@@ -19,6 +19,15 @@ using namespace clang;
 // C99 6.7.8
 void Parser::ParseInitializer() {
   // FIXME: STUB.
+  if (Tok.getKind() == tok::l_brace) {
+    ConsumeBrace();
+    // FIXME: initializer-list
+    // Match the '}'.
+    MatchRHSPunctuation(tok::r_brace, Tok.getLocation(), "{",
+                        diag::err_expected_rbrace);
+    return;
+  }
+  
   ParseAssignmentExpression();
 }
 
@@ -44,10 +53,12 @@ void Parser::ParseCastExpression() {
   if (Tok.getKind() != tok::l_paren)
     return ParseUnaryExpression();
   
+#if 0
   // Otherwise this is either a cast, a compound literal, or a parenthesized
   // expression.
   SourceLocation LParenLoc = Tok.getLocation();
   ConsumeParen();
+#endif
   
   assert(0);
 }
@@ -319,11 +330,22 @@ void Parser::ParseParenExpression(bool ParenExprOnly) {
       !getLang().NoExtensions) {
     Diag(Tok, diag::ext_gnu_statement_expr);
     ParseCompoundStatement();
-  } else if (!ParenExprOnly && isTypeSpecifierQualifier()) { 
-    // FIXME: Implement compound literals: C99 6.5.2.5.  Type-name: C99 6.7.6.
-    assert(0 && "IMPLEMENT THIS!");
-  } else {
+  } else if (ParenExprOnly || !isTypeSpecifierQualifier()) {
     ParseExpression();
+  } else {
+    // Otherwise, this is a compound expression.
+    ParseTypeName();
+
+    // Match the ')'.
+    MatchRHSPunctuation(tok::r_paren, OpenLoc, "(", diag::err_expected_rparen);
+
+    if (Tok.getKind() != tok::l_brace) {
+      Diag(Tok, diag::err_expected_lbrace_in_compound_literal);
+      return;
+    }
+    
+    ParseInitializer();
+    return;
   }
   
   

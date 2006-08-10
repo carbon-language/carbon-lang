@@ -204,7 +204,9 @@ private:
   void ParseInitDeclaratorListAfterFirstDeclarator(Declarator &D);
   void ParseDeclarationSpecifiers(DeclSpec &DS);
   bool isDeclarationSpecifier() const;
-  bool isTypeSpecifierQualifier() const { return false; } // FIXME!
+  bool isTypeSpecifierQualifier() const;
+
+  void ParseTypeName();
   
   /// ParseDeclarator - Parse and verify a newly-initialized declarator.
   void ParseDeclarator(Declarator &D);

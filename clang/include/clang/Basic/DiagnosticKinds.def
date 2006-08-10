@@ -288,6 +288,8 @@ DIAG(err_expected_statement, ERROR,
      "expected statement")
 DIAG(err_expected_lparen_after, ERROR,
      "expected '(' after '%s'")
+DIAG(err_expected_lbrace_in_compound_literal, ERROR,
+     "expected '{' in compound literal")
 DIAG(err_expected_while, ERROR,
      "expected 'while' in do/while loop")
 DIAG(err_expected_semi_after, ERROR,
@@ -306,7 +308,12 @@ DIAG(err_label_end_of_compound_statement, ERROR,
 DIAG(err_matching, ERROR,
      "to match this '%s'")
 
-     
+DIAG(err_typename_requires_specqual, ERROR,
+     "type name requires a specifier or qualifier")
+DIAG(err_typename_invalid_storageclass, ERROR,
+     "type name does not allow storage class to be specified")
+DIAG(err_typename_invalid_functionspec, ERROR,
+     "type name does not allow function specifier to be specified")
 DIAG(err_invalid_decl_spec_combination, ERROR,
      "cannot combine with previous '%s' declaration specifier")
 DIAG(err_invalid_sign_spec, ERROR,

@@ -20,6 +20,37 @@ using namespace clang;
 // C99 6.7: Declarations.
 //===----------------------------------------------------------------------===//
 
+/// ParseTypeName
+///       type-name: [C99 6.7.6]
+///         specifier-qualifier-list abstract-declarator[opt]
+void Parser::ParseTypeName() {
+  // Parse the common declaration-specifiers piece.
+  DeclSpec DS;
+  SourceLocation Loc = Tok.getLocation();
+  ParseDeclarationSpecifiers(DS);
+  
+  // Validate declspec for type-name.
+  unsigned Specs = DS.getParsedSpecifiers();
+  if (Specs == DeclSpec::PQ_None)
+    Diag(Tok, diag::err_typename_requires_specqual);
+  
+  if (Specs & DeclSpec::PQ_StorageClassSpecifier) {
+    Diag(Loc, diag::err_typename_invalid_storageclass);
+    // Remove storage class.
+    DS.StorageClassSpec     = DeclSpec::SCS_unspecified;
+    DS.SCS_thread_specified = false;
+  }
+  if (Specs & DeclSpec::PQ_FunctionSpecifier) {
+    Diag(Loc, diag::err_typename_invalid_functionspec);
+    DS.FS_inline_specified = false;
+  }
+  
+  // Parse the abstract-declarator, if present.
+  Declarator DeclaratorInfo(DS, Declarator::TypeNameContext);
+  ParseDeclarator(DeclaratorInfo);
+}
+
+
 /// ParseDeclaration - Parse a full 'declaration', which consists of
 /// declaration-specifiers, some number of declarators, and a semicolon.
 /// 'Context' should be a Declarator::TheContext value.
@@ -244,6 +275,49 @@ void Parser::ParseDeclarationSpecifiers(DeclSpec &DS) {
   }
 }
 
+/// isTypeSpecifierQualifier - Return true if the current token could be the
+/// start of a specifier-qualifier-list.
+bool Parser::isTypeSpecifierQualifier() const {
+  switch (Tok.getKind()) {
+  default: return false;
+    // type-specifiers
+  case tok::kw_short:
+  case tok::kw_long:
+  case tok::kw_signed:
+  case tok::kw_unsigned:
+  case tok::kw__Complex:
+  case tok::kw__Imaginary:
+  case tok::kw_void:
+  case tok::kw_char:
+  case tok::kw_int:
+  case tok::kw_float:
+  case tok::kw_double:
+  case tok::kw__Bool:
+  case tok::kw__Decimal32:
+  case tok::kw__Decimal64:
+  case tok::kw__Decimal128:
+    
+    // struct-or-union-specifier
+  case tok::kw_struct:
+  case tok::kw_union:
+    // enum-specifier
+  case tok::kw_enum:
+    
+    // type-qualifier
+  case tok::kw_const:
+  case tok::kw_volatile:
+  case tok::kw_restrict:
+    return true;
+    
+    // typedef-name
+  case tok::identifier:
+    // FIXME: if this is a typedef return true.
+    return false;
+    
+    // TODO: Attributes.
+  }
+}
+
 /// isDeclarationSpecifier() - Return true if the current token is part of a
 /// declaration specifier.
 bool Parser::isDeclarationSpecifier() const {
@@ -279,13 +353,16 @@ bool Parser::isDeclarationSpecifier() const {
   case tok::kw_union:
     // enum-specifier
   case tok::kw_enum:
+    
     // type-qualifier
   case tok::kw_const:
   case tok::kw_volatile:
   case tok::kw_restrict:
+    
     // function-specifier
   case tok::kw_inline:
     return true;
+    
     // typedef-name
   case tok::identifier:
     // FIXME: if this is a typedef return true.
