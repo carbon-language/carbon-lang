@@ -75,13 +75,19 @@ public:
     return Tok.getKind() == tok::l_brace || Tok.getKind() == tok::r_brace;
   }
   
+  /// isStringLiteral - True if this token is a string-literal.
+  ///
+  bool isStringLiteral() const {
+    return Tok.getKind() == tok::string_literal;
+  }
+  
   /// ConsumeToken - Consume the current 'peek token' and lex the next one.
   /// This does not work will all kinds of tokens: strings and specific other
   /// tokens must be consumed with custom methods below.
   void ConsumeToken() {
     // Note: update Parser::SkipUntil if any other special tokens are added.
-    assert(Tok.getKind() != tok::string_literal &&
-           !isTokenParen() && !isTokenBracket() && !isTokenBrace() &&
+    assert(!isStringLiteral() && !isTokenParen() && !isTokenBracket() &&
+           !isTokenBrace() &&
            "Should consume special tokens with Consume*Token");
     PP.Lex(Tok);
   }
@@ -127,12 +133,9 @@ public:
   /// handles string literal concatenation, as per C99 5.1.1.2, translation
   /// phase #6.
   void ConsumeStringToken() {
-    assert(Tok.getKind() != tok::string_literal &&
-           "Should consume special tokens with Consume*Token");
-    // Due to string literal concatenation, all consequtive string literals are
-    // a single token.
-    while (Tok.getKind() == tok::string_literal)
-      PP.Lex(Tok);
+    assert(isStringLiteral() &&
+           "Should only consume string literals with this method");
+    PP.Lex(Tok);
   }
   
 private:
@@ -160,7 +163,10 @@ private:
   // C99 6.5: Expressions.
   //ExprTy ParseExpression();  // Above.
   void ParseAssignmentExpression();  // Expr that doesn't include commas.
+
+  void ParsePostfixExpression();
   void ParseParenExpression();
+  void ParseStringLiteralExpression();
   
   void ParseInitializer();   // C99 6.7.8
   
