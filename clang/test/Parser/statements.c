@@ -35,5 +35,5 @@ int test4() {
   
   int X;  // declaration in a block.
   
-  if (0);
+foo:  if (0);
 }

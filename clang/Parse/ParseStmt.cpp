@@ -169,10 +169,33 @@ ParseNextStatement:
 /// there is a ':' after it.  If there is, this is a label, regardless of what
 /// else the identifier can mean.  If not, this is either part of a declaration
 /// (if the identifier is a type-name) or part of an expression.
+///
+///       labeled-statement:
+///         identifier ':' statement
+///         declaration                  (if !OnlyStatement)
+///         expression[opt] ';'
+///
 void Parser::ParseIdentifierStatement(bool OnlyStatement) {
+  IdentifierInfo *II = Tok.getIdentifierInfo();
+  assert(Tok.getKind() == tok::identifier && II && "Not an identifier!");
+
+  ConsumeToken();  // eat the identifier.
+  
+  // identifier ':' statement
+  if (Tok.getKind() == tok::colon) {
+    ConsumeToken();
+    ParseStatement();
+    return;
+  }
+  
+  // declaration
+  if (!OnlyStatement && 0/*Is typedef name!*/) {
+    // Handle this.  Warn/disable if in middle of block and !C99.
+  }
+  
+  // Otherwise, this is an expression.
   
   assert(0);
-  
 }
 
 /// ParseCaseStatement
