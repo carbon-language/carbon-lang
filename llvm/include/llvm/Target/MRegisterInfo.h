@@ -66,17 +66,21 @@ public:
     RegSize(RS), Alignment(Al), RegsBegin(RB), RegsEnd(RE) {}
   virtual ~TargetRegisterClass() {}     // Allow subclasses
   
-  // getID() - Return the register class ID number.
+  /// getID() - Return the register class ID number.
+  ///
   unsigned getID() const { return ID; }
   
-  // begin/end - Return all of the registers in this class.
+  /// begin/end - Return all of the registers in this class.
+  ///
   iterator       begin() const { return RegsBegin; }
   iterator         end() const { return RegsEnd; }
 
-  // getNumRegs - Return the number of registers in this class
+  /// getNumRegs - Return the number of registers in this class.
+  ///
   unsigned getNumRegs() const { return RegsEnd-RegsBegin; }
 
-  // getRegister - Return the specified register in the class
+  /// getRegister - Return the specified register in the class.
+  ///
   unsigned getRegister(unsigned i) const {
     assert(i < getNumRegs() && "Register number out of range!");
     return RegsBegin[i];
