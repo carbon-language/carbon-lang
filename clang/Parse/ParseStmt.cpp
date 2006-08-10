@@ -44,9 +44,6 @@ using namespace clang;
 ///         'case' constant-expression ':' statement
 ///         'default' ':' statement
 ///
-///       expression-statement:
-///         expression[opt] ';'
-///
 ///       selection-statement:
 ///         if-statement
 ///         switch-statement
@@ -55,6 +52,9 @@ using namespace clang;
 ///         while-statement
 ///         do-statement
 ///         for-statement
+///
+///       expression-statement:
+///         expression[opt] ';'
 ///
 ///       jump-statement:
 ///         'goto' identifier ';'
@@ -74,21 +74,28 @@ void Parser::ParseStatementOrDeclaration(bool OnlyStatement) {
     SkipUntil(tok::semi);
     break;
     
-    // C99 6.8.2: compound-statement -> '{}' block
-  case tok::l_brace:
+    
+  case tok::l_brace:                // C99 6.8.2: compound-statement
     ParseCompoundStatement();
     break;
-    // C99 6.8.3: expression[opt] ';'
-  case tok::semi:
+  case tok::semi:                   // C99 6.8.3: expression[opt] ';'
     ConsumeToken();
     break;
-    
-    // C99 6.8.4.1: if-statement
-  case tok::kw_if:
+  case tok::kw_if:                  // C99 6.8.4.1: if-statement
     ParseIfStatement();
     break;
-    
-    
+  case tok::kw_switch:              // C99 6.8.4.2: switch-statement
+    ParseSwitchStatement();
+    break;
+  case tok::kw_while:               // C99 6.8.5.1: while-statement
+    ParseWhileStatement();
+    break;
+  case tok::kw_do:                  // C99 6.8.5.2: do-statement
+    ParseDoStatement();
+    break;
+  case tok::kw_for:                 // C99 6.8.5.3: for-statement
+    ParseForStatement();
+    break;
     // TODO: Handle OnlyStatement..
   }
 }
@@ -142,7 +149,7 @@ void Parser::ParseIfStatement() {
   ConsumeToken();  // eat the 'if'.
 
   if (Tok.getKind() != tok::l_paren) {
-    Diag(Tok, diag::err_expected_lparen_after_if, "if");
+    Diag(Tok, diag::err_expected_lparen_after, "if");
     SkipUntil(tok::semi);
     return;
   }
@@ -158,7 +165,151 @@ void Parser::ParseIfStatement() {
     ConsumeToken();
     ParseStatement();
   }
-  
 }
 
+/// ParseSwitchStatement
+///       switch-statement:
+///         'switch' '(' expression ')' statement
+void Parser::ParseSwitchStatement() {
+  assert(Tok.getKind() == tok::kw_switch && "Not a switch stmt!");
+  ConsumeToken();  // eat the 'switch'.
+
+  if (Tok.getKind() != tok::l_paren) {
+    Diag(Tok, diag::err_expected_lparen_after, "switch");
+    SkipUntil(tok::semi);
+    return;
+  }
+  
+  // Parse the condition.
+  ParseParenExpression();
+  
+  // Read the body statement.
+  ParseStatement();
+}
+
+/// ParseWhileStatement
+///       while-statement: [C99 6.8.5.1]
+///         'while' '(' expression ')' statement
+void Parser::ParseWhileStatement() {
+  assert(Tok.getKind() == tok::kw_while && "Not a while stmt!");
+  ConsumeToken();  // eat the 'while'.
+  
+  if (Tok.getKind() != tok::l_paren) {
+    Diag(Tok, diag::err_expected_lparen_after, "while");
+    SkipUntil(tok::semi);
+    return;
+  }
+  
+  // Parse the condition.
+  ParseParenExpression();
+  
+  // Read the body statement.
+  ParseStatement();
+}
+
+/// ParseDoStatement
+///       do-statement: [C99 6.8.5.2]
+///         'do' statement 'while' '(' expression ')' ';'
+void Parser::ParseDoStatement() {
+  assert(Tok.getKind() == tok::kw_do && "Not a do stmt!");
+  SourceLocation DoLoc = Tok.getLocation();
+  ConsumeToken();  // eat the 'do'.
+  
+  // Read the body statement.
+  ParseStatement();
+
+  if (Tok.getKind() != tok::kw_while) {
+    Diag(Tok, diag::err_expected_while);
+    Diag(DoLoc, diag::err_matching);
+    SkipUntil(tok::semi);
+    return;
+  }
+  ConsumeToken();
+  
+  if (Tok.getKind() != tok::l_paren) {
+    Diag(Tok, diag::err_expected_lparen_after, "do/while");
+    SkipUntil(tok::semi);
+    return;
+  }
+  
+  // Parse the condition.
+  ParseParenExpression();
+  
+  if (Tok.getKind() != tok::semi) {
+    Diag(Tok, diag::err_expected_semi_do_while);
+    SkipUntil(tok::semi);
+    return;
+  }
+}
+
+/// ParseForStatement
+///       for-statement: [C99 6.8.5.3]
+///         'for' '(' expr[opt] ';' expr[opt] ';' expr[opt] ')' statement
+///         'for' '(' declaration expr[opt] ';' expr[opt] ')' statement
+void Parser::ParseForStatement() {
+  assert(Tok.getKind() == tok::kw_for && "Not a for stmt!");
+  SourceLocation ForLoc = Tok.getLocation();
+  ConsumeToken();  // eat the 'for'.
+  
+  if (Tok.getKind() != tok::l_paren) {
+    Diag(Tok, diag::err_expected_lparen_after, "for");
+    SkipUntil(tok::semi);
+    return;
+  }
+
+  SourceLocation LParenLoc = Tok.getLocation();
+  ConsumeParen();
+  
+  // Parse the first part of the for specifier.
+  if (Tok.getKind() == tok::semi) {  // for (;
+    // no first part.
+  } else if (isDeclarationSpecifier()) {  // for (int X = 4;
+    // FIXME: Parse declaration.
+    assert(0);
+  } else {
+    ParseExpression();
+  }
+  
+  if (Tok.getKind() == tok::semi) {
+    ConsumeToken();
+  } else {
+    Diag(Tok, diag::err_expected_semi_for);
+    Diag(ForLoc, diag::err_matching);
+    SkipUntil(tok::semi);
+  }
+  
+  // Parse the second part of the for specifier.
+  if (Tok.getKind() == tok::semi) {  // for (...;;
+    // no second part.
+  } else {
+    ParseExpression();
+  }
+  
+  if (Tok.getKind() == tok::semi) {
+    ConsumeToken();
+  } else {
+    Diag(Tok, diag::err_expected_semi_for);
+    Diag(ForLoc, diag::err_matching);
+    SkipUntil(tok::semi);
+  }
+  
+  // Parse the third part of the for specifier.
+  if (Tok.getKind() == tok::r_paren) {  // for (...;...;)
+    // no third part.
+  } else {
+    ParseExpression();
+  }
+  
+  if (Tok.getKind() == tok::r_paren) {
+    ConsumeParen();
+  } else {
+    Diag(Tok, diag::err_expected_rparen);
+    Diag(LParenLoc, diag::err_matching);
+    SkipUntil(tok::r_paren);
+    return;
+  }
+  
+  // Read the body statement.
+  ParseStatement();
+}
 

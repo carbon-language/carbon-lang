@@ -274,8 +274,14 @@ DIAG(err_expected_after_declarator, ERROR,
      "expected '=', ',', ';', 'asm', or '__attribute__' after declarator")
 DIAG(err_expected_statement_declaration, ERROR,
      "expected statement or declaration")
-DIAG(err_expected_lparen_after_if, ERROR,
+DIAG(err_expected_lparen_after, ERROR,
      "expected '(' after '%s'")
+DIAG(err_expected_while, ERROR,
+     "expected 'while' in do/while loop")
+DIAG(err_expected_semi_do_while, ERROR,
+     "expected ';' at end of do/while loop")
+DIAG(err_expected_semi_for, ERROR,
+     "expected ';' in 'for' statement specifier")
 
 /// err_matching - this is used as a continuation of a previous error, e.g. to 
 /// specify the '(' when we expected a ')'.  This should probably be some

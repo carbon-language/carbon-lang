@@ -162,7 +162,11 @@ private:
   void ParseStatementOrDeclaration(bool OnlyStatement = false);
   void ParseCompoundStatement();
   void ParseIfStatement();
-
+  void ParseSwitchStatement();
+  void ParseWhileStatement();
+  void ParseDoStatement();
+  void ParseForStatement();
+  
   //===--------------------------------------------------------------------===//
   // C99 6.7: Declarations.
   void ParseDeclarationSpecifiers(DeclSpec &DS);
