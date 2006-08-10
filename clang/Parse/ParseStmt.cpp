@@ -62,42 +62,76 @@ using namespace clang;
 ///         'continue' ';'
 ///         'break' ';'
 ///         'return' expression[opt] ';'
-/// [GNU]   'goto' '*' expression ';'     [TODO]
+/// [GNU]   'goto' '*' expression ';'
 ///
 /// [OBC] objc-throw-statement:           [TODO]
 /// [OBC]   '@' 'throw' expression ';'    [TODO]
 /// [OBC]   '@' 'throw' ';'               [TODO]
 /// 
 void Parser::ParseStatementOrDeclaration(bool OnlyStatement) {
+  const char *SemiError = 0;
+  
+  // Cases in this switch statement should fall through if the parser expects
+  // the token to end in a semicolon (in which case SemiError should be set),
+  // or they directly 'return;' if not.
   switch (Tok.getKind()) {
   default:
     Diag(Tok, diag::err_expected_statement_declaration);
     SkipUntil(tok::semi);
-    break;
+    return;
     
     
   case tok::l_brace:                // C99 6.8.2: compound-statement
     ParseCompoundStatement();
-    break;
+    return;
   case tok::semi:                   // C99 6.8.3: expression[opt] ';'
     ConsumeToken();
-    break;
+    return;
+    
   case tok::kw_if:                  // C99 6.8.4.1: if-statement
     ParseIfStatement();
-    break;
+    return;
   case tok::kw_switch:              // C99 6.8.4.2: switch-statement
     ParseSwitchStatement();
-    break;
+    return;
+    
   case tok::kw_while:               // C99 6.8.5.1: while-statement
     ParseWhileStatement();
-    break;
+    return;
   case tok::kw_do:                  // C99 6.8.5.2: do-statement
     ParseDoStatement();
+    SemiError = "do/while loop";
     break;
   case tok::kw_for:                 // C99 6.8.5.3: for-statement
     ParseForStatement();
+    return;
+
+  case tok::kw_goto:                // C99 6.8.6.1: goto-statement
+    ParseGotoStatement();
+    SemiError = "goto statement";
     break;
+  case tok::kw_continue:            // C99 6.8.6.2: continue-statement
+    ConsumeToken();  // eat the 'continue'.
+    SemiError = "continue statement";
+    break;
+  case tok::kw_break:               // C99 6.8.6.3: break-statement
+    ConsumeToken();  // eat the 'break'.
+    SemiError = "break statement";
+    break;
+  case tok::kw_return:              // C99 6.8.6.4: return-statement
+    ParseReturnStatement();
+    SemiError = "return statement";
+    break;
+    
     // TODO: Handle OnlyStatement..
+  }
+  
+  // If we reached this code, the statement must end in a semicolon.
+  if (Tok.getKind() == tok::semi) {
+    ConsumeToken();
+  } else {
+    Diag(Tok, diag::err_expected_semi_after, SemiError);
+    SkipUntil(tok::semi);
   }
 }
 
@@ -211,6 +245,7 @@ void Parser::ParseWhileStatement() {
 /// ParseDoStatement
 ///       do-statement: [C99 6.8.5.2]
 ///         'do' statement 'while' '(' expression ')' ';'
+/// Note: this lets the caller parse the end ';'.
 void Parser::ParseDoStatement() {
   assert(Tok.getKind() == tok::kw_do && "Not a do stmt!");
   SourceLocation DoLoc = Tok.getLocation();
@@ -235,12 +270,6 @@ void Parser::ParseDoStatement() {
   
   // Parse the condition.
   ParseParenExpression();
-  
-  if (Tok.getKind() != tok::semi) {
-    Diag(Tok, diag::err_expected_semi_do_while);
-    SkipUntil(tok::semi);
-    return;
-  }
 }
 
 /// ParseForStatement
@@ -317,3 +346,34 @@ void Parser::ParseForStatement() {
   ParseStatement();
 }
 
+/// ParseGotoStatement
+///       jump-statement:
+///         'goto' identifier ';'
+/// [GNU]   'goto' '*' expression ';'
+///
+/// Note: this lets the caller parse the end ';'.
+///
+void Parser::ParseGotoStatement() {
+  assert(Tok.getKind() == tok::kw_goto && "Not a goto stmt!");
+  ConsumeToken();  // eat the 'goto'.
+  
+  if (Tok.getKind() == tok::identifier) {
+    ConsumeToken();
+  } else if (Tok.getKind() == tok::star && !getLang().NoExtensions) {
+    // GNU indirect goto extension.
+    Diag(Tok, diag::ext_gnu_indirect_goto);
+    ConsumeToken();
+    ParseExpression();
+  }
+}
+
+/// ParseReturnStatement
+///       jump-statement:
+///         'return' expression[opt] ';'
+void Parser::ParseReturnStatement() {
+  assert(Tok.getKind() == tok::kw_return && "Not a return stmt!");
+  ConsumeToken();  // eat the 'return'.
+  
+  if (Tok.getKind() != tok::semi)
+    ParseExpression();
+}

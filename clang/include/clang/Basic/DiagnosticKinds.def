@@ -256,6 +256,8 @@ DIAG(ext_c99_array_usage, EXTENSION,
      "use of c99-specific array features")
 DIAG(ext_c99_variable_decl_in_for_loop, EXTENSION,
      "variable declaration in for loop is a c99-specific feature")
+DIAG(ext_gnu_indirect_goto, EXTENSION,
+     "use of GNU indirect-goto extension")
 
 // Generic errors.
 DIAG(err_parse_error, ERROR,
@@ -280,8 +282,8 @@ DIAG(err_expected_lparen_after, ERROR,
      "expected '(' after '%s'")
 DIAG(err_expected_while, ERROR,
      "expected 'while' in do/while loop")
-DIAG(err_expected_semi_do_while, ERROR,
-     "expected ';' at end of do/while loop")
+DIAG(err_expected_semi_after, ERROR,
+     "expected ';' after %s")
 DIAG(err_expected_semi_for, ERROR,
      "expected ';' in 'for' statement specifier")
 

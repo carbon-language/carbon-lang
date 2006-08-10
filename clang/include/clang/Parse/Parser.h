@@ -166,7 +166,9 @@ private:
   void ParseWhileStatement();
   void ParseDoStatement();
   void ParseForStatement();
-  
+  void ParseGotoStatement();
+  void ParseReturnStatement();
+
   //===--------------------------------------------------------------------===//
   // C99 6.7: Declarations.
 
