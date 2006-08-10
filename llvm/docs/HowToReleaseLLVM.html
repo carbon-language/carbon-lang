@@ -56,11 +56,13 @@ There are three main tasks for building a release of LLVM:
     <li><a href="#deps">Make LibDeps.txt</a></li>
     <li><a href="#settle">Settle LLVM HEAD</a></li>
     <li><a href="#tag">Tag LLVM and Create the Release Branch</a></li>
+    <li><a href="#verchanges">Update LLVM Version </a></li>
     <li><a href="#build">Build LLVM</a></li>
     <li><a href="#check">Run 'make check'</a></li>
     <li><a href="#test">Run LLVM Test Suite</a></li>
     <li><a href="#dist">Build the LLVM Source Distributions</a></li>
     <li><a href="#llvmgccbin">Build the LLVM GCC Binary Distribution</a></li>
+    <li><a href="#webupdates">Update the LLVM Website</a></li>
   </ol>
 </div>
 
@@ -138,12 +140,20 @@ fix <em>for the release</em>.
     "ROOT_RELEASE_XX" where XX is the major and minor
     release numbers (you can't have . in a cvs tag name). So, for Release 1.2,
     XX=12 and for Release 1.10, XX=110.
+	  
+    <p>
+    <tt>cvs tag ROOT_RELEASE_XX</tt><br>
+    </p>
     </li>
 
     <li>
     Immediately create cvs branches based on the ROOT_RELEASE_XX tag. The tag
     should be "release_XX" (where XX matches that used for the ROOT_RELEASE_XX
     tag).  This is where the release distribution will be created.
+
+    <p>
+    cvs tag -b -r ROOT_RELEASE_XX release_XX
+    </p>
     </li>
 
     <li>
@@ -162,6 +172,17 @@ fix <em>for the release</em>.
     <tt>cvs -d &lt;CVS Repository&gt; co -r release_XX llvm-gcc</tt><br>
     </p>
     </li>
+</div>
+
+<!-- ======================================================================= -->
+<div class="doc_subsection"><a name="verchanges">Update LLVM Version</a></div>
+<div class="doc_text">
+  <p>
+  After creating the llvm release branch, update the release branch's autoconf/configure.ac 
+  version from X.Xcvs to just X.X. Update it on mainline as well to be the next version 
+  (X.X+1cvs). 
+  </p>
+
 </div>
 
 <!-- ======================================================================= -->
@@ -272,6 +293,21 @@ fix <em>for the release</em>.
     previous releases of the LLVM-GCC front-end.
     </li>
   </ol>
+</div>
+
+
+<!-- ======================================================================= -->
+<div class="doc_subsection"><a name="webupdates">Update the LLVM Website</a></div>
+<div class="doc_text">
+  <p>
+  Check out the llvm-www module from cvs. Create a new subdirectory X.X in the 
+  releases directory. Place the llvm, llvm-test, llvm-gcc source, and llvm-gcc 
+  binaries in this new directory. Copy the llvm/docs and LICENSE.txt files 
+  into this new directory. Update the releases/download.html file with  the new release. 
+  Update the releases/index.html with the new release. Finally, update the main page (
+  index.html and sidebar) to point to the new release and release announcement. Make 
+  sure this all gets commited back into cvs.
+  </p>
 </div>
 
 <!--
