@@ -76,10 +76,23 @@ ParseNextStatement:
   // the token to end in a semicolon (in which case SemiError should be set),
   // or they directly 'return;' if not.
   switch (Tok.getKind()) {
+  case tok::identifier:             // C99 6.8.1: labeled-statement
+    // identifier ':' statement
+    // declaration                  (if !OnlyStatement)
+    // expression[opt] ';'
+    return ParseIdentifierStatement(OnlyStatement);
+
   default:
-    Diag(Tok, OnlyStatement ? diag::err_expected_statement :
-                              diag::err_expected_statement_declaration);
-    SkipUntil(tok::semi);
+    if (!OnlyStatement && isDeclarationSpecifier()) {
+      // TODO: warn/disable if declaration is in the middle of a block and !C99.
+      ParseDeclaration(Declarator::BlockContext);
+      return;
+    } else if (Tok.getKind() == tok::r_brace) {
+      Diag(Tok, diag::err_expected_statement);
+    } else {
+      // expression[opt] ';'
+      ParseExpression();
+    }
     return;
     
   case tok::kw_case:                // C99 6.8.1: labeled-statement
@@ -140,8 +153,6 @@ ParseNextStatement:
     ParseReturnStatement();
     SemiError = "return statement";
     break;
-    
-    // TODO: Handle OnlyStatement..
   }
   
   // If we reached this code, the statement must end in a semicolon.
@@ -151,6 +162,17 @@ ParseNextStatement:
     Diag(Tok, diag::err_expected_semi_after, SemiError);
     SkipUntil(tok::semi);
   }
+}
+
+/// ParseIdentifierStatement - Because we don't have two-token lookahead, we
+/// have a bit of a quandry here.  Reading the identifier is necessary to see if
+/// there is a ':' after it.  If there is, this is a label, regardless of what
+/// else the identifier can mean.  If not, this is either part of a declaration
+/// (if the identifier is a type-name) or part of an expression.
+void Parser::ParseIdentifierStatement(bool OnlyStatement) {
+  
+  assert(0);
+  
 }
 
 /// ParseCaseStatement

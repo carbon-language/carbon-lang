@@ -278,8 +278,6 @@ DIAG(err_expected_after_declarator, ERROR,
      "expected '=', ',', ';', 'asm', or '__attribute__' after declarator")
 DIAG(err_expected_statement, ERROR,
      "expected statement")
-DIAG(err_expected_statement_declaration, ERROR,
-     "expected statement or declaration")
 DIAG(err_expected_lparen_after, ERROR,
      "expected '(' after '%s'")
 DIAG(err_expected_while, ERROR,

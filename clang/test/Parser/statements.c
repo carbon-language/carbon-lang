@@ -29,3 +29,11 @@ int test3() {
       ;     
   }
 }
+
+int test4() {
+  if (0);
+  
+  int X;  // declaration in a block.
+  
+  if (0);
+}
