@@ -1,4 +1,4 @@
-//===--- Declarations.cpp - Declaration Representation Implementation -----===//
+//===--- DeclarationSemantics.cpp - Declaration Representation ------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,7 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 //
-//  This file implements the Declaration representation classes.
+//  This file implements semantic checking for declarations.
 //
 //===----------------------------------------------------------------------===//
 

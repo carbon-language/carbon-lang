@@ -1,4 +1,4 @@
-//===--- Parse.cpp - C Language Family Parser -----------------------------===//
+//===--- Parser.cpp - C Language Family Parser ----------------------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //

@@ -1,4 +1,4 @@
-//===--- ParserDeclarations.cpp - Declaration Parsing ---------------------===//
+//===--- Declaration.cpp - Declaration Parsing ----------------------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
