@@ -481,14 +481,9 @@ void Parser::ParseParenDeclarator(Declarator &D) {
     // direct-declarator: '(' attributes declarator ')'   [TODO]
     if (isGrouping) {
       ParseDeclaratorInternal(D);
-      if (Tok.getKind() == tok::r_paren) {
-        ConsumeParen();
-      } else {
-        // expected ')': skip until we find ')'.
-        Diag(Tok, diag::err_expected_rparen);
-        Diag(StartLoc, diag::err_matching, "(");
-        SkipUntil(tok::r_paren);
-      }
+      // Match the ')'.
+      MatchRHSPunctuation(tok::r_paren, StartLoc, "(",
+                          diag::err_expected_rparen);
       return;
     }
     

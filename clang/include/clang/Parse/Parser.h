@@ -75,9 +75,9 @@ public:
     return Tok.getKind() == tok::l_brace || Tok.getKind() == tok::r_brace;
   }
   
-  /// isStringLiteral - True if this token is a string-literal.
+  /// isTokenStringLiteral - True if this token is a string-literal.
   ///
-  bool isStringLiteral() const {
+  bool isTokenStringLiteral() const {
     return Tok.getKind() == tok::string_literal;
   }
   
@@ -86,7 +86,7 @@ public:
   /// tokens must be consumed with custom methods below.
   void ConsumeToken() {
     // Note: update Parser::SkipUntil if any other special tokens are added.
-    assert(!isStringLiteral() && !isTokenParen() && !isTokenBracket() &&
+    assert(!isTokenStringLiteral() && !isTokenParen() && !isTokenBracket() &&
            !isTokenBrace() &&
            "Should consume special tokens with Consume*Token");
     PP.Lex(Tok);
@@ -133,10 +133,18 @@ public:
   /// handles string literal concatenation, as per C99 5.1.1.2, translation
   /// phase #6.
   void ConsumeStringToken() {
-    assert(isStringLiteral() &&
+    assert(isTokenStringLiteral() &&
            "Should only consume string literals with this method");
     PP.Lex(Tok);
   }
+  
+  /// MatchRHSPunctuation - For punctuation with a LHS and RHS (e.g. '['/']'),
+  /// this helper function matches and consumes the specified RHS token if
+  /// present.  If not present, it emits the specified diagnostic indicating
+  /// that the parser failed to match the RHS of the token at LHSLoc.  LHSName
+  /// should be the name of the unmatched LHS token.
+  void MatchRHSPunctuation(tok::TokenKind RHSTok, SourceLocation LHSLoc,
+                           const char *LHSName, unsigned Diag);
   
 private:
   //===--------------------------------------------------------------------===//

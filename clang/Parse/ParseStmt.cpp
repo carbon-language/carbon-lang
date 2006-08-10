@@ -444,14 +444,8 @@ void Parser::ParseForStatement() {
     ParseExpression();
   }
   
-  if (Tok.getKind() == tok::r_paren) {
-    ConsumeParen();
-  } else {
-    Diag(Tok, diag::err_expected_rparen);
-    Diag(LParenLoc, diag::err_matching, "(");
-    SkipUntil(tok::r_paren);
-    return;
-  }
+  // Match the ')'.
+  MatchRHSPunctuation(tok::r_paren, LParenLoc, "(", diag::err_expected_rparen);
   
   // Read the body statement.
   ParseStatement();

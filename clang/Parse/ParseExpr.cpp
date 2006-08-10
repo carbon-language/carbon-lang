@@ -34,9 +34,22 @@ void Parser::ParseAssignmentExpression() {
   ParseExpression();
 }
 
-
+/// ParseCastExpression
+///       cast-expression: [C99 6.5.4]
+///         unary-expression
+///         '(' type-name ')' cast-expression
+///
 void Parser::ParseCastExpression() {
-  ParseUnaryExpression();
+  // If this doesn't start with an '(', then it is a unary-expression.
+  if (Tok.getKind() != tok::l_paren)
+    return ParseUnaryExpression();
+  
+  // Otherwise this is either a cast, a compound literal, or a parenthesized
+  // expression.
+  SourceLocation LParenLoc = Tok.getLocation();
+  ConsumeParen();
+  
+  assert(0);
 }
 
 /// ParseUnaryExpression
@@ -135,13 +148,8 @@ void Parser::ParseSizeofAlignofExpression() {
 
   }
   
-  if (Tok.getKind() == tok::r_paren) {
-    ConsumeParen();
-  } else {
-    Diag(Tok, diag::err_expected_rparen);
-    Diag(LParenLoc, diag::err_matching, "(");
-    SkipUntil(tok::r_paren);
-  }
+  // Match the ')'.
+  MatchRHSPunctuation(tok::r_paren, LParenLoc, "(", diag::err_expected_rparen);
 }
 
 /// ParsePostfixExpression
@@ -238,13 +246,8 @@ void Parser::ParsePostfixExpression() {
       Loc = Tok.getLocation();
       ConsumeBracket();
       ParseExpression();
-      if (Tok.getKind() == tok::r_square) {
-        ConsumeBracket();
-      } else {
-        Diag(Tok, diag::err_expected_rsquare);
-        Diag(Loc, diag::err_matching, "[");
-        SkipUntil(tok::r_square);
-      }
+      // Match the ']'.
+      MatchRHSPunctuation(tok::r_square, Loc, "[", diag::err_expected_rsquare);
       break;
       
     case tok::l_paren:     // p-e: p-e '(' argument-expression-list[opt] ')'
@@ -260,13 +263,8 @@ void Parser::ParsePostfixExpression() {
         ConsumeToken();  // Next argument.
       }
         
-      if (Tok.getKind() == tok::r_paren) {
-        ConsumeParen();
-      } else {
-        Diag(Tok, diag::err_expected_rparen);
-        Diag(Loc, diag::err_matching, "(");
-        SkipUntil(tok::r_paren);
-      }
+      // Match the ')'.
+      MatchRHSPunctuation(tok::r_paren, Loc, "(", diag::err_expected_rparen);
       break;
       
     case tok::arrow:       // postfix-expression: p-e '->' identifier
@@ -294,12 +292,12 @@ void Parser::ParsePostfixExpression() {
 ///       primary-expression: [C99 6.5.1]
 ///         string-literal
 void Parser::ParseStringLiteralExpression() {
-  assert(isStringLiteral() && "Not a string literal!");
+  assert(isTokenStringLiteral() && "Not a string literal!");
   ConsumeStringToken();
   
   // String concat.  Note that keywords like __func__ and __FUNCTION__ aren't
   // considered to be strings.
-  while (isStringLiteral())
+  while (isTokenStringLiteral())
     ConsumeStringToken();
 }
 
@@ -328,10 +326,7 @@ void Parser::ParseParenExpression(bool ParenExprOnly) {
     ParseExpression();
   }
   
-  if (Tok.getKind() == tok::r_paren) {
-    ConsumeParen();
-  } else {
-    Diag(Tok, diag::err_expected_rparen);
-    Diag(OpenLoc, diag::err_matching, "(");
-  }
+  
+  // Match the ')'.
+  MatchRHSPunctuation(tok::r_paren, OpenLoc, "(", diag::err_expected_rparen);
 }
