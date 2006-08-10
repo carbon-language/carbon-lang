@@ -25,13 +25,123 @@ void Parser::ParseInitializer() {
 
 
 Parser::ExprTy Parser::ParseExpression() {
-  ParsePostfixExpression();
+  ParseCastExpression();
   return 0;
 }
 
 // Expr that doesn't include commas.
 void Parser::ParseAssignmentExpression() {
   ParseExpression();
+}
+
+
+void Parser::ParseCastExpression() {
+  ParseUnaryExpression();
+}
+
+/// ParseUnaryExpression
+///       unary-expression:  [C99 6.5.3]
+///         postfix-expression
+///         '++' unary-expression
+///         '--' unary-expression
+///         unary-operator cast-expression
+///         'sizeof' unary-expression
+///         'sizeof' '(' type-name ')'
+/// [GNU]   '__alignof' unary-expression
+/// [GNU]   '__alignof' '(' type-name ')'
+/// [GNU]   '&&' identifier
+///       unary-operator: one of
+///         '&'  '*'  '+'  '-'  '~'  '!'
+/// [GNU]   '__extension__'  '__real'  '__imag'
+///
+void Parser::ParseUnaryExpression() {
+  switch (Tok.getKind()) {
+  default:                 // unary-expression: postfix-expression
+    ParsePostfixExpression();
+    break;
+  case tok::plusplus:      // unary-expression: '++' unary-expression
+  case tok::minusminus:    // unary-expression: '--' unary-expression
+    ConsumeToken();
+    ParseUnaryExpression();
+    break;
+  case tok::amp:           // unary-expression: '&' cast-expression
+  case tok::star:          // unary-expression: '*' cast-expression
+  case tok::plus:          // unary-expression: '+' cast-expression
+  case tok::minus:         // unary-expression: '-' cast-expression
+  case tok::tilde:         // unary-expression: '~' cast-expression
+  case tok::exclaim:       // unary-expression: '!' cast-expression
+  case tok::kw___real:     // unary-expression: '__real' cast-expression [GNU]
+  case tok::kw___imag:     // unary-expression: '__real' cast-expression [GNU]
+  //case tok::kw__extension__:  [TODO]
+    ConsumeToken();
+    ParseCastExpression();
+    break;
+    
+  case tok::kw_sizeof:     // unary-expression: 'sizeof' unary-expression
+                           // unary-expression: 'sizeof' '(' type-name ')'
+  case tok::kw___alignof:  // unary-expression: '__alignof' unary-expression
+                           // unary-expression: '__alignof' '(' type-name ')'
+    ParseSizeofAlignofExpression();
+    break;
+  case tok::ampamp:        // unary-expression: '&&' identifier
+    Diag(Tok, diag::ext_gnu_address_of_label);
+    ConsumeToken();
+    if (Tok.getKind() == tok::identifier) {
+      ConsumeToken();
+    } else {
+      Diag(Tok, diag::err_expected_ident);
+      ConsumeToken(); // FIXME: Should just return error!
+      return;
+    }
+    break;
+  }
+}
+
+/// ParseSizeofAlignofExpression - Parse a sizeof or alignof expression.
+///       unary-expression:  [C99 6.5.3]
+///         'sizeof' unary-expression
+///         'sizeof' '(' type-name ')'
+/// [GNU]   '__alignof' unary-expression
+/// [GNU]   '__alignof' '(' type-name ')'
+void Parser::ParseSizeofAlignofExpression() {
+  assert((Tok.getKind() == tok::kw_sizeof ||
+          Tok.getKind() == tok::kw___alignof) &&
+         "Not a sizeof/alignof expression!");
+  ConsumeToken();
+  
+  // If the operand doesn't start with an '(', it must be an expression.
+  if (Tok.getKind() != tok::l_paren) {
+    ParseUnaryExpression();
+    return;
+  }
+  
+  // If it starts with a '(', we know that it is either a parenthesized
+  // type-name, or it is a unary-expression that starts with a compound literal,
+  // or starts with a primary-expression that is a parenthesized expression.
+  SourceLocation LParenLoc = Tok.getLocation();
+  ConsumeParen();
+  
+  if (isTypeSpecifierQualifier()) {
+    // This is now known to be either a parenthesized type-name, or a compound
+    // literal.
+    
+    
+    // FIXME: ParseTypeName.
+    assert(0 && "implement!");
+  } else {
+    // Otherwise, this is known to be a parenthesized-expression.  Parse the 
+    // rest of the parethesized-expression here.
+    ParseExpression();
+
+  }
+  
+  if (Tok.getKind() == tok::r_paren) {
+    ConsumeParen();
+  } else {
+    Diag(Tok, diag::err_expected_rparen);
+    Diag(LParenLoc, diag::err_matching, "(");
+    SkipUntil(tok::r_paren);
+  }
 }
 
 /// ParsePostfixExpression
@@ -132,7 +242,7 @@ void Parser::ParsePostfixExpression() {
         ConsumeBracket();
       } else {
         Diag(Tok, diag::err_expected_rsquare);
-        Diag(Loc, diag::err_matching);
+        Diag(Loc, diag::err_matching, "[");
         SkipUntil(tok::r_square);
       }
       break;
@@ -154,7 +264,7 @@ void Parser::ParsePostfixExpression() {
         ConsumeParen();
       } else {
         Diag(Tok, diag::err_expected_rparen);
-        Diag(Loc, diag::err_matching);
+        Diag(Loc, diag::err_matching, "(");
         SkipUntil(tok::r_paren);
       }
       break;
@@ -211,8 +321,9 @@ void Parser::ParseParenExpression(bool ParenExprOnly) {
       !getLang().NoExtensions) {
     Diag(Tok, diag::ext_gnu_statement_expr);
     ParseCompoundStatement();
-  } else if (!ParenExprOnly && 0 /*type */) { 
+  } else if (!ParenExprOnly && isTypeSpecifierQualifier()) { 
     // FIXME: Implement compound literals: C99 6.5.2.5.  Type-name: C99 6.7.6.
+    assert(0 && "IMPLEMENT THIS!");
   } else {
     ParseExpression();
   }
@@ -221,6 +332,6 @@ void Parser::ParseParenExpression(bool ParenExprOnly) {
     ConsumeParen();
   } else {
     Diag(Tok, diag::err_expected_rparen);
-    Diag(OpenLoc, diag::err_matching);
+    Diag(OpenLoc, diag::err_matching, "(");
   }
 }

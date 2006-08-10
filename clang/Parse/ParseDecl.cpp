@@ -486,7 +486,7 @@ void Parser::ParseParenDeclarator(Declarator &D) {
       } else {
         // expected ')': skip until we find ')'.
         Diag(Tok, diag::err_expected_rparen);
-        Diag(StartLoc, diag::err_matching);
+        Diag(StartLoc, diag::err_matching, "(");
         SkipUntil(tok::r_paren);
       }
       return;

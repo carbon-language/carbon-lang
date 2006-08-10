@@ -164,6 +164,9 @@ private:
   //ExprTy ParseExpression();  // Above.
   void ParseAssignmentExpression();  // Expr that doesn't include commas.
 
+  void ParseCastExpression();
+  void ParseUnaryExpression();
+  void ParseSizeofAlignofExpression();
   void ParsePostfixExpression();
   void ParseParenExpression(bool ParenExprOnly = true);
   void ParseStringLiteralExpression();
@@ -193,6 +196,7 @@ private:
   void ParseInitDeclaratorListAfterFirstDeclarator(Declarator &D);
   void ParseDeclarationSpecifiers(DeclSpec &DS);
   bool isDeclarationSpecifier() const;
+  bool isTypeSpecifierQualifier() const { return false; } // FIXME!
   
   /// ParseDeclarator - Parse and verify a newly-initialized declarator.
   void ParseDeclarator(Declarator &D);

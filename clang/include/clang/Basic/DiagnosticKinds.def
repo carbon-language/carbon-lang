@@ -258,6 +258,8 @@ DIAG(ext_c99_variable_decl_in_for_loop, EXTENSION,
      "variable declaration in for loop is a c99-specific feature")
 DIAG(ext_gnu_indirect_goto, EXTENSION,
      "use of GNU indirect-goto extension")
+DIAG(ext_gnu_address_of_label, EXTENSION,
+     "use of GNU address-of-label extension")
 DIAG(ext_gnu_statement_expr, EXTENSION,
      "use of GNU statement expression extension")
      
@@ -302,7 +304,7 @@ DIAG(err_label_end_of_compound_statement, ERROR,
 /// special sort of diagnostic kind to indicate that it is the second half of
 /// the previous diagnostic.
 DIAG(err_matching, ERROR,
-     "to match")
+     "to match this '%s'")
 
      
 DIAG(err_invalid_decl_spec_combination, ERROR,

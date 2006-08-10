@@ -369,7 +369,7 @@ void Parser::ParseDoStatement() {
 
   if (Tok.getKind() != tok::kw_while) {
     Diag(Tok, diag::err_expected_while);
-    Diag(DoLoc, diag::err_matching);
+    Diag(DoLoc, diag::err_matching, "do");
     SkipUntil(tok::semi);
     return;
   }
@@ -419,7 +419,6 @@ void Parser::ParseForStatement() {
       ConsumeToken();
     } else {
       Diag(Tok, diag::err_expected_semi_for);
-      Diag(ForLoc, diag::err_matching);
       SkipUntil(tok::semi);
     }
   }
@@ -435,7 +434,6 @@ void Parser::ParseForStatement() {
     ConsumeToken();
   } else {
     Diag(Tok, diag::err_expected_semi_for);
-    Diag(ForLoc, diag::err_matching);
     SkipUntil(tok::semi);
   }
   
@@ -450,7 +448,7 @@ void Parser::ParseForStatement() {
     ConsumeParen();
   } else {
     Diag(Tok, diag::err_expected_rparen);
-    Diag(LParenLoc, diag::err_matching);
+    Diag(LParenLoc, diag::err_matching, "(");
     SkipUntil(tok::r_paren);
     return;
   }
