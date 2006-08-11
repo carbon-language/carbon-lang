@@ -217,11 +217,6 @@ public:
   }
   SDOperand getNode(unsigned Opcode, std::vector<MVT::ValueType> &ResultTys,
                     const SDOperand *Ops, unsigned NumOps);
-  SDOperand getNode(unsigned Opcode, std::vector<MVT::ValueType> &ResultTys,
-                    const std::vector<SDOperand> &Ops) {
-    return getNode(Opcode, ResultTys, &Ops[0], Ops.size());
-  }
-  
   
   /// getSetCC - Helper function to make it easier to build SetCC's if you just
   /// have an ISD::CondCode instead of an SDOperand.
