@@ -53,13 +53,24 @@ void Parser::ParseCastExpression() {
   if (Tok.getKind() != tok::l_paren)
     return ParseUnaryExpression();
   
-#if 0
-  // Otherwise this is either a cast, a compound literal, or a parenthesized
-  // expression.
-  SourceLocation LParenLoc = Tok.getLocation();
-  ConsumeParen();
-#endif
-  
+  ParenParseOption ParenExprType = CompoundLiteral;
+  ParseParenExpression(ParenExprType);
+
+  switch (ParenExprType) {
+  case SimpleExpr: break;    // Nothing to do.
+  case CompoundStmt: break;  // Nothing to do.
+  case CompoundLiteral:
+    // We parsed '(' type-name ')' '{' ... '}'.  If any suffixes of
+    // postfix-expression exist, parse them now.
+    assert(0 && "FIXME");
+    break;
+  case CastExpr:
+    // We parsed '(' type-name ')' and the thing after it wasn't a '{'.  Parse
+    // the cast-expression that follows it next.
+    ParseCastExpression();
+    break;
+  }
+  // If ParenExprType could have a postfix expr after it, handle it now.
   assert(0);
 }
 
@@ -142,25 +153,8 @@ void Parser::ParseSizeofAlignofExpression() {
   // If it starts with a '(', we know that it is either a parenthesized
   // type-name, or it is a unary-expression that starts with a compound literal,
   // or starts with a primary-expression that is a parenthesized expression.
-  SourceLocation LParenLoc = Tok.getLocation();
-  ConsumeParen();
-  
-  if (isTypeSpecifierQualifier()) {
-    // This is now known to be either a parenthesized type-name, or a compound
-    // literal.
-    
-    
-    // FIXME: ParseTypeName.
-    assert(0 && "implement!");
-  } else {
-    // Otherwise, this is known to be a parenthesized-expression.  Parse the 
-    // rest of the parethesized-expression here.
-    ParseExpression();
-
-  }
-  
-  // Match the ')'.
-  MatchRHSPunctuation(tok::r_paren, LParenLoc, "(", diag::err_expected_rparen);
+  ParenParseOption ExprType = CastExpr;
+  ParseParenExpression(ExprType);
 }
 
 /// ParsePostfixExpression
@@ -227,10 +221,14 @@ void Parser::ParsePostfixExpression() {
   case tok::string_literal:    // primary-expression: string-literal
     ParseStringLiteralExpression();
     break;
-  case tok::l_paren:           // primary-expression: '(' expression ')'
-                               // primary-expression: '(' compound-statement ')'
-    ParseParenExpression(false/*allow statement exprs, initializers */);
+  case tok::l_paren: {  // primary-expr: '(' expression ')'
+                        // primary-expr: '(' compound-statement ')'
+                        // postfix-expr: '(' type-name ')' '{' init-list '}'
+                        // postfix-expr: '(' type-name ')' '{' init-list ',' '}'
+    ParenParseOption ParenExprType = CompoundLiteral;
+    ParseParenExpression(ParenExprType);
     break;
+  }
   case tok::kw___builtin_va_arg:
   case tok::kw___builtin_offsetof:
   case tok::kw___builtin_choose_expr:
@@ -313,41 +311,51 @@ void Parser::ParseStringLiteralExpression() {
 }
 
 
-/// ParseParenExpression - C99 6.5.1p5
-///       primary-expression:
+/// ParseParenExpression - This parses the unit that starts with a '(' token,
+/// based on what is allowed by ExprType.  The actual thing parsed is returned
+/// in ExprType.
+///
+///       primary-expression: [C99 6.5.1]
 ///         '(' expression ')'
 /// [GNU]   '(' compound-statement ')'      (if !ParenExprOnly)
 ///       postfix-expression: [C99 6.5.2]
 ///         '(' type-name ')' '{' initializer-list '}'
 ///         '(' type-name ')' '{' initializer-list ',' '}'
+///       cast-expression: [C99 6.5.4]
+///         '(' type-name ')' cast-expression
 ///
-void Parser::ParseParenExpression(bool ParenExprOnly) {
+void Parser::ParseParenExpression(ParenParseOption &ExprType) {
   assert(Tok.getKind() == tok::l_paren && "Not a paren expr!");
   SourceLocation OpenLoc = Tok.getLocation();
   ConsumeParen();
   
-  if (!ParenExprOnly && Tok.getKind() == tok::l_brace &&
+  if (ExprType >= CompoundStmt && Tok.getKind() == tok::l_brace &&
       !getLang().NoExtensions) {
     Diag(Tok, diag::ext_gnu_statement_expr);
     ParseCompoundStatement();
-  } else if (ParenExprOnly || !isTypeSpecifierQualifier()) {
-    ParseExpression();
-  } else {
+    ExprType = CompoundStmt;
+  } else if (ExprType >= CompoundLiteral && isTypeSpecifierQualifier()) {
     // Otherwise, this is a compound expression.
     ParseTypeName();
 
     // Match the ')'.
     MatchRHSPunctuation(tok::r_paren, OpenLoc, "(", diag::err_expected_rparen);
 
-    if (Tok.getKind() != tok::l_brace) {
+    if (Tok.getKind() == tok::l_brace) {
+      ParseInitializer();
+      ExprType = CompoundLiteral;
+    } else if (ExprType == CastExpr) {
+      // Note that this doesn't parse the subsequence cast-expression.
+      ExprType = CastExpr;
+    } else {
       Diag(Tok, diag::err_expected_lbrace_in_compound_literal);
       return;
     }
-    
-    ParseInitializer();
     return;
+  } else {
+    ParseExpression();
+    ExprType = SimpleExpr;
   }
-  
   
   // Match the ')'.
   MatchRHSPunctuation(tok::r_paren, OpenLoc, "(", diag::err_expected_rparen);

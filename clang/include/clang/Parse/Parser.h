@@ -176,7 +176,15 @@ private:
   void ParseUnaryExpression();
   void ParseSizeofAlignofExpression();
   void ParsePostfixExpression();
-  void ParseParenExpression(bool ParenExprOnly = true);
+  
+  /// ParenParseOption - Control what ParseParenExpression will parse.
+  enum ParenParseOption {
+    SimpleExpr,      // Only parse '(' expression ')'
+    CompoundStmt,    // Also allow '(' compound-statement ')'
+    CompoundLiteral, // Also allow '(' type-name ')' '{' ... '}'
+    CastExpr         // Also allow '(' type-name ')' <anything>
+  };
+  void ParseParenExpression(ParenParseOption &ExprType);
   void ParseStringLiteralExpression();
   
   void ParseInitializer();   // C99 6.7.8

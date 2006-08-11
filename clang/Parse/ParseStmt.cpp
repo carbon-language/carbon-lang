@@ -303,7 +303,8 @@ void Parser::ParseIfStatement() {
   }
   
   // Parse the condition.
-  ParseParenExpression();
+  ParenParseOption ParenExprType = SimpleExpr;
+  ParseParenExpression(ParenExprType);
   
   // Read the if condition.
   ParseStatement();
@@ -329,7 +330,8 @@ void Parser::ParseSwitchStatement() {
   }
   
   // Parse the condition.
-  ParseParenExpression();
+  ParenParseOption ParenExprType = SimpleExpr;
+  ParseParenExpression(ParenExprType);
   
   // Read the body statement.
   ParseStatement();
@@ -349,7 +351,8 @@ void Parser::ParseWhileStatement() {
   }
   
   // Parse the condition.
-  ParseParenExpression();
+  ParenParseOption ParenExprType = SimpleExpr;
+  ParseParenExpression(ParenExprType);
   
   // Read the body statement.
   ParseStatement();
@@ -382,7 +385,8 @@ void Parser::ParseDoStatement() {
   }
   
   // Parse the condition.
-  ParseParenExpression();
+  ParenParseOption ParenExprType = SimpleExpr;
+  ParseParenExpression(ParenExprType);
 }
 
 /// ParseForStatement
