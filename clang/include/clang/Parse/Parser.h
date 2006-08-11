@@ -50,7 +50,15 @@ public:
   
   // Parsing methods.
   void ParseTranslationUnit();
-  ExprTy ParseExpression();
+  
+  struct ExprResult {
+    ExprTy Val;
+    bool isInvalid;
+    
+    ExprResult(bool Invalid = false) : isInvalid(Invalid) {}
+  };
+  
+  ExprResult ParseExpression();
   
 
   // Diagnostics.
@@ -169,11 +177,11 @@ private:
 
   //===--------------------------------------------------------------------===//
   // C99 6.5: Expressions.
-  //ExprTy ParseExpression();  // Above.
-  void ParseAssignmentExpression();  // Expr that doesn't include commas.
+  //ExprResult ParseExpression();  // Above.
+  ExprResult ParseAssignmentExpression();  // Expr that doesn't include commas.
 
-  void ParseCastExpression(bool isUnaryExpression);
-  void ParseSizeofAlignofExpression();
+  ExprResult ParseCastExpression(bool isUnaryExpression);
+  ExprResult ParseSizeofAlignofExpression();
   
   /// ParenParseOption - Control what ParseParenExpression will parse.
   enum ParenParseOption {
@@ -182,10 +190,10 @@ private:
     CompoundLiteral, // Also allow '(' type-name ')' '{' ... '}'
     CastExpr         // Also allow '(' type-name ')' <anything>
   };
-  void ParseParenExpression(ParenParseOption &ExprType);
-  void ParseStringLiteralExpression();
+  ExprResult ParseParenExpression(ParenParseOption &ExprType);
+  ExprResult ParseStringLiteralExpression();
   
-  void ParseInitializer();   // C99 6.7.8
+  ExprResult ParseInitializer();   // C99 6.7.8
   
   //===--------------------------------------------------------------------===//
   // C99 6.8: Statements and Blocks.

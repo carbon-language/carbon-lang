@@ -91,7 +91,13 @@ ParseNextStatement:
       Diag(Tok, diag::err_expected_statement);
     } else {
       // expression[opt] ';'
-      ParseExpression();
+      ExprResult Res = ParseExpression();
+      if (Res.isInvalid) {
+        // If the expression is invalid, skip ahead to the next semicolon.  Not
+        // doing this opens us up to the possibility of infinite loops if
+        // ParseExpression does not consume any tokens.
+        SkipUntil(tok::semi);
+      }
     }
     return;
     
@@ -407,6 +413,8 @@ void Parser::ParseForStatement() {
   SourceLocation LParenLoc = Tok.getLocation();
   ConsumeParen();
   
+  ExprResult Value;
+  
   // Parse the first part of the for specifier.
   if (Tok.getKind() == tok::semi) {  // for (;
     // no first part, eat the ';'.
@@ -417,12 +425,12 @@ void Parser::ParseForStatement() {
       Diag(Tok, diag::ext_c99_variable_decl_in_for_loop);
     ParseDeclaration(Declarator::ForContext);
   } else {
-    ParseExpression();
+    Value = ParseExpression();
   
     if (Tok.getKind() == tok::semi) {
       ConsumeToken();
     } else {
-      Diag(Tok, diag::err_expected_semi_for);
+      if (!Value.isInvalid) Diag(Tok, diag::err_expected_semi_for);
       SkipUntil(tok::semi);
     }
   }
@@ -430,22 +438,24 @@ void Parser::ParseForStatement() {
   // Parse the second part of the for specifier.
   if (Tok.getKind() == tok::semi) {  // for (...;;
     // no second part.
+    Value = ExprResult();
   } else {
-    ParseExpression();
+    Value = ParseExpression();
   }
   
   if (Tok.getKind() == tok::semi) {
     ConsumeToken();
   } else {
-    Diag(Tok, diag::err_expected_semi_for);
+    if (!Value.isInvalid) Diag(Tok, diag::err_expected_semi_for);
     SkipUntil(tok::semi);
   }
   
   // Parse the third part of the for specifier.
   if (Tok.getKind() == tok::r_paren) {  // for (...;...;)
     // no third part.
+    Value = ExprResult();
   } else {
-    ParseExpression();
+    Value = ParseExpression();
   }
   
   // Match the ')'.
