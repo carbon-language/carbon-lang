@@ -69,31 +69,42 @@ if test -d "$TOPDIR" ; then
       -path '*/.libs/*' \
     \) -prune  -o \( \
       \( \
-         -name '*.cpp' -o \
-         -name '*.h' -o \
-         -name '*.def' -o \
+         -name '*.ac' -o \
+         -name '*.b' -o \
          -name '*.c' -o \
-         -name '*.l' -o \
-         -name '*.y' -o \
-         -name '*.td' -o \
-         -name '*.py' -o \
-         -name '*.pl' -o \
-         -name '*.sh' -o \
-         -name '*.lst' -o \
-         -name '*.pod' -o \
-         -name '*.html' -o \
-         -name '*.css' -o \
-         -name '*.cfg' -o \
          -name '*.cc' -o \
+         -name '*.cfg' -o \
+         -name '*.cpp' -o \
+         -name '*.css' -o \
+         -name '*.def' -o \
+         -name '*.el' -o \
+         -name '*.exp' -o \
+         -name '*.footer' -o \
+         -name '*.gnuplot' -o \
+         -name '*.h' -o \
+         -name '*.header' -o \
+         -name '*.html' -o \
+         -name '*.in' -o \
+         -name '*.inc' -o \
+         -name '*.intro' -o \
+         -name '*.l' -o \
+         -name '*.ll' -o \
+         -name '*.llx' -o \
+         -name '*.lst' -o \
+         -name '*.m4' -o \
+         -name '*.pl' -o \
+         -name '*.pod' -o \
+         -name '*.py' -o \
+         -name '*.sh' -o \
+         -name '*.schema' -o \
+         -name '*.tcl' -o \
+         -name '*.td' -o \
+         -name '*.tr' -o \
          -name '*.txt' -o \
          -name '*.TXT' -o \
-         -name '*.el' -o \
-         -name '*.m4' -o \
-         -name '*.in' -o \
-         -name '*.ac' -o \
          -name '*.tr' -o \
          -name '*.vim' -o \
-         -name '*.gnuplot' -o \
+         -name '*.y' -o \
          -name 'Make*' -o \
          -path 'test/*.ll' -o \
          -path 'runtime/*.ll' \
@@ -101,7 +112,19 @@ if test -d "$TOPDIR" ; then
       \! -name '.*' \
       \! -name '*~' \
       \! -name '#*' \
-      \! -name 'Lexer.cpp' \
+      \! -name '*.cvs' \
+      \! -name 'configure' \
+      \! -name 'slow.ll' \
+      \! -name '*libtool*' \
+      \! -name 'ltdl*' \
+      \! -name 'ltdl.m4' \
+      \! -name 'ltmain.m4' \
+      \! -name 'ltmain.sh' \
+      \! -name 'aclocal.m4' \
+      \! -name 'acinclude.m4' \
+      \! -name '*VerifierIsReallySlow.llx' \
+      \! -name '*LoopSimplifyCrash.ll' \
+      \! -name '*AST-Remove.ll' \
       \! -name 'llvmAsmParser.cpp' \
       \! -name 'llvmAsmParser.h' \
       \! -name 'FileLexer.cpp' \
@@ -116,4 +139,3 @@ if test -d "$TOPDIR" ; then
 else
   echo "Can't find LLVM top directory in $TOPDIR"
 fi
-
