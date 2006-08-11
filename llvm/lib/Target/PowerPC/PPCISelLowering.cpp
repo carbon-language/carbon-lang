@@ -754,7 +754,7 @@ static SDOperand LowerFORMAL_ARGUMENTS(SDOperand Op, SelectionDAG &DAG,
   MachineFunction &MF = DAG.getMachineFunction();
   MachineFrameInfo *MFI = MF.getFrameInfo();
   SSARegMap *RegMap = MF.getSSARegMap();
-  std::vector<SDOperand> ArgValues;
+  SmallVector<SDOperand, 8> ArgValues;
   SDOperand Root = Op.getOperand(0);
   
   unsigned ArgOffset = 24;
@@ -916,7 +916,7 @@ static SDOperand LowerFORMAL_ARGUMENTS(SDOperand Op, SelectionDAG &DAG,
   // Return the new list of results.
   std::vector<MVT::ValueType> RetVT(Op.Val->value_begin(),
                                     Op.Val->value_end());
-  return DAG.getNode(ISD::MERGE_VALUES, RetVT, ArgValues);
+  return DAG.getNode(ISD::MERGE_VALUES, RetVT, &ArgValues[0], ArgValues.size());
 }
 
 /// isCallCompatibleAddress - Return the immediate to use if the specified
@@ -1111,7 +1111,7 @@ static SDOperand LowerCALL(SDOperand Op, SelectionDAG &DAG) {
   NodeTys.push_back(MVT::Other);   // Returns a chain
   NodeTys.push_back(MVT::Flag);    // Returns a flag for retval copy to use.
 
-  std::vector<SDOperand> Ops;
+  SmallVector<SDOperand, 8> Ops;
   unsigned CallOpc = PPCISD::CALL;
   
   // If the callee is a GlobalAddress/ExternalSymbol node (quite common, every
@@ -1127,12 +1127,8 @@ static SDOperand LowerCALL(SDOperand Op, SelectionDAG &DAG) {
   else {
     // Otherwise, this is an indirect call.  We have to use a MTCTR/BCTRL pair
     // to do the call, we can't use PPCISD::CALL.
-    Ops.push_back(Chain);
-    Ops.push_back(Callee);
-    
-    if (InFlag.Val)
-      Ops.push_back(InFlag);
-    Chain = DAG.getNode(PPCISD::MTCTR, NodeTys, Ops);
+    SDOperand MTCTROps[] = {Chain, Callee, InFlag};
+    Chain = DAG.getNode(PPCISD::MTCTR, NodeTys, MTCTROps, 2+(InFlag.Val!=0));
     InFlag = Chain.getValue(1);
     
     // Copy the callee address into R12 on darwin.
@@ -1142,7 +1138,6 @@ static SDOperand LowerCALL(SDOperand Op, SelectionDAG &DAG) {
     NodeTys.clear();
     NodeTys.push_back(MVT::Other);
     NodeTys.push_back(MVT::Flag);
-    Ops.clear();
     Ops.push_back(Chain);
     CallOpc = PPCISD::BCTRL;
     Callee.Val = 0;
@@ -1162,10 +1157,11 @@ static SDOperand LowerCALL(SDOperand Op, SelectionDAG &DAG) {
   
   if (InFlag.Val)
     Ops.push_back(InFlag);
-  Chain = DAG.getNode(CallOpc, NodeTys, Ops);
+  Chain = DAG.getNode(CallOpc, NodeTys, &Ops[0], Ops.size());
   InFlag = Chain.getValue(1);
 
-  std::vector<SDOperand> ResultVals;
+  SDOperand ResultVals[3];
+  unsigned NumResults = 0;
   NodeTys.clear();
   
   // If the call has results, copy the values out of the ret val registers.
@@ -1175,27 +1171,31 @@ static SDOperand LowerCALL(SDOperand Op, SelectionDAG &DAG) {
   case MVT::i32:
     if (Op.Val->getValueType(1) == MVT::i32) {
       Chain = DAG.getCopyFromReg(Chain, PPC::R4, MVT::i32, InFlag).getValue(1);
-      ResultVals.push_back(Chain.getValue(0));
+      ResultVals[0] = Chain.getValue(0);
       Chain = DAG.getCopyFromReg(Chain, PPC::R3, MVT::i32,
                                  Chain.getValue(2)).getValue(1);
-      ResultVals.push_back(Chain.getValue(0));
+      ResultVals[1] = Chain.getValue(0);
+      NumResults = 2;
       NodeTys.push_back(MVT::i32);
     } else {
       Chain = DAG.getCopyFromReg(Chain, PPC::R3, MVT::i32, InFlag).getValue(1);
-      ResultVals.push_back(Chain.getValue(0));
+      ResultVals[0] = Chain.getValue(0);
+      NumResults = 1;
     }
     NodeTys.push_back(MVT::i32);
     break;
   case MVT::i64:
     Chain = DAG.getCopyFromReg(Chain, PPC::X3, MVT::i64, InFlag).getValue(1);
-    ResultVals.push_back(Chain.getValue(0));
+    ResultVals[0] = Chain.getValue(0);
+    NumResults = 1;
     NodeTys.push_back(MVT::i64);
     break;
   case MVT::f32:
   case MVT::f64:
     Chain = DAG.getCopyFromReg(Chain, PPC::F1, Op.Val->getValueType(0),
                                InFlag).getValue(1);
-    ResultVals.push_back(Chain.getValue(0));
+    ResultVals[0] = Chain.getValue(0);
+    NumResults = 1;
     NodeTys.push_back(Op.Val->getValueType(0));
     break;
   case MVT::v4f32:
@@ -1204,7 +1204,8 @@ static SDOperand LowerCALL(SDOperand Op, SelectionDAG &DAG) {
   case MVT::v16i8:
     Chain = DAG.getCopyFromReg(Chain, PPC::V2, Op.Val->getValueType(0),
                                    InFlag).getValue(1);
-    ResultVals.push_back(Chain.getValue(0));
+    ResultVals[0] = Chain.getValue(0);
+    NumResults = 1;
     NodeTys.push_back(Op.Val->getValueType(0));
     break;
   }
@@ -1214,12 +1215,13 @@ static SDOperand LowerCALL(SDOperand Op, SelectionDAG &DAG) {
   NodeTys.push_back(MVT::Other);
   
   // If the function returns void, just return the chain.
-  if (ResultVals.empty())
+  if (NumResults == 1)
     return Chain;
   
   // Otherwise, merge everything together with a MERGE_VALUES node.
-  ResultVals.push_back(Chain);
-  SDOperand Res = DAG.getNode(ISD::MERGE_VALUES, NodeTys, ResultVals);
+  ResultVals[NumResults++] = Chain;
+  SDOperand Res = DAG.getNode(ISD::MERGE_VALUES, NodeTys,
+                              ResultVals, NumResults);
   return Res.getValue(Op.ResNo);
 }
 
@@ -2069,14 +2071,15 @@ static SDOperand LowerINTRINSIC_WO_CHAIN(SDOperand Op, SelectionDAG &DAG) {
   }
   
   // Create the PPCISD altivec 'dot' comparison node.
-  std::vector<SDOperand> Ops;
+  SDOperand Ops[] = {
+    Op.getOperand(2),  // LHS
+    Op.getOperand(3),  // RHS
+    DAG.getConstant(CompareOpc, MVT::i32)
+  };
   std::vector<MVT::ValueType> VTs;
-  Ops.push_back(Op.getOperand(2));  // LHS
-  Ops.push_back(Op.getOperand(3));  // RHS
-  Ops.push_back(DAG.getConstant(CompareOpc, MVT::i32));
   VTs.push_back(Op.getOperand(2).getValueType());
   VTs.push_back(MVT::Flag);
-  SDOperand CompNode = DAG.getNode(PPCISD::VCMPo, VTs, Ops);
+  SDOperand CompNode = DAG.getNode(PPCISD::VCMPo, VTs, Ops, 3);
   
   // Now that we have the comparison, emit a copy from the CR to a GPR.
   // This is flagged to the above dot comparison.
@@ -2376,12 +2379,13 @@ SDOperand PPCTargetLowering::PerformDAGCombine(SDNode *N,
       std::vector<MVT::ValueType> VTs;
       VTs.push_back(MVT::i32);
       VTs.push_back(MVT::Other);
-      std::vector<SDOperand> Ops;
-      Ops.push_back(Load.getOperand(0));   // Chain
-      Ops.push_back(Load.getOperand(1));   // Ptr
-      Ops.push_back(Load.getOperand(2));   // SrcValue
-      Ops.push_back(DAG.getValueType(N->getValueType(0))); // VT
-      SDOperand BSLoad = DAG.getNode(PPCISD::LBRX, VTs, Ops);
+      SDOperand Ops[] = {
+        Load.getOperand(0),   // Chain
+        Load.getOperand(1),   // Ptr
+        Load.getOperand(2),   // SrcValue
+        DAG.getValueType(N->getValueType(0)) // VT
+      };
+      SDOperand BSLoad = DAG.getNode(PPCISD::LBRX, VTs, Ops, 4);
 
       // If this is an i16 load, insert the truncate.  
       SDOperand ResVal = BSLoad;
@@ -2481,14 +2485,15 @@ SDOperand PPCTargetLowering::PerformDAGCombine(SDNode *N,
       bool BranchOnWhenPredTrue = (CC == ISD::SETEQ) ^ (Val == 0);
       
       // Create the PPCISD altivec 'dot' comparison node.
-      std::vector<SDOperand> Ops;
       std::vector<MVT::ValueType> VTs;
-      Ops.push_back(LHS.getOperand(2));  // LHS of compare
-      Ops.push_back(LHS.getOperand(3));  // RHS of compare
-      Ops.push_back(DAG.getConstant(CompareOpc, MVT::i32));
+      SDOperand Ops[] = {
+        LHS.getOperand(2),  // LHS of compare
+        LHS.getOperand(3),  // RHS of compare
+        DAG.getConstant(CompareOpc, MVT::i32)
+      };
       VTs.push_back(LHS.getOperand(2).getValueType());
       VTs.push_back(MVT::Flag);
-      SDOperand CompNode = DAG.getNode(PPCISD::VCMPo, VTs, Ops);
+      SDOperand CompNode = DAG.getNode(PPCISD::VCMPo, VTs, Ops, 3);
       
       // Unpack the result based on how the target uses it.
       unsigned CompOpc;
