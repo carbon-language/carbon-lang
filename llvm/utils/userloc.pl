@@ -16,6 +16,8 @@
 #               specified directory is examined
 #           -tag=tag
 #               Use "tag" to select the revision (as per cvs -r option)
+#           -filedetails
+#               Report details about lines of code in each file for each user
 #           -html
 #               Generate HTML output instead of text output
 
@@ -26,6 +28,7 @@ my $tag = "";
 my $recurse = 0;
 my $html = 0;
 my $debug = 0;
+my $filedetails = "";
 while ( substr($ARGV[0],0,1) eq '-' )
 {
   if ($ARGV[0] eq "-recurse") {
@@ -33,6 +36,8 @@ while ( substr($ARGV[0],0,1) eq '-' )
   } elsif ($ARGV[0] =~ /-tag=.*/) {
     $tag = $ARGV[0];
     $tag =~ s#-tag=(.*)#$1#;
+  } elsif ($ARGV[0] =~ /-filedetails/) {
+    $filedetails = 1;
   } elsif ($ARGV[0] eq "-html") {
     $html = 1;
   } elsif ($ARGV[0] eq "-debug") {
@@ -47,7 +52,7 @@ die "Usage userloc.pl [-recurse|-tag=tag|-html] <directories>..."
   if ($#ARGV < 0);
 
 my %Stats;
-my %StatsDetails;
+my %FileStats;
 
 sub ValidateFile
 {
@@ -96,19 +101,26 @@ sub ScanDir
   my $Dir = $_[0];
   my $files = GetCVSFiles($Dir);
 
-  open (DATA,"$annotate $files 2>/dev/null |")
+  open (DATA,"$annotate $files 2>&1 |")
     || die "Can't read cvs annotation data";
 
+  my $curfile = "";
   while ( defined($line = <DATA>) )
   {
-    if ($line =~ /^[0-9.]*[ \t]*\([^)]*\):/)
-    {
-      chomp($line);
-      $line =~ s#^[0-9.]*[ \t]*\(([a-zA-Z0-9_.-]*) [^)]*\):.*#$1#;
-      $Stats{$line}++;
+    chomp($line);
+    if ($line =~ '^Annotations for.*') {
+      $curfile = $line;
+      $curfile =~ s#^Annotations for ([[:print:]]*)#$1#;
+    } elsif ($line =~ /^[0-9.]*[ \t]*\([^)]*\):/) {
+      $uname = $line;
+      $uname =~ s#^[0-9.]*[ \t]*\(([a-zA-Z0-9_.-]*) [^)]*\):.*#$1#;
+      $Stats{$uname}++;
+      if ($filedetails) {
+        $FileStats{$uname} = {} unless exists $FileStats{$uname};
+        ${$FileStats{$uname}}{$curfile}++;
+      }
     }
   }
-
   close DATA;
 }
 
@@ -135,56 +147,61 @@ sub ValidateDirectory
   return 1;
 }
 
-my $RowCount = 0;
 sub printStats
 {
   my $dir = $_[0];
   my $hash = $_[1];
-  my $user;
+  my $usr;
   my $total = 0;
 
-  if ($RowCount % 10 == 0)
-  {
-    if ($html) {
-      print " <tr><th style=\"text-align:left\">Directory</th>\n";
-      foreach $user (sort keys %Stats)
-      {
-        print "<th style=\"text-align:right\">",$user,"</th>\n";
-      }
-      print "</tr>\n";
-    }
+  foreach $usr (keys %Stats) { $total += $Stats{$usr}; }
+
+  if ($html) { 
+    print "<table>";
+    print " <tr><th style=\"text-align:right\">LOC</th>\n";
+    print " <th style=\"text-align:right\">\%LOC</th>\n";
+    print " <th style=\"text-align:left\">User</th>\n";
+    print "</tr>\n";
   }
 
-  $RowCount++;
-
-  if ($html)
-    { print "<tr><td style=\"text-align:left\">",$dir,"</td>"; }
-  else
-    { print $dir,"\n"; }
-
-  foreach $user (keys %{$hash}) { $total += $hash->{$user}; }
-
-  foreach $user ( sort keys %Stats )
+  foreach $usr ( sort keys %Stats )
   {
-    my $v = $hash->{$user};
+    my $v = $Stats{$usr};
     if (defined($v))
     {
-      if ($html)
-      {
-        printf "<td style=\"text-align:right\">%d<br/>(%2.1f%%)</td>", $v,
-          (100.0/$total)*$v;
+      if ($html) {
+        printf "<tr><td style=\"text-align:right\">%d</td><td style=\"text-align:right\">(%4.1f%%)</td><td style=\"text-align:left\">%s</td></tr>", $v, (100.0/$total)*$v,$usr;
+      } else {
+        printf "%8d  (%4.1f%%)  %s\n", $v, (100.0/$total)*$v, $usr;
       }
-      else
-      {
-        printf "%8d (%4.1f%%): %s\n", $v, (100.0/$total)*$v, $user;
-      }
-    }
-    elsif ($html)
-    {
-      print "<td style=\"text-align:right\">-&nbsp;</td>";
     }
   }
-  print "</tr>\n" if ($html);
+  print "</table>\n" if ($html);
+
+  if ($filedetails) {
+    foreach $user (sort keys %FileStats) {
+      my $total = 0;
+      foreach $file (sort keys %{$FileStats{$user}}) { 
+        $total += ${$FileStats{$user}}{$file}
+      }
+      if ($html) {
+        print "<table><tr><th style=\"text-align:left\" colspan=\"3\">$user</th></tr>\n";
+      } else {
+        print $user,":\n";
+      }
+      foreach $file (sort keys %{$FileStats{$user}}) {
+        my $v = ${$FileStats{$user}}{$file};
+        if ($html) { 
+          printf "<tr><td style=\"text-align:right\">&nbsp;&nbsp;%d</td><td
+          style=\"text-align:right\">&nbsp;%4.1f%%</td><td
+          style=\"text-align:left\">%s</td></tr>",$v, (100.0/$total)*$v,$file;
+        } else {
+          printf "%8d  (%4.1f%%)  %s\n", $v, (100.0/$total)*$v, $file;
+        }
+      }
+      if ($html) { print "</table>\n"; }
+    }
+  }
 }
 
 my @ALLDIRS = @ARGV;
@@ -223,16 +240,10 @@ for $Dir (@ALLDIRS)
   }
 }
 
-if ($html)
-{
-  print "<table>\n";
-}
-
-printStats("Total",\%Stats);
+printStats;
 
 if ($html) 
 {
-  print "</table>";
   if (scalar @ignored_dirs > 0) {
     print "<p>The following directories were skipped:</p>\n";
     print "<ol>\n";
