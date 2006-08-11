@@ -341,15 +341,6 @@ void SelectionDAG::RemoveNodeFromCSEMaps(SDNode *N) {
   bool Erased = false;
   switch (N->getOpcode()) {
   case ISD::HANDLENODE: return;  // noop.
-  case ISD::Constant:
-    Erased = Constants.erase(std::make_pair(cast<ConstantSDNode>(N)->getValue(),
-                                            N->getValueType(0)));
-    break;
-  case ISD::TargetConstant:
-    Erased = TargetConstants.erase(std::make_pair(
-                                    cast<ConstantSDNode>(N)->getValue(),
-                                                  N->getValueType(0)));
-    break;
   case ISD::ConstantFP: {
     uint64_t V = DoubleToBits(cast<ConstantFPSDNode>(N)->getValue());
     Erased = ConstantFPs.erase(std::make_pair(V, N->getValueType(0)));
@@ -369,18 +360,6 @@ void SelectionDAG::RemoveNodeFromCSEMaps(SDNode *N) {
     Erased = CondCodeNodes[cast<CondCodeSDNode>(N)->get()] != 0;
     CondCodeNodes[cast<CondCodeSDNode>(N)->get()] = 0;
     break;
-  case ISD::GlobalAddress: {
-    GlobalAddressSDNode *GN = cast<GlobalAddressSDNode>(N);
-    Erased = GlobalValues.erase(std::make_pair(GN->getGlobal(),
-                                               GN->getOffset()));
-    break;
-  }
-  case ISD::TargetGlobalAddress: {
-    GlobalAddressSDNode *GN = cast<GlobalAddressSDNode>(N);
-    Erased =TargetGlobalValues.erase(std::make_pair(GN->getGlobal(),
-                                                    GN->getOffset()));
-    break;
-  }
   case ISD::FrameIndex:
     Erased = FrameIndices.erase(cast<FrameIndexSDNode>(N)->getIndex());
     break;
@@ -406,9 +385,6 @@ void SelectionDAG::RemoveNodeFromCSEMaps(SDNode *N) {
                         std::make_pair(cast<ConstantPoolSDNode>(N)->getOffset(),
                                  cast<ConstantPoolSDNode>(N)->getAlignment())));
     break;
-  case ISD::BasicBlock:
-    Erased = BBNodes.erase(cast<BasicBlockSDNode>(N)->getBasicBlock());
-    break;
   case ISD::ExternalSymbol:
     Erased = ExternalSymbols.erase(cast<ExternalSymbolSDNode>(N)->getSymbol());
     break;
@@ -420,15 +396,6 @@ void SelectionDAG::RemoveNodeFromCSEMaps(SDNode *N) {
     Erased = ValueTypeNodes[cast<VTSDNode>(N)->getVT()] != 0;
     ValueTypeNodes[cast<VTSDNode>(N)->getVT()] = 0;
     break;
-  case ISD::Register:
-    Erased = RegNodes.erase(std::make_pair(cast<RegisterSDNode>(N)->getReg(),
-                                           N->getValueType(0)));
-    break;
-  case ISD::SRCVALUE: {
-    SrcValueSDNode *SVN = cast<SrcValueSDNode>(N);
-    Erased =ValueNodes.erase(std::make_pair(SVN->getValue(), SVN->getOffset()));
-    break;
-  }    
   default:
     // Remove it from the CSE Map.
     Erased = CSEMap.RemoveNode(N);
@@ -551,21 +518,6 @@ SDOperand SelectionDAG::getZeroExtendInReg(SDOperand Op, MVT::ValueType VT) {
                  getConstant(Imm, Op.getValueType()));
 }
 
-SDOperand SelectionDAG::getConstant(uint64_t Val, MVT::ValueType VT) {
-  assert(MVT::isInteger(VT) && "Cannot create FP integer constant!");
-  assert(!MVT::isVector(VT) && "Cannot create Vector ConstantSDNodes!");
-  
-  // Mask out any bits that are not valid for this constant.
-  if (VT != MVT::i64)
-    Val &= ((uint64_t)1 << MVT::getSizeInBits(VT)) - 1;
-
-  SDNode *&N = Constants[std::make_pair(Val, VT)];
-  if (N) return SDOperand(N, 0);
-  N = new ConstantSDNode(false, Val, VT);
-  AllNodes.push_back(N);
-  return SDOperand(N, 0);
-}
-
 SDOperand SelectionDAG::getString(const std::string &Val) {
   StringSDNode *&N = StringNodes[Val];
   if (!N) {
@@ -575,18 +527,25 @@ SDOperand SelectionDAG::getString(const std::string &Val) {
   return SDOperand(N, 0);
 }
 
-SDOperand SelectionDAG::getTargetConstant(uint64_t Val, MVT::ValueType VT) {
+SDOperand SelectionDAG::getConstant(uint64_t Val, MVT::ValueType VT, bool isT) {
   assert(MVT::isInteger(VT) && "Cannot create FP integer constant!");
-  // Mask out any bits that are not valid for this constant.
-  if (VT != MVT::i64)
-    Val &= ((uint64_t)1 << MVT::getSizeInBits(VT)) - 1;
+  assert(!MVT::isVector(VT) && "Cannot create Vector ConstantSDNodes!");
   
-  SDNode *&N = TargetConstants[std::make_pair(Val, VT)];
-  if (N) return SDOperand(N, 0);
-  N = new ConstantSDNode(true, Val, VT);
+  // Mask out any bits that are not valid for this constant.
+  Val &= MVT::getIntVTBitMask(VT);
+
+  unsigned Opc = isT ? ISD::TargetConstant : ISD::Constant;
+  SelectionDAGCSEMap::NodeID ID(Opc, getNodeValueTypes(VT));
+  ID.AddInteger(Val);
+  void *IP = 0;
+  if (SDNode *E = CSEMap.FindNodeOrInsertPos(ID, IP))
+    return SDOperand(E, 0);
+  SDNode *N = new ConstantSDNode(isT, Val, VT);
+  CSEMap.InsertNode(N, IP);
   AllNodes.push_back(N);
   return SDOperand(N, 0);
 }
+
 
 SDOperand SelectionDAG::getConstantFP(double Val, MVT::ValueType VT) {
   assert(MVT::isFloatingPoint(VT) && "Cannot create integer FP constant!");
@@ -619,19 +578,17 @@ SDOperand SelectionDAG::getTargetConstantFP(double Val, MVT::ValueType VT) {
 }
 
 SDOperand SelectionDAG::getGlobalAddress(const GlobalValue *GV,
-                                         MVT::ValueType VT, int offset) {
-  SDNode *&N = GlobalValues[std::make_pair(GV, offset)];
-  if (N) return SDOperand(N, 0);
-  N = new GlobalAddressSDNode(false, GV, VT, offset);
-  AllNodes.push_back(N);
-  return SDOperand(N, 0);
-}
-
-SDOperand SelectionDAG::getTargetGlobalAddress(const GlobalValue *GV,
-                                               MVT::ValueType VT, int offset) {
-  SDNode *&N = TargetGlobalValues[std::make_pair(GV, offset)];
-  if (N) return SDOperand(N, 0);
-  N = new GlobalAddressSDNode(true, GV, VT, offset);
+                                         MVT::ValueType VT, int Offset,
+                                         bool isTargetGA) {
+  unsigned Opc = isTargetGA ? ISD::TargetGlobalAddress : ISD::GlobalAddress;
+  SelectionDAGCSEMap::NodeID ID(Opc, getNodeValueTypes(VT));
+  ID.AddPointer(GV);
+  ID.AddInteger(Offset);
+  void *IP = 0;
+  if (SDNode *E = CSEMap.FindNodeOrInsertPos(ID, IP))
+   return SDOperand(E, 0);
+  SDNode *N = new GlobalAddressSDNode(isTargetGA, GV, VT, Offset);
+  CSEMap.InsertNode(N, IP);
   AllNodes.push_back(N);
   return SDOperand(N, 0);
 }
@@ -689,9 +646,13 @@ SDOperand SelectionDAG::getTargetConstantPool(Constant *C, MVT::ValueType VT,
 }
 
 SDOperand SelectionDAG::getBasicBlock(MachineBasicBlock *MBB) {
-  SDNode *&N = BBNodes[MBB];
-  if (N) return SDOperand(N, 0);
-  N = new BasicBlockSDNode(MBB);
+  SelectionDAGCSEMap::NodeID ID(ISD::BasicBlock, getNodeValueTypes(MVT::Other));
+  ID.AddPointer(MBB);
+  void *IP = 0;
+  if (SDNode *E = CSEMap.FindNodeOrInsertPos(ID, IP))
+    return SDOperand(E, 0);
+  SDNode *N = new BasicBlockSDNode(MBB);
+  CSEMap.InsertNode(N, IP);
   AllNodes.push_back(N);
   return SDOperand(N, 0);
 }
@@ -736,12 +697,31 @@ SDOperand SelectionDAG::getCondCode(ISD::CondCode Cond) {
 }
 
 SDOperand SelectionDAG::getRegister(unsigned RegNo, MVT::ValueType VT) {
-  RegisterSDNode *&Reg = RegNodes[std::make_pair(RegNo, VT)];
-  if (!Reg) {
-    Reg = new RegisterSDNode(RegNo, VT);
-    AllNodes.push_back(Reg);
-  }
-  return SDOperand(Reg, 0);
+  SelectionDAGCSEMap::NodeID ID(ISD::Register, getNodeValueTypes(VT));
+  ID.AddInteger(RegNo);
+  void *IP = 0;
+  if (SDNode *E = CSEMap.FindNodeOrInsertPos(ID, IP))
+    return SDOperand(E, 0);
+  SDNode *N = new RegisterSDNode(RegNo, VT);
+  CSEMap.InsertNode(N, IP);
+  AllNodes.push_back(N);
+  return SDOperand(N, 0);
+}
+
+SDOperand SelectionDAG::getSrcValue(const Value *V, int Offset) {
+  assert((!V || isa<PointerType>(V->getType())) &&
+         "SrcValue is not a pointer?");
+
+  SelectionDAGCSEMap::NodeID ID(ISD::SRCVALUE, getNodeValueTypes(MVT::Other));
+  ID.AddPointer(V);
+  ID.AddInteger(Offset);
+  void *IP = 0;
+  if (SDNode *E = CSEMap.FindNodeOrInsertPos(ID, IP))
+    return SDOperand(E, 0);
+  SDNode *N = new SrcValueSDNode(V, Offset);
+  CSEMap.InsertNode(N, IP);
+  AllNodes.push_back(N);
+  return SDOperand(N, 0);
 }
 
 SDOperand SelectionDAG::SimplifySetCC(MVT::ValueType VT, SDOperand N1,
@@ -1538,17 +1518,6 @@ SDOperand SelectionDAG::getExtLoad(unsigned Opcode, MVT::ValueType VT,
   VTs.reserve(2);
   VTs.push_back(VT); VTs.push_back(MVT::Other);  // Add token chain.
   return getNode(Opcode, VTs, Ops, 4);
-}
-
-SDOperand SelectionDAG::getSrcValue(const Value *V, int Offset) {
-  assert((!V || isa<PointerType>(V->getType())) &&
-         "SrcValue is not a pointer?");
-  SDNode *&N = ValueNodes[std::make_pair(V, Offset)];
-  if (N) return SDOperand(N, 0);
-
-  N = new SrcValueSDNode(V, Offset);
-  AllNodes.push_back(N);
-  return SDOperand(N, 0);
 }
 
 SDOperand SelectionDAG::getVAArg(MVT::ValueType VT,

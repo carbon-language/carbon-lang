@@ -23,6 +23,32 @@ SelectionDAGCSEMap::NodeID::NodeID(SDNode *N) {
   SetValueTypes(N->value_begin());
   // Add the operand info.
   SetOperands(N->op_begin(), N->getNumOperands());
+
+  // Handle SDNode leafs with special info.
+  if (N->getNumOperands() == 0) {
+    switch (N->getOpcode()) {
+    default: break;  // Normal nodes don't need extra info.
+    case ISD::TargetConstant:
+    case ISD::Constant:
+      AddInteger(cast<ConstantSDNode>(N)->getValue());
+      break;
+    case ISD::TargetGlobalAddress:
+    case ISD::GlobalAddress:
+      AddPointer(cast<GlobalAddressSDNode>(N)->getGlobal());
+      AddInteger(cast<GlobalAddressSDNode>(N)->getOffset());
+      break;
+    case ISD::BasicBlock:
+      AddPointer(cast<BasicBlockSDNode>(N)->getBasicBlock());
+      break;
+    case ISD::Register:
+      AddInteger(cast<RegisterSDNode>(N)->getReg());
+      break;
+    case ISD::SRCVALUE:
+      AddPointer(cast<SrcValueSDNode>(N)->getValue());
+      AddInteger(cast<SrcValueSDNode>(N)->getOffset());
+      break;
+    }
+  }
 }
 
 SelectionDAGCSEMap::NodeID::NodeID(unsigned short ID, const void *VTList) {
