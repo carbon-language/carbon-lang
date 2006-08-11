@@ -63,7 +63,7 @@ namespace llvm {
     class NodeID {
       /// Use a SmallVector to avoid a heap allocation in the common case.
       ///
-      SmallVector<unsigned char, 256> Bits;
+      SmallVector<unsigned, 32> Bits;
     public:
       NodeID() {}
       NodeID(SDNode *N);
@@ -77,13 +77,13 @@ namespace llvm {
              const SDOperand *OpList, unsigned N);
       
       void SetOpcode(unsigned short ID) {
-        Bits.push_back(ID & 0xFF);
-        Bits.push_back(ID >> 8);
+        Bits.push_back(ID);
       }
       
-      /// getOpcode - If the opcode has been set for this NodeID, return it.
+      /// getOpcode - Return the opcode that has been set for this NodeID.
+      ///
       unsigned getOpcode() const {
-        return Bits[0] + (Bits[1] << 8);
+        return Bits[0];
       }
 
       void SetValueTypes(const void *VTList) { AddPointer(VTList); }
@@ -99,21 +99,14 @@ namespace llvm {
       void AddOperand(SDOperand Op);
       void AddPointer(const void *Ptr);
       void AddInteger(signed I) {
-        Bits.push_back((I >>  0) & 0xFF);
-        Bits.push_back((I >>  8) & 0xFF);
-        Bits.push_back((I >> 16) & 0xFF);
-        Bits.push_back((I >> 24) & 0xFF);
+        Bits.push_back(I);
       }
       void AddInteger(unsigned I) {
-        AddInteger((signed)I);
+        Bits.push_back(I);
       }
       void AddInteger(uint64_t I) {
-        union {
-          uint64_t x;
-          unsigned char A[8];
-        };
-        x = I;
-        Bits.append(A, A+8);
+        Bits.push_back(unsigned(I));
+        Bits.push_back(unsigned(I >> 32));
       }
       
       unsigned ComputeHash() const;

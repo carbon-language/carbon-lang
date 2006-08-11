@@ -105,21 +105,15 @@ void SelectionDAGCSEMap::NodeID::AddPointer(const void *Ptr) {
   // on the host.  It doesn't matter however, because hashing on pointer values
   // in inherently unstable.  Nothing in the SelectionDAG should depend on the
   // ordering of nodes in the CSEMap.
-  union {
-    intptr_t PtrI;
-    unsigned char PtrA[sizeof(intptr_t)];
-  };
-  PtrI = (intptr_t)Ptr;
-  Bits.append(PtrA, PtrA+sizeof(intptr_t));
+  intptr_t PtrI = (intptr_t)Ptr;
+  Bits.push_back(unsigned(PtrI));
+  if (sizeof(intptr_t) > sizeof(unsigned))
+    Bits.push_back(unsigned(uint64_t(PtrI) >> 32));
 }
 
 void SelectionDAGCSEMap::NodeID::AddOperand(SDOperand Op) {
   AddPointer(Op.Val);
-  // 2 bytes of resno might be too small, three should certainly be enough. :)
-  assert(Op.ResNo < (1 << 24) && "ResNo too large for CSE Map to handle!");
-  Bits.push_back((Op.ResNo >>  0) & 0xFF);
-  Bits.push_back((Op.ResNo >>  8) & 0xFF);
-  Bits.push_back((Op.ResNo >> 16) & 0xFF);
+  Bits.push_back(Op.ResNo);
 }
 
 void SelectionDAGCSEMap::NodeID::SetOperands(const SDOperand *Ops, 
@@ -135,13 +129,13 @@ unsigned SelectionDAGCSEMap::NodeID::ComputeHash() const {
   // FIXME: this hash function sucks.
   unsigned Hash = 0;
   for (unsigned i = 0, e = Bits.size(); i != e; ++i)
-    Hash += Bits[i];
+    Hash = Hash+Bits[i];
   return Hash;
 }
 
 bool SelectionDAGCSEMap::NodeID::operator==(const NodeID &RHS) const {
   if (Bits.size() != RHS.Bits.size()) return false;
-  return memcmp(&Bits[0], &RHS.Bits[0], Bits.size()) == 0;
+  return memcmp(&Bits[0], &RHS.Bits[0], Bits.size()*sizeof(Bits[0])) == 0;
 }
 
 
@@ -169,8 +163,8 @@ SDNode *SelectionDAGCSEMap::GetNextPtr(void *NextInBucketPtr) {
 }
 
 void **SelectionDAGCSEMap::GetBucketPtr(void *NextInBucketPtr) {
-  assert(NextInBucketPtr >= Buckets && NextInBucketPtr < Buckets+NumBuckets &&
-         "NextInBucketPtr is not a bucket ptr");
+  //assert(NextInBucketPtr >= Buckets && NextInBucketPtr < Buckets+NumBuckets &&
+  //       "NextInBucketPtr is not a bucket ptr");
   return static_cast<void**>(NextInBucketPtr);
 }
 
