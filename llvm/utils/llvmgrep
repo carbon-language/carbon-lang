@@ -18,8 +18,7 @@
 # details.
 ##===----------------------------------------------------------------------===##
 
-TOPDIR=`pwd | sed -e 's#\(.*/llvm[0-9]*\).*#\1#'`
-echo $TOPDIR
+TOPDIR=`llvm-config --src-root`
 if test -d "$TOPDIR" ; then
   cd $TOPDIR
   case `uname -s` in
