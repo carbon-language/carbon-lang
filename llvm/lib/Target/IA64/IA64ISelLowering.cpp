@@ -469,7 +469,8 @@ IA64TargetLowering::LowerCallTo(SDOperand Chain,
     assert(0 && "this should never happen!\n");
 
   // to make way for a hack:
-  Chain = DAG.getNode(IA64ISD::BRCALL, NodeTys, CallOperands);
+  Chain = DAG.getNode(IA64ISD::BRCALL, NodeTys,
+                      &CallOperands[0], CallOperands.size());
   InFlag = Chain.getValue(1);
 
   // restore the GP, SP and RP after the call  
@@ -578,7 +579,8 @@ LowerOperation(SDOperand Op, SelectionDAG &DAG) {
       NodeTys.push_back(MVT::Flag);
       RetOperands.push_back(AR_PFSVal);
       RetOperands.push_back(AR_PFSVal.getValue(1));
-      return DAG.getNode(IA64ISD::RET_FLAG, NodeTys, RetOperands);
+      return DAG.getNode(IA64ISD::RET_FLAG, NodeTys,
+                         &RetOperands[0], RetOperands.size());
     }
     }
     return SDOperand();
