@@ -111,22 +111,30 @@ public:
   SDOperand getTargetConstant(uint64_t Val, MVT::ValueType VT) {
     return getConstant(Val, VT, true);
   }
-  SDOperand getConstantFP(double Val, MVT::ValueType VT);
-  SDOperand getTargetConstantFP(double Val, MVT::ValueType VT);
+  SDOperand getConstantFP(double Val, MVT::ValueType VT, bool isTarget = false);
+  SDOperand getTargetConstantFP(double Val, MVT::ValueType VT) {
+    return getConstantFP(Val, VT, true);
+  }
   SDOperand getGlobalAddress(const GlobalValue *GV, MVT::ValueType VT,
                              int offset = 0, bool isTargetGA = false);
   SDOperand getTargetGlobalAddress(const GlobalValue *GV, MVT::ValueType VT,
                                    int offset = 0) {
     return getGlobalAddress(GV, VT, offset, true);
   }
-  SDOperand getFrameIndex(int FI, MVT::ValueType VT);
-  SDOperand getTargetFrameIndex(int FI, MVT::ValueType VT);
-  SDOperand getJumpTable(int JTI, MVT::ValueType VT);
-  SDOperand getTargetJumpTable(int JTI, MVT::ValueType VT);
+  SDOperand getFrameIndex(int FI, MVT::ValueType VT, bool isTarget = false);
+  SDOperand getTargetFrameIndex(int FI, MVT::ValueType VT) {
+    return getFrameIndex(FI, VT, true);
+  }
+  SDOperand getJumpTable(int JTI, MVT::ValueType VT, bool isTarget = false);
+  SDOperand getTargetJumpTable(int JTI, MVT::ValueType VT) {
+    return getJumpTable(JTI, VT, true);
+  }
   SDOperand getConstantPool(Constant *C, MVT::ValueType VT,
-                           unsigned Alignment=0,  int offset = 0);
+                            unsigned Align = 0, int Offs = 0, bool isT=false);
   SDOperand getTargetConstantPool(Constant *C, MVT::ValueType VT,
-                                  unsigned Alignment=0, int offset = 0);
+                                  unsigned Align = 0, int Offset = 0) {
+    return getConstantPool(C, VT, Align, Offset, true);
+  }
   SDOperand getBasicBlock(MachineBasicBlock *MBB);
   SDOperand getExternalSymbol(const char *Sym, MVT::ValueType VT);
   SDOperand getTargetExternalSymbol(const char *Sym, MVT::ValueType VT);
@@ -452,14 +460,6 @@ private:
   // Maps to auto-CSE operations.
   std::vector<CondCodeSDNode*> CondCodeNodes;
 
-  std::map<std::pair<uint64_t, MVT::ValueType>, SDNode*> ConstantFPs;
-  std::map<std::pair<uint64_t, MVT::ValueType>, SDNode*> TargetConstantFPs;
-  std::map<int, SDNode*> FrameIndices, TargetFrameIndices, JumpTableIndices,
-    TargetJumpTableIndices;
-  std::map<std::pair<Constant *,
-                     std::pair<int, unsigned> >, SDNode*> ConstantPoolIndices;
-  std::map<std::pair<Constant *,
-                 std::pair<int, unsigned> >, SDNode*> TargetConstantPoolIndices;
   std::vector<SDNode*> ValueTypeNodes;
   std::map<std::string, SDNode*> ExternalSymbols;
   std::map<std::string, SDNode*> TargetExternalSymbols;

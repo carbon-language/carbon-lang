@@ -341,16 +341,6 @@ void SelectionDAG::RemoveNodeFromCSEMaps(SDNode *N) {
   bool Erased = false;
   switch (N->getOpcode()) {
   case ISD::HANDLENODE: return;  // noop.
-  case ISD::ConstantFP: {
-    uint64_t V = DoubleToBits(cast<ConstantFPSDNode>(N)->getValue());
-    Erased = ConstantFPs.erase(std::make_pair(V, N->getValueType(0)));
-    break;
-  }
-  case ISD::TargetConstantFP: {
-    uint64_t V = DoubleToBits(cast<ConstantFPSDNode>(N)->getValue());
-    Erased = TargetConstantFPs.erase(std::make_pair(V, N->getValueType(0)));
-    break;
-  }
   case ISD::STRING:
     Erased = StringNodes.erase(cast<StringSDNode>(N)->getValue());
     break;
@@ -359,31 +349,6 @@ void SelectionDAG::RemoveNodeFromCSEMaps(SDNode *N) {
            "Cond code doesn't exist!");
     Erased = CondCodeNodes[cast<CondCodeSDNode>(N)->get()] != 0;
     CondCodeNodes[cast<CondCodeSDNode>(N)->get()] = 0;
-    break;
-  case ISD::FrameIndex:
-    Erased = FrameIndices.erase(cast<FrameIndexSDNode>(N)->getIndex());
-    break;
-  case ISD::TargetFrameIndex:
-    Erased = TargetFrameIndices.erase(cast<FrameIndexSDNode>(N)->getIndex());
-    break;
-  case ISD::JumpTable:
-    Erased = JumpTableIndices.erase(cast<JumpTableSDNode>(N)->getIndex());
-    break;
-  case ISD::TargetJumpTable:
-    Erased = 
-      TargetJumpTableIndices.erase(cast<JumpTableSDNode>(N)->getIndex());
-    break;
-  case ISD::ConstantPool:
-    Erased = ConstantPoolIndices.
-      erase(std::make_pair(cast<ConstantPoolSDNode>(N)->get(),
-                        std::make_pair(cast<ConstantPoolSDNode>(N)->getOffset(),
-                                 cast<ConstantPoolSDNode>(N)->getAlignment())));
-    break;
-  case ISD::TargetConstantPool:
-    Erased = TargetConstantPoolIndices.
-      erase(std::make_pair(cast<ConstantPoolSDNode>(N)->get(),
-                        std::make_pair(cast<ConstantPoolSDNode>(N)->getOffset(),
-                                 cast<ConstantPoolSDNode>(N)->getAlignment())));
     break;
   case ISD::ExternalSymbol:
     Erased = ExternalSymbols.erase(cast<ExternalSymbolSDNode>(N)->getSymbol());
@@ -547,7 +512,8 @@ SDOperand SelectionDAG::getConstant(uint64_t Val, MVT::ValueType VT, bool isT) {
 }
 
 
-SDOperand SelectionDAG::getConstantFP(double Val, MVT::ValueType VT) {
+SDOperand SelectionDAG::getConstantFP(double Val, MVT::ValueType VT,
+                                      bool isTarget) {
   assert(MVT::isFloatingPoint(VT) && "Cannot create integer FP constant!");
   if (VT == MVT::f32)
     Val = (float)Val;  // Mask out extra precision.
@@ -555,24 +521,14 @@ SDOperand SelectionDAG::getConstantFP(double Val, MVT::ValueType VT) {
   // Do the map lookup using the actual bit pattern for the floating point
   // value, so that we don't have problems with 0.0 comparing equal to -0.0, and
   // we don't have issues with SNANs.
-  SDNode *&N = ConstantFPs[std::make_pair(DoubleToBits(Val), VT)];
-  if (N) return SDOperand(N, 0);
-  N = new ConstantFPSDNode(false, Val, VT);
-  AllNodes.push_back(N);
-  return SDOperand(N, 0);
-}
-
-SDOperand SelectionDAG::getTargetConstantFP(double Val, MVT::ValueType VT) {
-  assert(MVT::isFloatingPoint(VT) && "Cannot create integer FP constant!");
-  if (VT == MVT::f32)
-    Val = (float)Val;  // Mask out extra precision.
-  
-  // Do the map lookup using the actual bit pattern for the floating point
-  // value, so that we don't have problems with 0.0 comparing equal to -0.0, and
-  // we don't have issues with SNANs.
-  SDNode *&N = TargetConstantFPs[std::make_pair(DoubleToBits(Val), VT)];
-  if (N) return SDOperand(N, 0);
-  N = new ConstantFPSDNode(true, Val, VT);
+  unsigned Opc = isTarget ? ISD::TargetConstantFP : ISD::ConstantFP;
+  SelectionDAGCSEMap::NodeID ID(Opc, getNodeValueTypes(VT));
+  ID.AddInteger(DoubleToBits(Val));
+  void *IP = 0;
+  if (SDNode *E = CSEMap.FindNodeOrInsertPos(ID, IP))
+    return SDOperand(E, 0);
+  SDNode *N = new ConstantFPSDNode(isTarget, Val, VT);
+  CSEMap.InsertNode(N, IP);
   AllNodes.push_back(N);
   return SDOperand(N, 0);
 }
@@ -593,57 +549,49 @@ SDOperand SelectionDAG::getGlobalAddress(const GlobalValue *GV,
   return SDOperand(N, 0);
 }
 
-SDOperand SelectionDAG::getFrameIndex(int FI, MVT::ValueType VT) {
-  SDNode *&N = FrameIndices[FI];
-  if (N) return SDOperand(N, 0);
-  N = new FrameIndexSDNode(FI, VT, false);
+SDOperand SelectionDAG::getFrameIndex(int FI, MVT::ValueType VT,
+                                      bool isTarget) {
+  unsigned Opc = isTarget ? ISD::TargetFrameIndex : ISD::FrameIndex;
+  SelectionDAGCSEMap::NodeID ID(Opc, getNodeValueTypes(VT));
+  ID.AddInteger(FI);
+  void *IP = 0;
+  if (SDNode *E = CSEMap.FindNodeOrInsertPos(ID, IP))
+    return SDOperand(E, 0);
+  SDNode *N = new FrameIndexSDNode(FI, VT, isTarget);
+  CSEMap.InsertNode(N, IP);
   AllNodes.push_back(N);
   return SDOperand(N, 0);
 }
 
-SDOperand SelectionDAG::getTargetFrameIndex(int FI, MVT::ValueType VT) {
-  SDNode *&N = TargetFrameIndices[FI];
-  if (N) return SDOperand(N, 0);
-  N = new FrameIndexSDNode(FI, VT, true);
-  AllNodes.push_back(N);
-  return SDOperand(N, 0);
-}
-
-SDOperand SelectionDAG::getJumpTable(int JTI, MVT::ValueType VT) {
-  SDNode *&N = JumpTableIndices[JTI];
-  if (N) return SDOperand(N, 0);
-  N = new JumpTableSDNode(JTI, VT, false);
-  AllNodes.push_back(N);
-  return SDOperand(N, 0);
-}
-
-SDOperand SelectionDAG::getTargetJumpTable(int JTI, MVT::ValueType VT) {
-  SDNode *&N = TargetJumpTableIndices[JTI];
-  if (N) return SDOperand(N, 0);
-  N = new JumpTableSDNode(JTI, VT, true);
+SDOperand SelectionDAG::getJumpTable(int JTI, MVT::ValueType VT, bool isTarget){
+  unsigned Opc = isTarget ? ISD::TargetJumpTable : ISD::JumpTable;
+  SelectionDAGCSEMap::NodeID ID(Opc, getNodeValueTypes(VT));
+  ID.AddInteger(JTI);
+  void *IP = 0;
+  if (SDNode *E = CSEMap.FindNodeOrInsertPos(ID, IP))
+    return SDOperand(E, 0);
+  SDNode *N = new JumpTableSDNode(JTI, VT, isTarget);
+  CSEMap.InsertNode(N, IP);
   AllNodes.push_back(N);
   return SDOperand(N, 0);
 }
 
 SDOperand SelectionDAG::getConstantPool(Constant *C, MVT::ValueType VT,
-                                        unsigned Alignment,  int Offset) {
-  SDNode *&N = ConstantPoolIndices[std::make_pair(C,
-                                            std::make_pair(Offset, Alignment))];
-  if (N) return SDOperand(N, 0);
-  N = new ConstantPoolSDNode(false, C, VT, Offset, Alignment);
+                                        unsigned Alignment, int Offset,
+                                        bool isTarget) {
+  unsigned Opc = isTarget ? ISD::TargetConstantPool : ISD::ConstantPool;
+  SelectionDAGCSEMap::NodeID ID(Opc, getNodeValueTypes(VT));
+  ID.AddInteger(Alignment);
+  ID.AddInteger(Offset);
+  void *IP = 0;
+  if (SDNode *E = CSEMap.FindNodeOrInsertPos(ID, IP))
+    return SDOperand(E, 0);
+  SDNode *N = new ConstantPoolSDNode(isTarget, C, VT, Offset, Alignment);
+  CSEMap.InsertNode(N, IP);
   AllNodes.push_back(N);
   return SDOperand(N, 0);
 }
 
-SDOperand SelectionDAG::getTargetConstantPool(Constant *C, MVT::ValueType VT,
-                                             unsigned Alignment,  int Offset) {
-  SDNode *&N = TargetConstantPoolIndices[std::make_pair(C,
-                                            std::make_pair(Offset, Alignment))];
-  if (N) return SDOperand(N, 0);
-  N = new ConstantPoolSDNode(true, C, VT, Offset, Alignment);
-  AllNodes.push_back(N);
-  return SDOperand(N, 0);
-}
 
 SDOperand SelectionDAG::getBasicBlock(MachineBasicBlock *MBB) {
   SelectionDAGCSEMap::NodeID ID(ISD::BasicBlock, getNodeValueTypes(MVT::Other));

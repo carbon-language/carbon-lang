@@ -12,6 +12,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/CodeGen/SelectionDAG.h"
+#include "llvm/Support/MathExtras.h"
 using namespace llvm;
 
 //===----------------------------------------------------------------------===//
@@ -32,6 +33,10 @@ SelectionDAGCSEMap::NodeID::NodeID(SDNode *N) {
     case ISD::Constant:
       AddInteger(cast<ConstantSDNode>(N)->getValue());
       break;
+    case ISD::TargetConstantFP:
+    case ISD::ConstantFP:
+      AddInteger(DoubleToBits(cast<ConstantFPSDNode>(N)->getValue()));
+      break;
     case ISD::TargetGlobalAddress:
     case ISD::GlobalAddress:
       AddPointer(cast<GlobalAddressSDNode>(N)->getGlobal());
@@ -46,6 +51,19 @@ SelectionDAGCSEMap::NodeID::NodeID(SDNode *N) {
     case ISD::SRCVALUE:
       AddPointer(cast<SrcValueSDNode>(N)->getValue());
       AddInteger(cast<SrcValueSDNode>(N)->getOffset());
+      break;
+    case ISD::FrameIndex:
+    case ISD::TargetFrameIndex:
+      AddInteger(cast<FrameIndexSDNode>(N)->getIndex());
+      break;
+    case ISD::JumpTable:
+    case ISD::TargetJumpTable:
+      AddInteger(cast<JumpTableSDNode>(N)->getIndex());
+      break;
+    case ISD::ConstantPool:
+    case ISD::TargetConstantPool:
+      AddInteger(cast<ConstantPoolSDNode>(N)->getAlignment());
+      AddInteger(cast<ConstantPoolSDNode>(N)->getOffset());
       break;
     }
   }
