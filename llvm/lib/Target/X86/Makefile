@@ -18,4 +18,3 @@ BUILT_SOURCES = X86GenRegisterInfo.h.inc X86GenRegisterNames.inc \
                 X86GenSubtarget.inc
 
 include $(LEVEL)/Makefile.common
-
