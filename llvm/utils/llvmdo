@@ -127,6 +127,7 @@ if test -d "$TOPDIR" ; then
       \! -name '*AST-Remove.ll' \
       \! -name 'llvmAsmParser.cpp' \
       \! -name 'llvmAsmParser.h' \
+      \! -name 'Lexer.cpp' \
       \! -name 'FileLexer.cpp' \
       \! -name 'FileParser.cpp' \
       \! -name 'FileParser.h' \
