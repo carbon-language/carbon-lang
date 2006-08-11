@@ -449,8 +449,6 @@ private:
   std::list<std::vector<MVT::ValueType> > VTList;
   
   // Maps to auto-CSE operations.
-  std::map<std::pair<unsigned, MVT::ValueType>, SDNode *> NullaryOps;
-
   std::map<std::pair<unsigned, MVT::ValueType>, RegisterSDNode*> RegNodes;
   std::vector<CondCodeSDNode*> CondCodeNodes;
 

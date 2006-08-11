@@ -430,18 +430,8 @@ void SelectionDAG::RemoveNodeFromCSEMaps(SDNode *N) {
     break;
   }    
   default:
-    if (N->getNumValues() == 1) {
-      if (N->getNumOperands() == 0) {
-        Erased = NullaryOps.erase(std::make_pair(N->getOpcode(),
-                                                 N->getValueType(0)));
-      } else { 
-        // Remove it from the CSE Map.
-        Erased = CSEMap.RemoveNode(N);
-      }
-    } else {
-      // Remove it from the CSE Map.
-      Erased = CSEMap.RemoveNode(N);
-    }
+    // Remove it from the CSE Map.
+    Erased = CSEMap.RemoveNode(N);
     break;
   }
 #ifndef NDEBUG
@@ -973,11 +963,15 @@ SDOperand SelectionDAG::SimplifySetCC(MVT::ValueType VT, SDOperand N1,
 /// getNode - Gets or creates the specified node.
 ///
 SDOperand SelectionDAG::getNode(unsigned Opcode, MVT::ValueType VT) {
-  SDNode *&N = NullaryOps[std::make_pair(Opcode, VT)];
-  if (!N) {
-    N = new SDNode(Opcode, VT);
-    AllNodes.push_back(N);
-  }
+  MVT::ValueType *VTs = getNodeValueTypes(VT);
+  SelectionDAGCSEMap::NodeID ID(Opcode, VTs);
+  void *IP = 0;
+  if (SDNode *E = CSEMap.FindNodeOrInsertPos(ID, IP))
+    return SDOperand(E, 0);
+  SDNode *N = new SDNode(Opcode, VT);
+  CSEMap.InsertNode(N, IP);
+  
+  AllNodes.push_back(N);
   return SDOperand(N, 0);
 }
 
@@ -1892,16 +1886,18 @@ UpdateNodeOperands(SDOperand InN, SDOperand *Ops, unsigned NumOps) {
 /// the current one.
 SDOperand SelectionDAG::SelectNodeTo(SDNode *N, unsigned TargetOpc,
                                      MVT::ValueType VT) {
-  // If an identical node already exists, use it.
-  SDNode *&ON = NullaryOps[std::make_pair(ISD::BUILTIN_OP_END+TargetOpc, VT)];
-  if (ON) return SDOperand(ON, 0);
-  
+  MVT::ValueType *VTs = getNodeValueTypes(VT);
+  SelectionDAGCSEMap::NodeID ID(ISD::BUILTIN_OP_END+TargetOpc, VTs);
+  void *IP = 0;
+  if (SDNode *ON = CSEMap.FindNodeOrInsertPos(ID, IP))
+    return SDOperand(ON, 0);
+   
   RemoveNodeFromCSEMaps(N);
   
   N->MorphNodeTo(ISD::BUILTIN_OP_END+TargetOpc);
   N->setValueTypes(getNodeValueTypes(VT), 1);
 
-  ON = N;   // Memoize the new node.
+  CSEMap.InsertNode(N, IP);
   return SDOperand(N, 0);
 }
 
