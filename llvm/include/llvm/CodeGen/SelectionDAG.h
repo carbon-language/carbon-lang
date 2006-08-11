@@ -393,7 +393,7 @@ public:
                           std::vector<SDNode*> *Deleted = 0);
   void ReplaceAllUsesWith(SDNode *From, SDNode *To,
                           std::vector<SDNode*> *Deleted = 0);
-  void ReplaceAllUsesWith(SDNode *From, const std::vector<SDOperand> &To,
+  void ReplaceAllUsesWith(SDNode *From, const SDOperand *To,
                           std::vector<SDNode*> *Deleted = 0);
 
   /// ReplaceAllUsesOfValueWith - Replace any uses of From with To, leaving
