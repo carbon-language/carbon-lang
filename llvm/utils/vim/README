@@ -41,4 +41,3 @@ TEST.nightly.Makefile), add the following to your ~/.vimrc:
   augroup filetype
     au! BufRead,BufNewFile *Makefile*     set filetype=make
   augroup END
-
