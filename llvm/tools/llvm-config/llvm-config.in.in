@@ -124,9 +124,9 @@ foreach my $arg (@ARGV) {
         } elsif ($arg eq "--build-mode") {
             $has_opt = 1; print "$LLVM_BUILDMODE\n";
         } elsif ($arg eq "--obj-root") {
-            $has_opt = 1; print `cd $LLVM_OBJ_ROOT/; pwd` . "\n";
+            $has_opt = 1; print `cd $LLVM_OBJ_ROOT/; pwd`;
         } elsif ($arg eq "--src-root") {
-            $has_opt = 1; print `cd $LLVM_SRC_ROOT/; pwd` . "\n";
+            $has_opt = 1; print `cd $LLVM_SRC_ROOT/; pwd`;
         } else {
             usage();
         }
