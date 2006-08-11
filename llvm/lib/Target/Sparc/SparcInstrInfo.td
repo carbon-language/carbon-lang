@@ -117,8 +117,10 @@ def SPselectfcc : SDNode<"SPISD::SELECT_FCC", SDTSPselectcc, [SDNPInFlag]>;
 
 // These are target-independent nodes, but have target-specific formats.
 def SDT_SPCallSeq : SDTypeProfile<0, 1, [ SDTCisVT<0, i32> ]>;
-def callseq_start : SDNode<"ISD::CALLSEQ_START", SDT_SPCallSeq, [SDNPHasChain]>;
-def callseq_end   : SDNode<"ISD::CALLSEQ_END",   SDT_SPCallSeq, [SDNPHasChain]>;
+def callseq_start : SDNode<"ISD::CALLSEQ_START", SDT_SPCallSeq,
+                           [SDNPHasChain, SDNPOutFlag]>;
+def callseq_end   : SDNode<"ISD::CALLSEQ_END",   SDT_SPCallSeq,
+                           [SDNPHasChain, SDNPOutFlag]>;
 
 def SDT_SPCall    : SDTypeProfile<0, 1, [SDTCisVT<0, i32>]>;
 def call          : SDNode<"SPISD::CALL", SDT_SPCall,

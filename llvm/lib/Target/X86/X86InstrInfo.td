@@ -67,7 +67,7 @@ def X86retflag : SDNode<"X86ISD::RET_FLAG", SDTX86Ret,
 
 def X86callseq_start :
                  SDNode<"ISD::CALLSEQ_START", SDT_X86CallSeqStart,
-                        [SDNPHasChain]>;
+                        [SDNPHasChain, SDNPOutFlag]>;
 def X86callseq_end :
                  SDNode<"ISD::CALLSEQ_END",   SDT_X86CallSeqEnd,
                         [SDNPHasChain, SDNPInFlag, SDNPOutFlag]>;

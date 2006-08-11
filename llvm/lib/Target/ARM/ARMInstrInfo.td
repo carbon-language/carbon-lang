@@ -38,8 +38,10 @@ class InstARM<dag ops, string asmstr, list<dag> pattern> : Instruction {
 }
 
 def SDT_ARMCallSeq : SDTypeProfile<0, 1, [ SDTCisVT<0, i32> ]>;
-def callseq_start  : SDNode<"ISD::CALLSEQ_START", SDT_ARMCallSeq, [SDNPHasChain]>;
-def callseq_end    : SDNode<"ISD::CALLSEQ_END",   SDT_ARMCallSeq, [SDNPHasChain]>;
+def callseq_start  : SDNode<"ISD::CALLSEQ_START", SDT_ARMCallSeq,
+    		             [SDNPHasChain, SDNPOutFlag]>;
+def callseq_end    : SDNode<"ISD::CALLSEQ_END",   SDT_ARMCallSeq,
+    		             [SDNPHasChain, SDNPOutFlag]>;
 
 def SDT_ARMcall    : SDTypeProfile<0, -1, [SDTCisInt<0>]>;
 def ARMcall        : SDNode<"ARMISD::CALL", SDT_ARMcall,
