@@ -2560,7 +2560,7 @@ public:
            "(N.getOperand(N.getNumOperands()-1).getValueType() == MVT::Flag);");
       }
       if (HasVarOps)
-        emitCode("std::vector<SDOperand> Ops;");
+        emitCode("SmallVector<SDOperand, 8> Ops;");
 
       // How many results is this pattern expected to produce?
       unsigned PatResults = 0;
