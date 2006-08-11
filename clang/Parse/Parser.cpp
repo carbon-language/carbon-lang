@@ -73,6 +73,9 @@ void Parser::MatchRHSPunctuation(tok::TokenKind RHSTok, SourceLocation LHSLoc,
 /// If SkipUntil finds the specified token, it returns true, otherwise it
 /// returns false.  
 bool Parser::SkipUntil(tok::TokenKind T, bool StopAtSemi, bool DontConsume) {
+  // We always want this function to skip at least one token if the first token
+  // isn't T and if not at EOF.
+  bool isFirstTokenSkipped = true;
   while (1) {
     // If we found the token, stop and return true.
     if (Tok.getKind() == T) {
@@ -84,7 +87,7 @@ bool Parser::SkipUntil(tok::TokenKind T, bool StopAtSemi, bool DontConsume) {
         ConsumeBracket();
       } else if (isTokenBrace()) {
         ConsumeBrace();
-      } else if (T == tok::string_literal) {
+      } else if (isTokenStringLiteral()) {
         ConsumeStringToken();
       } else {
         ConsumeToken();
@@ -100,17 +103,17 @@ bool Parser::SkipUntil(tok::TokenKind T, bool StopAtSemi, bool DontConsume) {
     case tok::l_paren:
       // Recursively skip properly-nested parens.
       ConsumeParen();
-      SkipUntil(tok::r_paren);
+      SkipUntil(tok::r_paren, false);
       break;
     case tok::l_square:
       // Recursively skip properly-nested square brackets.
       ConsumeBracket();
-      SkipUntil(tok::r_square);
+      SkipUntil(tok::r_square, false);
       break;
     case tok::l_brace:
       // Recursively skip properly-nested braces.
       ConsumeBrace();
-      SkipUntil(tok::r_brace);
+      SkipUntil(tok::r_brace, false);
       break;
       
     // Okay, we found a ']' or '}' or ')', which we think should be balanced.
@@ -119,15 +122,18 @@ bool Parser::SkipUntil(tok::TokenKind T, bool StopAtSemi, bool DontConsume) {
     // higher level, we will assume that this matches the unbalanced token
     // and return it.  Otherwise, this is a spurious RHS token, which we skip.
     case tok::r_paren:
-      if (ParenCount) return false;  // Matches something.
+      if (ParenCount && !isFirstTokenSkipped)
+        return false;  // Matches something.
       ConsumeParen();
       break;
     case tok::r_square:
-      if (BracketCount) return false;  // Matches something.
+      if (BracketCount && !isFirstTokenSkipped)
+        return false;  // Matches something.
       ConsumeBracket();
       break;
     case tok::r_brace:
-      if (BraceCount) return false;  // Matches something.
+      if (BraceCount && !isFirstTokenSkipped)
+        return false;  // Matches something.
       ConsumeBrace();
       break;
       
@@ -143,6 +149,7 @@ bool Parser::SkipUntil(tok::TokenKind T, bool StopAtSemi, bool DontConsume) {
       ConsumeToken();
       break;
     }
+    isFirstTokenSkipped = false;
   }  
 }
 
