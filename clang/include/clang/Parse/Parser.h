@@ -172,8 +172,7 @@ private:
   //ExprTy ParseExpression();  // Above.
   void ParseAssignmentExpression();  // Expr that doesn't include commas.
 
-  void ParseCastExpression();
-  void ParseUnaryExpression();
+  void ParseCastExpression(bool isUnaryExpression);
   void ParseSizeofAlignofExpression();
   void ParsePostfixExpression();
   
