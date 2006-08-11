@@ -2397,7 +2397,7 @@ public:
   /// EmitResultCode - Emit the action for a pattern.  Now that it has matched
   /// we actually have to build a DAG!
   std::pair<unsigned, unsigned>
-  EmitResultCode(TreePatternNode *N, bool LikeLeaf = false,
+  EmitResultCode(TreePatternNode *N, bool &RetSelected, bool LikeLeaf = false,
                  bool isRoot = false) {
     // This is something selected from the pattern we matched.
     if (!N->getName().empty()) {
@@ -2489,7 +2489,7 @@ public:
           if (isRoot && N->isLeaf()) {
             emitCode("ReplaceUses(N, Tmp" + utostr(ResNo) + ");");
             emitCode("Result = Tmp" + utostr(ResNo) + ";");
-            emitCode("return;");
+            emitCode("return NULL;");
           }
         }
       }
@@ -2590,7 +2590,8 @@ public:
       for (unsigned i = 0, e = EmitOrder.size(); i != e; ++i) {
         unsigned OpOrder       = EmitOrder[i].first;
         TreePatternNode *Child = EmitOrder[i].second;
-        std::pair<unsigned, unsigned> NumTemp =  EmitResultCode(Child);
+        std::pair<unsigned, unsigned> NumTemp = 
+          EmitResultCode(Child, RetSelected);
         NumTemps[OpOrder] = NumTemp;
       }
 
@@ -2703,10 +2704,7 @@ public:
         if (!isRoot)
           return std::make_pair(1, ResNo);
 
-        for (unsigned i = 0; i < NumResults; i++)
-          emitCode("ReplaceUses(SDOperand(N.Val, " +
-                   utostr(i) + "), SDOperand(ResNode, " + utostr(i) + "));");
-
+        bool NeedReplace = false;
         if (NodeHasOutFlag)
           emitCode("InFlag = SDOperand(ResNode, " + 
                    utostr(NumResults + (unsigned)NodeHasChain) + ");");
@@ -2716,11 +2714,6 @@ public:
           NumResults = 1;
         }
 
-        if (InputHasChain)
-          emitCode("ReplaceUses(SDOperand(N.Val, " + 
-                   utostr(PatResults) + "), SDOperand(" + ChainName + ".Val, " +
-                   ChainName + ".ResNo" + "));");
-
         if (FoldedChains.size() > 0) {
           std::string Code;
           for (unsigned j = 0, e = FoldedChains.size(); j < e; j++)
@@ -2728,37 +2721,64 @@ public:
                      FoldedChains[j].first + ".Val, " + 
                      utostr(FoldedChains[j].second) + "), SDOperand(ResNode, " +
                      utostr(NumResults) + "));");
+          NeedReplace = true;
         }
 
-        if (NodeHasOutFlag)
+        if (NodeHasOutFlag) {
           emitCode("ReplaceUses(SDOperand(N.Val, " +
                    utostr(PatResults + (unsigned)InputHasChain) +"), InFlag);");
+          NeedReplace = true;
+        }
+
+        if (NeedReplace) {
+          for (unsigned i = 0; i < NumResults; i++)
+            emitCode("ReplaceUses(SDOperand(N.Val, " +
+                     utostr(i) + "), SDOperand(ResNode, " + utostr(i) + "));");
+          if (InputHasChain)
+            emitCode("ReplaceUses(SDOperand(N.Val, " + 
+                     utostr(PatResults) + "), SDOperand(" + ChainName + ".Val, " +
+                     ChainName + ".ResNo" + "));");
+        } else {
+          RetSelected = true;
+        }
 
         // User does not expect the instruction would produce a chain!
-        bool AddedChain = NodeHasChain && !InputHasChain;
-        if (AddedChain && NodeHasOutFlag) {
+        if ((!InputHasChain && NodeHasChain) && NodeHasOutFlag) {
           if (PatResults == 0) {
             emitCode("Result = SDOperand(ResNode, N.ResNo+1);");
           } else {
-            emitCode("if (N.ResNo < " + utostr(PatResults) + ")");
-            emitCode("  Result = SDOperand(ResNode, N.ResNo);");
-            emitCode("else");
-            emitCode("  Result = SDOperand(ResNode, N.ResNo+1);");
+	    assert(PatResults == 1);
+            emitCode("Result = (N.ResNo == 0) ? SDOperand(ResNode, 0) :"
+		     " SDOperand(ResNode, 1);");
           }
         } else if (InputHasChain && !NodeHasChain) {
           // One of the inner node produces a chain.
-          emitCode("if (N.ResNo < " + utostr(PatResults) + ")");
-          emitCode("  Result = SDOperand(ResNode, N.ResNo);");
           if (NodeHasOutFlag) {
-            emitCode("else if (N.ResNo > " + utostr(PatResults) + ")");
-            emitCode("  Result = SDOperand(ResNode, N.ResNo-1);");
-          }
-          emitCode("else");
-          emitCode("  Result = SDOperand(" + ChainName + ".Val, " +
-                   ChainName + ".ResNo);");
-        } else {
+            emitCode("Result = (N.ResNo < " + utostr(PatResults) +
+		     ") ? SDOperand(ResNode, N.ResNo) : " +
+		     "(N.ResNo > " + utostr(PatResults) + ") ? " +
+		     "SDOperand(ResNode, N.ResNo-1) : " + ChainName + "));");
+	    emitCode("ReplaceUses(SDOperand(N.Val, " + utostr(PatResults+1) +
+		     "), SDOperand(ResNode, N.ResNo-1));");
+	  } else {
+            emitCode("Result = (N.ResNo < " + utostr(PatResults) +
+		     ") ? SDOperand(ResNode, N.ResNo) : " +
+		     ChainName + ";");
+	  }
+	  for (unsigned i = 0; i < PatResults; ++i)
+	    emitCode("ReplaceUses(SDOperand(N.Val, " + utostr(i) +
+		     "), SDOperand(ResNode, " + utostr(i) + "));");
+	  emitCode("ReplaceUses(SDOperand(N.Val, " + utostr(PatResults) +
+		   "), " + ChainName + ");");
+	  RetSelected = false;
+	} else {
           emitCode("Result = SDOperand(ResNode, N.ResNo);");
         }
+
+	if (RetSelected)
+	  emitCode("return Result.Val;");
+	else
+	  emitCode("return NULL;");
       } else {
         // If this instruction is the root, and if there is only one use of it,
         // use SelectNodeTo instead of getTargetNode to avoid an allocation.
@@ -2774,6 +2794,8 @@ public:
         if (NodeHasInFlag || HasImpInputs)
           Code += ", InFlag";
         emitCode(Code + ");");
+        if (isRoot)
+          emitCode("  return NULL;");
         emitCode("} else {");
         emitDecl("ResNode", 1);
         Code = "  ResNode = CurDAG->getTargetNode(Opc" + utostr(OpcNo);
@@ -2789,27 +2811,26 @@ public:
         if (NodeHasInFlag || HasImpInputs)
           Code += ", InFlag";
         emitCode(Code + ");");
-        emitCode("  ReplaceUses(N, SDOperand(ResNode, 0));");
         emitCode("  Result = SDOperand(ResNode, 0);");
+        if (isRoot)
+          emitCode("  return Result.Val;");
         emitCode("}");
       }
 
-      if (isRoot)
-        emitCode("return;");
       return std::make_pair(1, ResNo);
     } else if (Op->isSubClassOf("SDNodeXForm")) {
       assert(N->getNumChildren() == 1 && "node xform should have one child!");
       // PatLeaf node - the operand may or may not be a leaf node. But it should
       // behave like one.
-      unsigned OpVal = EmitResultCode(N->getChild(0), true).second;
+      unsigned OpVal = EmitResultCode(N->getChild(0), RetSelected, true).second;
       unsigned ResNo = TmpNo++;
       emitDecl("Tmp" + utostr(ResNo));
       emitCode("Tmp" + utostr(ResNo) + " = Transform_" + Op->getName()
                + "(Tmp" + utostr(OpVal) + ".Val);");
       if (isRoot) {
-        emitCode("ReplaceUses(N, Tmp" + utostr(ResNo) + ");");
+        //emitCode("ReplaceUses(N, Tmp" + utostr(ResNo) + ");");
         emitCode("Result = Tmp" + utostr(ResNo) + ";");
-        emitCode("return;");
+        emitCode("return Result.Val;");
       }
       return std::make_pair(1, ResNo);
     } else {
@@ -2948,7 +2969,8 @@ void DAGISelEmitter::GenerateCodeForPattern(PatternToMatch &Pattern,
 
   // Emit the matcher, capturing named arguments in VariableMap.
   bool FoundChain = false;
-  Emitter.EmitMatchCode(Pattern.getSrcPattern(), NULL, "N", "", "", FoundChain);
+  Emitter.EmitMatchCode(Pattern.getSrcPattern(), NULL, "N", "", "",
+                        FoundChain);
 
   // TP - Get *SOME* tree pattern, we don't care which.
   TreePattern &TP = *PatternFragments.begin()->second;
@@ -2986,7 +3008,8 @@ void DAGISelEmitter::GenerateCodeForPattern(PatternToMatch &Pattern,
     // otherwise we are done.
   } while (Emitter.InsertOneTypeCheck(Pat, Pattern.getSrcPattern(), "N", true));
 
-  Emitter.EmitResultCode(Pattern.getDstPattern(), false, true /*the root*/);
+  bool RetSelected = false;
+  Emitter.EmitResultCode(Pattern.getDstPattern(), RetSelected, false, true);
   delete Pat;
 }
 
@@ -3339,14 +3362,13 @@ void DAGISelEmitter::EmitInstructionSelector(std::ostream &OS) {
         } else {
           EmitFuncNum = EmitFunctions.size();
           EmitFunctions.insert(std::make_pair(CalleeCode, EmitFuncNum));
-          OS << "void " << "Emit_" << utostr(EmitFuncNum) << CalleeCode;
+          OS << "SDNode *Emit_" << utostr(EmitFuncNum) << CalleeCode;
         }
 
         // Replace the emission code within selection routines with calls to the
         // emission functions.
-        CallerCode = "Emit_" + utostr(EmitFuncNum) + CallerCode;
+        CallerCode = "return Emit_" + utostr(EmitFuncNum) + CallerCode;
         GeneratedCode.push_back(std::make_pair(false, CallerCode));
-        GeneratedCode.push_back(std::make_pair(false, "return;"));
       }
 
       // Print function.
@@ -3361,7 +3383,7 @@ void DAGISelEmitter::EmitInstructionSelector(std::ostream &OS) {
       } else
         OpVTI->second.push_back(OpVTStr);
 
-      OS << "void Select_" << OpName << (OpVTStr != "" ? "_" : "")
+      OS << "SDNode *Select_" << OpName << (OpVTStr != "" ? "_" : "")
          << OpVTStr << "(SDOperand &Result, const SDOperand &N) {\n";    
 
       // Print all declarations.
@@ -3403,14 +3425,15 @@ void DAGISelEmitter::EmitInstructionSelector(std::ostream &OS) {
             "Intrinsic::getName((Intrinsic::ID)iid);\n";
         }
         OS << "  std::cerr << '\\n';\n"
-           << "  abort();\n";
+           << "  abort();\n"
+           << "  return NULL;\n";
       }
       OS << "}\n\n";
     }
   }
   
   // Emit boilerplate.
-  OS << "void Select_INLINEASM(SDOperand& Result, SDOperand N) {\n"
+  OS << "SDNode *Select_INLINEASM(SDOperand& Result, SDOperand N) {\n"
      << "  std::vector<SDOperand> Ops(N.Val->op_begin(), N.Val->op_end());\n"
      << "  AddToQueue(Ops[0], N.getOperand(0)); // Select the chain.\n\n"
      << "  // Select the flag operand.\n"
@@ -3422,19 +3445,17 @@ void DAGISelEmitter::EmitInstructionSelector(std::ostream &OS) {
      << "  VTs.push_back(MVT::Flag);\n"
      << "  SDOperand New = CurDAG->getNode(ISD::INLINEASM, VTs, &Ops[0], "
                  "Ops.size());\n"
-     << "  ReplaceUses(SDOperand(N.Val, 0), New);\n"
-     << "  ReplaceUses(SDOperand(N.Val, 1), SDOperand(New.Val, 1));\n"
      << "  Result = New.getValue(N.ResNo);\n"
-     << "  return;\n"
+     << "  return Result.Val;\n"
      << "}\n\n";
   
   OS << "// The main instruction selector code.\n"
-     << "void SelectCode(SDOperand &Result, SDOperand N) {\n"
+     << "SDNode *SelectCode(SDOperand &Result, SDOperand N) {\n"
      << "  if (N.getOpcode() >= ISD::BUILTIN_OP_END &&\n"
      << "      N.getOpcode() < (ISD::BUILTIN_OP_END+" << InstNS
      << "INSTRUCTION_LIST_END)) {\n"
      << "    Result = N;\n"
-     << "    return;   // Already selected.\n"
+     << "    return NULL;   // Already selected.\n"
      << "  }\n\n"
      << "  switch (N.getOpcode()) {\n"
      << "  default: break;\n"
@@ -3448,13 +3469,13 @@ void DAGISelEmitter::EmitInstructionSelector(std::ostream &OS) {
      << "  case ISD::TargetJumpTable:\n"
      << "  case ISD::TargetGlobalAddress: {\n"
      << "    Result = N;\n"
-     << "    return;\n"
+     << "    return NULL;\n"
      << "  }\n"
      << "  case ISD::AssertSext:\n"
      << "  case ISD::AssertZext: {\n"
      << "    AddToQueue(Result, N.getOperand(0));\n"
      << "    ReplaceUses(N, Result);\n"
-     << "    return;\n"
+     << "    return NULL;\n"
      << "  }\n"
      << "  case ISD::TokenFactor:\n"
      << "  case ISD::CopyFromReg:\n"
@@ -3464,9 +3485,9 @@ void DAGISelEmitter::EmitInstructionSelector(std::ostream &OS) {
      << "      AddToQueue(Dummy, N.getOperand(i));\n"
      << "    }\n"
      << "    Result = N;\n"
-     << "    return;\n"
+     << "    return NULL;\n"
      << "  }\n"
-     << "  case ISD::INLINEASM:  Select_INLINEASM(Result, N); return;\n";
+     << "  case ISD::INLINEASM:  return Select_INLINEASM(Result, N);\n";
 
     
   // Loop over all of the case statements, emiting a call to each method we
@@ -3485,7 +3506,7 @@ void DAGISelEmitter::EmitInstructionSelector(std::ostream &OS) {
     OS << "  case " << OpcodeInfo.getEnumName() << ": {\n";
     if (OpVTs.size() == 1) {
       std::string &VTStr = OpVTs[0];
-      OS << "    Select_" << OpName
+      OS << "    return Select_" << OpName
          << (VTStr != "" ? "_" : "") << VTStr << "(Result, N);\n";
     } else {
       if (OpcodeInfo.getNumResults())
@@ -3496,26 +3517,26 @@ void DAGISelEmitter::EmitInstructionSelector(std::ostream &OS) {
       else
         OS << "    MVT::ValueType NVT = (N.getNumOperands() > 0) ?"
            << " N.getOperand(0).Val->getValueType(0) : MVT::isVoid;\n";
-      int ElseCase = -1;
-      bool First = true;
+      int Default = -1;
+      OS << "    switch (NVT) {\n";
       for (unsigned i = 0, e = OpVTs.size(); i < e; ++i) {
         std::string &VTStr = OpVTs[i];
         if (VTStr == "") {
-          ElseCase = i;
+          Default = i;
           continue;
         }
-        OS << (First ? "    if" : "    else if")
-           << " (NVT == MVT::" << VTStr << ")\n"
-           << "      Select_" << OpName
+        OS << "    case MVT::" << VTStr << ":\n"
+           << "      return Select_" << OpName
            << "_" << VTStr << "(Result, N);\n";
-        First = false;
       }
-      if (ElseCase != -1)
-        OS << "    else\n" << "      Select_" << OpName << "(Result, N);\n";
+      OS << "    default:\n";
+      if (Default != -1)
+        OS << "      return Select_" << OpName << "(Result, N);\n";
       else
-        OS << "    else\n" << "      break;\n";
+	OS << "      break;\n";
+      OS << "    }\n";
+      OS << "    break;\n";
     }
-    OS << "    return;\n";
     OS << "  }\n";
   }
 
@@ -3533,6 +3554,7 @@ void DAGISelEmitter::EmitInstructionSelector(std::ostream &OS) {
      << "  }\n"
      << "  std::cerr << '\\n';\n"
      << "  abort();\n"
+     << "  return NULL;\n"
      << "}\n";
 }
 
@@ -3582,7 +3604,7 @@ void DAGISelEmitter::run(std::ostream &OS) {
   OS << "  return ISelSelected[Id / 8] & (1 << (Id % 8));\n";
   OS << "}\n\n";
 
-  OS << "inline void AddToQueue(SDOperand &Result, SDOperand N) {\n";
+  OS << "void AddToQueue(SDOperand &Result, SDOperand N) NOINLINE {\n";
   OS << "  Result = N;\n";
   OS << "  int Id = N.Val->getNodeId();\n";
   OS << "  if (Id != -1 && !isQueued(Id)) {\n";
@@ -3604,9 +3626,14 @@ OS << "  unsigned NumKilled = ISelKilled.size();\n";
   OS << "  }\n";
   OS << "}\n\n";
 
-  OS << "inline void ReplaceUses(SDOperand F, SDOperand T) {\n";
+  OS << "void ReplaceUses(SDOperand F, SDOperand T) NOINLINE {\n";
   OS << "  CurDAG->ReplaceAllUsesOfValueWith(F, T, ISelKilled);\n";
   OS << "  setSelected(F.Val->getNodeId());\n";
+  OS << "  RemoveKilled();\n";
+  OS << "}\n";
+  OS << "inline void ReplaceUses(SDNode *F, SDNode *T) {\n";
+  OS << "  CurDAG->ReplaceAllUsesWith(F, T, &ISelKilled);\n";
+  OS << "  setSelected(F->getNodeId());\n";
   OS << "  RemoveKilled();\n";
   OS << "}\n\n";
 
@@ -3626,8 +3653,10 @@ OS << "  unsigned NumKilled = ISelKilled.size();\n";
   OS << "    SDNode *Node = ISelQueue.front();\n";
   OS << "    std::pop_heap(ISelQueue.begin(), ISelQueue.end(), isel_sort());\n";
   OS << "    ISelQueue.pop_back();\n";
-  OS << "    if (!isSelected(Node->getNodeId()))\n";
-  OS << "      Select(Tmp, SDOperand(Node, 0));\n";
+  OS << "    if (!isSelected(Node->getNodeId())) {\n";
+  OS << "      SDNode *ResNode = Select(Tmp, SDOperand(Node, 0));\n";
+  OS << "      if (ResNode) ReplaceUses(Node, ResNode);\n";
+  OS << "    }\n";
   OS << "  }\n";
   OS << "\n";
   OS << "  delete[] ISelQueued;\n";
