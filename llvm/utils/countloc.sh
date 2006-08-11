@@ -19,7 +19,7 @@
 # details.
 ##===----------------------------------------------------------------------===##
 
-TOPDIR=`pwd | sed -e 's#\(.*/llvm\).*#\1#'`
+TOPDIR=`llvm-config --src-root`
 if test -d "$TOPDIR" ; then
   cd $TOPDIR
   ./utils/llvmdo -dirs "include lib tools test utils examples" wc -l | awk '\
