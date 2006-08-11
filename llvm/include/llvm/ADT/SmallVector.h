@@ -131,47 +131,7 @@ public:
       new (Begin+NumElts-1) T(Elt);
   }
   
-  const SmallVectorImpl &operator=(const SmallVectorImpl &RHS) {
-    // Avoid self-assignment.
-    if (this == &RHS) return *this;
-    
-    // If we already have sufficient space, assign the common elements, then
-    // destroy any excess.
-    unsigned RHSSize = RHS.size();
-    unsigned CurSize = size();
-    if (CurSize >= RHSSize) {
-      // Assign common elements.
-      std::copy(RHS.Begin, RHS.Begin+RHSSize, Begin);
-      
-      // Destroy excess elements.
-      for (unsigned i = RHSSize; i != CurSize; ++i)
-        Begin[i].~T();
-      
-      // Trim.
-      End = Begin + RHSSize;
-      return *this;
-    }
-    
-    // If we have to grow to have enough elements, destroy the current elements.
-    // This allows us to avoid copying them during the grow.
-    if (Capacity-Begin < RHSSize) {
-      // Destroy current elements.
-      for (iterator I = Begin, E = End; I != E; ++I)
-        I->~T();
-      End = Begin;
-      CurSize = 0;
-      grow(RHSSize);
-    } else if (CurSize) {
-      // Otherwise, use assignment for the already-constructed elements.
-      std::copy(RHS.Begin, RHS.Begin+CurSize, Begin);
-    }
-    
-    // Copy construct the new elements in place.
-    std::uninitialized_copy(RHS.Begin+CurSize, RHS.End, Begin+CurSize);
-    
-    // Set end.
-    End = Begin+RHSSize;
-  }
+  const SmallVectorImpl &operator=(const SmallVectorImpl &RHS);
   
 private:
   /// isSmall - Return true if this is a smallvector which has not had dynamic
@@ -182,31 +142,78 @@ private:
 
   /// grow - double the size of the allocated memory, guaranteeing space for at
   /// least one more element or MinSize if specified.
-  void grow(unsigned MinSize = 0) {
-    unsigned CurCapacity = Capacity-Begin;
-    unsigned CurSize = size();
-    unsigned NewCapacity = 2*CurCapacity;
-    if (NewCapacity < MinSize)
-      NewCapacity = MinSize;
-    T *NewElts = reinterpret_cast<T*>(new char[NewCapacity*sizeof(T)]);
-
-    // Copy the elements over.
-    std::uninitialized_copy(Begin, End, NewElts);
-    
-    // Destroy the original elements.
-    for (iterator I = Begin, E = End; I != E; ++I)
-      I->~T();
-    
-    // If this wasn't grown from the inline copy, deallocate the old space.
-    if (!isSmall())
-      delete[] (char*)Begin;
-    
-    Begin = NewElts;
-    End = NewElts+CurSize;
-    Capacity = Begin+NewCapacity;
-  }
+  void grow(unsigned MinSize = 0);
 };
 
+// Define this out-of-line to dissuade the C++ compiler from inlining it.
+template <typename T>
+void SmallVectorImpl<T>::grow(unsigned MinSize) {
+  unsigned CurCapacity = Capacity-Begin;
+  unsigned CurSize = size();
+  unsigned NewCapacity = 2*CurCapacity;
+  if (NewCapacity < MinSize)
+    NewCapacity = MinSize;
+  T *NewElts = reinterpret_cast<T*>(new char[NewCapacity*sizeof(T)]);
+  
+  // Copy the elements over.
+  std::uninitialized_copy(Begin, End, NewElts);
+  
+  // Destroy the original elements.
+  for (iterator I = Begin, E = End; I != E; ++I)
+    I->~T();
+  
+  // If this wasn't grown from the inline copy, deallocate the old space.
+  if (!isSmall())
+    delete[] (char*)Begin;
+  
+  Begin = NewElts;
+  End = NewElts+CurSize;
+  Capacity = Begin+NewCapacity;
+}
+  
+template <typename T>
+const SmallVectorImpl<T> &
+SmallVectorImpl<T>::operator=(const SmallVectorImpl<T> &RHS) {
+  // Avoid self-assignment.
+  if (this == &RHS) return *this;
+  
+  // If we already have sufficient space, assign the common elements, then
+  // destroy any excess.
+  unsigned RHSSize = RHS.size();
+  unsigned CurSize = size();
+  if (CurSize >= RHSSize) {
+    // Assign common elements.
+    std::copy(RHS.Begin, RHS.Begin+RHSSize, Begin);
+    
+    // Destroy excess elements.
+    for (unsigned i = RHSSize; i != CurSize; ++i)
+      Begin[i].~T();
+    
+    // Trim.
+    End = Begin + RHSSize;
+    return *this;
+  }
+  
+  // If we have to grow to have enough elements, destroy the current elements.
+  // This allows us to avoid copying them during the grow.
+  if (Capacity-Begin < RHSSize) {
+    // Destroy current elements.
+    for (iterator I = Begin, E = End; I != E; ++I)
+      I->~T();
+    End = Begin;
+    CurSize = 0;
+    grow(RHSSize);
+  } else if (CurSize) {
+    // Otherwise, use assignment for the already-constructed elements.
+    std::copy(RHS.Begin, RHS.Begin+CurSize, Begin);
+  }
+  
+  // Copy construct the new elements in place.
+  std::uninitialized_copy(RHS.Begin+CurSize, RHS.End, Begin+CurSize);
+  
+  // Set end.
+  End = Begin+RHSSize;
+}
   
 /// SmallVector - This is a 'vector' (really, a variable-sized array), optimized
 /// for the case when the array is small.  It contains some number of elements
