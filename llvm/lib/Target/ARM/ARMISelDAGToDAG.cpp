@@ -121,7 +121,8 @@ static SDOperand LowerCALL(SDOperand Op, SelectionDAG &DAG) {
     }
   }
   if (!MemOpChains.empty())
-    Chain = DAG.getNode(ISD::TokenFactor, MVT::Other, MemOpChains);
+    Chain = DAG.getNode(ISD::TokenFactor, MVT::Other,
+                        &MemOpChains[0], MemOpChains.size());
 
   // Build a sequence of copy-to-reg nodes chained together with token chain
   // and flag operands which copy the outgoing args into the appropriate regs.

@@ -261,7 +261,7 @@ static SDOperand LowerFORMAL_ARGUMENTS(SDOperand Op, SelectionDAG &DAG,
     }
 
     //Set up a token factor with all the stack traffic
-    Root = DAG.getNode(ISD::TokenFactor, MVT::Other, LS);
+    Root = DAG.getNode(ISD::TokenFactor, MVT::Other, &LS[0], LS.size());
   }
 
   ArgValues.push_back(Root);

@@ -895,7 +895,7 @@ static SDOperand LowerFORMAL_ARGUMENTS(SDOperand Op, SelectionDAG &DAG,
     // If this function is vararg, store any remaining integer argument regs
     // to their spots on the stack so that they may be loaded by deferencing the
     // result of va_next.
-    std::vector<SDOperand> MemOps;
+    SmallVector<SDOperand, 8> MemOps;
     for (; GPR_idx != Num_GPR_Regs; ++GPR_idx) {
       unsigned VReg = RegMap->createVirtualRegister(&PPC::GPRCRegClass);
       MF.addLiveIn(GPR[GPR_idx], VReg);
@@ -908,7 +908,7 @@ static SDOperand LowerFORMAL_ARGUMENTS(SDOperand Op, SelectionDAG &DAG,
       FIN = DAG.getNode(ISD::ADD, PtrOff.getValueType(), FIN, PtrOff);
     }
     if (!MemOps.empty())
-      Root = DAG.getNode(ISD::TokenFactor, MVT::Other, MemOps);
+      Root = DAG.getNode(ISD::TokenFactor, MVT::Other,&MemOps[0],MemOps.size());
   }
   
   ArgValues.push_back(Root);
@@ -1011,7 +1011,7 @@ static SDOperand LowerCALL(SDOperand Op, SelectionDAG &DAG) {
   const unsigned *GPR = isPPC64 ? GPR_64 : GPR_32;
 
   std::vector<std::pair<unsigned, SDOperand> > RegsToPass;
-  std::vector<SDOperand> MemOpChains;
+  SmallVector<SDOperand, 8> MemOpChains;
   for (unsigned i = 0; i != NumOps; ++i) {
     SDOperand Arg = Op.getOperand(5+2*i);
     
@@ -1096,7 +1096,8 @@ static SDOperand LowerCALL(SDOperand Op, SelectionDAG &DAG) {
     }
   }
   if (!MemOpChains.empty())
-    Chain = DAG.getNode(ISD::TokenFactor, MVT::Other, MemOpChains);
+    Chain = DAG.getNode(ISD::TokenFactor, MVT::Other,
+                        &MemOpChains[0], MemOpChains.size());
   
   // Build a sequence of copy-to-reg nodes chained together with token chain
   // and flag operands which copy the outgoing args into the appropriate regs.
@@ -1609,8 +1610,10 @@ static SDOperand BuildSplatI(int Val, unsigned SplatSize, MVT::ValueType VT,
   
   // Build a canonical splat for this value.
   SDOperand Elt = DAG.getConstant(Val, MVT::getVectorBaseType(CanonicalVT));
-  std::vector<SDOperand> Ops(MVT::getVectorNumElements(CanonicalVT), Elt);
-  SDOperand Res = DAG.getNode(ISD::BUILD_VECTOR, CanonicalVT, Ops);
+  SmallVector<SDOperand, 8> Ops;
+  Ops.assign(MVT::getVectorNumElements(CanonicalVT), Elt);
+  SDOperand Res = DAG.getNode(ISD::BUILD_VECTOR, CanonicalVT,
+                              &Ops[0], Ops.size());
   return DAG.getNode(ISD::BIT_CONVERT, VT, Res);
 }
 
@@ -1643,11 +1646,11 @@ static SDOperand BuildVSLDOI(SDOperand LHS, SDOperand RHS, unsigned Amt,
   LHS = DAG.getNode(ISD::BIT_CONVERT, MVT::v16i8, LHS);
   RHS = DAG.getNode(ISD::BIT_CONVERT, MVT::v16i8, RHS);
   
-  std::vector<SDOperand> Ops;
+  SDOperand Ops[16];
   for (unsigned i = 0; i != 16; ++i)
-    Ops.push_back(DAG.getConstant(i+Amt, MVT::i32));
+    Ops[i] = DAG.getConstant(i+Amt, MVT::i32);
   SDOperand T = DAG.getNode(ISD::VECTOR_SHUFFLE, MVT::v16i8, LHS, RHS,
-                            DAG.getNode(ISD::BUILD_VECTOR, MVT::v16i8, Ops));
+                            DAG.getNode(ISD::BUILD_VECTOR, MVT::v16i8, Ops,16));
   return DAG.getNode(ISD::BIT_CONVERT, VT, T);
 }
 
@@ -1879,12 +1882,12 @@ static SDOperand GeneratePerfectShuffle(unsigned PFEntry, SDOperand LHS,
   case OP_VSLDOI12:
     return BuildVSLDOI(OpLHS, OpRHS, 12, OpLHS.getValueType(), DAG);
   }
-  std::vector<SDOperand> Ops;
+  SDOperand Ops[16];
   for (unsigned i = 0; i != 16; ++i)
-    Ops.push_back(DAG.getConstant(ShufIdxs[i], MVT::i32));
+    Ops[i] = DAG.getConstant(ShufIdxs[i], MVT::i32);
   
   return DAG.getNode(ISD::VECTOR_SHUFFLE, OpLHS.getValueType(), OpLHS, OpRHS,
-                     DAG.getNode(ISD::BUILD_VECTOR, MVT::v16i8, Ops));
+                     DAG.getNode(ISD::BUILD_VECTOR, MVT::v16i8, Ops, 16));
 }
 
 /// LowerVECTOR_SHUFFLE - Return the code we lower for VECTOR_SHUFFLE.  If this
@@ -1992,7 +1995,7 @@ static SDOperand LowerVECTOR_SHUFFLE(SDOperand Op, SelectionDAG &DAG) {
   MVT::ValueType EltVT = MVT::getVectorBaseType(V1.getValueType());
   unsigned BytesPerElement = MVT::getSizeInBits(EltVT)/8;
   
-  std::vector<SDOperand> ResultMask;
+  SmallVector<SDOperand, 16> ResultMask;
   for (unsigned i = 0, e = PermMask.getNumOperands(); i != e; ++i) {
     unsigned SrcElt;
     if (PermMask.getOperand(i).getOpcode() == ISD::UNDEF)
@@ -2005,7 +2008,8 @@ static SDOperand LowerVECTOR_SHUFFLE(SDOperand Op, SelectionDAG &DAG) {
                                            MVT::i8));
   }
   
-  SDOperand VPermMask = DAG.getNode(ISD::BUILD_VECTOR, MVT::v16i8, ResultMask);
+  SDOperand VPermMask = DAG.getNode(ISD::BUILD_VECTOR, MVT::v16i8,
+                                    &ResultMask[0], ResultMask.size());
   return DAG.getNode(PPCISD::VPERM, V1.getValueType(), V1, V2, VPermMask);
 }
 
@@ -2180,14 +2184,13 @@ static SDOperand LowerMUL(SDOperand Op, SelectionDAG &DAG) {
     OddParts = DAG.getNode(ISD::BIT_CONVERT, MVT::v16i8, OddParts);
     
     // Merge the results together.
-    std::vector<SDOperand> Ops;
+    SDOperand Ops[16];
     for (unsigned i = 0; i != 8; ++i) {
-      Ops.push_back(DAG.getConstant(2*i+1, MVT::i8));
-      Ops.push_back(DAG.getConstant(2*i+1+16, MVT::i8));
+      Ops[i*2  ] = DAG.getConstant(2*i+1, MVT::i8);
+      Ops[i*2+1] = DAG.getConstant(2*i+1+16, MVT::i8);
     }
-    
     return DAG.getNode(ISD::VECTOR_SHUFFLE, MVT::v16i8, EvenParts, OddParts,
-                       DAG.getNode(ISD::BUILD_VECTOR, MVT::v16i8, Ops));
+                       DAG.getNode(ISD::BUILD_VECTOR, MVT::v16i8, Ops, 16));
   } else {
     assert(0 && "Unknown mul to lower!");
     abort();

@@ -396,7 +396,7 @@ IA64TargetLowering::LowerCallTo(SDOperand Chain,
 
   // Emit all stores, make sure they occur before any copies into physregs.
   if (!Stores.empty())
-    Chain = DAG.getNode(ISD::TokenFactor, MVT::Other, Stores);
+    Chain = DAG.getNode(ISD::TokenFactor, MVT::Other, &Stores[0],Stores.size());
 
   static const unsigned IntArgRegs[] = {
     IA64::out0, IA64::out1, IA64::out2, IA64::out3, 

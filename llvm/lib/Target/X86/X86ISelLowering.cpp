@@ -2365,7 +2365,8 @@ X86TargetLowering::LowerBUILD_VECTOR(SDOperand Op, SelectionDAG &DAG) {
         MaskVec.push_back(DAG.getConstant(1-i+NumElems, EVT));
       else
         MaskVec.push_back(DAG.getConstant(i+NumElems, EVT));
-    SDOperand ShufMask = DAG.getNode(ISD::BUILD_VECTOR, MaskVT, MaskVec);
+    SDOperand ShufMask = DAG.getNode(ISD::BUILD_VECTOR, MaskVT,
+                                     &MaskVec[0], MaskVec.size());
     return DAG.getNode(ISD::VECTOR_SHUFFLE, VT, V[0], V[1], ShufMask);
   }
 
@@ -2501,14 +2502,15 @@ X86TargetLowering::LowerVECTOR_SHUFFLE(SDOperand Op, SelectionDAG &DAG) {
         MaskVec.push_back(PermMask.getOperand(i));
       for (unsigned i = 4; i != 8; ++i)
         MaskVec.push_back(DAG.getConstant(i, BaseVT));
-      SDOperand Mask = DAG.getNode(ISD::BUILD_VECTOR, MaskVT, MaskVec);
+      SDOperand Mask = DAG.getNode(ISD::BUILD_VECTOR, MaskVT,
+                                   &MaskVec[0], MaskVec.size());
       V1 = DAG.getNode(ISD::VECTOR_SHUFFLE, VT, V1, V2, Mask);
       MaskVec.clear();
       for (unsigned i = 0; i != 4; ++i)
         MaskVec.push_back(DAG.getConstant(i, BaseVT));
       for (unsigned i = 4; i != 8; ++i)
         MaskVec.push_back(PermMask.getOperand(i));
-      Mask = DAG.getNode(ISD::BUILD_VECTOR, MaskVT, MaskVec);
+      Mask = DAG.getNode(ISD::BUILD_VECTOR, MaskVT, &MaskVec[0],MaskVec.size());
       return DAG.getNode(ISD::VECTOR_SHUFFLE, VT, V1, V2, Mask);
     }
   } else {
@@ -2558,7 +2560,8 @@ X86TargetLowering::LowerVECTOR_SHUFFLE(SDOperand Op, SelectionDAG &DAG) {
     }
     if (NumLo <= 2 && NumHi <= 2) {
       V1 = DAG.getNode(ISD::VECTOR_SHUFFLE, VT, V1, V2,
-                       DAG.getNode(ISD::BUILD_VECTOR, MaskVT, Mask1));
+                       DAG.getNode(ISD::BUILD_VECTOR, MaskVT,
+                                   &Mask1[0], Mask1.size()));
       for (unsigned i = 0; i != NumElems; ++i) {
         if (Locs[i].first == -1)
           continue;
@@ -2570,7 +2573,8 @@ X86TargetLowering::LowerVECTOR_SHUFFLE(SDOperand Op, SelectionDAG &DAG) {
       }
 
       return DAG.getNode(ISD::VECTOR_SHUFFLE, VT, V1, V1,
-                         DAG.getNode(ISD::BUILD_VECTOR, MaskVT, Mask2));
+                         DAG.getNode(ISD::BUILD_VECTOR, MaskVT,
+                                     &Mask2[0], Mask2.size()));
     }
 
     // Break it into (shuffle shuffle_hi, shuffle_lo).
@@ -2604,10 +2608,12 @@ X86TargetLowering::LowerVECTOR_SHUFFLE(SDOperand Op, SelectionDAG &DAG) {
 
     SDOperand LoShuffle =
       DAG.getNode(ISD::VECTOR_SHUFFLE, VT, V1, V2,
-                  DAG.getNode(ISD::BUILD_VECTOR, MaskVT, LoMask));
+                  DAG.getNode(ISD::BUILD_VECTOR, MaskVT,
+                              &LoMask[0], LoMask.size()));
     SDOperand HiShuffle = 
       DAG.getNode(ISD::VECTOR_SHUFFLE, VT, V1, V2,
-                  DAG.getNode(ISD::BUILD_VECTOR, MaskVT, HiMask));
+                  DAG.getNode(ISD::BUILD_VECTOR, MaskVT,
+                              &HiMask[0], HiMask.size()));
     std::vector<SDOperand> MaskOps;
     for (unsigned i = 0; i != NumElems; ++i) {
       if (Locs[i].first == -1) {
@@ -2618,7 +2624,8 @@ X86TargetLowering::LowerVECTOR_SHUFFLE(SDOperand Op, SelectionDAG &DAG) {
       }
     }
     return DAG.getNode(ISD::VECTOR_SHUFFLE, VT, LoShuffle, HiShuffle,
-                       DAG.getNode(ISD::BUILD_VECTOR, MaskVT, MaskOps));
+                       DAG.getNode(ISD::BUILD_VECTOR, MaskVT,
+                                   &MaskOps[0], MaskOps.size()));
   }
 
   return SDOperand();
@@ -2651,7 +2658,8 @@ X86TargetLowering::LowerEXTRACT_VECTOR_ELT(SDOperand Op, SelectionDAG &DAG) {
     IdxVec.push_back(DAG.getNode(ISD::UNDEF, MVT::getVectorBaseType(MaskVT)));
     IdxVec.push_back(DAG.getNode(ISD::UNDEF, MVT::getVectorBaseType(MaskVT)));
     IdxVec.push_back(DAG.getNode(ISD::UNDEF, MVT::getVectorBaseType(MaskVT)));
-    SDOperand Mask = DAG.getNode(ISD::BUILD_VECTOR, MaskVT, IdxVec);
+    SDOperand Mask = DAG.getNode(ISD::BUILD_VECTOR, MaskVT,
+                                 &IdxVec[0], IdxVec.size());
     Vec = DAG.getNode(ISD::VECTOR_SHUFFLE, Vec.getValueType(),
                       Vec, Vec, Mask);
     return DAG.getNode(ISD::EXTRACT_VECTOR_ELT, VT, Vec,
@@ -2669,7 +2677,8 @@ X86TargetLowering::LowerEXTRACT_VECTOR_ELT(SDOperand Op, SelectionDAG &DAG) {
     std::vector<SDOperand> IdxVec;
     IdxVec.push_back(DAG.getConstant(1, MVT::getVectorBaseType(MaskVT)));
     IdxVec.push_back(DAG.getNode(ISD::UNDEF, MVT::getVectorBaseType(MaskVT)));
-    SDOperand Mask = DAG.getNode(ISD::BUILD_VECTOR, MaskVT, IdxVec);
+    SDOperand Mask = DAG.getNode(ISD::BUILD_VECTOR, MaskVT,
+                                 &IdxVec[0], IdxVec.size());
     Vec = DAG.getNode(ISD::VECTOR_SHUFFLE, Vec.getValueType(),
                       Vec, DAG.getNode(ISD::UNDEF, Vec.getValueType()), Mask);
     return DAG.getNode(ISD::EXTRACT_VECTOR_ELT, VT, Vec,
@@ -2706,7 +2715,8 @@ X86TargetLowering::LowerINSERT_VECTOR_ELT(SDOperand Op, SelectionDAG &DAG) {
       for (unsigned i = 1; i <= 3; ++i)
         MaskVec.push_back(DAG.getConstant(i, BaseVT));
       return DAG.getNode(ISD::VECTOR_SHUFFLE, VT, N0, N1,
-                         DAG.getNode(ISD::BUILD_VECTOR, MaskVT, MaskVec));
+                         DAG.getNode(ISD::BUILD_VECTOR, MaskVT,
+                                     &MaskVec[0], MaskVec.size()));
     } else {
       // Use two pinsrw instructions to insert a 32 bit value.
       Idx <<= 1;
