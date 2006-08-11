@@ -46,3 +46,11 @@ void test5() {
 
   if (0);
 }
+
+void test6() {
+  if (sizeof (int){ 1});   // sizeof compound literal
+  if (sizeof (int));       // sizeof type
+
+  (int)4;   // cast.
+  (int){4}; // compound literal.
+}
