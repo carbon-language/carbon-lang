@@ -557,21 +557,30 @@ example reports that can do fancy stuff.</p>
 <div class="doc_text">
 
 <p>
-The <a href="http://llvm.org/testresults/">LLVM Nightly Testers</a>
+The <a href="http://llvm.org/nightlytest/">LLVM Nightly Testers</a>
 automatically check out an LLVM tree, build it, run the "nightly" 
-program test (described above), run  all of the feature and regression tests, 
-and then delete the checked out tree.  This tester is designed to ensure that 
-programs don't break as well as keep track of LLVM's progress over time.</p>
+program test (described above), run all of the feature and regression tests, 
+delete the checked out tree, and then submit the results to 
+<a href="http://llvm.org/nightlytest/">http://llvm.org/nightlytest/</a>. 
+After test results are submitted to 
+<a href="http://llvm.org/nightlytest/">http://llvm.org/nightlytest/</a>,
+they are processed and displayed on the tests page. An email to 
+<a href="http://lists.cs.uiuc.edu/pipermail/llvm-testresults/">
+llvm-testresults@cs.uiuc.edu</a> summarizing the results is also generated. 
+This testing scheme is designed to ensure that programs don't break as well 
+as keep track of LLVM's progress over time.</p>
 
-<p>If you'd like to set up an instance of the nightly tester to run on your
-machine, take a look at the comments at the top of the
-<tt>utils/NightlyTest.pl</tt> file.  We usually run it from a crontab entry
-that looks like this:</p>
+<p>If you'd like to set up an instance of the nightly tester to run on your 
+machine, take a look at the comments at the top of the 
+<tt>utils/NewNightlyTest.pl</tt> file. If you decide to set up a nightly tester 
+please choose a unique nickname and invoke <tt>utils/NewNightlyTest.pl</tt> 
+with the "-nickname [yournickname]" command line option. We usually run it 
+from a crontab entry that looks like this:</p>
 
 <div class="doc_code">
 <pre>
-5 3 * * *  $HOME/llvm/utils/NightlyTest.pl -parallel $CVSROOT \
-           $HOME/buildtest $HOME/cvs/testresults
+5 3 * * *  $HOME/llvm/utils/NewNightlyTest.pl -parallel -nickname Nickname \
+           $CVSROOT $HOME/buildtest $HOME/cvs/testresults
 </pre>
 </div>
 
@@ -589,17 +598,24 @@ export LLVMGCCDIR=/proj/work/llvm/cfrontend/install
 export PATH=/proj/install/bin:$LLVMGCCDIR/bin:$PATH
 export LD_LIBRARY_PATH=/proj/install/lib
 cd $BASE
-cp /proj/work/llvm/llvm/utils/NightlyTest.pl .
-nice ./NightlyTest.pl -nice -release -verbose -parallel -enable-linscan \
-   -noexternals 2&gt;&amp;1 &gt; output.log
-mail -s 'X86 nightly tester results' <a href="http://mail.cs.uiuc.edu/mailman/\
-   listinfo/llvm-testresults">llvm-testresults@cs.uiuc.edu</a> &lt; output.log
+cp /proj/work/llvm/llvm/utils/NewNightlyTest.pl .
+nice ./NewNightlyTest.pl -nice -release -verbose -parallel -enable-linscan \
+   -nickname NightlyTester -noexternals 2&gt;&amp;1 &gt; output.log
 </pre>
 </div>
 
-<p>Take a look at the <tt>NightlyTest.pl</tt> file to see what all of the flags
-and strings do.  If you start running the nightly tests, please let us know and
-we'll link your page to the global tester page.  Thanks!</p>
+<p>It is also possible to specify the the location your nightly test results
+are submitted. You can do this by passing the command line option
+"-submit-server [server_address]" and "-submit-script [script_on_server]" to
+<tt>utils/NewNightlyTest.pl</tt>. For example, to submit to the llvm.org 
+nightly test results page, you would invoke the nightly test script with 
+"-submit-server llvm.org -submit-script /nightlytest/NightlyTestAccept.cgi". 
+If these options are not specified, the nightly test script sends the results 
+to the llvm.org nightly test results page.</p>
+
+<p>Take a look at the <tt>NewNightlyTest.pl</tt> file to see what all of the
+flags and strings do.  If you start running the nightly tests, please let us
+know. Thanks!</p>
 
 </div>
 
