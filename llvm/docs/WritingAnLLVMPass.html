@@ -102,7 +102,7 @@
 </ol>
 
 <div class="doc_author">
-  <p>Written by <a href="mailto:sabre@nondot.org">Chris Lattner</a>, 
+  <p>Written by <a href="mailto:sabre@nondot.org">Chris Lattner</a> and
   <a href="mailto:jlaskey@apple.com">Jim Laskey</a></p>
 </div>
 
@@ -1484,7 +1484,7 @@ allocator machine pass.</p>
 .cpp file add the following include;</p>
 
 <div class="doc_code"><pre>
-  #include ""llvm/CodeGen/RegAllocRegistry.h""
+  #include "llvm/CodeGen/RegAllocRegistry.h"
 </pre></div>
 
 <p>Also in your register allocator .cpp file, define a creator function in the
@@ -1522,8 +1522,8 @@ $ llc --help
 
 <p>And that's it.  The user is now free to use <tt>-regalloc=myregalloc</tt> as
 an option.  Registering instruction schedulers is similar except use the
-<tt>RegisterRegAlloc</tt> class.  Note that the
-<tt>RegisterRegAlloc::FunctionPassCtor</tt> is significantly different from
+<tt>RegisterScheduler</tt> class.  Note that the
+<tt>RegisterScheduler::FunctionPassCtor</tt> is significantly different from
 <tt>RegisterRegAlloc::FunctionPassCtor</tt>.</p>
 
 <p>To force the load/linking of your register allocator into the llc/lli tools,
