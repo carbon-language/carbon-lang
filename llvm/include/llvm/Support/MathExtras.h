@@ -307,7 +307,4 @@ int IsInf (double d);
 
 } // End llvm namespace
 
-FORCE_DEFINING_FILE_TO_BE_LINKED(SupportIsInf)
-FORCE_DEFINING_FILE_TO_BE_LINKED(SupportIsNAN)
-
 #endif

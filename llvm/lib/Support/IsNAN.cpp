@@ -12,7 +12,6 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Config/config.h"
-#include "llvm/System/IncludeFile.h"
 
 #if HAVE_ISNAN_IN_MATH_H
 # include <math.h>
@@ -29,10 +28,6 @@ using std::isnan;
 #endif
 
 namespace llvm {
-
-int IsNAN (float f)  { return isnan (f); }
-int IsNAN (double d) { return isnan (d); }
-
+  int IsNAN(float f)  { return isnan(f); }
+  int IsNAN(double d) { return isnan(d); }
 } // end namespace llvm;
-
-DEFINING_FILE_FOR(SupportIsNAN)

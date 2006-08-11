@@ -6,9 +6,12 @@
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
 //
 //===----------------------------------------------------------------------===//
+//
+// Platform-independent wrapper around C99 isinf()
+//
+//===----------------------------------------------------------------------===//
 
 #include "llvm/Config/config.h"
-#include "llvm/System/IncludeFile.h"
 
 #if HAVE_ISINF_IN_MATH_H
 # include <math.h>
@@ -33,16 +36,14 @@ static int isinf(double x) { return !finite(x) && x==x; }
 #elif defined(__hpux)
 // HP-UX is "special"
 #include <math.h>
-static int isinf(double x) { return ((x)==INFINITY)||((x)==-INFINITY); }
+static int isinf(double x) { return ((x) == INFINITY) || ((x) == -INFINITY); }
 #else
 # error "Don't know how to get isinf()"
 #endif
 
 namespace llvm {
 
-int IsInf (float f)  { return isinf (f); }
-int IsInf (double d) { return isinf (d); }
+int IsInf(float f)  { return isinf(f); }
+int IsInf(double d) { return isinf(d); }
 
 } // end namespace llvm;
-
-DEFINING_FILE_FOR(SupportIsInf)
