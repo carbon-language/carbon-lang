@@ -174,7 +174,6 @@ private:
 
   void ParseCastExpression(bool isUnaryExpression);
   void ParseSizeofAlignofExpression();
-  void ParsePostfixExpression();
   
   /// ParenParseOption - Control what ParseParenExpression will parse.
   enum ParenParseOption {

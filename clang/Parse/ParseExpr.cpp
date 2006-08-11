@@ -53,6 +53,7 @@ void Parser::ParseAssignmentExpression() {
 ///       cast-expression: [C99 6.5.4]
 ///         unary-expression
 ///         '(' type-name ')' cast-expression
+///
 ///       unary-expression:  [C99 6.5.3]
 ///         postfix-expression
 ///         '++' unary-expression
@@ -63,103 +64,11 @@ void Parser::ParseAssignmentExpression() {
 /// [GNU]   '__alignof' unary-expression
 /// [GNU]   '__alignof' '(' type-name ')'
 /// [GNU]   '&&' identifier
+///
 ///       unary-operator: one of
 ///         '&'  '*'  '+'  '-'  '~'  '!'
 /// [GNU]   '__extension__'  '__real'  '__imag'
 ///
-///
-void Parser::ParseCastExpression(bool isUnaryExpression) {
-  // If this doesn't start with an '(', then it is a unary-expression.
-  switch (Tok.getKind()) {
-  case tok::l_paren:
-    // If this expression is limited to being a unary-expression, the parent can
-    // not start a cast expression.
-    ParenParseOption ParenExprType =
-      isUnaryExpression ? CompoundLiteral : CastExpr;
-    ParseParenExpression(ParenExprType);
-
-    switch (ParenExprType) {
-    case SimpleExpr: return;    // Nothing else to do.
-    case CompoundStmt: return;  // Nothing else to do.
-    case CompoundLiteral:
-      // We parsed '(' type-name ')' '{' ... '}'.  If any suffixes of
-      // postfix-expression exist, parse them now.
-      //Diag(Tok, diag::err_parse_error);
-      //assert(0 && "FIXME");
-      return;
-    case CastExpr:
-      // We parsed '(' type-name ')' and the thing after it wasn't a '{'.  Parse
-      // the cast-expression that follows it next.
-      ParseCastExpression(false);
-      return;
-    }
-  default:                 // unary-expression: postfix-expression
-    ParsePostfixExpression();
-    break;
-  case tok::plusplus:      // unary-expression: '++' unary-expression
-  case tok::minusminus:    // unary-expression: '--' unary-expression
-    ConsumeToken();
-    ParseCastExpression(true);
-    break;
-  case tok::amp:           // unary-expression: '&' cast-expression
-  case tok::star:          // unary-expression: '*' cast-expression
-  case tok::plus:          // unary-expression: '+' cast-expression
-  case tok::minus:         // unary-expression: '-' cast-expression
-  case tok::tilde:         // unary-expression: '~' cast-expression
-  case tok::exclaim:       // unary-expression: '!' cast-expression
-  case tok::kw___real:     // unary-expression: '__real' cast-expression [GNU]
-  case tok::kw___imag:     // unary-expression: '__real' cast-expression [GNU]
-  //case tok::kw__extension__:  [TODO]
-    ConsumeToken();
-    ParseCastExpression(false);
-    break;
-    
-  case tok::kw_sizeof:     // unary-expression: 'sizeof' unary-expression
-                           // unary-expression: 'sizeof' '(' type-name ')'
-  case tok::kw___alignof:  // unary-expression: '__alignof' unary-expression
-                           // unary-expression: '__alignof' '(' type-name ')'
-    ParseSizeofAlignofExpression();
-    break;
-  case tok::ampamp:        // unary-expression: '&&' identifier
-    Diag(Tok, diag::ext_gnu_address_of_label);
-    ConsumeToken();
-    if (Tok.getKind() == tok::identifier) {
-      ConsumeToken();
-    } else {
-      Diag(Tok, diag::err_expected_ident);
-      ConsumeToken(); // FIXME: Should just return error!
-      return;
-    }
-    break;
-  }
-}
-
-/// ParseSizeofAlignofExpression - Parse a sizeof or alignof expression.
-///       unary-expression:  [C99 6.5.3]
-///         'sizeof' unary-expression
-///         'sizeof' '(' type-name ')'
-/// [GNU]   '__alignof' unary-expression
-/// [GNU]   '__alignof' '(' type-name ')'
-void Parser::ParseSizeofAlignofExpression() {
-  assert((Tok.getKind() == tok::kw_sizeof ||
-          Tok.getKind() == tok::kw___alignof) &&
-         "Not a sizeof/alignof expression!");
-  ConsumeToken();
-  
-  // If the operand doesn't start with an '(', it must be an expression.
-  if (Tok.getKind() != tok::l_paren) {
-    ParseCastExpression(true);
-    return;
-  }
-  
-  // If it starts with a '(', we know that it is either a parenthesized
-  // type-name, or it is a unary-expression that starts with a compound literal,
-  // or starts with a primary-expression that is a parenthesized expression.
-  ParenParseOption ExprType = CastExpr;
-  ParseParenExpression(ExprType);
-}
-
-/// ParsePostfixExpression
 ///       postfix-expression: [C99 6.5.2]
 ///         primary-expression
 ///         postfix-expression '[' expression ']'
@@ -206,9 +115,41 @@ void Parser::ParseSizeofAlignofExpression() {
 /// [GNU]   offsetof-member-designator '.' identifier
 /// [GNU]   offsetof-member-designator '[' expression ']'
 ///
-void Parser::ParsePostfixExpression() {
-  // First step, parse the primary expression.
+///
+void Parser::ParseCastExpression(bool isUnaryExpression) {
+  // This handles all of cast-expression, unary-expression, postfix-expression,
+  // and primary-expression.  We handle them together like this for efficiency
+  // and to simplify handling of an expression starting with a '(' token: which
+  // may be one of a parenthesized expression, cast-expression, compound literal
+  // expression, or statement expression.
+  //
+  // If the parsed tokens consist of a primary-expression, the cases below
+  // 'break' out of the switch.  This allows the postfix expression pieces to
+  // be applied to them.  Cases that cannot be followed by postfix exprs should
+  // return instead.
   switch (Tok.getKind()) {
+  case tok::l_paren:
+    // If this expression is limited to being a unary-expression, the parent can
+    // not start a cast expression.
+    ParenParseOption ParenExprType =
+      isUnaryExpression ? CompoundLiteral : CastExpr;
+    ParseParenExpression(ParenExprType);
+
+    switch (ParenExprType) {
+    case SimpleExpr:   break;    // Nothing else to do.
+    case CompoundStmt: break;  // Nothing else to do.
+    case CompoundLiteral:
+      // We parsed '(' type-name ')' '{' ... '}'.  If any suffixes of
+      // postfix-expression exist, parse them now.
+      break;
+    case CastExpr:
+      // We parsed '(' type-name ')' and the thing after it wasn't a '{'.  Parse
+      // the cast-expression that follows it next.
+      ParseCastExpression(false);
+      return;
+    }
+    break;  // These can be followed by postfix-expr pieces.
+      
     // primary-expression
   case tok::identifier:        // primary-expression: identifier
                                // constant: enumeration-constant
@@ -223,19 +164,46 @@ void Parser::ParsePostfixExpression() {
   case tok::string_literal:    // primary-expression: string-literal
     ParseStringLiteralExpression();
     break;
-  case tok::l_paren: {  // primary-expr: '(' expression ')'
-                        // primary-expr: '(' compound-statement ')'
-                        // postfix-expr: '(' type-name ')' '{' init-list '}'
-                        // postfix-expr: '(' type-name ')' '{' init-list ',' '}'
-    ParenParseOption ParenExprType = CompoundLiteral;
-    ParseParenExpression(ParenExprType);
-    break;
-  }
   case tok::kw___builtin_va_arg:
   case tok::kw___builtin_offsetof:
   case tok::kw___builtin_choose_expr:
   case tok::kw___builtin_types_compatible_p:
     assert(0 && "FIXME: UNIMP!");
+  case tok::plusplus:      // unary-expression: '++' unary-expression
+  case tok::minusminus:    // unary-expression: '--' unary-expression
+    ConsumeToken();
+    ParseCastExpression(true);
+    return;
+  case tok::amp:           // unary-expression: '&' cast-expression
+  case tok::star:          // unary-expression: '*' cast-expression
+  case tok::plus:          // unary-expression: '+' cast-expression
+  case tok::minus:         // unary-expression: '-' cast-expression
+  case tok::tilde:         // unary-expression: '~' cast-expression
+  case tok::exclaim:       // unary-expression: '!' cast-expression
+  case tok::kw___real:     // unary-expression: '__real' cast-expression [GNU]
+  case tok::kw___imag:     // unary-expression: '__real' cast-expression [GNU]
+  //case tok::kw__extension__:  [TODO]
+    ConsumeToken();
+    ParseCastExpression(false);
+    return;
+    
+  case tok::kw_sizeof:     // unary-expression: 'sizeof' unary-expression
+                           // unary-expression: 'sizeof' '(' type-name ')'
+  case tok::kw___alignof:  // unary-expression: '__alignof' unary-expression
+                           // unary-expression: '__alignof' '(' type-name ')'
+    ParseSizeofAlignofExpression();
+    return;
+  case tok::ampamp:        // unary-expression: '&&' identifier
+    Diag(Tok, diag::ext_gnu_address_of_label);
+    ConsumeToken();
+    if (Tok.getKind() == tok::identifier) {
+      ConsumeToken();
+    } else {
+      Diag(Tok, diag::err_expected_ident);
+      ConsumeToken(); // FIXME: Should just return error!
+      return;
+    }
+    return;
   default:
     Diag(Tok, diag::err_expected_expression);
     // Guarantee forward progress.
@@ -251,49 +219,74 @@ void Parser::ParsePostfixExpression() {
   SourceLocation Loc;
   while (1) {
     switch (Tok.getKind()) {
-    default:
-      return;
-    case tok::l_square:    // postfix-expression: p-e '[' expression ']'
-      Loc = Tok.getLocation();
-      ConsumeBracket();
-      ParseExpression();
-      // Match the ']'.
-      MatchRHSPunctuation(tok::r_square, Loc, "[", diag::err_expected_rsquare);
-      break;
-      
-    case tok::l_paren:     // p-e: p-e '(' argument-expression-list[opt] ')'
-      Loc = Tok.getLocation();
-      ConsumeParen();
-
-      while (1) {
-        // FIXME: This should be argument-expression!
-        ParseAssignmentExpression();
-        
-        if (Tok.getKind() != tok::comma)
-          break;
-        ConsumeToken();  // Next argument.
-      }
-        
-      // Match the ')'.
-      MatchRHSPunctuation(tok::r_paren, Loc, "(", diag::err_expected_rparen);
-      break;
-      
-    case tok::arrow:       // postfix-expression: p-e '->' identifier
-    case tok::period:      // postfix-expression: p-e '.' identifier
-      ConsumeToken();
-      if (Tok.getKind() != tok::identifier) {
-        Diag(Tok, diag::err_expected_ident);
+      default:
         return;
-      }
-      ConsumeToken();
-      break;
-      
-    case tok::plusplus:    // postfix-expression: postfix-expression '++'
-    case tok::minusminus:  // postfix-expression: postfix-expression '--'
-      ConsumeToken();
-      break;
+      case tok::l_square:    // postfix-expression: p-e '[' expression ']'
+        Loc = Tok.getLocation();
+        ConsumeBracket();
+        ParseExpression();
+        // Match the ']'.
+        MatchRHSPunctuation(tok::r_square, Loc, "[", diag::err_expected_rsquare);
+        break;
+        
+      case tok::l_paren:     // p-e: p-e '(' argument-expression-list[opt] ')'
+        Loc = Tok.getLocation();
+        ConsumeParen();
+        
+        while (1) {
+          // FIXME: This should be argument-expression!
+          ParseAssignmentExpression();
+          
+          if (Tok.getKind() != tok::comma)
+            break;
+          ConsumeToken();  // Next argument.
+        }
+          
+          // Match the ')'.
+          MatchRHSPunctuation(tok::r_paren, Loc, "(", diag::err_expected_rparen);
+        break;
+        
+      case tok::arrow:       // postfix-expression: p-e '->' identifier
+      case tok::period:      // postfix-expression: p-e '.' identifier
+        ConsumeToken();
+        if (Tok.getKind() != tok::identifier) {
+          Diag(Tok, diag::err_expected_ident);
+          return;
+        }
+          ConsumeToken();
+        break;
+        
+      case tok::plusplus:    // postfix-expression: postfix-expression '++'
+      case tok::minusminus:  // postfix-expression: postfix-expression '--'
+        ConsumeToken();
+        break;
     }
   }
+}
+
+/// ParseSizeofAlignofExpression - Parse a sizeof or alignof expression.
+///       unary-expression:  [C99 6.5.3]
+///         'sizeof' unary-expression
+///         'sizeof' '(' type-name ')'
+/// [GNU]   '__alignof' unary-expression
+/// [GNU]   '__alignof' '(' type-name ')'
+void Parser::ParseSizeofAlignofExpression() {
+  assert((Tok.getKind() == tok::kw_sizeof ||
+          Tok.getKind() == tok::kw___alignof) &&
+         "Not a sizeof/alignof expression!");
+  ConsumeToken();
+  
+  // If the operand doesn't start with an '(', it must be an expression.
+  if (Tok.getKind() != tok::l_paren) {
+    ParseCastExpression(true);
+    return;
+  }
+  
+  // If it starts with a '(', we know that it is either a parenthesized
+  // type-name, or it is a unary-expression that starts with a compound literal,
+  // or starts with a primary-expression that is a parenthesized expression.
+  ParenParseOption ExprType = CastExpr;
+  ParseParenExpression(ExprType);
 }
 
 /// ParseStringLiteralExpression - This handles the various token types that
