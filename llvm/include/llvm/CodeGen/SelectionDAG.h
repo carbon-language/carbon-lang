@@ -52,9 +52,6 @@ class SelectionDAG {
   // AllNodes - A linked list of nodes in the current DAG.
   ilist<SDNode> AllNodes;
 
-  // ValueNodes - track SrcValue nodes
-  std::map<std::pair<const Value*, int>, SDNode*> ValueNodes;
-
 public:
   SelectionDAG(TargetLowering &tli, MachineFunction &mf, MachineDebugInfo *di)
   : TLI(tli), MF(mf), DI(di) {
@@ -110,14 +107,18 @@ public:
   void RemoveDeadNodes();
 
   SDOperand getString(const std::string &Val);
-  SDOperand getConstant(uint64_t Val, MVT::ValueType VT);
-  SDOperand getTargetConstant(uint64_t Val, MVT::ValueType VT);
+  SDOperand getConstant(uint64_t Val, MVT::ValueType VT, bool isTarget = false);
+  SDOperand getTargetConstant(uint64_t Val, MVT::ValueType VT) {
+    return getConstant(Val, VT, true);
+  }
   SDOperand getConstantFP(double Val, MVT::ValueType VT);
   SDOperand getTargetConstantFP(double Val, MVT::ValueType VT);
   SDOperand getGlobalAddress(const GlobalValue *GV, MVT::ValueType VT,
-                             int offset = 0);
+                             int offset = 0, bool isTargetGA = false);
   SDOperand getTargetGlobalAddress(const GlobalValue *GV, MVT::ValueType VT,
-                                   int offset = 0);
+                                   int offset = 0) {
+    return getGlobalAddress(GV, VT, offset, true);
+  }
   SDOperand getFrameIndex(int FI, MVT::ValueType VT);
   SDOperand getTargetFrameIndex(int FI, MVT::ValueType VT);
   SDOperand getJumpTable(int JTI, MVT::ValueType VT);
@@ -449,13 +450,8 @@ private:
   std::list<std::vector<MVT::ValueType> > VTList;
   
   // Maps to auto-CSE operations.
-  std::map<std::pair<unsigned, MVT::ValueType>, RegisterSDNode*> RegNodes;
   std::vector<CondCodeSDNode*> CondCodeNodes;
 
-  std::map<std::pair<const GlobalValue*, int>, SDNode*> GlobalValues;
-  std::map<std::pair<const GlobalValue*, int>, SDNode*> TargetGlobalValues;
-  std::map<std::pair<uint64_t, MVT::ValueType>, SDNode*> Constants;
-  std::map<std::pair<uint64_t, MVT::ValueType>, SDNode*> TargetConstants;
   std::map<std::pair<uint64_t, MVT::ValueType>, SDNode*> ConstantFPs;
   std::map<std::pair<uint64_t, MVT::ValueType>, SDNode*> TargetConstantFPs;
   std::map<int, SDNode*> FrameIndices, TargetFrameIndices, JumpTableIndices,
@@ -464,7 +460,6 @@ private:
                      std::pair<int, unsigned> >, SDNode*> ConstantPoolIndices;
   std::map<std::pair<Constant *,
                  std::pair<int, unsigned> >, SDNode*> TargetConstantPoolIndices;
-  std::map<MachineBasicBlock *, SDNode*> BBNodes;
   std::vector<SDNode*> ValueTypeNodes;
   std::map<std::string, SDNode*> ExternalSymbols;
   std::map<std::string, SDNode*> TargetExternalSymbols;

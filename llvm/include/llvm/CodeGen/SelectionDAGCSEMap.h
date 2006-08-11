@@ -98,11 +98,22 @@ namespace llvm {
       void SetOperands(const SDOperand *Ops, unsigned NumOps);
       void AddOperand(SDOperand Op);
       void AddPointer(const void *Ptr);
-      void AddInteger(int I) {
+      void AddInteger(signed I) {
         Bits.push_back((I >>  0) & 0xFF);
         Bits.push_back((I >>  8) & 0xFF);
         Bits.push_back((I >> 16) & 0xFF);
         Bits.push_back((I >> 24) & 0xFF);
+      }
+      void AddInteger(unsigned I) {
+        AddInteger((signed)I);
+      }
+      void AddInteger(uint64_t I) {
+        union {
+          uint64_t x;
+          unsigned char A[8];
+        };
+        x = I;
+        Bits.append(A, A+8);
       }
       
       unsigned ComputeHash() const;
