@@ -966,7 +966,7 @@ public:
       Subtarget(TM.getSubtarget<SparcSubtarget>()) {
   }
 
-  void Select(SDOperand &Result, SDOperand Op);
+  SDNode *Select(SDOperand &Result, SDOperand Op);
 
   // Complex Pattern Selectors.
   bool SelectADDRrr(SDOperand N, SDOperand &R1, SDOperand &R2);
@@ -1063,12 +1063,12 @@ bool SparcDAGToDAGISel::SelectADDRrr(SDOperand Addr, SDOperand &R1,
   return true;
 }
 
-void SparcDAGToDAGISel::Select(SDOperand &Result, SDOperand Op) {
+SDNode *SparcDAGToDAGISel::Select(SDOperand &Result, SDOperand Op) {
   SDNode *N = Op.Val;
   if (N->getOpcode() >= ISD::BUILTIN_OP_END &&
       N->getOpcode() < SPISD::FIRST_NUMBER) {
     Result = Op;
-    return;   // Already selected.
+    return NULL;   // Already selected.
   }
 
   switch (N->getOpcode()) {
@@ -1094,7 +1094,7 @@ void SparcDAGToDAGISel::Select(SDOperand &Result, SDOperand Op) {
     // FIXME: Handle div by immediate.
     unsigned Opcode = N->getOpcode() == ISD::SDIV ? SP::SDIVrr : SP::UDIVrr;
     Result = CurDAG->SelectNodeTo(N, Opcode, MVT::i32, DivLHS, DivRHS, TopPart);
-    return;
+    return NULL;
   }    
   case ISD::MULHU:
   case ISD::MULHS: {
@@ -1107,11 +1107,11 @@ void SparcDAGToDAGISel::Select(SDOperand &Result, SDOperand Op) {
                                         MulLHS, MulRHS);
     // The high part is in the Y register.
     Result = CurDAG->SelectNodeTo(N, SP::RDY, MVT::i32, SDOperand(Mul, 1));
-    return;
+    return NULL;
   }
   }
   
-  SelectCode(Result, Op);
+  return SelectCode(Result, Op);
 }
 
 

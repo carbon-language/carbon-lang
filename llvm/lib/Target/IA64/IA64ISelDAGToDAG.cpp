@@ -65,7 +65,7 @@ namespace {
     
     // Select - Convert the specified operand from a target-independent to a
     // target-specific node if it hasn't already been changed.
-    void Select(SDOperand &Result, SDOperand N);
+    SDNode *Select(SDOperand &Result, SDOperand N);
     
     SDNode *SelectIntImmediateExpr(SDOperand LHS, SDOperand RHS,
                                    unsigned OCHi, unsigned OCLo,
@@ -296,12 +296,12 @@ SDOperand IA64DAGToDAGISel::SelectDIV(SDOperand Op) {
 
 // Select - Convert the specified operand from a target-independent to a
 // target-specific node if it hasn't already been changed.
-void IA64DAGToDAGISel::Select(SDOperand &Result, SDOperand Op) {
+SDNode *IA64DAGToDAGISel::Select(SDOperand &Result, SDOperand Op) {
   SDNode *N = Op.Val;
   if (N->getOpcode() >= ISD::BUILTIN_OP_END &&
       N->getOpcode() < IA64ISD::FIRST_NUMBER) {
     Result = Op;
-    return;   // Already selected.
+    return NULL;   // Already selected.
   }
 
   switch (N->getOpcode()) {
@@ -376,15 +376,14 @@ void IA64DAGToDAGISel::Select(SDOperand &Result, SDOperand Op) {
    for (unsigned i = 0, e = CallResults.size(); i != e; ++i)
      ReplaceUses(Op.getValue(i), CallResults[i]);
    Result = CallResults[Op.ResNo];
-   return;
+   return NULL;
   }
   
   case IA64ISD::GETFD: {
     SDOperand Input;
     AddToQueue(Input, N->getOperand(0));
     Result = SDOperand(CurDAG->getTargetNode(IA64::GETFD, MVT::i64, Input), 0);
-    ReplaceUses(Op, Result);
-    return;
+    return Result.Val;
   } 
   
   case ISD::FDIV:
@@ -393,8 +392,7 @@ void IA64DAGToDAGISel::Select(SDOperand &Result, SDOperand Op) {
   case ISD::SREM:
   case ISD::UREM:
     Result = SelectDIV(Op);
-    ReplaceUses(Op, Result);
-    return;
+    return Result.Val;
  
   case ISD::TargetConstantFP: {
     SDOperand Chain = CurDAG->getEntryNode(); // this is a constant, so..
@@ -405,20 +403,20 @@ void IA64DAGToDAGISel::Select(SDOperand &Result, SDOperand Op) {
       Result = CurDAG->getCopyFromReg(Chain, IA64::F1, MVT::f64);
     } else
       assert(0 && "Unexpected FP constant!");
-    return;
+    return Result.Val;
   }
 
   case ISD::FrameIndex: { // TODO: reduce creepyness
     int FI = cast<FrameIndexSDNode>(N)->getIndex();
-    if (N->hasOneUse())
+    if (N->hasOneUse()) {
       Result = CurDAG->SelectNodeTo(N, IA64::MOV, MVT::i64,
                                   CurDAG->getTargetFrameIndex(FI, MVT::i64));
-    else {
+      return NULL;
+    } else {
       Result = SDOperand(CurDAG->getTargetNode(IA64::MOV, MVT::i64,
                                 CurDAG->getTargetFrameIndex(FI, MVT::i64)), 0);
-      ReplaceUses(Op, Result);
+      return Result.Val;
     }
-    return;
   }
 
   case ISD::ConstantPool: { // TODO: nuke the constant pool
@@ -429,8 +427,7 @@ void IA64DAGToDAGISel::Select(SDOperand &Result, SDOperand Op) {
                                                   CP->getAlignment());
     Result = SDOperand(CurDAG->getTargetNode(IA64::ADDL_GA, MVT::i64, // ?
 	                      CurDAG->getRegister(IA64::r1, MVT::i64), CPI), 0);
-    ReplaceUses(Op, Result);
-    return;
+    return Result.Val;
   }
 
   case ISD::GlobalAddress: {
@@ -439,8 +436,7 @@ void IA64DAGToDAGISel::Select(SDOperand &Result, SDOperand Op) {
     SDOperand Tmp = SDOperand(CurDAG->getTargetNode(IA64::ADDL_GA, MVT::i64, 
 	                          CurDAG->getRegister(IA64::r1, MVT::i64), GA), 0);
     Result = SDOperand(CurDAG->getTargetNode(IA64::LD8, MVT::i64, Tmp), 0);
-    ReplaceUses(Op, Result);
-    return;
+    return Result.Val;
   }
   
 /* XXX  case ISD::ExternalSymbol: {
@@ -475,7 +471,7 @@ void IA64DAGToDAGISel::Select(SDOperand &Result, SDOperand Op) {
                     SDOperand(CurDAG->getTargetNode(Opc, MVT::i64, Address), 0),
                                   CurDAG->getRegister(IA64::r0, MVT::i64), 
                                   Chain).getValue(Op.ResNo);
-        return;
+        return NULL;
       }
       /* otherwise, we want to load a bool into something bigger: LD1
          will do that for us, so we just fall through */
@@ -492,7 +488,7 @@ void IA64DAGToDAGISel::Select(SDOperand &Result, SDOperand Op) {
     // TODO: comment this
     Result = CurDAG->SelectNodeTo(N, Opc, N->getValueType(0), MVT::Other,
                                 Address, Chain).getValue(Op.ResNo);
-    return;
+    return NULL;
   }
   
   case ISD::TRUNCSTORE:
@@ -517,7 +513,7 @@ void IA64DAGToDAGISel::Select(SDOperand &Result, SDOperand Op) {
                                               CurDAG->getConstant(1, MVT::i64),
                                               Tmp), 0);
         Result = CurDAG->SelectNodeTo(N, Opc, MVT::Other, Address, Tmp, Chain);
-        return;
+        return NULL;
       }
       case MVT::i64: Opc = IA64::ST8;  break;
       case MVT::f64: Opc = IA64::STF8; break;
@@ -536,7 +532,7 @@ void IA64DAGToDAGISel::Select(SDOperand &Result, SDOperand Op) {
     AddToQueue(N1, N->getOperand(1));
     AddToQueue(N2, N->getOperand(2));
     Result = CurDAG->SelectNodeTo(N, Opc, MVT::Other, N2, N1, Chain);
-    return;
+    return NULL;
   }
 
   case ISD::BRCOND: {
@@ -548,7 +544,7 @@ void IA64DAGToDAGISel::Select(SDOperand &Result, SDOperand Op) {
     //FIXME - we do NOT need long branches all the time
     Result = CurDAG->SelectNodeTo(N, IA64::BRLCOND_NOTCALL, MVT::Other, CC, 
                                 CurDAG->getBasicBlock(Dest), Chain);
-    return;
+    return NULL;
   }
 
   case ISD::CALLSEQ_START:
@@ -559,7 +555,7 @@ void IA64DAGToDAGISel::Select(SDOperand &Result, SDOperand Op) {
     SDOperand N0;
     AddToQueue(N0, N->getOperand(0));
     Result = CurDAG->SelectNodeTo(N, Opc, MVT::Other, getI64Imm(Amt), N0);
-    return;
+    return NULL;
   }
 
   case ISD::BR:
@@ -568,10 +564,10 @@ void IA64DAGToDAGISel::Select(SDOperand &Result, SDOperand Op) {
     AddToQueue(N0, N->getOperand(0));
     Result = CurDAG->SelectNodeTo(N, IA64::BRL_NOTCALL, MVT::Other, 
                                 N->getOperand(1), N0);
-    return;
+    return NULL;
   }
   
-  SelectCode(Result, Op);
+  return SelectCode(Result, Op);
 }
 
 

@@ -2992,9 +2992,14 @@ SDOperand X86TargetLowering::LowerFABS(SDOperand Op, SelectionDAG &DAG) {
   }
   Constant *CS = ConstantStruct::get(CV);
   SDOperand CPIdx = DAG.getConstantPool(CS, getPointerTy(), 4);
-  SDOperand Mask 
-    = DAG.getNode(X86ISD::LOAD_PACK,
-                  VT, DAG.getEntryNode(), CPIdx, DAG.getSrcValue(NULL));
+  std::vector<MVT::ValueType> Tys;
+  Tys.push_back(VT);
+  Tys.push_back(MVT::Other);
+  SmallVector<SDOperand, 3> Ops;
+  Ops.push_back(DAG.getEntryNode());
+  Ops.push_back(CPIdx);
+  Ops.push_back(DAG.getSrcValue(NULL));
+  SDOperand Mask = DAG.getNode(X86ISD::LOAD_PACK, Tys, &Ops[0], Ops.size());
   return DAG.getNode(X86ISD::FAND, VT, Op.getOperand(0), Mask);
 }
 
@@ -3013,8 +3018,14 @@ SDOperand X86TargetLowering::LowerFNEG(SDOperand Op, SelectionDAG &DAG) {
   }
   Constant *CS = ConstantStruct::get(CV);
   SDOperand CPIdx = DAG.getConstantPool(CS, getPointerTy(), 4);
-  SDOperand Mask  = DAG.getNode(X86ISD::LOAD_PACK,
-                          VT, DAG.getEntryNode(), CPIdx, DAG.getSrcValue(NULL));
+  std::vector<MVT::ValueType> Tys;
+  Tys.push_back(VT);
+  Tys.push_back(MVT::Other);
+  SmallVector<SDOperand, 3> Ops;
+  Ops.push_back(DAG.getEntryNode());
+  Ops.push_back(CPIdx);
+  Ops.push_back(DAG.getSrcValue(NULL));
+  SDOperand Mask = DAG.getNode(X86ISD::LOAD_PACK, Tys, &Ops[0], Ops.size());
   return DAG.getNode(X86ISD::FXOR, VT, Op.getOperand(0), Mask);
 }
 
@@ -4121,10 +4132,15 @@ static SDOperand PerformShuffleCombine(SDNode *N, SelectionDAG &DAG,
                        Base->getOperand(2));
   else {
     // Just use movups, it's shorter.
+    std::vector<MVT::ValueType> Tys;
+    Tys.push_back(MVT::v4f32);
+    Tys.push_back(MVT::Other);
+    SmallVector<SDOperand, 3> Ops;
+    Ops.push_back(Base->getOperand(0));
+    Ops.push_back(Base->getOperand(1));
+    Ops.push_back(Base->getOperand(2));
     return DAG.getNode(ISD::BIT_CONVERT, VT,
-                       DAG.getNode(X86ISD::LOAD_UA, MVT::v4f32,
-                                   Base->getOperand(0), Base->getOperand(1),
-                                   Base->getOperand(2)));
+                       DAG.getNode(X86ISD::LOAD_UA, Tys, &Ops[0], Ops.size()));
   }
 }
 

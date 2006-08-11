@@ -110,7 +110,7 @@ namespace {
 
     // Select - Convert the specified operand from a target-independent to a
     // target-specific node if it hasn't already been changed.
-    void Select(SDOperand &Result, SDOperand Op);
+    SDNode *Select(SDOperand &Result, SDOperand Op);
     
     /// InstructionSelectBasicBlock - This callback is invoked by
     /// SelectionDAGISel when it has created a SelectionDAG for us to codegen.
@@ -181,35 +181,35 @@ void AlphaDAGToDAGISel::InstructionSelectBasicBlock(SelectionDAG &DAG) {
 
 // Select - Convert the specified operand from a target-independent to a
 // target-specific node if it hasn't already been changed.
-void AlphaDAGToDAGISel::Select(SDOperand &Result, SDOperand Op) {
+SDNode *AlphaDAGToDAGISel::Select(SDOperand &Result, SDOperand Op) {
   SDNode *N = Op.Val;
   if (N->getOpcode() >= ISD::BUILTIN_OP_END &&
       N->getOpcode() < AlphaISD::FIRST_NUMBER) {
     Result = Op;
-    return;   // Already selected.
+    return NULL;   // Already selected.
   }
 
   switch (N->getOpcode()) {
   default: break;
   case AlphaISD::CALL:
     Result = SelectCALL(Op);
-    return;
+    return NULL;
 
   case ISD::FrameIndex: {
     int FI = cast<FrameIndexSDNode>(N)->getIndex();
     Result = CurDAG->SelectNodeTo(N, Alpha::LDA, MVT::i64,
                                   CurDAG->getTargetFrameIndex(FI, MVT::i32),
                                   getI64Imm(0));
-    return;
+    return NULL;
   }
   case AlphaISD::GlobalBaseReg: 
     Result = getGlobalBaseReg();
     ReplaceUses(Op, Result);
-    return;
+    return NULL;
   case AlphaISD::GlobalRetAddr:
     Result = getGlobalRetAddr();
     ReplaceUses(Op, Result);
-    return;
+    return NULL;
   
   case AlphaISD::DivCall: {
     SDOperand Chain = CurDAG->getEntryNode();
@@ -229,7 +229,7 @@ void AlphaDAGToDAGISel::Select(SDOperand &Result, SDOperand Op) {
     Chain = CurDAG->getCopyFromReg(Chain, Alpha::R27, MVT::i64, 
 				  SDOperand(CNode, 1));
     Result = CurDAG->SelectNodeTo(N, Alpha::BIS, MVT::i64, Chain, Chain);
-    return;
+    return NULL;
   }
 
   case ISD::READCYCLECOUNTER: {
@@ -237,9 +237,7 @@ void AlphaDAGToDAGISel::Select(SDOperand &Result, SDOperand Op) {
     AddToQueue(Chain, N->getOperand(0)); //Select chain
     Result = SDOperand(CurDAG->getTargetNode(Alpha::RPCC, MVT::i64, MVT::Other,
                                              Chain), Op.ResNo);
-    ReplaceUses(Op.getValue(0), Result.getValue(0));
-    ReplaceUses(Op.getValue(1), Result.getValue(1));
-    return;
+    return Result.Val;
   }
 
   case ISD::Constant: {
@@ -249,7 +247,7 @@ void AlphaDAGToDAGISel::Select(SDOperand &Result, SDOperand Op) {
       Result = CurDAG->getCopyFromReg(CurDAG->getEntryNode(), Alpha::R31,
                                       MVT::i64);
       ReplaceUses(Op, Result);
-      return;
+      return NULL;
     }
 
     int64_t val = (int64_t)uval;
@@ -270,7 +268,7 @@ void AlphaDAGToDAGISel::Select(SDOperand &Result, SDOperand Op) {
                                         getGlobalBaseReg());
     Result = CurDAG->SelectNodeTo(N, Alpha::LDQr, MVT::i64, MVT::Other, 
                                   CPI, SDOperand(Tmp, 0), CurDAG->getEntryNode());
-    return;
+    return NULL;
   }
   case ISD::TargetConstantFP: {
     ConstantFPSDNode *CN = cast<ConstantFPSDNode>(N);
@@ -280,12 +278,12 @@ void AlphaDAGToDAGISel::Select(SDOperand &Result, SDOperand Op) {
       Result = CurDAG->SelectNodeTo(N, isDouble ? Alpha::CPYST : Alpha::CPYSS,
                                     T, CurDAG->getRegister(Alpha::F31, T),
                                     CurDAG->getRegister(Alpha::F31, T));
-      return;
+      return NULL;
     } else if ( CN->isExactlyValue(-0.0)) {
       Result = CurDAG->SelectNodeTo(N, isDouble ? Alpha::CPYSNT : Alpha::CPYSNS,
                                     T, CurDAG->getRegister(Alpha::F31, T),
                                     CurDAG->getRegister(Alpha::F31, T));
-      return;
+      return NULL;
     } else {
       abort();
     }
@@ -335,8 +333,7 @@ void AlphaDAGToDAGISel::Select(SDOperand &Result, SDOperand Op) {
       Result = SDOperand(CurDAG->getTargetNode(Alpha::CMPULT, MVT::i64, 
                                                CurDAG->getRegister(Alpha::R31, MVT::i64),
                                                LD), 0);
-      ReplaceUses(Op, Result);
-      return;
+      return Result.Val;
     }
     break;
 
@@ -369,8 +366,7 @@ void AlphaDAGToDAGISel::Select(SDOperand &Result, SDOperand Op) {
       }
       Result = SDOperand(CurDAG->getTargetNode(isDouble?Alpha::FCMOVNET:Alpha::FCMOVNES,
                                                MVT::f64, FV, TV, LD), 0);
-      ReplaceUses(Op, Result);
-      return;
+      return Result.Val;
     }
     break;
 
@@ -401,8 +397,7 @@ void AlphaDAGToDAGISel::Select(SDOperand &Result, SDOperand Op) {
 					    getI64Imm(get_zapImm(mask))), 0);
 	  Result = SDOperand(CurDAG->getTargetNode(Alpha::SRL, MVT::i64, Z, 
 						   getI64Imm(sval)), 0);
-          ReplaceUses(Op, Result);
-	  return;
+	  return Result.Val;
 	}
       }
     break;
@@ -410,7 +405,7 @@ void AlphaDAGToDAGISel::Select(SDOperand &Result, SDOperand Op) {
 
   }
 
-  SelectCode(Result, Op);
+  return SelectCode(Result, Op);
 }
 
 SDOperand AlphaDAGToDAGISel::SelectCALL(SDOperand Op) {

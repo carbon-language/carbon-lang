@@ -123,7 +123,7 @@ namespace {
 #include "X86GenDAGISel.inc"
 
   private:
-    void Select(SDOperand &Result, SDOperand N);
+    SDNode *Select(SDOperand &Result, SDOperand N);
 
     bool MatchAddress(SDOperand N, X86ISelAddressMode &AM, bool isRoot = true);
     bool SelectAddr(SDOperand N, SDOperand &Base, SDOperand &Scale,
@@ -646,7 +646,7 @@ static SDNode *FindCallStartFromCall(SDNode *Node) {
   return FindCallStartFromCall(Node->getOperand(0).Val);
 }
 
-void X86DAGToDAGISel::Select(SDOperand &Result, SDOperand N) {
+SDNode *X86DAGToDAGISel::Select(SDOperand &Result, SDOperand N) {
   SDNode *Node = N.Val;
   MVT::ValueType NVT = Node->getValueType(0);
   unsigned Opc, MOpc;
@@ -669,15 +669,14 @@ void X86DAGToDAGISel::Select(SDOperand &Result, SDOperand N) {
     DEBUG(std::cerr << "\n");
     Indent -= 2;
 #endif
-    return;   // Already selected.
+    return NULL;   // Already selected.
   }
 
   switch (Opcode) {
     default: break;
     case X86ISD::GlobalBaseReg: 
       Result = getGlobalBaseReg();
-      ReplaceUses(N, Result);
-      return;
+      return Result.Val;
 
     case ISD::ADD: {
       // Turn ADD X, c to MOV32ri X+c. This cannot be done with tblgen'd
@@ -705,12 +704,12 @@ void X86DAGToDAGISel::Select(SDOperand &Result, SDOperand N) {
         if (C.Val) {
           if (N.Val->hasOneUse()) {
             Result = CurDAG->SelectNodeTo(N.Val, X86::MOV32ri, MVT::i32, C);
+	    return NULL;
           } else {
             SDNode *ResNode = CurDAG->getTargetNode(X86::MOV32ri, MVT::i32, C);
             Result = SDOperand(ResNode, 0);
-            ReplaceUses(N, Result);
+	    return ResNode;
           }
-          return;
         }
       }
 
@@ -798,7 +797,7 @@ void X86DAGToDAGISel::Select(SDOperand &Result, SDOperand N) {
       DEBUG(std::cerr << "\n");
       Indent -= 2;
 #endif
-      return;
+      return NULL;
     }
       
     case ISD::SDIV:
@@ -902,7 +901,8 @@ void X86DAGToDAGISel::Select(SDOperand &Result, SDOperand N) {
       DEBUG(std::cerr << "\n");
       Indent -= 2;
 #endif
-      return;
+
+      return NULL;
     }
 
     case ISD::TRUNCATE: {
@@ -927,7 +927,6 @@ void X86DAGToDAGISel::Select(SDOperand &Result, SDOperand N) {
         AddToQueue(Tmp0, Node->getOperand(0));
         Tmp1 = SDOperand(CurDAG->getTargetNode(Opc, VT, Tmp0), 0);
         Result = SDOperand(CurDAG->getTargetNode(Opc2, NVT, Tmp1), 0);
-        ReplaceUses(N, Result);
       
 #ifndef NDEBUG
         DEBUG(std::cerr << std::string(Indent-2, ' '));
@@ -936,14 +935,15 @@ void X86DAGToDAGISel::Select(SDOperand &Result, SDOperand N) {
         DEBUG(std::cerr << "\n");
         Indent -= 2;
 #endif
-        return;
+        return Result.Val;
       }
 
       break;
     }
   }
 
-  SelectCode(Result, N);
+  SDNode *ResNode = SelectCode(Result, N);
+
 #ifndef NDEBUG
   DEBUG(std::cerr << std::string(Indent-2, ' '));
   DEBUG(std::cerr << "=> ");
@@ -951,6 +951,8 @@ void X86DAGToDAGISel::Select(SDOperand &Result, SDOperand N) {
   DEBUG(std::cerr << "\n");
   Indent -= 2;
 #endif
+
+  return ResNode;
 }
 
 bool X86DAGToDAGISel::
