@@ -2441,11 +2441,9 @@ void SelectionDAG::ReplaceAllUsesWith(SDNode *From, SDNode *To,
 /// This version can replace From with any result values.  To must match the
 /// number and types of values returned by From.
 void SelectionDAG::ReplaceAllUsesWith(SDNode *From,
-                                      const std::vector<SDOperand> &To,
+                                      const SDOperand *To,
                                       std::vector<SDNode*> *Deleted) {
-  assert(From->getNumValues() == To.size() &&
-         "Incorrect number of values to replace with!");
-  if (To.size() == 1 && To[0].Val->getNumValues() == 1) {
+  if (From->getNumValues() == 1 && To[0].Val->getNumValues() == 1) {
     // Degenerate case handled above.
     ReplaceAllUsesWith(SDOperand(From, 0), To[0], Deleted);
     return;

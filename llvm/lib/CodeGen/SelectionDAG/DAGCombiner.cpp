@@ -81,7 +81,7 @@ namespace {
             std::cerr << "\nWith: "; To[0].Val->dump(&DAG);
             std::cerr << " and " << To.size()-1 << " other values\n");
       std::vector<SDNode*> NowDead;
-      DAG.ReplaceAllUsesWith(N, To, &NowDead);
+      DAG.ReplaceAllUsesWith(N, &To[0], &NowDead);
       
       // Push the new nodes and any users onto the worklist
       for (unsigned i = 0, e = To.size(); i != e; ++i) {
@@ -416,7 +416,8 @@ void DAGCombiner::Run(bool RunningAfterLegalize) {
               std::cerr << "\nWith: "; RV.Val->dump(&DAG);
               std::cerr << '\n');
         std::vector<SDNode*> NowDead;
-        DAG.ReplaceAllUsesWith(N, std::vector<SDOperand>(1, RV), &NowDead);
+        SDOperand OpV = RV;
+        DAG.ReplaceAllUsesWith(N, &OpV, &NowDead);
           
         // Push the new node and any users onto the worklist
         WorkList.push_back(RV.Val);
