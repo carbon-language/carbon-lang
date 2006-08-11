@@ -157,7 +157,7 @@ static SDOperand LowerCALL(SDOperand Op, SelectionDAG &DAG) {
   unsigned CallOpc = ARMISD::CALL;
   if (InFlag.Val)
     Ops.push_back(InFlag);
-  Chain = DAG.getNode(CallOpc, NodeTys, Ops);
+  Chain = DAG.getNode(CallOpc, NodeTys, &Ops[0], Ops.size());
   InFlag = Chain.getValue(1);
 
   std::vector<SDOperand> ResultVals;
@@ -182,7 +182,8 @@ static SDOperand LowerCALL(SDOperand Op, SelectionDAG &DAG) {
     return Chain;
 
   ResultVals.push_back(Chain);
-  SDOperand Res = DAG.getNode(ISD::MERGE_VALUES, NodeTys, ResultVals);
+  SDOperand Res = DAG.getNode(ISD::MERGE_VALUES, NodeTys, &ResultVals[0],
+                              ResultVals.size());
   return Res.getValue(Op.ResNo);
 }
 
@@ -279,7 +280,7 @@ static SDOperand LowerFORMAL_ARGUMENTS(SDOperand Op, SelectionDAG &DAG) {
   // Return the new list of results.
   std::vector<MVT::ValueType> RetVT(Op.Val->value_begin(),
                                     Op.Val->value_end());
-  return DAG.getNode(ISD::MERGE_VALUES, RetVT, ArgValues);
+  return DAG.getNode(ISD::MERGE_VALUES, RetVT, &ArgValues[0], ArgValues.size());
 }
 
 SDOperand ARMTargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
