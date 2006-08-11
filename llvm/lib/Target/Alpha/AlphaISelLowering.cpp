@@ -159,7 +159,8 @@ const char *AlphaTargetLowering::getTargetNodeName(unsigned Opcode) const {
   }
 }
 
-//http://www.cs.arizona.edu/computer.help/policy/DIGITAL_unix/AA-PY8AC-TET1_html/callCH3.html#BLOCK21
+//http://www.cs.arizona.edu/computer.help/policy/DIGITAL_unix/
+//AA-PY8AC-TET1_html/callCH3.html#BLOCK21
 
 //For now, just use variable size stack frame format
 
@@ -268,12 +269,13 @@ static SDOperand LowerFORMAL_ARGUMENTS(SDOperand Op, SelectionDAG &DAG,
   // Return the new list of results.
   std::vector<MVT::ValueType> RetVT(Op.Val->value_begin(),
                                     Op.Val->value_end());
-  return DAG.getNode(ISD::MERGE_VALUES, RetVT, ArgValues);
+  return DAG.getNode(ISD::MERGE_VALUES, RetVT, &ArgValues[0], ArgValues.size());
 }
 
 static SDOperand LowerRET(SDOperand Op, SelectionDAG &DAG, unsigned int RA) {
   SDOperand Copy = DAG.getCopyToReg(Op.getOperand(0), Alpha::R26, 
-				    DAG.getNode(AlphaISD::GlobalRetAddr, MVT::i64),
+				    DAG.getNode(AlphaISD::GlobalRetAddr, 
+                                    MVT::i64),
 				    SDOperand());
   switch (Op.getNumOperands()) {
   default:
@@ -350,7 +352,7 @@ AlphaTargetLowering::LowerCallTo(SDOperand Chain,
   Ops.push_back(Chain);
   Ops.push_back(Callee);
   Ops.insert(Ops.end(), args_to_use.begin(), args_to_use.end());
-  SDOperand TheCall = DAG.getNode(AlphaISD::CALL, RetVals, Ops);
+  SDOperand TheCall = DAG.getNode(AlphaISD::CALL, RetVals, &Ops[0], Ops.size());
   Chain = TheCall.getValue(RetTyVT != MVT::isVoid);
   Chain = DAG.getNode(ISD::CALLSEQ_END, MVT::Other, Chain,
                       DAG.getConstant(NumBytes, getPointerTy()));
