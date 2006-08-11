@@ -1238,11 +1238,11 @@ static SDOperand LowerRET(SDOperand Op, SelectionDAG &DAG) {
       ArgReg = PPC::R3;
     } else if (ArgVT == MVT::i64) {
       ArgReg = PPC::X3;
-    } else if (MVT::isFloatingPoint(ArgVT)) {
-      ArgReg = PPC::F1;
-    } else {
-      assert(MVT::isVector(ArgVT));
+    } else if (MVT::isVector(ArgVT)) {
       ArgReg = PPC::V2;
+    } else {
+      assert(MVT::isFloatingPoint(ArgVT));
+      ArgReg = PPC::F1;
     }
     
     Copy = DAG.getCopyToReg(Op.getOperand(0), ArgReg, Op.getOperand(1),
