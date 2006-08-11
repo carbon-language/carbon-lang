@@ -53,4 +53,8 @@ void test6() {
 
   (int)4;   // cast.
   (int){4}; // compound literal.
+
+  // FIXME: change this to the struct version when we can.
+  //int A = (struct{ int a;}){ 1}.a;
+  int A = (int){ 1}.a;
 }
