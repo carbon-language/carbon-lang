@@ -8,32 +8,30 @@
 #           then the cwd is used. The directory must be an LLVM tree checked out
 #           from cvs. 
 #
-# Syntax:   userloc.pl [-recurse|-tag=tag|-html... <directory>...
+# Syntax:   userloc.pl [-tag=tag|-html... <directory>...
 #
 # Options:
-#           -recurse
-#               Recurse through sub directories. Without this, only the
-#               specified directory is examined
 #           -tag=tag
 #               Use "tag" to select the revision (as per cvs -r option)
 #           -filedetails
 #               Report details about lines of code in each file for each user
 #           -html
 #               Generate HTML output instead of text output
+# Directories:
+#   The directories passed after the options should be relative paths to
+#   directories of interest from the top of the llvm source tree, e.g. "lib"
+#   or "include", etc.
 
-die "Usage userloc.pl [-recurse|-tag=tag|-html] <directories>..." 
+die "Usage userloc.pl [-tag=tag|-html] <directories>..." 
   if ($#ARGV < 0);
 
 my $tag = "";
-my $recurse = 0;
 my $html = 0;
 my $debug = 0;
 my $filedetails = "";
-while ( substr($ARGV[0],0,1) eq '-' )
+while ( defined($ARGV[0]) && substr($ARGV[0],0,1) eq '-' )
 {
-  if ($ARGV[0] eq "-recurse") {
-    $recurse = 1;
-  } elsif ($ARGV[0] =~ /-tag=.*/) {
+  if ($ARGV[0] =~ /-tag=.*/) {
     $tag = $ARGV[0];
     $tag =~ s#-tag=(.*)#$1#;
   } elsif ($ARGV[0] =~ /-filedetails/) {
@@ -48,52 +46,28 @@ while ( substr($ARGV[0],0,1) eq '-' )
   shift;
 }
 
-die "Usage userloc.pl [-recurse|-tag=tag|-html] <directories>..." 
-  if ($#ARGV < 0);
-
+chomp(my $srcroot = `llvm-config --src-root`);
+my $llvmdo = "$srcroot/utils/llvmdo";
 my %Stats;
 my %FileStats;
 
-sub ValidateFile
+my $annotate = "cvs -z6 annotate -lf ";
+if (length($tag) > 0)
 {
-  my $f = $_[0];
-  my $d = $_[1];
-
-  if ( $d =~ ".*autoconf.*")
-  {
-    return 1 if ($f eq "configure.ac");
-    return 1 if ($f eq "AutoRegen.sh");
-    return 0;
-  }
-  return 0 if ( "$f" eq "configure");
-  return 0 if ( "$f" eq 'PPCPerfectShuffle.h' );
-  return 0 if ( $f =~ /.*\.cvs/);
-  return 1;
+  $annotate = $annotate . " -r" . $tag;
 }
 
 sub GetCVSFiles
 {
   my $d = $_[0];
   my $files ="";
-  open STATUS, "cvs -nfz6 status $d -l 2>/dev/null |" 
-    || die "Can't 'cvs status'";
-  while ( defined($line = <STATUS>) )
-  {
-    if ( $line =~ /^File:.*/ )
-    {
-      chomp($line);
-      $line =~ s#^File: ([A-Za-z0-9._-]*)[ \t]*Status:.*#$1#;
-      $files = "$files $d/$line" if (ValidateFile($line,$d));
-    }
-
+  open FILELIST, 
+    "$llvmdo -dirs \"$d\" echo |" || die "Can't get list of files with llvmdo";
+  while ( defined($line = <FILELIST>) ) {
+    chomp($file = $line);
+    $files = "$files $file";
   }
   return $files;
-}
-
-my $annotate = "cvs -z6 annotate -lf ";
-if (length($tag) > 0)
-{
-  $annotate = $annotate . " -r" . $tag;
 }
 
 sub ScanDir
@@ -124,37 +98,14 @@ sub ScanDir
   close DATA;
 }
 
-sub ValidateDirectory
-{
-  my $d = $_[0];
-  return 0 if (! -d "$d" || ! -d "$d/CVS");
-  return 0 if ($d =~ /.*CVS.*/);
-  return 0 if ($d =~ /.*Debug.*/);
-  return 0 if ($d =~ /.*Release.*/);
-  return 0 if ($d =~ /.*Profile.*/);
-  return 0 if ($d =~ /.*docs\/CommandGuide\/html.*/);
-  return 0 if ($d =~ /.*docs\/CommandGuide\/man.*/);
-  return 0 if ($d =~ /.*docs\/CommandGuide\/ps.*/);
-  return 0 if ($d =~ /.*docs\/CommandGuide\/man.*/);
-  return 0 if ($d =~ /.*docs\/HistoricalNotes.*/);
-  return 0 if ($d =~ /.*docs\/img.*/);
-  return 0 if ($d =~ /.*bzip2.*/);
-  return 1 if ($d =~ /.*projects\/Stacker.*/);
-  return 1 if ($d =~ /.*projects\/sample.*/);
-  return 0 if ($d =~ /.*projects\/llvm-.*/);
-  return 0 if ($d =~ /.*win32.*/);
-  return 0 if ($d =~ /.*\/.libs\/.*/);
-  return 1;
-}
-
 sub printStats
 {
   my $dir = $_[0];
   my $hash = $_[1];
-  my $usr;
+  my $user;
   my $total = 0;
 
-  foreach $usr (keys %Stats) { $total += $Stats{$usr}; }
+  foreach $user (keys %Stats) { $total += $Stats{$user}; }
 
   if ($html) { 
     print "<table>";
@@ -164,15 +115,20 @@ sub printStats
     print "</tr>\n";
   }
 
-  foreach $usr ( sort keys %Stats )
+  foreach $user ( sort keys %Stats )
   {
-    my $v = $Stats{$usr};
+    my $v = $Stats{$user};
     if (defined($v))
     {
       if ($html) {
-        printf "<tr><td style=\"text-align:right\">%d</td><td style=\"text-align:right\">(%4.1f%%)</td><td style=\"text-align:left\">%s</td></tr>", $v, (100.0/$total)*$v,$usr;
+        printf "<tr><td style=\"text-align:right\">%d</td><td style=\"text-align:right\">(%4.1f%%)</td><td style=\"text-align:left\">", $v, (100.0/$total)*$v;
+        if ($filedetails) {
+          print "<a href=\"#$user\">$user</a></td></tr>";
+        } else {
+          print $user,"</td></tr>";
+        }
       } else {
-        printf "%8d  (%4.1f%%)  %s\n", $v, (100.0/$total)*$v, $usr;
+        printf "%8d  (%4.1f%%)  %s\n", $v, (100.0/$total)*$v, $user;
       }
     }
   }
@@ -185,7 +141,7 @@ sub printStats
         $total += ${$FileStats{$user}}{$file}
       }
       if ($html) {
-        print "<table><tr><th style=\"text-align:left\" colspan=\"3\">$user</th></tr>\n";
+        print "<table><tr><th style=\"text-align:left\" colspan=\"3\"><a name=\"$user\">$user</a></th></tr>\n";
       } else {
         print $user,":\n";
       }
@@ -204,14 +160,6 @@ sub printStats
   }
 }
 
-my @ALLDIRS = @ARGV;
-
-if ($recurse)
-{
-  $Dirs = join(" ", @ARGV);
-  $Dirs = `find $Dirs -type d \! -name CVS -print`;
-  @ALLDIRS = split(' ',$Dirs);
-}
 
 if ($html)
 {
@@ -226,31 +174,27 @@ print "LLVM directory. Lines of code are attributed by the user that last\n";
 print "committed the line. This does not necessarily reflect authorship.</p>\n";
 }
 
-my @ignored_dirs;
-
-for $Dir (@ALLDIRS) 
-{ 
-  if ( ValidateDirectory($Dir) )
-  {
-    ScanDir($Dir); 
-  }
-  elsif ($html)
-  {
-    push @ignored_dirs, $Dir;
-  }
+my @DIRS;
+if ($#ARGV > 0) {
+  @DIRS = @ARGV;
+} else {
+  push @DIRS, 'include';
+  push @DIRS, 'lib';
+  push @DIRS, 'tools';
+  push @DIRS, 'runtime';
+  push @DIRS, 'docs';
+  push @DIRS, 'test';
+  push @DIRS, 'utils';
+  push @DIRS, 'examples';
+  push @DIRS, 'projects/Stacker';
+  push @DIRS, 'projects/sample';
+  push @DIRS, 'autoconf';
+}
+  
+for $Index ( 0 .. $#DIRS) { 
+  ScanDir($DIRS[$Index]); 
 }
 
 printStats;
 
-if ($html) 
-{
-  if (scalar @ignored_dirs > 0) {
-    print "<p>The following directories were skipped:</p>\n";
-    print "<ol>\n";
-    foreach $index (0 .. $#ignored_dirs) {
-      print " <li>", $ignored_dirs[$index], "</li>\n";
-    }
-    print "</ol>\n";
-  }
-  print "</body></html>\n";
-}
+print "</body></html>\n" if ($html) ;
