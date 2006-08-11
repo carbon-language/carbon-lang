@@ -211,10 +211,6 @@ public:
                     SDOperand N5);
   SDOperand getNode(unsigned Opcode, MVT::ValueType VT,
                     const SDOperand *Ops, unsigned NumOps);
-  SDOperand getNode(unsigned Opcode, MVT::ValueType VT,
-                    const std::vector<SDOperand> &Ops) {
-    return getNode(Opcode, VT, &Ops[0], Ops.size());
-  }
   SDOperand getNode(unsigned Opcode, std::vector<MVT::ValueType> &ResultTys,
                     const SDOperand *Ops, unsigned NumOps);
   
