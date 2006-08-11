@@ -52,7 +52,7 @@ use Socket;
 #                   the default.
 #  -compileflags    Next argument specifies extra options passed to make when
 #                   building LLVM.
-#  -use-gmake    		Use gmake instead of the default make command to build
+#  -use-gmake       Use gmake instead of the default make command to build
 #                   llvm and run tests.
 #
 #  ---------------- Options to configure llvm-test ----------------------------
@@ -61,6 +61,14 @@ use Socket;
 #  -noexternals     Do not run the external tests (for cases where povray
 #                   or SPEC are not installed)
 #  -with-externals  Specify a directory where the external tests are located.
+#  -submit-server   Specifies a server to submit the test results too. If this
+#                   option is not specified it defaults to 
+#                   llvm.org. This is basically just the address of the 
+#                   webserver
+#  -submit-script   Specifies which script to call on the submit server. If
+#                   this option is not specified it defaults to
+#                   /nightlytest/NightlyTestAccept.cgi. This is basically 
+#                   everything after the www.yourserver.org.
 #
 # CVSROOT is the CVS repository from which the tree will be checked out,
 #  specified either in the full :method:user@host:/dir syntax, or
@@ -111,6 +119,8 @@ $nickname="";
 $NOTEST=0;
 $NORUNNINGTESTS=0;
 $MAKECMD="make";
+$SUBMITSERVER = "llvm.org";
+$SUBMITSCRIPT = "/nightlytest/NightlyTestAccept.cgi";
 
 while (scalar(@ARGV) and ($_ = $ARGV[0], /^[-+]/)) {
     shift;
@@ -141,6 +151,12 @@ while (scalar(@ARGV) and ($_ = $ARGV[0], /^[-+]/)) {
     }
     if (/^-with-externals$/)  {
 	$CONFIGUREARGS .= " --with-externals=$ARGV[0]"; shift; next;
+    }
+    if (/^-submit-server/)  {
+	$SUBMITSERVER = "$ARGV[0]"; shift; next;
+    }
+    if (/^-submit-script/)  {
+	$SUBMITSCRIPT = "$ARGV[0]"; shift; next;
     }
     if (/^-nickname$/)   	{ $nickname = "$ARGV[0]"; shift; next; }
     if (/^-gccpath/)         { $CONFIGUREARGS .= 
@@ -996,9 +1012,6 @@ my $all_tests = ReadFile "$Prefix-Tests.txt";
 
 if ( $VERBOSE ) { print "SEND THE DATA VIA THE POST REQUEST\n"; }
 
-
-my $host = "llvm.org";
-my $file = "/nightlytest/NightlyTestAccept.cgi";
 my %hash_of_data = ('machine_data' => $machine_data,
 	'build_data' => $build_data,
 	'gcc_version' => $gcc_version,
@@ -1049,7 +1062,7 @@ if($TESTING){
     }
 }
 else{
-    my $response = SendData $host,$file,\%hash_of_data;
+    my $response = SendData $SUBMITSERVER,$SUBMITSCRIPT,\%hash_of_data;
     if( $VERBOSE) { print "============================\n$response"; }
 }
 
