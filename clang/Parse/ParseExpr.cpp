@@ -21,6 +21,10 @@ void Parser::ParseInitializer() {
   // FIXME: STUB.
   if (Tok.getKind() == tok::l_brace) {
     ConsumeBrace();
+    
+    if (Tok.getKind() == tok::numeric_constant)
+      ConsumeToken();
+    
     // FIXME: initializer-list
     // Match the '}'.
     MatchRHSPunctuation(tok::r_brace, Tok.getLocation(), "{",
@@ -53,7 +57,7 @@ void Parser::ParseCastExpression() {
   if (Tok.getKind() != tok::l_paren)
     return ParseUnaryExpression();
   
-  ParenParseOption ParenExprType = CompoundLiteral;
+  ParenParseOption ParenExprType = CastExpr;
   ParseParenExpression(ParenExprType);
 
   switch (ParenExprType) {
@@ -62,7 +66,8 @@ void Parser::ParseCastExpression() {
   case CompoundLiteral:
     // We parsed '(' type-name ')' '{' ... '}'.  If any suffixes of
     // postfix-expression exist, parse them now.
-    assert(0 && "FIXME");
+    //Diag(Tok, diag::err_parse_error);
+    //assert(0 && "FIXME");
     break;
   case CastExpr:
     // We parsed '(' type-name ')' and the thing after it wasn't a '{'.  Parse
@@ -70,8 +75,6 @@ void Parser::ParseCastExpression() {
     ParseCastExpression();
     break;
   }
-  // If ParenExprType could have a postfix expr after it, handle it now.
-  assert(0);
 }
 
 /// ParseUnaryExpression
