@@ -20,63 +20,39 @@
 
 namespace llvm {
 
-/// SmallVector - This is a 'vector' (really, a variable-sized array), optimized
-/// for the case when the array is small.  It contains some number of elements
-/// in-place, which allows it to avoid heap allocation when the actual number of
-/// elements is below that threshold.  This allows normal "small" cases to be
-/// fast without losing generality for large inputs.
-///
-/// Note that this does not attempt to be exception safe.
-///
-template <typename T, unsigned N>
-class SmallVector {
+/// SmallVectorImpl - This class consists of common code factored out of the
+/// SmallVector class to reduce code duplication based on the SmallVector 'N'
+/// template parameter.
+template <typename T>
+class SmallVectorImpl {
+  T *Begin, *End, *Capacity;
+  
   // Allocate raw space for N elements of type T.  If T has a ctor or dtor, we
   // don't want it to be automatically run, so we need to represent the space as
   // something else.  An array of char would work great, but might not be
   // aligned sufficiently.  Instead, we either use GCC extensions, or some
   // number of union instances for the space, which guarantee maximal alignment.
+protected:
   union U {
     double D;
     long double LD;
     long long L;
     void *P;
-  };
-  
-  /// InlineElts - These are the 'N' elements that are stored inline in the body
-  /// of the vector
-  U InlineElts[(sizeof(T)*N+sizeof(U)-1)/sizeof(U)];
-  T *Begin, *End, *Capacity;
+  } FirstEl;
+  // Space after 'FirstEl' is clobbered, do not add any instance vars after it.
 public:
   // Default ctor - Initialize to empty.
-  SmallVector() : Begin((T*)InlineElts), End(Begin), Capacity(Begin+N) {
+  SmallVectorImpl(unsigned N)
+    : Begin((T*)&FirstEl), End((T*)&FirstEl), Capacity((T*)&FirstEl+N) {
   }
   
-  template<typename ItTy>
-  SmallVector(ItTy S, ItTy E)
-    : Begin((T*)InlineElts), End(Begin), Capacity(Begin+N) {
-    append(S, E);
-  }
-  
-  SmallVector(const SmallVector &RHS) {
-    unsigned RHSSize = RHS.size();
-    Begin = (T*)InlineElts;
-
-    // Doesn't fit in the small case?  Allocate space.
-    if (RHSSize > N) {
-      End = Capacity = Begin;
-      grow(RHSSize);
-    }
-    End = Begin+RHSSize;
-    Capacity = Begin+N;
-    std::uninitialized_copy(RHS.begin(), RHS.end(), Begin);
-  }
-  ~SmallVector() {
+  ~SmallVectorImpl() {
     // Destroy the constructed elements in the vector.
     for (iterator I = Begin, E = End; I != E; ++I)
       I->~T();
 
     // If this wasn't grown from the inline copy, deallocate the old space.
-    if ((void*)Begin != (void*)InlineElts)
+    if (!isSmall())
       delete[] (char*)Begin;
   }
   
@@ -155,7 +131,7 @@ public:
       new (Begin+NumElts-1) T(Elt);
   }
   
-  const SmallVector &operator=(const SmallVector &RHS) {
+  const SmallVectorImpl &operator=(const SmallVectorImpl &RHS) {
     // Avoid self-assignment.
     if (this == &RHS) return *this;
     
@@ -201,7 +177,7 @@ private:
   /// isSmall - Return true if this is a smallvector which has not had dynamic
   /// memory allocated for it.
   bool isSmall() const {
-    return (void*)Begin == (void*)InlineElts;
+    return (void*)Begin == (void*)&FirstEl;
   }
 
   /// grow - double the size of the allocated memory, guaranteeing space for at
@@ -228,6 +204,35 @@ private:
     Begin = NewElts;
     End = NewElts+CurSize;
     Capacity = Begin+NewCapacity;
+  }
+};
+
+  
+/// SmallVector - This is a 'vector' (really, a variable-sized array), optimized
+/// for the case when the array is small.  It contains some number of elements
+/// in-place, which allows it to avoid heap allocation when the actual number of
+/// elements is below that threshold.  This allows normal "small" cases to be
+/// fast without losing generality for large inputs.
+///
+/// Note that this does not attempt to be exception safe.
+///
+template <typename T, unsigned N>
+class SmallVector : public SmallVectorImpl<T> {
+  /// InlineElts - These are 'N-1' elements that are stored inline in the body
+  /// of the vector.  The extra '1' element is stored in SmallVectorImpl.
+  typedef typename SmallVectorImpl<T>::U U;
+  U InlineElts[(sizeof(T)*N+sizeof(U)-1)/sizeof(U) - 1];
+public:  
+  SmallVector() : SmallVectorImpl<T>(N) {
+  }
+  
+  template<typename ItTy>
+  SmallVector(ItTy S, ItTy E) : SmallVectorImpl<T>(N) {
+    append(S, E);
+  }
+  
+  SmallVector(const SmallVector &RHS) : SmallVectorImpl<T>(N) {
+    operator=(RHS);
   }
 };
 
