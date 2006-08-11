@@ -75,16 +75,17 @@ namespace {
       WorkList.push_back(N);
     }
     
-    SDOperand CombineTo(SDNode *N, const std::vector<SDOperand> &To) {
+    SDOperand CombineTo(SDNode *N, const SDOperand *To, unsigned NumTo) {
+      assert(N->getNumValues() == NumTo && "Broken CombineTo call!");
       ++NodesCombined;
       DEBUG(std::cerr << "\nReplacing "; N->dump();
             std::cerr << "\nWith: "; To[0].Val->dump(&DAG);
-            std::cerr << " and " << To.size()-1 << " other values\n");
+            std::cerr << " and " << NumTo-1 << " other values\n");
       std::vector<SDNode*> NowDead;
-      DAG.ReplaceAllUsesWith(N, &To[0], &NowDead);
+      DAG.ReplaceAllUsesWith(N, To, &NowDead);
       
       // Push the new nodes and any users onto the worklist
-      for (unsigned i = 0, e = To.size(); i != e; ++i) {
+      for (unsigned i = 0, e = NumTo; i != e; ++i) {
         WorkList.push_back(To[i].Val);
         AddUsersToWorkList(To[i].Val);
       }
@@ -101,16 +102,12 @@ namespace {
     }
     
     SDOperand CombineTo(SDNode *N, SDOperand Res) {
-      std::vector<SDOperand> To;
-      To.push_back(Res);
-      return CombineTo(N, To);
+      return CombineTo(N, &Res, 1);
     }
     
     SDOperand CombineTo(SDNode *N, SDOperand Res0, SDOperand Res1) {
-      std::vector<SDOperand> To;
-      To.push_back(Res0);
-      To.push_back(Res1);
-      return CombineTo(N, To);
+      SDOperand To[] = { Res0, Res1 };
+      return CombineTo(N, To, 2);
     }
   private:    
     
@@ -253,7 +250,7 @@ void TargetLowering::DAGCombinerInfo::AddToWorklist(SDNode *N) {
 
 SDOperand TargetLowering::DAGCombinerInfo::
 CombineTo(SDNode *N, const std::vector<SDOperand> &To) {
-  return ((DAGCombiner*)DC)->CombineTo(N, To);
+  return ((DAGCombiner*)DC)->CombineTo(N, &To[0], To.size());
 }
 
 SDOperand TargetLowering::DAGCombinerInfo::
