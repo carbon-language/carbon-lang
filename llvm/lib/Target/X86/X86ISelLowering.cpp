@@ -2970,7 +2970,7 @@ SDOperand X86TargetLowering::LowerFP_TO_SINT(SDOperand Op, SelectionDAG &DAG) {
   Ops.push_back(Chain);
   Ops.push_back(Value);
   Ops.push_back(StackSlot);
-  SDOperand FIST = DAG.getNode(Opc, MVT::Other, Ops);
+  SDOperand FIST = DAG.getNode(Opc, MVT::Other, &Ops[0], Ops.size());
 
   // Load the result.
   return DAG.getLoad(Op.getValueType(), FIST, StackSlot,
@@ -3126,7 +3126,7 @@ SDOperand X86TargetLowering::LowerSELECT(SDOperand Op, SelectionDAG &DAG) {
   Ops.push_back(Op.getOperand(1));
   Ops.push_back(CC);
   Ops.push_back(Cond);
-  return DAG.getNode(X86ISD::CMOV, Tys, Ops);
+  return DAG.getNode(X86ISD::CMOV, Tys, &Ops[0], Ops.size());
 }
 
 SDOperand X86TargetLowering::LowerBRCOND(SDOperand Op, SelectionDAG &DAG) {
@@ -3154,7 +3154,7 @@ SDOperand X86TargetLowering::LowerBRCOND(SDOperand Op, SelectionDAG &DAG) {
         std::vector<SDOperand> Ops;
         for (unsigned i = 0; i < Cond.getNumOperands(); ++i)
           Ops.push_back(Cond.getOperand(i));
-        Cond = DAG.getNode(X86ISD::SETCC, Tys, Ops);
+        Cond = DAG.getNode(X86ISD::SETCC, Tys, &Ops[0], Ops.size());
       }
 
       CC   = Cond.getOperand(0);
@@ -3236,7 +3236,7 @@ SDOperand X86TargetLowering::LowerRET(SDOperand Op, SelectionDAG &DAG) {
         std::vector<SDOperand> Ops;
         Ops.push_back(Op.getOperand(0));
         Ops.push_back(Op.getOperand(1));
-        Copy = DAG.getNode(X86ISD::FP_SET_RESULT, Tys, Ops);
+        Copy = DAG.getNode(X86ISD::FP_SET_RESULT, Tys, &Ops[0], Ops.size());
       } else {
         // FP return with ScalarSSE (return on fp-stack).
         if (DAG.getMachineFunction().liveout_empty())
@@ -3266,14 +3266,14 @@ SDOperand X86TargetLowering::LowerRET(SDOperand Op, SelectionDAG &DAG) {
         Ops.push_back(Chain);
         Ops.push_back(MemLoc);
         Ops.push_back(DAG.getValueType(ArgVT));
-        Copy = DAG.getNode(X86ISD::FLD, Tys, Ops);
+        Copy = DAG.getNode(X86ISD::FLD, Tys, &Ops[0], Ops.size());
         Tys.clear();
         Tys.push_back(MVT::Other);
         Tys.push_back(MVT::Flag);
         Ops.clear();
         Ops.push_back(Copy.getValue(1));
         Ops.push_back(Copy);
-        Copy = DAG.getNode(X86ISD::FP_SET_RESULT, Tys, Ops);
+        Copy = DAG.getNode(X86ISD::FP_SET_RESULT, Tys, &Ops[0], Ops.size());
       }
       break;
     }
@@ -3396,7 +3396,7 @@ SDOperand X86TargetLowering::LowerMEMSET(SDOperand Op, SelectionDAG &DAG) {
   Ops.push_back(Chain);
   Ops.push_back(DAG.getValueType(AVT));
   Ops.push_back(InFlag);
-  Chain  = DAG.getNode(X86ISD::REP_STOS, Tys, Ops);
+  Chain  = DAG.getNode(X86ISD::REP_STOS, Tys, &Ops[0], Ops.size());
 
   if (TwoRepStos) {
     InFlag = Chain.getValue(1);
@@ -3413,7 +3413,7 @@ SDOperand X86TargetLowering::LowerMEMSET(SDOperand Op, SelectionDAG &DAG) {
     Ops.push_back(Chain);
     Ops.push_back(DAG.getValueType(MVT::i8));
     Ops.push_back(InFlag);
-    Chain  = DAG.getNode(X86ISD::REP_STOS, Tys, Ops);
+    Chain  = DAG.getNode(X86ISD::REP_STOS, Tys, &Ops[0], Ops.size());
   } else if (BytesLeft) {
     // Issue stores for the last 1 - 3 bytes.
     SDOperand Value;
@@ -3508,7 +3508,7 @@ SDOperand X86TargetLowering::LowerMEMCPY(SDOperand Op, SelectionDAG &DAG) {
   Ops.push_back(Chain);
   Ops.push_back(DAG.getValueType(AVT));
   Ops.push_back(InFlag);
-  Chain = DAG.getNode(X86ISD::REP_MOVS, Tys, Ops);
+  Chain = DAG.getNode(X86ISD::REP_MOVS, Tys, &Ops[0], Ops.size());
 
   if (TwoRepMovs) {
     InFlag = Chain.getValue(1);
@@ -3525,7 +3525,7 @@ SDOperand X86TargetLowering::LowerMEMCPY(SDOperand Op, SelectionDAG &DAG) {
     Ops.push_back(Chain);
     Ops.push_back(DAG.getValueType(MVT::i8));
     Ops.push_back(InFlag);
-    Chain = DAG.getNode(X86ISD::REP_MOVS, Tys, Ops);
+    Chain = DAG.getNode(X86ISD::REP_MOVS, Tys, &Ops[0], Ops.size());
   } else if (BytesLeft) {
     // Issue loads and stores for the last 1 - 3 bytes.
     unsigned Offset = I->getValue() - BytesLeft;
@@ -3571,7 +3571,7 @@ X86TargetLowering::LowerREADCYCLCECOUNTER(SDOperand Op, SelectionDAG &DAG) {
   Tys.push_back(MVT::Flag);
   std::vector<SDOperand> Ops;
   Ops.push_back(Op.getOperand(0));
-  SDOperand rd = DAG.getNode(X86ISD::RDTSC_DAG, Tys, Ops);
+  SDOperand rd = DAG.getNode(X86ISD::RDTSC_DAG, Tys, &Ops[0], Ops.size());
   Ops.clear();
   Ops.push_back(DAG.getCopyFromReg(rd, X86::EAX, MVT::i32, rd.getValue(1)));
   Ops.push_back(DAG.getCopyFromReg(Ops[0].getValue(1), X86::EDX, 
@@ -3579,7 +3579,7 @@ X86TargetLowering::LowerREADCYCLCECOUNTER(SDOperand Op, SelectionDAG &DAG) {
   Ops.push_back(Ops[1].getValue(1));
   Tys[0] = Tys[1] = MVT::i32;
   Tys.push_back(MVT::Other);
-  return DAG.getNode(ISD::MERGE_VALUES, Tys, Ops);
+  return DAG.getNode(ISD::MERGE_VALUES, Tys, &Ops[0], Ops.size());
 }
 
 SDOperand X86TargetLowering::LowerVASTART(SDOperand Op, SelectionDAG &DAG) {
@@ -4119,12 +4119,13 @@ static SDOperand PerformShuffleCombine(SDNode *N, SelectionDAG &DAG,
   if (isAlign16)
     return DAG.getLoad(VT, Base->getOperand(0), Base->getOperand(1),
                        Base->getOperand(2));
-  else
+  else {
     // Just use movups, it's shorter.
     return DAG.getNode(ISD::BIT_CONVERT, VT,
                        DAG.getNode(X86ISD::LOAD_UA, MVT::v4f32,
                                    Base->getOperand(0), Base->getOperand(1),
                                    Base->getOperand(2)));
+  }
 }
 
 SDOperand X86TargetLowering::PerformDAGCombine(SDNode *N, 
