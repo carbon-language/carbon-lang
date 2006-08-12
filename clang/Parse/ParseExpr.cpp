@@ -302,21 +302,6 @@ Parser::ParseRHSOfBinaryExpression(ExprResult LHS, unsigned MinPrec) {
 ///         '&'  '*'  '+'  '-'  '~'  '!'
 /// [GNU]   '__extension__'  '__real'  '__imag'
 ///
-///       postfix-expression: [C99 6.5.2]
-///         primary-expression
-///         postfix-expression '[' expression ']'
-///         postfix-expression '(' argument-expression-list[opt] ')'
-///         postfix-expression '.' identifier
-///         postfix-expression '->' identifier
-///         postfix-expression '++'
-///         postfix-expression '--'
-///         '(' type-name ')' '{' initializer-list '}'
-///         '(' type-name ')' '{' initializer-list ',' '}'
-///
-///       argument-expression-list: [C99 6.5.2]
-///         argument-expression
-///         argument-expression-list ',' assignment-expression
-///
 ///       primary-expression: [C99 6.5.1]
 ///         identifier
 ///         constant
@@ -348,7 +333,6 @@ Parser::ParseRHSOfBinaryExpression(ExprResult LHS, unsigned MinPrec) {
 /// [GNU]   offsetof-member-designator '.' identifier
 /// [GNU]   offsetof-member-designator '[' expression ']'
 ///
-///
 Parser::ExprResult Parser::ParseCastExpression(bool isUnaryExpression) {
   ExprResult Res;
   
@@ -359,9 +343,9 @@ Parser::ExprResult Parser::ParseCastExpression(bool isUnaryExpression) {
   // expression, or statement expression.
   //
   // If the parsed tokens consist of a primary-expression, the cases below
-  // 'break' out of the switch.  This allows the postfix expression pieces to
-  // be applied to them.  Cases that cannot be followed by postfix exprs should
-  // return instead.
+  // call ParsePostfixExpressionSuffix to handle the postfix expression
+  // suffixes.  Cases that cannot be followed by postfix exprs should
+  // return without invoking ParsePostfixExpressionSuffix.
   switch (Tok.getKind()) {
   case tok::l_paren:
     // If this expression is limited to being a unary-expression, the parent can
@@ -383,7 +367,9 @@ Parser::ExprResult Parser::ParseCastExpression(bool isUnaryExpression) {
       // the cast-expression that follows it next.
       return ParseCastExpression(false);
     }
-    break;  // These can be followed by postfix-expr pieces.
+      
+    // These can be followed by postfix-expr pieces.
+    return ParsePostfixExpressionSuffix(Res);
     
     // primary-expression
   case tok::identifier:        // primary-expression: identifier
@@ -394,17 +380,22 @@ Parser::ExprResult Parser::ParseCastExpression(bool isUnaryExpression) {
   case tok::kw___func__:       // primary-expression: __func__ [C99 6.4.2.2]
   case tok::kw___FUNCTION__:   // primary-expression: __FUNCTION__ [GNU]
   case tok::kw___PRETTY_FUNCTION__:  // primary-expression: __P..Y_F..N__ [GNU]
+    Res = ExprResult(false);
     ConsumeToken();
-    break;
+    // These can be followed by postfix-expr pieces.
+    return ParsePostfixExpressionSuffix(Res);
   case tok::string_literal:    // primary-expression: string-literal
     Res = ParseStringLiteralExpression();
     if (Res.isInvalid) return Res;
-    break;
+    // This can be followed by postfix-expr pieces (e.g. "foo"[1]).
+    return ParsePostfixExpressionSuffix(Res);
   case tok::kw___builtin_va_arg:
   case tok::kw___builtin_offsetof:
   case tok::kw___builtin_choose_expr:
   case tok::kw___builtin_types_compatible_p:
     assert(0 && "FIXME: UNIMP!");
+    // This can be followed by postfix-expr pieces.
+    return ParsePostfixExpressionSuffix(Res);
   case tok::plusplus:      // unary-expression: '++' unary-expression
   case tok::minusminus:    // unary-expression: '--' unary-expression
     ConsumeToken();
@@ -441,13 +432,38 @@ Parser::ExprResult Parser::ParseCastExpression(bool isUnaryExpression) {
     return ExprResult(true);
   }
   
+  // unreachable.
+  abort();
+}
+
+/// ParsePostfixExpressionSuffix - Once the leading part of a postfix-expression
+/// is parsed, this method parses any suffixes that apply.
+///
+///       postfix-expression: [C99 6.5.2]
+///         primary-expression
+///         postfix-expression '[' expression ']'
+///         postfix-expression '(' argument-expression-list[opt] ')'
+///         postfix-expression '.' identifier
+///         postfix-expression '->' identifier
+///         postfix-expression '++'
+///         postfix-expression '--'
+///         '(' type-name ')' '{' initializer-list '}'
+///         '(' type-name ')' '{' initializer-list ',' '}'
+///
+///       argument-expression-list: [C99 6.5.2]
+///         argument-expression
+///         argument-expression-list ',' assignment-expression
+///
+Parser::ExprResult Parser::ParsePostfixExpressionSuffix(ExprResult LHS) {
+  assert(!LHS.isInvalid && "LHS is invalid already!");
+  
   // Now that the primary-expression piece of the postfix-expression has been
   // parsed, see if there are any postfix-expression pieces here.
   SourceLocation Loc;
   while (1) {
     switch (Tok.getKind()) {
-    default:
-      return ExprResult(false);
+    default:  // Not a postfix-expression suffix.
+      return LHS;
     case tok::l_square:    // postfix-expression: p-e '[' expression ']'
       Loc = Tok.getLocation();
       ConsumeBracket();
@@ -488,6 +504,7 @@ Parser::ExprResult Parser::ParseCastExpression(bool isUnaryExpression) {
     }
   }
 }
+
 
 /// ParseSizeofAlignofExpression - Parse a sizeof or alignof expression.
 ///       unary-expression:  [C99 6.5.3]

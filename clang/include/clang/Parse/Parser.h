@@ -182,6 +182,7 @@ private:
 
   ExprResult ParseRHSOfBinaryExpression(ExprResult LHS, unsigned MinPrec);
   ExprResult ParseCastExpression(bool isUnaryExpression);
+  ExprResult ParsePostfixExpressionSuffix(ExprResult LHS);
   ExprResult ParseSizeofAlignofExpression();
   
   /// ParenParseOption - Control what ParseParenExpression will parse.
