@@ -1216,7 +1216,7 @@ static SDOperand LowerCALL(SDOperand Op, SelectionDAG &DAG) {
   NodeTys.push_back(MVT::Other);
   
   // If the function returns void, just return the chain.
-  if (NumResults == 1)
+  if (NumResults == 0)
     return Chain;
   
   // Otherwise, merge everything together with a MERGE_VALUES node.
