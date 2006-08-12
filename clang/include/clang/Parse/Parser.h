@@ -93,11 +93,24 @@ public:
   /// This does not work will all kinds of tokens: strings and specific other
   /// tokens must be consumed with custom methods below.
   void ConsumeToken() {
-    // Note: update Parser::SkipUntil if any other special tokens are added.
     assert(!isTokenStringLiteral() && !isTokenParen() && !isTokenBracket() &&
            !isTokenBrace() &&
            "Should consume special tokens with Consume*Token");
     PP.Lex(Tok);
+  }
+  
+  /// ConsumeAnyToken - Dispatch to the right Consume* method based on the
+  /// current token type.  This should only be used in cases where the type of
+  /// the token really isn't known, e.g. in error recovery.
+  void ConsumeAnyToken() {
+    if (isTokenParen())
+      ConsumeParen();
+    else if (isTokenBracket())
+      ConsumeBracket();
+    else if (isTokenBrace())
+      ConsumeBrace();
+    else
+      ConsumeToken();
   }
   
   /// ConsumeParen - This consume method keeps the paren count up-to-date.
@@ -154,6 +167,14 @@ public:
   void MatchRHSPunctuation(tok::TokenKind RHSTok, SourceLocation LHSLoc,
                            const char *LHSName, unsigned Diag);
   
+  /// ExpectAndConsume - The parser expects that 'ExpectedTok' is next in the
+  /// input.  If so, it is consumed and false is returned.
+  ///
+  /// If the input is malformed, this emits the specified diagnostic.  Next, if
+  /// SkipToTok is specified, it calls SkipUntil(SkipToTok).  Finally, true is
+  /// returned.
+  bool ExpectAndConsume(tok::TokenKind ExpectedTok, unsigned Diag,
+                        tok::TokenKind SkipToTok = tok::unknown);
 private:
   //===--------------------------------------------------------------------===//
   // Error recovery.

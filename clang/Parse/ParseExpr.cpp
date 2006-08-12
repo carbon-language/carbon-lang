@@ -639,32 +639,22 @@ Parser::ExprResult Parser::ParseBuiltinPrimaryExpression() {
   case tok::kw___builtin_offsetof:
     ParseTypeName();
 
-    if (Tok.getKind() != tok::comma) {
-      Diag(Tok, diag::err_expected_comma);
-      SkipUntil(tok::r_paren);
+    if (ExpectAndConsume(tok::comma, diag::err_expected_comma, tok::r_paren))
       return ExprResult(true);
-    }
-    ConsumeToken();
     
     // We must have at least one identifier here.
-    if (Tok.getKind() != tok::identifier) {
-      Diag(Tok, diag::err_expected_ident);
-      SkipUntil(tok::r_paren);
+    if (ExpectAndConsume(tok::identifier, diag::err_expected_ident,
+                         tok::r_paren))
       return ExprResult(true);
-    }
-    ConsumeToken();
-    
+
     while (1) {
       if (Tok.getKind() == tok::period) {
         // offsetof-member-designator: offsetof-member-designator '.' identifier
         ConsumeToken();
         
-        if (Tok.getKind() != tok::identifier) {
-          Diag(Tok, diag::err_expected_ident);
-          SkipUntil(tok::r_paren);
+        if (ExpectAndConsume(tok::identifier, diag::err_expected_ident,
+                             tok::r_paren))
           return ExprResult(true);
-        }
-        ConsumeToken();
       } else if (Tok.getKind() == tok::l_square) {
         // offsetof-member-designator: offsetof-member-design '[' expression ']'
         SourceLocation LSquareLoc = Tok.getLocation();
@@ -685,33 +675,21 @@ Parser::ExprResult Parser::ParseBuiltinPrimaryExpression() {
   case tok::kw___builtin_choose_expr:
     Res = ParseAssignmentExpression();
     
-    if (Tok.getKind() != tok::comma) {
-      Diag(Tok, diag::err_expected_comma);
-      SkipUntil(tok::r_paren);
+    if (ExpectAndConsume(tok::comma, diag::err_expected_comma, tok::r_paren))
       return ExprResult(true);
-    }
-    ConsumeToken();
     
     Res = ParseAssignmentExpression();
     
-    if (Tok.getKind() != tok::comma) {
-      Diag(Tok, diag::err_expected_comma);
-      SkipUntil(tok::r_paren);
+    if (ExpectAndConsume(tok::comma, diag::err_expected_comma, tok::r_paren))
       return ExprResult(true);
-    }
-    ConsumeToken();
     
     Res = ParseAssignmentExpression();
     break;
   case tok::kw___builtin_types_compatible_p:
     ParseTypeName();
     
-    if (Tok.getKind() != tok::comma) {
-      Diag(Tok, diag::err_expected_comma);
-      SkipUntil(tok::r_paren);
+    if (ExpectAndConsume(tok::comma, diag::err_expected_comma, tok::r_paren))
       return ExprResult(true);
-    }
-    ConsumeToken();
     
     ParseTypeName();
     break;

@@ -45,19 +45,31 @@ void Parser::MatchRHSPunctuation(tok::TokenKind RHSTok, SourceLocation LHSLoc,
                                  const char *LHSName, unsigned DiagID) {
   
   if (Tok.getKind() == RHSTok) {
-    if (isTokenParen())
-      ConsumeParen();
-    else if (isTokenBracket())
-      ConsumeBracket();
-    else if (isTokenBrace())
-      ConsumeBrace();
-    else
-      ConsumeParen();
+    ConsumeAnyToken();
   } else {
     Diag(Tok, DiagID);
     Diag(LHSLoc, diag::err_matching, LHSName);
     SkipUntil(RHSTok);
   }
+}
+
+/// ExpectAndConsume - The parser expects that 'ExpectedTok' is next in the
+/// input.  If so, it is consumed and false is returned.
+///
+/// If the input is malformed, this emits the specified diagnostic.  Next, if
+/// SkipToTok is specified, it calls SkipUntil(SkipToTok).  Finally, true is
+/// returned.
+bool Parser::ExpectAndConsume(tok::TokenKind ExpectedTok, unsigned DiagID,
+                              tok::TokenKind SkipToTok) {
+  if (Tok.getKind() == ExpectedTok) {
+    ConsumeToken();
+    return false;
+  }
+  
+  Diag(Tok, DiagID);
+  if (SkipToTok != tok::unknown)
+    SkipUntil(SkipToTok);
+  return true;
 }
 
 //===----------------------------------------------------------------------===//
@@ -81,16 +93,8 @@ bool Parser::SkipUntil(tok::TokenKind T, bool StopAtSemi, bool DontConsume) {
     if (Tok.getKind() == T) {
       if (DontConsume) {
         // Noop, don't consume the token.
-      } else if (isTokenParen()) {
-        ConsumeParen();
-      } else if (isTokenBracket()) {
-        ConsumeBracket();
-      } else if (isTokenBrace()) {
-        ConsumeBrace();
-      } else if (isTokenStringLiteral()) {
-        ConsumeStringToken();
       } else {
-        ConsumeToken();
+        ConsumeAnyToken();
       }
       return true;
     }
