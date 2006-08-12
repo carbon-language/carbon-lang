@@ -16,3 +16,7 @@ int a, ***C, * const D, b(int);
 
 int *A;
 
+int test2(int *P, int A) {
+  // Hard case.
+  int Array[*(int*)P+A];
+}
