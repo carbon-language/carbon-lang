@@ -35,6 +35,7 @@ namespace llvm {
   class SelectionDAGCSEMap {
     void **Buckets;
     unsigned NumBuckets;  // Always a power of 2.
+    unsigned NumNodes;
   public:
     class NodeID;
     SelectionDAGCSEMap();
