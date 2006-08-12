@@ -607,16 +607,10 @@ void Parser::ParseParenDeclarator(Declarator &D) {
       // Eat the comma.
       ConsumeToken();
       
-      if (Tok.getKind() != tok::identifier) {
-        // If not identifier, diagnose the error.
-        Diag(Tok, diag::err_expected_ident);
+      if (ExpectAndConsume(tok::identifier, diag::err_expected_ident)) {
         ErrorEmitted = true;
         break;
       }
-
-      // Eat the id.
-      // TODO: remember it!
-      ConsumeToken();
     }
     
     // K&R 'prototype'.

@@ -576,9 +576,8 @@ Parser::ExprResult Parser::ParseSizeofAlignofExpression() {
   ConsumeToken();
   
   // If the operand doesn't start with an '(', it must be an expression.
-  if (Tok.getKind() != tok::l_paren) {
+  if (Tok.getKind() != tok::l_paren)
     return ParseCastExpression(true);
-  }
   
   // If it starts with a '(', we know that it is either a parenthesized
   // type-name, or it is a unary-expression that starts with a compound literal,
@@ -626,13 +625,10 @@ Parser::ExprResult Parser::ParseBuiltinPrimaryExpression() {
       SkipUntil(tok::r_paren);
       return Res;
     }
-    if (Tok.getKind() != tok::comma) {
-      Diag(Tok, diag::err_expected_comma);
-      SkipUntil(tok::r_paren);
+
+    if (ExpectAndConsume(tok::comma, diag::err_expected_comma, tok::r_paren))
       return ExprResult(true);
-    }
-    ConsumeToken();
-    
+
     ParseTypeName();
     break;
     
