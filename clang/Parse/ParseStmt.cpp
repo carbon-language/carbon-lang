@@ -482,7 +482,9 @@ void Parser::ParseGotoStatement() {
     // GNU indirect goto extension.
     Diag(Tok, diag::ext_gnu_indirect_goto);
     ConsumeToken();
-    ParseExpression();
+    ExprResult R = ParseExpression();
+    if (R.isInvalid)   // Skip to the semicolon, but don't consume it.
+      SkipUntil(tok::semi, false, true);
   }
 }
 
@@ -493,6 +495,9 @@ void Parser::ParseReturnStatement() {
   assert(Tok.getKind() == tok::kw_return && "Not a return stmt!");
   ConsumeToken();  // eat the 'return'.
   
-  if (Tok.getKind() != tok::semi)
-    ParseExpression();
+  if (Tok.getKind() != tok::semi) {
+    ExprResult R = ParseExpression();
+    if (R.isInvalid)   // Skip to the semicolon, but don't consume it.
+      SkipUntil(tok::semi, false, true);
+  }
 }
