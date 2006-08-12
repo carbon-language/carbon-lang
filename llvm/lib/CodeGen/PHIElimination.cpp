@@ -103,9 +103,9 @@ bool PNE::EliminatePHINodes(MachineFunction &MF, MachineBasicBlock &MBB) {
 /// use of the specified register.
 static bool InstructionUsesRegister(MachineInstr *MI, unsigned SrcReg) {
   for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i)
-    if (MI->getOperand(0).isRegister() &&
-        MI->getOperand(0).getReg() == SrcReg &&
-        MI->getOperand(0).isUse())
+    if (MI->getOperand(i).isRegister() &&
+        MI->getOperand(i).getReg() == SrcReg &&
+        MI->getOperand(i).isUse())
       return true;
   return false;
 }
