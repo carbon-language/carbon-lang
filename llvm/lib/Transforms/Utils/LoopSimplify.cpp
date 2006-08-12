@@ -168,6 +168,8 @@ bool LoopSimplify::runOnFunction(Function &F) {
 ///
 bool LoopSimplify::ProcessLoop(Loop *L) {
   bool Changed = false;
+ReprocessLoop:
+  
   // Canonicalize inner loops before outer loops.  Inner loop canonicalization
   // can provide work for the outer loop to canonicalize.
   for (Loop::iterator I = L->begin(), E = L->end(); I != E; ++I)
@@ -208,16 +210,25 @@ bool LoopSimplify::ProcessLoop(Loop *L) {
 
   // If the header has more than two predecessors at this point (from the
   // preheader and from multiple backedges), we must adjust the loop.
-  if (L->getNumBackEdges() != 1) {
-    
-    // If this is really a nested loop, rip it out into a child loop.
-    if (Loop *NL = SeparateNestedLoop(L)) {
-      ++NumNested;
-      // This is a big restructuring change, reprocess the whole loop.
-      ProcessLoop(NL);
-      return true;
+  unsigned NumBackedges = L->getNumBackEdges();
+  if (NumBackedges != 1) {
+    // If this is really a nested loop, rip it out into a child loop.  Don't do
+    // this for loops with a giant number of backedges, just factor them into a
+    // common backedge instead.
+    if (NumBackedges < 8) {
+      if (Loop *NL = SeparateNestedLoop(L)) {
+        ++NumNested;
+        // This is a big restructuring change, reprocess the whole loop.
+        ProcessLoop(NL);
+        Changed = true;
+        // GCC doesn't tail recursion eliminate this.
+        goto ReprocessLoop;
+      }
     }
 
+    // If we either couldn't, or didn't want to, identify nesting of the loops,
+    // insert a new block that all backedges target, then make it jump to the
+    // loop header.
     InsertUniqueBackedgeBlock(L);
     NumInserted++;
     Changed = true;
