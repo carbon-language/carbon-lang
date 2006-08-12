@@ -13,7 +13,7 @@
 //
 // In the C99 grammar, these unary operators bind tightest and are represented
 // as the 'cast-expression' production.  Everything else is either a binary
-// operator (e.g. '/') or a trinary operator ("?:").  The unary leaves are
+// operator (e.g. '/') or a ternary operator ("?:").  The unary leaves are
 // handled by ParseCastExpression, the higher level pieces are handled by
 // ParseBinaryExpression.
 //
@@ -54,7 +54,7 @@ Parser::ExprResult Parser::ParseAssignmentExpression() {
   return ParseExpression();
 }
 
-/// PrecedenceLevels - These are precedences for the binary/trinary operators in
+/// PrecedenceLevels - These are precedences for the binary/ternary operators in
 /// the C99 grammar.  These have been named to relate with the C99 grammar
 /// productions.  Low precedences numbers bind more weakly than high numbers.
 namespace prec {
@@ -121,8 +121,17 @@ static prec::Level getBinOpPrecedence(tok::TokenKind Kind) {
 }
 
 
-/// ParseBinaryExpression - Simple precedence-based parser for binary/trinary
+/// ParseBinaryExpression - Simple precedence-based parser for binary/ternary
 /// operators.
+///
+/// Note: we diverge from the C99 grammar when parsing the assignment-expression
+/// production.  C99 specifies that the LHS of an assignment operator should be
+/// parsed as a unary-expression, but consistency dictates that it be a
+/// conditional-expession.  In practice, the important thing here is that the
+/// LHS of an assignment has to be an l-value, which productions between
+/// unary-expression and conditional-expression don't produce.  Because we want
+/// consistency, we parse the LHS as a conditional-expression, then check for
+/// l-value-ness in semantic analysis stages.
 ///
 ///       multiplicative-expression: [C99 6.5.5]
 ///         cast-expression
@@ -232,8 +241,6 @@ Parser::ParseRHSOfBinaryExpression(ExprResult LHS, unsigned MinPrec) {
     
     // FIXME: ASSIGNMENT IS RIGHT ASSOCIATIVE.
     // FIXME: do we want to handle assignment here??
-    // ASSIGNMENT: Parse LHS as conditional expr, then catch errors in semantic
-    // analysis.
     bool isRightAssoc = OpToken.getKind() == tok::question;
 
     // Get the precedence of the operator to the right of the RHS.  If it binds
@@ -250,7 +257,7 @@ Parser::ParseRHSOfBinaryExpression(ExprResult LHS, unsigned MinPrec) {
     }
     assert(NextTokPrec <= ThisPrec && "Recursion didn't work!");
   
-    // Handle the special case of our one trinary operator here.
+    // Handle the special case of our one ternary operator here.
     if (OpToken.getKind() == tok::question) {
       if (Tok.getKind() != tok::colon) {
         Diag(Tok, diag::err_expected_colon);
