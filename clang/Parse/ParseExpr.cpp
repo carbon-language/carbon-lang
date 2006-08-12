@@ -45,11 +45,6 @@ Parser::ExprResult Parser::ParseInitializer() {
 
 
 
-// Expr that doesn't include commas.
-Parser::ExprResult Parser::ParseAssignmentExpression() {
-  return ParseExpression();
-}
-
 /// PrecedenceLevels - These are precedences for the binary/ternary operators in
 /// the C99 grammar.  These have been named to relate with the C99 grammar
 /// productions.  Low precedences numbers bind more weakly than high numbers.
@@ -117,7 +112,7 @@ static prec::Level getBinOpPrecedence(tok::TokenKind Kind) {
 }
 
 
-/// ParseBinaryExpression - Simple precedence-based parser for binary/ternary
+/// ParseExpression - Simple precedence-based parser for binary/ternary
 /// operators.
 ///
 /// Note: we diverge from the C99 grammar when parsing the assignment-expression
@@ -198,6 +193,14 @@ Parser::ExprResult Parser::ParseExpression() {
   if (LHS.isInvalid) return LHS;
   
   return ParseRHSOfBinaryExpression(LHS, prec::Comma);
+}
+
+// Expr that doesn't include commas.
+Parser::ExprResult Parser::ParseAssignmentExpression() {
+  ExprResult LHS = ParseCastExpression(false);
+  if (LHS.isInvalid) return LHS;
+  
+  return ParseRHSOfBinaryExpression(LHS, prec::Assignment);
 }
 
 /// ParseRHSOfBinaryExpression - Parse a binary expression that starts with
