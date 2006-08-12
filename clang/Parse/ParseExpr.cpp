@@ -217,26 +217,36 @@ Parser::ParseRHSOfBinaryExpression(ExprResult LHS, unsigned MinPrec) {
     LexerToken OpToken = Tok;
     ConsumeToken();
     
-    // Parse the RHS of the operator.
-    ExprResult RHS;
-
-    // In the normal case, just parse another leaf here.
-    if (OpToken.getKind() != tok::question) {
-      RHS = ParseCastExpression(false);
-      if (RHS.isInvalid) return RHS;
-    } else if (Tok.getKind() != tok::colon) {
-      // Handle this production specially:
-      //   logical-OR-expression '?' expression ':' conditional-expression
-      // In particular, the RHS of the '?' is 'expression', not
-      // 'logical-OR-expression' as we might expect.
-      RHS = ParseExpression();
-      if (RHS.isInvalid) return RHS;
-    } else {
-      // Special case handling of "X ? Y : Z" where Y is empty:
-      //   logical-OR-expression '?' ':' conditional-expression   [GNU]
-      RHS = ExprResult(false);
-      Diag(Tok, diag::ext_gnu_conditional_expr);
+    // Special case handling for the ternary operator.
+    ExprResult TernaryMiddle;
+    if (NextTokPrec == prec::Conditional) {
+      if (Tok.getKind() != tok::colon) {
+        // Handle this production specially:
+        //   logical-OR-expression '?' expression ':' conditional-expression
+        // In particular, the RHS of the '?' is 'expression', not
+        // 'logical-OR-expression' as we might expect.
+        TernaryMiddle = ParseExpression();
+        if (TernaryMiddle.isInvalid) return TernaryMiddle;
+      } else {
+        // Special case handling of "X ? Y : Z" where Y is empty:
+        //   logical-OR-expression '?' ':' conditional-expression   [GNU]
+        TernaryMiddle = ExprResult(false);
+        Diag(Tok, diag::ext_gnu_conditional_expr);
+      }
+      
+      if (Tok.getKind() != tok::colon) {
+        Diag(Tok, diag::err_expected_colon);
+        Diag(OpToken, diag::err_matching, "?");
+        return ExprResult(true);
+      }
+      
+      // Eat the colon.
+      ConsumeToken();
     }
+    
+    // Parse another leaf here for the RHS of the operator.
+    ExprResult RHS = ParseCastExpression(false);
+    if (RHS.isInvalid) return RHS;
 
     // Remember the precedence of this operator and get the precedence of the
     // operator immediately to the right of the RHS.
@@ -249,9 +259,6 @@ Parser::ParseRHSOfBinaryExpression(ExprResult LHS, unsigned MinPrec) {
 
     // Get the precedence of the operator to the right of the RHS.  If it binds
     // more tightly with RHS than we do, evaluate it completely first.
-
-    // FIXME: Is this enough for '?:' operators?  The second term is suppsed to
-    // be 'expression', not 'assignment'.
     if (ThisPrec < NextTokPrec ||
         (ThisPrec == NextTokPrec && isRightAssoc)) {
       RHS = ParseRHSOfBinaryExpression(RHS, ThisPrec+1);
@@ -261,32 +268,7 @@ Parser::ParseRHSOfBinaryExpression(ExprResult LHS, unsigned MinPrec) {
     }
     assert(NextTokPrec <= ThisPrec && "Recursion didn't work!");
   
-    // Handle the special case of our one ternary operator here.
-    if (OpToken.getKind() == tok::question) {
-      if (Tok.getKind() != tok::colon) {
-        Diag(Tok, diag::err_expected_colon);
-        Diag(OpToken, diag::err_matching, "?");
-        return ExprResult(true);
-      }
-      
-      // Eat the colon.
-      ConsumeToken();
-      
-      // Parse the value of the colon.
-      ExprResult AfterColonVal = ParseCastExpression(false);
-      if (AfterColonVal.isInvalid) return AfterColonVal;
-      
-      // Parse anything after the RRHS that has a higher precedence than ?.
-      AfterColonVal = ParseRHSOfBinaryExpression(AfterColonVal, ThisPrec+1);
-      if (AfterColonVal.isInvalid) return AfterColonVal;
-      
-      // TODO: Combine LHS = LHS ? RHS : AfterColonVal.
-      
-      // Figure out the precedence of the token after the : part.
-      NextTokPrec = getBinOpPrecedence(Tok.getKind());
-    } else {
-      // TODO: combine the LHS and RHS into the LHS (e.g. build AST).
-    }
+    // TODO: combine the LHS and RHS into the LHS (e.g. build AST).
   }
 }
 
