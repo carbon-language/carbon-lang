@@ -312,7 +312,7 @@ Parser::ParseRHSOfBinaryExpression(ExprResult LHS, unsigned MinPrec) {
 ///
 ///       argument-expression-list: [C99 6.5.2]
 ///         argument-expression
-///         argument-expression-list ',' argument-expression
+///         argument-expression-list ',' assignment-expression
 ///
 ///       primary-expression: [C99 6.5.1]
 ///         identifier
@@ -458,9 +458,7 @@ Parser::ExprResult Parser::ParseCastExpression(bool isUnaryExpression) {
       ConsumeParen();
       
       while (1) {
-        // FIXME: This should be argument-expression!
         ParseAssignmentExpression();
-        
         if (Tok.getKind() != tok::comma)
           break;
         ConsumeToken();  // Next argument.
