@@ -262,6 +262,8 @@ DIAG(ext_gnu_address_of_label, EXTENSION,
      "use of GNU address-of-label extension")
 DIAG(ext_gnu_statement_expr, EXTENSION,
      "use of GNU statement expression extension")
+DIAG(ext_gnu_conditional_expr, EXTENSION,
+     "use of GNU ?: expression extension, eliding middle term")
      
 // Generic errors.
 DIAG(err_parse_error, ERROR,
@@ -300,6 +302,8 @@ DIAG(err_expected_colon_after, ERROR,
      "expected ':' after %s")
 DIAG(err_label_end_of_compound_statement, ERROR,
      "label at end of compound statement: expected statement")
+DIAG(err_expected_colon, ERROR,
+     "expected ':'")
 
 /// err_matching - this is used as a continuation of a previous error, e.g. to 
 /// specify the '(' when we expected a ')'.  This should probably be some

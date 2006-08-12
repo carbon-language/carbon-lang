@@ -7,7 +7,15 @@
 //
 //===----------------------------------------------------------------------===//
 //
-//  This file implements the Expression parsing implementation.
+// This file implements the Expression parsing implementation.  Expressions in
+// C99 basically consist of a bunch of binary operators with unary operators and
+// other random stuff at the leaves.
+//
+// In the C99 grammar, these unary operators bind tightest and are represented
+// as the 'cast-expression' production.  Everything else is either a binary
+// operator (e.g. '/') or a trinary operator ("?:").  The unary leaves are
+// handled by ParseCastExpression, the higher level pieces are handled by
+// ParseBinaryExpression.
 //
 //===----------------------------------------------------------------------===//
 
@@ -38,13 +46,239 @@ Parser::ExprResult Parser::ParseInitializer() {
 
 
 Parser::ExprResult Parser::ParseExpression() {
-  return ParseCastExpression(false);
+  return ParseBinaryExpression();
 }
 
 // Expr that doesn't include commas.
 Parser::ExprResult Parser::ParseAssignmentExpression() {
   return ParseExpression();
 }
+
+/// PrecedenceLevels - These are precedences for the binary/trinary operators in
+/// the C99 grammar.  These have been named to relate with the C99 grammar
+/// productions.  Low precedences numbers bind more weakly than high numbers.
+namespace prec {
+  enum Level {
+    Unknown        = 0,    // Not binary operator.
+    Comma          = 1,    // ,
+    Assignment     = 2,    // =, *=, /=, %=, +=, -=, <<=, >>=, &=, ^=, |=
+    Conditional    = 3,    // ?
+    LogicalOr      = 4,    // ||
+    LogicalAnd     = 5,    // &&
+    InclusiveOr    = 6,    // |
+    ExclusiveOr    = 7,    // ^
+    And            = 8,    // &
+    MinMax         = 9,   // <?, >?           min, max (GCC extensions)
+    Equality       = 10,   // ==, !=
+    Relational     = 11,   //  >=, <=, >, <
+    Shift          = 12,   // <<, >>
+    Additive       = 13,   // -, +
+    Multiplicative = 14    // *, /, %
+  };
+}
+
+
+/// getBinOpPrecedence - Return the precedence of the specified binary operator
+/// token.  This returns:
+///
+static prec::Level getBinOpPrecedence(tok::TokenKind Kind) {
+  switch (Kind) {
+  default:                        return prec::Unknown;
+  case tok::comma:                return prec::Comma;
+  case tok::equal:
+  case tok::starequal:
+  case tok::slashequal:
+  case tok::percentequal:
+  case tok::plusequal:
+  case tok::minusequal:
+  case tok::lesslessequal:
+  case tok::greatergreaterequal:
+  case tok::ampequal:
+  case tok::caretequal:
+  case tok::pipeequal:            return prec::Assignment;
+  case tok::question:             return prec::Conditional;
+  case tok::pipepipe:             return prec::LogicalOr;
+  case tok::ampamp:               return prec::LogicalAnd;
+  case tok::pipe:                 return prec::InclusiveOr;
+  case tok::caret:                return prec::ExclusiveOr;
+  case tok::amp:                  return prec::And;
+  case tok::lessquestion:
+  case tok::greaterquestion:      return prec::MinMax;
+  case tok::exclaimequal:
+  case tok::equalequal:           return prec::Equality;
+  case tok::lessequal:
+  case tok::less:
+  case tok::greaterequal:
+  case tok::greater:              return prec::Relational;
+  case tok::lessless:
+  case tok::greatergreater:       return prec::Shift;
+  case tok::plus:
+  case tok::minus:                return prec::Additive;
+  case tok::percent:
+  case tok::slash:
+  case tok::star:                 return prec::Multiplicative;
+  }
+}
+
+
+/// ParseBinaryExpression - Simple precedence-based parser for binary/trinary
+/// operators.
+///
+///       multiplicative-expression: [C99 6.5.5]
+///         cast-expression
+///         multiplicative-expression '*' cast-expression
+///         multiplicative-expression '/' cast-expression
+///         multiplicative-expression '%' cast-expression
+///
+///       additive-expression: [C99 6.5.6]
+///         multiplicative-expression
+///         additive-expression '+' multiplicative-expression
+///         additive-expression '-' multiplicative-expression
+///
+///       shift-expression: [C99 6.5.7]
+///         additive-expression
+///         shift-expression '<<' additive-expression
+///         shift-expression '>>' additive-expression
+///
+///       relational-expression: [C99 6.5.8]
+///         shift-expression
+///         relational-expression '<' shift-expression
+///         relational-expression '>' shift-expression
+///         relational-expression '<=' shift-expression
+///         relational-expression '>=' shift-expression
+///
+///       equality-expression: [C99 6.5.9]
+///         relational-expression
+///         equality-expression '==' relational-expression
+///         equality-expression '!=' relational-expression
+///
+///       AND-expression: [C99 6.5.10]
+///         equality-expression
+///         AND-expression '&' equality-expression
+///
+///       exclusive-OR-expression: [C99 6.5.11]
+///         AND-expression
+///         exclusive-OR-expression '^' AND-expression
+///
+///       inclusive-OR-expression: [C99 6.5.12]
+///         exclusive-OR-expression
+///         inclusive-OR-expression '|' exclusive-OR-expression
+///
+///       logical-AND-expression: [C99 6.5.13]
+///         inclusive-OR-expression
+///         logical-AND-expression '&&' inclusive-OR-expression
+///
+///       logical-OR-expression: [C99 6.5.14]
+///         logical-AND-expression
+///         logical-OR-expression '||' logical-AND-expression
+///
+///       conditional-expression: [C99 6.5.15]
+///         logical-OR-expression
+///         logical-OR-expression '?' expression ':' conditional-expression
+/// [GNU]   logical-OR-expression '?' ':' conditional-expression
+///
+///       assignment-expression: [C99 6.5.16]
+///         conditional-expression
+///         unary-expression assignment-operator assignment-expression
+///
+///       assignment-operator: one of
+///         = *= /= %= += -= <<= >>= &= ^= |=
+///
+///       expression: [C99 6.5.17]
+///         assignment-expression
+///         expression ',' assignment-expression
+///
+Parser::ExprResult Parser::ParseBinaryExpression() {
+  ExprResult LHS = ParseCastExpression(false);
+  if (LHS.isInvalid) return LHS;
+  
+  return ParseRHSOfBinaryExpression(LHS, prec::Comma);
+}
+
+/// ParseRHSOfBinaryExpression - Parse a binary expression that starts with
+/// LHS and has a precedence of at least MinPrec.
+Parser::ExprResult
+Parser::ParseRHSOfBinaryExpression(ExprResult LHS, unsigned MinPrec) {
+  unsigned NextTokPrec = getBinOpPrecedence(Tok.getKind());
+  
+  while (1) {
+    // If this token has a lower precedence than we are allowed to parse (e.g.
+    // because we are called recursively, or because the token is not a binop),
+    // then we are done!
+    if (NextTokPrec < MinPrec)
+      return LHS;
+
+    // Consume the operator, saving the operator token for error reporting.
+    LexerToken OpToken = Tok;
+    ConsumeToken();
+    
+    // Parse the RHS of the operator.
+    ExprResult RHS;
+    
+    // Special case handling of "X ? Y : Z" were Y is empty.  This is a GCC
+    // extension.
+    if (OpToken.getKind() != tok::question || Tok.getKind() != tok::colon) {
+      RHS = ParseCastExpression(false);
+      if (RHS.isInvalid) return RHS;
+    } else {
+      RHS = ExprResult(false);
+      Diag(Tok, diag::ext_gnu_conditional_expr);
+    }
+
+    // Remember the precedence of this operator and get the precedence of the
+    // operator immediately to the right of the RHS.
+    unsigned ThisPrec = NextTokPrec;
+    NextTokPrec = getBinOpPrecedence(Tok.getKind());
+    
+    // FIXME: ASSIGNMENT IS RIGHT ASSOCIATIVE.
+    // FIXME: do we want to handle assignment here??
+    // ASSIGNMENT: Parse LHS as conditional expr, then catch errors in semantic
+    // analysis.
+    bool isRightAssoc = OpToken.getKind() == tok::question;
+
+    // Get the precedence of the operator to the right of the RHS.  If it binds
+    // more tightly with RHS than we do, evaluate it completely first.
+
+    // FIXME: Is this enough for '?:' operators?  The second term is suppsed to
+    // be 'expression', not 'assignment'.
+    if (ThisPrec < NextTokPrec ||
+        (ThisPrec == NextTokPrec && isRightAssoc)) {
+      RHS = ParseRHSOfBinaryExpression(RHS, ThisPrec+1);
+      if (RHS.isInvalid) return RHS;
+
+      NextTokPrec = getBinOpPrecedence(Tok.getKind());
+    }
+    assert(NextTokPrec <= ThisPrec && "Recursion didn't work!");
+  
+    // Handle the special case of our one trinary operator here.
+    if (OpToken.getKind() == tok::question) {
+      if (Tok.getKind() != tok::colon) {
+        Diag(Tok, diag::err_expected_colon);
+        Diag(OpToken, diag::err_matching, "?");
+        return ExprResult(true);
+      }
+      
+      // Eat the colon.
+      ConsumeToken();
+      
+      // Parse the value of the colon.
+      ExprResult AfterColonVal = ParseCastExpression(false);
+      if (AfterColonVal.isInvalid) return AfterColonVal;
+      
+      // Parse anything after the RRHS that has a higher precedence than ?.
+      AfterColonVal = ParseRHSOfBinaryExpression(AfterColonVal, ThisPrec+1);
+      if (AfterColonVal.isInvalid) return AfterColonVal;
+      
+      // TODO: Combine LHS = LHS ? RHS : AfterColonVal.
+      
+      // Figure out the precedence of the token after the : part.
+      NextTokPrec = getBinOpPrecedence(Tok.getKind());
+    } else {
+      // TODO: combine the LHS and RHS into the LHS (e.g. build AST).
+    }
+  }
+}
+
 
 /// ParseCastExpression - Parse a cast-expression, or, if isUnaryExpression is
 /// true, parse a unary-expression.
