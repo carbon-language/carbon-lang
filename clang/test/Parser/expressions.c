@@ -23,3 +23,8 @@ int test3(int a, int b, int c) {
 int test4() {
   test4();
 }
+
+int test_offsetof() {
+  // FIXME: change into something that is semantically correct.
+  __builtin_offsetof(int, a.b.c[4][5]);
+}
