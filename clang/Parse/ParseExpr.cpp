@@ -565,13 +565,15 @@ Parser::ExprResult Parser::ParseParenExpression(ParenParseOption &ExprType) {
     ParseCompoundStatement();
     ExprType = CompoundStmt;
   } else if (ExprType >= CompoundLiteral && isTypeSpecifierQualifier()) {
-    // Otherwise, this is a compound expression.
+    // Otherwise, this is a compound literal expression or cast expression.
     ParseTypeName();
 
     // Match the ')'.
     MatchRHSPunctuation(tok::r_paren, OpenLoc, "(", diag::err_expected_rparen);
 
     if (Tok.getKind() == tok::l_brace) {
+      if (!getLang().C99)   // Compound literals don't exist in C90.
+        Diag(OpenLoc, diag::ext_c99_compound_literal);
       Result = ParseInitializer();
       ExprType = CompoundLiteral;
     } else if (ExprType == CastExpr) {
