@@ -159,6 +159,7 @@ void Parser::ParseDeclarationSpecifiers(DeclSpec &DS) {
       // specifiers.  First verify that DeclSpec's are consistent.
       DS.Finish(StartLoc, Diags, getLang());
       return;
+    // FIXME: Handle struct/union/enum tags.
       
     // storage-class-specifier
     case tok::kw_typedef:
@@ -423,7 +424,7 @@ void Parser::ParseDeclarator(Declarator &D) {
   /// for well-formedness and issues diagnostics.
   ParseDeclaratorInternal(D);
   
-  // FIXME: validate D.
+  // TODO: validate D.
 
 }
 
@@ -574,7 +575,7 @@ void Parser::ParseParenDeclarator(Declarator &D) {
   // Okay, this is the parameter list of a function definition, or it is an
   // identifier list of a K&R-style function.
 
-  // FIXME: enter function-declaration scope, limiting any declarators for
+  // TODO: enter function-declaration scope, limiting any declarators for
   // arguments to the function scope.
   // NOTE: better to only create a scope if not '()'
   bool IsVariadic;
@@ -600,7 +601,7 @@ void Parser::ParseParenDeclarator(Declarator &D) {
     if (!D.getIdentifier())
       Diag(Tok, diag::ext_ident_list_in_param);
     
-    // FIXME: Remember token.
+    // TODO: Remember token.
     ConsumeToken();
     while (Tok.getKind() == tok::comma) {
       // Eat the comma.
@@ -614,7 +615,7 @@ void Parser::ParseParenDeclarator(Declarator &D) {
       }
 
       // Eat the id.
-      // FIXME: remember it!
+      // TODO: remember it!
       ConsumeToken();
     }
     
@@ -665,9 +666,9 @@ void Parser::ParseParenDeclarator(Declarator &D) {
     HasPrototype = true;
   }
   
-  // FIXME: pop the scope.  
+  // TODO: pop the scope.  
 
-  // FIXME: capture argument info.
+  // TODO: capture argument info.
   
   // Remember that we parsed a function type, and remember the attributes.
   D.AddTypeInfo(DeclaratorTypeInfo::getFunction(HasPrototype, IsVariadic,
@@ -716,6 +717,7 @@ void Parser::ParseBracketDeclarator(Declarator &D) {
   
   // Handle "direct-declarator [ type-qual-list[opt] * ]".
   bool isStar = false;
+  void *NumElts = 0;
   if (Tok.getKind() == tok::star) {
     // Remember the '*' token, in case we have to un-get it.
     LexerToken StarTok = Tok;
@@ -730,24 +732,27 @@ void Parser::ParseBracketDeclarator(Declarator &D) {
       isStar = true;
     } else {
       // Otherwise, the * must have been some expression (such as '*ptr') that
-      // started an assign-expr.  We already consumed the token, but now we need
-      // to reparse it.
+      // started an assignment-expr.  We already consumed the token, but now we
+      // need to reparse it.
       // FIXME: We must push 'StarTok' and Tok back into the preprocessor as a
       // macro expansion context, so they will be read again. It is basically
       // impossible to refudge the * in otherwise, due to cases like X[*p + 4].
       assert(0 && "FIXME: int X[*p] unimplemented");
     }
-  }
-  
-  void *NumElts = 0;
-  if (!isStar && Tok.getKind() != tok::r_square) {
+  } else if (Tok.getKind() != tok::r_square) {
     // Parse the assignment-expression now.
-    NumElts = /*FIXME: parse array size expr*/0;
-    assert(0 && "expr parsing not impl yet!");
+    ExprResult Res = ParseAssignmentExpression();
+    if (Res.isInvalid) {
+      // If the expression was invalid, skip it.
+      SkipUntil(tok::r_square);
+      return;
+    }
+    
+    NumElts = /*TODO: parse array size expr*/0;
   }
   
-  ConsumeBracket();
-  
+  MatchRHSPunctuation(tok::r_square, StartLoc, "[", diag::err_expected_rsquare);
+    
   // If C99 isn't enabled, emit an ext-warn if the arg list wasn't empty and if
   // it was not a constant expression.
   if (!getLang().C99) {
