@@ -15,8 +15,8 @@ I. Introduction:
 
 II. Current advantages over GCC:
 
- * Full column number support in diagnostics.
- * Caret diagnostics.
+ * Column numbers are fully tracked (no 256 col limit, no GCC-style pruning).
+ * All diagnostics have column numbers, includes 'caret diagnostics'.
  * Full diagnostic customization by client (can format diagnostics however they
    like, e.g. in an IDE or refactoring tool).
  * Built as a framework, can be reused by multiple tools.
