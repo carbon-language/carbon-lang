@@ -45,10 +45,6 @@ Parser::ExprResult Parser::ParseInitializer() {
 
 
 
-Parser::ExprResult Parser::ParseExpression() {
-  return ParseBinaryExpression();
-}
-
 // Expr that doesn't include commas.
 Parser::ExprResult Parser::ParseAssignmentExpression() {
   return ParseExpression();
@@ -197,7 +193,7 @@ static prec::Level getBinOpPrecedence(tok::TokenKind Kind) {
 ///         assignment-expression
 ///         expression ',' assignment-expression
 ///
-Parser::ExprResult Parser::ParseBinaryExpression() {
+Parser::ExprResult Parser::ParseExpression() {
   ExprResult LHS = ParseCastExpression(false);
   if (LHS.isInvalid) return LHS;
   
@@ -223,13 +219,21 @@ Parser::ParseRHSOfBinaryExpression(ExprResult LHS, unsigned MinPrec) {
     
     // Parse the RHS of the operator.
     ExprResult RHS;
-    
-    // Special case handling of "X ? Y : Z" were Y is empty.  This is a GCC
-    // extension.
-    if (OpToken.getKind() != tok::question || Tok.getKind() != tok::colon) {
+
+    // In the normal case, just parse another leaf here.
+    if (OpToken.getKind() != tok::question) {
       RHS = ParseCastExpression(false);
       if (RHS.isInvalid) return RHS;
+    } else if (Tok.getKind() != tok::colon) {
+      // Handle this production specially:
+      //   logical-OR-expression '?' expression ':' conditional-expression
+      // In particular, the RHS of the '?' is 'expression', not
+      // 'logical-OR-expression' as we might expect.
+      RHS = ParseExpression();
+      if (RHS.isInvalid) return RHS;
     } else {
+      // Special case handling of "X ? Y : Z" where Y is empty:
+      //   logical-OR-expression '?' ':' conditional-expression   [GNU]
       RHS = ExprResult(false);
       Diag(Tok, diag::ext_gnu_conditional_expr);
     }

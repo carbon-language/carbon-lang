@@ -180,7 +180,6 @@ private:
   //ExprResult ParseExpression();  // Above.
   ExprResult ParseAssignmentExpression();  // Expr that doesn't include commas.
 
-  ExprResult ParseBinaryExpression();
   ExprResult ParseRHSOfBinaryExpression(ExprResult LHS, unsigned MinPrec);
   ExprResult ParseCastExpression(bool isUnaryExpression);
   ExprResult ParseSizeofAlignofExpression();
