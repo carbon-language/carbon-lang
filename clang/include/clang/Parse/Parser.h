@@ -186,6 +186,7 @@ private:
   ExprResult ParseCastExpression(bool isUnaryExpression);
   ExprResult ParsePostfixExpressionSuffix(ExprResult LHS);
   ExprResult ParseSizeofAlignofExpression();
+  ExprResult ParseBuiltinPrimaryExpression();
   
   /// ParenParseOption - Control what ParseParenExpression will parse.
   enum ParenParseOption {

@@ -293,6 +293,8 @@ DIAG(err_expected_statement, ERROR,
      "expected statement")
 DIAG(err_expected_lparen_after, ERROR,
      "expected '(' after '%s'")
+DIAG(err_expected_comma, ERROR,
+     "expected ','")
 DIAG(err_expected_lbrace_in_compound_literal, ERROR,
      "expected '{' in compound literal")
 DIAG(err_expected_while, ERROR,
