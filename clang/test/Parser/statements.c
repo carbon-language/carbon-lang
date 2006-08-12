@@ -58,3 +58,7 @@ void test6() {
   //int A = (struct{ int a;}){ 1}.a;
   int A = (int){ 1}.a;
 }
+
+int test7(int a, int b) {
+  return a ? a,b : a;
+}
