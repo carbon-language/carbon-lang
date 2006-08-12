@@ -195,12 +195,42 @@ Parser::ExprResult Parser::ParseExpression() {
   return ParseRHSOfBinaryExpression(LHS, prec::Comma);
 }
 
-// Expr that doesn't include commas.
+/// ParseAssignmentExpression - Parse an expr that doesn't include commas.
+///
 Parser::ExprResult Parser::ParseAssignmentExpression() {
   ExprResult LHS = ParseCastExpression(false);
   if (LHS.isInvalid) return LHS;
   
   return ParseRHSOfBinaryExpression(LHS, prec::Assignment);
+}
+
+/// ParseExpressionWithLeadingIdentifier - This special purpose method is used
+/// in contexts where we have already consumed an identifier (which we saved in
+/// 'Tok'), then discovered that the identifier was really the leading token of
+/// part of an expression.  For example, in "A[1]+B", we consumed "A" (which is
+/// now in 'Tok') and the current token is "[".
+Parser::ExprResult Parser::
+ParseExpressionWithLeadingIdentifier(const LexerToken &Tok) {
+  // We know that 'Tok' must correspond to this production:
+  //   primary-expression: identifier
+  
+  // TODO: Pass 'Tok' to the action.
+  ExprResult Res = ExprResult(false);
+  
+  // Because we have to parse an entire cast-expression before starting the
+  // ParseRHSOfBinaryExpression method (which parses any trailing binops), we
+  // need to handle the 'postfix-expression' rules.  We do this by invoking
+  // ParsePostfixExpressionSuffix to consume any postfix-expression suffixes:
+  Res = ParsePostfixExpressionSuffix(Res);
+  if (Res.isInvalid) return Res;
+
+  // At this point, the "A[1]" part of "A[1]+B" has been consumed. Once this is
+  // done, we know we don't have to do anything for cast-expression, because the
+  // only non-postfix-expression production starts with a '(' token, and we know
+  // we have an identifier.  As such, we can invoke ParseRHSOfBinaryExpression
+  // to consume any trailing operators (e.g. "+" in this example) and connected
+  // chunks of the expression.
+  return ParseRHSOfBinaryExpression(Res, prec::Comma);
 }
 
 /// ParseRHSOfBinaryExpression - Parse a binary expression that starts with
@@ -476,11 +506,13 @@ Parser::ExprResult Parser::ParsePostfixExpressionSuffix(ExprResult LHS) {
       Loc = Tok.getLocation();
       ConsumeParen();
       
-      while (1) {
-        ParseAssignmentExpression();
-        if (Tok.getKind() != tok::comma)
-          break;
-        ConsumeToken();  // Next argument.
+      if (Tok.getKind() != tok::r_paren) {
+        while (1) {
+          ParseAssignmentExpression();
+          if (Tok.getKind() != tok::comma)
+            break;
+          ConsumeToken();  // Next argument.
+        }
       }
         
       // Match the ')'.

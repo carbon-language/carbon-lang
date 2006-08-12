@@ -185,6 +185,7 @@ void Parser::ParseIdentifierStatement(bool OnlyStatement) {
   IdentifierInfo *II = Tok.getIdentifierInfo();
   assert(Tok.getKind() == tok::identifier && II && "Not an identifier!");
 
+  LexerToken IdentTok = Tok;  // Save the token.
   ConsumeToken();  // eat the identifier.
   
   // identifier ':' statement
@@ -211,9 +212,16 @@ void Parser::ParseIdentifierStatement(bool OnlyStatement) {
     return;
   }
   
-  // Otherwise, this is an expression.  Seed it with II.
-  
-  assert(0);
+  // Otherwise, this is an expression.  Seed it with II and parse it.
+  ExprResult Res = ParseExpressionWithLeadingIdentifier(IdentTok);
+  if (Res.isInvalid)
+    SkipUntil(tok::semi);
+  else if (Tok.getKind() == tok::semi)
+    ConsumeToken();
+  else {
+    Diag(Tok, diag::err_expected_semi_after, "expression");
+    SkipUntil(tok::semi);
+  }
 }
 
 /// ParseCaseStatement
