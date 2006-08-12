@@ -336,11 +336,17 @@ void LoopInfo::removeBlock(BasicBlock *BB) {
 /// are the blocks _outside of the current loop_ which are branched to.
 ///
 void Loop::getExitBlocks(std::vector<BasicBlock*> &ExitBlocks) const {
+  // Sort the blocks vector so that we can use binary search to do quick
+  // lookups.
+  std::vector<BasicBlock*> LoopBBs(block_begin(), block_end());
+  std::sort(LoopBBs.begin(), LoopBBs.end());
+  
   for (std::vector<BasicBlock*>::const_iterator BI = Blocks.begin(),
-         BE = Blocks.end(); BI != BE; ++BI)
+       BE = Blocks.end(); BI != BE; ++BI)
     for (succ_iterator I = succ_begin(*BI), E = succ_end(*BI); I != E; ++I)
-      if (!contains(*I))               // Not in current loop?
-        ExitBlocks.push_back(*I);          // It must be an exit block...
+      if (!std::binary_search(LoopBBs.begin(), LoopBBs.end(), *I))
+        // Not in current loop? It must be an exit block.
+        ExitBlocks.push_back(*I);
 }
 
 
