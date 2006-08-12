@@ -16,6 +16,10 @@ int test2(int a, int b) {
   return a ? a,b : a;
 }
 
-int test3(int a, int b) {
+int test3(int a, int b, int c) {
   return a = b = c;
+}
+
+int test4() {
+  test4();
 }
