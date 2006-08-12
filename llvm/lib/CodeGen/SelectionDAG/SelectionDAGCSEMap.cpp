@@ -126,10 +126,23 @@ void SelectionDAGCSEMap::NodeID::SetOperands(const SDOperand *Ops,
 /// ComputeHash - Compute a strong hash value for this NodeID, for lookup in
 /// the SelectionDAGCSEMap.
 unsigned SelectionDAGCSEMap::NodeID::ComputeHash() const {
-  // FIXME: this hash function sucks.
-  unsigned Hash = 0;
-  for (unsigned i = 0, e = Bits.size(); i != e; ++i)
-    Hash = Hash+Bits[i];
+  // This is adapted from SuperFastHash by Paul Hsieh.
+  unsigned Hash = Bits.size();
+  for (const unsigned *BP = &Bits[0], *E = BP+Bits.size(); BP != E; ++BP) {
+    unsigned Data = *BP;
+    Hash         += Data & 0xFFFF;
+    unsigned Tmp  = ((Data >> 16) << 11) ^ Hash;
+    Hash          = (Hash << 16) ^ Tmp;
+    Hash         += Hash >> 11;
+  }
+  
+  // Force "avalanching" of final 127 bits.
+  Hash ^= Hash << 3;
+  Hash += Hash >> 5;
+  Hash ^= Hash << 4;
+  Hash += Hash >> 17;
+  Hash ^= Hash << 25;
+  Hash += Hash >> 6;
   return Hash;
 }
 
@@ -142,7 +155,7 @@ bool SelectionDAGCSEMap::NodeID::operator==(const NodeID &RHS) const {
 //===----------------------------------------------------------------------===//
 // SelectionDAGCSEMap Implementation
 
-SelectionDAGCSEMap::SelectionDAGCSEMap() {
+SelectionDAGCSEMap::SelectionDAGCSEMap() : NumNodes(0) {
   NumBuckets = 256;
   Buckets = new void*[NumBuckets];
   memset(Buckets, 0, NumBuckets*sizeof(void*));
@@ -211,6 +224,8 @@ SDNode *SelectionDAGCSEMap::FindNodeOrInsertPos(const NodeID &ID,
 /// is not already in the map.  InsertPos must be obtained from 
 /// FindNodeOrInsertPos.
 void SelectionDAGCSEMap::InsertNode(SDNode *N, void *InsertPos) {
+  ++NumNodes;
+  
   /// The insert position is actually a bucket pointer.
   void **Bucket = static_cast<void**>(InsertPos);
   
@@ -230,12 +245,15 @@ void SelectionDAGCSEMap::InsertNode(SDNode *N, void *InsertPos) {
 /// RemoveNode - Remove a node from the CSE map, returning true if one was
 /// removed or false if the node was not in the CSE map.
 bool SelectionDAGCSEMap::RemoveNode(SDNode *N) {
+
   // Because each bucket is a circular list, we don't need to compute N's hash
   // to remove it.  Chase around the list until we find the node (or bucket)
   // which points to N.
   void *Ptr = N->getNextInBucket();
   if (Ptr == 0) return false;  // Not in CSEMap.
-  
+
+  --NumNodes;
+
   void *NodeNextPtr = Ptr;
   N->SetNextInBucket(0);
   while (1) {
