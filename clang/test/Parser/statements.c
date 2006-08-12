@@ -62,3 +62,7 @@ void test6() {
 int test7(int a, int b) {
   return a ? a,b : a;
 }
+
+int test8(int a, int b) {
+  return a = b = c;
+}

@@ -252,16 +252,20 @@ Parser::ParseRHSOfBinaryExpression(ExprResult LHS, unsigned MinPrec) {
     // operator immediately to the right of the RHS.
     unsigned ThisPrec = NextTokPrec;
     NextTokPrec = getBinOpPrecedence(Tok.getKind());
-    
-    // FIXME: ASSIGNMENT IS RIGHT ASSOCIATIVE.
-    // FIXME: do we want to handle assignment here??
-    bool isRightAssoc = OpToken.getKind() == tok::question;
+
+    // Assignment and conditional expressions are right-associative.
+    bool isRightAssoc = NextTokPrec == prec::Conditional ||
+                        NextTokPrec == prec::Assignment;
 
     // Get the precedence of the operator to the right of the RHS.  If it binds
     // more tightly with RHS than we do, evaluate it completely first.
     if (ThisPrec < NextTokPrec ||
         (ThisPrec == NextTokPrec && isRightAssoc)) {
-      RHS = ParseRHSOfBinaryExpression(RHS, ThisPrec+1);
+      // If this is left-associative, only parse things on the RHS that bind
+      // more tightly than the current operator.  If it is left-associative, it
+      // is okay, to bind exactly as tightly.  For example, compile A=B=C=D as
+      // A=(B=(C=D)), where each paren is a level of recursion here.
+      RHS = ParseRHSOfBinaryExpression(RHS, ThisPrec + !isRightAssoc);
       if (RHS.isInvalid) return RHS;
 
       NextTokPrec = getBinOpPrecedence(Tok.getKind());
