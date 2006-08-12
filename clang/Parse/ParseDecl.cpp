@@ -717,7 +717,7 @@ void Parser::ParseBracketDeclarator(Declarator &D) {
   
   // Handle "direct-declarator [ type-qual-list[opt] * ]".
   bool isStar = false;
-  void *NumElts = 0;
+  ExprResult NumElements(false);
   if (Tok.getKind() == tok::star) {
     // Remember the '*' token, in case we have to un-get it.
     LexerToken StarTok = Tok;
@@ -733,22 +733,19 @@ void Parser::ParseBracketDeclarator(Declarator &D) {
     } else {
       // Otherwise, the * must have been some expression (such as '*ptr') that
       // started an assignment-expr.  We already consumed the token, but now we
-      // need to reparse it.
-      // FIXME: We must push 'StarTok' and Tok back into the preprocessor as a
-      // macro expansion context, so they will be read again. It is basically
-      // impossible to refudge the * in otherwise, due to cases like X[*p + 4].
-      assert(0 && "FIXME: int X[*p] unimplemented");
+      // need to reparse it.  This handles cases like 'X[*p + 4]'
+      NumElements = ParseAssignmentExpressionWithLeadingStar(StarTok);
     }
   } else if (Tok.getKind() != tok::r_square) {
     // Parse the assignment-expression now.
-    ExprResult Res = ParseAssignmentExpression();
-    if (Res.isInvalid) {
-      // If the expression was invalid, skip it.
-      SkipUntil(tok::r_square);
-      return;
-    }
-    
-    NumElts = /*TODO: parse array size expr*/0;
+    NumElements = ParseAssignmentExpression();
+  }
+  
+  // If there was an error parsing the assignment-expression, recover.
+  if (NumElements.isInvalid) {
+    // If the expression was invalid, skip it.
+    SkipUntil(tok::r_square);
+    return;
   }
   
   MatchRHSPunctuation(tok::r_square, StartLoc, "[", diag::err_expected_rsquare);
@@ -757,13 +754,13 @@ void Parser::ParseBracketDeclarator(Declarator &D) {
   // it was not a constant expression.
   if (!getLang().C99) {
     // TODO: check C90 array constant exprness.
-    if (isStar || StaticLoc.isValid() || 0/*NumElts is constantexpr*/)
+    if (isStar || StaticLoc.isValid() || 0/*FIXME: NumElts is constantexpr*/)
       Diag(StartLoc, diag::ext_c99_array_usage);
   }
   
   // Remember that we parsed a pointer type, and remember the type-quals.
   D.AddTypeInfo(DeclaratorTypeInfo::getArray(DS.TypeQualifiers,
                                              StaticLoc.isValid(), isStar,
-                                             NumElts, StartLoc));
+                                             NumElements.Val, StartLoc));
 }
 

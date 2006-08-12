@@ -233,6 +233,39 @@ ParseExpressionWithLeadingIdentifier(const LexerToken &Tok) {
   return ParseRHSOfBinaryExpression(Res, prec::Comma);
 }
 
+/// ParseAssignmentExpressionWithLeadingStar - This special purpose method is
+/// used in contexts where we have already consumed a '*' (which we saved in
+/// 'Tok'), then discovered that the '*' was really the leading token of an
+/// expression.  For example, in "*(int*)P+B", we consumed "*" (which is
+/// now in 'Tok') and the current token is "(".
+Parser::ExprResult Parser::
+ParseAssignmentExpressionWithLeadingStar(const LexerToken &Tok) {
+  // We know that 'Tok' must correspond to this production:
+  //  unary-expression: unary-operator cast-expression
+  // where 'unary-operator' is '*'.
+  
+  // Parse the cast-expression that follows the '*'.  This will parse the
+  // "*(int*)P" part of "*(int*)P+B".
+  ExprResult Res = ParseCastExpression(false);
+  if (Res.isInvalid) return Res;
+
+  // TODO: Combine Tok + Res to get the new AST.
+  
+  // We have to parse an entire cast-expression before starting the
+  // ParseRHSOfBinaryExpression method (which parses any trailing binops). Since
+  // we know that the only production above us is the cast-expression
+  // production, and because the only alternative productions start with a '('
+  // token (we know we had a '*'), there is no work to do to get a whole
+  // cast-expression.
+  
+  // At this point, the "*(int*)P" part of "*(int*)P+B" has been consumed. Once
+  // this is done, we can invoke ParseRHSOfBinaryExpression to consume any
+  // trailing operators (e.g. "+" in this example) and connected chunks of the
+  // assignment-expression.
+  return ParseRHSOfBinaryExpression(Res, prec::Assignment);
+}
+
+
 /// ParseRHSOfBinaryExpression - Parse a binary expression that starts with
 /// LHS and has a precedence of at least MinPrec.
 Parser::ExprResult
@@ -308,7 +341,6 @@ Parser::ParseRHSOfBinaryExpression(ExprResult LHS, unsigned MinPrec) {
     // TODO: combine the LHS and RHS into the LHS (e.g. build AST).
   }
 }
-
 
 /// ParseCastExpression - Parse a cast-expression, or, if isUnaryExpression is
 /// true, parse a unary-expression.

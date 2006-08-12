@@ -179,6 +179,7 @@ private:
   // C99 6.5: Expressions.
   //ExprResult ParseExpression();  // Above.
   ExprResult ParseExpressionWithLeadingIdentifier(const LexerToken &Tok);
+  ExprResult ParseAssignmentExpressionWithLeadingStar(const LexerToken &Tok);
   ExprResult ParseAssignmentExpression();  // Expr that doesn't include commas.
 
   ExprResult ParseRHSOfBinaryExpression(ExprResult LHS, unsigned MinPrec);

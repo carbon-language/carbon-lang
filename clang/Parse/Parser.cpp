@@ -224,7 +224,7 @@ void Parser::ParseDeclarationOrFunctionDefinition() {
   // C99 6.7.2.3p6: Handle "struct-or-union identifier;", "enum { X };"
   // declaration-specifiers init-declarator-list[opt] ';'
   if (Tok.getKind() == tok::semi)
-    assert(0 && "Unimp!");
+    assert(0 && "Unimp!");   // FIXME: implement 'struct foo;'.
   
   
   // Parse the first declarator.
