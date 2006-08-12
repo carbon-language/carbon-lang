@@ -72,6 +72,7 @@ bool X86SharedAsmPrinter::doInitialization(Module &M) {
     StaticDtorsSection = ".mod_term_func";
     InlineAsmStart = "# InlineAsm Start";
     InlineAsmEnd = "# InlineAsm End";
+    SetDirective = "\t.set";
     break;
   case X86Subtarget::isCygwin:
     GlobalPrefix = "_";

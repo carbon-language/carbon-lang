@@ -185,6 +185,10 @@ namespace llvm {
     
     //===--- Global Variable Emission Directives --------------------------===//
     
+    /// SetDirective - This is the name of a directive that can be used to tell
+    /// the assembler to set the value of a variable to some expression.
+    const char *SetDirective;            // Defaults to null.
+    
     /// LCOMMDirective - This is the name of a directive (if supported) that can
     /// be used to efficiently declare a local (internal) block of zero
     /// initialized data in the .bss/.data section.  The syntax expected is:
@@ -193,7 +197,7 @@ namespace llvm {
     const char *LCOMMDirective;          // Defaults to null.
     
     const char *COMMDirective;           // Defaults to "\t.comm\t".
-    
+
     /// COMMDirectiveTakesAlignment - True if COMMDirective take a third
     /// argument that specifies the alignment of the declaration.
     bool COMMDirectiveTakesAlignment;    // Defaults to true.
@@ -322,6 +326,10 @@ namespace llvm {
     virtual void printBasicBlockLabel(const MachineBasicBlock *MBB,
                                       bool printColon = false,
                                       bool printComment = true) const;
+                                      
+    /// printSetLabel - This method prints a set label for the specified
+    /// MachineBasicBlock
+    void printSetLabel(unsigned uid, const MachineBasicBlock *MBB) const;
     
   private:
     void EmitXXStructorList(Constant *List);

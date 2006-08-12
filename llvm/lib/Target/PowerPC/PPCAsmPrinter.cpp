@@ -276,6 +276,7 @@ namespace {
       GlobalPrefix = "_";
       PrivateGlobalPrefix = "L";     // Marker for constant pool idxs
       ZeroDirective = "\t.space\t";  // ".space N" emits N zeros.
+      SetDirective = "\t.set";
       if (isPPC64)
         Data64bitsDirective = ".quad\t";       // we can't emit a 64-bit unit
       else

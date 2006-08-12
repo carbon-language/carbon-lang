@@ -59,6 +59,7 @@ AsmPrinter::AsmPrinter(std::ostream &o, TargetMachine &tm)
   FourByteConstantSection(0),
   EightByteConstantSection(0),
   SixteenByteConstantSection(0),
+  SetDirective(0),
   LCOMMDirective(0),
   COMMDirective("\t.comm\t"),
   COMMDirectiveTakesAlignment(true),
@@ -228,15 +229,36 @@ void AsmPrinter::EmitJumpTableInfo(MachineJumpTableInfo *MJTI) {
   EmitAlignment(Log2_32(TD->getPointerAlignment()));
   
   for (unsigned i = 0, e = JT.size(); i != e; ++i) {
+    const std::vector<MachineBasicBlock*> &JTBBs = JT[i].MBBs;
+
+    // For PIC codegen, if possible we want to use the SetDirective to reduce
+    // the number of relocations the assembler will generate for the jump table.
+    // Set directives are all printed before the jump table itself.
+    std::set<MachineBasicBlock*> EmittedSets;
+    if (SetDirective && TM.getRelocationModel() == Reloc::PIC_)
+      for (unsigned ii = 0, ee = JTBBs.size(); ii != ee; ++ii)
+        if (EmittedSets.insert(JTBBs[ii]).second)
+          printSetLabel(i, JTBBs[ii]);
+    
     O << PrivateGlobalPrefix << "JTI" << getFunctionNumber() << '_' << i 
       << ":\n";
-    const std::vector<MachineBasicBlock*> &JTBBs = JT[i].MBBs;
+    
     for (unsigned ii = 0, ee = JTBBs.size(); ii != ee; ++ii) {
       O << JTEntryDirective << ' ';
-      printBasicBlockLabel(JTBBs[ii], false, false);
-      if (TM.getRelocationModel() == Reloc::PIC_) {
+      // If we have emitted set directives for the jump table entries, print 
+      // them rather than the entries themselves.  If we're emitting PIC, then
+      // emit the table entries as differences between two text section labels.
+      // If we're emitting non-PIC code, then emit the entries as direct
+      // references to the target basic blocks.
+      if (!EmittedSets.empty()) {
+        O << PrivateGlobalPrefix << getFunctionNumber() << '_' << i << "_set_"
+          << JTBBs[ii]->getNumber();
+      } else if (TM.getRelocationModel() == Reloc::PIC_) {
+        printBasicBlockLabel(JTBBs[ii], false, false);
         O << '-' << PrivateGlobalPrefix << "JTI" << getFunctionNumber() 
           << '_' << i;
+      } else {
+        printBasicBlockLabel(JTBBs[ii], false, false);
       }
       O << '\n';
     }
@@ -817,4 +839,18 @@ void AsmPrinter::printBasicBlockLabel(const MachineBasicBlock *MBB,
     O << ':';
   if (printComment)
     O << '\t' << CommentString << MBB->getBasicBlock()->getName();
+}
+
+/// printSetLabel - This method prints a set label for the specified
+/// MachineBasicBlock
+void AsmPrinter::printSetLabel(unsigned uid, 
+                               const MachineBasicBlock *MBB) const {
+  if (!SetDirective)
+    return;
+  
+  O << SetDirective << ' ' << PrivateGlobalPrefix << getFunctionNumber() 
+    << '_' << uid << "_set_" << MBB->getNumber() << ',';
+  printBasicBlockLabel(MBB, false, false);
+  O << '-' << PrivateGlobalPrefix << "JTI" << getFunctionNumber() 
+    << '_' << uid << '\n';
 }
