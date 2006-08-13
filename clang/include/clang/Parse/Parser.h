@@ -58,9 +58,6 @@ public:
     ExprResult(bool Invalid = false) : isInvalid(Invalid) {}
   };
   
-  ExprResult ParseExpression();
-  
-
   // Diagnostics.
   void Diag(SourceLocation Loc, unsigned DiagID, const std::string &Msg = "");
   void Diag(const LexerToken &Tok, unsigned DiagID, const std::string &M = "") {
@@ -198,10 +195,12 @@ private:
 
   //===--------------------------------------------------------------------===//
   // C99 6.5: Expressions.
-  //ExprResult ParseExpression();  // Above.
+  ExprResult ParseExpression();
+  ExprResult ParseConstantExpression();
+  ExprResult ParseAssignmentExpression();  // Expr that doesn't include commas.
+  
   ExprResult ParseExpressionWithLeadingIdentifier(const LexerToken &Tok);
   ExprResult ParseAssignmentExpressionWithLeadingStar(const LexerToken &Tok);
-  ExprResult ParseAssignmentExpression();  // Expr that doesn't include commas.
 
   ExprResult ParseRHSOfBinaryExpression(ExprResult LHS, unsigned MinPrec);
   ExprResult ParseCastExpression(bool isUnaryExpression);
@@ -243,6 +242,8 @@ private:
   void ParseDeclaration(unsigned Context);
   void ParseInitDeclaratorListAfterFirstDeclarator(Declarator &D);
   void ParseDeclarationSpecifiers(DeclSpec &DS);
+  void ParseEnumSpecifier(DeclSpec &DS);
+
   bool isDeclarationSpecifier() const;
   bool isTypeSpecifierQualifier() const;
 

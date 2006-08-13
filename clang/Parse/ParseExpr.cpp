@@ -204,6 +204,14 @@ Parser::ExprResult Parser::ParseAssignmentExpression() {
   return ParseRHSOfBinaryExpression(LHS, prec::Assignment);
 }
 
+Parser::ExprResult Parser::ParseConstantExpression() {
+  ExprResult LHS = ParseCastExpression(false);
+  if (LHS.isInvalid) return LHS;
+  
+  // TODO: Validate that this is a constant expr!
+  return ParseRHSOfBinaryExpression(LHS, prec::Conditional);
+}
+
 /// ParseExpressionWithLeadingIdentifier - This special purpose method is used
 /// in contexts where we have already consumed an identifier (which we saved in
 /// 'Tok'), then discovered that the identifier was really the leading token of

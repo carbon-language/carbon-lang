@@ -105,11 +105,11 @@ void Parser::ParseInitDeclaratorListAfterFirstDeclarator(Declarator &D) {
 
 /// ParseDeclarationSpecifiers
 ///       declaration-specifiers: [C99 6.7]
-///         storage-class-specifier declaration-specifiers [opt]
-///         type-specifier declaration-specifiers [opt]
-///         type-qualifier declaration-specifiers [opt]
-/// [C99]   function-specifier declaration-specifiers [opt]
-/// [GNU]   attributes declaration-specifiers [opt]                [TODO]
+///         storage-class-specifier declaration-specifiers[opt]
+///         type-specifier declaration-specifiers[opt]
+///         type-qualifier declaration-specifiers[opt]
+/// [C99]   function-specifier declaration-specifiers[opt]
+/// [GNU]   attributes declaration-specifiers[opt]                [TODO]
 ///
 ///       storage-class-specifier: [C99 6.7.1]
 ///         'typedef'
@@ -129,7 +129,7 @@ void Parser::ParseInitDeclaratorListAfterFirstDeclarator(Declarator &D) {
 ///         'signed'
 ///         'unsigned'
 ///         struct-or-union-specifier             [TODO]
-///         enum-specifier                        [TODO]
+///         enum-specifier
 ///         typedef-name                          [TODO]
 /// [C99]   '_Bool'
 /// [C99]   '_Complex'
@@ -138,15 +138,15 @@ void Parser::ParseInitDeclaratorListAfterFirstDeclarator(Declarator &D) {
 /// [GNU]   '_Decimal64'
 /// [GNU]   '_Decimal128'
 /// [GNU]   typeof-specifier                      [TODO]
-/// [OBJC]  class-name objc-protocol-refs [opt]   [TODO]
+/// [OBJC]  class-name objc-protocol-refs[opt]    [TODO]
 /// [OBJC]  typedef-name objc-protocol-refs       [TODO]
 /// [OBJC]  objc-protocol-refs                    [TODO]
 ///       type-qualifier:
-///         const
-///         volatile
-/// [C99]   restrict
+///         'const'
+///         'volatile'
+/// [C99]   'restrict'
 ///       function-specifier: [C99 6.7.4]
-/// [C99]   inline
+/// [C99]   'inline'
 ///
 void Parser::ParseDeclarationSpecifiers(DeclSpec &DS) {
   SourceLocation StartLoc = Tok.getLocation();
@@ -159,7 +159,7 @@ void Parser::ParseDeclarationSpecifiers(DeclSpec &DS) {
       // specifiers.  First verify that DeclSpec's are consistent.
       DS.Finish(StartLoc, Diags, getLang());
       return;
-    // FIXME: Handle struct/union/enum tags.
+    // FIXME: Handle struct/union tags.
       
     // storage-class-specifier
     case tok::kw_typedef:
@@ -242,7 +242,9 @@ void Parser::ParseDeclarationSpecifiers(DeclSpec &DS) {
       
     //case tok::kw_struct:
     //case tok::kw_union:
-    //case tok::kw_enum:
+    case tok::kw_enum:
+      ParseEnumSpecifier(DS);
+      continue;
     
     //case tok::identifier:
     // TODO: handle typedef names.
@@ -275,6 +277,65 @@ void Parser::ParseDeclarationSpecifiers(DeclSpec &DS) {
     ConsumeToken();
   }
 }
+
+/// ParseEnumSpecifier
+///       enum-specifier:
+///         'enum' identifier[opt] '{' enumerator-list '}'
+/// [C99]   'enum' identifier[opt] '{' enumerator-list ',' '}'
+///         'enum' identifier
+///       enumerator-list:
+///         enumerator
+///         enumerator-list , enumerator
+///       enumerator:
+///         enumeration-constant
+///         enumeration-constant = constant-expression
+///       enumeration-constant:
+///         identifier
+///
+void Parser::ParseEnumSpecifier(DeclSpec &DS) {
+  assert(Tok.getKind() == tok::kw_enum && "Not an enum specifier");
+  ConsumeToken();
+  
+  // Must have either 'enum name' or 'enum {...}'.
+  if (Tok.getKind() != tok::identifier &&
+      Tok.getKind() != tok::l_brace) {
+    Diag(Tok, diag::err_expected_ident_lbrace);
+    return;
+  }
+  
+  if (Tok.getKind() == tok::identifier)
+    ConsumeToken();
+  
+  if (Tok.getKind() == tok::l_brace) {
+    SourceLocation LBraceLoc = Tok.getLocation();
+    ConsumeBrace();
+    
+    // Parse the enumerator-list.
+    while (Tok.getKind() == tok::identifier) {
+      ConsumeToken();
+      
+      if (Tok.getKind() == tok::equal) {
+        ConsumeToken();
+        ExprResult Res = ParseConstantExpression();
+        if (Res.isInvalid) SkipUntil(tok::comma, true, false);
+      }
+      
+      if (Tok.getKind() != tok::comma)
+        break;
+      SourceLocation CommaLoc = Tok.getLocation();
+      ConsumeToken();
+      
+      if (Tok.getKind() != tok::identifier && !getLang().C99)
+        Diag(CommaLoc, diag::ext_c99_enumerator_list_comma);
+    }
+    
+    // Eat the }.
+    MatchRHSPunctuation(tok::r_brace, LBraceLoc, "{", 
+                        diag::err_expected_rbrace);
+  }
+  // TODO: semantic analysis on the declspec for enums.
+}
+
 
 /// isTypeSpecifierQualifier - Return true if the current token could be the
 /// start of a specifier-qualifier-list.
