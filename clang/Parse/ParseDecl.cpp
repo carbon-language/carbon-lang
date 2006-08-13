@@ -302,22 +302,29 @@ void Parser::ParseDeclarationSpecifiers(DeclSpec &DS) {
 
 /// ParseStructUnionSpecifier
 ///       struct-or-union-specifier: [C99 6.7.2.1]
-///         struct-or-union identifier[opt] '{' struct-declaration-list '}'
+///         struct-or-union identifier[opt] '{' struct-contents '}'
 ///         struct-or-union identifier
 ///       struct-or-union:
 ///         'struct'
 ///         'union'
+///       struct-contents:
+///         struct-declaration-list
+/// [EXT]   empty
+/// [GNU]   "struct-declaration-list" without terminatoring ';'   [TODO]
 ///       struct-declaration-list:
-///          struct-declaration
-///          struct-declaration-list struct-declaration
-///        struct-declaration:
-///          specifier-qualifier-list struct-declarator-list ';'
-///        struct-declarator-list:
-///          struct-declarator
-///          struct-declarator-list ',' struct-declarator
-///        struct-declarator:
-///          declarator
-///          declarator[opt] ':' constant-expression
+///         struct-declaration
+///         struct-declaration-list struct-declaration
+/// [OBC]   '@' 'defs' '(' class-name ')'                         [TODO]
+///       struct-declaration:
+///         specifier-qualifier-list struct-declarator-list ';'
+/// [GNU]   __extension__ struct-declaration                       [TODO]
+/// [GNU]   specifier-qualifier-list ';'                           [TODO]
+///       struct-declarator-list:
+///         struct-declarator
+///         struct-declarator-list ',' struct-declarator
+///       struct-declarator:
+///         declarator
+///         declarator[opt] ':' constant-expression
 ///
 void Parser::ParseStructUnionSpecifier(DeclSpec &DS) {
   assert((Tok.getKind() == tok::kw_struct ||
@@ -410,6 +417,8 @@ void Parser::ParseStructUnionSpecifier(DeclSpec &DS) {
 ///       enum-specifier: [C99 6.7.2.2]
 ///         'enum' identifier[opt] '{' enumerator-list '}'
 /// [C99]   'enum' identifier[opt] '{' enumerator-list ',' '}'
+/// [GNU]   'enum' identifier[opt] '{' enumerator-list '}' attributes [TODO]
+/// [GNU]   'enum' identifier[opt] '{' enumerator-list ',' '}' attributes [TODO]
 ///         'enum' identifier
 ///       enumerator-list:
 ///         enumerator

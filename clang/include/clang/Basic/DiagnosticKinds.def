@@ -282,6 +282,9 @@ DIAG(ext_gnu_missing_equal_designator, EXTENSION,
      "use of GNU 'missing =' extension in designator")
 DIAG(ext_gnu_old_style_field_designator, EXTENSION,
      "use of GNU old-style field designator extension")
+DIAG(ext_gnu_case_range, EXTENSION,
+     "use of GNU case range extension")
+     
 // Generic errors.
 DIAG(err_parse_error, ERROR,
      "parse error")

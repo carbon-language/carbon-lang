@@ -237,8 +237,7 @@ void Parser::ParseIdentifierStatement(bool OnlyStatement) {
 /// ParseCaseStatement
 ///       labeled-statement:
 ///         'case' constant-expression ':' statement
-///
-/// FIXME: Handle GNU case-range extension.
+/// [GNU]   'case' constant-expression '...' constant-expression ':' statement
 ///
 /// Note that this does not parse the 'statement' at the end.
 ///
@@ -246,7 +245,23 @@ void Parser::ParseCaseStatement() {
   assert(Tok.getKind() == tok::kw_case && "Not a case stmt!");
   ConsumeToken();  // eat the 'case'.
 
-  ParseAssignmentExpression(); // Expr without commas.
+  ExprResult Res = ParseConstantExpression();
+  if (Res.isInvalid) {
+    SkipUntil(tok::colon);
+    return;
+  }
+  
+  // GNU case range extension.
+  if (Tok.getKind() == tok::ellipsis) {
+    Diag(Tok, diag::ext_gnu_case_range);
+    ConsumeToken();
+    
+    ExprResult RHS = ParseConstantExpression();
+    if (RHS.isInvalid) {
+      SkipUntil(tok::colon);
+      return;
+    }
+  }
   
   if (Tok.getKind() == tok::colon) {
     ConsumeToken();
