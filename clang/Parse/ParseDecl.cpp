@@ -26,24 +26,7 @@ using namespace clang;
 void Parser::ParseTypeName() {
   // Parse the common declaration-specifiers piece.
   DeclSpec DS;
-  SourceLocation Loc = Tok.getLocation();
-  ParseDeclarationSpecifiers(DS);
-  
-  // Validate declspec for type-name.
-  unsigned Specs = DS.getParsedSpecifiers();
-  if (Specs == DeclSpec::PQ_None)
-    Diag(Tok, diag::err_typename_requires_specqual);
-  
-  if (Specs & DeclSpec::PQ_StorageClassSpecifier) {
-    Diag(Loc, diag::err_typename_invalid_storageclass);
-    // Remove storage class.
-    DS.StorageClassSpec     = DeclSpec::SCS_unspecified;
-    DS.SCS_thread_specified = false;
-  }
-  if (Specs & DeclSpec::PQ_FunctionSpecifier) {
-    Diag(Loc, diag::err_typename_invalid_functionspec);
-    DS.FS_inline_specified = false;
-  }
+  ParseSpecifierQualifierList(DS);
   
   // Parse the abstract-declarator, if present.
   Declarator DeclaratorInfo(DS, Declarator::TypeNameContext);
@@ -102,6 +85,33 @@ void Parser::ParseInitDeclaratorListAfterFirstDeclarator(Declarator &D) {
   }
 }
 
+/// ParseSpecifierQualifierList
+///        specifier-qualifier-list:
+///          type-specifier specifier-qualifier-list[opt]
+///          type-qualifier specifier-qualifier-list[opt]
+///
+void Parser::ParseSpecifierQualifierList(DeclSpec &DS) {
+  /// specifier-qualifier-list is a subset of declaration-specifiers.  Just
+  /// parse declaration-specifiers and complain about extra stuff.
+  SourceLocation Loc = Tok.getLocation();
+  ParseDeclarationSpecifiers(DS);
+  
+  // Validate declspec for type-name.
+  unsigned Specs = DS.getParsedSpecifiers();
+  if (Specs == DeclSpec::PQ_None)
+    Diag(Tok, diag::err_typename_requires_specqual);
+  
+  if (Specs & DeclSpec::PQ_StorageClassSpecifier) {
+    Diag(Loc, diag::err_typename_invalid_storageclass);
+    // Remove storage class.
+    DS.StorageClassSpec     = DeclSpec::SCS_unspecified;
+    DS.SCS_thread_specified = false;
+  }
+  if (Specs & DeclSpec::PQ_FunctionSpecifier) {
+    Diag(Loc, diag::err_typename_invalid_functionspec);
+    DS.FS_inline_specified = false;
+  }
+}
 
 /// ParseDeclarationSpecifiers
 ///       declaration-specifiers: [C99 6.7]
@@ -128,7 +138,7 @@ void Parser::ParseInitDeclaratorListAfterFirstDeclarator(Declarator &D) {
 ///         'double'
 ///         'signed'
 ///         'unsigned'
-///         struct-or-union-specifier             [TODO]
+///         struct-or-union-specifier
 ///         enum-specifier
 ///         typedef-name                          [TODO]
 /// [C99]   '_Bool'
@@ -240,8 +250,10 @@ void Parser::ParseDeclarationSpecifiers(DeclSpec &DS) {
       isInvalid = DS.SetTypeSpecType(DeclSpec::TST_decimal128, PrevSpec);
       break;
       
-    //case tok::kw_struct:
-    //case tok::kw_union:
+    case tok::kw_struct:
+    case tok::kw_union:
+      ParseStructUnionSpecifier(DS);
+      continue;
     case tok::kw_enum:
       ParseEnumSpecifier(DS);
       continue;
@@ -278,17 +290,124 @@ void Parser::ParseDeclarationSpecifiers(DeclSpec &DS) {
   }
 }
 
+
+/// ParseStructUnionSpecifier
+///       struct-or-union-specifier: [C99 6.7.2.1]
+///         struct-or-union identifier[opt] '{' struct-declaration-list '}'
+///         struct-or-union identifier
+///       struct-or-union:
+///         'struct'
+///         'union'
+///       struct-declaration-list:
+///          struct-declaration
+///          struct-declaration-list struct-declaration
+///        struct-declaration:
+///          specifier-qualifier-list struct-declarator-list ';'
+///        struct-declarator-list:
+///          struct-declarator
+///          struct-declarator-list ',' struct-declarator
+///        struct-declarator:
+///          declarator
+///          declarator[opt] ':' constant-expression
+///
+void Parser::ParseStructUnionSpecifier(DeclSpec &DS) {
+  assert((Tok.getKind() == tok::kw_struct ||
+          Tok.getKind() == tok::kw_union) && "Not a struct/union specifier");
+  bool isUnion = Tok.getKind() == tok::kw_union;
+  ConsumeToken();
+  
+  // Must have either 'struct name' or 'struct {...}'.
+  if (Tok.getKind() != tok::identifier &&
+      Tok.getKind() != tok::l_brace) {
+    Diag(Tok, diag::err_expected_ident_lbrace);
+    return;
+  }
+  
+  if (Tok.getKind() == tok::identifier)
+    ConsumeToken();
+  
+  if (Tok.getKind() != tok::l_brace)
+    return;
+  
+  SourceLocation LBraceLoc = Tok.getLocation();
+  ConsumeBrace();
+
+  if (Tok.getKind() == tok::r_brace)
+    Diag(Tok, diag::ext_empty_struct_union_enum, isUnion ? "union" : "struct");
+
+  while (Tok.getKind() != tok::r_brace && 
+         Tok.getKind() != tok::eof) {
+    // Each iteration of this loop reads one struct-declaration.
+
+    // Parse the common specifier-qualifiers-list piece.
+    DeclSpec DS;
+    SourceLocation SpecQualLoc = Tok.getLocation();
+    ParseSpecifierQualifierList(DS);
+    // TODO: Does specifier-qualifier list correctly check that *something* is
+    // specified?
+    
+    Declarator DeclaratorInfo(DS, Declarator::MemberContext);
+
+    // If there are no declarators, issue a warning.
+    if (Tok.getKind() == tok::semi) {
+      Diag(SpecQualLoc, diag::w_no_declarators);
+    } else {
+      // Read struct-declarators until we find the semicolon.
+      while (1) {
+        /// struct-declarator: declarator
+        /// struct-declarator: declarator[opt] ':' constant-expression
+        if (Tok.getKind() != tok::colon)
+          ParseDeclarator(DeclaratorInfo);
+        
+        if (Tok.getKind() == tok::colon) {
+          ConsumeToken();
+          ExprResult Res = ParseConstantExpression();
+          if (Res.isInvalid) {
+            SkipUntil(tok::semi, true, true);
+          } else {
+            // Process it.
+          }
+        }
+
+        // TODO: install declarator.
+        
+        // If we don't have a comma, it is either the end of the list (a ';') or
+        // an error, bail out.
+        if (Tok.getKind() != tok::comma)
+          break;
+        
+        // Consume the comma.
+        ConsumeToken();
+        
+        // Parse the next declarator.
+        DeclaratorInfo.clear();
+      }
+    }
+    
+    if (Tok.getKind() == tok::semi) {
+      ConsumeToken();
+    } else {
+      Diag(Tok, diag::err_expected_semi_decl_list);
+      // Skip to end of block or statement
+      SkipUntil(tok::r_brace, true, true);
+    }
+  }
+
+  MatchRHSPunctuation(tok::r_brace, LBraceLoc, "{",diag::err_expected_rbrace);
+}
+
+
 /// ParseEnumSpecifier
-///       enum-specifier:
+///       enum-specifier: [C99 6.7.2.2]
 ///         'enum' identifier[opt] '{' enumerator-list '}'
 /// [C99]   'enum' identifier[opt] '{' enumerator-list ',' '}'
 ///         'enum' identifier
 ///       enumerator-list:
 ///         enumerator
-///         enumerator-list , enumerator
+///         enumerator-list ',' enumerator
 ///       enumerator:
 ///         enumeration-constant
-///         enumeration-constant = constant-expression
+///         enumeration-constant '=' constant-expression
 ///       enumeration-constant:
 ///         identifier
 ///
@@ -306,33 +425,37 @@ void Parser::ParseEnumSpecifier(DeclSpec &DS) {
   if (Tok.getKind() == tok::identifier)
     ConsumeToken();
   
-  if (Tok.getKind() == tok::l_brace) {
-    SourceLocation LBraceLoc = Tok.getLocation();
-    ConsumeBrace();
+  if (Tok.getKind() != tok::l_brace)
+    return;
+  
+  SourceLocation LBraceLoc = Tok.getLocation();
+  ConsumeBrace();
+  
+  if (Tok.getKind() == tok::r_brace)
+    Diag(Tok, diag::ext_empty_struct_union_enum, "enum");
+  
+  // Parse the enumerator-list.
+  while (Tok.getKind() == tok::identifier) {
+    ConsumeToken();
     
-    // Parse the enumerator-list.
-    while (Tok.getKind() == tok::identifier) {
+    if (Tok.getKind() == tok::equal) {
       ConsumeToken();
-      
-      if (Tok.getKind() == tok::equal) {
-        ConsumeToken();
-        ExprResult Res = ParseConstantExpression();
-        if (Res.isInvalid) SkipUntil(tok::comma, true, false);
-      }
-      
-      if (Tok.getKind() != tok::comma)
-        break;
-      SourceLocation CommaLoc = Tok.getLocation();
-      ConsumeToken();
-      
-      if (Tok.getKind() != tok::identifier && !getLang().C99)
-        Diag(CommaLoc, diag::ext_c99_enumerator_list_comma);
+      ExprResult Res = ParseConstantExpression();
+      if (Res.isInvalid) SkipUntil(tok::comma, true, false);
     }
     
-    // Eat the }.
-    MatchRHSPunctuation(tok::r_brace, LBraceLoc, "{", 
-                        diag::err_expected_rbrace);
+    if (Tok.getKind() != tok::comma)
+      break;
+    SourceLocation CommaLoc = Tok.getLocation();
+    ConsumeToken();
+    
+    if (Tok.getKind() != tok::identifier && !getLang().C99)
+      Diag(CommaLoc, diag::ext_c99_enumerator_list_comma);
   }
+  
+  // Eat the }.
+  MatchRHSPunctuation(tok::r_brace, LBraceLoc, "{", 
+                      diag::err_expected_rbrace);
   // TODO: semantic analysis on the declspec for enums.
 }
 

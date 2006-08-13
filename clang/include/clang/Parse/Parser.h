@@ -242,7 +242,10 @@ private:
   void ParseDeclaration(unsigned Context);
   void ParseInitDeclaratorListAfterFirstDeclarator(Declarator &D);
   void ParseDeclarationSpecifiers(DeclSpec &DS);
+  void ParseSpecifierQualifierList(DeclSpec &DS);
+
   void ParseEnumSpecifier(DeclSpec &DS);
+  void ParseStructUnionSpecifier(DeclSpec &DS);
 
   bool isDeclarationSpecifier() const;
   bool isTypeSpecifierQualifier() const;

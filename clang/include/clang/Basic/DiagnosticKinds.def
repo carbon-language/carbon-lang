@@ -236,6 +236,8 @@ DIAG(err_pp_I_dash_not_supported, ERROR,
 
 DIAG(w_type_defaults_to_int, WARNING,
      "type defaults to 'int'")
+DIAG(w_no_declarators, WARNING,
+     "declaration does not declare anything")
 
 DIAG(ext_empty_source_file, EXTENSION,
      "ISO C forbids an empty source file")
@@ -249,6 +251,9 @@ DIAG(ext_integer_complex, EXTENSION,
      "ISO C does not support complex integer types")
 DIAG(ext_thread_before, EXTENSION,
      "'__thread' before 'static'")
+
+DIAG(ext_empty_struct_union_enum, EXTENSION,
+     "use of empty %s extension")
 
 DIAG(ext_ident_list_in_param, EXTENSION,
      "type-less parameter names in function declaration")
