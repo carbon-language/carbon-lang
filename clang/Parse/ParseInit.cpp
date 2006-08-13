@@ -29,7 +29,9 @@ static bool MayBeDesignationStart(tok::TokenKind K) {
   }
 }
 
-
+/// ParseInitializerWithPotentialDesignator - Parse the 'initializer' production
+/// checking to see if the token stream starts with a designator.
+///
 ///       designation:
 ///         designator-list '='
 /// [GNU]   array-designator
