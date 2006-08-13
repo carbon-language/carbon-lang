@@ -35,6 +35,8 @@
 using namespace llvm;
 using namespace clang;
 
+static unsigned NumDiagnostics = 0;
+
 //===----------------------------------------------------------------------===//
 // Global options.
 //===----------------------------------------------------------------------===//
@@ -150,6 +152,7 @@ void DiagnosticPrinterSTDERR::HandleDiagnostic(Diagnostic::Level Level,
                                                SourceLocation Pos,
                                                diag::kind ID, 
                                                const std::string &Extra) {
+  ++NumDiagnostics;
   unsigned LineNo = 0, FilePos = 0, FileID = 0, ColNo = 0;
   unsigned LineStart = 0, LineEnd = 0;
   const SourceBuffer *Buffer = 0;
@@ -755,6 +758,9 @@ int main(int argc, char **argv) {
     ParseFile(PP, new ParserActions(), MainFileID);
     break;
   }
+  
+  if (NumDiagnostics)
+    std::cerr << NumDiagnostics << " diagnostics generated.\n";
   
   if (Stats) {
     // Printed from low-to-high level.
