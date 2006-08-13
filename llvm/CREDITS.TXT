@@ -163,9 +163,10 @@ D: The `paths' pass
 N: Reid Spencer
 E: rspencer@reidspencer.com
 W: http://reidspencer.com/
-D: Stacker, llvmc, llvm-ld, llvm-ar, lib/Archive, lib/Linker, lib/System, 
-D: bytecode enhancements, symtab hacking, unoverloading of intrinsics, makefile 
-D: and configuration system, documentation, various bug fixing.
+D: Stacker, llvmc, llvm-ld, llvm-ar, llvm2cpp, lib/Archive, lib/Linker, 
+D: lib/System, bytecode enhancements, symtab hacking, unoverloading of 
+D: intrinsics, makefile and configuration system, documentation, various bug 
+D: fixing.
 
 N: Adam Treat
 E: manyoso@yahoo.com
