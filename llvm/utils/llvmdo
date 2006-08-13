@@ -90,15 +90,20 @@ if test -d "$TOPDIR" ; then
     -o -name *.def \
     -o -name *.el \
     -o -name *.exp \
+    -o -name *.footer \
     -o -name *.gnuplot' \
     -o -name *.h \
+    -o -name *.header \
+    -o -name *.html \
     -o -name *.in \
     -o -name *.inc \
+    -o -name *.intro \
     -o -name *.l \
     -o -name *.ll \
     -o -name *.llx \
     -o -name *.lst \
     -o -name *.m4 \
+    -o -name *.pod \
     -o -name *.pl \
     -o -name *.py \
     -o -name *.sh \
@@ -124,11 +129,6 @@ if test -d "$TOPDIR" ; then
   "
   if test -z "$CODE_ONLY" ; then
     files_to_match="$files_to_match \
-      -o -name *.footer \
-      -o -name *.header \
-      -o -name *.html \
-      -o -name *.intro \
-      -o -name *.pod \
       -o -name *.txt \
       -o -name *.TXT \
       -o -name *.vim \
