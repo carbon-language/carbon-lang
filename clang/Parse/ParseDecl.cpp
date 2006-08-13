@@ -329,6 +329,7 @@ void Parser::ParseDeclarationSpecifiers(DeclSpec &DS) {
 void Parser::ParseStructUnionSpecifier(DeclSpec &DS) {
   assert((Tok.getKind() == tok::kw_struct ||
           Tok.getKind() == tok::kw_union) && "Not a struct/union specifier");
+  SourceLocation Start = Tok.getLocation();
   bool isUnion = Tok.getKind() == tok::kw_union;
   ConsumeToken();
   
@@ -410,6 +411,11 @@ void Parser::ParseStructUnionSpecifier(DeclSpec &DS) {
   }
 
   MatchRHSPunctuation(tok::r_brace, LBraceLoc, "{",diag::err_expected_rbrace);
+
+  const char *PrevSpec = 0;
+  if (DS.SetTypeSpecType(isUnion ? DeclSpec::TST_union : DeclSpec::TST_struct,
+                         PrevSpec))
+    Diag(Start, diag::err_invalid_decl_spec_combination, PrevSpec);
 }
 
 
@@ -431,6 +437,7 @@ void Parser::ParseStructUnionSpecifier(DeclSpec &DS) {
 ///
 void Parser::ParseEnumSpecifier(DeclSpec &DS) {
   assert(Tok.getKind() == tok::kw_enum && "Not an enum specifier");
+  SourceLocation Start = Tok.getLocation();
   ConsumeToken();
   
   // Must have either 'enum name' or 'enum {...}'.
@@ -475,6 +482,11 @@ void Parser::ParseEnumSpecifier(DeclSpec &DS) {
   MatchRHSPunctuation(tok::r_brace, LBraceLoc, "{", 
                       diag::err_expected_rbrace);
   // TODO: semantic analysis on the declspec for enums.
+  
+  
+  const char *PrevSpec = 0;
+  if (DS.SetTypeSpecType(DeclSpec::TST_enum, PrevSpec))
+    Diag(Start, diag::err_invalid_decl_spec_combination, PrevSpec);
 }
 
 

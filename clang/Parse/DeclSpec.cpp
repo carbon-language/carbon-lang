@@ -98,6 +98,9 @@ static const char *getSpecifierName(DeclSpec::TST T) {
   case DeclSpec::TST_decimal32:   return "_Decimal32";
   case DeclSpec::TST_decimal64:   return "_Decimal64";
   case DeclSpec::TST_decimal128:  return "_Decimal128";
+  case DeclSpec::TST_enum:        return "enum";
+  case DeclSpec::TST_union:       return "union";
+  case DeclSpec::TST_struct:      return "struct";
   }
 }
 

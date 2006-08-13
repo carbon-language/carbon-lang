@@ -71,7 +71,10 @@ public:
     TST_bool,         // _Bool
     TST_decimal32,    // _Decimal32
     TST_decimal64,    // _Decimal64
-    TST_decimal128    // _Decimal128
+    TST_decimal128,   // _Decimal128
+    TST_enum,
+    TST_union,
+    TST_struct
   } TypeSpecType : 4;
   
   // type-qualifiers
