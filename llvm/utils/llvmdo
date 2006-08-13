@@ -27,7 +27,7 @@
 ##===----------------------------------------------------------------------===##
 
 if test $# -lt 1 ; then
-  echo "Usage: llvmdo [-dirs "DIRNAMES..."] PROGRAM ARGS..."
+  echo "Usage: llvmdo [-dirs "DIRNAMES..."] [-code-only] PROGRAM ARGS..."
   exit 1
 fi
 
@@ -37,6 +37,14 @@ if test "$1" = "-dirs" ; then
 elif test -z "$LLVMDO_DIRS" ; then
   LLVMDO_DIRS="include lib tools utils runtime autoconf docs test examples projects"
 fi
+
+if test "$1" = "-code-only" ; then
+  CODE_ONLY="set"
+  shift
+else
+  CODE_ONLY=""
+fi
+
 if test "$1" = "" ; then
   echo "Missing program name to run"
   exit 1
@@ -57,86 +65,114 @@ if test -d "$TOPDIR" ; then
     SunOS) find_prog=gfind ;;
     *) find_prog=find ;;
   esac
+  paths_to_ignore="\
+    -path */CVS -o \
+    -path */CVS/* -o \
+    -path docs/doxygen/* -o \
+    -path docs/CommandGuide/html/* -o \
+    -path docs/CommandGuide/man/* -o \
+    -path docs/CommandGuide/ps/* -o \
+    -path docs/CommandGuide/man/* -o \
+    -path docs/HistoricalNotes/* -o \
+    -path docs/img/* -o \
+    -path */.libs/* -o \
+    -path lib/Support/bzip2/* -o \
+    -path projects/llvm-test/* \
+  "
+  files_to_match="\
+       -name *.ac \
+    -o -name *.b \
+    -o -name *.c \
+    -o -name *.cc \
+    -o -name *.cfg \
+    -o -name *.cpp \
+    -o -name *.css \
+    -o -name *.def \
+    -o -name *.el \
+    -o -name *.exp \
+    -o -name *.gnuplot' \
+    -o -name *.h \
+    -o -name *.in \
+    -o -name *.inc \
+    -o -name *.l \
+    -o -name *.ll \
+    -o -name *.llx \
+    -o -name *.lst \
+    -o -name *.m4 \
+    -o -name *.pl \
+    -o -name *.py \
+    -o -name *.sh \
+    -o -name *.schema \
+    -o -name *.st \
+    -o -name *.tcl \
+    -o -name *.td \
+    -o -name *.tr \
+    -o -name *.y \
+    -o -name Make* \
+    -o -name llvmdo \
+    -o -name llvmgrep \
+    -o -name check-each-file \
+    -o -name codgen-diff \
+    -o -name cvsupdate \
+    -o -name llvm-native-gcc \
+    -o -name llvm-native-gxx \
+    -o -name makellvm \
+    -o -path include/llvm/ADT/ilist \
+    -o -path test/\*.ll \
+    -o -path test/Scripts/not \
+    -o -path runtime/\*.ll \
+  "
+  if test -z "$CODE_ONLY" ; then
+    files_to_match="$files_to_match \
+      -o -name *.footer \
+      -o -name *.header \
+      -o -name *.html \
+      -o -name *.intro \
+      -o -name *.pod \
+      -o -name *.txt \
+      -o -name *.TXT \
+      -o -name *.vim \
+      -o -name vimrc \
+      -o -name README \
+      -o -name COPYING.LIB \
+      -o -name LICENSE* "
+  fi
+  files_to_ignore="\
+       -name \.* \
+    -o -name *~ \
+    -o -name #* \
+    -o -name *.cvs \
+    -o -name configure \
+    -o -name slow.ll \
+    -o -name *libtool* \
+    -o -name ltdl* \
+    -o -name ltdl.m4 \
+    -o -name ltmain.m4 \
+    -o -name ltmain.sh \
+    -o -name aclocal.m4 \
+    -o -name acinclude.m4 \
+    -o -name *VerifierIsReallySlow.llx \
+    -o -name *LoopSimplifyCrash.ll \
+    -o -name *AST-Remove.ll \
+    -o -name llvmAsmParser.cpp \
+    -o -name llvmAsmParser.h \
+    -o -name Lexer.cpp \
+    -o -name FileLexer.cpp \
+    -o -name FileParser.cpp \
+    -o -name FileParser.h \
+    -o -name StackerParser.h \
+    -o -name StackerParser.cpp \
+    -o -name ConfigLexer.cpp \
+    -o -name PPCPerfectShuffle.h \
+  "
+
+  # Turn off file name generation (globbing) so that substitution of the
+  # variables doesn't cause the shell to create lists of file names
+  set -f
   $find_prog $LLVMDO_DIRS -type f \
-    \( \
-      -path 'docs/doxygen/*' -o \
-      -path 'docs/CommandGuide/html/*' -o \
-      -path 'docs/CommandGuide/man/*' -o \
-      -path 'docs/CommandGuide/ps/*' -o \
-      -path 'docs/CommandGuide/man/*' -o \
-      -path 'docs/HistoricalNotes/*' -o \
-      -path 'docs/img/*' -o \
-      -path '*/.libs/*' \
-    \) -prune  -o \( \
-      \( \
-         -name '*.ac' -o \
-         -name '*.b' -o \
-         -name '*.c' -o \
-         -name '*.cc' -o \
-         -name '*.cfg' -o \
-         -name '*.cpp' -o \
-         -name '*.css' -o \
-         -name '*.def' -o \
-         -name '*.el' -o \
-         -name '*.exp' -o \
-         -name '*.footer' -o \
-         -name '*.gnuplot' -o \
-         -name '*.h' -o \
-         -name '*.header' -o \
-         -name '*.html' -o \
-         -name '*.in' -o \
-         -name '*.inc' -o \
-         -name '*.intro' -o \
-         -name '*.l' -o \
-         -name '*.ll' -o \
-         -name '*.llx' -o \
-         -name '*.lst' -o \
-         -name '*.m4' -o \
-         -name '*.pl' -o \
-         -name '*.pod' -o \
-         -name '*.py' -o \
-         -name '*.sh' -o \
-         -name '*.schema' -o \
-         -name '*.tcl' -o \
-         -name '*.td' -o \
-         -name '*.tr' -o \
-         -name '*.txt' -o \
-         -name '*.TXT' -o \
-         -name '*.tr' -o \
-         -name '*.vim' -o \
-         -name '*.y' -o \
-         -name 'Make*' -o \
-         -path 'test/*.ll' -o \
-         -path 'runtime/*.ll' \
-      \) \
-      \! -name '.*' \
-      \! -name '*~' \
-      \! -name '#*' \
-      \! -name '*.cvs' \
-      \! -name 'configure' \
-      \! -name 'slow.ll' \
-      \! -name '*libtool*' \
-      \! -name 'ltdl*' \
-      \! -name 'ltdl.m4' \
-      \! -name 'ltmain.m4' \
-      \! -name 'ltmain.sh' \
-      \! -name 'aclocal.m4' \
-      \! -name 'acinclude.m4' \
-      \! -name '*VerifierIsReallySlow.llx' \
-      \! -name '*LoopSimplifyCrash.ll' \
-      \! -name '*AST-Remove.ll' \
-      \! -name 'llvmAsmParser.cpp' \
-      \! -name 'llvmAsmParser.h' \
-      \! -name 'Lexer.cpp' \
-      \! -name 'FileLexer.cpp' \
-      \! -name 'FileParser.cpp' \
-      \! -name 'FileParser.h' \
-      \! -name 'StackerParser.h' \
-      \! -name 'StackerParser.cpp' \
-      \! -name 'ConfigLexer.cpp' \
-      \! -name 'PPCPerfectShuffle.h' \
-     -exec $PROGRAM "$@" {} \; \
-    \)
+    \( $paths_to_ignore \) -prune \
+    -o \( \( $files_to_match \) \! \( $files_to_ignore \) \
+    -exec $PROGRAM "$@" {} \; \)
 else
   echo "Can't find LLVM top directory in $TOPDIR"
 fi
