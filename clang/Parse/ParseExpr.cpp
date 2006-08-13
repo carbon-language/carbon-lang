@@ -24,27 +24,6 @@
 using namespace llvm;
 using namespace clang;
 
-// C99 6.7.8
-Parser::ExprResult Parser::ParseInitializer() {
-  // FIXME: STUB.
-  if (Tok.getKind() == tok::l_brace) {
-    ConsumeBrace();
-    
-    if (Tok.getKind() == tok::numeric_constant)
-      ConsumeToken();
-    
-    // FIXME: initializer-list
-    // Match the '}'.
-    MatchRHSPunctuation(tok::r_brace, Tok.getLocation(), "{",
-                        diag::err_expected_rbrace);
-    return ExprResult(false);
-  }
-  
-  return ParseAssignmentExpression();
-}
-
-
-
 /// PrecedenceLevels - These are precedences for the binary/ternary operators in
 /// the C99 grammar.  These have been named to relate with the C99 grammar
 /// productions.  Low precedences numbers bind more weakly than high numbers.
@@ -240,6 +219,36 @@ ParseExpressionWithLeadingIdentifier(const LexerToken &Tok) {
   // chunks of the expression.
   return ParseRHSOfBinaryExpression(Res, prec::Comma);
 }
+
+/// ParseExpressionWithLeadingIdentifier - This special purpose method is used
+/// in contexts where we have already consumed an identifier (which we saved in
+/// 'Tok'), then discovered that the identifier was really the leading token of
+/// part of an assignment-expression.  For example, in "A[1]+B", we consumed "A"
+/// (which is now in 'Tok') and the current token is "[".
+Parser::ExprResult Parser::
+ParseAssignmentExprWithLeadingIdentifier(const LexerToken &Tok) {
+  // We know that 'Tok' must correspond to this production:
+  //   primary-expression: identifier
+  
+  // TODO: Pass 'Tok' to the action.
+  ExprResult Res = ExprResult(false);
+  
+  // Because we have to parse an entire cast-expression before starting the
+  // ParseRHSOfBinaryExpression method (which parses any trailing binops), we
+  // need to handle the 'postfix-expression' rules.  We do this by invoking
+  // ParsePostfixExpressionSuffix to consume any postfix-expression suffixes:
+  Res = ParsePostfixExpressionSuffix(Res);
+  if (Res.isInvalid) return Res;
+  
+  // At this point, the "A[1]" part of "A[1]+B" has been consumed. Once this is
+  // done, we know we don't have to do anything for cast-expression, because the
+  // only non-postfix-expression production starts with a '(' token, and we know
+  // we have an identifier.  As such, we can invoke ParseRHSOfBinaryExpression
+  // to consume any trailing operators (e.g. "+" in this example) and connected
+  // chunks of the expression.
+  return ParseRHSOfBinaryExpression(Res, prec::Assignment);
+}
+
 
 /// ParseAssignmentExpressionWithLeadingStar - This special purpose method is
 /// used in contexts where we have already consumed a '*' (which we saved in

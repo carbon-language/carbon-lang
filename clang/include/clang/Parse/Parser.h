@@ -195,11 +195,13 @@ private:
 
   //===--------------------------------------------------------------------===//
   // C99 6.5: Expressions.
+  
   ExprResult ParseExpression();
   ExprResult ParseConstantExpression();
   ExprResult ParseAssignmentExpression();  // Expr that doesn't include commas.
   
   ExprResult ParseExpressionWithLeadingIdentifier(const LexerToken &Tok);
+  ExprResult ParseAssignmentExprWithLeadingIdentifier(const LexerToken &Tok);
   ExprResult ParseAssignmentExpressionWithLeadingStar(const LexerToken &Tok);
 
   ExprResult ParseRHSOfBinaryExpression(ExprResult LHS, unsigned MinPrec);
@@ -218,10 +220,14 @@ private:
   ExprResult ParseParenExpression(ParenParseOption &ExprType);
   ExprResult ParseStringLiteralExpression();
   
-  ExprResult ParseInitializer();   // C99 6.7.8
+  //===--------------------------------------------------------------------===//
+  // C99 6.7.8: Initialization.
+  ExprResult ParseInitializer();
+  ExprResult ParseInitializerWithPotentialDesignator();
   
   //===--------------------------------------------------------------------===//
   // C99 6.8: Statements and Blocks.
+  
   void ParseStatement() { ParseStatementOrDeclaration(true); }
   void ParseStatementOrDeclaration(bool OnlyStatement = false);
   void ParseIdentifierStatement(bool OnlyStatement);

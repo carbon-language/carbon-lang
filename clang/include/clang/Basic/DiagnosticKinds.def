@@ -274,7 +274,14 @@ DIAG(ext_gnu_statement_expr, EXTENSION,
      "use of GNU statement expression extension")
 DIAG(ext_gnu_conditional_expr, EXTENSION,
      "use of GNU ?: expression extension, eliding middle term")
-     
+DIAG(ext_gnu_empty_initializer, EXTENSION,
+     "use of GNU empty initializer extension")
+DIAG(ext_gnu_array_range, EXTENSION,
+     "use of GNU array range extension")
+DIAG(ext_gnu_missing_equal_designator, EXTENSION,
+     "use of GNU 'missing =' extension in designator")
+DIAG(ext_gnu_old_style_field_designator, EXTENSION,
+     "use of GNU old-style field designator extension")
 // Generic errors.
 DIAG(err_parse_error, ERROR,
      "parse error")

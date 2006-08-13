@@ -299,7 +299,7 @@ void Parser::ParseFunctionDefinition(Declarator &D) {
     //if (isDeclarationSpecifier())
     //  Diag('k&r declspecs with prototype?');
     
-    // FIXME: Install the arguments into the current scope.
+    // TODO: Install the arguments into the current scope.
   }
 
   // We should have an opening brace now.

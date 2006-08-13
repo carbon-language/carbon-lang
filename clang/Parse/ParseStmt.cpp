@@ -238,6 +238,8 @@ void Parser::ParseIdentifierStatement(bool OnlyStatement) {
 ///       labeled-statement:
 ///         'case' constant-expression ':' statement
 ///
+/// FIXME: Handle GNU case-range extension.
+///
 /// Note that this does not parse the 'statement' at the end.
 ///
 void Parser::ParseCaseStatement() {
