@@ -22,7 +22,7 @@
 TOPDIR=`llvm-config --src-root`
 if test -d "$TOPDIR" ; then
   cd $TOPDIR
-  ./utils/llvmdo -dirs "include lib tools test utils examples" wc -l | awk '\
+  ./utils/llvmdo -dirs "include lib tools test utils examples" -code-only wc -l | awk '\
       BEGIN { loc=0; } \
       { loc += $1; } \
       END { print loc; }'
