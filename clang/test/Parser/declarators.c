@@ -16,7 +16,13 @@ int a, ***C, * const D, b(int);
 
 int *A;
 
+struct str;
+
 int test2(int *P, int A) {
-  // Hard case.
+  struct str;
+
+  // Hard case for array decl, not Array[*].
   int Array[*(int*)P+A];
 }
+
+
