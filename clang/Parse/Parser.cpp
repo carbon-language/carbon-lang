@@ -227,9 +227,13 @@ void Parser::ParseDeclarationOrFunctionDefinition() {
 
   // C99 6.7.2.3p6: Handle "struct-or-union identifier;", "enum { X };"
   // declaration-specifiers init-declarator-list[opt] ';'
-  if (Tok.getKind() == tok::semi)
-    assert(0 && "Unimp!");   // FIXME: implement 'struct foo;'.
-  
+  if (Tok.getKind() == tok::semi) {
+    // TODO: emit error on 'int;' or 'const enum foo;'.
+    // if (!DS.isMissingDeclaratorOk()) Diag(...);
+    
+    ConsumeToken();
+    return;
+  }
   
   // Parse the first declarator.
   Declarator DeclaratorInfo(DS, Declarator::FileContext);

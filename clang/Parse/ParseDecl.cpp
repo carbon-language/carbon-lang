@@ -42,6 +42,16 @@ void Parser::ParseDeclaration(unsigned Context) {
   DeclSpec DS;
   ParseDeclarationSpecifiers(DS);
   
+  // C99 6.7.2.3p6: Handle "struct-or-union identifier;", "enum { X };"
+  // declaration-specifiers init-declarator-list[opt] ';'
+  if (Tok.getKind() == tok::semi) {
+    // TODO: emit error on 'int;' or 'const enum foo;'.
+    // if (!DS.isMissingDeclaratorOk()) Diag(...);
+    
+    ConsumeToken();
+    return;
+  }
+  
   Declarator DeclaratorInfo(DS, (Declarator::TheContext)Context);
   ParseDeclarator(DeclaratorInfo);
   
@@ -169,7 +179,6 @@ void Parser::ParseDeclarationSpecifiers(DeclSpec &DS) {
       // specifiers.  First verify that DeclSpec's are consistent.
       DS.Finish(StartLoc, Diags, getLang());
       return;
-    // FIXME: Handle struct/union tags.
       
     // storage-class-specifier
     case tok::kw_typedef:
@@ -932,7 +941,8 @@ void Parser::ParseBracketDeclarator(Declarator &D) {
   // it was not a constant expression.
   if (!getLang().C99) {
     // TODO: check C90 array constant exprness.
-    if (isStar || StaticLoc.isValid() || 0/*FIXME: NumElts is constantexpr*/)
+    if (isStar || StaticLoc.isValid() ||
+        0/*TODO: NumElts is not a C90 constantexpr */)
       Diag(StartLoc, diag::ext_c99_array_usage);
   }
   

@@ -208,7 +208,7 @@ void DeclSpec::Finish(SourceLocation Loc, Diagnostic &D,
     break;
   }
   
-  // FIXME: if the implementation does not implement _Complex or _Imaginary,
+  // TODO: if the implementation does not implement _Complex or _Imaginary,
   // disallow their use.  Need information about the backend.
   if (TypeSpecComplex != TSC_unspecified) {
     if (TypeSpecType == TST_unspecified) {
@@ -237,9 +237,9 @@ void DeclSpec::Finish(SourceLocation Loc, Diagnostic &D,
   }
 
   // Okay, now we can infer the real type.
-  // FIXME: infer real type.
+  // TODO: infer real type.
   
-  // FIXME: return "auto function" and other bad things based on the real type.
+  // TODO: return "auto function" and other bad things based on the real type.
   
   // 'data definition has no type or storage class'?
 }

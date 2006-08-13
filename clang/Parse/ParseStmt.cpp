@@ -204,6 +204,16 @@ void Parser::ParseIdentifierStatement(bool OnlyStatement) {
     // ParseDeclarationSpecifiers will continue from there.
     ParseDeclarationSpecifiers(DS);
 
+    // C99 6.7.2.3p6: Handle "struct-or-union identifier;", "enum { X };"
+    // declaration-specifiers init-declarator-list[opt] ';'
+    if (Tok.getKind() == tok::semi) {
+      // TODO: emit error on 'int;' or 'const enum foo;'.
+      // if (!DS.isMissingDeclaratorOk()) Diag(...);
+      
+      ConsumeToken();
+      return;
+    }
+    
     // Parse all the declarators.
     Declarator DeclaratorInfo(DS, Declarator::BlockContext);
     ParseDeclarator(DeclaratorInfo);
