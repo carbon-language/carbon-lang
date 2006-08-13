@@ -47,6 +47,7 @@ while ( defined($ARGV[0]) && substr($ARGV[0],0,1) eq '-' )
 }
 
 chomp(my $srcroot = `llvm-config --src-root`);
+chdir($srcroot);
 my $llvmdo = "$srcroot/utils/llvmdo";
 my %Stats;
 my %FileStats;
@@ -62,9 +63,10 @@ sub GetCVSFiles
   my $d = $_[0];
   my $files ="";
   open FILELIST, 
-    "$llvmdo -dirs \"$d\" echo |" || die "Can't get list of files with llvmdo";
+    "$llvmdo -dirs \"$d\" -code-only echo |" || die "Can't get list of files with llvmdo";
   while ( defined($line = <FILELIST>) ) {
     chomp($file = $line);
+    print "File: $file\n" if ($debug);
     $files = "$files $file";
   }
   return $files;
@@ -85,6 +87,7 @@ sub ScanDir
     if ($line =~ '^Annotations for.*') {
       $curfile = $line;
       $curfile =~ s#^Annotations for ([[:print:]]*)#$1#;
+      print "Scanning: $curfile\n" if ($debug);
     } elsif ($line =~ /^[0-9.]*[ \t]*\([^)]*\):/) {
       $uname = $line;
       $uname =~ s#^[0-9.]*[ \t]*\(([a-zA-Z0-9_.-]*) [^)]*\):.*#$1#;
@@ -108,6 +111,7 @@ sub printStats
   foreach $user (keys %Stats) { $total += $Stats{$user}; }
 
   if ($html) { 
+    print "<p>Total Source Lines: $total<br/></p>\n";
     print "<table>";
     print " <tr><th style=\"text-align:right\">LOC</th>\n";
     print " <th style=\"text-align:right\">\%LOC</th>\n";
@@ -192,6 +196,7 @@ if ($#ARGV > 0) {
 }
   
 for $Index ( 0 .. $#DIRS) { 
+  print "Scanning Dir: $DIRS[$Index]\n" if ($debug);
   ScanDir($DIRS[$Index]); 
 }
 
