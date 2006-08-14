@@ -155,29 +155,23 @@ public:
   // null) and that there should be a flag result.
   SDOperand getCopyToReg(SDOperand Chain, unsigned Reg, SDOperand N,
                          SDOperand Flag) {
-    std::vector<MVT::ValueType> VTs;
-    VTs.push_back(MVT::Other);
-    VTs.push_back(MVT::Flag);
+    const MVT::ValueType *VTs = getNodeValueTypes(MVT::Other, MVT::Flag);
     SDOperand Ops[] = { Chain, getRegister(Reg, N.getValueType()), N, Flag };
-    return getNode(ISD::CopyToReg, VTs, Ops, Flag.Val ? 4 : 3);
+    return getNode(ISD::CopyToReg, VTs, 2, Ops, Flag.Val ? 4 : 3);
   }
 
   // Similar to last getCopyToReg() except parameter Reg is a SDOperand
   SDOperand getCopyToReg(SDOperand Chain, SDOperand Reg, SDOperand N,
                          SDOperand Flag) {
-    std::vector<MVT::ValueType> VTs;
-    VTs.push_back(MVT::Other);
-    VTs.push_back(MVT::Flag);
+    const MVT::ValueType *VTs = getNodeValueTypes(MVT::Other, MVT::Flag);
     SDOperand Ops[] = { Chain, Reg, N, Flag };
-    return getNode(ISD::CopyToReg, VTs, Ops, Flag.Val ? 4 : 3);
+    return getNode(ISD::CopyToReg, VTs, 2, Ops, Flag.Val ? 4 : 3);
   }
   
   SDOperand getCopyFromReg(SDOperand Chain, unsigned Reg, MVT::ValueType VT) {
-    std::vector<MVT::ValueType> ResultTys;
-    ResultTys.push_back(VT);
-    ResultTys.push_back(MVT::Other);
+    const MVT::ValueType *VTs = getNodeValueTypes(VT, MVT::Other);
     SDOperand Ops[] = { Chain, getRegister(Reg, VT) };
-    return getNode(ISD::CopyFromReg, ResultTys, Ops, 2);
+    return getNode(ISD::CopyFromReg, VTs, 2, Ops, 2);
   }
   
   // This version of the getCopyFromReg method takes an extra operand, which
@@ -185,12 +179,9 @@ public:
   // null) and that there should be a flag result.
   SDOperand getCopyFromReg(SDOperand Chain, unsigned Reg, MVT::ValueType VT,
                            SDOperand Flag) {
-    std::vector<MVT::ValueType> ResultTys;
-    ResultTys.push_back(VT);
-    ResultTys.push_back(MVT::Other);
-    ResultTys.push_back(MVT::Flag);
+    const MVT::ValueType *VTs = getNodeValueTypes(VT, MVT::Other, MVT::Flag);
     SDOperand Ops[] = { Chain, getRegister(Reg, VT), Flag };
-    return getNode(ISD::CopyFromReg, ResultTys, Ops, Flag.Val ? 3 : 2);
+    return getNode(ISD::CopyFromReg, VTs, 3, Ops, Flag.Val ? 3 : 2);
   }
 
   SDOperand getCondCode(ISD::CondCode Cond);
@@ -202,11 +193,9 @@ public:
   /// getCALLSEQ_START - Return a new CALLSEQ_START node, which always must have
   /// a flag result (to ensure it's not CSE'd).
   SDOperand getCALLSEQ_START(SDOperand Chain, SDOperand Op) {
-    std::vector<MVT::ValueType> ResultTys;
-    ResultTys.push_back(MVT::Other);
-    ResultTys.push_back(MVT::Flag);
+    const MVT::ValueType *VTs = getNodeValueTypes(MVT::Other, MVT::Flag);
     SDOperand Ops[] = { Chain,  Op };
-    return getNode(ISD::CALLSEQ_START, ResultTys, Ops, 2);
+    return getNode(ISD::CALLSEQ_START, VTs, 2, Ops, 2);
   }
 
   /// getNode - Gets or creates the specified node.
@@ -226,6 +215,8 @@ public:
                     const SDOperand *Ops, unsigned NumOps);
   SDOperand getNode(unsigned Opcode, std::vector<MVT::ValueType> &ResultTys,
                     const SDOperand *Ops, unsigned NumOps);
+  SDOperand getNode(unsigned Opcode, const MVT::ValueType *VTs, unsigned NumVTs,
+                    const SDOperand *Ops, unsigned NumOps);
   
   /// getSetCC - Helper function to make it easier to build SetCC's if you just
   /// have an ISD::CondCode instead of an SDOperand.
@@ -240,8 +231,8 @@ public:
   ///
   SDOperand getSelectCC(SDOperand LHS, SDOperand RHS,
                         SDOperand True, SDOperand False, ISD::CondCode Cond) {
-    MVT::ValueType VT = True.getValueType();
-    return getNode(ISD::SELECT_CC, VT, LHS, RHS, True, False,getCondCode(Cond));
+    return getNode(ISD::SELECT_CC, True.getValueType(), LHS, RHS, True, False,
+                   getCondCode(Cond));
   }
   
   /// getVAArg - VAArg produces a result and token chain, and takes a pointer
@@ -443,6 +434,8 @@ private:
   void DeleteNodeNotInCSEMaps(SDNode *N);
   MVT::ValueType *getNodeValueTypes(MVT::ValueType VT1);
   MVT::ValueType *getNodeValueTypes(MVT::ValueType VT1, MVT::ValueType VT2);
+  MVT::ValueType *getNodeValueTypes(MVT::ValueType VT1, MVT::ValueType VT2,
+                                    MVT::ValueType VT3);
   MVT::ValueType *getNodeValueTypes(std::vector<MVT::ValueType> &RetVals);
   
   

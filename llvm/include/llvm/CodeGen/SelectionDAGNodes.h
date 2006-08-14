@@ -697,7 +697,7 @@ class SDNode {
   
   /// ValueList - The types of the values this node defines.  SDNode's may
   /// define multiple values simultaneously.
-  MVT::ValueType *ValueList;
+  const MVT::ValueType *ValueList;
 
   /// NumOperands/NumValues - The number of entries in the Operand/Value list.
   unsigned short NumOperands, NumValues;
@@ -899,7 +899,7 @@ protected:
     NumOperands = 0;
   }
   
-  void setValueTypes(MVT::ValueType *List, unsigned NumVal) {
+  void setValueTypes(const MVT::ValueType *List, unsigned NumVal) {
     assert(NumValues == 0 && "Should not have values yet!");
     ValueList = List;
     NumValues = NumVal;

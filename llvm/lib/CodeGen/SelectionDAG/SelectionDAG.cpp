@@ -1454,30 +1454,26 @@ SDOperand SelectionDAG::getVecLoad(unsigned Count, MVT::ValueType EVT,
                                    SDOperand SV) {
   SDOperand Ops[] = { Chain, Ptr, SV, getConstant(Count, MVT::i32), 
                       getValueType(EVT) };
-  std::vector<MVT::ValueType> VTs;
-  VTs.reserve(2);
-  VTs.push_back(MVT::Vector); VTs.push_back(MVT::Other);  // Add token chain.
-  return getNode(ISD::VLOAD, VTs, Ops, 5);
+  // Add token chain.
+  MVT::ValueType *VTs = getNodeValueTypes(MVT::Vector, MVT::Other);
+  return getNode(ISD::VLOAD, VTs, 2, Ops, 5);
 }
 
 SDOperand SelectionDAG::getExtLoad(unsigned Opcode, MVT::ValueType VT,
                                    SDOperand Chain, SDOperand Ptr, SDOperand SV,
                                    MVT::ValueType EVT) {
   SDOperand Ops[] = { Chain, Ptr, SV, getValueType(EVT) };
-  std::vector<MVT::ValueType> VTs;
-  VTs.reserve(2);
-  VTs.push_back(VT); VTs.push_back(MVT::Other);  // Add token chain.
-  return getNode(Opcode, VTs, Ops, 4);
+  MVT::ValueType *VTs = getNodeValueTypes(VT, MVT::Other);
+  return getNode(Opcode, VTs, 2, Ops, 4);
 }
 
 SDOperand SelectionDAG::getVAArg(MVT::ValueType VT,
                                  SDOperand Chain, SDOperand Ptr,
                                  SDOperand SV) {
   SDOperand Ops[] = { Chain, Ptr, SV };
-  std::vector<MVT::ValueType> VTs;
-  VTs.reserve(2);
-  VTs.push_back(VT); VTs.push_back(MVT::Other);  // Add token chain.
-  return getNode(ISD::VAARG, VTs, Ops, 3);
+  // Add token chain.
+  MVT::ValueType *VTs = getNodeValueTypes(VT, MVT::Other);
+  return getNode(ISD::VAARG, VTs, 2, Ops, 3);
 }
 
 SDOperand SelectionDAG::getNode(unsigned Opcode, MVT::ValueType VT,
@@ -1552,29 +1548,36 @@ SDOperand SelectionDAG::getNode(unsigned Opcode, MVT::ValueType VT,
 SDOperand SelectionDAG::getNode(unsigned Opcode,
                                 std::vector<MVT::ValueType> &ResultTys,
                                 const SDOperand *Ops, unsigned NumOps) {
-  if (ResultTys.size() == 1)
-    return getNode(Opcode, ResultTys[0], Ops, NumOps);
+  return getNode(Opcode, getNodeValueTypes(ResultTys), ResultTys.size(),
+                 Ops, NumOps);
+}
+
+SDOperand SelectionDAG::getNode(unsigned Opcode,
+                                const MVT::ValueType *VTs, unsigned NumVTs,
+                                const SDOperand *Ops, unsigned NumOps) {
+  if (NumVTs == 1)
+    return getNode(Opcode, VTs[0], Ops, NumOps);
 
   switch (Opcode) {
   case ISD::EXTLOAD:
   case ISD::SEXTLOAD:
   case ISD::ZEXTLOAD: {
     MVT::ValueType EVT = cast<VTSDNode>(Ops[3])->getVT();
-    assert(NumOps == 4 && ResultTys.size() == 2 && "Bad *EXTLOAD!");
+    assert(NumOps == 4 && NumVTs == 2 && "Bad *EXTLOAD!");
     // If they are asking for an extending load from/to the same thing, return a
     // normal load.
-    if (ResultTys[0] == EVT)
-      return getLoad(ResultTys[0], Ops[0], Ops[1], Ops[2]);
-    if (MVT::isVector(ResultTys[0])) {
-      assert(EVT == MVT::getVectorBaseType(ResultTys[0]) &&
+    if (VTs[0] == EVT)
+      return getLoad(VTs[0], Ops[0], Ops[1], Ops[2]);
+    if (MVT::isVector(VTs[0])) {
+      assert(EVT == MVT::getVectorBaseType(VTs[0]) &&
              "Invalid vector extload!");
     } else {
-      assert(EVT < ResultTys[0] &&
+      assert(EVT < VTs[0] &&
              "Should only be an extending load, not truncating!");
     }
-    assert((Opcode == ISD::EXTLOAD || MVT::isInteger(ResultTys[0])) &&
+    assert((Opcode == ISD::EXTLOAD || MVT::isInteger(VTs[0])) &&
            "Cannot sign/zero extend a FP/Vector load!");
-    assert(MVT::isInteger(ResultTys[0]) == MVT::isInteger(EVT) &&
+    assert(MVT::isInteger(VTs[0]) == MVT::isInteger(EVT) &&
            "Cannot convert from FP to Int or Int -> FP!");
     break;
   }
@@ -1603,8 +1606,7 @@ SDOperand SelectionDAG::getNode(unsigned Opcode,
 
   // Memoize the node unless it returns a flag.
   SDNode *N;
-  MVT::ValueType *VTs = getNodeValueTypes(ResultTys);
-  if (ResultTys.back() != MVT::Flag) {
+  if (VTs[NumVTs-1] != MVT::Flag) {
     SelectionDAGCSEMap::NodeID ID;
     ID.SetOpcode(Opcode);
     ID.SetValueTypes(VTs);
@@ -1613,11 +1615,11 @@ SDOperand SelectionDAG::getNode(unsigned Opcode,
     if (SDNode *E = CSEMap.FindNodeOrInsertPos(ID, IP))
       return SDOperand(E, 0);
     N = new SDNode(Opcode, Ops, NumOps);
-    N->setValueTypes(VTs, ResultTys.size());
+    N->setValueTypes(VTs, NumVTs);
     CSEMap.InsertNode(N, IP);
   } else {
     N = new SDNode(Opcode, Ops, NumOps);
-    N->setValueTypes(VTs, ResultTys.size());
+    N->setValueTypes(VTs, NumVTs);
   }
   AllNodes.push_back(N);
   return SDOperand(N, 0);
@@ -1660,6 +1662,24 @@ MVT::ValueType *SelectionDAG::getNodeValueTypes(MVT::ValueType VT1,
   VTList.push_front(V);
   return &(*VTList.begin())[0];
 }
+
+MVT::ValueType *SelectionDAG::getNodeValueTypes(MVT::ValueType VT1, 
+                                                MVT::ValueType VT2,
+                                                MVT::ValueType VT3) {
+  for (std::list<std::vector<MVT::ValueType> >::iterator I = VTList.begin(),
+    E = VTList.end(); I != E; ++I) {
+      if (I->size() == 3 && (*I)[0] == VT1 && (*I)[1] == VT2 &&
+          (*I)[2] == VT3)
+        return &(*I)[0];
+    }
+  std::vector<MVT::ValueType> V;
+  V.push_back(VT1);
+  V.push_back(VT2);
+  V.push_back(VT3);
+  VTList.push_front(V);
+  return &(*VTList.begin())[0];
+}
+
 
 /// UpdateNodeOperands - *Mutate* the specified node in-place to have the
 /// specified operands.  If the resultant node already exists in the DAG,
@@ -2151,123 +2171,95 @@ SDNode *SelectionDAG::getTargetNode(unsigned Opcode, MVT::ValueType VT,
 }
 SDNode *SelectionDAG::getTargetNode(unsigned Opcode, MVT::ValueType VT1,
                                     MVT::ValueType VT2, SDOperand Op1) {
-  std::vector<MVT::ValueType> ResultTys;
-  ResultTys.push_back(VT1);
-  ResultTys.push_back(VT2);
-  return getNode(ISD::BUILTIN_OP_END+Opcode, ResultTys, &Op1, 1).Val;
+  MVT::ValueType *VTs = getNodeValueTypes(VT1, VT2);
+  return getNode(ISD::BUILTIN_OP_END+Opcode, VTs, 2, &Op1, 1).Val;
 }
 SDNode *SelectionDAG::getTargetNode(unsigned Opcode, MVT::ValueType VT1,
                                     MVT::ValueType VT2, SDOperand Op1,
                                     SDOperand Op2) {
-  std::vector<MVT::ValueType> ResultTys;
-  ResultTys.push_back(VT1);
-  ResultTys.push_back(VT2);
+  MVT::ValueType *VTs = getNodeValueTypes(VT1, VT2);
   SDOperand Ops[] = { Op1, Op2 };
-  return getNode(ISD::BUILTIN_OP_END+Opcode, ResultTys, Ops, 2).Val;
+  return getNode(ISD::BUILTIN_OP_END+Opcode, VTs, 2, Ops, 2).Val;
 }
 SDNode *SelectionDAG::getTargetNode(unsigned Opcode, MVT::ValueType VT1,
                                     MVT::ValueType VT2, SDOperand Op1,
                                     SDOperand Op2, SDOperand Op3) {
-  std::vector<MVT::ValueType> ResultTys;
-  ResultTys.push_back(VT1);
-  ResultTys.push_back(VT2);
+  MVT::ValueType *VTs = getNodeValueTypes(VT1, VT2);
   SDOperand Ops[] = { Op1, Op2, Op3 };
-  return getNode(ISD::BUILTIN_OP_END+Opcode, ResultTys, Ops, 3).Val;
+  return getNode(ISD::BUILTIN_OP_END+Opcode, VTs, 2, Ops, 3).Val;
 }
 SDNode *SelectionDAG::getTargetNode(unsigned Opcode, MVT::ValueType VT1,
                                     MVT::ValueType VT2, SDOperand Op1,
                                     SDOperand Op2, SDOperand Op3, 
                                     SDOperand Op4) {
-  std::vector<MVT::ValueType> ResultTys;
-  ResultTys.push_back(VT1);
-  ResultTys.push_back(VT2);
+  MVT::ValueType *VTs = getNodeValueTypes(VT1, VT2);
   SDOperand Ops[] = { Op1, Op2, Op3, Op4 };
-  return getNode(ISD::BUILTIN_OP_END+Opcode, ResultTys, Ops, 4).Val;
+  return getNode(ISD::BUILTIN_OP_END+Opcode, VTs, 2, Ops, 4).Val;
 }
 SDNode *SelectionDAG::getTargetNode(unsigned Opcode, MVT::ValueType VT1,
                                     MVT::ValueType VT2, SDOperand Op1,
                                     SDOperand Op2, SDOperand Op3, SDOperand Op4,
                                     SDOperand Op5) {
-  std::vector<MVT::ValueType> ResultTys;
-  ResultTys.push_back(VT1);
-  ResultTys.push_back(VT2);
+  MVT::ValueType *VTs = getNodeValueTypes(VT1, VT2);
   SDOperand Ops[] = { Op1, Op2, Op3, Op4, Op5 };
-  return getNode(ISD::BUILTIN_OP_END+Opcode, ResultTys, Ops, 5).Val;
+  return getNode(ISD::BUILTIN_OP_END+Opcode, VTs, 2, Ops, 5).Val;
 }
 SDNode *SelectionDAG::getTargetNode(unsigned Opcode, MVT::ValueType VT1,
                                     MVT::ValueType VT2, SDOperand Op1,
                                     SDOperand Op2, SDOperand Op3, SDOperand Op4,
                                     SDOperand Op5, SDOperand Op6) {
-  std::vector<MVT::ValueType> ResultTys;
-  ResultTys.push_back(VT1);
-  ResultTys.push_back(VT2);
+  MVT::ValueType *VTs = getNodeValueTypes(VT1, VT2);
   SDOperand Ops[] = { Op1, Op2, Op3, Op4, Op5, Op6 };
-  return getNode(ISD::BUILTIN_OP_END+Opcode, ResultTys, Ops, 6).Val;
+  return getNode(ISD::BUILTIN_OP_END+Opcode, VTs, 2, Ops, 6).Val;
 }
 SDNode *SelectionDAG::getTargetNode(unsigned Opcode, MVT::ValueType VT1,
                                     MVT::ValueType VT2, SDOperand Op1,
                                     SDOperand Op2, SDOperand Op3, SDOperand Op4,
                                     SDOperand Op5, SDOperand Op6,
                                     SDOperand Op7) {
-  std::vector<MVT::ValueType> ResultTys;
-  ResultTys.push_back(VT1);
-  ResultTys.push_back(VT2);
+  MVT::ValueType *VTs = getNodeValueTypes(VT1, VT2);
   SDOperand Ops[] = { Op1, Op2, Op3, Op4, Op5, Op6, Op7 };
-  return getNode(ISD::BUILTIN_OP_END+Opcode, ResultTys, Ops, 7).Val;
+  return getNode(ISD::BUILTIN_OP_END+Opcode, VTs, 2, Ops, 7).Val;
 }
 SDNode *SelectionDAG::getTargetNode(unsigned Opcode, MVT::ValueType VT1,
                                     MVT::ValueType VT2, MVT::ValueType VT3,
                                     SDOperand Op1, SDOperand Op2) {
-  std::vector<MVT::ValueType> ResultTys;
-  ResultTys.push_back(VT1);
-  ResultTys.push_back(VT2);
-  ResultTys.push_back(VT3);
+  MVT::ValueType *VTs = getNodeValueTypes(VT1, VT2, VT3);
   SDOperand Ops[] = { Op1, Op2 };
-  return getNode(ISD::BUILTIN_OP_END+Opcode, ResultTys, Ops, 2).Val;
+  return getNode(ISD::BUILTIN_OP_END+Opcode, VTs, 3, Ops, 2).Val;
 }
 SDNode *SelectionDAG::getTargetNode(unsigned Opcode, MVT::ValueType VT1,
                                     MVT::ValueType VT2, MVT::ValueType VT3,
                                     SDOperand Op1, SDOperand Op2,
                                     SDOperand Op3, SDOperand Op4,
                                     SDOperand Op5) {
-  std::vector<MVT::ValueType> ResultTys;
-  ResultTys.push_back(VT1);
-  ResultTys.push_back(VT2);
-  ResultTys.push_back(VT3);
+  MVT::ValueType *VTs = getNodeValueTypes(VT1, VT2, VT3);
   SDOperand Ops[] = { Op1, Op2, Op3, Op4, Op5 };
-  return getNode(ISD::BUILTIN_OP_END+Opcode, ResultTys, Ops, 5).Val;
+  return getNode(ISD::BUILTIN_OP_END+Opcode, VTs, 3, Ops, 5).Val;
 }
 SDNode *SelectionDAG::getTargetNode(unsigned Opcode, MVT::ValueType VT1,
                                     MVT::ValueType VT2, MVT::ValueType VT3,
                                     SDOperand Op1, SDOperand Op2,
                                     SDOperand Op3, SDOperand Op4, SDOperand Op5,
                                     SDOperand Op6) {
-  std::vector<MVT::ValueType> ResultTys;
-  ResultTys.push_back(VT1);
-  ResultTys.push_back(VT2);
-  ResultTys.push_back(VT3);
+  MVT::ValueType *VTs = getNodeValueTypes(VT1, VT2, VT3);
   SDOperand Ops[] = { Op1, Op2, Op3, Op4, Op5, Op6 };
-  return getNode(ISD::BUILTIN_OP_END+Opcode, ResultTys, Ops, 6).Val;
+  return getNode(ISD::BUILTIN_OP_END+Opcode, VTs, 3, Ops, 6).Val;
 }
 SDNode *SelectionDAG::getTargetNode(unsigned Opcode, MVT::ValueType VT1,
                                     MVT::ValueType VT2, MVT::ValueType VT3,
                                     SDOperand Op1, SDOperand Op2,
                                     SDOperand Op3, SDOperand Op4, SDOperand Op5,
                                     SDOperand Op6, SDOperand Op7) {
-  std::vector<MVT::ValueType> ResultTys;
-  ResultTys.push_back(VT1);
-  ResultTys.push_back(VT2);
-  ResultTys.push_back(VT3);
+  MVT::ValueType *VTs = getNodeValueTypes(VT1, VT2, VT3);
   SDOperand Ops[] = { Op1, Op2, Op3, Op4, Op5, Op6, Op7 };
-  return getNode(ISD::BUILTIN_OP_END+Opcode, ResultTys, Ops, 7).Val;
+  return getNode(ISD::BUILTIN_OP_END+Opcode, VTs, 3, Ops, 7).Val;
 }
 SDNode *SelectionDAG::getTargetNode(unsigned Opcode, MVT::ValueType VT1, 
                                     MVT::ValueType VT2,
                                     const SDOperand *Ops, unsigned NumOps) {
-  std::vector<MVT::ValueType> ResultTys;
-  ResultTys.push_back(VT1);
-  ResultTys.push_back(VT2);
-  return getNode(ISD::BUILTIN_OP_END+Opcode, ResultTys, Ops, NumOps).Val;
+  MVT::ValueType *VTs = getNodeValueTypes(VT1, VT2);
+  return getNode(ISD::BUILTIN_OP_END+Opcode, VTs, 2, Ops, NumOps).Val;
 }
 
 /// ReplaceAllUsesWith - Modify anything using 'From' to use 'To' instead.
