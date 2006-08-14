@@ -23,6 +23,7 @@
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/FileUtilities.h"
 #include "llvm/Support/SystemUtils.h"
+#include "llvm/Support/Mangler.h"
 #include "llvm/System/Program.h"
 #include "llvm/System/Signals.h"
 #include "llvm/Analysis/Passes.h"
@@ -84,17 +85,18 @@ getLTOLinkageType(GlobalValue *v)
 
 // Find exeternal symbols referenced by VALUE. This is a recursive function.
 static void
-findExternalRefs(Value *value, std::set<const char *> &references) {
+findExternalRefs(Value *value, std::set<std::string> &references, 
+		 Mangler &mangler) {
 
   if (GlobalValue *gv = dyn_cast<GlobalValue>(value)) {
     LTOLinkageTypes lt = getLTOLinkageType(gv);
     if (lt != LTOInternalLinkage && strncmp (gv->getName().c_str(), "llvm.", 5))
-      references.insert(addUnderscore(gv->getName().c_str()));
+      references.insert(mangler.getValueName(gv));
   }
   else if (Constant *c = dyn_cast<Constant>(value))
     // Handle ConstantExpr, ConstantStruct, ConstantArry etc..
     for (unsigned i = 0, e = c->getNumOperands(); i != e; ++i)
-      findExternalRefs(c->getOperand(i), references);
+      findExternalRefs(c->getOperand(i), references, mangler);
 }
 
 /// InputFilename is a LLVM bytecode file. Read it using bytecode reader.
@@ -104,11 +106,15 @@ findExternalRefs(Value *value, std::set<const char *> &references) {
 enum LTOStatus
 LinkTimeOptimizer::readLLVMObjectFile(const std::string &InputFilename,
 				      NameToSymbolMap &symbols,
-				      std::set<const char *> &references)
+				      std::set<std::string> &references)
 {
   Module *m = ParseBytecodeFile(InputFilename);
   if (!m)
     return LTO_READ_FAILURE;
+
+  // Use mangler to add GlobalPrefix to names to match linker names.
+  // FIXME : Instead of hard coding "-" use GlobalPrefix.
+  Mangler mangler(*m, "_");
   
   modules.push_back(m);
   
@@ -118,19 +124,19 @@ LinkTimeOptimizer::readLLVMObjectFile(const std::string &InputFilename,
 
     if (!f->isExternal() && lt != LTOInternalLinkage
 	&& strncmp (f->getName().c_str(), "llvm.", 5)) {
-      const char *name = addUnderscore(f->getName().c_str());
-      LLVMSymbol *newSymbol = new LLVMSymbol(lt, f);
-      symbols[name] = newSymbol;
-      allSymbols[name] = newSymbol;
+      LLVMSymbol *newSymbol = new LLVMSymbol(lt, f, f->getName(), 
+					     mangler.getValueName(f));
+      symbols[newSymbol->getMangledName()] = newSymbol;
+      allSymbols[newSymbol->getMangledName()] = newSymbol;
     }
-    
+
     // Collect external symbols referenced by this function.
     for (Function::iterator b = f->begin(), fe = f->end(); b != fe; ++b) 
       for (BasicBlock::iterator i = b->begin(), be = b->end(); 
 	   i != be; ++i)
 	for (unsigned count = 0, total = i->getNumOperands(); 
 	     count != total; ++count)
-	  findExternalRefs(i->getOperand(count), references);
+	  findExternalRefs(i->getOperand(count), references, mangler);
   }
     
   for (Module::global_iterator v = m->global_begin(), e = m->global_end();
@@ -138,13 +144,13 @@ LinkTimeOptimizer::readLLVMObjectFile(const std::string &InputFilename,
     LTOLinkageTypes lt = getLTOLinkageType(v);
     if (!v->isExternal() && lt != LTOInternalLinkage
 	&& strncmp (v->getName().c_str(), "llvm.", 5)) {
-      const char *name = addUnderscore(v->getName().c_str());
-      LLVMSymbol *newSymbol = new LLVMSymbol(lt,v);
-      symbols[name] = newSymbol;
+      LLVMSymbol *newSymbol = new LLVMSymbol(lt, v, v->getName(), 
+					     mangler.getValueName(v));
+      symbols[newSymbol->getMangledName()] = newSymbol;
 
       for (unsigned count = 0, total = v->getNumOperands(); 
 	   count != total; ++count)
-	findExternalRefs(v->getOperand(count), references);
+	findExternalRefs(v->getOperand(count), references, mangler);
 
     }
   }

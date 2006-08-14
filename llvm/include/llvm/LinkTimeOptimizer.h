@@ -55,11 +55,17 @@ namespace llvm {
     LTOLinkageTypes getLinkage() const { return linkage; }
     void mayBeNotUsed();
 
-  LLVMSymbol (enum LTOLinkageTypes lt, GlobalValue *g) : linkage(lt), gv(g) {}
+    LLVMSymbol (enum LTOLinkageTypes lt, GlobalValue *g, std::string n, 
+		std::string m) : linkage(lt), gv(g), name(n), mangledName(m) {}
+
+    const char *getName() { return name.c_str(); }
+    const char *getMangledName() { return mangledName.c_str(); }
 
   private:
     enum LTOLinkageTypes linkage;
     GlobalValue *gv;
+    std::string name;
+    std::string mangledName;
   };
 
   class string_compare {
@@ -79,7 +85,7 @@ namespace llvm {
 
     enum LTOStatus readLLVMObjectFile(const std::string &InputFilename,
 				      NameToSymbolMap &symbols,
-				      std::set<const char*> &references);
+				      std::set<std::string> &references);
     enum LTOStatus optimizeModules(const std::string &OutputFilename,
 				   std::vector<const char*> &exportList);
 
