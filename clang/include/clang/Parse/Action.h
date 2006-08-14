@@ -1,4 +1,4 @@
-//===--- ParserActions.h - Parser Actions Interface -------------*- C++ -*-===//
+//===--- Action.h - Parser Action Interface ---------------------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,12 +7,12 @@
 //
 //===----------------------------------------------------------------------===//
 //
-//  This file defines the ParserActions interface.
+//  This file defines the Action interface.
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_CLANG_PARSE_PARSERACTIONS_H
-#define LLVM_CLANG_PARSE_PARSERACTIONS_H
+#ifndef LLVM_CLANG_PARSE_ACTION_H
+#define LLVM_CLANG_PARSE_ACTION_H
 
 #include "clang/Basic/SourceLocation.h"
 
@@ -23,9 +23,9 @@ namespace clang {
   // Semantic.
   class Declarator;
 
-/// ParserActions - As the parser reads the input file and recognizes the
-/// productions of the grammar, it invokes methods on this class to turn the
-/// parsed input into something useful: e.g. a parse tree.
+/// Action - As the parser reads the input file and recognizes the productions
+/// of the grammar, it invokes methods on this class to turn the parsed input
+/// into something useful: e.g. a parse tree.
 ///
 /// The callback methods that this class provides are phrased as actions that
 /// the parser has just done or is about to do when the method is called.  They
@@ -33,12 +33,11 @@ namespace clang {
 ///
 /// All of the methods here are optional, but you must specify information about
 /// whether something is a typedef or not in order for the parse to complete
-/// accurately.  The EmptyParserActions class does this bare-minimum of
-/// tracking.
-class ParserActions {
+/// accurately.  The EmptyAction class does this bare-minimum of tracking.
+class Action {
 public:
   /// Out-of-line virtual destructor to provide home for this class.
-  virtual ~ParserActions();
+  virtual ~Action();
   
   // Types - Though these don't actually enforce strong typing, they document
   // what types are required to be identical for the actions.

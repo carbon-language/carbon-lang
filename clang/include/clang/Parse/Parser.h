@@ -15,11 +15,10 @@
 #define LLVM_CLANG_PARSE_PARSER_H
 
 #include "clang/Lex/Preprocessor.h"
-#include "clang/Parse/ParserActions.h"
+#include "clang/Parse/Action.h"
 
 namespace llvm {
 namespace clang {
-  class ParserActions;
   class DeclSpec;
   class Declarator;
   class Scope;
@@ -30,7 +29,7 @@ namespace clang {
 ///
 class Parser {
   Preprocessor &PP;
-  ParserActions &Actions;
+  Action &Actions;
   Diagnostic &Diags;
   Scope *CurScope;
   unsigned short ParenCount, BracketCount, BraceCount;
@@ -39,14 +38,14 @@ class Parser {
   /// that this is valid.
   LexerToken Tok;
 public:
-  Parser(Preprocessor &PP, ParserActions &Actions);
+  Parser(Preprocessor &PP, Action &Actions);
   ~Parser();
 
   const LangOptions &getLang() const { return PP.getLangOptions(); }
   
   // Type forwarding.  All of these are statically 'void*', but they may all be
   // different actual classes based on the actions in place.
-  typedef ParserActions::ExprTy ExprTy;
+  typedef Action::ExprTy ExprTy;
   
   // Parsing methods.
   void ParseTranslationUnit();

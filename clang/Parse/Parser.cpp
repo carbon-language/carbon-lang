@@ -17,7 +17,7 @@
 using namespace llvm;
 using namespace clang;
 
-Parser::Parser(Preprocessor &pp, ParserActions &actions)
+Parser::Parser(Preprocessor &pp, Action &actions)
   : PP(pp), Actions(actions), Diags(PP.getDiagnostics()) {
   Tok.SetKind(tok::eof);
   CurScope = 0;
@@ -30,8 +30,8 @@ Parser::~Parser() {
   delete CurScope;
 }
 
-///  Out-of-line virtual destructor to provide home for ParserActions class.
-ParserActions::~ParserActions() {}
+///  Out-of-line virtual destructor to provide home for Action class.
+Action::~Action() {}
 
 
 void Parser::Diag(SourceLocation Loc, unsigned DiagID,
@@ -166,7 +166,6 @@ bool Parser::SkipUntil(tok::TokenKind T, bool StopAtSemi, bool DontConsume) {
 
 /// EnterScope - Start a new scope.
 void Parser::EnterScope() {
-  // TODO: Inform actions?
   CurScope = new Scope(CurScope);
 }
 
