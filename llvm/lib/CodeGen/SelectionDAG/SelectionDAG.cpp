@@ -469,6 +469,7 @@ SDNode *SelectionDAG::FindModifiedNodeSlot(SDNode *N,
 SelectionDAG::~SelectionDAG() {
   while (!AllNodes.empty()) {
     SDNode *N = AllNodes.begin();
+    N->SetNextInBucket(0);
     delete [] N->OperandList;
     N->OperandList = 0;
     N->NumOperands = 0;

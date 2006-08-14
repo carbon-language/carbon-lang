@@ -46,11 +46,15 @@ class SelectionDAG {
   MachineFunction &MF;
   MachineDebugInfo *DI;
 
-  // Root - The root of the entire DAG.  EntryNode - The starting token.
+  /// Root - The root of the entire DAG.  EntryNode - The starting token.
   SDOperand Root, EntryNode;
 
-  // AllNodes - A linked list of nodes in the current DAG.
+  /// AllNodes - A linked list of nodes in the current DAG.
   ilist<SDNode> AllNodes;
+
+  /// CSEMap - This structure is used to memoize nodes, automatically performing
+  /// CSE with existing nodes with a duplicate is requested.
+  SelectionDAGCSEMap CSEMap;
 
 public:
   SelectionDAG(TargetLowering &tli, MachineFunction &mf, MachineDebugInfo *di)
@@ -464,7 +468,6 @@ private:
   std::map<std::string, SDNode*> ExternalSymbols;
   std::map<std::string, SDNode*> TargetExternalSymbols;
   std::map<std::string, StringSDNode*> StringNodes;
-  SelectionDAGCSEMap CSEMap;
 };
 
 template <> struct GraphTraits<SelectionDAG*> : public GraphTraits<SDNode*> {

@@ -719,6 +719,7 @@ class SDNode {
 public:
   virtual ~SDNode() {
     assert(NumOperands == 0 && "Operand list not cleared before deletion");
+    assert(NextInBucket == 0 && "Still in CSEMap?");
     NodeType = ISD::DELETED_NODE;
   }
   

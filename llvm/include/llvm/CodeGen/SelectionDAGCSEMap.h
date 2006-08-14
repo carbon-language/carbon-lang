@@ -117,8 +117,10 @@ namespace llvm {
     
   private:
     SDNode *GetNextPtr(void *NextInBucketPtr);
+    SDNode *GetNextPtr(void *NextInBucketPtr, void **Buckets, unsigned NumBuck);
     void **GetBucketPtr(void *NextInBucketPtr);
     void **GetBucketFor(const NodeID &ID) const;
+    void GrowHashTable();
   };
 }  // end namespace llvm
 

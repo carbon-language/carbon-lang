@@ -157,7 +157,7 @@ bool SelectionDAGCSEMap::NodeID::operator==(const NodeID &RHS) const {
 // SelectionDAGCSEMap Implementation
 
 SelectionDAGCSEMap::SelectionDAGCSEMap() : NumNodes(0) {
-  NumBuckets = 256;
+  NumBuckets = 64;
   Buckets = new void*[NumBuckets];
   memset(Buckets, 0, NumBuckets*sizeof(void*));
 }
@@ -176,6 +176,15 @@ SDNode *SelectionDAGCSEMap::GetNextPtr(void *NextInBucketPtr) {
   return static_cast<SDNode*>(NextInBucketPtr);
 }
 
+/// GetNextPtr - This is just like the previous GetNextPtr implementation, but
+/// allows a bucket array to be specified.
+SDNode *SelectionDAGCSEMap::GetNextPtr(void *NextInBucketPtr, void **Bucks, 
+                                       unsigned NumBuck) {
+  if (NextInBucketPtr >= Bucks && NextInBucketPtr < Bucks+NumBuck)
+    return 0;
+  return static_cast<SDNode*>(NextInBucketPtr);
+}
+
 void **SelectionDAGCSEMap::GetBucketPtr(void *NextInBucketPtr) {
   //assert(NextInBucketPtr >= Buckets && NextInBucketPtr < Buckets+NumBuckets &&
   //       "NextInBucketPtr is not a bucket ptr");
@@ -185,11 +194,40 @@ void **SelectionDAGCSEMap::GetBucketPtr(void *NextInBucketPtr) {
 /// GetBucketFor - Hash the specified node ID and return the hash bucket for the
 /// specified ID.
 void **SelectionDAGCSEMap::GetBucketFor(const NodeID &ID) const {
-  // TODO: if load is high, resize hash table.
-  
   // NumBuckets is always a power of 2.
   unsigned BucketNum = ID.ComputeHash() & (NumBuckets-1);
   return Buckets+BucketNum;
+}
+
+/// GrowHashTable - Double the size of the hash table and rehash everything.
+///
+void SelectionDAGCSEMap::GrowHashTable() {
+  void **OldBuckets = Buckets;
+  unsigned OldNumBuckets = NumBuckets;
+  NumBuckets <<= 1;
+  
+  // Reset the node count to zero: we're going to reinsert everything.
+  NumNodes = 0;
+  
+  // Clear out new buckets.
+  Buckets = new void*[NumBuckets];
+  memset(Buckets, 0, NumBuckets*sizeof(void*));
+
+  // Walk the old buckets, rehashing nodes into their new place.
+  for (unsigned i = 0; i != OldNumBuckets; ++i) {
+    void *Probe = OldBuckets[i];
+    if (!Probe) continue;
+    while (SDNode *NodeInBucket = GetNextPtr(Probe, OldBuckets, OldNumBuckets)){
+      // Figure out the next link, remove NodeInBucket from the old link.
+      Probe = NodeInBucket->getNextInBucket();
+      NodeInBucket->SetNextInBucket(0);
+
+      // Insert the node into the new bucket, after recomputing the hash.
+      InsertNode(NodeInBucket, GetBucketFor(NodeID(NodeInBucket)));
+    }
+  }
+  
+  delete[] OldBuckets;
 }
 
 /// FindNodeOrInsertPos - Look up the node specified by ID.  If it exists,
@@ -226,6 +264,11 @@ SDNode *SelectionDAGCSEMap::FindNodeOrInsertPos(const NodeID &ID,
 /// FindNodeOrInsertPos.
 void SelectionDAGCSEMap::InsertNode(SDNode *N, void *InsertPos) {
   ++NumNodes;
+  // Do we need to grow the hashtable?
+  if (NumNodes > NumBuckets*2) {
+    GrowHashTable();
+    InsertPos = GetBucketFor(NodeID(N));
+  }
   
   /// The insert position is actually a bucket pointer.
   void **Bucket = static_cast<void**>(InsertPos);
