@@ -305,17 +305,18 @@ up</a></li>
 <li><a name="pf_3">No native code generation</a></li>
 <li><a name="pf_4">Build is not complete: one or more tools don't link</a></li>
 <li><a name="pf_5">The GCC-based C/C++ frontend does not build</a></li>
-<li><a name="pf_6">The port is done using the MSYS shell. 
+<li><a name="pf_6">The port is done using the MSYS shell.</a>
 <a href="http://www.mingw.org/MinGWiki/">Download</a> and install 
 bison (excl. M4.exe) and flex in that order. Build binutils-2.15 from source,
-if necessary. Bison & flex can be also grabbed from GNUWin32 sf.net project</li>
+if necessary. Bison &amp; flex can be also grabbed from GNUWin32 sf.net 
+project.</li>
 <li><a name="pf_7">Native code generation exists but is not complete.</a></li>
-<li><a name="pf_8">Binutils up to post-2.17 has bug in bfd/cofflink.c
+<li><a name="pf_8">Binutils</a> up to post-2.17 has bug in bfd/cofflink.c
     preventing LLVM from building correctly. Several workarounds have been
     introduced into LLVM build system, but the bug can occur anytime in the
-    future. It's highly recommended to rebuild your current binutils with the
+    future. We highly recommend that you rebuild your current binutils with the
     patch from <a href="http://sourceware.org/bugzilla/show_bug.cgi?id=2659">
-    Binutils bugzilla</a>, if it's wasn't already applied. </a></li>
+    Binutils bugzilla</a>, if it wasn't already applied.</li>
 </ol>
 </div>
 
@@ -1487,6 +1488,86 @@ are code generators for parts of LLVM infrastructure.</p>
   <a name="tutorial">An Example Using the LLVM Tool Chain</a>
 </div>
 <!-- *********************************************************************** -->
+
+<div class="doc_text">
+<p>This section gives an example of using LLVM.  Since we are currently 
+transitioning from llvm-gcc3 to llvm-gcc4, we include examples for both.
+</p>
+</div>
+
+<!-- ======================================================================= -->
+<div class="doc_subsection"><a name="tutorial3">Example with llvm-gcc4</a></div>
+
+<div class="doc_text">
+
+<ol>
+  <li>First, create a simple C file, name it 'hello.c':
+       <pre>
+   #include &lt;stdio.h&gt;
+   int main() {
+     printf("hello world\n");
+     return 0;
+   }
+       </pre></li>
+
+  <li><p>Next, compile the C file into a native executable:</p>
+
+      <p><tt>% llvm-gcc hello.c -o hello</tt></p>
+
+      <p>Note that llvm-gcc works just like GCC by default.  The standard -S and
+        -c arguments work as usual (producing a native .s or .o file,
+        respectively). </p>
+
+  <li><p>Next, compile the C file into a LLVM bytecode file:</p>
+      <p><tt>% llvm-gcc -O3 -emit-llvm hello.c -c -o hello.bc</tt></p>
+
+      <p>The -emit-llvm option can be used with the -S or -c options to emit an
+         LLVM ".ll" or ".bc" file (respectively) for the code.  This allows you
+         to use the <a href="CommandGuide/index.html">standard LLVM tools</a> on
+         the bytecode file.</p>
+
+      <p>Unlike llvm-gcc3, llvm-gcc4 correctly responds to -O[0123] arguments.
+         </p></li>
+
+  <li><p>Run the program in both forms. To run the program, use:</p>
+      
+      <p><tt>% ./hello</tt></p>
+ 
+      <p>and</p>
+
+      <p><tt>% lli hello.bc</tt></p></li>
+
+      <p>The second examples shows how to invoke the LLVM JIT, <a
+       href="CommandGuide/html/lli.html">lli</a>.</p>
+
+  <li><p>Use the <tt>llvm-dis</tt> utility to take a look at the LLVM assembly
+      code:</p>
+
+      <p><tt>% llvm-dis &lt; hello.bc | less</tt><p></li>
+
+  <li><p>Compile the program to native assembly using the LLC code
+      generator:</p>
+
+      <p><tt>% llc hello.bc -o hello.s</tt></p>
+
+  <li><p>Assemble the native assembly language file into a program:</p>
+
+      <p><b>Solaris:</b><tt>% /opt/SUNWspro/bin/cc -xarch=v9 hello.s -o hello.native</tt></p>
+      <p><b>Others:</b><tt>% gcc hello.s -o hello.native</tt></p>
+
+  <li><p>Execute the native code program:</p>
+
+      <p><tt>% ./hello.native</tt></p></li>
+
+      <p>Note that using llvm-gcc to compile directly to native code (i.e. when
+         the -emit-llvm option is not present) does steps 6/7/8 for you.</p>
+
+</ol>
+
+</div>
+
+<!-- ======================================================================= -->
+<div class="doc_subsection"><a name="tutorial3">Example with llvm-gcc3</a></div>
 
 <div class="doc_text">
 
