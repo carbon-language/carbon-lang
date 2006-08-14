@@ -86,7 +86,7 @@ getLTOLinkageType(GlobalValue *v)
 // Find exeternal symbols referenced by VALUE. This is a recursive function.
 static void
 findExternalRefs(Value *value, std::set<std::string> &references, 
-		 Mangler &mangler) {
+                 Mangler &mangler) {
 
   if (GlobalValue *gv = dyn_cast<GlobalValue>(value)) {
     LTOLinkageTypes lt = getLTOLinkageType(gv);
@@ -105,8 +105,8 @@ findExternalRefs(Value *value, std::set<std::string> &references,
 /// Return LTO_READ_SUCCESS if there is no error.
 enum LTOStatus
 LinkTimeOptimizer::readLLVMObjectFile(const std::string &InputFilename,
-				      NameToSymbolMap &symbols,
-				      std::set<std::string> &references)
+                                      NameToSymbolMap &symbols,
+                                      std::set<std::string> &references)
 {
   Module *m = ParseBytecodeFile(InputFilename);
   if (!m)
@@ -123,9 +123,9 @@ LinkTimeOptimizer::readLLVMObjectFile(const std::string &InputFilename,
     LTOLinkageTypes lt = getLTOLinkageType(f);
 
     if (!f->isExternal() && lt != LTOInternalLinkage
-	&& strncmp (f->getName().c_str(), "llvm.", 5)) {
+        && strncmp (f->getName().c_str(), "llvm.", 5)) {
       LLVMSymbol *newSymbol = new LLVMSymbol(lt, f, f->getName(), 
-					     mangler.getValueName(f));
+                                             mangler.getValueName(f));
       symbols[newSymbol->getMangledName()] = newSymbol;
       allSymbols[newSymbol->getMangledName()] = newSymbol;
     }
@@ -133,24 +133,24 @@ LinkTimeOptimizer::readLLVMObjectFile(const std::string &InputFilename,
     // Collect external symbols referenced by this function.
     for (Function::iterator b = f->begin(), fe = f->end(); b != fe; ++b) 
       for (BasicBlock::iterator i = b->begin(), be = b->end(); 
-	   i != be; ++i)
-	for (unsigned count = 0, total = i->getNumOperands(); 
-	     count != total; ++count)
-	  findExternalRefs(i->getOperand(count), references, mangler);
+           i != be; ++i)
+        for (unsigned count = 0, total = i->getNumOperands(); 
+             count != total; ++count)
+          findExternalRefs(i->getOperand(count), references, mangler);
   }
     
   for (Module::global_iterator v = m->global_begin(), e = m->global_end();
        v !=  e; ++v) {
     LTOLinkageTypes lt = getLTOLinkageType(v);
     if (!v->isExternal() && lt != LTOInternalLinkage
-	&& strncmp (v->getName().c_str(), "llvm.", 5)) {
+        && strncmp (v->getName().c_str(), "llvm.", 5)) {
       LLVMSymbol *newSymbol = new LLVMSymbol(lt, v, v->getName(), 
-					     mangler.getValueName(v));
+                                             mangler.getValueName(v));
       symbols[newSymbol->getMangledName()] = newSymbol;
 
       for (unsigned count = 0, total = v->getNumOperands(); 
-	   count != total; ++count)
-	findExternalRefs(v->getOperand(count), references, mangler);
+           count != total; ++count)
+        findExternalRefs(v->getOperand(count), references, mangler);
 
     }
   }
@@ -163,7 +163,7 @@ LinkTimeOptimizer::readLLVMObjectFile(const std::string &InputFilename,
 /// based on information available to module M. No new target
 /// features are selected. 
 static enum LTOStatus lto_optimize(Module *M, std::ostream &Out,
-				   std::vector<const char *> &exportList)
+                                   std::vector<const char *> &exportList)
 {
   // Instantiate the pass manager to organize the passes.
   PassManager Passes;
@@ -266,7 +266,7 @@ static enum LTOStatus lto_optimize(Module *M, std::ostream &Out,
 /// Return appropriate LTOStatus.
 enum LTOStatus
 LinkTimeOptimizer::optimizeModules(const std::string &OutputFilename,
-				   std::vector<const char *> &exportList)
+                                   std::vector<const char *> &exportList)
 {
   if (modules.empty())
     return LTO_NO_WORK;
