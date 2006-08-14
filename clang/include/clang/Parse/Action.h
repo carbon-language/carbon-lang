@@ -7,7 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 //
-//  This file defines the Action interface.
+//  This file defines the Action and EmptyAction interface.
 //
 //===----------------------------------------------------------------------===//
 
@@ -18,10 +18,11 @@
 
 namespace llvm {
 namespace clang {
-  // Parse.
-  class Scope;
   // Semantic.
   class Declarator;
+  // Parse.
+  class Scope;
+  class Action;
 
 /// Action - As the parser reads the input file and recognizes the productions
 /// of the grammar, it invokes methods on this class to turn the parsed input
@@ -31,9 +32,9 @@ namespace clang {
 /// the parser has just done or is about to do when the method is called.  They
 /// are not requests that the actions module do the specified action.
 ///
-/// All of the methods here are optional, but you must specify information about
-/// whether something is a typedef or not in order for the parse to complete
-/// accurately.  The EmptyAction class does this bare-minimum of tracking.
+/// All of the methods here are optional except isTypedefName(), which must be
+/// specified in order for the parse to complete accurately.  The EmptyAction
+/// class does this bare-minimum of tracking to implement this functionality.
 class Action {
 public:
   /// Out-of-line virtual destructor to provide home for this class.
@@ -47,6 +48,10 @@ public:
   // Symbol table tracking callbacks.
   //===--------------------------------------------------------------------===//
   
+  /// isTypedefName - Return true if the specified identifier is a typedef name
+  /// in the current scope.
+  virtual bool isTypedefName(const IdentifierInfo &II, Scope *S) const = 0;
+  
   /// ParseDeclarator - This callback is invoked when a declarator is parsed and
   /// 'Init' specifies the initializer if any.  This is for things like:
   /// "int X = 4" or "typedef int foo".
@@ -57,6 +62,28 @@ public:
   /// is popped and deleted.
   virtual void PopScope(SourceLocation Loc, Scope *S) {}
   
+};
+
+
+/// EmptyAction - This is a simple (bare-minimum) implementation of the Action
+/// class, which only keeps track of which typedefs are in-scope.  This class is
+/// useful to subclass if clients want to implement some actions without having
+/// to reimplement all of the scoping rules.
+class EmptyAction : public Action {
+
+  /// isTypedefName - This looks at the IdentifierInfo::FETokenInfo field to
+  /// determine whether the name is a typedef or not in this scope.
+  virtual bool isTypedefName(const IdentifierInfo &II, Scope *S) const;
+  
+  /// ParseDeclarator - If this is a typedef declarator, we modify the
+  /// IdentifierInfo::FETokenInfo field to keep track of this fact, until S is
+  /// popped.
+  virtual void ParseDeclarator(SourceLocation Loc, Scope *S, Declarator &D,
+                               ExprTy *Init);
+  
+  /// PopScope - When a scope is popped, if any typedefs are now out-of-scope,
+  /// they are removed from the IdentifierInfo::FETokenInfo field.
+  virtual void PopScope(SourceLocation Loc, Scope *S);
 };
   
 }  // end namespace clang

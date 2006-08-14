@@ -752,7 +752,7 @@ int main(int argc, char **argv) {
     //ParseFile(PP, new ParserPrintActions(PP), MainFileID);
     break;
   case ParseSyntaxOnly:              // -fsyntax-only
-    ParseFile(PP, new Action(), MainFileID);
+    ParseFile(PP, new EmptyAction(), MainFileID);
     break;
   }
   
