@@ -51,7 +51,7 @@ AC_ARG_WITH($1[-inc],
 eval pfxval=\$\{$1pfxdir\}
 eval binval=\$\{$1bindir\}
 eval incval=\$\{$1incdir\}
-eval libvar=\$\{$1libdir\}
+eval libval=\$\{$1libdir\}
 if test "${pfxval}" != "nada" ; then
   CHECK_STD_PROGRAM(${pfxval},$1,$2,$3)
 elif test "${binval}" != "nada" ; then
