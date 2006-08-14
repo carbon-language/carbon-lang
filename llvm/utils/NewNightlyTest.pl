@@ -636,7 +636,6 @@ if (!$NOCHECKOUT && !$NOBUILD) {
 #my $NumLibraries   = scalar(grep(!/executable/, @Linked));
 #my $NumObjects     = `grep ']\: Compiling ' $BuildLog | wc -l` + 0;
 
-
 # Get the number of lines of source code. Must be here after the build is done
 # because countloc.sh uses the llvm-config script which must be built.
 my $LOC = `utils/countloc.sh`;
@@ -831,7 +830,7 @@ sub TestDirectory {
 
   ChangeDir( "../../..", "Programs Test Parent Directory" );
   return ($ProgramsTable, $llcbeta_options);
-}
+} #end sub TestDirectory
 
 if (!$BuildError) {
   if ( $VERBOSE ) {
