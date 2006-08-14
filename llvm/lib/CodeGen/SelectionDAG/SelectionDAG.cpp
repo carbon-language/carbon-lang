@@ -583,6 +583,7 @@ SDOperand SelectionDAG::getConstantPool(Constant *C, MVT::ValueType VT,
   SelectionDAGCSEMap::NodeID ID(Opc, getNodeValueTypes(VT));
   ID.AddInteger(Alignment);
   ID.AddInteger(Offset);
+  ID.AddPointer(C);
   void *IP = 0;
   if (SDNode *E = CSEMap.FindNodeOrInsertPos(ID, IP))
     return SDOperand(E, 0);

@@ -64,6 +64,7 @@ SelectionDAGCSEMap::NodeID::NodeID(SDNode *N) {
     case ISD::TargetConstantPool:
       AddInteger(cast<ConstantPoolSDNode>(N)->getAlignment());
       AddInteger(cast<ConstantPoolSDNode>(N)->getOffset());
+      AddPointer(cast<ConstantPoolSDNode>(N)->get());
       break;
     }
   }
