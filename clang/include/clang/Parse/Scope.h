@@ -43,6 +43,10 @@ public:
   Scope(Scope *parent) : Parent(parent), Depth(Parent ? Parent->Depth+1 : 0) {
   }
   
+  /// getParent - Return the scope that this is nested in.
+  ///
+  Scope *getParent() const { return Parent; }
+  
 };
     
 }  // end namespace clang
