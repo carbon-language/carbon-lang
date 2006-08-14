@@ -196,7 +196,7 @@ SmallVectorImpl<T>::operator=(const SmallVectorImpl<T> &RHS) {
   
   // If we have to grow to have enough elements, destroy the current elements.
   // This allows us to avoid copying them during the grow.
-  if (Capacity-Begin < RHSSize) {
+  if (unsigned(Capacity-Begin) < RHSSize) {
     // Destroy current elements.
     for (iterator I = Begin, E = End; I != E; ++I)
       I->~T();
