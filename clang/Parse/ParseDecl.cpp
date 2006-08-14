@@ -480,37 +480,36 @@ void Parser::ParseEnumSpecifier(DeclSpec &DS) {
   if (Tok.getKind() == tok::identifier)
     ConsumeToken();
   
-  if (Tok.getKind() != tok::l_brace)
-    return;
-  
-  SourceLocation LBraceLoc = Tok.getLocation();
-  ConsumeBrace();
-  
-  if (Tok.getKind() == tok::r_brace)
-    Diag(Tok, diag::ext_empty_struct_union_enum, "enum");
-  
-  // Parse the enumerator-list.
-  while (Tok.getKind() == tok::identifier) {
-    ConsumeToken();
+  if (Tok.getKind() == tok::l_brace) {
+    SourceLocation LBraceLoc = Tok.getLocation();
+    ConsumeBrace();
     
-    if (Tok.getKind() == tok::equal) {
+    if (Tok.getKind() == tok::r_brace)
+      Diag(Tok, diag::ext_empty_struct_union_enum, "enum");
+    
+    // Parse the enumerator-list.
+    while (Tok.getKind() == tok::identifier) {
       ConsumeToken();
-      ExprResult Res = ParseConstantExpression();
-      if (Res.isInvalid) SkipUntil(tok::comma, true, false);
+      
+      if (Tok.getKind() == tok::equal) {
+        ConsumeToken();
+        ExprResult Res = ParseConstantExpression();
+        if (Res.isInvalid) SkipUntil(tok::comma, true, false);
+      }
+      
+      if (Tok.getKind() != tok::comma)
+        break;
+      SourceLocation CommaLoc = Tok.getLocation();
+      ConsumeToken();
+      
+      if (Tok.getKind() != tok::identifier && !getLang().C99)
+        Diag(CommaLoc, diag::ext_c99_enumerator_list_comma);
     }
     
-    if (Tok.getKind() != tok::comma)
-      break;
-    SourceLocation CommaLoc = Tok.getLocation();
-    ConsumeToken();
-    
-    if (Tok.getKind() != tok::identifier && !getLang().C99)
-      Diag(CommaLoc, diag::ext_c99_enumerator_list_comma);
+    // Eat the }.
+    MatchRHSPunctuation(tok::r_brace, LBraceLoc, "{", 
+                        diag::err_expected_rbrace);
   }
-  
-  // Eat the }.
-  MatchRHSPunctuation(tok::r_brace, LBraceLoc, "{", 
-                      diag::err_expected_rbrace);
   // TODO: semantic analysis on the declspec for enums.
   
   
