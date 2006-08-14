@@ -173,7 +173,7 @@ void Parser::ParseSpecifierQualifierList(DeclSpec &DS) {
 ///         'unsigned'
 ///         struct-or-union-specifier
 ///         enum-specifier
-///         typedef-name                          [TODO]
+///         typedef-name
 /// [C99]   '_Bool'
 /// [C99]   '_Complex'
 /// [C99]   '_Imaginary'  // Removed in TC2?
@@ -197,6 +197,17 @@ void Parser::ParseDeclarationSpecifiers(DeclSpec &DS) {
     int isInvalid = false;
     const char *PrevSpec = 0;
     switch (Tok.getKind()) {
+      // typedef-name
+    case tok::identifier:
+      // This identifier can only be a typedef name if we haven't already seen
+      // a typename.  This avoids the virtual method call on things like
+      // 'int foo'.
+      if (DS.TypeSpecType == DeclSpec::TST_unspecified &&
+          Actions.isTypedefName(*Tok.getIdentifierInfo(), CurScope)) {
+        isInvalid = DS.SetTypeSpecType(DeclSpec::TST_typedef, PrevSpec);
+        break;
+      }
+      // FALL THROUGH.
     default:
       // If this is not a declaration specifier token, we're done reading decl
       // specifiers.  First verify that DeclSpec's are consistent.
@@ -290,9 +301,6 @@ void Parser::ParseDeclarationSpecifiers(DeclSpec &DS) {
       ParseEnumSpecifier(DS);
       continue;
     
-    //case tok::identifier:
-    // TODO: handle typedef names.
-      
     // type-qualifier
     case tok::kw_const:
       isInvalid = DS.SetTypeQual(DeclSpec::TQ_const   , PrevSpec, getLang())*2;
@@ -548,8 +556,7 @@ bool Parser::isTypeSpecifierQualifier() const {
     
     // typedef-name
   case tok::identifier:
-    // FIXME: if this is a typedef return true.
-    return false;
+    return Actions.isTypedefName(*Tok.getIdentifierInfo(), CurScope);
     
     // TODO: Attributes.
   }
@@ -602,8 +609,7 @@ bool Parser::isDeclarationSpecifier() const {
     
     // typedef-name
   case tok::identifier:
-    // FIXME: if this is a typedef return true.
-    return false;
+    return Actions.isTypedefName(*Tok.getIdentifierInfo(), CurScope);
     // TODO: Attributes.
   }
 }

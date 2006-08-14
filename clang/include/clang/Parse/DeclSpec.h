@@ -74,7 +74,8 @@ public:
     TST_decimal128,   // _Decimal128
     TST_enum,
     TST_union,
-    TST_struct
+    TST_struct,
+    TST_typedef
   } TypeSpecType : 4;
   
   // type-qualifiers

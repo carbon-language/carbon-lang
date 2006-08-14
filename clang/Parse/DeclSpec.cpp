@@ -101,6 +101,7 @@ static const char *getSpecifierName(DeclSpec::TST T) {
   case DeclSpec::TST_enum:        return "enum";
   case DeclSpec::TST_union:       return "union";
   case DeclSpec::TST_struct:      return "struct";
+  case DeclSpec::TST_typedef:     return "typedef";
   }
 }
 

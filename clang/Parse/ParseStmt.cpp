@@ -196,7 +196,8 @@ void Parser::ParseIdentifierStatement(bool OnlyStatement) {
   }
   
   // declaration
-  if (!OnlyStatement && 0/*Is typedef name!*/) {
+  if (!OnlyStatement &&
+      Actions.isTypedefName(*IdentTok.getIdentifierInfo(), CurScope)) {
     // Handle this.  Warn/disable if in middle of block and !C99.
     DeclSpec DS;
     
