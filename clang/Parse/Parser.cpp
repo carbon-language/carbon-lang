@@ -19,16 +19,19 @@ using namespace clang;
 
 Parser::Parser(Preprocessor &pp, ParserActions &actions)
   : PP(pp), Actions(actions), Diags(PP.getDiagnostics()) {
-  // Create the global scope, install it as the current scope.
-  CurScope = new Scope(0);
   Tok.SetKind(tok::eof);
+  CurScope = 0;
   
   ParenCount = BracketCount = BraceCount = 0;
 }
 
 Parser::~Parser() {
+  // If we still have scopes active, delete the scope tree.
   delete CurScope;
 }
+
+///  Out-of-line virtual destructor to provide home for ParserActions class.
+ParserActions::~ParserActions() {}
 
 
 void Parser::Diag(SourceLocation Loc, unsigned DiagID,
@@ -158,6 +161,31 @@ bool Parser::SkipUntil(tok::TokenKind T, bool StopAtSemi, bool DontConsume) {
 }
 
 //===----------------------------------------------------------------------===//
+// Scope manipulation
+//===----------------------------------------------------------------------===//
+
+/// EnterScope - Start a new scope.
+void Parser::EnterScope() {
+  // TODO: Inform actions?
+  CurScope = new Scope(CurScope);
+}
+
+/// ExitScope - Pop a scope off the scope stack.
+void Parser::ExitScope() {
+  assert(CurScope && "Scope imbalance!");
+
+  // Inform the actions module that this scope is going away.
+  Actions.PopScope(Tok.getLocation(), CurScope);
+  
+  Scope *Old = CurScope;
+  CurScope = Old->getParent();
+  delete Old;
+}
+
+
+
+
+//===----------------------------------------------------------------------===//
 // C99 6.9: External Definitions.
 //===----------------------------------------------------------------------===//
 
@@ -166,12 +194,21 @@ bool Parser::SkipUntil(tok::TokenKind T, bool StopAtSemi, bool DontConsume) {
 ///         external-declaration 
 ///         translation-unit external-declaration 
 void Parser::ParseTranslationUnit() {
+  // Prime the lexer look-ahead.
+  ConsumeToken();
+  
+  // Create the global scope, install it as the current scope.
+  assert(CurScope == 0 && "A scope is already active?");
+  EnterScope();
 
   if (Tok.getKind() == tok::eof)  // Empty source file is an extension.
     Diag(diag::ext_empty_source_file);
   
   while (Tok.getKind() != tok::eof)
     ParseExternalDeclaration();
+  
+  ExitScope();
+  assert(CurScope == 0 && "Scope imbalance!");
 }
 
 /// ParseExternalDeclaration:
@@ -212,13 +249,6 @@ void Parser::ParseExternalDeclaration() {
 ///         declaration-specifiers init-declarator-list[opt] ';' [TODO]
 /// [!C99]  init-declarator-list ';'                             [TODO]
 /// [OMP]   threadprivate-directive                              [TODO]
-///
-///       init-declarator-list: [C99 6.7]
-///         init-declarator
-///         init-declarator-list ',' init-declarator
-///       init-declarator: [C99 6.7]
-///         declarator
-///         declarator '=' initializer
 ///
 void Parser::ParseDeclarationOrFunctionDefinition() {
   // Parse the common declaration-specifiers piece.
@@ -264,9 +294,7 @@ void Parser::ParseDeclarationOrFunctionDefinition() {
       Diag(Tok, diag::err_expected_fn_body);
     else
       Diag(Tok, diag::err_expected_after_declarator);
-    SkipUntil(tok::r_brace, true);
-    if (Tok.getKind() == tok::semi)
-      ConsumeToken();
+    SkipUntil(tok::semi);
     return;
   }
 

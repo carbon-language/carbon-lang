@@ -52,20 +52,16 @@ public:
   void ParseTranslationUnit();
   
   struct ExprResult {
-    ExprTy Val;
+    ExprTy *Val;
     bool isInvalid;
     
-    ExprResult(bool Invalid = false) : isInvalid(Invalid) {}
+    ExprResult(bool Invalid = false) : Val(0), isInvalid(Invalid) {}
   };
   
-  // Diagnostics.
-  void Diag(SourceLocation Loc, unsigned DiagID, const std::string &Msg = "");
-  void Diag(const LexerToken &Tok, unsigned DiagID, const std::string &M = "") {
-    Diag(Tok.getLocation(), DiagID, M);
-  }
-  void Diag(unsigned DiagID, const std::string &Msg = "") {
-    Diag(Tok, DiagID, Msg);
-  }
+private:
+  //===--------------------------------------------------------------------===//
+  // Low-Level token peeking and consumption methods.
+  //
   
   /// isTokenParen - Return true if the cur token is '(' or ')'.
   bool isTokenParen() const {
@@ -172,10 +168,27 @@ public:
   /// returned.
   bool ExpectAndConsume(tok::TokenKind ExpectedTok, unsigned Diag,
                         tok::TokenKind SkipToTok = tok::unknown);
-private:
+
   //===--------------------------------------------------------------------===//
-  // Error recovery.
+  // Scope manipulation
+  
+  /// EnterScope - Start a new scope.
+  void EnterScope();
+  
+  /// ExitScope - Pop a scope off the scope stack.
+  void ExitScope();
+
+  //===--------------------------------------------------------------------===//
+  // Diagnostic Emission and Error recovery.
     
+  void Diag(SourceLocation Loc, unsigned DiagID, const std::string &Msg = "");
+  void Diag(const LexerToken &Tok, unsigned DiagID, const std::string &M = "") {
+    Diag(Tok.getLocation(), DiagID, M);
+  }
+  void Diag(unsigned DiagID, const std::string &Msg = "") {
+    Diag(Tok, DiagID, Msg);
+  }
+  
   /// SkipUntil - Read tokens until we get to the specified token, then consume
   /// it (unless DontConsume is false).  Because we cannot guarantee that the
   /// token will ever occur, this skips to the next token, or to some likely
