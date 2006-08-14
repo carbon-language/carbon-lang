@@ -43,6 +43,7 @@ public:
   // Types - Though these don't actually enforce strong typing, they document
   // what types are required to be identical for the actions.
   typedef void ExprTy;
+  typedef void DeclTy;
   
   //===--------------------------------------------------------------------===//
   // Symbol table tracking callbacks.
