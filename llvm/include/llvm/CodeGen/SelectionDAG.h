@@ -431,13 +431,6 @@ public:
 
   void dump() const;
 
-  /// InsertISelMapEntry - A helper function to insert a key / element pair
-  /// into a SDOperand to SDOperand map. This is added to avoid the map
-  /// insertion operator from being inlined.
-  static void InsertISelMapEntry(std::map<SDOperand, SDOperand> &Map,
-                                 SDNode *Key, unsigned KeyResNo,
-                                 SDNode *Element, unsigned ElementResNo);
-
 private:
   void RemoveNodeFromCSEMaps(SDNode *N);
   SDNode *AddNonLeafNodeToCSEMaps(SDNode *N);

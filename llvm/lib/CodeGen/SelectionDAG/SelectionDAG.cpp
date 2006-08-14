@@ -2901,12 +2901,3 @@ void SelectionDAG::dump() const {
   std::cerr << "\n\n";
 }
 
-/// InsertISelMapEntry - A helper function to insert a key / element pair
-/// into a SDOperand to SDOperand map. This is added to avoid the map
-/// insertion operator from being inlined.
-void SelectionDAG::InsertISelMapEntry(std::map<SDOperand, SDOperand> &Map,
-                                      SDNode *Key, unsigned KeyResNo,
-                                      SDNode *Element, unsigned ElementResNo) {
-  Map.insert(std::make_pair(SDOperand(Key, KeyResNo),
-                            SDOperand(Element, ElementResNo)));
-}
