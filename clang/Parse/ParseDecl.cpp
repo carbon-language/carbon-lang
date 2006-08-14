@@ -58,18 +58,41 @@ void Parser::ParseDeclaration(unsigned Context) {
   ParseInitDeclaratorListAfterFirstDeclarator(DeclaratorInfo);
 }
 
+/// ParseInitDeclaratorListAfterFirstDeclarator - Parse 'declaration' after
+/// parsing 'declaration-specifiers declarator'.  This method is split out this
+/// way to handle the ambiguity between top-level function-definitions and
+/// declarations.
+///
+///       declaration: [C99 6.7]
+///         declaration-specifiers init-declarator-list[opt] ';' [TODO]
+/// [!C99]  init-declarator-list ';'                             [TODO]
+/// [OMP]   threadprivate-directive                              [TODO]
+///
+///       init-declarator-list: [C99 6.7]
+///         init-declarator
+///         init-declarator-list ',' init-declarator
+///       init-declarator: [C99 6.7]
+///         declarator
+///         declarator '=' initializer
+///
 void Parser::ParseInitDeclaratorListAfterFirstDeclarator(Declarator &D) {
   // At this point, we know that it is not a function definition.  Parse the
   // rest of the init-declarator-list.
   while (1) {
     // must be: decl-spec[opt] declarator init-declarator-list
     // Parse declarator '=' initializer.
+    ExprResult Init;
     if (Tok.getKind() == tok::equal) {
       ConsumeToken();
-      ParseInitializer();
+      Init = ParseInitializer();
+      if (!Init.isInvalid) {
+        SkipUntil(tok::semi);
+        return;
+      }
     }
     
-    // TODO: install declarator.
+    // Inform the current actions module that we just parsed a declarator.
+    Actions.ParseDeclarator(Tok.getLocation(), CurScope, D, Init.Val);
     
     // If we don't have a comma, it is either the end of the list (a ';') or an
     // error, bail out.
