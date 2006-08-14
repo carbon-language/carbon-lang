@@ -3665,8 +3665,8 @@ void SelectionDAGLegalize::ExpandShiftParts(unsigned NodeOp,
   ExpandOp(Op, LHSL, LHSH);
 
   SDOperand Ops[] = { LHSL, LHSH, Amt };
-  std::vector<MVT::ValueType> VTs(2, LHSL.getValueType());
-  Lo = DAG.getNode(NodeOp, VTs, Ops, 3);
+  MVT::ValueType VT = LHSL.getValueType();
+  Lo = DAG.getNode(NodeOp, DAG.getNodeValueTypes(VT, VT), 2, Ops, 3);
   Hi = Lo.getValue(1);
 }
 
@@ -4636,22 +4636,21 @@ void SelectionDAGLegalize::ExpandOp(SDOperand Op, SDOperand &Lo, SDOperand &Hi){
     SDOperand LHSL, LHSH, RHSL, RHSH;
     ExpandOp(Node->getOperand(0), LHSL, LHSH);
     ExpandOp(Node->getOperand(1), RHSL, RHSH);
-    std::vector<MVT::ValueType> VTs;
+    const MVT::ValueType *VTs =
+      DAG.getNodeValueTypes(LHSL.getValueType(),MVT::Flag);
     SDOperand LoOps[2], HiOps[2];
-    VTs.push_back(LHSL.getValueType());
-    VTs.push_back(MVT::Flag);
     LoOps[0] = LHSL;
     LoOps[1] = RHSL;
     HiOps[0] = LHSH;
     HiOps[1] = RHSH;
     if (Node->getOpcode() == ISD::ADD) {
-      Lo = DAG.getNode(ISD::ADDC, VTs, LoOps, 2);
+      Lo = DAG.getNode(ISD::ADDC, VTs, 2, LoOps, 2);
       HiOps[2] = Lo.getValue(1);
-      Hi = DAG.getNode(ISD::ADDE, VTs, HiOps, 3);
+      Hi = DAG.getNode(ISD::ADDE, VTs, 2, HiOps, 3);
     } else {
-      Lo = DAG.getNode(ISD::SUBC, VTs, LoOps, 2);
+      Lo = DAG.getNode(ISD::SUBC, VTs, 2, LoOps, 2);
       HiOps[2] = Lo.getValue(1);
-      Hi = DAG.getNode(ISD::SUBE, VTs, HiOps, 3);
+      Hi = DAG.getNode(ISD::SUBE, VTs, 2, HiOps, 3);
     }
     break;
   }

@@ -1346,11 +1346,10 @@ void SelectionDAGLowering::visitAlloca(AllocaInst &I) {
                             getIntPtrConstant(~(uint64_t)(StackAlign-1)));
   }
 
-  std::vector<MVT::ValueType> VTs;
-  VTs.push_back(AllocSize.getValueType());
-  VTs.push_back(MVT::Other);
   SDOperand Ops[] = { getRoot(), AllocSize, getIntPtrConstant(Align) };
-  SDOperand DSA = DAG.getNode(ISD::DYNAMIC_STACKALLOC, VTs, Ops, 3);
+  const MVT::ValueType *VTs = DAG.getNodeValueTypes(AllocSize.getValueType(),
+                                                    MVT::Other);
+  SDOperand DSA = DAG.getNode(ISD::DYNAMIC_STACKALLOC, VTs, 2, Ops, 3);
   DAG.setRoot(setValue(&I, DSA).getValue(1));
 
   // Inform the Frame Information that we have just allocated a variable-sized
@@ -1476,14 +1475,19 @@ void SelectionDAGLowering::visitTargetIntrinsic(CallInst &I,
   if (HasChain)
     VTs.push_back(MVT::Other);
 
+  const MVT::ValueType *VTList = DAG.getNodeValueTypes(VTs);
+
   // Create the node.
   SDOperand Result;
   if (!HasChain)
-    Result = DAG.getNode(ISD::INTRINSIC_WO_CHAIN, VTs, &Ops[0], Ops.size());
+    Result = DAG.getNode(ISD::INTRINSIC_WO_CHAIN, VTList, VTs.size(),
+                         &Ops[0], Ops.size());
   else if (I.getType() != Type::VoidTy)
-    Result = DAG.getNode(ISD::INTRINSIC_W_CHAIN, VTs, &Ops[0], Ops.size());
+    Result = DAG.getNode(ISD::INTRINSIC_W_CHAIN, VTList, VTs.size(),
+                         &Ops[0], Ops.size());
   else
-    Result = DAG.getNode(ISD::INTRINSIC_VOID, VTs, &Ops[0], Ops.size());
+    Result = DAG.getNode(ISD::INTRINSIC_VOID, VTList, VTs.size(),
+                         &Ops[0], Ops.size());
 
   if (HasChain) {
     SDOperand Chain = Result.getValue(Result.Val->getNumValues()-1);
@@ -1623,11 +1627,10 @@ SelectionDAGLowering::visitIntrinsicCall(CallInst &I, unsigned Intrinsic) {
     return 0;
   }
   case Intrinsic::readcyclecounter: {
-    std::vector<MVT::ValueType> VTs;
-    VTs.push_back(MVT::i64);
-    VTs.push_back(MVT::Other);
     SDOperand Op = getRoot();
-    SDOperand Tmp = DAG.getNode(ISD::READCYCLECOUNTER, VTs, &Op, 1);
+    SDOperand Tmp = DAG.getNode(ISD::READCYCLECOUNTER,
+                                DAG.getNodeValueTypes(MVT::i64, MVT::Other), 2,
+                                &Op, 1);
     setValue(&I, Tmp);
     DAG.setRoot(Tmp.getValue(1));
     return 0;
@@ -1664,11 +1667,9 @@ SelectionDAGLowering::visitIntrinsicCall(CallInst &I, unsigned Intrinsic) {
                              getValue(I.getOperand(1))));
     return 0;
   case Intrinsic::stacksave: {
-    std::vector<MVT::ValueType> VTs;
-    VTs.push_back(TLI.getPointerTy());
-    VTs.push_back(MVT::Other);
     SDOperand Op = getRoot();
-    SDOperand Tmp = DAG.getNode(ISD::STACKSAVE, VTs, &Op, 1);
+    SDOperand Tmp = DAG.getNode(ISD::STACKSAVE,
+              DAG.getNodeValueTypes(TLI.getPointerTy(), MVT::Other), 2, &Op, 1);
     setValue(&I, Tmp);
     DAG.setRoot(Tmp.getValue(1));
     return 0;
@@ -2256,10 +2257,8 @@ void SelectionDAGLowering::visitInlineAsm(CallInst &I) {
   AsmNodeOperands[0] = Chain;
   if (Flag.Val) AsmNodeOperands.push_back(Flag);
   
-  std::vector<MVT::ValueType> VTs;
-  VTs.push_back(MVT::Other);
-  VTs.push_back(MVT::Flag);
-  Chain = DAG.getNode(ISD::INLINEASM, VTs,
+  Chain = DAG.getNode(ISD::INLINEASM, 
+                      DAG.getNodeValueTypes(MVT::Other, MVT::Flag), 2,
                       &AsmNodeOperands[0], AsmNodeOperands.size());
   Flag = Chain.getValue(1);
 
@@ -2428,7 +2427,8 @@ TargetLowering::LowerArguments(Function &F, SelectionDAG &DAG) {
   RetVals.push_back(MVT::Other);
   
   // Create the node.
-  SDNode *Result = DAG.getNode(ISD::FORMAL_ARGUMENTS, RetVals,
+  SDNode *Result = DAG.getNode(ISD::FORMAL_ARGUMENTS,
+                               DAG.getNodeValueTypes(RetVals), RetVals.size(),
                                &Ops[0], Ops.size()).Val;
   
   DAG.setRoot(SDOperand(Result, Result->getNumValues()-1));
@@ -2636,7 +2636,8 @@ TargetLowering::LowerCallTo(SDOperand Chain, const Type *RetTy, bool isVarArg,
   RetTys.push_back(MVT::Other);  // Always has a chain.
   
   // Finally, create the CALL node.
-  SDOperand Res = DAG.getNode(ISD::CALL, RetTys, &Ops[0], Ops.size());
+  SDOperand Res = DAG.getNode(ISD::CALL, DAG.getNodeValueTypes(RetTys),
+                              RetTys.size(), &Ops[0], Ops.size());
   
   // This returns a pair of operands.  The first element is the
   // return value for the function (if RetTy is not VoidTy).  The second
