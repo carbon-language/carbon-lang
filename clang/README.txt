@@ -27,6 +27,7 @@ II. Current advantages over GCC:
  * Faster than GCC at lexing and preprocessing.
  
 Future Features:
+
  * Fine grained diag control within the source (#pragma enable/disable warning).
  * Faster than GCC at parsing, IR generation.
  * Better token tracking within macros?  (Token came from this line, which is
