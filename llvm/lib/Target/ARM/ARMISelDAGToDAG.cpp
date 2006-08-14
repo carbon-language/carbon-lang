@@ -258,7 +258,8 @@ static SDOperand LowerConstantPool(SDOperand Op, SelectionDAG &DAG) {
 static SDOperand LowerGlobalAddress(SDOperand Op,
 				    SelectionDAG &DAG) {
   GlobalValue  *GV = cast<GlobalAddressSDNode>(Op)->getGlobal();
-  SDOperand CPAddr = DAG.getConstantPool(GV, MVT::i32, 2);
+  int alignment = 2;
+  SDOperand CPAddr = DAG.getConstantPool(GV, MVT::i32, alignment);
   return DAG.getLoad(MVT::i32, DAG.getEntryNode(), CPAddr,
 		     DAG.getSrcValue(NULL));
 }
@@ -336,9 +337,41 @@ void ARMDAGToDAGISel::InstructionSelectBasicBlock(SelectionDAG &DAG) {
   ScheduleAndEmitDAG(DAG);
 }
 
+static bool isInt12Immediate(SDNode *N, short &Imm) {
+  if (N->getOpcode() != ISD::Constant)
+    return false;
+
+  int32_t t = cast<ConstantSDNode>(N)->getValue();
+  int max = 2<<12 - 1;
+  int min = -max;
+  if (t > min && t < max) {
+    Imm = t;
+    return true;
+  }
+  else
+    return false;
+}
+
+static bool isInt12Immediate(SDOperand Op, short &Imm) {
+  return isInt12Immediate(Op.Val, Imm);
+}
+
 //register plus/minus 12 bit offset
 bool ARMDAGToDAGISel::SelectAddrRegImm(SDOperand N, SDOperand &Offset,
 				    SDOperand &Base) {
+  if (N.getOpcode() == ISD::ADD) {
+    short imm = 0;
+    if (isInt12Immediate(N.getOperand(1), imm)) {
+      Offset = CurDAG->getTargetConstant(imm, MVT::i32);
+      if (FrameIndexSDNode *FI = dyn_cast<FrameIndexSDNode>(N.getOperand(0))) {
+	Base = CurDAG->getTargetFrameIndex(FI->getIndex(), N.getValueType());
+      } else {
+	Base = N.getOperand(0);
+      }
+      return true; // [r+i]
+    }
+  }
+
   Offset = CurDAG->getTargetConstant(0, MVT::i32);
   if (FrameIndexSDNode *FI = dyn_cast<FrameIndexSDNode>(N)) {
     Base = CurDAG->getTargetFrameIndex(FI->getIndex(), N.getValueType());
