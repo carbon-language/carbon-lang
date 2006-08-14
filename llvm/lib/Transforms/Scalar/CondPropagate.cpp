@@ -87,8 +87,18 @@ void CondProp::SimplifyBlock(BasicBlock *BB) {
   // If this block ends with an unconditional branch and the only successor has
   // only this block as a predecessor, merge the two blocks together.
   if (BranchInst *BI = dyn_cast<BranchInst>(BB->getTerminator()))
-    if (BI->isUnconditional() && BI->getSuccessor(0)->getSinglePredecessor()) {
+    if (BI->isUnconditional() && BI->getSuccessor(0)->getSinglePredecessor() &&
+        BB != BI->getSuccessor(0)) {
       BasicBlock *Succ = BI->getSuccessor(0);
+      
+      // If Succ has any PHI nodes, they are all single-entry PHI's.
+      while (PHINode *PN = dyn_cast<PHINode>(Succ->begin())) {
+        assert(PN->getNumIncomingValues() == 1 &&
+               "PHI doesn't match parent block");
+        PN->replaceAllUsesWith(PN->getIncomingValue(0));
+        PN->eraseFromParent();
+      }
+      
       // Remove BI.
       BI->eraseFromParent();
 
