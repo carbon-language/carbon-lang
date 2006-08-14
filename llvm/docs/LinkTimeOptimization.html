@@ -7,7 +7,7 @@
 </head>
 
 <div class="doc_title">
-  LLVM Link Time Optimization: design and implentation
+  LLVM Link Time Optimization: design and implementation
 </div>
 
 <ul>
@@ -17,24 +17,24 @@
     <li><a href="#example1">Example of link time optimization</a></li>
     <li><a href="#alternative_approaches">Alternative Approaches</a></li>
   </ul></li>
-  <li><a href="#multiphase">Multi-phase communication between LLVM and linker</a></li>
+  <li><a href="#multiphase">Multi-phase communication between LLVM and linker</a>
   <ul>
     <li><a href="#phase1">Phase 1 : Read LLVM Bytecode Files</a></li>
     <li><a href="#phase2">Phase 2 : Symbol Resolution</a></li>
     <li><a href="#phase3">Phase 3 : Optimize Bytecode Files</a></li>
     <li><a href="#phase4">Phase 4 : Symbol Resolution after optimization</a></li>
   </ul></li>
-  <li><a href="#lto">LLVMlto</a></li>
+  <li><a href="#lto">LLVMlto</a>
   <ul>
     <li><a href="#llvmsymbol">LLVMSymbol</a></li>
     <li><a href="#readllvmobjectfile">readLLVMObjectFile()</a></li>
     <li><a href="#optimizemodules">optimizeModules()</a></li>
-  </ul>
+  </ul></li>
   <li><a href="#debug">Debugging Information</a></li>
 </ul>
 
 <div class="doc_author">
-<p>Written by Devang Patel</a></p>
+<p>Written by Devang Patel</p>
 </div>
 
 <!-- *********************************************************************** -->
@@ -71,6 +71,7 @@ files. This tight integration between the linker and LLVM optimizer helps to do
 optimizations that are not possible in other models. The linker input allows 
 optimizer to avoid relying on conservative escape analysis.
 </p>
+</div>
 
 <!-- ======================================================================= -->
 <div class="doc_subsection">
@@ -81,11 +82,12 @@ optimizer to avoid relying on conservative escape analysis.
 
 <p>Following example illustrates advantage of integrated approach that uses
 clean interface.  
+<ul>
 <li> Input source file <tt>a.c</tt> is compiled into LLVM byte code form.
 <li> Input source file <tt>main.c</tt> is compiled into native object code.
-<br>
+</ul>
 <code>
-<br>--- a.h ---
+--- a.h ---
 <br>extern int foo1(void);
 <br>extern void foo2(void);
 <br>extern void foo4(void);
@@ -113,7 +115,7 @@ clean interface.
 <br>}
 <br>
 <br>--- main.c ---
-<br>#include <stdio.h>
+<br>#include < stdio.h >
 <br>#include "a.h"
 <br>
 <br>void foo4(void) {
@@ -130,11 +132,10 @@ clean interface.
 <br> $ llvm-gcc4 a.o main.o -o main # <-- standard link command without any modifications
 <br>
 </code>
-</p>
 <p>
 In this example, the linker recognizes that <tt>foo2()</tt> is a externally visible
 symbol defined in LLVM byte code file. This information is collected using
-<a href=#lreadllvmbytecodefile> readLLVMByteCodeFile() </a>. Based on this
+<a href="#readllvmobjectfile"> readLLVMObjectFile() </a>. Based on this
 information, linker completes its usual symbol resolution pass and finds that
 <tt>foo2()</tt> is not used anywhere. This information is used by LLVM optimizer
 and it removes <tt>foo2()</tt>. As soon as <tt>foo2()</tt> is removed, optimizer
@@ -153,6 +154,7 @@ optimizer can not remove <tt>foo3()</tt> without the linker's input.
 
 <div class="doc_text">
 <p>
+<ul>
 <li> Compiler driver invokes link time optimizer separately. 
 <br><br>In this model link time optimizer is not able to take advantage of information
 collected during normal linker's symbol resolution phase. In above example,
@@ -171,7 +173,7 @@ significantly, which is not necessary. Plus, this approach requires staying
 synchronized with linker developements on various platforms, which is not the 
 main focus of link time optimizer. Finally, this approach increases end user's build 
 time due to duplicate work done by this separate tool and linker itself.
-</p>
+</ul>
 </div>
 
 <!-- *********************************************************************** -->
@@ -203,7 +205,7 @@ optimizer by sharing this information during various linking phases.
 <p>
 The linker first reads all object files in natural order and collects symbol 
 information. This includes native object files as well as LLVM byte code files. 
-In this phase, the linker uses <a href=#lreadllvmbytecodefile> readLLVMByteCodeFile() </a>  
+In this phase, the linker uses <a href="#readllvmobjectfile"> readLLVMObjectFile() </a>  
 to collect symbol  information from each LLVM bytecode files and updates its 
 internal global symbol table accordingly. The intent of this interface is to
 avoid overhead in the non LLVM case, where all input object files are native
@@ -224,7 +226,7 @@ In this stage, the linker resolves symbols using global symbol table information
 to report undefined symbol errors, read archive members, resolve weak
 symbols etc... The linker is able to do this seamlessly even though it does not 
 know exact content of input LLVM bytecode files because it uses symbol information
-provided by <a href=#lreadllvmbytecodefile> readLLVMByteCodeFile() </a>. 
+provided by <a href="#readllvmobjectfile"> readLLVMObjectFile() </a>. 
 If dead code stripping is enabled then linker collects list of live symbols.
 </p>
 </div>
@@ -352,7 +354,7 @@ as .o file at name and location provided by the linker.
   <a href="http://validator.w3.org/check/referer"><img
   src="http://www.w3.org/Icons/valid-html401" alt="Valid HTML 4.01!"></a>
 
-  Devang Patel</a><br>
+  Devang Patel<br>
   <a href="http://llvm.org">LLVM Compiler Infrastructure</a><br>
   Last modified: $Date$
 </address>
