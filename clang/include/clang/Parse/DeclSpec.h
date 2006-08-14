@@ -267,6 +267,10 @@ public:
   Declarator(const DeclSpec &ds, TheContext C)
     : DS(ds), Identifier(0), Context(C) {
   }
+
+  /// getDeclSpec - Return the declaration-specifier that this declarator was
+  /// declared with.
+  const DeclSpec &getDeclSpec() const { return DS; }
   
   /// clear - Reset the contents of this Declarator.
   void clear() {
