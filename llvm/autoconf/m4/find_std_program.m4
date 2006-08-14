@@ -64,7 +64,7 @@ elif test "${binval}" != "nada" ; then
             AC_SUBST(allcapsname()[_BIN],${binval})
             AC_SUBST(allcapsname()[_INC],${incval})
             AC_SUBST(allcapsname()[_LIB],${libval})
-            AC_SUBST([USE_]allcapsname(),[1])
+            AC_SUBST([USE_]allcapsname(),["USE_]allcapsname()[ = 1"])
             AC_MSG_RESULT([found via --with options])
           else
             AC_MSG_RESULT([failed])
