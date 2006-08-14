@@ -139,6 +139,19 @@ private:
 
 };
 
+static unsigned indent_level = 0;
+inline std::ostream& nl(std::ostream& Out, int delta = 0) {
+  Out << "\n";
+  if (delta >= 0 || indent_level >= unsigned(-delta))
+    indent_level += delta;
+  for (unsigned i = 0; i < indent_level; ++i) 
+    Out << "  ";
+  return Out;
+}
+
+inline void in() { indent_level++; }
+inline void out() { if (indent_level >0) indent_level--; }
+
 inline void
 sanitize(std::string& str) {
   for (size_t i = 0; i < str.length(); ++i)
@@ -420,7 +433,8 @@ CppWriter::printTypeInternal(const Type* Ty) {
   if (TI != TypeStack.end()) {
     TypeMap::const_iterator I = UnresolvedTypes.find(Ty);
     if (I == UnresolvedTypes.end()) {
-      Out << "PATypeHolder " << typeName << "_fwd = OpaqueType::get();\n";
+      Out << "PATypeHolder " << typeName << "_fwd = OpaqueType::get();";
+      nl(Out);
       UnresolvedTypes[Ty] = typeName;
     }
     return true;
@@ -435,7 +449,8 @@ CppWriter::printTypeInternal(const Type* Ty) {
   switch (Ty->getTypeID()) {
     case Type::FunctionTyID:  {
       const FunctionType* FT = cast<FunctionType>(Ty);
-      Out << "std::vector<const Type*>" << typeName << "_args;\n";
+      Out << "std::vector<const Type*>" << typeName << "_args;";
+      nl(Out);
       FunctionType::param_iterator PI = FT->param_begin();
       FunctionType::param_iterator PE = FT->param_end();
       for (; PI != PE; ++PI) {
@@ -445,21 +460,26 @@ CppWriter::printTypeInternal(const Type* Ty) {
         Out << typeName << "_args.push_back(" << argName;
         if (isForward)
           Out << "_fwd";
-        Out << ");\n";
+        Out << ");";
+        nl(Out);
       }
       bool isForward = printTypeInternal(FT->getReturnType());
       std::string retTypeName(getCppName(FT->getReturnType()));
-      Out << "FunctionType* " << typeName << " = FunctionType::get(\n"
-          << "  /*Result=*/" << retTypeName;
+      Out << "FunctionType* " << typeName << " = FunctionType::get(";
+      in(); nl(Out) << "/*Result=*/" << retTypeName;
       if (isForward)
         Out << "_fwd";
-      Out << ",\n  /*Params=*/" << typeName << "_args,\n  /*isVarArg=*/"
-          << (FT->isVarArg() ? "true" : "false") << ");\n";
+      Out << ",";
+      nl(Out) << "/*Params=*/" << typeName << "_args,";
+      nl(Out) << "/*isVarArg=*/" << (FT->isVarArg() ? "true" : "false") << ");";
+      out(); 
+      nl(Out);
       break;
     }
     case Type::StructTyID: {
       const StructType* ST = cast<StructType>(Ty);
-      Out << "std::vector<const Type*>" << typeName << "_fields;\n";
+      Out << "std::vector<const Type*>" << typeName << "_fields;";
+      nl(Out);
       StructType::element_iterator EI = ST->element_begin();
       StructType::element_iterator EE = ST->element_end();
       for (; EI != EE; ++EI) {
@@ -469,10 +489,12 @@ CppWriter::printTypeInternal(const Type* Ty) {
         Out << typeName << "_fields.push_back(" << fieldName;
         if (isForward)
           Out << "_fwd";
-        Out << ");\n";
+        Out << ");";
+        nl(Out);
       }
       Out << "StructType* " << typeName << " = StructType::get("
-          << typeName << "_fields);\n";
+          << typeName << "_fields);";
+      nl(Out);
       break;
     }
     case Type::ArrayTyID: {
@@ -482,7 +504,8 @@ CppWriter::printTypeInternal(const Type* Ty) {
       std::string elemName(getCppName(ET));
       Out << "ArrayType* " << typeName << " = ArrayType::get("
           << elemName << (isForward ? "_fwd" : "") 
-          << ", " << utostr(AT->getNumElements()) << ");\n";
+          << ", " << utostr(AT->getNumElements()) << ");";
+      nl(Out);
       break;
     }
     case Type::PointerTyID: {
@@ -491,7 +514,8 @@ CppWriter::printTypeInternal(const Type* Ty) {
       bool isForward = printTypeInternal(ET);
       std::string elemName(getCppName(ET));
       Out << "PointerType* " << typeName << " = PointerType::get("
-          << elemName << (isForward ? "_fwd" : "") << ");\n";
+          << elemName << (isForward ? "_fwd" : "") << ");";
+      nl(Out);
       break;
     }
     case Type::PackedTyID: {
@@ -501,12 +525,14 @@ CppWriter::printTypeInternal(const Type* Ty) {
       std::string elemName(getCppName(ET));
       Out << "PackedType* " << typeName << " = PackedType::get("
           << elemName << (isForward ? "_fwd" : "") 
-          << ", " << utostr(PT->getNumElements()) << ");\n";
+          << ", " << utostr(PT->getNumElements()) << ");";
+      nl(Out);
       break;
     }
     case Type::OpaqueTyID: {
       const OpaqueType* OT = cast<OpaqueType>(Ty);
-      Out << "OpaqueType* " << typeName << " = OpaqueType::get();\n";
+      Out << "OpaqueType* " << typeName << " = OpaqueType::get();";
+      nl(Out);
       break;
     }
     default:
@@ -518,7 +544,8 @@ CppWriter::printTypeInternal(const Type* Ty) {
     findTypeName(TheModule->getSymbolTable(),Ty);
   if (progTypeName)
     Out << "mod->addTypeName(\"" << *progTypeName << "\", " 
-        << typeName << ");\n";
+        << typeName << ");";
+    nl(Out);
 
   // Pop us off the type stack
   TypeStack.pop_back();
@@ -533,7 +560,8 @@ CppWriter::printTypeInternal(const Type* Ty) {
   TypeMap::iterator I = UnresolvedTypes.find(Ty);
   if (I != UnresolvedTypes.end()) {
     Out << "cast<OpaqueType>(" << I->second 
-        << "_fwd.get())->refineAbstractTypeTo(" << I->second << ");\n";
+        << "_fwd.get())->refineAbstractTypeTo(" << I->second << ");";
+    nl(Out);
     Out << I->second << " = cast<";
     switch (Ty->getTypeID()) {
       case Type::FunctionTyID: Out << "FunctionType"; break;
@@ -544,12 +572,13 @@ CppWriter::printTypeInternal(const Type* Ty) {
       case Type::OpaqueTyID:   Out << "OpaqueType"; break;
       default:                 Out << "NoSuchDerivedType"; break;
     }
-    Out << ">(" << I->second << "_fwd.get());\n\n";
+    Out << ">(" << I->second << "_fwd.get());";
+    nl(Out); nl(Out);
     UnresolvedTypes.erase(I);
   }
 
   // Finally, separate the type definition from other with a newline.
-  Out << "\n";
+  nl(Out);
 
   // We weren't a recursive type
   return false;
@@ -578,7 +607,8 @@ CppWriter::printTypes(const Module* M) {
     if (TI->second->isPrimitiveType() || TNI != TypeNames.end()) {
       Out << "mod->addTypeName(\"";
       printEscapedString(TI->first);
-      Out << "\", " << getCppName(TI->second) << ");\n";
+      Out << "\", " << getCppName(TI->second) << ");";
+      nl(Out);
     // For everything else, define the type
     } else {
       printType(TI->second);
@@ -627,13 +657,12 @@ void CppWriter::printConstant(const Constant *CV) {
   if (isa<GlobalValue>(CV) || ValueNames.find(CV) != ValueNames.end())
     return;
 
-  const int IndentSize = 2;
-  static std::string Indent = "\n";
   std::string constName(getCppName(CV));
   std::string typeName(getCppName(CV->getType()));
   if (CV->isNullValue()) {
     Out << "Constant* " << constName << " = Constant::getNullValue("
-        << typeName << ");\n";
+        << typeName << ");";
+    nl(Out);
     return;
   }
   if (isa<GlobalValue>(CV)) {
@@ -671,33 +700,39 @@ void CppWriter::printConstant(const Constant *CV) {
         Out << "\", true"; // Indicate that the null terminator should be added.
       Out << ");";
     } else { 
-      Out << "std::vector<Constant*> " << constName << "_elems;\n";
+      Out << "std::vector<Constant*> " << constName << "_elems;";
+      nl(Out);
       unsigned N = CA->getNumOperands();
       for (unsigned i = 0; i < N; ++i) {
         printConstant(CA->getOperand(i)); // recurse to print operands
         Out << constName << "_elems.push_back("
-            << getCppName(CA->getOperand(i)) << ");\n";
+            << getCppName(CA->getOperand(i)) << ");";
+        nl(Out);
       }
       Out << "Constant* " << constName << " = ConstantArray::get(" 
           << typeName << ", " << constName << "_elems);";
     }
   } else if (const ConstantStruct *CS = dyn_cast<ConstantStruct>(CV)) {
-    Out << "std::vector<Constant*> " << constName << "_fields;\n";
+    Out << "std::vector<Constant*> " << constName << "_fields;";
+    nl(Out);
     unsigned N = CS->getNumOperands();
     for (unsigned i = 0; i < N; i++) {
       printConstant(CS->getOperand(i));
       Out << constName << "_fields.push_back("
-          << getCppName(CS->getOperand(i)) << ");\n";
+          << getCppName(CS->getOperand(i)) << ");";
+      nl(Out);
     }
     Out << "Constant* " << constName << " = ConstantStruct::get(" 
         << typeName << ", " << constName << "_fields);";
   } else if (const ConstantPacked *CP = dyn_cast<ConstantPacked>(CV)) {
-    Out << "std::vector<Constant*> " << constName << "_elems;\n";
+    Out << "std::vector<Constant*> " << constName << "_elems;";
+    nl(Out);
     unsigned N = CP->getNumOperands();
     for (unsigned i = 0; i < N; ++i) {
       printConstant(CP->getOperand(i));
       Out << constName << "_elems.push_back("
-          << getCppName(CP->getOperand(i)) << ");\n";
+          << getCppName(CP->getOperand(i)) << ");";
+      nl(Out);
     }
     Out << "Constant* " << constName << " = ConstantPacked::get(" 
         << typeName << ", " << constName << "_elems);";
@@ -706,12 +741,14 @@ void CppWriter::printConstant(const Constant *CV) {
         << typeName << ");";
   } else if (const ConstantExpr *CE = dyn_cast<ConstantExpr>(CV)) {
     if (CE->getOpcode() == Instruction::GetElementPtr) {
-      Out << "std::vector<Constant*> " << constName << "_indices;\n";
+      Out << "std::vector<Constant*> " << constName << "_indices;";
+      nl(Out);
       printConstant(CE->getOperand(0));
       for (unsigned i = 1; i < CE->getNumOperands(); ++i ) {
         printConstant(CE->getOperand(i));
         Out << constName << "_indices.push_back("
-            << getCppName(CE->getOperand(i)) << ");\n";
+            << getCppName(CE->getOperand(i)) << ");";
+        nl(Out);
       }
       Out << "Constant* " << constName 
           << " = ConstantExpr::getGetElementPtr(" 
@@ -762,7 +799,7 @@ void CppWriter::printConstant(const Constant *CV) {
     error("Bad Constant");
     Out << "Constant* " << constName << " = 0; ";
   }
-  Out << "\n";
+  nl(Out);
 }
 
 void
@@ -792,63 +829,72 @@ CppWriter::printConstants(const Module* M) {
 }
 
 void CppWriter::printVariableUses(const GlobalVariable *GV) {
-  Out << "\n// Type Definitions\n";
+  nl(Out) << "// Type Definitions";
+  nl(Out);
   printType(GV->getType());
   if (GV->hasInitializer()) {
     Constant* Init = GV->getInitializer();
     printType(Init->getType());
     if (Function* F = dyn_cast<Function>(Init)) {
-      Out << "\n// Function Declarations\n";
+      nl(Out)<< "/ Function Declarations"; nl(Out);
       printFunctionHead(F);
     } else if (GlobalVariable* gv = dyn_cast<GlobalVariable>(Init)) {
-      Out << "\n// Global Variable Declarations\n";
+      nl(Out) << "// Global Variable Declarations"; nl(Out);
       printVariableHead(gv);
     } else  {
-      Out << "\n// Constant Definitions\n";
+      nl(Out) << "// Constant Definitions"; nl(Out);
       printConstant(gv);
     }
     if (GlobalVariable* gv = dyn_cast<GlobalVariable>(Init)) {
-      Out << "\n// Global Variable Definitions\n";
+      nl(Out) << "// Global Variable Definitions"; nl(Out);
       printVariableBody(gv);
     }
   }
 }
 
 void CppWriter::printVariableHead(const GlobalVariable *GV) {
-  Out << "\nGlobalVariable* " << getCppName(GV);
+  nl(Out) << "GlobalVariable* " << getCppName(GV);
   if (is_inline) {
      Out << " = mod->getGlobalVariable(";
      printEscapedString(GV->getName());
-     Out << ", " << getCppName(GV->getType()->getElementType()) << ",true)\n";
-     Out << "if (!" << getCppName(GV) << ") {\n  " << getCppName(GV);
+     Out << ", " << getCppName(GV->getType()->getElementType()) << ",true)";
+     nl(Out) << "if (!" << getCppName(GV) << ") {";
+     in(); nl(Out) << getCppName(GV);
   }
-  Out << " = new GlobalVariable(\n";
-  Out << "  /*Type=*/";
+  Out << " = new GlobalVariable(";
+  nl(Out) << "/*Type=*/";
   printCppName(GV->getType()->getElementType());
-  Out << ",\n";
-  Out << "  /*isConstant=*/" << (GV->isConstant()?"true":"false") 
-      << ",\n  /*Linkage=*/";
+  Out << ",";
+  nl(Out) << "/*isConstant=*/" << (GV->isConstant()?"true":"false");
+  Out << ",";
+  nl(Out) << "/*Linkage=*/";
   printLinkageType(GV->getLinkage());
-  Out << ",\n  /*Initializer=*/0, ";
+  Out << ",";
+  nl(Out) << "/*Initializer=*/0, ";
   if (GV->hasInitializer()) {
     Out << "// has initializer, specified below";
   }
-  Out << "\n  /*Name=*/\"";
+  nl(Out) << "/*Name=*/\"";
   printEscapedString(GV->getName());
-  Out << "\",\n  mod);\n";
+  Out << "\",";
+  nl(Out) << "mod);";
+  nl(Out);
 
   if (GV->hasSection()) {
     printCppName(GV);
     Out << "->setSection(\"";
     printEscapedString(GV->getSection());
-    Out << "\");\n";
+    Out << "\");";
+    nl(Out);
   }
   if (GV->getAlignment()) {
     printCppName(GV);
-    Out << "->setAlignment(" << utostr(GV->getAlignment()) << ");\n";
+    Out << "->setAlignment(" << utostr(GV->getAlignment()) << ");";
+    nl(Out);
   };
-  if (is_inline)
-    Out << "}\n";
+  if (is_inline) {
+    out(); Out << "}"; nl(Out);
+  }
 }
 
 void 
@@ -858,7 +904,8 @@ CppWriter::printVariableBody(const GlobalVariable *GV) {
     Out << "->setInitializer(";
     //if (!isa<GlobalValue(GV->getInitializer()))
     //else 
-      Out << getCppName(GV->getInitializer()) << ");\n";
+      Out << getCppName(GV->getInitializer()) << ");";
+      nl(Out);
   }
 }
 
@@ -879,8 +926,9 @@ CppWriter::getOpName(Value* V) {
   // Yes, this is a hack. An Argument is the smallest instantiable value that
   // we can make as a placeholder for the real value. We'll replace these
   // Argument instances later.
-  Out << "  Argument* " << result << " = new Argument(" 
-      << getCppName(V->getType()) << ");\n";
+  Out << "Argument* " << result << " = new Argument(" 
+      << getCppName(V->getType()) << ");";
+  nl(Out);
   ForwardRefs[V] = result;
   return result;
 }
@@ -900,13 +948,13 @@ CppWriter::printInstruction(const Instruction *I, const std::string& bbname) {
   switch (I->getOpcode()) {
     case Instruction::Ret: {
       const ReturnInst* ret =  cast<ReturnInst>(I);
-      Out << "  ReturnInst* " << iName << " = new ReturnInst("
+      Out << "ReturnInst* " << iName << " = new ReturnInst("
           << (ret->getReturnValue() ? opNames[0] + ", " : "") << bbname << ");";
       break;
     }
     case Instruction::Br: {
       const BranchInst* br = cast<BranchInst>(I);
-      Out << "  BranchInst* " << iName << " = new BranchInst(" ;
+      Out << "BranchInst* " << iName << " = new BranchInst(" ;
       if (br->getNumOperands() == 3 ) {
         Out << opNames[0] << ", " 
             << opNames[1] << ", "
@@ -922,42 +970,47 @@ CppWriter::printInstruction(const Instruction *I, const std::string& bbname) {
     }
     case Instruction::Switch: {
       const SwitchInst* sw = cast<SwitchInst>(I);
-      Out << "  SwitchInst* " << iName << " = new SwitchInst("
+      Out << "SwitchInst* " << iName << " = new SwitchInst("
           << opNames[0] << ", "
           << opNames[1] << ", "
-          << sw->getNumCases() << ", " << bbname << ");\n";
+          << sw->getNumCases() << ", " << bbname << ");";
+      nl(Out);
       for (unsigned i = 2; i < sw->getNumOperands(); i += 2 ) {
-        Out << "  " << iName << "->addCase(" 
+        Out << iName << "->addCase(" 
             << opNames[i] << ", "
-            << opNames[i+1] << ");\n";
+            << opNames[i+1] << ");";
+        nl(Out);
       }
       break;
     }
     case Instruction::Invoke: {
       const InvokeInst* inv = cast<InvokeInst>(I);
-      Out << "  std::vector<Value*> " << iName << "_params;\n";
-      for (unsigned i = 3; i < inv->getNumOperands(); ++i)
-        Out << "  " << iName << "_params.push_back("
-            << opNames[i] << ");\n";
-      Out << "  InvokeInst* " << iName << " = new InvokeInst("
+      Out << "std::vector<Value*> " << iName << "_params;";
+      nl(Out);
+      for (unsigned i = 3; i < inv->getNumOperands(); ++i) {
+        Out << iName << "_params.push_back("
+            << opNames[i] << ");";
+        nl(Out);
+      }
+      Out << "InvokeInst* " << iName << " = new InvokeInst("
           << opNames[0] << ", "
           << opNames[1] << ", "
           << opNames[2] << ", "
           << iName << "_params, \"";
       printEscapedString(inv->getName());
-      Out << "\", " << bbname << ");\n";
-      Out << iName << "->setCallingConv(";
+      Out << "\", " << bbname << ");";
+      nl(Out) << iName << "->setCallingConv(";
       printCallingConv(inv->getCallingConv());
       Out << ");";
       break;
     }
     case Instruction::Unwind: {
-      Out << "  UnwindInst* " << iName << " = new UnwindInst("
+      Out << "UnwindInst* " << iName << " = new UnwindInst("
           << bbname << ");";
       break;
     }
     case Instruction::Unreachable:{
-      Out << "  UnreachableInst* " << iName << " = new UnreachableInst("
+      Out << "UnreachableInst* " << iName << " = new UnreachableInst("
           << bbname << ");";
       break;
     }
@@ -971,7 +1024,7 @@ CppWriter::printInstruction(const Instruction *I, const std::string& bbname) {
     case Instruction::Xor:
     case Instruction::Shl: 
     case Instruction::Shr:{
-      Out << "  BinaryOperator* "  << iName << " = BinaryOperator::create(";
+      Out << "BinaryOperator* " << iName << " = BinaryOperator::create(";
       switch (I->getOpcode()) {
         case Instruction::Add: Out << "Instruction::Add"; break;
         case Instruction::Sub: Out << "Instruction::Sub"; break;
@@ -979,7 +1032,7 @@ CppWriter::printInstruction(const Instruction *I, const std::string& bbname) {
         case Instruction::Div: Out << "Instruction::Div"; break;
         case Instruction::Rem: Out << "Instruction::Rem"; break;
         case Instruction::And: Out << "Instruction::And"; break;
-        case Instruction::Or:  Out << "Instruction::Or"; break;
+        case Instruction::Or:  Out << "Instruction::Or";  break;
         case Instruction::Xor: Out << "Instruction::Xor"; break;
         case Instruction::Shl: Out << "Instruction::Shl"; break;
         case Instruction::Shr: Out << "Instruction::Shr"; break;
@@ -996,7 +1049,7 @@ CppWriter::printInstruction(const Instruction *I, const std::string& bbname) {
     case Instruction::SetGE:
     case Instruction::SetLT:
     case Instruction::SetGT: {
-      Out << "  SetCondInst* "  << iName << " = new SetCondInst(";
+      Out << "SetCondInst* " << iName << " = new SetCondInst(";
       switch (I->getOpcode()) {
         case Instruction::SetEQ: Out << "Instruction::SetEQ"; break;
         case Instruction::SetNE: Out << "Instruction::SetNE"; break;
@@ -1013,7 +1066,7 @@ CppWriter::printInstruction(const Instruction *I, const std::string& bbname) {
     }
     case Instruction::Malloc: {
       const MallocInst* mallocI = cast<MallocInst>(I);
-      Out << "  MallocInst* " << iName << " = new MallocInst("
+      Out << "MallocInst* " << iName << " = new MallocInst("
           << getCppName(mallocI->getAllocatedType()) << ", ";
       if (mallocI->isArrayAllocation())
         Out << opNames[0] << ", " ;
@@ -1021,18 +1074,18 @@ CppWriter::printInstruction(const Instruction *I, const std::string& bbname) {
       printEscapedString(mallocI->getName());
       Out << "\", " << bbname << ");";
       if (mallocI->getAlignment())
-        Out << "\n  " << iName << "->setAlignment(" 
+        nl(Out) << iName << "->setAlignment(" 
             << mallocI->getAlignment() << ");";
       break;
     }
     case Instruction::Free: {
-      Out << "  FreeInst* " << iName << " = new FreeInst("
+      Out << "FreeInst* " << iName << " = new FreeInst("
           << getCppName(I->getOperand(0)) << ", " << bbname << ");";
       break;
     }
     case Instruction::Alloca: {
       const AllocaInst* allocaI = cast<AllocaInst>(I);
-      Out << "  AllocaInst* " << iName << " = new AllocaInst("
+      Out << "AllocaInst* " << iName << " = new AllocaInst("
           << getCppName(allocaI->getAllocatedType()) << ", ";
       if (allocaI->isArrayAllocation())
         Out << opNames[0] << ", ";
@@ -1040,42 +1093,44 @@ CppWriter::printInstruction(const Instruction *I, const std::string& bbname) {
       printEscapedString(allocaI->getName());
       Out << "\", " << bbname << ");";
       if (allocaI->getAlignment())
-        Out << "\n  " << iName << "->setAlignment(" 
+        nl(Out) << iName << "->setAlignment(" 
             << allocaI->getAlignment() << ");";
       break;
     }
     case Instruction::Load:{
       const LoadInst* load = cast<LoadInst>(I);
-      Out << "  LoadInst* " << iName << " = new LoadInst(" 
+      Out << "LoadInst* " << iName << " = new LoadInst(" 
           << opNames[0] << ", \"";
       printEscapedString(load->getName());
       Out << "\", " << (load->isVolatile() ? "true" : "false" )
-          << ", " << bbname << ");\n";
+          << ", " << bbname << ");";
       break;
     }
     case Instruction::Store: {
       const StoreInst* store = cast<StoreInst>(I);
-      Out << "  StoreInst* " << iName << " = new StoreInst(" 
+      Out << "StoreInst* " << iName << " = new StoreInst(" 
           << opNames[0] << ", "
           << opNames[1] << ", "
           << (store->isVolatile() ? "true" : "false") 
-          << ", " << bbname << ");\n";
+          << ", " << bbname << ");";
       break;
     }
     case Instruction::GetElementPtr: {
       const GetElementPtrInst* gep = cast<GetElementPtrInst>(I);
       if (gep->getNumOperands() <= 2) {
-        Out << "  GetElementPtrInst* " << iName << " = new GetElementPtrInst("
+        Out << "GetElementPtrInst* " << iName << " = new GetElementPtrInst("
             << opNames[0]; 
         if (gep->getNumOperands() == 2)
           Out << ", " << opNames[1];
       } else {
-        Out << "  std::vector<Value*> " << iName << "_indices;\n";
+        Out << "std::vector<Value*> " << iName << "_indices;";
+        nl(Out);
         for (unsigned i = 1; i < gep->getNumOperands(); ++i ) {
-          Out << "  " << iName << "_indices.push_back("
-              << opNames[i] << ");\n";
+          Out << iName << "_indices.push_back("
+              << opNames[i] << ");";
+          nl(Out);
         }
-        Out << "  Instruction* " << iName << " = new GetElementPtrInst(" 
+        Out << "Instruction* " << iName << " = new GetElementPtrInst(" 
             << opNames[0] << ", " << iName << "_indices";
       }
       Out << ", \"";
@@ -1086,69 +1141,75 @@ CppWriter::printInstruction(const Instruction *I, const std::string& bbname) {
     case Instruction::PHI: {
       const PHINode* phi = cast<PHINode>(I);
 
-      Out << "  PHINode* " << iName << " = new PHINode("
+      Out << "PHINode* " << iName << " = new PHINode("
           << getCppName(phi->getType()) << ", \"";
       printEscapedString(phi->getName());
-      Out << "\", " << bbname << ");\n";
-      Out << "  " << iName << "->reserveOperandSpace(" 
+      Out << "\", " << bbname << ");";
+      nl(Out) << iName << "->reserveOperandSpace(" 
         << phi->getNumIncomingValues()
-          << ");\n";
+          << ");";
+      nl(Out);
       for (unsigned i = 0; i < phi->getNumOperands(); i+=2) {
-        Out << "  " << iName << "->addIncoming("
-            << opNames[i] << ", " << opNames[i+1] << ");\n";
+        Out << iName << "->addIncoming("
+            << opNames[i] << ", " << opNames[i+1] << ");";
+        nl(Out);
       }
       break;
     }
     case Instruction::Cast: {
       const CastInst* cst = cast<CastInst>(I);
-      Out << "  CastInst* " << iName << " = new CastInst("
+      Out << "CastInst* " << iName << " = new CastInst("
           << opNames[0] << ", "
           << getCppName(cst->getType()) << ", \"";
       printEscapedString(cst->getName());
-      Out << "\", " << bbname << ");\n";
+      Out << "\", " << bbname << ");";
       break;
     }
     case Instruction::Call:{
       const CallInst* call = cast<CallInst>(I);
       if (InlineAsm* ila = dyn_cast<InlineAsm>(call->getOperand(0))) {
-        Out << "  InlineAsm* " << getCppName(ila) << " = InlineAsm::get("
+        Out << "InlineAsm* " << getCppName(ila) << " = InlineAsm::get("
             << getCppName(ila->getFunctionType()) << ", \""
             << ila->getAsmString() << "\", \""
             << ila->getConstraintString() << "\","
-            << (ila->hasSideEffects() ? "true" : "false") << ");\n";
+            << (ila->hasSideEffects() ? "true" : "false") << ");";
+        nl(Out);
       }
       if (call->getNumOperands() > 3) {
-        Out << "  std::vector<Value*> " << iName << "_params;\n";
-        for (unsigned i = 1; i < call->getNumOperands(); ++i) 
-          Out << "  " << iName << "_params.push_back(" << opNames[i] << ");\n";
-        Out << "  CallInst* " << iName << " = new CallInst("
+        Out << "std::vector<Value*> " << iName << "_params;";
+        nl(Out);
+        for (unsigned i = 1; i < call->getNumOperands(); ++i) {
+          Out << iName << "_params.push_back(" << opNames[i] << ");";
+          nl(Out);
+        }
+        Out << "CallInst* " << iName << " = new CallInst("
             << opNames[0] << ", " << iName << "_params, \"";
       } else if (call->getNumOperands() == 3) {
-        Out << "  CallInst* " << iName << " = new CallInst("
+        Out << "CallInst* " << iName << " = new CallInst("
             << opNames[0] << ", " << opNames[1] << ", " << opNames[2] << ", \"";
       } else if (call->getNumOperands() == 2) {
-        Out << "  CallInst* " << iName << " = new CallInst("
+        Out << "CallInst* " << iName << " = new CallInst("
             << opNames[0] << ", " << opNames[1] << ", \"";
       } else {
-        Out << "  CallInst* " << iName << " = new CallInst(" << opNames[0] 
+        Out << "CallInst* " << iName << " = new CallInst(" << opNames[0] 
             << ", \"";
       }
       printEscapedString(call->getName());
-      Out << "\", " << bbname << ");\n";
-      Out << "  " << iName << "->setCallingConv(";
+      Out << "\", " << bbname << ");";
+      nl(Out) << iName << "->setCallingConv(";
       printCallingConv(call->getCallingConv());
-      Out << ");\n";
-      Out << "  " << iName << "->setTailCall(" 
+      Out << ");";
+      nl(Out) << iName << "->setTailCall(" 
           << (call->isTailCall() ? "true":"false");
       Out << ");";
       break;
     }
     case Instruction::Select: {
       const SelectInst* sel = cast<SelectInst>(I);
-      Out << "  SelectInst* " << getCppName(sel) << " = new SelectInst(";
+      Out << "SelectInst* " << getCppName(sel) << " = new SelectInst(";
       Out << opNames[0] << ", " << opNames[1] << ", " << opNames[2] << ", \"";
       printEscapedString(sel->getName());
-      Out << "\", " << bbname << ");\n";
+      Out << "\", " << bbname << ");";
       break;
     }
     case Instruction::UserOp1:
@@ -1159,49 +1220,49 @@ CppWriter::printInstruction(const Instruction *I, const std::string& bbname) {
     }
     case Instruction::VAArg: {
       const VAArgInst* va = cast<VAArgInst>(I);
-      Out << "  VAArgInst* " << getCppName(va) << " = new VAArgInst("
+      Out << "VAArgInst* " << getCppName(va) << " = new VAArgInst("
           << opNames[0] << ", " << getCppName(va->getType()) << ", \"";
       printEscapedString(va->getName());
-      Out << "\", " << bbname << ");\n";
+      Out << "\", " << bbname << ");";
       break;
     }
     case Instruction::ExtractElement: {
       const ExtractElementInst* eei = cast<ExtractElementInst>(I);
-      Out << "  ExtractElementInst* " << getCppName(eei) 
+      Out << "ExtractElementInst* " << getCppName(eei) 
           << " = new ExtractElementInst(" << opNames[0]
           << ", " << opNames[1] << ", \"";
       printEscapedString(eei->getName());
-      Out << "\", " << bbname << ");\n";
+      Out << "\", " << bbname << ");";
       break;
     }
     case Instruction::InsertElement: {
       const InsertElementInst* iei = cast<InsertElementInst>(I);
-      Out << "  InsertElementInst* " << getCppName(iei) 
+      Out << "InsertElementInst* " << getCppName(iei) 
           << " = new InsertElementInst(" << opNames[0]
           << ", " << opNames[1] << ", " << opNames[2] << ", \"";
       printEscapedString(iei->getName());
-      Out << "\", " << bbname << ");\n";
+      Out << "\", " << bbname << ");";
       break;
     }
     case Instruction::ShuffleVector: {
       const ShuffleVectorInst* svi = cast<ShuffleVectorInst>(I);
-      Out << "  ShuffleVectorInst* " << getCppName(svi) 
+      Out << "ShuffleVectorInst* " << getCppName(svi) 
           << " = new ShuffleVectorInst(" << opNames[0]
           << ", " << opNames[1] << ", " << opNames[2] << ", \"";
       printEscapedString(svi->getName());
-      Out << "\", " << bbname << ");\n";
+      Out << "\", " << bbname << ");";
       break;
     }
   }
   DefinedValues.insert(I);
-  Out << "\n";
+  nl(Out);
   delete [] opNames;
 }
 
 // Print out the types, constants and declarations needed by one function
 void CppWriter::printFunctionUses(const Function* F) {
 
-  Out << "\n// Type Definitions\n";
+  nl(Out) << "// Type Definitions"; nl(Out);
   if (!is_inline) {
     // Print the function's return type
     printType(F->getReturnType());
@@ -1239,7 +1300,7 @@ void CppWriter::printFunctionUses(const Function* F) {
   }
 
   // Print the function declarations for any functions encountered
-  Out << "\n// Function Declarations\n";
+  nl(Out) << "// Function Declarations"; nl(Out);
   for (std::vector<GlobalValue*>::iterator I = gvs.begin(), E = gvs.end();
        I != E; ++I) {
     if (Function* Fun = dyn_cast<Function>(*I)) {
@@ -1249,7 +1310,7 @@ void CppWriter::printFunctionUses(const Function* F) {
   }
 
   // Print the global variable declarations for any variables encountered
-  Out << "\n// Global Variable Declarations\n";
+  nl(Out) << "// Global Variable Declarations"; nl(Out);
   for (std::vector<GlobalValue*>::iterator I = gvs.begin(), E = gvs.end();
        I != E; ++I) {
     if (GlobalVariable* F = dyn_cast<GlobalVariable>(*I))
@@ -1257,7 +1318,7 @@ void CppWriter::printFunctionUses(const Function* F) {
   }
 
   // Print the constants found
-  Out << "\n// Constant Definitions\n";
+  nl(Out) << "// Constant Definitions"; nl(Out);
   for (std::vector<Constant*>::iterator I = consts.begin(), E = consts.end();
        I != E; ++I) {
       printConstant(*I);
@@ -1266,7 +1327,7 @@ void CppWriter::printFunctionUses(const Function* F) {
   // Process the global variables definitions now that all the constants have
   // been emitted. These definitions just couple the gvars with their constant
   // initializers.
-  Out << "\n// Global Variable Definitions\n";
+  nl(Out) << "// Global Variable Definitions"; nl(Out);
   for (std::vector<GlobalValue*>::iterator I = gvs.begin(), E = gvs.end();
        I != E; ++I) {
     if (GlobalVariable* GV = dyn_cast<GlobalVariable>(*I))
@@ -1275,36 +1336,41 @@ void CppWriter::printFunctionUses(const Function* F) {
 }
 
 void CppWriter::printFunctionHead(const Function* F) {
-  Out << "\nFunction* " << getCppName(F); 
+  nl(Out) << "Function* " << getCppName(F); 
   if (is_inline) {
     Out << " = mod->getFunction(\"";
     printEscapedString(F->getName());
-    Out << "\", " << getCppName(F->getFunctionType()) << ");\n";
-    Out << "if (!" << getCppName(F) << ") {\n";
-    Out << getCppName(F);
+    Out << "\", " << getCppName(F->getFunctionType()) << ");";
+    nl(Out) << "if (!" << getCppName(F) << ") {";
+    nl(Out) << getCppName(F);
   }
-  Out<< " = new Function(\n"
-      << "  /*Type=*/" << getCppName(F->getFunctionType()) << ",\n"
-      << "  /*Linkage=*/";
+  Out<< " = new Function(";
+  nl(Out,1) << "/*Type=*/" << getCppName(F->getFunctionType()) << ",";
+  nl(Out) << "/*Linkage=*/";
   printLinkageType(F->getLinkage());
-  Out << ",\n  /*Name=*/\"";
+  Out << ",";
+  nl(Out) << "/*Name=*/\"";
   printEscapedString(F->getName());
-  Out << "\", mod); " 
-      << (F->isExternal()? "// (external, no body)" : "") << "\n";
+  Out << "\", mod); " << (F->isExternal()? "// (external, no body)" : "");
+  nl(Out,-1);
   printCppName(F);
   Out << "->setCallingConv(";
   printCallingConv(F->getCallingConv());
-  Out << ");\n";
+  Out << ");";
+  nl(Out);
   if (F->hasSection()) {
     printCppName(F);
-    Out << "->setSection(\"" << F->getSection() << "\");\n";
+    Out << "->setSection(\"" << F->getSection() << "\");";
+    nl(Out);
   }
   if (F->getAlignment()) {
     printCppName(F);
-    Out << "->setAlignment(" << F->getAlignment() << ");\n";
+    Out << "->setAlignment(" << F->getAlignment() << ");";
+    nl(Out);
   }
   if (is_inline) {
-    Out << "}\n";
+    Out << "}";
+    nl(Out);
   }
 }
 
@@ -1320,34 +1386,39 @@ void CppWriter::printFunctionBody(const Function *F) {
   // Create all the argument values
   if (!is_inline) {
     if (!F->arg_empty()) {
-      Out << "  Function::arg_iterator args = " << getCppName(F) 
-          << "->arg_begin();\n";
+      Out << "Function::arg_iterator args = " << getCppName(F) 
+          << "->arg_begin();";
+      nl(Out);
     }
     for (Function::const_arg_iterator AI = F->arg_begin(), AE = F->arg_end();
          AI != AE; ++AI) {
-      Out << "  Value* " << getCppName(AI) << " = args++;\n";
-      if (AI->hasName())
-        Out << "  " << getCppName(AI) << "->setName(\"" << AI->getName() 
-            << "\");\n";
+      Out << "Value* " << getCppName(AI) << " = args++;";
+      nl(Out);
+      if (AI->hasName()) {
+        Out << getCppName(AI) << "->setName(\"" << AI->getName() << "\");";
+        nl(Out);
+      }
     }
   }
 
   // Create all the basic blocks
-  Out << "\n";
+  nl(Out);
   for (Function::const_iterator BI = F->begin(), BE = F->end(); 
        BI != BE; ++BI) {
     std::string bbname(getCppName(BI));
-    Out << "  BasicBlock* " << bbname << " = new BasicBlock(\"";
+    Out << "BasicBlock* " << bbname << " = new BasicBlock(\"";
     if (BI->hasName())
       printEscapedString(BI->getName());
-    Out << "\"," << getCppName(BI->getParent()) << ",0);\n";
+    Out << "\"," << getCppName(BI->getParent()) << ",0);";
+    nl(Out);
   }
 
   // Output all of its basic blocks... for the function
   for (Function::const_iterator BI = F->begin(), BE = F->end(); 
        BI != BE; ++BI) {
     std::string bbname(getCppName(BI));
-    Out << "\n  // Block " << BI->getName() << " (" << bbname << ")\n";
+    nl(Out) << "// Block " << BI->getName() << " (" << bbname << ")";
+    nl(Out);
 
     // Output all of the instructions in the basic block...
     for (BasicBlock::const_iterator I = BI->begin(), E = BI->end(); 
@@ -1358,12 +1429,16 @@ void CppWriter::printFunctionBody(const Function *F) {
 
   // Loop over the ForwardRefs and resolve them now that all instructions
   // are generated.
-  if (!ForwardRefs.empty())
-    Out << "\n  // Resolve Forward References\n";
+  if (!ForwardRefs.empty()) {
+    nl(Out) << "// Resolve Forward References";
+    nl(Out);
+  }
+  
   while (!ForwardRefs.empty()) {
     ForwardRefMap::iterator I = ForwardRefs.begin();
-    Out << "  " << I->second << "->replaceAllUsesWith(" 
-        << getCppName(I->first) << "); delete " << I->second << ";\n";
+    Out << I->second << "->replaceAllUsesWith(" 
+        << getCppName(I->first) << "); delete " << I->second << ";";
+    nl(Out);
     ForwardRefs.erase(I);
   }
 }
@@ -1378,37 +1453,39 @@ void CppWriter::printInline(const std::string& fname, const std::string& func) {
     error(std::string("Function '") + func + "' is external!");
     return;
   }
-  Out << "\nBasicBlock* " << fname << "(Module* mod, Function *" 
+  nl(Out) << "BasicBlock* " << fname << "(Module* mod, Function *" 
       << getCppName(F);
   unsigned arg_count = 1;
   for (Function::const_arg_iterator AI = F->arg_begin(), AE = F->arg_end();
        AI != AE; ++AI) {
     Out << ", Value* arg_" << arg_count;
   }
-  Out << ") {\n";
+  Out << ") {";
+  nl(Out);
   is_inline = true;
   printFunctionUses(F);
   printFunctionBody(F);
   is_inline = false;
-  Out << "return " << getCppName(F->begin()) << ";\n";
-  Out << "}\n";
+  Out << "return " << getCppName(F->begin()) << ";";
+  nl(Out) << "}";
+  nl(Out);
 }
 
 void CppWriter::printModuleBody() {
   // Print out all the type definitions
-  Out << "\n// Type Definitions\n";
+  nl(Out) << "// Type Definitions"; nl(Out);
   printTypes(TheModule);
 
   // Functions can call each other and global variables can reference them so 
   // define all the functions first before emitting their function bodies.
-  Out << "\n// Function Declarations\n";
+  nl(Out) << "// Function Declarations"; nl(Out);
   for (Module::const_iterator I = TheModule->begin(), E = TheModule->end(); 
        I != E; ++I)
     printFunctionHead(I);
 
   // Process the global variables declarations. We can't initialze them until
   // after the constants are printed so just print a header for each global
-  Out << "\n// Global Variable Declarations\n";
+  nl(Out) << "// Global Variable Declarations\n"; nl(Out);
   for (Module::const_global_iterator I = TheModule->global_begin(), 
        E = TheModule->global_end(); I != E; ++I) {
     printVariableHead(I);
@@ -1417,27 +1494,30 @@ void CppWriter::printModuleBody() {
   // Print out all the constants definitions. Constants don't recurse except
   // through GlobalValues. All GlobalValues have been declared at this point
   // so we can proceed to generate the constants.
-  Out << "\n// Constant Definitions\n";
+  nl(Out) << "// Constant Definitions"; nl(Out);
   printConstants(TheModule);
 
   // Process the global variables definitions now that all the constants have
   // been emitted. These definitions just couple the gvars with their constant
   // initializers.
-  Out << "\n// Global Variable Definitions\n";
+  nl(Out) << "// Global Variable Definitions"; nl(Out);
   for (Module::const_global_iterator I = TheModule->global_begin(), 
        E = TheModule->global_end(); I != E; ++I) {
     printVariableBody(I);
   }
 
   // Finally, we can safely put out all of the function bodies.
-  Out << "\n// Function Definitions\n";
+  nl(Out) << "// Function Definitions"; nl(Out);
   for (Module::const_iterator I = TheModule->begin(), E = TheModule->end(); 
        I != E; ++I) {
     if (!I->isExternal()) {
-      Out << "\n// Function: " << I->getName() << " (" << getCppName(I) 
-          << ")\n{\n";
+      nl(Out) << "// Function: " << I->getName() << " (" << getCppName(I) 
+          << ")";
+      nl(Out) << "{";
+      nl(Out,1);
       printFunctionBody(I);
-      Out << "}\n";
+      nl(Out,-1) << "}";
+      nl(Out);
     }
   }
 }
@@ -1481,41 +1561,47 @@ void CppWriter::printModule(
   const std::string& fname, 
   const std::string& mName
 ) {
-  Out << "\nModule* " << fname << "() {\n";
-  Out << "\n// Module Construction\n";
-  Out << "\nModule* mod = new Module(\"" << mName << "\");\n";
-  Out << "mod->setEndianness(";
+  nl(Out) << "Module* " << fname << "() {";
+  nl(Out,1) << "// Module Construction";
+  nl(Out) << "Module* mod = new Module(\"" << mName << "\");"; 
+  nl(Out) << "mod->setEndianness(";
   switch (TheModule->getEndianness()) {
-    case Module::LittleEndian: Out << "Module::LittleEndian);\n"; break;
-    case Module::BigEndian:    Out << "Module::BigEndian);\n";    break;
-    case Module::AnyEndianness:Out << "Module::AnyEndianness);\n";  break;
+    case Module::LittleEndian: Out << "Module::LittleEndian);"; break;
+    case Module::BigEndian:    Out << "Module::BigEndian);";    break;
+    case Module::AnyEndianness:Out << "Module::AnyEndianness);";  break;
   }
-  Out << "mod->setPointerSize(";
+  nl(Out) << "mod->setPointerSize(";
   switch (TheModule->getPointerSize()) {
-    case Module::Pointer32:      Out << "Module::Pointer32);\n"; break;
-    case Module::Pointer64:      Out << "Module::Pointer64);\n"; break;
-    case Module::AnyPointerSize: Out << "Module::AnyPointerSize);\n"; break;
+    case Module::Pointer32:      Out << "Module::Pointer32);"; break;
+    case Module::Pointer64:      Out << "Module::Pointer64);"; break;
+    case Module::AnyPointerSize: Out << "Module::AnyPointerSize);"; break;
   }
-  if (!TheModule->getTargetTriple().empty())
+  nl(Out);
+  if (!TheModule->getTargetTriple().empty()) {
     Out << "mod->setTargetTriple(\"" << TheModule->getTargetTriple() 
-        << "\");\n";
+        << "\");";
+    nl(Out);
+  }
 
   if (!TheModule->getModuleInlineAsm().empty()) {
     Out << "mod->setModuleInlineAsm(\"";
     printEscapedString(TheModule->getModuleInlineAsm());
-    Out << "\");\n";
+    Out << "\");";
+    nl(Out);
   }
   
   // Loop over the dependent libraries and emit them.
   Module::lib_iterator LI = TheModule->lib_begin();
   Module::lib_iterator LE = TheModule->lib_end();
   while (LI != LE) {
-    Out << "mod->addLibrary(\"" << *LI << "\");\n";
+    Out << "mod->addLibrary(\"" << *LI << "\");";
+    nl(Out);
     ++LI;
   }
   printModuleBody();
-  Out << "\nreturn mod;\n";
-  Out << "}\n";
+  nl(Out) << "return mod;";
+  nl(Out,-1) << "}";
+  nl(Out);
 }
 
 void CppWriter::printContents(
