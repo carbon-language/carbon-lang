@@ -422,6 +422,14 @@ public:
 
   void dump() const;
 
+  /// getNodeValueTypes - Return a pointer to an intern'd representation of the
+  /// specified valuetype list.
+  MVT::ValueType *getNodeValueTypes(MVT::ValueType VT1);
+  MVT::ValueType *getNodeValueTypes(MVT::ValueType VT1, MVT::ValueType VT2);
+  MVT::ValueType *getNodeValueTypes(MVT::ValueType VT1, MVT::ValueType VT2,
+                                    MVT::ValueType VT3);
+  MVT::ValueType *getNodeValueTypes(std::vector<MVT::ValueType> &RetVals);
+  
 private:
   void RemoveNodeFromCSEMaps(SDNode *N);
   SDNode *AddNonLeafNodeToCSEMaps(SDNode *N);
@@ -432,12 +440,6 @@ private:
                                void *&InsertPos);
 
   void DeleteNodeNotInCSEMaps(SDNode *N);
-  MVT::ValueType *getNodeValueTypes(MVT::ValueType VT1);
-  MVT::ValueType *getNodeValueTypes(MVT::ValueType VT1, MVT::ValueType VT2);
-  MVT::ValueType *getNodeValueTypes(MVT::ValueType VT1, MVT::ValueType VT2,
-                                    MVT::ValueType VT3);
-  MVT::ValueType *getNodeValueTypes(std::vector<MVT::ValueType> &RetVals);
-  
   
   /// SimplifySetCC - Try to simplify a setcc built with the specified operands 
   /// and cc.  If unable to simplify it, return a null SDOperand.
