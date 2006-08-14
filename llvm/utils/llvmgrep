@@ -18,7 +18,15 @@
 # details.
 ##===----------------------------------------------------------------------===##
 
-TOPDIR=`llvm-config --src-root`
+if test $# -gt 1 ; then
+  if test "$1" = "-topdir" ; then
+    TOPDIR="$2"
+    shift; shift;
+  else
+    TOPDIR=`llvm-config --src-root`
+  fi
+fi
+
 if test -d "$TOPDIR" ; then
   cd $TOPDIR
   case `uname -s` in
@@ -26,7 +34,8 @@ if test -d "$TOPDIR" ; then
     Linux) grep_cmd="egrep -H -n" ;;
     *) grep_cmd="egrep -l -n" ;;
   esac
-  ./utils/llvmdo -dirs "include lib tools utils docs examples test projects" $grep_cmd "$*"
+  ./utils/llvmdo -topdir "$TOPDIR" \
+    -dirs "include lib tools utils docs examples test projects" $grep_cmd "$*"
 else
-  echo "Can't find LLVM top directory in $TOPDIR"
+  echo "Can't find LLVM top directory"
 fi

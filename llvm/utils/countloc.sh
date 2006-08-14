@@ -12,20 +12,29 @@
 # (excluding certain things), runs "wc -l" on them to get the number of lines in
 # each file and then sums up and prints the total with awk. 
 #
-# The script takes no arguments but does expect to be run from somewhere in
-# the top llvm source directory.
+# The script takes one optional option, -topdir, which specifies the top llvm
+# source directory. If it is not specified then the llvm-config tool is 
+# consulted to find top source dir.  
 #
 # Note that the implementation is based on llvmdo. See that script for more
 # details.
 ##===----------------------------------------------------------------------===##
 
-TOPDIR=`llvm-config --src-root`
+if test $# -gt 1 ; then
+  if test "$1" = "-topdir" ; then
+    TOPDIR="$2"
+    shift; shift;
+  else
+    TOPDIR=`llvm-config --src-root`
+  fi
+fi
+
 if test -d "$TOPDIR" ; then
   cd $TOPDIR
-  ./utils/llvmdo -dirs "include lib tools test utils examples" -code-only wc -l | awk '\
+  ./utils/llvmdo -topdir "$TOPDIR" -dirs "include lib tools test utils examples" -code-only wc -l | awk '\
       BEGIN { loc=0; } \
       { loc += $1; } \
       END { print loc; }'
 else
-  echo "Can't find LLVM top directory in $TOPDIR"
+  echo "Can't find LLVM top directory"
 fi

@@ -638,7 +638,7 @@ if (!$NOCHECKOUT && !$NOBUILD) {
 
 # Get the number of lines of source code. Must be here after the build is done
 # because countloc.sh uses the llvm-config script which must be built.
-my $LOC = `utils/countloc.sh`;
+my $LOC = `utils/countloc.sh -topdir $BuildDir`;
 
 # Get the time taken by the configure script
 my $ConfigTimeU = GetRegexNum "^user", 0, "([0-9.]+)", "$BuildLog";

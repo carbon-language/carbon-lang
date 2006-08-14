@@ -17,6 +17,9 @@
 #               Report details about lines of code in each file for each user
 #           -html
 #               Generate HTML output instead of text output
+#           -topdir
+#               Specify where the top llvm source directory is. Otherwise the
+#               llvm-config tool is used to find it.
 # Directories:
 #   The directories passed after the options should be relative paths to
 #   directories of interest from the top of the llvm source tree, e.g. "lib"
@@ -29,6 +32,7 @@ my $tag = "";
 my $html = 0;
 my $debug = 0;
 my $filedetails = "";
+my $srcroot = "";
 while ( defined($ARGV[0]) && substr($ARGV[0],0,1) eq '-' )
 {
   if ($ARGV[0] =~ /-tag=.*/) {
@@ -40,15 +44,22 @@ while ( defined($ARGV[0]) && substr($ARGV[0],0,1) eq '-' )
     $html = 1;
   } elsif ($ARGV[0] eq "-debug") {
     $debug = 1;
+  } elsif ($ARGV[0] eq "-topdir") {
+    shift; $srcroot = $ARGV[0]; shift;
   } else {
     die "Invalid option: $ARGV[0]";
   }
   shift;
 }
 
-chomp(my $srcroot = `llvm-config --src-root`);
+if (length($srcroot) == 0) {
+  chomp($srcroot = `llvm-config --src-root`);
+}
+if (! -d "$srcroot") {
+  die "Invalid source root: $srcroot\n";
+}
 chdir($srcroot);
-my $llvmdo = "$srcroot/utils/llvmdo";
+my $llvmdo = "$srcroot/utils/llvmdo -topdir '$srcroot'";
 my %Stats;
 my %FileStats;
 
