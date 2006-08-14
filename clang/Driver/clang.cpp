@@ -621,9 +621,6 @@ static void ParseFile(Preprocessor &PP, ParserActions *PA, unsigned MainFileID){
 
   PP.EnterSourceFile(MainFileID, 0, true);
   
-  // Prime the lexer look-ahead.
-  P.ConsumeToken();
-  
   P.ParseTranslationUnit();
 
   // Start parsing the specified input file.
