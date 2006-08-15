@@ -3655,7 +3655,7 @@ OS << "  unsigned NumKilled = ISelKilled.size();\n";
   OS << "    ISelQueue.pop_back();\n";
   OS << "    if (!isSelected(Node->getNodeId())) {\n";
   OS << "      SDNode *ResNode = Select(Tmp, SDOperand(Node, 0));\n";
-  OS << "      if (ResNode) ReplaceUses(Node, ResNode);\n";
+  OS << "      if (ResNode && ResNode != Node) ReplaceUses(Node, ResNode);\n";
   OS << "    }\n";
   OS << "  }\n";
   OS << "\n";
