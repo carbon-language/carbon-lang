@@ -64,6 +64,11 @@ program. By default, B<bugpoint> uses these passes internally when attempting to
 reduce test programs.  If you're trying to find a bug in one of these passes,
 B<bugpoint> may crash.
 
+=item B<-find-bugs>
+
+Continually randomize the specified passes and run them on the test program
+until an error is found in LLVM or the user kills B<bugpoint>. 
+
 =item B<--help>
 
 Print a summary of command line options.
