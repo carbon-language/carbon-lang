@@ -297,10 +297,36 @@ std::string BugDriver::compileSharedObject(const std::string &BytecodeFile) {
   return "./" + SharedObjectFile;
 }
 
+/// createReferenceFile - calls compileProgram and then records the output
+/// into ReferenceOutputFile. Returns true if reference file created, false 
+/// otherwise. Note: initializeExecutionEnvironment should be called BEFORE
+/// this function.
+///
+bool BugDriver::createReferenceFile(Module *M, const std::string &Filename){
+  try {
+    compileProgram(Program);
+  } catch (ToolExecutionError &TEE) {
+    return false;
+  }
+  try {
+    ReferenceOutputFile = executeProgramWithCBE(Filename);
+    std::cout << "Reference output is: " << ReferenceOutputFile << "\n\n";
+  } catch (ToolExecutionError &TEE) {
+    std::cerr << TEE.what();
+    if (Interpreter != cbe) {
+      std::cerr << "*** There is a bug running the C backend.  Either debug"
+                << " it (use the -run-cbe bugpoint option), or fix the error"
+                << " some other way.\n";
+    }
+    return false;
+  }
+  return true;
+}
 
-/// diffProgram - This method executes the specified module and diffs the output
-/// against the file specified by ReferenceOutputFile.  If the output is
-/// different, true is returned.
+/// diffProgram - This method executes the specified module and diffs the
+/// output against the file specified by ReferenceOutputFile.  If the output
+/// is different, true is returned.  If there is a problem with the code
+/// generator (e.g., llc crashes), this will throw an exception.
 ///
 bool BugDriver::diffProgram(const std::string &BytecodeFile,
                             const std::string &SharedObject,

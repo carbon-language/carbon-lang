@@ -48,6 +48,7 @@ class BugDriver {
   CBE *cbe;
   GCC *gcc;
   bool run_as_child;
+  bool run_find_bugs;
   unsigned Timeout;
 
   // FIXME: sort out public/private distinctions...
@@ -55,7 +56,8 @@ class BugDriver {
   friend class ReduceMisCodegenFunctions;
 
 public:
-  BugDriver(const char *toolname, bool as_child, unsigned timeout);
+  BugDriver(const char *toolname, bool as_child, bool find_bugs,
+            unsigned timeout);
 
   const std::string &getToolName() const { return ToolName; }
 
@@ -82,7 +84,7 @@ public:
   /// crashes on input.  It attempts to prune down the testcase to something
   /// reasonable, and figure out exactly which pass is crashing.
   ///
-  bool debugOptimizerCrash();
+  bool debugOptimizerCrash(const std::string &ID = "passes");
 
   /// debugCodeGeneratorCrash - This method is called when the code generator
   /// crashes on an input.  It attempts to reduce the input as much as possible
@@ -175,6 +177,13 @@ public:
   ///
   std::string executeProgramWithCBE(std::string OutputFile = "");
 
+  /// createReferenceFile - calls compileProgram and then records the output
+  /// into ReferenceOutputFile. Returns true if reference file created, false 
+  /// otherwise. Note: initializeExecutionEnvironment should be called BEFORE
+  /// this function.
+  ///
+  bool createReferenceFile(Module *M, const std::string &Filename  = "bugpoint.reference.out");
+
   /// diffProgram - This method executes the specified module and diffs the
   /// output against the file specified by ReferenceOutputFile.  If the output
   /// is different, true is returned.  If there is a problem with the code
@@ -183,6 +192,7 @@ public:
   bool diffProgram(const std::string &BytecodeFile = "",
                    const std::string &SharedObj = "",
                    bool RemoveBytecode = false);
+                   
   /// EmitProgressBytecode - This function is used to output the current Program
   /// to a file named "bugpoint-ID.bc".
   ///
@@ -235,6 +245,15 @@ public:
   bool runPasses(const std::vector<const PassInfo*> &PassesToRun,
                  std::string &OutputFilename, bool DeleteOutput = false,
                  bool Quiet = false) const;
+                 
+  /// runManyPasses - Take the specified pass list and create different 
+  /// combinations of passes to compile the program with. Compile the program with
+  /// each set and mark test to see if it compiled correctly. If the passes 
+  /// compiled correctly output nothing and rearrange the passes into a new order.
+  /// If the passes did not compile correctly, output the command required to 
+  /// recreate the failure. This returns true if a compiler error is found.
+  ///
+  bool runManyPasses(const std::vector<const PassInfo*> &AllPasses);
 
   /// writeProgramToFile - This writes the current "Program" to the named
   /// bytecode file.  If an error occurs, true is returned.

@@ -62,10 +62,11 @@ std::string llvm::getPassesString(const std::vector<const PassInfo*> &Passes) {
   return Result;
 }
 
-BugDriver::BugDriver(const char *toolname, bool as_child, unsigned timeout)
+BugDriver::BugDriver(const char *toolname, bool as_child, bool find_bugs,
+                     unsigned timeout)
   : ToolName(toolname), ReferenceOutputFile(OutputFile),
     Program(0), Interpreter(0), cbe(0), gcc(0), run_as_child(as_child),
-    Timeout(timeout) {}
+    run_find_bugs(find_bugs), Timeout(timeout) {}
 
 
 /// ParseInputFile - Given a bytecode or assembly input filename, parse and
@@ -140,6 +141,12 @@ bool BugDriver::run() {
     // Execute the passes
     return runPassesAsChild(PassesToRun);
   }
+  
+  if (run_find_bugs) {
+    // Rearrange the passes and apply them to the program. Repeat this process
+    // until the user kills the program or we find a bug.
+    return runManyPasses(PassesToRun);
+  }
 
   // If we're not running as a child, the first thing that we must do is 
   // determine what the problem is. Does the optimization series crash the 
@@ -175,20 +182,10 @@ bool BugDriver::run() {
   bool CreatedOutput = false;
   if (ReferenceOutputFile.empty()) {
     std::cout << "Generating reference output from raw program: ";
-    try {
-      ReferenceOutputFile = executeProgramWithCBE("bugpoint.reference.out");
-      CreatedOutput = true;
-      std::cout << "Reference output is: " << ReferenceOutputFile << '\n';
-    } catch (ToolExecutionError &TEE) {
-      std::cerr << TEE.what();
-      if (Interpreter != cbe) {
-        std::cerr << "*** There is a bug running the C backend.  Either debug"
-                  << " it (use the -run-cbe bugpoint option), or fix the error"
-                  << " some other way.\n";
-        return 1;
-      }
-      return debugCodeGeneratorCrash();
+    if(!createReferenceFile(Program)){
+    	return debugCodeGeneratorCrash();
     }
+    CreatedOutput = true;
   }
 
   // Make sure the reference output file gets deleted on exit from this
@@ -197,7 +194,8 @@ bool BugDriver::run() {
   FileRemover RemoverInstance(ROF, CreatedOutput);
 
   // Diff the output of the raw program against the reference output.  If it
-  // matches, then we have a miscompilation bug.
+  // matches, then we assume there is a miscompilation bug and try to 
+  // diagnose it.
   std::cout << "*** Checking the code generator...\n";
   try {
     if (!diffProgram()) {

@@ -29,8 +29,12 @@ using namespace llvm;
 // from a parent process. It is not intended to be used by users so the 
 // option is hidden.
 static cl::opt<bool> 
-  AsChild("as-child", cl::desc("Run bugpoint as child process"), 
-          cl::ReallyHidden);
+AsChild("as-child", cl::desc("Run bugpoint as child process"), 
+        cl::ReallyHidden);
+          
+static cl::opt<bool> 
+FindBugs("find-bugs", cl::desc("Run many different optimization sequences"
+                               "on program to find bugs"), cl::init(false));
 
 static cl::list<std::string>
 InputFilenames(cl::Positional, cl::OneOrMore,
@@ -62,7 +66,7 @@ int main(int argc, char **argv) {
   sys::PrintStackTraceOnErrorSignal();
   sys::SetInterruptFunction(BugpointInterruptFunction);
   
-  BugDriver D(argv[0],AsChild,TimeoutValue);
+  BugDriver D(argv[0],AsChild,FindBugs,TimeoutValue);
   if (D.addSources(InputFilenames)) return 1;
   D.addPasses(PassList.begin(), PassList.end());
 

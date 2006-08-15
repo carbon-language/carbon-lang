@@ -423,7 +423,7 @@ static bool TestForOptimizerCrash(BugDriver &BD, Module *M) {
 /// It attempts to prune down the testcase to something reasonable, and figure
 /// out exactly which pass is crashing.
 ///
-bool BugDriver::debugOptimizerCrash() {
+bool BugDriver::debugOptimizerCrash(const std::string &ID) {
   std::cout << "\n*** Debugging optimizer crash!\n";
 
   // Reduce the list of passes which causes the optimizer to crash...
@@ -435,7 +435,7 @@ bool BugDriver::debugOptimizerCrash() {
             << (PassesToRun.size() == 1 ? ": " : "es: ")
             << getPassesString(PassesToRun) << '\n';
 
-  EmitProgressBytecode("passinput");
+  EmitProgressBytecode(ID);
 
   return DebugACrash(*this, TestForOptimizerCrash);
 }
