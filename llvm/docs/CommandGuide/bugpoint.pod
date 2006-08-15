@@ -67,7 +67,7 @@ B<bugpoint> may crash.
 =item B<-find-bugs>
 
 Continually randomize the specified passes and run them on the test program
-until an error is found in LLVM or the user kills B<bugpoint>. 
+until a bug is found or the user kills B<bugpoint>. 
 
 =item B<--help>
 
