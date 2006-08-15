@@ -178,6 +178,7 @@ ParseNextStatement:
 ///
 ///       labeled-statement:
 ///         identifier ':' statement
+/// [GNU]   identifier ':' attributes[opt] statement
 ///         declaration                  (if !OnlyStatement)
 ///         expression[opt] ';'
 ///
@@ -191,6 +192,11 @@ void Parser::ParseIdentifierStatement(bool OnlyStatement) {
   // identifier ':' statement
   if (Tok.getKind() == tok::colon) {
     ConsumeToken();
+
+    // Read label attributes, if present.
+    if (Tok.getKind() == tok::kw___attribute)
+      ParseAttributes();
+
     ParseStatement();
     return;
   }

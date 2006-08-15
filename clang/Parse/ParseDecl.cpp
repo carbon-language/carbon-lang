@@ -163,6 +163,7 @@ void Parser::ParseInitDeclaratorListAfterFirstDeclarator(Declarator &D) {
 ///        specifier-qualifier-list:
 ///          type-specifier specifier-qualifier-list[opt]
 ///          type-qualifier specifier-qualifier-list[opt]
+/// [GNU]    attributes     specifier-qualifier-list[opt]
 ///
 void Parser::ParseSpecifierQualifierList(DeclSpec &DS) {
   /// specifier-qualifier-list is a subset of declaration-specifiers.  Just
@@ -193,7 +194,7 @@ void Parser::ParseSpecifierQualifierList(DeclSpec &DS) {
 ///         type-specifier declaration-specifiers[opt]
 ///         type-qualifier declaration-specifiers[opt]
 /// [C99]   function-specifier declaration-specifiers[opt]
-/// [GNU]   attributes declaration-specifiers[opt]                [TODO]
+/// [GNU]   attributes declaration-specifiers[opt]
 ///
 ///       storage-class-specifier: [C99 6.7.1]
 ///         'typedef'
@@ -254,6 +255,11 @@ void Parser::ParseDeclarationSpecifiers(DeclSpec &DS) {
       // specifiers.  First verify that DeclSpec's are consistent.
       DS.Finish(StartLoc, Diags, getLang());
       return;
+    
+    // GNU attributes support.
+    case tok::kw___attribute:
+      ParseAttributes();
+      break;
       
     // storage-class-specifier
     case tok::kw_typedef:
@@ -376,6 +382,9 @@ void Parser::ParseDeclarationSpecifiers(DeclSpec &DS) {
 ///       struct-or-union-specifier: [C99 6.7.2.1]
 ///         struct-or-union identifier[opt] '{' struct-contents '}'
 ///         struct-or-union identifier
+/// [GNU]   struct-or-union attributes[opt] identifier[opt] '{' struct-contents
+///                                                         '}' attributes[opt]
+/// [GNU]   struct-or-union attributes[opt] identifier
 ///       struct-or-union:
 ///         'struct'
 ///         'union'
@@ -394,9 +403,12 @@ void Parser::ParseDeclarationSpecifiers(DeclSpec &DS) {
 ///       struct-declarator-list:
 ///         struct-declarator
 ///         struct-declarator-list ',' struct-declarator
+/// [GNU]   struct-declarator-list ',' attributes[opt] struct-declarator
 ///       struct-declarator:
 ///         declarator
+/// [GNU]   declarator attributes[opt]
 ///         declarator[opt] ':' constant-expression
+/// [GNU]   declarator[opt] ':' constant-expression attributes[opt]
 ///
 void Parser::ParseStructUnionSpecifier(DeclSpec &DS) {
   assert((Tok.getKind() == tok::kw_struct ||
@@ -404,7 +416,11 @@ void Parser::ParseStructUnionSpecifier(DeclSpec &DS) {
   SourceLocation Start = Tok.getLocation();
   bool isUnion = Tok.getKind() == tok::kw_union;
   ConsumeToken();
-  
+
+  // If attributes exist after tag, parse them.
+  if (Tok.getKind() == tok::kw___attribute)
+    ParseAttributes();
+
   // Must have either 'struct name' or 'struct {...}'.
   if (Tok.getKind() != tok::identifier &&
       Tok.getKind() != tok::l_brace) {
@@ -455,6 +471,10 @@ void Parser::ParseStructUnionSpecifier(DeclSpec &DS) {
               // Process it.
             }
           }
+          
+          // If attributes exist after the declarator, parse them.
+          if (Tok.getKind() == tok::kw___attribute)
+            ParseAttributes();
 
           // TODO: install declarator.
           
@@ -468,6 +488,10 @@ void Parser::ParseStructUnionSpecifier(DeclSpec &DS) {
           
           // Parse the next declarator.
           DeclaratorInfo.clear();
+
+          // Attributes are only allowed on the second declarator.
+          if (Tok.getKind() == tok::kw___attribute)
+            ParseAttributes();
         }
       }
       
@@ -481,6 +505,10 @@ void Parser::ParseStructUnionSpecifier(DeclSpec &DS) {
     }
 
     MatchRHSPunctuation(tok::r_brace, LBraceLoc, "{",diag::err_expected_rbrace);
+    
+    // If attributes exist after struct contents, parse them.
+    if (Tok.getKind() == tok::kw___attribute)
+      ParseAttributes();
   }
 
   const char *PrevSpec = 0;
@@ -494,9 +522,10 @@ void Parser::ParseStructUnionSpecifier(DeclSpec &DS) {
 ///       enum-specifier: [C99 6.7.2.2]
 ///         'enum' identifier[opt] '{' enumerator-list '}'
 /// [C99]   'enum' identifier[opt] '{' enumerator-list ',' '}'
-/// [GNU]   'enum' identifier[opt] '{' enumerator-list '}' attributes [TODO]
-/// [GNU]   'enum' identifier[opt] '{' enumerator-list ',' '}' attributes [TODO]
+/// [GNU]   'enum' attributes[opt] identifier[opt] '{' enumerator-list ',' [opt]
+///                                                 '}' attributes[opt]
 ///         'enum' identifier
+/// [GNU]   'enum' attributes[opt] identifier
 ///       enumerator-list:
 ///         enumerator
 ///         enumerator-list ',' enumerator
@@ -510,6 +539,9 @@ void Parser::ParseEnumSpecifier(DeclSpec &DS) {
   assert(Tok.getKind() == tok::kw_enum && "Not an enum specifier");
   SourceLocation Start = Tok.getLocation();
   ConsumeToken();
+  
+  if (Tok.getKind() == tok::kw___attribute)
+    ParseAttributes();
   
   // Must have either 'enum name' or 'enum {...}'.
   if (Tok.getKind() != tok::identifier &&
@@ -550,6 +582,10 @@ void Parser::ParseEnumSpecifier(DeclSpec &DS) {
     // Eat the }.
     MatchRHSPunctuation(tok::r_brace, LBraceLoc, "{", 
                         diag::err_expected_rbrace);
+
+    // If attributes exist after the identifier list, parse them.
+    if (Tok.getKind() == tok::kw___attribute)
+      ParseAttributes();
   }
   // TODO: semantic analysis on the declspec for enums.
   
@@ -565,6 +601,8 @@ void Parser::ParseEnumSpecifier(DeclSpec &DS) {
 bool Parser::isTypeSpecifierQualifier() const {
   switch (Tok.getKind()) {
   default: return false;
+    // GNU attributes support.
+  case tok::kw___attribute:
     // type-specifiers
   case tok::kw_short:
   case tok::kw_long:
@@ -658,9 +696,9 @@ bool Parser::isDeclarationSpecifier() const {
 /// ParseTypeQualifierListOpt
 ///       type-qualifier-list: [C99 6.7.5]
 ///         type-qualifier
-/// [GNU]   attributes                         [TODO]
+/// [GNU]   attributes
 ///         type-qualifier-list type-qualifier
-/// [GNU]   type-qualifier-list attributes     [TODO]
+/// [GNU]   type-qualifier-list attributes
 ///
 void Parser::ParseTypeQualifierListOpt(DeclSpec &DS) {
   SourceLocation StartLoc = Tok.getLocation();
@@ -670,11 +708,10 @@ void Parser::ParseTypeQualifierListOpt(DeclSpec &DS) {
 
     switch (Tok.getKind()) {
     default:
-      // If this is not a declaration specifier token, we're done reading decl
-      // specifiers.  First verify that DeclSpec's are consistent.
+      // If this is not a type-qualifier token, we're done reading type
+      // qualifiers.  First verify that DeclSpec's are consistent.
       DS.Finish(StartLoc, Diags, getLang());
       return;
-      // TODO: attributes.
     case tok::kw_const:
       isInvalid = DS.SetTypeQual(DeclSpec::TQ_const   , PrevSpec, getLang())*2;
       break;
@@ -683,6 +720,10 @@ void Parser::ParseTypeQualifierListOpt(DeclSpec &DS) {
       break;
     case tok::kw_restrict:
       isInvalid = DS.SetTypeQual(DeclSpec::TQ_restrict, PrevSpec, getLang())*2;
+      break;
+      
+    case tok::kw___attribute:
+      ParseAttributes();
       break;
     }
     
@@ -759,7 +800,7 @@ void Parser::ParseDirectDeclarator(Declarator &D) {
     ConsumeToken();
   } else if (Tok.getKind() == tok::l_paren) {
     // direct-declarator: '(' declarator ')'
-    // direct-declarator: '(' attributes declarator ')'   [TODO]
+    // direct-declarator: '(' attributes declarator ')'
     // Example: 'char (*X)'   or 'int (*XX)(void)'
     ParseParenDeclarator(D);
   } else if (D.mayOmitIdentifier()) {
@@ -802,9 +843,9 @@ void Parser::ParseDirectDeclarator(Declarator &D) {
 ///
 ///       parameter-declaration: [C99 6.7.5]
 ///         declaration-specifiers declarator
-/// [GNU]   declaration-specifiers declarator attributes               [TODO]
+/// [GNU]   declaration-specifiers declarator attributes
 ///         declaration-specifiers abstract-declarator[opt] 
-/// [GNU]   declaration-specifiers abstract-declarator[opt] attributes [TODO]
+/// [GNU]   declaration-specifiers abstract-declarator[opt] attributes
 ///
 ///       identifier-list: [C99 6.7.5]
 ///         identifier
@@ -838,8 +879,11 @@ void Parser::ParseParenDeclarator(Declarator &D) {
     
     // If this is a grouping paren, handle:
     // direct-declarator: '(' declarator ')'
-    // direct-declarator: '(' attributes declarator ')'   [TODO]
+    // direct-declarator: '(' attributes declarator ')'
     if (isGrouping) {
+      if (Tok.getKind() == tok::kw___attribute)
+        ParseAttributes();
+      
       ParseDeclaratorInternal(D);
       // Match the ')'.
       MatchRHSPunctuation(tok::r_paren, StartLoc, "(",
@@ -930,6 +974,10 @@ void Parser::ParseParenDeclarator(Declarator &D) {
       Declarator DeclaratorInfo(DS, Declarator::PrototypeContext);
       ParseDeclarator(DeclaratorInfo);
 
+      // Parse GNU attributes, if present.
+      if (Tok.getKind() == tok::kw___attribute)
+        ParseAttributes();
+      
       // TODO: do something with the declarator, if it is valid.
       
       // If the next token is a comma, consume it and keep reading arguments.
