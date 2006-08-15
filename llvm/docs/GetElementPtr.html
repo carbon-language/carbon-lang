@@ -77,21 +77,24 @@
   <pre>
   AType* Foo;
   ...
-  X = Foo[1];</pre>
+  X = &amp;Foo-&gt;F;</pre>
   <p>it is natural to think that there is only one index, the constant value
   <tt>1</tt>. This results from C allowing you to treat pointers and arrays as
   equivalent. LLVM doesn't. In this example, Foo is a pointer. That pointer must
   be indexed. To arrive at the same address location as the C code, you would
   provide the GEP instruction with two indices. The first indexes through the
-  pointer, the second index the second element of the array.</p>
+  pointer, the second index the element of the structure just as if it was:</p>
+  <pre>
+  X = &amp;Foo[0].F;</pre>
   <p>Sometimes this question gets rephrased as:</p>
   <blockquote><i>Why is it okay to index through the first pointer, but 
       subsequent pointers won't be dereferenced?</i></blockquote> 
   <p>The answer is simply because memory does not have to be accessed to 
   perform the computation. The first operand to the GEP instruction must be a 
   value of a pointer type. The value of the pointer is provided directly to 
-  the GEP instruction without any need for accessing memory. It must, 
-  therefore be indexed like any other operand.  Consider this example:</p>
+  the GEP instruction as an operand without any need for accessing memory. It 
+  must, therefore be indexed and requires an index operand. Consider this 
+  example:</p>
   <pre>
   struct munger_struct {
     int f1;
