@@ -101,7 +101,7 @@
           <li><a href="#i_vselect">'<tt>vselect</tt>' Instruction</a></li>
         </ol>
       </li>
-      <li><a href="#memoryops">Memory Access Operations</a>
+      <li><a href="#memoryops">Memory Access and Addressing Operations</a>
         <ol>
           <li><a href="#i_malloc">'<tt>malloc</tt>'   Instruction</a></li>
           <li><a href="#i_free">'<tt>free</tt>'     Instruction</a></li>
@@ -2273,7 +2273,7 @@ it gets its value from the second value argument.
 
 <!-- ======================================================================= -->
 <div class="doc_subsection"> 
-  <a name="memoryops">Memory Access Operations</a>
+  <a name="memoryops">Memory Access and Addressing Operations</a>
 </div>
 
 <div class="doc_text">
@@ -2573,6 +2573,10 @@ pointer indexes must always be within the defined bounds of the array type.
 The one exception for this rules is zero length arrays.  These arrays are
 defined to be accessible as variable length arrays, which requires access
 beyond the zero'th element.</p>
+
+<p>The getelementptr instruction is often confusing.  For some more insight
+into how it works, see <a href="GetElementPtr.html">the getelementptr 
+FAQ</a>.</p>
 
 <h5>Example:</h5>
 
