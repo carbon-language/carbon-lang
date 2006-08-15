@@ -3646,8 +3646,11 @@ OS << "  unsigned NumKilled = ISelKilled.size();\n";
   OS << "  memset(ISelQueued,   0, NumBytes);\n";
   OS << "  memset(ISelSelected, 0, NumBytes);\n";
   OS << "\n";
-  OS << "  SDOperand ResNode;\n";
-  OS << "  Select(ResNode, Root);\n";
+  OS << "  // Create a dummy node (which is not added to allnodes), that adds\n"
+     << "  // a reference to the root node, preventing it from being deleted,\n"
+     << "  // and tracking any changes of the root.\n"
+     << "  HandleSDNode Dummy(CurDAG->getRoot());\n"
+     << "  ISelQueue.push_back(CurDAG->getRoot().Val);\n";
   OS << "  while (!ISelQueue.empty()) {\n";
   OS << "    SDOperand Tmp;\n";
   OS << "    SDNode *Node = ISelQueue.front();\n";
@@ -3663,7 +3666,7 @@ OS << "  unsigned NumKilled = ISelKilled.size();\n";
   OS << "  ISelQueued = NULL;\n";
   OS << "  delete[] ISelSelected;\n";
   OS << "  ISelSelected = NULL;\n";
-  OS << "  return ResNode;\n";
+  OS << "  return Dummy.getValue();\n";
   OS << "}\n";
   
   Intrinsics = LoadIntrinsics(Records);
