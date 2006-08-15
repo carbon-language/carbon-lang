@@ -328,6 +328,8 @@ DIAG(err_label_end_of_compound_statement, ERROR,
      "label at end of compound statement: expected statement")
 DIAG(err_expected_colon, ERROR,
      "expected ':'")
+DIAG(err_expected_string_literal, ERROR,
+     "expected string literal")
 
 /// err_matching - this is used as a continuation of a previous error, e.g. to 
 /// specify the '(' when we expected a ')'.  This should probably be some

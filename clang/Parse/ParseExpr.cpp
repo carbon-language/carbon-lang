@@ -643,7 +643,7 @@ Parser::ExprResult Parser::ParseBuiltinPrimaryExpression() {
       return Res;
     }
 
-    if (ExpectAndConsume(tok::comma, diag::err_expected_comma, tok::r_paren))
+    if (ExpectAndConsume(tok::comma, diag::err_expected_comma, "",tok::r_paren))
       return ExprResult(true);
 
     ParseTypeName();
@@ -652,11 +652,11 @@ Parser::ExprResult Parser::ParseBuiltinPrimaryExpression() {
   case tok::kw___builtin_offsetof:
     ParseTypeName();
 
-    if (ExpectAndConsume(tok::comma, diag::err_expected_comma, tok::r_paren))
+    if (ExpectAndConsume(tok::comma, diag::err_expected_comma, "",tok::r_paren))
       return ExprResult(true);
     
     // We must have at least one identifier here.
-    if (ExpectAndConsume(tok::identifier, diag::err_expected_ident,
+    if (ExpectAndConsume(tok::identifier, diag::err_expected_ident, "",
                          tok::r_paren))
       return ExprResult(true);
 
@@ -665,7 +665,7 @@ Parser::ExprResult Parser::ParseBuiltinPrimaryExpression() {
         // offsetof-member-designator: offsetof-member-designator '.' identifier
         ConsumeToken();
         
-        if (ExpectAndConsume(tok::identifier, diag::err_expected_ident,
+        if (ExpectAndConsume(tok::identifier, diag::err_expected_ident, "",
                              tok::r_paren))
           return ExprResult(true);
       } else if (Tok.getKind() == tok::l_square) {
@@ -688,12 +688,12 @@ Parser::ExprResult Parser::ParseBuiltinPrimaryExpression() {
   case tok::kw___builtin_choose_expr:
     Res = ParseAssignmentExpression();
     
-    if (ExpectAndConsume(tok::comma, diag::err_expected_comma, tok::r_paren))
+    if (ExpectAndConsume(tok::comma, diag::err_expected_comma, "",tok::r_paren))
       return ExprResult(true);
     
     Res = ParseAssignmentExpression();
     
-    if (ExpectAndConsume(tok::comma, diag::err_expected_comma, tok::r_paren))
+    if (ExpectAndConsume(tok::comma, diag::err_expected_comma, "",tok::r_paren))
       return ExprResult(true);
     
     Res = ParseAssignmentExpression();
@@ -701,7 +701,7 @@ Parser::ExprResult Parser::ParseBuiltinPrimaryExpression() {
   case tok::kw___builtin_types_compatible_p:
     ParseTypeName();
     
-    if (ExpectAndConsume(tok::comma, diag::err_expected_comma, tok::r_paren))
+    if (ExpectAndConsume(tok::comma, diag::err_expected_comma, "",tok::r_paren))
       return ExprResult(true);
     
     ParseTypeName();

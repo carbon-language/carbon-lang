@@ -166,6 +166,7 @@ private:
   /// SkipToTok is specified, it calls SkipUntil(SkipToTok).  Finally, true is
   /// returned.
   bool ExpectAndConsume(tok::TokenKind ExpectedTok, unsigned Diag,
+                        const char *DiagMsg = "",
                         tok::TokenKind SkipToTok = tok::unknown);
 
   //===--------------------------------------------------------------------===//
@@ -204,7 +205,8 @@ private:
   void ParseExternalDeclaration();
   void ParseDeclarationOrFunctionDefinition();
   void ParseFunctionDefinition(Declarator &D);
-
+  void ParseSimpleAsm();
+  
   //===--------------------------------------------------------------------===//
   // C99 6.5: Expressions.
   

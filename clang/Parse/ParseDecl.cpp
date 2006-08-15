@@ -74,12 +74,19 @@ void Parser::ParseDeclaration(unsigned Context) {
 ///       init-declarator: [C99 6.7]
 ///         declarator
 ///         declarator '=' initializer
+/// [GNU]   declarator simple-asm-expr[opt] attributes[opt]
+/// [GNU]   declarator simple-asm-expr[opt] attributes[opt] '=' initializer
 ///
 void Parser::ParseInitDeclaratorListAfterFirstDeclarator(Declarator &D) {
   // At this point, we know that it is not a function definition.  Parse the
   // rest of the init-declarator-list.
   while (1) {
-    // must be: decl-spec[opt] declarator init-declarator-list
+    // If a simple-asm-expr is present, parse it.
+    if (Tok.getKind() == tok::kw_asm)
+      ParseSimpleAsm();
+    
+    // TODO: parse attributes.
+    
     // Parse declarator '=' initializer.
     ExprResult Init;
     if (Tok.getKind() == tok::equal) {

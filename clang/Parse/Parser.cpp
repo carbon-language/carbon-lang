@@ -63,13 +63,13 @@ void Parser::MatchRHSPunctuation(tok::TokenKind RHSTok, SourceLocation LHSLoc,
 /// SkipToTok is specified, it calls SkipUntil(SkipToTok).  Finally, true is
 /// returned.
 bool Parser::ExpectAndConsume(tok::TokenKind ExpectedTok, unsigned DiagID,
-                              tok::TokenKind SkipToTok) {
+                              const char *Msg, tok::TokenKind SkipToTok) {
   if (Tok.getKind() == ExpectedTok) {
     ConsumeToken();
     return false;
   }
   
-  Diag(Tok, DiagID);
+  Diag(Tok, DiagID, Msg);
   if (SkipToTok != tok::unknown)
     SkipUntil(SkipToTok);
   return true;
@@ -200,6 +200,23 @@ void Parser::ParseTranslationUnit() {
   assert(CurScope == 0 && "A scope is already active?");
   EnterScope();
 
+  
+  // Install builtin types.
+  // TODO: Move this someplace more useful.
+  {
+    //__builtin_va_list
+    DeclSpec DS;
+    DS.StorageClassSpec = DeclSpec::SCS_typedef;
+    
+    // TODO: add a 'TST_builtin' type?
+    DS.TypeSpecType = DeclSpec::TST_typedef;
+
+    Declarator D(DS, Declarator::FileContext);
+    D.SetIdentifier(PP.getIdentifierInfo("__builtin_va_list"),SourceLocation());
+    Actions.ParseDeclarator(SourceLocation(), CurScope, D, 0);
+  }
+  
+  
   if (Tok.getKind() == tok::eof)  // Empty source file is an extension.
     Diag(diag::ext_empty_source_file);
   
@@ -215,7 +232,7 @@ void Parser::ParseTranslationUnit() {
 ///         function-definition        [TODO]
 ///         declaration                [TODO]
 /// [EXT]   ';'
-/// [GNU]   asm-definition             [TODO]
+/// [GNU]   asm-definition
 /// [GNU]   __extension__ external-declaration     [TODO]
 /// [OBJC]  objc-class-definition      [TODO]
 /// [OBJC]  objc-class-declaration     [TODO]
@@ -224,11 +241,19 @@ void Parser::ParseTranslationUnit() {
 /// [OBJC]  objc-method-definition     [TODO]
 /// [OBJC]  @end                       [TODO]
 ///
+/// [GNU] asm-definition:
+///         simple-asm-expr ';'
+///
 void Parser::ParseExternalDeclaration() {
   switch (Tok.getKind()) {
   case tok::semi:
     Diag(diag::ext_top_level_semi);
     ConsumeToken();
+    break;
+  case tok::kw_asm:
+    ParseSimpleAsm();
+    ExpectAndConsume(tok::semi, diag::err_expected_semi_after,
+                     "top-level asm block");
     break;
   default:
     // We can't tell whether this is a function-definition or declaration yet.
@@ -344,3 +369,39 @@ void Parser::ParseFunctionDefinition(Declarator &D) {
   ParseCompoundStatement();
 }
 
+/// ParseSimpleAsm
+///
+/// [GNU] simple-asm-expr:
+///         'asm' '(' asm-string-literal ')'
+/// [GNU] asm-string-literal:
+///         string-literal
+///
+void Parser::ParseSimpleAsm() {
+  assert(Tok.getKind() == tok::kw_asm && "Not an asm!");
+  ConsumeToken();
+  
+  if (Tok.getKind() != tok::l_paren) {
+    Diag(Tok, diag::err_expected_lparen_after, "asm");
+    return;
+  }
+  
+  SourceLocation Loc = Tok.getLocation();
+  ConsumeParen();
+  
+  if (Tok.getKind() != tok::string_literal) {
+    Diag(Tok, diag::err_expected_string_literal);
+    SkipUntil(tok::r_paren);
+    return;
+  }
+  
+  ExprResult Res = ParseStringLiteralExpression();
+  if (Res.isInvalid) {
+    Diag(Tok, diag::err_expected_string_literal);
+    SkipUntil(tok::r_paren);
+    return;
+  }
+  
+  // TODO: Diagnose: wide string literal in 'asm'
+  
+  MatchRHSPunctuation(tok::r_paren, Loc, "(", diag::err_expected_rparen);
+}
