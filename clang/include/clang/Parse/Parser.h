@@ -271,6 +271,7 @@ private:
   bool isTypeSpecifierQualifier() const;
 
   void ParseTypeName();
+  void ParseAttributes();
   
   /// ParseDeclarator - Parse and verify a newly-initialized declarator.
   void ParseDeclarator(Declarator &D);

@@ -33,6 +33,38 @@ void Parser::ParseTypeName() {
   ParseDeclarator(DeclaratorInfo);
 }
 
+/// ParseAttributes - Parse a non-empty attributes list.
+///
+/// [GNU] attributes:
+///         attribute
+///         attributes attribute
+///
+/// [GNU]  attribute:
+///          '__attribute__' '(' '(' attribute-list ')' ')'
+///
+/// [GNU]  attribute-list:
+///          attrib
+///          attribute_list ',' attrib
+///
+/// [GNU]  attrib:
+///          empty
+///          any-word
+///          any-word '(' identifier ')'
+///          any-word '(' identifier ',' nonempty-expr-list ')'
+///          any-word '(' expr-list ')'
+///
+void Parser::ParseAttributes() {
+  assert(Tok.getKind() == tok::kw___attribute && "Not an attribute list!");
+  ConsumeToken();
+  
+  if (ExpectAndConsume(tok::l_paren, diag::err_expected_lparen_after,
+                       "attribute"))
+    return;
+  
+  // TODO: Parse the attributes.
+  SkipUntil(tok::r_paren, false);
+}
+
 
 /// ParseDeclaration - Parse a full 'declaration', which consists of
 /// declaration-specifiers, some number of declarators, and a semicolon.
@@ -85,7 +117,9 @@ void Parser::ParseInitDeclaratorListAfterFirstDeclarator(Declarator &D) {
     if (Tok.getKind() == tok::kw_asm)
       ParseSimpleAsm();
     
-    // TODO: parse attributes.
+    // If attributes are present, parse them.
+    if (Tok.getKind() == tok::kw___attribute)
+      ParseAttributes();
     
     // Parse declarator '=' initializer.
     ExprResult Init;
