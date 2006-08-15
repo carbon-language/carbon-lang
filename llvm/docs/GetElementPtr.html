@@ -78,12 +78,13 @@
   AType* Foo;
   ...
   X = &amp;Foo-&gt;F;</pre>
-  <p>it is natural to think that there is only one index, the constant value
-  <tt>1</tt>. This results from C allowing you to treat pointers and arrays as
-  equivalent. LLVM doesn't. In this example, Foo is a pointer. That pointer must
-  be indexed. To arrive at the same address location as the C code, you would
-  provide the GEP instruction with two indices. The first indexes through the
-  pointer, the second index the element of the structure just as if it was:</p>
+  <p>it is natural to think that there is only one index, the selection of the
+  field <tt>F</tt>.  However, in this example, <tt>Foo</tt> is a pointer. That 
+  pointer must be indexed explicitly in LLVM. C, on the other hand, indexs
+  through it ransparently.  To arrive at the same address location as the C 
+  code, you would provide the GEP instruction with two index operands. The 
+  first operand indexes through the pointer; the second operand indexes the 
+  field <tt>F</tt> of the structure, just as if you wrote:</p>
   <pre>
   X = &amp;Foo[0].F;</pre>
   <p>Sometimes this question gets rephrased as:</p>
