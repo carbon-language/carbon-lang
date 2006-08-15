@@ -242,9 +242,13 @@ void Parser::ParseDeclarationSpecifiers(DeclSpec &DS) {
       // typedef-name
     case tok::identifier:
       // This identifier can only be a typedef name if we haven't already seen
-      // a typename.  This avoids the virtual method call on things like
-      // 'int foo'.
-      if (DS.TypeSpecType == DeclSpec::TST_unspecified &&
+      // a type-specifier.  Without this check we misparse:
+      //  typedef int X; struct Y { short X; };  as 'short int'.
+      if (DS.TypeSpecType  == DeclSpec::TST_unspecified &&
+          DS.TypeSpecWidth == DeclSpec::TSW_unspecified &&
+          DS.TypeSpecComplex == DeclSpec::TSC_unspecified &&
+          DS.TypeSpecSign == DeclSpec::TSS_unspecified &&
+          // It has to be available as a typedef too!
           Actions.isTypedefName(*Tok.getIdentifierInfo(), CurScope)) {
         isInvalid = DS.SetTypeSpecType(DeclSpec::TST_typedef, PrevSpec);
         break;
