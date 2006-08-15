@@ -30,15 +30,6 @@ namespace llvm {
   class MachineDebugInfo;
   class MachineFunction;
 
-/// SDVTList - This represents a list of ValueType's that has been intern'd by
-/// a SelectionDAG.  Instances of this simple value class are returned by
-/// SelectionDAG::getVTList(...).
-///
-struct SDVTList {
-  const MVT::ValueType *VTs;
-  unsigned short NumVTs;
-};
-  
 /// SelectionDAG class - This is used to represent a portion of an LLVM function
 /// in a low-level Data Dependence DAG representation suitable for instruction
 /// selection.  This DAG is constructed as the first step of instruction

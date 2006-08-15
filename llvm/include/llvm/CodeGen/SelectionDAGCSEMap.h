@@ -20,6 +20,7 @@
 namespace llvm {
   class SDNode;
   class SDOperand;
+  struct SDVTList;
   
   /// SelectionDAGCSEMap - This class is used for two purposes:
   ///   1. Given information (e.g. opcode and operand info) about a node we want
@@ -68,13 +69,13 @@ namespace llvm {
     public:
       NodeID() {}
       NodeID(SDNode *N);
-      NodeID(unsigned short ID, const void *VTList);
-      NodeID(unsigned short ID, const void *VTList, SDOperand Op);
-      NodeID(unsigned short ID, const void *VTList, 
+      NodeID(unsigned short ID, SDVTList VTList);
+      NodeID(unsigned short ID, SDVTList VTList, SDOperand Op);
+      NodeID(unsigned short ID, SDVTList VTList, 
              SDOperand Op1, SDOperand Op2);
-      NodeID(unsigned short ID, const void *VTList, 
+      NodeID(unsigned short ID, SDVTList VTList, 
              SDOperand Op1, SDOperand Op2, SDOperand Op3);
-      NodeID(unsigned short ID, const void *VTList, 
+      NodeID(unsigned short ID, SDVTList VTList, 
              const SDOperand *OpList, unsigned N);
       
       void SetOpcode(unsigned short ID) {
@@ -87,7 +88,7 @@ namespace llvm {
         return Bits[0];
       }
 
-      void SetValueTypes(const void *VTList) { AddPointer(VTList); }
+      void SetValueTypes(SDVTList VTList);
       void SetOperands() {}
       void SetOperands(SDOperand Op) { AddOperand(Op); }
       void SetOperands(SDOperand Op1, SDOperand Op2) {

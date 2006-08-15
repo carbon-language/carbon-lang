@@ -38,6 +38,16 @@ template <typename T> struct ilist_traits;
 template<typename NodeTy, typename Traits> class iplist;
 template<typename NodeTy> class ilist_iterator;
 
+/// SDVTList - This represents a list of ValueType's that has been intern'd by
+/// a SelectionDAG.  Instances of this simple value class are returned by
+/// SelectionDAG::getVTList(...).
+///
+struct SDVTList {
+  const MVT::ValueType *VTs;
+  unsigned short NumVTs;
+};
+
+
 /// ISD namespace - This namespace contains an enum which represents all of the
 /// SelectionDAG node types and value types.
 ///
@@ -769,6 +779,11 @@ public:
   op_iterator op_end() const { return OperandList+NumOperands; }
 
 
+  SDVTList getVTList() const {
+    SDVTList X = { ValueList, NumValues };
+    return X;
+  };
+  
   /// getNumValues - Return the number of values defined/returned by this
   /// operator.
   ///
@@ -899,10 +914,10 @@ protected:
     NumOperands = 0;
   }
   
-  void setValueTypes(const MVT::ValueType *List, unsigned NumVal) {
+  void setValueTypes(SDVTList L) {
     assert(NumValues == 0 && "Should not have values yet!");
-    ValueList = List;
-    NumValues = NumVal;
+    ValueList = L.VTs;
+    NumValues = L.NumVTs;
   }
   
   void setOperands(SDOperand Op0) {

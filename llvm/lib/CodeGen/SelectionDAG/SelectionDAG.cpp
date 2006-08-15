@@ -31,6 +31,13 @@
 #include <algorithm>
 using namespace llvm;
 
+/// makeVTList - Return an instance of the SDVTList struct initialized with the
+/// specified members.
+static SDVTList makeVTList(const MVT::ValueType *VTs, unsigned NumVTs) {
+  SDVTList Res = {VTs, NumVTs};
+  return Res;
+}
+
 static bool isCommutativeBinOp(unsigned Opcode) {
   switch (Opcode) {
   case ISD::ADD:
@@ -415,7 +422,7 @@ SDNode *SelectionDAG::FindModifiedNodeSlot(SDNode *N, SDOperand Op,
   
   SelectionDAGCSEMap::NodeID ID;
   ID.SetOpcode(N->getOpcode());
-  ID.SetValueTypes(N->value_begin());
+  ID.SetValueTypes(N->getVTList());
   ID.SetOperands(Op);
   return CSEMap.FindNodeOrInsertPos(ID, InsertPos);
 }
@@ -437,7 +444,7 @@ SDNode *SelectionDAG::FindModifiedNodeSlot(SDNode *N,
                                               
   SelectionDAGCSEMap::NodeID ID;
   ID.SetOpcode(N->getOpcode());
-  ID.SetValueTypes(N->value_begin());
+  ID.SetValueTypes(N->getVTList());
   ID.SetOperands(Op1, Op2);
   return CSEMap.FindNodeOrInsertPos(ID, InsertPos);
 }
@@ -460,7 +467,7 @@ SDNode *SelectionDAG::FindModifiedNodeSlot(SDNode *N,
   
   SelectionDAGCSEMap::NodeID ID;
   ID.SetOpcode(N->getOpcode());
-  ID.SetValueTypes(N->value_begin());
+  ID.SetValueTypes(N->getVTList());
   ID.SetOperands(Ops, NumOps);
   return CSEMap.FindNodeOrInsertPos(ID, InsertPos);
 }
@@ -501,7 +508,7 @@ SDOperand SelectionDAG::getConstant(uint64_t Val, MVT::ValueType VT, bool isT) {
   Val &= MVT::getIntVTBitMask(VT);
 
   unsigned Opc = isT ? ISD::TargetConstant : ISD::Constant;
-  SelectionDAGCSEMap::NodeID ID(Opc, getNodeValueTypes(VT));
+  SelectionDAGCSEMap::NodeID ID(Opc, getVTList(VT));
   ID.AddInteger(Val);
   void *IP = 0;
   if (SDNode *E = CSEMap.FindNodeOrInsertPos(ID, IP))
@@ -523,7 +530,7 @@ SDOperand SelectionDAG::getConstantFP(double Val, MVT::ValueType VT,
   // value, so that we don't have problems with 0.0 comparing equal to -0.0, and
   // we don't have issues with SNANs.
   unsigned Opc = isTarget ? ISD::TargetConstantFP : ISD::ConstantFP;
-  SelectionDAGCSEMap::NodeID ID(Opc, getNodeValueTypes(VT));
+  SelectionDAGCSEMap::NodeID ID(Opc, getVTList(VT));
   ID.AddInteger(DoubleToBits(Val));
   void *IP = 0;
   if (SDNode *E = CSEMap.FindNodeOrInsertPos(ID, IP))
@@ -538,7 +545,7 @@ SDOperand SelectionDAG::getGlobalAddress(const GlobalValue *GV,
                                          MVT::ValueType VT, int Offset,
                                          bool isTargetGA) {
   unsigned Opc = isTargetGA ? ISD::TargetGlobalAddress : ISD::GlobalAddress;
-  SelectionDAGCSEMap::NodeID ID(Opc, getNodeValueTypes(VT));
+  SelectionDAGCSEMap::NodeID ID(Opc, getVTList(VT));
   ID.AddPointer(GV);
   ID.AddInteger(Offset);
   void *IP = 0;
@@ -553,7 +560,7 @@ SDOperand SelectionDAG::getGlobalAddress(const GlobalValue *GV,
 SDOperand SelectionDAG::getFrameIndex(int FI, MVT::ValueType VT,
                                       bool isTarget) {
   unsigned Opc = isTarget ? ISD::TargetFrameIndex : ISD::FrameIndex;
-  SelectionDAGCSEMap::NodeID ID(Opc, getNodeValueTypes(VT));
+  SelectionDAGCSEMap::NodeID ID(Opc, getVTList(VT));
   ID.AddInteger(FI);
   void *IP = 0;
   if (SDNode *E = CSEMap.FindNodeOrInsertPos(ID, IP))
@@ -566,7 +573,7 @@ SDOperand SelectionDAG::getFrameIndex(int FI, MVT::ValueType VT,
 
 SDOperand SelectionDAG::getJumpTable(int JTI, MVT::ValueType VT, bool isTarget){
   unsigned Opc = isTarget ? ISD::TargetJumpTable : ISD::JumpTable;
-  SelectionDAGCSEMap::NodeID ID(Opc, getNodeValueTypes(VT));
+  SelectionDAGCSEMap::NodeID ID(Opc, getVTList(VT));
   ID.AddInteger(JTI);
   void *IP = 0;
   if (SDNode *E = CSEMap.FindNodeOrInsertPos(ID, IP))
@@ -581,7 +588,7 @@ SDOperand SelectionDAG::getConstantPool(Constant *C, MVT::ValueType VT,
                                         unsigned Alignment, int Offset,
                                         bool isTarget) {
   unsigned Opc = isTarget ? ISD::TargetConstantPool : ISD::ConstantPool;
-  SelectionDAGCSEMap::NodeID ID(Opc, getNodeValueTypes(VT));
+  SelectionDAGCSEMap::NodeID ID(Opc, getVTList(VT));
   ID.AddInteger(Alignment);
   ID.AddInteger(Offset);
   ID.AddPointer(C);
@@ -596,7 +603,7 @@ SDOperand SelectionDAG::getConstantPool(Constant *C, MVT::ValueType VT,
 
 
 SDOperand SelectionDAG::getBasicBlock(MachineBasicBlock *MBB) {
-  SelectionDAGCSEMap::NodeID ID(ISD::BasicBlock, getNodeValueTypes(MVT::Other));
+  SelectionDAGCSEMap::NodeID ID(ISD::BasicBlock, getVTList(MVT::Other));
   ID.AddPointer(MBB);
   void *IP = 0;
   if (SDNode *E = CSEMap.FindNodeOrInsertPos(ID, IP))
@@ -647,7 +654,7 @@ SDOperand SelectionDAG::getCondCode(ISD::CondCode Cond) {
 }
 
 SDOperand SelectionDAG::getRegister(unsigned RegNo, MVT::ValueType VT) {
-  SelectionDAGCSEMap::NodeID ID(ISD::Register, getNodeValueTypes(VT));
+  SelectionDAGCSEMap::NodeID ID(ISD::Register, getVTList(VT));
   ID.AddInteger(RegNo);
   void *IP = 0;
   if (SDNode *E = CSEMap.FindNodeOrInsertPos(ID, IP))
@@ -662,7 +669,7 @@ SDOperand SelectionDAG::getSrcValue(const Value *V, int Offset) {
   assert((!V || isa<PointerType>(V->getType())) &&
          "SrcValue is not a pointer?");
 
-  SelectionDAGCSEMap::NodeID ID(ISD::SRCVALUE, getNodeValueTypes(MVT::Other));
+  SelectionDAGCSEMap::NodeID ID(ISD::SRCVALUE, getVTList(MVT::Other));
   ID.AddPointer(V);
   ID.AddInteger(Offset);
   void *IP = 0;
@@ -893,8 +900,7 @@ SDOperand SelectionDAG::SimplifySetCC(MVT::ValueType VT, SDOperand N1,
 /// getNode - Gets or creates the specified node.
 ///
 SDOperand SelectionDAG::getNode(unsigned Opcode, MVT::ValueType VT) {
-  const MVT::ValueType *VTs = getNodeValueTypes(VT);
-  SelectionDAGCSEMap::NodeID ID(Opcode, VTs);
+  SelectionDAGCSEMap::NodeID ID(Opcode, getVTList(VT));
   void *IP = 0;
   if (SDNode *E = CSEMap.FindNodeOrInsertPos(ID, IP))
     return SDOperand(E, 0);
@@ -1071,18 +1077,18 @@ SDOperand SelectionDAG::getNode(unsigned Opcode, MVT::ValueType VT,
   }
 
   SDNode *N;
-  const MVT::ValueType *VTs = getNodeValueTypes(VT);
+  SDVTList VTs = getVTList(VT);
   if (VT != MVT::Flag) { // Don't CSE flag producing nodes
     SelectionDAGCSEMap::NodeID ID(Opcode, VTs, Operand);
     void *IP = 0;
     if (SDNode *E = CSEMap.FindNodeOrInsertPos(ID, IP))
       return SDOperand(E, 0);
     N = new SDNode(Opcode, Operand);
-    N->setValueTypes(VTs, 1);
+    N->setValueTypes(VTs);
     CSEMap.InsertNode(N, IP);
   } else {
     N = new SDNode(Opcode, Operand);
-    N->setValueTypes(VTs, 1);
+    N->setValueTypes(VTs);
   }
   AllNodes.push_back(N);
   return SDOperand(N, 0);
@@ -1343,18 +1349,18 @@ SDOperand SelectionDAG::getNode(unsigned Opcode, MVT::ValueType VT,
 
   // Memoize this node if possible.
   SDNode *N;
-  const MVT::ValueType *VTs = getNodeValueTypes(VT);
+  SDVTList VTs = getVTList(VT);
   if (VT != MVT::Flag) {
     SelectionDAGCSEMap::NodeID ID(Opcode, VTs, N1, N2);
     void *IP = 0;
     if (SDNode *E = CSEMap.FindNodeOrInsertPos(ID, IP))
       return SDOperand(E, 0);
     N = new SDNode(Opcode, N1, N2);
-    N->setValueTypes(VTs, 1);
+    N->setValueTypes(VTs);
     CSEMap.InsertNode(N, IP);
   } else {
     N = new SDNode(Opcode, N1, N2);
-    N->setValueTypes(VTs, 1);
+    N->setValueTypes(VTs);
   }
 
   AllNodes.push_back(N);
@@ -1401,19 +1407,18 @@ SDOperand SelectionDAG::getNode(unsigned Opcode, MVT::ValueType VT,
 
   // Memoize node if it doesn't produce a flag.
   SDNode *N;
-  const MVT::ValueType *VTs = getNodeValueTypes(VT);
-
+  SDVTList VTs = getVTList(VT);
   if (VT != MVT::Flag) {
     SelectionDAGCSEMap::NodeID ID(Opcode, VTs, N1, N2, N3);
     void *IP = 0;
     if (SDNode *E = CSEMap.FindNodeOrInsertPos(ID, IP))
       return SDOperand(E, 0);
     N = new SDNode(Opcode, N1, N2, N3);
-    N->setValueTypes(VTs, 1);
+    N->setValueTypes(VTs);
     CSEMap.InsertNode(N, IP);
   } else {
     N = new SDNode(Opcode, N1, N2, N3);
-    N->setValueTypes(VTs, 1);
+    N->setValueTypes(VTs);
   }
   AllNodes.push_back(N);
   return SDOperand(N, 0);
@@ -1436,14 +1441,14 @@ SDOperand SelectionDAG::getNode(unsigned Opcode, MVT::ValueType VT,
 SDOperand SelectionDAG::getLoad(MVT::ValueType VT,
                                 SDOperand Chain, SDOperand Ptr,
                                 SDOperand SV) {
-  const MVT::ValueType *VTs = getNodeValueTypes(VT, MVT::Other);
+  SDVTList VTs = getVTList(VT, MVT::Other);
   
   SelectionDAGCSEMap::NodeID ID(ISD::LOAD, VTs, Chain, Ptr, SV);
   void *IP = 0;
   if (SDNode *E = CSEMap.FindNodeOrInsertPos(ID, IP))
     return SDOperand(E, 0);
   SDNode *N = new SDNode(ISD::LOAD, Chain, Ptr, SV);
-  N->setValueTypes(VTs, 2);
+  N->setValueTypes(VTs);
   CSEMap.InsertNode(N, IP);
   AllNodes.push_back(N);
   return SDOperand(N, 0);
@@ -1528,18 +1533,18 @@ SDOperand SelectionDAG::getNode(unsigned Opcode, MVT::ValueType VT,
 
   // Memoize nodes.
   SDNode *N;
-  const MVT::ValueType *VTs = getNodeValueTypes(VT);
+  SDVTList VTs = getVTList(VT);
   if (VT != MVT::Flag) {
     SelectionDAGCSEMap::NodeID ID(Opcode, VTs, Ops, NumOps);
     void *IP = 0;
     if (SDNode *E = CSEMap.FindNodeOrInsertPos(ID, IP))
       return SDOperand(E, 0);
     N = new SDNode(Opcode, Ops, NumOps);
-    N->setValueTypes(VTs, 1);
+    N->setValueTypes(VTs);
     CSEMap.InsertNode(N, IP);
   } else {
     N = new SDNode(Opcode, Ops, NumOps);
-    N->setValueTypes(VTs, 1);
+    N->setValueTypes(VTs);
   }
   AllNodes.push_back(N);
   return SDOperand(N, 0);
@@ -1606,30 +1611,24 @@ SDOperand SelectionDAG::getNode(unsigned Opcode,
 
   // Memoize the node unless it returns a flag.
   SDNode *N;
+  SDVTList VTList = makeVTList(VTs, NumVTs);
   if (VTs[NumVTs-1] != MVT::Flag) {
     SelectionDAGCSEMap::NodeID ID;
     ID.SetOpcode(Opcode);
-    ID.SetValueTypes(VTs);
+    ID.SetValueTypes(VTList);
     ID.SetOperands(&Ops[0], NumOps);
     void *IP = 0;
     if (SDNode *E = CSEMap.FindNodeOrInsertPos(ID, IP))
       return SDOperand(E, 0);
     N = new SDNode(Opcode, Ops, NumOps);
-    N->setValueTypes(VTs, NumVTs);
+    N->setValueTypes(VTList);
     CSEMap.InsertNode(N, IP);
   } else {
     N = new SDNode(Opcode, Ops, NumOps);
-    N->setValueTypes(VTs, NumVTs);
+    N->setValueTypes(VTList);
   }
   AllNodes.push_back(N);
   return SDOperand(N, 0);
-}
-
-/// makeVTList - Return an instance of the SDVTList struct initialized with the
-/// specified members.
-static SDVTList makeVTList(const MVT::ValueType *VTs, unsigned NumVTs) {
-  SDVTList Res = {VTs, NumVTs};
-  return Res;
 }
 
 SDVTList SelectionDAG::getVTList(MVT::ValueType VT) {
@@ -1836,7 +1835,7 @@ UpdateNodeOperands(SDOperand InN, SDOperand *Ops, unsigned NumOps) {
 /// the current one.
 SDOperand SelectionDAG::SelectNodeTo(SDNode *N, unsigned TargetOpc,
                                      MVT::ValueType VT) {
-  const MVT::ValueType *VTs = getNodeValueTypes(VT);
+  SDVTList VTs = getVTList(VT);
   SelectionDAGCSEMap::NodeID ID(ISD::BUILTIN_OP_END+TargetOpc, VTs);
   void *IP = 0;
   if (SDNode *ON = CSEMap.FindNodeOrInsertPos(ID, IP))
@@ -1845,7 +1844,7 @@ SDOperand SelectionDAG::SelectNodeTo(SDNode *N, unsigned TargetOpc,
   RemoveNodeFromCSEMaps(N);
   
   N->MorphNodeTo(ISD::BUILTIN_OP_END+TargetOpc);
-  N->setValueTypes(getNodeValueTypes(VT), 1);
+  N->setValueTypes(VTs);
 
   CSEMap.InsertNode(N, IP);
   return SDOperand(N, 0);
@@ -1854,7 +1853,7 @@ SDOperand SelectionDAG::SelectNodeTo(SDNode *N, unsigned TargetOpc,
 SDOperand SelectionDAG::SelectNodeTo(SDNode *N, unsigned TargetOpc,
                                      MVT::ValueType VT, SDOperand Op1) {
   // If an identical node already exists, use it.
-  const MVT::ValueType *VTs = getNodeValueTypes(VT);
+  SDVTList VTs = getVTList(VT);
   SelectionDAGCSEMap::NodeID ID(ISD::BUILTIN_OP_END+TargetOpc, VTs, Op1);
   void *IP = 0;
   if (SDNode *ON = CSEMap.FindNodeOrInsertPos(ID, IP))
@@ -1862,7 +1861,7 @@ SDOperand SelectionDAG::SelectNodeTo(SDNode *N, unsigned TargetOpc,
                                        
   RemoveNodeFromCSEMaps(N);
   N->MorphNodeTo(ISD::BUILTIN_OP_END+TargetOpc);
-  N->setValueTypes(getNodeValueTypes(VT), 1);
+  N->setValueTypes(VTs);
   N->setOperands(Op1);
   CSEMap.InsertNode(N, IP);
   return SDOperand(N, 0);
@@ -1872,7 +1871,7 @@ SDOperand SelectionDAG::SelectNodeTo(SDNode *N, unsigned TargetOpc,
                                      MVT::ValueType VT, SDOperand Op1,
                                      SDOperand Op2) {
   // If an identical node already exists, use it.
-  const MVT::ValueType *VTs = getNodeValueTypes(VT);
+  SDVTList VTs = getVTList(VT);
   SelectionDAGCSEMap::NodeID ID(ISD::BUILTIN_OP_END+TargetOpc, VTs, Op1, Op2);
   void *IP = 0;
   if (SDNode *ON = CSEMap.FindNodeOrInsertPos(ID, IP))
@@ -1880,7 +1879,7 @@ SDOperand SelectionDAG::SelectNodeTo(SDNode *N, unsigned TargetOpc,
                                        
   RemoveNodeFromCSEMaps(N);
   N->MorphNodeTo(ISD::BUILTIN_OP_END+TargetOpc);
-  N->setValueTypes(VTs, 1);
+  N->setValueTypes(VTs);
   N->setOperands(Op1, Op2);
   
   CSEMap.InsertNode(N, IP);   // Memoize the new node.
@@ -1891,15 +1890,16 @@ SDOperand SelectionDAG::SelectNodeTo(SDNode *N, unsigned TargetOpc,
                                      MVT::ValueType VT, SDOperand Op1,
                                      SDOperand Op2, SDOperand Op3) {
   // If an identical node already exists, use it.
-  const MVT::ValueType *VTs = getNodeValueTypes(VT);
-  SelectionDAGCSEMap::NodeID ID(ISD::BUILTIN_OP_END+TargetOpc, VTs, Op1, Op2, Op3);
+  SDVTList VTs = getVTList(VT);
+  SelectionDAGCSEMap::NodeID ID(ISD::BUILTIN_OP_END+TargetOpc, VTs,
+                                Op1, Op2, Op3);
   void *IP = 0;
   if (SDNode *ON = CSEMap.FindNodeOrInsertPos(ID, IP))
     return SDOperand(ON, 0);
                                        
   RemoveNodeFromCSEMaps(N);
   N->MorphNodeTo(ISD::BUILTIN_OP_END+TargetOpc);
-  N->setValueTypes(VTs, 1);
+  N->setValueTypes(VTs);
   N->setOperands(Op1, Op2, Op3);
 
   CSEMap.InsertNode(N, IP);   // Memoize the new node.
@@ -1911,7 +1911,7 @@ SDOperand SelectionDAG::SelectNodeTo(SDNode *N, unsigned TargetOpc,
                                      SDOperand Op2, SDOperand Op3,
                                      SDOperand Op4) {
   // If an identical node already exists, use it.
-  const MVT::ValueType *VTs = getNodeValueTypes(VT);
+  SDVTList VTs = getVTList(VT);
   SelectionDAGCSEMap::NodeID ID(ISD::BUILTIN_OP_END+TargetOpc, VTs);
   ID.AddOperand(Op1);
   ID.AddOperand(Op2);
@@ -1923,7 +1923,7 @@ SDOperand SelectionDAG::SelectNodeTo(SDNode *N, unsigned TargetOpc,
   
   RemoveNodeFromCSEMaps(N);
   N->MorphNodeTo(ISD::BUILTIN_OP_END+TargetOpc);
-  N->setValueTypes(VTs, 1);
+  N->setValueTypes(VTs);
   N->setOperands(Op1, Op2, Op3, Op4);
 
   CSEMap.InsertNode(N, IP);   // Memoize the new node.
@@ -1934,7 +1934,7 @@ SDOperand SelectionDAG::SelectNodeTo(SDNode *N, unsigned TargetOpc,
                                      MVT::ValueType VT, SDOperand Op1,
                                      SDOperand Op2, SDOperand Op3,
                                      SDOperand Op4, SDOperand Op5) {
-  const MVT::ValueType *VTs = getNodeValueTypes(VT);
+  SDVTList VTs = getVTList(VT);
   SelectionDAGCSEMap::NodeID ID(ISD::BUILTIN_OP_END+TargetOpc, VTs);
   ID.AddOperand(Op1);
   ID.AddOperand(Op2);
@@ -1947,7 +1947,7 @@ SDOperand SelectionDAG::SelectNodeTo(SDNode *N, unsigned TargetOpc,
                                        
   RemoveNodeFromCSEMaps(N);
   N->MorphNodeTo(ISD::BUILTIN_OP_END+TargetOpc);
-  N->setValueTypes(VTs, 1);
+  N->setValueTypes(VTs);
   N->setOperands(Op1, Op2, Op3, Op4, Op5);
   
   CSEMap.InsertNode(N, IP);   // Memoize the new node.
@@ -1958,7 +1958,7 @@ SDOperand SelectionDAG::SelectNodeTo(SDNode *N, unsigned TargetOpc,
                                      MVT::ValueType VT, SDOperand Op1,
                                      SDOperand Op2, SDOperand Op3,SDOperand Op4,
                                      SDOperand Op5, SDOperand Op6) {
-  const MVT::ValueType *VTs = getNodeValueTypes(VT);
+  SDVTList VTs = getVTList(VT);
   SelectionDAGCSEMap::NodeID ID(ISD::BUILTIN_OP_END+TargetOpc, VTs);
   ID.AddOperand(Op1);
   ID.AddOperand(Op2);
@@ -1972,7 +1972,7 @@ SDOperand SelectionDAG::SelectNodeTo(SDNode *N, unsigned TargetOpc,
                                        
   RemoveNodeFromCSEMaps(N);
   N->MorphNodeTo(ISD::BUILTIN_OP_END+TargetOpc);
-  N->setValueTypes(VTs, 1);
+  N->setValueTypes(VTs);
   N->setOperands(Op1, Op2, Op3, Op4, Op5, Op6);
   
   CSEMap.InsertNode(N, IP);   // Memoize the new node.
@@ -1984,7 +1984,7 @@ SDOperand SelectionDAG::SelectNodeTo(SDNode *N, unsigned TargetOpc,
                                      SDOperand Op2, SDOperand Op3,SDOperand Op4,
                                      SDOperand Op5, SDOperand Op6,
 				     SDOperand Op7) {
-  const MVT::ValueType *VTs = getNodeValueTypes(VT);
+  SDVTList VTs = getVTList(VT);
   // If an identical node already exists, use it.
   SelectionDAGCSEMap::NodeID ID(ISD::BUILTIN_OP_END+TargetOpc, VTs);
   ID.AddOperand(Op1);
@@ -2000,7 +2000,7 @@ SDOperand SelectionDAG::SelectNodeTo(SDNode *N, unsigned TargetOpc,
                                        
   RemoveNodeFromCSEMaps(N);
   N->MorphNodeTo(ISD::BUILTIN_OP_END+TargetOpc);
-  N->setValueTypes(VTs, 1);
+  N->setValueTypes(VTs);
   N->setOperands(Op1, Op2, Op3, Op4, Op5, Op6, Op7);
   
   CSEMap.InsertNode(N, IP);   // Memoize the new node.
@@ -2012,7 +2012,7 @@ SDOperand SelectionDAG::SelectNodeTo(SDNode *N, unsigned TargetOpc,
                                      SDOperand Op5, SDOperand Op6,
 				     SDOperand Op7, SDOperand Op8) {
   // If an identical node already exists, use it.
-  const MVT::ValueType *VTs = getNodeValueTypes(VT);
+  SDVTList VTs = getVTList(VT);
   SelectionDAGCSEMap::NodeID ID(ISD::BUILTIN_OP_END+TargetOpc, VTs);
   ID.AddOperand(Op1);
   ID.AddOperand(Op2);
@@ -2028,7 +2028,7 @@ SDOperand SelectionDAG::SelectNodeTo(SDNode *N, unsigned TargetOpc,
                                        
   RemoveNodeFromCSEMaps(N);
   N->MorphNodeTo(ISD::BUILTIN_OP_END+TargetOpc);
-  N->setValueTypes(VTs, 1);
+  N->setValueTypes(VTs);
   N->setOperands(Op1, Op2, Op3, Op4, Op5, Op6, Op7, Op8);
   
   CSEMap.InsertNode(N, IP);   // Memoize the new node.
@@ -2038,7 +2038,7 @@ SDOperand SelectionDAG::SelectNodeTo(SDNode *N, unsigned TargetOpc,
 SDOperand SelectionDAG::SelectNodeTo(SDNode *N, unsigned TargetOpc, 
                                      MVT::ValueType VT1, MVT::ValueType VT2,
                                      SDOperand Op1, SDOperand Op2) {
-  const MVT::ValueType *VTs = getNodeValueTypes(VT1, VT2);
+  SDVTList VTs = getVTList(VT1, VT2);
   SelectionDAGCSEMap::NodeID ID(ISD::BUILTIN_OP_END+TargetOpc, VTs, Op1, Op2);
   void *IP = 0;
   if (SDNode *ON = CSEMap.FindNodeOrInsertPos(ID, IP))
@@ -2046,7 +2046,7 @@ SDOperand SelectionDAG::SelectNodeTo(SDNode *N, unsigned TargetOpc,
 
   RemoveNodeFromCSEMaps(N);
   N->MorphNodeTo(ISD::BUILTIN_OP_END+TargetOpc);
-  N->setValueTypes(VTs, 2);
+  N->setValueTypes(VTs);
   N->setOperands(Op1, Op2);
   
   CSEMap.InsertNode(N, IP);   // Memoize the new node.
@@ -2058,7 +2058,7 @@ SDOperand SelectionDAG::SelectNodeTo(SDNode *N, unsigned TargetOpc,
                                      SDOperand Op1, SDOperand Op2, 
                                      SDOperand Op3) {
   // If an identical node already exists, use it.
-  const MVT::ValueType *VTs = getNodeValueTypes(VT1, VT2);
+  SDVTList VTs = getVTList(VT1, VT2);
   SelectionDAGCSEMap::NodeID ID(ISD::BUILTIN_OP_END+TargetOpc, VTs,
                                 Op1, Op2, Op3);
   void *IP = 0;
@@ -2067,7 +2067,7 @@ SDOperand SelectionDAG::SelectNodeTo(SDNode *N, unsigned TargetOpc,
 
   RemoveNodeFromCSEMaps(N);
   N->MorphNodeTo(ISD::BUILTIN_OP_END+TargetOpc);
-  N->setValueTypes(VTs, 2);
+  N->setValueTypes(VTs);
   N->setOperands(Op1, Op2, Op3);
   
   CSEMap.InsertNode(N, IP);   // Memoize the new node.
@@ -2079,7 +2079,7 @@ SDOperand SelectionDAG::SelectNodeTo(SDNode *N, unsigned TargetOpc,
                                      SDOperand Op1, SDOperand Op2,
                                      SDOperand Op3, SDOperand Op4) {
   // If an identical node already exists, use it.
-  const MVT::ValueType *VTs = getNodeValueTypes(VT1, VT2);
+  SDVTList VTs = getVTList(VT1, VT2);
   SelectionDAGCSEMap::NodeID ID(ISD::BUILTIN_OP_END+TargetOpc, VTs);
   ID.AddOperand(Op1);
   ID.AddOperand(Op2);
@@ -2091,7 +2091,7 @@ SDOperand SelectionDAG::SelectNodeTo(SDNode *N, unsigned TargetOpc,
                                        
   RemoveNodeFromCSEMaps(N);
   N->MorphNodeTo(ISD::BUILTIN_OP_END+TargetOpc);
-  N->setValueTypes(VTs, 2);
+  N->setValueTypes(VTs);
   N->setOperands(Op1, Op2, Op3, Op4);
 
   CSEMap.InsertNode(N, IP);   // Memoize the new node.
@@ -2104,7 +2104,7 @@ SDOperand SelectionDAG::SelectNodeTo(SDNode *N, unsigned TargetOpc,
                                      SDOperand Op3, SDOperand Op4, 
                                      SDOperand Op5) {
   // If an identical node already exists, use it.
-  const MVT::ValueType *VTs = getNodeValueTypes(VT1, VT2);
+  SDVTList VTs = getVTList(VT1, VT2);
   SelectionDAGCSEMap::NodeID ID(ISD::BUILTIN_OP_END+TargetOpc, VTs);
   ID.AddOperand(Op1);
   ID.AddOperand(Op2);
@@ -2117,7 +2117,7 @@ SDOperand SelectionDAG::SelectNodeTo(SDNode *N, unsigned TargetOpc,
                                        
   RemoveNodeFromCSEMaps(N);
   N->MorphNodeTo(ISD::BUILTIN_OP_END+TargetOpc);
-  N->setValueTypes(VTs, 2);
+  N->setValueTypes(VTs);
   N->setOperands(Op1, Op2, Op3, Op4, Op5);
   
   CSEMap.InsertNode(N, IP);   // Memoize the new node.

@@ -18,10 +18,16 @@ using namespace llvm;
 //===----------------------------------------------------------------------===//
 // SelectionDAGCSEMap::NodeID Implementation
 
+/// SetValueTypes - Value type lists are intern'd so we can represent them
+/// solely with their pointer.
+void SelectionDAGCSEMap::NodeID::SetValueTypes(SDVTList VTList) {
+  AddPointer(VTList.VTs);  
+}
+
 SelectionDAGCSEMap::NodeID::NodeID(SDNode *N) {
   SetOpcode(N->getOpcode());
   // Add the return value info.
-  SetValueTypes(N->value_begin());
+  SetValueTypes(N->getVTList());
   // Add the operand info.
   SetOperands(N->op_begin(), N->getNumOperands());
 
@@ -70,31 +76,31 @@ SelectionDAGCSEMap::NodeID::NodeID(SDNode *N) {
   }
 }
 
-SelectionDAGCSEMap::NodeID::NodeID(unsigned short ID, const void *VTList) {
+SelectionDAGCSEMap::NodeID::NodeID(unsigned short ID, SDVTList VTList) {
   SetOpcode(ID);
   SetValueTypes(VTList);
   SetOperands();
 }
-SelectionDAGCSEMap::NodeID::NodeID(unsigned short ID, const void *VTList,
+SelectionDAGCSEMap::NodeID::NodeID(unsigned short ID, SDVTList VTList,
                                    SDOperand Op) {
   SetOpcode(ID);
   SetValueTypes(VTList);
   SetOperands(Op);
 }
-SelectionDAGCSEMap::NodeID::NodeID(unsigned short ID, const void *VTList, 
+SelectionDAGCSEMap::NodeID::NodeID(unsigned short ID, SDVTList VTList, 
                                    SDOperand Op1, SDOperand Op2) {
   SetOpcode(ID);
   SetValueTypes(VTList);
   SetOperands(Op1, Op2);
 }
-SelectionDAGCSEMap::NodeID::NodeID(unsigned short ID, const void *VTList, 
+SelectionDAGCSEMap::NodeID::NodeID(unsigned short ID, SDVTList VTList, 
                                    SDOperand Op1, SDOperand Op2,
                                    SDOperand Op3) {
   SetOpcode(ID);
   SetValueTypes(VTList);
   SetOperands(Op1, Op2, Op3);
 }
-SelectionDAGCSEMap::NodeID::NodeID(unsigned short ID, const void *VTList, 
+SelectionDAGCSEMap::NodeID::NodeID(unsigned short ID, SDVTList VTList, 
                                    const SDOperand *OpList, unsigned N) {
   SetOpcode(ID);
   SetValueTypes(VTList);
