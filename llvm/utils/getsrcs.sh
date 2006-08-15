@@ -18,13 +18,11 @@
 # details.
 ##===----------------------------------------------------------------------===##
 
-if test $# -gt 1 ; then
-  if test "$1" = "-topdir" ; then
-    TOPDIR="$2"
-    shift; shift;
-  else
-    TOPDIR=`llvm-config --src-root`
-  fi
+if test "$1" = "-topdir" ; then
+  TOPDIR="$2"
+  shift; shift;
+else
+  TOPDIR=`llvm-config --src-root`
 fi
 
 if test -d "$TOPDIR" ; then
