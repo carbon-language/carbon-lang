@@ -504,7 +504,7 @@ void Parser::ParseStructUnionSpecifier(DeclSpec &DS) {
       }
     }
 
-    MatchRHSPunctuation(tok::r_brace, LBraceLoc, "{",diag::err_expected_rbrace);
+    MatchRHSPunctuation(tok::r_brace, LBraceLoc);
     
     // If attributes exist after struct contents, parse them.
     if (Tok.getKind() == tok::kw___attribute)
@@ -580,8 +580,7 @@ void Parser::ParseEnumSpecifier(DeclSpec &DS) {
     }
     
     // Eat the }.
-    MatchRHSPunctuation(tok::r_brace, LBraceLoc, "{", 
-                        diag::err_expected_rbrace);
+    MatchRHSPunctuation(tok::r_brace, LBraceLoc);
 
     // If attributes exist after the identifier list, parse them.
     if (Tok.getKind() == tok::kw___attribute)
@@ -886,8 +885,7 @@ void Parser::ParseParenDeclarator(Declarator &D) {
       
       ParseDeclaratorInternal(D);
       // Match the ')'.
-      MatchRHSPunctuation(tok::r_paren, StartLoc, "(",
-                          diag::err_expected_rparen);
+      MatchRHSPunctuation(tok::r_paren, StartLoc);
       return;
     }
     
@@ -1072,7 +1070,7 @@ void Parser::ParseBracketDeclarator(Declarator &D) {
     return;
   }
   
-  MatchRHSPunctuation(tok::r_square, StartLoc, "[", diag::err_expected_rsquare);
+  MatchRHSPunctuation(tok::r_square, StartLoc);
     
   // If C99 isn't enabled, emit an ext-warn if the arg list wasn't empty and if
   // it was not a constant expression.

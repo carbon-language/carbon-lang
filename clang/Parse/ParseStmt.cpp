@@ -501,7 +501,7 @@ void Parser::ParseForStatement() {
   }
   
   // Match the ')'.
-  MatchRHSPunctuation(tok::r_paren, LParenLoc, "(", diag::err_expected_rparen);
+  MatchRHSPunctuation(tok::r_paren, LParenLoc);
   
   // Read the body statement.
   ParseStatement();

@@ -541,7 +541,7 @@ Parser::ExprResult Parser::ParsePostfixExpressionSuffix(ExprResult LHS) {
       ConsumeBracket();
       ParseExpression();
       // Match the ']'.
-      MatchRHSPunctuation(tok::r_square, Loc, "[", diag::err_expected_rsquare);
+      MatchRHSPunctuation(tok::r_square, Loc);
       break;
       
     case tok::l_paren:     // p-e: p-e '(' argument-expression-list[opt] ')'
@@ -558,7 +558,7 @@ Parser::ExprResult Parser::ParsePostfixExpressionSuffix(ExprResult LHS) {
       }
         
       // Match the ')'.
-      MatchRHSPunctuation(tok::r_paren, Loc, "(", diag::err_expected_rparen);
+      MatchRHSPunctuation(tok::r_paren, Loc);
       break;
       
     case tok::arrow:       // postfix-expression: p-e '->' identifier
@@ -678,8 +678,7 @@ Parser::ExprResult Parser::ParseBuiltinPrimaryExpression() {
           return Res;
         }
 
-        MatchRHSPunctuation(tok::r_square, LSquareLoc, "[",
-                            diag::err_expected_rsquare);
+        MatchRHSPunctuation(tok::r_square, LSquareLoc);
       } else {
         break;
       }
@@ -708,8 +707,7 @@ Parser::ExprResult Parser::ParseBuiltinPrimaryExpression() {
     break;
   }      
   
-  MatchRHSPunctuation(tok::r_paren, LParenLoc, "(",
-                      diag::err_expected_rparen);
+  MatchRHSPunctuation(tok::r_paren, LParenLoc);
   
   // These can be followed by postfix-expr pieces because they are
   // primary-expressions.
@@ -763,7 +761,7 @@ Parser::ExprResult Parser::ParseParenExpression(ParenParseOption &ExprType) {
     ParseTypeName();
 
     // Match the ')'.
-    MatchRHSPunctuation(tok::r_paren, OpenLoc, "(", diag::err_expected_rparen);
+    MatchRHSPunctuation(tok::r_paren, OpenLoc);
 
     if (Tok.getKind() == tok::l_brace) {
       if (!getLang().C99)   // Compound literals don't exist in C90.
@@ -787,6 +785,6 @@ Parser::ExprResult Parser::ParseParenExpression(ParenParseOption &ExprType) {
   if (Result.isInvalid)
     SkipUntil(tok::r_paren);
   else
-    MatchRHSPunctuation(tok::r_paren, OpenLoc, "(", diag::err_expected_rparen);
+    MatchRHSPunctuation(tok::r_paren, OpenLoc);
   return Result;
 }

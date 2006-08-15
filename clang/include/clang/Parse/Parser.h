@@ -156,8 +156,7 @@ private:
   /// present.  If not present, it emits the specified diagnostic indicating
   /// that the parser failed to match the RHS of the token at LHSLoc.  LHSName
   /// should be the name of the unmatched LHS token.
-  void MatchRHSPunctuation(tok::TokenKind RHSTok, SourceLocation LHSLoc,
-                           const char *LHSName, unsigned Diag);
+  void MatchRHSPunctuation(tok::TokenKind RHSTok, SourceLocation LHSLoc);
   
   /// ExpectAndConsume - The parser expects that 'ExpectedTok' is next in the
   /// input.  If so, it is consumed and false is returned.

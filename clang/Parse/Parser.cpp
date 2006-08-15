@@ -44,13 +44,20 @@ void Parser::Diag(SourceLocation Loc, unsigned DiagID,
 /// present.  If not present, it emits the specified diagnostic indicating
 /// that the parser failed to match the RHS of the token at LHSLoc.  LHSName
 /// should be the name of the unmatched LHS token.
-void Parser::MatchRHSPunctuation(tok::TokenKind RHSTok, SourceLocation LHSLoc,
-                                 const char *LHSName, unsigned DiagID) {
+void Parser::MatchRHSPunctuation(tok::TokenKind RHSTok, SourceLocation LHSLoc) {
   
   if (Tok.getKind() == RHSTok) {
     ConsumeAnyToken();
   } else {
-    Diag(Tok, DiagID);
+    const char *LHSName = "unknown";
+    diag::kind DID = diag::err_parse_error;
+    switch (RHSTok) {
+    default: break;
+    case tok::r_paren : LHSName = "("; DID = diag::err_expected_rparen; break;
+    case tok::r_brace : LHSName = "{"; DID = diag::err_expected_rbrace; break;
+    case tok::r_square: LHSName = "["; DID = diag::err_expected_rsquare; break;
+    }
+    Diag(Tok, DID);
     Diag(LHSLoc, diag::err_matching, LHSName);
     SkipUntil(RHSTok);
   }
@@ -403,5 +410,5 @@ void Parser::ParseSimpleAsm() {
   
   // TODO: Diagnose: wide string literal in 'asm'
   
-  MatchRHSPunctuation(tok::r_paren, Loc, "(", diag::err_expected_rparen);
+  MatchRHSPunctuation(tok::r_paren, Loc);
 }

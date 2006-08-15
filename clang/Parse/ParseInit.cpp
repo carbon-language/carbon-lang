@@ -107,8 +107,7 @@ Parser::ExprResult Parser::ParseInitializerWithPotentialDesignator() {
         }
       }
       
-      MatchRHSPunctuation(tok::r_square, StartLoc, "[", 
-                          diag::err_expected_rsquare);
+      MatchRHSPunctuation(tok::r_square, StartLoc);
       break;
     }
     case tok::identifier: {
@@ -186,8 +185,7 @@ Parser::ExprResult Parser::ParseInitializer() {
   }
   
   // Match the '}'.
-  MatchRHSPunctuation(tok::r_brace, LBraceLoc, "{",
-                      diag::err_expected_rbrace);
+  MatchRHSPunctuation(tok::r_brace, LBraceLoc);
   return ExprResult(false);
 }
 
