@@ -70,9 +70,21 @@
   <a name="firstptr"><b>What is the first index of the GEP instruction?</b></a>
 </div>
 <div class="doc_text">
-  <p>Quick answer: Because its already present.</p> 
-  <p>Having understood the <a href="#deref">previous question</a>, a new 
-  question then arises:</p>
+  <p>Quick answer: The index stepping through the first operand.</p> 
+  <p>The confusion with the first index usually arises from thinking about 
+  the GetElementPtr instruction as if it was a C index operator. They aren't the
+  same. For example, when we write, in "C":</p>
+  <pre>
+  AType* Foo;
+  ...
+  X = Foo[1];</pre>
+  <p>it is natural to think that there is only one index, the constant value
+  <tt>1</tt>. This results from C allowing you to treat pointers and arrays as
+  equivalent. LLVM doesn't. In this example, Foo is a pointer. That pointer must
+  be indexed. To arrive at the same address location as the C code, you would
+  provide the GEP instruction with two indices. The first indexes through the
+  pointer, the second index the second element of the array.</p>
+  <p>Sometimes this question gets rephrased as:</p>
   <blockquote><i>Why is it okay to index through the first pointer, but 
       subsequent pointers won't be dereferenced?</i></blockquote> 
   <p>The answer is simply because memory does not have to be accessed to 
@@ -194,7 +206,7 @@
   %idx = getelementptr { [40 x int]* }* %MyVar, long 0, ubyte 0, long 0, long 17</pre>
   <p>In this example, we have a global variable, <tt>%MyVar</tt> that is a
   pointer to a structure containing a pointer to an array of 40 ints. The 
-  GEP instruction seems to be accessing the 18th integer of of the structure's
+  GEP instruction seems to be accessing the 18th integer of the structure's
   array of ints. However, this is actually an illegal GEP instruction. It 
   won't compile. The reason is that the pointer in the structure <i>must</i>
   be dereferenced in order to index into the array of 40 ints. Since the 
@@ -213,7 +225,7 @@
   ...
   %idx = getelementptr { [40 x int] }*, long 0, ubyte 0, long 17</pre>
   <p>then everything works fine. In this case, the structure does not contain a
-  pointer and the GEP instruction can index through the global variable pointer,
+  pointer and the GEP instruction can index through the global variable,
   into the first field of the structure and access the 18th <tt>int</tt> in the 
   array there.</p>
 </div>
