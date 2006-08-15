@@ -30,6 +30,15 @@ namespace llvm {
   class MachineDebugInfo;
   class MachineFunction;
 
+/// SDVTList - This represents a list of ValueType's that has been intern'd by
+/// a SelectionDAG.  Instances of this simple value class are returned by
+/// SelectionDAG::getVTList(...).
+///
+struct SDVTList {
+  const MVT::ValueType *VTs;
+  unsigned short NumVTs;
+};
+  
 /// SelectionDAG class - This is used to represent a portion of an LLVM function
 /// in a low-level Data Dependence DAG representation suitable for instruction
 /// selection.  This DAG is constructed as the first step of instruction
@@ -109,7 +118,34 @@ public:
   /// RemoveDeadNodes - This method deletes all unreachable nodes in the
   /// SelectionDAG.
   void RemoveDeadNodes();
-
+  
+  /// getVTList - Return an SDVTList that represents the list of values
+  /// specified.
+  SDVTList getVTList(MVT::ValueType VT);
+  SDVTList getVTList(MVT::ValueType VT1, MVT::ValueType VT2);
+  SDVTList getVTList(MVT::ValueType VT1, MVT::ValueType VT2,MVT::ValueType VT3);
+  SDVTList getVTList(const MVT::ValueType *VTs, unsigned NumVTs);
+  
+  /// getNodeValueTypes - These are obsolete, use getVTList instead.
+  const MVT::ValueType *getNodeValueTypes(MVT::ValueType VT) {
+    return getVTList(VT).VTs;
+  }
+  const MVT::ValueType *getNodeValueTypes(MVT::ValueType VT1, 
+                                          MVT::ValueType VT2) {
+    return getVTList(VT1, VT2).VTs;
+  }
+  const MVT::ValueType *getNodeValueTypes(MVT::ValueType VT1,MVT::ValueType VT2,
+                                          MVT::ValueType VT3) {
+    return getVTList(VT1, VT2, VT3).VTs;
+  }
+  const MVT::ValueType *getNodeValueTypes(std::vector<MVT::ValueType> &VTList) {
+    return getVTList(&VTList[0], VTList.size()).VTs;
+  }
+  
+  
+  //===----------------------------------------------------------------------===//
+  // Node creation methods.
+  //
   SDOperand getString(const std::string &Val);
   SDOperand getConstant(uint64_t Val, MVT::ValueType VT, bool isTarget = false);
   SDOperand getTargetConstant(uint64_t Val, MVT::ValueType VT) {
@@ -422,14 +458,6 @@ public:
 
   void dump() const;
 
-  /// getNodeValueTypes - Return a pointer to an intern'd representation of the
-  /// specified valuetype list.
-  MVT::ValueType *getNodeValueTypes(MVT::ValueType VT1);
-  MVT::ValueType *getNodeValueTypes(MVT::ValueType VT1, MVT::ValueType VT2);
-  MVT::ValueType *getNodeValueTypes(MVT::ValueType VT1, MVT::ValueType VT2,
-                                    MVT::ValueType VT3);
-  MVT::ValueType *getNodeValueTypes(std::vector<MVT::ValueType> &RetVals);
-  
 private:
   void RemoveNodeFromCSEMaps(SDNode *N);
   SDNode *AddNonLeafNodeToCSEMaps(SDNode *N);
