@@ -65,7 +65,7 @@ void Parser::MatchRHSPunctuation(tok::TokenKind RHSTok, SourceLocation LHSLoc,
 bool Parser::ExpectAndConsume(tok::TokenKind ExpectedTok, unsigned DiagID,
                               const char *Msg, tok::TokenKind SkipToTok) {
   if (Tok.getKind() == ExpectedTok) {
-    ConsumeToken();
+    ConsumeAnyToken();
     return false;
   }
   
