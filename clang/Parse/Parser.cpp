@@ -376,12 +376,28 @@ void Parser::ParseFunctionDefinition(Declarator &D) {
   ParseCompoundStatement();
 }
 
+/// ParseAsmStringLiteral - This is just a normal string-literal, but is not
+/// allowed to be a wide string, and is not subject to character translation.
+///
+/// [GNU] asm-string-literal:
+///         string-literal
+///
+void Parser::ParseAsmStringLiteral() {
+  if (Tok.getKind() != tok::string_literal) {
+    Diag(Tok, diag::err_expected_string_literal);
+    return;
+  }
+  
+  ExprResult Res = ParseStringLiteralExpression();
+  if (Res.isInvalid) return;
+  
+  // TODO: Diagnose: wide string literal in 'asm'
+}
+
 /// ParseSimpleAsm
 ///
 /// [GNU] simple-asm-expr:
 ///         'asm' '(' asm-string-literal ')'
-/// [GNU] asm-string-literal:
-///         string-literal
 ///
 void Parser::ParseSimpleAsm() {
   assert(Tok.getKind() == tok::kw_asm && "Not an asm!");
@@ -395,20 +411,7 @@ void Parser::ParseSimpleAsm() {
   SourceLocation Loc = Tok.getLocation();
   ConsumeParen();
   
-  if (Tok.getKind() != tok::string_literal) {
-    Diag(Tok, diag::err_expected_string_literal);
-    SkipUntil(tok::r_paren);
-    return;
-  }
-  
-  ExprResult Res = ParseStringLiteralExpression();
-  if (Res.isInvalid) {
-    Diag(Tok, diag::err_expected_string_literal);
-    SkipUntil(tok::r_paren);
-    return;
-  }
-  
-  // TODO: Diagnose: wide string literal in 'asm'
+  ParseAsmStringLiteral();
   
   MatchRHSPunctuation(tok::r_paren, Loc);
 }

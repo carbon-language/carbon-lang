@@ -238,6 +238,8 @@ DIAG(w_type_defaults_to_int, WARNING,
      "type defaults to 'int'")
 DIAG(w_no_declarators, WARNING,
      "declaration does not declare anything")
+DIAG(w_asm_qualifier_ignored, WARNING,
+     "ignored %s qualifier on asm")
 
 DIAG(ext_empty_source_file, EXTENSION,
      "ISO C forbids an empty source file")
@@ -330,6 +332,8 @@ DIAG(err_expected_colon, ERROR,
      "expected ':'")
 DIAG(err_expected_string_literal, ERROR,
      "expected string literal")
+DIAG(err_expected_asm_operand, ERROR,
+     "expected string literal or '[' for asm operand")
 
 /// err_matching - this is used as a continuation of a previous error, e.g. to 
 /// specify the '(' when we expected a ')'.  This should probably be some

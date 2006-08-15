@@ -205,6 +205,7 @@ private:
   void ParseDeclarationOrFunctionDefinition();
   void ParseFunctionDefinition(Declarator &D);
   void ParseSimpleAsm();
+  void ParseAsmStringLiteral();
   
   //===--------------------------------------------------------------------===//
   // C99 6.5: Expressions.
@@ -254,6 +255,8 @@ private:
   void ParseForStatement();
   void ParseGotoStatement();
   void ParseReturnStatement();
+  void ParseAsmStatement();
+  void ParseAsmOperandsOpt();
 
   //===--------------------------------------------------------------------===//
   // C99 6.7: Declarations.

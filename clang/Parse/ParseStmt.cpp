@@ -37,7 +37,7 @@ using namespace clang;
 /// [OBC]   objc-throw-statement         [TODO]
 /// [OBC]   objc-try-catch-statement     [TODO]
 /// [OBC]   objc-synchronized-statement  [TODO]
-/// [GNU]   asm-statement                [TODO]
+/// [GNU]   asm-statement
 /// [OMP]   openmp-construct             [TODO]
 ///
 ///       labeled-statement:
@@ -158,6 +158,11 @@ ParseNextStatement:
   case tok::kw_return:              // C99 6.8.6.4: return-statement
     ParseReturnStatement();
     SemiError = "return statement";
+    break;
+    
+  case tok::kw_asm:
+    ParseAsmStatement();
+    SemiError = "asm statement";
     break;
   }
   
@@ -541,5 +546,128 @@ void Parser::ParseReturnStatement() {
     ExprResult R = ParseExpression();
     if (R.isInvalid)   // Skip to the semicolon, but don't consume it.
       SkipUntil(tok::semi, false, true);
+  }
+}
+
+/// ParseAsmStatement - Parse a GNU extended asm statement.
+/// [GNU] asm-statement:
+///         'asm' type-qualifier[opt] '(' asm-argument ')' ';'
+///
+/// [GNU] asm-argument:
+///         asm-string-literal
+///         asm-string-literal ':' asm-operands[opt]
+///         asm-string-literal ':' asm-operands[opt] ':' asm-operands[opt]
+///         asm-string-literal ':' asm-operands[opt] ':' asm-operands[opt]
+///                 ':' asm-clobbers
+///
+/// [GNU] asm-clobbers:
+///         asm-string-literal
+///         asm-clobbers ',' asm-string-literal
+///
+void Parser::ParseAsmStatement() {
+  assert(Tok.getKind() == tok::kw_asm && "Not an asm stmt");
+  ConsumeToken();
+  
+  DeclSpec DS;
+  SourceLocation Loc = Tok.getLocation();
+  ParseTypeQualifierListOpt(DS);
+  
+  // GNU asms accept, but warn, about type-qualifiers other than volatile.
+  if (DS.TypeQualifiers & DeclSpec::TQ_const)
+    Diag(Loc, diag::w_asm_qualifier_ignored, "const");
+  if (DS.TypeQualifiers & DeclSpec::TQ_restrict)
+    Diag(Loc, diag::w_asm_qualifier_ignored, "restrict");
+  
+  // Remember if this was a volatile asm.
+  bool isVolatile = DS.TypeQualifiers & DeclSpec::TQ_volatile;
+  
+  if (Tok.getKind() != tok::l_paren) {
+    Diag(Tok, diag::err_expected_lparen_after, "asm");
+    SkipUntil(tok::r_paren);
+    return;
+  }
+  Loc = Tok.getLocation();
+  ConsumeParen();
+  
+  ParseAsmStringLiteral();
+  
+  // Parse Outputs, if present.
+  ParseAsmOperandsOpt();
+  
+  // Parse Inputs, if present.
+  ParseAsmOperandsOpt();
+  
+  // Parse the clobbers, if present.
+  if (Tok.getKind() == tok::colon) {
+    ConsumeToken();
+    
+    if (Tok.getKind() == tok::string_literal) {
+      // Parse the asm-string list for clobbers.
+      while (1) {
+        ParseAsmStringLiteral();
+
+        if (Tok.getKind() != tok::comma) break;
+        ConsumeToken();
+      }
+    }
+  }
+  
+  MatchRHSPunctuation(tok::r_paren, Loc);
+}
+
+/// ParseAsmOperands - Parse the asm-operands production as used by
+/// asm-statement.  We also parse a leading ':' token.  If the leading colon is
+/// not present, we do not parse anything.
+///
+/// [GNU] asm-operands:
+///         asm-operand
+///         asm-operands ',' asm-operand
+///
+/// [GNU] asm-operand:
+///         asm-string-literal '(' expression ')'
+///         '[' identifier ']' asm-string-literal '(' expression ')'
+///
+void Parser::ParseAsmOperandsOpt() {
+  // Only do anything if this operand is present.
+  if (Tok.getKind() != tok::colon) return;
+  ConsumeToken();
+  
+  // 'asm-operands' isn't present?
+  if (Tok.getKind() != tok::string_literal && Tok.getKind() != tok::l_square)
+    return;
+  
+  while (1) {
+    // Read the [id] if present.
+    if (Tok.getKind() == tok::l_square) {
+      SourceLocation Loc = Tok.getLocation();
+      ConsumeBracket();
+      
+      if (Tok.getKind() != tok::identifier) {
+        Diag(Tok, diag::err_expected_ident);
+        SkipUntil(tok::r_paren);
+        return;
+      }
+      MatchRHSPunctuation(tok::r_square, Loc);
+    }
+    
+    ParseAsmStringLiteral();
+
+    if (Tok.getKind() != tok::l_paren) {
+      Diag(Tok, diag::err_expected_lparen_after, "asm operand");
+      SkipUntil(tok::r_paren);
+      return;
+    }
+    
+    // Read the parenthesized expression.
+    ParenParseOption ExprTy = SimpleExpr;
+    ExprResult Res = ParseParenExpression(ExprTy);
+    if (Res.isInvalid) {
+      SkipUntil(tok::r_paren);
+      return;
+    }
+
+    // Eat the comma and continue parsing if it exists.
+    if (Tok.getKind() != tok::comma) return;
+    ConsumeToken();
   }
 }
