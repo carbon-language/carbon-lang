@@ -81,7 +81,7 @@
   <p>it is natural to think that there is only one index, the selection of the
   field <tt>F</tt>.  However, in this example, <tt>Foo</tt> is a pointer. That 
   pointer must be indexed explicitly in LLVM. C, on the other hand, indexs
-  through it ransparently.  To arrive at the same address location as the C 
+  through it transparently.  To arrive at the same address location as the C 
   code, you would provide the GEP instruction with two index operands. The 
   first operand indexes through the pointer; the second operand indexes the 
   field <tt>F</tt> of the structure, just as if you wrote:</p>
