@@ -56,13 +56,90 @@
   this leads to the following questions, all of which are answered in the
   following sections.</p>
   <ol>
+    <li><a href="firstptr">What is the first index of the GEP instruction?</a>
+    </li>
     <li><a href="extra_index">Why is the extra 0 index required?</a></li>
     <li><a href="deref">What is dereferenced by GEP?</a></li>
-    <li><a href="firstptr">Why can you index through the first pointer but not
-      subsequent ones?</a></li>
     <li><a href="lead0">Why don't GEP x,0,0,1 and GEP x,1 alias? </a></li>
     <li><a href="trail0">Why do GEP x,1,0,0 and GEP x,1 alias? </a></li>
   </ol>
+</div>
+
+<!-- *********************************************************************** -->
+<div class="doc_subsection">
+  <a name="firstptr"><b>What is the first index of the GEP instruction?</b></a>
+</div>
+<div class="doc_text">
+  <p>Quick answer: Because its already present.</p> 
+  <p>Having understood the <a href="#deref">previous question</a>, a new 
+  question then arises:</p>
+  <blockquote><i>Why is it okay to index through the first pointer, but 
+      subsequent pointers won't be dereferenced?</i></blockquote> 
+  <p>The answer is simply because memory does not have to be accessed to 
+  perform the computation. The first operand to the GEP instruction must be a 
+  value of a pointer type. The value of the pointer is provided directly to 
+  the GEP instruction without any need for accessing memory. It must, 
+  therefore be indexed like any other operand.  Consider this example:</p>
+  <pre>
+  struct munger_struct {
+    int f1;
+    int f2;
+  };
+  void munge(struct munger_struct *P)
+  {
+    P[0].f1 = P[1].f1 + P[2].f2;
+  }
+  ...
+  complex Array[3];
+  ...
+  munge(Array);</pre>
+  <p>In this "C" example, the front end compiler (llvm-gcc) will generate three
+  GEP instructions for the three indices through "P" in the assignment
+  statement.  The function argument <tt>P</tt> will be the first operand of each
+  of these GEP instructions.  The second operand will be the field offset into
+  the <tt>struct munger_struct</tt> type,  for either the <tt>f1</tt> or 
+  <tt>f2</tt> field. So, in LLVM assembly the <tt>munge</tt> function looks 
+  like:</p>
+  <pre>
+  void %munge(%struct.munger_struct* %P) {
+  entry:
+    %tmp = getelementptr %struct.munger_struct* %P, int 1, uint 0
+    %tmp = load int* %tmp
+    %tmp6 = getelementptr %struct.munger_struct* %P, int 2, uint 1
+    %tmp7 = load int* %tmp6
+    %tmp8 = add int %tmp7, %tmp
+    %tmp9 = getelementptr %struct.munger_struct* %P, int 0, uint 0
+    store int %tmp8, int* %tmp9
+    ret void
+  }</pre>
+  <p>In each case the first operand is the pointer through which the GEP
+  instruction starts. The same is true whether the first operand is an
+  argument, allocated memory, or a global variable. </p>
+  <p>To make this clear, let's consider a more obtuse example:</p>
+  <pre>
+  %MyVar = unintialized global int
+  ...
+  %idx1 = getelementptr int* %MyVar, long 0
+  %idx2 = getelementptr int* %MyVar, long 1
+  %idx3 = getelementptr int* %MyVar, long 2</pre>
+  <p>These GEP instructions are simply making address computations from the 
+  base address of <tt>MyVar</tt>.  They compute, as follows (using C syntax):
+  </p>
+  <ul>
+    <li> idx1 = (char*) &amp;MyVar + 0</li>
+    <li> idx2 = (char*) &amp;MyVar + 4</li>
+    <li> idx3 = (char*) &amp;MyVar + 8</li>
+  </ul>
+  <p>Since the type <tt>int</tt> is known to be four bytes long, the indices 
+  0, 1 and 2 translate into memory offsets of 0, 4, and 8, respectively. No 
+  memory is accessed to make these computations because the address of 
+  <tt>%MyVar</tt> is passed directly to the GEP instructions.</p>
+  <p>The obtuse part of this example is in the cases of <tt>%idx2</tt> and 
+  <tt>%idx3</tt>. They result in the computation of addresses that point to
+  memory past the end of the <tt>%MyVar</tt> global, which is only one
+  <tt>int</tt> long, not three <tt>int</tt>s long.  While this is legal in LLVM,
+  it is inadvisable because any load or store with the pointer that results 
+  from these GEP instructions would produce undefined results.</p>
 </div>
 
 <!-- *********************************************************************** -->
@@ -81,7 +158,7 @@
   <p>The GEP above yields an <tt>int*</tt> by indexing the <tt>int</tt> typed 
   field of the structure <tt>%MyStruct</tt>. When people first look at it, they 
   wonder why the <tt>long 0</tt> index is needed. However, a closer inspection 
-  of how globals and GEPs work reveals the need. Becoming aware of the following 
+  of how globals and GEPs work reveals the need. Becoming aware of the following
   facts will dispell the confusion:</p>
   <ol>
     <li>The type of <tt>%MyStruct</tt> is <i>not</i> <tt>{ float*, int }</tt> 
@@ -91,8 +168,11 @@
     <li>Point #1 is evidenced by noticing the type of the first operand of 
     the GEP instruction (<tt>%MyStruct</tt>) which is 
     <tt>{ float*, int }*</tt>.</li>
-    <li>The first index, <tt>long 0</tt> is required to dereference the
-    pointer associated with <tt>%MyStruct</tt>.</li>
+    <li>The first index, <tt>long 0</tt> is required to step over the global
+    variable <tt>%MyStruct</tt>.  Since the first argument to the GEP
+    instruction must always be a value of pointer type, the first index 
+    steps through that pointer. A value of 0 means 0 elements offset from that
+    pointer.</li>
     <li>The second index, <tt>ubyte 1</tt> selects the second field of the
     structure (the <tt>int</tt>). </li>
   </ol>
@@ -105,8 +185,9 @@
 <div class="doc_text">
   <p>Quick answer: nothing.</p> 
   <p>The GetElementPtr instruction dereferences nothing. That is, it doesn't
-  access memory in any way. That's what the Load instruction is for. GEP is
-  only involved in the computation of addresses. For example, consider this:</p>
+  access memory in any way. That's what the Load and Store instructions are for.
+  GEP is only involved in the computation of addresses. For example, consider 
+  this:</p>
   <pre>
   %MyVar = uninitialized global { [40 x int ]* }
   ...
@@ -139,45 +220,6 @@
 
 <!-- *********************************************************************** -->
 <div class="doc_subsection">
-  <a name="firstptr"><b>Why can you index through the first pointer?</b></a>
-</div>
-<div class="doc_text">
-  <p>Quick answer: Because its already present.</p> 
-  <p>Having understood the <a href="#deref">previous question</a>, a new 
-  question then arises:</p>
-  <blockquote><i>Why is it okay to index through the first pointer, but 
-      subsequent pointers won't be dereferenced?</i></blockquote> 
-  <p>The answer is simply because
-  memory does not have to be accessed to perform the computation. The first
-  operand to the GEP instruction must be a value of a pointer type. The value 
-  of the pointer is provided directly to the GEP instruction without any need 
-  for accessing memory. It must, therefore be indexed like any other operand.
-  Consider this example:</p>
-  <pre>
-  %MyVar = unintialized global int
-  ...
-  %idx1 = getelementptr int* %MyVar, long 0
-  %idx2 = getelementptr int* %MyVar, long 1
-  %idx3 = getelementptr int* %MyVar, long 2</pre>
-  <p>These GEP instructions are simply making address computations from the 
-  base address of <tt>MyVar</tt>.  They compute, as follows (using C syntax):</p>
-  <ul>
-    <li> idx1 = &amp;MyVar + 0</li>
-    <li> idx2 = &amp;MyVar + 4</li>
-    <li> idx3 = &amp;MyVar + 8</li>
-  </ul>
-  <p>Since the type <tt>int</tt> is known to be four bytes long, the indices 
-  0, 1 and 2 translate into memory offsets of 0, 4, and 8, respectively. No 
-  memory is accessed to make these computations because the address of 
-  <tt>%MyVar</tt> is passed directly to the GEP instructions.</p>
-  <p>Note that the cases of <tt>%idx2</tt> and <tt>%idx3</tt> are a bit silly. 
-  They are computing addresses of something of unknown type (and thus
-  potentially breaking type safety) because <tt>%MyVar</tt> is only one 
-  integer long.</p>
-</div>
-
-<!-- *********************************************************************** -->
-<div class="doc_subsection">
   <a name="lead0"><b>Why don't GEP x,0,0,1 and GEP x,1 alias?</b></a>
 </div>
 <div class="doc_text">
@@ -187,7 +229,7 @@
   computation diverges with that index. Consider this example:</p>
   <pre>
   %MyVar = global { [10 x int ] }
-  %idx1 = getlementptr { [10 x int ] }* %MyVar, long 0, byte 0, long 1
+  %idx1 = getlementptr { [10 x int ] }* %MyVar, long 0, ubyte 0, long 1
   %idx2 = getlementptr { [10 x int ] }* %MyVar, long 1</pre>
   <p>In this example, <tt>idx1</tt> computes the address of the second integer
   in the array that is in the structure in %MyVar, that is <tt>MyVar+4</tt>. The 
@@ -210,7 +252,7 @@
   the type. Consider this example:</p>
   <pre>
   %MyVar = global { [10 x int ] }
-  %idx1 = getlementptr { [10 x int ] }* %MyVar, long 1, byte 0, long 0
+  %idx1 = getlementptr { [10 x int ] }* %MyVar, long 1, ubyte 0, long 0
   %idx2 = getlementptr { [10 x int ] }* %MyVar, long 1</pre>
   <p>In this example, the value of <tt>%idx1</tt> is <tt>%MyVar+40</tt> and
   its type is <tt>int*</tt>. The value of <tt>%idx2</tt> is also 
