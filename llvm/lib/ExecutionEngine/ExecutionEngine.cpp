@@ -35,18 +35,32 @@ namespace {
 ExecutionEngine::EECtorFn ExecutionEngine::JITCtor = 0;
 ExecutionEngine::EECtorFn ExecutionEngine::InterpCtor = 0;
 
-ExecutionEngine::ExecutionEngine(ModuleProvider *P) :
-  CurMod(*P->getModule()), MP(P) {
+ExecutionEngine::ExecutionEngine(ModuleProvider *P) {
+  Modules.push_back(P);
   assert(P && "ModuleProvider is null?");
 }
 
-ExecutionEngine::ExecutionEngine(Module *M) : CurMod(*M), MP(0) {
+ExecutionEngine::ExecutionEngine(Module *M) {
   assert(M && "Module is null?");
+  Modules.push_back(new ExistingModuleProvider(M));
 }
 
 ExecutionEngine::~ExecutionEngine() {
-  delete MP;
+  for (unsigned i = 0, e = Modules.size(); i != e; ++i)
+    delete Modules[i];
 }
+
+/// FindFunctionNamed - Search all of the active modules to find the one that
+/// defines FnName.  This is very slow operation and shouldn't be used for
+/// general code.
+Function *ExecutionEngine::FindFunctionNamed(const char *FnName) {
+  for (unsigned i = 0, e = Modules.size(); i != e; ++i) {
+    if (Function *F = Modules[i]->getModule()->getNamedFunction(FnName))
+      return F;
+  }
+  return 0;
+}
+
 
 /// addGlobalMapping - Tell the execution engine that the specified global is
 /// at the specified location.  This is used internally as functions are JIT'd
@@ -168,37 +182,43 @@ static void *CreateArgv(ExecutionEngine *EE,
 
 
 /// runStaticConstructorsDestructors - This method is used to execute all of
-/// the static constructors or destructors for a module, depending on the
+/// the static constructors or destructors for a program, depending on the
 /// value of isDtors.
 void ExecutionEngine::runStaticConstructorsDestructors(bool isDtors) {
   const char *Name = isDtors ? "llvm.global_dtors" : "llvm.global_ctors";
-  GlobalVariable *GV = CurMod.getNamedGlobal(Name);
-
-  // If this global has internal linkage, or if it has a use, then it must be
-  // an old-style (llvmgcc3) static ctor with __main linked in and in use.  If
-  // this is the case, don't execute any of the global ctors, __main will do it.
-  if (!GV || GV->isExternal() || GV->hasInternalLinkage()) return;
   
-  // Should be an array of '{ int, void ()* }' structs.  The first value is the
-  // init priority, which we ignore.
-  ConstantArray *InitList = dyn_cast<ConstantArray>(GV->getInitializer());
-  if (!InitList) return;
-  for (unsigned i = 0, e = InitList->getNumOperands(); i != e; ++i)
-    if (ConstantStruct *CS = dyn_cast<ConstantStruct>(InitList->getOperand(i))){
-      if (CS->getNumOperands() != 2) return;  // Not array of 2-element structs.
+  // Execute global ctors/dtors for each module in the program.
+  for (unsigned m = 0, e = Modules.size(); m != e; ++m) {
+    GlobalVariable *GV = Modules[m]->getModule()->getNamedGlobal(Name);
+
+    // If this global has internal linkage, or if it has a use, then it must be
+    // an old-style (llvmgcc3) static ctor with __main linked in and in use.  If
+    // this is the case, don't execute any of the global ctors, __main will do
+    // it.
+    if (!GV || GV->isExternal() || GV->hasInternalLinkage()) continue;
+  
+    // Should be an array of '{ int, void ()* }' structs.  The first value is
+    // the init priority, which we ignore.
+    ConstantArray *InitList = dyn_cast<ConstantArray>(GV->getInitializer());
+    if (!InitList) continue;
+    for (unsigned i = 0, e = InitList->getNumOperands(); i != e; ++i)
+      if (ConstantStruct *CS = 
+          dyn_cast<ConstantStruct>(InitList->getOperand(i))) {
+        if (CS->getNumOperands() != 2) break; // Not array of 2-element structs.
       
-      Constant *FP = CS->getOperand(1);
-      if (FP->isNullValue())
-        return;  // Found a null terminator, exit.
+        Constant *FP = CS->getOperand(1);
+        if (FP->isNullValue())
+          break;  // Found a null terminator, exit.
       
-      if (ConstantExpr *CE = dyn_cast<ConstantExpr>(FP))
-        if (CE->getOpcode() == Instruction::Cast)
-          FP = CE->getOperand(0);
-      if (Function *F = dyn_cast<Function>(FP)) {
-        // Execute the ctor/dtor function!
-        runFunction(F, std::vector<GenericValue>());
+        if (ConstantExpr *CE = dyn_cast<ConstantExpr>(FP))
+          if (CE->getOpcode() == Instruction::Cast)
+            FP = CE->getOperand(0);
+        if (Function *F = dyn_cast<Function>(FP)) {
+          // Execute the ctor/dtor function!
+          runFunction(F, std::vector<GenericValue>());
+        }
       }
-    }
+  }
 }
 
 /// runFunctionAsMain - This is a helper function which wraps runFunction to
@@ -610,36 +630,110 @@ void ExecutionEngine::emitGlobals() {
   const TargetData *TD = getTargetData();
 
   // Loop over all of the global variables in the program, allocating the memory
-  // to hold them.
-  Module &M = getModule();
-  for (Module::const_global_iterator I = M.global_begin(), E = M.global_end();
-       I != E; ++I)
-    if (!I->isExternal()) {
-      // Get the type of the global...
-      const Type *Ty = I->getType()->getElementType();
+  // to hold them.  If there is more than one module, do a prepass over globals
+  // to figure out how the different modules should link together.
+  //
+  std::map<std::pair<std::string, const Type*>,
+           const GlobalValue*> LinkedGlobalsMap;
 
-      // Allocate some memory for it!
-      unsigned Size = TD->getTypeSize(Ty);
-      addGlobalMapping(I, new char[Size]);
-    } else {
-      // External variable reference. Try to use the dynamic loader to
-      // get a pointer to it.
-      if (void *SymAddr = sys::DynamicLibrary::SearchForAddressOfSymbol(
-                            I->getName().c_str()))
-        addGlobalMapping(I, SymAddr);
-      else {
-        std::cerr << "Could not resolve external global address: "
-                  << I->getName() << "\n";
-        abort();
+  if (Modules.size() != 1) {
+    for (unsigned m = 0, e = Modules.size(); m != e; ++m) {
+      Module &M = *Modules[m]->getModule();
+      for (Module::const_global_iterator I = M.global_begin(),
+           E = M.global_end(); I != E; ++I) {
+        const GlobalValue *GV = I;
+        if (GV->hasInternalLinkage() || GV->isExternal() ||
+            GV->hasAppendingLinkage() || !GV->hasName())
+          continue;// Ignore external globals and globals with internal linkage.
+          
+        const GlobalValue *&GVEntry = 
+          LinkedGlobalsMap[std::make_pair(GV->getName(), GV->getType())];
+
+        // If this is the first time we've seen this global, it is the canonical
+        // version.
+        if (!GVEntry) {
+          GVEntry = GV;
+          continue;
+        }
+        
+        // If the existing global is strong, never replace it.
+        if (GVEntry->hasExternalLinkage())
+          continue;
+        
+        // Otherwise, we know it's linkonce/weak, replace it if this is a strong
+        // symbol.
+        if (GV->hasExternalLinkage())
+          GVEntry = GV;
       }
     }
+  }
+  
+  std::vector<const GlobalValue*> NonCanonicalGlobals;
+  for (unsigned m = 0, e = Modules.size(); m != e; ++m) {
+    Module &M = *Modules[m]->getModule();
+    for (Module::const_global_iterator I = M.global_begin(), E = M.global_end();
+         I != E; ++I) {
+      // In the multi-module case, see what this global maps to.
+      if (!LinkedGlobalsMap.empty()) {
+        if (const GlobalValue *GVEntry = 
+              LinkedGlobalsMap[std::make_pair(I->getName(), I->getType())]) {
+          // If something else is the canonical global, ignore this one.
+          if (GVEntry != &*I) {
+            NonCanonicalGlobals.push_back(I);
+            continue;
+          }
+        }
+      }
+      
+      if (!I->isExternal()) {
+        // Get the type of the global.
+        const Type *Ty = I->getType()->getElementType();
 
-  // Now that all of the globals are set up in memory, loop through them all and
-  // initialize their contents.
-  for (Module::const_global_iterator I = M.global_begin(), E = M.global_end();
-       I != E; ++I)
-    if (!I->isExternal())
-      EmitGlobalVariable(I);
+        // Allocate some memory for it!
+        unsigned Size = TD->getTypeSize(Ty);
+        addGlobalMapping(I, new char[Size]);
+      } else {
+        // External variable reference. Try to use the dynamic loader to
+        // get a pointer to it.
+        if (void *SymAddr =
+            sys::DynamicLibrary::SearchForAddressOfSymbol(I->getName().c_str()))
+          addGlobalMapping(I, SymAddr);
+        else {
+          std::cerr << "Could not resolve external global address: "
+                    << I->getName() << "\n";
+          abort();
+        }
+      }
+    }
+    
+    // If there are multiple modules, map the non-canonical globals to their
+    // canonical location.
+    if (!NonCanonicalGlobals.empty()) {
+      for (unsigned i = 0, e = NonCanonicalGlobals.size(); i != e; ++i) {
+        const GlobalValue *GV = NonCanonicalGlobals[i];
+        const GlobalValue *CGV =
+          LinkedGlobalsMap[std::make_pair(GV->getName(), GV->getType())];
+        void *Ptr = getPointerToGlobalIfAvailable(CGV);
+        assert(Ptr && "Canonical global wasn't codegen'd!");
+        addGlobalMapping(GV, getPointerToGlobalIfAvailable(CGV));
+      }
+    }
+    
+    // Now that all of the globals are set up in memory, loop through them all and
+    // initialize their contents.
+    for (Module::const_global_iterator I = M.global_begin(), E = M.global_end();
+         I != E; ++I) {
+      if (!I->isExternal()) {
+        if (!LinkedGlobalsMap.empty()) {
+          if (const GlobalValue *GVEntry = 
+                LinkedGlobalsMap[std::make_pair(I->getName(), I->getType())])
+            if (GVEntry != &*I)  // Not the canonical variable.
+              continue;
+        }
+        EmitGlobalVariable(I);
+      }
+    }
+  }
 }
 
 // EmitGlobalVariable - This method emits the specified global variable to the

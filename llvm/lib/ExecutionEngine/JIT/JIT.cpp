@@ -263,8 +263,19 @@ void *JIT::getPointerToFunction(Function *F) {
   if (void *Addr = getPointerToGlobalIfAvailable(F))
     return Addr;   // Check if function already code gen'd
 
-  // Make sure we read in the function if it exists in this Module
+  // Make sure we read in the function if it exists in this Module.
   if (F->hasNotBeenReadFromBytecode()) {
+    // Determine the module provider this function is provided by.
+    Module *M = F->getParent();
+    ModuleProvider *MP = 0;
+    for (unsigned i = 0, e = Modules.size(); i != e; ++i) {
+      if (Modules[i]->getModule() == M) {
+        MP = Modules[i];
+        break;
+      }
+    }
+    assert(MP && "Function isn't in a module we know about!");
+    
     std::string ErrorMsg;
     if (MP->materializeFunction(F, &ErrorMsg)) {
       std::cerr << "Error reading function '" << F->getName()

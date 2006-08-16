@@ -20,6 +20,7 @@
 #include <cassert>
 #include <string>
 #include "llvm/System/Mutex.h"
+#include "llvm/ADT/SmallVector.h"
 
 namespace llvm {
 
@@ -60,14 +61,13 @@ public:
 
 
 class ExecutionEngine {
-  Module &CurMod;
   const TargetData *TD;
-
   ExecutionEngineState state;
-
 protected:
-  ModuleProvider *MP;
-
+  /// Modules - This is a list of ModuleProvider's that we are JIT'ing from.  We
+  /// use a smallvector to optimize for the case where there is only one module.
+  SmallVector<ModuleProvider*, 1> Modules;
+  
   void setTargetData(const TargetData *td) {
     TD = td;
   }
@@ -88,9 +88,14 @@ public:
   ExecutionEngine(Module *M);
   virtual ~ExecutionEngine();
 
-  Module &getModule() const { return CurMod; }
+  //Module &getModule() const { return CurMod; }
   const TargetData *getTargetData() const { return TD; }
 
+  /// FindFunctionNamed - Search all of the active modules to find the one that
+  /// defines FnName.  This is very slow operation and shouldn't be used for
+  /// general code.
+  Function *FindFunctionNamed(const char *FnName);
+  
   /// create - This is the factory method for creating an execution engine which
   /// is appropriate for the current machine.
   static ExecutionEngine *create(ModuleProvider *MP,

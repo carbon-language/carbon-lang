@@ -972,8 +972,7 @@ MachineCodeEmitter *JIT::createEmitter(JIT &jit) {
 // resolve their addresses at runtime, and this is the way to do it.
 extern "C" {
   void *getPointerToNamedFunction(const char *Name) {
-    Module &M = TheJIT->getModule();
-    if (Function *F = M.getNamedFunction(Name))
+    if (Function *F = TheJIT->FindFunctionNamed(Name))
       return TheJIT->getPointerToFunction(F);
     return TheJIT->getPointerToNamedFunction(Name);
   }
