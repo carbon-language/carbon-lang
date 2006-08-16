@@ -117,7 +117,7 @@ $NOTEST=0;
 $NORUNNINGTESTS=0;
 $MAKECMD="make";
 $SUBMITSERVER = "llvm.org";
-$SUBMITSCRIPT = "/nightlytest/NightlyTestAccept2.cgi";
+$SUBMITSCRIPT = "/nightlytest/NightlyTestAccept.cgi";
 
 while (scalar(@ARGV) and ($_ = $ARGV[0], /^[-+]/)) {
   shift;
@@ -824,7 +824,7 @@ sub TestDirectory {
   # Create a list of the tests which were run...
   #
   system "egrep 'TEST-(PASS|FAIL)' < $ProgramTestLog ".
-         "| sort > $Prefix-$SubDir-Tests.txt";
+         "| sort > $Prefix-multisourceprogramstable.txt";
   }
   $ProgramsTable = ReadFile "report.nightly.csv";
 
@@ -838,36 +838,31 @@ if (!$BuildError) {
   }
   ($SingleSourceProgramsTable, $llcbeta_options) = 
     TestDirectory("SingleSource");
-  WriteFile "$Prefix-SingleSource-Performance.txt", $SingleSourceProgramsTable;
+  WriteFile "$Prefix-singlesourceprogramstable.txt", $SingleSourceProgramsTable;
   if ( $VERBOSE ) {
      print "MultiSource TEST STAGE\n";
   }
   ($MultiSourceProgramsTable, $llcbeta_options) = TestDirectory("MultiSource");
-  WriteFile "$Prefix-MultiSource-Performance.txt", $MultiSourceProgramsTable;
+  WriteFile "$Prefix-multisourceprogramstable.txt", $MultiSourceProgramsTable;
   if ( ! $NOEXTERNALS ) {
     if ( $VERBOSE ) {
       print "External TEST STAGE\n";
     }
     ($ExternalProgramsTable, $llcbeta_options) = TestDirectory("External");
-    WriteFile "$Prefix-External-Performance.txt", $ExternalProgramsTable;
-    system "cat $Prefix-SingleSource-Tests.txt " . 
-               "$Prefix-MultiSource-Tests.txt ".
-               "$Prefix-External-Tests.txt | sort > $Prefix-Tests.txt";
-    system "cat $Prefix-SingleSource-Performance.txt " . 
-               "$Prefix-MultiSource-Performance.txt ".
-               "$Prefix-External-Performance.txt | sort > $Prefix-Performance.txt";
+    WriteFile "$Prefix-externalprogramstable.txt", $ExternalProgramsTable;
+    system "cat $Prefix-singlesourceprogramstable.txt " . 
+               "$Prefix-multisourceprogramstable.txt ".
+               "$Prefix-externalprogramstable.txt | sort > $Prefix-Tests.txt";
   } else {
     $ExternalProgramsTable = "External TEST STAGE SKIPPED\n";
     if ( $VERBOSE ) {
       print "External TEST STAGE SKIPPED\n";
     }
-    system "cat $Prefix-SingleSource-Tests.txt " . 
-               "$Prefix-MultiSource-Tests.txt ".
+    system "cat $Prefix-singlesourceprogramstable.txt " . 
+               "$Prefix-multisourceprogramstable.txt ".
                " | sort > $Prefix-Tests.txt";
-    system "cat $Prefix-SingleSource-Performance.txt " . 
-               "$Prefix-MultiSource-Performance.txt ".
-               " | sort > $Prefix-Performance.txt";
   }
+  WriteFile "$Prefix-externalprogramstable.txt", $ExternalProgramsTable;
 }
 
 ##############################################################
@@ -877,8 +872,9 @@ if (!$BuildError) {
 #
 #
 ##############################################################
-my $dejagnu_test_list = ReadFile "$Prefix-Tests.txt";
-my @DEJAGNU = split "\n", $dejagnu_test_list;
+my $dejagnu = ReadFile $DejagnuSum;
+my @DEJAGNU = split "\n", $dejagnu;
+my $dejagnu_test_list="";
 
 my $passes="",
 my $fails="";
@@ -888,12 +884,15 @@ if(!$NODEJAGNU) {
   for ($x=0; $x<@DEJAGNU; $x++) {
     if ($DEJAGNU[$x] =~ m/^PASS:/) {
       $passes.="$DEJAGNU[$x]\n";
+      $dejagnu_test_list.="$DEJAGNU[$x]\n";
     }
     elsif ($DEJAGNU[$x] =~ m/^FAIL:/) {
       $fails.="$DEJAGNU[$x]\n";
+      $dejagnu_test_list.="$DEJAGNU[$x]\n";
     }
     elsif ($DEJAGNU[$x] =~ m/^XFAIL:/) {
       $xfails.="$DEJAGNU[$x]\n";
+      $dejagnu_test_list.="$DEJAGNU[$x]\n";
     }
   }
 }
@@ -983,6 +982,8 @@ if ($GCCPATH ne "") {
 }
 @GCC_VERSION = split '\n', $gcc_version_long;
 my $gcc_version = $GCC_VERSION[0];
+
+my $all_tests = ReadFile "$Prefix-Tests.txt";
 
 ##############################################################
 #
