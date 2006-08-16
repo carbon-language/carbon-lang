@@ -2515,7 +2515,7 @@ TargetLowering::LowerCallTo(SDOperand Chain, const Type *RetTy, bool isVarArg,
                             unsigned CallingConv, bool isTailCall, 
                             SDOperand Callee,
                             ArgListTy &Args, SelectionDAG &DAG) {
-  std::vector<SDOperand> Ops;
+  SmallVector<SDOperand, 32> Ops;
   Ops.push_back(Chain);   // Op#0 - Chain
   Ops.push_back(DAG.getConstant(CallingConv, getPointerTy())); // Op#1 - CC
   Ops.push_back(DAG.getConstant(isVarArg, getPointerTy()));    // Op#2 - VarArg
@@ -2592,7 +2592,7 @@ TargetLowering::LowerCallTo(SDOperand Chain, const Type *RetTy, bool isVarArg,
   }
   
   // Figure out the result value types.
-  std::vector<MVT::ValueType> RetTys;
+  SmallVector<MVT::ValueType, 4> RetTys;
 
   if (RetTy != Type::VoidTy) {
     MVT::ValueType VT = getValueType(RetTy);
@@ -2636,8 +2636,9 @@ TargetLowering::LowerCallTo(SDOperand Chain, const Type *RetTy, bool isVarArg,
   RetTys.push_back(MVT::Other);  // Always has a chain.
   
   // Finally, create the CALL node.
-  SDOperand Res = DAG.getNode(ISD::CALL, DAG.getNodeValueTypes(RetTys),
-                              RetTys.size(), &Ops[0], Ops.size());
+  SDOperand Res = DAG.getNode(ISD::CALL,
+                              DAG.getVTList(&RetTys[0], RetTys.size()),
+                              &Ops[0], Ops.size());
   
   // This returns a pair of operands.  The first element is the
   // return value for the function (if RetTy is not VoidTy).  The second

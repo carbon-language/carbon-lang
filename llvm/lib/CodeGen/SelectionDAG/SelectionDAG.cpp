@@ -1459,26 +1459,21 @@ SDOperand SelectionDAG::getVecLoad(unsigned Count, MVT::ValueType EVT,
                                    SDOperand SV) {
   SDOperand Ops[] = { Chain, Ptr, SV, getConstant(Count, MVT::i32), 
                       getValueType(EVT) };
-  // Add token chain.
-  const MVT::ValueType *VTs = getNodeValueTypes(MVT::Vector, MVT::Other);
-  return getNode(ISD::VLOAD, VTs, 2, Ops, 5);
+  return getNode(ISD::VLOAD, getVTList(MVT::Vector, MVT::Other), Ops, 5);
 }
 
 SDOperand SelectionDAG::getExtLoad(unsigned Opcode, MVT::ValueType VT,
                                    SDOperand Chain, SDOperand Ptr, SDOperand SV,
                                    MVT::ValueType EVT) {
   SDOperand Ops[] = { Chain, Ptr, SV, getValueType(EVT) };
-  const MVT::ValueType *VTs = getNodeValueTypes(VT, MVT::Other);
-  return getNode(Opcode, VTs, 2, Ops, 4);
+  return getNode(Opcode, getVTList(VT, MVT::Other), Ops, 4);
 }
 
 SDOperand SelectionDAG::getVAArg(MVT::ValueType VT,
                                  SDOperand Chain, SDOperand Ptr,
                                  SDOperand SV) {
   SDOperand Ops[] = { Chain, Ptr, SV };
-  // Add token chain.
-  const MVT::ValueType *VTs = getNodeValueTypes(VT, MVT::Other);
-  return getNode(ISD::VAARG, VTs, 2, Ops, 3);
+  return getNode(ISD::VAARG, getVTList(VT, MVT::Other), Ops, 3);
 }
 
 SDOperand SelectionDAG::getNode(unsigned Opcode, MVT::ValueType VT,
@@ -1562,27 +1557,34 @@ SDOperand SelectionDAG::getNode(unsigned Opcode,
                                 const SDOperand *Ops, unsigned NumOps) {
   if (NumVTs == 1)
     return getNode(Opcode, VTs[0], Ops, NumOps);
+  return getNode(Opcode, makeVTList(VTs, NumVTs), Ops, NumOps);
+}  
+  
+SDOperand SelectionDAG::getNode(unsigned Opcode, SDVTList VTList,
+                                const SDOperand *Ops, unsigned NumOps) {
+  if (VTList.NumVTs == 1)
+    return getNode(Opcode, VTList.VTs[0], Ops, NumOps);
 
   switch (Opcode) {
   case ISD::EXTLOAD:
   case ISD::SEXTLOAD:
   case ISD::ZEXTLOAD: {
     MVT::ValueType EVT = cast<VTSDNode>(Ops[3])->getVT();
-    assert(NumOps == 4 && NumVTs == 2 && "Bad *EXTLOAD!");
+    assert(NumOps == 4 && VTList.NumVTs == 2 && "Bad *EXTLOAD!");
     // If they are asking for an extending load from/to the same thing, return a
     // normal load.
-    if (VTs[0] == EVT)
-      return getLoad(VTs[0], Ops[0], Ops[1], Ops[2]);
-    if (MVT::isVector(VTs[0])) {
-      assert(EVT == MVT::getVectorBaseType(VTs[0]) &&
+    if (VTList.VTs[0] == EVT)
+      return getLoad(VTList.VTs[0], Ops[0], Ops[1], Ops[2]);
+    if (MVT::isVector(VTList.VTs[0])) {
+      assert(EVT == MVT::getVectorBaseType(VTList.VTs[0]) &&
              "Invalid vector extload!");
     } else {
-      assert(EVT < VTs[0] &&
+      assert(EVT < VTList.VTs[0] &&
              "Should only be an extending load, not truncating!");
     }
-    assert((Opcode == ISD::EXTLOAD || MVT::isInteger(VTs[0])) &&
+    assert((Opcode == ISD::EXTLOAD || MVT::isInteger(VTList.VTs[0])) &&
            "Cannot sign/zero extend a FP/Vector load!");
-    assert(MVT::isInteger(VTs[0]) == MVT::isInteger(EVT) &&
+    assert(MVT::isInteger(VTList.VTs[0]) == MVT::isInteger(EVT) &&
            "Cannot convert from FP to Int or Int -> FP!");
     break;
   }
@@ -1611,8 +1613,7 @@ SDOperand SelectionDAG::getNode(unsigned Opcode,
 
   // Memoize the node unless it returns a flag.
   SDNode *N;
-  SDVTList VTList = makeVTList(VTs, NumVTs);
-  if (VTs[NumVTs-1] != MVT::Flag) {
+  if (VTList.VTs[VTList.NumVTs-1] != MVT::Flag) {
     SelectionDAGCSEMap::NodeID ID;
     ID.SetOpcode(Opcode);
     ID.SetValueTypes(VTList);
