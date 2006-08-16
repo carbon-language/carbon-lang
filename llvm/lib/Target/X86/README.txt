@@ -709,3 +709,16 @@ float uint32_2_float( unsigned u ) {
 
 When using fastcc abi, align stack slot of argument of type double on 8 byte
 boundary to improve performance.
+
+//===---------------------------------------------------------------------===//
+
+Codegen:
+
+if ((variable == 4) || (variable == 6)) { stuff }
+
+as:
+
+or eax, 2
+cmp eax, 6
+jz label
+
