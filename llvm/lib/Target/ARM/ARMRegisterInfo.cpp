@@ -58,13 +58,21 @@ MachineInstr *ARMRegisterInfo::foldMemoryOperand(MachineInstr* MI,
 }
 
 const unsigned* ARMRegisterInfo::getCalleeSaveRegs() const {
-  static const unsigned CalleeSaveRegs[] = { 0 };
+  static const unsigned CalleeSaveRegs[] = {
+    ARM::R4,  ARM::R5, ARM::R6,  ARM::R7,
+    ARM::R8,  ARM::R9, ARM::R10, ARM::R11,
+    ARM::R14, 0
+  };
   return CalleeSaveRegs;
 }
 
 const TargetRegisterClass* const *
 ARMRegisterInfo::getCalleeSaveRegClasses() const {
-  static const TargetRegisterClass * const CalleeSaveRegClasses[] = { 0 };
+  static const TargetRegisterClass * const CalleeSaveRegClasses[] = {
+    &ARM::IntRegsRegClass, &ARM::IntRegsRegClass, &ARM::IntRegsRegClass, &ARM::IntRegsRegClass,
+    &ARM::IntRegsRegClass, &ARM::IntRegsRegClass, &ARM::IntRegsRegClass, &ARM::IntRegsRegClass,
+    &ARM::IntRegsRegClass, 0
+  };
   return CalleeSaveRegClasses;
 }
 
@@ -126,16 +134,12 @@ void ARMRegisterInfo::emitPrologue(MachineFunction &MF) const {
     // entry to the current function.  This eliminates the need for add/sub
     // brackets around call sites.
     NumBytes += MFI->getMaxCallFrameSize();
-  } else {
-    NumBytes += 4;
   }
 
   MFI->setStackSize(NumBytes);
 
   //sub sp, sp, #NumBytes
   BuildMI(MBB, MBBI, ARM::subri, 2, ARM::R13).addReg(ARM::R13).addImm(NumBytes);
-  //str lr, [sp, #NumBytes - 4]
-  BuildMI(MBB, MBBI, ARM::str, 2, ARM::R14).addImm(NumBytes - 4).addReg(ARM::R13);
 }
 
 void ARMRegisterInfo::emitEpilogue(MachineFunction &MF,
@@ -147,8 +151,6 @@ void ARMRegisterInfo::emitEpilogue(MachineFunction &MF,
   MachineFrameInfo *MFI = MF.getFrameInfo();
   int          NumBytes = (int) MFI->getStackSize();
 
-  //ldr lr, [sp]
-  BuildMI(MBB, MBBI, ARM::ldr, 2, ARM::R14).addImm(NumBytes - 4).addReg(ARM::R13);
   //add sp, sp, #NumBytes
   BuildMI(MBB, MBBI, ARM::addri, 2, ARM::R13).addReg(ARM::R13).addImm(NumBytes);
 }

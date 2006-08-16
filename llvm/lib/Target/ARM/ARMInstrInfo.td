@@ -61,7 +61,7 @@ let isReturn = 1 in {
   def bx: InstARM<(ops), "bx r14", [(retflag)]>;
 }
 
-let  Defs = [R0, R1, R2, R3] in {
+let  Defs = [R0, R1, R2, R3, R14] in {
   def bl: InstARM<(ops i32imm:$func, variable_ops), "bl $func", [(ARMcall tglobaladdr:$func)]>;
 }
 

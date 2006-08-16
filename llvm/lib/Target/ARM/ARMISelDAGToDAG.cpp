@@ -84,9 +84,8 @@ static SDOperand LowerCALL(SDOperand Op, SelectionDAG &DAG) {
   SDOperand Callee   = Op.getOperand(4);
   unsigned NumOps    = (Op.getNumOperands() - 5) / 2;
 
-  // Count how many bytes are to be pushed on the stack. Initially
-  // only the link register.
-  unsigned NumBytes = 4;
+  // Count how many bytes are to be pushed on the stack.
+  unsigned NumBytes = 0;
 
   // Add up all the space actually used.
   for (unsigned i = 4; i < NumOps; ++i)

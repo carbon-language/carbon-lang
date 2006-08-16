@@ -20,6 +20,7 @@
 #include "llvm/Target/TargetFrameInfo.h"
 #include "llvm/PassManager.h"
 #include "ARMInstrInfo.h"
+#include "ARMFrameInfo.h"
 
 namespace llvm {
 
@@ -28,7 +29,7 @@ class Module;
 class ARMTargetMachine : public TargetMachine {
   const TargetData DataLayout;       // Calculates type size & alignment
   ARMInstrInfo InstrInfo;
-  TargetFrameInfo FrameInfo;
+  ARMFrameInfo FrameInfo;
 public:
   ARMTargetMachine(const Module &M, const std::string &FS);
 

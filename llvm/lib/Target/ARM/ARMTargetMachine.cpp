@@ -12,6 +12,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "ARMTargetMachine.h"
+#include "ARMFrameInfo.h"
 #include "ARM.h"
 #include "llvm/Assembly/PrintModulePass.h"
 #include "llvm/Module.h"
@@ -33,7 +34,7 @@ namespace {
 ///
 ARMTargetMachine::ARMTargetMachine(const Module &M, const std::string &FS)
   : TargetMachine("ARM"), DataLayout("E-p:32:32"),
-    FrameInfo(TargetFrameInfo::StackGrowsDown, 8, -4) {
+    FrameInfo() {
 }
 
 unsigned ARMTargetMachine::getModuleMatchQuality(const Module &M) {
