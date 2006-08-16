@@ -703,8 +703,7 @@ SDNode *X86DAGToDAGISel::Select(SDOperand &Result, SDOperand N) {
 
         if (C.Val) {
           if (N.Val->hasOneUse()) {
-            Result = CurDAG->SelectNodeTo(N.Val, X86::MOV32ri, MVT::i32, C);
-	    return NULL;
+            return CurDAG->SelectNodeTo(N.Val, X86::MOV32ri, MVT::i32, C).Val;
           } else {
             SDNode *ResNode = CurDAG->getTargetNode(X86::MOV32ri, MVT::i32, C);
             Result = SDOperand(ResNode, 0);

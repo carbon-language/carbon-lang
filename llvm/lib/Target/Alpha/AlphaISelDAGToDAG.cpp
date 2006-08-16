@@ -197,10 +197,9 @@ SDNode *AlphaDAGToDAGISel::Select(SDOperand &Result, SDOperand Op) {
 
   case ISD::FrameIndex: {
     int FI = cast<FrameIndexSDNode>(N)->getIndex();
-    Result = CurDAG->SelectNodeTo(N, Alpha::LDA, MVT::i64,
-                                  CurDAG->getTargetFrameIndex(FI, MVT::i32),
-                                  getI64Imm(0));
-    return NULL;
+    return CurDAG->SelectNodeTo(N, Alpha::LDA, MVT::i64,
+                                CurDAG->getTargetFrameIndex(FI, MVT::i32),
+                                getI64Imm(0)).Val;
   }
   case AlphaISD::GlobalBaseReg: 
     Result = getGlobalBaseReg();
@@ -228,8 +227,7 @@ SDNode *AlphaDAGToDAGISel::Select(SDOperand &Result, SDOperand Op) {
                             Chain, Chain.getValue(1));
     Chain = CurDAG->getCopyFromReg(Chain, Alpha::R27, MVT::i64, 
 				  SDOperand(CNode, 1));
-    Result = CurDAG->SelectNodeTo(N, Alpha::BIS, MVT::i64, Chain, Chain);
-    return NULL;
+    return CurDAG->SelectNodeTo(N, Alpha::BIS, MVT::i64, Chain, Chain).Val;
   }
 
   case ISD::READCYCLECOUNTER: {
@@ -266,24 +264,21 @@ SDNode *AlphaDAGToDAGISel::Select(SDOperand &Result, SDOperand Op) {
     SDOperand CPI = CurDAG->getTargetConstantPool(C, MVT::i64);
     SDNode *Tmp = CurDAG->getTargetNode(Alpha::LDAHr, MVT::i64, CPI,
                                         getGlobalBaseReg());
-    Result = CurDAG->SelectNodeTo(N, Alpha::LDQr, MVT::i64, MVT::Other, 
-                                  CPI, SDOperand(Tmp, 0), CurDAG->getEntryNode());
-    return NULL;
+    return CurDAG->SelectNodeTo(N, Alpha::LDQr, MVT::i64, MVT::Other, 
+                            CPI, SDOperand(Tmp, 0), CurDAG->getEntryNode()).Val;
   }
   case ISD::TargetConstantFP: {
     ConstantFPSDNode *CN = cast<ConstantFPSDNode>(N);
     bool isDouble = N->getValueType(0) == MVT::f64;
     MVT::ValueType T = isDouble ? MVT::f64 : MVT::f32;
     if (CN->isExactlyValue(+0.0)) {
-      Result = CurDAG->SelectNodeTo(N, isDouble ? Alpha::CPYST : Alpha::CPYSS,
-                                    T, CurDAG->getRegister(Alpha::F31, T),
-                                    CurDAG->getRegister(Alpha::F31, T));
-      return NULL;
+      return CurDAG->SelectNodeTo(N, isDouble ? Alpha::CPYST : Alpha::CPYSS,
+                                  T, CurDAG->getRegister(Alpha::F31, T),
+                                  CurDAG->getRegister(Alpha::F31, T)).Val;
     } else if ( CN->isExactlyValue(-0.0)) {
-      Result = CurDAG->SelectNodeTo(N, isDouble ? Alpha::CPYSNT : Alpha::CPYSNS,
-                                    T, CurDAG->getRegister(Alpha::F31, T),
-                                    CurDAG->getRegister(Alpha::F31, T));
-      return NULL;
+      return CurDAG->SelectNodeTo(N, isDouble ? Alpha::CPYSNT : Alpha::CPYSNS,
+                                  T, CurDAG->getRegister(Alpha::F31, T),
+                                  CurDAG->getRegister(Alpha::F31, T)).Val;
     } else {
       abort();
     }

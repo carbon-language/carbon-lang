@@ -2794,8 +2794,6 @@ public:
         if (NodeHasInFlag || HasImpInputs)
           Code += ", InFlag";
         emitCode(Code + ");");
-        if (isRoot)
-          emitCode("  return NULL;");
         emitCode("} else {");
         emitDecl("ResNode", 1);
         Code = "  ResNode = CurDAG->getTargetNode(Opc" + utostr(OpcNo);
@@ -2812,9 +2810,8 @@ public:
           Code += ", InFlag";
         emitCode(Code + ");");
         emitCode("  Result = SDOperand(ResNode, 0);");
-        if (isRoot)
-          emitCode("  return Result.Val;");
         emitCode("}");
+        emitCode("return Result.Val;");
       }
 
       return std::make_pair(1, ResNo);
