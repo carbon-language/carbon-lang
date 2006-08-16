@@ -464,7 +464,6 @@ dnl nothing. This just lets the build output show that we could have done
 dnl something if the tool was available. 
 AC_PATH_PROG(BZIP2,[bzip2],[echo "Skipped: bzip2 not found"])
 AC_PATH_PROG(DOXYGEN,[doxygen],[echo "Skipped: doxygen not found"])
-AC_PATH_PROG(ETAGS,[etags],[echo "Skipped: etags not found"])
 AC_PATH_PROG(GROFF,[groff],[echo "Skipped: groff not found"])
 AC_PATH_PROG(GZIP,[gzip],[echo "Skipped: gzip not found"])
 AC_PATH_PROG(POD2HTML,[pod2html],[echo "Skipped: pod2html not found"])
@@ -783,6 +782,9 @@ AC_CONFIG_HEADERS([include/llvm/ADT/iterator])
 
 dnl Configure the makefile's configuration data
 AC_CONFIG_FILES([Makefile.config])
+
+dnl Configure the RPM spec file for LLVM
+AC_CONFIG_FILES([llvm.spec])
 
 dnl Configure doxygen's configuration file
 AC_CONFIG_FILES([docs/doxygen.cfg])
