@@ -228,17 +228,30 @@ class SmallVector : public SmallVectorImpl<T> {
   /// InlineElts - These are 'N-1' elements that are stored inline in the body
   /// of the vector.  The extra '1' element is stored in SmallVectorImpl.
   typedef typename SmallVectorImpl<T>::U U;
-  U InlineElts[(sizeof(T)*N+sizeof(U)-1)/sizeof(U) - 1];
+  enum {
+    // MinUs - The number of U's require to cover N T's.
+    MinUs = (sizeof(T)*N+sizeof(U)-1)/sizeof(U),
+    
+    // NumInlineEltsElts - The number of elements actually in this array.  There
+    // is already one in the parent class, and we have to round up to avoid
+    // having a zero-element array.
+    NumInlineEltsElts = (MinUs - 1) > 0 ? (MinUs - 1) : 1,
+    
+    // NumTsAvailable - The number of T's we actually have space for, which may
+    // be more than N due to rounding.
+    NumTsAvailable = (NumInlineEltsElts+1)*sizeof(U) / sizeof(T)
+  };
+  U InlineElts[NumInlineEltsElts];
 public:  
-  SmallVector() : SmallVectorImpl<T>(N) {
+  SmallVector() : SmallVectorImpl<T>(NumTsAvailable) {
   }
   
   template<typename ItTy>
-  SmallVector(ItTy S, ItTy E) : SmallVectorImpl<T>(N) {
+  SmallVector(ItTy S, ItTy E) : SmallVectorImpl<T>(NumTsAvailable) {
     append(S, E);
   }
   
-  SmallVector(const SmallVector &RHS) : SmallVectorImpl<T>(N) {
+  SmallVector(const SmallVector &RHS) : SmallVectorImpl<T>(NumTsAvailable) {
     operator=(RHS);
   }
 };
