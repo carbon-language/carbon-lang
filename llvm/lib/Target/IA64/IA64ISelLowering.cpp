@@ -573,14 +573,8 @@ LowerOperation(SDOperand Op, SelectionDAG &DAG) {
                               SDOperand());
       AR_PFSVal = DAG.getCopyToReg(Copy.getValue(0), IA64::AR_PFS, AR_PFSVal,
                                    Copy.getValue(1));
-      std::vector<MVT::ValueType> NodeTys;
-      std::vector<SDOperand> RetOperands;
-      NodeTys.push_back(MVT::Other);
-      NodeTys.push_back(MVT::Flag);
-      RetOperands.push_back(AR_PFSVal);
-      RetOperands.push_back(AR_PFSVal.getValue(1));
-      return DAG.getNode(IA64ISD::RET_FLAG, NodeTys,
-                         &RetOperands[0], RetOperands.size());
+      return DAG.getNode(IA64ISD::RET_FLAG, MVT::Other,
+                         AR_PFSVal, AR_PFSVal.getValue(1));
     }
     }
     return SDOperand();
