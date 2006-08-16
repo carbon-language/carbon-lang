@@ -174,5 +174,5 @@ D: C++ bugs filed, and C++ front-end bug fixes.
 
 N: Bill Wendling
 E: isanbard@gmail.com
+W: http://web.mac.com/bwendling/
 D: The `Lower Setjmp/Longjmp' pass, improvements to the -lowerswitch pass.
-D: Bug hunter extraordinaire.
