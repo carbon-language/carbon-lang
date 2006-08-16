@@ -213,6 +213,7 @@ SmallVectorImpl<T>::operator=(const SmallVectorImpl<T> &RHS) {
   
   // Set end.
   End = Begin+RHSSize;
+  return *this;
 }
   
 /// SmallVector - This is a 'vector' (really, a variable-sized array), optimized
