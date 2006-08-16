@@ -2540,8 +2540,7 @@ bool SDNode::hasNUsesOfValue(unsigned NUses, unsigned Value) const {
 
   std::set<SDNode*> UsersHandled;
 
-  for (std::vector<SDNode*>::const_iterator UI = Uses.begin(), E = Uses.end();
-       UI != E; ++UI) {
+  for (SDNode::use_iterator UI = Uses.begin(), E = Uses.end(); UI != E; ++UI) {
     SDNode *User = *UI;
     if (User->getNumOperands() == 1 ||
         UsersHandled.insert(User).second)     // First time we've seen this?
