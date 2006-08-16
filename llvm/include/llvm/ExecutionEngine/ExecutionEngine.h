@@ -88,9 +88,15 @@ public:
   ExecutionEngine(Module *M);
   virtual ~ExecutionEngine();
 
-  //Module &getModule() const { return CurMod; }
   const TargetData *getTargetData() const { return TD; }
 
+  /// addModuleProvider - Add a ModuleProvider to the list of modules that we
+  /// can JIT from.  Note that this takes ownership of the ModuleProvider: when
+  /// the ExecutionEngine is destroyed, it destroys the MP as well.
+  void addModuleProvider(ModuleProvider *P) {
+    Modules.push_back(P);
+  }
+  
   /// FindFunctionNamed - Search all of the active modules to find the one that
   /// defines FnName.  This is very slow operation and shouldn't be used for
   /// general code.
