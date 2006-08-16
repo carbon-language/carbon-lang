@@ -245,6 +245,8 @@ public:
                     const SDOperand *Ops, unsigned NumOps);
   SDOperand getNode(unsigned Opcode, const MVT::ValueType *VTs, unsigned NumVTs,
                     const SDOperand *Ops, unsigned NumOps);
+  SDOperand getNode(unsigned Opcode, SDVTList VTs,
+                    const SDOperand *Ops, unsigned NumOps);
   
   /// getSetCC - Helper function to make it easier to build SetCC's if you just
   /// have an ISD::CondCode instead of an SDOperand.
