@@ -61,6 +61,7 @@ There are three main tasks for building a release of LLVM:
     <li><a href="#check">Run 'make check'</a></li>
     <li><a href="#test">Run LLVM Test Suite</a></li>
     <li><a href="#dist">Build the LLVM Source Distributions</a></li>
+    <li><a href="#rpm">Build RPM Packages (optional)</a></li>
     <li><a href="#llvmgccbin">Build the LLVM GCC Binary Distribution</a></li>
     <li><a href="#webupdates">Update the LLVM Website</a></li>
   </ol>
@@ -243,16 +244,31 @@ fix <em>for the release</em>.
   <tt>tar -cvf - llvm-test     | gzip &gt; llvm-test-X.X.tar.gz</tt><br>
   <tt>tar -cvf - cfrontend/src | gzip &gt; cfrontend-X.X.source.tar.gz</tt><br>
   </p>
+</div>
 
-  <!-- This is a
-  two step process. First, use "make dist" to simply build the distribution. Any
+<!-- ======================================================================= -->
+<div class="doc_subsection"><a name="rpm">Building RPM packages (optional)</a></div>
+<div class="doc_text">
+  <p>You can, optionally, create source and binary RPM packages for LLVM. These
+  may make it easier to get LLVM into a distribution. This can be done with
+  the following commands:</p>
+  <pre>
+  make dist        # Build the distribution source tarball
+  make dist-check  # Check that the source tarball can build itself.
+  cp llvm-M.m.tar.gz /usr/src/redhat/SOURCES  # Required by rpmbuild
+  make srpm # for source rpm
+  make rpm  # for binary rpm
+  </pre>
+  <p>First, use "make dist" to simply build the distribution. Any
   failures need to be corrected (on the branch). Once "make dist" can be
   successful, do "make dist-check". This target will do the same thing as the
-  'dist' target but also test that distribution to make sure it works. This
-  ensures that needed files are not missing and that the src tarball can be
-  successfully unbacked, built, installed, and cleaned. This two-level testing
-  needs to be done on each target platform.
-  -->
+  'dist' target but also test that distribution to make sure it can build itself
+  and runs "make check" as well. This ensures that needed files are not 
+  missing and that the src tarball can be successfully unpacked, built, 
+  installed, and cleaned. Once you have a reliable tarball, you need to copy
+  it to the /usr/src/redhat/SOURCES directory which is a requirement of the
+  rpmbuild tool. The last two "make" invocations just run rpmbuild to build
+  either a source (<tt>srpm</tt>) or binary (<tt>rpm</tt>) RPM package.</p>
 </div>
 
 <!-- ======================================================================= -->
