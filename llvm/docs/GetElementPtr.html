@@ -112,8 +112,9 @@
   <p>In this "C" example, the front end compiler (llvm-gcc) will generate three
   GEP instructions for the three indices through "P" in the assignment
   statement.  The function argument <tt>P</tt> will be the first operand of each
-  of these GEP instructions.  The second operand will be the field offset into
-  the <tt>struct munger_struct</tt> type,  for either the <tt>f1</tt> or 
+  of these GEP instructions.  The second operand indexes through that pointer.
+  The third operand will be the field offset into the 
+  <tt>struct munger_struct</tt> type,  for either the <tt>f1</tt> or 
   <tt>f2</tt> field. So, in LLVM assembly the <tt>munge</tt> function looks 
   like:</p>
   <pre>
