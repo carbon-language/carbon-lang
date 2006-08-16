@@ -78,7 +78,7 @@ namespace llvm {
   /// a group of nodes flagged together.
   struct SUnit {
     SDNode *Node;                       // Representative node.
-    std::vector<SDNode*> FlaggedNodes;  // All nodes flagged to Node.
+    SmallVector<SDNode*,4> FlaggedNodes;// All nodes flagged to Node.
     
     // Preds/Succs - The SUnits before/after us in the graph.  The boolean value
     // is true if the edge is a token chain edge, false if it is a value edge. 
