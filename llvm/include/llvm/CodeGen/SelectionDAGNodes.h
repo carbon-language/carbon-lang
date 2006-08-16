@@ -23,9 +23,9 @@
 #include "llvm/Value.h"
 #include "llvm/ADT/GraphTraits.h"
 #include "llvm/ADT/iterator"
+#include "llvm/ADT/SmallVector.h"
 #include "llvm/Support/DataTypes.h"
 #include <cassert>
-#include <vector>
 
 namespace llvm {
 
@@ -722,7 +722,7 @@ class SDNode {
   
   /// Uses - These are all of the SDNode's that use a value produced by this
   /// node.
-  std::vector<SDNode*> Uses;
+  SmallVector<SDNode*,3> Uses;
   
   // Out-of-line virtual method to give class a home.
   virtual void ANCHOR();
@@ -751,7 +751,7 @@ public:
   ///
   int getNodeId() const { return NodeId; }
 
-  typedef std::vector<SDNode*>::const_iterator use_iterator;
+  typedef SmallVector<SDNode*,3>::const_iterator use_iterator;
   use_iterator use_begin() const { return Uses.begin(); }
   use_iterator use_end() const { return Uses.end(); }
 

@@ -20,6 +20,7 @@
 #include "llvm/ADT/ilist"
 
 #include <list>
+#include <vector>
 #include <map>
 #include <set>
 #include <string>
