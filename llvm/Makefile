@@ -100,3 +100,10 @@ endif
 check-llvm2cpp:
 	$(MAKE) check TESTSUITE=Feature RUNLLVM2CPP=1
 
+srpm: $(LLVM_OBJ_ROOT)/llvm.spec 
+	rpmbuild -bs $(LLVM_OBJ_ROOT)/llvm.spec
+
+rpm: $(LLVM_OBJ_ROOT)/llvm.spec 
+	rpmbuild -bb --target $(TARGET_TRIPLE) $(LLVM_OBJ_ROOT)/llvm.spec
+
+.PHONY: srpm rpm
