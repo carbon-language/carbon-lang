@@ -24,7 +24,7 @@ CPPFLAGS = -DLLVMGCCDIR="\"$(LLVMGCCDIR)\"" \
 	   -DLLVMGCC="\"$(LLVMGCC)\"" \
 	   -DLLVMGXX="\"$(LLVMGXX)\"" \
 	   -DLLVMCC1="\"$(LLVMCC1)\"" \
-	   -DLLVMCC1PLUS="$(LLVMCC1PLUS)"
+	   -DLLVMCC1PLUS="\"$(LLVMCC1PLUS)\""
 
 include $(LEVEL)/Makefile.common
 

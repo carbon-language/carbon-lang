@@ -227,8 +227,53 @@ private:
     assert(pat != 0 && "Invalid command pattern");
 
     // Copy over some pattern things that don't need to change
-    action->program = pat->program;
     action->flags = pat->flags;
+
+    // See if program starts with wildcard...
+    std::string programName=pat->program.toString();
+    if (programName[0] == '%' && programName.length() >2) {
+      switch(programName[1]){
+      case 'b':
+	if (programName.substr(0,8) == "%bindir%") {
+	  std::string tmp(LLVM_BINDIR);
+	  tmp.append(programName.substr(8));
+	  pat->program.set(tmp);
+	}
+	break;
+      case 'l':
+	if (programName.substr(0,12) == "%llvmgccdir%"){
+	  std::string tmp(LLVMGCCDIR);
+	  tmp.append(programName.substr(12));
+	  pat->program.set(tmp);
+	}else if (programName.substr(0,13) == "%llvmgccarch%"){
+	  std::string tmp(LLVMGCCARCH);
+	  tmp.append(programName.substr(13));
+	  pat->program.set(tmp);
+	}else if (programName.substr(0,9) == "%llvmgcc%"){
+	  std::string tmp(LLVMGCC);
+	  tmp.append(programName.substr(9));
+	  pat->program.set(tmp);
+	}else if (programName.substr(0,9) == "%llvmgxx%"){
+	  std::string tmp(LLVMGXX);
+	  tmp.append(programName.substr(9));
+	  pat->program.set(tmp);
+	}else if (programName.substr(0,9) == "%llvmcc1%"){
+	  std::string tmp(LLVMCC1);
+	  tmp.append(programName.substr(9));
+	  pat->program.set(tmp);
+	}else if (programName.substr(0,13) == "%llvmcc1plus%"){
+	  std::string tmp(LLVMCC1PLUS);
+	  tmp.append(programName.substr(13));
+	  pat->program.set(tmp);
+	}else if (programName.substr(0,8) == "%libdir%") {
+	  std::string tmp(LLVM_LIBDIR);
+	  tmp.append(programName.substr(8));
+	  pat->program.set(tmp);
+	}
+	  break;
+      }
+    }
+    action->program = pat->program;
 
     // Do the substitutions from the pattern to the actual
     StringVector::iterator PI = pat->args.begin();
@@ -426,9 +471,9 @@ private:
       const char** Args = (const char**)
         alloca(sizeof(const char*)*(action->args.size()+2));
       Args[0] = action->program.toString().c_str();
-      for (unsigned i = 1; i != action->args.size(); ++i)
-        Args[i] = action->args[i].c_str();
-      Args[action->args.size()] = 0;  // null terminate list.
+      for (unsigned i = 1; i <= action->args.size(); ++i)
+        Args[i] = action->args[i-1].c_str();
+      Args[action->args.size()+1] = 0;  // null terminate list.
       if (isSet(TIME_ACTIONS_FLAG)) {
         Timer timer(action->program.toString());
         timer.startTimer();

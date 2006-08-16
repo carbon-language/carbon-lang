@@ -9,8 +9,7 @@
   lang.opt3=-O3
   lang.opt4=-O3
   lang.opt5=-O3
-  lang.libs=%llvmgccdir%/lib %llvmgccdir%/lib \
-    %llvmgccdir%/lib/gcc/%llvmgccarch%
+  lang.libs=%llvmgccdir%/lib %llvmgccdir%/lib %llvmgccdir%/lib/gcc/%llvmgccarch%
 
 ##########################################################
 # Pre-processor definitions

@@ -116,6 +116,8 @@ namespace {
       result.clear();
       while (next_is_real()) {
         switch (token ) {
+	case LLVMGCCDIR_SUBST:
+	case LLVMGCCARCH_SUBST:
           case STRING :
           case OPTION :
             result += ConfigLexerState.StringVal;
@@ -260,6 +262,11 @@ namespace {
       str.clear();
       do {
         switch (token) {
+	case BINDIR_SUBST:
+	case LLVMGCC_SUBST:
+	case LLVMGXX_SUBST:
+	case LLVMCC1_SUBST:
+	case LLVMCC1PLUS_SUBST:
           case OPTION:
           case STRING:
           case ARGS_SUBST:
