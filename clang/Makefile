@@ -1,5 +1,5 @@
 LEVEL = ../..
-PARALLEL_DIRS := Basic Lex Parse
+PARALLEL_DIRS := Basic Lex Parse AST
 CPPFLAGS += -I$(LEVEL)/tools/clang/include
 
 CXXFLAGS = -fno-rtti -fno-exceptions

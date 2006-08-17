@@ -18,10 +18,15 @@ namespace llvm {
 namespace clang {
 class Preprocessor;
 class LangOptions;
+class Action;
 
 /// DoPrintPreprocessedInput - Implement -E mode.
 void DoPrintPreprocessedInput(unsigned MainFileID, Preprocessor &PP,
                               LangOptions &Options);
+
+/// CreatePrintParserActionsAction - Return the actions implementation that
+/// implements the -parse-print-callbacks option.
+Action *CreatePrintParserActionsAction();
 
 }  // end namespace clang
 }  // end namespace llvm

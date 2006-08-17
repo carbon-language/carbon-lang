@@ -23,6 +23,8 @@ namespace clang {
   // Parse.
   class Scope;
   class Action;
+  // Lex.
+  class IdentifierInfo;
 
 /// Action - As the parser reads the input file and recognizes the productions
 /// of the grammar, it invokes methods on this class to turn the parsed input
@@ -71,7 +73,7 @@ public:
 /// useful to subclass if clients want to implement some actions without having
 /// to reimplement all of the scoping rules.
 class EmptyAction : public Action {
-
+public:
   /// isTypedefName - This looks at the IdentifierInfo::FETokenInfo field to
   /// determine whether the name is a typedef or not in this scope.
   virtual bool isTypedefName(const IdentifierInfo &II, Scope *S) const;

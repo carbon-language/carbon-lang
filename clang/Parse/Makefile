@@ -7,7 +7,7 @@
 # 
 ##===----------------------------------------------------------------------===##
 #
-#  This implements the Lexer library for the C-Language front-end.
+#  This implements the Parser library for the C-Language front-end.
 #
 ##===----------------------------------------------------------------------===##
 

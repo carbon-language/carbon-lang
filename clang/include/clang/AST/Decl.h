@@ -11,8 +11,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_CLANG_PARSE_DECL_H
-#define LLVM_CLANG_PARSE_DECL_H
+#ifndef LLVM_CLANG_AST_DECL_H
+#define LLVM_CLANG_AST_DECL_H
 
 #include "clang/ADT/SourceLocation.h"
 

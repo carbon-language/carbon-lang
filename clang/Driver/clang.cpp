@@ -23,6 +23,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "clang.h"
+#include "clang/AST/AST.h"
 #include "clang/Parse/Parser.h"
 #include "clang/Basic/Diagnostic.h"
 #include "clang/Basic/FileManager.h"
@@ -47,9 +48,10 @@ static cl::opt<bool>
 Stats("stats", cl::desc("Print performance metrics and statistics"));
 
 enum ProgActions {
+  ParseSyntaxOnly,              // Parse and perform semantic analysis.
+  ParsePrintASTs,               // Parse and print raw ASTs.
   ParsePrintCallbacks,          // Parse and print each callback.
   ParseNoop,                    // Parse with noop callbacks.
-  ParseSyntaxOnly,              // Parse and perform semantic analysis.
   RunPreprocessorOnly,          // Just lex, no output.
   PrintPreprocessedInput,       // -E mode.
   DumpTokens                    // Token dump mode.
@@ -57,7 +59,7 @@ enum ProgActions {
 
 static cl::opt<ProgActions> 
 ProgAction(cl::desc("Choose output type:"), cl::ZeroOrMore,
-           cl::init(ParseSyntaxOnly),
+           cl::init(ParsePrintASTs),
            cl::values(
              clEnumValN(RunPreprocessorOnly, "Eonly",
                         "Just run preprocessor, no output (for timings)"),
@@ -65,13 +67,14 @@ ProgAction(cl::desc("Choose output type:"), cl::ZeroOrMore,
                         "Run preprocessor, emit preprocessed file"),
              clEnumValN(DumpTokens, "dumptokens",
                         "Run preprocessor, dump internal rep of tokens"),
-             clEnumValN(ParseSyntaxOnly, "fsyntax-only",
-                        "Run parser and perform semantic analysis"),
-             clEnumValN(ParsePrintCallbacks, "parse-print-callbacks",
-                        "Run parser and print each callback invoked"),
              clEnumValN(ParseNoop, "parse-noop",
                         "Run parser with noop callbacks (for timings)"),
-             // TODO: NULL PARSER.
+             clEnumValN(ParsePrintCallbacks, "parse-print-callbacks",
+                        "Run parser and print each callback invoked"),
+             clEnumValN(ParsePrintASTs, "parse-print-ast",
+                        "Run parser and print raw ASTs"),
+             clEnumValN(ParseSyntaxOnly, "fsyntax-only",
+                        "Run parser and perform semantic analysis"),
              clEnumValEnd));
 
 
@@ -748,8 +751,13 @@ int main(int argc, char **argv) {
     break;
 
   case ParseNoop:                    // -parse-noop
+    ParseFile(PP, new EmptyAction(), MainFileID);
+    break;
   case ParsePrintCallbacks:
-    //ParseFile(PP, new ParserPrintActions(PP), MainFileID);
+    ParseFile(PP, CreatePrintParserActionsAction(), MainFileID);
+    break;
+  case ParsePrintASTs:
+    // 
     break;
   case ParseSyntaxOnly:              // -fsyntax-only
     ParseFile(PP, new EmptyAction(), MainFileID);
