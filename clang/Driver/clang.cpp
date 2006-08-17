@@ -616,20 +616,30 @@ static void ReadPrologFiles(Preprocessor &PP, std::vector<char> &Buf) {
 }
 
 //===----------------------------------------------------------------------===//
-// Parser driver
+// Basic Parser driver
 //===----------------------------------------------------------------------===//
 
 static void ParseFile(Preprocessor &PP, Action *PA, unsigned MainFileID) {
   Parser P(PP, *PA);
-
   PP.EnterSourceFile(MainFileID, 0, true);
   
+  // Parsing the specified input file.
   P.ParseTranslationUnit();
-
-  // Start parsing the specified input file.
-
-  
   delete PA;
+}
+
+//===----------------------------------------------------------------------===//
+// ASTStreamer drivers
+//===----------------------------------------------------------------------===//
+
+static void PrintASTs(Preprocessor &PP, unsigned MainFileID) {
+  ASTStreamerTy *Streamer = ASTStreamer_Init(PP, MainFileID);
+  
+  while (Decl *D = ASTStreamer_ReadTopLevelDecl(Streamer)) {
+    std::cerr << "Read decl!\n";
+  }
+  
+  ASTStreamer_Terminate(Streamer);
 }
 
 //===----------------------------------------------------------------------===//
@@ -757,7 +767,7 @@ int main(int argc, char **argv) {
     ParseFile(PP, CreatePrintParserActionsAction(), MainFileID);
     break;
   case ParsePrintASTs:
-    // 
+    PrintASTs(PP, MainFileID);
     break;
   case ParseSyntaxOnly:              // -fsyntax-only
     ParseFile(PP, new EmptyAction(), MainFileID);

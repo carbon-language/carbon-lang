@@ -14,14 +14,8 @@
 #ifndef LLVM_CLANG_AST_AST_H
 #define LLVM_CLANG_AST_AST_H
 
-namespace llvm {
-namespace clang {
-  
-  class Action;
-  
-  
-
-}  // end namespace clang
-}  // end namespace llvm
+// This header exports all AST interfaces.
+#include "clang/AST/ASTStreamer.h"
+#include "clang/AST/Decl.h"
 
 #endif

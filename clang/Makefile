@@ -6,6 +6,6 @@ CXXFLAGS = -fno-rtti -fno-exceptions
 
 TOOLNAME = clang
 
-USEDLIBS = clangParse.a clangLex.a clangBasic.a LLVMSupport.a LLVMSystem.a
+USEDLIBS = clangAST.a clangParse.a clangLex.a clangBasic.a LLVMSupport.a LLVMSystem.a
 
 include $(LEVEL)/Makefile.common

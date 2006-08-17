@@ -14,7 +14,7 @@
 #ifndef LLVM_CLANG_AST_DECL_H
 #define LLVM_CLANG_AST_DECL_H
 
-#include "clang/ADT/SourceLocation.h"
+#include "clang/Basic/SourceLocation.h"
 
 namespace llvm {
 namespace clang {
