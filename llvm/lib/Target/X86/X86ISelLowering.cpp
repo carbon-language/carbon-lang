@@ -4186,6 +4186,7 @@ X86TargetLowering::getConstraintType(char ConstraintLetter) const {
   case 'Y':
   case 'S':
   case 'D':
+  case 'c':
     return C_RegisterClass;
   default: return TargetLowering::getConstraintType(ConstraintLetter);
   }
@@ -4201,11 +4202,15 @@ getRegClassForInlineAsmConstraint(const std::string &Constraint,
     default: break;  // Unknown constraint letter
     case 'S':   // ESI
       if (VT == MVT::i32)
-	return make_vector<unsigned>(X86::ESI,0);
+        return make_vector<unsigned>(X86::ESI,0);
       break;
     case 'D':   // EDI
       if (VT == MVT::i32)
-	return make_vector<unsigned>(X86::EDI,0);
+        return make_vector<unsigned>(X86::EDI,0);
+      break;
+    case 'c':  // ECX
+      if (VT == MVT::i32)
+        return make_vector<unsigned>(X86::ECX, 0);
       break;
     case 'A':   // EAX/EDX
       if (VT == MVT::i32 || VT == MVT::i64)
