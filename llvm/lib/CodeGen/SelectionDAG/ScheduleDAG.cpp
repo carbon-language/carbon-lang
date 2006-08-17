@@ -84,7 +84,7 @@ void ScheduleDAG::BuildSchedUnits() {
           N = *UI;
           break;
         }
-          if (!HasFlagUse) break;
+      if (!HasFlagUse) break;
     }
     
     // Now all flagged nodes are in FlaggedNodes and N is the bottom-most node.
@@ -150,7 +150,7 @@ void ScheduleDAG::BuildSchedUnits() {
         assert(OpVT != MVT::Flag && "Flagged nodes should be in same sunit!");
         bool isChain = OpVT == MVT::Other;
         
-        if (SU->Preds.insert(std::make_pair(OpSU, isChain)).second) {
+        if (SU->addPred(OpSU, isChain)) {
           if (!isChain) {
             SU->NumPreds++;
             SU->NumPredsLeft++;
@@ -158,7 +158,7 @@ void ScheduleDAG::BuildSchedUnits() {
             SU->NumChainPredsLeft++;
           }
         }
-        if (OpSU->Succs.insert(std::make_pair(SU, isChain)).second) {
+        if (OpSU->addSucc(SU, isChain)) {
           if (!isChain) {
             OpSU->NumSuccs++;
             OpSU->NumSuccsLeft++;
@@ -176,35 +176,35 @@ void ScheduleDAG::BuildSchedUnits() {
   return;
 }
 
-static void CalculateDepths(SUnit *SU, unsigned Depth) {
-  if (SU->Depth == 0 || Depth > SU->Depth) {
-    SU->Depth = Depth;
-    for (std::set<std::pair<SUnit*, bool> >::iterator I = SU->Succs.begin(),
-           E = SU->Succs.end(); I != E; ++I)
-      CalculateDepths(I->first, Depth+1);
+static void CalculateDepths(SUnit &SU, unsigned Depth) {
+  if (SU.Depth == 0 || Depth > SU.Depth) {
+    SU.Depth = Depth;
+    for (SUnit::succ_iterator I = SU.Succs.begin(), E = SU.Succs.end();
+         I != E; ++I)
+      CalculateDepths(*I->first, Depth+1);
   }
 }
 
 void ScheduleDAG::CalculateDepths() {
   SUnit *Entry = SUnitMap[DAG.getEntryNode().Val];
-  ::CalculateDepths(Entry, 0U);
+  ::CalculateDepths(*Entry, 0U);
   for (unsigned i = 0, e = SUnits.size(); i != e; ++i)
     if (SUnits[i].Preds.size() == 0 && &SUnits[i] != Entry) {
-      ::CalculateDepths(&SUnits[i], 0U);
+      ::CalculateDepths(SUnits[i], 0U);
     }
 }
 
-static void CalculateHeights(SUnit *SU, unsigned Height) {
-  if (SU->Height == 0 || Height > SU->Height) {
-    SU->Height = Height;
-    for (std::set<std::pair<SUnit*, bool> >::iterator I = SU->Preds.begin(),
-           E = SU->Preds.end(); I != E; ++I)
-      CalculateHeights(I->first, Height+1);
+static void CalculateHeights(SUnit &SU, unsigned Height) {
+  if (SU.Height == 0 || Height > SU.Height) {
+    SU.Height = Height;
+    for (SUnit::pred_iterator I = SU.Preds.begin(), E = SU.Preds.end();
+         I != E; ++I)
+      CalculateHeights(*I->first, Height+1);
   }
 }
 void ScheduleDAG::CalculateHeights() {
   SUnit *Root = SUnitMap[DAG.getRoot().Val];
-  ::CalculateHeights(Root, 0U);
+  ::CalculateHeights(*Root, 0U);
 }
 
 /// CountResults - The results of target nodes have register or immediate
@@ -646,24 +646,24 @@ void SUnit::dumpAll(const SelectionDAG *G) const {
 
   if (Preds.size() != 0) {
     std::cerr << "  Predecessors:\n";
-    for (std::set<std::pair<SUnit*,bool> >::const_iterator I = Preds.begin(),
-           E = Preds.end(); I != E; ++I) {
+    for (SUnit::const_succ_iterator I = Preds.begin(), E = Preds.end();
+         I != E; ++I) {
       if (I->second)
-        std::cerr << "   ch  ";
+        std::cerr << "   ch  #";
       else
-        std::cerr << "   val ";
-      I->first->dump(G);
+        std::cerr << "   val #";
+      std::cerr << I->first << "\n";
     }
   }
   if (Succs.size() != 0) {
     std::cerr << "  Successors:\n";
-    for (std::set<std::pair<SUnit*, bool> >::const_iterator I = Succs.begin(),
-           E = Succs.end(); I != E; ++I) {
+    for (SUnit::const_succ_iterator I = Succs.begin(), E = Succs.end();
+         I != E; ++I) {
       if (I->second)
-        std::cerr << "   ch  ";
+        std::cerr << "   ch  #";
       else
-        std::cerr << "   val ";
-      I->first->dump(G);
+        std::cerr << "   val #";
+      std::cerr << I->first << "\n";
     }
   }
   std::cerr << "\n";

@@ -82,9 +82,16 @@ namespace llvm {
     
     // Preds/Succs - The SUnits before/after us in the graph.  The boolean value
     // is true if the edge is a token chain edge, false if it is a value edge. 
-    std::set<std::pair<SUnit*,bool> > Preds;  // All sunit predecessors.
-    std::set<std::pair<SUnit*,bool> > Succs;  // All sunit successors.
+    SmallVector<std::pair<SUnit*,bool>, 4> Preds;  // All sunit predecessors.
+    SmallVector<std::pair<SUnit*,bool>, 4> Succs;  // All sunit successors.
 
+    typedef SmallVector<std::pair<SUnit*,bool>, 4>::iterator pred_iterator;
+    typedef SmallVector<std::pair<SUnit*,bool>, 4>::iterator succ_iterator;
+    typedef SmallVector<std::pair<SUnit*,bool>, 4>::const_iterator 
+      const_pred_iterator;
+    typedef SmallVector<std::pair<SUnit*,bool>, 4>::const_iterator 
+      const_succ_iterator;
+    
     short NumPreds;                     // # of preds.
     short NumSuccs;                     // # of sucss.
     short NumPredsLeft;                 // # of preds not scheduled.
@@ -111,6 +118,26 @@ namespace llvm {
         Latency(0), CycleBound(0), Cycle(0), Depth(0), Height(0),
         NodeNum(nodenum) {}
     
+    /// addPred - This adds the specified node as a pred of the current node if
+    /// not already.  This returns true if this is a new pred.
+    bool addPred(SUnit *N, bool isChain) {
+      for (unsigned i = 0, e = Preds.size(); i != e; ++i)
+        if (Preds[i].first == N && Preds[i].second == isChain)
+          return false;
+      Preds.push_back(std::make_pair(N, isChain));
+      return true;
+    }
+
+    /// addSucc - This adds the specified node as a succ of the current node if
+    /// not already.  This returns true if this is a new succ.
+    bool addSucc(SUnit *N, bool isChain) {
+      for (unsigned i = 0, e = Succs.size(); i != e; ++i)
+        if (Succs[i].first == N && Succs[i].second == isChain)
+          return false;
+      Succs.push_back(std::make_pair(N, isChain));
+      return true;
+    }
+    
     void dump(const SelectionDAG *G) const;
     void dumpAll(const SelectionDAG *G) const;
   };
@@ -127,7 +154,7 @@ namespace llvm {
   public:
     virtual ~SchedulingPriorityQueue() {}
   
-    virtual void initNodes(const std::vector<SUnit> &SUnits) = 0;
+    virtual void initNodes(std::vector<SUnit> &SUnits) = 0;
     virtual void releaseState() = 0;
   
     virtual bool empty() const = 0;

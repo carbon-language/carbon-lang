@@ -132,15 +132,16 @@ void ScheduleDAGList::ReleaseSucc(SUnit *SuccSU, bool isChain) {
     // available.  This is the max of the start time of all predecessors plus
     // their latencies.
     unsigned AvailableCycle = 0;
-    for (std::set<std::pair<SUnit*, bool> >::iterator I = SuccSU->Preds.begin(),
+    for (SUnit::pred_iterator I = SuccSU->Preds.begin(),
          E = SuccSU->Preds.end(); I != E; ++I) {
       // If this is a token edge, we don't need to wait for the latency of the
       // preceeding instruction (e.g. a long-latency load) unless there is also
       // some other data dependence.
-      unsigned PredDoneCycle = I->first->Cycle;
+      SUnit &Pred = *I->first;
+      unsigned PredDoneCycle = Pred.Cycle;
       if (!I->second)
-        PredDoneCycle += I->first->Latency;
-      else if (I->first->Latency)
+        PredDoneCycle += Pred.Latency;
+      else if (Pred.Latency)
         PredDoneCycle += 1;
 
       AvailableCycle = std::max(AvailableCycle, PredDoneCycle);
@@ -161,8 +162,8 @@ void ScheduleDAGList::ScheduleNodeTopDown(SUnit *SU, unsigned CurCycle) {
   SU->Cycle = CurCycle;
   
   // Bottom up: release successors.
-  for (std::set<std::pair<SUnit*, bool> >::iterator I = SU->Succs.begin(),
-       E = SU->Succs.end(); I != E; ++I)
+  for (SUnit::succ_iterator I = SU->Succs.begin(), E = SU->Succs.end();
+       I != E; ++I)
     ReleaseSucc(I->first, I->second);
 }
 
@@ -313,7 +314,7 @@ namespace {
 namespace {
   class LatencyPriorityQueue : public SchedulingPriorityQueue {
     // SUnits - The SUnits for the current graph.
-    const std::vector<SUnit> *SUnits;
+    std::vector<SUnit> *SUnits;
     
     // Latencies - The latency (max of latency from this node to the bb exit)
     // for each node.
@@ -330,7 +331,7 @@ public:
     LatencyPriorityQueue() : Queue(latency_sort(this)) {
     }
     
-    void initNodes(const std::vector<SUnit> &sunits) {
+    void initNodes(std::vector<SUnit> &sunits) {
       SUnits = &sunits;
       // Calculate node priorities.
       CalculatePriorities();
@@ -379,6 +380,7 @@ private:
     void CalculatePriorities();
     int CalcLatency(const SUnit &SU);
     void AdjustPriorityOfUnscheduledPreds(SUnit *SU);
+    SUnit *getSingleUnscheduledPred(SUnit *SU);
 
     /// RemoveFromPriorityQueue - This is a really inefficient way to remove a
     /// node from a priority queue.  We should roll our own heap to make this
@@ -434,8 +436,8 @@ int LatencyPriorityQueue::CalcLatency(const SUnit &SU) {
     return Latency;
   
   int MaxSuccLatency = 0;
-  for (std::set<std::pair<SUnit*, bool> >::const_iterator I = SU.Succs.begin(),
-       E = SU.Succs.end(); I != E; ++I)
+  for (SUnit::const_succ_iterator I = SU.Succs.begin(), E = SU.Succs.end();
+       I != E; ++I)
     MaxSuccLatency = std::max(MaxSuccLatency, CalcLatency(*I->first));
 
   return Latency = MaxSuccLatency + SU.Latency;
@@ -452,17 +454,19 @@ void LatencyPriorityQueue::CalculatePriorities() {
 
 /// getSingleUnscheduledPred - If there is exactly one unscheduled predecessor
 /// of SU, return it, otherwise return null.
-static SUnit *getSingleUnscheduledPred(SUnit *SU) {
+SUnit *LatencyPriorityQueue::getSingleUnscheduledPred(SUnit *SU) {
   SUnit *OnlyAvailablePred = 0;
-  for (std::set<std::pair<SUnit*, bool> >::const_iterator I = SU->Preds.begin(),
-       E = SU->Preds.end(); I != E; ++I)
-    if (!I->first->isScheduled) {
+  for (SUnit::const_pred_iterator I = SU->Preds.begin(), E = SU->Preds.end();
+       I != E; ++I) {
+    SUnit &Pred = *I->first;
+    if (!Pred.isScheduled) {
       // We found an available, but not scheduled, predecessor.  If it's the
       // only one we have found, keep track of it... otherwise give up.
-      if (OnlyAvailablePred && OnlyAvailablePred != I->first)
+      if (OnlyAvailablePred && OnlyAvailablePred != &Pred)
         return 0;
-      OnlyAvailablePred = I->first;
+      OnlyAvailablePred = &Pred;
     }
+  }
       
   return OnlyAvailablePred;
 }
@@ -471,8 +475,8 @@ void LatencyPriorityQueue::push_impl(SUnit *SU) {
   // Look at all of the successors of this node.  Count the number of nodes that
   // this node is the sole unscheduled node for.
   unsigned NumNodesBlocking = 0;
-  for (std::set<std::pair<SUnit*, bool> >::const_iterator I = SU->Succs.begin(),
-       E = SU->Succs.end(); I != E; ++I)
+  for (SUnit::const_succ_iterator I = SU->Succs.begin(), E = SU->Succs.end();
+       I != E; ++I)
     if (getSingleUnscheduledPred(I->first) == SU)
       ++NumNodesBlocking;
   NumNodesSolelyBlocking[SU->NodeNum] = NumNodesBlocking;
@@ -486,8 +490,8 @@ void LatencyPriorityQueue::push_impl(SUnit *SU) {
 // single predecessor has a higher priority, since scheduling it will make
 // the node available.
 void LatencyPriorityQueue::ScheduledNode(SUnit *SU) {
-  for (std::set<std::pair<SUnit*, bool> >::const_iterator I = SU->Succs.begin(),
-       E = SU->Succs.end(); I != E; ++I)
+  for (SUnit::const_succ_iterator I = SU->Succs.begin(), E = SU->Succs.end();
+       I != E; ++I)
     AdjustPriorityOfUnscheduledPreds(I->first);
 }
 

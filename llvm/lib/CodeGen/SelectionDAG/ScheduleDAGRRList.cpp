@@ -93,7 +93,7 @@ void ScheduleDAGRRList::Schedule() {
   CalculateDepths();
   CalculateHeights();
   DEBUG(for (unsigned su = 0, e = SUnits.size(); su != e; ++su)
-        SUnits[su].dumpAll(&DAG));
+          SUnits[su].dumpAll(&DAG));
 
   AvailableQueue->initNodes(SUnits);
 
@@ -143,8 +143,8 @@ void ScheduleDAGRRList::CommuteNodesToReducePressure() {
       }
     }
 
-    for (std::set<std::pair<SUnit*, bool> >::iterator I = SU->Preds.begin(),
-           E = SU->Preds.end(); I != E; ++I) {
+    for (SUnit::pred_iterator I = SU->Preds.begin(), E = SU->Preds.end();
+         I != E; ++I) {
       if (!I->second)
         OperandSeen.insert(I->first);
     }
@@ -235,8 +235,8 @@ void ScheduleDAGRRList::ScheduleNodeBottomUp(SUnit *SU, unsigned CurCycle) {
   Sequence.push_back(SU);
 
   // Bottom up: release predecessors
-  for (std::set<std::pair<SUnit*, bool> >::iterator I = SU->Preds.begin(),
-         E = SU->Preds.end(); I != E; ++I)
+  for (SUnit::pred_iterator I = SU->Preds.begin(), E = SU->Preds.end();
+       I != E; ++I)
     ReleasePred(I->first, I->second, CurCycle);
   SU->isScheduled = true;
 }
@@ -347,8 +347,8 @@ void ScheduleDAGRRList::ScheduleNodeTopDown(SUnit *SU, unsigned CurCycle) {
   Sequence.push_back(SU);
 
   // Top down: release successors
-  for (std::set<std::pair<SUnit*, bool> >::iterator I = SU->Succs.begin(),
-         E = SU->Succs.end(); I != E; ++I)
+  for (SUnit::succ_iterator I = SU->Succs.begin(), E = SU->Succs.end();
+       I != E; ++I)
     ReleaseSucc(I->first, I->second, CurCycle);
   SU->isScheduled = true;
 }
@@ -448,7 +448,7 @@ namespace {
     RegReductionPriorityQueue() :
     Queue(SF(this)) {}
     
-    virtual void initNodes(const std::vector<SUnit> &sunits) {}
+    virtual void initNodes(std::vector<SUnit> &sunits) {}
     virtual void releaseState() {}
     
     virtual int getSethiUllmanNumber(unsigned NodeNum) const {
@@ -485,7 +485,7 @@ namespace {
   public:
     BURegReductionPriorityQueue() {}
 
-    void initNodes(const std::vector<SUnit> &sunits) {
+    void initNodes(std::vector<SUnit> &sunits) {
       SUnits = &sunits;
       // Add pseudo dependency edges for two-address nodes.
       AddPseudoTwoAddrDeps();
@@ -521,7 +521,7 @@ namespace {
   public:
     TDRegReductionPriorityQueue() {}
 
-    void initNodes(const std::vector<SUnit> &sunits) {
+    void initNodes(std::vector<SUnit> &sunits) {
       SUnits = &sunits;
       // Calculate node priorities.
       CalculatePriorities();
@@ -548,8 +548,8 @@ static bool isFloater(const SUnit *SU) {
     if (SU->NumPreds == 0)
       return true;
     if (SU->NumPreds == 1) {
-      for (std::set<std::pair<SUnit*, bool> >::iterator I = SU->Preds.begin(),
-             E = SU->Preds.end(); I != E; ++I) {
+      for (SUnit::const_pred_iterator I = SU->Preds.begin(),E = SU->Preds.end();
+           I != E; ++I) {
         if (I->second) continue;
 
         SUnit *PredSU = I->first;
@@ -566,8 +566,8 @@ static bool isFloater(const SUnit *SU) {
 
 static bool isSimpleFloaterUse(const SUnit *SU) {
   unsigned NumOps = 0;
-  for (std::set<std::pair<SUnit*, bool> >::iterator I = SU->Preds.begin(),
-         E = SU->Preds.end(); I != E; ++I) {
+  for (SUnit::const_pred_iterator I = SU->Preds.begin(), E = SU->Preds.end();
+       I != E; ++I) {
     if (I->second) continue;
     if (++NumOps > 1)
       return false;
@@ -641,8 +641,8 @@ static void isReachable(SUnit *SU, SUnit *TargetSU,
   }
   if (!Visited.insert(SU).second) return;
 
-  for (std::set<std::pair<SUnit*, bool> >::iterator I = SU->Preds.begin(),
-         E = SU->Preds.end(); I != E; ++I)
+  for (SUnit::pred_iterator I = SU->Preds.begin(), E = SU->Preds.end(); I != E;
+       ++I)
     isReachable(I->first, TargetSU, Visited, Reached);
 }
 
@@ -655,8 +655,8 @@ static bool isReachable(SUnit *SU, SUnit *TargetSU) {
 
 static SUnit *getDefUsePredecessor(SUnit *SU) {
   SDNode *DU = SU->Node->getOperand(0).Val;
-  for (std::set<std::pair<SUnit*, bool> >::iterator
-         I = SU->Preds.begin(), E = SU->Preds.end(); I != E; ++I) {
+  for (SUnit::pred_iterator I = SU->Preds.begin(), E = SU->Preds.end();
+       I != E; ++I) {
     if (I->second) continue;  // ignore chain preds
     SUnit *PredSU = I->first;
     if (PredSU->Node == DU)
@@ -689,8 +689,8 @@ void BURegReductionPriorityQueue<SF>::AddPseudoTwoAddrDeps() {
       SUnit *DUSU = getDefUsePredecessor(SU);
       if (!DUSU) continue;
 
-      for (std::set<std::pair<SUnit*, bool> >::iterator I = DUSU->Succs.begin(),
-             E = DUSU->Succs.end(); I != E; ++I) {
+      for (SUnit::succ_iterator I = DUSU->Succs.begin(), E = DUSU->Succs.end();
+           I != E; ++I) {
         if (I->second) continue;
         SUnit *SuccSU = I->first;
         if (SuccSU != SU &&
@@ -699,9 +699,9 @@ void BURegReductionPriorityQueue<SF>::AddPseudoTwoAddrDeps() {
           if (SuccSU->Depth == SU->Depth && !isReachable(SuccSU, SU)) {
             DEBUG(std::cerr << "Adding an edge from SU # " << SU->NodeNum
                   << " to SU #" << SuccSU->NodeNum << "\n");
-            if (SU->Preds.insert(std::make_pair(SuccSU, true)).second)
+            if (SU->addPred(SuccSU, true))
               SU->NumChainPredsLeft++;
-            if (SuccSU->Succs.insert(std::make_pair(SU, true)).second)
+            if (SuccSU->addSucc(SU, true))
               SuccSU->NumChainSuccsLeft++;
           }
         }
@@ -734,8 +734,8 @@ int BURegReductionPriorityQueue<SF>::CalcNodePriority(const SUnit *SU) {
     SethiUllmanNumber = INT_MAX - 10;
   else {
     int Extra = 0;
-    for (std::set<std::pair<SUnit*, bool> >::const_iterator
-         I = SU->Preds.begin(), E = SU->Preds.end(); I != E; ++I) {
+    for (SUnit::const_pred_iterator I = SU->Preds.begin(), E = SU->Preds.end();
+         I != E; ++I) {
       if (I->second) continue;  // ignore chain preds
       SUnit *PredSU = I->first;
       int PredSethiUllman = CalcNodePriority(PredSU);
@@ -763,11 +763,11 @@ void BURegReductionPriorityQueue<SF>::CalculatePriorities() {
 
 static unsigned SumOfUnscheduledPredsOfSuccs(const SUnit *SU) {
   unsigned Sum = 0;
-  for (std::set<std::pair<SUnit*, bool> >::const_iterator
-         I = SU->Succs.begin(), E = SU->Succs.end(); I != E; ++I) {
+  for (SUnit::const_succ_iterator I = SU->Succs.begin(), E = SU->Succs.end();
+       I != E; ++I) {
     SUnit *SuccSU = I->first;
-    for (std::set<std::pair<SUnit*, bool> >::const_iterator
-         II = SuccSU->Preds.begin(), EE = SuccSU->Preds.end(); II != EE; ++II) {
+    for (SUnit::const_pred_iterator II = SuccSU->Preds.begin(),
+         EE = SuccSU->Preds.end(); II != EE; ++II) {
       SUnit *PredSU = II->first;
       if (!PredSU->isScheduled)
         Sum++;
@@ -855,8 +855,8 @@ int TDRegReductionPriorityQueue<SF>::CalcNodePriority(const SUnit *SU) {
     SethiUllmanNumber = 1;
   else {
     int Extra = 0;
-    for (std::set<std::pair<SUnit*, bool> >::const_iterator
-         I = SU->Preds.begin(), E = SU->Preds.end(); I != E; ++I) {
+    for (SUnit::const_pred_iterator I = SU->Preds.begin(), E = SU->Preds.end();
+         I != E; ++I) {
       if (I->second) continue;  // ignore chain preds
       SUnit *PredSU = I->first;
       int PredSethiUllman = CalcNodePriority(PredSU);
