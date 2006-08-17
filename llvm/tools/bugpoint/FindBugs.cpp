@@ -13,13 +13,13 @@
 // we can hopefully spot bugs in the optimizations.
 //
 //===----------------------------------------------------------------------===//
+
 #include "BugDriver.h"
 #include "ToolRunner.h"
-
-#include "llvm/Bytecode/WriteBytecodePass.h"
-
+#include "llvm/Pass.h"
 #include <algorithm>
 #include <ctime>
+#include <iostream>
 using namespace llvm;
 
 /// runManyPasses - Take the specified pass list and create different 
@@ -29,28 +29,27 @@ using namespace llvm;
 /// If the passes did not compile correctly, output the command required to 
 /// recreate the failure. This returns true if a compiler error is found.
 ///
-bool BugDriver::runManyPasses(const std::vector<const PassInfo*> &AllPasses)
-{
+bool BugDriver::runManyPasses(const std::vector<const PassInfo*> &AllPasses) {
   std::string Filename;
   std::vector<const PassInfo*> TempPass(AllPasses);
   std::cout << "Starting bug finding procedure...\n\n";
   
   // Creating a reference output if necessary
   if (initializeExecutionEnvironment()) return false;
+  
   std::cout << "\n";
   if (ReferenceOutputFile.empty()) {
-  	std::cout << "Generating reference output from raw program: \n";
-	  if(!createReferenceFile(Program)){
-	  	return false;
-	  }
+    std::cout << "Generating reference output from raw program: \n";
+    if (!createReferenceFile(Program))
+      return false;
   }
   
   srand(time(NULL));  
   std::vector<const PassInfo*>::iterator I = TempPass.begin();
   std::vector<const PassInfo*>::iterator E = TempPass.end();
 
-	int num=1;
-  while(1){  
+  unsigned num = 1;
+  while(1) {  
     //
     // Step 1: Randomize the order of the optimizer passes.
     //
@@ -60,18 +59,18 @@ bool BugDriver::runManyPasses(const std::vector<const PassInfo*> &AllPasses)
     // Step 2: Run optimizer passes on the program and check for success.
     //
     std::cout << "Running selected passes on program to test for crash: ";
-    for(int i=0, e=TempPass.size(); i!=e; i++) {
+    for(int i = 0, e = TempPass.size(); i != e; i++) {
       std::cout << "-" << TempPass[i]->getPassArgument( )<< " ";
     }
+    
     std::string Filename;
     if(runPasses(TempPass, Filename, false)) {
       std::cout << "\n";
       std::cout << "Optimizer passes caused failure!\n\n";
       debugOptimizerCrash();
       return true;
-    }
-    else{
-     std::cout << "Combination "<<num<<" optimized successfully!\n";
+    } else {
+      std::cout << "Combination " << num << " optimized successfully!\n";
     }
      
     //
@@ -97,8 +96,7 @@ bool BugDriver::runManyPasses(const std::vector<const PassInfo*> &AllPasses)
         std::cout << "\n*** diffProgram returned true!\n";
         debugMiscompilation();
         return true;
-      }
-      else{
+      } else {
         std::cout << "\n*** diff'd output matches!\n";
       }
     } catch (ToolExecutionError &TEE) {
@@ -113,7 +111,5 @@ bool BugDriver::runManyPasses(const std::vector<const PassInfo*> &AllPasses)
     num++;
   } //end while
   
-  // This will never be reached
-  std::cout << "Did not find any bugs :-( \n";
-  return false;                          
+  // Unreachable.
 }
