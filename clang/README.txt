@@ -24,12 +24,12 @@ II. Current advantages over GCC:
  * mmap's code in read-only, does not dirty the pages like GCC (mem footprint).
  * BSD License, can be linked into non-GPL projects.
  * Full diagnostic control, per diagnostic.
- * Faster than GCC at lexing and preprocessing.
+ * Faster than GCC at parsing, lexing, and preprocessing.
  
 Future Features:
 
  * Fine grained diag control within the source (#pragma enable/disable warning).
- * Faster than GCC at parsing, IR generation.
+ * Faster than GCC at IR generation.
  * Better token tracking within macros?  (Token came from this line, which is
    a macro argument instantiated here, recursively instantiated here).
  * Fast #import!
@@ -81,7 +81,6 @@ Traditional Preprocessor:
 Parser:
  * C90/K&R modes.  Need to get C90 spec.
  * __extension__
- * __attribute__
 
 Parser Callbacks:
  * Enough to do devkit-style "indexing".
