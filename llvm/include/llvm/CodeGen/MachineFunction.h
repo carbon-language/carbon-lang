@@ -165,6 +165,11 @@ public:
     return static_cast<Ty*>(MFInfo);
   }
 
+  template<typename Ty>
+  const Ty *getInfo() const {
+     return const_cast<MachineFunction*>(this)->getInfo<Ty>();
+  }
+
   /// setUsedPhysRegs - The register allocator should call this to initialized
   /// the UsedPhysRegs set.  This should be passed a new[]'d array with entries
   /// for all of the physical registers that the target supports.  Each array

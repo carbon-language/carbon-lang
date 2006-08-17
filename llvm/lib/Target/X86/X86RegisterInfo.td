@@ -107,11 +107,11 @@ def GR8  : RegisterClass<"X86", [i8],  8, [AL, CL, DL, AH, CH, DH, BL, BH]>;
 
 def GR16 : RegisterClass<"X86", [i16], 16, [AX, CX, DX, SI, DI, BX, BP, SP]> {
   let MethodProtos = [{
-    iterator allocation_order_end(MachineFunction &MF) const;
+    iterator allocation_order_end(const MachineFunction &MF) const;
   }];
   let MethodBodies = [{
     GR16Class::iterator
-    GR16Class::allocation_order_end(MachineFunction &MF) const {
+    GR16Class::allocation_order_end(const MachineFunction &MF) const {
       if (hasFP(MF))     // Does the function dedicate EBP to being a frame ptr?
         return end()-2;  // If so, don't allocate SP or BP
       else
@@ -123,11 +123,11 @@ def GR16 : RegisterClass<"X86", [i16], 16, [AX, CX, DX, SI, DI, BX, BP, SP]> {
 def GR32 : RegisterClass<"X86", [i32], 32, 
                          [EAX, ECX, EDX, ESI, EDI, EBX, EBP, ESP]> {
   let MethodProtos = [{
-    iterator allocation_order_end(MachineFunction &MF) const;
+    iterator allocation_order_end(const MachineFunction &MF) const;
   }];
   let MethodBodies = [{
     GR32Class::iterator
-    GR32Class::allocation_order_end(MachineFunction &MF) const {
+    GR32Class::allocation_order_end(const MachineFunction &MF) const {
       if (hasFP(MF))     // Does the function dedicate EBP to being a frame ptr?
         return end()-2;  // If so, don't allocate ESP or EBP
       else
@@ -160,11 +160,11 @@ def RFP : RegisterClass<"X86", [f64], 32, [FP0, FP1, FP2, FP3, FP4, FP5, FP6]>;
 def RST : RegisterClass<"X86", [f64], 32,
                         [ST0, ST1, ST2, ST3, ST4, ST5, ST6, ST7]> {
     let MethodProtos = [{
-    iterator allocation_order_end(MachineFunction &MF) const;
+    iterator allocation_order_end(const MachineFunction &MF) const;
   }];
   let MethodBodies = [{
     RSTClass::iterator
-    RSTClass::allocation_order_end(MachineFunction &MF) const {
+    RSTClass::allocation_order_end(const MachineFunction &MF) const {
       return begin();
     }
   }];

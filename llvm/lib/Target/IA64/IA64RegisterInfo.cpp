@@ -113,7 +113,7 @@ IA64RegisterInfo::getCalleeSaveRegClasses() const {
 // pointer register.  This is true if the function has variable sized allocas or
 // if frame pointer elimination is disabled.
 //
-static bool hasFP(MachineFunction &MF) {
+static bool hasFP(const MachineFunction &MF) {
   return NoFramePointerElim || MF.getFrameInfo()->hasVarSizedObjects();
 }
 

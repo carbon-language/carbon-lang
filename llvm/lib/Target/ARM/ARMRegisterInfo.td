@@ -45,11 +45,11 @@ def IntRegs : RegisterClass<"ARM", [i32], 32, [R0, R1, R2, R3, R4, R5, R6,
 	                                       R7, R8, R9, R10, R11, R12,
                                                R13, R14, R15]> {
   let MethodProtos = [{
-    iterator allocation_order_end(MachineFunction &MF) const;
+    iterator allocation_order_end(const MachineFunction &MF) const;
   }];
   let MethodBodies = [{
     IntRegsClass::iterator
-    IntRegsClass::allocation_order_end(MachineFunction &MF) const {
+    IntRegsClass::allocation_order_end(const MachineFunction &MF) const {
       // r15 == Program Counter
       // r14 == Link Register
       // r13 == Stack Pointer

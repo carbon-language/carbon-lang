@@ -422,18 +422,18 @@ def GR : RegisterClass<"IA64", [i64], 64,
 	r0, r1, r2, r5, r12, r13, r22, rp]> // the last 16 are special (look down)
   {
     let MethodProtos = [{
-    iterator allocation_order_begin(MachineFunction &MF) const;
-    iterator allocation_order_end(MachineFunction &MF) const;
+    iterator allocation_order_begin(const MachineFunction &MF) const;
+    iterator allocation_order_end(const MachineFunction &MF) const;
   }];
   let MethodBodies = [{
     GRClass::iterator
-    GRClass::allocation_order_begin(MachineFunction &MF) const {
+    GRClass::allocation_order_begin(const MachineFunction &MF) const {
 	// hide the 8 out? registers appropriately:
 	return begin()+(8-(MF.getInfo<IA64FunctionInfo>()->outRegsUsed));
       }
 
       GRClass::iterator
-      GRClass::allocation_order_end(MachineFunction &MF) const {
+      GRClass::allocation_order_end(const MachineFunction &MF) const {
 	int numReservedRegs=8; // the 8 special registers r0,r1,r2,r5,r12,r13 etc
 
 	// we also can't allocate registers for use as locals if they're
@@ -472,17 +472,17 @@ def FP : RegisterClass<"IA64", [f64], 64,
     let Alignment=128;
 
     let MethodProtos = [{
-    iterator allocation_order_begin(MachineFunction &MF) const;
-    iterator allocation_order_end(MachineFunction &MF) const;
+    iterator allocation_order_begin(const MachineFunction &MF) const;
+    iterator allocation_order_end(const MachineFunction &MF) const;
   }];
   let MethodBodies = [{
     FPClass::iterator
-    FPClass::allocation_order_begin(MachineFunction &MF) const {
+    FPClass::allocation_order_begin(const MachineFunction &MF) const {
 	return begin(); // we don't hide any FP regs from the start
       }
 
       FPClass::iterator
-      FPClass::allocation_order_end(MachineFunction &MF) const {
+      FPClass::allocation_order_end(const MachineFunction &MF) const {
 	return end()-2; // we hide regs F0, F1 from the end 
       }
   }];

@@ -209,16 +209,16 @@ def GPRC : RegisterClass<"PPC", [i32], 32,
       R16, R15, R14, R13, R31, R0, R1, LR]>
 {
   let MethodProtos = [{
-    iterator allocation_order_begin(MachineFunction &MF) const;
-    iterator allocation_order_end(MachineFunction &MF) const;
+    iterator allocation_order_begin(const MachineFunction &MF) const;
+    iterator allocation_order_end(const MachineFunction &MF) const;
   }];
   let MethodBodies = [{
     GPRCClass::iterator
-    GPRCClass::allocation_order_begin(MachineFunction &MF) const {
+    GPRCClass::allocation_order_begin(const MachineFunction &MF) const {
       return begin();
     }
     GPRCClass::iterator
-    GPRCClass::allocation_order_end(MachineFunction &MF) const {
+    GPRCClass::allocation_order_end(const MachineFunction &MF) const {
       if (hasFP(MF))
         return end()-4;  // don't allocate R31, R0, R1, LR
       else
@@ -232,16 +232,16 @@ def G8RC : RegisterClass<"PPC", [i64], 64,
       X16, X15, X14, X13, X31, X0, X1]>
 {
   let MethodProtos = [{
-    iterator allocation_order_begin(MachineFunction &MF) const;
-    iterator allocation_order_end(MachineFunction &MF) const;
+    iterator allocation_order_begin(const MachineFunction &MF) const;
+    iterator allocation_order_end(const MachineFunction &MF) const;
   }];
   let MethodBodies = [{
     G8RCClass::iterator
-    G8RCClass::allocation_order_begin(MachineFunction &MF) const {
+    G8RCClass::allocation_order_begin(const MachineFunction &MF) const {
       return begin();
     }
     G8RCClass::iterator
-    G8RCClass::allocation_order_end(MachineFunction &MF) const {
+    G8RCClass::allocation_order_end(const MachineFunction &MF) const {
       if (hasFP(MF))
         return end()-3;
       else

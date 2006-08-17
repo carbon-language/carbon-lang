@@ -170,10 +170,10 @@ public:
   ///
   /// By default, these methods return all registers in the class.
   ///
-  virtual iterator allocation_order_begin(MachineFunction &MF) const {
+  virtual iterator allocation_order_begin(const MachineFunction &MF) const {
     return begin();
   }
-  virtual iterator allocation_order_end(MachineFunction &MF)   const {
+  virtual iterator allocation_order_end(const MachineFunction &MF)   const {
     return end();
   }
 
