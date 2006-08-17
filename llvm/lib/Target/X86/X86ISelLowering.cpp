@@ -4184,9 +4184,6 @@ X86TargetLowering::getConstraintType(char ConstraintLetter) const {
   case 'Q':
   case 'x':
   case 'Y':
-  case 'S':
-  case 'D':
-  case 'c':
     return C_RegisterClass;
   default: return TargetLowering::getConstraintType(ConstraintLetter);
   }
@@ -4200,18 +4197,6 @@ getRegClassForInlineAsmConstraint(const std::string &Constraint,
     // FIXME: not handling MMX registers yet ('y' constraint).
     switch (Constraint[0]) {      // GCC X86 Constraint Letters
     default: break;  // Unknown constraint letter
-    case 'S':   // ESI
-      if (VT == MVT::i32)
-        return make_vector<unsigned>(X86::ESI,0);
-      break;
-    case 'D':   // EDI
-      if (VT == MVT::i32)
-        return make_vector<unsigned>(X86::EDI,0);
-      break;
-    case 'c':  // ECX
-      if (VT == MVT::i32)
-        return make_vector<unsigned>(X86::ECX, 0);
-      break;
     case 'A':   // EAX/EDX
       if (VT == MVT::i32 || VT == MVT::i64)
         return make_vector<unsigned>(X86::EAX, X86::EDX, 0);
