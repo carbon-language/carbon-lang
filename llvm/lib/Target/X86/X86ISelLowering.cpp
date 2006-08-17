@@ -4187,6 +4187,9 @@ X86TargetLowering::getConstraintType(char ConstraintLetter) const {
   case 'S':
   case 'D':
   case 'c':
+  case 'g': //FIXME: This over-constrains g.  It should be replaced by rmi in
+            //       target independent code (I think this constraint is target
+            //       independent)
     return C_RegisterClass;
   default: return TargetLowering::getConstraintType(ConstraintLetter);
   }
@@ -4218,6 +4221,7 @@ getRegClassForInlineAsmConstraint(const std::string &Constraint,
       break;
     case 'r':   // GENERAL_REGS
     case 'R':   // LEGACY_REGS
+    case 'g':
       if (VT == MVT::i32)
         return make_vector<unsigned>(X86::EAX, X86::EDX, X86::ECX, X86::EBX,
                                      X86::ESI, X86::EDI, X86::EBP, X86::ESP, 0);
