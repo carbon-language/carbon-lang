@@ -182,7 +182,8 @@ public:
   /// otherwise. Note: initializeExecutionEnvironment should be called BEFORE
   /// this function.
   ///
-  bool createReferenceFile(Module *M, const std::string &Filename  = "bugpoint.reference.out");
+  bool createReferenceFile(Module *M, const std::string &Filename
+                                            = "bugpoint.reference.out");
 
   /// diffProgram - This method executes the specified module and diffs the
   /// output against the file specified by ReferenceOutputFile.  If the output
