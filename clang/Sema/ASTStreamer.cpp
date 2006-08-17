@@ -30,13 +30,21 @@ namespace {
       : P(PP, Builder) {
       PP.EnterSourceFile(MainFileID, 0, true);
       
-      // Parsing the specified input file.
-      P.ParseTranslationUnit();
+      // Initialize the parser.
+      P.Initialize();
     }
     
     /// ReadTopLevelDecl - Parse and return the next top-level declaration.
     Decl *ReadTopLevelDecl() {
-      return 0;
+      Parser::DeclTy *Result;
+      if (P.ParseTopLevelDecl(Result))
+        return 0;
+      Result = (Decl*)1; // FIXME!
+      return (Decl*)Result;
+    }
+    
+    ~ASTStreamer() {
+      P.Finalize();
     }
   };
 }

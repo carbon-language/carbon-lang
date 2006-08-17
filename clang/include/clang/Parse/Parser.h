@@ -46,16 +46,25 @@ public:
   // Type forwarding.  All of these are statically 'void*', but they may all be
   // different actual classes based on the actions in place.
   typedef Action::ExprTy ExprTy;
+  typedef Action::DeclTy DeclTy;
   
   // Parsing methods.
+  
+  /// ParseTranslationUnit - All in one method that initializes parses, and
+  /// shuts down the parser.
   void ParseTranslationUnit();
   
-  struct ExprResult {
-    ExprTy *Val;
-    bool isInvalid;
-    
-    ExprResult(bool Invalid = false) : Val(0), isInvalid(Invalid) {}
-  };
+  /// Initialize - Warm up the parser.
+  ///
+  void Initialize();
+  
+  /// ParseTopLevelDecl - Parse one top-level declaration, return whatever the
+  /// action tells us to.  This returns true if the EOF was encountered.
+  bool ParseTopLevelDecl(DeclTy*& Result);
+  
+  /// Finalize - Shut down the parser.
+  ///
+  void Finalize();
   
 private:
   //===--------------------------------------------------------------------===//
@@ -209,6 +218,13 @@ private:
   
   //===--------------------------------------------------------------------===//
   // C99 6.5: Expressions.
+
+  struct ExprResult {
+    ExprTy *Val;
+    bool isInvalid;
+    
+    ExprResult(bool Invalid = false) : Val(0), isInvalid(Invalid) {}
+  };
   
   ExprResult ParseExpression();
   ExprResult ParseConstantExpression();

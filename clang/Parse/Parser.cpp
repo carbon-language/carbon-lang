@@ -195,18 +195,16 @@ void Parser::ExitScope() {
 // C99 6.9: External Definitions.
 //===----------------------------------------------------------------------===//
 
-/// ParseTranslationUnit:
-///       translation-unit: [C99 6.9]
-///         external-declaration 
-///         translation-unit external-declaration 
-void Parser::ParseTranslationUnit() {
+/// Initialize - Warm up the parser.
+///
+void Parser::Initialize() {
   // Prime the lexer look-ahead.
   ConsumeToken();
   
   // Create the global scope, install it as the current scope.
   assert(CurScope == 0 && "A scope is already active?");
   EnterScope();
-
+  
   
   // Install builtin types.
   // TODO: Move this someplace more useful.
@@ -217,21 +215,45 @@ void Parser::ParseTranslationUnit() {
     
     // TODO: add a 'TST_builtin' type?
     DS.TypeSpecType = DeclSpec::TST_typedef;
-
+    
     Declarator D(DS, Declarator::FileContext);
     D.SetIdentifier(PP.getIdentifierInfo("__builtin_va_list"),SourceLocation());
     Actions.ParseDeclarator(SourceLocation(), CurScope, D, 0);
   }
   
-  
   if (Tok.getKind() == tok::eof)  // Empty source file is an extension.
     Diag(diag::ext_empty_source_file);
+}
+
+/// ParseTopLevelDecl - Parse one top-level declaration, return whatever the
+/// action tells us to.  This returns true if the EOF was encountered.
+bool Parser::ParseTopLevelDecl(DeclTy*& Result) {
+  Result = 0;
+  if (Tok.getKind() == tok::eof) return true;
   
-  while (Tok.getKind() != tok::eof)
-    ParseExternalDeclaration();
-  
+  ParseExternalDeclaration();
+  return false;
+}
+
+/// Finalize - Shut down the parser.
+///
+void Parser::Finalize() {
   ExitScope();
   assert(CurScope == 0 && "Scope imbalance!");
+}
+
+/// ParseTranslationUnit:
+///       translation-unit: [C99 6.9]
+///         external-declaration 
+///         translation-unit external-declaration 
+void Parser::ParseTranslationUnit() {
+  Initialize();
+  
+  DeclTy *Res;
+  while (!ParseTopLevelDecl(Res))
+    /*parse them all*/;
+  
+  Finalize();
 }
 
 /// ParseExternalDeclaration:
