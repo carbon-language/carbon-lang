@@ -59,19 +59,27 @@ namespace {
       return "ARM Assembly Printer";
     }
 
-    void printMemRegImm(const MachineInstr *MI, unsigned OpNo) {
-      const MachineOperand &MO1 = MI->getOperand(OpNo);
-      const MachineOperand &MO2 = MI->getOperand(OpNo + 1);
+    void printMemRegImm(const MachineInstr *MI, int opNum,
+			const char *Modifier = NULL) {
+      const MachineOperand &MO1 = MI->getOperand(opNum);
+      const MachineOperand &MO2 = MI->getOperand(opNum + 1);
       assert(MO1.isImmediate());
+      bool arith = false;
+      if (Modifier != NULL) {
+	assert(strcmp(Modifier, "arith") == 0);
+	arith = true;
+      }
 
       if (MO2.isConstantPoolIndex()) {
-	printOperand(MI, OpNo + 1);
+	printOperand(MI, opNum + 1);
       } else if (MO2.isRegister()) {
-	O << '[';
-	printOperand(MI, OpNo + 1);
+	if(!arith)
+	  O << '[';
+	printOperand(MI, opNum + 1);
 	O << ", ";
-	printOperand(MI, OpNo);
-	O << ']';
+	printOperand(MI, opNum);
+	if(!arith)
+	  O << ']';
       } else {
 	assert(0 && "Invalid Operand Type");
       }

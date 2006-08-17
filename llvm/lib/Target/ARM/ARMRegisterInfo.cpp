@@ -89,7 +89,8 @@ ARMRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II) const {
   MachineFunction &MF = *MBB.getParent();
 
   assert (MI.getOpcode() == ARM::ldr ||
-	  MI.getOpcode() == ARM::str);
+	  MI.getOpcode() == ARM::str ||
+	  MI.getOpcode() == ARM::lea_addri);
 
   unsigned FrameIdx = 2;
   unsigned OffIdx = 1;

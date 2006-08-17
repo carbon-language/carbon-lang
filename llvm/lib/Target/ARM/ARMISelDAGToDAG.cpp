@@ -358,6 +358,11 @@ static bool isInt12Immediate(SDOperand Op, short &Imm) {
 //register plus/minus 12 bit offset
 bool ARMDAGToDAGISel::SelectAddrRegImm(SDOperand N, SDOperand &Offset,
 				    SDOperand &Base) {
+  if (FrameIndexSDNode *FIN = dyn_cast<FrameIndexSDNode>(N)) {
+    Base = CurDAG->getTargetFrameIndex(FIN->getIndex(), MVT::i32);
+    Offset = CurDAG->getTargetConstant(0, MVT::i32);
+    return true;
+  }
   if (N.getOpcode() == ISD::ADD) {
     short imm = 0;
     if (isInt12Immediate(N.getOperand(1), imm)) {

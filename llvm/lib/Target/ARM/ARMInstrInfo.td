@@ -21,7 +21,7 @@ def memri : Operand<iPTR> {
 
 // Define ARM specific addressing mode.
 //register plus/minus 12 bit offset
-def iaddr  : ComplexPattern<iPTR, 2, "SelectAddrRegImm", []>;
+def iaddr  : ComplexPattern<iPTR, 2, "SelectAddrRegImm", [frameindex]>;
 //register plus scaled register
 //def raddr  : ComplexPattern<iPTR, 2, "SelectAddrRegReg", []>;
 
@@ -82,6 +82,12 @@ def movri   : InstARM<(ops IntRegs:$dst, i32imm:$src),
 def addri   : InstARM<(ops IntRegs:$dst, IntRegs:$a, i32imm:$b),
                        "add $dst, $a, $b",
 		       [(set IntRegs:$dst, (add IntRegs:$a, imm:$b))]>;
+
+// "LEA" forms of add
+def lea_addri : InstARM<(ops IntRegs:$dst, memri:$addr),
+			 "add $dst, ${addr:arith}",
+                	 [(set IntRegs:$dst, iaddr:$addr)]>;
+
 
 def subri   : InstARM<(ops IntRegs:$dst, IntRegs:$a, i32imm:$b),
                        "sub $dst, $a, $b",
