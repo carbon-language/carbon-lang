@@ -27,6 +27,11 @@
 #include <list>
 #include <utility>
 
+static bool TriggerError = false;
+#define CHECK_FOR_ERROR { if (TriggerError) { TriggerError = false; YYERROR; } }
+
+#define GEN_ERROR(msg) { GenerateError(msg); YYERROR; }
+
 int yyerror(const char *ErrorMsg); // Forward declarations to prevent "implicit
 int yylex();                       // declaration" of xxx warnings.
 int yyparse();
@@ -103,7 +108,7 @@ static struct PerModuleInfo {
         UndefinedReferences += "  " + I->first.first->getDescription() + " " +
                                I->first.second.getName() + "\n";
       }
-      ThrowException(UndefinedReferences);
+      GenerateError(UndefinedReferences);
     }
 
     // Look for intrinsic functions and CallInst that need to be upgraded
@@ -160,7 +165,7 @@ static struct PerFunctionInfo {
 
     // Any forward referenced blocks left?
     if (!BBForwardRefs.empty())
-      ThrowException("Undefined reference to label " +
+      GenerateError("Undefined reference to label " +
                      BBForwardRefs.begin()->first->getName());
 
     // Resolve all forward references now.
@@ -203,7 +208,7 @@ static const Type *getTypeVal(const ValID &D, bool DoNotImprovise = false) {
     }
     break;
   default:
-    ThrowException("Internal parser error: Invalid symbol type reference!");
+    GenerateError("Internal parser error: Invalid symbol type reference!");
   }
 
   // If we reached here, we referenced either a symbol that we don't know about
@@ -215,9 +220,9 @@ static const Type *getTypeVal(const ValID &D, bool DoNotImprovise = false) {
 
   if (inFunctionScope()) {
     if (D.Type == ValID::NameVal)
-      ThrowException("Reference to an undefined type: '" + D.getName() + "'");
+      GenerateError("Reference to an undefined type: '" + D.getName() + "'");
     else
-      ThrowException("Reference to an undefined type: #" + itostr(D.Num));
+      GenerateError("Reference to an undefined type: #" + itostr(D.Num));
   }
 
   std::map<ValID, PATypeHolder>::iterator I =CurModule.LateResolveTypes.find(D);
@@ -242,7 +247,7 @@ static Value *lookupInSymbolTable(const Type *Ty, const std::string &Name) {
 //
 static Value *getValNonImprovising(const Type *Ty, const ValID &D) {
   if (isa<FunctionType>(Ty))
-    ThrowException("Functions are not values and "
+    GenerateError("Functions are not values and "
                    "must be referenced as pointers");
 
   switch (D.Type) {
@@ -279,7 +284,7 @@ static Value *getValNonImprovising(const Type *Ty, const ValID &D) {
   // value will fit into the specified type...
   case ValID::ConstSIntVal:    // Is it a constant pool reference??
     if (!ConstantSInt::isValueValidForType(Ty, D.ConstPool64))
-      ThrowException("Signed integral constant '" +
+      GenerateError("Signed integral constant '" +
                      itostr(D.ConstPool64) + "' is invalid for type '" +
                      Ty->getDescription() + "'!");
     return ConstantSInt::get(Ty, D.ConstPool64);
@@ -287,7 +292,7 @@ static Value *getValNonImprovising(const Type *Ty, const ValID &D) {
   case ValID::ConstUIntVal:     // Is it an unsigned const pool reference?
     if (!ConstantUInt::isValueValidForType(Ty, D.UConstPool64)) {
       if (!ConstantSInt::isValueValidForType(Ty, D.ConstPool64)) {
-        ThrowException("Integral constant '" + utostr(D.UConstPool64) +
+        GenerateError("Integral constant '" + utostr(D.UConstPool64) +
                        "' is invalid or out of range!");
       } else {     // This is really a signed reference.  Transmogrify.
         return ConstantSInt::get(Ty, D.ConstPool64);
@@ -298,12 +303,12 @@ static Value *getValNonImprovising(const Type *Ty, const ValID &D) {
 
   case ValID::ConstFPVal:        // Is it a floating point const pool reference?
     if (!ConstantFP::isValueValidForType(Ty, D.ConstPoolFP))
-      ThrowException("FP constant invalid for type!!");
+      GenerateError("FP constant invalid for type!!");
     return ConstantFP::get(Ty, D.ConstPoolFP);
 
   case ValID::ConstNullVal:      // Is it a null value?
     if (!isa<PointerType>(Ty))
-      ThrowException("Cannot create a a non pointer null!");
+      GenerateError("Cannot create a a non pointer null!");
     return ConstantPointerNull::get(cast<PointerType>(Ty));
 
   case ValID::ConstUndefVal:      // Is it an undef value?
@@ -314,7 +319,7 @@ static Value *getValNonImprovising(const Type *Ty, const ValID &D) {
     
   case ValID::ConstantVal:       // Fully resolved constant?
     if (D.ConstantValue->getType() != Ty)
-      ThrowException("Constant expression type different from required type!");
+      GenerateError("Constant expression type different from required type!");
     return D.ConstantValue;
 
   case ValID::InlineAsmVal: {    // Inline asm expression
@@ -322,7 +327,7 @@ static Value *getValNonImprovising(const Type *Ty, const ValID &D) {
     const FunctionType *FTy =
       PTy ? dyn_cast<FunctionType>(PTy->getElementType()) : 0;
     if (!FTy || !InlineAsm::Verify(FTy, D.IAD->Constraints))
-      ThrowException("Invalid type for asm constraint string!");
+      GenerateError("Invalid type for asm constraint string!");
     InlineAsm *IA = InlineAsm::get(FTy, D.IAD->AsmString, D.IAD->Constraints,
                                    D.IAD->HasSideEffects);
     D.destroy();   // Free InlineAsmDescriptor.
@@ -345,14 +350,14 @@ static Value *getValNonImprovising(const Type *Ty, const ValID &D) {
 //
 static Value *getVal(const Type *Ty, const ValID &ID) {
   if (Ty == Type::LabelTy)
-    ThrowException("Cannot use a basic block here");
+    GenerateError("Cannot use a basic block here");
 
   // See if the value has already been defined.
   Value *V = getValNonImprovising(Ty, ID);
   if (V) return V;
 
   if (!Ty->isFirstClassType() && !isa<OpaqueType>(Ty))
-    ThrowException("Invalid use of a composite type!");
+    GenerateError("Invalid use of a composite type!");
 
   // If we reached here, we referenced either a symbol that we don't know about
   // or an id number that hasn't been read yet.  We may be referencing something
@@ -384,7 +389,7 @@ static BasicBlock *getBBVal(const ValID &ID, bool isDefinition = false) {
   std::string Name;
   BasicBlock *BB = 0;
   switch (ID.Type) {
-  default: ThrowException("Illegal label reference " + ID.getName());
+  default: GenerateError("Illegal label reference " + ID.getName());
   case ValID::NumberVal:                // Is it a numbered definition?
     if (unsigned(ID.Num) >= CurFun.NumberedBlocks.size())
       CurFun.NumberedBlocks.resize(ID.Num+1);
@@ -405,7 +410,7 @@ static BasicBlock *getBBVal(const ValID &ID, bool isDefinition = false) {
     // an entry for it in the PlaceHolderInfo map.
     if (isDefinition && !CurFun.BBForwardRefs.erase(BB))
       // The existing value was a definition, not a forward reference.
-      ThrowException("Redefinition of label " + ID.getName());
+      GenerateError("Redefinition of label " + ID.getName());
 
     ID.destroy();                       // Free strdup'd memory.
     return BB;
@@ -479,11 +484,11 @@ ResolveDefinitions(std::map<const Type*,ValueList> &LateResolvers,
         InsertValue(V, *FutureLateResolvers);
       } else {
         if (DID.Type == ValID::NameVal)
-          ThrowException("Reference to an invalid definition: '" +DID.getName()+
+          GenerateError("Reference to an invalid definition: '" +DID.getName()+
                          "' of type '" + V->getType()->getDescription() + "'",
                          PHI->second.second);
         else
-          ThrowException("Reference to an invalid definition: #" +
+          GenerateError("Reference to an invalid definition: #" +
                          itostr(DID.Num) + " of type '" +
                          V->getType()->getDescription() + "'",
                          PHI->second.second);
@@ -521,12 +526,12 @@ static void setValueName(Value *V, char *NameStr) {
     free(NameStr);                  // Free old string
 
     if (V->getType() == Type::VoidTy)
-      ThrowException("Can't assign name '" + Name+"' to value with void type!");
+      GenerateError("Can't assign name '" + Name+"' to value with void type!");
 
     assert(inFunctionScope() && "Must be in function scope!");
     SymbolTable &ST = CurFun.CurrentFunction->getSymbolTable();
     if (ST.lookup(V->getType(), Name))
-      ThrowException("Redefinition of value named '" + Name + "' in the '" +
+      GenerateError("Redefinition of value named '" + Name + "' in the '" +
                      V->getType()->getDescription() + "' type plane!");
 
     // Set the name.
@@ -541,7 +546,7 @@ ParseGlobalVariable(char *NameStr,GlobalValue::LinkageTypes Linkage,
                     bool isConstantGlobal, const Type *Ty,
                     Constant *Initializer) {
   if (isa<FunctionType>(Ty))
-    ThrowException("Cannot declare global vars of function type!");
+    GenerateError("Cannot declare global vars of function type!");
 
   const PointerType *PTy = PointerType::get(Ty);
 
@@ -598,7 +603,7 @@ ParseGlobalVariable(char *NameStr,GlobalValue::LinkageTypes Linkage,
         return EGV;
       }
 
-      ThrowException("Redefinition of global variable named '" + Name +
+      GenerateError("Redefinition of global variable named '" + Name +
                      "' in the '" + Ty->getDescription() + "' type plane!");
     }
   }
@@ -627,7 +632,7 @@ static bool setTypeName(const Type *T, char *NameStr) {
 
   // We don't allow assigning names to void type
   if (T == Type::VoidTy)
-    ThrowException("Can't assign name '" + Name + "' to the void type!");
+    GenerateError("Can't assign name '" + Name + "' to the void type!");
 
   // Set the type name, checking for conflicts as we do so.
   bool AlreadyExists = CurModule.CurrentModule->addTypeName(Name, T);
@@ -651,7 +656,7 @@ static bool setTypeName(const Type *T, char *NameStr) {
     if (Existing == T) return true;  // Yes, it's equal.
 
     // Any other kind of (non-equivalent) redefinition is an error.
-    ThrowException("Redefinition of type named '" + Name + "' in the '" +
+    GenerateError("Redefinition of type named '" + Name + "' in the '" +
                    T->getDescription() + "' type plane!");
   }
 
@@ -757,6 +762,8 @@ static PATypeHolder HandleUpRefs(const Type *ty) {
 
   CurModule.CurrentModule = M;
   yyparse();       // Parse the file, potentially throwing exception
+  if (!ParserResult)
+    return 0;
 
   Module *Result = ParserResult;
   ParserResult = 0;
@@ -773,12 +780,12 @@ static PATypeHolder HandleUpRefs(const Type *ty) {
   }
 
   if (ObsoleteVarArgs && NewVarArgs)
-    ThrowException("This file is corrupt: it uses both new and old style varargs");
+    GenerateError("This file is corrupt: it uses both new and old style varargs");
 
   if(ObsoleteVarArgs) {
     if(Function* F = Result->getNamedFunction("llvm.va_start")) {
       if (F->arg_size() != 0)
-        ThrowException("Obsolete va_start takes 0 argument!");
+        GenerateError("Obsolete va_start takes 0 argument!");
       
       //foo = va_start()
       // ->
@@ -805,7 +812,7 @@ static PATypeHolder HandleUpRefs(const Type *ty) {
     
     if(Function* F = Result->getNamedFunction("llvm.va_end")) {
       if(F->arg_size() != 1)
-        ThrowException("Obsolete va_end takes 1 argument!");
+        GenerateError("Obsolete va_end takes 1 argument!");
 
       //vaend foo
       // ->
@@ -829,7 +836,7 @@ static PATypeHolder HandleUpRefs(const Type *ty) {
 
     if(Function* F = Result->getNamedFunction("llvm.va_copy")) {
       if(F->arg_size() != 1)
-        ThrowException("Obsolete va_copy takes 1 argument!");
+        GenerateError("Obsolete va_copy takes 1 argument!");
       //foo = vacopy(bar)
       // ->
       //a = alloca 1 of typeof(foo)
@@ -1010,16 +1017,18 @@ Module *llvm::RunVMAsmParser(const char * AsmString, Module * M) {
 INTVAL : SINTVAL;
 INTVAL : UINTVAL {
   if ($1 > (uint32_t)INT32_MAX)     // Outside of my range!
-    ThrowException("Value too large for type!");
+    GEN_ERROR("Value too large for type!");
   $$ = (int32_t)$1;
+  CHECK_FOR_ERROR
 };
 
 
 EINT64VAL : ESINT64VAL;      // These have same type and can't cause problems...
 EINT64VAL : EUINT64VAL {
   if ($1 > (uint64_t)INT64_MAX)     // Outside of my range!
-    ThrowException("Value too large for type!");
+    GEN_ERROR("Value too large for type!");
   $$ = (int64_t)$1;
+  CHECK_FOR_ERROR
 };
 
 // Operations that are notably excluded from this list include:
@@ -1041,9 +1050,11 @@ FPType   : FLOAT | DOUBLE;
 // OptAssign - Value producing statements have an optional assignment component
 OptAssign : Name '=' {
     $$ = $1;
+    CHECK_FOR_ERROR
   }
   | /*empty*/ {
     $$ = 0;
+    CHECK_FOR_ERROR
   };
 
 OptLinkage : INTERNAL  { $$ = GlobalValue::InternalLinkage; } |
@@ -1059,8 +1070,9 @@ OptCallingConv : /*empty*/      { $$ = CallingConv::C; } |
                  COLDCC_TOK     { $$ = CallingConv::Cold; } |
                  CC_TOK EUINT64VAL {
                    if ((unsigned)$2 != $2)
-                     ThrowException("Calling conv too large!");
+                     GEN_ERROR("Calling conv too large!");
                    $$ = $2;
+                  CHECK_FOR_ERROR
                  };
 
 // OptAlign/OptCAlign - An optional alignment, and an optional alignment with
@@ -1069,21 +1081,24 @@ OptAlign : /*empty*/        { $$ = 0; } |
            ALIGN EUINT64VAL {
   $$ = $2;
   if ($$ != 0 && !isPowerOf2_32($$))
-    ThrowException("Alignment must be a power of two!");
+    GEN_ERROR("Alignment must be a power of two!");
+  CHECK_FOR_ERROR
 };
 OptCAlign : /*empty*/            { $$ = 0; } |
             ',' ALIGN EUINT64VAL {
   $$ = $3;
   if ($$ != 0 && !isPowerOf2_32($$))
-    ThrowException("Alignment must be a power of two!");
+    GEN_ERROR("Alignment must be a power of two!");
+  CHECK_FOR_ERROR
 };
 
 
 SectionString : SECTION STRINGCONSTANT {
   for (unsigned i = 0, e = strlen($2); i != e; ++i)
     if ($2[i] == '"' || $2[i] == '\\')
-      ThrowException("Invalid character in section name!");
+      GEN_ERROR("Invalid character in section name!");
   $$ = $2;
+  CHECK_FOR_ERROR
 };
 
 OptSection : /*empty*/ { $$ = 0; } |
@@ -1097,11 +1112,13 @@ GlobalVarAttributes : /* empty */ {} |
 GlobalVarAttribute : SectionString {
     CurGV->setSection($1);
     free($1);
+    CHECK_FOR_ERROR
   } 
   | ALIGN EUINT64VAL {
     if ($2 != 0 && !isPowerOf2_32($2))
-      ThrowException("Alignment must be a power of two!");
+      GEN_ERROR("Alignment must be a power of two!");
     CurGV->setAlignment($2);
+    CHECK_FOR_ERROR
   };
 
 //===----------------------------------------------------------------------===//
@@ -1116,8 +1133,9 @@ UpRTypesV : UpRTypes | VOID { $$ = new PATypeHolder($1); };
 
 Types     : UpRTypes {
     if (!UpRefs.empty())
-      ThrowException("Invalid upreference in type: " + (*$1)->getDescription());
+      GEN_ERROR("Invalid upreference in type: " + (*$1)->getDescription());
     $$ = $1;
+    CHECK_FOR_ERROR
   };
 
 
@@ -1127,22 +1145,26 @@ PrimType : BOOL | SBYTE | UBYTE | SHORT  | USHORT | INT   | UINT ;
 PrimType : LONG | ULONG | FLOAT | DOUBLE | TYPE   | LABEL;
 UpRTypes : OPAQUE {
     $$ = new PATypeHolder(OpaqueType::get());
+    CHECK_FOR_ERROR
   }
   | PrimType {
     $$ = new PATypeHolder($1);
+    CHECK_FOR_ERROR
   };
 UpRTypes : SymbolicValueRef {            // Named types are also simple types...
   $$ = new PATypeHolder(getTypeVal($1));
+  CHECK_FOR_ERROR
 };
 
 // Include derived types in the Types production.
 //
 UpRTypes : '\\' EUINT64VAL {                   // Type UpReference
-    if ($2 > (uint64_t)~0U) ThrowException("Value out of range!");
+    if ($2 > (uint64_t)~0U) GEN_ERROR("Value out of range!");
     OpaqueType *OT = OpaqueType::get();        // Use temporary placeholder
     UpRefs.push_back(UpRefRecord((unsigned)$2, OT));  // Add to vector...
     $$ = new PATypeHolder(OT);
     UR_OUT("New Upreference!\n");
+    CHECK_FOR_ERROR
   }
   | UpRTypesV '(' ArgTypeListI ')' {           // Function derived type?
     std::vector<const Type*> Params;
@@ -1155,21 +1177,24 @@ UpRTypes : '\\' EUINT64VAL {                   // Type UpReference
     $$ = new PATypeHolder(HandleUpRefs(FunctionType::get(*$1,Params,isVarArg)));
     delete $3;      // Delete the argument list
     delete $1;      // Delete the return type handle
+    CHECK_FOR_ERROR
   }
   | '[' EUINT64VAL 'x' UpRTypes ']' {          // Sized array type?
     $$ = new PATypeHolder(HandleUpRefs(ArrayType::get(*$4, (unsigned)$2)));
     delete $4;
+    CHECK_FOR_ERROR
   }
   | '<' EUINT64VAL 'x' UpRTypes '>' {          // Packed array type?
      const llvm::Type* ElemTy = $4->get();
      if ((unsigned)$2 != $2)
-        ThrowException("Unsigned result not equal to signed result");
+        GEN_ERROR("Unsigned result not equal to signed result");
      if (!ElemTy->isPrimitiveType())
-        ThrowException("Elemental type of a PackedType must be primitive");
+        GEN_ERROR("Elemental type of a PackedType must be primitive");
      if (!isPowerOf2_32($2))
-       ThrowException("Vector length should be a power of 2!");
+       GEN_ERROR("Vector length should be a power of 2!");
      $$ = new PATypeHolder(HandleUpRefs(PackedType::get(*$4, (unsigned)$2)));
      delete $4;
+     CHECK_FOR_ERROR
   }
   | '{' TypeListI '}' {                        // Structure type?
     std::vector<const Type*> Elements;
@@ -1179,13 +1204,16 @@ UpRTypes : '\\' EUINT64VAL {                   // Type UpReference
 
     $$ = new PATypeHolder(HandleUpRefs(StructType::get(Elements)));
     delete $2;
+    CHECK_FOR_ERROR
   }
   | '{' '}' {                                  // Empty structure type?
     $$ = new PATypeHolder(StructType::get(std::vector<const Type*>()));
+    CHECK_FOR_ERROR
   }
   | UpRTypes '*' {                             // Pointer type?
     $$ = new PATypeHolder(HandleUpRefs(PointerType::get(*$1)));
     delete $1;
+    CHECK_FOR_ERROR
   };
 
 // TypeList - Used for struct declarations and as a basis for function type 
@@ -1194,21 +1222,26 @@ UpRTypes : '\\' EUINT64VAL {                   // Type UpReference
 TypeListI : UpRTypes {
     $$ = new std::list<PATypeHolder>();
     $$->push_back(*$1); delete $1;
+    CHECK_FOR_ERROR
   }
   | TypeListI ',' UpRTypes {
     ($$=$1)->push_back(*$3); delete $3;
+    CHECK_FOR_ERROR
   };
 
 // ArgTypeList - List of types for a function type declaration...
 ArgTypeListI : TypeListI
   | TypeListI ',' DOTDOTDOT {
     ($$=$1)->push_back(Type::VoidTy);
+    CHECK_FOR_ERROR
   }
   | DOTDOTDOT {
     ($$ = new std::list<PATypeHolder>())->push_back(Type::VoidTy);
+    CHECK_FOR_ERROR
   }
   | /*empty*/ {
     $$ = new std::list<PATypeHolder>();
+    CHECK_FOR_ERROR
   };
 
 // ConstVal - The various declarations that go into the constant pool.  This
@@ -1220,52 +1253,54 @@ ArgTypeListI : TypeListI
 ConstVal: Types '[' ConstVector ']' { // Nonempty unsized arr
     const ArrayType *ATy = dyn_cast<ArrayType>($1->get());
     if (ATy == 0)
-      ThrowException("Cannot make array constant with type: '" + 
+      GEN_ERROR("Cannot make array constant with type: '" + 
                      (*$1)->getDescription() + "'!");
     const Type *ETy = ATy->getElementType();
     int NumElements = ATy->getNumElements();
 
     // Verify that we have the correct size...
     if (NumElements != -1 && NumElements != (int)$3->size())
-      ThrowException("Type mismatch: constant sized array initialized with " +
+      GEN_ERROR("Type mismatch: constant sized array initialized with " +
                      utostr($3->size()) +  " arguments, but has size of " + 
                      itostr(NumElements) + "!");
 
     // Verify all elements are correct type!
     for (unsigned i = 0; i < $3->size(); i++) {
       if (ETy != (*$3)[i]->getType())
-        ThrowException("Element #" + utostr(i) + " is not of type '" + 
+        GEN_ERROR("Element #" + utostr(i) + " is not of type '" + 
                        ETy->getDescription() +"' as required!\nIt is of type '"+
                        (*$3)[i]->getType()->getDescription() + "'.");
     }
 
     $$ = ConstantArray::get(ATy, *$3);
     delete $1; delete $3;
+    CHECK_FOR_ERROR
   }
   | Types '[' ']' {
     const ArrayType *ATy = dyn_cast<ArrayType>($1->get());
     if (ATy == 0)
-      ThrowException("Cannot make array constant with type: '" + 
+      GEN_ERROR("Cannot make array constant with type: '" + 
                      (*$1)->getDescription() + "'!");
 
     int NumElements = ATy->getNumElements();
     if (NumElements != -1 && NumElements != 0) 
-      ThrowException("Type mismatch: constant sized array initialized with 0"
+      GEN_ERROR("Type mismatch: constant sized array initialized with 0"
                      " arguments, but has size of " + itostr(NumElements) +"!");
     $$ = ConstantArray::get(ATy, std::vector<Constant*>());
     delete $1;
+    CHECK_FOR_ERROR
   }
   | Types 'c' STRINGCONSTANT {
     const ArrayType *ATy = dyn_cast<ArrayType>($1->get());
     if (ATy == 0)
-      ThrowException("Cannot make array constant with type: '" + 
+      GEN_ERROR("Cannot make array constant with type: '" + 
                      (*$1)->getDescription() + "'!");
 
     int NumElements = ATy->getNumElements();
     const Type *ETy = ATy->getElementType();
     char *EndStr = UnEscapeLexed($3, true);
     if (NumElements != -1 && NumElements != (EndStr-$3))
-      ThrowException("Can't build string constant of size " + 
+      GEN_ERROR("Can't build string constant of size " + 
                      itostr((int)(EndStr-$3)) +
                      " when array has size " + itostr(NumElements) + "!");
     std::vector<Constant*> Vals;
@@ -1278,86 +1313,92 @@ ConstVal: Types '[' ConstVector ']' { // Nonempty unsized arr
         Vals.push_back(ConstantUInt::get(ETy, *C));
     } else {
       free($3);
-      ThrowException("Cannot build string arrays of non byte sized elements!");
+      GEN_ERROR("Cannot build string arrays of non byte sized elements!");
     }
     free($3);
     $$ = ConstantArray::get(ATy, Vals);
     delete $1;
+    CHECK_FOR_ERROR
   }
   | Types '<' ConstVector '>' { // Nonempty unsized arr
     const PackedType *PTy = dyn_cast<PackedType>($1->get());
     if (PTy == 0)
-      ThrowException("Cannot make packed constant with type: '" + 
+      GEN_ERROR("Cannot make packed constant with type: '" + 
                      (*$1)->getDescription() + "'!");
     const Type *ETy = PTy->getElementType();
     int NumElements = PTy->getNumElements();
 
     // Verify that we have the correct size...
     if (NumElements != -1 && NumElements != (int)$3->size())
-      ThrowException("Type mismatch: constant sized packed initialized with " +
+      GEN_ERROR("Type mismatch: constant sized packed initialized with " +
                      utostr($3->size()) +  " arguments, but has size of " + 
                      itostr(NumElements) + "!");
 
     // Verify all elements are correct type!
     for (unsigned i = 0; i < $3->size(); i++) {
       if (ETy != (*$3)[i]->getType())
-        ThrowException("Element #" + utostr(i) + " is not of type '" + 
+        GEN_ERROR("Element #" + utostr(i) + " is not of type '" + 
            ETy->getDescription() +"' as required!\nIt is of type '"+
            (*$3)[i]->getType()->getDescription() + "'.");
     }
 
     $$ = ConstantPacked::get(PTy, *$3);
     delete $1; delete $3;
+    CHECK_FOR_ERROR
   }
   | Types '{' ConstVector '}' {
     const StructType *STy = dyn_cast<StructType>($1->get());
     if (STy == 0)
-      ThrowException("Cannot make struct constant with type: '" + 
+      GEN_ERROR("Cannot make struct constant with type: '" + 
                      (*$1)->getDescription() + "'!");
 
     if ($3->size() != STy->getNumContainedTypes())
-      ThrowException("Illegal number of initializers for structure type!");
+      GEN_ERROR("Illegal number of initializers for structure type!");
 
     // Check to ensure that constants are compatible with the type initializer!
     for (unsigned i = 0, e = $3->size(); i != e; ++i)
       if ((*$3)[i]->getType() != STy->getElementType(i))
-        ThrowException("Expected type '" +
+        GEN_ERROR("Expected type '" +
                        STy->getElementType(i)->getDescription() +
                        "' for element #" + utostr(i) +
                        " of structure initializer!");
 
     $$ = ConstantStruct::get(STy, *$3);
     delete $1; delete $3;
+    CHECK_FOR_ERROR
   }
   | Types '{' '}' {
     const StructType *STy = dyn_cast<StructType>($1->get());
     if (STy == 0)
-      ThrowException("Cannot make struct constant with type: '" + 
+      GEN_ERROR("Cannot make struct constant with type: '" + 
                      (*$1)->getDescription() + "'!");
 
     if (STy->getNumContainedTypes() != 0)
-      ThrowException("Illegal number of initializers for structure type!");
+      GEN_ERROR("Illegal number of initializers for structure type!");
 
     $$ = ConstantStruct::get(STy, std::vector<Constant*>());
     delete $1;
+    CHECK_FOR_ERROR
   }
   | Types NULL_TOK {
     const PointerType *PTy = dyn_cast<PointerType>($1->get());
     if (PTy == 0)
-      ThrowException("Cannot make null pointer constant with type: '" + 
+      GEN_ERROR("Cannot make null pointer constant with type: '" + 
                      (*$1)->getDescription() + "'!");
 
     $$ = ConstantPointerNull::get(PTy);
     delete $1;
+    CHECK_FOR_ERROR
   }
   | Types UNDEF {
     $$ = UndefValue::get($1->get());
     delete $1;
+    CHECK_FOR_ERROR
   }
   | Types SymbolicValueRef {
     const PointerType *Ty = dyn_cast<PointerType>($1->get());
     if (Ty == 0)
-      ThrowException("Global const reference must be a pointer type!");
+      GEN_ERROR("Global const reference must be a pointer type!");
 
     // ConstExprs can exist in the body of a function, thus creating
     // GlobalValues whenever they refer to a variable.  Because we are in
@@ -1412,57 +1453,66 @@ ConstVal: Types '[' ConstVector ']' { // Nonempty unsized arr
 
     $$ = cast<GlobalValue>(V);
     delete $1;            // Free the type handle
+    CHECK_FOR_ERROR
   }
   | Types ConstExpr {
     if ($1->get() != $2->getType())
-      ThrowException("Mismatched types for constant expression!");
+      GEN_ERROR("Mismatched types for constant expression!");
     $$ = $2;
     delete $1;
+    CHECK_FOR_ERROR
   }
   | Types ZEROINITIALIZER {
     const Type *Ty = $1->get();
     if (isa<FunctionType>(Ty) || Ty == Type::LabelTy || isa<OpaqueType>(Ty))
-      ThrowException("Cannot create a null initialized value of this type!");
+      GEN_ERROR("Cannot create a null initialized value of this type!");
     $$ = Constant::getNullValue(Ty);
     delete $1;
+    CHECK_FOR_ERROR
   };
 
 ConstVal : SIntType EINT64VAL {      // integral constants
     if (!ConstantSInt::isValueValidForType($1, $2))
-      ThrowException("Constant value doesn't fit in type!");
+      GEN_ERROR("Constant value doesn't fit in type!");
     $$ = ConstantSInt::get($1, $2);
+    CHECK_FOR_ERROR
   }
   | UIntType EUINT64VAL {            // integral constants
     if (!ConstantUInt::isValueValidForType($1, $2))
-      ThrowException("Constant value doesn't fit in type!");
+      GEN_ERROR("Constant value doesn't fit in type!");
     $$ = ConstantUInt::get($1, $2);
+    CHECK_FOR_ERROR
   }
   | BOOL TRUETOK {                      // Boolean constants
     $$ = ConstantBool::True;
+    CHECK_FOR_ERROR
   }
   | BOOL FALSETOK {                     // Boolean constants
     $$ = ConstantBool::False;
+    CHECK_FOR_ERROR
   }
   | FPType FPVAL {                   // Float & Double constants
     if (!ConstantFP::isValueValidForType($1, $2))
-      ThrowException("Floating point constant invalid for type!!");
+      GEN_ERROR("Floating point constant invalid for type!!");
     $$ = ConstantFP::get($1, $2);
+    CHECK_FOR_ERROR
   };
 
 
 ConstExpr: CAST '(' ConstVal TO Types ')' {
     if (!$3->getType()->isFirstClassType())
-      ThrowException("cast constant expression from a non-primitive type: '" +
+      GEN_ERROR("cast constant expression from a non-primitive type: '" +
                      $3->getType()->getDescription() + "'!");
     if (!$5->get()->isFirstClassType())
-      ThrowException("cast constant expression to a non-primitive type: '" +
+      GEN_ERROR("cast constant expression to a non-primitive type: '" +
                      $5->get()->getDescription() + "'!");
     $$ = ConstantExpr::getCast($3, $5->get());
     delete $5;
+    CHECK_FOR_ERROR
   }
   | GETELEMENTPTR '(' ConstVal IndexList ')' {
     if (!isa<PointerType>($3->getType()))
-      ThrowException("GetElementPtr requires a pointer operand!");
+      GEN_ERROR("GetElementPtr requires a pointer operand!");
 
     // LLVM 1.2 and earlier used ubyte struct indices.  Convert any ubyte struct
     // indices to uint struct indices for compatibility.
@@ -1478,29 +1528,31 @@ ConstExpr: CAST '(' ConstVal TO Types ')' {
     const Type *IdxTy =
       GetElementPtrInst::getIndexedType($3->getType(), *$4, true);
     if (!IdxTy)
-      ThrowException("Index list invalid for constant getelementptr!");
+      GEN_ERROR("Index list invalid for constant getelementptr!");
 
     std::vector<Constant*> IdxVec;
     for (unsigned i = 0, e = $4->size(); i != e; ++i)
       if (Constant *C = dyn_cast<Constant>((*$4)[i]))
         IdxVec.push_back(C);
       else
-        ThrowException("Indices to constant getelementptr must be constants!");
+        GEN_ERROR("Indices to constant getelementptr must be constants!");
 
     delete $4;
 
     $$ = ConstantExpr::getGetElementPtr($3, IdxVec);
+    CHECK_FOR_ERROR
   }
   | SELECT '(' ConstVal ',' ConstVal ',' ConstVal ')' {
     if ($3->getType() != Type::BoolTy)
-      ThrowException("Select condition must be of boolean type!");
+      GEN_ERROR("Select condition must be of boolean type!");
     if ($5->getType() != $7->getType())
-      ThrowException("Select operand types must match!");
+      GEN_ERROR("Select operand types must match!");
     $$ = ConstantExpr::getSelect($3, $5, $7);
+    CHECK_FOR_ERROR
   }
   | ArithmeticOps '(' ConstVal ',' ConstVal ')' {
     if ($3->getType() != $5->getType())
-      ThrowException("Binary operator types must match!");
+      GEN_ERROR("Binary operator types must match!");
     // HACK: llvm 1.3 and earlier used to emit invalid pointer constant exprs.
     // To retain backward compatibility with these early compilers, we emit a
     // cast to the appropriate integer type automatically if we are in the
@@ -1512,59 +1564,68 @@ ConstExpr: CAST '(' ConstVal TO Types ')' {
       switch (CurModule.CurrentModule->getPointerSize()) {
       case Module::Pointer32: IntPtrTy = Type::IntTy; break;
       case Module::Pointer64: IntPtrTy = Type::LongTy; break;
-      default: ThrowException("invalid pointer binary constant expr!");
+      default: GEN_ERROR("invalid pointer binary constant expr!");
       }
       $$ = ConstantExpr::get($1, ConstantExpr::getCast($3, IntPtrTy),
                              ConstantExpr::getCast($5, IntPtrTy));
       $$ = ConstantExpr::getCast($$, $3->getType());
     }
+    CHECK_FOR_ERROR
   }
   | LogicalOps '(' ConstVal ',' ConstVal ')' {
     if ($3->getType() != $5->getType())
-      ThrowException("Logical operator types must match!");
+      GEN_ERROR("Logical operator types must match!");
     if (!$3->getType()->isIntegral()) {
       if (!isa<PackedType>($3->getType()) || 
           !cast<PackedType>($3->getType())->getElementType()->isIntegral())
-        ThrowException("Logical operator requires integral operands!");
+        GEN_ERROR("Logical operator requires integral operands!");
     }
     $$ = ConstantExpr::get($1, $3, $5);
+    CHECK_FOR_ERROR
   }
   | SetCondOps '(' ConstVal ',' ConstVal ')' {
     if ($3->getType() != $5->getType())
-      ThrowException("setcc operand types must match!");
+      GEN_ERROR("setcc operand types must match!");
     $$ = ConstantExpr::get($1, $3, $5);
+    CHECK_FOR_ERROR
   }
   | ShiftOps '(' ConstVal ',' ConstVal ')' {
     if ($5->getType() != Type::UByteTy)
-      ThrowException("Shift count for shift constant must be unsigned byte!");
+      GEN_ERROR("Shift count for shift constant must be unsigned byte!");
     if (!$3->getType()->isInteger())
-      ThrowException("Shift constant expression requires integer operand!");
+      GEN_ERROR("Shift constant expression requires integer operand!");
     $$ = ConstantExpr::get($1, $3, $5);
+    CHECK_FOR_ERROR
   }
   | EXTRACTELEMENT '(' ConstVal ',' ConstVal ')' {
     if (!ExtractElementInst::isValidOperands($3, $5))
-      ThrowException("Invalid extractelement operands!");
+      GEN_ERROR("Invalid extractelement operands!");
     $$ = ConstantExpr::getExtractElement($3, $5);
+    CHECK_FOR_ERROR
   }
   | INSERTELEMENT '(' ConstVal ',' ConstVal ',' ConstVal ')' {
     if (!InsertElementInst::isValidOperands($3, $5, $7))
-      ThrowException("Invalid insertelement operands!");
+      GEN_ERROR("Invalid insertelement operands!");
     $$ = ConstantExpr::getInsertElement($3, $5, $7);
+    CHECK_FOR_ERROR
   }
   | SHUFFLEVECTOR '(' ConstVal ',' ConstVal ',' ConstVal ')' {
     if (!ShuffleVectorInst::isValidOperands($3, $5, $7))
-      ThrowException("Invalid shufflevector operands!");
+      GEN_ERROR("Invalid shufflevector operands!");
     $$ = ConstantExpr::getShuffleVector($3, $5, $7);
+    CHECK_FOR_ERROR
   };
 
 
 // ConstVector - A list of comma separated constants.
 ConstVector : ConstVector ',' ConstVal {
     ($$ = $1)->push_back($3);
+    CHECK_FOR_ERROR
   }
   | ConstVal {
     $$ = new std::vector<Constant*>();
     $$->push_back($1);
+    CHECK_FOR_ERROR
   };
 
 
@@ -1582,6 +1643,7 @@ GlobalType : GLOBAL { $$ = false; } | CONSTANT { $$ = true; };
 Module : FunctionList {
   $$ = ParserResult = $1;
   CurModule.ModuleDone();
+  CHECK_FOR_ERROR
 };
 
 // FunctionList - A list of functions, preceeded by a constant pool.
@@ -1589,26 +1651,32 @@ Module : FunctionList {
 FunctionList : FunctionList Function {
     $$ = $1;
     CurFun.FunctionDone();
+    CHECK_FOR_ERROR
   } 
   | FunctionList FunctionProto {
     $$ = $1;
+    CHECK_FOR_ERROR
   }
   | FunctionList MODULE ASM_TOK AsmBlock {
     $$ = $1;
+    CHECK_FOR_ERROR
   }  
   | FunctionList IMPLEMENTATION {
     $$ = $1;
+    CHECK_FOR_ERROR
   }
   | ConstPool {
     $$ = CurModule.CurrentModule;
     // Emit an error if there are any unresolved types left.
     if (!CurModule.LateResolveTypes.empty()) {
       const ValID &DID = CurModule.LateResolveTypes.begin()->first;
-      if (DID.Type == ValID::NameVal)
-        ThrowException("Reference to an undefined type: '"+DID.getName() + "'");
-      else
-        ThrowException("Reference to an undefined type: #" + itostr(DID.Num));
+      if (DID.Type == ValID::NameVal) {
+        GEN_ERROR("Reference to an undefined type: '"+DID.getName() + "'");
+      } else {
+        GEN_ERROR("Reference to an undefined type: #" + itostr(DID.Num));
+      }
     }
+    CHECK_FOR_ERROR
   };
 
 // ConstPool - Constants with optional names assigned to them.
@@ -1631,16 +1699,20 @@ ConstPool : ConstPool OptAssign TYPE TypesV {
     }
 
     delete $4;
+    CHECK_FOR_ERROR
   }
   | ConstPool FunctionProto {       // Function prototypes can be in const pool
+    CHECK_FOR_ERROR
   }
   | ConstPool MODULE ASM_TOK AsmBlock {  // Asm blocks can be in the const pool
+    CHECK_FOR_ERROR
   }
   | ConstPool OptAssign OptLinkage GlobalType ConstVal {
-    if ($5 == 0) ThrowException("Global value initializer is not a constant!");
+    if ($5 == 0) GEN_ERROR("Global value initializer is not a constant!");
     CurGV = ParseGlobalVariable($2, $3, $4, $5->getType(), $5);
                                                        } GlobalVarAttributes {
     CurGV = 0;
+    CHECK_FOR_ERROR
   }
   | ConstPool OptAssign EXTERNAL GlobalType Types {
     CurGV = ParseGlobalVariable($2, GlobalValue::ExternalLinkage,
@@ -1648,10 +1720,13 @@ ConstPool : ConstPool OptAssign TYPE TypesV {
     delete $5;
                                                    } GlobalVarAttributes {
     CurGV = 0;
+    CHECK_FOR_ERROR
   }
   | ConstPool TARGET TargetDefinition { 
+    CHECK_FOR_ERROR
   }
   | ConstPool DEPLIBS '=' LibrariesDefinition {
+    CHECK_FOR_ERROR
   }
   | /* empty: end of list */ { 
   };
@@ -1667,6 +1742,7 @@ AsmBlock : STRINGCONSTANT {
     CurModule.CurrentModule->setModuleInlineAsm(NewAsm);
   else
     CurModule.CurrentModule->setModuleInlineAsm(AsmSoFar+"\n"+NewAsm);
+  CHECK_FOR_ERROR
 };
 
 BigOrLittle : BIG    { $$ = Module::BigEndian; };
@@ -1674,6 +1750,7 @@ BigOrLittle : LITTLE { $$ = Module::LittleEndian; };
 
 TargetDefinition : ENDIAN '=' BigOrLittle {
     CurModule.CurrentModule->setEndianness($3);
+    CHECK_FOR_ERROR
   }
   | POINTERSIZE '=' EUINT64VAL {
     if ($3 == 32)
@@ -1681,11 +1758,13 @@ TargetDefinition : ENDIAN '=' BigOrLittle {
     else if ($3 == 64)
       CurModule.CurrentModule->setPointerSize(Module::Pointer64);
     else
-      ThrowException("Invalid pointer size: '" + utostr($3) + "'!");
+      GEN_ERROR("Invalid pointer size: '" + utostr($3) + "'!");
+    CHECK_FOR_ERROR
   }
   | TRIPLE '=' STRINGCONSTANT {
     CurModule.CurrentModule->setTargetTriple($3);
     free($3);
+    CHECK_FOR_ERROR
   };
 
 LibrariesDefinition : '[' LibList ']';
@@ -1693,12 +1772,15 @@ LibrariesDefinition : '[' LibList ']';
 LibList : LibList ',' STRINGCONSTANT {
           CurModule.CurrentModule->addLibrary($3);
           free($3);
+          CHECK_FOR_ERROR
         }
         | STRINGCONSTANT {
           CurModule.CurrentModule->addLibrary($1);
           free($1);
+          CHECK_FOR_ERROR
         }
         | /* empty: end of list */ {
+          CHECK_FOR_ERROR
         }
         ;
 
@@ -1711,35 +1793,42 @@ OptName : Name | /*empty*/ { $$ = 0; };
 
 ArgVal : Types OptName {
   if (*$1 == Type::VoidTy)
-    ThrowException("void typed arguments are invalid!");
+    GEN_ERROR("void typed arguments are invalid!");
   $$ = new std::pair<PATypeHolder*, char*>($1, $2);
+  CHECK_FOR_ERROR
 };
 
 ArgListH : ArgListH ',' ArgVal {
     $$ = $1;
     $1->push_back(*$3);
     delete $3;
+    CHECK_FOR_ERROR
   }
   | ArgVal {
     $$ = new std::vector<std::pair<PATypeHolder*,char*> >();
     $$->push_back(*$1);
     delete $1;
+    CHECK_FOR_ERROR
   };
 
 ArgList : ArgListH {
     $$ = $1;
+    CHECK_FOR_ERROR
   }
   | ArgListH ',' DOTDOTDOT {
     $$ = $1;
     $$->push_back(std::pair<PATypeHolder*,
                             char*>(new PATypeHolder(Type::VoidTy), 0));
+    CHECK_FOR_ERROR
   }
   | DOTDOTDOT {
     $$ = new std::vector<std::pair<PATypeHolder*,char*> >();
     $$->push_back(std::make_pair(new PATypeHolder(Type::VoidTy), (char*)0));
+    CHECK_FOR_ERROR
   }
   | /* empty */ {
     $$ = 0;
+    CHECK_FOR_ERROR
   };
 
 FunctionHeaderH : OptCallingConv TypesV Name '(' ArgList ')' 
@@ -1749,7 +1838,7 @@ FunctionHeaderH : OptCallingConv TypesV Name '(' ArgList ')'
   free($3);  // Free strdup'd memory!
   
   if (!(*$2)->isFirstClassType() && *$2 != Type::VoidTy)
-    ThrowException("LLVM functions cannot return aggregate types!");
+    GEN_ERROR("LLVM functions cannot return aggregate types!");
 
   std::vector<const Type*> ParamTypeList;
   if ($5) {   // If there are arguments...
@@ -1785,7 +1874,7 @@ FunctionHeaderH : OptCallingConv TypesV Name '(' ArgList ')'
     // If this is the case, either we need to be a forward decl, or it needs 
     // to be.
     if (!CurFun.isDeclare && !Fn->isExternal())
-      ThrowException("Redefinition of function '" + FunctionName + "'!");
+      GEN_ERROR("Redefinition of function '" + FunctionName + "'!");
     
     // Make sure to strip off any argument names so we can't get conflicts.
     if (Fn->isExternal())
@@ -1826,6 +1915,7 @@ FunctionHeaderH : OptCallingConv TypesV Name '(' ArgList ')'
 
     delete $5;                     // We're now done with the argument list
   }
+  CHECK_FOR_ERROR
 };
 
 BEGIN : BEGINTOK | '{';                // Allow BEGIN or '{' to start a function
@@ -1842,11 +1932,13 @@ END : ENDTOK | '}';                    // Allow end of '}' to end a function
 
 Function : BasicBlockList END {
   $$ = $1;
+  CHECK_FOR_ERROR
 };
 
 FunctionProto : DECLARE { CurFun.isDeclare = true; } FunctionHeaderH {
   $$ = CurFun.CurrentFunction;
   CurFun.FunctionDone();
+  CHECK_FOR_ERROR
 };
 
 //===----------------------------------------------------------------------===//
@@ -1855,34 +1947,44 @@ FunctionProto : DECLARE { CurFun.isDeclare = true; } FunctionHeaderH {
 
 OptSideEffect : /* empty */ {
     $$ = false;
+    CHECK_FOR_ERROR
   }
   | SIDEEFFECT {
     $$ = true;
+    CHECK_FOR_ERROR
   };
 
 ConstValueRef : ESINT64VAL {    // A reference to a direct constant
     $$ = ValID::create($1);
+    CHECK_FOR_ERROR
   }
   | EUINT64VAL {
     $$ = ValID::create($1);
+    CHECK_FOR_ERROR
   }
   | FPVAL {                     // Perhaps it's an FP constant?
     $$ = ValID::create($1);
+    CHECK_FOR_ERROR
   }
   | TRUETOK {
     $$ = ValID::create(ConstantBool::True);
+    CHECK_FOR_ERROR
   } 
   | FALSETOK {
     $$ = ValID::create(ConstantBool::False);
+    CHECK_FOR_ERROR
   }
   | NULL_TOK {
     $$ = ValID::createNull();
+    CHECK_FOR_ERROR
   }
   | UNDEF {
     $$ = ValID::createUndef();
+    CHECK_FOR_ERROR
   }
   | ZEROINITIALIZER {     // A vector zero constant.
     $$ = ValID::createZeroInit();
+    CHECK_FOR_ERROR
   }
   | '<' ConstVector '>' { // Nonempty unsized packed vector
     const Type *ETy = (*$2)[0]->getType();
@@ -1900,16 +2002,18 @@ ConstValueRef : ESINT64VAL {    // A reference to a direct constant
     // Verify all elements are correct type!
     for (unsigned i = 0; i < $2->size(); i++) {
       if (ETy != (*$2)[i]->getType())
-        ThrowException("Element #" + utostr(i) + " is not of type '" + 
+        GEN_ERROR("Element #" + utostr(i) + " is not of type '" + 
                      ETy->getDescription() +"' as required!\nIt is of type '" +
                      (*$2)[i]->getType()->getDescription() + "'.");
     }
 
     $$ = ValID::create(ConstantPacked::get(pt, *$2));
     delete PTy; delete $2;
+    CHECK_FOR_ERROR
   }
   | ConstExpr {
     $$ = ValID::create($1);
+    CHECK_FOR_ERROR
   }
   | ASM_TOK OptSideEffect STRINGCONSTANT ',' STRINGCONSTANT {
     char *End = UnEscapeLexed($3, true);
@@ -1919,6 +2023,7 @@ ConstValueRef : ESINT64VAL {    // A reference to a direct constant
     $$ = ValID::createInlineAsm(AsmStr, Constraints, $2);
     free($3);
     free($5);
+    CHECK_FOR_ERROR
   };
 
 // SymbolicValueRef - Reference to one of two ways of symbolically refering to
@@ -1926,9 +2031,11 @@ ConstValueRef : ESINT64VAL {    // A reference to a direct constant
 //
 SymbolicValueRef : INTVAL {  // Is it an integer reference...?
     $$ = ValID::create($1);
+    CHECK_FOR_ERROR
   }
   | Name {                   // Is it a named reference...?
     $$ = ValID::create($1);
+    CHECK_FOR_ERROR
   };
 
 // ValueRef - A reference to a definition... either constant or symbolic
@@ -1940,13 +2047,16 @@ ValueRef : SymbolicValueRef | ConstValueRef;
 // pool references (for things like: 'ret [2 x int] [ int 12, int 42]')
 ResolvedVal : Types ValueRef {
     $$ = getVal(*$1, $2); delete $1;
+    CHECK_FOR_ERROR
   };
 
 BasicBlockList : BasicBlockList BasicBlock {
     $$ = $1;
+    CHECK_FOR_ERROR
   }
   | FunctionHeader BasicBlock { // Do not allow functions with 0 basic blocks   
     $$ = $1;
+    CHECK_FOR_ERROR
   };
 
 
@@ -1960,11 +2070,13 @@ BasicBlock : InstructionList OptAssign BBTerminatorInst  {
     $1->getInstList().push_back($3);
     InsertValue($1);
     $$ = $1;
+    CHECK_FOR_ERROR
   };
 
 InstructionList : InstructionList Inst {
     $1->getInstList().push_back($2);
     $$ = $1;
+    CHECK_FOR_ERROR
   }
   | /* empty */ {
     $$ = CurBB = getBBVal(ValID::create((int)CurFun.NextBBNum++), true);
@@ -1975,6 +2087,7 @@ InstructionList : InstructionList Inst {
     Function::BasicBlockListType &BBL = 
       CurFun.CurrentFunction->getBasicBlockList();
     BBL.splice(BBL.end(), BBL, $$);
+    CHECK_FOR_ERROR
   }
   | LABELSTR {
     $$ = CurBB = getBBVal(ValID::create($1), true);
@@ -1985,19 +2098,24 @@ InstructionList : InstructionList Inst {
     Function::BasicBlockListType &BBL = 
       CurFun.CurrentFunction->getBasicBlockList();
     BBL.splice(BBL.end(), BBL, $$);
+    CHECK_FOR_ERROR
   };
 
 BBTerminatorInst : RET ResolvedVal {              // Return with a result...
     $$ = new ReturnInst($2);
+    CHECK_FOR_ERROR
   }
   | RET VOID {                                       // Return with no result...
     $$ = new ReturnInst();
+    CHECK_FOR_ERROR
   }
   | BR LABEL ValueRef {                         // Unconditional Branch...
     $$ = new BranchInst(getBBVal($3));
+    CHECK_FOR_ERROR
   }                                                  // Conditional Branch...
   | BR BOOL ValueRef ',' LABEL ValueRef ',' LABEL ValueRef {  
     $$ = new BranchInst(getBBVal($6), getBBVal($9), getVal(Type::BoolTy, $3));
+    CHECK_FOR_ERROR
   }
   | SWITCH IntType ValueRef ',' LABEL ValueRef '[' JumpTable ']' {
     SwitchInst *S = new SwitchInst(getVal($2, $3), getBBVal($6), $8->size());
@@ -2009,13 +2127,15 @@ BBTerminatorInst : RET ResolvedVal {              // Return with a result...
       if (ConstantInt *CI = dyn_cast<ConstantInt>(I->first))
           S->addCase(CI, I->second);
       else
-        ThrowException("Switch case is constant, but not a simple integer!");
+        GEN_ERROR("Switch case is constant, but not a simple integer!");
     }
     delete $8;
+    CHECK_FOR_ERROR
   }
   | SWITCH IntType ValueRef ',' LABEL ValueRef '[' ']' {
     SwitchInst *S = new SwitchInst(getVal($2, $3), getBBVal($6), 0);
     $$ = S;
+    CHECK_FOR_ERROR
   }
   | INVOKE OptCallingConv TypesV ValueRef '(' ValueRefListE ')'
     TO LABEL ValueRef UNWIND LABEL ValueRef {
@@ -2057,11 +2177,11 @@ BBTerminatorInst : RET ResolvedVal {              // Return with a result...
 
       for (; ArgI != ArgE && I != E; ++ArgI, ++I)
         if ((*ArgI)->getType() != *I)
-          ThrowException("Parameter " +(*ArgI)->getName()+ " is not of type '" +
+          GEN_ERROR("Parameter " +(*ArgI)->getName()+ " is not of type '" +
                          (*I)->getDescription() + "'!");
 
       if (I != E || (ArgI != ArgE && !Ty->isVarArg()))
-        ThrowException("Invalid number of parameters detected!");
+        GEN_ERROR("Invalid number of parameters detected!");
 
       $$ = new InvokeInst(V, Normal, Except, *$6);
     }
@@ -2069,12 +2189,15 @@ BBTerminatorInst : RET ResolvedVal {              // Return with a result...
   
     delete $3;
     delete $6;
+    CHECK_FOR_ERROR
   }
   | UNWIND {
     $$ = new UnwindInst();
+    CHECK_FOR_ERROR
   }
   | UNREACHABLE {
     $$ = new UnreachableInst();
+    CHECK_FOR_ERROR
   };
 
 
@@ -2083,18 +2206,20 @@ JumpTable : JumpTable IntType ConstValueRef ',' LABEL ValueRef {
     $$ = $1;
     Constant *V = cast<Constant>(getValNonImprovising($2, $3));
     if (V == 0)
-      ThrowException("May only switch on a constant pool value!");
+      GEN_ERROR("May only switch on a constant pool value!");
 
     $$->push_back(std::make_pair(V, getBBVal($6)));
+    CHECK_FOR_ERROR
   }
   | IntType ConstValueRef ',' LABEL ValueRef {
     $$ = new std::vector<std::pair<Constant*, BasicBlock*> >();
     Constant *V = cast<Constant>(getValNonImprovising($1, $2));
 
     if (V == 0)
-      ThrowException("May only switch on a constant pool value!");
+      GEN_ERROR("May only switch on a constant pool value!");
 
     $$->push_back(std::make_pair(V, getBBVal($5)));
+    CHECK_FOR_ERROR
   };
 
 Inst : OptAssign InstVal {
@@ -2102,27 +2227,32 @@ Inst : OptAssign InstVal {
   setValueName($2, $1);
   InsertValue($2);
   $$ = $2;
+  CHECK_FOR_ERROR
 };
 
 PHIList : Types '[' ValueRef ',' ValueRef ']' {    // Used for PHI nodes
     $$ = new std::list<std::pair<Value*, BasicBlock*> >();
     $$->push_back(std::make_pair(getVal(*$1, $3), getBBVal($5)));
     delete $1;
+    CHECK_FOR_ERROR
   }
   | PHIList ',' '[' ValueRef ',' ValueRef ']' {
     $$ = $1;
     $1->push_back(std::make_pair(getVal($1->front().first->getType(), $4),
                                  getBBVal($6)));
+    CHECK_FOR_ERROR
   };
 
 
 ValueRefList : ResolvedVal {    // Used for call statements, and memory insts...
     $$ = new std::vector<Value*>();
     $$->push_back($1);
+    CHECK_FOR_ERROR
   }
   | ValueRefList ',' ResolvedVal {
     $$ = $1;
     $1->push_back($3);
+    CHECK_FOR_ERROR
   };
 
 // ValueRefListE - Just like ValueRefList, except that it may also be empty!
@@ -2130,9 +2260,11 @@ ValueRefListE : ValueRefList | /*empty*/ { $$ = 0; };
 
 OptTailCall : TAIL CALL {
     $$ = true;
+    CHECK_FOR_ERROR
   }
   | CALL {
     $$ = false;
+    CHECK_FOR_ERROR
   };
 
 
@@ -2140,35 +2272,38 @@ OptTailCall : TAIL CALL {
 InstVal : ArithmeticOps Types ValueRef ',' ValueRef {
     if (!(*$2)->isInteger() && !(*$2)->isFloatingPoint() && 
         !isa<PackedType>((*$2).get()))
-      ThrowException(
+      GEN_ERROR(
         "Arithmetic operator requires integer, FP, or packed operands!");
     if (isa<PackedType>((*$2).get()) && $1 == Instruction::Rem)
-      ThrowException("Rem not supported on packed types!");
+      GEN_ERROR("Rem not supported on packed types!");
     $$ = BinaryOperator::create($1, getVal(*$2, $3), getVal(*$2, $5));
     if ($$ == 0)
-      ThrowException("binary operator returned null!");
+      GEN_ERROR("binary operator returned null!");
     delete $2;
+    CHECK_FOR_ERROR
   }
   | LogicalOps Types ValueRef ',' ValueRef {
     if (!(*$2)->isIntegral()) {
       if (!isa<PackedType>($2->get()) ||
           !cast<PackedType>($2->get())->getElementType()->isIntegral())
-        ThrowException("Logical operator requires integral operands!");
+        GEN_ERROR("Logical operator requires integral operands!");
     }
     $$ = BinaryOperator::create($1, getVal(*$2, $3), getVal(*$2, $5));
     if ($$ == 0)
-      ThrowException("binary operator returned null!");
+      GEN_ERROR("binary operator returned null!");
     delete $2;
+    CHECK_FOR_ERROR
   }
   | SetCondOps Types ValueRef ',' ValueRef {
     if(isa<PackedType>((*$2).get())) {
-      ThrowException(
+      GEN_ERROR(
         "PackedTypes currently not supported in setcc instructions!");
     }
     $$ = new SetCondInst($1, getVal(*$2, $3), getVal(*$2, $5));
     if ($$ == 0)
-      ThrowException("binary operator returned null!");
+      GEN_ERROR("binary operator returned null!");
     delete $2;
+    CHECK_FOR_ERROR
   }
   | NOT ResolvedVal {
     std::cerr << "WARNING: Use of eliminated 'not' instruction:"
@@ -2176,37 +2311,42 @@ InstVal : ArithmeticOps Types ValueRef ',' ValueRef {
 
     Value *Ones = ConstantIntegral::getAllOnesValue($2->getType());
     if (Ones == 0)
-      ThrowException("Expected integral type for not instruction!");
+      GEN_ERROR("Expected integral type for not instruction!");
 
     $$ = BinaryOperator::create(Instruction::Xor, $2, Ones);
     if ($$ == 0)
-      ThrowException("Could not create a xor instruction!");
+      GEN_ERROR("Could not create a xor instruction!");
+    CHECK_FOR_ERROR
   }
   | ShiftOps ResolvedVal ',' ResolvedVal {
     if ($4->getType() != Type::UByteTy)
-      ThrowException("Shift amount must be ubyte!");
+      GEN_ERROR("Shift amount must be ubyte!");
     if (!$2->getType()->isInteger())
-      ThrowException("Shift constant expression requires integer operand!");
+      GEN_ERROR("Shift constant expression requires integer operand!");
     $$ = new ShiftInst($1, $2, $4);
+    CHECK_FOR_ERROR
   }
   | CAST ResolvedVal TO Types {
     if (!$4->get()->isFirstClassType())
-      ThrowException("cast instruction to a non-primitive type: '" +
+      GEN_ERROR("cast instruction to a non-primitive type: '" +
                      $4->get()->getDescription() + "'!");
     $$ = new CastInst($2, *$4);
     delete $4;
+    CHECK_FOR_ERROR
   }
   | SELECT ResolvedVal ',' ResolvedVal ',' ResolvedVal {
     if ($2->getType() != Type::BoolTy)
-      ThrowException("select condition must be boolean!");
+      GEN_ERROR("select condition must be boolean!");
     if ($4->getType() != $6->getType())
-      ThrowException("select value types should match!");
+      GEN_ERROR("select value types should match!");
     $$ = new SelectInst($2, $4, $6);
+    CHECK_FOR_ERROR
   }
   | VAARG ResolvedVal ',' Types {
     NewVarArgs = true;
     $$ = new VAArgInst($2, *$4);
     delete $4;
+    CHECK_FOR_ERROR
   }
   | VAARG_old ResolvedVal ',' Types {
     ObsoleteVarArgs = true;
@@ -2226,6 +2366,7 @@ InstVal : ArithmeticOps Types ValueRef ',' ValueRef {
     CurBB->getInstList().push_back(new StoreInst(bar, foo));
     $$ = new VAArgInst(foo, *$4);
     delete $4;
+    CHECK_FOR_ERROR
   }
   | VANEXT_old ResolvedVal ',' Types {
     ObsoleteVarArgs = true;
@@ -2248,35 +2389,40 @@ InstVal : ArithmeticOps Types ValueRef ',' ValueRef {
     CurBB->getInstList().push_back(tmp);
     $$ = new LoadInst(foo);
     delete $4;
+    CHECK_FOR_ERROR
   }
   | EXTRACTELEMENT ResolvedVal ',' ResolvedVal {
     if (!ExtractElementInst::isValidOperands($2, $4))
-      ThrowException("Invalid extractelement operands!");
+      GEN_ERROR("Invalid extractelement operands!");
     $$ = new ExtractElementInst($2, $4);
+    CHECK_FOR_ERROR
   }
   | INSERTELEMENT ResolvedVal ',' ResolvedVal ',' ResolvedVal {
     if (!InsertElementInst::isValidOperands($2, $4, $6))
-      ThrowException("Invalid insertelement operands!");
+      GEN_ERROR("Invalid insertelement operands!");
     $$ = new InsertElementInst($2, $4, $6);
+    CHECK_FOR_ERROR
   }
   | SHUFFLEVECTOR ResolvedVal ',' ResolvedVal ',' ResolvedVal {
     if (!ShuffleVectorInst::isValidOperands($2, $4, $6))
-      ThrowException("Invalid shufflevector operands!");
+      GEN_ERROR("Invalid shufflevector operands!");
     $$ = new ShuffleVectorInst($2, $4, $6);
+    CHECK_FOR_ERROR
   }
   | PHI_TOK PHIList {
     const Type *Ty = $2->front().first->getType();
     if (!Ty->isFirstClassType())
-      ThrowException("PHI node operands must be of first class type!");
+      GEN_ERROR("PHI node operands must be of first class type!");
     $$ = new PHINode(Ty);
     ((PHINode*)$$)->reserveOperandSpace($2->size());
     while ($2->begin() != $2->end()) {
       if ($2->front().first->getType() != Ty) 
-        ThrowException("All elements of a PHI node must be of the same type!");
+        GEN_ERROR("All elements of a PHI node must be of the same type!");
       cast<PHINode>($$)->addIncoming($2->front().first, $2->front().second);
       $2->pop_front();
     }
     delete $2;  // Free the list...
+    CHECK_FOR_ERROR
   }
   | OptTailCall OptCallingConv TypesV ValueRef '(' ValueRefListE ')'  {
     const PointerType *PFTy;
@@ -2296,7 +2442,7 @@ InstVal : ArithmeticOps Types ValueRef ',' ValueRef {
       if (isVarArg) ParamTypes.pop_back();
 
       if (!(*$3)->isFirstClassType() && *$3 != Type::VoidTy)
-        ThrowException("LLVM functions cannot return aggregate types!");
+        GEN_ERROR("LLVM functions cannot return aggregate types!");
 
       Ty = FunctionType::get($3->get(), ParamTypes, isVarArg);
       PFTy = PointerType::get(Ty);
@@ -2308,7 +2454,7 @@ InstVal : ArithmeticOps Types ValueRef ',' ValueRef {
     if (!$6) {                                   // Has no arguments?
       // Make sure no arguments is a good thing!
       if (Ty->getNumParams() != 0)
-        ThrowException("No arguments passed to a function that "
+        GEN_ERROR("No arguments passed to a function that "
                        "expects arguments!");
 
       $$ = new CallInst(V, std::vector<Value*>());
@@ -2322,11 +2468,11 @@ InstVal : ArithmeticOps Types ValueRef ',' ValueRef {
 
       for (; ArgI != ArgE && I != E; ++ArgI, ++I)
         if ((*ArgI)->getType() != *I)
-          ThrowException("Parameter " +(*ArgI)->getName()+ " is not of type '" +
+          GEN_ERROR("Parameter " +(*ArgI)->getName()+ " is not of type '" +
                          (*I)->getDescription() + "'!");
 
       if (I != E || (ArgI != ArgE && !Ty->isVarArg()))
-        ThrowException("Invalid number of parameters detected!");
+        GEN_ERROR("Invalid number of parameters detected!");
 
       $$ = new CallInst(V, *$6);
     }
@@ -2334,24 +2480,30 @@ InstVal : ArithmeticOps Types ValueRef ',' ValueRef {
     cast<CallInst>($$)->setCallingConv($2);
     delete $3;
     delete $6;
+    CHECK_FOR_ERROR
   }
   | MemoryInst {
     $$ = $1;
+    CHECK_FOR_ERROR
   };
 
 
 // IndexList - List of indices for GEP based instructions...
 IndexList : ',' ValueRefList { 
     $$ = $2; 
+    CHECK_FOR_ERROR
   } | /* empty */ { 
     $$ = new std::vector<Value*>(); 
+    CHECK_FOR_ERROR
   };
 
 OptVolatile : VOLATILE {
     $$ = true;
+    CHECK_FOR_ERROR
   }
   | /* empty */ {
     $$ = false;
+    CHECK_FOR_ERROR
   };
 
 
@@ -2359,52 +2511,59 @@ OptVolatile : VOLATILE {
 MemoryInst : MALLOC Types OptCAlign {
     $$ = new MallocInst(*$2, 0, $3);
     delete $2;
+    CHECK_FOR_ERROR
   }
   | MALLOC Types ',' UINT ValueRef OptCAlign {
     $$ = new MallocInst(*$2, getVal($4, $5), $6);
     delete $2;
+    CHECK_FOR_ERROR
   }
   | ALLOCA Types OptCAlign {
     $$ = new AllocaInst(*$2, 0, $3);
     delete $2;
+    CHECK_FOR_ERROR
   }
   | ALLOCA Types ',' UINT ValueRef OptCAlign {
     $$ = new AllocaInst(*$2, getVal($4, $5), $6);
     delete $2;
+    CHECK_FOR_ERROR
   }
   | FREE ResolvedVal {
     if (!isa<PointerType>($2->getType()))
-      ThrowException("Trying to free nonpointer type " + 
+      GEN_ERROR("Trying to free nonpointer type " + 
                      $2->getType()->getDescription() + "!");
     $$ = new FreeInst($2);
+    CHECK_FOR_ERROR
   }
 
   | OptVolatile LOAD Types ValueRef {
     if (!isa<PointerType>($3->get()))
-      ThrowException("Can't load from nonpointer type: " +
+      GEN_ERROR("Can't load from nonpointer type: " +
                      (*$3)->getDescription());
     if (!cast<PointerType>($3->get())->getElementType()->isFirstClassType())
-      ThrowException("Can't load from pointer of non-first-class type: " +
+      GEN_ERROR("Can't load from pointer of non-first-class type: " +
                      (*$3)->getDescription());
     $$ = new LoadInst(getVal(*$3, $4), "", $1);
     delete $3;
+    CHECK_FOR_ERROR
   }
   | OptVolatile STORE ResolvedVal ',' Types ValueRef {
     const PointerType *PT = dyn_cast<PointerType>($5->get());
     if (!PT)
-      ThrowException("Can't store to a nonpointer type: " +
+      GEN_ERROR("Can't store to a nonpointer type: " +
                      (*$5)->getDescription());
     const Type *ElTy = PT->getElementType();
     if (ElTy != $3->getType())
-      ThrowException("Can't store '" + $3->getType()->getDescription() +
+      GEN_ERROR("Can't store '" + $3->getType()->getDescription() +
                      "' into space of type '" + ElTy->getDescription() + "'!");
 
     $$ = new StoreInst($3, getVal(*$5, $6), $1);
     delete $5;
+    CHECK_FOR_ERROR
   }
   | GETELEMENTPTR Types ValueRef IndexList {
     if (!isa<PointerType>($2->get()))
-      ThrowException("getelementptr insn requires pointer operand!");
+      GEN_ERROR("getelementptr insn requires pointer operand!");
 
     // LLVM 1.2 and earlier used ubyte struct indices.  Convert any ubyte struct
     // indices to uint struct indices for compatibility.
@@ -2418,14 +2577,24 @@ MemoryInst : MALLOC Types OptCAlign {
             (*$4)[i] = ConstantExpr::getCast(CUI, Type::UIntTy);
 
     if (!GetElementPtrInst::getIndexedType(*$2, *$4, true))
-      ThrowException("Invalid getelementptr indices for type '" +
+      GEN_ERROR("Invalid getelementptr indices for type '" +
                      (*$2)->getDescription()+ "'!");
     $$ = new GetElementPtrInst(getVal(*$2, $3), *$4);
     delete $2; delete $4;
+    CHECK_FOR_ERROR
   };
 
 
 %%
+
+void llvm::GenerateError(const std::string &message, int LineNo) {
+  if (LineNo == -1) LineNo = llvmAsmlineno;
+  // TODO: column number in exception
+  if (TheParseError)
+    TheParseError->setError(CurFilename, message, LineNo);
+  TriggerError = 1;
+}
+
 int yyerror(const char *ErrorMsg) {
   std::string where 
     = std::string((CurFilename == "-") ? std::string("<stdin>") : CurFilename)
@@ -2435,6 +2604,6 @@ int yyerror(const char *ErrorMsg) {
     errMsg += "end-of-file.";
   else
     errMsg += "token: '" + std::string(llvmAsmtext, llvmAsmleng) + "'";
-  ThrowException(errMsg);
+  GenerateError(errMsg);
   return 0;
 }

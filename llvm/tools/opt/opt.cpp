@@ -169,17 +169,13 @@ int main(int argc, char **argv) {
 
     if (AnalyzeOnly) {
       Module *CurMod = 0;
-      try {
 #if 0
-        TimeRegion RegionTimer(BytecodeLoadTimer);
+      TimeRegion RegionTimer(BytecodeLoadTimer);
 #endif
-        CurMod = ParseBytecodeFile(InputFilename);
-        if (!CurMod && !(CurMod = ParseAssemblyFile(InputFilename))){
-          std::cerr << argv[0] << ": input file didn't read correctly.\n";
-          return 1;
-        }
-      } catch (const ParseException &E) {
-        std::cerr << argv[0] << ": " << E.getMessage() << "\n";
+      CurMod = ParseBytecodeFile(InputFilename);
+      ParseError Err;
+      if (!CurMod && !(CurMod = ParseAssemblyFile(InputFilename,&Err))){
+        std::cerr << argv[0] << ": " << Err.getMessage() << "\n"; 
         return 1;
       }
 

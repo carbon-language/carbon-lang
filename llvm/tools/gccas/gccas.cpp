@@ -137,17 +137,10 @@ int main(int argc, char **argv) {
                                 " llvm .s -> .o assembler for GCC\n");
     sys::PrintStackTraceOnErrorSignal();
 
-    std::auto_ptr<Module> M;
-    try {
-      // Parse the file now...
-      M.reset(ParseAssemblyFile(InputFilename));
-    } catch (const ParseException &E) {
-      std::cerr << argv[0] << ": " << E.getMessage() << "\n";
-      return 1;
-    }
-
+    ParseError Err;
+    std::auto_ptr<Module> M(ParseAssemblyFile(InputFilename,&Err));
     if (M.get() == 0) {
-      std::cerr << argv[0] << ": assembly didn't read correctly.\n";
+      std::cerr << argv[0] << ": " << Err.getMessage() << "\n"; 
       return 1;
     }
 

@@ -25,7 +25,8 @@
 
 // Global variables exported from the lexer...
 
-extern int llvmAsmlineno;
+extern int llvmAsmlineno;         /// FIXME: Not threading friendly
+extern llvm::ParseError* TheParseError; /// FIXME: Not threading friendly
 
 extern std::string &llvmAsmTextin;
 
@@ -40,7 +41,7 @@ extern int   llvmAsmleng;
 namespace llvm {
 
 // Globals exported by the parser...
-extern std::string CurFilename;
+extern std::string CurFilename;   /// FIXME: Not threading friendly
 
 class Module;
 Module *RunVMAsmParser(const std::string &Filename, FILE *F);
@@ -51,7 +52,7 @@ Module *RunVMAsmParser(const char * AsmString, Module * M);
 
 // UnEscapeLexed - Run through the specified buffer and change \xx codes to the
 // appropriate character.  If AllowNull is set to false, a \00 value will cause
-// an exception to be thrown.
+// an error.
 //
 // If AllowNull is set to true, the return value of the function points to the
 // last character of the string in memory.
@@ -65,12 +66,7 @@ char *UnEscapeLexed(char *Buffer, bool AllowNull = false);
 // This also helps me because I keep typing 'throw new ParseException' instead
 // of just 'throw ParseException'... sigh...
 //
-static inline void ThrowException(const std::string &message,
-                                  int LineNo = -1) {
-  if (LineNo == -1) LineNo = llvmAsmlineno;
-  // TODO: column number in exception
-  throw ParseException(CurFilename, message, LineNo);
-}
+extern void GenerateError(const std::string &message, int LineNo = -1);
 
 /// InlineAsmDescriptor - This is a simple class that holds info about inline
 /// asm blocks, for use by ValID.

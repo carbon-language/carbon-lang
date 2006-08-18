@@ -73,15 +73,10 @@ BugDriver::BugDriver(const char *toolname, bool as_child, bool find_bugs,
 /// return it, or return null if not possible.
 ///
 Module *llvm::ParseInputFile(const std::string &InputFilename) {
-  Module *Result = 0;
-  try {
-    Result = ParseBytecodeFile(InputFilename);
-    if (!Result && !(Result = ParseAssemblyFile(InputFilename))){
-      std::cerr << "bugpoint: could not read input file '"
-                << InputFilename << "'!\n";
-    }
-  } catch (const ParseException &E) {
-    std::cerr << "bugpoint: " << E.getMessage() << '\n';
+  ParseError Err;
+  Module *Result = ParseBytecodeFile(InputFilename);
+  if (!Result && !(Result = ParseAssemblyFile(InputFilename,&Err))) {
+    std::cerr << "bugpoint: " << Err.getMessage() << "\n"; 
     Result = 0;
   }
   return Result;

@@ -15,26 +15,24 @@
 #include "llvm/Module.h"
 using namespace llvm;
 
-// The useful interface defined by this file... Parse an ASCII file, and return
-// the internal representation in a nice slice'n'dice'able representation.
-//
-Module *llvm::ParseAssemblyFile(const std::string &Filename) {
+
+ParseError* TheParseError = 0; /// FIXME: Not threading friendly
+
+Module *llvm::ParseAssemblyFile(const std::string &Filename, ParseError* Err) {
   FILE *F = stdin;
 
   if (Filename != "-") {
     F = fopen(Filename.c_str(), "r");
 
-    if (F == 0)
-      throw ParseException(Filename, "Could not open file '" + Filename + "'");
+    if (F == 0) {
+      if (Err)
+        Err->setError(Filename,"Could not open file '" + Filename + "'");
+      return 0;
+    }
   }
 
-  Module *Result;
-  try {
-    Result = RunVMAsmParser(Filename, F);
-  } catch (...) {
-    if (F != stdin) fclose(F);      // Make sure to close file descriptor if an
-    throw;                          // exception is thrown
-  }
+  TheParseError = Err;
+  Module *Result = RunVMAsmParser(Filename, F);
 
   if (F != stdin)
     fclose(F);
@@ -42,31 +40,37 @@ Module *llvm::ParseAssemblyFile(const std::string &Filename) {
   return Result;
 }
 
-Module *llvm::ParseAssemblyString(const char * AsmString, Module * M) {
+Module *llvm::ParseAssemblyString(
+  const char * AsmString, Module * M, ParseError* Err) 
+{
+  TheParseError = Err;
   return RunVMAsmParser(AsmString, M);
 }
 
 
 //===------------------------------------------------------------------------===
-//                              ParseException Class
+//                              ParseError Class
 //===------------------------------------------------------------------------===
 
 
-ParseException::ParseException(const std::string &filename,
-                               const std::string &message,
-                               int lineNo, int colNo)
-  : Filename(filename), Message(message) {
-  LineNo = lineNo; ColumnNo = colNo;
+void ParseError::setError(const std::string &filename,
+                         const std::string &message,
+                         int lineNo, int colNo)
+{
+  Filename = filename;
+  Message = message;
+  LineNo = lineNo;
+  colNo = colNo;
 }
 
-ParseException::ParseException(const ParseException &E)
+ParseError::ParseError(const ParseError &E)
   : Filename(E.Filename), Message(E.Message) {
   LineNo = E.LineNo;
   ColumnNo = E.ColumnNo;
 }
 
 // Includes info from options
-const std::string ParseException::getMessage() const {
+const std::string ParseError::getMessage() const {
   std::string Result;
   char Buffer[10];
 

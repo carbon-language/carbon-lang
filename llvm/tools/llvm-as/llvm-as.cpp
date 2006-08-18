@@ -57,9 +57,10 @@ int main(int argc, char **argv) {
   std::ostream *Out = 0;
   try {
     // Parse the file now...
-    std::auto_ptr<Module> M(ParseAssemblyFile(InputFilename));
+    ParseError Err;
+    std::auto_ptr<Module> M(ParseAssemblyFile(InputFilename,&Err));
     if (M.get() == 0) {
-      std::cerr << argv[0] << ": assembly didn't read correctly.\n";
+      std::cerr << argv[0] << ": " << Err.getMessage() << "\n"; 
       return 1;
     }
 
@@ -129,9 +130,6 @@ int main(int argc, char **argv) {
     if (Force || !CheckBytecodeOutputToConsole(Out,true)) {
       WriteBytecodeToFile(M.get(), *Out, !NoCompress);
     }
-  } catch (const ParseException &E) {
-    std::cerr << argv[0] << ": " << E.getMessage() << "\n";
-    exitCode = 1;
   } catch (const std::string& msg) {
     std::cerr << argv[0] << ": " << msg << "\n";
     exitCode = 1;

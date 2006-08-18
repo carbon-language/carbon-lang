@@ -59,7 +59,7 @@ static uint64_t atoull(const char *Buffer) {
     Result *= 10;
     Result += *Buffer-'0';
     if (Result < OldRes)   // Uh, oh, overflow detected!!!
-      ThrowException("constant bigger than 64 bits detected!");
+      GenerateError("constant bigger than 64 bits detected!");
   }
   return Result;
 }
@@ -78,7 +78,7 @@ static uint64_t HexIntToVal(const char *Buffer) {
       Result += C-'a'+10;
 
     if (Result < OldRes)   // Uh, oh, overflow detected!!!
-      ThrowException("constant bigger than 64 bits detected!");
+      GenerateError("constant bigger than 64 bits detected!");
   }
   return Result;
 }
@@ -116,7 +116,7 @@ char *UnEscapeLexed(char *Buffer, bool AllowNull) {
       char Tmp = BIn[3]; BIn[3] = 0;     // Terminate string
       *BOut = (char)strtol(BIn+1, 0, 16);  // Convert to number
       if (!AllowNull && !*BOut)
-        ThrowException("String literal cannot accept \\00 escape!");
+        GenerateError("String literal cannot accept \\00 escape!");
 
       BIn[3] = Tmp;                  // Restore character
       BIn += 3;                      // Skip over handled chars
@@ -315,7 +315,7 @@ shufflevector   { RET_TOK(OtherOpVal, ShuffleVector, SHUFFLEVECTOR); }
                   uint64_t Val = atoull(yytext+1);
                   // +1:  we have bigger negative range
                   if (Val > (uint64_t)INT64_MAX+1)
-                    ThrowException("Constant too large for signed 64 bits!");
+                    GenerateError("Constant too large for signed 64 bits!");
                   llvmAsmlval.SInt64Val = -Val;
                   return ESINT64VAL;
                 }
@@ -327,7 +327,7 @@ shufflevector   { RET_TOK(OtherOpVal, ShuffleVector, SHUFFLEVECTOR); }
 {EPInteger}     {
                   uint64_t Val = atoull(yytext+1);
                   if ((unsigned)Val != Val)
-                    ThrowException("Invalid value number (too large)!");
+                    GenerateError("Invalid value number (too large)!");
                   llvmAsmlval.UIntVal = unsigned(Val);
                   return UINTVAL;
                 }
@@ -335,7 +335,7 @@ shufflevector   { RET_TOK(OtherOpVal, ShuffleVector, SHUFFLEVECTOR); }
                   uint64_t Val = atoull(yytext+2);
                   // +1:  we have bigger negative range
                   if (Val > (uint64_t)INT32_MAX+1)
-                    ThrowException("Constant too large for signed 32 bits!");
+                    GenerateError("Constant too large for signed 32 bits!");
                   llvmAsmlval.SIntVal = (int)-Val;
                   return SINTVAL;
                 }
@@ -355,4 +355,3 @@ shufflevector   { RET_TOK(OtherOpVal, ShuffleVector, SHUFFLEVECTOR); }
 .               { return yytext[0]; }
 
 %%
-
