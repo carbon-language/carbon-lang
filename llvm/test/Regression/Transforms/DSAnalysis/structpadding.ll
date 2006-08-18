@@ -1,4 +1,4 @@
-; RUN: analyze %s -tddatastructure
+; RUN: opt -analyze %s -tddatastructure
 
 %str = type { int, int* }
 

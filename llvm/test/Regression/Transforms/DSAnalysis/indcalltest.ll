@@ -1,5 +1,5 @@
 ;
-; RUN: analyze %s -tddatastructure
+; RUN: opt -analyze %s -tddatastructure
 
 %G = global int 2		; <int*> [#uses=1]
 %H = global int* null

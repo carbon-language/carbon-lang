@@ -1,5 +1,5 @@
 
-; RUN: analyze %s -datastructure-gc --dsgc-abort-if-merged=Y,BVal
+; RUN: opt -analyze %s -datastructure-gc --dsgc-abort-if-merged=Y,BVal
 
 implementation
 

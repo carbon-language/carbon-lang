@@ -1,7 +1,7 @@
 ; This is the same testcase as 2003-06-29-NodeCollapsing2.ll, but it uses the 
 ; graph checker.
 ;
-; RUN: analyze %s -datastructure-gc -dsgc-abort-if-any-collapsed
+; RUN: opt -analyze %s -datastructure-gc -dsgc-abort-if-any-collapsed
 ;
 %T = type { int}
 

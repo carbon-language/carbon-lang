@@ -1,6 +1,6 @@
 ; This file contains a list of situations where node folding should happen...
 ;
-; RUN: analyze %s -tddatastructure
+; RUN: opt -analyze %s -tddatastructure
 
 implementation
 

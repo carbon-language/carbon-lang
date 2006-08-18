@@ -1,4 +1,4 @@
-; RUN: analyze %s -domset -disable-verify
+; RUN: opt -analyze %s -domset -disable-verify
 ;
 int %re_match_2() {
 ENTRY:

@@ -1,5 +1,5 @@
 ;
-; RUN: analyze %s -tddatastructure
+; RUN: opt -analyze %s -tddatastructure
 
 int* %test1(int *%A) {
 	%R = getelementptr int* %A, long 1

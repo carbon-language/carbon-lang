@@ -1,6 +1,6 @@
 ; very simple test
 ;
-; RUN: analyze %s -tddatastructure
+; RUN: opt -analyze %s -tddatastructure
 
 implementation
 

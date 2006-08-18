@@ -1,4 +1,4 @@
-; RUN: analyze %s -datastructure-gc -dsgc-abort-if-any-collapsed
+; RUN: opt -analyze %s -datastructure-gc -dsgc-abort-if-any-collapsed
 
 %X = internal global { int, short, short } { int 1, short 2, short 3 }
 

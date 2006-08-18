@@ -1,5 +1,5 @@
 ; FIXME: A should just be SM
-; RUN: analyze %s -datastructure-gc -dsgc-dspass=bu -dsgc-check-flags=A:SIM
+; RUN: opt -analyze %s -datastructure-gc -dsgc-dspass=bu -dsgc-check-flags=A:SIM
 ; Constant globals should not mark stuff incomplete.  This should allow the 
 ; bu pass to resolve the indirect call immediately in "test", allowing %A to
 ; be marked complete and the store to happen.

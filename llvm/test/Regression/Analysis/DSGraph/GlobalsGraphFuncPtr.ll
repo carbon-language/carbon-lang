@@ -5,7 +5,7 @@
 ; -- globals in GG pointed to by latter should be marked I, but not other nodes
 ;
 ; FIXME: KnownPtr should be just S.
-; RUN: analyze %s -datastructure-gc -dsgc-check-flags=KnownPtr:SI,UnknownPtr:SI -dsgc-dspass=bu
+; RUN: opt -analyze %s -datastructure-gc -dsgc-check-flags=KnownPtr:SI,UnknownPtr:SI -dsgc-dspass=bu
 
 %Z = internal global int 0
 %X = internal global int 0

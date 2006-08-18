@@ -1,5 +1,5 @@
-; RUN: analyze %s -datastructure-gc -dsgc-check-flags=Xn:SMR
-; RUN: analyze %s -datastructure-gc -dsgc-check-flags=X:SMR
+; RUN: opt -analyze %s -datastructure-gc -dsgc-check-flags=Xn:SMR
+; RUN: opt -analyze %s -datastructure-gc -dsgc-check-flags=X:SMR
 
 declare void %llvm.memcpy.i32(sbyte*, sbyte*, uint, uint)
 declare void %llvm.memmove.i32(sbyte*, sbyte*, uint, uint)

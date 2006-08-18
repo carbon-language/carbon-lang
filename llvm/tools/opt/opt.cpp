@@ -8,11 +8,12 @@
 //===----------------------------------------------------------------------===//
 //
 // Optimizations may be specified an arbitrary number of times on the command
-// line, they are run in the order specified.
+// line, They are run in the order specified.
 //
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Module.h"
+#include "llvm/Assembly/Parser.h"
 #include "llvm/PassManager.h"
 #include "llvm/Bytecode/Reader.h"
 #include "llvm/Bytecode/WriteBytecodePass.h"
@@ -24,6 +25,8 @@
 #include "llvm/System/Signals.h"
 #include "llvm/Support/PluginLoader.h"
 #include "llvm/Support/SystemUtils.h"
+#include "llvm/Support/Timer.h"
+#include "llvm/Analysis/LinkAllAnalyses.h"
 #include "llvm/Transforms/LinkAllPasses.h"
 #include "llvm/LinkAllVMCore.h"
 #include <fstream>
@@ -43,7 +46,8 @@ OptimizationList(cl::desc("Optimizations available:"));
 // Other command line options...
 //
 static cl::opt<std::string>
-InputFilename(cl::Positional, cl::desc("<input bytecode>"), cl::init("-"));
+InputFilename(cl::Positional, cl::desc("<input bytecode file>"), 
+    cl::init("-"), cl::value_desc("filename"));
 
 static cl::opt<std::string>
 OutputFilename("o", cl::desc("Override output filename"),
@@ -68,6 +72,91 @@ Quiet("q", cl::desc("Obsolete option"), cl::Hidden);
 static cl::alias
 QuietA("quiet", cl::desc("Alias for -q"), cl::aliasopt(Quiet));
 
+static cl::opt<bool>
+AnalyzeOnly("analyze", cl::desc("Only perform analysis, no optimization"));
+
+// The AnalysesList is automatically populated with registered Passes by the
+// PassNameParser.
+static 
+  cl::list<const PassInfo*, bool, FilteredPassNameParser<PassInfo::Analysis> >
+  AnalysesList(cl::desc("Analyses available:"));
+
+static Timer BytecodeLoadTimer("Bytecode Loader");
+
+// ---------- Define Printers for module and function passes ------------
+namespace {
+
+struct ModulePassPrinter : public ModulePass {
+  const PassInfo *PassToPrint;
+  ModulePassPrinter(const PassInfo *PI) : PassToPrint(PI) {}
+
+  virtual bool runOnModule(Module &M) {
+    if (!Quiet) {
+      std::cout << "Printing analysis '" << PassToPrint->getPassName() 
+                << "':\n";
+      getAnalysisID<Pass>(PassToPrint).print(std::cout, &M);
+    }
+
+    // Get and print pass...
+    return false;
+  }
+
+  virtual const char *getPassName() const { return "'Pass' Printer"; }
+
+  virtual void getAnalysisUsage(AnalysisUsage &AU) const {
+    AU.addRequiredID(PassToPrint);
+    AU.setPreservesAll();
+  }
+};
+
+struct FunctionPassPrinter : public FunctionPass {
+  const PassInfo *PassToPrint;
+  FunctionPassPrinter(const PassInfo *PI) : PassToPrint(PI) {}
+
+  virtual bool runOnFunction(Function &F) {
+    if (!Quiet) {
+      std::cout << "Printing analysis '" << PassToPrint->getPassName()
+		<< "' for function '" << F.getName() << "':\n";
+    }
+    // Get and print pass...
+    getAnalysisID<Pass>(PassToPrint).print(std::cout, F.getParent());
+    return false;
+  }
+
+  virtual const char *getPassName() const { return "FunctionPass Printer"; }
+
+  virtual void getAnalysisUsage(AnalysisUsage &AU) const {
+    AU.addRequiredID(PassToPrint);
+    AU.setPreservesAll();
+  }
+};
+
+struct BasicBlockPassPrinter : public BasicBlockPass {
+  const PassInfo *PassToPrint;
+  BasicBlockPassPrinter(const PassInfo *PI) : PassToPrint(PI) {}
+
+  virtual bool runOnBasicBlock(BasicBlock &BB) {
+    if (!Quiet) {
+      std::cout << "Printing Analysis info for BasicBlock '" << BB.getName()
+		<< "': Pass " << PassToPrint->getPassName() << ":\n";
+    }
+
+    // Get and print pass...
+    getAnalysisID<Pass>(PassToPrint).print(
+      std::cout, BB.getParent()->getParent());
+    return false;
+  }
+
+  virtual const char *getPassName() const { return "BasicBlockPass Printer"; }
+
+  virtual void getAnalysisUsage(AnalysisUsage &AU) const {
+    AU.addRequiredID(PassToPrint);
+    AU.setPreservesAll();
+  }
+};
+
+} // anonymous namespace
+
 
 //===----------------------------------------------------------------------===//
 // main for opt
@@ -75,8 +164,62 @@ QuietA("quiet", cl::desc("Alias for -q"), cl::aliasopt(Quiet));
 int main(int argc, char **argv) {
   try {
     cl::ParseCommandLineOptions(argc, argv,
-                                " llvm .bc -> .bc modular optimizer\n");
+      " llvm .bc -> .bc modular optimizer and analysis printer \n");
     sys::PrintStackTraceOnErrorSignal();
+
+    if (AnalyzeOnly) {
+      Module *CurMod = 0;
+      try {
+#if 0
+        TimeRegion RegionTimer(BytecodeLoadTimer);
+#endif
+        CurMod = ParseBytecodeFile(InputFilename);
+        if (!CurMod && !(CurMod = ParseAssemblyFile(InputFilename))){
+          std::cerr << argv[0] << ": input file didn't read correctly.\n";
+          return 1;
+        }
+      } catch (const ParseException &E) {
+        std::cerr << argv[0] << ": " << E.getMessage() << "\n";
+        return 1;
+      }
+
+      // Create a PassManager to hold and optimize the collection of passes we 
+      // are about to build...
+      PassManager Passes;
+
+      // Add an appropriate TargetData instance for this module...
+      Passes.add(new TargetData(CurMod));
+
+      // Make sure the input LLVM is well formed.
+      if (!NoVerify)
+        Passes.add(createVerifierPass());
+
+      // Create a new optimization pass for each one specified on the 
+      // command line
+      for (unsigned i = 0; i < AnalysesList.size(); ++i) {
+        const PassInfo *Analysis = AnalysesList[i];
+
+        if (Analysis->getNormalCtor()) {
+          Pass *P = Analysis->getNormalCtor()();
+          Passes.add(P);
+
+          if (BasicBlockPass *BBP = dynamic_cast<BasicBlockPass*>(P))
+            Passes.add(new BasicBlockPassPrinter(Analysis));
+          else if (FunctionPass *FP = dynamic_cast<FunctionPass*>(P))
+            Passes.add(new FunctionPassPrinter(Analysis));
+          else
+            Passes.add(new ModulePassPrinter(Analysis));
+
+        } else
+          std::cerr << argv[0] << ": cannot create pass: "
+                    << Analysis->getPassName() << "\n";
+      }
+
+      Passes.run(*CurMod);
+
+      delete CurMod;
+      return 0;
+    }
 
     // Allocate a full target machine description only if necessary...
     // FIXME: The choice of target should be controllable on the command line.
@@ -169,6 +312,7 @@ int main(int argc, char **argv) {
     Passes.run(*M.get());
 
     return 0;
+
   } catch (const std::string& msg) {
     std::cerr << argv[0] << ": " << msg << "\n";
   } catch (...) {
