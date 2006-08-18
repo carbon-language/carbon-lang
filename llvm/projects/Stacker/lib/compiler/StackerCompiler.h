@@ -158,7 +158,9 @@ class StackerCompiler
         {
           if (line == -1) line = Stackerlineno;
           // TODO: column number in exception
-          throw ParseException(TheInstance->CurFilename, message, line);
+          ParseError Err;
+          Err.setError(TheInstance->CurFilename, message, line);
+          throw Err;
         }
     private:
         /// @brief Generate code to increment the stack index

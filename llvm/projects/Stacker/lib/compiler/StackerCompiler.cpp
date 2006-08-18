@@ -110,8 +110,9 @@ StackerCompiler::compile(
 
         if (F == 0)
         {
-            throw ParseException(filename,
-                "Could not open file '" + filename + "'");
+          ParseError Err;
+          Err.setError(filename, "Could not open file '" + filename + "'");
+          throw Err;
         }
     }
 

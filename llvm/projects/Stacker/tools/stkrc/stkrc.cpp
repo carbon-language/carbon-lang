@@ -164,7 +164,7 @@ int main(int argc, char **argv)
       }
 
       WriteBytecodeToFile(M.get(), *Out);
-    } catch (const ParseException &E) {
+    } catch (const ParseError &E) {
       std::cerr << argv[0] << ": " << E.getMessage() << "\n";
       return 1;
     }
