@@ -365,62 +365,37 @@ sub FormatTime {
 }
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+#
+# This function is meant to read in the dejagnu sum file and 
+# return a string with only the results (i.e. PASS/FAIL/XPASS/
+# XFAIL).
+#
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 sub GetDejagnuTestResults { # (filename, log)
-  my ($filename, $DejagnuLog) = @_;
-  my @lines;
-  my $firstline;
-  $/ = "\n"; #Make sure we're going line at a time.
+    my ($filename, $DejagnuLog) = @_;
+    my @lines;
+    $/ = "\n"; #Make sure we're going line at a time.
 
-  if( $VERBOSE) { print "DEJAGNU TEST RESULTS:\n"; }
+    if( $VERBOSE) { print "DEJAGNU TEST RESULTS:\n"; }
 
-  if (open SRCHFILE, $filename) {
-# Process test results
-    my $first_list = 1;
-    my $should_break = 1;
-    my $nocopy = 0;
-    my $readingsum = 0;
-    while ( <SRCHFILE> ) {
-        if ( length($_) > 1 ) {
-            chomp($_);
-            if ( m/^XPASS:/ || m/^FAIL:/ ) {
-                $nocopy = 0;
-                if ( $first_list ) {
-                    push(@lines, "UNEXPECTED TEST RESULTS\n");
-                    $first_list = 0;
-                    $should_break = 1;
-                    push(@lines, "$_\n");
-                    if( $VERBOSE) { print "  $_\n"; }
-                } else {
-                    push(@lines, "$_\n");
-                    if( $VERBOSE) { print "  $_\n"; }
+    if (open SRCHFILE, $filename) {
+        # Process test results
+        while ( <SRCHFILE> ) {
+            if ( length($_) > 1 ) {
+                chomp($_);
+                if ( m/^PASS:/ || m/^XPASS:/ ||
+                     m/^FAIL:/ || m/^XFAIL:/) {
+                    push(@lines, "$_");
                 }
-            } #elsif ( m/Summary/ ) {
-            #    if ( $first_list ) {
-            #   push(@lines, "PERFECT!");
-            #   print "  PERFECT!\n";
-            #    } else {
-            #   push(@lines, "</li></ol>\n");
-            #    }
-            #    push(@lines, "STATISTICS\n");
-            #    print "\nDEJAGNU STATISTICS:\n";
-            #    $should_break = 0;
-            #    $nocopy = 0;
-            #    $readingsum = 1;
-            #} 
-            elsif ( $readingsum ) {
-                push(@lines,"$_\n");
-                if( $VERBOSE) { print "  $_\n"; }
             }
-
         }
     }
-  }
-  close SRCHFILE;
+    close SRCHFILE;
 
-  my $content = join("", @lines);
-  return $content;
+    my $content = join("\n", @lines);
+    return $content;
 }
+
 
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -716,7 +691,7 @@ if (!$BuildError) {
 # Running dejagnu tests
 #
 ##############################################################
-my $DejangnuTestResults; # String containing the results of the dejagnu
+my $DejangnuTestResults=""; # String containing the results of the dejagnu
 my $dejagnu_output = "$DejagnuTestsLog";
 if (!$NODEJAGNU) {
   if($VERBOSE) { 
@@ -1032,8 +1007,8 @@ my %hash_of_data = (
   'all_tests' => $dejagnu_test_list,
   'new_tests' => "",
   'removed_tests' => "",
-  'dejagnutests_log' => $dejagnutests_log,
-  'dejagnutests_sum' => $dejagnutests_sum,
+  'dejagnutests_results' => $DejagnuTestResults,
+  'dejagnutests_log' => $dejagnulog_full,
   'starttime' => $starttime,
   'endtime' => $endtime,
   'o_file_sizes' => $o_file_sizes,
