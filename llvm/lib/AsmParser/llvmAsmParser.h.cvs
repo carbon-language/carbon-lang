@@ -1,244 +1,4 @@
-/* A Bison parser, made by GNU Bison 2.1.  */
-
-/* Skeleton parser for Yacc-like parsing with Bison,
-   Copyright (C) 1984, 1989, 1990, 2000, 2001, 2002, 2003, 2004, 2005 Free Software Foundation, Inc.
-
-   This program is free software; you can redistribute it and/or modify
-   it under the terms of the GNU General Public License as published by
-   the Free Software Foundation; either version 2, or (at your option)
-   any later version.
-
-   This program is distributed in the hope that it will be useful,
-   but WITHOUT ANY WARRANTY; without even the implied warranty of
-   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-   GNU General Public License for more details.
-
-   You should have received a copy of the GNU General Public License
-   along with this program; if not, write to the Free Software
-   Foundation, Inc., 51 Franklin Street, Fifth Floor,
-   Boston, MA 02110-1301, USA.  */
-
-/* As a special exception, when this file is copied by Bison into a
-   Bison output file, you may use that output file without restriction.
-   This special exception was added by the Free Software Foundation
-   in version 1.24 of Bison.  */
-
-/* Tokens.  */
-#ifndef YYTOKENTYPE
-# define YYTOKENTYPE
-   /* Put the tokens into the symbol table, so that GDB and other debuggers
-      know about them.  */
-   enum yytokentype {
-     ESINT64VAL = 258,
-     EUINT64VAL = 259,
-     SINTVAL = 260,
-     UINTVAL = 261,
-     FPVAL = 262,
-     VOID = 263,
-     BOOL = 264,
-     SBYTE = 265,
-     UBYTE = 266,
-     SHORT = 267,
-     USHORT = 268,
-     INT = 269,
-     UINT = 270,
-     LONG = 271,
-     ULONG = 272,
-     FLOAT = 273,
-     DOUBLE = 274,
-     TYPE = 275,
-     LABEL = 276,
-     VAR_ID = 277,
-     LABELSTR = 278,
-     STRINGCONSTANT = 279,
-     IMPLEMENTATION = 280,
-     ZEROINITIALIZER = 281,
-     TRUETOK = 282,
-     FALSETOK = 283,
-     BEGINTOK = 284,
-     ENDTOK = 285,
-     DECLARE = 286,
-     GLOBAL = 287,
-     CONSTANT = 288,
-     SECTION = 289,
-     VOLATILE = 290,
-     TO = 291,
-     DOTDOTDOT = 292,
-     NULL_TOK = 293,
-     UNDEF = 294,
-     CONST = 295,
-     INTERNAL = 296,
-     LINKONCE = 297,
-     WEAK = 298,
-     APPENDING = 299,
-     OPAQUE = 300,
-     NOT = 301,
-     EXTERNAL = 302,
-     TARGET = 303,
-     TRIPLE = 304,
-     ENDIAN = 305,
-     POINTERSIZE = 306,
-     LITTLE = 307,
-     BIG = 308,
-     ALIGN = 309,
-     DEPLIBS = 310,
-     CALL = 311,
-     TAIL = 312,
-     ASM_TOK = 313,
-     MODULE = 314,
-     SIDEEFFECT = 315,
-     CC_TOK = 316,
-     CCC_TOK = 317,
-     CSRETCC_TOK = 318,
-     FASTCC_TOK = 319,
-     COLDCC_TOK = 320,
-     RET = 321,
-     BR = 322,
-     SWITCH = 323,
-     INVOKE = 324,
-     UNWIND = 325,
-     UNREACHABLE = 326,
-     ADD = 327,
-     SUB = 328,
-     MUL = 329,
-     DIV = 330,
-     REM = 331,
-     AND = 332,
-     OR = 333,
-     XOR = 334,
-     SETLE = 335,
-     SETGE = 336,
-     SETLT = 337,
-     SETGT = 338,
-     SETEQ = 339,
-     SETNE = 340,
-     MALLOC = 341,
-     ALLOCA = 342,
-     FREE = 343,
-     LOAD = 344,
-     STORE = 345,
-     GETELEMENTPTR = 346,
-     PHI_TOK = 347,
-     CAST = 348,
-     SELECT = 349,
-     SHL = 350,
-     SHR = 351,
-     VAARG = 352,
-     EXTRACTELEMENT = 353,
-     INSERTELEMENT = 354,
-     SHUFFLEVECTOR = 355,
-     VAARG_old = 356,
-     VANEXT_old = 357
-   };
-#endif
-/* Tokens.  */
-#define ESINT64VAL 258
-#define EUINT64VAL 259
-#define SINTVAL 260
-#define UINTVAL 261
-#define FPVAL 262
-#define VOID 263
-#define BOOL 264
-#define SBYTE 265
-#define UBYTE 266
-#define SHORT 267
-#define USHORT 268
-#define INT 269
-#define UINT 270
-#define LONG 271
-#define ULONG 272
-#define FLOAT 273
-#define DOUBLE 274
-#define TYPE 275
-#define LABEL 276
-#define VAR_ID 277
-#define LABELSTR 278
-#define STRINGCONSTANT 279
-#define IMPLEMENTATION 280
-#define ZEROINITIALIZER 281
-#define TRUETOK 282
-#define FALSETOK 283
-#define BEGINTOK 284
-#define ENDTOK 285
-#define DECLARE 286
-#define GLOBAL 287
-#define CONSTANT 288
-#define SECTION 289
-#define VOLATILE 290
-#define TO 291
-#define DOTDOTDOT 292
-#define NULL_TOK 293
-#define UNDEF 294
-#define CONST 295
-#define INTERNAL 296
-#define LINKONCE 297
-#define WEAK 298
-#define APPENDING 299
-#define OPAQUE 300
-#define NOT 301
-#define EXTERNAL 302
-#define TARGET 303
-#define TRIPLE 304
-#define ENDIAN 305
-#define POINTERSIZE 306
-#define LITTLE 307
-#define BIG 308
-#define ALIGN 309
-#define DEPLIBS 310
-#define CALL 311
-#define TAIL 312
-#define ASM_TOK 313
-#define MODULE 314
-#define SIDEEFFECT 315
-#define CC_TOK 316
-#define CCC_TOK 317
-#define CSRETCC_TOK 318
-#define FASTCC_TOK 319
-#define COLDCC_TOK 320
-#define RET 321
-#define BR 322
-#define SWITCH 323
-#define INVOKE 324
-#define UNWIND 325
-#define UNREACHABLE 326
-#define ADD 327
-#define SUB 328
-#define MUL 329
-#define DIV 330
-#define REM 331
-#define AND 332
-#define OR 333
-#define XOR 334
-#define SETLE 335
-#define SETGE 336
-#define SETLT 337
-#define SETGT 338
-#define SETEQ 339
-#define SETNE 340
-#define MALLOC 341
-#define ALLOCA 342
-#define FREE 343
-#define LOAD 344
-#define STORE 345
-#define GETELEMENTPTR 346
-#define PHI_TOK 347
-#define CAST 348
-#define SELECT 349
-#define SHL 350
-#define SHR 351
-#define VAARG 352
-#define EXTRACTELEMENT 353
-#define INSERTELEMENT 354
-#define SHUFFLEVECTOR 355
-#define VAARG_old 356
-#define VANEXT_old 357
-
-
-
-
-#if ! defined (YYSTYPE) && ! defined (YYSTYPE_IS_DECLARED)
-#line 907 "/proj/llvm/llvm/lib/AsmParser/llvmAsmParser.y"
-typedef union YYSTYPE {
+typedef union {
   llvm::Module                           *ModuleVal;
   llvm::Function                         *FunctionVal;
   std::pair<llvm::PATypeHolder*, char*>  *ArgVal;
@@ -277,14 +37,106 @@ typedef union YYSTYPE {
   llvm::Instruction::OtherOps             OtherOpVal;
   llvm::Module::Endianness                Endianness;
 } YYSTYPE;
-/* Line 1447 of yacc.c.  */
-#line 282 "llvmAsmParser.tab.h"
-# define yystype YYSTYPE /* obsolescent; will be withdrawn */
-# define YYSTYPE_IS_DECLARED 1
-# define YYSTYPE_IS_TRIVIAL 1
-#endif
+#define	ESINT64VAL	257
+#define	EUINT64VAL	258
+#define	SINTVAL	259
+#define	UINTVAL	260
+#define	FPVAL	261
+#define	VOID	262
+#define	BOOL	263
+#define	SBYTE	264
+#define	UBYTE	265
+#define	SHORT	266
+#define	USHORT	267
+#define	INT	268
+#define	UINT	269
+#define	LONG	270
+#define	ULONG	271
+#define	FLOAT	272
+#define	DOUBLE	273
+#define	TYPE	274
+#define	LABEL	275
+#define	VAR_ID	276
+#define	LABELSTR	277
+#define	STRINGCONSTANT	278
+#define	IMPLEMENTATION	279
+#define	ZEROINITIALIZER	280
+#define	TRUETOK	281
+#define	FALSETOK	282
+#define	BEGINTOK	283
+#define	ENDTOK	284
+#define	DECLARE	285
+#define	GLOBAL	286
+#define	CONSTANT	287
+#define	SECTION	288
+#define	VOLATILE	289
+#define	TO	290
+#define	DOTDOTDOT	291
+#define	NULL_TOK	292
+#define	UNDEF	293
+#define	CONST	294
+#define	INTERNAL	295
+#define	LINKONCE	296
+#define	WEAK	297
+#define	APPENDING	298
+#define	OPAQUE	299
+#define	NOT	300
+#define	EXTERNAL	301
+#define	TARGET	302
+#define	TRIPLE	303
+#define	ENDIAN	304
+#define	POINTERSIZE	305
+#define	LITTLE	306
+#define	BIG	307
+#define	ALIGN	308
+#define	DEPLIBS	309
+#define	CALL	310
+#define	TAIL	311
+#define	ASM_TOK	312
+#define	MODULE	313
+#define	SIDEEFFECT	314
+#define	CC_TOK	315
+#define	CCC_TOK	316
+#define	CSRETCC_TOK	317
+#define	FASTCC_TOK	318
+#define	COLDCC_TOK	319
+#define	RET	320
+#define	BR	321
+#define	SWITCH	322
+#define	INVOKE	323
+#define	UNWIND	324
+#define	UNREACHABLE	325
+#define	ADD	326
+#define	SUB	327
+#define	MUL	328
+#define	DIV	329
+#define	REM	330
+#define	AND	331
+#define	OR	332
+#define	XOR	333
+#define	SETLE	334
+#define	SETGE	335
+#define	SETLT	336
+#define	SETGT	337
+#define	SETEQ	338
+#define	SETNE	339
+#define	MALLOC	340
+#define	ALLOCA	341
+#define	FREE	342
+#define	LOAD	343
+#define	STORE	344
+#define	GETELEMENTPTR	345
+#define	PHI_TOK	346
+#define	CAST	347
+#define	SELECT	348
+#define	SHL	349
+#define	SHR	350
+#define	VAARG	351
+#define	EXTRACTELEMENT	352
+#define	INSERTELEMENT	353
+#define	SHUFFLEVECTOR	354
+#define	VAARG_old	355
+#define	VANEXT_old	356
+
 
 extern YYSTYPE llvmAsmlval;
-
-
-

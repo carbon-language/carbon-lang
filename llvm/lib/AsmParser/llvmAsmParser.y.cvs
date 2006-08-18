@@ -714,7 +714,10 @@ static std::vector<UpRefRecord> UpRefs;
 /// thus we can complete the cycle.
 ///
 static PATypeHolder HandleUpRefs(const Type *ty) {
-  if (!ty->isAbstract()) return ty;
+  // If Ty isn't abstract, or if there are no up-references in it, then there is
+  // nothing to resolve here.
+  if (!ty->isAbstract() || UpRefs.empty()) return ty;
+  
   PATypeHolder Ty(ty);
   UR_OUT("Type '" << Ty->getDescription() <<
          "' newly formed.  Resolving upreferences.\n" <<
