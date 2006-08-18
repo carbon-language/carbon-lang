@@ -14,20 +14,20 @@
 #include "clang/AST/ASTStreamer.h"
 #include "clang/Parse/Action.h"
 #include "clang/Parse/Parser.h"
-
 using namespace llvm;
 using namespace clang;
 
-
+/// Interface to the Builder.cpp file.
+///
+Action *CreateASTBuilderActions();
 
 
 namespace {
   class ASTStreamer {
-    EmptyAction Builder;
     Parser P;
   public:
     ASTStreamer(Preprocessor &PP, unsigned MainFileID)
-      : P(PP, Builder) {
+      : P(PP, *CreateASTBuilderActions()) {
       PP.EnterSourceFile(MainFileID, 0, true);
       
       // Initialize the parser.
@@ -45,6 +45,7 @@ namespace {
     
     ~ASTStreamer() {
       P.Finalize();
+      delete &P.getActions();
     }
   };
 }

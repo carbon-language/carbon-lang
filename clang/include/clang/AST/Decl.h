@@ -15,6 +15,7 @@
 #define LLVM_CLANG_AST_DECL_H
 
 #include "clang/Basic/SourceLocation.h"
+#include "clang/Parse/Declarations.h"
 
 namespace llvm {
 namespace clang {
@@ -28,6 +29,10 @@ class Decl {
   /// variable, the tag for a struct).
   IdentifierInfo *Identifier;
   
+  /// DeclarationSpecifier - Information about storage class, type specifiers,
+  /// etc.
+  DeclSpec DeclarationSpecifier;
+  
   /// Type.
   /// Kind.
   
@@ -35,14 +40,22 @@ class Decl {
   ///
   SourceLocation Loc;
   
+#if 0
   /// Next - Decls are chained together in a singly-linked list by their owning
   /// object.  Currently we allow decls to be owned by a translation unit or a
   /// function.  This way we can deallocate a function body and all the
   /// declarations within it.
+#endif
+  // Scope stack info when parsing, otherwise decl list when scope is popped.
   Decl *Next;
 public:
-  Decl(IdentifierInfo *Id, SourceLocation loc, Decl *next)
-    : Identifier(Id), Loc(loc), Next(next) {}
+  Decl(IdentifierInfo *Id, const DeclSpec &DS, SourceLocation loc, Decl *next)
+    : Identifier(Id), DeclarationSpecifier(DS), Loc(loc), Next(next) {}
+  
+  
+  const DeclSpec &getDeclSpecs() const { return DeclarationSpecifier; }
+  
+  Decl *getNext() const { return Next; }
   
   
 };

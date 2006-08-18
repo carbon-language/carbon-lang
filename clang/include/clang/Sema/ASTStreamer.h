@@ -1,4 +1,4 @@
-//===--- AST.h - "Umbrella" header for AST library --------------*- C++ -*-===//
+//===--- ASTStreamer.h - Stream ASTs for top-level decls --------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
