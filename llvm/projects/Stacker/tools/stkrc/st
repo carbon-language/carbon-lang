@@ -25,7 +25,7 @@
 
   # To compile stacker source, we just run the stacker
   # compiler with a default stack size of 2048 entries.
-  translator.command=%bindir%/stkrc -s2048 %in% -f -o %out% %opt% \
+  translator.command=%bindir%/stkrc %in% -f -o %out% %opt% \
     %time% %stats% %args%
 
   # stkrc doesn't preprocess but we set this to true so
@@ -43,7 +43,7 @@
 ##########################################################
   
   # For optimization, we use the LLVM "opt" program
-  optimizer.command=%bindir%/stkrc -s2048 %in% -f -o %out% %opt% \
+  optimizer.command=%bindir%/stkrc %in% -f -o %out% %opt% \
     %time% %stats% %args%
 
   optimizer.required = yes
