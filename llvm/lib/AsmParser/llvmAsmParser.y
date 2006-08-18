@@ -27,9 +27,19 @@
 #include <list>
 #include <utility>
 
+// The following is a gross hack. In order to rid the libAsmParser library of
+// exceptions, we have to have a way of getting the yyparse function to go into
+// an error situation. So, whenever we want an error to occur, the GenerateError
+// function (see bottom of file) sets TriggerError. Then, at the end of each 
+// production in the grammer we use CHECK_FOR_ERROR which will invoke YYERROR 
+// (a goto) to put YACC in error state. Furthermore, several calls to 
+// GenerateError are made from inside productions and they must simulate the
+// previous exception behavior by exiting the production immediately. We have
+// replaced these with the GEN_ERROR macro which calls GeneratError and then
+// immediately invokes YYERROR. This would be so much cleaner if it was a 
+// recursive descent parser.
 static bool TriggerError = false;
 #define CHECK_FOR_ERROR { if (TriggerError) { TriggerError = false; YYERROR; } }
-
 #define GEN_ERROR(msg) { GenerateError(msg); YYERROR; }
 
 int yyerror(const char *ErrorMsg); // Forward declarations to prevent "implicit

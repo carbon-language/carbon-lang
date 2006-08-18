@@ -237,7 +237,7 @@
 
 
 #if ! defined (YYSTYPE) && ! defined (YYSTYPE_IS_DECLARED)
-#line 897 "/proj/llvm/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 907 "/proj/llvm/llvm/lib/AsmParser/llvmAsmParser.y"
 typedef union YYSTYPE {
   llvm::Module                           *ModuleVal;
   llvm::Function                         *FunctionVal;
