@@ -11,7 +11,7 @@
 // computations derived from them) into simpler forms suitable for subsequent
 // analysis and transformation.
 //
-// This transformation make the following changes to each loop with an
+// This transformation makes the following changes to each loop with an
 // identifiable induction variable:
 //   1. All loops are transformed to have a SINGLE canonical induction variable
 //      which starts at zero and steps by one.
