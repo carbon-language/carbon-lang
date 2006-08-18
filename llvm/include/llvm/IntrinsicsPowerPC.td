@@ -371,7 +371,7 @@ let TargetPrefix = "ppc" in {  // All PPC intrinsics start with "llvm.ppc.".
                       [IntrNoMem]>;
   // vpkuwum is lowered to a shuffle.
   def int_ppc_altivec_vpkuwus : GCCBuiltin<"__builtin_altivec_vpkuwus">,
-            Intrinsic<[llvm_v16i8_ty, llvm_v4i32_ty, llvm_v4i32_ty],
+            Intrinsic<[llvm_v8i16_ty, llvm_v4i32_ty, llvm_v4i32_ty],
                       [IntrNoMem]>;
 
   // Unpacks.
