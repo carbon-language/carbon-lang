@@ -10,7 +10,6 @@
 LEVEL = ../..
 LIBRARYNAME := LLVMAsmParser
 BUILD_ARCHIVE = 1
-REQUIRES_EH := 1
 EXTRA_DIST := Lexer.cpp.cvs Lexer.l.cvs \
               llvmAsmParser.cpp.cvs llvmAsmParser.h.cvs llvmAsmParser.y.cvs
 

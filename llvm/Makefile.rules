@@ -249,6 +249,11 @@ else
   C.Flags   += -D_DEBUG
 endif
 
+# IF REQUIRES_EH=1 is specified then don't disable exceptions
+ifndef REQUIRES_EH
+  CXX.Flags += -fno-exceptions
+endif
+
 CXX.Flags     += $(CXXFLAGS)
 C.Flags       += $(CFLAGS)
 CPP.BaseFlags += $(CPPFLAGS)
