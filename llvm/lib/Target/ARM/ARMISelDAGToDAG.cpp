@@ -42,11 +42,17 @@ namespace {
 
 ARMTargetLowering::ARMTargetLowering(TargetMachine &TM)
   : TargetLowering(TM) {
+  addRegisterClass(MVT::i32, ARM::IntRegsRegisterClass);
+
+  //LLVM requires that a register class supports MVT::f64!
+  addRegisterClass(MVT::f64, ARM::IntRegsRegisterClass);
+
   setOperationAction(ISD::RET,           MVT::Other, Custom);
   setOperationAction(ISD::GlobalAddress, MVT::i32,   Custom);
   setOperationAction(ISD::ConstantPool,  MVT::i32,   Custom);
 
   setSchedulingPreference(SchedulingForRegPressure);
+  computeRegisterProperties();
 }
 
 namespace llvm {
