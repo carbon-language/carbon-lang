@@ -70,8 +70,8 @@ DisableOptimizations("disable-opt",
 static cl::opt<bool> DisableInternalize("disable-internalize",
   cl::desc("Do not mark all symbols as internal"));
 
-static cl::opt<bool> Verify("verify",
-  cl::desc("Verify intermediate results of all passes"));
+static cl::opt<bool> VerifyEach("verify-each",
+ cl::desc("Verify intermediate results of all passes"));
 
 static cl::opt<bool> Strip("s",
   cl::desc("Strip symbol info from executable"));
@@ -87,7 +87,7 @@ static inline void addPass(PassManager &PM, Pass *P) {
   PM.add(P);
 
   // If we are verifying all of the intermediate steps, add the verifier...
-  if (Verify)
+  if (VerifyEach)
     PM.add(createVerifierPass());
 }
 
@@ -102,7 +102,7 @@ void Optimize(Module* M) {
   PassManager Passes;
 
   // If we're verifying, start off with a verification pass.
-  if (Verify)
+  if (VerifyEach)
     Passes.add(createVerifierPass());
 
   // Add an appropriate TargetData instance for this module...
