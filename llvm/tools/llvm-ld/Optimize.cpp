@@ -175,12 +175,11 @@ void Optimize(Module* M) {
   std::auto_ptr<TargetMachine> target;
   for (unsigned i = 0; i < OptimizationList.size(); ++i) {
     const PassInfo *Opt = OptimizationList[i];
-    
     if (Opt->getNormalCtor())
-      Passes.add(Opt->getNormalCtor()());
+      addPass(Passes, Opt->getNormalCtor()());
     else if (Opt->getTargetCtor()) {
       assert(target.get() && "Could not allocate target machine!");
-      Passes.add(Opt->getTargetCtor()(*target.get()));
+      addPass(Passes, Opt->getTargetCtor()(*target.get()));
     } else
       std::cerr << "llvm-ld: cannot create pass: " << Opt->getPassName() 
                 << "\n";
