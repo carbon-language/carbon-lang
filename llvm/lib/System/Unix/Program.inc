@@ -81,18 +81,24 @@ Program::FindProgramByName(const std::string& progName) {
   return Path();
 }
 
-static void RedirectFD(const std::string &File, int FD) {
-  if (File.empty()) return;  // Noop
+static bool RedirectFD(const std::string &File, int FD, std::string* ErrMsg) {
+  if (File.empty()) return false;  // Noop
 
   // Open the file
   int InFD = open(File.c_str(), FD == 0 ? O_RDONLY : O_WRONLY|O_CREAT, 0666);
   if (InFD == -1) {
-    ThrowErrno("Cannot open file '" + File + "' for "
+    MakeErrMsg(ErrMsg, "Cannot open file '" + File + "' for "
               + (FD == 0 ? "input" : "output") + "!\n");
+    return true;
   }
 
-  dup2(InFD, FD);   // Install it as the requested FD
+  // Install it as the requested FD
+  if (-1 == dup2(InFD, FD)) {
+    MakeErrMsg(ErrMsg, "Cannot dup2");
+    return true;
+  }
   close(InFD);      // Close the original FD
+  return false;
 }
 
 static bool Timeout = false;
@@ -105,10 +111,14 @@ Program::ExecuteAndWait(const Path& path,
                         const char** args,
                         const char** envp,
                         const Path** redirects,
-                        unsigned secondsToWait
-) {
-  if (!path.canExecute())
-    return -9999;
+                        unsigned secondsToWait,
+                        std::string* ErrMsg) 
+{
+  if (!path.canExecute()) {
+    if (ErrMsg)
+      *ErrMsg = path.toString() + " is not executable";
+    return -1;
+  }
 
 #ifdef HAVE_SYS_WAIT_H
   // Create a child process.
@@ -116,9 +126,8 @@ Program::ExecuteAndWait(const Path& path,
   switch (child) {
     // An error occured:  Return to the caller.
     case -1:
-      ThrowErrno(std::string("Couldn't execute program '") + path.toString() + 
-                 "'");
-      break;
+      MakeErrMsg(ErrMsg, "Couldn't fork");
+      return -1;
 
     // Child process: Execute the program.
     case 0: {
@@ -126,22 +135,23 @@ Program::ExecuteAndWait(const Path& path,
       if (redirects) {
         if (redirects[0])
           if (redirects[0]->isEmpty())
-            RedirectFD("/dev/null",0);
+            if (RedirectFD("/dev/null",0,ErrMsg)) { return -1; }
           else
-            RedirectFD(redirects[0]->toString(), 0);
+            if (RedirectFD(redirects[0]->toString(), 0,ErrMsg)) { return -1; }
         if (redirects[1])
           if (redirects[1]->isEmpty())
-            RedirectFD("/dev/null",1);
+            if (RedirectFD("/dev/null",1,ErrMsg)) { return -1; }
           else
-            RedirectFD(redirects[1]->toString(), 1);
+            if (RedirectFD(redirects[1]->toString(),1,ErrMsg)) { return -1; }
         if (redirects[1] && redirects[2] && 
             *(redirects[1]) != *(redirects[2])) {
           if (redirects[2]->isEmpty())
-            RedirectFD("/dev/null",2);
+            if (RedirectFD("/dev/null",2,ErrMsg)) { return -1; }
           else
-            RedirectFD(redirects[2]->toString(), 2);
-        } else {
-          dup2(1, 2);
+            if (RedirectFD(redirects[2]->toString(), 2,ErrMsg)) { return -1; }
+        } else if (-1 == dup2(1,2)) {
+          MakeErrMsg(ErrMsg, "Can't redirect");
+          return -1;
         }
       }
 
@@ -192,11 +202,12 @@ Program::ExecuteAndWait(const Path& path,
 
       // Wait for child to die
       if (wait(&status) != child)
-        ThrowErrno("Child timedout but wouldn't die");
+        MakeErrMsg(ErrMsg, "Child timed out but wouldn't die");
         
       return -1;   // Timeout detected
     } else {
-      ThrowErrno("Error waiting for child process");
+      MakeErrMsg(ErrMsg, "Error waiting for child process");
+      return -1;
     }
 
   // We exited normally without timeout, so turn off the timer.
@@ -223,12 +234,14 @@ Program::ExecuteAndWait(const Path& path,
     
 }
 
-void Program::ChangeStdinToBinary(){
+bool Program::ChangeStdinToBinary(){
   // Do nothing, as Unix doesn't differentiate between text and binary.
+  return false;
 }
 
-void Program::ChangeStdoutToBinary(){
+bool Program::ChangeStdoutToBinary(){
   // Do nothing, as Unix doesn't differentiate between text and binary.
+  return false;
 }
 
 }

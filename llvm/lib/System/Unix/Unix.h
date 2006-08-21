@@ -119,4 +119,35 @@ inline void ThrowErrno(const std::string& prefix, int errnum = -1) {
   throw prefix + ": " + buffer;
 }
 
+/// This function builds an error message into \p ErrMsg using the \p prefix
+/// string and the Unix error number given by \p errnum. If errnum is -1, the
+/// default then the value of errno is used.
+/// @brief Make an error message
+inline void MakeErrMsg(
+  std::string* ErrMsg, const std::string& prefix, int errnum = -1) {
+  if (!ErrMsg)
+    return;
+  char buffer[MAXPATHLEN];
+  buffer[0] = 0;
+  if (errnum == -1)
+    errnum = errno;
+#ifdef HAVE_STRERROR_R
+  // strerror_r is thread-safe.
+  if (errnum)
+    strerror_r(errnum,buffer,MAXPATHLEN-1);
+#elif HAVE_STRERROR
+  // Copy the thread un-safe result of strerror into
+  // the buffer as fast as possible to minimize impact
+  // of collision of strerror in multiple threads.
+  if (errnum)
+    strncpy(buffer,strerror(errnum),MAXPATHLEN-1);
+  buffer[MAXPATHLEN-1] = 0;
+#else
+  // Strange that this system doesn't even have strerror
+  // but, oh well, just use a generic message
+  sprintf(buffer, "Error #%d", errnum);
+#endif
+  *ErrMsg = buffer;
+}
+
 #endif

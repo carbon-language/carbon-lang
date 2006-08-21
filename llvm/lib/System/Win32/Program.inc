@@ -69,7 +69,7 @@ Program::FindProgramByName(const std::string& progName) {
   }
 }
 
-static HANDLE RedirectIO(const Path *path, int fd) {
+static HANDLE RedirectIO(const Path *path, int fd, std::string* ErrMsg) {
   HANDLE h;
   if (path == 0) {
     DuplicateHandle(GetCurrentProcess(), (HANDLE)_get_osfhandle(fd),
@@ -91,8 +91,9 @@ static HANDLE RedirectIO(const Path *path, int fd) {
                  &sa, fd == 0 ? OPEN_EXISTING : CREATE_ALWAYS,
                  FILE_ATTRIBUTE_NORMAL, NULL);
   if (h == INVALID_HANDLE_VALUE) {
-    ThrowError(std::string(fname) + ": Can't open file for " +
+    MakeErrMsg(ErrMsg, std::string(fname) + ": Can't open file for " +
         (fd ? "input: " : "output: "));
+    return h;
   }
   return h;
 }
@@ -102,9 +103,13 @@ Program::ExecuteAndWait(const Path& path,
                         const char** args,
                         const char** envp,
                         const Path** redirects,
-                        unsigned secondsToWait) {
-  if (!path.canExecute())
-    throw path.toString() + " is not executable"; 
+                        unsigned secondsToWait,
+                        std::string* ErrMsg) {
+  if (!path.canExecute()) {
+    if (ErrMsg)
+      *ErrMsg = "program not executable";
+    return -1;
+  }
 
   // Windows wants a command line, not an array of args, to pass to the new
   // process.  We have to concatenate them all, while quoting the args that
@@ -148,21 +153,29 @@ Program::ExecuteAndWait(const Path& path,
   if (redirects) {
     si.dwFlags = STARTF_USESTDHANDLES;
     
-    try {
-      si.hStdInput = RedirectIO(redirects[0], 0);
-      si.hStdOutput = RedirectIO(redirects[1], 1);
-      if (redirects[1] && redirects[2] && *(redirects[1]) != *(redirects[2])) {
-        si.hStdError = RedirectIO(redirects[2], 2);
-      } else {
-        DuplicateHandle(GetCurrentProcess(), si.hStdOutput,
-                        GetCurrentProcess(), &si.hStdError,
-                        0, TRUE, DUPLICATE_SAME_ACCESS);
-      }
-    } catch (...) {
+    si.hStdInput = RedirectIO(redirects[0], 0, ErrMsg);
+    if (si.hStdInput == INVALID_HANDLE_VALUE) {
+      MakeErrMsg(ErrMsg, "can't redirect stdin");
+      return -1;
+    }
+    si.hStdOutput = RedirectIO(redirects[1], 1);
+    if (si.hStdOutput == INVALID_HANDLE_VALUE) {
       CloseHandle(si.hStdInput);
-      CloseHandle(si.hStdOutput);
-      CloseHandle(si.hStdError);
-      throw;
+      MakeErrMsg(ErrMsg, "can't redirect stdout");
+      return -1;
+    }
+    if (redirects[1] && redirects[2] && *(redirects[1]) != *(redirects[2])) {
+      si.hStdError = RedirectIO(redirects[2], 2);
+      if (si.hStdError == INVALID_HANDLE_VALUE) {
+        CloseHandle(si.hStdInput);
+        CloseHandle(si.hStdOutput);
+        MakeErrMsg(ErrMsg, "can't redirect stderr");
+        return -1;
+      }
+    } else {
+      DuplicateHandle(GetCurrentProcess(), si.hStdOutput,
+                      GetCurrentProcess(), &si.hStdError,
+                      0, TRUE, DUPLICATE_SAME_ACCESS);
     }
   }
 
@@ -181,12 +194,13 @@ Program::ExecuteAndWait(const Path& path,
   CloseHandle(si.hStdOutput);
   CloseHandle(si.hStdError);
 
-  // Now throw an error if the process didn't get created.
+  // Now return an error if the process didn't get created.
   if (!rc)
   {
     SetLastError(err);
-    ThrowError(std::string("Couldn't execute program '") + 
+    MakeErrMsg(ErrMsg, std::string("Couldn't execute program '") + 
                path.toString() + "'");
+    return -1;
   }
 
   // Wait for it to terminate.
@@ -196,8 +210,9 @@ Program::ExecuteAndWait(const Path& path,
 
   if (WaitForSingleObject(pi.hProcess, millisecondsToWait) == WAIT_TIMEOUT) {
     if (!TerminateProcess(pi.hProcess, 1)) {
-      ThrowError(std::string("Failed to terminate timed-out program '") + 
-                 path.toString() + "'");
+      MakeErrMsg(ErrMsg, std::string("Failed to terminate timed-out program '")
+          + path.toString() + "'");
+      return -1;
     }
     WaitForSingleObject(pi.hProcess, INFINITE);
   }
@@ -213,23 +228,22 @@ Program::ExecuteAndWait(const Path& path,
 
   if (!rc) {
     SetLastError(err);
-    ThrowError(std::string("Failed getting status for program '") + 
+    MakeErrMsg(ErrMsg, std::string("Failed getting status for program '") + 
                path.toString() + "'");
+    return -1;
   }
 
   return status;
 }
 
-void Program::ChangeStdinToBinary(){
+bool Program::ChangeStdinToBinary(){
   int result = _setmode( _fileno(stdin), _O_BINARY );
-  if( result == -1 )
-    throw std::string("Cannot set input mode on stdin to binary.");
+  return result == -1;
 }
 
-void Program::ChangeStdoutToBinary(){
+bool Program::ChangeStdoutToBinary(){
   int result = _setmode( _fileno(stdout), _O_BINARY );
-  if( result == -1 )
-    throw std::string("Cannot set output mode on stdout to binary.");
+  return result == -1;
 }
 
 }
