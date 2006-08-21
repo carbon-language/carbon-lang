@@ -179,7 +179,8 @@ bool BugDriver::runPasses(const std::vector<const PassInfo*> &Passes,
   args[n++] = 0;
 
   sys::Path prog(sys::Program::FindProgramByName(ToolName));
-  int result = sys::Program::ExecuteAndWait(prog,args,0,0,Timeout);
+  std::string ErrMsg;
+  int result = sys::Program::ExecuteAndWait(prog,args,0,0,Timeout,&ErrMsg);
 
   // If we are supposed to delete the bytecode file or if the passes crashed,
   // remove it now.  This may fail if the file was never created, but that's ok.
@@ -194,10 +195,12 @@ bool BugDriver::runPasses(const std::vector<const PassInfo*> &Passes,
       std::cout << "Success!\n";
     else if (result > 0)
       std::cout << "Exited with error code '" << result << "'\n";
-    else if (result == -9999)
-      std::cout << "Program not executable\n";
-    else if (result < 0)
-      std::cout << "Crashed with signal #" << abs(result) << "\n";
+    else if (result < 0) {
+      if (result == -1)
+        std::cout << "Execute failed: " << ErrMsg << "\n";
+      else
+        std::cout << "Crashed with signal #" << abs(result) << "\n";
+    }
     if (result & 0x01000000)
       std::cout << "Dumped core\n";
   }

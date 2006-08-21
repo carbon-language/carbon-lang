@@ -30,12 +30,14 @@ int
 GenerateAssembly (const std::string &OutputFilename,
                   const std::string &InputFilename,
                   const sys::Path &llc,
+                  std::string& ErrMsg,
                   bool Verbose=false);
 
 int
 GenerateCFile (const std::string &OutputFile,
                const std::string &InputFile,
                const sys::Path &llc,
+               std::string& ErrMsg,
                bool Verbose=false);
 int
 GenerateNative (const std::string &OutputFilename,
@@ -48,6 +50,7 @@ GenerateNative (const std::string &OutputFilename,
                 bool ExportAllAsDynamic,
                 const std::vector<std::string> &RPath,
                 const std::string &SOName,
+                std::string& ErrMsg,
                 bool Verbose=false);
 
 } // End llvm namespace

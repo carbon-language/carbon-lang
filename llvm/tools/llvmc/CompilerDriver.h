@@ -150,7 +150,8 @@ namespace llvm {
     /// @{
     public:
       /// @brief Execute the actions requested for the given input list.
-      virtual int execute(const InputList& list, const sys::Path& output) = 0;
+      virtual int execute(
+        const InputList& list, const sys::Path& output, std::string& ErrMsg) =0;
 
       /// @brief Set the final phase at which compilation terminates
       virtual void setFinalPhase(Phases phase) = 0;

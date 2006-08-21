@@ -297,6 +297,7 @@ int llvm::GenerateBytecode(Module *M, int StripLevel, bool Internalize,
 int llvm::GenerateAssembly(const std::string &OutputFilename,
                            const std::string &InputFilename,
                            const sys::Path &llc,
+                           std::string& ErrMsg,
                            bool Verbose) {
   // Run LLC to convert the bytecode file into assembly code.
   std::vector<const char*> args;
@@ -307,13 +308,14 @@ int llvm::GenerateAssembly(const std::string &OutputFilename,
   args.push_back(InputFilename.c_str());
   args.push_back(0);
   if (Verbose) dumpArgs(&args[0]);
-  return sys::Program::ExecuteAndWait(llc, &args[0]);
+  return sys::Program::ExecuteAndWait(llc, &args[0],0,0,0,&ErrMsg);
 }
 
 /// GenerateCFile - generates a C source file from the specified bytecode file.
 int llvm::GenerateCFile(const std::string &OutputFile,
                         const std::string &InputFile,
                         const sys::Path &llc,
+                        std::string& ErrMsg,
                         bool Verbose) {
   // Run LLC to convert the bytecode file into C.
   std::vector<const char*> args;
@@ -325,7 +327,7 @@ int llvm::GenerateCFile(const std::string &OutputFile,
   args.push_back(InputFile.c_str());
   args.push_back(0);
   if (Verbose) dumpArgs(&args[0]);
-  return sys::Program::ExecuteAndWait(llc, &args[0]);
+  return sys::Program::ExecuteAndWait(llc, &args[0],0,0,0,&ErrMsg);
 }
 
 /// GenerateNative - generates a native executable file from the specified
@@ -352,6 +354,7 @@ int llvm::GenerateNative(const std::string &OutputFilename,
                          bool ExportAllAsDynamic,
                          const std::vector<std::string> &RPaths,
                          const std::string &SOName,
+                         std::string& ErrMsg,
                          bool Verbose) {
   // Remove these environment variables from the environment of the
   // programs that we will execute.  It appears that GCC sets these
@@ -436,7 +439,8 @@ int llvm::GenerateNative(const std::string &OutputFilename,
 
   // Run the compiler to assembly and link together the program.
   if (Verbose) dumpArgs(&args[0]);
-  int Res = sys::Program::ExecuteAndWait(gcc, &args[0],(const char**)clean_env);
+  int Res = sys::Program::ExecuteAndWait(
+      gcc, &args[0],(const char**)clean_env,0,0,&ErrMsg);
 
   delete [] clean_env;
 

@@ -320,12 +320,19 @@ int main(int argc, char **argv, char **envp ) {
 
       // Generate an assembly language file for the bytecode.
       if (Verbose) std::cout << "Generating Assembly Code\n";
-      GenerateAssembly(AssemblyFile.toString(), RealBytecodeOutput, llc,
-                       Verbose);
+      std::string ErrMsg;
+      if (0 != GenerateAssembly(
+          AssemblyFile.toString(), RealBytecodeOutput, llc, ErrMsg, Verbose)) {
+        std::cerr << argv[0] << ": " << ErrMsg << "\n";
+        return 2;
+      }
       if (Verbose) std::cout << "Generating Native Code\n";
-      GenerateNative(OutputFilename, AssemblyFile.toString(),
+      if (0 != GenerateNative(OutputFilename, AssemblyFile.toString(),
                      LibPaths, Libraries, gcc, envp, LinkAsLibrary,
-                     NoInternalize, RPath, SOName, Verbose);
+                     NoInternalize, RPath, SOName, ErrMsg, Verbose) ) {
+        std::cerr << argv[0] << ": " << ErrMsg << "\n";
+        return 2;
+      }
 
       if (!SaveTemps) {
         // Remove the assembly language file.
@@ -353,11 +360,19 @@ int main(int argc, char **argv, char **envp ) {
 
       // Generate an assembly language file for the bytecode.
       if (Verbose) std::cout << "Generating C Source Code\n";
-      GenerateCFile(CFile.toString(), RealBytecodeOutput, llc, Verbose);
+      std::string ErrMsg;
+      if (0 != GenerateCFile(
+          CFile.toString(), RealBytecodeOutput, llc, ErrMsg, Verbose)) {
+        std::cerr << argv[0] << ": " << ErrMsg << "\n";
+        return 2;
+      }
       if (Verbose) std::cout << "Generating Native Code\n";
-      GenerateNative(OutputFilename, CFile.toString(),
+      if (0 != GenerateNative(OutputFilename, CFile.toString(),
                      LibPaths, Libraries, gcc, envp, LinkAsLibrary,
-                     NoInternalize, RPath, SOName, Verbose);
+                     NoInternalize, RPath, SOName, ErrMsg, Verbose)) {
+        std::cerr << argv[0] << ": " << ErrMsg << "\n";
+        return 2;
+      }
 
       if (!SaveTemps) {
         // Remove the assembly language file.

@@ -227,7 +227,8 @@ void GenerateBytecode(Module* M, const std::string& FileName) {
 ///
 static int GenerateAssembly(const std::string &OutputFilename,
                             const std::string &InputFilename,
-                            const sys::Path &llc) {
+                            const sys::Path &llc,
+                            std::string &ErrMsg ) {
   // Run LLC to convert the bytecode file into assembly code.
   std::vector<const char*> args;
   args.push_back(llc.c_str());
@@ -237,13 +238,14 @@ static int GenerateAssembly(const std::string &OutputFilename,
   args.push_back(InputFilename.c_str());
   args.push_back(0);
 
-  return sys::Program::ExecuteAndWait(llc,&args[0]);
+  return sys::Program::ExecuteAndWait(llc,&args[0],0,0,0,&ErrMsg);
 }
 
 /// GenerateCFile - generates a C source file from the specified bytecode file.
 static int GenerateCFile(const std::string &OutputFile,
                          const std::string &InputFile,
-                         const sys::Path &llc) {
+                         const sys::Path &llc,
+                         std::string& ErrMsg) {
   // Run LLC to convert the bytecode file into C.
   std::vector<const char*> args;
   args.push_back(llc.c_str());
@@ -253,7 +255,7 @@ static int GenerateCFile(const std::string &OutputFile,
   args.push_back(OutputFile.c_str());
   args.push_back(InputFile.c_str());
   args.push_back(0);
-  return sys::Program::ExecuteAndWait(llc, &args[0]);
+  return sys::Program::ExecuteAndWait(llc, &args[0],0,0,0,&ErrMsg);
 }
 
 /// GenerateNative - generates a native object file from the
@@ -275,7 +277,8 @@ static int GenerateCFile(const std::string &OutputFile,
 static int GenerateNative(const std::string &OutputFilename,
                           const std::string &InputFilename,
                           const std::vector<std::string> &Libraries,
-                          const sys::Path &gcc, char ** const envp) {
+                          const sys::Path &gcc, char ** const envp,
+                          std::string& ErrMsg) {
   // Remove these environment variables from the environment of the
   // programs that we will execute.  It appears that GCC sets these
   // environment variables so that the programs it uses can configure
@@ -329,7 +332,8 @@ static int GenerateNative(const std::string &OutputFilename,
   args.push_back(0);
 
   // Run the compiler to assembly and link together the program.
-  int R = sys::Program::ExecuteAndWait(gcc, &args[0], (const char**)clean_env);
+  int R = sys::Program::ExecuteAndWait(
+      gcc, &args[0], (const char**)clean_env,0,0,&ErrMsg);
   delete [] clean_env;
   return R;
 }
@@ -497,7 +501,8 @@ int main(int argc, char **argv, char **envp) {
           args[1] = RealBytecodeOutput.c_str();
           args[2] = tmp_output.c_str();
           args[3] = 0;
-          if (0 == sys::Program::ExecuteAndWait(prog, args)) {
+          std::string ErrMsg;
+          if (0 == sys::Program::ExecuteAndWait(prog, args, 0,0,0, &ErrMsg)) {
             if (tmp_output.isBytecodeFile()) {
               sys::Path target(RealBytecodeOutput);
               target.eraseFromDisk();
@@ -505,6 +510,9 @@ int main(int argc, char **argv, char **envp) {
             } else
               return PrintAndReturn(
                 "Post-link optimization output is not bytecode");
+          } else {
+            std::cerr << argv[0] << ": " << ErrMsg << "\n";
+            return 2;
           }
         }
       }
@@ -533,10 +541,19 @@ int main(int argc, char **argv, char **envp) {
 
         // Generate an assembly language file for the bytecode.
         if (Verbose) std::cout << "Generating Assembly Code\n";
-        GenerateAssembly(AssemblyFile.toString(), RealBytecodeOutput, llc);
+        std::string ErrMsg;
+        if (0 != GenerateAssembly(AssemblyFile.toString(), RealBytecodeOutput,
+            llc, ErrMsg)) {
+          std::cerr << argv[0] << ": " << ErrMsg << "\n";
+          return 1;
+        }
+
         if (Verbose) std::cout << "Generating Native Code\n";
-        GenerateNative(OutputFilename, AssemblyFile.toString(), Libraries,
-                       gcc, envp);
+        if (0 != GenerateNative(OutputFilename, AssemblyFile.toString(),
+            Libraries,gcc,envp,ErrMsg)) {
+          std::cerr << argv[0] << ": " << ErrMsg << "\n";
+          return 1;
+        }
 
         // Remove the assembly language file.
         AssemblyFile.eraseFromDisk();
@@ -559,9 +576,19 @@ int main(int argc, char **argv, char **envp) {
 
         // Generate an assembly language file for the bytecode.
         if (Verbose) std::cout << "Generating Assembly Code\n";
-        GenerateCFile(CFile.toString(), RealBytecodeOutput, llc);
+        std::string ErrMsg;
+        if (0 != GenerateCFile(
+            CFile.toString(), RealBytecodeOutput, llc, ErrMsg)) {
+          std::cerr << argv[0] << ": " << ErrMsg << "\n";
+          return 1;
+        }
+
         if (Verbose) std::cout << "Generating Native Code\n";
-        GenerateNative(OutputFilename, CFile.toString(), Libraries, gcc, envp);
+        if (0 != GenerateNative(OutputFilename, CFile.toString(), Libraries, 
+            gcc, envp, ErrMsg)) {
+          std::cerr << argv[0] << ": " << ErrMsg << "\n";
+          return 1;
+        }
 
         // Remove the assembly language file.
         CFile.eraseFromDisk();

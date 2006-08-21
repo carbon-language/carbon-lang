@@ -451,7 +451,7 @@ private:
     return action;
   }
 
-  bool DoAction(Action*action) {
+  int DoAction(Action*action, std::string& ErrMsg) {
     assert(action != 0 && "Invalid Action!");
     if (isSet(VERBOSE_FLAG))
       WriteAction(action);
@@ -477,15 +477,17 @@ private:
       if (isSet(TIME_ACTIONS_FLAG)) {
         Timer timer(action->program.toString());
         timer.startTimer();
-        int resultCode = sys::Program::ExecuteAndWait(action->program, Args);
+        int resultCode = 
+          sys::Program::ExecuteAndWait(action->program, Args,0,0,0,&ErrMsg);
         timer.stopTimer();
         timer.print(timer,std::cerr);
-        return resultCode == 0;
+        return resultCode;
       }
       else
-        return 0 == sys::Program::ExecuteAndWait(action->program, Args);
+        return 
+          sys::Program::ExecuteAndWait(action->program, Args, 0,0,0, &ErrMsg);
     }
-    return true;
+    return 0;
   }
 
   /// This method tries various variants of a linkage item's file
@@ -594,7 +596,7 @@ private:
 /// @name Methods
 /// @{
 public:
-  virtual int execute(const InputList& InpList, const sys::Path& Output ) {
+  virtual int execute(const InputList& InpList, const sys::Path& Output, std::string& ErrMsg ) {
     try {
       // Echo the configuration of options if we're running verbose
       if (isSet(DEBUG_FLAG)) {
@@ -851,8 +853,9 @@ public:
       std::vector<Action*>::iterator AI = actions.begin();
       std::vector<Action*>::iterator AE = actions.end();
       while (AI != AE) {
-        if (!DoAction(*AI))
-          throw std::string("Action failed");
+        int ActionResult = DoAction(*AI, ErrMsg);
+        if (ActionResult != 0)
+          return ActionResult;
         AI++;
       }
 
@@ -932,8 +935,9 @@ public:
         link->args.push_back(Output.toString());
 
         // Execute the link
-        if (!DoAction(link))
-            throw std::string("Action failed");
+        int ActionResult = DoAction(link, ErrMsg);
+        if (ActionResult != 0)
+          return ActionResult;
       }
     } catch (std::string& msg) {
       cleanup();

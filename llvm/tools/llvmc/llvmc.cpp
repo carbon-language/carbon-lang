@@ -355,9 +355,10 @@ int main(int argc, char **argv) {
     }
 
     // Tell the driver to do its thing
-    int result = CD->execute(InpList, sys::Path(OutputFilename));
+    std::string ErrMsg;
+    int result = CD->execute(InpList, sys::Path(OutputFilename), ErrMsg);
     if (result != 0) {
-      throw std::string("Error executing actions. Terminated.");
+      std::cerr << argv[0] << ": " << ErrMsg << '\n';
       return result;
     }
 
