@@ -735,8 +735,9 @@ void LiveIntervals::joinIntervalsInMachineBB(MachineBasicBlock *MBB) {
       assert(SrcInt.reg == SrcReg && DestInt.reg == DestReg &&
              "Register mapping is horribly broken!");
 
-      DEBUG(std::cerr << "\t\tInspecting " << SrcInt << " and " << DestInt
-                      << ": ");
+      DEBUG(std::cerr << "\t\tInspecting "; SrcInt.print(std::cerr, mri_);
+            std::cerr << " and "; DestInt.print(std::cerr, mri_);
+            std::cerr << ": ");
 
       // If two intervals contain a single value and are joined by a copy, it
       // does not matter if the intervals overlap, they can always be joined.
