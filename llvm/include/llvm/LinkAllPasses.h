@@ -1,4 +1,4 @@
-//===- llvm/Transforms/LinkAllPasses.h - Reference All Passes ---*- C++ -*-===//
+//===- llvm/LinkAllPasses.h ------------ Reference All Passes ---*- C++ -*-===//
 //
 //                      The LLVM Compiler Infrastructure
 //
@@ -7,8 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This header file pulls in all transformation passes for tools like opts and
-// bugpoint that need this functionality.
+// This header file pulls in all transformation and analysis passes for tools 
+// like opt and bugpoint that need this functionality.
 //
 //===----------------------------------------------------------------------===//
 
