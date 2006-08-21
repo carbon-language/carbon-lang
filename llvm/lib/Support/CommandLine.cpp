@@ -31,7 +31,7 @@ using namespace llvm;
 using namespace cl;
 
 // Globals for name and overview of program
-static const char *ProgramName = "<unknown>";
+static const char *ProgramName = "<premain>";
 static const char *ProgramOverview = 0;
 
 // This collects additional help to be printed.

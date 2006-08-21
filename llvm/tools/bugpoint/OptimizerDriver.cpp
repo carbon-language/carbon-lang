@@ -194,6 +194,8 @@ bool BugDriver::runPasses(const std::vector<const PassInfo*> &Passes,
       std::cout << "Success!\n";
     else if (result > 0)
       std::cout << "Exited with error code '" << result << "'\n";
+    else if (result == -9999)
+      std::cout << "Program not executable\n";
     else if (result < 0)
       std::cout << "Crashed with signal #" << abs(result) << "\n";
     if (result & 0x01000000)

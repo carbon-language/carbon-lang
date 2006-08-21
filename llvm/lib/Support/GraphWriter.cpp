@@ -59,7 +59,9 @@ void llvm::DisplayGraph(const sys::Path &Filename) {
     args.push_back(PSFilename.c_str());
     args.push_back(0);
     
-    sys::Program::ExecuteAndWait(gv, &args[0]);
+    if (sys::Program::ExecuteAndWait(gv, &args[0])) {
+      std::cerr << "Error viewing graph: 'gv' not in path?\n";
+    }
   }
   PSFilename.eraseFromDisk();
 #elif HAVE_DOTTY

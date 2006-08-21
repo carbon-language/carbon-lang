@@ -108,7 +108,7 @@ Program::ExecuteAndWait(const Path& path,
                         unsigned secondsToWait
 ) {
   if (!path.canExecute())
-    throw path.toString() + " is not executable"; 
+    return -9999;
 
 #ifdef HAVE_SYS_WAIT_H
   // Create a child process.

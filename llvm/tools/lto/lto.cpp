@@ -334,7 +334,7 @@ LinkTimeOptimizer::optimizeModules(const std::string &OutputFilename,
   args.push_back(tmpAsmFilePath.c_str());
   args.push_back(0);
 
-  int R1 = sys::Program::ExecuteAndWait(gcc, &args[0], 0, 0, 1);
+  sys::Program::ExecuteAndWait(gcc, &args[0], 0, 0, 1);
 
   tmpAsmFilePath.eraseFromDisk();
 

@@ -49,7 +49,8 @@ namespace sys {
       /// called then a std::string is thrown.
       /// @returns an integer result code indicating the status of the program.
       /// A zero or positive value indicates the result code of the program. A
-      /// negative value is the signal number on which it terminated.
+      /// negative value is the signal number on which it terminated. A value of
+      /// -9999 indicates the program could not be executed.
       /// @throws std::string on a variety of error conditions or if the invoked
       /// program aborted abnormally.
       /// @see FindProgrambyName
