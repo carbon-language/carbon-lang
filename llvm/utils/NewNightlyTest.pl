@@ -227,7 +227,9 @@ my $DejagnuSum = "$Prefix-Dejagnu-testrun.sum";
 my $DejagnuTestsLog = "$Prefix-DejagnuTests-Log.txt";
 if (! -d $WebDir) {
   mkdir $WebDir, 0777;
-  warn "$WebDir did not exist; creating it.\n";
+  if($VERBOSE){
+    warn "$WebDir did not exist; creating it.\n";
+  }
 }
 
 if ($VERBOSE) {
@@ -941,28 +943,28 @@ my $build_data;
 @BUILD_DATA = ReadFile "$BuildLog";
 $build_data = join("\n", @BUILD_DATA);
 
-my @DEJAGNU_LOG;
-my @DEJAGNU_SUM;
-my $dejagnutests_log;
-my $dejagnutests_sum;
-@DEJAGNU_LOG = ReadFile "$DejagnuLog";
-@DEJAGNU_SUM = ReadFile "$DejagnuSum";
-$dejagnutests_log = join("\n", @DEJAGNU_LOG);
-$dejagnutests_sum = join("\n", @DEJAGNU_SUM);
+my (@DEJAGNU_LOG, @DEJAGNU_SUM, @DEJAGNULOG_FULL, @GCC_VERSION);
+my ($dejagnutests_log ,$dejagnutests_sum, $dejagnulog_full) = "";
+my ($gcc_version, $gcc_version_long) = "";
 
-my @DEJAGNULOG_FULL;
-my $dejagnulog_full;
-@DEJAGNULOG_FULL = ReadFile "$DejagnuTestsLog";
-$dejagnulog_full = join("\n", @DEJAGNULOG_FULL);
+if(!$BuildError){
+  @DEJAGNU_LOG = ReadFile "$DejagnuLog";
+  @DEJAGNU_SUM = ReadFile "$DejagnuSum";
+  $dejagnutests_log = join("\n", @DEJAGNU_LOG);
+  $dejagnutests_sum = join("\n", @DEJAGNU_SUM);
 
-my $gcc_version_long="";
-if ($GCCPATH ne "") {
-  $gcc_version_long = `$GCCPATH/gcc --version`;
-} else {
-  $gcc_version_long = `gcc --version`;
+  @DEJAGNULOG_FULL = ReadFile "$DejagnuTestsLog";
+  $dejagnulog_full = join("\n", @DEJAGNULOG_FULL);
+
+  $gcc_version_long="";
+  if ($GCCPATH ne "") {
+  	$gcc_version_long = `$GCCPATH/gcc --version`;
+  } else {
+	  $gcc_version_long = `gcc --version`;
+  }
+  @GCC_VERSION = split '\n', $gcc_version_long;
+  $gcc_version = $GCC_VERSION[0];
 }
-@GCC_VERSION = split '\n', $gcc_version_long;
-my $gcc_version = $GCC_VERSION[0];
 
 ##############################################################
 #
