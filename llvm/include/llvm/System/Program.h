@@ -49,10 +49,7 @@ namespace sys {
       /// called then a std::string is thrown.
       /// @returns an integer result code indicating the status of the program.
       /// A zero or positive value indicates the result code of the program. A
-      /// negative value is the signal number on which it terminated. A value of
-      /// -9999 indicates the program could not be executed.
-      /// @throws std::string on a variety of error conditions or if the invoked
-      /// program aborted abnormally.
+      /// negative value is the signal number on which it terminated. 
       /// @see FindProgrambyName
       /// @brief Executes the program with the given set of \p args.
       static int ExecuteAndWait(
@@ -70,16 +67,21 @@ namespace sys {
           ///< should have a size of at least three. If the pointer in the array
           ///< are not null, then the inferior process's stdin(0), stdout(1),
           ///< and stderr(2) will be redirected to the corresponding Paths.
-        unsigned secondsToWait = 0 ///< If non-zero, this specifies the amount
+        unsigned secondsToWait = 0, ///< If non-zero, this specifies the amount
           ///< of time to wait for the child process to exit. If the time
           ///< expires, the child is killed and this call returns. If zero,
           ///< this function will wait until the child finishes or forever if
           ///< it doesn't.
+        std::string* ErrMsg = 0 ///< If non-zero, provides a pointer to a string
+          ///< instance in which error messages will be returned. If the string 
+          ///< is non-empty upon return an error occurred while invoking the
+          ///< program.
       );
       // These methods change the specified standard stream (stdin or stdout) to
-      // binary mode.
-      static void ChangeStdinToBinary();
-      static void ChangeStdoutToBinary();
+      // binary mode. They return true if an error occurred
+      static bool ChangeStdinToBinary();
+      static bool ChangeStdoutToBinary();
+    /// @}
   };
 }
 }
