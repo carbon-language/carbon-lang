@@ -591,6 +591,7 @@ are possible tag values;</p>
   DW_TAG_union_type = 23
   DW_TAG_vector_type = 259
   DW_TAG_subroutine_type = 46
+  DW_TAG_inheritance = 26
 </pre>
 
 <p>The vector flag indicates that an array type is a native packed vector.</p>
@@ -610,6 +611,17 @@ for the set.</p>
 href="#format_basic_type">basic</a>, <a href="#format_derived_type">derived</a>
 or <a href="#format_composite_type">composite</a> type descriptors, each
 representing a field member of the structure or union.</p>
+
+<p>For C++ classes (tag = <tt>DW_TAG_structure_type</tt>), member descriptors
+provide information about base classes, static members and member functions. If
+a member is a <a href="#format_derived_type">derived type descriptor</a> and has
+a tag of <tt>DW_TAG_inheritance</tt>, then the type represents a base class. If
+the member of is a <a href="#format_global_variables">global variable
+descriptor</a> then it represents a static member.  And, if the member is a <a
+href="#format_subprograms">subprogram descriptor</a> then it represents a member
+function.  For static members and member functions, <tt>getName()</tt> returns
+the members link or the C++ mangled name.  <tt>getDisplayName()</tt> the
+simplied version of the name.</p>
 
 <p>The first member of subroutine (tag = <tt>DW_TAG_subroutine_type</tt>)
 type elements is the return type for the subroutine.  The remaining
