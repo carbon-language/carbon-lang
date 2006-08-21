@@ -1502,6 +1502,7 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
           SDOperand Lo, Hi;
           ExpandOp(Tmp2, Lo, Hi);
           Result = DAG.getNode(ISD::RET, MVT::Other, Tmp1, Lo, Tmp3, Hi, Tmp3);
+          Result = LegalizeOp(Result);
         } else {
           SDNode *InVal = Tmp2.Val;
           unsigned NumElems =
