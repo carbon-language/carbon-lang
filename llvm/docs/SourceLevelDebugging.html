@@ -389,6 +389,7 @@ line correspondence.</p>
     {  }*,  ;; Global variable anchor = cast (%<a href="#format_anchors">llvm.dbg.anchor.type</a>* %<a href="#format_global_variables">llvm.dbg.global_variables</a> to {  }*),  
     {  }*,  ;; Reference to context descriptor
     sbyte*, ;; Name
+    sbyte*, ;; Display name (unmangled name if Name is the C++ mangled name)
     {  }*,  ;; Reference to compile unit where defined
     uint,   ;; Line number where defined
     {  }*,  ;; Reference to type descriptor
@@ -416,6 +417,7 @@ provide details such as name, type and where the variable is defined.</p>
     {  }*,  ;; Subprogram anchor = cast (%<a href="#format_anchors">llvm.dbg.anchor.type</a>* %<a href="#format_subprograms">llvm.dbg.subprograms</a> to {  }*),  
     {  }*,  ;; Reference to context descriptor
     sbyte*, ;; Name
+    sbyte*, ;; Display name (unmangled name if Name is the C++ mangled name)
     {  }*,  ;; Reference to compile unit where defined
     uint,   ;; Line number where defined
     {  }*,  ;; Reference to type descriptor
@@ -1140,6 +1142,7 @@ int MyGlobal = 100;
     {  }* cast (%<a href="#format_anchors">llvm.dbg.anchor.type</a>* %<a href="#format_global_variables">llvm.dbg.global_variables</a> to {  }*), 
     {  }* cast (%<a href="#format_compile_units">llvm.dbg.compile_unit.type</a>* %<a href="#format_compile_units">llvm.dbg.compile_unit</a> to {  }*), 
     sbyte* getelementptr ([9 x sbyte]* %str1, int 0, int 0), 
+    sbyte* getelementptr ([1 x sbyte]* %str2, int 0, int 0), 
     {  }* cast (%<a href="#format_compile_units">llvm.dbg.compile_unit.type</a>* %<a href="#format_compile_units">llvm.dbg.compile_unit</a> to {  }*), 
     uint 1,
     {  }* cast (%<a href="#format_basic_type">llvm.dbg.basictype.type</a>* %<a href="#format_basic_type">llvm.dbg.basictype</a> to {  }*), 
@@ -1154,7 +1157,7 @@ int MyGlobal = 100;
 %<a href="#format_basic_type">llvm.dbg.basictype</a> = internal constant %<a href="#format_basic_type">llvm.dbg.basictype.type</a> {
     uint add(uint 36, uint 262144), 
     {  }* cast (%<a href="#format_compile_units">llvm.dbg.compile_unit.type</a>* %<a href="#format_compile_units">llvm.dbg.compile_unit</a> to {  }*), 
-    sbyte* getelementptr ([4 x sbyte]* %str2, int 0, int 0), 
+    sbyte* getelementptr ([4 x sbyte]* %str3, int 0, int 0), 
     {  }* null, 
     int 0, 
     uint 32, 
@@ -1166,7 +1169,8 @@ int MyGlobal = 100;
 ;; Define the names of the global variable and basic type.
 ;;
 %str1 = internal constant [9 x sbyte] c"MyGlobal\00", section "llvm.metadata"
-%str2 = internal constant [4 x sbyte] c"int\00", section "llvm.metadata"
+%str2 = internal constant [1 x sbyte] c"\00", section "llvm.metadata"
+%str3 = internal constant [4 x sbyte] c"int\00", section "llvm.metadata"
 </pre>
 
 </div>
@@ -1213,6 +1217,7 @@ int main(int argc, char *argv[]) {
     {  }* cast (%<a href="#format_anchors">llvm.dbg.anchor.type</a>* %<a href="#format_subprograms">llvm.dbg.subprograms</a> to {  }*), 
     {  }* cast (%<a href="#format_compile_units">llvm.dbg.compile_unit.type</a>* %<a href="#format_compile_units">llvm.dbg.compile_unit</a> to {  }*), 
     sbyte* getelementptr ([5 x sbyte]* %str1, int 0, int 0), 
+    sbyte* getelementptr ([1 x sbyte]* %str2, int 0, int 0), 
     {  }* cast (%<a href="#format_compile_units">llvm.dbg.compile_unit.type</a>* %<a href="#format_compile_units">llvm.dbg.compile_unit</a> to {  }*),
     uint 1,
     {  }* null, 
@@ -1223,6 +1228,7 @@ int main(int argc, char *argv[]) {
 ;; Define the name of the subprogram.
 ;;
 %str1 = internal constant [5 x sbyte] c"main\00", section "llvm.metadata"
+%str2 = internal constant [1 x sbyte] c"\00", section "llvm.metadata"
 
 ;;
 ;; Define the subprogram itself.
