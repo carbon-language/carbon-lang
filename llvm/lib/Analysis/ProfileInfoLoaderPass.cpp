@@ -49,9 +49,8 @@ namespace {
     virtual bool runOnModule(Module &M);
   };
 
-  RegisterPass<LoaderPass>
-  X("profile-loader", "Load profile information from llvmprof.out",
-    PassInfo::Analysis|PassInfo::Optimization);
+  RegisterOpt<LoaderPass>
+  X("profile-loader", "Load profile information from llvmprof.out");
 
   RegisterAnalysisGroup<ProfileInfo, LoaderPass> Y;
 }  // End of anonymous namespace
