@@ -61,6 +61,9 @@ bool ARMTargetMachine::addPassesToEmitFile(PassManager &PM, std::ostream &Out,
   if (!Fast)
     PM.add(createLoopStrengthReducePass());
 
+  if (!Fast)
+    PM.add(createCFGSimplificationPass());
+
   // FIXME: Implement efficient support for garbage collection intrinsics.
   PM.add(createLowerGCPass());
 

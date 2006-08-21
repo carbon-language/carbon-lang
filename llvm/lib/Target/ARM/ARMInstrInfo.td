@@ -48,6 +48,10 @@ def ARMcall        : SDNode<"ARMISD::CALL", SDT_ARMcall,
                            [SDNPHasChain, SDNPOptInFlag, SDNPOutFlag]>;
 def retflag        : SDNode<"ARMISD::RET_FLAG", SDTRet,
 	                   [SDNPHasChain, SDNPOptInFlag]>;
+def armselect      : SDNode<"ARMISD::SELECT", SDTIntBinOp, [SDNPInFlag, SDNPOutFlag]>;
+
+def SDTVoidBinOp : SDTypeProfile<0, 2, [SDTCisSameAs<0, 1>]>;
+def armcmp       : SDNode<"ARMISD::CMP",  SDTVoidBinOp, [SDNPOutFlag]>;
 
 def ADJCALLSTACKUP : InstARM<(ops i32imm:$amt),
                             "!ADJCALLSTACKUP $amt",
@@ -96,3 +100,13 @@ def subri   : InstARM<(ops IntRegs:$dst, IntRegs:$a, i32imm:$b),
 def andrr     : InstARM<(ops IntRegs:$dst, IntRegs:$a, IntRegs:$b),
 		       "and $dst, $a, $b",
 		       [(set IntRegs:$dst, (and IntRegs:$a, IntRegs:$b))]>;
+
+let isTwoAddress = 1 in {
+  def moveq    : InstARM<(ops IntRegs:$dst, IntRegs:$false, IntRegs:$true),
+	                 "moveq $dst, $true",
+		         [(set IntRegs:$dst, (armselect IntRegs:$true, IntRegs:$false))]>;
+}
+
+def cmp      : InstARM<(ops IntRegs:$a, IntRegs:$b),
+	               "cmp $a, $b",
+		       [(armcmp IntRegs:$a, IntRegs:$b)]>;

@@ -51,6 +51,9 @@ ARMTargetLowering::ARMTargetLowering(TargetMachine &TM)
   setOperationAction(ISD::GlobalAddress, MVT::i32,   Custom);
   setOperationAction(ISD::ConstantPool,  MVT::i32,   Custom);
 
+  setOperationAction(ISD::SETCC, MVT::i32, Expand);
+  setOperationAction(ISD::SELECT_CC, MVT::i32, Custom);
+
   setSchedulingPreference(SchedulingForRegPressure);
   computeRegisterProperties();
 }
@@ -64,7 +67,11 @@ namespace llvm {
       CALL,
 
       /// Return with a flag operand.
-      RET_FLAG
+      RET_FLAG,
+
+      CMP,
+
+      SELECT
     };
   }
 }
@@ -74,6 +81,8 @@ const char *ARMTargetLowering::getTargetNodeName(unsigned Opcode) const {
   default: return 0;
   case ARMISD::CALL:          return "ARMISD::CALL";
   case ARMISD::RET_FLAG:      return "ARMISD::RET_FLAG";
+  case ARMISD::SELECT:        return "ARMISD::SELECT";
+  case ARMISD::CMP:           return "ARMISD::CMP";
   }
 }
 
@@ -290,6 +299,19 @@ static SDOperand LowerFORMAL_ARGUMENTS(SDOperand Op, SelectionDAG &DAG) {
   return DAG.getNode(ISD::MERGE_VALUES, RetVT, &ArgValues[0], ArgValues.size());
 }
 
+static SDOperand LowerSELECT_CC(SDOperand Op, SelectionDAG &DAG) {
+  SDOperand LHS = Op.getOperand(0);
+  SDOperand RHS = Op.getOperand(1);
+  ISD::CondCode CC = cast<CondCodeSDNode>(Op.getOperand(4))->get();
+  SDOperand TrueVal = Op.getOperand(2);
+  SDOperand FalseVal = Op.getOperand(3);
+
+  assert(CC == ISD::SETEQ);
+
+  SDOperand Cmp = DAG.getNode(ARMISD::CMP, MVT::Flag, LHS, RHS);
+  return DAG.getNode(ARMISD::SELECT, MVT::i32, FalseVal, TrueVal, Cmp);
+}
+
 SDOperand ARMTargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
   switch (Op.getOpcode()) {
   default:
@@ -305,6 +327,8 @@ SDOperand ARMTargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
     return LowerCALL(Op, DAG);
   case ISD::RET:
     return LowerRET(Op, DAG);
+  case ISD::SELECT_CC:
+    return LowerSELECT_CC(Op, DAG);
   }
 }
 
