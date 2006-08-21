@@ -12,12 +12,20 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_TRANSFORMS_LINKALLPASSES_H
-#define LLVM_TRANSFORMS_LINKALLPASSES_H
+#ifndef LLVM_LINKALLPASSES_H
+#define LLVM_LINKALLPASSES_H
 
-#include "llvm/Analysis/Passes.h"
+#include "llvm/Analysis/AliasSetTracker.h"
+#include "llvm/Analysis/FindUsedTypes.h"
+#include "llvm/Analysis/IntervalPartition.h"
 #include "llvm/Analysis/LoadValueNumbering.h"
+#include "llvm/Analysis/Passes.h"
+#include "llvm/Analysis/PostDominators.h"
+#include "llvm/Analysis/ScalarEvolution.h"
+#include "llvm/Analysis/DataStructure/DataStructure.h"
+#include "llvm/Analysis/DataStructure/CallTargets.h"
 #include "llvm/CodeGen/Passes.h"
+#include "llvm/Function.h"
 #include "llvm/Transforms/Instrumentation.h"
 #include "llvm/Transforms/IPO.h"
 #include "llvm/Transforms/Scalar.h"
@@ -109,6 +117,24 @@ namespace {
       (void) llvm::createNullProfilerRSPass();
       (void) llvm::createRSProfilingPass();
       (void) llvm::createIndMemRemPass();
+      (void) llvm::createDataStructureStatsPass();
+      (void) llvm::createDataStructureGraphCheckerPass();
+      (void) llvm::createInstCountPass();
+
+      (void)new llvm::LocalDataStructures();
+      (void)new llvm::BUDataStructures();
+      (void)new llvm::TDDataStructures();
+      (void)new llvm::CompleteBUDataStructures();
+      (void)new llvm::EquivClassGraphs();
+      (void)new llvm::IntervalPartition();
+      (void)new llvm::ImmediateDominators();
+      (void)new llvm::PostDominatorSet();
+      (void)new llvm::FindUsedTypes();
+      (void)new llvm::ScalarEvolution();
+      (void)new llvm::CallTargetFinder();
+      ((llvm::Function*)0)->viewCFGOnly();
+      llvm::AliasSetTracker X(*(llvm::AliasAnalysis*)0);
+      X.add((llvm::Value*)0, 0);  // for -print-alias-sets
     }
   } ForcePassLinking; // Force link by creating a global definition.
 }

@@ -15,8 +15,7 @@
 
 #include "BugDriver.h"
 #include "ToolRunner.h"
-#include "llvm/Analysis/LinkAllAnalyses.h"
-#include "llvm/Transforms/LinkAllPasses.h"
+#include "llvm/LinkAllPasses.h"
 #include "llvm/Support/PassNameParser.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/PluginLoader.h"
