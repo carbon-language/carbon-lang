@@ -202,7 +202,8 @@ enum dwarf_constants {
   DW_AT_elemental = 0x66,
   DW_AT_pure = 0x67,
   DW_AT_recursive = 0x68,
-  DW_AT_sf_names = 0x2101,
+  DW_AT_MIPS_linkage_name = 0x2007,
+  DW_AT_sf_names   = 0x2101,
   DW_AT_src_info = 0x2102,
   DW_AT_mac_info = 0x2103,
   DW_AT_src_coords = 0x2104,
@@ -211,7 +212,7 @@ enum dwarf_constants {
   DW_AT_GNU_vector = 0x2107,
   DW_AT_lo_user = 0x2000,
   DW_AT_hi_user = 0x3fff,
-
+ 
   // Attribute form encodings
   DW_FORM_addr = 0x01,
   DW_FORM_block2 = 0x03,

@@ -189,6 +189,7 @@ const char *AttributeString(unsigned Attribute) {
     case DW_AT_elemental:                  return "AT_elemental";
     case DW_AT_pure:                       return "AT_pure";
     case DW_AT_recursive:                  return "AT_recursive";
+    case DW_AT_MIPS_linkage_name:          return "AT_MIPS_linkage_name";
     case DW_AT_sf_names:                   return "AT_sf_names";
     case DW_AT_src_info:                   return "AT_src_info";
     case DW_AT_mac_info:                   return "AT_mac_info";
