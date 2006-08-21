@@ -820,8 +820,11 @@ void LiveIntervals::joinIntervals() {
 
   DEBUG(std::cerr << "*** Register mapping ***\n");
   DEBUG(for (int i = 0, e = r2rMap_.size(); i != e; ++i)
-          if (r2rMap_[i])
-             std::cerr << "  reg " << i << " -> reg " << r2rMap_[i] << "\n");
+          if (r2rMap_[i]) {
+            std::cerr << "  reg " << i << " -> ";
+            printRegName(r2rMap_[i]);
+            std::cerr << "\n";
+          });
 }
 
 /// Return true if the two specified registers belong to different register
