@@ -76,6 +76,9 @@ namespace llvm {
     unsigned reg;        // the register of this interval
     float weight;        // weight of this interval
     Ranges ranges;       // the ranges in which this register is live
+  private:
+    unsigned NumValues;  // the number of distinct values in this interval.
+  public:
 
     LiveInterval(unsigned Reg, float Weight)
       : reg(Reg), weight(Weight), NumValues(0) {
@@ -189,7 +192,6 @@ namespace llvm {
     void dump() const;
 
   private:
-    unsigned NumValues;  // the number of distinct values in this interval.
     Ranges::iterator addRangeFrom(LiveRange LR, Ranges::iterator From);
     void extendIntervalEndTo(Ranges::iterator I, unsigned NewEnd);
     Ranges::iterator extendIntervalStartTo(Ranges::iterator I, unsigned NewStr);
