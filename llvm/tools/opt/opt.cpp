@@ -26,7 +26,7 @@
 #include "llvm/Support/PluginLoader.h"
 #include "llvm/Support/SystemUtils.h"
 #include "llvm/Support/Timer.h"
-#include "llvm/LinkAllPasses.h"
+#include "llvm/Transforms/LinkAllPasses.h"
 #include "llvm/LinkAllVMCore.h"
 #include <fstream>
 #include <memory>
