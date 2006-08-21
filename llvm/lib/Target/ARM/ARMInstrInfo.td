@@ -92,3 +92,7 @@ def lea_addri : InstARM<(ops IntRegs:$dst, memri:$addr),
 def subri   : InstARM<(ops IntRegs:$dst, IntRegs:$a, i32imm:$b),
                        "sub $dst, $a, $b",
 		       [(set IntRegs:$dst, (sub IntRegs:$a, imm:$b))]>;
+
+def andrr     : InstARM<(ops IntRegs:$dst, IntRegs:$a, IntRegs:$b),
+		       "and $dst, $a, $b",
+		       [(set IntRegs:$dst, (and IntRegs:$a, IntRegs:$b))]>;
