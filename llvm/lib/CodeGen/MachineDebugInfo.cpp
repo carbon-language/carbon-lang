@@ -497,7 +497,8 @@ DebugInfoDesc *DebugInfoDesc::DescFactory(unsigned Tag) {
   case DW_TAG_const_type:
   case DW_TAG_volatile_type:        
   case DW_TAG_restrict_type:
-  case DW_TAG_member:           return new DerivedTypeDesc(Tag);
+  case DW_TAG_member:
+  case DW_TAG_inheritance:      return new DerivedTypeDesc(Tag);
   case DW_TAG_array_type:
   case DW_TAG_structure_type:
   case DW_TAG_union_type:
@@ -788,6 +789,7 @@ bool DerivedTypeDesc::classof(const DebugInfoDesc *D) {
   case DW_TAG_volatile_type:
   case DW_TAG_restrict_type:
   case DW_TAG_member:
+  case DW_TAG_inheritance:
     return true;
   default: break;
   }

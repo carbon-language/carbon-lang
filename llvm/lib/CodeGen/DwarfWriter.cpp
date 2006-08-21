@@ -1236,7 +1236,7 @@ void DwarfWriter::AddAddress(DIE *Die, unsigned Attribute,
 DIE *&DwarfWriter::getDieMapSlotFor(DebugInfoDesc *DD) {
   return DescToDieMap[DD];
 }
-                                 
+
 /// NewType - Create a new type DIE.
 ///
 DIE *DwarfWriter::NewType(DIE *Context, TypeDesc *TyDesc, CompileUnit *Unit) {
@@ -1249,8 +1249,6 @@ DIE *DwarfWriter::NewType(DIE *Context, TypeDesc *TyDesc, CompileUnit *Unit) {
     return Die;
   }
   
-  // FIXME - Should handle other contexts that compile units.
-
   // Check for pre-existence.
   DIE *&Slot = Unit->getDieMapSlotFor(TyDesc);
   if (Slot) return Slot;
@@ -1326,71 +1324,161 @@ DIE *DwarfWriter::NewType(DIE *Context, TypeDesc *TyDesc, CompileUnit *Unit) {
     }
     case DW_TAG_structure_type:
     case DW_TAG_union_type: {
-      // FIXME - this is just the basics.
       // Add elements to structure type.
       for(unsigned i = 0, N = Elements.size(); i < N; ++i) {
-        DerivedTypeDesc *MemberDesc = cast<DerivedTypeDesc>(Elements[i]);
+        DebugInfoDesc *Element = Elements[i];
         
-        // Extract the basic information.
-        const std::string &Name = MemberDesc->getName();
-        TypeDesc *MemTy = MemberDesc->getFromType();
-        uint64_t Size = MemberDesc->getSize();
-        uint64_t Align = MemberDesc->getAlign();
-        uint64_t Offset = MemberDesc->getOffset();
-   
-        // Construct member debug information entry.
-        DIE *Member = new DIE(DW_TAG_member);
-        
-        // Add name if not "".
-        if (!Name.empty()) Member->AddString(DW_AT_name, DW_FORM_string, Name);
-        // Add location if available.
-        AddSourceLine(Member, MemberDesc->getFile(), MemberDesc->getLine());
-        
-        // Most of the time the field info is the same as the members.
-        uint64_t FieldSize = Size;
-        uint64_t FieldAlign = Align;
-        uint64_t FieldOffset = Offset;
-        
-        if (TypeDesc *FromTy = MemberDesc->getFromType()) {
-          Member->AddDIEntry(DW_AT_type, DW_FORM_ref4,
-                             NewType(Context, FromTy, Unit));
-          FieldSize = FromTy->getSize();
-          FieldAlign = FromTy->getSize();
-        }
-        
-        // Unless we have a bit field.
-        if (FieldSize != Size) {
-          // Construct the alignment mask.
-          uint64_t AlignMask = ~(FieldAlign - 1);
-          // Determine the high bit + 1 of the declared size.
-          uint64_t HiMark = (Offset + FieldSize) & AlignMask;
-          // Work backwards to determine the base offset of the field.
-          FieldOffset = HiMark - FieldSize;
-          // Now normalize offset to the field.
-          Offset -= FieldOffset;
+        if (DerivedTypeDesc *MemberDesc = dyn_cast<DerivedTypeDesc>(Element)) {
+          // Add field or base class.
           
-          // Maybe we need to work from the other end.
-          if (TD->isLittleEndian()) Offset = FieldSize - (Offset + Size);
-          
-          Member->AddUInt(DW_AT_byte_size, 0, FieldSize >> 3);
-          Member->AddUInt(DW_AT_bit_size, 0, Size);
-          Member->AddUInt(DW_AT_bit_offset, 0, Offset);
-        }
+          unsigned Tag = MemberDesc->getTag();
         
-        // Add computation for offset.
-        DIEBlock *Block = new DIEBlock();
-        Block->AddUInt(DW_FORM_data1, DW_OP_plus_uconst);
-        Block->AddUInt(DW_FORM_udata, FieldOffset >> 3);
-        Block->ComputeSize(*this);
-        Member->AddBlock(DW_AT_data_member_location, 0, Block);
+          // Extract the basic information.
+          const std::string &Name = MemberDesc->getName();
+          TypeDesc *MemTy = MemberDesc->getFromType();
+          uint64_t Size = MemberDesc->getSize();
+          uint64_t Align = MemberDesc->getAlign();
+          uint64_t Offset = MemberDesc->getOffset();
+     
+          // Construct member debug information entry.
+          DIE *Member = new DIE(Tag);
+          
+          // Add name if not "".
+          if (!Name.empty())Member->AddString(DW_AT_name, DW_FORM_string, Name);
+          // Add location if available.
+          AddSourceLine(Member, MemberDesc->getFile(), MemberDesc->getLine());
+          
+          // Most of the time the field info is the same as the members.
+          uint64_t FieldSize = Size;
+          uint64_t FieldAlign = Align;
+          uint64_t FieldOffset = Offset;
+          
+          if (TypeDesc *FromTy = MemberDesc->getFromType()) {
+            Member->AddDIEntry(DW_AT_type, DW_FORM_ref4,
+                               NewType(Context, FromTy, Unit));
+            FieldSize = FromTy->getSize();
+            FieldAlign = FromTy->getSize();
+          }
+          
+          // Unless we have a bit field.
+          if (Tag == DW_TAG_member && FieldSize != Size) {
+            // Construct the alignment mask.
+            uint64_t AlignMask = ~(FieldAlign - 1);
+            // Determine the high bit + 1 of the declared size.
+            uint64_t HiMark = (Offset + FieldSize) & AlignMask;
+            // Work backwards to determine the base offset of the field.
+            FieldOffset = HiMark - FieldSize;
+            // Now normalize offset to the field.
+            Offset -= FieldOffset;
+            
+            // Maybe we need to work from the other end.
+            if (TD->isLittleEndian()) Offset = FieldSize - (Offset + Size);
+            
+            // Add size and offset.
+            Member->AddUInt(DW_AT_byte_size, 0, FieldSize >> 3);
+            Member->AddUInt(DW_AT_bit_size, 0, Size);
+            Member->AddUInt(DW_AT_bit_offset, 0, Offset);
+          }
+          
+          // Add computation for offset.
+          DIEBlock *Block = new DIEBlock();
+          Block->AddUInt(DW_FORM_data1, DW_OP_plus_uconst);
+          Block->AddUInt(DW_FORM_udata, FieldOffset >> 3);
+          Block->ComputeSize(*this);
+          Member->AddBlock(DW_AT_data_member_location, 0, Block);
 
-        if (MemberDesc->isProtected()) {
-          Member->AddUInt(DW_AT_accessibility, 0, DW_ACCESS_protected);
-        } else if (MemberDesc->isPrivate()) {
-          Member->AddUInt(DW_AT_accessibility, 0, DW_ACCESS_private);
+          // Add accessibility (public default unless is base class.
+          if (MemberDesc->isProtected()) {
+            Member->AddUInt(DW_AT_accessibility, 0, DW_ACCESS_protected);
+          } else if (MemberDesc->isPrivate()) {
+            Member->AddUInt(DW_AT_accessibility, 0, DW_ACCESS_private);
+          } else if (Tag == DW_TAG_inheritance) {
+            Member->AddUInt(DW_AT_accessibility, 0, DW_ACCESS_public);
+          }
+          
+          Ty->AddChild(Member);
+        } else if (GlobalVariableDesc *StaticDesc =
+                                        dyn_cast<GlobalVariableDesc>(Element)) {
+          // Add static member.
+          
+          // Construct member debug information entry.
+          DIE *Static = new DIE(DW_TAG_variable);
+          
+          // Add name and mangled name.
+          const std::string &Name = StaticDesc->getDisplayName();
+          const std::string &MangledName = StaticDesc->getName();
+          Static->AddString(DW_AT_name, DW_FORM_string, Name);
+          Static->AddString(DW_AT_MIPS_linkage_name, DW_FORM_string,
+                            MangledName);
+          
+          // Add location.
+          AddSourceLine(Static, StaticDesc->getFile(), StaticDesc->getLine());
+         
+          // Add type.
+          if (TypeDesc *StaticTy = StaticDesc->getType()) {
+            Static->AddDIEntry(DW_AT_type, DW_FORM_ref4, 
+                               NewType(Context, StaticTy, Unit));
+          }
+          
+          // Add flags.
+          Static->AddUInt(DW_AT_external, DW_FORM_flag, 1);
+          Static->AddUInt(DW_AT_declaration, DW_FORM_flag, 1);
+          
+          Ty->AddChild(Static);
+        } else if (SubprogramDesc *MethodDesc =
+                                            dyn_cast<SubprogramDesc>(Element)) {
+          // Add member function.
+          
+          // Construct member debug information entry.
+          DIE *Method = new DIE(DW_TAG_subprogram);
+         
+          // Add name and mangled name.
+          const std::string &Name = MethodDesc->getDisplayName();
+          const std::string &MangledName = MethodDesc->getName();
+          bool IsCTor = false;
+          
+          if (Name.empty()) {
+            Method->AddString(DW_AT_name, DW_FORM_string, MangledName);            
+            IsCTor = TyDesc->getName() == MangledName;
+          } else {
+            Method->AddString(DW_AT_name, DW_FORM_string, Name);            
+            Method->AddString(DW_AT_MIPS_linkage_name, DW_FORM_string,
+                              MangledName);
+          }
+          
+          // Add location.
+          AddSourceLine(Method, MethodDesc->getFile(), MethodDesc->getLine());
+         
+          // Add type.
+          if (CompositeTypeDesc *MethodTy =
+                   dyn_cast_or_null<CompositeTypeDesc>(MethodDesc->getType())) {
+            // Get argument information.
+            std::vector<DebugInfoDesc *> &Args = MethodTy->getElements();
+           
+            // If not a ctor.
+            if (!IsCTor) {
+              // Add return type.
+              Method->AddDIEntry(DW_AT_type, DW_FORM_ref4,
+                                 NewType(Context, dyn_cast<TypeDesc>(Args[0]),
+                                 Unit));
+            }
+            
+            // Add arguments.
+            for(unsigned i = 1, N = Args.size(); i < N; ++i) {
+              DIE *Arg = new DIE(DW_TAG_formal_parameter);
+              Arg->AddDIEntry(DW_AT_type, DW_FORM_ref4,
+                              NewType(Context, cast<TypeDesc>(Args[i]), Unit));
+              Arg->AddUInt(DW_AT_artificial, DW_FORM_flag, 1);
+              Method->AddChild(Arg);
+            }
+          }
+
+          // Add flags.
+          Method->AddUInt(DW_AT_external, DW_FORM_flag, 1);
+          Method->AddUInt(DW_AT_declaration, DW_FORM_flag, 1);
+            
+          Ty->AddChild(Method);
         }
-        
-        Ty->AddChild(Member);
       }
       break;
     }
