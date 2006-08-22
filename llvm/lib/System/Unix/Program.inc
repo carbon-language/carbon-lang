@@ -133,22 +133,27 @@ Program::ExecuteAndWait(const Path& path,
     case 0: {
       // Redirect file descriptors...
       if (redirects) {
-        if (redirects[0])
-          if (redirects[0]->isEmpty())
+        if (redirects[0]) {
+          if (redirects[0]->isEmpty()) {
             if (RedirectFD("/dev/null",0,ErrMsg)) { return -1; }
-          else
+          } else {
             if (RedirectFD(redirects[0]->toString(), 0,ErrMsg)) { return -1; }
-        if (redirects[1])
-          if (redirects[1]->isEmpty())
+          }
+        }
+        if (redirects[1]) {
+          if (redirects[1]->isEmpty()) {
             if (RedirectFD("/dev/null",1,ErrMsg)) { return -1; }
-          else
+          } else {
             if (RedirectFD(redirects[1]->toString(),1,ErrMsg)) { return -1; }
+          }
+        }
         if (redirects[1] && redirects[2] && 
             *(redirects[1]) != *(redirects[2])) {
-          if (redirects[2]->isEmpty())
+          if (redirects[2]->isEmpty()) {
             if (RedirectFD("/dev/null",2,ErrMsg)) { return -1; }
-          else
+          } else {
             if (RedirectFD(redirects[2]->toString(), 2,ErrMsg)) { return -1; }
+          }
         } else if (-1 == dup2(1,2)) {
           MakeErrMsg(ErrMsg, "Can't redirect");
           return -1;
