@@ -39,8 +39,13 @@ std::string TimeValue::toString() const {
 TimeValue TimeValue::now() {
   struct timeval the_time;
   timerclear(&the_time);
-  if (0 != ::gettimeofday(&the_time,0)) 
-    ThrowErrno("Couldn't obtain time of day");
+  if (0 != ::gettimeofday(&the_time,0)) {
+    // This is *really* unlikely to occur because the only gettimeofday
+    // errors concern the timezone parameter which we're passing in as 0.
+    // In the unlikely case it does happen, just return MinTime, no error
+    // message needed. 
+    return MinTime;
+  }
 
   return TimeValue(
     static_cast<TimeValue::SecondsType>( the_time.tv_sec ), 
