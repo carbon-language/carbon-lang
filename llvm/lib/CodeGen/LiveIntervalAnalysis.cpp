@@ -328,7 +328,7 @@ addIntervalsForSpills(const LiveInterval &li, VirtRegMap &vrm, int slot) {
             // the spill weight is now infinity as it
             // cannot be spilled again
             nI.weight = float(HUGE_VAL);
-            LiveRange LR(start, end, nI.getNextValue());
+            LiveRange LR(start, end, nI.getNextValue(~0U));
             DEBUG(std::cerr << " +" << LR);
             nI.addRange(LR);
             added.push_back(&nI);
@@ -351,18 +351,16 @@ addIntervalsForSpills(const LiveInterval &li, VirtRegMap &vrm, int slot) {
   return added;
 }
 
-void LiveIntervals::printRegName(unsigned reg) const
-{
+void LiveIntervals::printRegName(unsigned reg) const {
   if (MRegisterInfo::isPhysicalRegister(reg))
     std::cerr << mri_->getName(reg);
   else
     std::cerr << "%reg" << reg;
 }
 
-void LiveIntervals::handleVirtualRegisterDef(MachineBasicBlock* mbb,
+void LiveIntervals::handleVirtualRegisterDef(MachineBasicBlock *mbb,
                                              MachineBasicBlock::iterator mi,
-                                             LiveInterval& interval)
-{
+                                             LiveInterval &interval) {
   DEBUG(std::cerr << "\t\tregister: "; printRegName(interval.reg));
   LiveVariables::VarInfo& vi = lv_->getVarInfo(interval.reg);
 
@@ -374,7 +372,7 @@ void LiveIntervals::handleVirtualRegisterDef(MachineBasicBlock* mbb,
     // Get the Idx of the defining instructions.
     unsigned defIndex = getDefIndex(getInstructionIndex(mi));
 
-    unsigned ValNum = interval.getNextValue();
+    unsigned ValNum = interval.getNextValue(defIndex);
     assert(ValNum == 0 && "First value in interval is not 0?");
     ValNum = 0;  // Clue in the optimizer.
 
@@ -456,10 +454,22 @@ void LiveIntervals::handleVirtualRegisterDef(MachineBasicBlock* mbb,
       unsigned RedefIndex = getDefIndex(getInstructionIndex(mi));
 
       // Delete the initial value, which should be short and continuous,
-      // becuase the 2-addr copy must be in the same MBB as the redef.
+      // because the 2-addr copy must be in the same MBB as the redef.
       interval.removeRange(DefIndex, RedefIndex);
 
-      LiveRange LR(DefIndex, RedefIndex, interval.getNextValue());
+      // Two-address vregs should always only be redefined once.  This means
+      // that at this point, there should be exactly one value number in it.
+      assert(interval.containsOneValue() && "Unexpected 2-addr liveint!");
+
+      // The new value number is defined by the instruction we claimed defined
+      // value #0.
+      unsigned ValNo = interval.getNextValue(DefIndex);
+      
+      // Value#1 is now defined by the 2-addr instruction.
+      interval.setInstDefiningValNum(0, RedefIndex);
+      
+      // Add the new live interval which replaces the range for the input copy.
+      LiveRange LR(DefIndex, RedefIndex, ValNo);
       DEBUG(std::cerr << " replace range with " << LR);
       interval.addRange(LR);
 
@@ -487,8 +497,9 @@ void LiveIntervals::handleVirtualRegisterDef(MachineBasicBlock* mbb,
         interval.removeRange(Start, End);
         DEBUG(std::cerr << "RESULT: " << interval);
 
-        // Replace the interval with one of a NEW value number.
-        LiveRange LR(Start, End, interval.getNextValue());
+        // Replace the interval with one of a NEW value number.  Note that this
+        // value number isn't actually defined by an instruction, weird huh? :)
+        LiveRange LR(Start, End, interval.getNextValue(~0U));
         DEBUG(std::cerr << " replace range with " << LR);
         interval.addRange(LR);
         DEBUG(std::cerr << "RESULT: " << interval);
@@ -500,7 +511,7 @@ void LiveIntervals::handleVirtualRegisterDef(MachineBasicBlock* mbb,
       unsigned defIndex = getDefIndex(getInstructionIndex(mi));
       LiveRange LR(defIndex,
                    getInstructionIndex(&mbb->back()) + InstrSlots::NUM,
-                   interval.getNextValue());
+                   interval.getNextValue(defIndex));
       interval.addRange(LR);
       DEBUG(std::cerr << " +" << LR);
     }
@@ -513,8 +524,7 @@ void LiveIntervals::handlePhysicalRegisterDef(MachineBasicBlock *MBB,
                                               MachineBasicBlock::iterator mi,
                                               LiveInterval& interval,
                                               unsigned SrcReg, unsigned DestReg,
-                                              bool isLiveIn)
-{
+                                              bool isLiveIn) {
   // A physical register cannot be live across basic block, so its
   // lifetime must end somewhere in its defining basic block.
   DEBUG(std::cerr << "\t\tregister: "; printRegName(interval.reg));
@@ -591,8 +601,7 @@ exit:
     }
   }
 
-
-  LiveRange LR(start, end, interval.getNextValue());
+  LiveRange LR(start, end, interval.getNextValue(start));
   interval.addRange(LR);
   DEBUG(std::cerr << " +" << LR << '\n');
 }

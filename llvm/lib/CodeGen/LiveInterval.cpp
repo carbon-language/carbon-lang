@@ -388,7 +388,7 @@ void LiveInterval::join(LiveInterval &Other, unsigned CopyIdx) {
       I->ValId = MergedDstValIdx;
     else {
       unsigned &NV = Dst2SrcIdxMap[I->ValId];
-      if (NV == 0) NV = getNextValue();
+      if (NV == 0) NV = getNextValue(Other.getInstForValNum(I->ValId));
       I->ValId = NV;
     }
 
@@ -421,6 +421,20 @@ void LiveInterval::print(std::ostream &OS, const MRegisterInfo *MRI) const {
     for (LiveInterval::Ranges::const_iterator I = ranges.begin(),
            E = ranges.end(); I != E; ++I)
     OS << *I;
+  }
+  
+  // Print value number info.
+  if (NumValues) {
+    OS << "  ";
+    for (unsigned i = 0; i != NumValues; ++i) {
+      if (i) OS << " ";
+      OS << i << "@";
+      if (InstDefiningValue[i] == ~0U) {
+        OS << "?";
+      } else {
+        OS << InstDefiningValue[i];
+      }
+    }
   }
 }
 

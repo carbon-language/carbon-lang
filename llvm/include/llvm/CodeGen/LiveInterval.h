@@ -79,6 +79,11 @@ namespace llvm {
     Ranges ranges;       // the ranges in which this register is live
   private:
     unsigned NumValues;  // the number of distinct values in this interval.
+    
+    /// InstDefiningValue - This tracks the def index of the instruction that
+    /// defines a particular value number in the interval.  This may be ~0,
+    /// which is treated as unknown.
+    SmallVector<unsigned, 4> InstDefiningValue;
   public:
 
     LiveInterval(unsigned Reg, float Weight)
@@ -109,15 +114,31 @@ namespace llvm {
     void swap(LiveInterval& other) {
       std::swap(reg, other.reg);
       std::swap(weight, other.weight);
-      ranges.swap(other.ranges);
+      std::swap(ranges, other.ranges);
       std::swap(NumValues, other.NumValues);
     }
 
     bool containsOneValue() const { return NumValues == 1; }
 
-    unsigned getNextValue() {
+    /// getNextValue - Create a new value number and return it.  MIIdx specifies
+    /// the instruction that defines the value number.
+    unsigned getNextValue(unsigned MIIdx) {
+      InstDefiningValue.push_back(MIIdx);
       return NumValues++;
     }
+    
+    /// getInstForValNum - Return the machine instruction index that defines the
+    /// specified value number.
+    unsigned getInstForValNum(unsigned ValNo) const {
+      return InstDefiningValue[ValNo];
+    }
+    
+    /// setInstDefiningValNum - Change the instruction defining the specified
+    /// value number to the specified instruction.
+    void setInstDefiningValNum(unsigned ValNo, unsigned MIIdx) {
+      InstDefiningValue[ValNo] = MIIdx;
+    }
+
 
     bool empty() const { return ranges.empty(); }
 
