@@ -21,6 +21,7 @@
 #ifndef LLVM_CODEGEN_LIVEINTERVAL_H
 #define LLVM_CODEGEN_LIVEINTERVAL_H
 
+#include "llvm/ADT/SmallVector.h"
 #include <iosfwd>
 #include <vector>
 #include <cassert>
@@ -72,7 +73,7 @@ namespace llvm {
   /// register or value.  This class also contains a bit of register allocator
   /// state.
   struct LiveInterval {
-    typedef std::vector<LiveRange> Ranges;
+    typedef SmallVector<LiveRange,4> Ranges;
     unsigned reg;        // the register of this interval
     float weight;        // weight of this interval
     Ranges ranges;       // the ranges in which this register is live
