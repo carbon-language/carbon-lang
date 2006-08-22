@@ -101,7 +101,7 @@ namespace sys {
       /// @param ErrMsg Optional place for an error message if an error occurs
       /// @brief Constrct a path to an new, unique, existing temporary
       /// directory.
-      static Path GetTemporaryDirectory(std::string* ErrMsg);
+      static Path GetTemporaryDirectory(std::string* ErrMsg = 0);
 
       /// Construct a vector of sys::Path that contains the "standard" system
       /// library paths suitable for linking into programs. This function *must*
@@ -424,18 +424,18 @@ namespace sys {
       /// This method attempts to make the file referenced by the Path object
       /// available for reading so that the canRead() method will return true.
       /// @brief Make the file readable;
-      void makeReadableOnDisk();
+      bool makeReadableOnDisk(std::string* ErrMsg);
 
       /// This method attempts to make the file referenced by the Path object
       /// available for writing so that the canWrite() method will return true.
       /// @brief Make the file writable;
-      void makeWriteableOnDisk();
+      bool makeWriteableOnDisk(std::string* ErrMsg);
 
       /// This method attempts to make the file referenced by the Path object
       /// available for execution so that the canExecute() method will return
       /// true.
       /// @brief Make the file readable;
-      void makeExecutableOnDisk();
+      bool makeExecutableOnDisk(std::string* ErrMsg);
 
       /// This method allows the last modified time stamp and permission bits
       /// to be set on the disk object referenced by the Path.

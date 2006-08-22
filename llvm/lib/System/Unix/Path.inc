@@ -390,19 +390,28 @@ static bool AddPermissionBits(const Path &File, int bits) {
   return true;
 }
 
-void Path::makeReadableOnDisk() {
-  if (!AddPermissionBits(*this, 0444))
-    ThrowErrno(path + ": can't make file readable");
+bool Path::makeReadableOnDisk(std::string* ErrMsg) {
+  if (!AddPermissionBits(*this, 0444)) {
+    MakeErrMsg(ErrMsg, path + ": can't make file readable");
+    return true;
+  }
+  return false;
 }
 
-void Path::makeWriteableOnDisk() {
-  if (!AddPermissionBits(*this, 0222))
-    ThrowErrno(path + ": can't make file writable");
+bool Path::makeWriteableOnDisk(std::string* ErrMsg) {
+  if (!AddPermissionBits(*this, 0222)) {
+    MakeErrMsg(ErrMsg, path + ": can't make file writable");
+    return true;
+  }
+  return false;
 }
 
-void Path::makeExecutableOnDisk() {
-  if (!AddPermissionBits(*this, 0111))
-    ThrowErrno(path + ": can't make file executable");
+bool Path::makeExecutableOnDisk(std::string* ErrMsg) {
+  if (!AddPermissionBits(*this, 0111)) {
+    MakeErrMsg(ErrMsg, path + ": can't make file executable");
+    return true;
+  }
+  return false;
 }
 
 bool

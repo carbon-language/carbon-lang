@@ -598,11 +598,21 @@ int main(int argc, char **argv, char **envp) {
       }
 
       // Make the script executable...
-      sys::Path(OutputFilename).makeExecutableOnDisk();
+      std::string ErrMsg;
+      if (sys::Path(OutputFilename).makeExecutableOnDisk(&ErrMsg)) {
+        std::cerr << argv[0] << ": " << ErrMsg << "\n";
+        return 1;
+      }
 
       // Make the bytecode file readable and directly executable in LLEE as well
-      sys::Path(RealBytecodeOutput).makeExecutableOnDisk();
-      sys::Path(RealBytecodeOutput).makeReadableOnDisk();
+      if (sys::Path(RealBytecodeOutput).makeExecutableOnDisk(&ErrMsg)) {
+        std::cerr << argv[0] << ": " << ErrMsg << "\n";
+        return 1;
+      }
+      if (sys::Path(RealBytecodeOutput).makeReadableOnDisk(&ErrMsg)) {
+        std::cerr << argv[0] << ": " << ErrMsg << "\n";
+        return 1;
+      }
     }
 
     return 0;

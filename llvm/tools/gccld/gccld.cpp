@@ -385,13 +385,23 @@ int main(int argc, char **argv, char **envp ) {
       EmitShellScript(argv);
 
       // Make the bytecode file readable and directly executable in LLEE
-      sys::Path(RealBytecodeOutput).makeExecutableOnDisk();
-      sys::Path(RealBytecodeOutput).makeReadableOnDisk();
+      std::string ErrMsg;
+      if (sys::Path(RealBytecodeOutput).makeExecutableOnDisk(&ErrMsg)) {
+        std::cerr << argv[0] << ": " << ErrMsg << "\n";
+        return 1;
+      }
+      if (sys::Path(RealBytecodeOutput).makeReadableOnDisk(&ErrMsg)) {
+        std::cerr << argv[0] << ": " << ErrMsg << "\n";
+        return 1;
+      }
     }
 
     // Make the output, whether native or script, executable as well...
-    sys::Path(OutputFilename).makeExecutableOnDisk();
-
+    std::string ErrMsg;
+    if (sys::Path(OutputFilename).makeExecutableOnDisk(&ErrMsg)) {
+      std::cerr << argv[0] << ": " << ErrMsg << "\n";
+      return 1;
+    }
   } catch (const char*msg) {
     std::cerr << argv[0] << ": " << msg << "\n";
     exitCode = 1;
