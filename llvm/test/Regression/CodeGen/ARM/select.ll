@@ -1,4 +1,4 @@
-; RUN: llvm-as %s -o /dev/null -f
+; RUN: llvm-as < %s | llc -march=arm
 
 int %f(int %a) {
 entry:
