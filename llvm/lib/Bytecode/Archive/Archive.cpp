@@ -137,8 +137,12 @@ Archive::Archive(const sys::Path& filename, bool map )
     symTabSize(0), firstFileOffset(0), modules(), foreignST(0)
 {
   if (map) {
-    mapfile = new sys::MappedFile(filename);
-    base = (char*) mapfile->map();
+    std::string ErrMsg;
+    mapfile = new sys::MappedFile();
+    if (mapfile->open(filename, sys::MappedFile::READ_ACCESS, &ErrMsg))
+      throw ErrMsg;
+    if (!(base = (char*) mapfile->map(&ErrMsg)))
+      throw ErrMsg;
   }
 }
 

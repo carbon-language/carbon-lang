@@ -205,8 +205,12 @@ Archive::writeMember(
   const char* data = (const char*)member.getData();
   sys::MappedFile* mFile = 0;
   if (!data) {
-    mFile = new sys::MappedFile(member.getPath());
-    data = (const char*) mFile->map();
+    std::string ErrMsg;
+    mFile = new sys::MappedFile();
+    if (mFile->open(member.getPath(), sys::MappedFile::READ_ACCESS, &ErrMsg))
+      throw ErrMsg;
+    if (data = (const char*) mFile->map(&ErrMsg))
+      throw ErrMsg;
     fSize = mFile->size();
   }
 
@@ -437,8 +441,13 @@ Archive::writeToDisk(bool CreateSymbolTable, bool TruncateNames, bool Compress,
     // we just wrote back in and copying it to the destination file.
 
     // Map in the archive we just wrote.
-    sys::MappedFile arch(TmpArchive);
-    const char* base = (const char*) arch.map();
+    sys::MappedFile arch;
+    std::string ErrMsg;
+    if (arch.open(TmpArchive, sys::MappedFile::READ_ACCESS, &ErrMsg))
+      throw ErrMsg;
+    const char* base;
+    if (!(base = (const char*) arch.map(&ErrMsg)))
+      throw ErrMsg;
 
     // Open another temporary file in order to avoid invalidating the 
     // mmapped data
