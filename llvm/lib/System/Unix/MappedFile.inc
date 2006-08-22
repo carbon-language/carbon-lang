@@ -39,7 +39,7 @@ struct sys::MappedFileInfo {
   off_t Size;
 };
 
-void MappedFile::initialize() {
+bool MappedFile::initialize(std::string* ErrMsg) {
   int mode = 0;
   if (options_ & READ_ACCESS) 
     if (options_ & WRITE_ACCESS)
@@ -50,17 +50,20 @@ void MappedFile::initialize() {
     mode = O_WRONLY;
 
   int FD = ::open(path_.c_str(), mode);
-  if (FD < 0)
-    ThrowErrno(std::string("Can't open file: ") + path_.toString());
-
+  if (FD < 0) {
+    MakeErrMsg(ErrMsg, "can't open file '" + path_.toString() + "'");
+    return true;
+  } 
   struct stat sbuf;
   if(::fstat(FD, &sbuf) < 0) {
+    MakeErrMsg(ErrMsg, "can't stat file '"+ path_.toString() + "'");
     ::close(FD);
-    ThrowErrno(std::string("Can't stat file: ") + path_.toString());
+    return true;
   }
   info_ = new MappedFileInfo;
   info_->FD = FD;
   info_->Size = sbuf.st_size;
+  return false;
 }
 
 void MappedFile::terminate() {
@@ -79,7 +82,7 @@ void MappedFile::unmap() {
   }
 }
 
-void* MappedFile::map() {
+void* MappedFile::map(std::string* ErrMsg) {
   assert(info_ && "MappedFile not initialized");
   if (!isMapped()) {
     int prot = PROT_NONE;
@@ -106,8 +109,10 @@ void* MappedFile::map() {
       Process::GetPageSize();
 
     base_ = ::mmap(0, map_size, prot, flags, info_->FD, 0);
-    if (base_ == MAP_FAILED)
-      ThrowErrno(std::string("Can't map file:") + path_.toString());
+    if (base_ == MAP_FAILED) {
+      MakeErrMsg(ErrMsg, "Can't map file:" + path_.toString());
+      return 0;
+    }
   }
   return base_;
 }
@@ -139,8 +144,8 @@ void MappedFile::size(size_t new_size) {
     ::write(info_->FD, "\0", 1);
   }
 
-  // Seek to current end of file. 
-  this->map();
+  // Put the mapping back into memory.
+  this->map(0);
 }
 
 }

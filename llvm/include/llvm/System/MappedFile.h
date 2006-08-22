@@ -48,8 +48,7 @@ namespace sys {
     /// Construct a MappedFile to the \p path in the operating system's file
     /// system with the mapping \p options provided.
     /// @throws std::string if an error occurs
-    MappedFile(const Path& path, int options = READ_ACCESS)
-      : path_(path), options_(options), base_(0), info_(0) { initialize(); }
+    MappedFile() : path_(), options_(READ_ACCESS), base_(0), info_(0) {}
 
     /// Destruct a MappedFile and release all memory associated with it.
     /// @throws std::string if an error occurs
@@ -101,6 +100,18 @@ namespace sys {
   /// @name Mutators
   /// @{
   public:
+    /// Open a file to be mapped and get its size but don't map it yet.
+    /// @returns true if an error occurred
+    bool open(
+      const sys::Path& p, ///< Path to file to be mapped
+      int options = READ_ACCESS, ///< Access mode for the mapping
+      std::string* ErrMsg = 0 ///< Optional error string pointer
+    ) {
+      path_ = p;
+      options_ = options;
+      return initialize(ErrMsg);
+    }
+
     /// The mapped file is removed from memory. If the file was mapped for
     /// write access, the memory contents will be automatically synchronized
     /// with the file's disk contents.
@@ -108,9 +119,12 @@ namespace sys {
     void unmap();
 
     /// The mapped file is put into memory.
-    /// @returns The base memory address of the mapped file.
+    /// @returns The base memory address of the mapped file or 0 if an error
+    /// occurred.
     /// @brief Map the file into memory.
-    void* map();
+    void* map(
+      std::string* ErrMsg ///< Optional error string pointer
+    );
 
     /// This method causes the size of the file, and consequently the size
     /// of the mapping to be set. This is logically the same as unmap(),
@@ -122,14 +136,17 @@ namespace sys {
     /// @brief Set the size of the file and memory mapping.
     void size(size_t new_size);
 
-    void close() { terminate(); }
+    void close() { if (info_) terminate(); }
 
   /// @}
   /// @name Implementation
   /// @{
   private:
-    void initialize(); ///< Initialize platform-specific portion
-    void terminate();  ///< Terminate platform-specific portion
+    /// @brief Initialize platform-specific portion
+    bool initialize(std::string* ErrMsg); 
+
+    /// @brief Terminate platform-specific portion
+    void terminate();  
 
   /// @}
   /// @name Data
