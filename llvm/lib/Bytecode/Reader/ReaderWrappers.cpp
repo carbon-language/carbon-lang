@@ -48,11 +48,17 @@ namespace {
 BytecodeFileReader::BytecodeFileReader(const std::string &Filename,
                                        llvm::BytecodeHandler* H )
   : BytecodeReader(H)
-  , mapFile( sys::Path(Filename))
+  , mapFile()
 {
-  mapFile.map();
+  std::string ErrMsg;
+  if (mapFile.open(sys::Path(Filename), sys::MappedFile::READ_ACCESS, &ErrMsg))
+    throw ErrMsg;
+  if (!mapFile.map(&ErrMsg))
+    throw ErrMsg;
   unsigned char* buffer = reinterpret_cast<unsigned char*>(mapFile.base());
-  ParseBytecode(buffer, mapFile.size(), Filename);
+  if (ParseBytecode(buffer, mapFile.size(), Filename, &ErrMsg)) {
+    throw ErrMsg;
+  }
 }
 
 //===----------------------------------------------------------------------===//
@@ -98,11 +104,10 @@ BytecodeBufferReader::BytecodeBufferReader(const unsigned char *Buf,
     ParseBegin = Buffer = Buf;
     MustDelete = false;
   }
-  try {
-    ParseBytecode(ParseBegin, Length, ModuleID);
-  } catch (...) {
+  std::string ErrMsg;
+  if (ParseBytecode(ParseBegin, Length, ModuleID, &ErrMsg)) {
     if (MustDelete) delete [] Buffer;
-    throw;
+    throw ErrMsg;
   }
 }
 
@@ -149,7 +154,10 @@ BytecodeStdinReader::BytecodeStdinReader( BytecodeHandler* H )
     throw std::string("Standard Input empty!");
 
   FileBuf = &FileData[0];
-  ParseBytecode(FileBuf, FileData.size(), "<stdin>");
+  std::string ErrMsg;
+  if (ParseBytecode(FileBuf, FileData.size(), "<stdin>", &ErrMsg)) {
+    throw ErrMsg;
+  }
 }
 
 //===----------------------------------------------------------------------===//
