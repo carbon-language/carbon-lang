@@ -112,42 +112,19 @@ public:
     End = Begin;
   }
   
-  void swap(SmallVectorImpl &RHS) {
-    if (this == &RHS) return;
-    
-    // We can only avoid copying elements if neither vector is small.
-    if (!isSmall() && !RHS.isSmall()) {
-      std::swap(Begin, RHS.Begin);
-      std::swap(End, RHS.End);
-      std::swap(Capacity, RHS.Capacity);
-      return;
-    }
-    if (Begin+RHS.size() > Capacity)
-      grow(RHS.size());
-    if (RHS.begin()+size() > RHS.Capacity)
-      RHS.grow(size());
-
-    // Swap the shared elements.
-    unsigned NumShared = size();
-    if (NumShared > RHS.size()) NumShared = RHS.size();
-    for (unsigned i = 0; i != NumShared; ++i)
-      std::swap(Begin[i], RHS[i]);
-    
-    // Copy over the extra elts.
-    if (size() > RHS.size()) {
-      unsigned EltDiff = size() - RHS.size();
-      std::uninitialized_copy(Begin+NumShared, End, RHS.End);
-      RHS.End += EltDiff;
-      destroy_range(Begin+NumShared, End);
-      End = Begin+NumShared;
-    } else if (RHS.size() > size()) {
-      unsigned EltDiff = RHS.size() - size();
-      std::uninitialized_copy(RHS.Begin+NumShared, RHS.End, End);
-      End += EltDiff;
-      destroy_range(RHS.Begin+NumShared, RHS.End);
-      RHS.End = RHS.Begin+NumShared;
+  void resize(unsigned N) {
+    if (N < size()) {
+      destroy_range(Begin+N, End);
+      End = Begin+N;
+    } else if (N > size()) {
+      if (Begin+N > Capacity)
+        grow(N);
+      construct_range(End, Begin+N, T());
+      End = Begin+N;
     }
   }
+  
+  void swap(SmallVectorImpl &RHS);
   
   /// append - Add the specified range to the end of the SmallVector.
   ///
@@ -168,8 +145,7 @@ public:
     if (Begin+NumElts > Capacity)
       grow(NumElts);
     End = Begin+NumElts;
-    for (; NumElts; --NumElts)
-      new (Begin+NumElts-1) T(Elt);
+    construct_range(Begin, End, Elt);
   }
   
   void erase(iterator I) {
@@ -220,6 +196,12 @@ private:
   /// grow - double the size of the allocated memory, guaranteeing space for at
   /// least one more element or MinSize if specified.
   void grow(unsigned MinSize = 0);
+
+  void construct_range(T *S, T *E, const T &Elt) {
+    for (; S != E; ++S)
+      new (S) T(Elt);
+  }
+
   
   void destroy_range(T *S, T *E) {
     while (S != E) {
@@ -252,6 +234,44 @@ void SmallVectorImpl<T>::grow(unsigned MinSize) {
   Begin = NewElts;
   End = NewElts+CurSize;
   Capacity = Begin+NewCapacity;
+}
+
+template <typename T>
+void SmallVectorImpl<T>::swap(SmallVectorImpl<T> &RHS) {
+  if (this == &RHS) return;
+  
+  // We can only avoid copying elements if neither vector is small.
+  if (!isSmall() && !RHS.isSmall()) {
+    std::swap(Begin, RHS.Begin);
+    std::swap(End, RHS.End);
+    std::swap(Capacity, RHS.Capacity);
+    return;
+  }
+  if (Begin+RHS.size() > Capacity)
+    grow(RHS.size());
+  if (RHS.begin()+size() > RHS.Capacity)
+    RHS.grow(size());
+  
+  // Swap the shared elements.
+  unsigned NumShared = size();
+  if (NumShared > RHS.size()) NumShared = RHS.size();
+  for (unsigned i = 0; i != NumShared; ++i)
+    std::swap(Begin[i], RHS[i]);
+  
+  // Copy over the extra elts.
+  if (size() > RHS.size()) {
+    unsigned EltDiff = size() - RHS.size();
+    std::uninitialized_copy(Begin+NumShared, End, RHS.End);
+    RHS.End += EltDiff;
+    destroy_range(Begin+NumShared, End);
+    End = Begin+NumShared;
+  } else if (RHS.size() > size()) {
+    unsigned EltDiff = RHS.size() - size();
+    std::uninitialized_copy(RHS.Begin+NumShared, RHS.End, End);
+    End += EltDiff;
+    destroy_range(RHS.Begin+NumShared, RHS.End);
+    RHS.End = RHS.Begin+NumShared;
+  }
 }
   
 template <typename T>
