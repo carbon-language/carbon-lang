@@ -326,11 +326,12 @@ static bool AddPermissionBits(const std::string& Filename, int bits) {
   return true;
 }
 
-void Path::makeReadableOnDisk() {
+bool Path::makeReadableOnDisk(std::string* ErrMsg) {
   // All files are readable on Windows (ignoring security attributes).
+  return false;
 }
 
-void Path::makeWriteableOnDisk() {
+void Path::makeWriteableOnDisk(std::string* ErrMsg) {
   DWORD attr = GetFileAttributes(path.c_str());
 
   // If it doesn't exist, we're done.
@@ -338,13 +339,17 @@ void Path::makeWriteableOnDisk() {
     return;
 
   if (attr & FILE_ATTRIBUTE_READONLY) {
-    if (!SetFileAttributes(path.c_str(), attr & ~FILE_ATTRIBUTE_READONLY))
-      ThrowError(std::string(path) + ": Can't make file writable: ");
+    if (!SetFileAttributes(path.c_str(), attr & ~FILE_ATTRIBUTE_READONLY)) {
+      MakeErrMsg(ErrMsg, std::string(path) + ": Can't make file writable: ");
+      return true;
+    }
   }
+  return false;
 }
 
-void Path::makeExecutableOnDisk() {
+bool Path::makeExecutableOnDisk(std::string* ErrMsg) {
   // All files are executable on Windows (ignoring security attributes).
+  return false;
 }
 
 bool
