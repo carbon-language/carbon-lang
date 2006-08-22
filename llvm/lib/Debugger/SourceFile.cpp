@@ -20,7 +20,7 @@ using namespace llvm;
 ///
 void SourceFile::readFile() {
   std::string ErrMsg;
-  if (File.map(&ErrMsg))
+  if (!File.map(&ErrMsg))
     throw ErrMsg;
 }
 
