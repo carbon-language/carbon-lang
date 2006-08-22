@@ -106,6 +106,11 @@ AC_CACHE_CHECK([type of operating system we're going to host on],
     llvm_cv_no_link_all_option="-Wl,--no-whole-archive"
     llvm_cv_os_type="AIX" 
     llvm_cv_platform_type="Unix" ;;
+  *-*-irix*) 
+    llvm_cv_link_all_option="-Wl,--whole-archive"
+    llvm_cv_no_link_all_option="-Wl,--no-whole-archive"
+    llvm_cv_os_type="IRIX" 
+    llvm_cv_platform_type="Unix" ;;
   *-*-cygwin*) 
     llvm_cv_link_all_option="-Wl,--whole-archive"
     llvm_cv_no_link_all_option="-Wl,--no-whole-archive"
