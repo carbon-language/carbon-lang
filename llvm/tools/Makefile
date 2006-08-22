@@ -8,8 +8,9 @@
 ##===----------------------------------------------------------------------===##
 
 LEVEL := ..
-PARALLEL_DIRS := llvm-config llvm-as llvm-dis opt gccas llc llvm-link lli gccld\
-                 llvm-stub llvm-extract llvm-nm llvm-prof llvm-ar llvm-ranlib \
-		 llvm-bcanalyzer llvmc llvm-ld llvm-db bugpoint llvm2cpp
+PARALLEL_DIRS := llvm-config opt llvm-as -llvm-dis llc llvm-bcanalyzer \
+                 llvm-extract lli llvm-db llvm-ar llvm-ld llvm-prof llvm-nm \
+                 gccas llvm-ranlib llvm-stub gccld llvm2cpp \
+                 bugpoint llvmc llvm-link
 
 include $(LEVEL)/Makefile.common
