@@ -50,7 +50,10 @@ namespace llvm {
     /// reading it, or if the user cancels the operation.  Instead, it will just
     /// be an empty source file.
     SourceFile(const std::string &fn, const GlobalVariable *Desc)
-      : Filename(fn), Descriptor(Desc), File(Filename) {
+      : Filename(fn), Descriptor(Desc), File() {
+        std::string ErrMsg;
+      if (File.open(Filename, sys::MappedFile::READ_ACCESS, &ErrMsg))
+        throw ErrMsg;
       readFile();
     }
     ~SourceFile() {

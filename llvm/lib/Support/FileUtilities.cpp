@@ -147,9 +147,11 @@ int llvm::DiffFilesWithTolerance(const sys::Path &FileA,
                                  double AbsTol, double RelTol,
                                  std::string *Error) {
   sys::FileStatus FileAStat, FileBStat;
-  if (FileA.getFileStatus(FileAStat, Error) ||
-      FileB.getFileStatus(FileBStat, Error))
+  if (FileA.getFileStatus(FileAStat, Error))
     return 2;
+  if (FileB.getFileStatus(FileBStat, Error))
+    return 2;
+
   // Check for zero length files because some systems croak when you try to
   // mmap an empty file.
   size_t A_size = FileAStat.getSize();
@@ -165,10 +167,16 @@ int llvm::DiffFilesWithTolerance(const sys::Path &FileA,
   try {
     // Now its safe to mmap the files into memory becasue both files
     // have a non-zero size.
-    sys::MappedFile F1(FileA);
-    sys::MappedFile F2(FileB);
-    F1.map();
-    F2.map();
+    sys::MappedFile F1;
+    if (F1.open(FileA, sys::MappedFile::READ_ACCESS, Error))
+      return 2;
+    sys::MappedFile F2;
+    if (F2.open(FileB, sys::MappedFile::READ_ACCESS, Error))
+      return 2;
+    if (!F1.map(Error))
+      return 2;
+    if (!F2.map(Error))
+      return 2;
 
     // Okay, now that we opened the files, scan them for the first difference.
     char *File1Start = F1.charBase();

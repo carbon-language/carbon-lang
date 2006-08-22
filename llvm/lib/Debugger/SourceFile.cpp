@@ -19,7 +19,9 @@ using namespace llvm;
 /// readFile - Load Filename
 ///
 void SourceFile::readFile() {
-  File.map();
+  std::string ErrMsg;
+  if (File.map(&ErrMsg))
+    throw ErrMsg;
 }
 
 /// calculateLineOffsets - Compute the LineOffset vector for the current file.
