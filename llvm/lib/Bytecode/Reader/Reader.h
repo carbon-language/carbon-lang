@@ -24,6 +24,7 @@
 #include "llvm/Bytecode/Analyzer.h"
 #include <utility>
 #include <map>
+#include <setjmp.h>
 
 namespace llvm {
 
@@ -136,11 +137,13 @@ public:
 /// @name Methods
 /// @{
 public:
+  /// @returns true if an error occurred
   /// @brief Main interface to parsing a bytecode buffer.
-  void ParseBytecode(
+  bool ParseBytecode(
      const unsigned char *Buf,    ///< Beginning of the bytecode buffer
      unsigned Length,             ///< Length of the bytecode buffer
-     const std::string &ModuleID  ///< An identifier for the module constructed.
+     const std::string &ModuleID, ///< An identifier for the module constructed.
+     std::string* ErrMsg = 0      ///< Optional place for error message 
   );
 
   /// @brief Parse all function bodies
@@ -260,6 +263,8 @@ protected:
 /// @name Data
 /// @{
 private:
+  std::string ErrorMsg; ///< A place to hold an error message through longjmp
+  jmp_buf context;      ///< Where to return to if an error occurs.
   char*  decompressedBlock; ///< Result of decompression
   BufPtr MemStart;     ///< Start of the memory buffer
   BufPtr MemEnd;       ///< End of the memory buffer
@@ -487,7 +492,7 @@ private:
     }
   }
 
-  inline void error(std::string errmsg);
+  inline void error(const std::string& errmsg);
 
   BytecodeReader(const BytecodeReader &);  // DO NOT IMPLEMENT
   void operator=(const BytecodeReader &);  // DO NOT IMPLEMENT

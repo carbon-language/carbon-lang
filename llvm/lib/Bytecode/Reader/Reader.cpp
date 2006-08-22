@@ -51,13 +51,10 @@ namespace {
 }
 
 // Provide some details on error
-inline void BytecodeReader::error(std::string err) {
-  err +=  " (Vers=" ;
-  err += itostr(RevisionNum) ;
-  err += ", Pos=" ;
-  err += itostr(At-MemStart);
-  err += ")";
-  throw err;
+inline void BytecodeReader::error(const std::string& err) {
+  ErrorMsg = err + " (Vers=" + itostr(RevisionNum) + ", Pos=" 
+    + itostr(At-MemStart) + ")";
+  longjmp(context,1);
 }
 
 //===----------------------------------------------------------------------===//
@@ -470,7 +467,8 @@ Value * BytecodeReader::getValue(unsigned type, unsigned oNum, bool Create) {
     ForwardReferences.insert(I, std::make_pair(KeyValue, Val));
     return Val;
   }
-  throw "Can't create placeholder for value of type slot #" + utostr(type);
+  error("Can't create placeholder for value of type slot #" + utostr(type));
+  return 0; // just silence warning, error calls longjmp
 }
 
 /// This is just like getValue, but when a compaction table is in use, it
@@ -718,12 +716,12 @@ void BytecodeReader::ParseInstruction(std::vector<unsigned> &Oprnds,
   }
   case Instruction::ExtractElement: {
     if (Oprnds.size() != 2)
-      throw std::string("Invalid extractelement instruction!");
+      error("Invalid extractelement instruction!");
     Value *V1 = getValue(iType, Oprnds[0]);
     Value *V2 = getValue(Type::UIntTyID, Oprnds[1]);
     
     if (!ExtractElementInst::isValidOperands(V1, V2))
-      throw std::string("Invalid extractelement instruction!");
+      error("Invalid extractelement instruction!");
 
     Result = new ExtractElementInst(V1, V2);
     break;
@@ -731,28 +729,28 @@ void BytecodeReader::ParseInstruction(std::vector<unsigned> &Oprnds,
   case Instruction::InsertElement: {
     const PackedType *PackedTy = dyn_cast<PackedType>(InstTy);
     if (!PackedTy || Oprnds.size() != 3)
-      throw std::string("Invalid insertelement instruction!");
+      error("Invalid insertelement instruction!");
     
     Value *V1 = getValue(iType, Oprnds[0]);
     Value *V2 = getValue(getTypeSlot(PackedTy->getElementType()), Oprnds[1]);
     Value *V3 = getValue(Type::UIntTyID, Oprnds[2]);
       
     if (!InsertElementInst::isValidOperands(V1, V2, V3))
-      throw std::string("Invalid insertelement instruction!");
+      error("Invalid insertelement instruction!");
     Result = new InsertElementInst(V1, V2, V3);
     break;
   }
   case Instruction::ShuffleVector: {
     const PackedType *PackedTy = dyn_cast<PackedType>(InstTy);
     if (!PackedTy || Oprnds.size() != 3)
-      throw std::string("Invalid shufflevector instruction!");
+      error("Invalid shufflevector instruction!");
     Value *V1 = getValue(iType, Oprnds[0]);
     Value *V2 = getValue(iType, Oprnds[1]);
     const PackedType *EltTy = 
       PackedType::get(Type::UIntTy, PackedTy->getNumElements());
     Value *V3 = getValue(getTypeSlot(EltTy), Oprnds[2]);
     if (!ShuffleVectorInst::isValidOperands(V1, V2, V3))
-      throw std::string("Invalid shufflevector instruction!");
+      error("Invalid shufflevector instruction!");
     Result = new ShuffleVectorInst(V1, V2, V3);
     break;
   }
@@ -2403,95 +2401,14 @@ void BytecodeReader::ParseModule() {
 
 /// This function completely parses a bytecode buffer given by the \p Buf
 /// and \p Length parameters.
-void BytecodeReader::ParseBytecode(BufPtr Buf, unsigned Length,
-                                   const std::string &ModuleID) {
+bool BytecodeReader::ParseBytecode(BufPtr Buf, unsigned Length,
+                                   const std::string &ModuleID,
+                                   std::string* ErrMsg) {
 
-  try {
-    RevisionNum = 0;
-    At = MemStart = BlockStart = Buf;
-    MemEnd = BlockEnd = Buf + Length;
-
-    // Create the module
-    TheModule = new Module(ModuleID);
-
-    if (Handler) Handler->handleStart(TheModule, Length);
-
-    // Read the four bytes of the signature.
-    unsigned Sig = read_uint();
-
-    // If this is a compressed file
-    if (Sig == ('l' | ('l' << 8) | ('v' << 16) | ('c' << 24))) {
-
-      // Invoke the decompression of the bytecode. Note that we have to skip the
-      // file's magic number which is not part of the compressed block. Hence,
-      // the Buf+4 and Length-4. The result goes into decompressedBlock, a data
-      // member for retention until BytecodeReader is destructed.
-      unsigned decompressedLength = Compressor::decompressToNewBuffer(
-          (char*)Buf+4,Length-4,decompressedBlock);
-
-      // We must adjust the buffer pointers used by the bytecode reader to point
-      // into the new decompressed block. After decompression, the
-      // decompressedBlock will point to a contiguous memory area that has
-      // the decompressed data.
-      At = MemStart = BlockStart = Buf = (BufPtr) decompressedBlock;
-      MemEnd = BlockEnd = Buf + decompressedLength;
-
-    // else if this isn't a regular (uncompressed) bytecode file, then its
-    // and error, generate that now.
-    } else if (Sig != ('l' | ('l' << 8) | ('v' << 16) | ('m' << 24))) {
-      error("Invalid bytecode signature: " + utohexstr(Sig));
-    }
-
-    // Tell the handler we're starting a module
-    if (Handler) Handler->handleModuleBegin(ModuleID);
-
-    // Get the module block and size and verify. This is handled specially
-    // because the module block/size is always written in long format. Other
-    // blocks are written in short format so the read_block method is used.
-    unsigned Type, Size;
-    Type = read_uint();
-    Size = read_uint();
-    if (Type != BytecodeFormat::ModuleBlockID) {
-      error("Expected Module Block! Type:" + utostr(Type) + ", Size:"
-            + utostr(Size));
-    }
-
-    // It looks like the darwin ranlib program is broken, and adds trailing
-    // garbage to the end of some bytecode files.  This hack allows the bc
-    // reader to ignore trailing garbage on bytecode files.
-    if (At + Size < MemEnd)
-      MemEnd = BlockEnd = At+Size;
-
-    if (At + Size != MemEnd)
-      error("Invalid Top Level Block Length! Type:" + utostr(Type)
-            + ", Size:" + utostr(Size));
-
-    // Parse the module contents
-    this->ParseModule();
-
-    // Check for missing functions
-    if (hasFunctions())
-      error("Function expected, but bytecode stream ended!");
-
-    // Look for intrinsic functions to upgrade, upgrade them, and save the
-    // mapping from old function to new for use later when instructions are
-    // converted.
-    for (Module::iterator FI = TheModule->begin(), FE = TheModule->end();
-         FI != FE; ++FI)
-      if (Function* newF = UpgradeIntrinsicFunction(FI)) {
-        upgradedFunctions.insert(std::make_pair(FI, newF));
-        FI->setName("");
-      }
-
-    // Tell the handler we're done with the module
-    if (Handler)
-      Handler->handleModuleEnd(ModuleID);
-
-    // Tell the handler we're finished the parse
-    if (Handler) Handler->handleFinish();
-
-  } catch (std::string& errstr) {
-    if (Handler) Handler->handleError(errstr);
+  /// We handle errors by
+  if (setjmp(context)) {
+    // Cleanup after error
+    if (Handler) Handler->handleError(ErrorMsg);
     freeState();
     delete TheModule;
     TheModule = 0;
@@ -2499,19 +2416,98 @@ void BytecodeReader::ParseBytecode(BufPtr Buf, unsigned Length,
       ::free(decompressedBlock);
       decompressedBlock = 0;
     }
-    throw;
-  } catch (...) {
-    std::string msg("Unknown Exception Occurred");
-    if (Handler) Handler->handleError(msg);
-    freeState();
-    delete TheModule;
-    TheModule = 0;
-    if (decompressedBlock != 0) {
-      ::free(decompressedBlock);
-      decompressedBlock = 0;
-    }
-    throw msg;
+    // Set caller's error message, if requested
+    if (ErrMsg)
+      *ErrMsg = ErrorMsg;
+    // Indicate an error occurred
+    return true;
   }
+
+  RevisionNum = 0;
+  At = MemStart = BlockStart = Buf;
+  MemEnd = BlockEnd = Buf + Length;
+
+  // Create the module
+  TheModule = new Module(ModuleID);
+
+  if (Handler) Handler->handleStart(TheModule, Length);
+
+  // Read the four bytes of the signature.
+  unsigned Sig = read_uint();
+
+  // If this is a compressed file
+  if (Sig == ('l' | ('l' << 8) | ('v' << 16) | ('c' << 24))) {
+
+    // Invoke the decompression of the bytecode. Note that we have to skip the
+    // file's magic number which is not part of the compressed block. Hence,
+    // the Buf+4 and Length-4. The result goes into decompressedBlock, a data
+    // member for retention until BytecodeReader is destructed.
+    unsigned decompressedLength = Compressor::decompressToNewBuffer(
+        (char*)Buf+4,Length-4,decompressedBlock);
+
+    // We must adjust the buffer pointers used by the bytecode reader to point
+    // into the new decompressed block. After decompression, the
+    // decompressedBlock will point to a contiguous memory area that has
+    // the decompressed data.
+    At = MemStart = BlockStart = Buf = (BufPtr) decompressedBlock;
+    MemEnd = BlockEnd = Buf + decompressedLength;
+
+  // else if this isn't a regular (uncompressed) bytecode file, then its
+  // and error, generate that now.
+  } else if (Sig != ('l' | ('l' << 8) | ('v' << 16) | ('m' << 24))) {
+    error("Invalid bytecode signature: " + utohexstr(Sig));
+  }
+
+  // Tell the handler we're starting a module
+  if (Handler) Handler->handleModuleBegin(ModuleID);
+
+  // Get the module block and size and verify. This is handled specially
+  // because the module block/size is always written in long format. Other
+  // blocks are written in short format so the read_block method is used.
+  unsigned Type, Size;
+  Type = read_uint();
+  Size = read_uint();
+  if (Type != BytecodeFormat::ModuleBlockID) {
+    error("Expected Module Block! Type:" + utostr(Type) + ", Size:"
+          + utostr(Size));
+  }
+
+  // It looks like the darwin ranlib program is broken, and adds trailing
+  // garbage to the end of some bytecode files.  This hack allows the bc
+  // reader to ignore trailing garbage on bytecode files.
+  if (At + Size < MemEnd)
+    MemEnd = BlockEnd = At+Size;
+
+  if (At + Size != MemEnd)
+    error("Invalid Top Level Block Length! Type:" + utostr(Type)
+          + ", Size:" + utostr(Size));
+
+  // Parse the module contents
+  this->ParseModule();
+
+  // Check for missing functions
+  if (hasFunctions())
+    error("Function expected, but bytecode stream ended!");
+
+  // Look for intrinsic functions to upgrade, upgrade them, and save the
+  // mapping from old function to new for use later when instructions are
+  // converted.
+  for (Module::iterator FI = TheModule->begin(), FE = TheModule->end();
+       FI != FE; ++FI)
+    if (Function* newF = UpgradeIntrinsicFunction(FI)) {
+      upgradedFunctions.insert(std::make_pair(FI, newF));
+      FI->setName("");
+    }
+
+  // Tell the handler we're done with the module
+  if (Handler)
+    Handler->handleModuleEnd(ModuleID);
+
+  // Tell the handler we're finished the parse
+  if (Handler) Handler->handleFinish();
+
+  return false;
+
 }
 
 //===----------------------------------------------------------------------===//
