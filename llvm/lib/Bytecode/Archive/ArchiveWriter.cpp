@@ -209,7 +209,7 @@ Archive::writeMember(
     mFile = new sys::MappedFile();
     if (mFile->open(member.getPath(), sys::MappedFile::READ_ACCESS, &ErrMsg))
       throw ErrMsg;
-    if (data = (const char*) mFile->map(&ErrMsg))
+    if (!(data = (const char*) mFile->map(&ErrMsg)))
       throw ErrMsg;
     fSize = mFile->size();
   }
