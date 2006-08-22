@@ -108,13 +108,16 @@ Path::isValid() const {
 static Path *TempDirectory = NULL;
 
 Path
-Path::GetTemporaryDirectory() {
+Path::GetTemporaryDirectory(std::string* ErrMsg) {
   if (TempDirectory)
     return *TempDirectory;
 
   char pathname[MAX_PATH];
-  if (!GetTempPath(MAX_PATH, pathname))
-    throw std::string("Can't determine temporary directory");
+  if (!GetTempPath(MAX_PATH, pathname)) {
+    if (ErrMsg)
+      *ErrMsg = "Can't determine temporary directory";
+    return Path();
+  }
 
   Path result;
   result.set(pathname);
@@ -132,19 +135,6 @@ Path::GetTemporaryDirectory() {
   result.createDirectoryOnDisk(false);
   TempDirectory = new Path(result);
   return *TempDirectory;
-}
-
-Path::Path(const std::string& unverified_path)
-  : path(unverified_path)
-{
-  FlipBackSlashes(path);
-  if (unverified_path.empty())
-    return;
-  if (this->isValid())
-    return;
-  // oops, not valid.
-  path.clear();
-  throw std::string(unverified_path + ": path is not valid");
 }
 
 // FIXME: the following set of functions don't map to Windows very well.
