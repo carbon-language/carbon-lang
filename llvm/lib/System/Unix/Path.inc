@@ -63,16 +63,6 @@ inline bool lastIsSlash(const std::string& path) {
 namespace llvm {
 using namespace sys;
 
-Path::Path(const std::string& unverified_path) : path(unverified_path) {
-  if (unverified_path.empty())
-    return;
-  if (this->isValid()) 
-    return;
-  // oops, not valid.
-  path.clear();
-  ThrowErrno(unverified_path + ": path is not valid");
-}
-
 bool 
 Path::isValid() const {
   // Check some obvious things
@@ -97,14 +87,17 @@ Path::GetRootDirectory() {
 }
 
 Path
-Path::GetTemporaryDirectory() {
+Path::GetTemporaryDirectory(std::string* ErrMsg ) {
 #if defined(HAVE_MKDTEMP)
   // The best way is with mkdtemp but that's not available on many systems, 
   // Linux and FreeBSD have it. Others probably won't.
   char pathname[MAXPATHLEN];
   strcpy(pathname,"/tmp/llvm_XXXXXX");
-  if (0 == mkdtemp(pathname))
-    ThrowErrno(std::string(pathname) + ": can't create temporary directory");
+  if (0 == mkdtemp(pathname)) {
+    MakeErrMsg(ErrMsg, 
+      std::string(pathname) + ": can't create temporary directory");
+    return Path();
+  }
   Path result;
   result.set(pathname);
   assert(result.isValid() && "mkdtemp didn't create a valid pathname!");
@@ -118,12 +111,18 @@ Path::GetTemporaryDirectory() {
   char pathname[MAXPATHLEN];
   strcpy(pathname, "/tmp/llvm_XXXXXX");
   int fd = 0;
-  if (-1 == (fd = mkstemp(pathname)))
-    ThrowErrno(std::string(pathname) + ": can't create temporary directory");
+  if (-1 == (fd = mkstemp(pathname))) {
+    MakeErrMsg(ErrMsg, 
+      std::string(pathname) + ": can't create temporary directory");
+    return Path();
+  }
   ::close(fd);
   ::unlink(pathname); // start race condition, ignore errors
-  if (-1 == ::mkdir(pathname, S_IRWXU)) // end race condition
-    ThrowErrno(std::string(pathname) + ": can't create temporary directory");
+  if (-1 == ::mkdir(pathname, S_IRWXU)) { // end race condition
+    MakeErrMsg(ErrMsg, 
+      std::string(pathname) + ": can't create temporary directory");
+    return Path();
+  }
   Path result;
   result.set(pathname);
   assert(result.isValid() && "mkstemp didn't create a valid pathname!");
@@ -137,10 +136,16 @@ Path::GetTemporaryDirectory() {
   char pathname[MAXPATHLEN];
   strcpy(pathname, "/tmp/llvm_XXXXXX");
   char *TmpName = ::mktemp(pathname);
-  if (TmpName == 0)
-    ThrowErrno(std::string(TmpName) + ": can't create unique directory name");
-  if (-1 == ::mkdir(TmpName, S_IRWXU))
-    ThrowErrno(std::string(TmpName) + ": can't create temporary directory");
+  if (TmpName == 0) {
+    MakeErrMsg(ErrMsg, 
+      std::string(TmpName) + ": can't create unique directory name");
+    return Path();
+  }
+  if (-1 == ::mkdir(TmpName, S_IRWXU)) {
+    MakeErrMsg(ErrMsg, 
+        std::string(TmpName) + ": can't create temporary directory");
+    return Path();
+  }
   Path result;
   result.set(TmpName);
   assert(result.isValid() && "mktemp didn't create a valid pathname!");
@@ -160,8 +165,10 @@ Path::GetTemporaryDirectory() {
     num++;
     sprintf(pathname, "/tmp/llvm_%010u", unsigned(num));
   } while ( 0 == access(pathname, F_OK ) );
-  if (-1 == ::mkdir(pathname, S_IRWXU))
-    ThrowErrno(std::string(pathname) + ": can't create temporary directory");
+  if (-1 == ::mkdir(pathname, S_IRWXU)) {
+    MakeErrMsg(ErrMsg, 
+      std::string(pathname) + ": can't create temporary directory");
+    return Path();
   Path result;
   result.set(pathname);
   assert(result.isValid() && "mkstemp didn't create a valid pathname!");

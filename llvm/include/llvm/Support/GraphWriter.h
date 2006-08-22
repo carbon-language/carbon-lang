@@ -244,7 +244,12 @@ template<typename GraphType>
 sys::Path WriteGraph(const GraphType &G,
                      const std::string& Name, 
                      const std::string& Title = "") {
-  sys::Path Filename = sys::Path::GetTemporaryDirectory();;  
+  std::string ErrMsg;
+  sys::Path Filename = sys::Path::GetTemporaryDirectory(&ErrMsg);
+  if (Filename.isEmpty()) {
+    std::cerr << "Error: " << ErrMsg << "\n";
+    return Filename;
+  }
   Filename.appendComponent(Name + ".dot");
   Filename.makeUnique();
   std::cerr << "Writing '" << Filename << "'... ";

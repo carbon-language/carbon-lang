@@ -97,10 +97,11 @@ namespace sys {
       /// a "standard" place for the operating system. The directory is
       /// guaranteed to be created on exit from this function. If the directory
       /// cannot be created, the function will throw an exception.
-      /// @throws std::string indicating why the directory could not be created.
+      /// @returns an invalid path (empty) on error
+      /// @param ErrMsg Optional place for an error message if an error occurs
       /// @brief Constrct a path to an new, unique, existing temporary
       /// directory.
-      static Path GetTemporaryDirectory();
+      static Path GetTemporaryDirectory(std::string* ErrMsg);
 
       /// Construct a vector of sys::Path that contains the "standard" system
       /// library paths suitable for linking into programs. This function *must*
@@ -171,7 +172,7 @@ namespace sys {
       /// @throws std::string if \p unverified_path is not legal.
       /// @param unverified_path The path to verify and assign.
       /// @brief Construct a Path from a string.
-      explicit Path(const std::string& unverified_path);
+      explicit Path(const std::string& p) : path(p) {}
 
     /// @}
     /// @name Operators

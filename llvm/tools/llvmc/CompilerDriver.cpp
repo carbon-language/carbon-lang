@@ -83,8 +83,6 @@ public:
     , TempDir()
     , AdditionalArgs()
   {
-    TempDir = sys::Path::GetTemporaryDirectory();
-    sys::RemoveDirectoryOnSignal(TempDir);
     AdditionalArgs.reserve(NUM_PHASES);
     StringVector emptyVec;
     for (unsigned i = 0; i < NUM_PHASES; ++i)
@@ -196,12 +194,25 @@ private:
   }
 
   sys::Path MakeTempFile(const std::string& basename,
-                         const std::string& suffix) {
+                         const std::string& suffix,
+                         std::string* ErrMsg) {
+    if (TempDir.isEmpty()) {
+      TempDir = sys::Path::GetTemporaryDirectory(ErrMsg);
+      if (TempDir.isEmpty())
+        return sys::Path();
+      sys::RemoveDirectoryOnSignal(TempDir);
+    }
     sys::Path result(TempDir);
-    if (!result.appendComponent(basename))
-      throw basename + ": can't use this file name";
-    if (!result.appendSuffix(suffix))
-      throw suffix + ": can't use this file suffix";
+    if (!result.appendComponent(basename)) {
+      if (ErrMsg)
+        *ErrMsg = basename + ": can't use this file name";
+      return sys::Path();
+    }
+    if (!result.appendSuffix(suffix)) {
+      if (ErrMsg)
+        *ErrMsg = suffix + ": can't use this file suffix";
+      return sys::Path();
+    }
     return result;
   }
 
@@ -700,7 +711,10 @@ public:
                 actions.push_back(GetAction(cd,InFile,Output,PREPROCESSING));
               }
             } else {
-              sys::Path TempFile(MakeTempFile(I->first.getBasename(),"E"));
+              sys::Path TempFile(
+                  MakeTempFile(I->first.getBasename(),"E",&ErrMsg));
+              if (TempFile.isEmpty())
+                return 1;
               actions.push_back(GetAction(cd,InFile,TempFile,
                 PREPROCESSING));
               InFile = TempFile;
@@ -731,7 +745,10 @@ public:
                 actions.push_back(GetAction(cd,InFile,Output,TRANSLATION));
               }
             } else {
-              sys::Path TempFile(MakeTempFile(I->first.getBasename(),"trans"));
+              sys::Path TempFile(
+                  MakeTempFile(I->first.getBasename(),"trans", &ErrMsg));
+              if (TempFile.isEmpty())
+                return 1;
               actions.push_back(GetAction(cd,InFile,TempFile,TRANSLATION));
               InFile = TempFile;
             }
@@ -774,7 +791,10 @@ public:
                   actions.push_back(GetAction(cd,InFile,Output,OPTIMIZATION));
                 }
               } else {
-                sys::Path TempFile(MakeTempFile(I->first.getBasename(),"opt"));
+                sys::Path TempFile(
+                  MakeTempFile(I->first.getBasename(),"opt", &ErrMsg));
+                if (TempFile.isEmpty())
+                  return 1;
                 actions.push_back(GetAction(cd,InFile,TempFile,OPTIMIZATION));
                 InFile = TempFile;
               }
