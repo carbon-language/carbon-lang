@@ -354,14 +354,13 @@ namespace sys {
     /// @brief Normalize to canonical form.
     void normalize();
 
-/// @}
+  /// @}
   /// @name Data
   /// @{
   private:
-      /// Store the values as a <timeval>.
-      SecondsType      seconds_;///< Stores the seconds part of the TimeVal
-      NanoSecondsType  nanos_;  ///< Stores the nanoseconds part of the TimeVal
-
+    /// Store the values as a <timeval>.
+    SecondsType      seconds_;///< Stores the seconds part of the TimeVal
+    NanoSecondsType  nanos_;  ///< Stores the nanoseconds part of the TimeVal
   /// @}
 
   };
