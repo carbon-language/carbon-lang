@@ -1,6 +1,6 @@
 ; Crash in post dominator set construction.
 ;
-; RUN: analyze -postdomset %s
+; RUN: opt -analyze -postdomset %s
 ;
 
 implementation

@@ -1,6 +1,6 @@
 ;  Call graph construction crash: Not handling indirect calls right
 ;
-; RUN: analyze -callgraph %s
+; RUN: opt -analyze -callgraph %s
 ;
 
 %FunTy = type int(int)

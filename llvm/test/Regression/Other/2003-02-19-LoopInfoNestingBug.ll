@@ -2,7 +2,7 @@
 ; figure out that loop "Inner" should be nested inside of leep "LoopHeader", 
 ; and instead nests it just inside loop "Top"
 ;
-; RUN: analyze -loops %s | grep '     Loop Containing:[ ]*%Inner'
+; RUN: opt -analyze -loops %s | grep '     Loop Containing:[ ]*%Inner'
 ;
 
 implementation

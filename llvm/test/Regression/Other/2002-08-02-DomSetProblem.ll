@@ -2,7 +2,7 @@
 ; blocks.  These blocks should at least dominate themselves.  This is 
 ; fouling up the verify pass.
 ;
-; RUN: analyze -domset %s | grep BB
+; RUN: opt -analyze -domset %s | grep BB
 
 void %test() {
 	ret void
