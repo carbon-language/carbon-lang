@@ -352,7 +352,7 @@ bool
 Path::getFileStatus(FileStatus &info, std::string *ErrStr) const {
   struct stat buf;
   if (0 != stat(path.c_str(), &buf))
-    return GetErrno(path + ": can't determine type of path object: ", ErrStr);
+    return GetErrno(path + ": can't get status of file '" + path + "'", ErrStr);
   info.fileSize = buf.st_size;
   info.modTime.fromEpochTime(buf.st_mtime);
   info.mode = buf.st_mode;
