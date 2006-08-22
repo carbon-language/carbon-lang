@@ -768,8 +768,7 @@ if (!$NODEJAGNU) {
 #
 ##############################################################
 sub TestDirectory {
-  my $SubDir = shift;
-  
+  my $SubDir = shift;  
   ChangeDir( "$BuildDir/llvm/projects/llvm-test/$SubDir", 
              "Programs Test Subdirectory" ) || return ("", "");
   
@@ -850,35 +849,34 @@ if (!$BuildError) {
                "$Prefix-MultiSource-Performance.txt ".
                " | sort > $Prefix-Performance.txt";
   }
-}
 
-##############################################################
-#
-# 
-# gathering tests added removed broken information here
-#
-#
-##############################################################
-my $dejagnu_test_list = ReadFile "$Prefix-Tests.txt";
-my @DEJAGNU = split "\n", $dejagnu_test_list;
+  ##############################################################
+  #
+  # 
+  # gathering tests added removed broken information here 
+  #
+  #
+  ##############################################################
+  my $dejagnu_test_list = ReadFile "$Prefix-Tests.txt";
+  my @DEJAGNU = split "\n", $dejagnu_test_list;
+  my ($passes, $fails, $xfails) = "";
 
-my $passes="",
-my $fails="";
-my $xfails="";
-
-if(!$NODEJAGNU) {
-  for ($x=0; $x<@DEJAGNU; $x++) {
-    if ($DEJAGNU[$x] =~ m/^PASS:/) {
-      $passes.="$DEJAGNU[$x]\n";
-    }
-    elsif ($DEJAGNU[$x] =~ m/^FAIL:/) {
-      $fails.="$DEJAGNU[$x]\n";
-    }
-    elsif ($DEJAGNU[$x] =~ m/^XFAIL:/) {
-      $xfails.="$DEJAGNU[$x]\n";
+  if(!$NODEJAGNU) {
+    for ($x=0; $x<@DEJAGNU; $x++) {
+      if ($DEJAGNU[$x] =~ m/^PASS:/) {
+        $passes.="$DEJAGNU[$x]\n";
+      }
+      elsif ($DEJAGNU[$x] =~ m/^FAIL:/) {
+        $fails.="$DEJAGNU[$x]\n";
+      }
+      elsif ($DEJAGNU[$x] =~ m/^XFAIL:/) {
+        $xfails.="$DEJAGNU[$x]\n";
+      }
     }
   }
-}
+  
+} #end if !$BuildError
+
 
 ##############################################################
 #
@@ -947,6 +945,15 @@ my (@DEJAGNU_LOG, @DEJAGNU_SUM, @DEJAGNULOG_FULL, @GCC_VERSION);
 my ($dejagnutests_log ,$dejagnutests_sum, $dejagnulog_full) = "";
 my ($gcc_version, $gcc_version_long) = "";
 
+$gcc_version_long="";
+if ($GCCPATH ne "") {
+	$gcc_version_long = `$GCCPATH/gcc --version`;
+} else {
+	$gcc_version_long = `gcc --version`;
+}
+@GCC_VERSION = split '\n', $gcc_version_long;
+$gcc_version = $GCC_VERSION[0];
+
 if(!$BuildError){
   @DEJAGNU_LOG = ReadFile "$DejagnuLog";
   @DEJAGNU_SUM = ReadFile "$DejagnuSum";
@@ -955,15 +962,6 @@ if(!$BuildError){
 
   @DEJAGNULOG_FULL = ReadFile "$DejagnuTestsLog";
   $dejagnulog_full = join("\n", @DEJAGNULOG_FULL);
-
-  $gcc_version_long="";
-  if ($GCCPATH ne "") {
-  	$gcc_version_long = `$GCCPATH/gcc --version`;
-  } else {
-	  $gcc_version_long = `gcc --version`;
-  }
-  @GCC_VERSION = split '\n', $gcc_version_long;
-  $gcc_version = $GCC_VERSION[0];
 }
 
 ##############################################################
