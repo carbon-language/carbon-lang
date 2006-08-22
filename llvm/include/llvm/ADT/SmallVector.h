@@ -48,8 +48,7 @@ public:
   
   ~SmallVectorImpl() {
     // Destroy the constructed elements in the vector.
-    for (iterator I = Begin, E = End; I != E; ++I)
-      I->~T();
+    destroy_range(Begin, End);
 
     // If this wasn't grown from the inline copy, deallocate the old space.
     if (!isSmall())
@@ -78,6 +77,13 @@ public:
     return Begin[idx];
   }
   
+  reference front() {
+    return begin()[0];
+  }
+  const_reference front() const {
+    return begin()[0];
+  }
+  
   reference back() {
     return end()[-1];
   }
@@ -102,9 +108,44 @@ public:
   }
   
   void clear() {
-    while (End != Begin) {
-      End->~T();
-      --End;
+    destroy_range(Begin, End);
+    End = Begin;
+  }
+  
+  void swap(SmallVectorImpl &RHS) {
+    if (this == &RHS) return;
+    
+    // We can only avoid copying elements if neither vector is small.
+    if (!isSmall() && !RHS.isSmall()) {
+      std::swap(Begin, RHS.Begin);
+      std::swap(End, RHS.End);
+      std::swap(Capacity, RHS.Capacity);
+      return;
+    }
+    if (Begin+RHS.size() > Capacity)
+      grow(RHS.size());
+    if (RHS.begin()+size() > RHS.Capacity)
+      RHS.grow(size());
+
+    // Swap the shared elements.
+    unsigned NumShared = size();
+    if (NumShared > RHS.size()) NumShared = RHS.size();
+    for (unsigned i = 0; i != NumShared; ++i)
+      std::swap(Begin[i], RHS[i]);
+    
+    // Copy over the extra elts.
+    if (size() > RHS.size()) {
+      unsigned EltDiff = size() - RHS.size();
+      std::uninitialized_copy(Begin+NumShared, End, RHS.End);
+      RHS.End += EltDiff;
+      destroy_range(Begin+NumShared, End);
+      End = Begin+NumShared;
+    } else if (RHS.size() > size()) {
+      unsigned EltDiff = RHS.size() - size();
+      std::uninitialized_copy(RHS.Begin+NumShared, RHS.End, End);
+      End += EltDiff;
+      destroy_range(RHS.Begin+NumShared, RHS.End);
+      RHS.End = RHS.Begin+NumShared;
     }
   }
   
@@ -131,6 +172,42 @@ public:
       new (Begin+NumElts-1) T(Elt);
   }
   
+  void erase(iterator I) {
+    // Shift all elts down one.
+    std::copy(I+1, End, I);
+    // Drop the last elt.
+    pop_back();
+  }
+  
+  void erase(iterator S, iterator E) {
+    // Shift all elts down.
+    iterator I = std::copy(E, End, S);
+    // Drop the last elts.
+    destroy_range(I, End);
+    End = I;
+  }
+  
+  iterator insert(iterator I, const T &Elt) {
+    if (I == End) {  // Important special case for empty vector.
+      push_back(Elt);
+      return end()-1;
+    }
+    
+    if (End < Capacity) {
+  Retry:
+      new (End) T(back());
+      ++End;
+      // Push everything else over.
+      std::copy_backward(I, End-1, End);
+      *I = Elt;
+      return I;
+    }
+    unsigned EltNo = I-Begin;
+    grow();
+    I = Begin+EltNo;
+    goto Retry;
+  }
+  
   const SmallVectorImpl &operator=(const SmallVectorImpl &RHS);
   
 private:
@@ -143,6 +220,13 @@ private:
   /// grow - double the size of the allocated memory, guaranteeing space for at
   /// least one more element or MinSize if specified.
   void grow(unsigned MinSize = 0);
+  
+  void destroy_range(T *S, T *E) {
+    while (S != E) {
+      E->~T();
+      --E;
+    }
+  }
 };
 
 // Define this out-of-line to dissuade the C++ compiler from inlining it.
@@ -159,8 +243,7 @@ void SmallVectorImpl<T>::grow(unsigned MinSize) {
   std::uninitialized_copy(Begin, End, NewElts);
   
   // Destroy the original elements.
-  for (iterator I = Begin, E = End; I != E; ++I)
-    I->~T();
+  destroy_range(Begin, End);
   
   // If this wasn't grown from the inline copy, deallocate the old space.
   if (!isSmall())
@@ -183,14 +266,13 @@ SmallVectorImpl<T>::operator=(const SmallVectorImpl<T> &RHS) {
   unsigned CurSize = size();
   if (CurSize >= RHSSize) {
     // Assign common elements.
-    std::copy(RHS.Begin, RHS.Begin+RHSSize, Begin);
+    iterator NewEnd = std::copy(RHS.Begin, RHS.Begin+RHSSize, Begin);
     
     // Destroy excess elements.
-    for (unsigned i = RHSSize; i != CurSize; ++i)
-      Begin[i].~T();
+    destroy_range(NewEnd, End);
     
     // Trim.
-    End = Begin + RHSSize;
+    End = NewEnd;
     return *this;
   }
   
@@ -198,8 +280,7 @@ SmallVectorImpl<T>::operator=(const SmallVectorImpl<T> &RHS) {
   // This allows us to avoid copying them during the grow.
   if (unsigned(Capacity-Begin) < RHSSize) {
     // Destroy current elements.
-    for (iterator I = Begin, E = End; I != E; ++I)
-      I->~T();
+    destroy_range(Begin, End);
     End = Begin;
     CurSize = 0;
     grow(RHSSize);
@@ -255,8 +336,29 @@ public:
   SmallVector(const SmallVector &RHS) : SmallVectorImpl<T>(NumTsAvailable) {
     operator=(RHS);
   }
+  
+  const SmallVector &operator=(const SmallVector &RHS) {
+    SmallVectorImpl<T>::operator=(RHS);
+    return *this;
+  }
 };
 
 } // End llvm namespace
+
+namespace std {
+  /// Implement std::swap in terms of SmallVector swap.
+  template<typename T>
+  inline void
+  swap(llvm::SmallVectorImpl<T> &LHS, llvm::SmallVectorImpl<T> &RHS) {
+    LHS.swap(RHS);
+  }
+  
+  /// Implement std::swap in terms of SmallVector swap.
+  template<typename T, unsigned N>
+  inline void
+  swap(llvm::SmallVector<T, N> &LHS, llvm::SmallVector<T, N> &RHS) {
+    LHS.swap(RHS);
+  }
+}
 
 #endif
