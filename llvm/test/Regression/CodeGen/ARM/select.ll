@@ -1,5 +1,5 @@
 ; RUN: llvm-as %s -o /dev/null -f
-; XFAIL: *
+
 int %f(int %a) {
 entry:
 	%tmp = seteq int %a, 4		; <bool> [#uses=1]
