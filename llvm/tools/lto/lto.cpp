@@ -298,7 +298,7 @@ LinkTimeOptimizer::optimizeModules(const std::string &OutputFilename,
   std::string ErrMsg;
   if (tmpAsmFilePath.createTemporaryFileOnDisk(&ErrMsg)) {
     std::cerr << "lto: " << ErrMsg << "\n";
-    return;
+    return LTO_WRITE_FAILURE;
   }
   sys::RemoveFileOnSignal(tmpAsmFilePath);
 
