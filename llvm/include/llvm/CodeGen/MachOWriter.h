@@ -2,7 +2,7 @@
 //
 //                     The LLVM Compiler Infrastructure
 //
-// This file was developed by Chris Lattner and is distributed under the
+// This file was developed by Nate Begeman and is distributed under the
 // University of Illinois Open Source License. See LICENSE.TXT for details.
 //
 //===----------------------------------------------------------------------===//
@@ -75,13 +75,13 @@ namespace llvm {
     /// MachOHeader - This struct contains the header information about a
     /// specific architecture type/subtype pair that is emitted to the file.
     struct MachOHeader {
-      uint32_t	magic;      // mach magic number identifier
-      uint32_t	cputype;    // cpu specifier
-      uint32_t	cpusubtype; // machine specifier
-      uint32_t	filetype;   // type of file
-      uint32_t	ncmds;      // number of load commands
-      uint32_t	sizeofcmds; // the size of all the load commands
-      uint32_t	flags;      // flags
+      uint32_t  magic;      // mach magic number identifier
+      uint32_t  cputype;    // cpu specifier
+      uint32_t  cpusubtype; // machine specifier
+      uint32_t  filetype;   // type of file
+      uint32_t  ncmds;      // number of load commands
+      uint32_t  sizeofcmds; // the size of all the load commands
+      uint32_t  flags;      // flags
       uint32_t  reserved;   // 64-bit only
       
       /// HeaderData - The actual data for the header which we are building
@@ -254,18 +254,18 @@ namespace llvm {
     /// turned into the SectionCommand in the load command for a particlar
     /// segment.
     struct MachOSection { 
-      std::string sectname; // name of this section, 
-      std::string	segname;  // segment this section goes in
-      uint64_t	addr;       // memory address of this section
-      uint64_t	size;       // size in bytes of this section
-      uint32_t	offset;     // file offset of this section
-      uint32_t	align;      // section alignment (power of 2)
-      uint32_t	reloff;     // file offset of relocation entries
-      uint32_t	nreloc;     // number of relocation entries
-      uint32_t	flags;      // flags (section type and attributes)
-      uint32_t	reserved1;  // reserved (for offset or index)
-      uint32_t	reserved2;  // reserved (for count or sizeof)
-      uint32_t	reserved3;  // reserved (64 bit only)
+      std::string  sectname; // name of this section, 
+      std::string  segname;  // segment this section goes in
+      uint64_t  addr;        // memory address of this section
+      uint64_t  size;        // size in bytes of this section
+      uint32_t  offset;      // file offset of this section
+      uint32_t  align;       // section alignment (power of 2)
+      uint32_t  reloff;      // file offset of relocation entries
+      uint32_t  nreloc;      // number of relocation entries
+      uint32_t  flags;       // flags (section type and attributes)
+      uint32_t  reserved1;   // reserved (for offset or index)
+      uint32_t  reserved2;   // reserved (for count or sizeof)
+      uint32_t  reserved3;   // reserved (64 bit only)
       
       /// A unique number for this section, which will be used to match symbols
       /// to the correct section.
