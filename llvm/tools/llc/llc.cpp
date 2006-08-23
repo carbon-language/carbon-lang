@@ -78,7 +78,8 @@ FileType("filetype", cl::init(TargetMachine::AssemblyFile),
        clEnumValN(TargetMachine::ObjectFile,    "obj",
                   "  Emit a native object ('.o') file [experimental]"),
        clEnumValN(TargetMachine::DynamicLibrary, "dynlib",
-                  "  Emit a native dynamic library ('.so') file"),
+                  "  Emit a native dynamic library ('.so') file"
+                  " [experimental]"),
        clEnumValEnd));
 
 cl::opt<bool> NoVerify("disable-verify", cl::Hidden,
