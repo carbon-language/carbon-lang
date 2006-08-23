@@ -18,6 +18,7 @@
 		DE06E4D70A8FBF7A0050E87E /* Initializer.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DE06E4D60A8FBF7A0050E87E /* Initializer.cpp */; };
 		DE06E8140A8FF9330050E87E /* Action.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = DE06E8130A8FF9330050E87E /* Action.h */; };
 		DE0FCA210A95710600248FD5 /* EmptyAction.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DE0FCA200A95710600248FD5 /* EmptyAction.cpp */; };
+		DE0FCA630A95859D00248FD5 /* Expr.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = DE0FCA620A95859D00248FD5 /* Expr.h */; };
 		DE1F22030A7D852A00FBF588 /* Parser.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = DE1F22020A7D852A00FBF588 /* Parser.h */; };
 		DE1F24820A7DCD3800FBF588 /* Declarations.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = DE1F24810A7DCD3800FBF588 /* Declarations.h */; };
 		DEAEE98B0A5A2B970045101B /* MultipleIncludeOpt.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = DEAEE98A0A5A2B970045101B /* MultipleIncludeOpt.h */; };
@@ -98,13 +99,14 @@
 				DEC8D9910A9433CD00353FCA /* Decl.h in CopyFiles */,
 				DEC8D9A40A94346E00353FCA /* AST.h in CopyFiles */,
 				DEC8DAC00A94402500353FCA /* ASTStreamer.h in CopyFiles */,
+				DE0FCA630A95859D00248FD5 /* Expr.h in CopyFiles */,
 			);
 			runOnlyForDeploymentPostprocessing = 1;
 		};
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
-		8DD76F6C0486A84900D96B5E /* clang */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = "compiled.mach-o.executable"; path = clang; sourceTree = BUILT_PRODUCTS_DIR; };
+		8DD76F6C0486A84900D96B5E /* clang */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = clang; sourceTree = BUILT_PRODUCTS_DIR; };
 		DE06B73D0A8307640050E87E /* LangOptions.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = LangOptions.h; sourceTree = "<group>"; };
 		DE06BEC80A854E390050E87E /* Scope.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; name = Scope.cpp; path = Parse/Scope.cpp; sourceTree = "<group>"; };
 		DE06BECA0A854E4B0050E87E /* Scope.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; name = Scope.h; path = clang/Parse/Scope.h; sourceTree = "<group>"; };
@@ -116,6 +118,7 @@
 		DE06E4D60A8FBF7A0050E87E /* Initializer.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; name = Initializer.cpp; path = Parse/Initializer.cpp; sourceTree = "<group>"; };
 		DE06E8130A8FF9330050E87E /* Action.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; name = Action.h; path = clang/Parse/Action.h; sourceTree = "<group>"; };
 		DE0FCA200A95710600248FD5 /* EmptyAction.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; name = EmptyAction.cpp; path = Parse/EmptyAction.cpp; sourceTree = "<group>"; };
+		DE0FCA620A95859D00248FD5 /* Expr.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; name = Expr.h; path = clang/AST/Expr.h; sourceTree = "<group>"; };
 		DE1F22020A7D852A00FBF588 /* Parser.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; name = Parser.h; path = clang/Parse/Parser.h; sourceTree = "<group>"; };
 		DE1F24810A7DCD3800FBF588 /* Declarations.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; name = Declarations.h; path = clang/Parse/Declarations.h; sourceTree = "<group>"; };
 		DEAEE98A0A5A2B970045101B /* MultipleIncludeOpt.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = MultipleIncludeOpt.h; sourceTree = "<group>"; };
@@ -255,6 +258,7 @@
 				DEC8D9A30A94346E00353FCA /* AST.h */,
 				DEC8DABF0A94402500353FCA /* ASTStreamer.h */,
 				DEC8D9900A9433CD00353FCA /* Decl.h */,
+				DE0FCA620A95859D00248FD5 /* Expr.h */,
 			);
 			name = AST;
 			sourceTree = "<group>";

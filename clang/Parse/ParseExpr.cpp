@@ -288,7 +288,8 @@ ParseAssignmentExpressionWithLeadingStar(const LexerToken &Tok) {
 Parser::ExprResult
 Parser::ParseRHSOfBinaryExpression(ExprResult LHS, unsigned MinPrec) {
   unsigned NextTokPrec = getBinOpPrecedence(Tok.getKind());
-  
+  SourceLocation ColonLoc;
+
   while (1) {
     // If this token has a lower precedence than we are allowed to parse (e.g.
     // because we are called recursively, or because the token is not a binop),
@@ -324,6 +325,7 @@ Parser::ParseRHSOfBinaryExpression(ExprResult LHS, unsigned MinPrec) {
       }
       
       // Eat the colon.
+      ColonLoc = Tok.getLocation();
       ConsumeToken();
     }
     
@@ -355,7 +357,12 @@ Parser::ParseRHSOfBinaryExpression(ExprResult LHS, unsigned MinPrec) {
     }
     assert(NextTokPrec <= ThisPrec && "Recursion didn't work!");
   
-    // TODO: combine the LHS and RHS into the LHS (e.g. build AST).
+    // Combine the LHS and RHS into the LHS (e.g. build AST).
+    if (NextTokPrec != prec::Conditional)
+      LHS = Actions.ParseBinOp(OpToken, LHS.Val, RHS.Val);
+    else
+      LHS = Actions.ParseConditionalOp(OpToken.getLocation(), ColonLoc,
+                                       LHS.Val, TernaryMiddle.Val, RHS.Val);
   }
 }
 
@@ -446,10 +453,24 @@ Parser::ExprResult Parser::ParseCastExpression(bool isUnaryExpression) {
     return ParsePostfixExpressionSuffix(Res);
     
     // primary-expression
+  case tok::numeric_constant:
+    // constant: integer-constant
+    // constant: floating-constant
+    
+    // TODO: Validate whether this is an integer or floating-constant or
+    // neither.
+    if (1) {
+      Res = Actions.ParseIntegerConstant(Tok);
+    } else {
+      Res = Actions.ParseFloatingConstant(Tok);
+    }
+    ConsumeToken();
+    
+    // These can be followed by postfix-expr pieces.
+    return ParsePostfixExpressionSuffix(Res);
+
   case tok::identifier:        // primary-expression: identifier
                                // constant: enumeration-constant
-  case tok::numeric_constant:  // constant: integer-constant
-                               // constant: floating-constant
   case tok::char_constant:     // constant: character-constant
   case tok::kw___func__:       // primary-expression: __func__ [C99 6.4.2.2]
   case tok::kw___FUNCTION__:   // primary-expression: __FUNCTION__ [GNU]

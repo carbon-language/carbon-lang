@@ -13,9 +13,11 @@
 //===----------------------------------------------------------------------===//
 
 #include "clang/Parse/Action.h"
-#include "clang/Parse/Scope.h"
 #include "clang/AST/Decl.h"
+#include "clang/AST/Expr.h"
+#include "clang/Parse/Scope.h"
 #include "clang/Lex/IdentifierTable.h"
+#include "clang/Lex/LexerToken.h"
 #include "llvm/Support/Visibility.h"
 using namespace llvm;
 using namespace clang;
@@ -23,7 +25,11 @@ using namespace clang;
 /// ASTBuilder
 namespace {
 class VISIBILITY_HIDDEN ASTBuilder : public Action {
+  /// FullLocInfo - If this is true, the ASTBuilder constructs AST Nodes that
+  /// capture maximal location information for each source-language construct.
+  bool FullLocInfo;
 public:
+  ASTBuilder(bool fullLocInfo) : FullLocInfo(fullLocInfo) {}
   //===--------------------------------------------------------------------===//
   // Symbol table tracking callbacks.
   //
@@ -31,6 +37,20 @@ public:
   virtual void ParseDeclarator(SourceLocation Loc, Scope *S, Declarator &D,
                                ExprTy *Init);
   virtual void PopScope(SourceLocation Loc, Scope *S);
+  
+  //===--------------------------------------------------------------------===//
+  // Expression Parsing Callbacks.
+  virtual ExprTy *ParseIntegerConstant(const LexerToken &Tok);
+  virtual ExprTy *ParseFloatingConstant(const LexerToken &Tok);
+  
+  // Binary Operators.  'Tok' is the token
+  virtual ExprTy *ParseBinOp(const LexerToken &Tok, ExprTy *LHS, ExprTy *RHS);
+  
+  /// ParseConditionalOp - Parse a ?: operation.  Note that 'LHS' may be null
+  /// in the case of a the GNU conditional expr extension.
+  virtual ExprTy *ParseConditionalOp(SourceLocation QuestionLoc, 
+                                     SourceLocation ColonLoc,
+                                     ExprTy *Cond, ExprTy *LHS, ExprTy *RHS);
 };
 } // end anonymous namespace
 
@@ -75,11 +95,79 @@ void ASTBuilder::PopScope(SourceLocation Loc, Scope *S) {
   }
 }
 
+//===--------------------------------------------------------------------===//
+// Expression Parsing Callbacks.
+//===--------------------------------------------------------------------===//
+
+ASTBuilder::ExprTy *ASTBuilder::ParseIntegerConstant(const LexerToken &Tok) {
+  return new IntegerConstant();
+}
+ASTBuilder::ExprTy *ASTBuilder::ParseFloatingConstant(const LexerToken &Tok) {
+  return new FloatingConstant();
+}
+
+// Binary Operators.  'Tok' is the token for the operator.
+ASTBuilder::ExprTy *ASTBuilder::ParseBinOp(const LexerToken &Tok, ExprTy *LHS,
+                                           ExprTy *RHS) {
+  BinaryOperator::Opcode Opc;
+  switch (Tok.getKind()) {
+  default: assert(0 && "Unknown binop!");
+  case tok::star:                 Opc = BinaryOperator::Mul; break;
+  case tok::slash:                Opc = BinaryOperator::Div; break;
+  case tok::percent:              Opc = BinaryOperator::Rem; break;
+  case tok::plus:                 Opc = BinaryOperator::Add; break;
+  case tok::minus:                Opc = BinaryOperator::Sub; break;
+  case tok::lessless:             Opc = BinaryOperator::Shl; break;
+  case tok::greatergreater:       Opc = BinaryOperator::Shr; break;
+  case tok::lessequal:            Opc = BinaryOperator::LE; break;
+  case tok::less:                 Opc = BinaryOperator::LT; break;
+  case tok::greaterequal:         Opc = BinaryOperator::GE; break;
+  case tok::greater:              Opc = BinaryOperator::GT; break;
+  case tok::exclaimequal:         Opc = BinaryOperator::NE; break;
+  case tok::equalequal:           Opc = BinaryOperator::EQ; break;
+  case tok::amp:                  Opc = BinaryOperator::And; break;
+  case tok::caret:                Opc = BinaryOperator::Xor; break;
+  case tok::pipe:                 Opc = BinaryOperator::Or; break;
+  case tok::ampamp:               Opc = BinaryOperator::LAnd; break;
+  case tok::pipepipe:             Opc = BinaryOperator::LOr; break;
+  case tok::equal:                Opc = BinaryOperator::Assign; break;
+  case tok::starequal:            Opc = BinaryOperator::MulAssign; break;
+  case tok::slashequal:           Opc = BinaryOperator::DivAssign; break;
+  case tok::percentequal:         Opc = BinaryOperator::RemAssign; break;
+  case tok::plusequal:            Opc = BinaryOperator::AddAssign; break;
+  case tok::minusequal:           Opc = BinaryOperator::SubAssign; break;
+  case tok::lesslessequal:        Opc = BinaryOperator::ShlAssign; break;
+  case tok::greatergreaterequal:  Opc = BinaryOperator::ShrAssign; break;
+  case tok::ampequal:             Opc = BinaryOperator::AndAssign; break;
+  case tok::caretequal:           Opc = BinaryOperator::XorAssign; break;
+  case tok::pipeequal:            Opc = BinaryOperator::OrAssign; break;
+  case tok::comma:                Opc = BinaryOperator::Comma; break;
+  }
+  
+  if (!FullLocInfo)
+    return new BinaryOperator((Expr*)LHS, (Expr*)RHS, Opc);
+  else
+    return new BinaryOperatorLOC((Expr*)LHS, Tok.getLocation(), (Expr*)RHS,Opc);
+}
+
+/// ParseConditionalOp - Parse a ?: operation.  Note that 'LHS' may be null
+/// in the case of a the GNU conditional expr extension.
+ASTBuilder::ExprTy *ASTBuilder::ParseConditionalOp(SourceLocation QuestionLoc, 
+                                                   SourceLocation ColonLoc,
+                                                   ExprTy *Cond, ExprTy *LHS,
+                                                   ExprTy *RHS) {
+  if (!FullLocInfo)
+    return new ConditionalOperator((Expr*)Cond, (Expr*)LHS, (Expr*)RHS);
+  else
+    return new ConditionalOperatorLOC((Expr*)Cond, QuestionLoc, (Expr*)LHS,
+                                      ColonLoc, (Expr*)RHS);
+}
+
 
 /// Interface to the Builder.cpp file.
 ///
-Action *CreateASTBuilderActions() {
-  return new ASTBuilder();
+Action *CreateASTBuilderActions(bool FullLocInfo) {
+  return new ASTBuilder(FullLocInfo);
 }
 
 

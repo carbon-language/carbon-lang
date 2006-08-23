@@ -25,6 +25,7 @@ namespace clang {
   class Action;
   // Lex.
   class IdentifierInfo;
+  class LexerToken;
 
 /// Action - As the parser reads the input file and recognizes the productions
 /// of the grammar, it invokes methods on this class to turn the parsed input
@@ -48,7 +49,7 @@ public:
   typedef void DeclTy;
   
   //===--------------------------------------------------------------------===//
-  // Symbol table tracking callbacks.
+  // Symbol Table Tracking Callbacks.
   //===--------------------------------------------------------------------===//
   
   /// isTypedefName - Return true if the specified identifier is a typedef name
@@ -65,6 +66,26 @@ public:
   /// is popped and deleted.
   virtual void PopScope(SourceLocation Loc, Scope *S) {}
   
+  //===--------------------------------------------------------------------===//
+  // Expression Parsing Callbacks.
+  //===--------------------------------------------------------------------===//
+  
+  // Primary Expressions.
+  virtual ExprTy *ParseIntegerConstant(const LexerToken &Tok) { return 0; }
+  virtual ExprTy *ParseFloatingConstant(const LexerToken &Tok) { return 0; }
+  
+  // Binary Operators.  'Tok' is the token
+  virtual ExprTy *ParseBinOp(const LexerToken &Tok, ExprTy *LHS, ExprTy *RHS) {
+    return 0;
+  }
+
+  /// ParseConditionalOp - Parse a ?: operation.  Note that 'LHS' may be null
+  /// in the case of a the GNU conditional expr extension.
+  virtual ExprTy *ParseConditionalOp(SourceLocation QuestionLoc, 
+                                     SourceLocation ColonLoc,
+                                     ExprTy *Cond, ExprTy *LHS, ExprTy *RHS) {
+    return 0;
+  }
 };
 
 

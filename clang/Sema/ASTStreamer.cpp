@@ -19,15 +19,15 @@ using namespace clang;
 
 /// Interface to the Builder.cpp file.
 ///
-Action *CreateASTBuilderActions();
+Action *CreateASTBuilderActions(bool FullLocInfo);
 
 
 namespace {
   class ASTStreamer {
     Parser P;
   public:
-    ASTStreamer(Preprocessor &PP, unsigned MainFileID)
-      : P(PP, *CreateASTBuilderActions()) {
+    ASTStreamer(Preprocessor &PP, unsigned MainFileID, bool FullLocInfo)
+      : P(PP, *CreateASTBuilderActions(FullLocInfo)) {
       PP.EnterSourceFile(MainFileID, 0, true);
       
       // Initialize the parser.
@@ -59,8 +59,9 @@ namespace {
 /// ASTStreamer_Init - Create an ASTStreamer with the specified preprocessor
 /// and FileID.
 ASTStreamerTy *llvm::clang::ASTStreamer_Init(Preprocessor &PP, 
-                                             unsigned MainFileID) {
-  return new ASTStreamer(PP, MainFileID);
+                                             unsigned MainFileID,
+                                             bool FullLocInfo) {
+  return new ASTStreamer(PP, MainFileID, FullLocInfo);
 }
 
 /// ASTStreamer_ReadTopLevelDecl - Parse and return one top-level declaration. This

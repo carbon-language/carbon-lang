@@ -225,6 +225,12 @@ private:
     bool isInvalid;
     
     ExprResult(bool Invalid = false) : Val(0), isInvalid(Invalid) {}
+    
+    const ExprResult &operator=(ExprTy *RHS) {
+      Val = RHS;
+      isInvalid = false;
+      return *this;
+    }
   };
   
   ExprResult ParseExpression();

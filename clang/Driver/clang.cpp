@@ -633,7 +633,7 @@ static void ParseFile(Preprocessor &PP, Action *PA, unsigned MainFileID) {
 //===----------------------------------------------------------------------===//
 
 static void PrintASTs(Preprocessor &PP, unsigned MainFileID) {
-  ASTStreamerTy *Streamer = ASTStreamer_Init(PP, MainFileID);
+  ASTStreamerTy *Streamer = ASTStreamer_Init(PP, MainFileID, true);
   
   while (Decl *D = ASTStreamer_ReadTopLevelDecl(Streamer)) {
     std::cerr << "Read decl!\n";
