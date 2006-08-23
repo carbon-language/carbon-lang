@@ -40,10 +40,17 @@ public:
   
   //===--------------------------------------------------------------------===//
   // Expression Parsing Callbacks.
+
+  // Primary Expressions.
   virtual ExprTy *ParseIntegerConstant(const LexerToken &Tok);
   virtual ExprTy *ParseFloatingConstant(const LexerToken &Tok);
+  virtual ExprTy *ParseParenExpr(SourceLocation L, SourceLocation R,
+                                 ExprTy *Val);
   
-  // Binary Operators.  'Tok' is the token
+  // Binary/Unary Operators.  'Tok' is the token for the operator.
+  virtual ExprTy *ParseUnaryOp(const LexerToken &Tok, ExprTy *Input);
+  virtual ExprTy *ParsePostfixUnaryOp(const LexerToken &Tok, ExprTy *Input);
+  
   virtual ExprTy *ParseBinOp(const LexerToken &Tok, ExprTy *LHS, ExprTy *RHS);
   
   /// ParseConditionalOp - Parse a ?: operation.  Note that 'LHS' may be null
@@ -104,6 +111,55 @@ ASTBuilder::ExprTy *ASTBuilder::ParseIntegerConstant(const LexerToken &Tok) {
 }
 ASTBuilder::ExprTy *ASTBuilder::ParseFloatingConstant(const LexerToken &Tok) {
   return new FloatingConstant();
+}
+
+ASTBuilder::ExprTy *ASTBuilder::ParseParenExpr(SourceLocation L, 
+                                               SourceLocation R,
+                                               ExprTy *Val) {
+  // FIXME: This is obviously just for testing.
+  ((Expr*)Val)->dump();
+  if (!FullLocInfo) return Val;
+  
+  return new ParenExpr(L, R, (Expr*)Val);
+}
+
+// Unary Operators.  'Tok' is the token for the operator.
+ASTBuilder::ExprTy *ASTBuilder::ParseUnaryOp(const LexerToken &Tok, 
+                                             ExprTy *Input) {
+  UnaryOperator::Opcode Opc;
+  switch (Tok.getKind()) {
+  default: assert(0 && "Unknown unary op!");
+  case tok::plusplus:   Opc = UnaryOperator::PreInc; break;
+  case tok::minusminus: Opc = UnaryOperator::PreDec; break;
+  case tok::amp:        Opc = UnaryOperator::AddrOf; break;
+  case tok::star:       Opc = UnaryOperator::Deref; break;
+  case tok::plus:       Opc = UnaryOperator::Plus; break;
+  case tok::minus:      Opc = UnaryOperator::Minus; break;
+  case tok::tilde:      Opc = UnaryOperator::Not; break;
+  case tok::exclaim:    Opc = UnaryOperator::LNot; break;
+  case tok::kw___real:  Opc = UnaryOperator::Real; break;
+  case tok::kw___imag:  Opc = UnaryOperator::Imag; break;
+  }
+
+  if (!FullLocInfo)
+    return new UnaryOperator((Expr*)Input, Opc);
+  else
+    return new UnaryOperatorLOC(Tok.getLocation(), (Expr*)Input, Opc);
+}
+
+ASTBuilder::ExprTy *ASTBuilder::ParsePostfixUnaryOp(const LexerToken &Tok,
+                                                    ExprTy *Input) {
+  UnaryOperator::Opcode Opc;
+  switch (Tok.getKind()) {
+  default: assert(0 && "Unknown unary op!");
+  case tok::plusplus:   Opc = UnaryOperator::PostInc; break;
+  case tok::minusminus: Opc = UnaryOperator::PostDec; break;
+  }
+  
+  if (!FullLocInfo)
+    return new UnaryOperator((Expr*)Input, Opc);
+  else
+    return new UnaryOperatorLOC(Tok.getLocation(), (Expr*)Input, Opc);
 }
 
 // Binary Operators.  'Tok' is the token for the operator.

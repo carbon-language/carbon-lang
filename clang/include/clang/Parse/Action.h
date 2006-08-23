@@ -73,8 +73,19 @@ public:
   // Primary Expressions.
   virtual ExprTy *ParseIntegerConstant(const LexerToken &Tok) { return 0; }
   virtual ExprTy *ParseFloatingConstant(const LexerToken &Tok) { return 0; }
-  
-  // Binary Operators.  'Tok' is the token
+
+  virtual ExprTy *ParseParenExpr(SourceLocation L, SourceLocation R,
+                                 ExprTy *Val) {
+    return Val;
+  }
+
+  // Binary/Unary Operators.  'Tok' is the token for the operator.
+  virtual ExprTy *ParseUnaryOp(const LexerToken &Tok, ExprTy *Input) {
+    return 0;
+  }
+  virtual ExprTy *ParsePostfixUnaryOp(const LexerToken &Tok, ExprTy *Input) {
+    return 0;
+  }
   virtual ExprTy *ParseBinOp(const LexerToken &Tok, ExprTy *LHS, ExprTy *RHS) {
     return 0;
   }

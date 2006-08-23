@@ -416,6 +416,7 @@ Parser::ParseRHSOfBinaryExpression(ExprResult LHS, unsigned MinPrec) {
 ///
 Parser::ExprResult Parser::ParseCastExpression(bool isUnaryExpression) {
   ExprResult Res;
+  LexerToken SavedTok;
   
   // This handles all of cast-expression, unary-expression, postfix-expression,
   // and primary-expression.  We handle them together like this for efficiency
@@ -491,8 +492,12 @@ Parser::ExprResult Parser::ParseCastExpression(bool isUnaryExpression) {
     return ParseBuiltinPrimaryExpression();
   case tok::plusplus:      // unary-expression: '++' unary-expression
   case tok::minusminus:    // unary-expression: '--' unary-expression
+    SavedTok = Tok;
     ConsumeToken();
-    return ParseCastExpression(true);
+    Res = ParseCastExpression(true);
+    if (!Res.isInvalid)
+      Res = Actions.ParseUnaryOp(SavedTok, Res.Val);
+    return Res;
   case tok::amp:           // unary-expression: '&' cast-expression
   case tok::star:          // unary-expression: '*' cast-expression
   case tok::plus:          // unary-expression: '+' cast-expression
@@ -500,10 +505,14 @@ Parser::ExprResult Parser::ParseCastExpression(bool isUnaryExpression) {
   case tok::tilde:         // unary-expression: '~' cast-expression
   case tok::exclaim:       // unary-expression: '!' cast-expression
   case tok::kw___real:     // unary-expression: '__real' cast-expression [GNU]
-  case tok::kw___imag:     // unary-expression: '__real' cast-expression [GNU]
+  case tok::kw___imag:     // unary-expression: '__imag' cast-expression [GNU]
   //case tok::kw__extension__:  [TODO]
+    SavedTok = Tok;
     ConsumeToken();
-    return ParseCastExpression(false);
+    Res = ParseCastExpression(false);
+    if (!Res.isInvalid)
+      Res = Actions.ParseUnaryOp(SavedTok, Res.Val);
+    return Res;
     
   case tok::kw_sizeof:     // unary-expression: 'sizeof' unary-expression
                            // unary-expression: 'sizeof' '(' type-name ')'
@@ -594,6 +603,8 @@ Parser::ExprResult Parser::ParsePostfixExpressionSuffix(ExprResult LHS) {
       
     case tok::plusplus:    // postfix-expression: postfix-expression '++'
     case tok::minusminus:  // postfix-expression: postfix-expression '--'
+      if (!LHS.isInvalid)
+        LHS = Actions.ParsePostfixUnaryOp(Tok, LHS.Val);
       ConsumeToken();
       break;
     }
@@ -749,6 +760,7 @@ Parser::ExprResult Parser::ParseStringLiteralExpression() {
   // considered to be strings.
   while (isTokenStringLiteral())
     ConsumeStringToken();
+  // TODO: Build AST for string literals.
   return ExprResult(false);
 }
 
@@ -777,6 +789,7 @@ Parser::ExprResult Parser::ParseParenExpression(ParenParseOption &ExprType) {
     Diag(Tok, diag::ext_gnu_statement_expr);
     ParseCompoundStatement();
     ExprType = CompoundStmt;
+    // TODO: Build AST for GNU compound stmt.
   } else if (ExprType >= CompoundLiteral && isTypeSpecifierQualifier()) {
     // Otherwise, this is a compound literal expression or cast expression.
     ParseTypeName();
@@ -789,9 +802,11 @@ Parser::ExprResult Parser::ParseParenExpression(ParenParseOption &ExprType) {
         Diag(OpenLoc, diag::ext_c99_compound_literal);
       Result = ParseInitializer();
       ExprType = CompoundLiteral;
+      // TODO: Build AST for compound literal.
     } else if (ExprType == CastExpr) {
       // Note that this doesn't parse the subsequence cast-expression.
       ExprType = CastExpr;
+      // TODO: Build AST for cast in caller.
     } else {
       Diag(Tok, diag::err_expected_lbrace_in_compound_literal);
       return ExprResult(true);
@@ -800,6 +815,8 @@ Parser::ExprResult Parser::ParseParenExpression(ParenParseOption &ExprType) {
   } else {
     Result = ParseExpression();
     ExprType = SimpleExpr;
+    if (!Result.isInvalid && Tok.getKind() == tok::r_paren)
+      Result = Actions.ParseParenExpr(OpenLoc, Tok.getLocation(), Result.Val);
   }
   
   // Match the ')'.
@@ -807,5 +824,6 @@ Parser::ExprResult Parser::ParseParenExpression(ParenParseOption &ExprType) {
     SkipUntil(tok::r_paren);
   else
     MatchRHSPunctuation(tok::r_paren, OpenLoc);
+  
   return Result;
 }

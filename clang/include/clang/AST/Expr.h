@@ -26,16 +26,75 @@ class Expr {
 public:
   Expr() {}
   virtual ~Expr() {}
+  
+  // FIXME: Change to non-virtual method that uses visitor pattern to do this.
+  void dump() const;
+  
+private:
+  virtual void dump_impl() const = 0;
 };
+
+//===----------------------------------------------------------------------===//
+// Primary Expressions.
+//===----------------------------------------------------------------------===//
 
 class IntegerConstant : public Expr {
 public:
   IntegerConstant() {}
+  virtual void dump_impl() const;
 };
 
 class FloatingConstant : public Expr {
 public:
   FloatingConstant() {}
+  virtual void dump_impl() const;
+};
+
+/// ParenExpr - This represents a parethesized expression, e.g. "(1)".  This
+/// AST node is only formed if full location information is requested.
+class ParenExpr : public Expr {
+  SourceLocation L, R;
+  Expr *Val;
+public:
+  ParenExpr(SourceLocation l, SourceLocation r, Expr *val)
+    : L(l), R(r), Val(val) {}
+  virtual void dump_impl() const;
+};
+
+
+/// UnaryOperator - This represents the unary-expression's (except sizeof), the
+/// postinc/postdec operators from postfix-expression, and various extensions.
+class UnaryOperator : public Expr {
+public:
+  enum Opcode {
+    PostInc, PostDec, // [C99 6.5.2.4] Postfix increment and decrement operators
+    PreInc, PreDec,   // [C99 6.5.3.1] Prefix increment and decrement operators.
+    AddrOf, Deref,    // [C99 6.5.3.2] Address and indirection operators.
+    Plus, Minus,      // [C99 6.5.3.3] Unary arithmetic operators.
+    Not, LNot,        // [C99 6.5.3.3] Unary arithmetic operators.
+    Real, Imag        // "__real expr"/"__imag expr" Extension.
+  };
+
+  UnaryOperator(Expr *input, Opcode opc)
+    : Input(input), Opc(opc) {}
+  
+  /// getOpcodeStr - Turn an Opcode enum value into the punctuation char it
+  /// corresponds to, e.g. "sizeof" or "[pre]++"
+  static const char *getOpcodeStr(Opcode Op);
+  
+  virtual void dump_impl() const;
+  
+private:
+  Expr *Input;
+  Opcode Opc;
+};
+
+class UnaryOperatorLOC : public UnaryOperator {
+  SourceLocation Loc;
+public:
+  UnaryOperatorLOC(SourceLocation loc, Expr *Input, Opcode Opc)
+   : UnaryOperator(Input, Opc), Loc(loc) {}
+
 };
 
 class BinaryOperator : public Expr {
@@ -64,6 +123,12 @@ public:
   BinaryOperator(Expr *lhs, Expr *rhs, Opcode opc)
     : LHS(lhs), RHS(rhs), Opc(opc) {}
 
+  /// getOpcodeStr - Turn an Opcode enum value into the punctuation char it
+  /// corresponds to, e.g. "<<=".
+  static const char *getOpcodeStr(Opcode Op);
+  
+  virtual void dump_impl() const;
+
 private:
   Expr *LHS, *RHS;
   Opcode Opc;
@@ -85,6 +150,7 @@ class ConditionalOperator : public Expr {
 public:
   ConditionalOperator(Expr *cond, Expr *lhs, Expr *rhs)
     : Cond(cond), LHS(lhs), RHS(rhs) {}
+  virtual void dump_impl() const;
 };
 
 /// ConditionalOperatorLOC - ConditionalOperator with full location info.
