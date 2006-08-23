@@ -219,9 +219,6 @@ int main(int argc, char **argv) {
       }
     }
 
-    if (FileType != TargetMachine::AssemblyFile)
-      std::cerr << "WARNING: only -filetype=asm is currently supported.\n";
-    
     // Ask the target to add backend passes as necessary.
     if (Target.addPassesToEmitFile(Passes, *Out, FileType, Fast)) {
       std::cerr << argv[0] << ": target '" << Target.getName()

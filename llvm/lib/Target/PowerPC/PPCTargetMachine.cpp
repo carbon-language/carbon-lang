@@ -109,11 +109,11 @@ PPC64TargetMachine::PPC64TargetMachine(const Module &M, const std::string &FS)
 /// addPassesToEmitFile - Add passes to the specified pass manager to implement
 /// a static compiler for this target.
 ///
-bool PPCTargetMachine::addPassesToEmitFile(PassManager &PM,
-                                           std::ostream &Out,
+bool PPCTargetMachine::addPassesToEmitFile(PassManager &PM, std::ostream &Out,
                                            CodeGenFileType FileType,
                                            bool Fast) {
-  if (FileType != TargetMachine::AssemblyFile) return true;
+  if (FileType != TargetMachine::AssemblyFile &&
+      FileType != TargetMachine::ObjectFile) return true;
   
   // Run loop strength reduction before anything else.
   if (!Fast) PM.add(createLoopStrengthReducePass(&TLInfo));
@@ -146,7 +146,11 @@ bool PPCTargetMachine::addPassesToEmitFile(PassManager &PM,
   // Must run branch selection immediately preceding the asm printer
   PM.add(createPPCBranchSelectionPass());
 
-  PM.add(createDarwinAsmPrinter(Out, *this));
+  if (FileType == TargetMachine::AssemblyFile)
+    PM.add(createDarwinAsmPrinter(Out, *this));
+  else
+    // FIXME: support PPC ELF files at some point
+    addPPCMachOObjectWriterPass(PM, Out, *this);
 
   PM.add(createMachineCodeDeleter());
   return false;
@@ -184,3 +188,17 @@ void PPCJITInfo::addPassesToJITCompile(FunctionPassManager &PM) {
     PM.add(createMachineFunctionPrinterPass(&std::cerr));
 }
 
+/// addPassesToEmitMachineCode - Add passes to the specified pass manager to get
+/// machine code emitted.  This uses a MachineCodeEmitter object to handle
+/// actually outputting the machine code and resolving things like the address
+/// of functions.  This method should returns true if machine code emission is
+/// not supported.
+///
+bool PPCTargetMachine::addPassesToEmitMachineCode(FunctionPassManager &PM,
+                                                  MachineCodeEmitter &MCE) {
+  // Machine code emitter pass for PowerPC
+  PM.add(createPPCCodeEmitterPass(*this, MCE));
+  // Delete machine code for this function after emitting it
+  PM.add(createMachineCodeDeleter());
+  return false;
+}

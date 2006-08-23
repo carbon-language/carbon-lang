@@ -19,11 +19,18 @@
 
 namespace llvm {
 
-class FunctionPass;
 class PPCTargetMachine;
+class PassManager;
+class FunctionPass;
+class MachineCodeEmitter;
+
 FunctionPass *createPPCBranchSelectionPass();
 FunctionPass *createPPCISelDag(PPCTargetMachine &TM);
 FunctionPass *createDarwinAsmPrinter(std::ostream &OS, PPCTargetMachine &TM);
+FunctionPass *createPPCCodeEmitterPass(PPCTargetMachine &TM,
+                                       MachineCodeEmitter &MCE);
+void addPPCMachOObjectWriterPass(PassManager &FPM, std::ostream &o, 
+                                 PPCTargetMachine &tm);
 } // end namespace llvm;
 
 // GCC #defines PPC on Linux but we use it as our namespace name

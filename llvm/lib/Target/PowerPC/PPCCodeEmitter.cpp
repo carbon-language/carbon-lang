@@ -21,7 +21,7 @@
 #include "llvm/CodeGen/MachineFunctionPass.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "llvm/CodeGen/Passes.h"
-#include "llvm/Support/Debug.h"
+#include "llvm/Support/Debug.h"                   
 #include "llvm/Support/Visibility.h"
 #include "llvm/Target/TargetOptions.h"
 #include <iostream>
@@ -62,19 +62,11 @@ namespace {
   };
 }
 
-/// addPassesToEmitMachineCode - Add passes to the specified pass manager to get
-/// machine code emitted.  This uses a MachineCodeEmitter object to handle
-/// actually outputting the machine code and resolving things like the address
-/// of functions.  This method should returns true if machine code emission is
-/// not supported.
-///
-bool PPCTargetMachine::addPassesToEmitMachineCode(FunctionPassManager &PM,
-                                                  MachineCodeEmitter &MCE) {
-  // Machine code emitter pass for PowerPC
-  PM.add(new PPCCodeEmitter(*this, MCE));
-  // Delete machine code for this function after emitting it
-  PM.add(createMachineCodeDeleter());
-  return false;
+/// createPPCCodeEmitterPass - Return a pass that emits the collected PPC code
+/// to the specified MCE object.
+FunctionPass *llvm::createPPCCodeEmitterPass(PPCTargetMachine &TM,
+                                             MachineCodeEmitter &MCE) {
+  return new PPCCodeEmitter(TM, MCE);
 }
 
 #ifdef __APPLE__ 
@@ -132,7 +124,8 @@ int PPCCodeEmitter::getMachineOpValue(MachineInstr &MI, MachineOperand &MO) {
     }
   } else if (MO.isImmediate()) {
     rv = MO.getImmedValue();
-  } else if (MO.isGlobalAddress() || MO.isExternalSymbol()) {
+  } else if (MO.isGlobalAddress() || MO.isExternalSymbol() ||
+             MO.isConstantPoolIndex() || MO.isJumpTableIndex()) {
     unsigned Reloc = 0;
     if (MI.getOpcode() == PPC::BL)
       Reloc = PPC::reloc_pcrel_bx;
@@ -141,6 +134,7 @@ int PPCCodeEmitter::getMachineOpValue(MachineInstr &MI, MachineOperand &MO) {
       default: DEBUG(MI.dump()); assert(0 && "Unknown instruction for relocation!");
       case PPC::LIS:
       case PPC::LIS8:
+      case PPC::ADDIS:
       case PPC::ADDIS8:
         Reloc = PPC::reloc_absolute_high;       // Pointer to symbol
         break;
@@ -176,9 +170,17 @@ int PPCCodeEmitter::getMachineOpValue(MachineInstr &MI, MachineOperand &MO) {
     if (MO.isGlobalAddress())
       MCE.addRelocation(MachineRelocation::getGV(MCE.getCurrentPCOffset(),
                                           Reloc, MO.getGlobal(), 0));
-    else
+    else if (MO.isExternalSymbol())
       MCE.addRelocation(MachineRelocation::getExtSym(MCE.getCurrentPCOffset(),
                                           Reloc, MO.getSymbolName(), 0));
+    else if (MO.isConstantPoolIndex())
+      MCE.addRelocation(MachineRelocation::getConstPool(
+                                          MCE.getCurrentPCOffset(),
+                                          Reloc, MO.getConstantPoolIndex(), 0));
+    else // isJumpTableIndex
+      MCE.addRelocation(MachineRelocation::getJumpTable(
+                                          MCE.getCurrentPCOffset(),
+                                          Reloc, MO.getJumpTableIndex(), 0));
   } else if (MO.isMachineBasicBlock()) {
     unsigned Reloc = 0;
     unsigned Opcode = MI.getOpcode();
@@ -190,28 +192,6 @@ int PPCCodeEmitter::getMachineOpValue(MachineInstr &MI, MachineOperand &MO) {
     MCE.addRelocation(MachineRelocation::getBB(MCE.getCurrentPCOffset(),
                                                Reloc,
                                                MO.getMachineBasicBlock()));
-  } else if (MO.isConstantPoolIndex() || MO.isJumpTableIndex()) {
-    if (MO.isConstantPoolIndex())
-      rv = MCE.getConstantPoolEntryAddress(MO.getConstantPoolIndex());
-    else
-      rv = MCE.getJumpTableEntryAddress(MO.getJumpTableIndex());
-
-    unsigned Opcode = MI.getOpcode();
-    if (Opcode == PPC::LIS || Opcode == PPC::LIS8 ||
-        Opcode == PPC::ADDIS || Opcode == PPC::ADDIS8) {
-      // lis wants hi16(addr)
-      if ((short)rv < 0) rv += 1 << 16;
-      rv >>= 16;
-    } else if (Opcode == PPC::LWZ || Opcode == PPC::LWZ8 ||
-               Opcode == PPC::LA ||
-               Opcode == PPC::LI  || Opcode == PPC::LI8 ||
-               Opcode == PPC::LFS || Opcode == PPC::LFD) {
-      // These load opcodes want lo16(addr)
-      rv &= 0xffff;
-    } else {
-      MI.dump();
-      assert(0 && "Unknown constant pool or jump table using instruction!");
-    }
   } else {
     std::cerr << "ERROR: Unknown type of MachineOperand: " << MO << "\n";
     abort();

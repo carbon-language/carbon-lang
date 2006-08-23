@@ -136,7 +136,7 @@ bool X86TargetMachine::addPassesToEmitFile(PassManager &PM, std::ostream &Out,
     case TargetMachine::ObjectFile:
       // FIXME: We only support emission of ELF files for now, this should check
       // the target triple and decide on the format to write (e.g. COFF on
-      // win32).
+      // win32 or Mach-O on darwin).
       addX86ELFObjectWriterPass(PM, Out, *this);
       break;
     }
