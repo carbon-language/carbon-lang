@@ -139,12 +139,21 @@ bool BugDriver::runPasses(const std::vector<const PassInfo*> &Passes,
   // setup the output file name
   std::cout << std::flush;
   sys::Path uniqueFilename("bugpoint-output.bc");
-  uniqueFilename.makeUnique();
+  std::string ErrMsg;
+  if (uniqueFilename.makeUnique(true, &ErrMsg)) {
+    std::cerr << getToolName() << ": Error making unique filename: " 
+              << ErrMsg << "\n";
+    return(1);
+  }
   OutputFilename = uniqueFilename.toString();
 
   // set up the input file name
   sys::Path inputFilename("bugpoint-input.bc");
-  inputFilename.makeUnique();
+  if (inputFilename.makeUnique(true, &ErrMsg)) {
+    std::cerr << getToolName() << ": Error making unique filename: " 
+              << ErrMsg << "\n";
+    return(1);
+  }
   std::ios::openmode io_mode = std::ios::out | std::ios::trunc |
                                std::ios::binary;
   std::ofstream InFile(inputFilename.c_str(), io_mode);
@@ -179,7 +188,6 @@ bool BugDriver::runPasses(const std::vector<const PassInfo*> &Passes,
   args[n++] = 0;
 
   sys::Path prog(sys::Program::FindProgramByName(ToolName));
-  std::string ErrMsg;
   int result = sys::Program::ExecuteAndWait(prog,args,0,0,Timeout,&ErrMsg);
 
   // If we are supposed to delete the bytecode file or if the passes crashed,

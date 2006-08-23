@@ -414,7 +414,7 @@ namespace sys {
       /// already unique.
       /// @throws std::string if an unrecoverable error occurs.
       /// @brief Make the current path name unique in the file system.
-      void makeUnique( bool reuse_current = true );
+      bool makeUnique( bool reuse_current /*= true*/, std::string* ErrMsg );
 
     /// @}
     /// @name Disk Mutators
@@ -529,9 +529,9 @@ namespace sys {
 
   /// This function can be used to copy the file specified by Src to the
   /// file specified by Dest. If an error occurs, Dest is removed.
-  /// @throws std::string if an error opening or writing the files occurs.
+  /// @returns true if an error occurs, false otherwise
   /// @brief Copy one file to another.
-  void CopyFile(const Path& Dest, const Path& Src);
+  bool CopyFile(const Path& Dest, const Path& Src, std::string* ErrMsg);
 }
 
 std::ostream& operator<<(std::ostream& strm, const sys::Path& aPath);

@@ -776,7 +776,12 @@ static bool TestCodeGenerator(BugDriver &BD, Module *Test, Module *Safe) {
   CleanupAndPrepareModules(BD, Test, Safe);
 
   sys::Path TestModuleBC("bugpoint.test.bc");
-  TestModuleBC.makeUnique();
+  std::string ErrMsg;
+  if (TestModuleBC.makeUnique(true, &ErrMsg)) {
+    std::cerr << BD.getToolName() << "Error making unique filename: "
+              << ErrMsg << "\n";
+    exit(1);
+  }
   if (BD.writeProgramToFile(TestModuleBC.toString(), Test)) {
     std::cerr << "Error writing bytecode to `" << TestModuleBC << "'\nExiting.";
     exit(1);
@@ -785,7 +790,11 @@ static bool TestCodeGenerator(BugDriver &BD, Module *Test, Module *Safe) {
 
   // Make the shared library
   sys::Path SafeModuleBC("bugpoint.safe.bc");
-  SafeModuleBC.makeUnique();
+  if (SafeModuleBC.makeUnique(true, &ErrMsg)) {
+    std::cerr << BD.getToolName() << "Error making unique filename: "
+              << ErrMsg << "\n";
+    exit(1);
+  }
 
   if (BD.writeProgramToFile(SafeModuleBC.toString(), Safe)) {
     std::cerr << "Error writing bytecode to `" << SafeModuleBC << "'\nExiting.";
@@ -836,7 +845,12 @@ bool BugDriver::debugCodeGenerator() {
   CleanupAndPrepareModules(*this, ToCodeGen, ToNotCodeGen);
 
   sys::Path TestModuleBC("bugpoint.test.bc");
-  TestModuleBC.makeUnique();
+  std::string ErrMsg;
+  if (TestModuleBC.makeUnique(true, &ErrMsg)) {
+    std::cerr << getToolName() << "Error making unique filename: "
+              << ErrMsg << "\n";
+    exit(1);
+  }
 
   if (writeProgramToFile(TestModuleBC.toString(), ToCodeGen)) {
     std::cerr << "Error writing bytecode to `" << TestModuleBC << "'\nExiting.";
@@ -846,7 +860,11 @@ bool BugDriver::debugCodeGenerator() {
 
   // Make the shared library
   sys::Path SafeModuleBC("bugpoint.safe.bc");
-  SafeModuleBC.makeUnique();
+  if (SafeModuleBC.makeUnique(true, &ErrMsg)) {
+    std::cerr << getToolName() << "Error making unique filename: "
+              << ErrMsg << "\n";
+    exit(1);
+  }
 
   if (writeProgramToFile(SafeModuleBC.toString(), ToNotCodeGen)) {
     std::cerr << "Error writing bytecode to `" << SafeModuleBC << "'\nExiting.";

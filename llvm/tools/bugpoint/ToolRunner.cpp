@@ -53,7 +53,11 @@ static void ProcessFailure(sys::Path ProgPath, const char** Args) {
 
   // Rerun the compiler, capturing any error messages to print them.
   sys::Path ErrorFilename("error_messages");
-  ErrorFilename.makeUnique();
+  std::string ErrMsg;
+  if (ErrorFilename.makeUnique(true, &ErrMsg)) {
+    std::cerr << "Error making unique filename: " << ErrMsg << "\n";
+    exit(1);
+  }
   RunProgramWithTimeout(ProgPath, Args, sys::Path(""), ErrorFilename,
                         ErrorFilename); // FIXME: check return code ?
 
@@ -153,7 +157,11 @@ AbstractInterpreter *AbstractInterpreter::createLLI(const std::string &ProgPath,
 //
 void LLC::OutputAsm(const std::string &Bytecode, sys::Path &OutputAsmFile) {
   sys::Path uniqueFile(Bytecode+".llc.s");
-  uniqueFile.makeUnique();
+  std::string ErrMsg;
+  if (uniqueFile.makeUnique(true, &ErrMsg)) {
+    std::cerr << "Error making unique filename: " << ErrMsg << "\n";
+    exit(1);
+  }
   OutputAsmFile = uniqueFile;
   std::vector<const char *> LLCArgs;
   LLCArgs.push_back (LLCPath.c_str());
@@ -307,7 +315,11 @@ AbstractInterpreter *AbstractInterpreter::createJIT(const std::string &ProgPath,
 
 void CBE::OutputC(const std::string &Bytecode, sys::Path& OutputCFile) {
   sys::Path uniqueFile(Bytecode+".cbe.c");
-  uniqueFile.makeUnique();
+  std::string ErrMsg;
+  if (uniqueFile.makeUnique(true, &ErrMsg)) {
+    std::cerr << "Error making unique filename: " << ErrMsg << "\n";
+    exit(1);
+  }
   OutputCFile = uniqueFile;
   std::vector<const char *> LLCArgs;
   LLCArgs.push_back (LLCPath.c_str());
@@ -409,7 +421,11 @@ int GCC::ExecuteProgram(const std::string &ProgramFile,
   GCCArgs.push_back("none");
   GCCArgs.push_back("-o");
   sys::Path OutputBinary (ProgramFile+".gcc.exe");
-  OutputBinary.makeUnique();
+  std::string ErrMsg;
+  if (OutputBinary.makeUnique(true, &ErrMsg)) {
+    std::cerr << "Error making unique filename: " << ErrMsg << "\n";
+    exit(1);
+  }
   GCCArgs.push_back(OutputBinary.c_str()); // Output to the right file...
 
   // Add any arguments intended for GCC. We locate them here because this is
@@ -462,7 +478,11 @@ int GCC::MakeSharedObject(const std::string &InputFile, FileType fileType,
                           std::string &OutputFile,
                           const std::vector<std::string> &ArgsForGCC) {
   sys::Path uniqueFilename(InputFile+LTDL_SHLIB_EXT);
-  uniqueFilename.makeUnique();
+  std::string ErrMsg;
+  if (uniqueFilename.makeUnique(true, &ErrMsg)) {
+    std::cerr << "Error making unique filename: " << ErrMsg << "\n";
+    exit(1);
+  }
   OutputFile = uniqueFilename.toString();
 
   std::vector<const char*> GCCArgs;

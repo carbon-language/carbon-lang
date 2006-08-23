@@ -251,7 +251,11 @@ sys::Path WriteGraph(const GraphType &G,
     return Filename;
   }
   Filename.appendComponent(Name + ".dot");
-  Filename.makeUnique();
+  if (Filename.makeUnique(true,&ErrMsg)) {
+    std::cerr << "Error: " << ErrMsg << "\n";
+    return sys::Path();
+  }
+
   std::cerr << "Writing '" << Filename << "'... ";
   
   std::ofstream O(Filename.c_str());

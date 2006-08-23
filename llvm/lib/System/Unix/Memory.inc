@@ -35,7 +35,7 @@ llvm::sys::Memory::AllocateRWX(unsigned NumBytes, const MemoryBlock* NearBlock,
 #ifdef NEED_DEV_ZERO_FOR_MMAP
   static int zero_fd = open("/dev/zero", O_RDWR);
   if (zero_fd == -1) {
-    GetErrno("Can't open /dev/zero device", ErrMsg);
+    MakeErrMsg(ErrMsg, "Can't open /dev/zero device");
     return MemoryBlock();
   }
   fd = zero_fd;
@@ -58,7 +58,7 @@ llvm::sys::Memory::AllocateRWX(unsigned NumBytes, const MemoryBlock* NearBlock,
     if (NearBlock) //Try again without a near hint
       return AllocateRWX(NumBytes, 0);
 
-    GetErrno("Can't allocate RWX Memory", ErrMsg);
+    MakeErrMsg(ErrMsg, "Can't allocate RWX Memory");
     return MemoryBlock();
   }
   MemoryBlock result;
@@ -70,7 +70,7 @@ llvm::sys::Memory::AllocateRWX(unsigned NumBytes, const MemoryBlock* NearBlock,
 bool llvm::sys::Memory::ReleaseRWX(MemoryBlock &M, std::string *ErrMsg) {
   if (M.Address == 0 || M.Size == 0) return false;
   if (0 != ::munmap(M.Address, M.Size))
-    return GetErrno("Can't release RWX Memory", ErrMsg);
+    return MakeErrMsg(ErrMsg, "Can't release RWX Memory");
   return false;
 }
 

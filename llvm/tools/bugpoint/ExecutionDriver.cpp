@@ -161,7 +161,12 @@ bool BugDriver::initializeExecutionEnvironment() {
 void BugDriver::compileProgram(Module *M) {
   // Emit the program to a bytecode file...
   sys::Path BytecodeFile ("bugpoint-test-program.bc");
-  BytecodeFile.makeUnique();
+  std::string ErrMsg;
+  if (BytecodeFile.makeUnique(true,&ErrMsg)) {
+    std::cerr << ToolName << ": Error making unique filename: " << ErrMsg 
+              << "\n";
+    exit(1);
+  }
   if (writeProgramToFile(BytecodeFile.toString(), M)) {
     std::cerr << ToolName << ": Error emitting bytecode to file '"
               << BytecodeFile << "'!\n";
@@ -188,10 +193,15 @@ std::string BugDriver::executeProgram(std::string OutputFile,
   if (AI == 0) AI = Interpreter;
   assert(AI && "Interpreter should have been created already!");
   bool CreatedBytecode = false;
+  std::string ErrMsg;
   if (BytecodeFile.empty()) {
     // Emit the program to a bytecode file...
     sys::Path uniqueFilename("bugpoint-test-program.bc");
-    uniqueFilename.makeUnique();
+    if (uniqueFilename.makeUnique(true, &ErrMsg)) {
+      std::cerr << ToolName << ": Error making unique filename: " 
+                << ErrMsg << "!\n";
+      exit(1);
+    }
     BytecodeFile = uniqueFilename.toString();
 
     if (writeProgramToFile(BytecodeFile, Program)) {
@@ -210,7 +220,11 @@ std::string BugDriver::executeProgram(std::string OutputFile,
 
   // Check to see if this is a valid output filename...
   sys::Path uniqueFile(OutputFile);
-  uniqueFile.makeUnique();
+  if (uniqueFile.makeUnique(true, &ErrMsg)) {
+    std::cerr << ToolName << ": Error making unique filename: "
+              << ErrMsg << "\n";
+    exit(1);
+  }
   OutputFile = uniqueFile.toString();
 
   // Figure out which shared objects to run, if any.

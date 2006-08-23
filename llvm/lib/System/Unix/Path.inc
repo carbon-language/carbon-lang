@@ -169,6 +169,7 @@ Path::GetTemporaryDirectory(std::string* ErrMsg ) {
     MakeErrMsg(ErrMsg, 
       std::string(pathname) + ": can't create temporary directory");
     return Path();
+  }
   Path result;
   result.set(pathname);
   assert(result.isValid() && "mkstemp didn't create a valid pathname!");
@@ -359,7 +360,8 @@ bool
 Path::getFileStatus(FileStatus &info, std::string *ErrStr) const {
   struct stat buf;
   if (0 != stat(path.c_str(), &buf))
-    return GetErrno(path + ": can't get status of file '" + path + "'", ErrStr);
+    return MakeErrMsg(ErrStr, 
+      path + ": can't get status of file '" + path + "'");
   info.fileSize = buf.st_size;
   info.modTime.fromEpochTime(buf.st_mtime);
   info.mode = buf.st_mode;
@@ -566,7 +568,8 @@ Path::createFileOnDisk(std::string* ErrMsg) {
 bool
 Path::createTemporaryFileOnDisk(bool reuse_current, std::string* ErrMsg) {
   // Make this into a unique file name
-  makeUnique( reuse_current );
+  if (makeUnique( reuse_current, ErrMsg ))
+    return true;
 
   // create the file
   int fd = ::open(path.c_str(), O_WRONLY|O_CREAT|O_TRUNC, 0666);
@@ -589,7 +592,7 @@ Path::eraseFromDisk(bool remove_contents, std::string *ErrStr) const {
   // or other things that aren't "regular" files. 
   if (Status.isFile) {
     if (unlink(path.c_str()) != 0)
-      return GetErrno(path + ": can't destroy file", ErrStr);
+      return MakeErrMsg(ErrStr, path + ": can't destroy file");
     return false;
   }
   
@@ -614,8 +617,8 @@ Path::eraseFromDisk(bool remove_contents, std::string *ErrStr) const {
     pathname[lastchar+1] = 0;
     
   if (rmdir(pathname) != 0)
-    return GetErrno(std::string(pathname) + ": can't destroy directory",
-                    ErrStr);
+    return MakeErrMsg(ErrStr, 
+      std::string(pathname) + ": can't destroy directory");
   return false;
 }
 
@@ -633,59 +636,63 @@ Path::setStatusInfoOnDisk(const FileStatus &si, std::string *ErrStr) const {
   utb.actime = si.modTime.toPosixTime();
   utb.modtime = utb.actime;
   if (0 != ::utime(path.c_str(),&utb))
-    return GetErrno(path + ": can't set file modification time", ErrStr);
+    return MakeErrMsg(ErrStr, path + ": can't set file modification time");
   if (0 != ::chmod(path.c_str(),si.mode))
-    return GetErrno(path + ": can't set mode", ErrStr);
+    return MakeErrMsg(ErrStr, path + ": can't set mode");
   return false;
 }
 
-void 
-sys::CopyFile(const sys::Path &Dest, const sys::Path &Src) {
+bool 
+sys::CopyFile(const sys::Path &Dest, const sys::Path &Src, std::string* ErrMsg){
   int inFile = -1;
   int outFile = -1;
-  try {
-    inFile = ::open(Src.c_str(), O_RDONLY);
-    if (inFile == -1)
-      ThrowErrno(Src.toString() + ": can't open source file to copy: ");
+  inFile = ::open(Src.c_str(), O_RDONLY);
+  if (inFile == -1)
+    return MakeErrMsg(ErrMsg, Src.toString() + 
+      ": can't open source file to copy");
 
-    outFile = ::open(Dest.c_str(), O_WRONLY|O_CREAT, 0666);
-    if (outFile == -1)
-      ThrowErrno(Dest.toString() +": can't create destination file for copy: ");
+  outFile = ::open(Dest.c_str(), O_WRONLY|O_CREAT, 0666);
+  if (outFile == -1) {
+    ::close(inFile);
+    return MakeErrMsg(ErrMsg, Dest.toString() +
+      ": can't create destination file for copy");
+  }
 
-    char Buffer[16*1024];
-    while (ssize_t Amt = ::read(inFile, Buffer, 16*1024)) {
-      if (Amt == -1) {
-        if (errno != EINTR && errno != EAGAIN) 
-          ThrowErrno(Src.toString()+": can't read source file: ");
-      } else {
-        char *BufPtr = Buffer;
-        while (Amt) {
-          ssize_t AmtWritten = ::write(outFile, BufPtr, Amt);
-          if (AmtWritten == -1) {
-            if (errno != EINTR && errno != EAGAIN) 
-              ThrowErrno(Dest.toString() + ": can't write destination file: ");
-          } else {
-            Amt -= AmtWritten;
-            BufPtr += AmtWritten;
+  char Buffer[16*1024];
+  while (ssize_t Amt = ::read(inFile, Buffer, 16*1024)) {
+    if (Amt == -1) {
+      if (errno != EINTR && errno != EAGAIN) {
+        ::close(inFile);
+        ::close(outFile);
+        return MakeErrMsg(ErrMsg, Src.toString()+": can't read source file: ");
+      }
+    } else {
+      char *BufPtr = Buffer;
+      while (Amt) {
+        ssize_t AmtWritten = ::write(outFile, BufPtr, Amt);
+        if (AmtWritten == -1) {
+          if (errno != EINTR && errno != EAGAIN) {
+            ::close(inFile);
+            ::close(outFile);
+            return MakeErrMsg(ErrMsg, Dest.toString() + 
+              ": can't write destination file: ");
           }
+        } else {
+          Amt -= AmtWritten;
+          BufPtr += AmtWritten;
         }
       }
     }
-    ::close(inFile);
-    ::close(outFile);
-  } catch (...) {
-    if (inFile != -1)
-      ::close(inFile);
-    if (outFile != -1)
-      ::close(outFile);
-    throw;
   }
+  ::close(inFile);
+  ::close(outFile);
+  return false;
 }
 
-void 
-Path::makeUnique(bool reuse_current) {
+bool 
+Path::makeUnique(bool reuse_current, std::string* ErrMsg) {
   if (reuse_current && !exists())
-    return; // File doesn't exist already, just use it!
+    return false; // File doesn't exist already, just use it!
 
   // Append an XXXXXX pattern to the end of the file for use with mkstemp, 
   // mktemp or our own implementation.
@@ -695,9 +702,8 @@ Path::makeUnique(bool reuse_current) {
 
 #if defined(HAVE_MKSTEMP)
   int TempFD;
-  if ((TempFD = mkstemp(FNBuffer)) == -1) {
-    ThrowErrno(path + ": can't make unique filename");
-  }
+  if ((TempFD = mkstemp(FNBuffer)) == -1)
+    return MakeErrMsg(ErrMsg, path + ": can't make unique filename");
 
   // We don't need to hold the temp file descriptor... we will trust that no one
   // will overwrite/delete the file before we can open it again.
@@ -707,9 +713,8 @@ Path::makeUnique(bool reuse_current) {
   path = FNBuffer;
 #elif defined(HAVE_MKTEMP)
   // If we don't have mkstemp, use the old and obsolete mktemp function.
-  if (mktemp(FNBuffer) == 0) {
-    ThrowErrno(path + ": can't make unique filename");
-  }
+  if (mktemp(FNBuffer) == 0)
+    return MakeErrMsg(ErrMsg, path + ": can't make unique filename");
 
   // Save the name
   path = FNBuffer;
@@ -722,9 +727,11 @@ Path::makeUnique(bool reuse_current) {
     path = FNBuffer;
   }
   if (FCounter > 999999)
-    throw std::string(path + ": can't make unique filename: too many files");
+    return MakeErrMsg(ErrMsg, 
+      path + ": can't make unique filename: too many files");
 #endif
+  return false;
+}
 
-}
-}
+} // end llvm namespace
 
