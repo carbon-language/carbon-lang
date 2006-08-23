@@ -157,7 +157,8 @@ static bool isBytecodeLPath(const std::string &LibPath) {
   
   // Grab the contents of the -L path
   std::set<sys::Path> Files;
-  LPath.getDirectoryContents(Files);
+  if (LPath.getDirectoryContents(Files, 0))
+    return false;
   
   // Iterate over the contents one by one to determine
   // if this -L path has any bytecode shared libraries

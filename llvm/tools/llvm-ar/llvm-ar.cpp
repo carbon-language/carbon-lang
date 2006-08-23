@@ -269,32 +269,38 @@ ArchiveOperation parseCommandLine() {
 // the Paths vector (built by buildPaths, below) and replaces any directories it
 // finds with all the files in that directory (recursively). It uses the
 // sys::Path::getDirectoryContent method to perform the actual directory scans.
-std::set<sys::Path> recurseDirectories(const sys::Path& path) {
-  std::set<sys::Path> result;
+bool
+recurseDirectories(const sys::Path& path, 
+                   std::set<sys::Path>& result, std::string* ErrMsg) {
+  result.clear();
   if (RecurseDirectories) {
     std::set<sys::Path> content;
-    path.getDirectoryContents(content);
+    if (path.getDirectoryContents(content, ErrMsg))
+      return true;
+
     for (std::set<sys::Path>::iterator I = content.begin(), E = content.end();
          I != E; ++I) {
-       // Make sure it exists and is a directory
-       sys::FileStatus Status;
-       if (!I->getFileStatus(Status)) {
-         if (Status.isDir) {
-           std::set<sys::Path> moreResults = recurseDirectories(*I);
-           result.insert(moreResults.begin(), moreResults.end());
-         } else {
-           result.insert(*I);
-         }
-       }
+      // Make sure it exists and is a directory
+      sys::FileStatus Status;
+      if (I->getFileStatus(Status)) {
+        if (Status.isDir) {
+          std::set<sys::Path> moreResults;
+          if (recurseDirectories(*I, moreResults, ErrMsg))
+            return true;
+          result.insert(moreResults.begin(), moreResults.end());
+        } else {
+          result.insert(*I);
+        }
+      }
     }
   }
-  return result;
+  return false;
 }
 
 // buildPaths - Convert the strings in the Members vector to sys::Path objects
 // and make sure they are valid and exist exist. This check is only needed for
 // the operations that add/replace files to the archive ('q' and 'r')
-void buildPaths(bool checkExistence = true) {
+bool buildPaths(bool checkExistence, std::string* ErrMsg) {
   for (unsigned i = 0; i < Members.size(); i++) {
     sys::Path aPath;
     if (!aPath.set(Members[i]))
@@ -307,7 +313,9 @@ void buildPaths(bool checkExistence = true) {
       if (aPath.getFileStatus(si, &Err))
         throw Err;
       if (si.isDir) {
-        std::set<sys::Path> dirpaths = recurseDirectories(aPath);
+        std::set<sys::Path> dirpaths;
+        if (recurseDirectories(aPath, dirpaths, ErrMsg))
+          return true;
         Paths.insert(dirpaths.begin(),dirpaths.end());
       } else {
         Paths.insert(aPath);
@@ -316,6 +324,7 @@ void buildPaths(bool checkExistence = true) {
       Paths.insert(aPath);
     }
   }
+  return false;
 }
 
 // printSymbolTable - print out the archive's symbol table.
@@ -333,8 +342,9 @@ void printSymbolTable() {
 // looking for members that match the path list. It is careful to uncompress
 // things that should be and to skip bytecode files unless the 'k' modifier was
 // given.
-void doPrint() {
-  buildPaths(false);
+bool doPrint(std::string* ErrMsg) {
+  if (buildPaths(false, ErrMsg))
+    return true;
   unsigned countDown = Count;
   for (Archive::iterator I = TheArchive->begin(), E = TheArchive->end();
        I != E; ++I ) {
@@ -365,11 +375,13 @@ void doPrint() {
       }
     }
   }
+  return false;
 }
 
 // putMode - utility function for printing out the file mode when the 't'
 // operation is in verbose mode.
-void printMode(unsigned mode) {
+void 
+printMode(unsigned mode) {
   if (mode & 004)
     std::cout << "r";
   else
@@ -388,8 +400,10 @@ void printMode(unsigned mode) {
 // the file names of each of the members. However, if verbose mode is requested
 // ('v' modifier) then the file type, permission mode, user, group, size, and
 // modification time are also printed.
-void doDisplayTable() {
-  buildPaths(false);
+bool 
+doDisplayTable(std::string* ErrMsg) {
+  if (buildPaths(false, ErrMsg))
+    return true;
   for (Archive::iterator I = TheArchive->begin(), E = TheArchive->end();
        I != E; ++I ) {
     if (Paths.empty() ||
@@ -422,12 +436,15 @@ void doDisplayTable() {
   }
   if (ReallyVerbose)
     printSymbolTable();
+  return false;
 }
 
 // doExtract - Implement the 'x' operation. This function extracts files back to
 // the file system, making sure to uncompress any that were compressed
-bool doExtract(std::string* ErrMsg) {
-  buildPaths(false);
+bool 
+doExtract(std::string* ErrMsg) {
+  if (buildPaths(false, ErrMsg))
+    return true;
   unsigned countDown = Count;
   for (Archive::iterator I = TheArchive->begin(), E = TheArchive->end();
        I != E; ++I ) {
@@ -472,9 +489,12 @@ bool doExtract(std::string* ErrMsg) {
 // members from the archive. Note that if the count is specified, there should
 // be no more than one path in the Paths list or else this algorithm breaks.
 // That check is enforced in parseCommandLine (above).
-void doDelete() {
-  buildPaths(false);
-  if (Paths.empty()) return;
+bool 
+doDelete(std::string* ErrMsg) {
+  if (buildPaths(false, ErrMsg))
+    return true;
+  if (Paths.empty()) 
+    return false;
   unsigned countDown = Count;
   for (Archive::iterator I = TheArchive->begin(), E = TheArchive->end();
        I != E; ) {
@@ -491,20 +511,21 @@ void doDelete() {
   }
 
   // We're done editting, reconstruct the archive.
-  std::string errmsg;
-  if (!TheArchive->writeToDisk(SymTable,TruncateNames,Compression,&errmsg))
-    throw errmsg;
+  if (!TheArchive->writeToDisk(SymTable,TruncateNames,Compression,ErrMsg))
+    return true;
   if (ReallyVerbose)
     printSymbolTable();
+  return false;
 }
 
 // doMore - Implement the move operation. This function re-arranges just the
 // order of the archive members so that when the archive is written the move
 // of the members is accomplished. Note the use of the RelPos variable to
 // determine where the items should be moved to.
-void doMove() {
-
-  buildPaths(false);
+bool 
+doMove(std::string* ErrMsg) {
+  if (buildPaths(false, ErrMsg)) 
+    return true;
 
   // By default and convention the place to move members to is the end of the
   // archive.
@@ -545,19 +566,22 @@ void doMove() {
   }
 
   // We're done editting, reconstruct the archive.
-  std::string errmsg;
-  if (!TheArchive->writeToDisk(SymTable,TruncateNames,Compression,&errmsg))
-    throw errmsg;
+  if (!TheArchive->writeToDisk(SymTable,TruncateNames,Compression,ErrMsg))
+    return true;
   if (ReallyVerbose)
     printSymbolTable();
+  return false;
 }
 
 // doQuickAppend - Implements the 'q' operation. This function just
 // indiscriminantly adds the members to the archive and rebuilds it.
-void doQuickAppend() {
+bool 
+doQuickAppend(std::string* ErrMsg) {
   // Get the list of paths to append.
-  buildPaths(true);
-  if (Paths.empty()) return;
+  if (buildPaths(true, ErrMsg))
+    return true;
+  if (Paths.empty()) 
+    return false;
 
   // Append them quickly.
   for (std::set<sys::Path>::iterator PI = Paths.begin(), PE = Paths.end();
@@ -566,20 +590,23 @@ void doQuickAppend() {
   }
 
   // We're done editting, reconstruct the archive.
-  std::string errmsg;
-  if (!TheArchive->writeToDisk(SymTable,TruncateNames,Compression,&errmsg))
-    throw errmsg;
+  if (!TheArchive->writeToDisk(SymTable,TruncateNames,Compression,ErrMsg))
+    return true;
   if (ReallyVerbose)
     printSymbolTable();
+  return false;
 }
 
 // doReplaceOrInsert - Implements the 'r' operation. This function will replace
 // any existing files or insert new ones into the archive.
-void doReplaceOrInsert() {
+bool 
+doReplaceOrInsert(std::string* ErrMsg) {
 
   // Build the list of files to be added/replaced.
-  buildPaths(true);
-  if (Paths.empty()) return;
+  if (buildPaths(true, ErrMsg))
+    return true;
+  if (Paths.empty()) 
+    return false;
 
   // Keep track of the paths that remain to be inserted.
   std::set<sys::Path> remaining(Paths);
@@ -657,11 +684,11 @@ void doReplaceOrInsert() {
   }
 
   // We're done editting, reconstruct the archive.
-  std::string errmsg;
-  if (!TheArchive->writeToDisk(SymTable,TruncateNames,Compression,&errmsg))
-    throw errmsg;
+  if (!TheArchive->writeToDisk(SymTable,TruncateNames,Compression,ErrMsg))
+    return true;
   if (ReallyVerbose)
     printSymbolTable();
+  return false;
 }
 
 // main - main program for llvm-ar .. see comments in the code
@@ -714,22 +741,22 @@ int main(int argc, char **argv) {
 
     // Perform the operation
     std::string ErrMsg;
+    bool haveError = false;
     switch (Operation) {
-      case Print:           doPrint(); break;
-      case Delete:          doDelete(); break;
-      case Move:            doMove(); break;
-      case QuickAppend:      /* FALL THROUGH */
-      case ReplaceOrInsert: doReplaceOrInsert(); break;
-      case DisplayTable:    doDisplayTable(); break;
-      case Extract:         
-        if (doExtract(&ErrMsg)) {
-          std::cerr << argv[0] << ": " << ErrMsg << "\n";
-          return 1;
-        }
-        break;
+      case Print:           haveError = doPrint(&ErrMsg); break;
+      case Delete:          haveError = doDelete(&ErrMsg); break;
+      case Move:            haveError = doMove(&ErrMsg); break;
+      case QuickAppend:     haveError = doQuickAppend(&ErrMsg); break;
+      case ReplaceOrInsert: haveError = doReplaceOrInsert(&ErrMsg); break;
+      case DisplayTable:    haveError = doDisplayTable(&ErrMsg); break;
+      case Extract:         haveError = doExtract(&ErrMsg); break;
       case NoOperation:
         std::cerr << argv[0] << ": No operation was selected.\n";
         break;
+    }
+    if (haveError) {
+      std::cerr << argv[0] << ": " << ErrMsg << "\n";
+      return 1;
     }
   } catch (const char*msg) {
     // These errors are usage errors, thrown only by the various checks in the

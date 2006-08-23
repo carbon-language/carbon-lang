@@ -343,10 +343,12 @@ namespace sys {
 
       /// This function builds a list of paths that are the names of the
       /// files and directories in a directory.
-      /// @returns false if \p this is not a directory, true otherwise
-      /// @throws std::string if the directory cannot be searched
+      /// @returns true if an error occurs, true otherwise
       /// @brief Build a list of directory's contents.
-      bool getDirectoryContents(std::set<Path> &paths) const;
+      bool getDirectoryContents(
+        std::set<Path> &paths, ///< The resulting list of file & directory names
+        std::string* ErrMsg    ///< Optional place to return an error message.
+      ) const;
 
       /// This function returns status information about the file. The type of
       /// path (file or directory) is updated to reflect the actual contents

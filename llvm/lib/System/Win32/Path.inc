@@ -353,9 +353,11 @@ bool Path::makeExecutableOnDisk(std::string* ErrMsg) {
 }
 
 bool
-Path::getDirectoryContents(std::set<Path>& result) const {
-  if (!isDirectory())
-    return false;
+Path::getDirectoryContents(std::set<Path>& result, std::string* ErrMsg) const {
+  if (!isDirectory()) {
+    MakeErrMsg(ErrMsg, path + ": not a directory");
+    return true;
+  }
 
   result.clear();
   WIN32_FIND_DATA fd;
@@ -369,7 +371,8 @@ Path::getDirectoryContents(std::set<Path>& result) const {
   if (h == INVALID_HANDLE_VALUE) {
     if (GetLastError() == ERROR_FILE_NOT_FOUND)
       return true; // not really an error, now is it?
-    ThrowError(path + ": Can't read directory: ");
+    MakeErrMsg(ErrMsg, path + ": Can't read directory: ");
+    return true;
   }
 
   do {
@@ -384,9 +387,10 @@ Path::getDirectoryContents(std::set<Path>& result) const {
   FindClose(h);
   if (err != ERROR_NO_MORE_FILES) {
     SetLastError(err);
-    ThrowError(path + ": Can't read directory: ");
+    MakeErrMsg(ErrMsg, path + ": Can't read directory: ");
+    return true;
   }
-  return true;
+  return false;
 }
 
 bool

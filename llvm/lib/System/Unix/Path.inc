@@ -415,10 +415,12 @@ bool Path::makeExecutableOnDisk(std::string* ErrMsg) {
 }
 
 bool
-Path::getDirectoryContents(std::set<Path>& result) const {
+Path::getDirectoryContents(std::set<Path>& result, std::string* ErrMsg) const {
   DIR* direntries = ::opendir(path.c_str());
-  if (direntries == 0)
-    ThrowErrno(path + ": can't open directory");
+  if (direntries == 0) {
+    MakeErrMsg(ErrMsg, path + ": can't open directory");
+    return true;
+  }
 
   std::string dirPath = path;
   if (!lastIsSlash(dirPath))
@@ -433,14 +435,15 @@ Path::getDirectoryContents(std::set<Path>& result) const {
       if (0 != lstat(aPath.path.c_str(), &st)) {
         if (S_ISLNK(st.st_mode))
           continue; // dangling symlink -- ignore
-        ThrowErrno(aPath.path +  ": can't determine file object type");
+        MakeErrMsg(ErrMsg, aPath.path +  ": can't determine file object type");
+        return true;
       }
       result.insert(aPath);
     }
   }
   
   closedir(direntries);
-  return true;
+  return false;
 }
 
 bool
