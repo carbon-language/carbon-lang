@@ -8,7 +8,7 @@
 ##===----------------------------------------------------------------------===##
 
 LEVEL := ..
-PARALLEL_DIRS := llvm-config opt llvm-as -llvm-dis llc llvm-bcanalyzer \
+PARALLEL_DIRS := llvm-config opt llvm-as llvm-dis llc llvm-bcanalyzer \
                  llvm-extract lli llvm-db llvm-ar llvm-ld llvm-prof llvm-nm \
                  gccas llvm-ranlib llvm-stub gccld llvm2cpp \
                  bugpoint llvmc llvm-link
