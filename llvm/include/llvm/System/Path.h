@@ -424,18 +424,18 @@ namespace sys {
       /// This method attempts to make the file referenced by the Path object
       /// available for reading so that the canRead() method will return true.
       /// @brief Make the file readable;
-      bool makeReadableOnDisk(std::string* ErrMsg);
+      bool makeReadableOnDisk(std::string* ErrMsg = 0);
 
       /// This method attempts to make the file referenced by the Path object
       /// available for writing so that the canWrite() method will return true.
       /// @brief Make the file writable;
-      bool makeWriteableOnDisk(std::string* ErrMsg);
+      bool makeWriteableOnDisk(std::string* ErrMsg = 0);
 
       /// This method attempts to make the file referenced by the Path object
       /// available for execution so that the canExecute() method will return
       /// true.
       /// @brief Make the file readable;
-      bool makeExecutableOnDisk(std::string* ErrMsg);
+      bool makeExecutableOnDisk(std::string* ErrMsg = 0);
 
       /// This method allows the last modified time stamp and permission bits
       /// to be set on the disk object referenced by the Path.
@@ -452,23 +452,25 @@ namespace sys {
       /// intermediate directories, as needed. If \p create_parents is false,
       /// then only the final directory component of the Path name will be
       /// created. The created directory will have no entries.
-      /// @returns false if the Path does not reference a directory, true
-      /// otherwise.
-      /// @param create_parents Determines whether non-existent directory
-      /// components other than the last one (the "parents") are created or not.
-      /// @throws std::string if an error occurs.
+      /// @returns true if the directory could not be created, false otherwise
       /// @brief Create the directory this Path refers to.
-      bool createDirectoryOnDisk( bool create_parents = false );
+      bool createDirectoryOnDisk( 
+        bool create_parents = false, ///<  Determines whether non-existent 
+           ///< directory components other than the last one (the "parents") 
+           ///< are created or not.
+        std::string* ErrMsg = 0 ///< Optional place to put error messages.
+      );
 
       /// This method attempts to create a file in the file system with the same
       /// name as the Path object. The intermediate directories must all exist
       /// at the time this method is called. Use createDirectoriesOnDisk to
       /// accomplish that. The created file will be empty upon return from this
       /// function.
-      /// @returns false if the Path does not reference a file, true otherwise.
-      /// @throws std::string if an error occurs.
+      /// @returns true if the file could not be created, false otherwise.
       /// @brief Create the file this Path refers to.
-      bool createFileOnDisk();
+      bool createFileOnDisk(
+        std::string* ErrMsg = 0 ///< Optional place to put error messages.
+      );
 
       /// This is like createFile except that it creates a temporary file. A
       /// unique temporary file name is generated based on the contents of
@@ -476,14 +478,14 @@ namespace sys {
       /// file is created.  Note that this will both change the Path object
       /// *and* create the corresponding file. This function will ensure that
       /// the newly generated temporary file name is unique in the file system.
-      /// @param reuse_current When set to true, this parameter indicates that
-      /// if the current file name does not exist then it will be used without
-      /// modification.
-      /// @returns true if successful, false if the file couldn't be created.
-      /// @throws std::string if there is a hard error creating the temp file
-      /// name.
+      /// @returns true if the file couldn't be created, false otherwise. 
       /// @brief Create a unique temporary file
-      bool createTemporaryFileOnDisk(bool reuse_current = false);
+      bool createTemporaryFileOnDisk(
+        bool reuse_current = false, ///< When set to true, this parameter 
+          ///< indicates that if the current file name does not exist then 
+          ///< it will be used without modification.
+        std::string* ErrMsg = 0 ///< Optional place to put error messages
+      );
 
       /// This method renames the file referenced by \p this as \p newName. The
       /// file referenced by \p this must exist. The file referenced by

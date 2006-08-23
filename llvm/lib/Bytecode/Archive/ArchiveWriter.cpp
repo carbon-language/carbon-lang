@@ -389,7 +389,8 @@ Archive::writeToDisk(bool CreateSymbolTable, bool TruncateNames, bool Compress,
 
   // Create a temporary file to store the archive in
   sys::Path TmpArchive = archPath;
-  TmpArchive.createTemporaryFileOnDisk();
+  if (TmpArchive.createTemporaryFileOnDisk(error))
+    return false;
 
   // Make sure the temporary gets removed if we crash
   sys::RemoveFileOnSignal(TmpArchive);
@@ -452,7 +453,8 @@ Archive::writeToDisk(bool CreateSymbolTable, bool TruncateNames, bool Compress,
     // Open another temporary file in order to avoid invalidating the 
     // mmapped data
     sys::Path FinalFilePath = archPath;
-    FinalFilePath.createTemporaryFileOnDisk();
+    if (FinalFilePath.createTemporaryFileOnDisk(error))
+      return false;
     sys::RemoveFileOnSignal(FinalFilePath);
 
     std::ofstream FinalFile(FinalFilePath.c_str(), io_mode);

@@ -492,16 +492,15 @@ int main(int argc, char **argv, char **envp) {
           }
           // Get the program arguments
           sys::Path tmp_output("opt_result");
-          if (!tmp_output.createTemporaryFileOnDisk()) {
-            return PrintAndReturn(
-              "Can't create temporary file for post-link optimization");
+          std::string ErrMsg;
+          if (tmp_output.createTemporaryFileOnDisk(&ErrMsg)) {
+            return PrintAndReturn(ErrMsg);
           }
           const char* args[4];
           args[0] = I->c_str();
           args[1] = RealBytecodeOutput.c_str();
           args[2] = tmp_output.c_str();
           args[3] = 0;
-          std::string ErrMsg;
           if (0 == sys::Program::ExecuteAndWait(prog, args, 0,0,0, &ErrMsg)) {
             if (tmp_output.isBytecodeFile()) {
               sys::Path target(RealBytecodeOutput);

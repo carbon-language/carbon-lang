@@ -425,8 +425,8 @@ void doDisplayTable() {
 }
 
 // doExtract - Implement the 'x' operation. This function extracts files back to
-// the file system, making sure to uncompress any that were compressed.
-void doExtract() {
+// the file system, making sure to uncompress any that were compressed
+bool doExtract(std::string* ErrMsg) {
   buildPaths(false);
   unsigned countDown = Count;
   for (Archive::iterator I = TheArchive->begin(), E = TheArchive->end();
@@ -438,7 +438,8 @@ void doExtract() {
       if (I->hasPath()) {
         sys::Path dirs(I->getPath());
         dirs.eraseComponent();
-        dirs.createDirectoryOnDisk(/*create_parents=*/true);
+        if (dirs.createDirectoryOnDisk(/*create_parents=*/true, ErrMsg)) 
+          return true;
       }
 
       // Open up a file stream for writing
@@ -464,6 +465,7 @@ void doExtract() {
         I->getPath().setStatusInfoOnDisk(I->getFileStatus());
     }
   }
+  return false;
 }
 
 // doDelete - Implement the delete operation. This function deletes zero or more
@@ -711,6 +713,7 @@ int main(int argc, char **argv) {
     std::auto_ptr<Archive> AutoArchive(TheArchive);
 
     // Perform the operation
+    std::string ErrMsg;
     switch (Operation) {
       case Print:           doPrint(); break;
       case Delete:          doDelete(); break;
@@ -718,7 +721,12 @@ int main(int argc, char **argv) {
       case QuickAppend:      /* FALL THROUGH */
       case ReplaceOrInsert: doReplaceOrInsert(); break;
       case DisplayTable:    doDisplayTable(); break;
-      case Extract:         doExtract(); break;
+      case Extract:         
+        if (doExtract(&ErrMsg)) {
+          std::cerr << argv[0] << ": " << ErrMsg << "\n";
+          return 1;
+        }
+        break;
       case NoOperation:
         std::cerr << argv[0] << ": No operation was selected.\n";
         break;

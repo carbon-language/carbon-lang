@@ -295,7 +295,11 @@ LinkTimeOptimizer::optimizeModules(const std::string &OutputFilename,
   }
 
   sys::Path tmpAsmFilePath("/tmp/");
-  tmpAsmFilePath.createTemporaryFileOnDisk();
+  std::string ErrMsg;
+  if (tmpAsmFilePath.createTemporaryFileOnDisk(&ErrMsg)) {
+    std::cerr << "lto: " << ErrMsg << "\n";
+    return;
+  }
   sys::RemoveFileOnSignal(tmpAsmFilePath);
 
   std::ofstream asmFile(tmpAsmFilePath.c_str(), io_mode);

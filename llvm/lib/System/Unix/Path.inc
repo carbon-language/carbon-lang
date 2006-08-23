@@ -517,7 +517,7 @@ Path::eraseSuffix() {
 }
 
 bool
-Path::createDirectoryOnDisk( bool create_parents) {
+Path::createDirectoryOnDisk( bool create_parents, std::string* ErrMsg ) {
   // Get a writeable copy of the path name
   char pathname[MAXPATHLEN];
   path.copy(pathname,MAXPATHLEN);
@@ -540,8 +540,11 @@ Path::createDirectoryOnDisk( bool create_parents) {
     while ( next != 0 ) {
       *next = 0;
       if (0 != access(pathname, F_OK | R_OK | W_OK))
-        if (0 != mkdir(pathname, S_IRWXU | S_IRWXG))
-          ThrowErrno(std::string(pathname) + ": can't create directory");
+        if (0 != mkdir(pathname, S_IRWXU | S_IRWXG)) {
+          MakeErrMsg(ErrMsg, 
+            std::string(pathname) + ": can't create directory");
+          return true;
+        }
       char* save = next;
       next = strchr(next+1,'/');
       *save = '/';
@@ -549,33 +552,37 @@ Path::createDirectoryOnDisk( bool create_parents) {
   } 
 
   if (0 != access(pathname, F_OK | R_OK))
-    if (0 != mkdir(pathname, S_IRWXU | S_IRWXG))
-      ThrowErrno(std::string(pathname) + ": can't create directory");
-  return true;
+    if (0 != mkdir(pathname, S_IRWXU | S_IRWXG)) {
+      MakeErrMsg(ErrMsg, std::string(pathname) + ": can't create directory");
+      return true;
+    }
+  return false;
 }
 
 bool
-Path::createFileOnDisk() {
+Path::createFileOnDisk(std::string* ErrMsg) {
   // Create the file
   int fd = ::creat(path.c_str(), S_IRUSR | S_IWUSR);
-  if (fd < 0)
-    ThrowErrno(path + ": can't create file");
+  if (fd < 0) {
+    MakeErrMsg(ErrMsg, path + ": can't create file");
+    return true;
+  }
   ::close(fd);
-
-  return true;
+  return false;
 }
 
 bool
-Path::createTemporaryFileOnDisk(bool reuse_current) {
+Path::createTemporaryFileOnDisk(bool reuse_current, std::string* ErrMsg) {
   // Make this into a unique file name
   makeUnique( reuse_current );
 
   // create the file
-  int outFile = ::open(path.c_str(), O_WRONLY|O_CREAT|O_TRUNC, 0666);
-  if (outFile != -1) {
-    ::close(outFile);
+  int fd = ::open(path.c_str(), O_WRONLY|O_CREAT|O_TRUNC, 0666);
+  if (fd < 0) {
+    MakeErrMsg(ErrMsg, path + ": can't create temporary file");
     return true;
   }
+  ::close(fd);
   return false;
 }
 
