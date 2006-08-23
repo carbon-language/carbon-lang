@@ -164,97 +164,89 @@ int llvm::DiffFilesWithTolerance(const sys::Path &FileA,
   if ((A_size == 0 || B_size == 0))
     return 1;
 
-  try {
-    // Now its safe to mmap the files into memory becasue both files
-    // have a non-zero size.
-    sys::MappedFile F1;
-    if (F1.open(FileA, sys::MappedFile::READ_ACCESS, Error))
-      return 2;
-    sys::MappedFile F2;
-    if (F2.open(FileB, sys::MappedFile::READ_ACCESS, Error))
-      return 2;
-    if (!F1.map(Error))
-      return 2;
-    if (!F2.map(Error))
-      return 2;
-
-    // Okay, now that we opened the files, scan them for the first difference.
-    char *File1Start = F1.charBase();
-    char *File2Start = F2.charBase();
-    char *File1End = File1Start+A_size;
-    char *File2End = File2Start+B_size;
-    char *F1P = File1Start;
-    char *F2P = File2Start;
-
-    if (A_size == B_size) {
-      // Are the buffers identical?
-      if (std::memcmp(File1Start, File2Start, A_size) == 0)
-        return 0;
-
-      if (AbsTol == 0 && RelTol == 0)
-        return 1;   // Files different!
-    }
-
-    char *OrigFile1Start = File1Start;
-    char *OrigFile2Start = File2Start;
-
-    // If the files need padding, do so now.
-    PadFileIfNeeded(File1Start, File1End, F1P);
-    PadFileIfNeeded(File2Start, File2End, F2P);
-
-    bool CompareFailed = false;
-    while (1) {
-      // Scan for the end of file or next difference.
-      while (F1P < File1End && F2P < File2End && *F1P == *F2P)
-        ++F1P, ++F2P;
-
-      if (F1P >= File1End || F2P >= File2End) break;
-
-      // Okay, we must have found a difference.  Backup to the start of the
-      // current number each stream is at so that we can compare from the
-      // beginning.
-      F1P = BackupNumber(F1P, File1Start);
-      F2P = BackupNumber(F2P, File2Start);
-
-      // Now that we are at the start of the numbers, compare them, exiting if
-      // they don't match.
-      if (CompareNumbers(F1P, F2P, File1End, File2End, AbsTol, RelTol, Error)) {
-        CompareFailed = true;
-        break;
-      }
-    }
-
-    // Okay, we reached the end of file.  If both files are at the end, we
-    // succeeded.
-    bool F1AtEnd = F1P >= File1End;
-    bool F2AtEnd = F2P >= File2End;
-    if (!CompareFailed && (!F1AtEnd || !F2AtEnd)) {
-      // Else, we might have run off the end due to a number: backup and retry.
-      if (F1AtEnd && isNumberChar(F1P[-1])) --F1P;
-      if (F2AtEnd && isNumberChar(F2P[-1])) --F2P;
-      F1P = BackupNumber(F1P, File1Start);
-      F2P = BackupNumber(F2P, File2Start);
-
-      // Now that we are at the start of the numbers, compare them, exiting if
-      // they don't match.
-      if (CompareNumbers(F1P, F2P, File1End, File2End, AbsTol, RelTol, Error))
-        CompareFailed = true;
-
-      // If we found the end, we succeeded.
-      if (F1P < File1End || F2P < File2End)
-        CompareFailed = true;
-    }
-
-    if (OrigFile1Start != File1Start)
-      delete[] (File1Start-1);   // Back up past null byte
-    if (OrigFile2Start != File2Start)
-      delete[] (File2Start-1);   // Back up past null byte
-    return CompareFailed;
-  } catch (const std::string &Msg) {
-    if (Error) *Error = Msg;
+  // Now its safe to mmap the files into memory becasue both files
+  // have a non-zero size.
+  sys::MappedFile F1;
+  if (F1.open(FileA, sys::MappedFile::READ_ACCESS, Error))
     return 2;
-  } catch (...) {
-    *Error = "Unknown Exception Occurred";
+  sys::MappedFile F2;
+  if (F2.open(FileB, sys::MappedFile::READ_ACCESS, Error))
     return 2;
+  if (!F1.map(Error))
+    return 2;
+  if (!F2.map(Error))
+    return 2;
+
+  // Okay, now that we opened the files, scan them for the first difference.
+  char *File1Start = F1.charBase();
+  char *File2Start = F2.charBase();
+  char *File1End = File1Start+A_size;
+  char *File2End = File2Start+B_size;
+  char *F1P = File1Start;
+  char *F2P = File2Start;
+
+  if (A_size == B_size) {
+    // Are the buffers identical?
+    if (std::memcmp(File1Start, File2Start, A_size) == 0)
+      return 0;
+
+    if (AbsTol == 0 && RelTol == 0)
+      return 1;   // Files different!
   }
+
+  char *OrigFile1Start = File1Start;
+  char *OrigFile2Start = File2Start;
+
+  // If the files need padding, do so now.
+  PadFileIfNeeded(File1Start, File1End, F1P);
+  PadFileIfNeeded(File2Start, File2End, F2P);
+
+  bool CompareFailed = false;
+  while (1) {
+    // Scan for the end of file or next difference.
+    while (F1P < File1End && F2P < File2End && *F1P == *F2P)
+      ++F1P, ++F2P;
+
+    if (F1P >= File1End || F2P >= File2End) break;
+
+    // Okay, we must have found a difference.  Backup to the start of the
+    // current number each stream is at so that we can compare from the
+    // beginning.
+    F1P = BackupNumber(F1P, File1Start);
+    F2P = BackupNumber(F2P, File2Start);
+
+    // Now that we are at the start of the numbers, compare them, exiting if
+    // they don't match.
+    if (CompareNumbers(F1P, F2P, File1End, File2End, AbsTol, RelTol, Error)) {
+      CompareFailed = true;
+      break;
+    }
+  }
+
+  // Okay, we reached the end of file.  If both files are at the end, we
+  // succeeded.
+  bool F1AtEnd = F1P >= File1End;
+  bool F2AtEnd = F2P >= File2End;
+  if (!CompareFailed && (!F1AtEnd || !F2AtEnd)) {
+    // Else, we might have run off the end due to a number: backup and retry.
+    if (F1AtEnd && isNumberChar(F1P[-1])) --F1P;
+    if (F2AtEnd && isNumberChar(F2P[-1])) --F2P;
+    F1P = BackupNumber(F1P, File1Start);
+    F2P = BackupNumber(F2P, File2Start);
+
+    // Now that we are at the start of the numbers, compare them, exiting if
+    // they don't match.
+    if (CompareNumbers(F1P, F2P, File1End, File2End, AbsTol, RelTol, Error))
+      CompareFailed = true;
+
+    // If we found the end, we succeeded.
+    if (F1P < File1End || F2P < File2End)
+      CompareFailed = true;
+  }
+
+  if (OrigFile1Start != File1Start)
+    delete[] (File1Start-1);   // Back up past null byte
+  if (OrigFile2Start != File2Start)
+    delete[] (File2Start-1);   // Back up past null byte
+  return CompareFailed;
 }
