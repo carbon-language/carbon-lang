@@ -18,6 +18,7 @@
 
 #include "llvm/Config/config.h"
 #include "llvm/Support/CommandLine.h"
+#include "llvm/System/Path.h"
 #include <algorithm>
 #include <functional>
 #include <map>
@@ -31,7 +32,7 @@ using namespace llvm;
 using namespace cl;
 
 // Globals for name and overview of program
-static const char *ProgramName = "<premain>";
+static std::string ProgramName ( "<premain>" );
 static const char *ProgramOverview = 0;
 
 // This collects additional help to be printed.
@@ -289,7 +290,8 @@ void cl::ParseCommandLineOptions(int &argc, char **argv,
   assert((!getOpts().empty() || !getPositionalOpts().empty()) &&
          "No options specified, or ParseCommandLineOptions called more"
          " than once!");
-  ProgramName = argv[0];  // Save this away safe and snug
+  sys::Path progname(argv[0]);
+  ProgramName = sys::Path(argv[0]).getLast();
   ProgramOverview = Overview;
   bool ErrorParsing = false;
 
@@ -448,11 +450,8 @@ void cl::ParseCommandLineOptions(int &argc, char **argv,
     }
 
     if (Handler == 0) {
-      if (ProgramName)
-        std::cerr << ProgramName << ": Unknown command line argument '"
+      std::cerr << ProgramName << ": Unknown command line argument '"
                   << argv[i] << "'.  Try: '" << argv[0] << " --help'\n";
-      else
-        std::cerr << "Unknown command line argument '" << argv[i] << "'.\n";
       ErrorParsing = true;
       continue;
     }
@@ -488,28 +487,18 @@ void cl::ParseCommandLineOptions(int &argc, char **argv,
 
   // Check and handle positional arguments now...
   if (NumPositionalRequired > PositionalVals.size()) {
-    if (ProgramName)
-      std::cerr << ProgramName
-                << ": Not enough positional command line arguments specified!\n"
-                << "Must specify at least " << NumPositionalRequired
-                << " positional arguments: See: " << argv[0] << " --help\n";
-    else
-      std::cerr << "Not enough positional command line arguments specified!\n"
-                << "Must specify at least " << NumPositionalRequired
-                << " positional arguments.";
+    std::cerr << ProgramName
+              << ": Not enough positional command line arguments specified!\n"
+              << "Must specify at least " << NumPositionalRequired
+              << " positional arguments: See: " << argv[0] << " --help\n";
     
     ErrorParsing = true;
   } else if (!HasUnlimitedPositionals
              && PositionalVals.size() > PositionalOpts.size()) {
-    if (ProgramName)
-      std::cerr << ProgramName
-                << ": Too many positional arguments specified!\n"
-                << "Can specify at most " << PositionalOpts.size()
-                << " positional arguments: See: " << argv[0] << " --help\n";
-    else
-      std::cerr << "Too many positional arguments specified!\n"
-                << "Can specify at most " << PositionalOpts.size()
-                << " positional arguments.\n";
+    std::cerr << ProgramName
+              << ": Too many positional arguments specified!\n"
+              << "Can specify at most " << PositionalOpts.size()
+              << " positional arguments: See: " << argv[0] << " --help\n";
     ErrorParsing = true;
 
   } else if (ConsumeAfterOpt == 0) {
@@ -616,8 +605,7 @@ bool Option::error(std::string Message, const char *ArgName) {
   if (ArgName[0] == 0)
     std::cerr << HelpStr;  // Be nice for positional arguments
   else
-    std::cerr << (ProgramName ? ProgramName : "***")
-              << ": for the -" << ArgName;
+    std::cerr << ProgramName << ": for the -" << ArgName;
   
   std::cerr << " option: " << Message << "\n";
   return true;
