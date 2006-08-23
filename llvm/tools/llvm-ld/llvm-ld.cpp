@@ -505,7 +505,10 @@ int main(int argc, char **argv, char **envp) {
             if (tmp_output.isBytecodeFile()) {
               sys::Path target(RealBytecodeOutput);
               target.eraseFromDisk();
-              tmp_output.renamePathOnDisk(target);
+              if (tmp_output.renamePathOnDisk(target, &ErrMsg)) {
+                std::cerr << argv[0] << ": " << ErrMsg << "\n";
+                return 2;
+              }
             } else
               return PrintAndReturn(
                 "Post-link optimization output is not bytecode");

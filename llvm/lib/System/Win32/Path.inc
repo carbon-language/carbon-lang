@@ -651,10 +651,10 @@ bool Path::getMagicNumber(std::string& Magic, unsigned len) const {
 }
 
 bool
-Path::renamePathOnDisk(const Path& newName) {
+Path::renamePathOnDisk(const Path& newName, std::string* ErrMsg) {
   if (!MoveFileEx(path.c_str(), newName.c_str(), MOVEFILE_REPLACE_EXISTING))
-    ThrowError("Can't move '" + path +
-               "' to '" + newName.path + "': ");
+    return MakeErrMsg(ErrMsg, "Can't move '" + path + "' to '" + newName.path 
+        + "': ");
   return true;
 }
 

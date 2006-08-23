@@ -44,14 +44,15 @@ inline void ThrowError(const std::string& msg) {
   throw s;
 }
 
-inline void MakeErrMsg(std::string* ErrMsg, const std::string& prefix) {
+inline bool MakeErrMsg(std::string* ErrMsg, const std::string& prefix) {
   if (!ErrMsg)
-    return;
+    return true;
   char *buffer = NULL;
   FormatMessage(FORMAT_MESSAGE_ALLOCATE_BUFFER|FORMAT_MESSAGE_FROM_SYSTEM,
       NULL, GetLastError(), 0, (LPSTR)&buffer, 1, NULL);
   ErrMsg = prefix + buffer;
   LocalFree(buffer);
+  return true;
 }
 
 inline void ThrowErrno(const std::string& prefix) {

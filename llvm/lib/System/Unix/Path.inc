@@ -391,36 +391,28 @@ static bool AddPermissionBits(const Path &File, int bits) {
 }
 
 bool Path::makeReadableOnDisk(std::string* ErrMsg) {
-  if (!AddPermissionBits(*this, 0444)) {
-    MakeErrMsg(ErrMsg, path + ": can't make file readable");
-    return true;
-  }
+  if (!AddPermissionBits(*this, 0444)) 
+    return MakeErrMsg(ErrMsg, path + ": can't make file readable");
   return false;
 }
 
 bool Path::makeWriteableOnDisk(std::string* ErrMsg) {
-  if (!AddPermissionBits(*this, 0222)) {
-    MakeErrMsg(ErrMsg, path + ": can't make file writable");
-    return true;
-  }
+  if (!AddPermissionBits(*this, 0222))
+    return MakeErrMsg(ErrMsg, path + ": can't make file writable");
   return false;
 }
 
 bool Path::makeExecutableOnDisk(std::string* ErrMsg) {
-  if (!AddPermissionBits(*this, 0111)) {
-    MakeErrMsg(ErrMsg, path + ": can't make file executable");
-    return true;
-  }
+  if (!AddPermissionBits(*this, 0111))
+    return MakeErrMsg(ErrMsg, path + ": can't make file executable");
   return false;
 }
 
 bool
 Path::getDirectoryContents(std::set<Path>& result, std::string* ErrMsg) const {
   DIR* direntries = ::opendir(path.c_str());
-  if (direntries == 0) {
-    MakeErrMsg(ErrMsg, path + ": can't open directory");
-    return true;
-  }
+  if (direntries == 0)
+    return MakeErrMsg(ErrMsg, path + ": can't open directory");
 
   std::string dirPath = path;
   if (!lastIsSlash(dirPath))
@@ -435,8 +427,8 @@ Path::getDirectoryContents(std::set<Path>& result, std::string* ErrMsg) const {
       if (0 != lstat(aPath.path.c_str(), &st)) {
         if (S_ISLNK(st.st_mode))
           continue; // dangling symlink -- ignore
-        MakeErrMsg(ErrMsg, aPath.path +  ": can't determine file object type");
-        return true;
+        return MakeErrMsg(ErrMsg, 
+                          aPath.path +  ": can't determine file object type");
       }
       result.insert(aPath);
     }
@@ -544,9 +536,8 @@ Path::createDirectoryOnDisk( bool create_parents, std::string* ErrMsg ) {
       *next = 0;
       if (0 != access(pathname, F_OK | R_OK | W_OK))
         if (0 != mkdir(pathname, S_IRWXU | S_IRWXG)) {
-          MakeErrMsg(ErrMsg, 
-            std::string(pathname) + ": can't create directory");
-          return true;
+          return MakeErrMsg(ErrMsg, 
+                            std::string(pathname) + ": can't create directory");
         }
       char* save = next;
       next = strchr(next+1,'/');
@@ -556,8 +547,8 @@ Path::createDirectoryOnDisk( bool create_parents, std::string* ErrMsg ) {
 
   if (0 != access(pathname, F_OK | R_OK))
     if (0 != mkdir(pathname, S_IRWXU | S_IRWXG)) {
-      MakeErrMsg(ErrMsg, std::string(pathname) + ": can't create directory");
-      return true;
+      return MakeErrMsg(ErrMsg, 
+                        std::string(pathname) + ": can't create directory");
     }
   return false;
 }
@@ -566,10 +557,8 @@ bool
 Path::createFileOnDisk(std::string* ErrMsg) {
   // Create the file
   int fd = ::creat(path.c_str(), S_IRUSR | S_IWUSR);
-  if (fd < 0) {
-    MakeErrMsg(ErrMsg, path + ": can't create file");
-    return true;
-  }
+  if (fd < 0)
+    return MakeErrMsg(ErrMsg, path + ": can't create file");
   ::close(fd);
   return false;
 }
@@ -581,10 +570,8 @@ Path::createTemporaryFileOnDisk(bool reuse_current, std::string* ErrMsg) {
 
   // create the file
   int fd = ::open(path.c_str(), O_WRONLY|O_CREAT|O_TRUNC, 0666);
-  if (fd < 0) {
-    MakeErrMsg(ErrMsg, path + ": can't create temporary file");
-    return true;
-  }
+  if (fd < 0) 
+    return MakeErrMsg(ErrMsg, path + ": can't create temporary file");
   ::close(fd);
   return false;
 }
@@ -633,11 +620,11 @@ Path::eraseFromDisk(bool remove_contents, std::string *ErrStr) const {
 }
 
 bool
-Path::renamePathOnDisk(const Path& newName) {
+Path::renamePathOnDisk(const Path& newName, std::string* ErrMsg) {
   if (0 != ::rename(path.c_str(), newName.c_str()))
-    ThrowErrno(std::string("can't rename '") + path + "' as '" + 
+    return MakeErrMsg(ErrMsg, std::string("can't rename '") + path + "' as '" + 
                newName.toString() + "' ");
-  return true;
+  return false;
 }
 
 bool

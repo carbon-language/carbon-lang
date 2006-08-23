@@ -496,7 +496,8 @@ Archive::writeToDisk(bool CreateSymbolTable, bool TruncateNames, bool Compress,
     arch.close();
     
     // Move the final file over top of TmpArchive
-    FinalFilePath.renamePathOnDisk(TmpArchive);
+    if (FinalFilePath.renamePathOnDisk(TmpArchive, error))
+      return false;
   }
   
   // Before we replace the actual archive, we need to forget all the
@@ -504,7 +505,8 @@ Archive::writeToDisk(bool CreateSymbolTable, bool TruncateNames, bool Compress,
   // this because we cannot replace an open file on Windows.
   cleanUpMemory();
   
-  TmpArchive.renamePathOnDisk(archPath);
+  if (TmpArchive.renamePathOnDisk(archPath, error))
+    return false;
 
   return true;
 }

@@ -492,10 +492,9 @@ namespace sys {
       /// This method renames the file referenced by \p this as \p newName. The
       /// file referenced by \p this must exist. The file referenced by
       /// \p newName does not need to exist.
-      /// @returns true
-      /// @throws std::string if there is an file system error.
+      /// @returns true on error, false otherwise
       /// @brief Rename one file as another.
-      bool renamePathOnDisk(const Path& newName);
+      bool renamePathOnDisk(const Path& newName, std::string* ErrMsg);
 
       /// This method attempts to destroy the file or directory named by the
       /// last component of the Path. If the Path refers to a directory and the

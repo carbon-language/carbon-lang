@@ -123,10 +123,10 @@ inline void ThrowErrno(const std::string& prefix, int errnum = -1) {
 /// string and the Unix error number given by \p errnum. If errnum is -1, the
 /// default then the value of errno is used.
 /// @brief Make an error message
-inline void MakeErrMsg(
+inline bool MakeErrMsg(
   std::string* ErrMsg, const std::string& prefix, int errnum = -1) {
   if (!ErrMsg)
-    return;
+    return true;
   char buffer[MAXPATHLEN];
   buffer[0] = 0;
   if (errnum == -1)
@@ -148,6 +148,7 @@ inline void MakeErrMsg(
   sprintf(buffer, "Error #%d", errnum);
 #endif
   *ErrMsg = buffer;
+  return true;
 }
 
 #endif
