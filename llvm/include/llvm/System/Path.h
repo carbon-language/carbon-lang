@@ -164,13 +164,10 @@ namespace sys {
       /// @brief Construct an empty (and invalid) path.
       Path() : path() {}
 
-      /// This constructor will accept a std::string as a path but it verifies
-      /// that the path string has a legal syntax for the operating system on
-      /// which it is running. This allows a path to be taken in from outside
-      /// the program. However, if the path is not valid, the Path object will
-      /// be set to an empty string and an exception will be thrown.
-      /// @throws std::string if \p unverified_path is not legal.
-      /// @param unverified_path The path to verify and assign.
+      /// This constructor will accept a std::string as a path. No checking is
+      /// done on this path to determine if it is valid. To determine validity
+      /// of the path, use the isValid method. 
+      /// @param p The path to assign.
       /// @brief Construct a Path from a string.
       explicit Path(const std::string& p) : path(p) {}
 
