@@ -314,8 +314,7 @@ public:
   //===--------------------------------------------------------------------===//
   // Interfaces used by the register allocator and stack frame
   // manipulation passes to move data around between registers,
-  // immediates and memory.  The return value is the number of
-  // instructions added to (negative if removed from) the basic block.
+  // immediates and memory.  FIXME: Move these to TargetInstrInfo.h.
   //
 
   virtual void storeRegToStackSlot(MachineBasicBlock &MBB,
