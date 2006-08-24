@@ -79,6 +79,14 @@ namespace llvm {
   }
 }
 
+/// DAGCCToARMCC - Convert a DAG integer condition code to an ARM CC
+static ARMCC::CondCodes DAGCCToARMCC(ISD::CondCode CC) {
+  switch (CC) {
+  default: assert(0 && "Unknown condition code!");
+  case ISD::SETNE:  return ARMCC::NE;
+  }
+}
+
 const char *ARMTargetLowering::getTargetNodeName(unsigned Opcode) const {
   switch (Opcode) {
   default: return 0;
@@ -322,11 +330,10 @@ static SDOperand LowerBR_CC(SDOperand Op, SelectionDAG &DAG) {
   SDOperand    LHS = Op.getOperand(2);
   SDOperand    RHS = Op.getOperand(3);
   SDOperand   Dest = Op.getOperand(4);
-
-  assert(CC == ISD::SETNE);
+  SDOperand  ARMCC = DAG.getConstant(DAGCCToARMCC(CC), MVT::i32);
 
   SDOperand Cmp = DAG.getNode(ARMISD::CMP, MVT::Flag, LHS, RHS);
-  return DAG.getNode(ARMISD::BR, MVT::Other, Chain, Dest, Cmp);
+  return DAG.getNode(ARMISD::BR, MVT::Other, Chain, Dest, ARMCC, Cmp);
 }
 
 SDOperand ARMTargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {

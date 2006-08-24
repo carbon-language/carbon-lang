@@ -39,6 +39,10 @@ class InstARM<dag ops, string asmstr, list<dag> pattern> : Instruction {
 
 def brtarget : Operand<OtherVT>;
 
+// Operand for printing out a condition code.
+let PrintMethod = "printCCOperand" in
+  def CCOp : Operand<i32>;
+
 def SDT_ARMCallSeq : SDTypeProfile<0, 1, [ SDTCisVT<0, i32> ]>;
 def callseq_start  : SDNode<"ISD::CALLSEQ_START", SDT_ARMCallSeq,
     		             [SDNPHasChain, SDNPOutFlag]>;
@@ -52,7 +56,7 @@ def retflag        : SDNode<"ARMISD::RET_FLAG", SDTRet,
 	                   [SDNPHasChain, SDNPOptInFlag]>;
 def armselect      : SDNode<"ARMISD::SELECT", SDTIntBinOp, [SDNPInFlag, SDNPOutFlag]>;
 
-def SDTarmbr       : SDTypeProfile<0, 1, [SDTCisVT<0, OtherVT>]>;
+def SDTarmbr       : SDTypeProfile<0, 2, [SDTCisVT<0, OtherVT>, SDTCisVT<1, i32>]>;
 def armbr          : SDNode<"ARMISD::BR", SDTarmbr, [SDNPHasChain, SDNPInFlag]>;
 
 def SDTVoidBinOp : SDTypeProfile<0, 2, [SDTCisSameAs<0, 1>]>;
@@ -112,9 +116,9 @@ let isTwoAddress = 1 in {
 		         [(set IntRegs:$dst, (armselect IntRegs:$true, IntRegs:$false))]>;
 }
 
-def bne    : InstARM<(ops brtarget:$dst),
-		     "bne $dst",
-		     [(armbr bb:$dst)]>;
+def bcond      : InstARM<(ops brtarget:$dst, CCOp:$cc),
+		         "b$cc $dst",
+		         [(armbr bb:$dst, imm:$cc)]>;
 
 def cmp      : InstARM<(ops IntRegs:$a, IntRegs:$b),
 	               "cmp $a, $b",

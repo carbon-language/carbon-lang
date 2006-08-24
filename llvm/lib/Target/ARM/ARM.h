@@ -20,6 +20,20 @@
 #include <cassert>
 
 namespace llvm {
+  // Enums corresponding to ARM condition codes
+  namespace ARMCC {
+    enum CondCodes {
+      NE
+    };
+  }
+
+  static const char *ARMCondCodeToString(ARMCC::CondCodes CC) {
+    switch (CC) {
+    default: assert(0 && "Unknown condition code");
+    case ARMCC::NE:  return "ne";
+    }
+  }
+
   class FunctionPass;
   class TargetMachine;
 

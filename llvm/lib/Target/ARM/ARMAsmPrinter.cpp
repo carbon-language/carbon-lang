@@ -201,7 +201,8 @@ void ARMAsmPrinter::printMemOperand(const MachineInstr *MI, int opNum,
 }
 
 void ARMAsmPrinter::printCCOperand(const MachineInstr *MI, int opNum) {
-  assert(0 && "not implemented");
+  int CC = (int)MI->getOperand(opNum).getImmedValue();
+  O << ARMCondCodeToString((ARMCC::CondCodes)CC);
 }
 
 bool ARMAsmPrinter::doInitialization(Module &M) {
