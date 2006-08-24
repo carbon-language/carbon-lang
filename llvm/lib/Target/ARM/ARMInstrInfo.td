@@ -54,7 +54,10 @@ def ARMcall        : SDNode<"ARMISD::CALL", SDT_ARMcall,
                            [SDNPHasChain, SDNPOptInFlag, SDNPOutFlag]>;
 def retflag        : SDNode<"ARMISD::RET_FLAG", SDTRet,
 	                   [SDNPHasChain, SDNPOptInFlag]>;
-def armselect      : SDNode<"ARMISD::SELECT", SDTIntBinOp, [SDNPInFlag, SDNPOutFlag]>;
+
+def SDTarmselect   : SDTypeProfile<1, 3, [SDTCisSameAs<0, 1>, SDTCisSameAs<0, 2>, SDTCisInt<0>, SDTCisVT<2, i32>]>;
+
+def armselect      : SDNode<"ARMISD::SELECT", SDTarmselect, [SDNPInFlag, SDNPOutFlag]>;
 
 def SDTarmbr       : SDTypeProfile<0, 2, [SDTCisVT<0, OtherVT>, SDTCisVT<1, i32>]>;
 def armbr          : SDNode<"ARMISD::BR", SDTarmbr, [SDNPHasChain, SDNPInFlag]>;
@@ -111,9 +114,9 @@ def andrr     : InstARM<(ops IntRegs:$dst, IntRegs:$a, IntRegs:$b),
 		       [(set IntRegs:$dst, (and IntRegs:$a, IntRegs:$b))]>;
 
 let isTwoAddress = 1 in {
-  def moveq    : InstARM<(ops IntRegs:$dst, IntRegs:$false, IntRegs:$true),
-	                 "moveq $dst, $true",
-		         [(set IntRegs:$dst, (armselect IntRegs:$true, IntRegs:$false))]>;
+  def movcond : InstARM<(ops IntRegs:$dst, IntRegs:$false, IntRegs:$true, CCOp:$cc),
+	                 "mov$cc $dst, $true",
+		         [(set IntRegs:$dst, (armselect IntRegs:$true, IntRegs:$false, imm:$cc))]>;
 }
 
 def bcond      : InstARM<(ops brtarget:$dst, CCOp:$cc),

@@ -84,6 +84,7 @@ static ARMCC::CondCodes DAGCCToARMCC(ISD::CondCode CC) {
   switch (CC) {
   default: assert(0 && "Unknown condition code!");
   case ISD::SETNE:  return ARMCC::NE;
+  case ISD::SETEQ:  return ARMCC::EQ;
   }
 }
 
@@ -317,11 +318,10 @@ static SDOperand LowerSELECT_CC(SDOperand Op, SelectionDAG &DAG) {
   ISD::CondCode CC = cast<CondCodeSDNode>(Op.getOperand(4))->get();
   SDOperand TrueVal = Op.getOperand(2);
   SDOperand FalseVal = Op.getOperand(3);
-
-  assert(CC == ISD::SETEQ);
+  SDOperand    ARMCC = DAG.getConstant(DAGCCToARMCC(CC), MVT::i32);
 
   SDOperand Cmp = DAG.getNode(ARMISD::CMP, MVT::Flag, LHS, RHS);
-  return DAG.getNode(ARMISD::SELECT, MVT::i32, FalseVal, TrueVal, Cmp);
+  return DAG.getNode(ARMISD::SELECT, MVT::i32, FalseVal, TrueVal, ARMCC, Cmp);
 }
 
 static SDOperand LowerBR_CC(SDOperand Op, SelectionDAG &DAG) {

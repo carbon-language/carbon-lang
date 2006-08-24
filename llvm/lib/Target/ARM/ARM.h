@@ -23,7 +23,8 @@ namespace llvm {
   // Enums corresponding to ARM condition codes
   namespace ARMCC {
     enum CondCodes {
-      NE
+      NE,
+      EQ
     };
   }
 
@@ -31,6 +32,7 @@ namespace llvm {
     switch (CC) {
     default: assert(0 && "Unknown condition code");
     case ARMCC::NE:  return "ne";
+    case ARMCC::EQ:  return "eq";
     }
   }
 
