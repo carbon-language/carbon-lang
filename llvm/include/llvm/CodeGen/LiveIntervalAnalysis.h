@@ -53,8 +53,18 @@ namespace llvm {
     std::vector<bool> allocatableRegs_;
 
   public:
-    struct InstrSlots
-    {
+    struct CopyRec {
+      MachineInstr *MI;
+      unsigned SrcReg, DstReg;
+    };
+    CopyRec getCopyRec(MachineInstr *MI, unsigned SrcReg, unsigned DstReg) {
+      CopyRec R;
+      R.MI = MI;
+      R.SrcReg = SrcReg;
+      R.DstReg = DstReg;
+      return R;
+    }
+    struct InstrSlots {
       enum {
         LOAD  = 0,
         USE   = 1,
@@ -133,16 +143,37 @@ namespace llvm {
     virtual void print(std::ostream &O, const Module* = 0) const;
 
   private:
+    /// RemoveMachineInstrFromMaps - This marks the specified machine instr as
+    /// deleted.
+    void RemoveMachineInstrFromMaps(MachineInstr *MI) {
+      // remove index -> MachineInstr and
+      // MachineInstr -> index mappings
+      Mi2IndexMap::iterator mi2i = mi2iMap_.find(MI);
+      if (mi2i != mi2iMap_.end()) {
+        i2miMap_[mi2i->second/InstrSlots::NUM] = 0;
+        mi2iMap_.erase(mi2i);
+      }
+    }
+      
     /// computeIntervals - compute live intervals
     void computeIntervals();
 
     /// joinIntervals - join compatible live intervals
     void joinIntervals();
 
-    /// joinIntervalsInMachineBB - Join intervals based on move
-    /// instructions in the specified basic block.
-    void joinIntervalsInMachineBB(MachineBasicBlock *MBB);
+    /// CopyCoallesceInMBB - Coallsece copies in the specified MBB, putting
+    /// copies that cannot yet be coallesced into the "TryAgain" list.
+    void CopyCoallesceInMBB(MachineBasicBlock *MBB,
+                            std::vector<CopyRec> &TryAgain);
 
+    /// JoinCopy - Attempt to join intervals corresponding to SrcReg/DstReg,
+    /// which are the src/dst of the copy instruction CopyMI.  This returns true
+    /// if the copy was successfully coallesced away, or if it is never possible
+    /// to coallesce these this copy, due to register constraints.  It returns
+    /// false if it is not currently possible to coallesce this interval, but
+    /// it may be possible if other things get coallesced.
+    bool JoinCopy(MachineInstr *CopyMI, unsigned SrcReg, unsigned DstReg);
+    
     /// handleRegisterDef - update intervals for a register def
     /// (calls handlePhysicalRegisterDef and
     /// handleVirtualRegisterDef)
@@ -157,14 +188,10 @@ namespace llvm {
                                   LiveInterval& interval);
 
     /// handlePhysicalRegisterDef - update intervals for a physical register
-    /// def.  If the defining instruction is a move instruction, SrcReg will be
-    /// the input register, and DestReg will be the result.  Note that Interval
-    /// may not match DestReg (it might be an alias instead).
-    ///
+    /// def.
     void handlePhysicalRegisterDef(MachineBasicBlock* mbb,
                                    MachineBasicBlock::iterator mi,
                                    LiveInterval& interval,
-                                   unsigned SrcReg, unsigned DestReg,
                                    bool isLiveIn = false);
 
     /// Return true if the two specified registers belong to different
@@ -172,9 +199,8 @@ namespace llvm {
     bool differingRegisterClasses(unsigned RegA, unsigned RegB) const;
 
 
-    bool AdjustIfAllOverlappingRangesAreCopiesFrom(LiveInterval &IntA,
-                                                   LiveInterval &IntB,
-                                                   unsigned CopyIdx);
+    bool AdjustCopiesBackFrom(LiveInterval &IntA, LiveInterval &IntB,
+                              MachineInstr *CopyMI, unsigned CopyIdx);
 
     bool overlapsAliases(const LiveInterval *lhs,
                          const LiveInterval *rhs) const;

@@ -346,18 +346,29 @@ void LiveInterval::removeRange(unsigned Start, unsigned End) {
 
 /// getLiveRangeContaining - Return the live range that contains the
 /// specified index, or null if there is none.
-const LiveRange *LiveInterval::getLiveRangeContaining(unsigned Idx) const {
-  Ranges::const_iterator It = std::upper_bound(ranges.begin(),ranges.end(),Idx);
+LiveInterval::const_iterator 
+LiveInterval::FindLiveRangeContaining(unsigned Idx) const {
+  const_iterator It = std::upper_bound(begin(), end(), Idx);
   if (It != ranges.begin()) {
-    const LiveRange &LR = *prior(It);
-    if (LR.contains(Idx))
-      return &LR;
+    --It;
+    if (It->contains(Idx))
+      return It;
   }
 
-  return 0;
+  return end();
 }
 
-
+LiveInterval::iterator 
+LiveInterval::FindLiveRangeContaining(unsigned Idx) {
+  iterator It = std::upper_bound(begin(), end(), Idx);
+  if (It != ranges.begin()) {
+    --It;
+    if (It->contains(Idx))
+      return It;
+  }
+  
+  return end();
+}
 
 /// join - Join two live intervals (this, and other) together.  This operation
 /// is the result of a copy instruction in the source program, that occurs at
@@ -376,6 +387,7 @@ void LiveInterval::join(LiveInterval &Other, unsigned CopyIdx) {
     std::swap(MergedSrcValIdx, MergedDstValIdx);
     std::swap(ranges, Other.ranges);
     std::swap(NumValues, Other.NumValues);
+    std::swap(InstDefiningValue, Other.InstDefiningValue);
   }
 
   // Join the ranges of other into the ranges of this interval.
@@ -394,9 +406,72 @@ void LiveInterval::join(LiveInterval &Other, unsigned CopyIdx) {
 
     InsertPos = addRangeFrom(*I, InsertPos);
   }
-
+  
+  // Update the value number information for the value number defined by the
+  // copy.  The copy is about to be removed, so ensure that the value is defined
+  // by whatever the other value is defined by.
+  if (InstDefiningValue[MergedDstValIdx] == CopyIdx) {
+    InstDefiningValue[MergedDstValIdx] =
+      Other.InstDefiningValue[MergedSrcValIdx];
+  }
+  
   weight += Other.weight;
 }
+
+/// MergeValueNumberInto - This method is called when two value nubmers
+/// are found to be equivalent.  This eliminates V1, replacing all
+/// LiveRanges with the V1 value number with the V2 value number.  This can
+/// cause merging of V1/V2 values numbers and compaction of the value space.
+void LiveInterval::MergeValueNumberInto(unsigned V1, unsigned V2) {
+  assert(V1 != V2 && "Identical value#'s are always equivalent!");
+
+  // This code actually merges the (numerically) larger value number into the
+  // smaller value number, which is likely to allow us to compactify the value
+  // space.  The only thing we have to be careful of is to preserve the
+  // instruction that defines the result value.
+
+  // Make sure V2 is smaller than V1.
+  if (V1 < V2) {
+    setInstDefiningValNum(V1, getInstForValNum(V2));
+    std::swap(V1, V2);
+  }
+
+  // Merge V1 live ranges into V2.
+  for (iterator I = begin(); I != end(); ) {
+    iterator LR = I++;
+    if (LR->ValId != V1) continue;  // Not a V1 LiveRange.
+    
+    // Okay, we found a V1 live range.  If it had a previous, touching, V2 live
+    // range, extend it.
+    if (LR != begin()) {
+      iterator Prev = LR-1;
+      if (Prev->ValId == V2 && Prev->end == LR->start) {
+        Prev->end = LR->end;
+
+        // Erase this live-range.
+        ranges.erase(LR);
+        I = Prev+1;
+        LR = Prev;
+      }
+    }
+    
+    // Okay, now we have a V1 or V2 live range that is maximally merged forward.
+    // Ensure that it is a V2 live-range.
+    LR->ValId = V2;
+    
+    // If we can merge it into later V2 live ranges, do so now.  We ignore any
+    // following V1 live ranges, as they will be merged in subsequent iterations
+    // of the loop.
+    if (I != end()) {
+      if (I->start == LR->end && I->ValId == V2) {
+        LR->end = I->end;
+        ranges.erase(I);
+        I = LR+1;
+      }
+    }
+  }
+}
+
 
 std::ostream& llvm::operator<<(std::ostream& os, const LiveRange &LR) {
   return os << '[' << LR.start << ',' << LR.end << ':' << LR.ValId << ")";

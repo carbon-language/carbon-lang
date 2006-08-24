@@ -521,7 +521,6 @@ void LocalSpiller::RewriteMBB(MachineBasicBlock &MBB, VirtRegMap &VRM) {
     // Process all of the spilled uses and all non spilled reg references.
     for (unsigned i = 0, e = MI.getNumOperands(); i != e; ++i) {
       MachineOperand &MO = MI.getOperand(i);
-
       if (!MO.isRegister() || MO.getReg() == 0)
         continue;   // Ignore non-register operands.
       
@@ -791,37 +790,16 @@ void LocalSpiller::RewriteMBB(MachineBasicBlock &MBB, VirtRegMap &VRM) {
           }
 
           if (!OpTakenCareOf) {
+            // Check to see if this is a noop copy.  If so, eliminate the
+            // instruction before considering the dest reg to be changed.
             unsigned Src, Dst;
-            if (TII->isMoveInstr(MI, Src, Dst)) {
-              if (Src == Dst) {
-                // Check to see if this is a noop copy.  If so, eliminate
-                // the instruction before considering the dest reg to be
-                // changed.
-                ++NumDCE;
-                DEBUG(std::cerr << "Removing now-noop copy: " << MI);
-                MBB.erase(&MI);
-                VRM.RemoveFromFoldedVirtMap(&MI);
-                goto ProcessNextInst;
-              } else if (MII != MBB.begin()) {
-                // Check to see if this is a sequence of the form:
-                //    mov R0, R1
-                //    mov R1, R0
-                // Eliminate the second move if so.
-                MachineBasicBlock::iterator PrevMII = MII; --PrevMII;
-                MachineInstr& PrevMI = *PrevMII;
-                unsigned PrevSrc, PrevDst;
-
-                if (TII->isMoveInstr(PrevMI, PrevSrc, PrevDst))
-                  if (PrevSrc == Dst && PrevDst == Src) {
-                    ++NumDCE;
-                    DEBUG(std::cerr << "Removing now-noop copy: " << MI);
-                    MBB.erase(&MI);
-                    VRM.RemoveFromFoldedVirtMap(&MI);
-                    goto ProcessNextInst;
-                  }
-              }
+            if (TII->isMoveInstr(MI, Src, Dst) && Src == Dst) {
+              ++NumDCE;
+              DEBUG(std::cerr << "Removing now-noop copy: " << MI);
+              MBB.erase(&MI);
+              VRM.RemoveFromFoldedVirtMap(&MI);
+              goto ProcessNextInst;
             }
-
             Spills.ClobberPhysReg(VirtReg);
             continue;
           }
@@ -882,6 +860,8 @@ void LocalSpiller::RewriteMBB(MachineBasicBlock &MBB, VirtRegMap &VRM) {
     MII = NextMII;
   }
 }
+
+
 
 llvm::Spiller* llvm::createSpiller() {
   switch (SpillerOpt) {

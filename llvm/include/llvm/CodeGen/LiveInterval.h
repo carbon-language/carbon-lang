@@ -82,7 +82,7 @@ namespace llvm {
     
     /// InstDefiningValue - This tracks the def index of the instruction that
     /// defines a particular value number in the interval.  This may be ~0,
-    /// which is treated as unknown.
+    /// which is treated as unknown, or ~1, which is a deleted value number.
     SmallVector<unsigned, 4> InstDefiningValue;
   public:
 
@@ -116,10 +116,13 @@ namespace llvm {
       std::swap(weight, other.weight);
       std::swap(ranges, other.ranges);
       std::swap(NumValues, other.NumValues);
+      std::swap(InstDefiningValue, other.InstDefiningValue);
     }
 
     bool containsOneValue() const { return NumValues == 1; }
 
+    unsigned getNumValNums() const { return NumValues; }
+    
     /// getNextValue - Create a new value number and return it.  MIIdx specifies
     /// the instruction that defines the value number.
     unsigned getNextValue(unsigned MIIdx) {
@@ -138,6 +141,12 @@ namespace llvm {
     void setInstDefiningValNum(unsigned ValNo, unsigned MIIdx) {
       InstDefiningValue[ValNo] = MIIdx;
     }
+    
+    /// MergeValueNumberInto - This method is called when two value nubmers
+    /// are found to be equivalent.  This eliminates V1, replacing all
+    /// LiveRanges with the V1 value number with the V2 value number.  This can
+    /// cause merging of V1/V2 values numbers and compaction of the value space.
+    void MergeValueNumberInto(unsigned V1, unsigned V2);
 
 
     bool empty() const { return ranges.empty(); }
@@ -163,9 +172,19 @@ namespace llvm {
 
     /// getLiveRangeContaining - Return the live range that contains the
     /// specified index, or null if there is none.
-    const LiveRange *getLiveRangeContaining(unsigned Idx) const;
+    const LiveRange *getLiveRangeContaining(unsigned Idx) const {
+      const_iterator I = FindLiveRangeContaining(Idx);
+      return I == end() ? 0 : &*I;
+    }
 
+    /// FindLiveRangeContaining - Return an iterator to the live range that
+    /// contains the specified index, or end() if there is none.
+    const_iterator FindLiveRangeContaining(unsigned Idx) const;
 
+    /// FindLiveRangeContaining - Return an iterator to the live range that
+    /// contains the specified index, or end() if there is none.
+    iterator FindLiveRangeContaining(unsigned Idx);
+    
     /// joinable - Two intervals are joinable if the either don't overlap at all
     /// or if the destination of the copy is a single assignment value, and it
     /// only overlaps with one value in the source interval.
