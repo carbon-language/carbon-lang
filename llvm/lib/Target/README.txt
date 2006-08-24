@@ -140,17 +140,6 @@ stuff too.
 
 //===---------------------------------------------------------------------===//
 
-The loop unroller should be enhanced to be able to unroll loops that aren't 
-single basic blocks.  It should be able to handle stuff like this:
-
-  for (i = 0; i < c1; ++i)
-     if (c2 & (1 << i))
-       foo
-
-where c1/c2 are constants.
-
-//===---------------------------------------------------------------------===//
-
 For packed types, TargetData.cpp::getTypeInfo() returns alignment that is equal
 to the type size. It works but can be overly conservative as the alignment of
 specific packed types are target dependent.
