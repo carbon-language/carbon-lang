@@ -6365,9 +6365,9 @@ fi
 { echo "$as_me:$LINENO: result: $llvm_cv_has_bison" >&5
 echo "${ECHO_T}$llvm_cv_has_bison" >&6; }
 if test "$YACC" != "bison -y"; then
-  { { echo "$as_me:$LINENO: error: bison not found but required" >&5
-echo "$as_me: error: bison not found but required" >&2;}
-   { (exit 1); exit 1; }; }
+
+  { echo "$as_me:$LINENO: WARNING: bison not found, can't rebuild grammars" >&5
+echo "$as_me: WARNING: bison not found, can't rebuild grammars" >&2;}
 else
   BISON=bison
 

@@ -8,7 +8,8 @@
 AC_DEFUN([AC_PROG_BISON],
 [AC_CACHE_CHECK([],[llvm_cv_has_bison],[AC_PROG_YACC()])
 if test "$YACC" != "bison -y"; then
-  AC_MSG_ERROR([bison not found but required])
+  AC_SUBST(BISON,[])
+  AC_MSG_WARN([bison not found, can't rebuild grammars])
 else
-  AC_SUBST(BISON,[bison],[location of bison])
+  AC_SUBST(BISON,[bison])
 fi])
