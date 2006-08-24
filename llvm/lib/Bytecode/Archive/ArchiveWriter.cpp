@@ -64,7 +64,7 @@ inline unsigned numVbrBytes(unsigned num) {
 // Create an empty archive.
 Archive*
 Archive::CreateEmpty(const sys::Path& FilePath ) {
-  Archive* result = new Archive(FilePath,false);
+  Archive* result = new Archive(FilePath);
   return result;
 }
 
@@ -151,17 +151,17 @@ Archive::fillHeader(const ArchiveMember &mbr, ArchiveMemberHeader& hdr,
 
 // Insert a file into the archive before some other member. This also takes care
 // of extracting the necessary flags and information from the file.
-void
-Archive::addFileBefore(const sys::Path& filePath, iterator where) {
+bool
+Archive::addFileBefore(const sys::Path& filePath, iterator where, 
+                        std::string* ErrMsg) {
   assert(filePath.exists() && "Can't add a non-existent file");
 
   ArchiveMember* mbr = new ArchiveMember(this);
 
   mbr->data = 0;
   mbr->path = filePath;
-  std::string err;
-  if (mbr->path.getFileStatus(mbr->info, &err))
-    throw err;
+  if (mbr->path.getFileStatus(mbr->info, ErrMsg))
+    return true;
 
   unsigned flags = 0;
   bool hasSlash = filePath.toString().find('/') != std::string::npos;
@@ -183,6 +183,7 @@ Archive::addFileBefore(const sys::Path& filePath, iterator where) {
   }
   mbr->flags = flags;
   members.insert(where,mbr);
+  return false;
 }
 
 // Write one member out to the file.
@@ -193,7 +194,7 @@ Archive::writeMember(
   bool CreateSymbolTable,
   bool TruncateNames,
   bool ShouldCompress,
-  std::string* error
+  std::string* ErrMsg
 ) {
 
   unsigned filepos = ARFile.tellp();
@@ -205,12 +206,11 @@ Archive::writeMember(
   const char* data = (const char*)member.getData();
   sys::MappedFile* mFile = 0;
   if (!data) {
-    std::string ErrMsg;
     mFile = new sys::MappedFile();
-    if (mFile->open(member.getPath(), sys::MappedFile::READ_ACCESS, &ErrMsg))
-      throw ErrMsg;
-    if (!(data = (const char*) mFile->map(&ErrMsg)))
-      throw ErrMsg;
+    if (mFile->open(member.getPath(), sys::MappedFile::READ_ACCESS, ErrMsg))
+      return true;
+    if (!(data = (const char*) mFile->map(ErrMsg)))
+      return true;
     fSize = mFile->size();
   }
 
@@ -246,8 +246,9 @@ Archive::writeMember(
         mFile->close();
         delete mFile;
       }
-      if (error)
-        *error = "Can't parse bytecode member: " + member.getPath().toString();
+      if (ErrMsg)
+        *ErrMsg = "Can't parse bytecode member: " + member.getPath().toString();
+      return true;
     }
   }
 
@@ -274,9 +275,9 @@ Archive::writeMember(
       data +=4;
       fSize -= 4;
     }
-    fSize = Compressor::compressToNewBuffer(data,fSize,output,error);
+    fSize = Compressor::compressToNewBuffer(data,fSize,output,ErrMsg);
     if (fSize == 0)
-      return false;
+      return true;
     data = output;
     if (member.isBytecode())
       hdrSize = -fSize-4;
@@ -320,7 +321,7 @@ Archive::writeMember(
     mFile->close();
     delete mFile;
   }
-  return true;
+  return false;
 }
 
 // Write out the LLVM symbol table as an archive member to the file.
@@ -380,7 +381,7 @@ Archive::writeSymbolTable(std::ofstream& ARFile) {
 // compressing each archive member.
 bool
 Archive::writeToDisk(bool CreateSymbolTable, bool TruncateNames, bool Compress,
-                     std::string* error)
+                     std::string* ErrMsg)
 {
   // Make sure they haven't opened up the file, not loaded it,
   // but are now trying to write it which would wipe out the file.
@@ -389,8 +390,8 @@ Archive::writeToDisk(bool CreateSymbolTable, bool TruncateNames, bool Compress,
 
   // Create a temporary file to store the archive in
   sys::Path TmpArchive = archPath;
-  if (TmpArchive.createTemporaryFileOnDisk(error))
-    return false;
+  if (TmpArchive.createTemporaryFileOnDisk(ErrMsg))
+    return true;
 
   // Make sure the temporary gets removed if we crash
   sys::RemoveFileOnSignal(TmpArchive);
@@ -404,9 +405,9 @@ Archive::writeToDisk(bool CreateSymbolTable, bool TruncateNames, bool Compress,
   if (!ArchiveFile.is_open() || ArchiveFile.bad()) {
     if (TmpArchive.exists())
       TmpArchive.eraseFromDisk();
-    if (error)
-      *error = "Error opening archive file: " + archPath.toString();
-    return false;
+    if (ErrMsg)
+      *ErrMsg = "Error opening archive file: " + archPath.toString();
+    return true;
   }
 
   // If we're creating a symbol table, reset it now
@@ -421,12 +422,12 @@ Archive::writeToDisk(bool CreateSymbolTable, bool TruncateNames, bool Compress,
   // Loop over all member files, and write them out. Note that this also
   // builds the symbol table, symTab.
   for (MembersList::iterator I = begin(), E = end(); I != E; ++I) {
-    if (!writeMember(*I, ArchiveFile, CreateSymbolTable,
-                     TruncateNames, Compress, error)) {
+    if (writeMember(*I, ArchiveFile, CreateSymbolTable,
+                     TruncateNames, Compress, ErrMsg)) {
       if (TmpArchive.exists())
         TmpArchive.eraseFromDisk();
       ArchiveFile.close();
-      return false;
+      return true;
     }
   }
 
@@ -443,27 +444,26 @@ Archive::writeToDisk(bool CreateSymbolTable, bool TruncateNames, bool Compress,
 
     // Map in the archive we just wrote.
     sys::MappedFile arch;
-    std::string ErrMsg;
-    if (arch.open(TmpArchive, sys::MappedFile::READ_ACCESS, &ErrMsg))
-      throw ErrMsg;
+    if (arch.open(TmpArchive, sys::MappedFile::READ_ACCESS, ErrMsg))
+      return true;
     const char* base;
-    if (!(base = (const char*) arch.map(&ErrMsg)))
-      throw ErrMsg;
+    if (!(base = (const char*) arch.map(ErrMsg)))
+      return true;
 
     // Open another temporary file in order to avoid invalidating the 
     // mmapped data
     sys::Path FinalFilePath = archPath;
-    if (FinalFilePath.createTemporaryFileOnDisk(error))
-      return false;
+    if (FinalFilePath.createTemporaryFileOnDisk(ErrMsg))
+      return true;
     sys::RemoveFileOnSignal(FinalFilePath);
 
     std::ofstream FinalFile(FinalFilePath.c_str(), io_mode);
     if (!FinalFile.is_open() || FinalFile.bad()) {
       if (TmpArchive.exists())
         TmpArchive.eraseFromDisk();
-      if (error)
-        *error = "Error opening archive file: " + FinalFilePath.toString();
-      return false;
+      if (ErrMsg)
+        *ErrMsg = "Error opening archive file: " + FinalFilePath.toString();
+      return true;
     }
 
     // Write the file magic number
@@ -475,11 +475,11 @@ Archive::writeToDisk(bool CreateSymbolTable, bool TruncateNames, bool Compress,
     // compatibility with other ar(1) implementations as well as allowing the
     // archive to store both native .o and LLVM .bc files, both indexed.
     if (foreignST) {
-      if (!writeMember(*foreignST, FinalFile, false, false, false, error)) {
+      if (writeMember(*foreignST, FinalFile, false, false, false, ErrMsg)) {
         FinalFile.close();
         if (TmpArchive.exists())
           TmpArchive.eraseFromDisk();
-        return false;
+        return true;
       }
     }
 
@@ -496,8 +496,8 @@ Archive::writeToDisk(bool CreateSymbolTable, bool TruncateNames, bool Compress,
     arch.close();
     
     // Move the final file over top of TmpArchive
-    if (FinalFilePath.renamePathOnDisk(TmpArchive, error))
-      return false;
+    if (FinalFilePath.renamePathOnDisk(TmpArchive, ErrMsg))
+      return true;
   }
   
   // Before we replace the actual archive, we need to forget all the
@@ -505,8 +505,8 @@ Archive::writeToDisk(bool CreateSymbolTable, bool TruncateNames, bool Compress,
   // this because we cannot replace an open file on Windows.
   cleanUpMemory();
   
-  if (TmpArchive.renamePathOnDisk(archPath, error))
-    return false;
+  if (TmpArchive.renamePathOnDisk(archPath, ErrMsg))
+    return true;
 
-  return true;
+  return false;
 }

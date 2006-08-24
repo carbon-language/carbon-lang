@@ -61,7 +61,7 @@ ArchiveMember::ArchiveMember(Archive* PAR)
 // This method allows an ArchiveMember to be replaced with the data for a
 // different file, presumably as an update to the member. It also makes sure
 // the flags are reset correctly.
-void ArchiveMember::replaceWith(const sys::Path& newFile) {
+bool ArchiveMember::replaceWith(const sys::Path& newFile, std::string* ErrMsg) {
   assert(newFile.exists() && "Can't replace with a non-existent file");
   data = 0;
   path = newFile;
@@ -110,8 +110,8 @@ void ArchiveMember::replaceWith(const sys::Path& newFile) {
     path.getMagicNumber(magic,4);
     signature = magic.c_str();
     std::string err;
-    if (path.getFileStatus(info, &err))
-      throw err;
+    if (path.getFileStatus(info, ErrMsg))
+      return true;
   }
 
   // Determine what kind of file it is
@@ -127,23 +127,27 @@ void ArchiveMember::replaceWith(const sys::Path& newFile) {
       flags &= ~(BytecodeFlag|CompressedBytecodeFlag);
       break;
   }
+  return false;
 }
 
 // Archive constructor - this is the only constructor that gets used for the
 // Archive class. Everything else (default,copy) is deprecated. This just
 // initializes and maps the file into memory, if requested.
-Archive::Archive(const sys::Path& filename, bool map )
+Archive::Archive(const sys::Path& filename)
   : archPath(filename), members(), mapfile(0), base(0), symTab(), strtab(),
     symTabSize(0), firstFileOffset(0), modules(), foreignST(0)
 {
-  if (map) {
-    std::string ErrMsg;
-    mapfile = new sys::MappedFile();
-    if (mapfile->open(filename, sys::MappedFile::READ_ACCESS, &ErrMsg))
-      throw ErrMsg;
-    if (!(base = (char*) mapfile->map(&ErrMsg)))
-      throw ErrMsg;
-  }
+}
+
+bool
+Archive::mapToMemory(std::string* ErrMsg)
+{
+  mapfile = new sys::MappedFile();
+  if (mapfile->open(archPath, sys::MappedFile::READ_ACCESS, ErrMsg))
+    return true;
+  if (!(base = (char*) mapfile->map(ErrMsg)))
+    return true;
+  return false;
 }
 
 void Archive::cleanUpMemory() {

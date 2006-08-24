@@ -586,7 +586,8 @@ doQuickAppend(std::string* ErrMsg) {
   // Append them quickly.
   for (std::set<sys::Path>::iterator PI = Paths.begin(), PE = Paths.end();
        PI != PE; ++PI) {
-    TheArchive->addFileBefore(*PI,TheArchive->end());
+    if (TheArchive->addFileBefore(*PI,TheArchive->end(),ErrMsg))
+      return true;
   }
 
   // We're done editting, reconstruct the archive.
@@ -647,15 +648,17 @@ doReplaceOrInsert(std::string* ErrMsg) {
       sys::FileStatus si;
       std::string Err;
       if (found->getFileStatus(si, &Err))
-        throw Err;
+        return true;
       if (si.isDir) {
         if (OnlyUpdate) {
           // Replace the item only if it is newer.
           if (si.modTime > I->getModTime())
-            I->replaceWith(*found);
+            if (I->replaceWith(*found, ErrMsg))
+              return true;
         } else {
           // Replace the item regardless of time stamp
-          I->replaceWith(*found);
+          if (I->replaceWith(*found, ErrMsg))
+            return true;
         }
       } else {
         // We purposefully ignore directories.
@@ -679,7 +682,8 @@ doReplaceOrInsert(std::string* ErrMsg) {
   if (!remaining.empty()) {
     for (std::set<sys::Path>::iterator PI = remaining.begin(),
          PE = remaining.end(); PI != PE; ++PI) {
-      TheArchive->addFileBefore(*PI,insert_spot);
+      if (TheArchive->addFileBefore(*PI,insert_spot, ErrMsg))
+        return true;
     }
   }
 

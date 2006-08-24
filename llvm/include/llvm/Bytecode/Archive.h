@@ -167,8 +167,9 @@ class ArchiveMember {
     /// of the file specified by \p File. The contents of \p this will be
     /// updated to reflect the new data from \p File. The \p File must exist and
     /// be readable on entry to this method.
+    /// @returns true if an error occurred, false otherwise
     /// @brief Replace contents of archive member with a new file.
-    void replaceWith(const sys::Path &aFile);
+    bool replaceWith(const sys::Path &aFile, std::string* ErrMsg);
 
   /// @}
   /// @name ilist methods - do not use
@@ -439,8 +440,8 @@ class Archive {
     /// name will be truncated at 15 characters. If \p Compress is specified,
     /// all archive members will be compressed before being written. If
     /// \p PrintSymTab is true, the symbol table will be printed to std::cout.
-    /// @returns false if an error occurred, \p error set to error message
-    /// @returns true if the writing succeeded.
+    /// @returns true if an error occurred, \p error set to error message
+    /// @returns false if the writing succeeded.
     /// @brief Write (possibly modified) archive contents to disk
     bool writeToDisk(
       bool CreateSymbolTable=false,   ///< Create Symbol table
@@ -453,10 +454,13 @@ class Archive {
     /// to determine just enough information to create an ArchiveMember object
     /// which is then inserted into the Archive object's ilist at the location
     /// given by \p where.
-    /// @throws std::string if an error occurs reading the \p filename.
-    /// @returns nothing
+    /// @returns true if an error occured, false otherwise
     /// @brief Add a file to the archive.
-    void addFileBefore(const sys::Path& filename, iterator where);
+    bool addFileBefore(
+      const sys::Path& filename, ///< The file to be added
+      iterator where,            ///< Insertion point
+      std::string* ErrMsg        ///< Optional error message location
+    );
 
   /// @}
   /// @name Implementation
@@ -464,7 +468,7 @@ class Archive {
   protected:
     /// @brief Construct an Archive for \p filename and optionally  map it
     /// into memory.
-    Archive(const sys::Path& filename, bool map = false );
+    Archive(const sys::Path& filename);
 
     /// @param error Set to address of a std::string to get error messages
     /// @returns false on error
@@ -500,8 +504,8 @@ class Archive {
     /// Writes one ArchiveMember to an ofstream. If an error occurs, returns
     /// false, otherwise true. If an error occurs and error is non-null then 
     /// it will be set to an error message.
-    /// @returns true Writing member succeeded
-    /// @returns false Writing member failed, \p error set to error message
+    /// @returns false Writing member succeeded
+    /// @returns true Writing member failed, \p error set to error message
     bool writeMember(
       const ArchiveMember& member, ///< The member to be written
       std::ofstream& ARFile,       ///< The file to write member onto
@@ -515,6 +519,9 @@ class Archive {
     bool fillHeader(const ArchiveMember&mbr,
                     ArchiveMemberHeader& hdr,int sz, bool TruncateNames) const;
 
+    /// @brief Maps archive into memory
+    bool mapToMemory(std::string* ErrMsg);
+
     /// @brief Frees all the members and unmaps the archive file.
     void cleanUpMemory();
 
@@ -524,6 +531,7 @@ class Archive {
     /// @brief Module mapping type
     typedef std::map<unsigned,std::pair<ModuleProvider*,ArchiveMember*> >
       ModuleMap;
+
 
   /// @}
   /// @name Data

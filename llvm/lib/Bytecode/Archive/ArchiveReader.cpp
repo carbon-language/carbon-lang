@@ -330,7 +330,9 @@ Archive::loadArchive(std::string* error) {
 Archive*
 Archive::OpenAndLoad(const sys::Path& file, std::string* ErrorMessage) 
 {
-  std::auto_ptr<Archive> result ( new Archive(file, true));
+  std::auto_ptr<Archive> result ( new Archive(file));
+  if (result->mapToMemory(ErrorMessage))
+    return 0;
   if (!result->loadArchive(ErrorMessage))
     return 0;
   return result.release();
@@ -437,7 +439,9 @@ Archive::loadSymbolTable(std::string* ErrorMsg) {
 // Open the archive and load just the symbol tables
 Archive*
 Archive::OpenAndLoadSymbols(const sys::Path& file, std::string* ErrorMessage) {
-  std::auto_ptr<Archive> result ( new Archive(file, true) );
+  std::auto_ptr<Archive> result ( new Archive(file) );
+  if (result->mapToMemory(ErrorMessage))
+    return 0;
   if (!result->loadSymbolTable(ErrorMessage))
     return 0;
   return result.release();
