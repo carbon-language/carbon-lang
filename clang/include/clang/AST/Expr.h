@@ -177,12 +177,11 @@ public:
 ///
 class MemberExpr : public Expr {
   Expr *Base;
-  // TODO: union { Decl *MemberDecl; IdentifierInfo *MemberII; };
-  IdentifierInfo *MemberII;
+  Decl *MemberDecl;
   bool isArrow;      // True if this is "X->F", false if this is "X.F".
 public:
-  MemberExpr(Expr *base, bool isarrow, IdentifierInfo &memberii) 
-    : Base(base), MemberII(&memberii), isArrow(isarrow) {
+  MemberExpr(Expr *base, bool isarrow, Decl *memberdecl) 
+    : Base(base), MemberDecl(memberdecl), isArrow(isarrow) {
   }
   virtual void dump_impl() const;
 };
@@ -191,8 +190,8 @@ class MemberExprLOC : public MemberExpr {
   SourceLocation OpLoc, MemberLoc;
 public:
   MemberExprLOC(Expr *Base, SourceLocation oploc, bool isArrow,
-                SourceLocation memberLoc, IdentifierInfo &MemberII) 
-    : MemberExpr(Base, isArrow, MemberII), OpLoc(oploc), MemberLoc(memberLoc) {
+                SourceLocation memberLoc, Decl *MemberDecl) 
+    : MemberExpr(Base, isArrow, MemberDecl), OpLoc(oploc), MemberLoc(memberLoc){
   }
 
 };

@@ -57,6 +57,8 @@ public:
     bool isInvalid;
     
     ExprResult(bool Invalid = false) : Val(0), isInvalid(Invalid) {}
+    template<typename ActualExprTy>
+    ExprResult(ActualExprTy *val) : Val(val), isInvalid(false) {}
     
     const ExprResult &operator=(ExprTy *RHS) {
       Val = RHS;

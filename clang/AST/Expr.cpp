@@ -119,7 +119,11 @@ CallExprLOC::CallExprLOC(Expr *Fn, SourceLocation lparenloc, Expr **Args,
 
 void MemberExpr::dump_impl() const {
   Base->dump();
-  std::cerr << (isArrow ? "->" : ".") << MemberII->getName();
+  std::cerr << (isArrow ? "->" : ".");
+  
+  if (MemberDecl)
+    /*TODO: Print MemberDecl*/;
+  std::cerr << "member";
 }
 
 /// getOpcodeStr - Turn an Opcode enum value into the punctuation char it

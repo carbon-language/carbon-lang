@@ -559,7 +559,6 @@ Parser::ExprResult Parser::ParseCastExpression(bool isUnaryExpression) {
 ///         argument-expression-list ',' assignment-expression
 ///
 Parser::ExprResult Parser::ParsePostfixExpressionSuffix(ExprResult LHS) {
-  assert(!LHS.isInvalid && "LHS is invalid already!");
   
   // Now that the primary-expression piece of the postfix-expression has been
   // parsed, see if there are any postfix-expression pieces here.

@@ -211,11 +211,13 @@ Action::ExprResult ASTBuilder::
 ParseMemberReferenceExpr(ExprTy *Base, SourceLocation OpLoc,
                          tok::TokenKind OpKind, SourceLocation MemberLoc,
                          IdentifierInfo &Member) {
+  Decl *MemberDecl = 0;
+  // TODO: Look up MemberDecl.
   if (!FullLocInfo)
-    return new MemberExpr((Expr*)Base, OpKind == tok::arrow, Member);
+    return new MemberExpr((Expr*)Base, OpKind == tok::arrow, MemberDecl);
   else
     return new MemberExprLOC((Expr*)Base, OpLoc, OpKind == tok::arrow,
-                             MemberLoc, Member);
+                             MemberLoc, MemberDecl);
 }
 
 /// ParseCallExpr - Handle a call to Fn with the specified array of arguments.
