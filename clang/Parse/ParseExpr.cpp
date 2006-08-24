@@ -21,6 +21,7 @@
 
 #include "clang/Parse/Parser.h"
 #include "clang/Basic/Diagnostic.h"
+#include "llvm/ADT/SmallVector.h"
 using namespace llvm;
 using namespace clang;
 
@@ -476,6 +477,7 @@ Parser::ExprResult Parser::ParseCastExpression(bool isUnaryExpression) {
   case tok::kw___func__:       // primary-expression: __func__ [C99 6.4.2.2]
   case tok::kw___FUNCTION__:   // primary-expression: __FUNCTION__ [GNU]
   case tok::kw___PRETTY_FUNCTION__:  // primary-expression: __P..Y_F..N__ [GNU]
+    // TODO: Build AST.
     Res = ExprResult(false);
     ConsumeToken();
     // These can be followed by postfix-expr pieces.
@@ -522,6 +524,7 @@ Parser::ExprResult Parser::ParseCastExpression(bool isUnaryExpression) {
   case tok::ampamp:        // unary-expression: '&&' identifier
     Diag(Tok, diag::ext_gnu_address_of_label);
     ConsumeToken();
+    // TODO: Build AST.
     if (Tok.getKind() == tok::identifier) {
       ConsumeToken();
     } else {
@@ -566,41 +569,73 @@ Parser::ExprResult Parser::ParsePostfixExpressionSuffix(ExprResult LHS) {
     switch (Tok.getKind()) {
     default:  // Not a postfix-expression suffix.
       return LHS;
-    case tok::l_square:    // postfix-expression: p-e '[' expression ']'
+    case tok::l_square: {  // postfix-expression: p-e '[' expression ']'
       Loc = Tok.getLocation();
       ConsumeBracket();
-      ParseExpression();
+      ExprResult Idx = ParseExpression();
+      
+      SourceLocation RLoc = Tok.getLocation();
+      
+      if (!LHS.isInvalid && !Idx.isInvalid && Tok.getKind() == tok::r_square)
+        LHS = Actions.ParseArraySubscriptExpr(LHS.Val, Loc, Idx.Val, RLoc);
+      else
+        LHS = ExprResult(true);
+
       // Match the ']'.
       MatchRHSPunctuation(tok::r_square, Loc);
       break;
+    }
       
-    case tok::l_paren:     // p-e: p-e '(' argument-expression-list[opt] ')'
+    case tok::l_paren: {   // p-e: p-e '(' argument-expression-list[opt] ')'
+      SmallVector<ExprTy*, 8> ArgExprs;
+      SmallVector<SourceLocation, 8> CommaLocs;
+      bool ArgExprsOk = true;
+      
       Loc = Tok.getLocation();
       ConsumeParen();
       
       if (Tok.getKind() != tok::r_paren) {
         while (1) {
-          ParseAssignmentExpression();
+          ExprResult ArgExpr = ParseAssignmentExpression();
+          if (ArgExpr.isInvalid)
+            ArgExprsOk = false;
+          else
+            ArgExprs.push_back(ArgExpr.Val);
+          
           if (Tok.getKind() != tok::comma)
             break;
+          CommaLocs.push_back(Tok.getLocation());
           ConsumeToken();  // Next argument.
         }
       }
         
       // Match the ')'.
+      if (!LHS.isInvalid && ArgExprsOk && Tok.getKind() == tok::r_paren)
+        LHS = Actions.ParseCallExpr(LHS.Val, Loc, &ArgExprs[0], ArgExprs.size(),
+                                    &CommaLocs[0], CommaLocs.size(),
+                                    Tok.getLocation());
+      
       MatchRHSPunctuation(tok::r_paren, Loc);
       break;
-      
+    }
     case tok::arrow:       // postfix-expression: p-e '->' identifier
-    case tok::period:      // postfix-expression: p-e '.' identifier
-      ConsumeToken();
+    case tok::period: {    // postfix-expression: p-e '.' identifier
+      SourceLocation OpLoc = Tok.getLocation();
+      tok::TokenKind OpKind = Tok.getKind();
+      ConsumeToken();  // Eat the "." or "->" token.
+      
       if (Tok.getKind() != tok::identifier) {
         Diag(Tok, diag::err_expected_ident);
         return ExprResult(true);
       }
+      
+      if (!LHS.isInvalid)
+        LHS = Actions.ParseMemberReferenceExpr(LHS.Val, OpLoc, OpKind,
+                                               Tok.getLocation(),
+                                               *Tok.getIdentifierInfo());
       ConsumeToken();
       break;
-      
+    }
     case tok::plusplus:    // postfix-expression: postfix-expression '++'
     case tok::minusminus:  // postfix-expression: postfix-expression '--'
       if (!LHS.isInvalid)
@@ -625,6 +660,7 @@ Parser::ExprResult Parser::ParseSizeofAlignofExpression() {
   ConsumeToken();
   
   // If the operand doesn't start with an '(', it must be an expression.
+  // TODO: Build AST.
   if (Tok.getKind() != tok::l_paren)
     return ParseCastExpression(true);
   
@@ -632,6 +668,7 @@ Parser::ExprResult Parser::ParseSizeofAlignofExpression() {
   // type-name, or it is a unary-expression that starts with a compound literal,
   // or starts with a primary-expression that is a parenthesized expression.
   ParenParseOption ExprType = CastExpr;
+  // TODO: Build AST.
   return ParseParenExpression(ExprType);
 }
 
@@ -665,7 +702,8 @@ Parser::ExprResult Parser::ParseBuiltinPrimaryExpression() {
   
   SourceLocation LParenLoc = Tok.getLocation();
   ConsumeParen();
-  
+  // TODO: Build AST.
+
   switch (T) {
   default: assert(0 && "Not a builtin primary expression!");
   case tok::kw___builtin_va_arg:
