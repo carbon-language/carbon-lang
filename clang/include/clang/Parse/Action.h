@@ -49,6 +49,22 @@ public:
   typedef void ExprTy;
   typedef void DeclTy;
   
+  /// ExprResult - This structure is used while parsing/acting on expressions.
+  /// It encapsulates both the expression object returned by the action, plus
+  /// a sense of whether or not it is valid.
+  struct ExprResult {
+    ExprTy *Val;
+    bool isInvalid;
+    
+    ExprResult(bool Invalid = false) : Val(0), isInvalid(Invalid) {}
+    
+    const ExprResult &operator=(ExprTy *RHS) {
+      Val = RHS;
+      isInvalid = false;
+      return *this;
+    }
+  };
+  
   //===--------------------------------------------------------------------===//
   // Symbol Table Tracking Callbacks.
   //===--------------------------------------------------------------------===//

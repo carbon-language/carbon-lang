@@ -220,18 +220,7 @@ private:
   //===--------------------------------------------------------------------===//
   // C99 6.5: Expressions.
 
-  struct ExprResult {
-    ExprTy *Val;
-    bool isInvalid;
-    
-    ExprResult(bool Invalid = false) : Val(0), isInvalid(Invalid) {}
-    
-    const ExprResult &operator=(ExprTy *RHS) {
-      Val = RHS;
-      isInvalid = false;
-      return *this;
-    }
-  };
+  typedef Action::ExprResult ExprResult;
   
   ExprResult ParseExpression();
   ExprResult ParseConstantExpression();
