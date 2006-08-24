@@ -174,8 +174,7 @@ void ARMAsmPrinter::printOperand(const MachineInstr *MI, int opNum) {
     O << "#" << (int)MO.getImmedValue();
     break;
   case MachineOperand::MO_MachineBasicBlock:
-    assert(0 && "not implemented");
-    abort();
+    printBasicBlockLabel(MO.getMachineBasicBlock());
     return;
   case MachineOperand::MO_GlobalAddress: {
     GlobalValue *GV = MO.getGlobal();

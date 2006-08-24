@@ -37,6 +37,8 @@ class InstARM<dag ops, string asmstr, list<dag> pattern> : Instruction {
   let Pattern = pattern;
 }
 
+def brtarget : Operand<OtherVT>;
+
 def SDT_ARMCallSeq : SDTypeProfile<0, 1, [ SDTCisVT<0, i32> ]>;
 def callseq_start  : SDNode<"ISD::CALLSEQ_START", SDT_ARMCallSeq,
     		             [SDNPHasChain, SDNPOutFlag]>;
@@ -49,6 +51,9 @@ def ARMcall        : SDNode<"ARMISD::CALL", SDT_ARMcall,
 def retflag        : SDNode<"ARMISD::RET_FLAG", SDTRet,
 	                   [SDNPHasChain, SDNPOptInFlag]>;
 def armselect      : SDNode<"ARMISD::SELECT", SDTIntBinOp, [SDNPInFlag, SDNPOutFlag]>;
+
+def SDTarmbr       : SDTypeProfile<0, 1, [SDTCisVT<0, OtherVT>]>;
+def armbr          : SDNode<"ARMISD::BR", SDTarmbr, [SDNPHasChain, SDNPInFlag]>;
 
 def SDTVoidBinOp : SDTypeProfile<0, 2, [SDTCisSameAs<0, 1>]>;
 def armcmp       : SDNode<"ARMISD::CMP",  SDTVoidBinOp, [SDNPOutFlag]>;
@@ -106,6 +111,10 @@ let isTwoAddress = 1 in {
 	                 "moveq $dst, $true",
 		         [(set IntRegs:$dst, (armselect IntRegs:$true, IntRegs:$false))]>;
 }
+
+def bne    : InstARM<(ops brtarget:$dst),
+		     "bne $dst",
+		     [(armbr bb:$dst)]>;
 
 def cmp      : InstARM<(ops IntRegs:$a, IntRegs:$b),
 	               "cmp $a, $b",
