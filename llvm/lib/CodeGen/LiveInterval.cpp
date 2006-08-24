@@ -470,6 +470,18 @@ void LiveInterval::MergeValueNumberInto(unsigned V1, unsigned V2) {
       }
     }
   }
+  
+  // Now that V1 is dead, remove it.  If it is the largest value number, just
+  // nuke it (and any other deleted values neighboring it), otherwise mark it as
+  // ~1U so it can be nuked later.
+  if (V1 == NumValues-1) {
+    do {
+      InstDefiningValue.pop_back();
+      --NumValues;
+    } while (InstDefiningValue.back() == ~1U);
+  } else {
+    InstDefiningValue[V1] = ~1U;
+  }
 }
 
 
