@@ -27,6 +27,9 @@ void Expr::dump() const {
   std::cerr << ")";
 }
 
+void DeclExpr::dump_impl() const {
+  std::cerr << "x";
+}
 
 void IntegerConstant::dump_impl() const {
   std::cerr << "1";

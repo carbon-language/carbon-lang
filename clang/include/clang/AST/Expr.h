@@ -20,6 +20,7 @@
 namespace llvm {
 namespace clang {
   class IdentifierInfo;
+  class Decl;
   
 /// Expr - This represents one expression etc.  
 ///
@@ -39,6 +40,16 @@ private:
 //===----------------------------------------------------------------------===//
 // Primary Expressions.
 //===----------------------------------------------------------------------===//
+
+/// DeclExpr - [C99 6.5.1p2] - A reference to a declared variable, function,
+/// enum, etc.
+class DeclExpr : public Expr {
+  // TODO: Union with the decl when resolved.
+  Decl &D;
+public:
+  DeclExpr(Decl &d) : D(d) {}
+  virtual void dump_impl() const;
+};
 
 class IntegerConstant : public Expr {
 public:
@@ -98,6 +109,11 @@ public:
    : UnaryOperator(Input, Opc), Loc(loc) {}
 
 };
+
+
+//===----------------------------------------------------------------------===//
+// Postfix Operators.
+//===----------------------------------------------------------------------===//
 
 /// ArraySubscriptExpr - [C99 6.5.2.1] Array Subscripting.
 class ArraySubscriptExpr : public Expr {

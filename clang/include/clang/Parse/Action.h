@@ -72,6 +72,7 @@ public:
   //===--------------------------------------------------------------------===//
   
   // Primary Expressions.
+  virtual ExprTy *ParseSimplePrimaryExpr(const LexerToken &Tok) { return 0; }
   virtual ExprTy *ParseIntegerConstant(const LexerToken &Tok) { return 0; }
   virtual ExprTy *ParseFloatingConstant(const LexerToken &Tok) { return 0; }
 

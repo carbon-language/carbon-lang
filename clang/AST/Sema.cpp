@@ -42,6 +42,7 @@ public:
   // Expression Parsing Callbacks.
 
   // Primary Expressions.
+  virtual ExprTy *ParseSimplePrimaryExpr(const LexerToken &Tok);
   virtual ExprTy *ParseIntegerConstant(const LexerToken &Tok);
   virtual ExprTy *ParseFloatingConstant(const LexerToken &Tok);
   virtual ExprTy *ParseParenExpr(SourceLocation L, SourceLocation R,
@@ -121,6 +122,25 @@ void ASTBuilder::PopScope(SourceLocation Loc, Scope *S) {
 //===--------------------------------------------------------------------===//
 // Expression Parsing Callbacks.
 //===--------------------------------------------------------------------===//
+
+ASTBuilder::ExprTy *ASTBuilder::ParseSimplePrimaryExpr(const LexerToken &Tok) {
+  switch (Tok.getKind()) {
+  default:
+    assert(0 && "Unknown simple primary expr!");
+  case tok::identifier: {
+    // Could be enum-constant or decl.
+    //Tok.getIdentifierInfo()
+    return new DeclExpr(*(Decl*)0);
+  }
+    
+  case tok::char_constant:     // constant: character-constant
+  case tok::kw___func__:       // primary-expression: __func__ [C99 6.4.2.2]
+  case tok::kw___FUNCTION__:   // primary-expression: __FUNCTION__ [GNU]
+  case tok::kw___PRETTY_FUNCTION__:  // primary-expression: __P..Y_F..N__ [GNU]
+    assert(0 && "Unimp so far!");
+    return 0;
+  }
+}
 
 ASTBuilder::ExprTy *ASTBuilder::ParseIntegerConstant(const LexerToken &Tok) {
   return new IntegerConstant();
