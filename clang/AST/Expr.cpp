@@ -66,6 +66,8 @@ const char *UnaryOperator::getOpcodeStr(Opcode Op) {
   case LNot:    return "!";
   case Real:    return "__real";
   case Imag:    return "__imag";
+  case SizeOf:  return "sizeof";
+  case AlignOf: return "alignof";
   }
 }
 

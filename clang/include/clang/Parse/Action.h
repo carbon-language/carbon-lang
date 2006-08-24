@@ -99,10 +99,7 @@ public:
     return Val;  // Default impl returns operand.
   }
 
-  // Binary/Unary Operators.  'Tok' is the token for the operator.
-  virtual ExprResult ParseUnaryOp(const LexerToken &Tok, ExprTy *Input) {
-    return 0;
-  }
+  // Postfix Expressions.
   virtual ExprResult ParsePostfixUnaryOp(const LexerToken &Tok, ExprTy *Input) {
     return 0;
   }
@@ -125,6 +122,11 @@ public:
                                    ExprTy **Args, unsigned NumArgs,
                                    SourceLocation *CommaLocs,
                                    SourceLocation RParenLoc) {
+    return 0;
+  }
+  
+  // Unary Operators.  'Tok' is the token for the operator.
+  virtual ExprResult ParseUnaryOp(const LexerToken &Tok, ExprTy *Input) {
     return 0;
   }
 

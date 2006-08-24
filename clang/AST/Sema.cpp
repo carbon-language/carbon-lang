@@ -165,16 +165,18 @@ Action::ExprResult ASTBuilder::ParseUnaryOp(const LexerToken &Tok,
   UnaryOperator::Opcode Opc;
   switch (Tok.getKind()) {
   default: assert(0 && "Unknown unary op!");
-  case tok::plusplus:   Opc = UnaryOperator::PreInc; break;
-  case tok::minusminus: Opc = UnaryOperator::PreDec; break;
-  case tok::amp:        Opc = UnaryOperator::AddrOf; break;
-  case tok::star:       Opc = UnaryOperator::Deref; break;
-  case tok::plus:       Opc = UnaryOperator::Plus; break;
-  case tok::minus:      Opc = UnaryOperator::Minus; break;
-  case tok::tilde:      Opc = UnaryOperator::Not; break;
-  case tok::exclaim:    Opc = UnaryOperator::LNot; break;
-  case tok::kw___real:  Opc = UnaryOperator::Real; break;
-  case tok::kw___imag:  Opc = UnaryOperator::Imag; break;
+  case tok::plusplus:     Opc = UnaryOperator::PreInc; break;
+  case tok::minusminus:   Opc = UnaryOperator::PreDec; break;
+  case tok::amp:          Opc = UnaryOperator::AddrOf; break;
+  case tok::star:         Opc = UnaryOperator::Deref; break;
+  case tok::plus:         Opc = UnaryOperator::Plus; break;
+  case tok::minus:        Opc = UnaryOperator::Minus; break;
+  case tok::tilde:        Opc = UnaryOperator::Not; break;
+  case tok::exclaim:      Opc = UnaryOperator::LNot; break;
+  case tok::kw___real:    Opc = UnaryOperator::Real; break;
+  case tok::kw___imag:    Opc = UnaryOperator::Imag; break;
+  case tok::kw_sizeof:    Opc = UnaryOperator::SizeOf; break;
+  case tok::kw___alignof: Opc = UnaryOperator::AlignOf; break;
   }
 
   if (!FullLocInfo)

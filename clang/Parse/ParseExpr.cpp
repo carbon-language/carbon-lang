@@ -657,19 +657,34 @@ Parser::ExprResult Parser::ParseSizeofAlignofExpression() {
   assert((Tok.getKind() == tok::kw_sizeof ||
           Tok.getKind() == tok::kw___alignof) &&
          "Not a sizeof/alignof expression!");
+  LexerToken OpTok = Tok;
   ConsumeToken();
   
   // If the operand doesn't start with an '(', it must be an expression.
   // TODO: Build AST.
-  if (Tok.getKind() != tok::l_paren)
-    return ParseCastExpression(true);
+  ExprResult Operand;
+  if (Tok.getKind() != tok::l_paren) {
+    Operand = ParseCastExpression(true);
+  } else {
+    // If it starts with a '(', we know that it is either a parenthesized
+    // type-name, or it is a unary-expression that starts with a compound
+    // literal, or starts with a primary-expression that is a parenthesized
+    // expression.
+    ParenParseOption ExprType = CastExpr;
+    Operand = ParseParenExpression(ExprType);
+    
+    // If ParseParenExpression parsed a '(typename)' sequence only, the this is
+    // sizeof/alignof a type.  Otherwise, it is sizeof/alignof an expression.
+    if (ExprType == CastExpr) {
+      // TODO: Get type from ParseParenExpression and build AST here.
+      return ExprResult(false);
+    }
+  }
   
-  // If it starts with a '(', we know that it is either a parenthesized
-  // type-name, or it is a unary-expression that starts with a compound literal,
-  // or starts with a primary-expression that is a parenthesized expression.
-  ParenParseOption ExprType = CastExpr;
-  // TODO: Build AST.
-  return ParseParenExpression(ExprType);
+  // If we get here, the operand to the sizeof/alignof was an expresion.
+  if (!Operand.isInvalid)
+    Operand = Actions.ParseUnaryOp(OpTok, Operand.Val);
+  return Operand;
 }
 
 /// ParseBuiltinPrimaryExpression
