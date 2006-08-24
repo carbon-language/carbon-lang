@@ -42,39 +42,39 @@ public:
   // Expression Parsing Callbacks.
 
   // Primary Expressions.
-  virtual ExprTy *ParseSimplePrimaryExpr(const LexerToken &Tok);
-  virtual ExprTy *ParseIntegerConstant(const LexerToken &Tok);
-  virtual ExprTy *ParseFloatingConstant(const LexerToken &Tok);
-  virtual ExprTy *ParseParenExpr(SourceLocation L, SourceLocation R,
-                                 ExprTy *Val);
+  virtual ExprResult ParseSimplePrimaryExpr(const LexerToken &Tok);
+  virtual ExprResult ParseIntegerConstant(const LexerToken &Tok);
+  virtual ExprResult ParseFloatingConstant(const LexerToken &Tok);
+  virtual ExprResult ParseParenExpr(SourceLocation L, SourceLocation R,
+                                    ExprTy *Val);
   
   // Binary/Unary Operators.  'Tok' is the token for the operator.
-  virtual ExprTy *ParseUnaryOp(const LexerToken &Tok, ExprTy *Input);
-  virtual ExprTy *ParsePostfixUnaryOp(const LexerToken &Tok, ExprTy *Input);
+  virtual ExprResult ParseUnaryOp(const LexerToken &Tok, ExprTy *Input);
+  virtual ExprResult ParsePostfixUnaryOp(const LexerToken &Tok, ExprTy *Input);
   
-  virtual ExprTy *ParseArraySubscriptExpr(ExprTy *Base, SourceLocation LLoc,
-                                          ExprTy *Idx, SourceLocation RLoc);
-  virtual ExprTy *ParseMemberReferenceExpr(ExprTy *Base, SourceLocation OpLoc,
-                                           tok::TokenKind OpKind,
-                                           SourceLocation MemberLoc,
-                                           IdentifierInfo &Member);
+  virtual ExprResult ParseArraySubscriptExpr(ExprTy *Base, SourceLocation LLoc,
+                                             ExprTy *Idx, SourceLocation RLoc);
+  virtual ExprResult ParseMemberReferenceExpr(ExprTy *Base,SourceLocation OpLoc,
+                                              tok::TokenKind OpKind,
+                                              SourceLocation MemberLoc,
+                                              IdentifierInfo &Member);
   
   /// ParseCallExpr - Handle a call to Fn with the specified array of arguments.
   /// This provides the location of the left/right parens and a list of comma
   /// locations.
-  virtual ExprTy *ParseCallExpr(ExprTy *Fn, SourceLocation LParenLoc,
-                                ExprTy **Args, unsigned NumArgs,
-                                SourceLocation *CommaLocs,
-                                SourceLocation RParenLoc);
+  virtual ExprResult ParseCallExpr(ExprTy *Fn, SourceLocation LParenLoc,
+                                   ExprTy **Args, unsigned NumArgs,
+                                   SourceLocation *CommaLocs,
+                                   SourceLocation RParenLoc);
   
   
-  virtual ExprTy *ParseBinOp(const LexerToken &Tok, ExprTy *LHS, ExprTy *RHS);
+  virtual ExprResult ParseBinOp(const LexerToken &Tok, ExprTy *LHS,ExprTy *RHS);
   
   /// ParseConditionalOp - Parse a ?: operation.  Note that 'LHS' may be null
   /// in the case of a the GNU conditional expr extension.
-  virtual ExprTy *ParseConditionalOp(SourceLocation QuestionLoc, 
-                                     SourceLocation ColonLoc,
-                                     ExprTy *Cond, ExprTy *LHS, ExprTy *RHS);
+  virtual ExprResult ParseConditionalOp(SourceLocation QuestionLoc, 
+                                        SourceLocation ColonLoc,
+                                        ExprTy *Cond, ExprTy *LHS, ExprTy *RHS);
 };
 } // end anonymous namespace
 
@@ -123,7 +123,7 @@ void ASTBuilder::PopScope(SourceLocation Loc, Scope *S) {
 // Expression Parsing Callbacks.
 //===--------------------------------------------------------------------===//
 
-ASTBuilder::ExprTy *ASTBuilder::ParseSimplePrimaryExpr(const LexerToken &Tok) {
+Action::ExprResult ASTBuilder::ParseSimplePrimaryExpr(const LexerToken &Tok) {
   switch (Tok.getKind()) {
   default:
     assert(0 && "Unknown simple primary expr!");
@@ -142,16 +142,16 @@ ASTBuilder::ExprTy *ASTBuilder::ParseSimplePrimaryExpr(const LexerToken &Tok) {
   }
 }
 
-ASTBuilder::ExprTy *ASTBuilder::ParseIntegerConstant(const LexerToken &Tok) {
+Action::ExprResult ASTBuilder::ParseIntegerConstant(const LexerToken &Tok) {
   return new IntegerConstant();
 }
-ASTBuilder::ExprTy *ASTBuilder::ParseFloatingConstant(const LexerToken &Tok) {
+Action::ExprResult ASTBuilder::ParseFloatingConstant(const LexerToken &Tok) {
   return new FloatingConstant();
 }
 
-ASTBuilder::ExprTy *ASTBuilder::ParseParenExpr(SourceLocation L, 
-                                               SourceLocation R,
-                                               ExprTy *Val) {
+Action::ExprResult ASTBuilder::ParseParenExpr(SourceLocation L, 
+                                              SourceLocation R,
+                                              ExprTy *Val) {
   // FIXME: This is obviously just for testing.
   ((Expr*)Val)->dump();
   if (!FullLocInfo) return Val;
@@ -160,8 +160,8 @@ ASTBuilder::ExprTy *ASTBuilder::ParseParenExpr(SourceLocation L,
 }
 
 // Unary Operators.  'Tok' is the token for the operator.
-ASTBuilder::ExprTy *ASTBuilder::ParseUnaryOp(const LexerToken &Tok, 
-                                             ExprTy *Input) {
+Action::ExprResult ASTBuilder::ParseUnaryOp(const LexerToken &Tok,
+                                            ExprTy *Input) {
   UnaryOperator::Opcode Opc;
   switch (Tok.getKind()) {
   default: assert(0 && "Unknown unary op!");
@@ -183,8 +183,8 @@ ASTBuilder::ExprTy *ASTBuilder::ParseUnaryOp(const LexerToken &Tok,
     return new UnaryOperatorLOC(Tok.getLocation(), (Expr*)Input, Opc);
 }
 
-ASTBuilder::ExprTy *ASTBuilder::ParsePostfixUnaryOp(const LexerToken &Tok,
-                                                    ExprTy *Input) {
+Action::ExprResult ASTBuilder::ParsePostfixUnaryOp(const LexerToken &Tok,
+                                                   ExprTy *Input) {
   UnaryOperator::Opcode Opc;
   switch (Tok.getKind()) {
   default: assert(0 && "Unknown unary op!");
@@ -198,7 +198,7 @@ ASTBuilder::ExprTy *ASTBuilder::ParsePostfixUnaryOp(const LexerToken &Tok,
     return new UnaryOperatorLOC(Tok.getLocation(), (Expr*)Input, Opc);
 }
 
-ASTBuilder::ExprTy *ASTBuilder::
+Action::ExprResult ASTBuilder::
 ParseArraySubscriptExpr(ExprTy *Base, SourceLocation LLoc,
                         ExprTy *Idx, SourceLocation RLoc) {
   if (!FullLocInfo)
@@ -207,7 +207,7 @@ ParseArraySubscriptExpr(ExprTy *Base, SourceLocation LLoc,
     return new ArraySubscriptExprLOC((Expr*)Base, LLoc, (Expr*)Idx, RLoc);
 }
 
-ASTBuilder::ExprTy *ASTBuilder::
+Action::ExprResult ASTBuilder::
 ParseMemberReferenceExpr(ExprTy *Base, SourceLocation OpLoc,
                          tok::TokenKind OpKind, SourceLocation MemberLoc,
                          IdentifierInfo &Member) {
@@ -221,7 +221,7 @@ ParseMemberReferenceExpr(ExprTy *Base, SourceLocation OpLoc,
 /// ParseCallExpr - Handle a call to Fn with the specified array of arguments.
 /// This provides the location of the left/right parens and a list of comma
 /// locations.
-ASTBuilder::ExprTy *ASTBuilder::
+Action::ExprResult ASTBuilder::
 ParseCallExpr(ExprTy *Fn, SourceLocation LParenLoc,
               ExprTy **Args, unsigned NumArgs,
               SourceLocation *CommaLocs, SourceLocation RParenLoc) {
@@ -234,8 +234,8 @@ ParseCallExpr(ExprTy *Fn, SourceLocation LParenLoc,
 
 
 // Binary Operators.  'Tok' is the token for the operator.
-ASTBuilder::ExprTy *ASTBuilder::ParseBinOp(const LexerToken &Tok, ExprTy *LHS,
-                                           ExprTy *RHS) {
+Action::ExprResult ASTBuilder::ParseBinOp(const LexerToken &Tok, ExprTy *LHS,
+                                          ExprTy *RHS) {
   BinaryOperator::Opcode Opc;
   switch (Tok.getKind()) {
   default: assert(0 && "Unknown binop!");
@@ -279,10 +279,10 @@ ASTBuilder::ExprTy *ASTBuilder::ParseBinOp(const LexerToken &Tok, ExprTy *LHS,
 
 /// ParseConditionalOp - Parse a ?: operation.  Note that 'LHS' may be null
 /// in the case of a the GNU conditional expr extension.
-ASTBuilder::ExprTy *ASTBuilder::ParseConditionalOp(SourceLocation QuestionLoc, 
-                                                   SourceLocation ColonLoc,
-                                                   ExprTy *Cond, ExprTy *LHS,
-                                                   ExprTy *RHS) {
+Action::ExprResult ASTBuilder::ParseConditionalOp(SourceLocation QuestionLoc, 
+                                                  SourceLocation ColonLoc,
+                                                  ExprTy *Cond, ExprTy *LHS,
+                                                  ExprTy *RHS) {
   if (!FullLocInfo)
     return new ConditionalOperator((Expr*)Cond, (Expr*)LHS, (Expr*)RHS);
   else
