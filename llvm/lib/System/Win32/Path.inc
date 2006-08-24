@@ -310,22 +310,6 @@ Path::getFileStatus(FileStatus &info, std::string *ErrStr) const {
   return false;
 }
 
-static bool AddPermissionBits(const std::string& Filename, int bits) {
-  DWORD attr = GetFileAttributes(Filename.c_str());
-
-  // If it doesn't exist, we're done.
-  if (attr == INVALID_FILE_ATTRIBUTES)
-    return false;
-
-  // The best we can do to interpret Unix permission bits is to use
-  // the owner writable bit.
-  if ((attr & FILE_ATTRIBUTE_READONLY) && (bits & 0200)) {
-    if (!SetFileAttributes(Filename.c_str(), attr & ~FILE_ATTRIBUTE_READONLY))
-      ThrowError(Filename + ": SetFileAttributes: ");
-  }
-  return true;
-}
-
 bool Path::makeReadableOnDisk(std::string* ErrMsg) {
   // All files are readable on Windows (ignoring security attributes).
   return false;
@@ -469,8 +453,14 @@ Path::eraseSuffix() {
   return false;
 }
 
+inline bool PathMsg(std::string* ErrMsg, const char* pathname, const char*msg) {
+  if (ErrMsg)
+    *ErrMsg = std::string(pathname) + ": " + std::string(msg);
+  return true;
+}
+
 bool
-Path::createDirectoryOnDisk(bool create_parents) {
+Path::createDirectoryOnDisk(bool create_parents, std::string* ErrMsg) {
   // Get a writeable copy of the path name
   size_t len = path.length();
   char *pathname = reinterpret_cast<char *>(_alloca(len+2));
@@ -489,14 +479,17 @@ Path::createDirectoryOnDisk(bool create_parents) {
     // Skip host name.
     next = strchr(pathname+2, '/');
     if (next == NULL)
-      throw std::string(pathname) + ": badly formed remote directory";
+      return PathMsg(ErrMsg, pathname, "badly formed remote directory");
+
     // Skip share name.
     next = strchr(next+1, '/');
     if (next == NULL)
-      throw std::string(pathname) + ": badly formed remote directory";
+      return PathMsg(ErrMsg, pathname,"badly formed remote directory");
+
     next++;
     if (*next == 0)
-      throw std::string(pathname) + ": badly formed remote directory";
+      return PathMsg(ErrMsg, pathname, "badly formed remote directory");
+
   } else {
     if (pathname[1] == ':')
       next += 2;    // skip drive letter
@@ -511,43 +504,44 @@ Path::createDirectoryOnDisk(bool create_parents) {
       next = strchr(next, '/');
       *next = 0;
       if (!CreateDirectory(pathname, NULL))
-          ThrowError(std::string(pathname) + ": Can't create directory: ");
+          return MakeErrMsg(ErrMsg, 
+            std::string(pathname) + ": Can't create directory: ");
       *next++ = '/';
     }
   } else {
     // Drop trailing slash.
     pathname[len-1] = 0;
     if (!CreateDirectory(pathname, NULL)) {
-      ThrowError(std::string(pathname) + ": Can't create directory: ");
+      return MakeErrMsg(, std::string(pathname) + ": Can't create directory: ");
     }
   }
-  return true;
+  return false;
 }
 
 bool
-Path::createFileOnDisk() {
+Path::createFileOnDisk(std::string* ErrMsg) {
   // Create the file
   HANDLE h = CreateFile(path.c_str(), GENERIC_WRITE, 0, NULL, CREATE_NEW,
                         FILE_ATTRIBUTE_NORMAL, NULL);
   if (h == INVALID_HANDLE_VALUE)
-    ThrowError(path + ": Can't create file: ");
+    return MakeErrMsg(ErrMsg, path + ": Can't create file: ");
 
   CloseHandle(h);
-  return true;
+  return false;
 }
 
 bool
 Path::eraseFromDisk(bool remove_contents, std::string *ErrStr) const {
   FileStatus Status;
   if (getFileStatus(Status, ErrStr))
-    return true;
+    return false;
     
   if (Status.isFile) {
     DWORD attr = GetFileAttributes(path.c_str());
 
     // If it doesn't exist, we're done.
     if (attr == INVALID_FILE_ATTRIBUTES)
-      return true;
+      return false;
 
     // Read-only files cannot be deleted on Windows.  Must remove the read-only
     // attribute first.
@@ -557,7 +551,7 @@ Path::eraseFromDisk(bool remove_contents, std::string *ErrStr) const {
     }
 
     if (!DeleteFile(path.c_str()))
-      ThrowError(path + ": Can't destroy file: ");
+      return MakeErrMsg(ErrStr, path + ": Can't destroy file: ");
     return false;
   } else if (Status.isDir) {
     // If it doesn't exist, we're done.
@@ -618,10 +612,9 @@ Path::eraseFromDisk(bool remove_contents, std::string *ErrStr) const {
       return GetError(std::string(pathname) + ": Can't destroy directory: ",
                       ErrStr);
     return false;
-  } else {
-    // It appears the path doesn't exist.
-    return true;
-  }
+  } 
+  // It appears the path doesn't exist.
+  return true;
 }
 
 bool Path::getMagicNumber(std::string& Magic, unsigned len) const {
@@ -710,19 +703,20 @@ Path::setStatusInfoOnDisk(const FileStatus &si, std::string *ErrStr) const {
   return false;
 }
 
-void
-CopyFile(const sys::Path &Dest, const sys::Path &Src) {
+bool
+CopyFile(const sys::Path &Dest, const sys::Path &Src, std::string* ErrMsg) {
   // Can't use CopyFile macro defined in Windows.h because it would mess up the
   // above line.  We use the expansion it would have in a non-UNICODE build.
   if (!::CopyFileA(Src.c_str(), Dest.c_str(), false))
-    ThrowError("Can't copy '" + Src.toString() +
+    return MakeErrMsg(ErrMsg, "Can't copy '" + Src.toString() +
                "' to '" + Dest.toString() + "': ");
+  return false;
 }
 
-void
-Path::makeUnique(bool reuse_current) {
+bool
+Path::makeUnique(bool reuse_current, std::string* ErrMsg) {
   if (reuse_current && !exists())
-    return; // File doesn't exist already, just use it!
+    return false; // File doesn't exist already, just use it!
 
   // Reserve space for -XXXXXX at the end.
   char *FNBuffer = (char*) alloca(path.size()+8);
@@ -739,10 +733,11 @@ Path::makeUnique(bool reuse_current) {
       FCounter = 0;
     path = FNBuffer;
   } while (exists());
+  return false;
 }
 
 bool
-Path::createTemporaryFileOnDisk(bool reuse_current) {
+Path::createTemporaryFileOnDisk(bool reuse_current, std::string* ErrMsg) {
   // Make this into a unique file name
   makeUnique(reuse_current);
 
@@ -750,10 +745,10 @@ Path::createTemporaryFileOnDisk(bool reuse_current) {
   HANDLE h = CreateFile(path.c_str(), GENERIC_WRITE, 0, NULL, CREATE_NEW,
                         FILE_ATTRIBUTE_NORMAL, NULL);
   if (h == INVALID_HANDLE_VALUE)
-    return false;
+    return MakeErrMsg(ErrMsg, path.toString() + ": can't create file");
 
   CloseHandle(h);
-  return true;
+  return false;
 }
 
 }
