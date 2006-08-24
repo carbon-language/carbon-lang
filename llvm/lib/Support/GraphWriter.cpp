@@ -77,7 +77,7 @@ void llvm::DisplayGraph(const sys::Path &Filename) {
   if (sys::Program::ExecuteAndWait(dotty, &args[0],0,0,0,&ErrMsg)) {
     std::cerr << "Error viewing graph: " << ErrMsg << "\n";
   } else {
-#ifdef __MINGW32__ // Dotty spawns another app and doesn't wait until it returns.
+#ifdef __MINGW32__ // Dotty spawns another app and doesn't wait until it returns
     return;
 #endif
   }
