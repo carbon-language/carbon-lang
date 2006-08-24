@@ -100,10 +100,11 @@ public:
   
   /// ParseCallExpr - Handle a call to Fn with the specified array of arguments.
   /// This provides the location of the left/right parens and a list of comma
-  /// locations.
+  /// locations.  There are guaranteed to be one fewer commas than arguments,
+  /// unless there are zero arguments.
   virtual ExprTy *ParseCallExpr(ExprTy *Fn, SourceLocation LParenLoc,
                                 ExprTy **Args, unsigned NumArgs,
-                                SourceLocation *CommaLocs, unsigned NumCommas,
+                                SourceLocation *CommaLocs,
                                 SourceLocation RParenLoc) {
     return 0;
   }

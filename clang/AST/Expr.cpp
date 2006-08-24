@@ -12,15 +12,19 @@
 //===----------------------------------------------------------------------===//
 
 #include "clang/AST/Expr.h"
+#include "clang/Lex/IdentifierTable.h"
 #include <iostream>
 using namespace llvm;
 using namespace clang;
 
 void Expr::dump() const {
-  if (this == 0)
+  if (this == 0) {
     std::cerr << "<null expr>";
-  else
-    dump_impl();
+    return;
+  }
+  std::cerr << "(";
+  dump_impl();
+  std::cerr << ")";
 }
 
 
@@ -59,9 +63,53 @@ const char *UnaryOperator::getOpcodeStr(Opcode Op) {
 }
 
 void UnaryOperator::dump_impl() const {
-  std::cerr << "(" << getOpcodeStr(Opc);
+  std::cerr << getOpcodeStr(Opc);
   Input->dump();
+}
+
+
+void ArraySubscriptExpr::dump_impl() const {
+  Base->dump();
+  std::cerr << "[";
+  Idx->dump();
+  std::cerr << "]";
+}
+
+CallExpr::CallExpr(Expr *fn, Expr **args, unsigned numargs)
+  : Fn(fn), NumArgs(numargs) {
+  Args = new Expr*[numargs];
+  for (unsigned i = 0; i != numargs; ++i)
+    Args[i] = args[i];
+}
+
+void CallExpr::dump_impl() const {
+  Fn->dump();
+  std::cerr << "(";
+  for (unsigned i = 0, e = getNumArgs(); i != e; ++i) {
+    if (i) std::cerr << ", ";
+    getArg(i)->dump();
+  }
   std::cerr << ")";
+}
+
+CallExprLOC::CallExprLOC(Expr *Fn, SourceLocation lparenloc, Expr **Args, 
+                         unsigned NumArgs, SourceLocation *commalocs,
+                         SourceLocation rparenloc)
+  : CallExpr(Fn, Args, NumArgs), LParenLoc(lparenloc), RParenLoc(rparenloc) {
+  unsigned NumCommas = getNumCommas();
+  if (NumCommas)
+    CommaLocs = new SourceLocation[NumCommas];
+  else
+    CommaLocs = 0;
+  
+  for (unsigned i = 0; i != NumCommas; ++i)
+    CommaLocs[i] = commalocs[i];
+}
+
+
+void MemberExpr::dump_impl() const {
+  Base->dump();
+  std::cerr << (isArrow ? "->" : ".") << MemberII->getName();
 }
 
 /// getOpcodeStr - Turn an Opcode enum value into the punctuation char it
@@ -103,19 +151,15 @@ const char *BinaryOperator::getOpcodeStr(Opcode Op) {
 }
 
 void BinaryOperator::dump_impl() const {
-  std::cerr << "(";
   LHS->dump();
   std::cerr << " " << getOpcodeStr(Opc) << " ";
   RHS->dump();
-  std::cerr << ")";
 }
 
 void ConditionalOperator::dump_impl() const {
-  std::cerr << "(";
   Cond->dump();
   std::cerr << " ? ";
   LHS->dump();
   std::cerr << " : ";
   RHS->dump();
-  std::cerr << ")";
 }

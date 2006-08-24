@@ -15,9 +15,11 @@
 #define LLVM_CLANG_AST_EXPR_H
 
 #include "clang/Basic/SourceLocation.h"
+#include <cassert>
 
 namespace llvm {
 namespace clang {
+  class IdentifierInfo;
   
 /// Expr - This represents one expression etc.  
 ///
@@ -94,6 +96,88 @@ class UnaryOperatorLOC : public UnaryOperator {
 public:
   UnaryOperatorLOC(SourceLocation loc, Expr *Input, Opcode Opc)
    : UnaryOperator(Input, Opc), Loc(loc) {}
+
+};
+
+/// ArraySubscriptExpr - [C99 6.5.2.1] Array Subscripting.
+class ArraySubscriptExpr : public Expr {
+  Expr *Base, *Idx;
+public:
+  ArraySubscriptExpr(Expr *base, Expr *idx) : Base(base), Idx(idx) {}
+  
+  virtual void dump_impl() const;
+};
+
+
+class ArraySubscriptExprLOC : public ArraySubscriptExpr {
+  SourceLocation LLoc, RLoc;
+public:
+  ArraySubscriptExprLOC(Expr *Base, SourceLocation lloc, Expr *Idx, 
+                        SourceLocation rloc)
+    : ArraySubscriptExpr(Base, Idx), LLoc(lloc), RLoc(rloc) {}
+};
+
+/// CallExpr - [C99 6.5.2.2] Function Calls.
+///
+class CallExpr : public Expr {
+  Expr *Fn;
+  Expr **Args;
+  unsigned NumArgs;
+public:
+  CallExpr(Expr *fn, Expr **args, unsigned numargs);
+  ~CallExpr() {
+    delete [] Args;
+  }
+  
+  /// getNumArgs - Return the number of actual arguments to this call.
+  ///
+  unsigned getNumArgs() const { return NumArgs; }
+  
+  /// getArg - Return the specified argument.
+  Expr *getArg(unsigned Arg) const {
+    assert(Arg < NumArgs && "Arg access out of range!");
+    return Args[Arg];
+  }
+  
+  /// getNumCommas - Return the number of commas that must have been present in
+  /// this function call.
+  unsigned getNumCommas() const { return NumArgs ? NumArgs - 1 : 0; }
+  
+  virtual void dump_impl() const;
+};
+
+class CallExprLOC : public CallExpr {
+  SourceLocation LParenLoc, RParenLoc;
+  SourceLocation *CommaLocs;
+public:
+  CallExprLOC(Expr *Fn, SourceLocation lparenloc, Expr **Args, unsigned NumArgs,
+              SourceLocation *commalocs, SourceLocation rparenloc);
+  ~CallExprLOC() {
+    delete [] CommaLocs;
+  }
+};
+
+/// MemberExpr - [C99 6.5.2.3] Structure and Union Members.
+///
+class MemberExpr : public Expr {
+  Expr *Base;
+  // TODO: union { Decl *MemberDecl; IdentifierInfo *MemberII; };
+  IdentifierInfo *MemberII;
+  bool isArrow;      // True if this is "X->F", false if this is "X.F".
+public:
+  MemberExpr(Expr *base, bool isarrow, IdentifierInfo &memberii) 
+    : Base(base), MemberII(&memberii), isArrow(isarrow) {
+  }
+  virtual void dump_impl() const;
+};
+
+class MemberExprLOC : public MemberExpr {
+  SourceLocation OpLoc, MemberLoc;
+public:
+  MemberExprLOC(Expr *Base, SourceLocation oploc, bool isArrow,
+                SourceLocation memberLoc, IdentifierInfo &MemberII) 
+    : MemberExpr(Base, isArrow, MemberII), OpLoc(oploc), MemberLoc(memberLoc) {
+  }
 
 };
 

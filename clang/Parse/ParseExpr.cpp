@@ -610,10 +610,12 @@ Parser::ExprResult Parser::ParsePostfixExpressionSuffix(ExprResult LHS) {
       }
         
       // Match the ')'.
-      if (!LHS.isInvalid && ArgExprsOk && Tok.getKind() == tok::r_paren)
+      if (!LHS.isInvalid && ArgExprsOk && Tok.getKind() == tok::r_paren) {
+        assert((ArgExprs.size() == 0 || ArgExprs.size()-1 == CommaLocs.size())&&
+               "Unexpected number of commas!");
         LHS = Actions.ParseCallExpr(LHS.Val, Loc, &ArgExprs[0], ArgExprs.size(),
-                                    &CommaLocs[0], CommaLocs.size(),
-                                    Tok.getLocation());
+                                    &CommaLocs[0], Tok.getLocation());
+      }
       
       MatchRHSPunctuation(tok::r_paren, Loc);
       break;

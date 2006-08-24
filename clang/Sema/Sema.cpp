@@ -51,6 +51,22 @@ public:
   virtual ExprTy *ParseUnaryOp(const LexerToken &Tok, ExprTy *Input);
   virtual ExprTy *ParsePostfixUnaryOp(const LexerToken &Tok, ExprTy *Input);
   
+  virtual ExprTy *ParseArraySubscriptExpr(ExprTy *Base, SourceLocation LLoc,
+                                          ExprTy *Idx, SourceLocation RLoc);
+  virtual ExprTy *ParseMemberReferenceExpr(ExprTy *Base, SourceLocation OpLoc,
+                                           tok::TokenKind OpKind,
+                                           SourceLocation MemberLoc,
+                                           IdentifierInfo &Member);
+  
+  /// ParseCallExpr - Handle a call to Fn with the specified array of arguments.
+  /// This provides the location of the left/right parens and a list of comma
+  /// locations.
+  virtual ExprTy *ParseCallExpr(ExprTy *Fn, SourceLocation LParenLoc,
+                                ExprTy **Args, unsigned NumArgs,
+                                SourceLocation *CommaLocs,
+                                SourceLocation RParenLoc);
+  
+  
   virtual ExprTy *ParseBinOp(const LexerToken &Tok, ExprTy *LHS, ExprTy *RHS);
   
   /// ParseConditionalOp - Parse a ?: operation.  Note that 'LHS' may be null
@@ -161,6 +177,41 @@ ASTBuilder::ExprTy *ASTBuilder::ParsePostfixUnaryOp(const LexerToken &Tok,
   else
     return new UnaryOperatorLOC(Tok.getLocation(), (Expr*)Input, Opc);
 }
+
+ASTBuilder::ExprTy *ASTBuilder::
+ParseArraySubscriptExpr(ExprTy *Base, SourceLocation LLoc,
+                        ExprTy *Idx, SourceLocation RLoc) {
+  if (!FullLocInfo)
+    return new ArraySubscriptExpr((Expr*)Base, (Expr*)Idx);
+  else
+    return new ArraySubscriptExprLOC((Expr*)Base, LLoc, (Expr*)Idx, RLoc);
+}
+
+ASTBuilder::ExprTy *ASTBuilder::
+ParseMemberReferenceExpr(ExprTy *Base, SourceLocation OpLoc,
+                         tok::TokenKind OpKind, SourceLocation MemberLoc,
+                         IdentifierInfo &Member) {
+  if (!FullLocInfo)
+    return new MemberExpr((Expr*)Base, OpKind == tok::arrow, Member);
+  else
+    return new MemberExprLOC((Expr*)Base, OpLoc, OpKind == tok::arrow,
+                             MemberLoc, Member);
+}
+
+/// ParseCallExpr - Handle a call to Fn with the specified array of arguments.
+/// This provides the location of the left/right parens and a list of comma
+/// locations.
+ASTBuilder::ExprTy *ASTBuilder::
+ParseCallExpr(ExprTy *Fn, SourceLocation LParenLoc,
+              ExprTy **Args, unsigned NumArgs,
+              SourceLocation *CommaLocs, SourceLocation RParenLoc) {
+  if (!FullLocInfo)
+    return new CallExpr((Expr*)Fn, (Expr**)Args, NumArgs);
+  else
+    return new CallExprLOC((Expr*)Fn, LParenLoc, (Expr**)Args, NumArgs,
+                           CommaLocs, RParenLoc);
+}
+
 
 // Binary Operators.  'Tok' is the token for the operator.
 ASTBuilder::ExprTy *ASTBuilder::ParseBinOp(const LexerToken &Tok, ExprTy *LHS,
