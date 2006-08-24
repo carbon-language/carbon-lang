@@ -430,12 +430,15 @@ Parser::ExprResult Parser::ParseCastExpression(bool isUnaryExpression) {
   // suffixes.  Cases that cannot be followed by postfix exprs should
   // return without invoking ParsePostfixExpressionSuffix.
   switch (Tok.getKind()) {
-  case tok::l_paren:
+  case tok::l_paren: {
     // If this expression is limited to being a unary-expression, the parent can
     // not start a cast expression.
     ParenParseOption ParenExprType =
       isUnaryExpression ? CompoundLiteral : CastExpr;
-    Res = ParseParenExpression(ParenExprType);
+    TypeTy *CastTy;
+    SourceLocation LParenLoc = Tok.getLocation();
+    SourceLocation RParenLoc;
+    Res = ParseParenExpression(ParenExprType, CastTy, RParenLoc);
     if (Res.isInvalid) return Res;
     
     switch (ParenExprType) {
@@ -448,11 +451,16 @@ Parser::ExprResult Parser::ParseCastExpression(bool isUnaryExpression) {
     case CastExpr:
       // We parsed '(' type-name ')' and the thing after it wasn't a '{'.  Parse
       // the cast-expression that follows it next.
-      return ParseCastExpression(false);
+      // TODO: For cast expression with CastTy.
+      Res = ParseCastExpression(false);
+      if (!Res.isInvalid)
+        Res = Actions.ParseCastExpr(LParenLoc, CastTy, RParenLoc, Res.Val);
+      return Res;
     }
       
     // These can be followed by postfix-expr pieces.
     return ParsePostfixExpressionSuffix(Res);
+  }
     
     // primary-expression
   case tok::numeric_constant:
@@ -661,7 +669,6 @@ Parser::ExprResult Parser::ParseSizeofAlignofExpression() {
   ConsumeToken();
   
   // If the operand doesn't start with an '(', it must be an expression.
-  // TODO: Build AST.
   ExprResult Operand;
   if (Tok.getKind() != tok::l_paren) {
     Operand = ParseCastExpression(true);
@@ -671,12 +678,15 @@ Parser::ExprResult Parser::ParseSizeofAlignofExpression() {
     // literal, or starts with a primary-expression that is a parenthesized
     // expression.
     ParenParseOption ExprType = CastExpr;
-    Operand = ParseParenExpression(ExprType);
+    TypeTy *CastTy;
+    SourceLocation RParenLoc;
+    Operand = ParseParenExpression(ExprType, CastTy, RParenLoc);
     
     // If ParseParenExpression parsed a '(typename)' sequence only, the this is
     // sizeof/alignof a type.  Otherwise, it is sizeof/alignof an expression.
     if (ExprType == CastExpr) {
-      // TODO: Get type from ParseParenExpression and build AST here.
+      // TODO: Build AST here for sizeof type.
+      CastTy;
       return ExprResult(false);
     }
   }
@@ -831,11 +841,14 @@ Parser::ExprResult Parser::ParseStringLiteralExpression() {
 ///       cast-expression: [C99 6.5.4]
 ///         '(' type-name ')' cast-expression
 ///
-Parser::ExprResult Parser::ParseParenExpression(ParenParseOption &ExprType) {
+Parser::ExprResult Parser::ParseParenExpression(ParenParseOption &ExprType,
+                                                TypeTy *&CastTy,
+                                                SourceLocation &RParenLoc) {
   assert(Tok.getKind() == tok::l_paren && "Not a paren expr!");
   SourceLocation OpenLoc = Tok.getLocation();
   ConsumeParen();
   ExprResult Result(false);
+  CastTy = 0;
   
   if (ExprType >= CompoundStmt && Tok.getKind() == tok::l_brace &&
       !getLang().NoExtensions) {
@@ -845,11 +858,16 @@ Parser::ExprResult Parser::ParseParenExpression(ParenParseOption &ExprType) {
     // TODO: Build AST for GNU compound stmt.
   } else if (ExprType >= CompoundLiteral && isTypeSpecifierQualifier()) {
     // Otherwise, this is a compound literal expression or cast expression.
-    ParseTypeName();
+    TypeTy *Ty = ParseTypeName();
 
     // Match the ')'.
-    MatchRHSPunctuation(tok::r_paren, OpenLoc);
-
+    if (Tok.getKind() == tok::r_paren) {
+      RParenLoc = Tok.getLocation();
+      ConsumeParen();
+    } else {
+      MatchRHSPunctuation(tok::r_paren, OpenLoc);
+    }
+    
     if (Tok.getKind() == tok::l_brace) {
       if (!getLang().C99)   // Compound literals don't exist in C90.
         Diag(OpenLoc, diag::ext_c99_compound_literal);
@@ -857,9 +875,11 @@ Parser::ExprResult Parser::ParseParenExpression(ParenParseOption &ExprType) {
       ExprType = CompoundLiteral;
       // TODO: Build AST for compound literal.
     } else if (ExprType == CastExpr) {
-      // Note that this doesn't parse the subsequence cast-expression.
+      // Note that this doesn't parse the subsequence cast-expression, it just
+      // returns the parsed type to the callee.
       ExprType = CastExpr;
-      // TODO: Build AST for cast in caller.
+      CastTy = Ty;
+      return ExprResult(false);
     } else {
       Diag(Tok, diag::err_expected_lbrace_in_compound_literal);
       return ExprResult(true);
@@ -875,8 +895,14 @@ Parser::ExprResult Parser::ParseParenExpression(ParenParseOption &ExprType) {
   // Match the ')'.
   if (Result.isInvalid)
     SkipUntil(tok::r_paren);
-  else
-    MatchRHSPunctuation(tok::r_paren, OpenLoc);
+  else {
+    if (Tok.getKind() == tok::r_paren) {
+      RParenLoc = Tok.getLocation();
+      ConsumeParen();
+    } else {
+      MatchRHSPunctuation(tok::r_paren, OpenLoc);
+    }
+  }
   
   return Result;
 }

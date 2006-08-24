@@ -48,6 +48,7 @@ public:
   // what types are required to be identical for the actions.
   typedef void ExprTy;
   typedef void DeclTy;
+  typedef void TypeTy;
   
   /// ExprResult - This structure is used while parsing/acting on expressions.
   /// It encapsulates both the expression object returned by the action, plus
@@ -130,6 +131,11 @@ public:
     return 0;
   }
 
+  virtual ExprResult ParseCastExpr(SourceLocation LParenLoc, TypeTy *Ty,
+                                   SourceLocation RParenLoc, ExprTy *Op) {
+    return 0;
+  }
+  
   virtual ExprResult ParseBinOp(const LexerToken &Tok,
                                 ExprTy *LHS, ExprTy *RHS) {
     return 0;

@@ -356,8 +356,7 @@ void Parser::ParseIfStatement() {
   }
   
   // Parse the condition.
-  ParenParseOption ParenExprType = SimpleExpr;
-  ParseParenExpression(ParenExprType);
+  ParseSimpleParenExpression();
   
   // Read the if condition.
   ParseStatement();
@@ -383,8 +382,7 @@ void Parser::ParseSwitchStatement() {
   }
   
   // Parse the condition.
-  ParenParseOption ParenExprType = SimpleExpr;
-  ParseParenExpression(ParenExprType);
+  ParseSimpleParenExpression();
   
   // Read the body statement.
   ParseStatement();
@@ -404,8 +402,7 @@ void Parser::ParseWhileStatement() {
   }
   
   // Parse the condition.
-  ParenParseOption ParenExprType = SimpleExpr;
-  ParseParenExpression(ParenExprType);
+  ParseSimpleParenExpression();
   
   // Read the body statement.
   ParseStatement();
@@ -438,8 +435,7 @@ void Parser::ParseDoStatement() {
   }
   
   // Parse the condition.
-  ParenParseOption ParenExprType = SimpleExpr;
-  ParseParenExpression(ParenExprType);
+  ParseSimpleParenExpression();
 }
 
 /// ParseForStatement
@@ -659,8 +655,7 @@ void Parser::ParseAsmOperandsOpt() {
     }
     
     // Read the parenthesized expression.
-    ParenParseOption ExprTy = SimpleExpr;
-    ExprResult Res = ParseParenExpression(ExprTy);
+    ExprResult Res = ParseSimpleParenExpression();
     if (Res.isInvalid) {
       SkipUntil(tok::r_paren);
       return;

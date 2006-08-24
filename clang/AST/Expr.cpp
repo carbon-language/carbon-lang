@@ -128,6 +128,15 @@ void MemberExpr::dump_impl() const {
   std::cerr << "member";
 }
 
+
+void CastExpr::dump_impl() const {
+  std::cerr << "'('";
+  // TODO PRINT TYPE
+  std::cerr << "<type>";
+  std::cerr << "')'";
+  Op->dump();
+}
+
 /// getOpcodeStr - Turn an Opcode enum value into the punctuation char it
 /// corresponds to, e.g. "<<=".
 const char *BinaryOperator::getOpcodeStr(Opcode Op) {

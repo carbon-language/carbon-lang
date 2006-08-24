@@ -67,6 +67,8 @@ public:
                                    SourceLocation *CommaLocs,
                                    SourceLocation RParenLoc);
   
+  virtual ExprResult ParseCastExpr(SourceLocation LParenLoc, TypeTy *Ty,
+                                   SourceLocation RParenLoc, ExprTy *Op);
   
   virtual ExprResult ParseBinOp(const LexerToken &Tok, ExprTy *LHS,ExprTy *RHS);
   
@@ -235,6 +237,16 @@ ParseCallExpr(ExprTy *Fn, SourceLocation LParenLoc,
     return new CallExprLOC((Expr*)Fn, LParenLoc, (Expr**)Args, NumArgs,
                            CommaLocs, RParenLoc);
 }
+
+Action::ExprResult ASTBuilder::
+ParseCastExpr(SourceLocation LParenLoc, TypeTy *Ty,
+              SourceLocation RParenLoc, ExprTy *Op) {
+  if (!FullLocInfo)
+    return new CastExpr((Type*)Ty, (Expr*)Op);
+  else
+    return new CastExprLOC(LParenLoc, (Type*)Ty, RParenLoc, (Expr*)Op);
+}
+
 
 
 // Binary Operators.  'Tok' is the token for the operator.

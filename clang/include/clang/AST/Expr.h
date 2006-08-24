@@ -21,6 +21,7 @@ namespace llvm {
 namespace clang {
   class IdentifierInfo;
   class Decl;
+  class Type;
   
 /// Expr - This represents one expression etc.  
 ///
@@ -112,7 +113,6 @@ public:
 
 };
 
-
 //===----------------------------------------------------------------------===//
 // Postfix Operators.
 //===----------------------------------------------------------------------===//
@@ -197,6 +197,27 @@ public:
   }
 
 };
+
+/// CastExpr - [C99 6.5.4] Cast Operators.
+///
+class CastExpr : public Expr {
+  Type *Ty;
+  Expr *Op;
+public:
+  CastExpr(Type *ty, Expr *op) : Ty(ty), Op(op) {}
+  
+  virtual void dump_impl() const;
+};
+
+class CastExprLOC : public CastExpr {
+  SourceLocation LParenLoc, RParenLoc;
+public:
+  CastExprLOC(SourceLocation lparenloc, Type *Ty, SourceLocation rparenloc,
+              Expr *Op)
+  : CastExpr(Ty, Op), LParenLoc(lparenloc), RParenLoc(rparenloc) {
+  }
+};
+
 
 class BinaryOperator : public Expr {
 public:

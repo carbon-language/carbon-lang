@@ -23,7 +23,7 @@ using namespace clang;
 /// ParseTypeName
 ///       type-name: [C99 6.7.6]
 ///         specifier-qualifier-list abstract-declarator[opt]
-void Parser::ParseTypeName() {
+Parser::TypeTy *Parser::ParseTypeName() {
   // Parse the common declaration-specifiers piece.
   DeclSpec DS;
   ParseSpecifierQualifierList(DS);
@@ -31,6 +31,9 @@ void Parser::ParseTypeName() {
   // Parse the abstract-declarator, if present.
   Declarator DeclaratorInfo(DS, Declarator::TypeNameContext);
   ParseDeclarator(DeclaratorInfo);
+  
+  // TODO: Return something useful as the type, obtained from actions.
+  return 0;
 }
 
 /// ParseAttributes - Parse a non-empty attributes list.

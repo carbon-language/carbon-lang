@@ -48,6 +48,7 @@ public:
   // different actual classes based on the actions in place.
   typedef Action::ExprTy ExprTy;
   typedef Action::DeclTy DeclTy;
+  typedef Action::TypeTy TypeTy;
   
   // Parsing methods.
   
@@ -243,7 +244,15 @@ private:
     CompoundLiteral, // Also allow '(' type-name ')' '{' ... '}'
     CastExpr         // Also allow '(' type-name ')' <anything>
   };
-  ExprResult ParseParenExpression(ParenParseOption &ExprType);
+  ExprResult ParseParenExpression(ParenParseOption &ExprType, TypeTy *&CastTy,
+                                  SourceLocation &RParenLoc);
+  
+  ExprResult ParseSimpleParenExpression() {  // Parse SimpleExpr only.
+    ParenParseOption Op = SimpleExpr;
+    TypeTy *CastTy;
+    SourceLocation RParenLoc;
+    return ParseParenExpression(Op, CastTy, RParenLoc);
+  }
   ExprResult ParseStringLiteralExpression();
   
   //===--------------------------------------------------------------------===//
@@ -284,7 +293,7 @@ private:
   bool isDeclarationSpecifier() const;
   bool isTypeSpecifierQualifier() const;
 
-  void ParseTypeName();
+  TypeTy *ParseTypeName();
   void ParseAttributes();
   
   /// ParseDeclarator - Parse and verify a newly-initialized declarator.
