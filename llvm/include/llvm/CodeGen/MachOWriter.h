@@ -575,17 +575,15 @@ namespace llvm {
         outxword(Output, X);
     }
     void outstring(DataBuffer &Output, std::string &S, unsigned Length) {
-      char *buffer = (char *)calloc(1, Length);
-      unsigned i;
-      // FIXME: it is unclear if mach-o requires null terminated strings, or
-      //        if a string of 16 bytes with no null terminator is ok.  If so,
-      //        we should switch to strncpy.
-      strlcpy(buffer, S.c_str(), Length);
+      unsigned len_to_copy = S.length() < Length ? S.length() : Length;
+      unsigned len_to_fill = S.length() < Length ? Length-S.length() : 0;
       
-      for (i = 0; i < Length; ++i)
-        outbyte(Output, buffer[i]);
+      for (unsigned i = 0; i < len_to_copy; ++i)
+        outbyte(Output, S[i]);
+
+      for (unsigned i = 0; i < len_to_fill; ++i)
+        outbyte(Output, 0);
       
-      free(buffer);
     }
   private:
     void EmitGlobal(GlobalVariable *GV);
