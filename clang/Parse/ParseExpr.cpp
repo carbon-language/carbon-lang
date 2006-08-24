@@ -679,15 +679,15 @@ Parser::ExprResult Parser::ParseSizeofAlignofExpression() {
     // expression.
     ParenParseOption ExprType = CastExpr;
     TypeTy *CastTy;
-    SourceLocation RParenLoc;
+    SourceLocation LParenLoc = Tok.getLocation(), RParenLoc;
     Operand = ParseParenExpression(ExprType, CastTy, RParenLoc);
     
     // If ParseParenExpression parsed a '(typename)' sequence only, the this is
     // sizeof/alignof a type.  Otherwise, it is sizeof/alignof an expression.
     if (ExprType == CastExpr) {
-      // TODO: Build AST here for sizeof type.
-      CastTy;
-      return ExprResult(false);
+      return Actions.ParseSizeOfAlignOfTypeExpr(OpTok.getLocation(),
+                                              OpTok.getKind() == tok::kw_sizeof,
+                                                LParenLoc, CastTy, RParenLoc);
     }
   }
   

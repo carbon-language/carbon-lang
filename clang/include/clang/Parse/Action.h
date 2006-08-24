@@ -130,7 +130,13 @@ public:
   virtual ExprResult ParseUnaryOp(const LexerToken &Tok, ExprTy *Input) {
     return 0;
   }
-
+  virtual ExprResult 
+    ParseSizeOfAlignOfTypeExpr(SourceLocation OpLoc, bool isSizeof, 
+                               SourceLocation LParenLoc, TypeTy *Ty,
+                               SourceLocation RParenLoc) {
+    return 0;
+  }
+  
   virtual ExprResult ParseCastExpr(SourceLocation LParenLoc, TypeTy *Ty,
                                    SourceLocation RParenLoc, ExprTy *Op) {
     return 0;

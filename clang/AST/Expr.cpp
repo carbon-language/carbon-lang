@@ -76,6 +76,12 @@ void UnaryOperator::dump_impl() const {
   Input->dump();
 }
 
+void SizeOfAlignOfTypeExpr::dump_impl() const {
+  std::cerr << (isSizeof ? "sizeof(" : "alignof(");
+  // FIXME: print type.
+  std::cerr << "ty)";
+}
+
 //===----------------------------------------------------------------------===//
 // Postfix Operators.
 //===----------------------------------------------------------------------===//

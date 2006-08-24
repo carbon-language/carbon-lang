@@ -50,6 +50,11 @@ public:
   
   // Binary/Unary Operators.  'Tok' is the token for the operator.
   virtual ExprResult ParseUnaryOp(const LexerToken &Tok, ExprTy *Input);
+  virtual ExprResult 
+    ParseSizeOfAlignOfTypeExpr(SourceLocation OpLoc, bool isSizeof, 
+                               SourceLocation LParenLoc, TypeTy *Ty,
+                               SourceLocation RParenLoc);
+  
   virtual ExprResult ParsePostfixUnaryOp(const LexerToken &Tok, ExprTy *Input);
   
   virtual ExprResult ParseArraySubscriptExpr(ExprTy *Base, SourceLocation LLoc,
@@ -186,6 +191,18 @@ Action::ExprResult ASTBuilder::ParseUnaryOp(const LexerToken &Tok,
   else
     return new UnaryOperatorLOC(Tok.getLocation(), (Expr*)Input, Opc);
 }
+
+Action::ExprResult ASTBuilder::
+ParseSizeOfAlignOfTypeExpr(SourceLocation OpLoc, bool isSizeof, 
+                           SourceLocation LParenLoc, TypeTy *Ty,
+                           SourceLocation RParenLoc) {
+  if (!FullLocInfo)
+    return new SizeOfAlignOfTypeExpr(isSizeof, (Type*)Ty);
+  else
+    return new SizeOfAlignOfTypeExprLOC(OpLoc, isSizeof, LParenLoc, (Type*)Ty,
+                                        RParenLoc);
+}
+
 
 Action::ExprResult ASTBuilder::ParsePostfixUnaryOp(const LexerToken &Tok,
                                                    ExprTy *Input) {

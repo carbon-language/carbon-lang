@@ -110,7 +110,29 @@ class UnaryOperatorLOC : public UnaryOperator {
 public:
   UnaryOperatorLOC(SourceLocation loc, Expr *Input, Opcode Opc)
    : UnaryOperator(Input, Opc), Loc(loc) {}
+};
 
+/// SizeOfAlignOfTypeExpr - [C99 6.5.3.4] - This is only for sizeof/alignof of
+/// *types*.  sizeof(expr) is handled by UnaryOperator.
+class SizeOfAlignOfTypeExpr : public Expr {
+  bool isSizeof;  // true if sizeof, false if alignof.
+  Type *Ty;
+public:
+  SizeOfAlignOfTypeExpr(bool issizeof, Type *ty) : isSizeof(issizeof), Ty(ty) {
+  }
+
+  virtual void dump_impl() const;
+};
+
+class SizeOfAlignOfTypeExprLOC : public SizeOfAlignOfTypeExpr {
+  SourceLocation OpLoc, LParenLoc, RParenLoc;
+public:
+  SizeOfAlignOfTypeExprLOC(SourceLocation oploc, bool isSizeof, 
+                           SourceLocation lparenloc, Type *Ty,
+                           SourceLocation rparenloc)
+    : SizeOfAlignOfTypeExpr(isSizeof, Ty), OpLoc(oploc), LParenLoc(lparenloc),
+      RParenLoc(rparenloc) {
+  }
 };
 
 //===----------------------------------------------------------------------===//
