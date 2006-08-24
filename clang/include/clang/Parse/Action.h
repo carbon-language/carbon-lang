@@ -15,6 +15,7 @@
 #define LLVM_CLANG_PARSE_ACTION_H
 
 #include "clang/Basic/SourceLocation.h"
+#include "clang/Basic/TokenKinds.h"
 
 namespace llvm {
 namespace clang {
@@ -86,6 +87,27 @@ public:
   virtual ExprTy *ParsePostfixUnaryOp(const LexerToken &Tok, ExprTy *Input) {
     return 0;
   }
+  virtual ExprTy *ParseArraySubscriptExpr(ExprTy *Base, SourceLocation LLoc,
+                                          ExprTy *Idx, SourceLocation RLoc) {
+    return 0;
+  }
+  virtual ExprTy *ParseMemberReferenceExpr(ExprTy *Base, SourceLocation OpLoc,
+                                           tok::TokenKind OpKind,
+                                           SourceLocation MemberLoc,
+                                           IdentifierInfo &Member) {
+    return 0;
+  }
+  
+  /// ParseCallExpr - Handle a call to Fn with the specified array of arguments.
+  /// This provides the location of the left/right parens and a list of comma
+  /// locations.
+  virtual ExprTy *ParseCallExpr(ExprTy *Fn, SourceLocation LParenLoc,
+                                ExprTy **Args, unsigned NumArgs,
+                                SourceLocation *CommaLocs, unsigned NumCommas,
+                                SourceLocation RParenLoc) {
+    return 0;
+  }
+
   virtual ExprTy *ParseBinOp(const LexerToken &Tok, ExprTy *LHS, ExprTy *RHS) {
     return 0;
   }
