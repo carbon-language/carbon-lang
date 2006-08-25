@@ -134,7 +134,7 @@ class MachineFrameInfo {
   unsigned MaxCallFrameSize;
   
   /// CSInfo - The prolog/epilog code inserter fills in this vector with each
-  /// callee saved register saved in the frame.  Beyond it's use by the prolog/
+  /// callee saved register saved in the frame.  Beyond its use by the prolog/
   /// epilog code inserter, this data used for debug info and exception
   /// handling.
   std::vector<CalleeSavedInfo> CSInfo;
@@ -273,7 +273,15 @@ public:
   
   /// getCalleeSavedInfo - Returns a reference to call saved info vector for the
   /// current function.
-  std::vector<CalleeSavedInfo> &getCalleeSavedInfo() { return CSInfo; }
+  const std::vector<CalleeSavedInfo> &getCalleeSavedInfo() const {
+    return CSInfo;
+  }
+
+  /// setCalleeSavedInfo - Used by prolog/epilog inserter to set the function's
+  /// callee saved information.
+  void  setCalleeSavedInfo(const std::vector<CalleeSavedInfo> &CSI) {
+    CSInfo = CSI;
+  }
 
   /// getMachineDebugInfo - Used by a prologue/epilogue emitter (MRegisterInfo)
   /// to provide frame layout information. 

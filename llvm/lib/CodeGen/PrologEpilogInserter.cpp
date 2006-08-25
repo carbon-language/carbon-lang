@@ -139,7 +139,7 @@ void PEI::calculateCallerSavedRegisters(MachineFunction &Fn) {
   const bool *PhysRegsUsed = Fn.getUsedPhysregs();
   const TargetRegisterClass* const *CSRegClasses =
     RegInfo->getCalleeSaveRegClasses();
-  std::vector<CalleeSavedInfo> &CSI = FFI->getCalleeSavedInfo();
+  std::vector<CalleeSavedInfo> CSI;
   for (unsigned i = 0; CSRegs[i]; ++i) {
     unsigned Reg = CSRegs[i];
     if (PhysRegsUsed[Reg]) {
@@ -186,6 +186,8 @@ void PEI::calculateCallerSavedRegisters(MachineFunction &Fn) {
     }
     CSI[i].setFrameIdx(FrameIdx);
   }
+
+  FFI->setCalleeSavedInfo(CSI);
 }
 
 /// saveCallerSavedRegisters -  Insert spill code for any caller saved registers
@@ -194,7 +196,7 @@ void PEI::calculateCallerSavedRegisters(MachineFunction &Fn) {
 void PEI::saveCallerSavedRegisters(MachineFunction &Fn) {
   // Get callee saved register information.
   MachineFrameInfo *FFI = Fn.getFrameInfo();
-  std::vector<CalleeSavedInfo> &CSI = FFI->getCalleeSavedInfo();
+  const std::vector<CalleeSavedInfo> &CSI = FFI->getCalleeSavedInfo();
   
   // Early exit if no caller saved registers are modified!
   if (CSI.empty())
