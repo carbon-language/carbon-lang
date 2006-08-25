@@ -571,4 +571,6 @@ void IndVarSimplify::runOnLoop(Loop *L) {
 #endif
 
   DeleteTriviallyDeadInstructions(DeadInsts);
+  
+  if (mustPreserveAnalysisID(LCSSAID)) assert(L->isLCSSAForm());
 }
