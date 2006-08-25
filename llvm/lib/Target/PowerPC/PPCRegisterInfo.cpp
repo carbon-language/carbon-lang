@@ -673,7 +673,10 @@ void PPCRegisterInfo::emitPrologue(MachineFunction &MF) const {
     MachineLocation Src(MachineLocation::VirtualFP, NegNumbytes);
     Moves.push_back(new MachineMove(LabelID, Dst, Src));
 
+    // Mark effective beginning of when frame pointer becomes valid.
     BuildMI(MBB, MBBI, PPC::DWARF_LABEL, 1).addImm(LabelID);
+    
+    
   }
   
   // If there is a frame pointer, copy R1 (SP) into R31 (FP)
@@ -727,7 +730,7 @@ unsigned PPCRegisterInfo::getFrameRegister(MachineFunction &MF) const {
 
 void PPCRegisterInfo::getInitialFrameState(std::vector<MachineMove *> &Moves)
                                                                          const {
-  // Initial state is the frame pointer is R1.
+  // Initial state of the frame pointer is R1.
   MachineLocation Dst(MachineLocation::VirtualFP);
   MachineLocation Src(PPC::R1, 0);
   Moves.push_back(new MachineMove(0, Dst, Src));
