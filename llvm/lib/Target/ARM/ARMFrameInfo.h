@@ -22,20 +22,12 @@
 namespace llvm {
 
 class ARMFrameInfo: public TargetFrameInfo {
-  std::pair<unsigned, int> LR[1];
 
 public:
   ARMFrameInfo()
     : TargetFrameInfo(TargetFrameInfo::StackGrowsDown, 8, 0) {
-    LR[0].first = ARM::R14;
-    LR[0].second = -4;
   }
 
-  const std::pair<unsigned, int> *
-  getCalleeSaveSpillSlots(unsigned &NumEntries) const {
-    NumEntries = 1;
-    return &LR[0];
-  }
 };
 
 } // End llvm namespace

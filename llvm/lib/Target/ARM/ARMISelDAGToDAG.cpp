@@ -32,6 +32,7 @@ using namespace llvm;
 
 namespace {
   class ARMTargetLowering : public TargetLowering {
+    int VarArgsFrameIndex;            // FrameIndex for start of varargs area.
   public:
     ARMTargetLowering(TargetMachine &TM);
     virtual SDOperand LowerOperation(SDOperand Op, SelectionDAG &DAG);
@@ -54,6 +55,9 @@ ARMTargetLowering::ARMTargetLowering(TargetMachine &TM)
   setOperationAction(ISD::SETCC, MVT::i32, Expand);
   setOperationAction(ISD::SELECT_CC, MVT::i32, Custom);
   setOperationAction(ISD::BR_CC, MVT::i32, Custom);
+
+  setOperationAction(ISD::VASTART,       MVT::Other, Custom);
+  setOperationAction(ISD::VAEND,         MVT::Other, Expand);
 
   setSchedulingPreference(SchedulingForRegPressure);
   computeRegisterProperties();
@@ -238,6 +242,7 @@ static SDOperand LowerRET(SDOperand Op, SelectionDAG &DAG) {
 }
 
 static SDOperand LowerFORMAL_ARGUMENT(SDOperand Op, SelectionDAG &DAG,
+				      unsigned *vRegs,
 				      unsigned ArgNo) {
   MachineFunction &MF = DAG.getMachineFunction();
   MVT::ValueType ObjectVT = Op.getValue(ArgNo).getValueType();
@@ -253,6 +258,7 @@ static SDOperand LowerFORMAL_ARGUMENT(SDOperand Op, SelectionDAG &DAG,
   if(ArgNo < num_regs) {
     unsigned VReg = RegMap->createVirtualRegister(&ARM::IntRegsRegClass);
     MF.addLiveIn(REGS[ArgNo], VReg);
+    vRegs[ArgNo] = VReg;
     return DAG.getCopyFromReg(Root, VReg, MVT::i32);
   } else {
     // If the argument is actually used, emit a load from the right stack
@@ -291,18 +297,65 @@ static SDOperand LowerGlobalAddress(SDOperand Op,
 		     DAG.getSrcValue(NULL));
 }
 
-static SDOperand LowerFORMAL_ARGUMENTS(SDOperand Op, SelectionDAG &DAG) {
+static SDOperand LowerVASTART(SDOperand Op, SelectionDAG &DAG,
+                              unsigned VarArgsFrameIndex) {
+  // vastart just stores the address of the VarArgsFrameIndex slot into the
+  // memory location argument.
+  MVT::ValueType PtrVT = DAG.getTargetLoweringInfo().getPointerTy();
+  SDOperand FR = DAG.getFrameIndex(VarArgsFrameIndex, PtrVT);
+  return DAG.getNode(ISD::STORE, MVT::Other, Op.getOperand(0), FR, 
+                     Op.getOperand(1), Op.getOperand(2));
+}
+
+static SDOperand LowerFORMAL_ARGUMENTS(SDOperand Op, SelectionDAG &DAG,
+				       int &VarArgsFrameIndex) {
   std::vector<SDOperand> ArgValues;
   SDOperand Root = Op.getOperand(0);
+  unsigned VRegs[4];
 
-  for (unsigned ArgNo = 0, e = Op.Val->getNumValues()-1; ArgNo != e; ++ArgNo) {
-    SDOperand ArgVal = LowerFORMAL_ARGUMENT(Op, DAG, ArgNo);
+  unsigned NumArgs = Op.Val->getNumValues()-1;
+  for (unsigned ArgNo = 0; ArgNo < NumArgs; ++ArgNo) {
+    SDOperand ArgVal = LowerFORMAL_ARGUMENT(Op, DAG, VRegs, ArgNo);
 
     ArgValues.push_back(ArgVal);
   }
 
   bool isVarArg = cast<ConstantSDNode>(Op.getOperand(2))->getValue() != 0;
-  assert(!isVarArg);
+  if (isVarArg) {
+    MachineFunction &MF = DAG.getMachineFunction();
+    SSARegMap *RegMap = MF.getSSARegMap();
+    MachineFrameInfo *MFI = MF.getFrameInfo();
+    VarArgsFrameIndex = MFI->CreateFixedObject(MVT::getSizeInBits(MVT::i32)/8,
+                                               -16 + NumArgs * 4);
+
+
+    static const unsigned REGS[] = {
+      ARM::R0, ARM::R1, ARM::R2, ARM::R3
+    };
+    // If this function is vararg, store r0-r3 to their spots on the stack
+    // so that they may be loaded by deferencing the result of va_next.
+    SmallVector<SDOperand, 4> MemOps;
+    for (unsigned ArgNo = 0; ArgNo < 4; ++ArgNo) {
+      int ArgOffset = - (4 - ArgNo) * 4;
+      int FI = MFI->CreateFixedObject(MVT::getSizeInBits(MVT::i32)/8,
+				      ArgOffset);
+      SDOperand FIN = DAG.getFrameIndex(FI, MVT::i32);
+
+      unsigned VReg;
+      if (ArgNo < NumArgs)
+	VReg = VRegs[ArgNo];
+      else
+	VReg = RegMap->createVirtualRegister(&ARM::IntRegsRegClass);
+      if (ArgNo >= NumArgs)
+	MF.addLiveIn(REGS[ArgNo], VReg);
+
+      SDOperand Val = DAG.getCopyFromReg(Root, VReg, MVT::i32);
+      SDOperand Store = DAG.getNode(ISD::STORE, MVT::Other, Val.getValue(1),
+                                    Val, FIN, DAG.getSrcValue(NULL));
+      MemOps.push_back(Store);
+    }
+    Root = DAG.getNode(ISD::TokenFactor, MVT::Other,&MemOps[0],MemOps.size());
+  }
 
   ArgValues.push_back(Root);
 
@@ -346,7 +399,7 @@ SDOperand ARMTargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
   case ISD::GlobalAddress:
     return LowerGlobalAddress(Op, DAG);
   case ISD::FORMAL_ARGUMENTS:
-    return LowerFORMAL_ARGUMENTS(Op, DAG);
+    return LowerFORMAL_ARGUMENTS(Op, DAG, VarArgsFrameIndex);
   case ISD::CALL:
     return LowerCALL(Op, DAG);
   case ISD::RET:
@@ -355,6 +408,8 @@ SDOperand ARMTargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
     return LowerSELECT_CC(Op, DAG);
   case ISD::BR_CC:
     return LowerBR_CC(Op, DAG);
+  case ISD::VASTART:
+    return LowerVASTART(Op, DAG, VarArgsFrameIndex);
   }
 }
 

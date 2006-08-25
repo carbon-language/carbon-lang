@@ -43,7 +43,7 @@ namespace {
       Data32bitsDirective = "\t.word\t";
       Data64bitsDirective = 0;
       ZeroDirective = "\t.skip\t";
-      CommentString = "#";
+      CommentString = "@";
       ConstantPoolSection = "\t.text\n";
       AlignmentIsInBytes = false;
     }
