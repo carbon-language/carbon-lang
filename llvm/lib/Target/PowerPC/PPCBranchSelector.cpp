@@ -133,7 +133,7 @@ bool PPCBSel::runOnMachineFunction(MachineFunction &Fn) {
         if (Displacement >= -32768 && Displacement <= 32767) {
           BuildMI(*MBB, MBBJ, Opcode, 2).addReg(CRReg).addMBB(trueMBB);
         } else {
-          BuildMI(*MBB, MBBJ, Inverted, 2).addReg(CRReg).addImm(8);
+          BuildMI(*MBB, MBBJ, Inverted, 2).addReg(CRReg).addImm(2);
           BuildMI(*MBB, MBBJ, PPC::B, 1).addMBB(trueMBB);
         }
         
