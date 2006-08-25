@@ -239,9 +239,9 @@ else
 endif
 
 # IF REQUIRES_EH=1 is specified then don't disable exceptions
-#ifndef REQUIRES_EH
-#  CXX.Flags += -fno-exceptions
-#endif
+ifndef REQUIRES_EH
+  CXX.Flags += -fno-exceptions
+endif
 
 # If DISABLE_ASSERTIONS=1 is specified (make command line or configured),
 # then disable assertions by defining the appropriate preprocessor symbols.
