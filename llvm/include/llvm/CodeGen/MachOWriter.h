@@ -14,8 +14,10 @@
 #ifndef LLVM_CODEGEN_MACHOWRITER_H
 #define LLVM_CODEGEN_MACHOWRITER_H
 
-#include "llvm/CodeGen/MachineRelocation.h"
+#include "llvm/DerivedTypes.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
+#include "llvm/Target/TargetData.h"
+#include "llvm/Target/TargetMachine.h"
 #include <list>
 
 namespace llvm {
@@ -377,6 +379,31 @@ namespace llvm {
                         MachOSection::S_ATTR_PURE_INSTRUCTIONS |
                         MachOSection::S_ATTR_SOME_INSTRUCTIONS);
     }
+    MachOSection &getBSSSection() {
+      return getSection("__DATA", "__bss", MachOSection::S_ZEROFILL);
+    }
+    MachOSection &getDataSection() {
+      return getSection("__DATA", "__data");
+    }
+    MachOSection &getConstSection(const Type *Ty) {
+      // FIXME: support cstring literals and pointer literal
+      if (Ty->isPrimitiveType()) {
+        unsigned Size = TM.getTargetData()->getTypeSize(Ty);
+        switch(Size) {
+        default: break; // Fall through to __TEXT,__const
+        case 4:
+          return getSection("__TEXT", "__literal4",
+                            MachOSection::S_4BYTE_LITERALS);
+        case 8:
+          return getSection("__TEXT", "__literal8",
+                            MachOSection::S_8BYTE_LITERALS);
+        case 16:
+          return getSection("__TEXT", "__literal16",
+                            MachOSection::S_16BYTE_LITERALS);
+        }
+      }
+      return getSection("__TEXT", "__const");
+    }
     
     /// MachOSymTab - This struct contains information about the offsets and 
     /// size of symbol table information.
@@ -488,13 +515,19 @@ namespace llvm {
       static unsigned entrySize() { return 12; }
 
       MachOSym(const GlobalValue *gv, uint8_t sect) : GV(gv), n_strx(0), 
-        n_type(N_UNDF), n_sect(sect), n_desc(0), n_value(0) {}
+        n_type(sect == NO_SECT ? N_UNDF : N_SECT), n_sect(sect), n_desc(0),
+        n_value(0) {}
     };
 
     /// SymbolTable - This is the list of symbols we have emitted to the file.
     /// This actually gets rearranged before emission to the file (to put the
     /// local symbols first in the list).
     std::vector<MachOSym> SymbolTable;
+    
+    /// PendingSyms - This is a list of externally defined symbols that we have
+    /// been asked to emit, but have not seen a reference to.  When a reference
+    /// is seen, the symbol will move from this list to the SymbolTable.
+    std::vector<MachOSym> PendingSyms;
     
     /// DynamicSymbolTable - This is just a vector of indices into
     /// SymbolTable to aid in emitting the DYSYMTAB load command.
@@ -586,6 +619,7 @@ namespace llvm {
       
     }
   private:
+    void AddSymbolToSection(MachOSection &MOS, GlobalVariable *GV);
     void EmitGlobal(GlobalVariable *GV);
     void EmitHeaderAndLoadCommands();
     void EmitSections();

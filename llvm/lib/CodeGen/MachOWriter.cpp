@@ -27,10 +27,9 @@
 #include "llvm/CodeGen/MachineConstantPool.h"
 #include "llvm/CodeGen/MachineRelocation.h"
 #include "llvm/CodeGen/MachOWriter.h"
-#include "llvm/Target/TargetData.h"
 #include "llvm/Target/TargetJITInfo.h"
-#include "llvm/Target/TargetMachine.h"
 #include "llvm/Support/Mangler.h"
+#include "llvm/Support/MathExtras.h"
 #include <iostream>
 using namespace llvm;
 
@@ -137,10 +136,9 @@ bool MachOCodeEmitter::finishFunction(MachineFunction &F) {
     // appending linkage is illegal for functions.
     assert(0 && "Unknown linkage type!");
   case GlobalValue::ExternalLinkage:
-    FnSym.n_type = MachOWriter::MachOSym::N_SECT | MachOWriter::MachOSym::N_EXT;
+    FnSym.n_type |=  MachOWriter::MachOSym::N_EXT;
     break;
   case GlobalValue::InternalLinkage:
-    FnSym.n_type = MachOWriter::MachOSym::N_SECT;
     break;
   }
   
@@ -188,8 +186,75 @@ MachOWriter::~MachOWriter() {
   delete MCE;
 }
 
+void MachOWriter::AddSymbolToSection(MachOSection &Sec, GlobalVariable *GV) {
+  const Type *Ty = GV->getType()->getElementType();
+  unsigned Size = TM.getTargetData()->getTypeSize(Ty);
+  unsigned Align = Log2_32(TM.getTargetData()->getTypeAlignment(Ty));
+  
+  MachOSym Sym(GV, Sec.Index);
+  // Reserve space in the .bss section for this symbol while maintaining the
+  // desired section alignment, which must be at least as much as required by
+  // this symbol.
+  if (Align) {
+    Sec.align = std::max(Sec.align, Align);
+    Sec.size = (Sec.size + Align - 1) & ~(Align-1);
+  }
+  // Record the offset of the symbol, and then allocate space for it.
+  Sym.n_value = Sec.size;
+  Sec.size += Size;
+
+  switch (GV->getLinkage()) {
+  default:  // weak/linkonce handled above
+    assert(0 && "Unexpected linkage type!");
+  case GlobalValue::ExternalLinkage:
+    Sym.n_type |= MachOSym::N_EXT;
+    break;
+  case GlobalValue::InternalLinkage:
+    break;
+  }
+  SymbolTable.push_back(Sym);
+}
+
 void MachOWriter::EmitGlobal(GlobalVariable *GV) {
-  // FIXME: do something smart here.
+  const Type *Ty = GV->getType()->getElementType();
+  unsigned Size = TM.getTargetData()->getTypeSize(Ty);
+  bool NoInit = !GV->hasInitializer();
+
+  // If this global has a zero initializer, it is part of the .bss or common
+  // section.
+  if (NoInit || GV->getInitializer()->isNullValue()) {
+    // If this global is part of the common block, add it now.  Variables are
+    // part of the common block if they are zero initialized and allowed to be
+    // merged with other symbols.
+    if (NoInit || GV->hasLinkOnceLinkage() || GV->hasWeakLinkage()) {
+      MachOWriter::MachOSym ExtOrCommonSym(GV, MachOSym::NO_SECT);
+      ExtOrCommonSym.n_type |= MachOSym::N_EXT;
+      // For undefined (N_UNDF) external (N_EXT) types, n_value is the size in
+      // bytes of the symbol.
+      ExtOrCommonSym.n_value = Size;
+      // If the symbol is external, we'll put it on a list of symbols whose
+      // addition to the symbol table is being pended until we find a reference
+      if (NoInit)
+        PendingSyms.push_back(ExtOrCommonSym);
+      else
+        SymbolTable.push_back(ExtOrCommonSym);
+      return;
+    }
+    // Otherwise, this symbol is part of the .bss section.
+    MachOSection &BSS = getBSSSection();
+    AddSymbolToSection(BSS, GV);
+    return;
+  }
+  
+  // Scalar read-only data goes in a literal section if the scalar is 4, 8, or
+  // 16 bytes, or a cstring.  Other read only data goes into a regular const
+  // section.  Read-write data goes in the data section.
+  MachOSection &Sec = GV->isConstant() ? getConstSection(Ty) : getDataSection();
+  AddSymbolToSection(Sec, GV);
+  
+  // FIXME: actually write out the initializer to the section.  This will
+  // require ExecutionEngine's InitializeMemory() function, which will need to
+  // be enhanced to support relocations.
 }
 
 
