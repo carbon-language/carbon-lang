@@ -147,26 +147,21 @@ public:
   );
 
   /// @brief Parse all function bodies
-  void ParseAllFunctionBodies();
+  bool ParseAllFunctionBodies(std::string* ErrMsg);
 
   /// @brief Parse the next function of specific type
-  void ParseFunction(Function* Func) ;
+  bool ParseFunction(Function* Func, std::string* ErrMsg) ;
 
   /// This method is abstract in the parent ModuleProvider class. Its
   /// implementation is identical to the ParseFunction method.
   /// @see ParseFunction
   /// @brief Make a specific function materialize.
-  virtual bool materializeFunction(Function *F, std::string *ErrInfo = 0) {
+  virtual bool materializeFunction(Function *F, std::string *ErrMsg = 0) {
     LazyFunctionMap::iterator Fi = LazyFunctionLoadMap.find(F);
-    if (Fi == LazyFunctionLoadMap.end()) return false;
-    try {
-      ParseFunction(F);
-    } catch (std::string &ErrStr) {
-      if (ErrInfo) *ErrInfo = ErrStr;
+    if (Fi == LazyFunctionLoadMap.end()) 
+      return false;
+    if (ParseFunction(F,ErrMsg))
       return true;
-    } catch (...) {
-      return true;
-    }
     return false;
   }
 
@@ -174,15 +169,9 @@ public:
   /// implementation is identical to ParseAllFunctionBodies.
   /// @see ParseAllFunctionBodies
   /// @brief Make the whole module materialize
-  virtual Module* materializeModule(std::string *ErrInfo = 0) {
-    try {
-      ParseAllFunctionBodies();
-    } catch (std::string &ErrStr) {
-      if (ErrInfo) *ErrInfo = ErrStr;
+  virtual Module* materializeModule(std::string *ErrMsg = 0) {
+    if (ParseAllFunctionBodies(ErrMsg))
       return 0;
-    } catch (...) {
-      return 0;
-    }
     return TheModule;
   }
 

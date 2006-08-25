@@ -45,12 +45,6 @@ namespace sys {
       /// @brief Open program as dynamic library.
       DynamicLibrary();
 
-      /// This is the constructor for DynamicLibrary instances. It will open
-      /// the dynamic library specified by the filename Path.
-      /// @throws std::string indicating why the library couldn't be opened.
-      /// @brief Open a dynamic library.
-      DynamicLibrary(const char* filename);
-
       /// After destruction, the symbols of the library will no longer be
       /// available to the program. It is important to make sure the lifespan
       /// of a DynamicLibrary exceeds the lifetime of the pointers returned

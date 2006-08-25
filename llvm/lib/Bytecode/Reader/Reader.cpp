@@ -1943,14 +1943,18 @@ void BytecodeReader::ParseFunctionLazily() {
 /// ParseAllFunctionBodies.
 /// @see ParseAllFunctionBodies
 /// @see ParseBytecode
-void BytecodeReader::ParseFunction(Function* Func) {
+bool BytecodeReader::ParseFunction(Function* Func, std::string* ErrMsg) {
+
+  if (setjmp(context))
+    return true;
+
   // Find {start, end} pointers and slot in the map. If not there, we're done.
   LazyFunctionMap::iterator Fi = LazyFunctionLoadMap.find(Func);
 
   // Make sure we found it
   if (Fi == LazyFunctionLoadMap.end()) {
     error("Unrecognized function of type " + Func->getType()->getDescription());
-    return;
+    return true;
   }
 
   BlockStart = At = Fi->second.Buf;
@@ -1960,6 +1964,7 @@ void BytecodeReader::ParseFunction(Function* Func) {
   LazyFunctionLoadMap.erase(Fi);
 
   this->ParseFunctionBody(Func);
+  return false;
 }
 
 /// The ParseAllFunctionBodies method parses through all the previously
@@ -1969,7 +1974,10 @@ void BytecodeReader::ParseFunction(Function* Func) {
 /// the function definitions are located. This function uses that information
 /// to materialize the functions.
 /// @see ParseBytecode
-void BytecodeReader::ParseAllFunctionBodies() {
+bool BytecodeReader::ParseAllFunctionBodies(std::string* ErrMsg) {
+  if (setjmp(context))
+    return true;
+
   LazyFunctionMap::iterator Fi = LazyFunctionLoadMap.begin();
   LazyFunctionMap::iterator Fe = LazyFunctionLoadMap.end();
 
@@ -1981,7 +1989,7 @@ void BytecodeReader::ParseAllFunctionBodies() {
     ++Fi;
   }
   LazyFunctionLoadMap.clear();
-
+  return false;
 }
 
 /// Parse the global type list

@@ -45,12 +45,10 @@ using namespace llvm::sys;
 //===          independent code.
 //===----------------------------------------------------------------------===//
 
-static bool did_initialize_ltdl = false;
-
 static inline void check_ltdl_initialization() {
+  static bool did_initialize_ltdl = false;
   if (!did_initialize_ltdl) {
-    if (0 != lt_dlinit())
-      throw std::string(lt_dlerror());
+    assert(0 == lt_dlinit() || "Can't init the ltdl library");
     did_initialize_ltdl = true;
   }
 }
@@ -62,13 +60,13 @@ DynamicLibrary::DynamicLibrary() : handle(0) {
 
   lt_dlhandle a_handle = lt_dlopen(0);
 
-  if (a_handle == 0)
-    throw std::string("Can't open program as dynamic library");
+  assert(a_handle == 0 || "Can't open program as dynamic library");
 
   handle = a_handle;
   OpenedHandles.push_back(a_handle);
 }
 
+/*
 DynamicLibrary::DynamicLibrary(const char*filename) : handle(0) {
   check_ltdl_initialization();
 
@@ -83,6 +81,7 @@ DynamicLibrary::DynamicLibrary(const char*filename) : handle(0) {
   handle = a_handle;
   OpenedHandles.push_back(a_handle);
 }
+*/
 
 DynamicLibrary::~DynamicLibrary() {
   lt_dlhandle a_handle = (lt_dlhandle) handle;

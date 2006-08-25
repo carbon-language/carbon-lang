@@ -25,8 +25,8 @@ impatient, here's a high level summary of the library's requirements.
  3. No exposed system-specific functions.
  4. No exposed system-specific data.
  5. Data in lib/System classes must use only simple C++ intrinsic types.
- 6. Errors are handled by throwing std::string *only*.
- 7. Library must not throw any exceptions except std::string.
+ 6. Errors are handled by returning "true" and setting an optional std::string
+ 7. Library must not throw any exceptions, period.
  8. Interface functions must not have throw() specifications.
  9. No duplicate function impementations are permitted within an operating
     system class.

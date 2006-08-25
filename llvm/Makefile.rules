@@ -206,11 +206,6 @@ else
   OPTIMIZE_OPTION := -O2
 endif
 
-# IF REQUIRES_EH=1 is specified then don't disable exceptions
-#ifndef REQUIRES_EH
-#  CXX.Flags += -fno-exceptions
-#endif
-
 ifdef ENABLE_PROFILING
   BuildMode := Profile
   CXX.Flags := $(OPTIMIZE_OPTION) -pg -g
@@ -242,6 +237,11 @@ else
     KEEP_SYMBOLS := 1
   endif
 endif
+
+# IF REQUIRES_EH=1 is specified then don't disable exceptions
+#ifndef REQUIRES_EH
+#  CXX.Flags += -fno-exceptions
+#endif
 
 # If DISABLE_ASSERTIONS=1 is specified (make command line or configured),
 # then disable assertions by defining the appropriate preprocessor symbols.
