@@ -269,7 +269,8 @@ bool LoopUnroll::visitLoop(Loop *L) {
       if (isa<Instruction>(InVal))
         InVal = LastValueMap[InVal];
       (*SI)->removeIncomingValue(LatchBlock, false);
-      (*SI)->addIncoming(InVal, cast<BasicBlock>(LastValueMap[LatchBlock]));
+      if (InVal)
+        (*SI)->addIncoming(InVal, cast<BasicBlock>(LastValueMap[LatchBlock]));
     }
   }
 
