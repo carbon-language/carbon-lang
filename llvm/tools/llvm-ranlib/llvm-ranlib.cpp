@@ -74,7 +74,7 @@ int main(int argc, char **argv) {
     if (!TheArchive)
       throw err_msg;
 
-    if (!TheArchive->writeToDisk(true, false, false, &err_msg ))
+    if (TheArchive->writeToDisk(true, false, false, &err_msg ))
       throw err_msg;
 
     if (Verbose)
