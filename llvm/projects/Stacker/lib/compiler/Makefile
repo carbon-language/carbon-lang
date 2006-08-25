@@ -18,3 +18,4 @@ CompileCommonOpts := $(filter-out -pedantic,$(CompileCommonOpts))
 CompileCommonOpts := $(filter-out -Wno-long-long,$(CompileCommonOpts))
 
 $(ObjDir)/Lexer.o : $(PROJ_SRC_DIR)/StackerParser.h
+$(ObjDir)/StackerCompiler.o : $(PROJ_SRC_DIR)/StackerParser.h
