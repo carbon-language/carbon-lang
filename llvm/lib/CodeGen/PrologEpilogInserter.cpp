@@ -71,15 +71,10 @@ namespace {
       //
       replaceFrameIndices(Fn);
 
-      RegsToSave.clear();
-      StackSlots.clear();
       return true;
     }
-
+  
   private:
-    std::vector<std::pair<unsigned, const TargetRegisterClass*> > RegsToSave;
-    std::vector<int> StackSlots;
-
     void calculateCallerSavedRegisters(MachineFunction &Fn);
     void saveCallerSavedRegisters(MachineFunction &Fn);
     void calculateFrameObjectOffsets(MachineFunction &Fn);
@@ -144,23 +139,24 @@ void PEI::calculateCallerSavedRegisters(MachineFunction &Fn) {
   const bool *PhysRegsUsed = Fn.getUsedPhysregs();
   const TargetRegisterClass* const *CSRegClasses =
     RegInfo->getCalleeSaveRegClasses();
+  std::vector<CalleeSavedInfo> &CSI = FFI->getCalleeSavedInfo();
   for (unsigned i = 0; CSRegs[i]; ++i) {
     unsigned Reg = CSRegs[i];
     if (PhysRegsUsed[Reg]) {
         // If the reg is modified, save it!
-      RegsToSave.push_back(std::make_pair(Reg, CSRegClasses[i]));
+      CSI.push_back(CalleeSavedInfo(Reg, CSRegClasses[i]));
     } else {
       for (const unsigned *AliasSet = RegInfo->getAliasSet(Reg);
            *AliasSet; ++AliasSet) {  // Check alias registers too.
         if (PhysRegsUsed[*AliasSet]) {
-          RegsToSave.push_back(std::make_pair(Reg, CSRegClasses[i]));
+          CSI.push_back(CalleeSavedInfo(Reg, CSRegClasses[i]));
           break;
         }
       }
     }
   }
 
-  if (RegsToSave.empty())
+  if (CSI.empty())
     return;   // Early exit if no caller saved registers are modified!
 
   unsigned NumFixedSpillSlots;
@@ -169,9 +165,9 @@ void PEI::calculateCallerSavedRegisters(MachineFunction &Fn) {
 
   // Now that we know which registers need to be saved and restored, allocate
   // stack slots for them.
-  for (unsigned i = 0, e = RegsToSave.size(); i != e; ++i) {
-    unsigned Reg = RegsToSave[i].first;
-    const TargetRegisterClass *RC = RegsToSave[i].second;
+  for (unsigned i = 0, e = CSI.size(); i != e; ++i) {
+    unsigned Reg = CSI[i].getReg();
+    const TargetRegisterClass *RC = CSI[i].getRegClass();
 
     // Check to see if this physreg must be spilled to a particular stack slot
     // on this target.
@@ -188,7 +184,7 @@ void PEI::calculateCallerSavedRegisters(MachineFunction &Fn) {
       // Spill it to the stack where we must.
       FrameIdx = FFI->CreateFixedObject(RC->getSize(), FixedSlot->second);
     }
-    StackSlots.push_back(FrameIdx);
+    CSI[i].setFrameIdx(FrameIdx);
   }
 }
 
@@ -196,8 +192,12 @@ void PEI::calculateCallerSavedRegisters(MachineFunction &Fn) {
 /// that are modified in the function.
 ///
 void PEI::saveCallerSavedRegisters(MachineFunction &Fn) {
+  // Get callee saved register information.
+  MachineFrameInfo *FFI = Fn.getFrameInfo();
+  std::vector<CalleeSavedInfo> &CSI = FFI->getCalleeSavedInfo();
+  
   // Early exit if no caller saved registers are modified!
-  if (RegsToSave.empty())
+  if (CSI.empty())
     return;
 
   const MRegisterInfo *RegInfo = Fn.getTarget().getRegisterInfo();
@@ -206,10 +206,10 @@ void PEI::saveCallerSavedRegisters(MachineFunction &Fn) {
   // code into the entry block.
   MachineBasicBlock *MBB = Fn.begin();
   MachineBasicBlock::iterator I = MBB->begin();
-  for (unsigned i = 0, e = RegsToSave.size(); i != e; ++i) {
+  for (unsigned i = 0, e = CSI.size(); i != e; ++i) {
     // Insert the spill to the stack frame.
-    RegInfo->storeRegToStackSlot(*MBB, I, RegsToSave[i].first, StackSlots[i],
-                                 RegsToSave[i].second);
+    RegInfo->storeRegToStackSlot(*MBB, I, CSI[i].getReg(), CSI[i].getFrameIdx(),
+                                 CSI[i].getRegClass());
   }
 
   // Add code to restore the callee-save registers in each exiting block.
@@ -233,9 +233,10 @@ void PEI::saveCallerSavedRegisters(MachineFunction &Fn) {
       
       // Restore all registers immediately before the return and any terminators
       // that preceed it.
-      for (unsigned i = 0, e = RegsToSave.size(); i != e; ++i) {
-        RegInfo->loadRegFromStackSlot(*MBB, I, RegsToSave[i].first,
-                                      StackSlots[i], RegsToSave[i].second);
+      for (unsigned i = 0, e = CSI.size(); i != e; ++i) {
+        RegInfo->loadRegFromStackSlot(*MBB, I, CSI[i].getReg(),
+                                      CSI[i].getFrameIdx(),
+                                      CSI[i].getRegClass());
         assert(I != MBB->begin() &&
                "loadRegFromStackSlot didn't insert any code!");
         // Insert in reverse order.  loadRegFromStackSlot can insert multiple

@@ -20,6 +20,28 @@ class Type;
 class MachineDebugInfo;
 class MachineFunction;
 
+/// The CalleeSavedInfo class tracks the information need to locate where a
+/// callee saved register in the current frame.  
+class CalleeSavedInfo {
+
+private:
+  unsigned Reg;
+  const TargetRegisterClass *RegClass;
+  int FrameIdx;
+  
+public:
+  CalleeSavedInfo(unsigned R, const TargetRegisterClass *RC, int FI = 0)
+  : Reg(R)
+  , RegClass(RC)
+  , FrameIdx(FI)
+  {}
+  
+  // Accessors.
+  unsigned getReg()                        const { return Reg; }
+  const TargetRegisterClass *getRegClass() const { return RegClass; }
+  int getFrameIdx()                        const { return FrameIdx; }
+  void setFrameIdx(int FI)                       { FrameIdx = FI; }
+};
 
 /// The MachineFrameInfo class represents an abstract stack frame until
 /// prolog/epilog code is inserted.  This class is key to allowing stack frame
@@ -110,6 +132,12 @@ class MachineFrameInfo {
   /// insertion.
   ///
   unsigned MaxCallFrameSize;
+  
+  /// CSInfo - The prolog/epilog code inserter fills in this vector with each
+  /// callee saved register saved in the frame.  Beyond it's use by the prolog/
+  /// epilog code inserter, this data used for debug info and exception
+  /// handling.
+  std::vector<CalleeSavedInfo> CSInfo;
   
   /// DebugInfo - This field is set (via setMachineDebugInfo) by a debug info
   /// consumer (ex. DwarfWriter) to indicate that frame layout information
@@ -242,6 +270,10 @@ public:
     Objects.push_back(StackObject(0, 1, -1));
     return Objects.size()-NumFixedObjects-1;
   }
+  
+  /// getCalleeSavedInfo - Returns a reference to call saved info vector for the
+  /// current function.
+  std::vector<CalleeSavedInfo> &getCalleeSavedInfo() { return CSInfo; }
 
   /// getMachineDebugInfo - Used by a prologue/epilogue emitter (MRegisterInfo)
   /// to provide frame layout information. 
