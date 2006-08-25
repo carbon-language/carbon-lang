@@ -154,7 +154,7 @@ void sys::SetInterruptFunction(void (*IF)()) {
 }
 
 // RemoveFileOnSignal - The public API
-void sys::RemoveFileOnSignal(const sys::Path &Filename) {
+bool sys::RemoveFileOnSignal(const sys::Path &Filename, std::string* ErrMsg) {
   if (FilesToRemove == 0)
     FilesToRemove = new std::vector<sys::Path>;
 
@@ -162,14 +162,18 @@ void sys::RemoveFileOnSignal(const sys::Path &Filename) {
 
   std::for_each(IntSigs, IntSigsEnd, RegisterHandler);
   std::for_each(KillSigs, KillSigsEnd, RegisterHandler);
+  return false;
 }
 
 // RemoveDirectoryOnSignal - The public API
-void sys::RemoveDirectoryOnSignal(const sys::Path& path) {
+bool sys::RemoveDirectoryOnSignal(const sys::Path& path, std::string* ErrMsg) {
   // Not a directory?
   sys::FileStatus Status;
-  if (path.getFileStatus(Status) || !Status.isDir)
-    return;
+  if (path.getFileStatus(Status) || !Status.isDir) {
+    if (ErrMsg)
+      *ErrMsg = path.toString() + " is not a directory";
+    return true;
+  }
 
   if (DirectoriesToRemove == 0)
     DirectoriesToRemove = new std::vector<sys::Path>;
@@ -178,6 +182,7 @@ void sys::RemoveDirectoryOnSignal(const sys::Path& path) {
 
   std::for_each(IntSigs, IntSigsEnd, RegisterHandler);
   std::for_each(KillSigs, KillSigsEnd, RegisterHandler);
+  return false;
 }
 
 /// PrintStackTraceOnErrorSignal - When an error signal (such as SIBABRT or

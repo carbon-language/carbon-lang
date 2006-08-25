@@ -94,7 +94,7 @@ inline bool MakeErrMsg(
   // but, oh well, just use a generic message
   sprintf(buffer, "Error #%d", errnum);
 #endif
-  *ErrMsg = buffer;
+  *ErrMsg = prefix + buffer;
   return true;
 }
 

@@ -122,7 +122,7 @@ size_t MappedFile::size() const {
   return info_->Size;
 }
 
-void MappedFile::size(size_t new_size) {
+bool MappedFile::size(size_t new_size, std::string* ErrMsg) {
   assert(info_ && "MappedFile not initialized");
 
   // Take the mapping out of memory
@@ -140,12 +140,14 @@ void MappedFile::size(size_t new_size) {
   if (new_size > cur_size) {
     // Ensure we can allocate at least the idodes necessary to handle the
     // file size requested. 
-    ::lseek(info_->FD, new_size, SEEK_SET);
-    ::write(info_->FD, "\0", 1);
+    if ((off_t)-1 == ::lseek(info_->FD, new_size, SEEK_SET))
+      return MakeErrMsg(ErrMsg, "Can't lseek: ");
+    if (-1 == ::write(info_->FD, "\0", 1))
+      return MakeErrMsg(ErrMsg, "Can't write: ");
   }
 
   // Put the mapping back into memory.
-  this->map(0);
+  return this->map(ErrMsg);
 }
 
 }

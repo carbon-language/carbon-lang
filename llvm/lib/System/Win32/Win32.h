@@ -24,26 +24,6 @@
 #include <cassert>
 #include <string>
 
-inline bool GetError(const std::string &Prefix, std::string *Dest) {
-  if (Dest == 0) return true;
-  char *buffer = NULL;
-  FormatMessage(FORMAT_MESSAGE_ALLOCATE_BUFFER|FORMAT_MESSAGE_FROM_SYSTEM,
-      NULL, GetLastError(), 0, (LPSTR)&buffer, 1, NULL);
-  *Dest = Prefix + buffer;
-  LocalFree(buffer);
-  return true;
-}
-
-inline void ThrowError(const std::string& msg) {
-  char *buffer = NULL;
-  FormatMessage(FORMAT_MESSAGE_ALLOCATE_BUFFER|FORMAT_MESSAGE_FROM_SYSTEM,
-      NULL, GetLastError(), 0, (LPSTR)&buffer, 1, NULL);
-  std::string s(msg);
-  s += buffer;
-  LocalFree(buffer);
-  throw s;
-}
-
 inline bool MakeErrMsg(std::string* ErrMsg, const std::string& prefix) {
   if (!ErrMsg)
     return true;
@@ -53,10 +33,6 @@ inline bool MakeErrMsg(std::string* ErrMsg, const std::string& prefix) {
   ErrMsg = prefix + buffer;
   LocalFree(buffer);
   return true;
-}
-
-inline void ThrowErrno(const std::string& prefix) {
-  ThrowError(prefix + ": " + strerror(errno));
 }
 
 inline void MakeErrnoMsg(std::string* ErrMsg, const std::string & prefix) {

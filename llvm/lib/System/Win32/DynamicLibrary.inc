@@ -65,16 +65,6 @@ DynamicLibrary::DynamicLibrary() : handle(0) {
   OpenedHandles.push_back((HMODULE)handle);
 }
 
-DynamicLibrary::DynamicLibrary(const char*filename) : handle(0) {
-  HMODULE a_handle = LoadLibrary(filename);
-
-  if (a_handle == 0)
-    ThrowError(std::string(filename) + ": Can't open : ");
-
-  handle = a_handle;
-  OpenedHandles.push_back(a_handle);
-}
-
 DynamicLibrary::~DynamicLibrary() {
   if (handle == 0)
     return;
@@ -100,7 +90,7 @@ bool DynamicLibrary::LoadLibraryPermanently(const char *filename,
     HMODULE a_handle = LoadLibrary(filename);
 
     if (a_handle == 0)
-      return GetError(std::string(filename) + ": Can't open : ", ErrMsg);
+      return MakeErrMsg(ErrMsg, std::string(filename) + ": Can't open : ");
 
     OpenedHandles.push_back(a_handle);
   } else {

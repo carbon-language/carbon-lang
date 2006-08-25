@@ -24,13 +24,13 @@ namespace sys {
   /// This function registers signal handlers to ensure that if a signal gets
   /// delivered that the named file is removed.
   /// @brief Remove a file if a fatal signal occurs.
-  void RemoveFileOnSignal(const Path &Filename);
+  bool RemoveFileOnSignal(const Path &Filename, std::string* ErrMsg = 0);
 
   /// This function registers a signal handler to ensure that if a fatal signal
   /// gets delivered to the process that the named directory and all its
   /// contents are removed.
   /// @brief Remove a directory if a fatal signal occurs.
-  void RemoveDirectoryOnSignal(const Path& path);
+  bool RemoveDirectoryOnSignal(const Path& path, std::string* ErrMsg = 0);
 
   /// When an error signal (such as SIBABRT or SIGSEGV) is delivered to the
   /// process, print a stack trace and then exit.

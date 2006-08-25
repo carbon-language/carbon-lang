@@ -80,11 +80,14 @@ static void RegisterHandler() {
 }
 
 // RemoveFileOnSignal - The public API
-void sys::RemoveFileOnSignal(const sys::Path &Filename) {
+bool sys::RemoveFileOnSignal(const sys::Path &Filename, std::string* ErrMsg) {
   RegisterHandler();
 
-  if (CleanupExecuted)
-    throw std::string("Process terminating -- cannot register for removal");
+  if (CleanupExecuted) {
+    if (ErrMsg)
+      *ErrMsg = "Process terminating -- cannot register for removal";
+    return true;
+  }
 
   if (FilesToRemove == NULL)
     FilesToRemove = new std::vector<sys::Path>;
@@ -92,25 +95,33 @@ void sys::RemoveFileOnSignal(const sys::Path &Filename) {
   FilesToRemove->push_back(Filename);
 
   LeaveCriticalSection(&CriticalSection);
+  return false;
 }
 
 // RemoveDirectoryOnSignal - The public API
-void sys::RemoveDirectoryOnSignal(const sys::Path& path) {
+bool sys::RemoveDirectoryOnSignal(const sys::Path& path, std::string* ErrMsg) {
   // Not a directory?
   sys::FileStatus Status;
-  if (path.getFileStatus(Status) || !Status.isDir)
-    return;
+  if (path.getFileStatus(Status) || !Status.isDir) {
+    if (ErrMsg)
+      *ErrMsg = path.toString() + " is not a directory";
+    return true;
+  }
 
   RegisterHandler();
 
-  if (CleanupExecuted)
-    throw std::string("Process terminating -- cannot register for removal");
+  if (CleanupExecuted) {
+    if (ErrMsg)
+      *ErrMsg = "Process terminating -- cannot register for removal";
+    return true;
+  }
 
   if (DirectoriesToRemove == NULL)
     DirectoriesToRemove = new std::vector<sys::Path>;
   DirectoriesToRemove->push_back(path);
 
   LeaveCriticalSection(&CriticalSection);
+  return false;
 }
 
 /// PrintStackTraceOnErrorSignal - When an error signal (such as SIBABRT or

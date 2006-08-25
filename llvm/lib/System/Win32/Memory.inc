@@ -36,7 +36,7 @@ MemoryBlock Memory::AllocateRWX(unsigned NumBytes,
   void *pa = VirtualAlloc(NULL, NumPages*pageSize, MEM_COMMIT,
                   PAGE_EXECUTE_READWRITE);
   if (pa == NULL) {
-    GetError("Can't allocate RWX Memory: ", ErrMsg);
+    MakeErrMsg(ErrMsg, "Can't allocate RWX Memory: ");
     return MemoryBlock();
   }
 
@@ -49,7 +49,7 @@ MemoryBlock Memory::AllocateRWX(unsigned NumBytes,
 bool Memory::ReleaseRWX(MemoryBlock &M, std::string *ErrMsg) {
   if (M.Address == 0 || M.Size == 0) return false;
   if (!VirtualFree(M.Address, 0, MEM_RELEASE))
-    return GetError("Can't release RWX Memory: ", ErrMsg);
+    return MakeErrMsg(ErrMsg, "Can't release RWX Memory: ");
   return false;
 }
 

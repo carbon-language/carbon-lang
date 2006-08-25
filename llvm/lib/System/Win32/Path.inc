@@ -292,8 +292,8 @@ bool
 Path::getFileStatus(FileStatus &info, std::string *ErrStr) const {
   WIN32_FILE_ATTRIBUTE_DATA fi;
   if (!GetFileAttributesEx(path.c_str(), GetFileExInfoStandard, &fi))
-    return GetError("getStatusInfo():" + std::string(path) +
-                    ": Can't get status: ", ErrStr);
+    return MakeErrMsg(ErrStr, "getStatusInfo():" + std::string(path) +
+                    ": Can't get status: ");
 
   info.fileSize = fi.nFileSizeHigh;
   info.fileSize <<= sizeof(fi.nFileSizeHigh)*8;
@@ -547,7 +547,7 @@ Path::eraseFromDisk(bool remove_contents, std::string *ErrStr) const {
     // attribute first.
     if (attr & FILE_ATTRIBUTE_READONLY) {
       if (!SetFileAttributes(path.c_str(), attr & ~FILE_ATTRIBUTE_READONLY))
-        return GetError(path + ": Can't destroy file: ", ErrStr);
+        return MakeErrMsg(ErrStr, path + ": Can't destroy file: ");
     }
 
     if (!DeleteFile(path.c_str()))
@@ -593,7 +593,7 @@ Path::eraseFromDisk(bool remove_contents, std::string *ErrStr) const {
         FindClose(h);
         if (err != ERROR_NO_MORE_FILES) {
           SetLastError(err);
-          return GetError(path + ": Can't read directory: ", ErrStr);
+          return MakeErrMsg(ErrStr, path + ": Can't read directory: ");
         }
 
         for (std::vector<Path>::iterator I = list.begin(); I != list.end();
@@ -603,14 +603,14 @@ Path::eraseFromDisk(bool remove_contents, std::string *ErrStr) const {
         }
       } else {
         if (GetLastError() != ERROR_FILE_NOT_FOUND)
-          return GetError(path + ": Can't read directory: ", ErrStr);
+          return MakeErrMsg(ErrStr, path + ": Can't read directory: ");
       }
     }
 
     pathname[lastchar] = 0;
     if (!RemoveDirectory(pathname))
-      return GetError(std::string(pathname) + ": Can't destroy directory: ",
-                      ErrStr);
+      return MakeErrMsg(ErrStr, 
+        std::string(pathname) + ": Can't destroy directory: ");
     return false;
   } 
   // It appears the path doesn't exist.
@@ -671,7 +671,7 @@ Path::setStatusInfoOnDisk(const FileStatus &si, std::string *ErrStr) const {
     DWORD err = GetLastError();
     CloseHandle(h);
     SetLastError(err);
-    return GetError(path + ": GetFileInformationByHandle: ", ErrStr);
+    return MakeErrMsg(ErrStr, path + ": GetFileInformationByHandle: ");
   }
 
   FILETIME ft;
@@ -681,7 +681,7 @@ Path::setStatusInfoOnDisk(const FileStatus &si, std::string *ErrStr) const {
   CloseHandle(h);
   if (!ret) {
     SetLastError(err);
-    return GetError(path + ": SetFileTime: ", ErrStr);
+    return MakeErrMsg(path + ": SetFileTime: ");
   }
 
   // Best we can do with Unix permission bits is to interpret the owner
@@ -690,13 +690,13 @@ Path::setStatusInfoOnDisk(const FileStatus &si, std::string *ErrStr) const {
     if (bhfi.dwFileAttributes & FILE_ATTRIBUTE_READONLY) {
       if (!SetFileAttributes(path.c_str(),
               bhfi.dwFileAttributes & ~FILE_ATTRIBUTE_READONLY))
-        return GetError(path + ": SetFileAttributes: ", ErrStr);
+        return MakeErrMsg(ErrStr, path + ": SetFileAttributes: ");
     }
   } else {
     if (!(bhfi.dwFileAttributes & FILE_ATTRIBUTE_READONLY)) {
       if (!SetFileAttributes(path.c_str(),
               bhfi.dwFileAttributes | FILE_ATTRIBUTE_READONLY))
-        return GetError(path + ": SetFileAttributes: ", ErrStr);
+        return MakeErrMsg(ErrStr, path + ": SetFileAttributes: ");
     }
   }
 

@@ -134,7 +134,7 @@ namespace sys {
     /// areas of memory after this call.
     /// @throws std::string if an error occurs
     /// @brief Set the size of the file and memory mapping.
-    void size(size_t new_size);
+    bool size(size_t new_size, std::string* ErrMsg = 0);
 
     void close() { if (info_) terminate(); }
 
