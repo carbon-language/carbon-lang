@@ -79,6 +79,7 @@ namespace {
       AU.addRequired<ScalarEvolution>();
       AU.addRequired<LoopInfo>();
       AU.addPreservedID(LoopSimplifyID);
+      AU.addPreservedID(LCSSAID);
       AU.setPreservesCFG();
     }
   private:
