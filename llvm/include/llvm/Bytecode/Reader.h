@@ -29,48 +29,75 @@ namespace llvm {
 // Forward declare the handler class
 class BytecodeHandler;
 
-/// getBytecodeModuleProvider - lazy function-at-a-time loading from a file
-///
+/// This function returns a ModuleProvider that can be used to do lazy 
+/// function-at-a-time loading from a bytecode file.
+/// @returns NULL on error
+/// @returns ModuleProvider* if successful
+/// @brief Get a ModuleProvide for a bytecode file.
 ModuleProvider *getBytecodeModuleProvider(
-  const std::string &Filename, ///< Name of file to be read
-  BytecodeHandler* H = 0       ///< Optional handler for reader events
+  const std::string &Filename,  ///< Name of file to be read
+  std::string* ErrMsg,          ///< Optional error message holder 
+  BytecodeHandler* H = 0        ///< Optional handler for reader events
 );
 
-/// getBytecodeBufferModuleProvider - lazy function-at-a-time loading from a
-/// buffer
-///
-ModuleProvider *getBytecodeBufferModuleProvider(const unsigned char *Buffer,
-                                                unsigned BufferSize,
-                                                const std::string &ModuleID="",
-                                                BytecodeHandler* H = 0);
+/// This function returns a ModuleProvider that can be used to do lazy 
+/// function function-at-a-time loading from a bytecode buffer.
+/// @returns NULL on error
+/// @returns ModuleProvider* if successful
+/// @brief Get a ModuleProvider for a bytecode buffer.
+ModuleProvider *getBytecodeBufferModuleProvider(
+  const unsigned char *Buffer,    ///< Start of buffer to parse
+  unsigned BufferSize,            ///< Size of the buffer
+  const std::string &ModuleID,    ///< Name to give the module
+  std::string* ErrMsg,            ///< Optional place to return an error message
+  BytecodeHandler* H              ///< Optional handler for reader events
+);
 
+/// This is the main interface to bytecode parsing. It opens the file specified
+/// by \p Filename and parses the entire file, returing the corresponding Module
+/// object if successful.
+/// @returns NULL on error
+/// @returns the module corresponding to the bytecode file, if successful
 /// @brief Parse the given bytecode file
-Module* ParseBytecodeFile(const std::string &Filename,
-                          std::string *ErrorStr = 0);
+Module* ParseBytecodeFile(
+  const std::string &Filename,    ///< Name of file to parse
+  std::string *ErrMsg = 0         ///< Optional place to return an error message
+);
 
+/// Parses a bytecode buffer specified by \p Buffer and \p BufferSize.
+/// @returns NULL on error
+/// @returns the module corresponding to the bytecode buffer, if successful
 /// @brief Parse a given bytecode buffer
-Module* ParseBytecodeBuffer(const unsigned char *Buffer,
-                            unsigned BufferSize,
-                            const std::string &ModuleID = "",
-                            std::string *ErrorStr = 0);
+Module* ParseBytecodeBuffer(
+  const unsigned char *Buffer,    ///< Start of buffer to parse
+  unsigned BufferSize,            ///< Size of the buffer
+  const std::string &ModuleID="", ///< Name to give the module
+  std::string *ErrMsg = 0         ///< Optional place to return an error message
+);
 
 /// This function will read only the necessary parts of a bytecode file in order
 /// to determine the list of dependent libraries encoded within it. The \p
 /// deplibs parameter will contain a vector of strings of the bytecode module's
 /// dependent libraries.
-/// @returns true on success, false otherwise
+/// @returns true on error, false otherwise
 /// @brief Get the list of dependent libraries from a bytecode file.
-bool GetBytecodeDependentLibraries(const std::string &fileName,
-                                   Module::LibraryListType& deplibs);
+bool GetBytecodeDependentLibraries(
+  const std::string &fileName,       ///< File name to read bytecode from
+  Module::LibraryListType& deplibs,  ///< List of dependent libraries extracted
+  std::string* ErrMsg                ///< Optional error message holder
+);
 
 /// This function will read only the necessary parts of a bytecode file in order
 /// to obtain a list of externally visible global symbols that the bytecode
 /// module defines. This is used for archiving and linking when only the list
 /// of symbols the module defines is needed.
-/// @returns true on success, false otherwise
+/// @returns true on error, false otherwise
 /// @brief Get a bytecode file's externally visibile defined global symbols.
-bool GetBytecodeSymbols(const sys::Path& fileName,
-                        std::vector<std::string>& syms);
+bool GetBytecodeSymbols(
+  const sys::Path& fileName,       ///< Filename to read bytecode from
+  std::vector<std::string>& syms,  ///< Vector to return symbols in
+  std::string* ErrMsg              ///< Optional error message holder
+);
 
 /// This function will read only the necessary parts of a bytecode buffer in
 /// order to obtain a list of externally visible global symbols that the
@@ -83,7 +110,8 @@ ModuleProvider* GetBytecodeSymbols(
   const unsigned char*Buffer,        ///< The buffer to be parsed
   unsigned Length,                   ///< The length of \p Buffer
   const std::string& ModuleID,       ///< An identifier for the module
-  std::vector<std::string>& symbols  ///< The symbols defined in the module
+  std::vector<std::string>& symbols, ///< The symbols defined in the module
+  std::string* ErrMsg                ///< Optional error message holder
 );
 
 } // End llvm namespace

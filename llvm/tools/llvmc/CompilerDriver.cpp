@@ -576,7 +576,7 @@ private:
     if (fullpath.isBytecodeFile()) {
       // Process the dependent libraries recursively
       Module::LibraryListType modlibs;
-      if (GetBytecodeDependentLibraries(fullpath.toString(),modlibs)) {
+      if (GetBytecodeDependentLibraries(fullpath.toString(),modlibs,&err)) {
         // Traverse the dependent libraries list
         Module::lib_iterator LI = modlibs.begin();
         Module::lib_iterator LE = modlibs.end();
@@ -598,7 +598,8 @@ private:
           "The dependent libraries could not be extracted from '") +
           fullpath.toString();
         return false;
-      }
+      } else 
+        return false;
     }
     return true;
   }

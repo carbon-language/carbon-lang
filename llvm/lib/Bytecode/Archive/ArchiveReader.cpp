@@ -475,14 +475,16 @@ Archive::findModuleDefiningSymbol(const std::string& symbol,
   const char* modptr = base + fileOffset;
   ArchiveMember* mbr = parseMemberHeader(modptr, base + mapfile->size(),ErrMsg);
   if (!mbr)
-    return false;
+    return 0;
 
   // Now, load the bytecode module to get the ModuleProvider
   std::string FullMemberName = archPath.toString() + "(" +
     mbr->getPath().toString() + ")";
   ModuleProvider* mp = getBytecodeBufferModuleProvider(
       (const unsigned char*) mbr->getData(), mbr->getSize(),
-      FullMemberName, 0);
+      FullMemberName, ErrMsg, 0);
+  if (!mp)
+    return 0;
 
   modules.insert(std::make_pair(fileOffset, std::make_pair(mp, mbr)));
 
@@ -523,7 +525,7 @@ Archive::findModulesDefiningSymbols(std::set<std::string>& symbols,
         std::string FullMemberName = archPath.toString() + "(" +
           mbr->getPath().toString() + ")";
         ModuleProvider* MP = GetBytecodeSymbols((const unsigned char*)At,
-            mbr->getSize(), FullMemberName, symbols);
+            mbr->getSize(), FullMemberName, symbols, error);
 
         if (MP) {
           // Insert the module's symbols into the symbol table
@@ -537,7 +539,7 @@ Archive::findModulesDefiningSymbols(std::set<std::string>& symbols,
         } else {
           if (error)
             *error = "Can't parse bytecode member: " + 
-              mbr->getPath().toString();
+              mbr->getPath().toString() + ": " + *error;
           delete mbr;
           return false;
         }

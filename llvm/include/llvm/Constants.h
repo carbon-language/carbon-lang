@@ -7,13 +7,13 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This file contains the declarations for the subclasses of Constant, which
-// represent the different flavors of constant values that live in LLVM.  Note
-// that Constants are immutable (once created they never change) and are fully
-// shared by structural equivalence.  This means that two structurally
-// equivalent constants will always have the same address.  Constant's are
-// created on demand as needed and never deleted: thus clients don't have to
-// worry about the lifetime of the objects.
+/// @file This file contains the declarations for the subclasses of Constant, 
+/// which represent the different flavors of constant values that live in LLVM.
+/// Note that Constants are immutable (once created they never change) and are 
+/// fully shared by structural equivalence.  This means that two structurally
+/// equivalent constants will always have the same address.  Constant's are
+/// created on demand as needed and never deleted: thus clients don't have to
+/// worry about the lifetime of the objects.
 //
 //===----------------------------------------------------------------------===//
 
@@ -36,10 +36,9 @@ template<class ConstantClass, class TypeClass>
 struct ConvertConstantType;
 
 //===----------------------------------------------------------------------===//
-/// ConstantIntegral - Shared superclass of boolean and integer constants.
-///
-/// This class just defines some common interfaces to be implemented.
-///
+/// This is the shared superclass of boolean and integer constants. This class 
+/// just defines some common interfaces to be implemented by the subclasses.
+/// @brief An abstract class for integer constants.
 class ConstantIntegral : public Constant {
 protected:
   union {
@@ -49,52 +48,66 @@ protected:
   ConstantIntegral(const Type *Ty, ValueTy VT, uint64_t V);
 public:
 
-  /// getRawValue - return the underlying value of this constant as a 64-bit
-  /// unsigned integer value.
-  ///
+  /// @brief Return the raw value of the constant as a 64-bit integer value.
   inline uint64_t getRawValue() const { return Val.Unsigned; }
   
-  /// getZExtValue - Return the constant zero extended as appropriate for this
-  /// type.
+  /// Return the constant as a 64-bit unsigned integer value after it
+  /// has been zero extended as appropriate for the type of this constant.
+  /// @brief Return the zero extended value.
   inline uint64_t getZExtValue() const {
     unsigned Size = getType()->getPrimitiveSizeInBits();
     return Val.Unsigned & (~uint64_t(0UL) >> (64-Size));
   }
 
-  /// getSExtValue - Return the constant sign extended as appropriate for this
-  /// type.
+  /// Return the constant as a 64-bit integer value after it has been sign
+  /// sign extended as appropriate for the type of this constant.
+  /// @brief REturn the sign extended value.
   inline int64_t getSExtValue() const {
     unsigned Size = getType()->getPrimitiveSizeInBits();
     return (Val.Signed << (64-Size)) >> (64-Size);
   }
   
-  /// isNullValue - Return true if this is the value that would be returned by
-  /// getNullValue.
-  ///
+  /// This function is implemented by subclasses and will return true iff this
+  /// constant represents the the "null" value that would be returned by the
+  /// getNullValue method.
+  /// @returns true if the constant's value is 0.
+  /// @brief Determine if the value is null.
   virtual bool isNullValue() const = 0;
 
-  /// isMaxValue - Return true if this is the largest value that may be
-  /// represented by this type.
-  ///
+  /// This function is implemented by sublcasses and will return true iff this
+  /// constant represents the the largest value that may be represented by this
+  /// constant's type.
+  /// @returns true if the constant's value is maximal.
+  /// @brief Determine if the value is maximal.
   virtual bool isMaxValue() const = 0;
 
-  /// isMinValue - Return true if this is the smallest value that may be
-  /// represented by this type.
-  ///
+  /// This function is implemented by subclasses and will return true iff this 
+  /// constant represents the smallest value that may be represented by this 
+  /// constant's type.
+  /// @returns true if the constant's value is minimal
+  /// @brief Determine if the value is minimal.
   virtual bool isMinValue() const = 0;
 
-  /// isAllOnesValue - Return true if every bit in this constant is set to true.
-  ///
+  /// This function is implemented by subclasses and will return true iff every
+  /// bit in this constant is set to true.
+  /// @returns true if all bits of the constant are ones.
+  /// @brief Determine if the value is all ones.
   virtual bool isAllOnesValue() const = 0;
 
-  /// Static constructor to get the maximum/minimum/allones constant of
-  /// specified (integral) type...
-  ///
+  /// @returns the largest value for an integer constant of the given type 
+  /// @brief Get the maximal value
   static ConstantIntegral *getMaxValue(const Type *Ty);
+
+  /// @returns the smallest value for an integer constant of the given type 
+  /// @brief Get the minimal value
   static ConstantIntegral *getMinValue(const Type *Ty);
+
+  /// @returns the value for an integer constant of the given type that has all
+  /// its bits set to true.
+  /// @brief Get the all ones value
   static ConstantIntegral *getAllOnesValue(const Type *Ty);
 
-  /// Methods for support type inquiry through isa, cast, and dyn_cast:
+  /// Methods to support type inquiry through isa, cast, and dyn_cast:
   static inline bool classof(const ConstantIntegral *) { return true; }
   static bool classof(const Value *V) {
     return V->getValueType() == ConstantBoolVal ||
@@ -105,33 +118,41 @@ public:
 
 
 //===----------------------------------------------------------------------===//
-/// ConstantBool - Boolean Values
-///
+/// This concrete class represents constant values of type BoolTy. There are 
+/// only two instances of this class constructed: the True and False static 
+/// members. The constructor is hidden to ensure this invariant.
+/// @brief Constant Boolean class
 class ConstantBool : public ConstantIntegral {
   ConstantBool(bool V);
 public:
-  static ConstantBool *True, *False;  // The True & False values
+  static ConstantBool *True, *False;  ///< The True & False values
 
-  /// get() - Static factory methods - Return objects of the specified value
+  /// This method is provided mostly for compatibility with the other 
+  /// ConstantIntegral subclasses.
+  /// @brief Static factory method for getting a ConstantBool instance.
   static ConstantBool *get(bool Value) { return Value ? True : False; }
+
+  /// This method is provided mostly for compatibility with the other 
+  /// ConstantIntegral subclasses.
+  /// @brief Static factory method for getting a ConstantBool instance.
   static ConstantBool *get(const Type *Ty, bool Value) { return get(Value); }
 
-  /// inverted - Return the opposite value of the current value.
+  /// Returns the opposite value of this ConstantBool value.
+  /// @brief Get inverse value.
   inline ConstantBool *inverted() const { return (this==True) ? False : True; }
 
-  /// getValue - return the boolean value of this constant.
-  ///
+  /// @returns the value of this ConstantBool
+  /// @brief return the boolean value of this constant.
   inline bool getValue() const { return static_cast<bool>(getRawValue()); }
 
-  /// isNullValue - Return true if this is the value that would be returned by
-  /// getNullValue.
-  ///
+  /// @see ConstantIntegral for details
+  /// @brief Implement overrides
   virtual bool isNullValue() const { return this == False; }
   virtual bool isMaxValue() const { return this == True; }
   virtual bool isMinValue() const { return this == False; }
   virtual bool isAllOnesValue() const { return this == True; }
 
-  /// Methods for support type inquiry through isa, cast, and dyn_cast:
+  /// @brief Methods to support type inquiry through isa, cast, and dyn_cast:
   static inline bool classof(const ConstantBool *) { return true; }
   static bool classof(const Value *V) {
     return V->getValueType() == ConstantBoolVal;
@@ -140,37 +161,36 @@ public:
 
 
 //===----------------------------------------------------------------------===//
-/// ConstantInt - Superclass of ConstantSInt & ConstantUInt, to make dealing
-/// with integral constants easier.
-///
+/// This is the abstract superclass of ConstantSInt & ConstantUInt, to make 
+/// dealing with integral constants easier when sign is irrelevant.
+/// @brief Abstract clas for constant integers.
 class ConstantInt : public ConstantIntegral {
 protected:
   ConstantInt(const ConstantInt &);      // DO NOT IMPLEMENT
   ConstantInt(const Type *Ty, ValueTy VT, uint64_t V);
 public:
-  /// equalsInt - Provide a helper method that can be used to determine if the
-  /// constant contained within is equal to a constant.  This only works for
-  /// very small values, because this is all that can be represented with all
-  /// types.
-  ///
+  /// A helper method that can be used to determine if the constant contained 
+  /// within is equal to a constant.  This only works for very small values, 
+  /// because this is all that can be represented with all types.
+  /// @brief Determine if this constant's value is same as an unsigned char.
   bool equalsInt(unsigned char V) const {
     assert(V <= 127 &&
            "equalsInt: Can only be used with very small positive constants!");
     return Val.Unsigned == V;
   }
 
-  /// ConstantInt::get static method: return a ConstantInt with the specified
-  /// value.  as above, we work only with very small values here.
-  ///
+  /// Return a ConstantInt with the specified value for the specified type. 
+  /// This only works for very small values, because this is all that can be 
+  /// represented with all types integer types.
+  /// @brief Get a ConstantInt for a specific value.
   static ConstantInt *get(const Type *Ty, unsigned char V);
 
-  /// isNullValue - Return true if this is the value that would be returned by
-  /// getNullValue.
+  /// @returns true if this is the null integer value.
+  /// @see ConstantIntegral for details
+  /// @brief Implement override.
   virtual bool isNullValue() const { return Val.Unsigned == 0; }
-  virtual bool isMaxValue() const = 0;
-  virtual bool isMinValue() const = 0;
 
-  /// Methods for support type inquiry through isa, cast, and dyn_cast:
+  /// @brief Methods to support type inquiry through isa, cast, and dyn_cast.
   static inline bool classof(const ConstantInt *) { return true; }
   static bool classof(const Value *V) {
     return V->getValueType() == ConstantSIntVal ||
@@ -180,8 +200,9 @@ public:
 
 
 //===----------------------------------------------------------------------===//
-/// ConstantSInt - Signed Integer Values [sbyte, short, int, long]
-///
+/// A concrete class to represent constant signed integer values for the types
+/// sbyte, short, int, and long.
+/// @brief Constant Signed Integer Class.
 class ConstantSInt : public ConstantInt {
   ConstantSInt(const ConstantSInt &);      // DO NOT IMPLEMENT
   friend struct ConstantCreator<ConstantSInt, Type, int64_t>;
@@ -189,23 +210,35 @@ class ConstantSInt : public ConstantInt {
 protected:
   ConstantSInt(const Type *Ty, int64_t V);
 public:
-  /// get() - Static factory methods - Return objects of the specified value
-  ///
-  static ConstantSInt *get(const Type *Ty, int64_t V);
+  /// This static factory methods returns objects of the specified value. Note
+  /// that repeated calls with the same operands return the same object.
+  /// @returns A ConstantSInt instant for the type and value requested.
+  /// @brief Get a signed integer constant.
+  static ConstantSInt *get(
+    const Type *Ty,  ///< The type of constant (SByteTy, IntTy, ShortTy, LongTy)
+    int64_t V        ///< The value for the constant integer.
+  );
 
-  /// isValueValidForType - return true if Ty is big enough to represent V.
-  ///
+  /// This static method returns true if the type Ty is big enough to 
+  /// represent the value V. This can be used to avoid having the get method 
+  /// assert when V is larger than Ty can represent.
+  /// @returns true if V is a valid value for type Ty
+  /// @brief Determine if the value is in range for the given type.
   static bool isValueValidForType(const Type *Ty, int64_t V);
 
-  /// getValue - return the underlying value of this constant.
-  ///
+  /// @returns the underlying value of this constant.
+  /// @brief Get the constant value.
   inline int64_t getValue() const { return Val.Signed; }
 
+  /// @returns true iff this constant's bits are all set to true.
+  /// @see ConstantIntegral
+  /// @brief Override implementation
   virtual bool isAllOnesValue() const { return getValue() == -1; }
 
-  /// isMaxValue - Return true if this is the largest value that may be
-  /// represented by this type.
-  ///
+  /// @returns true iff this is the largest value that may be represented 
+  /// by this type.
+  /// @see ConstantIntegeral
+  /// @brief Override implementation
   virtual bool isMaxValue() const {
     int64_t V = getValue();
     if (V < 0) return false;    // Be careful about wrap-around on 'long's
@@ -213,9 +246,10 @@ public:
     return !isValueValidForType(getType(), V) || V < 0;
   }
 
-  /// isMinValue - Return true if this is the smallest value that may be
-  /// represented by this type.
-  ///
+  /// @returns true if this is the smallest value that may be represented by 
+  /// this type.
+  /// @see ConstantIntegral
+  /// @brief Override implementation
   virtual bool isMinValue() const {
     int64_t V = getValue();
     if (V > 0) return false;    // Be careful about wrap-around on 'long's
@@ -223,8 +257,7 @@ public:
     return !isValueValidForType(getType(), V) || V > 0;
   }
 
-  /// Methods for support type inquiry through isa, cast, and dyn_cast:
-  ///
+  /// @brief Methods to support type inquiry through isa, cast, and dyn_cast:
   static inline bool classof(const ConstantSInt *) { return true; }
   static bool classof(const Value *V) {
     return V->getValueType() == ConstantSIntVal;
@@ -232,8 +265,9 @@ public:
 };
 
 //===----------------------------------------------------------------------===//
-/// ConstantUInt - Unsigned Integer Values [ubyte, ushort, uint, ulong]
-///
+/// A concrete class that represents constant unsigned integer values of type
+/// Type::UByteTy, Type::UShortTy, Type::UIntTy, or Type::ULongTy.
+/// @brief Constant Unsigned Integer Class
 class ConstantUInt : public ConstantInt {
   ConstantUInt(const ConstantUInt &);      // DO NOT IMPLEMENT
   friend struct ConstantCreator<ConstantUInt, Type, uint64_t>;

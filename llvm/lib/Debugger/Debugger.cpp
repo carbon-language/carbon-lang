@@ -45,15 +45,7 @@ std::string Debugger::getProgramPath() const {
 
 static Module *
 getMaterializedModuleProvider(const std::string &Filename) {
-  try {
-    std::auto_ptr<ModuleProvider> Result(getBytecodeModuleProvider(Filename));
-    if (!Result.get()) return 0;
-
-    Result->materializeModule();
-    return Result.release()->releaseModule();
-  } catch (...) {
-    return 0;
-  }
+  return ParseBytecodeFile(Filename);
 }
 
 /// loadProgram - If a program is currently loaded, unload it.  Then search

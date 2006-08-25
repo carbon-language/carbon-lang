@@ -35,6 +35,7 @@ namespace {
   ///
   class BytecodeFileReader : public BytecodeReader {
   private:
+    std::string fileName;
     sys::MappedFile mapFile;
 
     BytecodeFileReader(const BytecodeFileReader&); // Do not implement
@@ -42,23 +43,30 @@ namespace {
 
   public:
     BytecodeFileReader(const std::string &Filename, llvm::BytecodeHandler* H=0);
+    bool read(std::string* ErrMsg);
   };
 }
 
 BytecodeFileReader::BytecodeFileReader(const std::string &Filename,
                                        llvm::BytecodeHandler* H )
   : BytecodeReader(H)
+  , fileName(Filename)
   , mapFile()
 {
-  std::string ErrMsg;
-  if (mapFile.open(sys::Path(Filename), sys::MappedFile::READ_ACCESS, &ErrMsg))
-    throw ErrMsg;
-  if (!mapFile.map(&ErrMsg))
-    throw ErrMsg;
-  unsigned char* buffer = reinterpret_cast<unsigned char*>(mapFile.base());
-  if (ParseBytecode(buffer, mapFile.size(), Filename, &ErrMsg)) {
-    throw ErrMsg;
+}
+
+bool BytecodeFileReader::read(std::string* ErrMsg) {
+  if (mapFile.open(sys::Path(fileName), sys::MappedFile::READ_ACCESS, ErrMsg))
+    return true;
+  if (!mapFile.map(ErrMsg)) {
+    mapFile.close();
+    return true;
   }
+  unsigned char* buffer = reinterpret_cast<unsigned char*>(mapFile.base());
+  if (ParseBytecode(buffer, mapFile.size(), fileName, ErrMsg)) {
+    return true;
+  }
+  return false;
 }
 
 //===----------------------------------------------------------------------===//
@@ -71,6 +79,9 @@ namespace {
   class BytecodeBufferReader : public BytecodeReader {
   private:
     const unsigned char *Buffer;
+    const unsigned char *Buf;
+    unsigned Length;
+    std::string ModuleID;
     bool MustDelete;
 
     BytecodeBufferReader(const BytecodeBufferReader&); // Do not implement
@@ -82,15 +93,30 @@ namespace {
                          llvm::BytecodeHandler* Handler = 0);
     ~BytecodeBufferReader();
 
+    bool read(std::string* ErrMsg);
+
   };
 }
 
-BytecodeBufferReader::BytecodeBufferReader(const unsigned char *Buf,
-                                           unsigned Length,
-                                           const std::string &ModuleID,
-                                           llvm::BytecodeHandler* H )
+BytecodeBufferReader::BytecodeBufferReader(const unsigned char *buf,
+                                           unsigned len,
+                                           const std::string &modID,
+                                           llvm::BytecodeHandler* H)
   : BytecodeReader(H)
+  , Buffer(0)
+  , Buf(buf)
+  , Length(len)
+  , ModuleID(modID)
+  , MustDelete(false)
 {
+}
+
+BytecodeBufferReader::~BytecodeBufferReader() {
+  if (MustDelete) delete [] Buffer;
+}
+
+bool
+BytecodeBufferReader::read(std::string* ErrMsg) {
   // If not aligned, allocate a new buffer to hold the bytecode...
   const unsigned char *ParseBegin = 0;
   if (reinterpret_cast<uint64_t>(Buf) & 3) {
@@ -104,15 +130,11 @@ BytecodeBufferReader::BytecodeBufferReader(const unsigned char *Buf,
     ParseBegin = Buffer = Buf;
     MustDelete = false;
   }
-  std::string ErrMsg;
-  if (ParseBytecode(ParseBegin, Length, ModuleID, &ErrMsg)) {
+  if (ParseBytecode(ParseBegin, Length, ModuleID, ErrMsg)) {
     if (MustDelete) delete [] Buffer;
-    throw ErrMsg;
+    return true;
   }
-}
-
-BytecodeBufferReader::~BytecodeBufferReader() {
-  if (MustDelete) delete [] Buffer;
+  return false;
 }
 
 //===----------------------------------------------------------------------===//
@@ -132,11 +154,17 @@ namespace {
 
   public:
     BytecodeStdinReader( llvm::BytecodeHandler* H = 0 );
+    bool read(std::string* ErrMsg);
   };
 }
 
 BytecodeStdinReader::BytecodeStdinReader( BytecodeHandler* H )
   : BytecodeReader(H)
+{
+}
+
+bool
+BytecodeStdinReader::read(std::string* ErrMsg)
 {
   sys::Program::ChangeStdinToBinary();
   char Buffer[4096*4];
@@ -150,14 +178,16 @@ BytecodeStdinReader::BytecodeStdinReader( BytecodeHandler* H )
     FileData.insert(FileData.end(), Buffer, Buffer+BlockSize);
   }
 
-  if (FileData.empty())
-    throw std::string("Standard Input empty!");
+  if (FileData.empty()) {
+    if (ErrMsg)
+      *ErrMsg = "Standard Input is empty!";
+    return true;
+  }
 
   FileBuf = &FileData[0];
-  std::string ErrMsg;
-  if (ParseBytecode(FileBuf, FileData.size(), "<stdin>", &ErrMsg)) {
-    throw ErrMsg;
-  }
+  if (ParseBytecode(FileBuf, FileData.size(), "<stdin>", ErrMsg))
+    return true;
+  return false;
 }
 
 //===----------------------------------------------------------------------===//
@@ -270,66 +300,71 @@ ModuleProvider*
 llvm::getBytecodeBufferModuleProvider(const unsigned char *Buffer,
                                       unsigned Length,
                                       const std::string &ModuleID,
-                                      BytecodeHandler* H ) {
-  return CheckVarargs(
-     new BytecodeBufferReader(Buffer, Length, ModuleID, H));
+                                      std::string* ErrMsg, 
+                                      BytecodeHandler* H) {
+  BytecodeBufferReader* rdr = 
+    new BytecodeBufferReader(Buffer, Length, ModuleID, H);
+  if (rdr->read(ErrMsg))
+    return 0;
+  return CheckVarargs(rdr);
 }
 
 /// ParseBytecodeBuffer - Parse a given bytecode buffer
 ///
 Module *llvm::ParseBytecodeBuffer(const unsigned char *Buffer, unsigned Length,
                                   const std::string &ModuleID,
-                                  std::string *ErrorStr){
-  try {
-    std::auto_ptr<ModuleProvider>
-      AMP(getBytecodeBufferModuleProvider(Buffer, Length, ModuleID));
-    return AMP->releaseModule();
-  } catch (std::string &err) {
-    if (ErrorStr) *ErrorStr = err;
+                                  std::string *ErrMsg){
+  ModuleProvider* MP = 
+    getBytecodeBufferModuleProvider(Buffer, Length, ModuleID, ErrMsg, 0);
+  if (!MP)
     return 0;
-  }
+  return MP->releaseModule();
 }
 
 /// getBytecodeModuleProvider - lazy function-at-a-time loading from a file
 ///
-ModuleProvider *llvm::getBytecodeModuleProvider(const std::string &Filename,
-                                                BytecodeHandler* H) {
-  if (Filename != std::string("-"))        // Read from a file...
-    return CheckVarargs(new BytecodeFileReader(Filename,H));
-  else                                     // Read from stdin
-    return CheckVarargs(new BytecodeStdinReader(H));
+ModuleProvider *
+llvm::getBytecodeModuleProvider(const std::string &Filename,
+                                std::string* ErrMsg,
+                                BytecodeHandler* H) {
+  // Read from a file
+  if (Filename != std::string("-")) {
+    BytecodeFileReader* rdr = new BytecodeFileReader(Filename, H);
+    if (rdr->read(ErrMsg))
+      return 0;
+    return CheckVarargs(rdr);
+  }
+
+  // Read from stdin
+  BytecodeStdinReader* rdr = new BytecodeStdinReader(H);
+  if (rdr->read(ErrMsg))
+    return 0;
+  return CheckVarargs(rdr);
 }
 
 /// ParseBytecodeFile - Parse the given bytecode file
 ///
 Module *llvm::ParseBytecodeFile(const std::string &Filename,
-                                std::string *ErrorStr) {
-  try {
-    std::auto_ptr<ModuleProvider> AMP(getBytecodeModuleProvider(Filename));
-    return AMP->releaseModule();
-  } catch (std::string &err) {
-    if (ErrorStr) *ErrorStr = err;
+                                std::string *ErrMsg) {
+  ModuleProvider* MP = getBytecodeModuleProvider(Filename, ErrMsg);
+  if (!MP)
     return 0;
-  }
+  return MP->releaseModule();
 }
 
 // AnalyzeBytecodeFile - analyze one file
 Module* llvm::AnalyzeBytecodeFile(
   const std::string &Filename,  ///< File to analyze
   BytecodeAnalysis& bca,        ///< Statistical output
-  std::string *ErrorStr,        ///< Error output
+  std::string *ErrMsg,          ///< Error output
   std::ostream* output          ///< Dump output
 )
 {
-  try {
-    BytecodeHandler* analyzerHandler =createBytecodeAnalyzerHandler(bca,output);
-    std::auto_ptr<ModuleProvider> AMP(
-      getBytecodeModuleProvider(Filename,analyzerHandler));
-    return AMP->releaseModule();
-  } catch (std::string &err) {
-    if (ErrorStr) *ErrorStr = err;
+  BytecodeHandler* AH = createBytecodeAnalyzerHandler(bca,output);
+  ModuleProvider* MP = getBytecodeModuleProvider(Filename, ErrMsg, AH);
+  if (!MP)
     return 0;
-  }
+  return MP->releaseModule();
 }
 
 // AnalyzeBytecodeBuffer - analyze a buffer
@@ -338,34 +373,30 @@ Module* llvm::AnalyzeBytecodeBuffer(
   unsigned Length,             ///< Size of the bytecode buffer
   const std::string& ModuleID, ///< Identifier for the module
   BytecodeAnalysis& bca,       ///< The results of the analysis
-  std::string* ErrorStr,       ///< Errors, if any.
+  std::string* ErrMsg,         ///< Errors, if any.
   std::ostream* output         ///< Dump output, if any
 )
 {
-  try {
-    BytecodeHandler* hdlr = createBytecodeAnalyzerHandler(bca, output);
-    std::auto_ptr<ModuleProvider>
-      AMP(getBytecodeBufferModuleProvider(Buffer, Length, ModuleID, hdlr));
-    return AMP->releaseModule();
-  } catch (std::string &err) {
-    if (ErrorStr) *ErrorStr = err;
+  BytecodeHandler* hdlr = createBytecodeAnalyzerHandler(bca, output);
+  ModuleProvider* MP = 
+    getBytecodeBufferModuleProvider(Buffer, Length, ModuleID, ErrMsg, hdlr);
+  if (!MP)
     return 0;
-  }
+  return MP->releaseModule();
 }
 
 bool llvm::GetBytecodeDependentLibraries(const std::string &fname,
-                                         Module::LibraryListType& deplibs) {
-  try {
-    std::auto_ptr<ModuleProvider> AMP( getBytecodeModuleProvider(fname));
-    Module* M = AMP->releaseModule();
-
-    deplibs = M->getLibraries();
-    delete M;
-    return true;
-  } catch (...) {
+                                         Module::LibraryListType& deplibs,
+                                         std::string* ErrMsg) {
+  ModuleProvider* MP =  getBytecodeModuleProvider(fname, ErrMsg);
+  if (!MP) {
     deplibs.clear();
-    return false;
+    return true;
   }
+  Module* M = MP->releaseModule();
+  deplibs = M->getLibraries();
+  delete M;
+  return false;
 }
 
 static void getSymbols(Module*M, std::vector<std::string>& symbols) {
@@ -384,13 +415,16 @@ static void getSymbols(Module*M, std::vector<std::string>& symbols) {
 
 // Get just the externally visible defined symbols from the bytecode
 bool llvm::GetBytecodeSymbols(const sys::Path& fName,
-                              std::vector<std::string>& symbols) {
-  std::auto_ptr<ModuleProvider> AMP(
-      getBytecodeModuleProvider(fName.toString()));
+                              std::vector<std::string>& symbols,
+                              std::string* ErrMsg) {
+  ModuleProvider* MP = getBytecodeModuleProvider(fName.toString(), ErrMsg);
+  if (!MP)
+    return true;
 
   // Get the module from the provider
-  Module* M = AMP->materializeModule();
-  if (M == 0) return false;
+  Module* M = MP->materializeModule();
+  if (M == 0) 
+    return true;
 
   // Get the symbols
   getSymbols(M, symbols);
@@ -402,29 +436,26 @@ bool llvm::GetBytecodeSymbols(const sys::Path& fName,
 ModuleProvider*
 llvm::GetBytecodeSymbols(const unsigned char*Buffer, unsigned Length,
                          const std::string& ModuleID,
-                         std::vector<std::string>& symbols) {
+                         std::vector<std::string>& symbols,
+                         std::string* ErrMsg) {
+  // Get the module provider
+  ModuleProvider* MP = 
+    getBytecodeBufferModuleProvider(Buffer, Length, ModuleID, ErrMsg, 0);
+  if (!MP)
+    return 0;
 
-  ModuleProvider* MP = 0;
-  try {
-    // Get the module provider
-    MP = getBytecodeBufferModuleProvider(Buffer, Length, ModuleID);
-
-    // Get the module from the provider
-    Module* M = MP->materializeModule();
-    if (M == 0) return 0;
-
-    // Get the symbols
-    getSymbols(M, symbols);
-
-    // Done with the module. Note that ModuleProvider will delete the
-    // Module when it is deleted. Also note that its the caller's responsibility
-    // to delete the ModuleProvider.
-    return MP;
-
-  } catch (...) {
-    // We delete only the ModuleProvider here because its destructor will
-    // also delete the Module (we used materializeModule not releaseModule).
+  // Get the module from the provider
+  Module* M = MP->materializeModule();
+  if (M == 0) {
     delete MP;
+    return 0;
   }
-  return 0;
+
+  // Get the symbols
+  getSymbols(M, symbols);
+
+  // Done with the module. Note that ModuleProvider will delete the
+  // Module when it is deleted. Also note that its the caller's responsibility
+  // to delete the ModuleProvider.
+  return MP;
 }

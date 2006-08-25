@@ -59,11 +59,10 @@ int main(int argc, char **argv, char * const *envp) {
     // Load the bytecode...
     std::string ErrorMsg;
     ModuleProvider *MP = 0;
-    try {
-      MP = getBytecodeModuleProvider(InputFile);
-    } catch (std::string &err) {
+    MP = getBytecodeModuleProvider(InputFile, &ErrorMsg);
+    if (!MP) {
       std::cerr << "Error loading program '" << InputFile << "': "
-                << err << "\n";
+                << ErrorMsg << "\n";
       exit(1);
     }
 

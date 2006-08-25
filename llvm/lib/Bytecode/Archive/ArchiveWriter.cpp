@@ -223,7 +223,7 @@ Archive::writeMember(
       member.getPath().toString()
       + ")";
     ModuleProvider* MP = GetBytecodeSymbols(
-      (const unsigned char*)data,fSize,FullMemberName, symbols);
+      (const unsigned char*)data,fSize,FullMemberName, symbols, ErrMsg);
 
     // If the bytecode parsed successfully
     if ( MP ) {
@@ -247,7 +247,8 @@ Archive::writeMember(
         delete mFile;
       }
       if (ErrMsg)
-        *ErrMsg = "Can't parse bytecode member: " + member.getPath().toString();
+        *ErrMsg = "Can't parse bytecode member: " + member.getPath().toString()
+          + ": " + *ErrMsg;
       return true;
     }
   }
