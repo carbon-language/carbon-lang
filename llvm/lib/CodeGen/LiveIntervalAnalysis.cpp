@@ -673,7 +673,8 @@ bool LiveIntervals::AdjustCopiesBackFrom(LiveInterval &IntA, LiveInterval &IntB,
   // Make sure that the end of the live range is inside the same block as
   // CopyMI.
   MachineInstr *ValLREndInst = getInstructionFromIndex(ValLR->end-1);
-  if (ValLREndInst->getParent() != CopyMI->getParent()) return false;
+  if (!ValLREndInst || 
+      ValLREndInst->getParent() != CopyMI->getParent()) return false;
 
   // Okay, we now know that ValLR ends in the same block that the CopyMI
   // live-range starts.  If there are no intervening live ranges between them in
@@ -685,7 +686,18 @@ bool LiveIntervals::AdjustCopiesBackFrom(LiveInterval &IntA, LiveInterval &IntB,
   // Okay, we can merge them.  We need to insert a new liverange:
   // [ValLR.end, BLR.begin) of either value number, then we merge the
   // two value numbers.
-  IntB.addRange(LiveRange(ValLR->end, BLR->start, BValNo));
+  unsigned FillerStart = ValLR->end, FillerEnd = BLR->start;
+  IntB.addRange(LiveRange(FillerStart, FillerEnd, BValNo));
+
+  // If the IntB live range is assigned to a physical register, and if that
+  // physreg has aliases, 
+  if (MRegisterInfo::isPhysicalRegister(IntB.reg)) {
+    for (const unsigned *AS = mri_->getAliasSet(IntB.reg); *AS; ++AS) {
+      LiveInterval &AliasLI = getInterval(*AS);
+      AliasLI.addRange(LiveRange(FillerStart, FillerEnd,
+                                 AliasLI.getNextValue(~0U)));
+    }
+  }
 
   // Okay, merge "B1" into the same value number as "B0".
   if (BValNo != ValLR->ValId)
@@ -773,19 +785,30 @@ bool LiveIntervals::JoinCopy(MachineInstr *CopyMI,
   if (!Joinable && AdjustCopiesBackFrom(SrcInt, DestInt, CopyMI, MIDefIdx))
     return true;
   
-  // If this looks joinable, do the final, expensive last check, checking to see
-  // if aliases overlap.  If they do, we can never join these.
-  if (Joinable && overlapsAliases(&SrcInt, &DestInt)) {
-    DEBUG(std::cerr << "Alias Overlap Interference!\n");
-    return true;   // Can never join these.
-  }
-  
   if (!Joinable) {
     DEBUG(std::cerr << "Interference!\n");
     return false;
   }
 
+  // If we're about to merge live ranges into a physical register live range,
+  // we have to update any aliased register's live ranges to indicate that they
+  // have clobbered values for this range.
+  if (MRegisterInfo::isPhysicalRegister(SrcReg) ||
+      MRegisterInfo::isPhysicalRegister(DstReg)) {
+    // Figure out which register is the physical reg and which one is the
+    // virtreg.
+    LiveInterval *PhysRegLI = &SrcInt, *VirtRegLI = &DestInt;
+    if (MRegisterInfo::isPhysicalRegister(DstReg))
+      std::swap(PhysRegLI, VirtRegLI);
+    
+    for (const unsigned *AS = mri_->getAliasSet(PhysRegLI->reg); *AS; ++AS)
+      getInterval(*AS).MergeInClobberRanges(*VirtRegLI);
+  }
+
   DestInt.join(SrcInt, MIDefIdx);
+  // FIXME: If SrcInt/DestInt are physregs, we must insert the new liveranges
+  // into all aliasing registers as clobbers.
+                               
   DEBUG(std::cerr << "\n\t\tJoined.  Result = "; DestInt.print(std::cerr, mri_);
         std::cerr << "\n");
     
@@ -909,25 +932,6 @@ bool LiveIntervals::differingRegisterClasses(unsigned RegA,
     return RegClass != mf_->getSSARegMap()->getRegClass(RegB);
   else
     return !RegClass->contains(RegB);
-}
-
-bool LiveIntervals::overlapsAliases(const LiveInterval *LHS,
-                                    const LiveInterval *RHS) const {
-  if (!MRegisterInfo::isPhysicalRegister(LHS->reg)) {
-    if (!MRegisterInfo::isPhysicalRegister(RHS->reg))
-      return false;   // vreg-vreg merge has no aliases!
-    std::swap(LHS, RHS);
-  }
-
-  assert(MRegisterInfo::isPhysicalRegister(LHS->reg) &&
-         MRegisterInfo::isVirtualRegister(RHS->reg) &&
-         "first interval must describe a physical register");
-
-  for (const unsigned *AS = mri_->getAliasSet(LHS->reg); *AS; ++AS)
-    if (RHS->overlaps(getInterval(*AS)))
-      return true;
-
-  return false;
 }
 
 LiveInterval LiveIntervals::createInterval(unsigned reg) {

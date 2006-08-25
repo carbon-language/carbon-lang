@@ -261,15 +261,15 @@ LiveInterval::extendIntervalStartTo(Ranges::iterator I, unsigned NewStart) {
   return MergeTo;
 }
 
-LiveInterval::Ranges::iterator
-LiveInterval::addRangeFrom(LiveRange LR, Ranges::iterator From) {
+LiveInterval::iterator
+LiveInterval::addRangeFrom(LiveRange LR, iterator From) {
   unsigned Start = LR.start, End = LR.end;
-  Ranges::iterator it = std::upper_bound(From, ranges.end(), Start);
+  iterator it = std::upper_bound(From, ranges.end(), Start);
 
   // If the inserted interval starts in the middle or right at the end of
   // another interval, just extend that interval to contain the range of LR.
   if (it != ranges.begin()) {
-    Ranges::iterator B = prior(it);
+    iterator B = prior(it);
     if (LR.ValId == B->ValId) {
       if (B->start <= Start && B->end >= Start) {
         extendIntervalEndTo(B, End);
@@ -391,10 +391,9 @@ void LiveInterval::join(LiveInterval &Other, unsigned CopyIdx) {
   }
 
   // Join the ranges of other into the ranges of this interval.
-  Ranges::iterator InsertPos = ranges.begin();
   std::map<unsigned, unsigned> Dst2SrcIdxMap;
-  for (Ranges::iterator I = Other.ranges.begin(),
-         E = Other.ranges.end(); I != E; ++I) {
+  iterator InsertPos = begin();
+  for (iterator I = Other.begin(), E = Other.end(); I != E; ++I) {
     // Map the ValId in the other live range to the current live range.
     if (I->ValId == MergedSrcValIdx)
       I->ValId = MergedDstValIdx;
@@ -416,6 +415,40 @@ void LiveInterval::join(LiveInterval &Other, unsigned CopyIdx) {
   }
   
   weight += Other.weight;
+}
+
+/// MergeInClobberRanges - For any live ranges that are not defined in the
+/// current interval, but are defined in the Clobbers interval, mark them
+/// used with an unknown definition value.
+void LiveInterval::MergeInClobberRanges(const LiveInterval &Clobbers) {
+  if (Clobbers.begin() == Clobbers.end()) return;
+  
+  // Find a value # to use for the clobber ranges.  If there is already a value#
+  // for unknown values, use it.
+  // FIXME: Use a single sentinal number for these!
+  unsigned ClobberValNo = getNextValue(~0U);
+  
+  iterator IP = begin();
+  for (const_iterator I = Clobbers.begin(), E = Clobbers.end(); I != E; ++I) {
+    unsigned Start = I->start, End = I->end;
+    IP = std::upper_bound(IP, end(), Start);
+    
+    // If the start of this range overlaps with an existing liverange, trim it.
+    if (IP != begin() && IP[-1].end > Start) {
+      Start = IP[-1].end;
+      // Trimmed away the whole range?
+      if (Start >= End) continue;
+    }
+    // If the end of this range overlaps with an existing liverange, trim it.
+    if (IP != end() && End > IP->start) {
+      End = IP->start;
+      // If this trimmed away the whole range, ignore it.
+      if (Start == End) continue;
+    }
+    
+    // Insert the clobber interval.
+    IP = addRangeFrom(LiveRange(Start, End, ClobberValNo), IP);
+  }
 }
 
 /// MergeValueNumberInto - This method is called when two value nubmers

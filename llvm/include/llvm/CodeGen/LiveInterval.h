@@ -148,6 +148,10 @@ namespace llvm {
     /// cause merging of V1/V2 values numbers and compaction of the value space.
     void MergeValueNumberInto(unsigned V1, unsigned V2);
 
+    /// MergeInClobberRanges - For any live ranges that are not defined in the
+    /// current interval, but are defined in the Clobbers interval, mark them
+    /// used with an unknown definition value.
+    void MergeInClobberRanges(const LiveInterval &Clobbers);
 
     bool empty() const { return ranges.empty(); }
 
