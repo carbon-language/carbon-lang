@@ -79,7 +79,6 @@ namespace {
       AU.addRequired<ScalarEvolution>();
       AU.addRequired<LoopInfo>();
       AU.addPreservedID(LoopSimplifyID);
-      AU.addPreservedID(LCSSAID);
       AU.setPreservesCFG();
     }
   private:
@@ -571,6 +570,4 @@ void IndVarSimplify::runOnLoop(Loop *L) {
 #endif
 
   DeleteTriviallyDeadInstructions(DeadInsts);
-  
-  assert(L->isLCSSAForm());
 }
