@@ -1219,12 +1219,22 @@ void DwarfWriter::AddSourceLine(DIE *Die, CompileUnitDesc *File, unsigned Line){
 void DwarfWriter::AddAddress(DIE *Die, unsigned Attribute,
                              const MachineLocation &Location) {
   DIEBlock *Block = new DIEBlock();
+  unsigned Reg = RI->getDwarfRegNum(Location.getRegister());
+  
   if (Location.isRegister()) {
-    Block->AddUInt(DW_FORM_data1,
-                   DW_OP_reg0 + RI->getDwarfRegNum(Location.getRegister()));
+    if (Reg < 32) {
+      Block->AddUInt(DW_FORM_data1, DW_OP_reg0 + Reg);
+    } else {
+      Block->AddUInt(DW_FORM_data1, DW_OP_regx);
+      Block->AddUInt(DW_FORM_udata, Reg);
+    }
   } else {
-    Block->AddUInt(DW_FORM_data1,
-                   DW_OP_breg0 + RI->getDwarfRegNum(Location.getRegister()));
+    if (Reg < 32) {
+      Block->AddUInt(DW_FORM_data1, DW_OP_breg0 + Reg);
+    } else {
+      Block->AddUInt(DW_FORM_data1, DW_OP_bregx);
+      Block->AddUInt(DW_FORM_udata, Reg);
+    }
     Block->AddUInt(DW_FORM_sdata, Location.getOffset());
   }
   Block->ComputeSize(*this);
