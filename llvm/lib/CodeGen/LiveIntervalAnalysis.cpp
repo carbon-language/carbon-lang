@@ -790,39 +790,34 @@ bool LiveIntervals::JoinCopy(MachineInstr *CopyMI,
     return false;
   }
 
+  // Okay, we can join these two intervals.  If one of the intervals being
+  // joined is a physreg, this method always canonicalizes DestInt to be it.
+  // The output "SrcInt" will not have been modified.
+  DestInt.join(SrcInt, MIDefIdx);
+
+  bool Swapped = SrcReg == DestInt.reg;
+  if (Swapped)
+    std::swap(SrcReg, DstReg);
+  assert(MRegisterInfo::isVirtualRegister(SrcReg) &&
+         "LiveInterval::join didn't work right!");
+                               
   // If we're about to merge live ranges into a physical register live range,
   // we have to update any aliased register's live ranges to indicate that they
   // have clobbered values for this range.
-  if (MRegisterInfo::isPhysicalRegister(SrcReg) ||
-      MRegisterInfo::isPhysicalRegister(DstReg)) {
-    // Figure out which register is the physical reg and which one is the
-    // virtreg.
-    LiveInterval *PhysRegLI = &SrcInt, *VirtRegLI = &DestInt;
-    if (MRegisterInfo::isPhysicalRegister(DstReg))
-      std::swap(PhysRegLI, VirtRegLI);
-    
-    for (const unsigned *AS = mri_->getAliasSet(PhysRegLI->reg); *AS; ++AS)
-      getInterval(*AS).MergeInClobberRanges(*VirtRegLI);
+  if (MRegisterInfo::isPhysicalRegister(DstReg)) {
+    for (const unsigned *AS = mri_->getAliasSet(DstReg); *AS; ++AS)
+      getInterval(*AS).MergeInClobberRanges(SrcInt);
   }
 
-  DestInt.join(SrcInt, MIDefIdx);
-  // FIXME: If SrcInt/DestInt are physregs, we must insert the new liveranges
-  // into all aliasing registers as clobbers.
-                               
   DEBUG(std::cerr << "\n\t\tJoined.  Result = "; DestInt.print(std::cerr, mri_);
         std::cerr << "\n");
-    
-  if (!MRegisterInfo::isPhysicalRegister(SrcReg)) {
-    r2iMap_.erase(SrcReg);
-    r2rMap_[SrcReg] = DstReg;
-  } else {
-    // Otherwise merge the data structures the other way so we don't lose
-    // the physreg information.
-    r2rMap_[DstReg] = SrcReg;
-    DestInt.reg = SrcReg;
-    SrcInt.swap(DestInt);
-    r2iMap_.erase(DstReg);
-  }
+  
+  // If the intervals were swapped by Join, swap them back so that the register
+  // mapping (in the r2i map) is correct.
+  if (Swapped) SrcInt.swap(DestInt);
+  r2iMap_.erase(SrcReg);
+  r2rMap_[SrcReg] = DstReg;
+
   ++numJoins;
   return true;
 }

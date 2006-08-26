@@ -374,21 +374,25 @@ LiveInterval::FindLiveRangeContaining(unsigned Idx) {
 /// is the result of a copy instruction in the source program, that occurs at
 /// index 'CopyIdx' that copies from 'Other' to 'this'.
 void LiveInterval::join(LiveInterval &Other, unsigned CopyIdx) {
-  const LiveRange *SourceLR = Other.getLiveRangeContaining(CopyIdx-1);
-  const LiveRange *DestLR = getLiveRangeContaining(CopyIdx);
-  assert(SourceLR && DestLR && "Not joining due to a copy?");
-  unsigned MergedSrcValIdx = SourceLR->ValId;
-  unsigned MergedDstValIdx = DestLR->ValId;
-
   // Try to do the least amount of work possible.  In particular, if there are
   // more liverange chunks in the other set than there are in the 'this' set,
   // swap sets to merge the fewest chunks in possible.
-  if (Other.ranges.size() > ranges.size()) {
-    std::swap(MergedSrcValIdx, MergedDstValIdx);
-    std::swap(ranges, Other.ranges);
-    std::swap(NumValues, Other.NumValues);
-    std::swap(InstDefiningValue, Other.InstDefiningValue);
+  //
+  // Also, if one range is a physreg and one is a vreg, we always merge from the
+  // vreg into the physreg, which leaves the vreg intervals pristine.
+  unsigned OtherOffs = 1, ThisOffs = 0;
+  if ((Other.ranges.size() > ranges.size() &&
+      MRegisterInfo::isVirtualRegister(reg)) ||
+      MRegisterInfo::isPhysicalRegister(Other.reg)) {
+    swap(Other);
+    std::swap(ThisOffs, OtherOffs);
   }
+  
+  const LiveRange *SourceLR = Other.getLiveRangeContaining(CopyIdx-OtherOffs);
+  const LiveRange *DestLR = getLiveRangeContaining(CopyIdx-ThisOffs);
+  assert(SourceLR && DestLR && "Not joining due to a copy?");
+  unsigned MergedSrcValIdx = SourceLR->ValId;
+  unsigned MergedDstValIdx = DestLR->ValId;
 
   // Join the ranges of other into the ranges of this interval.
   std::map<unsigned, unsigned> Dst2SrcIdxMap;
