@@ -385,6 +385,9 @@ void Emitter::emitInstruction(const MachineInstr &MI) {
     switch (Opcode) {
     default: 
       assert(0 && "psuedo instructions should be removed before code emission");
+    case TargetInstrInfo::INLINEASM:
+      std::cerr << "JIT does not support inline asm!\n";
+      abort();
     case X86::IMPLICIT_USE:
     case X86::IMPLICIT_DEF:
     case X86::IMPLICIT_DEF_GR8:
