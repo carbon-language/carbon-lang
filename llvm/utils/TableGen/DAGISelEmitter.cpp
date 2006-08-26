@@ -2126,7 +2126,7 @@ private:
   std::vector<std::pair<unsigned, std::string> > &GeneratedCode;
   /// GeneratedDecl - This is the set of all SDOperand declarations needed for
   /// the set of patterns for each top-level opcode.
-  std::set<std::pair<unsigned, std::string> > &GeneratedDecl;
+  std::set<std::string> &GeneratedDecl;
   /// TargetOpcodes - The target specific opcodes used by the resulting
   /// instructions.
   std::vector<std::string> &TargetOpcodes;
@@ -2149,9 +2149,9 @@ private:
     if (!S.empty())
       GeneratedCode.push_back(std::make_pair(2, S));
   }
-  void emitDecl(const std::string &S, unsigned T=0) {
+  void emitDecl(const std::string &S) {
     assert(!S.empty() && "Invalid declaration");
-    GeneratedDecl.insert(std::make_pair(T, S));
+    GeneratedDecl.insert(S);
   }
   void emitOpcode(const std::string &Opc) {
     TargetOpcodes.push_back(Opc);
@@ -2165,7 +2165,7 @@ public:
   PatternCodeEmitter(DAGISelEmitter &ise, ListInit *preds,
                      TreePatternNode *pattern, TreePatternNode *instr,
                      std::vector<std::pair<unsigned, std::string> > &gc,
-                     std::set<std::pair<unsigned, std::string> > &gd,
+                     std::set<std::string> &gd,
                      std::vector<std::string> &to,
                      std::vector<std::string> &tv)
   : ISE(ise), Predicates(preds), Pattern(pattern), Instruction(instr),
@@ -2986,9 +2986,9 @@ private:
 /// succeeds.  Returns true if the pattern is not guaranteed to match.
 void DAGISelEmitter::GenerateCodeForPattern(PatternToMatch &Pattern,
                   std::vector<std::pair<unsigned, std::string> > &GeneratedCode,
-                     std::set<std::pair<unsigned, std::string> > &GeneratedDecl,
+                                           std::set<std::string> &GeneratedDecl,
                                         std::vector<std::string> &TargetOpcodes,
-                                            std::vector<std::string> &TargetVTs) {
+                                          std::vector<std::string> &TargetVTs) {
   PatternCodeEmitter Emitter(*this, Pattern.getPredicates(),
                              Pattern.getSrcPattern(), Pattern.getDstPattern(),
                              GeneratedCode, GeneratedDecl,
@@ -3274,10 +3274,10 @@ void DAGISelEmitter::EmitInstructionSelector(std::ostream &OS) {
       std::vector<std::pair<PatternToMatch*, CodeList> > CodeForPatterns;
       std::vector<std::vector<std::string> > PatternOpcodes;
       std::vector<std::vector<std::string> > PatternVTs;
-      std::vector<std::set<std::pair<unsigned, std::string> > > PatternDecls;
+      std::vector<std::set<std::string> > PatternDecls;
       for (unsigned i = 0, e = Patterns.size(); i != e; ++i) {
         CodeList GeneratedCode;
-        std::set<std::pair<unsigned, std::string> > GeneratedDecl;
+        std::set<std::string> GeneratedDecl;
         std::vector<std::string> TargetOpcodes;
         std::vector<std::string> TargetVTs;
         GenerateCodeForPattern(*Patterns[i], GeneratedCode, GeneratedDecl,
@@ -3319,7 +3319,7 @@ void DAGISelEmitter::EmitInstructionSelector(std::ostream &OS) {
         CodeList &GeneratedCode = CodeForPatterns[i].second;
         std::vector<std::string> &TargetOpcodes = PatternOpcodes[i];
         std::vector<std::string> &TargetVTs = PatternVTs[i];
-        std::set<std::pair<unsigned, std::string> > Decls = PatternDecls[i];
+        std::set<std::string> Decls = PatternDecls[i];
         std::vector<std::string> AddedInits;
         int CodeSize = (int)GeneratedCode.size();
         int LastPred = -1;
@@ -3340,9 +3340,9 @@ void DAGISelEmitter::EmitInstructionSelector(std::ostream &OS) {
           CalleeCode += ", MVT::ValueType VT" + utostr(j);
           CallerCode += ", " + TargetVTs[j];
         }
-        for (std::set<std::pair<unsigned, std::string> >::iterator
+        for (std::set<std::string>::iterator
                I = Decls.begin(), E = Decls.end(); I != E; ++I) {
-          std::string Name = I->second;
+          std::string Name = *I;
           CalleeCode += ", SDOperand &" + Name;
           CallerCode += ", " + Name;
         }
@@ -3357,11 +3357,8 @@ void DAGISelEmitter::EmitInstructionSelector(std::ostream &OS) {
                I = AddedInits.rbegin(), E = AddedInits.rend(); I != E; ++I)
           CalleeCode += "  " + *I + "\n";
 
-        for (int j = LastPred+1; j < CodeSize; ++j) {
-          std::string code = GeneratedCode[j].second;
-          //          if (!AddedDecls.count(code))
-            CalleeCode += "  " + code + "\n";
-        }
+        for (int j = LastPred+1; j < CodeSize; ++j)
+          CalleeCode += "  " + GeneratedCode[j].second + "\n";
         for (int j = LastPred+1; j < CodeSize; ++j)
           GeneratedCode.pop_back();
         CalleeCode += "}\n";

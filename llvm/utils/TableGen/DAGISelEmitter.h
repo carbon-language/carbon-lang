@@ -521,7 +521,7 @@ private:
                                    std::vector<Record*> &InstImpResults);
   void GenerateCodeForPattern(PatternToMatch &Pattern,
                   std::vector<std::pair<unsigned, std::string> > &GeneratedCode,
-                     std::set<std::pair<unsigned, std::string> > &GeneratedDecl,
+                              std::set<std::string> &GeneratedDecl,
                               std::vector<std::string> &TargetOpcodes,
                               std::vector<std::string> &TargetVTs);
   void EmitPatterns(std::vector<std::pair<PatternToMatch*, 
