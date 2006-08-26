@@ -2658,7 +2658,6 @@ public:
           else
             Code += ", " + OpName;
         }
-        //AllOps.clear();
 
         if (HasVarOps) {
           if (NodeHasInFlag || HasImpInputs)
@@ -2813,7 +2812,6 @@ public:
           Code += ", MVT::Flag";
         for (unsigned i = 0, e = AllOps.size(); i != e; ++i)
           Code += ", " + AllOps[i];
-        //AllOps.clear();
         if (NodeHasInFlag || HasImpInputs)
           Code += ", InFlag";
         emitCode(Code + ");");
