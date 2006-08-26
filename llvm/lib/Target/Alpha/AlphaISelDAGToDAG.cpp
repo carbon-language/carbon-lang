@@ -199,7 +199,7 @@ SDNode *AlphaDAGToDAGISel::Select(SDOperand Op) {
     int FI = cast<FrameIndexSDNode>(N)->getIndex();
     return CurDAG->SelectNodeTo(N, Alpha::LDA, MVT::i64,
                                 CurDAG->getTargetFrameIndex(FI, MVT::i32),
-                                getI64Imm(0)).Val;
+                                getI64Imm(0));
   }
   case AlphaISD::GlobalBaseReg: {
     SDOperand Result = getGlobalBaseReg();
@@ -231,7 +231,7 @@ SDNode *AlphaDAGToDAGISel::Select(SDOperand Op) {
                             Chain, Chain.getValue(1));
     Chain = CurDAG->getCopyFromReg(Chain, Alpha::R27, MVT::i64, 
 				  SDOperand(CNode, 1));
-    return CurDAG->SelectNodeTo(N, Alpha::BIS, MVT::i64, Chain, Chain).Val;
+    return CurDAG->SelectNodeTo(N, Alpha::BIS, MVT::i64, Chain, Chain);
   }
 
   case ISD::READCYCLECOUNTER: {
@@ -268,7 +268,7 @@ SDNode *AlphaDAGToDAGISel::Select(SDOperand Op) {
     SDNode *Tmp = CurDAG->getTargetNode(Alpha::LDAHr, MVT::i64, CPI,
                                         getGlobalBaseReg());
     return CurDAG->SelectNodeTo(N, Alpha::LDQr, MVT::i64, MVT::Other, 
-                            CPI, SDOperand(Tmp, 0), CurDAG->getEntryNode()).Val;
+                            CPI, SDOperand(Tmp, 0), CurDAG->getEntryNode());
   }
   case ISD::TargetConstantFP: {
     ConstantFPSDNode *CN = cast<ConstantFPSDNode>(N);
@@ -277,11 +277,11 @@ SDNode *AlphaDAGToDAGISel::Select(SDOperand Op) {
     if (CN->isExactlyValue(+0.0)) {
       return CurDAG->SelectNodeTo(N, isDouble ? Alpha::CPYST : Alpha::CPYSS,
                                   T, CurDAG->getRegister(Alpha::F31, T),
-                                  CurDAG->getRegister(Alpha::F31, T)).Val;
+                                  CurDAG->getRegister(Alpha::F31, T));
     } else if ( CN->isExactlyValue(-0.0)) {
       return CurDAG->SelectNodeTo(N, isDouble ? Alpha::CPYSNT : Alpha::CPYSNS,
                                   T, CurDAG->getRegister(Alpha::F31, T),
-                                  CurDAG->getRegister(Alpha::F31, T)).Val;
+                                  CurDAG->getRegister(Alpha::F31, T));
     } else {
       abort();
     }

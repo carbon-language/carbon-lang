@@ -304,41 +304,41 @@ public:
   /// operands.  Note that target opcodes are stored as
   /// ISD::BUILTIN_OP_END+TargetOpcode in the node opcode field.  The 0th value
   /// of the resultant node is returned.
-  SDOperand SelectNodeTo(SDNode *N, unsigned TargetOpc, MVT::ValueType VT);
-  SDOperand SelectNodeTo(SDNode *N, unsigned TargetOpc, MVT::ValueType VT, 
-                         SDOperand Op1);
-  SDOperand SelectNodeTo(SDNode *N, unsigned TargetOpc, MVT::ValueType VT, 
-                         SDOperand Op1, SDOperand Op2);
-  SDOperand SelectNodeTo(SDNode *N, unsigned TargetOpc, MVT::ValueType VT, 
-                         SDOperand Op1, SDOperand Op2, SDOperand Op3);
-  SDOperand SelectNodeTo(SDNode *N, unsigned TargetOpc, MVT::ValueType VT, 
-                         SDOperand Op1, SDOperand Op2, SDOperand Op3, 
-                         SDOperand Op4);
-  SDOperand SelectNodeTo(SDNode *N, unsigned TargetOpc, MVT::ValueType VT, 
-                         SDOperand Op1, SDOperand Op2, SDOperand Op3,
-                         SDOperand Op4, SDOperand Op5);
-  SDOperand SelectNodeTo(SDNode *N, unsigned TargetOpc, MVT::ValueType VT, 
-                         SDOperand Op1, SDOperand Op2, SDOperand Op3, 
-                         SDOperand Op4, SDOperand Op5, SDOperand Op6);
-  SDOperand SelectNodeTo(SDNode *N, unsigned TargetOpc, MVT::ValueType VT, 
-                         SDOperand Op1, SDOperand Op2, SDOperand Op3,
-                         SDOperand Op4, SDOperand Op5, SDOperand Op6,
-			 SDOperand Op7);
-  SDOperand SelectNodeTo(SDNode *N, unsigned TargetOpc, MVT::ValueType VT, 
-                         SDOperand Op1, SDOperand Op2, SDOperand Op3,
-                         SDOperand Op4, SDOperand Op5, SDOperand Op6,
-			 SDOperand Op7, SDOperand Op8);
-  SDOperand SelectNodeTo(SDNode *N, unsigned TargetOpc, MVT::ValueType VT1, 
-                         MVT::ValueType VT2, SDOperand Op1, SDOperand Op2);
-  SDOperand SelectNodeTo(SDNode *N, unsigned TargetOpc, MVT::ValueType VT1,
-                         MVT::ValueType VT2, SDOperand Op1, SDOperand Op2,
-                         SDOperand Op3);
-  SDOperand SelectNodeTo(SDNode *N, unsigned TargetOpc, MVT::ValueType VT1,
-                         MVT::ValueType VT2, SDOperand Op1, SDOperand Op2,
-                         SDOperand Op3, SDOperand Op4);
-  SDOperand SelectNodeTo(SDNode *N, unsigned TargetOpc, MVT::ValueType VT1,
-                         MVT::ValueType VT2, SDOperand Op1, SDOperand Op2,
-                         SDOperand Op3, SDOperand Op4, SDOperand Op5);
+  SDNode *SelectNodeTo(SDNode *N, unsigned TargetOpc, MVT::ValueType VT);
+  SDNode *SelectNodeTo(SDNode *N, unsigned TargetOpc, MVT::ValueType VT, 
+                       SDOperand Op1);
+  SDNode *SelectNodeTo(SDNode *N, unsigned TargetOpc, MVT::ValueType VT, 
+                       SDOperand Op1, SDOperand Op2);
+  SDNode *SelectNodeTo(SDNode *N, unsigned TargetOpc, MVT::ValueType VT, 
+                       SDOperand Op1, SDOperand Op2, SDOperand Op3);
+  SDNode *SelectNodeTo(SDNode *N, unsigned TargetOpc, MVT::ValueType VT, 
+                       SDOperand Op1, SDOperand Op2, SDOperand Op3, 
+                       SDOperand Op4);
+  SDNode *SelectNodeTo(SDNode *N, unsigned TargetOpc, MVT::ValueType VT, 
+                       SDOperand Op1, SDOperand Op2, SDOperand Op3,
+                       SDOperand Op4, SDOperand Op5);
+  SDNode *SelectNodeTo(SDNode *N, unsigned TargetOpc, MVT::ValueType VT, 
+                       SDOperand Op1, SDOperand Op2, SDOperand Op3, 
+                       SDOperand Op4, SDOperand Op5, SDOperand Op6);
+  SDNode *SelectNodeTo(SDNode *N, unsigned TargetOpc, MVT::ValueType VT, 
+                       SDOperand Op1, SDOperand Op2, SDOperand Op3,
+                       SDOperand Op4, SDOperand Op5, SDOperand Op6,
+                       SDOperand Op7);
+  SDNode *SelectNodeTo(SDNode *N, unsigned TargetOpc, MVT::ValueType VT, 
+                       SDOperand Op1, SDOperand Op2, SDOperand Op3,
+                       SDOperand Op4, SDOperand Op5, SDOperand Op6,
+                       SDOperand Op7, SDOperand Op8);
+  SDNode *SelectNodeTo(SDNode *N, unsigned TargetOpc, MVT::ValueType VT1, 
+                       MVT::ValueType VT2, SDOperand Op1, SDOperand Op2);
+  SDNode *SelectNodeTo(SDNode *N, unsigned TargetOpc, MVT::ValueType VT1,
+                       MVT::ValueType VT2, SDOperand Op1, SDOperand Op2,
+                       SDOperand Op3);
+  SDNode *SelectNodeTo(SDNode *N, unsigned TargetOpc, MVT::ValueType VT1,
+                       MVT::ValueType VT2, SDOperand Op1, SDOperand Op2,
+                       SDOperand Op3, SDOperand Op4);
+  SDNode *SelectNodeTo(SDNode *N, unsigned TargetOpc, MVT::ValueType VT1,
+                       MVT::ValueType VT2, SDOperand Op1, SDOperand Op2,
+                       SDOperand Op3, SDOperand Op4, SDOperand Op5);
 
   /// getTargetNode - These are used for target selectors to create a new node
   /// with specified return type(s), target opcode, and operands.

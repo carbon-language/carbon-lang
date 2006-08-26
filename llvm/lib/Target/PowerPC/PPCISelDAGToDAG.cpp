@@ -812,23 +812,23 @@ SDNode *PPCDAGToDAGISel::SelectSETCC(SDOperand Op) {
       case ISD::SETEQ:
         Op = SDOperand(CurDAG->getTargetNode(PPC::CNTLZW, MVT::i32, Op), 0);
         return CurDAG->SelectNodeTo(N, PPC::RLWINM, MVT::i32, Op, getI32Imm(27),
-                                    getI32Imm(5), getI32Imm(31)).Val;
+                                    getI32Imm(5), getI32Imm(31));
       case ISD::SETNE: {
         SDOperand AD =
           SDOperand(CurDAG->getTargetNode(PPC::ADDIC, MVT::i32, MVT::Flag,
                                           Op, getI32Imm(~0U)), 0);
         return CurDAG->SelectNodeTo(N, PPC::SUBFE, MVT::i32, AD, Op, 
-                                    AD.getValue(1)).Val;
+                                    AD.getValue(1));
       }
       case ISD::SETLT:
         return CurDAG->SelectNodeTo(N, PPC::RLWINM, MVT::i32, Op, getI32Imm(1),
-                                    getI32Imm(31), getI32Imm(31)).Val;
+                                    getI32Imm(31), getI32Imm(31));
       case ISD::SETGT: {
         SDOperand T =
           SDOperand(CurDAG->getTargetNode(PPC::NEG, MVT::i32, Op), 0);
         T = SDOperand(CurDAG->getTargetNode(PPC::ANDC, MVT::i32, T, Op), 0);
         return CurDAG->SelectNodeTo(N, PPC::RLWINM, MVT::i32, T, getI32Imm(1),
-                                    getI32Imm(31), getI32Imm(31)).Val;
+                                    getI32Imm(31), getI32Imm(31));
       }
       }
     } else if (Imm == ~0U) {        // setcc op, -1
@@ -842,13 +842,13 @@ SDNode *PPCDAGToDAGISel::SelectSETCC(SDOperand Op) {
         return CurDAG->SelectNodeTo(N, PPC::ADDZE, MVT::i32, 
                               SDOperand(CurDAG->getTargetNode(PPC::LI, MVT::i32,
                                                               getI32Imm(0)), 0),
-                                    Op.getValue(1)).Val;
+                                    Op.getValue(1));
       case ISD::SETNE: {
         Op = SDOperand(CurDAG->getTargetNode(PPC::NOR, MVT::i32, Op, Op), 0);
         SDNode *AD = CurDAG->getTargetNode(PPC::ADDIC, MVT::i32, MVT::Flag,
                                            Op, getI32Imm(~0U));
         return CurDAG->SelectNodeTo(N, PPC::SUBFE, MVT::i32, SDOperand(AD, 0),
-                                    Op, SDOperand(AD, 1)).Val;
+                                    Op, SDOperand(AD, 1));
       }
       case ISD::SETLT: {
         SDOperand AD = SDOperand(CurDAG->getTargetNode(PPC::ADDI, MVT::i32, Op,
@@ -856,14 +856,14 @@ SDNode *PPCDAGToDAGISel::SelectSETCC(SDOperand Op) {
         SDOperand AN = SDOperand(CurDAG->getTargetNode(PPC::AND, MVT::i32, AD,
                                                        Op), 0);
         return CurDAG->SelectNodeTo(N, PPC::RLWINM, MVT::i32, AN, getI32Imm(1),
-                                    getI32Imm(31), getI32Imm(31)).Val;
+                                    getI32Imm(31), getI32Imm(31));
       }
       case ISD::SETGT:
         Op = SDOperand(CurDAG->getTargetNode(PPC::RLWINM, MVT::i32, Op,
                                              getI32Imm(1), getI32Imm(31),
                                              getI32Imm(31)), 0);
         return CurDAG->SelectNodeTo(N, PPC::XORI, MVT::i32, Op, 
-                                    getI32Imm(1)).Val;
+                                    getI32Imm(1));
       }
     }
   }
@@ -889,13 +889,13 @@ SDNode *PPCDAGToDAGISel::SelectSETCC(SDOperand Op) {
   if (!Inv) {
     return CurDAG->SelectNodeTo(N, PPC::RLWINM, MVT::i32, IntCR,
                                 getI32Imm((32-(3-Idx)) & 31),
-                                getI32Imm(31), getI32Imm(31)).Val;
+                                getI32Imm(31), getI32Imm(31));
   } else {
     SDOperand Tmp =
       SDOperand(CurDAG->getTargetNode(PPC::RLWINM, MVT::i32, IntCR,
                                       getI32Imm((32-(3-Idx)) & 31),
                                       getI32Imm(31),getI32Imm(31)), 0);
-    return CurDAG->SelectNodeTo(N, PPC::XORI, MVT::i32, Tmp, getI32Imm(1)).Val;
+    return CurDAG->SelectNodeTo(N, PPC::XORI, MVT::i32, Tmp, getI32Imm(1));
   }
 }
 
@@ -921,7 +921,7 @@ SDNode *PPCDAGToDAGISel::Select(SDOperand Op) {
     unsigned Opc = Op.getValueType() == MVT::i32 ? PPC::ADDI : PPC::ADDI8;
     if (N->hasOneUse())
       return CurDAG->SelectNodeTo(N, Opc, Op.getValueType(), TFI,
-                                  getSmallIPtrImm(0)).Val;
+                                  getSmallIPtrImm(0));
     return CurDAG->getTargetNode(Opc, Op.getValueType(), TFI,
                                  getSmallIPtrImm(0));
   }
@@ -952,7 +952,7 @@ SDNode *PPCDAGToDAGISel::Select(SDOperand Op) {
           CurDAG->getTargetNode(PPC::SRAWI, MVT::i32, MVT::Flag,
                                 N0, getI32Imm(Log2_32(Imm)));
         return CurDAG->SelectNodeTo(N, PPC::ADDZE, MVT::i32, 
-                                    SDOperand(Op, 0), SDOperand(Op, 1)).Val;
+                                    SDOperand(Op, 0), SDOperand(Op, 1));
       } else if ((signed)Imm < 0 && isPowerOf2_32(-Imm)) {
         SDNode *Op =
           CurDAG->getTargetNode(PPC::SRAWI, MVT::i32, MVT::Flag,
@@ -961,7 +961,7 @@ SDNode *PPCDAGToDAGISel::Select(SDOperand Op) {
           SDOperand(CurDAG->getTargetNode(PPC::ADDZE, MVT::i32,
                                           SDOperand(Op, 0), SDOperand(Op, 1)),
                     0);
-        return CurDAG->SelectNodeTo(N, PPC::NEG, MVT::i32, PT).Val;
+        return CurDAG->SelectNodeTo(N, PPC::NEG, MVT::i32, PT);
       }
     }
     
@@ -992,7 +992,7 @@ SDNode *PPCDAGToDAGISel::Select(SDOperand Op) {
       }
       return CurDAG->SelectNodeTo(N, PPC::RLWINM, MVT::i32, Val,
                                   getI32Imm(SH), getI32Imm(MB),
-                                  getI32Imm(ME)).Val;
+                                  getI32Imm(ME));
     }
     // ISD::OR doesn't get all the bitfield insertion fun.
     // (and (or x, c1), c2) where isRunOfOnes(~(c1^c2)) is a bitfield insert
@@ -1029,7 +1029,7 @@ SDNode *PPCDAGToDAGISel::Select(SDOperand Op) {
       return CurDAG->SelectNodeTo(N, PPC::RLWINM, MVT::i32, 
                                   N->getOperand(0).getOperand(0),
                                   getI32Imm(SH), getI32Imm(MB),
-                                  getI32Imm(ME)).Val;
+                                  getI32Imm(ME));
     }
     
     // Other cases are autogenerated.
@@ -1043,7 +1043,7 @@ SDNode *PPCDAGToDAGISel::Select(SDOperand Op) {
       return CurDAG->SelectNodeTo(N, PPC::RLWINM, MVT::i32, 
                                   N->getOperand(0).getOperand(0),
                                   getI32Imm(SH), getI32Imm(MB),
-                                  getI32Imm(ME)).Val;
+                                  getI32Imm(ME));
     }
     
     // Other cases are autogenerated.
@@ -1066,7 +1066,7 @@ SDNode *PPCDAGToDAGISel::Select(SDOperand Op) {
                                     N->getOperand(0), getI32Imm(~0U));
             return CurDAG->SelectNodeTo(N, PPC::SUBFE, MVT::i32,
                                         SDOperand(Tmp, 0), N->getOperand(0),
-                                        SDOperand(Tmp, 1)).Val;
+                                        SDOperand(Tmp, 1));
           }
 
     SDOperand CCReg = SelectCC(N->getOperand(0), N->getOperand(1), CC);
@@ -1089,7 +1089,7 @@ SDNode *PPCDAGToDAGISel::Select(SDOperand Op) {
     AddToISelQueue(N->getOperand(3));
     return CurDAG->SelectNodeTo(N, SelectCCOp, N->getValueType(0), CCReg,
                                 N->getOperand(2), N->getOperand(3),
-                                getI32Imm(BROpc)).Val;
+                                getI32Imm(BROpc));
   }
   case ISD::BR_CC: {
     AddToISelQueue(N->getOperand(0));
@@ -1097,7 +1097,7 @@ SDNode *PPCDAGToDAGISel::Select(SDOperand Op) {
     SDOperand CondCode = SelectCC(N->getOperand(2), N->getOperand(3), CC);
     return CurDAG->SelectNodeTo(N, PPC::COND_BRANCH, MVT::Other, 
                                 CondCode, getI32Imm(getBCCForSetCC(CC)), 
-                                N->getOperand(4), N->getOperand(0)).Val;
+                                N->getOperand(4), N->getOperand(0));
   }
   case ISD::BRIND: {
     // FIXME: Should custom lower this.
@@ -1108,7 +1108,7 @@ SDNode *PPCDAGToDAGISel::Select(SDOperand Op) {
     unsigned Opc = Target.getValueType() == MVT::i32 ? PPC::MTCTR : PPC::MTCTR8;
     Chain = SDOperand(CurDAG->getTargetNode(Opc, MVT::Other, Target,
                                             Chain), 0);
-    return CurDAG->SelectNodeTo(N, PPC::BCTR, MVT::Other, Chain).Val;
+    return CurDAG->SelectNodeTo(N, PPC::BCTR, MVT::Other, Chain);
   }
   // FIXME: These are manually selected because tblgen isn't handling varargs
   // nodes correctly.

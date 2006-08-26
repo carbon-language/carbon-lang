@@ -2796,7 +2796,7 @@ public:
           Code += ", " + AllOps[i];
         if (NodeHasInFlag || HasImpInputs)
           Code += ", InFlag";
-        emitCode(Code + ").Val;");
+        emitCode(Code + ");");
         emitOpcode(II.Namespace + "::" + II.TheDef->getName());
         if (N->getTypeNum(0) != MVT::isVoid)
           emitVT(getEnumName(N->getTypeNum(0)));

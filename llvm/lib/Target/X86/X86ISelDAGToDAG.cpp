@@ -658,7 +658,7 @@ SDNode *X86DAGToDAGISel::Select(SDOperand N) {
         }
 
         if (C.Val)
-          return CurDAG->SelectNodeTo(N.Val, X86::MOV32ri, MVT::i32, C).Val;
+          return CurDAG->SelectNodeTo(N.Val, X86::MOV32ri, MVT::i32, C);
       }
 
       // Other cases are handled by auto-generated code.

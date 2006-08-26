@@ -1093,7 +1093,7 @@ SDNode *SparcDAGToDAGISel::Select(SDOperand Op) {
     // FIXME: Handle div by immediate.
     unsigned Opcode = N->getOpcode() == ISD::SDIV ? SP::SDIVrr : SP::UDIVrr;
     return CurDAG->SelectNodeTo(N, Opcode, MVT::i32, DivLHS, DivRHS,
-                                TopPart).Val;
+                                TopPart);
   }    
   case ISD::MULHU:
   case ISD::MULHS: {
@@ -1106,7 +1106,7 @@ SDNode *SparcDAGToDAGISel::Select(SDOperand Op) {
     SDNode *Mul = CurDAG->getTargetNode(Opcode, MVT::i32, MVT::Flag,
                                         MulLHS, MulRHS);
     // The high part is in the Y register.
-    return CurDAG->SelectNodeTo(N, SP::RDY, MVT::i32, SDOperand(Mul, 1)).Val;
+    return CurDAG->SelectNodeTo(N, SP::RDY, MVT::i32, SDOperand(Mul, 1));
     return NULL;
   }
   }
