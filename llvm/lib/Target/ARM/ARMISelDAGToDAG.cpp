@@ -430,7 +430,7 @@ public:
     : SelectionDAGISel(Lowering), Lowering(TM) {
   }
 
-  SDNode *Select(SDOperand &Result, SDOperand Op);
+  SDNode *Select(SDOperand Op);
   virtual void InstructionSelectBasicBlock(SelectionDAG &DAG);
   bool SelectAddrRegImm(SDOperand N, SDOperand &Offset, SDOperand &Base);
 
@@ -496,12 +496,12 @@ bool ARMDAGToDAGISel::SelectAddrRegImm(SDOperand N, SDOperand &Offset,
   return true;      //any address fits in a register
 }
 
-SDNode *ARMDAGToDAGISel::Select(SDOperand &Result, SDOperand Op) {
+SDNode *ARMDAGToDAGISel::Select(SDOperand Op) {
   SDNode *N = Op.Val;
 
   switch (N->getOpcode()) {
   default:
-    return SelectCode(Result, Op);
+    return SelectCode(Op);
     break;
   }
   return NULL;

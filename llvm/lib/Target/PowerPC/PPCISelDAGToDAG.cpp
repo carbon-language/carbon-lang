@@ -79,11 +79,11 @@ namespace {
     
     /// getGlobalBaseReg - insert code into the entry mbb to materialize the PIC
     /// base register.  Return the virtual register that holds this value.
-    SDOperand getGlobalBaseReg();
+    SDNode *getGlobalBaseReg();
     
     // Select - Convert the specified operand from a target-independent to a
     // target-specific node if it hasn't already been changed.
-    SDNode *Select(SDOperand &Result, SDOperand Op);
+    SDNode *Select(SDOperand Op);
     
     SDNode *SelectBitfieldInsert(SDNode *N);
 
@@ -252,7 +252,7 @@ void PPCDAGToDAGISel::InsertVRSaveCode(Function &F) {
 /// getGlobalBaseReg - Output the instructions required to put the
 /// base address to use for accessing globals into a register.
 ///
-SDOperand PPCDAGToDAGISel::getGlobalBaseReg() {
+SDNode *PPCDAGToDAGISel::getGlobalBaseReg() {
   if (!GlobalBaseReg) {
     // Insert the set of GlobalBaseReg into the first MBB of the function
     MachineBasicBlock &FirstMBB = BB->getParent()->front();
@@ -267,7 +267,7 @@ SDOperand PPCDAGToDAGISel::getGlobalBaseReg() {
     BuildMI(FirstMBB, MBBI, PPC::MovePCtoLR, 0, PPC::LR);
     BuildMI(FirstMBB, MBBI, PPC::MFLR, 1, GlobalBaseReg);
   }
-  return CurDAG->getRegister(GlobalBaseReg, PPCLowering.getPointerTy());
+  return CurDAG->getRegister(GlobalBaseReg, PPCLowering.getPointerTy()).Val;
 }
 
 /// isIntS16Immediate - This method tests to see if the node is either a 32-bit
@@ -902,20 +902,18 @@ SDNode *PPCDAGToDAGISel::SelectSETCC(SDOperand Op) {
 
 // Select - Convert the specified operand from a target-independent to a
 // target-specific node if it hasn't already been changed.
-SDNode *PPCDAGToDAGISel::Select(SDOperand &Result, SDOperand Op) {
+SDNode *PPCDAGToDAGISel::Select(SDOperand Op) {
   SDNode *N = Op.Val;
   if (N->getOpcode() >= ISD::BUILTIN_OP_END &&
-      N->getOpcode() < PPCISD::FIRST_NUMBER) {
-    Result = Op;
+      N->getOpcode() < PPCISD::FIRST_NUMBER)
     return NULL;   // Already selected.
-  }
 
   switch (N->getOpcode()) {
   default: break;
   case ISD::SETCC:
     return SelectSETCC(Op);
   case PPCISD::GlobalBaseReg:
-    return getGlobalBaseReg().Val;
+    return getGlobalBaseReg();
     
   case ISD::FrameIndex: {
     int FI = cast<FrameIndexSDNode>(N)->getIndex();
@@ -1118,7 +1116,7 @@ SDNode *PPCDAGToDAGISel::Select(SDOperand &Result, SDOperand Op) {
   case PPCISD::CALL:             return MySelect_PPCcall(Op);
   }
   
-  return SelectCode(Result, Op);
+  return SelectCode(Op);
 }
 
 

@@ -123,7 +123,7 @@ namespace {
 #include "X86GenDAGISel.inc"
 
   private:
-    SDNode *Select(SDOperand &Result, SDOperand N);
+    SDNode *Select(SDOperand N);
 
     bool MatchAddress(SDOperand N, X86ISelAddressMode &AM, bool isRoot = true);
     bool SelectAddr(SDOperand N, SDOperand &Base, SDOperand &Scale,
@@ -176,7 +176,7 @@ namespace {
 
     /// getGlobalBaseReg - insert code into the entry mbb to materialize the PIC
     /// base register.  Return the virtual register that holds this value.
-    SDOperand getGlobalBaseReg();
+    SDNode *getGlobalBaseReg();
 
 #ifndef NDEBUG
     unsigned Indent;
@@ -582,7 +582,7 @@ static bool isRegister0(SDOperand Op) {
 /// getGlobalBaseReg - Output the instructions required to put the
 /// base address to use for accessing globals into a register.
 ///
-SDOperand X86DAGToDAGISel::getGlobalBaseReg() {
+SDNode *X86DAGToDAGISel::getGlobalBaseReg() {
   if (!GlobalBaseReg) {
     // Insert the set of GlobalBaseReg into the first MBB of the function
     MachineBasicBlock &FirstMBB = BB->getParent()->front();
@@ -594,7 +594,7 @@ SDOperand X86DAGToDAGISel::getGlobalBaseReg() {
     BuildMI(FirstMBB, MBBI, X86::MovePCtoStack, 0);
     BuildMI(FirstMBB, MBBI, X86::POP32r, 1, GlobalBaseReg);
   }
-  return CurDAG->getRegister(GlobalBaseReg, MVT::i32);
+  return CurDAG->getRegister(GlobalBaseReg, MVT::i32).Val;
 }
 
 static SDNode *FindCallStartFromCall(SDNode *Node) {
@@ -604,7 +604,7 @@ static SDNode *FindCallStartFromCall(SDNode *Node) {
   return FindCallStartFromCall(Node->getOperand(0).Val);
 }
 
-SDNode *X86DAGToDAGISel::Select(SDOperand &Result, SDOperand N) {
+SDNode *X86DAGToDAGISel::Select(SDOperand N) {
   SDNode *Node = N.Val;
   MVT::ValueType NVT = Node->getValueType(0);
   unsigned Opc, MOpc;
@@ -619,7 +619,6 @@ SDNode *X86DAGToDAGISel::Select(SDOperand &Result, SDOperand N) {
 #endif
 
   if (Opcode >= ISD::BUILTIN_OP_END && Opcode < X86ISD::FIRST_NUMBER) {
-    Result = N;
 #ifndef NDEBUG
     DEBUG(std::cerr << std::string(Indent-2, ' '));
     DEBUG(std::cerr << "== ");
@@ -633,8 +632,7 @@ SDNode *X86DAGToDAGISel::Select(SDOperand &Result, SDOperand N) {
   switch (Opcode) {
     default: break;
     case X86ISD::GlobalBaseReg: 
-      Result = getGlobalBaseReg();
-      return Result.Val;
+      return getGlobalBaseReg();
 
     case ISD::ADD: {
       // Turn ADD X, c to MOV32ri X+c. This cannot be done with tblgen'd
@@ -736,7 +734,7 @@ SDNode *X86DAGToDAGISel::Select(SDOperand &Result, SDOperand N) {
           SDOperand(CurDAG->getTargetNode(Opc, MVT::Flag, N1, InFlag), 0);
       }
 
-      Result = CurDAG->getCopyFromReg(Chain, HiReg, NVT, InFlag);
+      SDOperand Result = CurDAG->getCopyFromReg(Chain, HiReg, NVT, InFlag);
       ReplaceUses(N.getValue(0), Result);
       if (foldedLoad)
         ReplaceUses(N1.getValue(1), Result.getValue(1));
@@ -840,8 +838,8 @@ SDNode *X86DAGToDAGISel::Select(SDOperand &Result, SDOperand N) {
           SDOperand(CurDAG->getTargetNode(Opc, MVT::Flag, N1, InFlag), 0);
       }
 
-      Result = CurDAG->getCopyFromReg(Chain, isDiv ? LoReg : HiReg,
-                                      NVT, InFlag);
+      SDOperand Result = CurDAG->getCopyFromReg(Chain, isDiv ? LoReg : HiReg,
+                                                NVT, InFlag);
       ReplaceUses(N.getValue(0), Result);
       if (foldedLoad)
         ReplaceUses(N1.getValue(1), Result.getValue(1));
@@ -878,28 +876,31 @@ SDNode *X86DAGToDAGISel::Select(SDOperand &Result, SDOperand N) {
         AddToISelQueue(Node->getOperand(0));
         SDOperand Tmp =
           SDOperand(CurDAG->getTargetNode(Opc, VT, Node->getOperand(0)), 0);
-        Result = SDOperand(CurDAG->getTargetNode(Opc2, NVT, Tmp), 0);
+        SDNode *ResNode = CurDAG->getTargetNode(Opc2, NVT, Tmp);
       
 #ifndef NDEBUG
         DEBUG(std::cerr << std::string(Indent-2, ' '));
         DEBUG(std::cerr << "=> ");
-        DEBUG(Result.Val->dump(CurDAG));
+        DEBUG(ResNode->dump(CurDAG));
         DEBUG(std::cerr << "\n");
         Indent -= 2;
 #endif
-        return Result.Val;
+        return ResNode;
       }
 
       break;
     }
   }
 
-  SDNode *ResNode = SelectCode(Result, N);
+  SDNode *ResNode = SelectCode(N);
 
 #ifndef NDEBUG
   DEBUG(std::cerr << std::string(Indent-2, ' '));
   DEBUG(std::cerr << "=> ");
-  DEBUG(Result.Val->dump(CurDAG));
+  if (ResNode == NULL || ResNode == N.Val)
+    DEBUG(N.Val->dump(CurDAG));
+  else
+    DEBUG(ResNode->dump(CurDAG));
   DEBUG(std::cerr << "\n");
   Indent -= 2;
 #endif

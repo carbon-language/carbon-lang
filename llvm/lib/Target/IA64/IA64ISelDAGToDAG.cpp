@@ -65,7 +65,7 @@ namespace {
     
     // Select - Convert the specified operand from a target-independent to a
     // target-specific node if it hasn't already been changed.
-    SDNode *Select(SDOperand &Result, SDOperand N);
+    SDNode *Select(SDOperand N);
     
     SDNode *SelectIntImmediateExpr(SDOperand LHS, SDOperand RHS,
                                    unsigned OCHi, unsigned OCLo,
@@ -94,7 +94,7 @@ namespace {
 #include "IA64GenDAGISel.inc"
     
 private:
-    SDOperand SelectDIV(SDOperand Op);
+    SDNode *SelectDIV(SDOperand Op);
   };
 }
 
@@ -111,7 +111,7 @@ void IA64DAGToDAGISel::InstructionSelectBasicBlock(SelectionDAG &DAG) {
   ScheduleAndEmitDAG(DAG);
 }
 
-SDOperand IA64DAGToDAGISel::SelectDIV(SDOperand Op) {
+SDNode *IA64DAGToDAGISel::SelectDIV(SDOperand Op) {
   SDNode *N = Op.Val;
   SDOperand Chain = N->getOperand(0);
   SDOperand Tmp1 = N->getOperand(0);
@@ -245,7 +245,7 @@ SDOperand IA64DAGToDAGISel::SelectDIV(SDOperand Op) {
       Result = CurDAG->getTargetNode(IA64::TCFMADS0, MVT::f64, // d.p. s0 rndg!
                                      TmpF5, TmpY3, TmpR0, TmpQ0, TmpPR);
       Chain = SDOperand(Result, 1);
-      return SDOperand(Result, 0); // XXX: early exit!
+      return Result; // XXX: early exit!
     } else { // this is *not* an FP divide, so there's a bit left to do:
     
       SDOperand TmpQ2, TmpR2, TmpQ3, TmpQ;
@@ -292,19 +292,17 @@ SDOperand IA64DAGToDAGISel::SelectDIV(SDOperand Op) {
         Chain = SDOperand(Result, 1);
       }
 
-      return SDOperand(Result, 0);
+      return Result;
     } // wasn't an FP divide
 }
 
 // Select - Convert the specified operand from a target-independent to a
 // target-specific node if it hasn't already been changed.
-SDNode *IA64DAGToDAGISel::Select(SDOperand &Result, SDOperand Op) {
+SDNode *IA64DAGToDAGISel::Select(SDOperand Op) {
   SDNode *N = Op.Val;
   if (N->getOpcode() >= ISD::BUILTIN_OP_END &&
-      N->getOpcode() < IA64ISD::FIRST_NUMBER) {
-    Result = Op;
+      N->getOpcode() < IA64ISD::FIRST_NUMBER)
     return NULL;   // Already selected.
-  }
 
   switch (N->getOpcode()) {
   default: break;
@@ -379,15 +377,13 @@ SDNode *IA64DAGToDAGISel::Select(SDOperand &Result, SDOperand Op) {
 
    for (unsigned i = 0, e = CallResults.size(); i != e; ++i)
      ReplaceUses(Op.getValue(i), CallResults[i]);
-   Result = CallResults[Op.ResNo];
    return NULL;
   }
   
   case IA64ISD::GETFD: {
     SDOperand Input = N->getOperand(0);
     AddToISelQueue(Input);
-    Result = SDOperand(CurDAG->getTargetNode(IA64::GETFD, MVT::i64, Input), 0);
-    return Result.Val;
+    return CurDAG->getTargetNode(IA64::GETFD, MVT::i64, Input);
   } 
   
   case ISD::FDIV:
@@ -395,8 +391,7 @@ SDNode *IA64DAGToDAGISel::Select(SDOperand &Result, SDOperand Op) {
   case ISD::UDIV:
   case ISD::SREM:
   case ISD::UREM:
-    Result = SelectDIV(Op);
-    return Result.Val;
+    return SelectDIV(Op);
  
   case ISD::TargetConstantFP: {
     SDOperand Chain = CurDAG->getEntryNode(); // this is a constant, so..
@@ -425,9 +420,8 @@ SDNode *IA64DAGToDAGISel::Select(SDOperand &Result, SDOperand Op) {
     Constant *C = CP->get();
     SDOperand CPI = CurDAG->getTargetConstantPool(C, MVT::i64,
                                                   CP->getAlignment());
-    Result = SDOperand(CurDAG->getTargetNode(IA64::ADDL_GA, MVT::i64, // ?
-	                      CurDAG->getRegister(IA64::r1, MVT::i64), CPI), 0);
-    return Result.Val;
+    return CurDAG->getTargetNode(IA64::ADDL_GA, MVT::i64, // ?
+                                 CurDAG->getRegister(IA64::r1, MVT::i64), CPI);
   }
 
   case ISD::GlobalAddress: {
@@ -435,8 +429,7 @@ SDNode *IA64DAGToDAGISel::Select(SDOperand &Result, SDOperand Op) {
     SDOperand GA = CurDAG->getTargetGlobalAddress(GV, MVT::i64);
     SDOperand Tmp = SDOperand(CurDAG->getTargetNode(IA64::ADDL_GA, MVT::i64, 
 	                          CurDAG->getRegister(IA64::r1, MVT::i64), GA), 0);
-    Result = SDOperand(CurDAG->getTargetNode(IA64::LD8, MVT::i64, Tmp), 0);
-    return Result.Val;
+    return CurDAG->getTargetNode(IA64::LD8, MVT::i64, Tmp);
   }
   
 /* XXX  case ISD::ExternalSymbol: {
@@ -564,7 +557,7 @@ SDNode *IA64DAGToDAGISel::Select(SDOperand &Result, SDOperand Op) {
                                 N->getOperand(1), N0).Val;
   }
   
-  return SelectCode(Result, Op);
+  return SelectCode(Op);
 }
 
 

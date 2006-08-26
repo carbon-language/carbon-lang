@@ -966,7 +966,7 @@ public:
       Subtarget(TM.getSubtarget<SparcSubtarget>()) {
   }
 
-  SDNode *Select(SDOperand &Result, SDOperand Op);
+  SDNode *Select(SDOperand Op);
 
   // Complex Pattern Selectors.
   bool SelectADDRrr(SDOperand N, SDOperand &R1, SDOperand &R2);
@@ -1063,13 +1063,11 @@ bool SparcDAGToDAGISel::SelectADDRrr(SDOperand Addr, SDOperand &R1,
   return true;
 }
 
-SDNode *SparcDAGToDAGISel::Select(SDOperand &Result, SDOperand Op) {
+SDNode *SparcDAGToDAGISel::Select(SDOperand Op) {
   SDNode *N = Op.Val;
   if (N->getOpcode() >= ISD::BUILTIN_OP_END &&
-      N->getOpcode() < SPISD::FIRST_NUMBER) {
-    Result = Op;
+      N->getOpcode() < SPISD::FIRST_NUMBER)
     return NULL;   // Already selected.
-  }
 
   switch (N->getOpcode()) {
   default: break;
@@ -1113,7 +1111,7 @@ SDNode *SparcDAGToDAGISel::Select(SDOperand &Result, SDOperand Op) {
   }
   }
   
-  return SelectCode(Result, Op);
+  return SelectCode(Op);
 }
 
 
