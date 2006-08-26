@@ -520,12 +520,12 @@ private:
                                    std::vector<Record*> &InstImpInputs,
                                    std::vector<Record*> &InstImpResults);
   void GenerateCodeForPattern(PatternToMatch &Pattern,
-                      std::vector<std::pair<bool, std::string> > &GeneratedCode,
+                  std::vector<std::pair<unsigned, std::string> > &GeneratedCode,
                      std::set<std::pair<unsigned, std::string> > &GeneratedDecl,
                               std::vector<std::string> &TargetOpcodes,
                               std::vector<std::string> &TargetVTs);
   void EmitPatterns(std::vector<std::pair<PatternToMatch*, 
-                    std::vector<std::pair<bool, std::string> > > > &Patterns, 
+                  std::vector<std::pair<unsigned, std::string> > > > &Patterns, 
                     unsigned Indent, std::ostream &OS);
   void EmitInstructionSelector(std::ostream &OS);
 };
