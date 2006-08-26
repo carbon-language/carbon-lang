@@ -124,7 +124,8 @@ namespace {
         break;
       case 'o':   // offsetable
         if (!SelectAddrImm(Op, Op0, Op1)) {
-          AddToQueue(Op0, Op);     // r+0.
+          Op0 = Op;
+          AddToISelQueue(Op0);     // r+0.
           Op1 = getSmallIPtrImm(0);
         }
         break;
@@ -453,10 +454,10 @@ SDNode *PPCDAGToDAGISel::SelectBitfieldInsert(SDNode *N) {
       }
       
       Tmp3 = (Op0Opc == ISD::AND && DisjointMask) ? Op0.getOperand(0) : Op0;
-      AddToQueue(Tmp1, Tmp3);
-      AddToQueue(Tmp2, Op1);
+      AddToISelQueue(Tmp3);
+      AddToISelQueue(Op1);
       SH &= 31;
-      return CurDAG->getTargetNode(PPC::RLWIMI, MVT::i32, Tmp1, Tmp2,
+      return CurDAG->getTargetNode(PPC::RLWIMI, MVT::i32, Tmp3, Op1,
                                    getI32Imm(SH), getI32Imm(MB), getI32Imm(ME));
     }
   }
@@ -692,7 +693,7 @@ bool PPCDAGToDAGISel::SelectAddrImmShift(SDOperand N, SDOperand &Disp,
 SDOperand PPCDAGToDAGISel::SelectCC(SDOperand LHS, SDOperand RHS,
                                     ISD::CondCode CC) {
   // Always select the LHS.
-  AddToQueue(LHS, LHS);
+  AddToISelQueue(LHS);
   unsigned Opc;
   
   if (LHS.getValueType() == MVT::i32) {
@@ -731,7 +732,7 @@ SDOperand PPCDAGToDAGISel::SelectCC(SDOperand LHS, SDOperand RHS,
     assert(LHS.getValueType() == MVT::f64 && "Unknown vt!");
     Opc = PPC::FCMPUD;
   }
-  AddToQueue(RHS, RHS);
+  AddToISelQueue(RHS);
   return SDOperand(CurDAG->getTargetNode(Opc, MVT::i32, LHS, RHS), 0);
 }
 
@@ -804,8 +805,8 @@ SDNode *PPCDAGToDAGISel::SelectSETCC(SDOperand Op) {
     // Check for those cases here.
     // setcc op, 0
     if (Imm == 0) {
-      SDOperand Op;
-      AddToQueue(Op, N->getOperand(0));
+      SDOperand Op = N->getOperand(0);
+      AddToISelQueue(Op);
       switch (CC) {
       default: break;
       case ISD::SETEQ:
@@ -831,8 +832,8 @@ SDNode *PPCDAGToDAGISel::SelectSETCC(SDOperand Op) {
       }
       }
     } else if (Imm == ~0U) {        // setcc op, -1
-      SDOperand Op;
-      AddToQueue(Op, N->getOperand(0));
+      SDOperand Op = N->getOperand(0);
+      AddToISelQueue(Op);
       switch (CC) {
       default: break;
       case ISD::SETEQ:
@@ -928,8 +929,8 @@ SDNode *PPCDAGToDAGISel::Select(SDOperand &Result, SDOperand Op) {
   }
 
   case PPCISD::MFCR: {
-    SDOperand InFlag;
-    AddToQueue(InFlag, N->getOperand(1));
+    SDOperand InFlag = N->getOperand(1);
+    AddToISelQueue(InFlag);
     // Use MFOCRF if supported.
     if (TLI.getTargetMachine().getSubtarget<PPCSubtarget>().isGigaProcessor())
       return CurDAG->getTargetNode(PPC::MFOCRF, MVT::i32,
@@ -946,8 +947,8 @@ SDNode *PPCDAGToDAGISel::Select(SDOperand &Result, SDOperand Op) {
     //        sra/addze rather than having to handle sdiv ourselves.  oh well.
     unsigned Imm;
     if (isInt32Immediate(N->getOperand(1), Imm)) {
-      SDOperand N0;
-      AddToQueue(N0, N->getOperand(0));
+      SDOperand N0 = N->getOperand(0);
+      AddToISelQueue(N0);
       if ((signed)Imm > 0 && isPowerOf2_32(Imm)) {
         SDNode *Op =
           CurDAG->getTargetNode(PPC::SRAWI, MVT::i32, MVT::Flag,
@@ -978,14 +979,16 @@ SDNode *PPCDAGToDAGISel::Select(SDOperand &Result, SDOperand Op) {
       SDOperand Val;
       unsigned SH, MB, ME;
       if (isRotateAndMask(N->getOperand(0).Val, Imm, false, SH, MB, ME)) {
-        AddToQueue(Val, N->getOperand(0).getOperand(0));
+        Val = N->getOperand(0).getOperand(0);
+        AddToISelQueue(Val);
       } else if (Imm == 0) {
         // AND X, 0 -> 0, not "rlwinm 32".
-        AddToQueue(Result, N->getOperand(1));
+        AddToISelQueue(N->getOperand(1));
         ReplaceUses(SDOperand(N, 0), N->getOperand(1));
         return NULL;
       } else {        
-        AddToQueue(Val, N->getOperand(0));
+        Val = N->getOperand(0);
+        AddToISelQueue(Val);
         isRunOfOnes(Imm, MB, ME);
         SH = 0;
       }
@@ -1001,10 +1004,11 @@ SDNode *PPCDAGToDAGISel::Select(SDOperand &Result, SDOperand Op) {
       unsigned MB, ME;
       Imm = ~(Imm^Imm2);
       if (isRunOfOnes(Imm, MB, ME)) {
-        SDOperand Tmp1, Tmp2;
-        AddToQueue(Tmp1, N->getOperand(0).getOperand(0));
-        AddToQueue(Tmp2, N->getOperand(0).getOperand(1));
-        return CurDAG->getTargetNode(PPC::RLWIMI, MVT::i32, Tmp1, Tmp2,
+        AddToISelQueue(N->getOperand(0).getOperand(0));
+        AddToISelQueue(N->getOperand(0).getOperand(1));
+        return CurDAG->getTargetNode(PPC::RLWIMI, MVT::i32,
+                                     N->getOperand(0).getOperand(0),
+                                     N->getOperand(0).getOperand(1),
                                      getI32Imm(0), getI32Imm(MB),getI32Imm(ME));
       }
     }
@@ -1023,10 +1027,10 @@ SDNode *PPCDAGToDAGISel::Select(SDOperand &Result, SDOperand Op) {
     unsigned Imm, SH, MB, ME;
     if (isOpcWithIntImmediate(N->getOperand(0).Val, ISD::AND, Imm) &&
         isRotateAndMask(N, Imm, true, SH, MB, ME)) {
-      SDOperand Val;
-      AddToQueue(Val, N->getOperand(0).getOperand(0));
+      AddToISelQueue(N->getOperand(0).getOperand(0));
       return CurDAG->SelectNodeTo(N, PPC::RLWINM, MVT::i32, 
-                                  Val, getI32Imm(SH), getI32Imm(MB),
+                                  N->getOperand(0).getOperand(0),
+                                  getI32Imm(SH), getI32Imm(MB),
                                   getI32Imm(ME)).Val;
     }
     
@@ -1037,10 +1041,10 @@ SDNode *PPCDAGToDAGISel::Select(SDOperand &Result, SDOperand Op) {
     unsigned Imm, SH, MB, ME;
     if (isOpcWithIntImmediate(N->getOperand(0).Val, ISD::AND, Imm) &&
         isRotateAndMask(N, Imm, true, SH, MB, ME)) { 
-      SDOperand Val;
-      AddToQueue(Val, N->getOperand(0).getOperand(0));
+      AddToISelQueue(N->getOperand(0).getOperand(0));
       return CurDAG->SelectNodeTo(N, PPC::RLWINM, MVT::i32, 
-                                  Val, getI32Imm(SH), getI32Imm(MB),
+                                  N->getOperand(0).getOperand(0),
+                                  getI32Imm(SH), getI32Imm(MB),
                                   getI32Imm(ME)).Val;
     }
     
@@ -1058,13 +1062,12 @@ SDNode *PPCDAGToDAGISel::Select(SDOperand &Result, SDOperand Op) {
               N2C->getValue() == 1ULL && CC == ISD::SETNE &&
               // FIXME: Implement this optzn for PPC64.
               N->getValueType(0) == MVT::i32) {
-            SDOperand LHS;
-            AddToQueue(LHS, N->getOperand(0));
+            AddToISelQueue(N->getOperand(0));
             SDNode *Tmp =
               CurDAG->getTargetNode(PPC::ADDIC, MVT::i32, MVT::Flag,
-                                    LHS, getI32Imm(~0U));
+                                    N->getOperand(0), getI32Imm(~0U));
             return CurDAG->SelectNodeTo(N, PPC::SUBFE, MVT::i32,
-                                        SDOperand(Tmp, 0), LHS,
+                                        SDOperand(Tmp, 0), N->getOperand(0),
                                         SDOperand(Tmp, 1)).Val;
           }
 
@@ -1084,26 +1087,26 @@ SDNode *PPCDAGToDAGISel::Select(SDOperand &Result, SDOperand Op) {
     else
       SelectCCOp = PPC::SELECT_CC_VRRC;
 
-    SDOperand N2, N3;
-    AddToQueue(N2, N->getOperand(2));
-    AddToQueue(N3, N->getOperand(3));
+    AddToISelQueue(N->getOperand(2));
+    AddToISelQueue(N->getOperand(3));
     return CurDAG->SelectNodeTo(N, SelectCCOp, N->getValueType(0), CCReg,
-                                N2, N3, getI32Imm(BROpc)).Val;
+                                N->getOperand(2), N->getOperand(3),
+                                getI32Imm(BROpc)).Val;
   }
   case ISD::BR_CC: {
-    SDOperand Chain;
-    AddToQueue(Chain, N->getOperand(0));
+    AddToISelQueue(N->getOperand(0));
     ISD::CondCode CC = cast<CondCodeSDNode>(N->getOperand(1))->get();
     SDOperand CondCode = SelectCC(N->getOperand(2), N->getOperand(3), CC);
     return CurDAG->SelectNodeTo(N, PPC::COND_BRANCH, MVT::Other, 
                                 CondCode, getI32Imm(getBCCForSetCC(CC)), 
-                                N->getOperand(4), Chain).Val;
+                                N->getOperand(4), N->getOperand(0)).Val;
   }
   case ISD::BRIND: {
     // FIXME: Should custom lower this.
-    SDOperand Chain, Target;
-    AddToQueue(Chain, N->getOperand(0));
-    AddToQueue(Target,N->getOperand(1));
+    SDOperand Chain = N->getOperand(0);
+    SDOperand Target = N->getOperand(1);
+    AddToISelQueue(Chain);
+    AddToISelQueue(Target);
     unsigned Opc = Target.getValueType() == MVT::i32 ? PPC::MTCTR : PPC::MTCTR8;
     Chain = SDOperand(CurDAG->getTargetNode(Opc, MVT::Other, Target,
                                             Chain), 0);
@@ -1130,15 +1133,18 @@ SDNode *PPCDAGToDAGISel::MySelect_PPCbctrl(SDOperand N) {
   SmallVector<SDOperand, 8> Ops;
   // Push varargs arguments, including optional flag.
   for (unsigned i = 1, e = N.getNumOperands()-hasFlag; i != e; ++i) {
-    AddToQueue(Chain, N.getOperand(i));
+    Chain = N.getOperand(i);
+    AddToISelQueue(Chain);
     Ops.push_back(Chain);
   }
 
-  AddToQueue(Chain, N.getOperand(0));
+  Chain = N.getOperand(0);
+  AddToISelQueue(Chain);
   Ops.push_back(Chain);
 
   if (hasFlag) {
-    AddToQueue(Chain, N.getOperand(N.getNumOperands()-1));
+    Chain = N.getOperand(N.getNumOperands()-1);
+    AddToISelQueue(Chain);
     Ops.push_back(Chain);
   }
   
@@ -1170,13 +1176,16 @@ SDNode *PPCDAGToDAGISel::MySelect_PPCcall(SDOperand N) {
     
     // Push varargs arguments, not including optional flag.
     for (unsigned i = 2, e = N.getNumOperands()-hasFlag; i != e; ++i) {
-      AddToQueue(Chain, N.getOperand(i));
+      Chain = N.getOperand(i);
+      AddToISelQueue(Chain);
       Ops.push_back(Chain);
     }
-    AddToQueue(Chain, N.getOperand(0));
+    Chain = N.getOperand(0);
+    AddToISelQueue(Chain);
     Ops.push_back(Chain);
     if (hasFlag) {
-      AddToQueue(Chain, N.getOperand(N.getNumOperands()-1));
+      Chain = N.getOperand(N.getNumOperands()-1);
+      AddToISelQueue(Chain);
       Ops.push_back(Chain);
     }
     return CurDAG->getTargetNode(PPC::BLA, MVT::Other, MVT::Flag,
@@ -1195,13 +1204,16 @@ SDNode *PPCDAGToDAGISel::MySelect_PPCcall(SDOperand N) {
 
     // Push varargs arguments, not including optional flag.
     for (unsigned i = 2, e = N.getNumOperands()-hasFlag; i != e; ++i) {
-      AddToQueue(Chain, N.getOperand(i));
+      Chain = N.getOperand(i);
+      AddToISelQueue(Chain);
       Ops.push_back(Chain);
     }
-    AddToQueue(Chain, N.getOperand(0));
+    Chain = N.getOperand(0);
+    AddToISelQueue(Chain);
     Ops.push_back(Chain);
     if (hasFlag) {
-      AddToQueue(Chain, N.getOperand(N.getNumOperands()-1));
+      Chain = N.getOperand(N.getNumOperands()-1);
+      AddToISelQueue(Chain);
       Ops.push_back(Chain);
     }
     
@@ -1221,13 +1233,16 @@ SDNode *PPCDAGToDAGISel::MySelect_PPCcall(SDOperand N) {
 
     // Push varargs arguments, not including optional flag.
     for (unsigned i = 2, e = N.getNumOperands()-hasFlag; i != e; ++i) {
-      AddToQueue(Chain, N.getOperand(i));
+      Chain = N.getOperand(i);
+      AddToISelQueue(Chain);
       Ops.push_back(Chain);
     }
-    AddToQueue(Chain, N.getOperand(0));
+    Chain = N.getOperand(0);
+    AddToISelQueue(Chain);
     Ops.push_back(Chain);
     if (hasFlag) {
-      AddToQueue(Chain, N.getOperand(N.getNumOperands()-1));
+      Chain = N.getOperand(N.getNumOperands()-1);
+      AddToISelQueue(Chain);
       Ops.push_back(Chain);
     }
     

@@ -130,7 +130,8 @@ namespace {
       switch (ConstraintCode) {
       default: return true;
       case 'm':   // memory
-	AddToQueue(Op0, Op);
+        Op0 = Op;
+	AddToISelQueue(Op0);
         break;
       }
       
@@ -212,10 +213,12 @@ SDNode *AlphaDAGToDAGISel::Select(SDOperand &Result, SDOperand Op) {
   
   case AlphaISD::DivCall: {
     SDOperand Chain = CurDAG->getEntryNode();
-    SDOperand N0, N1, N2;
-    AddToQueue(N0, Op.getOperand(0));
-    AddToQueue(N1, Op.getOperand(1));
-    AddToQueue(N2, Op.getOperand(2));
+    SDOperand N0 = Op.getOperand(0);
+    SDOperand N1 = Op.getOperand(1);
+    SDOperand N2 = Op.getOperand(2);
+    AddToISelQueue(N0);
+    AddToISelQueue(N1);
+    AddToISelQueue(N2);
     Chain = CurDAG->getCopyToReg(Chain, Alpha::R24, N1, 
 				 SDOperand(0,0));
     Chain = CurDAG->getCopyToReg(Chain, Alpha::R25, N2, 
@@ -231,8 +234,8 @@ SDNode *AlphaDAGToDAGISel::Select(SDOperand &Result, SDOperand Op) {
   }
 
   case ISD::READCYCLECOUNTER: {
-    SDOperand Chain;
-    AddToQueue(Chain, N->getOperand(0)); //Select chain
+    SDOperand Chain = N->getOperand(0);
+    AddToISelQueue(Chain); //Select chain
     Result = SDOperand(CurDAG->getTargetNode(Alpha::RPCC, MVT::i64, MVT::Other,
                                              Chain), Op.ResNo);
     return Result.Val;
@@ -300,9 +303,10 @@ SDNode *AlphaDAGToDAGISel::Select(SDOperand &Result, SDOperand Op) {
       case ISD::SETGE: case ISD::SETOGE: case ISD::SETUGE: Opc = Alpha::CMPTLE; rev = true; break;
       case ISD::SETNE: case ISD::SETONE: case ISD::SETUNE: Opc = Alpha::CMPTEQ; isNE = true; break;
       };
-      SDOperand tmp1, tmp2;
-      AddToQueue(tmp1, N->getOperand(0));
-      AddToQueue(tmp2, N->getOperand(1));
+      SDOperand tmp1 = N->getOperand(0);
+      SDOperand tmp2 = N->getOperand(1);
+      AddToISelQueue(tmp1);
+      AddToISelQueue(tmp2);
       SDNode *cmp = CurDAG->getTargetNode(Opc, MVT::f64, 
                                           rev?tmp2:tmp1,
                                           rev?tmp1:tmp2);
@@ -341,10 +345,13 @@ SDNode *AlphaDAGToDAGISel::Select(SDOperand &Result, SDOperand Op) {
       // so that things like this can be caught in fall though code
       //move int to fp
       bool isDouble = N->getValueType(0) == MVT::f64;
-      SDOperand LD, cond, TV, FV;
-      AddToQueue(cond, N->getOperand(0));
-      AddToQueue(TV, N->getOperand(1));
-      AddToQueue(FV, N->getOperand(2));
+      SDOperand LD;
+      SDOperand cond = N->getOperand(0);
+      SDOperand TV = N->getOperand(1);
+      SDOperand FV = N->getOperand(2);
+      AddToISelQueue(cond);
+      AddToISelQueue(TV);
+      AddToISelQueue(FV);
       
       if (AlphaLowering.hasITOF()) {
 	LD = CurDAG->getNode(AlphaISD::ITOFT_, MVT::f64, cond);
@@ -385,10 +392,10 @@ SDNode *AlphaDAGToDAGISel::Select(SDOperand &Result, SDOperand Op) {
 	  mask = mask | dontcare;
 
 	if (get_zapImm(mask)) {
-	  SDOperand Src;
-	  AddToQueue(Src, N->getOperand(0).getOperand(0));
+	  AddToISelQueue(N->getOperand(0).getOperand(0));
 	  SDOperand Z = 
-	    SDOperand(CurDAG->getTargetNode(Alpha::ZAPNOTi, MVT::i64, Src, 
+	    SDOperand(CurDAG->getTargetNode(Alpha::ZAPNOTi, MVT::i64,
+                                            N->getOperand(0).getOperand(0),
 					    getI64Imm(get_zapImm(mask))), 0);
 	  Result = SDOperand(CurDAG->getTargetNode(Alpha::SRL, MVT::i64, Z, 
 						   getI64Imm(sval)), 0);
@@ -407,20 +414,19 @@ SDOperand AlphaDAGToDAGISel::SelectCALL(SDOperand Op) {
   //TODO: add flag stuff to prevent nondeturministic breakage!
 
   SDNode *N = Op.Val;
-  SDOperand Chain;
+  SDOperand Chain = N->getOperand(0);
   SDOperand Addr = N->getOperand(1);
   SDOperand InFlag(0,0);  // Null incoming flag value.
-  AddToQueue(Chain, N->getOperand(0));
+  AddToISelQueue(Chain);
 
    std::vector<SDOperand> CallOperands;
    std::vector<MVT::ValueType> TypeOperands;
   
    //grab the arguments
    for(int i = 2, e = N->getNumOperands(); i < e; ++i) {
-     SDOperand Tmp;
      TypeOperands.push_back(N->getOperand(i).getValueType());
-     AddToQueue(Tmp, N->getOperand(i));
-     CallOperands.push_back(Tmp);
+     AddToISelQueue(N->getOperand(i));
+     CallOperands.push_back(N->getOperand(i));
    }
    int count = N->getNumOperands() - 2;
 
@@ -464,7 +470,7 @@ SDOperand AlphaDAGToDAGISel::SelectCALL(SDOperand Op) {
      Chain = SDOperand(CurDAG->getTargetNode(Alpha::BSR, MVT::Other, MVT::Flag, 
                                              Addr.getOperand(0), Chain, InFlag), 0);
    } else {
-     AddToQueue(Addr, Addr);
+     AddToISelQueue(Addr);
      Chain = CurDAG->getCopyToReg(Chain, Alpha::R27, Addr, InFlag);
      InFlag = Chain.getValue(1);
      Chain = SDOperand(CurDAG->getTargetNode(Alpha::JSR, MVT::Other, MVT::Flag, 
