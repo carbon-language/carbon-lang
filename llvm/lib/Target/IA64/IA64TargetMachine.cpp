@@ -44,14 +44,6 @@ namespace {
   RegisterTarget<IA64TargetMachine> X("ia64", "  IA-64 (Itanium)");
 }
 
-unsigned IA64TargetMachine::compileTimeMatchQuality() {
-#if defined(__ia64__) || defined(__IA64__)
-  return 50;
-#else
-  return 0;
-#endif
-}
-
 unsigned IA64TargetMachine::getModuleMatchQuality(const Module &M) {
   // we match [iI][aA]*64
   bool seenIA64=false;
@@ -65,12 +57,15 @@ unsigned IA64TargetMachine::getModuleMatchQuality(const Module &M) {
           seenIA64=true;
     }
 
-    if(seenIA64)
-      return 50; // strong match
+    if (seenIA64)
+      return 20; // strong match
   }
 
-  return compileTimeMatchQuality()/2;
-
+#if defined(__ia64__) || defined(__IA64__)
+  return 5;
+#else
+  return 0;
+#endif
 }
 
 /// IA64TargetMachine ctor - Create an LP64 architecture model

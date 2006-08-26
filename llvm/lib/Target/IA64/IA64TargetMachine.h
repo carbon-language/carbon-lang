@@ -46,7 +46,6 @@ public:
                                    CodeGenFileType FileType, bool Fast);
 
   static unsigned getModuleMatchQuality(const Module &M);
-  static unsigned compileTimeMatchQuality(void);
 
 };
 } // End llvm namespace
