@@ -2897,9 +2897,8 @@ private:
               }
               std::string Decl = (!ResNodeDecled) ? "SDNode *" : "";
               emitCode(Decl + "ResNode = CurDAG->getCopyToReg(" + ChainName +
-                       ", CurDAG->getRegister(" + ISE.getQualifiedName(RR) +
-                       ", " + getEnumName(RVT) + "), " +
-                       RootName + utostr(OpNo) + ", InFlag).Val;");
+                       ", " + ISE.getQualifiedName(RR) +
+                       ", " +  RootName + utostr(OpNo) + ", InFlag).Val;");
               ResNodeDecled = true;
               emitCode(ChainName + " = SDOperand(ResNode, 0);");
               emitCode("InFlag = SDOperand(ResNode, 1);");
