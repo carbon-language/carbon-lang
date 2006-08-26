@@ -30,6 +30,7 @@
 #include "llvm/Target/TargetJITInfo.h"
 #include "llvm/Support/Mangler.h"
 #include "llvm/Support/MathExtras.h"
+#include <algorithm>
 #include <iostream>
 using namespace llvm;
 
@@ -128,10 +129,11 @@ bool MachOCodeEmitter::finishFunction(MachineFunction &F) {
   MOS->size += CurBufferPtr - BufferBegin;
   
   // Get a symbol for the function to add to the symbol table
-  MachOWriter::MachOSym FnSym(F.getFunction(), MOS->Index);
+  const GlobalValue *FuncV = F.getFunction();
+  MachOWriter::MachOSym FnSym(FuncV, MOW.Mang->getValueName(FuncV), MOS->Index);
   
   // Figure out the binding (linkage) of the symbol.
-  switch (F.getFunction()->getLinkage()) {
+  switch (FuncV->getLinkage()) {
   default:
     // appending linkage is illegal for functions.
     assert(0 && "Unknown linkage type!");
@@ -159,7 +161,6 @@ bool MachOCodeEmitter::finishFunction(MachineFunction &F) {
       //        until the sections are all layed out, but we still need to
       //        record them.  Maybe emit TargetRelocations and then resolve
       //        those at file writing time?
-      std::cerr << "whee!\n";
     }
   }
   Relocations.clear();
@@ -191,7 +192,7 @@ void MachOWriter::AddSymbolToSection(MachOSection &Sec, GlobalVariable *GV) {
   unsigned Size = TM.getTargetData()->getTypeSize(Ty);
   unsigned Align = Log2_32(TM.getTargetData()->getTypeAlignment(Ty));
   
-  MachOSym Sym(GV, Sec.Index);
+  MachOSym Sym(GV, Mang->getValueName(GV), Sec.Index);
   // Reserve space in the .bss section for this symbol while maintaining the
   // desired section alignment, which must be at least as much as required by
   // this symbol.
@@ -219,7 +220,7 @@ void MachOWriter::EmitGlobal(GlobalVariable *GV) {
   const Type *Ty = GV->getType()->getElementType();
   unsigned Size = TM.getTargetData()->getTypeSize(Ty);
   bool NoInit = !GV->hasInitializer();
-
+  
   // If this global has a zero initializer, it is part of the .bss or common
   // section.
   if (NoInit || GV->getInitializer()->isNullValue()) {
@@ -227,7 +228,8 @@ void MachOWriter::EmitGlobal(GlobalVariable *GV) {
     // part of the common block if they are zero initialized and allowed to be
     // merged with other symbols.
     if (NoInit || GV->hasLinkOnceLinkage() || GV->hasWeakLinkage()) {
-      MachOWriter::MachOSym ExtOrCommonSym(GV, MachOSym::NO_SECT);
+      MachOWriter::MachOSym ExtOrCommonSym(GV, Mang->getValueName(GV), 
+                                           MachOSym::NO_SECT);
       ExtOrCommonSym.n_type |= MachOSym::N_EXT;
       // For undefined (N_UNDF) external (N_EXT) types, n_value is the size in
       // bytes of the symbol.
@@ -279,12 +281,18 @@ bool MachOWriter::doInitialization(Module &M) {
 /// doFinalization - Now that the module has been completely processed, emit
 /// the Mach-O file to 'O'.
 bool MachOWriter::doFinalization(Module &M) {
+  // FIXME: we don't handle debug info yet, we should probably do that.
+
   // Okay, the.text section has been completed, build the .data, .bss, and 
   // "common" sections next.
   for (Module::global_iterator I = M.global_begin(), E = M.global_end();
        I != E; ++I)
     EmitGlobal(I);
   
+  // Emit the symbol table to temporary buffers, so that we know the size of
+  // the string table when we write the load commands in the next phase.
+  BufferSymbolAndStringTable();
+
   // Emit the header and load commands.
   EmitHeaderAndLoadCommands();
 
@@ -296,12 +304,9 @@ bool MachOWriter::doFinalization(Module &M) {
   //        have different relocation types.
   EmitRelocations();
 
-  // Emit the symbol table.
-  // FIXME: we don't handle debug info yet, we should probably do that.
-  EmitSymbolTable();
-
-  // Emit the string table for the sections we have.
-  EmitStringTable();
+  // Write the symbol table and the string table to the end of the file.
+  O.write((char*)&SymT[0], SymT.size());
+  O.write((char*)&StrT[0], StrT.size());
 
   // We are done with the abstract symbols.
   SectionList.clear();
@@ -383,16 +388,11 @@ void MachOWriter::EmitHeaderAndLoadCommands() {
   }
   
   // Step #6: Emit LC_SYMTAB/LC_DYSYMTAB load commands
-  // FIXME: We'll need to scan over the symbol table and possibly do the sort
-  // here so that we can set the proper indices in the dysymtab load command for
-  // the index and number of external symbols defined in this module.
-  // FIXME: We'll also need to scan over all the symbols so that we can 
-  // calculate the size of the string table.
   // FIXME: add size of relocs
   SymTab.symoff  = SEG.fileoff + SEG.filesize;
   SymTab.nsyms   = SymbolTable.size();
-  SymTab.stroff  = SymTab.symoff + SymTab.nsyms * MachOSym::entrySize();
-  SymTab.strsize = 10;
+  SymTab.stroff  = SymTab.symoff + SymT.size();
+  SymTab.strsize = StrT.size();
   outword(FH, SymTab.cmd);
   outword(FH, SymTab.cmdsize);
   outword(FH, SymTab.symoff);
@@ -401,6 +401,8 @@ void MachOWriter::EmitHeaderAndLoadCommands() {
   outword(FH, SymTab.strsize);
 
   // FIXME: set DySymTab fields appropriately
+  // We should probably just update these in BufferSymbolAndStringTable since
+  // thats where we're partitioning up the different kinds of symbols.
   outword(FH, DySymTab.cmd);
   outword(FH, DySymTab.cmdsize);
   outword(FH, DySymTab.ilocalsym);
@@ -440,54 +442,74 @@ void MachOWriter::EmitRelocations() {
   // specific.
 }
 
-/// EmitSymbolTable - Sort the symbols we encountered and assign them each a 
-/// string table index so that they appear in the correct order in the output 
-/// file.
-void MachOWriter::EmitSymbolTable() {
-  // The order of the symbol table is:
-  // local symbols
-  // defined external symbols (sorted by name)
-  // undefined external symbols (sorted by name)
-  DataBuffer ST;
-  
-  // FIXME: enforce the above ordering, presumably by sorting by name, 
-  // then partitioning twice.
-  unsigned stringIndex;
-  for (std::vector<MachOSym>::iterator I = SymbolTable.begin(),
-         E = SymbolTable.end(); I != E; ++I) {
-    // FIXME: remove when we actually calculate these correctly
-    I->n_strx = 1;
-    StringTable.push_back(Mang->getValueName(I->GV));
-    // Emit nlist to buffer
-    outword(ST, I->n_strx);
-    outbyte(ST, I->n_type);
-    outbyte(ST, I->n_sect);
-    outhalf(ST, I->n_desc);
-    outaddr(ST, I->n_value);
-  }
-  
-  O.write((char*)&ST[0], ST.size());
+/// PartitionByLocal - Simple boolean predicate that returns true if Sym is
+/// a local symbol rather than an external symbol.
+bool MachOWriter::PartitionByLocal(const MachOSym &Sym) {
+  // FIXME: Not totally sure if private extern counts as external
+  return (Sym.n_type & (MachOSym::N_EXT | MachOSym::N_PEXT)) == 0;
 }
 
-/// EmitStringTable - This method adds and emits a section for the Mach-O 
-/// string table.
-void MachOWriter::EmitStringTable() {
-  // The order of the string table is:
-  // strings for external symbols
-  // strings for local symbols
-  // This is the symbol table, but backwards.  This allows us to avoid a sorting
-  // the symbol table again; all we have to do is use a reverse iterator.
-  DataBuffer ST;
+/// PartitionByDefined - Simple boolean predicate that returns true if Sym is
+/// defined in this module.
+bool MachOWriter::PartitionByDefined(const MachOSym &Sym) {
+  // FIXME: Do N_ABS or N_INDR count as defined?
+  return (Sym.n_type & MachOSym::N_SECT) == MachOSym::N_SECT;
+}
 
+/// BufferSymbolAndStringTable - Sort the symbols we encountered and assign them
+/// each a string table index so that they appear in the correct order in the
+/// output file.
+void MachOWriter::BufferSymbolAndStringTable() {
+  // The order of the symbol table is:
+  // 1. local symbols
+  // 2. defined external symbols (sorted by name)
+  // 3. undefined external symbols (sorted by name)
+  
+  // Sort the symbols by name, so that when we partition the symbols by scope
+  // of definition, we won't have to sort by name within each partition.
+  std::sort(SymbolTable.begin(), SymbolTable.end(), MachOSymCmp());
+
+  // Parition the symbol table entries so that all local symbols come before 
+  // all symbols with external linkage. { 1 | 2 3 }
+  std::partition(SymbolTable.begin(), SymbolTable.end(), PartitionByLocal);
+  
+  // Advance iterator to beginning of external symbols and partition so that
+  // all external symbols defined in this module come before all external
+  // symbols defined elsewhere. { 1 | 2 | 3 }
+  for (std::vector<MachOSym>::iterator I = SymbolTable.begin(),
+         E = SymbolTable.end(); I != E; ++I) {
+    if (!PartitionByLocal(*I)) {
+      std::partition(I, E, PartitionByDefined);
+      break;
+    }
+  }
+  
   // Write out a leading zero byte when emitting string table, for n_strx == 0
   // which means an empty string.
-  outbyte(ST, 0);
+  outbyte(StrT, 0);
 
-  for (std::vector<std::string>::iterator I = StringTable.begin(),
-         E = StringTable.end(); I != E; ++I) {
-    // FIXME: do not arbitrarily cap symbols to 16 characters
-    // FIXME: do something more efficient than outstring
-    outstring(ST, *I, 16);
+  // The order of the string table is:
+  // 1. strings for external symbols
+  // 2. strings for local symbols
+  // Since this is the opposite order from the symbol table, which we have just
+  // sorted, we can walk the symbol table backwards to output the string table.
+  for (std::vector<MachOSym>::reverse_iterator I = SymbolTable.rbegin(),
+        E = SymbolTable.rend(); I != E; ++I) {
+    if (I->GVName == "") {
+      I->n_strx = 0;
+    } else {
+      I->n_strx = StrT.size();
+      outstring(StrT, I->GVName, I->GVName.length()+1);
+    }
   }
-  O.write((char*)&ST[0], ST.size());
+
+  for (std::vector<MachOSym>::iterator I = SymbolTable.begin(),
+         E = SymbolTable.end(); I != E; ++I) {
+    // Emit nlist to buffer
+    outword(SymT, I->n_strx);
+    outbyte(SymT, I->n_type);
+    outbyte(SymT, I->n_sect);
+    outhalf(SymT, I->n_desc);
+    outaddr(SymT, I->n_value);
+  }
 }

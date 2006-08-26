@@ -204,8 +204,6 @@ namespace llvm {
     /// the file, and then emit during finalization.
     MachOHeader Header;
     
-  private:
-
     /// MachOSegment - This struct contains the necessary information to
     /// emit the load commands for each section in the file.
     struct MachOSegment {
@@ -353,6 +351,8 @@ namespace llvm {
           reserved3(0) { }
     };
 
+  private:
+
     /// SectionList - This is the list of sections that we have emitted to the
     /// file.  Once the file has been completely built, the segment load command
     /// SectionCommands are constructed from this info.
@@ -472,11 +472,12 @@ namespace llvm {
     /// turned into a real symbol table in the file.
     struct MachOSym {
       const GlobalValue *GV;    // The global value this corresponds to.
-      uint32_t  n_strx;         // index into the string table
-      uint8_t   n_type;         // type flag
-      uint8_t   n_sect;         // section number or NO_SECT
-      int16_t   n_desc;         // see <mach-o/stab.h>
-      uint64_t  n_value;        // value for this symbol (or stab offset)
+      std::string GVName;       // The mangled name of the global value.
+      uint32_t    n_strx;       // index into the string table
+      uint8_t     n_type;       // type flag
+      uint8_t     n_sect;       // section number or NO_SECT
+      int16_t     n_desc;       // see <mach-o/stab.h>
+      uint64_t    n_value;      // value for this symbol (or stab offset)
       
       // Constants for the n_sect field
       // see <mach-o/nlist.h>
@@ -510,19 +511,39 @@ namespace llvm {
              N_WEAK_DEF      = 0x0080  // coalesced symbol is a weak definition
       };
       
-      /// entrySize - This routine returns the size of a symbol table entry as
-      /// written to disk.
-      static unsigned entrySize() { return 12; }
-
-      MachOSym(const GlobalValue *gv, uint8_t sect) : GV(gv), n_strx(0), 
-        n_type(sect == NO_SECT ? N_UNDF : N_SECT), n_sect(sect), n_desc(0),
-        n_value(0) {}
+      MachOSym(const GlobalValue *gv, std::string name, uint8_t sect) : GV(gv), 
+        GVName(name), n_strx(0), n_type(sect == NO_SECT ? N_UNDF : N_SECT), 
+        n_sect(sect), n_desc(0), n_value(0) {
+        // FIXME: names aren't getting the proper global/local prefix
+      }
     };
+
+    struct MachOSymCmp {
+      bool operator()(const MachOSym &LHS, const MachOSym &RHS) {
+        return LHS.GVName < RHS.GVName;
+      }
+    };
+
+    /// PartitionByLocal - Simple boolean predicate that returns true if Sym is
+    /// a local symbol rather than an external symbol.
+    static bool PartitionByLocal(const MachOSym &Sym);
+
+    /// PartitionByDefined - Simple boolean predicate that returns true if Sym 
+    /// is defined in this module.
+    static bool PartitionByDefined(const MachOWriter::MachOSym &Sym);
 
     /// SymbolTable - This is the list of symbols we have emitted to the file.
     /// This actually gets rearranged before emission to the file (to put the
     /// local symbols first in the list).
     std::vector<MachOSym> SymbolTable;
+    
+    /// SymT - A buffer to hold the symbol table before we write it out at the
+    /// appropriate location in the file.
+    DataBuffer SymT;
+    
+    /// StrT - A buffer to hold the string table before we write it out at the
+    /// appropriate location in the file.
+    DataBuffer StrT;
     
     /// PendingSyms - This is a list of externally defined symbols that we have
     /// been asked to emit, but have not seen a reference to.  When a reference
@@ -533,9 +554,6 @@ namespace llvm {
     /// SymbolTable to aid in emitting the DYSYMTAB load command.
     std::vector<unsigned> DynamicSymbolTable;
     
-    /// StringTable - The table of strings referenced by SymbolTable entries
-    std::vector<std::string> StringTable;
-
     // align - Emit padding into the file until the current output position is
     // aligned to the specified power of two boundary.
     static void align(DataBuffer &Output, unsigned Boundary) {
@@ -624,8 +642,7 @@ namespace llvm {
     void EmitHeaderAndLoadCommands();
     void EmitSections();
     void EmitRelocations();
-    void EmitSymbolTable();
-    void EmitStringTable();
+    void BufferSymbolAndStringTable();
   };
 }
 
