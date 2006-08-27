@@ -23,7 +23,7 @@
 #include "llvm/Pass.h"
 #include "llvm/Target/TargetData.h"
 #include "llvm/Support/GetElementPtrTypeIterator.h"
-#include "llvm/Support/Visibility.h"
+#include "llvm/Support/Compiler.h"
 #include <algorithm>
 using namespace llvm;
 

@@ -25,7 +25,7 @@
 #include "llvm/Function.h"
 #include "llvm/Support/GetElementPtrTypeIterator.h"
 #include "llvm/Support/MathExtras.h"
-#include "llvm/Support/Visibility.h"
+#include "llvm/Support/Compiler.h"
 #include <limits>
 #include <cmath>
 using namespace llvm;

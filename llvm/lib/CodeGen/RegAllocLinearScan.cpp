@@ -27,7 +27,7 @@
 #include "llvm/ADT/Statistic.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/Support/Debug.h"
-#include "llvm/Support/Visibility.h"
+#include "llvm/Support/Compiler.h"
 #include <algorithm>
 #include <cmath>
 #include <iostream>

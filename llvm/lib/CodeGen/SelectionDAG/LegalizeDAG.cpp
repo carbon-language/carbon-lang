@@ -21,7 +21,7 @@
 #include "llvm/Constants.h"
 #include "llvm/Support/MathExtras.h"
 #include "llvm/Support/CommandLine.h"
-#include "llvm/Support/Visibility.h"
+#include "llvm/Support/Compiler.h"
 #include "llvm/ADT/SmallVector.h"
 #include <iostream>
 #include <map>

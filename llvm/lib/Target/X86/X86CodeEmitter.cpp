@@ -22,7 +22,7 @@
 #include "llvm/CodeGen/Passes.h"
 #include "llvm/Function.h"
 #include "llvm/ADT/Statistic.h"
-#include "llvm/Support/Visibility.h"
+#include "llvm/Support/Compiler.h"
 #include "llvm/Target/TargetOptions.h"
 #include <iostream>
 using namespace llvm;

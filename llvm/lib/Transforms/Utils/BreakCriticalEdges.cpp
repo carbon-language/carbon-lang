@@ -24,7 +24,7 @@
 #include "llvm/Instructions.h"
 #include "llvm/Type.h"
 #include "llvm/Support/CFG.h"
-#include "llvm/Support/Visibility.h"
+#include "llvm/Support/Compiler.h"
 #include "llvm/ADT/Statistic.h"
 using namespace llvm;
 

@@ -27,7 +27,7 @@
 #include "llvm/Instructions.h"
 #include "llvm/Support/LeakDetector.h"
 #include "llvm/Support/GraphWriter.h"
-#include "llvm/Support/Visibility.h"
+#include "llvm/Support/Compiler.h"
 #include "llvm/Config/config.h"
 #include <fstream>
 #include <iostream>

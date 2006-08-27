@@ -42,7 +42,7 @@
 #include "llvm/Transforms/Utils/BasicBlockUtils.h"
 #include "llvm/Support/MathExtras.h"
 #include "llvm/Support/Debug.h"
-#include "llvm/Support/Visibility.h"
+#include "llvm/Support/Compiler.h"
 #include <map>
 #include <set>
 #include <iostream>

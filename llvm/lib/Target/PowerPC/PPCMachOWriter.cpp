@@ -15,7 +15,7 @@
 #include "PPCTargetMachine.h"
 #include "llvm/PassManager.h"
 #include "llvm/CodeGen/MachOWriter.h"
-#include "llvm/Support/Visibility.h"
+#include "llvm/Support/Compiler.h"
 using namespace llvm;
 
 namespace {

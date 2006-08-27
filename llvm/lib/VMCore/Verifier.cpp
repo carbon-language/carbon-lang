@@ -57,7 +57,7 @@
 #include "llvm/Support/InstVisitor.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/ADT/STLExtras.h"
-#include "llvm/Support/Visibility.h"
+#include "llvm/Support/Compiler.h"
 #include <algorithm>
 #include <iostream>
 #include <sstream>

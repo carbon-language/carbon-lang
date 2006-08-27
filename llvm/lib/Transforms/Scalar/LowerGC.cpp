@@ -26,7 +26,7 @@
 #include "llvm/Instructions.h"
 #include "llvm/Module.h"
 #include "llvm/Pass.h"
-#include "llvm/Support/Visibility.h"
+#include "llvm/Support/Compiler.h"
 using namespace llvm;
 
 namespace {

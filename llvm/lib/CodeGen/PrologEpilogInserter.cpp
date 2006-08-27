@@ -24,7 +24,7 @@
 #include "llvm/Target/MRegisterInfo.h"
 #include "llvm/Target/TargetFrameInfo.h"
 #include "llvm/Target/TargetInstrInfo.h"
-#include "llvm/Support/Visibility.h"
+#include "llvm/Support/Compiler.h"
 using namespace llvm;
 
 namespace {

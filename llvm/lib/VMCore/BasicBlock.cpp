@@ -17,7 +17,7 @@
 #include "llvm/Type.h"
 #include "llvm/Support/CFG.h"
 #include "llvm/Support/LeakDetector.h"
-#include "llvm/Support/Visibility.h"
+#include "llvm/Support/Compiler.h"
 #include "SymbolTableListTraitsImpl.h"
 #include <algorithm>
 using namespace llvm;

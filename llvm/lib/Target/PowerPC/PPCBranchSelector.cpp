@@ -19,7 +19,7 @@
 #include "PPCInstrBuilder.h"
 #include "PPCInstrInfo.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
-#include "llvm/Support/Visibility.h"
+#include "llvm/Support/Compiler.h"
 #include <map>
 using namespace llvm;
 

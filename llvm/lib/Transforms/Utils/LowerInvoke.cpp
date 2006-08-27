@@ -44,7 +44,7 @@
 #include "llvm/Transforms/Utils/Local.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/Support/CommandLine.h"
-#include "llvm/Support/Visibility.h"
+#include "llvm/Support/Compiler.h"
 #include <csetjmp>
 using namespace llvm;
 

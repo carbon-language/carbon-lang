@@ -26,7 +26,7 @@
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/Support/CFG.h"
 #include "llvm/Support/StableBasicBlockNumbering.h"
-#include "llvm/Support/Visibility.h"
+#include "llvm/Support/Compiler.h"
 #include <algorithm>
 using namespace llvm;
 

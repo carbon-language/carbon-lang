@@ -72,7 +72,7 @@
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/ConstantRange.h"
 #include "llvm/Support/InstIterator.h"
-#include "llvm/Support/Visibility.h"
+#include "llvm/Support/Compiler.h"
 #include "llvm/ADT/Statistic.h"
 #include <cmath>
 #include <iostream>

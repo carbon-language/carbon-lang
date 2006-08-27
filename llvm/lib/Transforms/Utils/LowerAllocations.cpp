@@ -21,7 +21,7 @@
 #include "llvm/Pass.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/Target/TargetData.h"
-#include "llvm/Support/Visibility.h"
+#include "llvm/Support/Compiler.h"
 using namespace llvm;
 
 namespace {

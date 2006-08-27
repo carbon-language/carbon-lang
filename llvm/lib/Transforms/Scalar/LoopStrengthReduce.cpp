@@ -31,7 +31,7 @@
 #include "llvm/Target/TargetData.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/Support/Debug.h"
-#include "llvm/Support/Visibility.h"
+#include "llvm/Support/Compiler.h"
 #include "llvm/Target/TargetLowering.h"
 #include <algorithm>
 #include <iostream>
