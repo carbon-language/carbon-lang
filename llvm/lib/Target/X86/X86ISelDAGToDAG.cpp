@@ -723,9 +723,9 @@ SDNode *X86DAGToDAGISel::Select(SDOperand N) {
         AddToISelQueue(Tmp1);
         AddToISelQueue(Tmp2);
         AddToISelQueue(Tmp3);
+        SDOperand Ops[] = { Tmp0, Tmp1, Tmp2, Tmp3, Chain, InFlag };
         SDNode *CNode =
-          CurDAG->getTargetNode(MOpc, MVT::Other, MVT::Flag, Tmp0, Tmp1,
-                                Tmp2, Tmp3, Chain, InFlag);
+          CurDAG->getTargetNode(MOpc, MVT::Other, MVT::Flag, Ops, 6);
         Chain  = SDOperand(CNode, 0);
         InFlag = SDOperand(CNode, 1);
       } else {
@@ -827,9 +827,9 @@ SDNode *X86DAGToDAGISel::Select(SDOperand N) {
         AddToISelQueue(Tmp1);
         AddToISelQueue(Tmp2);
         AddToISelQueue(Tmp3);
+        SDOperand Ops[] = { Tmp0, Tmp1, Tmp2, Tmp3, Chain, InFlag };
         SDNode *CNode =
-          CurDAG->getTargetNode(MOpc, MVT::Other, MVT::Flag, Tmp0, Tmp1,
-                                Tmp2, Tmp3, Chain, InFlag);
+          CurDAG->getTargetNode(MOpc, MVT::Other, MVT::Flag, Ops, 6);
         Chain  = SDOperand(CNode, 0);
         InFlag = SDOperand(CNode, 1);
       } else {

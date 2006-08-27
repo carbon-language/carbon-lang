@@ -204,18 +204,22 @@ SDNode *IA64DAGToDAGISel::SelectDIV(SDOperand Op) {
     }
     
     SDOperand TmpE0, TmpY1, TmpE1, TmpY2;
-    
+
+    SDOperand OpsE0[] = { TmpF4, TmpF5, F1, TmpPR };
     TmpE0 = SDOperand(CurDAG->getTargetNode(IA64::CFNMAS1, MVT::f64,
-                                            TmpF4, TmpF5, F1, TmpPR), 0);
+                                            OpsE0, 4), 0);
     Chain = TmpE0.getValue(1);
+    SDOperand OpsY1[] = { TmpF5, TmpE0, TmpF5, TmpPR };
     TmpY1 = SDOperand(CurDAG->getTargetNode(IA64::CFMAS1, MVT::f64,
-                                            TmpF5, TmpE0, TmpF5, TmpPR), 0);
+                                            OpsY1, 4), 0);
     Chain = TmpY1.getValue(1);
+    SDOperand OpsE1[] = { TmpE0, TmpE0, F0, TmpPR };
     TmpE1 = SDOperand(CurDAG->getTargetNode(IA64::CFMAS1, MVT::f64,
-                                            TmpE0, TmpE0, F0, TmpPR), 0);
+                                            OpsE1, 4), 0);
     Chain = TmpE1.getValue(1);
+    SDOperand OpsY2[] = { TmpY1, TmpE1, TmpY1, TmpPR };
     TmpY2 = SDOperand(CurDAG->getTargetNode(IA64::CFMAS1, MVT::f64,
-                                            TmpY1, TmpE1, TmpY1, TmpPR), 0);
+                                            OpsY2, 4), 0);
     Chain = TmpY2.getValue(1);
     
     if(isFP) { // if this is an FP divide, we finish up here and exit early
@@ -223,45 +227,53 @@ SDNode *IA64DAGToDAGISel::SelectDIV(SDOperand Op) {
         assert(0 && "Sorry, try another FORTRAN compiler.");
  
       SDOperand TmpE2, TmpY3, TmpQ0, TmpR0;
-      
+
+      SDOperand OpsE2[] = { TmpE1, TmpE1, F0, TmpPR };
       TmpE2 = SDOperand(CurDAG->getTargetNode(IA64::CFMAS1, MVT::f64,
-                                              TmpE1, TmpE1, F0, TmpPR), 0);
+                                              OpsE2, 4), 0);
       Chain = TmpE2.getValue(1);
+      SDOperand OpsY3[] = { TmpY2, TmpE2, TmpY2, TmpPR };
       TmpY3 = SDOperand(CurDAG->getTargetNode(IA64::CFMAS1, MVT::f64,
-                                              TmpY2, TmpE2, TmpY2, TmpPR), 0);
+                                              OpsY3, 4), 0);
       Chain = TmpY3.getValue(1);
+      SDOperand OpsQ0[] = { Tmp1, TmpY3, F0, TmpPR };
       TmpQ0 =
         SDOperand(CurDAG->getTargetNode(IA64::CFMADS1, MVT::f64, // double prec!
-                                        Tmp1, TmpY3, F0, TmpPR), 0);
+                                        OpsQ0, 4), 0);
       Chain = TmpQ0.getValue(1);
+      SDOperand OpsR0[] = { Tmp2, TmpQ0, Tmp1, TmpPR };
       TmpR0 =
         SDOperand(CurDAG->getTargetNode(IA64::CFNMADS1, MVT::f64, // double prec!
-                                        Tmp2, TmpQ0, Tmp1, TmpPR), 0);
+                                        OpsR0, 4), 0);
       Chain = TmpR0.getValue(1);
 
 // we want Result to have the same target register as the frcpa, so
 // we two-address hack it. See the comment "for this to work..." on
 // page 48 of Intel application note #245415
+      SDOperand Ops[] = { TmpF5, TmpY3, TmpR0, TmpQ0, TmpPR };
       Result = CurDAG->getTargetNode(IA64::TCFMADS0, MVT::f64, // d.p. s0 rndg!
-                                     TmpF5, TmpY3, TmpR0, TmpQ0, TmpPR);
+                                     Ops, 5);
       Chain = SDOperand(Result, 1);
       return Result; // XXX: early exit!
     } else { // this is *not* an FP divide, so there's a bit left to do:
     
       SDOperand TmpQ2, TmpR2, TmpQ3, TmpQ;
-      
+
+      SDOperand OpsQ2[] = { TmpF3, TmpY2, F0, TmpPR };
       TmpQ2 = SDOperand(CurDAG->getTargetNode(IA64::CFMAS1, MVT::f64,
-                                              TmpF3, TmpY2, F0, TmpPR), 0);
+                                              OpsQ2, 4), 0);
       Chain = TmpQ2.getValue(1);
+      SDOperand OpsR2[] = { TmpF4, TmpQ2, TmpF3, TmpPR };
       TmpR2 = SDOperand(CurDAG->getTargetNode(IA64::CFNMAS1, MVT::f64,
-                                              TmpF4, TmpQ2, TmpF3, TmpPR), 0);
+                                              OpsR2, 4), 0);
       Chain = TmpR2.getValue(1);
       
 // we want TmpQ3 to have the same target register as the frcpa? maybe we
 // should two-address hack it. See the comment "for this to work..." on page
 // 48 of Intel application note #245415
+      SDOperand OpsQ3[] = { TmpF5, TmpR2, TmpY2, TmpQ2, TmpPR };
       TmpQ3 = SDOperand(CurDAG->getTargetNode(IA64::TCFMAS1, MVT::f64,
-                                         TmpF5, TmpR2, TmpY2, TmpQ2, TmpPR), 0);
+                                         OpsQ3, 5), 0);
       Chain = TmpQ3.getValue(1);
 
       // STORY: without these two-address instructions (TCFMAS1 and TCFMADS0)

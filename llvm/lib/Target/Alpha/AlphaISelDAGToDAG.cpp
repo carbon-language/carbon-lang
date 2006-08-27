@@ -442,10 +442,11 @@ void AlphaDAGToDAGISel::SelectCALL(SDOperand Op) {
        Opc = Alpha::STT;
      } else
        assert(0 && "Unknown operand"); 
-     Chain = SDOperand(CurDAG->getTargetNode(Opc, MVT::Other, CallOperands[i], 
-                                             getI64Imm((i - 6) * 8), 
-                                             CurDAG->getCopyFromReg(Chain, Alpha::R30, MVT::i64),
-                                             Chain), 0);
+
+     SDOperand Ops[] = { CallOperands[i],  getI64Imm((i - 6) * 8), 
+                         CurDAG->getCopyFromReg(Chain, Alpha::R30, MVT::i64),
+                         Chain };
+     Chain = SDOperand(CurDAG->getTargetNode(Opc, MVT::Other, Ops, 4), 0);
    }
    for (int i = 0; i < std::min(6, count); ++i) {
      if (MVT::isInteger(TypeOperands[i])) {
