@@ -30,7 +30,6 @@
 #include <fstream>
 #include <memory>
 #include <algorithm>
-
 using namespace llvm;
 
 // The OptimizationList is automatically populated with registered Passes by the
@@ -250,7 +249,7 @@ int main(int argc, char **argv) {
       Passes.add(createVerifierPass());
 
     // Write bytecode out to disk or cout as the last step...
-    if (!NoOutput)
+    if (!NoOutput && !AnalyzeOnly)
       Passes.add(new WriteBytecodePass(Out, Out != &std::cout));
 
     // Now that we have all of the passes ready, run them.
