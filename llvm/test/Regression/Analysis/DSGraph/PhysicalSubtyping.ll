@@ -1,6 +1,6 @@
 ; Test to check for support for "physical subtyping"
 ;
-; RUN: opt -analyze %s -datastructure-gc -dsgc-abort-if-any-collapsed
+; RUN: llvm-as < %s | opt -analyze -datastructure-gc -dsgc-abort-if-any-collapsed
 ;
 %S = type { int }
 %T = type { int, float, double }

@@ -1,4 +1,4 @@
-; RUN: opt -analyze %s -budatastructure -dont-print-ds
+; RUN: llvm-as < %s | opt -analyze -budatastructure -dont-print-ds
 
 %MidFnTy = type void (\2*)
 

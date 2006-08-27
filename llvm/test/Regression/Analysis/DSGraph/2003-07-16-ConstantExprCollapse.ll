@@ -1,6 +1,6 @@
 ; This should cause the global node to collapse!!
 ; XFAIL: *
-; RUN: opt -analyze %s -datastructure-gc --dsgc-check-flags=test:GAU
+; RUN: llvm-as < %s | opt -analyze -datastructure-gc --dsgc-check-flags=test:GAU
 
 %Tree = type { int, %Tree*, %Tree* }
 %T5 = external global %Tree

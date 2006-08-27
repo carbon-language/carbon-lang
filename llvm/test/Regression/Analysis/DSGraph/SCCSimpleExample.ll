@@ -1,5 +1,5 @@
 
-; RUN: opt -analyze %s -datastructure-gc --dsgc-abort-if-merged=Y,BVal
+; RUN: llvm-as < %s | opt -analyze -datastructure-gc --dsgc-abort-if-merged=Y,BVal
 
 implementation
 

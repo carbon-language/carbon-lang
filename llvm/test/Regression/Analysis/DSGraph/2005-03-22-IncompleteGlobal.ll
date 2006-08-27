@@ -1,5 +1,5 @@
-; RUN: opt -analyze %s -datastructure-gc  -dsgc-check-flags=G:GIM -dsgc-dspass=bu &&\
-; RUN: opt -analyze %s -datastructure-gc  -dsgc-check-flags=G:GIM -dsgc-dspass=td
+; RUN: llvm-as < %s | opt -analyze -datastructure-gc  -dsgc-check-flags=G:GIM -dsgc-dspass=bu &&\
+; RUN: llvm-as < %s | opt -analyze -datastructure-gc  -dsgc-check-flags=G:GIM -dsgc-dspass=td
 
 %S = type { double, int }
 
