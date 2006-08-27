@@ -1908,40 +1908,13 @@ SDNode *SelectionDAG::SelectNodeTo(SDNode *N, unsigned TargetOpc,
 }
 
 SDNode *SelectionDAG::SelectNodeTo(SDNode *N, unsigned TargetOpc,
-                                   MVT::ValueType VT, SDOperand Op1,
-                                   SDOperand Op2, SDOperand Op3,
-                                   SDOperand Op4) {
+                                   MVT::ValueType VT, const SDOperand *Ops,
+                                   unsigned NumOps) {
   // If an identical node already exists, use it.
   SDVTList VTs = getVTList(VT);
   SelectionDAGCSEMap::NodeID ID(ISD::BUILTIN_OP_END+TargetOpc, VTs);
-  ID.AddOperand(Op1);
-  ID.AddOperand(Op2);
-  ID.AddOperand(Op3);
-  ID.AddOperand(Op4);
-  void *IP = 0;
-  if (SDNode *ON = CSEMap.FindNodeOrInsertPos(ID, IP))
-    return ON;
-  
-  RemoveNodeFromCSEMaps(N);
-  N->MorphNodeTo(ISD::BUILTIN_OP_END+TargetOpc);
-  N->setValueTypes(VTs);
-  N->setOperands(Op1, Op2, Op3, Op4);
-
-  CSEMap.InsertNode(N, IP);   // Memoize the new node.
-  return N;
-}
-
-SDNode *SelectionDAG::SelectNodeTo(SDNode *N, unsigned TargetOpc,
-                                   MVT::ValueType VT, SDOperand Op1,
-                                   SDOperand Op2, SDOperand Op3,
-                                   SDOperand Op4, SDOperand Op5) {
-  SDVTList VTs = getVTList(VT);
-  SelectionDAGCSEMap::NodeID ID(ISD::BUILTIN_OP_END+TargetOpc, VTs);
-  ID.AddOperand(Op1);
-  ID.AddOperand(Op2);
-  ID.AddOperand(Op3);
-  ID.AddOperand(Op4);
-  ID.AddOperand(Op5);
+  for (unsigned i = 0; i != NumOps; ++i)
+    ID.AddOperand(Ops[i]);
   void *IP = 0;
   if (SDNode *ON = CSEMap.FindNodeOrInsertPos(ID, IP))
     return ON;
@@ -1949,88 +1922,7 @@ SDNode *SelectionDAG::SelectNodeTo(SDNode *N, unsigned TargetOpc,
   RemoveNodeFromCSEMaps(N);
   N->MorphNodeTo(ISD::BUILTIN_OP_END+TargetOpc);
   N->setValueTypes(VTs);
-  N->setOperands(Op1, Op2, Op3, Op4, Op5);
-  
-  CSEMap.InsertNode(N, IP);   // Memoize the new node.
-  return N;
-}
-
-SDNode *SelectionDAG::SelectNodeTo(SDNode *N, unsigned TargetOpc,
-                                   MVT::ValueType VT, SDOperand Op1,
-                                   SDOperand Op2, SDOperand Op3, SDOperand Op4,
-                                   SDOperand Op5, SDOperand Op6) {
-  SDVTList VTs = getVTList(VT);
-  SelectionDAGCSEMap::NodeID ID(ISD::BUILTIN_OP_END+TargetOpc, VTs);
-  ID.AddOperand(Op1);
-  ID.AddOperand(Op2);
-  ID.AddOperand(Op3);
-  ID.AddOperand(Op4);
-  ID.AddOperand(Op5);
-  ID.AddOperand(Op6);
-  void *IP = 0;
-  if (SDNode *ON = CSEMap.FindNodeOrInsertPos(ID, IP))
-    return ON;
-                                       
-  RemoveNodeFromCSEMaps(N);
-  N->MorphNodeTo(ISD::BUILTIN_OP_END+TargetOpc);
-  N->setValueTypes(VTs);
-  N->setOperands(Op1, Op2, Op3, Op4, Op5, Op6);
-  
-  CSEMap.InsertNode(N, IP);   // Memoize the new node.
-  return N;
-}
-
-SDNode *SelectionDAG::SelectNodeTo(SDNode *N, unsigned TargetOpc,
-                                   MVT::ValueType VT, SDOperand Op1,
-                                   SDOperand Op2, SDOperand Op3,SDOperand Op4,
-                                   SDOperand Op5, SDOperand Op6,
-                                   SDOperand Op7) {
-  SDVTList VTs = getVTList(VT);
-  // If an identical node already exists, use it.
-  SelectionDAGCSEMap::NodeID ID(ISD::BUILTIN_OP_END+TargetOpc, VTs);
-  ID.AddOperand(Op1);
-  ID.AddOperand(Op2);
-  ID.AddOperand(Op3);
-  ID.AddOperand(Op4);
-  ID.AddOperand(Op5);
-  ID.AddOperand(Op6);
-  ID.AddOperand(Op7);
-  void *IP = 0;
-  if (SDNode *ON = CSEMap.FindNodeOrInsertPos(ID, IP))
-    return ON;
-                                       
-  RemoveNodeFromCSEMaps(N);
-  N->MorphNodeTo(ISD::BUILTIN_OP_END+TargetOpc);
-  N->setValueTypes(VTs);
-  N->setOperands(Op1, Op2, Op3, Op4, Op5, Op6, Op7);
-  
-  CSEMap.InsertNode(N, IP);   // Memoize the new node.
-  return N;
-}
-SDNode *SelectionDAG::SelectNodeTo(SDNode *N, unsigned TargetOpc,
-                                   MVT::ValueType VT, SDOperand Op1,
-                                   SDOperand Op2, SDOperand Op3,SDOperand Op4,
-                                   SDOperand Op5, SDOperand Op6,
-                                   SDOperand Op7, SDOperand Op8) {
-  // If an identical node already exists, use it.
-  SDVTList VTs = getVTList(VT);
-  SelectionDAGCSEMap::NodeID ID(ISD::BUILTIN_OP_END+TargetOpc, VTs);
-  ID.AddOperand(Op1);
-  ID.AddOperand(Op2);
-  ID.AddOperand(Op3);
-  ID.AddOperand(Op4);
-  ID.AddOperand(Op5);
-  ID.AddOperand(Op6);
-  ID.AddOperand(Op7);
-  ID.AddOperand(Op8);
-  void *IP = 0;
-  if (SDNode *ON = CSEMap.FindNodeOrInsertPos(ID, IP))
-    return ON;
-                                       
-  RemoveNodeFromCSEMaps(N);
-  N->MorphNodeTo(ISD::BUILTIN_OP_END+TargetOpc);
-  N->setValueTypes(VTs);
-  N->setOperands(Op1, Op2, Op3, Op4, Op5, Op6, Op7, Op8);
+  N->setOperands(Ops, NumOps);
   
   CSEMap.InsertNode(N, IP);   // Memoize the new node.
   return N;
@@ -2075,55 +1967,6 @@ SDNode *SelectionDAG::SelectNodeTo(SDNode *N, unsigned TargetOpc,
   return N;
 }
 
-SDNode *SelectionDAG::SelectNodeTo(SDNode *N, unsigned TargetOpc,
-                                   MVT::ValueType VT1, MVT::ValueType VT2,
-                                   SDOperand Op1, SDOperand Op2,
-                                   SDOperand Op3, SDOperand Op4) {
-  // If an identical node already exists, use it.
-  SDVTList VTs = getVTList(VT1, VT2);
-  SelectionDAGCSEMap::NodeID ID(ISD::BUILTIN_OP_END+TargetOpc, VTs);
-  ID.AddOperand(Op1);
-  ID.AddOperand(Op2);
-  ID.AddOperand(Op3);
-  ID.AddOperand(Op4);
-  void *IP = 0;
-  if (SDNode *ON = CSEMap.FindNodeOrInsertPos(ID, IP))
-    return ON;
-                                       
-  RemoveNodeFromCSEMaps(N);
-  N->MorphNodeTo(ISD::BUILTIN_OP_END+TargetOpc);
-  N->setValueTypes(VTs);
-  N->setOperands(Op1, Op2, Op3, Op4);
-
-  CSEMap.InsertNode(N, IP);   // Memoize the new node.
-  return N;
-}
-
-SDNode *SelectionDAG::SelectNodeTo(SDNode *N, unsigned TargetOpc,
-                                   MVT::ValueType VT1, MVT::ValueType VT2,
-                                   SDOperand Op1, SDOperand Op2,
-                                   SDOperand Op3, SDOperand Op4, 
-                                   SDOperand Op5) {
-  // If an identical node already exists, use it.
-  SDVTList VTs = getVTList(VT1, VT2);
-  SelectionDAGCSEMap::NodeID ID(ISD::BUILTIN_OP_END+TargetOpc, VTs);
-  ID.AddOperand(Op1);
-  ID.AddOperand(Op2);
-  ID.AddOperand(Op3);
-  ID.AddOperand(Op4);
-  ID.AddOperand(Op5);
-  void *IP = 0;
-  if (SDNode *ON = CSEMap.FindNodeOrInsertPos(ID, IP))
-    return ON;
-                                       
-  RemoveNodeFromCSEMaps(N);
-  N->MorphNodeTo(ISD::BUILTIN_OP_END+TargetOpc);
-  N->setValueTypes(VTs);
-  N->setOperands(Op1, Op2, Op3, Op4, Op5);
-  
-  CSEMap.InsertNode(N, IP);   // Memoize the new node.
-  return N;
-}
 
 /// getTargetNode - These are used for target selectors to create a new node
 /// with specified return type(s), target opcode, and operands.
@@ -2145,37 +1988,6 @@ SDNode *SelectionDAG::getTargetNode(unsigned Opcode, MVT::ValueType VT,
 SDNode *SelectionDAG::getTargetNode(unsigned Opcode, MVT::ValueType VT,
                                     SDOperand Op1, SDOperand Op2, SDOperand Op3) {
   return getNode(ISD::BUILTIN_OP_END+Opcode, VT, Op1, Op2, Op3).Val;
-}
-SDNode *SelectionDAG::getTargetNode(unsigned Opcode, MVT::ValueType VT,
-                                    SDOperand Op1, SDOperand Op2, SDOperand Op3,
-                                    SDOperand Op4) {
-  return getNode(ISD::BUILTIN_OP_END+Opcode, VT, Op1, Op2, Op3, Op4).Val;
-}
-SDNode *SelectionDAG::getTargetNode(unsigned Opcode, MVT::ValueType VT,
-                                    SDOperand Op1, SDOperand Op2, SDOperand Op3,
-                                    SDOperand Op4, SDOperand Op5) {
-  return getNode(ISD::BUILTIN_OP_END+Opcode, VT, Op1, Op2, Op3, Op4, Op5).Val;
-}
-SDNode *SelectionDAG::getTargetNode(unsigned Opcode, MVT::ValueType VT,
-                                    SDOperand Op1, SDOperand Op2, SDOperand Op3,
-                                    SDOperand Op4, SDOperand Op5,
-                                    SDOperand Op6) {
-  SDOperand Ops[] = { Op1, Op2, Op3, Op4, Op5, Op6 };
-  return getNode(ISD::BUILTIN_OP_END+Opcode, VT, Ops, 6).Val;
-}
-SDNode *SelectionDAG::getTargetNode(unsigned Opcode, MVT::ValueType VT,
-                                    SDOperand Op1, SDOperand Op2, SDOperand Op3,
-                                    SDOperand Op4, SDOperand Op5, SDOperand Op6,
-                                    SDOperand Op7) {
-  SDOperand Ops[] = { Op1, Op2, Op3, Op4, Op5, Op6, Op7 };
-  return getNode(ISD::BUILTIN_OP_END+Opcode, VT, Ops, 7).Val;
-}
-SDNode *SelectionDAG::getTargetNode(unsigned Opcode, MVT::ValueType VT,
-                                    SDOperand Op1, SDOperand Op2, SDOperand Op3,
-                                    SDOperand Op4, SDOperand Op5, SDOperand Op6,
-                                    SDOperand Op7, SDOperand Op8) {
-  SDOperand Ops[] = { Op1, Op2, Op3, Op4, Op5, Op6, Op7, Op8 };
-  return getNode(ISD::BUILTIN_OP_END+Opcode, VT, Ops, 8).Val;
 }
 SDNode *SelectionDAG::getTargetNode(unsigned Opcode, MVT::ValueType VT,
                                     const SDOperand *Ops, unsigned NumOps) {
@@ -2200,38 +2012,11 @@ SDNode *SelectionDAG::getTargetNode(unsigned Opcode, MVT::ValueType VT1,
   SDOperand Ops[] = { Op1, Op2, Op3 };
   return getNode(ISD::BUILTIN_OP_END+Opcode, VTs, 2, Ops, 3).Val;
 }
-SDNode *SelectionDAG::getTargetNode(unsigned Opcode, MVT::ValueType VT1,
-                                    MVT::ValueType VT2, SDOperand Op1,
-                                    SDOperand Op2, SDOperand Op3, 
-                                    SDOperand Op4) {
+SDNode *SelectionDAG::getTargetNode(unsigned Opcode, MVT::ValueType VT1, 
+                                    MVT::ValueType VT2,
+                                    const SDOperand *Ops, unsigned NumOps) {
   const MVT::ValueType *VTs = getNodeValueTypes(VT1, VT2);
-  SDOperand Ops[] = { Op1, Op2, Op3, Op4 };
-  return getNode(ISD::BUILTIN_OP_END+Opcode, VTs, 2, Ops, 4).Val;
-}
-SDNode *SelectionDAG::getTargetNode(unsigned Opcode, MVT::ValueType VT1,
-                                    MVT::ValueType VT2, SDOperand Op1,
-                                    SDOperand Op2, SDOperand Op3, SDOperand Op4,
-                                    SDOperand Op5) {
-  const MVT::ValueType *VTs = getNodeValueTypes(VT1, VT2);
-  SDOperand Ops[] = { Op1, Op2, Op3, Op4, Op5 };
-  return getNode(ISD::BUILTIN_OP_END+Opcode, VTs, 2, Ops, 5).Val;
-}
-SDNode *SelectionDAG::getTargetNode(unsigned Opcode, MVT::ValueType VT1,
-                                    MVT::ValueType VT2, SDOperand Op1,
-                                    SDOperand Op2, SDOperand Op3, SDOperand Op4,
-                                    SDOperand Op5, SDOperand Op6) {
-  const MVT::ValueType *VTs = getNodeValueTypes(VT1, VT2);
-  SDOperand Ops[] = { Op1, Op2, Op3, Op4, Op5, Op6 };
-  return getNode(ISD::BUILTIN_OP_END+Opcode, VTs, 2, Ops, 6).Val;
-}
-SDNode *SelectionDAG::getTargetNode(unsigned Opcode, MVT::ValueType VT1,
-                                    MVT::ValueType VT2, SDOperand Op1,
-                                    SDOperand Op2, SDOperand Op3, SDOperand Op4,
-                                    SDOperand Op5, SDOperand Op6,
-                                    SDOperand Op7) {
-  const MVT::ValueType *VTs = getNodeValueTypes(VT1, VT2);
-  SDOperand Ops[] = { Op1, Op2, Op3, Op4, Op5, Op6, Op7 };
-  return getNode(ISD::BUILTIN_OP_END+Opcode, VTs, 2, Ops, 7).Val;
+  return getNode(ISD::BUILTIN_OP_END+Opcode, VTs, 2, Ops, NumOps).Val;
 }
 SDNode *SelectionDAG::getTargetNode(unsigned Opcode, MVT::ValueType VT1,
                                     MVT::ValueType VT2, MVT::ValueType VT3,
@@ -2240,38 +2025,11 @@ SDNode *SelectionDAG::getTargetNode(unsigned Opcode, MVT::ValueType VT1,
   SDOperand Ops[] = { Op1, Op2 };
   return getNode(ISD::BUILTIN_OP_END+Opcode, VTs, 3, Ops, 2).Val;
 }
-SDNode *SelectionDAG::getTargetNode(unsigned Opcode, MVT::ValueType VT1,
-                                    MVT::ValueType VT2, MVT::ValueType VT3,
-                                    SDOperand Op1, SDOperand Op2,
-                                    SDOperand Op3, SDOperand Op4,
-                                    SDOperand Op5) {
-  const MVT::ValueType *VTs = getNodeValueTypes(VT1, VT2, VT3);
-  SDOperand Ops[] = { Op1, Op2, Op3, Op4, Op5 };
-  return getNode(ISD::BUILTIN_OP_END+Opcode, VTs, 3, Ops, 5).Val;
-}
-SDNode *SelectionDAG::getTargetNode(unsigned Opcode, MVT::ValueType VT1,
-                                    MVT::ValueType VT2, MVT::ValueType VT3,
-                                    SDOperand Op1, SDOperand Op2,
-                                    SDOperand Op3, SDOperand Op4, SDOperand Op5,
-                                    SDOperand Op6) {
-  const MVT::ValueType *VTs = getNodeValueTypes(VT1, VT2, VT3);
-  SDOperand Ops[] = { Op1, Op2, Op3, Op4, Op5, Op6 };
-  return getNode(ISD::BUILTIN_OP_END+Opcode, VTs, 3, Ops, 6).Val;
-}
-SDNode *SelectionDAG::getTargetNode(unsigned Opcode, MVT::ValueType VT1,
-                                    MVT::ValueType VT2, MVT::ValueType VT3,
-                                    SDOperand Op1, SDOperand Op2,
-                                    SDOperand Op3, SDOperand Op4, SDOperand Op5,
-                                    SDOperand Op6, SDOperand Op7) {
-  const MVT::ValueType *VTs = getNodeValueTypes(VT1, VT2, VT3);
-  SDOperand Ops[] = { Op1, Op2, Op3, Op4, Op5, Op6, Op7 };
-  return getNode(ISD::BUILTIN_OP_END+Opcode, VTs, 3, Ops, 7).Val;
-}
 SDNode *SelectionDAG::getTargetNode(unsigned Opcode, MVT::ValueType VT1, 
-                                    MVT::ValueType VT2,
+                                    MVT::ValueType VT2, MVT::ValueType VT3,
                                     const SDOperand *Ops, unsigned NumOps) {
-  const MVT::ValueType *VTs = getNodeValueTypes(VT1, VT2);
-  return getNode(ISD::BUILTIN_OP_END+Opcode, VTs, 2, Ops, NumOps).Val;
+  const MVT::ValueType *VTs = getNodeValueTypes(VT1, VT2, VT3);
+  return getNode(ISD::BUILTIN_OP_END+Opcode, VTs, 3, Ops, NumOps).Val;
 }
 
 /// ReplaceAllUsesWith - Modify anything using 'From' to use 'To' instead.
