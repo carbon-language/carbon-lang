@@ -38,28 +38,18 @@ class PassInfo {
   const char           *PassName;      // Nice name for Pass
   const char           *PassArgument;  // Command Line argument to run this pass
   const std::type_info &TypeInfo;      // type_info object for this Pass class
-  unsigned char PassType;              // Set of enums values below...
+  bool IsAnalysisGroup;                // True if an analysis group.
   std::vector<const PassInfo*> ItfImpl;// Interfaces implemented by this pass
 
   Pass *(*NormalCtor)();               // No argument ctor
   Pass *(*TargetCtor)(TargetMachine&);   // Ctor taking TargetMachine object...
 
 public:
-  /// PassType - Define symbolic constants that can be used to test to see if
-  /// this pass should be listed by analyze or opt.  Passes can use none, one or
-  /// many of these flags or'd together.  It is not legal to combine the
-  /// AnalysisGroup flag with others.
-  ///
-  enum {
-    Analysis = 1, Optimization = 2, AnalysisGroup = 4
-  };
-
   /// PassInfo ctor - Do not call this directly, this should only be invoked
   /// through RegisterPass.
   PassInfo(const char *name, const char *arg, const std::type_info &ti,
-           unsigned char pt, Pass *(*normal)() = 0,
-           Pass *(*targetctor)(TargetMachine &) = 0)
-    : PassName(name), PassArgument(arg), TypeInfo(ti), PassType(pt),
+           Pass *(*normal)() = 0, Pass *(*targetctor)(TargetMachine &) = 0)
+    : PassName(name), PassArgument(arg), TypeInfo(ti), IsAnalysisGroup(false),
       NormalCtor(normal), TargetCtor(targetctor)  {
   }
 
@@ -78,11 +68,11 @@ public:
   ///
   const std::type_info &getTypeInfo() const { return TypeInfo; }
 
-  /// getPassType - Return the PassType of a pass.  Note that this can be
-  /// several different types or'd together.  This is _strictly_ for use by opt,
-  /// analyze and llc for deciding which passes to use as command line options.
+  /// isAnalysisGroup - Return true if this is an analysis group, not a normal
+  /// pass.
   ///
-  unsigned getPassType() const { return PassType; }
+  bool isAnalysisGroup() const { return IsAnalysisGroup; }
+  void SetIsAnalysisGroup() { IsAnalysisGroup = true; }
 
   /// getNormalCtor - Return a pointer to a function, that when called, creates
   /// an instance of the pass and returns it.  This pointer may be null if there
@@ -97,7 +87,7 @@ public:
 
   /// createPass() - Use this method to create an instance of this pass.
   Pass *createPass() const {
-    assert((PassType != AnalysisGroup || NormalCtor) &&
+    assert((!isAnalysisGroup() || NormalCtor) &&
            "No default implementation found for analysis group!");
     assert(NormalCtor &&
            "Cannot call createPass on PassInfo without default ctor!");
@@ -153,21 +143,21 @@ struct RegisterPassBase {
   const PassInfo *getPassInfo() const { return &PIObj; }
 
   RegisterPassBase(const char *Name, const char *Arg, const std::type_info &TI,
-                   unsigned char PT, Pass *(*Normal)() = 0,
+                   Pass *(*Normal)() = 0,
                    Pass *(*TargetCtor)(TargetMachine &) = 0)
-    : PIObj(Name, Arg, TI, PT, Normal, TargetCtor) {
+    : PIObj(Name, Arg, TI, Normal, TargetCtor) {
     registerPass();
   }
-  RegisterPassBase(const std::type_info &TI, unsigned char PT)
-    : PIObj("", "", TI, PT, 0, 0) {
+  RegisterPassBase(const std::type_info &TI)
+    : PIObj("", "", TI, 0, 0) {
     // This ctor may only be used for analysis groups: it does not auto-register
     // the pass.
-    assert(PT == PassInfo::AnalysisGroup && "Not an AnalysisGroup!");
+    PIObj.SetIsAnalysisGroup();
   }
   
   ~RegisterPassBase() {   // Intentionally non-virtual.
     // Analysis groups are registered/unregistered by their dtor.
-    if (PIObj.getPassType() != PassInfo::AnalysisGroup)
+    if (!PIObj.isAnalysisGroup())
       unregisterPass();
   }
 
@@ -189,26 +179,24 @@ template<typename PassName>
 struct RegisterPass : public RegisterPassBase {
 
   // Register Pass using default constructor...
-  RegisterPass(const char *PassArg, const char *Name, unsigned char PassTy = 0)
-  : RegisterPassBase(Name, PassArg, typeid(PassName), PassTy,
+  RegisterPass(const char *PassArg, const char *Name)
+  : RegisterPassBase(Name, PassArg, typeid(PassName),
                      callDefaultCtor<PassName>) {}
 
   // Register Pass using default constructor explicitly...
-  RegisterPass(const char *PassArg, const char *Name, unsigned char PassTy,
+  RegisterPass(const char *PassArg, const char *Name,
                Pass *(*ctor)()) 
-  : RegisterPassBase(Name, PassArg, typeid(PassName), PassTy, ctor) {}
+  : RegisterPassBase(Name, PassArg, typeid(PassName), ctor) {}
 
   // Register Pass using TargetMachine constructor...
-  RegisterPass(const char *PassArg, const char *Name, unsigned char PassTy,
+  RegisterPass(const char *PassArg, const char *Name, 
                Pass *(*targetctor)(TargetMachine &))
-  : RegisterPassBase(Name, PassArg, typeid(PassName), PassTy,
-                     0, targetctor) {}
+  : RegisterPassBase(Name, PassArg, typeid(PassName), 0, targetctor) {}
 
   // Generic constructor version that has an unknown ctor type...
   template<typename CtorType>
-  RegisterPass(const char *PassArg, const char *Name, unsigned char PassTy,
-               CtorType *Fn)
-  : RegisterPassBase(Name, PassArg, typeid(PassName), PassTy, 0) {}
+  RegisterPass(const char *PassArg, const char *Name, CtorType *Fn)
+  : RegisterPassBase(Name, PassArg, typeid(PassName), 0) {}
 };
 
 /// RegisterOpt - Register something that is to show up in Opt, this is just a
@@ -217,7 +205,7 @@ struct RegisterPass : public RegisterPassBase {
 template<typename PassName>
 struct RegisterOpt : public RegisterPassBase {
   RegisterOpt(const char *PassArg, const char *Name, bool CFGOnly = false)
-  : RegisterPassBase(Name, PassArg, typeid(PassName), PassInfo::Optimization,
+  : RegisterPassBase(Name, PassArg, typeid(PassName),
                      callDefaultCtor<PassName>) {
     if (CFGOnly) setOnlyUsesCFG();
   }
@@ -226,8 +214,7 @@ struct RegisterOpt : public RegisterPassBase {
   ///
   RegisterOpt(const char *PassArg, const char *Name, Pass *(*ctor)(),
               bool CFGOnly = false) 
-  : RegisterPassBase(Name, PassArg, typeid(PassName),
-                     PassInfo::Optimization, ctor) {
+  : RegisterPassBase(Name, PassArg, typeid(PassName), ctor) {
     if (CFGOnly) setOnlyUsesCFG();
   }
 
@@ -235,7 +222,7 @@ struct RegisterOpt : public RegisterPassBase {
   ///
   RegisterOpt(const char *PassArg, const char *Name, FunctionPass *(*ctor)(),
               bool CFGOnly = false)
-  : RegisterPassBase(Name, PassArg, typeid(PassName), PassInfo::Optimization,
+  : RegisterPassBase(Name, PassArg, typeid(PassName),
                      static_cast<Pass*(*)()>(ctor)) {
     if (CFGOnly) setOnlyUsesCFG();
   }
@@ -244,8 +231,7 @@ struct RegisterOpt : public RegisterPassBase {
   ///
   RegisterOpt(const char *PassArg, const char *Name,
                Pass *(*targetctor)(TargetMachine &), bool CFGOnly = false)
-  : RegisterPassBase(Name, PassArg, typeid(PassName),
-                     PassInfo::Optimization, 0, targetctor) {
+  : RegisterPassBase(Name, PassArg, typeid(PassName), 0, targetctor) {
     if (CFGOnly) setOnlyUsesCFG();
   }
 
@@ -254,7 +240,7 @@ struct RegisterOpt : public RegisterPassBase {
   RegisterOpt(const char *PassArg, const char *Name,
               FunctionPass *(*targetctor)(TargetMachine &),
               bool CFGOnly = false)
-  : RegisterPassBase(Name, PassArg, typeid(PassName), PassInfo::Optimization, 0,
+  : RegisterPassBase(Name, PassArg, typeid(PassName), 0,
                      static_cast<Pass*(*)(TargetMachine&)>(targetctor)) {
     if (CFGOnly) setOnlyUsesCFG();
   }
@@ -270,7 +256,7 @@ template<typename PassName>
 struct RegisterAnalysis : public RegisterPassBase {
   RegisterAnalysis(const char *PassArg, const char *Name,
                    bool CFGOnly = false)
-  : RegisterPassBase(Name, PassArg, typeid(PassName), PassInfo::Analysis,
+  : RegisterPassBase(Name, PassArg, typeid(PassName),
                      callDefaultCtor<PassName>) {
     if (CFGOnly) setOnlyUsesCFG();
   }

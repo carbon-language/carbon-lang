@@ -136,7 +136,7 @@ void PMDebug::PrintArgumentInformation(const Pass *P) {
   } else {  // Normal pass.  Print argument information...
     // Print out arguments for registered passes that are _optimizations_
     if (const PassInfo *PI = P->getPassInfo())
-      if (PI->getPassType() & PassInfo::Optimization)
+      if (!PI->isAnalysisGroup())
         std::cerr << " -" << PI->getPassArgument();
   }
 }
@@ -376,7 +376,7 @@ static std::map<const PassInfo *, AnalysisGroupInfo> *AnalysisGroupInfoMap = 0;
 //
 RegisterAGBase::RegisterAGBase(const std::type_info &Interface,
                                const std::type_info *Pass, bool isDefault)
-  : RegisterPassBase(Interface, PassInfo::AnalysisGroup),
+  : RegisterPassBase(Interface),
     ImplementationInfo(0), isDefaultImplementation(isDefault) {
 
   InterfaceInfo = const_cast<PassInfo*>(Pass::lookupPassInfo(Interface));
@@ -385,7 +385,7 @@ RegisterAGBase::RegisterAGBase(const std::type_info &Interface,
     registerPass();
     InterfaceInfo = &PIObj;
   }
-  assert(InterfaceInfo->getPassType() == PassInfo::AnalysisGroup &&
+  assert(PIObj.isAnalysisGroup() &&
          "Trying to join an analysis group that is a normal pass!");
 
   if (Pass) {
