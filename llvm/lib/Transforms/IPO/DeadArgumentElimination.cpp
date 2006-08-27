@@ -93,7 +93,7 @@ namespace {
 
     void RemoveDeadArgumentsFromFunction(Function *F);
   };
-  RegisterOpt<DAE> X("deadargelim", "Dead Argument Elimination");
+  RegisterPass<DAE> X("deadargelim", "Dead Argument Elimination");
 
   /// DAH - DeadArgumentHacking pass - Same as dead argument elimination, but
   /// deletes arguments to functions which are external.  This is only for use

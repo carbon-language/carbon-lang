@@ -31,7 +31,7 @@ namespace {
     bool runOnModule(Module &M);
   };
 
-  RegisterOpt<TraceBasicBlocks> X("trace-basic-blocks",
+  RegisterPass<TraceBasicBlocks> X("trace-basic-blocks",
                               "Insert instrumentation for basic block tracing");
 }
 

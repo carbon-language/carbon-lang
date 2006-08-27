@@ -35,7 +35,7 @@ namespace {
   class VISIBILITY_HIDDEN UnreachableBlockElim : public FunctionPass {
     virtual bool runOnFunction(Function &F);
   };
-  RegisterOpt<UnreachableBlockElim>
+  RegisterPass<UnreachableBlockElim>
   X("unreachableblockelim", "Remove unreachable blocks from the CFG");
 }
 

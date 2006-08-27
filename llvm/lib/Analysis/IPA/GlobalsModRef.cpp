@@ -135,8 +135,8 @@ namespace {
                              std::vector<Function*> &Writers);
   };
 
-  RegisterOpt<GlobalsModRef> X("globalsmodref-aa",
-                               "Simple mod/ref analysis for globals");
+  RegisterPass<GlobalsModRef> X("globalsmodref-aa",
+                                "Simple mod/ref analysis for globals");
   RegisterAnalysisGroup<AliasAnalysis, GlobalsModRef> Y;
 }
 

@@ -103,7 +103,7 @@ namespace {
                            std::vector<Instruction*> &Worklist);
     void RemoveLoopFromHierarchy(Loop *L);
   };
-  RegisterOpt<LoopUnswitch> X("loop-unswitch", "Unswitch loops");
+  RegisterPass<LoopUnswitch> X("loop-unswitch", "Unswitch loops");
 }
 
 FunctionPass *llvm::createLoopUnswitchPass() { return new LoopUnswitch(); }

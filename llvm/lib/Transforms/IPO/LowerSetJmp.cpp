@@ -120,7 +120,7 @@ namespace {
     bool doInitialization(Module& M);
   };
 
-  RegisterOpt<LowerSetJmp> X("lowersetjmp", "Lower Set Jump");
+  RegisterPass<LowerSetJmp> X("lowersetjmp", "Lower Set Jump");
 } // end anonymous namespace
 
 // run - Run the transformation on the program. We grab the function

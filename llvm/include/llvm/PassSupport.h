@@ -208,53 +208,6 @@ struct RegisterPass : public RegisterPassBase {
   }
 };
 
-/// RegisterOpt - Register something that is to show up in Opt, this is just a
-/// shortcut for specifying RegisterPass...
-///
-template<typename PassName>
-struct RegisterOpt : public RegisterPassBase {
-  RegisterOpt(const char *PassArg, const char *Name, bool CFGOnly = false)
-  : RegisterPassBase(Name, PassArg, typeid(PassName),
-                     callDefaultCtor<PassName>) {
-    if (CFGOnly) setOnlyUsesCFG();
-  }
-
-  /// Register Pass using default constructor explicitly...
-  ///
-  RegisterOpt(const char *PassArg, const char *Name, Pass *(*ctor)(),
-              bool CFGOnly = false) 
-  : RegisterPassBase(Name, PassArg, typeid(PassName), ctor) {
-    if (CFGOnly) setOnlyUsesCFG();
-  }
-
-  /// Register FunctionPass using default constructor explicitly...
-  ///
-  RegisterOpt(const char *PassArg, const char *Name, FunctionPass *(*ctor)(),
-              bool CFGOnly = false)
-  : RegisterPassBase(Name, PassArg, typeid(PassName),
-                     static_cast<Pass*(*)()>(ctor)) {
-    if (CFGOnly) setOnlyUsesCFG();
-  }
-
-  /// Register Pass using TargetMachine constructor...
-  ///
-  RegisterOpt(const char *PassArg, const char *Name,
-               Pass *(*targetctor)(TargetMachine &), bool CFGOnly = false)
-  : RegisterPassBase(Name, PassArg, typeid(PassName), 0, targetctor) {
-    if (CFGOnly) setOnlyUsesCFG();
-  }
-
-  /// Register FunctionPass using TargetMachine constructor...
-  ///
-  RegisterOpt(const char *PassArg, const char *Name,
-              FunctionPass *(*targetctor)(TargetMachine &),
-              bool CFGOnly = false)
-  : RegisterPassBase(Name, PassArg, typeid(PassName), 0,
-                     static_cast<Pass*(*)(TargetMachine&)>(targetctor)) {
-    if (CFGOnly) setOnlyUsesCFG();
-  }
-};
-
 
 /// RegisterAnalysisGroup - Register a Pass as a member of an analysis _group_.
 /// Analysis groups are used to define an interface (which need not derive from

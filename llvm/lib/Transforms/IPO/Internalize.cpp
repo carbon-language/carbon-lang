@@ -49,7 +49,7 @@ namespace {
     void LoadFile(const char *Filename);
     virtual bool runOnModule(Module &M);
   };
-  RegisterOpt<InternalizePass> X("internalize", "Internalize Global Symbols");
+  RegisterPass<InternalizePass> X("internalize", "Internalize Global Symbols");
 } // end anonymous namespace
 
 InternalizePass::InternalizePass(bool InternalizeEverything) 

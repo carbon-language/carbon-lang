@@ -239,7 +239,7 @@ namespace {  // Anonymous namespace for class
     }
   };
 
-  RegisterOpt<Verifier> X("verify", "Module Verifier");
+  RegisterPass<Verifier> X("verify", "Module Verifier");
 } // End anonymous namespace
 
 

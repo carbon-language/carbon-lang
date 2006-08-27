@@ -162,9 +162,9 @@ public:
 
 }  // end namespace llvm
 
-static RegisterOpt<PrintModulePass>
+static RegisterPass<PrintModulePass>
 X("printm", "Print module to stderr");
-static RegisterOpt<PrintFunctionPass>
+static RegisterPass<PrintFunctionPass>
 Y("print","Print function to stderr");
 
 static void WriteAsOperandInternal(std::ostream &Out, const Value *V,

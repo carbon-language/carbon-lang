@@ -70,7 +70,7 @@ namespace {
     bool doFinalization(Module &M);
   };
 
-  RegisterOpt<AAEval>
+  RegisterPass<AAEval>
   X("aa-eval", "Exhaustive Alias Analysis Precision Evaluator");
 }
 

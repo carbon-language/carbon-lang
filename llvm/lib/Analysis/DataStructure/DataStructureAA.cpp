@@ -96,7 +96,7 @@ namespace {
   };
 
   // Register the pass...
-  RegisterOpt<DSAA> X("ds-aa", "Data Structure Graph Based Alias Analysis");
+  RegisterPass<DSAA> X("ds-aa", "Data Structure Graph Based Alias Analysis");
 
   // Register as an implementation of AliasAnalysis
   RegisterAnalysisGroup<AliasAnalysis, DSAA> Y;

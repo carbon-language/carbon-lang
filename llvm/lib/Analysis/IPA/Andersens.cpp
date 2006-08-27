@@ -336,8 +336,8 @@ namespace {
     void visitInstruction(Instruction &I);
   };
 
-  RegisterOpt<Andersens> X("anders-aa",
-                           "Andersen's Interprocedural Alias Analysis");
+  RegisterPass<Andersens> X("anders-aa",
+                            "Andersen's Interprocedural Alias Analysis");
   RegisterAnalysisGroup<AliasAnalysis, Andersens> Y;
 }
 

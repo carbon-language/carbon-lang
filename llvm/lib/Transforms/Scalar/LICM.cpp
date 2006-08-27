@@ -197,7 +197,7 @@ namespace {
                                     std::map<Value*, AllocaInst*> &Val2AlMap);
   };
 
-  RegisterOpt<LICM> X("licm", "Loop Invariant Code Motion");
+  RegisterPass<LICM> X("licm", "Loop Invariant Code Motion");
 }
 
 FunctionPass *llvm::createLICMPass() { return new LICM(); }

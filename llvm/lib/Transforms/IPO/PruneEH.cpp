@@ -46,7 +46,7 @@ namespace {
     bool SimplifyFunction(Function *F);
     void DeleteBasicBlock(BasicBlock *BB);
   };
-  RegisterOpt<PruneEH> X("prune-eh", "Remove unused exception handling info");
+  RegisterPass<PruneEH> X("prune-eh", "Remove unused exception handling info");
 }
 
 ModulePass *llvm::createPruneEHPass() { return new PruneEH(); }

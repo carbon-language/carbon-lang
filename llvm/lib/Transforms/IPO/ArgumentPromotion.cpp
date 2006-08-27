@@ -72,8 +72,8 @@ namespace {
     Function *DoPromotion(Function *F, std::vector<Argument*> &ArgsToPromote);
   };
 
-  RegisterOpt<ArgPromotion> X("argpromotion",
-                              "Promote 'by reference' arguments to scalars");
+  RegisterPass<ArgPromotion> X("argpromotion",
+                               "Promote 'by reference' arguments to scalars");
 }
 
 ModulePass *llvm::createArgumentPromotionPass() {

@@ -60,7 +60,7 @@ namespace {
   };
 
   // Register this pass...
-  RegisterOpt<BasicVN>
+  RegisterPass<BasicVN>
   X("basicvn", "Basic Value Numbering (default GVN impl)");
 
   // Declare that we implement the ValueNumbering interface

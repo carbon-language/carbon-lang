@@ -55,7 +55,7 @@ namespace {
   public:
     int getInlineCost(CallSite CS);
   };
-  RegisterOpt<SimpleInliner> X("inline", "Function Integration/Inlining");
+  RegisterPass<SimpleInliner> X("inline", "Function Integration/Inlining");
 }
 
 ModulePass *llvm::createFunctionInliningPass() { return new SimpleInliner(); }

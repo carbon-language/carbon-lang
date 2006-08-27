@@ -60,7 +60,7 @@ namespace {
       AU.addPreserved<LoopInfo>();
     }
   };
-  RegisterOpt<LoopUnroll> X("loop-unroll", "Unroll loops");
+  RegisterPass<LoopUnroll> X("loop-unroll", "Unroll loops");
 }
 
 FunctionPass *llvm::createLoopUnrollPass() { return new LoopUnroll(); }

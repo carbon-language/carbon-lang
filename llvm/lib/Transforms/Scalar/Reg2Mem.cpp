@@ -76,7 +76,7 @@ namespace {
     }
   };
   
-  RegisterOpt<RegToMem> X("reg2mem", "Demote all values to stack slots");
+  RegisterPass<RegToMem> X("reg2mem", "Demote all values to stack slots");
 }
 
 // createDemoteRegisterToMemory - Provide an entry point to create this pass.

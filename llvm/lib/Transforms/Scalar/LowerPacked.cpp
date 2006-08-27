@@ -102,7 +102,7 @@ private:
    std::vector<Instruction*> instrsToRemove;
 };
 
-RegisterOpt<LowerPacked>
+RegisterPass<LowerPacked>
 X("lower-packed",
   "lowers packed operations to operations on smaller packed datatypes");
 

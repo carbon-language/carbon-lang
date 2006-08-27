@@ -56,7 +56,7 @@ namespace {
     const StructType *getRootRecordType(unsigned NumRoots);
   };
 
-  RegisterOpt<LowerGC>
+  RegisterPass<LowerGC>
   X("lowergc", "Lower GC intrinsics, for GCless code generators");
 }
 

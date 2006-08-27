@@ -33,8 +33,8 @@ namespace {
     bool runOnModule(Module &M);
   };
 
-  RegisterOpt<EdgeProfiler> X("insert-edge-profiling",
-                              "Insert instrumentation for edge profiling");
+  RegisterPass<EdgeProfiler> X("insert-edge-profiling",
+                               "Insert instrumentation for edge profiling");
 }
 
 ModulePass *llvm::createEdgeProfilerPass() { return new EdgeProfiler(); }

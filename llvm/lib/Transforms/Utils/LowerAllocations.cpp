@@ -65,7 +65,7 @@ namespace {
     bool runOnBasicBlock(BasicBlock &BB);
   };
 
-  RegisterOpt<LowerAllocations>
+  RegisterPass<LowerAllocations>
   X("lowerallocs", "Lower allocations from instructions to calls");
 }
 

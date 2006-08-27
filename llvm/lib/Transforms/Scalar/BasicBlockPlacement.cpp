@@ -68,8 +68,8 @@ namespace {
     void PlaceBlocks(BasicBlock *BB);
   };
 
-  RegisterOpt<BlockPlacement> X("block-placement",
-                                "Profile Guided Basic Block Placement");
+  RegisterPass<BlockPlacement> X("block-placement",
+                                 "Profile Guided Basic Block Placement");
 }
 
 FunctionPass *llvm::createBlockPlacementPass() { return new BlockPlacement(); }

@@ -1075,7 +1075,7 @@ namespace {
     }
   };
 
-  RegisterOpt<SCCP> X("sccp", "Sparse Conditional Constant Propagation");
+  RegisterPass<SCCP> X("sccp", "Sparse Conditional Constant Propagation");
 } // end anonymous namespace
 
 
@@ -1183,7 +1183,7 @@ namespace {
     bool runOnModule(Module &M);
   };
 
-  RegisterOpt<IPSCCP>
+  RegisterPass<IPSCCP>
   Y("ipsccp", "Interprocedural Sparse Conditional Constant Propagation");
 } // end anonymous namespace
 

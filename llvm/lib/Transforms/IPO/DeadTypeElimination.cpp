@@ -36,7 +36,7 @@ namespace {
       AU.addRequired<FindUsedTypes>();
     }
   };
-  RegisterOpt<DTE> X("deadtypeelim", "Dead Type Elimination");
+  RegisterPass<DTE> X("deadtypeelim", "Dead Type Elimination");
   Statistic<>
   NumKilled("deadtypeelim", "Number of unused typenames removed from symtab");
 }

@@ -87,7 +87,7 @@ namespace {
   };
 
   static RegisterAnalysisGroup<RSProfilers> A("Profiling passes");
-  static RegisterOpt<NullProfilerRS> NP("insert-null-profiling-rs",
+  static RegisterPass<NullProfilerRS> NP("insert-null-profiling-rs",
 					"Measure profiling framework overhead");
   static RegisterAnalysisGroup<RSProfilers, NullProfilerRS, true> NPT;
 
@@ -160,8 +160,8 @@ namespace {
     virtual void getAnalysisUsage(AnalysisUsage &AU) const;
   };
 
-  RegisterOpt<ProfilerRS> X("insert-rs-profiling-framework",
-			   "Insert random sampling instrumentation  framework");
+  RegisterPass<ProfilerRS> X("insert-rs-profiling-framework",
+			   "Insert random sampling instrumentation framework");
 }
 
 //Local utilities

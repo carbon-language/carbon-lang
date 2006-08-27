@@ -49,7 +49,7 @@ namespace {
     virtual bool runOnModule(Module &M);
   };
 
-  RegisterOpt<LoaderPass>
+  RegisterPass<LoaderPass>
   X("profile-loader", "Load profile information from llvmprof.out");
 
   RegisterAnalysisGroup<ProfileInfo, LoaderPass> Y;

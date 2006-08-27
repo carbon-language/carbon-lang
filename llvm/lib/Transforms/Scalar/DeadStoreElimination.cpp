@@ -54,7 +54,7 @@ namespace {
       AU.addPreserved<AliasAnalysis>();
     }
   };
-  RegisterOpt<DSE> X("dse", "Dead Store Elimination");
+  RegisterPass<DSE> X("dse", "Dead Store Elimination");
 }
 
 FunctionPass *llvm::createDeadStoreEliminationPass() { return new DSE(); }

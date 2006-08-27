@@ -47,7 +47,7 @@ namespace {
     bool OptimizeGlobals(Module &M);
   };
 
-  RegisterOpt<DSOpt> X("ds-opt", "DSA-based simple optimizations");
+  RegisterPass<DSOpt> X("ds-opt", "DSA-based simple optimizations");
 }
 
 ModulePass *llvm::createDSOptPass() { return new DSOpt(); }

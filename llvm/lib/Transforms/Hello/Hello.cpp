@@ -34,7 +34,7 @@ namespace {
       return false;
     }
   };
-  RegisterOpt<Hello> X("hello", "Hello World Pass");
+  RegisterPass<Hello> X("hello", "Hello World Pass");
 
   // Hello2 - The second implementation with getAnalysisUsage implemented.
   struct Hello2 : public FunctionPass {
@@ -52,5 +52,6 @@ namespace {
       AU.setPreservesAll();
     };
   };
-  RegisterOpt<Hello2> Y("hello2", "Hello World Pass (with getAnalysisUsage implemented)");
+  RegisterPass<Hello2> Y("hello2",
+                        "Hello World Pass (with getAnalysisUsage implemented)");
 }

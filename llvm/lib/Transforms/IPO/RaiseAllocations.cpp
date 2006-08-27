@@ -44,7 +44,7 @@ namespace {
     bool runOnModule(Module &M);
   };
 
-  RegisterOpt<RaiseAllocations>
+  RegisterPass<RaiseAllocations>
   X("raiseallocs", "Raise allocations from calls to instructions");
 }  // end anonymous namespace
 

@@ -366,8 +366,8 @@ private:
 };
 
 // Register the pass
-RegisterOpt<SimplifyLibCalls>
-X("simplify-libcalls","Simplify well-known library calls");
+RegisterPass<SimplifyLibCalls>
+X("simplify-libcalls", "Simplify well-known library calls");
 
 } // anonymous namespace
 

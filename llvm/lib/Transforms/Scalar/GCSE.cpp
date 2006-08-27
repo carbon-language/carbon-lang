@@ -51,7 +51,7 @@ namespace {
     }
   };
 
-  RegisterOpt<GCSE> X("gcse", "Global Common Subexpression Elimination");
+  RegisterPass<GCSE> X("gcse", "Global Common Subexpression Elimination");
 }
 
 // createGCSEPass - The public interface to this file...

@@ -46,7 +46,7 @@ namespace {
     }
   };
 
-  RegisterOpt<LoopExtractor>
+  RegisterPass<LoopExtractor>
   X("loop-extract", "Extract loops into new functions");
 
   /// SingleLoopExtractor - For bugpoint.
@@ -54,7 +54,7 @@ namespace {
     SingleLoopExtractor() : LoopExtractor(1) {}
   };
 
-  RegisterOpt<SingleLoopExtractor>
+  RegisterPass<SingleLoopExtractor>
   Y("loop-extract-single", "Extract at most one loop into a new function");
 } // End anonymous namespace
 
@@ -148,7 +148,7 @@ namespace {
 
     bool runOnModule(Module &M);
   };
-  RegisterOpt<BlockExtractorPass>
+  RegisterPass<BlockExtractorPass>
   XX("extract-blocks", "Extract Basic Blocks From Module (for bugpoint use)");
 }
 

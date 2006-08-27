@@ -46,7 +46,7 @@ namespace {
     void SimplifyPredecessors(SwitchInst *SI);
     void RevectorBlockTo(BasicBlock *FromBB, BasicBlock *ToBB);
   };
-  RegisterOpt<CondProp> X("condprop", "Conditional Propagation");
+  RegisterPass<CondProp> X("condprop", "Conditional Propagation");
 }
 
 FunctionPass *llvm::createCondPropagationPass() {

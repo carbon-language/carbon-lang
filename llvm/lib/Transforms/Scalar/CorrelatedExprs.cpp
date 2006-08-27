@@ -286,7 +286,7 @@ namespace {
     bool SimplifyBasicBlock(BasicBlock &BB, const RegionInfo &RI);
     bool SimplifyInstruction(Instruction *Inst, const RegionInfo &RI);
   };
-  RegisterOpt<CEE> X("cee", "Correlated Expression Elimination");
+  RegisterPass<CEE> X("cee", "Correlated Expression Elimination");
 }
 
 FunctionPass *llvm::createCorrelatedExpressionEliminationPass() {

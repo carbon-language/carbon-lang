@@ -264,7 +264,7 @@ namespace {
     Value *EvaluateInDifferentType(Value *V, const Type *Ty);
   };
 
-  RegisterOpt<InstCombiner> X("instcombine", "Combine redundant instructions");
+  RegisterPass<InstCombiner> X("instcombine", "Combine redundant instructions");
 }
 
 // getComplexity:  Assign a complexity or rank value to LLVM Values...

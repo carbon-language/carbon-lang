@@ -80,7 +80,7 @@ namespace {
     bool PeepholeOptimize(BasicBlock *BB, BasicBlock::iterator &BI);
   };
 
-  RegisterOpt<RPR> X("raise", "Raise Pointer References");
+  RegisterPass<RPR> X("raise", "Raise Pointer References");
 }
 
 

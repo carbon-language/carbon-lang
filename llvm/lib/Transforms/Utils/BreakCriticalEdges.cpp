@@ -47,7 +47,7 @@ namespace {
     }
   };
 
-  RegisterOpt<BreakCriticalEdges> X("break-crit-edges",
+  RegisterPass<BreakCriticalEdges> X("break-crit-edges",
                                     "Break critical edges in CFG");
 }
 

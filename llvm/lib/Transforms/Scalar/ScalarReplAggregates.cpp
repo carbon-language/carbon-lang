@@ -70,7 +70,7 @@ namespace {
     void ConvertUsesToScalar(Value *Ptr, AllocaInst *NewAI, unsigned Offset);
   };
 
-  RegisterOpt<SROA> X("scalarrepl", "Scalar Replacement of Aggregates");
+  RegisterPass<SROA> X("scalarrepl", "Scalar Replacement of Aggregates");
 }
 
 // Public interface to the ScalarReplAggregates pass

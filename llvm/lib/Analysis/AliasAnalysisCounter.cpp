@@ -109,7 +109,7 @@ namespace {
     }
   };
 
-  RegisterOpt<AliasAnalysisCounter>
+  RegisterPass<AliasAnalysisCounter>
   X("count-aa", "Count Alias Analysis Query Responses");
   RegisterAnalysisGroup<AliasAnalysis, AliasAnalysisCounter> Y;
 }

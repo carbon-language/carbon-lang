@@ -50,7 +50,7 @@ namespace {
     }
   };
 
-  RegisterOpt<DeadInstElimination> X("die", "Dead Instruction Elimination");
+  RegisterPass<DeadInstElimination> X("die", "Dead Instruction Elimination");
 }
 
 FunctionPass *llvm::createDeadInstEliminationPass() {
@@ -71,7 +71,7 @@ namespace {
     }
  };
 
-  RegisterOpt<DCE> Y("dce", "Dead Code Elimination");
+  RegisterPass<DCE> Y("dce", "Dead Code Elimination");
 }
 
 bool DCE::runOnFunction(Function &F) {

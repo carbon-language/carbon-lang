@@ -28,7 +28,7 @@ namespace {
   Statistic<> NumArgumentsProped("ipconstprop",
                                  "Number of args turned into constants");
   Statistic<> NumReturnValProped("ipconstprop",
-                                 "Number of return values turned into constants");
+                              "Number of return values turned into constants");
 
   /// IPCP - The interprocedural constant propagation pass
   ///
@@ -38,7 +38,7 @@ namespace {
     bool PropagateConstantsIntoArguments(Function &F);
     bool PropagateConstantReturn(Function &F);
   };
-  RegisterOpt<IPCP> X("ipconstprop", "Interprocedural constant propagation");
+  RegisterPass<IPCP> X("ipconstprop", "Interprocedural constant propagation");
 }
 
 ModulePass *llvm::createIPConstantPropagationPass() { return new IPCP(); }
@@ -69,7 +69,7 @@ bool IPCP::runOnModule(Module &M) {
 /// constant in for an argument, propagate that constant in as the argument.
 ///
 bool IPCP::PropagateConstantsIntoArguments(Function &F) {
-  if (F.arg_empty() || F.use_empty()) return false;  // No arguments?  Early exit.
+  if (F.arg_empty() || F.use_empty()) return false; // No arguments? Early exit.
 
   std::vector<std::pair<Constant*, bool> > ArgumentConstants;
   ArgumentConstants.resize(F.arg_size());

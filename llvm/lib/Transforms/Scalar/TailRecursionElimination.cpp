@@ -75,7 +75,7 @@ namespace {
     bool CanMoveAboveCall(Instruction *I, CallInst *CI);
     Value *CanTransformAccumulatorRecursion(Instruction *I, CallInst *CI);
   };
-  RegisterOpt<TailCallElim> X("tailcallelim", "Tail Call Elimination");
+  RegisterPass<TailCallElim> X("tailcallelim", "Tail Call Elimination");
 }
 
 // Public interface to the TailCallElimination pass

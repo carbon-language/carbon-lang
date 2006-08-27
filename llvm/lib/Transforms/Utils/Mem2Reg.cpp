@@ -48,7 +48,7 @@ namespace {
     }
   };
 
-  RegisterOpt<PromotePass> X("mem2reg", "Promote Memory to Register");
+  RegisterPass<PromotePass> X("mem2reg", "Promote Memory to Register");
 }  // end of anonymous namespace
 
 bool PromotePass::runOnFunction(Function &F) {

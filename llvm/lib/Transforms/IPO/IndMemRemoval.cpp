@@ -38,7 +38,7 @@ namespace {
     IndMemRemPass();
     virtual bool runOnModule(Module &M);
   };
-  RegisterOpt<IndMemRemPass> X("indmemrem", "Indirect Malloc and Free Removal");
+  RegisterPass<IndMemRemPass> X("indmemrem","Indirect Malloc and Free Removal");
 } // end anonymous namespace
 
 

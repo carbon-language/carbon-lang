@@ -85,7 +85,7 @@ namespace {
   struct NoProfileInfo : public ImmutablePass, public ProfileInfo {};
 
   // Register this pass...
-  RegisterOpt<NoProfileInfo>
+  RegisterPass<NoProfileInfo>
   X("no-profile", "No Profile Information");
 
   // Declare that we implement the ProfileInfo interface

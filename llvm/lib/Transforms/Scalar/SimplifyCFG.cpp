@@ -35,7 +35,7 @@ namespace {
   struct CFGSimplifyPass : public FunctionPass {
     virtual bool runOnFunction(Function &F);
   };
-  RegisterOpt<CFGSimplifyPass> X("simplifycfg", "Simplify the CFG");
+  RegisterPass<CFGSimplifyPass> X("simplifycfg", "Simplify the CFG");
 }
 
 // Public interface to the CFGSimplification pass

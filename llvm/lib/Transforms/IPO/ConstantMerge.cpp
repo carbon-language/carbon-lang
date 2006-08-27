@@ -33,7 +33,7 @@ namespace {
     bool runOnModule(Module &M);
   };
 
-  RegisterOpt<ConstantMerge> X("constmerge","Merge Duplicate Global Constants");
+  RegisterPass<ConstantMerge>X("constmerge","Merge Duplicate Global Constants");
 }
 
 ModulePass *llvm::createConstantMergePass() { return new ConstantMerge(); }

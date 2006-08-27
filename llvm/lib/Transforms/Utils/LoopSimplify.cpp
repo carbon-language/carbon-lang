@@ -89,7 +89,7 @@ namespace {
                                          std::vector<BasicBlock*> &PredBlocks);
   };
 
-  RegisterOpt<LoopSimplify>
+  RegisterPass<LoopSimplify>
   X("loopsimplify", "Canonicalize natural loops", true);
 }
 

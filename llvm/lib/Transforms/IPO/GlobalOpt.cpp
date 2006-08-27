@@ -60,10 +60,10 @@ namespace {
     bool OptimizeFunctions(Module &M);
     bool OptimizeGlobalVars(Module &M);
     bool OptimizeGlobalCtorsList(GlobalVariable *&GCL);
-    bool ProcessInternalGlobal(GlobalVariable *GV, Module::global_iterator &GVI);
+    bool ProcessInternalGlobal(GlobalVariable *GV,Module::global_iterator &GVI);
   };
 
-  RegisterOpt<GlobalOpt> X("globalopt", "Global Variable Optimizer");
+  RegisterPass<GlobalOpt> X("globalopt", "Global Variable Optimizer");
 }
 
 ModulePass *llvm::createGlobalOptimizerPass() { return new GlobalOpt(); }
@@ -800,7 +800,8 @@ static bool ValueIsOnlyUsedLocallyOrStoredToOneGlobal(Instruction *V,
 // OptimizeOnceStoredGlobal - Try to optimize globals based on the knowledge
 // that only one value (besides its initializer) is ever stored to the global.
 static bool OptimizeOnceStoredGlobal(GlobalVariable *GV, Value *StoredOnceVal,
-                                     Module::global_iterator &GVI, TargetData &TD) {
+                                     Module::global_iterator &GVI,
+                                     TargetData &TD) {
   if (CastInst *CI = dyn_cast<CastInst>(StoredOnceVal))
     StoredOnceVal = CI->getOperand(0);
   else if (GetElementPtrInst *GEPI =dyn_cast<GetElementPtrInst>(StoredOnceVal)){

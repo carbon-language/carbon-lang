@@ -40,7 +40,7 @@ namespace {
     bool runOnModule(Module &M);
   };
 
-  RegisterOpt<EmitFunctionTable>
+  RegisterPass<EmitFunctionTable>
   X("emitfuncs", "Emit a function table for the reoptimizer");
 }
 

@@ -568,5 +568,5 @@ namespace {
       return false;
     }
   };
-  RegisterOpt<AliasSetPrinter> X("print-alias-sets", "Alias Set Printer");
+  RegisterPass<AliasSetPrinter> X("print-alias-sets", "Alias Set Printer");
 }

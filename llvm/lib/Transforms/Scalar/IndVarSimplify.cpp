@@ -92,7 +92,7 @@ namespace {
 
     void DeleteTriviallyDeadInstructions(std::set<Instruction*> &Insts);
   };
-  RegisterOpt<IndVarSimplify> X("indvars", "Canonicalize Induction Variables");
+  RegisterPass<IndVarSimplify> X("indvars", "Canonicalize Induction Variables");
 }
 
 FunctionPass *llvm::createIndVarSimplifyPass() {

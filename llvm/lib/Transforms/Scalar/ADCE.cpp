@@ -102,7 +102,7 @@ private:
   }
 };
 
-  RegisterOpt<ADCE> X("adce", "Aggressive Dead Code Elimination");
+  RegisterPass<ADCE> X("adce", "Aggressive Dead Code Elimination");
 } // End of anonymous namespace
 
 FunctionPass *llvm::createAggressiveDCEPass() { return new ADCE(); }

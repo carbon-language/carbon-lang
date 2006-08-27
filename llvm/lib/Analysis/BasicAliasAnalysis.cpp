@@ -72,7 +72,7 @@ namespace {
   };
 
   // Register this pass...
-  RegisterOpt<NoAA>
+  RegisterPass<NoAA>
   U("no-aa", "No Alias Analysis (always returns 'may' alias)");
 
   // Declare that we implement the AliasAnalysis interface
@@ -117,7 +117,7 @@ namespace {
   };
 
   // Register this pass...
-  RegisterOpt<BasicAliasAnalysis>
+  RegisterPass<BasicAliasAnalysis>
   X("basicaa", "Basic Alias Analysis (default AA impl)");
 
   // Declare that we implement the AliasAnalysis interface

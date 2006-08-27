@@ -81,7 +81,7 @@ namespace {
   };
 
   // Register this pass...
-  RegisterOpt<LoadVN> X("load-vn", "Load Value Numbering");
+  RegisterPass<LoadVN> X("load-vn", "Load Value Numbering");
 
   // Declare that we implement the ValueNumbering interface
   RegisterAnalysisGroup<ValueNumbering, LoadVN> Y;

@@ -94,7 +94,7 @@ namespace {
     unsigned JumpBufAlign;
   };
 
-  RegisterOpt<LowerInvoke>
+  RegisterPass<LowerInvoke>
   X("lowerinvoke", "Lower invoke and unwind, for unwindless code generators");
 }
 

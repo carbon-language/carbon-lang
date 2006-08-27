@@ -73,8 +73,8 @@ namespace {
   };
 
   // Register the pass...
-  RegisterOpt<Steens> X("steens-aa",
-                        "Steensgaard's alias analysis (DSGraph based)");
+  RegisterPass<Steens> X("steens-aa",
+                         "Steensgaard's alias analysis (DSGraph based)");
 
   // Register as an implementation of AliasAnalysis
   RegisterAnalysisGroup<AliasAnalysis, Steens> Y;

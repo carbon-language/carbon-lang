@@ -43,7 +43,7 @@ namespace {
       AU.setPreservesAll();
     }
   };
-  RegisterOpt<StripSymbols> X("strip", "Strip all symbols from a module");
+  RegisterPass<StripSymbols> X("strip", "Strip all symbols from a module");
 }
 
 ModulePass *llvm::createStripSymbolsPass(bool OnlyDebugInfo) {
@@ -75,7 +75,8 @@ bool StripSymbols::runOnModule(Module &M) {
   // If we're not just stripping debug info, strip all symbols from the
   // functions and the names from any internal globals.
   if (!OnlyDebugInfo) {
-    for (Module::global_iterator I = M.global_begin(), E = M.global_end(); I != E; ++I)
+    for (Module::global_iterator I = M.global_begin(), E = M.global_end();
+         I != E; ++I)
       if (I->hasInternalLinkage())
         I->setName("");     // Internal symbols can't participate in linkage
 

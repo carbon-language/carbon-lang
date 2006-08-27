@@ -68,7 +68,7 @@ namespace {
     }
   };
 
-  RegisterOpt<LowerSwitch>
+  RegisterPass<LowerSwitch>
   X("lowerswitch", "Lower SwitchInst's to branches");
 }
 

@@ -50,7 +50,7 @@ namespace {
     bool runOnFunction(Function &F);
   };
 
-  RegisterOpt<LowerSelect>
+  RegisterPass<LowerSelect>
   X("lowerselect", "Lower select instructions to branches");
 }
 

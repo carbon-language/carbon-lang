@@ -47,7 +47,7 @@ namespace {
     inline bool shouldEliminateUnconditionalBranch(TerminatorInst *TI);
     inline void eliminateUnconditionalBranch(BranchInst *BI);
   };
-  RegisterOpt<TailDup> X("tailduplicate", "Tail Duplication");
+  RegisterPass<TailDup> X("tailduplicate", "Tail Duplication");
 }
 
 // Public interface to the Tail Duplication pass

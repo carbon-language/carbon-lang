@@ -420,7 +420,7 @@ namespace {
   class BlockExtractorPass : public ModulePass {
     bool runOnModule(Module &M);
   };
-  RegisterOpt<BlockExtractorPass>
+  RegisterPass<BlockExtractorPass>
   XX("extract-bbs", "Extract Basic Blocks From Module (for bugpoint use)");
 }
 

@@ -90,7 +90,7 @@ namespace {
     void RemoveDeadBinaryOp(Value *V);
   };
 
-  RegisterOpt<Reassociate> X("reassociate", "Reassociate expressions");
+  RegisterPass<Reassociate> X("reassociate", "Reassociate expressions");
 }
 
 // Public interface to the Reassociate pass

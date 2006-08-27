@@ -43,7 +43,7 @@ namespace {
 
     bool runOnModule(Module &M);
   };
-  RegisterOpt<FunctionResolvingPass> X("funcresolve", "Resolve Functions");
+  RegisterPass<FunctionResolvingPass> X("funcresolve", "Resolve Functions");
 }
 
 ModulePass *llvm::createFunctionResolvingPass() {
@@ -314,7 +314,8 @@ bool FunctionResolvingPass::runOnModule(Module &M) {
       Globals[F->getName()].push_back(F);
   }
 
-  for (Module::global_iterator I = M.global_begin(), E = M.global_end(); I != E; ) {
+  for (Module::global_iterator I = M.global_begin(), E = M.global_end();
+       I != E; ) {
     GlobalVariable *GV = I++;
     if (GV->use_empty() && GV->isExternal()) {
       M.getGlobalList().erase(GV);
@@ -346,7 +347,8 @@ bool FunctionResolvingPass::runOnModule(Module &M) {
       ++I;
     }
 
-  for (Module::global_iterator I = M.global_begin(), E = M.global_end(); I != E; )
+  for (Module::global_iterator I = M.global_begin(), E = M.global_end();
+       I != E; )
     if (I->isExternal() && I->use_empty()) {
       GlobalVariable *GV = I;
       ++I;

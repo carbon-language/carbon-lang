@@ -35,7 +35,7 @@ namespace {
     bool runOnModule(Module &M);
   };
 
-  RegisterOpt<FunctionProfiler> X("insert-function-profiling",
+  RegisterPass<FunctionProfiler> X("insert-function-profiling",
                                "Insert instrumentation for function profiling");
   RegisterAnalysisGroup<RSProfilers, FunctionProfiler> XG;
 
@@ -81,8 +81,8 @@ namespace {
     bool runOnModule(Module &M);
   };
 
-  RegisterOpt<BlockProfiler> Y("insert-block-profiling",
-                               "Insert instrumentation for block profiling");
+  RegisterPass<BlockProfiler> Y("insert-block-profiling",
+                                "Insert instrumentation for block profiling");
   RegisterAnalysisGroup<RSProfilers, BlockProfiler> YG;
 }
 

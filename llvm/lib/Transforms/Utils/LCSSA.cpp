@@ -80,7 +80,7 @@ namespace {
     }
   };
   
-  RegisterOpt<LCSSA> X("lcssa", "Loop-Closed SSA Form Pass");
+  RegisterPass<LCSSA> X("lcssa", "Loop-Closed SSA Form Pass");
 }
 
 FunctionPass *llvm::createLCSSAPass() { return new LCSSA(); }
