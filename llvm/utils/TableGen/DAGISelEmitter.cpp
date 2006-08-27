@@ -3355,7 +3355,7 @@ void DAGISelEmitter::EmitInstructionSelector(std::ostream &OS) {
         CalleeCode += ") ";
         // Prevent emission routines from being inlined to reduce selection
         // routines stack frame sizes.
-        CalleeCode += "NOINLINE ";
+        CalleeCode += "DISABLE_INLINE ";
         CalleeCode += "{\n";
 
         for (std::vector<std::string>::const_reverse_iterator
@@ -3565,12 +3565,7 @@ void DAGISelEmitter::run(std::ostream &OS) {
      << "// *** instruction selector class.  These functions are really "
      << "methods.\n\n";
   
-  OS << "#if defined(__GNUC__) && \\\n";
-  OS << "    ((__GNUC__ > 3) || ((__GNUC__ == 3) && (__GNUC_MINOR__ >= 4)))\n";
-  OS << "#define NOINLINE __attribute__((noinline))\n";
-  OS << "#else\n";
-  OS << "#define NOINLINE\n";
-  OS << "#endif\n\n";
+  OS << "#include \"llvm/Support/Compiler.h\"\n";
 
   OS << "// Instruction selector priority queue:\n"
      << "std::vector<SDNode*> ISelQueue;\n";
@@ -3603,7 +3598,7 @@ void DAGISelEmitter::run(std::ostream &OS) {
   OS << "  return ISelSelected[Id / 8] & (1 << (Id % 8));\n";
   OS << "}\n\n";
 
-  OS << "void AddToISelQueue(SDOperand N) NOINLINE {\n";
+  OS << "void AddToISelQueue(SDOperand N) DISABLE_INLINE {\n";
   OS << "  int Id = N.Val->getNodeId();\n";
   OS << "  if (Id != -1 && !isQueued(Id)) {\n";
   OS << "    ISelQueue.push_back(N.Val);\n";
@@ -3624,7 +3619,7 @@ OS << "  unsigned NumKilled = ISelKilled.size();\n";
   OS << "  }\n";
   OS << "}\n\n";
 
-  OS << "void ReplaceUses(SDOperand F, SDOperand T) NOINLINE {\n";
+  OS << "void ReplaceUses(SDOperand F, SDOperand T) DISABLE_INLINE {\n";
   OS << "  CurDAG->ReplaceAllUsesOfValueWith(F, T, ISelKilled);\n";
   OS << "  setSelected(F.Val->getNodeId());\n";
   OS << "  RemoveKilled();\n";
