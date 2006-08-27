@@ -99,23 +99,6 @@ public:
   }
 };
 
-
-//===----------------------------------------------------------------------===//
-// FilteredPassNameParser class - Just like PassNameParser, but filter out
-// passes that do not have a PassType that includes the flags specified as the
-// template argument.
-//
-template<unsigned Flags>
-struct FilteredPassNameParser : public PassNameParser {
-
-  // ignorablePassImpl - Can be overriden in subclasses to refine the list of
-  // which passes we want to include.
-  //
-  virtual bool ignorablePassImpl(const PassInfo *P) const {
-    return (P->getPassType() & Flags) == 0;
-  }
-};
-
 } // End llvm namespace
 
 #endif
