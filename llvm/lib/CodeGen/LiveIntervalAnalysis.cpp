@@ -202,12 +202,13 @@ bool LiveIntervals::runOnMachineFunction(MachineFunction &fn) {
 
   for (iterator I = begin(), E = end(); I != E; ++I) {
     LiveInterval &li = I->second;
-    if (MRegisterInfo::isVirtualRegister(li.reg))
-      // If the live interval legnth is essentially zero, i.e. in every live
+    if (MRegisterInfo::isVirtualRegister(li.reg)) {
+      // If the live interval length is essentially zero, i.e. in every live
       // range the use follows def immediately, it doesn't make sense to spill
       // it and hope it will be easier to allocate for this li.
       if (isZeroLengthInterval(&li))
         li.weight = float(HUGE_VAL);
+    }
   }
 
   DEBUG(dump());
@@ -931,6 +932,6 @@ bool LiveIntervals::differingRegisterClasses(unsigned RegA,
 
 LiveInterval LiveIntervals::createInterval(unsigned reg) {
   float Weight = MRegisterInfo::isPhysicalRegister(reg) ?
-                       (float)HUGE_VAL :0.0F;
+                       (float)HUGE_VAL : 0.0F;
   return LiveInterval(reg, Weight);
 }
