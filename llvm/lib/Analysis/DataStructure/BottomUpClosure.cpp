@@ -37,7 +37,7 @@ namespace {
   UpdateGlobals("budatastructures-update-from-globals",
 		cl::desc("Update local graph from global graph when processing function"));
 
-  RegisterAnalysis<BUDataStructures>
+  RegisterPass<BUDataStructures>
   X("budatastructure", "Bottom-up Data Structure Analysis");
 }
 

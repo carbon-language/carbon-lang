@@ -72,6 +72,6 @@ namespace {
     }
   };
 
-  RegisterAnalysis<CallGraphPrinter> P2("print-callgraph",
-                                        "Print Call Graph to 'dot' file");
+  RegisterPass<CallGraphPrinter> P2("print-callgraph",
+                                    "Print Call Graph to 'dot' file");
 }

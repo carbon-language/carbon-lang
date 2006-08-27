@@ -55,8 +55,8 @@ namespace {
 
   };
 
-  RegisterAnalysis<InstCount> X("instcount",
-                                "Counts the various types of Instructions");
+  RegisterPass<InstCount> X("instcount",
+                            "Counts the various types of Instructions");
 }
 
 FunctionPass *llvm::createInstCountPass() { return new InstCount(); }

@@ -109,8 +109,8 @@ namespace {
     }
   };
 
-  RegisterAnalysis<CFGPrinter> P1("print-cfg",
-                                  "Print CFG of function to 'dot' file");
+  RegisterPass<CFGPrinter> P1("print-cfg",
+                              "Print CFG of function to 'dot' file");
 
   struct CFGOnlyPrinter : public CFGPrinter {
     virtual bool runOnFunction(Function &F) {
@@ -127,7 +127,7 @@ namespace {
     }
   };
 
-  RegisterAnalysis<CFGOnlyPrinter>
+  RegisterPass<CFGOnlyPrinter>
   P2("print-cfg-only",
      "Print CFG of function to 'dot' file (with no function bodies)");
 }

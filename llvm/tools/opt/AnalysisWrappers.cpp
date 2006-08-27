@@ -61,7 +61,7 @@ namespace {
     }
   };
 
-  RegisterAnalysis<ExternalFunctionsPassedConstants>
+  RegisterPass<ExternalFunctionsPassedConstants>
   P1("externalfnconstants", "Print external fn callsites passed constants");
   
   struct CallGraphPrinter : public ModulePass {
@@ -76,6 +76,6 @@ namespace {
     }
   };
   
-  RegisterAnalysis<CallGraphPrinter>
+  RegisterPass<CallGraphPrinter>
     P2("callgraph", "Print a call graph");
 }

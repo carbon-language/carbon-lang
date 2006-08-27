@@ -21,7 +21,7 @@
 #include "llvm/Support/InstIterator.h"
 using namespace llvm;
 
-static RegisterAnalysis<FindUsedTypes>
+static RegisterPass<FindUsedTypes>
 X("printusedtypes", "Find Used Types");
 
 // IncorporateType - Incorporate one type and all of its subtypes into the

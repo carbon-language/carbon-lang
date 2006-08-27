@@ -34,7 +34,7 @@ namespace {
   Statistic<> CompleteInd("calltarget", "Number of complete indirect calls");
   Statistic<> CompleteEmpty("calltarget", "Number of complete empty calls");
 
-  RegisterAnalysis<CallTargetFinder> X("calltarget", "Find Call Targets (uses DSA)");
+  RegisterPass<CallTargetFinder> X("calltarget","Find Call Targets (uses DSA)");
 }
 
 void CallTargetFinder::findIndTargets(Module &M)

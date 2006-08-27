@@ -74,7 +74,7 @@ namespace {
     void verify(const DSGraph &G);
   };
 
-  RegisterAnalysis<DSGC> X("datastructure-gc", "DSA Graph Checking Pass");
+  RegisterPass<DSGC> X("datastructure-gc", "DSA Graph Checking Pass");
 }
 
 FunctionPass *llvm::createDataStructureGraphCheckerPass() {

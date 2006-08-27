@@ -179,24 +179,33 @@ template<typename PassName>
 struct RegisterPass : public RegisterPassBase {
 
   // Register Pass using default constructor...
-  RegisterPass(const char *PassArg, const char *Name)
+  RegisterPass(const char *PassArg, const char *Name, bool CFGOnly = false)
   : RegisterPassBase(Name, PassArg, typeid(PassName),
-                     callDefaultCtor<PassName>) {}
+                     callDefaultCtor<PassName>) {
+    if (CFGOnly) setOnlyUsesCFG();
+  }
 
   // Register Pass using default constructor explicitly...
   RegisterPass(const char *PassArg, const char *Name,
-               Pass *(*ctor)()) 
-  : RegisterPassBase(Name, PassArg, typeid(PassName), ctor) {}
+               Pass *(*ctor)(), bool CFGOnly = false) 
+  : RegisterPassBase(Name, PassArg, typeid(PassName), ctor) {
+    if (CFGOnly) setOnlyUsesCFG();
+  }
 
   // Register Pass using TargetMachine constructor...
   RegisterPass(const char *PassArg, const char *Name, 
-               Pass *(*targetctor)(TargetMachine &))
-  : RegisterPassBase(Name, PassArg, typeid(PassName), 0, targetctor) {}
+               Pass *(*targetctor)(TargetMachine &), bool CFGOnly = false)
+  : RegisterPassBase(Name, PassArg, typeid(PassName), 0, targetctor) {
+    if (CFGOnly) setOnlyUsesCFG();
+  }
 
   // Generic constructor version that has an unknown ctor type...
   template<typename CtorType>
-  RegisterPass(const char *PassArg, const char *Name, CtorType *Fn)
-  : RegisterPassBase(Name, PassArg, typeid(PassName), 0) {}
+  RegisterPass(const char *PassArg, const char *Name, CtorType *Fn,
+               bool CFGOnly = false)
+  : RegisterPassBase(Name, PassArg, typeid(PassName), 0) {
+    if (CFGOnly) setOnlyUsesCFG();
+  }
 };
 
 /// RegisterOpt - Register something that is to show up in Opt, this is just a
@@ -242,22 +251,6 @@ struct RegisterOpt : public RegisterPassBase {
               bool CFGOnly = false)
   : RegisterPassBase(Name, PassArg, typeid(PassName), 0,
                      static_cast<Pass*(*)(TargetMachine&)>(targetctor)) {
-    if (CFGOnly) setOnlyUsesCFG();
-  }
-};
-
-/// RegisterAnalysis - Register something that is to show up in Analysis, this
-/// is just a shortcut for specifying RegisterPass...  Analyses take a special
-/// argument that, when set to true, tells the system that the analysis ONLY
-/// depends on the shape of the CFG, so if a transformation preserves the CFG
-/// that the analysis is not invalidated.
-///
-template<typename PassName>
-struct RegisterAnalysis : public RegisterPassBase {
-  RegisterAnalysis(const char *PassArg, const char *Name,
-                   bool CFGOnly = false)
-  : RegisterPassBase(Name, PassArg, typeid(PassName),
-                     callDefaultCtor<PassName>) {
     if (CFGOnly) setOnlyUsesCFG();
   }
 };

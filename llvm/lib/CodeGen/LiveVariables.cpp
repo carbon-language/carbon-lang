@@ -38,7 +38,7 @@
 #include <iostream>
 using namespace llvm;
 
-static RegisterAnalysis<LiveVariables> X("livevars", "Live Variable Analysis");
+static RegisterPass<LiveVariables> X("livevars", "Live Variable Analysis");
 
 void LiveVariables::VarInfo::dump() const {
   std::cerr << "Register Defined by: ";

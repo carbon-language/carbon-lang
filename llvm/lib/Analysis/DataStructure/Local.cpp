@@ -33,7 +33,7 @@
 
 using namespace llvm;
 
-static RegisterAnalysis<LocalDataStructures>
+static RegisterPass<LocalDataStructures>
 X("datastructure", "Local Data Structure Analysis");
 
 static cl::opt<bool>

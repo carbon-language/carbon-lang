@@ -23,7 +23,7 @@ using namespace llvm;
 //  ImmediatePostDominators Implementation
 //===----------------------------------------------------------------------===//
 
-static RegisterAnalysis<ImmediatePostDominators>
+static RegisterPass<ImmediatePostDominators>
 D("postidom", "Immediate Post-Dominators Construction", true);
 
 unsigned ImmediatePostDominators::DFSPass(BasicBlock *V, InfoRec &VInfo,
@@ -145,7 +145,7 @@ bool ImmediatePostDominators::runOnFunction(Function &F) {
 //  PostDominatorSet Implementation
 //===----------------------------------------------------------------------===//
 
-static RegisterAnalysis<PostDominatorSet>
+static RegisterPass<PostDominatorSet>
 B("postdomset", "Post-Dominator Set Construction", true);
 
 // Postdominator set construction.  This converts the specified function to only
@@ -212,7 +212,7 @@ bool PostDominatorSet::runOnFunction(Function &F) {
 //  PostDominatorTree Implementation
 //===----------------------------------------------------------------------===//
 
-static RegisterAnalysis<PostDominatorTree>
+static RegisterPass<PostDominatorTree>
 F("postdomtree", "Post-Dominator Tree Construction", true);
 
 DominatorTreeBase::Node *PostDominatorTree::getNodeForBlock(BasicBlock *BB) {
@@ -258,7 +258,7 @@ void PostDominatorTree::calculate(const ImmediatePostDominators &IPD) {
 // PostETForest Implementation
 //===----------------------------------------------------------------------===//
 
-static RegisterAnalysis<PostETForest>
+static RegisterPass<PostETForest>
 G("postetforest", "Post-ET-Forest Construction", true);
 
 ETNode *PostETForest::getNodeForBlock(BasicBlock *BB) {
@@ -322,7 +322,7 @@ void PostETForest::calculate(const ImmediatePostDominators &ID) {
 //  PostDominanceFrontier Implementation
 //===----------------------------------------------------------------------===//
 
-static RegisterAnalysis<PostDominanceFrontier>
+static RegisterPass<PostDominanceFrontier>
 H("postdomfrontier", "Post-Dominance Frontier Construction", true);
 
 const DominanceFrontier::DomSetType &

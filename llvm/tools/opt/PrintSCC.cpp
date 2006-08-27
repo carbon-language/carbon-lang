@@ -57,10 +57,10 @@ namespace {
     }
   };
 
-  RegisterAnalysis<CFGSCC>
+  RegisterPass<CFGSCC>
   Y("cfgscc", "Print SCCs of each function CFG");
 
-  RegisterAnalysis<CallGraphSCC>
+  RegisterPass<CallGraphSCC>
   Z("callscc", "Print SCCs of the Call Graph");
 }
 

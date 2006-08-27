@@ -60,7 +60,7 @@ namespace {
     void print(std::ostream &O, const Module* = 0) const { }
   };
 
-  static RegisterAnalysis<DSGraphStats> Z("dsstats", "DS Graph Statistics");
+  static RegisterPass<DSGraphStats> Z("dsstats", "DS Graph Statistics");
 }
 
 FunctionPass *llvm::createDataStructureStatsPass() { 

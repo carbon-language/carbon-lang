@@ -38,7 +38,7 @@
 using namespace llvm;
 
 namespace {
-  RegisterAnalysis<LiveIntervals> X("liveintervals", "Live Interval Analysis");
+  RegisterPass<LiveIntervals> X("liveintervals", "Live Interval Analysis");
 
   static Statistic<> numIntervals
   ("liveintervals", "Number of original intervals");

@@ -30,7 +30,7 @@
 using namespace llvm;
 
 namespace {
-  RegisterAnalysis<EquivClassGraphs> X("eqdatastructure",
+  RegisterPass<EquivClassGraphs> X("eqdatastructure",
                     "Equivalence-class Bottom-up Data Structure Analysis");
   Statistic<> NumEquivBUInlines("equivdatastructures",
                                 "Number of graphs inlined");

@@ -25,7 +25,7 @@
 #include <iostream>
 using namespace llvm;
 
-static RegisterAnalysis<LoopInfo>
+static RegisterPass<LoopInfo>
 X("loops", "Natural Loop Construction", true);
 
 //===----------------------------------------------------------------------===//

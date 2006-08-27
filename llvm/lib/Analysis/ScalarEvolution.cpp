@@ -80,7 +80,7 @@
 using namespace llvm;
 
 namespace {
-  RegisterAnalysis<ScalarEvolution>
+  RegisterPass<ScalarEvolution>
   R("scalar-evolution", "Scalar Evolution Analysis");
 
   Statistic<>

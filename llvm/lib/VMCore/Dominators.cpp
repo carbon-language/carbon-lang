@@ -44,7 +44,7 @@ using namespace llvm;
 //
 //===----------------------------------------------------------------------===//
 
-static RegisterAnalysis<ImmediateDominators>
+static RegisterPass<ImmediateDominators>
 C("idom", "Immediate Dominators Construction", true);
 
 unsigned ImmediateDominators::DFSPass(BasicBlock *V, InfoRec &VInfo,
@@ -243,7 +243,7 @@ void ImmediateDominatorsBase::print(std::ostream &o, const Module* ) const {
 //  DominatorSet Implementation
 //===----------------------------------------------------------------------===//
 
-static RegisterAnalysis<DominatorSet>
+static RegisterPass<DominatorSet>
 B("domset", "Dominator Set Construction", true);
 
 // dominates - Return true if A dominates B.  This performs the special checks
@@ -343,7 +343,7 @@ void DominatorSetBase::print(std::ostream &o, const Module* ) const {
 //  DominatorTree Implementation
 //===----------------------------------------------------------------------===//
 
-static RegisterAnalysis<DominatorTree>
+static RegisterPass<DominatorTree>
 E("domtree", "Dominator Tree Construction", true);
 
 // DominatorTreeBase::reset - Free all of the tree node memory.
@@ -434,7 +434,7 @@ void DominatorTreeBase::print(std::ostream &o, const Module* ) const {
 //  DominanceFrontier Implementation
 //===----------------------------------------------------------------------===//
 
-static RegisterAnalysis<DominanceFrontier>
+static RegisterPass<DominanceFrontier>
 G("domfrontier", "Dominance Frontier Construction", true);
 
 const DominanceFrontier::DomSetType &
@@ -813,7 +813,7 @@ ETNode *ETNode::NCA(ETNode *other) {
 // ETForest implementation
 //===----------------------------------------------------------------------===//
 
-static RegisterAnalysis<ETForest>
+static RegisterPass<ETForest>
 D("etforest", "ET Forest Construction", true);
 
 void ETForestBase::reset() {
