@@ -58,8 +58,10 @@ void CallTargetFinder::findIndTargets(Module &M)
               } 
               if (N->isComplete() && !IndMap[cs].size()) {
                 ++CompleteEmpty;
-                std::cerr << "Call site empty: '" << cs.getInstruction()->getName() 
-                          << "' In '" << cs.getInstruction()->getParent()->getParent()->getName()
+                std::cerr << "Call site empty: '"
+                << cs.getInstruction()->getName() 
+                          << "' In '"
+                << cs.getInstruction()->getParent()->getParent()->getName()
                           << "'\n";
               }
             } else {
@@ -74,7 +76,8 @@ void CallTargetFinder::print(std::ostream &O, const Module *M) const
 {
   return;
   O << "[* = incomplete] CS: func list\n";
-  for (std::map<CallSite, std::vector<Function*> >::const_iterator ii = IndMap.begin(),
+  for (std::map<CallSite, std::vector<Function*> >::const_iterator ii =
+       IndMap.begin(),
          ee = IndMap.end(); ii != ee; ++ii) {
     if (!ii->first.getCalledFunction()) { //only print indirect
       if (!isComplete(ii->first)) {
