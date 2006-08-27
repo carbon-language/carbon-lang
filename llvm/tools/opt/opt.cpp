@@ -13,7 +13,6 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Module.h"
-#include "llvm/Assembly/Parser.h"
 #include "llvm/PassManager.h"
 #include "llvm/Bytecode/Reader.h"
 #include "llvm/Bytecode/WriteBytecodePass.h"
@@ -37,9 +36,8 @@ using namespace llvm;
 // The OptimizationList is automatically populated with registered Passes by the
 // PassNameParser.
 //
-static cl::list<const PassInfo*, bool,
-                FilteredPassNameParser<PassInfo::Optimization> >
-OptimizationList(cl::desc("Optimizations available:"));
+static cl::list<const PassInfo*, bool, PassNameParser>
+PassList(cl::desc("Optimizations available:"));
 
 
 // Other command line options...
@@ -73,12 +71,6 @@ QuietA("quiet", cl::desc("Alias for -q"), cl::aliasopt(Quiet));
 
 static cl::opt<bool>
 AnalyzeOnly("analyze", cl::desc("Only perform analysis, no optimization"));
-
-// The AnalysesList is automatically populated with registered Passes by the
-// PassNameParser.
-static 
-  cl::list<const PassInfo*, bool, FilteredPassNameParser<PassInfo::Analysis> >
-  AnalysesList(cl::desc("Analyses available:"));
 
 static Timer BytecodeLoadTimer("Bytecode Loader");
 
@@ -166,57 +158,7 @@ int main(int argc, char **argv) {
       " llvm .bc -> .bc modular optimizer and analysis printer \n");
     sys::PrintStackTraceOnErrorSignal();
 
-    if (AnalyzeOnly) {
-      Module *CurMod = 0;
-#if 0
-      TimeRegion RegionTimer(BytecodeLoadTimer);
-#endif
-      CurMod = ParseBytecodeFile(InputFilename);
-      ParseError Err;
-      if (!CurMod && !(CurMod = ParseAssemblyFile(InputFilename,&Err))){
-        std::cerr << argv[0] << ": " << Err.getMessage() << "\n"; 
-        return 1;
-      }
-
-      // Create a PassManager to hold and optimize the collection of passes we 
-      // are about to build...
-      PassManager Passes;
-
-      // Add an appropriate TargetData instance for this module...
-      Passes.add(new TargetData(CurMod));
-
-      // Make sure the input LLVM is well formed.
-      if (!NoVerify)
-        Passes.add(createVerifierPass());
-
-      // Create a new optimization pass for each one specified on the 
-      // command line
-      for (unsigned i = 0; i < AnalysesList.size(); ++i) {
-        const PassInfo *Analysis = AnalysesList[i];
-
-        if (Analysis->getNormalCtor()) {
-          Pass *P = Analysis->getNormalCtor()();
-          Passes.add(P);
-
-          if (BasicBlockPass *BBP = dynamic_cast<BasicBlockPass*>(P))
-            Passes.add(new BasicBlockPassPrinter(Analysis));
-          else if (FunctionPass *FP = dynamic_cast<FunctionPass*>(P))
-            Passes.add(new FunctionPassPrinter(Analysis));
-          else
-            Passes.add(new ModulePassPrinter(Analysis));
-
-        } else
-          std::cerr << argv[0] << ": cannot create pass: "
-                    << Analysis->getPassName() << "\n";
-      }
-
-      Passes.run(*CurMod);
-
-      delete CurMod;
-      return 0;
-    }
-
-    // Allocate a full target machine description only if necessary...
+    // Allocate a full target machine description only if necessary.
     // FIXME: The choice of target should be controllable on the command line.
     std::auto_ptr<TargetMachine> target;
 
@@ -275,22 +217,30 @@ int main(int argc, char **argv) {
     Passes.add(new TargetData(M.get()));
 
     // Create a new optimization pass for each one specified on the command line
-    for (unsigned i = 0; i < OptimizationList.size(); ++i) {
-      const PassInfo *Opt = OptimizationList[i];
-
-      if (Opt->getNormalCtor())
-        Passes.add(Opt->getNormalCtor()());
-      else if (Opt->getTargetCtor()) {
-#if 0
-        if (target.get() == NULL)
-          target.reset(allocateSparcTargetMachine()); // FIXME: target option
-#endif
+    for (unsigned i = 0; i < PassList.size(); ++i) {
+      const PassInfo *PassInf = PassList[i];
+      Pass *P = 0;
+      if (PassInf->getNormalCtor())
+        P = PassInf->getNormalCtor()();
+      else if (PassInf->getTargetCtor()) {
         assert(target.get() && "Could not allocate target machine!");
-        Passes.add(Opt->getTargetCtor()(*target.get()));
+        P = PassInf->getTargetCtor()(*target.get());
       } else
-        std::cerr << argv[0] << ": cannot create pass: " << Opt->getPassName()
-                  << "\n";
-
+        std::cerr << argv[0] << ": cannot create pass: "
+                  << PassInf->getPassName() << "\n";
+      if (P) {
+        Passes.add(P);
+        
+        if (AnalyzeOnly) {
+          if (BasicBlockPass *BBP = dynamic_cast<BasicBlockPass*>(P))
+            Passes.add(new BasicBlockPassPrinter(PassInf));
+          else if (FunctionPass *FP = dynamic_cast<FunctionPass*>(P))
+            Passes.add(new FunctionPassPrinter(PassInf));
+          else
+            Passes.add(new ModulePassPrinter(PassInf));
+        }
+      }
+      
       if (PrintEachXForm)
         Passes.add(new PrintModulePass(&std::cerr));
     }
