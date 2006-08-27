@@ -1,6 +1,6 @@
 ; Crash in post dominator set construction.
 ;
-; RUN: opt -analyze -postdomset %s
+; RUN: llvm-as < %s | opt -analyze -postdomset
 ;
 
 implementation

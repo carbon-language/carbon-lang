@@ -1,6 +1,6 @@
 ;  Call graph construction crash: Not handling indirect calls right
 ;
-; RUN: opt -analyze -callgraph %s
+; RUN: llvm-as < %s | opt -analyze -callgraph
 ;
 
 %FunTy = type int(int)
