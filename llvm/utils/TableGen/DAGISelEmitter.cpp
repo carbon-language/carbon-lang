@@ -2583,7 +2583,7 @@ public:
            "(N.getOperand(N.getNumOperands()-1).getValueType() == MVT::Flag);");
       }
       if (HasVarOps)
-        emitCode("SmallVector<SDOperand, 8> Ops;");
+        emitCode("SmallVector<SDOperand, 8> Ops" + utostr(OpcNo) + ";");
 
       // How many results is this pattern expected to produce?
       unsigned PatResults = 0;
@@ -2607,15 +2607,17 @@ public:
       if (NodeHasInFlag || HasImpInputs)
         EmitInFlagSelectCode(Pattern, "N", ChainEmitted,
                              InFlagDecled, ResNodeDecled, true);
-      if (NodeHasOptInFlag) {
+      if (NodeHasOptInFlag || NodeHasInFlag || HasImpInputs) {
         if (!InFlagDecled) {
           emitCode("SDOperand InFlag(0, 0);");
           InFlagDecled = true;
         }
-        emitCode("if (HasInFlag) {");
-        emitCode("  InFlag = N.getOperand(N.getNumOperands()-1);");
-        emitCode("  AddToISelQueue(InFlag);");
-        emitCode("}");
+        if (NodeHasOptInFlag) {
+          emitCode("if (HasInFlag) {");
+          emitCode("  InFlag = N.getOperand(N.getNumOperands()-1);");
+          emitCode("  AddToISelQueue(InFlag);");
+          emitCode("}");
+        }
       }
 
       unsigned NumResults = Inst.getNumResults();    
@@ -2635,7 +2637,9 @@ public:
           else
             Code2 = NodeName + " = ";
         }
+
         Code = "CurDAG->getTargetNode(Opc" + utostr(OpcNo);
+        unsigned OpsNo = OpcNo;
         emitOpcode(II.Namespace + "::" + II.TheDef->getName());
 
         // Output order: results, chain, flags
@@ -2650,12 +2654,10 @@ public:
           Code += ", MVT::Flag";
 
         // Inputs.
-        for (unsigned i = 0, e = AllOps.size(); i != e; ++i) {
-          std::string OpName = AllOps[i];
-          if (HasVarOps)
-            emitCode("Ops.push_back(" + OpName + ");");
-          else
-            Code += ", " + OpName;
+        if (HasVarOps) {
+          for (unsigned i = 0, e = AllOps.size(); i != e; ++i)
+            emitCode("Ops" + utostr(OpsNo) + ".push_back(" + AllOps[i] + ");");
+          AllOps.clear();
         }
 
         if (HasVarOps) {
@@ -2669,40 +2671,51 @@ public:
             emitCode("for (unsigned i = 2, e = N.getNumOperands(); "
                      "i != e; ++i) {");
           emitCode("  AddToISelQueue(N.getOperand(i));");
-          emitCode("  Ops.push_back(N.getOperand(i));");
+          emitCode("  Ops" + utostr(OpsNo) + ".push_back(N.getOperand(i));");
           emitCode("}");
         }
 
         if (NodeHasChain) {
           if (HasVarOps)
-            emitCode("Ops.push_back(" + ChainName + ");");
+            emitCode("Ops" + utostr(OpsNo) + ".push_back(" + ChainName + ");");
           else
-            Code += ", " + ChainName;
-        }
-        if (NodeHasInFlag || HasImpInputs) {
-          if (!InFlagDecled) {
-            emitCode("SDOperand InFlag(0, 0);");
-            InFlagDecled = true;
-          }
-          if (HasVarOps) {
-            emitCode("Ops.push_back(InFlag);");
-          } else
-            Code += ", InFlag";
-        } else if (NodeHasOptInFlag && HasVarOps) {
-          if (!InFlagDecled) {
-            emitCode("SDOperand InFlag(0, 0);");
-            InFlagDecled = true;
-          }
-          emitCode("if (HasInFlag)");
-          emitCode("  Ops.push_back(InFlag);");
+            AllOps.push_back(ChainName);
         }
 
-        if (HasVarOps)
-          Code += ", &Ops[0], Ops.size()";
-        else if (NodeHasOptInFlag) {
-          Code = "HasInFlag ? " + Code + ", InFlag) : " + Code;
-        }
+        if (HasVarOps) {
+          if (NodeHasInFlag || HasImpInputs)
+            emitCode("Ops" + utostr(OpsNo) + ".push_back(InFlag);");
+          else if (NodeHasOptInFlag) {
+            emitCode("if (HasInFlag)");
+            emitCode("  Ops" + utostr(OpsNo) + ".push_back(InFlag);");
+          }
+          Code += ", &Ops" + utostr(OpsNo) + "[0], Ops" + utostr(OpsNo) +
+            ".size()";
+        } else if (NodeHasInFlag || NodeHasOptInFlag || HasImpInputs)
+            AllOps.push_back("InFlag");
 
+        unsigned NumOps = AllOps.size();
+        if (NumOps) {
+          if (!NodeHasOptInFlag && NumOps < 4) {
+            for (unsigned i = 0; i != NumOps; ++i)
+              Code += ", " + AllOps[i];
+          } else {
+            std::string OpsCode = "SDOperand Ops" + utostr(OpsNo) + "[] = { ";
+            for (unsigned i = 0; i != NumOps; ++i) {
+              OpsCode += AllOps[i];
+              if (i != NumOps-1)
+                OpsCode += ", ";
+            }
+            emitCode(OpsCode + " };");
+            Code += ", Ops" + utostr(OpsNo) + ", ";
+            if (NodeHasOptInFlag) {
+              Code += "HasInFlag ? ";
+              Code += utostr(NumOps) + " : " + utostr(NumOps-1);
+            } else
+              Code += utostr(NumOps);
+          }
+        }
+            
         if (!isRoot)
           Code += "), 0";
         emitCode(Code2 + Code + ");");
@@ -2761,9 +2774,8 @@ public:
             emitCode("ReplaceUses(SDOperand(N.Val, " + 
                      utostr(PatResults) + "), SDOperand(" + ChainName + ".Val, " +
                      ChainName + ".ResNo" + "));");
-        } else {
+        } else
           RetSelected = true;
-        }
 
         // User does not expect the instruction would produce a chain!
         if ((!InputHasChain && NodeHasChain) && NodeHasOutFlag) {
@@ -2792,10 +2804,27 @@ public:
           Code += ", VT" + utostr(VTNo);
         if (NodeHasOutFlag)
           Code += ", MVT::Flag";
-        for (unsigned i = 0, e = AllOps.size(); i != e; ++i)
-          Code += ", " + AllOps[i];
-        if (NodeHasInFlag || HasImpInputs)
-          Code += ", InFlag";
+
+        if (NodeHasInFlag || NodeHasOptInFlag || HasImpInputs)
+          AllOps.push_back("InFlag");
+
+        unsigned NumOps = AllOps.size();
+        if (NumOps) {
+          if (!NodeHasOptInFlag && NumOps < 4) {
+            for (unsigned i = 0; i != NumOps; ++i)
+              Code += ", " + AllOps[i];
+          } else {
+            std::string OpsCode = "SDOperand Ops" + utostr(OpcNo) + "[] = { ";
+            for (unsigned i = 0; i != NumOps; ++i) {
+              OpsCode += AllOps[i];
+              if (i != NumOps-1)
+                OpsCode += ", ";
+            }
+            emitCode(OpsCode + " };");
+            Code += ", Ops" + utostr(OpcNo) + ", ";
+            Code += utostr(NumOps);
+          }
+        }
         emitCode(Code + ");");
         emitOpcode(II.Namespace + "::" + II.TheDef->getName());
         if (N->getTypeNum(0) != MVT::isVoid)
