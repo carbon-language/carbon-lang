@@ -110,9 +110,12 @@ public:
 };
 }
 
-SourceBufferFile::SourceBufferFile(const sys::Path &Filename) : File(Filename) {
+SourceBufferFile::SourceBufferFile(const sys::Path &Filename) {
   // FIXME: This does an extra stat syscall to figure out the size, but we
   // already know the size!
+  bool Failure = File.open(Filename);
+  assert(!Failure && "Can't open file??");
+  
   File.map();
   
   size_t Size = File.size();
