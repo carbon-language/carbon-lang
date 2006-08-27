@@ -123,7 +123,7 @@ namespace sys {
     /// occurred.
     /// @brief Map the file into memory.
     void* map(
-      std::string* ErrMsg ///< Optional error string pointer
+      std::string* ErrMsg = 0///< Optional error string pointer
     );
 
     /// This method causes the size of the file, and consequently the size
