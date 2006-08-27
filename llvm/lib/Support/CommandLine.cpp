@@ -214,8 +214,8 @@ static bool EatsUnboundedNumberOfValues(const Option *O) {
 /// using strdup (), so it is the caller's responsibility to free ()
 /// them later.
 ///
-static void ParseCStringVector (std::vector<char *> &output,
-                                const char *input) {
+static void ParseCStringVector(std::vector<char *> &output,
+                               const char *input) {
   // Characters which will be treated as token separators:
   static const char *delims = " \v\f\t\r\n";
 
@@ -265,26 +265,25 @@ void cl::ParseEnvironmentOptions(const char *progName, const char *envVar,
   assert(envVar && "Environment variable name missing");
 
   // Get the environment variable they want us to parse options out of.
-  const char *envValue = getenv (envVar);
+  const char *envValue = getenv(envVar);
   if (!envValue)
     return;
 
   // Get program's "name", which we wouldn't know without the caller
   // telling us.
-  std::vector<char *> newArgv;
-  newArgv.push_back (strdup (progName));
+  std::vector<char*> newArgv;
+  newArgv.push_back(strdup(progName));
 
   // Parse the value of the environment variable into a "command line"
   // and hand it off to ParseCommandLineOptions().
-  ParseCStringVector (newArgv, envValue);
-  int newArgc = newArgv.size ();
-  ParseCommandLineOptions (newArgc, &newArgv[0], Overview);
+  ParseCStringVector(newArgv, envValue);
+  int newArgc = newArgv.size();
+  ParseCommandLineOptions(newArgc, &newArgv[0], Overview);
 
   // Free all the strdup()ed strings.
-  for (std::vector<char *>::iterator i = newArgv.begin (), e = newArgv.end ();
-       i != e; ++i) {
+  for (std::vector<char*>::iterator i = newArgv.begin(), e = newArgv.end();
+       i != e; ++i)
     free (*i);
-  }
 }
 
 /// LookupOption - Lookup the option specified by the specified option on the
