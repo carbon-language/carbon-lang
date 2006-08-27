@@ -1,6 +1,6 @@
 ; A test for "physical subtyping" used in some C programs...
 ;
-; RUN: opt -analyze %s -tddatastructure
+; RUN: llvm-as < %s | opt -analyze -tddatastructure
 ;
 %ST = type { int, int* }            ; "Subtype"
 %DT = type { int, int*, int }       ; "derived type"

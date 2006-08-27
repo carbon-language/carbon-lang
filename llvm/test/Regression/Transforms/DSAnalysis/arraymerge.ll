@@ -2,7 +2,7 @@
 ; folded completely away if possible.  This is a very common case, so it should
 ; be efficient.
 ;
-; RUN: opt -analyze %s -tddatastructure
+; RUN: llvm-as < %s | opt -analyze -tddatastructure
 ;
 implementation
 

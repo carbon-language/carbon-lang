@@ -1,5 +1,5 @@
 ;
-; RUN: opt -analyze %s -tddatastructure
+; RUN: llvm-as < %s | opt -analyze -tddatastructure
 %crazy = type [2 x { [2 x sbyte], short } ]
 
 implementation

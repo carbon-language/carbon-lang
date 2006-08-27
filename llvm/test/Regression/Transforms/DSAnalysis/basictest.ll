@@ -1,6 +1,6 @@
 ; very simple test
 ;
-; RUN: opt -analyze %s -tddatastructure
+; RUN: llvm-as < %s | opt -analyze -tddatastructure
 
 implementation
 

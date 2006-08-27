@@ -1,5 +1,5 @@
 ;
-; RUN: opt -analyze %s -tddatastructure
+; RUN: llvm-as < %s | opt -analyze -tddatastructure
 
 int* %test1(int *%A) {
 	%R = getelementptr int* %A, long 1

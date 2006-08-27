@@ -1,6 +1,6 @@
 ; This file contains a list of situations where node folding should happen...
 ;
-; RUN: opt -analyze %s -tddatastructure
+; RUN: llvm-as < %s | opt -analyze -tddatastructure
 
 implementation
 

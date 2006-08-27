@@ -1,4 +1,4 @@
-; RUN: opt -analyze %s -tddatastructure
+; RUN: llvm-as < %s | opt -analyze -tddatastructure
 
 %str = type { int, int* }
 
