@@ -22,6 +22,7 @@
 
 #include "llvm/Support/type_traits.h"
 #include "llvm/Support/DataTypes.h"
+#include "llvm/Support/Compiler.h"
 #include <string>
 #include <vector>
 #include <utility>
@@ -509,6 +510,9 @@ struct basic_parser_impl {  // non-template implementation of basic_parser<t>
 
   // getValueName - Overload in subclass to provide a better default value.
   virtual const char *getValueName() const { return "value"; }
+
+  // An out-of-line virtual method to provide a 'home' for this class.
+  virtual void anchor();
 };
 
 // basic_parser - The real basic parser is just a template wrapper that provides
@@ -518,7 +522,6 @@ template<class DataType>
 struct basic_parser : public basic_parser_impl {
   typedef DataType parser_data_type;
 };
-
 
 //--------------------------------------------------
 // parser<bool>
@@ -533,9 +536,14 @@ public:
     return ValueOptional;
   }
 
-  // getValueName - Do not print =<value> at all
+  // getValueName - Do not print =<value> at all.
   virtual const char *getValueName() const { return 0; }
+  
+  // An out-of-line virtual method to provide a 'home' for this class.
+  virtual void anchor();
 };
+
+EXTERN_TEMPLATE_INSTANTIATION(class basic_parser<bool>);
 
 
 //--------------------------------------------------
@@ -549,7 +557,12 @@ public:
 
   // getValueName - Overload in subclass to provide a better default value.
   virtual const char *getValueName() const { return "int"; }
+
+  // An out-of-line virtual method to provide a 'home' for this class.
+  virtual void anchor();
 };
+
+EXTERN_TEMPLATE_INSTANTIATION(class basic_parser<int>);
 
 
 //--------------------------------------------------
@@ -563,8 +576,12 @@ public:
 
   // getValueName - Overload in subclass to provide a better default value.
   virtual const char *getValueName() const { return "uint"; }
+
+  // An out-of-line virtual method to provide a 'home' for this class.
+  virtual void anchor();
 };
 
+EXTERN_TEMPLATE_INSTANTIATION(class basic_parser<unsigned>);
 
 //--------------------------------------------------
 // parser<double>
@@ -577,8 +594,12 @@ public:
 
   // getValueName - Overload in subclass to provide a better default value.
   virtual const char *getValueName() const { return "number"; }
+
+  // An out-of-line virtual method to provide a 'home' for this class.
+  virtual void anchor();
 };
 
+EXTERN_TEMPLATE_INSTANTIATION(class basic_parser<double>);
 
 //--------------------------------------------------
 // parser<float>
@@ -591,8 +612,12 @@ public:
 
   // getValueName - Overload in subclass to provide a better default value.
   virtual const char *getValueName() const { return "number"; }
+
+  // An out-of-line virtual method to provide a 'home' for this class.
+  virtual void anchor();
 };
 
+EXTERN_TEMPLATE_INSTANTIATION(class basic_parser<float>);
 
 //--------------------------------------------------
 // parser<std::string>
@@ -609,7 +634,12 @@ public:
 
   // getValueName - Overload in subclass to provide a better default value.
   virtual const char *getValueName() const { return "string"; }
+
+  // An out-of-line virtual method to provide a 'home' for this class.
+  virtual void anchor();
 };
+
+EXTERN_TEMPLATE_INSTANTIATION(class basic_parser<std::string>);
 
 //===----------------------------------------------------------------------===//
 // applicator class - This class is used because we must use partial
@@ -844,6 +874,11 @@ public:
     done();
   }
 };
+
+EXTERN_TEMPLATE_INSTANTIATION(class opt<unsigned>);
+EXTERN_TEMPLATE_INSTANTIATION(class opt<int>);
+EXTERN_TEMPLATE_INSTANTIATION(class opt<std::string>);
+EXTERN_TEMPLATE_INSTANTIATION(class opt<bool>);
 
 //===----------------------------------------------------------------------===//
 // list_storage class

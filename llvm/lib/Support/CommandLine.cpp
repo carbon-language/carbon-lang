@@ -28,11 +28,36 @@
 #include <cerrno>
 #include <cstring>
 using namespace llvm;
-
 using namespace cl;
 
+//===----------------------------------------------------------------------===//
+// Template instantiations and anchors.
+//
+TEMPLATE_INSTANTIATION(class basic_parser<bool>);
+TEMPLATE_INSTANTIATION(class basic_parser<int>);
+TEMPLATE_INSTANTIATION(class basic_parser<unsigned>);
+TEMPLATE_INSTANTIATION(class basic_parser<double>);
+TEMPLATE_INSTANTIATION(class basic_parser<float>);
+TEMPLATE_INSTANTIATION(class basic_parser<std::string>);
+
+TEMPLATE_INSTANTIATION(class opt<unsigned>);
+TEMPLATE_INSTANTIATION(class opt<int>);
+TEMPLATE_INSTANTIATION(class opt<std::string>);
+TEMPLATE_INSTANTIATION(class opt<bool>);
+
+void Option::anchor() {}
+void basic_parser_impl::anchor() {}
+void parser<bool>::anchor() {}
+void parser<int>::anchor() {}
+void parser<unsigned>::anchor() {}
+void parser<double>::anchor() {}
+void parser<float>::anchor() {}
+void parser<std::string>::anchor() {}
+
+//===----------------------------------------------------------------------===//
+
 // Globals for name and overview of program
-static std::string ProgramName ( "<premain>" );
+static std::string ProgramName = "<premain>";
 static const char *ProgramOverview = 0;
 
 // This collects additional help to be printed.
@@ -47,7 +72,7 @@ extrahelp::extrahelp(const char* Help)
 }
 
 //===----------------------------------------------------------------------===//
-// Basic, shared command line option processing machinery...
+// Basic, shared command line option processing machinery.
 //
 
 // Return the global command line option vector.  Making it a function scoped
@@ -595,10 +620,6 @@ void cl::ParseCommandLineOptions(int &argc, char **argv,
 //===----------------------------------------------------------------------===//
 // Option Base class implementation
 //
-
-// Out of line virtual function to provide home for the class.
-void Option::anchor() {
-}
 
 bool Option::error(std::string Message, const char *ArgName) {
   if (ArgName == 0) ArgName = ArgStr;
