@@ -183,7 +183,7 @@ private:
 
 RegisterAnalysisGroup<CallGraph> X("Call Graph");
 RegisterPass<BasicCallGraph> Y("basiccg", "Basic CallGraph Construction");
-RegisterAnalysisGroup<CallGraph, BasicCallGraph, true> Z;
+RegisterAnalysisGroup<CallGraph, true> Z(Y);
 
 } //End anonymous namespace
 

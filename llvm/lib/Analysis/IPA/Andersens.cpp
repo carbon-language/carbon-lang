@@ -338,7 +338,7 @@ namespace {
 
   RegisterPass<Andersens> X("anders-aa",
                             "Andersen's Interprocedural Alias Analysis");
-  RegisterAnalysisGroup<AliasAnalysis, Andersens> Y;
+  RegisterAnalysisGroup<AliasAnalysis> Y(X);
 }
 
 ModulePass *llvm::createAndersensPass() { return new Andersens(); }

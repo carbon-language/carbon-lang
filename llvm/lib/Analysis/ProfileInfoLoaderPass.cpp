@@ -52,7 +52,7 @@ namespace {
   RegisterPass<LoaderPass>
   X("profile-loader", "Load profile information from llvmprof.out");
 
-  RegisterAnalysisGroup<ProfileInfo, LoaderPass> Y;
+  RegisterAnalysisGroup<ProfileInfo> Y(X);
 }  // End of anonymous namespace
 
 ModulePass *llvm::createProfileLoaderPass() { return new LoaderPass(); }

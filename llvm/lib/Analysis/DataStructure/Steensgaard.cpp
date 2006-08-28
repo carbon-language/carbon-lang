@@ -77,7 +77,7 @@ namespace {
                          "Steensgaard's alias analysis (DSGraph based)");
 
   // Register as an implementation of AliasAnalysis
-  RegisterAnalysisGroup<AliasAnalysis, Steens> Y;
+  RegisterAnalysisGroup<AliasAnalysis> Y(X);
 }
 
 ModulePass *llvm::createSteensgaardPass() { return new Steens(); }

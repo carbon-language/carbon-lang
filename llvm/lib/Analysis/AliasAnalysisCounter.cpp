@@ -111,7 +111,7 @@ namespace {
 
   RegisterPass<AliasAnalysisCounter>
   X("count-aa", "Count Alias Analysis Query Responses");
-  RegisterAnalysisGroup<AliasAnalysis, AliasAnalysisCounter> Y;
+  RegisterAnalysisGroup<AliasAnalysis> Y(X);
 }
 
 ModulePass *llvm::createAliasAnalysisCounterPass() {

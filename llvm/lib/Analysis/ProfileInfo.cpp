@@ -89,7 +89,7 @@ namespace {
   X("no-profile", "No Profile Information");
 
   // Declare that we implement the ProfileInfo interface
-  RegisterAnalysisGroup<ProfileInfo, NoProfileInfo, true> Y;
+  RegisterAnalysisGroup<ProfileInfo, true> Y(X);
 }  // End of anonymous namespace
 
 ImmutablePass *llvm::createNoProfileInfoPass() { return new NoProfileInfo(); }

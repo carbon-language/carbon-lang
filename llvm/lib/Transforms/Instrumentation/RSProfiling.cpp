@@ -89,7 +89,7 @@ namespace {
   static RegisterAnalysisGroup<RSProfilers> A("Profiling passes");
   static RegisterPass<NullProfilerRS> NP("insert-null-profiling-rs",
 					"Measure profiling framework overhead");
-  static RegisterAnalysisGroup<RSProfilers, NullProfilerRS, true> NPT;
+  static RegisterAnalysisGroup<RSProfilers, true> NPT(NP);
 
   /// Chooser - Something that chooses when to make a sample of the profiled code
   class Chooser {

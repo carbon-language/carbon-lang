@@ -241,23 +241,15 @@ public:
   ~RegisterAGBase();
 };
 
-
-template<typename Interface, typename DefaultImplementationPass = void,
-         bool Default = false>
+template<typename Interface, bool Default = false>
 struct RegisterAnalysisGroup : public RegisterAGBase {
-  RegisterAnalysisGroup() : RegisterAGBase(typeid(Interface),
-                                           &typeid(DefaultImplementationPass),
-                                           Default) {
+  RegisterAnalysisGroup(RegisterPassBase &RPB)
+    : RegisterAGBase(typeid(Interface), &RPB.getPassInfo()->getTypeInfo(), 
+                     Default) {
   }
-};
 
-/// Define a specialization of RegisterAnalysisGroup that is used to set the
-/// name for the analysis group.
-///
-template<typename Interface>
-struct RegisterAnalysisGroup<Interface, void, false> : public RegisterAGBase {
   RegisterAnalysisGroup(const char *Name)
-    : RegisterAGBase(typeid(Interface)) {
+  : RegisterAGBase(typeid(Interface)) {
     setGroupName(Name);
   }
 };

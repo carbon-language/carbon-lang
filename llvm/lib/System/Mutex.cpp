@@ -53,7 +53,7 @@ using namespace sys;
 //       is configured into the LIBS variable.
 // Note: this line of code generates a warning if pthread_mutex_init is not
 //       declared with weak linkage. It's safe to ignore the warning.
-static const bool pthread_enabled = static_cast<bool>(pthread_mutex_init);
+static const bool pthread_enabled = true;
 
 // Construct a Mutex using pthread calls
 Mutex::Mutex( bool recursive)

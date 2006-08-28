@@ -137,7 +137,7 @@ namespace {
 
   RegisterPass<GlobalsModRef> X("globalsmodref-aa",
                                 "Simple mod/ref analysis for globals");
-  RegisterAnalysisGroup<AliasAnalysis, GlobalsModRef> Y;
+  RegisterAnalysisGroup<AliasAnalysis> Y(X);
 }
 
 Pass *llvm::createGlobalsModRefPass() { return new GlobalsModRef(); }

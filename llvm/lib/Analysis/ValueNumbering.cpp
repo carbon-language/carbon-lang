@@ -64,7 +64,7 @@ namespace {
   X("basicvn", "Basic Value Numbering (default GVN impl)");
 
   // Declare that we implement the ValueNumbering interface
-  RegisterAnalysisGroup<ValueNumbering, BasicVN, true> Y;
+  RegisterAnalysisGroup<ValueNumbering, true> Y(X);
 
   /// BVNImpl - Implement BasicVN in terms of a visitor class that
   /// handles the different types of instructions as appropriate.

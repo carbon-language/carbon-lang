@@ -76,7 +76,7 @@ namespace {
   U("no-aa", "No Alias Analysis (always returns 'may' alias)");
 
   // Declare that we implement the AliasAnalysis interface
-  RegisterAnalysisGroup<AliasAnalysis, NoAA> V;
+  RegisterAnalysisGroup<AliasAnalysis> V(U);
 }  // End of anonymous namespace
 
 ImmutablePass *llvm::createNoAAPass() { return new NoAA(); }
@@ -121,7 +121,7 @@ namespace {
   X("basicaa", "Basic Alias Analysis (default AA impl)");
 
   // Declare that we implement the AliasAnalysis interface
-  RegisterAnalysisGroup<AliasAnalysis, BasicAliasAnalysis, true> Y;
+  RegisterAnalysisGroup<AliasAnalysis, true> Y(X);
 }  // End of anonymous namespace
 
 ImmutablePass *llvm::createBasicAliasAnalysisPass() {

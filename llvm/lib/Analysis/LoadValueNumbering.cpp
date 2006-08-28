@@ -84,7 +84,7 @@ namespace {
   RegisterPass<LoadVN> X("load-vn", "Load Value Numbering");
 
   // Declare that we implement the ValueNumbering interface
-  RegisterAnalysisGroup<ValueNumbering, LoadVN> Y;
+  RegisterAnalysisGroup<ValueNumbering> Y(X);
 }
 
 FunctionPass *llvm::createLoadValueNumberingPass() { return new LoadVN(); }

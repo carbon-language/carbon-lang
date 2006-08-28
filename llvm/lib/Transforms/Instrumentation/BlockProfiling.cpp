@@ -37,7 +37,7 @@ namespace {
 
   RegisterPass<FunctionProfiler> X("insert-function-profiling",
                                "Insert instrumentation for function profiling");
-  RegisterAnalysisGroup<RSProfilers, FunctionProfiler> XG;
+  RegisterAnalysisGroup<RSProfilers> XG(X);
 
 }
 
@@ -83,7 +83,7 @@ namespace {
 
   RegisterPass<BlockProfiler> Y("insert-block-profiling",
                                 "Insert instrumentation for block profiling");
-  RegisterAnalysisGroup<RSProfilers, BlockProfiler> YG;
+  RegisterAnalysisGroup<RSProfilers> YG(Y);
 }
 
 ModulePass *llvm::createBlockProfilerPass() { return new BlockProfiler(); }

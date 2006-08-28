@@ -99,7 +99,7 @@ namespace {
   RegisterPass<DSAA> X("ds-aa", "Data Structure Graph Based Alias Analysis");
 
   // Register as an implementation of AliasAnalysis
-  RegisterAnalysisGroup<AliasAnalysis, DSAA> Y;
+  RegisterAnalysisGroup<AliasAnalysis> Y(X);
 }
 
 ModulePass *llvm::createDSAAPass() { return new DSAA(); }
