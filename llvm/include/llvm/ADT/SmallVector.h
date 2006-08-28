@@ -124,6 +124,18 @@ public:
     }
   }
   
+  void resize(unsigned N, const T &NV) {
+    if (N < size()) {
+      destroy_range(Begin+N, End);
+      End = Begin+N;
+    } else if (N > size()) {
+      if (Begin+N > Capacity)
+        grow(N);
+      construct_range(End, Begin+N, NV);
+      End = Begin+N;
+    }
+  }
+  
   void swap(SmallVectorImpl &RHS);
   
   /// append - Add the specified range to the end of the SmallVector.
