@@ -74,7 +74,8 @@
 </ol>
 
 <div class="doc_author">
-  <p>Written by <a href="mailto:sabre@nondot.org">Chris Lattner</a></p>
+  <p>Written by <a href="mailto:sabre@nondot.org">Chris Lattner</a> &amp;
+  <a href="mailto:isanbard@gmail.com">Bill Wendling</a></p>
 </div>
 
 <div class="doc_warning">
@@ -91,9 +92,10 @@
 
 <p>The LLVM target-independent code generator is a framework that provides a
 suite of reusable components for translating the LLVM internal representation to
-the machine code for a specified target -- either in assembly form (suitable for
-a static compiler) or in binary machine code format (usable for a JIT compiler).
-The LLVM target-independent code generator consists of five main components:</p>
+the machine code for a specified target&mdash;either in assembly form (suitable
+for a static compiler) or in binary machine code format (usable for a JIT
+compiler). The LLVM target-independent code generator consists of five main
+components:</p>
 
 <ol>
 <li><a href="#targetdesc">Abstract target description</a> interfaces which
@@ -166,7 +168,7 @@ to the GCC RTL form and uses GCC to emit machine code for a target.</p>
 implement radically different code generators in the LLVM system that do not
 make use of any of the built-in components.  Doing so is not recommended at all,
 but could be required for radically different targets that do not fit into the
-LLVM machine description model: programmable FPGAs for example.</p>
+LLVM machine description model: FPGAs for example.</p>
 
 </div>
 
@@ -228,23 +230,20 @@ format or in machine code.</li>
 
 </ol>
 
-<p>
-The code generator is based on the assumption that the instruction selector will
-use an optimal pattern matching selector to create high-quality sequences of
+<p>The code generator is based on the assumption that the instruction selector
+will use an optimal pattern matching selector to create high-quality sequences of
 native instructions.  Alternative code generator designs based on pattern 
-expansion and
-aggressive iterative peephole optimization are much slower.  This design 
-permits efficient compilation (important for JIT environments) and
+expansion and aggressive iterative peephole optimization are much slower.  This
+design permits efficient compilation (important for JIT environments) and
 aggressive optimization (used when generating code offline) by allowing 
 components of varying levels of sophistication to be used for any step of 
 compilation.</p>
 
-<p>
-In addition to these stages, target implementations can insert arbitrary
+<p>In addition to these stages, target implementations can insert arbitrary
 target-specific passes into the flow.  For example, the X86 target uses a
 special pass to handle the 80x87 floating point stack architecture.  Other
-targets with unusual requirements can be supported with custom passes as needed.
-</p>
+targets with unusual requirements can be supported with custom passes as
+needed.</p>
 
 </div>
 
@@ -264,18 +263,17 @@ In order to allow the maximum amount of commonality to be factored out, the LLVM
 code generator uses the <a href="TableGenFundamentals.html">TableGen</a> tool to
 describe big chunks of the target machine, which allows the use of
 domain-specific and target-specific abstractions to reduce the amount of 
-repetition.
-</p>
+repetition.</p>
 
 <p>As LLVM continues to be developed and refined, we plan to move more and more
-of the target description to be in <tt>.td</tt> form.  Doing so gives us a
+of the target description to the <tt>.td</tt> form.  Doing so gives us a
 number of advantages.  The most important is that it makes it easier to port
-LLVM, because it reduces the amount of C++ code that has to be written and the
+LLVM because it reduces the amount of C++ code that has to be written, and the
 surface area of the code generator that needs to be understood before someone
-can get in an get something working.  Second, it is also important to us because
-it makes it easier to change things: in particular, if tables and other things
-are all emitted by tblgen, we only need to change one place (tblgen) to update
-all of the targets to a new interface.</p>
+can get something working.  Second, it makes it easier to change things. In
+particular, if tables and other things are all emitted by <tt>tblgen</tt>, we
+only need a change in one place (<tt>tblgen</tt>) to update all of the targets
+to a new interface.</p>
 
 </div>
 
@@ -287,9 +285,9 @@ all of the targets to a new interface.</p>
 
 <div class="doc_text">
 
-<p>The LLVM target description classes (which are located in the
+<p>The LLVM target description classes (located in the
 <tt>include/llvm/Target</tt> directory) provide an abstract description of the
-target machine; independent of any particular client.  These classes are
+target machine independent of any particular client.  These classes are
 designed to capture the <i>abstract</i> properties of the target (such as the
 instructions and registers it has), and do not incorporate any particular pieces
 of code generation algorithms.</p>
@@ -349,14 +347,16 @@ little-endian or big-endian.</p>
 
 <p>The <tt>TargetLowering</tt> class is used by SelectionDAG based instruction
 selectors primarily to describe how LLVM code should be lowered to SelectionDAG
-operations.  Among other things, this class indicates:
-<ul><li>an initial register class to use for various ValueTypes</li>
+operations.  Among other things, this class indicates:</p>
+
+<ul>
+  <li>an initial register class to use for various <tt>ValueType</tt>s</li>
   <li>which operations are natively supported by the target machine</li>
-  <li>the return type of setcc operations</li>
+  <li>the return type of <tt>setcc</tt> operations</li>
   <li>the type to use for shift amounts</li>
   <li>various high-level characteristics, like whether it is profitable to turn
       division by a constant into a multiplication sequence</li>
-</ol></p>
+</ol>
 
 </div>
 
@@ -372,14 +372,14 @@ operations.  Among other things, this class indicates:
 target and any interactions between the registers.</p>
 
 <p>Registers in the code generator are represented in the code generator by
-unsigned numbers.  Physical registers (those that actually exist in the target
+unsigned integers.  Physical registers (those that actually exist in the target
 description) are unique small numbers, and virtual registers are generally
 large.  Note that register #0 is reserved as a flag value.</p>
 
 <p>Each register in the processor description has an associated
-<tt>TargetRegisterDesc</tt> entry, which provides a textual name for the register
-(used for assembly output and debugging dumps) and a set of aliases (used to
-indicate that one register overlaps with another).
+<tt>TargetRegisterDesc</tt> entry, which provides a textual name for the
+register (used for assembly output and debugging dumps) and a set of aliases
+(used to indicate whether one register overlaps with another).
 </p>
 
 <p>In addition to the per-register description, the <tt>MRegisterInfo</tt> class
@@ -409,7 +409,8 @@ href="TableGenFundamentals.html">TableGen</a> description of the register file.
   instruction the target supports. Descriptors define things like the mnemonic
   for the opcode, the number of operands, the list of implicit register uses
   and defs, whether the instruction has certain target-independent properties 
-  (accesses memory, is commutable, etc), and holds any target-specific flags.</p>
+  (accesses memory, is commutable, etc), and holds any target-specific
+  flags.</p>
 </div>
 
 <!-- ======================================================================= -->
@@ -421,7 +422,7 @@ href="TableGenFundamentals.html">TableGen</a> description of the register file.
   <p>The <tt>TargetFrameInfo</tt> class is used to provide information about the
   stack frame layout of the target. It holds the direction of stack growth, 
   the known stack alignment on entry to each function, and the offset to the 
-  locals area.  The offset to the local area is the offset from the stack 
+  local area.  The offset to the local area is the offset from the stack 
   pointer on function entry to the first location where function data (local 
   variables, spill locations) can be stored.</p>
 </div>
@@ -432,19 +433,25 @@ href="TableGenFundamentals.html">TableGen</a> description of the register file.
 </div>
 
 <div class="doc_text">
-  <p>
   <p>The <tt>TargetSubtarget</tt> class is used to provide information about the
   specific chip set being targeted.  A sub-target informs code generation of 
   which instructions are supported, instruction latencies and instruction 
   execution itinerary; i.e., which processing units are used, in what order, and
-  for how long.
-  </p>
+  for how long.</p>
 </div>
 
 
 <!-- ======================================================================= -->
 <div class="doc_subsection">
   <a name="targetjitinfo">The <tt>TargetJITInfo</tt> class</a>
+</div>
+
+<div class="doc_text">
+  <p>The <tt>TargetJITInfo</tt> class exposes an abstract interface used by the
+  Just-In-Time code generator to perform target-specific activities, such as
+  emitting stubs.  If a <tt>TargetMachine</tt> supports JIT code generation, it
+  should provide one of these objects through the <tt>getJITInfo</tt>
+  method.</p>
 </div>
 
 <!-- *********************************************************************** -->
@@ -455,16 +462,16 @@ href="TableGenFundamentals.html">TableGen</a> description of the register file.
 
 <div class="doc_text">
 
-<p>
-At the high-level, LLVM code is translated to a machine specific representation
-formed out of <a href="#machinefunction">MachineFunction</a>,
-<a href="#machinebasicblock">MachineBasicBlock</a>, and <a 
+<p>At the high-level, LLVM code is translated to a machine specific
+representation formed out of
+<a href="#machinefunction"><tt>MachineFunction</tt></a>,
+<a href="#machinebasicblock"><tt>MachineBasicBlock</tt></a>, and <a 
 href="#machineinstr"><tt>MachineInstr</tt></a> instances
-(defined in include/llvm/CodeGen).  This representation is completely target
-agnostic, representing instructions in their most abstract form: an opcode and a
-series of operands.  This representation is designed to support both SSA
-representation for machine code, as well as a register allocated, non-SSA form.
-</p>
+(defined in <tt>include/llvm/CodeGen</tt>).  This representation is completely
+target agnostic, representing instructions in their most abstract form: an
+opcode and a series of operands.  This representation is designed to support
+both an SSA representation for machine code, as well as a register allocated,
+non-SSA form.</p>
 
 </div>
 
@@ -480,17 +487,17 @@ representation for machine code, as well as a register allocated, non-SSA form.
 representing machine instructions.  In particular, it only keeps track of 
 an opcode number and a set of operands.</p>
 
-<p>The opcode number is a simple unsigned number that only has meaning to a 
+<p>The opcode number is a simple unsigned integer that only has meaning to a 
 specific backend.  All of the instructions for a target should be defined in 
 the <tt>*InstrInfo.td</tt> file for the target. The opcode enum values
 are auto-generated from this description.  The <tt>MachineInstr</tt> class does
 not have any information about how to interpret the instruction (i.e., what the 
-semantics of the instruction are): for that you must refer to the 
+semantics of the instruction are); for that you must refer to the 
 <tt><a href="#targetinstrinfo">TargetInstrInfo</a></tt> class.</p> 
 
 <p>The operands of a machine instruction can be of several different types:
-they can be a register reference, constant integer, basic block reference, etc.
-In addition, a machine operand should be marked as a def or a use of the value
+a register reference, a constant integer, a basic block reference, etc.  In
+addition, a machine operand should be marked as a def or a use of the value
 (though only registers are allowed to be defs).</p>
 
 <p>By convention, the LLVM code generator orders instruction operands so that
@@ -505,11 +512,13 @@ first.</p>
 list has several advantages.  In particular, the debugging printer will print 
 the instruction like this:</p>
 
+<div class="doc_code">
 <pre>
-  %r3 = add %i1, %i2
+%r3 = add %i1, %i2
 </pre>
+</div>
 
-<p>If the first operand is a def, and it is also easier to <a 
+<p>Also if the first operand is a def, it is easier to <a 
 href="#buildmi">create instructions</a> whose only def is the first 
 operand.</p>
 
@@ -525,39 +534,44 @@ operand.</p>
 <p>Machine instructions are created by using the <tt>BuildMI</tt> functions,
 located in the <tt>include/llvm/CodeGen/MachineInstrBuilder.h</tt> file.  The
 <tt>BuildMI</tt> functions make it easy to build arbitrary machine 
-instructions.  Usage of the <tt>BuildMI</tt> functions look like this: 
-</p>
+instructions.  Usage of the <tt>BuildMI</tt> functions look like this:</p>
 
+<div class="doc_code">
 <pre>
-  // Create a 'DestReg = mov 42' (rendered in X86 assembly as 'mov DestReg, 42')
-  // instruction.  The '1' specifies how many operands will be added.
-  MachineInstr *MI = BuildMI(X86::MOV32ri, 1, DestReg).addImm(42);
+// Create a 'DestReg = mov 42' (rendered in X86 assembly as 'mov DestReg, 42')
+// instruction.  The '1' specifies how many operands will be added.
+MachineInstr *MI = BuildMI(X86::MOV32ri, 1, DestReg).addImm(42);
 
-  // Create the same instr, but insert it at the end of a basic block.
-  MachineBasicBlock &amp;MBB = ...
-  BuildMI(MBB, X86::MOV32ri, 1, DestReg).addImm(42);
+// Create the same instr, but insert it at the end of a basic block.
+MachineBasicBlock &amp;MBB = ...
+BuildMI(MBB, X86::MOV32ri, 1, DestReg).addImm(42);
 
-  // Create the same instr, but insert it before a specified iterator point.
-  MachineBasicBlock::iterator MBBI = ...
-  BuildMI(MBB, MBBI, X86::MOV32ri, 1, DestReg).addImm(42);
+// Create the same instr, but insert it before a specified iterator point.
+MachineBasicBlock::iterator MBBI = ...
+BuildMI(MBB, MBBI, X86::MOV32ri, 1, DestReg).addImm(42);
 
-  // Create a 'cmp Reg, 0' instruction, no destination reg.
-  MI = BuildMI(X86::CMP32ri, 2).addReg(Reg).addImm(0);
-  // Create an 'sahf' instruction which takes no operands and stores nothing.
-  MI = BuildMI(X86::SAHF, 0);
+// Create a 'cmp Reg, 0' instruction, no destination reg.
+MI = BuildMI(X86::CMP32ri, 2).addReg(Reg).addImm(0);
+// Create an 'sahf' instruction which takes no operands and stores nothing.
+MI = BuildMI(X86::SAHF, 0);
 
-  // Create a self looping branch instruction.
-  BuildMI(MBB, X86::JNE, 1).addMBB(&amp;MBB);
+// Create a self looping branch instruction.
+BuildMI(MBB, X86::JNE, 1).addMBB(&amp;MBB);
 </pre>
+</div>
 
-<p>
-The key thing to remember with the <tt>BuildMI</tt> functions is that you have
-to specify the number of operands that the machine instruction will take. This
-allows for efficient memory allocation.  You also need to specify if operands 
-default to be uses of values, not definitions.  If you need to add a definition
-operand (other than the optional destination register), you must explicitly 
-mark it as such.
-</p>
+<p>The key thing to remember with the <tt>BuildMI</tt> functions is that you
+have to specify the number of operands that the machine instruction will take.
+This allows for efficient memory allocation.  You also need to specify if
+operands default to be uses of values, not definitions.  If you need to add a
+definition operand (other than the optional destination register), you must
+explicitly mark it as such:</p>
+
+<div class="doc_code">
+<pre>
+MI.addReg(Reg, MachineOperand::Def);
+</pre>
+</div>
 
 </div>
 
@@ -579,48 +593,54 @@ copies a virtual register into or out of a physical register when needed.</p>
 
 <p>For example, consider this simple LLVM example:</p>
 
+<div class="doc_code">
 <pre>
-  int %test(int %X, int %Y) {
-    %Z = div int %X, %Y
-    ret int %Z
-  }
+int %test(int %X, int %Y) {
+  %Z = div int %X, %Y
+  ret int %Z
+}
 </pre>
+</div>
 
-<p>The X86 instruction selector produces this machine code for the div 
-and ret (use 
+<p>The X86 instruction selector produces this machine code for the <tt>div</tt>
+and <tt>ret</tt> (use 
 "<tt>llc X.bc -march=x86 -print-machineinstrs</tt>" to get this):</p>
 
+<div class="doc_code">
 <pre>
-        ;; Start of div
-        %EAX = mov %reg1024           ;; Copy X (in reg1024) into EAX
-        %reg1027 = sar %reg1024, 31
-        %EDX = mov %reg1027           ;; Sign extend X into EDX
-        idiv %reg1025                 ;; Divide by Y (in reg1025)
-        %reg1026 = mov %EAX           ;; Read the result (Z) out of EAX
+;; Start of div
+%EAX = mov %reg1024           ;; Copy X (in reg1024) into EAX
+%reg1027 = sar %reg1024, 31
+%EDX = mov %reg1027           ;; Sign extend X into EDX
+idiv %reg1025                 ;; Divide by Y (in reg1025)
+%reg1026 = mov %EAX           ;; Read the result (Z) out of EAX
 
-        ;; Start of ret
-        %EAX = mov %reg1026           ;; 32-bit return value goes in EAX
-        ret
+;; Start of ret
+%EAX = mov %reg1026           ;; 32-bit return value goes in EAX
+ret
 </pre>
+</div>
 
 <p>By the end of code generation, the register allocator has coalesced
-the registers and deleted the resultant identity moves, producing the
+the registers and deleted the resultant identity moves producing the
 following code:</p>
 
+<div class="doc_code">
 <pre>
-        ;; X is in EAX, Y is in ECX
-        mov %EAX, %EDX
-        sar %EDX, 31
-        idiv %ECX
-        ret 
+;; X is in EAX, Y is in ECX
+mov %EAX, %EDX
+sar %EDX, 31
+idiv %ECX
+ret 
 </pre>
+</div>
 
 <p>This approach is extremely general (if it can handle the X86 architecture, 
 it can handle anything!) and allows all of the target specific
 knowledge about the instruction stream to be isolated in the instruction 
 selector.  Note that physical registers should have a short lifetime for good 
-code generation, and all physical registers are assumed dead on entry and
-exit of basic blocks (before register allocation).  Thus if you need a value
+code generation, and all physical registers are assumed dead on entry to and
+exit from basic blocks (before register allocation).  Thus, if you need a value
 to be live across basic block boundaries, it <em>must</em> live in a virtual 
 register.</p>
 
@@ -628,18 +648,18 @@ register.</p>
 
 <!-- _______________________________________________________________________ -->
 <div class="doc_subsubsection">
-  <a name="ssa">Machine code SSA form</a>
+  <a name="ssa">Machine code in SSA form</a>
 </div>
 
 <div class="doc_text">
 
 <p><tt>MachineInstr</tt>'s are initially selected in SSA-form, and
 are maintained in SSA-form until register allocation happens.  For the most 
-part, this is trivially simple since LLVM is already in SSA form: LLVM PHI nodes
+part, this is trivially simple since LLVM is already in SSA form; LLVM PHI nodes
 become machine code PHI nodes, and virtual registers are only allowed to have a
 single definition.</p>
 
-<p>After register allocation, machine code is no longer in SSA-form, as there 
+<p>After register allocation, machine code is no longer in SSA-form because there 
 are no virtual registers left in the code.</p>
 
 </div>
@@ -652,12 +672,12 @@ are no virtual registers left in the code.</p>
 <div class="doc_text">
 
 <p>The <tt>MachineBasicBlock</tt> class contains a list of machine instructions
-(<a href="#machineinstr">MachineInstr</a> instances).  It roughly corresponds to
-the LLVM code input to the instruction selector, but there can be a one-to-many
-mapping (i.e. one LLVM basic block can map to multiple machine basic blocks).
-The MachineBasicBlock class has a "<tt>getBasicBlock</tt>" method, which returns
-the LLVM basic block that it comes from.
-</p>
+(<tt><a href="#machineinstr">MachineInstr</a></tt> instances).  It roughly
+corresponds to the LLVM code input to the instruction selector, but there can be
+a one-to-many mapping (i.e. one LLVM basic block can map to multiple machine
+basic blocks). The <tt>MachineBasicBlock</tt> class has a
+"<tt>getBasicBlock</tt>" method, which returns the LLVM basic block that it
+comes from.</p>
 
 </div>
 
@@ -669,17 +689,15 @@ the LLVM basic block that it comes from.
 <div class="doc_text">
 
 <p>The <tt>MachineFunction</tt> class contains a list of machine basic blocks
-(<a href="#machinebasicblock">MachineBasicBlock</a> instances).  It corresponds
-one-to-one with the LLVM function input to the instruction selector.  In
-addition to a list of basic blocks, the <tt>MachineFunction</tt> contains a
-the MachineConstantPool, MachineFrameInfo, MachineFunctionInfo,
-SSARegMap, and a set of live in and live out registers for the function.  See
-<tt>MachineFunction.h</tt> for more information.
-</p>
+(<tt><a href="#machinebasicblock">MachineBasicBlock</a></tt> instances).  It
+corresponds one-to-one with the LLVM function input to the instruction selector.
+In addition to a list of basic blocks, the <tt>MachineFunction</tt> contains a
+a <tt>MachineConstantPool</tt>, a <tt>MachineFrameInfo</tt>, a
+<tt>MachineFunctionInfo</tt>, a <tt>SSARegMap</tt>, and a set of live in and
+live out registers for the function.  See
+<tt>include/llvm/CodeGen/MachineFunction.h</tt> for more information.</p>
 
 </div>
-
-
 
 <!-- *********************************************************************** -->
 <div class="doc_section">
@@ -706,14 +724,14 @@ Instruction Selection is the process of translating LLVM code presented to the
 code generator into target-specific machine instructions.  There are several
 well-known ways to do this in the literature.  In LLVM there are two main forms:
 the SelectionDAG based instruction selector framework and an old-style 'simple'
-instruction selector (which effectively peephole selects each LLVM instruction
-into a series of machine instructions).  We recommend that all targets use the
+instruction selector, which effectively peephole selects each LLVM instruction
+into a series of machine instructions.  We recommend that all targets use the
 SelectionDAG infrastructure.
 </p>
 
 <p>Portions of the DAG instruction selector are generated from the target 
-description files (<tt>*.td</tt>) files.  Eventually, we aim for the entire
-instruction selector to be generated from these <tt>.td</tt> files.</p>
+description (<tt>*.td</tt>) files.  Our goal is for the entire instruction
+selector to be generated from these <tt>.td</tt> files.</p>
 </div>
 
 <!-- _______________________________________________________________________ -->
@@ -723,21 +741,18 @@ instruction selector to be generated from these <tt>.td</tt> files.</p>
 
 <div class="doc_text">
 
-<p>
-The SelectionDAG provides an abstraction for code representation in a way that 
-is amenable to instruction selection using automatic techniques
-(e.g. dynamic-programming based optimal pattern matching selectors), It is also
-well suited to other phases of code generation; in particular,
+<p>The SelectionDAG provides an abstraction for code representation in a way
+that is amenable to instruction selection using automatic techniques
+(e.g. dynamic-programming based optimal pattern matching selectors). It is also
+well-suited to other phases of code generation; in particular,
 instruction scheduling (SelectionDAG's are very close to scheduling DAGs
 post-selection).  Additionally, the SelectionDAG provides a host representation
 where a large variety of very-low-level (but target-independent) 
 <a href="#selectiondag_optimize">optimizations</a> may be
-performed: ones which require extensive information about the instructions
-efficiently supported by the target.
-</p>
+performed; ones which require extensive information about the instructions
+efficiently supported by the target.</p>
 
-<p>
-The SelectionDAG is a Directed-Acyclic-Graph whose nodes are instances of the
+<p>The SelectionDAG is a Directed-Acyclic-Graph whose nodes are instances of the
 <tt>SDNode</tt> class.  The primary payload of the <tt>SDNode</tt> is its 
 operation code (Opcode) that indicates what operation the node performs and
 the operands to the operation.
@@ -750,38 +765,33 @@ both the dividend and the remainder. Many other situations require multiple
 values as well.  Each node also has some number of operands, which are edges 
 to the node defining the used value.  Because nodes may define multiple values,
 edges are represented by instances of the <tt>SDOperand</tt> class, which is 
-a &lt;SDNode, unsigned&gt; pair, indicating the node and result
-value being used, respectively.  Each value produced by an SDNode has an 
-associated MVT::ValueType, indicating what type the value is.
-</p>
+a <tt>&lt;SDNode, unsigned&gt;</tt> pair, indicating the node and result
+value being used, respectively.  Each value produced by an <tt>SDNode</tt> has
+an associated <tt>MVT::ValueType</tt> indicating what type the value is.</p>
 
-<p>
-SelectionDAGs contain two different kinds of values: those that represent data
-flow and those that represent control flow dependencies.  Data values are simple
-edges with an integer or floating point value type.  Control edges are
-represented as "chain" edges which are of type MVT::Other.  These edges provide
-an ordering between nodes that have side effects (such as
-loads/stores/calls/return/etc).  All nodes that have side effects should take a
-token chain as input and produce a new one as output.  By convention, token
-chain inputs are always operand #0, and chain results are always the last
+<p>SelectionDAGs contain two different kinds of values: those that represent
+data flow and those that represent control flow dependencies.  Data values are
+simple edges with an integer or floating point value type.  Control edges are
+represented as "chain" edges which are of type <tt>MVT::Other</tt>.  These edges
+provide an ordering between nodes that have side effects (such as
+loads, stores, calls, returns, etc).  All nodes that have side effects should
+take a token chain as input and produce a new one as output.  By convention,
+token chain inputs are always operand #0, and chain results are always the last
 value produced by an operation.</p>
 
-<p>
-A SelectionDAG has designated "Entry" and "Root" nodes.  The Entry node is
-always a marker node with an Opcode of ISD::EntryToken.  The Root node is the
-final side-effecting node in the token chain. For example, in a single basic
-block function, this would be the return node.
-</p>
+<p>A SelectionDAG has designated "Entry" and "Root" nodes.  The Entry node is
+always a marker node with an Opcode of <tt>ISD::EntryToken</tt>.  The Root node
+is the final side-effecting node in the token chain. For example, in a single
+basic block function it would be the return node.</p>
 
-<p>
-One important concept for SelectionDAGs is the notion of a "legal" vs. "illegal"
-DAG.  A legal DAG for a target is one that only uses supported operations and
-supported types.  On a 32-bit PowerPC, for example, a DAG with any values of i1,
-i8, i16,
-or i64 type would be illegal, as would a DAG that uses a SREM or UREM operation.
-The <a href="#selectiondag_legalize">legalize</a>
-phase is responsible for turning an illegal DAG into a legal DAG.
-</p>
+<p>One important concept for SelectionDAGs is the notion of a "legal" vs.
+"illegal" DAG.  A legal DAG for a target is one that only uses supported
+operations and supported types.  On a 32-bit PowerPC, for example, a DAG with
+a value of type i1, i8, i16, or i64 would be illegal, as would a DAG that uses a
+SREM or UREM operation.  The
+<a href="#selectiondag_legalize">legalize</a> phase is responsible for turning
+an illegal DAG into a legal DAG.</p>
+
 </div>
 
 <!-- _______________________________________________________________________ -->
@@ -791,25 +801,23 @@ phase is responsible for turning an illegal DAG into a legal DAG.
 
 <div class="doc_text">
 
-<p>
-SelectionDAG-based instruction selection consists of the following steps:
-</p>
+<p>SelectionDAG-based instruction selection consists of the following steps:</p>
 
 <ol>
-<li><a href="#selectiondag_build">Build initial DAG</a> - This stage performs
-    a simple translation from the input LLVM code to an illegal SelectionDAG.
-    </li>
+<li><a href="#selectiondag_build">Build initial DAG</a> - This stage
+    performs a simple translation from the input LLVM code to an illegal
+    SelectionDAG.</li>
 <li><a href="#selectiondag_optimize">Optimize SelectionDAG</a> - This stage
-    performs simple optimizations on the SelectionDAG to simplify it and
-    recognize meta instructions (like rotates and div/rem pairs) for
-    targets that support these meta operations.  This makes the resultant code
-    more efficient and the 'select instructions from DAG' phase (below) simpler.
-</li>
+    performs simple optimizations on the SelectionDAG to simplify it, and
+    recognize meta instructions (like rotates and <tt>div</tt>/<tt>rem</tt>
+    pairs) for targets that support these meta operations.  This makes the
+    resultant code more efficient and the <a href="#selectiondag_select">select
+    instructions from DAG</a> phase (below) simpler.</li>
 <li><a href="#selectiondag_legalize">Legalize SelectionDAG</a> - This stage
-    converts the illegal SelectionDAG to a legal SelectionDAG, by eliminating
+    converts the illegal SelectionDAG to a legal SelectionDAG by eliminating
     unsupported operations and data types.</li>
 <li><a href="#selectiondag_optimize">Optimize SelectionDAG (#2)</a> - This
-    second run of the SelectionDAG optimized the newly legalized DAG, to
+    second run of the SelectionDAG optimizes the newly legalized DAG to
     eliminate inefficiencies introduced by legalization.</li>
 <li><a href="#selectiondag_select">Select instructions from DAG</a> - Finally,
     the target instruction selector matches the DAG operations to target
@@ -831,8 +839,8 @@ of the code compiled (if you only get errors printed to the console while using
 this, you probably <a href="ProgrammersManual.html#ViewGraph">need to configure
 your system</a> to add support for it).  The <tt>-view-sched-dags</tt> option
 views the SelectionDAG output from the Select phase and input to the Scheduler
-phase.
-</p>
+phase.</p>
+
 </div>
 
 <!-- _______________________________________________________________________ -->
@@ -842,17 +850,15 @@ phase.
 
 <div class="doc_text">
 
-<p>
-The initial SelectionDAG is naively peephole expanded from the LLVM input by
-the <tt>SelectionDAGLowering</tt> class in the SelectionDAGISel.cpp file.  The 
-intent of  this pass is to expose as much low-level, target-specific details 
-to the SelectionDAG as possible.  This pass is mostly hard-coded (e.g. an LLVM 
-add turns into an SDNode add while a geteelementptr is expanded into the obvious
-arithmetic). This pass requires target-specific hooks to lower calls and
-returns, varargs, etc.  For these features, the <a 
-href="#targetlowering">TargetLowering</a> interface is
-used.
-</p>
+<p>The initial SelectionDAG is naively peephole expanded from the LLVM input by
+the <tt>SelectionDAGLowering</tt> class in the
+<tt>lib/CodeGen/SelectionDAG/SelectionDAGISel.cpp</tt> file.  The intent of this
+pass is to expose as much low-level, target-specific details to the SelectionDAG
+as possible.  This pass is mostly hard-coded (e.g. an LLVM <tt>add</tt> turns
+into an <tt>SDNode add</tt> while a <tt>geteelementptr</tt> is expanded into the
+obvious arithmetic). This pass requires target-specific hooks to lower calls,
+returns, varargs, etc.  For these features, the
+<tt><a href="#targetlowering">TargetLowering</a></tt> interface is used.</p>
 
 </div>
 
@@ -875,38 +881,35 @@ tasks:</p>
        that all f32 values are promoted to f64 and that all i1/i8/i16 values
        are promoted to i32.  The same target might require that all i64 values
        be expanded into i32 values.  These changes can insert sign and zero
-       extensions as 
-       needed to make sure that the final code has the same behavior as the 
-       input.</p>
+       extensions as needed to make sure that the final code has the same
+       behavior as the input.</p>
     <p>A target implementation tells the legalizer which types are supported
        (and which register class to use for them) by calling the
-       "addRegisterClass" method in its TargetLowering constructor.</p>
+       <tt>addRegisterClass</tt> method in its TargetLowering constructor.</p>
 </li>
 
 <li><p>Eliminate operations that are not supported by the target.</p>
     <p>Targets often have weird constraints, such as not supporting every
        operation on every supported datatype (e.g. X86 does not support byte
        conditional moves and PowerPC does not support sign-extending loads from
-       a 16-bit memory location).  Legalize takes care by open-coding
+       a 16-bit memory location).  Legalize takes care of this by open-coding
        another sequence of operations to emulate the operation ("expansion"), by
-       promoting to a larger type that supports the operation
-       (promotion), or using a target-specific hook to implement the
-       legalization (custom).</p>
+       promoting one type to a larger type that supports the operation
+       ("promotion"), or by using a target-specific hook to implement the
+       legalization ("custom").</p>
     <p>A target implementation tells the legalizer which operations are not
        supported (and which of the above three actions to take) by calling the
-       "setOperationAction" method in its TargetLowering constructor.</p>
+       <tt>setOperationAction</tt> method in its <tt>TargetLowering</tt>
+       constructor.</p>
 </li>
 </ol>
 
-<p>
-Prior to the existance of the Legalize pass, we required that every
-target <a href="#selectiondag_optimize">selector</a> supported and handled every
+<p>Prior to the existance of the Legalize pass, we required that every target
+<a href="#selectiondag_optimize">selector</a> supported and handled every
 operator and type even if they are not natively supported.  The introduction of
-the Legalize phase allows all of the 
-cannonicalization patterns to be shared across targets, and makes it very 
-easy to optimize the cannonicalized code because it is still in the form of 
-a DAG.
-</p>
+the Legalize phase allows all of the cannonicalization patterns to be shared
+across targets, and makes it very easy to optimize the cannonicalized code
+because it is still in the form of a DAG.</p>
 
 </div>
 
@@ -918,27 +921,24 @@ a DAG.
 
 <div class="doc_text">
 
-<p>
-The SelectionDAG optimization phase is run twice for code generation: once
+<p>The SelectionDAG optimization phase is run twice for code generation: once
 immediately after the DAG is built and once after legalization.  The first run
 of the pass allows the initial code to be cleaned up (e.g. performing 
 optimizations that depend on knowing that the operators have restricted type 
 inputs).  The second run of the pass cleans up the messy code generated by the 
 Legalize pass, which allows Legalize to be very simple (it can focus on making
-code legal instead of focusing on generating <i>good</i> and legal code).
-</p>
+code legal instead of focusing on generating <em>good</em> and legal code).</p>
+
+<p>One important class of optimizations performed is optimizing inserted sign
+and zero extension instructions.  We currently use ad-hoc techniques, but could
+move to more rigorous techniques in the future.  Here are some good papers on
+the subject:</p>
 
 <p>
-One important class of optimizations performed is optimizing inserted sign and
-zero extension instructions.  We currently use ad-hoc techniques, but could move
-to more rigorous techniques in the future.  Here are some good
-papers on the subject:</p>
-
-<p>
-"<a href="http://www.eecs.harvard.edu/~nr/pubs/widen-abstract.html">Widening
-integer arithmetic</a>"<br>
-Kevin Redwine and Norman Ramsey<br>
-International Conference on Compiler Construction (CC) 2004
+ "<a href="http://www.eecs.harvard.edu/~nr/pubs/widen-abstract.html">Widening
+ integer arithmetic</a>"<br>
+ Kevin Redwine and Norman Ramsey<br>
+ International Conference on Compiler Construction (CC) 2004
 </p>
 
 
@@ -960,40 +960,44 @@ International Conference on Compiler Construction (CC) 2004
 <div class="doc_text">
 
 <p>The Select phase is the bulk of the target-specific code for instruction
-selection.  This phase takes a legal SelectionDAG as input,
-pattern matches the instructions supported by the target to this DAG, and
-produces a new DAG of target code.  For example, consider the following LLVM
-fragment:</p>
+selection.  This phase takes a legal SelectionDAG as input, pattern matches the
+instructions supported by the target to this DAG, and produces a new DAG of
+target code.  For example, consider the following LLVM fragment:</p>
 
+<div class="doc_code">
 <pre>
-   %t1 = add float %W, %X
-   %t2 = mul float %t1, %Y
-   %t3 = add float %t2, %Z
+%t1 = add float %W, %X
+%t2 = mul float %t1, %Y
+%t3 = add float %t2, %Z
 </pre>
+</div>
 
-<p>This LLVM code corresponds to a SelectionDAG that looks basically like this:
-</p>
+<p>This LLVM code corresponds to a SelectionDAG that looks basically like
+this:</p>
 
+<div class="doc_code">
 <pre>
-  (fadd:f32 (fmul:f32 (fadd:f32 W, X), Y), Z)
+(fadd:f32 (fmul:f32 (fadd:f32 W, X), Y), Z)
 </pre>
+</div>
 
 <p>If a target supports floating point multiply-and-add (FMA) operations, one
 of the adds can be merged with the multiply.  On the PowerPC, for example, the
 output of the instruction selector might look like this DAG:</p>
 
+<div class="doc_code">
 <pre>
-  (FMADDS (FADDS W, X), Y, Z)
+(FMADDS (FADDS W, X), Y, Z)
 </pre>
+</div>
 
-<p>
-The FMADDS instruction is a ternary instruction that multiplies its first two
-operands and adds the third (as single-precision floating-point numbers).  The
-FADDS instruction is a simple binary single-precision add instruction.  To
-perform this pattern match, the PowerPC backend includes the following
-instruction definitions:
-</p>
+<p>The <tt>FMADDS</tt> instruction is a ternary instruction that multiplies its
+first two operands and adds the third (as single-precision floating-point
+numbers).  The <tt>FADDS</tt> instruction is a simple binary single-precision
+add instruction.  To perform this pattern match, the PowerPC backend includes
+the following instruction definitions:</p>
 
+<div class="doc_code">
 <pre>
 def FMADDS : AForm_1&lt;59, 29,
                     (ops F4RC:$FRT, F4RC:$FRA, F4RC:$FRC, F4RC:$FRB),
@@ -1005,6 +1009,7 @@ def FADDS : AForm_2&lt;59, 21,
                     "fadds $FRT, $FRA, $FRB",
                     [<b>(set F4RC:$FRT, (fadd F4RC:$FRA, F4RC:$FRB))</b>]&gt;;
 </pre>
+</div>
 
 <p>The portion of the instruction definition in bold indicates the pattern used
 to match the instruction.  The DAG operators (like <tt>fmul</tt>/<tt>fadd</tt>)
@@ -1012,8 +1017,8 @@ are defined in the <tt>lib/Target/TargetSelectionDAG.td</tt> file.
 "<tt>F4RC</tt>" is the register class of the input and result values.<p>
 
 <p>The TableGen DAG instruction selector generator reads the instruction 
-patterns in the .td and automatically builds parts of the pattern matching code
-for your target.  It has the following strengths:</p>
+patterns in the <tt>.td</tt> file and automatically builds parts of the pattern
+matching code for your target.  It has the following strengths:</p>
 
 <ul>
 <li>At compiler-compiler time, it analyzes your instruction patterns and tells
@@ -1021,7 +1026,8 @@ for your target.  It has the following strengths:</p>
 <li>It can handle arbitrary constraints on operands for the pattern match.  In
     particular, it is straight-forward to say things like "match any immediate
     that is a 13-bit sign-extended value".  For examples, see the 
-    <tt>immSExt16</tt> and related tblgen classes in the PowerPC backend.</li>
+    <tt>immSExt16</tt> and related <tt>tblgen</tt> classes in the PowerPC
+    backend.</li>
 <li>It knows several important identities for the patterns defined.  For
     example, it knows that addition is commutative, so it allows the 
     <tt>FMADDS</tt> pattern above to match "<tt>(fadd X, (fmul Y, Z))</tt>" as
@@ -1029,55 +1035,58 @@ for your target.  It has the following strengths:</p>
     to specially handle this case.</li>
 <li>It has a full-featured type-inferencing system.  In particular, you should
     rarely have to explicitly tell the system what type parts of your patterns
-    are.  In the FMADDS case above, we didn't have to tell tblgen that all of
-    the nodes in the pattern are of type 'f32'.  It was able to infer and
-    propagate this knowledge from the fact that F4RC has type 'f32'.</li>
+    are.  In the <tt>FMADDS</tt> case above, we didn't have to tell
+    <tt>tblgen</tt> that all of the nodes in the pattern are of type 'f32'.  It
+    was able to infer and propagate this knowledge from the fact that
+    <tt>F4RC</tt> has type 'f32'.</li>
 <li>Targets can define their own (and rely on built-in) "pattern fragments".
     Pattern fragments are chunks of reusable patterns that get inlined into your
-    patterns during compiler-compiler time.  For example, the integer "(not x)"
-    operation is actually defined as a pattern fragment that expands as
-    "(xor x, -1)", since the SelectionDAG does not have a native 'not'
-    operation.  Targets can define their own short-hand fragments as they see
-    fit.  See the definition of 'not' and 'ineg' for examples.</li>
+    patterns during compiler-compiler time.  For example, the integer
+    "<tt>(not x)</tt>" operation is actually defined as a pattern fragment that
+    expands as "<tt>(xor x, -1)</tt>", since the SelectionDAG does not have a
+    native '<tt>not</tt>' operation.  Targets can define their own short-hand
+    fragments as they see fit.  See the definition of '<tt>not</tt>' and
+    '<tt>ineg</tt>' for examples.</li>
 <li>In addition to instructions, targets can specify arbitrary patterns that
-    map to one or more instructions, using the 'Pat' class.  For example,
+    map to one or more instructions using the 'Pat' class.  For example,
     the PowerPC has no way to load an arbitrary integer immediate into a
     register in one instruction. To tell tblgen how to do this, it defines:
-    
+    <br>
+    <br>
+    <div class="doc_code">
     <pre>
-    // Arbitrary immediate support.  Implement in terms of LIS/ORI.
-    def : Pat&lt;(i32 imm:$imm),
-              (ORI (LIS (HI16 imm:$imm)), (LO16 imm:$imm))&gt;;
+// Arbitrary immediate support.  Implement in terms of LIS/ORI.
+def : Pat&lt;(i32 imm:$imm),
+          (ORI (LIS (HI16 imm:$imm)), (LO16 imm:$imm))&gt;;
     </pre>
-    
+    </div>
+    <br>    
     If none of the single-instruction patterns for loading an immediate into a
     register match, this will be used.  This rule says "match an arbitrary i32
-    immediate, turning it into an ORI ('or a 16-bit immediate') and an LIS
-    ('load 16-bit immediate, where the immediate is shifted to the left 16
-    bits') instruction".  To make this work, the LO16/HI16 node transformations
-    are used to manipulate the input immediate (in this case, take the high or
-    low 16-bits of the immediate).
-    </li>
+    immediate, turning it into an <tt>ORI</tt> ('or a 16-bit immediate') and an
+    <tt>LIS</tt> ('load 16-bit immediate, where the immediate is shifted to the
+    left 16 bits') instruction".  To make this work, the
+    <tt>LO16</tt>/<tt>HI16</tt> node transformations are used to manipulate the
+    input immediate (in this case, take the high or low 16-bits of the
+    immediate).</li>
 <li>While the system does automate a lot, it still allows you to write custom
-    C++ code to match special cases, in case there is something that is hard
-    to express.</li>
+    C++ code to match special cases if there is something that is hard to
+    express.</li>
 </ul>
 
-<p>
-While it has many strengths, the system currently has some limitations,
-primarily because it is a work in progress and is not yet finished:
-</p>
+<p>While it has many strengths, the system currently has some limitations,
+primarily because it is a work in progress and is not yet finished:</p>
 
 <ul>
 <li>Overall, there is no way to define or match SelectionDAG nodes that define
-    multiple values (e.g. ADD_PARTS, LOAD, CALL, etc).  This is the biggest
-    reason that you currently still <i>have to</i> write custom C++ code for
-    your instruction selector.</li>
-<li>There is no great way to support match complex addressing modes yet.  In the
-    future, we will extend pattern fragments to allow them to define multiple
-    values (e.g. the four operands of the <a href="#x86_memory">X86 addressing
-    mode</a>).  In addition, we'll extend fragments so that a fragment can match
-    multiple different patterns.</li>
+    multiple values (e.g. <tt>ADD_PARTS</tt>, <tt>LOAD</tt>, <tt>CALL</tt>,
+    etc).  This is the biggest reason that you currently still <em>have to</em>
+    write custom C++ code for your instruction selector.</li>
+<li>There is no great way to support matching complex addressing modes yet.  In
+    the future, we will extend pattern fragments to allow them to define
+    multiple values (e.g. the four operands of the <a href="#x86_memory">X86
+    addressing mode</a>).  In addition, we'll extend fragments so that a
+    fragment can match multiple different patterns.</li>
 <li>We don't automatically infer flags like isStore/isLoad yet.</li>
 <li>We don't automatically generate the set of supported registers and
     operations for the <a href="#"selectiondag_legalize>Legalizer</a> yet.</li>
@@ -1102,9 +1111,8 @@ please let Chris know!</p>
 phase and assigns an order.  The scheduler can pick an order depending on
 various constraints of the machines (i.e. order for minimal register pressure or
 try to cover instruction latencies).  Once an order is established, the DAG is
-converted to a list of <a href="#machineinstr">MachineInstr</a>s and the
-Selection DAG is destroyed.
-</p>
+converted to a list of <tt><a href="#machineinstr">MachineInstr</a></tt>s and
+the SelectionDAG is destroyed.</p>
 
 <p>Note that this phase is logically separate from the instruction selection
 phase, but is tied to it closely in the code because it operates on
@@ -1121,7 +1129,7 @@ SelectionDAGs.</p>
 
 <ol>
 <li>Optional function-at-a-time selection.</li>
-<li>Auto-generate entire selector from .td file.</li>
+<li>Auto-generate entire selector from <tt>.td</tt> file.</li>
 </li>
 </ol>
 
@@ -1151,25 +1159,19 @@ SelectionDAGs.</p>
 <div class="doc_subsection">
   <a name="codeemit">Code Emission</a>
 </div>
-
-
+<div class="doc_text"><p>To Be Written</p></div>
 <!-- _______________________________________________________________________ -->
 <div class="doc_subsubsection">
   <a name="codeemit_asm">Generating Assembly Code</a>
 </div>
-
-<div class="doc_text">
-
-</div>
-
-
+<div class="doc_text"><p>To Be Written</p></div>
 <!-- _______________________________________________________________________ -->
 <div class="doc_subsubsection">
   <a name="codeemit_bin">Generating Binary Machine Code</a>
 </div>
 
 <div class="doc_text">
-   <p>For the JIT or .o file writer</p>
+   <p>For the JIT or <tt>.o</tt> file writer</p>
 </div>
 
 
@@ -1177,6 +1179,7 @@ SelectionDAGs.</p>
 <div class="doc_section">
   <a name="targetimpls">Target-specific Implementation Notes</a>
 </div>
+<div class="doc_text"><p>To Be Written</p></div>
 <!-- *********************************************************************** -->
 
 <div class="doc_text">
@@ -1194,8 +1197,7 @@ are specific to the code generator for a particular target.</p>
 
 <div class="doc_text">
 
-<p>
-The X86 code generator lives in the <tt>lib/Target/X86</tt> directory.  This
+<p>The X86 code generator lives in the <tt>lib/Target/X86</tt> directory.  This
 code generator currently targets a generic P6-like processor.  As such, it
 produces a few P6-and-above instructions (like conditional moves), but it does
 not make use of newer features like MMX or SSE.  In the future, the X86 backend
@@ -1210,11 +1212,10 @@ implementations.</p>
 </div>
 
 <div class="doc_text">
-<p>
-The following are the known target triples that are supported by the X86 
-backend.  This is not an exhaustive list, but it would be useful to add those
-that people test.
-</p>
+
+<p>The following are the known target triples that are supported by the X86 
+backend.  This is not an exhaustive list, and it would be useful to add those
+that people test.</p>
 
 <ul>
 <li><b>i686-pc-linux-gnu</b> - Linux</li>
@@ -1237,13 +1238,15 @@ that people test.
 forming memory addresses of the following expression directly in integer
 instructions (which use ModR/M addressing):</p>
 
+<div class="doc_code">
 <pre>
-   Base+[1,2,4,8]*IndexReg+Disp32
+Base + [1,2,4,8] * IndexReg + Disp32
 </pre>
+</div>
 
 <p>In order to represent this, LLVM tracks no less than 4 operands for each
-memory operand of this form.  This means that the "load" form of 'mov' has the
-following <tt>MachineOperand</tt>s in this order:</p>
+memory operand of this form.  This means that the "load" form of '<tt>mov</tt>'
+has the following <tt>MachineOperand</tt>s in this order:</p>
 
 <pre>
 Index:        0     |    1        2       3           4
@@ -1252,7 +1255,7 @@ OperandTy: VirtReg, | VirtReg, UnsImm, VirtReg,   SignExtImm
 </pre>
 
 <p>Stores, and all other instructions, treat the four memory operands in the 
-same way, in the same order.</p>
+same way and in the same order.</p>
 
 </div>
 
@@ -1263,8 +1266,7 @@ same way, in the same order.</p>
 
 <div class="doc_text">
 
-<p>
-An instruction name consists of the base name, a default operand size, and a
+<p>An instruction name consists of the base name, a default operand size, and a
 a character per operand with an optional special size. For example:</p>
 
 <p>
