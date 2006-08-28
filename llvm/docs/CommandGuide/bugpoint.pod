@@ -114,7 +114,7 @@ if an error occurs, it will exit with a non-zero value.
 
 =head1 SEE ALSO
 
-L<opt|opt>, L<analyze|analyze>
+L<opt|opt>
 
 =head1 AUTHOR
 

@@ -81,7 +81,7 @@ basic information.</p>
 <p>First, LLVM comes in two pieces. The first piece is the LLVM suite. This
 contains all of the tools, libraries, and header files needed to use the low
 level virtual machine.  It contains an assembler, disassembler, bytecode
-analyzer, and bytecode optimizer.  It also contains a test suite that can be
+analyzer and bytecode optimizer.  It also contains a test suite that can be
 used to test the LLVM tools and the GCC front end.</p>
 
 <p>The second piece is the GCC front end.  This component provides a version of
@@ -1299,11 +1299,6 @@ following is a brief introduction to the most important tools.  More detailed
 information is in the <a href="CommandGuide/index.html">Command Guide</a>.</p>
 
 <dl>
-  <dt><tt><b>analyze</b></tt></dt>
-  <dd><tt>analyze</tt> is used to run a specific
-  analysis on an input LLVM bytecode file and print out the results.  It is
-  primarily useful for debugging analyses, or familiarizing yourself with
-  what an analysis does.</dd>
 
   <dt><tt><b>bugpoint</b></tt></dt>
   <dd><tt>bugpoint</tt> is used to debug
@@ -1395,11 +1390,13 @@ information is in the <a href="CommandGuide/index.html">Command Guide</a>.</p>
   </dd>
 
   <dt><tt><b>opt</b></tt></dt>
-  <dd><tt>opt</tt> reads LLVM bytecode, applies a
-  series of LLVM to LLVM transformations (which are specified on the command
-  line), and then outputs the resultant bytecode.  The '<tt>opt --help</tt>'
-  command is a good way to get a list of the program transformations
-  available in LLVM.</dd>
+  <dd><tt>opt</tt> reads LLVM bytecode, applies a series of LLVM to LLVM 
+  transformations (which are specified on the command line), and then outputs 
+  the resultant bytecode.  The '<tt>opt --help</tt>' command is a good way to 
+  get a list of the program transformations available in LLVM.<br/>
+  <dd><tt>opt</tt> can also be used to run a specific analysis on an input 
+  LLVM bytecode file and print out the results.  It is primarily useful for 
+  debugging analyses, or familiarizing yourself with what an analysis does.</dd>
 </dl>
 </div>
 

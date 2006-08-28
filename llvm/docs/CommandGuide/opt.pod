@@ -10,17 +10,25 @@ B<opt> [I<options>] [I<filename>]
 
 =head1 DESCRIPTION
 
-The B<opt> command is the modular LLVM optimizer.  It takes LLVM
-bytecode as input, runs the specified optimizations on it, and then
-outputs the optimized LLVM bytecode.
+The B<opt> command is the modular LLVM optimizer and analyzer.  It takes LLVM 
+bytecode as input, runs the specified optimizations or analyses on it, and then
+outputs the optimized LLVM bytecode or the analysis results.  The function of 
+B<opt> depends on whether the B<-analyze> option is given. 
 
-The optimizations available via B<opt> depend upon what libraries
-were linked into it as well as any additional libraries that have
-been loaded with the B<-load> option.  Use the B<-help> option to
-determine what optimizations you can use.
+When B<-analyze> is specified, B<opt> performs various analyses of LLVM 
+bytecode.  It will usually print the results on standard output, but in a few 
+cases, it will print output to standard error or generate a file with the 
+analysis output, which is usually done when the output is meant for another 
+program.  
 
-If no filename is specified on the command line, B<opt> reads its
-input from standard input.
+While B<-analyze> is I<not> given, B<opt> attempts to produce an optimized 
+bytecode file.  The optimizations available via B<opt> depend upon what 
+libraries were linked into it as well as any additional libraries that have 
+been loaded with the B<-load> option.  Use the B<-help> option to determine 
+what optimizations you can use.
+
+If I<filename> is omitted from the command line or is I<->, B<opt> reads its
+input from standard input. The input must be an LLVM bytecode file.
 
 If an output filename is not specified with the B<-o> option, B<opt>
 writes its output to the standard output.
@@ -64,10 +72,10 @@ Manual>, section I<#DEBUG> for more information.
 
 =item B<-load>=I<plugin>
 
-Load the dynamic object I<plugin>.  This object should register new
-optimization passes.  Once loaded, the object will add new command line
-options to enable various optimizations.  To see the new complete list
-of optimizations, use the B<-help> and B<-load> options together:
+Load the dynamic object I<plugin>.  This object should register new optimization
+or analysis passes. Once loaded, the object will add new command line options to
+enable various optimizations or analyses.  To see the new complete list of 
+optimizations, use the B<-help> and B<-load> options together. For example:
 
 =over
 
@@ -85,10 +93,6 @@ Print module after each transformation.
 
 If B<opt> succeeds, it will exit with 0.  Otherwise, if an error
 occurs, it will exit with a non-zero value.
-
-=head1 SEE ALSO
-
-L<analyze|analyze>
 
 =head1 AUTHORS
 
