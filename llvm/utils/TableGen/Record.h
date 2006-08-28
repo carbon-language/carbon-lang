@@ -122,6 +122,7 @@ public:
   virtual Init *convertValue(VarBitInit *VB) { return (Init*)VB; }
   virtual Init *convertValue(   DefInit *DI) { return 0; }
   virtual Init *convertValue(   DagInit *DI) { return 0; }
+  virtual Init *convertValue( BinOpInit *UI) { return 0; }
   virtual Init *convertValue( TypedInit *TI);
   virtual Init *convertValue(   VarInit *VI) { return RecTy::convertValue(VI);}
   virtual Init *convertValue( FieldInit *FI) { return RecTy::convertValue(FI);}
@@ -163,6 +164,7 @@ public:
   virtual Init *convertValue(VarBitInit *VB) { return 0; }
   virtual Init *convertValue(   DefInit *DI) { return 0; }
   virtual Init *convertValue(   DagInit *DI) { return 0; }
+  virtual Init *convertValue( BinOpInit *UI) { return 0; }
   virtual Init *convertValue( TypedInit *TI);
   virtual Init *convertValue(   VarInit *VI) { return RecTy::convertValue(VI);}
   virtual Init *convertValue( FieldInit *FI) { return RecTy::convertValue(FI);}
@@ -201,6 +203,7 @@ public:
   virtual Init *convertValue(VarBitInit *VB) { return 0; }
   virtual Init *convertValue(   DefInit *DI) { return 0; }
   virtual Init *convertValue(   DagInit *DI) { return 0; }
+  virtual Init *convertValue( BinOpInit *UI) { return 0; }
   virtual Init *convertValue( TypedInit *TI);
   virtual Init *convertValue(   VarInit *VI) { return RecTy::convertValue(VI);}
   virtual Init *convertValue( FieldInit *FI) { return RecTy::convertValue(FI);}
@@ -280,6 +283,7 @@ public:
   virtual Init *convertValue(VarBitInit *VB) { return 0; }
   virtual Init *convertValue(   DefInit *DI) { return 0; }
   virtual Init *convertValue(   DagInit *DI) { return 0; }
+  virtual Init *convertValue( BinOpInit *UI) { return 0; }
   virtual Init *convertValue( TypedInit *TI);
   virtual Init *convertValue(   VarInit *VI) { return RecTy::convertValue(VI);}
   virtual Init *convertValue( FieldInit *FI) { return RecTy::convertValue(FI);}
@@ -316,6 +320,7 @@ public:
   virtual Init *convertValue(VarBitInit *VB) { return 0; }
   virtual Init *convertValue(   DefInit *DI) { return 0; }
   virtual Init *convertValue(   DagInit *DI) { return 0; }
+  virtual Init *convertValue( BinOpInit *UI) { return 0; }
   virtual Init *convertValue( TypedInit *TI);
   virtual Init *convertValue(   VarInit *VI) { return RecTy::convertValue(VI);}
   virtual Init *convertValue( FieldInit *FI) { return RecTy::convertValue(FI);}
@@ -349,6 +354,7 @@ public:
   virtual Init *convertValue(  CodeInit *CI) { return 0; }
   virtual Init *convertValue(VarBitInit *VB) { return 0; }
   virtual Init *convertValue(   DefInit *DI) { return 0; }
+  virtual Init *convertValue( BinOpInit *UI) { return 0; }
   virtual Init *convertValue(   DagInit *CI) { return (Init*)CI; }
   virtual Init *convertValue( TypedInit *TI);
   virtual Init *convertValue(   VarInit *VI) { return RecTy::convertValue(VI);}
@@ -389,6 +395,7 @@ public:
   virtual Init *convertValue(  ListInit *LI) { return 0; }
   virtual Init *convertValue(  CodeInit *CI) { return 0; }
   virtual Init *convertValue(VarBitInit *VB) { return 0; }
+  virtual Init *convertValue( BinOpInit *UI) { return 0; }
   virtual Init *convertValue(   DefInit *DI);
   virtual Init *convertValue(   DagInit *DI) { return 0; }
   virtual Init *convertValue( TypedInit *VI);
