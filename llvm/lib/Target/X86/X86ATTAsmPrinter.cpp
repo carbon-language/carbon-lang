@@ -38,9 +38,6 @@ bool X86ATTAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
   // Print out constants referenced by the function
   EmitConstantPool(MF.getConstantPool());
 
-  // Print out jump tables referenced by the function
-  EmitJumpTableInfo(MF.getJumpTableInfo());
-  
   // Print out labels for the function.
   const Function *F = MF.getFunction();
   switch (F->getLinkage()) {
@@ -98,6 +95,12 @@ bool X86ATTAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
       printMachineInstruction(II);
     }
   }
+
+  // Print out jump tables referenced by the function
+  // Mac OS X requires at least one non-local (e.g. L1) labels before local
+  // lables that are used in jump table expressions (e.g. LBB1_1-LJT1_0).
+  EmitJumpTableInfo(MF.getJumpTableInfo());
+  
   if (HasDotTypeDotSizeDirective)
     O << "\t.size " << CurrentFnName << ", .-" << CurrentFnName << "\n";
 
