@@ -39,6 +39,10 @@
 #include <set>
 using namespace llvm;
 
+#include "llvm/Support/CommandLine.h"
+static cl::opt<bool> X86ISelPreproc("enable-x86-isel-preprocessing", cl::Hidden,
+                                  cl::desc("Enable isel preprocessing on X86"));
+
 //===----------------------------------------------------------------------===//
 //                      Pattern Matcher Implementation
 //===----------------------------------------------------------------------===//
@@ -133,6 +137,7 @@ namespace {
     bool TryFoldLoad(SDOperand P, SDOperand N,
                      SDOperand &Base, SDOperand &Scale,
                      SDOperand &Index, SDOperand &Disp);
+    void InstructionSelectPreprocess(SelectionDAG &DAG);
 
     /// SelectInlineAsmMemoryOperand - Implement addressing mode selection for
     /// inline asm expressions.
@@ -232,11 +237,136 @@ bool X86DAGToDAGISel::CanBeFoldedBy(SDNode *N, SDNode *U) {
   return !isNonImmUse(U, N);
 }
 
+/// MoveBelowTokenFactor - Replace TokenFactor operand with load's chain operand
+/// and move load below the TokenFactor. Replace store's chain operand with
+/// load's chain result.
+static void MoveBelowTokenFactor(SelectionDAG &DAG, SDOperand Load,
+                                 SDOperand Store, SDOperand TF) {
+  std::vector<SDOperand> Ops;
+  for (unsigned i = 0, e = TF.Val->getNumOperands(); i != e; ++i)
+    if (Load.Val == TF.Val->getOperand(i).Val)
+      Ops.push_back(Load.Val->getOperand(0));
+    else
+      Ops.push_back(TF.Val->getOperand(i));
+  DAG.UpdateNodeOperands(TF, &Ops[0], Ops.size());
+  DAG.UpdateNodeOperands(Load, TF, Load.getOperand(1), Load.getOperand(2));
+  DAG.UpdateNodeOperands(Store, Load.getValue(1), Store.getOperand(1),
+                         Store.getOperand(2), Store.getOperand(3));
+}
+
+/// InstructionSelectPreprocess - Preprocess the DAG to allow the instruction
+/// selector to pick more load-modify-store instructions. This is a common
+/// case:
+///
+///     [Load chain]
+///         ^
+///         |
+///       [Load]
+///       ^    ^
+///       |    |
+///      /      \-
+///     /         |
+/// [TokenFactor] [Op]
+///     ^          ^
+///     |          |
+///      \        /
+///       \      /
+///       [Store]
+///
+/// The fact the store's chain operand != load's chain will prevent the
+/// (store (op (load))) instruction from being selected. We can transform it to:
+///
+///     [Load chain]
+///         ^
+///         |
+///    [TokenFactor]
+///         ^
+///         |
+///       [Load]
+///       ^    ^
+///       |    |
+///       |     \- 
+///       |       | 
+///       |     [Op]
+///       |       ^
+///       |       |
+///       \      /
+///        \    /
+///       [Store]
+void X86DAGToDAGISel::InstructionSelectPreprocess(SelectionDAG &DAG) {
+  for (SelectionDAG::allnodes_iterator I = DAG.allnodes_begin(),
+         E = DAG.allnodes_end(); I != E; ++I) {
+    if (I->getOpcode() != ISD::STORE)
+      continue;
+    SDOperand Chain = I->getOperand(0);
+    if (Chain.Val->getOpcode() != ISD::TokenFactor)
+      continue;
+
+    SDOperand N1 = I->getOperand(1);
+    SDOperand N2 = I->getOperand(2);
+    if (!N1.hasOneUse())
+      continue;
+
+    bool RModW = false;
+    SDOperand Load;
+    unsigned Opcode = N1.Val->getOpcode();
+    switch (Opcode) {
+      case ISD::ADD:
+      case ISD::MUL:
+      case ISD::FADD:
+      case ISD::FMUL:
+      case ISD::AND:
+      case ISD::OR:
+      case ISD::XOR:
+      case ISD::ADDC:
+      case ISD::ADDE: {
+        SDOperand N10 = N1.getOperand(0);
+        SDOperand N11 = N1.getOperand(1);
+        if (N10.Val->getOpcode() == ISD::LOAD)
+          RModW = true;
+        else if (N11.Val->getOpcode() == ISD::LOAD) {
+          RModW = true;
+          std::swap(N10, N11);
+        }
+        RModW = RModW && N10.Val->isOperand(Chain.Val) && N10.hasOneUse() &&
+          N10.getOperand(1) == N2;
+        if (RModW)
+          Load = N10;
+        break;
+      }
+      case ISD::SUB:
+      case ISD::SHL:
+      case ISD::SRA:
+      case ISD::SRL:
+      case ISD::ROTL:
+      case ISD::ROTR:
+      case ISD::SUBC:
+      case ISD::SUBE:
+      case X86ISD::SHLD:
+      case X86ISD::SHRD: {
+        SDOperand N10 = N1.getOperand(0);
+        if (N10.Val->getOpcode() == ISD::LOAD)
+          RModW = N10.Val->isOperand(Chain.Val) && N10.hasOneUse() &&
+            N10.getOperand(1) == N2;
+        if (RModW)
+          Load = N10;
+        break;
+      }
+    }
+
+    if (RModW)
+      MoveBelowTokenFactor(DAG, Load, SDOperand(I, 0), Chain);
+  }
+}
+
 /// InstructionSelectBasicBlock - This callback is invoked by SelectionDAGISel
 /// when it has created a SelectionDAG for us to codegen.
 void X86DAGToDAGISel::InstructionSelectBasicBlock(SelectionDAG &DAG) {
   DEBUG(BB->dump());
   MachineFunction::iterator FirstMBB = BB;
+
+  if (X86ISelPreproc)
+    InstructionSelectPreprocess(DAG);
 
   // Codegen the basic block.
 #ifndef NDEBUG
