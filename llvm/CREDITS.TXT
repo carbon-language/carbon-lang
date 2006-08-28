@@ -176,3 +176,7 @@ N: Bill Wendling
 E: isanbard@gmail.com
 W: http://web.mac.com/bwendling/
 D: The `Lower Setjmp/Longjmp' pass, improvements to the -lowerswitch pass.
+
+N: Nick Lewycky
+E: nicholas@mxc.ca
+D: PredicateSimplifier pass

@@ -120,6 +120,7 @@ namespace {
       (void) llvm::createDataStructureStatsPass();
       (void) llvm::createDataStructureGraphCheckerPass();
       (void) llvm::createInstCountPass();
+      (void) llvm::createPredicateSimplifierPass();
 
       (void)new llvm::LocalDataStructures();
       (void)new llvm::BUDataStructures();

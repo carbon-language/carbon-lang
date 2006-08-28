@@ -308,6 +308,11 @@ FunctionPass *createBlockPlacementPass();
 FunctionPass *createLCSSAPass();
 extern const PassInfo *LCSSAID;
 
+//===----------------------------------------------------------------------===//
+// This pass collapses duplicate variables into one canonical form,
+// and tries to simplify expressions along the way.
+FunctionPass *createPredicateSimplifierPass();
+
 } // End llvm namespace
 
 #endif
