@@ -1162,7 +1162,7 @@ implementations of the interface by using the following code:</p>
   B("<i>somefancyaa</i>", "<i>A more complex alias analysis implementation</i>");
 
   //<i> Declare that we implement the AliasAnalysis interface</i>
-  RegisterAnalysisGroup&lt;<a href="http://llvm.org/doxygen/classllvm_1_1AliasAnalysis.html">AliasAnalysis</a>, FancyAA&gt; C;
+  RegisterAnalysisGroup&lt;<a href="http://llvm.org/doxygen/classllvm_1_1AliasAnalysis.html">AliasAnalysis</a>&gt; C(B);
 }
 </pre></div>
 
@@ -1180,7 +1180,7 @@ no problem.</p>
   D("<i>basicaa</i>", "<i>Basic Alias Analysis (default AA impl)</i>");
 
   //<i> Declare that we implement the AliasAnalysis interface</i>
-  RegisterAnalysisGroup&lt;<a href="http://llvm.org/doxygen/classllvm_1_1AliasAnalysis.html">AliasAnalysis</a>, <a href="http://llvm.org/doxygen/structBasicAliasAnalysis.html">BasicAliasAnalysis</a>, <b>true</b>&gt; E;
+  RegisterAnalysisGroup&lt;<a href="http://llvm.org/doxygen/classllvm_1_1AliasAnalysis.html">AliasAnalysis</a>, <b>true</b>&gt; E(D);
 }
 </pre></div>
 
