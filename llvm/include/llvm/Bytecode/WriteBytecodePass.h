@@ -36,7 +36,7 @@ public:
   }
 
   bool runOnModule(Module &M) {
-    WriteBytecodeToFile(&M, *Out, CompressFile );
+    WriteBytecodeToFile(&M, *Out, CompressFile);
     return false;
   }
 };
