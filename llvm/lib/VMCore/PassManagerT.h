@@ -720,6 +720,10 @@ public:
     PassManagerT<BBTraits>(BBPM->Parent) {
   }
   
+  virtual bool runPass(Module &M) { return false; }
+
+  virtual bool runPass(BasicBlock &BB) { return BasicBlockPass::runPass(BB); }
+
   // runPass - Specify how the pass should be run on the UnitType
   virtual bool runPass(BBTraits::PassClass *P, BasicBlock *M) {
     // TODO: init and finalize
@@ -790,6 +794,9 @@ public:
     AU.setPreservesAll();
   }
   
+  virtual bool runPass(Module &M) { return FunctionPass::runPass(M); }
+  virtual bool runPass(BasicBlock &BB) { return FunctionPass::runPass(BB); }
+
   // runPass - Specify how the pass should be run on the UnitType
   virtual bool runPass(FTraits::PassClass *P, Function *F) {
     return P->runOnFunction(*F);
@@ -831,7 +838,10 @@ public:
   
   // runOnModule - Implement the PassManager interface.
   virtual bool runOnModule(Module &M);
-  
+
+  virtual bool runPass(Module &M) { return ModulePass::runPass(M); }
+  virtual bool runPass(BasicBlock &BB) { return ModulePass::runPass(BB); }
+
   // runPass - Specify how the pass should be run on the UnitType
   virtual bool runPass(MTraits::PassClass *P, Module *M) {
     return P->runOnModule(*M);

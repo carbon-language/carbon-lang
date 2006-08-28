@@ -290,7 +290,7 @@ public:
   ///
   bool run(Function &F);
 
-private:
+protected:
   template<typename Trait> friend class PassManagerT;
   friend class ModulePassManager;
   friend class FunctionPassManagerT;
@@ -354,6 +354,9 @@ private:
   template<typename Trait> friend class PassManagerT;
   friend class FunctionPassManagerT;
   friend class BasicBlockPassManager;
+  virtual void addToPassManager(ModulePassManager *PM, AnalysisUsage &AU) {
+    FunctionPass::addToPassManager(PM, AU);
+  }
   virtual void addToPassManager(FunctionPassManagerT *PM, AnalysisUsage &AU);
   virtual void addToPassManager(BasicBlockPassManager *PM,AnalysisUsage &AU);
 };
