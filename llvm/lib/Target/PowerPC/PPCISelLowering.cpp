@@ -2691,3 +2691,7 @@ bool PPCTargetLowering::isLegalAddressImmediate(int64_t V) const {
   // PPC allows a sign-extended 16-bit immediate field.
   return (V > -(1 << 16) && V < (1 << 16)-1);
 }
+
+bool PPCTargetLowering::isLegalAddressImmediate(llvm::GlobalValue* GV) const {
+  return TargetLowering::isLegalAddressImmediate(GV); 
+}

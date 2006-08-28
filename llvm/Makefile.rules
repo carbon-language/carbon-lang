@@ -254,7 +254,7 @@ else
   C.Flags   += -D_DEBUG
 endif
 
-CXX.Flags     += $(CXXFLAGS)
+CXX.Flags     += $(CXXFLAGS) -Woverloaded-virtual
 C.Flags       += $(CFLAGS)
 CPP.BaseFlags += $(CPPFLAGS)
 LD.Flags      += $(LDFLAGS)

@@ -236,7 +236,8 @@ namespace {
     //
     AliasResult alias(const Value *V1, unsigned V1Size,
                       const Value *V2, unsigned V2Size);
-    ModRefResult getModRefInfo(CallSite CS, Value *P, unsigned Size);
+    virtual ModRefResult getModRefInfo(CallSite CS, Value *P, unsigned Size);
+    virtual ModRefResult getModRefInfo(CallSite CS1, CallSite CS2);
     void getMustAliases(Value *P, std::vector<Value*> &RetVals);
     bool pointsToConstantMemory(const Value *P);
 
@@ -385,6 +386,11 @@ Andersens::getModRefInfo(CallSite CS, Value *P, unsigned Size) {
     }
 
   return AliasAnalysis::getModRefInfo(CS, P, Size);
+}
+
+AliasAnalysis::ModRefResult
+Andersens::getModRefInfo(CallSite CS1, CallSite CS2) {
+  return AliasAnalysis::getModRefInfo(CS1,CS2);
 }
 
 /// getMustAlias - We can provide must alias information if we know that a

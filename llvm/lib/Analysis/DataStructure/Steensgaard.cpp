@@ -65,7 +65,8 @@ namespace {
     AliasResult alias(const Value *V1, unsigned V1Size,
                       const Value *V2, unsigned V2Size);
 
-    ModRefResult getModRefInfo(CallSite CS, Value *P, unsigned Size);
+    virtual ModRefResult getModRefInfo(CallSite CS, Value *P, unsigned Size);
+    virtual ModRefResult getModRefInfo(CallSite CS1, CallSite CS2);
 
   private:
     void ResolveFunctionCall(Function *F, const DSCallSite &Call,
@@ -265,4 +266,10 @@ Steens::getModRefInfo(CallSite CS, Value *P, unsigned Size) {
   }
 
   return (ModRefResult)(Result & AliasAnalysis::getModRefInfo(CS, P, Size));
+}
+
+AliasAnalysis::ModRefResult 
+Steens::getModRefInfo(CallSite CS1, CallSite CS2)
+{
+  return AliasAnalysis::getModRefInfo(CS1,CS2);
 }

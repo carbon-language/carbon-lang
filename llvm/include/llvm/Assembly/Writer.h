@@ -43,6 +43,10 @@ std::ostream &WriteAsOperand(std::ostream &, const Value *, bool PrintTy = true,
 std::ostream &WriteAsOperand(std::ostream&, const Type*, bool PrintTy = true,
                              bool PrintName = true, const Module* Context = 0);
 
+#ifndef NDEBUG
+void dumpType(const Type* Ty);
+void dumpValue(const Value* Val);
+#endif
 } // End llvm namespace
 
 #endif

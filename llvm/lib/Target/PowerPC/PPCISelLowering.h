@@ -199,6 +199,7 @@ namespace llvm {
     /// isLegalAddressImmediate - Return true if the integer value can be used
     /// as the offset of the target addressing mode.
     virtual bool isLegalAddressImmediate(int64_t V) const;
+    virtual bool isLegalAddressImmediate(llvm::GlobalValue*) const;
   };
 }
 

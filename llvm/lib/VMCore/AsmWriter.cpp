@@ -1081,8 +1081,7 @@ void AssemblyWriter::printInfoComment(const Value &V) {
   }
 }
 
-/// printInstruction - This member is called for each Instruction in a function..
-///
+// This member is called for each Instruction in a function..
 void AssemblyWriter::printInstruction(const Instruction &I) {
   if (AnnotationWriter) AnnotationWriter->emitInstructionAnnot(&I, Out);
 

@@ -65,6 +65,7 @@ namespace {
     }
 
     void print(std::ostream &OS) const {}
+    void print(std::ostream &OS, const llvm::Module*) const {}
 
     virtual void getAnalysisUsage(AnalysisUsage &AU) const {
       AU.addRequired<CallGraph>();
