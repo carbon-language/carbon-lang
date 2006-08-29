@@ -130,6 +130,10 @@ W: http://www.lenharth.org/~andrewl/
 D: Alpha backend
 D: Sampling based profiling
 
+N: Nick Lewycky
+E: nicholas@mxc.ca
+D: PredicateSimplifier pass
+
 N: Duraid Madina
 E: duraid@octopus.com.au
 W: http://kinoko.c.u-tokyo.ac.jp/~duraid/
@@ -176,7 +180,3 @@ N: Bill Wendling
 E: isanbard@gmail.com
 W: http://web.mac.com/bwendling/
 D: The `Lower Setjmp/Longjmp' pass, improvements to the -lowerswitch pass.
-
-N: Nick Lewycky
-E: nicholas@mxc.ca
-D: PredicateSimplifier pass
