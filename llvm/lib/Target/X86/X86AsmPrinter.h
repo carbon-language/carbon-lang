@@ -90,7 +90,8 @@ struct X86SharedAsmPrinter : public AsmPrinter {
       MI->getOperand(Op+2).isRegister() &&
       (MI->getOperand(Op+3).isImmediate() ||
        MI->getOperand(Op+3).isGlobalAddress() ||
-       MI->getOperand(Op+3).isConstantPoolIndex());
+       MI->getOperand(Op+3).isConstantPoolIndex() ||
+       MI->getOperand(Op+3).isJumpTableIndex());
   }
 };
 

@@ -252,7 +252,9 @@ void X86ATTAsmPrinter::printMemReference(const MachineInstr *MI, unsigned Op){
     return;
   }
 
-  if (DispSpec.isGlobalAddress() || DispSpec.isConstantPoolIndex()) {
+  if (DispSpec.isGlobalAddress() ||
+      DispSpec.isConstantPoolIndex() ||
+      DispSpec.isJumpTableIndex()) {
     printOperand(MI, Op+3, "mem");
   } else {
     int DispVal = DispSpec.getImmedValue();
