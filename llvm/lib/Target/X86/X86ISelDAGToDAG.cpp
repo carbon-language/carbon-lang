@@ -39,10 +39,6 @@
 #include <set>
 using namespace llvm;
 
-#include "llvm/Support/CommandLine.h"
-static cl::opt<bool> X86ISelPreproc("enable-x86-isel-preprocessing", cl::Hidden,
-                                  cl::desc("Enable isel preprocessing on X86"));
-
 //===----------------------------------------------------------------------===//
 //                      Pattern Matcher Implementation
 //===----------------------------------------------------------------------===//
