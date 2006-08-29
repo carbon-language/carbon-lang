@@ -174,6 +174,13 @@ namespace llvm {
     /// it may be possible if other things get coallesced.
     bool JoinCopy(MachineInstr *CopyMI, unsigned SrcReg, unsigned DstReg);
     
+    /// JoinIntervals - Attempt to join these two intervals.  On failure, this
+    /// returns false.  Otherwise, if one of the intervals being joined is a
+    /// physreg, this method always canonicalizes DestInt to be it.  The output
+    /// "SrcInt" will not have been modified, so we can use this information
+    /// below to update aliases.
+    bool JoinIntervals(LiveInterval &LHS, LiveInterval &RHS);
+    
     /// handleRegisterDef - update intervals for a register def
     /// (calls handlePhysicalRegisterDef and
     /// handleVirtualRegisterDef)
@@ -200,7 +207,7 @@ namespace llvm {
 
 
     bool AdjustCopiesBackFrom(LiveInterval &IntA, LiveInterval &IntB,
-                              MachineInstr *CopyMI, unsigned CopyIdx);
+                              MachineInstr *CopyMI);
 
     bool overlapsAliases(const LiveInterval *lhs,
                          const LiveInterval *rhs) const;

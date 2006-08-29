@@ -629,8 +629,9 @@ void LiveIntervals::computeIntervals() {
 /// This returns true if an interval was modified.
 ///
 bool LiveIntervals::AdjustCopiesBackFrom(LiveInterval &IntA, LiveInterval &IntB,
-                                         MachineInstr *CopyMI,
-                                         unsigned CopyIdx) {
+                                         MachineInstr *CopyMI) {
+  unsigned CopyIdx = getDefIndex(getInstructionIndex(CopyMI));
+
   // BValNo is a value number in B that is defined by a copy from A.  'B3' in
   // the example above.
   LiveInterval::iterator BLR = IntB.FindLiveRangeContaining(CopyIdx);
@@ -768,33 +769,21 @@ bool LiveIntervals::JoinCopy(MachineInstr *CopyMI,
         std::cerr << " and "; DestInt.print(std::cerr, mri_);
         std::cerr << ": ");
     
-  // If two intervals contain a single value and are joined by a copy, it
-  // does not matter if the intervals overlap, they can always be joined.
+  // Okay, attempt to join these two intervals.  On failure, this returns false.
+  // Otherwise, if one of the intervals being joined is a physreg, this method
+  // always canonicalizes DestInt to be it.  The output "SrcInt" will not have
+  // been modified, so we can use this information below to update aliases.
+  if (!JoinIntervals(DestInt, SrcInt)) {
+    // Coallescing failed.
+    
+    // If we can eliminate the copy without merging the live ranges, do so now.
+    if (AdjustCopiesBackFrom(SrcInt, DestInt, CopyMI))
+      return true;
 
-  bool Joinable = SrcInt.containsOneValue() && DestInt.containsOneValue();
-  
-  unsigned MIDefIdx = getDefIndex(getInstructionIndex(CopyMI));
-  
-  // If the intervals think that this is joinable, do so now.
-  if (!Joinable && DestInt.joinable(SrcInt, MIDefIdx))
-    Joinable = true;
-  
-  // If DestInt is actually a copy from SrcInt (which we know) that is used
-  // to define another value of SrcInt, we can change the other range of
-  // SrcInt to be the value of the range that defines DestInt, simplying the
-  // interval an promoting coallescing.
-  if (!Joinable && AdjustCopiesBackFrom(SrcInt, DestInt, CopyMI, MIDefIdx))
-    return true;
-  
-  if (!Joinable) {
+    // Otherwise, we are unable to join the intervals.
     DEBUG(std::cerr << "Interference!\n");
     return false;
   }
-
-  // Okay, we can join these two intervals.  If one of the intervals being
-  // joined is a physreg, this method always canonicalizes DestInt to be it.
-  // The output "SrcInt" will not have been modified.
-  DestInt.join(SrcInt, MIDefIdx);
 
   bool Swapped = SrcReg == DestInt.reg;
   if (Swapped)
@@ -823,6 +812,182 @@ bool LiveIntervals::JoinCopy(MachineInstr *CopyMI,
   return true;
 }
 
+/// ComputeUltimateVN - Assuming we are going to join two live intervals,
+/// compute what the resultant value numbers for each value in the input two
+/// ranges will be.  This is complicated by copies between the two which can
+/// and will commonly cause multiple value numbers to be merged into one.
+///
+/// VN is the value number that we're trying to resolve.  InstDefiningValue
+/// keeps track of the new InstDefiningValue assignment for the result
+/// LiveInterval.  ThisFromOther/OtherFromThis are sets that keep track of
+/// whether a value in this or other is a copy from the opposite set.
+/// ThisValNoAssignments/OtherValNoAssignments keep track of value #'s that have
+/// already been assigned.
+///
+/// ThisFromOther[x] - If x is defined as a copy from the other interval, this
+/// contains the value number the copy is from.
+///
+static unsigned ComputeUltimateVN(unsigned VN,
+                                  SmallVector<unsigned, 16> &InstDefiningValue,
+                                  SmallVector<int, 16> &ThisFromOther,
+                                  SmallVector<int, 16> &OtherFromThis,
+                                  SmallVector<int, 16> &ThisValNoAssignments,
+                                  SmallVector<int, 16> &OtherValNoAssignments,
+                                  LiveInterval &ThisLI, LiveInterval &OtherLI) {
+  // If the VN has already been computed, just return it.
+  if (ThisValNoAssignments[VN] >= 0)
+    return ThisValNoAssignments[VN];
+  assert(ThisValNoAssignments[VN] != -2 && "FIXME: Cyclic case, handle it!");
+  
+  // If this val is not a copy from the other val, then it must be a new value
+  // number in the destination.
+  int OtherValNo = ThisFromOther[VN];
+  if (OtherValNo == -1) {
+    InstDefiningValue.push_back(ThisLI.getInstForValNum(VN));
+    return ThisValNoAssignments[VN] = InstDefiningValue.size()-1;
+  }
+
+  // Otherwise, this *is* a copy from the RHS.  Mark this value number as
+  // currently being computed, then ask what the ultimate value # of the other
+  // value is.
+  ThisValNoAssignments[VN] = -2;
+  unsigned UltimateVN =
+    ComputeUltimateVN(OtherValNo, InstDefiningValue,
+                      OtherFromThis, ThisFromOther,
+                      OtherValNoAssignments, ThisValNoAssignments,
+                      OtherLI, ThisLI);
+  return ThisValNoAssignments[VN] = UltimateVN;
+}
+
+
+/// JoinIntervals - Attempt to join these two intervals.  On failure, this
+/// returns false.  Otherwise, if one of the intervals being joined is a
+/// physreg, this method always canonicalizes LHS to be it.  The output
+/// "RHS" will not have been modified, so we can use this information
+/// below to update aliases.
+bool LiveIntervals::JoinIntervals(LiveInterval &LHS, LiveInterval &RHS) {
+  // Loop over the value numbers of the LHS, seeing if any are defined from the
+  // RHS.
+  SmallVector<int, 16> LHSValsDefinedFromRHS;
+  LHSValsDefinedFromRHS.resize(LHS.getNumValNums(), -1);
+  for (unsigned VN = 0, e = LHS.getNumValNums(); VN != e; ++VN) {
+    unsigned ValInst = LHS.getInstForValNum(VN);
+    if (ValInst == ~0U || ValInst == ~1U)
+      continue;
+    
+    // If the instruction defining the LHS's value is a copy.
+    MachineInstr *ValInstMI = getInstructionFromIndex(ValInst);
+    
+    // If the value number is not defined by a copy instruction, ignore it.
+    unsigned SrcReg, DstReg;
+    if (!tii_->isMoveInstr(*ValInstMI, SrcReg, DstReg))
+      continue;
+    
+    // DstReg is known to be a register in the LHS interval.  If the src is from
+    // the RHS interval, we can use its value #.
+    if (rep(SrcReg) != RHS.reg)
+      continue;
+    
+    // Figure out the value # from the RHS.
+    LHSValsDefinedFromRHS[VN] = RHS.getLiveRangeContaining(ValInst-1)->ValId;
+  }
+  
+  // Loop over the value numbers of the RHS, seeing if any are defined from the
+  // LHS.
+  SmallVector<int, 16> RHSValsDefinedFromLHS;
+  RHSValsDefinedFromLHS.resize(RHS.getNumValNums(), -1);
+  for (unsigned VN = 0, e = RHS.getNumValNums(); VN != e; ++VN) {
+    unsigned ValInst = RHS.getInstForValNum(VN);
+    if (ValInst == ~0U || ValInst == ~1U)
+      continue;
+    
+    // If the instruction defining the RHS's value is a copy.
+    MachineInstr *ValInstMI = getInstructionFromIndex(ValInst);
+    
+    // If the value number is not defined by a copy instruction, ignore it.
+    unsigned SrcReg, DstReg;
+    if (!tii_->isMoveInstr(*ValInstMI, SrcReg, DstReg))
+      continue;
+    
+    // DstReg is known to be a register in the RHS interval.  If the src is from
+    // the LHS interval, we can use its value #.
+    if (rep(SrcReg) != LHS.reg)
+      continue;
+    
+    // Figure out the value # from the LHS.
+    RHSValsDefinedFromLHS[VN] = LHS.getLiveRangeContaining(ValInst-1)->ValId;
+  }
+  
+  // Now that we know the value mapping, compute the final value assignment,
+  // assuming that the live ranges can be coallesced.
+  SmallVector<int, 16> LHSValNoAssignments;
+  SmallVector<int, 16> RHSValNoAssignments;
+  SmallVector<unsigned, 16> InstDefiningValue;
+  LHSValNoAssignments.resize(LHS.getNumValNums(), -1);
+  RHSValNoAssignments.resize(RHS.getNumValNums(), -1);
+  
+  // Compute ultimate value numbers for the LHS and RHS values.
+  for (unsigned VN = 0, e = LHS.getNumValNums(); VN != e; ++VN) {
+    if (LHS.getInstForValNum(VN) == ~2U) continue;
+    ComputeUltimateVN(VN, InstDefiningValue,
+                      LHSValsDefinedFromRHS, RHSValsDefinedFromLHS,
+                      LHSValNoAssignments, RHSValNoAssignments, LHS, RHS);
+  }
+  for (unsigned VN = 0, e = RHS.getNumValNums(); VN != e; ++VN) {
+    if (RHS.getInstForValNum(VN) == ~2U) continue;
+    ComputeUltimateVN(VN, InstDefiningValue,
+                      RHSValsDefinedFromLHS, LHSValsDefinedFromRHS,
+                      RHSValNoAssignments, LHSValNoAssignments, RHS, LHS);
+  }
+  
+  // Armed with the mappings of LHS/RHS values to ultimate values, walk the
+  // interval lists to see if these intervals are coallescable.
+  LiveInterval::const_iterator I = LHS.begin();
+  LiveInterval::const_iterator IE = LHS.end();
+  LiveInterval::const_iterator J = RHS.begin();
+  LiveInterval::const_iterator JE = RHS.end();
+  
+  // Skip ahead until the first place of potential sharing.
+  if (I->start < J->start) {
+    I = std::upper_bound(I, IE, J->start);
+    if (I != LHS.begin()) --I;
+  } else if (J->start < I->start) {
+    J = std::upper_bound(J, JE, I->start);
+    if (J != RHS.begin()) --J;
+  }
+  
+  while (1) {
+    // Determine if these two live ranges overlap.
+    bool Overlaps;
+    if (I->start < J->start) {
+      Overlaps = I->end > J->start;
+    } else {
+      Overlaps = J->end > I->start;
+    }
+
+    // If so, check value # info to determine if they are really different.
+    if (Overlaps) {
+      // If the live range overlap will map to the same value number in the
+      // result liverange, we can still coallesce them.  If not, we can't.
+      if (LHSValNoAssignments[I->ValId] != RHSValNoAssignments[J->ValId])
+        return false;
+    }
+    
+    if (I->end < J->end) {
+      ++I;
+      if (I == IE) break;
+    } else {
+      ++J;
+      if (J == JE) break;
+    }
+  }
+
+  // If we get here, we know that we can coallesce the live ranges.  Ask the
+  // intervals to coallesce themselves now.
+  LHS.join(RHS, &LHSValNoAssignments[0], &RHSValNoAssignments[0],
+           InstDefiningValue);
+  return true;
+}
 
 
 namespace {

@@ -78,8 +78,6 @@ namespace llvm {
     float weight;        // weight of this interval
     Ranges ranges;       // the ranges in which this register is live
   private:
-    unsigned NumValues;  // the number of distinct values in this interval.
-    
     /// InstDefiningValue - This tracks the def index of the instruction that
     /// defines a particular value number in the interval.  This may be ~0,
     /// which is treated as unknown, or ~1, which is a deleted value number.
@@ -87,7 +85,7 @@ namespace llvm {
   public:
 
     LiveInterval(unsigned Reg, float Weight)
-      : reg(Reg), weight(Weight), NumValues(0) {
+      : reg(Reg), weight(Weight) {
     }
 
     typedef Ranges::iterator iterator;
@@ -115,24 +113,24 @@ namespace llvm {
       std::swap(reg, other.reg);
       std::swap(weight, other.weight);
       std::swap(ranges, other.ranges);
-      std::swap(NumValues, other.NumValues);
       std::swap(InstDefiningValue, other.InstDefiningValue);
     }
 
-    bool containsOneValue() const { return NumValues == 1; }
+    bool containsOneValue() const { return InstDefiningValue.size() == 1; }
 
-    unsigned getNumValNums() const { return NumValues; }
+    unsigned getNumValNums() const { return InstDefiningValue.size(); }
     
     /// getNextValue - Create a new value number and return it.  MIIdx specifies
     /// the instruction that defines the value number.
     unsigned getNextValue(unsigned MIIdx) {
       InstDefiningValue.push_back(MIIdx);
-      return NumValues++;
+      return InstDefiningValue.size()-1;
     }
     
     /// getInstForValNum - Return the machine instruction index that defines the
     /// specified value number.
     unsigned getInstForValNum(unsigned ValNo) const {
+      assert(ValNo < InstDefiningValue.size());
       return InstDefiningValue[ValNo];
     }
     
@@ -189,11 +187,6 @@ namespace llvm {
     /// contains the specified index, or end() if there is none.
     iterator FindLiveRangeContaining(unsigned Idx);
     
-    /// joinable - Two intervals are joinable if the either don't overlap at all
-    /// or if the destination of the copy is a single assignment value, and it
-    /// only overlaps with one value in the source interval.
-    bool joinable(const LiveInterval& other, unsigned CopyIdx) const;
-
     /// getOverlapingRanges - Given another live interval which is defined as a
     /// copy from this one, return a list of all of the live ranges where the
     /// two overlap and have different value numbers.
@@ -218,11 +211,12 @@ namespace llvm {
       addRangeFrom(LR, ranges.begin());
     }
 
-    /// join - Join two live intervals (this, and other) together.  This
-    /// operation is the result of a copy instruction in the source program,
-    /// that occurs at index 'CopyIdx' that copies from 'other' to 'this'.  This
-    /// destroys 'other'.
-    void join(LiveInterval& other, unsigned CopyIdx);
+    /// join - Join two live intervals (this, and other) together.  This applies
+    /// mappings to the value numbers in the LHS/RHS intervals as specified.  If
+    /// the intervals are not joinable, this aborts.
+    void join(LiveInterval &Other, int *ValNoAssignments,
+              int *RHSValNoAssignments,
+              SmallVector<unsigned, 16> &NewInstDefiningValue);
 
 
     /// removeRange - Remove the specified range from this interval.  Note that

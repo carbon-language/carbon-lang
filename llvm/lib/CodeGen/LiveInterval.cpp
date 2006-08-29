@@ -101,101 +101,6 @@ bool LiveInterval::overlapsFrom(const LiveInterval& other,
   return false;
 }
 
-/// NontrivialOverlap - Check to see if the two live ranges specified by i and j
-/// overlap.  If so, check to see if they have value numbers that are not 
-/// iIdx/jIdx respectively.  If both conditions are true, return true.
-static inline bool NontrivialOverlap(const LiveRange &I, const LiveRange &J,
-                                     unsigned iIdx, unsigned jIdx) {
-  if (I.start == J.start) {
-    // If this is not the allowed value merge, we cannot join.
-    if (I.ValId != iIdx || J.ValId != jIdx)
-      return true;
-  } else if (I.start < J.start) {
-    if (I.end > J.start && (I.ValId != iIdx || J.ValId != jIdx)) {
-      return true;
-    }
-  } else {
-    if (J.end > I.start && (I.ValId != iIdx || J.ValId != jIdx))
-      return true;
-  }
-  
-  return false;
-}
-
-/// joinable - Two intervals are joinable if the either don't overlap at all
-/// or if the destination of the copy is a single assignment value, and it
-/// only overlaps with one value in the source interval.
-bool LiveInterval::joinable(const LiveInterval &other, unsigned CopyIdx) const {
-  const LiveRange *SourceLR = other.getLiveRangeContaining(CopyIdx-1);
-  const LiveRange *DestLR = getLiveRangeContaining(CopyIdx);
-  assert(SourceLR && DestLR && "Not joining due to a copy?");
-  unsigned OtherValIdx = SourceLR->ValId;
-  unsigned ThisValIdx = DestLR->ValId;
-
-  Ranges::const_iterator i = ranges.begin();
-  Ranges::const_iterator ie = ranges.end();
-  Ranges::const_iterator j = other.ranges.begin();
-  Ranges::const_iterator je = other.ranges.end();
-
-  if (i->start < j->start) {
-    i = std::upper_bound(i, ie, j->start);
-    if (i != ranges.begin()) --i;
-  } else if (j->start < i->start) {
-    j = std::upper_bound(j, je, i->start);
-    if (j != other.ranges.begin()) --j;
-  }
-
-  while (i != ie && j != je) {
-    if (NontrivialOverlap(*i, *j, ThisValIdx, OtherValIdx))
-      return false;
-    
-    if (i->end < j->end)
-      ++i;
-    else
-      ++j;
-  }
-
-  return true;
-}
-
-/// getOverlapingRanges - Given another live interval which is defined as a
-/// copy from this one, return a list of all of the live ranges where the
-/// two overlap and have different value numbers.
-void LiveInterval::getOverlapingRanges(const LiveInterval &other, 
-                                       unsigned CopyIdx,
-                                       std::vector<LiveRange*> &Ranges) {
-  const LiveRange *SourceLR = getLiveRangeContaining(CopyIdx-1);
-  const LiveRange *DestLR = other.getLiveRangeContaining(CopyIdx);
-  assert(SourceLR && DestLR && "Not joining due to a copy?");
-  unsigned OtherValIdx = SourceLR->ValId;
-  unsigned ThisValIdx = DestLR->ValId;
-  
-  Ranges::iterator i = ranges.begin();
-  Ranges::iterator ie = ranges.end();
-  Ranges::const_iterator j = other.ranges.begin();
-  Ranges::const_iterator je = other.ranges.end();
-  
-  if (i->start < j->start) {
-    i = std::upper_bound(i, ie, j->start);
-    if (i != ranges.begin()) --i;
-  } else if (j->start < i->start) {
-    j = std::upper_bound(j, je, i->start);
-    if (j != other.ranges.begin()) --j;
-  }
-  
-  while (i != ie && j != je) {
-    if (NontrivialOverlap(*i, *j, ThisValIdx, OtherValIdx))
-      Ranges.push_back(&*i);
-    
-    if (i->end < j->end)
-      ++i;
-    else
-      ++j;
-  }
-}
-
-
-
 /// extendIntervalEndTo - This method is used when we want to extend the range
 /// specified by I to end at the specified endpoint.  To do this, we should
 /// merge and eliminate all ranges that this will overlap with.  The iterator is
@@ -361,7 +266,7 @@ LiveInterval::FindLiveRangeContaining(unsigned Idx) const {
 LiveInterval::iterator 
 LiveInterval::FindLiveRangeContaining(unsigned Idx) {
   iterator It = std::upper_bound(begin(), end(), Idx);
-  if (It != ranges.begin()) {
+  if (It != begin()) {
     --It;
     if (It->contains(Idx))
       return It;
@@ -370,10 +275,13 @@ LiveInterval::FindLiveRangeContaining(unsigned Idx) {
   return end();
 }
 
-/// join - Join two live intervals (this, and other) together.  This operation
-/// is the result of a copy instruction in the source program, that occurs at
-/// index 'CopyIdx' that copies from 'Other' to 'this'.
-void LiveInterval::join(LiveInterval &Other, unsigned CopyIdx) {
+/// join - Join two live intervals (this, and other) together.  This applies
+/// mappings to the value numbers in the LHS/RHS intervals as specified.  If
+/// the intervals are not joinable, this aborts.
+void LiveInterval::join(LiveInterval &Other, int *LHSValNoAssignments,
+                        int *RHSValNoAssignments, 
+                        SmallVector<unsigned, 16> &NewInstDefiningValue) {
+  
   // Try to do the least amount of work possible.  In particular, if there are
   // more liverange chunks in the other set than there are in the 'this' set,
   // swap sets to merge the fewest chunks in possible.
@@ -385,39 +293,61 @@ void LiveInterval::join(LiveInterval &Other, unsigned CopyIdx) {
       MRegisterInfo::isVirtualRegister(reg)) ||
       MRegisterInfo::isPhysicalRegister(Other.reg)) {
     swap(Other);
-    std::swap(ThisOffs, OtherOffs);
+    std::swap(LHSValNoAssignments, RHSValNoAssignments);
+  }
+
+  // Determine if any of our live range values are mapped.  This is uncommon, so
+  // we want to avoid the interval scan if not.
+  bool MustMapCurValNos = false;
+  for (unsigned i = 0, e = getNumValNums(); i != e; ++i) {
+    if (InstDefiningValue[i] == ~2U) continue;  // tombstone value #
+    if (i != (unsigned)LHSValNoAssignments[i]) {
+      MustMapCurValNos = true;
+      break;
+    }
   }
   
-  const LiveRange *SourceLR = Other.getLiveRangeContaining(CopyIdx-OtherOffs);
-  const LiveRange *DestLR = getLiveRangeContaining(CopyIdx-ThisOffs);
-  assert(SourceLR && DestLR && "Not joining due to a copy?");
-  unsigned MergedSrcValIdx = SourceLR->ValId;
-  unsigned MergedDstValIdx = DestLR->ValId;
-
-  // Join the ranges of other into the ranges of this interval.
-  std::map<unsigned, unsigned> Dst2SrcIdxMap;
+  // If we have to apply a mapping to our base interval assignment, rewrite it
+  // now.
+  if (MustMapCurValNos) {
+    // Map the first live range.
+    iterator OutIt = begin();
+    OutIt->ValId = LHSValNoAssignments[OutIt->ValId];
+    ++OutIt;
+    for (iterator I = OutIt, E = end(); I != E; ++I) {
+      OutIt->ValId = LHSValNoAssignments[I->ValId];
+      
+      // If this live range has the same value # as its immediate predecessor,
+      // and if they are neighbors, remove one LiveRange.  This happens when we
+      // have [0,3:0)[4,7:1) and map 0/1 onto the same value #.
+      if (OutIt->ValId == (OutIt-1)->ValId && (OutIt-1)->end == OutIt->start) {
+        (OutIt-1)->end = OutIt->end;
+      } else {
+        if (I != OutIt) {
+          OutIt->start = I->start;
+          OutIt->end = I->end;
+        }
+        
+        // Didn't merge, on to the next one.
+        ++OutIt;
+      }
+    }
+    
+    // If we merge some live ranges, chop off the end.
+    ranges.erase(OutIt, end());
+  }
+  
+  // Okay, now insert the RHS live ranges into the LHS.
   iterator InsertPos = begin();
   for (iterator I = Other.begin(), E = Other.end(); I != E; ++I) {
     // Map the ValId in the other live range to the current live range.
-    if (I->ValId == MergedSrcValIdx)
-      I->ValId = MergedDstValIdx;
-    else {
-      unsigned &NV = Dst2SrcIdxMap[I->ValId];
-      if (NV == 0) NV = getNextValue(Other.getInstForValNum(I->ValId));
-      I->ValId = NV;
-    }
-
+    I->ValId = RHSValNoAssignments[I->ValId];
     InsertPos = addRangeFrom(*I, InsertPos);
   }
-  
-  // Update the value number information for the value number defined by the
-  // copy.  The copy is about to be removed, so ensure that the value is defined
-  // by whatever the other value is defined by.
-  if (InstDefiningValue[MergedDstValIdx] == CopyIdx) {
-    InstDefiningValue[MergedDstValIdx] =
-      Other.InstDefiningValue[MergedSrcValIdx];
-  }
-  
+
+  InstDefiningValue.clear();
+  InstDefiningValue.append(NewInstDefiningValue.begin(), 
+                           NewInstDefiningValue.end());
   weight += Other.weight;
 }
 
@@ -511,10 +441,9 @@ void LiveInterval::MergeValueNumberInto(unsigned V1, unsigned V2) {
   // Now that V1 is dead, remove it.  If it is the largest value number, just
   // nuke it (and any other deleted values neighboring it), otherwise mark it as
   // ~1U so it can be nuked later.
-  if (V1 == NumValues-1) {
+  if (V1 == getNumValNums()-1) {
     do {
       InstDefiningValue.pop_back();
-      --NumValues;
     } while (InstDefiningValue.back() == ~1U);
   } else {
     InstDefiningValue[V1] = ~1U;
@@ -548,9 +477,9 @@ void LiveInterval::print(std::ostream &OS, const MRegisterInfo *MRI) const {
   }
   
   // Print value number info.
-  if (NumValues) {
+  if (getNumValNums()) {
     OS << "  ";
-    for (unsigned i = 0; i != NumValues; ++i) {
+    for (unsigned i = 0; i != getNumValNums(); ++i) {
       if (i) OS << " ";
       OS << i << "@";
       if (InstDefiningValue[i] == ~0U) {
