@@ -409,7 +409,7 @@ ChangeDir( $BuildDir, "CVS checkout directory" );
 my $CVSOPT = "";
 # Use compression if going over ssh.
 $CVSOPT = "-z3" if $CVSRootDir =~ /^:ext:/;
-my $CVSCMD = "$NICE cvs $CVSOPT -d $CVSRootDir co $CVSCOOPT";
+my $CVSCMD = "$NICE cvs $CVSOPT -d $CVSRootDir co -P $CVSCOOPT";
 if (!$NOCHECKOUT) {
   if ( $VERBOSE ) { print "CHECKOUT STAGE\n"; }
   system "( time -p $CVSCMD llvm; cd llvm/projects ; " .
@@ -418,11 +418,6 @@ if (!$NOCHECKOUT) {
 }
 
 ChangeDir( "llvm" , "llvm source directory") ;
-
-if (!$NOCHECKOUT) {
-  if ( $VERBOSE ) { print "UPDATE STAGE\n"; }
-  system "$NICE cvs update -PdRA >> $CVSLog 2>&1" ;
-}
 
 if ( $Template eq "" ) {
   $Template = "$BuildDir/llvm/utils/NightlyTestTemplate.html";
