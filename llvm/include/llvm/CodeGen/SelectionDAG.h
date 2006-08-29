@@ -388,6 +388,25 @@ public:
   /// of the SDNodes* in assigned order by reference.
   unsigned AssignTopologicalOrder(std::vector<SDNode*> &TopOrder);
 
+  /// isCommutativeBinOp - Returns true if the opcode is a commutative binary
+  /// operation.
+  static bool isCommutativeBinOp(unsigned Opcode) {
+    switch (Opcode) {
+    case ISD::ADD:
+    case ISD::MUL:
+    case ISD::MULHU:
+    case ISD::MULHS:
+    case ISD::FADD:
+    case ISD::FMUL:
+    case ISD::AND:
+    case ISD::OR:
+    case ISD::XOR:
+    case ISD::ADDC: 
+    case ISD::ADDE: return true;
+    default: return false;
+    }
+  }
+
   void dump() const;
 
 private:

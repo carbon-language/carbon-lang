@@ -38,21 +38,6 @@ static SDVTList makeVTList(const MVT::ValueType *VTs, unsigned NumVTs) {
   return Res;
 }
 
-static bool isCommutativeBinOp(unsigned Opcode) {
-  switch (Opcode) {
-  case ISD::ADD:
-  case ISD::MUL:
-  case ISD::MULHU:
-  case ISD::MULHS:
-  case ISD::FADD:
-  case ISD::FMUL:
-  case ISD::AND:
-  case ISD::OR:
-  case ISD::XOR: return true;
-  default: return false; // FIXME: Need commutative info for user ops!
-  }
-}
-
 // isInvertibleForFree - Return true if there is no cost to emitting the logical
 // inverse of this node.
 static bool isInvertibleForFree(SDOperand N) {

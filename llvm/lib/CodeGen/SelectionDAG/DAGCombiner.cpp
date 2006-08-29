@@ -306,19 +306,6 @@ static bool isOneUseSetCC(SDOperand N) {
   return false;
 }
 
-// FIXME: This should probably go in the ISD class rather than being duplicated
-// in several files.
-static bool isCommutativeBinOp(unsigned Opcode) {
-  switch (Opcode) {
-    case ISD::ADD:
-    case ISD::MUL:
-    case ISD::AND:
-    case ISD::OR:
-    case ISD::XOR: return true;
-    default: return false; // FIXME: Need commutative info for user ops!
-  }
-}
-
 SDOperand DAGCombiner::ReassociateOps(unsigned Opc, SDOperand N0, SDOperand N1){
   MVT::ValueType VT = N0.getValueType();
   // reassoc. (op (op x, c1), y) -> (op (op x, y), c1) iff x+c1 has one use
@@ -3456,7 +3443,7 @@ SDOperand DAGCombiner::SimplifySetCC(MVT::ValueType VT, SDOperand N0,
           return DAG.getSetCC(VT, N0.getOperand(1), N1.getOperand(1), Cond);
         if (N0.getOperand(1) == N1.getOperand(1))
           return DAG.getSetCC(VT, N0.getOperand(0), N1.getOperand(0), Cond);
-        if (isCommutativeBinOp(N0.getOpcode())) {
+        if (DAG.isCommutativeBinOp(N0.getOpcode())) {
           // If X op Y == Y op X, try other combinations.
           if (N0.getOperand(0) == N1.getOperand(1))
             return DAG.getSetCC(VT, N0.getOperand(1), N1.getOperand(0), Cond);
@@ -3499,7 +3486,7 @@ SDOperand DAGCombiner::SimplifySetCC(MVT::ValueType VT, SDOperand N0,
         return DAG.getSetCC(VT, N0.getOperand(1),
                         DAG.getConstant(0, N0.getValueType()), Cond);
       if (N0.getOperand(1) == N1) {
-        if (isCommutativeBinOp(N0.getOpcode()))
+        if (DAG.isCommutativeBinOp(N0.getOpcode()))
           return DAG.getSetCC(VT, N0.getOperand(0),
                           DAG.getConstant(0, N0.getValueType()), Cond);
         else {
@@ -3521,7 +3508,7 @@ SDOperand DAGCombiner::SimplifySetCC(MVT::ValueType VT, SDOperand N0,
         return DAG.getSetCC(VT, N1.getOperand(1),
                         DAG.getConstant(0, N1.getValueType()), Cond);
       } else if (N1.getOperand(1) == N0) {
-        if (isCommutativeBinOp(N1.getOpcode())) {
+        if (DAG.isCommutativeBinOp(N1.getOpcode())) {
           return DAG.getSetCC(VT, N1.getOperand(0),
                           DAG.getConstant(0, N1.getValueType()), Cond);
         } else {
