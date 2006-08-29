@@ -22,8 +22,12 @@ namespace llvm {
   class PPCJITInfo : public TargetJITInfo {
   protected:
     PPCTargetMachine &TM;
+    bool is64Bit;
   public:
-    PPCJITInfo(PPCTargetMachine &tm) : TM(tm) {useGOT = 0;}
+    PPCJITInfo(PPCTargetMachine &tm, bool tmIs64Bit) : TM(tm) {
+      useGOT = 0;
+      is64Bit = tmIs64Bit;
+    }
 
     /// addPassesToJITCompile - Add passes to the specified pass manager to
     /// implement a fast dynamic compiler for this target.  Return true if this
