@@ -248,11 +248,11 @@ static void SplitStaticCtorDtor(const char *GlobalName, Module *M1, Module *M2){
   }
 }
 
-//// RewriteUsesInNewModule - takes a Module and a reference to a globalvalue 
-//// (OrigVal) in that module and changes the reference to a different
-//// globalvalue (NewVal) in a seperate module.
+/// RewriteUsesInNewModule - Given a constant 'OrigVal' and a module 'OrigMod',
+/// find all uses of the constant.  If they are not in the specified module,
+/// replace them with uses of another constant 'NewVal'.
 static void RewriteUsesInNewModule(Constant *OrigVal, Constant *NewVal,
-                                   Module *TargetMod) {
+                                   Module *OrigMod) {
   assert(OrigVal->getType() == NewVal->getType() &&
          "Can't replace something with a different type");
   for (Value::use_iterator UI = OrigVal->use_begin(), E = OrigVal->use_end();
@@ -260,20 +260,17 @@ static void RewriteUsesInNewModule(Constant *OrigVal, Constant *NewVal,
     Value::use_iterator TmpUI = UI++;
     User *U = *TmpUI;
     if (Instruction *Inst = dyn_cast<Instruction>(U)) {
-      Module *InstM = Inst->getParent()->getParent()->getParent();
-      if (InstM != TargetMod) {
-         TmpUI.getUse() = NewVal;
-      }
-    } else if (GlobalVariable *GV = dyn_cast<GlobalVariable>(U)) {
-      if (GV->getParent() != TargetMod) {
+      if (Inst->getParent()->getParent()->getParent() != OrigMod)
         TmpUI.getUse() = NewVal;
-      }
+    } else if (GlobalVariable *GV = dyn_cast<GlobalVariable>(U)) {
+      if (GV->getParent() != OrigMod)
+        TmpUI.getUse() = NewVal;
     } else if (ConstantExpr *CE = dyn_cast<ConstantExpr>(U)) {
       // If nothing uses this, don't bother making a copy.
       if (CE->use_empty()) continue;
       Constant *NewCE = CE->getWithOperandReplaced(TmpUI.getOperandNo(),
                                                    NewVal);
-      RewriteUsesInNewModule(CE, NewCE, TargetMod);
+      RewriteUsesInNewModule(CE, NewCE, OrigMod);
     } else if (ConstantStruct *CS = dyn_cast<ConstantStruct>(U)) {
       // If nothing uses this, don't bother making a copy.
       if (CS->use_empty()) continue;
@@ -282,7 +279,7 @@ static void RewriteUsesInNewModule(Constant *OrigVal, Constant *NewVal,
       for (unsigned i = 0, e = CS->getNumOperands(); i != e; ++i)
         Ops.push_back(i == OpNo ? NewVal : CS->getOperand(i));
       Constant *NewStruct = ConstantStruct::get(Ops);
-      RewriteUsesInNewModule(CS, NewStruct, TargetMod);
+      RewriteUsesInNewModule(CS, NewStruct, OrigMod);
      } else if (ConstantPacked *CP = dyn_cast<ConstantPacked>(U)) {
       // If nothing uses this, don't bother making a copy.
       if (CP->use_empty()) continue;
@@ -291,7 +288,7 @@ static void RewriteUsesInNewModule(Constant *OrigVal, Constant *NewVal,
       for (unsigned i = 0, e = CP->getNumOperands(); i != e; ++i)
         Ops.push_back(i == OpNo ? NewVal : CP->getOperand(i));
       Constant *NewPacked = ConstantPacked::get(Ops);
-      RewriteUsesInNewModule(CP, NewPacked, TargetMod);
+      RewriteUsesInNewModule(CP, NewPacked, OrigMod);
     } else if (ConstantArray *CA = dyn_cast<ConstantArray>(U)) {
       // If nothing uses this, don't bother making a copy.
       if (CA->use_empty()) continue;
@@ -301,7 +298,7 @@ static void RewriteUsesInNewModule(Constant *OrigVal, Constant *NewVal,
         Ops.push_back(i == OpNo ? NewVal : CA->getOperand(i));
       }
       Constant *NewArray = ConstantArray::get(CA->getType(), Ops);
-      RewriteUsesInNewModule(CA, NewArray, TargetMod);
+      RewriteUsesInNewModule(CA, NewArray, OrigMod);
     } else {
       assert(0 && "Unexpected user");
     }
@@ -345,42 +342,38 @@ Module *llvm::SplitFunctionsOutOfModule(Module *M,
   // Adding specified functions to new module...
   for (Module::iterator I = M->begin(), E = M->end(); I != E;) {
     OrigGlobals.push_back(I);
-    if(TestFunctions.count(std::make_pair(I->getName(), I->getType()))) {    
+    if (TestFunctions.count(std::make_pair(I->getName(), I->getType()))) {    
       Module::iterator tempI = I;
       I++;
-      Function * func = new Function(tempI->getFunctionType(), 
+      Function *Func = new Function(tempI->getFunctionType(), 
                                     GlobalValue::ExternalLinkage);
-      M->getFunctionList().insert(tempI, func);
+      M->getFunctionList().insert(tempI, Func);
       New->getFunctionList().splice(New->end(), 
                                     M->getFunctionList(),
                                     tempI);
-      func->setName(tempI->getName());
-      func->setCallingConv(tempI->getCallingConv());
-      GlobalToPrototypeMap[tempI] = func;
-      // NEW TO OLD
+      Func->setName(tempI->getName());
+      Func->setCallingConv(tempI->getCallingConv());
+      GlobalToPrototypeMap[tempI] = Func;
     } else {
-      Function * func = new Function(I->getFunctionType(), 
+      Function *Func = new Function(I->getFunctionType(), 
                                     GlobalValue::ExternalLinkage,
                                     I->getName(), 
                                     New);
-      func->setCallingConv(I->getCallingConv());           
-      GlobalToPrototypeMap[I] = func;
-      // NEW TO OLD
+      Func->setCallingConv(I->getCallingConv());           
+      GlobalToPrototypeMap[I] = Func;
       I++;
     }
   }
 
-  //copy over global list
-  for (Module::global_iterator I = M->global_begin(),
-       E = M->global_end(); I != E; ++I) {
+  // Copy over global variable list.
+  for (Module::global_iterator I = M->global_begin(), E = M->global_end();
+       I != E; ++I) {
     OrigGlobals.push_back(I);
-    GlobalVariable  *glob = new GlobalVariable (I->getType()->getElementType(),
-                                                I->isConstant(),
-                                                GlobalValue::ExternalLinkage,
-                                                0,
-                                                I->getName(),
-                                                New);
-    GlobalToPrototypeMap[I] = glob;
+    GlobalVariable *G = new GlobalVariable(I->getType()->getElementType(),
+                                           I->isConstant(),
+                                           GlobalValue::ExternalLinkage,
+                                           0, I->getName(), New);
+    GlobalToPrototypeMap[I] = G;
   }
   
   // Copy all of the type symbol table entries over.
@@ -394,7 +387,8 @@ Module *llvm::SplitFunctionsOutOfModule(Module *M,
   // the prototype.
   for (unsigned i = 0, e = OrigGlobals.size(); i != e; ++i) {
     assert(OrigGlobals[i]->getName() ==
-           GlobalToPrototypeMap[OrigGlobals[i]]->getName());
+           GlobalToPrototypeMap[OrigGlobals[i]]->getName() &&
+           "Something got renamed?");
     RewriteUsesInNewModule(OrigGlobals[i], GlobalToPrototypeMap[OrigGlobals[i]],
                            OrigGlobals[i]->getParent());
   }
