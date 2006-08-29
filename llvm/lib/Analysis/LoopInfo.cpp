@@ -349,6 +349,59 @@ void Loop::getExitBlocks(std::vector<BasicBlock*> &ExitBlocks) const {
         ExitBlocks.push_back(*I);
 }
 
+/// getUniqueExitBlocks - Return all unique successor blocks of this loop. These
+/// are the blocks _outside of the current loop_ which are branched to. This
+/// assumes that loop is in canonical form.
+//
+void Loop::getUniqueExitBlocks(std::vector<BasicBlock*> &ExitBlocks) const {
+  // Sort the blocks vector so that we can use binary search to do quick
+  // lookups.
+  std::vector<BasicBlock*> LoopBBs(block_begin(), block_end());
+  std::sort(LoopBBs.begin(), LoopBBs.end());
+
+  std::vector<BasicBlock*> switchExitBlocks;  
+  
+  for (std::vector<BasicBlock*>::const_iterator BI = Blocks.begin(),
+    BE = Blocks.end(); BI != BE; ++BI) {
+
+    BasicBlock *current = *BI;
+    switchExitBlocks.clear();
+
+    for (succ_iterator I = succ_begin(*BI), E = succ_end(*BI); I != E; ++I) {
+      if (std::binary_search(LoopBBs.begin(), LoopBBs.end(), *I))
+    // If block is inside the loop then it is not a exit block.
+        continue;
+
+      pred_iterator PI = pred_begin(*I);
+      BasicBlock *firstPred = *PI;
+
+      // If current basic block is this exit block's first predecessor
+      // then only insert exit block in to the output ExitBlocks vector.
+      // This ensures that same exit block is not inserted twice into
+      // ExitBlocks vector.
+      if (current != firstPred) 
+        continue;
+
+      // If a terminator has more then two successors, for example SwitchInst,
+      // then it is possible that there are multiple edges from current block 
+      // to one exit block. 
+      if (current->getTerminator()->getNumSuccessors() <= 2) {
+        ExitBlocks.push_back(*I);
+        continue;
+      }
+      
+      // In case of multiple edges from current block to exit block, collect
+      // only one edge in ExitBlocks. Use switchExitBlocks to keep track of
+      // duplicate edges.
+      if (std::find(switchExitBlocks.begin(), switchExitBlocks.end(), *I) 
+          == switchExitBlocks.end()) {
+        switchExitBlocks.push_back(*I);
+        ExitBlocks.push_back(*I);
+      }
+    }
+  }
+}
+
 
 /// getLoopPreheader - If there is a preheader for this loop, return it.  A
 /// loop has a preheader if there is only one edge to the header of the loop

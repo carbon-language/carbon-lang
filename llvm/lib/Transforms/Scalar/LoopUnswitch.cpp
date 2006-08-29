@@ -570,11 +570,8 @@ void LoopUnswitch::UnswitchNontrivialCondition(Value *LIC, Constant *Val,
   LoopBlocks.insert(LoopBlocks.end(), L->block_begin(), L->block_end());
 
   std::vector<BasicBlock*> ExitBlocks;
-  L->getExitBlocks(ExitBlocks);
-  std::sort(ExitBlocks.begin(), ExitBlocks.end());
-  ExitBlocks.erase(std::unique(ExitBlocks.begin(), ExitBlocks.end()),
-                   ExitBlocks.end());
-  
+  L->getUniqueExitBlocks(ExitBlocks);
+
   // Split all of the edges from inside the loop to their exit blocks.  Update
   // the appropriate Phi nodes as we do so.
   unsigned NumBlocks = L->getBlocks().size();
@@ -626,11 +623,8 @@ void LoopUnswitch::UnswitchNontrivialCondition(Value *LIC, Constant *Val,
   
   // The exit blocks may have been changed due to edge splitting, recompute.
   ExitBlocks.clear();
-  L->getExitBlocks(ExitBlocks);
-  std::sort(ExitBlocks.begin(), ExitBlocks.end());
-  ExitBlocks.erase(std::unique(ExitBlocks.begin(), ExitBlocks.end()),
-                   ExitBlocks.end());
-  
+  L->getUniqueExitBlocks(ExitBlocks);
+
   // Add exit blocks to the loop blocks.
   LoopBlocks.insert(LoopBlocks.end(), ExitBlocks.begin(), ExitBlocks.end());
 

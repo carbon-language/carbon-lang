@@ -112,6 +112,12 @@ public:
   ///
   void getExitBlocks(std::vector<BasicBlock*> &Blocks) const;
 
+  /// getUniqueExitBlocks - Return all unique successor blocks of this loop. 
+  /// These are the blocks _outside of the current loop_ which are branched to.
+  /// This assumes that loop is in canonical form.
+  ///
+  void getUniqueExitBlocks(std::vector<BasicBlock*> &ExitBlocks) const;
+
   /// getLoopPreheader - If there is a preheader for this loop, return it.  A
   /// loop has a preheader if there is only one edge to the header of the loop
   /// from outside of the loop.  If this is the case, the block branching to the
