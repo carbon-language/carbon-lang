@@ -312,7 +312,9 @@ void X86DAGToDAGISel::InstructionSelectPreprocess(SelectionDAG &DAG) {
 
     SDOperand N1 = I->getOperand(1);
     SDOperand N2 = I->getOperand(2);
-    if (!N1.hasOneUse())
+    if (MVT::isFloatingPoint(N1.getValueType()) &&
+        MVT::isVector(N1.getValueType()) &&
+        !N1.hasOneUse())
       continue;
 
     bool RModW = false;
