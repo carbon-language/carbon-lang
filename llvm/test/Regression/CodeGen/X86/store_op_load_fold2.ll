@@ -1,5 +1,8 @@
 ; RUN: llvm-as < %s | llc -march=x86 -x86-asm-syntax=intel | grep 'and DWORD PTR' | wc -l | grep 2
 
+target endian = little
+target pointersize = 32
+
 	%struct.Macroblock = type { int, int, int, int, int, [8 x int], %struct.Macroblock*, %struct.Macroblock*, int, [2 x [4 x [4 x [2 x int]]]], [16 x sbyte], [16 x sbyte], int, long, [4 x int], [4 x int], long, int, int, int, int, int, int, int, int, int, int, int, int, int, int, int, short, double, int, int, int, int, int, int, int, int, int }
 
 implementation   ; Functions:
