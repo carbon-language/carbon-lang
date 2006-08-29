@@ -80,6 +80,9 @@ namespace {
   Statistic<>
   NumFPKill("x86-codegen", "Number of FP_REG_KILL instructions added");
 
+  Statistic<>
+  NumLoadMoved("x86-codegen", "Number of loads moved below TokenFactor");
+
   //===--------------------------------------------------------------------===//
   /// ISel - X86 specific code to select X86 machine instructions for
   /// SelectionDAG operations.
@@ -313,8 +316,6 @@ void X86DAGToDAGISel::InstructionSelectPreprocess(SelectionDAG &DAG) {
     switch (Opcode) {
       case ISD::ADD:
       case ISD::MUL:
-      case ISD::FADD:
-      case ISD::FMUL:
       case ISD::AND:
       case ISD::OR:
       case ISD::XOR:
@@ -329,7 +330,8 @@ void X86DAGToDAGISel::InstructionSelectPreprocess(SelectionDAG &DAG) {
           std::swap(N10, N11);
         }
         RModW = RModW && N10.Val->isOperand(Chain.Val) && N10.hasOneUse() &&
-          N10.getOperand(1) == N2;
+          (N10.getOperand(1) == N2) &&
+          (N10.Val->getValueType(0) == N1.getValueType());
         if (RModW)
           Load = N10;
         break;
@@ -347,15 +349,18 @@ void X86DAGToDAGISel::InstructionSelectPreprocess(SelectionDAG &DAG) {
         SDOperand N10 = N1.getOperand(0);
         if (N10.Val->getOpcode() == ISD::LOAD)
           RModW = N10.Val->isOperand(Chain.Val) && N10.hasOneUse() &&
-            N10.getOperand(1) == N2;
+            (N10.getOperand(1) == N2) &&
+            (N10.Val->getValueType(0) == N1.getValueType());
         if (RModW)
           Load = N10;
         break;
       }
     }
 
-    if (RModW)
+    if (RModW) {
       MoveBelowTokenFactor(DAG, Load, SDOperand(I, 0), Chain);
+      ++NumLoadMoved;
+    }
   }
 }
 
