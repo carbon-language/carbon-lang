@@ -92,6 +92,10 @@ namespace {
     /// register should set this to true.
     bool ContainsFPCode;
 
+    /// FastISel - Enable fast(er) instruction selection.
+    ///
+    bool FastISel;
+
     /// X86Lowering - This object fully describes how to lower LLVM code to an
     /// X86-specific SelectionDAG.
     X86TargetLowering X86Lowering;
@@ -103,8 +107,9 @@ namespace {
     unsigned GlobalBaseReg;
 
   public:
-    X86DAGToDAGISel(X86TargetMachine &TM)
+    X86DAGToDAGISel(X86TargetMachine &TM, bool fast)
       : SelectionDAGISel(X86Lowering),
+        ContainsFPCode(false), FastISel(fast), 
         X86Lowering(*TM.getTargetLowering()),
         Subtarget(&TM.getSubtarget<X86Subtarget>()) {}
 
@@ -237,7 +242,7 @@ bool X86DAGToDAGISel::CanBeFoldedBy(SDNode *N, SDNode *U) {
   //      /        [X]
   //      |         ^
   //     [U]--------|
-  return !isNonImmUse(U, N);
+  return !FastISel && !isNonImmUse(U, N);
 }
 
 /// MoveBelowTokenFactor - Replace TokenFactor operand with load's chain operand
@@ -370,7 +375,7 @@ void X86DAGToDAGISel::InstructionSelectBasicBlock(SelectionDAG &DAG) {
   DEBUG(BB->dump());
   MachineFunction::iterator FirstMBB = BB;
 
-  if (X86ISelPreproc)
+  if (!FastISel)
     InstructionSelectPreprocess(DAG);
 
   // Codegen the basic block.
@@ -1071,6 +1076,6 @@ SelectInlineAsmMemoryOperand(const SDOperand &Op, char ConstraintCode,
 /// createX86ISelDag - This pass converts a legalized DAG into a 
 /// X86-specific DAG, ready for instruction scheduling.
 ///
-FunctionPass *llvm::createX86ISelDag(X86TargetMachine &TM) {
-  return new X86DAGToDAGISel(TM);
+FunctionPass *llvm::createX86ISelDag(X86TargetMachine &TM, bool Fast) {
+  return new X86DAGToDAGISel(TM, Fast);
 }

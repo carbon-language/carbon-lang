@@ -103,7 +103,7 @@ bool X86TargetMachine::addPassesToEmitFile(PassManager &PM, std::ostream &Out,
   PM.add(createUnreachableBlockEliminationPass());
 
   // Install an instruction selector.
-  PM.add(createX86ISelDag(*this));
+  PM.add(createX86ISelDag(*this, Fast));
 
   // Print the instruction selected machine code...
   if (PrintMachineCode)
@@ -168,7 +168,7 @@ void X86JITInfo::addPassesToJITCompile(FunctionPassManager &PM) {
   PM.add(createUnreachableBlockEliminationPass());
 
   // Install an instruction selector.
-  PM.add(createX86ISelDag(TM));
+  PM.add(createX86ISelDag(TM, false));
 
   // Print the instruction selected machine code...
   if (PrintMachineCode)

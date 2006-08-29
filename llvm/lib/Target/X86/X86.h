@@ -28,7 +28,7 @@ class MachineCodeEmitter;
 /// createX86ISelDag - This pass converts a legalized DAG into a 
 /// X86-specific DAG, ready for instruction scheduling.
 ///
-FunctionPass *createX86ISelDag(X86TargetMachine &TM);
+FunctionPass *createX86ISelDag(X86TargetMachine &TM, bool Fast);
 
 /// createX86FloatingPointStackifierPass - This function returns a pass which
 /// converts floating point register references and pseudo instructions into
