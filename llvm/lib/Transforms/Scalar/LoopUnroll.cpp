@@ -128,66 +128,47 @@ BasicBlock* LoopUnroll::FoldBlockIntoPredecessor(BasicBlock* BB) {
   // pred, and if there is only one distinct successor of the predecessor, and
   // if there are no PHI nodes.
   //
-  pred_iterator PI(pred_begin(BB)), PE(pred_end(BB));
-  BasicBlock *OnlyPred = *PI++;
-  for (; PI != PE; ++PI)  // Search all predecessors, see if they are all same
-    if (*PI != OnlyPred) {
-      OnlyPred = 0;       // There are multiple different predecessors...
-      break;
-    }
+  BasicBlock *OnlyPred = BB->getSinglePredecessor();
+  if (!OnlyPred) return 0;
 
-  BasicBlock *OnlySucc = 0;
-  if (OnlyPred && OnlyPred != BB &&    // Don't break self loops
-      OnlyPred->getTerminator()->getOpcode() != Instruction::Invoke) {
-    // Check to see if there is only one distinct successor...
-    succ_iterator SI(succ_begin(OnlyPred)), SE(succ_end(OnlyPred));
-    OnlySucc = BB;
-    for (; SI != SE; ++SI)
-      if (*SI != OnlySucc) {
-        OnlySucc = 0;     // There are multiple distinct successors!
-        break;
-      }
+  if (OnlyPred->getTerminator()->getNumSuccessors() != 1)
+    return 0;
+
+  DEBUG(std::cerr << "Merging: " << *BB << "into: " << *OnlyPred);
+  TerminatorInst *Term = OnlyPred->getTerminator();
+
+  // Resolve any PHI nodes at the start of the block.  They are all
+  // guaranteed to have exactly one entry if they exist, unless there are
+  // multiple duplicate (but guaranteed to be equal) entries for the
+  // incoming edges.  This occurs when there are multiple edges from
+  // OnlyPred to OnlySucc.
+  //
+  while (PHINode *PN = dyn_cast<PHINode>(&BB->front())) {
+    PN->replaceAllUsesWith(PN->getIncomingValue(0));
+    BB->getInstList().pop_front();  // Delete the phi node...
   }
 
-  if (OnlySucc) {
-    DEBUG(std::cerr << "Merging: " << *BB << "into: " << *OnlyPred);
-    TerminatorInst *Term = OnlyPred->getTerminator();
+  // Delete the unconditional branch from the predecessor...
+  OnlyPred->getInstList().pop_back();
 
-    // Resolve any PHI nodes at the start of the block.  They are all
-    // guaranteed to have exactly one entry if they exist, unless there are
-    // multiple duplicate (but guaranteed to be equal) entries for the
-    // incoming edges.  This occurs when there are multiple edges from
-    // OnlyPred to OnlySucc.
-    //
-    while (PHINode *PN = dyn_cast<PHINode>(&BB->front())) {
-      PN->replaceAllUsesWith(PN->getIncomingValue(0));
-      BB->getInstList().pop_front();  // Delete the phi node...
-    }
+  // Move all definitions in the successor to the predecessor...
+  OnlyPred->getInstList().splice(OnlyPred->end(), BB->getInstList());
 
-    // Delete the unconditional branch from the predecessor...
-    OnlyPred->getInstList().pop_back();
+  // Make all PHI nodes that referred to BB now refer to Pred as their
+  // source...
+  BB->replaceAllUsesWith(OnlyPred);
 
-    // Move all definitions in the successor to the predecessor...
-    OnlyPred->getInstList().splice(OnlyPred->end(), BB->getInstList());
+  std::string OldName = BB->getName();
 
-    // Make all PHI nodes that referred to BB now refer to Pred as their
-    // source...
-    BB->replaceAllUsesWith(OnlyPred);
+  // Erase basic block from the function...
+  LI->removeBlock(BB);
+  BB->eraseFromParent();
 
-    std::string OldName = BB->getName();
+  // Inherit predecessors name if it exists...
+  if (!OldName.empty() && !OnlyPred->hasName())
+    OnlyPred->setName(OldName);
 
-    // Erase basic block from the function...
-    LI->removeBlock(BB);
-    BB->eraseFromParent();
-
-    // Inherit predecessors name if it exists...
-    if (!OldName.empty() && !OnlyPred->hasName())
-      OnlyPred->setName(OldName);
-
-    return OnlyPred;
-  }
-  
-  return 0;
+  return OnlyPred;
 }
 
 bool LoopUnroll::visitLoop(Loop *L) {
