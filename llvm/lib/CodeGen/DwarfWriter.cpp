@@ -35,7 +35,7 @@ using namespace llvm::dwarf;
 
 static cl::opt<bool>
 DwarfVerbose("dwarf-verbose", cl::Hidden,
-                                cl::desc("Add comments to Dwarf directives."));
+                              cl::desc("Add comments to Dwarf directives."));
 
 namespace llvm {
 
@@ -1946,7 +1946,7 @@ void DwarfWriter::EmitFrameMoves(const char *BaseLabel, unsigned BaseLabelID,
     
     // Advance row if new location.
     if (BaseLabel && LabelID && BaseLabelID != LabelID) {
-      EmitULEB128Bytes(DW_CFA_advance_loc4);
+      EmitInt8(DW_CFA_advance_loc4);
       EOL("DW_CFA_advance_loc4");
       EmitDifference("loc", LabelID, BaseLabel, BaseLabelID);
       EOL("");
@@ -1955,30 +1955,56 @@ void DwarfWriter::EmitFrameMoves(const char *BaseLabel, unsigned BaseLabelID,
       BaseLabel = "loc";
     }
     
+    int stackGrowth =
+        Asm->TM.getFrameInfo()->getStackGrowthDirection() ==
+          TargetFrameInfo::StackGrowsUp ?
+            AddressSize : -AddressSize;
+
     // If advancing cfa.
     if (Dst.isRegister() && Dst.getRegister() == MachineLocation::VirtualFP) {
       if (!Src.isRegister()) {
         if (Src.getRegister() == MachineLocation::VirtualFP) {
-          EmitULEB128Bytes(DW_CFA_def_cfa_offset);
+          EmitInt8(DW_CFA_def_cfa_offset);
           EOL("DW_CFA_def_cfa_offset");
         } else {
-          EmitULEB128Bytes(DW_CFA_def_cfa);
+          EmitInt8(DW_CFA_def_cfa);
           EOL("DW_CFA_def_cfa");
           
           EmitULEB128Bytes(RI->getDwarfRegNum(Src.getRegister()));
           EOL("Register");
         }
         
-        int stackGrowth =
-            Asm->TM.getFrameInfo()->getStackGrowthDirection() ==
-              TargetFrameInfo::StackGrowsUp ?
-                AddressSize : -AddressSize;
+        int Offset = Src.getOffset() / stackGrowth;
         
-        EmitULEB128Bytes(Src.getOffset() / stackGrowth);
+        EmitULEB128Bytes(Offset);
         EOL("Offset");
       } else {
+        assert(0 && "Machine move no supported yet.");
       }
     } else {
+      unsigned Reg = RI->getDwarfRegNum(Src.getRegister());
+      int Offset = Dst.getOffset() / stackGrowth;
+      
+      if (Offset < 0) {
+        EmitInt8(DW_CFA_offset_extended_sf);
+        EOL("DW_CFA_offset_extended_sf");
+        EmitULEB128Bytes(Reg);
+        EOL("Reg");
+        EmitSLEB128Bytes(Offset);
+        EOL("Offset");
+      } else if (Reg < 64) {
+        EmitInt8(DW_CFA_offset + Reg);
+        EOL("DW_CFA_offset + Reg");
+        EmitULEB128Bytes(Offset);
+        EOL("Offset");
+      } else {
+        EmitInt8(DW_CFA_offset_extended);
+        EOL("DW_CFA_offset_extended");
+        EmitULEB128Bytes(Reg);
+        EOL("Reg");
+        EmitULEB128Bytes(Offset);
+        EOL("Offset");
+      }
     }
   }
 }

@@ -668,15 +668,22 @@ void PPCRegisterInfo::emitPrologue(MachineFunction &MF) const {
     std::vector<MachineMove *> &Moves = DebugInfo->getFrameMoves();
     unsigned LabelID = DebugInfo->NextLabelID();
     
-    // Show update of SP.
-    MachineLocation Dst(MachineLocation::VirtualFP);
-    MachineLocation Src(MachineLocation::VirtualFP, NegNumbytes);
-    Moves.push_back(new MachineMove(LabelID, Dst, Src));
-
     // Mark effective beginning of when frame pointer becomes valid.
     BuildMI(MBB, MBBI, PPC::DWARF_LABEL, 1).addImm(LabelID);
     
-    
+    // Show update of SP.
+    MachineLocation SPDst(MachineLocation::VirtualFP);
+    MachineLocation SPSrc(MachineLocation::VirtualFP, NegNumbytes);
+    Moves.push_back(new MachineMove(LabelID, SPDst, SPSrc));
+
+    // Add callee saved registers to move list.
+    const std::vector<CalleeSavedInfo> &CSI = MFI->getCalleeSavedInfo();
+    for (unsigned I = 0, E = CSI.size(); I != E; ++I) {
+      MachineLocation CSDst(MachineLocation::VirtualFP,
+                            MFI->getObjectOffset(CSI[I].getFrameIdx()));
+      MachineLocation CSSrc(CSI[I].getReg());
+      Moves.push_back(new MachineMove(LabelID, CSDst, CSSrc));
+    }
   }
   
   // If there is a frame pointer, copy R1 (SP) into R31 (FP)
