@@ -33,6 +33,8 @@ namespace llvm { extern std::ostream *GetLibSupportInfoOutputFile(); }
 
 unsigned StatisticBase::NumStats = 0;
 
+TEMPLATE_INSTANTIATION(class Statistic<unsigned>);
+
 // -stats - Command line option to cause transformations to emit stats about
 // what they did.
 //

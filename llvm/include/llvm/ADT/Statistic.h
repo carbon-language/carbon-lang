@@ -24,7 +24,8 @@
 #ifndef LLVM_ADT_STATISTIC_H
 #define LLVM_ADT_STATISTIC_H
 
-#include <iosfwd>
+#include <ostream>
+#include "llvm/Support/Compiler.h"
 
 namespace llvm {
 
@@ -84,6 +85,8 @@ public:
   const Statistic &operator*=(const DataType &V) { Value *= V; return *this; }
   const Statistic &operator/=(const DataType &V) { Value /= V; return *this; }
 };
+
+EXTERN_TEMPLATE_INSTANTIATION(class Statistic<unsigned>);
 
 } // End llvm namespace
 
