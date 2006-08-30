@@ -36,7 +36,7 @@ class BytecodeHandler;
 /// @brief Get a ModuleProvide for a bytecode file.
 ModuleProvider *getBytecodeModuleProvider(
   const std::string &Filename,  ///< Name of file to be read
-  std::string* ErrMsg,          ///< Optional error message holder 
+  std::string* ErrMsg = 0,      ///< Optional error message holder 
   BytecodeHandler* H = 0        ///< Optional handler for reader events
 );
 
@@ -49,8 +49,8 @@ ModuleProvider *getBytecodeBufferModuleProvider(
   const unsigned char *Buffer,    ///< Start of buffer to parse
   unsigned BufferSize,            ///< Size of the buffer
   const std::string &ModuleID,    ///< Name to give the module
-  std::string* ErrMsg,            ///< Optional place to return an error message
-  BytecodeHandler* H              ///< Optional handler for reader events
+  std::string* ErrMsg = 0,        ///< Optional place to return an error message
+  BytecodeHandler* H = 0          ///< Optional handler for reader events
 );
 
 /// This is the main interface to bytecode parsing. It opens the file specified
@@ -84,7 +84,7 @@ Module* ParseBytecodeBuffer(
 bool GetBytecodeDependentLibraries(
   const std::string &fileName,       ///< File name to read bytecode from
   Module::LibraryListType& deplibs,  ///< List of dependent libraries extracted
-  std::string* ErrMsg                ///< Optional error message holder
+  std::string* ErrMsg = 0            ///< Optional error message holder
 );
 
 /// This function will read only the necessary parts of a bytecode file in order
@@ -96,7 +96,7 @@ bool GetBytecodeDependentLibraries(
 bool GetBytecodeSymbols(
   const sys::Path& fileName,       ///< Filename to read bytecode from
   std::vector<std::string>& syms,  ///< Vector to return symbols in
-  std::string* ErrMsg              ///< Optional error message holder
+  std::string* ErrMsg = 0          ///< Optional error message holder
 );
 
 /// This function will read only the necessary parts of a bytecode buffer in
@@ -111,7 +111,7 @@ ModuleProvider* GetBytecodeSymbols(
   unsigned Length,                   ///< The length of \p Buffer
   const std::string& ModuleID,       ///< An identifier for the module
   std::vector<std::string>& symbols, ///< The symbols defined in the module
-  std::string* ErrMsg                ///< Optional error message holder
+  std::string* ErrMsg = 0            ///< Optional error message holder
 );
 
 } // End llvm namespace
