@@ -23,26 +23,20 @@
 //===------------------------------------------------------------------===//
 //
 // This optimization works by substituting %q for %p when protected by a
-// conditional that assures us of that fact. Equivalent variables are
-// called SynSets; sets of synonyms. We maintain a mapping from Value *
-// to the SynSet, and the SynSet maintains the best canonical form of the
-// Value.
-//
-// Properties are stored as relationships between two SynSets.
+// conditional that assures us of that fact. Properties are stored as
+// relationships between two values.
 //
 //===------------------------------------------------------------------===//
 
 // TODO:
-// * Handle SelectInst
-// * Switch to EquivalenceClasses ADT
 // * Check handling of NAN in floating point types
-// * Don't descend into false side of branches with ConstantBool condition.
 
 #define DEBUG_TYPE "predsimplify"
 #include "llvm/Transforms/Scalar.h"
 #include "llvm/Constants.h"
 #include "llvm/Instructions.h"
 #include "llvm/Pass.h"
+#include "llvm/ADT/EquivalenceClasses.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/Analysis/Dominators.h"
@@ -55,9 +49,11 @@ namespace {
   Statistic<>
   NumVarsReplaced("predsimplify", "Number of argument substitutions");
   Statistic<>
-  NumResolved("predsimplify", "Number of instruction substitutions");
+  NumInstruction("predsimplify", "Number of instructions removed");
   Statistic<>
   NumSwitchCases("predsimplify", "Number of switch cases removed");
+  Statistic<>
+  NumBranches("predsimplify", "Number of branches made unconditional");
 
   /// Used for choosing the canonical Value in a synonym set.
   /// Leaves the better one in V1. Returns whether a swap took place.
@@ -89,10 +85,8 @@ namespace {
   /// and fast lookup. Also stores the set of inequality relationships.
   class PropertySet {
     struct Property;
+    class EquivalenceClasses<Value *> union_find;
   public:
-    typedef unsigned SynSet;
-    typedef std::map<Value*, unsigned>::iterator       SynonymIterator;
-    typedef std::map<Value*, unsigned>::const_iterator ConstSynonymIterator;
     typedef std::vector<Property>::iterator       PropertyIterator;
     typedef std::vector<Property>::const_iterator ConstPropertyIterator;
 
@@ -107,133 +101,44 @@ namespace {
     }
 
     Value *lookup(Value *V) const {
-      ConstSynonymIterator SI = SynonymMap.find(V);
-      if (SI == SynonymMap.end()) return NULL;
-
-      return Synonyms[SI->second];
-    }
-
-    Value *lookup(SynSet SS) const {
-      assert(SS < Synonyms.size());
-      return Synonyms[SS];
-    }
-
-    // Find a SynSet for a given Value.
-    //
-    // Given the Value *V sets SS to a valid SynSet. Returns true if it
-    // found it.
-    bool findSynSet(Value *V, SynSet &SS) const {
-      ConstSynonymIterator SI = SynonymMap.find(V);
-      if (SI != SynonymMap.end()) {
-        SS = SI->second;
-        return true;
-      }
-
-      std::vector<Value *>::const_iterator I =
-          std::find(Synonyms.begin(), Synonyms.end(), V);
-      if (I != Synonyms.end()) { 
-        SS = I-Synonyms.begin();
-        return true;
-      }
-
-      return false;
+      EquivalenceClasses<Value *>::member_iterator SI =
+          union_find.findLeader(V);
+      if (SI == union_find.member_end()) return NULL;
+      return *SI;
     }
 
     bool empty() const {
-      return Synonyms.empty();
+      return union_find.empty();
     }
 
     void addEqual(Value *V1, Value *V2) {
       order(V1, V2);
       if (isa<Constant>(V2)) return; // refuse to set false == true.
 
-      V1 = canonicalize(V1);
-      V2 = canonicalize(V2);
-
-      if (V1 == V2) return; // already equivalent.
-
-      SynSet I1, I2;
-      bool F1 = findSynSet(V1, I1),
-           F2 = findSynSet(V2, I2);
-
-      DEBUG(std::cerr << "V1: " << *V1 << " I1: " << I1
-                      << " F1: " << F1 << "\n");
-      DEBUG(std::cerr << "V2: " << *V2 << " I2: " << I2
-                      << " F2: " << F2 << "\n");
-
-      if (!F1 && !F2) {
-        SynSet SS = addSynSet(V1);
-        SynonymMap[V1] = SS;
-        SynonymMap[V2] = SS;
-      }
-
-      else if (!F1 && F2) {
-        SynonymMap[V1] = I2;
-      }
-
-      else if (F1 && !F2) {
-        SynonymMap[V2] = I1;
-      }
-
-      else {
-        // This is the case where we have two sets, [%a1, %a2, %a3] and
-        // [%p1, %p2, %p3] and someone says that %a2 == %p3. We need to
-        // combine the two synsets.
-
-        // Collapse synonyms of V2 into V1.
-        for (SynonymIterator I = SynonymMap.begin(), E = SynonymMap.end();
-             I != E; ++I) {
-          if (I->second == I2) I->second = I1;
-          else if (I->second > I2) --I->second;
-        }
-
-        // Move Properties
-        for (PropertyIterator I = Properties.begin(), E = Properties.end();
-             I != E; ++I) {
-          if (I->S1 == I2) I->S1 = I1;
-          else if (I->S1 > I2) --I->S1;
-          if (I->S2 == I2) I->S2 = I1;
-          else if (I->S2 > I2) --I->S2;
-        }
-
-        // Remove the synonym
-        Synonyms.erase(Synonyms.begin() + I2);
-      }
-
+      union_find.unionSets(V1, V2);
       addImpliedProperties(EQ, V1, V2);
     }
 
     void addNotEqual(Value *V1, Value *V2) {
       DEBUG(std::cerr << "not equal: " << *V1 << " and " << *V2 << "\n");
-      bool skip_search = false;
       V1 = canonicalize(V1);
       V2 = canonicalize(V2);
 
-      SynSet S1, S2;
-      if (!findSynSet(V1, S1)) {
-        skip_search = true;
-        S1 = addSynSet(V1);
-      }
-      if (!findSynSet(V2, S2)) {
-        skip_search = true;
-        S2 = addSynSet(V2);
-      }
+      // Does the property already exist?
+      for (PropertyIterator I = Properties.begin(), E = Properties.end();
+           I != E; ++I) {
+        if (I->Opcode != NE) continue;
 
-      if (!skip_search) {
-        // Does the property already exist?
-        for (PropertyIterator I = Properties.begin(), E = Properties.end();
-             I != E; ++I) {
-          if (I->Opcode != NE) continue;
-
-          if ((I->S1 == S1 && I->S2 == S2) ||
-              (I->S1 == S2 && I->S2 == S1)) {
-            return; // Found.
-          }
+        I->V1 = canonicalize(I->V1);
+        I->V2 = canonicalize(I->V2);
+        if ((I->V1 == V1 && I->V2 == V2) ||
+            (I->V1 == V2 && I->V2 == V1)) {
+          return; // Found.
         }
       }
 
       // Add the property.
-      Properties.push_back(Property(NE, S1, S2));
+      Properties.push_back(Property(NE, V1, V2));
       addImpliedProperties(NE, V1, V2);
     }
 
@@ -241,17 +146,19 @@ namespace {
       assert(Opcode != EQ && "Can't findProperty on EQ."
              "Use the lookup method instead.");
 
-      SynSet S1, S2;
-      if (!findSynSet(V1, S1)) return Properties.end();
-      if (!findSynSet(V2, S2)) return Properties.end();
+      V1 = lookup(V1);
+      V2 = lookup(V2);
+      if (!V1 || !V2) return Properties.end();
 
       // Does the property already exist?
       for (PropertyIterator I = Properties.begin(), E = Properties.end();
            I != E; ++I) {
         if (I->Opcode != Opcode) continue;
 
-        if ((I->S1 == S1 && I->S2 == S2) ||
-            (I->S1 == S2 && I->S2 == S1)) {
+        I->V1 = canonicalize(I->V1);
+        I->V2 = canonicalize(I->V2);
+        if ((I->V1 == V1 && I->V2 == V2) ||
+            (I->V1 == V2 && I->V2 == V1)) {
           return I; // Found.
         }
       }
@@ -263,17 +170,20 @@ namespace {
       assert(Opcode != EQ && "Can't findProperty on EQ."
              "Use the lookup method instead.");
 
-      SynSet S1, S2;
-      if (!findSynSet(V1, S1)) return Properties.end();
-      if (!findSynSet(V2, S2)) return Properties.end();
+      V1 = lookup(V1);
+      V2 = lookup(V2);
+      if (!V1 || !V2) return Properties.end();
 
       // Does the property already exist?
       for (ConstPropertyIterator I = Properties.begin(),
            E = Properties.end(); I != E; ++I) {
         if (I->Opcode != Opcode) continue;
 
-        if ((I->S1 == S1 && I->S2 == S2) ||
-            (I->S1 == S2 && I->S2 == S1)) {
+        Value *v1 = lookup(I->V1),
+              *v2 = lookup(I->V2);
+        if (!v1 || !v2) continue;
+        if ((v1 == V1 && v2 == V2) ||
+            (v1 == V2 && v2 == V1)) {
           return I; // Found.
         }
       }
@@ -284,25 +194,20 @@ namespace {
     // Represents Head OP [Tail1, Tail2, ...]
     // For example: %x != %a, %x != %b.
     struct Property {
-      Property(Ops opcode, SynSet s1, SynSet s2)
-        : Opcode(opcode), S1(s1), S2(s2)
+      Property(Ops opcode, Value *v1, Value *v2)
+        : Opcode(opcode), V1(v1), V2(v2)
       { assert(opcode != EQ && "Equality belongs in the synonym set,"
                "not a property."); }
 
       bool operator<(const Property &rhs) const {
         if (Opcode != rhs.Opcode) return Opcode < rhs.Opcode;
-        if (S1 != rhs.S1) return S1 < rhs.S1;
-        return S2 < rhs.S2;
+        if (V1 != rhs.V1) return V1 < rhs.V1;
+        return V2 < rhs.V2;
       }
 
       Ops Opcode;
-      SynSet S1, S2;
+      Value *V1, *V2;
     };
-
-    SynSet addSynSet(Value *V) {
-      Synonyms.push_back(V);
-      return Synonyms.size()-1;
-    }
 
     void add(Ops Opcode, Value *V1, Value *V2, bool invert) {
       switch (Opcode) {
@@ -386,19 +291,6 @@ namespace {
 
   public:
     void debug(std::ostream &os) const {
-      os << Synonyms.size() << " synsets:\n";
-      for (unsigned I = 0, E = Synonyms.size(); I != E; ++I) {
-        os << I << ". " << *Synonyms[I] << "\n";
-      }
-      for (ConstSynonymIterator I = SynonymMap.begin(),E = SynonymMap.end();
-           I != E; ++I) {
-        os << *I->first << "-> #" << I->second << "\n";
-      }
-      os << Properties.size() << " properties:\n";
-      for (unsigned I = 0, E = Properties.size(); I != E; ++I) {
-        os << I << ". (" << Properties[I].Opcode << ","
-           << Properties[I].S1 << "," << Properties[I].S2 << ")\n";
-      }
     }
 
     std::vector<Property> Properties;
@@ -416,6 +308,7 @@ namespace {
     // Try to replace the Use of the instruction with something simpler.
     Value *resolve(SetCondInst *SCI, const PropertySet &);
     Value *resolve(BinaryOperator *BO, const PropertySet &);
+    Value *resolve(SelectInst *SI, const PropertySet &);
     Value *resolve(Value *V, const PropertySet &);
 
     // Used by terminator instructions to proceed from the current basic
@@ -546,6 +439,15 @@ Value *PredicateSimplifier::resolve(BinaryOperator *BO,
   return BO;
 }
 
+Value *PredicateSimplifier::resolve(SelectInst *SI, const PropertySet &KP) {
+  Value *Condition = resolve(SI->getCondition(), KP);
+  if (Condition == ConstantBool::True)
+    return resolve(SI->getTrueValue(), KP);
+  else if (Condition == ConstantBool::False)
+    return resolve(SI->getFalseValue(), KP);
+  return SI;
+}
+
 Value *PredicateSimplifier::resolve(Value *V, const PropertySet &KP) {
   if (isa<Constant>(V) || isa<BasicBlock>(V) || KP.empty()) return V;
 
@@ -553,6 +455,8 @@ Value *PredicateSimplifier::resolve(Value *V, const PropertySet &KP) {
 
   if (BinaryOperator *BO = dyn_cast<BinaryOperator>(V))
     return resolve(BO, KP);
+  else if (SelectInst *SI = dyn_cast<SelectInst>(V))
+    return resolve(SI, KP);
 
   return V;
 }
@@ -588,7 +492,7 @@ void PredicateSimplifier::visit(Instruction *I, DominatorTree::Node *DTNode,
   assert(V && "resolve not supposed to return NULL.");
   if (V != I) {
     modified = true;
-    ++NumResolved;
+    ++NumInstruction;
     I->replaceAllUsesWith(V);
     I->eraseFromParent();
   }
@@ -645,14 +549,30 @@ void PredicateSimplifier::visit(BranchInst *BI,
 
   Value *Condition = BI->getCondition();
 
+  BasicBlock *TrueDest  = BI->getSuccessor(0),
+             *FalseDest = BI->getSuccessor(1);
+
+  if (Condition == ConstantBool::True) {
+    FalseDest->removePredecessor(BI->getParent());
+    BI->setUnconditionalDest(TrueDest);
+    modified = true;
+    ++NumBranches;
+    proceedToSuccessor(KP, Node, DT->getNode(TrueDest));
+    return;
+  } else if (Condition == ConstantBool::False) {
+    TrueDest->removePredecessor(BI->getParent());
+    BI->setUnconditionalDest(FalseDest);
+    modified = true;
+    ++NumBranches;
+    proceedToSuccessor(KP, Node, DT->getNode(FalseDest));
+    return;
+  }
+
   PropertySet TrueProperties(KP), FalseProperties(KP);
   DEBUG(std::cerr << "true set:\n");
   TrueProperties.addEqual(ConstantBool::True,   Condition);
   DEBUG(std::cerr << "false set:\n");
   FalseProperties.addEqual(ConstantBool::False, Condition);
-
-  BasicBlock *TrueDest  = BI->getSuccessor(0),
-             *FalseDest = BI->getSuccessor(1);
 
   PropertySet KPcopy(KP);
   proceedToSuccessor(KP,     TrueProperties,  Node, DT->getNode(TrueDest));
@@ -665,17 +585,18 @@ void PredicateSimplifier::visit(SwitchInst *SI,
 
   // If there's an NEProperty covering this SwitchInst, we may be able to
   // eliminate one of the cases.
-  PropertySet::SynSet S;
-
-  if (KP.findSynSet(Condition, S)) {
+  if (Value *C = KP.lookup(Condition)) {
+    Condition = C;
     for (PropertySet::ConstPropertyIterator I = KP.Properties.begin(),
          E = KP.Properties.end(); I != E; ++I) {
       if (I->Opcode != PropertySet::NE) continue;
-      if (I->S1 != S && I->S2 != S) continue;
+      Value *V1 = KP.lookup(I->V1),
+            *V2 = KP.lookup(I->V2);
+      if (V1 != C && V2 != C) continue;
 
       // Is one side a number?
-      ConstantInt *CI = dyn_cast<ConstantInt>(KP.lookup(I->S1));
-      if (!CI)     CI = dyn_cast<ConstantInt>(KP.lookup(I->S2));
+      ConstantInt *CI = dyn_cast<ConstantInt>(KP.lookup(I->V1));
+      if (!CI)     CI = dyn_cast<ConstantInt>(KP.lookup(I->V2));
 
       if (CI) {
         unsigned i = SI->findCaseValue(CI);
@@ -732,11 +653,17 @@ void PredicateSimplifier::visit(StoreInst *SI,
 void PredicateSimplifier::visit(BinaryOperator *BO,
                                 DominatorTree::Node *, PropertySet &KP) {
   Instruction::BinaryOps ops = BO->getOpcode();
-  if (ops != Instruction::Div && ops != Instruction::Rem) return;
 
-  Value *Divisor = BO->getOperand(1);
-  const Type *Ty = cast<Type>(Divisor->getType());
-  KP.addNotEqual(Constant::getNullValue(Ty), Divisor);
+  switch (ops) {
+    case Instruction::Div:
+    case Instruction::Rem: {
+      Value *Divisor = BO->getOperand(1);
+      KP.addNotEqual(Constant::getNullValue(Divisor->getType()), Divisor);
+      break;
+    }
+    default:
+      break;
+  }
 
   // Some other things we could do:
   // In f=x*y, if x != 1 && y != 1 then f != x && f != y.
