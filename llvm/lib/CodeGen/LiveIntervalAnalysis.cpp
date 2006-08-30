@@ -570,7 +570,7 @@ void LiveIntervals::handleRegisterDef(MachineBasicBlock *MBB,
   else if (allocatableRegs_[reg]) {
     handlePhysicalRegisterDef(MBB, MI, getOrCreateInterval(reg));
     for (const unsigned* AS = mri_->getAliasSet(reg); *AS; ++AS)
-      handlePhysicalRegisterDef(MBB, MI, getOrCreateInterval(*AS));
+      handlePhysicalRegisterDef(MBB, MI, getOrCreateInterval(*AS), true);
   }
 }
 
@@ -684,7 +684,11 @@ bool LiveIntervals::AdjustCopiesBackFrom(LiveInterval &IntA, LiveInterval &IntB,
   if (ValLR+1 != BLR) return false;
   
   DEBUG(std::cerr << "\nExtending: "; IntB.print(std::cerr, mri_));
-    
+  
+  // We are about to delete CopyMI, so need to remove it as the 'instruction
+  // that defines this value #'.
+  IntB.setInstDefiningValNum(BValNo, ~0U);
+  
   // Okay, we can merge them.  We need to insert a new liverange:
   // [ValLR.end, BLR.begin) of either value number, then we merge the
   // two value numbers.
