@@ -823,6 +823,10 @@ bool LiveIntervals::JoinCopy(MachineInstr *CopyMI,
   r2iMap_.erase(SrcReg);
   r2rMap_[SrcReg] = DstReg;
 
+  // Finally, delete the copy instruction.
+  RemoveMachineInstrFromMaps(CopyMI);
+  CopyMI->eraseFromParent();
+  ++numPeep;
   ++numJoins;
   return true;
 }
