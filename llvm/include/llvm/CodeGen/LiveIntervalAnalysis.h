@@ -198,8 +198,8 @@ namespace llvm {
     /// def.
     void handlePhysicalRegisterDef(MachineBasicBlock* mbb,
                                    MachineBasicBlock::iterator mi,
-                                   LiveInterval& interval,
-                                   bool isLiveIn = false);
+                                   LiveInterval &interval,
+                                   unsigned SrcReg);
 
     /// Return true if the two specified registers belong to different
     /// register classes.  The registers may be either phys or virt regs.

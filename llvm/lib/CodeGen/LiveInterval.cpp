@@ -280,7 +280,8 @@ LiveInterval::FindLiveRangeContaining(unsigned Idx) {
 /// the intervals are not joinable, this aborts.
 void LiveInterval::join(LiveInterval &Other, int *LHSValNoAssignments,
                         int *RHSValNoAssignments, 
-                        SmallVector<unsigned, 16> &NewInstDefiningValue) {
+                        SmallVector<std::pair<unsigned, 
+                                           unsigned>, 16> &NewValueNumberInfo) {
   
   // Try to do the least amount of work possible.  In particular, if there are
   // more liverange chunks in the other set than there are in the 'this' set,
@@ -300,7 +301,7 @@ void LiveInterval::join(LiveInterval &Other, int *LHSValNoAssignments,
   // we want to avoid the interval scan if not.
   bool MustMapCurValNos = false;
   for (unsigned i = 0, e = getNumValNums(); i != e; ++i) {
-    if (InstDefiningValue[i] == ~2U) continue;  // tombstone value #
+    if (ValueNumberInfo[i].first == ~2U) continue;  // tombstone value #
     if (i != (unsigned)LHSValNoAssignments[i]) {
       MustMapCurValNos = true;
       break;
@@ -345,9 +346,8 @@ void LiveInterval::join(LiveInterval &Other, int *LHSValNoAssignments,
     InsertPos = addRangeFrom(*I, InsertPos);
   }
 
-  InstDefiningValue.clear();
-  InstDefiningValue.append(NewInstDefiningValue.begin(), 
-                           NewInstDefiningValue.end());
+  ValueNumberInfo.clear();
+  ValueNumberInfo.append(NewValueNumberInfo.begin(), NewValueNumberInfo.end());
   weight += Other.weight;
 }
 
@@ -360,7 +360,7 @@ void LiveInterval::MergeInClobberRanges(const LiveInterval &Clobbers) {
   // Find a value # to use for the clobber ranges.  If there is already a value#
   // for unknown values, use it.
   // FIXME: Use a single sentinal number for these!
-  unsigned ClobberValNo = getNextValue(~0U);
+  unsigned ClobberValNo = getNextValue(~0U, 0);
   
   iterator IP = begin();
   for (const_iterator I = Clobbers.begin(), E = Clobbers.end(); I != E; ++I) {
@@ -399,7 +399,7 @@ void LiveInterval::MergeValueNumberInto(unsigned V1, unsigned V2) {
 
   // Make sure V2 is smaller than V1.
   if (V1 < V2) {
-    setInstDefiningValNum(V1, getInstForValNum(V2));
+    setValueNumberInfo(V1, getValNumInfo(V2));
     std::swap(V1, V2);
   }
 
@@ -443,10 +443,10 @@ void LiveInterval::MergeValueNumberInto(unsigned V1, unsigned V2) {
   // ~1U so it can be nuked later.
   if (V1 == getNumValNums()-1) {
     do {
-      InstDefiningValue.pop_back();
-    } while (InstDefiningValue.back() == ~1U);
+      ValueNumberInfo.pop_back();
+    } while (ValueNumberInfo.back().first == ~1U);
   } else {
-    InstDefiningValue[V1] = ~1U;
+    ValueNumberInfo[V1].first = ~1U;
   }
 }
 
@@ -482,10 +482,10 @@ void LiveInterval::print(std::ostream &OS, const MRegisterInfo *MRI) const {
     for (unsigned i = 0; i != getNumValNums(); ++i) {
       if (i) OS << " ";
       OS << i << "@";
-      if (InstDefiningValue[i] == ~0U) {
+      if (ValueNumberInfo[i].first == ~0U) {
         OS << "?";
       } else {
-        OS << InstDefiningValue[i];
+        OS << ValueNumberInfo[i].first;
       }
     }
   }

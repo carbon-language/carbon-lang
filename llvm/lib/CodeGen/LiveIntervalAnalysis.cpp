@@ -138,10 +138,10 @@ bool LiveIntervals::runOnMachineFunction(MachineFunction &fn) {
     for (MachineFunction::livein_iterator I = fn.livein_begin(),
            E = fn.livein_end(); I != E; ++I) {
       handlePhysicalRegisterDef(Entry, Entry->begin(),
-                                getOrCreateInterval(I->first), true);
+                                getOrCreateInterval(I->first), 0);
       for (const unsigned* AS = mri_->getAliasSet(I->first); *AS; ++AS)
         handlePhysicalRegisterDef(Entry, Entry->begin(),
-                                  getOrCreateInterval(*AS), true);
+                                  getOrCreateInterval(*AS), 0);
     }
   }
 
@@ -321,7 +321,7 @@ addIntervalsForSpills(const LiveInterval &li, VirtRegMap &vrm, int slot) {
             // the spill weight is now infinity as it
             // cannot be spilled again
             nI.weight = float(HUGE_VAL);
-            LiveRange LR(start, end, nI.getNextValue(~0U));
+            LiveRange LR(start, end, nI.getNextValue(~0U, 0));
             DEBUG(std::cerr << " +" << LR);
             nI.addRange(LR);
             added.push_back(&nI);
@@ -366,7 +366,13 @@ void LiveIntervals::handleVirtualRegisterDef(MachineBasicBlock *mbb,
     // Get the Idx of the defining instructions.
     unsigned defIndex = getDefIndex(getInstructionIndex(mi));
 
-    unsigned ValNum = interval.getNextValue(defIndex);
+    unsigned ValNum;
+    unsigned SrcReg, DstReg;
+    if (!tii_->isMoveInstr(*mi, SrcReg, DstReg))
+      ValNum = interval.getNextValue(~0U, 0);
+    else
+      ValNum = interval.getNextValue(defIndex, SrcReg);
+    
     assert(ValNum == 0 && "First value in interval is not 0?");
     ValNum = 0;  // Clue in the optimizer.
 
@@ -455,12 +461,13 @@ void LiveIntervals::handleVirtualRegisterDef(MachineBasicBlock *mbb,
       // that at this point, there should be exactly one value number in it.
       assert(interval.containsOneValue() && "Unexpected 2-addr liveint!");
 
-      // The new value number is defined by the instruction we claimed defined
-      // value #0.
-      unsigned ValNo = interval.getNextValue(DefIndex);
+      // The new value number (#1) is defined by the instruction we claimed
+      // defined value #0.
+      unsigned ValNo = interval.getNextValue(0, 0);
+      interval.setValueNumberInfo(1, interval.getValNumInfo(0));
       
-      // Value#1 is now defined by the 2-addr instruction.
-      interval.setInstDefiningValNum(0, RedefIndex);
+      // Value#0 is now defined by the 2-addr instruction.
+      interval.setValueNumberInfo(0, std::make_pair(~0U, 0U));
       
       // Add the new live interval which replaces the range for the input copy.
       LiveRange LR(DefIndex, RedefIndex, ValNo);
@@ -493,7 +500,7 @@ void LiveIntervals::handleVirtualRegisterDef(MachineBasicBlock *mbb,
 
         // Replace the interval with one of a NEW value number.  Note that this
         // value number isn't actually defined by an instruction, weird huh? :)
-        LiveRange LR(Start, End, interval.getNextValue(~0U));
+        LiveRange LR(Start, End, interval.getNextValue(~0U, 0));
         DEBUG(std::cerr << " replace range with " << LR);
         interval.addRange(LR);
         DEBUG(std::cerr << "RESULT: "; interval.print(std::cerr, mri_));
@@ -503,9 +510,16 @@ void LiveIntervals::handleVirtualRegisterDef(MachineBasicBlock *mbb,
       // live until the end of the block.  We've already taken care of the
       // rest of the live range.
       unsigned defIndex = getDefIndex(getInstructionIndex(mi));
+      
+      unsigned ValNum;
+      unsigned SrcReg, DstReg;
+      if (!tii_->isMoveInstr(*mi, SrcReg, DstReg))
+        ValNum = interval.getNextValue(~0U, 0);
+      else
+        ValNum = interval.getNextValue(defIndex, SrcReg);
+      
       LiveRange LR(defIndex,
-                   getInstructionIndex(&mbb->back()) + InstrSlots::NUM,
-                   interval.getNextValue(defIndex));
+                   getInstructionIndex(&mbb->back()) + InstrSlots::NUM, ValNum);
       interval.addRange(LR);
       DEBUG(std::cerr << " +" << LR);
     }
@@ -516,8 +530,8 @@ void LiveIntervals::handleVirtualRegisterDef(MachineBasicBlock *mbb,
 
 void LiveIntervals::handlePhysicalRegisterDef(MachineBasicBlock *MBB,
                                               MachineBasicBlock::iterator mi,
-                                              LiveInterval& interval,
-                                              bool isLiveIn) {
+                                              LiveInterval &interval,
+                                              unsigned SrcReg) {
   // A physical register cannot be live across basic block, so its
   // lifetime must end somewhere in its defining basic block.
   DEBUG(std::cerr << "\t\tregister: "; printRegName(interval.reg));
@@ -551,13 +565,14 @@ void LiveIntervals::handlePhysicalRegisterDef(MachineBasicBlock *MBB,
   // The only case we should have a dead physreg here without a killing or
   // instruction where we know it's dead is if it is live-in to the function
   // and never used.
-  assert(isLiveIn && "physreg was not killed in defining block!");
+  assert(!SrcReg && "physreg was not killed in defining block!");
   end = getDefIndex(start) + 1;  // It's dead.
 
 exit:
   assert(start < end && "did not find end of interval?");
 
-  LiveRange LR(start, end, interval.getNextValue(isLiveIn ? ~0U : start));
+  LiveRange LR(start, end, interval.getNextValue(SrcReg != 0 ? start : ~0U,
+                                                 SrcReg));
   interval.addRange(LR);
   DEBUG(std::cerr << " +" << LR << '\n');
 }
@@ -568,9 +583,12 @@ void LiveIntervals::handleRegisterDef(MachineBasicBlock *MBB,
   if (MRegisterInfo::isVirtualRegister(reg))
     handleVirtualRegisterDef(MBB, MI, getOrCreateInterval(reg));
   else if (allocatableRegs_[reg]) {
-    handlePhysicalRegisterDef(MBB, MI, getOrCreateInterval(reg));
+    unsigned SrcReg, DstReg;
+    if (!tii_->isMoveInstr(*MI, SrcReg, DstReg))
+      SrcReg = 0;
+    handlePhysicalRegisterDef(MBB, MI, getOrCreateInterval(reg), SrcReg);
     for (const unsigned* AS = mri_->getAliasSet(reg); *AS; ++AS)
-      handlePhysicalRegisterDef(MBB, MI, getOrCreateInterval(*AS), true);
+      handlePhysicalRegisterDef(MBB, MI, getOrCreateInterval(*AS), 0);
   }
 }
 
@@ -652,24 +670,17 @@ bool LiveIntervals::AdjustCopiesBackFrom(LiveInterval &IntA, LiveInterval &IntB,
   // If AValNo is defined as a copy from IntB, we can potentially process this.
   
   // Get the instruction that defines this value number.
-  unsigned AValNoInstIdx = IntA.getInstForValNum(AValNo);
-  
-  // If it's unknown, ignore it.
-  if (AValNoInstIdx == ~0U || AValNoInstIdx == ~1U) return false;
-  // Otherwise, get the instruction for it.
-  MachineInstr *AValNoInstMI = getInstructionFromIndex(AValNoInstIdx);
+  unsigned SrcReg = IntA.getSrcRegForValNum(AValNo);
+  if (!SrcReg) return false;  // Not defined by a copy.
     
   // If the value number is not defined by a copy instruction, ignore it.
-  unsigned SrcReg, DstReg;
-  if (!tii_->isMoveInstr(*AValNoInstMI, SrcReg, DstReg))
-    return false;
     
   // If the source register comes from an interval other than IntB, we can't
   // handle this.
-  assert(rep(DstReg) == IntA.reg && "Not defining a reg in IntA?");
   if (rep(SrcReg) != IntB.reg) return false;
-    
+  
   // Get the LiveRange in IntB that this value number starts with.
+  unsigned AValNoInstIdx = IntA.getInstForValNum(AValNo);
   LiveInterval::iterator ValLR = IntB.FindLiveRangeContaining(AValNoInstIdx-1);
   
   // Make sure that the end of the live range is inside the same block as
@@ -687,7 +698,7 @@ bool LiveIntervals::AdjustCopiesBackFrom(LiveInterval &IntA, LiveInterval &IntB,
   
   // We are about to delete CopyMI, so need to remove it as the 'instruction
   // that defines this value #'.
-  IntB.setInstDefiningValNum(BValNo, ~0U);
+  IntB.setValueNumberInfo(BValNo, std::make_pair(~0U, 0));
   
   // Okay, we can merge them.  We need to insert a new liverange:
   // [ValLR.end, BLR.begin) of either value number, then we merge the
@@ -701,7 +712,7 @@ bool LiveIntervals::AdjustCopiesBackFrom(LiveInterval &IntA, LiveInterval &IntB,
     for (const unsigned *AS = mri_->getAliasSet(IntB.reg); *AS; ++AS) {
       LiveInterval &AliasLI = getInterval(*AS);
       AliasLI.addRange(LiveRange(FillerStart, FillerEnd,
-                                 AliasLI.getNextValue(~0U)));
+                                 AliasLI.getNextValue(~0U, 0)));
     }
   }
 
@@ -832,7 +843,8 @@ bool LiveIntervals::JoinCopy(MachineInstr *CopyMI,
 /// contains the value number the copy is from.
 ///
 static unsigned ComputeUltimateVN(unsigned VN,
-                                  SmallVector<unsigned, 16> &InstDefiningValue,
+                                  SmallVector<std::pair<unsigned,
+                                                unsigned>, 16> &ValueNumberInfo,
                                   SmallVector<int, 16> &ThisFromOther,
                                   SmallVector<int, 16> &OtherFromThis,
                                   SmallVector<int, 16> &ThisValNoAssignments,
@@ -847,8 +859,8 @@ static unsigned ComputeUltimateVN(unsigned VN,
   // number in the destination.
   int OtherValNo = ThisFromOther[VN];
   if (OtherValNo == -1) {
-    InstDefiningValue.push_back(ThisLI.getInstForValNum(VN));
-    return ThisValNoAssignments[VN] = InstDefiningValue.size()-1;
+    ValueNumberInfo.push_back(ThisLI.getValNumInfo(VN));
+    return ThisValNoAssignments[VN] = ValueNumberInfo.size()-1;
   }
 
   // Otherwise, this *is* a copy from the RHS.  Mark this value number as
@@ -856,7 +868,7 @@ static unsigned ComputeUltimateVN(unsigned VN,
   // value is.
   ThisValNoAssignments[VN] = -2;
   unsigned UltimateVN =
-    ComputeUltimateVN(OtherValNo, InstDefiningValue,
+    ComputeUltimateVN(OtherValNo, ValueNumberInfo,
                       OtherFromThis, ThisFromOther,
                       OtherValNoAssignments, ThisValNoAssignments,
                       OtherLI, ThisLI);
@@ -875,24 +887,17 @@ bool LiveIntervals::JoinIntervals(LiveInterval &LHS, LiveInterval &RHS) {
   SmallVector<int, 16> LHSValsDefinedFromRHS;
   LHSValsDefinedFromRHS.resize(LHS.getNumValNums(), -1);
   for (unsigned VN = 0, e = LHS.getNumValNums(); VN != e; ++VN) {
-    unsigned ValInst = LHS.getInstForValNum(VN);
-    if (ValInst == ~0U || ValInst == ~1U)
+    unsigned ValSrcReg = LHS.getSrcRegForValNum(VN);
+    if (ValSrcReg == 0)  // Src not defined by a copy?
       continue;
-    
-    // If the instruction defining the LHS's value is a copy.
-    MachineInstr *ValInstMI = getInstructionFromIndex(ValInst);
-    
-    // If the value number is not defined by a copy instruction, ignore it.
-    unsigned SrcReg, DstReg;
-    if (!tii_->isMoveInstr(*ValInstMI, SrcReg, DstReg))
-      continue;
-    
+
     // DstReg is known to be a register in the LHS interval.  If the src is from
     // the RHS interval, we can use its value #.
-    if (rep(SrcReg) != RHS.reg)
+    if (rep(ValSrcReg) != RHS.reg)
       continue;
-    
+
     // Figure out the value # from the RHS.
+    unsigned ValInst = LHS.getInstForValNum(VN);
     LHSValsDefinedFromRHS[VN] = RHS.getLiveRangeContaining(ValInst-1)->ValId;
   }
   
@@ -901,24 +906,17 @@ bool LiveIntervals::JoinIntervals(LiveInterval &LHS, LiveInterval &RHS) {
   SmallVector<int, 16> RHSValsDefinedFromLHS;
   RHSValsDefinedFromLHS.resize(RHS.getNumValNums(), -1);
   for (unsigned VN = 0, e = RHS.getNumValNums(); VN != e; ++VN) {
-    unsigned ValInst = RHS.getInstForValNum(VN);
-    if (ValInst == ~0U || ValInst == ~1U)
-      continue;
-    
-    // If the instruction defining the RHS's value is a copy.
-    MachineInstr *ValInstMI = getInstructionFromIndex(ValInst);
-    
-    // If the value number is not defined by a copy instruction, ignore it.
-    unsigned SrcReg, DstReg;
-    if (!tii_->isMoveInstr(*ValInstMI, SrcReg, DstReg))
+    unsigned ValSrcReg = RHS.getSrcRegForValNum(VN);
+    if (ValSrcReg == 0)  // Src not defined by a copy?
       continue;
     
     // DstReg is known to be a register in the RHS interval.  If the src is from
     // the LHS interval, we can use its value #.
-    if (rep(SrcReg) != LHS.reg)
+    if (rep(ValSrcReg) != LHS.reg)
       continue;
     
     // Figure out the value # from the LHS.
+    unsigned ValInst = RHS.getInstForValNum(VN);
     RHSValsDefinedFromLHS[VN] = LHS.getLiveRangeContaining(ValInst-1)->ValId;
   }
   
@@ -926,20 +924,20 @@ bool LiveIntervals::JoinIntervals(LiveInterval &LHS, LiveInterval &RHS) {
   // assuming that the live ranges can be coallesced.
   SmallVector<int, 16> LHSValNoAssignments;
   SmallVector<int, 16> RHSValNoAssignments;
-  SmallVector<unsigned, 16> InstDefiningValue;
+  SmallVector<std::pair<unsigned,unsigned>, 16> ValueNumberInfo;
   LHSValNoAssignments.resize(LHS.getNumValNums(), -1);
   RHSValNoAssignments.resize(RHS.getNumValNums(), -1);
   
   // Compute ultimate value numbers for the LHS and RHS values.
   for (unsigned VN = 0, e = LHS.getNumValNums(); VN != e; ++VN) {
     if (LHS.getInstForValNum(VN) == ~2U) continue;
-    ComputeUltimateVN(VN, InstDefiningValue,
+    ComputeUltimateVN(VN, ValueNumberInfo,
                       LHSValsDefinedFromRHS, RHSValsDefinedFromLHS,
                       LHSValNoAssignments, RHSValNoAssignments, LHS, RHS);
   }
   for (unsigned VN = 0, e = RHS.getNumValNums(); VN != e; ++VN) {
     if (RHS.getInstForValNum(VN) == ~2U) continue;
-    ComputeUltimateVN(VN, InstDefiningValue,
+    ComputeUltimateVN(VN, ValueNumberInfo,
                       RHSValsDefinedFromLHS, LHSValsDefinedFromRHS,
                       RHSValNoAssignments, LHSValNoAssignments, RHS, LHS);
   }
@@ -989,7 +987,7 @@ bool LiveIntervals::JoinIntervals(LiveInterval &LHS, LiveInterval &RHS) {
   // If we get here, we know that we can coallesce the live ranges.  Ask the
   // intervals to coallesce themselves now.
   LHS.join(RHS, &LHSValNoAssignments[0], &RHSValNoAssignments[0],
-           InstDefiningValue);
+           ValueNumberInfo);
   return true;
 }
 
