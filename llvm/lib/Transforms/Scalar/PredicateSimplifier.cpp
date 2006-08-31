@@ -121,21 +121,8 @@ namespace {
 
     void addNotEqual(Value *V1, Value *V2) {
       DEBUG(std::cerr << "not equal: " << *V1 << " and " << *V2 << "\n");
-      V1 = canonicalize(V1);
-      V2 = canonicalize(V2);
-
-      // Does the property already exist?
-      for (PropertyIterator I = Properties.begin(), E = Properties.end();
-           I != E; ++I) {
-        if (I->Opcode != NE) continue;
-
-        I->V1 = canonicalize(I->V1);
-        I->V2 = canonicalize(I->V2);
-        if ((I->V1 == V1 && I->V2 == V2) ||
-            (I->V1 == V2 && I->V2 == V1)) {
-          return; // Found.
-        }
-      }
+      if (findProperty(NE, V1, V2) != Properties.end())
+        return; // found.
 
       // Add the property.
       Properties.push_back(Property(NE, V1, V2));
@@ -146,9 +133,8 @@ namespace {
       assert(Opcode != EQ && "Can't findProperty on EQ."
              "Use the lookup method instead.");
 
-      V1 = lookup(V1);
-      V2 = lookup(V2);
-      if (!V1 || !V2) return Properties.end();
+      V1 = canonicalize(V1);
+      V2 = canonicalize(V2);
 
       // Does the property already exist?
       for (PropertyIterator I = Properties.begin(), E = Properties.end();
@@ -170,18 +156,16 @@ namespace {
       assert(Opcode != EQ && "Can't findProperty on EQ."
              "Use the lookup method instead.");
 
-      V1 = lookup(V1);
-      V2 = lookup(V2);
-      if (!V1 || !V2) return Properties.end();
+      V1 = canonicalize(V1);
+      V2 = canonicalize(V2);
 
       // Does the property already exist?
       for (ConstPropertyIterator I = Properties.begin(),
            E = Properties.end(); I != E; ++I) {
         if (I->Opcode != Opcode) continue;
 
-        Value *v1 = lookup(I->V1),
-              *v2 = lookup(I->V2);
-        if (!v1 || !v2) continue;
+        Value *v1 = canonicalize(I->V1),
+              *v2 = canonicalize(I->V2);
         if ((v1 == V1 && v2 == V2) ||
             (v1 == V2 && v2 == V1)) {
           return I; // Found.
@@ -291,6 +275,14 @@ namespace {
 
   public:
     void debug(std::ostream &os) const {
+      for (EquivalenceClasses<Value*>::iterator I = union_find.begin(),
+           E = union_find.end(); I != E; ++I) {
+        if (!I->isLeader()) continue;
+        for (EquivalenceClasses<Value*>::member_iterator MI =
+             union_find.member_begin(I); MI != union_find.member_end(); ++MI)
+          std::cerr << **MI << " ";
+        std::cerr << "\n--\n";
+      }
     }
 
     std::vector<Property> Properties;
@@ -571,8 +563,10 @@ void PredicateSimplifier::visit(BranchInst *BI,
   PropertySet TrueProperties(KP), FalseProperties(KP);
   DEBUG(std::cerr << "true set:\n");
   TrueProperties.addEqual(ConstantBool::True,   Condition);
+  DEBUG(TrueProperties.debug(std::cerr));
   DEBUG(std::cerr << "false set:\n");
   FalseProperties.addEqual(ConstantBool::False, Condition);
+  DEBUG(FalseProperties.debug(std::cerr));
 
   PropertySet KPcopy(KP);
   proceedToSuccessor(KP,     TrueProperties,  Node, DT->getNode(TrueDest));
