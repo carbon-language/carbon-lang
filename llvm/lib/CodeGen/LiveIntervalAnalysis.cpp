@@ -886,46 +886,8 @@ static unsigned ComputeUltimateVN(unsigned VN,
 /// "RHS" will not have been modified, so we can use this information
 /// below to update aliases.
 bool LiveIntervals::JoinIntervals(LiveInterval &LHS, LiveInterval &RHS) {
-  // Loop over the value numbers of the LHS, seeing if any are defined from the
-  // RHS.
-  SmallVector<int, 16> LHSValsDefinedFromRHS;
-  LHSValsDefinedFromRHS.resize(LHS.getNumValNums(), -1);
-  for (unsigned VN = 0, e = LHS.getNumValNums(); VN != e; ++VN) {
-    unsigned ValSrcReg = LHS.getSrcRegForValNum(VN);
-    if (ValSrcReg == 0)  // Src not defined by a copy?
-      continue;
-
-    // DstReg is known to be a register in the LHS interval.  If the src is from
-    // the RHS interval, we can use its value #.
-    if (rep(ValSrcReg) != RHS.reg)
-      continue;
-
-    // Figure out the value # from the RHS.
-    unsigned ValInst = LHS.getInstForValNum(VN);
-    LHSValsDefinedFromRHS[VN] = RHS.getLiveRangeContaining(ValInst-1)->ValId;
-  }
-  
-  // Loop over the value numbers of the RHS, seeing if any are defined from the
-  // LHS.
-  SmallVector<int, 16> RHSValsDefinedFromLHS;
-  RHSValsDefinedFromLHS.resize(RHS.getNumValNums(), -1);
-  for (unsigned VN = 0, e = RHS.getNumValNums(); VN != e; ++VN) {
-    unsigned ValSrcReg = RHS.getSrcRegForValNum(VN);
-    if (ValSrcReg == 0)  // Src not defined by a copy?
-      continue;
-    
-    // DstReg is known to be a register in the RHS interval.  If the src is from
-    // the LHS interval, we can use its value #.
-    if (rep(ValSrcReg) != LHS.reg)
-      continue;
-    
-    // Figure out the value # from the LHS.
-    unsigned ValInst = RHS.getInstForValNum(VN);
-    RHSValsDefinedFromLHS[VN] = LHS.getLiveRangeContaining(ValInst-1)->ValId;
-  }
-  
-  // Now that we know the value mapping, compute the final value assignment,
-  // assuming that the live ranges can be coallesced.
+  // Compute the final value assignment, assuming that the live ranges can be
+  // coallesced.
   SmallVector<int, 16> LHSValNoAssignments;
   SmallVector<int, 16> RHSValNoAssignments;
   SmallVector<std::pair<unsigned,unsigned>, 16> ValueNumberInfo;
@@ -933,17 +895,111 @@ bool LiveIntervals::JoinIntervals(LiveInterval &LHS, LiveInterval &RHS) {
   RHSValNoAssignments.resize(RHS.getNumValNums(), -1);
   
   // Compute ultimate value numbers for the LHS and RHS values.
-  for (unsigned VN = 0, e = LHS.getNumValNums(); VN != e; ++VN) {
-    if (LHS.getInstForValNum(VN) == ~2U) continue;
-    ComputeUltimateVN(VN, ValueNumberInfo,
-                      LHSValsDefinedFromRHS, RHSValsDefinedFromLHS,
-                      LHSValNoAssignments, RHSValNoAssignments, LHS, RHS);
-  }
-  for (unsigned VN = 0, e = RHS.getNumValNums(); VN != e; ++VN) {
-    if (RHS.getInstForValNum(VN) == ~2U) continue;
-    ComputeUltimateVN(VN, ValueNumberInfo,
-                      RHSValsDefinedFromLHS, LHSValsDefinedFromRHS,
-                      RHSValNoAssignments, LHSValNoAssignments, RHS, LHS);
+  if (RHS.containsOneValue()) {
+    // Copies from a liveinterval with a single value are simple to handle and
+    // very common, handle the special case here.  This is important, because
+    // often RHS is small and LHS is large (e.g. a physreg).
+    
+    // Find out if the RHS is defined as a copy from some value in the LHS.
+    int RHSValID = -1;
+    std::pair<unsigned,unsigned> RHSValNoInfo;
+    if (unsigned RHSSrcReg = RHS.getSrcRegForValNum(0)) {
+      if (rep(RHSSrcReg) != LHS.reg) {
+        RHSValNoInfo = RHS.getValNumInfo(0);
+      } else {
+        // It was defined as a copy from the LHS, find out what value # it is.
+        unsigned ValInst = RHS.getInstForValNum(0);
+        RHSValID = LHS.getLiveRangeContaining(ValInst-1)->ValId;
+        RHSValNoInfo = LHS.getValNumInfo(RHSValID);
+      }
+    } else {
+      RHSValNoInfo = RHS.getValNumInfo(0);
+    }
+    
+    ValueNumberInfo.resize(LHS.getNumValNums());
+    
+    // Okay, *all* of the values in LHS that are defined as a copy from RHS
+    // should now get updated.
+    for (unsigned VN = 0, e = LHS.getNumValNums(); VN != e; ++VN) {
+      if (unsigned LHSSrcReg = LHS.getSrcRegForValNum(VN)) {
+        if (rep(LHSSrcReg) != RHS.reg) {
+          // If this is not a copy from the RHS, its value number will be
+          // unmodified by the coallescing.
+          ValueNumberInfo[VN] = LHS.getValNumInfo(VN);
+          LHSValNoAssignments[VN] = VN;
+        } else if (RHSValID == -1) {
+          // Otherwise, it is a copy from the RHS, and we don't already have a
+          // value# for it.  Keep the current value number, but remember it.
+          LHSValNoAssignments[VN] = RHSValID = VN;
+          ValueNumberInfo[VN] = RHSValNoInfo;
+        } else {
+          // Otherwise, use the specified value #.
+          LHSValNoAssignments[VN] = RHSValID;
+          if (VN != (unsigned)RHSValID)
+            ValueNumberInfo[VN].first = ~1U;
+          else
+            ValueNumberInfo[VN] = RHSValNoInfo;
+        }
+      } else {
+        ValueNumberInfo[VN] = LHS.getValNumInfo(VN);
+        LHSValNoAssignments[VN] = VN;
+      }
+    }
+    
+    assert(RHSValID != -1 && "Didn't find value #?");
+    RHSValNoAssignments[0] = RHSValID;
+    
+  } else {
+    // Loop over the value numbers of the LHS, seeing if any are defined from the
+    // RHS.
+    SmallVector<int, 16> LHSValsDefinedFromRHS;
+    LHSValsDefinedFromRHS.resize(LHS.getNumValNums(), -1);
+    for (unsigned VN = 0, e = LHS.getNumValNums(); VN != e; ++VN) {
+      unsigned ValSrcReg = LHS.getSrcRegForValNum(VN);
+      if (ValSrcReg == 0)  // Src not defined by a copy?
+        continue;
+      
+      // DstReg is known to be a register in the LHS interval.  If the src is from
+      // the RHS interval, we can use its value #.
+      if (rep(ValSrcReg) != RHS.reg)
+        continue;
+      
+      // Figure out the value # from the RHS.
+      unsigned ValInst = LHS.getInstForValNum(VN);
+      LHSValsDefinedFromRHS[VN] = RHS.getLiveRangeContaining(ValInst-1)->ValId;
+    }
+    
+    // Loop over the value numbers of the RHS, seeing if any are defined from the
+    // LHS.
+    SmallVector<int, 16> RHSValsDefinedFromLHS;
+    RHSValsDefinedFromLHS.resize(RHS.getNumValNums(), -1);
+    for (unsigned VN = 0, e = RHS.getNumValNums(); VN != e; ++VN) {
+      unsigned ValSrcReg = RHS.getSrcRegForValNum(VN);
+      if (ValSrcReg == 0)  // Src not defined by a copy?
+        continue;
+      
+      // DstReg is known to be a register in the RHS interval.  If the src is from
+      // the LHS interval, we can use its value #.
+      if (rep(ValSrcReg) != LHS.reg)
+        continue;
+      
+      // Figure out the value # from the LHS.
+      unsigned ValInst = RHS.getInstForValNum(VN);
+      RHSValsDefinedFromLHS[VN] = LHS.getLiveRangeContaining(ValInst-1)->ValId;
+    }
+    
+    for (unsigned VN = 0, e = LHS.getNumValNums(); VN != e; ++VN) {
+      if (LHS.getInstForValNum(VN) == ~2U) continue;
+      ComputeUltimateVN(VN, ValueNumberInfo,
+                        LHSValsDefinedFromRHS, RHSValsDefinedFromLHS,
+                        LHSValNoAssignments, RHSValNoAssignments, LHS, RHS);
+    }
+    for (unsigned VN = 0, e = RHS.getNumValNums(); VN != e; ++VN) {
+      if (RHS.getInstForValNum(VN) == ~2U) continue;
+      ComputeUltimateVN(VN, ValueNumberInfo,
+                        RHSValsDefinedFromLHS, LHSValsDefinedFromRHS,
+                        RHSValNoAssignments, LHSValNoAssignments, RHS, LHS);
+    }
   }
   
   // Armed with the mappings of LHS/RHS values to ultimate values, walk the
