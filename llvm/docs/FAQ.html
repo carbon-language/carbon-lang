@@ -541,8 +541,8 @@ C++ support for a processor that does not otherwise have a C++ compiler.
 <p>or:</p>
 
 <div class="doc_code">
- llvm-g++ a.cpp -c
- llvm-g++ b.cpp -c
+ llvm-g++ a.cpp -c<br>
+ llvm-g++ b.cpp -c<br>
  llvm-g++ a.o b.o -o program
 </div>
 
@@ -566,6 +566,15 @@ If you want/need it for a certain program, you can enable it by passing
 use setjmp/longjmp to implement exception support that is correct but
 relatively slow.
 </p>
+
+<p>Also note: this specific sequence of commands won't work if you use a 
+function defined in the C++ runtime library (or any other C++ library).  To 
+access an external C++ library, you must manually 
+compile libstdc++ to LLVM bytecode, statically link it into your program, then
+use the commands above to convert the whole result into C code.  Alternatively,
+you can compile the libraries and your application into two different chunks
+of C code and link them.</p>
+
 </div>
 
 
