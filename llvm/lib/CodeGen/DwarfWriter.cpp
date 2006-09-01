@@ -942,7 +942,7 @@ void DIE::AddChild(DIE *Child) {
 
 //===----------------------------------------------------------------------===//
 
-/// DWContext
+/// DwarfWriter
 
 //===----------------------------------------------------------------------===//
 
@@ -1103,9 +1103,9 @@ void DwarfWriter::EmitString(const std::string &String) const {
       case '\t': O << "\\t"; break;
       default:
         O << '\\';
-        O << char('0' + (C >> 6));
-        O << char('0' + (C >> 3));
-        O << char('0' + (C >> 0));
+        O << char('0' + ((C >> 6) & 7));
+        O << char('0' + ((C >> 3) & 7));
+        O << char('0' + ((C >> 0) & 7));
         break;
       }
     } else if (C == '\"') {
