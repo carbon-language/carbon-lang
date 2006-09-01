@@ -645,7 +645,8 @@ ClassInst : CLASS ClassName {
      };
 
 DefInst : DEF DefName ObjectBody {
-  $3->resolveReferences();
+  if (CurMultiClass == 0)  // Def's in multiclasses aren't really defs.
+    $3->resolveReferences();
 
   // If ObjectBody has template arguments, it's an error.
   assert($3->getTemplateArgs().empty() && "How'd this get template args?");
@@ -749,6 +750,9 @@ DefMInst : DEFM ID { CurDefmPrefix = $2; } ':' SubClassRef ';' {
       exit(1);
     }
     Records.addDef(CurRec);
+    
+    CurRec->resolveReferences();
+
     CurRec = 0;
   }
   

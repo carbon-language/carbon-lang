@@ -350,10 +350,10 @@ static const short yyrline[] = { 0,
    458,   471,   487,   489,   489,   493,   495,   499,   502,   506,
    523,   525,   531,   531,   532,   532,   534,   536,   540,   545,
    550,   553,   557,   560,   565,   566,   566,   568,   568,   570,
-   577,   595,   620,   634,   639,   641,   643,   647,   656,   670,
-   673,   677,   688,   690,   692,   697,   697,   759,   759,   760,
-   760,   762,   767,   767,   770,   770,   773,   776,   780,   780,
-   782
+   577,   595,   620,   634,   639,   641,   643,   647,   657,   671,
+   674,   678,   689,   691,   693,   698,   698,   763,   763,   764,
+   764,   766,   771,   771,   774,   774,   777,   780,   784,   784,
+   786
 };
 #endif
 
@@ -1679,7 +1679,8 @@ case 77:
 case 78:
 #line 647 "/Volumes/ProjectsDisk/cvs/llvm/utils/TableGen/FileParser.y"
 {
-  yyvsp[0].Rec->resolveReferences();
+  if (CurMultiClass == 0)  // Def's in multiclasses aren't really defs.
+    yyvsp[0].Rec->resolveReferences();
 
   // If ObjectBody has template arguments, it's an error.
   assert(yyvsp[0].Rec->getTemplateArgs().empty() && "How'd this get template args?");
@@ -1687,7 +1688,7 @@ case 78:
 ;
     break;}
 case 79:
-#line 656 "/Volumes/ProjectsDisk/cvs/llvm/utils/TableGen/FileParser.y"
+#line 657 "/Volumes/ProjectsDisk/cvs/llvm/utils/TableGen/FileParser.y"
 {
   yyval.Rec = yyvsp[0].Rec;
   // Copy the template arguments for the multiclass into the def.
@@ -1701,20 +1702,20 @@ case 79:
 ;
     break;}
 case 80:
-#line 670 "/Volumes/ProjectsDisk/cvs/llvm/utils/TableGen/FileParser.y"
+#line 671 "/Volumes/ProjectsDisk/cvs/llvm/utils/TableGen/FileParser.y"
 {
   yyval.RecList = new std::vector<Record*>();
   yyval.RecList->push_back(yyvsp[0].Rec);
 ;
     break;}
 case 81:
-#line 673 "/Volumes/ProjectsDisk/cvs/llvm/utils/TableGen/FileParser.y"
+#line 674 "/Volumes/ProjectsDisk/cvs/llvm/utils/TableGen/FileParser.y"
 {
   yyval.RecList->push_back(yyvsp[0].Rec);  
 ;
     break;}
 case 82:
-#line 677 "/Volumes/ProjectsDisk/cvs/llvm/utils/TableGen/FileParser.y"
+#line 678 "/Volumes/ProjectsDisk/cvs/llvm/utils/TableGen/FileParser.y"
 {
   MultiClass *&MCE = MultiClasses[*yyvsp[0].StrVal];
   if (MCE) {
@@ -1726,29 +1727,29 @@ case 82:
 ;
     break;}
 case 83:
-#line 688 "/Volumes/ProjectsDisk/cvs/llvm/utils/TableGen/FileParser.y"
+#line 689 "/Volumes/ProjectsDisk/cvs/llvm/utils/TableGen/FileParser.y"
 {
                                              ParsingTemplateArgs = true;
                                            ;
     break;}
 case 84:
-#line 690 "/Volumes/ProjectsDisk/cvs/llvm/utils/TableGen/FileParser.y"
+#line 691 "/Volumes/ProjectsDisk/cvs/llvm/utils/TableGen/FileParser.y"
 {
                                              ParsingTemplateArgs = false;
                                            ;
     break;}
 case 85:
-#line 692 "/Volumes/ProjectsDisk/cvs/llvm/utils/TableGen/FileParser.y"
+#line 693 "/Volumes/ProjectsDisk/cvs/llvm/utils/TableGen/FileParser.y"
 {
   CurMultiClass = 0;
 ;
     break;}
 case 86:
-#line 697 "/Volumes/ProjectsDisk/cvs/llvm/utils/TableGen/FileParser.y"
+#line 698 "/Volumes/ProjectsDisk/cvs/llvm/utils/TableGen/FileParser.y"
 { CurDefmPrefix = yyvsp[0].StrVal; ;
     break;}
 case 87:
-#line 697 "/Volumes/ProjectsDisk/cvs/llvm/utils/TableGen/FileParser.y"
+#line 698 "/Volumes/ProjectsDisk/cvs/llvm/utils/TableGen/FileParser.y"
 {
   // To instantiate a multiclass, we need to first get the multiclass, then
   // instantiate each def contained in the multiclass with the SubClassRef
@@ -1804,6 +1805,9 @@ case 87:
       exit(1);
     }
     Records.addDef(CurRec);
+    
+    CurRec->resolveReferences();
+
     CurRec = 0;
   }
   
@@ -1812,42 +1816,42 @@ case 87:
 ;
     break;}
 case 88:
-#line 759 "/Volumes/ProjectsDisk/cvs/llvm/utils/TableGen/FileParser.y"
+#line 763 "/Volumes/ProjectsDisk/cvs/llvm/utils/TableGen/FileParser.y"
 {;
     break;}
 case 89:
-#line 759 "/Volumes/ProjectsDisk/cvs/llvm/utils/TableGen/FileParser.y"
+#line 763 "/Volumes/ProjectsDisk/cvs/llvm/utils/TableGen/FileParser.y"
 {;
     break;}
 case 92:
-#line 762 "/Volumes/ProjectsDisk/cvs/llvm/utils/TableGen/FileParser.y"
+#line 766 "/Volumes/ProjectsDisk/cvs/llvm/utils/TableGen/FileParser.y"
 {
   LetStack.back().push_back(LetRecord(*yyvsp[-3].StrVal, yyvsp[-2].BitList, yyvsp[0].Initializer));
   delete yyvsp[-3].StrVal; delete yyvsp[-2].BitList;
 ;
     break;}
 case 95:
-#line 770 "/Volumes/ProjectsDisk/cvs/llvm/utils/TableGen/FileParser.y"
+#line 774 "/Volumes/ProjectsDisk/cvs/llvm/utils/TableGen/FileParser.y"
 { LetStack.push_back(std::vector<LetRecord>()); ;
     break;}
 case 97:
-#line 773 "/Volumes/ProjectsDisk/cvs/llvm/utils/TableGen/FileParser.y"
+#line 777 "/Volumes/ProjectsDisk/cvs/llvm/utils/TableGen/FileParser.y"
 {
     LetStack.pop_back();
   ;
     break;}
 case 98:
-#line 776 "/Volumes/ProjectsDisk/cvs/llvm/utils/TableGen/FileParser.y"
+#line 780 "/Volumes/ProjectsDisk/cvs/llvm/utils/TableGen/FileParser.y"
 {
     LetStack.pop_back();
   ;
     break;}
 case 99:
-#line 780 "/Volumes/ProjectsDisk/cvs/llvm/utils/TableGen/FileParser.y"
+#line 784 "/Volumes/ProjectsDisk/cvs/llvm/utils/TableGen/FileParser.y"
 {;
     break;}
 case 100:
-#line 780 "/Volumes/ProjectsDisk/cvs/llvm/utils/TableGen/FileParser.y"
+#line 784 "/Volumes/ProjectsDisk/cvs/llvm/utils/TableGen/FileParser.y"
 {;
     break;}
 }
@@ -2072,7 +2076,7 @@ yyerrhandle:
     }
   return 1;
 }
-#line 784 "/Volumes/ProjectsDisk/cvs/llvm/utils/TableGen/FileParser.y"
+#line 788 "/Volumes/ProjectsDisk/cvs/llvm/utils/TableGen/FileParser.y"
 
 
 int yyerror(const char *ErrorMsg) {
