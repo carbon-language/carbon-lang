@@ -58,6 +58,18 @@
       <li><a href="#selectiondag_future">Future directions for the
                                          SelectionDAG</a></li>
       </ul></li>
+    <ul>
+    <li><a href="#regalloc">Register Allocation</a>
+      <ul>
+      <li><a href="#regAlloc_represent">How registers are represented in
+                                        LLVM</a></li>
+      <li><a href="#regAlloc_howTo">Mapping virtual registers to physical
+                                    registers</a></li>
+      <li><a href="#regAlloc_twoAddr">Handling two address instructions</a></li>
+      <li><a href="#regAlloc_ssaDecon">The SSA deconstruction phase</a></li>
+      <li><a href="#regAlloc_fold">Instruction folding</a></li>
+      <li><a href="#regAlloc_builtIn">Built in register allocators</a></li>
+      </ul></li>
     <li><a href="#codeemit">Code Emission</a>
         <ul>
         <li><a href="#codeemit_asm">Generating Assembly Code</a></li>
@@ -74,8 +86,10 @@
 </ol>
 
 <div class="doc_author">
-  <p>Written by <a href="mailto:sabre@nondot.org">Chris Lattner</a> &amp;
-  <a href="mailto:isanbard@gmail.com">Bill Wendling</a></p>
+  <p>Written by <a href="mailto:sabre@nondot.org">Chris Lattner</a>,
+                <a href="mailto:isanbard@gmail.com">Bill Wendling</a>, and
+                <a href="mailto:pronesto@gmail.com">Fernando Magno Quintao
+                                                    Pereira</a></p>
 </div>
 
 <div class="doc_warning">
@@ -1140,11 +1154,335 @@ SelectionDAGs.</p>
   <a name="ssamco">SSA-based Machine Code Optimizations</a>
 </div>
 <div class="doc_text"><p>To Be Written</p></div>
+
 <!-- ======================================================================= -->
 <div class="doc_subsection">
   <a name="regalloc">Register Allocation</a>
 </div>
-<div class="doc_text"><p>To Be Written</p></div>
+
+<div class="doc_text">
+
+<p>The <i>Register Allocation problem</i> consists in mapping a
+program <i>P<sub>v</sub></i>, that can use an unbounded number of
+virtual registers, to a program <i>P<sub>p</sub></i> that contains a
+finite (possibly small) number of physical registers. Each target
+architecture has a different number of physical registers. If the
+number of physical registers is not enough to accommodate all the
+virtual registers, some of them will have to be mapped into
+memory. These virtuals are called <i>spilled virtuals</i>.</p>
+
+</div>
+
+<!-- _______________________________________________________________________ -->
+
+<div class="doc_subsubsection">
+  <a name="regAlloc_represent">How registers are represented in LLVM</a>
+</div>
+
+<div class="doc_text">
+
+<p>In LLVM, physical registers are denoted by integer numbers that
+normally range from 1 to 1023. To see how this numbering is defined
+for a particular architecture, you can read the
+<tt>GenRegisterNames.inc</tt> file for that architecture. For
+instance, by inspecting
+<tt>lib/Target/X86/X86GenRegisterNames.inc</tt> we see that the 32-bit
+register <tt>EAX</tt> is denoted by 15, and the MMX register
+<tt>MM0</tt> is mapped to 48.</p>
+
+<p>Some architectures contain registers that share the same physical
+location. A notable example is the X86 platform. For instance, in the
+X86 architecture, the registers <tt>EAX</tt>, <tt>AX</tt> and
+<tt>AL</tt> share the first eight bits. These physical registers are
+marked as <i>aliased</i> in LLVM. Given a particular architecture, you
+can check which registers are aliased by inspecting its
+<tt>RegisterInfo.td</tt> file. Moreover, the method
+<tt>MRegisterInfo::getAliasSet(p_reg)</tt> returns an array containing
+all the physical registers aliased to the register <tt>p_reg</tt>.</p>
+
+<p>Physical registers, in LLVM, are grouped in <i>Register Classes</i>.
+Elements in the same register class are functionally equivalent, and can
+be interchangeably used. Each virtual register can only be mapped to
+physical registers of a particular class. For instance, in the X86
+architecture, some virtuals can only be allocated to 8 bit registers.
+A register class is described by <tt>TargetRegisterClass</tt> objects.
+To discover if a virtual register is compatible with a given physical,
+this code can be used:
+</p>
+
+<div class="doc_code">
+<pre>
+bool RegMapping_Fer::compatible_class(MachineFunction &mf,
+                                      unsigned v_reg,
+                                      unsigned p_reg) {
+  assert(MRegisterInfo::isPhysicalRegister(p_reg) &&
+         "Target register must be physical");
+  const TargetRegisterClass *trc = mf.getSSARegMap()->getRegClass(v_reg);
+  return trc->contains(p_reg);
+}
+</pre>
+</div>
+
+<p>Sometimes, mostly for debugging purposes, it is useful to change
+the number of physical registers available in the target
+architecture. This must be done statically, inside the
+<tt>TargetRegsterInfo.td</tt> file. Just <tt>grep</tt> for
+<tt>RegisterClass</tt>, the last parameter of which is a list of
+registers. Just commenting some out is one simple way to avoid them
+being used. A more polite way is to explicitly exclude some registers
+from the <i>allocation order</i>. See the definition of the
+<tt>GR</tt> register class in
+<tt>lib/Target/IA64/IA64RegisterInfo.td</tt> for an example of this
+(e.g., <tt>numReservedRegs</tt> registers are hidden.)</p>
+
+<p>Virtual registers are also denoted by integer numbers. Contrary to
+physical registers, different virtual registers never share the same
+number. The smallest virtual register is normally assigned the number
+1024. This may change, so, in order to know which is the first virtual
+register, you should access
+<tt>MRegisterInfo::FirstVirtualRegister</tt>. Any register whose
+number is greater than or equal to
+<tt>MRegisterInfo::FirstVirtualRegister</tt> is considered a virtual
+register. Whereas physical registers are statically defined in a
+<tt>TargetRegisterInfo.td</tt> file and cannot be created by the
+application developer, that is not the case with virtual registers.
+In order to create new virtual registers, use the method
+<tt>SSARegMap::createVirtualRegister()</tt>. This method will return a
+virtual register with the highest code.
+</p>
+
+<p>Before register allocation, the operands of an instruction are
+mostly virtual registers, although physical registers may also be
+used. In order to check if a given machine operand is a register, use
+the boolean function <tt>MachineOperand::isRegister()</tt>. To obtain
+the integer code of a register, use
+<tt>MachineOperand::getReg()</tt>. An instruction may define or use a
+register. For instance, <tt>ADD reg:1026 := reg:1025 reg:1024</tt>
+defines the registers 1024, and uses registers 1025 and 1026. Given a
+register operand, the method <tt>MachineOperand::isUse()</tt> informs
+if that register is being used by the instruction. The method
+<tt>MachineOperand::isDef()</tt> informs if that registers is being
+defined.</p>
+
+<p>We will call physical registers present in the LLVM bytecode before
+register allocation <i>pre-colored registers</i>. Pre-colored
+registers are used in many different situations, for instance, to pass
+parameters of functions calls, and to store results of particular
+instructions. There are two types of pre-colored registers: the ones
+<i>implicitly</i> defined, and those <i>explicitly</i>
+defined. Explicitly defined registers are normal operands, and can be
+accessed with <tt>MachineInstr::getOperand(int)::getReg()</tt>.  In
+order to check which registers are implicitly defined by an
+instruction, use the
+<tt>TargetInstrInfo::get(opcode)::ImplicitDefs</tt>, where
+<tt>opcode</tt> is the opcode of the target instruction. One important
+difference between explicit and implicit physical registers is that
+the latter are defined statically for each instruction, whereas the
+former may vary depending on the program being compiled. For example,
+an instruction that represents a function call will always implicitly
+define or use the same set of physical registers. To read the
+registers implicitly used by an instruction, use
+<tt>TargetInstrInfo::get(opcode)::ImplicitUses</tt>. Pre-colored
+registers impose constraints on any register allocation algorithm. The
+register allocator must make sure that none of them is been
+overwritten by the values of virtual registers while still alive.</p>
+
+</div>
+
+<!-- _______________________________________________________________________ -->
+
+<div class="doc_subsubsection">
+  <a name="regAlloc_howTo">Mapping virtual registers to physical registers</a>
+</div>
+
+<div class="doc_text">
+
+<p>There are two ways to map virtual registers to physical registers (or to
+memory slots). The first way, that we will call <i>direct mapping</i>,
+is based on the use of methods of the classes <tt>MRegisterInfo</tt>,
+and <tt>MachineOperand</tt>. The second way, that we will call
+<i>indirect mapping</i>, relies on the <tt>VirtRegMap</tt> class in
+order to insert loads and stores sending and getting values to and from
+memory.</p>
+
+<p>The direct mapping provides more flexibility to the developer of
+the register allocator; however, it is more error prone, and demands
+more implementation work.  Basically, the programmer will have to
+specify where load and store instructions should be inserted in the
+target function being compiled in order to get and store values in
+memory. To assign a physical register to a virtual register present in
+a given operand, use <tt>MachineOperand::setReg(p_reg)</tt>. To insert
+a store instruction, use
+<tt>MRegisterInfo::storeRegToStackSlot(...)</tt>, and to insert a load
+instruction, use <tt>MRegisterInfo::loadRegFromStackSlot</tt>.</p>
+
+<p>The indirect mapping shields the application developer from the
+complexities of inserting load and store instructions. In order to map
+a virtual register to a physical one, use
+<tt>VirtRegMap::assignVirt2Phys(vreg, preg)</tt>.  In order to map a
+certain virtual register to memory, use
+<tt>VirtRegMap::assignVirt2StackSlot(vreg)</tt>. This method will
+return the stack slot where <tt>vreg</tt>'s value will be located.  If
+it is necessary to map another virtual register to the same stack
+slot, use <tt>VirtRegMap::assignVirt2StackSlot(vreg,
+stack_location)</tt>. One important point to consider when using the
+indirect mapping, is that even if a virtual register is mapped to
+memory, it still needs to be mapped to a physical register. This
+physical register is the location where the virtual register is
+supposed to be found before being stored or after being reloaded.</p>
+
+<p>If the indirect strategy is used, after all the virtual registers
+have been mapped to physical registers or stack slots, it is necessary
+to use a spiller object to place load and store instructions in the
+code. Every virtual that has been mapped to a stack slot will be
+stored to memory after been defined and will be loaded before being
+used. The implementation of the spiller tries to recycle load/store
+instructions, avoiding unnecessary instructions. For an example of how
+to invoke the spiller, see
+<tt>RegAllocLinearScan::runOnMachineFunction</tt> in
+<tt>lib/CodeGen/RegAllocLinearScan.cpp</tt>.</p>
+
+</div>
+
+<!-- _______________________________________________________________________ -->
+<div class="doc_subsubsection">
+  <a name="regAlloc_twoAddr">Handling two address instructions</a>
+</div>
+
+<div class="doc_text">
+
+<p>With very rare exceptions (e.g., function calls), the LLVM machine
+code instructions are three address instructions. That is, each
+instruction is expected to define at most one register, and to use at
+most two registers.  However, some architectures use two address
+instructions. In this case, the defined register is also one of the
+used register. For instance, an instruction such as <tt>ADD %EAX,
+%EBX</tt>, in X86 is actually equivalent to <tt>%EAX = %EAX +
+%EBX</tt>.</p>
+
+<p>In order to produce correct code, LLVM must convert three address
+instructions that represent two address instructions into true two
+address instructions. LLVM provides the pass
+<tt>TwoAddressInstructionPass</tt> for this specific purpose. It must
+be run before register allocation takes place. After its execution,
+the resulting code may no longer be in SSA form. This happens, for
+instance, in situations where an instruction such as <tt>%a = ADD %b
+%c</tt> is converted to two instructions such as:</p>
+
+<div class="doc_code">
+<pre>
+%a = MOVE %b
+%a = ADD %a %b
+</pre>
+</div>
+
+<p>Notice that, internally, the second instruction is represented as
+<tt>ADD %a[def/use] %b</tt>. I.e., the register operand <tt>%a</tt> is
+both used and defined by the instruction.</p>
+
+</div>
+
+<!-- _______________________________________________________________________ -->
+<div class="doc_subsubsection">
+  <a name="regAlloc_ssaDecon">The SSA deconstruction phase</a>
+</div>
+
+<div class="doc_text">
+
+<p>An important transformation that happens during register allocation is called
+the <i>SSA Deconstruction Phase</i>. The SSA form simplifies many
+analyses that are performed on the control flow graph of
+programs. However, traditional instruction sets do not implement
+PHI instructions. Thus, in order to generate executable code, compilers
+must replace PHI instructions with other instructions that preserve their
+semantics.</p>
+
+<p>There are many ways in which PHI instructions can safely be removed
+from the target code. The most traditional PHI deconstruction
+algorithm replaces PHI instructions with copy instructions. That is
+the strategy adopted by LLVM. The SSA deconstruction algorithm is
+implemented in n<tt>lib/CodeGen/>PHIElimination.cpp</tt>. In order to
+invoke this pass, the identifier <tt>PHIEliminationID</tt> must be
+marked as required in the code of the register allocator.</p>
+
+</div>
+
+<!-- _______________________________________________________________________ -->
+<div class="doc_subsubsection">
+  <a name="regAlloc_fold">Instruction folding</a>
+</div>
+
+<div class="doc_text">
+
+<p><i>Instruction folding</i> is an optimization performed during
+register allocation that removes unnecessary copy instructions. For
+instance, a sequence of instructions such as:</p>
+
+<div class="doc_code">
+<pre>
+%EBX = LOAD %mem_address
+%EAX = COPY %EBX
+</pre>
+</div>
+
+<p>can be safely substituted by the single instruction:
+
+<div class="doc_code">
+<pre>
+%EAX = LOAD %mem_address
+</pre>
+</div>
+
+<p>Instructions can be folded with the
+<tt>MRegisterInfo::foldMemoryOperand(...)</tt> method. Care must be
+taken when folding instructions; a folded instruction can be quite
+different from the original instruction. See
+<tt>LiveIntervals::addIntervalsForSpills</tt> in
+<tt>lib/CodeGen/LiveIntervalAnalysis.cpp</tt> for an example of its use.</p>
+
+</div>
+
+<!-- _______________________________________________________________________ -->
+
+<div class="doc_subsubsection">
+  <a name="regAlloc_builtIn">Built in register allocators</a>
+</div>
+
+<div class="doc_text">
+
+<p>The LLVM infrastructure provides the application developer with
+three different register allocators:</p>
+
+<ul>
+  <li><i>Simple</i> - This is a very simple implementation that does
+      not keep values in registers across instructions. This register
+      allocator immediately spills every value right after it is
+      computed, and reloads all used operands from memory to temporary
+      registers before each instruction.</li>
+  <li><i>Local</i> - This register allocator is an improvement on the
+      <i>Simple</i> implementation. It allocates registers on a basic
+      block level, attempting to keep values in registers and reusing
+      registers as appropriate.</li>
+  <li><i>Linear Scan</i> - <i>The default allocator</i>. This is the
+      well-know linear scan register allocator. Whereas the
+      <i>Simple</i> and <i>Local</i> algorithms use a direct mapping
+      implementation technique, the <i>Linear Scan</i> implementation
+      uses a spiller in order to place load and stores.</li>
+</ul>
+
+<p>The type of register allocator used in <tt>llc</tt> can be chosen with the
+command line option <tt>-regalloc=...</tt>:</p>
+
+<div class="doc_code">
+<pre>
+$ llc -f -regalloc=simple file.bc -o sp.s;
+$ llc -f -regalloc=local file.bc -o lc.s;
+$ llc -f -regalloc=linearscan file.bc -o ln.s;
+</pre>
+</div>
+
+</div>
+
 <!-- ======================================================================= -->
 <div class="doc_subsection">
   <a name="proepicode">Prolog/Epilog Code Insertion</a>
