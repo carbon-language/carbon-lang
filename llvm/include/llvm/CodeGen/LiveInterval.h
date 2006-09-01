@@ -132,19 +132,19 @@ namespace llvm {
     /// getInstForValNum - Return the machine instruction index that defines the
     /// specified value number.
     unsigned getInstForValNum(unsigned ValNo) const {
-      assert(ValNo < ValueNumberInfo.size());
+      //assert(ValNo < ValueNumberInfo.size());
       return ValueNumberInfo[ValNo].first;
     }
     
     unsigned getSrcRegForValNum(unsigned ValNo) const {
-      assert(ValNo < ValueNumberInfo.size());
+      //assert(ValNo < ValueNumberInfo.size());
       if (ValueNumberInfo[ValNo].first < ~2U)
         return ValueNumberInfo[ValNo].second;
       return 0;
     }
     
     std::pair<unsigned, unsigned> getValNumInfo(unsigned ValNo) const {
-      assert(ValNo < ValueNumberInfo.size());
+      //assert(ValNo < ValueNumberInfo.size());
       return ValueNumberInfo[ValNo];
     }
     
