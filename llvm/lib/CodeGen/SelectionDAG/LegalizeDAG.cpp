@@ -4656,7 +4656,10 @@ void SelectionDAGLegalize::ExpandOp(SDOperand Op, SDOperand &Lo, SDOperand &Hi){
     break;
   }
   case ISD::MUL: {
-    if (TLI.isOperationLegal(ISD::MULHU, NVT)) {
+    bool HasMULHS = TLI.isOperationLegal(ISD::MULHS, NVT);
+    bool HasMULHU = TLI.isOperationLegal(ISD::MULHU, NVT);
+    bool UseLibCall = true;
+    if (HasMULHS || HasMULHU) {
       SDOperand LL, LH, RL, RH;
       ExpandOp(Node->getOperand(0), LL, LH);
       ExpandOp(Node->getOperand(1), RL, RH);
@@ -4665,7 +4668,7 @@ void SelectionDAGLegalize::ExpandOp(SDOperand Op, SDOperand &Lo, SDOperand &Hi){
       // extended the sign bit of the low half through the upper half, and if so
       // emit a MULHS instead of the alternate sequence that is valid for any
       // i64 x i64 multiply.
-      if (TLI.isOperationLegal(ISD::MULHS, NVT) &&
+      if (HasMULHS &&
           // is RH an extension of the sign bit of RL?
           RH.getOpcode() == ISD::SRA && RH.getOperand(0) == RL &&
           RH.getOperand(1).getOpcode() == ISD::Constant &&
@@ -4675,17 +4678,21 @@ void SelectionDAGLegalize::ExpandOp(SDOperand Op, SDOperand &Lo, SDOperand &Hi){
           LH.getOperand(1).getOpcode() == ISD::Constant &&
           cast<ConstantSDNode>(LH.getOperand(1))->getValue() == SH) {
         Hi = DAG.getNode(ISD::MULHS, NVT, LL, RL);
-      } else {
+        UseLibCall = false;
+      } else if (HasMULHU) {
         Hi = DAG.getNode(ISD::MULHU, NVT, LL, RL);
         RH = DAG.getNode(ISD::MUL, NVT, LL, RH);
         LH = DAG.getNode(ISD::MUL, NVT, LH, RL);
         Hi = DAG.getNode(ISD::ADD, NVT, Hi, RH);
         Hi = DAG.getNode(ISD::ADD, NVT, Hi, LH);
+        UseLibCall = false;
       }
-      Lo = DAG.getNode(ISD::MUL, NVT, LL, RL);
-    } else {
-      Lo = ExpandLibCall("__muldi3" , Node, Hi);
+      if (!UseLibCall)
+        Lo = DAG.getNode(ISD::MUL, NVT, LL, RL);
     }
+
+    if (UseLibCall)
+      Lo = ExpandLibCall("__muldi3" , Node, Hi);
     break;
   }
   case ISD::SDIV: Lo = ExpandLibCall("__divdi3" , Node, Hi); break;
