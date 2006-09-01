@@ -857,7 +857,7 @@ static unsigned ComputeUltimateVN(unsigned VN,
   // If the VN has already been computed, just return it.
   if (ThisValNoAssignments[VN] >= 0)
     return ThisValNoAssignments[VN];
-  assert(ThisValNoAssignments[VN] != -2 && "FIXME: Cyclic case, handle it!");
+//  assert(ThisValNoAssignments[VN] != -2 && "Cyclic case?");
   
   // If this val is not a copy from the other val, then it must be a new value
   // number in the destination.
@@ -867,9 +867,13 @@ static unsigned ComputeUltimateVN(unsigned VN,
     return ThisValNoAssignments[VN] = ValueNumberInfo.size()-1;
   }
 
-  // Otherwise, this *is* a copy from the RHS.  Mark this value number as
-  // currently being computed, then ask what the ultimate value # of the other
-  // value is.
+  // Otherwise, this *is* a copy from the RHS.  If the other side has already
+  // been computed, return it.
+  if (OtherValNoAssignments[OtherValNo] >= 0)
+    return ThisValNoAssignments[VN] = OtherValNoAssignments[OtherValNo];
+  
+  // Mark this value number as currently being computed, then ask what the
+  // ultimate value # of the other value is.
   ThisValNoAssignments[VN] = -2;
   unsigned UltimateVN =
     ComputeUltimateVN(OtherValNo, ValueNumberInfo,
@@ -989,13 +993,22 @@ bool LiveIntervals::JoinIntervals(LiveInterval &LHS, LiveInterval &RHS) {
     }
     
     for (unsigned VN = 0, e = LHS.getNumValNums(); VN != e; ++VN) {
-      if (LHS.getInstForValNum(VN) == ~2U) continue;
+      if (LHSValNoAssignments[VN] >= 0 || LHS.getInstForValNum(VN) == ~2U) 
+        continue;
       ComputeUltimateVN(VN, ValueNumberInfo,
                         LHSValsDefinedFromRHS, RHSValsDefinedFromLHS,
                         LHSValNoAssignments, RHSValNoAssignments, LHS, RHS);
     }
     for (unsigned VN = 0, e = RHS.getNumValNums(); VN != e; ++VN) {
-      if (RHS.getInstForValNum(VN) == ~2U) continue;
+      if (RHSValNoAssignments[VN] >= 0 || RHS.getInstForValNum(VN) == ~2U)
+        continue;
+      // If this value number isn't a copy from the LHS, it's a new number.
+      if (RHSValsDefinedFromLHS[VN] == -1) {
+        ValueNumberInfo.push_back(RHS.getValNumInfo(VN));
+        RHSValNoAssignments[VN] = ValueNumberInfo.size()-1;
+        continue;
+      }
+      
       ComputeUltimateVN(VN, ValueNumberInfo,
                         RHSValsDefinedFromLHS, LHSValsDefinedFromRHS,
                         RHSValNoAssignments, LHSValNoAssignments, RHS, LHS);
