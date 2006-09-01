@@ -15,3 +15,5 @@ multiclass t<int a> {
 }
 
 defm FOO : t<42>;
+
+def T4 : C1<6, "foo">;
