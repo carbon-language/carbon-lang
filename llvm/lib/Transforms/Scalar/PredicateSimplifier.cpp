@@ -576,30 +576,29 @@ void PredicateSimplifier::visit(BranchInst *BI,
 void PredicateSimplifier::visit(SwitchInst *SI,
                              DominatorTree::Node *DTNode, PropertySet KP) {
   Value *Condition = SI->getCondition();
+  DEBUG(assert(Condition == KP.canonicalize(Condition) &&
+               "Instruction wasn't already canonicalized?"));
 
   // If there's an NEProperty covering this SwitchInst, we may be able to
   // eliminate one of the cases.
-  if (Value *C = KP.lookup(Condition)) {
-    Condition = C;
-    for (PropertySet::ConstPropertyIterator I = KP.Properties.begin(),
-         E = KP.Properties.end(); I != E; ++I) {
-      if (I->Opcode != PropertySet::NE) continue;
-      Value *V1 = KP.lookup(I->V1),
-            *V2 = KP.lookup(I->V2);
-      if (V1 != C && V2 != C) continue;
+  for (PropertySet::ConstPropertyIterator I = KP.Properties.begin(),
+       E = KP.Properties.end(); I != E; ++I) {
+    if (I->Opcode != PropertySet::NE) continue;
+    Value *V1 = KP.canonicalize(I->V1),
+          *V2 = KP.canonicalize(I->V2);
+    if (V1 != Condition && V2 != Condition) continue;
 
-      // Is one side a number?
-      ConstantInt *CI = dyn_cast<ConstantInt>(KP.lookup(I->V1));
-      if (!CI)     CI = dyn_cast<ConstantInt>(KP.lookup(I->V2));
+    // Is one side a number?
+    ConstantInt *CI = dyn_cast<ConstantInt>(KP.canonicalize(I->V1));
+    if (!CI)     CI = dyn_cast<ConstantInt>(KP.canonicalize(I->V2));
 
-      if (CI) {
-        unsigned i = SI->findCaseValue(CI);
-        if (i != 0) {
-          SI->getSuccessor(i)->removePredecessor(SI->getParent());
-          SI->removeCase(i);
-          modified = true;
-          ++NumSwitchCases;
-        }
+    if (CI) {
+      unsigned i = SI->findCaseValue(CI);
+      if (i != 0) {
+        SI->getSuccessor(i)->removePredecessor(SI->getParent());
+        SI->removeCase(i);
+        modified = true;
+        ++NumSwitchCases;
       }
     }
   }
