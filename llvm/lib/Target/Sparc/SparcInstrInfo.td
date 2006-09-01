@@ -168,6 +168,32 @@ def FCC_LE  : FCC_VAL<27>;  // Less or Equal
 def FCC_ULE : FCC_VAL<28>;  // Unordered or Less or Equal
 def FCC_O   : FCC_VAL<29>;  // Ordered
 
+//===----------------------------------------------------------------------===//
+// Instruction Class Templates
+//===----------------------------------------------------------------------===//
+
+/// F3_12 multiclass - Define a normal F3_1/F3_2 pattern in one shot.
+multiclass F3_12<string OpcStr, bits<6> Op3Val, SDNode OpNode> {
+  def rr  : F3_1<2, Op3Val, 
+                 (ops IntRegs:$dst, IntRegs:$b, IntRegs:$c),
+                 !strconcat(OpcStr, " $b, $c, $dst"),
+                 [(set IntRegs:$dst, (OpNode IntRegs:$b, IntRegs:$c))]>;
+  def ri  : F3_2<2, Op3Val,
+                 (ops IntRegs:$dst, IntRegs:$b, i32imm:$c),
+                 !strconcat(OpcStr, " $b, $c, $dst"),
+                 [(set IntRegs:$dst, (OpNode IntRegs:$b, simm13:$c))]>;
+}
+
+/// F3_12np multiclass - Define a normal F3_1/F3_2 pattern in one shot, with no
+/// pattern.
+multiclass F3_12np<string OpcStr, bits<6> Op3Val> {
+  def rr  : F3_1<2, Op3Val, 
+                 (ops IntRegs:$dst, IntRegs:$b, IntRegs:$c),
+                 !strconcat(OpcStr, " $b, $c, $dst"), []>;
+  def ri  : F3_2<2, Op3Val,
+                 (ops IntRegs:$dst, IntRegs:$b, i32imm:$c),
+                 !strconcat(OpcStr, " $b, $c, $dst"), []>;
+}
 
 //===----------------------------------------------------------------------===//
 // Instructions
@@ -364,14 +390,8 @@ let rd = 0, imm22 = 0 in
   def NOP : F2_1<0b100, (ops), "nop", []>;
 
 // Section B.11 - Logical Instructions, p. 106
-def ANDrr   : F3_1<2, 0b000001,
-                   (ops IntRegs:$dst, IntRegs:$b, IntRegs:$c),
-                   "and $b, $c, $dst",
-                   [(set IntRegs:$dst, (and IntRegs:$b, IntRegs:$c))]>;
-def ANDri   : F3_2<2, 0b000001,
-                   (ops IntRegs:$dst, IntRegs:$b, i32imm:$c),
-                   "and $b, $c, $dst",
-                   [(set IntRegs:$dst, (and IntRegs:$b, simm13:$c))]>;
+defm AND    : F3_12<"and", 0b000001, and>;
+
 def ANDNrr  : F3_1<2, 0b000101,
                    (ops IntRegs:$dst, IntRegs:$b, IntRegs:$c),
                    "andn $b, $c, $dst",
@@ -379,14 +399,9 @@ def ANDNrr  : F3_1<2, 0b000101,
 def ANDNri  : F3_2<2, 0b000101,
                    (ops IntRegs:$dst, IntRegs:$b, i32imm:$c),
                    "andn $b, $c, $dst", []>;
-def ORrr    : F3_1<2, 0b000010,
-                   (ops IntRegs:$dst, IntRegs:$b, IntRegs:$c),
-                   "or $b, $c, $dst",
-                   [(set IntRegs:$dst, (or IntRegs:$b, IntRegs:$c))]>;
-def ORri    : F3_2<2, 0b000010,
-                   (ops IntRegs:$dst, IntRegs:$b, i32imm:$c),
-                   "or $b, $c, $dst",
-                   [(set IntRegs:$dst, (or IntRegs:$b, simm13:$c))]>;
+
+defm OR     : F3_12<"or", 0b000010, or>;
+
 def ORNrr   : F3_1<2, 0b000110,
                    (ops IntRegs:$dst, IntRegs:$b, IntRegs:$c),
                    "orn $b, $c, $dst",
@@ -394,14 +409,8 @@ def ORNrr   : F3_1<2, 0b000110,
 def ORNri   : F3_2<2, 0b000110,
                    (ops IntRegs:$dst, IntRegs:$b, i32imm:$c),
                    "orn $b, $c, $dst", []>;
-def XORrr   : F3_1<2, 0b000011,
-                   (ops IntRegs:$dst, IntRegs:$b, IntRegs:$c),
-                   "xor $b, $c, $dst",
-                   [(set IntRegs:$dst, (xor IntRegs:$b, IntRegs:$c))]>;
-def XORri   : F3_2<2, 0b000011,
-                   (ops IntRegs:$dst, IntRegs:$b, i32imm:$c),
-                   "xor $b, $c, $dst",
-                   [(set IntRegs:$dst, (xor IntRegs:$b, simm13:$c))]>;
+defm XOR    : F3_12<"xor", 0b000011, xor>;
+
 def XNORrr  : F3_1<2, 0b000111,
                    (ops IntRegs:$dst, IntRegs:$b, IntRegs:$c),
                    "xnor $b, $c, $dst",
@@ -411,40 +420,12 @@ def XNORri  : F3_2<2, 0b000111,
                    "xnor $b, $c, $dst", []>;
 
 // Section B.12 - Shift Instructions, p. 107
-def SLLrr : F3_1<2, 0b100101,
-                 (ops IntRegs:$dst, IntRegs:$b, IntRegs:$c),
-                 "sll $b, $c, $dst",
-                 [(set IntRegs:$dst, (shl IntRegs:$b, IntRegs:$c))]>;
-def SLLri : F3_2<2, 0b100101,
-                 (ops IntRegs:$dst, IntRegs:$b, i32imm:$c),
-                 "sll $b, $c, $dst",
-                 [(set IntRegs:$dst, (shl IntRegs:$b, simm13:$c))]>;
-def SRLrr : F3_1<2, 0b100110, 
-                 (ops IntRegs:$dst, IntRegs:$b, IntRegs:$c),
-                  "srl $b, $c, $dst",
-                  [(set IntRegs:$dst, (srl IntRegs:$b, IntRegs:$c))]>;
-def SRLri : F3_2<2, 0b100110,
-                 (ops IntRegs:$dst, IntRegs:$b, i32imm:$c),
-                 "srl $b, $c, $dst", 
-                 [(set IntRegs:$dst, (srl IntRegs:$b, simm13:$c))]>;
-def SRArr : F3_1<2, 0b100111, 
-                 (ops IntRegs:$dst, IntRegs:$b, IntRegs:$c),
-                  "sra $b, $c, $dst",
-                  [(set IntRegs:$dst, (sra IntRegs:$b, IntRegs:$c))]>;
-def SRAri : F3_2<2, 0b100111,
-                 (ops IntRegs:$dst, IntRegs:$b, i32imm:$c),
-                 "sra $b, $c, $dst",
-                 [(set IntRegs:$dst, (sra IntRegs:$b, simm13:$c))]>;
+defm SLL : F3_12<"sll", 0b100101, shl>;
+defm SRL : F3_12<"srl", 0b100110, srl>;
+defm SRA : F3_12<"sra", 0b100111, sra>;
 
 // Section B.13 - Add Instructions, p. 108
-def ADDrr   : F3_1<2, 0b000000, 
-                  (ops IntRegs:$dst, IntRegs:$b, IntRegs:$c),
-                  "add $b, $c, $dst",
-                   [(set IntRegs:$dst, (add IntRegs:$b, IntRegs:$c))]>;
-def ADDri   : F3_2<2, 0b000000,
-                   (ops IntRegs:$dst, IntRegs:$b, i32imm:$c),
-                   "add $b, $c, $dst",
-                   [(set IntRegs:$dst, (add IntRegs:$b, simm13:$c))]>;
+defm ADD   : F3_12<"add", 0b000000, add>;
 
 // "LEA" forms of add (patterns to make tblgen happy)
 def LEA_ADDri   : F3_2<2, 0b000000,
@@ -452,97 +433,30 @@ def LEA_ADDri   : F3_2<2, 0b000000,
                    "add ${addr:arith}, $dst",
                    [(set IntRegs:$dst, ADDRri:$addr)]>;
                    
-def ADDCCrr : F3_1<2, 0b010000, 
-                   (ops IntRegs:$dst, IntRegs:$b, IntRegs:$c),
-                   "addcc $b, $c, $dst",
-                   [(set IntRegs:$dst, (addc IntRegs:$b, IntRegs:$c))]>;
-def ADDCCri : F3_2<2, 0b010000,
-                   (ops IntRegs:$dst, IntRegs:$b, i32imm:$c),
-                   "addcc $b, $c, $dst", 
-                   [(set IntRegs:$dst, (addc IntRegs:$b, simm13:$c))]>;
-def ADDXrr  : F3_1<2, 0b001000, 
-                   (ops IntRegs:$dst, IntRegs:$b, IntRegs:$c),
-                   "addx $b, $c, $dst",
-                   [(set IntRegs:$dst, (adde IntRegs:$b, IntRegs:$c))]>;
-def ADDXri  : F3_2<2, 0b001000,
-                   (ops IntRegs:$dst, IntRegs:$b, i32imm:$c),
-                   "addx $b, $c, $dst",
-                   [(set IntRegs:$dst, (adde IntRegs:$b, simm13:$c))]>;
+defm ADDCC  : F3_12<"addcc", 0b010000, addc>;
+defm ADDX  : F3_12<"addx", 0b001000, adde>;
 
 // Section B.15 - Subtract Instructions, p. 110
-def SUBrr   : F3_1<2, 0b000100, 
-                   (ops IntRegs:$dst, IntRegs:$b, IntRegs:$c),
-                   "sub $b, $c, $dst",
-                   [(set IntRegs:$dst, (sub IntRegs:$b, IntRegs:$c))]>;
-def SUBri   : F3_2<2, 0b000100,
-                   (ops IntRegs:$dst, IntRegs:$b, i32imm:$c),
-                   "sub $b, $c, $dst",
-                   [(set IntRegs:$dst, (sub IntRegs:$b, simm13:$c))]>;
-def SUBXrr  : F3_1<2, 0b001100, 
-                   (ops IntRegs:$dst, IntRegs:$b, IntRegs:$c),
-                   "subx $b, $c, $dst",
-                   [(set IntRegs:$dst, (sube IntRegs:$b, IntRegs:$c))]>;
-def SUBXri  : F3_2<2, 0b001100,
-                   (ops IntRegs:$dst, IntRegs:$b, i32imm:$c),
-                   "subx $b, $c, $dst",
-                   [(set IntRegs:$dst, (sube IntRegs:$b, simm13:$c))]>;
-def SUBCCrr : F3_1<2, 0b010100, 
-                   (ops IntRegs:$dst, IntRegs:$b, IntRegs:$c),
-                   "subcc $b, $c, $dst",
-                   [(set IntRegs:$dst, (SPcmpicc IntRegs:$b, IntRegs:$c))]>;
-def SUBCCri : F3_2<2, 0b010100,
-                   (ops IntRegs:$dst, IntRegs:$b, i32imm:$c),
-                   "subcc $b, $c, $dst",
-                   [(set IntRegs:$dst, (SPcmpicc IntRegs:$b, simm13:$c))]>;
+defm SUB    : F3_12  <"sub"  , 0b000100, sub>;
+defm SUBX   : F3_12  <"subx" , 0b001100, sube>;
+defm SUBCC  : F3_12  <"subcc", 0b010100, SPcmpicc>;
+
 def SUBXCCrr: F3_1<2, 0b011100, 
                    (ops IntRegs:$dst, IntRegs:$b, IntRegs:$c),
                    "subxcc $b, $c, $dst", []>;
 
 // Section B.18 - Multiply Instructions, p. 113
-def UMULrr  : F3_1<2, 0b001010, 
-                   (ops IntRegs:$dst, IntRegs:$b, IntRegs:$c),
-                   "umul $b, $c, $dst", []>;
-def UMULri  : F3_2<2, 0b001010,
-                   (ops IntRegs:$dst, IntRegs:$b, i32imm:$c),
-                   "umul $b, $c, $dst", []>;
-                   
-def SMULrr  : F3_1<2, 0b001011, 
-                   (ops IntRegs:$dst, IntRegs:$b, IntRegs:$c),
-                   "smul $b, $c, $dst",
-                   [(set IntRegs:$dst, (mul IntRegs:$b, IntRegs:$c))]>;
-def SMULri  : F3_2<2, 0b001011,
-                   (ops IntRegs:$dst, IntRegs:$b, i32imm:$c),
-                   "smul $b, $c, $dst",
-                   [(set IntRegs:$dst, (mul IntRegs:$b, simm13:$c))]>;
+defm UMUL : F3_12np<"umul", 0b001010>;
+defm SMUL : F3_12  <"smul", 0b001011, mul>;
 
 
 // Section B.19 - Divide Instructions, p. 115
-def UDIVrr   : F3_1<2, 0b001110, 
-                    (ops IntRegs:$dst, IntRegs:$b, IntRegs:$c),
-                    "udiv $b, $c, $dst", []>;
-def UDIVri   : F3_2<2, 0b001110,
-                    (ops IntRegs:$dst, IntRegs:$b, i32imm:$c),
-                    "udiv $b, $c, $dst", []>;
-def SDIVrr   : F3_1<2, 0b001111,
-                    (ops IntRegs:$dst, IntRegs:$b, IntRegs:$c),
-                    "sdiv $b, $c, $dst", []>;
-def SDIVri   : F3_2<2, 0b001111,
-                    (ops IntRegs:$dst, IntRegs:$b, i32imm:$c),
-                    "sdiv $b, $c, $dst", []>;
+defm UDIV : F3_12np<"udiv", 0b001110>;
+defm SDIV : F3_12np<"sdiv", 0b001111>;
 
 // Section B.20 - SAVE and RESTORE, p. 117
-def SAVErr    : F3_1<2, 0b111100,
-                     (ops IntRegs:$dst, IntRegs:$b, IntRegs:$c),
-                     "save $b, $c, $dst", []>;
-def SAVEri    : F3_2<2, 0b111100,
-                     (ops IntRegs:$dst, IntRegs:$b, i32imm:$c),
-                     "save $b, $c, $dst", []>;
-def RESTORErr : F3_1<2, 0b111101,
-                     (ops IntRegs:$dst, IntRegs:$b, IntRegs:$c),
-                     "restore $b, $c, $dst", []>;
-def RESTOREri : F3_2<2, 0b111101,
-                     (ops IntRegs:$dst, IntRegs:$b, i32imm:$c),
-                     "restore $b, $c, $dst", []>;
+defm SAVE    : F3_12np<"save"   , 0b111100>;
+defm RESTORE : F3_12np<"restore", 0b111101>;
 
 // Section B.21 - Branch on Integer Condition Codes Instructions, p. 119
 
