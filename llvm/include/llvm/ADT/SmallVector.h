@@ -136,6 +136,11 @@ public:
     }
   }
   
+  void reserve(unsigned N) {
+    if (unsigned(Capacity-Begin) < N)
+      grow(N);
+  }
+  
   void swap(SmallVectorImpl &RHS);
   
   /// append - Add the specified range to the end of the SmallVector.
