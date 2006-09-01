@@ -351,9 +351,9 @@ static const short yyrline[] = { 0,
    523,   525,   531,   531,   532,   532,   534,   536,   540,   545,
    550,   553,   557,   560,   565,   566,   566,   568,   568,   570,
    577,   595,   620,   634,   639,   641,   643,   647,   657,   671,
-   674,   678,   689,   691,   693,   698,   698,   763,   763,   764,
-   764,   766,   771,   771,   774,   774,   777,   780,   784,   784,
-   786
+   674,   678,   689,   691,   693,   698,   698,   764,   764,   765,
+   765,   767,   772,   772,   775,   775,   778,   781,   785,   785,
+   787
 };
 #endif
 
@@ -1813,45 +1813,46 @@ case 87:
   
   delete &TemplateVals;
   delete yyvsp[-4].StrVal;
+  CurDefmPrefix = 0;
 ;
     break;}
 case 88:
-#line 763 "/Volumes/ProjectsDisk/cvs/llvm/utils/TableGen/FileParser.y"
+#line 764 "/Volumes/ProjectsDisk/cvs/llvm/utils/TableGen/FileParser.y"
 {;
     break;}
 case 89:
-#line 763 "/Volumes/ProjectsDisk/cvs/llvm/utils/TableGen/FileParser.y"
+#line 764 "/Volumes/ProjectsDisk/cvs/llvm/utils/TableGen/FileParser.y"
 {;
     break;}
 case 92:
-#line 766 "/Volumes/ProjectsDisk/cvs/llvm/utils/TableGen/FileParser.y"
+#line 767 "/Volumes/ProjectsDisk/cvs/llvm/utils/TableGen/FileParser.y"
 {
   LetStack.back().push_back(LetRecord(*yyvsp[-3].StrVal, yyvsp[-2].BitList, yyvsp[0].Initializer));
   delete yyvsp[-3].StrVal; delete yyvsp[-2].BitList;
 ;
     break;}
 case 95:
-#line 774 "/Volumes/ProjectsDisk/cvs/llvm/utils/TableGen/FileParser.y"
+#line 775 "/Volumes/ProjectsDisk/cvs/llvm/utils/TableGen/FileParser.y"
 { LetStack.push_back(std::vector<LetRecord>()); ;
     break;}
 case 97:
-#line 777 "/Volumes/ProjectsDisk/cvs/llvm/utils/TableGen/FileParser.y"
+#line 778 "/Volumes/ProjectsDisk/cvs/llvm/utils/TableGen/FileParser.y"
 {
     LetStack.pop_back();
   ;
     break;}
 case 98:
-#line 780 "/Volumes/ProjectsDisk/cvs/llvm/utils/TableGen/FileParser.y"
+#line 781 "/Volumes/ProjectsDisk/cvs/llvm/utils/TableGen/FileParser.y"
 {
     LetStack.pop_back();
   ;
     break;}
 case 99:
-#line 784 "/Volumes/ProjectsDisk/cvs/llvm/utils/TableGen/FileParser.y"
+#line 785 "/Volumes/ProjectsDisk/cvs/llvm/utils/TableGen/FileParser.y"
 {;
     break;}
 case 100:
-#line 784 "/Volumes/ProjectsDisk/cvs/llvm/utils/TableGen/FileParser.y"
+#line 785 "/Volumes/ProjectsDisk/cvs/llvm/utils/TableGen/FileParser.y"
 {;
     break;}
 }
@@ -2076,7 +2077,7 @@ yyerrhandle:
     }
   return 1;
 }
-#line 788 "/Volumes/ProjectsDisk/cvs/llvm/utils/TableGen/FileParser.y"
+#line 789 "/Volumes/ProjectsDisk/cvs/llvm/utils/TableGen/FileParser.y"
 
 
 int yyerror(const char *ErrorMsg) {

@@ -758,6 +758,7 @@ DefMInst : DEFM ID { CurDefmPrefix = $2; } ':' SubClassRef ';' {
   
   delete &TemplateVals;
   delete $2;
+  CurDefmPrefix = 0;
 };
 
 Object : ClassInst {} | DefInst {};
