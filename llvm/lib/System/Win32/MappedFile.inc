@@ -55,6 +55,8 @@ bool MappedFile::initialize(std::string* ErrMsg) {
     return MakeErrMsg(ErrMsg, 
       std::string("Can't get size of file: ") + path_.toString());
   }
+
+  return false;
 }
 
 void MappedFile::terminate() {

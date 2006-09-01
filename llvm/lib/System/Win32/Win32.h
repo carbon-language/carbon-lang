@@ -30,11 +30,7 @@ inline bool MakeErrMsg(std::string* ErrMsg, const std::string& prefix) {
   char *buffer = NULL;
   FormatMessage(FORMAT_MESSAGE_ALLOCATE_BUFFER|FORMAT_MESSAGE_FROM_SYSTEM,
       NULL, GetLastError(), 0, (LPSTR)&buffer, 1, NULL);
-  ErrMsg = prefix + buffer;
+  *ErrMsg = prefix + buffer;
   LocalFree(buffer);
   return true;
-}
-
-inline void MakeErrnoMsg(std::string* ErrMsg, const std::string & prefix) {
-  MakeErrorMsg(prefix + ": " + strerror(errno));
 }

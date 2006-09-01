@@ -315,12 +315,12 @@ bool Path::makeReadableOnDisk(std::string* ErrMsg) {
   return false;
 }
 
-void Path::makeWriteableOnDisk(std::string* ErrMsg) {
+bool Path::makeWriteableOnDisk(std::string* ErrMsg) {
   DWORD attr = GetFileAttributes(path.c_str());
 
   // If it doesn't exist, we're done.
   if (attr == INVALID_FILE_ATTRIBUTES)
-    return;
+    return false;
 
   if (attr & FILE_ATTRIBUTE_READONLY) {
     if (!SetFileAttributes(path.c_str(), attr & ~FILE_ATTRIBUTE_READONLY)) {
@@ -338,7 +338,11 @@ bool Path::makeExecutableOnDisk(std::string* ErrMsg) {
 
 bool
 Path::getDirectoryContents(std::set<Path>& result, std::string* ErrMsg) const {
-  if (!isDirectory()) {
+  FileStatus Status;
+  if (getFileStatus(Status, ErrMsg))
+    return true;
+
+  if (!Status.isDir) {
     MakeErrMsg(ErrMsg, path + ": not a directory");
     return true;
   }
@@ -512,7 +516,7 @@ Path::createDirectoryOnDisk(bool create_parents, std::string* ErrMsg) {
     // Drop trailing slash.
     pathname[len-1] = 0;
     if (!CreateDirectory(pathname, NULL)) {
-      return MakeErrMsg(, std::string(pathname) + ": Can't create directory: ");
+      return MakeErrMsg(ErrMsg, std::string(pathname) + ": Can't create directory: ");
     }
   }
   return false;
@@ -652,10 +656,12 @@ Path::renamePathOnDisk(const Path& newName, std::string* ErrMsg) {
 }
 
 bool
-Path::setStatusInfoOnDisk(const FileStatus &si, std::string *ErrStr) const {
+Path::setStatusInfoOnDisk(const FileStatus &si, std::string *ErrMsg) const {
   // FIXME: should work on directories also.
-  if (!isFile()) return true;
-
+  if (!si.isFile) {
+    return true;
+  }
+  
   HANDLE h = CreateFile(path.c_str(),
                         FILE_READ_ATTRIBUTES | FILE_WRITE_ATTRIBUTES,
                         FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE,
@@ -671,7 +677,7 @@ Path::setStatusInfoOnDisk(const FileStatus &si, std::string *ErrStr) const {
     DWORD err = GetLastError();
     CloseHandle(h);
     SetLastError(err);
-    return MakeErrMsg(ErrStr, path + ": GetFileInformationByHandle: ");
+    return MakeErrMsg(ErrMsg, path + ": GetFileInformationByHandle: ");
   }
 
   FILETIME ft;
@@ -681,7 +687,7 @@ Path::setStatusInfoOnDisk(const FileStatus &si, std::string *ErrStr) const {
   CloseHandle(h);
   if (!ret) {
     SetLastError(err);
-    return MakeErrMsg(path + ": SetFileTime: ");
+    return MakeErrMsg(ErrMsg, path + ": SetFileTime: ");
   }
 
   // Best we can do with Unix permission bits is to interpret the owner
@@ -690,13 +696,13 @@ Path::setStatusInfoOnDisk(const FileStatus &si, std::string *ErrStr) const {
     if (bhfi.dwFileAttributes & FILE_ATTRIBUTE_READONLY) {
       if (!SetFileAttributes(path.c_str(),
               bhfi.dwFileAttributes & ~FILE_ATTRIBUTE_READONLY))
-        return MakeErrMsg(ErrStr, path + ": SetFileAttributes: ");
+        return MakeErrMsg(ErrMsg, path + ": SetFileAttributes: ");
     }
   } else {
     if (!(bhfi.dwFileAttributes & FILE_ATTRIBUTE_READONLY)) {
       if (!SetFileAttributes(path.c_str(),
               bhfi.dwFileAttributes | FILE_ATTRIBUTE_READONLY))
-        return MakeErrMsg(ErrStr, path + ": SetFileAttributes: ");
+        return MakeErrMsg(ErrMsg, path + ": SetFileAttributes: ");
     }
   }
 
@@ -739,13 +745,13 @@ Path::makeUnique(bool reuse_current, std::string* ErrMsg) {
 bool
 Path::createTemporaryFileOnDisk(bool reuse_current, std::string* ErrMsg) {
   // Make this into a unique file name
-  makeUnique(reuse_current);
+  makeUnique(reuse_current, ErrMsg);
 
   // Now go and create it
   HANDLE h = CreateFile(path.c_str(), GENERIC_WRITE, 0, NULL, CREATE_NEW,
                         FILE_ATTRIBUTE_NORMAL, NULL);
   if (h == INVALID_HANDLE_VALUE)
-    return MakeErrMsg(ErrMsg, path.toString() + ": can't create file");
+    return MakeErrMsg(ErrMsg, path + ": can't create file");
 
   CloseHandle(h);
   return false;

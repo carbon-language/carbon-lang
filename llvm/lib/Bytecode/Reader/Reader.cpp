@@ -2409,7 +2409,7 @@ void BytecodeReader::ParseModule() {
 
 /// This function completely parses a bytecode buffer given by the \p Buf
 /// and \p Length parameters.
-bool BytecodeReader::ParseBytecode(BufPtr Buf, unsigned Length,
+bool BytecodeReader::ParseBytecode(volatile BufPtr Buf, unsigned Length,
                                    const std::string &ModuleID,
                                    std::string* ErrMsg) {
 

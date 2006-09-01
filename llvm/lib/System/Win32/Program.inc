@@ -158,14 +158,14 @@ Program::ExecuteAndWait(const Path& path,
       MakeErrMsg(ErrMsg, "can't redirect stdin");
       return -1;
     }
-    si.hStdOutput = RedirectIO(redirects[1], 1);
+    si.hStdOutput = RedirectIO(redirects[1], 1, ErrMsg);
     if (si.hStdOutput == INVALID_HANDLE_VALUE) {
       CloseHandle(si.hStdInput);
       MakeErrMsg(ErrMsg, "can't redirect stdout");
       return -1;
     }
     if (redirects[1] && redirects[2] && *(redirects[1]) != *(redirects[2])) {
-      si.hStdError = RedirectIO(redirects[2], 2);
+      si.hStdError = RedirectIO(redirects[2], 2, ErrMsg);
       if (si.hStdError == INVALID_HANDLE_VALUE) {
         CloseHandle(si.hStdInput);
         CloseHandle(si.hStdOutput);
