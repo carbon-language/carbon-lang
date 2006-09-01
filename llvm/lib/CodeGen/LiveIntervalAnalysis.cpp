@@ -1066,8 +1066,7 @@ namespace {
 }
 
 
-void LiveIntervals::CopyCoallesceInMBB(MachineBasicBlock *MBB,
-                                       std::vector<CopyRec> &TryAgain) {
+void LiveIntervals::CopyCoallesceInMBB(MachineBasicBlock *MBB) {
   DEBUG(std::cerr << ((Value*)MBB->getBasicBlock())->getName() << ":\n");
   
   for (MachineBasicBlock::iterator MII = MBB->begin(), E = MBB->end();
@@ -1078,8 +1077,7 @@ void LiveIntervals::CopyCoallesceInMBB(MachineBasicBlock *MBB,
     unsigned SrcReg, DstReg;
     if (!tii_->isMoveInstr(*Inst, SrcReg, DstReg)) continue;
     
-    if (!JoinCopy(Inst, SrcReg, DstReg))
-      TryAgain.push_back(getCopyRec(Inst, SrcReg, DstReg));
+    JoinCopy(Inst, SrcReg, DstReg);
   }
 }
 
@@ -1087,14 +1085,12 @@ void LiveIntervals::CopyCoallesceInMBB(MachineBasicBlock *MBB,
 void LiveIntervals::joinIntervals() {
   DEBUG(std::cerr << "********** JOINING INTERVALS ***********\n");
 
-  std::vector<CopyRec> TryAgainList;
-  
   const LoopInfo &LI = getAnalysis<LoopInfo>();
   if (LI.begin() == LI.end()) {
     // If there are no loops in the function, join intervals in function order.
     for (MachineFunction::iterator I = mf_->begin(), E = mf_->end();
          I != E; ++I)
-      CopyCoallesceInMBB(I, TryAgainList);
+      CopyCoallesceInMBB(I);
   } else {
     // Otherwise, join intervals in inner loops before other intervals.
     // Unfortunately we can't just iterate over loop hierarchy here because
@@ -1109,23 +1105,7 @@ void LiveIntervals::joinIntervals() {
 
     // Finally, join intervals in loop nest order.
     for (unsigned i = 0, e = MBBs.size(); i != e; ++i)
-      CopyCoallesceInMBB(MBBs[i].second, TryAgainList);
-  }
-
-  // Joining intervals can allow other intervals to be joined.  Iteratively join
-  // until we make no progress.
-  bool ProgressMade = true;
-  while (ProgressMade) {
-    ProgressMade = false;
-    
-    for (unsigned i = 0, e = TryAgainList.size(); i != e; ++i) {
-      CopyRec &TheCopy = TryAgainList[i];
-      if (TheCopy.MI &&
-          JoinCopy(TheCopy.MI, TheCopy.SrcReg, TheCopy.DstReg)) {
-        TheCopy.MI = 0;   // Mark this one as done.
-        ProgressMade = true;
-      }
-    }
+      CopyCoallesceInMBB(MBBs[i].second);
   }
   
   DEBUG(std::cerr << "*** Register mapping ***\n");
