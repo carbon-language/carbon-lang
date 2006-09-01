@@ -195,6 +195,8 @@ dag            { return DAG; }
 
 class          { return CLASS; }
 def            { return DEF; }
+defm           { return DEFM; }
+multiclass     { return MULTICLASS; }
 field          { return FIELD; }
 let            { return LET; }
 in             { return IN; }

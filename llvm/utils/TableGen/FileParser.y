@@ -22,8 +22,19 @@ int yyerror(const char *ErrorMsg);
 int yylex();
 
 namespace llvm {
+  struct MultiClass {
+    Record Rec;  // Placeholder for template args and Name.
+    std::vector<Record*> DefPrototypes;
+    
+    MultiClass(const std::string &Name) : Rec(Name) {}
+  };
 
+  
+static std::map<std::string, MultiClass*> MultiClasses;
+  
 extern int Filelineno;
+static MultiClass *CurMultiClass = 0;    // Set while parsing a multiclass.
+static std::string *CurDefmPrefix = 0;   // Set while parsing defm.
 static Record *CurRec = 0;
 static bool ParsingTemplateArgs = false;
 
@@ -45,8 +56,16 @@ static std::vector<std::vector<LetRecord> > LetStack;
 
 extern std::ostream &err();
 
+/// getActiveRec - If inside a def/class definition, return the def/class.
+/// Otherwise, if within a multidef, return it.
+static Record *getActiveRec() {
+  return CurRec ? CurRec : &CurMultiClass->Rec;
+}
+
 static void addValue(const RecordVal &RV) {
-  if (RecordVal *ERV = CurRec->getValue(RV.getName())) {
+  Record *TheRec = getActiveRec();
+  
+  if (RecordVal *ERV = TheRec->getValue(RV.getName())) {
     // The value already exists in the class, treat this as a set...
     if (ERV->setValue(RV.getValue())) {
       err() << "New definition of '" << RV.getName() << "' of type '"
@@ -55,7 +74,7 @@ static void addValue(const RecordVal &RV) {
       exit(1);
     }
   } else {
-    CurRec->addValue(RV);
+    TheRec->addValue(RV);
   }
 }
 
@@ -148,33 +167,33 @@ static void addSubClass(Record *SC, const std::vector<Init*> &TemplateArgs) {
   if (TArgs.size() < TemplateArgs.size()) {
     err() << "ERROR: More template args specified than expected!\n";
     exit(1);
-  } else {    // This class expects template arguments...
-    // Loop over all of the template arguments, setting them to the specified
-    // value or leaving them as the default if necessary.
-    for (unsigned i = 0, e = TArgs.size(); i != e; ++i) {
-      if (i < TemplateArgs.size()) {  // A value is specified for this temp-arg?
-        // Set it now.
-        setValue(TArgs[i], 0, TemplateArgs[i]);
+  }
+  
+  // Loop over all of the template arguments, setting them to the specified
+  // value or leaving them as the default if necessary.
+  for (unsigned i = 0, e = TArgs.size(); i != e; ++i) {
+    if (i < TemplateArgs.size()) {  // A value is specified for this temp-arg?
+      // Set it now.
+      setValue(TArgs[i], 0, TemplateArgs[i]);
 
-        // Resolve it next.
-        CurRec->resolveReferencesTo(CurRec->getValue(TArgs[i]));
-                                    
-        
-        // Now remove it.
-        CurRec->removeValue(TArgs[i]);
+      // Resolve it next.
+      CurRec->resolveReferencesTo(CurRec->getValue(TArgs[i]));
+                                  
+      
+      // Now remove it.
+      CurRec->removeValue(TArgs[i]);
 
-      } else if (!CurRec->getValue(TArgs[i])->getValue()->isComplete()) {
-        err() << "ERROR: Value not specified for template argument #"
-              << i << " (" << TArgs[i] << ") of subclass '" << SC->getName()
-              << "'!\n";
-        exit(1);
-      }
+    } else if (!CurRec->getValue(TArgs[i])->getValue()->isComplete()) {
+      err() << "ERROR: Value not specified for template argument #"
+            << i << " (" << TArgs[i] << ") of subclass '" << SC->getName()
+            << "'!\n";
+      exit(1);
     }
   }
 
   // Since everything went well, we can now set the "superclass" list for the
   // current record.
-  const std::vector<Record*> &SCs  = SC->getSuperClasses();
+  const std::vector<Record*> &SCs = SC->getSuperClasses();
   for (unsigned i = 0, e = SCs.size(); i != e; ++i)
     addSuperClass(SCs[i]);
   addSuperClass(SC);
@@ -194,18 +213,20 @@ using namespace llvm;
   std::vector<llvm::Init*>*   FieldList;
   std::vector<unsigned>*      BitList;
   llvm::Record*               Rec;
+  std::vector<llvm::Record*>* RecList;
   SubClassRefTy*              SubClassRef;
   std::vector<SubClassRefTy>* SubClassList;
   std::vector<std::pair<llvm::Init*, std::string> >* DagValueList;
 };
 
-%token INT BIT STRING BITS LIST CODE DAG CLASS DEF FIELD LET IN
+%token INT BIT STRING BITS LIST CODE DAG CLASS DEF MULTICLASS DEFM FIELD LET IN
 %token SHLTOK SRATOK SRLTOK STRCONCATTOK
 %token <IntVal>      INTVAL
 %token <StrVal>      ID VARNAME STRVAL CODEFRAGMENT
 
 %type <Ty>           Type
-%type <Rec>          ClassInst DefInst Object ObjectBody ClassID
+%type <Rec>          ClassInst DefInst MultiClassDef ObjectBody ClassID
+%type <RecList>      MultiClassBody
 
 %type <SubClassRef>  SubClassRef
 %type <SubClassList> ClassList ClassListNE
@@ -221,7 +242,18 @@ using namespace llvm;
 %%
 
 ClassID : ID {
-    $$ = Records.getClass(*$1);
+    if (CurDefmPrefix) {
+      // If CurDefmPrefix is set, we're parsing a defm, which means that this is
+      // actually the name of a multiclass.
+      MultiClass *MC = MultiClasses[*$1];
+      if (MC == 0) {
+        err() << "Couldn't find class '" << *$1 << "'!\n";
+        exit(1);
+      }
+      $$ = &MC->Rec;
+    } else {
+      $$ = Records.getClass(*$1);
+    }
     if ($$ == 0) {
       err() << "Couldn't find class '" << *$1 << "'!\n";
       exit(1);
@@ -260,6 +292,12 @@ IDValue : ID {
     const RecordVal *RV = CurRec->getValue(CurRec->getName()+":"+*$1);
     assert(RV && "Template arg doesn't exist??");
     $$ = new VarInit(CurRec->getName()+":"+*$1, RV->getType());
+  } else if (CurMultiClass &&
+      CurMultiClass->Rec.isTemplateArg(CurMultiClass->Rec.getName()+"::"+*$1)) {
+    std::string Name = CurMultiClass->Rec.getName()+"::"+*$1;
+    const RecordVal *RV = CurMultiClass->Rec.getValue(Name);
+    assert(RV && "Template arg doesn't exist??");
+    $$ = new VarInit(Name, RV->getType());
   } else if (Record *D = Records.getDef(*$1)) {
     $$ = new DefInit(D);
   } else {
@@ -467,8 +505,15 @@ ValueListNE : Value {
 
 Declaration : OptPrefix Type ID OptValue {
   std::string DecName = *$3;
-  if (ParsingTemplateArgs)
-    DecName = CurRec->getName() + ":" + DecName;
+  if (ParsingTemplateArgs) {
+    if (CurRec) {
+      DecName = CurRec->getName() + ":" + DecName;
+    } else {
+      assert(CurMultiClass);
+    }
+    if (CurMultiClass)
+      DecName = CurMultiClass->Rec.getName() + "::" + DecName;
+  }
 
   addValue(RecordVal(DecName, $2, $1));
   setValue(DecName, 0, $4);
@@ -510,10 +555,10 @@ ClassList : /*empty */ {
   };
 
 DeclListNE : Declaration {
-  CurRec->addTemplateArg(*$1);
+  getActiveRec()->addTemplateArg(*$1);
   delete $1;
 } | DeclListNE ',' Declaration {
-  CurRec->addTemplateArg(*$3);
+  getActiveRec()->addTemplateArg(*$3);
   delete $3;
 };
 
@@ -551,12 +596,25 @@ DefName : ObjectName {
   CurRec = new Record(*$1);
   delete $1;
   
-  // Ensure redefinition doesn't happen.
-  if (Records.getDef(CurRec->getName())) {
-    err() << "Def '" << CurRec->getName() << "' already defined!\n";
-    exit(1);
+  if (!CurMultiClass) {
+    // Top-level def definition.
+    
+    // Ensure redefinition doesn't happen.
+    if (Records.getDef(CurRec->getName())) {
+      err() << "def '" << CurRec->getName() << "' already defined!\n";
+      exit(1);
+    }
+    Records.addDef(CurRec);
+  } else {
+    // Otherwise, a def inside a multiclass, add it to the multiclass.
+    for (unsigned i = 0, e = CurMultiClass->DefPrototypes.size(); i != e; ++i)
+      if (CurMultiClass->DefPrototypes[i]->getName() == CurRec->getName()) {
+        err() << "def '" << CurRec->getName()
+              << "' already defined in this multiclass!\n";
+        exit(1);
+      }
+    CurMultiClass->DefPrototypes.push_back(CurRec);
   }
-  Records.addDef(CurRec);
 };
 
 ObjectBody : ClassList {
@@ -594,8 +652,112 @@ DefInst : DEF DefName ObjectBody {
   $$ = $3;
 };
 
+// MultiClassDef - A def instance specified inside a multiclass.
+MultiClassDef : DefInst {
+  $$ = $1;
+  // Copy the template arguments for the multiclass into the def.
+  const std::vector<std::string> &TArgs = CurMultiClass->Rec.getTemplateArgs();
+  
+  for (unsigned i = 0, e = TArgs.size(); i != e; ++i) {
+    const RecordVal *RV = CurMultiClass->Rec.getValue(TArgs[i]);
+    assert(RV && "Template arg doesn't exist?");
+    $$->addValue(*RV);
+  }
+};
 
-Object : ClassInst | DefInst;
+// MultiClassBody - Sequence of def's that are instantiated when a multiclass is
+// used.
+MultiClassBody : MultiClassDef {
+  $$ = new std::vector<Record*>();
+  $$->push_back($1);
+} | MultiClassBody MultiClassDef {
+  $$->push_back($2);  
+};
+
+MultiClassName : ID {
+  MultiClass *&MCE = MultiClasses[*$1];
+  if (MCE) {
+    err() << "multiclass '" << *$1 << "' already defined!\n";
+    exit(1);
+  }
+  MCE = CurMultiClass = new MultiClass(*$1);
+  delete $1;
+};
+
+// MultiClass - Multiple definitions.
+MultiClassInst : MULTICLASS MultiClassName {
+                                             ParsingTemplateArgs = true;
+                                           } OptTemplateArgList {
+                                             ParsingTemplateArgs = false;
+                                           }'{' MultiClassBody '}' {
+  CurMultiClass = 0;
+};
+
+// DefMInst - Instantiate a multiclass.
+DefMInst : DEFM ID { CurDefmPrefix = $2; } ':' SubClassRef ';' {
+  // To instantiate a multiclass, we need to first get the multiclass, then
+  // instantiate each def contained in the multiclass with the SubClassRef
+  // template parameters.
+  MultiClass *MC = MultiClasses[$5->first->getName()];
+  assert(MC && "Didn't lookup multiclass correctly?");
+  std::vector<Init*> &TemplateVals = *$5->second;
+  delete $5;
+  
+  // Verify that the correct number of template arguments were specified.
+  const std::vector<std::string> &TArgs = MC->Rec.getTemplateArgs();
+  if (TArgs.size() < TemplateVals.size()) {
+    err() << "ERROR: More template args specified than multiclass expects!\n";
+    exit(1);
+  }
+  
+  // Loop over all the def's in the multiclass, instantiating each one.
+  for (unsigned i = 0, e = MC->DefPrototypes.size(); i != e; ++i) {
+    Record *DefProto = MC->DefPrototypes[i];
+    
+    // Add the suffix to the defm name to get the new name.
+    assert(CurRec == 0 && "A def is current?");
+    CurRec = new Record(*$2 + DefProto->getName());
+    
+    addSubClass(DefProto, std::vector<Init*>());
+    
+    // Loop over all of the template arguments, setting them to the specified
+    // value or leaving them as the default if necessary.
+    for (unsigned i = 0, e = TArgs.size(); i != e; ++i) {
+      if (i < TemplateVals.size()) { // A value is specified for this temp-arg?
+        // Set it now.
+        setValue(TArgs[i], 0, TemplateVals[i]);
+        
+        // Resolve it next.
+        CurRec->resolveReferencesTo(CurRec->getValue(TArgs[i]));
+        
+        // Now remove it.
+        CurRec->removeValue(TArgs[i]);
+        
+      } else if (!CurRec->getValue(TArgs[i])->getValue()->isComplete()) {
+        err() << "ERROR: Value not specified for template argument #"
+        << i << " (" << TArgs[i] << ") of multiclassclass '"
+        << MC->Rec.getName() << "'!\n";
+        exit(1);
+      }
+    }
+    
+    // Ensure redefinition doesn't happen.
+    if (Records.getDef(CurRec->getName())) {
+      err() << "def '" << CurRec->getName() << "' already defined, "
+            << "instantiating defm '" << *$2 << "' with subdef '"
+            << DefProto->getName() << "'!\n";
+      exit(1);
+    }
+    Records.addDef(CurRec);
+    CurRec = 0;
+  }
+  
+  delete &TemplateVals;
+  delete $2;
+};
+
+Object : ClassInst {} | DefInst {};
+Object : MultiClassInst | DefMInst;
 
 LETItem : ID OptBitList '=' Value {
   LetStack.back().push_back(LetRecord(*$1, $2, $4));
@@ -617,7 +779,7 @@ Object : LETCommand '{' ObjectList '}' {
 
 ObjectList : Object {} | ObjectList Object {};
 
-File : ObjectList {};
+File : ObjectList;
 
 %%
 
