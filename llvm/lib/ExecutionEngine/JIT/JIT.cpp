@@ -312,7 +312,10 @@ void *JIT::getOrEmitGlobalVariable(const GlobalVariable *GV) {
 #ifdef __APPLE__
 #if MAC_OS_X_VERSION_MIN_REQUIRED >= MAC_OS_X_VERSION_10_4 && \
     __APPLE_CC__ >= 5330
-    // __dso_handle is resolved by the Mac OS X dynamic linker.
+    // Apple gcc defaults to -fuse-cxa-atexit (i.e. calls __cxa_atexit instead
+    // of atexit). It passes the address of linker generated symbol __dso_handle
+    // to the function.
+    // This configuration change happened at version 5330.
     if (GV->getName() == "__dso_handle")
       return (void*)&__dso_handle;
 #endif
