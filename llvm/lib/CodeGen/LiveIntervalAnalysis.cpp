@@ -879,7 +879,6 @@ static unsigned ComputeUltimateVN(unsigned VN,
   return ThisValNoAssignments[VN] = UltimateVN;
 }
 
-
 /// JoinIntervals - Attempt to join these two intervals.  On failure, this
 /// returns false.  Otherwise, if one of the intervals being joined is a
 /// physreg, this method always canonicalizes LHS to be it.  The output
@@ -893,7 +892,8 @@ bool LiveIntervals::JoinIntervals(LiveInterval &LHS, LiveInterval &RHS) {
   SmallVector<std::pair<unsigned,unsigned>, 16> ValueNumberInfo;
   LHSValNoAssignments.resize(LHS.getNumValNums(), -1);
   RHSValNoAssignments.resize(RHS.getNumValNums(), -1);
-  
+  ValueNumberInfo.reserve(LHS.getNumValNums() + RHS.getNumValNums());
+                          
   // Compute ultimate value numbers for the LHS and RHS values.
   if (RHS.containsOneValue()) {
     // Copies from a liveinterval with a single value are simple to handle and
@@ -950,8 +950,8 @@ bool LiveIntervals::JoinIntervals(LiveInterval &LHS, LiveInterval &RHS) {
     RHSValNoAssignments[0] = RHSValID;
     
   } else {
-    // Loop over the value numbers of the LHS, seeing if any are defined from the
-    // RHS.
+    // Loop over the value numbers of the LHS, seeing if any are defined from
+    // the RHS.
     SmallVector<int, 16> LHSValsDefinedFromRHS;
     LHSValsDefinedFromRHS.resize(LHS.getNumValNums(), -1);
     for (unsigned VN = 0, e = LHS.getNumValNums(); VN != e; ++VN) {
@@ -959,8 +959,8 @@ bool LiveIntervals::JoinIntervals(LiveInterval &LHS, LiveInterval &RHS) {
       if (ValSrcReg == 0)  // Src not defined by a copy?
         continue;
       
-      // DstReg is known to be a register in the LHS interval.  If the src is from
-      // the RHS interval, we can use its value #.
+      // DstReg is known to be a register in the LHS interval.  If the src is
+      // from the RHS interval, we can use its value #.
       if (rep(ValSrcReg) != RHS.reg)
         continue;
       
@@ -969,8 +969,8 @@ bool LiveIntervals::JoinIntervals(LiveInterval &LHS, LiveInterval &RHS) {
       LHSValsDefinedFromRHS[VN] = RHS.getLiveRangeContaining(ValInst-1)->ValId;
     }
     
-    // Loop over the value numbers of the RHS, seeing if any are defined from the
-    // LHS.
+    // Loop over the value numbers of the RHS, seeing if any are defined from
+    // the LHS.
     SmallVector<int, 16> RHSValsDefinedFromLHS;
     RHSValsDefinedFromLHS.resize(RHS.getNumValNums(), -1);
     for (unsigned VN = 0, e = RHS.getNumValNums(); VN != e; ++VN) {
@@ -978,8 +978,8 @@ bool LiveIntervals::JoinIntervals(LiveInterval &LHS, LiveInterval &RHS) {
       if (ValSrcReg == 0)  // Src not defined by a copy?
         continue;
       
-      // DstReg is known to be a register in the RHS interval.  If the src is from
-      // the LHS interval, we can use its value #.
+      // DstReg is known to be a register in the RHS interval.  If the src is
+      // from the LHS interval, we can use its value #.
       if (rep(ValSrcReg) != LHS.reg)
         continue;
       
