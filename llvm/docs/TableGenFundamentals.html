@@ -30,6 +30,7 @@
       <li><a href="#valuedef">Value definitions</a></li>
       <li><a href="#recordlet">'let' expressions</a></li>
       <li><a href="#templateargs">Class template arguments</a></li>
+      <li><a href="#multiclass">Multiclass definitions and instances</a></li>
     </ol></li>
     <li><a href="#filescope">File scope entities</a>
     <ol>
@@ -101,6 +102,10 @@ which is used to represent floating point instructions in the X86 backend).
 TableGen keeps track of all of the classes that are used to build up a
 definition, so the backend can find all definitions of a particular class, such
 as "Instruction".</p>
+
+<p><b>TableGen multiclasses</b> are groups of abstract records that are
+instantiated all at once.  Each instantiation can result in multiple TableGen
+definitions.</p>
 
 </div>
 
@@ -463,16 +468,16 @@ running <tt>tblgen</tt> on the example prints the following definitions:</p>
 
 <pre>
 <b>def</b> bork {      <i>// Value</i>
-  bit isMod = 1;
-  bit isRef = 0;
+  <b>bit</b> isMod = 1;
+  <b>bit</b> isRef = 0;
 }
 <b>def</b> hork {      <i>// Value</i>
-  bit isMod = 1;
-  bit isRef = 1;
+  <b>bit</b> isMod = 1;
+  <b>bit</b> isRef = 1;
 }
 <b>def</b> zork {      <i>// Value</i>
-  bit isMod = 0;
-  bit isRef = 1;
+  <b>bit</b> isMod = 0;
+  <b>bit</b> isRef = 1;
 }
 </pre>
 
@@ -480,6 +485,78 @@ running <tt>tblgen</tt> on the example prints the following definitions:</p>
 piece of information that was requested by the designer of the "Value" class.
 For more realistic examples, please see existing users of TableGen, such as the
 X86 backend.</p>
+
+</div>
+
+<!-- -------------------------------------------------------------------------->
+<div class="doc_subsubsection">
+  <a name="multiclass">Multiclass definitions and instances</a>
+</div>
+
+<div class="doc_text">
+
+<p>
+While classes with template arguments are a good way to factor commonality
+between two instances of a definition, multiclasses allow a convenient notation
+for defining multiple definitions at once (instances of implicitly constructed
+classes).  For example, consider an 3-address instruction set whose instructions
+come in two forms: "reg = reg op reg" and "reg = reg op imm" (e.g. SPARC). In
+this case, you'd like to specify in one place that this commonality exists, then
+in a separate place indicate what all the ops are.
+</p>
+
+<p>
+Here is an example TableGen fragment that shows this idea:
+</p>
+
+<pre>
+<b>def</b> ops;
+<b>def</b> GPR;
+<b>def</b> Imm;
+<b>class</b> inst&lt;<b>int</b> opc, <b>string</b> asmstr, <b>dag</b> operandlist&gt;;
+
+<b>multiclass</b> ri_inst&lt;<b>int</b> opc, <b>string</b> asmstr&gt; {
+  def _rr : inst&lt;opc, !strconcat(asmstr, " $dst, $src1, $src2"),
+                 (ops GPR:$dst, GPR:$src1, GPR:$src2)&gt;;
+  def _ri : inst&lt;opc, !strconcat(asmstr, " $dst, $src1, $src2"),
+                 (ops GPR:$dst, GPR:$src1, Imm:$src2)&gt;;
+}
+
+// Instantiations of the ri_inst multiclass.
+<b>defm</b> ADD : ri_inst&lt;0b111, "add"&gt;;
+<b>defm</b> SUB : ri_inst&lt;0b101, "sub"&gt;;
+<b>defm</b> MUL : ri_inst&lt;0b100, "mul"&gt;;
+...
+</pre>
+
+<p>The name of the resuntant definitions has the multidef fragment names
+   appended to them, so this defines ADD_rr, ADD_ri, SUB_rr, etc.  Using a
+   multiclass this way is exactly equivalent to instantiating the
+   classes multiple times yourself, e.g. by writing:</p>
+   
+<pre>
+<b>def</b> ops;
+<b>def</b> GPR;
+<b>def</b> Imm;
+<b>class</b> inst&lt;<b>int</b> opc, <b>string</b> asmstr, <b>dag</b> operandlist&gt;;
+
+<b>class</b> rrinst&lt;<b>int</b> opc, <b>string</b> asmstr&gt;
+  : inst&lt;opc, !strconcat(asmstr, " $dst, $src1, $src2"),
+         (ops GPR:$dst, GPR:$src1, GPR:$src2)&gt;;
+
+<b>class</b> riinst&lt;<b>int</b> opc, <b>string</b> asmstr&gt;
+  : inst&lt;opc, !strconcat(asmstr, " $dst, $src1, $src2"),
+         (ops GPR:$dst, GPR:$src1, Imm:$src2)&gt;;
+
+// Instantiations of the ri_inst multiclass.
+<b>def</b> ADD_rr : rrinst&lt;0b111, "add"&gt;;
+<b>def</b> ADD_ri : riinst&lt;0b111, "add"&gt;;
+<b>def</b> SUB_rr : rrinst&lt;0b101, "sub"&gt;;
+<b>def</b> SUB_ri : riinst&lt;0b101, "sub"&gt;;
+<b>def</b> MUL_rr : rrinst&lt;0b100, "mul"&gt;;
+<b>def</b> MUL_ri : riinst&lt;0b100, "mul"&gt;;
+...
+</pre>
 
 </div>
 
