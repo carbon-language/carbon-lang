@@ -32,7 +32,8 @@ using namespace llvm;
 
 #ifdef __APPLE__ 
 #include <AvailabilityMacros.h>
-#if MAC_OS_X_VERSION_MIN_REQUIRED > MAC_OS_X_VERSION_10_4
+#if MAC_OS_X_VERSION_MIN_REQUIRED >= MAC_OS_X_VERSION_10_4 && \
+    __APPLE_CC__ >= 5330
 // __dso_handle is resolved by Mac OS X dynamic linker.
 extern void *__dso_handle __attribute__ ((__visibility__ ("hidden")));
 #endif
@@ -309,7 +310,8 @@ void *JIT::getOrEmitGlobalVariable(const GlobalVariable *GV) {
   // If the global is external, just remember the address.
   if (GV->isExternal()) {
 #ifdef __APPLE__
-#if MAC_OS_X_VERSION_MIN_REQUIRED > MAC_OS_X_VERSION_10_4
+#if MAC_OS_X_VERSION_MIN_REQUIRED >= MAC_OS_X_VERSION_10_4 && \
+    __APPLE_CC__ >= 5330
     // __dso_handle is resolved by the Mac OS X dynamic linker.
     if (GV->getName() == "__dso_handle")
       return (void*)&__dso_handle;
