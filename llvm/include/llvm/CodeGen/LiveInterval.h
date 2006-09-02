@@ -166,6 +166,13 @@ namespace llvm {
     /// used with an unknown definition value.
     void MergeInClobberRanges(const LiveInterval &Clobbers);
 
+    
+    /// MergeRangesInAsValue - Merge all of the intervals in RHS into this live
+    /// interval as the specified value number.  The LiveRanges in RHS are
+    /// allowed to overlap with LiveRanges in the current interval, but only if
+    /// the overlapping LiveRanges have the specified value number.
+    void MergeRangesInAsValue(const LiveInterval &RHS, unsigned LHSValNo);
+    
     bool empty() const { return ranges.empty(); }
 
     /// beginNumber - Return the lowest numbered slot covered by interval.
@@ -232,7 +239,6 @@ namespace llvm {
     void join(LiveInterval &Other, int *ValNoAssignments,
               int *RHSValNoAssignments,
               SmallVector<std::pair<unsigned,unsigned>,16> &NewValueNumberInfo);
-
 
     /// removeRange - Remove the specified range from this interval.  Note that
     /// the range must already be in this interval in its entirety.
