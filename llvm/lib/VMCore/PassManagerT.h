@@ -670,7 +670,9 @@ private:
     for (std::vector<Pass*>::iterator I = DeadPass.begin(),E = DeadPass.end();
           I != E; ++I) {
       PMDebug::PrintPassInformation(getDepth()+1, "Freeing Pass", *I, M);
+      if (TheTimeInfo) TheTimeInfo->passStarted(*I);
       (*I)->releaseMemory();
+      if (TheTimeInfo) TheTimeInfo->passEnded(*I);
     }
     
     for (std::map<AnalysisID, Pass*>::iterator I = CurrentAnalyses.begin();
