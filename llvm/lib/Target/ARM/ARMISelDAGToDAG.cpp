@@ -89,6 +89,8 @@ static ARMCC::CondCodes DAGCCToARMCC(ISD::CondCode CC) {
   default: assert(0 && "Unknown condition code!");
   case ISD::SETNE:  return ARMCC::NE;
   case ISD::SETEQ:  return ARMCC::EQ;
+  case ISD::SETGE:  return ARMCC::GE;
+  case ISD::SETUGE: return ARMCC::CS;
   }
 }
 
