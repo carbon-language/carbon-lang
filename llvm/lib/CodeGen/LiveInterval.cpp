@@ -351,6 +351,23 @@ void LiveInterval::join(LiveInterval &Other, int *LHSValNoAssignments,
   weight += Other.weight;
 }
 
+/// MergeRangesInAsValue - Merge all of the intervals in RHS into this live
+/// interval as the specified value number.  The LiveRanges in RHS are
+/// allowed to overlap with LiveRanges in the current interval, but only if
+/// the overlapping LiveRanges have the specified value number.
+void LiveInterval::MergeRangesInAsValue(const LiveInterval &RHS, 
+                                        unsigned LHSValNo) {
+  // TODO: Make this more efficient.
+  iterator InsertPos = begin();
+  for (const_iterator I = RHS.begin(), E = RHS.end(); I != E; ++I) {
+    // Map the ValId in the other live range to the current live range.
+    LiveRange Tmp = *I;
+    Tmp.ValId = LHSValNo;
+    InsertPos = addRangeFrom(Tmp, InsertPos);
+  }
+}
+
+
 /// MergeInClobberRanges - For any live ranges that are not defined in the
 /// current interval, but are defined in the Clobbers interval, mark them
 /// used with an unknown definition value.

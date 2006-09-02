@@ -883,6 +883,140 @@ static unsigned ComputeUltimateVN(unsigned VN,
   return ThisValNoAssignments[VN] = UltimateVN;
 }
 
+Statistic<> A("x", "a");
+Statistic<> B("x", "b");
+Statistic<> C("x", "c");
+Statistic<> D("x", "d");
+
+
+static bool InVector(unsigned Val, const SmallVector<unsigned, 8> &V) {
+  return std::find(V.begin(), V.end(), Val) != V.end();
+}
+
+/// SimpleJoin - Attempt to joint the specified interval into this one. The
+/// caller of this method must guarantee that the RHS only contains a single
+/// value number and that the RHS is not defined by a copy from this
+/// interval.  This returns false if the intervals are not joinable, or it
+/// joins them and returns true.
+bool LiveIntervals::SimpleJoin(LiveInterval &LHS, LiveInterval &RHS) {
+  assert(RHS.containsOneValue());
+  
+  // Some number (potentially more than one) value numbers in the current
+  // interval may be defined as copies from the RHS.  Scan the overlapping
+  // portions of the LHS and RHS, keeping track of this and looking for
+  // overlapping live ranges that are NOT defined as copies.  If these exist, we
+  // cannot coallesce.
+  
+  LiveInterval::iterator LHSIt = LHS.begin(), LHSEnd = LHS.end();
+  LiveInterval::iterator RHSIt = RHS.begin(), RHSEnd = RHS.end();
+  
+  if (LHSIt->start < RHSIt->start) {
+    LHSIt = std::upper_bound(LHSIt, LHSEnd, RHSIt->start);
+    if (LHSIt != LHS.begin()) --LHSIt;
+  } else if (RHSIt->start < LHSIt->start) {
+    RHSIt = std::upper_bound(RHSIt, RHSEnd, LHSIt->start);
+    if (RHSIt != RHS.begin()) --RHSIt;
+  }
+  
+  SmallVector<unsigned, 8> EliminatedLHSVals;
+  
+  while (1) {
+    // Determine if these live intervals overlap.
+    bool Overlaps = false;
+    if (LHSIt->start <= RHSIt->start)
+      Overlaps = LHSIt->end > RHSIt->start;
+    else
+      Overlaps = RHSIt->end > LHSIt->start;
+    
+    // If the live intervals overlap, there are two interesting cases: if the
+    // LHS interval is defined by a copy from the RHS, it's ok and we record
+    // that the LHS value # is the same as the RHS.  If it's not, then we cannot
+    // coallesce these live ranges and we bail out.
+    if (Overlaps) {
+      // If we haven't already recorded that this value # is safe, check it.
+      if (!InVector(LHSIt->ValId, EliminatedLHSVals)) {
+        // Copy from the RHS?
+        unsigned SrcReg = LHS.getSrcRegForValNum(LHSIt->ValId);
+        if (rep(SrcReg) != RHS.reg)
+          return false;    // Nope, bail out.
+        
+        EliminatedLHSVals.push_back(LHSIt->ValId);
+      }
+      
+      // We know this entire LHS live range is okay, so skip it now.
+      if (++LHSIt == LHSEnd) break;
+      continue;
+    }
+    
+    if (LHSIt->end < RHSIt->end) {
+      if (++LHSIt == LHSEnd) break;
+    } else {
+      // One interesting case to check here.  It's possible that we have
+      // something like "X3 = Y" which defines a new value number in the LHS,
+      // and is the last use of this liverange of the RHS.  In this case, we
+      // want to notice this copy (so that it gets coallesced away) even though
+      // the live ranges don't actually overlap.
+      if (LHSIt->start == RHSIt->end) {
+        if (InVector(LHSIt->ValId, EliminatedLHSVals)) {
+          // We already know that this value number is going to be merged in
+          // if coallescing succeeds.  Just skip the liverange.
+          if (++LHSIt == LHSEnd) break;
+        } else {
+          // Otherwise, if this is a copy from the RHS, mark it as being merged
+          // in.
+          if (rep(LHS.getSrcRegForValNum(LHSIt->ValId)) == RHS.reg) {
+            EliminatedLHSVals.push_back(LHSIt->ValId);
+
+            // We know this entire LHS live range is okay, so skip it now.
+            if (++LHSIt == LHSEnd) break;
+          }
+        }
+      }
+      
+      if (++RHSIt == RHSEnd) break;
+    }
+  }
+  
+  // If we got here, we know that the coallescing will be successful and that
+  // the value numbers in EliminatedLHSVals will all be merged together.  Since
+  // the most common case is that EliminatedLHSVals has a single number, we
+  // optimize for it: if there is more than one value, we merge them all into
+  // the lowest numbered one, then handle the interval as if we were merging
+  // with one value number.
+  unsigned LHSValNo;
+  if (EliminatedLHSVals.size() > 1) {
+    // Loop through all the equal value numbers merging them into the smallest
+    // one.
+    unsigned Smallest = EliminatedLHSVals[0];
+    for (unsigned i = 1, e = EliminatedLHSVals.size(); i != e; ++i) {
+      if (EliminatedLHSVals[i] < Smallest) {
+        // Merge the current notion of the smallest into the smaller one.
+        LHS.MergeValueNumberInto(Smallest, EliminatedLHSVals[i]);
+        Smallest = EliminatedLHSVals[i];
+      } else {
+        // Merge into the smallest.
+        LHS.MergeValueNumberInto(EliminatedLHSVals[i], Smallest);
+      }
+    }
+    LHSValNo = Smallest;
+  } else {
+    assert(!EliminatedLHSVals.empty() && "No copies from the RHS?");
+    LHSValNo = EliminatedLHSVals[0];
+  }
+  
+  // Okay, now that there is a single LHS value number that we're merging the
+  // RHS into, update the value number info for the LHS to indicate that the
+  // value number is defined where the RHS value number was.
+  LHS.setValueNumberInfo(LHSValNo, RHS.getValNumInfo(0));
+  
+  // Okay, the final step is to loop over the RHS live intervals, adding them to
+  // the LHS.
+  LHS.MergeRangesInAsValue(RHS, LHSValNo);
+  LHS.weight += RHS.weight;
+  
+  return true;
+}
+
 /// JoinIntervals - Attempt to join these two intervals.  On failure, this
 /// returns false.  Otherwise, if one of the intervals being joined is a
 /// physreg, this method always canonicalizes LHS to be it.  The output
@@ -894,9 +1028,6 @@ bool LiveIntervals::JoinIntervals(LiveInterval &LHS, LiveInterval &RHS) {
   SmallVector<int, 16> LHSValNoAssignments;
   SmallVector<int, 16> RHSValNoAssignments;
   SmallVector<std::pair<unsigned,unsigned>, 16> ValueNumberInfo;
-  LHSValNoAssignments.resize(LHS.getNumValNums(), -1);
-  RHSValNoAssignments.resize(RHS.getNumValNums(), -1);
-  ValueNumberInfo.reserve(LHS.getNumValNums() + RHS.getNumValNums());
                           
   // Compute ultimate value numbers for the LHS and RHS values.
   if (RHS.containsOneValue()) {
@@ -907,19 +1038,27 @@ bool LiveIntervals::JoinIntervals(LiveInterval &LHS, LiveInterval &RHS) {
     // Find out if the RHS is defined as a copy from some value in the LHS.
     int RHSValID = -1;
     std::pair<unsigned,unsigned> RHSValNoInfo;
-    if (unsigned RHSSrcReg = RHS.getSrcRegForValNum(0)) {
-      if (rep(RHSSrcReg) != LHS.reg) {
-        RHSValNoInfo = RHS.getValNumInfo(0);
+    unsigned RHSSrcReg = RHS.getSrcRegForValNum(0);
+    if ((RHSSrcReg == 0 || rep(RHSSrcReg) != LHS.reg)) {
+      // If RHS is not defined as a copy from the LHS, we can use simpler and
+      // faster checks to see if the live ranges are coallescable.  This joiner
+      // can't swap the LHS/RHS intervals though.
+      if (!MRegisterInfo::isPhysicalRegister(RHS.reg)) {
+        return SimpleJoin(LHS, RHS);
       } else {
-        // It was defined as a copy from the LHS, find out what value # it is.
-        unsigned ValInst = RHS.getInstForValNum(0);
-        RHSValID = LHS.getLiveRangeContaining(ValInst-1)->ValId;
-        RHSValNoInfo = LHS.getValNumInfo(RHSValID);
+        RHSValNoInfo = RHS.getValNumInfo(0);
       }
+      ++A;
     } else {
-      RHSValNoInfo = RHS.getValNumInfo(0);
+      // It was defined as a copy from the LHS, find out what value # it is.
+      unsigned ValInst = RHS.getInstForValNum(0);
+      RHSValID = LHS.getLiveRangeContaining(ValInst-1)->ValId;
+      RHSValNoInfo = LHS.getValNumInfo(RHSValID);
+      ++B;
     }
     
+    LHSValNoAssignments.resize(LHS.getNumValNums(), -1);
+    RHSValNoAssignments.resize(RHS.getNumValNums(), -1);
     ValueNumberInfo.resize(LHS.getNumValNums());
     
     // Okay, *all* of the values in LHS that are defined as a copy from RHS
@@ -954,6 +1093,7 @@ bool LiveIntervals::JoinIntervals(LiveInterval &LHS, LiveInterval &RHS) {
     RHSValNoAssignments[0] = RHSValID;
     
   } else {
+    ++D;
     // Loop over the value numbers of the LHS, seeing if any are defined from
     // the RHS.
     SmallVector<int, 16> LHSValsDefinedFromRHS;
@@ -991,6 +1131,10 @@ bool LiveIntervals::JoinIntervals(LiveInterval &LHS, LiveInterval &RHS) {
       unsigned ValInst = RHS.getInstForValNum(VN);
       RHSValsDefinedFromLHS[VN] = LHS.getLiveRangeContaining(ValInst-1)->ValId;
     }
+    
+    LHSValNoAssignments.resize(LHS.getNumValNums(), -1);
+    RHSValNoAssignments.resize(RHS.getNumValNums(), -1);
+    ValueNumberInfo.reserve(LHS.getNumValNums() + RHS.getNumValNums());
     
     for (unsigned VN = 0, e = LHS.getNumValNums(); VN != e; ++VN) {
       if (LHSValNoAssignments[VN] >= 0 || LHS.getInstForValNum(VN) == ~2U) 
