@@ -53,6 +53,17 @@ namespace llvm {
     std::vector<bool> allocatableRegs_;
 
   public:
+    struct CopyRec {
+      MachineInstr *MI;
+      unsigned SrcReg, DstReg;
+    };
+    CopyRec getCopyRec(MachineInstr *MI, unsigned SrcReg, unsigned DstReg) {
+      CopyRec R;
+      R.MI = MI;
+      R.SrcReg = SrcReg;
+      R.DstReg = DstReg;
+      return R;
+    }
     struct InstrSlots {
       enum {
         LOAD  = 0,
@@ -150,9 +161,10 @@ namespace llvm {
     /// joinIntervals - join compatible live intervals
     void joinIntervals();
 
-    /// CopyCoallesceInMBB - Coallsece copies in the specified MBB.
-    void CopyCoallesceInMBB(MachineBasicBlock *MBB);
-
+    /// CopyCoallesceInMBB - Coallsece copies in the specified MBB, putting
+    /// copies that cannot yet be coallesced into the "TryAgain" list.
+    void CopyCoallesceInMBB(MachineBasicBlock *MBB,
+                            std::vector<CopyRec> &TryAgain);
     /// JoinCopy - Attempt to join intervals corresponding to SrcReg/DstReg,
     /// which are the src/dst of the copy instruction CopyMI.  This returns true
     /// if the copy was successfully coallesced away, or if it is never possible
