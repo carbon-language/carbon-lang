@@ -168,6 +168,13 @@ namespace llvm {
     /// below to update aliases.
     bool JoinIntervals(LiveInterval &LHS, LiveInterval &RHS);
     
+    /// SimpleJoin - Attempt to joint the specified interval into this one. The
+    /// caller of this method must guarantee that the RHS only contains a single
+    /// value number and that the RHS is not defined by a copy from this
+    /// interval.  This returns false if the intervals are not joinable, or it
+    /// joins them and returns true.
+    bool SimpleJoin(LiveInterval &LHS, LiveInterval &RHS);
+    
     /// handleRegisterDef - update intervals for a register def
     /// (calls handlePhysicalRegisterDef and
     /// handleVirtualRegisterDef)
