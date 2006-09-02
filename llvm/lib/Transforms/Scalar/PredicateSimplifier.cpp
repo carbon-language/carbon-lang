@@ -28,9 +28,6 @@
 //
 //===------------------------------------------------------------------===//
 
-// TODO:
-// * Check handling of NAN in floating point types
-
 #define DEBUG_TYPE "predsimplify"
 #include "llvm/Transforms/Scalar.h"
 #include "llvm/Constants.h"
@@ -112,14 +109,22 @@ namespace {
     }
 
     void addEqual(Value *V1, Value *V2) {
+      // If %x = 0. and %y = -0., seteq %x, %y is true, but
+      // copysign(%x) is not the same as copysign(%y).
+      if (V2->getType()->isFloatingPoint()) return;
+
       order(V1, V2);
       if (isa<Constant>(V2)) return; // refuse to set false == true.
 
+      DEBUG(std::cerr << "equal: " << *V1 << " and " << *V2 << "\n");
       union_find.unionSets(V1, V2);
       addImpliedProperties(EQ, V1, V2);
     }
 
     void addNotEqual(Value *V1, Value *V2) {
+      // If %x = NAN then seteq %x, %x is false.
+      if (V2->getType()->isFloatingPoint()) return;
+
       DEBUG(std::cerr << "not equal: " << *V1 << " and " << *V2 << "\n");
       if (findProperty(NE, V1, V2) != Properties.end())
         return; // found.
@@ -180,14 +185,8 @@ namespace {
     struct Property {
       Property(Ops opcode, Value *v1, Value *v2)
         : Opcode(opcode), V1(v1), V2(v2)
-      { assert(opcode != EQ && "Equality belongs in the synonym set,"
+      { assert(opcode != EQ && "Equality belongs in the synonym set, "
                "not a property."); }
-
-      bool operator<(const Property &rhs) const {
-        if (Opcode != rhs.Opcode) return Opcode < rhs.Opcode;
-        if (V1 != rhs.V1) return V1 < rhs.V1;
-        return V2 < rhs.V2;
-      }
 
       Ops Opcode;
       Value *V1, *V2;
@@ -208,7 +207,7 @@ namespace {
       }
     }
 
-    // Finds the properties implied by a synonym and adds them too.
+    // Finds the properties implied by a equivalence and adds them too.
     // Example: ("seteq %a, %b", true,  EQ) --> (%a, %b, EQ)
     //          ("seteq %a, %b", false, EQ) --> (%a, %b, NE)
     void addImpliedProperties(Ops Opcode, Value *V1, Value *V2) {
@@ -267,13 +266,25 @@ namespace {
         default:
           break;
         }
+      } else if (SelectInst *SI = dyn_cast<SelectInst>(V2)) {
+        if (Opcode != EQ && Opcode != NE) return;
+
+        ConstantBool *True  = (Opcode==EQ) ? ConstantBool::True
+                                           : ConstantBool::False,
+                     *False = (Opcode==EQ) ? ConstantBool::False
+                                           : ConstantBool::True;
+
+        if (V1 == SI->getTrueValue())
+          addEqual(SI->getCondition(), True);
+        else if (V1 == SI->getFalseValue())
+          addEqual(SI->getCondition(), False);
+        else if (Opcode == EQ)
+          assert("Result of select not equal to either value.");
       }
     }
 
-    std::map<Value *, unsigned> SynonymMap;
-    std::vector<Value *> Synonyms;
-
   public:
+#ifdef DEBUG
     void debug(std::ostream &os) const {
       for (EquivalenceClasses<Value*>::iterator I = union_find.begin(),
            E = union_find.end(); I != E; ++I) {
@@ -284,6 +295,7 @@ namespace {
         std::cerr << "\n--\n";
       }
     }
+#endif
 
     std::vector<Property> Properties;
   };
@@ -351,13 +363,13 @@ void PredicateSimplifier::getAnalysisUsage(AnalysisUsage &AU) const {
 
 // resolve catches cases addProperty won't because it wasn't used as a
 // condition in the branch, and that visit won't, because the instruction
-// was defined outside of the range that the properties apply to.
+// was defined outside of the scope that the properties apply to.
 Value *PredicateSimplifier::resolve(SetCondInst *SCI,
                                     const PropertySet &KP) {
   // Attempt to resolve the SetCondInst to a boolean.
 
-  Value *SCI0 = SCI->getOperand(0),
-        *SCI1 = SCI->getOperand(1);
+  Value *SCI0 = resolve(SCI->getOperand(0), KP),
+        *SCI1 = resolve(SCI->getOperand(1), KP);
   PropertySet::ConstPropertyIterator NE =
                    KP.findProperty(PropertySet::NE, SCI0, SCI1);
 
@@ -377,9 +389,6 @@ Value *PredicateSimplifier::resolve(SetCondInst *SCI,
         break;
     }
   }
-
-  SCI0 = KP.canonicalize(SCI0);
-  SCI1 = KP.canonicalize(SCI1);
 
   ConstantIntegral *CI1 = dyn_cast<ConstantIntegral>(SCI0),
                    *CI2 = dyn_cast<ConstantIntegral>(SCI1);
@@ -445,6 +454,8 @@ Value *PredicateSimplifier::resolve(Value *V, const PropertySet &KP) {
 
   V = KP.canonicalize(V);
 
+  DEBUG(std::cerr << "peering into " << *V << "\n");
+
   if (BinaryOperator *BO = dyn_cast<BinaryOperator>(V))
     return resolve(BO, KP);
   else if (SelectInst *SI = dyn_cast<SelectInst>(V))
@@ -466,8 +477,19 @@ void PredicateSimplifier::visit(Instruction *I, DominatorTree::Node *DTNode,
   DEBUG(std::cerr << "Considering instruction " << *I << "\n");
   DEBUG(KnownProperties.debug(std::cerr));
 
-  // Substitute values known to be equal.
-  for (unsigned i = 0, E = I->getNumOperands(); i != E; ++i) {
+  // Try to replace whole instruction.
+  Value *V = resolve(I, KnownProperties);
+  assert(V && "resolve not supposed to return NULL.");
+  if (V != I) {
+    modified = true;
+    ++NumInstruction;
+    I->replaceAllUsesWith(V);
+    I->eraseFromParent();
+    return;
+  }
+
+  // Try to substitute operands.
+  for (unsigned i = 0, e = I->getNumOperands(); i != e; ++i) {
     Value *Oper = I->getOperand(i);
     Value *V = resolve(Oper, KnownProperties);
     assert(V && "resolve not supposed to return NULL.");
@@ -478,15 +500,6 @@ void PredicateSimplifier::visit(Instruction *I, DominatorTree::Node *DTNode,
       I->setOperand(i, V);
       DEBUG(std::cerr << "into " << *I);
     }
-  }
-
-  Value *V = resolve(I, KnownProperties);
-  assert(V && "resolve not supposed to return NULL.");
-  if (V != I) {
-    modified = true;
-    ++NumInstruction;
-    I->replaceAllUsesWith(V);
-    I->eraseFromParent();
   }
 
   if (TerminatorInst *TI = dyn_cast<TerminatorInst>(I))
