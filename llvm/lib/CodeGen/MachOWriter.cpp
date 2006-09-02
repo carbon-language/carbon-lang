@@ -197,7 +197,7 @@ void MachOWriter::AddSymbolToSection(MachOSection &Sec, GlobalVariable *GV) {
   // desired section alignment, which must be at least as much as required by
   // this symbol.
   if (Align) {
-    Sec.align = std::max(Sec.align, Align);
+    Sec.align = std::max(unsigned(Sec.align), Align);
     Sec.size = (Sec.size + Align - 1) & ~(Align-1);
   }
   // Record the offset of the symbol, and then allocate space for it.
