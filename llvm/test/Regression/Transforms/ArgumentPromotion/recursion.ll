@@ -5,7 +5,8 @@ implementation   ; Functions:
 
 internal int %foo(int* %x) {
 entry:
-        %tmp.foo = load int* %x
+        %tmp = load int* %x
+        %tmp.foo = call int %foo(int *%x)
         ret int %tmp.foo
 }
 
