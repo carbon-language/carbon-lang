@@ -222,8 +222,8 @@ int main(int argc, char **argv) {
 
     // Ask the target to add backend passes as necessary.
     if (Target.addPassesToEmitFile(Passes, *Out, FileType, Fast)) {
-      std::cerr << argv[0] << ": target '" << Target.getName()
-                << "' does not support generation of this file type!\n";
+      std::cerr << argv[0] << ": target does not support generation of this"
+                << " file type!\n";
       if (Out != &std::cout) delete Out;
       // And the Out file is empty and useless, so remove it now.
       sys::Path(OutputFilename).eraseFromDisk();
