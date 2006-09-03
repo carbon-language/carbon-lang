@@ -415,3 +415,39 @@ void LiveVariables::instructionChanged(MachineInstr *OldMI,
     RegistersDead.erase(OldMI);
   }
 }
+
+/// removeVirtualRegistersKilled - Remove all killed info for the specified
+/// instruction.
+void LiveVariables::removeVirtualRegistersKilled(MachineInstr *MI) {
+  std::map<MachineInstr*, std::vector<unsigned> >::iterator I = 
+    RegistersKilled.find(MI);
+  if (I == RegistersKilled.end()) return;
+
+  std::vector<unsigned> &Regs = I->second;
+  for (unsigned i = 0, e = Regs.size(); i != e; ++i) {
+    if (MRegisterInfo::isVirtualRegister(Regs[i])) {
+      bool removed = getVarInfo(Regs[i]).removeKill(MI);
+      assert(removed && "kill not in register's VarInfo?");
+    }
+  }
+  RegistersKilled.erase(I);
+}
+
+/// removeVirtualRegistersDead - Remove all of the dead registers for the
+/// specified instruction from the live variable information.
+void LiveVariables::removeVirtualRegistersDead(MachineInstr *MI) {
+  std::map<MachineInstr*, std::vector<unsigned> >::iterator I = 
+    RegistersDead.find(MI);
+  if (I == RegistersDead.end()) return;
+  
+  std::vector<unsigned> &Regs = I->second;
+  for (unsigned i = 0, e = Regs.size(); i != e; ++i) {
+    if (MRegisterInfo::isVirtualRegister(Regs[i])) {
+      bool removed = getVarInfo(Regs[i]).removeKill(MI);
+      assert(removed && "kill not in register's VarInfo?");
+    }
+  }
+  RegistersDead.erase(I);
+}
+
+
