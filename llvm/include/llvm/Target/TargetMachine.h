@@ -62,18 +62,10 @@ namespace CodeModel {
 /// through this interface.
 ///
 class TargetMachine {
-  const std::string Name;
-
   TargetMachine(const TargetMachine&);   // DO NOT IMPLEMENT
   void operator=(const TargetMachine&);  // DO NOT IMPLEMENT
-protected: // Can only create subclasses...
-  TargetMachine(const std::string &name) : Name(name) { };
-
-  /// This constructor is used for targets that support arbitrary TargetData
-  /// layouts, like the C backend.  It initializes the TargetData to match that
-  /// of the specified module.
-  ///
-  TargetMachine(const std::string &name, const Module &M);
+protected: // Can only create subclasses.
+  TargetMachine() { }
 
   /// getSubtargetImpl - virtual method implemented by subclasses that returns
   /// a reference to that target's TargetSubtarget-derived member variable.
@@ -93,9 +85,6 @@ public:
   /// execution on the current host.  If a value of 0 is returned, the target
   /// will not be used unless an explicit -march option is used.
   static unsigned getJITMatchQuality() { return 0; }
-
-
-  const std::string &getName() const { return Name; }
 
   // Interfaces to the major aspects of target machine information:
   // -- Instruction opcode and operand information
@@ -122,7 +111,7 @@ public:
   /// not, return null.  This is kept separate from RegInfo until RegInfo has
   /// details of graph coloring register allocation removed from it.
   ///
-  virtual const MRegisterInfo*          getRegisterInfo() const { return 0; }
+  virtual const MRegisterInfo *getRegisterInfo() const { return 0; }
 
   /// getJITInfo - If this target supports a JIT, return information for it,
   /// otherwise return null.
