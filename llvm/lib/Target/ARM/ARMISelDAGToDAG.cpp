@@ -91,6 +91,7 @@ static ARMCC::CondCodes DAGCCToARMCC(ISD::CondCode CC) {
   case ISD::SETEQ:  return ARMCC::EQ;
   case ISD::SETGE:  return ARMCC::GE;
   case ISD::SETUGE: return ARMCC::CS;
+  case ISD::SETULT: return ARMCC::CC;
   }
 }
 
