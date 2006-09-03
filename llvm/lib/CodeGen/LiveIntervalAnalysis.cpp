@@ -161,7 +161,7 @@ bool LiveIntervals::runOnMachineFunction(MachineFunction &fn) {
   numIntervalsAfter += getNumIntervals();
 
   // perform a final pass over the instructions and compute spill
-  // weights, coalesce virtual registers and remove identity moves
+  // weights, coalesce virtual registers and remove identity moves.
   const LoopInfo& loopInfo = getAnalysis<LoopInfo>();
 
   for (MachineFunction::iterator mbbi = mf_->begin(), mbbe = mf_->end();
@@ -182,8 +182,8 @@ bool LiveIntervals::runOnMachineFunction(MachineFunction &fn) {
         ++numPeep;
       }
       else {
-        for (unsigned i = 0; i < mii->getNumOperands(); ++i) {
-          const MachineOperand& mop = mii->getOperand(i);
+        for (unsigned i = 0, e = mii->getNumOperands(); i != e; ++i) {
+          const MachineOperand &mop = mii->getOperand(i);
           if (mop.isRegister() && mop.getReg() &&
               MRegisterInfo::isVirtualRegister(mop.getReg())) {
             // replace register with representative register
