@@ -33,8 +33,7 @@ namespace {
 /// TargetMachine ctor - Create an ILP32 architecture model
 ///
 ARMTargetMachine::ARMTargetMachine(const Module &M, const std::string &FS)
-  : TargetMachine("ARM"), DataLayout("E-p:32:32"),
-    FrameInfo() {
+  : DataLayout("E-p:32:32") {
 }
 
 unsigned ARMTargetMachine::getModuleMatchQuality(const Module &M) {

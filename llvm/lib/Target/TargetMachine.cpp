@@ -95,10 +95,6 @@ namespace {
 // TargetMachine Class
 //
 
-TargetMachine::TargetMachine(const std::string &name, const Module &M)
-  : Name(name) {
-}
-
 TargetMachine::~TargetMachine() {
 }
 
