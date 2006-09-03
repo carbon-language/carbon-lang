@@ -659,8 +659,11 @@ void RA::AllocateBasicBlock(MachineBasicBlock &MBB) {
     
     // Finally, if this is a noop copy instruction, zap it.
     unsigned SrcReg, DstReg;
-    if (TII.isMoveInstr(*MI, SrcReg, DstReg) && SrcReg == DstReg)
+    if (TII.isMoveInstr(*MI, SrcReg, DstReg) && SrcReg == DstReg) {
+      LV->removeVirtualRegistersKilled(MI);
+      LV->removeVirtualRegistersDead(MI);
       MBB.erase(MI);
+    }
   }
 
   MachineBasicBlock::iterator MI = MBB.getFirstTerminator();
