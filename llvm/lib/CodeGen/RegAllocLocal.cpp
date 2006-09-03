@@ -103,8 +103,8 @@ namespace {
     }
 
     void MarkPhysRegRecentlyUsed(unsigned Reg) {
-      if(PhysRegsUseOrder.empty() ||
-         PhysRegsUseOrder.back() == Reg) return;  // Already most recently used
+      if (PhysRegsUseOrder.empty() ||
+          PhysRegsUseOrder.back() == Reg) return;  // Already most recently used
 
       for (unsigned i = PhysRegsUseOrder.size(); i != 0; --i)
         if (areRegsEqual(Reg, PhysRegsUseOrder[i-1])) {
@@ -408,10 +408,15 @@ unsigned RA::getReg(MachineBasicBlock &MBB, MachineInstr *I,
         } else {
           // If one of the registers aliased to the current register is
           // compatible, use it.
-          for (const unsigned *AliasSet = RegInfo->getAliasSet(R);
-               *AliasSet; ++AliasSet) {
-            if (RC->contains(*AliasSet)) {
-              PhysReg = *AliasSet;    // Take an aliased register
+          for (const unsigned *AliasIt = RegInfo->getAliasSet(R);
+               *AliasIt; ++AliasIt) {
+            if (RC->contains(*AliasIt) &&
+                // If this is pinned down for some reason, don't use it.  For
+                // example, if CL is pinned, and we run across CH, don't use
+                // CH as justification for using scavenging ECX (which will
+                // fail).
+                PhysRegsUsed[*AliasIt] != 0) {
+              PhysReg = *AliasIt;    // Take an aliased register
               break;
             }
           }
