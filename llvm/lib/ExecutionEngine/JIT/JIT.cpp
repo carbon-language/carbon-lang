@@ -67,8 +67,7 @@ JIT::JIT(ModuleProvider *MP, TargetMachine &tm, TargetJITInfo &tji)
   // Turn the machine code intermediate representation into bytes in memory that
   // may be executed.
   if (TM.addPassesToEmitMachineCode(PM, *MCE)) {
-    std::cerr << "Target '" << TM.getName()
-              << "' doesn't support machine code emission!\n";
+    std::cerr << "Target does not support machine code emission!\n";
     abort();
   }
 }
