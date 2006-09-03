@@ -137,10 +137,10 @@ bool LiveIntervals::runOnMachineFunction(MachineFunction &fn) {
     MachineBasicBlock *Entry = fn.begin();
     for (MachineFunction::livein_iterator I = fn.livein_begin(),
            E = fn.livein_end(); I != E; ++I) {
-      handlePhysicalRegisterDef(Entry, Entry->begin(),
+      handlePhysicalRegisterDef(Entry, Entry->begin(), 0,
                                 getOrCreateInterval(I->first), 0);
       for (const unsigned* AS = mri_->getAliasSet(I->first); *AS; ++AS)
-        handlePhysicalRegisterDef(Entry, Entry->begin(),
+        handlePhysicalRegisterDef(Entry, Entry->begin(), 0,
                                   getOrCreateInterval(*AS), 0);
     }
   }
@@ -354,6 +354,7 @@ void LiveIntervals::printRegName(unsigned reg) const {
 
 void LiveIntervals::handleVirtualRegisterDef(MachineBasicBlock *mbb,
                                              MachineBasicBlock::iterator mi,
+                                             unsigned MIIdx,
                                              LiveInterval &interval) {
   DEBUG(std::cerr << "\t\tregister: "; printRegName(interval.reg));
   LiveVariables::VarInfo& vi = lv_->getVarInfo(interval.reg);
@@ -364,7 +365,7 @@ void LiveIntervals::handleVirtualRegisterDef(MachineBasicBlock *mbb,
   // time we see a vreg.
   if (interval.empty()) {
     // Get the Idx of the defining instructions.
-    unsigned defIndex = getDefIndex(getInstructionIndex(mi));
+    unsigned defIndex = getDefIndex(MIIdx);
 
     unsigned ValNum;
     unsigned SrcReg, DstReg;
@@ -451,7 +452,7 @@ void LiveIntervals::handleVirtualRegisterDef(MachineBasicBlock *mbb,
       // need to take the LiveRegion that defines this register and split it
       // into two values.
       unsigned DefIndex = getDefIndex(getInstructionIndex(vi.DefInst));
-      unsigned RedefIndex = getDefIndex(getInstructionIndex(mi));
+      unsigned RedefIndex = getDefIndex(MIIdx);
 
       // Delete the initial value, which should be short and continuous,
       // because the 2-addr copy must be in the same MBB as the redef.
@@ -509,7 +510,7 @@ void LiveIntervals::handleVirtualRegisterDef(MachineBasicBlock *mbb,
       // In the case of PHI elimination, each variable definition is only
       // live until the end of the block.  We've already taken care of the
       // rest of the live range.
-      unsigned defIndex = getDefIndex(getInstructionIndex(mi));
+      unsigned defIndex = getDefIndex(MIIdx);
       
       unsigned ValNum;
       unsigned SrcReg, DstReg;
@@ -530,6 +531,7 @@ void LiveIntervals::handleVirtualRegisterDef(MachineBasicBlock *mbb,
 
 void LiveIntervals::handlePhysicalRegisterDef(MachineBasicBlock *MBB,
                                               MachineBasicBlock::iterator mi,
+                                              unsigned MIIdx,
                                               LiveInterval &interval,
                                               unsigned SrcReg) {
   // A physical register cannot be live across basic block, so its
@@ -537,7 +539,7 @@ void LiveIntervals::handlePhysicalRegisterDef(MachineBasicBlock *MBB,
   DEBUG(std::cerr << "\t\tregister: "; printRegName(interval.reg));
   typedef LiveVariables::killed_iterator KillIter;
 
-  unsigned baseIndex = getInstructionIndex(mi);
+  unsigned baseIndex = MIIdx;
   unsigned start = getDefIndex(baseIndex);
   unsigned end = start;
 
@@ -579,16 +581,17 @@ exit:
 
 void LiveIntervals::handleRegisterDef(MachineBasicBlock *MBB,
                                       MachineBasicBlock::iterator MI,
+                                      unsigned MIIdx,
                                       unsigned reg) {
   if (MRegisterInfo::isVirtualRegister(reg))
-    handleVirtualRegisterDef(MBB, MI, getOrCreateInterval(reg));
+    handleVirtualRegisterDef(MBB, MI, MIIdx, getOrCreateInterval(reg));
   else if (allocatableRegs_[reg]) {
     unsigned SrcReg, DstReg;
     if (!tii_->isMoveInstr(*MI, SrcReg, DstReg))
       SrcReg = 0;
-    handlePhysicalRegisterDef(MBB, MI, getOrCreateInterval(reg), SrcReg);
+    handlePhysicalRegisterDef(MBB, MI, MIIdx, getOrCreateInterval(reg), SrcReg);
     for (const unsigned* AS = mri_->getAliasSet(reg); *AS; ++AS)
-      handlePhysicalRegisterDef(MBB, MI, getOrCreateInterval(*AS), 0);
+      handlePhysicalRegisterDef(MBB, MI, MIIdx, getOrCreateInterval(*AS), 0);
   }
 }
 
@@ -602,6 +605,8 @@ void LiveIntervals::computeIntervals() {
         << ((Value*)mf_->getFunction())->getName() << '\n');
   bool IgnoreFirstInstr = mf_->livein_begin() != mf_->livein_end();
 
+  // Track the index of the current machine instr.
+  unsigned MIIndex = 0;
   for (MachineFunction::iterator I = mf_->begin(), E = mf_->end();
        I != E; ++I) {
     MachineBasicBlock* mbb = I;
@@ -612,12 +617,12 @@ void LiveIntervals::computeIntervals() {
     for (; mi != miEnd; ++mi) {
       const TargetInstrDescriptor& tid =
         tm_->getInstrInfo()->get(mi->getOpcode());
-      DEBUG(std::cerr << getInstructionIndex(mi) << "\t" << *mi);
+      DEBUG(std::cerr << MIIndex << "\t" << *mi);
 
       // handle implicit defs
       if (tid.ImplicitDefs) {
         for (const unsigned* id = tid.ImplicitDefs; *id; ++id)
-          handleRegisterDef(mbb, mi, *id);
+          handleRegisterDef(mbb, mi, MIIndex, *id);
       }
 
       // handle explicit defs
@@ -625,8 +630,10 @@ void LiveIntervals::computeIntervals() {
         MachineOperand& mop = mi->getOperand(i);
         // handle register defs - build intervals
         if (mop.isRegister() && mop.getReg() && mop.isDef())
-          handleRegisterDef(mbb, mi, mop.getReg());
+          handleRegisterDef(mbb, mi, MIIndex, mop.getReg());
       }
+      
+      MIIndex += InstrSlots::NUM;
     }
   }
 }

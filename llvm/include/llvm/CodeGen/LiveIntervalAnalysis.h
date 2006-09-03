@@ -190,20 +190,22 @@ namespace llvm {
     /// handleRegisterDef - update intervals for a register def
     /// (calls handlePhysicalRegisterDef and
     /// handleVirtualRegisterDef)
-    void handleRegisterDef(MachineBasicBlock* mbb,
-                           MachineBasicBlock::iterator mi,
+    void handleRegisterDef(MachineBasicBlock *MBB,
+                           MachineBasicBlock::iterator MI, unsigned MIIdx,
                            unsigned reg);
 
     /// handleVirtualRegisterDef - update intervals for a virtual
     /// register def
-    void handleVirtualRegisterDef(MachineBasicBlock* mbb,
-                                  MachineBasicBlock::iterator mi,
+    void handleVirtualRegisterDef(MachineBasicBlock *MBB,
+                                  MachineBasicBlock::iterator MI,
+                                  unsigned MIIdx,
                                   LiveInterval& interval);
 
     /// handlePhysicalRegisterDef - update intervals for a physical register
     /// def.
     void handlePhysicalRegisterDef(MachineBasicBlock* mbb,
                                    MachineBasicBlock::iterator mi,
+                                   unsigned MIIdx,
                                    LiveInterval &interval,
                                    unsigned SrcReg);
 
