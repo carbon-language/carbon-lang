@@ -626,68 +626,6 @@ endif
 ###############################################################################
 
 #---------------------------------------------------------
-# Handle the special "JIT" value for LLVM_LIBS which is a
-# shorthand for a bunch of libraries that get the correct
-# JIT support for a library or a tool that runs JIT.
-#---------------------------------------------------------
-ifeq ($(firstword $(LLVMLIBS)),config)
-LLVMLIBS := $(shell $(LLVM_CONFIG) --libnames $(wordlist 2,9999,$(LLVMLIBS)))
-LLVMLIBS := $(patsubst lib%.a,%.a,$(LLVMLIBS))
-LLVMLIBS := $(patsubst %.o,%,$(LLVMLIBS))
-endif
-
-ifeq ($(LLVMLIBS),JIT)
-
-# Make sure we can get our own symbols in the tool
-Link += -dlopen self
-
-# Generic JIT libraries
-JIT_LIBS := LLVMInterpreter LLVMJIT
-
-# You can enable the X86 JIT on a non-X86 host by setting the flag
-# ENABLE_X86_JIT on the make command line. If not, it will still be
-# enabled automagically on an X86 host.
-ifeq ($(ARCH), x86)
-  ENABLE_X86_JIT = 1
-endif
-
-# What the X86 JIT requires
-ifdef ENABLE_X86_JIT
-  JIT_LIBS += LLVMX86 
-endif
-
-# You can enable the PowerPC JIT on a non-PowerPC host by setting the flag
-# ENABLE_PPC_JIT on the make command line. If not, it will still be
-# enabled automagically on an PowerPC host.
-ifeq ($(ARCH), PowerPC)
-  ENABLE_PPC_JIT = 1
-endif
-
-# What the PowerPC JIT requires
-ifdef ENABLE_PPC_JIT
-  JIT_LIBS += LLVMPowerPC 
-endif
-
-# You can enable the Alpha JIT on a non-Alpha host by setting the flag
-# ENABLE_ALPHA_JIT on the make command line. If not, it will still be
-# enabled automagically on an Alpha host.
-ifeq ($(ARCH), Alpha)
-  ENABLE_ALPHA_JIT = 1
-endif
-
-# What the Alpha JIT requires
-ifdef ENABLE_ALPHA_JIT
-  JIT_LIBS += LLVMAlpha 
-endif
-
-JIT_LIBS +=  LLVMTarget.a LLVMSelectionDAG.a LLVMCodeGen.a LLVMExecutionEngine
-
-LLVMLIBS := $(JIT_LIBS) LLVMScalarOpts.a LLVMTransformUtils.a LLVMAnalysis.a \
-            LLVMBCReader.a LLVMCore.a LLVMSupport.a LLVMbzip2.a \
-            LLVMSystem.a $(PLATFORMLIBDL)
-endif
-
-#---------------------------------------------------------
 # Define various command line options pertaining to the
 # libraries needed when linking. There are "Proj" libs 
 # (defined by the user's project) and "LLVM" libs (defined 
