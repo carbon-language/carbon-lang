@@ -613,15 +613,17 @@ void LiveIntervals::computeIntervals() {
     DEBUG(std::cerr << ((Value*)mbb->getBasicBlock())->getName() << ":\n");
 
     MachineBasicBlock::iterator mi = mbb->begin(), miEnd = mbb->end();
-    if (IgnoreFirstInstr) { ++mi; IgnoreFirstInstr = false; }
+    if (IgnoreFirstInstr) {
+      ++mi;
+      IgnoreFirstInstr = false;
+      MIIndex += InstrSlots::NUM;
+    }
+    
     for (; mi != miEnd; ++mi) {
       const TargetInstrDescriptor& tid =
         tm_->getInstrInfo()->get(mi->getOpcode());
       DEBUG(std::cerr << MIIndex << "\t" << *mi);
 
-      // FIXME: Why is  this needed?
-      MIIndex = getInstructionIndex(mi);
-      
       // handle implicit defs
       if (tid.ImplicitDefs) {
         for (const unsigned* id = tid.ImplicitDefs; *id; ++id)
