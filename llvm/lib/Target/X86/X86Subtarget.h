@@ -82,6 +82,7 @@ public:
   bool has3DNowA() const { return X863DNowLevel >= ThreeDNowA; }
 
   bool isTargetDarwin() const { return TargetType == isDarwin; }
+  bool isTargetELF() const { return TargetType == isELF; }
 };
 } // End llvm namespace
 
