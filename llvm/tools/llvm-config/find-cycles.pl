@@ -61,7 +61,6 @@ foreach my $cycle (@CYCLES) {
         $cycles_found = $cycles_found + 1;
         print STDERR "find-cycles.pl: Circular dependency between *.a files:\n";
         print STDERR "find-cycles.pl:   ", join(' ', @archives), "\n";
-        print STDERR "find-cycles.pl: Some linkers may have problems.\n";
         push @modules, @archives; # WORKAROUND: Duplicate *.a files. Ick.
     }
 
