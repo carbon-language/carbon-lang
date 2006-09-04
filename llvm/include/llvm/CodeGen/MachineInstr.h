@@ -111,6 +111,10 @@ public:
 
   /// Accessors that tell you what kind of MachineOperand you're looking at.
   ///
+  bool isReg() const { return opType == MO_Register; }
+  bool isImm() const { return opType == MO_Immediate; }
+  bool isMBB() const { return opType == MO_MachineBasicBlock; }
+  
   bool isRegister() const { return opType == MO_Register; }
   bool isImmediate() const { return opType == MO_Immediate; }
   bool isMachineBasicBlock() const { return opType == MO_MachineBasicBlock; }
