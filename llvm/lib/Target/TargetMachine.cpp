@@ -13,7 +13,6 @@
 
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetOptions.h"
-#include "llvm/Type.h"
 #include "llvm/Support/CommandLine.h"
 using namespace llvm;
 
@@ -127,3 +126,4 @@ namespace llvm {
   /// and results are never NaNs or +-Infs.
   bool FiniteOnlyFPMath() { return UnsafeFPMath || FiniteOnlyFPMathOption; }
 }
+
