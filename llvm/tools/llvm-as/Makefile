@@ -6,10 +6,10 @@
 # the University of Illinois Open Source License. See LICENSE.TXT for details.
 # 
 ##===----------------------------------------------------------------------===##
+
 LEVEL = ../..
 TOOLNAME = llvm-as
-USEDLIBS = LLVMAsmParser.a LLVMBCWriter.a LLVMCore.a \
-           LLVMSupport.a LLVMbzip2.a LLVMSystem.a
+LINK_COMPONENTS := asmparser bcwriter
 REQUIRES_EH := 1
 
 include $(LEVEL)/Makefile.common
