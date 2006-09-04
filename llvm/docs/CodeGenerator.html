@@ -58,6 +58,10 @@
       <li><a href="#selectiondag_future">Future directions for the
                                          SelectionDAG</a></li>
       </ul></li>
+     <li><a href="#liveinterval_analysis">Live Interval Analysis</a>
+       <ul>
+       <li><a href="#livevariable_analysis">Live Variable Analysis</a></li>
+       </ul></li>
     <li><a href="#regalloc">Register Allocation</a>
       <ul>
       <li><a href="#regAlloc_represent">How registers are represented in
@@ -1153,6 +1157,190 @@ SelectionDAGs.</p>
   <a name="ssamco">SSA-based Machine Code Optimizations</a>
 </div>
 <div class="doc_text"><p>To Be Written</p></div>
+
+<!-- ======================================================================= -->
+<div class="doc_subsection">
+  <a name="liveinterval_analysis">Live Interval Analysis</a>
+</div>
+
+<div class="doc_text">
+
+<p>Live Interval Analysis identifies the ranges where a variable is <i>live</i>.
+It's used by the <a href="#regalloc">register allocator pass</a> to determine
+if two or more virtual registers which require the same register are live at
+the same point in the program (conflict). When this situation occurs, one
+virtual register must be <i>spilt</i>.</p>
+
+</div>
+
+<!-- _______________________________________________________________________ -->
+<div class="doc_subsubsection">
+  <a name="livevariable_analysis">Live Variable Analysis</a>
+</div>
+
+<div class="doc_text">
+
+<p>The first step to determining the live intervals of variables is to
+calculate the set of registers that are immediately dead after the
+instruction (i.e., the instruction calculates the value, but it is never
+used) and the set of registers that are used by the instruction, but are
+never used after the instruction (i.e., they are killed). Live variable
+information is computed for each <i>virtual</i> and <i>register
+allocatable</i> physical register in the function.  LLVM assumes that
+physical registers are only live within a single basic block.  This allows
+it to do a single, local analysis to resolve physical register lifetimes in
+each basic block. If a physical register is not register allocatable (e.g.,
+a stack pointer or condition codes), it is not tracked.</p>
+
+<p>Physical registers may be live in to or out of a function. Live in values
+are typically arguments in register. Live out values are typically return
+values in registers. Live in values are marked as such, and are given a dummy
+"defining" instruction during live interval analysis. If the last basic block
+of a function is a <tt>return</tt>, then it's marked as using all live-out
+values in the function.</p>
+
+<p><tt>PHI</tt> nodes need to be handled specially, because the calculation
+of the live variable information from a depth first traversal of the CFG of
+the function won't guarantee that a virtual register is defined before it's
+used. When a <tt>PHI</tt> node is encounted, only the definition is
+handled, because the uses will be handled in other basic blocks.</p>
+
+<p>For each <tt>PHI</tt> node of the current basic block, we simulate an
+assignment at the end of the current basic block and traverse the successor
+basic blocks. If a successor basic block has a <tt>PHI</tt> node and one of
+the <tt>PHI</tt> node's operands is coming from the current basic block,
+then the variable is marked as <i>alive</i> within the current basic block
+and all of its predecessor basic blocks, until the basic block with the
+defining instruction is encountered.</p>
+
+</div>
+
+<!-- FIXME:
+
+A. General Overview
+B. Describe Default RA (Linear Scan)
+   1. LiveVariable Analysis
+      a. All physical register references presumed dead across BBs
+      b. Mark live-in regs as live-in
+      c. Calculate LV info in DFS order
+         1) We'll see def of vreg before its uses
+         2) PHI nodes are treated specially
+            a) Only handle its def
+            b) Uses handled in other BBs
+         3) Handle all uses and defs
+            a) Handle implicit preg uses
+               (1) "TargetInstrDescriptor" from "TargetInstructionInfo"
+            b) Handle explicit preg and vreg uses
+            c) Handle implicit preg defs
+               (1) "TargetInstrDescriptor" from "TargetInstructionInfo"
+            d) Handle explicit preg and vreg defs
+         4) Use of vreg marks it killed (last use in BB)
+            a) Updates (expands) live range
+            b) Marks vreg as alive in dominating blocks
+         5) Use of preg updates info and used tables
+         6) Def of vreg defaults to "dead"
+            a) Expanded later (see B.1.c.4)
+         7) Def of preg updates info, used, RegsKilled, and RegsDead tables.
+         8) Handle virt assigns from PHI nodes at the bottom of the BB
+            a) If successor block has PHI nodes
+               (1) Simulate an assignment at the end of current BB
+                   (i.e., mark it as alive in current BB)
+         9) If last block is a "return"
+            a) Mark it as using all live-out values
+         10) Kill all pregs available at the end of the BB
+      d. Update "RegistersDead" and "RegistersKilled"
+         1) RegistersDead - This map keeps track of all of the registers that
+            are dead immediately after an instruction executes, which are not
+            dead after the operands are evaluated.  In practice, this only
+            contains registers which are defined by an instruction, but never
+            used.
+         2) RegistersKilled - This map keeps track of all of the registers that
+            are dead immediately after an instruction reads its operands.  If an
+            instruction does not have an entry in this map, it kills no
+            registers.
+   2. LiveInterval Analysis
+      a. Use LV pass to conservatively compute live intervals for vregs and pregs
+      b. For some ordering of the machine instrs [1,N], a live interval is an
+         interval [i,j) where 1 <= i <= j < N for which a variable is live
+      c. Function has live ins
+         1) Insert dummy instr at beginning
+         2) Pretend dummy instr "defines" values
+      d. Number each machine instruction -- depth-first order
+         1) An interval [i, j) == Live interval for reg v if there is no
+            instr with num j' > j s.t. v is live at j' and there is no instr
+            with number i' < i s.t. v is live at i'
+         2) Intervals can have holes: [1,20), [50,65), [1000,1001)
+      e. Handle line-in values
+      f. Compute live intervals
+         1) Each live range is assigned a value num within the live interval
+         2) vreg
+            a) May be defined multiple times (due to phi and 2-addr elimination)
+            b) Live only within defining BB
+               (1) Single kill after def in BB
+            c) Lives to end of defining BB, potentially across some BBs
+               (1) Add range that goes from def to end of defining BB
+               (2) Iterate over all BBs that the var is completely live in
+                   (a) add [instrIndex(begin), InstrIndex(end)+4) to LI
+               (3) Vreg is live from start of any killing block to 'use'
+            d) If seeing vreg again (because of phi or 2-addr elimination)
+               (1) If 2-addr elim, then vreg is 1st op and a def-and-use
+                   (a) Didn't realize there are 2 values in LI
+                   (b) Need to take LR that defs vreg and split it into 2 vals
+                       (1) Delete initial value (from first def to redef)
+                       (2) Get new value num (#1)
+                       (3) Value#0 is now defined by the 2-addr instr
+                       (4) Add new LR which replaces the range for input copy
+               (2) Else phi-elimination
+                   (a) If first redef of vreg, change LR in PHI block to be
+                       a different Value Number
+                   (b) Each variable def is only live until the end of the BB
+         3) preg
+            a) Cannot be live across BB
+            b) Lifetime must end somewhere in its defining BB
+            c) Dead at def instr, if not used after def
+               (1) Interval: [defSlot(def), defSlot(def) + 1)
+            d) Killed by subsequent instr, if not dead on def
+               (1) Interval: [defSlot(def), useSlot(kill) + 1)
+            e) If neither, then it's live-in to func and never used
+               (1) Interval: [start, start + 1)
+      e. Join intervals
+      f. Compute spill weights
+      g. Coalesce vregs
+      h. Remove identity moves
+   3. Linear Scan RA
+      a. 
+
+
+  /// VarInfo - This represents the regions where a virtual register is live in
+  /// the program.  We represent this with three different pieces of
+  /// information: the instruction that uniquely defines the value, the set of
+  /// blocks the instruction is live into and live out of, and the set of 
+  /// non-phi instructions that are the last users of the value.
+  ///
+  /// In the common case where a value is defined and killed in the same block,
+  /// DefInst is the defining inst, there is one killing instruction, and 
+  /// AliveBlocks is empty.
+  ///
+  /// Otherwise, the value is live out of the block.  If the value is live
+  /// across any blocks, these blocks are listed in AliveBlocks.  Blocks where
+  /// the liveness range ends are not included in AliveBlocks, instead being
+  /// captured by the Kills set.  In these blocks, the value is live into the
+  /// block (unless the value is defined and killed in the same block) and lives
+  /// until the specified instruction.  Note that there cannot ever be a value
+  /// whose Kills set contains two instructions from the same basic block.
+  ///
+  /// PHI nodes complicate things a bit.  If a PHI node is the last user of a
+  /// value in one of its predecessor blocks, it is not listed in the kills set,
+  /// but does include the predecessor block in the AliveBlocks set (unless that
+  /// block also defines the value).  This leads to the (perfectly sensical)
+  /// situation where a value is defined in a block, and the last use is a phi
+  /// node in the successor.  In this case, DefInst will be the defining
+  /// instruction, AliveBlocks is empty (the value is not live across any 
+  /// blocks) and Kills is empty (phi nodes are not included).  This is sensical
+  /// because the value must be live to the end of the block, but is not live in
+  /// any successor blocks.
+
+ -->
 
 <!-- ======================================================================= -->
 <div class="doc_subsection">
