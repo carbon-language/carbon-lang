@@ -94,13 +94,26 @@ FunctionPassManager::FunctionPassManager(ModuleProvider *P) :
 FunctionPassManager::~FunctionPassManager() { delete PM; }
 void FunctionPassManager::add(FunctionPass *P) { PM->add(P); }
 void FunctionPassManager::add(ImmutablePass *IP) { PM->add(IP); }
+
+/// doInitialization - Run all of the initializers for the function passes.
+///
+bool FunctionPassManager::doInitialization() {
+  return PM->doInitialization(*MP->getModule());
+}
+
 bool FunctionPassManager::run(Function &F) {
   std::string errstr;
   if (MP->materializeFunction(&F, &errstr)) {
     std::cerr << "Error reading bytecode file: " << errstr << "\n";
     abort();
   }
-  return PM->run(F);
+  return PM->runOnFunction(F);
+}
+
+/// doFinalization - Run all of the initializers for the function passes.
+///
+bool FunctionPassManager::doFinalization() {
+  return PM->doFinalization(*MP->getModule());
 }
 
 

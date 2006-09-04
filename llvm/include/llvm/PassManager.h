@@ -70,11 +70,19 @@ public:
   ///
   void add(ImmutablePass *IP);
 
+  /// doInitialization - Run all of the initializers for the function passes.
+  ///
+  bool doInitialization();
+  
   /// run - Execute all of the passes scheduled for execution.  Keep
   /// track of whether any of the passes modifies the function, and if
   /// so, return true.
   ///
   bool run(Function &F);
+  
+  /// doFinalization - Run all of the initializers for the function passes.
+  ///
+  bool doFinalization();
 };
 
 } // End llvm namespace
