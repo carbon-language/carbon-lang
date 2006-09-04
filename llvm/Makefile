@@ -8,7 +8,18 @@
 #===------------------------------------------------------------------------===#
 
 LEVEL := .
-DIRS := lib/System lib/Support utils lib/VMCore lib tools runtime docs
+
+# Top-Level LLVM Build Stages:
+#   1. Build lib/System and lib/Support, which are used by utils (tblgen).
+#   2. Build utils, which is used by VMCore.
+#   3. Build VMCore, which builds the Intrinsics.inc file used by libs.
+#   4. Build libs, which are needed by llvm-config.
+#   5. Build llvm-config, which determines inter-lib dependencies for tools.
+#   6. Build tools, runtime, docs.
+#
+DIRS := lib/System lib/Support utils lib/VMCore lib tools/llvm-config \
+        tools runtime docs
+        
 OPTIONAL_DIRS := examples projects
 EXTRA_DIST := test llvm.spec include win32 Xcode
 
