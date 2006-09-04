@@ -73,6 +73,7 @@ PreConditions      := $(ConfigStatusScript) $(ObjMakefiles)
 ifneq ($(MakefileCommonIn),)
 PreConditions      += $(MakefileCommon)
 endif
+
 ifneq ($(MakefileConfigIn),)
 PreConditions      += $(MakefileConfig)
 endif
@@ -304,7 +305,7 @@ endif
 ifndef GCCLD
 GCCLD    := $(LLVMToolDir)/gccld$(EXEEXT)
 endif
-ifndef LDIS
+ifndef LLVMDIS
 LLVMDIS  := $(LLVMToolDir)/llvm-dis$(EXEEXT)
 endif
 ifndef LLI
@@ -707,10 +708,19 @@ LLVMUsedLibs    := $(patsubst %.a.o, lib%.a, $(addsuffix .o, $(LLVMLIBS)))
 LLVMLibsPaths   := $(addprefix $(LLVMLibDir)/,$(LLVMUsedLibs))
 endif
 
-ifneq ($(strip($(filter-out clean clean-local dist-clean,$(MAKECMDGOALS)))),)
+ifeq ($(strip $(filter clean clean-local dist-clean,$(MAKECMDGOALS))),)
 ifdef LINK_COMPONENTS
-ProjLibsOptions := $(shell $(LLVM_CONFIG) --libs     $(LINK_COMPONENTS))
-ProjLibsPaths   := $(shell $(LLVM_CONFIG) --libfiles $(LINK_COMPONENTS))
+
+# If LLVM_CONFIG doesn't exist, build it.  This can happen if you do a make
+# clean in tools, then do a make in tools (instead of at the top level).
+$(LLVM_CONFIG):
+	@echo "*** llvm-config doesn't exist - rebuilding it."
+	@$(MAKE) -C $(PROJ_OBJ_ROOT)/tools/llvm-config
+        
+$(ToolDir)/$(strip $(TOOLNAME))$(EXEEXT): $(LLVM_CONFIG)
+
+ProjLibsOptions = $(shell $(LLVM_CONFIG) --libs     $(LINK_COMPONENTS))
+ProjLibsPaths   = $(shell $(LLVM_CONFIG) --libfiles $(LINK_COMPONENTS))
 endif
 endif
 
@@ -990,13 +1000,6 @@ ToolBuildPath   := $(ToolDir)/$(strip $(TOOLNAME))$(EXEEXT)
 endif
 
 #---------------------------------------------------------
-# Tell make that we need to rebuild subdirectories before 
-# we can link the tool. This affects things like LLI which 
-# has library subdirectories.
-#---------------------------------------------------------
-$(ToolBuildPath): $(addsuffix /.makeall, $(PARALLEL_DIRS))
-
-#---------------------------------------------------------
 # Provide targets for building the tools
 #---------------------------------------------------------
 all-local:: $(ToolBuildPath)
@@ -1012,7 +1015,7 @@ else
 $(ToolBuildPath): $(ToolDir)/.dir
 endif
 
-$(ToolBuildPath): $(ObjectsO) $(ProjLibsPaths) $(LLVMLibsPaths)
+$(ToolBuildPath): $(ObjectsO) $(LLVM_CONFIG) $(ProjLibsPaths) $(LLVMLibsPaths)
 	$(Echo) Linking $(BuildMode) executable $(TOOLNAME) $(StripWarnMsg)
 	$(Verb) $(LTLink) -o $@ $(TOOLLINKOPTS) $(ObjectsO) $(ProjLibsOptions) \
 	$(LLVMLibsOptions) $(ExtraLibs) $(TOOLLINKOPTSB) $(LIBS)
@@ -1417,7 +1420,7 @@ CTAGS:
 ifndef DISABLE_AUTO_DEPENDENCIES
 
 # If its not one of the cleaning targets
-ifneq ($(strip($(filter-out clean clean-local dist-clean,$(MAKECMDGOALS)))),)
+ifneq ($(strip $(filter-out clean clean-local dist-clean,$(MAKECMDGOALS)))),)
 
 # Get the list of dependency files
 DependFiles := $(basename $(filter %.cpp %.c %.cc, $(Sources)))
