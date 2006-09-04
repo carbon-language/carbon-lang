@@ -327,6 +327,18 @@ public:
     return StackPointerRegisterToSaveRestore;
   }
 
+  /// getJumpBufSize - returns the target's jmp_buf size in bytes (if never
+  /// set, the default is 200)
+  unsigned getJumpBufSize() const {
+    return JumpBufSize;
+  }
+
+  /// getJumpBufAlignment - returns the target's jmp_buf alignment in bytes
+  /// (if never set, the default is 0)
+  unsigned getJumpBufAlignment() const {
+    return JumpBufAlignment;
+  }
+  
   //===--------------------------------------------------------------------===//
   // TargetLowering Optimization Methods
   //
@@ -537,6 +549,18 @@ protected:
     TargetDAGCombineArray[NT >> 3] |= 1 << (NT&7);
   }
   
+  /// setJumpBufSize - Set the target's required jmp_buf buffer size (in
+  /// bytes); default is 200
+  void setJumpBufSize(unsigned Size) {
+    JumpBufSize = Size;
+  }
+
+  /// setJumpBufAlignment - Set the target's required jmp_buf buffer
+  /// alignment (in bytes); default is 0
+  void setJumpBufAlignment(unsigned Align) {
+    JumpBufAlignment = Align;
+  }
+  
 public:
 
   //===--------------------------------------------------------------------===//
@@ -717,6 +741,13 @@ private:
   /// UseUnderscoreSetJmpLongJmp - This target prefers to use _setjmp and
   /// _longjmp to implement llvm.setjmp/llvm.longjmp.  Defaults to false.
   bool UseUnderscoreSetJmpLongJmp;
+  
+  /// JumpBufSize - The size, in bytes, of the target's jmp_buf buffers
+  unsigned JumpBufSize;
+  
+  /// JumpBufAlignment - The alignment, in bytes, of the target's jmp_buf
+  /// buffers
+  unsigned JumpBufAlignment;
   
   /// StackPointerRegisterToSaveRestore - If set to a physical register, this
   /// specifies the register that llvm.savestack/llvm.restorestack should save

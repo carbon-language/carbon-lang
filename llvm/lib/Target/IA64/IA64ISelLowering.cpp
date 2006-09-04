@@ -109,6 +109,9 @@ IA64TargetLowering::IA64TargetLowering(TargetMachine &TM)
 
       setStackPointerRegisterToSaveRestore(IA64::r12);
 
+      setJumpBufSize(704); // on ia64-linux, jmp_bufs are 704 bytes..
+      setJumpBufAlignment(16); // ...and must be 16-byte aligned
+      
       computeRegisterProperties();
 
       setOperationAction(ISD::ConstantFP, MVT::f64, Expand);

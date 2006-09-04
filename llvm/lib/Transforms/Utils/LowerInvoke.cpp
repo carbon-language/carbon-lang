@@ -45,6 +45,7 @@
 #include "llvm/ADT/Statistic.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Compiler.h"
+#include "llvm/Target/TargetLowering.h"
 #include <csetjmp>
 using namespace llvm;
 
@@ -67,9 +68,12 @@ namespace {
     const Type *JBLinkTy;
     GlobalVariable *JBListHead;
     Function *SetJmpFn, *LongJmpFn;
+    
+    // We peek in TLI to grab the target's jmp_buf size and alignment
+    const TargetLowering *TLI;
+    
   public:
-    LowerInvoke(unsigned Size = 200, unsigned Align = 0) : JumpBufSize(Size),
-      JumpBufAlign(Align) {}
+    LowerInvoke(const TargetLowering *tli = NULL) : TLI(tli) { }
     bool doInitialization(Module &M);
     bool runOnFunction(Function &F);
  
@@ -89,9 +93,6 @@ namespace {
     void rewriteExpensiveInvoke(InvokeInst *II, unsigned InvokeNo,
                                 AllocaInst *InvokeNum, SwitchInst *CatchSwitch);
     bool insertExpensiveEHSupport(Function &F);
-    
-    unsigned JumpBufSize;
-    unsigned JumpBufAlign;
   };
 
   RegisterPass<LowerInvoke>
@@ -101,9 +102,8 @@ namespace {
 const PassInfo *llvm::LowerInvokePassID = X.getPassInfo();
 
 // Public Interface To the LowerInvoke pass.
-FunctionPass *llvm::createLowerInvokePass(unsigned JumpBufSize, 
-                                          unsigned JumpBufAlign) { 
-  return new LowerInvoke(JumpBufSize, JumpBufAlign); 
+FunctionPass *llvm::createLowerInvokePass(const TargetLowering *TLI) { 
+  return new LowerInvoke(TLI); 
 }
 
 // doInitialization - Make sure that there is a prototype for abort in the
@@ -113,7 +113,7 @@ bool LowerInvoke::doInitialization(Module &M) {
   AbortMessage = 0;
   if (ExpensiveEHSupport) {
     // Insert a type for the linked list of jump buffers.
-    const Type *JmpBufTy = ArrayType::get(VoidPtrTy, JumpBufSize);
+    const Type *JmpBufTy = ArrayType::get(VoidPtrTy, TLI->getJumpBufSize());
 
     { // The type is recursive, so use a type holder.
       std::vector<const Type*> Elements;
@@ -453,7 +453,7 @@ bool LowerInvoke::insertExpensiveEHSupport(Function &F) {
     // that needs to be restored on all exits from the function.  This is an
     // alloca because the value needs to be live across invokes.
     AllocaInst *JmpBuf = 
-      new AllocaInst(JBLinkTy, 0, JumpBufAlign, "jblink", F.begin()->begin());
+      new AllocaInst(JBLinkTy, 0, TLI->getJumpBufAlignment(), "jblink", F.begin()->begin());
     
     std::vector<Value*> Idx;
     Idx.push_back(Constant::getNullValue(Type::IntTy));
