@@ -17,9 +17,9 @@ REQUIRES_EH := 1
 include $(LEVEL)/Makefile.config
 
 USEDLIBS := $(addprefix LLVM,$(TARGETS_TO_BUILD)) \
+	LLVMTarget.a \
 	LLVMCodeGen.a \
 	LLVMSelectionDAG.a \
-	LLVMTarget.a \
 	LLVMipa.a \
 	LLVMTransforms.a \
 	LLVMScalarOpts.a \
