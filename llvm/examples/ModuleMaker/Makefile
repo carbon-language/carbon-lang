@@ -9,6 +9,6 @@
 LEVEL=../..
 TOOLNAME=ModuleMaker
 EXAMPLE_TOOL = 1
-USEDLIBS= LLVMBCWriter.a LLVMCore.a LLVMSupport.a LLVMbzip2.a LLVMSystem.a
+LINK_COMPONENTS := bcwriter
 
 include $(LEVEL)/Makefile.common

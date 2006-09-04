@@ -10,7 +10,6 @@ LEVEL = ../..
 TOOLNAME = HowToUseJIT
 EXAMPLE_TOOL = 1
 
-# Enable JIT support
-LLVMLIBS := JIT
+LINK_COMPONENTS := jit interpreter native
 
 include $(LEVEL)/Makefile.common
