@@ -124,8 +124,13 @@ public:
   bool isGlobalAddress() const { return opType == MO_GlobalAddress; }
   bool isExternalSymbol() const { return opType == MO_ExternalSymbol; }
 
+  int64_t getImm() const {
+    assert(isImm() && "Wrong MachineOperand accessor");
+    return contents.immedVal;
+  }
+  
   int64_t getImmedValue() const {
-    assert(isImmediate() && "Wrong MachineOperand accessor");
+    assert(isImm() && "Wrong MachineOperand accessor");
     return contents.immedVal;
   }
   MachineBasicBlock *getMachineBasicBlock() const {
@@ -165,10 +170,10 @@ public:
   /// MachineOperand methods for testing that work on any kind of
   /// MachineOperand...
   ///
-  bool            isUse           () const { return flags & USEFLAG; }
-  MachineOperand& setUse          ()       { flags |= USEFLAG; return *this; }
-  bool            isDef           () const { return flags & DEFFLAG; }
-  MachineOperand& setDef          ()       { flags |= DEFFLAG; return *this; }
+  bool isUse() const { return flags & USEFLAG; }
+  bool isDef() const { return flags & DEFFLAG; }
+  MachineOperand &setUse() { flags |= USEFLAG; return *this; }
+  MachineOperand &setDef() { flags |= DEFFLAG; return *this; }
 
   /// getReg - Returns the register number.
   ///
@@ -185,7 +190,11 @@ public:
   }
 
   void setImmedValue(int64_t immVal) {
-    assert(isImmediate() && "Wrong MachineOperand mutator");
+    assert(isImm() && "Wrong MachineOperand mutator");
+    contents.immedVal = immVal;
+  }
+  void setImm(int64_t immVal) {
+    assert(isImm() && "Wrong MachineOperand mutator");
     contents.immedVal = immVal;
   }
 
