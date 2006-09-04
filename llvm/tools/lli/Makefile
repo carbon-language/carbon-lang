@@ -8,7 +8,7 @@
 ##===----------------------------------------------------------------------===##
 LEVEL    := ../..
 TOOLNAME := lli
-LLVMLIBS := JIT
+LINK_COMPONENTS := jit interpreter native bcreader
 REQUIRES_EH := 1
 
 # Enable JIT support
