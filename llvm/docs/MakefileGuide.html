@@ -297,7 +297,7 @@
   <pre><tt>
      LIBRARYNAME := MyMod
      LOADABLE_MODULE := 1
-     USEDLIBS := LLVMSupport.a LLVMSystem.a
+     LINK_COMPONENTS := support system
   </tt></pre>
   <p>Use of the <tt>LOADABLE_MODULE</tt> facility implies several things:</p>
   <ol>
@@ -323,7 +323,7 @@
   <pre><tt>
       TOOLNAME = mytool
       USEDLIBS = mylib
-      LLVMLIBS = LLVMSupport.a LLVMSystem.a
+      LINK_COMPONENTS = support system
   </tt></pre>
   <p>says that we are to build a tool name <tt>mytool</tt> and that it requires
   three libraries: <tt>mylib</tt>, <tt>LLVMSupport.a</tt> and
@@ -352,36 +352,22 @@
 <!-- ======================================================================= -->
 <div class="doc_subsubsection"><a name="JIT">JIT Tools</a></div>
 <div class="doc_text">
-  <p>Many tools will want to use the JIT features of LLVM. However, getting the
-  right set of libraries to link with is tedious, platform specific, and error 
-  prone. Additionally, the JIT has special linker switch options that it needs.
-  Consequently, to make it easier to build tools that use the JIT, you can 
-  use a special value for the <tt>LLVMLIBS</tt> variable:</p>
+  <p>Many tools will want to use the JIT features of LLVM.  To do this, you
+     simply specify that you want an execution 'engine', and the makefiles will
+     automatically link in the appropriate JIT for the host or an interpreter
+     if none is available:</p>
   <pre><tt>
       TOOLNAME = my_jit_tool
       USEDLIBS = mylib
-      LLVMLIBS = JIT
+      LINK_COMPONENTS = engine
   </tt></pre>
-  <p>Using a value of <tt>JIT</tt> for <tt>LLVMLIBS</tt> tells the makefile
-  system to construct a special value for LLVMLIBS that gives the program all
-  the LLVM libraries needed to run the JIT. Any additional libraries needed can
-  still be specified with <tt>USEDLIBS</tt>. To get a full understanding of how
-  this changes the linker command, it is recommended that you:</p>
+  <p>Of course, any additional libraries may be listed as other components.  To
+  get a full understanding of how this changes the linker command, it is
+  recommended that you:</p>
   <pre><tt>
       cd examples/Fibonacci
       make VERBOSE=1
   </tt></pre>
-  <p>By default, using <tt>LLVMLIBS=JIT</tt> will link in enough to support JIT
-  code generation for the architecture on which the tool is linked. If you need
-  additional target architectures linked in, you may specify them on the command
-  line or in your <tt>Makefile</tt>. For example:</p>
-  <pre><tt>
-      ENABLE_X86_JIT=1
-      ENABLE_SPARCV9_JIT=1
-      ENALBE_PPC_JIT=1
-  </tt></pre>
-  <p>will cause the tool to be able to generate code for all three platforms.
-  </p>
 </div>
 
 <!-- *********************************************************************** -->
