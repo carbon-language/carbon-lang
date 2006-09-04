@@ -707,9 +707,11 @@ LLVMUsedLibs    := $(patsubst %.a.o, lib%.a, $(addsuffix .o, $(LLVMLIBS)))
 LLVMLibsPaths   := $(addprefix $(LLVMLibDir)/,$(LLVMUsedLibs))
 endif
 
+ifneq ($(strip($(filter-out clean clean-local dist-clean,$(MAKECMDGOALS)))),)
 ifdef LINK_COMPONENTS
 ProjLibsOptions := $(shell $(LLVM_CONFIG) --libs     $(LINK_COMPONENTS))
 ProjLibsPaths   := $(shell $(LLVM_CONFIG) --libfiles $(LINK_COMPONENTS))
+endif
 endif
 
 ###############################################################################
@@ -1415,7 +1417,7 @@ CTAGS:
 ifndef DISABLE_AUTO_DEPENDENCIES
 
 # If its not one of the cleaning targets
-ifneq ($strip($(filter-out clean clean-local dist-clean,$(MAKECMDGOALS))),)
+ifneq ($(strip($(filter-out clean clean-local dist-clean,$(MAKECMDGOALS)))),)
 
 # Get the list of dependency files
 DependFiles := $(basename $(filter %.cpp %.c %.cc, $(Sources)))
