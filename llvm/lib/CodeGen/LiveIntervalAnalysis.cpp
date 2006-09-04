@@ -619,6 +619,9 @@ void LiveIntervals::computeIntervals() {
         tm_->getInstrInfo()->get(mi->getOpcode());
       DEBUG(std::cerr << MIIndex << "\t" << *mi);
 
+      // FIXME: Why is  this needed?
+      MIIndex = getInstructionIndex(mi);
+      
       // handle implicit defs
       if (tid.ImplicitDefs) {
         for (const unsigned* id = tid.ImplicitDefs; *id; ++id)
