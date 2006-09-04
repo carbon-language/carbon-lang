@@ -10,13 +10,8 @@ LEVEL = ../..
 
 TOOLNAME = bugpoint
 
-OPTLIBS  = LLVMTransforms.a LLVMInstrumentation.a
-ANALIBS  = LLVMDataStructure LLVMipa.a LLVMTarget.a 
-
-USEDLIBS = LLVMipo.a LLVMScalarOpts.a $(OPTLIBS) $(ANALIBS) LLVMAnalysis.a \
-	   LLVMTransformUtils.a \
-	   LLVMAsmParser.a LLVMLinker.a LLVMBCReader.a LLVMBCWriter.a \
-	   LLVMCore.a LLVMSupport.a LLVMbzip2.a LLVMSystem.a
+LINK_COMPONENTS := bcreader bcwriter asmparser instrumentation scalaropts ipo \
+                   datastructure transforms linker
 REQUIRES_EH := 1
 
 include $(LEVEL)/Makefile.common

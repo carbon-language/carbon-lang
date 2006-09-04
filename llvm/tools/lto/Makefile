@@ -17,14 +17,10 @@ DONT_BUILD_RELINKED = 1
 
 # Include this here so we can get the configuration of the targets
 # that have been configured for construction. We have to do this 
-# early so we can set up USEDLIBS properly before includeing Makefile.rules
+# early so we can set up LINK_COMPONENTS before includeing Makefile.rules
 include $(LEVEL)/Makefile.config
 
-USEDLIBS := $(addprefix LLVM,$(TARGETS_TO_BUILD)) \
-	LLVMSelectionDAG.a LLVMCodeGen.a LLVMipo.a LLVMTransforms.a \
-	LLVMScalarOpts.a LLVMipa.a LLVMTransformUtils.a LLVMAnalysis.a \
-	LLVMTarget.a LLVMBCReader.a LLVMBCWriter.a LLVMSystem.a LLVMLinker.a \
-	LLVMCore.a LLVMSupport.a LLVMbzip2.a
+LINK_COMPONENTS := $(TARGETS_TO_BUILD) ipo scalaropts bcreader bcwriter
 
 include $(LEVEL)/Makefile.common
 

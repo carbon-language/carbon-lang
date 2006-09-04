@@ -8,7 +8,7 @@
 ##===----------------------------------------------------------------------===##
 LEVEL = ../..
 TOOLNAME = llvmc
-USEDLIBS = LLVMCore.a LLVMSupport.a LLVMSystem.a
+LINK_COMPONENTS = support system
 CONFIG_FILES = c cpp ll
 EXTRA_DIST = c cpp ll ConfigLexer.cpp.cvs ConfigLexer.l.cvs
 REQUIRES_EH := 1

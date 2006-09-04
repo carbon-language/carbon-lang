@@ -9,8 +9,7 @@
 LEVEL = ../..
 
 TOOLNAME = llvm-prof
-USEDLIBS = LLVMAnalysis.a LLVMBCReader.a \
-           LLVMCore.a LLVMSupport.a LLVMbzip2.a LLVMSystem.a
+LINK_COMPONENTS = bcreader analysis
 REQUIRES_EH := 1
 
 include $(LEVEL)/Makefile.common

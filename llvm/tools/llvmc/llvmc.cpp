@@ -295,7 +295,6 @@ int main(int argc, char **argv) {
     if (KeepTemps)      flags |= CompilerDriver::KEEP_TEMPS_FLAG;
     if (ShowStats)      flags |= CompilerDriver::SHOW_STATS_FLAG;
     if (TimeActions)    flags |= CompilerDriver::TIME_ACTIONS_FLAG;
-    if (TimePassesIsEnabled) flags |= CompilerDriver::TIME_PASSES_FLAG;
     if (StripOutput)    flags |= CompilerDriver::STRIP_OUTPUT_FLAG;
     CD->setDriverFlags(flags);
 

@@ -8,10 +8,9 @@
 ##===----------------------------------------------------------------------===##
 LEVEL = ../..
 TOOLNAME = llvm2cpp
-USEDLIBS = LLVMBCReader.a LLVMCore.a LLVMSupport.a LLVMbzip2.a LLVMSystem.a
+LINK_COMPONENTS = bcreader
 REQUIRES_EH := 1
 
 include $(LEVEL)/Makefile.common
 
 CompileCommonOpts := $(filter-out -pedantic,$(CompileCommonOpts))
-CompileCommonOpts := $(filter-out -Wno-long-long,$(CompileCommonOpts))

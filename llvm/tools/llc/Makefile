@@ -13,24 +13,10 @@ REQUIRES_EH := 1
 
 # Include this here so we can get the configuration of the targets
 # that have been configured for construction. We have to do this 
-# early so we can set up USEDLIBS properly before includeing Makefile.rules
+# early so we can set up LINK_COMPONENTS before including Makefile.rules
 include $(LEVEL)/Makefile.config
 
-USEDLIBS := $(addprefix LLVM,$(TARGETS_TO_BUILD)) \
-	LLVMTarget.a \
-	LLVMCodeGen.a \
-	LLVMSelectionDAG.a \
-	LLVMipa.a \
-	LLVMTransforms.a \
-	LLVMScalarOpts.a \
-	LLVMTransformUtils.a \
-	LLVMAnalysis.a \
-	LLVMBCReader.a \
-	LLVMBCWriter.a \
-	LLVMCore.a \
-	LLVMSupport.a \
-	LLVMbzip2.a \
-	LLVMSystem.a
+LINK_COMPONENTS := $(TARGETS_TO_BUILD) bcreader
 
 include $(LLVM_SRC_ROOT)/Makefile.rules
 

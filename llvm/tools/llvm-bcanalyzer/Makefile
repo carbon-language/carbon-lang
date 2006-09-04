@@ -9,7 +9,7 @@
 LEVEL = ../..
 
 TOOLNAME = llvm-bcanalyzer
-USEDLIBS = LLVMBCReader.a LLVMCore.a LLVMSupport.a LLVMbzip2.a LLVMSystem.a
+LINK_COMPONENTS := bcreader
 REQUIRES_EH := 1
 
 include $(LEVEL)/Makefile.common
