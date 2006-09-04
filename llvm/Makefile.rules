@@ -658,7 +658,8 @@ $(LLVM_CONFIG):
 $(ToolDir)/$(strip $(TOOLNAME))$(EXEEXT): $(LLVM_CONFIG)
 
 ProjLibsOptions = $(shell $(LLVM_CONFIG) --libs     $(LINK_COMPONENTS))
-ProjLibsPaths   = $(shell $(LLVM_CONFIG) --libfiles $(LINK_COMPONENTS))
+ProjLibsPaths   = $(LLVM_CONFIG) \
+                  $(shell $(LLVM_CONFIG) --libfiles $(LINK_COMPONENTS))
 endif
 endif
 
@@ -953,7 +954,7 @@ else
 $(ToolBuildPath): $(ToolDir)/.dir
 endif
 
-$(ToolBuildPath): $(ObjectsO) $(LLVM_CONFIG) $(ProjLibsPaths) $(LLVMLibsPaths)
+$(ToolBuildPath): $(ObjectsO) $(ProjLibsPaths) $(LLVMLibsPaths)
 	$(Echo) Linking $(BuildMode) executable $(TOOLNAME) $(StripWarnMsg)
 	$(Verb) $(LTLink) -o $@ $(TOOLLINKOPTS) $(ObjectsO) $(ProjLibsOptions) \
 	$(LLVMLibsOptions) $(ExtraLibs) $(TOOLLINKOPTSB) $(LIBS)
