@@ -143,6 +143,9 @@ if (@components == 0) {
     push @components, 'all';
 }
 
+# Force component names to lower case.
+@components = map lc, @components;
+
 # Handle any arguments which require building our dependency graph.
 if ($want_libs || $want_libnames || $want_libfiles) {
     my @libs = expand_dependencies(@components);
