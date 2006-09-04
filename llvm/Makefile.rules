@@ -641,8 +641,7 @@ ifeq ($(LLVMLIBS),JIT)
 Link += -dlopen self
 
 # Generic JIT libraries
-JIT_LIBS := LLVMInterpreter LLVMJIT LLVMSelectionDAG.a LLVMCodeGen.a \
-            LLVMExecutionEngine
+JIT_LIBS := LLVMInterpreter LLVMJIT
 
 # You can enable the X86 JIT on a non-X86 host by setting the flag
 # ENABLE_X86_JIT on the make command line. If not, it will still be
@@ -680,8 +679,10 @@ ifdef ENABLE_ALPHA_JIT
   JIT_LIBS += LLVMAlpha 
 endif
 
+JIT_LIBS +=  LLVMTarget.a LLVMSelectionDAG.a LLVMCodeGen.a LLVMExecutionEngine
+
 LLVMLIBS := $(JIT_LIBS) LLVMScalarOpts.a LLVMTransformUtils.a LLVMAnalysis.a \
-            LLVMBCReader.a LLVMTarget.a LLVMCore.a LLVMSupport.a LLVMbzip2.a \
+            LLVMBCReader.a LLVMCore.a LLVMSupport.a LLVMbzip2.a \
             LLVMSystem.a $(PLATFORMLIBDL)
 endif
 
