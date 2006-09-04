@@ -6,9 +6,10 @@
 # the University of Illinois Open Source License. See LICENSE.TXT for details.
 # 
 ##===----------------------------------------------------------------------===##
+
 LEVEL    := ../..
 TOOLNAME := lli
-LINK_COMPONENTS := jit interpreter native bcreader
+LINK_COMPONENTS := jit interpreter native bcreader selectiondag
 REQUIRES_EH := 1
 
 # Enable JIT support
