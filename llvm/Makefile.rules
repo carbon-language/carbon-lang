@@ -297,6 +297,7 @@ ifndef TBLGEN
     TBLGEN   := $(LLVMToolDir)/tblgen$(EXEEXT)
   endif
 endif
+LLVM_CONFIG := $(LLVMToolDir)/llvm-config 
 ifndef GCCAS
 GCCAS    := $(LLVMToolDir)/gccas$(EXEEXT)
 endif
@@ -629,7 +630,6 @@ endif
 # JIT support for a library or a tool that runs JIT.
 #---------------------------------------------------------
 ifeq ($(firstword $(LLVMLIBS)),config)
-LLVM_CONFIG := $(LLVM_SRC_ROOT)/utils/llvm-config/llvm-config 
 LLVMLIBS := $(shell $(LLVM_CONFIG) --libnames $(wordlist 2,9999,$(LLVMLIBS)))
 LLVMLIBS := $(patsubst lib%.a,%.a,$(LLVMLIBS))
 LLVMLIBS := $(patsubst %.o,%,$(LLVMLIBS))
@@ -690,17 +690,27 @@ endif
 # Define various command line options pertaining to the
 # libraries needed when linking. There are "Proj" libs 
 # (defined by the user's project) and "LLVM" libs (defined 
-# by the # LLVM project).
+# by the LLVM project).
 #---------------------------------------------------------
 
+ifdef USEDLIBS
 ProjLibsOptions := $(patsubst %.a.o, -l%, $(addsuffix .o, $(USEDLIBS)))
 ProjLibsOptions := $(patsubst %.o, $(LibDir)/%.o,  $(ProjLibsOptions))
+ProjUsedLibs    := $(patsubst %.a.o, lib%.a, $(addsuffix .o, $(USEDLIBS)))
+ProjLibsPaths   := $(addprefix $(LibDir)/,$(ProjUsedLibs))
+endif
+
+ifdef LLVMLIBS
 LLVMLibsOptions := $(patsubst %.a.o, -l%, $(addsuffix .o, $(LLVMLIBS)))
 LLVMLibsOptions := $(patsubst %.o, $(LLVMLibDir)/%.o, $(LLVMLibsOptions))
-ProjUsedLibs    := $(patsubst %.a.o, lib%.a, $(addsuffix .o, $(USEDLIBS)))
 LLVMUsedLibs    := $(patsubst %.a.o, lib%.a, $(addsuffix .o, $(LLVMLIBS)))
-ProjLibsPaths   := $(addprefix $(LibDir)/,$(ProjUsedLibs))
 LLVMLibsPaths   := $(addprefix $(LLVMLibDir)/,$(LLVMUsedLibs))
+endif
+
+ifdef LINK_COMPONENTS
+ProjLibsOptions := $(shell $(LLVM_CONFIG) --libs     $(LINK_COMPONENTS))
+ProjLibsPaths   := $(shell $(LLVM_CONFIG) --libfiles $(LINK_COMPONENTS))
+endif
 
 ###############################################################################
 # Library Build Rules: Four ways to build a library
