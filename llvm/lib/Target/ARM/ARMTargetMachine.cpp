@@ -14,15 +14,9 @@
 #include "ARMTargetMachine.h"
 #include "ARMFrameInfo.h"
 #include "ARM.h"
-#include "llvm/Assembly/PrintModulePass.h"
 #include "llvm/Module.h"
 #include "llvm/PassManager.h"
-#include "llvm/CodeGen/MachineFunction.h"
-#include "llvm/CodeGen/Passes.h"
-#include "llvm/Target/TargetOptions.h"
 #include "llvm/Target/TargetMachineRegistry.h"
-#include "llvm/Transforms/Scalar.h"
-#include <iostream>
 using namespace llvm;
 
 namespace {
@@ -47,54 +41,16 @@ unsigned ARMTargetMachine::getModuleMatchQuality(const Module &M) {
     return 0;
 }
 
-/// addPassesToEmitFile - Add passes to the specified pass manager
-/// to implement a static compiler for this target.
-///
-bool ARMTargetMachine::addPassesToEmitFile(PassManager &PM, std::ostream &Out,
-                                             CodeGenFileType FileType,
-                                             bool Fast) {
-  if (FileType != TargetMachine::AssemblyFile)
-    return true;
 
-  // Run loop strength reduction before anything else.
-  if (!Fast)
-    PM.add(createLoopStrengthReducePass());
-
-  if (!Fast)
-    PM.add(createCFGSimplificationPass());
-
-  // FIXME: Implement efficient support for garbage collection intrinsics.
-  PM.add(createLowerGCPass());
-
-  // FIXME: implement the invoke/unwind instructions!
-  PM.add(createLowerInvokePass());
-
-  // Print LLVM code input to instruction selector:
-  if (PrintMachineCode)
-    PM.add(new PrintFunctionPass());
-
-  // Make sure that no unreachable blocks are instruction selected.
-  PM.add(createUnreachableBlockEliminationPass());
-
+// Pass Pipeline Configuration
+bool ARMTargetMachine::addInstSelector(FunctionPassManager &PM, bool Fast) {
   PM.add(createARMISelDag(*this));
-
-  // Print machine instructions as they were initially generated.
-  if (PrintMachineCode)
-    PM.add(createMachineFunctionPrinterPass(&std::cerr));
-
-  PM.add(createRegisterAllocator());
-  PM.add(createPrologEpilogCodeInserter());
-
-  // Print machine instructions after register allocation and prolog/epilog
-  // insertion.
-  if (PrintMachineCode)
-    PM.add(createMachineFunctionPrinterPass(&std::cerr));
-
+  return false;
+}
+bool ARMTargetMachine::addAssemblyEmitter(FunctionPassManager &PM, bool Fast, 
+                                          std::ostream &Out) {
   // Output assembly language.
   PM.add(createARMCodePrinterPass(Out, *this));
-
-  // Delete the MachineInstrs we generated, since they're no longer needed.
-  PM.add(createMachineCodeDeleter());
   return false;
 }
 

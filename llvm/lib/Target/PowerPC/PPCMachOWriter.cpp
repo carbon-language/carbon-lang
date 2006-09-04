@@ -33,7 +33,7 @@ namespace {
 /// addPPCMachOObjectWriterPass - Returns a pass that outputs the generated code
 /// as a Mach-O object file.
 ///
-void llvm::addPPCMachOObjectWriterPass(PassManager &FPM,
+void llvm::addPPCMachOObjectWriterPass(FunctionPassManager &FPM,
                                        std::ostream &O, PPCTargetMachine &TM) {
   PPCMachOWriter *EW = new PPCMachOWriter(O, TM);
   FPM.add(EW);

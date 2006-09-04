@@ -17,7 +17,6 @@
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetData.h"
 #include "llvm/Target/TargetFrameInfo.h"
-#include "llvm/PassManager.h"
 #include "SparcInstrInfo.h"
 #include "SparcSubtarget.h"
 
@@ -25,7 +24,7 @@ namespace llvm {
 
 class Module;
 
-class SparcTargetMachine : public TargetMachine {
+class SparcTargetMachine : public LLVMTargetMachine {
   const TargetData DataLayout;       // Calculates type size & alignment
   SparcSubtarget Subtarget;
   SparcInstrInfo InstrInfo;
@@ -42,8 +41,12 @@ public:
   virtual const TargetData       *getTargetData() const { return &DataLayout; }
   static unsigned getModuleMatchQuality(const Module &M);
 
-  virtual bool addPassesToEmitFile(PassManager &PM, std::ostream &Out,
-                                   CodeGenFileType FileType, bool Fast);
+  
+  // Pass Pipeline Configuration
+  virtual bool addInstSelector(FunctionPassManager &PM, bool Fast);
+  virtual bool addPreEmitPass(FunctionPassManager &PM, bool Fast);
+  virtual bool addAssemblyEmitter(FunctionPassManager &PM, bool Fast, 
+                                  std::ostream &Out);
 };
 
 } // end namespace llvm

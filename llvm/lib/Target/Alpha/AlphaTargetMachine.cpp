@@ -14,12 +14,8 @@
 #include "AlphaJITInfo.h"
 #include "AlphaTargetMachine.h"
 #include "llvm/Module.h"
-#include "llvm/CodeGen/Passes.h"
-#include "llvm/Target/TargetOptions.h"
+#include "llvm/PassManager.h"
 #include "llvm/Target/TargetMachineRegistry.h"
-#include "llvm/Transforms/Scalar.h"
-#include "llvm/Support/Debug.h"
-#include <iostream>
 
 using namespace llvm;
 
@@ -57,89 +53,30 @@ AlphaTargetMachine::AlphaTargetMachine(const Module &M, const std::string &FS)
   : DataLayout("e"),
     FrameInfo(TargetFrameInfo::StackGrowsDown, 16, 0),
     JITInfo(*this),
-    Subtarget(M, FS)
-{
-  DEBUG(std::cerr << "FS is " << FS << "\n");
+    Subtarget(M, FS) {
 }
 
-/// addPassesToEmitFile - Add passes to the specified pass manager to implement
-/// a static compiler for this target.
-///
-bool AlphaTargetMachine::addPassesToEmitFile(PassManager &PM,
-                                             std::ostream &Out,
-                                             CodeGenFileType FileType,
-                                             bool Fast) {
-  if (FileType != TargetMachine::AssemblyFile) return true;
 
-  PM.add(createLoopStrengthReducePass());
-  PM.add(createCFGSimplificationPass());
+//===----------------------------------------------------------------------===//
+// Pass Pipeline Configuration
+//===----------------------------------------------------------------------===//
 
- 
-  // FIXME: Implement efficient support for garbage collection intrinsics.
-  PM.add(createLowerGCPass());
-
-  // FIXME: Implement the invoke/unwind instructions!
-  PM.add(createLowerInvokePass());
-
-  // Make sure that no unreachable blocks are instruction selected.
-  PM.add(createUnreachableBlockEliminationPass());
-
+bool AlphaTargetMachine::addInstSelector(FunctionPassManager &PM, bool Fast) {
   PM.add(createAlphaISelDag(*this));
-
-  if (PrintMachineCode)
-    PM.add(createMachineFunctionPrinterPass(&std::cerr));
-
-  PM.add(createRegisterAllocator());
-
-  if (PrintMachineCode)
-    PM.add(createMachineFunctionPrinterPass(&std::cerr));
-
-  PM.add(createPrologEpilogCodeInserter());
-
-  // Must run branch selection immediately preceding the asm printer
-  //PM.add(createAlphaBranchSelectionPass());
-
-  PM.add(createAlphaCodePrinterPass(Out, *this));
-
-  PM.add(createMachineCodeDeleter());
   return false;
 }
-
-void AlphaJITInfo::addPassesToJITCompile(FunctionPassManager &PM) {
-
-  PM.add(createLoopStrengthReducePass());
-  PM.add(createCFGSimplificationPass());
-
-  // FIXME: Implement efficient support for garbage collection intrinsics.
-  PM.add(createLowerGCPass());
-
-  // FIXME: Implement the invoke/unwind instructions!
-  PM.add(createLowerInvokePass());
-
-  // Make sure that no unreachable blocks are instruction selected.
-  PM.add(createUnreachableBlockEliminationPass());
-
-  PM.add(createAlphaISelDag(TM));
-
-  if (PrintMachineCode)
-    PM.add(createMachineFunctionPrinterPass(&std::cerr));
-
-  PM.add(createRegisterAllocator());
-
-  if (PrintMachineCode)
-    PM.add(createMachineFunctionPrinterPass(&std::cerr));
-
-  PM.add(createPrologEpilogCodeInserter());
-
+bool AlphaTargetMachine::addPreEmitPass(FunctionPassManager &PM, bool Fast) {
   // Must run branch selection immediately preceding the asm printer
   //PM.add(createAlphaBranchSelectionPass());
-
+  return false;
 }
-
-bool AlphaTargetMachine::addPassesToEmitMachineCode(FunctionPassManager &PM,
-                                                    MachineCodeEmitter &MCE) {
+bool AlphaTargetMachine::addAssemblyEmitter(FunctionPassManager &PM, bool Fast, 
+                                            std::ostream &Out) {
+  PM.add(createAlphaCodePrinterPass(Out, *this));
+  return false;
+}
+bool AlphaTargetMachine::addCodeEmitter(FunctionPassManager &PM, bool Fast,
+                                        MachineCodeEmitter &MCE) {
   PM.add(createAlphaCodeEmitterPass(*this, MCE));
-  // Delete machine code for this function
-  PM.add(createMachineCodeDeleter());
   return false;
 }

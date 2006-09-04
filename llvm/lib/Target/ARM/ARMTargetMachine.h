@@ -18,7 +18,6 @@
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetData.h"
 #include "llvm/Target/TargetFrameInfo.h"
-#include "llvm/PassManager.h"
 #include "ARMInstrInfo.h"
 #include "ARMFrameInfo.h"
 
@@ -26,7 +25,7 @@ namespace llvm {
 
 class Module;
 
-class ARMTargetMachine : public TargetMachine {
+class ARMTargetMachine : public LLVMTargetMachine {
   const TargetData DataLayout;       // Calculates type size & alignment
   ARMInstrInfo InstrInfo;
   ARMFrameInfo FrameInfo;
@@ -41,8 +40,10 @@ public:
   virtual const TargetData       *getTargetData() const { return &DataLayout; }
   static unsigned getModuleMatchQuality(const Module &M);
 
-  virtual bool addPassesToEmitFile(PassManager &PM, std::ostream &Out,
-                                   CodeGenFileType FileType, bool Fast);
+  // Pass Pipeline Configuration
+  virtual bool addInstSelector(FunctionPassManager &PM, bool Fast);
+  virtual bool addAssemblyEmitter(FunctionPassManager &PM, bool Fast, 
+                                  std::ostream &Out);
 };
 
 } // end namespace llvm

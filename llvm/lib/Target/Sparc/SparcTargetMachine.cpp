@@ -12,14 +12,9 @@
 
 #include "SparcTargetMachine.h"
 #include "Sparc.h"
-#include "llvm/Assembly/PrintModulePass.h"
 #include "llvm/Module.h"
 #include "llvm/PassManager.h"
-#include "llvm/CodeGen/MachineFunction.h"
-#include "llvm/CodeGen/Passes.h"
-#include "llvm/Target/TargetOptions.h"
 #include "llvm/Target/TargetMachineRegistry.h"
-#include "llvm/Transforms/Scalar.h"
 #include <iostream>
 using namespace llvm;
 
@@ -55,57 +50,23 @@ unsigned SparcTargetMachine::getModuleMatchQuality(const Module &M) {
   return 0;
 }
 
-/// addPassesToEmitFile - Add passes to the specified pass manager
-/// to implement a static compiler for this target.
-///
-bool SparcTargetMachine::addPassesToEmitFile(PassManager &PM, std::ostream &Out,
-                                             CodeGenFileType FileType,
-                                             bool Fast) {
-  if (FileType != TargetMachine::AssemblyFile) return true;
-
-  // Run loop strength reduction before anything else.
-  if (!Fast) PM.add(createLoopStrengthReducePass());
-
-  // FIXME: Implement efficient support for garbage collection intrinsics.
-  PM.add(createLowerGCPass());
-
-  // FIXME: implement the invoke/unwind instructions!
-  PM.add(createLowerInvokePass());
-
-  // Print LLVM code input to instruction selector:
-  if (PrintMachineCode)
-    PM.add(new PrintFunctionPass());
-
-  // Make sure that no unreachable blocks are instruction selected.
-  PM.add(createUnreachableBlockEliminationPass());
-  
+bool SparcTargetMachine::addInstSelector(FunctionPassManager &PM, bool Fast) {
   PM.add(createSparcISelDag(*this));
-
-  // Print machine instructions as they were initially generated.
-  if (PrintMachineCode)
-    PM.add(createMachineFunctionPrinterPass(&std::cerr));
-
-  PM.add(createRegisterAllocator());
-  PM.add(createPrologEpilogCodeInserter());
-
-  // Print machine instructions after register allocation and prolog/epilog
-  // insertion.
-  if (PrintMachineCode)
-    PM.add(createMachineFunctionPrinterPass(&std::cerr));
-
-  PM.add(createSparcFPMoverPass(*this));
-
-  PM.add(createSparcDelaySlotFillerPass(*this));
-
-  // Print machine instructions after filling delay slots.
-  if (PrintMachineCode)
-    PM.add(createMachineFunctionPrinterPass(&std::cerr));
-
-  // Output assembly language.
-  PM.add(createSparcCodePrinterPass(Out, *this));
-
-  // Delete the MachineInstrs we generated, since they're no longer needed.
-  PM.add(createMachineCodeDeleter());
   return false;
 }
 
+/// addPreEmitPass - This pass may be implemented by targets that want to run
+/// passes immediately before machine code is emitted.  This should return
+/// true if -print-machineinstrs should print out the code after the passes.
+bool SparcTargetMachine::addPreEmitPass(FunctionPassManager &PM, bool Fast) {
+  PM.add(createSparcFPMoverPass(*this));
+  PM.add(createSparcDelaySlotFillerPass(*this));
+  return true;
+}
+
+bool SparcTargetMachine::addAssemblyEmitter(FunctionPassManager &PM, bool Fast, 
+                                            std::ostream &Out) {
+  // Output assembly language.
+  PM.add(createSparcCodePrinterPass(Out, *this));
+  return false;
+}

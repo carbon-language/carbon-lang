@@ -7,7 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This file describes the general parts of a Target machine.
+// This file defines the TargetMachine and LLVMTargetMachine classes.
 //
 //===----------------------------------------------------------------------===//
 
@@ -62,8 +62,8 @@ namespace CodeModel {
 /// through this interface.
 ///
 class TargetMachine {
-  TargetMachine(const TargetMachine&);   // DO NOT IMPLEMENT
-  void operator=(const TargetMachine&);  // DO NOT IMPLEMENT
+  TargetMachine(const TargetMachine &);   // DO NOT IMPLEMENT
+  void operator=(const TargetMachine &);  // DO NOT IMPLEMENT
 protected: // Can only create subclasses.
   TargetMachine() { }
 
@@ -151,19 +151,109 @@ public:
   /// code as fast as possible, without regard for compile time.  This method
   /// should return true if emission of this file type is not supported.
   ///
-  virtual bool addPassesToEmitFile(PassManager &PM, std::ostream &Out,
+  virtual bool addPassesToEmitFile(FunctionPassManager &PM, std::ostream &Out,
                                    CodeGenFileType FileType, bool Fast) {
     return true;
   }
-
+ 
   /// addPassesToEmitMachineCode - Add passes to the specified pass manager to
   /// get machine code emitted.  This uses a MachineCodeEmitter object to handle
   /// actually outputting the machine code and resolving things like the address
-  /// of functions.  This method should returns true if machine code emission is
+  /// of functions.  This method returns true if machine code emission is
   /// not supported.
   ///
   virtual bool addPassesToEmitMachineCode(FunctionPassManager &PM,
-                                          MachineCodeEmitter &MCE) {
+                                          MachineCodeEmitter &MCE, bool Fast) {
+    return true;
+  }
+  
+
+  /// addPassesToEmitWholeFile - This method can be implemented by targets that 
+  /// require having the entire module at once.  This is not recommended, do not
+  /// use this.
+  virtual bool WantsWholeFile() const { return false; }
+  virtual bool addPassesToEmitWholeFile(PassManager &PM, std::ostream &Out,
+                                        CodeGenFileType FileType, bool Fast) {
+    return true;
+  }
+};
+
+/// LLVMTargetMachine - This class describes a target machine that is
+/// implemented with the LLVM target-independent code generator.
+///
+class LLVMTargetMachine : public TargetMachine {
+protected: // Can only create subclasses.
+    LLVMTargetMachine() { }
+public:
+  
+  /// addPassesToEmitFile - Add passes to the specified pass manager to get
+  /// the specified file emitted.  Typically this will involve several steps of
+  /// code generation.  If Fast is set to true, the code generator should emit
+  /// code as fast as possible, without regard for compile time.  This method
+  /// should return true if emission of this file type is not supported.
+  ///
+  /// The default implementation of this method adds components from the
+  /// LLVM retargetable code generator, invoking the methods below to get
+  /// target-specific passes in standard locations.
+  ///
+  virtual bool addPassesToEmitFile(FunctionPassManager &PM, std::ostream &Out,
+                                   CodeGenFileType FileType, bool Fast);
+  
+  /// addPassesToEmitMachineCode - Add passes to the specified pass manager to
+  /// get machine code emitted.  This uses a MachineCodeEmitter object to handle
+  /// actually outputting the machine code and resolving things like the address
+  /// of functions.  This method returns true if machine code emission is
+  /// not supported.
+  ///
+  virtual bool addPassesToEmitMachineCode(FunctionPassManager &PM,
+                                          MachineCodeEmitter &MCE, bool Fast);
+  
+  /// Target-Independent Code Generator Pass Configuration Options.
+  
+  /// addInstSelector - This method should add any "last minute" LLVM->LLVM
+  /// passes, then install an instruction selector pass, which converts from
+  /// LLVM code to machine instructions.
+  virtual bool addInstSelector(FunctionPassManager &PM, bool Fast) {
+    return true;
+  }
+  
+  /// addPostRegAllocPasses - This method may be implemented by targets that
+  /// want to run passes after register allocation but before prolog-epilog
+  /// insertion.  This should return true if -print-machineinstrs should print
+  /// after these passes.
+  virtual bool addPostRegAlloc(FunctionPassManager &PM, bool Fast) {
+    return false;
+  }
+  
+  /// addPreEmitPass - This pass may be implemented by targets that want to run
+  /// passes immediately before machine code is emitted.  This should return
+  /// true if -print-machineinstrs should print out the code after the passes.
+  virtual bool addPreEmitPass(FunctionPassManager &PM, bool Fast) {
+    return false;
+  }
+  
+  
+  /// addAssemblyEmitter - This pass should be overridden by the target to add
+  /// the asmprinter, if asm emission is supported.  If this is not supported,
+  /// 'true' should be returned.
+  virtual bool addAssemblyEmitter(FunctionPassManager &PM, bool Fast, 
+                                  std::ostream &Out) {
+    return true;
+  }
+  
+  /// addObjectWriter - This pass should be overridden by the target to add
+  /// the object-file writer, if supported.  If this is not supported,
+  /// 'true' should be returned.
+  virtual bool addObjectWriter(FunctionPassManager &PM, bool Fast,
+                               std::ostream &Out) {
+    return true;
+  }
+  
+  /// addCodeEmitter - This pass should be overridden by the target to add a
+  /// code emitter, if supported.  If this is not supported, 'true' should be
+  /// returned.
+  virtual bool addCodeEmitter(FunctionPassManager &PM, bool Fast, 
+                              MachineCodeEmitter &MCE) {
     return true;
   }
 };

@@ -1,4 +1,4 @@
-//===-- PowerPC.h - Top-level interface for PowerPC representation -*- C++ -*-//
+//===-- PPC.h - Top-level interface for PowerPC Target ----------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -12,15 +12,15 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef TARGET_POWERPC_H
-#define TARGET_POWERPC_H
+#ifndef LLVM_TARGET_POWERPC_H
+#define LLVM_TARGET_POWERPC_H
 
 #include <iosfwd>
 
 namespace llvm {
 
 class PPCTargetMachine;
-class PassManager;
+class FunctionPassManager;
 class FunctionPass;
 class MachineCodeEmitter;
 
@@ -29,7 +29,7 @@ FunctionPass *createPPCISelDag(PPCTargetMachine &TM);
 FunctionPass *createDarwinAsmPrinter(std::ostream &OS, PPCTargetMachine &TM);
 FunctionPass *createPPCCodeEmitterPass(PPCTargetMachine &TM,
                                        MachineCodeEmitter &MCE);
-void addPPCMachOObjectWriterPass(PassManager &FPM, std::ostream &o, 
+void addPPCMachOObjectWriterPass(FunctionPassManager &FPM, std::ostream &o, 
                                  PPCTargetMachine &tm);
 } // end namespace llvm;
 

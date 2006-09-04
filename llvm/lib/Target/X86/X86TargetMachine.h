@@ -17,7 +17,6 @@
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetData.h"
 #include "llvm/Target/TargetFrameInfo.h"
-#include "llvm/PassManager.h"
 #include "X86.h"
 #include "X86InstrInfo.h"
 #include "X86JITInfo.h"
@@ -26,7 +25,7 @@
 
 namespace llvm {
 
-class X86TargetMachine : public TargetMachine {
+class X86TargetMachine : public LLVMTargetMachine {
   X86Subtarget      Subtarget;
   const TargetData DataLayout;       // Calculates type size & alignment
   TargetFrameInfo   FrameInfo;
@@ -48,14 +47,19 @@ public:
   }
   virtual const TargetData       *getTargetData() const { return &DataLayout; }
 
-  virtual bool addPassesToEmitMachineCode(FunctionPassManager &PM,
-                                          MachineCodeEmitter &MCE);
-
-  virtual bool addPassesToEmitFile(PassManager &PM, std::ostream &Out,
-                                   CodeGenFileType FileType, bool Fast);
-
   static unsigned getModuleMatchQuality(const Module &M);
   static unsigned getJITMatchQuality();
+  
+  
+  // Set up the pass pipeline.
+  virtual bool addInstSelector(FunctionPassManager &PM, bool Fast);  
+  virtual bool addPostRegAlloc(FunctionPassManager &PM, bool Fast);
+  virtual bool addAssemblyEmitter(FunctionPassManager &PM, bool Fast, 
+                                  std::ostream &Out);
+  virtual bool addObjectWriter(FunctionPassManager &PM, bool Fast,
+                               std::ostream &Out);
+  virtual bool addCodeEmitter(FunctionPassManager &PM, bool Fast,
+                              MachineCodeEmitter &MCE);
 };
 } // End llvm namespace
 

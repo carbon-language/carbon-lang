@@ -12,19 +12,10 @@
 //===----------------------------------------------------------------------===//
 
 #include "PPC.h"
-#include "PPCFrameInfo.h"
 #include "PPCTargetMachine.h"
-#include "PPCJITInfo.h"
 #include "llvm/Module.h"
 #include "llvm/PassManager.h"
-#include "llvm/Analysis/Verifier.h"
-#include "llvm/CodeGen/MachineFunction.h"
-#include "llvm/CodeGen/Passes.h"
-#include "llvm/Target/TargetOptions.h"
 #include "llvm/Target/TargetMachineRegistry.h"
-#include "llvm/Transforms/Scalar.h"
-#include "llvm/Support/CommandLine.h"
-#include <iostream>
 using namespace llvm;
 
 namespace {
@@ -106,99 +97,47 @@ PPC64TargetMachine::PPC64TargetMachine(const Module &M, const std::string &FS)
   : PPCTargetMachine(M, FS, true) {
 }
 
-/// addPassesToEmitFile - Add passes to the specified pass manager to implement
-/// a static compiler for this target.
-///
-bool PPCTargetMachine::addPassesToEmitFile(PassManager &PM, std::ostream &Out,
-                                           CodeGenFileType FileType,
-                                           bool Fast) {
-  if (FileType != TargetMachine::AssemblyFile &&
-      FileType != TargetMachine::ObjectFile) return true;
-  
-  // Run loop strength reduction before anything else.
-  if (!Fast) PM.add(createLoopStrengthReducePass(&TLInfo));
 
-  // FIXME: Implement efficient support for garbage collection intrinsics.
-  PM.add(createLowerGCPass());
+//===----------------------------------------------------------------------===//
+// Pass Pipeline Configuration
+//===----------------------------------------------------------------------===//
 
-  // FIXME: Implement the invoke/unwind instructions!
-  PM.add(createLowerInvokePass());
-  
-  // Clean up after other passes, e.g. merging critical edges.
-  if (!Fast) PM.add(createCFGSimplificationPass());
-
-  // Make sure that no unreachable blocks are instruction selected.
-  PM.add(createUnreachableBlockEliminationPass());
-
+bool PPCTargetMachine::addInstSelector(FunctionPassManager &PM, bool Fast) {
   // Install an instruction selector.
   PM.add(createPPCISelDag(*this));
-
-  if (PrintMachineCode)
-    PM.add(createMachineFunctionPrinterPass(&std::cerr));
-
-  PM.add(createRegisterAllocator());
-
-  if (PrintMachineCode)
-    PM.add(createMachineFunctionPrinterPass(&std::cerr));
-
-  PM.add(createPrologEpilogCodeInserter());
-
-  // Must run branch selection immediately preceding the asm printer
-  PM.add(createPPCBranchSelectionPass());
-
-  if (FileType == TargetMachine::AssemblyFile)
-    PM.add(createDarwinAsmPrinter(Out, *this));
-  else
-    // FIXME: support PPC ELF files at some point
-    addPPCMachOObjectWriterPass(PM, Out, *this);
-
-  PM.add(createMachineCodeDeleter());
   return false;
 }
 
-void PPCJITInfo::addPassesToJITCompile(FunctionPassManager &PM) {
+bool PPCTargetMachine::addPreEmitPass(FunctionPassManager &PM, bool Fast) {
+  
+  // Must run branch selection immediately preceding the asm printer.
+  PM.add(createPPCBranchSelectionPass());
+  return false;
+}
+
+bool PPCTargetMachine::addAssemblyEmitter(FunctionPassManager &PM, bool Fast, 
+                                          std::ostream &Out) {
+  PM.add(createDarwinAsmPrinter(Out, *this));
+  return false;
+}
+
+bool PPCTargetMachine::addObjectWriter(FunctionPassManager &PM, bool Fast,
+                                       std::ostream &Out) {
+  // FIXME: support PPC ELF files at some point
+  addPPCMachOObjectWriterPass(PM, Out, *this);
+  return true;
+}
+
+bool PPCTargetMachine::addCodeEmitter(FunctionPassManager &PM, bool Fast,
+                                      MachineCodeEmitter &MCE) {
   // The JIT should use the static relocation model.
-  TM.setRelocationModel(Reloc::Static);
+  // FIXME: This should be moved to TargetJITInfo!!
+  setRelocationModel(Reloc::Static);
 
-  // Run loop strength reduction before anything else.
-  PM.add(createLoopStrengthReducePass(TM.getTargetLowering()));
-
-  // FIXME: Implement efficient support for garbage collection intrinsics.
-  PM.add(createLowerGCPass());
-
-  // FIXME: Implement the invoke/unwind instructions!
-  PM.add(createLowerInvokePass());
-
-  // Clean up after other passes, e.g. merging critical edges.
-  PM.add(createCFGSimplificationPass());
-
-  // Make sure that no unreachable blocks are instruction selected.
-  PM.add(createUnreachableBlockEliminationPass());
-
-  // Install an instruction selector.
-  PM.add(createPPCISelDag(TM));
-
-  PM.add(createRegisterAllocator());
-  PM.add(createPrologEpilogCodeInserter());
-
-  // Must run branch selection immediately preceding the asm printer
-  PM.add(createPPCBranchSelectionPass());
-
-  if (PrintMachineCode)
-    PM.add(createMachineFunctionPrinterPass(&std::cerr));
-}
-
-/// addPassesToEmitMachineCode - Add passes to the specified pass manager to get
-/// machine code emitted.  This uses a MachineCodeEmitter object to handle
-/// actually outputting the machine code and resolving things like the address
-/// of functions.  This method should returns true if machine code emission is
-/// not supported.
-///
-bool PPCTargetMachine::addPassesToEmitMachineCode(FunctionPassManager &PM,
-                                                  MachineCodeEmitter &MCE) {
-  // Machine code emitter pass for PowerPC
+  
+  
+  // Machine code emitter pass for PowerPC.
   PM.add(createPPCCodeEmitterPass(*this, MCE));
-  // Delete machine code for this function after emitting it
-  PM.add(createMachineCodeDeleter());
   return false;
 }
+

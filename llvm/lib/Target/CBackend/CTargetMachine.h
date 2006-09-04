@@ -25,14 +25,14 @@ struct CTargetMachine : public TargetMachine {
   CTargetMachine(const Module &M, const std::string &FS)
     : DataLayout(&M) {}
 
-  // This is the only thing that actually does anything here.
-  virtual bool addPassesToEmitFile(PassManager &PM, std::ostream &Out,
-                                   CodeGenFileType FileType, bool Fast);
+  virtual bool WantsWholeFile() const { return true; }
+  virtual bool addPassesToEmitWholeFile(PassManager &PM, std::ostream &Out,
+                                        CodeGenFileType FileType, bool Fast);
 
   // This class always works, but shouldn't be the default in most cases.
   static unsigned getModuleMatchQuality(const Module &M) { return 1; }
   
-  virtual const TargetData       *getTargetData() const { return &DataLayout; }
+  virtual const TargetData *getTargetData() const { return &DataLayout; }
 };
 
 } // End llvm namespace

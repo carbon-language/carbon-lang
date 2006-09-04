@@ -33,11 +33,6 @@ namespace llvm {
   public:
     virtual ~TargetJITInfo() {}
 
-    /// addPassesToJITCompile - Add passes to the specified pass manager to
-    /// implement a fast code generator for this target.
-    ///
-    virtual void addPassesToJITCompile(FunctionPassManager &PM) = 0;
-
     /// replaceMachineCodeForFunction - Make it so that calling the function
     /// whose machine code is at OLD turns into a call to NEW, perhaps by
     /// overwriting OLD with a branch to NEW.  This is used for self-modifying

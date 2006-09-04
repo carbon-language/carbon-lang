@@ -20,8 +20,6 @@
 #include "llvm/Target/TargetOptions.h"
 #include "llvm/Target/TargetMachineRegistry.h"
 #include "llvm/Transforms/Scalar.h"
-#include "llvm/Support/CommandLine.h"
-#include "llvm/ADT/Statistic.h"
 #include <iostream>
 using namespace llvm;
 
@@ -33,9 +31,6 @@ extern "C" int X86TargetMachineModule;
 int X86TargetMachineModule = 0;
 
 namespace {
-  cl::opt<bool> DisableOutput("disable-x86-llc-output", cl::Hidden,
-                              cl::desc("Disable the X86 asm printer, for use "
-                                       "when profiling the code generator."));
   // Register the target.
   RegisterTarget<X86TargetMachine> X("x86", "  IA-32 (Pentium and above)");
 }
@@ -79,121 +74,38 @@ X86TargetMachine::X86TargetMachine(const Module &M, const std::string &FS)
       setRelocationModel(Reloc::PIC_);
 }
 
+//===----------------------------------------------------------------------===//
+// Pass Pipeline Configuration
+//===----------------------------------------------------------------------===//
 
-// addPassesToEmitFile - We currently use all of the same passes as the JIT
-// does to emit statically compiled machine code.
-bool X86TargetMachine::addPassesToEmitFile(PassManager &PM, std::ostream &Out,
-                                           CodeGenFileType FileType,
-                                           bool Fast) {
-  if (FileType != TargetMachine::AssemblyFile &&
-      FileType != TargetMachine::ObjectFile) return true;
-
-  // Run loop strength reduction before anything else.
-  if (!Fast) PM.add(createLoopStrengthReducePass(&TLInfo));
-
-  // FIXME: Implement efficient support for garbage collection intrinsics.
-  PM.add(createLowerGCPass());
-
-  // FIXME: Implement the invoke/unwind instructions!
-  PM.add(createLowerInvokePass());
-
-  // Make sure that no unreachable blocks are instruction selected.
-  PM.add(createUnreachableBlockEliminationPass());
-
+bool X86TargetMachine::addInstSelector(FunctionPassManager &PM, bool Fast) {
   // Install an instruction selector.
   PM.add(createX86ISelDag(*this, Fast));
-
-  // Print the instruction selected machine code...
-  if (PrintMachineCode)
-    PM.add(createMachineFunctionPrinterPass(&std::cerr));
-
-  // Perform register allocation to convert to a concrete x86 representation
-  PM.add(createRegisterAllocator());
-
-  if (PrintMachineCode)
-    PM.add(createMachineFunctionPrinterPass(&std::cerr));
-
-  PM.add(createX86FloatingPointStackifierPass());
-
-  if (PrintMachineCode)
-    PM.add(createMachineFunctionPrinterPass(&std::cerr));
-
-  // Insert prolog/epilog code.  Eliminate abstract frame index references...
-  PM.add(createPrologEpilogCodeInserter());
-
-  if (PrintMachineCode)  // Print the register-allocated code
-    PM.add(createX86CodePrinterPass(std::cerr, *this));
-
-  if (!DisableOutput)
-    switch (FileType) {
-    default:
-      assert(0 && "Unexpected filetype here!");
-    case TargetMachine::AssemblyFile:
-      PM.add(createX86CodePrinterPass(Out, *this));
-      break;
-    case TargetMachine::ObjectFile:
-      // FIXME: We only support emission of ELF files for now, this should check
-      // the target triple and decide on the format to write (e.g. COFF on
-      // win32 or Mach-O on darwin).
-      addX86ELFObjectWriterPass(PM, Out, *this);
-      break;
-    }
-
-  // Delete machine code for this function
-  PM.add(createMachineCodeDeleter());
-
-  return false; // success!
+  return false;
 }
 
-/// addPassesToJITCompile - Add passes to the specified pass manager to
-/// implement a fast dynamic compiler for this target.  Return true if this is
-/// not supported for this target.
-///
-void X86JITInfo::addPassesToJITCompile(FunctionPassManager &PM) {
-  // The JIT should use static relocation model.
-  TM.setRelocationModel(Reloc::Static);
-
-  // Run loop strength reduction before anything else.
-  PM.add(createLoopStrengthReducePass(TM.getTargetLowering()));
-
-  // FIXME: Implement efficient support for garbage collection intrinsics.
-  PM.add(createLowerGCPass());
-
-  // FIXME: Implement the invoke/unwind instructions!
-  PM.add(createLowerInvokePass());
-
-  // Make sure that no unreachable blocks are instruction selected.
-  PM.add(createUnreachableBlockEliminationPass());
-
-  // Install an instruction selector.
-  PM.add(createX86ISelDag(TM, false));
-
-  // Print the instruction selected machine code...
-  if (PrintMachineCode)
-    PM.add(createMachineFunctionPrinterPass(&std::cerr));
-
-  // Perform register allocation to convert to a concrete x86 representation
-  PM.add(createRegisterAllocator());
-
-  if (PrintMachineCode)
-    PM.add(createMachineFunctionPrinterPass(&std::cerr));
-
+bool X86TargetMachine::addPostRegAlloc(FunctionPassManager &PM, bool Fast) {
   PM.add(createX86FloatingPointStackifierPass());
-
-  if (PrintMachineCode)
-    PM.add(createMachineFunctionPrinterPass(&std::cerr));
-
-  // Insert prolog/epilog code.  Eliminate abstract frame index references...
-  PM.add(createPrologEpilogCodeInserter());
-
-  if (PrintMachineCode)  // Print the register-allocated code
-    PM.add(createX86CodePrinterPass(std::cerr, TM));
+  return true;  // -print-machineinstr should print after this.
 }
 
-bool X86TargetMachine::addPassesToEmitMachineCode(FunctionPassManager &PM,
-                                                  MachineCodeEmitter &MCE) {
+bool X86TargetMachine::addAssemblyEmitter(FunctionPassManager &PM, bool Fast, 
+                                          std::ostream &Out) {
+  PM.add(createX86CodePrinterPass(Out, *this));
+  return false;
+}
+
+bool X86TargetMachine::addObjectWriter(FunctionPassManager &PM, bool Fast,
+                                       std::ostream &Out) {
+  if (Subtarget.isTargetELF()) {
+    addX86ELFObjectWriterPass(PM, Out, *this);
+    return false;
+  }
+  return true;
+}
+
+bool X86TargetMachine::addCodeEmitter(FunctionPassManager &PM, bool Fast,
+                                      MachineCodeEmitter &MCE) {
   PM.add(createX86CodeEmitterPass(*this, MCE));
-  // Delete machine code for this function
-  PM.add(createMachineCodeDeleter());
   return false;
 }

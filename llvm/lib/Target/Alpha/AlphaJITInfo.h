@@ -29,12 +29,6 @@ namespace llvm {
     AlphaJITInfo(TargetMachine &tm) : TM(tm)
     { useGOT = true; }
 
-    /// addPassesToJITCompile - Add passes to the specified pass manager to
-    /// implement a fast dynamic compiler for this target.  Return true if this
-    /// is not supported for this target.
-    ///
-    virtual void addPassesToJITCompile(FunctionPassManager &PM);
-
     virtual void *emitFunctionStub(void *Fn, MachineCodeEmitter &MCE);
     virtual LazyResolverFn getLazyResolverFunction(JITCompilerFn);
     virtual void relocate(void *Function, MachineRelocation *MR,

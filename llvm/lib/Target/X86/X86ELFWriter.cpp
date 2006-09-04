@@ -31,7 +31,7 @@ namespace {
 /// addX86ELFObjectWriterPass - Returns a pass that outputs the generated code
 /// as an ELF object file.
 ///
-void llvm::addX86ELFObjectWriterPass(PassManager &FPM,
+void llvm::addX86ELFObjectWriterPass(FunctionPassManager &FPM,
                                      std::ostream &O, X86TargetMachine &TM) {
   X86ELFWriter *EW = new X86ELFWriter(O, TM);
   FPM.add(EW);

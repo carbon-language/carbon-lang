@@ -25,12 +25,6 @@ namespace llvm {
   public:
     X86JITInfo(X86TargetMachine &tm) : TM(tm) {useGOT = 0;}
 
-    /// addPassesToJITCompile - Add passes to the specified pass manager to
-    /// implement a fast dynamic compiler for this target.  Return true if this
-    /// is not supported for this target.
-    ///
-    virtual void addPassesToJITCompile(FunctionPassManager &PM);
-
     /// replaceMachineCodeForFunction - Make it so that calling the function
     /// whose machine code is at OLD turns into a call to NEW, perhaps by
     /// overwriting OLD with a branch to NEW.  This is used for self-modifying

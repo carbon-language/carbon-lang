@@ -28,7 +28,7 @@ class GlobalValue;
 
 /// PPCTargetMachine - Common code between 32-bit and 64-bit PowerPC targets.
 ///
-class PPCTargetMachine : public TargetMachine {
+class PPCTargetMachine : public LLVMTargetMachine {
   PPCSubtarget        Subtarget;
   const TargetData    DataLayout;       // Calculates type size & alignment
   PPCInstrInfo        InstrInfo;
@@ -55,12 +55,16 @@ public:
     return InstrItins;
   }
   
-
-  virtual bool addPassesToEmitFile(PassManager &PM, std::ostream &Out,
-                                   CodeGenFileType FileType, bool Fast);
   
-  bool addPassesToEmitMachineCode(FunctionPassManager &PM,
-                                  MachineCodeEmitter &MCE);
+  // Pass Pipeline Configuration
+  virtual bool addInstSelector(FunctionPassManager &PM, bool Fast);
+  virtual bool addPreEmitPass(FunctionPassManager &PM, bool Fast);
+  virtual bool addAssemblyEmitter(FunctionPassManager &PM, bool Fast, 
+                                  std::ostream &Out);
+  virtual bool addObjectWriter(FunctionPassManager &PM, bool Fast,
+                               std::ostream &Out);
+  virtual bool addCodeEmitter(FunctionPassManager &PM, bool Fast,
+                              MachineCodeEmitter &MCE);
 };
 
 /// PPC32TargetMachine - PowerPC 32-bit target machine.

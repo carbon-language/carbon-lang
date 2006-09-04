@@ -2027,8 +2027,10 @@ void CWriter::visitVAArgInst(VAArgInst &I) {
 //                       External Interface declaration
 //===----------------------------------------------------------------------===//
 
-bool CTargetMachine::addPassesToEmitFile(PassManager &PM, std::ostream &o,
-                                         CodeGenFileType FileType, bool Fast) {
+bool CTargetMachine::addPassesToEmitWholeFile(PassManager &PM,
+                                              std::ostream &o,
+                                              CodeGenFileType FileType,
+                                              bool Fast) {
   if (FileType != TargetMachine::AssemblyFile) return true;
 
   PM.add(createLowerGCPass());

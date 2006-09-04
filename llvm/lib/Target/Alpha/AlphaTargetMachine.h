@@ -17,7 +17,6 @@
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetData.h"
 #include "llvm/Target/TargetFrameInfo.h"
-#include "llvm/PassManager.h"
 #include "AlphaInstrInfo.h"
 #include "AlphaJITInfo.h"
 #include "AlphaSubtarget.h"
@@ -26,7 +25,7 @@ namespace llvm {
 
 class GlobalValue;
 
-class AlphaTargetMachine : public TargetMachine {
+class AlphaTargetMachine : public LLVMTargetMachine {
   const TargetData DataLayout;       // Calculates type size & alignment
   AlphaInstrInfo InstrInfo;
   TargetFrameInfo FrameInfo;
@@ -48,14 +47,15 @@ public:
   }
 
   static unsigned getJITMatchQuality();
-
-  virtual bool addPassesToEmitMachineCode(FunctionPassManager &PM,
-                                          MachineCodeEmitter &MCE);
-
-  virtual bool addPassesToEmitFile(PassManager &PM, std::ostream &Out,
-                                   CodeGenFileType FileType, bool Fast);
-
   static unsigned getModuleMatchQuality(const Module &M);
+  
+  // Pass Pipeline Configuration
+  virtual bool addInstSelector(FunctionPassManager &PM, bool Fast);
+  virtual bool addPreEmitPass(FunctionPassManager &PM, bool Fast);
+  virtual bool addAssemblyEmitter(FunctionPassManager &PM, bool Fast, 
+                                  std::ostream &Out);
+  virtual bool addCodeEmitter(FunctionPassManager &PM, bool Fast,
+                              MachineCodeEmitter &MCE);
 };
 
 } // end namespace llvm

@@ -101,6 +101,69 @@ GetFileNameRoot(const std::string &InputFilename) {
   return outputFilename;
 }
 
+static std::ostream *GetOutputStream(const char *ProgName) {
+  if (OutputFilename != "") {
+    if (OutputFilename == "-")
+      return &std::cout;
+
+    // Specified an output filename?
+    if (!Force && std::ifstream(OutputFilename.c_str())) {
+      // If force is not specified, make sure not to overwrite a file!
+      std::cerr << ProgName << ": error opening '" << OutputFilename
+                << "': file exists!\n"
+                << "Use -f command line argument to force output\n";
+      return 0;
+    }
+    // Make sure that the Out file gets unlinked from the disk if we get a
+    // SIGINT
+    sys::RemoveFileOnSignal(sys::Path(OutputFilename));
+
+    return new std::ofstream(OutputFilename.c_str());
+  }
+  
+  if (InputFilename == "-") {
+    OutputFilename = "-";
+    return &std::cout;
+  }
+
+  OutputFilename = GetFileNameRoot(InputFilename);
+    
+  switch (FileType) {
+  case TargetMachine::AssemblyFile:
+    if (MArch->Name[0] != 'c' || MArch->Name[1] != 0)  // not CBE
+      OutputFilename += ".s";
+    else
+      OutputFilename += ".cbe.c";
+    break;
+  case TargetMachine::ObjectFile:
+    OutputFilename += ".o";
+    break;
+  case TargetMachine::DynamicLibrary:
+    OutputFilename += LTDL_SHLIB_EXT;
+    break;
+  }
+  
+  if (!Force && std::ifstream(OutputFilename.c_str())) {
+    // If force is not specified, make sure not to overwrite a file!
+    std::cerr << ProgName << ": error opening '" << OutputFilename
+                          << "': file exists!\n"
+                          << "Use -f command line argument to force output\n";
+    return 0;
+  }
+  
+  // Make sure that the Out file gets unlinked from the disk if we get a
+  // SIGINT
+  sys::RemoveFileOnSignal(sys::Path(OutputFilename));
+  
+  std::ostream *Out = new std::ofstream(OutputFilename.c_str());
+  if (!Out->good()) {
+    std::cerr << ProgName << ": error opening " << OutputFilename << "!\n";
+    delete Out;
+    return 0;
+  }
+  
+  return Out;
+}
 
 // main - Entry point for the llc compiler.
 //
@@ -148,91 +211,59 @@ int main(int argc, char **argv) {
     assert(target.get() && "Could not allocate target machine!");
     TargetMachine &Target = *target.get();
 
-    // Build up all of the passes that we want to do to the module...
-    PassManager Passes;
-    Passes.add(new TargetData(*Target.getTargetData()));
-
-#ifndef NDEBUG
-    if(!NoVerify)
-      Passes.add(createVerifierPass());
-#endif
-
     // Figure out where we are going to send the output...
-    std::ostream *Out = 0;
-    if (OutputFilename != "") {
-      if (OutputFilename != "-") {
-        // Specified an output filename?
-        if (!Force && std::ifstream(OutputFilename.c_str())) {
-          // If force is not specified, make sure not to overwrite a file!
-          std::cerr << argv[0] << ": error opening '" << OutputFilename
-                    << "': file exists!\n"
-                    << "Use -f command line argument to force output\n";
-          return 1;
-        }
-        Out = new std::ofstream(OutputFilename.c_str());
-
-        // Make sure that the Out file gets unlinked from the disk if we get a
-        // SIGINT
-        sys::RemoveFileOnSignal(sys::Path(OutputFilename));
-      } else {
-        Out = &std::cout;
+    std::ostream *Out = GetOutputStream(argv[0]);
+    if (Out == 0) return 1;
+    
+    // If this target requires addPassesToEmitWholeFile, do it now.  This is
+    // used by strange things like the C backend.
+    if (Target.WantsWholeFile()) {
+      PassManager PM;
+      PM.add(new TargetData(*Target.getTargetData()));
+      if (!NoVerify)
+        PM.add(createVerifierPass());
+      
+      // Ask the target to add backend passes as necessary.
+      if (Target.addPassesToEmitWholeFile(PM, *Out, FileType, Fast)) {
+        std::cerr << argv[0] << ": target does not support generation of this"
+                  << " file type!\n";
+        if (Out != &std::cout) delete Out;
+        // And the Out file is empty and useless, so remove it now.
+        sys::Path(OutputFilename).eraseFromDisk();
+        return 1;
       }
+      PM.run(mod);
     } else {
-      if (InputFilename == "-") {
-        OutputFilename = "-";
-        Out = &std::cout;
-      } else {
-        OutputFilename = GetFileNameRoot(InputFilename);
-
-        switch (FileType) {
-        case TargetMachine::AssemblyFile:
-          if (MArch->Name[0] != 'c' || MArch->Name[1] != 0)  // not CBE
-            OutputFilename += ".s";
-          else
-            OutputFilename += ".cbe.c";
-          break;
-        case TargetMachine::ObjectFile:
-          OutputFilename += ".o";
-          break;
-        case TargetMachine::DynamicLibrary:
-          OutputFilename += LTDL_SHLIB_EXT;
-          break;
-        }
-
-        if (!Force && std::ifstream(OutputFilename.c_str())) {
-          // If force is not specified, make sure not to overwrite a file!
-          std::cerr << argv[0] << ": error opening '" << OutputFilename
-                    << "': file exists!\n"
-                    << "Use -f command line argument to force output\n";
-          return 1;
-        }
-
-        Out = new std::ofstream(OutputFilename.c_str());
-        if (!Out->good()) {
-          std::cerr << argv[0] << ": error opening " << OutputFilename << "!\n";
-          delete Out;
-          return 1;
-        }
-
-        // Make sure that the Out file gets unlinked from the disk if we get a
-        // SIGINT
-        sys::RemoveFileOnSignal(sys::Path(OutputFilename));
+      // Build up all of the passes that we want to do to the module.
+      FunctionPassManager Passes(new ExistingModuleProvider(M.get()));
+      Passes.add(new TargetData(*Target.getTargetData()));
+      
+#ifndef NDEBUG
+      if (!NoVerify)
+        Passes.add(createVerifierPass());
+#endif
+    
+      // Ask the target to add backend passes as necessary.
+      if (Target.addPassesToEmitFile(Passes, *Out, FileType, Fast)) {
+        std::cerr << argv[0] << ": target does not support generation of this"
+                  << " file type!\n";
+        if (Out != &std::cout) delete Out;
+        // And the Out file is empty and useless, so remove it now.
+        sys::Path(OutputFilename).eraseFromDisk();
+        return 1;
       }
-    }
-
-    // Ask the target to add backend passes as necessary.
-    if (Target.addPassesToEmitFile(Passes, *Out, FileType, Fast)) {
-      std::cerr << argv[0] << ": target does not support generation of this"
-                << " file type!\n";
-      if (Out != &std::cout) delete Out;
-      // And the Out file is empty and useless, so remove it now.
-      sys::Path(OutputFilename).eraseFromDisk();
-      return 1;
-    } else {
+    
+      Passes.doInitialization();
+    
       // Run our queue of passes all at once now, efficiently.
-      Passes.run(*M.get());
+      // TODO: this could lazily stream functions out of the module.
+      for (Module::iterator I = mod.begin(), E = mod.end(); I != E; ++I)
+        if (!I->isExternal())
+          Passes.run(*I);
+      
+      Passes.doFinalization();
     }
-
+      
     // Delete the ostream if it's not a stdout stream
     if (Out != &std::cout) delete Out;
 
