@@ -106,6 +106,9 @@ bool X86TargetMachine::addObjectWriter(FunctionPassManager &PM, bool Fast,
 
 bool X86TargetMachine::addCodeEmitter(FunctionPassManager &PM, bool Fast,
                                       MachineCodeEmitter &MCE) {
+  // FIXME: Move this to TargetJITInfo!
+  setRelocationModel(Reloc::Static);
+  
   PM.add(createX86CodeEmitterPass(*this, MCE));
   return false;
 }
