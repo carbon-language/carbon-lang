@@ -113,7 +113,9 @@ bool LowerInvoke::doInitialization(Module &M) {
   AbortMessage = 0;
   if (ExpensiveEHSupport) {
     // Insert a type for the linked list of jump buffers.
-    const Type *JmpBufTy = ArrayType::get(VoidPtrTy, TLI->getJumpBufSize());
+    unsigned JBSize = TLI ? TLI->getJumpBufSize() : 0;
+    JBSize = JBSize ? JBSize : 200;
+    const Type *JmpBufTy = ArrayType::get(VoidPtrTy, JBSize);
 
     { // The type is recursive, so use a type holder.
       std::vector<const Type*> Elements;
@@ -130,11 +132,12 @@ bool LowerInvoke::doInitialization(Module &M) {
 
     // Now that we've done that, insert the jmpbuf list head global, unless it
     // already exists.
-    if (!(JBListHead = M.getGlobalVariable("llvm.sjljeh.jblist", PtrJBList)))
+    if (!(JBListHead = M.getGlobalVariable("llvm.sjljeh.jblist", PtrJBList))) {
       JBListHead = new GlobalVariable(PtrJBList, false,
                                       GlobalValue::LinkOnceLinkage,
                                       Constant::getNullValue(PtrJBList),
                                       "llvm.sjljeh.jblist", &M);
+    }
     SetJmpFn = M.getOrInsertFunction("llvm.setjmp", Type::IntTy,
                                      PointerType::get(JmpBufTy), (Type *)0);
     LongJmpFn = M.getOrInsertFunction("llvm.longjmp", Type::VoidTy,
@@ -452,8 +455,9 @@ bool LowerInvoke::insertExpensiveEHSupport(Function &F) {
     // Create an alloca for the incoming jump buffer ptr and the new jump buffer
     // that needs to be restored on all exits from the function.  This is an
     // alloca because the value needs to be live across invokes.
+    unsigned Align = TLI ? TLI->getJumpBufAlignment() : 0;
     AllocaInst *JmpBuf = 
-      new AllocaInst(JBLinkTy, 0, TLI->getJumpBufAlignment(), "jblink", F.begin()->begin());
+      new AllocaInst(JBLinkTy, 0, Align, "jblink", F.begin()->begin());
     
     std::vector<Value*> Idx;
     Idx.push_back(Constant::getNullValue(Type::IntTy));
