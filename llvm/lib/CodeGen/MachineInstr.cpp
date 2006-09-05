@@ -158,7 +158,7 @@ void MachineInstr::print(std::ostream &OS, const TargetMachine *TM) const {
   unsigned StartOp = 0;
 
    // Specialize printing if op#0 is definition
-  if (getNumOperands() && getOperand(0).isDef() && !getOperand(0).isUse()) {
+  if (getNumOperands() && getOperand(0).isReg() && getOperand(0).isDef()) {
     ::print(getOperand(0), OS, TM);
     OS << " = ";
     ++StartOp;   // Don't print this operand again!
@@ -176,11 +176,8 @@ void MachineInstr::print(std::ostream &OS, const TargetMachine *TM) const {
     OS << " ";
     ::print(mop, OS, TM);
 
-    if (mop.isDef())
-      if (mop.isUse())
-        OS << "<def&use>";
-      else
-        OS << "<def>";
+    if (mop.isReg() && mop.isDef())
+      OS << "<def>";
   }
 
   OS << "\n";
@@ -204,11 +201,8 @@ std::ostream &llvm::operator<<(std::ostream &os, const MachineInstr &MI) {
 
   for (unsigned i = 0, N = MI.getNumOperands(); i < N; i++) {
     os << "\t" << MI.getOperand(i);
-    if (MI.getOperand(i).isDef())
-      if (MI.getOperand(i).isUse())
-        os << "<d&u>";
-      else
-        os << "<d>";
+    if (MI.getOperand(i).isReg() && MI.getOperand(i).isDef())
+      os << "<d>";
   }
 
   return os << "\n";
