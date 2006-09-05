@@ -161,6 +161,11 @@ void CodeEmitterGen::run(std::ostream &o) {
                    +  utostr(op++)
                    +  "));\n";
               gotOp = true;
+              
+              // If this is a two-address instruction and we just got the dest
+              // op, skip the src op.
+              if (op == 1 && Target.getInstruction(InstName).isTwoAddress)
+                ++op;
             }
             
             unsigned opMask = (1 << N) - 1;
