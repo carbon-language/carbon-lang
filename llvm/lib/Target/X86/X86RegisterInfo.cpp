@@ -933,12 +933,12 @@ void X86RegisterInfo::emitEpilogue(MachineFunction &MF,
         if ((PI->getOpcode() == X86::ADD32ri || 
              PI->getOpcode() == X86::ADD32ri8) &&
             PI->getOperand(0).getReg() == X86::ESP) {
-          NumBytes += PI->getOperand(1).getImmedValue();
+          NumBytes += PI->getOperand(2).getImmedValue();
           MBB.erase(PI);
         } else if ((PI->getOpcode() == X86::SUB32ri ||
                     PI->getOpcode() == X86::SUB32ri8) &&
                    PI->getOperand(0).getReg() == X86::ESP) {
-          NumBytes -= PI->getOperand(1).getImmedValue();
+          NumBytes -= PI->getOperand(2).getImmedValue();
           MBB.erase(PI);
         } else if (PI->getOpcode() == X86::ADJSTACKPTRri) {
           NumBytes += PI->getOperand(1).getImmedValue();
