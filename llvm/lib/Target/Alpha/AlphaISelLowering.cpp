@@ -135,6 +135,9 @@ AlphaTargetLowering::AlphaTargetLowering(TargetMachine &TM) : TargetLowering(TM)
   addLegalFPImmediate(+0.0); //F31
   addLegalFPImmediate(-0.0); //-F31
 
+  setJumpBufSize(272);
+  setJumpBufAlignment(16);
+
   computeRegisterProperties();
 
   useITOF = TM.getSubtarget<AlphaSubtarget>().hasF2I();
