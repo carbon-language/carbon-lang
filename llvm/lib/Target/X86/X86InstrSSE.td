@@ -2045,7 +2045,7 @@ def PMOVMSKBrr : PDI<0xD7, MRMSrcReg, (ops GR32:$dst, VR128:$src),
                      [(set GR32:$dst, (int_x86_sse2_pmovmskb_128 VR128:$src))]>;
 
 // Conditional store
-def MASKMOVDQU : PDI<0xF7, RawFrm, (ops VR128:$src, VR128:$mask),
+def MASKMOVDQU : PDI<0xF7, MRMSrcReg, (ops VR128:$src, VR128:$mask),
                      "maskmovdqu {$mask, $src|$src, $mask}",
                      [(int_x86_sse2_maskmov_dqu VR128:$src, VR128:$mask, EDI)]>,
                  Imp<[EDI],[]>;
