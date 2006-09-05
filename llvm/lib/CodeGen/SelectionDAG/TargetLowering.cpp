@@ -41,7 +41,7 @@ TargetLowering::TargetLowering(TargetMachine &tm)
   Pow2DivIsCheap = false;
   StackPointerRegisterToSaveRestore = 0;
   SchedPreferenceInfo = SchedulingForLatency;
-  JumpBufSize = 200;
+  JumpBufSize = 0;
   JumpBufAlignment = 0;
 }
 
