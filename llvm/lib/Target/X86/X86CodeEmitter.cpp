@@ -246,7 +246,7 @@ void Emitter::emitMemModRMByte(const MachineInstr &MI,
   } else if (Op3.isJumpTableIndex()) {
     DispVal += MCE.getJumpTableEntryAddress(Op3.getJumpTableIndex());
   } else {
-    DispVal = Op3.getImmedValue();
+    DispVal = Op3.getImm();
   }
 
   const MachineOperand &Base     = MI.getOperand(Op);
@@ -306,7 +306,7 @@ void Emitter::emitMemModRMByte(const MachineInstr &MI,
 
     // Calculate what the SS field value should be...
     static const unsigned SSTable[] = { ~0, 0, 1, ~0, 2, ~0, ~0, ~0, 3 };
-    unsigned SS = SSTable[Scale.getImmedValue()];
+    unsigned SS = SSTable[Scale.getImm()];
 
     if (BaseReg == 0) {
       // Handle the SIB byte for the case where there is no base.  The
@@ -377,6 +377,10 @@ void Emitter::emitInstruction(const MachineInstr &MI) {
   case 0: break;  // No prefix!
   }
 
+  // If this is a two-address instruction, skip one of the register operands.
+  unsigned CurOp = 0;
+  CurOp += (Desc.Flags & M_2_ADDR_FLAG) != 0;
+  
   unsigned char BaseOpcode = II->getBaseOpcodeFor(Opcode);
   switch (Desc.TSFlags & X86II::FormMask) {
   default: assert(0 && "Unknown FormMask value in X86 MachineCodeEmitter!");
@@ -401,12 +405,13 @@ void Emitter::emitInstruction(const MachineInstr &MI) {
       break;
     }
 #endif
+    CurOp = MI.getNumOperands();
     break;
 
   case X86II::RawFrm:
     MCE.emitByte(BaseOpcode);
-    if (Desc.numOperands == 1) {
-      const MachineOperand &MO = MI.getOperand(0);
+    if (CurOp != MI.getNumOperands()) {
+      const MachineOperand &MO = MI.getOperand(CurOp++);
       if (MO.isMachineBasicBlock()) {
         emitPCRelativeBlockAddress(MO.getMachineBasicBlock());
       } else if (MO.isGlobalAddress()) {
@@ -416,7 +421,7 @@ void Emitter::emitInstruction(const MachineInstr &MI) {
       } else if (MO.isExternalSymbol()) {
         emitExternalSymbolAddress(MO.getSymbolName(), true);
       } else if (MO.isImmediate()) {
-        emitConstant(MO.getImmedValue(), sizeOfImm(Desc));
+        emitConstant(MO.getImm(), sizeOfImm(Desc));
       } else {
         assert(0 && "Unknown RawFrm operand!");
       }
@@ -424,9 +429,10 @@ void Emitter::emitInstruction(const MachineInstr &MI) {
     break;
 
   case X86II::AddRegFrm:
-    MCE.emitByte(BaseOpcode + getX86RegNum(MI.getOperand(0).getReg()));
-    if (MI.getNumOperands() == 2) {
-      const MachineOperand &MO1 = MI.getOperand(1);
+    MCE.emitByte(BaseOpcode + getX86RegNum(MI.getOperand(CurOp++).getReg()));
+    
+    if (CurOp != MI.getNumOperands()) {
+      const MachineOperand &MO1 = MI.getOperand(CurOp++);
       if (MO1.isGlobalAddress()) {
         assert(sizeOfImm(Desc) == 4 &&
                "Don't know how to emit non-pointer values!");
@@ -440,39 +446,43 @@ void Emitter::emitInstruction(const MachineInstr &MI) {
                "Don't know how to emit non-pointer values!");
         emitConstant(MCE.getJumpTableEntryAddress(MO1.getJumpTableIndex()), 4);
       } else {
-        emitConstant(MO1.getImmedValue(), sizeOfImm(Desc));
+        emitConstant(MO1.getImm(), sizeOfImm(Desc));
       }
     }
     break;
 
   case X86II::MRMDestReg: {
     MCE.emitByte(BaseOpcode);
-    emitRegModRMByte(MI.getOperand(0).getReg(),
-                     getX86RegNum(MI.getOperand(1).getReg()));
-    if (MI.getNumOperands() == 3)
-      emitConstant(MI.getOperand(2).getImmedValue(), sizeOfImm(Desc));
+    emitRegModRMByte(MI.getOperand(CurOp).getReg(),
+                     getX86RegNum(MI.getOperand(CurOp+1).getReg()));
+    CurOp += 2;
+    if (CurOp != MI.getNumOperands())
+      emitConstant(MI.getOperand(CurOp++).getImm(), sizeOfImm(Desc));
     break;
   }
   case X86II::MRMDestMem:
     MCE.emitByte(BaseOpcode);
-    emitMemModRMByte(MI, 0, getX86RegNum(MI.getOperand(4).getReg()));
-    if (MI.getNumOperands() == 6)
-      emitConstant(MI.getOperand(5).getImmedValue(), sizeOfImm(Desc));
+    emitMemModRMByte(MI, CurOp, getX86RegNum(MI.getOperand(CurOp+4).getReg()));
+    CurOp += 5;
+    if (CurOp != MI.getNumOperands())
+      emitConstant(MI.getOperand(CurOp++).getImm(), sizeOfImm(Desc));
     break;
 
   case X86II::MRMSrcReg:
     MCE.emitByte(BaseOpcode);
-    emitRegModRMByte(MI.getOperand(1).getReg(),
-                     getX86RegNum(MI.getOperand(0).getReg()));
-    if (MI.getNumOperands() == 3)
-      emitConstant(MI.getOperand(2).getImmedValue(), sizeOfImm(Desc));
+    emitRegModRMByte(MI.getOperand(CurOp+1).getReg(),
+                     getX86RegNum(MI.getOperand(CurOp).getReg()));
+    CurOp += 2;
+    if (CurOp != MI.getNumOperands())
+      emitConstant(MI.getOperand(CurOp++).getImm(), sizeOfImm(Desc));
     break;
 
   case X86II::MRMSrcMem:
     MCE.emitByte(BaseOpcode);
-    emitMemModRMByte(MI, 1, getX86RegNum(MI.getOperand(0).getReg()));
-    if (MI.getNumOperands() == 2+4)
-      emitConstant(MI.getOperand(5).getImmedValue(), sizeOfImm(Desc));
+    emitMemModRMByte(MI, CurOp+1, getX86RegNum(MI.getOperand(CurOp).getReg()));
+    CurOp += 5;
+    if (CurOp != MI.getNumOperands())
+      emitConstant(MI.getOperand(CurOp++).getImm(), sizeOfImm(Desc));
     break;
 
   case X86II::MRM0r: case X86II::MRM1r:
@@ -480,13 +490,11 @@ void Emitter::emitInstruction(const MachineInstr &MI) {
   case X86II::MRM4r: case X86II::MRM5r:
   case X86II::MRM6r: case X86II::MRM7r:
     MCE.emitByte(BaseOpcode);
-    emitRegModRMByte(MI.getOperand(0).getReg(),
+    emitRegModRMByte(MI.getOperand(CurOp++).getReg(),
                      (Desc.TSFlags & X86II::FormMask)-X86II::MRM0r);
 
-    if (MI.getOperand(MI.getNumOperands()-1).isImmediate()) {
-      emitConstant(MI.getOperand(MI.getNumOperands()-1).getImmedValue(),
-                   sizeOfImm(Desc));
-    }
+    if (CurOp != MI.getNumOperands())
+      emitConstant(MI.getOperand(CurOp++).getImm(), sizeOfImm(Desc));
     break;
 
   case X86II::MRM0m: case X86II::MRM1m:
@@ -494,17 +502,17 @@ void Emitter::emitInstruction(const MachineInstr &MI) {
   case X86II::MRM4m: case X86II::MRM5m:
   case X86II::MRM6m: case X86II::MRM7m:
     MCE.emitByte(BaseOpcode);
-    emitMemModRMByte(MI, 0, (Desc.TSFlags & X86II::FormMask)-X86II::MRM0m);
+    emitMemModRMByte(MI, CurOp, (Desc.TSFlags & X86II::FormMask)-X86II::MRM0m);
+    CurOp += 4;
 
-    if (MI.getNumOperands() == 5) {
-      if (MI.getOperand(4).isImmediate())
-        emitConstant(MI.getOperand(4).getImmedValue(), sizeOfImm(Desc));
-      else if (MI.getOperand(4).isGlobalAddress())
-        emitGlobalAddressForPtr(MI.getOperand(4).getGlobal(),
-                                MI.getOperand(4).getOffset());
-      else if (MI.getOperand(4).isJumpTableIndex())
-        emitConstant(MCE.getJumpTableEntryAddress(MI.getOperand(4)
-                                                    .getJumpTableIndex()), 4);
+    if (CurOp != MI.getNumOperands()) {
+      const MachineOperand &MO = MI.getOperand(CurOp++);
+      if (MO.isImmediate())
+        emitConstant(MO.getImm(), sizeOfImm(Desc));
+      else if (MO.isGlobalAddress())
+        emitGlobalAddressForPtr(MO.getGlobal(), MO.getOffset());
+      else if (MO.isJumpTableIndex())
+        emitConstant(MCE.getJumpTableEntryAddress(MO.getJumpTableIndex()), 4);
       else
         assert(0 && "Unknown operand!");
     }
@@ -512,8 +520,11 @@ void Emitter::emitInstruction(const MachineInstr &MI) {
 
   case X86II::MRMInitReg:
     MCE.emitByte(BaseOpcode);
-    emitRegModRMByte(MI.getOperand(0).getReg(),
-                     getX86RegNum(MI.getOperand(0).getReg()));
+    // Duplicate register, used by things like MOV8r0 (aka xor reg,reg).
+    emitRegModRMByte(MI.getOperand(CurOp).getReg(),
+                     getX86RegNum(MI.getOperand(CurOp).getReg()));
+    ++CurOp;
     break;
   }
+  assert(CurOp == MI.getNumOperands() && "Unknown encoding!");
 }
