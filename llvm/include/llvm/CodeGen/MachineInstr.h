@@ -143,10 +143,22 @@ public:
     return contents.SymbolName;
   }
 
-  bool isUse() const { return !IsDef; }
-  bool isDef() const { return IsDef; }
-  void setIsUse() { IsDef = false; }
-  void setIsDef() { IsDef = true; }
+  bool isUse() const { 
+    assert(isRegister() && "Wrong MachineOperand accessor");
+    return !IsDef;
+  }
+  bool isDef() const {
+    assert(isRegister() && "Wrong MachineOperand accessor");
+    return IsDef;
+  }
+  void setIsUse() {
+    assert(isRegister() && "Wrong MachineOperand accessor");
+    IsDef = false;
+  }
+  void setIsDef() {
+    assert(isRegister() && "Wrong MachineOperand accessor");
+    IsDef = true;
+  }
 
   /// getReg - Returns the register number.
   ///
@@ -295,7 +307,6 @@ public:
   void addImmOperand(int64_t Val) {
     MachineOperand &Op = AddNewOperand();
     Op.opType = MachineOperand::MO_Immediate;
-    Op.IsDef = false;
     Op.contents.immedVal = Val;
     Op.offset = 0;
   }
@@ -303,7 +314,6 @@ public:
   void addMachineBasicBlockOperand(MachineBasicBlock *MBB) {
     MachineOperand &Op = AddNewOperand();
     Op.opType = MachineOperand::MO_MachineBasicBlock;
-    Op.IsDef = false;
     Op.contents.MBB = MBB;
     Op.offset = 0;
   }
@@ -313,7 +323,6 @@ public:
   void addFrameIndexOperand(unsigned Idx) {
     MachineOperand &Op = AddNewOperand();
     Op.opType = MachineOperand::MO_FrameIndex;
-    Op.IsDef = false;
     Op.contents.immedVal = Idx;
     Op.offset = 0;
   }
@@ -324,7 +333,6 @@ public:
   void addConstantPoolIndexOperand(unsigned Idx, int Offset) {
     MachineOperand &Op = AddNewOperand();
     Op.opType = MachineOperand::MO_ConstantPoolIndex;
-    Op.IsDef = false;
     Op.contents.immedVal = Idx;
     Op.offset = Offset;
   }
@@ -335,7 +343,6 @@ public:
   void addJumpTableIndexOperand(unsigned Idx) {
     MachineOperand &Op = AddNewOperand();
     Op.opType = MachineOperand::MO_JumpTableIndex;
-    Op.IsDef = false;
     Op.contents.immedVal = Idx;
     Op.offset = 0;
   }
@@ -343,7 +350,6 @@ public:
   void addGlobalAddressOperand(GlobalValue *GV, int Offset) {
     MachineOperand &Op = AddNewOperand();
     Op.opType = MachineOperand::MO_GlobalAddress;
-    Op.IsDef = false;
     Op.contents.GV = GV;
     Op.offset = Offset;
   }
@@ -353,7 +359,6 @@ public:
   void addExternalSymbolOperand(const char *SymName) {
     MachineOperand &Op = AddNewOperand();
     Op.opType = MachineOperand::MO_ExternalSymbol;
-    Op.IsDef = false;
     Op.contents.SymbolName = SymName;
     Op.offset = 0;
   }
