@@ -752,7 +752,7 @@ void FPS::handleCondMovFP(MachineBasicBlock::iterator &I) {
   MachineInstr *MI = I;
 
   unsigned Op0 = getFPReg(MI->getOperand(0));
-  unsigned Op1 = getFPReg(MI->getOperand(1));
+  unsigned Op1 = getFPReg(MI->getOperand(2));
 
   // The first operand *must* be on the top of the stack.
   moveToTop(Op0, I);
@@ -760,6 +760,7 @@ void FPS::handleCondMovFP(MachineBasicBlock::iterator &I) {
   // Change the second operand to the stack register that the operand is in.
   // Change from the pseudo instruction to the concrete instruction.
   MI->RemoveOperand(0);
+  MI->RemoveOperand(1);
   MI->getOperand(0).setReg(getSTReg(Op1));
   MI->setOpcode(getConcreteOpcode(MI->getOpcode()));
   
