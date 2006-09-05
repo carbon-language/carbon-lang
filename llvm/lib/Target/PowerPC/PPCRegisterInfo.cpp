@@ -421,7 +421,7 @@ PPCRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II) const {
   int FrameIndex = MI.getOperand(i).getFrameIndex();
 
   // Replace the FrameIndex with base register with GPR1 (SP) or GPR31 (FP).
-  MI.getOperand(i).ChangeToRegister(hasFP(MF) ? PPC::R31 : PPC::R1);
+  MI.getOperand(i).ChangeToRegister(hasFP(MF) ? PPC::R31 : PPC::R1, false);
 
   // Take into account whether it's an add or mem instruction
   unsigned OffIdx = (i == 2) ? 1 : 2;
@@ -466,8 +466,8 @@ PPCRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II) const {
            "No indexed form of load or store available!");
     unsigned NewOpcode = ImmToIdxMap.find(MI.getOpcode())->second;
     MI.setOpcode(NewOpcode);
-    MI.getOperand(1).ChangeToRegister(MI.getOperand(i).getReg());
-    MI.getOperand(2).ChangeToRegister(PPC::R0);
+    MI.getOperand(1).ChangeToRegister(MI.getOperand(i).getReg(), false);
+    MI.getOperand(2).ChangeToRegister(PPC::R0, false);
   } else {
     if (isIXAddr) {
       assert((Offset & 3) == 0 && "Invalid frame offset!");

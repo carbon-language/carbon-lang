@@ -33,10 +33,8 @@ public:
 
   /// addReg - Add a new virtual register operand...
   ///
-  const MachineInstrBuilder &addReg(
-    int RegNo,
-    MachineOperand::UseType Ty = MachineOperand::Use) const {
-    MI->addRegOperand(RegNo, Ty);
+  const MachineInstrBuilder &addReg(int RegNo, bool isDef = false) const {
+    MI->addRegOperand(RegNo, isDef);
     return *this;
   }
 
@@ -92,12 +90,10 @@ inline MachineInstrBuilder BuildMI(int Opcode, unsigned NumOperands) {
 /// destination virtual register.  NumOperands is the number of additional add*
 /// calls that are expected, not including the destination register.
 ///
-inline MachineInstrBuilder BuildMI(
-  int Opcode, unsigned NumOperands,
-  unsigned DestReg,
-  MachineOperand::UseType useType = MachineOperand::Def) {
+inline MachineInstrBuilder 
+BuildMI(int Opcode, unsigned NumOperands, unsigned DestReg) {
   return MachineInstrBuilder(new MachineInstr(Opcode, NumOperands+1))
-               .addReg(DestReg, useType);
+               .addReg(DestReg, true);
 }
 
 /// BuildMI - This version of the builder inserts the newly-built
@@ -112,7 +108,7 @@ inline MachineInstrBuilder BuildMI(MachineBasicBlock &BB,
                                    unsigned DestReg) {
   MachineInstr *MI = new MachineInstr(Opcode, NumOperands+1);
   BB.insert(I, MI);
-  return MachineInstrBuilder(MI).addReg(DestReg, MachineOperand::Def);
+  return MachineInstrBuilder(MI).addReg(DestReg, true);
 }
 
 /// BuildMI - This version of the builder inserts the newly-built

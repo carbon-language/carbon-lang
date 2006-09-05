@@ -168,7 +168,7 @@ static MachineInstr *FuseInst(unsigned Opcode, unsigned OpNo,
       assert(MO.isReg() && "Expected to fold into reg operand!");
       MIB = addFrameReference(MIB, FrameIndex);
     } else if (MO.isReg())
-      MIB = MIB.addReg(MO.getReg(), MO.getUseType());
+      MIB = MIB.addReg(MO.getReg(), MO.isDef());
     else if (MO.isImm())
       MIB = MIB.addImm(MO.getImm());
     else if (MO.isGlobalAddress())
@@ -795,7 +795,7 @@ void X86RegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II) const{
 
   // This must be part of a four operand memory reference.  Replace the
   // FrameIndex with base register with EBP.  Add add an offset to the offset.
-  MI.getOperand(i).ChangeToRegister(hasFP(MF) ? X86::EBP : X86::ESP);
+  MI.getOperand(i).ChangeToRegister(hasFP(MF) ? X86::EBP : X86::ESP, false);
 
   // Now add the frame object offset to the offset from EBP.
   int Offset = MF.getFrameInfo()->getObjectOffset(FrameIndex) +

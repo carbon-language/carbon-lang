@@ -85,7 +85,8 @@ void IA64RegisterInfo::copyRegToReg(MachineBasicBlock &MBB,
 
   if(RC == IA64::PRRegisterClass ) // if a bool, we use pseudocode
     // (SrcReg) DestReg = cmp.eq.unc(r0, r0)
-    BuildMI(MBB, MI, IA64::PCMPEQUNC, 3, DestReg).addReg(IA64::r0).addReg(IA64::r0).addReg(SrcReg);
+    BuildMI(MBB, MI, IA64::PCMPEQUNC, 3, DestReg)
+      .addReg(IA64::r0).addReg(IA64::r0).addReg(SrcReg);
   else // otherwise, MOV works (for both gen. regs and FP regs)
     BuildMI(MBB, MI, IA64::MOV, 1, DestReg).addReg(SrcReg);
 }
@@ -152,7 +153,7 @@ eliminateCallFramePseudoInstr(MachineFunction &MF, MachineBasicBlock &MBB,
   MBB.erase(I);
 }
 
-void IA64RegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II) const{
+void IA64RegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II)const{
   unsigned i = 0;
   MachineInstr &MI = *II;
   MachineBasicBlock &MBB = *MI.getParent();
@@ -170,7 +171,7 @@ void IA64RegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II) const
   // choose a base register: ( hasFP? framepointer : stack pointer )
   unsigned BaseRegister = FP ? IA64::r5 : IA64::r12;
   // Add the base register
-  MI.getOperand(i).ChangeToRegister(BaseRegister);
+  MI.getOperand(i).ChangeToRegister(BaseRegister, false);
 
   // Now add the frame object offset to the offset from r1.
   int Offset = MF.getFrameInfo()->getObjectOffset(FrameIndex);
@@ -181,20 +182,16 @@ void IA64RegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II) const
   Offset += MF.getFrameInfo()->getStackSize();
 
   // XXX: we use 'r22' as another hack+slash temporary register here :(
-  if ( Offset <= 8191 && Offset >= -8192) { // smallish offset
-    //fix up the old:
-    MI.getOperand(i).ChangeToRegister(IA64::r22);
-    MI.getOperand(i).setUse(); // mark r22 as being used
-                               // (the bundler wants to know this)
+  if (Offset <= 8191 && Offset >= -8192) { // smallish offset
+    // Fix up the old:
+    MI.getOperand(i).ChangeToRegister(IA64::r22, false);
     //insert the new
     MachineInstr* nMI=BuildMI(IA64::ADDIMM22, 2, IA64::r22)
       .addReg(BaseRegister).addImm(Offset);
     MBB.insert(II, nMI);
   } else { // it's big
     //fix up the old:
-    MI.getOperand(i).ChangeToRegister(IA64::r22);
-    MI.getOperand(i).setUse(); // mark r22 as being used
-                               // (the bundler wants to know this)
+    MI.getOperand(i).ChangeToRegister(IA64::r22, false);
     MachineInstr* nMI;
     nMI=BuildMI(IA64::MOVLIMM64, 1, IA64::r22).addImm(Offset);
     MBB.insert(II, nMI);
@@ -242,7 +239,8 @@ void IA64RegisterInfo::emitPrologue(MachineFunction &MF) const {
 
   unsigned numOutRegsUsed=MF.getInfo<IA64FunctionInfo>()->outRegsUsed;
 
-  // XXX FIXME : this code should be a bit more reliable (in case there _isn't_ a pseudo_alloc in the MBB)
+  // XXX FIXME : this code should be a bit more reliable (in case there _isn't_
+  // a pseudo_alloc in the MBB)
   unsigned dstRegOfPseudoAlloc;
   for(MBBI = MBB.begin(); /*MBBI->getOpcode() != IA64::PSEUDO_ALLOC*/; ++MBBI) {
     assert(MBBI != MBB.end());
@@ -284,7 +282,7 @@ void IA64RegisterInfo::emitPrologue(MachineFunction &MF) const {
 
   // adjust stack pointer: r12 -= numbytes
   if (NumBytes <= 8191) {
-    MI=BuildMI(IA64::ADDIMM22, 2, IA64::r12).addReg(IA64::r12).addImm(-NumBytes);
+    MI=BuildMI(IA64::ADDIMM22,2,IA64::r12).addReg(IA64::r12).addImm(-NumBytes);
     MBB.insert(MBBI, MI);
   } else { // we use r22 as a scratch register here
     MI=BuildMI(IA64::MOVLIMM64, 1, IA64::r22).addImm(-NumBytes);
@@ -332,7 +330,7 @@ void IA64RegisterInfo::emitEpilogue(MachineFunction &MF,
   if (NumBytes != 0)
   {
     if (NumBytes <= 8191) {
-      MI=BuildMI(IA64::ADDIMM22, 2, IA64::r12).addReg(IA64::r12).addImm(NumBytes);
+      MI=BuildMI(IA64::ADDIMM22,2,IA64::r12).addReg(IA64::r12).addImm(NumBytes);
       MBB.insert(MBBI, MI);
     } else {
       MI=BuildMI(IA64::MOVLIMM64, 1, IA64::r22).addImm(NumBytes);

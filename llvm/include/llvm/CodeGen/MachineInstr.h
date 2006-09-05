@@ -38,26 +38,6 @@ template <typename T> struct ilist;
 //   Representation of each machine instruction operand.
 //
 struct MachineOperand {
-private:
-  // Bit fields of the flags variable used for different operand properties
-  enum {
-    DEFFLAG     = 0x01,       // this is a def of the operand
-    USEFLAG     = 0x02        // this is a use of the operand
-  };
-
-public:
-  // UseType - This enum describes how the machine operand is used by
-  // the instruction. Note that the MachineInstr/Operator class
-  // currently uses bool arguments to represent this information
-  // instead of an enum.  Eventually this should change over to use
-  // this _easier to read_ representation instead.
-  //
-  enum UseType {
-    Use = USEFLAG,        /// only read
-    Def = DEFFLAG,        /// only written
-    UseAndDef = Use | Def /// read AND written
-  };
-
   enum MachineOperandType {
     MO_Register,                // Register operand.
     MO_Immediate,               // Immediate Operand
@@ -78,8 +58,8 @@ private:
     int64_t immedVal;         // For MO_Immediate and MO_*Index.
   } contents;
 
-  char flags;                   // see bit field definitions above
-  MachineOperandType opType:8;  // Pack into 8 bits efficiently after flags.
+  MachineOperandType opType:8; // Discriminate the union.
+  bool IsDef : 1;              // True if this is a def, false if this is a use.
   
   /// offset - Offset to address of global or external, only valid for
   /// MO_GlobalAddress, MO_ExternalSym and MO_ConstantPoolIndex
@@ -95,7 +75,7 @@ public:
 
   const MachineOperand &operator=(const MachineOperand &MO) {
     contents = MO.contents;
-    flags    = MO.flags;
+    IsDef    = MO.IsDef;
     opType   = MO.opType;
     offset   = MO.offset;
     return *this;
@@ -104,10 +84,6 @@ public:
   /// getType - Returns the MachineOperandType for this operand.
   ///
   MachineOperandType getType() const { return opType; }
-
-  /// getUseType - Returns the MachineOperandUseType of this operand.
-  ///
-  UseType getUseType() const { return UseType(flags & (USEFLAG|DEFFLAG)); }
 
   /// Accessors that tell you what kind of MachineOperand you're looking at.
   ///
@@ -167,13 +143,10 @@ public:
     return contents.SymbolName;
   }
 
-  /// MachineOperand methods for testing that work on any kind of
-  /// MachineOperand...
-  ///
-  bool isUse() const { return flags & USEFLAG; }
-  bool isDef() const { return flags & DEFFLAG; }
-  MachineOperand &setUse() { flags |= USEFLAG; return *this; }
-  MachineOperand &setDef() { flags |= DEFFLAG; return *this; }
+  bool isUse() const { return !IsDef; }
+  bool isDef() const { return IsDef; }
+  void setIsUse() { IsDef = false; }
+  void setIsDef() { IsDef = true; }
 
   /// getReg - Returns the register number.
   ///
@@ -216,9 +189,10 @@ public:
   /// ChangeToRegister - Replace this operand with a new register operand of
   /// the specified value.  If an operand is known to be an register already,
   /// the setReg method should be used.
-  void ChangeToRegister(unsigned Reg) {
+  void ChangeToRegister(unsigned Reg, bool isDef) {
     opType = MO_Register;
     contents.RegNo = Reg;
+    IsDef = isDef;
   }
 
   friend std::ostream& operator<<(std::ostream& os, const MachineOperand& mop);
@@ -307,11 +281,10 @@ public:
 
   /// addRegOperand - Add a register operand.
   ///
-  void addRegOperand(unsigned Reg,
-                     MachineOperand::UseType UTy = MachineOperand::Use) {
+  void addRegOperand(unsigned Reg, bool IsDef) {
     MachineOperand &Op = AddNewOperand();
     Op.opType = MachineOperand::MO_Register;
-    Op.flags = UTy;
+    Op.IsDef = IsDef;
     Op.contents.RegNo = Reg;
     Op.offset = 0;
   }
@@ -322,7 +295,6 @@ public:
   void addImmOperand(int64_t Val) {
     MachineOperand &Op = AddNewOperand();
     Op.opType = MachineOperand::MO_Immediate;
-    Op.flags = 0;
     Op.contents.immedVal = Val;
     Op.offset = 0;
   }
@@ -330,7 +302,6 @@ public:
   void addMachineBasicBlockOperand(MachineBasicBlock *MBB) {
     MachineOperand &Op = AddNewOperand();
     Op.opType = MachineOperand::MO_MachineBasicBlock;
-    Op.flags = 0;
     Op.contents.MBB = MBB;
     Op.offset = 0;
   }
@@ -340,7 +311,6 @@ public:
   void addFrameIndexOperand(unsigned Idx) {
     MachineOperand &Op = AddNewOperand();
     Op.opType = MachineOperand::MO_FrameIndex;
-    Op.flags = 0;
     Op.contents.immedVal = Idx;
     Op.offset = 0;
   }
@@ -351,7 +321,6 @@ public:
   void addConstantPoolIndexOperand(unsigned Idx, int Offset) {
     MachineOperand &Op = AddNewOperand();
     Op.opType = MachineOperand::MO_ConstantPoolIndex;
-    Op.flags = 0;
     Op.contents.immedVal = Idx;
     Op.offset = Offset;
   }
@@ -362,7 +331,6 @@ public:
   void addJumpTableIndexOperand(unsigned Idx) {
     MachineOperand &Op = AddNewOperand();
     Op.opType = MachineOperand::MO_JumpTableIndex;
-    Op.flags = 0;
     Op.contents.immedVal = Idx;
     Op.offset = 0;
   }
@@ -370,7 +338,6 @@ public:
   void addGlobalAddressOperand(GlobalValue *GV, int Offset) {
     MachineOperand &Op = AddNewOperand();
     Op.opType = MachineOperand::MO_GlobalAddress;
-    Op.flags = 0;
     Op.contents.GV = GV;
     Op.offset = Offset;
   }
@@ -380,7 +347,6 @@ public:
   void addExternalSymbolOperand(const char *SymName) {
     MachineOperand &Op = AddNewOperand();
     Op.opType = MachineOperand::MO_ExternalSymbol;
-    Op.flags = 0;
     Op.contents.SymbolName = SymName;
     Op.offset = 0;
   }

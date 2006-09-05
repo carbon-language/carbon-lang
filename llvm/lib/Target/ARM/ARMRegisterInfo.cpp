@@ -107,7 +107,7 @@ ARMRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II) const {
   assert (Offset >= 0);
   if (Offset < 4096) {
     // Replace the FrameIndex with r13
-    MI.getOperand(FrameIdx).ChangeToRegister(ARM::R13);
+    MI.getOperand(FrameIdx).ChangeToRegister(ARM::R13, false);
     // Replace the ldr offset with Offset
     MI.getOperand(OffIdx).ChangeToImmediate(Offset);
   } else {
@@ -117,7 +117,7 @@ ARMRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II) const {
     BuildMI(*MBB2, II, ARM::addri, 2, ARM::R12).addReg(ARM::R13).addImm(Offset);
 
     // Replace the FrameIndex with r12
-    MI.getOperand(FrameIdx).ChangeToRegister(ARM::R12);
+    MI.getOperand(FrameIdx).ChangeToRegister(ARM::R12, false);
   }
 }
 

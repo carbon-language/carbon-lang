@@ -67,14 +67,18 @@ AlphaRegisterInfo::storeRegToStackSlot(MachineBasicBlock &MBB,
                                        MachineBasicBlock::iterator MI,
                                        unsigned SrcReg, int FrameIdx,
                                        const TargetRegisterClass *RC) const {
-  //std::cerr << "Trying to store " << getPrettyName(SrcReg) << " to " << FrameIdx << "\n";
+  //std::cerr << "Trying to store " << getPrettyName(SrcReg) << " to "
+  //<< FrameIdx << "\n";
   //BuildMI(MBB, MI, Alpha::WTF, 0).addReg(SrcReg);
   if (RC == Alpha::F4RCRegisterClass)
-    BuildMI(MBB, MI, Alpha::STS, 3).addReg(SrcReg).addFrameIndex(FrameIdx).addReg(Alpha::F31);
+    BuildMI(MBB, MI, Alpha::STS, 3)
+      .addReg(SrcReg).addFrameIndex(FrameIdx).addReg(Alpha::F31);
   else if (RC == Alpha::F8RCRegisterClass)
-    BuildMI(MBB, MI, Alpha::STT, 3).addReg(SrcReg).addFrameIndex(FrameIdx).addReg(Alpha::F31);
+    BuildMI(MBB, MI, Alpha::STT, 3)
+      .addReg(SrcReg).addFrameIndex(FrameIdx).addReg(Alpha::F31);
   else if (RC == Alpha::GPRCRegisterClass)
-    BuildMI(MBB, MI, Alpha::STQ, 3).addReg(SrcReg).addFrameIndex(FrameIdx).addReg(Alpha::F31);
+    BuildMI(MBB, MI, Alpha::STQ, 3)
+      .addReg(SrcReg).addFrameIndex(FrameIdx).addReg(Alpha::F31);
   else
     abort();
 }
@@ -84,13 +88,17 @@ AlphaRegisterInfo::loadRegFromStackSlot(MachineBasicBlock &MBB,
                                         MachineBasicBlock::iterator MI,
                                         unsigned DestReg, int FrameIdx,
                                         const TargetRegisterClass *RC) const {
-  //std::cerr << "Trying to load " << getPrettyName(DestReg) << " to " << FrameIdx << "\n";
+  //std::cerr << "Trying to load " << getPrettyName(DestReg) << " to "
+  //<< FrameIdx << "\n";
   if (RC == Alpha::F4RCRegisterClass)
-    BuildMI(MBB, MI, Alpha::LDS, 2, DestReg).addFrameIndex(FrameIdx).addReg(Alpha::F31);
+    BuildMI(MBB, MI, Alpha::LDS, 2, DestReg)
+      .addFrameIndex(FrameIdx).addReg(Alpha::F31);
   else if (RC == Alpha::F8RCRegisterClass)
-    BuildMI(MBB, MI, Alpha::LDT, 2, DestReg).addFrameIndex(FrameIdx).addReg(Alpha::F31);
+    BuildMI(MBB, MI, Alpha::LDT, 2, DestReg)
+      .addFrameIndex(FrameIdx).addReg(Alpha::F31);
   else if (RC == Alpha::GPRCRegisterClass)
-    BuildMI(MBB, MI, Alpha::LDQ, 2, DestReg).addFrameIndex(FrameIdx).addReg(Alpha::F31);
+    BuildMI(MBB, MI, Alpha::LDQ, 2, DestReg)
+      .addFrameIndex(FrameIdx).addReg(Alpha::F31);
   else
     abort();
 }
@@ -243,7 +251,7 @@ AlphaRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II) const {
   int FrameIndex = MI.getOperand(i).getFrameIndex();
 
   // Add the base register of R30 (SP) or R15 (FP).
-  MI.getOperand(i + 1).ChangeToRegister(FP ? Alpha::R15 : Alpha::R30);
+  MI.getOperand(i + 1).ChangeToRegister(FP ? Alpha::R15 : Alpha::R30, false);
 
   // Now add the frame object offset to the offset from the virtual frame index.
   int Offset = MF.getFrameInfo()->getObjectOffset(FrameIndex);
@@ -256,11 +264,12 @@ AlphaRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II) const {
         " for stack size: " << MF.getFrameInfo()->getStackSize() << "\n");
 
   if (Offset > IMM_HIGH || Offset < IMM_LOW) {
-    DEBUG(std::cerr << "Unconditionally using R28 for evil purposes Offset: " << Offset << "\n");
-    //so in this case, we need to use a temporary register, and move the original
-    //inst off the SP/FP
+    DEBUG(std::cerr << "Unconditionally using R28 for evil purposes Offset: "
+          << Offset << "\n");
+    //so in this case, we need to use a temporary register, and move the
+    //original inst off the SP/FP
     //fix up the old:
-    MI.getOperand(i + 1).ChangeToRegister(Alpha::R28);
+    MI.getOperand(i + 1).ChangeToRegister(Alpha::R28, false);
     MI.getOperand(i).ChangeToImmediate(getLower16(Offset));
     //insert the new
     MachineInstr* nMI=BuildMI(Alpha::LDAH, 2, Alpha::R28)
@@ -335,9 +344,11 @@ void AlphaRegisterInfo::emitPrologue(MachineFunction &MF) const {
   //now if we need to, save the old FP and set the new
   if (FP)
   {
-    BuildMI(MBB, MBBI, Alpha::STQ, 3).addReg(Alpha::R15).addImm(0).addReg(Alpha::R30);
+    BuildMI(MBB, MBBI, Alpha::STQ, 3)
+      .addReg(Alpha::R15).addImm(0).addReg(Alpha::R30);
     //this must be the last instr in the prolog
-    BuildMI(MBB, MBBI, Alpha::BIS, 2, Alpha::R15).addReg(Alpha::R30).addReg(Alpha::R30);
+    BuildMI(MBB, MBBI, Alpha::BIS, 2, Alpha::R15)
+      .addReg(Alpha::R30).addReg(Alpha::R30);
   }
 
 }
@@ -346,7 +357,8 @@ void AlphaRegisterInfo::emitEpilogue(MachineFunction &MF,
                                      MachineBasicBlock &MBB) const {
   const MachineFrameInfo *MFI = MF.getFrameInfo();
   MachineBasicBlock::iterator MBBI = prior(MBB.end());
-  assert(MBBI->getOpcode() == Alpha::RETDAG || MBBI->getOpcode() == Alpha::RETDAGp
+  assert(MBBI->getOpcode() == Alpha::RETDAG ||
+         MBBI->getOpcode() == Alpha::RETDAGp
          && "Can only insert epilog into returning blocks");
 
   bool FP = hasFP(MF);

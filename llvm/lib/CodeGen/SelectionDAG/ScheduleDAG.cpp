@@ -255,11 +255,11 @@ static unsigned CreateVirtualRegisters(const MRegisterInfo *MRI,
   // the machine instruction.
   unsigned ResultReg =
     RegMap->createVirtualRegister(getInstrOperandRegClass(MRI, TII, &II, 0));
-  MI->addRegOperand(ResultReg, MachineOperand::Def);
+  MI->addRegOperand(ResultReg, true);
   for (unsigned i = 1; i != NumResults; ++i) {
     const TargetRegisterClass *RC = getInstrOperandRegClass(MRI, TII, &II, i);
     assert(RC && "Isn't a register operand!");
-    MI->addRegOperand(RegMap->createVirtualRegister(RC), MachineOperand::Def);
+    MI->addRegOperand(RegMap->createVirtualRegister(RC), true);
   }
   return ResultReg;
 }
@@ -291,7 +291,7 @@ void ScheduleDAG::AddOperand(MachineInstr *MI, SDOperand Op,
     
     // Get/emit the operand.
     unsigned VReg = getVR(Op, VRBaseMap);
-    MI->addRegOperand(VReg, MachineOperand::Use);
+    MI->addRegOperand(VReg, false);
     
     // Verify that it is right.
     assert(MRegisterInfo::isVirtualRegister(VReg) && "Not a vreg?");
@@ -307,7 +307,7 @@ void ScheduleDAG::AddOperand(MachineInstr *MI, SDOperand Op,
     MI->addImmOperand(C->getValue());
   } else if (RegisterSDNode*R =
              dyn_cast<RegisterSDNode>(Op)) {
-    MI->addRegOperand(R->getReg(), MachineOperand::Use);
+    MI->addRegOperand(R->getReg(), false);
   } else if (GlobalAddressSDNode *TGA =
              dyn_cast<GlobalAddressSDNode>(Op)) {
     MI->addGlobalAddressOperand(TGA->getGlobal(), TGA->getOffset());
@@ -349,7 +349,7 @@ void ScheduleDAG::AddOperand(MachineInstr *MI, SDOperand Op,
            Op.getValueType() != MVT::Flag &&
            "Chain and flag operands should occur at end of operand list!");
     unsigned VReg = getVR(Op, VRBaseMap);
-    MI->addRegOperand(VReg, MachineOperand::Use);
+    MI->addRegOperand(VReg, false);
     
     // Verify that it is right.
     assert(MRegisterInfo::isVirtualRegister(VReg) && "Not a vreg?");
@@ -402,7 +402,7 @@ void ScheduleDAG::EmitNode(SDNode *Node,
           unsigned Reg = cast<RegisterSDNode>(Use->getOperand(1))->getReg();
           if (MRegisterInfo::isVirtualRegister(Reg)) {
             VRBase = Reg;
-            MI->addRegOperand(Reg, MachineOperand::Def);
+            MI->addRegOperand(Reg, true);
             break;
           }
         }
@@ -529,13 +529,13 @@ void ScheduleDAG::EmitNode(SDNode *Node,
         case 1:  // Use of register.
           for (; NumVals; --NumVals, ++i) {
             unsigned Reg = cast<RegisterSDNode>(Node->getOperand(i))->getReg();
-            MI->addRegOperand(Reg, MachineOperand::Use);
+            MI->addRegOperand(Reg, false);
           }
           break;
         case 2:   // Def of register.
           for (; NumVals; --NumVals, ++i) {
             unsigned Reg = cast<RegisterSDNode>(Node->getOperand(i))->getReg();
-            MI->addRegOperand(Reg, MachineOperand::Def);
+            MI->addRegOperand(Reg, true);
           }
           break;
         case 3: { // Immediate.

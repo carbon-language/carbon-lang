@@ -3547,7 +3547,7 @@ void SelectionDAGISel::SelectBasicBlock(BasicBlock *LLVMBB, MachineFunction &MF,
       MachineInstr *PHI = PHINodesToUpdate[i].first;
       assert(PHI->getOpcode() == TargetInstrInfo::PHI &&
              "This is not a machine PHI node that we are updating!");
-      PHI->addRegOperand(PHINodesToUpdate[i].second);
+      PHI->addRegOperand(PHINodesToUpdate[i].second, false);
       PHI->addMachineBasicBlockOperand(BB);
     }
     return;
@@ -3576,11 +3576,11 @@ void SelectionDAGISel::SelectBasicBlock(BasicBlock *LLVMBB, MachineFunction &MF,
       assert(PHI->getOpcode() == TargetInstrInfo::PHI &&
              "This is not a machine PHI node that we are updating!");
       if (PHIBB == JT.Default) {
-        PHI->addRegOperand(PHINodesToUpdate[pi].second);
+        PHI->addRegOperand(PHINodesToUpdate[pi].second, false);
         PHI->addMachineBasicBlockOperand(RangeBB);
       }
       if (BB->succ_end() != std::find(BB->succ_begin(),BB->succ_end(), PHIBB)) {
-        PHI->addRegOperand(PHINodesToUpdate[pi].second);
+        PHI->addRegOperand(PHINodesToUpdate[pi].second, false);
         PHI->addMachineBasicBlockOperand(BB);
       }
     }
@@ -3610,7 +3610,7 @@ void SelectionDAGISel::SelectBasicBlock(BasicBlock *LLVMBB, MachineFunction &MF,
       assert(PHI->getOpcode() == TargetInstrInfo::PHI &&
              "This is not a machine PHI node that we are updating!");
       if (PHIBB == SwitchCases[i].LHSBB || PHIBB == SwitchCases[i].RHSBB) {
-        PHI->addRegOperand(PHINodesToUpdate[pi].second);
+        PHI->addRegOperand(PHINodesToUpdate[pi].second, false);
         PHI->addMachineBasicBlockOperand(BB);
       }
     }
