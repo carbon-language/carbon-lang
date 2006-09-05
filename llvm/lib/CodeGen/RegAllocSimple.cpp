@@ -203,17 +203,13 @@ void RegAllocSimple::AllocateBasicBlock(MachineBasicBlock &MBB) {
               physReg = getFreeReg(virtualReg);
             } else {
               // must be same register number as the first operand
-              // This maps a = b + c into b += c, and saves b into a's spot
+              // This maps a = b + c into b = b + c, and saves b into a's spot.
               assert(MI->getOperand(1).isRegister()  &&
                      MI->getOperand(1).getReg() &&
                      MI->getOperand(1).isUse() &&
                      "Two address instruction invalid!");
 
               physReg = MI->getOperand(1).getReg();
-              spillVirtReg(MBB, next(MI), virtualReg, physReg);
-              MI->getOperand(1).setDef();
-              MI->RemoveOperand(0);
-              break; // This is the last operand to process
             }
             spillVirtReg(MBB, next(MI), virtualReg, physReg);
           } else {

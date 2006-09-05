@@ -22,7 +22,7 @@ using namespace llvm;
 
 X86InstrInfo::X86InstrInfo(X86TargetMachine &tm)
   : TargetInstrInfo(X86Insts, sizeof(X86Insts)/sizeof(X86Insts[0])),
-    TM(tm) {
+    TM(tm), RI(*this) {
 }
 
 

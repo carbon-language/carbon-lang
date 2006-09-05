@@ -23,6 +23,7 @@
 
 namespace llvm {
   class MachineInstr;
+  class TargetInstrInfo;
 
   class VirtRegMap {
   public:
@@ -31,6 +32,8 @@ namespace llvm {
                           std::pair<unsigned, ModRef> > MI2VirtMapTy;
 
   private:
+    const TargetInstrInfo &TII;
+
     MachineFunction &MF;
     /// Virt2PhysMap - This is a virtual to physical register
     /// mapping. Each virtual register is required to have an entry in
@@ -58,10 +61,7 @@ namespace llvm {
     };
 
   public:
-    VirtRegMap(MachineFunction &mf)
-      : MF(mf), Virt2PhysMap(NO_PHYS_REG), Virt2StackSlotMap(NO_STACK_SLOT) {
-      grow();
-    }
+    VirtRegMap(MachineFunction &mf);
 
     void grow();
 

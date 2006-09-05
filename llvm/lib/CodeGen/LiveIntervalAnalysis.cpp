@@ -262,23 +262,11 @@ addIntervalsForSpills(const LiveInterval &li, VirtRegMap &vrm, int slot) {
 
       MachineInstr *MI = getInstructionFromIndex(index);
 
-      // NewRegLiveIn - This instruction might have multiple uses of the spilled
-      // register.  In this case, for the first use, keep track of the new vreg
-      // that we reload it into.  If we see a second use, reuse this vreg
-      // instead of creating live ranges for two reloads.
-      unsigned NewRegLiveIn = 0;
-
-    for_operand:
+    RestartInstruction:
       for (unsigned i = 0; i != MI->getNumOperands(); ++i) {
         MachineOperand& mop = MI->getOperand(i);
         if (mop.isRegister() && mop.getReg() == li.reg) {
-          if (NewRegLiveIn && mop.isUse()) {
-            // We already emitted a reload of this value, reuse it for
-            // subsequent operands.
-            MI->getOperand(i).setReg(NewRegLiveIn);
-            DEBUG(std::cerr << "\t\t\t\treused reload into reg" << NewRegLiveIn
-                            << " for operand #" << i << '\n');
-          } else if (MachineInstr* fmi = mri_->foldMemoryOperand(MI, i, slot)) {
+          if (MachineInstr *fmi = mri_->foldMemoryOperand(MI, i, slot)) {
             // Attempt to fold the memory reference into the instruction.  If we
             // can do this, we don't need to insert spill code.
             if (lv_)
@@ -292,47 +280,63 @@ addIntervalsForSpills(const LiveInterval &li, VirtRegMap &vrm, int slot) {
             ++numFolded;
             // Folding the load/store can completely change the instruction in
             // unpredictable ways, rescan it from the beginning.
-            goto for_operand;
+            goto RestartInstruction;
           } else {
-            // This is tricky. We need to add information in the interval about
-            // the spill code so we have to use our extra load/store slots.
+            // Create a new virtual register for the spill interval.
+            unsigned NewVReg = mf_->getSSARegMap()->createVirtualRegister(rc);
+            
+            // Scan all of the operands of this instruction rewriting operands
+            // to use NewVReg instead of li.reg as appropriate.  We do this for
+            // two reasons:
             //
-            // If we have a use we are going to have a load so we start the
-            // interval from the load slot onwards. Otherwise we start from the
-            // def slot.
-            unsigned start = (mop.isUse() ?
-                              getLoadIndex(index) :
-                              getDefIndex(index));
-            // If we have a def we are going to have a store right after it so
-            // we end the interval after the use of the next
-            // instruction. Otherwise we end after the use of this instruction.
-            unsigned end = 1 + (mop.isDef() ?
-                                getStoreIndex(index) :
-                                getUseIndex(index));
+            //   1. If the instr reads the same spilled vreg multiple times, we
+            //      want to reuse the NewVReg.
+            //   2. If the instr is a two-addr instruction, we are required to
+            //      keep the src/dst regs pinned.
+            //
+            // Keep track of whether we replace a use and/or def so that we can
+            // create the spill interval with the appropriate range. 
+            mop.setReg(NewVReg);
+            
+            bool HasUse = mop.isUse();
+            bool HasDef = mop.isDef();
+            for (unsigned j = i+1, e = MI->getNumOperands(); j != e; ++j) {
+              if (MI->getOperand(j).isReg() &&
+                  MI->getOperand(j).getReg() == li.reg) {
+                MI->getOperand(j).setReg(NewVReg);
+                HasUse |= MI->getOperand(j).isUse();
+                HasDef |= MI->getOperand(j).isDef();
+              }
+            }
 
             // create a new register for this spill
-            NewRegLiveIn = mf_->getSSARegMap()->createVirtualRegister(rc);
-            MI->getOperand(i).setReg(NewRegLiveIn);
             vrm.grow();
-            vrm.assignVirt2StackSlot(NewRegLiveIn, slot);
-            LiveInterval& nI = getOrCreateInterval(NewRegLiveIn);
+            vrm.assignVirt2StackSlot(NewVReg, slot);
+            LiveInterval &nI = getOrCreateInterval(NewVReg);
             assert(nI.empty());
 
             // the spill weight is now infinity as it
             // cannot be spilled again
             nI.weight = float(HUGE_VAL);
-            LiveRange LR(start, end, nI.getNextValue(~0U, 0));
-            DEBUG(std::cerr << " +" << LR);
-            nI.addRange(LR);
+
+            if (HasUse) {
+              LiveRange LR(getLoadIndex(index), getUseIndex(index),
+                           nI.getNextValue(~0U, 0));
+              DEBUG(std::cerr << " +" << LR);
+              nI.addRange(LR);
+            }
+            if (HasDef) {
+              LiveRange LR(getDefIndex(index), getStoreIndex(index),
+                           nI.getNextValue(~0U, 0));
+              DEBUG(std::cerr << " +" << LR);
+              nI.addRange(LR);
+            }
+            
             added.push_back(&nI);
 
             // update live variables if it is available
             if (lv_)
-              lv_->addVirtualRegisterKilled(NewRegLiveIn, MI);
-            
-            // If this is a live in, reuse it for subsequent live-ins.  If it's
-            // a def, we can't do this.
-            if (!mop.isUse()) NewRegLiveIn = 0;
+              lv_->addVirtualRegisterKilled(NewVReg, MI);
             
             DEBUG(std::cerr << "\t\t\t\tadded new interval: ";
                   nI.print(std::cerr, mri_); std::cerr << '\n');
@@ -445,7 +449,9 @@ void LiveIntervals::handleVirtualRegisterDef(MachineBasicBlock *mbb,
     // operand, and is a def-and-use.
     if (mi->getOperand(0).isRegister() &&
         mi->getOperand(0).getReg() == interval.reg &&
-        mi->getOperand(0).isDef() && mi->getOperand(0).isUse()) {
+        mi->getNumOperands() > 1 && mi->getOperand(1).isRegister() && 
+        mi->getOperand(1).getReg() == interval.reg &&
+        mi->getOperand(0).isDef() && mi->getOperand(1).isUse()) {
       // If this is a two-address definition, then we have already processed
       // the live range.  The only problem is that we didn't realize there
       // are actually two values in the live interval.  Because of this we

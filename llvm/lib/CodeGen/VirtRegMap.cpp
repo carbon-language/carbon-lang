@@ -57,6 +57,12 @@ namespace {
 //  VirtRegMap implementation
 //===----------------------------------------------------------------------===//
 
+VirtRegMap::VirtRegMap(MachineFunction &mf)
+  : TII(*mf.getTarget().getInstrInfo()), MF(mf), 
+    Virt2PhysMap(NO_PHYS_REG), Virt2StackSlotMap(NO_STACK_SLOT) {
+  grow();
+}
+
 void VirtRegMap::grow() {
   Virt2PhysMap.grow(MF.getSSARegMap()->getLastVirtReg());
   Virt2StackSlotMap.grow(MF.getSSARegMap()->getLastVirtReg());
@@ -92,11 +98,13 @@ void VirtRegMap::virtFolded(unsigned VirtReg, MachineInstr *OldMI,
   }
 
   ModRef MRInfo;
-  if (!OldMI->getOperand(OpNo).isDef()) {
-    assert(OldMI->getOperand(OpNo).isUse() && "Operand is not use or def?");
-    MRInfo = isRef;
+  if (OpNo < 2 && TII.isTwoAddrInstr(OldMI->getOpcode())) {
+    // Folded a two-address operand.
+    MRInfo = isModRef;
+  } else if (OldMI->getOperand(OpNo).isDef()) {
+    MRInfo = isMod;
   } else {
-    MRInfo = OldMI->getOperand(OpNo).isUse() ? isModRef : isMod;
+    MRInfo = isRef;
   }
 
   // add new memory reference
@@ -492,11 +500,6 @@ void LocalSpiller::RewriteMBB(MachineBasicBlock &MBB, VirtRegMap &VRM) {
   // that we can choose to reuse the physregs instead of emitting reloads.
   AvailableSpills Spills(MRI, TII);
   
-  // DefAndUseVReg - When we see a def&use operand that is spilled, keep track
-  // of it.  ".first" is the machine operand index (should always be 0 for now),
-  // and ".second" is the virtual register that is spilled.
-  std::vector<std::pair<unsigned, unsigned> > DefAndUseVReg;
-
   // MaybeDeadStores - When we need to write a value back into a stack slot,
   // keep track of the inserted store.  If the stack slot value is never read
   // (because the value was used from some available register, for example), and
@@ -516,8 +519,6 @@ void LocalSpiller::RewriteMBB(MachineBasicBlock &MBB, VirtRegMap &VRM) {
     /// reuse.
     ReuseInfo ReusedOperands(MI);
     
-    DefAndUseVReg.clear();
-
     // Process all of the spilled uses and all non spilled reg references.
     for (unsigned i = 0, e = MI.getNumOperands(); i != e; ++i) {
       MachineOperand &MO = MI.getOperand(i);
@@ -547,24 +548,27 @@ void LocalSpiller::RewriteMBB(MachineBasicBlock &MBB, VirtRegMap &VRM) {
       if (!MO.isUse())
         continue;  // Handle defs in the loop below (handle use&def here though)
 
-      // If this is both a def and a use, we need to emit a store to the
-      // stack slot after the instruction.  Keep track of D&U operands
-      // because we are about to change it to a physreg here.
-      if (MO.isDef()) {
-        // Remember that this was a def-and-use operand, and that the
-        // stack slot is live after this instruction executes.
-        DefAndUseVReg.push_back(std::make_pair(i, VirtReg));
-      }
-      
       int StackSlot = VRM.getStackSlot(VirtReg);
       unsigned PhysReg;
 
       // Check to see if this stack slot is available.
       if ((PhysReg = Spills.getSpillSlotPhysReg(StackSlot))) {
 
-        // Don't reuse it for a def&use operand if we aren't allowed to change
-        // the physreg!
-        if (!MO.isDef() || Spills.canClobberPhysReg(StackSlot)) {
+        // This spilled operand might be part of a two-address operand.  If this
+        // is the case, then changing it will necessarily require changing the 
+        // def part of the instruction as well.  However, in some cases, we
+        // aren't allowed to modify the reused register.  If none of these cases
+        // apply, reuse it.
+        bool CanReuse = true;
+        if (i == 1 && MI.getOperand(0).isReg() && 
+            MI.getOperand(0).getReg() == VirtReg &&
+            TII->isTwoAddrInstr(MI.getOpcode())) {
+          // Okay, we have a two address operand.  We can reuse this physreg as
+          // long as we are allowed to clobber the value.
+          CanReuse = Spills.canClobberPhysReg(StackSlot);
+        }
+        
+        if (CanReuse) {
           // If this stack slot value is already available, reuse it!
           DEBUG(std::cerr << "Reusing SS#" << StackSlot << " from physreg "
                           << MRI->getName(PhysReg) << " for vreg"
@@ -777,47 +781,32 @@ void LocalSpiller::RewriteMBB(MachineBasicBlock &MBB, VirtRegMap &VRM) {
         unsigned VirtReg = MO.getReg();
 
         if (!MRegisterInfo::isVirtualRegister(VirtReg)) {
-          // Check to see if this is a def-and-use vreg operand that we do need
-          // to insert a store for.
-          bool OpTakenCareOf = false;
-          if (MO.isUse() && !DefAndUseVReg.empty()) {
-            for (unsigned dau = 0, e = DefAndUseVReg.size(); dau != e; ++dau)
-              if (DefAndUseVReg[dau].first == i) {
-                VirtReg = DefAndUseVReg[dau].second;
-                OpTakenCareOf = true;
-                break;
-              }
+          // Check to see if this is a noop copy.  If so, eliminate the
+          // instruction before considering the dest reg to be changed.
+          unsigned Src, Dst;
+          if (TII->isMoveInstr(MI, Src, Dst) && Src == Dst) {
+            ++NumDCE;
+            DEBUG(std::cerr << "Removing now-noop copy: " << MI);
+            MBB.erase(&MI);
+            VRM.RemoveFromFoldedVirtMap(&MI);
+            goto ProcessNextInst;
           }
-
-          if (!OpTakenCareOf) {
-            // Check to see if this is a noop copy.  If so, eliminate the
-            // instruction before considering the dest reg to be changed.
-            unsigned Src, Dst;
-            if (TII->isMoveInstr(MI, Src, Dst) && Src == Dst) {
-              ++NumDCE;
-              DEBUG(std::cerr << "Removing now-noop copy: " << MI);
-              MBB.erase(&MI);
-              VRM.RemoveFromFoldedVirtMap(&MI);
-              goto ProcessNextInst;
-            }
-            Spills.ClobberPhysReg(VirtReg);
-            continue;
-          }
+          Spills.ClobberPhysReg(VirtReg);
+          continue;
         }
 
         // The only vregs left are stack slot definitions.
         int StackSlot = VRM.getStackSlot(VirtReg);
         const TargetRegisterClass *RC =
           MBB.getParent()->getSSARegMap()->getRegClass(VirtReg);
-        unsigned PhysReg;
 
-        // If this is a def&use operand, and we used a different physreg for
-        // it than the one assigned, make sure to execute the store from the
-        // correct physical register.
-        if (MO.getReg() == VirtReg)
-          PhysReg = VRM.getPhys(VirtReg);
+        // If this def is part of a two-address operand, make sure to execute
+        // the store from the correct physical register.
+        unsigned PhysReg;
+        if (i == 0 && TII->isTwoAddrInstr(MI.getOpcode()))
+          PhysReg = MI.getOperand(1).getReg();
         else
-          PhysReg = MO.getReg();
+          PhysReg = VRM.getPhys(VirtReg);
 
         PhysRegsUsed[PhysReg] = true;
         MRI->storeRegToStackSlot(MBB, next(MII), PhysReg, StackSlot, RC);

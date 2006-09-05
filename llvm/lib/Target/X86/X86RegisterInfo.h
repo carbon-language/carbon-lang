@@ -15,15 +15,15 @@
 #define X86REGISTERINFO_H
 
 #include "llvm/Target/MRegisterInfo.h"
-
-class llvm::Type;
-
 #include "X86GenRegisterInfo.h.inc"
 
 namespace llvm {
+  class Type;
+  class TargetInstrInfo;
 
 struct X86RegisterInfo : public X86GenRegisterInfo {
-  X86RegisterInfo();
+  const TargetInstrInfo &TII;
+  X86RegisterInfo(const TargetInstrInfo &tii);
 
   /// Code Generation virtual methods...
   void storeRegToStackSlot(MachineBasicBlock &MBB,

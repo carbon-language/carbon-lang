@@ -46,8 +46,8 @@ namespace {
                     cl::Hidden);
 }
 
-X86RegisterInfo::X86RegisterInfo()
-  : X86GenRegisterInfo(X86::ADJCALLSTACKDOWN, X86::ADJCALLSTACKUP) {}
+X86RegisterInfo::X86RegisterInfo(const TargetInstrInfo &tii)
+  : X86GenRegisterInfo(X86::ADJCALLSTACKDOWN, X86::ADJCALLSTACKUP), TII(tii) {}
 
 void X86RegisterInfo::storeRegToStackSlot(MachineBasicBlock &MBB,
                                           MachineBasicBlock::iterator MI,
@@ -139,58 +139,51 @@ void X86RegisterInfo::copyRegToReg(MachineBasicBlock &MBB,
   BuildMI(MBB, MI, Opc, 1, DestReg).addReg(SrcReg);
 }
 
-
-static MachineInstr *MakeMInst(unsigned Opcode, unsigned FrameIndex,
-                               MachineInstr *MI) {
-  return addFrameReference(BuildMI(Opcode, 4), FrameIndex);
+static MachineInstr *FuseTwoAddrInst(unsigned Opcode, unsigned FrameIndex,
+                                     MachineInstr *MI) {
+  unsigned NumOps = MI->getNumOperands()-2;
+  // Create the base instruction with the memory operand as the first part.
+  MachineInstrBuilder MIB = addFrameReference(BuildMI(Opcode, 4+NumOps),
+                                              FrameIndex);
+  
+  // Loop over the rest of the ri operands, converting them over.
+  for (unsigned i = 0; i != NumOps; ++i) {
+    if (MI->getOperand(i+2).isReg())
+      MIB = MIB.addReg(MI->getOperand(i+2).getReg());
+    else {
+      assert(MI->getOperand(i+2).isImm() && "Unknown operand type!");
+      MIB = MIB.addImm(MI->getOperand(i+2).getImm());
+    }
+  }
+  return MIB;
 }
 
-static MachineInstr *MakeMRInst(unsigned Opcode, unsigned FrameIndex,
-                                MachineInstr *MI) {
-  return addFrameReference(BuildMI(Opcode, 5), FrameIndex)
-                 .addReg(MI->getOperand(1).getReg());
-}
-
-static MachineInstr *MakeMRIInst(unsigned Opcode, unsigned FrameIndex,
-                                 MachineInstr *MI) {
-  return addFrameReference(BuildMI(Opcode, 6), FrameIndex)
-      .addReg(MI->getOperand(1).getReg())
-      .addImm(MI->getOperand(2).getImmedValue());
-}
-
-static MachineInstr *MakeMIInst(unsigned Opcode, unsigned FrameIndex,
-                                MachineInstr *MI) {
-  if (MI->getOperand(1).isImmediate())
-    return addFrameReference(BuildMI(Opcode, 5), FrameIndex)
-      .addImm(MI->getOperand(1).getImmedValue());
-  else if (MI->getOperand(1).isGlobalAddress())
-    return addFrameReference(BuildMI(Opcode, 5), FrameIndex)
-      .addGlobalAddress(MI->getOperand(1).getGlobal(),
-                        MI->getOperand(1).getOffset());
-  else if (MI->getOperand(1).isJumpTableIndex())
-    return addFrameReference(BuildMI(Opcode, 5), FrameIndex)
-      .addJumpTableIndex(MI->getOperand(1).getJumpTableIndex());
-  assert(0 && "Unknown operand for MakeMI!");
-  return 0;
+static MachineInstr *FuseInst(unsigned Opcode, unsigned OpNo,
+                              unsigned FrameIndex, MachineInstr *MI) {
+  MachineInstrBuilder MIB = BuildMI(Opcode, MI->getNumOperands()+3);
+  
+  for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
+    MachineOperand &MO = MI->getOperand(i);
+    if (i == OpNo) {
+      assert(MO.isReg() && "Expected to fold into reg operand!");
+      MIB = addFrameReference(MIB, FrameIndex);
+    } else if (MO.isReg())
+      MIB = MIB.addReg(MO.getReg(), MO.getUseType());
+    else if (MO.isImm())
+      MIB = MIB.addImm(MO.getImm());
+    else if (MO.isGlobalAddress())
+      MIB = MIB.addGlobalAddress(MO.getGlobal(), MO.getOffset());
+    else if (MO.isJumpTableIndex())
+      MIB = MIB.addJumpTableIndex(MO.getJumpTableIndex());
+    else
+      assert(0 && "Unknown operand for FuseInst!");
+  }
+  return MIB;
 }
 
 static MachineInstr *MakeM0Inst(unsigned Opcode, unsigned FrameIndex,
                                 MachineInstr *MI) {
   return addFrameReference(BuildMI(Opcode, 5), FrameIndex).addImm(0);
-}
-
-static MachineInstr *MakeRMInst(unsigned Opcode, unsigned FrameIndex,
-                                MachineInstr *MI) {
-  const MachineOperand& op = MI->getOperand(0);
-  return addFrameReference(BuildMI(Opcode, 5, op.getReg(), op.getUseType()),
-                           FrameIndex);
-}
-
-static MachineInstr *MakeRMIInst(unsigned Opcode, unsigned FrameIndex,
-                                 MachineInstr *MI) {
-  const MachineOperand& op = MI->getOperand(0);
-  return addFrameReference(BuildMI(Opcode, 6, op.getReg(), op.getUseType()),
-                        FrameIndex).addImm(MI->getOperand(2).getImmedValue());
 }
 
 
@@ -204,8 +197,6 @@ namespace {
   struct TableEntry {
     unsigned from;                      // Original opcode.
     unsigned to;                        // New opcode.
-    unsigned make;                      // Form of make required to produce the
-                                        // new instruction.
                                         
     // less operators used by STL search.                                    
     bool operator<(const TableEntry &TE) const { return from < TE.from; }
@@ -257,451 +248,451 @@ static const TableEntry *TableLookup(const TableEntry *Table, unsigned N,
 #endif
 
 
-MachineInstr* X86RegisterInfo::foldMemoryOperand(MachineInstr* MI,
+MachineInstr* X86RegisterInfo::foldMemoryOperand(MachineInstr *MI,
                                                  unsigned i,
                                                  int FrameIndex) const {
   // Check switch flag 
   if (NoFusing) return NULL;
 
-  // Selection of instruction makes
-  enum {
-    makeM0Inst,
-    makeMIInst,
-    makeMInst,
-    makeMRIInst,
-    makeMRInst,
-    makeRMIInst,
-    makeRMInst
-  };
-  
   // Table (and size) to search
   const TableEntry *OpcodeTablePtr = NULL;
   unsigned OpcodeTableSize = 0;
+  bool isTwoAddrFold = false;
 
-  if (i == 0) { // If operand 0
+  // Folding a memory location into the two-address part of a two-address
+  // instruction is different than folding it other places.  It requires
+  // replacing the *two* registers with the memory location.
+  if (MI->getNumOperands() >= 2 && MI->getOperand(0).isReg() && 
+      MI->getOperand(1).isReg() && i < 2 &&
+      MI->getOperand(0).getReg() == MI->getOperand(1).getReg() &&
+      TII.isTwoAddrInstr(MI->getOpcode())) {
     static const TableEntry OpcodeTable[] = {
-      { X86::ADC32ri,     X86::ADC32mi,     makeMIInst },
-      { X86::ADC32ri8,    X86::ADC32mi8,    makeMIInst },
-      { X86::ADC32rr,     X86::ADC32mr,     makeMRInst },
-      { X86::ADD16ri,     X86::ADD16mi,     makeMIInst },
-      { X86::ADD16ri8,    X86::ADD16mi8,    makeMIInst },
-      { X86::ADD16rr,     X86::ADD16mr,     makeMRInst },
-      { X86::ADD32ri,     X86::ADD32mi,     makeMIInst },
-      { X86::ADD32ri8,    X86::ADD32mi8,    makeMIInst },
-      { X86::ADD32rr,     X86::ADD32mr,     makeMRInst },
-      { X86::ADD8ri,      X86::ADD8mi,      makeMIInst },
-      { X86::ADD8rr,      X86::ADD8mr,      makeMRInst },
-      { X86::AND16ri,     X86::AND16mi,     makeMIInst },
-      { X86::AND16ri8,    X86::AND16mi8,    makeMIInst },
-      { X86::AND16rr,     X86::AND16mr,     makeMRInst },
-      { X86::AND32ri,     X86::AND32mi,     makeMIInst },
-      { X86::AND32ri8,    X86::AND32mi8,    makeMIInst },
-      { X86::AND32rr,     X86::AND32mr,     makeMRInst },
-      { X86::AND8ri,      X86::AND8mi,      makeMIInst },
-      { X86::AND8rr,      X86::AND8mr,      makeMRInst },
-      { X86::DEC16r,      X86::DEC16m,      makeMInst },
-      { X86::DEC32r,      X86::DEC32m,      makeMInst },
-      { X86::DEC8r,       X86::DEC8m,       makeMInst },
-      { X86::DIV16r,      X86::DIV16m,      makeMInst },
-      { X86::DIV32r,      X86::DIV32m,      makeMInst },
-      { X86::DIV8r,       X86::DIV8m,       makeMInst },
-      { X86::FsMOVAPDrr,  X86::MOVSDmr,     makeMRInst },
-      { X86::FsMOVAPSrr,  X86::MOVSSmr,     makeMRInst },
-      { X86::IDIV16r,     X86::IDIV16m,     makeMInst },
-      { X86::IDIV32r,     X86::IDIV32m,     makeMInst },
-      { X86::IDIV8r,      X86::IDIV8m,      makeMInst },
-      { X86::IMUL16r,     X86::IMUL16m,     makeMInst },
-      { X86::IMUL32r,     X86::IMUL32m,     makeMInst },
-      { X86::IMUL8r,      X86::IMUL8m,      makeMInst },
-      { X86::INC16r,      X86::INC16m,      makeMInst },
-      { X86::INC32r,      X86::INC32m,      makeMInst },
-      { X86::INC8r,       X86::INC8m,       makeMInst },
-      { X86::MOV16r0,     X86::MOV16mi,     makeM0Inst },
-      { X86::MOV16ri,     X86::MOV16mi,     makeMIInst },
-      { X86::MOV16rr,     X86::MOV16mr,     makeMRInst },
-      { X86::MOV32r0,     X86::MOV32mi,     makeM0Inst },
-      { X86::MOV32ri,     X86::MOV32mi,     makeMIInst },
-      { X86::MOV32rr,     X86::MOV32mr,     makeMRInst },
-      { X86::MOV8r0,      X86::MOV8mi,      makeM0Inst },
-      { X86::MOV8ri,      X86::MOV8mi,      makeMIInst },
-      { X86::MOV8rr,      X86::MOV8mr,      makeMRInst },
-      { X86::MOVAPDrr,    X86::MOVAPDmr,    makeMRInst },
-      { X86::MOVAPSrr,    X86::MOVAPSmr,    makeMRInst },
-      { X86::MOVPDI2DIrr, X86::MOVPDI2DImr, makeMRInst },
-      { X86::MOVPS2SSrr,  X86::MOVPS2SSmr,  makeMRInst },
-      { X86::MOVSDrr,     X86::MOVSDmr,     makeMRInst },
-      { X86::MOVSSrr,     X86::MOVSSmr,     makeMRInst },
-      { X86::MOVUPDrr,    X86::MOVUPDmr,    makeMRInst },
-      { X86::MOVUPSrr,    X86::MOVUPSmr,    makeMRInst },
-      { X86::MUL16r,      X86::MUL16m,      makeMInst },
-      { X86::MUL32r,      X86::MUL32m,      makeMInst },
-      { X86::MUL8r,       X86::MUL8m,       makeMInst },
-      { X86::NEG16r,      X86::NEG16m,      makeMInst },
-      { X86::NEG32r,      X86::NEG32m,      makeMInst },
-      { X86::NEG8r,       X86::NEG8m,       makeMInst },
-      { X86::NOT16r,      X86::NOT16m,      makeMInst },
-      { X86::NOT32r,      X86::NOT32m,      makeMInst },
-      { X86::NOT8r,       X86::NOT8m,       makeMInst },
-      { X86::OR16ri,      X86::OR16mi,      makeMIInst },
-      { X86::OR16ri8,     X86::OR16mi8,     makeMIInst },
-      { X86::OR16rr,      X86::OR16mr,      makeMRInst },
-      { X86::OR32ri,      X86::OR32mi,      makeMIInst },
-      { X86::OR32ri8,     X86::OR32mi8,     makeMIInst },
-      { X86::OR32rr,      X86::OR32mr,      makeMRInst },
-      { X86::OR8ri,       X86::OR8mi,       makeMIInst },
-      { X86::OR8rr,       X86::OR8mr,       makeMRInst },
-      { X86::ROL16r1,     X86::ROL16m1,     makeMInst },
-      { X86::ROL16rCL,    X86::ROL16mCL,    makeMInst },
-      { X86::ROL16ri,     X86::ROL16mi,     makeMIInst },
-      { X86::ROL32r1,     X86::ROL32m1,     makeMInst },
-      { X86::ROL32rCL,    X86::ROL32mCL,    makeMInst },
-      { X86::ROL32ri,     X86::ROL32mi,     makeMIInst },
-      { X86::ROL8r1,      X86::ROL8m1,      makeMInst },
-      { X86::ROL8rCL,     X86::ROL8mCL,     makeMInst },
-      { X86::ROL8ri,      X86::ROL8mi,      makeMIInst },
-      { X86::ROR16r1,     X86::ROR16m1,     makeMInst },
-      { X86::ROR16rCL,    X86::ROR16mCL,    makeMInst },
-      { X86::ROR16ri,     X86::ROR16mi,     makeMIInst },
-      { X86::ROR32r1,     X86::ROR32m1,     makeMInst },
-      { X86::ROR32rCL,    X86::ROR32mCL,    makeMInst },
-      { X86::ROR32ri,     X86::ROR32mi,     makeMIInst },
-      { X86::ROR8r1,      X86::ROR8m1,      makeMInst },
-      { X86::ROR8rCL,     X86::ROR8mCL,     makeMInst },
-      { X86::ROR8ri,      X86::ROR8mi,      makeMIInst },
-      { X86::SAR16r1,     X86::SAR16m1,     makeMInst },
-      { X86::SAR16rCL,    X86::SAR16mCL,    makeMInst },
-      { X86::SAR16ri,     X86::SAR16mi,     makeMIInst },
-      { X86::SAR32r1,     X86::SAR32m1,     makeMInst },
-      { X86::SAR32rCL,    X86::SAR32mCL,    makeMInst },
-      { X86::SAR32ri,     X86::SAR32mi,     makeMIInst },
-      { X86::SAR8r1,      X86::SAR8m1,      makeMInst },
-      { X86::SAR8rCL,     X86::SAR8mCL,     makeMInst },
-      { X86::SAR8ri,      X86::SAR8mi,      makeMIInst },
-      { X86::SBB32ri,     X86::SBB32mi,     makeMIInst },
-      { X86::SBB32ri8,    X86::SBB32mi8,    makeMIInst },
-      { X86::SBB32rr,     X86::SBB32mr,     makeMRInst },
-      { X86::SETAEr,      X86::SETAEm,      makeMInst },
-      { X86::SETAr,       X86::SETAm,       makeMInst },
-      { X86::SETBEr,      X86::SETBEm,      makeMInst },
-      { X86::SETBr,       X86::SETBm,       makeMInst },
-      { X86::SETEr,       X86::SETEm,       makeMInst },
-      { X86::SETGEr,      X86::SETGEm,      makeMInst },
-      { X86::SETGr,       X86::SETGm,       makeMInst },
-      { X86::SETLEr,      X86::SETLEm,      makeMInst },
-      { X86::SETLr,       X86::SETLm,       makeMInst },
-      { X86::SETNEr,      X86::SETNEm,      makeMInst },
-      { X86::SETNPr,      X86::SETNPm,      makeMInst },
-      { X86::SETNSr,      X86::SETNSm,      makeMInst },
-      { X86::SETPr,       X86::SETPm,       makeMInst },
-      { X86::SETSr,       X86::SETSm,       makeMInst },
-      { X86::SHL16r1,     X86::SHL16m1,     makeMInst },
-      { X86::SHL16rCL,    X86::SHL16mCL,    makeMInst },
-      { X86::SHL16ri,     X86::SHL16mi,     makeMIInst },
-      { X86::SHL32r1,     X86::SHL32m1,     makeMInst },
-      { X86::SHL32rCL,    X86::SHL32mCL,    makeMInst },
-      { X86::SHL32ri,     X86::SHL32mi,     makeMIInst },
-      { X86::SHL8r1,      X86::SHL8m1,      makeMInst },
-      { X86::SHL8rCL,     X86::SHL8mCL,     makeMInst },
-      { X86::SHL8ri,      X86::SHL8mi,      makeMIInst },
-      { X86::SHLD16rrCL,  X86::SHLD16mrCL,  makeMRInst },
-      { X86::SHLD16rri8,  X86::SHLD16mri8,  makeMRIInst },
-      { X86::SHLD32rrCL,  X86::SHLD32mrCL,  makeMRInst },
-      { X86::SHLD32rri8,  X86::SHLD32mri8,  makeMRIInst },
-      { X86::SHR16r1,     X86::SHR16m1,     makeMInst },
-      { X86::SHR16rCL,    X86::SHR16mCL,    makeMInst },
-      { X86::SHR16ri,     X86::SHR16mi,     makeMIInst },
-      { X86::SHR32r1,     X86::SHR32m1,     makeMInst },
-      { X86::SHR32rCL,    X86::SHR32mCL,    makeMInst },
-      { X86::SHR32ri,     X86::SHR32mi,     makeMIInst },
-      { X86::SHR8r1,      X86::SHR8m1,      makeMInst },
-      { X86::SHR8rCL,     X86::SHR8mCL,     makeMInst },
-      { X86::SHR8ri,      X86::SHR8mi,      makeMIInst },
-      { X86::SHRD16rrCL,  X86::SHRD16mrCL,  makeMRInst },
-      { X86::SHRD16rri8,  X86::SHRD16mri8,  makeMRIInst },
-      { X86::SHRD32rrCL,  X86::SHRD32mrCL,  makeMRInst },
-      { X86::SHRD32rri8,  X86::SHRD32mri8,  makeMRIInst },
-      { X86::SUB16ri,     X86::SUB16mi,     makeMIInst },
-      { X86::SUB16ri8,    X86::SUB16mi8,    makeMIInst },
-      { X86::SUB16rr,     X86::SUB16mr,     makeMRInst },
-      { X86::SUB32ri,     X86::SUB32mi,     makeMIInst },
-      { X86::SUB32ri8,    X86::SUB32mi8,    makeMIInst },
-      { X86::SUB32rr,     X86::SUB32mr,     makeMRInst },
-      { X86::SUB8ri,      X86::SUB8mi,      makeMIInst },
-      { X86::SUB8rr,      X86::SUB8mr,      makeMRInst },
-      { X86::XCHG16rr,    X86::XCHG16mr,    makeMRInst },
-      { X86::XCHG32rr,    X86::XCHG32mr,    makeMRInst },
-      { X86::XCHG8rr,     X86::XCHG8mr,     makeMRInst },
-      { X86::XOR16ri,     X86::XOR16mi,     makeMIInst },
-      { X86::XOR16ri8,    X86::XOR16mi8,    makeMIInst },
-      { X86::XOR16rr,     X86::XOR16mr,     makeMRInst },
-      { X86::XOR32ri,     X86::XOR32mi,     makeMIInst },
-      { X86::XOR32ri8,    X86::XOR32mi8,    makeMIInst },
-      { X86::XOR32rr,     X86::XOR32mr,     makeMRInst },
-      { X86::XOR8ri,      X86::XOR8mi,      makeMIInst },
-      { X86::XOR8rr,      X86::XOR8mr,      makeMRInst }
+      { X86::ADC32ri,     X86::ADC32mi },
+      { X86::ADC32ri8,    X86::ADC32mi8 },
+      { X86::ADC32rr,     X86::ADC32mr },
+      { X86::ADD16ri,     X86::ADD16mi },
+      { X86::ADD16ri8,    X86::ADD16mi8 },
+      { X86::ADD16rr,     X86::ADD16mr },
+      { X86::ADD32ri,     X86::ADD32mi },
+      { X86::ADD32ri8,    X86::ADD32mi8 },
+      { X86::ADD32rr,     X86::ADD32mr },
+      { X86::ADD8ri,      X86::ADD8mi },
+      { X86::ADD8rr,      X86::ADD8mr },
+      { X86::AND16ri,     X86::AND16mi },
+      { X86::AND16ri8,    X86::AND16mi8 },
+      { X86::AND16rr,     X86::AND16mr },
+      { X86::AND32ri,     X86::AND32mi },
+      { X86::AND32ri8,    X86::AND32mi8 },
+      { X86::AND32rr,     X86::AND32mr },
+      { X86::AND8ri,      X86::AND8mi },
+      { X86::AND8rr,      X86::AND8mr },
+      { X86::DEC16r,      X86::DEC16m },
+      { X86::DEC32r,      X86::DEC32m },
+      { X86::DEC8r,       X86::DEC8m },
+      { X86::INC16r,      X86::INC16m },
+      { X86::INC32r,      X86::INC32m },
+      { X86::INC8r,       X86::INC8m },
+      { X86::NEG16r,      X86::NEG16m },
+      { X86::NEG32r,      X86::NEG32m },
+      { X86::NEG8r,       X86::NEG8m },
+      { X86::NOT16r,      X86::NOT16m },
+      { X86::NOT32r,      X86::NOT32m },
+      { X86::NOT8r,       X86::NOT8m },
+      { X86::OR16ri,      X86::OR16mi },
+      { X86::OR16ri8,     X86::OR16mi8 },
+      { X86::OR16rr,      X86::OR16mr },
+      { X86::OR32ri,      X86::OR32mi },
+      { X86::OR32ri8,     X86::OR32mi8 },
+      { X86::OR32rr,      X86::OR32mr },
+      { X86::OR8ri,       X86::OR8mi },
+      { X86::OR8rr,       X86::OR8mr },
+      { X86::ROL16r1,     X86::ROL16m1 },
+      { X86::ROL16rCL,    X86::ROL16mCL },
+      { X86::ROL16ri,     X86::ROL16mi },
+      { X86::ROL32r1,     X86::ROL32m1 },
+      { X86::ROL32rCL,    X86::ROL32mCL },
+      { X86::ROL32ri,     X86::ROL32mi },
+      { X86::ROL8r1,      X86::ROL8m1 },
+      { X86::ROL8rCL,     X86::ROL8mCL },
+      { X86::ROL8ri,      X86::ROL8mi },
+      { X86::ROR16r1,     X86::ROR16m1 },
+      { X86::ROR16rCL,    X86::ROR16mCL },
+      { X86::ROR16ri,     X86::ROR16mi },
+      { X86::ROR32r1,     X86::ROR32m1 },
+      { X86::ROR32rCL,    X86::ROR32mCL },
+      { X86::ROR32ri,     X86::ROR32mi },
+      { X86::ROR8r1,      X86::ROR8m1 },
+      { X86::ROR8rCL,     X86::ROR8mCL },
+      { X86::ROR8ri,      X86::ROR8mi },
+      { X86::SAR16r1,     X86::SAR16m1 },
+      { X86::SAR16rCL,    X86::SAR16mCL },
+      { X86::SAR16ri,     X86::SAR16mi },
+      { X86::SAR32r1,     X86::SAR32m1 },
+      { X86::SAR32rCL,    X86::SAR32mCL },
+      { X86::SAR32ri,     X86::SAR32mi },
+      { X86::SAR8r1,      X86::SAR8m1 },
+      { X86::SAR8rCL,     X86::SAR8mCL },
+      { X86::SAR8ri,      X86::SAR8mi },
+      { X86::SBB32ri,     X86::SBB32mi },
+      { X86::SBB32ri8,    X86::SBB32mi8 },
+      { X86::SBB32rr,     X86::SBB32mr },
+      { X86::SHL16r1,     X86::SHL16m1 },
+      { X86::SHL16rCL,    X86::SHL16mCL },
+      { X86::SHL16ri,     X86::SHL16mi },
+      { X86::SHL32r1,     X86::SHL32m1 },
+      { X86::SHL32rCL,    X86::SHL32mCL },
+      { X86::SHL32ri,     X86::SHL32mi },
+      { X86::SHL8r1,      X86::SHL8m1 },
+      { X86::SHL8rCL,     X86::SHL8mCL },
+      { X86::SHL8ri,      X86::SHL8mi },
+      { X86::SHLD16rrCL,  X86::SHLD16mrCL },
+      { X86::SHLD16rri8,  X86::SHLD16mri8 },
+      { X86::SHLD32rrCL,  X86::SHLD32mrCL },
+      { X86::SHLD32rri8,  X86::SHLD32mri8 },
+      { X86::SHR16r1,     X86::SHR16m1 },
+      { X86::SHR16rCL,    X86::SHR16mCL },
+      { X86::SHR16ri,     X86::SHR16mi },
+      { X86::SHR32r1,     X86::SHR32m1 },
+      { X86::SHR32rCL,    X86::SHR32mCL },
+      { X86::SHR32ri,     X86::SHR32mi },
+      { X86::SHR8r1,      X86::SHR8m1 },
+      { X86::SHR8rCL,     X86::SHR8mCL },
+      { X86::SHR8ri,      X86::SHR8mi },
+      { X86::SHRD16rrCL,  X86::SHRD16mrCL },
+      { X86::SHRD16rri8,  X86::SHRD16mri8 },
+      { X86::SHRD32rrCL,  X86::SHRD32mrCL },
+      { X86::SHRD32rri8,  X86::SHRD32mri8 },
+      { X86::SUB16ri,     X86::SUB16mi },
+      { X86::SUB16ri8,    X86::SUB16mi8 },
+      { X86::SUB16rr,     X86::SUB16mr },
+      { X86::SUB32ri,     X86::SUB32mi },
+      { X86::SUB32ri8,    X86::SUB32mi8 },
+      { X86::SUB32rr,     X86::SUB32mr },
+      { X86::SUB8ri,      X86::SUB8mi },
+      { X86::SUB8rr,      X86::SUB8mr },
+      { X86::XOR16ri,     X86::XOR16mi },
+      { X86::XOR16ri8,    X86::XOR16mi8 },
+      { X86::XOR16rr,     X86::XOR16mr },
+      { X86::XOR32ri,     X86::XOR32mi },
+      { X86::XOR32ri8,    X86::XOR32mi8 },
+      { X86::XOR32rr,     X86::XOR32mr },
+      { X86::XOR8ri,      X86::XOR8mi },
+      { X86::XOR8rr,      X86::XOR8mr }
+    };
+    ASSERT_SORTED(OpcodeTable);
+    OpcodeTablePtr = OpcodeTable;
+    OpcodeTableSize = ARRAY_SIZE(OpcodeTable);
+    isTwoAddrFold = true;
+  } else if (i == 0) { // If operand 0
+    if (MI->getOpcode() == X86::MOV16r0)
+      return MakeM0Inst(X86::MOV16mi, FrameIndex, MI);
+    else if (MI->getOpcode() == X86::MOV32r0)
+      return MakeM0Inst(X86::MOV32mi, FrameIndex, MI);
+    else if (MI->getOpcode() == X86::MOV8r0)
+      return MakeM0Inst(X86::MOV8mi, FrameIndex, MI);
+    
+    static const TableEntry OpcodeTable[] = {
+      { X86::CMP16ri,     X86::CMP16mi },
+      { X86::CMP16ri8,    X86::CMP16mi8 },
+      { X86::CMP32ri,     X86::CMP32mi },
+      { X86::CMP32ri8,    X86::CMP32mi8 },
+      { X86::CMP8ri,      X86::CMP8mi },
+      { X86::DIV16r,      X86::DIV16m },
+      { X86::DIV32r,      X86::DIV32m },
+      { X86::DIV8r,       X86::DIV8m },
+      { X86::FsMOVAPDrr,  X86::MOVSDmr },
+      { X86::FsMOVAPSrr,  X86::MOVSSmr },
+      { X86::IDIV16r,     X86::IDIV16m },
+      { X86::IDIV32r,     X86::IDIV32m },
+      { X86::IDIV8r,      X86::IDIV8m },
+      { X86::IMUL16r,     X86::IMUL16m },
+      { X86::IMUL32r,     X86::IMUL32m },
+      { X86::IMUL8r,      X86::IMUL8m },
+      { X86::MOV16ri,     X86::MOV16mi },
+      { X86::MOV16rr,     X86::MOV16mr },
+      { X86::MOV32ri,     X86::MOV32mi },
+      { X86::MOV32rr,     X86::MOV32mr },
+      { X86::MOV8ri,      X86::MOV8mi },
+      { X86::MOV8rr,      X86::MOV8mr },
+      { X86::MOVAPDrr,    X86::MOVAPDmr },
+      { X86::MOVAPSrr,    X86::MOVAPSmr },
+      { X86::MOVPDI2DIrr, X86::MOVPDI2DImr },
+      { X86::MOVPS2SSrr,  X86::MOVPS2SSmr },
+      { X86::MOVSDrr,     X86::MOVSDmr },
+      { X86::MOVSSrr,     X86::MOVSSmr },
+      { X86::MOVUPDrr,    X86::MOVUPDmr },
+      { X86::MOVUPSrr,    X86::MOVUPSmr },
+      { X86::MUL16r,      X86::MUL16m },
+      { X86::MUL32r,      X86::MUL32m },
+      { X86::MUL8r,       X86::MUL8m },
+      { X86::SETAEr,      X86::SETAEm },
+      { X86::SETAr,       X86::SETAm },
+      { X86::SETBEr,      X86::SETBEm },
+      { X86::SETBr,       X86::SETBm },
+      { X86::SETEr,       X86::SETEm },
+      { X86::SETGEr,      X86::SETGEm },
+      { X86::SETGr,       X86::SETGm },
+      { X86::SETLEr,      X86::SETLEm },
+      { X86::SETLr,       X86::SETLm },
+      { X86::SETNEr,      X86::SETNEm },
+      { X86::SETNPr,      X86::SETNPm },
+      { X86::SETNSr,      X86::SETNSm },
+      { X86::SETPr,       X86::SETPm },
+      { X86::SETSr,       X86::SETSm },
+      { X86::TEST16ri,    X86::TEST16mi },
+      { X86::TEST32ri,    X86::TEST32mi },
+      { X86::TEST8ri,     X86::TEST8mi },
+      { X86::XCHG16rr,    X86::XCHG16mr },
+      { X86::XCHG32rr,    X86::XCHG32mr },
+      { X86::XCHG8rr,     X86::XCHG8mr }
     };
     ASSERT_SORTED(OpcodeTable);
     OpcodeTablePtr = OpcodeTable;
     OpcodeTableSize = ARRAY_SIZE(OpcodeTable);
   } else if (i == 1) {
     static const TableEntry OpcodeTable[] = {
-      { X86::ADC32rr,         X86::ADC32rm,         makeRMInst },
-      { X86::ADD16rr,         X86::ADD16rm,         makeRMInst },
-      { X86::ADD32rr,         X86::ADD32rm,         makeRMInst },
-      { X86::ADD8rr,          X86::ADD8rm,          makeRMInst },
-      { X86::ADDPDrr,         X86::ADDPDrm,         makeRMInst },
-      { X86::ADDPSrr,         X86::ADDPSrm,         makeRMInst },
-      { X86::ADDSDrr,         X86::ADDSDrm,         makeRMInst },
-      { X86::ADDSSrr,         X86::ADDSSrm,         makeRMInst },
-      { X86::ADDSUBPDrr,      X86::ADDSUBPDrm,      makeRMInst },
-      { X86::ADDSUBPSrr,      X86::ADDSUBPSrm,      makeRMInst },
-      { X86::AND16rr,         X86::AND16rm,         makeRMInst },
-      { X86::AND32rr,         X86::AND32rm,         makeRMInst },
-      { X86::AND8rr,          X86::AND8rm,          makeRMInst },
-      { X86::ANDNPDrr,        X86::ANDNPDrm,        makeRMInst },
-      { X86::ANDNPSrr,        X86::ANDNPSrm,        makeRMInst },
-      { X86::ANDPDrr,         X86::ANDPDrm,         makeRMInst },
-      { X86::ANDPSrr,         X86::ANDPSrm,         makeRMInst },
-      { X86::CMOVA16rr,       X86::CMOVA16rm,       makeRMInst },
-      { X86::CMOVA32rr,       X86::CMOVA32rm,       makeRMInst },
-      { X86::CMOVAE16rr,      X86::CMOVAE16rm,      makeRMInst },
-      { X86::CMOVAE32rr,      X86::CMOVAE32rm,      makeRMInst },
-      { X86::CMOVB16rr,       X86::CMOVB16rm,       makeRMInst },
-      { X86::CMOVB32rr,       X86::CMOVB32rm,       makeRMInst },
-      { X86::CMOVBE16rr,      X86::CMOVBE16rm,      makeRMInst },
-      { X86::CMOVBE32rr,      X86::CMOVBE32rm,      makeRMInst },
-      { X86::CMOVE16rr,       X86::CMOVE16rm,       makeRMInst },
-      { X86::CMOVE32rr,       X86::CMOVE32rm,       makeRMInst },
-      { X86::CMOVG16rr,       X86::CMOVG16rm,       makeRMInst },
-      { X86::CMOVG32rr,       X86::CMOVG32rm,       makeRMInst },
-      { X86::CMOVGE16rr,      X86::CMOVGE16rm,      makeRMInst },
-      { X86::CMOVGE32rr,      X86::CMOVGE32rm,      makeRMInst },
-      { X86::CMOVL16rr,       X86::CMOVL16rm,       makeRMInst },
-      { X86::CMOVL32rr,       X86::CMOVL32rm,       makeRMInst },
-      { X86::CMOVLE16rr,      X86::CMOVLE16rm,      makeRMInst },
-      { X86::CMOVLE32rr,      X86::CMOVLE32rm,      makeRMInst },
-      { X86::CMOVNE16rr,      X86::CMOVNE16rm,      makeRMInst },
-      { X86::CMOVNE32rr,      X86::CMOVNE32rm,      makeRMInst },
-      { X86::CMOVNP16rr,      X86::CMOVNP16rm,      makeRMInst },
-      { X86::CMOVNP32rr,      X86::CMOVNP32rm,      makeRMInst },
-      { X86::CMOVNS16rr,      X86::CMOVNS16rm,      makeRMInst },
-      { X86::CMOVNS32rr,      X86::CMOVNS32rm,      makeRMInst },
-      { X86::CMOVP16rr,       X86::CMOVP16rm,       makeRMInst },
-      { X86::CMOVP32rr,       X86::CMOVP32rm,       makeRMInst },
-      { X86::CMOVS16rr,       X86::CMOVS16rm,       makeRMInst },
-      { X86::CMOVS32rr,       X86::CMOVS32rm,       makeRMInst },
-      { X86::CMP16ri,         X86::CMP16mi,         makeMIInst },
-      { X86::CMP16ri8,        X86::CMP16mi8,        makeMIInst },
-      { X86::CMP16rr,         X86::CMP16rm,         makeRMInst },
-      { X86::CMP32ri,         X86::CMP32mi,         makeMIInst },
-      { X86::CMP32ri8,        X86::CMP32mi8,        makeRMInst },
-      { X86::CMP32rr,         X86::CMP32rm,         makeRMInst },
-      { X86::CMP8ri,          X86::CMP8mi,          makeRMInst },
-      { X86::CMP8rr,          X86::CMP8rm,          makeRMInst },
-      { X86::CMPPDrri,        X86::CMPPDrmi,        makeRMIInst },
-      { X86::CMPPSrri,        X86::CMPPSrmi,        makeRMIInst },
-      { X86::CMPSDrr,         X86::CMPSDrm,         makeRMInst },
-      { X86::CMPSSrr,         X86::CMPSSrm,         makeRMInst },
-      { X86::CVTSD2SSrr,      X86::CVTSD2SSrm,      makeRMInst },
-      { X86::CVTSI2SDrr,      X86::CVTSI2SDrm,      makeRMInst },
-      { X86::CVTSI2SSrr,      X86::CVTSI2SSrm,      makeRMInst },
-      { X86::CVTSS2SDrr,      X86::CVTSS2SDrm,      makeRMInst },
-      { X86::CVTTSD2SIrr,     X86::CVTTSD2SIrm,     makeRMInst },
-      { X86::CVTTSS2SIrr,     X86::CVTTSS2SIrm,     makeRMInst },
-      { X86::DIVPDrr,         X86::DIVPDrm,         makeRMInst },
-      { X86::DIVPSrr,         X86::DIVPSrm,         makeRMInst },
-      { X86::DIVSDrr,         X86::DIVSDrm,         makeRMInst },
-      { X86::DIVSSrr,         X86::DIVSSrm,         makeRMInst },
-      { X86::FsMOVAPDrr,      X86::MOVSDrm,         makeRMInst },
-      { X86::FsMOVAPSrr,      X86::MOVSSrm,         makeRMInst },
-      { X86::HADDPDrr,        X86::HADDPDrm,        makeRMInst },
-      { X86::HADDPSrr,        X86::HADDPSrm,        makeRMInst },
-      { X86::HSUBPDrr,        X86::HSUBPDrm,        makeRMInst },
-      { X86::HSUBPSrr,        X86::HSUBPSrm,        makeRMInst },
-      { X86::IMUL16rr,        X86::IMUL16rm,        makeRMInst },
-      { X86::IMUL16rri,       X86::IMUL16rmi,       makeRMIInst },
-      { X86::IMUL16rri8,      X86::IMUL16rmi8,      makeRMIInst },
-      { X86::IMUL32rr,        X86::IMUL32rm,        makeRMInst },
-      { X86::IMUL32rri,       X86::IMUL32rmi,       makeRMIInst },
-      { X86::IMUL32rri8,      X86::IMUL32rmi8,      makeRMIInst },
-      { X86::Int_CMPSDrr,     X86::Int_CMPSDrm,     makeRMInst },
-      { X86::Int_CMPSSrr,     X86::Int_CMPSSrm,     makeRMInst },
-      { X86::Int_COMISDrr,    X86::Int_COMISDrm,    makeRMInst },
-      { X86::Int_COMISSrr,    X86::Int_COMISSrm,    makeRMInst },
-      { X86::Int_CVTDQ2PDrr,  X86::Int_CVTDQ2PDrm,  makeRMInst },
-      { X86::Int_CVTDQ2PSrr,  X86::Int_CVTDQ2PSrm,  makeRMInst },
-      { X86::Int_CVTPD2DQrr,  X86::Int_CVTPD2DQrm,  makeRMInst },
-      { X86::Int_CVTPD2PSrr,  X86::Int_CVTPD2PSrm,  makeRMInst },
-      { X86::Int_CVTPS2DQrr,  X86::Int_CVTPS2DQrm,  makeRMInst },
-      { X86::Int_CVTPS2PDrr,  X86::Int_CVTPS2PDrm,  makeRMInst },
-      { X86::Int_CVTSD2SIrr,  X86::Int_CVTSD2SIrm,  makeRMInst },
-      { X86::Int_CVTSD2SSrr,  X86::Int_CVTSD2SSrm,  makeRMInst },
-      { X86::Int_CVTSI2SDrr,  X86::Int_CVTSI2SDrm,  makeRMInst },
-      { X86::Int_CVTSI2SSrr,  X86::Int_CVTSI2SSrm,  makeRMInst },
-      { X86::Int_CVTSS2SDrr,  X86::Int_CVTSS2SDrm,  makeRMInst },
-      { X86::Int_CVTSS2SIrr,  X86::Int_CVTSS2SIrm,  makeRMInst },
-      { X86::Int_CVTTPD2DQrr, X86::Int_CVTTPD2DQrm, makeRMInst },
-      { X86::Int_CVTTPS2DQrr, X86::Int_CVTTPS2DQrm, makeRMInst },
-      { X86::Int_CVTTSD2SIrr, X86::Int_CVTTSD2SIrm, makeRMInst },
-      { X86::Int_CVTTSS2SIrr, X86::Int_CVTTSS2SIrm, makeRMInst },
-      { X86::Int_UCOMISDrr,   X86::Int_UCOMISDrm,   makeRMInst },
-      { X86::Int_UCOMISSrr,   X86::Int_UCOMISSrm,   makeRMInst },
-      { X86::MAXPDrr,         X86::MAXPDrm,         makeRMInst },
-      { X86::MAXPSrr,         X86::MAXPSrm,         makeRMInst },
-      { X86::MINPDrr,         X86::MINPDrm,         makeRMInst },
-      { X86::MINPSrr,         X86::MINPSrm,         makeRMInst },
-      { X86::MOV16rr,         X86::MOV16rm,         makeRMInst },
-      { X86::MOV32rr,         X86::MOV32rm,         makeRMInst },
-      { X86::MOV8rr,          X86::MOV8rm,          makeRMInst },
-      { X86::MOVAPDrr,        X86::MOVAPDrm,        makeRMInst },
-      { X86::MOVAPSrr,        X86::MOVAPSrm,        makeRMInst },
-      { X86::MOVDDUPrr,       X86::MOVDDUPrm,       makeRMInst },
-      { X86::MOVDI2PDIrr,     X86::MOVDI2PDIrm,     makeRMInst },
-      { X86::MOVQI2PQIrr,     X86::MOVQI2PQIrm,     makeRMInst },
-      { X86::MOVSD2PDrr,      X86::MOVSD2PDrm,      makeRMInst },
-      { X86::MOVSDrr,         X86::MOVSDrm,         makeRMInst },
-      { X86::MOVSHDUPrr,      X86::MOVSHDUPrm,      makeRMInst },
-      { X86::MOVSLDUPrr,      X86::MOVSLDUPrm,      makeRMInst },
-      { X86::MOVSS2PSrr,      X86::MOVSS2PSrm,      makeRMInst },
-      { X86::MOVSSrr,         X86::MOVSSrm,         makeRMInst },
-      { X86::MOVSX16rr8,      X86::MOVSX16rm8,      makeRMInst },
-      { X86::MOVSX32rr16,     X86::MOVSX32rm16,     makeRMInst },
-      { X86::MOVSX32rr8,      X86::MOVSX32rm8,      makeRMInst },
-      { X86::MOVUPDrr,        X86::MOVUPDrm,        makeRMInst },
-      { X86::MOVUPSrr,        X86::MOVUPSrm,        makeRMInst },
-      { X86::MOVZX16rr8,      X86::MOVZX16rm8,      makeRMInst },
-      { X86::MOVZX32rr16,     X86::MOVZX32rm16,     makeRMInst },
-      { X86::MOVZX32rr8,      X86::MOVZX32rm8,      makeRMInst },
-      { X86::MULPDrr,         X86::MULPDrm,         makeRMInst },
-      { X86::MULPSrr,         X86::MULPSrm,         makeRMInst },
-      { X86::MULSDrr,         X86::MULSDrm,         makeRMInst },
-      { X86::MULSSrr,         X86::MULSSrm,         makeRMInst },
-      { X86::OR16rr,          X86::OR16rm,          makeRMInst },
-      { X86::OR32rr,          X86::OR32rm,          makeRMInst },
-      { X86::OR8rr,           X86::OR8rm,           makeRMInst },
-      { X86::ORPDrr,          X86::ORPDrm,          makeRMInst },
-      { X86::ORPSrr,          X86::ORPSrm,          makeRMInst },
-      { X86::PACKSSDWrr,      X86::PACKSSDWrm,      makeRMInst },
-      { X86::PACKSSWBrr,      X86::PACKSSWBrm,      makeRMInst },
-      { X86::PACKUSWBrr,      X86::PACKUSWBrm,      makeRMInst },
-      { X86::PADDBrr,         X86::PADDBrm,         makeRMInst },
-      { X86::PADDDrr,         X86::PADDDrm,         makeRMInst },
-      { X86::PADDSBrr,        X86::PADDSBrm,        makeRMInst },
-      { X86::PADDSWrr,        X86::PADDSWrm,        makeRMInst },
-      { X86::PADDWrr,         X86::PADDWrm,         makeRMInst },
-      { X86::PANDNrr,         X86::PANDNrm,         makeRMInst },
-      { X86::PANDrr,          X86::PANDrm,          makeRMInst },
-      { X86::PAVGBrr,         X86::PAVGBrm,         makeRMInst },
-      { X86::PAVGWrr,         X86::PAVGWrm,         makeRMInst },
-      { X86::PCMPEQBrr,       X86::PCMPEQBrm,       makeRMInst },
-      { X86::PCMPEQDrr,       X86::PCMPEQDrm,       makeRMInst },
-      { X86::PCMPEQWrr,       X86::PCMPEQWrm,       makeRMInst },
-      { X86::PCMPGTBrr,       X86::PCMPGTBrm,       makeRMInst },
-      { X86::PCMPGTDrr,       X86::PCMPGTDrm,       makeRMInst },
-      { X86::PCMPGTWrr,       X86::PCMPGTWrm,       makeRMInst },
-      { X86::PINSRWrri,       X86::PINSRWrmi,       makeRMIInst },
-      { X86::PMADDWDrr,       X86::PMADDWDrm,       makeRMInst },
-      { X86::PMAXSWrr,        X86::PMAXSWrm,        makeRMInst },
-      { X86::PMAXUBrr,        X86::PMAXUBrm,        makeRMInst },
-      { X86::PMINSWrr,        X86::PMINSWrm,        makeRMInst },
-      { X86::PMINUBrr,        X86::PMINUBrm,        makeRMInst },
-      { X86::PMULHUWrr,       X86::PMULHUWrm,       makeRMInst },
-      { X86::PMULHWrr,        X86::PMULHWrm,        makeRMInst },
-      { X86::PMULLWrr,        X86::PMULLWrm,        makeRMInst },
-      { X86::PMULUDQrr,       X86::PMULUDQrm,       makeRMInst },
-      { X86::PORrr,           X86::PORrm,           makeRMInst },
-      { X86::PSADBWrr,        X86::PSADBWrm,        makeRMInst },
-      { X86::PSHUFDri,        X86::PSHUFDmi,        makeRMIInst },
-      { X86::PSHUFHWri,       X86::PSHUFHWmi,       makeRMIInst },
-      { X86::PSHUFLWri,       X86::PSHUFLWmi,       makeRMIInst },
-      { X86::PSLLDrr,         X86::PSLLDrm,         makeRMInst },
-      { X86::PSLLQrr,         X86::PSLLQrm,         makeRMInst },
-      { X86::PSLLWrr,         X86::PSLLWrm,         makeRMInst },
-      { X86::PSRADrr,         X86::PSRADrm,         makeRMInst },
-      { X86::PSRAWrr,         X86::PSRAWrm,         makeRMInst },
-      { X86::PSRLDrr,         X86::PSRLDrm,         makeRMInst },
-      { X86::PSRLQrr,         X86::PSRLQrm,         makeRMInst },
-      { X86::PSRLWrr,         X86::PSRLWrm,         makeRMInst },
-      { X86::PSUBBrr,         X86::PSUBBrm,         makeRMInst },
-      { X86::PSUBDrr,         X86::PSUBDrm,         makeRMInst },
-      { X86::PSUBSBrr,        X86::PSUBSBrm,        makeRMInst },
-      { X86::PSUBSWrr,        X86::PSUBSWrm,        makeRMInst },
-      { X86::PSUBWrr,         X86::PSUBWrm,         makeRMInst },
-      { X86::PUNPCKHBWrr,     X86::PUNPCKHBWrm,     makeRMInst },
-      { X86::PUNPCKHDQrr,     X86::PUNPCKHDQrm,     makeRMInst },
-      { X86::PUNPCKHQDQrr,    X86::PUNPCKHQDQrm,    makeRMInst },
-      { X86::PUNPCKHWDrr,     X86::PUNPCKHWDrm,     makeRMInst },
-      { X86::PUNPCKLBWrr,     X86::PUNPCKLBWrm,     makeRMInst },
-      { X86::PUNPCKLDQrr,     X86::PUNPCKLDQrm,     makeRMInst },
-      { X86::PUNPCKLQDQrr,    X86::PUNPCKLQDQrm,    makeRMInst },
-      { X86::PUNPCKLWDrr,     X86::PUNPCKLWDrm,     makeRMInst },
-      { X86::PXORrr,          X86::PXORrm,          makeRMInst },
-      { X86::RCPPSr,          X86::RCPPSm,          makeRMInst },
-      { X86::RSQRTPSr,        X86::RSQRTPSm,        makeRMInst },
-      { X86::SBB32rr,         X86::SBB32rm,         makeRMInst },
-      { X86::SHUFPDrri,       X86::SHUFPDrmi,       makeRMIInst },
-      { X86::SHUFPSrri,       X86::SHUFPSrmi,       makeRMIInst },
-      { X86::SQRTPDr,         X86::SQRTPDm,         makeRMInst },
-      { X86::SQRTPSr,         X86::SQRTPSm,         makeRMInst },
-      { X86::SQRTSDr,         X86::SQRTSDm,         makeRMInst },
-      { X86::SQRTSSr,         X86::SQRTSSm,         makeRMInst },
-      { X86::SUB16rr,         X86::SUB16rm,         makeRMInst },
-      { X86::SUB32rr,         X86::SUB32rm,         makeRMInst },
-      { X86::SUB8rr,          X86::SUB8rm,          makeRMInst },
-      { X86::SUBPDrr,         X86::SUBPDrm,         makeRMInst },
-      { X86::SUBPSrr,         X86::SUBPSrm,         makeRMInst },
-      { X86::SUBSDrr,         X86::SUBSDrm,         makeRMInst },
-      { X86::SUBSSrr,         X86::SUBSSrm,         makeRMInst },
-      { X86::TEST16ri,        X86::TEST16mi,        makeMIInst },
-      { X86::TEST16rr,        X86::TEST16rm,        makeRMInst },
-      { X86::TEST32ri,        X86::TEST32mi,        makeMIInst },
-      { X86::TEST32rr,        X86::TEST32rm,        makeRMInst },
-      { X86::TEST8ri,         X86::TEST8mi,         makeMIInst },
-      { X86::TEST8rr,         X86::TEST8rm,         makeRMInst },
-      { X86::UCOMISDrr,       X86::UCOMISDrm,       makeRMInst },
-      { X86::UCOMISSrr,       X86::UCOMISSrm,       makeRMInst },
-      { X86::UNPCKHPDrr,      X86::UNPCKHPDrm,      makeRMInst },
-      { X86::UNPCKHPSrr,      X86::UNPCKHPSrm,      makeRMInst },
-      { X86::UNPCKLPDrr,      X86::UNPCKLPDrm,      makeRMInst },
-      { X86::UNPCKLPSrr,      X86::UNPCKLPSrm,      makeRMInst },
-      { X86::XCHG16rr,        X86::XCHG16rm,        makeRMInst },
-      { X86::XCHG32rr,        X86::XCHG32rm,        makeRMInst },
-      { X86::XCHG8rr,         X86::XCHG8rm,         makeRMInst },
-      { X86::XOR16rr,         X86::XOR16rm,         makeRMInst },
-      { X86::XOR32rr,         X86::XOR32rm,         makeRMInst },
-      { X86::XOR8rr,          X86::XOR8rm,          makeRMInst },
-      { X86::XORPDrr,         X86::XORPDrm,         makeRMInst },
-      { X86::XORPSrr,         X86::XORPSrm,         makeRMInst }
+      { X86::CMP16rr,         X86::CMP16rm },
+      { X86::CMP32rr,         X86::CMP32rm },
+      { X86::CMP8rr,          X86::CMP8rm },
+      { X86::CMPPDrri,        X86::CMPPDrmi },
+      { X86::CMPPSrri,        X86::CMPPSrmi },
+      { X86::CMPSDrr,         X86::CMPSDrm },
+      { X86::CMPSSrr,         X86::CMPSSrm },
+      { X86::CVTSD2SSrr,      X86::CVTSD2SSrm },
+      { X86::CVTSI2SDrr,      X86::CVTSI2SDrm },
+      { X86::CVTSI2SSrr,      X86::CVTSI2SSrm },
+      { X86::CVTSS2SDrr,      X86::CVTSS2SDrm },
+      { X86::CVTTSD2SIrr,     X86::CVTTSD2SIrm },
+      { X86::CVTTSS2SIrr,     X86::CVTTSS2SIrm },
+      { X86::FsMOVAPDrr,      X86::MOVSDrm },
+      { X86::FsMOVAPSrr,      X86::MOVSSrm },
+      { X86::IMUL16rri,       X86::IMUL16rmi },
+      { X86::IMUL16rri8,      X86::IMUL16rmi8 },
+      { X86::IMUL32rri,       X86::IMUL32rmi },
+      { X86::IMUL32rri8,      X86::IMUL32rmi8 },
+      { X86::Int_CMPSDrr,     X86::Int_CMPSDrm },
+      { X86::Int_CMPSSrr,     X86::Int_CMPSSrm },
+      { X86::Int_COMISDrr,    X86::Int_COMISDrm },
+      { X86::Int_COMISSrr,    X86::Int_COMISSrm },
+      { X86::Int_CVTDQ2PDrr,  X86::Int_CVTDQ2PDrm },
+      { X86::Int_CVTDQ2PSrr,  X86::Int_CVTDQ2PSrm },
+      { X86::Int_CVTPD2DQrr,  X86::Int_CVTPD2DQrm },
+      { X86::Int_CVTPD2PSrr,  X86::Int_CVTPD2PSrm },
+      { X86::Int_CVTPS2DQrr,  X86::Int_CVTPS2DQrm },
+      { X86::Int_CVTPS2PDrr,  X86::Int_CVTPS2PDrm },
+      { X86::Int_CVTSD2SIrr,  X86::Int_CVTSD2SIrm },
+      { X86::Int_CVTSD2SSrr,  X86::Int_CVTSD2SSrm },
+      { X86::Int_CVTSI2SDrr,  X86::Int_CVTSI2SDrm },
+      { X86::Int_CVTSI2SSrr,  X86::Int_CVTSI2SSrm },
+      { X86::Int_CVTSS2SDrr,  X86::Int_CVTSS2SDrm },
+      { X86::Int_CVTSS2SIrr,  X86::Int_CVTSS2SIrm },
+      { X86::Int_CVTTPD2DQrr, X86::Int_CVTTPD2DQrm },
+      { X86::Int_CVTTPS2DQrr, X86::Int_CVTTPS2DQrm },
+      { X86::Int_CVTTSD2SIrr, X86::Int_CVTTSD2SIrm },
+      { X86::Int_CVTTSS2SIrr, X86::Int_CVTTSS2SIrm },
+      { X86::Int_UCOMISDrr,   X86::Int_UCOMISDrm },
+      { X86::Int_UCOMISSrr,   X86::Int_UCOMISSrm },
+      { X86::MOV16rr,         X86::MOV16rm },
+      { X86::MOV32rr,         X86::MOV32rm },
+      { X86::MOV8rr,          X86::MOV8rm },
+      { X86::MOVAPDrr,        X86::MOVAPDrm },
+      { X86::MOVAPSrr,        X86::MOVAPSrm },
+      { X86::MOVDDUPrr,       X86::MOVDDUPrm },
+      { X86::MOVDI2PDIrr,     X86::MOVDI2PDIrm },
+      { X86::MOVQI2PQIrr,     X86::MOVQI2PQIrm },
+      { X86::MOVSD2PDrr,      X86::MOVSD2PDrm },
+      { X86::MOVSDrr,         X86::MOVSDrm },
+      { X86::MOVSHDUPrr,      X86::MOVSHDUPrm },
+      { X86::MOVSLDUPrr,      X86::MOVSLDUPrm },
+      { X86::MOVSS2PSrr,      X86::MOVSS2PSrm },
+      { X86::MOVSSrr,         X86::MOVSSrm },
+      { X86::MOVSX16rr8,      X86::MOVSX16rm8 },
+      { X86::MOVSX32rr16,     X86::MOVSX32rm16 },
+      { X86::MOVSX32rr8,      X86::MOVSX32rm8 },
+      { X86::MOVUPDrr,        X86::MOVUPDrm },
+      { X86::MOVUPSrr,        X86::MOVUPSrm },
+      { X86::MOVZX16rr8,      X86::MOVZX16rm8 },
+      { X86::MOVZX32rr16,     X86::MOVZX32rm16 },
+      { X86::MOVZX32rr8,      X86::MOVZX32rm8 },
+      { X86::PSHUFDri,        X86::PSHUFDmi },
+      { X86::PSHUFHWri,       X86::PSHUFHWmi },
+      { X86::PSHUFLWri,       X86::PSHUFLWmi },
+      { X86::TEST16rr,        X86::TEST16rm },
+      { X86::TEST32rr,        X86::TEST32rm },
+      { X86::TEST8rr,         X86::TEST8rm },
+      { X86::UCOMISDrr,       X86::UCOMISDrm },
+      { X86::UCOMISSrr,       X86::UCOMISSrm },
+      { X86::XCHG16rr,        X86::XCHG16rm },
+      { X86::XCHG32rr,        X86::XCHG32rm },
+      { X86::XCHG8rr,         X86::XCHG8rm }
+    };
+    ASSERT_SORTED(OpcodeTable);
+    OpcodeTablePtr = OpcodeTable;
+    OpcodeTableSize = ARRAY_SIZE(OpcodeTable);
+  } else if (i == 2) {
+    static const TableEntry OpcodeTable[] = {
+      { X86::ADC32rr,         X86::ADC32rm },
+      { X86::ADD16rr,         X86::ADD16rm },
+      { X86::ADD32rr,         X86::ADD32rm },
+      { X86::ADD8rr,          X86::ADD8rm },
+      { X86::ADDPDrr,         X86::ADDPDrm },
+      { X86::ADDPSrr,         X86::ADDPSrm },
+      { X86::ADDSDrr,         X86::ADDSDrm },
+      { X86::ADDSSrr,         X86::ADDSSrm },
+      { X86::ADDSUBPDrr,      X86::ADDSUBPDrm },
+      { X86::ADDSUBPSrr,      X86::ADDSUBPSrm },
+      { X86::AND16rr,         X86::AND16rm },
+      { X86::AND32rr,         X86::AND32rm },
+      { X86::AND8rr,          X86::AND8rm },
+      { X86::ANDNPDrr,        X86::ANDNPDrm },
+      { X86::ANDNPSrr,        X86::ANDNPSrm },
+      { X86::ANDPDrr,         X86::ANDPDrm },
+      { X86::ANDPSrr,         X86::ANDPSrm },
+      { X86::CMOVA16rr,       X86::CMOVA16rm },
+      { X86::CMOVA32rr,       X86::CMOVA32rm },
+      { X86::CMOVAE16rr,      X86::CMOVAE16rm },
+      { X86::CMOVAE32rr,      X86::CMOVAE32rm },
+      { X86::CMOVB16rr,       X86::CMOVB16rm },
+      { X86::CMOVB32rr,       X86::CMOVB32rm },
+      { X86::CMOVBE16rr,      X86::CMOVBE16rm },
+      { X86::CMOVBE32rr,      X86::CMOVBE32rm },
+      { X86::CMOVE16rr,       X86::CMOVE16rm },
+      { X86::CMOVE32rr,       X86::CMOVE32rm },
+      { X86::CMOVG16rr,       X86::CMOVG16rm },
+      { X86::CMOVG32rr,       X86::CMOVG32rm },
+      { X86::CMOVGE16rr,      X86::CMOVGE16rm },
+      { X86::CMOVGE32rr,      X86::CMOVGE32rm },
+      { X86::CMOVL16rr,       X86::CMOVL16rm },
+      { X86::CMOVL32rr,       X86::CMOVL32rm },
+      { X86::CMOVLE16rr,      X86::CMOVLE16rm },
+      { X86::CMOVLE32rr,      X86::CMOVLE32rm },
+      { X86::CMOVNE16rr,      X86::CMOVNE16rm },
+      { X86::CMOVNE32rr,      X86::CMOVNE32rm },
+      { X86::CMOVNP16rr,      X86::CMOVNP16rm },
+      { X86::CMOVNP32rr,      X86::CMOVNP32rm },
+      { X86::CMOVNS16rr,      X86::CMOVNS16rm },
+      { X86::CMOVNS32rr,      X86::CMOVNS32rm },
+      { X86::CMOVP16rr,       X86::CMOVP16rm },
+      { X86::CMOVP32rr,       X86::CMOVP32rm },
+      { X86::CMOVS16rr,       X86::CMOVS16rm },
+      { X86::CMOVS32rr,       X86::CMOVS32rm },
+      { X86::DIVPDrr,         X86::DIVPDrm },
+      { X86::DIVPSrr,         X86::DIVPSrm },
+      { X86::DIVSDrr,         X86::DIVSDrm },
+      { X86::DIVSSrr,         X86::DIVSSrm },
+      { X86::HADDPDrr,        X86::HADDPDrm },
+      { X86::HADDPSrr,        X86::HADDPSrm },
+      { X86::HSUBPDrr,        X86::HSUBPDrm },
+      { X86::HSUBPSrr,        X86::HSUBPSrm },
+      { X86::IMUL16rr,        X86::IMUL16rm },
+      { X86::IMUL32rr,        X86::IMUL32rm },
+      { X86::MAXPDrr,         X86::MAXPDrm },
+      { X86::MAXPSrr,         X86::MAXPSrm },
+      { X86::MINPDrr,         X86::MINPDrm },
+      { X86::MINPSrr,         X86::MINPSrm },
+      { X86::MULPDrr,         X86::MULPDrm },
+      { X86::MULPSrr,         X86::MULPSrm },
+      { X86::MULSDrr,         X86::MULSDrm },
+      { X86::MULSSrr,         X86::MULSSrm },
+      { X86::OR16rr,          X86::OR16rm },
+      { X86::OR32rr,          X86::OR32rm },
+      { X86::OR8rr,           X86::OR8rm },
+      { X86::ORPDrr,          X86::ORPDrm },
+      { X86::ORPSrr,          X86::ORPSrm },
+      { X86::PACKSSDWrr,      X86::PACKSSDWrm },
+      { X86::PACKSSWBrr,      X86::PACKSSWBrm },
+      { X86::PACKUSWBrr,      X86::PACKUSWBrm },
+      { X86::PADDBrr,         X86::PADDBrm },
+      { X86::PADDDrr,         X86::PADDDrm },
+      { X86::PADDSBrr,        X86::PADDSBrm },
+      { X86::PADDSWrr,        X86::PADDSWrm },
+      { X86::PADDWrr,         X86::PADDWrm },
+      { X86::PANDNrr,         X86::PANDNrm },
+      { X86::PANDrr,          X86::PANDrm },
+      { X86::PAVGBrr,         X86::PAVGBrm },
+      { X86::PAVGWrr,         X86::PAVGWrm },
+      { X86::PCMPEQBrr,       X86::PCMPEQBrm },
+      { X86::PCMPEQDrr,       X86::PCMPEQDrm },
+      { X86::PCMPEQWrr,       X86::PCMPEQWrm },
+      { X86::PCMPGTBrr,       X86::PCMPGTBrm },
+      { X86::PCMPGTDrr,       X86::PCMPGTDrm },
+      { X86::PCMPGTWrr,       X86::PCMPGTWrm },
+      { X86::PINSRWrri,       X86::PINSRWrmi },
+      { X86::PMADDWDrr,       X86::PMADDWDrm },
+      { X86::PMAXSWrr,        X86::PMAXSWrm },
+      { X86::PMAXUBrr,        X86::PMAXUBrm },
+      { X86::PMINSWrr,        X86::PMINSWrm },
+      { X86::PMINUBrr,        X86::PMINUBrm },
+      { X86::PMULHUWrr,       X86::PMULHUWrm },
+      { X86::PMULHWrr,        X86::PMULHWrm },
+      { X86::PMULLWrr,        X86::PMULLWrm },
+      { X86::PMULUDQrr,       X86::PMULUDQrm },
+      { X86::PORrr,           X86::PORrm },
+      { X86::PSADBWrr,        X86::PSADBWrm },
+      { X86::PSLLDrr,         X86::PSLLDrm },
+      { X86::PSLLQrr,         X86::PSLLQrm },
+      { X86::PSLLWrr,         X86::PSLLWrm },
+      { X86::PSRADrr,         X86::PSRADrm },
+      { X86::PSRAWrr,         X86::PSRAWrm },
+      { X86::PSRLDrr,         X86::PSRLDrm },
+      { X86::PSRLQrr,         X86::PSRLQrm },
+      { X86::PSRLWrr,         X86::PSRLWrm },
+      { X86::PSUBBrr,         X86::PSUBBrm },
+      { X86::PSUBDrr,         X86::PSUBDrm },
+      { X86::PSUBSBrr,        X86::PSUBSBrm },
+      { X86::PSUBSWrr,        X86::PSUBSWrm },
+      { X86::PSUBWrr,         X86::PSUBWrm },
+      { X86::PUNPCKHBWrr,     X86::PUNPCKHBWrm },
+      { X86::PUNPCKHDQrr,     X86::PUNPCKHDQrm },
+      { X86::PUNPCKHQDQrr,    X86::PUNPCKHQDQrm },
+      { X86::PUNPCKHWDrr,     X86::PUNPCKHWDrm },
+      { X86::PUNPCKLBWrr,     X86::PUNPCKLBWrm },
+      { X86::PUNPCKLDQrr,     X86::PUNPCKLDQrm },
+      { X86::PUNPCKLQDQrr,    X86::PUNPCKLQDQrm },
+      { X86::PUNPCKLWDrr,     X86::PUNPCKLWDrm },
+      { X86::PXORrr,          X86::PXORrm },
+      { X86::RCPPSr,          X86::RCPPSm },
+      { X86::RSQRTPSr,        X86::RSQRTPSm },
+      { X86::SBB32rr,         X86::SBB32rm },
+      { X86::SHUFPDrri,       X86::SHUFPDrmi },
+      { X86::SHUFPSrri,       X86::SHUFPSrmi },
+      { X86::SQRTPDr,         X86::SQRTPDm },
+      { X86::SQRTPSr,         X86::SQRTPSm },
+      { X86::SQRTSDr,         X86::SQRTSDm },
+      { X86::SQRTSSr,         X86::SQRTSSm },
+      { X86::SUB16rr,         X86::SUB16rm },
+      { X86::SUB32rr,         X86::SUB32rm },
+      { X86::SUB8rr,          X86::SUB8rm },
+      { X86::SUBPDrr,         X86::SUBPDrm },
+      { X86::SUBPSrr,         X86::SUBPSrm },
+      { X86::SUBSDrr,         X86::SUBSDrm },
+      { X86::SUBSSrr,         X86::SUBSSrm },
+      { X86::UNPCKHPDrr,      X86::UNPCKHPDrm },
+      { X86::UNPCKHPSrr,      X86::UNPCKHPSrm },
+      { X86::UNPCKLPDrr,      X86::UNPCKLPDrm },
+      { X86::UNPCKLPSrr,      X86::UNPCKLPSrm },
+      { X86::XOR16rr,         X86::XOR16rm },
+      { X86::XOR32rr,         X86::XOR32rm },
+      { X86::XOR8rr,          X86::XOR8rm },
+      { X86::XORPDrr,         X86::XORPDrm },
+      { X86::XORPSrr,         X86::XORPSrm }
     };
     ASSERT_SORTED(OpcodeTable);
     OpcodeTablePtr = OpcodeTable;
     OpcodeTableSize = ARRAY_SIZE(OpcodeTable);
   }
   
-  // If table selected
+  // If table selected...
   if (OpcodeTablePtr) {
-    // Opcode to fuse
+    // Find the Opcode to fuse
     unsigned fromOpcode = MI->getOpcode();
     // Lookup fromOpcode in table
-    const TableEntry *entry = TableLookup(OpcodeTablePtr, OpcodeTableSize,
-                                          fromOpcode);
-    
-    // If opcode found in table
-    if (entry) {
-      // Fused opcode
-      unsigned toOpcode = entry->to;
+    if (const TableEntry *Entry = TableLookup(OpcodeTablePtr, OpcodeTableSize,
+                                              fromOpcode)) {
+      if (isTwoAddrFold)
+        return FuseTwoAddrInst(Entry->to, FrameIndex, MI);
       
-      // Make new instruction
-      switch (entry->make) {
-      case makeM0Inst:  return MakeM0Inst(toOpcode, FrameIndex, MI);
-      case makeMIInst:  return MakeMIInst(toOpcode, FrameIndex, MI);
-      case makeMInst:   return MakeMInst(toOpcode, FrameIndex, MI);
-      case makeMRIInst: return MakeMRIInst(toOpcode, FrameIndex, MI);
-      case makeMRInst:  return MakeMRInst(toOpcode, FrameIndex, MI);
-      case makeRMIInst: return MakeRMIInst(toOpcode, FrameIndex, MI);
-      case makeRMInst:  return MakeRMInst(toOpcode, FrameIndex, MI);
-      default: assert(0 && "Unknown instruction make");
-      }
+      return FuseInst(Entry->to, i, FrameIndex, MI);
     }
   }
   
@@ -761,8 +752,7 @@ eliminateCallFramePseudoInstr(MachineFunction &MF, MachineBasicBlock &MBB,
 
       MachineInstr *New = 0;
       if (Old->getOpcode() == X86::ADJCALLSTACKDOWN) {
-        New=BuildMI(X86::SUB32ri, 1, X86::ESP, MachineOperand::UseAndDef)
-              .addImm(Amount);
+        New=BuildMI(X86::SUB32ri, 2, X86::ESP).addReg(X86::ESP).addImm(Amount);
       } else {
         assert(Old->getOpcode() == X86::ADJCALLSTACKUP);
         // factor out the amount the callee already popped.
@@ -770,8 +760,7 @@ eliminateCallFramePseudoInstr(MachineFunction &MF, MachineBasicBlock &MBB,
         Amount -= CalleeAmt;
         if (Amount) {
           unsigned Opc = Amount < 128 ? X86::ADD32ri8 : X86::ADD32ri;
-          New = BuildMI(Opc, 1, X86::ESP,
-                        MachineOperand::UseAndDef).addImm(Amount);
+          New = BuildMI(Opc, 2, X86::ESP).addReg(X86::ESP).addImm(Amount);
         }
       }
 
@@ -785,8 +774,7 @@ eliminateCallFramePseudoInstr(MachineFunction &MF, MachineBasicBlock &MBB,
     if (unsigned CalleeAmt = I->getOperand(1).getImmedValue()) {
       unsigned Opc = CalleeAmt < 128 ? X86::SUB32ri8 : X86::SUB32ri;
       MachineInstr *New =
-        BuildMI(Opc, 1, X86::ESP,
-                MachineOperand::UseAndDef).addImm(CalleeAmt);
+        BuildMI(Opc, 1, X86::ESP).addReg(X86::ESP).addImm(CalleeAmt);
       MBB.insert(I, New);
     }
   }
@@ -870,7 +858,7 @@ void X86RegisterInfo::emitPrologue(MachineFunction &MF) const {
       MBB.insert(MBBI, MI);
     } else {
       unsigned Opc = NumBytes < 128 ? X86::SUB32ri8 : X86::SUB32ri;
-      MI = BuildMI(Opc, 1, X86::ESP,MachineOperand::UseAndDef).addImm(NumBytes);
+      MI = BuildMI(Opc, 2, X86::ESP).addReg(X86::ESP).addImm(NumBytes);
       MBB.insert(MBBI, MI);
     }
   }
@@ -897,7 +885,7 @@ void X86RegisterInfo::emitPrologue(MachineFunction &MF) const {
   // If it's main() on Cygwin\Mingw32 we should align stack as well
   if (Fn->hasExternalLinkage() && Fn->getName() == "main" &&
       Subtarget->TargetType == X86Subtarget::isCygwin) {
-    MI = BuildMI(X86::AND32ri, 2, X86::ESP).addImm(-Align);
+    MI = BuildMI(X86::AND32ri, 2, X86::ESP).addReg(X86::ESP).addImm(-Align);
     MBB.insert(MBBI, MI);
 
     // Probe the stack
@@ -929,7 +917,7 @@ void X86RegisterInfo::emitEpilogue(MachineFunction &MF,
     int EBPOffset = MFI->getObjectOffset(MFI->getObjectIndexEnd()-1)+4;
 
     // mov ESP, EBP
-    BuildMI(MBB, MBBI, X86::MOV32rr, 1,X86::ESP).addReg(X86::EBP);
+    BuildMI(MBB, MBBI, X86::MOV32rr, 1, X86::ESP).addReg(X86::EBP);
 
     // pop EBP
     BuildMI(MBB, MBBI, X86::POP32r, 0, X86::EBP);
@@ -960,12 +948,10 @@ void X86RegisterInfo::emitEpilogue(MachineFunction &MF,
 
       if (NumBytes > 0) {
         unsigned Opc = NumBytes < 128 ? X86::ADD32ri8 : X86::ADD32ri;
-        BuildMI(MBB, MBBI, Opc, 2)
-          .addReg(X86::ESP, MachineOperand::UseAndDef).addImm(NumBytes);
+        BuildMI(MBB, MBBI, Opc, 2, X86::ESP).addReg(X86::ESP).addImm(NumBytes);
       } else if ((int)NumBytes < 0) {
         unsigned Opc = -NumBytes < 128 ? X86::SUB32ri8 : X86::SUB32ri;
-        BuildMI(MBB, MBBI, Opc, 2)
-          .addReg(X86::ESP, MachineOperand::UseAndDef).addImm(-NumBytes);
+        BuildMI(MBB, MBBI, Opc, 2, X86::ESP).addReg(X86::ESP).addImm(-NumBytes);
       }
     }
   }

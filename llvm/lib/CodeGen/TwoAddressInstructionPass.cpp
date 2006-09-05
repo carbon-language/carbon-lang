@@ -206,9 +206,8 @@ bool TwoAddressInstructionPass::runOnMachineFunction(MachineFunction &MF) {
         }
       }
 
-      assert(mi->getOperand(0).isDef());
-      mi->getOperand(0).setUse();
-      mi->RemoveOperand(1);
+      assert(mi->getOperand(0).isDef() && mi->getOperand(1).isUse());
+      mi->getOperand(1).setReg(mi->getOperand(0).getReg());
       MadeChange = true;
 
       DEBUG(std::cerr << "\t\trewrite to:\t"; mi->print(std::cerr, &TM));
