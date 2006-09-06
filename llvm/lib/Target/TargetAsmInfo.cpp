@@ -1,4 +1,4 @@
-//===-- TargetData.cpp - Data size & alignment routines --------------------==//
+//===-- TargetAsmInfo.cpp - Asm Info ---------------------------------------==//
 //
 //                     The LLVM Compiler Infrastructure
 //
