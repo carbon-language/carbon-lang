@@ -147,6 +147,7 @@ LinkTimeOptimizer::readLLVMObjectFile(const std::string &InputFilename,
       LLVMSymbol *newSymbol = new LLVMSymbol(lt, v, v->getName(), 
                                              mangler.getValueName(v));
       symbols[newSymbol->getMangledName()] = newSymbol;
+      allSymbols[newSymbol->getMangledName()] = newSymbol;
 
       for (unsigned count = 0, total = v->getNumOperands(); 
            count != total; ++count)
@@ -291,8 +292,9 @@ LinkTimeOptimizer::optimizeModules(const std::string &OutputFilename,
   // seen by linker.
   for (unsigned i = 0, e = exportList.size(); i != e; ++i) {
     const char *name = exportList[i];
-    if (strlen(name) > 2 && name[0] == '_')
-      exportList[i] = &name[1];
+    NameToSymbolMap::iterator itr = allSymbols.find(name);
+    if (itr != allSymbols.end())
+      exportList[i] = allSymbols[name]->getName();
   }
 
   sys::Path tmpAsmFilePath("/tmp/");
