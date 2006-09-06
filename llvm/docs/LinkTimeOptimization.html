@@ -29,6 +29,7 @@
     <li><a href="#llvmsymbol">LLVMSymbol</a></li>
     <li><a href="#readllvmobjectfile">readLLVMObjectFile()</a></li>
     <li><a href="#optimizemodules">optimizeModules()</a></li>
+    <li><a href="#gettargettriple">getTargetTriple()</a></li>
   </ul></li>
   <li><a href="#debug">Debugging Information</a></li>
 </ul>
@@ -324,6 +325,16 @@ $ llvm-gcc4 a.o main.o -o main # &lt;-- standard link command without any modifi
   This function runs the LLVM intermodular optimizer and generates native 
   object code as <tt>.o</tt> files at the name and location provided by the 
   linker.</p>
+</div>
+
+<!-- ======================================================================= -->
+<div class="doc_subsection">
+  <a name="gettargettriple">getTargetTriple()</a>
+</div>
+
+<div class="doc_text">
+  <p>The linker may use <tt>getTargetTriple()</tt> to query target architecture
+  while validating LLVM bytecode file.</p>
 </div>
 
 <!-- *********************************************************************** -->
