@@ -26,10 +26,11 @@
 #include "llvm/Support/CommandLine.h"
 using namespace llvm;
 
+enum AsmWriterFlavorTy { att, intel };
+
 Statistic<> llvm::EmittedInsts("asm-printer",
                                "Number of machine instrs printed");
 
-enum AsmWriterFlavorTy { att, intel };
 cl::opt<AsmWriterFlavorTy>
 AsmWriterFlavor("x86-asm-syntax",
                 cl::desc("Choose style of code to emit from X86 backend:"),
@@ -44,16 +45,11 @@ AsmWriterFlavor("x86-asm-syntax",
 #endif
                 );
 
-// Out of line virtual function to home classes.
-void X86DwarfWriter::virtfn() {}
-
-
-/// doInitialization
-bool X86SharedAsmPrinter::doInitialization(Module &M) {
-  PrivateGlobalPrefix = ".L";
-  DefaultTextSection = ".text";
-  DefaultDataSection = ".data";
+X86TargetAsmInfo::X86TargetAsmInfo(X86TargetMachine &TM) {
+  const X86Subtarget *Subtarget = &TM.getSubtarget<X86Subtarget>();
   
+  //FIXME - Should to be simplified.
+   
   switch (Subtarget->TargetType) {
   case X86Subtarget::isDarwin:
     AlignmentIsInBytes = false;
@@ -73,6 +69,19 @@ bool X86SharedAsmPrinter::doInitialization(Module &M) {
     InlineAsmStart = "# InlineAsm Start";
     InlineAsmEnd = "# InlineAsm End";
     SetDirective = "\t.set";
+    
+    NeedsSet = true;
+    DwarfAbbrevSection = ".section __DWARF,__debug_abbrev,regular,debug";
+    DwarfInfoSection = ".section __DWARF,__debug_info,regular,debug";
+    DwarfLineSection = ".section __DWARF,__debug_line,regular,debug";
+    DwarfFrameSection = ".section __DWARF,__debug_frame,regular,debug";
+    DwarfPubNamesSection = ".section __DWARF,__debug_pubnames,regular,debug";
+    DwarfPubTypesSection = ".section __DWARF,__debug_pubtypes,regular,debug";
+    DwarfStrSection = ".section __DWARF,__debug_str,regular,debug";
+    DwarfLocSection = ".section __DWARF,__debug_loc,regular,debug";
+    DwarfARangesSection = ".section __DWARF,__debug_aranges,regular,debug";
+    DwarfRangesSection = ".section __DWARF,__debug_ranges,regular,debug";
+    DwarfMacInfoSection = ".section __DWARF,__debug_macinfo,regular,debug";
     break;
   case X86Subtarget::isCygwin:
     GlobalPrefix = "_";
@@ -88,6 +97,33 @@ bool X86SharedAsmPrinter::doInitialization(Module &M) {
   default: break;
   }
   
+  if (AsmWriterFlavor == intel) {
+    GlobalPrefix = "_";
+    CommentString = ";";
+  
+    PrivateGlobalPrefix = "$";
+    AlignDirective = "\talign\t";
+    ZeroDirective = "\tdb\t";
+    ZeroDirectiveSuffix = " dup(0)";
+    AsciiDirective = "\tdb\t";
+    AscizDirective = 0;
+    Data8bitsDirective = "\tdb\t";
+    Data16bitsDirective = "\tdw\t";
+    Data32bitsDirective = "\tdd\t";
+    Data64bitsDirective = "\tdq\t";
+    HasDotTypeDotSizeDirective = false;
+    
+    TextSection = "_text";
+    DataSection = "_data";
+    SwitchToSectionDirective = "";
+    TextSectionStartSuffix = "\tsegment 'CODE'";
+    DataSectionStartSuffix = "\tsegment 'DATA'";
+    SectionEndDirectiveSuffix = "\tends\n";
+  }
+}
+
+/// doInitialization
+bool X86SharedAsmPrinter::doInitialization(Module &M) {  
   if (Subtarget->isTargetDarwin()) {
     // Emit initial debug information.
     DW.BeginModule(&M);
@@ -127,25 +163,25 @@ bool X86SharedAsmPrinter::doFinalization(Module &M) {
           O << "\t.zerofill __DATA__, __common, " << name << ", "
             << Size << ", " << Align;
       } else {
-        SwitchToDataSection(DefaultDataSection, I);
-        if (LCOMMDirective != NULL) {
+        SwitchToDataSection(TAI->getDataSection(), I);
+        if (TAI->getLCOMMDirective() != NULL) {
           if (I->hasInternalLinkage()) {
-            O << LCOMMDirective << name << "," << Size;
+            O << TAI->getLCOMMDirective() << name << "," << Size;
             if (Subtarget->isTargetDarwin())
-              O << "," << (AlignmentIsInBytes ? (1 << Align) : Align);
+              O << "," << (TAI->getAlignmentIsInBytes() ? (1 << Align) : Align);
           } else
-            O << COMMDirective  << name << "," << Size;
+            O << TAI->getCOMMDirective()  << name << "," << Size;
         } else {
           if (Subtarget->TargetType != X86Subtarget::isCygwin) {
             if (I->hasInternalLinkage())
               O << "\t.local\t" << name << "\n";
           }
-          O << COMMDirective  << name << "," << Size;
-          if (COMMDirectiveTakesAlignment)
-            O << "," << (AlignmentIsInBytes ? (1 << Align) : Align);
+          O << TAI->getCOMMDirective()  << name << "," << Size;
+          if (TAI->getCOMMDirectiveTakesAlignment())
+            O << "," << (TAI->getAlignmentIsInBytes() ? (1 << Align) : Align);
         }
       }
-      O << "\t\t" << CommentString << " " << I->getName() << "\n";
+      O << "\t\t" << TAI->getCommentString() << " " << I->getName() << "\n";
     } else {
       switch (I->getLinkage()) {
       case GlobalValue::LinkOnceLinkage:
@@ -170,16 +206,16 @@ bool X86SharedAsmPrinter::doFinalization(Module &M) {
         O << "\t.globl " << name << "\n";
         // FALL THROUGH
       case GlobalValue::InternalLinkage:
-        SwitchToDataSection(DefaultDataSection, I);
+        SwitchToDataSection(TAI->getDataSection(), I);
         break;
       default:
         assert(0 && "Unknown linkage type!");
       }
 
       EmitAlignment(Align, I);
-      O << name << ":\t\t\t\t" << CommentString << " " << I->getName()
+      O << name << ":\t\t\t\t" << TAI->getCommentString() << " " << I->getName()
         << "\n";
-      if (HasDotTypeDotSizeDirective)
+      if (TAI->hasDotTypeDotSizeDirective())
         O << "\t.size " << name << ", " << Size << "\n";
 
       EmitGlobalConstant(C);
@@ -234,13 +270,13 @@ bool X86SharedAsmPrinter::doFinalization(Module &M) {
 /// machine description.
 ///
 FunctionPass *llvm::createX86CodePrinterPass(std::ostream &o,
-                                             X86TargetMachine &tm){
+                                             X86TargetMachine &tm) {
+  TargetAsmInfo *TAI = new X86TargetAsmInfo(tm);
+
   switch (AsmWriterFlavor) {
   default:
     assert(0 && "Unknown asm flavor!");
-  case intel:
-    return new X86IntelAsmPrinter(o, tm);
-  case att:
-    return new X86ATTAsmPrinter(o, tm);
+  case intel: return new X86IntelAsmPrinter(o, tm, TAI);
+  case att: return new X86ATTAsmPrinter(o, tm, TAI);
   }
 }

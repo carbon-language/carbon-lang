@@ -19,6 +19,7 @@
 #include "llvm/Type.h"
 #include "llvm/Assembly/Writer.h"
 #include "llvm/CodeGen/AsmPrinter.h"
+#include "llvm/Target/TargetAsmInfo.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Support/Mangler.h"
 #include "llvm/ADT/Statistic.h"
@@ -27,17 +28,22 @@ using namespace llvm;
 
 namespace {
   Statistic<> EmittedInsts("asm-printer", "Number of machine instrs printed");
+  
+  struct VISIBILITY_HIDDEN AlphaTargetAsmInfo : public TargetAsmInfo {
+    AlphaTargetAsmInfo() {
+      AlignmentIsInBytes = false;
+      PrivateGlobalPrefix = "$";
+    }
+  };
 
-  struct AlphaAsmPrinter : public AsmPrinter {
+  struct VISIBILITY_HIDDEN AlphaAsmPrinter : public AsmPrinter {
 
     /// Unique incrementer for label values for referencing Global values.
     ///
     unsigned LabelNumber;
 
-     AlphaAsmPrinter(std::ostream &o, TargetMachine &tm)
-       : AsmPrinter(o, tm), LabelNumber(0) {
-      AlignmentIsInBytes = false;
-      PrivateGlobalPrefix = "$";
+    AlphaAsmPrinter(std::ostream &o, TargetMachine &tm, TargetAsmInfo *T)
+       : AsmPrinter(o, tm, T), LabelNumber(0) {
     }
 
     /// We name each basic block in a Function with a unique number, so
@@ -76,7 +82,8 @@ namespace {
 ///
 FunctionPass *llvm::createAlphaCodePrinterPass (std::ostream &o,
                                                   TargetMachine &tm) {
-  return new AlphaAsmPrinter(o, tm);
+  AlphaTargetAsmInfo *TAI = new AlphaTargetAsmInfo();
+  return new AlphaAsmPrinter(o, tm, TAI);
 }
 
 #include "AlphaGenAsmWriter.inc"
@@ -115,7 +122,7 @@ void AlphaAsmPrinter::printOp(const MachineOperand &MO, bool IsCallOp) {
     return;
 
   case MachineOperand::MO_ConstantPoolIndex:
-    O << PrivateGlobalPrefix << "CPI" << getFunctionNumber() << "_"
+    O << TAI->getPrivateGlobalPrefix() << "CPI" << getFunctionNumber() << "_"
       << MO.getConstantPoolIndex();
     return;
 

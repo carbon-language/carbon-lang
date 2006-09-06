@@ -26,7 +26,8 @@ class MachineCodeEmitter;
 
 FunctionPass *createPPCBranchSelectionPass();
 FunctionPass *createPPCISelDag(PPCTargetMachine &TM);
-FunctionPass *createDarwinAsmPrinter(std::ostream &OS, PPCTargetMachine &TM);
+FunctionPass *createDarwinCodePrinterPass(std::ostream &OS,
+                                          PPCTargetMachine &TM);
 FunctionPass *createPPCCodeEmitterPass(PPCTargetMachine &TM,
                                        MachineCodeEmitter &MCE);
 void addPPCMachOObjectWriterPass(FunctionPassManager &FPM, std::ostream &o, 

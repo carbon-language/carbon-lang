@@ -24,6 +24,7 @@
 #include "llvm/CodeGen/AsmPrinter.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
 #include "llvm/Target/TargetMachine.h"
+#include "llvm/Target/TargetAsmInfo.h"
 #include "llvm/Support/Mangler.h"
 #include "llvm/ADT/Statistic.h"
 #include <iostream>
@@ -32,10 +33,8 @@ using namespace llvm;
 namespace {
   Statistic<> EmittedInsts("asm-printer", "Number of machine instrs printed");
 
-  struct IA64AsmPrinter : public AsmPrinter {
-    std::set<std::string> ExternalFunctionNames, ExternalObjectNames;
-
-    IA64AsmPrinter(std::ostream &O, TargetMachine &TM) : AsmPrinter(O, TM) {
+  struct VISIBILITY_HIDDEN IA64TargetAsmInfo : public TargetAsmInfo {
+    IA64TargetAsmInfo() {
       CommentString = "//";
       Data8bitsDirective = "\tdata1\t";     // FIXME: check that we are
       Data16bitsDirective = "\tdata2.ua\t"; // disabling auto-alignment
@@ -51,6 +50,14 @@ namespace {
       
       // FIXME: would be nice to have rodata (no 'w') when appropriate?
       ConstantPoolSection = "\n\t.section .data, \"aw\", \"progbits\"\n";
+    }
+  };
+  
+  struct IA64AsmPrinter : public AsmPrinter {
+    std::set<std::string> ExternalFunctionNames, ExternalObjectNames;
+
+    IA64AsmPrinter(std::ostream &O, TargetMachine &TM, TargetAsmInfo *T)
+      : AsmPrinter(O, TM, T) {
     }
 
     virtual const char *getPassName() const {
@@ -185,7 +192,8 @@ void IA64AsmPrinter::printOp(const MachineOperand &MO,
     printBasicBlockLabel(MO.getMachineBasicBlock());
     return;
   case MachineOperand::MO_ConstantPoolIndex: {
-    O << "@gprel(" << PrivateGlobalPrefix << "CPI" << getFunctionNumber() << "_"
+    O << "@gprel(" << TAI->getPrivateGlobalPrefix()
+      << "CPI" << getFunctionNumber() << "_"
       << MO.getConstantPoolIndex() << ")";
     return;
   }
@@ -358,7 +366,8 @@ bool IA64AsmPrinter::doFinalization(Module &M) {
 ///
 FunctionPass *llvm::createIA64CodePrinterPass(std::ostream &o,
                                               IA64TargetMachine &tm) {
-  return new IA64AsmPrinter(o, tm);
+  IA64TargetAsmInfo *TAI = new IA64TargetAsmInfo();
+  return new IA64AsmPrinter(o, tm, TAI);
 }
 
 

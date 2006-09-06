@@ -20,51 +20,16 @@
 #include "llvm/CodeGen/MachineJumpTableInfo.h"
 #include "llvm/Support/Mangler.h"
 #include "llvm/Support/MathExtras.h"
+#include "llvm/Target/TargetAsmInfo.h"
 #include "llvm/Target/TargetData.h"
 #include "llvm/Target/TargetMachine.h"
 #include <iostream>
 #include <cerrno>
 using namespace llvm;
 
-AsmPrinter::AsmPrinter(std::ostream &o, TargetMachine &tm)
-: FunctionNumber(0), O(o), TM(tm),
-  CommentString("#"),
-  GlobalPrefix(""),
-  PrivateGlobalPrefix("."),
-  GlobalVarAddrPrefix(""),
-  GlobalVarAddrSuffix(""),
-  FunctionAddrPrefix(""),
-  FunctionAddrSuffix(""),
-  InlineAsmStart("#APP"),
-  InlineAsmEnd("#NO_APP"),
-  ZeroDirective("\t.zero\t"),
-  ZeroDirectiveSuffix(0),
-  AsciiDirective("\t.ascii\t"),
-  AscizDirective("\t.asciz\t"),
-  Data8bitsDirective("\t.byte\t"),
-  Data16bitsDirective("\t.short\t"),
-  Data32bitsDirective("\t.long\t"),
-  Data64bitsDirective("\t.quad\t"),
-  AlignDirective("\t.align\t"),
-  AlignmentIsInBytes(true),
-  SwitchToSectionDirective("\t.section\t"),
-  TextSectionStartSuffix(""),
-  DataSectionStartSuffix(""),
-  SectionEndDirectiveSuffix(0),
-  ConstantPoolSection("\t.section .rodata\n"),
-  JumpTableDataSection("\t.section .rodata\n"),
-  JumpTableTextSection("\t.text\n"),
-  StaticCtorsSection("\t.section .ctors,\"aw\",@progbits"),
-  StaticDtorsSection("\t.section .dtors,\"aw\",@progbits"),
-  FourByteConstantSection(0),
-  EightByteConstantSection(0),
-  SixteenByteConstantSection(0),
-  SetDirective(0),
-  LCOMMDirective(0),
-  COMMDirective("\t.comm\t"),
-  COMMDirectiveTakesAlignment(true),
-  HasDotTypeDotSizeDirective(true) {
-}
+AsmPrinter::AsmPrinter(std::ostream &o, TargetMachine &tm, TargetAsmInfo *T)
+: FunctionNumber(0), O(o), TM(tm), TAI(T)
+{}
 
 
 /// SwitchToTextSection - Switch to the specified text section of the executable
@@ -74,7 +39,7 @@ void AsmPrinter::SwitchToTextSection(const char *NewSection,
                                      const GlobalValue *GV) {
   std::string NS;
   if (GV && GV->hasSection())
-    NS = SwitchToSectionDirective + GV->getSection();
+    NS = TAI->getSwitchToSectionDirective() + GV->getSection();
   else
     NS = NewSection;
   
@@ -82,13 +47,13 @@ void AsmPrinter::SwitchToTextSection(const char *NewSection,
   if (CurrentSection == NS) return;
 
   // Close the current section, if applicable.
-  if (SectionEndDirectiveSuffix && !CurrentSection.empty())
-    O << CurrentSection << SectionEndDirectiveSuffix << "\n";
+  if (TAI->getSectionEndDirectiveSuffix() && !CurrentSection.empty())
+    O << CurrentSection << TAI->getSectionEndDirectiveSuffix() << "\n";
 
   CurrentSection = NS;
 
   if (!CurrentSection.empty())
-    O << CurrentSection << TextSectionStartSuffix << '\n';
+    O << CurrentSection << TAI->getTextSectionStartSuffix() << '\n';
 }
 
 /// SwitchToDataSection - Switch to the specified data section of the executable
@@ -98,7 +63,7 @@ void AsmPrinter::SwitchToDataSection(const char *NewSection,
                                      const GlobalValue *GV) {
   std::string NS;
   if (GV && GV->hasSection())
-    NS = SwitchToSectionDirective + GV->getSection();
+    NS = TAI->getSwitchToSectionDirective() + GV->getSection();
   else
     NS = NewSection;
   
@@ -106,23 +71,24 @@ void AsmPrinter::SwitchToDataSection(const char *NewSection,
   if (CurrentSection == NS) return;
 
   // Close the current section, if applicable.
-  if (SectionEndDirectiveSuffix && !CurrentSection.empty())
-    O << CurrentSection << SectionEndDirectiveSuffix << "\n";
+  if (TAI->getSectionEndDirectiveSuffix() && !CurrentSection.empty())
+    O << CurrentSection << TAI->getSectionEndDirectiveSuffix() << "\n";
 
   CurrentSection = NS;
   
   if (!CurrentSection.empty())
-    O << CurrentSection << DataSectionStartSuffix << '\n';
+    O << CurrentSection << TAI->getDataSectionStartSuffix() << '\n';
 }
 
 
 bool AsmPrinter::doInitialization(Module &M) {
-  Mang = new Mangler(M, GlobalPrefix);
+  Mang = new Mangler(M, TAI->getGlobalPrefix());
   
   if (!M.getModuleInlineAsm().empty())
-    O << CommentString << " Start of file scope inline assembly\n"
+    O << TAI->getCommentString() << " Start of file scope inline assembly\n"
       << M.getModuleInlineAsm()
-      << "\n" << CommentString << " End of file scope inline assembly\n";
+      << "\n" << TAI->getCommentString()
+      << " End of file scope inline assembly\n";
 
   SwitchToDataSection("", 0);   // Reset back to no section.
   
@@ -163,13 +129,13 @@ void AsmPrinter::EmitConstantPool(MachineConstantPool *MCP) {
     MachineConstantPoolEntry CPE = CP[i];
     const Constant *CV = CPE.Val;
     const Type *Ty = CV->getType();
-    if (FourByteConstantSection &&
+    if (TAI->getFourByteConstantSection() &&
         TM.getTargetData()->getTypeSize(Ty) == 4)
       FourByteCPs.push_back(std::make_pair(CPE, i));
-    else if (EightByteConstantSection &&
+    else if (TAI->getSectionEndDirectiveSuffix() &&
              TM.getTargetData()->getTypeSize(Ty) == 8)
       EightByteCPs.push_back(std::make_pair(CPE, i));
-    else if (SixteenByteConstantSection &&
+    else if (TAI->getSectionEndDirectiveSuffix() &&
              TM.getTargetData()->getTypeSize(Ty) == 16)
       SixteenByteCPs.push_back(std::make_pair(CPE, i));
     else
@@ -177,10 +143,11 @@ void AsmPrinter::EmitConstantPool(MachineConstantPool *MCP) {
   }
 
   unsigned Alignment = MCP->getConstantPoolAlignment();
-  EmitConstantPool(Alignment, FourByteConstantSection,    FourByteCPs);
-  EmitConstantPool(Alignment, EightByteConstantSection,   EightByteCPs);
-  EmitConstantPool(Alignment, SixteenByteConstantSection, SixteenByteCPs);
-  EmitConstantPool(Alignment, ConstantPoolSection,        OtherCPs);
+  EmitConstantPool(Alignment, TAI->getFourByteConstantSection(), FourByteCPs);
+  EmitConstantPool(Alignment, TAI->getEightByteConstantSection(), EightByteCPs);
+  EmitConstantPool(Alignment, TAI->getSixteenByteConstantSection(),
+                   SixteenByteCPs);
+  EmitConstantPool(Alignment, TAI->getConstantPoolSection(), OtherCPs);
 }
 
 void AsmPrinter::EmitConstantPool(unsigned Alignment, const char *Section,
@@ -190,8 +157,8 @@ void AsmPrinter::EmitConstantPool(unsigned Alignment, const char *Section,
   SwitchToDataSection(Section, 0);
   EmitAlignment(Alignment);
   for (unsigned i = 0, e = CP.size(); i != e; ++i) {
-    O << PrivateGlobalPrefix << "CPI" << getFunctionNumber() << '_'
-      << CP[i].second << ":\t\t\t\t\t" << CommentString << " ";
+    O << TAI->getPrivateGlobalPrefix() << "CPI" << getFunctionNumber() << '_'
+      << CP[i].second << ":\t\t\t\t\t" << TAI->getCommentString() << " ";
     WriteTypeSymbolic(O, CP[i].first.Val->getType(), 0) << '\n';
     EmitGlobalConstant(CP[i].first.Val);
     if (i != e-1) {
@@ -215,16 +182,16 @@ void AsmPrinter::EmitJumpTableInfo(MachineJumpTableInfo *MJTI) {
   // JTEntryDirective is a string to print sizeof(ptr) for non-PIC jump tables,
   // and 32 bits for PIC since PIC jump table entries are differences, not
   // pointers to blocks.
-  const char *JTEntryDirective = Data32bitsDirective;
+  const char *JTEntryDirective = TAI->getData32bitsDirective();
   
   // Pick the directive to use to print the jump table entries, and switch to 
   // the appropriate section.
   if (TM.getRelocationModel() == Reloc::PIC_) {
-    SwitchToTextSection(JumpTableTextSection, 0);
+    SwitchToTextSection(TAI->getJumpTableTextSection(), 0);
   } else {
-    SwitchToDataSection(JumpTableDataSection, 0);
+    SwitchToDataSection(TAI->getJumpTableDataSection(), 0);
     if (TD->getPointerSize() == 8)
-      JTEntryDirective = Data64bitsDirective;
+      JTEntryDirective = TAI->getData64bitsDirective();
   }
   EmitAlignment(Log2_32(TD->getPointerAlignment()));
   
@@ -235,13 +202,13 @@ void AsmPrinter::EmitJumpTableInfo(MachineJumpTableInfo *MJTI) {
     // the number of relocations the assembler will generate for the jump table.
     // Set directives are all printed before the jump table itself.
     std::set<MachineBasicBlock*> EmittedSets;
-    if (SetDirective && TM.getRelocationModel() == Reloc::PIC_)
+    if (TAI->getSetDirective() && TM.getRelocationModel() == Reloc::PIC_)
       for (unsigned ii = 0, ee = JTBBs.size(); ii != ee; ++ii)
         if (EmittedSets.insert(JTBBs[ii]).second)
           printSetLabel(i, JTBBs[ii]);
     
-    O << PrivateGlobalPrefix << "JTI" << getFunctionNumber() << '_' << i 
-      << ":\n";
+    O << TAI->getPrivateGlobalPrefix() << "JTI" << getFunctionNumber() 
+      << '_' << i << ":\n";
     
     for (unsigned ii = 0, ee = JTBBs.size(); ii != ee; ++ii) {
       O << JTEntryDirective << ' ';
@@ -251,12 +218,12 @@ void AsmPrinter::EmitJumpTableInfo(MachineJumpTableInfo *MJTI) {
       // If we're emitting non-PIC code, then emit the entries as direct
       // references to the target basic blocks.
       if (!EmittedSets.empty()) {
-        O << PrivateGlobalPrefix << getFunctionNumber() << '_' << i << "_set_"
-          << JTBBs[ii]->getNumber();
+        O << TAI->getPrivateGlobalPrefix() << getFunctionNumber()
+          << '_' << i << "_set_" << JTBBs[ii]->getNumber();
       } else if (TM.getRelocationModel() == Reloc::PIC_) {
         printBasicBlockLabel(JTBBs[ii], false, false);
-        O << '-' << PrivateGlobalPrefix << "JTI" << getFunctionNumber() 
-          << '_' << i;
+        O << '-' << TAI->getPrivateGlobalPrefix() << "JTI"
+          << getFunctionNumber() << '_' << i;
       } else {
         printBasicBlockLabel(JTBBs[ii], false, false);
       }
@@ -280,14 +247,14 @@ bool AsmPrinter::EmitSpecialLLVMGlobal(const GlobalVariable *GV) {
     return true;  // No need to emit this at all.
 
   if (GV->getName() == "llvm.global_ctors" && GV->use_empty()) {
-    SwitchToDataSection(StaticCtorsSection, 0);
+    SwitchToDataSection(TAI->getStaticCtorsSection(), 0);
     EmitAlignment(2, 0);
     EmitXXStructorList(GV->getInitializer());
     return true;
   } 
   
   if (GV->getName() == "llvm.global_dtors" && GV->use_empty()) {
-    SwitchToDataSection(StaticDtorsSection, 0);
+    SwitchToDataSection(TAI->getStaticDtorsSection(), 0);
     EmitAlignment(2, 0);
     EmitXXStructorList(GV->getInitializer());
     return true;
@@ -342,22 +309,22 @@ void AsmPrinter::EmitAlignment(unsigned NumBits, const GlobalValue *GV) const {
   if (GV && GV->getAlignment())
     NumBits = Log2_32(GV->getAlignment());
   if (NumBits == 0) return;   // No need to emit alignment.
-  if (AlignmentIsInBytes) NumBits = 1 << NumBits;
-  O << AlignDirective << NumBits << "\n";
+  if (TAI->getAlignmentIsInBytes()) NumBits = 1 << NumBits;
+  O << TAI->getAlignDirective() << NumBits << "\n";
 }
 
 /// EmitZeros - Emit a block of zeros.
 ///
 void AsmPrinter::EmitZeros(uint64_t NumZeros) const {
   if (NumZeros) {
-    if (ZeroDirective) {
-      O << ZeroDirective << NumZeros;
-      if (ZeroDirectiveSuffix)
-        O << ZeroDirectiveSuffix;
+    if (TAI->getZeroDirective()) {
+      O << TAI->getZeroDirective() << NumZeros;
+      if (TAI->getZeroDirectiveSuffix())
+        O << TAI->getZeroDirectiveSuffix();
       O << "\n";
     } else {
       for (; NumZeros; --NumZeros)
-        O << Data8bitsDirective << "0\n";
+        O << TAI->getData8bitsDirective() << "0\n";
     }
   }
 }
@@ -382,10 +349,15 @@ void AsmPrinter::EmitConstantValueOnly(const Constant *CV) {
     // name of the variable or function as the address value, possibly
     // decorating it with GlobalVarAddrPrefix/Suffix or
     // FunctionAddrPrefix/Suffix (these all default to "" )
-    if (isa<Function>(GV))
-      O << FunctionAddrPrefix << Mang->getValueName(GV) << FunctionAddrSuffix;
-    else
-      O << GlobalVarAddrPrefix << Mang->getValueName(GV) << GlobalVarAddrSuffix;
+    if (isa<Function>(GV)) {
+      O << TAI->getFunctionAddrPrefix()
+        << Mang->getValueName(GV)
+        << TAI->getFunctionAddrSuffix();
+    } else {
+      O << TAI->getGlobalVarAddrPrefix()
+        << Mang->getValueName(GV)
+        << TAI->getGlobalVarAddrSuffix();
+    }
   } else if (const ConstantExpr *CE = dyn_cast<ConstantExpr>(CV)) {
     const TargetData *TD = TM.getTargetData();
     switch(CE->getOpcode()) {
@@ -495,12 +467,12 @@ static void printAsCString(std::ostream &O, const ConstantArray *CVA,
 ///
 void AsmPrinter::EmitString(const ConstantArray *CVA) const {
   unsigned NumElts = CVA->getNumOperands();
-  if (AscizDirective && NumElts && 
+  if (TAI->getAscizDirective() && NumElts && 
       cast<ConstantInt>(CVA->getOperand(NumElts-1))->getRawValue() == 0) {
-    O << AscizDirective;
+    O << TAI->getAscizDirective();
     printAsCString(O, CVA, NumElts-1);
   } else {
-    O << AsciiDirective;
+    O << TAI->getAsciiDirective();
     printAsCString(O, CVA, NumElts);
   }
   O << "\n";
@@ -550,50 +522,50 @@ void AsmPrinter::EmitGlobalConstant(const Constant *CV) {
     // precision...
     double Val = CFP->getValue();
     if (CFP->getType() == Type::DoubleTy) {
-      if (Data64bitsDirective)
-        O << Data64bitsDirective << DoubleToBits(Val) << "\t" << CommentString
-          << " double value: " << Val << "\n";
+      if (TAI->getData64bitsDirective())
+        O << TAI->getData64bitsDirective() << DoubleToBits(Val) << "\t"
+          << TAI->getCommentString() << " double value: " << Val << "\n";
       else if (TD->isBigEndian()) {
-        O << Data32bitsDirective << unsigned(DoubleToBits(Val) >> 32)
-          << "\t" << CommentString << " double most significant word "
-          << Val << "\n";
-        O << Data32bitsDirective << unsigned(DoubleToBits(Val))
-          << "\t" << CommentString << " double least significant word "
-          << Val << "\n";
+        O << TAI->getData32bitsDirective() << unsigned(DoubleToBits(Val) >> 32)
+          << "\t" << TAI->getCommentString()
+          << " double most significant word " << Val << "\n";
+        O << TAI->getData32bitsDirective() << unsigned(DoubleToBits(Val))
+          << "\t" << TAI->getCommentString()
+          << " double least significant word " << Val << "\n";
       } else {
-        O << Data32bitsDirective << unsigned(DoubleToBits(Val))
-          << "\t" << CommentString << " double least significant word " << Val
-          << "\n";
-        O << Data32bitsDirective << unsigned(DoubleToBits(Val) >> 32)
-          << "\t" << CommentString << " double most significant word " << Val
-          << "\n";
+        O << TAI->getData32bitsDirective() << unsigned(DoubleToBits(Val))
+          << "\t" << TAI->getCommentString()
+          << " double least significant word " << Val << "\n";
+        O << TAI->getData32bitsDirective() << unsigned(DoubleToBits(Val) >> 32)
+          << "\t" << TAI->getCommentString()
+          << " double most significant word " << Val << "\n";
       }
       return;
     } else {
-      O << Data32bitsDirective << FloatToBits(Val) << "\t" << CommentString
-        << " float " << Val << "\n";
+      O << TAI->getData32bitsDirective() << FloatToBits(Val)
+        << "\t" << TAI->getCommentString() << " float " << Val << "\n";
       return;
     }
   } else if (CV->getType() == Type::ULongTy || CV->getType() == Type::LongTy) {
     if (const ConstantInt *CI = dyn_cast<ConstantInt>(CV)) {
       uint64_t Val = CI->getRawValue();
 
-      if (Data64bitsDirective)
-        O << Data64bitsDirective << Val << "\n";
+      if (TAI->getData64bitsDirective())
+        O << TAI->getData64bitsDirective() << Val << "\n";
       else if (TD->isBigEndian()) {
-        O << Data32bitsDirective << unsigned(Val >> 32)
-          << "\t" << CommentString << " Double-word most significant word "
-          << Val << "\n";
-        O << Data32bitsDirective << unsigned(Val)
-          << "\t" << CommentString << " Double-word least significant word "
-          << Val << "\n";
+        O << TAI->getData32bitsDirective() << unsigned(Val >> 32)
+          << "\t" << TAI->getCommentString()
+          << " Double-word most significant word " << Val << "\n";
+        O << TAI->getData32bitsDirective() << unsigned(Val)
+          << "\t" << TAI->getCommentString()
+          << " Double-word least significant word " << Val << "\n";
       } else {
-        O << Data32bitsDirective << unsigned(Val)
-          << "\t" << CommentString << " Double-word least significant word "
-          << Val << "\n";
-        O << Data32bitsDirective << unsigned(Val >> 32)
-          << "\t" << CommentString << " Double-word most significant word "
-          << Val << "\n";
+        O << TAI->getData32bitsDirective() << unsigned(Val)
+          << "\t" << TAI->getCommentString()
+          << " Double-word least significant word " << Val << "\n";
+        O << TAI->getData32bitsDirective() << unsigned(Val >> 32)
+          << "\t" << TAI->getCommentString()
+          << " Double-word most significant word " << Val << "\n";
       }
       return;
     }
@@ -610,25 +582,26 @@ void AsmPrinter::EmitGlobalConstant(const Constant *CV) {
   switch (type->getTypeID()) {
   case Type::BoolTyID:
   case Type::UByteTyID: case Type::SByteTyID:
-    O << Data8bitsDirective;
+    O << TAI->getData8bitsDirective();
     break;
   case Type::UShortTyID: case Type::ShortTyID:
-    O << Data16bitsDirective;
+    O << TAI->getData16bitsDirective();
     break;
   case Type::PointerTyID:
     if (TD->getPointerSize() == 8) {
-      assert(Data64bitsDirective &&
+      assert(TAI->getData64bitsDirective() &&
              "Target cannot handle 64-bit pointer exprs!");
-      O << Data64bitsDirective;
+      O << TAI->getData64bitsDirective();
       break;
     }
     //Fall through for pointer size == int size
   case Type::UIntTyID: case Type::IntTyID:
-    O << Data32bitsDirective;
+    O << TAI->getData32bitsDirective();
     break;
   case Type::ULongTyID: case Type::LongTyID:
-    assert(Data64bitsDirective &&"Target cannot handle 64-bit constant exprs!");
-    O << Data64bitsDirective;
+    assert(TAI->getData64bitsDirective() &&
+           "Target cannot handle 64-bit constant exprs!");
+    O << TAI->getData64bitsDirective();
     break;
   case Type::FloatTyID: case Type::DoubleTyID:
     assert (0 && "Should have already output floating point constant.");
@@ -662,7 +635,7 @@ void AsmPrinter::printInlineAsm(const MachineInstr *MI) const {
     return;
   }
   
-  O << InlineAsmStart << "\n\t";
+  O << TAI->getInlineAsmStart() << "\n\t";
 
   // The variant of the current asmprinter: FIXME: change.
   int AsmPrinterVariant = 0;
@@ -810,7 +783,7 @@ void AsmPrinter::printInlineAsm(const MachineInstr *MI) const {
       break;
     }
   }
-  O << "\n\t" << InlineAsmEnd << "\n";
+  O << "\n\t" << TAI->getInlineAsmEnd() << "\n";
 }
 
 /// PrintAsmOperand - Print the specified operand of MI, an INLINEASM
@@ -834,24 +807,24 @@ bool AsmPrinter::PrintAsmMemoryOperand(const MachineInstr *MI, unsigned OpNo,
 void AsmPrinter::printBasicBlockLabel(const MachineBasicBlock *MBB,
                                       bool printColon,
                                       bool printComment) const {
-  O << PrivateGlobalPrefix << "BB" << FunctionNumber << "_"
+  O << TAI->getPrivateGlobalPrefix() << "BB" << FunctionNumber << "_"
     << MBB->getNumber();
   if (printColon)
     O << ':';
   if (printComment)
-    O << '\t' << CommentString << MBB->getBasicBlock()->getName();
+    O << '\t' << TAI->getCommentString() << MBB->getBasicBlock()->getName();
 }
 
 /// printSetLabel - This method prints a set label for the specified
 /// MachineBasicBlock
 void AsmPrinter::printSetLabel(unsigned uid, 
                                const MachineBasicBlock *MBB) const {
-  if (!SetDirective)
+  if (!TAI->getSetDirective())
     return;
   
-  O << SetDirective << ' ' << PrivateGlobalPrefix << getFunctionNumber() 
-    << '_' << uid << "_set_" << MBB->getNumber() << ',';
+  O << TAI->getSetDirective() << ' ' << TAI->getPrivateGlobalPrefix()
+    << getFunctionNumber() << '_' << uid << "_set_" << MBB->getNumber() << ',';
   printBasicBlockLabel(MBB, false, false);
-  O << '-' << PrivateGlobalPrefix << "JTI" << getFunctionNumber() 
+  O << '-' << TAI->getPrivateGlobalPrefix() << "JTI" << getFunctionNumber() 
     << '_' << uid << '\n';
 }

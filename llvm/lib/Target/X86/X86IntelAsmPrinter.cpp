@@ -22,10 +22,6 @@
 #include "llvm/Target/TargetOptions.h"
 using namespace llvm;
 
-X86IntelAsmPrinter::X86IntelAsmPrinter(std::ostream &O, X86TargetMachine &TM)
-    : X86SharedAsmPrinter(O, TM) {
-}
-
 /// runOnMachineFunction - This uses the printMachineInstruction()
 /// method to print assembly for each instruction.
 ///
@@ -106,8 +102,8 @@ void X86IntelAsmPrinter::printOp(const MachineOperand &MO,
   case MachineOperand::MO_ConstantPoolIndex: {
     bool isMemOp  = Modifier && !strcmp(Modifier, "mem");
     if (!isMemOp) O << "OFFSET ";
-    O << "[" << PrivateGlobalPrefix << "CPI" << getFunctionNumber() << "_"
-      << MO.getConstantPoolIndex();
+    O << "[" << TAI->getPrivateGlobalPrefix() << "CPI"
+      << getFunctionNumber() << "_" << MO.getConstantPoolIndex();
     int Offset = MO.getOffset();
     if (Offset > 0)
       O << " + " << Offset;
@@ -131,7 +127,7 @@ void X86IntelAsmPrinter::printOp(const MachineOperand &MO,
   case MachineOperand::MO_ExternalSymbol: {
     bool isCallOp = Modifier && !strcmp(Modifier, "call");
     if (!isCallOp) O << "OFFSET ";
-    O << GlobalPrefix << MO.getSymbolName();
+    O << TAI->getGlobalPrefix() << MO.getSymbolName();
     return;
   }
   default:
@@ -272,7 +268,7 @@ void X86IntelAsmPrinter::printMachineInstruction(const MachineInstr *MI) {
       Reg1 = getX86SubSuperRegister(Reg1, MVT::i16);
     else
       Reg1 = getX86SubSuperRegister(Reg1, MVT::i8);
-    O << CommentString << " TRUNCATE ";
+    O << TAI->getCommentString() << " TRUNCATE ";
     if (Reg0 != Reg1)
       O << "\n\t";
     break;
@@ -284,30 +280,9 @@ void X86IntelAsmPrinter::printMachineInstruction(const MachineInstr *MI) {
 }
 
 bool X86IntelAsmPrinter::doInitialization(Module &M) {
-  GlobalPrefix = "_";
-  CommentString = ";";
-
   X86SharedAsmPrinter::doInitialization(M);
-
-  PrivateGlobalPrefix = "$";
-  AlignDirective = "\talign\t";
-  ZeroDirective = "\tdb\t";
-  ZeroDirectiveSuffix = " dup(0)";
-  AsciiDirective = "\tdb\t";
-  AscizDirective = 0;
-  Data8bitsDirective = "\tdb\t";
-  Data16bitsDirective = "\tdw\t";
-  Data32bitsDirective = "\tdd\t";
-  Data64bitsDirective = "\tdq\t";
-  HasDotTypeDotSizeDirective = false;
-  Mang->markCharUnacceptable('.');
   
-  DefaultTextSection = "_text";
-  DefaultDataSection = "_data";
-  SwitchToSectionDirective = "";
-  TextSectionStartSuffix = "\tsegment 'CODE'";
-  DataSectionStartSuffix = "\tsegment 'DATA'";
-  SectionEndDirectiveSuffix = "\tends\n";
+  Mang->markCharUnacceptable('.');
 
   O << "\t.686\n\t.model flat\n\n";
 
@@ -365,7 +340,7 @@ bool X86IntelAsmPrinter::doFinalization(Module &M) {
       O << "\tpublic " << name << "\n";
       // FALL THROUGH
     case GlobalValue::InternalLinkage:
-      SwitchToDataSection(DefaultDataSection, I);
+      SwitchToDataSection(TAI->getDataSection(), I);
       break;
     default:
       assert(0 && "Unknown linkage type!");
@@ -374,7 +349,8 @@ bool X86IntelAsmPrinter::doFinalization(Module &M) {
     if (!bCustomSegment)
       EmitAlignment(Align, I);
 
-    O << name << ":\t\t\t\t" << CommentString << " " << I->getName() << '\n';
+    O << name << ":\t\t\t\t" << TAI->getCommentString()
+      << " " << I->getName() << '\n';
 
     EmitGlobalConstant(C);
 

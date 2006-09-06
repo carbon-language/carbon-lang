@@ -21,7 +21,9 @@
 namespace llvm {
 
 struct X86IntelAsmPrinter : public X86SharedAsmPrinter {
-  X86IntelAsmPrinter(std::ostream &O, X86TargetMachine &TM);
+  X86IntelAsmPrinter(std::ostream &O, X86TargetMachine &TM, TargetAsmInfo *T)
+      : X86SharedAsmPrinter(O, TM, T) {
+  }
 
   virtual const char *getPassName() const {
     return "X86 Intel-Style Assembly Printer";

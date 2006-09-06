@@ -23,6 +23,7 @@
 #include "llvm/Support/Dwarf.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Mangler.h"
+#include "llvm/Target/TargetAsmInfo.h"
 #include "llvm/Target/MRegisterInfo.h"
 #include "llvm/Target/TargetData.h"
 #include "llvm/Target/TargetMachine.h"
@@ -674,7 +675,7 @@ void DIEDwarfLabel::EmitValue(const DwarfWriter &DW, unsigned Form) const {
 /// SizeOf - Determine size of label value in bytes.
 ///
 unsigned DIEDwarfLabel::SizeOf(const DwarfWriter &DW, unsigned Form) const {
-  return DW.getAddressSize();
+  return DW.getTargetAsmInfo()->getAddressSize();
 }
     
 //===----------------------------------------------------------------------===//
@@ -688,7 +689,7 @@ void DIEObjectLabel::EmitValue(const DwarfWriter &DW, unsigned Form) const {
 /// SizeOf - Determine size of label value in bytes.
 ///
 unsigned DIEObjectLabel::SizeOf(const DwarfWriter &DW, unsigned Form) const {
-  return DW.getAddressSize();
+  return DW.getTargetAsmInfo()->getAddressSize();
 }
     
 //===----------------------------------------------------------------------===//
@@ -702,7 +703,7 @@ void DIEDelta::EmitValue(const DwarfWriter &DW, unsigned Form) const {
 /// SizeOf - Determine size of delta value in bytes.
 ///
 unsigned DIEDelta::SizeOf(const DwarfWriter &DW, unsigned Form) const {
-  return DW.getAddressSize();
+  return DW.getTargetAsmInfo()->getAddressSize();
 }
 
 //===----------------------------------------------------------------------===//
@@ -957,7 +958,7 @@ void DwarfWriter::PrintHex(int Value) const {
 void DwarfWriter::EOL(const std::string &Comment) const {
   if (DwarfVerbose && !Comment.empty()) {
     O << "\t"
-      << Asm->CommentString
+      << TAI->getCommentString()
       << " "
       << Comment;
   }
@@ -967,17 +968,17 @@ void DwarfWriter::EOL(const std::string &Comment) const {
 /// EmitAlign - Print a align directive.
 ///
 void DwarfWriter::EmitAlign(unsigned Alignment) const {
-  O << Asm->AlignDirective << Alignment << "\n";
+  O << TAI->getAlignDirective() << Alignment << "\n";
 }
 
 /// EmitULEB128Bytes - Emit an assembler byte data directive to compose an
 /// unsigned leb128 value.
 void DwarfWriter::EmitULEB128Bytes(unsigned Value) const {
-  if (hasLEB128) {
+  if (TAI->hasLEB128()) {
     O << "\t.uleb128\t"
       << Value;
   } else {
-    O << Asm->Data8bitsDirective;
+    O << TAI->getData8bitsDirective();
     PrintULEB128(Value);
   }
 }
@@ -985,11 +986,11 @@ void DwarfWriter::EmitULEB128Bytes(unsigned Value) const {
 /// EmitSLEB128Bytes - Emit an assembler byte data directive to compose a
 /// signed leb128 value.
 void DwarfWriter::EmitSLEB128Bytes(int Value) const {
-  if (hasLEB128) {
+  if (TAI->hasLEB128()) {
     O << "\t.sleb128\t"
       << Value;
   } else {
-    O << Asm->Data8bitsDirective;
+    O << TAI->getData8bitsDirective();
     PrintSLEB128(Value);
   }
 }
@@ -1052,29 +1053,29 @@ unsigned DwarfWriter::SizeSLEB128(int Value) {
 /// EmitInt8 - Emit a byte directive and value.
 ///
 void DwarfWriter::EmitInt8(int Value) const {
-  O << Asm->Data8bitsDirective;
+  O << TAI->getData8bitsDirective();
   PrintHex(Value & 0xFF);
 }
 
 /// EmitInt16 - Emit a short directive and value.
 ///
 void DwarfWriter::EmitInt16(int Value) const {
-  O << Asm->Data16bitsDirective;
+  O << TAI->getData16bitsDirective();
   PrintHex(Value & 0xFFFF);
 }
 
 /// EmitInt32 - Emit a long directive and value.
 ///
 void DwarfWriter::EmitInt32(int Value) const {
-  O << Asm->Data32bitsDirective;
+  O << TAI->getData32bitsDirective();
   PrintHex(Value);
 }
 
 /// EmitInt64 - Emit a long long directive and value.
 ///
 void DwarfWriter::EmitInt64(uint64_t Value) const {
-  if (Asm->Data64bitsDirective) {
-    O << Asm->Data64bitsDirective << "0x" << std::hex << Value << std::dec;
+  if (TAI->getData64bitsDirective()) {
+    O << TAI->getData64bitsDirective() << "0x" << std::hex << Value << std::dec;
   } else {
     if (TD->isBigEndian()) {
       EmitInt32(unsigned(Value >> 32)); O << "\n";
@@ -1089,7 +1090,7 @@ void DwarfWriter::EmitInt64(uint64_t Value) const {
 /// EmitString - Emit a string with quotes and a null terminator.
 /// Special characters are emitted properly. (Eg. '\t')
 void DwarfWriter::EmitString(const std::string &String) const {
-  O << Asm->AsciiDirective
+  O << TAI->getAsciiDirective()
     << "\"";
   for (unsigned i = 0, N = String.size(); i < N; ++i) {
     unsigned char C = String[i];
@@ -1122,7 +1123,7 @@ void DwarfWriter::EmitString(const std::string &String) const {
 /// PrintLabelName - Print label name in form used by Dwarf writer.
 ///
 void DwarfWriter::PrintLabelName(const char *Tag, unsigned Number) const {
-  O << Asm->PrivateGlobalPrefix
+  O << TAI->getPrivateGlobalPrefix()
     << "debug_"
     << Tag;
   if (Number) O << Number;
@@ -1138,18 +1139,18 @@ void DwarfWriter::EmitLabel(const char *Tag, unsigned Number) const {
 /// EmitReference - Emit a reference to a label.
 ///
 void DwarfWriter::EmitReference(const char *Tag, unsigned Number) const {
-  if (AddressSize == 4)
-    O << Asm->Data32bitsDirective;
+  if (TAI->getAddressSize() == 4)
+    O << TAI->getData32bitsDirective();
   else
-    O << Asm->Data64bitsDirective;
+    O << TAI->getData64bitsDirective();
     
   PrintLabelName(Tag, Number);
 }
 void DwarfWriter::EmitReference(const std::string &Name) const {
-  if (AddressSize == 4)
-    O << Asm->Data32bitsDirective;
+  if (TAI->getAddressSize() == 4)
+    O << TAI->getData32bitsDirective();
   else
-    O << Asm->Data64bitsDirective;
+    O << TAI->getData64bitsDirective();
     
   O << Name;
 }
@@ -1159,7 +1160,7 @@ void DwarfWriter::EmitReference(const std::string &Name) const {
 /// is an option (needsSet) to use an intermediary 'set' expression.
 void DwarfWriter::EmitDifference(const char *TagHi, unsigned NumberHi,
                                  const char *TagLo, unsigned NumberLo) const {
-  if (needsSet) {
+  if (TAI->getNeedsSet()) {
     static unsigned SetCounter = 0;
     
     O << "\t.set\t";
@@ -1170,19 +1171,19 @@ void DwarfWriter::EmitDifference(const char *TagHi, unsigned NumberHi,
     PrintLabelName(TagLo, NumberLo);
     O << "\n";
     
-    if (AddressSize == sizeof(int32_t))
-      O << Asm->Data32bitsDirective;
+    if (TAI->getAddressSize() == sizeof(int32_t))
+      O << TAI->getData32bitsDirective();
     else
-      O << Asm->Data64bitsDirective;
+      O << TAI->getData64bitsDirective();
       
     PrintLabelName("set", SetCounter);
     
     ++SetCounter;
   } else {
-    if (AddressSize == sizeof(int32_t))
-      O << Asm->Data32bitsDirective;
+    if (TAI->getAddressSize() == sizeof(int32_t))
+      O << TAI->getData32bitsDirective();
     else
-      O << Asm->Data64bitsDirective;
+      O << TAI->getData64bitsDirective();
       
     PrintLabelName(TagHi, NumberHi);
     O << "-";
@@ -1782,33 +1783,33 @@ void DwarfWriter::EmitInitial() {
   didInitial = true;
   
   // Dwarf sections base addresses.
-  Asm->SwitchToDataSection(DwarfFrameSection, 0);
+  Asm->SwitchToDataSection(TAI->getDwarfFrameSection(), 0);
   EmitLabel("section_frame", 0);
-  Asm->SwitchToDataSection(DwarfInfoSection, 0);
+  Asm->SwitchToDataSection(TAI->getDwarfInfoSection(), 0);
   EmitLabel("section_info", 0);
   EmitLabel("info", 0);
-  Asm->SwitchToDataSection(DwarfAbbrevSection, 0);
+  Asm->SwitchToDataSection(TAI->getDwarfAbbrevSection(), 0);
   EmitLabel("section_abbrev", 0);
   EmitLabel("abbrev", 0);
-  Asm->SwitchToDataSection(DwarfARangesSection, 0);
+  Asm->SwitchToDataSection(TAI->getDwarfARangesSection(), 0);
   EmitLabel("section_aranges", 0);
-  Asm->SwitchToDataSection(DwarfMacInfoSection, 0);
+  Asm->SwitchToDataSection(TAI->getDwarfMacInfoSection(), 0);
   EmitLabel("section_macinfo", 0);
-  Asm->SwitchToDataSection(DwarfLineSection, 0);
+  Asm->SwitchToDataSection(TAI->getDwarfLineSection(), 0);
   EmitLabel("section_line", 0);
   EmitLabel("line", 0);
-  Asm->SwitchToDataSection(DwarfLocSection, 0);
+  Asm->SwitchToDataSection(TAI->getDwarfLocSection(), 0);
   EmitLabel("section_loc", 0);
-  Asm->SwitchToDataSection(DwarfPubNamesSection, 0);
+  Asm->SwitchToDataSection(TAI->getDwarfPubNamesSection(), 0);
   EmitLabel("section_pubnames", 0);
-  Asm->SwitchToDataSection(DwarfStrSection, 0);
+  Asm->SwitchToDataSection(TAI->getDwarfStrSection(), 0);
   EmitLabel("section_str", 0);
-  Asm->SwitchToDataSection(DwarfRangesSection, 0);
+  Asm->SwitchToDataSection(TAI->getDwarfRangesSection(), 0);
   EmitLabel("section_ranges", 0);
 
-  Asm->SwitchToTextSection(TextSection, 0);
+  Asm->SwitchToTextSection(TAI->getTextSection(), 0);
   EmitLabel("text_begin", 0);
-  Asm->SwitchToDataSection(DataSection, 0);
+  Asm->SwitchToDataSection(TAI->getDataSection(), 0);
   EmitLabel("data_begin", 0);
 
   // Emit common frame information.
@@ -1958,7 +1959,7 @@ void DwarfWriter::EmitFrameMoves(const char *BaseLabel, unsigned BaseLabelID,
     int stackGrowth =
         Asm->TM.getFrameInfo()->getStackGrowthDirection() ==
           TargetFrameInfo::StackGrowsUp ?
-            AddressSize : -AddressSize;
+            TAI->getAddressSize() : -TAI->getAddressSize();
 
     // If advancing cfa.
     if (Dst.isRegister() && Dst.getRegister() == MachineLocation::VirtualFP) {
@@ -2013,7 +2014,7 @@ void DwarfWriter::EmitFrameMoves(const char *BaseLabel, unsigned BaseLabelID,
 ///
 void DwarfWriter::EmitDebugInfo() const {
   // Start debug info section.
-  Asm->SwitchToDataSection(DwarfInfoSection, 0);
+  Asm->SwitchToDataSection(TAI->getDwarfInfoSection(), 0);
   
   // Process each compile unit.
   for (unsigned i = 0, N = CompileUnits.size(); i < N; ++i) {
@@ -2033,7 +2034,7 @@ void DwarfWriter::EmitDebugInfo() const {
       EmitInt16(DWARF_VERSION); EOL("DWARF version number");
       EmitDifference("abbrev_begin", 0, "section_abbrev", 0);
       EOL("Offset Into Abbrev. Section");
-      EmitInt8(AddressSize); EOL("Address Size (in bytes)");
+      EmitInt8(TAI->getAddressSize()); EOL("Address Size (in bytes)");
     
       EmitDIE(Die);
       EmitLabel("info_end", Unit->getID());
@@ -2049,7 +2050,7 @@ void DwarfWriter::EmitAbbreviations() const {
   // Check to see if it is worth the effort.
   if (!Abbreviations.empty()) {
     // Start the debug abbrev section.
-    Asm->SwitchToDataSection(DwarfAbbrevSection, 0);
+    Asm->SwitchToDataSection(TAI->getDwarfAbbrevSection(), 0);
     
     EmitLabel("abbrev_begin", 0);
     
@@ -2083,7 +2084,7 @@ void DwarfWriter::EmitDebugLines() const {
   const int MaxLineDelta = 255 + MinLineDelta;
 
   // Start the dwarf line section.
-  Asm->SwitchToDataSection(DwarfLineSection, 0);
+  Asm->SwitchToDataSection(TAI->getDwarfLineSection(), 0);
   
   // Construct the section header.
   
@@ -2148,7 +2149,7 @@ void DwarfWriter::EmitDebugLines() const {
     
     if (DwarfVerbose) {
       O << "\t"
-        << Asm->CommentString << " "
+        << TAI->getCommentString() << " "
         << "Section "
         << SectionMap[j + 1].c_str() << "\n";
     }
@@ -2166,7 +2167,7 @@ void DwarfWriter::EmitDebugLines() const {
         const SourceFileInfo &SourceFile = SourceFiles[SourceID];
         unsigned DirectoryID = SourceFile.getDirectoryID();
         O << "\t"
-          << Asm->CommentString << " "
+          << TAI->getCommentString() << " "
           << Directories[DirectoryID]
           << SourceFile.getName() << ":"
           << LineInfo->getLine() << "\n"; 
@@ -2233,10 +2234,10 @@ void DwarfWriter::EmitInitialDebugFrame() {
   int stackGrowth =
       Asm->TM.getFrameInfo()->getStackGrowthDirection() ==
         TargetFrameInfo::StackGrowsUp ?
-      AddressSize : -AddressSize;
+      TAI->getAddressSize() : -TAI->getAddressSize();
 
   // Start the dwarf frame section.
-  Asm->SwitchToDataSection(DwarfFrameSection, 0);
+  Asm->SwitchToDataSection(TAI->getDwarfFrameSection(), 0);
 
   EmitLabel("frame_common", 0);
   EmitDifference("frame_common_end", 0,
@@ -2266,7 +2267,7 @@ void DwarfWriter::EmitInitialDebugFrame() {
 /// section.
 void DwarfWriter::EmitFunctionDebugFrame() {
   // Start the dwarf frame section.
-  Asm->SwitchToDataSection(DwarfFrameSection, 0);
+  Asm->SwitchToDataSection(TAI->getDwarfFrameSection(), 0);
   
   EmitDifference("frame_end", SubprogramCount,
                  "frame_begin", SubprogramCount);
@@ -2296,7 +2297,7 @@ void DwarfWriter::EmitFunctionDebugFrame() {
 ///
 void DwarfWriter::EmitDebugPubNames() {
   // Start the dwarf pubnames section.
-  Asm->SwitchToDataSection(DwarfPubNamesSection, 0);
+  Asm->SwitchToDataSection(TAI->getDwarfPubNamesSection(), 0);
     
   // Process each compile unit.
   for (unsigned i = 0, N = CompileUnits.size(); i < N; ++i) {
@@ -2343,7 +2344,7 @@ void DwarfWriter::EmitDebugStr() {
   // Check to see if it is worth the effort.
   if (!StringPool.empty()) {
     // Start the dwarf str section.
-    Asm->SwitchToDataSection(DwarfStrSection, 0);
+    Asm->SwitchToDataSection(TAI->getDwarfStrSection(), 0);
     
     // For each of strings in the string pool.
     for (unsigned StringID = 1, N = StringPool.size();
@@ -2363,7 +2364,7 @@ void DwarfWriter::EmitDebugStr() {
 ///
 void DwarfWriter::EmitDebugLoc() {
   // Start the dwarf loc section.
-  Asm->SwitchToDataSection(DwarfLocSection, 0);
+  Asm->SwitchToDataSection(TAI->getDwarfLocSection(), 0);
   
   O << "\n";
 }
@@ -2372,7 +2373,7 @@ void DwarfWriter::EmitDebugLoc() {
 ///
 void DwarfWriter::EmitDebugARanges() {
   // Start the dwarf aranges section.
-  Asm->SwitchToDataSection(DwarfARangesSection, 0);
+  Asm->SwitchToDataSection(TAI->getDwarfARangesSection(), 0);
   
   // FIXME - Mock up
 #if 0
@@ -2389,7 +2390,7 @@ void DwarfWriter::EmitDebugARanges() {
       EmitReference("info_begin", Unit->getID());
       EOL("Offset of Compilation Unit Info");
 
-      EmitInt8(AddressSize); EOL("Size of Address");
+      EmitInt8(TAI->getAddressSize()); EOL("Size of Address");
 
       EmitInt8(0); EOL("Size of Segment Descriptor");
 
@@ -2413,7 +2414,7 @@ void DwarfWriter::EmitDebugARanges() {
 ///
 void DwarfWriter::EmitDebugRanges() {
   // Start the dwarf ranges section.
-  Asm->SwitchToDataSection(DwarfRangesSection, 0);
+  Asm->SwitchToDataSection(TAI->getDwarfRangesSection(), 0);
   
   O << "\n";
 }
@@ -2422,7 +2423,7 @@ void DwarfWriter::EmitDebugRanges() {
 ///
 void DwarfWriter::EmitDebugMacInfo() {
   // Start the dwarf macinfo section.
-  Asm->SwitchToDataSection(DwarfMacInfoSection, 0);
+  Asm->SwitchToDataSection(TAI->getDwarfMacInfoSection(), 0);
   
   O << "\n";
 }
@@ -2466,9 +2467,10 @@ void DwarfWriter::ConstructSubprogramDIEs() {
 // Main entry points.
 //
   
-DwarfWriter::DwarfWriter(std::ostream &OS, AsmPrinter *A)
+DwarfWriter::DwarfWriter(std::ostream &OS, AsmPrinter *A, TargetAsmInfo *T)
 : O(OS)
 , Asm(A)
+, TAI(T)
 , TD(Asm->TM.getTargetData())
 , RI(Asm->TM.getRegisterInfo())
 , M(NULL)
@@ -2484,24 +2486,6 @@ DwarfWriter::DwarfWriter(std::ostream &OS, AsmPrinter *A)
 , DescToDieMap()
 , SectionMap()
 , SectionSourceLines()
-, AddressSize(sizeof(int32_t))
-, hasLEB128(false)
-, hasDotLoc(false)
-, hasDotFile(false)
-, needsSet(false)
-, DwarfAbbrevSection(".debug_abbrev")
-, DwarfInfoSection(".debug_info")
-, DwarfLineSection(".debug_line")
-, DwarfFrameSection(".debug_frame")
-, DwarfPubNamesSection(".debug_pubnames")
-, DwarfPubTypesSection(".debug_pubtypes")
-, DwarfStrSection(".debug_str")
-, DwarfLocSection(".debug_loc")
-, DwarfARangesSection(".debug_aranges")
-, DwarfRangesSection(".debug_ranges")
-, DwarfMacInfoSection(".debug_macinfo")
-, TextSection(".text")
-, DataSection(".data")
 {}
 DwarfWriter::~DwarfWriter() {
   for (unsigned i = 0, N = CompileUnits.size(); i < N; ++i) {
@@ -2530,7 +2514,7 @@ void DwarfWriter::SetDebugInfo(MachineDebugInfo *DI) {
     ConstructSubprogramDIEs();
     
     // Prime section data.
-    SectionMap.insert(std::string("\t") + TextSection);
+    SectionMap.insert(std::string("\t") + TAI->getTextSection());
   }
 }
 
@@ -2550,9 +2534,9 @@ void DwarfWriter::EndModule() {
   EOL("Dwarf End Module");
   
   // Standard sections final addresses.
-  Asm->SwitchToTextSection(TextSection, 0);
+  Asm->SwitchToTextSection(TAI->getTextSection(), 0);
   EmitLabel("text_end", 0);
-  Asm->SwitchToDataSection(DataSection, 0);
+  Asm->SwitchToDataSection(TAI->getDataSection(), 0);
   EmitLabel("data_end", 0);
   
   // End text sections.

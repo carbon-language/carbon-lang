@@ -34,6 +34,7 @@
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/Compiler.h"
+#include "llvm/Target/TargetAsmInfo.h"
 #include "llvm/Target/MRegisterInfo.h"
 #include "llvm/Target/TargetInstrInfo.h"
 #include "llvm/Target/TargetOptions.h"
@@ -46,12 +47,11 @@ using namespace llvm;
 namespace {
   Statistic<> EmittedInsts("asm-printer", "Number of machine instrs printed");
 
-  class VISIBILITY_HIDDEN PPCAsmPrinter : public AsmPrinter {
-  public:
+  struct VISIBILITY_HIDDEN PPCAsmPrinter : public AsmPrinter {
     std::set<std::string> FnStubs, GVStubs;
     
-    PPCAsmPrinter(std::ostream &O, TargetMachine &TM)
-      : AsmPrinter(O, TM) {}
+    PPCAsmPrinter(std::ostream &O, TargetMachine &TM, TargetAsmInfo *T)
+      : AsmPrinter(O, TM, T) {}
 
     virtual const char *getPassName() const {
       return "PowerPC Assembly Printer";
@@ -151,7 +151,7 @@ namespace {
           }
         }
         if (MO.getType() == MachineOperand::MO_ExternalSymbol) {
-          std::string Name(GlobalPrefix); Name += MO.getSymbolName();
+          std::string Name(TAI->getGlobalPrefix()); Name += MO.getSymbolName();
           FnStubs.insert(Name);
           O << "L" << Name << "$stub";
           return;
@@ -239,14 +239,28 @@ namespace {
     
   };
 
-  /// DarwinDwarfWriter - Dwarf debug info writer customized for Darwin/Mac OS X
-  ///
-  struct VISIBILITY_HIDDEN DarwinDwarfWriter : public DwarfWriter {
-    // Ctor.
-    DarwinDwarfWriter(std::ostream &o, AsmPrinter *ap)
-    : DwarfWriter(o, ap)
-    {
-      needsSet = true;
+  struct VISIBILITY_HIDDEN DarwinTargetAsmInfo : public TargetAsmInfo {
+    DarwinTargetAsmInfo(PPCTargetMachine &TM) {
+      bool isPPC64 = TM.getSubtargetImpl()->isPPC64();
+
+      CommentString = ";";
+      GlobalPrefix = "_";
+      PrivateGlobalPrefix = "L";
+      ZeroDirective = "\t.space\t";
+      SetDirective = "\t.set";
+      Data64bitsDirective = isPPC64 ? ".quad\t" : 0;  
+      AlignmentIsInBytes = false;
+      ConstantPoolSection = "\t.const\t";
+      JumpTableDataSection = ".const";
+      JumpTableTextSection = "\t.text";
+      LCOMMDirective = "\t.lcomm\t";
+      StaticCtorsSection = ".mod_init_func";
+      StaticDtorsSection = ".mod_term_func";
+      InlineAsmStart = "# InlineAsm Start";
+      InlineAsmEnd = "# InlineAsm End";
+      
+      NeedsSet = true;
+      AddressSize = isPPC64 ? 8 : 4;
       DwarfAbbrevSection = ".section __DWARF,__debug_abbrev";
       DwarfInfoSection = ".section __DWARF,__debug_info";
       DwarfLineSection = ".section __DWARF,__debug_line";
@@ -258,8 +272,6 @@ namespace {
       DwarfARangesSection = ".section __DWARF,__debug_aranges";
       DwarfRangesSection = ".section __DWARF,__debug_ranges";
       DwarfMacInfoSection = ".section __DWARF,__debug_macinfo";
-      TextSection = ".text";
-      DataSection = ".data";
     }
   };
 
@@ -267,29 +279,11 @@ namespace {
   /// X
   struct VISIBILITY_HIDDEN DarwinAsmPrinter : public PPCAsmPrinter {
   
-    DarwinDwarfWriter DW;
+    DwarfWriter DW;
 
-    DarwinAsmPrinter(std::ostream &O, PPCTargetMachine &TM)
-      : PPCAsmPrinter(O, TM), DW(O, this) {
+    DarwinAsmPrinter(std::ostream &O, PPCTargetMachine &TM, TargetAsmInfo *T)
+      : PPCAsmPrinter(O, TM, T), DW(O, this, T) {
       bool isPPC64 = TM.getSubtargetImpl()->isPPC64();
-      CommentString = ";";
-      GlobalPrefix = "_";
-      PrivateGlobalPrefix = "L";     // Marker for constant pool idxs
-      ZeroDirective = "\t.space\t";  // ".space N" emits N zeros.
-      SetDirective = "\t.set";
-      if (isPPC64)
-        Data64bitsDirective = ".quad\t";       // we can't emit a 64-bit unit
-      else
-        Data64bitsDirective = 0;       // we can't emit a 64-bit unit
-      AlignmentIsInBytes = false;    // Alignment is by power of 2.
-      ConstantPoolSection = "\t.const\t";
-      JumpTableDataSection = ".const";
-      JumpTableTextSection = "\t.text";
-      LCOMMDirective = "\t.lcomm\t";
-      StaticCtorsSection = ".mod_init_func";
-      StaticDtorsSection = ".mod_term_func";
-      InlineAsmStart = "# InlineAsm Start";
-      InlineAsmEnd = "# InlineAsm End";
     }
 
     virtual const char *getPassName() const {
@@ -309,13 +303,14 @@ namespace {
   };
 } // end of anonymous namespace
 
-/// createDarwinAsmPrinterPass - Returns a pass that prints the PPC assembly
+/// createDarwinCodePrinterPass - Returns a pass that prints the PPC assembly
 /// code for a MachineFunction to the given output stream, in a format that the
 /// Darwin assembler can deal with.
 ///
-FunctionPass *llvm::createDarwinAsmPrinter(std::ostream &o,
-                                           PPCTargetMachine &tm) {
-  return new DarwinAsmPrinter(o, tm);
+FunctionPass *llvm::createDarwinCodePrinterPass(std::ostream &o,
+                                                PPCTargetMachine &tm) {
+  TargetAsmInfo *TAI = new DarwinTargetAsmInfo(tm);
+  return new DarwinAsmPrinter(o, tm, TAI);
 }
 
 // Include the auto-generated portion of the assembly writer
@@ -332,23 +327,23 @@ void PPCAsmPrinter::printOp(const MachineOperand &MO) {
     printBasicBlockLabel(MO.getMachineBasicBlock());
     return;
   case MachineOperand::MO_JumpTableIndex:
-    O << PrivateGlobalPrefix << "JTI" << getFunctionNumber()
+    O << TAI->getPrivateGlobalPrefix() << "JTI" << getFunctionNumber()
       << '_' << MO.getJumpTableIndex();
     // FIXME: PIC relocation model
     return;
   case MachineOperand::MO_ConstantPoolIndex:
-    O << PrivateGlobalPrefix << "CPI" << getFunctionNumber()
+    O << TAI->getPrivateGlobalPrefix() << "CPI" << getFunctionNumber()
       << '_' << MO.getConstantPoolIndex();
     return;
   case MachineOperand::MO_ExternalSymbol:
     // Computing the address of an external symbol, not calling it.
     if (TM.getRelocationModel() != Reloc::Static) {
-      std::string Name(GlobalPrefix); Name += MO.getSymbolName();
+      std::string Name(TAI->getGlobalPrefix()); Name += MO.getSymbolName();
       GVStubs.insert(Name);
       O << "L" << Name << "$non_lazy_ptr";
       return;
     }
-    O << GlobalPrefix << MO.getSymbolName();
+    O << TAI->getGlobalPrefix() << MO.getSymbolName();
     return;
   case MachineOperand::MO_GlobalAddress: {
     // Computing the address of a global symbol, not calling it.
@@ -561,7 +556,7 @@ bool DarwinAsmPrinter::doFinalization(Module &M) {
           << Size << ", " << Align;
       } else if (I->hasInternalLinkage()) {
         SwitchToDataSection("\t.data", I);
-        O << LCOMMDirective << name << "," << Size << "," << Align;
+        O << TAI->getLCOMMDirective() << name << "," << Size << "," << Align;
       } else {
         SwitchToDataSection("\t.data", I);
         O << ".comm " << name << "," << Size;

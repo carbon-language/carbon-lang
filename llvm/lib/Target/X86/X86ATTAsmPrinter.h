@@ -20,8 +20,8 @@
 namespace llvm {
 
 struct X86ATTAsmPrinter : public X86SharedAsmPrinter {
- X86ATTAsmPrinter(std::ostream &O, X86TargetMachine &TM)
-    : X86SharedAsmPrinter(O, TM) { }
+ X86ATTAsmPrinter(std::ostream &O, X86TargetMachine &TM, TargetAsmInfo *T)
+    : X86SharedAsmPrinter(O, TM, T) { }
 
   virtual const char *getPassName() const {
     return "X86 AT&T-Style Assembly Printer";

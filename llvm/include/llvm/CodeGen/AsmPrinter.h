@@ -7,9 +7,9 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This class is intended to be used as a base class for target-specific
-// asmwriters.  This class primarily takes care of printing global constants,
-// which are printed in a very similar way across all targets.
+// This file contains a class to be used as the base class for target specific
+// asm writers.  This class primarily handles common functionality used by
+// all asm writers.
 //
 //===----------------------------------------------------------------------===//
 
@@ -22,10 +22,14 @@
 namespace llvm {
   class Constant;
   class ConstantArray;
-  class Mangler;
   class GlobalVariable;
   class MachineConstantPoolEntry;
+  class Mangler;
+  class TargetAsmInfo;
+  
 
+  /// AsmPrinter - This class is intended to be used as a driving class for all
+  /// asm writers.
   class AsmPrinter : public MachineFunctionPass {
     /// FunctionNumber - This provides a unique ID for each function emitted in
     /// this translation unit.  It is autoincremented by SetupMachineFunction,
@@ -42,6 +46,10 @@ namespace llvm {
     /// Target machine description.
     ///
     TargetMachine &TM;
+    
+    /// Target Asm Printer information.
+    ///
+    TargetAsmInfo *TAI;
 
     /// Name-mangler for global names.
     ///
@@ -51,163 +59,13 @@ namespace llvm {
     /// beginning of each call to runOnMachineFunction().
     ///
     std::string CurrentFnName;
-
-    //===------------------------------------------------------------------===//
-    // Properties to be set by the derived class ctor, used to configure the
-    // asmwriter.
-
-    /// CommentString - This indicates the comment character used by the
-    /// assembler.
-    const char *CommentString;     // Defaults to "#"
-
-    /// GlobalPrefix - If this is set to a non-empty string, it is prepended
-    /// onto all global symbols.  This is often used for "_" or ".".
-    const char *GlobalPrefix;    // Defaults to ""
-
-    /// PrivateGlobalPrefix - This prefix is used for globals like constant
-    /// pool entries that are completely private to the .o file and should not
-    /// have names in the .o file.  This is often "." or "L".
-    const char *PrivateGlobalPrefix;   // Defaults to "."
-    
-    /// GlobalVarAddrPrefix/Suffix - If these are nonempty, these strings
-    /// will enclose any GlobalVariable (that isn't a function)
-    ///
-    const char *GlobalVarAddrPrefix;       // Defaults to ""
-    const char *GlobalVarAddrSuffix;       // Defaults to ""
-
-    /// FunctionAddrPrefix/Suffix - If these are nonempty, these strings
-    /// will enclose any GlobalVariable that points to a function.
-    /// For example, this is used by the IA64 backend to materialize
-    /// function descriptors, by decorating the ".data8" object with the
-    /// \literal @fptr( ) \endliteral
-    /// link-relocation operator.
-    ///
-    const char *FunctionAddrPrefix;       // Defaults to ""
-    const char *FunctionAddrSuffix;       // Defaults to ""
-
-    /// InlineAsmStart/End - If these are nonempty, they contain a directive to
-    /// emit before and after an inline assmebly statement.
-    const char *InlineAsmStart;           // Defaults to "#APP\n"
-    const char *InlineAsmEnd;             // Defaults to "#NO_APP\n"
-    
-    //===--- Data Emission Directives -------------------------------------===//
-
-    /// ZeroDirective - this should be set to the directive used to get some
-    /// number of zero bytes emitted to the current section.  Common cases are
-    /// "\t.zero\t" and "\t.space\t".  If this is set to null, the
-    /// Data*bitsDirective's will be used to emit zero bytes.
-    const char *ZeroDirective;   // Defaults to "\t.zero\t"
-    const char *ZeroDirectiveSuffix;  // Defaults to ""
-
-    /// AsciiDirective - This directive allows emission of an ascii string with
-    /// the standard C escape characters embedded into it.
-    const char *AsciiDirective;  // Defaults to "\t.ascii\t"
-    
-    /// AscizDirective - If not null, this allows for special handling of
-    /// zero terminated strings on this target.  This is commonly supported as
-    /// ".asciz".  If a target doesn't support this, it can be set to null.
-    const char *AscizDirective;  // Defaults to "\t.asciz\t"
-
-    /// DataDirectives - These directives are used to output some unit of
-    /// integer data to the current section.  If a data directive is set to
-    /// null, smaller data directives will be used to emit the large sizes.
-    const char *Data8bitsDirective;   // Defaults to "\t.byte\t"
-    const char *Data16bitsDirective;  // Defaults to "\t.short\t"
-    const char *Data32bitsDirective;  // Defaults to "\t.long\t"
-    const char *Data64bitsDirective;  // Defaults to "\t.quad\t"
-
-    //===--- Alignment Information ----------------------------------------===//
-
-    /// AlignDirective - The directive used to emit round up to an alignment
-    /// boundary.
-    ///
-    const char *AlignDirective;       // Defaults to "\t.align\t"
-
-    /// AlignmentIsInBytes - If this is true (the default) then the asmprinter
-    /// emits ".align N" directives, where N is the number of bytes to align to.
-    /// Otherwise, it emits ".align log2(N)", e.g. 3 to align to an 8 byte
-    /// boundary.
-    bool AlignmentIsInBytes;          // Defaults to true
-    
-    //===--- Section Switching Directives ---------------------------------===//
     
     /// CurrentSection - The current section we are emitting to.  This is
     /// controlled and used by the SwitchSection method.
     std::string CurrentSection;
-    
-    /// SwitchToSectionDirective - This is the directive used when we want to
-    /// emit a global to an arbitrary section.  The section name is emited after
-    /// this.
-    const char *SwitchToSectionDirective;  // Defaults to "\t.section\t"
-    
-    /// TextSectionStartSuffix - This is printed after each start of section
-    /// directive for text sections.
-    const char *TextSectionStartSuffix;        // Defaults to "".
-
-    /// DataSectionStartSuffix - This is printed after each start of section
-    /// directive for data sections.
-    const char *DataSectionStartSuffix;        // Defaults to "".
-    
-    /// SectionEndDirectiveSuffix - If non-null, the asm printer will close each
-    /// section with the section name and this suffix printed.
-    const char *SectionEndDirectiveSuffix; // Defaults to null.
-    
-    /// ConstantPoolSection - This is the section that we SwitchToSection right
-    /// before emitting the constant pool for a function.
-    const char *ConstantPoolSection;     // Defaults to "\t.section .rodata\n"
-
-    /// JumpTableDataSection - This is the section that we SwitchToSection right
-    /// before emitting the jump tables for a function when the relocation model
-    /// is not PIC.
-    const char *JumpTableDataSection;     // Defaults to "\t.section .rodata\n"
-    
-    /// JumpTableTextSection - This is the section that we SwitchToSection right
-    /// before emitting the jump tables for a function when the relocation model
-    /// is PIC.
-    const char *JumpTableTextSection;     // Defaults to "\t.text\n"
-    
-    /// StaticCtorsSection - This is the directive that is emitted to switch to
-    /// a section to emit the static constructor list.
-    /// Defaults to "\t.section .ctors,\"aw\",@progbits".
-    const char *StaticCtorsSection;
-
-    /// StaticDtorsSection - This is the directive that is emitted to switch to
-    /// a section to emit the static destructor list.
-    /// Defaults to "\t.section .dtors,\"aw\",@progbits".
-    const char *StaticDtorsSection;
-
-    /// FourByteConstantSection, EightByteConstantSection,
-    /// SixteenByteConstantSection - These are special sections where we place
-    /// 4-, 8-, and 16- byte constant literals.
-    const char *FourByteConstantSection;
-    const char *EightByteConstantSection;
-    const char *SixteenByteConstantSection;
-    
-    //===--- Global Variable Emission Directives --------------------------===//
-    
-    /// SetDirective - This is the name of a directive that can be used to tell
-    /// the assembler to set the value of a variable to some expression.
-    const char *SetDirective;            // Defaults to null.
-    
-    /// LCOMMDirective - This is the name of a directive (if supported) that can
-    /// be used to efficiently declare a local (internal) block of zero
-    /// initialized data in the .bss/.data section.  The syntax expected is:
-    /// \literal <LCOMMDirective> SYMBOLNAME LENGTHINBYTES, ALIGNMENT
-    /// \endliteral
-    const char *LCOMMDirective;          // Defaults to null.
-    
-    const char *COMMDirective;           // Defaults to "\t.comm\t".
-
-    /// COMMDirectiveTakesAlignment - True if COMMDirective take a third
-    /// argument that specifies the alignment of the declaration.
-    bool COMMDirectiveTakesAlignment;    // Defaults to true.
-    
-    /// HasDotTypeDotSizeDirective - True if the target has .type and .size
-    /// directives, this is true for most ELF targets.
-    bool HasDotTypeDotSizeDirective;     // Defaults to true.
   
   protected:
-    AsmPrinter(std::ostream &o, TargetMachine &TM);
+    AsmPrinter(std::ostream &o, TargetMachine &TM, TargetAsmInfo *T);
     
   public:
     /// SwitchToTextSection - Switch to the specified section of the executable

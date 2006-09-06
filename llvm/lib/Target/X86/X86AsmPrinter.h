@@ -22,6 +22,7 @@
 #include "llvm/CodeGen/DwarfWriter.h"
 #include "llvm/CodeGen/MachineDebugInfo.h"
 #include "llvm/ADT/Statistic.h"
+#include "llvm/Target/TargetAsmInfo.h"
 #include <set>
 
 
@@ -29,33 +30,16 @@ namespace llvm {
 
 extern Statistic<> EmittedInsts;
 
-/// X86DwarfWriter - Dwarf debug info writer customized for Darwin/Mac OS X
-///
-struct X86DwarfWriter : public DwarfWriter {
-  X86DwarfWriter(std::ostream &o, AsmPrinter *ap) : DwarfWriter(o, ap) {
-      needsSet = true;
-      DwarfAbbrevSection = ".section __DWARF,__debug_abbrev,regular,debug";
-      DwarfInfoSection = ".section __DWARF,__debug_info,regular,debug";
-      DwarfLineSection = ".section __DWARF,__debug_line,regular,debug";
-      DwarfFrameSection = ".section __DWARF,__debug_frame,regular,debug";
-      DwarfPubNamesSection = ".section __DWARF,__debug_pubnames,regular,debug";
-      DwarfPubTypesSection = ".section __DWARF,__debug_pubtypes,regular,debug";
-      DwarfStrSection = ".section __DWARF,__debug_str,regular,debug";
-      DwarfLocSection = ".section __DWARF,__debug_loc,regular,debug";
-      DwarfARangesSection = ".section __DWARF,__debug_aranges,regular,debug";
-      DwarfRangesSection = ".section __DWARF,__debug_ranges,regular,debug";
-      DwarfMacInfoSection = ".section __DWARF,__debug_macinfo,regular,debug";
-      TextSection = ".text";
-      DataSection = ".data";
-  }
-  virtual void virtfn();  // out of line virtual fn.
+struct VISIBILITY_HIDDEN X86TargetAsmInfo : public TargetAsmInfo {
+  X86TargetAsmInfo(X86TargetMachine &TM);
 };
 
-struct X86SharedAsmPrinter : public AsmPrinter {
-  X86DwarfWriter DW;
+struct VISIBILITY_HIDDEN X86SharedAsmPrinter : public AsmPrinter {
+  DwarfWriter DW;
 
-  X86SharedAsmPrinter(std::ostream &O, X86TargetMachine &TM)
-    : AsmPrinter(O, TM), DW(O, this) {
+  X86SharedAsmPrinter(std::ostream &O, X86TargetMachine &TM,
+                      TargetAsmInfo *T)
+    : AsmPrinter(O, TM, T), DW(O, this, T) {
     Subtarget = &TM.getSubtarget<X86Subtarget>();
   }
 
@@ -70,8 +54,6 @@ struct X86SharedAsmPrinter : public AsmPrinter {
     MachineFunctionPass::getAnalysisUsage(AU);
   }
 
-  const char *DefaultTextSection;   // "_text" for MASM, ".text" for others.
-  const char *DefaultDataSection;   // "_data" for MASM, ".data" for others.
   const X86Subtarget *Subtarget;
 
   // Necessary for Darwin to print out the apprioriate types of linker stubs

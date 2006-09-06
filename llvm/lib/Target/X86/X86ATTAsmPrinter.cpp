@@ -43,11 +43,11 @@ bool X86ATTAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
   switch (F->getLinkage()) {
   default: assert(0 && "Unknown linkage type!");
   case Function::InternalLinkage:  // Symbols default to internal.
-    SwitchToTextSection(DefaultTextSection, F);
+    SwitchToTextSection(TAI->getTextSection(), F);
     EmitAlignment(4, F);     // FIXME: This should be parameterized somewhere.
     break;
   case Function::ExternalLinkage:
-    SwitchToTextSection(DefaultTextSection, F);
+    SwitchToTextSection(TAI->getTextSection(), F);
     EmitAlignment(4, F);     // FIXME: This should be parameterized somewhere.
     O << "\t.globl\t" << CurrentFnName << "\n";
     break;
@@ -101,7 +101,7 @@ bool X86ATTAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
   // lables that are used in jump table expressions (e.g. LBB1_1-LJT1_0).
   EmitJumpTableInfo(MF.getJumpTableInfo());
   
-  if (HasDotTypeDotSizeDirective)
+  if (TAI->hasDotTypeDotSizeDirective())
     O << "\t.size " << CurrentFnName << ", .-" << CurrentFnName << "\n";
 
   if (Subtarget->isTargetDarwin()) {
@@ -144,7 +144,7 @@ void X86ATTAsmPrinter::printOperand(const MachineInstr *MI, unsigned OpNo,
   case MachineOperand::MO_JumpTableIndex: {
     bool isMemOp  = Modifier && !strcmp(Modifier, "mem");
     if (!isMemOp) O << '$';
-    O << PrivateGlobalPrefix << "JTI" << getFunctionNumber() << "_"
+    O << TAI->getPrivateGlobalPrefix() << "JTI" << getFunctionNumber() << "_"
       << MO.getJumpTableIndex();
     if (Subtarget->isTargetDarwin() && 
         TM.getRelocationModel() == Reloc::PIC_)
@@ -154,7 +154,7 @@ void X86ATTAsmPrinter::printOperand(const MachineInstr *MI, unsigned OpNo,
   case MachineOperand::MO_ConstantPoolIndex: {
     bool isMemOp  = Modifier && !strcmp(Modifier, "mem");
     if (!isMemOp) O << '$';
-    O << PrivateGlobalPrefix << "CPI" << getFunctionNumber() << "_"
+    O << TAI->getPrivateGlobalPrefix() << "CPI" << getFunctionNumber() << "_"
       << MO.getConstantPoolIndex();
     if (Subtarget->isTargetDarwin() && 
         TM.getRelocationModel() == Reloc::PIC_)
@@ -206,14 +206,14 @@ void X86ATTAsmPrinter::printOperand(const MachineInstr *MI, unsigned OpNo,
     if (isCallOp && 
         Subtarget->isTargetDarwin() && 
         TM.getRelocationModel() != Reloc::Static) {
-      std::string Name(GlobalPrefix);
+      std::string Name(TAI->getGlobalPrefix());
       Name += MO.getSymbolName();
       FnStubs.insert(Name);
       O << "L" << Name << "$stub";
       return;
     }
     if (!isCallOp) O << '$';
-    O << GlobalPrefix << MO.getSymbolName();
+    O << TAI->getGlobalPrefix() << MO.getSymbolName();
     return;
   }
   default:
@@ -388,7 +388,7 @@ void X86ATTAsmPrinter::printMachineInstruction(const MachineInstr *MI) {
       Reg1 = getX86SubSuperRegister(Reg1, MVT::i16);
     else
       Reg1 = getX86SubSuperRegister(Reg1, MVT::i8);
-    O << CommentString << " TRUNCATE ";
+    O << TAI->getCommentString() << " TRUNCATE ";
     if (Reg0 != Reg1)
       O << "\n\t";
     break;

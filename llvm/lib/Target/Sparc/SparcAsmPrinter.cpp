@@ -22,6 +22,7 @@
 #include "llvm/CodeGen/MachineFunctionPass.h"
 #include "llvm/CodeGen/MachineConstantPool.h"
 #include "llvm/CodeGen/MachineInstr.h"
+#include "llvm/Target/TargetAsmInfo.h"
 #include "llvm/Target/TargetData.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Support/Mangler.h"
@@ -36,14 +37,20 @@ using namespace llvm;
 namespace {
   Statistic<> EmittedInsts("asm-printer", "Number of machine instrs printed");
 
-  struct SparcAsmPrinter : public AsmPrinter {
-    SparcAsmPrinter(std::ostream &O, TargetMachine &TM) : AsmPrinter(O, TM) {
+  struct VISIBILITY_HIDDEN SparcTargetAsmInfo : public TargetAsmInfo {
+    SparcTargetAsmInfo() {
       Data16bitsDirective = "\t.half\t";
       Data32bitsDirective = "\t.word\t";
       Data64bitsDirective = 0;  // .xword is only supported by V9.
       ZeroDirective = "\t.skip\t";
       CommentString = "!";
       ConstantPoolSection = "\t.section \".rodata\",#alloc\n";
+    }
+  };
+
+  struct VISIBILITY_HIDDEN SparcAsmPrinter : public AsmPrinter {
+    SparcAsmPrinter(std::ostream &O, TargetMachine &TM, TargetAsmInfo *T)
+      : AsmPrinter(O, TM, T) {
     }
 
     /// We name each basic block in a Function with a unique number, so
@@ -78,7 +85,8 @@ namespace {
 ///
 FunctionPass *llvm::createSparcCodePrinterPass(std::ostream &o,
                                                TargetMachine &tm) {
-  return new SparcAsmPrinter(o, tm);
+  SparcTargetAsmInfo *TAI = new SparcTargetAsmInfo();
+  return new SparcAsmPrinter(o, tm, TAI);
 }
 
 /// runOnMachineFunction - This uses the printMachineInstruction()
@@ -167,7 +175,7 @@ void SparcAsmPrinter::printOperand(const MachineInstr *MI, int opNum) {
     O << MO.getSymbolName();
     break;
   case MachineOperand::MO_ConstantPoolIndex:
-    O << PrivateGlobalPrefix << "CPI" << getFunctionNumber() << "_"
+    O << TAI->getPrivateGlobalPrefix() << "CPI" << getFunctionNumber() << "_"
       << MO.getConstantPoolIndex();
     break;
   default:

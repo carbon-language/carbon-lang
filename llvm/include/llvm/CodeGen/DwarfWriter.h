@@ -48,6 +48,7 @@ class Module;
 class MRegisterInfo;
 class SubprogramDesc;
 class SourceLineInfo;
+class TargetAsmInfo;
 class TargetData;
 class Type;
 class TypeDesc;
@@ -70,7 +71,8 @@ public:
 // DwarfWriter - Emits Dwarf debug and exception handling directives.
 //
 class DwarfWriter {
-protected:
+
+private:
 
   //===--------------------------------------------------------------------===//
   // Core attributes used by the Dwarf  writer.
@@ -84,6 +86,9 @@ protected:
   /// Asm - Target of Dwarf emission.
   ///
   AsmPrinter *Asm;
+  
+  /// TAI - Target Asm Printer.
+  TargetAsmInfo *TAI;
   
   /// TD - Target data.
   const TargetData *TD;
@@ -147,92 +152,13 @@ protected:
   /// SectionSourceLines - Tracks line numbers per text section.
   ///
   std::vector<std::vector<SourceLineInfo *> > SectionSourceLines;
-  
-  //===--------------------------------------------------------------------===//
-  // Properties to be set by the derived class ctor, used to configure the
-  // Dwarf writer.
-  //
-  
-  /// AddressSize - Size of addresses used in file.
-  ///
-  unsigned AddressSize;
 
-  /// hasLEB128 - True if target asm supports leb128 directives.
-  ///
-  bool hasLEB128; /// Defaults to false.
-  
-  /// hasDotLoc - True if target asm supports .loc directives.
-  ///
-  bool hasDotLoc; /// Defaults to false.
-  
-  /// hasDotFile - True if target asm supports .file directives.
-  ///
-  bool hasDotFile; /// Defaults to false.
-  
-  /// needsSet - True if target asm can't compute addresses on data
-  /// directives.
-  bool needsSet; /// Defaults to false.
-  
-  /// DwarfAbbrevSection - Section directive for Dwarf abbrev.
-  ///
-  const char *DwarfAbbrevSection; /// Defaults to ".debug_abbrev".
 
-  /// DwarfInfoSection - Section directive for Dwarf info.
-  ///
-  const char *DwarfInfoSection; /// Defaults to ".debug_info".
-
-  /// DwarfLineSection - Section directive for Dwarf info.
-  ///
-  const char *DwarfLineSection; /// Defaults to ".debug_line".
-  
-  /// DwarfFrameSection - Section directive for Dwarf info.
-  ///
-  const char *DwarfFrameSection; /// Defaults to ".debug_frame".
-  
-  /// DwarfPubNamesSection - Section directive for Dwarf info.
-  ///
-  const char *DwarfPubNamesSection; /// Defaults to ".debug_pubnames".
-  
-  /// DwarfPubTypesSection - Section directive for Dwarf info.
-  ///
-  const char *DwarfPubTypesSection; /// Defaults to ".debug_pubtypes".
-  
-  /// DwarfStrSection - Section directive for Dwarf info.
-  ///
-  const char *DwarfStrSection; /// Defaults to ".debug_str".
-
-  /// DwarfLocSection - Section directive for Dwarf info.
-  ///
-  const char *DwarfLocSection; /// Defaults to ".debug_loc".
-
-  /// DwarfARangesSection - Section directive for Dwarf info.
-  ///
-  const char *DwarfARangesSection; /// Defaults to ".debug_aranges".
-
-  /// DwarfRangesSection - Section directive for Dwarf info.
-  ///
-  const char *DwarfRangesSection; /// Defaults to ".debug_ranges".
-
-  /// DwarfMacInfoSection - Section directive for Dwarf info.
-  ///
-  const char *DwarfMacInfoSection; /// Defaults to ".debug_macinfo".
-
-  /// TextSection - Section directive for standard text.
-  ///
-  const char *TextSection; /// Defaults to ".text".
-  
-  /// DataSection - Section directive for standard data.
-  ///
-  const char *DataSection; /// Defaults to ".data".
+public:
 
   //===--------------------------------------------------------------------===//
   // Emission and print routines
   //
-
-public:
-  /// getAddressSize - Return the size of a target address in bytes.
-  ///
-  unsigned getAddressSize() const { return AddressSize; }
 
   /// PrintHex - Print a value as a hexidecimal value.
   ///
@@ -461,8 +387,12 @@ private:
 
 public:
   
-  DwarfWriter(std::ostream &OS, AsmPrinter *A);
+  DwarfWriter(std::ostream &OS, AsmPrinter *A, TargetAsmInfo *T);
   virtual ~DwarfWriter();
+  
+  // Accessors.
+  //
+  TargetAsmInfo *getTargetAsmInfo() const { return TAI; }
   
   /// SetDebugInfo - Set DebugInfo when it's known that pass manager has
   /// created it.  Set by the target AsmPrinter.
