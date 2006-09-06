@@ -56,8 +56,8 @@ namespace llvm {
     void mayBeNotUsed();
 
     LLVMSymbol (enum LTOLinkageTypes lt, GlobalValue *g, const std::string &n, 
-		const std::string &m) : linkage(lt), gv(g), name(n), 
-					mangledName(m) {}
+                const std::string &m) : linkage(lt), gv(g), name(n), 
+                                        mangledName(m) {}
 
     const char *getName() { return name.c_str(); }
     const char *getMangledName() { return mangledName.c_str(); }
@@ -82,13 +82,14 @@ namespace llvm {
 
   public:
     typedef hash_map<const char*, LLVMSymbol*, hash<const char*>, 
-		     string_compare> NameToSymbolMap;
+                     string_compare> NameToSymbolMap;
 
     enum LTOStatus readLLVMObjectFile(const std::string &InputFilename,
-				      NameToSymbolMap &symbols,
-				      std::set<std::string> &references);
+                                      NameToSymbolMap &symbols,
+                                      std::set<std::string> &references);
     enum LTOStatus optimizeModules(const std::string &OutputFilename,
-				   std::vector<const char*> &exportList);
+                                   std::vector<const char*> &exportList,
+                                   std::string &targetTriple);
 
   private:
     std::vector<Module *> modules;

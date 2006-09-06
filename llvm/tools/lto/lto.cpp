@@ -266,7 +266,8 @@ static enum LTOStatus lto_optimize(Module *M, std::ostream &Out,
 /// Return appropriate LTOStatus.
 enum LTOStatus
 LinkTimeOptimizer::optimizeModules(const std::string &OutputFilename,
-                                   std::vector<const char *> &exportList)
+                                   std::vector<const char *> &exportList,
+                                   std::string &targetTriple)
 {
   if (modules.empty())
     return LTO_NO_WORK;
@@ -315,6 +316,8 @@ LinkTimeOptimizer::optimizeModules(const std::string &OutputFilename,
     tmpAsmFilePath.eraseFromDisk();
     return status;
   }
+
+  targetTriple = bigOne->getTargetTriple();
 
   // Run GCC to assemble and link the program into native code.
   //
