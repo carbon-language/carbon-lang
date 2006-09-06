@@ -92,6 +92,7 @@ namespace llvm {
     enum LTOStatus optimizeModules(const std::string &OutputFilename,
                                    std::vector<const char*> &exportList,
                                    std::string &targetTriple);
+    void getTargetTriple(const std::string &InputFilename, std::string &targetTriple);
 
   private:
     Module *getModule (const std::string &InputFilename);

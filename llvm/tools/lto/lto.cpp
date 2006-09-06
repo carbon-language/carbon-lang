@@ -116,6 +116,17 @@ LinkTimeOptimizer::getModule(const std::string &InputFilename)
   return m;
 }
 
+/// InputFilename is a LLVM bytecode file. Reade this bytecode file and 
+/// set corresponding target triplet string.
+void
+LinkTimeOptimizer::getTargetTriple(const std::string &InputFilename, 
+				   std::string &targetTriple)
+{
+  Module *m = getModule(InputFilename);
+  if (m)
+    targetTriple = m->getTargetTriple();
+}
+
 /// InputFilename is a LLVM bytecode file. Read it using bytecode reader.
 /// Collect global functions and symbol names in symbols vector.
 /// Collect external references in references vector.
