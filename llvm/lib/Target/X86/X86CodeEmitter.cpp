@@ -493,7 +493,7 @@ void Emitter::emitInstruction(const MachineInstr &MI) {
     emitRegModRMByte(MI.getOperand(CurOp++).getReg(),
                      (Desc.TSFlags & X86II::FormMask)-X86II::MRM0r);
 
-    if (CurOp != MI.getNumOperands())
+    if (CurOp != MI.getNumOperands() && MI.getOperand(CurOp).isImmediate())
       emitConstant(MI.getOperand(CurOp++).getImm(), sizeOfImm(Desc));
     break;
 
