@@ -99,6 +99,23 @@ findExternalRefs(Value *value, std::set<std::string> &references,
       findExternalRefs(c->getOperand(i), references, mangler);
 }
 
+/// InputFilename is a LLVM bytecode file. If Module with InputFilename is
+/// available then return it. Otherwise parseInputFilename.
+Module *
+LinkTimeOptimizer::getModule(const std::string &InputFilename)
+{
+  Module *m = NULL;
+
+  NameToModuleMap::iterator pos = allModules.find(InputFilename.c_str());
+  if (pos != allModules.end())
+    m = allModules[InputFilename.c_str()];
+  else {
+    m = ParseBytecodeFile(InputFilename);
+    allModules[InputFilename.c_str()] = m;
+  }
+  return m;
+}
+
 /// InputFilename is a LLVM bytecode file. Read it using bytecode reader.
 /// Collect global functions and symbol names in symbols vector.
 /// Collect external references in references vector.
@@ -108,7 +125,7 @@ LinkTimeOptimizer::readLLVMObjectFile(const std::string &InputFilename,
                                       NameToSymbolMap &symbols,
                                       std::set<std::string> &references)
 {
-  Module *m = ParseBytecodeFile(InputFilename);
+  Module *m = getModule(InputFilename);
   if (!m)
     return LTO_READ_FAILURE;
 

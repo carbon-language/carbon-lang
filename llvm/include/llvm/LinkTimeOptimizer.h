@@ -83,6 +83,8 @@ namespace llvm {
   public:
     typedef hash_map<const char*, LLVMSymbol*, hash<const char*>, 
                      string_compare> NameToSymbolMap;
+    typedef hash_map<const char*, Module*, hash<const char*>, 
+                     string_compare> NameToModuleMap;
 
     enum LTOStatus readLLVMObjectFile(const std::string &InputFilename,
                                       NameToSymbolMap &symbols,
@@ -92,8 +94,12 @@ namespace llvm {
                                    std::string &targetTriple);
 
   private:
+    Module *getModule (const std::string &InputFilename);
+
+  private:
     std::vector<Module *> modules;
     NameToSymbolMap allSymbols;
+    NameToModuleMap allModules;
   };
 
 } // End llvm namespace
