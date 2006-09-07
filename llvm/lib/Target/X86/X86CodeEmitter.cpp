@@ -527,6 +527,6 @@ void Emitter::emitInstruction(const MachineInstr &MI) {
     break;
   }
 
-  if ((Desc.Flags & M_VARIABLE_OPS) == 0)
-    assert(CurOp == MI.getNumOperands() && "Unknown encoding!");
+  assert((Desc.Flags & M_VARIABLE_OPS) != 0 ||
+         CurOp == MI.getNumOperands() && "Unknown encoding!");
 }
