@@ -24,7 +24,7 @@ class Module;
 class X86Subtarget : public TargetSubtarget {
 public:
   enum AsmWriterFlavorTy {
-    att, intel
+    att, intel, unset
   };
 
 protected:
