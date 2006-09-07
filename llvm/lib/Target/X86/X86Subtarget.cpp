@@ -18,18 +18,12 @@
 using namespace llvm;
 
 cl::opt<X86Subtarget::AsmWriterFlavorTy>
-AsmWriterFlavor("x86-asm-syntax",
+AsmWriterFlavor("x86-asm-syntax", cl::init(X86Subtarget::unset),
   cl::desc("Choose style of code to emit from X86 backend:"),
   cl::values(
     clEnumValN(X86Subtarget::att,   "att",   "  Emit AT&T-style assembly"),
     clEnumValN(X86Subtarget::intel, "intel", "  Emit Intel-style assembly"),
-    clEnumValEnd),
-#ifdef _MSC_VER
-  cl::init(X86Subtarget::intel)
-#else
-  cl::init(X86Subtarget::att)
-#endif
-                );
+    clEnumValEnd));
 
 /// GetCpuIDAndInfo - Execute the specified cpuid and return the 4 values in the
 /// specified arguments.  If we can't run cpuid on the host, return true.
@@ -197,6 +191,16 @@ X86Subtarget::X86Subtarget(const Module &M, const std::string &FS) {
 #elif defined(_WIN32)
     TargetType = isWindows;
 #endif
+  }
+
+  // If the asm syntax hasn't been overridden on the command line, use whatever
+  // the target wants.
+  if (AsmFlavor == X86Subtarget::unset) {
+    if (TargetType == isWindows) {
+      AsmFlavor = X86Subtarget::intel;
+    } else {
+      AsmFlavor = X86Subtarget::att;
+    }
   }
 
   if (TargetType == isDarwin || TargetType == isCygwin)
