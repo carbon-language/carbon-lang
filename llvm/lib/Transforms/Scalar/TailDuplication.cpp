@@ -127,6 +127,25 @@ bool TailDup::shouldEliminateUnconditionalBranch(TerminatorInst *TI) {
     for (; PI != PE; ++PI)
       if (TooMany-- == 0) return false;
   }
+  
+  // Finally, if this unconditional branch is a fall-through, be careful about
+  // tail duplicating it.  In particular, we don't want to taildup it if the
+  // original block will still be there after taildup is completed: doing so
+  // would eliminate the fall-through, requiring unconditional branches.
+  Function::iterator DestI = Dest;
+  if (&*--DestI == BI->getParent()) {
+    // The uncond branch is a fall-through.  Tail duplication of the block is
+    // will eliminate the fall-through-ness and end up cloning the terminator
+    // at the end of the Dest block.  Since the original Dest block will
+    // continue to exist, this means that one or the other will not be able to
+    // fall through.  One typical example that this helps with is code like:
+    // if (a)
+    //   foo();
+    // if (b)
+    //   foo();
+    // Cloning the 'if b' block into the end of the first foo block is messy.
+    return false;
+  }
 
   return true;
 }
