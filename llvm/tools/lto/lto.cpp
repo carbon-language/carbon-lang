@@ -282,7 +282,7 @@ static enum LTOStatus lto_optimize(Module *M, std::ostream &Out,
   // Make sure everything is still good.
   Passes.add(createVerifierPass());
 
-  Target.addPassesToEmitFile(Passes, Out, TargetMachine::AssemblyFile, true);
+  Target.addPassesToEmitWholeFile(Passes, Out, TargetMachine::AssemblyFile, true);
 
   // Run our queue of passes all at once now, efficiently.
   Passes.run(*M);
