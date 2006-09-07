@@ -49,12 +49,12 @@ unsigned ImmediatePostDominators::DFSPass(BasicBlock *V, InfoRec &VInfo,
     // For PostDominators, we want to walk predecessors rather than successors
     // as we do in forward Dominators.
     for (pred_iterator PI = pred_begin(currentBB), PE = pred_end(currentBB); 
-	 PI != PE; ++PI) {
+         PI != PE; ++PI) {
       InfoRec &SuccVInfo = Info[*PI];
       if (SuccVInfo.Semi == 0) {
-	SuccVInfo.Parent = currentBB;
+        SuccVInfo.Parent = currentBB;
 
-	workStack.push_back(std::make_pair(*PI, &SuccVInfo));	
+        workStack.push_back(std::make_pair(*PI, &SuccVInfo));   
       }
     }
   } while (!workStack.empty());
