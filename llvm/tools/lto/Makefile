@@ -20,7 +20,7 @@ DONT_BUILD_RELINKED = 1
 # early so we can set up LINK_COMPONENTS before includeing Makefile.rules
 include $(LEVEL)/Makefile.config
 
-LINK_COMPONENTS := $(TARGETS_TO_BUILD) ipo scalaropts bcreader bcwriter
+LINK_COMPONENTS := $(TARGETS_TO_BUILD) ipo scalaropts linker bcreader bcwriter
 
 include $(LEVEL)/Makefile.common
 
