@@ -18,6 +18,7 @@ PARALLEL_DIRS := llvm-config \
 		 bugpoint llvm-db llvm-extract \
                  gccas llvm-bcanalyzer llvm-stub \
 		 gccld llvm2cpp \
-                 llvm-ld llvmc llvm-prof
+                 llvm-ld llvmc llvm-prof \
+                 lto
 
 include $(LEVEL)/Makefile.common
