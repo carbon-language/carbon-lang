@@ -922,7 +922,6 @@ void SelectionDAGLowering::visitSwitch(SwitchInst &I) {
   // If the switch has more than 5 blocks, and at least 31.25% dense, and the 
   // target supports indirect branches, then emit a jump table rather than 
   // lowering the switch to a binary tree of conditional branches.
-  // FIXME: Make this work with PIC code
   if (TLI.isOperationLegal(ISD::BRIND, TLI.getPointerTy()) &&
       Cases.size() > 5) {
     uint64_t First = cast<ConstantIntegral>(Cases.front().first)->getRawValue();
@@ -3412,12 +3411,14 @@ void SelectionDAGISel::BuildSelectionDAG(SelectionDAG &DAG, BasicBlock *LLVMBB,
 
   // Emit constants only once even if used by multiple PHI nodes.
   std::map<Constant*, unsigned> ConstantsOut;
-
+  
   // Check successor nodes PHI nodes that expect a constant to be available from
   // this block.
   TerminatorInst *TI = LLVMBB->getTerminator();
   for (unsigned succ = 0, e = TI->getNumSuccessors(); succ != e; ++succ) {
     BasicBlock *SuccBB = TI->getSuccessor(succ);
+    if (!isa<PHINode>(SuccBB->begin())) continue;
+    
     MachineBasicBlock::iterator MBBI = FuncInfo.MBBMap[SuccBB]->begin();
     PHINode *PN;
 
@@ -3589,31 +3590,47 @@ void SelectionDAGISel::SelectBasicBlock(BasicBlock *LLVMBB, MachineFunction &MF,
   
   // If we generated any switch lowering information, build and codegen any
   // additional DAGs necessary.
-  for(unsigned i = 0, e = SwitchCases.size(); i != e; ++i) {
+  for (unsigned i = 0, e = SwitchCases.size(); i != e; ++i) {
     SelectionDAG SDAG(TLI, MF, getAnalysisToUpdate<MachineDebugInfo>());
     CurDAG = &SDAG;
     SelectionDAGLowering SDL(SDAG, TLI, FuncInfo);
+    
     // Set the current basic block to the mbb we wish to insert the code into
     BB = SwitchCases[i].ThisBB;
     SDL.setCurrentBasicBlock(BB);
+    
     // Emit the code
     SDL.visitSwitchCase(SwitchCases[i]);
     SDAG.setRoot(SDL.getRoot());
     CodeGenAndEmitDAG(SDAG);
-    // Iterate over the phi nodes, if there is a phi node in a successor of this
-    // block (for instance, the default block), then add a pair of operands to
-    // the phi node for this block, as if we were coming from the original
-    // BB before switch expansion.
-    for (unsigned pi = 0, pe = PHINodesToUpdate.size(); pi != pe; ++pi) {
-      MachineInstr *PHI = PHINodesToUpdate[pi].first;
-      MachineBasicBlock *PHIBB = PHI->getParent();
-      assert(PHI->getOpcode() == TargetInstrInfo::PHI &&
-             "This is not a machine PHI node that we are updating!");
-      if (PHIBB == SwitchCases[i].LHSBB || PHIBB == SwitchCases[i].RHSBB) {
-        PHI->addRegOperand(PHINodesToUpdate[pi].second, false);
-        PHI->addMachineBasicBlockOperand(BB);
+    
+    // Handle any PHI nodes in successors of this chunk, as if we were coming
+    // from the original BB before switch expansion.  Note that PHI nodes can
+    // occur multiple times in PHINodesToUpdate.  We have to be very careful to
+    // handle them the right number of times.
+    while ((BB = SwitchCases[i].LHSBB)) {  // Handle LHS and RHS.
+      for (MachineBasicBlock::iterator Phi = BB->begin();
+           Phi != BB->end() && Phi->getOpcode() == TargetInstrInfo::PHI; ++Phi){
+        // This value for this PHI node is recorded in PHINodesToUpdate, get it.
+        for (unsigned pn = 0; ; ++pn) {
+          assert(pn != PHINodesToUpdate.size() && "Didn't find PHI entry!");
+          if (PHINodesToUpdate[pn].first == Phi) {
+            Phi->addRegOperand(PHINodesToUpdate[pn].second, false);
+            Phi->addMachineBasicBlockOperand(SwitchCases[i].ThisBB);
+            break;
+          }
+        }
       }
+      
+      // Don't process RHS if same block as LHS.
+      if (BB == SwitchCases[i].RHSBB)
+        SwitchCases[i].RHSBB = 0;
+      
+      // If we haven't handled the RHS, do so now.  Otherwise, we're done.
+      SwitchCases[i].LHSBB = SwitchCases[i].RHSBB;
+      SwitchCases[i].RHSBB = 0;
     }
+    assert(SwitchCases[i].LHSBB == 0 && SwitchCases[i].RHSBB == 0);
   }
 }
 
