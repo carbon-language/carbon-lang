@@ -22,6 +22,11 @@ namespace llvm {
 class Module;
 
 class X86Subtarget : public TargetSubtarget {
+public:
+  enum AsmWriterFlavorTy {
+    att, intel
+  };
+
 protected:
   enum X86SSEEnum {
     NoMMXSSE, MMX, SSE1, SSE2, SSE3
@@ -31,12 +36,15 @@ protected:
     NoThreeDNow, ThreeDNow, ThreeDNowA
   };
 
+  /// AsmFlavor - Which x86 asm dialect to use.
+  AsmWriterFlavorTy AsmFlavor;
+
   /// X86SSELevel - MMX, SSE1, SSE2, SSE3, or none supported.
   X86SSEEnum X86SSELevel;
 
   /// X863DNowLevel - 3DNow or 3DNow Athlon, or none supported.
   X863DNowEnum X863DNowLevel;
-
+  
   /// Is64Bit - True if the processor supports Em64T.
   bool Is64Bit;
 
@@ -80,6 +88,9 @@ public:
   bool hasSSE3() const { return X86SSELevel >= SSE3; }
   bool has3DNow() const { return X863DNowLevel >= ThreeDNow; }
   bool has3DNowA() const { return X863DNowLevel >= ThreeDNowA; }
+  
+  bool isFlavorAtt() const { return AsmFlavor == att; }
+  bool isFlavorIntel() const { return AsmFlavor == intel; }
 
   bool isTargetDarwin() const { return TargetType == isDarwin; }
   bool isTargetELF() const { return TargetType == isELF; }

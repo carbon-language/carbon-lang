@@ -23,27 +23,10 @@
 #include "llvm/Type.h"
 #include "llvm/Assembly/Writer.h"
 #include "llvm/Support/Mangler.h"
-#include "llvm/Support/CommandLine.h"
 using namespace llvm;
-
-enum AsmWriterFlavorTy { att, intel };
 
 Statistic<> llvm::EmittedInsts("asm-printer",
                                "Number of machine instrs printed");
-
-cl::opt<AsmWriterFlavorTy>
-AsmWriterFlavor("x86-asm-syntax",
-                cl::desc("Choose style of code to emit from X86 backend:"),
-                cl::values(
-                           clEnumVal(att,   "  Emit AT&T-style assembly"),
-                           clEnumVal(intel, "  Emit Intel-style assembly"),
-                           clEnumValEnd),
-#ifdef _MSC_VER
-                cl::init(intel)
-#else
-                cl::init(att)
-#endif
-                );
 
 X86TargetAsmInfo::X86TargetAsmInfo(X86TargetMachine &TM) {
   const X86Subtarget *Subtarget = &TM.getSubtarget<X86Subtarget>();
@@ -97,7 +80,7 @@ X86TargetAsmInfo::X86TargetAsmInfo(X86TargetMachine &TM) {
   default: break;
   }
   
-  if (AsmWriterFlavor == intel) {
+  if (Subtarget->isFlavorIntel()) {
     GlobalPrefix = "_";
     CommentString = ";";
   
@@ -271,12 +254,12 @@ bool X86SharedAsmPrinter::doFinalization(Module &M) {
 ///
 FunctionPass *llvm::createX86CodePrinterPass(std::ostream &o,
                                              X86TargetMachine &tm) {
+  const X86Subtarget *Subtarget = &tm.getSubtarget<X86Subtarget>();
   TargetAsmInfo *TAI = new X86TargetAsmInfo(tm);
 
-  switch (AsmWriterFlavor) {
-  default:
-    assert(0 && "Unknown asm flavor!");
-  case intel: return new X86IntelAsmPrinter(o, tm, TAI);
-  case att: return new X86ATTAsmPrinter(o, tm, TAI);
+  if (Subtarget->isFlavorIntel()) {
+    return new X86IntelAsmPrinter(o, tm, TAI);
+  } else {
+    return new X86ATTAsmPrinter(o, tm, TAI);
   }
 }

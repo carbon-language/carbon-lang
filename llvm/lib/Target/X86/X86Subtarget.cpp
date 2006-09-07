@@ -13,8 +13,23 @@
 
 #include "X86Subtarget.h"
 #include "llvm/Module.h"
+#include "llvm/Support/CommandLine.h"
 #include "X86GenSubtarget.inc"
 using namespace llvm;
+
+cl::opt<X86Subtarget::AsmWriterFlavorTy>
+AsmWriterFlavor("x86-asm-syntax",
+  cl::desc("Choose style of code to emit from X86 backend:"),
+  cl::values(
+    clEnumValN(X86Subtarget::att,   "att",   "  Emit AT&T-style assembly"),
+    clEnumValN(X86Subtarget::intel, "intel", "  Emit Intel-style assembly"),
+    clEnumValEnd),
+#ifdef _MSC_VER
+  cl::init(X86Subtarget::intel)
+#else
+  cl::init(X86Subtarget::att)
+#endif
+                );
 
 /// GetCpuIDAndInfo - Execute the specified cpuid and return the 4 values in the
 /// specified arguments.  If we can't run cpuid on the host, return true.
@@ -151,6 +166,7 @@ X86Subtarget::X86Subtarget(const Module &M, const std::string &FS) {
   MinRepStrSizeThreshold = 128;
   X86SSELevel = NoMMXSSE;
   X863DNowLevel = NoThreeDNow;
+  AsmFlavor = AsmWriterFlavor;
   Is64Bit = false;
 
   // Determine default and user specified characteristics
