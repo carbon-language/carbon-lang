@@ -234,6 +234,7 @@ static void DisambiguateGlobalSymbols(Module *M) {
   Mangler Mang(*M);
   // Agree with the CBE on symbol naming
   Mang.markCharUnacceptable('.');
+  Mang.setPreserveAsmNames(true);
   for (Module::global_iterator I = M->global_begin(), E = M->global_end();
        I != E; ++I)
     I->setName(Mang.getValueName(I));
