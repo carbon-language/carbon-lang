@@ -88,7 +88,7 @@ private:
   AsmPrinter *Asm;
   
   /// TAI - Target Asm Printer.
-  TargetAsmInfo *TAI;
+  const TargetAsmInfo *TAI;
   
   /// TD - Target data.
   const TargetData *TD;
@@ -387,12 +387,12 @@ private:
 
 public:
   
-  DwarfWriter(std::ostream &OS, AsmPrinter *A, TargetAsmInfo *T);
+  DwarfWriter(std::ostream &OS, AsmPrinter *A, const TargetAsmInfo *T);
   virtual ~DwarfWriter();
   
   // Accessors.
   //
-  TargetAsmInfo *getTargetAsmInfo() const { return TAI; }
+  const TargetAsmInfo *getTargetAsmInfo() const { return TAI; }
   
   /// SetDebugInfo - Set DebugInfo when it's known that pass manager has
   /// created it.  Set by the target AsmPrinter.

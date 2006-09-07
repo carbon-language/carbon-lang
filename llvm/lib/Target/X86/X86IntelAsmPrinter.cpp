@@ -14,11 +14,13 @@
 //===----------------------------------------------------------------------===//
 
 #include "X86IntelAsmPrinter.h"
+#include "X86TargetAsmInfo.h"
 #include "X86.h"
 #include "llvm/Constants.h"
 #include "llvm/Module.h"
 #include "llvm/Assembly/Writer.h"
 #include "llvm/Support/Mangler.h"
+#include "llvm/Target/TargetAsmInfo.h"
 #include "llvm/Target/TargetOptions.h"
 using namespace llvm;
 

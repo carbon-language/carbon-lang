@@ -49,7 +49,7 @@ namespace llvm {
     
     /// Target Asm Printer information.
     ///
-    TargetAsmInfo *TAI;
+    const TargetAsmInfo *TAI;
 
     /// Name-mangler for global names.
     ///
@@ -65,7 +65,7 @@ namespace llvm {
     std::string CurrentSection;
   
   protected:
-    AsmPrinter(std::ostream &o, TargetMachine &TM, TargetAsmInfo *T);
+    AsmPrinter(std::ostream &o, TargetMachine &TM, const TargetAsmInfo *T);
     
   public:
     /// SwitchToTextSection - Switch to the specified section of the executable

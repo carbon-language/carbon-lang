@@ -19,6 +19,7 @@
 #include "llvm/Target/TargetFrameInfo.h"
 #include "IA64InstrInfo.h"
 #include "IA64ISelLowering.h"
+#include "IA64TargetAsmInfo.h"
 
 namespace llvm {
 
@@ -40,6 +41,10 @@ public:
     return &InstrInfo.getRegisterInfo();
   }
   virtual const TargetData       *getTargetData() const { return &DataLayout; }
+  
+  virtual const TargetAsmInfo *createTargetAsmInfo() const {
+    return static_cast<const TargetAsmInfo *>(new IA64TargetAsmInfo(*this));
+  }
 
   static unsigned getModuleMatchQuality(const Module &M);
 

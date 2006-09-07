@@ -21,6 +21,9 @@
 
 namespace llvm {
 
+  // Forward declaration.
+  class TargetMachine;
+
   /// TargetAsmInfo - This class is intended to be used as a base class for asm
   /// properties and features specific to the target.
   class TargetAsmInfo {
@@ -266,7 +269,7 @@ namespace llvm {
     unsigned getAddressSize() const {
       return AddressSize;
     }
-    bool getNeedsSet() const {
+    bool needsSet() const {
       return NeedsSet;
     }
     const char *getCommentString() const {

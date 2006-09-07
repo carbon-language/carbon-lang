@@ -23,87 +23,11 @@
 #include "llvm/Type.h"
 #include "llvm/Assembly/Writer.h"
 #include "llvm/Support/Mangler.h"
+#include "llvm/Target/TargetAsmInfo.h"
 using namespace llvm;
 
 Statistic<> llvm::EmittedInsts("asm-printer",
                                "Number of machine instrs printed");
-
-X86TargetAsmInfo::X86TargetAsmInfo(X86TargetMachine &TM) {
-  const X86Subtarget *Subtarget = &TM.getSubtarget<X86Subtarget>();
-  
-  //FIXME - Should to be simplified.
-   
-  switch (Subtarget->TargetType) {
-  case X86Subtarget::isDarwin:
-    AlignmentIsInBytes = false;
-    GlobalPrefix = "_";
-    Data64bitsDirective = 0;       // we can't emit a 64-bit unit
-    ZeroDirective = "\t.space\t";  // ".space N" emits N zeros.
-    PrivateGlobalPrefix = "L";     // Marker for constant pool idxs
-    ConstantPoolSection = "\t.const\n";
-    JumpTableDataSection = "\t.const\n"; // FIXME: depends on PIC mode
-    FourByteConstantSection = "\t.literal4\n";
-    EightByteConstantSection = "\t.literal8\n";
-    LCOMMDirective = "\t.lcomm\t";
-    COMMDirectiveTakesAlignment = false;
-    HasDotTypeDotSizeDirective = false;
-    StaticCtorsSection = ".mod_init_func";
-    StaticDtorsSection = ".mod_term_func";
-    InlineAsmStart = "# InlineAsm Start";
-    InlineAsmEnd = "# InlineAsm End";
-    SetDirective = "\t.set";
-    
-    NeedsSet = true;
-    DwarfAbbrevSection = ".section __DWARF,__debug_abbrev,regular,debug";
-    DwarfInfoSection = ".section __DWARF,__debug_info,regular,debug";
-    DwarfLineSection = ".section __DWARF,__debug_line,regular,debug";
-    DwarfFrameSection = ".section __DWARF,__debug_frame,regular,debug";
-    DwarfPubNamesSection = ".section __DWARF,__debug_pubnames,regular,debug";
-    DwarfPubTypesSection = ".section __DWARF,__debug_pubtypes,regular,debug";
-    DwarfStrSection = ".section __DWARF,__debug_str,regular,debug";
-    DwarfLocSection = ".section __DWARF,__debug_loc,regular,debug";
-    DwarfARangesSection = ".section __DWARF,__debug_aranges,regular,debug";
-    DwarfRangesSection = ".section __DWARF,__debug_ranges,regular,debug";
-    DwarfMacInfoSection = ".section __DWARF,__debug_macinfo,regular,debug";
-    break;
-  case X86Subtarget::isCygwin:
-    GlobalPrefix = "_";
-    COMMDirectiveTakesAlignment = false;
-    HasDotTypeDotSizeDirective = false;
-    StaticCtorsSection = "\t.section .ctors,\"aw\"";
-    StaticDtorsSection = "\t.section .dtors,\"aw\"";
-    break;
-  case X86Subtarget::isWindows:
-    GlobalPrefix = "_";
-    HasDotTypeDotSizeDirective = false;
-    break;
-  default: break;
-  }
-  
-  if (Subtarget->isFlavorIntel()) {
-    GlobalPrefix = "_";
-    CommentString = ";";
-  
-    PrivateGlobalPrefix = "$";
-    AlignDirective = "\talign\t";
-    ZeroDirective = "\tdb\t";
-    ZeroDirectiveSuffix = " dup(0)";
-    AsciiDirective = "\tdb\t";
-    AscizDirective = 0;
-    Data8bitsDirective = "\tdb\t";
-    Data16bitsDirective = "\tdw\t";
-    Data32bitsDirective = "\tdd\t";
-    Data64bitsDirective = "\tdq\t";
-    HasDotTypeDotSizeDirective = false;
-    
-    TextSection = "_text";
-    DataSection = "_data";
-    SwitchToSectionDirective = "";
-    TextSectionStartSuffix = "\tsegment 'CODE'";
-    DataSectionStartSuffix = "\tsegment 'DATA'";
-    SectionEndDirectiveSuffix = "\tends\n";
-  }
-}
 
 /// doInitialization
 bool X86SharedAsmPrinter::doInitialization(Module &M) {  
@@ -255,11 +179,10 @@ bool X86SharedAsmPrinter::doFinalization(Module &M) {
 FunctionPass *llvm::createX86CodePrinterPass(std::ostream &o,
                                              X86TargetMachine &tm) {
   const X86Subtarget *Subtarget = &tm.getSubtarget<X86Subtarget>();
-  TargetAsmInfo *TAI = new X86TargetAsmInfo(tm);
 
   if (Subtarget->isFlavorIntel()) {
-    return new X86IntelAsmPrinter(o, tm, TAI);
+    return new X86IntelAsmPrinter(o, tm, tm.getTargetAsmInfo());
   } else {
-    return new X86ATTAsmPrinter(o, tm, TAI);
+    return new X86ATTAsmPrinter(o, tm, tm.getTargetAsmInfo());
   }
 }

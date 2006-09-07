@@ -16,8 +16,10 @@
 #include "X86ATTAsmPrinter.h"
 #include "X86.h"
 #include "X86TargetMachine.h"
+#include "X86TargetAsmInfo.h"
 #include "llvm/Module.h"
 #include "llvm/Support/Mangler.h"
+#include "llvm/Target/TargetAsmInfo.h"
 #include "llvm/Target/TargetOptions.h"
 #include <iostream>
 using namespace llvm;

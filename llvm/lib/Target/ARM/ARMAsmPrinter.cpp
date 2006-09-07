@@ -38,20 +38,8 @@ using namespace llvm;
 namespace {
   Statistic<> EmittedInsts("asm-printer", "Number of machine instrs printed");
 
-  struct VISIBILITY_HIDDEN ARMTargetAsmInfo : public TargetAsmInfo {
-    ARMTargetAsmInfo() {
-      Data16bitsDirective = "\t.half\t";
-      Data32bitsDirective = "\t.word\t";
-      Data64bitsDirective = 0;
-      ZeroDirective = "\t.skip\t";
-      CommentString = "@";
-      ConstantPoolSection = "\t.text\n";
-      AlignmentIsInBytes = false;
-    }
-  };
-
   struct VISIBILITY_HIDDEN ARMAsmPrinter : public AsmPrinter {
-    ARMAsmPrinter(std::ostream &O, TargetMachine &TM, TargetAsmInfo *T)
+    ARMAsmPrinter(std::ostream &O, TargetMachine &TM, const TargetAsmInfo *T)
       : AsmPrinter(O, TM, T) {
     }
 
@@ -113,8 +101,7 @@ namespace {
 ///
 FunctionPass *llvm::createARMCodePrinterPass(std::ostream &o,
                                                TargetMachine &tm) {
-  ARMTargetAsmInfo *TAI = new ARMTargetAsmInfo();
-  return new ARMAsmPrinter(o, tm, TAI);
+  return new ARMAsmPrinter(o, tm, tm.getTargetAsmInfo());
 }
 
 /// runOnMachineFunction - This uses the printMachineInstruction()

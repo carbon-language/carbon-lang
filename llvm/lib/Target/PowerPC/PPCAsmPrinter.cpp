@@ -50,7 +50,7 @@ namespace {
   struct VISIBILITY_HIDDEN PPCAsmPrinter : public AsmPrinter {
     std::set<std::string> FnStubs, GVStubs;
     
-    PPCAsmPrinter(std::ostream &O, TargetMachine &TM, TargetAsmInfo *T)
+    PPCAsmPrinter(std::ostream &O, TargetMachine &TM, const TargetAsmInfo *T)
       : AsmPrinter(O, TM, T) {}
 
     virtual const char *getPassName() const {
@@ -239,49 +239,14 @@ namespace {
     
   };
 
-  struct VISIBILITY_HIDDEN DarwinTargetAsmInfo : public TargetAsmInfo {
-    DarwinTargetAsmInfo(PPCTargetMachine &TM) {
-      bool isPPC64 = TM.getSubtargetImpl()->isPPC64();
-
-      CommentString = ";";
-      GlobalPrefix = "_";
-      PrivateGlobalPrefix = "L";
-      ZeroDirective = "\t.space\t";
-      SetDirective = "\t.set";
-      Data64bitsDirective = isPPC64 ? ".quad\t" : 0;  
-      AlignmentIsInBytes = false;
-      ConstantPoolSection = "\t.const\t";
-      JumpTableDataSection = ".const";
-      JumpTableTextSection = "\t.text";
-      LCOMMDirective = "\t.lcomm\t";
-      StaticCtorsSection = ".mod_init_func";
-      StaticDtorsSection = ".mod_term_func";
-      InlineAsmStart = "# InlineAsm Start";
-      InlineAsmEnd = "# InlineAsm End";
-      
-      NeedsSet = true;
-      AddressSize = isPPC64 ? 8 : 4;
-      DwarfAbbrevSection = ".section __DWARF,__debug_abbrev";
-      DwarfInfoSection = ".section __DWARF,__debug_info";
-      DwarfLineSection = ".section __DWARF,__debug_line";
-      DwarfFrameSection = ".section __DWARF,__debug_frame";
-      DwarfPubNamesSection = ".section __DWARF,__debug_pubnames";
-      DwarfPubTypesSection = ".section __DWARF,__debug_pubtypes";
-      DwarfStrSection = ".section __DWARF,__debug_str";
-      DwarfLocSection = ".section __DWARF,__debug_loc";
-      DwarfARangesSection = ".section __DWARF,__debug_aranges";
-      DwarfRangesSection = ".section __DWARF,__debug_ranges";
-      DwarfMacInfoSection = ".section __DWARF,__debug_macinfo";
-    }
-  };
-
   /// DarwinAsmPrinter - PowerPC assembly printer, customized for Darwin/Mac OS
   /// X
   struct VISIBILITY_HIDDEN DarwinAsmPrinter : public PPCAsmPrinter {
   
     DwarfWriter DW;
 
-    DarwinAsmPrinter(std::ostream &O, PPCTargetMachine &TM, TargetAsmInfo *T)
+    DarwinAsmPrinter(std::ostream &O, PPCTargetMachine &TM,
+                     const TargetAsmInfo *T)
       : PPCAsmPrinter(O, TM, T), DW(O, this, T) {
       bool isPPC64 = TM.getSubtargetImpl()->isPPC64();
     }
@@ -309,8 +274,7 @@ namespace {
 ///
 FunctionPass *llvm::createDarwinCodePrinterPass(std::ostream &o,
                                                 PPCTargetMachine &tm) {
-  TargetAsmInfo *TAI = new DarwinTargetAsmInfo(tm);
-  return new DarwinAsmPrinter(o, tm, TAI);
+  return new DarwinAsmPrinter(o, tm, tm.getTargetAsmInfo());
 }
 
 // Include the auto-generated portion of the assembly writer

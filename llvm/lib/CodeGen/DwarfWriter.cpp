@@ -574,24 +574,24 @@ void DIEAbbrev::Emit(const DwarfWriter &DW) const {
 }
 
 #ifndef NDEBUG
-  void DIEAbbrev::print(std::ostream &O) {
-    O << "Abbreviation @"
-      << std::hex << (intptr_t)this << std::dec
+void DIEAbbrev::print(std::ostream &O) {
+  O << "Abbreviation @"
+    << std::hex << (intptr_t)this << std::dec
+    << "  "
+    << TagString(Tag)
+    << " "
+    << ChildrenString(ChildrenFlag)
+    << "\n";
+  
+  for (unsigned i = 0, N = Data.size(); i < N; ++i) {
+    O << "  "
+      << AttributeString(Data[i].getAttribute())
       << "  "
-      << TagString(Tag)
-      << " "
-      << ChildrenString(ChildrenFlag)
+      << FormEncodingString(Data[i].getForm())
       << "\n";
-    
-    for (unsigned i = 0, N = Data.size(); i < N; ++i) {
-      O << "  "
-        << AttributeString(Data[i].getAttribute())
-        << "  "
-        << FormEncodingString(Data[i].getForm())
-        << "\n";
-    }
   }
-  void DIEAbbrev::dump() { print(std::cerr); }
+}
+void DIEAbbrev::dump() { print(std::cerr); }
 #endif
 
 //===----------------------------------------------------------------------===//
@@ -1160,7 +1160,7 @@ void DwarfWriter::EmitReference(const std::string &Name) const {
 /// is an option (needsSet) to use an intermediary 'set' expression.
 void DwarfWriter::EmitDifference(const char *TagHi, unsigned NumberHi,
                                  const char *TagLo, unsigned NumberLo) const {
-  if (TAI->getNeedsSet()) {
+  if (TAI->needsSet()) {
     static unsigned SetCounter = 0;
     
     O << "\t.set\t";
@@ -2467,7 +2467,8 @@ void DwarfWriter::ConstructSubprogramDIEs() {
 // Main entry points.
 //
   
-DwarfWriter::DwarfWriter(std::ostream &OS, AsmPrinter *A, TargetAsmInfo *T)
+DwarfWriter::DwarfWriter(std::ostream &OS, AsmPrinter *A,
+  const TargetAsmInfo *T)
 : O(OS)
 , Asm(A)
 , TAI(T)

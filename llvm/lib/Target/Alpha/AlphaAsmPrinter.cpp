@@ -29,20 +29,13 @@ using namespace llvm;
 namespace {
   Statistic<> EmittedInsts("asm-printer", "Number of machine instrs printed");
   
-  struct VISIBILITY_HIDDEN AlphaTargetAsmInfo : public TargetAsmInfo {
-    AlphaTargetAsmInfo() {
-      AlignmentIsInBytes = false;
-      PrivateGlobalPrefix = "$";
-    }
-  };
-
   struct VISIBILITY_HIDDEN AlphaAsmPrinter : public AsmPrinter {
 
     /// Unique incrementer for label values for referencing Global values.
     ///
     unsigned LabelNumber;
 
-    AlphaAsmPrinter(std::ostream &o, TargetMachine &tm, TargetAsmInfo *T)
+    AlphaAsmPrinter(std::ostream &o, TargetMachine &tm, const TargetAsmInfo *T)
        : AsmPrinter(o, tm, T), LabelNumber(0) {
     }
 
@@ -82,8 +75,7 @@ namespace {
 ///
 FunctionPass *llvm::createAlphaCodePrinterPass (std::ostream &o,
                                                   TargetMachine &tm) {
-  AlphaTargetAsmInfo *TAI = new AlphaTargetAsmInfo();
-  return new AlphaAsmPrinter(o, tm, TAI);
+  return new AlphaAsmPrinter(o, tm, tm.getTargetAsmInfo());
 }
 
 #include "AlphaGenAsmWriter.inc"

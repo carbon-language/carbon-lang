@@ -27,7 +27,8 @@
 #include <cerrno>
 using namespace llvm;
 
-AsmPrinter::AsmPrinter(std::ostream &o, TargetMachine &tm, TargetAsmInfo *T)
+AsmPrinter::AsmPrinter(std::ostream &o, TargetMachine &tm,
+                       const TargetAsmInfo *T)
 : FunctionNumber(0), O(o), TM(tm), TAI(T)
 {}
 

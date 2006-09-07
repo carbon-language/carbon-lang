@@ -22,7 +22,6 @@
 #include "llvm/CodeGen/DwarfWriter.h"
 #include "llvm/CodeGen/MachineDebugInfo.h"
 #include "llvm/ADT/Statistic.h"
-#include "llvm/Target/TargetAsmInfo.h"
 #include <set>
 
 
@@ -30,15 +29,11 @@ namespace llvm {
 
 extern Statistic<> EmittedInsts;
 
-struct VISIBILITY_HIDDEN X86TargetAsmInfo : public TargetAsmInfo {
-  X86TargetAsmInfo(X86TargetMachine &TM);
-};
-
 struct VISIBILITY_HIDDEN X86SharedAsmPrinter : public AsmPrinter {
   DwarfWriter DW;
 
   X86SharedAsmPrinter(std::ostream &O, X86TargetMachine &TM,
-                      TargetAsmInfo *T)
+                      const TargetAsmInfo *T)
     : AsmPrinter(O, TM, T), DW(O, this, T) {
     Subtarget = &TM.getSubtarget<X86Subtarget>();
   }

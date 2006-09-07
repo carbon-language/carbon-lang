@@ -19,6 +19,7 @@
 #include "PPCJITInfo.h"
 #include "PPCInstrInfo.h"
 #include "PPCISelLowering.h"
+#include "PPCTargetAsmInfo.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetData.h"
 
@@ -55,6 +56,9 @@ public:
     return InstrItins;
   }
   
+  virtual const TargetAsmInfo *createTargetAsmInfo() const {
+    return static_cast<const TargetAsmInfo *>(new DarwinTargetAsmInfo(*this));
+  }
   
   // Pass Pipeline Configuration
   virtual bool addInstSelector(FunctionPassManager &PM, bool Fast);

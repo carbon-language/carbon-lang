@@ -37,19 +37,8 @@ using namespace llvm;
 namespace {
   Statistic<> EmittedInsts("asm-printer", "Number of machine instrs printed");
 
-  struct VISIBILITY_HIDDEN SparcTargetAsmInfo : public TargetAsmInfo {
-    SparcTargetAsmInfo() {
-      Data16bitsDirective = "\t.half\t";
-      Data32bitsDirective = "\t.word\t";
-      Data64bitsDirective = 0;  // .xword is only supported by V9.
-      ZeroDirective = "\t.skip\t";
-      CommentString = "!";
-      ConstantPoolSection = "\t.section \".rodata\",#alloc\n";
-    }
-  };
-
   struct VISIBILITY_HIDDEN SparcAsmPrinter : public AsmPrinter {
-    SparcAsmPrinter(std::ostream &O, TargetMachine &TM, TargetAsmInfo *T)
+    SparcAsmPrinter(std::ostream &O, TargetMachine &TM, const TargetAsmInfo *T)
       : AsmPrinter(O, TM, T) {
     }
 
@@ -85,8 +74,7 @@ namespace {
 ///
 FunctionPass *llvm::createSparcCodePrinterPass(std::ostream &o,
                                                TargetMachine &tm) {
-  SparcTargetAsmInfo *TAI = new SparcTargetAsmInfo();
-  return new SparcAsmPrinter(o, tm, TAI);
+  return new SparcAsmPrinter(o, tm, tm.getTargetAsmInfo());
 }
 
 /// runOnMachineFunction - This uses the printMachineInstruction()

@@ -20,7 +20,7 @@
 namespace llvm {
 
 struct X86ATTAsmPrinter : public X86SharedAsmPrinter {
- X86ATTAsmPrinter(std::ostream &O, X86TargetMachine &TM, TargetAsmInfo *T)
+ X86ATTAsmPrinter(std::ostream &O, X86TargetMachine &TM, const TargetAsmInfo *T)
     : X86SharedAsmPrinter(O, TM, T) { }
 
   virtual const char *getPassName() const {
