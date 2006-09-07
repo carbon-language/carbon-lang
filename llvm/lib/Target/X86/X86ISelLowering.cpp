@@ -2836,8 +2836,11 @@ SDOperand X86TargetLowering::LowerShift(SDOperand Op, SelectionDAG &DAG) {
       Tmp3 = DAG.getNode(isSRA ? ISD::SRA : ISD::SRL, MVT::i32, ShOpHi, ShAmt);
     }
 
-    SDOperand InFlag = DAG.getNode(X86ISD::TEST, MVT::Flag,
-                                   ShAmt, DAG.getConstant(32, MVT::i8));
+    SDOperand InFlag =
+      DAG.getNode(X86ISD::CMP, MVT::Flag,
+                  DAG.getNode(ISD::AND, MVT::i8, 
+                              ShAmt, DAG.getConstant(32, MVT::i8)),
+                  DAG.getConstant(0, MVT::i8));
 
     SDOperand Hi, Lo;
     SDOperand CC = DAG.getConstant(X86ISD::COND_NE, MVT::i8);
@@ -3134,7 +3137,8 @@ SDOperand X86TargetLowering::LowerSELECT(SDOperand Op, SelectionDAG &DAG) {
 
   if (addTest) {
     CC = DAG.getConstant(X86ISD::COND_NE, MVT::i8);
-    Cond = DAG.getNode(X86ISD::TEST, MVT::Flag, Op0, Op0);
+    Cond = DAG.getNode(X86ISD::CMP, MVT::Flag, Op0,
+                       DAG.getConstant(0, MVT::i8));
   }
 
   std::vector<MVT::ValueType> Tys;
@@ -3190,7 +3194,8 @@ SDOperand X86TargetLowering::LowerBRCOND(SDOperand Op, SelectionDAG &DAG) {
 
   if (addTest) {
     CC = DAG.getConstant(X86ISD::COND_NE, MVT::i8);
-    Cond = DAG.getNode(X86ISD::TEST, MVT::Flag, Cond, Cond);
+    Cond = DAG.getNode(X86ISD::CMP, MVT::Flag, Cond,
+                       DAG.getConstant(0, MVT::i8));
   }
   return DAG.getNode(X86ISD::BRCOND, Op.getValueType(),
                      Op.getOperand(0), Op.getOperand(2), CC, Cond);
@@ -3774,7 +3779,6 @@ const char *X86TargetLowering::getTargetNodeName(unsigned Opcode) const {
   case X86ISD::TAILCALL:           return "X86ISD::TAILCALL";
   case X86ISD::RDTSC_DAG:          return "X86ISD::RDTSC_DAG";
   case X86ISD::CMP:                return "X86ISD::CMP";
-  case X86ISD::TEST:               return "X86ISD::TEST";
   case X86ISD::COMI:               return "X86ISD::COMI";
   case X86ISD::UCOMI:              return "X86ISD::UCOMI";
   case X86ISD::SETCC:              return "X86ISD::SETCC";

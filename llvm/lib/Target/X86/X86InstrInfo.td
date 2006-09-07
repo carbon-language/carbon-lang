@@ -52,8 +52,6 @@ def X86shrd    : SDNode<"X86ISD::SHRD",     SDTIntShiftDOp>;
 
 def X86cmp     : SDNode<"X86ISD::CMP" ,     SDTX86CmpTest,
                         [SDNPOutFlag]>;
-def X86test    : SDNode<"X86ISD::TEST",     SDTX86CmpTest,
-                        [SDNPOutFlag]>;
 
 def X86cmov    : SDNode<"X86ISD::CMOV",     SDTX86Cmov,    
                         [SDNPInFlag, SDNPOutFlag]>;
@@ -2073,60 +2071,54 @@ def IMUL32rmi8 : Ii8<0x6B, MRMSrcMem,                       // GR32 = [mem32]*I8
 let isCommutable = 1 in {   // TEST X, Y   --> TEST Y, X
 def TEST8rr  : I<0x84, MRMDestReg, (ops GR8:$src1, GR8:$src2),
                  "test{b} {$src2, $src1|$src1, $src2}",
-                 [(X86test GR8:$src1, GR8:$src2)]>;
+                 [(X86cmp (and GR8:$src1, GR8:$src2), 0)]>;
 def TEST16rr : I<0x85, MRMDestReg, (ops GR16:$src1, GR16:$src2),
                  "test{w} {$src2, $src1|$src1, $src2}",
-                 [(X86test GR16:$src1, GR16:$src2)]>, OpSize;
+                 [(X86cmp (and GR16:$src1, GR16:$src2), 0)]>, OpSize;
 def TEST32rr : I<0x85, MRMDestReg, (ops GR32:$src1, GR32:$src2),
                  "test{l} {$src2, $src1|$src1, $src2}",
-                 [(X86test GR32:$src1, GR32:$src2)]>;
+                 [(X86cmp (and GR32:$src1, GR32:$src2), 0)]>;
 }
-def TEST8mr  : I<0x84, MRMDestMem, (ops i8mem :$src1, GR8 :$src2),
-                 "test{b} {$src2, $src1|$src1, $src2}",
-                 [(X86test (loadi8 addr:$src1), GR8:$src2)]>;
-def TEST16mr : I<0x85, MRMDestMem, (ops i16mem:$src1, GR16:$src2),
-                 "test{w} {$src2, $src1|$src1, $src2}",
-                 [(X86test (loadi16 addr:$src1), GR16:$src2)]>,
-               OpSize;
-def TEST32mr : I<0x85, MRMDestMem, (ops i32mem:$src1, GR32:$src2),
-                 "test{l} {$src2, $src1|$src1, $src2}",
-                 [(X86test (loadi32 addr:$src1), GR32:$src2)]>;
+// FIXME: These patterns are disabled until isel issue surrounding
+//CodeGen/X86/test-load-fold.ll is fixed.
 def TEST8rm  : I<0x84, MRMSrcMem, (ops GR8 :$src1, i8mem :$src2),
                  "test{b} {$src2, $src1|$src1, $src2}",
-                 [(X86test GR8:$src1, (loadi8 addr:$src2))]>;
+                 [/*(X86cmp (and GR8:$src1, (loadi8 addr:$src2)), 0)*/]>;
 def TEST16rm : I<0x85, MRMSrcMem, (ops GR16:$src1, i16mem:$src2),
                  "test{w} {$src2, $src1|$src1, $src2}",
-                 [(X86test GR16:$src1, (loadi16 addr:$src2))]>,
+                 [/*(X86cmp (and GR16:$src1, (loadi16 addr:$src2)), 0)*/]>,
                OpSize;
 def TEST32rm : I<0x85, MRMSrcMem, (ops GR32:$src1, i32mem:$src2),
                  "test{l} {$src2, $src1|$src1, $src2}",
-                 [(X86test GR32:$src1, (loadi32 addr:$src2))]>;
+                 [/*(X86cmp (and GR32:$src1, (loadi32 addr:$src2)), 0)*/]>;
 
 def TEST8ri  : Ii8 <0xF6, MRM0r,                     // flags = GR8  & imm8
                     (ops GR8:$src1, i8imm:$src2),
                     "test{b} {$src2, $src1|$src1, $src2}",
-                    [(X86test GR8:$src1, imm:$src2)]>;
+                    [(X86cmp (and GR8:$src1, imm:$src2), 0)]>;
 def TEST16ri : Ii16<0xF7, MRM0r,                     // flags = GR16 & imm16
                     (ops GR16:$src1, i16imm:$src2),
                     "test{w} {$src2, $src1|$src1, $src2}",
-                    [(X86test GR16:$src1, imm:$src2)]>, OpSize;
+                    [(X86cmp (and GR16:$src1, imm:$src2), 0)]>, OpSize;
 def TEST32ri : Ii32<0xF7, MRM0r,                     // flags = GR32 & imm32
                     (ops GR32:$src1, i32imm:$src2),
                     "test{l} {$src2, $src1|$src1, $src2}",
-                    [(X86test GR32:$src1, imm:$src2)]>;
+                    [(X86cmp (and GR32:$src1, imm:$src2), 0)]>;
+// FIXME: These patterns are disabled until isel issue surrounding
+//CodeGen/X86/test-load-fold.ll is fixed.
 def TEST8mi  : Ii8 <0xF6, MRM0m,                     // flags = [mem8]  & imm8
                     (ops i8mem:$src1, i8imm:$src2),
                     "test{b} {$src2, $src1|$src1, $src2}",
-                    [(X86test (loadi8 addr:$src1), imm:$src2)]>;
+                    [/*(X86cmp (and (loadi8 addr:$src1), imm:$src2), 0)*/]>;
 def TEST16mi : Ii16<0xF7, MRM0m,                     // flags = [mem16] & imm16
                     (ops i16mem:$src1, i16imm:$src2),
                     "test{w} {$src2, $src1|$src1, $src2}",
-                    [(X86test (loadi16 addr:$src1), imm:$src2)]>,
+                    [/*(X86cmp (and (loadi16 addr:$src1), imm:$src2), 0)*/]>,
                OpSize;
 def TEST32mi : Ii32<0xF7, MRM0m,                     // flags = [mem32] & imm32
                     (ops i32mem:$src1, i32imm:$src2),
                     "test{l} {$src2, $src1|$src1, $src2}",
-                    [(X86test (loadi32 addr:$src1), imm:$src2)]>;
+                    [/*(X86cmp (and (loadi32 addr:$src1), imm:$src2), 0)*/]>;
 
 
 // Condition code ops, incl. set if equal/not equal/...
@@ -2522,6 +2514,16 @@ def : Pat<(truncstore (i8 imm:$src), addr:$dst, i1),
           (MOV8mi addr:$dst, imm:$src)>;
 def : Pat<(truncstore GR8:$src, addr:$dst, i1), 
           (MOV8mr addr:$dst, GR8:$src)>;
+
+// Comparisons.
+
+// TEST R,R is smaller than CMP R,0
+def : Pat<(X86cmp GR8:$src1, 0),
+          (TEST8rr GR8:$src1, GR8:$src1)>;
+def : Pat<(X86cmp GR16:$src1, 0),
+          (TEST16rr GR16:$src1, GR16:$src1)>;
+def : Pat<(X86cmp GR32:$src1, 0),
+          (TEST32rr GR32:$src1, GR32:$src1)>;
 
 // {s|z}extload bool -> {s|z}extload byte
 def : Pat<(sextloadi16i1 addr:$src), (MOVSX16rm8 addr:$src)>;
