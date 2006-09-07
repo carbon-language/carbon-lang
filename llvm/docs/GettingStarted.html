@@ -52,6 +52,10 @@
     </ol></li>
 
   <li><a href="#tutorial">An Example Using the LLVM Tool Chain</a>
+      <ol>
+         <li><a href="#tutorial4">Example with llvm-gcc4</a></li>
+         <li><a href="#tutorial3">Example with llvm-gcc3</a></li>
+      </ol>
   <li><a href="#problems">Common Problems</a>
   <li><a href="#links">Links</a>
 </ul>
@@ -206,7 +210,7 @@ software you will need.</p>
 
 <p>LLVM is known to work on the following platforms:</p>
 
-<table cellpadding="3">
+<table cellpadding="3" summary="Known LLVM platforms">
 <tr>
   <th>OS</th>
   <th>Arch</th>
@@ -257,7 +261,7 @@ software you will need.</p>
 
 <p>LLVM has partial support for the following platforms:</p>
 
-<table>
+<table summary="LLVM partial platform support">
 <tr>
   <th>OS</th>
   <th>Arch</th>
@@ -347,7 +351,7 @@ href="CFEBuildInstrs.html">try to compile it</a> on your platform.</p>
   is the usual name for the software package that LLVM depends on. The Version
   column provides "known to work" versions of the package. The Notes column
   describes how LLVM uses the package and provides other details.</p>
-  <table>
+  <table summary="Packages required to compile LLVM">
     <tr><th>Package</th><th>Version</th><th>Notes</th></tr>
 
     <tr>
@@ -439,7 +443,7 @@ href="CFEBuildInstrs.html">try to compile it</a> on your platform.</p>
   <p><b>Notes:</b></p>
   <div class="doc_notes">
   <ol>
-    <li><a name="sf3">Only the C and C++ languages are needed so there's no
+    <li><a name="sf1">Only the C and C++ languages are needed so there's no
       need to build the other languages for LLVM's purposes.</a> See 
       <a href="#brokengcc">below</a> for specific version info.</li>
     <li><a name="sf2">You only need CVS if you intend to build from the 
@@ -566,14 +570,14 @@ All these paths are absolute:</p>
     <dt>SRC_ROOT
     <dd>
     This is the top level directory of the LLVM source tree.
-    <p>
+    <br><br>
 
     <dt>OBJ_ROOT
     <dd>
     This is the top level directory of the LLVM object tree (i.e. the
     tree where object files and compiled programs will be placed.  It
     can be the same as SRC_ROOT).
-    <p>
+    <br><br>
 
     <dt>LLVMGCCDIR
     <dd>
@@ -765,7 +769,7 @@ the Makefiles needed to begin building LLVM.</p>
 <p>The following environment variables are used by the <tt>configure</tt>
 script to configure the build system:</p>
 
-<table>
+<table summary="LLVM configure script environment variables">
   <tr><th>Variable</th><th>Purpose</th></tr>
   <tr>
     <td>CC</td>
@@ -807,14 +811,14 @@ script to configure the build system:</p>
   dejagnu based test suite in <tt>llvm/test</tt>. If you don't specify this
   option, the LLVM configure script will search for the tcl 8.4 and 8.3
   releases.
-  <p></p>
+  <br><br>
   </dd>
   <dt><i>--enable-optimized</i></dt>
   <dd>
     Enables optimized compilation by default (debugging symbols are removed
     and GCC optimization flags are enabled).  The default is to use an
     unoptimized build (also known as a debug build).
-    <p></p>
+    <br><br>
   </dd>
   <dt><i>--enable-debug-runtime</i></dt>
   <dd>
@@ -827,7 +831,7 @@ script to configure the build system:</p>
     available
     on all platforms.  The default is dependent on platform, so it is best
     to explicitly enable it if you want it.
-    <p></p>
+    <br><br>
   </dd>
   <dt><i>--enable-targets=</i><tt>target-option</tt></dt>
   <dd>Controls which targets will be built and linked into llc. The default 
@@ -838,7 +842,7 @@ script to configure the build system:</p>
   separated list of target names that you want available in llc. The target 
   names use all lower case. The current set of targets is: <br/>
   <tt>alpha, ia64, powerpc, skeleton, sparc, x86</tt>.
-  <p></p></dd>
+  <br><br></dd>
   <dt><i>--enable-doxygen</i></dt>
   <dd>Look for the doxygen program and enable construction of doxygen based
   documentation from the source code. This is disabled by default because 
@@ -852,12 +856,12 @@ script to configure the build system:</p>
     <li>Change directory into the object root directory:
     <br>
     <tt>cd <i>OBJ_ROOT</i></tt>
-    <p>
+    <br><br>
 
     <li>Run the <tt>configure</tt> script located in the LLVM source tree:
     <br>
     <tt><i>SRC_ROOT</i>/configure --prefix=/install/path [other options]</tt>
-    <p>
+    <br><br>
 </ol>
 
 </div>
@@ -879,7 +883,7 @@ builds:</p>
     <tt>--enable-optimized</tt> option was used during configuration).  The
     build system will compile the tools and libraries with debugging
     information.
-    <p>
+    <br><br>
 
     <dt>Release (Optimized) Builds
     <dd>
@@ -888,7 +892,7 @@ builds:</p>
     <tt>gmake</tt> command line.  For these builds, the build system will
     compile the tools and libraries with GCC optimizations enabled and strip
     debugging information from the libraries and executables it generates. 
-    <p>
+    <br><br>
 
     <dt>Profile Builds
     <dd>
@@ -921,14 +925,14 @@ source code:</p>
   <dd>
   Removes all files generated by the build.  This includes object files,
   generated C/C++ files, libraries, and executables.
-  <p>
+  <br><br>
 
   <dt><tt>gmake dist-clean</tt>
   <dd>
   Removes everything that <tt>gmake clean</tt> does, but also removes files
   generated by <tt>configure</tt>.  It attempts to return the source tree to the
   original state in which it was shipped.
-  <p>
+  <br><br>
 
   <dt><tt>gmake install</tt>
   <dd>
@@ -936,15 +940,15 @@ source code:</p>
   hierarchy 
   under $PREFIX, specified with <tt>./configure --prefix=[dir]</tt>, which 
   defaults to <tt>/usr/local</tt>.
-  <p>
-  
+  <br><br>
+
   <dt><tt>gmake -C runtime install-bytecode</tt>
   <dd>
   Assuming you built LLVM into $OBJDIR, when this command is run, it will 
   install bytecode libraries into the GCC front end's bytecode library 
   directory.  If you need to update your bytecode libraries,
   this is the target to use once you've built them.
-  <p>
+  <br><br>
 </dl>
 
 <p>Please see the <a href="MakefileGuide.html">Makefile Guide</a> for further
@@ -958,27 +962,27 @@ declaring variables on the command line.  The following are some examples:</p>
   <dt><tt>gmake ENABLE_OPTIMIZED=1</tt>
   <dd>
   Perform a Release (Optimized) build.
-  <p>
+  <br><br>
 
   <dt><tt>gmake ENABLE_OPTIMIZED=1 DISABLE_ASSERTIONS=1</tt>
   <dd>
   Perform a Release (Optimized) build without assertions enabled.
-  <p>
+  <br><br>
 
   <dt><tt>gmake ENABLE_PROFILING=1</tt>
   <dd>
   Perform a Profiling build.
-  <p>
+  <br><br>
 
   <dt><tt>gmake VERBOSE=1</tt>
   <dd>
   Print what <tt>gmake</tt> is doing on standard output.
-  <p>
+  <br><br>
 
   <dt><tt>gmake TOOL_VERBOSE=1</tt></dt>
   <dd>Ask each tool invoked by the makefiles to print out what it is doing on 
   the standard output. This also implies <tt>VERBOSE=1</tt>.
-  <p></dd>
+  <br><br></dd>
 </dl>
 
 <p>Every directory in the LLVM object tree includes a <tt>Makefile</tt> to build
@@ -1069,7 +1073,7 @@ named after the build type:</p>
     <dt>Libraries
     <dd><tt><i>OBJ_ROOT</i>/Debug/lib</tt>
   </dl>
-  <p>
+  <br><br>
 
   <dt>Release Builds
   <dd>
@@ -1079,7 +1083,7 @@ named after the build type:</p>
     <dt>Libraries
     <dd><tt><i>OBJ_ROOT</i>/Release/lib</tt>
   </dl>
-  <p>
+  <br><br>
 
   <dt>Profile Builds
   <dd>
@@ -1413,7 +1417,7 @@ are code generators for parts of LLVM infrastructure.</p>
   that finds differences between code that LLC generates and code that LLI
   generates. This is a useful tool if you are debugging one of them,
   assuming that the other generates correct output. For the full user
-  manual, run <tt>`perldoc codegen-diff'</tt>.<p>
+  manual, run <tt>`perldoc codegen-diff'</tt>.<br><br>
 
   <dt><tt><b>cvsupdate</b></tt> <dd><tt>cvsupdate</tt> is a script that will
   update your CVS tree, but produce a much cleaner and more organized output
@@ -1421,21 +1425,21 @@ are code generators for parts of LLVM infrastructure.</p>
   together all the new and updated files and modified files in separate
   sections, so you can see at a glance what has changed. If you are at the
   top of your LLVM CVS tree, running <tt>utils/cvsupdate</tt> is the
-  preferred way of updating the tree.<p>
+  preferred way of updating the tree.<br><br>
 
   <dt><tt><b>emacs/</b></tt> <dd>The <tt>emacs</tt> directory contains
   syntax-highlighting files which will work with Emacs and XEmacs editors,
   providing syntax highlighting support for LLVM assembly files and TableGen
   description files. For information on how to use the syntax files, consult
-  the <tt>README</tt> file in that directory.<p>
+  the <tt>README</tt> file in that directory.<br><br>
 
   <dt><tt><b>getsrcs.sh</b></tt> <dd>The <tt>getsrcs.sh</tt> script finds
   and outputs all non-generated source files, which is useful if one wishes
   to do a lot of development across directories and does not want to
   individually find each file. One way to use it is to run, for example:
   <tt>xemacs `utils/getsources.sh`</tt> from the top of your LLVM source
-  tree.<p>
-  
+  tree.<br><br>
+
   <dt><tt><b>llvmgrep</b></tt></dt>
   <dd>This little tool performs an "egrep -H -n" on each source file in LLVM and
   passes to it a regular expression provided on <tt>llvmgrep</tt>'s command
@@ -1448,24 +1452,24 @@ are code generators for parts of LLVM infrastructure.</p>
   <tt>llvm/lib/Target/Sparc</tt>, if <tt>makellvm</tt> is in your path,
   simply running <tt>makellvm llc</tt> will make a build of the current
   directory, switch to directory <tt>llvm/tools/llc</tt> and build it,
-  causing a re-linking of LLC.<p>
+  causing a re-linking of LLC.<br><br>
 
   <dt><tt><b>NightlyTest.pl</b></tt> and
   <tt><b>NightlyTestTemplate.html</b></tt> <dd>These files are used in a
   cron script to generate nightly status reports of the functionality of
   tools, and the results can be seen by following the appropriate link on
-  the <a href="http://llvm.org/">LLVM homepage</a>.<p>
+  the <a href="http://llvm.org/">LLVM homepage</a>.<br><br>
 
   <dt><tt><b>TableGen/</b></tt> <dd>The <tt>TableGen</tt> directory contains
   the tool used to generate register descriptions, instruction set
   descriptions, and even assemblers from common TableGen description
-  files.<p>
+  files.<br><br>
 
   <dt><tt><b>vim/</b></tt> <dd>The <tt>vim</tt> directory contains
   syntax-highlighting files which will work with the VIM editor, providing
   syntax highlighting support for LLVM assembly files and TableGen
   description files. For information on how to use the syntax files, consult
-  the <tt>README</tt> file in that directory.<p>
+  the <tt>README</tt> file in that directory.<br><br>
 
 </dl>
 
@@ -1490,10 +1494,17 @@ are code generators for parts of LLVM infrastructure.</p>
 <p>This section gives an example of using LLVM.  Since we are currently 
 transitioning from llvm-gcc3 to llvm-gcc4, we include examples for both.
 </p>
+
+<p><b>Note:</b> The <i>gcc4</i> frontend's invocation is <b><i>considerably different</i></b>
+from the previous <i>gcc3</i> frontend. In particular, the <i>gcc4</i> frontend <b><i>does not</i></b>
+create bytecode by default: <i>gcc4</i> produces native code. As the example below illustrates,
+the '--emit-llvm' flag is needed to produce LLVM bytecode output. For <i>makefiles</i> and
+<i>configure</i> scripts, the CFLAGS variable needs '--emit-llvm' to produce bytecode
+output.</p>
 </div>
 
 <!-- ======================================================================= -->
-<div class="doc_subsection"><a name="tutorial3">Example with llvm-gcc4</a></div>
+<div class="doc_subsection"><a name="tutorial4">Example with llvm-gcc4</a></div>
 
 <div class="doc_text">
 
@@ -1540,7 +1551,7 @@ transitioning from llvm-gcc3 to llvm-gcc4, we include examples for both.
   <li><p>Use the <tt>llvm-dis</tt> utility to take a look at the LLVM assembly
       code:</p>
 
-      <p><tt>% llvm-dis &lt; hello.bc | less</tt><p></li>
+      <p><tt>% llvm-dis &lt; hello.bc | less</tt><br><br></li>
 
   <li><p>Compile the program to native assembly using the LLC code
       generator:</p>
@@ -1595,9 +1606,9 @@ transitioning from llvm-gcc3 to llvm-gcc4, we include examples for both.
 
   <li><p>Run the program. To make sure the program ran, execute one of the
       following commands:</p>
-      
+
       <p><tt>% ./hello</tt></p>
- 
+
       <p>or</p>
 
       <p><tt>% lli hello.bc</tt></p></li>
@@ -1605,7 +1616,7 @@ transitioning from llvm-gcc3 to llvm-gcc4, we include examples for both.
   <li><p>Use the <tt>llvm-dis</tt> utility to take a look at the LLVM assembly
       code:</p>
 
-      <p><tt>% llvm-dis &lt; hello.bc | less</tt><p></li>
+      <p><tt>% llvm-dis &lt; hello.bc | less</tt><br><br></li>
 
   <li><p>Compile the program to native assembly using the LLC code
       generator:</p>
