@@ -19,7 +19,6 @@
 #include "PPCJITInfo.h"
 #include "PPCInstrInfo.h"
 #include "PPCISelLowering.h"
-#include "PPCTargetAsmInfo.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetData.h"
 
@@ -37,6 +36,10 @@ class PPCTargetMachine : public LLVMTargetMachine {
   PPCJITInfo          JITInfo;
   PPCTargetLowering   TLInfo;
   InstrItineraryData  InstrItins;
+  
+protected:
+  virtual const TargetAsmInfo *createTargetAsmInfo() const;
+  
 public:
   PPCTargetMachine(const Module &M, const std::string &FS, bool is64Bit);
 
@@ -54,10 +57,6 @@ public:
   virtual const PPCSubtarget  *getSubtargetImpl() const { return &Subtarget; }
   virtual const InstrItineraryData getInstrItineraryData() const {  
     return InstrItins;
-  }
-  
-  virtual const TargetAsmInfo *createTargetAsmInfo() const {
-    return static_cast<const TargetAsmInfo *>(new DarwinTargetAsmInfo(*this));
   }
   
   // Pass Pipeline Configuration

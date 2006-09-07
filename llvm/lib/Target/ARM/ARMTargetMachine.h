@@ -20,7 +20,6 @@
 #include "llvm/Target/TargetFrameInfo.h"
 #include "ARMInstrInfo.h"
 #include "ARMFrameInfo.h"
-#include "ARMTargetAsmInfo.h"
 
 namespace llvm {
 
@@ -30,6 +29,10 @@ class ARMTargetMachine : public LLVMTargetMachine {
   const TargetData DataLayout;       // Calculates type size & alignment
   ARMInstrInfo InstrInfo;
   ARMFrameInfo FrameInfo;
+  
+protected:
+  virtual const TargetAsmInfo *createTargetAsmInfo() const;
+
 public:
   ARMTargetMachine(const Module &M, const std::string &FS);
 
@@ -40,10 +43,6 @@ public:
   }
   virtual const TargetData       *getTargetData() const { return &DataLayout; }
   static unsigned getModuleMatchQuality(const Module &M);
-
-  virtual const TargetAsmInfo *createTargetAsmInfo() const {
-    return static_cast<const TargetAsmInfo *>(new ARMTargetAsmInfo(*this));
-  }
 
   // Pass Pipeline Configuration
   virtual bool addInstSelector(FunctionPassManager &PM, bool Fast);

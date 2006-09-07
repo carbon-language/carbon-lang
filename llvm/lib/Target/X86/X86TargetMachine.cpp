@@ -11,6 +11,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "X86TargetAsmInfo.h"
 #include "X86TargetMachine.h"
 #include "X86.h"
 #include "llvm/Module.h"
@@ -33,6 +34,10 @@ int X86TargetMachineModule = 0;
 namespace {
   // Register the target.
   RegisterTarget<X86TargetMachine> X("x86", "  IA-32 (Pentium and above)");
+}
+
+const TargetAsmInfo *X86TargetMachine::createTargetAsmInfo() const {
+  return new X86TargetAsmInfo(*this);
 }
 
 unsigned X86TargetMachine::getJITMatchQuality() {

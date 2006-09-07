@@ -21,7 +21,6 @@
 #include "X86InstrInfo.h"
 #include "X86JITInfo.h"
 #include "X86Subtarget.h"
-#include "X86TargetAsmInfo.h"
 #include "X86ISelLowering.h"
 
 namespace llvm {
@@ -33,6 +32,10 @@ class X86TargetMachine : public LLVMTargetMachine {
   X86InstrInfo      InstrInfo;
   X86JITInfo        JITInfo;
   X86TargetLowering TLInfo;
+
+protected:
+  virtual const TargetAsmInfo *createTargetAsmInfo() const;
+  
 public:
   X86TargetMachine(const Module &M, const std::string &FS);
 
@@ -50,10 +53,6 @@ public:
 
   static unsigned getModuleMatchQuality(const Module &M);
   static unsigned getJITMatchQuality();
-  
-  virtual const TargetAsmInfo *createTargetAsmInfo() const {
-    return static_cast<const TargetAsmInfo *>(new X86TargetAsmInfo(*this));
-  }
   
   // Set up the pass pipeline.
   virtual bool addInstSelector(FunctionPassManager &PM, bool Fast);  

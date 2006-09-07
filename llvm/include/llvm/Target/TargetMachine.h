@@ -76,6 +76,10 @@ protected: // Can only create subclasses.
   ///
   mutable const TargetAsmInfo *AsmInfo;
   
+  /// createTargetAsmInfo - Create a new instance of target specific asm
+  /// information.
+  virtual const TargetAsmInfo *createTargetAsmInfo() const { return NULL; }
+
 public:
   virtual ~TargetMachine();
 
@@ -111,10 +115,6 @@ public:
     return AsmInfo;
   }
   
-  /// createTargetAsmInfo - Create a new instance of target specific asm
-  /// information.
-  virtual const TargetAsmInfo *createTargetAsmInfo() const { return NULL; }
-
   /// getSubtarget - This method returns a pointer to the specified type of
   /// TargetSubtarget.  In debug builds, it verifies that the object being
   /// returned is of the correct type.

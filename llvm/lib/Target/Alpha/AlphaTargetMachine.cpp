@@ -12,6 +12,7 @@
 
 #include "Alpha.h"
 #include "AlphaJITInfo.h"
+#include "AlphaTargetAsmInfo.h"
 #include "AlphaTargetMachine.h"
 #include "llvm/Module.h"
 #include "llvm/PassManager.h"
@@ -22,6 +23,10 @@ using namespace llvm;
 namespace {
   // Register the targets
   RegisterTarget<AlphaTargetMachine> X("alpha", "  Alpha (incomplete)");
+}
+
+const TargetAsmInfo *AlphaTargetMachine::createTargetAsmInfo() const {
+  return new AlphaTargetAsmInfo(*this);
 }
 
 unsigned AlphaTargetMachine::getModuleMatchQuality(const Module &M) {
@@ -53,8 +58,7 @@ AlphaTargetMachine::AlphaTargetMachine(const Module &M, const std::string &FS)
   : DataLayout("e"),
     FrameInfo(TargetFrameInfo::StackGrowsDown, 16, 0),
     JITInfo(*this),
-    Subtarget(M, FS),
-    AsmInfo(NULL) {
+    Subtarget(M, FS) {
 }
 
 

@@ -12,6 +12,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "PPC.h"
+#include "PPCTargetAsmInfo.h"
 #include "PPCTargetMachine.h"
 #include "llvm/Module.h"
 #include "llvm/PassManager.h"
@@ -24,6 +25,10 @@ namespace {
   X("ppc32", "  PowerPC 32");
   RegisterTarget<PPC64TargetMachine>
   Y("ppc64", "  PowerPC 64");
+}
+
+const TargetAsmInfo *PPCTargetMachine::createTargetAsmInfo() const {
+  return new DarwinTargetAsmInfo(*this);
 }
 
 unsigned PPC32TargetMachine::getJITMatchQuality() {

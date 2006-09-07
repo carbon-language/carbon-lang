@@ -11,6 +11,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "ARMTargetAsmInfo.h"
 #include "ARMTargetMachine.h"
 #include "ARMFrameInfo.h"
 #include "ARM.h"
@@ -23,6 +24,12 @@ namespace {
   // Register the target.
   RegisterTarget<ARMTargetMachine> X("arm", "  ARM");
 }
+
+
+const TargetAsmInfo *ARMTargetMachine::createTargetAsmInfo() const {
+  return new ARMTargetAsmInfo(*this);
+}
+
 
 /// TargetMachine ctor - Create an ILP32 architecture model
 ///

@@ -20,7 +20,6 @@
 #include "AlphaInstrInfo.h"
 #include "AlphaJITInfo.h"
 #include "AlphaSubtarget.h"
-#include "AlphaTargetAsmInfo.h"
 
 namespace llvm {
 
@@ -32,13 +31,12 @@ class AlphaTargetMachine : public LLVMTargetMachine {
   TargetFrameInfo FrameInfo;
   AlphaJITInfo JITInfo;
   AlphaSubtarget Subtarget;
-  AlphaTargetAsmInfo *AsmInfo;
+  
+protected:
+  virtual const TargetAsmInfo *createTargetAsmInfo() const;
   
 public:
   AlphaTargetMachine(const Module &M, const std::string &FS);
-  ~AlphaTargetMachine() {
-    if (AsmInfo) delete AsmInfo;
-  }
 
   virtual const AlphaInstrInfo *getInstrInfo() const { return &InstrInfo; }
   virtual const TargetFrameInfo  *getFrameInfo() const { return &FrameInfo; }
@@ -49,10 +47,6 @@ public:
   virtual const TargetData       *getTargetData() const { return &DataLayout; }
   virtual TargetJITInfo* getJITInfo() {
     return &JITInfo;
-  }
-
-  virtual const TargetAsmInfo *createTargetAsmInfo() const {
-    return static_cast<const TargetAsmInfo *>(new AlphaTargetAsmInfo(*this));
   }
 
   static unsigned getJITMatchQuality();

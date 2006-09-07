@@ -11,6 +11,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "IA64TargetAsmInfo.h"
 #include "IA64TargetMachine.h"
 #include "IA64.h"
 #include "llvm/Module.h"
@@ -27,6 +28,10 @@ int IA64TargetMachineModule = 0;
 
 namespace {
   RegisterTarget<IA64TargetMachine> X("ia64", "  IA-64 (Itanium)");
+}
+
+const TargetAsmInfo *IA64TargetMachine::createTargetAsmInfo() const {
+  return new IA64TargetAsmInfo(*this);
 }
 
 unsigned IA64TargetMachine::getModuleMatchQuality(const Module &M) {

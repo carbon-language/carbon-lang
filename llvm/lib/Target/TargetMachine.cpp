@@ -96,7 +96,7 @@ namespace {
 //
 
 TargetMachine::~TargetMachine() {
-  if (AsmInfo) delete AsmInfo;
+  delete AsmInfo;
 }
 
 /// getRelocationModel - Returns the code generation relocation model. The
