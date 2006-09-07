@@ -28,23 +28,36 @@ D("postidom", "Immediate Post-Dominators Construction", true);
 
 unsigned ImmediatePostDominators::DFSPass(BasicBlock *V, InfoRec &VInfo,
                                           unsigned N) {
-  VInfo.Semi = ++N;
-  VInfo.Label = V;
-  
-  Vertex.push_back(V);        // Vertex[n] = V;
-                              //Info[V].Ancestor = 0;     // Ancestor[n] = 0
-                              //Child[V] = 0;             // Child[v] = 0
-  VInfo.Size = 1;             // Size[v] = 1
-  
-  // For PostDominators, we want to walk predecessors rather than successors
-  // as we do in forward Dominators.
-  for (pred_iterator PI = pred_begin(V), PE = pred_end(V); PI != PE; ++PI) {
-    InfoRec &SuccVInfo = Info[*PI];
-    if (SuccVInfo.Semi == 0) {
-      SuccVInfo.Parent = V;
-      N = DFSPass(*PI, SuccVInfo, N);
+
+  std::vector<std::pair<BasicBlock *, InfoRec *> > workStack;
+  workStack.push_back(std::make_pair(V, &VInfo));
+
+  do {
+    BasicBlock *currentBB = workStack.back().first; 
+    InfoRec *currentVInfo = workStack.back().second;
+    workStack.pop_back();
+
+    currentVInfo->Semi = ++N;
+    currentVInfo->Label = currentBB;
+
+    Vertex.push_back(currentBB);  // Vertex[n] = current;
+                                  // Info[currentBB].Ancestor = 0;     
+                                  // Ancestor[n] = 0
+                                  // Child[currentBB] = 0;
+    currentVInfo->Size = 1;       // Size[currentBB] = 1
+
+    // For PostDominators, we want to walk predecessors rather than successors
+    // as we do in forward Dominators.
+    for (pred_iterator PI = pred_begin(currentBB), PE = pred_end(currentBB); 
+	 PI != PE; ++PI) {
+      InfoRec &SuccVInfo = Info[*PI];
+      if (SuccVInfo.Semi == 0) {
+	SuccVInfo.Parent = currentBB;
+
+	workStack.push_back(std::make_pair(*PI, &SuccVInfo));	
+      }
     }
-  }
+  } while (!workStack.empty());
   return N;
 }
 
