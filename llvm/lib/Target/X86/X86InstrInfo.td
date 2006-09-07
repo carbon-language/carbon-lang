@@ -383,7 +383,7 @@ let isBranch = 1, isTerminator = 1, noResults = 1 in
         I<opcode, RawFrm, ops, asm, pattern>;
 
 // Indirect branches
-let isBarrier = 1 in
+let isBranch = 1, isBarrier = 1 in
   def JMP : IBr<0xE9, (ops brtarget:$dst), "jmp $dst", [(br bb:$dst)]>;
 
 let isBranch = 1, isTerminator = 1, noResults = 1, isBarrier = 1 in {
