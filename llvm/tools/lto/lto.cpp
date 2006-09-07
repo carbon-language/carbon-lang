@@ -282,10 +282,23 @@ static enum LTOStatus lto_optimize(Module *M, std::ostream &Out,
   // Make sure everything is still good.
   Passes.add(createVerifierPass());
 
-  Target.addPassesToEmitWholeFile(Passes, Out, TargetMachine::AssemblyFile, true);
+  FunctionPassManager *CodeGenPasses =
+    new FunctionPassManager(new ExistingModuleProvider(M));
+
+  CodeGenPasses->add(new TargetData(*Target.getTargetData()));
+  Target.addPassesToEmitFile(*CodeGenPasses, Out, TargetMachine::AssemblyFile, 
+			     true);
 
   // Run our queue of passes all at once now, efficiently.
   Passes.run(*M);
+
+  // Run the code generator, if present.
+  CodeGenPasses->doInitialization();
+  for (Module::iterator I = M->begin(), E = M->end(); I != E; ++I) {
+    if (!I->isExternal())
+      CodeGenPasses->run(*I);
+  }
+  CodeGenPasses->doFinalization();
 
   return LTO_OPT_SUCCESS;
 }
