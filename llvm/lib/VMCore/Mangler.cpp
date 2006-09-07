@@ -33,6 +33,10 @@ std::string Mangler::makeNameProper(const std::string &X, const char *Prefix) {
   std::string Result;
   if (X.empty()) return X;  // Empty names are uniqued by the caller.
   
+  // If PreserveAsmNames is set, names with asm identifiers are not modified. 
+  if (PreserveAsmNames && X[0] == 1)
+    return X;
+  
   if (!UseQuotes) {
     // If X does not start with (char)1, add the prefix.
     std::string::const_iterator I = X.begin();
@@ -174,7 +178,8 @@ void Mangler::InsertName(GlobalValue *GV,
 
 
 Mangler::Mangler(Module &M, const char *prefix)
-  : Prefix(prefix), UseQuotes(false), Count(0), TypeCounter(0) {
+  : Prefix(prefix), UseQuotes(false), PreserveAsmNames(false),
+    Count(0), TypeCounter(0) {
   std::fill(AcceptableChars, 
           AcceptableChars+sizeof(AcceptableChars)/sizeof(AcceptableChars[0]),
             0);

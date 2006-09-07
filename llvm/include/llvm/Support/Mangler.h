@@ -35,6 +35,10 @@ class Mangler {
   /// the space character.  By default, this is false.
   bool UseQuotes;
   
+  /// PreserveAsmNames - If this is set, the asm escape character is not removed
+  /// from names with 'asm' specifiers. 
+  bool PreserveAsmNames;
+  
   /// Memo - This is used to remember the name that we assign a value.
   ///
   std::map<const Value*, std::string> Memo;
@@ -65,6 +69,10 @@ public:
   /// setUseQuotes - If UseQuotes is set to true, this target accepts quoted
   /// strings for assembler labels.
   void setUseQuotes(bool Val) { UseQuotes = Val; }
+  
+  /// setPreserveAsmNames - If the mangler should not strip off the asm name
+  /// identifier (\001), this should be set.
+  void setPreserveAsmNames(bool Val) { PreserveAsmNames = Val; }
   
   /// Acceptable Characters - This allows the target to specify which characters
   /// are acceptable to the assembler without being mangled.  By default we
