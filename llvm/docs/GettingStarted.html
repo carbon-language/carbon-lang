@@ -530,6 +530,9 @@ the "<tt>convert_from_eh_region_ranges_1</tt>" GCC function.</p>
 <p><b>Apple Xcode 2.3</b>: GCC crashes when compiling LLVM at -O3 (which is the
    default with ENABLE_OPTIMIZED=1.  To work around this, build with 
    "ENABLE_OPTIMIZED=1 OPTIMIZE_OPTION=-O2".</p>
+<p><b>GCC 4.1.1</b>: GCC fails to build LLVM with template concept check errors
+      compiling some files.  At the time of this writing, GCC mainline (4.2)
+      did not share the problem.</p>
 </div>
 
 
