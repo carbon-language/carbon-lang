@@ -41,6 +41,18 @@
 /* Begin PBXFileReference section */
 		CF1ACC9709C9DE4400D3C5EB /* IntrinsicInst.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = IntrinsicInst.cpp; path = ../lib/VMCore/IntrinsicInst.cpp; sourceTree = "<group>"; };
 		CF26835B09178F5500C5F253 /* TargetInstrItineraries.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = TargetInstrItineraries.h; sourceTree = "<group>"; };
+		CF341DAD0AB07A8B0099B064 /* AlphaTargetAsmInfo.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = AlphaTargetAsmInfo.h; sourceTree = "<group>"; };
+		CF341DAE0AB07A8B0099B064 /* AlphaTargetAsmInfo.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = AlphaTargetAsmInfo.cpp; sourceTree = "<group>"; };
+		CF341DC30AB07E6B0099B064 /* ARMTargetAsmInfo.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ARMTargetAsmInfo.h; sourceTree = "<group>"; };
+		CF341DC40AB07E6B0099B064 /* ARMTargetAsmInfo.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = ARMTargetAsmInfo.cpp; sourceTree = "<group>"; };
+		CF341DE80AB07F890099B064 /* IA64TargetAsmInfo.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = IA64TargetAsmInfo.h; sourceTree = "<group>"; };
+		CF341DE90AB07F890099B064 /* IA64TargetAsmInfo.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = IA64TargetAsmInfo.cpp; sourceTree = "<group>"; };
+		CF341E010AB080220099B064 /* PPCTargetAsmInfo.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = PPCTargetAsmInfo.h; sourceTree = "<group>"; };
+		CF341E020AB080220099B064 /* PPCTargetAsmInfo.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = PPCTargetAsmInfo.cpp; sourceTree = "<group>"; };
+		CF341E220AB0814B0099B064 /* SparcTargetAsmInfo.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SparcTargetAsmInfo.h; sourceTree = "<group>"; };
+		CF341E230AB0814B0099B064 /* SparcTargetAsmInfo.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = SparcTargetAsmInfo.cpp; sourceTree = "<group>"; };
+		CF341E320AB082D60099B064 /* X86TargetAsmInfo.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = X86TargetAsmInfo.h; sourceTree = "<group>"; };
+		CF341E330AB082D60099B064 /* X86TargetAsmInfo.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = X86TargetAsmInfo.cpp; sourceTree = "<group>"; };
 		CF47BD380AAF40BC00A8B13E /* TargetAsmInfo.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = TargetAsmInfo.h; sourceTree = "<group>"; };
 		CF47BD860AAF487E00A8B13E /* TargetAsmInfo.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = TargetAsmInfo.cpp; sourceTree = "<group>"; };
 		CF490D14090541D30072DB1C /* TargetSchedule.td */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = TargetSchedule.td; sourceTree = "<group>"; };
@@ -938,6 +950,8 @@
 				CF9720490A9F3BBC002CEEDD /* ARMRegisterInfo.cpp */,
 				CF97204A0A9F3BBC002CEEDD /* ARMRegisterInfo.h */,
 				CF97204B0A9F3BBC002CEEDD /* ARMRegisterInfo.td */,
+				CF341DC40AB07E6B0099B064 /* ARMTargetAsmInfo.cpp */,
+				CF341DC30AB07E6B0099B064 /* ARMTargetAsmInfo.h */,
 				CF97204C0A9F3BBC002CEEDD /* ARMTargetMachine.cpp */,
 				CF97204D0A9F3BBC002CEEDD /* ARMTargetMachine.h */,
 			);
@@ -1394,6 +1408,8 @@
 				DE66EEAC08ABEE5E00323D32 /* AlphaRegisterInfo.h */,
 				DE66EEAD08ABEE5E00323D32 /* AlphaRegisterInfo.td */,
 				DE66EEAE08ABEE5E00323D32 /* AlphaRelocations.h */,
+				CF341DAE0AB07A8B0099B064 /* AlphaTargetAsmInfo.cpp */,
+				CF341DAD0AB07A8B0099B064 /* AlphaTargetAsmInfo.h */,
 				DE66EEAF08ABEE5E00323D32 /* AlphaTargetMachine.cpp */,
 				DE66EEB008ABEE5E00323D32 /* AlphaTargetMachine.h */,
 			);
@@ -1435,6 +1451,8 @@
 				DE66EF0808ABEE5E00323D32 /* IA64RegisterInfo.cpp */,
 				DE66EF0908ABEE5E00323D32 /* IA64RegisterInfo.h */,
 				DE66EF0A08ABEE5E00323D32 /* IA64RegisterInfo.td */,
+				CF341DE90AB07F890099B064 /* IA64TargetAsmInfo.cpp */,
+				CF341DE80AB07F890099B064 /* IA64TargetAsmInfo.h */,
 				DE66EF0B08ABEE5E00323D32 /* IA64TargetMachine.cpp */,
 				DE66EF0C08ABEE5E00323D32 /* IA64TargetMachine.h */,
 				DE66EF0E08ABEE5E00323D32 /* README */,
@@ -1488,6 +1506,8 @@
 				CFE421310A66FA2D00AB4BF6 /* PPCScheduleG5.td */,
 				CFE421320A66FA2E00AB4BF6 /* PPCSubtarget.cpp */,
 				CFE421330A66FA2E00AB4BF6 /* PPCSubtarget.h */,
+				CF341E020AB080220099B064 /* PPCTargetAsmInfo.cpp */,
+				CF341E010AB080220099B064 /* PPCTargetAsmInfo.h */,
 				CFE421340A66FA2E00AB4BF6 /* PPCTargetMachine.cpp */,
 				CFE421350A66FA2E00AB4BF6 /* PPCTargetMachine.h */,
 				CFE421360A66FA2E00AB4BF6 /* README_ALTIVEC.txt */,
@@ -1524,6 +1544,8 @@
 				CF65281009D1BA3800C4B521 /* SparcRegisterInfo.td */,
 				CF65281109D1BA3800C4B521 /* SparcSubtarget.cpp */,
 				CF65281209D1BA3800C4B521 /* SparcSubtarget.h */,
+				CF341E230AB0814B0099B064 /* SparcTargetAsmInfo.cpp */,
+				CF341E220AB0814B0099B064 /* SparcTargetAsmInfo.h */,
 				CF65281309D1BA3800C4B521 /* SparcTargetMachine.cpp */,
 				CF65281409D1BA3800C4B521 /* SparcTargetMachine.h */,
 			);
@@ -1575,6 +1597,8 @@
 				CFC244BD0959F24C009F8C47 /* X86ISelLowering.h */,
 				DE66F0DC08ABEE6100323D32 /* X86Subtarget.cpp */,
 				DE66F0DD08ABEE6100323D32 /* X86Subtarget.h */,
+				CF341E330AB082D60099B064 /* X86TargetAsmInfo.cpp */,
+				CF341E320AB082D60099B064 /* X86TargetAsmInfo.h */,
 				DE66F0DE08ABEE6100323D32 /* X86TargetMachine.cpp */,
 				DE66F0DF08ABEE6100323D32 /* X86TargetMachine.h */,
 			);
