@@ -132,10 +132,10 @@ void AsmPrinter::EmitConstantPool(MachineConstantPool *MCP) {
     if (TAI->getFourByteConstantSection() &&
         TM.getTargetData()->getTypeSize(Ty) == 4)
       FourByteCPs.push_back(std::make_pair(CPE, i));
-    else if (TAI->getSectionEndDirectiveSuffix() &&
+    else if (TAI->getEightByteConstantSection() &&
              TM.getTargetData()->getTypeSize(Ty) == 8)
       EightByteCPs.push_back(std::make_pair(CPE, i));
-    else if (TAI->getSectionEndDirectiveSuffix() &&
+    else if (TAI->getSixteenByteConstantSection() &&
              TM.getTargetData()->getTypeSize(Ty) == 16)
       SixteenByteCPs.push_back(std::make_pair(CPE, i));
     else
