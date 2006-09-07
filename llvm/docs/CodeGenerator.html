@@ -1168,9 +1168,9 @@ SelectionDAGs.</p>
 
 <p>Live Intervals are the ranges (intervals) where a variable is <i>live</i>.
 They are used by some <a href="#regalloc">register allocator</a> passes to
-determine if two or more virtual registers which require the same register are
-live at the same point in the program (conflict).  When this situation occurs,
-one virtual register must be <i>spilled</i>.</p>
+determine if two or more virtual registers which require the same physical
+register are live at the same point in the program (i.e., theyconflict).  When
+this situation occurs, one virtual register must be <i>spilled</i>.</p>
 
 </div>
 
@@ -1186,10 +1186,10 @@ calculate the set of registers that are immediately dead after the
 instruction (i.e., the instruction calculates the value, but it is
 never used) and the set of registers that are used by the instruction,
 but are never used after the instruction (i.e., they are killed). Live
-variable information is computed for each <i>virtual</i> and
+variable information is computed for each <i>virtual</i> register and
 <i>register allocatable</i> physical register in the function.  This
 is done in a very efficient manner because it uses SSA to sparsely
-computer lifetime information for virtual registers (which are in SSA
+compute lifetime information for virtual registers (which are in SSA
 form) and only has to track physical registers within a block.  Before
 register allocation, LLVM can assume that physical registers are only
 live within a single basic block.  This allows it to do a single,
@@ -1200,7 +1200,7 @@ a stack pointer or condition codes), it is not tracked.</p>
 <p>Physical registers may be live in to or out of a function. Live in values
 are typically arguments in registers. Live out values are typically return
 values in registers. Live in values are marked as such, and are given a dummy
-"defining" instruction during live interval analysis. If the last basic block
+"defining" instruction during live intervals analysis. If the last basic block
 of a function is a <tt>return</tt>, then it's marked as using all live out
 values in the function.</p>
 
