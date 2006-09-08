@@ -113,6 +113,18 @@ def andrr     : InstARM<(ops IntRegs:$dst, IntRegs:$a, IntRegs:$b),
 		       "and $dst, $a, $b",
 		       [(set IntRegs:$dst, (and IntRegs:$a, IntRegs:$b))]>;
 
+
+// All arm data processing instructions have a shift. Maybe we don't have
+// to implement this
+def SHL : InstARM<(ops IntRegs:$dst, IntRegs:$a, IntRegs:$b),
+		       "mov $dst, $a, lsl $b",
+		       [(set IntRegs:$dst, (shl IntRegs:$a, IntRegs:$b))]>;
+
+def SRA : InstARM<(ops IntRegs:$dst, IntRegs:$a, IntRegs:$b),
+		       "mov $dst, $a, asr $b",
+		       [(set IntRegs:$dst, (sra IntRegs:$a, IntRegs:$b))]>;
+
+
 def eor_rr     : InstARM<(ops IntRegs:$dst, IntRegs:$a, IntRegs:$b),
 		       "eor $dst, $a, $b",
 		       [(set IntRegs:$dst, (xor IntRegs:$a, IntRegs:$b))]>;
