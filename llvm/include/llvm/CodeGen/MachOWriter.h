@@ -16,6 +16,7 @@
 
 #include "llvm/DerivedTypes.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
+#include "llvm/CodeGen/MachineRelocation.h"
 #include "llvm/Target/TargetData.h"
 #include "llvm/Target/TargetMachine.h"
 #include <list>
@@ -26,6 +27,53 @@ namespace llvm {
   class MachineCodeEmitter;
   class MachOCodeEmitter;
 
+  /// MachOSym - This struct contains information about each symbol that is
+  /// added to logical symbol table for the module.  This is eventually
+  /// turned into a real symbol table in the file.
+  struct MachOSym {
+    const GlobalValue *GV;    // The global value this corresponds to.
+    std::string GVName;       // The mangled name of the global value.
+    uint32_t    n_strx;       // index into the string table
+    uint8_t     n_type;       // type flag
+    uint8_t     n_sect;       // section number or NO_SECT
+    int16_t     n_desc;       // see <mach-o/stab.h>
+    uint64_t    n_value;      // value for this symbol (or stab offset)
+    
+    // Constants for the n_sect field
+    // see <mach-o/nlist.h>
+    enum { NO_SECT = 0 };   // symbol is not in any section
+
+    // Constants for the n_type field
+    // see <mach-o/nlist.h>
+    enum { N_UNDF  = 0x0,  // undefined, n_sect == NO_SECT
+           N_ABS   = 0x2,  // absolute, n_sect == NO_SECT
+           N_SECT  = 0xe,  // defined in section number n_sect
+           N_PBUD  = 0xc,  // prebound undefined (defined in a dylib)
+           N_INDR  = 0xa   // indirect
+    };
+    // The following bits are OR'd into the types above. For example, a type
+    // of 0x0f would be an external N_SECT symbol (0x0e | 0x01).
+    enum { N_EXT  = 0x01,   // external symbol bit
+           N_PEXT = 0x10    // private external symbol bit
+    };
+    
+    // Constants for the n_desc field
+    // see <mach-o/loader.h>
+    enum { REFERENCE_FLAG_UNDEFINED_NON_LAZY          = 0,
+           REFERENCE_FLAG_UNDEFINED_LAZY              = 1,
+           REFERENCE_FLAG_DEFINED                     = 2,
+           REFERENCE_FLAG_PRIVATE_DEFINED             = 3,
+           REFERENCE_FLAG_PRIVATE_UNDEFINED_NON_LAZY  = 4,
+           REFERENCE_FLAG_PRIVATE_UNDEFINED_LAZY      = 5
+    };
+    enum { N_NO_DEAD_STRIP = 0x0020, // symbol is not to be dead stripped
+           N_WEAK_REF      = 0x0040, // symbol is weak referenced
+           N_WEAK_DEF      = 0x0080  // coalesced symbol is a weak definition
+    };
+    
+    MachOSym(const GlobalValue *gv, std::string name, uint8_t sect);
+  };
+      
   /// MachOWriter - This class implements the common target-independent code for
   /// writing Mach-O files.  Targets should derive a class from this to
   /// parameterize the output format.
@@ -55,7 +103,7 @@ namespace llvm {
     /// Mang - The object used to perform name mangling for this module.
     ///
     Mangler *Mang;
-
+    
     /// MCE - The MachineCodeEmitter object that we are exposing to emit machine
     /// code for functions to the .o file.
     MachOCodeEmitter *MCE;
@@ -249,6 +297,28 @@ namespace llvm {
           initprot(VM_PROT_ALL), nsects(0), flags(0) { }
     };
 
+    /// MachORelocation - This struct contains information about each relocation
+    /// that needs to be emitted to the file.
+    /// see <mach-o/reloc.h>
+    struct MachORelocation {
+      uint32_t r_address;   // offset in the section to what is being  relocated
+      uint32_t r_symbolnum; // symbol index if r_extern == 1 else section index
+      bool     r_pcrel;     // was relocated pc-relative already
+      uint8_t  r_length;    // length = 2 ^ r_length
+      bool     r_extern;    // 
+      uint8_t  r_type;      // if not 0, machine-specific relocation type.
+      
+      uint32_t getPackedFields() { 
+        return (r_symbolnum << 8) | (r_pcrel << 7) | ((r_length & 3) << 5) |
+               (r_extern << 4) | (r_type & 15);
+      }
+      
+      MachORelocation(uint32_t addr, uint32_t index, bool pcrel, uint8_t len,
+                      bool ext, uint8_t type) : r_address(addr),
+        r_symbolnum(index), r_pcrel(pcrel), r_length(len), r_extern(ext),
+        r_type(type) {}
+    };
+
     /// MachOSection - This struct contains information about each section in a 
     /// particular segment that is emitted to the file.  This is eventually
     /// turned into the SectionCommand in the load command for a particlar
@@ -274,6 +344,11 @@ namespace llvm {
       /// SectionData - The actual data for this section which we are building
       /// up for emission to the file.
       DataBuffer SectionData;
+      
+      /// Relocations - The relocations that we have encountered so far in this 
+      /// section that we will need to convert to MachORelocation entries when
+      /// the file is written.
+      std::vector<MachineRelocation> Relocations;
       
       // Constants for the section types (low 8 bits of flags field)
       // see <mach-o/loader.h>
@@ -467,57 +542,6 @@ namespace llvm {
     /// DySymTab - symbol table info for the dynamic link editor
     MachODySymTab DySymTab;
 
-    /// MachOSym - This struct contains information about each symbol that is
-    /// added to logical symbol table for the module.  This is eventually
-    /// turned into a real symbol table in the file.
-    struct MachOSym {
-      const GlobalValue *GV;    // The global value this corresponds to.
-      std::string GVName;       // The mangled name of the global value.
-      uint32_t    n_strx;       // index into the string table
-      uint8_t     n_type;       // type flag
-      uint8_t     n_sect;       // section number or NO_SECT
-      int16_t     n_desc;       // see <mach-o/stab.h>
-      uint64_t    n_value;      // value for this symbol (or stab offset)
-      
-      // Constants for the n_sect field
-      // see <mach-o/nlist.h>
-      enum { NO_SECT = 0 };   // symbol is not in any section
-
-      // Constants for the n_type field
-      // see <mach-o/nlist.h>
-      enum { N_UNDF  = 0x0,  // undefined, n_sect == NO_SECT
-             N_ABS   = 0x2,  // absolute, n_sect == NO_SECT
-             N_SECT  = 0xe,  // defined in section number n_sect
-             N_PBUD  = 0xc,  // prebound undefined (defined in a dylib)
-             N_INDR  = 0xa   // indirect
-      };
-      // The following bits are OR'd into the types above. For example, a type
-      // of 0x0f would be an external N_SECT symbol (0x0e | 0x01).
-      enum { N_EXT  = 0x01,   // external symbol bit
-             N_PEXT = 0x10    // private external symbol bit
-      };
-      
-      // Constants for the n_desc field
-      // see <mach-o/loader.h>
-      enum { REFERENCE_FLAG_UNDEFINED_NON_LAZY          = 0,
-             REFERENCE_FLAG_UNDEFINED_LAZY              = 1,
-             REFERENCE_FLAG_DEFINED                     = 2,
-             REFERENCE_FLAG_PRIVATE_DEFINED             = 3,
-             REFERENCE_FLAG_PRIVATE_UNDEFINED_NON_LAZY  = 4,
-             REFERENCE_FLAG_PRIVATE_UNDEFINED_LAZY      = 5
-      };
-      enum { N_NO_DEAD_STRIP = 0x0020, // symbol is not to be dead stripped
-             N_WEAK_REF      = 0x0040, // symbol is weak referenced
-             N_WEAK_DEF      = 0x0080  // coalesced symbol is a weak definition
-      };
-      
-      MachOSym(const GlobalValue *gv, std::string name, uint8_t sect) : GV(gv), 
-        GVName(name), n_strx(0), n_type(sect == NO_SECT ? N_UNDF : N_SECT), 
-        n_sect(sect), n_desc(0), n_value(0) {
-        // FIXME: names aren't getting the proper global/local prefix
-      }
-    };
-
     struct MachOSymCmp {
       bool operator()(const MachOSym &LHS, const MachOSym &RHS) {
         return LHS.GVName < RHS.GVName;
@@ -530,12 +554,18 @@ namespace llvm {
 
     /// PartitionByDefined - Simple boolean predicate that returns true if Sym 
     /// is defined in this module.
-    static bool PartitionByDefined(const MachOWriter::MachOSym &Sym);
+    static bool PartitionByDefined(const MachOSym &Sym);
 
+  protected:
+  
     /// SymbolTable - This is the list of symbols we have emitted to the file.
     /// This actually gets rearranged before emission to the file (to put the
     /// local symbols first in the list).
     std::vector<MachOSym> SymbolTable;
+    
+    /// RelocBuffer - A buffer to hold the mach-o relocations before we write
+    /// them out at the appropriate location in the file.
+    DataBuffer RelocBuffer;
     
     /// SymT - A buffer to hold the symbol table before we write it out at the
     /// appropriate location in the file.
@@ -641,8 +671,10 @@ namespace llvm {
     void EmitGlobal(GlobalVariable *GV);
     void EmitHeaderAndLoadCommands();
     void EmitSections();
-    void EmitRelocations();
     void BufferSymbolAndStringTable();
+
+    virtual void GetTargetRelocation(MachOSection &MOS, MachineRelocation &MR, 
+                                     uint64_t Addr) = 0;
   };
 }
 

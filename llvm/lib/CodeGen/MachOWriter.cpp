@@ -25,8 +25,8 @@
 #include "llvm/Module.h"
 #include "llvm/CodeGen/MachineCodeEmitter.h"
 #include "llvm/CodeGen/MachineConstantPool.h"
-#include "llvm/CodeGen/MachineRelocation.h"
 #include "llvm/CodeGen/MachOWriter.h"
+#include "llvm/ExecutionEngine/ExecutionEngine.h"
 #include "llvm/Target/TargetJITInfo.h"
 #include "llvm/Support/Mangler.h"
 #include "llvm/Support/MathExtras.h"
@@ -130,19 +130,10 @@ bool MachOCodeEmitter::finishFunction(MachineFunction &F) {
   
   // Get a symbol for the function to add to the symbol table
   const GlobalValue *FuncV = F.getFunction();
-  MachOWriter::MachOSym FnSym(FuncV, MOW.Mang->getValueName(FuncV), MOS->Index);
-  
-  // Figure out the binding (linkage) of the symbol.
-  switch (FuncV->getLinkage()) {
-  default:
-    // appending linkage is illegal for functions.
-    assert(0 && "Unknown linkage type!");
-  case GlobalValue::ExternalLinkage:
-    FnSym.n_type |=  MachOWriter::MachOSym::N_EXT;
-    break;
-  case GlobalValue::InternalLinkage:
-    break;
-  }
+  MachOSym FnSym(FuncV, MOW.Mang->getValueName(FuncV), MOS->Index);
+
+  // FIXME: emit constant pool to appropriate section(s)
+  // FIXME: emit jump table to appropriate section
   
   // Resolve the function's relocations either to concrete pointers in the case
   // of branches from one block to another, or to target relocation entries.
@@ -152,15 +143,14 @@ bool MachOCodeEmitter::finishFunction(MachineFunction &F) {
       void *MBBAddr = (void *)getMachineBasicBlockAddress(MR.getBasicBlock());
       MR.setResultPointer(MBBAddr);
       MOW.TM.getJITInfo()->relocate(BufferBegin, &MR, 1, 0);
-      // FIXME: we basically want the JITInfo relocate() function to rewrite
-      //        this guy right now, so we just write the correct displacement
-      //        to the file.
+    } else if (MR.isConstantPoolIndex() || MR.isJumpTableIndex()) {
+      // Get the address of the index.
+      uint64_t Addr = 0;
+      // Generate the relocation(s) for the index.
+      MOW.GetTargetRelocation(*MOS, MR, Addr);
     } else {
-      // isString | isGV | isCPI | isJTI
-      // FIXME: do something smart here.  We won't be able to relocate these
-      //        until the sections are all layed out, but we still need to
-      //        record them.  Maybe emit TargetRelocations and then resolve
-      //        those at file writing time?
+      // Handle other types later once we've finalized the sections in the file.
+      MOS->Relocations.push_back(MR);
     }
   }
   Relocations.clear();
@@ -175,7 +165,6 @@ bool MachOCodeEmitter::finishFunction(MachineFunction &F) {
 //===----------------------------------------------------------------------===//
 
 MachOWriter::MachOWriter(std::ostream &o, TargetMachine &tm) : O(o), TM(tm) {
-  // FIXME: set cpu type and cpu subtype somehow from TM
   is64Bit = TM.getTargetData()->getPointerSizeInBits() == 64;
   isLittleEndian = TM.getTargetData()->isLittleEndian();
 
@@ -228,9 +217,7 @@ void MachOWriter::EmitGlobal(GlobalVariable *GV) {
     // part of the common block if they are zero initialized and allowed to be
     // merged with other symbols.
     if (NoInit || GV->hasLinkOnceLinkage() || GV->hasWeakLinkage()) {
-      MachOWriter::MachOSym ExtOrCommonSym(GV, Mang->getValueName(GV), 
-                                           MachOSym::NO_SECT);
-      ExtOrCommonSym.n_type |= MachOSym::N_EXT;
+      MachOSym ExtOrCommonSym(GV, Mang->getValueName(GV), MachOSym::NO_SECT);
       // For undefined (N_UNDF) external (N_EXT) types, n_value is the size in
       // bytes of the symbol.
       ExtOrCommonSym.n_value = Size;
@@ -254,9 +241,20 @@ void MachOWriter::EmitGlobal(GlobalVariable *GV) {
   MachOSection &Sec = GV->isConstant() ? getConstSection(Ty) : getDataSection();
   AddSymbolToSection(Sec, GV);
   
-  // FIXME: actually write out the initializer to the section.  This will
-  // require ExecutionEngine's InitializeMemory() function, which will need to
-  // be enhanced to support relocations.
+  // FIXME: A couple significant changes are required for this to work, even for
+  //        trivial cases such as a constant integer:
+  //   0. InitializeMemory needs to be split out of ExecutionEngine.  We don't
+  //      want to have to create an ExecutionEngine such as JIT just to write
+  //      some bytes into a buffer.  The only thing necessary for
+  //      InitializeMemory to function properly should be TargetData.
+  //
+  //   1. InitializeMemory needs to be enhanced to return MachineRelocations 
+  //      rather than accessing the address of objects such basic blocks, 
+  //      constant pools, and jump tables.  The client of InitializeMemory such
+  //      as an object writer or jit emitter should then handle these relocs
+  //      appropriately.
+  //
+  // FIXME: need to allocate memory for the global initializer.
 }
 
 
@@ -292,7 +290,7 @@ bool MachOWriter::doFinalization(Module &M) {
   // Emit the symbol table to temporary buffers, so that we know the size of
   // the string table when we write the load commands in the next phase.
   BufferSymbolAndStringTable();
-
+  
   // Emit the header and load commands.
   EmitHeaderAndLoadCommands();
 
@@ -300,9 +298,7 @@ bool MachOWriter::doFinalization(Module &M) {
   EmitSections();
 
   // Emit the relocation entry data for each section.
-  // FIXME: presumably this should be a virtual method, since different targets
-  //        have different relocation types.
-  EmitRelocations();
+  O.write((char*)&RelocBuffer[0], RelocBuffer.size());
 
   // Write the symbol table and the string table to the end of the file.
   O.write((char*)&SymT[0], SymT.size());
@@ -368,10 +364,32 @@ void MachOWriter::EmitHeaderAndLoadCommands() {
   outword(FH, SEG.nsects);
   outword(FH, SEG.flags);
   
-  // Step #5: Write out the section commands for each section
+  // Step #5: Finish filling in the fields of the MachOSections 
+  uint64_t currentAddr = 0;
   for (std::list<MachOSection>::iterator I = SectionList.begin(),
          E = SectionList.end(); I != E; ++I) {
-    I->offset = SEG.fileoff;  // FIXME: separate offset
+    I->addr = currentAddr;
+    I->offset = currentAddr + SEG.fileoff;
+    // FIXME: do we need to do something with alignment here?
+    currentAddr += I->size;
+  }
+  
+  // Step #6: Calculate the number of relocations for each section and write out
+  // the section commands for each section
+  currentAddr += SEG.fileoff;
+  for (std::list<MachOSection>::iterator I = SectionList.begin(),
+         E = SectionList.end(); I != E; ++I) {
+    // calculate the relocation info for this section command
+    // FIXME: this could get complicated calculating the address argument, we 
+    // should probably split this out into its own function.
+    for (unsigned i = 0, e = I->Relocations.size(); i != e; ++i)
+      GetTargetRelocation(*I, I->Relocations[i], 0);
+    if (I->nreloc != 0) {
+      I->reloff = currentAddr;
+      currentAddr += I->nreloc * 8;
+    }
+    
+    // write the finalized section command to the output buffer
     outstring(FH, I->sectname, 16);
     outstring(FH, I->segname, 16);
     outaddr(FH, I->addr);
@@ -387,9 +405,9 @@ void MachOWriter::EmitHeaderAndLoadCommands() {
       outword(FH, I->reserved3);
   }
   
-  // Step #6: Emit LC_SYMTAB/LC_DYSYMTAB load commands
+  // Step #7: Emit LC_SYMTAB/LC_DYSYMTAB load commands
   // FIXME: add size of relocs
-  SymTab.symoff  = SEG.fileoff + SEG.filesize;
+  SymTab.symoff  = currentAddr;
   SymTab.nsyms   = SymbolTable.size();
   SymTab.stroff  = SymTab.symoff + SymT.size();
   SymTab.strsize = StrT.size();
@@ -434,12 +452,6 @@ void MachOWriter::EmitSections() {
          E = SectionList.end(); I != E; ++I) {
     O.write((char*)&I->SectionData[0], I->size);
   }
-}
-
-void MachOWriter::EmitRelocations() {
-  // FIXME: this should probably be a pure virtual function, since the
-  // relocation types and layout of the relocations themselves are target
-  // specific.
 }
 
 /// PartitionByLocal - Simple boolean predicate that returns true if Sym is
@@ -511,5 +523,25 @@ void MachOWriter::BufferSymbolAndStringTable() {
     outbyte(SymT, I->n_sect);
     outhalf(SymT, I->n_desc);
     outaddr(SymT, I->n_value);
+  }
+}
+
+MachOSym::MachOSym(const GlobalValue *gv, std::string name, uint8_t sect) :
+  GV(gv), GVName(name), n_strx(0), n_type(sect == NO_SECT ? N_UNDF : N_SECT), 
+  n_sect(sect), n_desc(0), n_value(0) {
+  // FIXME: take a target machine, and then add the appropriate prefix for
+  //        the linkage type based on the TargetAsmInfo
+  switch (GV->getLinkage()) {
+  default:
+    assert(0 && "Unexpected linkage type!");
+    break;
+  case GlobalValue::WeakLinkage:
+  case GlobalValue::LinkOnceLinkage:
+    assert(!isa<Function>(gv) && "Unexpected linkage type for Function!");
+  case GlobalValue::ExternalLinkage:
+    n_type |= N_EXT;
+    break;
+  case GlobalValue::InternalLinkage:
+    break;
   }
 }

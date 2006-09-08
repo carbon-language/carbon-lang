@@ -312,15 +312,12 @@ void PPCJITInfo::relocate(void *Function, MachineRelocation *MR,
              "Relocation out of range!");
       *RelocPos |= (ResultPtr & ((1 << 14)-1))  << 2;
       break;
-    case PPC::reloc_absolute_ptr_high: // Pointer relocations.
-    case PPC::reloc_absolute_ptr_low:
     case PPC::reloc_absolute_high:     // high bits of ref -> low 16 of instr
     case PPC::reloc_absolute_low: {    // low bits of ref  -> low 16 of instr
       ResultPtr += MR->getConstantVal();
 
       // If this is a high-part access, get the high-part.
-      if (MR->getRelocationType() == PPC::reloc_absolute_high ||
-          MR->getRelocationType() == PPC::reloc_absolute_ptr_high) {
+      if (MR->getRelocationType() == PPC::reloc_absolute_high) {
         // If the low part will have a carry (really a borrow) from the low
         // 16-bits into the high 16, add a bit to borrow from.
         if (((int)ResultPtr << 16) < 0)
