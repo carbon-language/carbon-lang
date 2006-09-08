@@ -596,6 +596,8 @@ void RA::AllocateBasicBlock(MachineBasicBlock &MBB) {
       if (MO.isRegister() && MO.isDef() && MO.getReg() &&
           MRegisterInfo::isPhysicalRegister(MO.getReg())) {
         unsigned Reg = MO.getReg();
+        if (PhysRegsUsed[Reg] == -2) continue;  // Something like ESP.
+            
         PhysRegsEverUsed[Reg] = true;
         spillPhysReg(MBB, MI, Reg, true); // Spill any existing value in the reg
         PhysRegsUsed[Reg] = 0;            // It is free and reserved now
