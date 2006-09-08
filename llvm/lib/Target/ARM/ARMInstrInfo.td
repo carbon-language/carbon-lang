@@ -127,6 +127,10 @@ def bcond      : InstARM<(ops brtarget:$dst, CCOp:$cc),
 		         "b$cc $dst",
 		         [(armbr bb:$dst, imm:$cc)]>;
 
+def b      : InstARM<(ops brtarget:$dst),
+		         "b $dst",
+		         [(br bb:$dst)]>;
+
 def cmp      : InstARM<(ops IntRegs:$a, IntRegs:$b),
 	               "cmp $a, $b",
 		       [(armcmp IntRegs:$a, IntRegs:$b)]>;

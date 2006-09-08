@@ -1,5 +1,4 @@
 ; RUN: llvm-as < %s | llc -march=arm
-; XFAIL: *
 
 int %f(int %a) {
 entry:
