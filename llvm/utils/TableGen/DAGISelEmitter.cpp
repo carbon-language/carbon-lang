@@ -768,7 +768,6 @@ bool TreePatternNode::ApplyTypeConstraints(TreePattern &TP, bool NotRegisters) {
       if (OperandNode->isSubClassOf("RegisterClass")) {
         const CodeGenRegisterClass &RC = 
           ISE.getTargetInfo().getRegisterClass(OperandNode);
-        //VT = RC.getValueTypeNum(0);
         MadeChange |=getChild(i)->UpdateNodeType(ConvertVTs(RC.getValueTypes()),
                                                  TP);
       } else if (OperandNode->isSubClassOf("Operand")) {
@@ -1944,11 +1943,11 @@ static unsigned getPatternSize(TreePatternNode *P, DAGISelEmitter &ISE) {
           P->getExtTypeNum(0) == MVT::Flag ||
           P->getExtTypeNum(0) == MVT::iPTR) && 
          "Not a valid pattern node to size!");
-  unsigned Size = 2;  // The node itself.
+  unsigned Size = 3;  // The node itself.
   // If the root node is a ConstantSDNode, increases its size.
   // e.g. (set R32:$dst, 0).
   if (P->isLeaf() && dynamic_cast<IntInit*>(P->getLeafValue()))
-    Size++;
+    Size += 2;
 
   // FIXME: This is a hack to statically increase the priority of patterns
   // which maps a sub-dag to a complex pattern. e.g. favors LEA over ADD.
@@ -1957,7 +1956,7 @@ static unsigned getPatternSize(TreePatternNode *P, DAGISelEmitter &ISE) {
   // calculate the complexity of all patterns a dag can potentially map to.
   const ComplexPattern *AM = NodeGetComplexPattern(P, ISE);
   if (AM)
-    Size += AM->getNumOperands() * 2;
+    Size += AM->getNumOperands() * 3;
 
   // If this node has some predicate function that must match, it adds to the
   // complexity of this node.
@@ -1971,7 +1970,7 @@ static unsigned getPatternSize(TreePatternNode *P, DAGISelEmitter &ISE) {
       Size += getPatternSize(Child, ISE);
     else if (Child->isLeaf()) {
       if (dynamic_cast<IntInit*>(Child->getLeafValue())) 
-        Size += 3;  // Matches a ConstantSDNode (+2) and a specific value (+1).
+        Size += 5;  // Matches a ConstantSDNode (+3) and a specific value (+2).
       else if (NodeIsComplexPattern(Child))
         Size += getPatternSize(Child, ISE);
       else if (!Child->getPredicateFn().empty())
