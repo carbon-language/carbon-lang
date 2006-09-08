@@ -130,7 +130,7 @@ bool PPCTargetMachine::addObjectWriter(FunctionPassManager &PM, bool Fast,
                                        std::ostream &Out) {
   // FIXME: support PPC ELF files at some point
   addPPCMachOObjectWriterPass(PM, Out, *this);
-  return true;
+  return false;
 }
 
 bool PPCTargetMachine::addCodeEmitter(FunctionPassManager &PM, bool Fast,
@@ -138,8 +138,6 @@ bool PPCTargetMachine::addCodeEmitter(FunctionPassManager &PM, bool Fast,
   // The JIT should use the static relocation model.
   // FIXME: This should be moved to TargetJITInfo!!
   setRelocationModel(Reloc::Static);
-
-  
   
   // Machine code emitter pass for PowerPC.
   PM.add(createPPCCodeEmitterPass(*this, MCE));
