@@ -19,6 +19,10 @@ PARALLEL_DIRS := llvm-config \
                  gccas llvm-bcanalyzer llvm-stub \
 		 gccld llvm2cpp \
                  llvm-ld llvmc llvm-prof
+
+include $(LEVEL)/Makefile.common
+
+# Disable liblto on non-darwin platforms right now until LLVM is built PIC.
 ifeq ($(OS), Darwin)
 PARALLEL_DIRS += lto
 endif
