@@ -1719,7 +1719,8 @@ bool X86::isMOVLMask(SDNode *N) {
 /// isCommutedMOVL - Returns true if the shuffle mask is except the reverse
 /// of what x86 movss want. X86 movs requires the lowest  element to be lowest
 /// element of vector 2 and the other elements to come from vector 1 in order.
-static bool isCommutedMOVL(std::vector<SDOperand> &Ops, bool V2IsSplat = false) {
+static bool isCommutedMOVL(std::vector<SDOperand> &Ops, bool V2IsSplat = false,
+                           bool V2IsUndef = false) {
   unsigned NumElems = Ops.size();
   if (NumElems != 2 && NumElems != 4 && NumElems != 8 && NumElems != 16)
     return false;
@@ -1729,22 +1730,20 @@ static bool isCommutedMOVL(std::vector<SDOperand> &Ops, bool V2IsSplat = false) 
 
   for (unsigned i = 1; i < NumElems; ++i) {
     SDOperand Arg = Ops[i];
-    if (V2IsSplat) {
-      if (!isUndefOrEqual(Arg, NumElems))
-        return false;
-    } else {
-      if (!isUndefOrEqual(Arg, i+NumElems))
-        return false;
-    }
+    if (!(isUndefOrEqual(Arg, i+NumElems) ||
+          (V2IsUndef && isUndefOrInRange(Arg, NumElems, NumElems*2)) ||
+          (V2IsSplat && isUndefOrEqual(Arg, NumElems))))
+      return false;
   }
 
   return true;
 }
 
-static bool isCommutedMOVL(SDNode *N, bool V2IsSplat = false) {
+static bool isCommutedMOVL(SDNode *N, bool V2IsSplat = false,
+                           bool V2IsUndef = false) {
   assert(N->getOpcode() == ISD::BUILD_VECTOR);
   std::vector<SDOperand> Ops(N->op_begin(), N->op_end());
-  return isCommutedMOVL(Ops, V2IsSplat);
+  return isCommutedMOVL(Ops, V2IsSplat, V2IsUndef);
 }
 
 /// isMOVSHDUPMask - Return true if the specified VECTOR_SHUFFLE operand
@@ -2031,6 +2030,29 @@ static bool isSplatVector(SDNode *N) {
   for (unsigned i = 1, e = N->getNumOperands(); i != e; ++i)
     if (N->getOperand(i) != SplatValue)
       return false;
+  return true;
+}
+
+/// isUndefShuffle - Returns true if N is a VECTOR_SHUFFLE that can be resolved
+/// to an undef.
+static bool isUndefShuffle(SDNode *N) {
+  if (N->getOpcode() != ISD::BUILD_VECTOR)
+    return false;
+
+  SDOperand V1 = N->getOperand(0);
+  SDOperand V2 = N->getOperand(1);
+  SDOperand Mask = N->getOperand(2);
+  unsigned NumElems = Mask.getNumOperands();
+  for (unsigned i = 0; i != NumElems; ++i) {
+    SDOperand Arg = Mask.getOperand(i);
+    if (Arg.getOpcode() != ISD::UNDEF) {
+      unsigned Val = cast<ConstantSDNode>(Arg)->getValue();
+      if (Val < NumElems && V1.getOpcode() != ISD::UNDEF)
+        return false;
+      else if (Val >= NumElems && V2.getOpcode() != ISD::UNDEF)
+        return false;
+    }
+  }
   return true;
 }
 
@@ -2402,6 +2424,9 @@ X86TargetLowering::LowerVECTOR_SHUFFLE(SDOperand Op, SelectionDAG &DAG) {
   bool V1IsUndef = V1.getOpcode() == ISD::UNDEF;
   bool V2IsUndef = V2.getOpcode() == ISD::UNDEF;
 
+  if (isUndefShuffle(Op.Val))
+    return DAG.getNode(ISD::UNDEF, VT);
+
   if (isSplatMask(PermMask.Val)) {
     if (NumElems <= 4) return Op;
     // Promote it to a v4i32 splat.
@@ -2422,17 +2447,18 @@ X86TargetLowering::LowerVECTOR_SHUFFLE(SDOperand Op, SelectionDAG &DAG) {
       ShouldXformToMOVLP(V1.Val, PermMask.Val))
     return CommuteVectorShuffle(Op, DAG);
 
-  bool V1IsSplat = isSplatVector(V1.Val) || V1.getOpcode() == ISD::UNDEF;
-  bool V2IsSplat = isSplatVector(V2.Val) || V2.getOpcode() == ISD::UNDEF;
-  if (V1IsSplat && !V2IsSplat) {
+  bool V1IsSplat = isSplatVector(V1.Val);
+  bool V2IsSplat = isSplatVector(V2.Val);
+  if ((V1IsSplat || V1IsUndef) && !(V2IsSplat || V2IsUndef)) {
     Op = CommuteVectorShuffle(Op, DAG);
     V1 = Op.getOperand(0);
     V2 = Op.getOperand(1);
     PermMask = Op.getOperand(2);
-    V2IsSplat = true;
+    std::swap(V1IsSplat, V2IsSplat);
+    std::swap(V1IsUndef, V2IsUndef);
   }
 
-  if (isCommutedMOVL(PermMask.Val, V2IsSplat)) {
+  if (isCommutedMOVL(PermMask.Val, V2IsSplat, V2IsUndef)) {
     if (V2IsUndef) return V1;
     Op = CommuteVectorShuffle(Op, DAG);
     V1 = Op.getOperand(0);
