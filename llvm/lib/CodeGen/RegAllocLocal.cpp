@@ -66,8 +66,9 @@ namespace {
     // Virt2PhysRegMap).  The value mapped to is the virtual register
     // corresponding to the physical register (the inverse of the
     // Virt2PhysRegMap), or 0.  The value is set to 0 if this register is pinned
-    // because it is used by a future instruction.  If the entry for a physical
-    // register is -1, then the physical register is "not in the map".
+    // because it is used by a future instruction, and to -2 if it is not
+    // allocatable.  If the entry for a physical register is -1, then the
+    // physical register is "not in the map".
     //
     std::vector<int> PhysRegsUsed;
 
@@ -298,14 +299,16 @@ void RA::spillVirtReg(MachineBasicBlock &MBB, MachineBasicBlock::iterator I,
 void RA::spillPhysReg(MachineBasicBlock &MBB, MachineInstr *I,
                       unsigned PhysReg, bool OnlyVirtRegs) {
   if (PhysRegsUsed[PhysReg] != -1) {            // Only spill it if it's used!
+    assert(PhysRegsUsed[PhysReg] != -2 && "Non allocable reg used!");
     if (PhysRegsUsed[PhysReg] || !OnlyVirtRegs)
       spillVirtReg(MBB, I, PhysRegsUsed[PhysReg], PhysReg);
   } else {
     // If the selected register aliases any other registers, we must make
-    // sure that one of the aliases isn't alive...
+    // sure that one of the aliases isn't alive.
     for (const unsigned *AliasSet = RegInfo->getAliasSet(PhysReg);
          *AliasSet; ++AliasSet)
-      if (PhysRegsUsed[*AliasSet] != -1)     // Spill aliased register...
+      if (PhysRegsUsed[*AliasSet] != -1 &&     // Spill aliased register.
+          PhysRegsUsed[*AliasSet] != -2)       // If allocatable.
         if (PhysRegsUsed[*AliasSet] || !OnlyVirtRegs)
           spillVirtReg(MBB, I, PhysRegsUsed[*AliasSet], *AliasSet);
   }
@@ -400,7 +403,7 @@ unsigned RA::getReg(MachineBasicBlock &MBB, MachineInstr *I,
       // physical register!
       assert(PhysRegsUsed[R] != -1 &&
              "PhysReg in PhysRegsUseOrder, but is not allocated?");
-      if (PhysRegsUsed[R]) {
+      if (PhysRegsUsed[R] && PhysRegsUsed[R] != -2) {
         // If the current register is compatible, use it.
         if (RC->contains(R)) {
           PhysReg = R;
@@ -415,7 +418,11 @@ unsigned RA::getReg(MachineBasicBlock &MBB, MachineInstr *I,
                 // example, if CL is pinned, and we run across CH, don't use
                 // CH as justification for using scavenging ECX (which will
                 // fail).
-                PhysRegsUsed[*AliasIt] != 0) {
+                PhysRegsUsed[*AliasIt] != 0 &&
+                
+                // Make sure the register is allocatable.  Don't allocate SIL on
+                // x86-32.
+                PhysRegsUsed[*AliasIt] != -2) {
               PhysReg = *AliasIt;    // Take an aliased register
               break;
             }
@@ -516,9 +523,11 @@ void RA::AllocateBasicBlock(MachineBasicBlock &MBB) {
       PhysRegsUseOrder.push_back(Reg);
       for (const unsigned *AliasSet = RegInfo->getAliasSet(Reg);
            *AliasSet; ++AliasSet) {
-        PhysRegsUseOrder.push_back(*AliasSet);
-        PhysRegsUsed[*AliasSet] = 0;  // It is free and reserved now
-        PhysRegsEverUsed[*AliasSet] = true;
+        if (PhysRegsUsed[*AliasSet] != -2) {
+          PhysRegsUseOrder.push_back(*AliasSet);
+          PhysRegsUsed[*AliasSet] = 0;  // It is free and reserved now
+          PhysRegsEverUsed[*AliasSet] = true;
+        }
       }
     }    
   }
@@ -530,7 +539,7 @@ void RA::AllocateBasicBlock(MachineBasicBlock &MBB) {
     DEBUG(std::cerr << "\nStarting RegAlloc of: " << *MI;
           std::cerr << "  Regs have values: ";
           for (unsigned i = 0; i != RegInfo->getNumRegs(); ++i)
-            if (PhysRegsUsed[i] != -1)
+            if (PhysRegsUsed[i] != -1 && PhysRegsUsed[i] != -2)
                std::cerr << "[" << RegInfo->getName(i)
                          << ",%reg" << PhysRegsUsed[i] << "] ";
           std::cerr << "\n");
@@ -593,9 +602,11 @@ void RA::AllocateBasicBlock(MachineBasicBlock &MBB) {
         PhysRegsUseOrder.push_back(Reg);
         for (const unsigned *AliasSet = RegInfo->getAliasSet(Reg);
              *AliasSet; ++AliasSet) {
-          PhysRegsUseOrder.push_back(*AliasSet);
-          PhysRegsUsed[*AliasSet] = 0;  // It is free and reserved now
-          PhysRegsEverUsed[*AliasSet] = true;
+          if (PhysRegsUsed[*AliasSet] != -2) {
+            PhysRegsUseOrder.push_back(*AliasSet);
+            PhysRegsUsed[*AliasSet] = 0;  // It is free and reserved now
+            PhysRegsEverUsed[*AliasSet] = true;
+          }
         }
       }
     }
@@ -605,6 +616,8 @@ void RA::AllocateBasicBlock(MachineBasicBlock &MBB) {
       for (const unsigned *ImplicitDefs = TID.ImplicitDefs;
            *ImplicitDefs; ++ImplicitDefs) {
         unsigned Reg = *ImplicitDefs;
+        if (PhysRegsUsed[Reg] == -2) continue;
+
         spillPhysReg(MBB, MI, Reg, true);
         PhysRegsUseOrder.push_back(Reg);
         PhysRegsUsed[Reg] = 0;            // It is free and reserved now
@@ -612,9 +625,11 @@ void RA::AllocateBasicBlock(MachineBasicBlock &MBB) {
 
         for (const unsigned *AliasSet = RegInfo->getAliasSet(Reg);
              *AliasSet; ++AliasSet) {
-          PhysRegsUseOrder.push_back(*AliasSet);
-          PhysRegsUsed[*AliasSet] = 0;  // It is free and reserved now
-          PhysRegsEverUsed[*AliasSet] = true;
+          if (PhysRegsUsed[*AliasSet] != -2) {
+            PhysRegsUseOrder.push_back(*AliasSet);
+            PhysRegsUsed[*AliasSet] = 0;  // It is free and reserved now
+            PhysRegsEverUsed[*AliasSet] = true;
+          }
         }
       }
     }
@@ -675,7 +690,7 @@ void RA::AllocateBasicBlock(MachineBasicBlock &MBB) {
 
   // Spill all physical registers holding virtual registers now.
   for (unsigned i = 0, e = RegInfo->getNumRegs(); i != e; ++i)
-    if (PhysRegsUsed[i] != -1)
+    if (PhysRegsUsed[i] != -1 && PhysRegsUsed[i] != -2)
       if (unsigned VirtReg = PhysRegsUsed[i])
         spillVirtReg(MBB, MI, VirtReg, i);
       else
@@ -714,6 +729,16 @@ bool RA::runOnMachineFunction(MachineFunction &Fn) {
   Fn.setUsedPhysRegs(PhysRegsEverUsed);
 
   PhysRegsUsed.assign(RegInfo->getNumRegs(), -1);
+  
+  // At various places we want to efficiently check to see whether a register
+  // is allocatable.  To handle this, we mark all unallocatable registers as
+  // being pinned down, permanently.
+  {
+    std::vector<bool> Allocable = RegInfo->getAllocatableSet(Fn);
+    for (unsigned i = 0, e = Allocable.size(); i != e; ++i)
+      if (!Allocable[i])
+        PhysRegsUsed[i] = -2;  // Mark the reg unallocable.
+  }
 
   // initialize the virtual->physical register map to have a 'null'
   // mapping for all virtual registers
