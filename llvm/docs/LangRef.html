@@ -156,7 +156,7 @@
           <li><a href="#i_memset">'<tt>llvm.memset.*</tt>' Intrinsic</a></li>
           <li><a href="#i_isunordered">'<tt>llvm.isunordered.*</tt>' Intrinsic</a></li>
           <li><a href="#i_sqrt">'<tt>llvm.sqrt.*</tt>' Intrinsic</a></li>
-
+          <li><a href="#i_powi">'<tt>llvm.powi.*</tt>' Intrinsic</a></li>
         </ol>
       </li>
       <li><a href="#int_manip">Bit Manipulation Intrinsics</a>
@@ -3630,8 +3630,8 @@ false.
 
 <h5>Syntax:</h5>
 <pre>
-  declare double %llvm.sqrt.f32(float Val)
-  declare double %llvm.sqrt.f64(double Val)
+  declare float %llvm.sqrt.f32(float %Val)
+  declare double %llvm.sqrt.f64(double %Val)
 </pre>
 
 <h5>Overview:</h5>
@@ -3656,6 +3656,42 @@ This function returns the sqrt of the specified operand if it is a positive
 floating point number.
 </p>
 </div>
+
+<!-- _______________________________________________________________________ -->
+<div class="doc_subsubsection">
+  <a name="i_powi">'<tt>llvm.powi.*</tt>' Intrinsic</a>
+</div>
+
+<div class="doc_text">
+
+<h5>Syntax:</h5>
+<pre>
+  declare float  %llvm.powi.f32(float  %Val, int %power)
+  declare double %llvm.powi.f64(double %Val, int %power)
+</pre>
+
+<h5>Overview:</h5>
+
+<p>
+The '<tt>llvm.powi.*</tt>' intrinsics return the first operand raised to the
+specified (positive or negative) power.  The order of evaluation of
+multiplications is not defined.
+</p>
+
+<h5>Arguments:</h5>
+
+<p>
+The second argument is an integer power, and the first is a value to raise to
+that power.
+</p>
+
+<h5>Semantics:</h5>
+
+<p>
+This function returns the first value raised to the second power with an
+unspecified sequence of rounding operations.</p>
+</div>
+
 
 <!-- ======================================================================= -->
 <div class="doc_subsection">
