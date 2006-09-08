@@ -27,4 +27,3 @@ ifeq ($(OS), Darwin)
 PARALLEL_DIRS += lto
 endif
 
-include $(LEVEL)/Makefile.common
