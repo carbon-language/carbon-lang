@@ -113,9 +113,14 @@ def andrr     : InstARM<(ops IntRegs:$dst, IntRegs:$a, IntRegs:$b),
 		       "and $dst, $a, $b",
 		       [(set IntRegs:$dst, (and IntRegs:$a, IntRegs:$b))]>;
 
+def eor_rr     : InstARM<(ops IntRegs:$dst, IntRegs:$a, IntRegs:$b),
+		       "eor $dst, $a, $b",
+		       [(set IntRegs:$dst, (xor IntRegs:$a, IntRegs:$b))]>;
+
 def orr_rr    : InstARM<(ops IntRegs:$dst, IntRegs:$a, IntRegs:$b),
 		       "orr $dst, $a, $b",
 		       [(set IntRegs:$dst, (or IntRegs:$a, IntRegs:$b))]>;
+
 
 let isTwoAddress = 1 in {
   def movcond : InstARM<(ops IntRegs:$dst, IntRegs:$false, IntRegs:$true, CCOp:$cc),
