@@ -580,6 +580,9 @@ void RA::AllocateBasicBlock(MachineBasicBlock &MBB) {
         unsigned &PhysRegSlot = getVirt2PhysRegMapSlot(VirtReg);
         PhysReg = PhysRegSlot;
         PhysRegSlot = 0;
+      } else if (PhysRegsUsed[PhysReg] == -2) {
+        // Unallocatable register dead, ignore.
+        continue;
       }
 
       if (PhysReg) {
@@ -669,6 +672,9 @@ void RA::AllocateBasicBlock(MachineBasicBlock &MBB) {
         PhysReg = PhysRegSlot;
         assert(PhysReg != 0);
         PhysRegSlot = 0;
+      } else if (PhysRegsUsed[PhysReg] == -2) {
+        // Unallocatable register dead, ignore.
+        continue;
       }
 
       if (PhysReg) {
