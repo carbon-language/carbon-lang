@@ -709,9 +709,6 @@ let isCommutable = 1 in
 def TEST64rr : RI<0x85, MRMDestReg, (ops GR64:$src1, GR64:$src2),
                   "test{q} {$src2, $src1|$src1, $src2}",
                   [(X86cmp (and GR64:$src1, GR64:$src2), 0)]>;
-def TEST64mr : RI<0x85, MRMDestMem, (ops i64mem:$src1, GR64:$src2),
-                  "test{q} {$src2, $src1|$src1, $src2}",
-                  [/*(X86cmp (and (loadi64 addr:$src1), GR64:$src2), 0)*/]>;
 def TEST64rm : RI<0x85, MRMSrcMem, (ops GR64:$src1, i64mem:$src2),
                   "test{q} {$src2, $src1|$src1, $src2}",
                   [/*(X86cmp (and GR64:$src1, (loadi64 addr:$src2)), 0)*/]>;
