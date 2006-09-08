@@ -24,7 +24,7 @@ DarwinTargetAsmInfo::DarwinTargetAsmInfo(const PPCTargetMachine &TM) {
   PrivateGlobalPrefix = "L";
   ZeroDirective = "\t.space\t";
   SetDirective = "\t.set";
-  Data64bitsDirective = isPPC64 ? ".quad\t" : 0;  
+  Data64bitsDirective = isPPC64 ? "\t.quad\t" : 0;  
   AlignmentIsInBytes = false;
   ConstantPoolSection = "\t.const\t";
   JumpTableDataSection = ".const";
