@@ -171,6 +171,9 @@ let Properties = [IntrNoMem] in {
                                        llvm_double_ty, llvm_double_ty]>;
   def int_sqrt_f32 : Intrinsic<[llvm_float_ty , llvm_float_ty]>;
   def int_sqrt_f64 : Intrinsic<[llvm_double_ty, llvm_double_ty]>;
+
+  def int_powi_f32 : Intrinsic<[llvm_float_ty , llvm_float_ty, llvm_int_ty]>;
+  def int_powi_f64 : Intrinsic<[llvm_double_ty, llvm_double_ty, llvm_int_ty]>;
 }
 
 // NOTE: these are internal interfaces.
