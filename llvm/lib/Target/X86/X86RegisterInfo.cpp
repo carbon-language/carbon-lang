@@ -169,12 +169,17 @@ static MachineInstr *FuseTwoAddrInst(unsigned Opcode, unsigned FrameIndex,
   
   // Loop over the rest of the ri operands, converting them over.
   for (unsigned i = 0; i != NumOps; ++i) {
-    if (MI->getOperand(i+2).isReg())
-      MIB = MIB.addReg(MI->getOperand(i+2).getReg());
-    else {
-      assert(MI->getOperand(i+2).isImm() && "Unknown operand type!");
-      MIB = MIB.addImm(MI->getOperand(i+2).getImm());
-    }
+    MachineOperand &MO = MI->getOperand(i+2);
+    if (MO.isReg())
+      MIB = MIB.addReg(MO.getReg());
+    else if (MO.isImm())
+      MIB = MIB.addImm(MO.getImm());
+    else if (MO.isGlobalAddress())
+      MIB = MIB.addGlobalAddress(MO.getGlobal(), MO.getOffset());
+    else if (MO.isJumpTableIndex())
+      MIB = MIB.addJumpTableIndex(MO.getJumpTableIndex());
+    else
+      assert(0 && "Unknown operand type!");
   }
   return MIB;
 }
