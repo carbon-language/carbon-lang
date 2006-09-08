@@ -18,6 +18,7 @@
 #include "X86RegisterInfo.h"
 
 namespace llvm {
+  class X86RegisterInfo;
   class X86TargetMachine;
 
 /// X86II - This namespace holds all of the target specific flags that
@@ -90,12 +91,18 @@ namespace X86II {
     // instead of 32 bit data.
     OpSize      = 1 << 6,
 
+    // AsSize - Set if this instruction requires an operand size prefix (0x67),
+    // which most often indicates that the instruction address 16 bit address
+    // instead of 32 bit address (or 32 bit address in 64 bit mode).
+    AdSize      = 1 << 7,
+
+    //===------------------------------------------------------------------===//
     // Op0Mask - There are several prefix bytes that are used to form two byte
     // opcodes.  These are currently 0x0F, 0xF3, and 0xD8-0xDF.  This mask is
     // used to obtain the setting of this field.  If no bits in this field is
     // set, there is no prefix byte for obtaining a multibyte opcode.
     //
-    Op0Shift    = 7,
+    Op0Shift    = 8,
     Op0Mask     = 0xF << Op0Shift,
 
     // TB - TwoByte - Set if this instruction has a two byte opcode, which
@@ -118,19 +125,29 @@ namespace X86II {
     XD = 11 << Op0Shift,   XS = 12 << Op0Shift,
 
     //===------------------------------------------------------------------===//
-    // This two-bit field describes the size of an immediate operand.  Zero is
+    // REX_W - REX prefixes are instruction prefixes used in 64-bit mode.
+    // They are used to specify GPRs and SSE registers, 64-bit operand size,
+    // etc. We only cares about REX.W and REX.R bits and only the former is
+    // statically determined.
+    //
+    REXShift    = 12,
+    REX_W       = 1 << REXShift,
+
+    //===------------------------------------------------------------------===//
+    // This three-bit field describes the size of an immediate operand.  Zero is
     // unused so that we can tell if we forgot to set a value.
-    ImmShift = 11,
-    ImmMask  = 3 << ImmShift,
+    ImmShift = 13,
+    ImmMask  = 7 << ImmShift,
     Imm8     = 1 << ImmShift,
     Imm16    = 2 << ImmShift,
     Imm32    = 3 << ImmShift,
+    Imm64    = 4 << ImmShift,
 
     //===------------------------------------------------------------------===//
     // FP Instruction Classification...  Zero is non-fp instruction.
 
     // FPTypeMask - Mask for all of the FP types...
-    FPTypeShift = 13,
+    FPTypeShift = 16,
     FPTypeMask  = 7 << FPTypeShift,
 
     // NotFP - The default, set for instructions that do not use FP registers.
@@ -162,9 +179,9 @@ namespace X86II {
     // SpecialFP - Special instruction forms.  Dispatch by opcode explicitly.
     SpecialFP  = 7 << FPTypeShift,
 
-    OpcodeShift   = 16,
+    // Bits 19 -> 23 are unused
+    OpcodeShift   = 24,
     OpcodeMask    = 0xFF << OpcodeShift
-    // Bits 25 -> 31 are unused
   };
 }
 
@@ -215,6 +232,8 @@ public:
   /// MI. The instruction is replaced and the new MI is returned.
   virtual MachineBasicBlock::iterator
   reverseBranchCondition(MachineBasicBlock::iterator MI) const;
+
+  const TargetRegisterClass *getPointerRegClass() const;
 
   // getBaseOpcodeFor - This function returns the "base" X86 opcode for the
   // specified opcode number.

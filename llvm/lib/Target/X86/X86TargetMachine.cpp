@@ -33,22 +33,31 @@ int X86TargetMachineModule = 0;
 
 namespace {
   // Register the target.
-  RegisterTarget<X86TargetMachine> X("x86", "  IA-32 (Pentium and above)");
+  RegisterTarget<X86_32TargetMachine>
+  X("x86",    "  32-bit X86: Pentium-Pro and above");
+  RegisterTarget<X86_64TargetMachine>
+  Y("x86-64", "  64-bit X86: EM64T and AMD64");
 }
 
 const TargetAsmInfo *X86TargetMachine::createTargetAsmInfo() const {
   return new X86TargetAsmInfo(*this);
 }
 
-unsigned X86TargetMachine::getJITMatchQuality() {
+unsigned X86_32TargetMachine::getJITMatchQuality() {
 #if defined(i386) || defined(__i386__) || defined(__x86__) || defined(_M_IX86)
   return 10;
-#else
-  return 0;
 #endif
+  return 0;
 }
 
-unsigned X86TargetMachine::getModuleMatchQuality(const Module &M) {
+unsigned X86_64TargetMachine::getJITMatchQuality() {
+#if defined(__x86_64__)
+  return 10;
+#endif
+  return 0;
+}
+
+unsigned X86_32TargetMachine::getModuleMatchQuality(const Module &M) {
   // We strongly match "i[3-9]86-*".
   std::string TT = M.getTargetTriple();
   if (TT.size() >= 5 && TT[0] == 'i' && TT[2] == '8' && TT[3] == '6' &&
@@ -65,18 +74,55 @@ unsigned X86TargetMachine::getModuleMatchQuality(const Module &M) {
   return getJITMatchQuality()/2;
 }
 
+unsigned X86_64TargetMachine::getModuleMatchQuality(const Module &M) {
+  // We strongly match "x86_64-*".
+  std::string TT = M.getTargetTriple();
+  if (TT.size() >= 7 && TT[0] == 'x' && TT[1] == '8' && TT[2] == '6' &&
+      TT[3] == '_' && TT[4] == '6' && TT[5] == '4' && TT[6] == '-')
+    return 20;
+
+  if (M.getEndianness()  == Module::LittleEndian &&
+      M.getPointerSize() == Module::Pointer64)
+    return 10;                                   // Weak match
+  else if (M.getEndianness() != Module::AnyEndianness ||
+           M.getPointerSize() != Module::AnyPointerSize)
+    return 0;                                    // Match for some other target
+
+  return getJITMatchQuality()/2;
+}
+
+X86_32TargetMachine::X86_32TargetMachine(const Module &M, const std::string &FS) 
+  : X86TargetMachine(M, FS, false) {
+}
+
+
+X86_64TargetMachine::X86_64TargetMachine(const Module &M, const std::string &FS)
+  : X86TargetMachine(M, FS, true) {
+}
+
 /// X86TargetMachine ctor - Create an ILP32 architecture model
 ///
-X86TargetMachine::X86TargetMachine(const Module &M, const std::string &FS)
-  : Subtarget(M, FS), DataLayout("e-p:32:32-d:32-l:32"),
+X86TargetMachine::X86TargetMachine(const Module &M, const std::string &FS, bool is64Bit)
+  : Subtarget(M, FS, is64Bit),
+    DataLayout(Subtarget.is64Bit() ?
+               std::string("e-p:64:64-d:32-l:32") :
+               std::string("e-p:32:32-d:32-l:32")),
     FrameInfo(TargetFrameInfo::StackGrowsDown,
-              Subtarget.getStackAlignment(), -4),
+              Subtarget.getStackAlignment(), Subtarget.is64Bit() ? -8 : -4),
     InstrInfo(*this), JITInfo(*this), TLInfo(*this) {
   if (getRelocationModel() == Reloc::Default)
     if (Subtarget.isTargetDarwin())
       setRelocationModel(Reloc::DynamicNoPIC);
     else
       setRelocationModel(Reloc::PIC_);
+  if (Subtarget.is64Bit()) {
+    // No DynamicNoPIC support under X86-64.
+    if (getRelocationModel() == Reloc::DynamicNoPIC)
+      setRelocationModel(Reloc::PIC_);
+    // Default X86-64 code model is small.
+    if (getCodeModel() == CodeModel::Default)
+      setCodeModel(CodeModel::Small);
+  }
 }
 
 //===----------------------------------------------------------------------===//

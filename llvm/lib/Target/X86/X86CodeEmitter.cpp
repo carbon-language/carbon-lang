@@ -12,6 +12,8 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "X86InstrInfo.h"
+#include "X86Subtarget.h"
 #include "X86TargetMachine.h"
 #include "X86Relocations.h"
 #include "X86.h"
@@ -35,14 +37,16 @@ namespace {
 namespace {
   class VISIBILITY_HIDDEN Emitter : public MachineFunctionPass {
     const X86InstrInfo  *II;
-    TargetMachine &TM;
+    const TargetData    *TD;
+    TargetMachine       &TM;
     MachineCodeEmitter  &MCE;
+    bool Is64BitMode;
   public:
     explicit Emitter(TargetMachine &tm, MachineCodeEmitter &mce)
-      : II(0), TM(tm), MCE(mce) {}
+      : II(0), TD(0), TM(tm), MCE(mce), Is64BitMode(false) {}
     Emitter(TargetMachine &tm, MachineCodeEmitter &mce,
-            const X86InstrInfo& ii)
-      : II(&ii), TM(tm), MCE(mce) {}
+            const X86InstrInfo &ii, const TargetData &td, bool is64)
+      : II(&ii), TD(&td), TM(tm), MCE(mce), Is64BitMode(is64) {}
 
     bool runOnMachineFunction(MachineFunction &MF);
 
@@ -54,20 +58,29 @@ namespace {
 
   private:
     void emitPCRelativeBlockAddress(MachineBasicBlock *MBB);
-    void emitPCRelativeValue(unsigned Address);
-    void emitGlobalAddressForCall(GlobalValue *GV, bool isTailCall);
-    void emitGlobalAddressForPtr(GlobalValue *GV, int Disp = 0);
+    void emitPCRelativeValue(intptr_t Address);
+    void emitGlobalAddressForCall(GlobalValue *GV, bool DoesntNeedStub);
+    void emitGlobalAddressForPtr(GlobalValue *GV, bool isPCRelative,
+                                 int Disp = 0, unsigned PCAdj = 0);
     void emitExternalSymbolAddress(const char *ES, bool isPCRelative);
+    void emitPCRelativeConstPoolAddress(unsigned CPI, int Disp = 0,
+                                        unsigned PCAdj = 0);
+    void emitPCRelativeJumpTableAddress(unsigned JTI, unsigned PCAdj = 0);
 
-    void emitDisplacementField(const MachineOperand *RelocOp, int DispVal);
+    void emitDisplacementField(const MachineOperand *RelocOp, int DispVal,
+                               unsigned PCAdj = 0);
 
     void emitRegModRMByte(unsigned ModRMReg, unsigned RegOpcodeField);
     void emitSIBByte(unsigned SS, unsigned Index, unsigned Base);
-    void emitConstant(unsigned Val, unsigned Size);
+    void emitConstant(uint64_t Val, unsigned Size);
 
     void emitMemModRMByte(const MachineInstr &MI,
-                          unsigned Op, unsigned RegOpcodeField);
+                          unsigned Op, unsigned RegOpcodeField,
+                          unsigned PCAdj = 0);
 
+    unsigned getX86RegNum(unsigned RegNo);
+    bool isX86_64ExtendedReg(const MachineOperand &MO);
+    unsigned determineREX(const MachineInstr &MI);
   };
 }
 
@@ -83,6 +96,9 @@ bool Emitter::runOnMachineFunction(MachineFunction &MF) {
           MF.getTarget().getRelocationModel() != Reloc::Static) &&
          "JIT relocation model must be set to static or default!");
   II = ((X86TargetMachine&)MF.getTarget()).getInstrInfo();
+  TD = ((X86TargetMachine&)MF.getTarget()).getTargetData();
+  Is64BitMode =
+    ((X86TargetMachine&)MF.getTarget()).getSubtarget<X86Subtarget>().is64Bit();
 
   do {
     MCE.startFunction(MF);
@@ -98,9 +114,9 @@ bool Emitter::runOnMachineFunction(MachineFunction &MF) {
   return false;
 }
 
-/// emitPCRelativeValue - Emit a 32-bit PC relative address.
+/// emitPCRelativeValue - Emit a PC relative address.
 ///
-void Emitter::emitPCRelativeValue(unsigned Address) {
+void Emitter::emitPCRelativeValue(intptr_t Address) {
   MCE.emitWordLE(Address-MCE.getCurrentPCValue()-4);
 }
 
@@ -119,20 +135,22 @@ void Emitter::emitPCRelativeBlockAddress(MachineBasicBlock *MBB) {
 /// emitGlobalAddressForCall - Emit the specified address to the code stream
 /// assuming this is part of a function call, which is PC relative.
 ///
-void Emitter::emitGlobalAddressForCall(GlobalValue *GV, bool isTailCall) {
+void Emitter::emitGlobalAddressForCall(GlobalValue *GV, bool DoesntNeedStub) {
   MCE.addRelocation(MachineRelocation::getGV(MCE.getCurrentPCOffset(),
                                       X86::reloc_pcrel_word, GV, 0,
-                                      !isTailCall /*Doesn'tNeedStub*/));
+                                      DoesntNeedStub));
   MCE.emitWordLE(0);
 }
 
 /// emitGlobalAddress - Emit the specified address to the code stream assuming
-/// this is part of a "take the address of a global" instruction, which is not
-/// PC relative.
+/// this is part of a "take the address of a global" instruction.
 ///
-void Emitter::emitGlobalAddressForPtr(GlobalValue *GV, int Disp /* = 0 */) {
-  MCE.addRelocation(MachineRelocation::getGV(MCE.getCurrentPCOffset(),
-                                      X86::reloc_absolute_word, GV));
+void Emitter::emitGlobalAddressForPtr(GlobalValue *GV, bool isPCRelative,
+                                      int Disp /* = 0 */,
+                                      unsigned PCAdj /* = 0 */) {
+  unsigned rt = isPCRelative ? X86::reloc_pcrel_word : X86::reloc_absolute_word;
+  MCE.addRelocation(MachineRelocation::getGV(MCE.getCurrentPCOffset(), rt,
+                                             GV, PCAdj));
   MCE.emitWordLE(Disp); // The relocated value will be added to the displacement
 }
 
@@ -145,6 +163,26 @@ void Emitter::emitExternalSymbolAddress(const char *ES, bool isPCRelative) {
   MCE.emitWordLE(0);
 }
 
+/// emitPCRelativeConstPoolAddress - Arrange for the address of an constant pool
+/// to be emitted to the current location in the function, and allow it to be PC
+/// relative.
+void Emitter::emitPCRelativeConstPoolAddress(unsigned CPI, int Disp /* = 0 */,
+                                             unsigned PCAdj /* = 0 */) {
+  MCE.addRelocation(MachineRelocation::getConstPool(MCE.getCurrentPCOffset(),
+                                            X86::reloc_pcrel_word, CPI, PCAdj));
+  MCE.emitWordLE(Disp); // The relocated value will be added to the displacement
+}
+
+/// emitPCRelativeJumpTableAddress - Arrange for the address of a jump table to
+/// be emitted to the current location in the function, and allow it to be PC
+/// relative.
+void Emitter::emitPCRelativeJumpTableAddress(unsigned JTI,
+                                             unsigned PCAdj /* = 0 */) {
+  MCE.addRelocation(MachineRelocation::getJumpTable(MCE.getCurrentPCOffset(),
+                                            X86::reloc_pcrel_word, JTI, PCAdj));
+  MCE.emitWordLE(0); // The relocated value will be added to the displacement
+}
+
 /// N86 namespace - Native X86 Register numbers... used by X86 backend.
 ///
 namespace N86 {
@@ -153,28 +191,53 @@ namespace N86 {
   };
 }
 
-
 // getX86RegNum - This function maps LLVM register identifiers to their X86
 // specific numbering, which is used in various places encoding instructions.
 //
-static unsigned getX86RegNum(unsigned RegNo) {
+unsigned Emitter::getX86RegNum(unsigned RegNo) {
   switch(RegNo) {
-  case X86::EAX: case X86::AX: case X86::AL: return N86::EAX;
-  case X86::ECX: case X86::CX: case X86::CL: return N86::ECX;
-  case X86::EDX: case X86::DX: case X86::DL: return N86::EDX;
-  case X86::EBX: case X86::BX: case X86::BL: return N86::EBX;
-  case X86::ESP: case X86::SP: case X86::AH: return N86::ESP;
-  case X86::EBP: case X86::BP: case X86::CH: return N86::EBP;
-  case X86::ESI: case X86::SI: case X86::DH: return N86::ESI;
-  case X86::EDI: case X86::DI: case X86::BH: return N86::EDI;
+  case X86::RAX: case X86::EAX: case X86::AX: case X86::AL: return N86::EAX;
+  case X86::RCX: case X86::ECX: case X86::CX: case X86::CL: return N86::ECX;
+  case X86::RDX: case X86::EDX: case X86::DX: case X86::DL: return N86::EDX;
+  case X86::RBX: case X86::EBX: case X86::BX: case X86::BL: return N86::EBX;
+  case X86::RSP: case X86::ESP: case X86::SP: case X86::SPL: case X86::AH:
+    return N86::ESP;
+  case X86::RBP: case X86::EBP: case X86::BP: case X86::BPL: case X86::CH:
+    return N86::EBP;
+  case X86::RSI: case X86::ESI: case X86::SI: case X86::SIL: case X86::DH:
+    return N86::ESI;
+  case X86::RDI: case X86::EDI: case X86::DI: case X86::DIL: case X86::BH:
+    return N86::EDI;
+
+  case X86::R8:  case X86::R8D:  case X86::R8W:  case X86::R8B:
+    return N86::EAX;
+  case X86::R9:  case X86::R9D:  case X86::R9W:  case X86::R9B:
+    return N86::ECX;
+  case X86::R10: case X86::R10D: case X86::R10W: case X86::R10B:
+    return N86::EDX;
+  case X86::R11: case X86::R11D: case X86::R11W: case X86::R11B:
+    return N86::EBX;
+  case X86::R12: case X86::R12D: case X86::R12W: case X86::R12B:
+    return N86::ESP;
+  case X86::R13: case X86::R13D: case X86::R13W: case X86::R13B:
+    return N86::EBP;
+  case X86::R14: case X86::R14D: case X86::R14W: case X86::R14B:
+    return N86::ESI;
+  case X86::R15: case X86::R15D: case X86::R15W: case X86::R15B:
+    return N86::EDI;
 
   case X86::ST0: case X86::ST1: case X86::ST2: case X86::ST3:
   case X86::ST4: case X86::ST5: case X86::ST6: case X86::ST7:
     return RegNo-X86::ST0;
 
-  case X86::XMM0: case X86::XMM1: case X86::XMM2: case X86::XMM3:
-  case X86::XMM4: case X86::XMM5: case X86::XMM6: case X86::XMM7:
-    return RegNo-X86::XMM0;
+  case X86::XMM0:  case X86::XMM1:  case X86::XMM2:  case X86::XMM3:
+  case X86::XMM4:  case X86::XMM5:  case X86::XMM6:  case X86::XMM7:
+    return II->getRegisterInfo().getDwarfRegNum(RegNo) -
+           II->getRegisterInfo().getDwarfRegNum(X86::XMM0);
+  case X86::XMM8:  case X86::XMM9:  case X86::XMM10: case X86::XMM11:
+  case X86::XMM12: case X86::XMM13: case X86::XMM14: case X86::XMM15:
+    return II->getRegisterInfo().getDwarfRegNum(RegNo) -
+           II->getRegisterInfo().getDwarfRegNum(X86::XMM8);
 
   default:
     assert(MRegisterInfo::isVirtualRegister(RegNo) &&
@@ -199,7 +262,7 @@ void Emitter::emitSIBByte(unsigned SS, unsigned Index, unsigned Base) {
   MCE.emitByte(ModRMByte(SS, Index, Base));
 }
 
-void Emitter::emitConstant(unsigned Val, unsigned Size) {
+void Emitter::emitConstant(uint64_t Val, unsigned Size) {
   // Output the constant in little endian byte order...
   for (unsigned i = 0; i != Size; ++i) {
     MCE.emitByte(Val & 255);
@@ -214,7 +277,7 @@ static bool isDisp8(int Value) {
 }
 
 void Emitter::emitDisplacementField(const MachineOperand *RelocOp,
-                                    int DispVal) {
+                                    int DispVal, unsigned PCAdj) {
   // If this is a simple integer displacement that doesn't require a relocation,
   // emit it now.
   if (!RelocOp) {
@@ -225,14 +288,27 @@ void Emitter::emitDisplacementField(const MachineOperand *RelocOp,
   // Otherwise, this is something that requires a relocation.  Emit it as such
   // now.
   if (RelocOp->isGlobalAddress()) {
-    emitGlobalAddressForPtr(RelocOp->getGlobal(), RelocOp->getOffset());
+    // In 64-bit static small code model, we could potentially emit absolute.
+    // But it's probably not beneficial.
+    //  89 05 00 00 00 00    	mov    %eax,0(%rip)  # PC-relative
+    //	89 04 25 00 00 00 00 	mov    %eax,0x0      # Absolute
+    emitGlobalAddressForPtr(RelocOp->getGlobal(), Is64BitMode,
+                            RelocOp->getOffset(), PCAdj);
+  } else if (RelocOp->isConstantPoolIndex()) {
+    // Must be in 64-bit mode.
+    emitPCRelativeConstPoolAddress(RelocOp->getConstantPoolIndex(),
+                                   RelocOp->getOffset(), PCAdj);
+  } else if (RelocOp->isJumpTableIndex()) {
+    // Must be in 64-bit mode.
+    emitPCRelativeJumpTableAddress(RelocOp->getJumpTableIndex(), PCAdj);
   } else {
     assert(0 && "Unknown value to relocate!");
   }
 }
 
 void Emitter::emitMemModRMByte(const MachineInstr &MI,
-                               unsigned Op, unsigned RegOpcodeField) {
+                               unsigned Op, unsigned RegOpcodeField,
+                               unsigned PCAdj) {
   const MachineOperand &Op3 = MI.getOperand(Op+3);
   int DispVal = 0;
   const MachineOperand *DispForReloc = 0;
@@ -241,10 +317,18 @@ void Emitter::emitMemModRMByte(const MachineInstr &MI,
   if (Op3.isGlobalAddress()) {
     DispForReloc = &Op3;
   } else if (Op3.isConstantPoolIndex()) {
-    DispVal += MCE.getConstantPoolEntryAddress(Op3.getConstantPoolIndex());
-    DispVal += Op3.getOffset();
+    if (Is64BitMode) {
+      DispForReloc = &Op3;
+    } else {
+      DispVal += MCE.getConstantPoolEntryAddress(Op3.getConstantPoolIndex());
+      DispVal += Op3.getOffset();
+    }
   } else if (Op3.isJumpTableIndex()) {
-    DispVal += MCE.getJumpTableEntryAddress(Op3.getJumpTableIndex());
+    if (Is64BitMode) {
+      DispForReloc = &Op3;
+    } else {
+      DispVal += MCE.getJumpTableEntryAddress(Op3.getJumpTableIndex());
+    }
   } else {
     DispVal = Op3.getImm();
   }
@@ -256,12 +340,13 @@ void Emitter::emitMemModRMByte(const MachineInstr &MI,
   unsigned BaseReg = Base.getReg();
 
   // Is a SIB byte needed?
-  if (IndexReg.getReg() == 0 && BaseReg != X86::ESP) {
+  if (IndexReg.getReg() == 0 &&
+      (BaseReg == 0 || getX86RegNum(BaseReg) != N86::ESP)) {
     if (BaseReg == 0) {  // Just a displacement?
       // Emit special case [disp32] encoding
       MCE.emitByte(ModRMByte(0, RegOpcodeField, 5));
       
-      emitDisplacementField(DispForReloc, DispVal);
+      emitDisplacementField(DispForReloc, DispVal, PCAdj);
     } else {
       unsigned BaseRegNo = getX86RegNum(BaseReg);
       if (!DispForReloc && DispVal == 0 && BaseRegNo != N86::EBP) {
@@ -274,12 +359,13 @@ void Emitter::emitMemModRMByte(const MachineInstr &MI,
       } else {
         // Emit the most general non-SIB encoding: [REG+disp32]
         MCE.emitByte(ModRMByte(2, RegOpcodeField, BaseRegNo));
-        emitDisplacementField(DispForReloc, DispVal);
+        emitDisplacementField(DispForReloc, DispVal, PCAdj);
       }
     }
 
   } else {  // We need a SIB byte, so start by outputting the ModR/M byte first
-    assert(IndexReg.getReg() != X86::ESP && "Cannot use ESP as index reg!");
+    assert(IndexReg.getReg() != X86::ESP &&
+           IndexReg.getReg() != X86::RSP && "Cannot use ESP as index reg!");
 
     bool ForceDisp32 = false;
     bool ForceDisp8  = false;
@@ -292,7 +378,7 @@ void Emitter::emitMemModRMByte(const MachineInstr &MI,
       // Emit the normal disp32 encoding.
       MCE.emitByte(ModRMByte(2, RegOpcodeField, 4));
       ForceDisp32 = true;
-    } else if (DispVal == 0 && BaseReg != X86::EBP) {
+    } else if (DispVal == 0 && getX86RegNum(BaseReg) != N86::EBP) {
       // Emit no displacement ModR/M byte
       MCE.emitByte(ModRMByte(0, RegOpcodeField, 4));
     } else if (isDisp8(DispVal)) {
@@ -327,7 +413,7 @@ void Emitter::emitMemModRMByte(const MachineInstr &MI,
     if (ForceDisp8) {
       emitConstant(DispVal, 1);
     } else if (DispVal != 0 || ForceDisp32) {
-      emitDisplacementField(DispForReloc, DispVal);
+      emitDisplacementField(DispForReloc, DispVal, PCAdj);
     }
   }
 }
@@ -337,9 +423,129 @@ static unsigned sizeOfImm(const TargetInstrDescriptor &Desc) {
   case X86II::Imm8:   return 1;
   case X86II::Imm16:  return 2;
   case X86II::Imm32:  return 4;
+  case X86II::Imm64:  return 8;
   default: assert(0 && "Immediate size not set!");
     return 0;
   }
+}
+
+/// isX86_64ExtendedReg - Is the MachineOperand a x86-64 extended register?
+/// e.g. r8, xmm8, etc.
+bool Emitter::isX86_64ExtendedReg(const MachineOperand &MO) {
+  if (!MO.isRegister()) return false;
+  unsigned RegNo = MO.getReg();
+  int DWNum = II->getRegisterInfo().getDwarfRegNum(RegNo);
+  if (DWNum >= II->getRegisterInfo().getDwarfRegNum(X86::R8) &&
+      DWNum <= II->getRegisterInfo().getDwarfRegNum(X86::R15))
+    return true;
+  if (DWNum >= II->getRegisterInfo().getDwarfRegNum(X86::XMM8) &&
+      DWNum <= II->getRegisterInfo().getDwarfRegNum(X86::XMM15))
+    return true;
+  return false;
+}
+
+inline static bool isX86_64TruncToByte(unsigned oc) {
+  return (oc == X86::TRUNC_64to8 || oc == X86::TRUNC_32to8 ||
+          oc == X86::TRUNC_16to8);
+}
+
+
+inline static bool isX86_64NonExtLowByteReg(unsigned reg) {
+  return (reg == X86::SPL || reg == X86::BPL ||
+          reg == X86::SIL || reg == X86::DIL);
+}
+
+/// determineREX - Determine if the MachineInstr has to be encoded with a X86-64
+/// REX prefix which specifies 1) 64-bit instructions, 2) non-default operand
+/// size, and 3) use of X86-64 extended registers.
+unsigned Emitter::determineREX(const MachineInstr &MI) {
+  unsigned REX = 0;
+  unsigned Opcode = MI.getOpcode();
+  const TargetInstrDescriptor &Desc = II->get(Opcode);
+
+  // Pseudo instructions do not need REX prefix byte.
+  if ((Desc.TSFlags & X86II::FormMask) == X86II::Pseudo)
+    return 0;
+  if (Desc.TSFlags & X86II::REX_W)
+    REX |= 1 << 3;
+
+  if (MI.getNumOperands()) {
+    // If it accesses SPL, BPL, SIL, or DIL, then it requires a 0x40 REX prefix.
+    bool isTrunc8 = isX86_64TruncToByte(Opcode);
+    for (unsigned i = 0, e = MI.getNumOperands(); i != e; ++i) {
+      const MachineOperand& MO = MI.getOperand(i);
+      if (MO.isRegister()) {
+	unsigned Reg = MO.getReg();
+	// Trunc to byte are actually movb. The real source operand is the low
+	// byte of the register.
+	if (isTrunc8 && i == 1)
+	  Reg = getX86SubSuperRegister(Reg, MVT::i8);
+	if (isX86_64NonExtLowByteReg(Reg))
+	  REX |= 0x40;
+      }
+    }
+
+    switch (Desc.TSFlags & X86II::FormMask) {
+    case X86II::MRMInitReg:
+      if (isX86_64ExtendedReg(MI.getOperand(0)))
+        REX |= (1 << 0) | (1 << 2);
+      break;
+    case X86II::MRMSrcReg: {
+      if (isX86_64ExtendedReg(MI.getOperand(0)))
+        REX |= 1 << 2;
+      for (unsigned i = 1, e = MI.getNumOperands(); i != e; ++i) {
+        const MachineOperand& MO = MI.getOperand(i);
+        if (isX86_64ExtendedReg(MO))
+          REX |= 1 << 0;
+      }
+      break;
+    }
+    case X86II::MRMSrcMem: {
+      if (isX86_64ExtendedReg(MI.getOperand(0)))
+        REX |= 1 << 2;
+      unsigned Bit = 0;
+      for (unsigned i = 1; i != 5; ++i) {
+        const MachineOperand& MO = MI.getOperand(i);
+        if (MO.isRegister()) {
+          if (isX86_64ExtendedReg(MO))
+            REX |= 1 << Bit;
+          Bit++;
+        }
+      }
+      break;
+    }
+    case X86II::MRM0m: case X86II::MRM1m:
+    case X86II::MRM2m: case X86II::MRM3m:
+    case X86II::MRM4m: case X86II::MRM5m:
+    case X86II::MRM6m: case X86II::MRM7m:
+    case X86II::MRMDestMem: {
+      if (MI.getNumOperands() >= 5 &&
+          isX86_64ExtendedReg(MI.getOperand(4)))
+        REX |= 1 << 2;
+      unsigned Bit = 0;
+      for (unsigned i = 0; i != 4; ++i) {
+        const MachineOperand& MO = MI.getOperand(i);
+        if (MO.isRegister()) {
+          if (isX86_64ExtendedReg(MO))
+            REX |= 1 << Bit;
+          Bit++;
+        }
+      }
+      break;
+    }
+    default: {
+      if (isX86_64ExtendedReg(MI.getOperand(0)))
+        REX |= 1 << 0;
+      for (unsigned i = 1, e = MI.getNumOperands(); i != e; ++i) {
+        const MachineOperand& MO = MI.getOperand(i);
+        if (isX86_64ExtendedReg(MO))
+          REX |= 1 << 2;
+      }
+      break;
+    }
+    }
+  }
+  return REX;
 }
 
 void Emitter::emitInstruction(const MachineInstr &MI) {
@@ -354,18 +560,22 @@ void Emitter::emitInstruction(const MachineInstr &MI) {
   // Emit the operand size opcode prefix as needed.
   if (Desc.TSFlags & X86II::OpSize) MCE.emitByte(0x66);
 
+  // Emit the address size opcode prefix as needed.
+  if (Desc.TSFlags & X86II::AdSize) MCE.emitByte(0x67);
+
+  bool Need0FPrefix = false;
   switch (Desc.TSFlags & X86II::Op0Mask) {
   case X86II::TB:
-    MCE.emitByte(0x0F);   // Two-byte opcode prefix
+    Need0FPrefix = true;   // Two-byte opcode prefix
     break;
   case X86II::REP: break; // already handled.
   case X86II::XS:   // F3 0F
     MCE.emitByte(0xF3);
-    MCE.emitByte(0x0F);
+    Need0FPrefix = true;
     break;
   case X86II::XD:   // F2 0F
     MCE.emitByte(0xF2);
-    MCE.emitByte(0x0F);
+    Need0FPrefix = true;
     break;
   case X86II::D8: case X86II::D9: case X86II::DA: case X86II::DB:
   case X86II::DC: case X86II::DD: case X86II::DE: case X86II::DF:
@@ -376,6 +586,17 @@ void Emitter::emitInstruction(const MachineInstr &MI) {
   default: assert(0 && "Invalid prefix!");
   case 0: break;  // No prefix!
   }
+
+  if (Is64BitMode) {
+    // REX prefix
+    unsigned REX = determineREX(MI);
+    if (REX)
+      MCE.emitByte(0x40 | REX);
+  }
+
+  // 0x0F escape code must be emitted just before the opcode.
+  if (Need0FPrefix)
+    MCE.emitByte(0x0F);
 
   // If this is a two-address instruction, skip one of the register operands.
   unsigned CurOp = 0;
@@ -397,6 +618,7 @@ void Emitter::emitInstruction(const MachineInstr &MI) {
     case X86::IMPLICIT_DEF_GR8:
     case X86::IMPLICIT_DEF_GR16:
     case X86::IMPLICIT_DEF_GR32:
+    case X86::IMPLICIT_DEF_GR64:
     case X86::IMPLICIT_DEF_FR32:
     case X86::IMPLICIT_DEF_FR64:
     case X86::IMPLICIT_DEF_VR64:
@@ -417,7 +639,7 @@ void Emitter::emitInstruction(const MachineInstr &MI) {
       } else if (MO.isGlobalAddress()) {
         bool isTailCall = Opcode == X86::TAILJMPd ||
                           Opcode == X86::TAILJMPr || Opcode == X86::TAILJMPm;
-        emitGlobalAddressForCall(MO.getGlobal(), isTailCall);
+        emitGlobalAddressForCall(MO.getGlobal(), !isTailCall);
       } else if (MO.isExternalSymbol()) {
         emitExternalSymbolAddress(MO.getSymbolName(), true);
       } else if (MO.isImmediate()) {
@@ -434,15 +656,15 @@ void Emitter::emitInstruction(const MachineInstr &MI) {
     if (CurOp != MI.getNumOperands()) {
       const MachineOperand &MO1 = MI.getOperand(CurOp++);
       if (MO1.isGlobalAddress()) {
-        assert(sizeOfImm(Desc) == 4 &&
+        assert(sizeOfImm(Desc) == TD->getPointerSize() &&
                "Don't know how to emit non-pointer values!");
-        emitGlobalAddressForPtr(MO1.getGlobal(), MO1.getOffset());
+        emitGlobalAddressForPtr(MO1.getGlobal(), Is64BitMode, MO1.getOffset());
       } else if (MO1.isExternalSymbol()) {
-        assert(sizeOfImm(Desc) == 4 &&
+        assert(sizeOfImm(Desc) == TD->getPointerSize() &&
                "Don't know how to emit non-pointer values!");
         emitExternalSymbolAddress(MO1.getSymbolName(), false);
       } else if (MO1.isJumpTableIndex()) {
-        assert(sizeOfImm(Desc) == 4 &&
+        assert(sizeOfImm(Desc) == TD->getPointerSize() &&
                "Don't know how to emit non-pointer values!");
         emitConstant(MCE.getJumpTableEntryAddress(MO1.getJumpTableIndex()), 4);
       } else {
@@ -460,13 +682,14 @@ void Emitter::emitInstruction(const MachineInstr &MI) {
       emitConstant(MI.getOperand(CurOp++).getImm(), sizeOfImm(Desc));
     break;
   }
-  case X86II::MRMDestMem:
+  case X86II::MRMDestMem: {
     MCE.emitByte(BaseOpcode);
     emitMemModRMByte(MI, CurOp, getX86RegNum(MI.getOperand(CurOp+4).getReg()));
     CurOp += 5;
     if (CurOp != MI.getNumOperands())
       emitConstant(MI.getOperand(CurOp++).getImm(), sizeOfImm(Desc));
     break;
+  }
 
   case X86II::MRMSrcReg:
     MCE.emitByte(BaseOpcode);
@@ -477,13 +700,17 @@ void Emitter::emitInstruction(const MachineInstr &MI) {
       emitConstant(MI.getOperand(CurOp++).getImm(), sizeOfImm(Desc));
     break;
 
-  case X86II::MRMSrcMem:
+  case X86II::MRMSrcMem: {
+    unsigned PCAdj = (CurOp+5 != MI.getNumOperands()) ? sizeOfImm(Desc) : 0;
+
     MCE.emitByte(BaseOpcode);
-    emitMemModRMByte(MI, CurOp+1, getX86RegNum(MI.getOperand(CurOp).getReg()));
+    emitMemModRMByte(MI, CurOp+1, getX86RegNum(MI.getOperand(CurOp).getReg()),
+                     PCAdj);
     CurOp += 5;
     if (CurOp != MI.getNumOperands())
       emitConstant(MI.getOperand(CurOp++).getImm(), sizeOfImm(Desc));
     break;
+  }
 
   case X86II::MRM0r: case X86II::MRM1r:
   case X86II::MRM2r: case X86II::MRM3r:
@@ -500,9 +727,13 @@ void Emitter::emitInstruction(const MachineInstr &MI) {
   case X86II::MRM0m: case X86II::MRM1m:
   case X86II::MRM2m: case X86II::MRM3m:
   case X86II::MRM4m: case X86II::MRM5m:
-  case X86II::MRM6m: case X86II::MRM7m:
+  case X86II::MRM6m: case X86II::MRM7m: {
+    unsigned PCAdj = (CurOp+4 != MI.getNumOperands()) ?
+      (MI.getOperand(CurOp+4).isImmediate() ? sizeOfImm(Desc) : 4) : 0;
+
     MCE.emitByte(BaseOpcode);
-    emitMemModRMByte(MI, CurOp, (Desc.TSFlags & X86II::FormMask)-X86II::MRM0m);
+    emitMemModRMByte(MI, CurOp, (Desc.TSFlags & X86II::FormMask)-X86II::MRM0m,
+                     PCAdj);
     CurOp += 4;
 
     if (CurOp != MI.getNumOperands()) {
@@ -510,13 +741,14 @@ void Emitter::emitInstruction(const MachineInstr &MI) {
       if (MO.isImmediate())
         emitConstant(MO.getImm(), sizeOfImm(Desc));
       else if (MO.isGlobalAddress())
-        emitGlobalAddressForPtr(MO.getGlobal(), MO.getOffset());
+        emitGlobalAddressForPtr(MO.getGlobal(), Is64BitMode, MO.getOffset());
       else if (MO.isJumpTableIndex())
         emitConstant(MCE.getJumpTableEntryAddress(MO.getJumpTableIndex()), 4);
       else
         assert(0 && "Unknown operand!");
     }
     break;
+  }
 
   case X86II::MRMInitReg:
     MCE.emitByte(BaseOpcode);

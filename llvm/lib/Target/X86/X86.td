@@ -20,8 +20,8 @@ include "../Target.td"
 // X86 Subtarget features.
 //
  
-def Feature64Bit     : SubtargetFeature<"64bit", "Is64Bit", "true",
-                                        "Enable 64-bit instructions">;
+def Feature64Bit     : SubtargetFeature<"64bit", "HasX86_64", "true",
+                                        "Support 64-bit instructions">;
 def FeatureMMX       : SubtargetFeature<"mmx","X86SSELevel", "MMX",
                                         "Enable MMX instructions">;
 def FeatureSSE1      : SubtargetFeature<"sse", "X86SSELevel", "SSE1",
@@ -61,6 +61,8 @@ def : Proc<"prescott",        [FeatureMMX, FeatureSSE1, FeatureSSE2,
                                FeatureSSE3]>;
 def : Proc<"nocona",          [FeatureMMX, FeatureSSE1, FeatureSSE2,
                                FeatureSSE3, Feature64Bit]>;
+def : Proc<"core2",           [FeatureMMX, FeatureSSE1, FeatureSSE2,
+                               FeatureSSE3,  Feature64Bit]>;
 
 def : Proc<"k6",              [FeatureMMX]>;
 def : Proc<"k6-2",            [FeatureMMX, Feature3DNow]>;
@@ -105,16 +107,20 @@ def X86InstrInfo : InstrInfo {
   // should be kept up-to-date with the fields in the X86InstrInfo.h file.
   let TSFlagsFields = ["FormBits",
                        "hasOpSizePrefix",
+                       "hasAdSizePrefix",
                        "Prefix",
+                       "hasREX_WPrefix",
                        "ImmTypeBits",
                        "FPFormBits",
                        "Opcode"];
   let TSFlagsShifts = [0,
                        6,
                        7,
-                       11,
+                       8,
+                       12,
                        13,
-                       16];
+                       16,
+                       24];
 }
 
 // The X86 target supports two different syntaxes for emitting machine code.

@@ -12,9 +12,10 @@
 //===----------------------------------------------------------------------===//
 
 #include "X86Subtarget.h"
+#include "X86GenSubtarget.inc"
 #include "llvm/Module.h"
 #include "llvm/Support/CommandLine.h"
-#include "X86GenSubtarget.inc"
+#include <iostream>
 using namespace llvm;
 
 cl::opt<X86Subtarget::AsmWriterFlavorTy>
@@ -29,7 +30,18 @@ AsmWriterFlavor("x86-asm-syntax", cl::init(X86Subtarget::unset),
 /// specified arguments.  If we can't run cpuid on the host, return true.
 static bool GetCpuIDAndInfo(unsigned value, unsigned *rEAX, unsigned *rEBX,
                             unsigned *rECX, unsigned *rEDX) {
-#if defined(i386) || defined(__i386__) || defined(__x86__) || defined(_M_IX86)
+#if defined(__x86_64__)
+  asm ("pushq\t%%rbx\n\t"
+       "cpuid\n\t"
+       "movl\t%%ebx, %%esi\n\t"
+       "popq\t%%rbx"
+       : "=a" (*rEAX),
+         "=S" (*rEBX),
+         "=c" (*rECX),
+         "=d" (*rEDX)
+       :  "a" (value));
+  return false;
+#elif defined(i386) || defined(__i386__) || defined(__x86__) || defined(_M_IX86)
 #if defined(__GNUC__)
   asm ("pushl\t%%ebx\n\t"
        "cpuid\n\t"
@@ -99,8 +111,8 @@ static const char *GetCurrentX86CPU() {
         case 9:
         case 13: return "pentium-m";
         case 14: return "yonah";
-        default:
-          return (Model > 14) ? "yonah" : "i686";
+        case 15: return "core2";
+        default: return "i686";
         }
       case 15: {
         switch (Model) {
@@ -154,14 +166,16 @@ static const char *GetCurrentX86CPU() {
   }
 }
 
-X86Subtarget::X86Subtarget(const Module &M, const std::string &FS) {
-  stackAlignment = 8;
-  // FIXME: this is a known good value for Yonah. Not sure about others.
-  MinRepStrSizeThreshold = 128;
-  X86SSELevel = NoMMXSSE;
-  X863DNowLevel = NoThreeDNow;
-  AsmFlavor = AsmWriterFlavor;
-  Is64Bit = false;
+X86Subtarget::X86Subtarget(const Module &M, const std::string &FS, bool is64Bit)
+  :  AsmFlavor(AsmWriterFlavor)
+  , X86SSELevel(NoMMXSSE)
+  , X863DNowLevel(NoThreeDNow)
+  , HasX86_64(false)
+  , stackAlignment(8)
+  // FIXME: this is a known good value for Yonah. How about others?
+  , MinRepStrSizeThreshold(128)
+  , Is64Bit(is64Bit)
+  , TargetType(isELF) { // Default to ELF unless otherwise specified.
 
   // Determine default and user specified characteristics
   std::string CPU = GetCurrentX86CPU();
@@ -169,9 +183,12 @@ X86Subtarget::X86Subtarget(const Module &M, const std::string &FS) {
   // Parse features string.
   ParseSubtargetFeatures(FS, CPU);
 
-  // Default to ELF unless otherwise specified.
-  TargetType = isELF;
-  
+  if (Is64Bit && !HasX86_64) {
+      std::cerr << "Warning: Generation of 64-bit code for a 32-bit processor "
+                   "requested.\n";
+      HasX86_64 = true;
+  }
+
   // Set the boolean corresponding to the current target triple, or the default
   // if one cannot be determined, to true.
   const std::string& TT = M.getTargetTriple();

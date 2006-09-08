@@ -20,10 +20,26 @@
 namespace llvm {
   class Type;
   class TargetInstrInfo;
+  class X86TargetMachine;
 
 struct X86RegisterInfo : public X86GenRegisterInfo {
+  X86TargetMachine &TM;
   const TargetInstrInfo &TII;
-  X86RegisterInfo(const TargetInstrInfo &tii);
+private:
+  /// Is64Bit - Is the target 64-bits.
+  bool Is64Bit;
+
+  /// SlotSize - Stack slot size in bytes.
+  unsigned SlotSize;
+
+  /// StackPtr - X86 physical register used as stack ptr.
+  unsigned StackPtr;
+
+  /// FramePtr - X86 physical register used as frame ptr.
+  unsigned FramePtr;
+
+public:
+  X86RegisterInfo(X86TargetMachine &tm, const TargetInstrInfo &tii);
 
   /// Code Generation virtual methods...
   void storeRegToStackSlot(MachineBasicBlock &MBB,

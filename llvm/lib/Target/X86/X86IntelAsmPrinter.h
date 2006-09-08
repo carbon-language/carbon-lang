@@ -80,6 +80,10 @@ struct X86IntelAsmPrinter : public X86SharedAsmPrinter {
     O << "XMMWORD PTR ";
     printMemReference(MI, OpNo);
   }
+  void printlea64_32mem(const MachineInstr *MI, unsigned OpNo) {
+    O << "QWORD PTR ";
+    printMemReference(MI, OpNo, "subreg64");
+  }
 
   bool printAsmMRegister(const MachineOperand &MO, const char Mode);
   bool PrintAsmOperand(const MachineInstr *MI, unsigned OpNo,
@@ -89,7 +93,8 @@ struct X86IntelAsmPrinter : public X86SharedAsmPrinter {
   void printMachineInstruction(const MachineInstr *MI);
   void printOp(const MachineOperand &MO, const char *Modifier = 0);
   void printSSECC(const MachineInstr *MI, unsigned Op);
-  void printMemReference(const MachineInstr *MI, unsigned Op);
+  void printMemReference(const MachineInstr *MI, unsigned Op,
+                         const char *Modifier=NULL);
   void printPICLabel(const MachineInstr *MI, unsigned Op);
   bool runOnMachineFunction(MachineFunction &F);
   bool doInitialization(Module &M);

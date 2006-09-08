@@ -267,6 +267,9 @@ namespace llvm {
   //  X86TargetLowering - X86 Implementation of the TargetLowering interface
   class X86TargetLowering : public TargetLowering {
     int VarArgsFrameIndex;            // FrameIndex for start of varargs area.
+    int RegSaveFrameIndex;            // X86-64 vararg func register save area.
+    unsigned VarArgsGPOffset;         // X86-64 vararg func int reg offset.
+    unsigned VarArgsFPOffset;         // X86-64 vararg func fp reg offset.
     int ReturnAddrIndex;              // FrameIndex for return slot.
     int BytesToPopOnReturn;           // Number of arg bytes ret should pop.
     int BytesCallerReserves;          // Number of arg bytes caller makes.
@@ -347,12 +350,19 @@ namespace llvm {
     /// make the right decision when generating code for different targets.
     const X86Subtarget *Subtarget;
 
+    /// X86StackPtr - X86 physical register used as stack ptr.
+    unsigned X86StackPtr;
+
     /// X86ScalarSSE - Select between SSE2 or x87 floating point ops.
     bool X86ScalarSSE;
 
     // C Calling Convention implementation.
     SDOperand LowerCCCArguments(SDOperand Op, SelectionDAG &DAG);
     SDOperand LowerCCCCallTo(SDOperand Op, SelectionDAG &DAG);
+
+    // X86-64 C Calling Convention implementation.
+    SDOperand LowerX86_64CCCArguments(SDOperand Op, SelectionDAG &DAG);
+    SDOperand LowerX86_64CCCCallTo(SDOperand Op, SelectionDAG &DAG);
 
     // Fast Calling Convention implementation.
     SDOperand LowerFastCCArguments(SDOperand Op, SelectionDAG &DAG);

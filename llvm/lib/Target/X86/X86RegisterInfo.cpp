@@ -14,13 +14,13 @@
 
 #include "X86.h"
 #include "X86RegisterInfo.h"
-#include "X86Subtarget.h"
 #include "X86InstrBuilder.h"
 #include "X86MachineFunctionInfo.h"
+#include "X86Subtarget.h"
 #include "X86TargetMachine.h"
 #include "llvm/Constants.h"
-#include "llvm/Type.h"
 #include "llvm/Function.h"
+#include "llvm/Type.h"
 #include "llvm/CodeGen/ValueTypes.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "llvm/CodeGen/MachineFunction.h"
@@ -46,15 +46,32 @@ namespace {
                     cl::Hidden);
 }
 
-X86RegisterInfo::X86RegisterInfo(const TargetInstrInfo &tii)
-  : X86GenRegisterInfo(X86::ADJCALLSTACKDOWN, X86::ADJCALLSTACKUP), TII(tii) {}
+X86RegisterInfo::X86RegisterInfo(X86TargetMachine &tm,
+                                 const TargetInstrInfo &tii)
+  : X86GenRegisterInfo(X86::ADJCALLSTACKDOWN, X86::ADJCALLSTACKUP),
+    TM(tm), TII(tii) {
+  // Cache some information.
+  const X86Subtarget *Subtarget = &TM.getSubtarget<X86Subtarget>();
+  Is64Bit = Subtarget->is64Bit();
+  if (Is64Bit) {
+    SlotSize = 8;
+    StackPtr = X86::RSP;
+    FramePtr = X86::RBP;
+  } else {
+    SlotSize = 4;
+    StackPtr = X86::ESP;
+    FramePtr = X86::EBP;
+  }
+}
 
 void X86RegisterInfo::storeRegToStackSlot(MachineBasicBlock &MBB,
                                           MachineBasicBlock::iterator MI,
                                           unsigned SrcReg, int FrameIdx,
                                           const TargetRegisterClass *RC) const {
   unsigned Opc;
-  if (RC == &X86::GR32RegClass) {
+  if (RC == &X86::GR64RegClass) {
+    Opc = X86::MOV64mr;
+  } else if (RC == &X86::GR32RegClass) {
     Opc = X86::MOV32mr;
   } else if (RC == &X86::GR16RegClass) {
     Opc = X86::MOV16mr;
@@ -84,7 +101,9 @@ void X86RegisterInfo::loadRegFromStackSlot(MachineBasicBlock &MBB,
                                            unsigned DestReg, int FrameIdx,
                                            const TargetRegisterClass *RC) const{
   unsigned Opc;
-  if (RC == &X86::GR32RegClass) {
+  if (RC == &X86::GR64RegClass) {
+    Opc = X86::MOV64rm;
+  } else if (RC == &X86::GR32RegClass) {
     Opc = X86::MOV32rm;
   } else if (RC == &X86::GR16RegClass) {
     Opc = X86::MOV16rm;
@@ -114,7 +133,9 @@ void X86RegisterInfo::copyRegToReg(MachineBasicBlock &MBB,
                                    unsigned DestReg, unsigned SrcReg,
                                    const TargetRegisterClass *RC) const {
   unsigned Opc;
-  if (RC == &X86::GR32RegClass) {
+  if (RC == &X86::GR64RegClass) {
+    Opc = X86::MOV64rr;
+  } else if (RC == &X86::GR32RegClass) {
     Opc = X86::MOV32rr;
   } else if (RC == &X86::GR16RegClass) {
     Opc = X86::MOV16rr;
@@ -270,12 +291,18 @@ MachineInstr* X86RegisterInfo::foldMemoryOperand(MachineInstr *MI,
       { X86::ADC32ri,     X86::ADC32mi },
       { X86::ADC32ri8,    X86::ADC32mi8 },
       { X86::ADC32rr,     X86::ADC32mr },
+      { X86::ADC64ri32,   X86::ADC64mi32 },
+      { X86::ADC64ri8,    X86::ADC64mi8 },
+      { X86::ADC64rr,     X86::ADC64mr },
       { X86::ADD16ri,     X86::ADD16mi },
       { X86::ADD16ri8,    X86::ADD16mi8 },
       { X86::ADD16rr,     X86::ADD16mr },
       { X86::ADD32ri,     X86::ADD32mi },
       { X86::ADD32ri8,    X86::ADD32mi8 },
       { X86::ADD32rr,     X86::ADD32mr },
+      { X86::ADD64ri32,   X86::ADD64mi32 },
+      { X86::ADD64ri8,    X86::ADD64mi8 },
+      { X86::ADD64rr,     X86::ADD64mr },
       { X86::ADD8ri,      X86::ADD8mi },
       { X86::ADD8rr,      X86::ADD8mr },
       { X86::AND16ri,     X86::AND16mi },
@@ -284,19 +311,30 @@ MachineInstr* X86RegisterInfo::foldMemoryOperand(MachineInstr *MI,
       { X86::AND32ri,     X86::AND32mi },
       { X86::AND32ri8,    X86::AND32mi8 },
       { X86::AND32rr,     X86::AND32mr },
+      { X86::AND64ri32,   X86::AND64mi32 },
+      { X86::AND64ri8,    X86::AND64mi8 },
+      { X86::AND64rr,     X86::AND64mr },
       { X86::AND8ri,      X86::AND8mi },
       { X86::AND8rr,      X86::AND8mr },
       { X86::DEC16r,      X86::DEC16m },
       { X86::DEC32r,      X86::DEC32m },
+      { X86::DEC64_16r,   X86::DEC16m },
+      { X86::DEC64_32r,   X86::DEC32m },
+      { X86::DEC64r,      X86::DEC64m },
       { X86::DEC8r,       X86::DEC8m },
       { X86::INC16r,      X86::INC16m },
       { X86::INC32r,      X86::INC32m },
+      { X86::INC64_16r,   X86::INC16m },
+      { X86::INC64_32r,   X86::INC32m },
+      { X86::INC64r,      X86::INC64m },
       { X86::INC8r,       X86::INC8m },
       { X86::NEG16r,      X86::NEG16m },
       { X86::NEG32r,      X86::NEG32m },
+      { X86::NEG64r,      X86::NEG64m },
       { X86::NEG8r,       X86::NEG8m },
       { X86::NOT16r,      X86::NOT16m },
       { X86::NOT32r,      X86::NOT32m },
+      { X86::NOT64r,      X86::NOT64m },
       { X86::NOT8r,       X86::NOT8m },
       { X86::OR16ri,      X86::OR16mi },
       { X86::OR16ri8,     X86::OR16mi8 },
@@ -304,6 +342,9 @@ MachineInstr* X86RegisterInfo::foldMemoryOperand(MachineInstr *MI,
       { X86::OR32ri,      X86::OR32mi },
       { X86::OR32ri8,     X86::OR32mi8 },
       { X86::OR32rr,      X86::OR32mr },
+      { X86::OR64ri32,    X86::OR64mi32 },
+      { X86::OR64ri8,     X86::OR64mi8 },
+      { X86::OR64rr,      X86::OR64mr },
       { X86::OR8ri,       X86::OR8mi },
       { X86::OR8rr,       X86::OR8mr },
       { X86::ROL16r1,     X86::ROL16m1 },
@@ -312,6 +353,9 @@ MachineInstr* X86RegisterInfo::foldMemoryOperand(MachineInstr *MI,
       { X86::ROL32r1,     X86::ROL32m1 },
       { X86::ROL32rCL,    X86::ROL32mCL },
       { X86::ROL32ri,     X86::ROL32mi },
+      { X86::ROL64r1,     X86::ROL64m1 },
+      { X86::ROL64rCL,    X86::ROL64mCL },
+      { X86::ROL64ri,     X86::ROL64mi },
       { X86::ROL8r1,      X86::ROL8m1 },
       { X86::ROL8rCL,     X86::ROL8mCL },
       { X86::ROL8ri,      X86::ROL8mi },
@@ -321,6 +365,9 @@ MachineInstr* X86RegisterInfo::foldMemoryOperand(MachineInstr *MI,
       { X86::ROR32r1,     X86::ROR32m1 },
       { X86::ROR32rCL,    X86::ROR32mCL },
       { X86::ROR32ri,     X86::ROR32mi },
+      { X86::ROR64r1,     X86::ROR64m1 },
+      { X86::ROR64rCL,    X86::ROR64mCL },
+      { X86::ROR64ri,     X86::ROR64mi },
       { X86::ROR8r1,      X86::ROR8m1 },
       { X86::ROR8rCL,     X86::ROR8mCL },
       { X86::ROR8ri,      X86::ROR8mi },
@@ -330,18 +377,27 @@ MachineInstr* X86RegisterInfo::foldMemoryOperand(MachineInstr *MI,
       { X86::SAR32r1,     X86::SAR32m1 },
       { X86::SAR32rCL,    X86::SAR32mCL },
       { X86::SAR32ri,     X86::SAR32mi },
+      { X86::SAR64r1,     X86::SAR64m1 },
+      { X86::SAR64rCL,    X86::SAR64mCL },
+      { X86::SAR64ri,     X86::SAR64mi },
       { X86::SAR8r1,      X86::SAR8m1 },
       { X86::SAR8rCL,     X86::SAR8mCL },
       { X86::SAR8ri,      X86::SAR8mi },
       { X86::SBB32ri,     X86::SBB32mi },
       { X86::SBB32ri8,    X86::SBB32mi8 },
       { X86::SBB32rr,     X86::SBB32mr },
+      { X86::SBB64ri32,   X86::SBB64mi32 },
+      { X86::SBB64ri8,    X86::SBB64mi8 },
+      { X86::SBB64rr,     X86::SBB64mr },
       { X86::SHL16r1,     X86::SHL16m1 },
       { X86::SHL16rCL,    X86::SHL16mCL },
       { X86::SHL16ri,     X86::SHL16mi },
       { X86::SHL32r1,     X86::SHL32m1 },
       { X86::SHL32rCL,    X86::SHL32mCL },
       { X86::SHL32ri,     X86::SHL32mi },
+      { X86::SHL64r1,     X86::SHL64m1 },
+      { X86::SHL64rCL,    X86::SHL64mCL },
+      { X86::SHL64ri,     X86::SHL64mi },
       { X86::SHL8r1,      X86::SHL8m1 },
       { X86::SHL8rCL,     X86::SHL8mCL },
       { X86::SHL8ri,      X86::SHL8mi },
@@ -349,12 +405,17 @@ MachineInstr* X86RegisterInfo::foldMemoryOperand(MachineInstr *MI,
       { X86::SHLD16rri8,  X86::SHLD16mri8 },
       { X86::SHLD32rrCL,  X86::SHLD32mrCL },
       { X86::SHLD32rri8,  X86::SHLD32mri8 },
+      { X86::SHLD64rrCL,  X86::SHLD64mrCL },
+      { X86::SHLD64rri8,  X86::SHLD64mri8 },
       { X86::SHR16r1,     X86::SHR16m1 },
       { X86::SHR16rCL,    X86::SHR16mCL },
       { X86::SHR16ri,     X86::SHR16mi },
       { X86::SHR32r1,     X86::SHR32m1 },
       { X86::SHR32rCL,    X86::SHR32mCL },
       { X86::SHR32ri,     X86::SHR32mi },
+      { X86::SHR64r1,     X86::SHR64m1 },
+      { X86::SHR64rCL,    X86::SHR64mCL },
+      { X86::SHR64ri,     X86::SHR64mi },
       { X86::SHR8r1,      X86::SHR8m1 },
       { X86::SHR8rCL,     X86::SHR8mCL },
       { X86::SHR8ri,      X86::SHR8mi },
@@ -362,12 +423,17 @@ MachineInstr* X86RegisterInfo::foldMemoryOperand(MachineInstr *MI,
       { X86::SHRD16rri8,  X86::SHRD16mri8 },
       { X86::SHRD32rrCL,  X86::SHRD32mrCL },
       { X86::SHRD32rri8,  X86::SHRD32mri8 },
+      { X86::SHRD64rrCL,  X86::SHRD64mrCL },
+      { X86::SHRD64rri8,  X86::SHRD64mri8 },
       { X86::SUB16ri,     X86::SUB16mi },
       { X86::SUB16ri8,    X86::SUB16mi8 },
       { X86::SUB16rr,     X86::SUB16mr },
       { X86::SUB32ri,     X86::SUB32mi },
       { X86::SUB32ri8,    X86::SUB32mi8 },
       { X86::SUB32rr,     X86::SUB32mr },
+      { X86::SUB64ri32,   X86::SUB64mi32 },
+      { X86::SUB64ri8,    X86::SUB64mi8 },
+      { X86::SUB64rr,     X86::SUB64mr },
       { X86::SUB8ri,      X86::SUB8mi },
       { X86::SUB8rr,      X86::SUB8mr },
       { X86::XOR16ri,     X86::XOR16mi },
@@ -376,6 +442,9 @@ MachineInstr* X86RegisterInfo::foldMemoryOperand(MachineInstr *MI,
       { X86::XOR32ri,     X86::XOR32mi },
       { X86::XOR32ri8,    X86::XOR32mi8 },
       { X86::XOR32rr,     X86::XOR32mr },
+      { X86::XOR64ri32,   X86::XOR64mi32 },
+      { X86::XOR64ri8,    X86::XOR64mi8 },
+      { X86::XOR64rr,     X86::XOR64mr },
       { X86::XOR8ri,      X86::XOR8mi },
       { X86::XOR8rr,      X86::XOR8mr }
     };
@@ -388,6 +457,8 @@ MachineInstr* X86RegisterInfo::foldMemoryOperand(MachineInstr *MI,
       return MakeM0Inst(X86::MOV16mi, FrameIndex, MI);
     else if (MI->getOpcode() == X86::MOV32r0)
       return MakeM0Inst(X86::MOV32mi, FrameIndex, MI);
+    else if (MI->getOpcode() == X86::MOV64r0)
+      return MakeM0Inst(X86::MOV64mi32, FrameIndex, MI);
     else if (MI->getOpcode() == X86::MOV8r0)
       return MakeM0Inst(X86::MOV8mi, FrameIndex, MI);
     
@@ -399,19 +470,24 @@ MachineInstr* X86RegisterInfo::foldMemoryOperand(MachineInstr *MI,
       { X86::CMP8ri,      X86::CMP8mi },
       { X86::DIV16r,      X86::DIV16m },
       { X86::DIV32r,      X86::DIV32m },
+      { X86::DIV64r,      X86::DIV64m },
       { X86::DIV8r,       X86::DIV8m },
       { X86::FsMOVAPDrr,  X86::MOVSDmr },
       { X86::FsMOVAPSrr,  X86::MOVSSmr },
       { X86::IDIV16r,     X86::IDIV16m },
       { X86::IDIV32r,     X86::IDIV32m },
+      { X86::IDIV64r,     X86::IDIV64m },
       { X86::IDIV8r,      X86::IDIV8m },
       { X86::IMUL16r,     X86::IMUL16m },
       { X86::IMUL32r,     X86::IMUL32m },
+      { X86::IMUL64r,     X86::IMUL64m },
       { X86::IMUL8r,      X86::IMUL8m },
       { X86::MOV16ri,     X86::MOV16mi },
       { X86::MOV16rr,     X86::MOV16mr },
       { X86::MOV32ri,     X86::MOV32mi },
       { X86::MOV32rr,     X86::MOV32mr },
+      { X86::MOV64ri32,   X86::MOV64mi32 },
+      { X86::MOV64rr,     X86::MOV64mr },
       { X86::MOV8ri,      X86::MOV8mi },
       { X86::MOV8rr,      X86::MOV8mr },
       { X86::MOVAPDrr,    X86::MOVAPDmr },
@@ -424,6 +500,7 @@ MachineInstr* X86RegisterInfo::foldMemoryOperand(MachineInstr *MI,
       { X86::MOVUPSrr,    X86::MOVUPSmr },
       { X86::MUL16r,      X86::MUL16m },
       { X86::MUL32r,      X86::MUL32m },
+      { X86::MUL64r,      X86::MUL64m },
       { X86::MUL8r,       X86::MUL8m },
       { X86::SETAEr,      X86::SETAEm },
       { X86::SETAr,       X86::SETAm },
@@ -441,9 +518,11 @@ MachineInstr* X86RegisterInfo::foldMemoryOperand(MachineInstr *MI,
       { X86::SETSr,       X86::SETSm },
       { X86::TEST16ri,    X86::TEST16mi },
       { X86::TEST32ri,    X86::TEST32mi },
+      { X86::TEST64ri32,  X86::TEST64mi32 },
       { X86::TEST8ri,     X86::TEST8mi },
       { X86::XCHG16rr,    X86::XCHG16mr },
       { X86::XCHG32rr,    X86::XCHG32mr },
+      { X86::XCHG64rr,    X86::XCHG64mr },
       { X86::XCHG8rr,     X86::XCHG8mr }
     };
     ASSERT_SORTED(OpcodeTable);
@@ -453,16 +532,23 @@ MachineInstr* X86RegisterInfo::foldMemoryOperand(MachineInstr *MI,
     static const TableEntry OpcodeTable[] = {
       { X86::CMP16rr,         X86::CMP16rm },
       { X86::CMP32rr,         X86::CMP32rm },
+      { X86::CMP64ri32,       X86::CMP64mi32 },
+      { X86::CMP64ri8,        X86::CMP64mi8 },
+      { X86::CMP64rr,         X86::CMP64rm },
       { X86::CMP8rr,          X86::CMP8rm },
       { X86::CMPPDrri,        X86::CMPPDrmi },
       { X86::CMPPSrri,        X86::CMPPSrmi },
       { X86::CMPSDrr,         X86::CMPSDrm },
       { X86::CMPSSrr,         X86::CMPSSrm },
       { X86::CVTSD2SSrr,      X86::CVTSD2SSrm },
+      { X86::CVTSI2SD64rr,    X86::CVTSI2SD64rm },
       { X86::CVTSI2SDrr,      X86::CVTSI2SDrm },
+      { X86::CVTSI2SS64rr,    X86::CVTSI2SS64rm },
       { X86::CVTSI2SSrr,      X86::CVTSI2SSrm },
       { X86::CVTSS2SDrr,      X86::CVTSS2SDrm },
+      { X86::CVTTSD2SI64rr,   X86::CVTTSD2SI64rm },
       { X86::CVTTSD2SIrr,     X86::CVTTSD2SIrm },
+      { X86::CVTTSS2SI64rr,   X86::CVTTSS2SI64rm },
       { X86::CVTTSS2SIrr,     X86::CVTTSS2SIrm },
       { X86::FsMOVAPDrr,      X86::MOVSDrm },
       { X86::FsMOVAPSrr,      X86::MOVSSrm },
@@ -470,6 +556,9 @@ MachineInstr* X86RegisterInfo::foldMemoryOperand(MachineInstr *MI,
       { X86::IMUL16rri8,      X86::IMUL16rmi8 },
       { X86::IMUL32rri,       X86::IMUL32rmi },
       { X86::IMUL32rri8,      X86::IMUL32rmi8 },
+      { X86::IMUL64rr,        X86::IMUL64rm },
+      { X86::IMUL64rri32,     X86::IMUL64rmi32 },
+      { X86::IMUL64rri8,      X86::IMUL64rmi8 },
       { X86::Int_CMPSDrr,     X86::Int_CMPSDrm },
       { X86::Int_CMPSSrr,     X86::Int_CMPSSrm },
       { X86::Int_COMISDrr,    X86::Int_COMISDrm },
@@ -480,20 +569,27 @@ MachineInstr* X86RegisterInfo::foldMemoryOperand(MachineInstr *MI,
       { X86::Int_CVTPD2PSrr,  X86::Int_CVTPD2PSrm },
       { X86::Int_CVTPS2DQrr,  X86::Int_CVTPS2DQrm },
       { X86::Int_CVTPS2PDrr,  X86::Int_CVTPS2PDrm },
+      { X86::Int_CVTSD2SI64rr,X86::Int_CVTSD2SI64rm },
       { X86::Int_CVTSD2SIrr,  X86::Int_CVTSD2SIrm },
       { X86::Int_CVTSD2SSrr,  X86::Int_CVTSD2SSrm },
+      { X86::Int_CVTSI2SD64rr,X86::Int_CVTSI2SD64rm },
       { X86::Int_CVTSI2SDrr,  X86::Int_CVTSI2SDrm },
+      { X86::Int_CVTSI2SS64rr,X86::Int_CVTSI2SS64rm },
       { X86::Int_CVTSI2SSrr,  X86::Int_CVTSI2SSrm },
       { X86::Int_CVTSS2SDrr,  X86::Int_CVTSS2SDrm },
+      { X86::Int_CVTSS2SI64rr,X86::Int_CVTSS2SI64rm },
       { X86::Int_CVTSS2SIrr,  X86::Int_CVTSS2SIrm },
       { X86::Int_CVTTPD2DQrr, X86::Int_CVTTPD2DQrm },
       { X86::Int_CVTTPS2DQrr, X86::Int_CVTTPS2DQrm },
+      { X86::Int_CVTTSD2SI64rr,X86::Int_CVTTSD2SI64rm },
       { X86::Int_CVTTSD2SIrr, X86::Int_CVTTSD2SIrm },
+      { X86::Int_CVTTSS2SI64rr,X86::Int_CVTTSS2SI64rm },
       { X86::Int_CVTTSS2SIrr, X86::Int_CVTTSS2SIrm },
       { X86::Int_UCOMISDrr,   X86::Int_UCOMISDrm },
       { X86::Int_UCOMISSrr,   X86::Int_UCOMISSrm },
       { X86::MOV16rr,         X86::MOV16rm },
       { X86::MOV32rr,         X86::MOV32rm },
+      { X86::MOV64rr,         X86::MOV64rm },
       { X86::MOV8rr,          X86::MOV8rm },
       { X86::MOVAPDrr,        X86::MOVAPDrm },
       { X86::MOVAPSrr,        X86::MOVAPSrm },
@@ -509,22 +605,30 @@ MachineInstr* X86RegisterInfo::foldMemoryOperand(MachineInstr *MI,
       { X86::MOVSX16rr8,      X86::MOVSX16rm8 },
       { X86::MOVSX32rr16,     X86::MOVSX32rm16 },
       { X86::MOVSX32rr8,      X86::MOVSX32rm8 },
+      { X86::MOVSX64rr16,     X86::MOVSX64rm16 },
+      { X86::MOVSX64rr32,     X86::MOVSX64rm32 },
+      { X86::MOVSX64rr8,      X86::MOVSX64rm8 },
       { X86::MOVUPDrr,        X86::MOVUPDrm },
       { X86::MOVUPSrr,        X86::MOVUPSrm },
       { X86::MOVZX16rr8,      X86::MOVZX16rm8 },
       { X86::MOVZX32rr16,     X86::MOVZX32rm16 },
       { X86::MOVZX32rr8,      X86::MOVZX32rm8 },
+      { X86::MOVZX64rr16,     X86::MOVZX64rm16 },
+      { X86::MOVZX64rr8,      X86::MOVZX64rm8 },
       { X86::PSHUFDri,        X86::PSHUFDmi },
       { X86::PSHUFHWri,       X86::PSHUFHWmi },
       { X86::PSHUFLWri,       X86::PSHUFLWmi },
+      { X86::PsMOVZX64rr32,   X86::PsMOVZX64rm32 },
       { X86::TEST16rr,        X86::TEST16rm },
       { X86::TEST32rr,        X86::TEST32rm },
+      { X86::TEST64rr,        X86::TEST64rm },
       { X86::TEST8rr,         X86::TEST8rm },
       // FIXME: TEST*rr EAX,EAX ---> CMP [mem], 0
       { X86::UCOMISDrr,       X86::UCOMISDrm },
       { X86::UCOMISSrr,       X86::UCOMISSrm },
       { X86::XCHG16rr,        X86::XCHG16rm },
       { X86::XCHG32rr,        X86::XCHG32rm },
+      { X86::XCHG64rr,        X86::XCHG64rm },
       { X86::XCHG8rr,         X86::XCHG8rm }
     };
     ASSERT_SORTED(OpcodeTable);
@@ -533,8 +637,10 @@ MachineInstr* X86RegisterInfo::foldMemoryOperand(MachineInstr *MI,
   } else if (i == 2) {
     static const TableEntry OpcodeTable[] = {
       { X86::ADC32rr,         X86::ADC32rm },
+      { X86::ADC64rr,         X86::ADC64rm },
       { X86::ADD16rr,         X86::ADD16rm },
       { X86::ADD32rr,         X86::ADD32rm },
+      { X86::ADD64rr,         X86::ADD64rm },
       { X86::ADD8rr,          X86::ADD8rm },
       { X86::ADDPDrr,         X86::ADDPDrm },
       { X86::ADDPSrr,         X86::ADDPSrm },
@@ -544,6 +650,7 @@ MachineInstr* X86RegisterInfo::foldMemoryOperand(MachineInstr *MI,
       { X86::ADDSUBPSrr,      X86::ADDSUBPSrm },
       { X86::AND16rr,         X86::AND16rm },
       { X86::AND32rr,         X86::AND32rm },
+      { X86::AND64rr,         X86::AND64rm },
       { X86::AND8rr,          X86::AND8rm },
       { X86::ANDNPDrr,        X86::ANDNPDrm },
       { X86::ANDNPSrr,        X86::ANDNPSrm },
@@ -551,32 +658,46 @@ MachineInstr* X86RegisterInfo::foldMemoryOperand(MachineInstr *MI,
       { X86::ANDPSrr,         X86::ANDPSrm },
       { X86::CMOVA16rr,       X86::CMOVA16rm },
       { X86::CMOVA32rr,       X86::CMOVA32rm },
+      { X86::CMOVA64rr,       X86::CMOVA64rm },
       { X86::CMOVAE16rr,      X86::CMOVAE16rm },
       { X86::CMOVAE32rr,      X86::CMOVAE32rm },
+      { X86::CMOVAE64rr,      X86::CMOVAE64rm },
       { X86::CMOVB16rr,       X86::CMOVB16rm },
       { X86::CMOVB32rr,       X86::CMOVB32rm },
+      { X86::CMOVB64rr,       X86::CMOVB64rm },
       { X86::CMOVBE16rr,      X86::CMOVBE16rm },
       { X86::CMOVBE32rr,      X86::CMOVBE32rm },
+      { X86::CMOVBE64rr,      X86::CMOVBE64rm },
       { X86::CMOVE16rr,       X86::CMOVE16rm },
       { X86::CMOVE32rr,       X86::CMOVE32rm },
+      { X86::CMOVE64rr,       X86::CMOVE64rm },
       { X86::CMOVG16rr,       X86::CMOVG16rm },
       { X86::CMOVG32rr,       X86::CMOVG32rm },
+      { X86::CMOVG64rr,       X86::CMOVG64rm },
       { X86::CMOVGE16rr,      X86::CMOVGE16rm },
       { X86::CMOVGE32rr,      X86::CMOVGE32rm },
+      { X86::CMOVGE64rr,      X86::CMOVGE64rm },
       { X86::CMOVL16rr,       X86::CMOVL16rm },
       { X86::CMOVL32rr,       X86::CMOVL32rm },
+      { X86::CMOVL64rr,       X86::CMOVL64rm },
       { X86::CMOVLE16rr,      X86::CMOVLE16rm },
       { X86::CMOVLE32rr,      X86::CMOVLE32rm },
+      { X86::CMOVLE64rr,      X86::CMOVLE64rm },
       { X86::CMOVNE16rr,      X86::CMOVNE16rm },
       { X86::CMOVNE32rr,      X86::CMOVNE32rm },
+      { X86::CMOVNE64rr,      X86::CMOVNE64rm },
       { X86::CMOVNP16rr,      X86::CMOVNP16rm },
       { X86::CMOVNP32rr,      X86::CMOVNP32rm },
+      { X86::CMOVNP64rr,      X86::CMOVNP64rm },
       { X86::CMOVNS16rr,      X86::CMOVNS16rm },
       { X86::CMOVNS32rr,      X86::CMOVNS32rm },
+      { X86::CMOVNS64rr,      X86::CMOVNS64rm },
       { X86::CMOVP16rr,       X86::CMOVP16rm },
       { X86::CMOVP32rr,       X86::CMOVP32rm },
+      { X86::CMOVP64rr,       X86::CMOVP64rm },
       { X86::CMOVS16rr,       X86::CMOVS16rm },
       { X86::CMOVS32rr,       X86::CMOVS32rm },
+      { X86::CMOVS64rr,       X86::CMOVS64rm },
       { X86::DIVPDrr,         X86::DIVPDrm },
       { X86::DIVPSrr,         X86::DIVPSrm },
       { X86::DIVSDrr,         X86::DIVSDrm },
@@ -597,6 +718,7 @@ MachineInstr* X86RegisterInfo::foldMemoryOperand(MachineInstr *MI,
       { X86::MULSSrr,         X86::MULSSrm },
       { X86::OR16rr,          X86::OR16rm },
       { X86::OR32rr,          X86::OR32rm },
+      { X86::OR64rr,          X86::OR64rm },
       { X86::OR8rr,           X86::OR8rm },
       { X86::ORPDrr,          X86::ORPDrm },
       { X86::ORPSrr,          X86::ORPSrm },
@@ -655,6 +777,7 @@ MachineInstr* X86RegisterInfo::foldMemoryOperand(MachineInstr *MI,
       { X86::RCPPSr,          X86::RCPPSm },
       { X86::RSQRTPSr,        X86::RSQRTPSm },
       { X86::SBB32rr,         X86::SBB32rm },
+      { X86::SBB64rr,         X86::SBB64rm },
       { X86::SHUFPDrri,       X86::SHUFPDrmi },
       { X86::SHUFPSrri,       X86::SHUFPSrmi },
       { X86::SQRTPDr,         X86::SQRTPDm },
@@ -663,6 +786,7 @@ MachineInstr* X86RegisterInfo::foldMemoryOperand(MachineInstr *MI,
       { X86::SQRTSSr,         X86::SQRTSSm },
       { X86::SUB16rr,         X86::SUB16rm },
       { X86::SUB32rr,         X86::SUB32rm },
+      { X86::SUB64rr,         X86::SUB64rm },
       { X86::SUB8rr,          X86::SUB8rm },
       { X86::SUBPDrr,         X86::SUBPDrm },
       { X86::SUBPSrr,         X86::SUBPSrm },
@@ -675,6 +799,7 @@ MachineInstr* X86RegisterInfo::foldMemoryOperand(MachineInstr *MI,
       { X86::UNPCKLPSrr,      X86::UNPCKLPSrm },
       { X86::XOR16rr,         X86::XOR16rm },
       { X86::XOR32rr,         X86::XOR32rm },
+      { X86::XOR64rr,         X86::XOR64rm },
       { X86::XOR8rr,          X86::XOR8rm },
       { X86::XORPDrr,         X86::XORPDrm },
       { X86::XORPSrr,         X86::XORPSrm }
@@ -707,19 +832,29 @@ MachineInstr* X86RegisterInfo::foldMemoryOperand(MachineInstr *MI,
 
 
 const unsigned *X86RegisterInfo::getCalleeSaveRegs() const {
-  static const unsigned CalleeSaveRegs[] = {
+  static const unsigned CalleeSaveRegs32Bit[] = {
     X86::ESI, X86::EDI, X86::EBX, X86::EBP,  0
   };
-  return CalleeSaveRegs;
+  static const unsigned CalleeSaveRegs64Bit[] = {
+    X86::RBX, X86::R12, X86::R13, X86::R14, X86::R15, X86::RBP, 0
+  };
+
+  return Is64Bit ? CalleeSaveRegs64Bit : CalleeSaveRegs32Bit;
 }
 
 const TargetRegisterClass* const*
 X86RegisterInfo::getCalleeSaveRegClasses() const {
-  static const TargetRegisterClass * const CalleeSaveRegClasses[] = {
+  static const TargetRegisterClass * const CalleeSaveRegClasses32Bit[] = {
     &X86::GR32RegClass, &X86::GR32RegClass,
     &X86::GR32RegClass, &X86::GR32RegClass,  0
   };
-  return CalleeSaveRegClasses;
+  static const TargetRegisterClass * const CalleeSaveRegClasses64Bit[] = {
+    &X86::GR64RegClass, &X86::GR64RegClass,
+    &X86::GR64RegClass, &X86::GR64RegClass,
+    &X86::GR64RegClass, &X86::GR64RegClass, 0
+  };
+
+  return Is64Bit ? CalleeSaveRegClasses64Bit : CalleeSaveRegClasses32Bit;
 }
 
 //===----------------------------------------------------------------------===//
@@ -754,15 +889,18 @@ eliminateCallFramePseudoInstr(MachineFunction &MF, MachineBasicBlock &MBB,
 
       MachineInstr *New = 0;
       if (Old->getOpcode() == X86::ADJCALLSTACKDOWN) {
-        New=BuildMI(X86::SUB32ri, 2, X86::ESP).addReg(X86::ESP).addImm(Amount);
+        New=BuildMI(Is64Bit ? X86::SUB64ri32 : X86::SUB32ri, 1, StackPtr)
+          .addReg(StackPtr).addImm(Amount);
       } else {
         assert(Old->getOpcode() == X86::ADJCALLSTACKUP);
         // factor out the amount the callee already popped.
         unsigned CalleeAmt = Old->getOperand(1).getImmedValue();
         Amount -= CalleeAmt;
         if (Amount) {
-          unsigned Opc = Amount < 128 ? X86::ADD32ri8 : X86::ADD32ri;
-          New = BuildMI(Opc, 2, X86::ESP).addReg(X86::ESP).addImm(Amount);
+          unsigned Opc = (Amount < 128) ?
+            (Is64Bit ? X86::ADD64ri8 : X86::ADD32ri8) :
+            (Is64Bit ? X86::ADD64ri32 : X86::ADD32ri);
+          New = BuildMI(Opc, 1,  StackPtr).addReg(StackPtr).addImm(Amount);
         }
       }
 
@@ -774,9 +912,11 @@ eliminateCallFramePseudoInstr(MachineFunction &MF, MachineBasicBlock &MBB,
     // something off the stack pointer, add it back.  We do this until we have
     // more advanced stack pointer tracking ability.
     if (unsigned CalleeAmt = I->getOperand(1).getImmedValue()) {
-      unsigned Opc = CalleeAmt < 128 ? X86::SUB32ri8 : X86::SUB32ri;
+      unsigned Opc = (CalleeAmt < 128) ?
+        (Is64Bit ? X86::SUB64ri8 : X86::SUB32ri8) :
+        (Is64Bit ? X86::SUB64ri32 : X86::SUB32ri);
       MachineInstr *New =
-        BuildMI(Opc, 1, X86::ESP).addReg(X86::ESP).addImm(CalleeAmt);
+        BuildMI(Opc, 1, StackPtr).addReg(StackPtr).addImm(CalleeAmt);
       MBB.insert(I, New);
     }
   }
@@ -794,19 +934,18 @@ void X86RegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II) const{
   }
 
   int FrameIndex = MI.getOperand(i).getFrameIndex();
-
   // This must be part of a four operand memory reference.  Replace the
-  // FrameIndex with base register with EBP.  Add add an offset to the offset.
-  MI.getOperand(i).ChangeToRegister(hasFP(MF) ? X86::EBP : X86::ESP, false);
+  // FrameIndex with base register with EBP.  Add an offset to the offset.
+  MI.getOperand(i).ChangeToRegister(hasFP(MF) ? FramePtr : StackPtr, false);
 
   // Now add the frame object offset to the offset from EBP.
   int Offset = MF.getFrameInfo()->getObjectOffset(FrameIndex) +
-               MI.getOperand(i+3).getImmedValue()+4;
+               MI.getOperand(i+3).getImmedValue()+SlotSize;
 
   if (!hasFP(MF))
     Offset += MF.getFrameInfo()->getStackSize();
   else
-    Offset += 4;  // Skip the saved EBP
+    Offset += SlotSize;  // Skip the saved EBP
 
   MI.getOperand(i+3).ChangeToImmediate(Offset);
 }
@@ -815,7 +954,7 @@ void
 X86RegisterInfo::processFunctionBeforeFrameFinalized(MachineFunction &MF) const{
   if (hasFP(MF)) {
     // Create a frame entry for the EBP register that must be saved.
-    int FrameIdx = MF.getFrameInfo()->CreateFixedObject(4, -8);
+    int FrameIdx = MF.getFrameInfo()->CreateFixedObject(SlotSize,SlotSize * -2);
     assert(FrameIdx == MF.getFrameInfo()->getObjectIndexBegin() &&
            "Slot for EBP register must be last in order to be found!");
   }
@@ -840,9 +979,9 @@ void X86RegisterInfo::emitPrologue(MachineFunction &MF) const {
     if (!hasFP(MF))
       NumBytes += MFI->getMaxCallFrameSize();
 
-    // Round the size to a multiple of the alignment (don't forget the 4 byte
+    // Round the size to a multiple of the alignment (don't forget the 4/8 byte
     // offset though).
-    NumBytes = ((NumBytes+4)+Align-1)/Align*Align - 4;
+    NumBytes = ((NumBytes+SlotSize)+Align-1)/Align*Align - SlotSize;
   }
 
   // Update frame info to pretend that this is part of the stack...
@@ -859,8 +998,10 @@ void X86RegisterInfo::emitPrologue(MachineFunction &MF) const {
       MI = BuildMI(X86::CALLpcrel32, 1).addExternalSymbol("_alloca");
       MBB.insert(MBBI, MI);
     } else {
-      unsigned Opc = NumBytes < 128 ? X86::SUB32ri8 : X86::SUB32ri;
-      MI = BuildMI(Opc, 2, X86::ESP).addReg(X86::ESP).addImm(NumBytes);
+      unsigned Opc = (NumBytes < 128) ?
+        (Is64Bit ? X86::SUB64ri8 : X86::SUB32ri8) :
+        (Is64Bit ? X86::SUB64ri32 : X86::SUB32ri);
+      MI= BuildMI(Opc, 1, StackPtr).addReg(StackPtr).addImm(NumBytes);
       MBB.insert(MBBI, MI);
     }
   }
@@ -868,18 +1009,21 @@ void X86RegisterInfo::emitPrologue(MachineFunction &MF) const {
   if (hasFP(MF)) {
     // Get the offset of the stack slot for the EBP register... which is
     // guaranteed to be the last slot by processFunctionBeforeFrameFinalized.
-    int EBPOffset = MFI->getObjectOffset(MFI->getObjectIndexBegin())+4;
+    int EBPOffset = MFI->getObjectOffset(MFI->getObjectIndexBegin())+SlotSize;
 
     // Save EBP into the appropriate stack slot...
-    MI = addRegOffset(BuildMI(X86::MOV32mr, 5),    // mov [ESP-<offset>], EBP
-                      X86::ESP, EBPOffset+NumBytes).addReg(X86::EBP);
+    // mov [ESP-<offset>], EBP
+    MI = addRegOffset(BuildMI(Is64Bit ? X86::MOV64mr : X86::MOV32mr, 5),
+                      StackPtr, EBPOffset+NumBytes).addReg(FramePtr);
     MBB.insert(MBBI, MI);
 
     // Update EBP with the new base value...
-    if (NumBytes == 4)    // mov EBP, ESP
-      MI = BuildMI(X86::MOV32rr, 2, X86::EBP).addReg(X86::ESP);
+    if (NumBytes == SlotSize)    // mov EBP, ESP
+      MI = BuildMI(Is64Bit ? X86::MOV64rr : X86::MOV32rr, 2, FramePtr).
+        addReg(StackPtr);
     else                  // lea EBP, [ESP+StackSize]
-      MI = addRegOffset(BuildMI(X86::LEA32r, 5, X86::EBP), X86::ESP,NumBytes-4);
+      MI = addRegOffset(BuildMI(Is64Bit ? X86::LEA64r : X86::LEA32r,
+                               5, FramePtr), StackPtr, NumBytes-SlotSize);
 
     MBB.insert(MBBI, MI);
   }
@@ -916,13 +1060,14 @@ void X86RegisterInfo::emitEpilogue(MachineFunction &MF,
   if (hasFP(MF)) {
     // Get the offset of the stack slot for the EBP register... which is
     // guaranteed to be the last slot by processFunctionBeforeFrameFinalized.
-    int EBPOffset = MFI->getObjectOffset(MFI->getObjectIndexEnd()-1)+4;
+    int EBPOffset = MFI->getObjectOffset(MFI->getObjectIndexEnd()-1)+SlotSize;
 
     // mov ESP, EBP
-    BuildMI(MBB, MBBI, X86::MOV32rr, 1, X86::ESP).addReg(X86::EBP);
+    BuildMI(MBB, MBBI, Is64Bit ? X86::MOV64rr : X86::MOV32rr, 1, StackPtr).
+      addReg(FramePtr);
 
     // pop EBP
-    BuildMI(MBB, MBBI, X86::POP32r, 0, X86::EBP);
+    BuildMI(MBB, MBBI, Is64Bit ? X86::POP64r : X86::POP32r, 0, FramePtr);
   } else {
     // Get the number of bytes allocated from the FrameInfo...
     unsigned NumBytes = MFI->getStackSize();
@@ -932,14 +1077,15 @@ void X86RegisterInfo::emitEpilogue(MachineFunction &MF,
       // instruction, merge the two instructions.
       if (MBBI != MBB.begin()) {
         MachineBasicBlock::iterator PI = prior(MBBI);
-        if ((PI->getOpcode() == X86::ADD32ri || 
-             PI->getOpcode() == X86::ADD32ri8) &&
-            PI->getOperand(0).getReg() == X86::ESP) {
+        unsigned Opc = PI->getOpcode();
+        if ((Opc == X86::ADD64ri32 || Opc == X86::ADD64ri8 ||
+             Opc == X86::ADD32ri || Opc == X86::ADD32ri8) &&
+            PI->getOperand(0).getReg() == StackPtr) {
           NumBytes += PI->getOperand(2).getImmedValue();
           MBB.erase(PI);
-        } else if ((PI->getOpcode() == X86::SUB32ri ||
-                    PI->getOpcode() == X86::SUB32ri8) &&
-                   PI->getOperand(0).getReg() == X86::ESP) {
+        } else if ((Opc == X86::SUB64ri32 || Opc == X86::SUB64ri8 ||
+                    Opc == X86::SUB32ri || Opc == X86::SUB32ri8) &&
+                   PI->getOperand(0).getReg() == StackPtr) {
           NumBytes -= PI->getOperand(2).getImmedValue();
           MBB.erase(PI);
         } else if (PI->getOpcode() == X86::ADJSTACKPTRri) {
@@ -949,11 +1095,15 @@ void X86RegisterInfo::emitEpilogue(MachineFunction &MF,
       }
 
       if (NumBytes > 0) {
-        unsigned Opc = NumBytes < 128 ? X86::ADD32ri8 : X86::ADD32ri;
-        BuildMI(MBB, MBBI, Opc, 2, X86::ESP).addReg(X86::ESP).addImm(NumBytes);
+        unsigned Opc = (NumBytes < 128) ?
+          (Is64Bit ? X86::ADD64ri8 : X86::ADD32ri8) :
+          (Is64Bit ? X86::ADD64ri32 : X86::ADD32ri);
+        BuildMI(MBB, MBBI, Opc, 2, StackPtr).addReg(StackPtr).addImm(NumBytes);
       } else if ((int)NumBytes < 0) {
-        unsigned Opc = -NumBytes < 128 ? X86::SUB32ri8 : X86::SUB32ri;
-        BuildMI(MBB, MBBI, Opc, 2, X86::ESP).addReg(X86::ESP).addImm(-NumBytes);
+        unsigned Opc = (-NumBytes < 128) ?
+          (Is64Bit ? X86::SUB64ri8 : X86::SUB32ri8) :
+          (Is64Bit ? X86::SUB64ri32 : X86::SUB32ri);
+        BuildMI(MBB, MBBI, Opc, 2, StackPtr).addReg(StackPtr).addImm(-NumBytes);
       }
     }
   }
@@ -964,7 +1114,7 @@ unsigned X86RegisterInfo::getRARegister() const {
 }
 
 unsigned X86RegisterInfo::getFrameRegister(MachineFunction &MF) const {
-  return hasFP(MF) ? X86::EBP : X86::ESP;
+  return hasFP(MF) ? FramePtr : StackPtr;
 }
 
 namespace llvm {
@@ -974,68 +1124,160 @@ unsigned getX86SubSuperRegister(unsigned Reg, MVT::ValueType VT, bool High) {
   case MVT::i8:
     if (High) {
       switch (Reg) {
-      default: return Reg;
-      case X86::AH: case X86::AL: case X86::AX: case X86::EAX:
+      default: return 0;
+      case X86::AH: case X86::AL: case X86::AX: case X86::EAX: case X86::RAX:
         return X86::AH;
-      case X86::DH: case X86::DL: case X86::DX: case X86::EDX:
+      case X86::DH: case X86::DL: case X86::DX: case X86::EDX: case X86::RDX:
         return X86::DH;
-      case X86::CH: case X86::CL: case X86::CX: case X86::ECX:
+      case X86::CH: case X86::CL: case X86::CX: case X86::ECX: case X86::RCX:
         return X86::CH;
-      case X86::BH: case X86::BL: case X86::BX: case X86::EBX:
+      case X86::BH: case X86::BL: case X86::BX: case X86::EBX: case X86::RBX:
         return X86::BH;
       }
     } else {
       switch (Reg) {
-      default: return Reg;
-      case X86::AH: case X86::AL: case X86::AX: case X86::EAX:
+      default: return 0;
+      case X86::AH: case X86::AL: case X86::AX: case X86::EAX: case X86::RAX:
         return X86::AL;
-      case X86::DH: case X86::DL: case X86::DX: case X86::EDX:
+      case X86::DH: case X86::DL: case X86::DX: case X86::EDX: case X86::RDX:
         return X86::DL;
-      case X86::CH: case X86::CL: case X86::CX: case X86::ECX:
+      case X86::CH: case X86::CL: case X86::CX: case X86::ECX: case X86::RCX:
         return X86::CL;
-      case X86::BH: case X86::BL: case X86::BX: case X86::EBX:
+      case X86::BH: case X86::BL: case X86::BX: case X86::EBX: case X86::RBX:
         return X86::BL;
+      case X86::SIL: case X86::SI: case X86::ESI: case X86::RSI:
+        return X86::SIL;
+      case X86::DIL: case X86::DI: case X86::EDI: case X86::RDI:
+        return X86::DIL;
+      case X86::BPL: case X86::BP: case X86::EBP: case X86::RBP:
+        return X86::BPL;
+      case X86::SPL: case X86::SP: case X86::ESP: case X86::RSP:
+        return X86::SPL;
+      case X86::R8B: case X86::R8W: case X86::R8D: case X86::R8:
+        return X86::R8B;
+      case X86::R9B: case X86::R9W: case X86::R9D: case X86::R9:
+        return X86::R9B;
+      case X86::R10B: case X86::R10W: case X86::R10D: case X86::R10:
+        return X86::R10B;
+      case X86::R11B: case X86::R11W: case X86::R11D: case X86::R11:
+        return X86::R11B;
+      case X86::R12B: case X86::R12W: case X86::R12D: case X86::R12:
+        return X86::R12B;
+      case X86::R13B: case X86::R13W: case X86::R13D: case X86::R13:
+        return X86::R13B;
+      case X86::R14B: case X86::R14W: case X86::R14D: case X86::R14:
+        return X86::R14B;
+      case X86::R15B: case X86::R15W: case X86::R15D: case X86::R15:
+        return X86::R15B;
       }
     }
   case MVT::i16:
     switch (Reg) {
     default: return Reg;
-    case X86::AH: case X86::AL: case X86::AX: case X86::EAX:
+    case X86::AH: case X86::AL: case X86::AX: case X86::EAX: case X86::RAX:
       return X86::AX;
-    case X86::DH: case X86::DL: case X86::DX: case X86::EDX:
+    case X86::DH: case X86::DL: case X86::DX: case X86::EDX: case X86::RDX:
       return X86::DX;
-    case X86::CH: case X86::CL: case X86::CX: case X86::ECX:
+    case X86::CH: case X86::CL: case X86::CX: case X86::ECX: case X86::RCX:
       return X86::CX;
-    case X86::BH: case X86::BL: case X86::BX: case X86::EBX:
+    case X86::BH: case X86::BL: case X86::BX: case X86::EBX: case X86::RBX:
       return X86::BX;
-    case X86::ESI:
+    case X86::SIL: case X86::SI: case X86::ESI: case X86::RSI:
       return X86::SI;
-    case X86::EDI:
+    case X86::DIL: case X86::DI: case X86::EDI: case X86::RDI:
       return X86::DI;
-    case X86::EBP:
+    case X86::BPL: case X86::BP: case X86::EBP: case X86::RBP:
       return X86::BP;
-    case X86::ESP:
+    case X86::SPL: case X86::SP: case X86::ESP: case X86::RSP:
       return X86::SP;
+    case X86::R8B: case X86::R8W: case X86::R8D: case X86::R8:
+      return X86::R8W;
+    case X86::R9B: case X86::R9W: case X86::R9D: case X86::R9:
+      return X86::R9W;
+    case X86::R10B: case X86::R10W: case X86::R10D: case X86::R10:
+      return X86::R10W;
+    case X86::R11B: case X86::R11W: case X86::R11D: case X86::R11:
+      return X86::R11W;
+    case X86::R12B: case X86::R12W: case X86::R12D: case X86::R12:
+      return X86::R12W;
+    case X86::R13B: case X86::R13W: case X86::R13D: case X86::R13:
+      return X86::R13W;
+    case X86::R14B: case X86::R14W: case X86::R14D: case X86::R14:
+      return X86::R14W;
+    case X86::R15B: case X86::R15W: case X86::R15D: case X86::R15:
+      return X86::R15W;
     }
   case MVT::i32:
     switch (Reg) {
-    default: return true;
-    case X86::AH: case X86::AL: case X86::AX: case X86::EAX:
+    default: return Reg;
+    case X86::AH: case X86::AL: case X86::AX: case X86::EAX: case X86::RAX:
       return X86::EAX;
-    case X86::DH: case X86::DL: case X86::DX: case X86::EDX:
+    case X86::DH: case X86::DL: case X86::DX: case X86::EDX: case X86::RDX:
       return X86::EDX;
-    case X86::CH: case X86::CL: case X86::CX: case X86::ECX:
+    case X86::CH: case X86::CL: case X86::CX: case X86::ECX: case X86::RCX:
       return X86::ECX;
-    case X86::BH: case X86::BL: case X86::BX: case X86::EBX:
+    case X86::BH: case X86::BL: case X86::BX: case X86::EBX: case X86::RBX:
       return X86::EBX;
-    case X86::SI:
+    case X86::SIL: case X86::SI: case X86::ESI: case X86::RSI:
       return X86::ESI;
-    case X86::DI:
+    case X86::DIL: case X86::DI: case X86::EDI: case X86::RDI:
       return X86::EDI;
-    case X86::BP:
+    case X86::BPL: case X86::BP: case X86::EBP: case X86::RBP:
       return X86::EBP;
-    case X86::SP:
+    case X86::SPL: case X86::SP: case X86::ESP: case X86::RSP:
       return X86::ESP;
+    case X86::R8B: case X86::R8W: case X86::R8D: case X86::R8:
+      return X86::R8D;
+    case X86::R9B: case X86::R9W: case X86::R9D: case X86::R9:
+      return X86::R9D;
+    case X86::R10B: case X86::R10W: case X86::R10D: case X86::R10:
+      return X86::R10D;
+    case X86::R11B: case X86::R11W: case X86::R11D: case X86::R11:
+      return X86::R11D;
+    case X86::R12B: case X86::R12W: case X86::R12D: case X86::R12:
+      return X86::R12D;
+    case X86::R13B: case X86::R13W: case X86::R13D: case X86::R13:
+      return X86::R13D;
+    case X86::R14B: case X86::R14W: case X86::R14D: case X86::R14:
+      return X86::R14D;
+    case X86::R15B: case X86::R15W: case X86::R15D: case X86::R15:
+      return X86::R15D;
+    }
+  case MVT::i64:
+    switch (Reg) {
+    default: return Reg;
+    case X86::AH: case X86::AL: case X86::AX: case X86::EAX: case X86::RAX:
+      return X86::RAX;
+    case X86::DH: case X86::DL: case X86::DX: case X86::EDX: case X86::RDX:
+      return X86::RDX;
+    case X86::CH: case X86::CL: case X86::CX: case X86::ECX: case X86::RCX:
+      return X86::RCX;
+    case X86::BH: case X86::BL: case X86::BX: case X86::EBX: case X86::RBX:
+      return X86::RBX;
+    case X86::SIL: case X86::SI: case X86::ESI: case X86::RSI:
+      return X86::RSI;
+    case X86::DIL: case X86::DI: case X86::EDI: case X86::RDI:
+      return X86::RDI;
+    case X86::BPL: case X86::BP: case X86::EBP: case X86::RBP:
+      return X86::RBP;
+    case X86::SPL: case X86::SP: case X86::ESP: case X86::RSP:
+      return X86::RSP;
+    case X86::R8B: case X86::R8W: case X86::R8D: case X86::R8:
+      return X86::R8;
+    case X86::R9B: case X86::R9W: case X86::R9D: case X86::R9:
+      return X86::R9;
+    case X86::R10B: case X86::R10W: case X86::R10D: case X86::R10:
+      return X86::R10;
+    case X86::R11B: case X86::R11W: case X86::R11D: case X86::R11:
+      return X86::R11;
+    case X86::R12B: case X86::R12W: case X86::R12D: case X86::R12:
+      return X86::R12;
+    case X86::R13B: case X86::R13W: case X86::R13D: case X86::R13:
+      return X86::R13;
+    case X86::R14B: case X86::R14W: case X86::R14D: case X86::R14:
+      return X86::R14;
+    case X86::R15B: case X86::R15W: case X86::R15D: case X86::R15:
+      return X86::R15;
     }
   }
 

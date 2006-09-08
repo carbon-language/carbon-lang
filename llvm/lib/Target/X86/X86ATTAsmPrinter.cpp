@@ -126,8 +126,9 @@ void X86ATTAsmPrinter::printOperand(const MachineInstr *MI, unsigned OpNo,
     O << '%';
     unsigned Reg = MO.getReg();
     if (Modifier && strncmp(Modifier, "subreg", strlen("subreg")) == 0) {
-      MVT::ValueType VT = (strcmp(Modifier,"subreg16") == 0)
-        ? MVT::i16 : MVT::i8;
+      MVT::ValueType VT = (strcmp(Modifier+6,"64") == 0) ?
+        MVT::i64 : ((strcmp(Modifier+6, "32") == 0) ? MVT::i32 :
+                    ((strcmp(Modifier+6,"16") == 0) ? MVT::i16 : MVT::i8));
       Reg = getX86SubSuperRegister(Reg, VT);
     }
     for (const char *Name = RI.get(Reg).Name; *Name; ++Name)
@@ -148,9 +149,11 @@ void X86ATTAsmPrinter::printOperand(const MachineInstr *MI, unsigned OpNo,
     if (!isMemOp) O << '$';
     O << TAI->getPrivateGlobalPrefix() << "JTI" << getFunctionNumber() << "_"
       << MO.getJumpTableIndex();
-    if (Subtarget->isTargetDarwin() && 
+    if (X86PICStyle == PICStyle::Stub &&
         TM.getRelocationModel() == Reloc::PIC_)
       O << "-\"L" << getFunctionNumber() << "$pb\"";
+    if (Subtarget->is64Bit())
+      O << "(%rip)";
     return;
   }
   case MachineOperand::MO_ConstantPoolIndex: {
@@ -158,7 +161,7 @@ void X86ATTAsmPrinter::printOperand(const MachineInstr *MI, unsigned OpNo,
     if (!isMemOp) O << '$';
     O << TAI->getPrivateGlobalPrefix() << "CPI" << getFunctionNumber() << "_"
       << MO.getConstantPoolIndex();
-    if (Subtarget->isTargetDarwin() && 
+    if (X86PICStyle == PICStyle::Stub &&
         TM.getRelocationModel() == Reloc::PIC_)
       O << "-\"L" << getFunctionNumber() << "$pb\"";
     int Offset = MO.getOffset();
@@ -166,47 +169,59 @@ void X86ATTAsmPrinter::printOperand(const MachineInstr *MI, unsigned OpNo,
       O << "+" << Offset;
     else if (Offset < 0)
       O << Offset;
+
+    if (Subtarget->is64Bit())
+      O << "(%rip)";
     return;
   }
   case MachineOperand::MO_GlobalAddress: {
     bool isCallOp = Modifier && !strcmp(Modifier, "call");
     bool isMemOp  = Modifier && !strcmp(Modifier, "mem");
     if (!isMemOp && !isCallOp) O << '$';
-    // Darwin block shameless ripped from PPCAsmPrinter.cpp
-    if (Subtarget->isTargetDarwin() && 
+
+    GlobalValue *GV = MO.getGlobal();
+    std::string Name = Mang->getValueName(GV);
+    bool isExt = (GV->isExternal() || GV->hasWeakLinkage() ||
+                  GV->hasLinkOnceLinkage());
+    if (X86PICStyle == PICStyle::Stub &&
         TM.getRelocationModel() != Reloc::Static) {
-      GlobalValue *GV = MO.getGlobal();
-      std::string Name = Mang->getValueName(GV);
       // Link-once, External, or Weakly-linked global variables need
       // non-lazily-resolved stubs
-      if (GV->isExternal() || GV->hasWeakLinkage() ||
-          GV->hasLinkOnceLinkage()) {
+      if (isExt) {
         // Dynamically-resolved functions need a stub for the function.
-        if (isCallOp && isa<Function>(GV) && cast<Function>(GV)->isExternal()) {
+        if (isCallOp && isa<Function>(GV)) {
           FnStubs.insert(Name);
           O << "L" << Name << "$stub";
         } else {
           GVStubs.insert(Name);
           O << "L" << Name << "$non_lazy_ptr";
         }
-      } else {
-        O << Mang->getValueName(GV);
-      } 
+      } else
+        O << Name;
       if (!isCallOp && TM.getRelocationModel() == Reloc::PIC_)
         O << "-\"L" << getFunctionNumber() << "$pb\"";
-   } else
-      O << Mang->getValueName(MO.getGlobal());
+    } else
+      O << Name;
+
     int Offset = MO.getOffset();
     if (Offset > 0)
       O << "+" << Offset;
     else if (Offset < 0)
       O << Offset;
+
+    if (!isCallOp &&
+        Subtarget->is64Bit()) {
+      if (isExt && TM.getRelocationModel() != Reloc::Static)
+        O << "@GOTPCREL";
+      O << "(%rip)";
+    }
+
     return;
   }
   case MachineOperand::MO_ExternalSymbol: {
     bool isCallOp = Modifier && !strcmp(Modifier, "call");
     if (isCallOp && 
-        Subtarget->isTargetDarwin() && 
+        X86PICStyle == PICStyle::Stub &&
         TM.getRelocationModel() != Reloc::Static) {
       std::string Name(TAI->getGlobalPrefix());
       Name += MO.getSymbolName();
@@ -216,6 +231,11 @@ void X86ATTAsmPrinter::printOperand(const MachineInstr *MI, unsigned OpNo,
     }
     if (!isCallOp) O << '$';
     O << TAI->getGlobalPrefix() << MO.getSymbolName();
+
+    if (!isCallOp &&
+        Subtarget->is64Bit())
+      O << "(%rip)";
+
     return;
   }
   default:
@@ -238,7 +258,8 @@ void X86ATTAsmPrinter::printSSECC(const MachineInstr *MI, unsigned Op) {
   }
 }
 
-void X86ATTAsmPrinter::printMemReference(const MachineInstr *MI, unsigned Op){
+void X86ATTAsmPrinter::printMemReference(const MachineInstr *MI, unsigned Op,
+                                         const char *Modifier){
   assert(isMem(MI, Op) && "Invalid memory reference!");
 
   const MachineOperand &BaseReg  = MI->getOperand(Op);
@@ -266,12 +287,13 @@ void X86ATTAsmPrinter::printMemReference(const MachineInstr *MI, unsigned Op){
 
   if (IndexReg.getReg() || BaseReg.getReg()) {
     O << "(";
-    if (BaseReg.getReg())
-      printOperand(MI, Op);
+    if (BaseReg.getReg()) {
+      printOperand(MI, Op, Modifier);
+    }
 
     if (IndexReg.getReg()) {
       O << ",";
-      printOperand(MI, Op+2);
+      printOperand(MI, Op+2, Modifier);
       if (ScaleVal != 1)
         O << "," << ScaleVal;
     }
@@ -350,43 +372,25 @@ bool X86ATTAsmPrinter::PrintAsmMemoryOperand(const MachineInstr *MI,
 ///
 void X86ATTAsmPrinter::printMachineInstruction(const MachineInstr *MI) {
   ++EmittedInsts;
-  // This works around some Darwin assembler bugs.
-  if (Subtarget->isTargetDarwin()) {
-    switch (MI->getOpcode()) {
-    case X86::REP_MOVSB:
-      O << "rep/movsb (%esi),(%edi)\n";
-      return;
-    case X86::REP_MOVSD:
-      O << "rep/movsl (%esi),(%edi)\n";
-      return;
-    case X86::REP_MOVSW:
-      O << "rep/movsw (%esi),(%edi)\n";
-      return;
-    case X86::REP_STOSB:
-      O << "rep/stosb\n";
-      return;
-    case X86::REP_STOSD:
-      O << "rep/stosl\n";
-      return;
-    case X86::REP_STOSW:
-      O << "rep/stosw\n";
-      return;
-    default:
-      break;
-    }
-  }
 
   // See if a truncate instruction can be turned into a nop.
   switch (MI->getOpcode()) {
   default: break;
-  case X86::TRUNC_GR32_GR16:
-  case X86::TRUNC_GR32_GR8:
-  case X86::TRUNC_GR16_GR8: {
+  case X86::TRUNC_64to32:
+  case X86::TRUNC_64to16:
+  case X86::TRUNC_32to16:
+  case X86::TRUNC_32to8:
+  case X86::TRUNC_16to8:
+  case X86::TRUNC_32_to8:
+  case X86::TRUNC_16_to8: {
     const MachineOperand &MO0 = MI->getOperand(0);
     const MachineOperand &MO1 = MI->getOperand(1);
     unsigned Reg0 = MO0.getReg();
     unsigned Reg1 = MO1.getReg();
-    if (MI->getOpcode() == X86::TRUNC_GR32_GR16)
+    unsigned Opc = MI->getOpcode();
+    if (Opc == X86::TRUNC_64to32)
+      Reg1 = getX86SubSuperRegister(Reg1, MVT::i32);
+    else if (Opc == X86::TRUNC_32to16 || Opc == X86::TRUNC_64to16)
       Reg1 = getX86SubSuperRegister(Reg1, MVT::i16);
     else
       Reg1 = getX86SubSuperRegister(Reg1, MVT::i8);
@@ -395,6 +399,9 @@ void X86ATTAsmPrinter::printMachineInstruction(const MachineInstr *MI) {
       O << "\n\t";
     break;
   }
+  case X86::PsMOVZX64rr32:
+    O << TAI->getCommentString() << " ZERO-EXTEND " << "\n\t";
+    break;
   }
 
   // Call the autogenerated instruction printer routines.

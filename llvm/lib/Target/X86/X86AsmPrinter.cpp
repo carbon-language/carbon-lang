@@ -30,8 +30,12 @@ Statistic<> llvm::EmittedInsts("asm-printer",
                                "Number of machine instrs printed");
 
 /// doInitialization
-bool X86SharedAsmPrinter::doInitialization(Module &M) {  
+bool X86SharedAsmPrinter::doInitialization(Module &M) {
   if (Subtarget->isTargetDarwin()) {
+    const X86Subtarget *Subtarget = &TM.getSubtarget<X86Subtarget>();
+    if (!Subtarget->is64Bit())
+      X86PICStyle = PICStyle::Stub;
+
     // Emit initial debug information.
     DW.BeginModule(&M);
   }

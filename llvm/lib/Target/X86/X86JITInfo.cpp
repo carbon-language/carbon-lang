@@ -42,7 +42,65 @@ static TargetJITInfo::JITCompilerFn JITCompilerFunction;
 // Provide a wrapper for X86CompilationCallback2 that saves non-traditional
 // callee saved registers, for the fastcc calling convention.
 extern "C" {
-#if defined(__i386__) || defined(i386) || defined(_M_IX86)
+#if defined(__x86_64__)
+  // No need to save EAX/EDX for X86-64.
+  void X86CompilationCallback(void);
+  asm(
+    ".text\n"
+    ".align 8\n"
+    ".globl _X86CompilationCallback\n"
+  "_X86CompilationCallback:\n"
+    // Save RBP
+    "pushq   %rbp\n"
+    // Save RSP
+    "movq    %rsp, %rbp\n"
+    // Save all int arg registers
+    "pushq   %rdi\n"
+    "pushq   %rsi\n"
+    "pushq   %rdx\n"
+    "pushq   %rcx\n"
+    "pushq   %r8\n"
+    "pushq   %r9\n"
+    // Align stack on 16-byte boundary. ESP might not be properly aligned
+    // (8 byte) if this is called from an indirect stub.
+    "andq    $-16, %rsp\n"
+    // Save all XMM arg registers
+    "subq    $128, %rsp\n"
+    "movaps  %xmm0, (%rsp)\n"
+    "movaps  %xmm1, 16(%rsp)\n"
+    "movaps  %xmm2, 32(%rsp)\n"
+    "movaps  %xmm3, 48(%rsp)\n"
+    "movaps  %xmm4, 64(%rsp)\n"
+    "movaps  %xmm5, 80(%rsp)\n"
+    "movaps  %xmm6, 96(%rsp)\n"
+    "movaps  %xmm7, 112(%rsp)\n"
+    // JIT callee
+    "movq    %rbp, %rdi\n"    // Pass prev frame and return address
+    "movq    8(%rbp), %rsi\n"
+    "call    _X86CompilationCallback2\n"
+    // Restore all XMM arg registers
+    "movaps  112(%rsp), %xmm7\n"
+    "movaps  96(%rsp), %xmm6\n"
+    "movaps  80(%rsp), %xmm5\n"
+    "movaps  64(%rsp), %xmm4\n"
+    "movaps  48(%rsp), %xmm3\n"
+    "movaps  32(%rsp), %xmm2\n"
+    "movaps  16(%rsp), %xmm1\n"
+    "movaps  (%rsp), %xmm0\n"
+    // Restore RSP
+    "movq    %rbp, %rsp\n"
+    // Restore all int arg registers
+    "subq    $48, %rsp\n"
+    "popq    %r9\n"
+    "popq    %r8\n"
+    "popq    %rcx\n"
+    "popq    %rdx\n"
+    "popq    %rsi\n"
+    "popq    %rdi\n"
+    // Restore RBP
+    "popq    %rbp\n"
+    "ret\n");
+#elif defined(__i386__) || defined(i386) || defined(_M_IX86)
 #ifndef _MSC_VER
   void X86CompilationCallback(void);
   asm(
@@ -122,7 +180,7 @@ extern "C" void X86CompilationCallback2(intptr_t *StackPtr, intptr_t RetAddr) {
          "Could not find return address on the stack!");
 
   // It's a stub if there is an interrupt marker after the call.
-  bool isStub = ((unsigned char*)(intptr_t)RetAddr)[0] == 0xCD;
+  bool isStub = ((unsigned char*)RetAddr)[0] == 0xCD;
 
   // The call instruction should have pushed the return value onto the stack...
   RetAddr -= 4;  // Backtrack to the reference itself...
@@ -135,20 +193,20 @@ extern "C" void X86CompilationCallback2(intptr_t *StackPtr, intptr_t RetAddr) {
 #endif
 
   // Sanity check to make sure this really is a call instruction.
-  assert(((unsigned char*)(intptr_t)RetAddr)[-1] == 0xE8 &&"Not a call instr!");
+  assert(((unsigned char*)RetAddr)[-1] == 0xE8 &&"Not a call instr!");
 
-  unsigned NewVal = (intptr_t)JITCompilerFunction((void*)(intptr_t)RetAddr);
+  intptr_t NewVal = (intptr_t)JITCompilerFunction((void*)RetAddr);
 
   // Rewrite the call target... so that we don't end up here every time we
   // execute the call.
-  *(unsigned*)(intptr_t)RetAddr = NewVal-RetAddr-4;
+  *(unsigned *)RetAddr = (unsigned)(NewVal-RetAddr-4);
 
   if (isStub) {
     // If this is a stub, rewrite the call into an unconditional branch
     // instruction so that two return addresses are not pushed onto the stack
     // when the requested function finally gets called.  This also makes the
     // 0xCD byte (interrupt) dead, so the marker doesn't effect anything.
-    ((unsigned char*)(intptr_t)RetAddr)[-1] = 0xE9;
+    ((unsigned char*)RetAddr)[-1] = 0xE9;
   }
 
   // Change the return address to reexecute the call instruction...
@@ -189,16 +247,17 @@ void X86JITInfo::relocate(void *Function, MachineRelocation *MR,
     void *RelocPos = (char*)Function + MR->getMachineCodeOffset();
     intptr_t ResultPtr = (intptr_t)MR->getResultPointer();
     switch ((X86::RelocationType)MR->getRelocationType()) {
-    case X86::reloc_pcrel_word:
+    case X86::reloc_pcrel_word: {
       // PC relative relocation, add the relocated value to the value already in
       // memory, after we adjust it for where the PC is.
-      ResultPtr = ResultPtr-(intptr_t)RelocPos-4;
-      *((intptr_t*)RelocPos) += ResultPtr;
+      ResultPtr = ResultPtr-(intptr_t)RelocPos-4-MR->getConstantVal();
+      *((unsigned*)RelocPos) += (unsigned)ResultPtr;
       break;
+    }
     case X86::reloc_absolute_word:
       // Absolute relocation, just add the relocated value to the value already
       // in memory.
-      *((intptr_t*)RelocPos) += ResultPtr;
+      *((unsigned*)RelocPos) += (unsigned)ResultPtr;
       break;
     }
   }

@@ -30,8 +30,9 @@
 #include "llvm/CodeGen/SSARegMap.h"
 #include "llvm/CodeGen/SelectionDAGISel.h"
 #include "llvm/Target/TargetMachine.h"
-#include "llvm/Support/Debug.h"
 #include "llvm/Support/Compiler.h"
+#include "llvm/Support/Debug.h"
+#include "llvm/Support/MathExtras.h"
 #include "llvm/ADT/Statistic.h"
 #include <deque>
 #include <iostream>
@@ -58,16 +59,19 @@ namespace {
       int FrameIndex;
     } Base;
 
+    bool isRIPRel;     // RIP relative?
     unsigned Scale;
     SDOperand IndexReg; 
     unsigned Disp;
     GlobalValue *GV;
     Constant *CP;
+    const char *ES;
+    int JT;
     unsigned Align;    // CP alignment.
 
     X86ISelAddressMode()
-      : BaseType(RegBase), Scale(1), IndexReg(), Disp(0), GV(0),
-        CP(0), Align(0) {
+      : BaseType(RegBase), isRIPRel(false), Scale(1), IndexReg(), Disp(0),
+        GV(0), CP(0), ES(0), JT(-1), Align(0) {
     }
   };
 }
@@ -92,6 +96,10 @@ namespace {
     ///
     bool FastISel;
 
+    /// TM - Keep a reference to X86TargetMachine.
+    ///
+    X86TargetMachine &TM;
+
     /// X86Lowering - This object fully describes how to lower LLVM code to an
     /// X86-specific SelectionDAG.
     X86TargetLowering X86Lowering;
@@ -100,12 +108,14 @@ namespace {
     /// make the right decision when generating code for different targets.
     const X86Subtarget *Subtarget;
 
+    /// GlobalBaseReg - keeps track of the virtual register mapped onto global
+    /// base register.
     unsigned GlobalBaseReg;
 
   public:
-    X86DAGToDAGISel(X86TargetMachine &TM, bool fast)
+    X86DAGToDAGISel(X86TargetMachine &tm, bool fast)
       : SelectionDAGISel(X86Lowering),
-        ContainsFPCode(false), FastISel(fast), 
+        ContainsFPCode(false), FastISel(fast), TM(tm),
         X86Lowering(*TM.getTargetLowering()),
         Subtarget(&TM.getSubtarget<X86Subtarget>()) {}
 
@@ -156,13 +166,22 @@ namespace {
                                    SDOperand &Scale, SDOperand &Index,
                                    SDOperand &Disp) {
       Base  = (AM.BaseType == X86ISelAddressMode::FrameIndexBase) ?
-        CurDAG->getTargetFrameIndex(AM.Base.FrameIndex, MVT::i32) : AM.Base.Reg;
+        CurDAG->getTargetFrameIndex(AM.Base.FrameIndex, TLI.getPointerTy()) :
+        AM.Base.Reg;
       Scale = getI8Imm(AM.Scale);
       Index = AM.IndexReg;
-      Disp  = AM.GV ? CurDAG->getTargetGlobalAddress(AM.GV, MVT::i32, AM.Disp)
-        : (AM.CP ?
-           CurDAG->getTargetConstantPool(AM.CP, MVT::i32, AM.Align, AM.Disp)
-           : getI32Imm(AM.Disp));
+      // These are 32-bit even in 64-bit mode since RIP relative offset
+      // is 32-bit.
+      if (AM.GV)
+        Disp = CurDAG->getTargetGlobalAddress(AM.GV, MVT::i32, AM.Disp);
+      else if (AM.CP)
+        Disp = CurDAG->getTargetConstantPool(AM.CP, MVT::i32, AM.Align, AM.Disp);
+      else if (AM.ES)
+        Disp = CurDAG->getTargetExternalSymbol(AM.ES, MVT::i32);
+      else if (AM.JT != -1)
+        Disp = CurDAG->getTargetJumpTable(AM.JT, MVT::i32);
+      else
+        Disp = getI32Imm(AM.Disp);
     }
 
     /// getI8Imm - Return a target constant with the specified value, of type
@@ -476,26 +495,56 @@ void X86DAGToDAGISel::EmitFunctionEntryCode(Function &Fn, MachineFunction &MF) {
 /// addressing mode
 bool X86DAGToDAGISel::MatchAddress(SDOperand N, X86ISelAddressMode &AM,
                                    bool isRoot) {
+  // RIP relative addressing: %rip + 32-bit displacement!
+  if (AM.isRIPRel) {
+    if (!AM.ES && AM.JT != -1 && N.getOpcode() == ISD::Constant) {
+      uint64_t Val = cast<ConstantSDNode>(N)->getValue();
+      if (isInt32(AM.Disp + Val)) {
+        AM.Disp += Val;
+        return false;
+      }
+    }
+    return true;
+  }
+
   int id = N.Val->getNodeId();
   bool Available = isSelected(id);
 
   switch (N.getOpcode()) {
   default: break;
-  case ISD::Constant:
-    AM.Disp += cast<ConstantSDNode>(N)->getValue();
-    return false;
+  case ISD::Constant: {
+    uint64_t Val = cast<ConstantSDNode>(N)->getValue();
+    if (isInt32(AM.Disp + Val)) {
+      AM.Disp += Val;
+      return false;
+    }
+    break;
+  }
 
   case X86ISD::Wrapper:
-    // If both base and index components have been picked, we can't fit
-    // the result available in the register in the addressing mode. Duplicate
-    // GlobalAddress or ConstantPool as displacement.
-    if (!Available || (AM.Base.Reg.Val && AM.IndexReg.Val)) {
+    // If value is available in a register both base and index components have
+    // been picked, we can't fit the result available in the register in the
+    // addressing mode. Duplicate GlobalAddress or ConstantPool as displacement.
+
+    // Can't fit GV or CP in addressing mode for X86-64 medium or large code
+    // model since the displacement field is 32-bit. Ok for small code model.
+
+    // For X86-64 PIC code, only allow GV / CP + displacement so we can use RIP
+    // relative addressing mode.
+    if ((!Subtarget->is64Bit() || TM.getCodeModel() == CodeModel::Small) &&
+        (!Available || (AM.Base.Reg.Val && AM.IndexReg.Val))) {
+      bool isRIP = Subtarget->is64Bit();
+      if (isRIP && (AM.Base.Reg.Val || AM.Scale > 1 || AM.IndexReg.Val ||
+                    AM.BaseType == X86ISelAddressMode::FrameIndexBase))
+        break;
       if (ConstantPoolSDNode *CP =
           dyn_cast<ConstantPoolSDNode>(N.getOperand(0))) {
         if (AM.CP == 0) {
           AM.CP = CP->get();
           AM.Align = CP->getAlignment();
           AM.Disp += CP->getOffset();
+          if (isRIP)
+            AM.isRIPRel = true;
           return false;
         }
       } else if (GlobalAddressSDNode *G =
@@ -503,6 +552,20 @@ bool X86DAGToDAGISel::MatchAddress(SDOperand N, X86ISelAddressMode &AM,
         if (AM.GV == 0) {
           AM.GV = G->getGlobal();
           AM.Disp += G->getOffset();
+          if (isRIP)
+            AM.isRIPRel = true;
+          return false;
+        }
+      } else if (isRoot && isRIP) {
+        if (ExternalSymbolSDNode *S =
+            dyn_cast<ExternalSymbolSDNode>(N.getOperand(0))) {
+          AM.ES = S->getSymbol();
+          AM.isRIPRel = true;
+          return false;
+        } else if (JumpTableSDNode *J =
+                   dyn_cast<JumpTableSDNode>(N.getOperand(0))) {
+          AM.JT = J->getIndex();
+          AM.isRIPRel = true;
           return false;
         }
       }
@@ -533,7 +596,11 @@ bool X86DAGToDAGISel::MatchAddress(SDOperand N, X86ISelAddressMode &AM,
             AM.IndexReg = ShVal.Val->getOperand(0);
             ConstantSDNode *AddVal =
               cast<ConstantSDNode>(ShVal.Val->getOperand(1));
-            AM.Disp += AddVal->getValue() << Val;
+            uint64_t Disp = AM.Disp + AddVal->getValue() << Val;
+            if (isInt32(Disp))
+              AM.Disp = Disp;
+            else
+              AM.IndexReg = ShVal;
           } else {
             AM.IndexReg = ShVal;
           }
@@ -563,7 +630,11 @@ bool X86DAGToDAGISel::MatchAddress(SDOperand N, X86ISelAddressMode &AM,
             Reg = MulVal.Val->getOperand(0);
             ConstantSDNode *AddVal =
               cast<ConstantSDNode>(MulVal.Val->getOperand(1));
-            AM.Disp += AddVal->getValue() * CN->getValue();
+            uint64_t Disp = AM.Disp + AddVal->getValue() * CN->getValue();
+            if (isInt32(Disp))
+              AM.Disp = Disp;
+            else
+              Reg = N.Val->getOperand(0);
           } else {
             Reg = N.Val->getOperand(0);
           }
@@ -641,13 +712,14 @@ bool X86DAGToDAGISel::SelectAddr(SDOperand N, SDOperand &Base, SDOperand &Scale,
   if (MatchAddress(N, AM))
     return false;
 
+  MVT::ValueType VT = N.getValueType();
   if (AM.BaseType == X86ISelAddressMode::RegBase) {
     if (!AM.Base.Reg.Val)
-      AM.Base.Reg = CurDAG->getRegister(0, MVT::i32);
+      AM.Base.Reg = CurDAG->getRegister(0, VT);
   }
 
   if (!AM.IndexReg.Val)
-    AM.IndexReg = CurDAG->getRegister(0, MVT::i32);
+    AM.IndexReg = CurDAG->getRegister(0, VT);
 
   getAddressOperands(AM, Base, Scale, Index, Disp);
   return true;
@@ -662,19 +734,20 @@ bool X86DAGToDAGISel::SelectLEAAddr(SDOperand N, SDOperand &Base,
   if (MatchAddress(N, AM))
     return false;
 
+  MVT::ValueType VT = N.getValueType();
   unsigned Complexity = 0;
   if (AM.BaseType == X86ISelAddressMode::RegBase)
     if (AM.Base.Reg.Val)
       Complexity = 1;
     else
-      AM.Base.Reg = CurDAG->getRegister(0, MVT::i32);
+      AM.Base.Reg = CurDAG->getRegister(0, VT);
   else if (AM.BaseType == X86ISelAddressMode::FrameIndexBase)
     Complexity = 4;
 
   if (AM.IndexReg.Val)
     Complexity++;
   else
-    AM.IndexReg = CurDAG->getRegister(0, MVT::i32);
+    AM.IndexReg = CurDAG->getRegister(0, VT);
 
   if (AM.Scale > 2) 
     Complexity += 2;
@@ -687,8 +760,14 @@ bool X86DAGToDAGISel::SelectLEAAddr(SDOperand N, SDOperand &Base,
   // optimal (especially for code size consideration). LEA is nice because of
   // its three-address nature. Tweak the cost function again when we can run
   // convertToThreeAddress() at register allocation time.
-  if (AM.GV || AM.CP)
-    Complexity += 2;
+  if (AM.GV || AM.CP || AM.ES || AM.JT != -1) {
+    // For X86-64, we should always use lea to materialize RIP relative
+    // addresses.
+    if (Subtarget->is64Bit())
+      Complexity = 4;
+    else
+      Complexity += 2;
+  }
 
   if (AM.Disp && (AM.Base.Reg.Val || AM.IndexReg.Val))
     Complexity++;
@@ -721,6 +800,7 @@ static bool isRegister0(SDOperand Op) {
 /// base address to use for accessing globals into a register.
 ///
 SDNode *X86DAGToDAGISel::getGlobalBaseReg() {
+  assert(!Subtarget->is64Bit() && "X86-64 PIC uses RIP relative addressing");
   if (!GlobalBaseReg) {
     // Insert the set of GlobalBaseReg into the first MBB of the function
     MachineBasicBlock &FirstMBB = BB->getParent()->front();
@@ -732,7 +812,7 @@ SDNode *X86DAGToDAGISel::getGlobalBaseReg() {
     BuildMI(FirstMBB, MBBI, X86::MovePCtoStack, 0);
     BuildMI(FirstMBB, MBBI, X86::POP32r, 1, GlobalBaseReg);
   }
-  return CurDAG->getRegister(GlobalBaseReg, MVT::i32).Val;
+  return CurDAG->getRegister(GlobalBaseReg, TLI.getPointerTy()).Val;
 }
 
 static SDNode *FindCallStartFromCall(SDNode *Node) {
@@ -776,9 +856,11 @@ SDNode *X86DAGToDAGISel::Select(SDOperand N) {
       // Turn ADD X, c to MOV32ri X+c. This cannot be done with tblgen'd
       // code and is matched first so to prevent it from being turned into
       // LEA32r X+c.
+      // In 64-bit mode, use LEA to take advantage of RIP-relative addressing.
+      MVT::ValueType PtrVT = TLI.getPointerTy();
       SDOperand N0 = N.getOperand(0);
       SDOperand N1 = N.getOperand(1);
-      if (N.Val->getValueType(0) == MVT::i32 &&
+      if (N.Val->getValueType(0) == PtrVT &&
           N0.getOpcode() == X86ISD::Wrapper &&
           N1.getOpcode() == ISD::Constant) {
         unsigned Offset = (unsigned)cast<ConstantSDNode>(N1)->getValue();
@@ -786,17 +868,23 @@ SDNode *X86DAGToDAGISel::Select(SDOperand N) {
         // TODO: handle ExternalSymbolSDNode.
         if (GlobalAddressSDNode *G =
             dyn_cast<GlobalAddressSDNode>(N0.getOperand(0))) {
-          C = CurDAG->getTargetGlobalAddress(G->getGlobal(), MVT::i32,
+          C = CurDAG->getTargetGlobalAddress(G->getGlobal(), PtrVT,
                                              G->getOffset() + Offset);
         } else if (ConstantPoolSDNode *CP =
                    dyn_cast<ConstantPoolSDNode>(N0.getOperand(0))) {
-          C = CurDAG->getTargetConstantPool(CP->get(), MVT::i32,
+          C = CurDAG->getTargetConstantPool(CP->get(), PtrVT,
                                             CP->getAlignment(),
                                             CP->getOffset()+Offset);
         }
 
-        if (C.Val)
-          return CurDAG->SelectNodeTo(N.Val, X86::MOV32ri, MVT::i32, C);
+        if (C.Val) {
+          if (Subtarget->is64Bit()) {
+            SDOperand Ops[] = { CurDAG->getRegister(0, PtrVT), getI8Imm(1),
+                                CurDAG->getRegister(0, PtrVT), C };
+            return CurDAG->SelectNodeTo(N.Val, X86::LEA64r, MVT::i64, Ops, 4);
+          } else
+            return CurDAG->SelectNodeTo(N.Val, X86::MOV32ri, PtrVT, C);
+        }
       }
 
       // Other cases are handled by auto-generated code.
@@ -811,6 +899,7 @@ SDNode *X86DAGToDAGISel::Select(SDOperand N) {
         case MVT::i8:  Opc = X86::MUL8r;  MOpc = X86::MUL8m;  break;
         case MVT::i16: Opc = X86::MUL16r; MOpc = X86::MUL16m; break;
         case MVT::i32: Opc = X86::MUL32r; MOpc = X86::MUL32m; break;
+        case MVT::i64: Opc = X86::MUL64r; MOpc = X86::MUL64m; break;
         }
       else
         switch (NVT) {
@@ -818,6 +907,7 @@ SDNode *X86DAGToDAGISel::Select(SDOperand N) {
         case MVT::i8:  Opc = X86::IMUL8r;  MOpc = X86::IMUL8m;  break;
         case MVT::i16: Opc = X86::IMUL16r; MOpc = X86::IMUL16m; break;
         case MVT::i32: Opc = X86::IMUL32r; MOpc = X86::IMUL32m; break;
+        case MVT::i64: Opc = X86::IMUL64r; MOpc = X86::IMUL64m; break;
         }
 
       unsigned LoReg, HiReg;
@@ -826,6 +916,7 @@ SDNode *X86DAGToDAGISel::Select(SDOperand N) {
       case MVT::i8:  LoReg = X86::AL;  HiReg = X86::AH;  break;
       case MVT::i16: LoReg = X86::AX;  HiReg = X86::DX;  break;
       case MVT::i32: LoReg = X86::EAX; HiReg = X86::EDX; break;
+      case MVT::i64: LoReg = X86::RAX; HiReg = X86::RDX; break;
       }
 
       SDOperand N0 = Node->getOperand(0);
@@ -899,6 +990,7 @@ SDNode *X86DAGToDAGISel::Select(SDOperand N) {
         case MVT::i8:  Opc = X86::DIV8r;  MOpc = X86::DIV8m;  break;
         case MVT::i16: Opc = X86::DIV16r; MOpc = X86::DIV16m; break;
         case MVT::i32: Opc = X86::DIV32r; MOpc = X86::DIV32m; break;
+        case MVT::i64: Opc = X86::DIV64r; MOpc = X86::DIV64m; break;
         }
       else
         switch (NVT) {
@@ -906,6 +998,7 @@ SDNode *X86DAGToDAGISel::Select(SDOperand N) {
         case MVT::i8:  Opc = X86::IDIV8r;  MOpc = X86::IDIV8m;  break;
         case MVT::i16: Opc = X86::IDIV16r; MOpc = X86::IDIV16m; break;
         case MVT::i32: Opc = X86::IDIV32r; MOpc = X86::IDIV32m; break;
+        case MVT::i64: Opc = X86::IDIV64r; MOpc = X86::IDIV64m; break;
         }
 
       unsigned LoReg, HiReg;
@@ -926,6 +1019,11 @@ SDNode *X86DAGToDAGISel::Select(SDOperand N) {
         LoReg = X86::EAX; HiReg = X86::EDX;
         ClrOpcode  = X86::MOV32r0;
         SExtOpcode = X86::CDQ;
+        break;
+      case MVT::i64:
+        LoReg = X86::RAX; HiReg = X86::RDX;
+        ClrOpcode  = X86::MOV64r0;
+        SExtOpcode = X86::CQO;
         break;
       }
 
@@ -994,7 +1092,7 @@ SDNode *X86DAGToDAGISel::Select(SDOperand N) {
     }
 
     case ISD::TRUNCATE: {
-      if (NVT == MVT::i8) {
+      if (!Subtarget->is64Bit() && NVT == MVT::i8) {
         unsigned Opc2;
         MVT::ValueType VT;
         switch (Node->getOperand(0).getValueType()) {
@@ -1002,12 +1100,12 @@ SDNode *X86DAGToDAGISel::Select(SDOperand N) {
         case MVT::i16:
           Opc = X86::MOV16to16_;
           VT = MVT::i16;
-          Opc2 = X86::TRUNC_GR16_GR8;
+          Opc2 = X86::TRUNC_16_to8;
           break;
         case MVT::i32:
           Opc = X86::MOV32to32_;
           VT = MVT::i32;
-          Opc2 = X86::TRUNC_GR32_GR8;
+          Opc2 = X86::TRUNC_32_to8;
           break;
         }
 

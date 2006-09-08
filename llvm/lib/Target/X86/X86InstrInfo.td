@@ -39,7 +39,7 @@ def SDT_X86CallSeqStart : SDTypeProfile<0, 1, [ SDTCisVT<0, i32> ]>;
 def SDT_X86CallSeqEnd   : SDTypeProfile<0, 2, [ SDTCisVT<0, i32>,
                                                 SDTCisVT<1, i32> ]>;
 
-def SDT_X86Call   : SDTypeProfile<0, 1, [SDTCisVT<0, i32>]>;
+def SDT_X86Call   : SDTypeProfile<0, 1, [SDTCisVT<0, iPTR>]>;
 
 def SDTX86RepStr  : SDTypeProfile<0, 1, [SDTCisVT<0, OtherVT>]>;
 
@@ -95,7 +95,7 @@ def X86Wrapper : SDNode<"X86ISD::Wrapper",  SDTX86Wrapper>;
 class X86MemOperand<string printMethod> : Operand<iPTR> {
   let PrintMethod = printMethod;
   let NumMIOperands = 4;
-  let MIOperandInfo = (ops GR32, i8imm, GR32, i32imm);
+  let MIOperandInfo = (ops ptr_rc, i8imm, ptr_rc, i32imm);
 }
 
 def i8mem   : X86MemOperand<"printi8mem">;
@@ -106,6 +106,12 @@ def i128mem : X86MemOperand<"printi128mem">;
 def f32mem  : X86MemOperand<"printf32mem">;
 def f64mem  : X86MemOperand<"printf64mem">;
 def f128mem : X86MemOperand<"printf128mem">;
+
+def lea32mem : Operand<i32> {
+  let PrintMethod = "printi32mem";
+  let NumMIOperands = 4;
+  let MIOperandInfo = (ops GR32, i8imm, GR32, i32imm);
+}
 
 def SSECC : Operand<i8> {
   let PrintMethod = "printSSECC";
@@ -129,9 +135,9 @@ def brtarget : Operand<OtherVT>;
 //
 
 // Define X86 specific addressing mode.
-def addr    : ComplexPattern<iPTR, 4, "SelectAddr", []>;
-def leaaddr : ComplexPattern<iPTR, 4, "SelectLEAAddr",
-                             [add, mul, shl, or, frameindex]>;
+def addr      : ComplexPattern<iPTR, 4, "SelectAddr", []>;
+def lea32addr : ComplexPattern<i32, 4, "SelectLEAAddr",
+                               [add, mul, shl, or, frameindex]>;
 
 //===----------------------------------------------------------------------===//
 // X86 Instruction Format Definitions.
@@ -158,11 +164,13 @@ def MRMInitReg : Format<32>;
 
 //===----------------------------------------------------------------------===//
 // X86 Instruction Predicate Definitions.
-def HasMMX  : Predicate<"Subtarget->hasMMX()">;
-def HasSSE1 : Predicate<"Subtarget->hasSSE1()">;
-def HasSSE2 : Predicate<"Subtarget->hasSSE2()">;
-def HasSSE3 : Predicate<"Subtarget->hasSSE3()">;
-def FPStack : Predicate<"!Subtarget->hasSSE2()">;
+def HasMMX   : Predicate<"Subtarget->hasMMX()">;
+def HasSSE1  : Predicate<"Subtarget->hasSSE1()">;
+def HasSSE2  : Predicate<"Subtarget->hasSSE2()">;
+def HasSSE3  : Predicate<"Subtarget->hasSSE3()">;
+def FPStack  : Predicate<"!Subtarget->hasSSE2()">;
+def In32BitMode : Predicate<"!Subtarget->is64Bit()">;
+def In64BitMode : Predicate<"Subtarget->is64Bit()">;
 
 //===----------------------------------------------------------------------===//
 // X86 specific pattern fragments.
@@ -171,13 +179,14 @@ def FPStack : Predicate<"!Subtarget->hasSSE2()">;
 // ImmType - This specifies the immediate type used by an instruction. This is
 // part of the ad-hoc solution used to emit machine instruction encodings by our
 // machine code emitter.
-class ImmType<bits<2> val> {
-  bits<2> Value = val;
+class ImmType<bits<3> val> {
+  bits<3> Value = val;
 }
 def NoImm  : ImmType<0>;
 def Imm8   : ImmType<1>;
 def Imm16  : ImmType<2>;
 def Imm32  : ImmType<3>;
+def Imm64  : ImmType<4>;
 
 // FPFormat - This specifies what form this FP instruction has.  This is used by
 // the Floating-Point stackifier pass.
@@ -202,7 +211,7 @@ class X86Inst<bits<8> opcod, Format f, ImmType i, dag ops, string AsmStr>
   Format Form = f;
   bits<6> FormBits = Form.Value;
   ImmType ImmT = i;
-  bits<2> ImmTypeBits = ImmT.Value;
+  bits<3> ImmTypeBits = ImmT.Value;
 
   dag OperandList = ops;
   string AsmString = AsmStr;
@@ -210,9 +219,11 @@ class X86Inst<bits<8> opcod, Format f, ImmType i, dag ops, string AsmStr>
   //
   // Attributes specific to X86 instructions...
   //
-  bit hasOpSizePrefix = 0; // Does this inst have a 0x66 prefix?
+  bit hasOpSizePrefix = 0;  // Does this inst have a 0x66 prefix?
+  bit hasAdSizePrefix = 0;  // Does this inst have a 0x67 prefix?
 
   bits<4> Prefix = 0;       // Which prefix byte does this inst have?
+  bit hasREX_WPrefix  = 0;  // Does this inst requires the REX.W prefix?
   FPFormat FPForm;          // What flavor of FP instruction is this?
   bits<3> FPFormBits = 0;
 }
@@ -226,6 +237,8 @@ class Imp<list<Register> uses, list<Register> defs> {
 // Prefix byte classes which are used to indicate to the ad-hoc machine code
 // emitter that various prefix bytes are required.
 class OpSize { bit hasOpSizePrefix = 1; }
+class AdSize { bit hasAdSizePrefix = 1; }
+class REX_W  { bit hasREX_WPrefix = 1; }
 class TB     { bits<4> Prefix = 1; }
 class REP    { bits<4> Prefix = 2; }
 class D8     { bits<4> Prefix = 3; }
@@ -276,8 +289,6 @@ def i32immSExt8  : PatLeaf<(i32 imm), [{
 }]>;
 
 // Helper fragments for loads.
-def loadiPTR : PatFrag<(ops node:$ptr), (iPTR (load node:$ptr))>;
-
 def loadi8  : PatFrag<(ops node:$ptr), (i8  (load node:$ptr))>;
 def loadi16 : PatFrag<(ops node:$ptr), (i16 (load node:$ptr))>;
 def loadi32 : PatFrag<(ops node:$ptr), (i32 (load node:$ptr))>;
@@ -308,6 +319,7 @@ def extloadi32i16  : PatFrag<(ops node:$ptr), (i32 (extload node:$ptr, i16))>;
 
 //===----------------------------------------------------------------------===//
 // Instruction templates...
+//
 
 class I<bits<8> o, Format f, dag ops, string asm, list<dag> pattern>
   : X86Inst<o, f, NoImm, ops, asm> {
@@ -355,13 +367,13 @@ def IMPLICIT_DEF_GR32  : I<0, Pseudo, (ops GR32:$dst),
 def NOOP : I<0x90, RawFrm, (ops), "nop", []>;
 
 // Truncate
-def TRUNC_GR32_GR8  : I<0x88, MRMDestReg, (ops GR8:$dst, GR32_:$src),
-                      "mov{b} {${src:subreg8}, $dst|$dst, ${src:subreg8}", []>;
-def TRUNC_GR16_GR8  : I<0x88, MRMDestReg, (ops GR8:$dst, GR16_:$src),
-                      "mov{b} {${src:subreg8}, $dst|$dst, ${src:subreg8}}", []>;
-def TRUNC_GR32_GR16 : I<0x89, MRMDestReg, (ops GR16:$dst, GR32:$src),
-                      "mov{w} {${src:subreg16}, $dst|$dst, ${src:subreg16}}",
-                      [(set GR16:$dst, (trunc GR32:$src))]>;
+def TRUNC_32_to8 : I<0x88, MRMDestReg, (ops GR8:$dst, GR32_:$src),
+                     "mov{b} {${src:subreg8}, $dst|$dst, ${src:subreg8}", []>;
+def TRUNC_16_to8 : I<0x88, MRMDestReg, (ops GR8:$dst, GR16_:$src),
+                     "mov{b} {${src:subreg8}, $dst|$dst, ${src:subreg8}}", []>;
+def TRUNC_32to16 : I<0x89, MRMDestReg, (ops GR16:$dst, GR32:$src),
+                     "mov{w} {${src:subreg16}, $dst|$dst, ${src:subreg16}}",
+                     [(set GR16:$dst, (trunc GR32:$src))]>;
 
 //===----------------------------------------------------------------------===//
 //  Control Flow Instructions...
@@ -388,7 +400,7 @@ let isBranch = 1, isTerminator = 1, noResults = 1, isBarrier = 1 in {
   def JMP32r     : I<0xFF, MRM4r, (ops GR32:$dst), "jmp{l} {*}$dst",
                      [(brind GR32:$dst)]>;
   def JMP32m     : I<0xFF, MRM4m, (ops i32mem:$dst), "jmp{l} {*}$dst",
-                     [(brind (loadiPTR addr:$dst))]>;
+                     [(brind (loadi32 addr:$dst))]>;
 }
 
 // Conditional branches
@@ -510,9 +522,9 @@ def LEA16r   : I<0x8D, MRMSrcMem,
                  (ops GR16:$dst, i32mem:$src),
                  "lea{w} {$src|$dst}, {$dst|$src}", []>, OpSize;
 def LEA32r   : I<0x8D, MRMSrcMem,
-                 (ops GR32:$dst, i32mem:$src),
+                 (ops GR32:$dst, lea32mem:$src),
                  "lea{l} {$src|$dst}, {$dst|$src}",
-                 [(set GR32:$dst, leaaddr:$src)]>;
+                 [(set GR32:$dst, lea32addr:$src)]>, Requires<[In32BitMode]>;
 
 def REP_MOVSB : I<0xA4, RawFrm, (ops), "{rep;movsb|rep movsb}",
                   [(X86rep_movs i8)]>,
@@ -1101,9 +1113,10 @@ def INC8r  : I<0xFE, MRM0r, (ops GR8 :$dst, GR8 :$src), "inc{b} $dst",
                [(set GR8:$dst, (add GR8:$src, 1))]>;
 let isConvertibleToThreeAddress = 1, CodeSize = 1 in {  // Can xform into LEA.
 def INC16r : I<0x40, AddRegFrm, (ops GR16:$dst, GR16:$src), "inc{w} $dst",
-               [(set GR16:$dst, (add GR16:$src, 1))]>, OpSize;
+               [(set GR16:$dst, (add GR16:$src, 1))]>,
+             OpSize, Requires<[In32BitMode]>;
 def INC32r : I<0x40, AddRegFrm, (ops GR32:$dst, GR32:$src), "inc{l} $dst",
-               [(set GR32:$dst, (add GR32:$src, 1))]>;
+               [(set GR32:$dst, (add GR32:$src, 1))]>, Requires<[In32BitMode]>;
 }
 let isTwoAddress = 0, CodeSize = 2 in {
   def INC8m  : I<0xFE, MRM0m, (ops i8mem :$dst), "inc{b} $dst",
@@ -1119,9 +1132,10 @@ def DEC8r  : I<0xFE, MRM1r, (ops GR8 :$dst, GR8 :$src), "dec{b} $dst",
                [(set GR8:$dst, (add GR8:$src, -1))]>;
 let isConvertibleToThreeAddress = 1, CodeSize = 1 in {   // Can xform into LEA.
 def DEC16r : I<0x48, AddRegFrm, (ops GR16:$dst, GR16:$src), "dec{w} $dst",
-               [(set GR16:$dst, (add GR16:$src, -1))]>, OpSize;
+               [(set GR16:$dst, (add GR16:$src, -1))]>,
+             OpSize, Requires<[In32BitMode]>;
 def DEC32r : I<0x48, AddRegFrm, (ops GR32:$dst, GR32:$src), "dec{l} $dst",
-               [(set GR32:$dst, (add GR32:$src, -1))]>;
+               [(set GR32:$dst, (add GR32:$src, -1))]>, Requires<[In32BitMode]>;
 }
 
 let isTwoAddress = 0, CodeSize = 2 in {
@@ -2455,7 +2469,7 @@ def DWARF_LABEL : I<0, Pseudo, (ops i32imm:$id),
 // Non-Instruction Patterns
 //===----------------------------------------------------------------------===//
 
-// ConstantPool GlobalAddress, ExternalSymbol
+// ConstantPool GlobalAddress, ExternalSymbol, and JumpTable
 def : Pat<(i32 (X86Wrapper tconstpool  :$dst)), (MOV32ri tconstpool  :$dst)>;
 def : Pat<(i32 (X86Wrapper tjumptable  :$dst)), (MOV32ri tjumptable  :$dst)>;
 def : Pat<(i32 (X86Wrapper tglobaladdr :$dst)), (MOV32ri tglobaladdr :$dst)>;
@@ -2477,18 +2491,16 @@ def : Pat<(store (i32 (X86Wrapper texternalsym:$src)), addr:$dst),
 
 // Calls
 def : Pat<(X86tailcall GR32:$dst),
-      (CALL32r     GR32:$dst)>;
+          (CALL32r     GR32:$dst)>;
 
-def : Pat<(X86tailcall tglobaladdr:$dst),
+def : Pat<(X86tailcall (i32 tglobaladdr:$dst)),
           (CALLpcrel32 tglobaladdr:$dst)>;
-def : Pat<(X86tailcall texternalsym:$dst),
+def : Pat<(X86tailcall (i32 texternalsym:$dst)),
           (CALLpcrel32 texternalsym:$dst)>;
 
-
-
-def : Pat<(X86call tglobaladdr:$dst),
+def : Pat<(X86call (i32 tglobaladdr:$dst)),
           (CALLpcrel32 tglobaladdr:$dst)>;
-def : Pat<(X86call texternalsym:$dst),
+def : Pat<(X86call (i32 texternalsym:$dst)),
           (CALLpcrel32 texternalsym:$dst)>;
 
 // X86 specific add which produces a flag.
@@ -2611,3 +2623,9 @@ include "X86InstrMMX.td"
 //===----------------------------------------------------------------------===//
 
 include "X86InstrSSE.td"
+
+//===----------------------------------------------------------------------===//
+// X86-64 Support
+//===----------------------------------------------------------------------===//
+
+include "X86InstrX86-64.td"

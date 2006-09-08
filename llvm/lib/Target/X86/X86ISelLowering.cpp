@@ -42,6 +42,7 @@ X86TargetLowering::X86TargetLowering(TargetMachine &TM)
   : TargetLowering(TM) {
   Subtarget = &TM.getSubtarget<X86Subtarget>();
   X86ScalarSSE = Subtarget->hasSSE2();
+  X86StackPtr = Subtarget->is64Bit() ? X86::RSP : X86::ESP;
 
   // Set up the TargetLowering object.
 
@@ -51,7 +52,7 @@ X86TargetLowering::X86TargetLowering(TargetMachine &TM)
   setSetCCResultContents(ZeroOrOneSetCCResult);
   setSchedulingPreference(SchedulingForRegPressure);
   setShiftAmountFlavor(Mask);   // shl X, 32 == shl X, 0
-  setStackPointerRegisterToSaveRestore(X86::ESP);
+  setStackPointerRegisterToSaveRestore(X86StackPtr);
 
   if (!Subtarget->isTargetDarwin())
     // Darwin should use _setjmp/_longjmp instead of setjmp/longjmp.
@@ -71,6 +72,8 @@ X86TargetLowering::X86TargetLowering(TargetMachine &TM)
   addRegisterClass(MVT::i8, X86::GR8RegisterClass);
   addRegisterClass(MVT::i16, X86::GR16RegisterClass);
   addRegisterClass(MVT::i32, X86::GR32RegisterClass);
+  if (Subtarget->is64Bit())
+    addRegisterClass(MVT::i64, X86::GR64RegisterClass);
 
   // Promote all UINT_TO_FP to larger SINT_TO_FP's, as X86 doesn't have this
   // operation.
@@ -78,11 +81,16 @@ X86TargetLowering::X86TargetLowering(TargetMachine &TM)
   setOperationAction(ISD::UINT_TO_FP       , MVT::i8   , Promote);
   setOperationAction(ISD::UINT_TO_FP       , MVT::i16  , Promote);
 
-  if (X86ScalarSSE)
-    // No SSE i64 SINT_TO_FP, so expand i32 UINT_TO_FP instead.
-    setOperationAction(ISD::UINT_TO_FP     , MVT::i32  , Expand);
-  else
+  if (Subtarget->is64Bit()) {
+    setOperationAction(ISD::UINT_TO_FP     , MVT::i64  , Expand);
     setOperationAction(ISD::UINT_TO_FP     , MVT::i32  , Promote);
+  } else {
+    if (X86ScalarSSE)
+      // If SSE i64 SINT_TO_FP is not available, expand i32 UINT_TO_FP.
+      setOperationAction(ISD::UINT_TO_FP   , MVT::i32  , Expand);
+    else
+      setOperationAction(ISD::UINT_TO_FP   , MVT::i32  , Promote);
+  }
 
   // Promote i1/i8 SINT_TO_FP to larger SINT_TO_FP's, as X86 doesn't have
   // this operation.
@@ -96,10 +104,11 @@ X86TargetLowering::X86TargetLowering(TargetMachine &TM)
     setOperationAction(ISD::SINT_TO_FP     , MVT::i32  , Custom);
   }
 
-  // We can handle SINT_TO_FP and FP_TO_SINT from/to i64 even though i64
-  // isn't legal.
-  setOperationAction(ISD::SINT_TO_FP       , MVT::i64  , Custom);
-  setOperationAction(ISD::FP_TO_SINT       , MVT::i64  , Custom);
+  if (!Subtarget->is64Bit()) {
+    // Custom lower SINT_TO_FP and FP_TO_SINT from/to i64 in 32-bit mode.
+    setOperationAction(ISD::SINT_TO_FP     , MVT::i64  , Custom);
+    setOperationAction(ISD::FP_TO_SINT     , MVT::i64  , Custom);
+  }
 
   // Promote i1/i8 FP_TO_SINT to larger FP_TO_SINTS's, as X86 doesn't have
   // this operation.
@@ -119,14 +128,19 @@ X86TargetLowering::X86TargetLowering(TargetMachine &TM)
   setOperationAction(ISD::FP_TO_UINT       , MVT::i8   , Promote);
   setOperationAction(ISD::FP_TO_UINT       , MVT::i16  , Promote);
 
-  if (X86ScalarSSE && !Subtarget->hasSSE3())
-    // Expand FP_TO_UINT into a select.
-    // FIXME: We would like to use a Custom expander here eventually to do
-    // the optimal thing for SSE vs. the default expansion in the legalizer.
-    setOperationAction(ISD::FP_TO_UINT     , MVT::i32  , Expand);
-  else
-    // With SSE3 we can use fisttpll to convert to a signed i64.
+  if (Subtarget->is64Bit()) {
+    setOperationAction(ISD::FP_TO_UINT     , MVT::i64  , Expand);
     setOperationAction(ISD::FP_TO_UINT     , MVT::i32  , Promote);
+  } else {
+    if (X86ScalarSSE && !Subtarget->hasSSE3())
+      // Expand FP_TO_UINT into a select.
+      // FIXME: We would like to use a Custom expander here eventually to do
+      // the optimal thing for SSE vs. the default expansion in the legalizer.
+      setOperationAction(ISD::FP_TO_UINT   , MVT::i32  , Expand);
+    else
+      // With SSE3 we can use fisttpll to convert to a signed i64.
+      setOperationAction(ISD::FP_TO_UINT   , MVT::i32  , Promote);
+  }
 
   setOperationAction(ISD::BIT_CONVERT      , MVT::f32  , Expand);
   setOperationAction(ISD::BIT_CONVERT      , MVT::i32  , Expand);
@@ -135,12 +149,15 @@ X86TargetLowering::X86TargetLowering(TargetMachine &TM)
   setOperationAction(ISD::BR_CC            , MVT::Other, Expand);
   setOperationAction(ISD::SELECT_CC        , MVT::Other, Expand);
   setOperationAction(ISD::MEMMOVE          , MVT::Other, Expand);
+  if (Subtarget->is64Bit())
+    setOperationAction(ISD::SIGN_EXTEND_INREG, MVT::i32, Expand);
   setOperationAction(ISD::SIGN_EXTEND_INREG, MVT::i16  , Expand);
   setOperationAction(ISD::SIGN_EXTEND_INREG, MVT::i8   , Expand);
   setOperationAction(ISD::SIGN_EXTEND_INREG, MVT::i1   , Expand);
   setOperationAction(ISD::FP_ROUND_INREG   , MVT::f32  , Expand);
   setOperationAction(ISD::SEXTLOAD         , MVT::i1   , Expand);
   setOperationAction(ISD::FREM             , MVT::f64  , Expand);
+
   setOperationAction(ISD::CTPOP            , MVT::i8   , Expand);
   setOperationAction(ISD::CTTZ             , MVT::i8   , Expand);
   setOperationAction(ISD::CTLZ             , MVT::i8   , Expand);
@@ -150,13 +167,18 @@ X86TargetLowering::X86TargetLowering(TargetMachine &TM)
   setOperationAction(ISD::CTPOP            , MVT::i32  , Expand);
   setOperationAction(ISD::CTTZ             , MVT::i32  , Expand);
   setOperationAction(ISD::CTLZ             , MVT::i32  , Expand);
+  if (Subtarget->is64Bit()) {
+    setOperationAction(ISD::CTPOP          , MVT::i64  , Expand);
+    setOperationAction(ISD::CTTZ           , MVT::i64  , Expand);
+    setOperationAction(ISD::CTLZ           , MVT::i64  , Expand);
+  }
+
   setOperationAction(ISD::READCYCLECOUNTER , MVT::i64  , Custom);
   setOperationAction(ISD::BSWAP            , MVT::i16  , Expand);
 
   // These should be promoted to a larger select which is supported.
   setOperationAction(ISD::SELECT           , MVT::i1   , Promote);
   setOperationAction(ISD::SELECT           , MVT::i8   , Promote);
-
   // X86 wants to expand cmov itself.
   setOperationAction(ISD::SELECT          , MVT::i16  , Custom);
   setOperationAction(ISD::SELECT          , MVT::i32  , Custom);
@@ -167,6 +189,10 @@ X86TargetLowering::X86TargetLowering(TargetMachine &TM)
   setOperationAction(ISD::SETCC           , MVT::i32  , Custom);
   setOperationAction(ISD::SETCC           , MVT::f32  , Custom);
   setOperationAction(ISD::SETCC           , MVT::f64  , Custom);
+  if (Subtarget->is64Bit()) {
+    setOperationAction(ISD::SELECT        , MVT::i64  , Custom);
+    setOperationAction(ISD::SETCC         , MVT::i64  , Custom);
+  }
   // X86 ret instruction may pop stack.
   setOperationAction(ISD::RET             , MVT::Other, Custom);
   // Darwin ABI issue.
@@ -174,6 +200,12 @@ X86TargetLowering::X86TargetLowering(TargetMachine &TM)
   setOperationAction(ISD::JumpTable       , MVT::i32  , Custom);
   setOperationAction(ISD::GlobalAddress   , MVT::i32  , Custom);
   setOperationAction(ISD::ExternalSymbol  , MVT::i32  , Custom);
+  if (Subtarget->is64Bit()) {
+    setOperationAction(ISD::ConstantPool  , MVT::i64  , Custom);
+    setOperationAction(ISD::JumpTable     , MVT::i64  , Custom);
+    setOperationAction(ISD::GlobalAddress , MVT::i64  , Custom);
+    setOperationAction(ISD::ExternalSymbol, MVT::i64  , Custom);
+  }
   // 64-bit addm sub, shl, sra, srl (iff 32-bit x86)
   setOperationAction(ISD::SHL_PARTS       , MVT::i32  , Custom);
   setOperationAction(ISD::SRA_PARTS       , MVT::i32  , Custom);
@@ -198,6 +230,8 @@ X86TargetLowering::X86TargetLowering(TargetMachine &TM)
   setOperationAction(ISD::VAEND             , MVT::Other, Expand);
   setOperationAction(ISD::STACKSAVE,          MVT::Other, Expand); 
   setOperationAction(ISD::STACKRESTORE,       MVT::Other, Expand);
+  if (Subtarget->is64Bit())
+    setOperationAction(ISD::DYNAMIC_STACKALLOC, MVT::i64, Expand);
   setOperationAction(ISD::DYNAMIC_STACKALLOC, MVT::i32  , Expand);
 
   setOperationAction(ISD::FCOPYSIGN, MVT::f64, Expand);
@@ -441,7 +475,7 @@ SDOperand X86TargetLowering::LowerCCCArguments(SDOperand Op, SelectionDAG &DAG) 
     if (ObjXMMRegs) {
       // Passed in a XMM register.
       unsigned Reg = AddLiveIn(MF, XMMArgRegs[NumXMMRegs],
-                                 X86::VR128RegisterClass);
+                               X86::VR128RegisterClass);
       ArgValue= DAG.getCopyFromReg(Root, Reg, ObjectVT);
       ArgValues.push_back(ArgValue);
       NumXMMRegs += ObjXMMRegs;
@@ -466,8 +500,9 @@ SDOperand X86TargetLowering::LowerCCCArguments(SDOperand Op, SelectionDAG &DAG) 
   bool isVarArg = cast<ConstantSDNode>(Op.getOperand(2))->getValue() != 0;
   if (isVarArg)
     VarArgsFrameIndex = MFI->CreateFixedObject(1, ArgOffset);
-  ReturnAddrIndex = 0;     // No return address slot generated yet.
-  BytesToPopOnReturn = 0;  // Callee pops nothing.
+  RegSaveFrameIndex = 0xAAAAAAA;  // X86-64 only.
+  ReturnAddrIndex = 0;            // No return address slot generated yet.
+  BytesToPopOnReturn = 0;         // Callee pops nothing.
   BytesCallerReserves = ArgOffset;
 
   // If this is a struct return on Darwin/X86, the callee pops the hidden struct
@@ -539,7 +574,7 @@ SDOperand X86TargetLowering::LowerCCCCallTo(SDOperand Op, SelectionDAG &DAG) {
   NumXMMRegs = 0;
   std::vector<std::pair<unsigned, SDOperand> > RegsToPass;
   std::vector<SDOperand> MemOpChains;
-  SDOperand StackPtr = DAG.getRegister(X86::ESP, getPointerTy());
+  SDOperand StackPtr = DAG.getRegister(X86StackPtr, getPointerTy());
   for (unsigned i = 0; i != NumOps; ++i) {
     SDOperand Arg = Op.getOperand(5+2*i);
 
@@ -737,6 +772,507 @@ SDOperand X86TargetLowering::LowerCCCCallTo(SDOperand Op, SelectionDAG &DAG) {
     NodeTys.push_back(RetVT);
     break;
   }
+  }
+
+  // If the function returns void, just return the chain.
+  if (ResultVals.empty())
+    return Chain;
+  
+  // Otherwise, merge everything together with a MERGE_VALUES node.
+  NodeTys.push_back(MVT::Other);
+  ResultVals.push_back(Chain);
+  SDOperand Res = DAG.getNode(ISD::MERGE_VALUES, NodeTys,
+                              &ResultVals[0], ResultVals.size());
+  return Res.getValue(Op.ResNo);
+}
+
+
+//===----------------------------------------------------------------------===//
+//                 X86-64 C Calling Convention implementation
+//===----------------------------------------------------------------------===//
+
+/// HowToPassX86_64CCCArgument - Returns how an formal argument of the specified
+/// type should be passed. If it is through stack, returns the size of the stack
+/// slot; if it is through integer or XMM register, returns the number of
+/// integer or XMM registers are needed.
+static void
+HowToPassX86_64CCCArgument(MVT::ValueType ObjectVT,
+                           unsigned NumIntRegs, unsigned NumXMMRegs,
+                           unsigned &ObjSize, unsigned &ObjIntRegs,
+                           unsigned &ObjXMMRegs) {
+  ObjSize = 0;
+  ObjIntRegs = 0;
+  ObjXMMRegs = 0;
+
+  switch (ObjectVT) {
+  default: assert(0 && "Unhandled argument type!");
+  case MVT::i8:
+  case MVT::i16:
+  case MVT::i32:
+  case MVT::i64:
+    if (NumIntRegs < 6)
+      ObjIntRegs = 1;
+    else {
+      switch (ObjectVT) {
+      default: break;
+      case MVT::i8:  ObjSize = 1; break;
+      case MVT::i16: ObjSize = 2; break;
+      case MVT::i32: ObjSize = 4; break;
+      case MVT::i64: ObjSize = 8; break;
+      }
+    }
+    break;
+  case MVT::f32:
+  case MVT::f64:
+  case MVT::v16i8:
+  case MVT::v8i16:
+  case MVT::v4i32:
+  case MVT::v2i64:
+  case MVT::v4f32:
+  case MVT::v2f64:
+    if (NumXMMRegs < 8)
+      ObjXMMRegs = 1;
+    else {
+      switch (ObjectVT) {
+      default: break;
+      case MVT::f32:  ObjSize = 4; break;
+      case MVT::f64:  ObjSize = 8; break;
+      case MVT::v16i8:
+      case MVT::v8i16:
+      case MVT::v4i32:
+      case MVT::v2i64:
+      case MVT::v4f32:
+      case MVT::v2f64: ObjSize = 16; break;
+    }
+    break;
+  }
+  }
+}
+
+SDOperand
+X86TargetLowering::LowerX86_64CCCArguments(SDOperand Op, SelectionDAG &DAG) {
+  unsigned NumArgs = Op.Val->getNumValues() - 1;
+  MachineFunction &MF = DAG.getMachineFunction();
+  MachineFrameInfo *MFI = MF.getFrameInfo();
+  SDOperand Root = Op.getOperand(0);
+  bool isVarArg = cast<ConstantSDNode>(Op.getOperand(2))->getValue() != 0;
+  std::vector<SDOperand> ArgValues;
+
+  // Add DAG nodes to load the arguments...  On entry to a function on the X86,
+  // the stack frame looks like this:
+  //
+  // [RSP] -- return address
+  // [RSP + 8] -- first nonreg argument (leftmost lexically)
+  // [RSP +16] -- second nonreg argument, if 1st argument is <= 8 bytes in size
+  //    ...
+  //
+  unsigned ArgOffset = 0;   // Frame mechanisms handle retaddr slot
+  unsigned NumIntRegs = 0;  // Int regs used for parameter passing.
+  unsigned NumXMMRegs = 0;  // XMM regs used for parameter passing.
+
+  static const unsigned GPR8ArgRegs[] = {
+    X86::DIL, X86::SIL, X86::DL,  X86::CL,  X86::R8B, X86::R9B
+  };
+  static const unsigned GPR16ArgRegs[] = {
+    X86::DI,  X86::SI,  X86::DX,  X86::CX,  X86::R8W, X86::R9W
+  };
+  static const unsigned GPR32ArgRegs[] = {
+    X86::EDI, X86::ESI, X86::EDX, X86::ECX, X86::R8D, X86::R9D
+  };
+  static const unsigned GPR64ArgRegs[] = {
+    X86::RDI, X86::RSI, X86::RDX, X86::RCX, X86::R8,  X86::R9
+  };
+  static const unsigned XMMArgRegs[] = {
+    X86::XMM0, X86::XMM1, X86::XMM2, X86::XMM3,
+    X86::XMM4, X86::XMM5, X86::XMM6, X86::XMM7
+  };
+
+  for (unsigned i = 0; i < NumArgs; ++i) {
+    MVT::ValueType ObjectVT = Op.getValue(i).getValueType();
+    unsigned ArgIncrement = 8;
+    unsigned ObjSize = 0;
+    unsigned ObjIntRegs = 0;
+    unsigned ObjXMMRegs = 0;
+
+    // FIXME: __int128 and long double support?
+    HowToPassX86_64CCCArgument(ObjectVT, NumIntRegs, NumXMMRegs,
+                               ObjSize, ObjIntRegs, ObjXMMRegs);
+    if (ObjSize > 8)
+      ArgIncrement = ObjSize;
+
+    unsigned Reg = 0;
+    SDOperand ArgValue;
+    if (ObjIntRegs || ObjXMMRegs) {
+      switch (ObjectVT) {
+      default: assert(0 && "Unhandled argument type!");
+      case MVT::i8:
+      case MVT::i16:
+      case MVT::i32:
+      case MVT::i64: {
+        TargetRegisterClass *RC = NULL;
+        switch (ObjectVT) {
+        default: break;
+        case MVT::i8: 
+          RC = X86::GR8RegisterClass;
+          Reg = GPR8ArgRegs[NumIntRegs];
+          break;
+        case MVT::i16:
+          RC = X86::GR16RegisterClass;
+          Reg = GPR16ArgRegs[NumIntRegs];
+          break;
+        case MVT::i32:
+          RC = X86::GR32RegisterClass;
+          Reg = GPR32ArgRegs[NumIntRegs];
+          break;
+        case MVT::i64:
+          RC = X86::GR64RegisterClass;
+          Reg = GPR64ArgRegs[NumIntRegs];
+          break;
+        }
+        Reg = AddLiveIn(MF, Reg, RC);
+        ArgValue = DAG.getCopyFromReg(Root, Reg, ObjectVT);
+        break;
+      }
+      case MVT::f32:
+      case MVT::f64:
+      case MVT::v16i8:
+      case MVT::v8i16:
+      case MVT::v4i32:
+      case MVT::v2i64:
+      case MVT::v4f32:
+      case MVT::v2f64: {
+        TargetRegisterClass *RC= (ObjectVT == MVT::f32) ?
+          X86::FR32RegisterClass : ((ObjectVT == MVT::f64) ?
+                              X86::FR64RegisterClass : X86::VR128RegisterClass);
+        Reg = AddLiveIn(MF, XMMArgRegs[NumXMMRegs], RC);
+        ArgValue = DAG.getCopyFromReg(Root, Reg, ObjectVT);
+        break;
+      }
+      }
+      NumIntRegs += ObjIntRegs;
+      NumXMMRegs += ObjXMMRegs;
+    } else if (ObjSize) {
+      // XMM arguments have to be aligned on 16-byte boundary.
+      if (ObjSize == 16)
+        ArgOffset = ((ArgOffset + 15) / 16) * 16;
+      // Create the SelectionDAG nodes corresponding to a load from this
+      // parameter.
+      int FI = MFI->CreateFixedObject(ObjSize, ArgOffset);
+      SDOperand FIN = DAG.getFrameIndex(FI, getPointerTy());
+      ArgValue = DAG.getLoad(Op.Val->getValueType(i), Root, FIN,
+                             DAG.getSrcValue(NULL));
+      ArgOffset += ArgIncrement;   // Move on to the next argument.
+    }
+
+    ArgValues.push_back(ArgValue);
+  }
+
+  // If the function takes variable number of arguments, make a frame index for
+  // the start of the first vararg value... for expansion of llvm.va_start.
+  if (isVarArg) {
+    // For X86-64, if there are vararg parameters that are passed via
+    // registers, then we must store them to their spots on the stack so they
+    // may be loaded by deferencing the result of va_next.
+    VarArgsGPOffset = NumIntRegs * 8;
+    VarArgsFPOffset = 6 * 8 + NumXMMRegs * 16;
+    VarArgsFrameIndex = MFI->CreateFixedObject(1, ArgOffset);
+    RegSaveFrameIndex = MFI->CreateStackObject(6 * 8 + 8 * 16, 16);
+
+    // Store the integer parameter registers.
+    std::vector<SDOperand> MemOps;
+    SDOperand RSFIN = DAG.getFrameIndex(RegSaveFrameIndex, getPointerTy());
+    SDOperand FIN = DAG.getNode(ISD::ADD, getPointerTy(), RSFIN,
+                              DAG.getConstant(VarArgsGPOffset, getPointerTy()));
+    for (; NumIntRegs != 6; ++NumIntRegs) {
+      unsigned VReg = AddLiveIn(MF, GPR64ArgRegs[NumIntRegs],
+                                X86::GR64RegisterClass);
+      SDOperand Val = DAG.getCopyFromReg(Root, VReg, MVT::i64);
+      SDOperand Store = DAG.getNode(ISD::STORE, MVT::Other, Val.getValue(1),
+                                    Val, FIN, DAG.getSrcValue(NULL));
+      MemOps.push_back(Store);
+      FIN = DAG.getNode(ISD::ADD, getPointerTy(), FIN,
+                        DAG.getConstant(8, getPointerTy()));
+    }
+
+    // Now store the XMM (fp + vector) parameter registers.
+    FIN = DAG.getNode(ISD::ADD, getPointerTy(), RSFIN,
+                      DAG.getConstant(VarArgsFPOffset, getPointerTy()));
+    for (; NumXMMRegs != 8; ++NumXMMRegs) {
+      unsigned VReg = AddLiveIn(MF, XMMArgRegs[NumXMMRegs],
+                                X86::VR128RegisterClass);
+      SDOperand Val = DAG.getCopyFromReg(Root, VReg, MVT::v4f32);
+      SDOperand Store = DAG.getNode(ISD::STORE, MVT::Other, Val.getValue(1),
+                                    Val, FIN, DAG.getSrcValue(NULL));
+      MemOps.push_back(Store);
+      FIN = DAG.getNode(ISD::ADD, getPointerTy(), FIN,
+                        DAG.getConstant(16, getPointerTy()));
+    }
+    if (!MemOps.empty())
+        Root = DAG.getNode(ISD::TokenFactor, MVT::Other,
+                           &MemOps[0], MemOps.size());
+  }
+
+  ArgValues.push_back(Root);
+
+  ReturnAddrIndex = 0;     // No return address slot generated yet.
+  BytesToPopOnReturn = 0;  // Callee pops nothing.
+  BytesCallerReserves = ArgOffset;
+
+  // Return the new list of results.
+  std::vector<MVT::ValueType> RetVTs(Op.Val->value_begin(),
+                                     Op.Val->value_end());
+  return DAG.getNode(ISD::MERGE_VALUES, RetVTs, &ArgValues[0],ArgValues.size());
+}
+
+SDOperand
+X86TargetLowering::LowerX86_64CCCCallTo(SDOperand Op, SelectionDAG &DAG) {
+  SDOperand Chain     = Op.getOperand(0);
+  unsigned CallingConv= cast<ConstantSDNode>(Op.getOperand(1))->getValue();
+  bool isVarArg       = cast<ConstantSDNode>(Op.getOperand(2))->getValue() != 0;
+  bool isTailCall     = cast<ConstantSDNode>(Op.getOperand(3))->getValue() != 0;
+  SDOperand Callee    = Op.getOperand(4);
+  MVT::ValueType RetVT= Op.Val->getValueType(0);
+  unsigned NumOps     = (Op.getNumOperands() - 5) / 2;
+
+  // Count how many bytes are to be pushed on the stack.
+  unsigned NumBytes = 0;
+  unsigned NumIntRegs = 0;  // Int regs used for parameter passing.
+  unsigned NumXMMRegs = 0;  // XMM regs used for parameter passing.
+
+  static const unsigned GPR8ArgRegs[] = {
+    X86::DIL, X86::SIL, X86::DL,  X86::CL,  X86::R8B, X86::R9B
+  };
+  static const unsigned GPR16ArgRegs[] = {
+    X86::DI,  X86::SI,  X86::DX,  X86::CX,  X86::R8W, X86::R9W
+  };
+  static const unsigned GPR32ArgRegs[] = {
+    X86::EDI, X86::ESI, X86::EDX, X86::ECX, X86::R8D, X86::R9D
+  };
+  static const unsigned GPR64ArgRegs[] = {
+    X86::RDI, X86::RSI, X86::RDX, X86::RCX, X86::R8,  X86::R9
+  };
+  static const unsigned XMMArgRegs[] = {
+    X86::XMM0, X86::XMM1, X86::XMM2, X86::XMM3,
+    X86::XMM4, X86::XMM5, X86::XMM6, X86::XMM7
+  };
+
+  for (unsigned i = 0; i != NumOps; ++i) {
+    SDOperand Arg = Op.getOperand(5+2*i);
+    MVT::ValueType ArgVT = Arg.getValueType();
+
+    switch (ArgVT) {
+    default: assert(0 && "Unknown value type!");
+    case MVT::i8:
+    case MVT::i16:
+    case MVT::i32:
+    case MVT::i64:
+      if (NumIntRegs < 6)
+        ++NumIntRegs;
+      else
+        NumBytes += 8;
+      break;
+    case MVT::f32:
+    case MVT::f64:
+    case MVT::v16i8:
+    case MVT::v8i16:
+    case MVT::v4i32:
+    case MVT::v2i64:
+    case MVT::v4f32:
+    case MVT::v2f64:
+      if (NumXMMRegs < 8)
+        NumXMMRegs++;
+      else if (ArgVT == MVT::f32 || ArgVT == MVT::f64)
+        NumBytes += 8;
+      else {
+        // XMM arguments have to be aligned on 16-byte boundary.
+        NumBytes = ((NumBytes + 15) / 16) * 16;
+        NumBytes += 16;
+      }
+      break;
+    }
+  }
+
+  Chain = DAG.getCALLSEQ_START(Chain,DAG.getConstant(NumBytes, getPointerTy()));
+
+  // Arguments go on the stack in reverse order, as specified by the ABI.
+  unsigned ArgOffset = 0;
+  NumIntRegs = 0;
+  NumXMMRegs = 0;
+  std::vector<std::pair<unsigned, SDOperand> > RegsToPass;
+  std::vector<SDOperand> MemOpChains;
+  SDOperand StackPtr = DAG.getRegister(X86StackPtr, getPointerTy());
+  for (unsigned i = 0; i != NumOps; ++i) {
+    SDOperand Arg = Op.getOperand(5+2*i);
+    MVT::ValueType ArgVT = Arg.getValueType();
+
+    switch (ArgVT) {
+    default: assert(0 && "Unexpected ValueType for argument!");
+    case MVT::i8:
+    case MVT::i16:
+    case MVT::i32:
+    case MVT::i64:
+      if (NumIntRegs < 6) {
+        unsigned Reg = 0;
+        switch (ArgVT) {
+        default: break;
+        case MVT::i8:  Reg = GPR8ArgRegs[NumIntRegs];  break;
+        case MVT::i16: Reg = GPR16ArgRegs[NumIntRegs]; break;
+        case MVT::i32: Reg = GPR32ArgRegs[NumIntRegs]; break;
+        case MVT::i64: Reg = GPR64ArgRegs[NumIntRegs]; break;
+        }
+        RegsToPass.push_back(std::make_pair(Reg, Arg));
+        ++NumIntRegs;
+      } else {
+        SDOperand PtrOff = DAG.getConstant(ArgOffset, getPointerTy());
+        PtrOff = DAG.getNode(ISD::ADD, getPointerTy(), StackPtr, PtrOff);
+        MemOpChains.push_back(DAG.getNode(ISD::STORE, MVT::Other, Chain,
+                                          Arg, PtrOff, DAG.getSrcValue(NULL)));
+        ArgOffset += 8;
+      }
+      break;
+    case MVT::f32:
+    case MVT::f64:
+    case MVT::v16i8:
+    case MVT::v8i16:
+    case MVT::v4i32:
+    case MVT::v2i64:
+    case MVT::v4f32:
+    case MVT::v2f64:
+      if (NumXMMRegs < 8) {
+        RegsToPass.push_back(std::make_pair(XMMArgRegs[NumXMMRegs], Arg));
+        NumXMMRegs++;
+      } else {
+        if (ArgVT != MVT::f32 && ArgVT != MVT::f64) {
+          // XMM arguments have to be aligned on 16-byte boundary.
+          ArgOffset = ((ArgOffset + 15) / 16) * 16;
+        }
+        SDOperand PtrOff = DAG.getConstant(ArgOffset, getPointerTy());
+        PtrOff = DAG.getNode(ISD::ADD, getPointerTy(), StackPtr, PtrOff);
+        MemOpChains.push_back(DAG.getNode(ISD::STORE, MVT::Other, Chain,
+                                          Arg, PtrOff, DAG.getSrcValue(NULL)));
+        if (ArgVT == MVT::f32 || ArgVT == MVT::f64)
+          ArgOffset += 8;
+        else
+          ArgOffset += 16;
+      }
+    }
+  }
+
+  if (!MemOpChains.empty())
+    Chain = DAG.getNode(ISD::TokenFactor, MVT::Other,
+                        &MemOpChains[0], MemOpChains.size());
+
+  // Build a sequence of copy-to-reg nodes chained together with token chain
+  // and flag operands which copy the outgoing args into registers.
+  SDOperand InFlag;
+  for (unsigned i = 0, e = RegsToPass.size(); i != e; ++i) {
+    Chain = DAG.getCopyToReg(Chain, RegsToPass[i].first, RegsToPass[i].second,
+                             InFlag);
+    InFlag = Chain.getValue(1);
+  }
+
+  if (isVarArg) {
+    // From AMD64 ABI document:
+    // For calls that may call functions that use varargs or stdargs
+    // (prototype-less calls or calls to functions containing ellipsis (...) in
+    // the declaration) %al is used as hidden argument to specify the number
+    // of SSE registers used. The contents of %al do not need to match exactly
+    // the number of registers, but must be an ubound on the number of SSE
+    // registers used and is in the range 0 - 8 inclusive.
+    Chain = DAG.getCopyToReg(Chain, X86::AL,
+                             DAG.getConstant(NumXMMRegs, MVT::i8), InFlag);
+    InFlag = Chain.getValue(1);
+  }
+
+  // If the callee is a GlobalAddress node (quite common, every direct call is)
+  // turn it into a TargetGlobalAddress node so that legalize doesn't hack it.
+  if (GlobalAddressSDNode *G = dyn_cast<GlobalAddressSDNode>(Callee))
+    Callee = DAG.getTargetGlobalAddress(G->getGlobal(), getPointerTy());
+  else if (ExternalSymbolSDNode *S = dyn_cast<ExternalSymbolSDNode>(Callee))
+    Callee = DAG.getTargetExternalSymbol(S->getSymbol(), getPointerTy());
+
+  std::vector<MVT::ValueType> NodeTys;
+  NodeTys.push_back(MVT::Other);   // Returns a chain
+  NodeTys.push_back(MVT::Flag);    // Returns a flag for retval copy to use.
+  std::vector<SDOperand> Ops;
+  Ops.push_back(Chain);
+  Ops.push_back(Callee);
+
+  // Add argument registers to the end of the list so that they are known live
+  // into the call.
+  for (unsigned i = 0, e = RegsToPass.size(); i != e; ++i)
+    Ops.push_back(DAG.getRegister(RegsToPass[i].first, 
+                                  RegsToPass[i].second.getValueType()));
+
+  if (InFlag.Val)
+    Ops.push_back(InFlag);
+
+  // FIXME: Do not generate X86ISD::TAILCALL for now.
+  Chain = DAG.getNode(isTailCall ? X86ISD::TAILCALL : X86ISD::CALL,
+                      NodeTys, &Ops[0], Ops.size());
+  InFlag = Chain.getValue(1);
+
+  NodeTys.clear();
+  NodeTys.push_back(MVT::Other);   // Returns a chain
+  if (RetVT != MVT::Other)
+    NodeTys.push_back(MVT::Flag);  // Returns a flag for retval copy to use.
+  Ops.clear();
+  Ops.push_back(Chain);
+  Ops.push_back(DAG.getConstant(NumBytes, getPointerTy()));
+  Ops.push_back(DAG.getConstant(0, getPointerTy()));
+  Ops.push_back(InFlag);
+  Chain = DAG.getNode(ISD::CALLSEQ_END, NodeTys, &Ops[0], Ops.size());
+  if (RetVT != MVT::Other)
+    InFlag = Chain.getValue(1);
+  
+  std::vector<SDOperand> ResultVals;
+  NodeTys.clear();
+  switch (RetVT) {
+  default: assert(0 && "Unknown value type to return!");
+  case MVT::Other: break;
+  case MVT::i8:
+    Chain = DAG.getCopyFromReg(Chain, X86::AL, MVT::i8, InFlag).getValue(1);
+    ResultVals.push_back(Chain.getValue(0));
+    NodeTys.push_back(MVT::i8);
+    break;
+  case MVT::i16:
+    Chain = DAG.getCopyFromReg(Chain, X86::AX, MVT::i16, InFlag).getValue(1);
+    ResultVals.push_back(Chain.getValue(0));
+    NodeTys.push_back(MVT::i16);
+    break;
+  case MVT::i32:
+    Chain = DAG.getCopyFromReg(Chain, X86::EAX, MVT::i32, InFlag).getValue(1);
+    ResultVals.push_back(Chain.getValue(0));
+    NodeTys.push_back(MVT::i32);
+    break;
+  case MVT::i64:
+    if (Op.Val->getValueType(1) == MVT::i64) {
+      // FIXME: __int128 support?
+      Chain = DAG.getCopyFromReg(Chain, X86::RAX, MVT::i64, InFlag).getValue(1);
+      ResultVals.push_back(Chain.getValue(0));
+      Chain = DAG.getCopyFromReg(Chain, X86::RDX, MVT::i64,
+                                 Chain.getValue(2)).getValue(1);
+      ResultVals.push_back(Chain.getValue(0));
+      NodeTys.push_back(MVT::i64);
+    } else {
+      Chain = DAG.getCopyFromReg(Chain, X86::RAX, MVT::i64, InFlag).getValue(1);
+      ResultVals.push_back(Chain.getValue(0));
+    }
+    NodeTys.push_back(MVT::i64);
+    break;
+  case MVT::f32:
+  case MVT::f64:
+  case MVT::v16i8:
+  case MVT::v8i16:
+  case MVT::v4i32:
+  case MVT::v2i64:
+  case MVT::v4f32:
+  case MVT::v2f64:
+    // FIXME: long double support?
+    Chain = DAG.getCopyFromReg(Chain, X86::XMM0, RetVT, InFlag).getValue(1);
+    ResultVals.push_back(Chain.getValue(0));
+    NodeTys.push_back(RetVT);
+    break;
   }
 
   // If the function returns void, just return the chain.
@@ -949,6 +1485,7 @@ X86TargetLowering::LowerFastCCArguments(SDOperand Op, SelectionDAG &DAG) {
     ArgOffset += 4;
 
   VarArgsFrameIndex = 0xAAAAAAA;   // fastcc functions can't have varargs.
+  RegSaveFrameIndex = 0xAAAAAAA;   // X86-64 only.
   ReturnAddrIndex = 0;             // No return address slot generated yet.
   BytesToPopOnReturn = ArgOffset;  // Callee pops all stack arguments.
   BytesCallerReserves = 0;
@@ -1063,7 +1600,7 @@ SDOperand X86TargetLowering::LowerFastCCCallTo(SDOperand Op, SelectionDAG &DAG){
   NumIntRegs = 0;
   std::vector<std::pair<unsigned, SDOperand> > RegsToPass;
   std::vector<SDOperand> MemOpChains;
-  SDOperand StackPtr = DAG.getRegister(X86::ESP, getPointerTy());
+  SDOperand StackPtr = DAG.getRegister(X86StackPtr, getPointerTy());
   for (unsigned i = 0; i != NumOps; ++i) {
     SDOperand Arg = Op.getOperand(5+2*i);
 
@@ -1273,10 +1810,13 @@ SDOperand X86TargetLowering::getReturnAddressFrameIndex(SelectionDAG &DAG) {
   if (ReturnAddrIndex == 0) {
     // Set up a frame object for the return address.
     MachineFunction &MF = DAG.getMachineFunction();
-    ReturnAddrIndex = MF.getFrameInfo()->CreateFixedObject(4, -4);
+    if (Subtarget->is64Bit())
+      ReturnAddrIndex = MF.getFrameInfo()->CreateFixedObject(8, -8);
+    else
+      ReturnAddrIndex = MF.getFrameInfo()->CreateFixedObject(4, -4);
   }
 
-  return DAG.getFrameIndex(ReturnAddrIndex, MVT::i32);
+  return DAG.getFrameIndex(ReturnAddrIndex, getPointerTy());
 }
 
 
@@ -1291,11 +1831,11 @@ LowerFrameReturnAddress(bool isFrameAddress, SDOperand Chain, unsigned Depth,
     SDOperand RetAddrFI = getReturnAddressFrameIndex(DAG);
     if (!isFrameAddress)
       // Just load the return address
-      Result = DAG.getLoad(MVT::i32, DAG.getEntryNode(), RetAddrFI,
+      Result = DAG.getLoad(getPointerTy(), DAG.getEntryNode(), RetAddrFI,
                            DAG.getSrcValue(NULL));
     else
-      Result = DAG.getNode(ISD::SUB, MVT::i32, RetAddrFI,
-                           DAG.getConstant(4, MVT::i32));
+      Result = DAG.getNode(ISD::SUB, getPointerTy(), RetAddrFI,
+                           DAG.getConstant(4, getPointerTy()));
   }
   return std::make_pair(Result, Chain);
 }
@@ -2184,7 +2724,7 @@ static SDOperand getShuffleVectorZeroOrUndef(SDOperand V2, MVT::ValueType VT,
 ///
 static SDOperand LowerBuildVectorv16i8(SDOperand Op, unsigned NonZeros,
                                        unsigned NumNonZero, unsigned NumZero,
-                                       SelectionDAG &DAG) {
+                                       SelectionDAG &DAG, TargetLowering &TLI) {
   if (NumNonZero > 8)
     return SDOperand();
 
@@ -2217,7 +2757,7 @@ static SDOperand LowerBuildVectorv16i8(SDOperand Op, unsigned NonZeros,
 
       if (ThisElt.Val)
         V = DAG.getNode(ISD::INSERT_VECTOR_ELT, MVT::v8i16, V, ThisElt,
-                        DAG.getConstant(i/2, MVT::i32));
+                        DAG.getConstant(i/2, TLI.getPointerTy()));
     }
   }
 
@@ -2228,7 +2768,7 @@ static SDOperand LowerBuildVectorv16i8(SDOperand Op, unsigned NonZeros,
 ///
 static SDOperand LowerBuildVectorv8i16(SDOperand Op, unsigned NonZeros,
                                        unsigned NumNonZero, unsigned NumZero,
-                                       SelectionDAG &DAG) {
+                                       SelectionDAG &DAG, TargetLowering &TLI) {
   if (NumNonZero > 4)
     return SDOperand();
 
@@ -2245,7 +2785,7 @@ static SDOperand LowerBuildVectorv8i16(SDOperand Op, unsigned NonZeros,
         First = false;
       }
       V = DAG.getNode(ISD::INSERT_VECTOR_ELT, MVT::v8i16, V, Op.getOperand(i),
-                      DAG.getConstant(i, MVT::i32));
+                      DAG.getConstant(i, TLI.getPointerTy()));
     }
   }
 
@@ -2324,12 +2864,14 @@ X86TargetLowering::LowerBUILD_VECTOR(SDOperand Op, SelectionDAG &DAG) {
 
   // If element VT is < 32 bits, convert it to inserts into a zero vector.
   if (EVTBits == 8) {
-    SDOperand V = LowerBuildVectorv16i8(Op, NonZeros,NumNonZero,NumZero, DAG);
+    SDOperand V = LowerBuildVectorv16i8(Op, NonZeros,NumNonZero,NumZero, DAG,
+                                        *this);
     if (V.Val) return V;
   }
 
   if (EVTBits == 16) {
-    SDOperand V = LowerBuildVectorv8i16(Op, NonZeros,NumNonZero,NumZero, DAG);
+    SDOperand V = LowerBuildVectorv8i16(Op, NonZeros,NumNonZero,NumZero, DAG,
+                                        *this);
     if (V.Val) return V;
   }
 
@@ -2791,7 +3333,8 @@ X86TargetLowering::LowerConstantPool(SDOperand Op, SelectionDAG &DAG) {
                                                       CP->getAlignment()));
   if (Subtarget->isTargetDarwin()) {
     // With PIC, the address is actually $g + Offset.
-    if (getTargetMachine().getRelocationModel() == Reloc::PIC_)
+    if (!Subtarget->is64Bit() &&
+        getTargetMachine().getRelocationModel() == Reloc::PIC_)
       Result = DAG.getNode(ISD::ADD, getPointerTy(),
                     DAG.getNode(X86ISD::GlobalBaseReg, getPointerTy()), Result);
   }
@@ -2807,7 +3350,8 @@ X86TargetLowering::LowerGlobalAddress(SDOperand Op, SelectionDAG &DAG) {
                                                             getPointerTy()));
   if (Subtarget->isTargetDarwin()) {
     // With PIC, the address is actually $g + Offset.
-    if (getTargetMachine().getRelocationModel() == Reloc::PIC_)
+    if (!Subtarget->is64Bit() &&
+        getTargetMachine().getRelocationModel() == Reloc::PIC_)
       Result = DAG.getNode(ISD::ADD, getPointerTy(),
                            DAG.getNode(X86ISD::GlobalBaseReg, getPointerTy()),
                            Result);
@@ -2818,7 +3362,7 @@ X86TargetLowering::LowerGlobalAddress(SDOperand Op, SelectionDAG &DAG) {
     // not the GV offset field.
     if (getTargetMachine().getRelocationModel() != Reloc::Static &&
         DarwinGVRequiresExtraLoad(GV))
-      Result = DAG.getLoad(MVT::i32, DAG.getEntryNode(),
+      Result = DAG.getLoad(getPointerTy(), DAG.getEntryNode(),
                            Result, DAG.getSrcValue(NULL));
   }
 
@@ -2833,7 +3377,8 @@ X86TargetLowering::LowerExternalSymbol(SDOperand Op, SelectionDAG &DAG) {
                                                              getPointerTy()));
   if (Subtarget->isTargetDarwin()) {
     // With PIC, the address is actually $g + Offset.
-    if (getTargetMachine().getRelocationModel() == Reloc::PIC_)
+    if (!Subtarget->is64Bit() &&
+        getTargetMachine().getRelocationModel() == Reloc::PIC_)
       Result = DAG.getNode(ISD::ADD, getPointerTy(),
                            DAG.getNode(X86ISD::GlobalBaseReg, getPointerTy()),
                            Result);
@@ -3234,7 +3779,8 @@ SDOperand X86TargetLowering::LowerJumpTable(SDOperand Op, SelectionDAG &DAG) {
                                                         getPointerTy()));
   if (Subtarget->isTargetDarwin()) {
     // With PIC, the address is actually $g + Offset.
-    if (getTargetMachine().getRelocationModel() == Reloc::PIC_)
+    if (!Subtarget->is64Bit() &&
+        getTargetMachine().getRelocationModel() == Reloc::PIC_)
       Result = DAG.getNode(ISD::ADD, getPointerTy(),
                            DAG.getNode(X86ISD::GlobalBaseReg, getPointerTy()),
                            Result);    
@@ -3245,7 +3791,9 @@ SDOperand X86TargetLowering::LowerJumpTable(SDOperand Op, SelectionDAG &DAG) {
 
 SDOperand X86TargetLowering::LowerCALL(SDOperand Op, SelectionDAG &DAG) {
   unsigned CallingConv= cast<ConstantSDNode>(Op.getOperand(1))->getValue();
-  if (CallingConv == CallingConv::Fast && EnableFastCC)
+  if (Subtarget->is64Bit())
+    return LowerX86_64CCCCallTo(Op, DAG);
+  else if (CallingConv == CallingConv::Fast && EnableFastCC)
     return LowerFastCCCallTo(Op, DAG);
   else
     return LowerCCCCallTo(Op, DAG);
@@ -3264,18 +3812,25 @@ SDOperand X86TargetLowering::LowerRET(SDOperand Op, SelectionDAG &DAG) {
     case 3: {
       MVT::ValueType ArgVT = Op.getOperand(1).getValueType();
       
-      if (MVT::isVector(ArgVT)) {
+      if (MVT::isVector(ArgVT) ||
+          (Subtarget->is64Bit() && MVT::isFloatingPoint(ArgVT))) {
         // Integer or FP vector result -> XMM0.
         if (DAG.getMachineFunction().liveout_empty())
           DAG.getMachineFunction().addLiveOut(X86::XMM0);
         Copy = DAG.getCopyToReg(Op.getOperand(0), X86::XMM0, Op.getOperand(1),
                                 SDOperand());
       } else if (MVT::isInteger(ArgVT)) {
-        // Integer result -> EAX
+        // Integer result -> EAX / RAX.
+        // The C calling convention guarantees the return value has been
+        // promoted to at least MVT::i32. The X86-64 ABI doesn't require the
+        // value to be promoted MVT::i64. So we don't have to extend it to
+        // 64-bit. Return the value in EAX, but mark RAX as liveout.
+        unsigned Reg = Subtarget->is64Bit() ? X86::RAX : X86::EAX;
         if (DAG.getMachineFunction().liveout_empty())
-          DAG.getMachineFunction().addLiveOut(X86::EAX);
+          DAG.getMachineFunction().addLiveOut(Reg);
 
-        Copy = DAG.getCopyToReg(Op.getOperand(0), X86::EAX, Op.getOperand(1),
+        Reg = (ArgVT == MVT::i64) ? X86::RAX : X86::EAX;
+        Copy = DAG.getCopyToReg(Op.getOperand(0), Reg, Op.getOperand(1),
                                 SDOperand());
       } else if (!X86ScalarSSE) {
         // FP return with fp-stack value.
@@ -3329,19 +3884,22 @@ SDOperand X86TargetLowering::LowerRET(SDOperand Op, SelectionDAG &DAG) {
       }
       break;
     }
-    case 5:
+    case 5: {
+      unsigned Reg1 = Subtarget->is64Bit() ? X86::RAX : X86::EAX;
+      unsigned Reg2 = Subtarget->is64Bit() ? X86::RDX : X86::EDX;
       if (DAG.getMachineFunction().liveout_empty()) {
-        DAG.getMachineFunction().addLiveOut(X86::EAX);
-        DAG.getMachineFunction().addLiveOut(X86::EDX);
+        DAG.getMachineFunction().addLiveOut(Reg1);
+        DAG.getMachineFunction().addLiveOut(Reg2);
       }
 
-      Copy = DAG.getCopyToReg(Op.getOperand(0), X86::EDX, Op.getOperand(3), 
+      Copy = DAG.getCopyToReg(Op.getOperand(0), Reg2, Op.getOperand(3), 
                               SDOperand());
-      Copy = DAG.getCopyToReg(Copy, X86::EAX,Op.getOperand(1),Copy.getValue(1));
+      Copy = DAG.getCopyToReg(Copy, Reg1, Op.getOperand(1), Copy.getValue(1));
       break;
+    }
   }
   return DAG.getNode(X86ISD::RET_FLAG, MVT::Other,
-                   Copy, DAG.getConstant(getBytesToPopOnReturn(), MVT::i16),
+                     Copy, DAG.getConstant(getBytesToPopOnReturn(), MVT::i16),
                      Copy.getValue(1));
 }
 
@@ -3355,7 +3913,9 @@ X86TargetLowering::LowerFORMAL_ARGUMENTS(SDOperand Op, SelectionDAG &DAG) {
     MF.getInfo<X86FunctionInfo>()->setForceFramePointer(true);
 
   unsigned CC = cast<ConstantSDNode>(Op.getOperand(1))->getValue();
-  if (CC == CallingConv::Fast && EnableFastCC)
+  if (Subtarget->is64Bit())
+    return LowerX86_64CCCArguments(Op, DAG);
+  else if (CC == CallingConv::Fast && EnableFastCC)
     return LowerFastCCArguments(Op, DAG);
   else
     return LowerCCCArguments(Op, DAG);
@@ -3394,36 +3954,45 @@ SDOperand X86TargetLowering::LowerMEMSET(SDOperand Op, SelectionDAG &DAG) {
   bool TwoRepStos = false;
   if (ValC) {
     unsigned ValReg;
-    unsigned Val = ValC->getValue() & 255;
+    uint64_t Val = ValC->getValue() & 255;
 
     // If the value is a constant, then we can potentially use larger sets.
     switch (Align & 3) {
       case 2:   // WORD aligned
         AVT = MVT::i16;
-        Count = DAG.getConstant(I->getValue() / 2, MVT::i32);
-        BytesLeft = I->getValue() % 2;
-        Val    = (Val << 8) | Val;
         ValReg = X86::AX;
+        Val = (Val << 8) | Val;
         break;
-      case 0:   // DWORD aligned
+      case 0:  // DWORD aligned
         AVT = MVT::i32;
-        if (I) {
-          Count = DAG.getConstant(I->getValue() / 4, MVT::i32);
-          BytesLeft = I->getValue() % 4;
-        } else {
-          Count = DAG.getNode(ISD::SRL, MVT::i32, Op.getOperand(3),
-                              DAG.getConstant(2, MVT::i8));
-          TwoRepStos = true;
-        }
+        ValReg = X86::EAX;
         Val = (Val << 8)  | Val;
         Val = (Val << 16) | Val;
-        ValReg = X86::EAX;
+        if (Subtarget->is64Bit() && ((Align & 0xF) == 0)) {  // QWORD aligned
+          AVT = MVT::i64;
+          ValReg = X86::RAX;
+          Val = (Val << 32) | Val;
+        }
         break;
       default:  // Byte aligned
         AVT = MVT::i8;
-        Count = Op.getOperand(3);
         ValReg = X86::AL;
+        Count = Op.getOperand(3);
         break;
+    }
+
+    if (AVT > MVT::i8) {
+      if (I) {
+        unsigned UBytes = MVT::getSizeInBits(AVT) / 8;
+        Count = DAG.getConstant(I->getValue() / UBytes, getPointerTy());
+        BytesLeft = I->getValue() % UBytes;
+      } else {
+        assert(AVT >= MVT::i32 &&
+               "Do not use rep;stos if not at least DWORD aligned");
+        Count = DAG.getNode(ISD::SRL, Op.getOperand(3).getValueType(),
+                            Op.getOperand(3), DAG.getConstant(2, MVT::i8));
+        TwoRepStos = true;
+      }
     }
 
     Chain  = DAG.getCopyToReg(Chain, ValReg, DAG.getConstant(Val, AVT),
@@ -3436,9 +4005,11 @@ SDOperand X86TargetLowering::LowerMEMSET(SDOperand Op, SelectionDAG &DAG) {
     InFlag = Chain.getValue(1);
   }
 
-  Chain  = DAG.getCopyToReg(Chain, X86::ECX, Count, InFlag);
+  Chain  = DAG.getCopyToReg(Chain, Subtarget->is64Bit() ? X86::RCX : X86::ECX,
+                            Count, InFlag);
   InFlag = Chain.getValue(1);
-  Chain  = DAG.getCopyToReg(Chain, X86::EDI, Op.getOperand(1), InFlag);
+  Chain  = DAG.getCopyToReg(Chain, Subtarget->is64Bit() ? X86::RDI : X86::EDI,
+                            Op.getOperand(1), InFlag);
   InFlag = Chain.getValue(1);
 
   std::vector<MVT::ValueType> Tys;
@@ -3455,8 +4026,9 @@ SDOperand X86TargetLowering::LowerMEMSET(SDOperand Op, SelectionDAG &DAG) {
     Count = Op.getOperand(3);
     MVT::ValueType CVT = Count.getValueType();
     SDOperand Left = DAG.getNode(ISD::AND, CVT, Count,
-                                 DAG.getConstant(3, CVT));
-    Chain  = DAG.getCopyToReg(Chain, X86::ECX, Left, InFlag);
+                               DAG.getConstant((AVT == MVT::i64) ? 7 : 3, CVT));
+    Chain  = DAG.getCopyToReg(Chain, (CVT == MVT::i64) ? X86::RCX : X86::ECX,
+                              Left, InFlag);
     InFlag = Chain.getValue(1);
     Tys.clear();
     Tys.push_back(MVT::Other);
@@ -3467,12 +4039,23 @@ SDOperand X86TargetLowering::LowerMEMSET(SDOperand Op, SelectionDAG &DAG) {
     Ops.push_back(InFlag);
     Chain  = DAG.getNode(X86ISD::REP_STOS, Tys, &Ops[0], Ops.size());
   } else if (BytesLeft) {
-    // Issue stores for the last 1 - 3 bytes.
+    // Issue stores for the last 1 - 7 bytes.
     SDOperand Value;
     unsigned Val = ValC->getValue() & 255;
     unsigned Offset = I->getValue() - BytesLeft;
     SDOperand DstAddr = Op.getOperand(1);
     MVT::ValueType AddrVT = DstAddr.getValueType();
+    if (BytesLeft >= 4) {
+      Val = (Val << 8)  | Val;
+      Val = (Val << 16) | Val;
+      Value = DAG.getConstant(Val, MVT::i32);
+      Chain = DAG.getNode(ISD::STORE, MVT::Other, Chain, Value,
+                          DAG.getNode(ISD::ADD, AddrVT, DstAddr,
+                                      DAG.getConstant(Offset, AddrVT)),
+                          DAG.getSrcValue(NULL));
+      BytesLeft -= 4;
+      Offset += 4;
+    }
     if (BytesLeft >= 2) {
       Value = DAG.getConstant((Val << 8) | Val, MVT::i16);
       Chain = DAG.getNode(ISD::STORE, MVT::Other, Chain, Value,
@@ -3482,7 +4065,6 @@ SDOperand X86TargetLowering::LowerMEMSET(SDOperand Op, SelectionDAG &DAG) {
       BytesLeft -= 2;
       Offset += 2;
     }
-
     if (BytesLeft == 1) {
       Value = DAG.getConstant(Val, MVT::i8);
       Chain = DAG.getNode(ISD::STORE, MVT::Other, Chain, Value,
@@ -3525,19 +4107,11 @@ SDOperand X86TargetLowering::LowerMEMCPY(SDOperand Op, SelectionDAG &DAG) {
   switch (Align & 3) {
     case 2:   // WORD aligned
       AVT = MVT::i16;
-      Count = DAG.getConstant(I->getValue() / 2, MVT::i32);
-      BytesLeft = I->getValue() % 2;
       break;
-    case 0:   // DWORD aligned
+    case 0:  // DWORD aligned
       AVT = MVT::i32;
-      if (I) {
-        Count = DAG.getConstant(I->getValue() / 4, MVT::i32);
-        BytesLeft = I->getValue() % 4;
-      } else {
-        Count = DAG.getNode(ISD::SRL, MVT::i32, Op.getOperand(3),
-                            DAG.getConstant(2, MVT::i8));
-        TwoRepMovs = true;
-      }
+      if (Subtarget->is64Bit() && ((Align & 0xF) == 0))  // QWORD aligned
+        AVT = MVT::i64;
       break;
     default:  // Byte aligned
       AVT = MVT::i8;
@@ -3545,12 +4119,29 @@ SDOperand X86TargetLowering::LowerMEMCPY(SDOperand Op, SelectionDAG &DAG) {
       break;
   }
 
+  if (AVT > MVT::i8) {
+    if (I) {
+      unsigned UBytes = MVT::getSizeInBits(AVT) / 8;
+      Count = DAG.getConstant(I->getValue() / UBytes, getPointerTy());
+      BytesLeft = I->getValue() % UBytes;
+    } else {
+      assert(AVT >= MVT::i32 &&
+             "Do not use rep;movs if not at least DWORD aligned");
+      Count = DAG.getNode(ISD::SRL, Op.getOperand(3).getValueType(),
+                          Op.getOperand(3), DAG.getConstant(2, MVT::i8));
+      TwoRepMovs = true;
+    }
+  }
+
   SDOperand InFlag(0, 0);
-  Chain  = DAG.getCopyToReg(Chain, X86::ECX, Count, InFlag);
+  Chain  = DAG.getCopyToReg(Chain, Subtarget->is64Bit() ? X86::RCX : X86::ECX,
+                            Count, InFlag);
   InFlag = Chain.getValue(1);
-  Chain  = DAG.getCopyToReg(Chain, X86::EDI, Op.getOperand(1), InFlag);
+  Chain  = DAG.getCopyToReg(Chain, Subtarget->is64Bit() ? X86::RDI : X86::EDI,
+                            Op.getOperand(1), InFlag);
   InFlag = Chain.getValue(1);
-  Chain  = DAG.getCopyToReg(Chain, X86::ESI, Op.getOperand(2), InFlag);
+  Chain  = DAG.getCopyToReg(Chain, Subtarget->is64Bit() ? X86::RSI : X86::ESI,
+                            Op.getOperand(2), InFlag);
   InFlag = Chain.getValue(1);
 
   std::vector<MVT::ValueType> Tys;
@@ -3567,8 +4158,9 @@ SDOperand X86TargetLowering::LowerMEMCPY(SDOperand Op, SelectionDAG &DAG) {
     Count = Op.getOperand(3);
     MVT::ValueType CVT = Count.getValueType();
     SDOperand Left = DAG.getNode(ISD::AND, CVT, Count,
-                                 DAG.getConstant(3, CVT));
-    Chain  = DAG.getCopyToReg(Chain, X86::ECX, Left, InFlag);
+                               DAG.getConstant((AVT == MVT::i64) ? 7 : 3, CVT));
+    Chain  = DAG.getCopyToReg(Chain, (CVT == MVT::i64) ? X86::RCX : X86::ECX,
+                              Left, InFlag);
     InFlag = Chain.getValue(1);
     Tys.clear();
     Tys.push_back(MVT::Other);
@@ -3579,13 +4171,26 @@ SDOperand X86TargetLowering::LowerMEMCPY(SDOperand Op, SelectionDAG &DAG) {
     Ops.push_back(InFlag);
     Chain = DAG.getNode(X86ISD::REP_MOVS, Tys, &Ops[0], Ops.size());
   } else if (BytesLeft) {
-    // Issue loads and stores for the last 1 - 3 bytes.
+    // Issue loads and stores for the last 1 - 7 bytes.
     unsigned Offset = I->getValue() - BytesLeft;
     SDOperand DstAddr = Op.getOperand(1);
     MVT::ValueType DstVT = DstAddr.getValueType();
     SDOperand SrcAddr = Op.getOperand(2);
     MVT::ValueType SrcVT = SrcAddr.getValueType();
     SDOperand Value;
+    if (BytesLeft >= 4) {
+      Value = DAG.getLoad(MVT::i32, Chain,
+                          DAG.getNode(ISD::ADD, SrcVT, SrcAddr,
+                                      DAG.getConstant(Offset, SrcVT)),
+                          DAG.getSrcValue(NULL));
+      Chain = Value.getValue(1);
+      Chain = DAG.getNode(ISD::STORE, MVT::Other, Chain, Value,
+                          DAG.getNode(ISD::ADD, DstVT, DstAddr,
+                                      DAG.getConstant(Offset, DstVT)),
+                          DAG.getSrcValue(NULL));
+      BytesLeft -= 4;
+      Offset += 4;
+    }
     if (BytesLeft >= 2) {
       Value = DAG.getLoad(MVT::i16, Chain,
                           DAG.getNode(ISD::ADD, SrcVT, SrcAddr,
@@ -3635,12 +4240,51 @@ X86TargetLowering::LowerREADCYCLCECOUNTER(SDOperand Op, SelectionDAG &DAG) {
 }
 
 SDOperand X86TargetLowering::LowerVASTART(SDOperand Op, SelectionDAG &DAG) {
-  // vastart just stores the address of the VarArgsFrameIndex slot into the
-  // memory location argument.
-  // FIXME: Replace MVT::i32 with PointerTy
-  SDOperand FR = DAG.getFrameIndex(VarArgsFrameIndex, MVT::i32);
-  return DAG.getNode(ISD::STORE, MVT::Other, Op.getOperand(0), FR, 
-                     Op.getOperand(1), Op.getOperand(2));
+  if (!Subtarget->is64Bit()) {
+    // vastart just stores the address of the VarArgsFrameIndex slot into the
+    // memory location argument.
+    SDOperand FR = DAG.getFrameIndex(VarArgsFrameIndex, getPointerTy());
+    return DAG.getNode(ISD::STORE, MVT::Other, Op.getOperand(0), FR, 
+                       Op.getOperand(1), Op.getOperand(2));
+  }
+
+  // __va_list_tag:
+  //   gp_offset         (0 - 6 * 8)
+  //   fp_offset         (48 - 48 + 8 * 16)
+  //   overflow_arg_area (point to parameters coming in memory).
+  //   reg_save_area
+  std::vector<SDOperand> MemOps;
+  SDOperand FIN = Op.getOperand(1);
+  // Store gp_offset
+  SDOperand Store = DAG.getNode(ISD::STORE, MVT::Other, Op.getOperand(0),
+                                DAG.getConstant(VarArgsGPOffset, MVT::i32),
+                                FIN, Op.getOperand(2));
+  MemOps.push_back(Store);
+
+  // Store fp_offset
+  FIN = DAG.getNode(ISD::ADD, getPointerTy(), FIN,
+                    DAG.getConstant(4, getPointerTy()));
+  Store = DAG.getNode(ISD::STORE, MVT::Other, Op.getOperand(0),
+                      DAG.getConstant(VarArgsFPOffset, MVT::i32),
+                      FIN, Op.getOperand(2));
+  MemOps.push_back(Store);
+
+  // Store ptr to overflow_arg_area
+  FIN = DAG.getNode(ISD::ADD, getPointerTy(), FIN,
+                    DAG.getConstant(4, getPointerTy()));
+  SDOperand OVFIN = DAG.getFrameIndex(VarArgsFrameIndex, getPointerTy());
+  Store = DAG.getNode(ISD::STORE, MVT::Other, Op.getOperand(0),
+                      OVFIN, FIN, Op.getOperand(2));
+  MemOps.push_back(Store);
+
+  // Store ptr to reg_save_area.
+  FIN = DAG.getNode(ISD::ADD, getPointerTy(), FIN,
+                    DAG.getConstant(8, getPointerTy()));
+  SDOperand RSFIN = DAG.getFrameIndex(RegSaveFrameIndex, getPointerTy());
+  Store = DAG.getNode(ISD::STORE, MVT::Other, Op.getOperand(0),
+                      RSFIN, FIN, Op.getOperand(2));
+  MemOps.push_back(Store);
+  return DAG.getNode(ISD::TokenFactor, MVT::Other, &MemOps[0], MemOps.size());
 }
 
 SDOperand
@@ -4332,6 +4976,23 @@ X86TargetLowering::getRegForInlineAsmConstraint(const std::string &Constraint,
     if (DestReg) {
       Res.first = DestReg;
       Res.second = Res.second = X86::GR32RegisterClass;
+    }
+  } else if (VT == MVT::i64) {
+    unsigned DestReg = 0;
+    switch (Res.first) {
+    default: break;
+    case X86::AX: DestReg = X86::RAX; break;
+    case X86::DX: DestReg = X86::RDX; break;
+    case X86::CX: DestReg = X86::RCX; break;
+    case X86::BX: DestReg = X86::RBX; break;
+    case X86::SI: DestReg = X86::RSI; break;
+    case X86::DI: DestReg = X86::RDI; break;
+    case X86::BP: DestReg = X86::RBP; break;
+    case X86::SP: DestReg = X86::RSP; break;
+    }
+    if (DestReg) {
+      Res.first = DestReg;
+      Res.second = Res.second = X86::GR64RegisterClass;
     }
   }
   

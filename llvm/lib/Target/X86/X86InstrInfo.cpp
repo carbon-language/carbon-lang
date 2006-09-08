@@ -22,7 +22,7 @@ using namespace llvm;
 
 X86InstrInfo::X86InstrInfo(X86TargetMachine &tm)
   : TargetInstrInfo(X86Insts, sizeof(X86Insts)/sizeof(X86Insts[0])),
-    TM(tm), RI(*this) {
+    TM(tm), RI(tm, *this) {
 }
 
 
@@ -30,7 +30,8 @@ bool X86InstrInfo::isMoveInstr(const MachineInstr& MI,
                                unsigned& sourceReg,
                                unsigned& destReg) const {
   MachineOpCode oc = MI.getOpcode();
-  if (oc == X86::MOV8rr || oc == X86::MOV16rr || oc == X86::MOV32rr ||
+  if (oc == X86::MOV8rr || oc == X86::MOV16rr ||
+      oc == X86::MOV32rr || oc == X86::MOV64rr ||
       oc == X86::MOV16to16_ || oc == X86::MOV32to32_ ||
       oc == X86::FpMOV  || oc == X86::MOVSSrr || oc == X86::MOVSDrr ||
       oc == X86::FsMOVAPSrr || oc == X86::FsMOVAPDrr ||
@@ -59,6 +60,7 @@ unsigned X86InstrInfo::isLoadFromStackSlot(MachineInstr *MI,
   case X86::MOV16_rm:
   case X86::MOV32rm:
   case X86::MOV32_rm:
+  case X86::MOV64rm:
   case X86::FpLD64m:
   case X86::MOVSSrm:
   case X86::MOVSDrm:
@@ -86,6 +88,7 @@ unsigned X86InstrInfo::isStoreToStackSlot(MachineInstr *MI,
   case X86::MOV16_mr:
   case X86::MOV32mr:
   case X86::MOV32_mr:
+  case X86::MOV64mr:
   case X86::FpSTP64m:
   case X86::MOVSSmr:
   case X86::MOVSDmr:
@@ -145,16 +148,20 @@ MachineInstr *X86InstrInfo::convertToThreeAddress(MachineInstr *MI) const {
 
   switch (MI->getOpcode()) {
   case X86::INC32r:
+  case X86::INC64_32r:
     assert(MI->getNumOperands() == 2 && "Unknown inc instruction!");
     return addRegOffset(BuildMI(X86::LEA32r, 5, Dest), Src, 1);
   case X86::INC16r:
+  case X86::INC64_16r:
     if (DisableLEA16) return 0;
     assert(MI->getNumOperands() == 2 && "Unknown inc instruction!");
     return addRegOffset(BuildMI(X86::LEA16r, 5, Dest), Src, 1);
   case X86::DEC32r:
+  case X86::DEC64_32r:
     assert(MI->getNumOperands() == 2 && "Unknown dec instruction!");
     return addRegOffset(BuildMI(X86::LEA32r, 5, Dest), Src, -1);
   case X86::DEC16r:
+  case X86::DEC64_16r:
     if (DisableLEA16) return 0;
     assert(MI->getNumOperands() == 2 && "Unknown dec instruction!");
     return addRegOffset(BuildMI(X86::LEA16r, 5, Dest), Src, -1);
@@ -264,3 +271,10 @@ X86InstrInfo::reverseBranchCondition(MachineBasicBlock::iterator MI) const {
   return BuildMI(*MBB, MBB->erase(MI), ROpcode, 1).addMBB(TMBB);
 }
 
+const TargetRegisterClass *X86InstrInfo::getPointerRegClass() const {
+  const X86Subtarget *Subtarget = &TM.getSubtarget<X86Subtarget>();
+  if (Subtarget->is64Bit())
+    return &X86::GR64RegClass;
+  else
+    return &X86::GR32RegClass;
+}

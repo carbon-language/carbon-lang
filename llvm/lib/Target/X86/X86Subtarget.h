@@ -44,9 +44,9 @@ protected:
 
   /// X863DNowLevel - 3DNow or 3DNow Athlon, or none supported.
   X863DNowEnum X863DNowLevel;
-  
-  /// Is64Bit - True if the processor supports Em64T.
-  bool Is64Bit;
+
+  /// HasX86_64 - True if the processor supports X86-64 instructions.
+  bool HasX86_64;
 
   /// stackAlignment - The minimum alignment known to hold of the stack frame on
   /// entry to the function and which must be maintained by every function.
@@ -54,6 +54,11 @@ protected:
 
   /// Min. memset / memcpy size that is turned into rep/movs, rep/stos ops.
   unsigned MinRepStrSizeThreshold;
+
+private:
+  /// Is64Bit - True if the processor supports 64-bit instructions and module
+  /// pointer size is 64 bit.
+  bool Is64Bit;
 
 public:
   enum {
@@ -63,7 +68,7 @@ public:
   /// This constructor initializes the data members to match that
   /// of the specified module.
   ///
-  X86Subtarget(const Module &M, const std::string &FS);
+  X86Subtarget(const Module &M, const std::string &FS, bool is64Bit);
 
   /// getStackAlignment - Returns the minimum alignment known to hold of the
   /// stack frame on entry to the function and which must be maintained by every

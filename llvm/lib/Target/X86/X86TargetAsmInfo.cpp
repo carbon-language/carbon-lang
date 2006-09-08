@@ -26,13 +26,16 @@ X86TargetAsmInfo::X86TargetAsmInfo(const X86TargetMachine &TM) {
   case X86Subtarget::isDarwin:
     AlignmentIsInBytes = false;
     GlobalPrefix = "_";
-    Data64bitsDirective = 0;       // we can't emit a 64-bit unit
+    if (!Subtarget->is64Bit())
+      Data64bitsDirective = 0;       // we can't emit a 64-bit unit
     ZeroDirective = "\t.space\t";  // ".space N" emits N zeros.
     PrivateGlobalPrefix = "L";     // Marker for constant pool idxs
     ConstantPoolSection = "\t.const\n";
     JumpTableDataSection = "\t.const\n"; // FIXME: depends on PIC mode
     FourByteConstantSection = "\t.literal4\n";
     EightByteConstantSection = "\t.literal8\n";
+    if (Subtarget->is64Bit())
+      SixteenByteConstantSection = "\t.literal16\n";
     LCOMMDirective = "\t.lcomm\t";
     COMMDirectiveTakesAlignment = false;
     HasDotTypeDotSizeDirective = false;
