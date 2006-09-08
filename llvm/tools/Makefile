@@ -18,7 +18,9 @@ PARALLEL_DIRS := llvm-config \
 		 bugpoint llvm-db llvm-extract \
                  gccas llvm-bcanalyzer llvm-stub \
 		 gccld llvm2cpp \
-                 llvm-ld llvmc llvm-prof \
-                 lto
+                 llvm-ld llvmc llvm-prof
+ifeq ($(OS), Darwin)
+PARALLEL_DIRS += lto
+endif
 
 include $(LEVEL)/Makefile.common
