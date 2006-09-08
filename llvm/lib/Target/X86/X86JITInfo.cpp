@@ -39,6 +39,14 @@ void X86JITInfo::replaceMachineCodeForFunction(void *Old, void *New) {
 /// compile a function lazily.
 static TargetJITInfo::JITCompilerFn JITCompilerFunction;
 
+// Get the ASMPREFIX for the current host.  This is often '_'.
+#ifndef __USER_LABEL_PREFIX__
+#define __USER_LABEL_PREFIX__
+#endif
+#define GETASMPREFIX2(X) #X
+#define GETASMPREFIX(X) GETASMPREFIX2(X)
+#define ASMPREFIX GETASMPREFIX(__USER_LABEL_PREFIX__)
+
 // Provide a wrapper for X86CompilationCallback2 that saves non-traditional
 // callee saved registers, for the fastcc calling convention.
 extern "C" {
@@ -48,8 +56,8 @@ extern "C" {
   asm(
     ".text\n"
     ".align 8\n"
-    ".globl _X86CompilationCallback\n"
-  "_X86CompilationCallback:\n"
+    ".globl " ASMPREFIX "X86CompilationCallback\n"
+  ASMPREFIX "X86CompilationCallback:\n"
     // Save RBP
     "pushq   %rbp\n"
     // Save RSP
@@ -77,7 +85,7 @@ extern "C" {
     // JIT callee
     "movq    %rbp, %rdi\n"    // Pass prev frame and return address
     "movq    8(%rbp), %rsi\n"
-    "call    _X86CompilationCallback2\n"
+    "call    " ASMPREFIX "X86CompilationCallback2\n"
     // Restore all XMM arg registers
     "movaps  112(%rsp), %xmm7\n"
     "movaps  96(%rsp), %xmm6\n"
@@ -106,13 +114,8 @@ extern "C" {
   asm(
     ".text\n"
     ".align 8\n"
-#if defined(__CYGWIN__) || defined(__APPLE__) || defined(__MINGW32__)
-    ".globl _X86CompilationCallback\n"
-  "_X86CompilationCallback:\n"
-#else
-    ".globl X86CompilationCallback\n"
-  "X86CompilationCallback:\n"
-#endif
+    ".globl " ASMPREFIX  "X86CompilationCallback\n"
+  ASMPREFIX "X86CompilationCallback:\n"
     "pushl   %ebp\n"
     "movl    %esp, %ebp\n"    // Standard prologue
 #if FASTCC_NUM_INT_ARGS_INREGS > 0
@@ -126,11 +129,7 @@ extern "C" {
     "movl    4(%ebp), %eax\n" // Pass prev frame and return address
     "movl    %eax, 4(%esp)\n"
     "movl    %ebp, (%esp)\n"
-#if defined(__CYGWIN__) || defined(__MINGW32__) || defined(__APPLE__)
-    "call    _X86CompilationCallback2\n"
-#else
-    "call    X86CompilationCallback2\n"
-#endif
+    "call    " ASMPREFIX "X86CompilationCallback2\n"
     "movl    %ebp, %esp\n"    // Restore ESP
 #if FASTCC_NUM_INT_ARGS_INREGS > 0
     "subl    $8, %esp\n"
