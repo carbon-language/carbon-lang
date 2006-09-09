@@ -1894,19 +1894,42 @@ Instruction *InstCombiner::visitDiv(BinaryOperator &I) {
     }
   }
 
-  // If this is 'udiv X, (Cond ? C1, C2)' where C1&C2 are powers of two,
-  // transform this into: '(Cond ? (udiv X, C1) : (udiv X, C2))'.
-  if (SelectInst *SI = dyn_cast<SelectInst>(Op1))
+  // Handle div X, Cond?Y:Z
+  if (SelectInst *SI = dyn_cast<SelectInst>(Op1)) {
+    // div X, (Cond ? 0 : Y) -> div X, Y.  If the div and the select are in the
+    // same basic block, then we replace the select with Y, and the condition of
+    // the select with false (if the cond value is in the same BB).  If the
+    // select has uses other than the div, this allows them to be simplified
+    // also.
+    if (Constant *ST = dyn_cast<Constant>(SI->getOperand(1)))
+      if (ST->isNullValue()) {
+        Instruction *CondI = dyn_cast<Instruction>(SI->getOperand(0));
+        if (CondI && CondI->getParent() == I.getParent())
+          UpdateValueUsesWith(CondI, ConstantBool::False);
+        else if (I.getParent() != SI->getParent() || SI->hasOneUse())
+          I.setOperand(1, SI->getOperand(2));
+        else
+          UpdateValueUsesWith(SI, SI->getOperand(2));
+        return &I;
+      }
+    // Likewise for: div X, (Cond ? Y : 0) -> div X, Y
+    if (Constant *ST = dyn_cast<Constant>(SI->getOperand(2)))
+      if (ST->isNullValue()) {
+        Instruction *CondI = dyn_cast<Instruction>(SI->getOperand(0));
+        if (CondI && CondI->getParent() == I.getParent())
+          UpdateValueUsesWith(CondI, ConstantBool::True);
+        else if (I.getParent() != SI->getParent() || SI->hasOneUse())
+          I.setOperand(1, SI->getOperand(1));
+        else
+          UpdateValueUsesWith(SI, SI->getOperand(1));
+        return &I;
+      }
+
+    // If this is 'udiv X, (Cond ? C1, C2)' where C1&C2 are powers of two,
+    // transform this into: '(Cond ? (udiv X, C1) : (udiv X, C2))'.
     if (ConstantUInt *STO = dyn_cast<ConstantUInt>(SI->getOperand(1)))
       if (ConstantUInt *SFO = dyn_cast<ConstantUInt>(SI->getOperand(2))) {
-        if (STO->getValue() == 0) { // Couldn't be this argument.
-          I.setOperand(1, SFO);
-          return &I;
-        } else if (SFO->getValue() == 0) {
-          I.setOperand(1, STO);
-          return &I;
-        }
-
+        // STO == 0 and SFO == 0 handled above.
         uint64_t TVA = STO->getValue(), FVA = SFO->getValue();
         if (isPowerOf2_64(TVA) && isPowerOf2_64(FVA)) {
           unsigned TSA = Log2_64(TVA), FSA = Log2_64(FVA);
@@ -1922,6 +1945,7 @@ Instruction *InstCombiner::visitDiv(BinaryOperator &I) {
           return new SelectInst(SI->getOperand(0), TSI, FSI);
         }
       }
+  }
 
   // 0 / X == 0, we don't need to preserve faults!
   if (ConstantInt *LHS = dyn_cast<ConstantInt>(Op0))
@@ -2095,16 +2119,40 @@ Instruction *InstCombiner::visitRem(BinaryOperator &I) {
     
     // If this is 'urem X, (Cond ? C1, C2)' where C1&C2 are powers of two,
     // transform this into: '(Cond ? (urem X, C1) : (urem X, C2))'.
-    if (SelectInst *SI = dyn_cast<SelectInst>(Op1))
+    if (SelectInst *SI = dyn_cast<SelectInst>(Op1)) {
+      // rem X, (Cond ? 0 : Y) -> rem X, Y.  If the rem and the select are in
+      // the same basic block, then we replace the select with Y, and the
+      // condition of the select with false (if the cond value is in the same
+      // BB).  If the select has uses other than the div, this allows them to be
+      // simplified also.
+      if (Constant *ST = dyn_cast<Constant>(SI->getOperand(1)))
+        if (ST->isNullValue()) {
+          Instruction *CondI = dyn_cast<Instruction>(SI->getOperand(0));
+          if (CondI && CondI->getParent() == I.getParent())
+            UpdateValueUsesWith(CondI, ConstantBool::False);
+          else if (I.getParent() != SI->getParent() || SI->hasOneUse())
+            I.setOperand(1, SI->getOperand(2));
+          else
+            UpdateValueUsesWith(SI, SI->getOperand(2));
+          return &I;
+        }
+      // Likewise for: rem X, (Cond ? Y : 0) -> rem X, Y
+      if (Constant *ST = dyn_cast<Constant>(SI->getOperand(2)))
+        if (ST->isNullValue()) {
+          Instruction *CondI = dyn_cast<Instruction>(SI->getOperand(0));
+          if (CondI && CondI->getParent() == I.getParent())
+            UpdateValueUsesWith(CondI, ConstantBool::True);
+          else if (I.getParent() != SI->getParent() || SI->hasOneUse())
+            I.setOperand(1, SI->getOperand(1));
+          else
+            UpdateValueUsesWith(SI, SI->getOperand(1));
+          return &I;
+        }
+
+      
       if (ConstantUInt *STO = dyn_cast<ConstantUInt>(SI->getOperand(1)))
         if (ConstantUInt *SFO = dyn_cast<ConstantUInt>(SI->getOperand(2))) {
-          if (STO->getValue() == 0) { // Couldn't be this argument.
-            I.setOperand(1, SFO);
-            return &I;
-          } else if (SFO->getValue() == 0) {
-            I.setOperand(1, STO);
-            return &I;
-          }
+          // STO == 0 and SFO == 0 handled above.
           
           if (isPowerOf2_64(STO->getValue()) && isPowerOf2_64(SFO->getValue())){
             Value *TrueAnd = InsertNewInstBefore(BinaryOperator::createAnd(Op0,
@@ -2114,6 +2162,7 @@ Instruction *InstCombiner::visitRem(BinaryOperator &I) {
             return new SelectInst(SI->getOperand(0), TrueAnd, FalseAnd);
           }
         }
+    }
   }
   
   return 0;
