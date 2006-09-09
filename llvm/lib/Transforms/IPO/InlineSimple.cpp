@@ -138,9 +138,32 @@ void FunctionInfo::analyzeFunction(Function *F) {
   // each instruction counts as 10.
   for (Function::const_iterator BB = F->begin(), E = F->end(); BB != E; ++BB) {
     for (BasicBlock::const_iterator II = BB->begin(), E = BB->end();
-         II != E; ++II)
-      if (!isa<DbgInfoIntrinsic>(II)) 
-        ++NumInsts;
+         II != E; ++II) {
+      if (isa<DbgInfoIntrinsic>(II)) continue;  // Debug intrinsics don't count.
+      
+      // Noop casts don't count.
+      if (const CastInst *CI = dyn_cast<CastInst>(II)) {
+        const Type *OpTy = CI->getOperand(0)->getType();
+        if (CI->getType()->isLosslesslyConvertibleTo(OpTy))
+          continue;
+        if ((isa<PointerType>(CI->getType()) && OpTy->isInteger()) ||
+            (isa<PointerType>(OpTy) && CI->getType()->isInteger()))
+          continue;  // ptr <-> int is *probably* noop cast.
+      } else if (const GetElementPtrInst *GEPI =
+                         dyn_cast<GetElementPtrInst>(II)) {
+        // If a GEP has all constant indices, it will probably be folded with
+        // a load/store.
+        bool AllConstant = true;
+        for (unsigned i = 1, e = GEPI->getNumOperands(); i != e; ++i)
+          if (!isa<ConstantInt>(GEPI->getOperand(i))) {
+            AllConstant = false;
+            break;
+          }
+        if (AllConstant) continue;
+      }
+      
+      ++NumInsts;
+    }
 
     ++NumBlocks;
   }
