@@ -1693,6 +1693,8 @@ void CWriter::lowerIntrinsics(Function &F) {
           case Intrinsic::longjmp:
           case Intrinsic::prefetch:
           case Intrinsic::dbg_stoppoint:
+          case Intrinsic::powi_f32:
+          case Intrinsic::powi_f64:
             // We directly implement these intrinsics
             break;
           default:
@@ -1783,6 +1785,14 @@ void CWriter::visitCallInst(CallInst &I) {
       case Intrinsic::frameaddress:
         Out << "__builtin_frame_address(";
         writeOperand(I.getOperand(1));
+        Out << ')';
+        return;
+      case Intrinsic::powi_f32:
+      case Intrinsic::powi_f64:
+        Out << "__builtin_powi(";
+        writeOperand(I.getOperand(1));
+        Out << ", ";
+        writeOperand(I.getOperand(2));
         Out << ')';
         return;
       case Intrinsic::setjmp:
