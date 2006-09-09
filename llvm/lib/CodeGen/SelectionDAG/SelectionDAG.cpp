@@ -2404,6 +2404,7 @@ const char *SDNode::getOperationName(const SelectionDAG *G) const {
   case ISD::FSQRT:  return "fsqrt";
   case ISD::FSIN:   return "fsin";
   case ISD::FCOS:   return "fcos";
+  case ISD::FPOWI:  return "fpowi";
 
   // Binary operators
   case ISD::ADD:    return "add";

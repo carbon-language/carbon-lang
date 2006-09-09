@@ -2581,7 +2581,14 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
       break;
     }
     break;
-    
+  case ISD::FPOWI: {
+    // We always lower FPOWI into a libcall.  No target support it yet.
+    const char *FnName = Node->getValueType(0) == MVT::f32
+                            ? "__powisf2" : "__powidf2";
+    SDOperand Dummy;
+    Result = ExpandLibCall(FnName, Node, Dummy);
+    break;
+  }
   case ISD::BIT_CONVERT:
     if (!isTypeLegal(Node->getOperand(0).getValueType())) {
       Result = ExpandBIT_CONVERT(Node->getValueType(0), Node->getOperand(0));
