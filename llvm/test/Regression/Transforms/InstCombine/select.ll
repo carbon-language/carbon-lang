@@ -148,3 +148,9 @@ bool %test17(int* %X, bool %C) {
 	%RV = seteq int* %R, null
 	ret bool %RV
 }
+
+int %test18(int %X, int %Y, bool %C) {
+	%R = select bool %C, int %X, int 0
+	%V = div int %Y, %R   ; div Y,X
+	ret int %V
+}
