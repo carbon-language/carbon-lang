@@ -1330,14 +1330,31 @@ static Instruction *FoldOpIntoSelect(Instruction &Op, SelectInst *SI,
 Instruction *InstCombiner::FoldOpIntoPhi(Instruction &I) {
   PHINode *PN = cast<PHINode>(I.getOperand(0));
   unsigned NumPHIValues = PN->getNumIncomingValues();
-  if (!PN->hasOneUse() || NumPHIValues == 0 ||
-      !isa<Constant>(PN->getIncomingValue(0))) return 0;
+  if (!PN->hasOneUse() || NumPHIValues == 0) return 0;
 
-  // Check to see if all of the operands of the PHI are constants.  If not, we
-  // cannot do the transformation.
-  for (unsigned i = 1; i != NumPHIValues; ++i)
-    if (!isa<Constant>(PN->getIncomingValue(i)))
-      return 0;
+  // Check to see if all of the operands of the PHI are constants.  If there is
+  // one non-constant value, remember the BB it is.  If there is more than one
+  // bail out.
+  BasicBlock *NonConstBB = 0;
+  for (unsigned i = 0; i != NumPHIValues; ++i)
+    if (!isa<Constant>(PN->getIncomingValue(i))) {
+      if (NonConstBB) return 0;  // More than one non-const value.
+      NonConstBB = PN->getIncomingBlock(i);
+      
+      // If the incoming non-constant value is in I's block, we have an infinite
+      // loop.
+      if (NonConstBB == I.getParent())
+        return 0;
+    }
+  
+  // If there is exactly one non-constant value, we can insert a copy of the
+  // operation in that block.  However, if this is a critical edge, we would be
+  // inserting the computation one some other paths (e.g. inside a loop).  Only
+  // do this if the pred block is unconditionally branching into the phi block.
+  if (NonConstBB) {
+    BranchInst *BI = dyn_cast<BranchInst>(NonConstBB->getTerminator());
+    if (!BI || !BI->isUnconditional()) return 0;
+  }
 
   // Okay, we can do the transformation: create the new PHI node.
   PHINode *NewPN = new PHINode(I.getType(), I.getName());
@@ -1349,17 +1366,40 @@ Instruction *InstCombiner::FoldOpIntoPhi(Instruction &I) {
   if (I.getNumOperands() == 2) {
     Constant *C = cast<Constant>(I.getOperand(1));
     for (unsigned i = 0; i != NumPHIValues; ++i) {
-      Constant *InV = cast<Constant>(PN->getIncomingValue(i));
-      NewPN->addIncoming(ConstantExpr::get(I.getOpcode(), InV, C),
-                         PN->getIncomingBlock(i));
+      Value *InV;
+      if (Constant *InC = dyn_cast<Constant>(PN->getIncomingValue(i))) {
+        InV = ConstantExpr::get(I.getOpcode(), InC, C);
+      } else {
+        assert(PN->getIncomingBlock(i) == NonConstBB);
+        if (BinaryOperator *BO = dyn_cast<BinaryOperator>(&I)) 
+          InV = BinaryOperator::create(BO->getOpcode(),
+                                       PN->getIncomingValue(i), C, "phitmp",
+                                       NonConstBB->getTerminator());
+        else if (ShiftInst *SI = dyn_cast<ShiftInst>(&I))
+          InV = new ShiftInst(SI->getOpcode(),
+                              PN->getIncomingValue(i), C, "phitmp",
+                              NonConstBB->getTerminator());
+        else
+          assert(0 && "Unknown binop!");
+        
+        WorkList.push_back(cast<Instruction>(InV));
+      }
+      NewPN->addIncoming(InV, PN->getIncomingBlock(i));
     }
   } else {
     assert(isa<CastInst>(I) && "Unary op should be a cast!");
     const Type *RetTy = I.getType();
     for (unsigned i = 0; i != NumPHIValues; ++i) {
-      Constant *InV = cast<Constant>(PN->getIncomingValue(i));
-      NewPN->addIncoming(ConstantExpr::getCast(InV, RetTy),
-                         PN->getIncomingBlock(i));
+      Value *InV;
+      if (Constant *InC = dyn_cast<Constant>(PN->getIncomingValue(i))) {
+        InV = ConstantExpr::getCast(InC, RetTy);
+      } else {
+        assert(PN->getIncomingBlock(i) == NonConstBB);
+        InV = new CastInst(PN->getIncomingValue(i), I.getType(), "phitmp",
+                           NonConstBB->getTerminator());
+        WorkList.push_back(cast<Instruction>(InV));
+      }
+      NewPN->addIncoming(InV, PN->getIncomingBlock(i));
     }
   }
   return ReplaceInstUsesWith(I, NewPN);
