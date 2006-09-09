@@ -220,15 +220,17 @@ int llvm::GenerateBytecode(Module *M, int StripLevel, bool Internalize,
     // internal.
     addPass(Passes, createInternalizePass(Internalize));
 
+    // Propagate constants at call sites into the functions they call.  This
+    // opens opportunities for globalopt (and inlining) by substituting function
+    // pointers passed as arguments to direct uses of functions.
+    addPass(Passes, createIPSCCPPass());
+    
     // Now that we internalized some globals, see if we can hack on them!
     addPass(Passes, createGlobalOptimizerPass());
 
     // Linking modules together can lead to duplicated global constants, only
     // keep one copy of each constant...
     addPass(Passes, createConstantMergePass());
-
-    // Propagate constants at call sites into the functions they call.
-    addPass(Passes, createIPSCCPPass());
 
     // Remove unused arguments from functions...
     addPass(Passes, createDeadArgEliminationPass());
