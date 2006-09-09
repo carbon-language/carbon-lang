@@ -4457,8 +4457,21 @@ void SelectionDAGLegalize::ExpandOp(SDOperand Op, SDOperand &Lo, SDOperand &Hi){
     break;
     
   case ISD::BIT_CONVERT: {
-    SDOperand Tmp = ExpandBIT_CONVERT(Node->getValueType(0), 
-                                      Node->getOperand(0));
+    SDOperand Tmp;
+    if (TLI.getOperationAction(ISD::BIT_CONVERT, VT) == TargetLowering::Custom){
+      // If the target wants to, allow it to lower this itself.
+      switch (getTypeAction(Node->getOperand(0).getValueType())) {
+      case Expand: assert(0 && "cannot expand FP!");
+      case Legal:   Tmp = LegalizeOp(Node->getOperand(0)); break;
+      case Promote: Tmp = PromoteOp (Node->getOperand(0)); break;
+      }
+      Tmp = TLI.LowerOperation(DAG.getNode(ISD::BIT_CONVERT, VT, Tmp), DAG);
+    }
+
+    // Turn this into a load/store pair by default.
+    if (Tmp.Val == 0)
+      Tmp = ExpandBIT_CONVERT(Node->getValueType(0), Node->getOperand(0));
+    
     ExpandOp(Tmp, Lo, Hi);
     break;
   }
