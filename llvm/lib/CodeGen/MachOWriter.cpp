@@ -25,6 +25,7 @@
 #include "llvm/Module.h"
 #include "llvm/CodeGen/MachineCodeEmitter.h"
 #include "llvm/CodeGen/MachineConstantPool.h"
+#include "llvm/CodeGen/MachineJumpTableInfo.h"
 #include "llvm/CodeGen/MachOWriter.h"
 #include "llvm/ExecutionEngine/ExecutionEngine.h"
 #include "llvm/Target/TargetJITInfo.h"
@@ -50,6 +51,14 @@ namespace llvm {
     /// Relocations - These are the relocations that the function needs, as
     /// emitted.
     std::vector<MachineRelocation> Relocations;
+    
+    /// CPLocations - This is a map of constant pool indices to offsets from the
+    /// start of the section for that constant pool index.
+    std::vector<intptr_t> CPLocations;
+
+    /// JTLocations - This is a map of jump table indices to offsets from the
+    /// start of the section for that jump table index.
+    std::vector<intptr_t> JTLocations;
 
     /// MBBLocations - This vector is a mapping from MBB ID's to their address.
     /// It is filled in by the StartMachineBasicBlock callback and queried by
@@ -66,19 +75,22 @@ namespace llvm {
       Relocations.push_back(MR);
     }
     
-    virtual void StartMachineBasicBlock(MachineBasicBlock *MBB) {
-      if (MBBLocations.size() <= (unsigned)MBB->getNumber())
-        MBBLocations.resize((MBB->getNumber()+1)*2);
-      MBBLocations[MBB->getNumber()] = getCurrentPCValue();
-    }
-
+    void emitConstantPool(MachineConstantPool *MCP);
+    void emitJumpTables(MachineJumpTableInfo *MJTI);
+    
     virtual intptr_t getConstantPoolEntryAddress(unsigned Index) const {
       assert(0 && "CP not implementated yet!");
       return 0;
     }
     virtual intptr_t getJumpTableEntryAddress(unsigned Index) const {
-      assert(0 && "JT not implementated yet!");
-      return 0;
+      assert(JTLocations.size() > Index && "JT not emitted!");
+      return JTLocations[Index];
+    }
+
+    virtual void StartMachineBasicBlock(MachineBasicBlock *MBB) {
+      if (MBBLocations.size() <= (unsigned)MBB->getNumber())
+        MBBLocations.resize((MBB->getNumber()+1)*2);
+      MBBLocations[MBB->getNumber()] = getCurrentPCOffset();
     }
 
     virtual intptr_t getMachineBasicBlockAddress(MachineBasicBlock *MBB) const {
@@ -119,7 +131,9 @@ void MachOCodeEmitter::startFunction(MachineFunction &F) {
   // Upgrade the section alignment if required.
   if (MOS->align < Align) MOS->align = Align;
 
-  // Make sure we only relocate to this function's MBBs.
+  // Clear per-function data structures.
+  CPLocations.clear();
+  JTLocations.clear();
   MBBLocations.clear();
 }
 
@@ -132,32 +146,73 @@ bool MachOCodeEmitter::finishFunction(MachineFunction &F) {
   const GlobalValue *FuncV = F.getFunction();
   MachOSym FnSym(FuncV, MOW.Mang->getValueName(FuncV), MOS->Index);
 
-  // FIXME: emit constant pool to appropriate section(s)
-  // FIXME: emit jump table to appropriate section
+  // Emit constant pool to appropriate section(s)
+  emitConstantPool(F.getConstantPool());
+
+  // Emit jump tables to appropriate section
+  emitJumpTables(F.getJumpTableInfo());
   
-  // Resolve the function's relocations either to concrete pointers in the case
-  // of branches from one block to another, or to target relocation entries.
+  // If we have emitted any relocations to function-specific objects such as 
+  // basic blocks, constant pools entries, or jump tables, record their
+  // addresses now so that we can rewrite them with the correct addresses
+  // later.
   for (unsigned i = 0, e = Relocations.size(); i != e; ++i) {
     MachineRelocation &MR = Relocations[i];
+    intptr_t Addr;
     if (MR.isBasicBlock()) {
-      void *MBBAddr = (void *)getMachineBasicBlockAddress(MR.getBasicBlock());
-      MR.setResultPointer(MBBAddr);
-      MOW.TM.getJITInfo()->relocate(BufferBegin, &MR, 1, 0);
-    } else if (MR.isConstantPoolIndex() || MR.isJumpTableIndex()) {
-      // Get the address of the index.
-      uint64_t Addr = 0;
-      // Generate the relocation(s) for the index.
-      MOW.GetTargetRelocation(*MOS, MR, Addr);
-    } else {
-      // Handle other types later once we've finalized the sections in the file.
-      MOS->Relocations.push_back(MR);
+      Addr = getMachineBasicBlockAddress(MR.getBasicBlock());
+      MR.setResultPointer((void *)Addr);
+    } else if (MR.isConstantPoolIndex()) {
+      Addr = getConstantPoolEntryAddress(MR.getConstantPoolIndex());
+      MR.setResultPointer((void *)Addr);
+    } else if (MR.isJumpTableIndex()) {
+      // FIXME: handle PIC codegen
+      Addr = getJumpTableEntryAddress(MR.getJumpTableIndex());
+      MR.setResultPointer((void *)Addr);
     }
+    MOS->Relocations.push_back(MR);
   }
   Relocations.clear();
   
   // Finally, add it to the symtab.
   MOW.SymbolTable.push_back(FnSym);
   return false;
+}
+
+/// emitConstantPool - For each constant pool entry, figure out which section
+/// the constant should live in, allocate space for it, and emit it to the 
+/// Section data buffer.
+void MachOCodeEmitter::emitConstantPool(MachineConstantPool *MCP) {
+}
+
+/// emitJumpTables - Emit all the jump tables for a given jump table info
+/// record to the appropriate section.
+void MachOCodeEmitter::emitJumpTables(MachineJumpTableInfo *MJTI) {
+  const std::vector<MachineJumpTableEntry> &JT = MJTI->getJumpTables();
+  if (JT.empty()) return;
+
+  bool isPIC = MOW.TM.getRelocationModel() == Reloc::PIC_;
+  assert(!isPIC && "PIC codegen not yet handled for mach-o jump tables!");
+
+  MachOWriter::MachOSection &Sec = MOW.getJumpTableSection();
+
+  for (unsigned i = 0, e = JT.size(); i != e; ++i) {
+    // For each jump table, record its offset from the start of the section,
+    // reserve space for the relocations to the MBBs, and add the relocations.
+    const std::vector<MachineBasicBlock*> &MBBs = JT[i].MBBs;
+    JTLocations.push_back(Sec.SectionData.size());
+    for (unsigned mi = 0, me = MBBs.size(); mi != me; ++mi) {
+      MachineRelocation MR(MOW.GetJTRelocation(Sec.SectionData.size(),
+                                               MBBs[mi]));
+      MR.setResultPointer((void *)JTLocations[i]);
+      Sec.Relocations.push_back(MR);
+      MOW.outaddr(Sec.SectionData, 0);
+    }
+  }
+  // FIXME: it really seems like keeping these in sync is redundant, someone
+  // should do something about that (never access section size directly, only
+  // look at buffer size).
+  Sec.size = Sec.SectionData.size();
 }
 
 //===----------------------------------------------------------------------===//
@@ -294,11 +349,8 @@ bool MachOWriter::doFinalization(Module &M) {
   // Emit the header and load commands.
   EmitHeaderAndLoadCommands();
 
-  // Emit the text and data sections.
+  // Emit the various sections and their relocation info.
   EmitSections();
-
-  // Emit the relocation entry data for each section.
-  O.write((char*)&RelocBuffer[0], RelocBuffer.size());
 
   // Write the symbol table and the string table to the end of the file.
   O.write((char*)&SymT[0], SymT.size());
@@ -370,6 +422,7 @@ void MachOWriter::EmitHeaderAndLoadCommands() {
          E = SectionList.end(); I != E; ++I) {
     I->addr = currentAddr;
     I->offset = currentAddr + SEG.fileoff;
+
     // FIXME: do we need to do something with alignment here?
     currentAddr += I->size;
   }
@@ -380,14 +433,8 @@ void MachOWriter::EmitHeaderAndLoadCommands() {
   for (std::list<MachOSection>::iterator I = SectionList.begin(),
          E = SectionList.end(); I != E; ++I) {
     // calculate the relocation info for this section command
-    // FIXME: this could get complicated calculating the address argument, we 
-    // should probably split this out into its own function.
-    for (unsigned i = 0, e = I->Relocations.size(); i != e; ++i)
-      GetTargetRelocation(*I, I->Relocations[i], 0);
-    if (I->nreloc != 0) {
-      I->reloff = currentAddr;
-      currentAddr += I->nreloc * 8;
-    }
+    CalculateRelocations(*I, currentAddr);
+    currentAddr += I->nreloc * 8;
     
     // write the finalized section command to the output buffer
     outstring(FH, I->sectname, 16);
@@ -449,9 +496,13 @@ void MachOWriter::EmitHeaderAndLoadCommands() {
 /// commands, emit the data for each section to the file.
 void MachOWriter::EmitSections() {
   for (std::list<MachOSection>::iterator I = SectionList.begin(),
-         E = SectionList.end(); I != E; ++I) {
+         E = SectionList.end(); I != E; ++I)
+    // Emit the contents of each section
     O.write((char*)&I->SectionData[0], I->size);
-  }
+  for (std::list<MachOSection>::iterator I = SectionList.begin(),
+         E = SectionList.end(); I != E; ++I)
+    // Emit the relocation entry data for each section.
+    O.write((char*)&I->RelocBuffer[0], I->RelocBuffer.size());
 }
 
 /// PartitionByLocal - Simple boolean predicate that returns true if Sym is
@@ -524,6 +575,23 @@ void MachOWriter::BufferSymbolAndStringTable() {
     outhalf(SymT, I->n_desc);
     outaddr(SymT, I->n_value);
   }
+}
+
+/// CalculateRelocations - For each MachineRelocation in the current section,
+/// calculate the index of the section containing the object to be relocated,
+/// and the offset into that section.  From this information, create the
+/// appropriate target-specific MachORelocation type and add buffer it to be
+/// written out after we are finished writing out sections.
+void MachOWriter::CalculateRelocations(MachOSection &MOS, unsigned RelOffset) {
+  for (unsigned i = 0, e = MOS.Relocations.size(); i != e; ++i) {
+    // FIXME: calculate the correct offset and section index for relocated
+    // object.
+    // FIXME: somehow convey the fact that the relocation might be external
+    // to the relocating code.
+    GetTargetRelocation(MOS.Relocations[i], MOS, MOS.Index);
+  }
+  if (MOS.nreloc != 0)
+    MOS.reloff = RelOffset;
 }
 
 MachOSym::MachOSym(const GlobalValue *gv, std::string name, uint8_t sect) :

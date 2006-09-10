@@ -673,7 +673,7 @@ namespace {
     ///
     void *ConstantPoolBase;
 
-    /// ConstantPool - The constant pool for the current function.
+    /// JumpTable - The jump tables for the current function.
     ///
     MachineJumpTableInfo *JumpTable;
     

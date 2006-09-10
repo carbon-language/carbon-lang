@@ -25,6 +25,10 @@
 namespace llvm {
   namespace PPC {
     enum RelocationType {
+      // reloc_vanilla - A standard relocation, where the address of the
+      // relocated object completely overwrites the address of the relocation.
+      reloc_vanilla,
+    
       // reloc_pcrel_bx - PC relative relocation, for the b or bl instructions.
       reloc_pcrel_bx,
 

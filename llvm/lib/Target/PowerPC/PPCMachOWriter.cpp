@@ -31,9 +31,15 @@ namespace {
       Header.cpusubtype = MachOHeader::CPU_SUBTYPE_POWERPC_ALL;
     }
 
-    virtual void GetTargetRelocation(MachOSection &MOS, MachineRelocation &MR,
-                                     uint64_t Addr);
+    virtual void GetTargetRelocation(MachineRelocation &MR, MachOSection &MOS,
+                                     unsigned ToIndex);
+    virtual MachineRelocation GetJTRelocation(unsigned Offset,
+                                              MachineBasicBlock *MBB);
     
+    virtual const char *getPassName() const {
+      return "PowerPC Mach-O Writer";
+    }
+
     // Constants for the relocation r_type field.
     // see <mach-o/ppc/reloc.h>
     enum { PPC_RELOC_VANILLA, // generic relocation
@@ -53,73 +59,93 @@ namespace {
 ///
 void llvm::addPPCMachOObjectWriterPass(FunctionPassManager &FPM,
                                        std::ostream &O, PPCTargetMachine &TM) {
-  PPCMachOWriter *EW = new PPCMachOWriter(O, TM);
-  FPM.add(EW);
-  FPM.add(createPPCCodeEmitterPass(TM, EW->getMachineCodeEmitter()));
+  PPCMachOWriter *MOW = new PPCMachOWriter(O, TM);
+  FPM.add(MOW);
+  FPM.add(createPPCCodeEmitterPass(TM, MOW->getMachineCodeEmitter()));
 }
 
 /// GetTargetRelocation - For the MachineRelocation MR, convert it to one or
 /// more PowerPC MachORelocation(s), add the new relocations to the
 /// MachOSection, and rewrite the instruction at the section offset if required 
 /// by that relocation type.
-void PPCMachOWriter::GetTargetRelocation(MachOSection &MOS,
-                                         MachineRelocation &MR,
-                                         uint64_t Addr) {
+void PPCMachOWriter::GetTargetRelocation(MachineRelocation &MR,
+                                         MachOSection &MOS,
+                                         unsigned ToIndex) {
+  uint64_t Addr = 0;
+  
   // Keep track of whether or not this is an externally defined relocation.
-  uint32_t index = MOS.Index;
   bool     isExtern = false;
   
-  // Get the address of the instruction to rewrite
-  unsigned char *RelocPos = &MOS.SectionData[0] + MR.getMachineCodeOffset();
-  
   // Get the address of whatever it is we're relocating, if possible.
-  if (MR.isGlobalValue()) {
-    // determine whether or not its external and then figure out what section
-    // we put it in if it's a locally defined symbol.
-  } else if (MR.isString()) {
-    // lookup in global values?
-  } else {
-    assert((MR.isConstantPoolIndex() || MR.isJumpTableIndex()) &&
-           "Unhandled MachineRelocation type!");
-  }
-  
+  if (!isExtern)
+    Addr = (uintptr_t)MR.getResultPointer();
+    
   switch ((PPC::RelocationType)MR.getRelocationType()) {
   default: assert(0 && "Unknown PPC relocation type!");
-  case PPC::reloc_pcrel_bx:
-  case PPC::reloc_pcrel_bcx:
   case PPC::reloc_absolute_low_ix:
     assert(0 && "Unhandled PPC relocation type!");
     break;
+  case PPC::reloc_vanilla:
+    {
+      // FIXME: need to handle 64 bit vanilla relocs
+      MachORelocation VANILLA(MR.getMachineCodeOffset(), ToIndex, false, 2, 
+                              isExtern, PPC_RELOC_VANILLA);
+      outword(MOS.RelocBuffer, VANILLA.r_address);
+      outword(MOS.RelocBuffer, VANILLA.getPackedFields());
+    }
+    MOS.nreloc += 1;
+    fixword(MOS.SectionData, Addr, MR.getMachineCodeOffset());
+    break;
+  case PPC::reloc_pcrel_bx:
+    Addr -= MR.getMachineCodeOffset();
+    Addr >>= 2;
+    Addr & 0xFFFFFF;
+    Addr <<= 2;
+    Addr |= (MOS.SectionData[MR.getMachineCodeOffset()] << 24);
+    fixword(MOS.SectionData, Addr, MR.getMachineCodeOffset());
+    break;
+  case PPC::reloc_pcrel_bcx:
+    Addr -= MR.getMachineCodeOffset();
+    Addr &= 0xFFFC;
+    fixhalf(MOS.SectionData, Addr, MR.getMachineCodeOffset() + 2);
+    break;
   case PPC::reloc_absolute_high:
     {
-      MachORelocation HA16(MR.getMachineCodeOffset(), index, false, 2, isExtern, 
-                           PPC_RELOC_HA16);
+      MachORelocation HA16(MR.getMachineCodeOffset(), ToIndex, false, 2,
+                           isExtern, PPC_RELOC_HA16);
       MachORelocation PAIR(Addr & 0xFFFF, 0xFFFFFF, false, 2, isExtern,
                            PPC_RELOC_PAIR);
-      outword(RelocBuffer, HA16.r_address);
-      outword(RelocBuffer, HA16.getPackedFields());
-      outword(RelocBuffer, PAIR.r_address);
-      outword(RelocBuffer, PAIR.getPackedFields());
+      outword(MOS.RelocBuffer, HA16.r_address);
+      outword(MOS.RelocBuffer, HA16.getPackedFields());
+      outword(MOS.RelocBuffer, PAIR.r_address);
+      outword(MOS.RelocBuffer, PAIR.getPackedFields());
     }
+    printf("ha16: %x\n", (unsigned)Addr);
     MOS.nreloc += 2;
     Addr += 0x8000;
-    *(unsigned *)RelocPos &= 0xFFFF0000;
-    *(unsigned *)RelocPos |= ((Addr >> 16) & 0xFFFF);
+    fixhalf(MOS.SectionData, Addr >> 16, MR.getMachineCodeOffset() + 2);
     break;
   case PPC::reloc_absolute_low:
     {
-      MachORelocation LO16(MR.getMachineCodeOffset(), index, false, 2, isExtern, 
-                           PPC_RELOC_LO16);
+      MachORelocation LO16(MR.getMachineCodeOffset(), ToIndex, false, 2,
+                           isExtern, PPC_RELOC_LO16);
       MachORelocation PAIR(Addr >> 16, 0xFFFFFF, false, 2, isExtern,
                            PPC_RELOC_PAIR);
-      outword(RelocBuffer, LO16.r_address);
-      outword(RelocBuffer, LO16.getPackedFields());
-      outword(RelocBuffer, PAIR.r_address);
-      outword(RelocBuffer, PAIR.getPackedFields());
+      outword(MOS.RelocBuffer, LO16.r_address);
+      outword(MOS.RelocBuffer, LO16.getPackedFields());
+      outword(MOS.RelocBuffer, PAIR.r_address);
+      outword(MOS.RelocBuffer, PAIR.getPackedFields());
     }
+    printf("lo16: %x\n", (unsigned)Addr);
     MOS.nreloc += 2;
-    *(unsigned *)RelocPos &= 0xFFFF0000;
-    *(unsigned *)RelocPos |= (Addr & 0xFFFF);
+    fixhalf(MOS.SectionData, Addr, MR.getMachineCodeOffset() + 2);
     break;
   }
 }
+
+MachineRelocation PPCMachOWriter::GetJTRelocation(unsigned Offset,
+                                                  MachineBasicBlock *MBB) {
+  // FIXME: do something about PIC
+  return MachineRelocation::getBB(Offset, PPC::reloc_vanilla, MBB);
+}
+

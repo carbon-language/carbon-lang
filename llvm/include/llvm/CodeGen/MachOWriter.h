@@ -344,6 +344,10 @@ namespace llvm {
       /// SectionData - The actual data for this section which we are building
       /// up for emission to the file.
       DataBuffer SectionData;
+
+      /// RelocBuffer - A buffer to hold the mach-o relocations before we write
+      /// them out at the appropriate location in the file.
+      DataBuffer RelocBuffer;
       
       /// Relocations - The relocations that we have encountered so far in this 
       /// section that we will need to convert to MachORelocation entries when
@@ -421,7 +425,7 @@ namespace llvm {
       }
 
       MachOSection(const std::string &seg, const std::string &sect)
-        : sectname(sect), segname(seg), addr(0), size(0), offset(0), align(0),
+        : sectname(sect), segname(seg), addr(0), size(0), offset(0), align(2),
           reloff(0), nreloc(0), flags(0), reserved1(0), reserved2(0),
           reserved3(0) { }
     };
@@ -449,10 +453,13 @@ namespace llvm {
       SN->flags = MachOSection::S_REGULAR | Flags;
       return *SN;
     }
-    MachOSection &getTextSection() {
-      return getSection("__TEXT", "__text", 
-                        MachOSection::S_ATTR_PURE_INSTRUCTIONS |
-                        MachOSection::S_ATTR_SOME_INSTRUCTIONS);
+    MachOSection &getTextSection(bool isCode = true) {
+      if (isCode)
+        return getSection("__TEXT", "__text", 
+                          MachOSection::S_ATTR_PURE_INSTRUCTIONS |
+                          MachOSection::S_ATTR_SOME_INSTRUCTIONS);
+      else
+        return getSection("__TEXT", "__text");
     }
     MachOSection &getBSSSection() {
       return getSection("__DATA", "__bss", MachOSection::S_ZEROFILL);
@@ -478,6 +485,12 @@ namespace llvm {
         }
       }
       return getSection("__TEXT", "__const");
+    }
+    MachOSection &getJumpTableSection() {
+      if (TM.getRelocationModel() == Reloc::PIC_)
+        return getTextSection(false);
+      else
+        return getSection("__TEXT", "__const");
     }
     
     /// MachOSymTab - This struct contains information about the offsets and 
@@ -562,10 +575,6 @@ namespace llvm {
     /// This actually gets rearranged before emission to the file (to put the
     /// local symbols first in the list).
     std::vector<MachOSym> SymbolTable;
-    
-    /// RelocBuffer - A buffer to hold the mach-o relocations before we write
-    /// them out at the appropriate location in the file.
-    DataBuffer RelocBuffer;
     
     /// SymT - A buffer to hold the symbol table before we write it out at the
     /// appropriate location in the file.
@@ -666,15 +675,31 @@ namespace llvm {
         outbyte(Output, 0);
       
     }
+    void fixhalf(DataBuffer &Output, unsigned short X, unsigned Offset) {
+      unsigned char *P = &Output[Offset];
+      P[0] = (X >> (isLittleEndian ?  0 : 8)) & 255;
+      P[1] = (X >> (isLittleEndian ?  8 : 0)) & 255;
+    }
+    void fixword(DataBuffer &Output, unsigned X, unsigned Offset) {
+      unsigned char *P = &Output[Offset];
+      P[0] = (X >> (isLittleEndian ?  0 : 24)) & 255;
+      P[1] = (X >> (isLittleEndian ?  8 : 16)) & 255;
+      P[2] = (X >> (isLittleEndian ? 16 :  8)) & 255;
+      P[3] = (X >> (isLittleEndian ? 24 :  0)) & 255;
+    }
+
   private:
     void AddSymbolToSection(MachOSection &MOS, GlobalVariable *GV);
     void EmitGlobal(GlobalVariable *GV);
     void EmitHeaderAndLoadCommands();
     void EmitSections();
     void BufferSymbolAndStringTable();
+    void CalculateRelocations(MachOSection &MOS, unsigned RelOffset);
 
-    virtual void GetTargetRelocation(MachOSection &MOS, MachineRelocation &MR, 
-                                     uint64_t Addr) = 0;
+    virtual MachineRelocation GetJTRelocation(unsigned Offset,
+                                              MachineBasicBlock *MBB) = 0;
+    virtual void GetTargetRelocation(MachineRelocation &MR, MachOSection &MOS,
+                                     unsigned ToIndex) = 0;
   };
 }
 
