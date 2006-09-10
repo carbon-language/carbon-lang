@@ -144,7 +144,18 @@ bool TailDup::shouldEliminateUnconditionalBranch(TerminatorInst *TI) {
     // if (b)
     //   foo();
     // Cloning the 'if b' block into the end of the first foo block is messy.
-    return false;
+    
+    // The messy case is when the fall-through block falls through to other
+    // blocks.  This is what we would be preventing if we cloned the block.
+    DestI = Dest;
+    if (++DestI != Dest->getParent()->end()) {
+      BasicBlock *DestSucc = DestI;
+      // If any of Dest's successors are fall-throughs, don't do this xform.
+      for (succ_iterator SI = succ_begin(Dest), SE = succ_end(Dest);
+           SI != SE; ++SI)
+        if (*SI == DestSucc)
+          return false;
+    }
   }
 
   return true;
