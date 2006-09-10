@@ -33,7 +33,6 @@
 #include "llvm/Constants.h"
 #include "llvm/Instructions.h"
 #include "llvm/Pass.h"
-#include "llvm/ADT/EquivalenceClasses.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/Analysis/Dominators.h"
@@ -41,6 +40,8 @@
 #include "llvm/Support/Debug.h"
 #include <iostream>
 using namespace llvm;
+
+typedef DominatorTree::Node DTNodeType;
 
 namespace {
   Statistic<>
@@ -52,40 +53,167 @@ namespace {
   Statistic<>
   NumBranches("predsimplify", "Number of branches made unconditional");
 
-  /// Used for choosing the canonical Value in a synonym set.
-  /// Leaves the better one in V1. Returns whether a swap took place.
-  static void order(Value *&V1, Value *&V2) {
-    if (isa<Constant>(V2)) {
-      if (!isa<Constant>(V1)) {
-        std::swap(V1, V2);
-        return;
-      }
-    } else if (isa<Argument>(V2)) {
-      if (!isa<Constant>(V1) && !isa<Argument>(V1)) {
-        std::swap(V1, V2);
-        return;
-      }
-    }
-    if (User *U1 = dyn_cast<User>(V1)) {
-      for (User::const_op_iterator I = U1->op_begin(), E = U1->op_end();
-           I != E; ++I) {
-        if (*I == V2) {
-          std::swap(V1, V2);
-          return;
+  /// Returns true if V1 is a better choice than V2. Note that it is
+  /// not a total ordering.
+  struct compare {
+    bool operator()(Value *V1, Value *V2) const {
+      if (isa<Constant>(V2)) {
+        if (!isa<Constant>(V1)) {
+          return true;
+        }
+      } else if (isa<Argument>(V2)) {
+        if (!isa<Constant>(V1) && !isa<Argument>(V1)) {
+          return true;
         }
       }
+      if (User *U1 = dyn_cast<User>(V1)) {
+        for (User::const_op_iterator I = U1->op_begin(), E = U1->op_end();
+             I != E; ++I) {
+          if (*I == V2) {
+            return true;
+          }
+        }
+      }
+      return false;
     }
-    return;
+  };
+
+  /// Used for choosing the canonical Value in a synonym set.
+  /// Leaves the better one in V1.
+  static void order(Value *&V1, Value *&V2) {
+    static compare c;
+    if (c(V1, V2))
+      std::swap(V1, V2);
   }
+
+  /// Similar to EquivalenceClasses, this stores the set of equivalent
+  /// types. Beyond EquivalenceClasses, it allows the user to specify
+  /// which element will act as leader through a StrictWeakOrdering
+  /// function.
+  template<typename ElemTy, typename StrictWeak>
+  class VISIBILITY_HIDDEN Synonyms {
+    std::map<ElemTy, unsigned> mapping;
+    std::vector<ElemTy> leaders;
+    StrictWeak swo;
+
+  public:
+    typedef unsigned iterator;
+    typedef const unsigned const_iterator;
+
+    // Inspection
+
+    bool empty() const {
+      return leaders.empty();
+    }
+
+    iterator findLeader(ElemTy e) {
+      typename std::map<ElemTy, unsigned>::iterator MI = mapping.find(e);
+      if (MI == mapping.end()) return 0;
+
+      return MI->second;
+    }
+
+    const_iterator findLeader(ElemTy e) const {
+      typename std::map<ElemTy, unsigned>::const_iterator MI =
+          mapping.find(e);
+      if (MI == mapping.end()) return 0;
+
+      return MI->second;
+    }
+
+    ElemTy &getLeader(iterator I) {
+      assert(I != 0 && "Element zero is out of range.");
+      return leaders[I-1];
+    }
+
+    const ElemTy &getLeader(const_iterator I) const {
+      assert(I != 0 && "Element zero is out of range.");
+      return leaders[I-1];
+    }
+
+#ifdef DEBUG
+    void debug(std::ostream &os) const {
+      for (unsigned i = 1, e = leaders.size()+1; i != e; ++i) {
+        os << i << ". " << *leaders[i-1] << ": [";
+        for (std::map<Value *, unsigned>::const_iterator
+             I = mapping.begin(), E = mapping.end(); I != E; ++I) {
+          if ((*I).second == i && (*I).first != leaders[i-1]) {
+            os << *(*I).first << "  ";
+	  }
+	}
+        os << "]\n";
+      }
+    }
+#endif
+
+    // Mutators
+
+    /// Combine two sets referring to the same element, inserting the
+    /// elements as needed. Returns a valid iterator iff two already
+    /// existing disjoint synonym sets were combined. The iterator
+    /// points to the removed element.
+    iterator unionSets(ElemTy E1, ElemTy E2) {
+      if (swo(E1, E2)) std::swap(E1, E2);
+
+      iterator I1 = findLeader(E1);
+      iterator I2 = findLeader(E2);
+
+      if (!I1 && !I2) { // neither entry is in yet
+        leaders.push_back(E1);
+        I1 = leaders.size();
+        mapping[E1] = I1;
+        mapping[E2] = I1;
+        return false;
+      }
+
+      if (!I1 && I2) {
+        mapping[E1] = I2;
+        return false;
+      }
+
+      if (I1 && !I2) {
+        mapping[E2] = I1;
+        return false;
+      }
+
+      // This is the case where we have two sets, [%a1, %a2, %a3] and
+      // [%p1, %p2, %p3] and someone says that %a2 == %p3. We need to
+      // combine the two synsets.
+
+      for (std::map<Value *, unsigned>::iterator I = mapping.begin(),
+           E = mapping.end(); I != E; ++I) {
+        if (I->second == I2) I->second = I1;
+        else if (I->second > I2) --I->second;
+      }
+
+      leaders.erase(leaders.begin() + I2 - 1);
+
+      return true;
+    }
+
+    /// Returns an iterator pointing to the synonym set containing
+    /// element e. If none exists, a new one is created and returned.
+    iterator findOrInsert(ElemTy e) {
+      iterator I = findLeader(e);
+      if (I) return I;
+
+      leaders.push_back(e);
+      I = leaders.size();
+      mapping[e] = I;
+      return I;
+    }
+  };
 
   /// Represents the set of equivalent Value*s and provides insertion
   /// and fast lookup. Also stores the set of inequality relationships.
   class PropertySet {
     struct Property;
-    class EquivalenceClasses<Value *> union_find;
   public:
+    class Synonyms<Value *, compare> union_find;
+
     typedef std::vector<Property>::iterator       PropertyIterator;
     typedef std::vector<Property>::const_iterator ConstPropertyIterator;
+    typedef Synonyms<Value *, compare>::iterator  SynonymIterator;
 
     enum Ops {
       EQ,
@@ -98,10 +226,9 @@ namespace {
     }
 
     Value *lookup(Value *V) const {
-      EquivalenceClasses<Value *>::member_iterator SI =
-          union_find.findLeader(V);
-      if (SI == union_find.member_end()) return NULL;
-      return *SI;
+      Synonyms<Value *, compare>::iterator SI = union_find.findLeader(V);
+      if (!SI) return NULL;
+      return union_find.getLeader(SI);
     }
 
     bool empty() const {
@@ -117,7 +244,18 @@ namespace {
       if (isa<Constant>(V2)) return; // refuse to set false == true.
 
       DEBUG(std::cerr << "equal: " << *V1 << " and " << *V2 << "\n");
-      union_find.unionSets(V1, V2);
+      SynonymIterator deleted = union_find.unionSets(V1, V2);
+      if (deleted) {
+        SynonymIterator replacement = union_find.findLeader(V1);
+        // Move Properties
+        for (PropertyIterator I = Properties.begin(), E = Properties.end();
+             I != E; ++I) {
+          if (I->I1 == deleted) I->I1 = replacement;
+          else if (I->I1 > deleted) --I->I1;
+          if (I->I2 == deleted) I->I2 = replacement;
+          else if (I->I2 > deleted) --I->I2;
+        }
+      }
       addImpliedProperties(EQ, V1, V2);
     }
 
@@ -130,7 +268,9 @@ namespace {
         return; // found.
 
       // Add the property.
-      Properties.push_back(Property(NE, V1, V2));
+      SynonymIterator I1 = union_find.findOrInsert(V1),
+                      I2 = union_find.findOrInsert(V2);
+      Properties.push_back(Property(NE, I1, I2));
       addImpliedProperties(NE, V1, V2);
     }
 
@@ -138,22 +278,12 @@ namespace {
       assert(Opcode != EQ && "Can't findProperty on EQ."
              "Use the lookup method instead.");
 
-      V1 = canonicalize(V1);
-      V2 = canonicalize(V2);
+      SynonymIterator I1 = union_find.findLeader(V1),
+                      I2 = union_find.findLeader(V2);
+      if (!I1 || !I2) return Properties.end();
 
-      // Does the property already exist?
-      for (PropertyIterator I = Properties.begin(), E = Properties.end();
-           I != E; ++I) {
-        if (I->Opcode != Opcode) continue;
-
-        I->V1 = canonicalize(I->V1);
-        I->V2 = canonicalize(I->V2);
-        if ((I->V1 == V1 && I->V2 == V2) ||
-            (I->V1 == V2 && I->V2 == V1)) {
-          return I; // Found.
-        }
-      }
-      return Properties.end();
+      return
+      find(Properties.begin(), Properties.end(), Property(Opcode, I1, I2));
     }
 
     ConstPropertyIterator
@@ -161,35 +291,33 @@ namespace {
       assert(Opcode != EQ && "Can't findProperty on EQ."
              "Use the lookup method instead.");
 
-      V1 = canonicalize(V1);
-      V2 = canonicalize(V2);
+      SynonymIterator I1 = union_find.findLeader(V1),
+                      I2 = union_find.findLeader(V2);
+      if (!I1 || !I2) return Properties.end();
 
-      // Does the property already exist?
-      for (ConstPropertyIterator I = Properties.begin(),
-           E = Properties.end(); I != E; ++I) {
-        if (I->Opcode != Opcode) continue;
-
-        Value *v1 = canonicalize(I->V1),
-              *v2 = canonicalize(I->V2);
-        if ((v1 == V1 && v2 == V2) ||
-            (v1 == V2 && v2 == V1)) {
-          return I; // Found.
-        }
-      }
-      return Properties.end();
+      return
+      find(Properties.begin(), Properties.end(), Property(Opcode, I1, I2));
     }
 
   private:
     // Represents Head OP [Tail1, Tail2, ...]
     // For example: %x != %a, %x != %b.
-    struct Property {
-      Property(Ops opcode, Value *v1, Value *v2)
-        : Opcode(opcode), V1(v1), V2(v2)
+    struct VISIBILITY_HIDDEN Property {
+      typedef Synonyms<Value *, compare>::iterator Iter;
+
+      Property(Ops opcode, Iter i1, Iter i2)
+        : Opcode(opcode), I1(i1), I2(i2)
       { assert(opcode != EQ && "Equality belongs in the synonym set, "
-               "not a property."); }
+                               "not a property."); }
+
+      bool operator==(const Property &P) const {
+        return (Opcode == P.Opcode) &&
+               ((I1 == P.I1 && I2 == P.I2) ||
+                (I1 == P.I2 && I2 == P.I1));
+      }
 
       Ops Opcode;
-      Value *V1, *V2;
+      Iter I1, I2;
     };
 
     void add(Ops Opcode, Value *V1, Value *V2, bool invert) {
@@ -207,7 +335,7 @@ namespace {
       }
     }
 
-    // Finds the properties implied by a equivalence and adds them too.
+    // Finds the properties implied by an equivalence and adds them too.
     // Example: ("seteq %a, %b", true,  EQ) --> (%a, %b, EQ)
     //          ("seteq %a, %b", false, EQ) --> (%a, %b, NE)
     void addImpliedProperties(Ops Opcode, Value *V1, Value *V2) {
@@ -286,14 +414,15 @@ namespace {
   public:
 #ifdef DEBUG
     void debug(std::ostream &os) const {
-      for (EquivalenceClasses<Value*>::iterator I = union_find.begin(),
-           E = union_find.end(); I != E; ++I) {
-        if (!I->isLeader()) continue;
-        for (EquivalenceClasses<Value*>::member_iterator MI =
-             union_find.member_begin(I); MI != union_find.member_end(); ++MI)
-          std::cerr << **MI << " ";
-        std::cerr << "\n--\n";
+      static const char *OpcodeTable[] = { "EQ", "NE" };
+
+      union_find.debug(os);
+      for (std::vector<Property>::const_iterator I = Properties.begin(),
+           E = Properties.end(); I != E; ++I) {
+        os << (*I).I1 << " " << OpcodeTable[(*I).Opcode] << " "
+           << (*I).I2 << "\n";
       }
+      os << "\n";
     }
 #endif
 
@@ -319,22 +448,24 @@ namespace {
     // block to the next. Verifies that "current" dominates "next",
     // then calls visitBasicBlock.
     void proceedToSuccessor(PropertySet &CurrentPS, PropertySet &NextPS,
-                  DominatorTree::Node *Current, DominatorTree::Node *Next);
+                            DTNodeType *Current, DTNodeType *Next);
     void proceedToSuccessor(PropertySet &CurrentPS,
-                  DominatorTree::Node *Current, DominatorTree::Node *Next);
+                            DTNodeType *Current, DTNodeType *Next);
 
     // Visits each instruction in the basic block.
-    void visitBasicBlock(DominatorTree::Node *DTNode,
-                         PropertySet &KnownProperties);
+    void visitBasicBlock(DTNodeType *DTNode, PropertySet &KnownProperties);
 
+    // Tries to simplify each Instruction and add new properties to
+    // the PropertySet. Returns true if it erase the instruction.
+    void visitInstruction(Instruction *I, DTNodeType *, PropertySet &);
     // For each instruction, add the properties to KnownProperties.
-    void visit(Instruction *I, DominatorTree::Node *, PropertySet &);
-    void visit(TerminatorInst *TI, DominatorTree::Node *, PropertySet &);
-    void visit(BranchInst *BI, DominatorTree::Node *, PropertySet &);
-    void visit(SwitchInst *SI, DominatorTree::Node *, PropertySet);
-    void visit(LoadInst *LI, DominatorTree::Node *, PropertySet &);
-    void visit(StoreInst *SI, DominatorTree::Node *, PropertySet &);
-    void visit(BinaryOperator *BO, DominatorTree::Node *, PropertySet &);
+
+    void visit(TerminatorInst *TI, DTNodeType *, PropertySet &);
+    void visit(BranchInst *BI, DTNodeType *, PropertySet &);
+    void visit(SwitchInst *SI, DTNodeType *, PropertySet);
+    void visit(LoadInst *LI, DTNodeType *, PropertySet &);
+    void visit(StoreInst *SI, DTNodeType *, PropertySet &);
+    void visit(BinaryOperator *BO, DTNodeType *, PropertySet &);
 
     DominatorTree *DT;
     bool modified;
@@ -421,17 +552,10 @@ Value *PredicateSimplifier::resolve(BinaryOperator *BO,
   if (SetCondInst *SCI = dyn_cast<SetCondInst>(BO))
     return resolve(SCI, KP);
 
-  DEBUG(std::cerr << "BO->getOperand(1) = " << *BO->getOperand(1) << "\n");
-
   Value *lhs = resolve(BO->getOperand(0), KP),
         *rhs = resolve(BO->getOperand(1), KP);
   ConstantIntegral *CI1 = dyn_cast<ConstantIntegral>(lhs);
   ConstantIntegral *CI2 = dyn_cast<ConstantIntegral>(rhs);
-
-  DEBUG(std::cerr << "resolveBO: lhs = " << *lhs
-                  << ", rhs = " << *rhs << "\n");
-  if (CI1) DEBUG(std::cerr << "CI1 = " << *CI1);
-  if (CI2) DEBUG(std::cerr << "CI2 = " << *CI2);
 
   if (!CI1 || !CI2) return BO;
 
@@ -464,27 +588,28 @@ Value *PredicateSimplifier::resolve(Value *V, const PropertySet &KP) {
   return V;
 }
 
-void PredicateSimplifier::visitBasicBlock(DominatorTree::Node *DTNode,
+void PredicateSimplifier::visitBasicBlock(DTNodeType *DTNode,
                                           PropertySet &KnownProperties) {
   BasicBlock *BB = DTNode->getBlock();
   for (BasicBlock::iterator I = BB->begin(), E = BB->end(); I != E; ++I) {
-    visit(I, DTNode, KnownProperties);
+    visitInstruction(I, DTNode, KnownProperties);
   }
 }
 
-void PredicateSimplifier::visit(Instruction *I, DominatorTree::Node *DTNode,
-                                PropertySet &KnownProperties) {
+void PredicateSimplifier::visitInstruction(Instruction *I,
+                                           DTNodeType *DTNode,
+                                           PropertySet &KnownProperties) {
+
   DEBUG(std::cerr << "Considering instruction " << *I << "\n");
   DEBUG(KnownProperties.debug(std::cerr));
 
-  // Try to replace whole instruction.
+  // Try to replace the whole instruction.
   Value *V = resolve(I, KnownProperties);
   assert(V && "resolve not supposed to return NULL.");
   if (V != I) {
     modified = true;
     ++NumInstruction;
     I->replaceAllUsesWith(V);
-    I->eraseFromParent();
     return;
   }
 
@@ -513,8 +638,9 @@ void PredicateSimplifier::visit(Instruction *I, DominatorTree::Node *DTNode,
 }
 
 void PredicateSimplifier::proceedToSuccessor(PropertySet &CurrentPS,
-    PropertySet &NextPS, DominatorTree::Node *Current,
-    DominatorTree::Node *Next) {
+                                             PropertySet &NextPS,
+                                             DTNodeType *Current,
+                                             DTNodeType *Next) {
   if (Next->getBlock()->getSinglePredecessor() == Current->getBlock())
     proceedToSuccessor(NextPS, Current, Next);
   else
@@ -522,13 +648,14 @@ void PredicateSimplifier::proceedToSuccessor(PropertySet &CurrentPS,
 }
 
 void PredicateSimplifier::proceedToSuccessor(PropertySet &KP,
-    DominatorTree::Node *Current, DominatorTree::Node *Next) {
+                                             DTNodeType *Current,
+                                             DTNodeType *Next) {
   if (Current->properlyDominates(Next))
     visitBasicBlock(Next, KP);
 }
 
-void PredicateSimplifier::visit(TerminatorInst *TI,
-                                DominatorTree::Node *Node, PropertySet &KP){
+void PredicateSimplifier::visit(TerminatorInst *TI, DTNodeType *Node,
+                                PropertySet &KP) {
   if (BranchInst *BI = dyn_cast<BranchInst>(TI)) {
     visit(BI, Node, KP);
     return;
@@ -545,8 +672,8 @@ void PredicateSimplifier::visit(TerminatorInst *TI,
   }
 }
 
-void PredicateSimplifier::visit(BranchInst *BI,
-                                DominatorTree::Node *Node, PropertySet &KP){
+void PredicateSimplifier::visit(BranchInst *BI, DTNodeType *Node,
+                                PropertySet &KP) {
   if (BI->isUnconditional()) {
     proceedToSuccessor(KP, Node, DT->getNode(BI->getSuccessor(0)));
     return;
@@ -586,33 +713,36 @@ void PredicateSimplifier::visit(BranchInst *BI,
   proceedToSuccessor(KPcopy, FalseProperties, Node, DT->getNode(FalseDest));
 }
 
-void PredicateSimplifier::visit(SwitchInst *SI,
-                             DominatorTree::Node *DTNode, PropertySet KP) {
+void PredicateSimplifier::visit(SwitchInst *SI, DTNodeType *DTNode,
+                                PropertySet KP) {
   Value *Condition = SI->getCondition();
-  DEBUG(assert(Condition == KP.canonicalize(Condition) &&
-               "Instruction wasn't already canonicalized?"));
+  assert(Condition == KP.canonicalize(Condition) &&
+         "Instruction wasn't already canonicalized?");
 
   // If there's an NEProperty covering this SwitchInst, we may be able to
   // eliminate one of the cases.
   for (PropertySet::ConstPropertyIterator I = KP.Properties.begin(),
        E = KP.Properties.end(); I != E; ++I) {
     if (I->Opcode != PropertySet::NE) continue;
-    Value *V1 = KP.canonicalize(I->V1),
-          *V2 = KP.canonicalize(I->V2);
-    if (V1 != Condition && V2 != Condition) continue;
+    Value *V1 = KP.union_find.getLeader(I->I1),
+          *V2 = KP.union_find.getLeader(I->I2);
 
-    // Is one side a number?
-    ConstantInt *CI = dyn_cast<ConstantInt>(KP.canonicalize(I->V1));
-    if (!CI)     CI = dyn_cast<ConstantInt>(KP.canonicalize(I->V2));
+    // Find a Property with a ConstantInt on one side and our
+    // Condition on the other.
+    ConstantInt *CI = NULL;
+    if (V1 == Condition)
+      CI = dyn_cast<ConstantInt>(V2);
+    else if (V2 == Condition)
+      CI = dyn_cast<ConstantInt>(V1);
 
-    if (CI) {
-      unsigned i = SI->findCaseValue(CI);
-      if (i != 0) {
-        SI->getSuccessor(i)->removePredecessor(SI->getParent());
-        SI->removeCase(i);
-        modified = true;
-        ++NumSwitchCases;
-      }
+    if (!CI) continue;
+
+    unsigned i = SI->findCaseValue(CI);
+    if (i != 0) { // zero is reserved for the default case.
+      SI->getSuccessor(i)->removePredecessor(SI->getParent());
+      SI->removeCase(i);
+      modified = true;
+      ++NumSwitchCases;
     }
   }
 
@@ -620,8 +750,8 @@ void PredicateSimplifier::visit(SwitchInst *SI,
   // and the NEProperties in the default BB.
   PropertySet DefaultProperties(KP);
 
-  DominatorTree::Node *Node        = DT->getNode(SI->getParent()),
-                      *DefaultNode = DT->getNode(SI->getSuccessor(0));
+  DTNodeType *Node        = DT->getNode(SI->getParent()),
+             *DefaultNode = DT->getNode(SI->getSuccessor(0));
   if (!Node->dominates(DefaultNode)) DefaultNode = NULL;
 
   for (unsigned I = 1, E = SI->getNumCases(); I < E; ++I) {
@@ -644,20 +774,20 @@ void PredicateSimplifier::visit(SwitchInst *SI,
     proceedToSuccessor(DefaultProperties, DTNode, DefaultNode);
 }
 
-void PredicateSimplifier::visit(LoadInst *LI,
-                                DominatorTree::Node *, PropertySet &KP) {
+void PredicateSimplifier::visit(LoadInst *LI, DTNodeType *,
+                                PropertySet &KP) {
   Value *Ptr = LI->getPointerOperand();
   KP.addNotEqual(Constant::getNullValue(Ptr->getType()), Ptr);
 }
 
-void PredicateSimplifier::visit(StoreInst *SI,
-                                DominatorTree::Node *, PropertySet &KP) {
+void PredicateSimplifier::visit(StoreInst *SI, DTNodeType *,
+                                PropertySet &KP) {
   Value *Ptr = SI->getPointerOperand();
   KP.addNotEqual(Constant::getNullValue(Ptr->getType()), Ptr);
 }
 
-void PredicateSimplifier::visit(BinaryOperator *BO,
-                                DominatorTree::Node *, PropertySet &KP) {
+void PredicateSimplifier::visit(BinaryOperator *BO, DTNodeType *,
+                                PropertySet &KP) {
   Instruction::BinaryOps ops = BO->getOpcode();
 
   switch (ops) {
@@ -670,8 +800,4 @@ void PredicateSimplifier::visit(BinaryOperator *BO,
     default:
       break;
   }
-
-  // Some other things we could do:
-  // In f=x*y, if x != 1 && y != 1 then f != x && f != y.
-  // In f=x+y, if x != 0 then f != y and if y != 0 then f != x.
 }
