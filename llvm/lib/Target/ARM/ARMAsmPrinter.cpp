@@ -201,7 +201,6 @@ void ARMAsmPrinter::printCCOperand(const MachineInstr *MI, int opNum) {
 }
 
 bool ARMAsmPrinter::doInitialization(Module &M) {
-  Mang = new Mangler(M);
   return false; // success
 }
 
