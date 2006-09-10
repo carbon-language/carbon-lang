@@ -970,24 +970,21 @@ void SelectionDAGLowering::visitSwitch(SwitchInst &I) {
       // of the jump table.  If the value of the jump table slot corresponds to
       // a case statement, push the case's BB onto the vector, otherwise, push
       // the default BB.
-      std::set<MachineBasicBlock*> UniqueBBs;
       std::vector<MachineBasicBlock*> DestBBs;
       uint64_t TEI = First;
       for (CaseItr ii = Cases.begin(), ee = Cases.end(); ii != ee; ++TEI) {
         if (cast<ConstantIntegral>(ii->first)->getRawValue() == TEI) {
           DestBBs.push_back(ii->second);
-          UniqueBBs.insert(ii->second);
           ++ii;
         } else {
           DestBBs.push_back(Default);
-          UniqueBBs.insert(Default);
         }
       }
       
       // Update successor info
-      for (std::set<MachineBasicBlock*>::iterator ii = UniqueBBs.begin(), 
-           ee = UniqueBBs.end(); ii != ee; ++ii)
-        JumpTableBB->addSuccessor(*ii);
+      for (std::vector<MachineBasicBlock*>::iterator I = DestBBs.begin(), 
+           E = DestBBs.end(); I != E; ++I)
+        JumpTableBB->addSuccessor(*I);
       
       // Create a jump table index for this jump table, or return an existing
       // one.
