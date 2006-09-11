@@ -129,6 +129,11 @@ def SRA : InstARM<(ops IntRegs:$dst, IntRegs:$a, IntRegs:$b),
 		       "mov $dst, $a, asr $b",
 		       [(set IntRegs:$dst, (sra IntRegs:$a, IntRegs:$b))]>;
 
+def SRL : InstARM<(ops IntRegs:$dst, IntRegs:$a, IntRegs:$b),
+		       "mov $dst, $a, lsr $b",
+		       [(set IntRegs:$dst, (srl IntRegs:$a, IntRegs:$b))]>;
+
+
 def EOR     : InstARM<(ops IntRegs:$dst, IntRegs:$a, op_addr_mode1:$b),
                        "eor $dst, $a, $b",
 		       [(set IntRegs:$dst, (xor IntRegs:$a, addr_mode1:$b))]>;
@@ -144,6 +149,10 @@ let isTwoAddress = 1 in {
 		         [(set IntRegs:$dst, (armselect addr_mode1:$true,
 			   IntRegs:$false, imm:$cc))]>;
 }
+
+def MUL     : InstARM<(ops IntRegs:$dst, IntRegs:$a, IntRegs:$b),
+                       "mul $dst, $a, $b",
+		       [(set IntRegs:$dst, (mul IntRegs:$a, IntRegs:$b))]>;
 
 def bcond      : InstARM<(ops brtarget:$dst, CCOp:$cc),
 		         "b$cc $dst",
