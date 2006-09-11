@@ -3394,9 +3394,9 @@ SDOperand X86TargetLowering::LowerShift(SDOperand Op, SelectionDAG &DAG) {
     SDOperand ShOpLo = Op.getOperand(0);
     SDOperand ShOpHi = Op.getOperand(1);
     SDOperand ShAmt  = Op.getOperand(2);
-    SDOperand Tmp1 = isSRA ? DAG.getNode(ISD::SRA, MVT::i32, ShOpHi,
-                                         DAG.getConstant(31, MVT::i8))
-                           : DAG.getConstant(0, MVT::i32);
+    SDOperand Tmp1 = isSRA ?
+      DAG.getNode(ISD::SRA, MVT::i32, ShOpHi, DAG.getConstant(31, MVT::i8)) :
+      DAG.getConstant(0, MVT::i32);
 
     SDOperand Tmp2, Tmp3;
     if (Op.getOpcode() == ISD::SHL_PARTS) {
@@ -3407,25 +3407,23 @@ SDOperand X86TargetLowering::LowerShift(SDOperand Op, SelectionDAG &DAG) {
       Tmp3 = DAG.getNode(isSRA ? ISD::SRA : ISD::SRL, MVT::i32, ShOpHi, ShAmt);
     }
 
-    SDOperand InFlag =
-      DAG.getNode(X86ISD::CMP, MVT::Flag,
-                  DAG.getNode(ISD::AND, MVT::i8, 
-                              ShAmt, DAG.getConstant(32, MVT::i8)),
-                  DAG.getConstant(0, MVT::i8));
+    const MVT::ValueType *VTs = DAG.getNodeValueTypes(MVT::Other, MVT::Flag);
+    SDOperand AndNode = DAG.getNode(ISD::AND, MVT::i8, ShAmt,
+                                    DAG.getConstant(32, MVT::i8));
+    SDOperand COps[]={DAG.getEntryNode(), AndNode, DAG.getConstant(0, MVT::i8)};
+    SDOperand InFlag = DAG.getNode(X86ISD::CMP, VTs, 2, COps, 3).getValue(1);
 
     SDOperand Hi, Lo;
     SDOperand CC = DAG.getConstant(X86ISD::COND_NE, MVT::i8);
 
-    std::vector<MVT::ValueType> Tys;
-    Tys.push_back(MVT::i32);
-    Tys.push_back(MVT::Flag);
-    std::vector<SDOperand> Ops;
+    VTs = DAG.getNodeValueTypes(MVT::i32, MVT::Flag);
+    SmallVector<SDOperand, 4> Ops;
     if (Op.getOpcode() == ISD::SHL_PARTS) {
       Ops.push_back(Tmp2);
       Ops.push_back(Tmp3);
       Ops.push_back(CC);
       Ops.push_back(InFlag);
-      Hi = DAG.getNode(X86ISD::CMOV, Tys, &Ops[0], Ops.size());
+      Hi = DAG.getNode(X86ISD::CMOV, VTs, 2, &Ops[0], Ops.size());
       InFlag = Hi.getValue(1);
 
       Ops.clear();
@@ -3433,13 +3431,13 @@ SDOperand X86TargetLowering::LowerShift(SDOperand Op, SelectionDAG &DAG) {
       Ops.push_back(Tmp1);
       Ops.push_back(CC);
       Ops.push_back(InFlag);
-      Lo = DAG.getNode(X86ISD::CMOV, Tys, &Ops[0], Ops.size());
+      Lo = DAG.getNode(X86ISD::CMOV, VTs, 2, &Ops[0], Ops.size());
     } else {
       Ops.push_back(Tmp2);
       Ops.push_back(Tmp3);
       Ops.push_back(CC);
       Ops.push_back(InFlag);
-      Lo = DAG.getNode(X86ISD::CMOV, Tys, &Ops[0], Ops.size());
+      Lo = DAG.getNode(X86ISD::CMOV, VTs, 2, &Ops[0], Ops.size());
       InFlag = Lo.getValue(1);
 
       Ops.clear();
@@ -3447,16 +3445,14 @@ SDOperand X86TargetLowering::LowerShift(SDOperand Op, SelectionDAG &DAG) {
       Ops.push_back(Tmp1);
       Ops.push_back(CC);
       Ops.push_back(InFlag);
-      Hi = DAG.getNode(X86ISD::CMOV, Tys, &Ops[0], Ops.size());
+      Hi = DAG.getNode(X86ISD::CMOV, VTs, 2, &Ops[0], Ops.size());
     }
 
-    Tys.clear();
-    Tys.push_back(MVT::i32);
-    Tys.push_back(MVT::i32);
+    VTs = DAG.getNodeValueTypes(MVT::i32, MVT::i32);
     Ops.clear();
     Ops.push_back(Lo);
     Ops.push_back(Hi);
-    return DAG.getNode(ISD::MERGE_VALUES, Tys, &Ops[0], Ops.size());
+    return DAG.getNode(ISD::MERGE_VALUES, VTs, 2, &Ops[0], Ops.size());
 }
 
 SDOperand X86TargetLowering::LowerSINT_TO_FP(SDOperand Op, SelectionDAG &DAG) {
@@ -3613,163 +3609,139 @@ SDOperand X86TargetLowering::LowerFNEG(SDOperand Op, SelectionDAG &DAG) {
   return DAG.getNode(X86ISD::FXOR, VT, Op.getOperand(0), Mask);
 }
 
-SDOperand X86TargetLowering::LowerSETCC(SDOperand Op, SelectionDAG &DAG) {
+SDOperand X86TargetLowering::LowerSETCC(SDOperand Op, SelectionDAG &DAG,
+                                        SDOperand Chain) {
   assert(Op.getValueType() == MVT::i8 && "SetCC type must be 8-bit integer");
   SDOperand Cond;
+  SDOperand Op0 = Op.getOperand(0);
+  SDOperand Op1 = Op.getOperand(1);
   SDOperand CC = Op.getOperand(2);
   ISD::CondCode SetCCOpcode = cast<CondCodeSDNode>(CC)->get();
+  const MVT::ValueType *VTs = DAG.getNodeValueTypes(MVT::Other, MVT::Flag);
   bool isFP = MVT::isFloatingPoint(Op.getOperand(1).getValueType());
   bool Flip;
   unsigned X86CC;
-  if (translateX86CC(CC, isFP, X86CC, Flip)) {
-    if (Flip)
-      Cond = DAG.getNode(X86ISD::CMP, MVT::Flag,
-                         Op.getOperand(1), Op.getOperand(0));
-    else
-      Cond = DAG.getNode(X86ISD::CMP, MVT::Flag,
-                         Op.getOperand(0), Op.getOperand(1));
-    return DAG.getNode(X86ISD::SETCC, MVT::i8, 
-                       DAG.getConstant(X86CC, MVT::i8), Cond);
-  } else {
-    assert(isFP && "Illegal integer SetCC!");
 
-    Cond = DAG.getNode(X86ISD::CMP, MVT::Flag,
-                       Op.getOperand(0), Op.getOperand(1));
-    std::vector<MVT::ValueType> Tys;
-    std::vector<SDOperand> Ops;
-    switch (SetCCOpcode) {
-      default: assert(false && "Illegal floating point SetCC!");
-      case ISD::SETOEQ: {  // !PF & ZF
-        Tys.push_back(MVT::i8);
-        Tys.push_back(MVT::Flag);
-        Ops.push_back(DAG.getConstant(X86ISD::COND_NP, MVT::i8));
-        Ops.push_back(Cond);
-        SDOperand Tmp1 = DAG.getNode(X86ISD::SETCC, Tys, &Ops[0], Ops.size());
-        SDOperand Tmp2 = DAG.getNode(X86ISD::SETCC, MVT::i8,
-                                     DAG.getConstant(X86ISD::COND_E, MVT::i8),
-                                     Tmp1.getValue(1));
-        return DAG.getNode(ISD::AND, MVT::i8, Tmp1, Tmp2);
-      }
-      case ISD::SETUNE: {  // PF | !ZF
-        Tys.push_back(MVT::i8);
-        Tys.push_back(MVT::Flag);
-        Ops.push_back(DAG.getConstant(X86ISD::COND_P, MVT::i8));
-        Ops.push_back(Cond);
-        SDOperand Tmp1 = DAG.getNode(X86ISD::SETCC, Tys, &Ops[0], Ops.size());
-        SDOperand Tmp2 = DAG.getNode(X86ISD::SETCC, MVT::i8,
-                                     DAG.getConstant(X86ISD::COND_NE, MVT::i8),
-                                     Tmp1.getValue(1));
-        return DAG.getNode(ISD::OR, MVT::i8, Tmp1, Tmp2);
-      }
-    }
+  VTs = DAG.getNodeValueTypes(MVT::i8, MVT::Flag);
+  if (translateX86CC(CC, isFP, X86CC, Flip)) {
+    if (Flip) std::swap(Op0, Op1);
+    SDOperand Ops1[] = { Chain, Op0, Op1 };
+    Cond = DAG.getNode(X86ISD::CMP, VTs, 2, Ops1, 3).getValue(1);
+    SDOperand Ops2[] = { DAG.getConstant(X86CC, MVT::i8), Cond };
+    return DAG.getNode(X86ISD::SETCC, VTs, 2, Ops2, 2);
+  }
+
+  assert(isFP && "Illegal integer SetCC!");
+
+  SDOperand COps[] = { Chain, Op0, Op1 };
+  Cond = DAG.getNode(X86ISD::CMP, VTs, 2, COps, 3).getValue(1);
+
+  switch (SetCCOpcode) {
+  default: assert(false && "Illegal floating point SetCC!");
+  case ISD::SETOEQ: {  // !PF & ZF
+    SDOperand Ops1[] = { DAG.getConstant(X86ISD::COND_NP, MVT::i8), Cond };
+    SDOperand Tmp1 = DAG.getNode(X86ISD::SETCC, VTs, 2, Ops1, 2);
+    SDOperand Ops2[] = { DAG.getConstant(X86ISD::COND_E, MVT::i8),
+                         Tmp1.getValue(1) };
+    SDOperand Tmp2 = DAG.getNode(X86ISD::SETCC, VTs, 2, Ops2, 2);
+    return DAG.getNode(ISD::AND, MVT::i8, Tmp1, Tmp2);
+  }
+  case ISD::SETUNE: {  // PF | !ZF
+    SDOperand Ops1[] = { DAG.getConstant(X86ISD::COND_P, MVT::i8), Cond };
+    SDOperand Tmp1 = DAG.getNode(X86ISD::SETCC, VTs, 2, Ops1, 2);
+    SDOperand Ops2[] = { DAG.getConstant(X86ISD::COND_NE, MVT::i8),
+                         Tmp1.getValue(1) };
+    SDOperand Tmp2 = DAG.getNode(X86ISD::SETCC, VTs, 2, Ops2, 2);
+    return DAG.getNode(ISD::OR, MVT::i8, Tmp1, Tmp2);
+  }
   }
 }
 
 SDOperand X86TargetLowering::LowerSELECT(SDOperand Op, SelectionDAG &DAG) {
-  MVT::ValueType VT = Op.getValueType();
-  bool isFPStack = MVT::isFloatingPoint(VT) && !X86ScalarSSE;
-  bool addTest   = false;
-  SDOperand Op0 = Op.getOperand(0);
-  SDOperand Cond, CC;
-  if (Op0.getOpcode() == ISD::SETCC)
-    Op0 = LowerOperation(Op0, DAG);
+  bool addTest = true;
+  SDOperand Chain = DAG.getEntryNode();
+  SDOperand Cond  = Op.getOperand(0);
+  SDOperand CC;
+  const MVT::ValueType *VTs = DAG.getNodeValueTypes(MVT::Other, MVT::Flag);
 
-  if (Op0.getOpcode() == X86ISD::SETCC) {
+  if (Cond.getOpcode() == ISD::SETCC)
+    Cond = LowerSETCC(Cond, DAG, Chain);
+
+  if (Cond.getOpcode() == X86ISD::SETCC) {
+    CC = Cond.getOperand(0);
+
     // If condition flag is set by a X86ISD::CMP, then make a copy of it
-    // (since flag operand cannot be shared). If the X86ISD::SETCC does not
-    // have another use it will be eliminated.
-    // If the X86ISD::SETCC has more than one use, then it's probably better
+    // (since flag operand cannot be shared). Use it as the condition setting
+    // operand in place of the X86ISD::SETCC.
+    // If the X86ISD::SETCC has more than one use, then perhaps it's better
     // to use a test instead of duplicating the X86ISD::CMP (for register
-    // pressure reason).
-    unsigned CmpOpc = Op0.getOperand(1).getOpcode();
-    if (CmpOpc == X86ISD::CMP || CmpOpc == X86ISD::COMI ||
-        CmpOpc == X86ISD::UCOMI) {
-      if (!Op0.hasOneUse()) {
-        std::vector<MVT::ValueType> Tys;
-        for (unsigned i = 0; i < Op0.Val->getNumValues(); ++i)
-          Tys.push_back(Op0.Val->getValueType(i));
-        std::vector<SDOperand> Ops;
-        for (unsigned i = 0; i < Op0.getNumOperands(); ++i)
-          Ops.push_back(Op0.getOperand(i));
-        Op0 = DAG.getNode(X86ISD::SETCC, Tys, &Ops[0], Ops.size());
-      }
-
-      CC   = Op0.getOperand(0);
-      Cond = Op0.getOperand(1);
-      // Make a copy as flag result cannot be used by more than one.
-      Cond = DAG.getNode(CmpOpc, MVT::Flag,
-                         Cond.getOperand(0), Cond.getOperand(1));
-      addTest =
-        isFPStack && !hasFPCMov(cast<ConstantSDNode>(CC)->getSignExtended());
-    } else
-      addTest = true;
-  } else
-    addTest = true;
+    // pressure reason)?
+    SDOperand Cmp = Cond.getOperand(1);
+    unsigned Opc = Cmp.getOpcode();
+    bool IllegalFPCMov = !X86ScalarSSE &&
+      MVT::isFloatingPoint(Op.getValueType()) &&
+      !hasFPCMov(cast<ConstantSDNode>(CC)->getSignExtended());
+    if ((Opc == X86ISD::CMP || Opc == X86ISD::COMI || Opc == X86ISD::UCOMI) &&
+        !IllegalFPCMov) {
+      SDOperand Ops[] = { Chain, Cmp.getOperand(1), Cmp.getOperand(2) };
+      Cond = DAG.getNode(Opc, VTs, 2, Ops, 3);
+      addTest = false;
+    }
+  }
 
   if (addTest) {
     CC = DAG.getConstant(X86ISD::COND_NE, MVT::i8);
-    Cond = DAG.getNode(X86ISD::CMP, MVT::Flag, Op0,
-                       DAG.getConstant(0, MVT::i8));
+    SDOperand Ops[] = { Chain, Cond, DAG.getConstant(0, MVT::i8) };
+    Cond = DAG.getNode(X86ISD::CMP, VTs, 2, Ops, 3);
   }
 
-  std::vector<MVT::ValueType> Tys;
-  Tys.push_back(Op.getValueType());
-  Tys.push_back(MVT::Flag);
-  std::vector<SDOperand> Ops;
+  VTs = DAG.getNodeValueTypes(Op.getValueType(), MVT::Flag);
+  SmallVector<SDOperand, 4> Ops;
   // X86ISD::CMOV means set the result (which is operand 1) to the RHS if
   // condition is true.
   Ops.push_back(Op.getOperand(2));
   Ops.push_back(Op.getOperand(1));
   Ops.push_back(CC);
-  Ops.push_back(Cond);
-  return DAG.getNode(X86ISD::CMOV, Tys, &Ops[0], Ops.size());
+  Ops.push_back(Cond.getValue(1));
+  return DAG.getNode(X86ISD::CMOV, VTs, 2, &Ops[0], Ops.size());
 }
 
 SDOperand X86TargetLowering::LowerBRCOND(SDOperand Op, SelectionDAG &DAG) {
-  bool addTest = false;
+  bool addTest = true;
+  SDOperand Chain = Op.getOperand(0);
   SDOperand Cond  = Op.getOperand(1);
   SDOperand Dest  = Op.getOperand(2);
   SDOperand CC;
+  const MVT::ValueType *VTs = DAG.getNodeValueTypes(MVT::Other, MVT::Flag);
+
   if (Cond.getOpcode() == ISD::SETCC)
-    Cond = LowerOperation(Cond, DAG);
+    Cond = LowerSETCC(Cond, DAG, Chain);
 
   if (Cond.getOpcode() == X86ISD::SETCC) {
-    // If condition flag is set by a X86ISD::CMP, then make a copy of it
-    // (since flag operand cannot be shared). If the X86ISD::SETCC does not
-    // have another use it will be eliminated.
-    // If the X86ISD::SETCC has more than one use, then it's probably better
-    // to use a test instead of duplicating the X86ISD::CMP (for register
-    // pressure reason).
-    unsigned CmpOpc = Cond.getOperand(1).getOpcode();
-    if (CmpOpc == X86ISD::CMP || CmpOpc == X86ISD::COMI ||
-        CmpOpc == X86ISD::UCOMI) {
-      if (!Cond.hasOneUse()) {
-        std::vector<MVT::ValueType> Tys;
-        for (unsigned i = 0; i < Cond.Val->getNumValues(); ++i)
-          Tys.push_back(Cond.Val->getValueType(i));
-        std::vector<SDOperand> Ops;
-        for (unsigned i = 0; i < Cond.getNumOperands(); ++i)
-          Ops.push_back(Cond.getOperand(i));
-        Cond = DAG.getNode(X86ISD::SETCC, Tys, &Ops[0], Ops.size());
-      }
+    CC = Cond.getOperand(0);
 
-      CC   = Cond.getOperand(0);
-      Cond = Cond.getOperand(1);
-      // Make a copy as flag result cannot be used by more than one.
-      Cond = DAG.getNode(CmpOpc, MVT::Flag,
-                         Cond.getOperand(0), Cond.getOperand(1));
-    } else
-      addTest = true;
-  } else
-    addTest = true;
+    // If condition flag is set by a X86ISD::CMP, then make a copy of it
+    // (since flag operand cannot be shared). Use it as the condition setting
+    // operand in place of the X86ISD::SETCC.
+    // If the X86ISD::SETCC has more than one use, then perhaps it's better
+    // to use a test instead of duplicating the X86ISD::CMP (for register
+    // pressure reason)?
+    SDOperand Cmp = Cond.getOperand(1);
+    unsigned Opc = Cmp.getOpcode();
+    if (Opc == X86ISD::CMP || Opc == X86ISD::COMI || Opc == X86ISD::UCOMI) {
+      SDOperand Ops[] = { Chain, Cmp.getOperand(1), Cmp.getOperand(2) };
+      Cond = DAG.getNode(Opc, VTs, 2, Ops, 3);
+      addTest = false;
+    }
+  }
 
   if (addTest) {
     CC = DAG.getConstant(X86ISD::COND_NE, MVT::i8);
-    Cond = DAG.getNode(X86ISD::CMP, MVT::Flag, Cond,
-                       DAG.getConstant(0, MVT::i8));
+    SDOperand Ops[] = { Chain, Cond, DAG.getConstant(0, MVT::i8) };
+    Cond = DAG.getNode(X86ISD::CMP, VTs, 2, Ops, 3);
   }
   return DAG.getNode(X86ISD::BRCOND, Op.getValueType(),
-                     Op.getOperand(0), Op.getOperand(2), CC, Cond);
+                     Cond, Op.getOperand(2), CC, Cond.getValue(1));
 }
 
 SDOperand X86TargetLowering::LowerJumpTable(SDOperand Op, SelectionDAG &DAG) {
@@ -4382,13 +4354,18 @@ X86TargetLowering::LowerINTRINSIC_WO_CHAIN(SDOperand Op, SelectionDAG &DAG) {
       CC = ISD::SETNE;
       break;
     }
+
     bool Flip;
     unsigned X86CC;
     translateX86CC(CC, true, X86CC, Flip);
-    SDOperand Cond = DAG.getNode(Opc, MVT::Flag, Op.getOperand(Flip?2:1),
-                                 Op.getOperand(Flip?1:2));
-    SDOperand SetCC = DAG.getNode(X86ISD::SETCC, MVT::i8, 
-                                  DAG.getConstant(X86CC, MVT::i8), Cond);
+
+    const MVT::ValueType *VTs = DAG.getNodeValueTypes(MVT::Other, MVT::Flag);
+    SDOperand Ops1[] = { DAG.getEntryNode(), Op.getOperand(Flip?2:1),
+                         Op.getOperand(Flip?1:2) };
+    SDOperand Cond = DAG.getNode(Opc, VTs, 2, Ops1, 3);
+    VTs = DAG.getNodeValueTypes(MVT::i8, MVT::Flag);
+    SDOperand Ops2[] = { DAG.getConstant(X86CC, MVT::i8), Cond };
+    SDOperand SetCC = DAG.getNode(X86ISD::SETCC, VTs, 2, Ops2, 2);
     return DAG.getNode(ISD::ANY_EXTEND, MVT::i32, SetCC);
   }
   }
@@ -4414,7 +4391,7 @@ SDOperand X86TargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
   case ISD::FP_TO_SINT:         return LowerFP_TO_SINT(Op, DAG);
   case ISD::FABS:               return LowerFABS(Op, DAG);
   case ISD::FNEG:               return LowerFNEG(Op, DAG);
-  case ISD::SETCC:              return LowerSETCC(Op, DAG);
+  case ISD::SETCC:              return LowerSETCC(Op, DAG, DAG.getEntryNode());
   case ISD::SELECT:             return LowerSELECT(Op, DAG);
   case ISD::BRCOND:             return LowerBRCOND(Op, DAG);
   case ISD::JumpTable:          return LowerJumpTable(Op, DAG);

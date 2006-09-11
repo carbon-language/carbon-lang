@@ -381,7 +381,7 @@ namespace llvm {
     SDOperand LowerFP_TO_SINT(SDOperand Op, SelectionDAG &DAG);
     SDOperand LowerFABS(SDOperand Op, SelectionDAG &DAG);
     SDOperand LowerFNEG(SDOperand Op, SelectionDAG &DAG);
-    SDOperand LowerSETCC(SDOperand Op, SelectionDAG &DAG);
+    SDOperand LowerSETCC(SDOperand Op, SelectionDAG &DAG, SDOperand Chain);
     SDOperand LowerSELECT(SDOperand Op, SelectionDAG &DAG);
     SDOperand LowerBRCOND(SDOperand Op, SelectionDAG &DAG);
     SDOperand LowerMEMSET(SDOperand Op, SelectionDAG &DAG);

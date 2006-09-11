@@ -51,7 +51,7 @@ def X86shld    : SDNode<"X86ISD::SHLD",     SDTIntShiftDOp>;
 def X86shrd    : SDNode<"X86ISD::SHRD",     SDTIntShiftDOp>;
 
 def X86cmp     : SDNode<"X86ISD::CMP" ,     SDTX86CmpTest,
-                        [SDNPOutFlag]>;
+                        [SDNPHasChain, SDNPOutFlag]>;
 
 def X86cmov    : SDNode<"X86ISD::CMOV",     SDTX86Cmov,    
                         [SDNPInFlag, SDNPOutFlag]>;
@@ -2093,18 +2093,17 @@ def TEST32rr : I<0x85, MRMDestReg, (ops GR32:$src1, GR32:$src2),
                  "test{l} {$src2, $src1|$src1, $src2}",
                  [(X86cmp (and GR32:$src1, GR32:$src2), 0)]>;
 }
-// FIXME: These patterns are disabled until isel issue surrounding
-//CodeGen/X86/test-load-fold.ll is fixed.
+
 def TEST8rm  : I<0x84, MRMSrcMem, (ops GR8 :$src1, i8mem :$src2),
                  "test{b} {$src2, $src1|$src1, $src2}",
-                 [/*(X86cmp (and GR8:$src1, (loadi8 addr:$src2)), 0)*/]>;
+                 [(X86cmp (and GR8:$src1, (loadi8 addr:$src2)), 0)]>;
 def TEST16rm : I<0x85, MRMSrcMem, (ops GR16:$src1, i16mem:$src2),
                  "test{w} {$src2, $src1|$src1, $src2}",
-                 [/*(X86cmp (and GR16:$src1, (loadi16 addr:$src2)), 0)*/]>,
+                 [(X86cmp (and GR16:$src1, (loadi16 addr:$src2)), 0)]>,
                OpSize;
 def TEST32rm : I<0x85, MRMSrcMem, (ops GR32:$src1, i32mem:$src2),
                  "test{l} {$src2, $src1|$src1, $src2}",
-                 [/*(X86cmp (and GR32:$src1, (loadi32 addr:$src2)), 0)*/]>;
+                 [(X86cmp (and GR32:$src1, (loadi32 addr:$src2)), 0)]>;
 
 def TEST8ri  : Ii8 <0xF6, MRM0r,                     // flags = GR8  & imm8
                     (ops GR8:$src1, i8imm:$src2),
@@ -2118,21 +2117,20 @@ def TEST32ri : Ii32<0xF7, MRM0r,                     // flags = GR32 & imm32
                     (ops GR32:$src1, i32imm:$src2),
                     "test{l} {$src2, $src1|$src1, $src2}",
                     [(X86cmp (and GR32:$src1, imm:$src2), 0)]>;
-// FIXME: These patterns are disabled until isel issue surrounding
-//CodeGen/X86/test-load-fold.ll is fixed.
+
 def TEST8mi  : Ii8 <0xF6, MRM0m,                     // flags = [mem8]  & imm8
                     (ops i8mem:$src1, i8imm:$src2),
                     "test{b} {$src2, $src1|$src1, $src2}",
-                    [/*(X86cmp (and (loadi8 addr:$src1), imm:$src2), 0)*/]>;
+                    [(X86cmp (and (loadi8 addr:$src1), imm:$src2), 0)]>;
 def TEST16mi : Ii16<0xF7, MRM0m,                     // flags = [mem16] & imm16
                     (ops i16mem:$src1, i16imm:$src2),
                     "test{w} {$src2, $src1|$src1, $src2}",
-                    [/*(X86cmp (and (loadi16 addr:$src1), imm:$src2), 0)*/]>,
+                    [(X86cmp (and (loadi16 addr:$src1), imm:$src2), 0)]>,
                OpSize;
 def TEST32mi : Ii32<0xF7, MRM0m,                     // flags = [mem32] & imm32
                     (ops i32mem:$src1, i32imm:$src2),
                     "test{l} {$src2, $src1|$src1, $src2}",
-                    [/*(X86cmp (and (loadi32 addr:$src1), imm:$src2), 0)*/]>;
+                    [(X86cmp (and (loadi32 addr:$src1), imm:$src2), 0)]>;
 
 
 // Condition code ops, incl. set if equal/not equal/...

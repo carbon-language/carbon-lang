@@ -711,14 +711,13 @@ def TEST64rr : RI<0x85, MRMDestReg, (ops GR64:$src1, GR64:$src2),
                   [(X86cmp (and GR64:$src1, GR64:$src2), 0)]>;
 def TEST64rm : RI<0x85, MRMSrcMem, (ops GR64:$src1, i64mem:$src2),
                   "test{q} {$src2, $src1|$src1, $src2}",
-                  [/*(X86cmp (and GR64:$src1, (loadi64 addr:$src2)), 0)*/]>;
+                  [(X86cmp (and GR64:$src1, (loadi64 addr:$src2)), 0)]>;
 def TEST64ri32 : RIi32<0xF7, MRM0r, (ops GR64:$src1, i64i32imm:$src2),
                        "test{q} {$src2, $src1|$src1, $src2}",
                        [(X86cmp (and GR64:$src1, i64immSExt32:$src2), 0)]>;
 def TEST64mi32 : RIi32<0xF7, MRM0m, (ops i64mem:$src1, i64i32imm:$src2),
                        "test{q} {$src2, $src1|$src1, $src2}",
-                      [/*(X86cmp (and (loadi64 addr:$src1), i64immSExt32:$src2),
-                         0)*/]>;
+                  [(X86cmp (and (loadi64 addr:$src1), i64immSExt32:$src2), 0)]>;
 
 def CMP64rr : RI<0x39, MRMDestReg, (ops GR64:$src1, GR64:$src2),
                  "cmp{q} {$src2, $src1|$src1, $src2}",
