@@ -594,3 +594,37 @@ or eax, 2
 cmp eax, 6
 jz label
 
+//===---------------------------------------------------------------------===//
+
+Compile:
+int %test(ulong *%tmp) {
+        %tmp = load ulong* %tmp         ; <ulong> [#uses=1]
+        %tmp.mask = shr ulong %tmp, ubyte 50            ; <ulong> [#uses=1]
+        %tmp.mask = cast ulong %tmp.mask to ubyte               ; <ubyte> [#uses=1]
+        %tmp2 = and ubyte %tmp.mask, 3          ; <ubyte> [#uses=1]
+        %tmp2 = cast ubyte %tmp2 to int         ; <int> [#uses=1]
+        ret int %tmp2
+}
+
+to:
+
+_test:
+        movl 4(%esp), %eax
+        movl 4(%eax), %eax
+        shrl $18, %eax
+        andl $3, %eax
+        ret
+
+instead of:
+
+_test:
+        movl 4(%esp), %eax
+        movl 4(%eax), %eax
+        shrl $18, %eax
+        # TRUNCATE movb %al, %al
+        andb $3, %al
+        movzbl %al, %eax
+        ret
+
+This saves a movzbl, and saves a truncate if it doesn't get coallesced right.
+This is a simple DAGCombine to propagate the zext through the and.
