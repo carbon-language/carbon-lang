@@ -147,32 +147,6 @@ and ISD::FMAX node types?
 
 //===---------------------------------------------------------------------===//
 
-The first BB of this code:
-
-declare bool %foo()
-int %bar() {
-        %V = call bool %foo()
-        br bool %V, label %T, label %F
-T:
-        ret int 1
-F:
-        call bool %foo()
-        ret int 12
-}
-
-compiles to:
-
-_bar:
-        subl $12, %esp
-        call L_foo$stub
-        xorb $1, %al
-        testb %al, %al
-        jne LBB_bar_2   # F
-
-It would be better to emit "cmp %al, 1" than a xor and test.
-
-//===---------------------------------------------------------------------===//
-
 Lower memcpy / memset to a series of SSE 128 bit move instructions when it's
 feasible.
 
@@ -274,33 +248,6 @@ instead of por and movdqa. Does it matter?
 
 //===---------------------------------------------------------------------===//
 
-Use movddup to splat a v2f64 directly from a memory source. e.g.
-
-#include <emmintrin.h>
-
-void test(__m128d *r, double A) {
-  *r = _mm_set1_pd(A);
-}
-
-llc:
-
-_test:
-	movsd 8(%esp), %xmm0
-	unpcklpd %xmm0, %xmm0
-	movl 4(%esp), %eax
-	movapd %xmm0, (%eax)
-	ret
-
-icc:
-
-_test:
-	movl 4(%esp), %eax
-	movddup 8(%esp), %xmm0
-	movapd %xmm0, (%eax)
-	ret
-
-//===---------------------------------------------------------------------===//
-
 X86RegisterInfo::copyRegToReg() returns X86::MOVAPSrr for VR128. Is it possible
 to choose between movaps, movapd, and movdqa based on types of source and
 destination?
@@ -308,69 +255,6 @@ destination?
 How about andps, andpd, and pand? Do we really care about the type of the packed
 elements? If not, why not always use the "ps" variants which are likely to be
 shorter.
-
-//===---------------------------------------------------------------------===//
-
-We are emitting bad code for this:
-
-float %test(float* %V, int %I, int %D, float %V) {
-entry:
-	%tmp = seteq int %D, 0
-	br bool %tmp, label %cond_true, label %cond_false23
-
-cond_true:
-	%tmp3 = getelementptr float* %V, int %I
-	%tmp = load float* %tmp3
-	%tmp5 = setgt float %tmp, %V
-	%tmp6 = tail call bool %llvm.isunordered.f32( float %tmp, float %V )
-	%tmp7 = or bool %tmp5, %tmp6
-	br bool %tmp7, label %UnifiedReturnBlock, label %cond_next
-
-cond_next:
-	%tmp10 = add int %I, 1
-	%tmp12 = getelementptr float* %V, int %tmp10
-	%tmp13 = load float* %tmp12
-	%tmp15 = setle float %tmp13, %V
-	%tmp16 = tail call bool %llvm.isunordered.f32( float %tmp13, float %V )
-	%tmp17 = or bool %tmp15, %tmp16
-	%retval = select bool %tmp17, float 0.000000e+00, float 1.000000e+00
-	ret float %retval
-
-cond_false23:
-	%tmp28 = tail call float %foo( float* %V, int %I, int %D, float %V )
-	ret float %tmp28
-
-UnifiedReturnBlock:		; preds = %cond_true
-	ret float 0.000000e+00
-}
-
-declare bool %llvm.isunordered.f32(float, float)
-
-declare float %foo(float*, int, int, float)
-
-
-It exposes a known load folding problem:
-
-	movss (%edx,%ecx,4), %xmm1
-	ucomiss %xmm1, %xmm0
-
-As well as this:
-
-LBB_test_2:	# cond_next
-	movss LCPI1_0, %xmm2
-	pxor %xmm3, %xmm3
-	ucomiss %xmm0, %xmm1
-	jbe LBB_test_6	# cond_next
-LBB_test_5:	# cond_next
-	movaps %xmm2, %xmm3
-LBB_test_6:	# cond_next
-	movss %xmm3, 40(%esp)
-	flds 40(%esp)
-	addl $44, %esp
-	ret
-
-Clearly it's unnecessary to clear %xmm3. It's also not clear why we are emitting
-three moves (movss, movaps, movss).
 
 //===---------------------------------------------------------------------===//
 
