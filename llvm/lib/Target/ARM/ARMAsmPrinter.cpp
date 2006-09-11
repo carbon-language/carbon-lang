@@ -201,6 +201,7 @@ void ARMAsmPrinter::printCCOperand(const MachineInstr *MI, int opNum) {
 }
 
 bool ARMAsmPrinter::doInitialization(Module &M) {
+  AsmPrinter::doInitialization(M);
   return false; // success
 }
 
