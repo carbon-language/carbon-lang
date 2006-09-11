@@ -33,15 +33,15 @@ bool ARMInstrInfo::isMoveInstr(const MachineInstr &MI,
                                  unsigned &SrcReg, unsigned &DstReg) const {
   MachineOpCode oc = MI.getOpcode();
   switch (oc) {
-  default:
-    return false;
-  case ARM::movrr:
+  case ARM::MOV:
     assert(MI.getNumOperands() == 2 &&
 	   MI.getOperand(0).isRegister() &&
-	   MI.getOperand(1).isRegister() &&
 	   "Invalid ARM MOV instruction");
-    SrcReg = MI.getOperand(1).getReg();;
-    DstReg = MI.getOperand(0).getReg();;
-    return true;
+    if (MI.getOperand(1).isRegister()) {
+      SrcReg = MI.getOperand(1).getReg();
+      DstReg = MI.getOperand(0).getReg();
+      return true;
+    }
   }
+  return false;
 }

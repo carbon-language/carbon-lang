@@ -13,6 +13,12 @@
 //===----------------------------------------------------------------------===//
 
 // Address operands
+def op_addr_mode1 : Operand<iPTR> {
+  let PrintMethod = "printAddrMode1";
+  let NumMIOperands = 1;
+  let MIOperandInfo = (ops ptr_rc);
+}
+
 def memri : Operand<iPTR> {
   let PrintMethod = "printMemRegImm";
   let NumMIOperands = 2;
@@ -20,6 +26,9 @@ def memri : Operand<iPTR> {
 }
 
 // Define ARM specific addressing mode.
+//Addressing Mode 1: data processing operands
+def addr_mode1 : ComplexPattern<iPTR, 1, "SelectAddrMode1", [imm]>;
+
 //register plus/minus 12 bit offset
 def iaddr  : ComplexPattern<iPTR, 2, "SelectAddrRegImm", [frameindex]>;
 //register plus scaled register
@@ -89,15 +98,12 @@ def str  : InstARM<(ops IntRegs:$src, memri:$addr),
                     "str $src, $addr",
                     [(store IntRegs:$src, iaddr:$addr)]>;
 
-def movrr   : InstARM<(ops IntRegs:$dst, IntRegs:$src),
-                       "mov $dst, $src", []>;
+def MOV   : InstARM<(ops IntRegs:$dst, op_addr_mode1:$src),
+                    "mov $dst, $src", [(set IntRegs:$dst, addr_mode1:$src)]>;
 
-def movri   : InstARM<(ops IntRegs:$dst, i32imm:$src),
-                       "mov $dst, $src", [(set IntRegs:$dst, imm:$src)]>;
-
-def addri   : InstARM<(ops IntRegs:$dst, IntRegs:$a, i32imm:$b),
+def ADD     : InstARM<(ops IntRegs:$dst, IntRegs:$a, op_addr_mode1:$b),
                        "add $dst, $a, $b",
-		       [(set IntRegs:$dst, (add IntRegs:$a, imm:$b))]>;
+		       [(set IntRegs:$dst, (add IntRegs:$a, addr_mode1:$b))]>;
 
 // "LEA" forms of add
 def lea_addri : InstARM<(ops IntRegs:$dst, memri:$addr),
@@ -105,14 +111,13 @@ def lea_addri : InstARM<(ops IntRegs:$dst, memri:$addr),
                 	 [(set IntRegs:$dst, iaddr:$addr)]>;
 
 
-def subri   : InstARM<(ops IntRegs:$dst, IntRegs:$a, i32imm:$b),
+def SUB     : InstARM<(ops IntRegs:$dst, IntRegs:$a, op_addr_mode1:$b),
                        "sub $dst, $a, $b",
-		       [(set IntRegs:$dst, (sub IntRegs:$a, imm:$b))]>;
+		       [(set IntRegs:$dst, (sub IntRegs:$a, addr_mode1:$b))]>;
 
-def andrr     : InstARM<(ops IntRegs:$dst, IntRegs:$a, IntRegs:$b),
-		       "and $dst, $a, $b",
-		       [(set IntRegs:$dst, (and IntRegs:$a, IntRegs:$b))]>;
-
+def AND     : InstARM<(ops IntRegs:$dst, IntRegs:$a, op_addr_mode1:$b),
+                       "and $dst, $a, $b",
+		       [(set IntRegs:$dst, (and IntRegs:$a, addr_mode1:$b))]>;
 
 // All arm data processing instructions have a shift. Maybe we don't have
 // to implement this
@@ -124,20 +129,20 @@ def SRA : InstARM<(ops IntRegs:$dst, IntRegs:$a, IntRegs:$b),
 		       "mov $dst, $a, asr $b",
 		       [(set IntRegs:$dst, (sra IntRegs:$a, IntRegs:$b))]>;
 
+def EOR     : InstARM<(ops IntRegs:$dst, IntRegs:$a, op_addr_mode1:$b),
+                       "eor $dst, $a, $b",
+		       [(set IntRegs:$dst, (xor IntRegs:$a, addr_mode1:$b))]>;
 
-def eor_rr     : InstARM<(ops IntRegs:$dst, IntRegs:$a, IntRegs:$b),
-		       "eor $dst, $a, $b",
-		       [(set IntRegs:$dst, (xor IntRegs:$a, IntRegs:$b))]>;
-
-def orr_rr    : InstARM<(ops IntRegs:$dst, IntRegs:$a, IntRegs:$b),
-		       "orr $dst, $a, $b",
-		       [(set IntRegs:$dst, (or IntRegs:$a, IntRegs:$b))]>;
-
+def ORR     : InstARM<(ops IntRegs:$dst, IntRegs:$a, op_addr_mode1:$b),
+                       "orr $dst, $a, $b",
+		       [(set IntRegs:$dst, (or IntRegs:$a, addr_mode1:$b))]>;
 
 let isTwoAddress = 1 in {
-  def movcond : InstARM<(ops IntRegs:$dst, IntRegs:$false, IntRegs:$true, CCOp:$cc),
+  def movcond : InstARM<(ops IntRegs:$dst, IntRegs:$false,
+			 op_addr_mode1:$true, CCOp:$cc),
 	                 "mov$cc $dst, $true",
-		         [(set IntRegs:$dst, (armselect IntRegs:$true, IntRegs:$false, imm:$cc))]>;
+		         [(set IntRegs:$dst, (armselect addr_mode1:$true,
+			   IntRegs:$false, imm:$cc))]>;
 }
 
 def bcond      : InstARM<(ops brtarget:$dst, CCOp:$cc),
@@ -148,6 +153,6 @@ def b      : InstARM<(ops brtarget:$dst),
 		         "b $dst",
 		         [(br bb:$dst)]>;
 
-def cmp      : InstARM<(ops IntRegs:$a, IntRegs:$b),
+def cmp      : InstARM<(ops IntRegs:$a, op_addr_mode1:$b),
 	               "cmp $a, $b",
-		       [(armcmp IntRegs:$a, IntRegs:$b)]>;
+		       [(armcmp IntRegs:$a, addr_mode1:$b)]>;

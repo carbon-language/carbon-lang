@@ -48,7 +48,7 @@ void ARMRegisterInfo::copyRegToReg(MachineBasicBlock &MBB,
                                      unsigned DestReg, unsigned SrcReg,
                                      const TargetRegisterClass *RC) const {
   assert (RC == ARM::IntRegsRegisterClass);
-  BuildMI(MBB, I, ARM::movrr, 1, DestReg).addReg(SrcReg);
+  BuildMI(MBB, I, ARM::MOV, 1, DestReg).addReg(SrcReg);
 }
 
 MachineInstr *ARMRegisterInfo::foldMemoryOperand(MachineInstr* MI,
@@ -114,7 +114,7 @@ ARMRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II) const {
     // Insert a set of r12 with the full address
     // r12 = r13 + offset
     MachineBasicBlock *MBB2 = MI.getParent();
-    BuildMI(*MBB2, II, ARM::addri, 2, ARM::R12).addReg(ARM::R13).addImm(Offset);
+    BuildMI(*MBB2, II, ARM::ADD, 2, ARM::R12).addReg(ARM::R13).addImm(Offset);
 
     // Replace the FrameIndex with r12
     MI.getOperand(FrameIdx).ChangeToRegister(ARM::R12, false);
@@ -140,7 +140,7 @@ void ARMRegisterInfo::emitPrologue(MachineFunction &MF) const {
   MFI->setStackSize(NumBytes);
 
   //sub sp, sp, #NumBytes
-  BuildMI(MBB, MBBI, ARM::subri, 2, ARM::R13).addReg(ARM::R13).addImm(NumBytes);
+  BuildMI(MBB, MBBI, ARM::SUB, 2, ARM::R13).addReg(ARM::R13).addImm(NumBytes);
 }
 
 void ARMRegisterInfo::emitEpilogue(MachineFunction &MF,
@@ -153,7 +153,7 @@ void ARMRegisterInfo::emitEpilogue(MachineFunction &MF,
   int          NumBytes = (int) MFI->getStackSize();
 
   //add sp, sp, #NumBytes
-  BuildMI(MBB, MBBI, ARM::addri, 2, ARM::R13).addReg(ARM::R13).addImm(NumBytes);
+  BuildMI(MBB, MBBI, ARM::ADD, 2, ARM::R13).addReg(ARM::R13).addImm(NumBytes);
 }
 
 unsigned ARMRegisterInfo::getRARegister() const {

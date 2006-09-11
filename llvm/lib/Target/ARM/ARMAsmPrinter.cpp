@@ -54,6 +54,8 @@ namespace {
       return "ARM Assembly Printer";
     }
 
+    void printAddrMode1(const MachineInstr *MI, int opNum);
+
     void printMemRegImm(const MachineInstr *MI, int opNum,
 			const char *Modifier = NULL) {
       const MachineOperand &MO1 = MI->getOperand(opNum);
@@ -153,6 +155,17 @@ bool ARMAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
   }
 
   return false;
+}
+
+void ARMAsmPrinter::printAddrMode1(const MachineInstr *MI, int opNum) {
+  const MachineOperand &MO1 = MI->getOperand(opNum);
+
+  if(MO1.isImmediate()) {
+    printOperand(MI, opNum);
+  } else {
+    assert(MO1.isRegister());
+    printOperand(MI, opNum);
+  }
 }
 
 void ARMAsmPrinter::printOperand(const MachineInstr *MI, int opNum) {
