@@ -2246,24 +2246,6 @@ public:
         emitCheck(RootName + ".hasOneUse()");
         EmittedUseCheck = true;
         if (NodeHasChain) {
-          // FIXME: Don't fold if 1) the parent node writes a flag, 2) the node
-          // has a chain use.
-          // This a workaround for this problem:
-          //
-          //          [ch, r : ld]
-          //             ^ ^
-          //             | |
-          //      [XX]--/   \- [flag : cmp]
-          //       ^             ^
-          //       |             |
-          //       \---[br flag]-
-          //
-          // cmp + br should be considered as a single node as they are flagged
-          // together. So, if the ld is folded into the cmp, the XX node in the
-          // graph is now both an operand and a use of the ld/cmp/br node.
-          if (NodeHasProperty(P, SDNodeInfo::SDNPOutFlag, ISE))
-            emitCheck(ParentName + ".Val->isOnlyUse(" +  RootName + ".Val)");
-
           // If the immediate use can somehow reach this node through another
           // path, then can't fold it either or it will create a cycle.
           // e.g. In the following diagram, XX can reach ld through YY. If
@@ -3629,6 +3611,16 @@ OS << "  unsigned NumKilled = ISelKilled.size();\n";
   OS << "  RemoveKilled();\n";
   OS << "}\n\n";
 
+  OS << "void DeleteNode(SDNode *N) {\n";
+  OS << "  CurDAG->DeleteNode(N);\n";
+  OS << "  for (SDNode::op_iterator I = N->op_begin(), E = N->op_end(); "
+     << "I != E; ++I) {\n";
+  OS << "    SDNode *Operand = I->Val;\n";
+  OS << "    if (Operand->use_empty())\n";
+  OS << "      DeleteNode(Operand);\n";
+  OS << "  }\n";
+  OS << "}\n";
+
   OS << "// SelectRoot - Top level entry to DAG isel.\n";
   OS << "SDOperand SelectRoot(SDOperand Root) {\n";
   OS << "  SelectRootInit();\n";
@@ -3649,7 +3641,12 @@ OS << "  unsigned NumKilled = ISelKilled.size();\n";
   OS << "    ISelQueue.pop_back();\n";
   OS << "    if (!isSelected(Node->getNodeId())) {\n";
   OS << "      SDNode *ResNode = Select(SDOperand(Node, 0));\n";
-  OS << "      if (ResNode && ResNode != Node) ReplaceUses(Node, ResNode);\n";
+  OS << "      if (ResNode != Node) {\n";
+  OS << "        if (ResNode)\n";
+  OS << "          ReplaceUses(Node, ResNode);\n";
+  OS << "        if (Node->use_empty()) // Don't delete EntryToken, etc.\n";
+  OS << "          DeleteNode(Node);\n";
+  OS << "      }\n";
   OS << "    }\n";
   OS << "  }\n";
   OS << "\n";
