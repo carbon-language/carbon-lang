@@ -581,7 +581,12 @@ boundary to improve performance.
 
 Codegen:
 
-if ((variable == 4) || (variable == 6)) { stuff }
+int f(int a, int b) {
+  if (a == 4 || a == 6)
+    b++;
+  return b;
+}
+
 
 as:
 
