@@ -68,5 +68,4 @@ bzip2               llvm/lib/Support/bzip2/LICENSE
 Autoconf            llvm/autoconf
                     llvm/projects/ModuleMaker/autoconf
                     llvm/projects/sample/autoconf
-Burg                llvm/utils/Burg
 GNU Libc            llvm/runtime/GCCLibraries/libc
