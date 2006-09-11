@@ -501,30 +501,32 @@ Value *PredicateSimplifier::resolve(SetCondInst *SCI,
 
   Value *SCI0 = resolve(SCI->getOperand(0), KP),
         *SCI1 = resolve(SCI->getOperand(1), KP);
-  PropertySet::ConstPropertyIterator NE =
-                   KP.findProperty(PropertySet::NE, SCI0, SCI1);
-
-  if (NE != KP.Properties.end()) {
-    switch (SCI->getOpcode()) {
-      case Instruction::SetEQ:
-        return ConstantBool::False;
-      case Instruction::SetNE:
-        return ConstantBool::True;
-      case Instruction::SetLE:
-      case Instruction::SetGE:
-      case Instruction::SetLT:
-      case Instruction::SetGT:
-        break;
-      default:
-        assert(0 && "Unknown opcode in SetCondInst.");
-        break;
-    }
-  }
 
   ConstantIntegral *CI1 = dyn_cast<ConstantIntegral>(SCI0),
                    *CI2 = dyn_cast<ConstantIntegral>(SCI1);
 
-  if (!CI1 || !CI2) return SCI;
+  if (!CI1 || !CI2) {
+    PropertySet::ConstPropertyIterator NE =
+        KP.findProperty(PropertySet::NE, SCI0, SCI1);
+
+    if (NE != KP.Properties.end()) {
+      switch (SCI->getOpcode()) {
+        case Instruction::SetEQ:
+          return ConstantBool::False;
+        case Instruction::SetNE:
+          return ConstantBool::True;
+        case Instruction::SetLE:
+        case Instruction::SetGE:
+        case Instruction::SetLT:
+        case Instruction::SetGT:
+          break;
+        default:
+          assert(0 && "Unknown opcode in SetCondInst.");
+          break;
+      }
+    }
+    return SCI;
+  }
 
   switch(SCI->getOpcode()) {
     case Instruction::SetLE:
