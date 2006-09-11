@@ -5187,7 +5187,8 @@ Instruction *InstCombiner::visitCastInst(CastInst &CI) {
       Constant *ZeroUInt = Constant::getNullValue(Type::UIntTy);
       unsigned NumZeros = 0;
       while (SrcTy != DstTy && 
-             isa<CompositeType>(SrcTy) && !isa<PointerType>(SrcTy)) {
+             isa<CompositeType>(SrcTy) && !isa<PointerType>(SrcTy) &&
+             SrcTy->getNumContainedTypes() /* not "{}" */) {
         SrcTy = cast<CompositeType>(SrcTy)->getTypeAtIndex(ZeroUInt);
         ++NumZeros;
       }
