@@ -482,19 +482,16 @@ static bool isInt12Immediate(SDOperand Op, short &Imm) {
 bool ARMDAGToDAGISel::SelectAddrMode1(SDOperand N,
 				      SDOperand &Arg) {
   switch(N.getOpcode()) {
-  case ISD::CopyFromReg:
-    Arg    = N;
-    return true;
   case ISD::Constant: {
     //TODO:check that we have a valid constant
     int32_t t = cast<ConstantSDNode>(N)->getValue();
     Arg       = CurDAG->getTargetConstant(t, MVT::i32);
     return true;
   }
-  default:
-    std::cerr << "OpCode = " <<  N.getOpcode() << "\n";
-    assert(0);
   }
+
+  Arg    = N;
+  return true;
 }
 
 //register plus/minus 12 bit offset
