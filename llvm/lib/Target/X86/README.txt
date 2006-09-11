@@ -80,15 +80,6 @@ allocator. Delay codegen until post register allocation.
 
 //===---------------------------------------------------------------------===//
 
-Model X86 EFLAGS as a real register to avoid redudant cmp / test. e.g.
-
-	cmpl $1, %eax
-	setg %al
-	testb %al, %al  # unnecessary
-	jne .BB7
-
-//===---------------------------------------------------------------------===//
-
 Count leading zeros and count trailing zeros:
 
 int clz(int X) { return __builtin_clz(X); }
@@ -126,6 +117,8 @@ commutative, it is not matched with the load on both sides.  The dag combiner
 should be made smart enough to cannonicalize the load into the RHS of a compare
 when it can invert the result of the compare for free.
 
+//===---------------------------------------------------------------------===//
+
 How about intrinsics? An example is:
   *res = _mm_mulhi_epu16(*A, _mm_mul_epu32(*B, *C));
 
@@ -137,51 +130,6 @@ compiles to
 
 The transformation probably requires a X86 specific pass or a DAG combiner
 target specific hook.
-
-//===---------------------------------------------------------------------===//
-
-The DAG Isel doesn't fold the loads into the adds in this testcase.  The
-pattern selector does.  This is because the chain value of the load gets 
-selected first, and the loads aren't checking to see if they are only used by
-and add.
-
-.ll:
-
-int %test(int* %x, int* %y, int* %z) {
-        %X = load int* %x
-        %Y = load int* %y
-        %Z = load int* %z
-        %a = add int %X, %Y
-        %b = add int %a, %Z
-        ret int %b
-}
-
-dag isel:
-
-_test:
-        movl 4(%esp), %eax
-        movl (%eax), %eax
-        movl 8(%esp), %ecx
-        movl (%ecx), %ecx
-        addl %ecx, %eax
-        movl 12(%esp), %ecx
-        movl (%ecx), %ecx
-        addl %ecx, %eax
-        ret
-
-pattern isel:
-
-_test:
-        movl 12(%esp), %ecx
-        movl 4(%esp), %edx
-        movl 8(%esp), %eax
-        movl (%eax), %eax
-        addl (%edx), %eax
-        addl (%ecx), %eax
-        ret
-
-This is bad for register pressure, though the dag isel is producing a 
-better schedule. :)
 
 //===---------------------------------------------------------------------===//
 
@@ -198,44 +146,12 @@ on some processors (which ones?), it is more efficient to do this:
 
 _test:
         movl 8(%esp), %ebx
-	    xor  %eax, %eax
+        xor  %eax, %eax
         cmpl %ebx, 4(%esp)
         setl %al
         ret
 
 Doing this correctly is tricky though, as the xor clobbers the flags.
-
-//===---------------------------------------------------------------------===//
-
-We should generate 'test' instead of 'cmp' in various cases, e.g.:
-
-bool %test(int %X) {
-        %Y = shl int %X, ubyte 1
-        %C = seteq int %Y, 0
-        ret bool %C
-}
-bool %test(int %X) {
-        %Y = and int %X, 8
-        %C = seteq int %Y, 0
-        ret bool %C
-}
-
-This may just be a matter of using 'test' to write bigger patterns for X86cmp.
-
-An important case is comparison against zero:
-
-if (X == 0) ...
-
-instead of:
-
-	cmpl $0, %eax
-	je LBB4_2	#cond_next
-
-use:
-	test %eax, %eax
-	jz LBB4_2
-
-which is smaller.
 
 //===---------------------------------------------------------------------===//
 
@@ -561,17 +477,6 @@ The issue is that llvmgcc4 is forcing the struct to memory, then passing it as
 integer chunks.  It does this so that structs like {short,short} are passed in
 a single 32-bit integer stack slot.  We should handle the safe cases above much
 nicer, while still handling the hard cases.
-
-//===---------------------------------------------------------------------===//
-
-Some ideas for instruction selection code simplification: 1. A pre-pass to
-determine which chain producing node can or cannot be folded. The generated
-isel code would then use the information. 2. The same pre-pass can force
-ordering of TokenFactor operands to allow load / store folding. 3. During isel,
-instead of recursively going up the chain operand chain, mark the chain operand
-as available and put it in some work list. Select other nodes in the normal
-manner. The chain operands are selected after all other nodes are selected. Uses
-of chain nodes are modified after instruction selection is completed.
 
 //===---------------------------------------------------------------------===//
 
