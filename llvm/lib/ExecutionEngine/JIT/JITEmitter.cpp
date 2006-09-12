@@ -861,8 +861,11 @@ void JITEmitter::emitConstantPool(MachineConstantPool *MCP) {
   const std::vector<MachineConstantPoolEntry> &Constants = MCP->getConstants();
   if (Constants.empty()) return;
 
-  unsigned Size = Constants.back().Offset;
-  Size += TheJIT->getTargetData()->getTypeSize(Constants.back().Val->getType());
+  MachineConstantPoolEntry CPE = Constants.back();
+  unsigned Size = CPE.Offset;
+  const Type *Ty = CPE.isMachineConstantPoolEntry()
+    ? CPE.Val.ConstVal->getType() : CPE.Val.MachineCPVal->getType();
+  Size += TheJIT->getTargetData()->getTypeSize(Ty);
 
   ConstantPoolBase = allocateSpace(Size, 1 << MCP->getConstantPoolAlignment());
   ConstantPool = MCP;
@@ -872,7 +875,13 @@ void JITEmitter::emitConstantPool(MachineConstantPool *MCP) {
   // Initialize the memory for all of the constant pool entries.
   for (unsigned i = 0, e = Constants.size(); i != e; ++i) {
     void *CAddr = (char*)ConstantPoolBase+Constants[i].Offset;
-    TheJIT->InitializeMemory(Constants[i].Val, CAddr);
+    if (Constants[i].isMachineConstantPoolEntry()) {
+      // FIXME: add support to lower machine constant pool values into bytes!
+      std::cerr << "Initialize memory with machine specific constant pool entry"
+                << " has not been implemented!\n";
+      abort();
+    }
+    TheJIT->InitializeMemory(Constants[i].Val.ConstVal, CAddr);
   }
 }
 
