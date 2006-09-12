@@ -399,6 +399,14 @@ public:
     N->setIDom(NewIDom);
   }
 
+  /// removeNode - Removes a node from the dominator tree.  Block must not
+  /// dominate any other blocks.  Invalidates any node pointing to removed
+  /// block.
+  void removeNode(BasicBlock *BB) {
+    assert(getNode(BB) && "Removing node that isn't in dominator tree.");
+    Nodes.erase(BB);
+  }
+
   /// print - Convert to human readable form
   ///
   virtual void print(std::ostream &OS, const Module* = 0) const;
