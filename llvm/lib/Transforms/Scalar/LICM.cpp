@@ -447,6 +447,8 @@ void LICM::sink(Instruction &I) {
     if (!isExitBlockDominatedByBlockInLoop(ExitBlocks[0], I.getParent())) {
       // Instruction is not used, just delete it.
       CurAST->deleteValue(&I);
+      if (!I.use_empty())  // If I has users in unreachable blocks, eliminate.
+        I.replaceAllUsesWith(UndefValue::get(I.getType()));
       I.eraseFromParent();
     } else {
       // Move the instruction to the start of the exit block, after any PHI
@@ -460,6 +462,8 @@ void LICM::sink(Instruction &I) {
   } else if (ExitBlocks.size() == 0) {
     // The instruction is actually dead if there ARE NO exit blocks.
     CurAST->deleteValue(&I);
+    if (!I.use_empty())  // If I has users in unreachable blocks, eliminate.
+      I.replaceAllUsesWith(UndefValue::get(I.getType()));
     I.eraseFromParent();
   } else {
     // Otherwise, if we have multiple exits, use the PromoteMem2Reg function to
