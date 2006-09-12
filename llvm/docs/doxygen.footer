@@ -7,7 +7,7 @@ Copyright &copy; 2003,2004,2005,2006 University of Illinois at Urbana-Champaign.
 All Rights Reserved.</p>
 
 <hr>
-<!--#include virtual="attrib.incl" -->
+<!--#include virtual="/attrib.incl" -->
 
 </body>
 </html>
