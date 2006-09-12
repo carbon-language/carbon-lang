@@ -540,7 +540,7 @@ bool X86DAGToDAGISel::MatchAddress(SDOperand N, X86ISelAddressMode &AM,
       if (ConstantPoolSDNode *CP =
           dyn_cast<ConstantPoolSDNode>(N.getOperand(0))) {
         if (AM.CP == 0) {
-          AM.CP = CP->get();
+          AM.CP = CP->getConstVal();
           AM.Align = CP->getAlignment();
           AM.Disp += CP->getOffset();
           if (isRIP)
@@ -872,7 +872,7 @@ SDNode *X86DAGToDAGISel::Select(SDOperand N) {
                                              G->getOffset() + Offset);
         } else if (ConstantPoolSDNode *CP =
                    dyn_cast<ConstantPoolSDNode>(N0.getOperand(0))) {
-          C = CurDAG->getTargetConstantPool(CP->get(), PtrVT,
+          C = CurDAG->getTargetConstantPool(CP->getConstVal(), PtrVT,
                                             CP->getAlignment(),
                                             CP->getOffset()+Offset);
         }

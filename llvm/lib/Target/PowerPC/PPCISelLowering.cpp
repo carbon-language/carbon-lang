@@ -314,7 +314,7 @@ static bool isFloatingPointZero(SDOperand Op) {
   else if (Op.getOpcode() == ISD::EXTLOAD || Op.getOpcode() == ISD::LOAD) {
     // Maybe this has already been legalized into the constant pool?
     if (ConstantPoolSDNode *CP = dyn_cast<ConstantPoolSDNode>(Op.getOperand(1)))
-      if (ConstantFP *CFP = dyn_cast<ConstantFP>(CP->get()))
+      if (ConstantFP *CFP = dyn_cast<ConstantFP>(CP->getConstVal()))
         return CFP->isExactlyValue(-0.0) || CFP->isExactlyValue(0.0);
   }
   return false;
@@ -601,7 +601,7 @@ SDOperand PPC::get_VSPLTI_elt(SDNode *N, unsigned ByteSize, SelectionDAG &DAG) {
 static SDOperand LowerConstantPool(SDOperand Op, SelectionDAG &DAG) {
   MVT::ValueType PtrVT = Op.getValueType();
   ConstantPoolSDNode *CP = cast<ConstantPoolSDNode>(Op);
-  Constant *C = CP->get();
+  Constant *C = CP->getConstVal();
   SDOperand CPI = DAG.getTargetConstantPool(C, PtrVT, CP->getAlignment());
   SDOperand Zero = DAG.getConstant(0, PtrVT);
 

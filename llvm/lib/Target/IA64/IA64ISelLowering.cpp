@@ -136,7 +136,7 @@ static bool isFloatingPointZero(SDOperand Op) {
   else if (Op.getOpcode() == ISD::EXTLOAD || Op.getOpcode() == ISD::LOAD) {
     // Maybe this has already been legalized into the constant pool?
     if (ConstantPoolSDNode *CP = dyn_cast<ConstantPoolSDNode>(Op.getOperand(1)))
-      if (ConstantFP *CFP = dyn_cast<ConstantFP>(CP->get()))
+      if (ConstantFP *CFP = dyn_cast<ConstantFP>(CP->getConstVal()))
         return CFP->isExactlyValue(-0.0) || CFP->isExactlyValue(0.0);
   }
   return false;

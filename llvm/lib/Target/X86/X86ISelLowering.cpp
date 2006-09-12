@@ -3329,8 +3329,9 @@ SDOperand
 X86TargetLowering::LowerConstantPool(SDOperand Op, SelectionDAG &DAG) {
   ConstantPoolSDNode *CP = cast<ConstantPoolSDNode>(Op);
   SDOperand Result = DAG.getNode(X86ISD::Wrapper, getPointerTy(),
-                            DAG.getTargetConstantPool(CP->get(), getPointerTy(),
-                                                      CP->getAlignment()));
+                                 DAG.getTargetConstantPool(CP->getConstVal(),
+                                                           getPointerTy(),
+                                                           CP->getAlignment()));
   if (Subtarget->isTargetDarwin()) {
     // With PIC, the address is actually $g + Offset.
     if (!Subtarget->is64Bit() &&

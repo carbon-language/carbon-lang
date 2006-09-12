@@ -294,7 +294,7 @@ static SDOperand LowerFORMAL_ARGUMENT(SDOperand Op, SelectionDAG &DAG,
 static SDOperand LowerConstantPool(SDOperand Op, SelectionDAG &DAG) {
   MVT::ValueType PtrVT = Op.getValueType();
   ConstantPoolSDNode *CP = cast<ConstantPoolSDNode>(Op);
-  Constant *C = CP->get();
+  Constant *C = CP->getConstVal();
   SDOperand CPI = DAG.getTargetConstantPool(C, PtrVT, CP->getAlignment());
 
   return CPI;
