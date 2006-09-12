@@ -16,6 +16,7 @@
 #define LLVM_CODEGEN_SELECTIONDAGCSEMAP_H
 
 #include "llvm/ADT/SmallVector.h"
+#include "llvm/CodeGen/SelectionDAGNodes.h"
 
 namespace llvm {
   class SDNode;

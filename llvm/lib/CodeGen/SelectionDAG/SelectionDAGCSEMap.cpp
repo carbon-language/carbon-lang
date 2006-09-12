@@ -12,6 +12,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/CodeGen/SelectionDAG.h"
+#include "llvm/CodeGen/MachineConstantPool.h"
 #include "llvm/Support/MathExtras.h"
 using namespace llvm;
 
@@ -70,7 +71,11 @@ SelectionDAGCSEMap::NodeID::NodeID(SDNode *N) {
     case ISD::TargetConstantPool:
       AddInteger(cast<ConstantPoolSDNode>(N)->getAlignment());
       AddInteger(cast<ConstantPoolSDNode>(N)->getOffset());
-      AddPointer(cast<ConstantPoolSDNode>(N)->get());
+      if (cast<ConstantPoolSDNode>(N)->isMachineConstantPoolEntry())
+        cast<ConstantPoolSDNode>(N)->getMachineCPVal()->
+          AddSelectionDAGCSEId(this);
+      else
+        AddPointer(cast<ConstantPoolSDNode>(N)->getConstVal());
       break;
     }
   }

@@ -15,6 +15,7 @@
 #include "llvm/Function.h"
 #include "llvm/Assembly/Writer.h"
 #include "llvm/CodeGen/SelectionDAG.h"
+#include "llvm/CodeGen/MachineConstantPool.h"
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/Target/MRegisterInfo.h"
 #include "llvm/Target/TargetMachine.h"
@@ -80,14 +81,20 @@ std::string DOTGraphTraits<SelectionDAG*>::getNodeLabel(const SDNode *Node,
   } else if (const FrameIndexSDNode *FIDN = dyn_cast<FrameIndexSDNode>(Node)) {
     Op += " " + itostr(FIDN->getIndex());
   } else if (const ConstantPoolSDNode *CP = dyn_cast<ConstantPoolSDNode>(Node)){
-    if (ConstantFP *CFP = dyn_cast<ConstantFP>(CP->get()))
-      Op += "<" + ftostr(CFP->getValue()) + ">";
-    else if (ConstantInt *CI = dyn_cast<ConstantInt>(CP->get()))
-      Op += "<" + utostr(CI->getZExtValue()) + ">";
-    else {
+    if (CP->isMachineConstantPoolEntry()) {
       std::ostringstream SS;
-      WriteAsOperand(SS, CP->get(), false);
+      CP->getMachineCPVal()->print(SS);
       Op += "<" + SS.str() + ">";
+    } else {
+      if (ConstantFP *CFP = dyn_cast<ConstantFP>(CP->getConstVal()))
+        Op += "<" + ftostr(CFP->getValue()) + ">";
+      else if (ConstantInt *CI = dyn_cast<ConstantInt>(CP->getConstVal()))
+        Op += "<" + utostr(CI->getZExtValue()) + ">";
+      else {
+        std::ostringstream SS;
+        WriteAsOperand(SS, CP->getConstVal(), false);
+        Op += "<" + SS.str() + ">";
+      }
     }
   } else if (const BasicBlockSDNode *BBDN = dyn_cast<BasicBlockSDNode>(Node)) {
     Op = "BB: ";

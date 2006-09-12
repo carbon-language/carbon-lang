@@ -17,6 +17,7 @@
 #include "llvm/Intrinsics.h"
 #include "llvm/Assembly/Writer.h"
 #include "llvm/CodeGen/MachineBasicBlock.h"
+#include "llvm/CodeGen/MachineConstantPool.h"
 #include "llvm/Support/MathExtras.h"
 #include "llvm/Target/MRegisterInfo.h"
 #include "llvm/Target/TargetLowering.h"
@@ -577,6 +578,25 @@ SDOperand SelectionDAG::getConstantPool(Constant *C, MVT::ValueType VT,
   ID.AddInteger(Alignment);
   ID.AddInteger(Offset);
   ID.AddPointer(C);
+  void *IP = 0;
+  if (SDNode *E = CSEMap.FindNodeOrInsertPos(ID, IP))
+    return SDOperand(E, 0);
+  SDNode *N = new ConstantPoolSDNode(isTarget, C, VT, Offset, Alignment);
+  CSEMap.InsertNode(N, IP);
+  AllNodes.push_back(N);
+  return SDOperand(N, 0);
+}
+
+
+SDOperand SelectionDAG::getConstantPool(MachineConstantPoolValue *C,
+                                        MVT::ValueType VT,
+                                        unsigned Alignment, int Offset,
+                                        bool isTarget) {
+  unsigned Opc = isTarget ? ISD::TargetConstantPool : ISD::ConstantPool;
+  SelectionDAGCSEMap::NodeID ID(Opc, getVTList(VT));
+  ID.AddInteger(Alignment);
+  ID.AddInteger(Offset);
+  C->AddSelectionDAGCSEId(&ID);
   void *IP = 0;
   if (SDNode *E = CSEMap.FindNodeOrInsertPos(ID, IP))
     return SDOperand(E, 0);
@@ -2586,7 +2606,10 @@ void SDNode::dump(const SelectionDAG *G) const {
     std::cerr << "<" << FIDN->getIndex() << ">";
   } else if (const ConstantPoolSDNode *CP = dyn_cast<ConstantPoolSDNode>(this)){
     int offset = CP->getOffset();
-    std::cerr << "<" << *CP->get() << ">";
+    if (CP->isMachineConstantPoolEntry())
+      std::cerr << "<" << *CP->getMachineCPVal() << ">";
+    else
+      std::cerr << "<" << *CP->getConstVal() << ">";
     if (offset > 0)
       std::cerr << " + " << offset;
     else
@@ -2648,3 +2671,8 @@ void SelectionDAG::dump() const {
   std::cerr << "\n\n";
 }
 
+const Type *ConstantPoolSDNode::getType() const {
+  if (isMachineConstantPoolEntry())
+    return Val.MachineCPVal->getType();
+  return Val.ConstVal->getType();
+}

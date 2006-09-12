@@ -351,6 +351,12 @@ void MachineJumpTableInfo::dump() const { print(std::cerr); }
 //  MachineConstantPool implementation
 //===----------------------------------------------------------------------===//
 
+MachineConstantPool::~MachineConstantPool() {
+  for (unsigned i = 0, e = Constants.size(); i != e; ++i)
+    if (Constants[i].isMachineConstantPoolEntry())
+      delete Constants[i].Val.MachineCPVal;
+}
+
 /// getConstantPoolIndex - Create a new entry in the constant pool or return
 /// an existing one.  User must specify an alignment in bytes for the object.
 ///
@@ -364,13 +370,13 @@ unsigned MachineConstantPool::getConstantPoolIndex(Constant *C,
   // FIXME, this could be made much more efficient for large constant pools.
   unsigned AlignMask = (1 << Alignment)-1;
   for (unsigned i = 0, e = Constants.size(); i != e; ++i)
-    if (Constants[i].Val == C && (Constants[i].Offset & AlignMask) == 0)
+    if (Constants[i].Val.ConstVal == C && (Constants[i].Offset & AlignMask)== 0)
       return i;
   
   unsigned Offset = 0;
   if (!Constants.empty()) {
     Offset = Constants.back().Offset;
-    Offset += TD->getTypeSize(Constants.back().Val->getType());
+    Offset += TD->getTypeSize(Constants.back().Val.ConstVal->getType());
     Offset = (Offset+AlignMask)&~AlignMask;
   }
   
@@ -378,10 +384,38 @@ unsigned MachineConstantPool::getConstantPoolIndex(Constant *C,
   return Constants.size()-1;
 }
 
+unsigned MachineConstantPool::getConstantPoolIndex(MachineConstantPoolValue *V,
+                                                   unsigned Alignment) {
+  assert(Alignment && "Alignment must be specified!");
+  if (Alignment > PoolAlignment) PoolAlignment = Alignment;
+  
+  // Check to see if we already have this constant.
+  //
+  // FIXME, this could be made much more efficient for large constant pools.
+  unsigned AlignMask = (1 << Alignment)-1;
+  int Idx = V->getExistingMachineCPValue(this, Alignment);
+  if (Idx != -1)
+    return (unsigned)Idx;
+  
+  unsigned Offset = 0;
+  if (!Constants.empty()) {
+    Offset = Constants.back().Offset;
+    Offset += TD->getTypeSize(Constants.back().Val.MachineCPVal->getType());
+    Offset = (Offset+AlignMask)&~AlignMask;
+  }
+  
+  Constants.push_back(MachineConstantPoolEntry(V, Offset));
+  return Constants.size()-1;
+}
+
 
 void MachineConstantPool::print(std::ostream &OS) const {
   for (unsigned i = 0, e = Constants.size(); i != e; ++i) {
-    OS << "  <cp #" << i << "> is" << *(Value*)Constants[i].Val;
+    OS << "  <cp #" << i << "> is";
+    if (Constants[i].isMachineConstantPoolEntry())
+      Constants[i].Val.MachineCPVal->print(OS);
+    else
+      OS << *(Value*)Constants[i].Val.ConstVal;
     OS << " , offset=" << Constants[i].Offset;
     OS << "\n";
   }

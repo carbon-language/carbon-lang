@@ -324,22 +324,26 @@ void ScheduleDAG::AddOperand(MachineInstr *MI, SDOperand Op,
              dyn_cast<ConstantPoolSDNode>(Op)) {
     int Offset = CP->getOffset();
     unsigned Align = CP->getAlignment();
+    const Type *Type = CP->getType();
     // MachineConstantPool wants an explicit alignment.
     if (Align == 0) {
-      if (CP->get()->getType() == Type::DoubleTy)
+      if (Type == Type::DoubleTy)
         Align = 3;  // always 8-byte align doubles.
       else {
-        Align = TM.getTargetData()
-          ->getTypeAlignmentShift(CP->get()->getType());
+        Align = TM.getTargetData()->getTypeAlignmentShift(Type);
         if (Align == 0) {
           // Alignment of packed types.  FIXME!
-          Align = TM.getTargetData()->getTypeSize(CP->get()->getType());
+          Align = TM.getTargetData()->getTypeSize(Type);
           Align = Log2_64(Align);
         }
       }
     }
     
-    unsigned Idx = ConstPool->getConstantPoolIndex(CP->get(), Align);
+    unsigned Idx;
+    if (CP->isMachineConstantPoolEntry())
+      Idx = ConstPool->getConstantPoolIndex(CP->getMachineCPVal(), Align);
+    else
+      Idx = ConstPool->getConstantPoolIndex(CP->getConstVal(), Align);
     MI->addConstantPoolIndexOperand(Idx, Offset);
   } else if (ExternalSymbolSDNode *ES = 
              dyn_cast<ExternalSymbolSDNode>(Op)) {

@@ -15,22 +15,77 @@
 #ifndef LLVM_CODEGEN_MACHINECONSTANTPOOL_H
 #define LLVM_CODEGEN_MACHINECONSTANTPOOL_H
 
+#include "llvm/CodeGen/SelectionDAGCSEMap.h"
 #include <vector>
 #include <iosfwd>
 
 namespace llvm {
 
+class AsmPrinter;
 class Constant;
 class TargetData;
+class TargetMachine;
+class MachineConstantPool;
+
+/// Abstract base class for all machine specific constantpool value subclasses.
+///
+class MachineConstantPoolValue {
+  const Type *Ty;
+
+public:
+  MachineConstantPoolValue(const Type *ty) : Ty(ty) {}
+  virtual ~MachineConstantPoolValue() {};
+
+  /// getType - get type of this MachineConstantPoolValue.
+  ///
+  inline const Type *getType() const { return Ty; }
+
+  virtual int getExistingMachineCPValue(MachineConstantPool *CP,
+                                        unsigned Alignment) = 0;
+
+  virtual void AddSelectionDAGCSEId(SelectionDAGCSEMap::NodeID *Id) = 0;
+
+  /// print - Implement operator<<...
+  ///
+  virtual void print(std::ostream &O) const = 0;
+};
+
+inline std::ostream &operator<<(std::ostream &OS,
+                                const MachineConstantPoolValue &V) {
+  V.print(OS);
+  return OS;
+}
 
 /// This class is a data container for one entry in a MachineConstantPool.
 /// It contains a pointer to the value and an offset from the start of
 /// the constant pool.
 /// @brief An entry in a MachineConstantPool
 struct MachineConstantPoolEntry {
-  Constant *Val;   ///< The constant itself.
-  unsigned Offset; ///< The offset of the constant from the start of the pool.
-  MachineConstantPoolEntry(Constant *V, unsigned O) : Val(V), Offset(O) {}
+  /// The constant itself.
+  union {
+    Constant *ConstVal;
+    MachineConstantPoolValue *MachineCPVal;
+  } Val;
+
+  /// The offset of the constant from the start of the pool. It's really
+  /// 31-bit only. The top bit is set when Val is a MachineConstantPoolValue.
+  unsigned Offset;
+
+  MachineConstantPoolEntry(Constant *V, unsigned O)
+    : Offset(O) {
+    assert((int)Offset >= 0 && "Offset is too large");
+    Val.ConstVal = V;
+  }
+  MachineConstantPoolEntry(MachineConstantPoolValue *V, unsigned O)
+    : Offset(O){
+    assert((int)Offset >= 0 && "Offset is too large");
+    Val.MachineCPVal = V; 
+    Offset |= 1 << (sizeof(unsigned)*8-1);
+  }
+
+  bool isMachineConstantPoolEntry() const {
+    return (int)Offset < 0;
+  }
 };
   
 /// The MachineConstantPool class keeps track of constants referenced by a
@@ -50,6 +105,7 @@ class MachineConstantPool {
 public:
   /// @brief The only constructor.
   MachineConstantPool(const TargetData *td) : TD(td), PoolAlignment(1) {}
+  ~MachineConstantPool();
     
   /// getConstantPoolAlignment - Return the log2 of the alignment required by
   /// the whole constant pool, of which the first element must be aligned.
@@ -58,6 +114,7 @@ public:
   /// getConstantPoolIndex - Create a new entry in the constant pool or return
   /// an existing one.  User must specify an alignment in bytes for the object.
   unsigned getConstantPoolIndex(Constant *C, unsigned Alignment);
+  unsigned getConstantPoolIndex(MachineConstantPoolValue *V,unsigned Alignment);
   
   /// isEmpty - Return true if this constant pool contains no constants.
   bool isEmpty() const { return Constants.empty(); }

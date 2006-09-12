@@ -24,6 +24,7 @@ namespace llvm {
   class ConstantArray;
   class GlobalVariable;
   class MachineConstantPoolEntry;
+  class MachineConstantPoolValue;
   class Mangler;
   class TargetAsmInfo;
   
@@ -174,6 +175,8 @@ namespace llvm {
     /// EmitGlobalConstant - Print a general LLVM constant to the .s file.
     ///
     void EmitGlobalConstant(const Constant* CV);
+
+    virtual void EmitMachineConstantPoolValue(MachineConstantPoolValue *MCPV);
     
     /// printInlineAsm - This method formats and prints the specified machine
     /// instruction that is an inline asm.
@@ -188,7 +191,11 @@ namespace llvm {
     /// printSetLabel - This method prints a set label for the specified
     /// MachineBasicBlock
     void printSetLabel(unsigned uid, const MachineBasicBlock *MBB) const;
-    
+
+    /// printDataDirective - This method prints the asm directive for the
+    /// specified type.
+    void printDataDirective(const Type *type);
+
   private:
     void EmitXXStructorList(Constant *List);
     void EmitConstantPool(unsigned Alignment, const char *Section,

@@ -126,10 +126,11 @@ void AsmPrinter::EmitConstantPool(MachineConstantPool *MCP) {
   std::vector<std::pair<MachineConstantPoolEntry,unsigned> > EightByteCPs;
   std::vector<std::pair<MachineConstantPoolEntry,unsigned> > SixteenByteCPs;
   std::vector<std::pair<MachineConstantPoolEntry,unsigned> > OtherCPs;
+  std::vector<std::pair<MachineConstantPoolEntry,unsigned> > TargetCPs;
   for (unsigned i = 0, e = CP.size(); i != e; ++i) {
     MachineConstantPoolEntry CPE = CP[i];
-    const Constant *CV = CPE.Val;
-    const Type *Ty = CV->getType();
+    const Type *Ty = CPE.isMachineConstantPoolEntry()
+      ? CPE.Val.MachineCPVal->getType() : CPE.Val.ConstVal->getType();
     if (TAI->getFourByteConstantSection() &&
         TM.getTargetData()->getTypeSize(Ty) == 4)
       FourByteCPs.push_back(std::make_pair(CPE, i));
@@ -160,11 +161,20 @@ void AsmPrinter::EmitConstantPool(unsigned Alignment, const char *Section,
   for (unsigned i = 0, e = CP.size(); i != e; ++i) {
     O << TAI->getPrivateGlobalPrefix() << "CPI" << getFunctionNumber() << '_'
       << CP[i].second << ":\t\t\t\t\t" << TAI->getCommentString() << " ";
-    WriteTypeSymbolic(O, CP[i].first.Val->getType(), 0) << '\n';
-    EmitGlobalConstant(CP[i].first.Val);
+    if (CP[i].first.isMachineConstantPoolEntry()) {
+      WriteTypeSymbolic(O, CP[i].first.Val.MachineCPVal->getType(), 0) << '\n';
+      printDataDirective(CP[i].first.Val.MachineCPVal->getType());
+      EmitMachineConstantPoolValue(CP[i].first.Val.MachineCPVal);
+    } else {
+      WriteTypeSymbolic(O, CP[i].first.Val.ConstVal->getType(), 0) << '\n';
+      EmitGlobalConstant(CP[i].first.Val.ConstVal);
+    }
     if (i != e-1) {
+      const Type *Ty = CP[i].first.isMachineConstantPoolEntry()
+        ? CP[i].first.Val.MachineCPVal->getType()
+        : CP[i].first.Val.ConstVal->getType();
       unsigned EntSize =
-        TM.getTargetData()->getTypeSize(CP[i].first.Val->getType());
+        TM.getTargetData()->getTypeSize(Ty);
       unsigned ValEnd = CP[i].first.Offset + EntSize;
       // Emit inter-object padding for alignment.
       EmitZeros(CP[i+1].first.Offset-ValEnd);
@@ -580,38 +590,15 @@ void AsmPrinter::EmitGlobalConstant(const Constant *CV) {
   }
 
   const Type *type = CV->getType();
-  switch (type->getTypeID()) {
-  case Type::BoolTyID:
-  case Type::UByteTyID: case Type::SByteTyID:
-    O << TAI->getData8bitsDirective();
-    break;
-  case Type::UShortTyID: case Type::ShortTyID:
-    O << TAI->getData16bitsDirective();
-    break;
-  case Type::PointerTyID:
-    if (TD->getPointerSize() == 8) {
-      assert(TAI->getData64bitsDirective() &&
-             "Target cannot handle 64-bit pointer exprs!");
-      O << TAI->getData64bitsDirective();
-      break;
-    }
-    //Fall through for pointer size == int size
-  case Type::UIntTyID: case Type::IntTyID:
-    O << TAI->getData32bitsDirective();
-    break;
-  case Type::ULongTyID: case Type::LongTyID:
-    assert(TAI->getData64bitsDirective() &&
-           "Target cannot handle 64-bit constant exprs!");
-    O << TAI->getData64bitsDirective();
-    break;
-  case Type::FloatTyID: case Type::DoubleTyID:
-    assert (0 && "Should have already output floating point constant.");
-  default:
-    assert (0 && "Can't handle printing this type of thing");
-    break;
-  }
+  printDataDirective(type);
   EmitConstantValueOnly(CV);
   O << "\n";
+}
+
+void
+AsmPrinter::EmitMachineConstantPoolValue(MachineConstantPoolValue *MCPV) {
+  // Target doesn't support this yet!
+  abort();
 }
 
 /// printInlineAsm - This method formats and prints the specified machine
@@ -828,4 +815,40 @@ void AsmPrinter::printSetLabel(unsigned uid,
   printBasicBlockLabel(MBB, false, false);
   O << '-' << TAI->getPrivateGlobalPrefix() << "JTI" << getFunctionNumber() 
     << '_' << uid << '\n';
+}
+
+/// printDataDirective - This method prints the asm directive for the
+/// specified type.
+void AsmPrinter::printDataDirective(const Type *type) {
+  const TargetData *TD = TM.getTargetData();
+  switch (type->getTypeID()) {
+  case Type::BoolTyID:
+  case Type::UByteTyID: case Type::SByteTyID:
+    O << TAI->getData8bitsDirective();
+    break;
+  case Type::UShortTyID: case Type::ShortTyID:
+    O << TAI->getData16bitsDirective();
+    break;
+  case Type::PointerTyID:
+    if (TD->getPointerSize() == 8) {
+      assert(TAI->getData64bitsDirective() &&
+             "Target cannot handle 64-bit pointer exprs!");
+      O << TAI->getData64bitsDirective();
+      break;
+    }
+    //Fall through for pointer size == int size
+  case Type::UIntTyID: case Type::IntTyID:
+    O << TAI->getData32bitsDirective();
+    break;
+  case Type::ULongTyID: case Type::LongTyID:
+    assert(TAI->getData64bitsDirective() &&
+           "Target cannot handle 64-bit constant exprs!");
+    O << TAI->getData64bitsDirective();
+    break;
+  case Type::FloatTyID: case Type::DoubleTyID:
+    assert (0 && "Should have already output floating point constant.");
+  default:
+    assert (0 && "Can't handle printing this type of thing");
+    break;
+  }
 }

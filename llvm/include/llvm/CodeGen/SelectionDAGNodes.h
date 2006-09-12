@@ -19,11 +19,11 @@
 #ifndef LLVM_CODEGEN_SELECTIONDAGNODES_H
 #define LLVM_CODEGEN_SELECTIONDAGNODES_H
 
-#include "llvm/CodeGen/ValueTypes.h"
 #include "llvm/Value.h"
 #include "llvm/ADT/GraphTraits.h"
 #include "llvm/ADT/iterator"
 #include "llvm/ADT/SmallVector.h"
+#include "llvm/CodeGen/ValueTypes.h"
 #include "llvm/Support/DataTypes.h"
 #include <cassert>
 
@@ -32,6 +32,7 @@ namespace llvm {
 class SelectionDAG;
 class GlobalValue;
 class MachineBasicBlock;
+class MachineConstantPoolValue;
 class SDNode;
 template <typename T> struct simplify_type;
 template <typename T> struct ilist_traits;
@@ -1145,7 +1146,10 @@ public:
 };
 
 class ConstantPoolSDNode : public SDNode {
-  Constant *C;
+  union {
+    Constant *ConstVal;
+    MachineConstantPoolValue *MachineCPVal;
+  } Val;
   int Offset;
   unsigned Alignment;
 protected:
@@ -1153,19 +1157,56 @@ protected:
   ConstantPoolSDNode(bool isTarget, Constant *c, MVT::ValueType VT,
                      int o=0)
     : SDNode(isTarget ? ISD::TargetConstantPool : ISD::ConstantPool, VT),
-      C(c), Offset(o), Alignment(0) {}
+      Offset(o), Alignment(0) {
+    assert((int)Offset >= 0 && "Offset is too large");
+    Val.ConstVal = c;
+  }
   ConstantPoolSDNode(bool isTarget, Constant *c, MVT::ValueType VT, int o,
                      unsigned Align)
     : SDNode(isTarget ? ISD::TargetConstantPool : ISD::ConstantPool, VT),
-      C(c), Offset(o), Alignment(Align) {}
+      Offset(o), Alignment(Align) {
+    assert((int)Offset >= 0 && "Offset is too large");
+    Val.ConstVal = c;
+  }
+  ConstantPoolSDNode(bool isTarget, MachineConstantPoolValue *v,
+                     MVT::ValueType VT, int o=0)
+    : SDNode(isTarget ? ISD::TargetConstantPool : ISD::ConstantPool, VT),
+      Offset(o), Alignment(0) {
+    assert((int)Offset >= 0 && "Offset is too large");
+    Val.MachineCPVal = v;
+    Offset |= 1 << (sizeof(unsigned)*8-1);
+  }
+  ConstantPoolSDNode(bool isTarget, MachineConstantPoolValue *v,
+                     MVT::ValueType VT, int o, unsigned Align)
+    : SDNode(isTarget ? ISD::TargetConstantPool : ISD::ConstantPool, VT),
+      Offset(o), Alignment(Align) {
+    assert((int)Offset >= 0 && "Offset is too large");
+    Val.MachineCPVal = v;
+    Offset |= 1 << (sizeof(unsigned)*8-1);
+  }
 public:
 
-  Constant *get() const { return C; }
+  bool isMachineConstantPoolEntry() const {
+    return (int)Offset < 0;
+  }
+
+  Constant *getConstVal() const {
+    assert(!isMachineConstantPoolEntry() && "Wrong constantpool type");
+    return Val.ConstVal;
+  }
+
+  MachineConstantPoolValue *getMachineCPVal() const {
+    assert(isMachineConstantPoolEntry() && "Wrong constantpool type");
+    return Val.MachineCPVal;
+  }
+
   int getOffset() const { return Offset; }
   
   // Return the alignment of this constant pool object, which is either 0 (for
   // default alignment) or log2 of the desired value.
   unsigned getAlignment() const { return Alignment; }
+
+  const Type *getType() const;
 
   static bool classof(const ConstantPoolSDNode *) { return true; }
   static bool classof(const SDNode *N) {

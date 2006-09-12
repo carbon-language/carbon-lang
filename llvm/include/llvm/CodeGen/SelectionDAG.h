@@ -15,7 +15,6 @@
 #ifndef LLVM_CODEGEN_SELECTIONDAG_H
 #define LLVM_CODEGEN_SELECTIONDAG_H
 
-#include "llvm/CodeGen/SelectionDAGNodes.h"
 #include "llvm/CodeGen/SelectionDAGCSEMap.h"
 #include "llvm/ADT/ilist"
 
@@ -30,6 +29,7 @@ namespace llvm {
   class TargetMachine;
   class MachineDebugInfo;
   class MachineFunction;
+  class MachineConstantPoolValue;
 
 /// SelectionDAG class - This is used to represent a portion of an LLVM function
 /// in a low-level Data Dependence DAG representation suitable for instruction
@@ -165,6 +165,13 @@ public:
                             unsigned Align = 0, int Offs = 0, bool isT=false);
   SDOperand getTargetConstantPool(Constant *C, MVT::ValueType VT,
                                   unsigned Align = 0, int Offset = 0) {
+    return getConstantPool(C, VT, Align, Offset, true);
+  }
+  SDOperand getConstantPool(MachineConstantPoolValue *C, MVT::ValueType VT,
+                            unsigned Align = 0, int Offs = 0, bool isT=false);
+  SDOperand getTargetConstantPool(MachineConstantPoolValue *C,
+                                  MVT::ValueType VT, unsigned Align = 0,
+                                  int Offset = 0) {
     return getConstantPool(C, VT, Align, Offset, true);
   }
   SDOperand getBasicBlock(MachineBasicBlock *MBB);
