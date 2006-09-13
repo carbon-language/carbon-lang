@@ -593,8 +593,8 @@ Value *PredicateSimplifier::resolve(Value *V, const PropertySet &KP) {
 void PredicateSimplifier::visitBasicBlock(DTNodeType *DTNode,
                                           PropertySet &KnownProperties) {
   BasicBlock *BB = DTNode->getBlock();
-  for (BasicBlock::iterator I = BB->begin(), E = BB->end(); I != E; ++I) {
-    visitInstruction(I, DTNode, KnownProperties);
+  for (BasicBlock::iterator I = BB->begin(), E = BB->end(); I != E;) {
+    visitInstruction(I++, DTNode, KnownProperties);
   }
 }
 
@@ -612,6 +612,7 @@ void PredicateSimplifier::visitInstruction(Instruction *I,
     modified = true;
     ++NumInstruction;
     I->replaceAllUsesWith(V);
+    I->eraseFromParent();
     return;
   }
 
