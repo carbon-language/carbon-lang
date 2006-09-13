@@ -45,6 +45,19 @@ http://gcc.gnu.org/ml/gcc-patches/2004-09/msg01136.html
 
 Another useful one would be  ~0ULL >> X and ~0ULL << X.
 
+One better solution for 1LL << x is:
+        xorl    %eax, %eax
+        xorl    %edx, %edx
+        testb   $32, %cl
+        sete    %al
+        setne   %dl
+        sall    %cl, %eax
+        sall    %cl, %edx
+
+But that requires good 8-bit subreg support.
+
+
+
 //===---------------------------------------------------------------------===//
 
 Compile this:
