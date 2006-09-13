@@ -643,3 +643,35 @@ This saves a movzbl, and saves a truncate if it doesn't get coallesced right.
 This is a simple DAGCombine to propagate the zext through the and.
 
 //===---------------------------------------------------------------------===//
+
+GCC's ix86_expand_int_movcc function (in i386.c) has a ton of interesting
+simplifications for integer "x cmp y ? a : b".  For example, instead of:
+
+int G;
+void f(int X, int Y) {
+  G = X < 0 ? 14 : 13;
+}
+
+compiling to:
+
+_f:
+        movl $14, %eax
+        movl $13, %ecx
+        movl 4(%esp), %edx
+        testl %edx, %edx
+        cmovl %eax, %ecx
+        movl %ecx, _G
+        ret
+
+it could be:
+_f:
+        movl    4(%esp), %eax
+        sarl    $31, %eax
+        notl    %eax
+        addl    $14, %eax
+        movl    %eax, _G
+        ret
+
+etc.
+
+//===---------------------------------------------------------------------===//
