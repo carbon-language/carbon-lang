@@ -1873,14 +1873,17 @@ static bool translateX86CC(ISD::CondCode SetCCOpcode, bool isFP,
                            SelectionDAG &DAG) {
   X86CC = X86ISD::COND_INVALID;
   if (!isFP) {
-    if (SetCCOpcode == ISD::SETGT) {
-      if (ConstantSDNode *RHSC = dyn_cast<ConstantSDNode>(RHS))
-        if (RHSC->isAllOnesValue()) {
-          // X > -1   -> X == 0, jump on sign.
-          RHS = DAG.getConstant(0, RHS.getValueType());
-          X86CC = X86ISD::COND_NS;
-          return true;
-        }
+    if (ConstantSDNode *RHSC = dyn_cast<ConstantSDNode>(RHS)) {
+      if (SetCCOpcode == ISD::SETGT && RHSC->isAllOnesValue()) {
+        // X > -1   -> X == 0, jump !sign.
+        RHS = DAG.getConstant(0, RHS.getValueType());
+        X86CC = X86ISD::COND_NS;
+        return true;
+      } else if (SetCCOpcode == ISD::SETLT && RHSC->isNullValue()) {
+        // X < 0   -> X == 0, jump on sign.
+        X86CC = X86ISD::COND_S;
+        return true;
+      }
     }
     
     switch (SetCCOpcode) {
