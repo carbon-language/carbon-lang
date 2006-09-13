@@ -470,9 +470,12 @@ unsigned Emitter::determineREX(const MachineInstr &MI) {
     REX |= 1 << 3;
 
   if (MI.getNumOperands()) {
+    bool isTwoAddr = (Desc.Flags & M_2_ADDR_FLAG) != 0;
+
     // If it accesses SPL, BPL, SIL, or DIL, then it requires a 0x40 REX prefix.
     bool isTrunc8 = isX86_64TruncToByte(Opcode);
-    for (unsigned i = 0, e = MI.getNumOperands(); i != e; ++i) {
+    unsigned i = isTwoAddr ? 1 : 0;
+    for (unsigned e = MI.getNumOperands(); i != e; ++i) {
       const MachineOperand& MO = MI.getOperand(i);
       if (MO.isRegister()) {
 	unsigned Reg = MO.getReg();
@@ -493,7 +496,8 @@ unsigned Emitter::determineREX(const MachineInstr &MI) {
     case X86II::MRMSrcReg: {
       if (isX86_64ExtendedReg(MI.getOperand(0)))
         REX |= 1 << 2;
-      for (unsigned i = 1, e = MI.getNumOperands(); i != e; ++i) {
+      i = isTwoAddr ? 2 : 1;
+      for (unsigned e = MI.getNumOperands(); i != e; ++i) {
         const MachineOperand& MO = MI.getOperand(i);
         if (isX86_64ExtendedReg(MO))
           REX |= 1 << 0;
@@ -504,7 +508,8 @@ unsigned Emitter::determineREX(const MachineInstr &MI) {
       if (isX86_64ExtendedReg(MI.getOperand(0)))
         REX |= 1 << 2;
       unsigned Bit = 0;
-      for (unsigned i = 1; i != 5; ++i) {
+      i = isTwoAddr ? 2 : 1;
+      for (; i != MI.getNumOperands(); ++i) {
         const MachineOperand& MO = MI.getOperand(i);
         if (MO.isRegister()) {
           if (isX86_64ExtendedReg(MO))
@@ -519,11 +524,12 @@ unsigned Emitter::determineREX(const MachineInstr &MI) {
     case X86II::MRM4m: case X86II::MRM5m:
     case X86II::MRM6m: case X86II::MRM7m:
     case X86II::MRMDestMem: {
-      if (MI.getNumOperands() >= 5 &&
-          isX86_64ExtendedReg(MI.getOperand(4)))
+      unsigned e = isTwoAddr ? 5 : 4;
+      i = isTwoAddr ? 1 : 0;
+      if (MI.getNumOperands() > e && isX86_64ExtendedReg(MI.getOperand(e)))
         REX |= 1 << 2;
       unsigned Bit = 0;
-      for (unsigned i = 0; i != 4; ++i) {
+      for (; i != e; ++i) {
         const MachineOperand& MO = MI.getOperand(i);
         if (MO.isRegister()) {
           if (isX86_64ExtendedReg(MO))
@@ -536,7 +542,8 @@ unsigned Emitter::determineREX(const MachineInstr &MI) {
     default: {
       if (isX86_64ExtendedReg(MI.getOperand(0)))
         REX |= 1 << 0;
-      for (unsigned i = 1, e = MI.getNumOperands(); i != e; ++i) {
+      i = isTwoAddr ? 2 : 1;
+      for (unsigned e = MI.getNumOperands(); i != e; ++i) {
         const MachineOperand& MO = MI.getOperand(i);
         if (isX86_64ExtendedReg(MO))
           REX |= 1 << 2;
