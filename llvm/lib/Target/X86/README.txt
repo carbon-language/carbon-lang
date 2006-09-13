@@ -607,6 +607,34 @@ or eax, 2
 cmp eax, 6
 jz label
 
+If we aren't going to do this, we should lower the switch better.  We compile 
+the code to:
+
+_f:
+        movl 8(%esp), %eax
+        movl 4(%esp), %ecx
+        cmpl $6, %ecx
+        jl LBB1_4       #entry
+        jmp LBB1_3      #entry
+LBB1_3: #entry
+        cmpl $6, %ecx
+        je LBB1_1       #bb
+        jmp LBB1_2      #UnifiedReturnBlock
+LBB1_4: #entry
+        cmpl $4, %ecx
+        jne LBB1_2      #UnifiedReturnBlock
+LBB1_1: #bb
+        incl %eax
+        ret
+LBB1_2: #UnifiedReturnBlock
+        ret
+
+In the code above, the 'if' is turned into a 'switch' at the mid-level.  It looks 
+like the 'lower to branches' mode could be improved a little here.  In particular,
+the fall-through to LBB1_3 doesn't need a branch.  It would also be nice to
+eliminate the redundant "cmp 6", maybe by lowering to a linear sequence of
+compares if there are below a certain number of cases (instead of a binary sequence)?
+
 //===---------------------------------------------------------------------===//
 
 Compile:
@@ -675,3 +703,4 @@ _f:
 etc.
 
 //===---------------------------------------------------------------------===//
+
