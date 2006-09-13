@@ -449,6 +449,32 @@ void llvm::CloneAndPruneFunctionInto(Function *NewFunc, const Function *OldFunc,
       }
     }
   }
+  
+  // Now that the inlined function body has been fully constructed, go through
+  // and zap unconditional fall-through branches.  This happen all the time when
+  // specializing code: code specialization turns conditional branches into
+  // uncond branches, and this code folds them.
+  Function::iterator I = cast<BasicBlock>(ValueMap[&OldFunc->getEntryBlock()]);
+  while (I != NewFunc->end()) {
+    BranchInst *BI = dyn_cast<BranchInst>(I->getTerminator());
+    if (!BI || BI->isConditional()) { ++I; continue; }
+    
+    BasicBlock *Dest = BI->getSuccessor(0);
+    if (!Dest->getSinglePredecessor()) { ++I; continue; }
+    
+    // We know all single-entry PHI nodes in the inlined function have been
+    // removed, so we just need to splice the blocks.
+    BI->eraseFromParent();
+    
+    // Move all the instructions in the succ to the pred.
+    I->getInstList().splice(I->end(), Dest->getInstList());
+    
+    // Make all PHI nodes that referred to Dest now refer to I as their source.
+    Dest->replaceAllUsesWith(I);
+
+    // Remove the dest block.
+    Dest->eraseFromParent();
+    
+    // Do not increment I, iteratively merge all things this block branches to.
+  }
 }
-
-
