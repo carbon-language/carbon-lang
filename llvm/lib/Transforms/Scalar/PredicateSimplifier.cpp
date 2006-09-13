@@ -106,6 +106,10 @@ namespace {
       return leaders.empty();
     }
 
+    unsigned countLeaders() const {
+      return leaders.size();
+    }
+
     iterator findLeader(ElemTy e) {
       typename std::map<ElemTy, unsigned>::iterator MI = mapping.find(e);
       if (MI == mapping.end()) return 0;
@@ -123,6 +127,7 @@ namespace {
 
     ElemTy &getLeader(iterator I) {
       assert(I != 0 && "Element zero is out of range.");
+      assert(I <= leaders.size() && "Invalid iterator.");
       return leaders[I-1];
     }
 
@@ -133,8 +138,10 @@ namespace {
 
 #ifdef DEBUG
     void debug(std::ostream &os) const {
+      std::set<Value *> Unique;
       for (unsigned i = 1, e = leaders.size()+1; i != e; ++i) {
-        os << i << ". " << *leaders[i-1] << ": [";
+        Unique.insert(getLeader(i));
+        os << i << ". " << *getLeader(i) << ": [";
         for (std::map<Value *, unsigned>::const_iterator
              I = mapping.begin(), E = mapping.end(); I != E; ++I) {
           if ((*I).second == i && (*I).first != leaders[i-1]) {
@@ -142,6 +149,14 @@ namespace {
           }
         }
         os << "]\n";
+      }
+      assert(Unique.size() == leaders.size() && "Duplicate leaders.");
+
+      for (typename std::map<ElemTy, unsigned>::const_iterator
+           I = mapping.begin(), E = mapping.end(); I != E; ++I) {
+        assert(I->second != 0 && "Zero iterator in mapping.");
+        assert(I->second <= leaders.size() &&
+               "Invalid iterator found in mapping.");
       }
     }
 #endif
@@ -428,11 +443,15 @@ namespace {
     void debug(std::ostream &os) const {
       static const char *OpcodeTable[] = { "EQ", "NE" };
 
+      unsigned int size = union_find.countLeaders();
+
       union_find.debug(os);
       for (std::vector<Property>::const_iterator I = Properties.begin(),
            E = Properties.end(); I != E; ++I) {
         os << (*I).I1 << " " << OpcodeTable[(*I).Opcode] << " "
            << (*I).I2 << "\n";
+        assert((*I).I1 <= size && "Invalid property.");
+        assert((*I).I2 <= size && "Invalid property.");
       }
       os << "\n";
     }
