@@ -41,6 +41,16 @@ namespace llvm {
     };
   }
 
+  namespace ARMShift {
+    enum ShiftTypes {
+      LSL,
+      LSR,
+      ASR,
+      ROR,
+      RRX
+    };
+  }
+
   static const char *ARMCondCodeToString(ARMCC::CondCodes CC) {
     switch (CC) {
     default: assert(0 && "Unknown condition code");

@@ -158,13 +158,38 @@ bool ARMAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
 }
 
 void ARMAsmPrinter::printAddrMode1(const MachineInstr *MI, int opNum) {
-  const MachineOperand &MO1 = MI->getOperand(opNum);
+  const MachineOperand &Arg       = MI->getOperand(opNum);
+  const MachineOperand &Shift     = MI->getOperand(opNum + 1);
+  const MachineOperand &ShiftType = MI->getOperand(opNum + 2);
 
-  if(MO1.isImmediate()) {
+  if(Arg.isImmediate()) {
+    assert(Shift.getImmedValue() == 0);
     printOperand(MI, opNum);
   } else {
-    assert(MO1.isRegister());
+    assert(Arg.isRegister());
     printOperand(MI, opNum);
+    if(Shift.isRegister() || Shift.getImmedValue() != 0) {
+      const char *s = NULL;
+      switch(ShiftType.getImmedValue()) {
+      case ARMShift::LSL:
+	s = ", lsl ";
+	break;
+      case ARMShift::LSR:
+	s = ", lsr ";
+	break;
+      case ARMShift::ASR:
+	s = ", asr ";
+	break;
+      case ARMShift::ROR:
+	s = ", ror ";
+	break;
+      case ARMShift::RRX:
+	s = ", rrx ";
+	break;
+      }
+      O << s;
+      printOperand(MI, opNum + 1);
+    }
   }
 }
 

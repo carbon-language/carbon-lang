@@ -15,8 +15,8 @@
 // Address operands
 def op_addr_mode1 : Operand<iPTR> {
   let PrintMethod = "printAddrMode1";
-  let NumMIOperands = 1;
-  let MIOperandInfo = (ops ptr_rc);
+  let NumMIOperands = 3;
+  let MIOperandInfo = (ops ptr_rc, ptr_rc, i32imm);
 }
 
 def memri : Operand<iPTR> {
@@ -27,7 +27,7 @@ def memri : Operand<iPTR> {
 
 // Define ARM specific addressing mode.
 //Addressing Mode 1: data processing operands
-def addr_mode1 : ComplexPattern<iPTR, 1, "SelectAddrMode1", [imm]>;
+def addr_mode1 : ComplexPattern<iPTR, 3, "SelectAddrMode1", [imm, sra, shl, srl]>;
 
 //register plus/minus 12 bit offset
 def iaddr  : ComplexPattern<iPTR, 2, "SelectAddrRegImm", [frameindex]>;
@@ -118,21 +118,6 @@ def SUB     : InstARM<(ops IntRegs:$dst, IntRegs:$a, op_addr_mode1:$b),
 def AND     : InstARM<(ops IntRegs:$dst, IntRegs:$a, op_addr_mode1:$b),
                        "and $dst, $a, $b",
 		       [(set IntRegs:$dst, (and IntRegs:$a, addr_mode1:$b))]>;
-
-// All arm data processing instructions have a shift. Maybe we don't have
-// to implement this
-def SHL : InstARM<(ops IntRegs:$dst, IntRegs:$a, IntRegs:$b),
-		       "mov $dst, $a, lsl $b",
-		       [(set IntRegs:$dst, (shl IntRegs:$a, IntRegs:$b))]>;
-
-def SRA : InstARM<(ops IntRegs:$dst, IntRegs:$a, IntRegs:$b),
-		       "mov $dst, $a, asr $b",
-		       [(set IntRegs:$dst, (sra IntRegs:$a, IntRegs:$b))]>;
-
-def SRL : InstARM<(ops IntRegs:$dst, IntRegs:$a, IntRegs:$b),
-		       "mov $dst, $a, lsr $b",
-		       [(set IntRegs:$dst, (srl IntRegs:$a, IntRegs:$b))]>;
-
 
 def EOR     : InstARM<(ops IntRegs:$dst, IntRegs:$a, op_addr_mode1:$b),
                        "eor $dst, $a, $b",
