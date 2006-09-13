@@ -498,7 +498,7 @@ bool X86DAGToDAGISel::MatchAddress(SDOperand N, X86ISelAddressMode &AM,
   // RIP relative addressing: %rip + 32-bit displacement!
   if (AM.isRIPRel) {
     if (!AM.ES && AM.JT != -1 && N.getOpcode() == ISD::Constant) {
-      uint64_t Val = cast<ConstantSDNode>(N)->getValue();
+      int64_t Val = cast<ConstantSDNode>(N)->getSignExtended();
       if (isInt32(AM.Disp + Val)) {
         AM.Disp += Val;
         return false;
@@ -513,7 +513,7 @@ bool X86DAGToDAGISel::MatchAddress(SDOperand N, X86ISelAddressMode &AM,
   switch (N.getOpcode()) {
   default: break;
   case ISD::Constant: {
-    uint64_t Val = cast<ConstantSDNode>(N)->getValue();
+    int64_t Val = cast<ConstantSDNode>(N)->getSignExtended();
     if (isInt32(AM.Disp + Val)) {
       AM.Disp += Val;
       return false;
