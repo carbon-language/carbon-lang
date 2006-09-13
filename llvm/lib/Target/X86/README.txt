@@ -630,15 +630,3 @@ This saves a movzbl, and saves a truncate if it doesn't get coallesced right.
 This is a simple DAGCombine to propagate the zext through the and.
 
 //===---------------------------------------------------------------------===//
-
-Instead of:
-
-	cmpl $4294967295, %edx
-	jg LBB1_8	#cond_false49
-
-emit:
-
-	testl %edx, %edx
-	js LBB1_8
-
-This saves a byte of code space.
