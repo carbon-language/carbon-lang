@@ -3234,6 +3234,15 @@ bool SelectionDAGISel::runOnFunction(Function &Fn) {
       if (GetElementPtrInst *GEPI = dyn_cast<GetElementPtrInst>(I)) {
         MadeChange |= OptimizeGEPExpression(GEPI, TLI.getTargetData());
       } else if (CastInst *CI = dyn_cast<CastInst>(I)) {
+        // If the source of the cast is a constant, then this should have
+        // already been constant folded.  The only reason NOT to constant fold
+        // it is if something (e.g. LSR) was careful to place the constant
+        // evaluation in a block other than then one that uses it (e.g. to hoist
+        // the address of globals out of a loop).  If this is the case, we don't
+        // want to forward-subst the cast.
+        if (isa<Constant>(CI->getOperand(0)))
+          continue;
+        
         // If this is a noop copy, sink it into user blocks to reduce the number
         // of virtual registers that must be created and coallesced.
         MVT::ValueType SrcVT = TLI.getValueType(CI->getOperand(0)->getType());
