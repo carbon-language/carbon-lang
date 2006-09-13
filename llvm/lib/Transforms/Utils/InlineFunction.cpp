@@ -245,7 +245,14 @@ bool llvm::InlineFunction(CallSite CS, CallGraph *CG) {
     BasicBlock::iterator InsertPoint = Caller->begin()->begin();
     for (BasicBlock::iterator I = FirstNewBlock->begin(),
            E = FirstNewBlock->end(); I != E; )
-      if (AllocaInst *AI = dyn_cast<AllocaInst>(I++))
+      if (AllocaInst *AI = dyn_cast<AllocaInst>(I++)) {
+        // If the alloca is now dead, remove it.  This often occurs due to code
+        // specialization.
+        if (AI->use_empty()) {
+          AI->eraseFromParent();
+          continue;
+        }
+        
         if (isa<Constant>(AI->getArraySize())) {
           // Scan for the block of allocas that we can move over, and move them
           // all at once.
@@ -260,6 +267,7 @@ bool llvm::InlineFunction(CallSite CS, CallGraph *CG) {
                                                FirstNewBlock->getInstList(),
                                                AI, I);
         }
+      }
   }
 
   // If the inlined code contained dynamic alloca instructions, wrap the inlined
