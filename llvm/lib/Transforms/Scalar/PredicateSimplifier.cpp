@@ -57,19 +57,19 @@ namespace {
   /// not a total ordering.
   struct compare {
     bool operator()(Value *V1, Value *V2) const {
-      if (isa<Constant>(V2)) {
-        if (!isa<Constant>(V1)) {
+      if (isa<Constant>(V1)) {
+        if (!isa<Constant>(V2)) {
           return true;
         }
-      } else if (isa<Argument>(V2)) {
-        if (!isa<Constant>(V1) && !isa<Argument>(V1)) {
+      } else if (isa<Argument>(V1)) {
+        if (!isa<Constant>(V2) && !isa<Argument>(V2)) {
           return true;
         }
       }
-      if (User *U1 = dyn_cast<User>(V1)) {
-        for (User::const_op_iterator I = U1->op_begin(), E = U1->op_end();
+      if (User *U = dyn_cast<User>(V2)) {
+        for (User::const_op_iterator I = U->op_begin(), E = U->op_end();
              I != E; ++I) {
-          if (*I == V2) {
+          if (*I == V1) {
             return true;
           }
         }
@@ -79,10 +79,10 @@ namespace {
   };
 
   /// Used for choosing the canonical Value in a synonym set.
-  /// Leaves the better one in V1.
+  /// Leaves the better choice in V1.
   static void order(Value *&V1, Value *&V2) {
     static compare c;
-    if (c(V1, V2))
+    if (c(V2, V1))
       std::swap(V1, V2);
   }
 
@@ -139,8 +139,8 @@ namespace {
              I = mapping.begin(), E = mapping.end(); I != E; ++I) {
           if ((*I).second == i && (*I).first != leaders[i-1]) {
             os << *(*I).first << "  ";
-	  }
-	}
+          }
+        }
         os << "]\n";
       }
     }
@@ -153,32 +153,37 @@ namespace {
     /// existing disjoint synonym sets were combined. The iterator
     /// points to the removed element.
     iterator unionSets(ElemTy E1, ElemTy E2) {
-      if (swo(E1, E2)) std::swap(E1, E2);
+      if (swo(E2, E1)) std::swap(E1, E2);
 
-      iterator I1 = findLeader(E1);
-      iterator I2 = findLeader(E2);
+      iterator I1 = findLeader(E1),
+               I2 = findLeader(E2);
 
       if (!I1 && !I2) { // neither entry is in yet
         leaders.push_back(E1);
         I1 = leaders.size();
         mapping[E1] = I1;
         mapping[E2] = I1;
-        return false;
+        return 0;
       }
 
       if (!I1 && I2) {
         mapping[E1] = I2;
-        return false;
+        std::swap(getLeader(I2), E1);
+        return 0;
       }
 
       if (I1 && !I2) {
         mapping[E2] = I1;
-        return false;
+        return 0;
       }
+
+      if (I1 == I2) return 0;
 
       // This is the case where we have two sets, [%a1, %a2, %a3] and
       // [%p1, %p2, %p3] and someone says that %a2 == %p3. We need to
       // combine the two synsets.
+
+      if (I1 > I2) --I1;
 
       for (std::map<Value *, unsigned>::iterator I = mapping.begin(),
            E = mapping.end(); I != E; ++I) {
@@ -188,7 +193,7 @@ namespace {
 
       leaders.erase(leaders.begin() + I2 - 1);
 
-      return true;
+      return I2;
     }
 
     /// Returns an iterator pointing to the synonym set containing
@@ -238,7 +243,7 @@ namespace {
     void addEqual(Value *V1, Value *V2) {
       // If %x = 0. and %y = -0., seteq %x, %y is true, but
       // copysign(%x) is not the same as copysign(%y).
-      if (V2->getType()->isFloatingPoint()) return;
+      if (V1->getType()->isFloatingPoint()) return;
 
       order(V1, V2);
       if (isa<Constant>(V2)) return; // refuse to set false == true.
@@ -261,7 +266,10 @@ namespace {
 
     void addNotEqual(Value *V1, Value *V2) {
       // If %x = NAN then seteq %x, %x is false.
-      if (V2->getType()->isFloatingPoint()) return;
+      if (V1->getType()->isFloatingPoint()) return;
+
+      // For example, %x = setne int 0, 0 causes "0 != 0".
+      if (isa<Constant>(V1) && isa<Constant>(V2)) return;
 
       DEBUG(std::cerr << "not equal: " << *V1 << " and " << *V2 << "\n");
       if (findProperty(NE, V1, V2) != Properties.end())
@@ -270,6 +278,10 @@ namespace {
       // Add the property.
       SynonymIterator I1 = union_find.findOrInsert(V1),
                       I2 = union_find.findOrInsert(V2);
+
+      // Technically this means that the block is unreachable.
+      if (I1 == I2) return;
+
       Properties.push_back(Property(NE, I1, I2));
       addImpliedProperties(NE, V1, V2);
     }
@@ -607,7 +619,7 @@ void PredicateSimplifier::visitInstruction(Instruction *I,
 
   // Try to replace the whole instruction.
   Value *V = resolve(I, KnownProperties);
-  assert(V && "resolve not supposed to return NULL.");
+  assert(V->getType() == I->getType() && "Instruction type mutated!");
   if (V != I) {
     modified = true;
     ++NumInstruction;
@@ -620,7 +632,7 @@ void PredicateSimplifier::visitInstruction(Instruction *I,
   for (unsigned i = 0, e = I->getNumOperands(); i != e; ++i) {
     Value *Oper = I->getOperand(i);
     Value *V = resolve(Oper, KnownProperties);
-    assert(V && "resolve not supposed to return NULL.");
+    assert(V->getType() == Oper->getType() && "Operand type mutated!");
     if (V != Oper) {
       modified = true;
       ++NumVarsReplaced;
