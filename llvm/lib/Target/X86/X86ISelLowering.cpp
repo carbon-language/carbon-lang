@@ -1878,7 +1878,7 @@ static bool translateX86CC(ISD::CondCode SetCCOpcode, bool isFP,
         if (RHSC->isAllOnesValue()) {
           // X > -1   -> X == 0, jump on sign.
           RHS = DAG.getConstant(0, RHS.getValueType());
-          X86CC = X86ISD::COND_S;
+          X86CC = X86ISD::COND_NS;
           return true;
         }
     }
