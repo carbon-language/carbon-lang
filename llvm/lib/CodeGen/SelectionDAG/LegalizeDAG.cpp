@@ -4559,6 +4559,24 @@ void SelectionDAGLegalize::ExpandOp(SDOperand Op, SDOperand &Lo, SDOperand &Hi){
       }
     }
     
+    // If ADDC/ADDE are supported and if the shift amount is a constant 1, emit 
+    // this X << 1 as X+X.
+    if (ConstantSDNode *ShAmt = dyn_cast<ConstantSDNode>(ShiftAmt)) {
+      if (ShAmt->getValue() == 1 && TLI.isOperationLegal(ISD::ADDC, NVT) && 
+          TLI.isOperationLegal(ISD::ADDE, NVT)) {
+        SDOperand LoOps[2], HiOps[3];
+        ExpandOp(Node->getOperand(0), LoOps[0], HiOps[0]);
+        SDVTList VTList = DAG.getVTList(LoOps[0].getValueType(), MVT::Flag);
+        LoOps[1] = LoOps[0];
+        Lo = DAG.getNode(ISD::ADDC, VTList, LoOps, 2);
+
+        HiOps[1] = HiOps[0];
+        HiOps[2] = Lo.getValue(1);
+        Hi = DAG.getNode(ISD::ADDE, VTList, HiOps, 3);
+        break;
+      }
+    }
+    
     // If we can emit an efficient shift operation, do so now.
     if (ExpandShift(ISD::SHL, Node->getOperand(0), ShiftAmt, Lo, Hi))
       break;
@@ -4657,21 +4675,20 @@ void SelectionDAGLegalize::ExpandOp(SDOperand Op, SDOperand &Lo, SDOperand &Hi){
     SDOperand LHSL, LHSH, RHSL, RHSH;
     ExpandOp(Node->getOperand(0), LHSL, LHSH);
     ExpandOp(Node->getOperand(1), RHSL, RHSH);
-    const MVT::ValueType *VTs =
-      DAG.getNodeValueTypes(LHSL.getValueType(),MVT::Flag);
-    SDOperand LoOps[2], HiOps[2];
+    SDVTList VTList = DAG.getVTList(LHSL.getValueType(), MVT::Flag);
+    SDOperand LoOps[2], HiOps[3];
     LoOps[0] = LHSL;
     LoOps[1] = RHSL;
     HiOps[0] = LHSH;
     HiOps[1] = RHSH;
     if (Node->getOpcode() == ISD::ADD) {
-      Lo = DAG.getNode(ISD::ADDC, VTs, 2, LoOps, 2);
+      Lo = DAG.getNode(ISD::ADDC, VTList, LoOps, 2);
       HiOps[2] = Lo.getValue(1);
-      Hi = DAG.getNode(ISD::ADDE, VTs, 2, HiOps, 3);
+      Hi = DAG.getNode(ISD::ADDE, VTList, HiOps, 3);
     } else {
-      Lo = DAG.getNode(ISD::SUBC, VTs, 2, LoOps, 2);
+      Lo = DAG.getNode(ISD::SUBC, VTList, LoOps, 2);
       HiOps[2] = Lo.getValue(1);
-      Hi = DAG.getNode(ISD::SUBE, VTs, 2, HiOps, 3);
+      Hi = DAG.getNode(ISD::SUBE, VTList, HiOps, 3);
     }
     break;
   }
