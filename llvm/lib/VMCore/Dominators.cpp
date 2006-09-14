@@ -890,6 +890,39 @@ void ETForest::calculate(const ImmediateDominators &ID) {
   updateDFSNumbers ();
 }
 
+// Walk ETNode and its children using DFS algorithm and assign
+// DFSNumIn and DFSNumOut numbers for each node. 
+void ETNode::assignDFSNumber(int &num) {
+
+    std::vector<ETNode *> DFSInStack;
+    std::set<ETNode *> visited;
+
+    DFSInStack.push_back(this);
+
+    visited.insert(this);
+
+    while(!DFSInStack.empty()) {
+      ETNode *Parent = DFSInStack.back();
+      DFSInStack.pop_back();
+      Parent->DFSNumIn = num++;
+      Parent->DFSNumOut = Parent->DFSNumIn + 1;
+
+      ETNode *son = Parent->Son;
+      if (son && visited.count(son) == 0) {
+
+        DFSInStack.push_back(son);
+        son->DFSNumIn = Parent->DFSNumIn + 1;
+        visited.insert(son);
+        
+        for (ETNode *s = son->Right; s != son; s = s->Right) {
+          DFSInStack.push_back(s);
+          s->DFSNumIn = Parent->DFSNumIn + 1;
+          visited.insert(s);
+        }
+      }
+    }
+}
+
 //===----------------------------------------------------------------------===//
 // ETForestBase Implementation
 //===----------------------------------------------------------------------===//
