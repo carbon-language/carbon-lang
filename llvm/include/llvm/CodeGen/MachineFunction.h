@@ -223,13 +223,8 @@ public:
     return MBBNumbering[N];
   }
 
-  /// getLastBlock - Returns the MachineBasicBlock with the greatest number
-  MachineBasicBlock *getLastBlock() {
-    return MBBNumbering.back();
-  }
-  const MachineBasicBlock *getLastBlock() const {
-    return MBBNumbering.back();
-  }
+  /// getNumBlockIDs - Return the number of MBB ID's allocated.
+  unsigned getNumBlockIDs() const { return MBBNumbering.size(); }
   
   /// print - Print out the MachineFunction in a format suitable for debugging
   /// to the specified stream.

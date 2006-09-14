@@ -38,6 +38,10 @@ namespace llvm {
     const TargetInstrInfo* tii_;
     LiveVariables* lv_;
 
+    /// MBB2IdxMap - The index of the first instruction in the specified basic
+    /// block.
+    std::vector<unsigned> MBB2IdxMap;
+    
     typedef std::map<MachineInstr*, unsigned> Mi2IndexMap;
     Mi2IndexMap mi2iMap_;
 
@@ -113,6 +117,17 @@ namespace llvm {
       return I->second;
     }
 
+    /// getMBBStartIdx - Return the base index of the first instruction in the
+    /// specified MachineBasicBlock.
+    unsigned getMBBStartIdx(MachineBasicBlock *MBB) const {
+      return getMBBStartIdx(MBB->getNumber());
+    }
+    
+    unsigned getMBBStartIdx(unsigned MBBNo) const {
+      assert(MBBNo < MBB2IdxMap.size() && "Invalid MBB number!");
+      return MBB2IdxMap[MBBNo];
+    }
+
     /// getInstructionIndex - returns the base index of instr
     unsigned getInstructionIndex(MachineInstr* instr) const {
       Mi2IndexMap::const_iterator it = mi2iMap_.find(instr);
@@ -128,7 +143,7 @@ namespace llvm {
              "index does not correspond to an instruction");
       return i2miMap_[index];
     }
-
+    
     std::vector<LiveInterval*> addIntervalsForSpills(const LiveInterval& i,
                                                      VirtRegMap& vrm,
                                                      int slot);
@@ -155,11 +170,16 @@ namespace llvm {
       }
     }
       
-    /// computeIntervals - compute live intervals
-    void computeIntervals();
+    /// computeIntervals - Compute live intervals.  This returns a vector of all
+    /// the two-address instructions to the caller.
+    void computeIntervals(std::vector<MachineInstr*> &TwoAddrInsts);
 
     /// joinIntervals - join compatible live intervals
     void joinIntervals();
+
+    /// HandleTwoAddressInsts - Arrange for the specified list of 2-addr
+    /// instructions to have their src/dst regs allocated to the same register.
+    void HandleTwoAddressInsts(const std::vector<MachineInstr*> &TwoAddrInsts);
 
     /// CopyCoallesceInMBB - Coallsece copies in the specified MBB, putting
     /// copies that cannot yet be coallesced into the "TryAgain" list.
