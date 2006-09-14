@@ -784,7 +784,6 @@ bool X86DAGToDAGISel::TryFoldLoad(SDOperand P, SDOperand N,
                                   SDOperand &Index, SDOperand &Disp) {
   if (N.getOpcode() == ISD::LOAD &&
       N.hasOneUse() &&
-      P.Val->isOnlyUse(N.Val) &&
       CanBeFoldedBy(N.Val, P.Val))
     return SelectAddr(N.getOperand(1), Base, Scale, Index, Disp);
   return false;
