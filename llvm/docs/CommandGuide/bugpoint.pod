@@ -105,6 +105,12 @@ using the specified code generator.  These options allow you to choose the
 interpreter, the JIT compiler, the static native code compiler, or the C
 backend, respectively.
 
+=item B<--enable-valgrind>
+
+Use valgrind to find faults in the optimization phase. This will allow
+bugpoint to find otherwise asymptomatic problems caused by memory
+mis-management.
+
 =back
 
 =head1 EXIT STATUS
