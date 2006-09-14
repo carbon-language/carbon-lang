@@ -23,6 +23,7 @@
 #include "llvm/ExecutionEngine/GenericValue.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/PluginLoader.h"
+#include "llvm/System/Process.h"
 #include "llvm/System/Signals.h"
 #include <iostream>
 
@@ -45,6 +46,10 @@ namespace {
   FakeArgv0("fake-argv0",
             cl::desc("Override the 'argv[0]' value passed into the executing"
                      " program"), cl::value_desc("executable"));
+  
+  cl::opt<bool>
+  DisableCoreFiles("disable-core-files", cl::Hidden,
+                   cl::desc("Disable emission of core files if possible"));
 }
 
 //===----------------------------------------------------------------------===//
@@ -56,6 +61,10 @@ int main(int argc, char **argv, char * const *envp) {
                                 " llvm interpreter & dynamic compiler\n");
     sys::PrintStackTraceOnErrorSignal();
 
+    // If the user doesn't want core files, disable them.
+    if (DisableCoreFiles)
+      sys::Process::PreventCoreFiles();
+    
     // Load the bytecode...
     std::string ErrorMsg;
     ModuleProvider *MP = 0;
