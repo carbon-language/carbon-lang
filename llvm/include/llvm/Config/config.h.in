@@ -200,6 +200,9 @@
 /* Define if lt_dlopen() is available on this platform */
 #undef HAVE_LT_DLOPEN
 
+/* Define to 1 if you have the <mach/mach.h> header file. */
+#undef HAVE_MACH_MACH_H
+
 /* Define to 1 if you have the <mach-o/dyld.h> header file. */
 #undef HAVE_MACH_O_DYLD_H
 
