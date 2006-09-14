@@ -824,13 +824,16 @@ bool TreePatternNode::canPatternMatch(std::string &Reason, DAGISelEmitter &ISE){
   const SDNodeInfo &NodeInfo = ISE.getSDNodeInfo(getOperator());
   if (NodeInfo.hasProperty(SDNodeInfo::SDNPCommutative)) {
     // Scan all of the operands of the node and make sure that only the last one
-    // is a constant node.
-    for (unsigned i = 0, e = getNumChildren()-1; i != e; ++i)
-      if (!getChild(i)->isLeaf() && 
-          getChild(i)->getOperator()->getName() == "imm") {
-        Reason = "Immediate value must be on the RHS of commutative operators!";
-        return false;
-      }
+    // is a constant node, unless the RHS also is.
+    if (getChild(getNumChildren()-1)->isLeaf() ||
+        getChild(getNumChildren()-1)->getOperator()->getName() != "imm") {
+      for (unsigned i = 0, e = getNumChildren()-1; i != e; ++i)
+        if (!getChild(i)->isLeaf() && 
+            getChild(i)->getOperator()->getName() == "imm") {
+          Reason = "Immediate value must be on the RHS of commutative operators!";
+          return false;
+        }
+    }
   }
   
   return true;
