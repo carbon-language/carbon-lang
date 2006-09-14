@@ -123,7 +123,7 @@ int Process::GetCurrentGroupId() {
   return getgid();
 }
 
-#ifdef __APPLE__   // FIXME: Should be configurified.
+#ifdef HAVE_MACH_MACH_H
 #include <mach/mach.h>
 #endif
 
@@ -137,7 +137,7 @@ void Process::PreventCoreFiles() {
   setrlimit(RLIMIT_CORE, &rlim);
 #endif
 
-#ifdef __APPLE__   // FIXME: Should be configurified.
+#ifdef HAVE_MACH_MACH_H
   // Disable crash reporting on Mac OS/X.
 
   // get information about the original set of exception ports for the task
