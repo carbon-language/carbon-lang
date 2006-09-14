@@ -41,6 +41,8 @@ namespace {
   // ChildOutput - This option captures the name of the child output file that
   // is set up by the parent bugpoint process
   cl::opt<std::string> ChildOutput("child-output", cl::ReallyHidden);
+  cl::opt<bool> UseValgrind("enable-valgrind",
+                            cl::desc("Run optimizations through valgrind"));
 }
 
 /// writeProgramToFile - This writes the current "Program" to the named bytecode
@@ -124,7 +126,7 @@ int BugDriver::runPassesAsChild(const std::vector<const PassInfo*> &Passes) {
 ///
 bool BugDriver::runPasses(const std::vector<const PassInfo*> &Passes,
                           std::string &OutputFilename, bool DeleteOutput,
-                          bool Quiet) const{
+                          bool Quiet) const {
   // setup the output file name
   std::cout << std::flush;
   sys::Path uniqueFilename("bugpoint-output.bc");
@@ -158,7 +160,14 @@ bool BugDriver::runPasses(const std::vector<const PassInfo*> &Passes,
     alloca(sizeof(const char*) * 
 	   (Passes.size()+10+2*PluginLoader::getNumPlugins()));
   int n = 0;
-  args[n++] = ToolName.c_str();
+  if (UseValgrind) {
+    args[n++] = "valgrind";
+    args[n++] = "--error-exitcode=1";
+    args[n++] = "-q";
+    args[n++] = sys::Program::FindProgramByName(ToolName).c_str();
+  } else
+    args[n++] = ToolName.c_str();
+
   args[n++] = "-as-child";
   args[n++] = "-child-output";
   args[n++] = OutputFilename.c_str();
@@ -176,7 +185,11 @@ bool BugDriver::runPasses(const std::vector<const PassInfo*> &Passes,
   args[n++] = inputFilename.c_str();
   args[n++] = 0;
 
-  sys::Path prog(sys::Program::FindProgramByName(ToolName));
+  sys::Path prog;
+  if (UseValgrind)
+    prog = sys::Program::FindProgramByName("valgrind");
+  else
+    prog = sys::Program::FindProgramByName(ToolName);
   int result = sys::Program::ExecuteAndWait(prog,args,0,0,Timeout,&ErrMsg);
 
   // If we are supposed to delete the bytecode file or if the passes crashed,
