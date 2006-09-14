@@ -67,8 +67,8 @@ struct MachineConstantPoolEntry {
     MachineConstantPoolValue *MachineCPVal;
   } Val;
 
-  /// The offset of the constant from the start of the pool. It's really
-  /// 31-bit only. The top bit is set when Val is a MachineConstantPoolValue.
+  /// The offset of the constant from the start of the pool. The top bit is set
+  /// when Val is a MachineConstantPoolValue.
   unsigned Offset;
 
   MachineConstantPoolEntry(Constant *V, unsigned O)
@@ -85,6 +85,10 @@ struct MachineConstantPoolEntry {
 
   bool isMachineConstantPoolEntry() const {
     return (int)Offset < 0;
+  }
+
+  int getOffset() const { 
+    return Offset & ~(1 << (sizeof(unsigned)*8-1));
   }
 
   const Type *getType() const;
