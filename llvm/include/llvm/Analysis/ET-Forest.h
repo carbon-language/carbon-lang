@@ -250,7 +250,16 @@ public:
     return this->Below(other);
   }
 
-  void assignDFSNumber(int &);
+  void assignDFSNumber(int &num) {
+    DFSNumIn = num++;
+    
+    if (Son) {
+      Son->assignDFSNumber(num);
+      for (ETNode *son = Son->Right; son != Son; son = son->Right)
+        son->assignDFSNumber(num);
+    }
+    DFSNumOut = num++;
+  }
   
   bool hasFather() const {
     return Father != NULL;
