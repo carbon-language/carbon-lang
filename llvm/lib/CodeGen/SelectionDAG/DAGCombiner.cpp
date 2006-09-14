@@ -230,7 +230,8 @@ namespace {
                             ISD::CondCode Cond, bool foldBooleans = true);
     SDOperand ConstantFoldVBIT_CONVERTofVBUILD_VECTOR(SDNode *, MVT::ValueType);
     SDOperand BuildSDIV(SDNode *N);
-    SDOperand BuildUDIV(SDNode *N);    
+    SDOperand BuildUDIV(SDNode *N);
+    SDNode *MatchRotate(SDOperand LHS, SDOperand RHS);
 public:
     DAGCombiner(SelectionDAG &D)
       : DAG(D), TLI(D.getTargetLoweringInfo()), AfterLegalize(false) {}
@@ -1153,62 +1154,149 @@ SDOperand DAGCombiner::visitOR(SDNode *N) {
     SDOperand Tmp = SimplifyBinOpWithSameOpcodeHands(N);
     if (Tmp.Val) return Tmp;
   }
+  
+  // See if this is some rotate idiom.
+  if (SDNode *Rot = MatchRotate(N0, N1))
+    return SDOperand(Rot, 0);
 
-  // canonicalize shl to left side in a shl/srl pair, to match rotate
-  if (N0.getOpcode() == ISD::SRL && N1.getOpcode() == ISD::SHL)
-    std::swap(N0, N1);
-  // check for rotl, rotr
-  if (N0.getOpcode() == ISD::SHL && N1.getOpcode() == ISD::SRL &&
-      N0.getOperand(0) == N1.getOperand(0) &&
-      TLI.isTypeLegal(VT)) {
-    bool HasROTL = TLI.isOperationLegal(ISD::ROTL, VT);
-    bool HasROTR = TLI.isOperationLegal(ISD::ROTR, VT);
-    if (HasROTL || HasROTR) {
-      // fold (or (shl x, C1), (srl x, C2)) -> (rotl x, C1)
-      // fold (or (shl x, C1), (srl x, C2)) -> (rotr x, C2)
-      if (N0.getOperand(1).getOpcode() == ISD::Constant &&
-          N1.getOperand(1).getOpcode() == ISD::Constant) {
-        uint64_t c1val = cast<ConstantSDNode>(N0.getOperand(1))->getValue();
-        uint64_t c2val = cast<ConstantSDNode>(N1.getOperand(1))->getValue();
-        if ((c1val + c2val) == OpSizeInBits)
-          if (HasROTL)
-            return DAG.getNode(ISD::ROTL, VT, N0.getOperand(0),
-                               N0.getOperand(1));
-          else
-            return DAG.getNode(ISD::ROTR, VT, N0.getOperand(0),
-                               N1.getOperand(1));
-            
-      }
-      // fold (or (shl x, y), (srl x, (sub 32, y))) -> (rotl x, y)
-      // fold (or (shl x, y), (srl x, (sub 32, y))) -> (rotr x, (sub 32, y))
-      if (N1.getOperand(1).getOpcode() == ISD::SUB &&
-          N0.getOperand(1) == N1.getOperand(1).getOperand(1))
-        if (ConstantSDNode *SUBC = 
-            dyn_cast<ConstantSDNode>(N1.getOperand(1).getOperand(0)))
-          if (SUBC->getValue() == OpSizeInBits)
-            if (HasROTL)
-              return DAG.getNode(ISD::ROTL, VT, N0.getOperand(0),
-                                 N0.getOperand(1));
-            else
-              return DAG.getNode(ISD::ROTR, VT, N0.getOperand(0),
-                                 N1.getOperand(1));
-      // fold (or (shl x, (sub 32, y)), (srl x, r)) -> (rotr x, y)
-      // fold (or (shl x, (sub 32, y)), (srl x, r)) -> (rotl x, (sub 32, y))
-      if (N0.getOperand(1).getOpcode() == ISD::SUB &&
-          N1.getOperand(1) == N0.getOperand(1).getOperand(1))
-        if (ConstantSDNode *SUBC = 
-            dyn_cast<ConstantSDNode>(N0.getOperand(1).getOperand(0)))
-          if (SUBC->getValue() == OpSizeInBits)
-            if (HasROTR)
-              return DAG.getNode(ISD::ROTR, VT, N0.getOperand(0), 
-                                 N1.getOperand(1));
-            else
-              return DAG.getNode(ISD::ROTL, VT, N0.getOperand(0),
-                                 N0.getOperand(1));
-    }
-  }
   return SDOperand();
 }
+
+
+/// MatchRotateHalf - Match "(X shl/srl V1) & V2" where V2 may not be present.
+static bool MatchRotateHalf(SDOperand Op, SDOperand &Shift, SDOperand &Mask) {
+  if (Op.getOpcode() == ISD::AND) {
+    if (ConstantSDNode *RHSC = dyn_cast<ConstantSDNode>(Op.getOperand(1))) {
+      Mask = Op.getOperand(1);
+      Op = Op.getOperand(0);
+    } else {
+      return false;
+    }
+  }
+  
+  if (Op.getOpcode() == ISD::SRL || Op.getOpcode() == ISD::SHL) {
+    Shift = Op;
+    return true;
+  }
+  return false;  
+}
+
+
+// MatchRotate - Handle an 'or' of two operands.  If this is one of the many
+// idioms for rotate, and if the target supports rotation instructions, generate
+// a rot[lr].
+SDNode *DAGCombiner::MatchRotate(SDOperand LHS, SDOperand RHS) {
+  // Must be a legal type.  Expanded an promoted things won't work with rotates.
+  MVT::ValueType VT = LHS.getValueType();
+  if (!TLI.isTypeLegal(VT)) return 0;
+
+  // The target must have at least one rotate flavor.
+  bool HasROTL = TLI.isOperationLegal(ISD::ROTL, VT);
+  bool HasROTR = TLI.isOperationLegal(ISD::ROTR, VT);
+  if (!HasROTL && !HasROTR) return 0;
+  
+  // Match "(X shl/srl V1) & V2" where V2 may not be present.
+  SDOperand LHSShift;   // The shift.
+  SDOperand LHSMask;    // AND value if any.
+  if (!MatchRotateHalf(LHS, LHSShift, LHSMask))
+    return 0; // Not part of a rotate.
+
+  SDOperand RHSShift;   // The shift.
+  SDOperand RHSMask;    // AND value if any.
+  if (!MatchRotateHalf(RHS, RHSShift, RHSMask))
+    return 0; // Not part of a rotate.
+  
+  if (LHSShift.getOperand(0) != RHSShift.getOperand(0))
+    return 0;   // Not shifting the same value.
+
+  if (LHSShift.getOpcode() == RHSShift.getOpcode())
+    return 0;   // Shifts must disagree.
+    
+  // Canonicalize shl to left side in a shl/srl pair.
+  if (RHSShift.getOpcode() == ISD::SHL) {
+    std::swap(LHS, RHS);
+    std::swap(LHSShift, RHSShift);
+    std::swap(LHSMask , RHSMask );
+  }
+
+  unsigned OpSizeInBits = MVT::getSizeInBits(VT);
+
+  // fold (or (shl x, C1), (srl x, C2)) -> (rotl x, C1)
+  // fold (or (shl x, C1), (srl x, C2)) -> (rotr x, C2)
+  if (LHSShift.getOperand(1).getOpcode() == ISD::Constant &&
+      RHSShift.getOperand(1).getOpcode() == ISD::Constant) {
+    uint64_t LShVal = cast<ConstantSDNode>(LHSShift.getOperand(1))->getValue();
+    uint64_t RShVal = cast<ConstantSDNode>(RHSShift.getOperand(1))->getValue();
+    if ((LShVal + RShVal) != OpSizeInBits)
+      return 0;
+
+    SDOperand Rot;
+    if (HasROTL)
+      Rot = DAG.getNode(ISD::ROTL, VT, LHSShift.getOperand(0),
+                        LHSShift.getOperand(1));
+    else
+      Rot = DAG.getNode(ISD::ROTR, VT, LHSShift.getOperand(0),
+                        RHSShift.getOperand(1));
+    
+    // If there is an AND of either shifted operand, apply it to the result.
+    if (LHSMask.Val || RHSMask.Val) {
+      uint64_t Mask = MVT::getIntVTBitMask(VT);
+      
+      if (LHSMask.Val) {
+        uint64_t RHSBits = (1ULL << LShVal)-1;
+        Mask &= cast<ConstantSDNode>(LHSMask)->getValue() | RHSBits;
+      }
+      if (RHSMask.Val) {
+        uint64_t LHSBits = ~((1ULL << (OpSizeInBits-RShVal))-1);
+        Mask &= cast<ConstantSDNode>(RHSMask)->getValue() | LHSBits;
+      }
+        
+      Rot = DAG.getNode(ISD::AND, VT, Rot, DAG.getConstant(Mask, VT));
+    }
+    
+    return Rot.Val;
+  }
+  
+  // If there is a mask here, and we have a variable shift, we can't be sure
+  // that we're masking out the right stuff.
+  if (LHSMask.Val || RHSMask.Val)
+    return 0;
+  
+  // fold (or (shl x, y), (srl x, (sub 32, y))) -> (rotl x, y)
+  // fold (or (shl x, y), (srl x, (sub 32, y))) -> (rotr x, (sub 32, y))
+  if (RHSShift.getOperand(1).getOpcode() == ISD::SUB &&
+      LHSShift.getOperand(1) == RHSShift.getOperand(1).getOperand(1)) {
+    if (ConstantSDNode *SUBC = 
+          dyn_cast<ConstantSDNode>(RHSShift.getOperand(1).getOperand(0))) {
+      if (SUBC->getValue() == OpSizeInBits)
+        if (HasROTL)
+          return DAG.getNode(ISD::ROTL, VT, LHSShift.getOperand(0),
+                             LHSShift.getOperand(1)).Val;
+        else
+          return DAG.getNode(ISD::ROTR, VT, LHSShift.getOperand(0),
+                             LHSShift.getOperand(1)).Val;
+    }
+  }
+  
+  // fold (or (shl x, (sub 32, y)), (srl x, r)) -> (rotr x, y)
+  // fold (or (shl x, (sub 32, y)), (srl x, r)) -> (rotl x, (sub 32, y))
+  if (LHSShift.getOperand(1).getOpcode() == ISD::SUB &&
+      RHSShift.getOperand(1) == LHSShift.getOperand(1).getOperand(1)) {
+    if (ConstantSDNode *SUBC = 
+          dyn_cast<ConstantSDNode>(LHSShift.getOperand(1).getOperand(0))) {
+      if (SUBC->getValue() == OpSizeInBits)
+        if (HasROTL)
+          return DAG.getNode(ISD::ROTL, VT, LHSShift.getOperand(0),
+                             LHSShift.getOperand(1)).Val;
+        else
+          return DAG.getNode(ISD::ROTR, VT, LHSShift.getOperand(0), 
+                             RHSShift.getOperand(1)).Val;
+    }
+  }
+  
+  return 0;
+}
+
 
 SDOperand DAGCombiner::visitXOR(SDNode *N) {
   SDOperand N0 = N->getOperand(0);
@@ -2864,7 +2952,8 @@ SDOperand DAGCombiner::XformToShuffleWithZero(SDNode *N) {
       SDOperand NumEltsNode = DAG.getConstant(NumElts, MVT::i32);
       SDOperand EVTNode = DAG.getValueType(EVT);
       std::vector<SDOperand> Ops;
-      LHS = DAG.getNode(ISD::VBIT_CONVERT, MVT::Vector, LHS, NumEltsNode, EVTNode);
+      LHS = DAG.getNode(ISD::VBIT_CONVERT, MVT::Vector, LHS, NumEltsNode,
+                        EVTNode);
       Ops.push_back(LHS);
       AddToWorkList(LHS.Val);
       std::vector<SDOperand> ZeroOps(NumElts, DAG.getConstant(0, EVT));
