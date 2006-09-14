@@ -539,3 +539,28 @@ be folded together.
 unsigned short G;
 void foo(unsigned long H) { G = H; }
 
+===-------------------------------------------------------------------------===
+
+We compile:
+
+unsigned test6(unsigned x) { 
+  return ((x & 0x00FF0000) >> 16) | ((x & 0x000000FF) << 16);
+}
+
+into:
+
+_test6:
+        lis r2, 255
+        rlwinm r3, r3, 16, 0, 31
+        ori r2, r2, 255
+        and r3, r3, r2
+        blr
+
+GCC gets it down to:
+
+_test6:
+        rlwinm r0,r3,16,8,15
+        rlwinm r3,r3,16,24,31
+        or r3,r3,r0
+        blr
+
