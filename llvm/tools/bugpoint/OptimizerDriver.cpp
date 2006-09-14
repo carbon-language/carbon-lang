@@ -158,13 +158,14 @@ bool BugDriver::runPasses(const std::vector<const PassInfo*> &Passes,
   // setup the child process' arguments
   const char** args = (const char**)
     alloca(sizeof(const char*) * 
-	   (Passes.size()+10+2*PluginLoader::getNumPlugins()));
+	   (Passes.size()+13+2*PluginLoader::getNumPlugins()));
   int n = 0;
+  sys::Path tool = sys::Program::FindProgramByName(ToolName);
   if (UseValgrind) {
     args[n++] = "valgrind";
     args[n++] = "--error-exitcode=1";
     args[n++] = "-q";
-    args[n++] = sys::Program::FindProgramByName(ToolName).c_str();
+    args[n++] = tool.c_str();
   } else
     args[n++] = ToolName.c_str();
 
@@ -189,7 +190,7 @@ bool BugDriver::runPasses(const std::vector<const PassInfo*> &Passes,
   if (UseValgrind)
     prog = sys::Program::FindProgramByName("valgrind");
   else
-    prog = sys::Program::FindProgramByName(ToolName);
+    prog = tool;
   int result = sys::Program::ExecuteAndWait(prog,args,0,0,Timeout,&ErrMsg);
 
   // If we are supposed to delete the bytecode file or if the passes crashed,
