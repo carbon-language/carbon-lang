@@ -162,11 +162,16 @@ void Mangler::InsertName(GlobalValue *GV,
     ExistingValue = GV;
   } else {
     // If GV is external but the existing one is static, mangle the existing one
-    if (GV->hasExternalLinkage() && !ExistingValue->hasExternalLinkage()) {
+    if ((GV->hasExternalLinkage() || GV->hasDLLImportLinkage()) &&
+        !(ExistingValue->hasExternalLinkage() || ExistingValue->hasDLLImportLinkage())) {
       MangledGlobals.insert(ExistingValue);
       ExistingValue = GV;
-    } else if (GV->hasExternalLinkage() && ExistingValue->hasExternalLinkage()&&
-               GV->isExternal() && ExistingValue->isExternal()) {
+    } else if ((GV->hasExternalLinkage() ||
+                GV->hasDLLImportLinkage()) &&
+               (ExistingValue->hasExternalLinkage() ||
+                ExistingValue->hasDLLImportLinkage()) &&
+               GV->isExternal() &&
+               ExistingValue->isExternal()) {
       // If the two globals both have external inkage, and are both external,
       // don't mangle either of them, we just have some silly type mismatch.
     } else {

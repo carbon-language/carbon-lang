@@ -191,6 +191,9 @@ internal        { return INTERNAL; }
 linkonce        { return LINKONCE; }
 weak            { return WEAK; }
 appending       { return APPENDING; }
+dllimport       { return DLLIMPORT; }
+dllexport       { return DLLEXPORT; }
+extern_weak     { return EXTERN_WEAK; }
 uninitialized   { return EXTERNAL; }    /* Deprecated, turn into external */
 external        { return EXTERNAL; }
 implementation  { return IMPLEMENTATION; }

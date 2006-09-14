@@ -1245,7 +1245,7 @@ static Constant *getVal(std::map<Value*, Constant*> &ComputedValues,
 static bool isSimpleEnoughPointerToCommit(Constant *C) {
   if (GlobalVariable *GV = dyn_cast<GlobalVariable>(C)) {
     if (!GV->hasExternalLinkage() && !GV->hasInternalLinkage())
-      return false;  // do not allow weak/linkonce linkage.
+      return false;  // do not allow weak/linkonce/dllimport/dllexport linkage.
     return !GV->isExternal();  // reject external globals.
   }
   if (ConstantExpr *CE = dyn_cast<ConstantExpr>(C))
@@ -1254,7 +1254,7 @@ static bool isSimpleEnoughPointerToCommit(Constant *C) {
         isa<GlobalVariable>(CE->getOperand(0))) {
       GlobalVariable *GV = cast<GlobalVariable>(CE->getOperand(0));
       if (!GV->hasExternalLinkage() && !GV->hasInternalLinkage())
-        return false;  // do not allow weak/linkonce linkage.
+        return false;  // do not allow weak/linkonce/dllimport/dllexport linkage.
       return GV->hasInitializer() &&
              ConstantFoldLoadThroughGEPConstantExpr(GV->getInitializer(), CE);
     }

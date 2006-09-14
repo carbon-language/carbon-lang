@@ -1054,7 +1054,11 @@ bool CWriter::doInitialization(Module &M) {
         Out << "extern ";
         printType(Out, I->getType()->getElementType(), Mang->getValueName(I));
         Out << ";\n";
-      }
+      } else if (I->hasDLLImportLinkage()) {
+        Out << "__declspec(dllimport) ";
+        printType(Out, I->getType()->getElementType(), Mang->getValueName(I));
+        Out << ";\n";        
+      }      
     }
   }
 
@@ -1118,6 +1122,11 @@ bool CWriter::doInitialization(Module &M) {
         
         if (I->hasInternalLinkage())
           Out << "static ";
+        else if (I->hasDLLImportLinkage())
+          Out << "__declspec(dllimport) ";
+        else if (I->hasDLLExportLinkage())
+          Out << "__declspec(dllexport) ";
+            
         printType(Out, I->getType()->getElementType(), Mang->getValueName(I));
         if (I->hasLinkOnceLinkage())
           Out << " __attribute__((common))";
@@ -1267,6 +1276,8 @@ void CWriter::printFunctionSignature(const Function *F, bool Prototype) {
   bool isCStructReturn = F->getCallingConv() == CallingConv::CSRet;
   
   if (F->hasInternalLinkage()) Out << "static ";
+  if (F->hasDLLImportLinkage()) Out << "__declspec(dllimport) ";
+  if (F->hasDLLExportLinkage()) Out << "__declspec(dllexport) ";  
 
   // Loop over the arguments, printing them...
   const FunctionType *FT = cast<FunctionType>(F->getFunctionType());

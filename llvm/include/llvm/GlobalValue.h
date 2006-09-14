@@ -28,12 +28,15 @@ class GlobalValue : public Constant {
   GlobalValue(const GlobalValue &);             // do not implement
 public:
   enum LinkageTypes {
-    ExternalLinkage,   /// Externally visible function
-    LinkOnceLinkage,   /// Keep one copy of named function when linking (inline)
-    WeakLinkage,       /// Keep one copy of named function when linking (weak)
-    AppendingLinkage,  /// Special purpose, only applies to global arrays
-    InternalLinkage,   /// Rename collisions when linking (static functions)
-    GhostLinkage       /// Stand-in functions for streaming fns from BC files
+    ExternalLinkage,     /// Externally visible function
+    LinkOnceLinkage,     /// Keep one copy of named function when linking (inline)
+    WeakLinkage,         /// Keep one copy of named function when linking (weak)
+    AppendingLinkage,    /// Special purpose, only applies to global arrays
+    InternalLinkage,     /// Rename collisions when linking (static functions)
+    DLLImportLinkage,    /// Function to be imported from DLL
+    DLLExportLinkage,    /// Function to be accessible from DLL
+    ExternalWeakLinkage, /// TBD: ExternalWeak linkage description
+    GhostLinkage         /// Stand-in functions for streaming fns from BC files    
   };
 protected:
   GlobalValue(const Type *Ty, ValueTy vty, Use *Ops, unsigned NumOps,
@@ -72,11 +75,14 @@ public:
     return reinterpret_cast<const PointerType*>(User::getType());
   }
 
-  bool hasExternalLinkage()  const { return Linkage == ExternalLinkage; }
-  bool hasLinkOnceLinkage()  const { return Linkage == LinkOnceLinkage; }
-  bool hasWeakLinkage()      const { return Linkage == WeakLinkage; }
-  bool hasAppendingLinkage() const { return Linkage == AppendingLinkage; }
-  bool hasInternalLinkage()  const { return Linkage == InternalLinkage; }
+  bool hasExternalLinkage()   const { return Linkage == ExternalLinkage; }
+  bool hasLinkOnceLinkage()   const { return Linkage == LinkOnceLinkage; }
+  bool hasWeakLinkage()       const { return Linkage == WeakLinkage; }
+  bool hasAppendingLinkage()  const { return Linkage == AppendingLinkage; }
+  bool hasInternalLinkage()   const { return Linkage == InternalLinkage; }
+  bool hasDLLImportLinkage()  const { return Linkage == DLLImportLinkage; }
+  bool hasDLLExportLinkage()  const { return Linkage == DLLExportLinkage; }
+  bool hasExternalWeakLinkage()  const { return Linkage == ExternalWeakLinkage; }
   void setLinkage(LinkageTypes LT) { Linkage = LT; }
   LinkageTypes getLinkage() const { return Linkage; }
 

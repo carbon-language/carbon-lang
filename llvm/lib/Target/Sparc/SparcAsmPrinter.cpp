@@ -271,6 +271,14 @@ bool SparcAsmPrinter::doFinalization(Module &M) {
         case GlobalValue::GhostLinkage:
           std::cerr << "Should not have any unmaterialized functions!\n";
           abort();
+        case GlobalValue::DLLImportLinkage:
+          std::cerr << "DLLImport linkage is not supported by this target!\n";
+          abort();
+        case GlobalValue::DLLExportLinkage:
+          std::cerr << "DLLExport linkage is not supported by this target!\n";
+          abort();
+        default:
+          assert(0 && "Unknown linkage type!");          
         }
 
         O << "\t.align " << Align << "\n";

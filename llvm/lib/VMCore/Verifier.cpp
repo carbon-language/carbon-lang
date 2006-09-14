@@ -257,8 +257,16 @@ namespace {  // Anonymous namespace for class
 
 
 void Verifier::visitGlobalValue(GlobalValue &GV) {
-  Assert1(!GV.isExternal() || GV.hasExternalLinkage(),
-          "Global is external, but doesn't have external linkage!", &GV);
+  Assert1(!GV.isExternal() ||
+          GV.hasExternalLinkage() ||
+          GV.hasDLLImportLinkage() ||
+          GV.hasExternalWeakLinkage(),
+  "Global is external, but doesn't have external or dllimport or weak linkage!",
+          &GV);
+
+  Assert1(!GV.hasDLLImportLinkage() || GV.isExternal(),
+          "Global is marked as dllimport, but not external", &GV);
+  
   Assert1(!GV.hasAppendingLinkage() || isa<GlobalVariable>(GV),
           "Only global variables can have appending linkage!", &GV);
 

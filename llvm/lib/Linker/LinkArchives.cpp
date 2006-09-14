@@ -65,16 +65,22 @@ GetAllUndefinedSymbols(Module *M, std::set<std::string> &UndefinedSymbols) {
     if (I->hasName()) {
       if (I->isExternal())
         UndefinedSymbols.insert(I->getName());
-      else if (!I->hasInternalLinkage())
+      else if (!I->hasInternalLinkage()) {
+        assert(!I->hasDLLImportLinkage()
+               && "Found dllimported non-external symbol!");
         DefinedSymbols.insert(I->getName());
+      }      
     }
   for (Module::global_iterator I = M->global_begin(), E = M->global_end();
        I != E; ++I)
     if (I->hasName()) {
       if (I->isExternal())
         UndefinedSymbols.insert(I->getName());
-      else if (!I->hasInternalLinkage())
+      else if (!I->hasInternalLinkage()) {
+        assert(!I->hasDLLImportLinkage()
+               && "Found dllimported non-external symbol!");
         DefinedSymbols.insert(I->getName());
+      }      
     }
 
   // Prune out any defined symbols from the undefined symbols set...

@@ -439,6 +439,35 @@ All Global Variables and Functions have one of the following types of linkage:
   visible, meaning that it participates in linkage and can be used to resolve
   external symbol references.
   </dd>
+
+  <dt><tt><b><a name="linkage_externweak">extern_weak</a></b></tt>: </dt>
+
+  <dd>"<tt>extern_weak</tt>" TBD
+  </dd>
+
+  <p>
+  The next two types of linkage are targeted for Microsoft Windows platform
+  only. They are designed to support importing (exporting) symbols from (to)
+  DLLs.
+  </p>
+
+  <dt><tt><b><a name="linkage_dllimport">dllimport</a></b></tt>: </dt>
+
+  <dd>"<tt>dllimport</tt>" linkage causes the compiler to reference a function
+    or variable via a global pointer to a pointer that is set up by the DLL
+    exporting the symbol. On Microsoft Windows targets, the pointer name is
+    formed by combining <code>_imp__</code> and the function or variable name.
+  </dd>
+
+  <dt><tt><b><a name="linkage_dllexport">dllexport</a></b></tt>: </dt>
+
+  <dd>"<tt>dllexport</tt>" linkage causes the compiler to provide a global
+    pointer to a pointer in a DLL, so that it can be referenced with the
+    <tt>dllimport</tt> attribute. On Microsoft Windows targets, the pointer
+    name is formed by combining <code>_imp__</code> and the function or variable
+    name.
+  </dd>
+
 </dl>
 
 <p><a name="linkage_external">For example, since the "<tt>.LC0</tt>"

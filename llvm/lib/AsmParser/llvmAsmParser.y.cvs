@@ -150,9 +150,10 @@ static struct PerModuleInfo {
 static struct PerFunctionInfo {
   Function *CurrentFunction;     // Pointer to current function being created
 
-  std::map<const Type*, ValueList> Values;   // Keep track of #'d definitions
+  std::map<const Type*, ValueList> Values; // Keep track of #'d definitions
   std::map<const Type*, ValueList> LateResolveValues;
-  bool isDeclare;                // Is this function a forward declararation?
+  bool isDeclare;                    // Is this function a forward declararation?
+  GlobalValue::LinkageTypes Linkage; // Linkage for forward declaration.
 
   /// BBForwardRefs - When we see forward references to basic blocks, keep
   /// track of them here.
@@ -163,6 +164,7 @@ static struct PerFunctionInfo {
   inline PerFunctionInfo() {
     CurrentFunction = 0;
     isDeclare = false;
+    Linkage = GlobalValue::ExternalLinkage;    
   }
 
   inline void FunctionStart(Function *M) {
@@ -184,6 +186,7 @@ static struct PerFunctionInfo {
     Values.clear();         // Clear out function local definitions
     CurrentFunction = 0;
     isDeclare = false;
+    Linkage = GlobalValue::ExternalLinkage;
   }
 } CurFun;  // Info for the current function...
 
@@ -998,7 +1001,8 @@ Module *llvm::RunVMAsmParser(const char * AsmString, Module * M) {
 
 %token IMPLEMENTATION ZEROINITIALIZER TRUETOK FALSETOK BEGINTOK ENDTOK
 %token DECLARE GLOBAL CONSTANT SECTION VOLATILE
-%token TO DOTDOTDOT NULL_TOK UNDEF CONST INTERNAL LINKONCE WEAK  APPENDING
+%token TO DOTDOTDOT NULL_TOK UNDEF CONST INTERNAL LINKONCE WEAK APPENDING
+%token DLLIMPORT DLLEXPORT EXTERN_WEAK
 %token OPAQUE NOT EXTERNAL TARGET TRIPLE ENDIAN POINTERSIZE LITTLE BIG ALIGN
 %token DEPLIBS CALL TAIL ASM_TOK MODULE SIDEEFFECT
 %token CC_TOK CCC_TOK CSRETCC_TOK FASTCC_TOK COLDCC_TOK
@@ -1070,11 +1074,14 @@ OptAssign : Name '=' {
     CHECK_FOR_ERROR
   };
 
-OptLinkage : INTERNAL  { $$ = GlobalValue::InternalLinkage; } |
-             LINKONCE  { $$ = GlobalValue::LinkOnceLinkage; } |
-             WEAK      { $$ = GlobalValue::WeakLinkage; } |
-             APPENDING { $$ = GlobalValue::AppendingLinkage; } |
-             /*empty*/ { $$ = GlobalValue::ExternalLinkage; };
+OptLinkage : INTERNAL    { $$ = GlobalValue::InternalLinkage; } |
+             LINKONCE    { $$ = GlobalValue::LinkOnceLinkage; } |
+             WEAK        { $$ = GlobalValue::WeakLinkage; } |
+             APPENDING   { $$ = GlobalValue::AppendingLinkage; } |
+             DLLIMPORT   { $$ = GlobalValue::DLLImportLinkage; } |
+             DLLEXPORT   { $$ = GlobalValue::DLLExportLinkage; } |
+             EXTERN_WEAK { $$ = GlobalValue::ExternalWeakLinkage; } |
+             /*empty*/   { $$ = GlobalValue::ExternalLinkage; };
 
 OptCallingConv : /*empty*/      { $$ = CallingConv::C; } |
                  CCC_TOK        { $$ = CallingConv::C; } |
@@ -1728,8 +1735,24 @@ ConstPool : ConstPool OptAssign TYPE TypesV {
     CHECK_FOR_ERROR
   }
   | ConstPool OptAssign EXTERNAL GlobalType Types {
-    CurGV = ParseGlobalVariable($2, GlobalValue::ExternalLinkage,
-                                             $4, *$5, 0);
+    CurGV = ParseGlobalVariable($2,
+                                GlobalValue::ExternalLinkage, $4, *$5, 0);
+    delete $5;
+                                                   } GlobalVarAttributes {
+    CurGV = 0;
+    CHECK_FOR_ERROR
+  }
+  | ConstPool OptAssign DLLIMPORT GlobalType Types {
+    CurGV = ParseGlobalVariable($2,
+                                GlobalValue::DLLImportLinkage, $4, *$5, 0);
+    delete $5;
+                                                   } GlobalVarAttributes {
+    CurGV = 0;
+    CHECK_FOR_ERROR
+  }
+  | ConstPool OptAssign EXTERN_WEAK GlobalType Types {
+    CurGV = ParseGlobalVariable($2,
+                                GlobalValue::ExternalWeakLinkage, $4, *$5, 0);
     delete $5;
                                                    } GlobalVarAttributes {
     CurGV = 0;
@@ -1895,9 +1918,17 @@ FunctionHeaderH : OptCallingConv TypesV Name '(' ArgList ')'
            AI != AE; ++AI)
         AI->setName("");
 
+    if (CurFun.isDeclare) {
+      Fn->setLinkage(CurFun.Linkage);      
+    }    
   } else  {  // Not already defined?
     Fn = new Function(FT, GlobalValue::ExternalLinkage, FunctionName,
                       CurModule.CurrentModule);
+
+    if (CurFun.isDeclare) {
+      Fn->setLinkage(CurFun.Linkage);      
+    }    
+
     InsertValue(Fn, CurModule.Values);
   }
 
@@ -1948,11 +1979,15 @@ Function : BasicBlockList END {
   CHECK_FOR_ERROR
 };
 
-FunctionProto : DECLARE { CurFun.isDeclare = true; } FunctionHeaderH {
-  $$ = CurFun.CurrentFunction;
-  CurFun.FunctionDone();
-  CHECK_FOR_ERROR
-};
+FnDeclareLinkage: /*default*/ |
+                  DLLIMPORT   { CurFun.Linkage = GlobalValue::DLLImportLinkage } |
+                  EXTERN_WEAK { CurFun.Linkage = GlobalValue::DLLImportLinkage };
+  
+FunctionProto : DECLARE { CurFun.isDeclare = true; } FnDeclareLinkage FunctionHeaderH {
+    $$ = CurFun.CurrentFunction;
+    CurFun.FunctionDone();
+    CHECK_FOR_ERROR
+  };
 
 //===----------------------------------------------------------------------===//
 //                        Rules to match Basic Blocks

@@ -112,6 +112,9 @@ bool X86SharedAsmPrinter::doFinalization(Module &M) {
       case GlobalValue::AppendingLinkage:
         // FIXME: appending linkage variables should go into a section of
         // their name or something.  For now, just emit them as external.
+      case GlobalValue::DLLExportLinkage:
+        DLLExportedGVs.insert(Mang->makeNameProper(I->getName(),""));
+        // FALL THROUGH
       case GlobalValue::ExternalLinkage:
         // If external or appending, declare as a global symbol
         O << "\t.globl " << name << "\n";
@@ -134,6 +137,27 @@ bool X86SharedAsmPrinter::doFinalization(Module &M) {
     }
   }
   
+  // Output linker support code for dllexported globals
+  if (DLLExportedGVs.begin() != DLLExportedGVs.end()) {
+    SwitchToDataSection(".section .drectve", 0);    
+  }
+
+  for (std::set<std::string>::iterator i = DLLExportedGVs.begin(),
+         e = DLLExportedGVs.end();
+         i != e; ++i) {
+    O << "\t.ascii \" -export:" << *i << ",data\"\n";
+  }    
+
+  if (DLLExportedFns.begin() != DLLExportedFns.end()) {
+    SwitchToDataSection(".section .drectve", 0);    
+  }
+
+  for (std::set<std::string>::iterator i = DLLExportedFns.begin(),
+         e = DLLExportedFns.end();
+         i != e; ++i) {
+    O << "\t.ascii \" -export:" << *i << "\"\n";
+  }    
+ 
   if (Subtarget->isTargetDarwin()) {
     SwitchToDataSection("", 0);
 

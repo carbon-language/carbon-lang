@@ -845,14 +845,21 @@ void AssemblyWriter::printGlobal(const GlobalVariable *GV) {
   if (GV->hasName()) Out << getLLVMName(GV->getName()) << " = ";
 
   if (!GV->hasInitializer())
-    Out << "external ";
+    switch (GV->getLinkage()) {
+     case GlobalValue::DLLImportLinkage:   Out << "dllimport "; break;
+     case GlobalValue::ExternalWeakLinkage: Out << "extern_weak "; break;
+     default: Out << "external "; break;
+    }
   else
     switch (GV->getLinkage()) {
-    case GlobalValue::InternalLinkage:  Out << "internal "; break;
-    case GlobalValue::LinkOnceLinkage:  Out << "linkonce "; break;
-    case GlobalValue::WeakLinkage:      Out << "weak "; break;
-    case GlobalValue::AppendingLinkage: Out << "appending "; break;
-    case GlobalValue::ExternalLinkage: break;
+    case GlobalValue::InternalLinkage:     Out << "internal "; break;
+    case GlobalValue::LinkOnceLinkage:     Out << "linkonce "; break;
+    case GlobalValue::WeakLinkage:         Out << "weak "; break;
+    case GlobalValue::AppendingLinkage:    Out << "appending "; break;
+    case GlobalValue::DLLImportLinkage:    Out << "dllimport "; break;
+    case GlobalValue::DLLExportLinkage:    Out << "dllexport "; break;     
+    case GlobalValue::ExternalWeakLinkage: Out << "extern_weak "; break;
+    case GlobalValue::ExternalLinkage:     break;
     case GlobalValue::GhostLinkage:
       std::cerr << "GhostLinkage not allowed in AsmWriter!\n";
       abort();
@@ -937,13 +944,20 @@ void AssemblyWriter::printFunction(const Function *F) {
   if (AnnotationWriter) AnnotationWriter->emitFunctionAnnot(F, Out);
 
   if (F->isExternal())
-    Out << "declare ";
+    switch (F->getLinkage()) {
+    case GlobalValue::DLLImportLinkage:    Out << "declare dllimport "; break;
+    case GlobalValue::ExternalWeakLinkage: Out << "declare extern_weak "; break;
+    default: Out << "declare ";
+    }
   else
     switch (F->getLinkage()) {
-    case GlobalValue::InternalLinkage:  Out << "internal "; break;
-    case GlobalValue::LinkOnceLinkage:  Out << "linkonce "; break;
-    case GlobalValue::WeakLinkage:      Out << "weak "; break;
-    case GlobalValue::AppendingLinkage: Out << "appending "; break;
+    case GlobalValue::InternalLinkage:     Out << "internal "; break;
+    case GlobalValue::LinkOnceLinkage:     Out << "linkonce "; break;
+    case GlobalValue::WeakLinkage:         Out << "weak "; break;
+    case GlobalValue::AppendingLinkage:    Out << "appending "; break;
+    case GlobalValue::DLLImportLinkage:    Out << "dllimport "; break;
+    case GlobalValue::DLLExportLinkage:    Out << "dllexport "; break;
+    case GlobalValue::ExternalWeakLinkage: Out << "extern_weak "; break;      
     case GlobalValue::ExternalLinkage: break;
     case GlobalValue::GhostLinkage:
       std::cerr << "GhostLinkage not allowed in AsmWriter!\n";

@@ -359,9 +359,16 @@ static bool GetLinkageResult(GlobalValue *Dest, GlobalValue *Src,
   } else if (Src->isExternal()) {
     // If Src is external or if both Src & Drc are external..  Just link the
     // external globals, we aren't adding anything.
-    LinkFromSrc = false;
-    LT = Dest->getLinkage();
-  } else if (Dest->isExternal()) {
+    if (Src->hasDLLImportLinkage()) {
+      if (Dest->isExternal()) {
+        LinkFromSrc = true;
+        LT = Src->getLinkage();
+      }      
+    } else {
+      LinkFromSrc = false;
+      LT = Dest->getLinkage();
+    }
+  } else if (Dest->isExternal() && !Dest->hasDLLImportLinkage()) {
     // If Dest is external but Src is not:
     LinkFromSrc = true;
     LT = Src->getLinkage();
@@ -372,7 +379,7 @@ static bool GetLinkageResult(GlobalValue *Dest, GlobalValue *Src,
     LinkFromSrc = true; // Special cased.
     LT = Src->getLinkage();
   } else if (Src->hasWeakLinkage() || Src->hasLinkOnceLinkage()) {
-    // At this point we know that Dest has LinkOnce, External or Weak linkage.
+    // At this point we know that Dest has LinkOnce, External, Weak, DLL* linkage.
     if (Dest->hasLinkOnceLinkage() && Src->hasWeakLinkage()) {
       LinkFromSrc = true;
       LT = Src->getLinkage();
@@ -381,11 +388,16 @@ static bool GetLinkageResult(GlobalValue *Dest, GlobalValue *Src,
       LT = Dest->getLinkage();
     }
   } else if (Dest->hasWeakLinkage() || Dest->hasLinkOnceLinkage()) {
-    // At this point we know that Src has External linkage.
+    // At this point we know that Src has External or DLL* linkage.
     LinkFromSrc = true;
     LT = GlobalValue::ExternalLinkage;
   } else {
-    assert(Dest->hasExternalLinkage() && Src->hasExternalLinkage() &&
+    assert((Dest->hasExternalLinkage() ||
+            Dest->hasDLLImportLinkage() ||
+            Dest->hasDLLExportLinkage()) &&
+           (Src->hasExternalLinkage() ||
+            Src->hasDLLImportLinkage() ||
+            Src->hasDLLExportLinkage()) &&
            "Unexpected linkage type!");
     return Error(Err, "Linking globals named '" + Src->getName() +
                  "': symbol multiply defined!");
@@ -425,7 +437,8 @@ static bool LinkGlobals(Module *Dest, Module *Src,
     if (DGV && DGV->hasInternalLinkage())
       DGV = 0;
 
-    assert(SGV->hasInitializer() || SGV->hasExternalLinkage() &&
+    assert(SGV->hasInitializer() ||
+           SGV->hasExternalLinkage() || SGV->hasDLLImportLinkage() &&
            "Global must either be external or have an initializer!");
 
     GlobalValue::LinkageTypes NewLinkage;
@@ -565,7 +578,7 @@ static bool LinkGlobalInits(Module *Dest, const Module *Src,
 //
 static bool LinkFunctionProtos(Module *Dest, const Module *Src,
                                std::map<const Value*, Value*> &ValueMap,
-                             std::map<std::string, GlobalValue*> &GlobalsByName,
+                               std::map<std::string, GlobalValue*> &GlobalsByName,
                                std::string *Err) {
   SymbolTable *ST = (SymbolTable*)&Dest->getSymbolTable();
 
@@ -604,12 +617,19 @@ static bool LinkFunctionProtos(Module *Dest, const Module *Src,
     } else if (SF->isExternal()) {
       // If SF is external or if both SF & DF are external..  Just link the
       // external functions, we aren't adding anything.
-      ValueMap.insert(std::make_pair(SF, DF));
-    } else if (DF->isExternal()) {   // If DF is external but SF is not...
+      if (SF->hasDLLImportLinkage()) {
+        if (DF->isExternal()) {
+          ValueMap.insert(std::make_pair(SF, DF));
+          DF->setLinkage(SF->getLinkage());          
+        }        
+      } else {
+        ValueMap.insert(std::make_pair(SF, DF));
+      }      
+    } else if (DF->isExternal() && !DF->hasDLLImportLinkage()) {
+      // If DF is external but SF is not...
       // Link the external functions, update linkage qualifiers
       ValueMap.insert(std::make_pair(SF, DF));
       DF->setLinkage(SF->getLinkage());
-
     } else if (SF->hasWeakLinkage() || SF->hasLinkOnceLinkage()) {
       // At this point we know that DF has LinkOnce, Weak, or External linkage.
       ValueMap.insert(std::make_pair(SF, DF));

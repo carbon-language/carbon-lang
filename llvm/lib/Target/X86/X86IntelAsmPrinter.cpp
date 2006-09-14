@@ -35,10 +35,23 @@ bool X86IntelAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
   EmitConstantPool(MF.getConstantPool());
 
   // Print out labels for the function.
-  SwitchToTextSection("_text", MF.getFunction());
-  EmitAlignment(4);
-  if (MF.getFunction()->getLinkage() == GlobalValue::ExternalLinkage)
+  const Function* F = MF.getFunction();
+  switch (F->getLinkage()) {
+  default: assert(0 && "Unsupported linkage type!");
+  case Function::InternalLinkage:
+    SwitchToTextSection("_text", F);
+    EmitAlignment(4);
+    break;    
+  case Function::DLLExportLinkage:
+    DLLExportedFns.insert(CurrentFnName);
+    //FALLS THROUGH
+  case Function::ExternalLinkage:
     O << "\tpublic " << CurrentFnName << "\n";
+    SwitchToTextSection("_text", F);
+    EmitAlignment(4);
+    break;    
+  }
+  
   O << CurrentFnName << "\tproc near\n";
   
   // Print out code for the function.
@@ -118,8 +131,15 @@ void X86IntelAsmPrinter::printOp(const MachineOperand &MO,
   case MachineOperand::MO_GlobalAddress: {
     bool isCallOp = Modifier && !strcmp(Modifier, "call");
     bool isMemOp  = Modifier && !strcmp(Modifier, "mem");
+    GlobalValue *GV = MO.getGlobal();    
+
     if (!isMemOp && !isCallOp) O << "OFFSET ";
-    O << Mang->getValueName(MO.getGlobal());
+    if (GV->hasDLLImportLinkage()) {
+      // FIXME: This should be fixed with full support of stdcall & fastcall
+      // CC's
+      O << "__imp_";          
+    } 
+    O << Mang->getValueName(GV);
     int Offset = MO.getOffset();
     if (Offset > 0)
       O << " + " << Offset;
@@ -350,6 +370,9 @@ bool X86IntelAsmPrinter::doFinalization(Module &M) {
       // FIXME: the default alignment is 16 bytes, but 1, 2, 4, and 256
       // are also available.
       break;
+    case GlobalValue::DLLExportLinkage:
+      DLLExportedGVs.insert(name);
+      // FALL THROUGH
     case GlobalValue::ExternalLinkage:
       O << "\tpublic " << name << "\n";
       // FALL THROUGH
@@ -370,6 +393,34 @@ bool X86IntelAsmPrinter::doFinalization(Module &M) {
 
     if (bCustomSegment)
       O << name << "?\tends\n";
+  }
+
+    // Output linker support code for dllexported globals
+  if ((DLLExportedGVs.begin() != DLLExportedGVs.end()) ||
+      (DLLExportedFns.begin() != DLLExportedFns.end())) {
+    SwitchToDataSection("", 0);
+    O << "; WARNING: The following code is valid only with MASM v8.x and (possible) higher\n"
+      << "; This version of MASM is usually shipped with Microsoft Visual Studio 2005\n"
+      << "; or (possible) further versions. Unfortunately, there is no way to support\n"
+      << "; dllexported symbols in the earlier versions of MASM in fully automatic way\n\n";
+    O << "_drectve\t segment info alias('.drectve')\n";
+  }
+
+  for (std::set<std::string>::iterator i = DLLExportedGVs.begin(),
+         e = DLLExportedGVs.end();
+         i != e; ++i) {
+    O << "\t db ' /EXPORT:" << *i << ",data'\n";
+  }    
+
+  for (std::set<std::string>::iterator i = DLLExportedFns.begin(),
+         e = DLLExportedFns.end();
+         i != e; ++i) {
+    O << "\t db ' /EXPORT:" << *i << "'\n";
+  }    
+
+  if ((DLLExportedGVs.begin() != DLLExportedGVs.end()) ||
+      (DLLExportedFns.begin() != DLLExportedFns.end())) {
+    O << "_drectve\t ends\n";    
   }
   
   // Bypass X86SharedAsmPrinter::doFinalization().

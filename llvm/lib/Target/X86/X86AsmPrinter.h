@@ -63,6 +63,9 @@ struct VISIBILITY_HIDDEN X86SharedAsmPrinter : public AsmPrinter {
   // Necessary for Darwin to print out the apprioriate types of linker stubs
   std::set<std::string> FnStubs, GVStubs, LinkOnceStubs;
 
+  // Necessary for dllexport support
+  std::set<std::string> DLLExportedFns, DLLExportedGVs;
+  
   inline static bool isScale(const MachineOperand &MO) {
     return MO.isImmediate() &&
           (MO.getImmedValue() == 1 || MO.getImmedValue() == 2 ||

@@ -99,6 +99,8 @@ public:
 
   bool isTargetDarwin() const { return TargetType == isDarwin; }
   bool isTargetELF() const { return TargetType == isELF; }
+  bool isTargetWindows() const { return TargetType == isWindows; }
+  bool isTargetCygwin() const { return TargetType == isCygwin; }  
 };
 } // End llvm namespace
 

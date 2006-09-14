@@ -306,6 +306,14 @@ bool IA64AsmPrinter::doFinalization(Module &M) {
           case GlobalValue::GhostLinkage:
             std::cerr << "GhostLinkage cannot appear in IA64AsmPrinter!\n";
             abort();
+          case GlobalValue::DLLImportLinkage:
+            std::cerr << "DLLImport linkage is not supported by this target!\n";
+            abort();
+          case GlobalValue::DLLExportLinkage:
+            std::cerr << "DLLExport linkage is not supported by this target!\n";
+            abort();
+          default:
+            assert(0 && "Unknown linkage type!");            
         }
         
         EmitAlignment(Align);

@@ -1791,6 +1791,9 @@ void BytecodeReader::ParseFunctionBody(Function* F) {
   case 2: Linkage = GlobalValue::AppendingLinkage; break;
   case 3: Linkage = GlobalValue::InternalLinkage; break;
   case 4: Linkage = GlobalValue::LinkOnceLinkage; break;
+  case 5: Linkage = GlobalValue::DLLImportLinkage; break;
+  case 6: Linkage = GlobalValue::DLLExportLinkage; break;
+  case 7: Linkage = GlobalValue::ExternalWeakLinkage; break;
   default:
     error("Invalid linkage type for Function.");
     Linkage = GlobalValue::InternalLinkage;
@@ -2047,6 +2050,9 @@ void BytecodeReader::ParseModuleGlobalInfo() {
     case 2: Linkage = GlobalValue::AppendingLinkage; break;
     case 3: Linkage = GlobalValue::InternalLinkage;  break;
     case 4: Linkage = GlobalValue::LinkOnceLinkage;  break;
+    case 5: Linkage = GlobalValue::DLLImportLinkage;  break;
+    case 6: Linkage = GlobalValue::DLLExportLinkage;  break;
+    case 7: Linkage = GlobalValue::ExternalWeakLinkage;  break;
     default:
       error("Unknown linkage type: " + utostr(LinkageID));
       Linkage = GlobalValue::InternalLinkage;
@@ -2129,6 +2135,14 @@ void BytecodeReader::ParseModuleGlobalInfo() {
       
       if (ExtWord & (1 << 10))  // Has a section ID.
         SectionID[Func] = read_vbr_uint();
+
+      // Parse external declaration linkage
+      switch ((ExtWord >> 11) & 3) {
+       case 0: break;
+       case 1: Func->setLinkage(Function::DLLImportLinkage); break;
+       case 2: Func->setLinkage(Function::ExternalWeakLinkage); break;        
+       default: assert(0 && "Unsupported external linkage");        
+      }      
     }
     
     Func->setCallingConv(CC-1);

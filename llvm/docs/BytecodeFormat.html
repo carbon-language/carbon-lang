@@ -1025,7 +1025,8 @@ follows. </td>
     <tr>
       <td><a href="#bit">bit(2-4)</a></td>
       <td class="td_left">Linkage type: 0=External, 1=Weak,
-2=Appending, 3=Internal, 4=LinkOnce</td>
+        2=Appending, 3=Internal, 4=LinkOnce, 5=DllImport, 
+        6=DllExport, 7=ExternWeak</td>
     </tr>
     <tr>
       <td><a href="#bit">bit(5-31)</a></td>
@@ -1136,13 +1137,16 @@ href="#uint32_vbr">uint32_vbr</a> that describes the function.</p>
       <td><a href="#bit">bit(4)</a></td>
       <td class="td_left">If this bit is set to 1, the indicated function is
       external, and there is no <a href="#functiondefs">Function Definiton
-      Block</a> in the bytecode file for the function.</td>
+      Block</a> in the bytecode file for the function. If the function is
+      external and has <tt>dllimport or extern_weak</tt> linkage additional
+      field in the extension word is used to indicate the actual linkage
+      type.</td>
     </tr>
     <tr>
       <td><a href="#bit">bit(5-30)</a></td>
       <td class="td_left">Type slot number of type for the function.</td>
     </tr>
-    <tr>
+                                      <tr>
       <td><a href="#bit">bit(31)</a></td>
       <td class="td_left">Indicates whether an extension word follows.</td>
     </tr>
@@ -1171,7 +1175,12 @@ follows with the following fields:</p>
       <td class="td_left">If this bit is set, a SectionID follows this vbr.</td>
     </tr>
     <tr>
-      <td><a href="#bit">bit(11-31)</a></td>
+      <td><a href="#bit">bit(11-12)</a></td>
+      <td class="td_left">Linkage type for external functions. 0 - External
+        linkage, 1 - DLLImport linkage, 2 - External weak linkage.</td>
+    </tr>
+    <tr>
+      <td><a href="#bit">bit(13-31)</a></td>
       <td class="td_left">Currently unassigned.</td>
     </tr>
   </tbody>
@@ -1410,8 +1419,8 @@ size<br>
     </tr>
     <tr>
       <td><a href="#uint32_vbr">uint32_vbr</a></td>
-      <td class="td_left">The linkage type of the function: 0=External,
-1=Weak, 2=Appending, 3=Internal, 4=LinkOnce<sup>1</sup></td>
+      <td class="td_left">The linkage type of the function: 0=External, 1=Weak,
+2=Appending, 3=Internal, 4=LinkOnce, 5=DllImport, 6=DllExport<sup>1</sup></td>
     </tr>
     <tr>
       <td><a href="#block">block</a></td>

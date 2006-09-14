@@ -284,6 +284,12 @@ CppWriter::printLinkageType(GlobalValue::LinkageTypes LT) {
       Out << "GlobalValue::AppendingLinkage"; break;
     case GlobalValue::ExternalLinkage: 
       Out << "GlobalValue::ExternalLinkage"; break;
+    case GlobalValue::DLLImportLinkage: 
+      Out << "GlobalValue::DllImportLinkage"; break;
+    case GlobalValue::DLLExportLinkage: 
+      Out << "GlobalValue::DllExportLinkage"; break;
+    case GlobalValue::ExternalWeakLinkage: 
+      Out << "GlobalValue::ExternalWeakLinkage"; break;
     case GlobalValue::GhostLinkage:
       Out << "GlobalValue::GhostLinkage"; break;
   }

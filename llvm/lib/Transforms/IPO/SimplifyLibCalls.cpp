@@ -178,8 +178,10 @@ public:
         // All the "well-known" functions are external and have external linkage
         // because they live in a runtime library somewhere and were (probably)
         // not compiled by LLVM.  So, we only act on external functions that
-        // have external linkage and non-empty uses.
-        if (!FI->isExternal() || !FI->hasExternalLinkage() || FI->use_empty())
+        // have external or dllimport linkage and non-empty uses.
+        if (!FI->isExternal() ||
+            !(FI->hasExternalLinkage() || FI->hasDLLImportLinkage()) ||
+            FI->use_empty())
           continue;
 
         // Get the optimization class that pertains to this function

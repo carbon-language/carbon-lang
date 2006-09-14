@@ -48,10 +48,13 @@ bool X86ATTAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
     SwitchToTextSection(TAI->getTextSection(), F);
     EmitAlignment(4, F);     // FIXME: This should be parameterized somewhere.
     break;
+  case Function::DLLExportLinkage:
+    DLLExportedFns.insert(Mang->makeNameProper(F->getName(), ""));
+    //FALLS THROUGH
   case Function::ExternalLinkage:
     SwitchToTextSection(TAI->getTextSection(), F);
     EmitAlignment(4, F);     // FIXME: This should be parameterized somewhere.
-    O << "\t.globl\t" << CurrentFnName << "\n";
+    O << "\t.globl\t" << CurrentFnName << "\n";    
     break;
   case Function::WeakLinkage:
   case Function::LinkOnceLinkage:
@@ -179,8 +182,9 @@ void X86ATTAsmPrinter::printOperand(const MachineInstr *MI, unsigned OpNo,
     bool isMemOp  = Modifier && !strcmp(Modifier, "mem");
     if (!isMemOp && !isCallOp) O << '$';
 
-    GlobalValue *GV = MO.getGlobal();
+    GlobalValue *GV = MO.getGlobal();    
     std::string Name = Mang->getValueName(GV);
+    
     bool isExt = (GV->isExternal() || GV->hasWeakLinkage() ||
                   GV->hasLinkOnceLinkage());
     if (X86PICStyle == PICStyle::Stub &&
@@ -196,13 +200,27 @@ void X86ATTAsmPrinter::printOperand(const MachineInstr *MI, unsigned OpNo,
           GVStubs.insert(Name);
           O << "L" << Name << "$non_lazy_ptr";
         }
-      } else
+      } else {
+        if (GV->hasDLLImportLinkage()) {
+          // FIXME: This should be fixed with full support of stdcall & fastcall
+          // CC's
+          O << "__imp_";          
+        } 
         O << Name;
+      }
+      
       if (!isCallOp && TM.getRelocationModel() == Reloc::PIC_)
         O << "-\"L" << getFunctionNumber() << "$pb\"";
-    } else
+    } else {
+      if (GV->hasDLLImportLinkage()) {
+        // FIXME: This should be fixed with full support of stdcall & fastcall
+        // CC's
+        O << "__imp_";          
+      }       
       O << Name;
-
+   
+    }
+    
     int Offset = MO.getOffset();
     if (Offset > 0)
       O << "+" << Offset;

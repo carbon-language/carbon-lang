@@ -938,11 +938,14 @@ void BytecodeWriter::outputConstants(bool isFunction) {
 static unsigned getEncodedLinkage(const GlobalValue *GV) {
   switch (GV->getLinkage()) {
   default: assert(0 && "Invalid linkage!");
-  case GlobalValue::ExternalLinkage:  return 0;
-  case GlobalValue::WeakLinkage:      return 1;
-  case GlobalValue::AppendingLinkage: return 2;
-  case GlobalValue::InternalLinkage:  return 3;
-  case GlobalValue::LinkOnceLinkage:  return 4;
+  case GlobalValue::ExternalLinkage:     return 0;
+  case GlobalValue::WeakLinkage:         return 1;
+  case GlobalValue::AppendingLinkage:    return 2;
+  case GlobalValue::InternalLinkage:     return 3;
+  case GlobalValue::LinkOnceLinkage:     return 4;
+  case GlobalValue::DLLImportLinkage:    return 5;
+  case GlobalValue::DLLExportLinkage:    return 6;
+  case GlobalValue::ExternalWeakLinkage: return 7;
   }
 }
 
@@ -973,7 +976,7 @@ void BytecodeWriter::outputModuleInfoBlock(const Module *M) {
       unsigned oSlot = ((unsigned)Slot << 5) | (getEncodedLinkage(I) << 2) |
                         (I->hasInitializer() << 1) | (unsigned)I->isConstant();
       output_vbr(oSlot);
-    } else {
+    } else {  
       unsigned oSlot = ((unsigned)Slot << 5) | (3 << 2) |
                         (0 << 1) | (unsigned)I->isConstant();
       output_vbr(oSlot);
@@ -1018,16 +1021,30 @@ void BytecodeWriter::outputModuleInfoBlock(const Module *M) {
     if (I->isExternal())   // If external, we don't have an FunctionInfo block.
       ID |= 1 << 4;
     
-    if (I->getAlignment() || I->hasSection() || (CC & ~15) != 0)
+    if (I->getAlignment() || I->hasSection() || (CC & ~15) != 0 ||
+        (I->isExternal() && I->hasDLLImportLinkage()) ||
+        (I->isExternal() && I->hasExternalWeakLinkage())
+       )
       ID |= 1 << 31;       // Do we need an extension word?
     
     output_vbr(ID);
     
     if (ID & (1 << 31)) {
       // Extension byte: bits 0-4 = alignment, bits 5-9 = top nibble of calling
-      // convention, bit 10 = hasSectionID.
+      // convention, bit 10 = hasSectionID., bits 11-12 = external linkage type
+      unsigned extLinkage = 0;
+
+      if (I->isExternal()) {
+        if (I->hasDLLImportLinkage()) {
+          extLinkage = 1;
+        } else if (I->hasExternalWeakLinkage()) {
+          extLinkage = 2;
+        }
+      }
+
       ID = (Log2_32(I->getAlignment())+1) | ((CC >> 4) << 5) | 
-           (I->hasSection() << 10);
+        (I->hasSection() << 10) |
+        ((extLinkage & 3) << 11);
       output_vbr(ID);
       
       // Give section names unique ID's.
