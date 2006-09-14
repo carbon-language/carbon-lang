@@ -1150,7 +1150,7 @@ class ConstantPoolSDNode : public SDNode {
     Constant *ConstVal;
     MachineConstantPoolValue *MachineCPVal;
   } Val;
-  int Offset;
+  int Offset;  // It's a MachineConstantPoolValue if top bit is set.
   unsigned Alignment;
 protected:
   friend class SelectionDAG;
@@ -1200,7 +1200,9 @@ public:
     return Val.MachineCPVal;
   }
 
-  int getOffset() const { return Offset; }
+  int getOffset() const {
+    return Offset & ~(1 << (sizeof(unsigned)*8-1));
+  }
   
   // Return the alignment of this constant pool object, which is either 0 (for
   // default alignment) or log2 of the desired value.
