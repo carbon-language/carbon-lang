@@ -93,7 +93,7 @@ findExternalRefs(Value *value, std::set<std::string> &references,
     if (lt != LTOInternalLinkage && strncmp (gv->getName().c_str(), "llvm.", 5))
       references.insert(mangler.getValueName(gv));
   }
-  else if (Constant *c = dyn_cast<Constant>(value))
+  if (Constant *c = dyn_cast<Constant>(value))
     // Handle ConstantExpr, ConstantStruct, ConstantArry etc..
     for (unsigned i = 0, e = c->getNumOperands(); i != e; ++i)
       findExternalRefs(c->getOperand(i), references, mangler);
