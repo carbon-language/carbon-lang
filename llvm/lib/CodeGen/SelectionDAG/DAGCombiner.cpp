@@ -1155,6 +1155,26 @@ SDOperand DAGCombiner::visitOR(SDNode *N) {
     if (Tmp.Val) return Tmp;
   }
   
+  // (X & C1) | (Y & C2)  -> (X|Y) & C3  if possible.
+  if (N0.getOpcode() == ISD::AND &&
+      N1.getOpcode() == ISD::AND &&
+      N0.getOperand(1).getOpcode() == ISD::Constant &&
+      N1.getOperand(1).getOpcode() == ISD::Constant &&
+      // Don't increase # computations.
+      (N0.Val->hasOneUse() || N1.Val->hasOneUse())) {
+    // We can only do this xform if we know that bits from X that are set in C2
+    // but not in C1 are already zero.  Likewise for Y.
+    uint64_t LHSMask = cast<ConstantSDNode>(N0.getOperand(1))->getValue();
+    uint64_t RHSMask = cast<ConstantSDNode>(N1.getOperand(1))->getValue();
+    
+    if (TLI.MaskedValueIsZero(N0.getOperand(0), RHSMask&~LHSMask) &&
+        TLI.MaskedValueIsZero(N1.getOperand(0), LHSMask&~RHSMask)) {
+      SDOperand X =DAG.getNode(ISD::OR, VT, N0.getOperand(0), N1.getOperand(0));
+      return DAG.getNode(ISD::AND, VT, X, DAG.getConstant(LHSMask|RHSMask, VT));
+    }
+  }
+  
+  
   // See if this is some rotate idiom.
   if (SDNode *Rot = MatchRotate(N0, N1))
     return SDOperand(Rot, 0);
