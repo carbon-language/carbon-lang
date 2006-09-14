@@ -30,7 +30,7 @@
 //===          is guaranteed to work on *all* UNIX variants.
 //===----------------------------------------------------------------------===//
 
-namespace llvm {
+using namespace llvm;
 using namespace sys;
 
 unsigned 
@@ -115,15 +115,17 @@ Process::GetTimeUsage(TimeValue& elapsed, TimeValue& user_time,
 #endif
 }
 
-int Process::GetCurrentUserId()
-{
+int Process::GetCurrentUserId() {
   return getuid();
 }
 
-int Process::GetCurrentGroupId()
-{
+int Process::GetCurrentGroupId() {
   return getgid();
 }
+
+#ifdef __APPLE__   // FIXME: Should be configurified.
+#include <mach/mach.h>
+#endif
 
 // Some LLVM programs such as bugpoint produce core files as a normal part of
 // their operation. To prevent the disk from filling up, this function
@@ -133,6 +135,28 @@ void Process::PreventCoreFiles() {
   struct rlimit rlim;
   rlim.rlim_cur = rlim.rlim_max = 0;
   setrlimit(RLIMIT_CORE, &rlim);
+#endif
+
+#ifdef __APPLE__   // FIXME: Should be configurified.
+  // Disable crash reporting on Mac OS/X.
+
+  // get information about the original set of exception ports for the task
+  mach_msg_type_number_t Count = 0;
+  exception_mask_t OriginalMasks[EXC_TYPES_COUNT];
+  exception_port_t OriginalPorts[EXC_TYPES_COUNT];
+  exception_behavior_t OriginalBehaviors[EXC_TYPES_COUNT];
+  thread_state_flavor_t OriginalFlavors[EXC_TYPES_COUNT];
+  kern_return_t err = 
+    task_get_exception_ports(mach_task_self(), EXC_MASK_ALL, OriginalMasks,
+                             &Count, OriginalPorts, OriginalBehaviors,
+                             OriginalFlavors);
+  if (err == KERN_SUCCESS) {
+    // replace each with MACH_PORT_NULL.
+    for (unsigned i = 0; i != Count; ++i)
+      task_set_exception_ports(mach_task_self(), OriginalMasks[i], 
+                               MACH_PORT_NULL, OriginalBehaviors[i],
+                               OriginalFlavors[i]);
+  }
 #endif
 }
 
@@ -158,6 +182,4 @@ bool Process::StandardErrIsDisplayed() {
 #endif
   // If we don't have isatty, just return false.
   return false;
-}
-
 }
