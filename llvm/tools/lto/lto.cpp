@@ -93,6 +93,9 @@ findExternalRefs(Value *value, std::set<std::string> &references,
     if (lt != LTOInternalLinkage && strncmp (gv->getName().c_str(), "llvm.", 5))
       references.insert(mangler.getValueName(gv));
   }
+
+  // GlobalValue, even with InternalLinkage type, may have operands with 
+  // ExternalLinkage type. Do not ignore these operands.
   if (Constant *c = dyn_cast<Constant>(value))
     // Handle ConstantExpr, ConstantStruct, ConstantArry etc..
     for (unsigned i = 0, e = c->getNumOperands(); i != e; ++i)
