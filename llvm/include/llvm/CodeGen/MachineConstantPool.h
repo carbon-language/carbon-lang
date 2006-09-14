@@ -86,6 +86,8 @@ struct MachineConstantPoolEntry {
   bool isMachineConstantPoolEntry() const {
     return (int)Offset < 0;
   }
+
+  const Type *getType() const;
 };
   
 /// The MachineConstantPool class keeps track of constants referenced by a
