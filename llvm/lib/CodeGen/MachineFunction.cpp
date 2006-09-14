@@ -351,6 +351,12 @@ void MachineJumpTableInfo::dump() const { print(std::cerr); }
 //  MachineConstantPool implementation
 //===----------------------------------------------------------------------===//
 
+const Type *MachineConstantPoolEntry::getType() const {
+  if (isMachineConstantPoolEntry())
+      return Val.MachineCPVal->getType();
+  return Val.ConstVal->getType();
+}
+
 MachineConstantPool::~MachineConstantPool() {
   for (unsigned i = 0, e = Constants.size(); i != e; ++i)
     if (Constants[i].isMachineConstantPoolEntry())
@@ -376,7 +382,7 @@ unsigned MachineConstantPool::getConstantPoolIndex(Constant *C,
   unsigned Offset = 0;
   if (!Constants.empty()) {
     Offset = Constants.back().Offset;
-    Offset += TD->getTypeSize(Constants.back().Val.ConstVal->getType());
+    Offset += TD->getTypeSize(Constants.back().getType());
     Offset = (Offset+AlignMask)&~AlignMask;
   }
   
@@ -400,7 +406,7 @@ unsigned MachineConstantPool::getConstantPoolIndex(MachineConstantPoolValue *V,
   unsigned Offset = 0;
   if (!Constants.empty()) {
     Offset = Constants.back().Offset;
-    Offset += TD->getTypeSize(Constants.back().Val.MachineCPVal->getType());
+    Offset += TD->getTypeSize(Constants.back().getType());
     Offset = (Offset+AlignMask)&~AlignMask;
   }
   
