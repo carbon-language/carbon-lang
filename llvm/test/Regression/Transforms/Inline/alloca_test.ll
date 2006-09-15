@@ -5,6 +5,7 @@
 
 int %func(int %i) {
 	%X = alloca int 
+	store int %i, int* %X
 	ret int %i
 }
 
