@@ -28,7 +28,7 @@ namespace {
   // for miscompilation.
   //
   enum OutputType {
-    AutoPick, RunLLI, RunJIT, RunLLC, RunCBE
+    AutoPick, RunLLI, RunJIT, RunLLC, RunCBE, CBE_bug
   };
 
   cl::opt<double>
@@ -46,6 +46,7 @@ namespace {
                             clEnumValN(RunJIT, "run-jit", "Execute with JIT"),
                             clEnumValN(RunLLC, "run-llc", "Compile with LLC"),
                             clEnumValN(RunCBE, "run-cbe", "Compile with CBE"),
+                            clEnumValN(CBE_bug,"cbe-bug", "Find CBE bugs"),
                             clEnumValEnd),
                  cl::init(AutoPick));
 
@@ -133,8 +134,9 @@ bool BugDriver::initializeExecutionEnvironment() {
                                                  &ToolArgv);
     break;
   case RunCBE:
-    Interpreter = cbe = AbstractInterpreter::createCBE(getToolName(), Message,
-                                                       &ToolArgv);
+  case CBE_bug:
+    Interpreter = AbstractInterpreter::createCBE(getToolName(), Message,
+                                                 &ToolArgv);
     break;
   default:
     Message = "Sorry, this back-end is not supported by bugpoint right now!\n";
@@ -143,10 +145,19 @@ bool BugDriver::initializeExecutionEnvironment() {
   std::cerr << Message;
 
   // Initialize auxiliary tools for debugging
-  if (!cbe) {
+  if (InterpreterSel == RunCBE) {
+    // We already created a CBE, reuse it.
+    cbe = Interpreter;
+  } else if (InterpreterSel == CBE_bug) {
+    // We want to debug the CBE itself.  Use LLC as the 'known-good' compiler.
+    std::vector<std::string> ToolArgs;
+    ToolArgs.push_back("--relocation-model=pic");
+    cbe = AbstractInterpreter::createLLC(getToolName(), Message, &ToolArgs);
+  } else {
     cbe = AbstractInterpreter::createCBE(getToolName(), Message, &ToolArgv);
-    if (!cbe) { std::cout << Message << "\nExiting.\n"; exit(1); }
   }
+  if (!cbe) { std::cout << Message << "\nExiting.\n"; exit(1); }
+  
   gcc = GCC::create(getToolName(), Message);
   if (!gcc) { std::cout << Message << "\nExiting.\n"; exit(1); }
 
@@ -237,7 +248,8 @@ std::string BugDriver::executeProgram(std::string OutputFile,
   // compile the program. If so, we should pass the user's -Xlinker options
   // as the GCCArgs.
   int RetVal = 0;
-  if (InterpreterSel == RunLLC || InterpreterSel == RunCBE)
+  if (InterpreterSel == RunLLC || InterpreterSel == RunCBE ||
+      InterpreterSel == CBE_bug)
     RetVal = AI->ExecuteProgram(BytecodeFile, InputArgv, InputFile,
                                 OutputFile, AdditionalLinkerArgs, SharedObjs, 
                                 Timeout);
@@ -271,8 +283,7 @@ std::string BugDriver::executeProgram(std::string OutputFile,
 ///
 std::string BugDriver::executeProgramWithCBE(std::string OutputFile) {
   bool ProgramExitedNonzero;
-  std::string outFN = executeProgram(OutputFile, "", "",
-                                     (AbstractInterpreter*)cbe,
+  std::string outFN = executeProgram(OutputFile, "", "", cbe,
                                      &ProgramExitedNonzero);
   if (ProgramExitedNonzero) {
     std::cerr
@@ -285,28 +296,18 @@ std::string BugDriver::executeProgramWithCBE(std::string OutputFile) {
 
 std::string BugDriver::compileSharedObject(const std::string &BytecodeFile) {
   assert(Interpreter && "Interpreter should have been created already!");
-  sys::Path OutputCFile;
+  sys::Path OutputFile;
 
   // Using CBE
-  cbe->OutputC(BytecodeFile, OutputCFile);
-
-#if 0 /* This is an alternative, as yet unimplemented */
-  // Using LLC
-  std::string Message;
-  LLC *llc = createLLCtool(Message);
-  if (llc->OutputAsm(BytecodeFile, OutputFile)) {
-    std::cerr << "Could not generate asm code with `llc', exiting.\n";
-    exit(1);
-  }
-#endif
+  GCC::FileType FT = cbe->OutputCode(BytecodeFile, OutputFile);
 
   std::string SharedObjectFile;
-  if (gcc->MakeSharedObject(OutputCFile.toString(), GCC::CFile,
+  if (gcc->MakeSharedObject(OutputFile.toString(), FT,
                             SharedObjectFile, AdditionalLinkerArgs))
     exit(1);
 
   // Remove the intermediate C file
-  OutputCFile.eraseFromDisk();
+  OutputFile.eraseFromDisk();
 
   return "./" + SharedObjectFile;
 }
@@ -316,7 +317,7 @@ std::string BugDriver::compileSharedObject(const std::string &BytecodeFile) {
 /// otherwise. Note: initializeExecutionEnvironment should be called BEFORE
 /// this function.
 ///
-bool BugDriver::createReferenceFile(Module *M, const std::string &Filename){
+bool BugDriver::createReferenceFile(Module *M, const std::string &Filename) {
   try {
     compileProgram(Program);
   } catch (ToolExecutionError &TEE) {

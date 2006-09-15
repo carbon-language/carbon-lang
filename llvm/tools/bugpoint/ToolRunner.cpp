@@ -37,6 +37,13 @@ static int RunProgramWithTimeout(const sys::Path &ProgramPath,
   redirects[0] = &StdInFile;
   redirects[1] = &StdOutFile;
   redirects[2] = &StdErrFile;
+                                   
+{
+  std::cerr << "RUN:";
+  for (unsigned i = 0; Args[i]; ++i)
+    std::cerr << " " << Args[i];
+  std::cerr << "\n";
+}
 
   return
     sys::Program::ExecuteAndWait(ProgramPath, Args, 0, redirects, NumSeconds);
@@ -155,7 +162,8 @@ AbstractInterpreter *AbstractInterpreter::createLLI(const std::string &ProgPath,
 //===----------------------------------------------------------------------===//
 // LLC Implementation of AbstractIntepreter interface
 //
-void LLC::OutputAsm(const std::string &Bytecode, sys::Path &OutputAsmFile) {
+GCC::FileType LLC::OutputCode(const std::string &Bytecode, 
+                              sys::Path &OutputAsmFile) {
   sys::Path uniqueFile(Bytecode+".llc.s");
   std::string ErrMsg;
   if (uniqueFile.makeUnique(true, &ErrMsg)) {
@@ -185,11 +193,13 @@ void LLC::OutputAsm(const std::string &Bytecode, sys::Path &OutputAsmFile) {
   if (RunProgramWithTimeout(sys::Path(LLCPath), &LLCArgs[0],
                             sys::Path(), sys::Path(), sys::Path()))
     ProcessFailure(sys::Path(LLCPath), &LLCArgs[0]);
+
+  return GCC::AsmFile;                              
 }
 
 void LLC::compileProgram(const std::string &Bytecode) {
   sys::Path OutputAsmFile;
-  OutputAsm(Bytecode, OutputAsmFile);
+  OutputCode(Bytecode, OutputAsmFile);
   OutputAsmFile.eraseFromDisk();
 }
 
@@ -202,7 +212,7 @@ int LLC::ExecuteProgram(const std::string &Bytecode,
                         unsigned Timeout) {
 
   sys::Path OutputAsmFile;
-  OutputAsm(Bytecode, OutputAsmFile);
+  OutputCode(Bytecode, OutputAsmFile);
   FileRemover OutFileRemover(OutputAsmFile);
 
   std::vector<std::string> GCCArgs(ArgsForGCC);
@@ -313,7 +323,8 @@ AbstractInterpreter *AbstractInterpreter::createJIT(const std::string &ProgPath,
   return 0;
 }
 
-void CBE::OutputC(const std::string &Bytecode, sys::Path& OutputCFile) {
+GCC::FileType CBE::OutputCode(const std::string &Bytecode,
+                              sys::Path &OutputCFile) {
   sys::Path uniqueFile(Bytecode+".cbe.c");
   std::string ErrMsg;
   if (uniqueFile.makeUnique(true, &ErrMsg)) {
@@ -344,11 +355,12 @@ void CBE::OutputC(const std::string &Bytecode, sys::Path& OutputCFile) {
   if (RunProgramWithTimeout(LLCPath, &LLCArgs[0], sys::Path(), sys::Path(),
                             sys::Path()))
     ProcessFailure(LLCPath, &LLCArgs[0]);
+  return GCC::CFile;
 }
 
 void CBE::compileProgram(const std::string &Bytecode) {
   sys::Path OutputCFile;
-  OutputC(Bytecode, OutputCFile);
+  OutputCode(Bytecode, OutputCFile);
   OutputCFile.eraseFromDisk();
 }
 
@@ -360,7 +372,7 @@ int CBE::ExecuteProgram(const std::string &Bytecode,
                         const std::vector<std::string> &SharedLibs,
                         unsigned Timeout) {
   sys::Path OutputCFile;
-  OutputC(Bytecode, OutputCFile);
+  OutputCode(Bytecode, OutputCFile);
 
   FileRemover CFileRemove(OutputCFile);
 

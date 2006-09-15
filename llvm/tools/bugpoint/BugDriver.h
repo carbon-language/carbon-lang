@@ -30,7 +30,6 @@ class Instruction;
 
 class DebugCrashes;
 
-class CBE;
 class GCC;
 
 extern bool DisableSimplifyCFG;
@@ -45,7 +44,7 @@ class BugDriver {
   Module *Program;             // The raw program, linked together
   std::vector<const PassInfo*> PassesToRun;
   AbstractInterpreter *Interpreter;   // How to run the program
-  CBE *cbe;
+  AbstractInterpreter *cbe;
   GCC *gcc;
   bool run_as_child;
   bool run_find_bugs;

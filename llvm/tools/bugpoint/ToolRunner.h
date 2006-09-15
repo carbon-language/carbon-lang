@@ -104,6 +104,15 @@ public:
   /// thrown, otherwise, this function will just return.
   virtual void compileProgram(const std::string &Bytecode) {}
 
+  /// OutputCode - Compile the specified program from bytecode to code
+  /// understood by the GCC driver (either C or asm).  If the code generator
+  /// fails, an exception should be thrown, otherwise, this function returns the
+  /// type of code emitted.
+  virtual GCC::FileType OutputCode(const std::string &Bytecode,
+                                   sys::Path &OutFile) {
+    throw std::string("OutputCode not supported by this AbstractInterpreter!");
+  }
+  
   /// ExecuteProgram - Run the specified bytecode file, emitting output to the
   /// specified filename.  This returns the exit code of the program.
   ///
@@ -149,11 +158,12 @@ public:
                                std::vector<std::string>(),
                              unsigned Timeout = 0);
 
-  // Sometimes we just want to go half-way and only generate the .c file, not
-  // necessarily compile it with GCC and run the program.  This throws an
-  // exception if LLC crashes.
-  //
-  virtual void OutputC(const std::string &Bytecode, sys::Path& OutputCFile);
+  /// OutputCode - Compile the specified program from bytecode to code
+  /// understood by the GCC driver (either C or asm).  If the code generator
+  /// fails, an exception should be thrown, otherwise, this function returns the
+  /// type of code emitted.
+  virtual GCC::FileType OutputCode(const std::string &Bytecode,
+                                   sys::Path &OutFile);
 };
 
 
@@ -188,11 +198,9 @@ public:
                                 std::vector<std::string>(),
                              unsigned Timeout = 0);
 
-  // Sometimes we just want to go half-way and only generate the .s file,
-  // not necessarily compile it all the way and run the program.  This throws
-  // an exception if execution of LLC fails.
-  //
-  void OutputAsm(const std::string &Bytecode, sys::Path &OutputAsmFile);
+  virtual GCC::FileType OutputCode(const std::string &Bytecode,
+                                   sys::Path &OutFile);
+  
 };
 
 } // End llvm namespace
