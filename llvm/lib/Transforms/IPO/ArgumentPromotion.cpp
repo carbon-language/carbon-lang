@@ -179,6 +179,40 @@ static bool AllCalleesPassInValidPointerForArgument(Argument *Arg) {
   return true;
 }
 
+/// AccessOccursOnPath - Returns true if and only if a load or GEP instruction
+/// on Pointer occurs in Path, or in every control-flow path that succeeds it.
+bool AccessOccursOnPath(Argument* Arg) {
+  std::vector<BasicBlock*> Worklist;
+  Worklist.push_back(Arg->getParent()->begin());
+  
+  std::set<BasicBlock*> Visited;
+  
+  while (!Worklist.empty()) {
+    BasicBlock* BB = Worklist.back();
+    Worklist.pop_back();
+    Visited.insert(BB);
+    
+    bool ContainsAccess = false;
+    for (BasicBlock::iterator I = BB->begin(), E = BB->end(); I != E; ++I)
+      if (isa<LoadInst>(I) || isa<GetElementPtrInst>(I)) {
+        ContainsAccess = true;
+        break;
+      }
+    
+    if (ContainsAccess) continue;
+    
+    TerminatorInst* TI = BB->getTerminator();
+    if (isa<BranchInst>(TI) || isa<SwitchInst>(TI)) {
+      for (unsigned i = 0; i < TI->getNumSuccessors(); ++i)
+        if (!Visited.count(TI->getSuccessor(i)))
+          Worklist.push_back(TI->getSuccessor(i));
+    } else {
+      return false;
+    }
+  }
+  
+  return true;
+}
 
 /// isSafeToPromoteArgument - As you might guess from the name of this method,
 /// it checks to see if it is both safe and useful to promote the argument.
@@ -186,8 +220,6 @@ static bool AllCalleesPassInValidPointerForArgument(Argument *Arg) {
 /// elements of the aggregate in order to avoid exploding the number of
 /// arguments passed in.
 bool ArgPromotion::isSafeToPromoteArgument(Argument *Arg) const {
-  AliasAnalysis &AA = getAnalysis<AliasAnalysis>();
-
   // We can only promote this argument if all of the uses are loads, or are GEP
   // instructions (with constant indices) that are subsequently loaded.
   bool HasLoadInEntryBlock = false;
@@ -242,25 +274,6 @@ bool ArgPromotion::isSafeToPromoteArgument(Argument *Arg) const {
         }
         GEPIndices.push_back(Operands);
       }
-    } else if (CallInst* CI = dyn_cast<CallInst>(*UI)) {
-      // Is this a recursive call?
-      if (CI->getCalledFunction() != Arg->getParent())
-        return false;
-      
-      // Find out what position argument we're dealing with.
-      unsigned Position = 0;
-      Function::arg_iterator ArgPos = Arg->getParent()->arg_begin();
-      while (Arg != ArgPos) {
-        assert(ArgPos != Arg->getParent()->arg_end() &&
-               "Arg not in parent's arg list?");
-        Position++;
-        ArgPos++;
-      }
-      
-      // We only know that the call is safe if it's passing the argument in
-      // the same position that it came in at.
-      if (UI.getOperandNo() != Position+1)
-        return false;
     } else {
       return false;  // Not a load or a GEP.
     }
@@ -273,7 +286,7 @@ bool ArgPromotion::isSafeToPromoteArgument(Argument *Arg) const {
   // of the pointer in the entry block of the function) or if we can prove that
   // all pointers passed in are always to legal locations (for example, no null
   // pointers are passed in, no pointers to free'd memory, etc).
-  if (!HasLoadInEntryBlock && !AllCalleesPassInValidPointerForArgument(Arg))
+  if (!AccessOccursOnPath(Arg) && !AllCalleesPassInValidPointerForArgument(Arg))
     return false;   // Cannot prove that this is safe!!
 
   // Okay, now we know that the argument is only used by load instructions and
@@ -285,7 +298,8 @@ bool ArgPromotion::isSafeToPromoteArgument(Argument *Arg) const {
   // Because there could be several/many load instructions, remember which
   // blocks we know to be transparent to the load.
   std::set<BasicBlock*> TranspBlocks;
-  
+
+  AliasAnalysis &AA = getAnalysis<AliasAnalysis>();
   TargetData &TD = getAnalysis<TargetData>();
 
   for (unsigned i = 0, e = Loads.size(); i != e; ++i) {
@@ -380,17 +394,15 @@ Function *ArgPromotion::DoPromotion(Function *F,
       for (Value::use_iterator UI = I->use_begin(), E = I->use_end(); UI != E;
            ++UI) {
         Instruction *User = cast<Instruction>(*UI);
-        if (!isa<CallInst>(User)) {
-          assert(isa<LoadInst>(User) || isa<GetElementPtrInst>(User));
-          std::vector<Value*> Indices(User->op_begin()+1, User->op_end());
-          ArgIndices.insert(Indices);
-          LoadInst *OrigLoad;
-          if (LoadInst *L = dyn_cast<LoadInst>(User))
-            OrigLoad = L;
-          else
-            OrigLoad = cast<LoadInst>(User->use_back());
-          OriginalLoads[Indices] = OrigLoad;
-        }
+        assert(isa<LoadInst>(User) || isa<GetElementPtrInst>(User));
+        std::vector<Value*> Indices(User->op_begin()+1, User->op_end());
+        ArgIndices.insert(Indices);
+        LoadInst *OrigLoad;
+        if (LoadInst *L = dyn_cast<LoadInst>(User))
+          OrigLoad = L;
+        else
+          OrigLoad = cast<LoadInst>(User->use_back());
+        OriginalLoads[Indices] = OrigLoad;
       }
 
       // Add a parameter to the function for each element passed in.
