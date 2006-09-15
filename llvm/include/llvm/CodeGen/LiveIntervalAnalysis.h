@@ -38,6 +38,10 @@ namespace llvm {
     const TargetInstrInfo* tii_;
     LiveVariables* lv_;
 
+    /// MBB2IdxMap - The index of the first instruction in the specified basic
+    /// block.
+    std::vector<unsigned> MBB2IdxMap;
+    
     typedef std::map<MachineInstr*, unsigned> Mi2IndexMap;
     Mi2IndexMap mi2iMap_;
 
@@ -113,6 +117,17 @@ namespace llvm {
       return I->second;
     }
 
+    /// getMBBStartIdx - Return the base index of the first instruction in the
+    /// specified MachineBasicBlock.
+    unsigned getMBBStartIdx(MachineBasicBlock *MBB) const {
+      return getMBBStartIdx(MBB->getNumber());
+    }
+    
+    unsigned getMBBStartIdx(unsigned MBBNo) const {
+      assert(MBBNo < MBB2IdxMap.size() && "Invalid MBB number!");
+      return MBB2IdxMap[MBBNo];
+    }
+
     /// getInstructionIndex - returns the base index of instr
     unsigned getInstructionIndex(MachineInstr* instr) const {
       Mi2IndexMap::const_iterator it = mi2iMap_.find(instr);
@@ -128,7 +143,7 @@ namespace llvm {
              "index does not correspond to an instruction");
       return i2miMap_[index];
     }
-
+    
     std::vector<LiveInterval*> addIntervalsForSpills(const LiveInterval& i,
                                                      VirtRegMap& vrm,
                                                      int slot);
@@ -155,7 +170,7 @@ namespace llvm {
       }
     }
       
-    /// computeIntervals - compute live intervals
+    /// computeIntervals - Compute live intervals.
     void computeIntervals();
 
     /// joinIntervals - join compatible live intervals

@@ -57,7 +57,7 @@ namespace {
 
   static cl::opt<bool>
   EnableJoining("join-liveintervals",
-                cl::desc("Join compatible live intervals"),
+                cl::desc("Coallesce copies (default=true)"),
                 cl::init(true));
 }
 
@@ -120,17 +120,24 @@ bool LiveIntervals::runOnMachineFunction(MachineFunction &fn) {
            "copyRetToReg didn't insert anything!");
   }
 
-  // number MachineInstrs
-  unsigned miIndex = 0;
-  for (MachineFunction::iterator mbb = mf_->begin(), mbbEnd = mf_->end();
-       mbb != mbbEnd; ++mbb)
-    for (MachineBasicBlock::iterator mi = mbb->begin(), miEnd = mbb->end();
-         mi != miEnd; ++mi) {
-      bool inserted = mi2iMap_.insert(std::make_pair(mi, miIndex)).second;
+  // Number MachineInstrs and MachineBasicBlocks.
+  // Initialize MBB indexes to a sentinal.
+  MBB2IdxMap.resize(mf_->getNumBlockIDs(), ~0U);
+  
+  unsigned MIIndex = 0;
+  for (MachineFunction::iterator MBB = mf_->begin(), E = mf_->end();
+       MBB != E; ++MBB) {
+    // Set the MBB2IdxMap entry for this MBB.
+    MBB2IdxMap[MBB->getNumber()] = MIIndex;
+    
+    for (MachineBasicBlock::iterator I = MBB->begin(), E = MBB->end();
+         I != E; ++I) {
+      bool inserted = mi2iMap_.insert(std::make_pair(I, MIIndex)).second;
       assert(inserted && "multiple MachineInstr -> index mappings");
-      i2miMap_.push_back(mi);
-      miIndex += InstrSlots::NUM;
+      i2miMap_.push_back(I);
+      MIIndex += InstrSlots::NUM;
     }
+  }
 
   // Note intervals due to live-in values.
   if (fn.livein_begin() != fn.livein_end()) {
@@ -155,14 +162,15 @@ bool LiveIntervals::runOnMachineFunction(MachineFunction &fn) {
           std::cerr << "\n";
         });
 
-  // join intervals if requested
+  // Join (coallesce) intervals if requested.
   if (EnableJoining) joinIntervals();
 
   numIntervalsAfter += getNumIntervals();
+  
 
   // perform a final pass over the instructions and compute spill
   // weights, coalesce virtual registers and remove identity moves.
-  const LoopInfo& loopInfo = getAnalysis<LoopInfo>();
+  const LoopInfo &loopInfo = getAnalysis<LoopInfo>();
 
   for (MachineFunction::iterator mbbi = mf_->begin(), mbbe = mf_->end();
        mbbi != mbbe; ++mbbi) {
@@ -420,10 +428,10 @@ void LiveIntervals::handleVirtualRegisterDef(MachineBasicBlock *mbb,
     // live interval.
     for (unsigned i = 0, e = vi.AliveBlocks.size(); i != e; ++i) {
       if (vi.AliveBlocks[i]) {
-        MachineBasicBlock* mbb = mf_->getBlockNumbered(i);
-        if (!mbb->empty()) {
-          LiveRange LR(getInstructionIndex(&mbb->front()),
-                       getInstructionIndex(&mbb->back()) + InstrSlots::NUM,
+        MachineBasicBlock *MBB = mf_->getBlockNumbered(i);
+        if (!MBB->empty()) {
+          LiveRange LR(getMBBStartIdx(i),
+                       getInstructionIndex(&MBB->back()) + InstrSlots::NUM,
                        ValNum);
           interval.addRange(LR);
           DEBUG(std::cerr << " +" << LR);
@@ -435,7 +443,7 @@ void LiveIntervals::handleVirtualRegisterDef(MachineBasicBlock *mbb,
     // block to the 'use' slot of the killing instruction.
     for (unsigned i = 0, e = vi.Kills.size(); i != e; ++i) {
       MachineInstr *Kill = vi.Kills[i];
-      LiveRange LR(getInstructionIndex(Kill->getParent()->begin()),
+      LiveRange LR(getMBBStartIdx(Kill->getParent()),
                    getUseIndex(getInstructionIndex(Kill))+1,
                    ValNum);
       interval.addRange(LR);
@@ -498,7 +506,7 @@ void LiveIntervals::handleVirtualRegisterDef(MachineBasicBlock *mbb,
 
         // Remove the old range that we now know has an incorrect number.
         MachineInstr *Killer = vi.Kills[0];
-        unsigned Start = getInstructionIndex(Killer->getParent()->begin());
+        unsigned Start = getMBBStartIdx(Killer->getParent());
         unsigned End = getUseIndex(getInstructionIndex(Killer))+1;
         DEBUG(std::cerr << "Removing [" << Start << "," << End << "] from: ";
               interval.print(std::cerr, mri_); std::cerr << "\n");
@@ -613,35 +621,34 @@ void LiveIntervals::computeIntervals() {
 
   // Track the index of the current machine instr.
   unsigned MIIndex = 0;
-  for (MachineFunction::iterator I = mf_->begin(), E = mf_->end();
-       I != E; ++I) {
-    MachineBasicBlock* mbb = I;
-    DEBUG(std::cerr << ((Value*)mbb->getBasicBlock())->getName() << ":\n");
+  for (MachineFunction::iterator MBBI = mf_->begin(), E = mf_->end();
+       MBBI != E; ++MBBI) {
+    MachineBasicBlock *MBB = MBBI;
+    DEBUG(std::cerr << ((Value*)MBB->getBasicBlock())->getName() << ":\n");
 
-    MachineBasicBlock::iterator mi = mbb->begin(), miEnd = mbb->end();
+    MachineBasicBlock::iterator MI = MBB->begin(), miEnd = MBB->end();
     if (IgnoreFirstInstr) {
-      ++mi;
+      ++MI;
       IgnoreFirstInstr = false;
       MIIndex += InstrSlots::NUM;
     }
     
-    for (; mi != miEnd; ++mi) {
-      const TargetInstrDescriptor& tid =
-        tm_->getInstrInfo()->get(mi->getOpcode());
-      DEBUG(std::cerr << MIIndex << "\t" << *mi);
-
-      // handle implicit defs
-      if (tid.ImplicitDefs) {
-        for (const unsigned* id = tid.ImplicitDefs; *id; ++id)
-          handleRegisterDef(mbb, mi, MIIndex, *id);
+    for (; MI != miEnd; ++MI) {
+      const TargetInstrDescriptor &TID = tii_->get(MI->getOpcode());
+      DEBUG(std::cerr << MIIndex << "\t" << *MI);
+      
+      // Handle implicit defs.
+      if (TID.ImplicitDefs) {
+        for (const unsigned *ImpDef = TID.ImplicitDefs; *ImpDef; ++ImpDef)
+          handleRegisterDef(MBB, MI, MIIndex, *ImpDef);
       }
 
-      // handle explicit defs
-      for (int i = mi->getNumOperands() - 1; i >= 0; --i) {
-        MachineOperand& mop = mi->getOperand(i);
+      // Handle explicit defs.
+      for (int i = MI->getNumOperands() - 1; i >= 0; --i) {
+        MachineOperand &MO = MI->getOperand(i);
         // handle register defs - build intervals
-        if (mop.isRegister() && mop.getReg() && mop.isDef())
-          handleRegisterDef(mbb, mi, MIIndex, mop.getReg());
+        if (MO.isRegister() && MO.getReg() && MO.isDef())
+          handleRegisterDef(MBB, MI, MIIndex, MO.getReg());
       }
       
       MIIndex += InstrSlots::NUM;
