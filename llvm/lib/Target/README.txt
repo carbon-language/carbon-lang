@@ -240,4 +240,10 @@ _bar:   addic r3,r3,-1
         subfe r3,r3,r3
         blr
 
+//===---------------------------------------------------------------------===//
+
+Legalize should lower ctlz like this:
+  ctlz(x) = popcnt((x-1) & ~x)
+
+on targets that have popcnt but not ctlz.  itanium, what else?
 
