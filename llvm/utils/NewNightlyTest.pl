@@ -67,7 +67,7 @@ use Socket;
 #                   webserver
 #  -submit-script   Specifies which script to call on the submit server. If
 #                   this option is not specified it defaults to
-#                   /nightlytest/NightlyTestAccept.cgi. This is basically 
+#                   /nightlytest/NightlyTestAccept.php. This is basically 
 #                   everything after the www.yourserver.org.
 #
 # CVSROOT is the CVS repository from which the tree will be checked out,
@@ -117,7 +117,7 @@ $NOTEST=0;
 $NORUNNINGTESTS=0;
 $MAKECMD="make";
 $SUBMITSERVER = "llvm.org";
-$SUBMITSCRIPT = "/nightlytest/NightlyTestAccept.cgi";
+$SUBMITSCRIPT = "/nightlytest/NightlyTestAccept.php";
 
 while (scalar(@ARGV) and ($_ = $ARGV[0], /^[-+]/)) {
   shift;
@@ -470,11 +470,15 @@ if (!$NOCHECKOUT) {
         print "Build directory exists! Removing it\n";
       }
       system "rm -rf $BuildDir";
+      mkdir $BuildDir or die "Could not create CVS checkout directory $BuildDir!";
     } else {
-       die "CVS checkout directory $BuildDir already exists!";
+      if ( $VERBOSE ) {
+        print "Build directory exists!\n";
+      }
     }
+  } else {
+    mkdir $BuildDir or die "Could not create CVS checkout directory $BuildDir!";
   }
-  mkdir $BuildDir or die "Could not create CVS checkout directory $BuildDir!";
 }
 ChangeDir( $BuildDir, "CVS checkout directory" );
 
