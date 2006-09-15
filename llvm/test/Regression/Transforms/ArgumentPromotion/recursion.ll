@@ -1,5 +1,5 @@
 ; RUN: llvm-as < %s | opt -argpromotion | llvm-dis | grep x.val
-; ModuleID = 'recursive2.bc'
+; XFAIL: *
 
 implementation   ; Functions:
 
