@@ -179,40 +179,6 @@ static bool AllCalleesPassInValidPointerForArgument(Argument *Arg) {
   return true;
 }
 
-/// AccessOccursOnPath - Returns true if and only if a load or GEP instruction
-/// on Pointer occurs in Path, or in every control-flow path that succeeds it.
-bool AccessOccursOnPath(Argument* Arg) {
-  std::vector<BasicBlock*> Worklist;
-  Worklist.push_back(Arg->getParent()->begin());
-  
-  std::set<BasicBlock*> Visited;
-  
-  while (!Worklist.empty()) {
-    BasicBlock* BB = Worklist.back();
-    Worklist.pop_back();
-    Visited.insert(BB);
-    
-    bool ContainsAccess = false;
-    for (BasicBlock::iterator I = BB->begin(), E = BB->end(); I != E; ++I)
-      if (isa<LoadInst>(I) || isa<GetElementPtrInst>(I)) {
-        ContainsAccess = true;
-        break;
-      }
-    
-    if (ContainsAccess) continue;
-    
-    TerminatorInst* TI = BB->getTerminator();
-    if (isa<BranchInst>(TI) || isa<SwitchInst>(TI)) {
-      for (unsigned i = 0; i < TI->getNumSuccessors(); ++i)
-        if (!Visited.count(TI->getSuccessor(i)))
-          Worklist.push_back(TI->getSuccessor(i));
-    } else {
-      return false;
-    }
-  }
-  
-  return true;
-}
 
 /// isSafeToPromoteArgument - As you might guess from the name of this method,
 /// it checks to see if it is both safe and useful to promote the argument.
@@ -286,7 +252,7 @@ bool ArgPromotion::isSafeToPromoteArgument(Argument *Arg) const {
   // of the pointer in the entry block of the function) or if we can prove that
   // all pointers passed in are always to legal locations (for example, no null
   // pointers are passed in, no pointers to free'd memory, etc).
-  if (!AccessOccursOnPath(Arg) && !AllCalleesPassInValidPointerForArgument(Arg))
+  if (!HasLoadInEntryBlock && !AllCalleesPassInValidPointerForArgument(Arg))
     return false;   // Cannot prove that this is safe!!
 
   // Okay, now we know that the argument is only used by load instructions and
