@@ -38,12 +38,12 @@ static int RunProgramWithTimeout(const sys::Path &ProgramPath,
   redirects[1] = &StdOutFile;
   redirects[2] = &StdErrFile;
                                    
-{
-  std::cerr << "RUN:";
-  for (unsigned i = 0; Args[i]; ++i)
-    std::cerr << " " << Args[i];
-  std::cerr << "\n";
-}
+  if (0) {
+    std::cerr << "RUN:";
+    for (unsigned i = 0; Args[i]; ++i)
+      std::cerr << " " << Args[i];
+    std::cerr << "\n";
+  }
 
   return
     sys::Program::ExecuteAndWait(ProgramPath, Args, 0, redirects, NumSeconds);
