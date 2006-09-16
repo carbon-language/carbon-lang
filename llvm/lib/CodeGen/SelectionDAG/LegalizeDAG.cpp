@@ -4693,6 +4693,15 @@ void SelectionDAGLegalize::ExpandOp(SDOperand Op, SDOperand &Lo, SDOperand &Hi){
     break;
   }
   case ISD::MUL: {
+    // If the target wants to custom expand this, let them.
+    if (TLI.getOperationAction(ISD::MUL, VT) == TargetLowering::Custom) {
+      Op = TLI.LowerOperation(Op, DAG);
+      if (Op.Val) {
+        ExpandOp(Op, Lo, Hi);
+        break;
+      }
+    }
+    
     bool HasMULHS = TLI.isOperationLegal(ISD::MULHS, NVT);
     bool HasMULHU = TLI.isOperationLegal(ISD::MULHU, NVT);
     bool UseLibCall = true;
