@@ -18,6 +18,9 @@ long long test(int X, int Y) { return (long long)X*Y; }
 
 ... which should only be one imul instruction.
 
+This can be done with a custom expander, but it would be nice to move this to
+generic code.
+
 //===---------------------------------------------------------------------===//
 
 This should be one DIV/IDIV instruction, not a libcall:
