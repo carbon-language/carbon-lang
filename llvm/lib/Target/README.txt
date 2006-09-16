@@ -198,11 +198,11 @@ Scalar Repl cannot currently promote this testcase to 'ret long cst':
         %struct.Y = type { %struct.X }
 ulong %bar() {
         %retval = alloca %struct.Y, align 8             ; <%struct.Y*> [#uses=3]
-        %tmp12 = getelementptr %struct.Y* %retval, int 0, uint 0, uint 0                ; <int*> [#uses=1]
+        %tmp12 = getelementptr %struct.Y* %retval, int 0, uint 0, uint 0
         store int 0, int* %tmp12
-        %tmp15 = getelementptr %struct.Y* %retval, int 0, uint 0, uint 1                ; <int*> [#uses=1]
+        %tmp15 = getelementptr %struct.Y* %retval, int 0, uint 0, uint 1
         store int 1, int* %tmp15
-        %retval = cast %struct.Y* %retval to ulong*             ; <ulong*> [#uses=1]
+        %retval = cast %struct.Y* %retval to ulong*
         %retval = load ulong* %retval           ; <ulong> [#uses=1]
         ret ulong %retval
 }
@@ -247,3 +247,30 @@ Legalize should lower ctlz like this:
 
 on targets that have popcnt but not ctlz.  itanium, what else?
 
+//===---------------------------------------------------------------------===//
+
+quantum_sigma_x in 462.libquantum contains the following loop:
+
+      for(i=0; i<reg->size; i++)
+	{
+	  /* Flip the target bit of each basis state */
+	  reg->node[i].state ^= ((MAX_UNSIGNED) 1 << target);
+	} 
+
+Where MAX_UNSIGNED/state is a 64-bit int.  On a 32-bit platform it would be just
+so cool to turn it into something like:
+
+   if (target < 32) {
+     for(i=0; i<reg->size; i++)
+       reg->node[i].state ^= ((int) (1 << target));
+   } else {
+     for(i=0; i<reg->size; i++)
+       reg->node[i].state ^= (long long)((int) (1 << (target-32))) << 32;
+   }
+   
+... which would only do one 32-bit XOR per loop iteration instead of two.
+
+It would also be nice to recognize the reg->size doesn't alias reg->node[i], but
+alas...
+
+//===---------------------------------------------------------------------===//
