@@ -1011,6 +1011,11 @@ bool InstCombiner::SimplifyDemandedBits(Value *V, uint64_t DemandedMask,
     // If this is an integer truncate or noop, just look in the input.
     if (SrcTy->getPrimitiveSizeInBits() >= 
         I->getType()->getPrimitiveSizeInBits()) {
+      // Cast to bool is a comparison against 0, which demands all bits.  We
+      // can't propagate anything useful up.
+      if (I->getType() == Type::BoolTy)
+        break;
+      
       if (SimplifyDemandedBits(I->getOperand(0), DemandedMask,
                                KnownZero, KnownOne, Depth+1))
         return true;
