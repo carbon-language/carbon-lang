@@ -4723,22 +4723,28 @@ void SelectionDAGLegalize::ExpandOp(SDOperand Op, SDOperand &Lo, SDOperand &Hi){
           LH.getOpcode() == ISD::SRA && LH.getOperand(0) == LL &&
           LH.getOperand(1).getOpcode() == ISD::Constant &&
           cast<ConstantSDNode>(LH.getOperand(1))->getValue() == SH) {
+        // FIXME: Move this to the dag combiner.
+        
+        // Low part:
+        Lo = DAG.getNode(ISD::MUL, NVT, LL, RL);
+        // High part:
         Hi = DAG.getNode(ISD::MULHS, NVT, LL, RL);
-        UseLibCall = false;
+        break;
       } else if (HasMULHU) {
+        // Low part:
+        Lo = DAG.getNode(ISD::MUL, NVT, LL, RL);
+        
+        // High part:
         Hi = DAG.getNode(ISD::MULHU, NVT, LL, RL);
         RH = DAG.getNode(ISD::MUL, NVT, LL, RH);
         LH = DAG.getNode(ISD::MUL, NVT, LH, RL);
         Hi = DAG.getNode(ISD::ADD, NVT, Hi, RH);
         Hi = DAG.getNode(ISD::ADD, NVT, Hi, LH);
-        UseLibCall = false;
+        break;
       }
-      if (!UseLibCall)
-        Lo = DAG.getNode(ISD::MUL, NVT, LL, RL);
     }
 
-    if (UseLibCall)
-      Lo = ExpandLibCall("__muldi3" , Node, Hi);
+    Lo = ExpandLibCall("__muldi3" , Node, Hi);
     break;
   }
   case ISD::SDIV: Lo = ExpandLibCall("__divdi3" , Node, Hi); break;
