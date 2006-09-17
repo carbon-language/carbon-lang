@@ -200,9 +200,9 @@ bool Instruction::isCommutative(unsigned op) {
   }
 }
 
-/// isRelational - Return true if the instruction is a Set* instruction:
+/// isComparison - Return true if the instruction is a Set* instruction:
 ///
-bool Instruction::isRelational(unsigned op) {
+bool Instruction::isComparison(unsigned op) {
   switch (op) {
   case SetEQ:
   case SetNE:

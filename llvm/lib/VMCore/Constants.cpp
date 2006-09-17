@@ -1419,7 +1419,7 @@ Constant *ConstantExpr::getTy(const Type *ReqTy, unsigned Opcode,
   assert(C1->getType() == C2->getType() &&
          "Operand types in binary constant expression should match");
 
-  if (ReqTy == C1->getType() || (Instruction::isRelational(Opcode) &&
+  if (ReqTy == C1->getType() || (Instruction::isComparison(Opcode) &&
                                  ReqTy == Type::BoolTy))
     if (Constant *FC = ConstantFoldBinaryInstruction(Opcode, C1, C2))
       return FC;          // Fold a few common cases...
@@ -1462,7 +1462,7 @@ Constant *ConstantExpr::get(unsigned Opcode, Constant *C1, Constant *C2) {
   }
 #endif
 
-  if (Instruction::isRelational(Opcode))
+  if (Instruction::isComparison(Opcode))
     return getTy(Type::BoolTy, Opcode, C1, C2);
   else
     return getTy(C1->getType(), Opcode, C1, C2);

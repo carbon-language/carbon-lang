@@ -454,7 +454,18 @@ public:
   ///
   static BinaryOps getSwappedCondition(BinaryOps Opcode);
 
-
+  /// isEquality - Return true if this comparison is an ==/!= comparison.
+  ///
+  bool isEquality() const {
+    return getOpcode() == SetEQ || getOpcode() == SetNE;
+  }
+  
+  /// isRelational - Return true if this comparison is a </>/<=/>= comparison.
+  ///
+  bool isRelational() const {
+    return !isEquality();
+  }
+  
   // Methods for support type inquiry through isa, cast, and dyn_cast:
   static inline bool classof(const SetCondInst *) { return true; }
   static inline bool classof(const Instruction *I) {

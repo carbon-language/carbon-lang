@@ -1212,7 +1212,7 @@ Constant *llvm::ConstantFoldBinaryInstruction(unsigned Opcode,
   // If we successfully folded the expression, return it now.
   if (C) return C;
 
-  if (SetCondInst::isRelational(Opcode)) {
+  if (SetCondInst::isComparison(Opcode)) {
     if (isa<UndefValue>(V1) || isa<UndefValue>(V2))
       return UndefValue::get(Type::BoolTy);
     switch (evaluateRelation(const_cast<Constant*>(V1),
