@@ -16,7 +16,6 @@
 #ifndef LLVM_INSTRUCTIONS_H
 #define LLVM_INSTRUCTIONS_H
 
-#include "llvm/Instruction.h"
 #include "llvm/InstrTypes.h"
 
 namespace llvm {
@@ -633,6 +632,17 @@ public:
   }
   unsigned getNumOperands() const { return 2; }
 
+  /// isLogicalShift - Return true if this is a logical shift left or a logical
+  /// shift right.
+  bool isLogicalShift() const;
+  
+  /// isArithmeticShift - Return true if this is a sign-extending shift right
+  /// operation.
+  bool isArithmeticShift() const {
+    return !isLogicalShift();
+  }
+  
+  
   virtual ShiftInst *clone() const;
 
   // Methods for support type inquiry through isa, cast, and dyn_cast:
