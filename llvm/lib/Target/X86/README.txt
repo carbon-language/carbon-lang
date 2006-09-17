@@ -707,3 +707,29 @@ etc.
 
 //===---------------------------------------------------------------------===//
 
+Currently we don't have elimination of redundant stack manipulations. Consider
+the code:
+
+int %main() {
+entry:
+	call fastcc void %test1( )
+	call fastcc void %test2( sbyte* cast (void ()* %test1 to sbyte*) )
+	ret int 0
+}
+
+declare fastcc void %test1()
+
+declare fastcc void %test2(sbyte*)
+
+
+This currently compiles to:
+
+	subl $16, %esp
+	call _test5
+	addl $12, %esp
+	subl $16, %esp
+	movl $_test5, (%esp)
+	call _test6
+	addl $12, %esp
+
+The add\sub pair is really unneeded here.

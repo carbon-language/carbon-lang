@@ -224,6 +224,8 @@ ccc             { return CCC_TOK; }
 csretcc         { return CSRETCC_TOK; }
 fastcc          { return FASTCC_TOK; }
 coldcc          { return COLDCC_TOK; }
+x86_stdcallcc   { return X86_STDCALLCC_TOK; }
+x86_fastcallcc  { return X86_FASTCALLCC_TOK; }
 
 void            { llvmAsmlval.PrimType = Type::VoidTy  ; return VOID;   }
 bool            { llvmAsmlval.PrimType = Type::BoolTy  ; return BOOL;   }

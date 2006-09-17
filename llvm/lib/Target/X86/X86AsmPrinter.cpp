@@ -83,7 +83,7 @@ bool X86SharedAsmPrinter::doFinalization(Module &M) {
           } else
             O << TAI->getCOMMDirective()  << name << "," << Size;
         } else {
-          if (Subtarget->TargetType != X86Subtarget::isCygwin) {
+          if (!Subtarget->isTargetCygwin()) {
             if (I->hasInternalLinkage())
               O << "\t.local\t" << name << "\n";
           }
@@ -101,7 +101,7 @@ bool X86SharedAsmPrinter::doFinalization(Module &M) {
           O << "\t.globl " << name << "\n"
             << "\t.weak_definition " << name << "\n";
           SwitchToDataSection(".section __DATA,__const_coal,coalesced", I);
-        } else if (Subtarget->TargetType == X86Subtarget::isCygwin) {
+        } else if (Subtarget->isTargetCygwin()) {
           O << "\t.section\t.llvm.linkonce.d." << name << ",\"aw\"\n"
             << "\t.weak " << name << "\n";
         } else {

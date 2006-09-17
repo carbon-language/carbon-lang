@@ -468,7 +468,7 @@ void X86DAGToDAGISel::InstructionSelectBasicBlock(SelectionDAG &DAG) {
 /// the main function.
 void X86DAGToDAGISel::EmitSpecialCodeForMain(MachineBasicBlock *BB,
                                              MachineFrameInfo *MFI) {
-  if (Subtarget->TargetType == X86Subtarget::isCygwin)
+  if (Subtarget->isTargetCygwin())
     BuildMI(BB, X86::CALLpcrel32, 1).addExternalSymbol("__main");
 
   // Switch the FPU to 64-bit precision mode for better compatibility and speed.

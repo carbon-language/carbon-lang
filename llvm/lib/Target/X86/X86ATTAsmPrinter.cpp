@@ -63,7 +63,7 @@ bool X86ATTAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
                 ".section __TEXT,__textcoal_nt,coalesced,pure_instructions", F);
       O << "\t.globl\t" << CurrentFnName << "\n";
       O << "\t.weak_definition\t" << CurrentFnName << "\n";
-    } else if (Subtarget->TargetType == X86Subtarget::isCygwin) {
+    } else if (Subtarget->isTargetCygwin()) {
       EmitAlignment(4, F);     // FIXME: This should be parameterized somewhere.
       O << "\t.section\t.llvm.linkonce.t." << CurrentFnName
         << ",\"ax\"\n";

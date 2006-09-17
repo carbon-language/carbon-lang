@@ -105,43 +105,45 @@
      CSRETCC_TOK = 321,
      FASTCC_TOK = 322,
      COLDCC_TOK = 323,
-     RET = 324,
-     BR = 325,
-     SWITCH = 326,
-     INVOKE = 327,
-     UNWIND = 328,
-     UNREACHABLE = 329,
-     ADD = 330,
-     SUB = 331,
-     MUL = 332,
-     DIV = 333,
-     REM = 334,
-     AND = 335,
-     OR = 336,
-     XOR = 337,
-     SETLE = 338,
-     SETGE = 339,
-     SETLT = 340,
-     SETGT = 341,
-     SETEQ = 342,
-     SETNE = 343,
-     MALLOC = 344,
-     ALLOCA = 345,
-     FREE = 346,
-     LOAD = 347,
-     STORE = 348,
-     GETELEMENTPTR = 349,
-     PHI_TOK = 350,
-     CAST = 351,
-     SELECT = 352,
-     SHL = 353,
-     SHR = 354,
-     VAARG = 355,
-     EXTRACTELEMENT = 356,
-     INSERTELEMENT = 357,
-     SHUFFLEVECTOR = 358,
-     VAARG_old = 359,
-     VANEXT_old = 360
+     X86_STDCALLCC_TOK = 324,
+     X86_FASTCALLCC_TOK = 325,
+     RET = 326,
+     BR = 327,
+     SWITCH = 328,
+     INVOKE = 329,
+     UNWIND = 330,
+     UNREACHABLE = 331,
+     ADD = 332,
+     SUB = 333,
+     MUL = 334,
+     DIV = 335,
+     REM = 336,
+     AND = 337,
+     OR = 338,
+     XOR = 339,
+     SETLE = 340,
+     SETGE = 341,
+     SETLT = 342,
+     SETGT = 343,
+     SETEQ = 344,
+     SETNE = 345,
+     MALLOC = 346,
+     ALLOCA = 347,
+     FREE = 348,
+     LOAD = 349,
+     STORE = 350,
+     GETELEMENTPTR = 351,
+     PHI_TOK = 352,
+     CAST = 353,
+     SELECT = 354,
+     SHL = 355,
+     SHR = 356,
+     VAARG = 357,
+     EXTRACTELEMENT = 358,
+     INSERTELEMENT = 359,
+     SHUFFLEVECTOR = 360,
+     VAARG_old = 361,
+     VANEXT_old = 362
    };
 #endif
 /* Tokens.  */
@@ -211,43 +213,45 @@
 #define CSRETCC_TOK 321
 #define FASTCC_TOK 322
 #define COLDCC_TOK 323
-#define RET 324
-#define BR 325
-#define SWITCH 326
-#define INVOKE 327
-#define UNWIND 328
-#define UNREACHABLE 329
-#define ADD 330
-#define SUB 331
-#define MUL 332
-#define DIV 333
-#define REM 334
-#define AND 335
-#define OR 336
-#define XOR 337
-#define SETLE 338
-#define SETGE 339
-#define SETLT 340
-#define SETGT 341
-#define SETEQ 342
-#define SETNE 343
-#define MALLOC 344
-#define ALLOCA 345
-#define FREE 346
-#define LOAD 347
-#define STORE 348
-#define GETELEMENTPTR 349
-#define PHI_TOK 350
-#define CAST 351
-#define SELECT 352
-#define SHL 353
-#define SHR 354
-#define VAARG 355
-#define EXTRACTELEMENT 356
-#define INSERTELEMENT 357
-#define SHUFFLEVECTOR 358
-#define VAARG_old 359
-#define VANEXT_old 360
+#define X86_STDCALLCC_TOK 324
+#define X86_FASTCALLCC_TOK 325
+#define RET 326
+#define BR 327
+#define SWITCH 328
+#define INVOKE 329
+#define UNWIND 330
+#define UNREACHABLE 331
+#define ADD 332
+#define SUB 333
+#define MUL 334
+#define DIV 335
+#define REM 336
+#define AND 337
+#define OR 338
+#define XOR 339
+#define SETLE 340
+#define SETGE 341
+#define SETLT 342
+#define SETGT 343
+#define SETEQ 344
+#define SETNE 345
+#define MALLOC 346
+#define ALLOCA 347
+#define FREE 348
+#define LOAD 349
+#define STORE 350
+#define GETELEMENTPTR 351
+#define PHI_TOK 352
+#define CAST 353
+#define SELECT 354
+#define SHL 355
+#define SHR 356
+#define VAARG 357
+#define EXTRACTELEMENT 358
+#define INSERTELEMENT 359
+#define SHUFFLEVECTOR 360
+#define VAARG_old 361
+#define VANEXT_old 362
 
 
 
@@ -295,7 +299,7 @@ typedef union YYSTYPE
   llvm::Module::Endianness                Endianness;
 }
 /* Line 1528 of yacc.c.  */
-#line 299 "llvmAsmParser.tab.h"
+#line 303 "llvmAsmParser.tab.h"
 	YYSTYPE;
 # define yystype YYSTYPE /* obsolescent; will be withdrawn */
 # define YYSTYPE_IS_DECLARED 1

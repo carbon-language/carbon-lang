@@ -1278,7 +1278,15 @@ void CWriter::printFunctionSignature(const Function *F, bool Prototype) {
   if (F->hasInternalLinkage()) Out << "static ";
   if (F->hasDLLImportLinkage()) Out << "__declspec(dllimport) ";
   if (F->hasDLLExportLinkage()) Out << "__declspec(dllexport) ";  
-
+  switch (F->getCallingConv()) {
+   case CallingConv::X86_StdCall:
+    Out << "__stdcall ";
+    break;
+   case CallingConv::X86_FastCall:
+    Out << "__fastcall ";
+    break;
+  }
+  
   // Loop over the arguments, printing them...
   const FunctionType *FT = cast<FunctionType>(F->getFunctionType());
 

@@ -332,6 +332,7 @@ void Verifier::visitFunction(Function &F) {
     break;
   case CallingConv::Fast:
   case CallingConv::Cold:
+  case CallingConv::X86_FastCall:
     Assert1(!F.isVarArg(),
             "Varargs functions must have C calling conventions!", &F);
     break;

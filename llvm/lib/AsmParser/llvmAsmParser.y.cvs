@@ -1006,6 +1006,7 @@ Module *llvm::RunVMAsmParser(const char * AsmString, Module * M) {
 %token OPAQUE NOT EXTERNAL TARGET TRIPLE ENDIAN POINTERSIZE LITTLE BIG ALIGN
 %token DEPLIBS CALL TAIL ASM_TOK MODULE SIDEEFFECT
 %token CC_TOK CCC_TOK CSRETCC_TOK FASTCC_TOK COLDCC_TOK
+%token X86_STDCALLCC_TOK X86_FASTCALLCC_TOK
 %type <UIntVal> OptCallingConv
 
 // Basic Block Terminating Operators
@@ -1083,12 +1084,14 @@ OptLinkage : INTERNAL    { $$ = GlobalValue::InternalLinkage; } |
              EXTERN_WEAK { $$ = GlobalValue::ExternalWeakLinkage; } |
              /*empty*/   { $$ = GlobalValue::ExternalLinkage; };
 
-OptCallingConv : /*empty*/      { $$ = CallingConv::C; } |
-                 CCC_TOK        { $$ = CallingConv::C; } |
-                 CSRETCC_TOK    { $$ = CallingConv::CSRet; } |
-                 FASTCC_TOK     { $$ = CallingConv::Fast; } |
-                 COLDCC_TOK     { $$ = CallingConv::Cold; } |
-                 CC_TOK EUINT64VAL {
+OptCallingConv : /*empty*/          { $$ = CallingConv::C; } |
+                 CCC_TOK            { $$ = CallingConv::C; } |
+                 CSRETCC_TOK        { $$ = CallingConv::CSRet; } |
+                 FASTCC_TOK         { $$ = CallingConv::Fast; } |
+                 COLDCC_TOK         { $$ = CallingConv::Cold; } |
+                 X86_STDCALLCC_TOK  { $$ = CallingConv::X86_StdCall; } |
+                 X86_FASTCALLCC_TOK { $$ = CallingConv::X86_FastCall; } |
+                 CC_TOK EUINT64VAL  {
                    if ((unsigned)$2 != $2)
                      GEN_ERROR("Calling conv too large!");
                    $$ = $2;
