@@ -374,8 +374,8 @@ void AliasSetTracker::remove(AliasSet &AS) {
     ++NumRefs;
 
     // Finally, remove the entry.
-    Value *Remove = P->first;
-    PointerMap.erase(Remove);
+    Value *Remove = P->first;   // Take a copy because it is invalid to pass
+    PointerMap.erase(Remove);   // a reference to the data being erased.
   }
   
   // Stop using the alias set, removing it.
