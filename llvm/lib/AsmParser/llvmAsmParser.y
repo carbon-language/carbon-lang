@@ -1917,22 +1917,21 @@ FunctionHeaderH : OptCallingConv TypesV Name '(' ArgList ')'
       for (Function::arg_iterator AI = Fn->arg_begin(), AE = Fn->arg_end();
            AI != AE; ++AI)
         AI->setName("");
-
-    if (CurFun.isDeclare) {
-      Fn->setLinkage(CurFun.Linkage);      
-    }    
   } else  {  // Not already defined?
     Fn = new Function(FT, GlobalValue::ExternalLinkage, FunctionName,
                       CurModule.CurrentModule);
-
-    if (CurFun.isDeclare) {
-      Fn->setLinkage(CurFun.Linkage);      
-    }    
 
     InsertValue(Fn, CurModule.Values);
   }
 
   CurFun.FunctionStart(Fn);
+
+  if (CurFun.isDeclare) {
+    // If we have declaration, always overwrite linkage.  This will allow us to
+    // correctly handle cases, when pointer to function is passed as argument to
+    // another function.
+    Fn->setLinkage(CurFun.Linkage);
+  }
   Fn->setCallingConv($1);
   Fn->setAlignment($8);
   if ($7) {

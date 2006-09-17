@@ -1964,13 +1964,13 @@ static bool DarwinGVRequiresExtraLoad(GlobalValue *GV) {
           (GV->isExternal() && !GV->hasNotBeenReadFromBytecode()));
 }
 
-/// WinndowsGVRequiresExtraLoad - true if accessing the GV requires an extra
+/// WindowsGVRequiresExtraLoad - true if accessing the GV requires an extra
 /// load. For Windows, dllimported variables (not functions!) are indirect,
 /// loading the value at address GV rather then the value of GV itself. This
 /// means that the GlobalAddress must be in the base or index register of the
 /// address, not the GV offset field.
 static bool WindowsGVRequiresExtraLoad(GlobalValue *GV) {
-  return (isa<GlobalVariable>((Value*)GV) && GV->hasDLLImportLinkage());  
+  return (GV->hasDLLImportLinkage());  
 }
 
 /// isUndefOrInRange - Op is either an undef node or a ConstantSDNode.  Return

@@ -204,6 +204,7 @@ public:
     if (os) {
       *os << "      Function Decl: ";
       WriteTypeSymbolic(*os,Func->getType(),M);
+      *os <<", Linkage=" << Func->getLinkage();
       *os << "\n";
     }
   }
