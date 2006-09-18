@@ -42,8 +42,8 @@ std::vector<std::string> IncludeDirectories;
 ///
 static int ParseInt(const char *Str) {
   if (Str[0] == '0' && Str[1] == 'b')
-    return strtol(Str+2, 0, 2);
-  return strtol(Str, 0, 0); 
+    return strtoll(Str+2, 0, 2);
+  return strtoll(Str, 0, 0); 
 }
 
 static int CommentDepth = 0;

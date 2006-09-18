@@ -2373,6 +2373,8 @@ public:
           }
         } else if (IntInit *II =
                        dynamic_cast<IntInit*>(Child->getLeafValue())) {
+          if (II->getValue() == 2147483647)
+            std::cerr << "HERE!\n";
           emitCheck("isa<ConstantSDNode>(" + RootName + utostr(OpNo) + ")");
           unsigned CTmp = TmpNo++;
           emitCode("int64_t CN"+utostr(CTmp)+" = cast<ConstantSDNode>("+
