@@ -714,6 +714,7 @@ void AsmPrinter::printInlineAsm(const MachineInstr *MI) const {
 
         if (OpNo >= MI->getNumOperands()) {
           Error = true;
+	  std::cerr << "Too many operands\n";
         } else {
           unsigned OpFlags = MI->getOperand(OpNo).getImmedValue();
           ++OpNo;  // Skip over the ID number.

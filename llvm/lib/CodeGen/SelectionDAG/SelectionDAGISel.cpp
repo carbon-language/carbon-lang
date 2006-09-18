@@ -866,7 +866,7 @@ void SelectionDAGLowering::visitJumpTable(SelectionDAGISel::JumpTable &JT) {
                               DAG.getConstant(EntrySize, PTy));
   SDOperand TAB = DAG.getJumpTable(JT.JTI,PTy);
   SDOperand ADD = DAG.getNode(ISD::ADD, PTy, IDX, TAB);
-  SDOperand LD  = DAG.getLoad(MVT::i32, Copy.getValue(1), ADD,
+  SDOperand LD  = DAG.getLoad(PTy, Copy.getValue(1), ADD,
                               DAG.getSrcValue(0));
   if (TLI.getTargetMachine().getRelocationModel() == Reloc::PIC_) {
     ADD = DAG.getNode(ISD::ADD, PTy,
