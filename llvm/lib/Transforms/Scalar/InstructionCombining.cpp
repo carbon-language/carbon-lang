@@ -3871,12 +3871,46 @@ Instruction *InstCombiner::visitSetCondInst(SetCondInst &I) {
       case Instruction::And:
         if (LHSI->hasOneUse() && isa<ConstantInt>(LHSI->getOperand(1)) &&
             LHSI->getOperand(0)->hasOneUse()) {
+          ConstantInt *AndCST = cast<ConstantInt>(LHSI->getOperand(1));
+
+          // If an operand is an AND of a truncating cast, we can widen the
+          // and/compare to be the input width without changing the value
+          // produced, eliminating a cast.
+          if (CastInst *Cast = dyn_cast<CastInst>(LHSI->getOperand(0))) {
+            // We can do this transformation if either the AND constant does not
+            // have its sign bit set or if it is an equality comparison. 
+            // Extending a relational comparison when we're checking the sign
+            // bit would not work.
+            if (Cast->hasOneUse() && Cast->isTruncIntCast() && 
+                (I.isEquality() ||
+                 (AndCST->getZExtValue() == (uint64_t)AndCST->getSExtValue()) &&
+                 (CI->getZExtValue() == (uint64_t)CI->getSExtValue()))) {
+              ConstantInt *NewCST;
+              ConstantInt *NewCI;
+              if (Cast->getOperand(0)->getType()->isSigned()) {
+                NewCST = ConstantSInt::get(Cast->getOperand(0)->getType(),
+                                           AndCST->getZExtValue());
+                NewCI = ConstantSInt::get(Cast->getOperand(0)->getType(),
+                                          CI->getZExtValue());
+              } else {
+                NewCST = ConstantUInt::get(Cast->getOperand(0)->getType(),
+                                           AndCST->getZExtValue());
+                NewCI = ConstantUInt::get(Cast->getOperand(0)->getType(),
+                                          CI->getZExtValue());
+              }
+              Instruction *NewAnd = 
+                BinaryOperator::createAnd(Cast->getOperand(0), NewCST, 
+                                          LHSI->getName());
+              InsertNewInstBefore(NewAnd, I);
+              return new SetCondInst(I.getOpcode(), NewAnd, NewCI);
+            }
+          }
+          
           // If this is: (X >> C1) & C2 != C3 (where any shift and any compare
           // could exist), turn it into (X & (C2 << C1)) != (C3 << C1).  This
           // happens a LOT in code produced by the C front-end, for bitfield
           // access.
           ShiftInst *Shift = dyn_cast<ShiftInst>(LHSI->getOperand(0));
-          Constant *AndCST = cast<ConstantInt>(LHSI->getOperand(1));
 
           // Check to see if there is a noop-cast between the shift and the and.
           if (!Shift) {
@@ -3962,11 +3996,12 @@ Instruction *InstCombiner::visitSetCondInst(SetCondInst &I) {
                                  "tmp");
             } else {
               // Make sure we insert a logical shift.
+              Constant *NewAndCST = AndCST;
               if (AndCST->getType()->isSigned())
-                AndCST = ConstantExpr::getCast(AndCST,
+                NewAndCST = ConstantExpr::getCast(AndCST,
                                       AndCST->getType()->getUnsignedVersion());
-              NS = new ShiftInst(Instruction::Shr, AndCST, Shift->getOperand(1),
-                                 "tmp");
+              NS = new ShiftInst(Instruction::Shr, NewAndCST,
+                                 Shift->getOperand(1), "tmp");
             }
             InsertNewInstBefore(cast<Instruction>(NS), I);
 
