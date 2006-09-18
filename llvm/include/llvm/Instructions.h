@@ -1310,6 +1310,19 @@ public:
     return 0;
   }
 
+  /// findCaseDest - Finds the unique case value for a given successor. Returns
+  /// null if the successor is not found, not unique, or is the default case.
+  ConstantInt *findCaseDest(BasicBlock *BB) {
+    ConstantInt *CI = NULL;
+    for (unsigned i = 1, e = getNumCases(); i != e; ++i) {
+      if (getSuccessor(i) == BB) {
+        if (CI) return NULL;   // Multiple cases lead to BB.
+        else CI = getCaseValue(i);
+      }
+    }
+    return CI;
+  }
+
   /// addCase - Add an entry to the switch instruction...
   ///
   void addCase(ConstantInt *OnVal, BasicBlock *Dest);
