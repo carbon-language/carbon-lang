@@ -48,10 +48,6 @@ namespace {
   NumVarsReplaced("predsimplify", "Number of argument substitutions");
   Statistic<>
   NumInstruction("predsimplify", "Number of instructions removed");
-  Statistic<>
-  NumSwitchCases("predsimplify", "Number of switch cases removed");
-  Statistic<>
-  NumBranches("predsimplify", "Number of branches made unconditional");
 
   /// Returns true if V1 is a better choice than V2. Note that it is
   /// not a total ordering.
@@ -126,21 +122,18 @@ namespace {
     }
 
     ElemTy &getLeader(iterator I) {
-      assert(I != 0 && "Element zero is out of range.");
-      assert(I <= leaders.size() && "Invalid iterator.");
+      assert(I && I <= leaders.size() && "Illegal leader to get.");
       return leaders[I-1];
     }
 
     const ElemTy &getLeader(const_iterator I) const {
-      assert(I != 0 && "Element zero is out of range.");
+      assert(I && I <= leaders.size() && "Illegal leaders to get.");
       return leaders[I-1];
     }
 
 #ifdef DEBUG
     void debug(std::ostream &os) const {
-      std::set<Value *> Unique;
       for (unsigned i = 1, e = leaders.size()+1; i != e; ++i) {
-        Unique.insert(getLeader(i));
         os << i << ". " << *getLeader(i) << ": [";
         for (std::map<Value *, unsigned>::const_iterator
              I = mapping.begin(), E = mapping.end(); I != E; ++I) {
@@ -149,14 +142,6 @@ namespace {
           }
         }
         os << "]\n";
-      }
-      assert(Unique.size() == leaders.size() && "Duplicate leaders.");
-
-      for (typename std::map<ElemTy, unsigned>::const_iterator
-           I = mapping.begin(), E = mapping.end(); I != E; ++I) {
-        assert(I->second != 0 && "Zero iterator in mapping.");
-        assert(I->second <= leaders.size() &&
-               "Invalid iterator found in mapping.");
       }
     }
 #endif
@@ -263,7 +248,6 @@ namespace {
       order(V1, V2);
       if (isa<Constant>(V2)) return; // refuse to set false == true.
 
-      DEBUG(std::cerr << "equal: " << *V1 << " and " << *V2 << "\n");
       SynonymIterator deleted = union_find.unionSets(V1, V2);
       if (deleted) {
         SynonymIterator replacement = union_find.findLeader(V1);
@@ -286,7 +270,6 @@ namespace {
       // For example, %x = setne int 0, 0 causes "0 != 0".
       if (isa<Constant>(V1) && isa<Constant>(V2)) return;
 
-      DEBUG(std::cerr << "not equal: " << *V1 << " and " << *V2 << "\n");
       if (findProperty(NE, V1, V2) != Properties.end())
         return; // found.
 
@@ -450,8 +433,6 @@ namespace {
            E = Properties.end(); I != E; ++I) {
         os << (*I).I1 << " " << OpcodeTable[(*I).Opcode] << " "
            << (*I).I2 << "\n";
-        assert((*I).I1 <= size && "Invalid property.");
-        assert((*I).I2 <= size && "Invalid property.");
       }
       os << "\n";
     }
@@ -478,25 +459,24 @@ namespace {
     // Used by terminator instructions to proceed from the current basic
     // block to the next. Verifies that "current" dominates "next",
     // then calls visitBasicBlock.
-    void proceedToSuccessor(PropertySet &CurrentPS, PropertySet &NextPS,
-                            DTNodeType *Current, DTNodeType *Next);
-    void proceedToSuccessor(PropertySet &CurrentPS,
-                            DTNodeType *Current, DTNodeType *Next);
+    void proceedToSuccessor(TerminatorInst *TI, unsigned edge,
+                            PropertySet &CurrentPS, PropertySet &NextPS);
+    void proceedToSuccessors(PropertySet &CurrentPS, BasicBlock *Current);
 
     // Visits each instruction in the basic block.
-    void visitBasicBlock(DTNodeType *DTNode, PropertySet &KnownProperties);
+    void visitBasicBlock(BasicBlock *Block, PropertySet &KnownProperties);
 
     // Tries to simplify each Instruction and add new properties to
     // the PropertySet. Returns true if it erase the instruction.
-    void visitInstruction(Instruction *I, DTNodeType *, PropertySet &);
+    void visitInstruction(Instruction *I, PropertySet &);
     // For each instruction, add the properties to KnownProperties.
 
-    void visit(TerminatorInst *TI, DTNodeType *, PropertySet &);
-    void visit(BranchInst *BI, DTNodeType *, PropertySet &);
-    void visit(SwitchInst *SI, DTNodeType *, PropertySet);
-    void visit(LoadInst *LI, DTNodeType *, PropertySet &);
-    void visit(StoreInst *SI, DTNodeType *, PropertySet &);
-    void visit(BinaryOperator *BO, DTNodeType *, PropertySet &);
+    void visit(TerminatorInst *TI, PropertySet &);
+    void visit(BranchInst *BI, PropertySet &);
+    void visit(SwitchInst *SI, PropertySet);
+    void visit(LoadInst *LI, PropertySet &);
+    void visit(StoreInst *SI, PropertySet &);
+    void visit(BinaryOperator *BO, PropertySet &);
 
     DominatorTree *DT;
     bool modified;
@@ -515,12 +495,13 @@ bool PredicateSimplifier::runOnFunction(Function &F) {
 
   modified = false;
   PropertySet KnownProperties;
-  visitBasicBlock(DT->getRootNode(), KnownProperties);
+  visitBasicBlock(DT->getRootNode()->getBlock(), KnownProperties);
   return modified;
 }
 
 void PredicateSimplifier::getAnalysisUsage(AnalysisUsage &AU) const {
   AU.addRequired<DominatorTree>();
+  AU.setPreservesCFG();
 }
 
 // resolve catches cases addProperty won't because it wasn't used as a
@@ -611,8 +592,6 @@ Value *PredicateSimplifier::resolve(Value *V, const PropertySet &KP) {
 
   V = KP.canonicalize(V);
 
-  DEBUG(std::cerr << "peering into " << *V << "\n");
-
   if (BinaryOperator *BO = dyn_cast<BinaryOperator>(V))
     return resolve(BO, KP);
   else if (SelectInst *SI = dyn_cast<SelectInst>(V))
@@ -621,24 +600,17 @@ Value *PredicateSimplifier::resolve(Value *V, const PropertySet &KP) {
   return V;
 }
 
-void PredicateSimplifier::visitBasicBlock(DTNodeType *DTNode,
+void PredicateSimplifier::visitBasicBlock(BasicBlock *BB,
                                           PropertySet &KnownProperties) {
-  BasicBlock *BB = DTNode->getBlock();
   for (BasicBlock::iterator I = BB->begin(), E = BB->end(); I != E;) {
-    visitInstruction(I++, DTNode, KnownProperties);
+    visitInstruction(I++, KnownProperties);
   }
 }
 
 void PredicateSimplifier::visitInstruction(Instruction *I,
-                                           DTNodeType *DTNode,
                                            PropertySet &KnownProperties) {
-
-  DEBUG(std::cerr << "Considering instruction " << *I << "\n");
-  DEBUG(KnownProperties.debug(std::cerr));
-
   // Try to replace the whole instruction.
   Value *V = resolve(I, KnownProperties);
-  assert(V->getType() == I->getType() && "Instruction type mutated!");
   if (V != I) {
     modified = true;
     ++NumInstruction;
@@ -651,7 +623,6 @@ void PredicateSimplifier::visitInstruction(Instruction *I,
   for (unsigned i = 0, e = I->getNumOperands(); i != e; ++i) {
     Value *Oper = I->getOperand(i);
     Value *V = resolve(Oper, KnownProperties);
-    assert(V->getType() == Oper->getType() && "Operand type mutated!");
     if (V != Oper) {
       modified = true;
       ++NumVarsReplaced;
@@ -662,54 +633,60 @@ void PredicateSimplifier::visitInstruction(Instruction *I,
   }
 
   if (TerminatorInst *TI = dyn_cast<TerminatorInst>(I))
-    visit(TI, DTNode, KnownProperties);
+    visit(TI, KnownProperties);
   else if (LoadInst *LI = dyn_cast<LoadInst>(I))
-    visit(LI, DTNode, KnownProperties);
+    visit(LI, KnownProperties);
   else if (StoreInst *SI = dyn_cast<StoreInst>(I))
-    visit(SI, DTNode, KnownProperties);
+    visit(SI, KnownProperties);
   else if (BinaryOperator *BO = dyn_cast<BinaryOperator>(I))
-    visit(BO, DTNode, KnownProperties);
+    visit(BO, KnownProperties);
 }
 
-void PredicateSimplifier::proceedToSuccessor(PropertySet &CurrentPS,
-                                             PropertySet &NextPS,
-                                             DTNodeType *Current,
-                                             DTNodeType *Next) {
-  if (Next->getBlock()->getSinglePredecessor() == Current->getBlock())
-    proceedToSuccessor(NextPS, Current, Next);
+// The basic block on the target of the specified edge must be known
+// to be immediately dominated by the parent of the TerminatorInst.
+void PredicateSimplifier::proceedToSuccessor(TerminatorInst *TI,
+                                             unsigned edge,
+                                             PropertySet &CurrentPS,
+                                             PropertySet &NextPS) {
+  assert(edge < TI->getNumSuccessors() && "Invalid index for edge.");
+
+  BasicBlock *BB     = TI->getParent(),
+             *BBNext = TI->getSuccessor(edge);
+
+  if (BBNext->getSinglePredecessor() == BB)
+    visitBasicBlock(BBNext, NextPS);
   else
-    proceedToSuccessor(CurrentPS, Current, Next);
+    visitBasicBlock(BBNext, CurrentPS);
 }
 
-void PredicateSimplifier::proceedToSuccessor(PropertySet &KP,
-                                             DTNodeType *Current,
-                                             DTNodeType *Next) {
-  if (Current->properlyDominates(Next))
-    visitBasicBlock(Next, KP);
+void PredicateSimplifier::proceedToSuccessors(PropertySet &KP,
+                                              BasicBlock *BBCurrent) {
+  DTNodeType *Current = DT->getNode(BBCurrent);
+  for (DTNodeType::iterator I = Current->begin(), E = Current->end();
+       I != E; ++I) {
+    PropertySet Copy(KP);
+    visitBasicBlock((*I)->getBlock(), Copy);
+  }
 }
 
-void PredicateSimplifier::visit(TerminatorInst *TI, DTNodeType *Node,
-                                PropertySet &KP) {
+void PredicateSimplifier::visit(TerminatorInst *TI, PropertySet &KP) {
   if (BranchInst *BI = dyn_cast<BranchInst>(TI)) {
-    visit(BI, Node, KP);
+    visit(BI, KP);
     return;
   }
   if (SwitchInst *SI = dyn_cast<SwitchInst>(TI)) {
-    visit(SI, Node, KP);
+    visit(SI, KP);
     return;
   }
 
-  for (unsigned i = 0, E = TI->getNumSuccessors(); i != E; ++i) {
-    BasicBlock *BB = TI->getSuccessor(i);
-    PropertySet KPcopy(KP);
-    proceedToSuccessor(KPcopy, Node, DT->getNode(TI->getSuccessor(i)));
-  }
+  proceedToSuccessors(KP, TI->getParent());
 }
 
-void PredicateSimplifier::visit(BranchInst *BI, DTNodeType *Node,
-                                PropertySet &KP) {
+void PredicateSimplifier::visit(BranchInst *BI, PropertySet &KP) {
+  BasicBlock *BB = BI->getParent();
+
   if (BI->isUnconditional()) {
-    proceedToSuccessor(KP, Node, DT->getNode(BI->getSuccessor(0)));
+    proceedToSuccessors(KP, BB);
     return;
   }
 
@@ -718,110 +695,73 @@ void PredicateSimplifier::visit(BranchInst *BI, DTNodeType *Node,
   BasicBlock *TrueDest  = BI->getSuccessor(0),
              *FalseDest = BI->getSuccessor(1);
 
-  if (Condition == ConstantBool::True) {
-    FalseDest->removePredecessor(BI->getParent());
-    BI->setUnconditionalDest(TrueDest);
-    modified = true;
-    ++NumBranches;
-    proceedToSuccessor(KP, Node, DT->getNode(TrueDest));
+  if (Condition == ConstantBool::True || TrueDest == FalseDest) {
+    proceedToSuccessors(KP, BB);
     return;
   } else if (Condition == ConstantBool::False) {
-    TrueDest->removePredecessor(BI->getParent());
-    BI->setUnconditionalDest(FalseDest);
-    modified = true;
-    ++NumBranches;
-    proceedToSuccessor(KP, Node, DT->getNode(FalseDest));
+    proceedToSuccessors(KP, BB);
     return;
   }
 
-  PropertySet TrueProperties(KP), FalseProperties(KP);
-  DEBUG(std::cerr << "true set:\n");
-  TrueProperties.addEqual(ConstantBool::True,   Condition);
-  DEBUG(TrueProperties.debug(std::cerr));
-  DEBUG(std::cerr << "false set:\n");
-  FalseProperties.addEqual(ConstantBool::False, Condition);
-  DEBUG(FalseProperties.debug(std::cerr));
+  DTNodeType *Node = DT->getNode(BB);
+  for (DTNodeType::iterator I = Node->begin(), E = Node->end(); I != E; ++I) {
+    if ((*I)->getBlock() == TrueDest) {
+      PropertySet TrueProperties(KP);
+      TrueProperties.addEqual(ConstantBool::True, Condition);
+      proceedToSuccessor(BI, 0, KP, TrueProperties);
+      continue;
+    }
 
-  PropertySet KPcopy(KP);
-  proceedToSuccessor(KP,     TrueProperties,  Node, DT->getNode(TrueDest));
-  proceedToSuccessor(KPcopy, FalseProperties, Node, DT->getNode(FalseDest));
+    if ((*I)->getBlock() == FalseDest) {
+      PropertySet FalseProperties(KP);
+      FalseProperties.addEqual(ConstantBool::False, Condition);
+      proceedToSuccessor(BI, 1, KP, FalseProperties);
+      continue;
+    }
+
+    visitBasicBlock((*I)->getBlock(), KP);
+  }
 }
 
-void PredicateSimplifier::visit(SwitchInst *SI, DTNodeType *DTNode,
-                                PropertySet KP) {
+void PredicateSimplifier::visit(SwitchInst *SI, PropertySet KP) {
   Value *Condition = SI->getCondition();
-  assert(Condition == KP.canonicalize(Condition) &&
-         "Instruction wasn't already canonicalized?");
-
-  // If there's an NEProperty covering this SwitchInst, we may be able to
-  // eliminate one of the cases.
-  for (PropertySet::ConstPropertyIterator I = KP.Properties.begin(),
-       E = KP.Properties.end(); I != E; ++I) {
-    if (I->Opcode != PropertySet::NE) continue;
-    Value *V1 = KP.union_find.getLeader(I->I1),
-          *V2 = KP.union_find.getLeader(I->I2);
-
-    // Find a Property with a ConstantInt on one side and our
-    // Condition on the other.
-    ConstantInt *CI = NULL;
-    if (V1 == Condition)
-      CI = dyn_cast<ConstantInt>(V2);
-    else if (V2 == Condition)
-      CI = dyn_cast<ConstantInt>(V1);
-
-    if (!CI) continue;
-
-    unsigned i = SI->findCaseValue(CI);
-    if (i != 0) { // zero is reserved for the default case.
-      SI->getSuccessor(i)->removePredecessor(SI->getParent());
-      SI->removeCase(i);
-      modified = true;
-      ++NumSwitchCases;
-    }
-  }
 
   // Set the EQProperty in each of the cases BBs,
   // and the NEProperties in the default BB.
   PropertySet DefaultProperties(KP);
 
-  DTNodeType *Node        = DT->getNode(SI->getParent()),
-             *DefaultNode = DT->getNode(SI->getSuccessor(0));
-  if (!Node->dominates(DefaultNode)) DefaultNode = NULL;
+  DTNodeType *Node = DT->getNode(SI->getParent());
+  for (DTNodeType::iterator I = Node->begin(), E = Node->end(); I != E; ++I) {
+    BasicBlock *BB = (*I)->getBlock();
 
-  for (unsigned I = 1, E = SI->getNumCases(); I < E; ++I) {
-    ConstantInt *CI = SI->getCaseValue(I);
+    PropertySet Copy(KP);
 
-    BasicBlock *SuccBB = SI->getSuccessor(I);
-    PropertySet copy(KP);
-    if (SuccBB->getSinglePredecessor()) {
+    if (BB == SI->getDefaultDest()) {
+      PropertySet NewProperties(KP);
+      for (unsigned i = 1, e = SI->getNumCases(); i < e; ++i)
+        NewProperties.addNotEqual(Condition, SI->getCaseValue(i));
+
+      proceedToSuccessor(SI, 0, Copy, NewProperties);
+    } else if (ConstantInt *CI = SI->findCaseDest(BB)) {
       PropertySet NewProperties(KP);
       NewProperties.addEqual(Condition, CI);
-      proceedToSuccessor(copy, NewProperties, DTNode, DT->getNode(SuccBB));
-    } else
-      proceedToSuccessor(copy, DTNode, DT->getNode(SuccBB));
-
-    if (DefaultNode)
-      DefaultProperties.addNotEqual(Condition, CI);
+      proceedToSuccessor(SI, SI->findCaseValue(CI), Copy, NewProperties);
+    } else 
+      visitBasicBlock(BB, Copy);
   }
-
-  if (DefaultNode)
-    proceedToSuccessor(DefaultProperties, DTNode, DefaultNode);
 }
 
-void PredicateSimplifier::visit(LoadInst *LI, DTNodeType *,
-                                PropertySet &KP) {
+void PredicateSimplifier::visit(LoadInst *LI, PropertySet &KP) {
   Value *Ptr = LI->getPointerOperand();
   KP.addNotEqual(Constant::getNullValue(Ptr->getType()), Ptr);
 }
 
-void PredicateSimplifier::visit(StoreInst *SI, DTNodeType *,
-                                PropertySet &KP) {
+void PredicateSimplifier::visit(StoreInst *SI, PropertySet &KP) {
   Value *Ptr = SI->getPointerOperand();
   KP.addNotEqual(Constant::getNullValue(Ptr->getType()), Ptr);
 }
 
-void PredicateSimplifier::visit(BinaryOperator *BO, DTNodeType *,
-                                PropertySet &KP) {
+void PredicateSimplifier::visit(BinaryOperator *BO, PropertySet &KP) {
   Instruction::BinaryOps ops = BO->getOpcode();
 
   switch (ops) {
