@@ -1592,20 +1592,23 @@ DIE *DwarfWriter::NewGlobalVariable(GlobalVariableDesc *GVD) {
   
   // Get the global variable itself.
   GlobalVariable *GV = GVD->getGlobalVariable();
-  // Generate the mangled name.
-  std::string MangledName = Asm->Mang->getValueName(GV);
 
-  // Gather the details (simplify add attribute code.)
-  const std::string &Name = GVD->getName();
-  
+  const std::string &Name = GVD->hasMangledName() ? GVD->getDisplayName()
+                                                  : GVD->getName();
+  const std::string &MangledName = GVD->hasMangledName() ? GVD->getName()
+                                                         : "";
   // Get the global's type.
   DIE *Type = NewType(Unit->getDie(), GVD->getType(), Unit); 
 
   // Create the globale variable DIE.
   DIE *VariableDie = new DIE(DW_TAG_variable);
-  VariableDie->AddString     (DW_AT_name,      DW_FORM_string, Name);
-  VariableDie->AddDIEntry    (DW_AT_type,      DW_FORM_ref4,   Type);
-  VariableDie->AddUInt       (DW_AT_external,  DW_FORM_flag,   1);
+  VariableDie->AddString(DW_AT_name, DW_FORM_string, Name);
+  if (!MangledName.empty()) {
+    VariableDie->AddString(DW_AT_MIPS_linkage_name, DW_FORM_string,
+                           MangledName);
+  }
+  VariableDie->AddDIEntry(DW_AT_type, DW_FORM_ref4, Type);
+  VariableDie->AddUInt(DW_AT_external, DW_FORM_flag, 1);
   
   // Add source line info if available.
   AddSourceLine(VariableDie, UnitDesc, GVD->getLine());
@@ -1642,17 +1645,24 @@ DIE *DwarfWriter::NewSubprogram(SubprogramDesc *SPD) {
   if (Slot) return Slot;
   
   // Gather the details (simplify add attribute code.)
-  const std::string &Name = SPD->getName();
+  const std::string &Name = SPD->hasMangledName() ? SPD->getDisplayName()
+                                                  : SPD->getName();
+  const std::string &MangledName = SPD->hasMangledName() ? SPD->getName()
+                                                         : "";
   DIE *Type = NewType(Unit->getDie(), SPD->getType(), Unit); 
   unsigned IsExternal = SPD->isStatic() ? 0 : 1;
                                     
   DIE *SubprogramDie = new DIE(DW_TAG_subprogram);
-  SubprogramDie->AddString     (DW_AT_name,      DW_FORM_string, Name);
-  if (Type) {
-    SubprogramDie->AddDIEntry    (DW_AT_type,      DW_FORM_ref4,   Type);
+  SubprogramDie->AddString(DW_AT_name, DW_FORM_string, Name);
+  if (!MangledName.empty()) {
+    SubprogramDie->AddString(DW_AT_MIPS_linkage_name, DW_FORM_string,
+                             MangledName);
   }
-  SubprogramDie->AddUInt       (DW_AT_external,    DW_FORM_flag,   IsExternal);
-  SubprogramDie->AddUInt       (DW_AT_prototyped,  DW_FORM_flag,   1);
+  if (Type) {
+    SubprogramDie->AddDIEntry(DW_AT_type, DW_FORM_ref4, Type);
+  }
+  SubprogramDie->AddUInt(DW_AT_external, DW_FORM_flag, IsExternal);
+  SubprogramDie->AddUInt(DW_AT_prototyped, DW_FORM_flag, 1);
   
   // Add source line info if available.
   AddSourceLine(SubprogramDie, UnitDesc, SPD->getLine());

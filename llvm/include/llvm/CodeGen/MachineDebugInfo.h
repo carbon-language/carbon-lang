@@ -622,6 +622,9 @@ public:
   }
   void setIsStatic(bool IS)                        { IsStatic = IS; }
   void setIsDefinition(bool ID)                    { IsDefinition = ID; }
+  bool hasMangledName()                      const {
+    return !DisplayName.empty();
+  }
 
   /// ApplyToFields - Target the visitor to the fields of the GlobalDesc.
   ///
