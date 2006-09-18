@@ -1089,6 +1089,26 @@ bool InstCombiner::SimplifyDemandedBits(Value *V, uint64_t DemandedMask,
     }
     break;
   case Instruction::Shr:
+    // If this is an arithmetic shift right and only the low-bit is set, we can
+    // always convert this into a logical shr, even if the shift amount is
+    // variable.  The low bit of the shift cannot be an input sign bit unless
+    // the shift amount is >= the size of the datatype, which is undefined.
+    if (DemandedMask == 1 && I->getType()->isSigned()) {
+      // Convert the input to unsigned.
+      Instruction *NewVal = new CastInst(I->getOperand(0), 
+                                         I->getType()->getUnsignedVersion(),
+                                         I->getOperand(0)->getName());
+      InsertNewInstBefore(NewVal, *I);
+      // Perform the unsigned shift right.
+      NewVal = new ShiftInst(Instruction::Shr, NewVal, I->getOperand(1),
+                             I->getName());
+      InsertNewInstBefore(NewVal, *I);
+      // Then cast that to the destination type.
+      NewVal = new CastInst(NewVal, I->getType(), I->getName());
+      InsertNewInstBefore(NewVal, *I);
+      return UpdateValueUsesWith(I, NewVal);
+    }    
+    
     if (ConstantUInt *SA = dyn_cast<ConstantUInt>(I->getOperand(1))) {
       unsigned ShAmt = SA->getValue();
       
