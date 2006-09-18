@@ -23,6 +23,7 @@
 #include "llvm/Constant.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/Instructions.h"
+#include "llvm/IntrinsicInst.h"
 #include "llvm/Module.h"
 #include "llvm/Pass.h"
 #include "llvm/Support/CallSite.h"
@@ -85,6 +86,7 @@ namespace {
     Liveness getArgumentLiveness(const Argument &A);
     bool isMaybeLiveArgumentNowLive(Argument *Arg);
 
+    bool DeleteDeadVarargs(Function &Fn);
     void SurveyFunction(Function &Fn);
 
     void MarkArgumentLive(Argument *Arg);
@@ -110,6 +112,109 @@ namespace {
 ///
 ModulePass *llvm::createDeadArgEliminationPass() { return new DAE(); }
 ModulePass *llvm::createDeadArgHackingPass() { return new DAH(); }
+
+/// DeleteDeadVarargs - If this is an function that takes a ... list, and if
+/// llvm.vastart is never called, the varargs list is dead for the function.
+bool DAE::DeleteDeadVarargs(Function &Fn) {
+  assert(Fn.getFunctionType()->isVarArg() && "Function isn't varargs!");
+  if (Fn.isExternal() || !Fn.hasInternalLinkage()) return false;
+  
+  // Ensure that the function is only directly called.
+  for (Value::use_iterator I = Fn.use_begin(), E = Fn.use_end(); I != E; ++I) {
+    // If this use is anything other than a call site, give up.
+    CallSite CS = CallSite::get(*I);
+    Instruction *TheCall = CS.getInstruction();
+    if (!TheCall) return false;   // Not a direct call site?
+   
+    // The addr of this function is passed to the call.
+    if (I.getOperandNo() != 0) return false;
+  }
+  
+  // Okay, we know we can transform this function if safe.  Scan its body
+  // looking for calls to llvm.vastart.
+  for (Function::iterator BB = Fn.begin(), E = Fn.end(); BB != E; ++BB) {
+    for (BasicBlock::iterator I = BB->begin(), E = BB->end(); I != E; ++I) {
+      if (IntrinsicInst *II = dyn_cast<IntrinsicInst>(I)) {
+        if (II->getIntrinsicID() == Intrinsic::vastart)
+          return false;
+      }
+    }
+  }
+  
+  // If we get here, there are no calls to llvm.vastart in the function body,
+  // remove the "..." and adjust all the calls.
+  
+  // Start by computing a new prototype for the function, which is the same as
+  // the old function, but has fewer arguments.
+  const FunctionType *FTy = Fn.getFunctionType();
+  std::vector<const Type*> Params(FTy->param_begin(), FTy->param_end());
+  FunctionType *NFTy = FunctionType::get(FTy->getReturnType(), Params, false);
+  unsigned NumArgs = Params.size();
+  
+  // Create the new function body and insert it into the module...
+  Function *NF = new Function(NFTy, Fn.getLinkage(), Fn.getName());
+  NF->setCallingConv(Fn.getCallingConv());
+  Fn.getParent()->getFunctionList().insert(&Fn, NF);
+  
+  // Loop over all of the callers of the function, transforming the call sites
+  // to pass in a smaller number of arguments into the new function.
+  //
+  std::vector<Value*> Args;
+  while (!Fn.use_empty()) {
+    CallSite CS = CallSite::get(Fn.use_back());
+    Instruction *Call = CS.getInstruction();
+    
+    // Loop over the operands, dropping extraneous ones at the end of the list.
+    Args.assign(CS.arg_begin(), CS.arg_begin()+NumArgs);
+    
+    Instruction *New;
+    if (InvokeInst *II = dyn_cast<InvokeInst>(Call)) {
+      New = new InvokeInst(NF, II->getNormalDest(), II->getUnwindDest(),
+                           Args, "", Call);
+      cast<InvokeInst>(New)->setCallingConv(CS.getCallingConv());
+    } else {
+      New = new CallInst(NF, Args, "", Call);
+      cast<CallInst>(New)->setCallingConv(CS.getCallingConv());
+      if (cast<CallInst>(Call)->isTailCall())
+        cast<CallInst>(New)->setTailCall();
+    }
+    Args.clear();
+    
+    if (!Call->use_empty())
+      Call->replaceAllUsesWith(Constant::getNullValue(Call->getType()));
+    
+    if (Call->hasName()) {
+      std::string Name = Call->getName();
+      Call->setName("");
+      New->setName(Name);
+    }
+    
+    // Finally, remove the old call from the program, reducing the use-count of
+    // F.
+    Call->getParent()->getInstList().erase(Call);
+  }
+  
+  // Since we have now created the new function, splice the body of the old
+  // function right into the new function, leaving the old rotting hulk of the
+  // function empty.
+  NF->getBasicBlockList().splice(NF->begin(), Fn.getBasicBlockList());
+  
+  // Loop over the argument list, transfering uses of the old arguments over to
+  // the new arguments, also transfering over the names as well.  While we're at
+  // it, remove the dead arguments from the DeadArguments list.
+  //
+  for (Function::arg_iterator I = Fn.arg_begin(), E = Fn.arg_end(),
+       I2 = NF->arg_begin(); I != E; ++I, ++I2) {
+    // Move the name and users over to the new version.
+    I->replaceAllUsesWith(I2);
+    I2->setName(I->getName());
+  }
+  
+  // Finally, nuke the old function.
+  Fn.eraseFromParent();
+  return true;
+}
+
 
 static inline bool CallPassesValueThoughVararg(Instruction *Call,
                                                const Value *Arg) {
@@ -507,8 +612,14 @@ bool DAE::runOnModule(Module &M) {
   // determine that dead arguments passed into recursive functions are dead).
   //
   DEBUG(std::cerr << "DAE - Determining liveness\n");
-  for (Module::iterator I = M.begin(), E = M.end(); I != E; ++I)
-    SurveyFunction(*I);
+  for (Module::iterator I = M.begin(), E = M.end(); I != E; ) {
+    Function &F = *I++;
+    if (F.getFunctionType()->isVarArg())
+      if (DeleteDeadVarargs(F))
+        continue;
+      
+    SurveyFunction(F);
+  }
 
   // Loop over the instructions to inspect, propagating liveness among arguments
   // and return values which are MaybeLive.
