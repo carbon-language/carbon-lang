@@ -271,6 +271,39 @@ private:
 template<typename LHS>
 inline not_match<LHS> m_Not(const LHS &L) { return L; }
 
+
+template<typename Op_t>
+struct cast_match {
+  Op_t Op;
+  const Type **DestTy;
+  
+  cast_match(const Op_t &op, const Type **destTy) : Op(op), DestTy(destTy) {}
+  
+  template<typename OpTy>
+  bool match(OpTy *V) {
+    if (CastInst *I = dyn_cast<CastInst>(V)) {
+      if (DestTy) *DestTy = I->getType();
+      return Op.match(I->getOperand(0));
+    } else if (ConstantExpr *CE = dyn_cast<ConstantExpr>(V)) {
+      if (CE->getOpcode() == Instruction::Cast) {
+        if (DestTy) *DestTy = I->getType();
+        return Op.match(CE->getOperand(0));
+      }
+    }
+    return false;
+  }
+};
+
+template<typename Op_t>
+inline cast_match<Op_t> m_Cast(const Op_t &Op, const Type *&Ty) {
+  return cast_match<Op_t>(Op, &Ty);
+}
+template<typename Op_t>
+inline cast_match<Op_t> m_Cast(const Op_t &Op) {
+  return cast_match<Op_t>(Op, 0);
+}
+
+
 //===----------------------------------------------------------------------===//
 // Matchers for control flow
 //
