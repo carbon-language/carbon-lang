@@ -61,7 +61,7 @@ public:
 
   /// Return the constant as a 64-bit integer value after it has been sign
   /// sign extended as appropriate for the type of this constant.
-  /// @brief REturn the sign extended value.
+  /// @brief Return the sign extended value.
   inline int64_t getSExtValue() const {
     unsigned Size = getType()->getPrimitiveSizeInBits();
     return (Val.Signed << (64-Size)) >> (64-Size);
