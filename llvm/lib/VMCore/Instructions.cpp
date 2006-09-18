@@ -1151,6 +1151,22 @@ bool ShiftInst::isLogicalShift() const {
   return getOpcode() == Instruction::Shl || getType()->isUnsigned();
 }
 
+//===----------------------------------------------------------------------===//
+//                                CastInst Class
+//===----------------------------------------------------------------------===//
+
+/// isTruncIntCast - Return true if this is a truncating integer cast
+/// instruction, e.g. a cast from long to uint.
+bool CastInst::isTruncIntCast() const {
+  // The dest type has to be integral, the input has to be integer.
+  if (!getType()->isIntegral() || !getOperand(0)->getType()->isInteger())
+    return false;
+
+  // Has to be large to smaller.
+  return getOperand(0)->getType()->getPrimitiveSizeInBits() >
+         getType()->getPrimitiveSizeInBits();
+}
+
 
 //===----------------------------------------------------------------------===//
 //                             SetCondInst Class

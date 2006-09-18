@@ -498,6 +498,11 @@ public:
     : UnaryInstruction(Ty, Cast, S, Name, InsertAtEnd) {
   }
 
+  /// isTruncIntCast - Return true if this is a truncating integer cast
+  /// instruction, e.g. a cast from long to uint.
+  bool isTruncIntCast() const;
+  
+  
   virtual CastInst *clone() const;
 
   // Methods for support type inquiry through isa, cast, and dyn_cast:
