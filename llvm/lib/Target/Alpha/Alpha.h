@@ -31,6 +31,8 @@ namespace llvm {
   FunctionPass *createAlphaPatternInstructionSelector(TargetMachine &TM);
   FunctionPass *createAlphaCodeEmitterPass(AlphaTargetMachine &TM,
                                            MachineCodeEmitter &MCE);
+  FunctionPass *createAlphaLLRPPass(AlphaTargetMachine &tm);
+
 } // end namespace llvm;
 
 // Defines symbolic names for Alpha registers.  This defines a mapping from

@@ -77,6 +77,7 @@ bool AlphaTargetMachine::addPreEmitPass(FunctionPassManager &PM, bool Fast) {
 }
 bool AlphaTargetMachine::addAssemblyEmitter(FunctionPassManager &PM, bool Fast, 
                                             std::ostream &Out) {
+  PM.add(createAlphaLLRPPass(*this));
   PM.add(createAlphaCodePrinterPass(Out, *this));
   return false;
 }
