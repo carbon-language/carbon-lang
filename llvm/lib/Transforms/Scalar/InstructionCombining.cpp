@@ -3988,7 +3988,8 @@ Instruction *InstCombiner::visitSetCondInst(SetCondInst &I) {
           // preferable because it allows the C<<Y expression to be hoisted out
           // of a loop if Y is invariant and X is not.
           if (Shift && Shift->hasOneUse() && CI->isNullValue() &&
-              I.isEquality() && !Shift->isArithmeticShift()) {
+              I.isEquality() && !Shift->isArithmeticShift() &&
+              isa<Instruction>(Shift->getOperand(0))) {
             // Compute C << Y.
             Value *NS;
             if (Shift->getOpcode() == Instruction::Shr) {
