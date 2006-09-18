@@ -1313,6 +1313,8 @@ public:
   /// findCaseDest - Finds the unique case value for a given successor. Returns
   /// null if the successor is not found, not unique, or is the default case.
   ConstantInt *findCaseDest(BasicBlock *BB) {
+    if (BB == getDefaultDest()) return NULL;
+
     ConstantInt *CI = NULL;
     for (unsigned i = 1, e = getNumCases(); i != e; ++i) {
       if (getSuccessor(i) == BB) {
