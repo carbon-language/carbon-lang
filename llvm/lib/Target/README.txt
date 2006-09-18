@@ -260,12 +260,13 @@ quantum_sigma_x in 462.libquantum contains the following loop:
 Where MAX_UNSIGNED/state is a 64-bit int.  On a 32-bit platform it would be just
 so cool to turn it into something like:
 
+   long long Res = ((MAX_UNSIGNED) 1 << target);
    if (target < 32) {
      for(i=0; i<reg->size; i++)
-       reg->node[i].state ^= ((int) (1 << target));
+       reg->node[i].state ^= Res & 0xFFFFFFFFULL;
    } else {
      for(i=0; i<reg->size; i++)
-       reg->node[i].state ^= (long long)((int) (1 << (target-32))) << 32;
+       reg->node[i].state ^= Res & 0xFFFFFFFF00000000ULL
    }
    
 ... which would only do one 32-bit XOR per loop iteration instead of two.
