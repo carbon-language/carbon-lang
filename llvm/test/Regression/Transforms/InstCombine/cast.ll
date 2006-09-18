@@ -192,5 +192,10 @@ uint %test30(uint %c1) {
         ret uint %c4
 }
 
-
+bool %test31(ulong %A) {
+	%B = cast ulong %A to int
+	%C = and int %B, 42
+	%D = seteq int %C, 10
+	ret bool %D
+}
 
