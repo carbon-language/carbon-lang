@@ -2148,6 +2148,19 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
       if (Tmp1.Val) Result = Tmp1;
       break;
     case TargetLowering::Expand: {
+      if (Node->getValueType(0) == MVT::i32) {
+        switch (Node->getOpcode()) {
+        default:  assert(0 && "Do not know how to expand this integer BinOp!");
+        case ISD::UDIV:
+        case ISD::SDIV:
+          const char *FnName = Node->getOpcode() == ISD::UDIV
+            ? "__udivsi3" : "__divsi3";
+          SDOperand Dummy;
+          Result = ExpandLibCall(FnName, Node, Dummy);
+        };
+        break;
+      }
+
       assert(MVT::isVector(Node->getValueType(0)) &&
              "Cannot expand this binary operator!");
       // Expand the operation into a bunch of nasty scalar code.
@@ -2318,13 +2331,24 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
       }
       break;
     case TargetLowering::Expand:
+      unsigned DivOpc= (Node->getOpcode() == ISD::UREM) ? ISD::UDIV : ISD::SREM;
       if (MVT::isInteger(Node->getValueType(0))) {
-        // X % Y -> X-X/Y*Y
-        MVT::ValueType VT = Node->getValueType(0);
-        unsigned Opc = Node->getOpcode() == ISD::UREM ? ISD::UDIV : ISD::SDIV;
-        Result = DAG.getNode(Opc, VT, Tmp1, Tmp2);
-        Result = DAG.getNode(ISD::MUL, VT, Result, Tmp2);
-        Result = DAG.getNode(ISD::SUB, VT, Tmp1, Result);
+        if (TLI.getOperationAction(DivOpc, Node->getValueType(0)) ==
+            TargetLowering::Legal) {
+          // X % Y -> X-X/Y*Y
+          MVT::ValueType VT = Node->getValueType(0);
+          unsigned Opc = Node->getOpcode() == ISD::UREM ? ISD::UDIV : ISD::SDIV;
+          Result = DAG.getNode(Opc, VT, Tmp1, Tmp2);
+          Result = DAG.getNode(ISD::MUL, VT, Result, Tmp2);
+          Result = DAG.getNode(ISD::SUB, VT, Tmp1, Result);
+        } else {
+          assert(Node->getValueType(0) == MVT::i32 &&
+                 "Cannot expand this binary operator!");
+          const char *FnName = Node->getOpcode() == ISD::UREM
+            ? "__umodsi3" : "__modsi3";
+          SDOperand Dummy;
+          Result = ExpandLibCall(FnName, Node, Dummy);
+        }
       } else {
         // Floating point mod -> fmod libcall.
         const char *FnName = Node->getValueType(0) == MVT::f32 ? "fmodf":"fmod";
