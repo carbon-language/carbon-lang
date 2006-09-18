@@ -3856,7 +3856,7 @@ Instruction *InstCombiner::visitSetCondInst(SetCondInst &I) {
           // happens a LOT in code produced by the C front-end, for bitfield
           // access.
           ShiftInst *Shift = dyn_cast<ShiftInst>(LHSI->getOperand(0));
-          ConstantInt *AndCST = cast<ConstantInt>(LHSI->getOperand(1));
+          Constant *AndCST = cast<ConstantInt>(LHSI->getOperand(1));
 
           // Check to see if there is a noop-cast between the shift and the and.
           if (!Shift) {
@@ -3866,7 +3866,7 @@ Instruction *InstCombiner::visitSetCondInst(SetCondInst &I) {
                      CI->getType()->getPrimitiveSizeInBits())
                 Shift = dyn_cast<ShiftInst>(CI->getOperand(0));
           }
-          
+
           ConstantUInt *ShAmt;
           ShAmt = Shift ? dyn_cast<ConstantUInt>(Shift->getOperand(1)) : 0;
           const Type *Ty = Shift ? Shift->getType() : 0;  // Type of the shift.
@@ -3876,8 +3876,7 @@ Instruction *InstCombiner::visitSetCondInst(SetCondInst &I) {
           // into the mask.  This can only happen with signed shift
           // rights, as they sign-extend.
           if (ShAmt) {
-            bool CanFold = Shift->getOpcode() != Instruction::Shr ||
-                           Ty->isUnsigned();
+            bool CanFold = Shift->isLogicalShift();
             if (!CanFold) {
               // To test for the bad case of the signed shr, see if any
               // of the bits shifted in could be tested after the mask.
@@ -3930,15 +3929,49 @@ Instruction *InstCombiner::visitSetCondInst(SetCondInst &I) {
               }
             }
           }
+          
+          // Turn ((X >> Y) & C) == 0  into  (X & (C << Y)) == 0.  The later is
+          // preferable because it allows the C<<Y expression to be hoisted out
+          // of a loop if Y is invariant and X is not.
+          if (Shift && Shift->hasOneUse() && CI->isNullValue() &&
+              I.isEquality() && !Shift->isArithmeticShift()) {
+            // Compute C << Y.
+            Value *NS;
+            if (Shift->getOpcode() == Instruction::Shr) {
+              NS = new ShiftInst(Instruction::Shl, AndCST, Shift->getOperand(1),
+                                 "tmp");
+            } else {
+              // Make sure we insert a logical shift.
+              if (AndCST->getType()->isSigned())
+                AndCST = ConstantExpr::getCast(AndCST,
+                                      AndCST->getType()->getUnsignedVersion());
+              NS = new ShiftInst(Instruction::Shr, AndCST, Shift->getOperand(1),
+                                 "tmp");
+            }
+            InsertNewInstBefore(cast<Instruction>(NS), I);
+
+            // If C's sign doesn't agree with the and, insert a cast now.
+            if (NS->getType() != LHSI->getType())
+              NS = InsertCastBefore(NS, LHSI->getType(), I);
+
+            Value *ShiftOp = Shift->getOperand(0);
+            if (ShiftOp->getType() != LHSI->getType())
+              ShiftOp = InsertCastBefore(ShiftOp, LHSI->getType(), I);
+              
+            // Compute X & (C << Y).
+            Instruction *NewAnd =
+              BinaryOperator::createAnd(ShiftOp, NS, LHSI->getName());
+            InsertNewInstBefore(NewAnd, I);
+            
+            I.setOperand(0, NewAnd);
+            return &I;
+          }
         }
         break;
 
       case Instruction::Shl:         // (setcc (shl X, ShAmt), CI)
         if (ConstantUInt *ShAmt = dyn_cast<ConstantUInt>(LHSI->getOperand(1))) {
-          switch (I.getOpcode()) {
-          default: break;
-          case Instruction::SetEQ:
-          case Instruction::SetNE: {
+          if (I.isEquality()) {
             unsigned TypeBits = CI->getType()->getPrimitiveSizeInBits();
 
             // Check that the shift amount is in range.  If not, don't perform
@@ -3979,17 +4012,12 @@ Instruction *InstCombiner::visitSetCondInst(SetCondInst &I) {
                                      ConstantExpr::getUShr(CI, ShAmt));
             }
           }
-          }
         }
         break;
 
       case Instruction::Shr:         // (setcc (shr X, ShAmt), CI)
         if (ConstantUInt *ShAmt = dyn_cast<ConstantUInt>(LHSI->getOperand(1))) {
-          switch (I.getOpcode()) {
-          default: break;
-          case Instruction::SetEQ:
-          case Instruction::SetNE: {
-
+          if (I.isEquality()) {
             // Check that the shift amount is in range.  If not, don't perform
             // undefined shifts.  When the shift is visited it will be
             // simplified.
@@ -4030,8 +4058,6 @@ Instruction *InstCombiner::visitSetCondInst(SetCondInst &I) {
               return new SetCondInst(I.getOpcode(), And,
                                      ConstantExpr::getShl(CI, ShAmt));
             }
-            break;
-          }
           }
         }
         break;
@@ -4130,8 +4156,7 @@ Instruction *InstCombiner::visitSetCondInst(SetCondInst &I) {
       }
 
     // Simplify seteq and setne instructions...
-    if (I.getOpcode() == Instruction::SetEQ ||
-        I.getOpcode() == Instruction::SetNE) {
+    if (I.isEquality()) {
       bool isSetNE = I.getOpcode() == Instruction::SetNE;
 
       // If the first operand is (and|or|xor) with a constant, and the second
@@ -4361,9 +4386,7 @@ Instruction *InstCombiner::visitSetCondInst(SetCondInst &I) {
   if (CastInst *CI = dyn_cast<CastInst>(Op0)) {
     Value *CastOp0 = CI->getOperand(0);
     if (CastOp0->getType()->isLosslesslyConvertibleTo(CI->getType()) &&
-        (isa<Constant>(Op1) || isa<CastInst>(Op1)) &&
-        (I.getOpcode() == Instruction::SetEQ ||
-         I.getOpcode() == Instruction::SetNE)) {
+        (isa<Constant>(Op1) || isa<CastInst>(Op1)) && I.isEquality()) {
       // We keep moving the cast from the left operand over to the right
       // operand, where it can often be eliminated completely.
       Op0 = CastOp0;
@@ -4398,8 +4421,7 @@ Instruction *InstCombiner::visitSetCondInst(SetCondInst &I) {
         return R;
   }
   
-  if (I.getOpcode() == Instruction::SetNE ||
-      I.getOpcode() == Instruction::SetEQ) {
+  if (I.isEquality()) {
     Value *A, *B;
     if (match(Op0, m_Xor(m_Value(A), m_Value(B))) &&
         (A == Op1 || B == Op1)) {
@@ -4552,7 +4574,7 @@ Instruction *InstCombiner::visitShiftInst(ShiftInst &I) {
         return R;
 
   // See if we can turn a signed shr into an unsigned shr.
-  if (!isLeftShift && I.getType()->isSigned()) {
+  if (I.isArithmeticShift()) {
     if (MaskedValueIsZero(Op0,
                           1ULL << (I.getType()->getPrimitiveSizeInBits()-1))) {
       Value *V = InsertCastBefore(Op0, I.getType()->getUnsignedVersion(), I);
@@ -5617,10 +5639,8 @@ Instruction *InstCombiner::visitSelectInst(SelectInst &SI) {
       // non-constant value, eliminate this whole mess.  This corresponds to
       // cases like this: ((X & 27) ? 27 : 0)
       if (TrueValC->isNullValue() || FalseValC->isNullValue())
-        if (Instruction *IC = dyn_cast<Instruction>(SI.getCondition()))
-          if ((IC->getOpcode() == Instruction::SetEQ ||
-               IC->getOpcode() == Instruction::SetNE) &&
-              isa<ConstantInt>(IC->getOperand(1)) &&
+        if (SetCondInst *IC = dyn_cast<SetCondInst>(SI.getCondition()))
+          if (IC->isEquality() && isa<ConstantInt>(IC->getOperand(1)) &&
               cast<Constant>(IC->getOperand(1))->isNullValue())
             if (Instruction *ICA = dyn_cast<Instruction>(IC->getOperand(0)))
               if (ICA->getOpcode() == Instruction::And &&
