@@ -435,7 +435,11 @@ let isReturn = 1, isTerminator = 1, noResults = 1, Ra = 31, Rb = 26, disp = 1, U
   def RETDAGp : MbrpForm< 0x1A, 0x02, (ops), "ret $$31,($$26),1", [(retflag)], s_jsr>; //Return from subroutine
 }
 
-def JMP : MbrForm< 0x1A, 0x00, (ops GPRC:$RD, GPRC:$RS, GPRC:$DISP), "jmp $RD,($RS),$DISP", s_jsr>; //Jump
+let isBranch = 1, isTerminator = 1, noResults = 1, isBarrier = 1,
+Ra = 31, disp = 0 in
+def JMP : MbrpForm< 0x1A, 0x00, (ops GPRC:$RS), "jmp $$31,($RS),0", 
+          [(brind GPRC:$RS)], s_jsr>; //Jump
+
 let isCall = 1, noResults = 1, Ra = 26,
     Defs = [R0, R1, R2, R3, R4, R5, R6, R7, R8, R16, R17, R18, R19,
             R20, R21, R22, R23, R24, R25, R26, R27, R28, R29,
@@ -544,6 +548,12 @@ def : Pat<(f32 (load (Alpha_gprello tconstpool:$DISP, GPRC:$RB))),
           (LDSr tconstpool:$DISP, GPRC:$RB)>;
 def : Pat<(f64 (load (Alpha_gprello tconstpool:$DISP, GPRC:$RB))),
           (LDTr tconstpool:$DISP, GPRC:$RB)>;
+
+//jumptable rels
+def : Pat<(i64 (Alpha_gprelhi tjumptable:$DISP, GPRC:$RB)),
+          (LDAHr tjumptable:$DISP, GPRC:$RB)>;
+def : Pat<(i64 (Alpha_gprello tjumptable:$DISP, GPRC:$RB)),
+          (LDAr tjumptable:$DISP, GPRC:$RB)>;
 
 
 //misc ext patterns

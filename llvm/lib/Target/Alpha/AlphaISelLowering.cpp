@@ -48,7 +48,7 @@ AlphaTargetLowering::AlphaTargetLowering(TargetMachine &TM) : TargetLowering(TM)
   addRegisterClass(MVT::f64, Alpha::F8RCRegisterClass);
   addRegisterClass(MVT::f32, Alpha::F4RCRegisterClass);
   
-  setOperationAction(ISD::BRIND,        MVT::i64,   Expand);
+  //  setOperationAction(ISD::BRIND,        MVT::i64,   Expand);
   setOperationAction(ISD::BR_CC,        MVT::Other, Expand);
   setOperationAction(ISD::SELECT_CC,    MVT::Other, Expand);
   
@@ -128,6 +128,8 @@ AlphaTargetLowering::AlphaTargetLowering(TargetMachine &TM) : TargetLowering(TM)
 
   setOperationAction(ISD::RET,     MVT::Other, Custom);
 
+  setOperationAction(ISD::JumpTable, MVT::i64, Custom);
+
   setStackPointerRegisterToSaveRestore(Alpha::R30);
 
   setOperationAction(ISD::ConstantFP, MVT::f64, Expand);
@@ -160,6 +162,20 @@ const char *AlphaTargetLowering::getTargetNodeName(unsigned Opcode) const {
   case AlphaISD::DivCall: return "Alpha::DivCall";
   case AlphaISD::RET_FLAG: return "Alpha::RET_FLAG";
   }
+}
+
+static SDOperand LowerJumpTable(SDOperand Op, SelectionDAG &DAG) {
+  MVT::ValueType PtrVT = Op.getValueType();
+  JumpTableSDNode *JT = cast<JumpTableSDNode>(Op);
+  SDOperand JTI = DAG.getTargetJumpTable(JT->getIndex(), PtrVT);
+  SDOperand Zero = DAG.getConstant(0, PtrVT);
+  
+  const TargetMachine &TM = DAG.getTarget();
+
+  SDOperand Hi = DAG.getNode(AlphaISD::GPRelHi,  MVT::i64, JTI,
+			     DAG.getNode(AlphaISD::GlobalBaseReg, MVT::i64));
+  SDOperand Lo = DAG.getNode(AlphaISD::GPRelLo, MVT::i64, JTI, Hi);
+  return Lo;
 }
 
 //http://www.cs.arizona.edu/computer.help/policy/DIGITAL_unix/
@@ -395,6 +411,8 @@ SDOperand AlphaTargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
 							   VarArgsOffset,
 							   GP, RA);
   case ISD::RET: return LowerRET(Op,DAG, getVRegRA());
+  case ISD::JumpTable: return LowerJumpTable(Op, DAG);
+
   case ISD::SINT_TO_FP: {
     assert(MVT::i64 == Op.getOperand(0).getValueType() && 
            "Unhandled SINT_TO_FP type in custom expander!");

@@ -126,6 +126,11 @@ void AlphaAsmPrinter::printOp(const MachineOperand &MO, bool IsCallOp) {
     O << Mang->getValueName(MO.getGlobal());
     return;
 
+  case MachineOperand::MO_JumpTableIndex:
+    O << TAI->getPrivateGlobalPrefix() << "JTI" << getFunctionNumber()
+      << '_' << MO.getJumpTableIndex();
+    return;
+
   default:
     O << "<unknown operand type: " << MO.getType() << ">";
     return;
@@ -155,6 +160,9 @@ bool AlphaAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
 
   // Print out constants referenced by the function
   EmitConstantPool(MF.getConstantPool());
+
+  // Print out jump tables referenced by the function
+  EmitJumpTableInfo(MF.getJumpTableInfo());
 
   // Print out labels for the function.
   const Function *F = MF.getFunction();
