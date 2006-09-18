@@ -59,7 +59,8 @@ One better solution for 1LL << x is:
 
 But that requires good 8-bit subreg support.
 
-
+64-bit shifts (in general) expand to really bad code.  Instead of using
+cmovs, we should expand to a conditional branch like GCC produces.
 
 //===---------------------------------------------------------------------===//
 
