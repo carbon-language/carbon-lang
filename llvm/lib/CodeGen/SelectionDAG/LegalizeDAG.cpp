@@ -2331,14 +2331,13 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
       }
       break;
     case TargetLowering::Expand:
-      unsigned DivOpc= (Node->getOpcode() == ISD::UREM) ? ISD::UDIV : ISD::SREM;
+      unsigned DivOpc= (Node->getOpcode() == ISD::UREM) ? ISD::UDIV : ISD::SDIV;
       if (MVT::isInteger(Node->getValueType(0))) {
         if (TLI.getOperationAction(DivOpc, Node->getValueType(0)) ==
             TargetLowering::Legal) {
           // X % Y -> X-X/Y*Y
           MVT::ValueType VT = Node->getValueType(0);
-          unsigned Opc = Node->getOpcode() == ISD::UREM ? ISD::UDIV : ISD::SDIV;
-          Result = DAG.getNode(Opc, VT, Tmp1, Tmp2);
+          Result = DAG.getNode(DivOpc, VT, Tmp1, Tmp2);
           Result = DAG.getNode(ISD::MUL, VT, Result, Tmp2);
           Result = DAG.getNode(ISD::SUB, VT, Tmp1, Result);
         } else {
