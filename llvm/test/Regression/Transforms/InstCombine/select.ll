@@ -173,7 +173,7 @@ long %test21(int %x) {
         ret long %retval
 }
 
-short %test20(int %x) {
+short %test22(int %x) {
         %tmp = setlt int %x, 0
         %retval = select bool %tmp, short -1, short 0
         ret short %retval
