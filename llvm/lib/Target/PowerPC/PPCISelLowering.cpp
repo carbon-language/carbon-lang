@@ -2309,6 +2309,26 @@ SDOperand PPCTargetLowering::PerformDAGCombine(SDNode *N,
   SelectionDAG &DAG = DCI.DAG;
   switch (N->getOpcode()) {
   default: break;
+  case PPCISD::SHL:
+    if (ConstantSDNode *C = dyn_cast<ConstantSDNode>(N->getOperand(0))) {
+      if (C->getValue() == 0)   // 0 << V -> 0.
+        return N->getOperand(0);
+    }
+    break;
+  case PPCISD::SRL:
+    if (ConstantSDNode *C = dyn_cast<ConstantSDNode>(N->getOperand(0))) {
+      if (C->getValue() == 0)   // 0 >>u V -> 0.
+        return N->getOperand(0);
+    }
+    break;
+  case PPCISD::SRA:
+    if (ConstantSDNode *C = dyn_cast<ConstantSDNode>(N->getOperand(0))) {
+      if (C->getValue() == 0 ||   //  0 >>s V -> 0.
+          C->isAllOnesValue())    // -1 >>s V -> -1.
+        return N->getOperand(0);
+    }
+    break;
+    
   case ISD::SINT_TO_FP:
     if (TM.getSubtarget<PPCSubtarget>().has64BitSupport()) {
       if (N->getOperand(0).getOpcode() == ISD::FP_TO_SINT) {
