@@ -1158,15 +1158,19 @@ void DAGISelEmitter::ParsePatternFragments(std::ostream &OS) {
     // keep track of the fact that this fragment uses it.
     std::string Code = Fragments[i]->getValueAsCode("Predicate");
     if (!Code.empty()) {
-      assert(!P->getOnlyTree()->isLeaf() && "Can't be a leaf!");
-      std::string ClassName =
-        getSDNodeInfo(P->getOnlyTree()->getOperator()).getSDClassName();
-      const char *C2 = ClassName == "SDNode" ? "N" : "inN";
+      if (P->getOnlyTree()->isLeaf())
+        OS << "inline bool Predicate_" << Fragments[i]->getName()
+           << "(SDNode *N) {\n";
+      else {
+        std::string ClassName =
+          getSDNodeInfo(P->getOnlyTree()->getOperator()).getSDClassName();
+        const char *C2 = ClassName == "SDNode" ? "N" : "inN";
       
-      OS << "inline bool Predicate_" << Fragments[i]->getName()
-         << "(SDNode *" << C2 << ") {\n";
-      if (ClassName != "SDNode")
-        OS << "  " << ClassName << " *N = cast<" << ClassName << ">(inN);\n";
+        OS << "inline bool Predicate_" << Fragments[i]->getName()
+           << "(SDNode *" << C2 << ") {\n";
+        if (ClassName != "SDNode")
+          OS << "  " << ClassName << " *N = cast<" << ClassName << ">(inN);\n";
+      }
       OS << Code << "\n}\n";
       P->getOnlyTree()->setPredicateFn("Predicate_"+Fragments[i]->getName());
     }
@@ -2371,6 +2375,11 @@ public:
 #endif
             assert(0 && "Unknown leaf type!");
           }
+
+          // If there is a node predicate for this, emit the call.
+          if (!Child->getPredicateFn().empty())
+            emitCheck(Child->getPredicateFn() + "(" + RootName + utostr(OpNo) +
+                      ".Val)");
         } else if (IntInit *II =
                        dynamic_cast<IntInit*>(Child->getLeafValue())) {
           emitCheck("isa<ConstantSDNode>(" + RootName + utostr(OpNo) + ")");
@@ -2827,7 +2836,6 @@ public:
       emitCode("SDOperand Tmp" + utostr(ResNo) + " = Transform_" + Op->getName()
                + "(" + Ops.back() + ".Val);");
       NodeOps.push_back("Tmp" + utostr(ResNo));
-      emitCode("AddToISelQueue(Tmp" + utostr(ResNo) + ");");
       if (isRoot)
         emitCode("return Tmp" + utostr(ResNo) + ".Val;");
       return NodeOps;
