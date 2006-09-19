@@ -621,18 +621,21 @@ void RA::AllocateBasicBlock(MachineBasicBlock &MBB) {
       for (const unsigned *ImplicitDefs = TID.ImplicitDefs;
            *ImplicitDefs; ++ImplicitDefs) {
         unsigned Reg = *ImplicitDefs;
-        if (PhysRegsUsed[Reg] == -2) continue;
-
-        spillPhysReg(MBB, MI, Reg, true);
-        PhysRegsUseOrder.push_back(Reg);
-        PhysRegsUsed[Reg] = 0;            // It is free and reserved now
+        bool IsNonAllocatable = PhysRegsUsed[Reg] == -2;
+        if (!IsNonAllocatable) {
+          spillPhysReg(MBB, MI, Reg, true);
+          PhysRegsUseOrder.push_back(Reg);
+          PhysRegsUsed[Reg] = 0;            // It is free and reserved now
+        }
         PhysRegsEverUsed[Reg] = true;
 
         for (const unsigned *AliasSet = RegInfo->getAliasSet(Reg);
              *AliasSet; ++AliasSet) {
           if (PhysRegsUsed[*AliasSet] != -2) {
-            PhysRegsUseOrder.push_back(*AliasSet);
-            PhysRegsUsed[*AliasSet] = 0;  // It is free and reserved now
+            if (!IsNonAllocatable) {
+              PhysRegsUseOrder.push_back(*AliasSet);
+              PhysRegsUsed[*AliasSet] = 0;  // It is free and reserved now
+            }
             PhysRegsEverUsed[*AliasSet] = true;
           }
         }
