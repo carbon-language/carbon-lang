@@ -54,10 +54,15 @@ bool ARMTargetMachine::addInstSelector(FunctionPassManager &PM, bool Fast) {
   PM.add(createARMISelDag(*this));
   return false;
 }
+
+bool ARMTargetMachine::addPostRegAlloc(FunctionPassManager &PM, bool Fast) {
+  PM.add(createARMFixMulPass());
+  return true;
+}
+
 bool ARMTargetMachine::addAssemblyEmitter(FunctionPassManager &PM, bool Fast, 
                                           std::ostream &Out) {
   // Output assembly language.
   PM.add(createARMCodePrinterPass(Out, *this));
   return false;
 }
-

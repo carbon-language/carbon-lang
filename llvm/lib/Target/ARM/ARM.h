@@ -77,6 +77,7 @@ namespace llvm {
 
   FunctionPass *createARMISelDag(TargetMachine &TM);
   FunctionPass *createARMCodePrinterPass(std::ostream &OS, TargetMachine &TM);
+  FunctionPass *createARMFixMulPass();
 } // end namespace llvm;
 
 // Defines symbolic names for ARM registers.  This defines a mapping from
