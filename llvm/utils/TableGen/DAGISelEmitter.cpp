@@ -2195,7 +2195,7 @@ public:
             assert(0 && "Unknown predicate type!");
           }
           if (!PredicateCheck.empty())
-            PredicateCheck += " || ";
+            PredicateCheck += " && ";
           PredicateCheck += "(" + Def->getValueAsString("CondString") + ")";
         }
       }
