@@ -1,4 +1,4 @@
-//===-- ARMTargetMachine.cpp - Define TargetMachine for ARM ---------------===//
+//===-- ARMMul.cpp - Define TargetMachine for A5CRM -----------------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -8,6 +8,7 @@
 //
 //===----------------------------------------------------------------------===//
 //
+// Modify the ARM multiplication instructions so that Rd and Rm are distinct
 //
 //===----------------------------------------------------------------------===//
 
@@ -39,25 +40,27 @@ bool FixMul::runOnMachineFunction(MachineFunction &MF) {
       MachineInstr *MI = I;
 
       if (MI->getOpcode() == ARM::MUL) {
-	MachineOperand &RdOp = MI->getOperand(0);
-	MachineOperand &RmOp = MI->getOperand(1);
-	MachineOperand &RsOp = MI->getOperand(2);
+        MachineOperand &RdOp = MI->getOperand(0);
+        MachineOperand &RmOp = MI->getOperand(1);
+        MachineOperand &RsOp = MI->getOperand(2);
 
-	unsigned Rd = RdOp.getReg();
-	unsigned Rm = RmOp.getReg();
-	unsigned Rs = RsOp.getReg();
+        unsigned Rd = RdOp.getReg();
+        unsigned Rm = RmOp.getReg();
+        unsigned Rs = RsOp.getReg();
 
-	if(Rd == Rm) {
-	  Changed = true;
-	  if (Rd != Rs) {
-	    RmOp.setReg(Rs);
-	    RsOp.setReg(Rm);
-	  } else {
-	    BuildMI(MBB, I, ARM::MOV, 3, ARM::R12).addReg(Rm).addImm(0)
-	      .addImm(ARMShift::LSL);
-	    RmOp.setReg(ARM::R12);
-	  }
-	}
+        if(Rd == Rm) {
+          Changed = true;
+          if (Rd != Rs) {
+	    //Rd and Rm must be distinct, but Rd can be equal to Rs.
+	    //Swap Rs and Rm
+            RmOp.setReg(Rs);
+            RsOp.setReg(Rm);
+          } else {
+            BuildMI(MBB, I, ARM::MOV, 3, ARM::R12).addReg(Rm).addImm(0)
+              .addImm(ARMShift::LSL);
+            RmOp.setReg(ARM::R12);
+          }
+        }
       }
     }
   }
