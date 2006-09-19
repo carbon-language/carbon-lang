@@ -2827,6 +2827,7 @@ public:
       emitCode("SDOperand Tmp" + utostr(ResNo) + " = Transform_" + Op->getName()
                + "(" + Ops.back() + ".Val);");
       NodeOps.push_back("Tmp" + utostr(ResNo));
+      emitCode("AddToISelQueue(Tmp" + utostr(ResNo) + ");");
       if (isRoot)
         emitCode("return Tmp" + utostr(ResNo) + ".Val;");
       return NodeOps;
