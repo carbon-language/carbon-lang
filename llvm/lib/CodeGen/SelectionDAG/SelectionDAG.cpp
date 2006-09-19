@@ -1330,12 +1330,18 @@ SDOperand SelectionDAG::getNode(unsigned Opcode, MVT::ValueType VT,
     break;
   }
   case ISD::EXTRACT_ELEMENT:
+    assert(N2C && (unsigned)N2C->getValue() < 2 && "Bad EXTRACT_ELEMENT!");
+    
     // EXTRACT_ELEMENT of BUILD_PAIR is often formed while legalize is expanding
     // 64-bit integers into 32-bit parts.  Instead of building the extract of
     // the BUILD_PAIR, only to have legalize rip it apart, just do it now. 
-    if (N2C && N1.getOpcode() == ISD::BUILD_PAIR) {
-      assert((unsigned)N2C->getValue() < 2 && "Bad EXTRACT_ELEMENT!");
+    if (N1.getOpcode() == ISD::BUILD_PAIR)
       return N1.getOperand(N2C->getValue());
+    
+    // EXTRACT_ELEMENT of a constant int is also very common.
+    if (ConstantSDNode *C = dyn_cast<ConstantSDNode>(N1)) {
+      unsigned Shift = MVT::getSizeInBits(VT) * N2C->getValue();
+      return getConstant(C->getValue() >> Shift, VT);
     }
     break;
 
