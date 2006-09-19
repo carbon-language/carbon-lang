@@ -63,17 +63,6 @@ which will be removed once the proper fix is made.
 
 //===---------------------------------------------------------------------===//
 
-Turn this into a signed shift right in instcombine:
-
-int f(unsigned x) {
-  return x >> 31 ? -1 : 0;
-}
-
-http://gcc.gnu.org/bugzilla/show_bug.cgi?id=25600
-http://gcc.gnu.org/ml/gcc-patches/2006-02/msg01492.html
-
-//===---------------------------------------------------------------------===//
-
 On targets with expensive 64-bit multiply, we could LSR this:
 
 for (i = ...; ++i) {
