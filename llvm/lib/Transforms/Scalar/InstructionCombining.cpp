@@ -1595,6 +1595,28 @@ FoundSExt:
         return R;
   }
 
+  // add (cast *A to intptrtype) B -> cast (GEP (cast *A to sbyte*) B) -> intptrtype
+  {
+    CastInst* CI = dyn_cast<CastInst>(LHS);
+    Value* Other = RHS;
+    if (!CI) {
+      CI = dyn_cast<CastInst>(RHS);
+      Other = LHS;
+    }
+    if (CI) {
+      const Type *UIntPtrTy = TD->getIntPtrType();
+      const Type *SIntPtrTy = UIntPtrTy->getSignedVersion();
+      if((CI->getType() == UIntPtrTy || CI->getType() == SIntPtrTy) 
+	 && isa<PointerType>(CI->getOperand(0)->getType())) {
+	Instruction* I2 = new CastInst(CI->getOperand(0), PointerType::get(Type::SByteTy), "ctg", &I);
+	WorkList.push_back(I2);
+	I2 = new GetElementPtrInst(I2, Other, "ctg", &I);
+	WorkList.push_back(I2);
+	return new CastInst(I2, CI->getType());
+      }
+    }
+  }
+
   return Changed ? &I : 0;
 }
 
