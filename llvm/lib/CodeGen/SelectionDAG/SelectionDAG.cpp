@@ -1329,6 +1329,15 @@ SDOperand SelectionDAG::getNode(unsigned Opcode, MVT::ValueType VT,
     if (EVT == VT) return N1;  // Not actually extending
     break;
   }
+  case ISD::EXTRACT_ELEMENT:
+    // EXTRACT_ELEMENT of BUILD_PAIR is often formed while legalize is expanding
+    // 64-bit integers into 32-bit parts.  Instead of building the extract of
+    // the BUILD_PAIR, only to have legalize rip it apart, just do it now. 
+    if (N2C && N1.getOpcode() == ISD::BUILD_PAIR) {
+      assert((unsigned)N2C->getValue() < 2 && "Bad EXTRACT_ELEMENT!");
+      return N1.getOperand(N2C->getValue());
+    }
+    break;
 
   // FIXME: figure out how to safely handle things like
   // int foo(int x) { return 1 << (x & 255); }
