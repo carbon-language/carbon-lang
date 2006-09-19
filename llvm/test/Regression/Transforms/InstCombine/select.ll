@@ -1,5 +1,4 @@
 ; This test makes sure that these instructions are properly eliminated.
-;
 
 ; RUN: llvm-as < %s | opt -instcombine | llvm-dis | not grep select
 
@@ -154,3 +153,17 @@ int %test18(int %X, int %Y, bool %C) {
 	%V = div int %Y, %R   ; div Y,X
 	ret int %V
 }
+
+int %test19(uint %x) {
+entry:
+        %tmp = setgt uint %x, 2147483647
+        %retval = select bool %tmp, int -1, int 0
+        ret int %retval
+}
+
+int %test20(int %x) {
+        %tmp = setlt int %x, 0
+        %retval = select bool %tmp, int -1, int 0
+        ret int %retval
+}
+
