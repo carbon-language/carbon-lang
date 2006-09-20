@@ -270,15 +270,6 @@ namespace {
   };
 } // end of anonymous namespace
 
-/// createDarwinCodePrinterPass - Returns a pass that prints the PPC assembly
-/// code for a MachineFunction to the given output stream, in a format that the
-/// Darwin assembler can deal with.
-///
-FunctionPass *llvm::createDarwinCodePrinterPass(std::ostream &o,
-                                                PPCTargetMachine &tm) {
-  return new DarwinAsmPrinter(o, tm, tm.getTargetAsmInfo());
-}
-
 // Include the auto-generated portion of the assembly writer
 #include "PPCGenAsmWriter.inc"
 
@@ -639,10 +630,20 @@ bool DarwinAsmPrinter::doFinalization(Module &M) {
   // implementation of multiple entry points).  If this doesn't occur, the
   // linker can safely perform dead code stripping.  Since LLVM never generates
   // code that does this, it is always safe to set.
-  if (Subtarget.isDarwin())
-    O << "\t.subsections_via_symbols\n";
+  O << "\t.subsections_via_symbols\n";
 
   AsmPrinter::doFinalization(M);
   return false; // success
+}
+
+
+
+/// createDarwinCodePrinterPass - Returns a pass that prints the PPC assembly
+/// code for a MachineFunction to the given output stream, in a format that the
+/// Darwin assembler can deal with.
+///
+FunctionPass *llvm::createPPCAsmPrinterPass(std::ostream &o,
+                                            PPCTargetMachine &tm) {
+  return new DarwinAsmPrinter(o, tm, tm.getTargetAsmInfo());
 }
 

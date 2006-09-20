@@ -122,7 +122,7 @@ bool PPCTargetMachine::addPreEmitPass(FunctionPassManager &PM, bool Fast) {
 
 bool PPCTargetMachine::addAssemblyEmitter(FunctionPassManager &PM, bool Fast, 
                                           std::ostream &Out) {
-  PM.add(createDarwinCodePrinterPass(Out, *this));
+  PM.add(createPPCAsmPrinterPass(Out, *this));
   return false;
 }
 
