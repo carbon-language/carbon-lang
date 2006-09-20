@@ -1,4 +1,7 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+Fix cmovs with a constant on the wrong side
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 Fix Ordered/Unordered FP stuff
 
 
