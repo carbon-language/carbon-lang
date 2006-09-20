@@ -385,9 +385,8 @@ sub GetDejagnuTestResults { # (filename, log)
         while ( <SRCHFILE> ) {
             if ( length($_) > 1 ) {
                 chomp($_);
-                if ( m/^PASS:/ || m/^XPASS:/ ||
-                     m/^FAIL:/ || m/^XFAIL:/) {
-                    push(@lines, "$_");
+                if ( m/^(PASS|XPASS|FAIL|XFAIL): .*\/llvm\/test\/(.*)$/ ) {
+                    push(@lines, "$1: test/$2");
                 }
             }
         }
