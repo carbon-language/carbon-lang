@@ -38,8 +38,14 @@ entry:
 }
 
 short %seli16_2(int %a, short %b) {
-entry:
 	%tmp.1 = setlt int %a, 0
 	%retval = select bool %tmp.1, short %b, short 0
 	ret short %retval
 }
+
+int %seli32_a_a(int %a) {
+        %tmp = setlt int %a, 1
+        %min = select bool %tmp, int %a, int 0
+        ret int %min
+}
+
