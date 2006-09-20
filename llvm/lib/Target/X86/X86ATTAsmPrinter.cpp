@@ -15,8 +15,10 @@
 
 #include "X86ATTAsmPrinter.h"
 #include "X86.h"
+#include "X86MachineFunctionInfo.h"
 #include "X86TargetMachine.h"
 #include "X86TargetAsmInfo.h"
+#include "llvm/CallingConv.h"
 #include "llvm/Module.h"
 #include "llvm/Support/Mangler.h"
 #include "llvm/Target/TargetAsmInfo.h"
@@ -42,6 +44,16 @@ bool X86ATTAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
 
   // Print out labels for the function.
   const Function *F = MF.getFunction();
+  unsigned CC = F->getCallingConv();
+
+  // Populate function information map.  Actually, We don't want to populate
+  // non-stdcall or non-fastcall functions' information right now.
+  if (CC == CallingConv::X86_StdCall || CC == CallingConv::X86_FastCall) {
+    FunctionInfoMap[F] = *(MF.getInfo<X86FunctionInfo>());
+  }
+
+  X86SharedAsmPrinter::decorateName(CurrentFnName, F);
+
   switch (F->getLinkage()) {
   default: assert(0 && "Unknown linkage type!");
   case Function::InternalLinkage:  // Symbols default to internal.
@@ -182,11 +194,14 @@ void X86ATTAsmPrinter::printOperand(const MachineInstr *MI, unsigned OpNo,
     bool isMemOp  = Modifier && !strcmp(Modifier, "mem");
     if (!isMemOp && !isCallOp) O << '$';
 
-    GlobalValue *GV = MO.getGlobal();    
+    GlobalValue *GV = MO.getGlobal();
     std::string Name = Mang->getValueName(GV);
     
     bool isExt = (GV->isExternal() || GV->hasWeakLinkage() ||
                   GV->hasLinkOnceLinkage());
+    
+    X86SharedAsmPrinter::decorateName(Name, (Function*)GV);
+    
     if (X86PICStyle == PICStyle::Stub &&
         TM.getRelocationModel() != Reloc::Static) {
       // Link-once, External, or Weakly-linked global variables need
@@ -202,8 +217,6 @@ void X86ATTAsmPrinter::printOperand(const MachineInstr *MI, unsigned OpNo,
         }
       } else {
         if (GV->hasDLLImportLinkage()) {
-          // FIXME: This should be fixed with full support of stdcall & fastcall
-          // CC's
           O << "__imp_";          
         } 
         O << Name;
@@ -213,12 +226,9 @@ void X86ATTAsmPrinter::printOperand(const MachineInstr *MI, unsigned OpNo,
         O << "-\"L" << getFunctionNumber() << "$pb\"";
     } else {
       if (GV->hasDLLImportLinkage()) {
-        // FIXME: This should be fixed with full support of stdcall & fastcall
-        // CC's
         O << "__imp_";          
       }       
       O << Name;
-   
     }
     
     int Offset = MO.getOffset();

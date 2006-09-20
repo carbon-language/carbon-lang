@@ -17,6 +17,7 @@
 #define X86ASMPRINTER_H
 
 #include "X86.h"
+#include "X86MachineFunctionInfo.h"
 #include "X86TargetMachine.h"
 #include "llvm/CodeGen/AsmPrinter.h"
 #include "llvm/CodeGen/DwarfWriter.h"
@@ -44,6 +45,23 @@ struct VISIBILITY_HIDDEN X86SharedAsmPrinter : public AsmPrinter {
     : AsmPrinter(O, TM, T), DW(O, this, T), X86PICStyle(PICStyle::GOT) {
     Subtarget = &TM.getSubtarget<X86Subtarget>();
   }
+
+  typedef std::map<const Function*, X86FunctionInfo> FMFInfoMap ;
+
+  // We have to propagate some information about MachineFunction to
+  // AsmPrinter. It's ok, when we're printing the function, since we have
+  // access to MachineFunction and can get the appropriate  MachineFunctionInfo.
+  // Unfortunately, this is not possible when we're printing reference to
+  // Function (e.g. calling it and so on). Even more, there is no way to get the
+  // corresponding MachineFunctions: it can even be not created at all. That's
+  // why we should use additional structure, when we're collecting all necessary
+  // information.
+
+  // This structure is using e.g. for name decoration for stdcall & fastcall'ed
+  // function, since we have to use arguments' size for decoration.
+  FMFInfoMap FunctionInfoMap;
+
+  void decorateName(std::string& Name, const GlobalValue* GV);
 
   bool doInitialization(Module &M);
   bool doFinalization(Module &M);

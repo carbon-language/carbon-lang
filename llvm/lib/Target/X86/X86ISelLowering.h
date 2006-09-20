@@ -366,7 +366,15 @@ namespace llvm {
 
     // Fast Calling Convention implementation.
     SDOperand LowerFastCCArguments(SDOperand Op, SelectionDAG &DAG);
-    SDOperand LowerFastCCCallTo(SDOperand Op, SelectionDAG &DAG);
+    SDOperand LowerFastCCCallTo(SDOperand Op, SelectionDAG &DAG,
+                                bool isFastCall);
+
+    // StdCall Calling Convention implementation.
+    SDOperand LowerStdCallCCArguments(SDOperand Op, SelectionDAG &DAG);
+    SDOperand LowerStdCallCCCallTo(SDOperand Op, SelectionDAG &DAG);
+
+    // FastCall Calling Convention implementation.
+    SDOperand LowerFastCallCCArguments(SDOperand Op, SelectionDAG &DAG);
 
     SDOperand LowerBUILD_VECTOR(SDOperand Op, SelectionDAG &DAG);
     SDOperand LowerVECTOR_SHUFFLE(SDOperand Op, SelectionDAG &DAG);

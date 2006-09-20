@@ -16,6 +16,7 @@
 #include "X86IntelAsmPrinter.h"
 #include "X86TargetAsmInfo.h"
 #include "X86.h"
+#include "llvm/CallingConv.h"
 #include "llvm/Constants.h"
 #include "llvm/Module.h"
 #include "llvm/Assembly/Writer.h"
@@ -36,6 +37,16 @@ bool X86IntelAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
 
   // Print out labels for the function.
   const Function* F = MF.getFunction();
+  unsigned CC = F->getCallingConv();
+
+  // Populate function information map.  Actually, We don't want to populate
+  // non-stdcall or non-fastcall functions' information right now.
+  if (CC == CallingConv::X86_StdCall || CC == CallingConv::X86_FastCall) {
+    FunctionInfoMap[F] = *(MF.getInfo<X86FunctionInfo>());
+  }
+
+  X86SharedAsmPrinter::decorateName(CurrentFnName, F);
+
   switch (F->getLinkage()) {
   default: assert(0 && "Unsupported linkage type!");
   case Function::InternalLinkage:
@@ -132,6 +143,9 @@ void X86IntelAsmPrinter::printOp(const MachineOperand &MO,
     bool isCallOp = Modifier && !strcmp(Modifier, "call");
     bool isMemOp  = Modifier && !strcmp(Modifier, "mem");
     GlobalValue *GV = MO.getGlobal();    
+    std::string Name = Mang->getValueName(GV);
+
+    X86SharedAsmPrinter::decorateName(Name, GV);
 
     if (!isMemOp && !isCallOp) O << "OFFSET ";
     if (GV->hasDLLImportLinkage()) {
@@ -139,7 +153,7 @@ void X86IntelAsmPrinter::printOp(const MachineOperand &MO,
       // CC's
       O << "__imp_";          
     } 
-    O << Mang->getValueName(GV);
+    O << Name;
     int Offset = MO.getOffset();
     if (Offset > 0)
       O << " + " << Offset;
@@ -322,15 +336,30 @@ bool X86IntelAsmPrinter::doInitialization(Module &M) {
 
   // Emit declarations for external functions.
   for (Module::iterator I = M.begin(), E = M.end(); I != E; ++I)
-    if (I->isExternal())
-      O << "\textern " << Mang->getValueName(I) << ":near\n";
+    if (I->isExternal()) {
+      std::string Name = Mang->getValueName(I);
+      X86SharedAsmPrinter::decorateName(Name, I);
 
+      O << "\textern " ;
+      if (I->hasDLLImportLinkage()) {
+        O << "__imp_";
+      }      
+      O << Name << ":near\n";
+    }
+  
   // Emit declarations for external globals.  Note that VC++ always declares
   // external globals to have type byte, and if that's good enough for VC++...
   for (Module::const_global_iterator I = M.global_begin(), E = M.global_end();
        I != E; ++I) {
-    if (I->isExternal())
-      O << "\textern " << Mang->getValueName(I) << ":byte\n";
+    if (I->isExternal()) {
+      std::string Name = Mang->getValueName(I);
+
+      O << "\textern " ;
+      if (I->hasDLLImportLinkage()) {
+        O << "__imp_";
+      }      
+      O << Name << ":byte\n";
+    }
   }
 
   return false;

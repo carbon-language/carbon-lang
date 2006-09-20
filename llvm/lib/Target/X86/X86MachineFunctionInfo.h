@@ -18,18 +18,47 @@
 
 namespace llvm {
 
+enum NameDecorationStyle {
+  None,
+  StdCall,
+  FastCall
+};
+  
 /// X86FunctionInfo - This class is derived from MachineFunction private
 /// X86 target-specific information for each MachineFunction.
 class X86FunctionInfo : public MachineFunctionInfo {
-  // ForceFramePointer - True if the function is required to use of frame
-  // pointer for reasons other than it containing dynamic allocation or 
-  // that FP eliminatation is turned off. For example, Cygwin main function
-  // contains stack pointer re-alignment code which requires FP.
+  /// ForceFramePointer - True if the function is required to use of frame
+  /// pointer for reasons other than it containing dynamic allocation or 
+  /// that FP eliminatation is turned off. For example, Cygwin main function
+  /// contains stack pointer re-alignment code which requires FP.
   bool ForceFramePointer;
+
+  /// BytesToPopOnReturn - amount of bytes function pops on return.
+  /// Used on windows platform for stdcall & fastcall name decoration
+  unsigned BytesToPopOnReturn;
+
+  /// If the function requires additional name decoration, DecorationStyle holds
+  /// the right way to do so.
+  NameDecorationStyle DecorationStyle;
+  
 public:
-  X86FunctionInfo(MachineFunction& MF) : ForceFramePointer(false) {}
+  X86FunctionInfo() : ForceFramePointer(false),
+                      BytesToPopOnReturn(0),
+                      DecorationStyle(None) {}
+  
+  X86FunctionInfo(MachineFunction& MF) : ForceFramePointer(false),
+                                         BytesToPopOnReturn(0),
+                                         DecorationStyle(None) {}
+  
   bool getForceFramePointer() const { return ForceFramePointer;} 
   void setForceFramePointer(bool forceFP) { ForceFramePointer = forceFP; }
+
+  unsigned getBytesToPopOnReturn() const { return BytesToPopOnReturn; }
+  void setBytesToPopOnReturn (unsigned bytes) { BytesToPopOnReturn = bytes;}
+
+  NameDecorationStyle getDecorationStyle() const { return DecorationStyle; }
+  void setDecorationStyle(NameDecorationStyle style) { DecorationStyle = style;}
+  
 };
 } // End llvm namespace
 
