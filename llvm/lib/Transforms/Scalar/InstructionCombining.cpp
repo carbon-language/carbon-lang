@@ -1608,7 +1608,8 @@ FoundSExt:
       const Type *SIntPtrTy = UIntPtrTy->getSignedVersion();
       if((CI->getType() == UIntPtrTy || CI->getType() == SIntPtrTy) 
 	 && isa<PointerType>(CI->getOperand(0)->getType())) {
-	Instruction* I2 = new CastInst(CI->getOperand(0), PointerType::get(Type::SByteTy), "ctg", &I);
+	Instruction* I2 = new CastInst(CI->getOperand(0),
+                                    PointerType::get(Type::SByteTy), "ctg", &I);
 	WorkList.push_back(I2);
 	I2 = new GetElementPtrInst(I2, Other, "ctg", &I);
 	WorkList.push_back(I2);
