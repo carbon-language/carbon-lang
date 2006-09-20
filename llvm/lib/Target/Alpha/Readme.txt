@@ -1,6 +1,19 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 Fix cmovs with a constant on the wrong side
 
+aka:
+        lda $0,10($31)
+        cmovlt $17,$0,$16
+
+is bad for:
+
+long %cmov_lt2(long %a, long %c) {
+entry:
+	%tmp.1 = setlt long %c, 0
+	%retval = select bool %tmp.1, long 10, long %a
+	ret long %retval
+}
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 Fix Ordered/Unordered FP stuff
 
