@@ -524,6 +524,9 @@ Value *PredicateSimplifier::resolve(SetCondInst *SCI,
                                     const PropertySet &KP) {
   // Attempt to resolve the SetCondInst to a boolean.
 
+  static ConstantBool *True  = ConstantBool::True,
+                      *False = ConstantBool::False;
+
   Value *SCI0 = resolve(SCI->getOperand(0), KP),
         *SCI1 = resolve(SCI->getOperand(1), KP);
 
@@ -536,10 +539,8 @@ Value *PredicateSimplifier::resolve(SetCondInst *SCI,
 
     if (NE != KP.Properties.end()) {
       switch (SCI->getOpcode()) {
-        case Instruction::SetEQ:
-          return ConstantBool::False;
-        case Instruction::SetNE:
-          return ConstantBool::True;
+        case Instruction::SetEQ: return False;
+        case Instruction::SetNE: return True;
         case Instruction::SetLE:
         case Instruction::SetGE:
         case Instruction::SetLT:
@@ -553,25 +554,20 @@ Value *PredicateSimplifier::resolve(SetCondInst *SCI,
     return SCI;
   }
 
+  uint64_t I1 = CI1->getRawValue(), I2 = CI2->getRawValue();
   switch(SCI->getOpcode()) {
-    case Instruction::SetLE:
-    case Instruction::SetGE:
-    case Instruction::SetEQ:
-      if (CI1->getRawValue() == CI2->getRawValue())
-        return ConstantBool::True;
-      else
-        return ConstantBool::False;
-    case Instruction::SetLT:
-    case Instruction::SetGT:
-    case Instruction::SetNE:
-      if (CI1->getRawValue() == CI2->getRawValue())
-        return ConstantBool::False;
-      else
-        return ConstantBool::True;
+    case Instruction::SetLE: if (I1 <= I2) return True; else return False;
+    case Instruction::SetGE: if (I1 >= I2) return True; else return False;
+    case Instruction::SetEQ: if (I1 == I2) return True; else return False;
+    case Instruction::SetLT: if (I1 <  I2) return True; else return False;
+    case Instruction::SetGT: if (I1 >  I2) return True; else return False;
+    case Instruction::SetNE: if (I1 != I2) return True; else return False;
     default:
       assert(0 && "Unknown opcode in SetContInst.");
       break;
   }
+
+  return SCI;
 }
 
 Value *PredicateSimplifier::resolve(BinaryOperator *BO,
