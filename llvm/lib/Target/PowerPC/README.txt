@@ -546,14 +546,6 @@ _foo:
 
 ===-------------------------------------------------------------------------===
 
-On PPC64, this results in a truncate followed by a truncstore.  These should
-be folded together.
-
-unsigned short G;
-void foo(unsigned long H) { G = H; }
-
-===-------------------------------------------------------------------------===
-
 We compile:
 
 unsigned test6(unsigned x) { 
