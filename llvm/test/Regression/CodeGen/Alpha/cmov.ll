@@ -1,7 +1,7 @@
 ; RUN: llvm-as < %s | llc -march=alpha | not grep cmovlt
 ; RUN: llvm-as < %s | llc -march=alpha | grep cmoveq
 
-long %cmovlt_(long %a, long %c) {
+long %cmov_lt(long %a, long %c) {
 entry:
 	%tmp.1 = setlt long %c, 0
 	%retval = select bool %tmp.1, long %a, long 10
@@ -15,3 +15,9 @@ entry:
         ret long %retval
 }
 
+long %cmov_lt2(long %a, long %c) {
+entry:
+	%tmp.1 = setgt long %c, 0
+	%retval = select bool %tmp.1, long 10, long %a
+	ret long %retval
+}
