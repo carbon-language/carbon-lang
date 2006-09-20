@@ -1858,9 +1858,15 @@ SDOperand DAGCombiner::visitANY_EXTEND(SDNode *N) {
       N0.getOpcode() == ISD::SIGN_EXTEND)
     return DAG.getNode(N0.getOpcode(), VT, N0.getOperand(0));
   
-  // fold (aext (truncate x)) -> x iff x size == zext size.
-  if (N0.getOpcode() == ISD::TRUNCATE && N0.getOperand(0).getValueType() == VT)
-    return N0.getOperand(0);
+  // fold (aext (truncate x))
+  if (N0.getOpcode() == ISD::TRUNCATE) {
+    SDOperand TruncOp = N0.getOperand(0);
+    if (TruncOp.getValueType() == VT)
+      return TruncOp; // x iff x size == zext size.
+    if (TruncOp.getValueType() > VT)
+      return DAG.getNode(ISD::TRUNCATE, VT, TruncOp);
+    return DAG.getNode(ISD::ANY_EXTEND, VT, TruncOp);
+  }
   // fold (aext (load x)) -> (aext (truncate (extload x)))
   if (N0.getOpcode() == ISD::LOAD && N0.hasOneUse() &&
       (!AfterLegalize||TLI.isOperationLegal(ISD::EXTLOAD, N0.getValueType()))) {
