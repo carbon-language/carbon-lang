@@ -49,9 +49,11 @@ namespace {
 
   struct VISIBILITY_HIDDEN PPCAsmPrinter : public AsmPrinter {
     std::set<std::string> FnStubs, GVStubs;
+    const PPCSubtarget &Subtarget;
     
     PPCAsmPrinter(std::ostream &O, TargetMachine &TM, const TargetAsmInfo *T)
-      : AsmPrinter(O, TM, T) {}
+      : AsmPrinter(O, TM, T), Subtarget(TM.getSubtarget<PPCSubtarget>()) {
+    }
 
     virtual const char *getPassName() const {
       return "PowerPC Assembly Printer";
@@ -248,7 +250,7 @@ namespace {
     DarwinAsmPrinter(std::ostream &O, PPCTargetMachine &TM,
                      const TargetAsmInfo *T)
       : PPCAsmPrinter(O, TM, T), DW(O, this, T) {
-      bool isPPC64 = TM.getSubtargetImpl()->isPPC64();
+      bool isPPC64 = Subtarget.isPPC64();
     }
 
     virtual const char *getPassName() const {
@@ -480,7 +482,7 @@ bool DarwinAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
 
 
 bool DarwinAsmPrinter::doInitialization(Module &M) {
-  if (TM.getSubtarget<PPCSubtarget>().isGigaProcessor())
+  if (Subtarget.isGigaProcessor())
     O << "\t.machine ppc970\n";
   AsmPrinter::doInitialization(M);
   
@@ -637,7 +639,8 @@ bool DarwinAsmPrinter::doFinalization(Module &M) {
   // implementation of multiple entry points).  If this doesn't occur, the
   // linker can safely perform dead code stripping.  Since LLVM never generates
   // code that does this, it is always safe to set.
-  O << "\t.subsections_via_symbols\n";
+  if (Subtarget.isDarwin())
+    O << "\t.subsections_via_symbols\n";
 
   AsmPrinter::doFinalization(M);
   return false; // success
