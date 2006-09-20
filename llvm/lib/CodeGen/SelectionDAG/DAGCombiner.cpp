@@ -3168,7 +3168,6 @@ SDOperand DAGCombiner::SimplifySelectCC(SDOperand N0, SDOperand N1,
                                         ISD::CondCode CC) {
   
   MVT::ValueType VT = N2.getValueType();
-  //ConstantSDNode *N0C = dyn_cast<ConstantSDNode>(N0.Val);
   ConstantSDNode *N1C = dyn_cast<ConstantSDNode>(N1.Val);
   ConstantSDNode *N2C = dyn_cast<ConstantSDNode>(N2.Val);
   ConstantSDNode *N3C = dyn_cast<ConstantSDNode>(N3.Val);
@@ -3204,9 +3203,11 @@ SDOperand DAGCombiner::SimplifySelectCC(SDOperand N0, SDOperand N1,
   
   // Check to see if we can perform the "gzip trick", transforming
   // select_cc setlt X, 0, A, 0 -> and (sra X, size(X)-1), A
-  if (N1C && N1C->isNullValue() && N3C && N3C->isNullValue() &&
+  if (N1C && N3C && N3C->isNullValue() && CC == ISD::SETLT &&
       MVT::isInteger(N0.getValueType()) && 
-      MVT::isInteger(N2.getValueType()) && CC == ISD::SETLT) {
+      MVT::isInteger(N2.getValueType()) && 
+      (N1C->isNullValue() ||                    // (a < 0) ? b : 0
+       (N1C->getValue() == 1 && N0 == N2))) {   // (a < 1) ? a : 0
     MVT::ValueType XType = N0.getValueType();
     MVT::ValueType AType = N2.getValueType();
     if (XType >= AType) {
