@@ -49,52 +49,22 @@ namespace {
   Statistic<>
   NumInstruction("predsimplify", "Number of instructions removed");
 
-  /// Returns true if V1 is a better choice than V2. Note that it is
-  /// not a total ordering.
-  struct compare {
-    bool operator()(Value *V1, Value *V2) const {
-      if (isa<Constant>(V1)) {
-        if (!isa<Constant>(V2)) {
-          return true;
-        }
-      } else if (isa<Argument>(V1)) {
-        if (!isa<Constant>(V2) && !isa<Argument>(V2)) {
-          return true;
-        }
-      }
-      if (User *U = dyn_cast<User>(V2)) {
-        for (User::const_op_iterator I = U->op_begin(), E = U->op_end();
-             I != E; ++I) {
-          if (*I == V1) {
-            return true;
-          }
-        }
-      }
-      return false;
-    }
-  };
-
-  /// Used for choosing the canonical Value in a synonym set.
-  /// Leaves the better choice in V1.
-  static void order(Value *&V1, Value *&V2) {
-    static compare c;
-    if (c(V2, V1))
-      std::swap(V1, V2);
-  }
+  class PropertySet;
 
   /// Similar to EquivalenceClasses, this stores the set of equivalent
-  /// types. Beyond EquivalenceClasses, it allows the user to specify
-  /// which element will act as leader through a StrictWeakOrdering
-  /// function.
-  template<typename ElemTy, typename StrictWeak>
+  /// types. Beyond EquivalenceClasses, it allows us to specify which
+  /// element will act as leader.
+  template<typename ElemTy>
   class VISIBILITY_HIDDEN Synonyms {
     std::map<ElemTy, unsigned> mapping;
     std::vector<ElemTy> leaders;
-    StrictWeak swo;
+    PropertySet *PS;
 
   public:
     typedef unsigned iterator;
     typedef const unsigned const_iterator;
+
+    Synonyms(PropertySet *PS) : PS(PS) {}
 
     // Inspection
 
@@ -102,7 +72,7 @@ namespace {
       return leaders.empty();
     }
 
-    unsigned countLeaders() const {
+    typename std::vector<ElemTy>::size_type countLeaders() const {
       return leaders.size();
     }
 
@@ -151,50 +121,8 @@ namespace {
     /// Combine two sets referring to the same element, inserting the
     /// elements as needed. Returns a valid iterator iff two already
     /// existing disjoint synonym sets were combined. The iterator
-    /// points to the removed element.
-    iterator unionSets(ElemTy E1, ElemTy E2) {
-      if (swo(E2, E1)) std::swap(E1, E2);
-
-      iterator I1 = findLeader(E1),
-               I2 = findLeader(E2);
-
-      if (!I1 && !I2) { // neither entry is in yet
-        leaders.push_back(E1);
-        I1 = leaders.size();
-        mapping[E1] = I1;
-        mapping[E2] = I1;
-        return 0;
-      }
-
-      if (!I1 && I2) {
-        mapping[E1] = I2;
-        std::swap(getLeader(I2), E1);
-        return 0;
-      }
-
-      if (I1 && !I2) {
-        mapping[E2] = I1;
-        return 0;
-      }
-
-      if (I1 == I2) return 0;
-
-      // This is the case where we have two sets, [%a1, %a2, %a3] and
-      // [%p1, %p2, %p3] and someone says that %a2 == %p3. We need to
-      // combine the two synsets.
-
-      if (I1 > I2) --I1;
-
-      for (std::map<Value *, unsigned>::iterator I = mapping.begin(),
-           E = mapping.end(); I != E; ++I) {
-        if (I->second == I2) I->second = I1;
-        else if (I->second > I2) --I->second;
-      }
-
-      leaders.erase(leaders.begin() + I2 - 1);
-
-      return I2;
-    }
+    /// points to the no longer existing element.
+    iterator unionSets(ElemTy E1, ElemTy E2);
 
     /// Returns an iterator pointing to the synonym set containing
     /// element e. If none exists, a new one is created and returned.
@@ -212,13 +140,51 @@ namespace {
   /// Represents the set of equivalent Value*s and provides insertion
   /// and fast lookup. Also stores the set of inequality relationships.
   class PropertySet {
+    /// Returns true if V1 is a better choice than V2. Note that it is
+    /// not a total ordering.
+    bool compare(Value *V1, Value *V2) const {
+      if (isa<Constant>(V1)) {
+        if (!isa<Constant>(V2)) {
+          return true;
+        }
+      } else if (isa<Argument>(V1)) {
+        if (!isa<Constant>(V2) && !isa<Argument>(V2)) {
+          return true;
+        }
+      }
+      if (Instruction *I1 = dyn_cast<Instruction>(V1)) {
+        if (Instruction *I2 = dyn_cast<Instruction>(V2)) {
+          BasicBlock *BB1 = I1->getParent(),
+                     *BB2 = I2->getParent();
+          if (BB1 == BB2) {
+            for (BasicBlock::const_iterator I = BB1->begin(), E = BB1->end();
+                 I != E; ++I) {
+              if (&*I == I1) return true;
+              if (&*I == I2) return false;
+            }
+            assert(0 && "Instructions not found in parent BasicBlock?");
+          } else
+            return DT->getNode(BB1)->properlyDominates(DT->getNode(BB2));
+        }
+      }
+      return false;
+    }
+
     struct Property;
   public:
-    class Synonyms<Value *, compare> union_find;
+    /// Choose the canonical Value in a synonym set.
+    /// Leaves the more canonical choice in V1.
+    void order(Value *&V1, Value *&V2) const {
+      if (compare(V2, V1)) std::swap(V1, V2);
+    }
+
+    PropertySet(DominatorTree *DT) : union_find(this), DT(DT) {}
+
+    class Synonyms<Value *> union_find;
 
     typedef std::vector<Property>::iterator       PropertyIterator;
     typedef std::vector<Property>::const_iterator ConstPropertyIterator;
-    typedef Synonyms<Value *, compare>::iterator  SynonymIterator;
+    typedef Synonyms<Value *>::iterator  SynonymIterator;
 
     enum Ops {
       EQ,
@@ -231,7 +197,7 @@ namespace {
     }
 
     Value *lookup(Value *V) const {
-      Synonyms<Value *, compare>::iterator SI = union_find.findLeader(V);
+      SynonymIterator SI = union_find.findLeader(V);
       if (!SI) return NULL;
       return union_find.getLeader(SI);
     }
@@ -313,7 +279,7 @@ namespace {
     // Represents Head OP [Tail1, Tail2, ...]
     // For example: %x != %a, %x != %b.
     struct VISIBILITY_HIDDEN Property {
-      typedef Synonyms<Value *, compare>::iterator Iter;
+      typedef SynonymIterator Iter;
 
       Property(Ops opcode, Iter i1, Iter i2)
         : Opcode(opcode), I1(i1), I2(i2)
@@ -421,6 +387,7 @@ namespace {
       }
     }
 
+    DominatorTree *DT;
   public:
 #ifdef DEBUG
     void debug(std::ostream &os) const {
@@ -484,6 +451,52 @@ namespace {
 
   RegisterPass<PredicateSimplifier> X("predsimplify",
                                       "Predicate Simplifier");
+
+  template <typename ElemTy>
+  typename Synonyms<ElemTy>::iterator
+  Synonyms<ElemTy>::unionSets(ElemTy E1, ElemTy E2) {
+    PS->order(E1, E2);
+
+    iterator I1 = findLeader(E1),
+             I2 = findLeader(E2);
+
+    if (!I1 && !I2) { // neither entry is in yet
+      leaders.push_back(E1);
+      I1 = leaders.size();
+      mapping[E1] = I1;
+      mapping[E2] = I1;
+      return 0;
+    }
+
+    if (!I1 && I2) {
+      mapping[E1] = I2;
+      std::swap(getLeader(I2), E1);
+      return 0;
+    }
+
+    if (I1 && !I2) {
+      mapping[E2] = I1;
+      return 0;
+    }
+
+    if (I1 == I2) return 0;
+
+    // This is the case where we have two sets, [%a1, %a2, %a3] and
+    // [%p1, %p2, %p3] and someone says that %a2 == %p3. We need to
+    // combine the two synsets.
+
+    if (I1 > I2) --I1;
+
+    for (std::map<Value *, unsigned>::iterator I = mapping.begin(),
+         E = mapping.end(); I != E; ++I) {
+      if (I->second == I2) I->second = I1;
+      else if (I->second > I2) --I->second;
+    }
+
+    leaders.erase(leaders.begin() + I2 - 1);
+
+    return I2;
+  }
 }
 
 FunctionPass *llvm::createPredicateSimplifierPass() {
@@ -494,7 +507,7 @@ bool PredicateSimplifier::runOnFunction(Function &F) {
   DT = &getAnalysis<DominatorTree>();
 
   modified = false;
-  PropertySet KnownProperties;
+  PropertySet KnownProperties(DT);
   visitBasicBlock(DT->getRootNode()->getBlock(), KnownProperties);
   return modified;
 }
@@ -614,6 +627,7 @@ void PredicateSimplifier::visitInstruction(Instruction *I,
   if (V != I) {
     modified = true;
     ++NumInstruction;
+    DEBUG(std::cerr << "Removing " << *I);
     I->replaceAllUsesWith(V);
     I->eraseFromParent();
     return;
