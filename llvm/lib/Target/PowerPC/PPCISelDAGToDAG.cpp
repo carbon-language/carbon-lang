@@ -303,7 +303,7 @@ static bool isInt32Immediate(SDNode *N, unsigned &Imm) {
 /// isInt64Immediate - This method tests to see if the node is a 64-bit constant
 /// operand.  If so Imm will receive the 64-bit value.
 static bool isInt64Immediate(SDNode *N, uint64_t &Imm) {
-  if (N->getOpcode() == ISD::Constant && N->getValueType(0) == MVT::i32) {
+  if (N->getOpcode() == ISD::Constant && N->getValueType(0) == MVT::i64) {
     Imm = cast<ConstantSDNode>(N)->getValue();
     return true;
   }
@@ -740,7 +740,35 @@ SDOperand PPCDAGToDAGISel::SelectCC(SDOperand LHS, SDOperand RHS,
     }
   } else if (LHS.getValueType() == MVT::i64) {
     uint64_t Imm;
-    if (ISD::isUnsignedIntSetCC(CC)) {
+    if (CC == ISD::SETEQ || CC == ISD::SETNE) {
+      if (isInt64Immediate(RHS.Val, Imm)) {
+        // SETEQ/SETNE comparison with 16-bit immediate, fold it.
+        if (isUInt16(Imm))
+          return SDOperand(CurDAG->getTargetNode(PPC::CMPLDI, MVT::i64, LHS,
+                                                 getI32Imm(Imm & 0xFFFF)), 0);
+        // If this is a 16-bit signed immediate, fold it.
+        if (isInt16(Imm))
+          return SDOperand(CurDAG->getTargetNode(PPC::CMPDI, MVT::i64, LHS,
+                                                 getI32Imm(Imm & 0xFFFF)), 0);
+        
+        // For non-equality comparisons, the default code would materialize the
+        // constant, then compare against it, like this:
+        //   lis r2, 4660
+        //   ori r2, r2, 22136 
+        //   cmpd cr0, r3, r2
+        // Since we are just comparing for equality, we can emit this instead:
+        //   xoris r0,r3,0x1234
+        //   cmpldi cr0,r0,0x5678
+        //   beq cr0,L6
+        if (isUInt32(Imm)) {
+          SDOperand Xor(CurDAG->getTargetNode(PPC::XORIS8, MVT::i64, LHS,
+                                              getI64Imm(Imm >> 16)), 0);
+          return SDOperand(CurDAG->getTargetNode(PPC::CMPLDI, MVT::i64, Xor,
+                                                 getI64Imm(Imm & 0xFFFF)), 0);
+        }
+      }
+      Opc = PPC::CMPLD;
+    } else if (ISD::isUnsignedIntSetCC(CC)) {
       if (isInt64Immediate(RHS.Val, Imm) && isUInt16(Imm))
         return SDOperand(CurDAG->getTargetNode(PPC::CMPLDI, MVT::i64, LHS,
                                                getI64Imm(Imm & 0xFFFF)), 0);
@@ -749,7 +777,7 @@ SDOperand PPCDAGToDAGISel::SelectCC(SDOperand LHS, SDOperand RHS,
       short SImm;
       if (isIntS16Immediate(RHS, SImm))
         return SDOperand(CurDAG->getTargetNode(PPC::CMPDI, MVT::i64, LHS,
-                                               getI64Imm((int)SImm & 0xFFFF)),
+                                               getI64Imm(SImm & 0xFFFF)),
                          0);
       Opc = PPC::CMPD;
     }
