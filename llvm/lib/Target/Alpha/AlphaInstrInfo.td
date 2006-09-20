@@ -214,6 +214,20 @@ def : Pat<(select GPRC:$which, GPRC:$src1, GPRC:$src2),
 def : Pat<(select GPRC:$which, GPRC:$src1, immUExt8:$src2),
       (CMOVEQi GPRC:$src1, immUExt8:$src2, GPRC:$which)>;
 
+//Invert sense when we can for constants:
+def : Pat<(select (seteq GPRC:$RCOND, 0), immUExt8:$RFALSE, GPRC:$RTRUE),
+          (CMOVEQi GPRC:$RTRUE, immUExt8:$RFALSE, GPRC:$RCOND)>;
+def : Pat<(select (setne GPRC:$RCOND, 0), immUExt8:$RFALSE, GPRC:$RTRUE),
+          (CMOVNEi GPRC:$RTRUE, immUExt8:$RFALSE, GPRC:$RCOND)>;
+def : Pat<(select (setgt GPRC:$RCOND, 0), immUExt8:$RFALSE, GPRC:$RTRUE),
+          (CMOVGTi GPRC:$RTRUE, immUExt8:$RFALSE, GPRC:$RCOND)>;
+def : Pat<(select (setge GPRC:$RCOND, 0), immUExt8:$RFALSE, GPRC:$RTRUE),
+          (CMOVGEi GPRC:$RTRUE, immUExt8:$RFALSE, GPRC:$RCOND)>;
+def : Pat<(select (setlt GPRC:$RCOND, 0), immUExt8:$RFALSE, GPRC:$RTRUE),
+          (CMOVLTi GPRC:$RTRUE, immUExt8:$RFALSE, GPRC:$RCOND)>;
+def : Pat<(select (setle GPRC:$RCOND, 0), immUExt8:$RFALSE, GPRC:$RTRUE),
+          (CMOVLEi GPRC:$RTRUE, immUExt8:$RFALSE, GPRC:$RCOND)>;
+
 
 def ADDL     : OForm< 0x10, 0x00, "addl $RA,$RB,$RC",
                       [(set GPRC:$RC, (intop (add GPRC:$RA, GPRC:$RB)))], s_iadd>;
