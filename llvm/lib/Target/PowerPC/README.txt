@@ -50,27 +50,6 @@ we don't have to always run the branch selector for small functions.
 
 ===-------------------------------------------------------------------------===
 
-* Codegen this:
-
-   void test2(int X) {
-     if (X == 0x12345678) bar();
-   }
-
-    as:
-
-       xoris r0,r3,0x1234
-       cmplwi cr0,r0,0x5678
-       beq cr0,L6
-
-    not:
-
-        lis r2, 4660
-        ori r2, r2, 22136 
-        cmpw cr0, r3, r2  
-        bne .LBB_test2_2
-
-===-------------------------------------------------------------------------===
-
 Lump the constant pool for each function into ONE pic object, and reference
 pieces of it as offsets from the start.  For functions like this (contrived
 to have lots of constants obviously):

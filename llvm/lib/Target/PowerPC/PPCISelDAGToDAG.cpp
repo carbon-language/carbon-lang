@@ -699,7 +699,33 @@ SDOperand PPCDAGToDAGISel::SelectCC(SDOperand LHS, SDOperand RHS,
   
   if (LHS.getValueType() == MVT::i32) {
     unsigned Imm;
-    if (ISD::isUnsignedIntSetCC(CC)) {
+    if (CC == ISD::SETEQ || CC == ISD::SETNE) {
+      if (isInt32Immediate(RHS, Imm)) {
+        // SETEQ/SETNE comparison with 16-bit immediate, fold it.
+        if (isUInt16(Imm))
+          return SDOperand(CurDAG->getTargetNode(PPC::CMPLWI, MVT::i32, LHS,
+                                                 getI32Imm(Imm & 0xFFFF)), 0);
+        // If this is a 16-bit signed immediate, fold it.
+        if (isInt16(Imm))
+          return SDOperand(CurDAG->getTargetNode(PPC::CMPWI, MVT::i32, LHS,
+                                                 getI32Imm(Imm & 0xFFFF)), 0);
+        
+        // For non-equality comparisons, the default code would materialize the
+        // constant, then compare against it, like this:
+        //   lis r2, 4660
+        //   ori r2, r2, 22136 
+        //   cmpw cr0, r3, r2
+        // Since we are just comparing for equality, we can emit this instead:
+        //   xoris r0,r3,0x1234
+        //   cmplwi cr0,r0,0x5678
+        //   beq cr0,L6
+        SDOperand Xor(CurDAG->getTargetNode(PPC::XORIS, MVT::i32, LHS,
+                                            getI32Imm(Imm >> 16)), 0);
+        return SDOperand(CurDAG->getTargetNode(PPC::CMPLWI, MVT::i32, Xor,
+                                               getI32Imm(Imm & 0xFFFF)), 0);
+      }
+      Opc = PPC::CMPLW;
+    } else if (ISD::isUnsignedIntSetCC(CC)) {
       if (isInt32Immediate(RHS, Imm) && isUInt16(Imm))
         return SDOperand(CurDAG->getTargetNode(PPC::CMPLWI, MVT::i32, LHS,
                                                getI32Imm(Imm & 0xFFFF)), 0);
