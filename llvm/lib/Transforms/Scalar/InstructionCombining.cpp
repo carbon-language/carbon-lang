@@ -1603,18 +1603,14 @@ FoundSExt:
       CI = dyn_cast<CastInst>(RHS);
       Other = LHS;
     }
-    if (CI) {
-      const Type *UIntPtrTy = TD->getIntPtrType();
-      const Type *SIntPtrTy = UIntPtrTy->getSignedVersion();
-      if((CI->getType() == UIntPtrTy || CI->getType() == SIntPtrTy) 
-	 && isa<PointerType>(CI->getOperand(0)->getType())) {
-	Instruction* I2 = new CastInst(CI->getOperand(0),
-                                    PointerType::get(Type::SByteTy), "ctg", &I);
-	WorkList.push_back(I2);
-	I2 = new GetElementPtrInst(I2, Other, "ctg", &I);
-	WorkList.push_back(I2);
-	return new CastInst(I2, CI->getType());
-      }
+    if (CI && CI->getType()->isSized() && 
+        (CI->getType()->getPrimitiveSize() == 
+         TD->getIntPtrType()->getPrimitiveSize()) 
+        && isa<PointerType>(CI->getOperand(0)->getType())) {
+      Value* I2 = InsertCastBefore(CI->getOperand(0),
+                                   PointerType::get(Type::SByteTy), I);
+      I2 = InsertNewInstBefore(new GetElementPtrInst(I2, Other, "ctg2"), I);
+      return new CastInst(I2, CI->getType());
     }
   }
 
