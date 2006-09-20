@@ -22,7 +22,6 @@
 // FIXME: shr X, (and Y,31) -> shr X, Y   (TRICKY!)
 // FIXME: mul (x, const) -> shifts + adds
 // FIXME: undef values
-// FIXME: make truncate see through SIGN_EXTEND and AND
 // FIXME: divide by zero is currently left unfolded.  do we want to turn this
 //        into an undef?
 // FIXME: select ne (select cc, 1, 0), 0, true, false -> select cc, true, false
@@ -1721,13 +1720,25 @@ SDOperand DAGCombiner::visitSELECT_CC(SDNode *N) {
   ConstantSDNode *N2C = dyn_cast<ConstantSDNode>(N2);
   ISD::CondCode CC = cast<CondCodeSDNode>(N4)->get();
   
-  // Determine if the condition we're dealing with is constant
-  SDOperand SCC = SimplifySetCC(TLI.getSetCCResultTy(), N0, N1, CC, false);
-  //ConstantSDNode *SCCC = dyn_cast_or_null<ConstantSDNode>(SCC.Val);
-  
   // fold select_cc lhs, rhs, x, x, cc -> x
   if (N2 == N3)
     return N2;
+  
+  // Determine if the condition we're dealing with is constant
+  SDOperand SCC = SimplifySetCC(TLI.getSetCCResultTy(), N0, N1, CC, false);
+
+  if (ConstantSDNode *SCCC = dyn_cast_or_null<ConstantSDNode>(SCC.Val)) {
+    if (SCCC->getValue())
+      return N2;    // cond always true -> true val
+    else
+      return N3;    // cond always false -> false val
+  }
+  
+  // Fold to a simpler select_cc
+  if (SCC.Val && SCC.getOpcode() == ISD::SETCC)
+    return DAG.getNode(ISD::SELECT_CC, N2.getValueType(), 
+                       SCC.getOperand(0), SCC.getOperand(1), N2, N3, 
+                       SCC.getOperand(2));
   
   // If we can fold this based on the true/false value, do so.
   if (SimplifySelectOps(N, N2, N3))
@@ -3340,6 +3351,30 @@ SDOperand DAGCombiner::SimplifySetCC(MVT::ValueType VT, SDOperand N0,
       case ISD::SETGE:  return DAG.getConstant((int64_t)C0 >= (int64_t)C1, VT);
       }
     } else {
+      // If the LHS is '(srl (ctlz x), 5)', the RHS is 0/1, and this is an
+      // equality comparison, then we're just comparing whether X itself is
+      // zero.
+      if (N0.getOpcode() == ISD::SRL && (C1 == 0 || C1 == 1) &&
+          N0.getOperand(0).getOpcode() == ISD::CTLZ &&
+          N0.getOperand(1).getOpcode() == ISD::Constant) {
+        unsigned ShAmt = cast<ConstantSDNode>(N0.getOperand(1))->getValue();
+        if ((Cond == ISD::SETEQ || Cond == ISD::SETNE) &&
+            ShAmt == Log2_32(MVT::getSizeInBits(N0.getValueType()))) {
+          if ((C1 == 0) == (Cond == ISD::SETEQ)) {
+            // (srl (ctlz x), 5) == 0  -> X != 0
+            // (srl (ctlz x), 5) != 1  -> X != 0
+            Cond = ISD::SETNE;
+          } else {
+            // (srl (ctlz x), 5) != 0  -> X == 0
+            // (srl (ctlz x), 5) == 1  -> X == 0
+            Cond = ISD::SETEQ;
+          }
+          SDOperand Zero = DAG.getConstant(0, N0.getValueType());
+          return DAG.getSetCC(VT, N0.getOperand(0).getOperand(0),
+                              Zero, Cond);
+        }
+      }
+      
       // If the LHS is a ZERO_EXTEND, perform the comparison on the input.
       if (N0.getOpcode() == ISD::ZERO_EXTEND) {
         unsigned InSize = MVT::getSizeInBits(N0.getOperand(0).getValueType());
