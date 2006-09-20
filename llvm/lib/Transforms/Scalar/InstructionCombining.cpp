@@ -5713,48 +5713,12 @@ Instruction *InstCombiner::visitSelectInst(SelectInst &SI) {
         return new CastInst(NotCond, SI.getType());
       }
 
-      if (SetCondInst *IC = dyn_cast<SetCondInst>(SI.getCondition())) {
-
-        // (x <s 0) ? -1 : 0 -> sra x, 31
-        // (x >u 2147483647) ? -1 : 0 -> sra x, 31
-        if (TrueValC->isAllOnesValue() && FalseValC->isNullValue())
-          if (ConstantInt *CmpCst = dyn_cast<ConstantInt>(IC->getOperand(1))) {
-            bool CanXForm = false;
-            if (CmpCst->getType()->isSigned())
-              CanXForm = CmpCst->isNullValue() && 
-                         IC->getOpcode() == Instruction::SetLT;
-            else {
-              unsigned Bits = CmpCst->getType()->getPrimitiveSizeInBits();
-              CanXForm = (CmpCst->getRawValue() == ~0ULL >> (64-Bits+1)) &&
-                         IC->getOpcode() == Instruction::SetGT;
-            }
-            
-            // The comparison constant and the result are not neccessarily the
-            // same width.  In any case, the first step to do is make sure that
-            // X is signed.
-            Value *X = IC->getOperand(0);
-            if (!X->getType()->isSigned())
-              X = InsertCastBefore(X, X->getType()->getSignedVersion(), SI);
-            
-            // Now that X is signed, we have to make the all ones value.  Do
-            // this by inserting a new SRA.
-            unsigned Bits = X->getType()->getPrimitiveSizeInBits();
-            Constant *ShAmt = ConstantUInt::get(Type::UByteTy, Bits-1);
-            Instruction *SRA = new ShiftInst(Instruction::Shr, X, ShAmt,"ones");
-            InsertNewInstBefore(SRA, SI);
-            
-            // Finally, convert to the type of the select RHS.  If this is
-            // smaller than the compare value, it will truncate the ones to fit.
-            // If it is larger, it will sext the ones to fit.
-            return new CastInst(SRA, SI.getType());
-          }
-
-
-        // If one of the constants is zero (we know they can't both be) and we
-        // have a setcc instruction with zero, and we have an 'and' with the
-        // non-constant value, eliminate this whole mess.  This corresponds to
-        // cases like this: ((X & 27) ? 27 : 0)
-        if (TrueValC->isNullValue() || FalseValC->isNullValue())
+      // If one of the constants is zero (we know they can't both be) and we
+      // have a setcc instruction with zero, and we have an 'and' with the
+      // non-constant value, eliminate this whole mess.  This corresponds to
+      // cases like this: ((X & 27) ? 27 : 0)
+      if (TrueValC->isNullValue() || FalseValC->isNullValue())
+        if (SetCondInst *IC = dyn_cast<SetCondInst>(SI.getCondition()))
           if (IC->isEquality() && isa<ConstantInt>(IC->getOperand(1)) &&
               cast<Constant>(IC->getOperand(1))->isNullValue())
             if (Instruction *ICA = dyn_cast<Instruction>(IC->getOperand(0)))
@@ -5774,7 +5738,6 @@ Instruction *InstCombiner::visitSelectInst(SelectInst &SI) {
                                   Instruction::Xor, V, ICA->getOperand(1)), SI);
                 return ReplaceInstUsesWith(SI, V);
               }
-      }
     }
 
   // See if we are selecting two values based on a comparison of the two values.
