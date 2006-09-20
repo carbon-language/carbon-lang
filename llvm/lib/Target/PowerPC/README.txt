@@ -139,12 +139,6 @@ _test:
 
 ===-------------------------------------------------------------------------===
 
-int test3(int a, int b) { return (a < 0) ? a : 0; }
-
-should be branch free code.  LLVM is turning it into < 1 because of the RHS.
-
-===-------------------------------------------------------------------------===
-
 No loads or stores of the constants should be needed:
 
 struct foo { double X, Y; };
