@@ -3781,6 +3781,72 @@ bool SelectionDAGLegalize::ExpandShift(unsigned Opc, SDOperand Op,SDOperand Amt,
       return true;
     }
   }
+  
+  // Okay, the shift amount isn't constant.  However, if we can tell that it is
+  // >= 32 or < 32, we can still simplify it, without knowing the actual value.
+  uint64_t Mask = NVTBits, KnownZero, KnownOne;
+  TLI.ComputeMaskedBits(Amt, Mask, KnownZero, KnownOne);
+  
+  // If we know that the high bit of the shift amount is one, then we can do
+  // this as a couple of simple shifts.
+  if (KnownOne & Mask) {
+    // Mask out the high bit, which we know is set.
+    Amt = DAG.getNode(ISD::AND, Amt.getValueType(), Amt,
+                      DAG.getConstant(NVTBits-1, Amt.getValueType()));
+    
+    // Expand the incoming operand to be shifted, so that we have its parts
+    SDOperand InL, InH;
+    ExpandOp(Op, InL, InH);
+    switch(Opc) {
+    case ISD::SHL:
+      Lo = DAG.getConstant(0, NVT);              // Low part is zero.
+      Hi = DAG.getNode(ISD::SHL, NVT, InL, Amt); // High part from Lo part.
+      return true;
+    case ISD::SRL:
+      Hi = DAG.getConstant(0, NVT);              // Hi part is zero.
+      Lo = DAG.getNode(ISD::SRL, NVT, InH, Amt); // Lo part from Hi part.
+      return true;
+    case ISD::SRA:
+      Hi = DAG.getNode(ISD::SRA, NVT, InH,       // Sign extend high part.
+                       DAG.getConstant(NVTBits-1, Amt.getValueType()));
+      Lo = DAG.getNode(ISD::SRA, NVT, InH, Amt); // Lo part from Hi part.
+      return true;
+    }
+  }
+  
+  // If we know that the high bit of the shift amount is zero, then we can do
+  // this as a couple of simple shifts.
+  if (KnownZero & Mask) {
+    // Compute 32-amt.
+    SDOperand Amt2 = DAG.getNode(ISD::SUB, Amt.getValueType(),
+                                 DAG.getConstant(NVTBits, Amt.getValueType()),
+                                 Amt);
+    
+    // Expand the incoming operand to be shifted, so that we have its parts
+    SDOperand InL, InH;
+    ExpandOp(Op, InL, InH);
+    switch(Opc) {
+    case ISD::SHL:
+      Lo = DAG.getNode(ISD::SHL, NVT, InL, Amt);
+      Hi = DAG.getNode(ISD::OR, NVT,
+                       DAG.getNode(ISD::SHL, NVT, InH, Amt),
+                       DAG.getNode(ISD::SRL, NVT, InL, Amt2));
+      return true;
+    case ISD::SRL:
+      Hi = DAG.getNode(ISD::SRL, NVT, InH, Amt);
+      Lo = DAG.getNode(ISD::OR, NVT,
+                       DAG.getNode(ISD::SRL, NVT, InL, Amt),
+                       DAG.getNode(ISD::SHL, NVT, InH, Amt2));
+      return true;
+    case ISD::SRA:
+      Hi = DAG.getNode(ISD::SRA, NVT, InH, Amt);
+      Lo = DAG.getNode(ISD::OR, NVT,
+                       DAG.getNode(ISD::SRL, NVT, InL, Amt),
+                       DAG.getNode(ISD::SHL, NVT, InH, Amt2));
+      return true;
+    }
+  }
+  
   return false;
 }
 
