@@ -75,10 +75,28 @@ namespace llvm {
       return (strcmp(left, right) == 0); 
     }
   };
-  
+
+  /// This is abstract class to facilitate dlopen() interface.
+  /// See LTO below for more info.
+  class LinkTimeOptimizer {
+  public:
+    typedef hash_map<const char*, LLVMSymbol*, hash<const char*>, 
+                     string_compare> NameToSymbolMap;
+    typedef hash_map<const char*, Module*, hash<const char*>, 
+                     string_compare> NameToModuleMap;
+    virtual enum LTOStatus readLLVMObjectFile(const std::string &,
+                                              NameToSymbolMap &,
+                                              std::set<std::string> &) = 0;
+    virtual enum LTOStatus optimizeModules(const std::string &,
+                                   std::vector<const char*> &,
+                                   std::string &) = 0;
+    virtual void getTargetTriple(const std::string &, std::string &) = 0;
+    virtual ~LinkTimeOptimizer() = 0;
+  };
+
   /// This is the main link time optimization class. It exposes simple API
   /// to perform link time optimization using LLVM intermodular optimizer.
-  class LinkTimeOptimizer {
+  class LTO : public LinkTimeOptimizer {
 
   public:
     typedef hash_map<const char*, LLVMSymbol*, hash<const char*>, 

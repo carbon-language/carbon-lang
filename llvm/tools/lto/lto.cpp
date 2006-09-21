@@ -44,7 +44,7 @@ using namespace llvm;
 extern "C"
 llvm::LinkTimeOptimizer *createLLVMOptimizer()
 {
-  llvm::LinkTimeOptimizer *l = new llvm::LinkTimeOptimizer();
+  llvm::LTO *l = new llvm::LTO();
   return l;
 }
 
@@ -105,7 +105,7 @@ findExternalRefs(Value *value, std::set<std::string> &references,
 /// InputFilename is a LLVM bytecode file. If Module with InputFilename is
 /// available then return it. Otherwise parseInputFilename.
 Module *
-LinkTimeOptimizer::getModule(const std::string &InputFilename)
+LTO::getModule(const std::string &InputFilename)
 {
   Module *m = NULL;
 
@@ -122,7 +122,7 @@ LinkTimeOptimizer::getModule(const std::string &InputFilename)
 /// InputFilename is a LLVM bytecode file. Reade this bytecode file and 
 /// set corresponding target triplet string.
 void
-LinkTimeOptimizer::getTargetTriple(const std::string &InputFilename, 
+LTO::getTargetTriple(const std::string &InputFilename, 
 				   std::string &targetTriple)
 {
   Module *m = getModule(InputFilename);
@@ -135,7 +135,7 @@ LinkTimeOptimizer::getTargetTriple(const std::string &InputFilename,
 /// Collect external references in references vector.
 /// Return LTO_READ_SUCCESS if there is no error.
 enum LTOStatus
-LinkTimeOptimizer::readLLVMObjectFile(const std::string &InputFilename,
+LTO::readLLVMObjectFile(const std::string &InputFilename,
                                       NameToSymbolMap &symbols,
                                       std::set<std::string> &references)
 {
@@ -310,7 +310,7 @@ static enum LTOStatus lto_optimize(Module *M, std::ostream &Out,
 /// native object file using OutputFilename
 /// Return appropriate LTOStatus.
 enum LTOStatus
-LinkTimeOptimizer::optimizeModules(const std::string &OutputFilename,
+LTO::optimizeModules(const std::string &OutputFilename,
                                    std::vector<const char *> &exportList,
                                    std::string &targetTriple)
 {
