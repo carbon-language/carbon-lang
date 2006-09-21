@@ -800,6 +800,17 @@ bool TreePatternNode::ApplyTypeConstraints(TreePattern &TP, bool NotRegisters) {
   }
 }
 
+/// OnlyOnRHSOfCommutative - Return true if this value is only allowed on the
+/// RHS of a commutative operation, not the on LHS.
+static bool OnlyOnRHSOfCommutative(TreePatternNode *N) {
+  if (!N->isLeaf() && N->getOperator()->getName() == "imm")
+    return true;
+  if (N->isLeaf() && dynamic_cast<IntInit*>(N->getLeafValue()))
+    return true;
+  return false;
+}
+
+
 /// canPatternMatch - If it is impossible for this pattern to match on this
 /// target, fill in Reason and return false.  Otherwise, return true.  This is
 /// used as a santity check for .td files (to prevent people from writing stuff
@@ -825,11 +836,9 @@ bool TreePatternNode::canPatternMatch(std::string &Reason, DAGISelEmitter &ISE){
   if (NodeInfo.hasProperty(SDNodeInfo::SDNPCommutative)) {
     // Scan all of the operands of the node and make sure that only the last one
     // is a constant node, unless the RHS also is.
-    if (getChild(getNumChildren()-1)->isLeaf() ||
-        getChild(getNumChildren()-1)->getOperator()->getName() != "imm") {
+    if (!OnlyOnRHSOfCommutative(getChild(getNumChildren()-1))) {
       for (unsigned i = 0, e = getNumChildren()-1; i != e; ++i)
-        if (!getChild(i)->isLeaf() && 
-            getChild(i)->getOperator()->getName() == "imm") {
+        if (OnlyOnRHSOfCommutative(getChild(i))) {
           Reason="Immediate value must be on the RHS of commutative operators!";
           return false;
         }
