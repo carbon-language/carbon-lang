@@ -1564,13 +1564,13 @@ SDOperand X86TargetLowering::LowerFastCCCallTo(SDOperand Op,
     default: assert(0 && "Unknown value type!");
     case MVT::i8:
     case MVT::i16:
-    case MVT::i32:
+    case MVT::i32: {
      unsigned MaxNumIntRegs = (isFastCall ? 2 : FASTCC_NUM_INT_ARGS_INREGS);
      if (NumIntRegs < MaxNumIntRegs) {
        ++NumIntRegs;
        break;
      }
-      // Fall through
+     } // Fall through
     case MVT::f32:
       NumBytes += 4;
       break;
@@ -1618,7 +1618,7 @@ SDOperand X86TargetLowering::LowerFastCCCallTo(SDOperand Op,
     default: assert(0 && "Unexpected ValueType for argument!");
     case MVT::i8:
     case MVT::i16:
-    case MVT::i32:
+    case MVT::i32: {
      unsigned MaxNumIntRegs = (isFastCall ? 2 : FASTCC_NUM_INT_ARGS_INREGS);
      if (NumIntRegs < MaxNumIntRegs) {
        RegsToPass.push_back(
@@ -1627,7 +1627,7 @@ SDOperand X86TargetLowering::LowerFastCCCallTo(SDOperand Op,
        ++NumIntRegs;
        break;
      }
-      // Fall through
+     } // Fall through
     case MVT::f32: {
       SDOperand PtrOff = DAG.getConstant(ArgOffset, getPointerTy());
       PtrOff = DAG.getNode(ISD::ADD, getPointerTy(), StackPtr, PtrOff);
