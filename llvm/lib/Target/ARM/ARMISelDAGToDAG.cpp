@@ -16,6 +16,7 @@
 #include "llvm/CallingConv.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/Function.h"
+#include "llvm/Constants.h"
 #include "llvm/Intrinsics.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/CodeGen/MachineFunction.h"
@@ -466,7 +467,7 @@ static bool isInt12Immediate(SDNode *N, short &Imm) {
     return false;
 
   int32_t t = cast<ConstantSDNode>(N)->getValue();
-  int max = 2<<12 - 1;
+  int max = 1<<12;
   int min = -max;
   if (t > min && t < max) {
     Imm = t;
@@ -480,15 +481,44 @@ static bool isInt12Immediate(SDOperand Op, short &Imm) {
   return isInt12Immediate(Op.Val, Imm);
 }
 
+static uint32_t rotateL(uint32_t x) {
+  uint32_t bit31 = (x & (1 << 31)) >> 31;
+  uint32_t     t = x << 1;
+  return t | bit31;
+}
+
+static bool isUInt8Immediate(uint32_t x) {
+  return x < (1 << 8);
+}
+
+static bool isRotInt8Immediate(uint32_t x) {
+  int r;
+  for (r = 0; r < 16; r++) {
+    if (isUInt8Immediate(x))
+      return true;
+    x = rotateL(rotateL(x));
+  }
+  return false;
+}
+
 bool ARMDAGToDAGISel::SelectAddrMode1(SDOperand N,
 				      SDOperand &Arg,
 				      SDOperand &Shift,
 				      SDOperand &ShiftType) {
   switch(N.getOpcode()) {
   case ISD::Constant: {
-    //TODO:check that we have a valid constant
-    int32_t t = cast<ConstantSDNode>(N)->getValue();
-    Arg       = CurDAG->getTargetConstant(t,             MVT::i32);
+    uint32_t val = cast<ConstantSDNode>(N)->getValue();
+    if(!isRotInt8Immediate(val)) {
+      const Type  *t =  MVT::getTypeForValueType(MVT::i32);
+      Constant    *C = ConstantUInt::get(t, val);
+      int  alignment = 2;
+      SDOperand Addr = CurDAG->getTargetConstantPool(C, MVT::i32, alignment);
+      SDOperand    Z = CurDAG->getTargetConstant(0,     MVT::i32);
+      SDNode      *n = CurDAG->getTargetNode(ARM::ldr,  MVT::i32, Z, Addr);
+      Arg            = SDOperand(n, 0);
+    } else
+      Arg            = CurDAG->getTargetConstant(val,    MVT::i32);
+
     Shift     = CurDAG->getTargetConstant(0,             MVT::i32);
     ShiftType = CurDAG->getTargetConstant(ARMShift::LSL, MVT::i32);
     return true;

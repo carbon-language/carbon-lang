@@ -1,10 +1,9 @@
 ; RUN: llvm-as < %s | llc -march=arm &&
 ; RUN: llvm-as < %s | llc -march=arm | grep "mov r1, #0" | wc -l | grep 4 &&
 ; RUN: llvm-as < %s | llc -march=arm | grep "mov r0, #1" | wc -l | grep 1 &&
-; RUN: llvm-as < %s | llc -march=arm | grep "mov r0, #2147483647" | wc -l | grep 1 &&
+; RUN: llvm-as < %s | llc -march=arm | grep ".word.*2147483647" | wc -l | grep 2 &&
 ; RUN: llvm-as < %s | llc -march=arm | grep "mov r0, #-2147483648" | wc -l | grep 1 &&
-; RUN: llvm-as < %s | llc -march=arm | grep "mov r0, #-1" | wc -l | grep 1 &&
-; RUN: llvm-as < %s | llc -march=arm | grep "mov r1, #2147483647" | wc -l | grep 1
+; RUN: llvm-as < %s | llc -march=arm | grep ".word.*4294967295" | wc -l | grep 1
 
 long %f1() {
 entry:
