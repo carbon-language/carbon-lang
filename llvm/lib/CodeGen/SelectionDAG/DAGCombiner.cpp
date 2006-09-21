@@ -1768,7 +1768,8 @@ SDOperand DAGCombiner::visitSIGN_EXTEND(SDNode *N) {
   
   // fold (sext (truncate x)) -> (sextinreg x).
   if (N0.getOpcode() == ISD::TRUNCATE && 
-      (!AfterLegalize || TLI.isOperationLegal(ISD::SIGN_EXTEND_INREG, VT))) {
+      (!AfterLegalize || TLI.isOperationLegal(ISD::SIGN_EXTEND_INREG,
+                                              N0.getValueType()))) {
     SDOperand Op = N0.getOperand(0);
     if (Op.getValueType() < VT) {
       Op = DAG.getNode(ISD::ANY_EXTEND, VT, Op);
