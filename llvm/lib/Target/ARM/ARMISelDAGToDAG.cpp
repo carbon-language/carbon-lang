@@ -87,7 +87,14 @@ namespace llvm {
 /// DAGCCToARMCC - Convert a DAG integer condition code to an ARM CC
 static ARMCC::CondCodes DAGCCToARMCC(ISD::CondCode CC) {
   switch (CC) {
-  default: assert(0 && "Unknown condition code!");
+  default:
+    std::cerr << "CC = " << CC << "\n";
+    assert(0 && "Unknown condition code!");
+  case ISD::SETUGT: return ARMCC::HI;
+  case ISD::SETULE: return ARMCC::LS;
+  case ISD::SETLE:  return ARMCC::LE;
+  case ISD::SETLT:  return ARMCC::LT;
+  case ISD::SETGT:  return ARMCC::GT;
   case ISD::SETNE:  return ARMCC::NE;
   case ISD::SETEQ:  return ARMCC::EQ;
   case ISD::SETGE:  return ARMCC::GE;
