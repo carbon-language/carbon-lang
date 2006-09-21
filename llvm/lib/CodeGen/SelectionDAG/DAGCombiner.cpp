@@ -46,13 +46,9 @@ namespace {
 				    "Number of dag nodes combined");
             
 
-#ifndef NDEBUG
 static cl::opt<bool>
   CombinerAA("combiner-alias-analysis", cl::Hidden,
              cl::desc("Turn on alias analysis turning testing"));
-#else
-  static const bool CombinerAA = 0;
-#endif
  
 class VISIBILITY_HIDDEN DAGCombiner {
     SelectionDAG &DAG;
@@ -2594,14 +2590,14 @@ bool DAGCombiner::isNotAlias(SDOperand Ptr1, SDOperand Ptr2) {
   // Mind the flag.
   if (!CombinerAA) return false;
   
-  // If they are the same then they are simple aliases.
+  // If they are the same then they must be aliases.
   if (Ptr1 == Ptr2) return false;
   
-  // If either operand is a frame value (not the same location from above test)
+  // If both operands are frame values (not the same location from above test)
   // then they can't alias.
   FrameIndexSDNode *FI1 = dyn_cast<FrameIndexSDNode>(Ptr1);
   FrameIndexSDNode *FI2 = dyn_cast<FrameIndexSDNode>(Ptr2);
-  if (FI1 || FI2) {
+  if (FI1 && FI2) {
     return true;
   }
   
@@ -2651,9 +2647,7 @@ SDOperand DAGCombiner::visitSTORE(SDNode *N) {
     SDOperand Token = DAG.getNode(ISD::TokenFactor, MVT::Other,
                       Chain, ReplStore);
     // Replace uses with token.
-    CombineTo(N, Token);
-    // Don't recombine on token.
-    return SDOperand(N, 0);
+    return Token;
   }
   
   return SDOperand();
