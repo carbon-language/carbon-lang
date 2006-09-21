@@ -86,8 +86,8 @@ namespace {
     void runOnLoop(Loop *L);
     void EliminatePointerRecurrence(PHINode *PN, BasicBlock *Preheader,
                                     std::set<Instruction*> &DeadInsts);
-    void LinearFunctionTestReplace(Loop *L, SCEV *IterationCount,
-                                   SCEVExpander &RW);
+    Instruction *LinearFunctionTestReplace(Loop *L, SCEV *IterationCount,
+                                           SCEVExpander &RW);
     void RewriteLoopExitValues(Loop *L);
 
     void DeleteTriviallyDeadInstructions(std::set<Instruction*> &Insts);
@@ -209,13 +209,17 @@ void IndVarSimplify::EliminatePointerRecurrence(PHINode *PN,
 /// variable.  This pass is able to rewrite the exit tests of any loop where the
 /// SCEV analysis can determine a loop-invariant trip count of the loop, which
 /// is actually a much broader range than just linear tests.
-void IndVarSimplify::LinearFunctionTestReplace(Loop *L, SCEV *IterationCount,
-                                               SCEVExpander &RW) {
+///
+/// This method returns a "potentially dead" instruction whose computation chain
+/// should be deleted when convenient.
+Instruction *IndVarSimplify::LinearFunctionTestReplace(Loop *L,
+                                                       SCEV *IterationCount,
+                                                       SCEVExpander &RW) {
   // Find the exit block for the loop.  We can currently only handle loops with
   // a single exit.
   std::vector<BasicBlock*> ExitBlocks;
   L->getExitBlocks(ExitBlocks);
-  if (ExitBlocks.size() != 1) return;
+  if (ExitBlocks.size() != 1) return 0;
   BasicBlock *ExitBlock = ExitBlocks[0];
 
   // Make sure there is only one predecessor block in the loop.
@@ -226,19 +230,17 @@ void IndVarSimplify::LinearFunctionTestReplace(Loop *L, SCEV *IterationCount,
       if (ExitingBlock == 0)
         ExitingBlock = *PI;
       else
-        return;  // Multiple exits from loop to this block.
+        return 0;  // Multiple exits from loop to this block.
     }
   assert(ExitingBlock && "Loop info is broken");
 
   if (!isa<BranchInst>(ExitingBlock->getTerminator()))
-    return;  // Can't rewrite non-branch yet
+    return 0;  // Can't rewrite non-branch yet
   BranchInst *BI = cast<BranchInst>(ExitingBlock->getTerminator());
   assert(BI->isConditional() && "Must be conditional to be part of loop!");
 
-  std::set<Instruction*> InstructionsToDelete;
-  if (Instruction *Cond = dyn_cast<Instruction>(BI->getCondition()))
-    InstructionsToDelete.insert(Cond);
-
+  Instruction *PotentiallyDeadInst = dyn_cast<Instruction>(BI->getCondition());
+  
   // If the exiting block is not the same as the backedge block, we must compare
   // against the preincremented value, otherwise we prefer to compare against
   // the post-incremented value.
@@ -279,8 +281,7 @@ void IndVarSimplify::LinearFunctionTestReplace(Loop *L, SCEV *IterationCount,
   BI->setCondition(Cond);
   ++NumLFTR;
   Changed = true;
-
-  DeleteTriviallyDeadInstructions(InstructionsToDelete);
+  return PotentiallyDeadInst;
 }
 
 
@@ -471,7 +472,12 @@ void IndVarSimplify::runOnLoop(Loop *L) {
       SCEVExpander Rewriter(*SE, *LI);
       Rewriter.getOrInsertCanonicalInductionVariable(L,
                                                      IterationCount->getType());
-      LinearFunctionTestReplace(L, IterationCount, Rewriter);
+      if (Instruction *I = LinearFunctionTestReplace(L, IterationCount,
+                                                     Rewriter)) {
+        std::set<Instruction*> InstructionsToDelete;
+        InstructionsToDelete.insert(I);
+        DeleteTriviallyDeadInstructions(InstructionsToDelete);
+      }
     }
     return;
   }
@@ -498,7 +504,8 @@ void IndVarSimplify::runOnLoop(Loop *L) {
   Changed = true;
 
   if (!isa<SCEVCouldNotCompute>(IterationCount))
-    LinearFunctionTestReplace(L, IterationCount, Rewriter);
+    if (Instruction *DI = LinearFunctionTestReplace(L, IterationCount,Rewriter))
+      DeadInsts.insert(DI);
 
   // Now that we have a canonical induction variable, we can rewrite any
   // recurrences in terms of the induction variable.  Start with the auxillary
