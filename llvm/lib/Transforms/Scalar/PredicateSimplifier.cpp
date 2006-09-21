@@ -524,66 +524,42 @@ Value *PredicateSimplifier::resolve(SetCondInst *SCI,
                                     const PropertySet &KP) {
   // Attempt to resolve the SetCondInst to a boolean.
 
-  static ConstantBool *True  = ConstantBool::True,
-                      *False = ConstantBool::False;
-
   Value *SCI0 = resolve(SCI->getOperand(0), KP),
         *SCI1 = resolve(SCI->getOperand(1), KP);
 
-  ConstantIntegral *CI1 = dyn_cast<ConstantIntegral>(SCI0),
-                   *CI2 = dyn_cast<ConstantIntegral>(SCI1);
+  PropertySet::ConstPropertyIterator NE =
+      KP.findProperty(PropertySet::NE, SCI0, SCI1);
 
-  if (!CI1 || !CI2) {
-    PropertySet::ConstPropertyIterator NE =
-        KP.findProperty(PropertySet::NE, SCI0, SCI1);
-
-    if (NE != KP.Properties.end()) {
-      switch (SCI->getOpcode()) {
-        case Instruction::SetEQ: return False;
-        case Instruction::SetNE: return True;
-        case Instruction::SetLE:
-        case Instruction::SetGE:
-        case Instruction::SetLT:
-        case Instruction::SetGT:
-          break;
-        default:
-          assert(0 && "Unknown opcode in SetCondInst.");
-          break;
-      }
+  if (NE != KP.Properties.end()) {
+    switch (SCI->getOpcode()) {
+      case Instruction::SetEQ: return ConstantBool::False;
+      case Instruction::SetNE: return ConstantBool::True;
+      case Instruction::SetLE:
+      case Instruction::SetGE:
+      case Instruction::SetLT:
+      case Instruction::SetGT:
+        break;
+      default:
+        assert(0 && "Unknown opcode in SetCondInst.");
+        break;
     }
-    return SCI;
   }
-
-  uint64_t I1 = CI1->getRawValue(), I2 = CI2->getRawValue();
-  switch(SCI->getOpcode()) {
-    case Instruction::SetLE: if (I1 <= I2) return True; else return False;
-    case Instruction::SetGE: if (I1 >= I2) return True; else return False;
-    case Instruction::SetEQ: if (I1 == I2) return True; else return False;
-    case Instruction::SetLT: if (I1 <  I2) return True; else return False;
-    case Instruction::SetGT: if (I1 >  I2) return True; else return False;
-    case Instruction::SetNE: if (I1 != I2) return True; else return False;
-    default:
-      assert(0 && "Unknown opcode in SetContInst.");
-      break;
-  }
-
   return SCI;
 }
 
 Value *PredicateSimplifier::resolve(BinaryOperator *BO,
                                     const PropertySet &KP) {
-  if (SetCondInst *SCI = dyn_cast<SetCondInst>(BO))
-    return resolve(SCI, KP);
-
   Value *lhs = resolve(BO->getOperand(0), KP),
         *rhs = resolve(BO->getOperand(1), KP);
+
   ConstantIntegral *CI1 = dyn_cast<ConstantIntegral>(lhs);
   ConstantIntegral *CI2 = dyn_cast<ConstantIntegral>(rhs);
 
-  if (!CI1 || !CI2) return BO;
+  if (CI1 && CI2) return ConstantExpr::get(BO->getOpcode(), CI1, CI2);
 
-  Value *V = ConstantExpr::get(BO->getOpcode(), CI1, CI2);
-  if (V) return V;
+  if (SetCondInst *SCI = dyn_cast<SetCondInst>(BO))
+    return resolve(SCI, KP);
+
   return BO;
 }
 
