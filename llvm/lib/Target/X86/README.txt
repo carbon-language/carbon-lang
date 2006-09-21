@@ -544,9 +544,9 @@ entry:
         br label %cond_true
 
 cond_true:              ; preds = %cond_true, %entry
-        %x.0.0 = phi int [ 0, %entry ], [ %tmp9, %cond_true ]           ; <int> [#uses=3]
-        %t_addr.0.0 = phi int [ %t, %entry ], [ %tmp7, %cond_true ]             ; <int> [#uses=1]
-        %tmp2 = getelementptr int* %a, int %x.0.0               ; <int*> [#uses=1]
+        %x.0.0 = phi int [ 0, %entry ], [ %tmp9, %cond_true ]  
+        %t_addr.0.0 = phi int [ %t, %entry ], [ %tmp7, %cond_true ]
+        %tmp2 = getelementptr int* %a, int %x.0.0              
         %tmp3 = load int* %tmp2         ; <int> [#uses=1]
         %tmp5 = add int %t_addr.0.0, %x.0.0             ; <int> [#uses=1]
         %tmp7 = add int %tmp5, %tmp3            ; <int> [#uses=2]
@@ -633,11 +633,12 @@ LBB1_1: #bb
 LBB1_2: #UnifiedReturnBlock
         ret
 
-In the code above, the 'if' is turned into a 'switch' at the mid-level.  It looks 
-like the 'lower to branches' mode could be improved a little here.  In particular,
-the fall-through to LBB1_3 doesn't need a branch.  It would also be nice to
-eliminate the redundant "cmp 6", maybe by lowering to a linear sequence of
-compares if there are below a certain number of cases (instead of a binary sequence)?
+In the code above, the 'if' is turned into a 'switch' at the mid-level.  It
+looks  like the 'lower to branches' mode could be improved a little here.  In
+particular, the fall-through to LBB1_3 doesn't need a branch.  It would also be
+nice to eliminate the redundant "cmp 6", maybe by lowering to a linear sequence
+of compares if there are below a certain number of cases (instead of a binary
+sequence)?
 
 //===---------------------------------------------------------------------===//
 
@@ -645,7 +646,7 @@ Compile:
 int %test(ulong *%tmp) {
         %tmp = load ulong* %tmp         ; <ulong> [#uses=1]
         %tmp.mask = shr ulong %tmp, ubyte 50            ; <ulong> [#uses=1]
-        %tmp.mask = cast ulong %tmp.mask to ubyte               ; <ubyte> [#uses=1]
+        %tmp.mask = cast ulong %tmp.mask to ubyte           
         %tmp2 = and ubyte %tmp.mask, 3          ; <ubyte> [#uses=1]
         %tmp2 = cast ubyte %tmp2 to int         ; <int> [#uses=1]
         ret int %tmp2
