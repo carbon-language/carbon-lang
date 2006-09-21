@@ -830,7 +830,7 @@ bool TreePatternNode::canPatternMatch(std::string &Reason, DAGISelEmitter &ISE){
       for (unsigned i = 0, e = getNumChildren()-1; i != e; ++i)
         if (!getChild(i)->isLeaf() && 
             getChild(i)->getOperator()->getName() == "imm") {
-          Reason = "Immediate value must be on the RHS of commutative operators!";
+          Reason="Immediate value must be on the RHS of commutative operators!";
           return false;
         }
     }
@@ -1590,8 +1590,8 @@ void DAGISelEmitter::ParsePatterns() {
       // can never do anything with this pattern: report it to the user.
       InferredAllPatternTypes = Pattern->InferAllTypes();
       
-      // Infer as many types as possible.  If we cannot infer all of them, we can
-      // never do anything with this pattern: report it to the user.
+      // Infer as many types as possible.  If we cannot infer all of them, we
+      // can never do anything with this pattern: report it to the user.
       InferredAllResultTypes = Result->InferAllTypes();
 
       // Apply the type of the result to the source pattern.  This helps us
@@ -2466,8 +2466,8 @@ public:
                    Val + ")->getSymbol(), " +
                    getEnumName(N->getTypeNum(0)) + ");");
           NodeOps.push_back("Tmp" + utostr(ResNo));
-          // Add Tmp<ResNo> to VariableMap, so that we don't multiply select this
-          // value if used multiple times by this pattern result.
+          // Add Tmp<ResNo> to VariableMap, so that we don't multiply select
+          // this value if used multiple times by this pattern result.
           Val = "Tmp"+utostr(ResNo);
         } else {
           NodeOps.push_back(Val);
@@ -2481,8 +2481,8 @@ public:
                    ")->getGlobal(), " + getEnumName(N->getTypeNum(0)) +
                    ");");
           NodeOps.push_back("Tmp" + utostr(ResNo));
-          // Add Tmp<ResNo> to VariableMap, so that we don't multiply select this
-          // value if used multiple times by this pattern result.
+          // Add Tmp<ResNo> to VariableMap, so that we don't multiply select
+          // this value if used multiple times by this pattern result.
           Val = "Tmp"+utostr(ResNo);
         } else {
           NodeOps.push_back(Val);
@@ -2765,8 +2765,8 @@ public:
                      utostr(i) + "), SDOperand(ResNode, " + utostr(i) + "));");
           if (InputHasChain)
             emitCode("ReplaceUses(SDOperand(N.Val, " + 
-                     utostr(PatResults) + "), SDOperand(" + ChainName + ".Val, " +
-                     ChainName + ".ResNo" + "));");
+                     utostr(PatResults) + "), SDOperand(" + ChainName + ".Val, "
+                     + ChainName + ".ResNo" + "));");
         } else
           RetSelected = true;
 
@@ -3266,8 +3266,8 @@ void DAGISelEmitter::EmitInstructionSelector(std::ostream &OS) {
          ++II) {
       MVT::ValueType OpVT = II->first;
       std::vector<PatternToMatch*> &Patterns = II->second;
-      typedef std::vector<std::pair<unsigned, std::string> > CodeList;
-      typedef std::vector<std::pair<unsigned, std::string> >::iterator CodeListI;
+      typedef std::vector<std::pair<unsigned,std::string> > CodeList;
+      typedef std::vector<std::pair<unsigned,std::string> >::iterator CodeListI;
     
       std::vector<std::pair<PatternToMatch*, CodeList> > CodeForPatterns;
       std::vector<std::vector<std::string> > PatternOpcodes;
@@ -3408,8 +3408,8 @@ void DAGISelEmitter::EmitInstructionSelector(std::ostream &OS) {
       // Emit all of the patterns now, grouped together to share code.
       EmitPatterns(CodeForPatterns, 2, OS);
     
-      // If the last pattern has predicates (which could fail) emit code to catch
-      // the case where nothing handles a pattern.
+      // If the last pattern has predicates (which could fail) emit code to
+      // catch the case where nothing handles a pattern.
       if (mightNotMatch) {
         OS << "  std::cerr << \"Cannot yet select: \";\n";
         if (OpcodeInfo.getEnumName() != "ISD::INTRINSIC_W_CHAIN" &&
