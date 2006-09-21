@@ -407,8 +407,13 @@ void DAGCombiner::Run(bool RunningAfterLegalize) {
               std::cerr << "\nWith: "; RV.Val->dump(&DAG);
               std::cerr << '\n');
         std::vector<SDNode*> NowDead;
-        SDOperand OpV = RV;
-        DAG.ReplaceAllUsesWith(N, &OpV, &NowDead);
+        if (N->getNumValues() == RV.Val->getNumValues())
+          DAG.ReplaceAllUsesWith(N, RV.Val, &NowDead);
+        else {
+          assert(N->getValueType(0) == RV.getValueType() && "Type mismatch");
+          SDOperand OpV = RV;
+          DAG.ReplaceAllUsesWith(N, &OpV, &NowDead);
+        }
           
         // Push the new node and any users onto the worklist
         WorkList.push_back(RV.Val);
