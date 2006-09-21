@@ -1766,12 +1766,18 @@ SDOperand DAGCombiner::visitSIGN_EXTEND(SDNode *N) {
   if (N0.getOpcode() == ISD::SIGN_EXTEND || N0.getOpcode() == ISD::ANY_EXTEND)
     return DAG.getNode(ISD::SIGN_EXTEND, VT, N0.getOperand(0));
   
-  // fold (sext (truncate x)) -> (sextinreg x) iff x size == sext size.
-  if (N0.getOpcode() == ISD::TRUNCATE && N0.getOperand(0).getValueType() == VT&&
-      (!AfterLegalize || 
-       TLI.isOperationLegal(ISD::SIGN_EXTEND_INREG, N0.getValueType())))
-    return DAG.getNode(ISD::SIGN_EXTEND_INREG, VT, N0.getOperand(0),
+  // fold (sext (truncate x)) -> (sextinreg x).
+  if (N0.getOpcode() == ISD::TRUNCATE && 
+      (!AfterLegalize || TLI.isOperationLegal(ISD::SIGN_EXTEND_INREG, VT))) {
+    SDOperand Op = N0.getOperand(0);
+    if (Op.getValueType() < VT) {
+      Op = DAG.getNode(ISD::ANY_EXTEND, VT, Op);
+    } else if (Op.getValueType() > VT) {
+      Op = DAG.getNode(ISD::TRUNCATE, VT, Op);
+    }
+    return DAG.getNode(ISD::SIGN_EXTEND_INREG, VT, Op,
                        DAG.getValueType(N0.getValueType()));
+  }
   
   // fold (sext (load x)) -> (sext (truncate (sextload x)))
   if (N0.getOpcode() == ISD::LOAD && N0.hasOneUse() &&
@@ -1812,10 +1818,19 @@ SDOperand DAGCombiner::visitZERO_EXTEND(SDNode *N) {
   // fold (zext (aext x)) -> (zext x)
   if (N0.getOpcode() == ISD::ZERO_EXTEND || N0.getOpcode() == ISD::ANY_EXTEND)
     return DAG.getNode(ISD::ZERO_EXTEND, VT, N0.getOperand(0));
-  // fold (zext (truncate x)) -> (zextinreg x) iff x size == zext size.
-  if (N0.getOpcode() == ISD::TRUNCATE && N0.getOperand(0).getValueType() == VT&&
-      (!AfterLegalize || TLI.isOperationLegal(ISD::AND, N0.getValueType())))
-    return DAG.getZeroExtendInReg(N0.getOperand(0), N0.getValueType());
+
+  // fold (zext (truncate x)) -> (and x, mask)
+  if (N0.getOpcode() == ISD::TRUNCATE &&
+      (!AfterLegalize || TLI.isOperationLegal(ISD::AND, VT))) {
+    SDOperand Op = N0.getOperand(0);
+    if (Op.getValueType() < VT) {
+      Op = DAG.getNode(ISD::ANY_EXTEND, VT, Op);
+    } else if (Op.getValueType() > VT) {
+      Op = DAG.getNode(ISD::TRUNCATE, VT, Op);
+    }
+    return DAG.getZeroExtendInReg(Op, N0.getValueType());
+  }
+  
   // fold (zext (load x)) -> (zext (truncate (zextload x)))
   if (N0.getOpcode() == ISD::LOAD && N0.hasOneUse() &&
       (!AfterLegalize||TLI.isOperationLegal(ISD::ZEXTLOAD, N0.getValueType()))){
