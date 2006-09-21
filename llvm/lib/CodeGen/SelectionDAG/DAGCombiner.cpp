@@ -1831,6 +1831,20 @@ SDOperand DAGCombiner::visitZERO_EXTEND(SDNode *N) {
     return DAG.getZeroExtendInReg(Op, N0.getValueType());
   }
   
+  // fold (zext (and (trunc x), cst)) -> (and x, cst).
+  if (N0.getOpcode() == ISD::AND &&
+      N0.getOperand(0).getOpcode() == ISD::TRUNCATE &&
+      N0.getOperand(1).getOpcode() == ISD::Constant) {
+    SDOperand X = N0.getOperand(0).getOperand(0);
+    if (X.getValueType() < VT) {
+      X = DAG.getNode(ISD::ANY_EXTEND, VT, X);
+    } else if (X.getValueType() > VT) {
+      X = DAG.getNode(ISD::TRUNCATE, VT, X);
+    }
+    uint64_t Mask = cast<ConstantSDNode>(N0.getOperand(1))->getValue();
+    return DAG.getNode(ISD::AND, VT, X, DAG.getConstant(Mask, VT));
+  }
+  
   // fold (zext (load x)) -> (zext (truncate (zextload x)))
   if (N0.getOpcode() == ISD::LOAD && N0.hasOneUse() &&
       (!AfterLegalize||TLI.isOperationLegal(ISD::ZEXTLOAD, N0.getValueType()))){
