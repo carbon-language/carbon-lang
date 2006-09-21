@@ -35,6 +35,7 @@
 #include "llvm/Support/MathExtras.h"
 #include "llvm/Target/TargetLowering.h"
 #include "llvm/Support/Compiler.h"
+#include "llvm/Support/CommandLine.h"
 #include <algorithm>
 #include <cmath>
 #include <iostream>
@@ -43,8 +44,17 @@ using namespace llvm;
 namespace {
   static Statistic<> NodesCombined ("dagcombiner", 
 				    "Number of dag nodes combined");
+            
 
-  class VISIBILITY_HIDDEN DAGCombiner {
+#ifndef NDEBUG
+static cl::opt<bool>
+  CombinerAA("combiner-alias-analysis", cl::Hidden,
+             cl::desc("Turn on alias analysis turning testing"));
+#else
+  static const bool CombinerAA = 0;
+#endif
+ 
+class VISIBILITY_HIDDEN DAGCombiner {
     SelectionDAG &DAG;
     TargetLowering &TLI;
     bool AfterLegalize;
@@ -231,6 +241,7 @@ namespace {
     SDOperand BuildSDIV(SDNode *N);
     SDOperand BuildUDIV(SDNode *N);
     SDNode *MatchRotate(SDOperand LHS, SDOperand RHS);
+    bool isNotAlias(SDOperand Ptr1, SDOperand Ptr2);
 public:
     DAGCombiner(SelectionDAG &D)
       : DAG(D), TLI(D.getTargetLoweringInfo()), AfterLegalize(false) {}
@@ -2577,6 +2588,27 @@ SDOperand DAGCombiner::visitXEXTLOAD(SDNode *N) {
   return SDOperand();
 }
 
+/// isNotAlias - Return true if we have definitive knowlege that the two
+/// addresses don't overlap.
+bool DAGCombiner::isNotAlias(SDOperand Ptr1, SDOperand Ptr2) {
+  // Mind the flag.
+  if (!CombinerAA) return false;
+  
+  // If they are the same then they are simple aliases.
+  if (Ptr1 == Ptr2) return false;
+  
+  // If either operand is a frame value (not the same location from above test)
+  // then they can't alias.
+  FrameIndexSDNode *FI1 = dyn_cast<FrameIndexSDNode>(Ptr1);
+  FrameIndexSDNode *FI2 = dyn_cast<FrameIndexSDNode>(Ptr2);
+  if (FI1 || FI2) {
+    return true;
+  }
+  
+  // Otherwise we don't know and have to play it safe.
+  return false;
+}
+
 SDOperand DAGCombiner::visitSTORE(SDNode *N) {
   SDOperand Chain    = N->getOperand(0);
   SDOperand Value    = N->getOperand(1);
@@ -2607,6 +2639,22 @@ SDOperand DAGCombiner::visitSTORE(SDNode *N) {
   if (0 && Value.getOpcode() == ISD::BIT_CONVERT)
     return DAG.getNode(ISD::STORE, MVT::Other, Chain, Value.getOperand(0),
                        Ptr, SrcValue);
+                       
+  // If the previous store is not an alias then break artificial chain.
+  if (Chain.getOpcode() == ISD::STORE && isNotAlias(Ptr, Chain.getOperand(2))) {
+    // Replace the chain to void dependency.
+    SDNode *PrevStore = Chain.Val;
+    SDOperand ReplStore = DAG.getNode(ISD::STORE, MVT::Other,
+                                     PrevStore->getOperand(0), Value, Ptr,
+                                     SrcValue);
+    // Create token to keep both stores around.
+    SDOperand Token = DAG.getNode(ISD::TokenFactor, MVT::Other,
+                      Chain, ReplStore);
+    // Replace uses with token.
+    CombineTo(N, Token);
+    // Don't recombine on token.
+    return SDOperand(N, 0);
+  }
   
   return SDOperand();
 }
