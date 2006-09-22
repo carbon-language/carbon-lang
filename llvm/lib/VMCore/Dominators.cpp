@@ -809,6 +809,53 @@ ETNode *ETNode::NCA(ETNode *other) {
     return occmin->OccFor;
 }
 
+void ETNode::assignDFSNumber(int num) {
+  std::vector<ETNode *>  workStack;
+  std::set<ETNode *> visitedNodes;
+  
+  workStack.push_back(this);
+  visitedNodes.insert(this);
+  this->DFSNumIn = num++;
+
+  while (!workStack.empty()) {
+    ETNode  *Node = workStack.back();
+    
+    // If this is leaf node then set DFSNumOut and pop the stack
+    if (!Node->Son) {
+      Node->DFSNumOut = num++;
+      workStack.pop_back();
+      continue;
+    }
+    
+    ETNode *son = Node->Son;
+    
+    // Visit Node->Son first
+    if (visitedNodes.count(son) == 0) {
+      son->DFSNumIn = num++;
+      workStack.push_back(son);
+      visitedNodes.insert(son);
+      continue;
+    }
+    
+    bool visitChild = false;
+    // Visit remaining children
+    for (ETNode *s = son->Right;  s != son && !visitChild; s = s->Right) {
+      if (visitedNodes.count(s) == 0) {
+        visitChild = true;
+        s->DFSNumIn = num++;
+        workStack.push_back(s);
+          visitedNodes.insert(s);
+      }
+    }
+    
+    if (!visitChild) {
+      // If we reach here means all children are visited
+      Node->DFSNumOut = num++;
+      workStack.pop_back();
+    }
+  }
+}
+
 //===----------------------------------------------------------------------===//
 // ETForest implementation
 //===----------------------------------------------------------------------===//
