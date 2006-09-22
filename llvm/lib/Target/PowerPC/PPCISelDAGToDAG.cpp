@@ -76,6 +76,17 @@ namespace {
       return CurDAG->getTargetConstant(Imm, PPCLowering.getPointerTy());
     }
     
+    /// isRunOfOnes - Returns true iff Val consists of one contiguous run of 1s 
+    /// with any number of 0s on either side.  The 1s are allowed to wrap from
+    /// LSB to MSB, so 0x000FFF0, 0x0000FFFF, and 0xFF0000FF are all runs.
+    /// 0x0F0F0000 is not, since all 1s are not contiguous.
+    static bool isRunOfOnes(unsigned Val, unsigned &MB, unsigned &ME);
+
+
+    /// isRotateAndMask - Returns true if Mask and Shift can be folded into a
+    /// rotate and mask opcode and mask operation.
+    static bool isRotateAndMask(SDNode *N, unsigned Mask, bool IsShiftMask,
+                                unsigned &SH, unsigned &MB, unsigned &ME);
     
     /// getGlobalBaseReg - insert code into the entry mbb to materialize the PIC
     /// base register.  Return the virtual register that holds this value.
@@ -324,12 +335,7 @@ static bool isOpcWithIntImmediate(SDNode *N, unsigned Opc, unsigned& Imm) {
   return N->getOpcode() == Opc && isInt32Immediate(N->getOperand(1).Val, Imm);
 }
 
-
-// isRunOfOnes - Returns true iff Val consists of one contiguous run of 1s with
-// any number of 0s on either side.  The 1s are allowed to wrap from LSB to
-// MSB, so 0x000FFF0, 0x0000FFFF, and 0xFF0000FF are all runs.  0x0F0F0000 is
-// not, since all 1s are not contiguous.
-static bool isRunOfOnes(unsigned Val, unsigned &MB, unsigned &ME) {
+bool PPCDAGToDAGISel::isRunOfOnes(unsigned Val, unsigned &MB, unsigned &ME) {
   if (isShiftedMask_32(Val)) {
     // look for the first non-zero bit
     MB = CountLeadingZeros_32(Val);
@@ -350,10 +356,9 @@ static bool isRunOfOnes(unsigned Val, unsigned &MB, unsigned &ME) {
   return false;
 }
 
-// isRotateAndMask - Returns true if Mask and Shift can be folded into a rotate
-// and mask opcode and mask operation.
-static bool isRotateAndMask(SDNode *N, unsigned Mask, bool IsShiftMask,
-                            unsigned &SH, unsigned &MB, unsigned &ME) {
+bool PPCDAGToDAGISel::isRotateAndMask(SDNode *N, unsigned Mask, 
+                                      bool IsShiftMask, unsigned &SH, 
+                                      unsigned &MB, unsigned &ME) {
   // Don't even go down this path for i64, since different logic will be
   // necessary for rldicl/rldicr/rldimi.
   if (N->getValueType(0) != MVT::i32)
@@ -378,6 +383,8 @@ static bool isRotateAndMask(SDNode *N, unsigned Mask, bool IsShiftMask,
     Indeterminant = ~(0xFFFFFFFFu >> Shift);
     // adjust for the left rotate
     Shift = 32 - Shift;
+  } else if (Opcode == ISD::ROTL) {
+    Indeterminant = 0;
   } else {
     return false;
   }
@@ -1024,29 +1031,32 @@ SDNode *PPCDAGToDAGISel::Select(SDOperand Op) {
     break;
   }
   case ISD::AND: {
-    unsigned Imm, Imm2;
+    unsigned Imm, Imm2, SH, MB, ME;
+
     // If this is an and of a value rotated between 0 and 31 bits and then and'd
     // with a mask, emit rlwinm
     if (isInt32Immediate(N->getOperand(1), Imm) &&
-        (isShiftedMask_32(Imm) || isShiftedMask_32(~Imm))) {
-      SDOperand Val;
-      unsigned SH, MB, ME;
-      if (isRotateAndMask(N->getOperand(0).Val, Imm, false, SH, MB, ME)) {
-        Val = N->getOperand(0).getOperand(0);
-        AddToISelQueue(Val);
-      } else if (Imm == 0) {
-        // AND X, 0 -> 0, not "rlwinm 32".
-        AddToISelQueue(N->getOperand(1));
-        ReplaceUses(SDOperand(N, 0), N->getOperand(1));
-        return NULL;
-      } else {        
-        Val = N->getOperand(0);
-        AddToISelQueue(Val);
-        isRunOfOnes(Imm, MB, ME);
-        SH = 0;
-      }
+        isRotateAndMask(N->getOperand(0).Val, Imm, false, SH, MB, ME)) {
+      SDOperand Val = N->getOperand(0).getOperand(0);
+      AddToISelQueue(Val);
       SDOperand Ops[] = { Val, getI32Imm(SH), getI32Imm(MB), getI32Imm(ME) };
       return CurDAG->SelectNodeTo(N, PPC::RLWINM, MVT::i32, Ops, 4);
+    }
+    // If this is just a masked value where the input is not handled above, and
+    // is not a rotate-left (handled by a pattern in the .td file), emit rlwinm
+    if (isInt32Immediate(N->getOperand(1), Imm) &&
+        isRunOfOnes(Imm, MB, ME) && 
+        N->getOperand(0).getOpcode() != ISD::ROTL) {
+      SDOperand Val = N->getOperand(0);
+      AddToISelQueue(Val);
+      SDOperand Ops[] = { Val, getI32Imm(0), getI32Imm(MB), getI32Imm(ME) };
+      return CurDAG->SelectNodeTo(N, PPC::RLWINM, MVT::i32, Ops, 4);
+    }
+    // AND X, 0 -> 0, not "rlwinm 32".
+    if (isInt32Immediate(N->getOperand(1), Imm) && (Imm == 0)) {
+      AddToISelQueue(N->getOperand(1));
+      ReplaceUses(SDOperand(N, 0), N->getOperand(1));
+      return NULL;
     }
     // ISD::OR doesn't get all the bitfield insertion fun.
     // (and (or x, c1), c2) where isRunOfOnes(~(c1^c2)) is a bitfield insert

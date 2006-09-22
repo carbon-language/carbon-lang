@@ -129,7 +129,27 @@ def HA16 : SDNodeXForm<imm, [{
   signed int Val = N->getValue();
   return getI32Imm((Val - (signed short)Val) >> 16);
 }]>;
+def MB : SDNodeXForm<imm, [{
+  // Transformation function: get the start bit of a mask
+  unsigned mb, me;
+  (void)isRunOfOnes((unsigned)N->getValue(), mb, me);
+  return getI32Imm(mb);
+}]>;
 
+def ME : SDNodeXForm<imm, [{
+  // Transformation function: get the end bit of a mask
+  unsigned mb, me;
+  (void)isRunOfOnes((unsigned)N->getValue(), mb, me);
+  return getI32Imm(me);
+}]>;
+def maskimm32 : PatLeaf<(imm), [{
+  // maskImm predicate - True if immediate is a run of ones.
+  unsigned mb, me;
+  if (N->getValueType(0) == MVT::i32)
+    return isRunOfOnes((unsigned)N->getValue(), mb, me);
+  else
+    return false;
+}]>;
 
 def immSExt16  : PatLeaf<(imm), [{
   // immSExt16 predicate - True if the immediate fits in a 16-bit sign extended
@@ -922,6 +942,10 @@ def : Pat<(rotl GPRC:$in, GPRC:$sh),
           (RLWNM GPRC:$in, GPRC:$sh, 0, 31)>;
 def : Pat<(rotl GPRC:$in, (i32 imm:$imm)),
           (RLWINM GPRC:$in, imm:$imm, 0, 31)>;
+
+// RLWNM
+def : Pat<(and (rotl GPRC:$in, GPRC:$sh), maskimm32:$imm),
+          (RLWNM GPRC:$in, GPRC:$sh, (MB maskimm32:$imm), (ME maskimm32:$imm))>;
 
 // Calls
 def : Pat<(PPCcall tglobaladdr:$dst),

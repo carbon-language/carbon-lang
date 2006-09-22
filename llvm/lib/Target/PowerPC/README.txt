@@ -6,40 +6,6 @@ TODO:
 
 ===-------------------------------------------------------------------------===
 
-We only produce the rlwnm instruction for rotate instructions.  We should
-at least match stuff like:
-
-unsigned rot_and(unsigned X, int Y) {
-  unsigned T = (X << Y) | (X >> (32-Y));
-  T &= 127;
-  return T;
-}
-
-_foo3:
-        rlwnm r2, r3, r4, 0, 31
-        rlwinm r3, r2, 0, 25, 31
-        blr
-
-... which is the basic pattern that should be written in the instr.  It may
-also be useful for stuff like:
-
-long long foo2(long long X, int C) {
-  return X << (C&~32);
-}
-
-which currently produces:
-
-_foo2:
-        rlwinm r2, r5, 0, 27, 25
-        subfic r5, r2, 32
-        slw r3, r3, r2
-        srw r5, r4, r5
-        or r3, r3, r5
-        slw r4, r4, r2
-        blr
-
-===-------------------------------------------------------------------------===
-
 Support 'update' load/store instructions.  These are cracked on the G5, but are
 still a codesize win.
 
