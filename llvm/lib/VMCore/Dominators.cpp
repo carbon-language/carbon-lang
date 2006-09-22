@@ -844,7 +844,7 @@ void ETNode::assignDFSNumber(int num) {
         visitChild = true;
         s->DFSNumIn = num++;
         workStack.push_back(s);
-          visitedNodes.insert(s);
+        visitedNodes.insert(s);
       }
     }
     
