@@ -1093,9 +1093,6 @@ void X86RegisterInfo::emitEpilogue(MachineFunction &MF,
                    PI->getOperand(0).getReg() == StackPtr) {
           NumBytes -= PI->getOperand(2).getImmedValue();
           MBB.erase(PI);
-        } else if (PI->getOpcode() == X86::ADJSTACKPTRri) {
-          NumBytes += PI->getOperand(1).getImmedValue();
-          MBB.erase(PI);
         }
       }
 
