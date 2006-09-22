@@ -1,4 +1,4 @@
-// RUN: llvm-g++ -O3 -S -o - %s
+// RUN: %llvmgxx -O3 -S -o - %s
 
 struct A {
    virtual ~A();
