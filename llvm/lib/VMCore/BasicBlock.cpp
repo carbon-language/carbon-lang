@@ -103,12 +103,19 @@ void BasicBlock::eraseFromParent() {
   getParent()->getBasicBlockList().erase(this);
 }
 
-/// moveBefore - Unlink this instruction from its current function and
-/// insert it into the function that MovePos lives in, right before
-/// MovePos.
+/// moveBefore - Unlink this basic block from its current function and
+/// insert it into the function that MovePos lives in, right before MovePos.
 void BasicBlock::moveBefore(BasicBlock *MovePos) {
   MovePos->getParent()->getBasicBlockList().splice(MovePos,
                        getParent()->getBasicBlockList(), this);
+}
+
+/// moveAfter - Unlink this basic block from its current function and
+/// insert it into the function that MovePos lives in, right after MovePos.
+void BasicBlock::moveAfter(BasicBlock *MovePos) {
+  Function::iterator I = MovePos;
+  MovePos->getParent()->getBasicBlockList().splice(++I,
+                                       getParent()->getBasicBlockList(), this);
 }
 
 
