@@ -84,7 +84,10 @@ namespace {
     void InsertPreheaderForLoop(Loop *L);
     Loop *SeparateNestedLoop(Loop *L);
     void InsertUniqueBackedgeBlock(Loop *L);
-
+    void PlaceSplitBlockCarefully(BasicBlock *NewBB,
+                                  std::vector<BasicBlock*> &SplitPreds,
+                                  Loop *L);
+      
     void UpdateDomInfoForRevectoredPreds(BasicBlock *NewBB,
                                          std::vector<BasicBlock*> &PredBlocks);
   };
@@ -367,6 +370,10 @@ void LoopSimplify::InsertPreheaderForLoop(Loop *L) {
     Parent->addBasicBlockToLoop(NewBB, *LI);
 
   UpdateDomInfoForRevectoredPreds(NewBB, OutsideBlocks);
+  
+  // Make sure that NewBB is put someplace intelligent, which doesn't mess up
+  // code layout too horribly.
+  PlaceSplitBlockCarefully(NewBB, OutsideBlocks, L);
 }
 
 /// RewriteLoopExitBlock - Ensure that the loop preheader dominates all exit
@@ -435,6 +442,44 @@ static PHINode *FindPHIToPartitionLoops(Loop *L, DominatorSet &DS,
   return 0;
 }
 
+// PlaceSplitBlockCarefully - If the block isn't already, move the new block to
+// right after some 'outside block' block.  This prevents the preheader from
+// being placed inside the loop body, e.g. when the loop hasn't been rotated.
+void LoopSimplify::PlaceSplitBlockCarefully(BasicBlock *NewBB,
+                                            std::vector<BasicBlock*>&SplitPreds,
+                                            Loop *L) {
+  // Check to see if NewBB is already well placed.
+  Function::iterator BBI = NewBB; --BBI;
+  for (unsigned i = 0, e = SplitPreds.size(); i != e; ++i) {
+    if (&*BBI == SplitPreds[i])
+      return;
+  }
+  
+  // If it isn't already after an outside block, move it after one.  This is
+  // always good as it makes the uncond branch from the outside block into a
+  // fall-through.
+  
+  // Figure out *which* outside block to put this after.  Prefer an outside
+  // block that neighbors a BB actually in the loop.
+  BasicBlock *FoundBB = 0;
+  for (unsigned i = 0, e = SplitPreds.size(); i != e; ++i) {
+    Function::iterator BBI = SplitPreds[i];
+    if (++BBI != NewBB->getParent()->end() && 
+        L->contains(BBI)) {
+      FoundBB = SplitPreds[i];
+      break;
+    }
+  }
+  
+  // If our heuristic for a *good* bb to place this after doesn't find
+  // anything, just pick something.  It's likely better than leaving it within
+  // the loop.
+  if (!FoundBB)
+    FoundBB = SplitPreds[0];
+  NewBB->moveAfter(FoundBB);
+}
+
+
 /// SeparateNestedLoop - If this loop has multiple backedges, try to pull one of
 /// them out into a nested loop.  This is important for code that looks like
 /// this:
@@ -471,6 +516,10 @@ Loop *LoopSimplify::SeparateNestedLoop(Loop *L) {
   // Update dominator information (set, immdom, domtree, and domfrontier)
   UpdateDomInfoForRevectoredPreds(NewBB, OuterLoopPreds);
 
+  // Make sure that NewBB is put someplace intelligent, which doesn't mess up
+  // code layout too horribly.
+  PlaceSplitBlockCarefully(NewBB, OuterLoopPreds, L);
+  
   // Create the new outer loop.
   Loop *NewOuter = new Loop();
 
