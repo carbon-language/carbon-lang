@@ -72,10 +72,6 @@ namespace {
       return leaders.empty();
     }
 
-    typename std::vector<ElemTy>::size_type countLeaders() const {
-      return leaders.size();
-    }
-
     iterator findLeader(ElemTy e) {
       typename std::map<ElemTy, unsigned>::iterator MI = mapping.find(e);
       if (MI == mapping.end()) return 0;
@@ -140,8 +136,7 @@ namespace {
   /// Represents the set of equivalent Value*s and provides insertion
   /// and fast lookup. Also stores the set of inequality relationships.
   class PropertySet {
-    /// Returns true if V1 is a better choice than V2. Note that it is
-    /// not a total ordering.
+    /// Returns true if V1 is a better choice than V2.
     bool compare(Value *V1, Value *V2) const {
       if (isa<Constant>(V1)) {
         if (!isa<Constant>(V2)) {
@@ -393,8 +388,6 @@ namespace {
     void debug(std::ostream &os) const {
       static const char *OpcodeTable[] = { "EQ", "NE" };
 
-      unsigned int size = union_find.countLeaders();
-
       union_find.debug(os);
       for (std::vector<Property>::const_iterator I = Properties.begin(),
            E = Properties.end(); I != E; ++I) {
@@ -552,8 +545,8 @@ Value *PredicateSimplifier::resolve(BinaryOperator *BO,
   Value *lhs = resolve(BO->getOperand(0), KP),
         *rhs = resolve(BO->getOperand(1), KP);
 
-  ConstantIntegral *CI1 = dyn_cast<ConstantIntegral>(lhs);
-  ConstantIntegral *CI2 = dyn_cast<ConstantIntegral>(rhs);
+  ConstantIntegral *CI1 = dyn_cast<ConstantIntegral>(lhs),
+                   *CI2 = dyn_cast<ConstantIntegral>(rhs);
 
   if (CI1 && CI2) return ConstantExpr::get(BO->getOpcode(), CI1, CI2);
 
@@ -612,7 +605,7 @@ void PredicateSimplifier::visitInstruction(Instruction *I,
     if (V != Oper) {
       modified = true;
       ++NumVarsReplaced;
-      DEBUG(std::cerr << "resolving " << *I);
+      DEBUG(std::cerr << "Resolving " << *I);
       I->setOperand(i, V);
       DEBUG(std::cerr << "into " << *I);
     }
