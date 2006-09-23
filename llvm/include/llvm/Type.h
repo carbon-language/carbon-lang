@@ -371,13 +371,7 @@ protected:
 //===----------------------------------------------------------------------===//
 // Define some inline methods for the AbstractTypeUser.h:PATypeHandle class.
 // These are defined here because they MUST be inlined, yet are dependent on
-// the definition of the Type class.  Of course Type derives from Value, which
-// contains an AbstractTypeUser instance, so there is no good way to factor out
-// the code.  Hence this bit of uglyness.
-//
-// In the long term, Type should not derive from Value, allowing
-// AbstractTypeUser.h to #include Type.h, allowing us to eliminate this
-// nastyness entirely.
+// the definition of the Type class.
 //
 inline void PATypeHandle::addUser() {
   assert(Ty && "Type Handle has a null type!");
