@@ -129,6 +129,8 @@ AlphaTargetLowering::AlphaTargetLowering(TargetMachine &TM) : TargetLowering(TM)
   setOperationAction(ISD::RET,     MVT::Other, Custom);
 
   setOperationAction(ISD::JumpTable, MVT::i64, Custom);
+  setOperationAction(ISD::JumpTable, MVT::i32, Custom);
+  setOperationAction(ISD::JumpTableRelocBase, MVT::i64, Custom);
 
   setStackPointerRegisterToSaveRestore(Alpha::R30);
 
@@ -412,6 +414,8 @@ SDOperand AlphaTargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
 							   GP, RA);
   case ISD::RET: return LowerRET(Op,DAG, getVRegRA());
   case ISD::JumpTable: return LowerJumpTable(Op, DAG);
+  case ISD::JumpTableRelocBase: 
+    return DAG.getNode(AlphaISD::GlobalBaseReg, MVT::i64);
 
   case ISD::SINT_TO_FP: {
     assert(MVT::i64 == Op.getOperand(0).getValueType() && 

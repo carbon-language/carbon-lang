@@ -59,6 +59,7 @@ AlphaTargetMachine::AlphaTargetMachine(const Module &M, const std::string &FS)
     FrameInfo(TargetFrameInfo::StackGrowsDown, 16, 0),
     JITInfo(*this),
     Subtarget(M, FS) {
+  setRelocationModel(Reloc::PIC_);
 }
 
 

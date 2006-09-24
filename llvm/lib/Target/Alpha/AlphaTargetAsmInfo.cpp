@@ -18,4 +18,6 @@ using namespace llvm;
 AlphaTargetAsmInfo::AlphaTargetAsmInfo(const AlphaTargetMachine &TM) {
   AlignmentIsInBytes = false;
   PrivateGlobalPrefix = "$";
+  JumpTableDirective = ".gprel32";
+  JumpTableTextSection = "\t.section .rodata\n";
 }
