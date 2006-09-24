@@ -248,6 +248,7 @@ int llvm::GenerateBytecode(Module *M, int StripLevel, bool Internalize,
 
     // The IPO passes may leave cruft around.  Clean up after them.
     addPass(Passes, createInstructionCombiningPass());
+    addPass(Passes, createPredicateSimplifierPass());
 
     addPass(Passes, createScalarReplAggregatesPass()); // Break up allocas
 
