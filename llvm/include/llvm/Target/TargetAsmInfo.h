@@ -108,6 +108,7 @@ namespace llvm {
     const char *Data16bitsDirective;      // Defaults to "\t.short\t"
     const char *Data32bitsDirective;      // Defaults to "\t.long\t"
     const char *Data64bitsDirective;      // Defaults to "\t.quad\t"
+    const char *JumpTableDirective;       // if used, the jump table reloc flag
 
     //===--- Alignment Information ----------------------------------------===//
 
@@ -322,6 +323,9 @@ namespace llvm {
     }
     const char *getData64bitsDirective() const {
       return Data64bitsDirective;
+    }
+    const char *getJumpTableDirective() const {
+      return JumpTableDirective;
     }
     const char *getAlignDirective() const {
       return AlignDirective;

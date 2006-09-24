@@ -187,7 +187,10 @@ void AsmPrinter::EmitJumpTableInfo(MachineJumpTableInfo *MJTI) {
   // JTEntryDirective is a string to print sizeof(ptr) for non-PIC jump tables,
   // and 32 bits for PIC since PIC jump table entries are differences, not
   // pointers to blocks.
-  const char *JTEntryDirective = TAI->getData32bitsDirective();
+  // Use the architecture specific relocation directive, if it is set
+  const char *JTEntryDirective = TAI->getJumpTableDirective();
+  if (!JTEntryDirective)
+    JTEntryDirective = TAI->getData32bitsDirective();
   
   // Pick the directive to use to print the jump table entries, and switch to 
   // the appropriate section.
@@ -227,8 +230,10 @@ void AsmPrinter::EmitJumpTableInfo(MachineJumpTableInfo *MJTI) {
           << '_' << i << "_set_" << JTBBs[ii]->getNumber();
       } else if (TM.getRelocationModel() == Reloc::PIC_) {
         printBasicBlockLabel(JTBBs[ii], false, false);
-        O << '-' << TAI->getPrivateGlobalPrefix() << "JTI"
-          << getFunctionNumber() << '_' << i;
+	//If the arch uses custom Jump Table directives, don't calc relative to JT
+	if (!TAI->getJumpTableDirective()) 
+	  O << '-' << TAI->getPrivateGlobalPrefix() << "JTI"
+	    << getFunctionNumber() << '_' << i;
       } else {
         printBasicBlockLabel(JTBBs[ii], false, false);
       }

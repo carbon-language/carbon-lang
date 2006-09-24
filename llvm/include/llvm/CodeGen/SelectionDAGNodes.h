@@ -82,6 +82,9 @@ namespace ISD {
     Constant, ConstantFP,
     GlobalAddress, FrameIndex, JumpTable, ConstantPool, ExternalSymbol,
 
+    // The relocation value to add to the value loaded from a jump table
+    JumpTableRelocBase,
+
     // TargetConstant* - Like Constant*, but the DAG does not do any folding or
     // simplification of the constant.
     TargetConstant,

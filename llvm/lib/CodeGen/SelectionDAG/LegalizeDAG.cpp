@@ -558,6 +558,17 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
 #endif
     assert(0 && "Do not know how to legalize this operator!");
     abort();
+  case ISD::JumpTableRelocBase:
+    switch (TLI.getOperationAction(Node->getOpcode(), Node->getValueType(0))) {
+    case TargetLowering::Custom:
+      Tmp1 = TLI.LowerOperation(Op, DAG);
+      if (Tmp1.Val) Result = Tmp1;
+      break;
+    default:
+      Result = LegalizeOp(Node->getOperand(0));
+      break;
+    }
+    break;
   case ISD::GlobalAddress:
   case ISD::ExternalSymbol:
   case ISD::ConstantPool:
