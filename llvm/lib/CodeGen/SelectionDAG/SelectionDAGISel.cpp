@@ -857,18 +857,17 @@ void SelectionDAGLowering::visitJumpTable(SelectionDAGISel::JumpTable &JT) {
   MVT::ValueType PTy = TLI.getPointerTy();
   assert((PTy == MVT::i32 || PTy == MVT::i64) &&
          "Jump table entries are 32-bit values");
+  bool isPIC = TLI.getTargetMachine().getRelocationModel() == Reloc::PIC_;
   // PIC jump table entries are 32-bit values.
-  unsigned EntrySize = 
-    (TLI.getTargetMachine().getRelocationModel() == Reloc::PIC_)
-    ? 4 : MVT::getSizeInBits(PTy)/8;
+  unsigned EntrySize = isPIC ? 4 : MVT::getSizeInBits(PTy)/8;
   SDOperand Copy = DAG.getCopyFromReg(getRoot(), JT.Reg, PTy);
   SDOperand IDX = DAG.getNode(ISD::MUL, PTy, Copy,
                               DAG.getConstant(EntrySize, PTy));
   SDOperand TAB = DAG.getJumpTable(JT.JTI,PTy);
   SDOperand ADD = DAG.getNode(ISD::ADD, PTy, IDX, TAB);
-  SDOperand LD  = DAG.getLoad(PTy, Copy.getValue(1), ADD,
+  SDOperand LD  = DAG.getLoad(isPIC ? MVT::i32 : PTy, Copy.getValue(1), ADD,
                               DAG.getSrcValue(0));
-  if (TLI.getTargetMachine().getRelocationModel() == Reloc::PIC_) {
+  if (isPIC) {
     ADD = DAG.getNode(ISD::ADD, PTy,
         ((PTy != MVT::i32) ? DAG.getNode(ISD::SIGN_EXTEND, PTy, LD) : LD), TAB);
     DAG.setRoot(DAG.getNode(ISD::BRIND, MVT::Other, LD.getValue(1), ADD));
