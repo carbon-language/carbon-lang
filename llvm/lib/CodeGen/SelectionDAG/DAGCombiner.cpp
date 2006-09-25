@@ -2650,13 +2650,13 @@ SDOperand DAGCombiner::visitLOAD(SDNode *N) {
       SDOperand ReplLoad = DAG.getLoad(N->getValueType(0), BetterChain, Ptr,
                                        SrcValue);
 
-      // Replace uses with token.
-      CombineTo(N, ReplLoad.getValue(0), ReplLoad.getValue(1));
-      
-      // Old chain needs to be cleaned up.
-      AddToWorkList(Chain.Val);
-      
-      // Don't recombine on token.
+      // Create token factor to keep chain around.
+      SDOperand Token = DAG.getNode(ISD::TokenFactor, MVT::Other,
+                                    Chain, ReplLoad.getValue(1));
+
+      // Replace uses with load and token factor.
+      CombineTo(N, ReplLoad.getValue(0), Token);
+
       return SDOperand(N, 0);
     }
   }
@@ -2712,6 +2712,13 @@ SDOperand DAGCombiner::visitSTORE(SDNode *N) {
   }
   
   if (CombinerAA) { 
+    // If the store ptr is a frame index and the frame index has a use of one
+    // and this is a return block, then the store is redundant.
+    if (Ptr.hasOneUse() && isa<FrameIndexSDNode>(Ptr) &&
+        DAG.getRoot().getOpcode() == ISD::RET) {
+      return Chain;
+    }
+
     // Walk up chain skipping non-aliasing memory nodes.
     SDOperand BetterChain = FindBetterChain(N, Chain);
     
