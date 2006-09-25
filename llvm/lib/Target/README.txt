@@ -264,3 +264,25 @@ It would also be nice to recognize the reg->size doesn't alias reg->node[i], but
 alas...
 
 //===---------------------------------------------------------------------===//
+
+This isn't recognized as bswap by instcombine:
+
+unsigned int swap_32(unsigned int v) {
+  v = ((v & 0x00ff00ffU) << 8)  | ((v & 0xff00ff00U) >> 8);
+  v = ((v & 0x0000ffffU) << 16) | ((v & 0xffff0000U) >> 16);
+  return v;
+}
+
+//===---------------------------------------------------------------------===//
+
+These should turn into single 16-bit (unaligned?) loads on little/big endian
+processors.
+
+unsigned short read_16_le(const unsigned char *adr) {
+  return adr[0] | (adr[1] << 8);
+}
+unsigned short read_16_be(const unsigned char *adr) {
+  return (adr[0] << 8) | adr[1];
+}
+
+//===---------------------------------------------------------------------===//
