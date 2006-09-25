@@ -2706,7 +2706,7 @@ SDOperand DAGCombiner::visitSTORE(SDNode *N) {
   // If this is a store of a bit convert, store the input value.
   // FIXME: This needs to know that the resultant store does not need a 
   // higher alignment than the original.
-  if (Value.getOpcode() == ISD::BIT_CONVERT) {
+  if (0 && Value.getOpcode() == ISD::BIT_CONVERT) {
     return DAG.getNode(ISD::STORE, MVT::Other, Chain, Value.getOperand(0),
                        Ptr, SrcValue);
   }
