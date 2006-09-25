@@ -108,7 +108,6 @@ namespace llvm {
     const char *Data16bitsDirective;      // Defaults to "\t.short\t"
     const char *Data32bitsDirective;      // Defaults to "\t.long\t"
     const char *Data64bitsDirective;      // Defaults to "\t.quad\t"
-    const char *JumpTableDirective;       // if used, the jump table reloc flag
 
     //===--- Alignment Information ----------------------------------------===//
 
@@ -156,6 +155,10 @@ namespace llvm {
     /// is PIC.
     const char *JumpTableTextSection;     // Defaults to "\t.text\n"
     
+    /// JumpTableDirective - if non-null, the directive to emit before a jump
+    /// table.
+    const char *JumpTableDirective;
+
     /// StaticCtorsSection - This is the directive that is emitted to switch to
     /// a section to emit the static constructor list.
     /// Defaults to "\t.section .ctors,\"aw\",@progbits".
