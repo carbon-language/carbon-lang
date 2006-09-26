@@ -98,7 +98,9 @@ std::string AsmWriterOperand::getCode() const {
   if (OperandType == isLiteralTextOperand)
     return "O << \"" + Str + "\"; ";
 
-  std::string Result = Str + "(MI, " + utostr(MIOpNo);
+  std::string Result = Str + "(MI";
+  if (MIOpNo != ~0U)
+    Result += ", " + utostr(MIOpNo);
   if (!MiModifier.empty())
     Result += ", \"" + MiModifier + '"';
   return Result + "); ";
@@ -172,7 +174,8 @@ AsmWriterInst::AsmWriterInst(const CodeGenInstruction &CGI, unsigned Variant) {
                           AsmString.begin()+VarEnd);
 
       // Modifier - Support ${foo:modifier} syntax, where "modifier" is passed
-      // into printOperand.
+      // into printOperand.  Also support ${:feature}, which is passed into
+      // printSpecial.
       std::string Modifier;
       
       // In order to avoid starting the next string at the terminating curly
@@ -204,23 +207,29 @@ AsmWriterInst::AsmWriterInst(const CodeGenInstruction &CGI, unsigned Variant) {
                 + CGI.TheDef->getName() + "'";
         ++VarEnd;
       }
-      if (VarName.empty())
+      if (VarName.empty() && Modifier.empty())
         throw "Stray '$' in '" + CGI.TheDef->getName() +
               "' asm string, maybe you want $$?";
 
-      unsigned OpNo = CGI.getOperandNamed(VarName);
-      CodeGenInstruction::OperandInfo OpInfo = CGI.OperandList[OpNo];
+      if (VarName.empty()) {
+        // Just a modifier, pass this into printSpecial.
+        Operands.push_back(AsmWriterOperand("printSpecial", ~0U, Modifier));
+      } else {
+        // Otherwise, normal operand.
+        unsigned OpNo = CGI.getOperandNamed(VarName);
+        CodeGenInstruction::OperandInfo OpInfo = CGI.OperandList[OpNo];
 
-      // If this is a two-address instruction, verify the second operand isn't
-      // used.
-      unsigned MIOp = OpInfo.MIOperandNo;
-      if (CGI.isTwoAddress && MIOp == 1)
-        throw "Should refer to operand #0 instead of #1 for two-address"
-              " instruction '" + CGI.TheDef->getName() + "'!";
-
-      if (CurVariant == Variant || CurVariant == ~0U) 
-        Operands.push_back(AsmWriterOperand(OpInfo.PrinterMethodName, MIOp,
-                                            Modifier));
+        // If this is a two-address instruction, verify the second operand isn't
+        // used.
+        unsigned MIOp = OpInfo.MIOperandNo;
+        if (CGI.isTwoAddress && MIOp == 1)
+          throw "Should refer to operand #0 instead of #1 for two-address"
+                " instruction '" + CGI.TheDef->getName() + "'!";
+        
+        if (CurVariant == Variant || CurVariant == ~0U) 
+          Operands.push_back(AsmWriterOperand(OpInfo.PrinterMethodName, MIOp,
+                                              Modifier));
+      }
       LastEmitted = VarEnd;
     }
   }
