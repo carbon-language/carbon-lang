@@ -2644,6 +2644,8 @@ SDOperand DAGCombiner::visitLOAD(SDNode *N) {
       Chain.getOperand(1).getValueType() == N->getValueType(0))
     return CombineTo(N, Chain.getOperand(1), Chain);
   
+  // We can only move the load if it has a user of it's chain result.  Otherwise
+  // there is no place to attach it's old chain.
   if (CombinerAA && hasChainUsers(N)) { 
     // Walk up chain skipping non-aliasing memory nodes.
     SDOperand BetterChain = FindBetterChain(N, Chain);
@@ -3956,15 +3958,19 @@ SDOperand DAGCombiner::BuildUDIV(SDNode *N) {
 bool DAGCombiner::hasChainUsers(SDNode *Load) {
   // Don't even bother if the load only has one user (conservatively the value.)
   if (!Load->hasOneUse()) {
-    SDOperand Chain(Load, 1);
+    SDOperand Chain(Load, 1);  // The load's chain result.
     
+    // For each user of the load.
     for (SDNode::use_iterator UI = Load->use_begin(), UE = Load->use_end();
          UI != UE; ++UI) {
+         
+      // Chain will be the first operand.
       if ((*UI)->getOperand(0) == Chain)
         return true;
     }
   }
   
+  // No luck.
   return false;
 }
 
@@ -4025,7 +4031,7 @@ void DAGCombiner::FindAliasInfo(SDNode *N,
   switch (N->getOpcode()) {
   case ISD::LOAD:
     Ptr = N->getOperand(1);
-    Size = MVT::getSizeInBits(N->getOperand(1).getValueType()) >> 3;
+    Size = MVT::getSizeInBits(N->getValueType(0)) >> 3;
     SrcValue = N->getOperand(2);
     break;
   case ISD::STORE:
