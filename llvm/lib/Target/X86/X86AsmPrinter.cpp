@@ -33,88 +33,75 @@ using namespace llvm;
 Statistic<> llvm::EmittedInsts("asm-printer",
                                "Number of machine instrs printed");
 
-static X86FunctionInfo calculateFunctionInfo(const Function* F,
-                                             const TargetData* TD) 
-{
+static X86FunctionInfo calculateFunctionInfo(const Function *F,
+                                             const TargetData *TD) {
   X86FunctionInfo Info;
-  uint64_t size = 0;
+  uint64_t Size = 0;
   
   switch (F->getCallingConv()) {
-   case CallingConv::X86_StdCall:
+  case CallingConv::X86_StdCall:
     Info.setDecorationStyle(StdCall);
     break;
-   case CallingConv::X86_FastCall:
+  case CallingConv::X86_FastCall:
     Info.setDecorationStyle(FastCall);
     break;
-   default:
+  default:
     return Info;
   }
 
-  for (Function::const_arg_iterator AI = F->arg_begin(),
-                                    AE = F->arg_end();
-       AI != AE;
-       ++AI) {
-    size += TD->getTypeSize(AI->getType());
-  }
+  for (Function::const_arg_iterator AI = F->arg_begin(), AE = F->arg_end();
+       AI != AE; ++AI)
+    Size += TD->getTypeSize(AI->getType());
 
   // We're not supporting tooooo huge arguments :)
-  Info.setBytesToPopOnReturn((unsigned int)size);
-    
+  Info.setBytesToPopOnReturn((unsigned int)Size);
   return Info;
 }
 
 
-// Query FunctionInfoMap and use this information for various name decoration
-void X86SharedAsmPrinter::decorateName(std::string& Name, const GlobalValue* GV)
-{
-  const X86FunctionInfo* Info;
-  const Function* F;
-  
-  if ((F = dyn_cast<Function>(GV)) == NULL) {
-    return;
-  }
-
-  unsigned CC = F->getCallingConv();
+/// decorateName - Query FunctionInfoMap and use this information for various
+/// name decoration.
+void X86SharedAsmPrinter::decorateName(std::string &Name,
+                                       const GlobalValue *GV) {
+  const Function *F = dyn_cast<Function>(GV);
+  if (!F) return;
 
   // We don't want to decorate non-stdcall or non-fastcall functions right now
-  if (CC != CallingConv::X86_StdCall && CC != CallingConv::X86_FastCall) {
+  unsigned CC = F->getCallingConv();
+  if (CC != CallingConv::X86_StdCall && CC != CallingConv::X86_FastCall)
     return;
-  }
     
   FMFInfoMap::const_iterator info_item = FunctionInfoMap.find(F);
 
+  const X86FunctionInfo *Info;
   if (info_item == FunctionInfoMap.end()) {
     // Calculate apropriate function info and populate map
     FunctionInfoMap[F] = calculateFunctionInfo(F, TM.getTargetData());
     Info = &FunctionInfoMap[F];
   } else {
-    Info = &(info_item->second);
+    Info = &info_item->second;
   }
         
   switch (Info->getDecorationStyle()) {
-   case None:
+  case None:
     break;
-   case StdCall:
-    if (!F->isVarArg()) {
-      // Variadic functions do not receive @0 suffix
+  case StdCall:
+    if (!F->isVarArg()) // Variadic functions do not receive @0 suffix.
       Name += '@' + utostr_32(Info->getBytesToPopOnReturn());
-    }    
     break;
-   case FastCall:
-    if (!F->isVarArg()) {
-      // Variadic functions do not receive @0 suffix
+  case FastCall:
+    if (!F->isVarArg()) // Variadic functions do not receive @0 suffix.
       Name += '@' + utostr_32(Info->getBytesToPopOnReturn());
-    }
+
     if (Name[0] == '_') {
       Name[0] = '@';
     } else {
       Name = '@' + Name;
     }    
     break;
-   default:
+  default:
     assert(0 && "Unsupported DecorationStyle");
   }
-    
 }
 
 /// doInitialization

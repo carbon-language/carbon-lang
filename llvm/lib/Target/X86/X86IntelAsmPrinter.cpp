@@ -36,14 +36,13 @@ bool X86IntelAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
   EmitConstantPool(MF.getConstantPool());
 
   // Print out labels for the function.
-  const Function* F = MF.getFunction();
+  const Function *F = MF.getFunction();
   unsigned CC = F->getCallingConv();
 
   // Populate function information map.  Actually, We don't want to populate
   // non-stdcall or non-fastcall functions' information right now.
-  if (CC == CallingConv::X86_StdCall || CC == CallingConv::X86_FastCall) {
-    FunctionInfoMap[F] = *(MF.getInfo<X86FunctionInfo>());
-  }
+  if (CC == CallingConv::X86_StdCall || CC == CallingConv::X86_FastCall)
+    FunctionInfoMap[F] = *MF.getInfo<X86FunctionInfo>();
 
   X86SharedAsmPrinter::decorateName(CurrentFnName, F);
 

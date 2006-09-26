@@ -1523,9 +1523,8 @@ X86TargetLowering::LowerFastCCArguments(SDOperand Op, SelectionDAG &DAG) {
   return DAG.getNode(ISD::MERGE_VALUES, RetVTs, &ArgValues[0],ArgValues.size());
 }
 
-SDOperand X86TargetLowering::LowerFastCCCallTo(SDOperand Op,
-                                               SelectionDAG &DAG,
-                                               bool isFastCall){
+SDOperand X86TargetLowering::LowerFastCCCallTo(SDOperand Op, SelectionDAG &DAG,
+                                               bool isFastCall) {
   SDOperand Chain     = Op.getOperand(0);
   unsigned CallingConv= cast<ConstantSDNode>(Op.getOperand(1))->getValue();
   bool isVarArg       = cast<ConstantSDNode>(Op.getOperand(2))->getValue() != 0;

@@ -48,9 +48,8 @@ bool X86ATTAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
 
   // Populate function information map.  Actually, We don't want to populate
   // non-stdcall or non-fastcall functions' information right now.
-  if (CC == CallingConv::X86_StdCall || CC == CallingConv::X86_FastCall) {
-    FunctionInfoMap[F] = *(MF.getInfo<X86FunctionInfo>());
-  }
+  if (CC == CallingConv::X86_StdCall || CC == CallingConv::X86_FastCall)
+    FunctionInfoMap[F] = *MF.getInfo<X86FunctionInfo>();
 
   X86SharedAsmPrinter::decorateName(CurrentFnName, F);
 
@@ -200,7 +199,7 @@ void X86ATTAsmPrinter::printOperand(const MachineInstr *MI, unsigned OpNo,
     bool isExt = (GV->isExternal() || GV->hasWeakLinkage() ||
                   GV->hasLinkOnceLinkage());
     
-    X86SharedAsmPrinter::decorateName(Name, (Function*)GV);
+    X86SharedAsmPrinter::decorateName(Name, GV);
     
     if (X86PICStyle == PICStyle::Stub &&
         TM.getRelocationModel() != Reloc::Static) {

@@ -46,7 +46,7 @@ public:
                       BytesToPopOnReturn(0),
                       DecorationStyle(None) {}
   
-  X86FunctionInfo(MachineFunction& MF) : ForceFramePointer(false),
+  X86FunctionInfo(MachineFunction &MF) : ForceFramePointer(false),
                                          BytesToPopOnReturn(0),
                                          DecorationStyle(None) {}
   
