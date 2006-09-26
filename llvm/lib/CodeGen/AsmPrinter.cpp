@@ -619,6 +619,30 @@ AsmPrinter::EmitMachineConstantPoolValue(MachineConstantPoolValue *MCPV) {
   abort();
 }
 
+/// PrintSpecial - Print information related to the specified machine instr
+/// that is independent of the operand, and may be independent of the instr
+/// itself.  This can be useful for portably encoding the comment character
+/// or other bits of target-specific knowledge into the asmstrings.  The
+/// syntax used is ${:comment}.  Targets can override this to add support
+/// for their own strange codes.
+void AsmPrinter::PrintSpecial(const MachineInstr *MI, const char *Code) {
+  if (!strcmp(Code, "comment")) {
+    O << TAI->getCommentString();
+  } else if (!strcmp(Code, "uid")) {
+    // Assign a unique ID to this machine instruction.
+    static const MachineInstr *LastMI = 0;
+    static unsigned Counter = 0U-1;
+    // If this is a new machine instruction, bump the counter.
+    if (LastMI != MI) { ++Counter; LastMI = MI; }
+    O << Counter;
+  } else {
+    std::cerr << "Unknown special formatter '" << Code
+              << "' for machine instr: " << *MI;
+    exit(1);
+  }    
+}
+
+
 /// printInlineAsm - This method formats and prints the specified machine
 /// instruction that is an inline asm.
 void AsmPrinter::printInlineAsm(const MachineInstr *MI) const {

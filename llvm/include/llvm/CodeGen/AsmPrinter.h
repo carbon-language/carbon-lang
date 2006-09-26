@@ -108,6 +108,14 @@ namespace llvm {
     /// doFinalization - Shut down the asmprinter.  If you override this in your
     /// pass, you must make sure to call it explicitly.
     bool doFinalization(Module &M);
+    
+    /// PrintSpecial - Print information related to the specified machine instr
+    /// that is independent of the operand, and may be independent of the instr
+    /// itself.  This can be useful for portably encoding the comment character
+    /// or other bits of target-specific knowledge into the asmstrings.  The
+    /// syntax used is ${:comment}.  Targets can override this to add support
+    /// for their own strange codes.
+    virtual void PrintSpecial(const MachineInstr *MI, const char *Code);
 
     /// PrintAsmOperand - Print the specified operand of MI, an INLINEASM
     /// instruction, using the specified assembler variant.  Targets should
