@@ -868,6 +868,9 @@ void SelectionDAGLowering::visitJumpTable(SelectionDAGISel::JumpTable &JT) {
   SDOperand LD  = DAG.getLoad(isPIC ? MVT::i32 : PTy, Copy.getValue(1), ADD,
                               DAG.getSrcValue(0));
   if (isPIC) {
+    // For Pic, the sequence is:
+    // BRIND(load(Jumptable + index) + RelocBase)
+    // RelocBase is the JumpTable on PPC and X86, GOT on Alpha
     SDOperand Reloc = DAG.getNode(ISD::JumpTableRelocBase, PTy, TAB);
     ADD = DAG.getNode(ISD::ADD, PTy,
         ((PTy != MVT::i32) ? DAG.getNode(ISD::SIGN_EXTEND, PTy, LD) : LD), Reloc);
