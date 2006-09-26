@@ -253,8 +253,11 @@ bool AsmPrinter::EmitSpecialLLVMGlobal(const GlobalVariable *GV) {
 
   assert(GV->hasInitializer() && "Not a special LLVM global!");
   
-  if (GV->getName() == "llvm.used")
-    return true;  // No need to emit this at all.
+  if (GV->getName() == "llvm.used") {
+    if (TAI->getUsedDirective() != 0)    // No need to emit this at all.
+      EmitLLVMUsedList(GV->getInitializer());
+    return true;
+  }
 
   if (GV->getName() == "llvm.global_ctors" && GV->use_empty()) {
     SwitchToDataSection(TAI->getStaticCtorsSection(), 0);
@@ -271,6 +274,22 @@ bool AsmPrinter::EmitSpecialLLVMGlobal(const GlobalVariable *GV) {
   }
   
   return false;
+}
+
+/// EmitLLVMUsedList - For targets that define a TAI::UsedDirective, mark each
+/// global in the specified llvm.used list as being used with this directive.
+void AsmPrinter::EmitLLVMUsedList(Constant *List) {
+  const char *Directive = TAI->getUsedDirective();
+
+  // Should be an array of 'sbyte*'.
+  ConstantArray *InitList = dyn_cast<ConstantArray>(List);
+  if (InitList == 0) return;
+  
+  for (unsigned i = 0, e = InitList->getNumOperands(); i != e; ++i) {
+    O << Directive;
+    EmitConstantValueOnly(InitList->getOperand(i));
+    O << "\n";
+  }
 }
 
 /// EmitXXStructorList - Emit the ctor or dtor list.  This just prints out the 

@@ -197,6 +197,7 @@ namespace llvm {
     void printDataDirective(const Type *type);
 
   private:
+    void EmitLLVMUsedList(Constant *List);
     void EmitXXStructorList(Constant *List);
     void EmitConstantPool(unsigned Alignment, const char *Section,
                 std::vector<std::pair<MachineConstantPoolEntry,unsigned> > &CP);

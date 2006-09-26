@@ -199,6 +199,11 @@ namespace llvm {
     /// directives, this is true for most ELF targets.
     bool HasDotTypeDotSizeDirective;      // Defaults to true.
     
+    /// UsedDirective - This directive, if non-null, is used to declare a global
+    /// as being used somehow that the assembler can't see.  This prevents dead
+    /// code elimination on some targets.
+    const char *UsedDirective;            // Defaults to null.
+    
     //===--- Dwarf Emission Directives -----------------------------------===//
 
     /// HasLEB128 - True if target asm supports leb128 directives.
@@ -386,6 +391,9 @@ namespace llvm {
     }
     bool hasDotTypeDotSizeDirective() const {
       return HasDotTypeDotSizeDirective;
+    }
+    const char *getUsedDirective() const {
+      return UsedDirective;
     }
     bool hasLEB128() const {
       return HasLEB128;
