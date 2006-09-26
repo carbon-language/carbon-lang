@@ -43,11 +43,11 @@ namespace {
         Fn.getFrameInfo()->setMachineDebugInfo(DI);
       }
       
-      // Scan the function for modified caller saved registers and insert spill
-      // code for any caller saved registers that are modified.  Also calculate
+      // Scan the function for modified callee saved registers and insert spill
+      // code for any callee saved registers that are modified.  Also calculate
       // the MaxCallFrameSize and HasCalls variables for the function's frame
       // information and eliminates call frame pseudo instructions.
-      calculateCallerSavedRegisters(Fn);
+      calculateCalleeSavedRegisters(Fn);
 
       // Add the code to save and restore the caller saved registers
       saveCallerSavedRegisters(Fn);
@@ -61,7 +61,7 @@ namespace {
 
       // Add prolog and epilog code to the function.  This function is required
       // to align the stack frame as necessary for any stack variables or
-      // called functions.  Because of this, calculateCallerSavedRegisters
+      // called functions.  Because of this, calculateCalleeSavedRegisters
       // must be called before this function in order to set the HasCalls
       // and MaxCallFrameSize variables.
       insertPrologEpilogCode(Fn);
@@ -75,7 +75,7 @@ namespace {
     }
   
   private:
-    void calculateCallerSavedRegisters(MachineFunction &Fn);
+    void calculateCalleeSavedRegisters(MachineFunction &Fn);
     void saveCallerSavedRegisters(MachineFunction &Fn);
     void calculateFrameObjectOffsets(MachineFunction &Fn);
     void replaceFrameIndices(MachineFunction &Fn);
@@ -90,12 +90,12 @@ namespace {
 FunctionPass *llvm::createPrologEpilogCodeInserter() { return new PEI(); }
 
 
-/// calculateCallerSavedRegisters - Scan the function for modified caller saved
+/// calculateCalleeSavedRegisters - Scan the function for modified caller saved
 /// registers.  Also calculate the MaxCallFrameSize and HasCalls variables for
 /// the function's frame information and eliminates call frame pseudo
 /// instructions.
 ///
-void PEI::calculateCallerSavedRegisters(MachineFunction &Fn) {
+void PEI::calculateCalleeSavedRegisters(MachineFunction &Fn) {
   const MRegisterInfo *RegInfo = Fn.getTarget().getRegisterInfo();
   const TargetFrameInfo *TFI = Fn.getTarget().getFrameInfo();
 
