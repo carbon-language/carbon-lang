@@ -3956,17 +3956,15 @@ SDOperand DAGCombiner::BuildUDIV(SDNode *N) {
 ///  hasChainUsers - Returns true if one of the users of a load node has the
 ///  chain result as an operand.
 bool DAGCombiner::hasChainUsers(SDNode *Load) {
-  // Don't even bother if the load only has one user (conservatively the value.)
-  if (!Load->hasOneUse()) {
-    SDOperand Chain(Load, 1);  // The load's chain result.
-    
-    // For each user of the load.
-    for (SDNode::use_iterator UI = Load->use_begin(), UE = Load->use_end();
-         UI != UE; ++UI) {
-         
-      // Chain will be the first operand.
-      if ((*UI)->getOperand(0) == Chain)
-        return true;
+  SDOperand Chain(Load, 1);  // The load's chain result.
+  
+  // For each user of the load.
+  for (SDNode::use_iterator UI = Load->use_begin(), UE = Load->use_end();
+       UI != UE; ++UI) {
+    const SDNode *User = *UI;
+       
+    for (unsigned i = 0, e = User->getNumOperands(); i != e; ++i) {
+      if (User->getOperand(i) == Chain) return true;
     }
   }
   
