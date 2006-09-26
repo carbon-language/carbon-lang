@@ -240,10 +240,6 @@ class VISIBILITY_HIDDEN DAGCombiner {
     SDOperand BuildUDIV(SDNode *N);
     SDNode *MatchRotate(SDOperand LHS, SDOperand RHS);
     
-    ///  hasChainUsers - Returns true if one of the users of a load node has the
-    ///  chain result as an operand.
-    bool hasChainUsers(SDNode *Load);
-    
     /// FindBaseOffset - Return true if we can determine base and offset
     /// information from a given pointer operand.  Provides base and offset as a
     /// result.
@@ -2646,7 +2642,7 @@ SDOperand DAGCombiner::visitLOAD(SDNode *N) {
   
   // We can only move the load if it has a user of it's chain result.  Otherwise
   // there is no place to attach it's old chain.
-  if (CombinerAA && hasChainUsers(N)) { 
+  if (CombinerAA) { 
     // Walk up chain skipping non-aliasing memory nodes.
     SDOperand BetterChain = FindBetterChain(N, Chain);
     
@@ -3951,25 +3947,6 @@ SDOperand DAGCombiner::BuildUDIV(SDNode *N) {
        ii != ee; ++ii)
     AddToWorkList(*ii);
   return S;
-}
-
-///  hasChainUsers - Returns true if one of the users of a load node has the
-///  chain result as an operand.
-bool DAGCombiner::hasChainUsers(SDNode *Load) {
-  SDOperand Chain(Load, 1);  // The load's chain result.
-  
-  // For each user of the load.
-  for (SDNode::use_iterator UI = Load->use_begin(), UE = Load->use_end();
-       UI != UE; ++UI) {
-    const SDNode *User = *UI;
-       
-    for (unsigned i = 0, e = User->getNumOperands(); i != e; ++i) {
-      if (User->getOperand(i) == Chain) return true;
-    }
-  }
-  
-  // No luck.
-  return false;
 }
 
 /// FindBaseOffset - Return true if we can determine base and offset information
