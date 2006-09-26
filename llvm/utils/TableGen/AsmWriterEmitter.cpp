@@ -175,7 +175,7 @@ AsmWriterInst::AsmWriterInst(const CodeGenInstruction &CGI, unsigned Variant) {
 
       // Modifier - Support ${foo:modifier} syntax, where "modifier" is passed
       // into printOperand.  Also support ${:feature}, which is passed into
-      // printSpecial.
+      // PrintSpecial.
       std::string Modifier;
       
       // In order to avoid starting the next string at the terminating curly
@@ -212,8 +212,8 @@ AsmWriterInst::AsmWriterInst(const CodeGenInstruction &CGI, unsigned Variant) {
               "' asm string, maybe you want $$?";
 
       if (VarName.empty()) {
-        // Just a modifier, pass this into printSpecial.
-        Operands.push_back(AsmWriterOperand("printSpecial", ~0U, Modifier));
+        // Just a modifier, pass this into PrintSpecial.
+        Operands.push_back(AsmWriterOperand("PrintSpecial", ~0U, Modifier));
       } else {
         // Otherwise, normal operand.
         unsigned OpNo = CGI.getOperandNamed(VarName);
