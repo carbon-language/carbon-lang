@@ -97,6 +97,14 @@ void MachineBasicBlock::print(std::ostream &OS) const {
   if (LBB)
     OS << "\n" << LBB->getName() << " (" << (const void*)this
        << ", LLVM BB @" << (const void*) LBB << "):\n";
+  // Print the preds of this block according to the CFG.
+  if (!pred_empty()) {
+    OS << "    Predecessors according to CFG:";
+    for (const_pred_iterator PI = pred_begin(), E = pred_end(); PI != E; ++PI)
+      OS << " " << *PI;
+    OS << "\n";
+  }
+  
   for (const_iterator I = begin(); I != end(); ++I) {
     OS << "\t";
     I->print(OS, &getParent()->getTarget());
