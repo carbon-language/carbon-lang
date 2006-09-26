@@ -44,6 +44,7 @@ X86TargetAsmInfo::X86TargetAsmInfo(const X86TargetMachine &TM) {
     InlineAsmStart = "# InlineAsm Start";
     InlineAsmEnd = "# InlineAsm End";
     SetDirective = "\t.set";
+    UsedDirective = "\t.no_dead_strip\t";
     
     NeedsSet = true;
     DwarfAbbrevSection = ".section __DWARF,__debug_abbrev,regular,debug";
