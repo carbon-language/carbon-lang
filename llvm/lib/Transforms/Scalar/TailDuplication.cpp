@@ -18,6 +18,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#define DEBUG_TYPE "tailduplicate"
 #include "llvm/Transforms/Scalar.h"
 #include "llvm/Constant.h"
 #include "llvm/Function.h"
