@@ -626,7 +626,9 @@ AsmPrinter::EmitMachineConstantPoolValue(MachineConstantPoolValue *MCPV) {
 /// syntax used is ${:comment}.  Targets can override this to add support
 /// for their own strange codes.
 void AsmPrinter::PrintSpecial(const MachineInstr *MI, const char *Code) {
-  if (!strcmp(Code, "comment")) {
+  if (!strcmp(Code, "private")) {
+    O << TAI->getPrivateGlobalPrefix();
+  } else if (!strcmp(Code, "comment")) {
     O << TAI->getCommentString();
   } else if (!strcmp(Code, "uid")) {
     // Assign a unique ID to this machine instruction.
