@@ -4286,20 +4286,20 @@ SDOperand X86TargetLowering::LowerCALL(SDOperand Op, SelectionDAG &DAG) {
     return LowerX86_64CCCCallTo(Op, DAG);
   else
     switch (CallingConv) {
-     case CallingConv::Fast:
+    default:
+      assert(0 && "Unsupported calling convention");      
+    case CallingConv::Fast:
       if (EnableFastCC) {
         return LowerFastCCCallTo(Op, DAG, false);
       }
       // Falls through
-     case CallingConv::C:
-     case CallingConv::CSRet:
+    case CallingConv::C:
+    case CallingConv::CSRet:
       return LowerCCCCallTo(Op, DAG);
-     case CallingConv::X86_StdCall: 
+    case CallingConv::X86_StdCall: 
       return LowerStdCallCCCallTo(Op, DAG);
-     case CallingConv::X86_FastCall:
+    case CallingConv::X86_FastCall:
       return LowerFastCCCallTo(Op, DAG, true);
-     default:
-      assert(0 && "Unsupported calling convention");      
     }
 }
 
@@ -4421,22 +4421,22 @@ X86TargetLowering::LowerFORMAL_ARGUMENTS(SDOperand Op, SelectionDAG &DAG) {
     return LowerX86_64CCCArguments(Op, DAG);
   else
     switch(CC) {
-     case CallingConv::Fast:
+    default:
+      assert(0 && "Unsupported calling convention");
+    case CallingConv::Fast:
       if (EnableFastCC) {
         return LowerFastCCArguments(Op, DAG);
       }
       // Falls through
-     case CallingConv::C:
-     case CallingConv::CSRet:
+    case CallingConv::C:
+    case CallingConv::CSRet:
       return LowerCCCArguments(Op, DAG);
-     case CallingConv::X86_StdCall:
+    case CallingConv::X86_StdCall:
       MF.getInfo<X86FunctionInfo>()->setDecorationStyle(StdCall);
       return LowerStdCallCCArguments(Op, DAG);
-     case CallingConv::X86_FastCall:
+    case CallingConv::X86_FastCall:
       MF.getInfo<X86FunctionInfo>()->setDecorationStyle(FastCall);
       return LowerFastCallCCArguments(Op, DAG);
-     default:
-      assert(0 && "Unsupported calling convention");
     }
 }
 
