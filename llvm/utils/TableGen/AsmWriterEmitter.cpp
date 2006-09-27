@@ -484,9 +484,10 @@ void AsmWriterEmitter::run(std::ostream &O) {
   // Build an aggregate string, and build a table of offsets into it.
   std::map<std::string, unsigned> StringOffset;
   std::string AggregateString;
-  AggregateString += "\0\0";
+  AggregateString.push_back(0);  // "\0"
+  AggregateString.push_back(0);  // "\0"
   
-  /// OpcodeInfo - Theis encodes the index of the string to use for the first
+  /// OpcodeInfo - This encodes the index of the string to use for the first
   /// chunk of the output as well as indices used for operand printing.
   std::vector<unsigned> OpcodeInfo;
   
