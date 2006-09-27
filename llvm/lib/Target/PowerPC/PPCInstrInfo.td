@@ -275,20 +275,20 @@ def FPContractions : Predicate<"!NoExcessFPPrecision">;
 
 let hasCtrlDep = 1 in {
 def ADJCALLSTACKDOWN : Pseudo<(ops u16imm:$amt),
-                              "; ADJCALLSTACKDOWN",
+                              "${:comment} ADJCALLSTACKDOWN",
                               [(callseq_start imm:$amt)]>;
 def ADJCALLSTACKUP   : Pseudo<(ops u16imm:$amt),
-                              "; ADJCALLSTACKUP",
+                              "${:comment} ADJCALLSTACKUP",
                               [(callseq_end imm:$amt)]>;
 
 def UPDATE_VRSAVE    : Pseudo<(ops GPRC:$rD, GPRC:$rS),
                               "UPDATE_VRSAVE $rD, $rS", []>;
 }
-def IMPLICIT_DEF_GPRC: Pseudo<(ops GPRC:$rD), "; IMPLICIT_DEF_GPRC $rD",
+def IMPLICIT_DEF_GPRC: Pseudo<(ops GPRC:$rD),"${:comment}IMPLICIT_DEF_GPRC $rD",
                               [(set GPRC:$rD, (undef))]>;
-def IMPLICIT_DEF_F8  : Pseudo<(ops F8RC:$rD), "; IMPLICIT_DEF_F8 $rD",
+def IMPLICIT_DEF_F8  : Pseudo<(ops F8RC:$rD), "${:comment} IMPLICIT_DEF_F8 $rD",
                               [(set F8RC:$rD, (undef))]>;
-def IMPLICIT_DEF_F4  : Pseudo<(ops F4RC:$rD), "; IMPLICIT_DEF_F4 $rD",
+def IMPLICIT_DEF_F4  : Pseudo<(ops F4RC:$rD), "${:comment} IMPLICIT_DEF_F4 $rD",
                               [(set F4RC:$rD, (undef))]>;
 
 // SELECT_CC_* - Used to implement the SELECT_CC DAG operation.  Expanded by the
@@ -296,15 +296,20 @@ def IMPLICIT_DEF_F4  : Pseudo<(ops F4RC:$rD), "; IMPLICIT_DEF_F4 $rD",
 let usesCustomDAGSchedInserter = 1,    // Expanded by the scheduler.
     PPC970_Single = 1 in {
   def SELECT_CC_I4 : Pseudo<(ops GPRC:$dst, CRRC:$cond, GPRC:$T, GPRC:$F,
-                              i32imm:$BROPC), "; SELECT_CC PSEUDO!", []>;
+                              i32imm:$BROPC), "${:comment} SELECT_CC PSEUDO!",
+                              []>;
   def SELECT_CC_I8 : Pseudo<(ops G8RC:$dst, CRRC:$cond, G8RC:$T, G8RC:$F,
-                              i32imm:$BROPC), "; SELECT_CC PSEUDO!", []>;
+                              i32imm:$BROPC), "${:comment} SELECT_CC PSEUDO!",
+                              []>;
   def SELECT_CC_F4  : Pseudo<(ops F4RC:$dst, CRRC:$cond, F4RC:$T, F4RC:$F,
-                              i32imm:$BROPC), "; SELECT_CC PSEUDO!", []>;
+                              i32imm:$BROPC), "${:comment} SELECT_CC PSEUDO!",
+                              []>;
   def SELECT_CC_F8  : Pseudo<(ops F8RC:$dst, CRRC:$cond, F8RC:$T, F8RC:$F,
-                              i32imm:$BROPC), "; SELECT_CC PSEUDO!", []>;
+                              i32imm:$BROPC), "${:comment} SELECT_CC PSEUDO!",
+                              []>;
   def SELECT_CC_VRRC: Pseudo<(ops VRRC:$dst, CRRC:$cond, VRRC:$T, VRRC:$F,
-                              i32imm:$BROPC), "; SELECT_CC PSEUDO!", []>;
+                              i32imm:$BROPC), "${:comment} SELECT_CC PSEUDO!",
+                              []>;
 }
 
 let isTerminator = 1, noResults = 1, PPC970_Unit = 7 in {
@@ -320,7 +325,7 @@ let Defs = [LR] in
 let isBranch = 1, isTerminator = 1, hasCtrlDep = 1, 
     noResults = 1, PPC970_Unit = 7 in {
   def COND_BRANCH : Pseudo<(ops CRRC:$crS, u16imm:$opc, target:$dst),
-                           "; COND_BRANCH $crS, $opc, $dst",
+                           "${:comment} COND_BRANCH $crS, $opc, $dst",
                            [(PPCcondbranch CRRC:$crS, imm:$opc, bb:$dst)]>;
   def B   : IForm<18, 0, 0, (ops target:$dst),
                   "b $dst", BrB,
@@ -895,12 +900,12 @@ def RLWNM  : MForm_2<23,
 //
 
 def DWARF_LOC        : Pseudo<(ops i32imm:$line, i32imm:$col, i32imm:$file),
-                              "; .loc $file, $line, $col",
+                              "${:comment} .loc $file, $line, $col",
                       [(dwarf_loc (i32 imm:$line), (i32 imm:$col),
                                   (i32 imm:$file))]>;
 
 def DWARF_LABEL      : Pseudo<(ops i32imm:$id),
-                              "\nLdebug_loc$id:",
+                              "\n${:private}debug_loc$id:",
                       [(dwarf_label (i32 imm:$id))]>;
 
 //===----------------------------------------------------------------------===//
