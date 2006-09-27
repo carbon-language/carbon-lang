@@ -28,36 +28,49 @@ D("postidom", "Immediate Post-Dominators Construction", true);
 
 unsigned ImmediatePostDominators::DFSPass(BasicBlock *V, InfoRec &VInfo,
                                           unsigned N) {
-
   std::vector<std::pair<BasicBlock *, InfoRec *> > workStack;
+  std::set<BasicBlock *> visited;
   workStack.push_back(std::make_pair(V, &VInfo));
 
   do {
     BasicBlock *currentBB = workStack.back().first; 
     InfoRec *currentVInfo = workStack.back().second;
-    workStack.pop_back();
 
-    currentVInfo->Semi = ++N;
-    currentVInfo->Label = currentBB;
+    // Visit each block only once.
+    if (visited.count(currentBB) == 0) {
 
-    Vertex.push_back(currentBB);  // Vertex[n] = current;
-                                  // Info[currentBB].Ancestor = 0;     
-                                  // Ancestor[n] = 0
-                                  // Child[currentBB] = 0;
-    currentVInfo->Size = 1;       // Size[currentBB] = 1
+      visited.insert(currentBB);
+      currentVInfo->Semi = ++N;
+      currentVInfo->Label = currentBB;
+      
+      Vertex.push_back(currentBB);  // Vertex[n] = current;
+      // Info[currentBB].Ancestor = 0;     
+      // Ancestor[n] = 0
+      // Child[currentBB] = 0;
+      currentVInfo->Size = 1;       // Size[currentBB] = 1
+    }
 
-    // For PostDominators, we want to walk predecessors rather than successors
-    // as we do in forward Dominators.
+    // Visit children
+    bool visitChild = false;
     for (pred_iterator PI = pred_begin(currentBB), PE = pred_end(currentBB); 
-         PI != PE; ++PI) {
+         PI != PE && !visitChild; ++PI) {
       InfoRec &SuccVInfo = Info[*PI];
       if (SuccVInfo.Semi == 0) {
         SuccVInfo.Parent = currentBB;
-
-        workStack.push_back(std::make_pair(*PI, &SuccVInfo));   
+        if (visited.count (*PI) == 0) {
+          workStack.push_back(std::make_pair(*PI, &SuccVInfo));   
+          visitChild = true;
+        }
       }
     }
+
+    // If all children are visited or if this block has no child then pop this
+    // block out of workStack.
+    if (!visitChild)
+      workStack.pop_back();
+
   } while (!workStack.empty());
+
   return N;
 }
 
