@@ -34,15 +34,12 @@ namespace {
   
   struct VISIBILITY_HIDDEN PNE : public MachineFunctionPass {
     bool runOnMachineFunction(MachineFunction &Fn) {
-      analyzePHINodes(Fn);
-
       bool Changed = false;
 
       // Eliminate PHI instructions by inserting copies into predecessor blocks.
       for (MachineFunction::iterator I = Fn.begin(), E = Fn.end(); I != E; ++I)
         Changed |= EliminatePHINodes(Fn, *I);
 
-      VRegPHIUseCount.clear();
       return Changed;
     }
 
@@ -57,25 +54,14 @@ namespace {
     ///
     bool EliminatePHINodes(MachineFunction &MF, MachineBasicBlock &MBB);
     void LowerAtomicPHINode(MachineBasicBlock &MBB,
-                            MachineBasicBlock::iterator AfterPHIsIt);
-
-    /// analyzePHINodes - Gather information about the PHI nodes in
-    /// here. In particular, we want to map the number of uses of a virtual
-    /// register which is used in a PHI node. We map that to the BB the
-    /// vreg is coming from. This is used later to determine when the vreg
-    /// is killed in the BB.
-    /// 
-    void analyzePHINodes(const MachineFunction& Fn);
-
-    typedef std::pair<const MachineBasicBlock*, unsigned> BBVRegPair;
-    typedef std::map<BBVRegPair, unsigned> VRegPHIUse;
-
-    VRegPHIUse VRegPHIUseCount;
+                            MachineBasicBlock::iterator AfterPHIsIt,
+                            DenseMap<unsigned, VirtReg2IndexFunctor> &VUC);
   };
 
   RegisterPass<PNE> X("phi-node-elimination",
                       "Eliminate PHI nodes for register allocation");
 }
+
 
 const PassInfo *llvm::PHIEliminationID = X.getPassInfo();
 
@@ -86,6 +72,20 @@ bool PNE::EliminatePHINodes(MachineFunction &MF, MachineBasicBlock &MBB) {
   if (MBB.empty() || MBB.front().getOpcode() != TargetInstrInfo::PHI)
     return false;   // Quick exit for basic blocks without PHIs.
 
+  // VRegPHIUseCount - Keep track of the number of times each virtual register
+  // is used by PHI nodes in successors of this block.
+  DenseMap<unsigned, VirtReg2IndexFunctor> VRegPHIUseCount;
+  VRegPHIUseCount.grow(MF.getSSARegMap()->getLastVirtReg());
+
+  for (MachineBasicBlock::pred_iterator PI = MBB.pred_begin(),
+         E = MBB.pred_end(); PI != E; ++PI)
+    for (MachineBasicBlock::succ_iterator SI = (*PI)->succ_begin(),
+           E = (*PI)->succ_end(); SI != E; ++SI)
+      for (MachineBasicBlock::iterator BBI = (*SI)->begin(), E = (*SI)->end();
+           BBI != E && BBI->getOpcode() == TargetInstrInfo::PHI; ++BBI)
+        for (unsigned i = 1, e = BBI->getNumOperands(); i != e; i += 2)
+          VRegPHIUseCount[BBI->getOperand(i).getReg()]++;
+      
   // Get an iterator to the first instruction after the last PHI node (this may
   // also be the end of the basic block).
   MachineBasicBlock::iterator AfterPHIsIt = MBB.begin();
@@ -93,9 +93,9 @@ bool PNE::EliminatePHINodes(MachineFunction &MF, MachineBasicBlock &MBB) {
          AfterPHIsIt->getOpcode() == TargetInstrInfo::PHI)
     ++AfterPHIsIt;    // Skip over all of the PHI nodes...
 
-  while (MBB.front().getOpcode() == TargetInstrInfo::PHI)
-    LowerAtomicPHINode(MBB, AfterPHIsIt);
-
+  while (MBB.front().getOpcode() == TargetInstrInfo::PHI) {
+    LowerAtomicPHINode(MBB, AfterPHIsIt, VRegPHIUseCount);
+  }
   return true;
 }
 
@@ -115,7 +115,8 @@ static bool InstructionUsesRegister(MachineInstr *MI, unsigned SrcReg) {
 /// atomic execution of PHIs.  This lowering method is always correct all of the
 /// time.
 void PNE::LowerAtomicPHINode(MachineBasicBlock &MBB,
-                             MachineBasicBlock::iterator AfterPHIsIt) {
+                             MachineBasicBlock::iterator AfterPHIsIt,
+                   DenseMap<unsigned, VirtReg2IndexFunctor> &VRegPHIUseCount) {
   // Unlink the PHI node from the basic block, but don't delete the PHI yet.
   MachineInstr *MPhi = MBB.remove(MBB.begin());
 
@@ -166,9 +167,7 @@ void PNE::LowerAtomicPHINode(MachineBasicBlock &MBB,
   // node.
   unsigned NumPreds = (MPhi->getNumOperands()-1)/2;
   for (unsigned i = 1; i != MPhi->getNumOperands(); i += 2)
-    VRegPHIUseCount[BBVRegPair(
-                      MPhi->getOperand(i + 1).getMachineBasicBlock(),
-                      MPhi->getOperand(i).getReg())] -= NumPreds;
+    VRegPHIUseCount[MPhi->getOperand(i).getReg()] -= NumPreds;
 
   // Now loop over all of the incoming arguments, changing them to copy into
   // the IncomingReg register in the corresponding predecessor basic block.
@@ -220,10 +219,7 @@ void PNE::LowerAtomicPHINode(MachineBasicBlock &MBB,
     //
 
     // Is it used by any PHI instructions in this block?
-    bool ValueIsLive = 
-      VRegPHIUseCount[BBVRegPair(
-                        MPhi->getOperand(i).getMachineBasicBlock(),
-                        SrcReg)] != 0;
+    bool ValueIsLive = VRegPHIUseCount[SrcReg] != 0;
 
     std::vector<MachineBasicBlock*> OpSuccBlocks;
     
@@ -320,20 +316,4 @@ void PNE::LowerAtomicPHINode(MachineBasicBlock &MBB,
   // Really delete the PHI instruction now!
   delete MPhi;
   ++NumAtomic;
-}
-
-/// analyzePHINodes - Gather information about the PHI nodes in here. In
-/// particular, we want to map the number of uses of a virtual register which is
-/// used in a PHI node. We map that to the BB the vreg is coming from. This is
-/// used later to determine when the vreg is killed in the BB.
-/// 
-void PNE::analyzePHINodes(const MachineFunction& Fn) {
-  for (MachineFunction::const_iterator I = Fn.begin(), E = Fn.end();
-       I != E; ++I)
-    for (MachineBasicBlock::const_iterator BBI = I->begin(), BBE = I->end();
-         BBI != BBE && BBI->getOpcode() == TargetInstrInfo::PHI; ++BBI)
-      for (unsigned i = 1, e = BBI->getNumOperands(); i != e; i += 2)
-        VRegPHIUseCount[BBVRegPair(
-                          BBI->getOperand(i + 1).getMachineBasicBlock(),
-                          BBI->getOperand(i).getReg())]++;
 }
