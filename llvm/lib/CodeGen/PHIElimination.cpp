@@ -64,7 +64,7 @@ namespace {
     /// register which is used in a PHI node. We map that to the BB the
     /// vreg is coming from. This is used later to determine when the vreg
     /// is killed in the BB.
-    ///
+    /// 
     void analyzePHINodes(const MachineFunction& Fn);
 
     typedef std::pair<const MachineBasicBlock*, unsigned> BBVRegPair;
@@ -220,7 +220,7 @@ void PNE::LowerAtomicPHINode(MachineBasicBlock &MBB,
     //
 
     // Is it used by any PHI instructions in this block?
-    bool ValueIsLive =
+    bool ValueIsLive = 
       VRegPHIUseCount[BBVRegPair(
                         MPhi->getOperand(i).getMachineBasicBlock(),
                         SrcReg)] != 0;
@@ -326,7 +326,7 @@ void PNE::LowerAtomicPHINode(MachineBasicBlock &MBB,
 /// particular, we want to map the number of uses of a virtual register which is
 /// used in a PHI node. We map that to the BB the vreg is coming from. This is
 /// used later to determine when the vreg is killed in the BB.
-///
+/// 
 void PNE::analyzePHINodes(const MachineFunction& Fn) {
   for (MachineFunction::const_iterator I = Fn.begin(), E = Fn.end();
        I != E; ++I)
