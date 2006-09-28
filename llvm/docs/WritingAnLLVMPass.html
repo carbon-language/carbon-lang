@@ -1593,7 +1593,7 @@ object.  The most foolproof way of doing this is to set a breakpoint in
 want:</p>
 
 <div class="doc_code"><pre>
-(gdb) <b>break PassManager::run</b>
+(gdb) <b>break llvm::PassManager::run</b>
 Breakpoint 1 at 0x2413bc: file Pass.cpp, line 70.
 (gdb) <b>run test.bc -load $(LLVMTOP)/llvm/Debug/lib/[libname].so -[passoption]</b>
 Starting program: opt test.bc -load $(LLVMTOP)/llvm/Debug/lib/[libname].so -[passoption]
