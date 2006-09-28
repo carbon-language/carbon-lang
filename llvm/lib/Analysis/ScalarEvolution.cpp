@@ -1689,7 +1689,7 @@ ComputeLoadConstantCompareIterationCount(LoadInst *LI, Constant *RHS,
     // Evaluate the condition for this iteration.
     Result = ConstantExpr::get(SetCCOpcode, Result, RHS);
     if (!isa<ConstantBool>(Result)) break;  // Couldn't decide for sure
-    if (Result == ConstantBool::False) {
+    if (cast<ConstantBool>(Result)->getValue() == false) {
 #if 0
       std::cerr << "\n***\n*** Computed loop count " << *ItCst
                 << "\n*** From global " << *GV << "*** BB: " << *L->getHeader()
@@ -2168,7 +2168,7 @@ SCEVHandle ScalarEvolutionsImpl::HowFarToZero(SCEV *V, const Loop *L) {
       if (ConstantBool *CB =
           dyn_cast<ConstantBool>(ConstantExpr::getSetLT(R1->getValue(),
                                                         R2->getValue()))) {
-        if (CB != ConstantBool::True)
+        if (CB->getValue() == false)
           std::swap(R1, R2);   // R1 is the minimum root now.
 
         // We can only use this value if the chrec ends up with an exact zero
@@ -2198,7 +2198,7 @@ SCEVHandle ScalarEvolutionsImpl::HowFarToNonZero(SCEV *V, const Loop *L) {
   if (SCEVConstant *C = dyn_cast<SCEVConstant>(V)) {
     Constant *Zero = Constant::getNullValue(C->getValue()->getType());
     Constant *NonZero = ConstantExpr::getSetNE(C->getValue(), Zero);
-    if (NonZero == ConstantBool::True)
+    if (NonZero == ConstantBool::getTrue())
       return getSCEV(Zero);
     return UnknownValue;  // Otherwise it will loop infinitely.
   }
@@ -2386,7 +2386,7 @@ SCEVHandle SCEVAddRecExpr::getNumIterationsInRange(ConstantRange Range) const {
       if (ConstantBool *CB =
           dyn_cast<ConstantBool>(ConstantExpr::getSetLT(R1->getValue(),
                                                         R2->getValue()))) {
-        if (CB != ConstantBool::True)
+        if (CB->getValue() == false)
           std::swap(R1, R2);   // R1 is the minimum root now.
 
         // Make sure the root is not off by one.  The returned iteration should

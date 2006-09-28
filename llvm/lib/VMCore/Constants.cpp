@@ -26,10 +26,6 @@
 #include <iostream>
 using namespace llvm;
 
-ConstantBool *ConstantBool::True  = new ConstantBool(true);
-ConstantBool *ConstantBool::False = new ConstantBool(false);
-
-
 //===----------------------------------------------------------------------===//
 //                              Constant Class
 //===----------------------------------------------------------------------===//
@@ -128,7 +124,7 @@ Constant *Constant::getNullValue(const Type *Ty) {
 // Static constructor to create the maximum constant of an integral type...
 ConstantIntegral *ConstantIntegral::getMaxValue(const Type *Ty) {
   switch (Ty->getTypeID()) {
-  case Type::BoolTyID:   return ConstantBool::True;
+  case Type::BoolTyID:   return ConstantBool::getTrue();
   case Type::SByteTyID:
   case Type::ShortTyID:
   case Type::IntTyID:
@@ -152,7 +148,7 @@ ConstantIntegral *ConstantIntegral::getMaxValue(const Type *Ty) {
 // Static constructor to create the minimum constant for an integral type...
 ConstantIntegral *ConstantIntegral::getMinValue(const Type *Ty) {
   switch (Ty->getTypeID()) {
-  case Type::BoolTyID:   return ConstantBool::False;
+  case Type::BoolTyID:   return ConstantBool::getFalse();
   case Type::SByteTyID:
   case Type::ShortTyID:
   case Type::IntTyID:
@@ -176,7 +172,7 @@ ConstantIntegral *ConstantIntegral::getMinValue(const Type *Ty) {
 // Static constructor to create an integral constant with all bits set
 ConstantIntegral *ConstantIntegral::getAllOnesValue(const Type *Ty) {
   switch (Ty->getTypeID()) {
-  case Type::BoolTyID:   return ConstantBool::True;
+  case Type::BoolTyID:   return ConstantBool::getTrue();
   case Type::SByteTyID:
   case Type::ShortTyID:
   case Type::IntTyID:
@@ -877,6 +873,20 @@ public:
   };
 }
 
+
+//---- ConstantBool::get*() implementation.
+
+ConstantBool *ConstantBool::getTrue() {
+  static ConstantBool *T = 0;
+  if (T) return T;
+  return T = new ConstantBool(true);
+}
+ConstantBool *ConstantBool::getFalse() {
+  static ConstantBool *F = 0;
+  if (F) return F;
+  return F = new ConstantBool(false);
+}
+
 //---- ConstantUInt::get() and ConstantSInt::get() implementations...
 //
 static ManagedStatic<ValueMap< int64_t, Type, ConstantSInt> > SIntConstants;
@@ -1380,7 +1390,7 @@ Constant *ConstantExpr::getSignExtend(Constant *C, const Type *Ty) {
     C = ConstantExpr::getCast(C, C->getType()->getSignedVersion());
     return ConstantExpr::getCast(C, Ty);
   } else {
-    if (C == ConstantBool::True)
+    if (C == ConstantBool::getTrue())
       return ConstantIntegral::getAllOnesValue(Ty);
     else
       return ConstantIntegral::getNullValue(Ty);

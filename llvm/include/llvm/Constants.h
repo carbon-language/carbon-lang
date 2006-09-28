@@ -125,12 +125,14 @@ public:
 class ConstantBool : public ConstantIntegral {
   ConstantBool(bool V);
 public:
-  static ConstantBool *True, *False;  ///< The True & False values
+  /// getTrue/getFalse - Return the singleton true/false values.
+  static ConstantBool *getTrue();
+  static ConstantBool *getFalse();
 
   /// This method is provided mostly for compatibility with the other 
   /// ConstantIntegral subclasses.
   /// @brief Static factory method for getting a ConstantBool instance.
-  static ConstantBool *get(bool Value) { return Value ? True : False; }
+  static ConstantBool *get(bool Value) { return Value ? getTrue() : getFalse();}
 
   /// This method is provided mostly for compatibility with the other 
   /// ConstantIntegral subclasses.
@@ -139,7 +141,9 @@ public:
 
   /// Returns the opposite value of this ConstantBool value.
   /// @brief Get inverse value.
-  inline ConstantBool *inverted() const { return (this==True) ? False : True; }
+  inline ConstantBool *inverted() const {
+    return getValue() ? getFalse() : getTrue();
+  }
 
   /// @returns the value of this ConstantBool
   /// @brief return the boolean value of this constant.
@@ -147,10 +151,10 @@ public:
 
   /// @see ConstantIntegral for details
   /// @brief Implement overrides
-  virtual bool isNullValue() const { return this == False; }
-  virtual bool isMaxValue() const { return this == True; }
-  virtual bool isMinValue() const { return this == False; }
-  virtual bool isAllOnesValue() const { return this == True; }
+  virtual bool isNullValue() const { return getValue() == false; }
+  virtual bool isMaxValue() const { return getValue() == true; }
+  virtual bool isMinValue() const { return getValue() == false; }
+  virtual bool isAllOnesValue() const { return getValue() == true; }
 
   /// @brief Methods to support type inquiry through isa, cast, and dyn_cast:
   static inline bool classof(const ConstantBool *) { return true; }
