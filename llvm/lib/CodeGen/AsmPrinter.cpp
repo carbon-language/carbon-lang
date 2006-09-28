@@ -364,7 +364,7 @@ void AsmPrinter::EmitConstantValueOnly(const Constant *CV) {
   if (CV->isNullValue() || isa<UndefValue>(CV))
     O << "0";
   else if (const ConstantBool *CB = dyn_cast<ConstantBool>(CV)) {
-    assert(CB == ConstantBool::True);
+    assert(CB->getValue());
     O << "1";
   } else if (const ConstantSInt *CI = dyn_cast<ConstantSInt>(CV))
     if (((CI->getValue() << 32) >> 32) == CI->getValue())
