@@ -677,8 +677,7 @@ void CppWriter::printConstant(const Constant *CV) {
   }
   if (const ConstantBool *CB = dyn_cast<ConstantBool>(CV)) {
     Out << "ConstantBool* " << constName << " = ConstantBool::get(" 
-        << (CB == ConstantBool::True ? "true" : "false")
-        << ");";
+        << (CB->getValue() ? "true" : "false") << ");";
   } else if (const ConstantSInt *CI = dyn_cast<ConstantSInt>(CV)) {
     Out << "ConstantSInt* " << constName << " = ConstantSInt::get(" 
         << typeName << ", " << CI->getValue() << ");";
