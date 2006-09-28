@@ -470,7 +470,7 @@ emitCallAndSwitchStatement(Function *newFunction, BasicBlock *codeReplacer,
           case 0:
           case 1: break;  // No value needed.
           case 2:         // Conditional branch, return a bool
-            brVal = SuccNum ? ConstantBool::False : ConstantBool::True;
+            brVal = ConstantBool::get(!SuccNum);
             break;
           default:
             brVal = ConstantUInt::get(Type::UShortTy, SuccNum);
