@@ -638,10 +638,12 @@ void CWriter::printConstant(Constant *CPV) {
 
   switch (CPV->getType()->getTypeID()) {
   case Type::BoolTyID:
-    Out << (CPV == ConstantBool::False ? '0' : '1'); break;
+    Out << (cast<ConstantBool>(CPV)->getValue() ? '1' : '0');
+    break;
   case Type::SByteTyID:
   case Type::ShortTyID:
-    Out << cast<ConstantSInt>(CPV)->getValue(); break;
+    Out << cast<ConstantSInt>(CPV)->getValue();
+    break;
   case Type::IntTyID:
     if ((int)cast<ConstantSInt>(CPV)->getValue() == (int)0x80000000)
       Out << "((int)0x80000000U)";   // Handle MININT specially to avoid warning
@@ -653,15 +655,19 @@ void CWriter::printConstant(Constant *CPV) {
     if (cast<ConstantSInt>(CPV)->isMinValue())
       Out << "(/*INT64_MIN*/(-9223372036854775807LL)-1)";
     else
-      Out << cast<ConstantSInt>(CPV)->getValue() << "ll"; break;
+      Out << cast<ConstantSInt>(CPV)->getValue() << "ll";
+    break;
 
   case Type::UByteTyID:
   case Type::UShortTyID:
-    Out << cast<ConstantUInt>(CPV)->getValue(); break;
+    Out << cast<ConstantUInt>(CPV)->getValue();
+    break;
   case Type::UIntTyID:
-    Out << cast<ConstantUInt>(CPV)->getValue() << 'u'; break;
+    Out << cast<ConstantUInt>(CPV)->getValue() << 'u';
+    break;
   case Type::ULongTyID:
-    Out << cast<ConstantUInt>(CPV)->getValue() << "ull"; break;
+    Out << cast<ConstantUInt>(CPV)->getValue() << "ull";
+    break;
 
   case Type::FloatTyID:
   case Type::DoubleTyID: {
