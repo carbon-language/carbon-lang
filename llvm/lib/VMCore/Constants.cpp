@@ -21,6 +21,7 @@
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/Support/MathExtras.h"
 #include "llvm/Support/Compiler.h"
+#include "llvm/Support/ManagedStatic.h"
 #include <algorithm>
 #include <iostream>
 using namespace llvm;
@@ -879,15 +880,15 @@ public:
 
 //---- ConstantUInt::get() and ConstantSInt::get() implementations...
 //
-static ValueMap< int64_t, Type, ConstantSInt> SIntConstants;
-static ValueMap<uint64_t, Type, ConstantUInt> UIntConstants;
+static ManagedStatic<ValueMap< int64_t, Type, ConstantSInt> > SIntConstants;
+static ManagedStatic<ValueMap<uint64_t, Type, ConstantUInt> > UIntConstants;
 
 ConstantSInt *ConstantSInt::get(const Type *Ty, int64_t V) {
-  return SIntConstants.getOrCreate(Ty, V);
+  return SIntConstants->getOrCreate(Ty, V);
 }
 
 ConstantUInt *ConstantUInt::get(const Type *Ty, uint64_t V) {
-  return UIntConstants.getOrCreate(Ty, V);
+  return UIntConstants->getOrCreate(Ty, V);
 }
 
 ConstantInt *ConstantInt::get(const Type *Ty, unsigned char V) {
@@ -915,8 +916,8 @@ namespace llvm {
   };
 }
 
-static ValueMap<uint64_t, Type, ConstantFP> DoubleConstants;
-static ValueMap<uint32_t, Type, ConstantFP> FloatConstants;
+static ManagedStatic<ValueMap<uint64_t, Type, ConstantFP> > DoubleConstants;
+static ManagedStatic<ValueMap<uint32_t, Type, ConstantFP> > FloatConstants;
 
 bool ConstantFP::isNullValue() const {
   return DoubleToBits(Val) == 0;
@@ -930,10 +931,10 @@ bool ConstantFP::isExactlyValue(double V) const {
 ConstantFP *ConstantFP::get(const Type *Ty, double V) {
   if (Ty == Type::FloatTy) {
     // Force the value through memory to normalize it.
-    return FloatConstants.getOrCreate(Ty, FloatToBits(V));
+    return FloatConstants->getOrCreate(Ty, FloatToBits(V));
   } else {
     assert(Ty == Type::DoubleTy);
-    return DoubleConstants.getOrCreate(Ty, DoubleToBits(V));
+    return DoubleConstants->getOrCreate(Ty, DoubleToBits(V));
   }
 }
 
@@ -960,20 +961,21 @@ namespace llvm {
   };
 }
 
-static ValueMap<char, Type, ConstantAggregateZero> AggZeroConstants;
+static ManagedStatic<ValueMap<char, Type, 
+                              ConstantAggregateZero> > AggZeroConstants;
 
 static char getValType(ConstantAggregateZero *CPZ) { return 0; }
 
 Constant *ConstantAggregateZero::get(const Type *Ty) {
   assert((isa<StructType>(Ty) || isa<ArrayType>(Ty) || isa<PackedType>(Ty)) &&
          "Cannot create an aggregate zero of non-aggregate type!");
-  return AggZeroConstants.getOrCreate(Ty, 0);
+  return AggZeroConstants->getOrCreate(Ty, 0);
 }
 
 // destroyConstant - Remove the constant from the constant table...
 //
 void ConstantAggregateZero::destroyConstant() {
-  AggZeroConstants.remove(this);
+  AggZeroConstants->remove(this);
   destroyConstantImpl();
 }
 
@@ -1005,7 +1007,7 @@ static std::vector<Constant*> getValType(ConstantArray *CA) {
 
 typedef ValueMap<std::vector<Constant*>, ArrayType, 
                  ConstantArray, true /*largekey*/> ArrayConstantsTy;
-static ArrayConstantsTy ArrayConstants;
+static ManagedStatic<ArrayConstantsTy> ArrayConstants;
 
 Constant *ConstantArray::get(const ArrayType *Ty,
                              const std::vector<Constant*> &V) {
@@ -1013,10 +1015,10 @@ Constant *ConstantArray::get(const ArrayType *Ty,
   if (!V.empty()) {
     Constant *C = V[0];
     if (!C->isNullValue())
-      return ArrayConstants.getOrCreate(Ty, V);
+      return ArrayConstants->getOrCreate(Ty, V);
     for (unsigned i = 1, e = V.size(); i != e; ++i)
       if (V[i] != C)
-        return ArrayConstants.getOrCreate(Ty, V);
+        return ArrayConstants->getOrCreate(Ty, V);
   }
   return ConstantAggregateZero::get(Ty);
 }
@@ -1024,7 +1026,7 @@ Constant *ConstantArray::get(const ArrayType *Ty,
 // destroyConstant - Remove the constant from the constant table...
 //
 void ConstantArray::destroyConstant() {
-  ArrayConstants.remove(this);
+  ArrayConstants->remove(this);
   destroyConstantImpl();
 }
 
@@ -1098,7 +1100,7 @@ namespace llvm {
 
 typedef ValueMap<std::vector<Constant*>, StructType,
                  ConstantStruct, true /*largekey*/> StructConstantsTy;
-static StructConstantsTy StructConstants;
+static ManagedStatic<StructConstantsTy> StructConstants;
 
 static std::vector<Constant*> getValType(ConstantStruct *CS) {
   std::vector<Constant*> Elements;
@@ -1113,7 +1115,7 @@ Constant *ConstantStruct::get(const StructType *Ty,
   // Create a ConstantAggregateZero value if all elements are zeros...
   for (unsigned i = 0, e = V.size(); i != e; ++i)
     if (!V[i]->isNullValue())
-      return StructConstants.getOrCreate(Ty, V);
+      return StructConstants->getOrCreate(Ty, V);
 
   return ConstantAggregateZero::get(Ty);
 }
@@ -1129,7 +1131,7 @@ Constant *ConstantStruct::get(const std::vector<Constant*> &V) {
 // destroyConstant - Remove the constant from the constant table...
 //
 void ConstantStruct::destroyConstant() {
-  StructConstants.remove(this);
+  StructConstants->remove(this);
   destroyConstantImpl();
 }
 
@@ -1159,8 +1161,8 @@ static std::vector<Constant*> getValType(ConstantPacked *CP) {
   return Elements;
 }
 
-static ValueMap<std::vector<Constant*>, PackedType,
-                ConstantPacked> PackedConstants;
+static ManagedStatic<ValueMap<std::vector<Constant*>, PackedType,
+                              ConstantPacked> > PackedConstants;
 
 Constant *ConstantPacked::get(const PackedType *Ty,
                               const std::vector<Constant*> &V) {
@@ -1168,10 +1170,10 @@ Constant *ConstantPacked::get(const PackedType *Ty,
   if (!V.empty()) {
     Constant *C = V[0];
     if (!C->isNullValue())
-      return PackedConstants.getOrCreate(Ty, V);
+      return PackedConstants->getOrCreate(Ty, V);
     for (unsigned i = 1, e = V.size(); i != e; ++i)
       if (V[i] != C)
-        return PackedConstants.getOrCreate(Ty, V);
+        return PackedConstants->getOrCreate(Ty, V);
   }
   return ConstantAggregateZero::get(Ty);
 }
@@ -1184,7 +1186,7 @@ Constant *ConstantPacked::get(const std::vector<Constant*> &V) {
 // destroyConstant - Remove the constant from the constant table...
 //
 void ConstantPacked::destroyConstant() {
-  PackedConstants.remove(this);
+  PackedConstants->remove(this);
   destroyConstantImpl();
 }
 
@@ -1212,7 +1214,8 @@ namespace llvm {
   };
 }
 
-static ValueMap<char, PointerType, ConstantPointerNull> NullPtrConstants;
+static ManagedStatic<ValueMap<char, PointerType, 
+                              ConstantPointerNull> > NullPtrConstants;
 
 static char getValType(ConstantPointerNull *) {
   return 0;
@@ -1220,13 +1223,13 @@ static char getValType(ConstantPointerNull *) {
 
 
 ConstantPointerNull *ConstantPointerNull::get(const PointerType *Ty) {
-  return NullPtrConstants.getOrCreate(Ty, 0);
+  return NullPtrConstants->getOrCreate(Ty, 0);
 }
 
 // destroyConstant - Remove the constant from the constant table...
 //
 void ConstantPointerNull::destroyConstant() {
-  NullPtrConstants.remove(this);
+  NullPtrConstants->remove(this);
   destroyConstantImpl();
 }
 
@@ -1255,7 +1258,7 @@ namespace llvm {
   };
 }
 
-static ValueMap<char, Type, UndefValue> UndefValueConstants;
+static ManagedStatic<ValueMap<char, Type, UndefValue> > UndefValueConstants;
 
 static char getValType(UndefValue *) {
   return 0;
@@ -1263,13 +1266,13 @@ static char getValType(UndefValue *) {
 
 
 UndefValue *UndefValue::get(const Type *Ty) {
-  return UndefValueConstants.getOrCreate(Ty, 0);
+  return UndefValueConstants->getOrCreate(Ty, 0);
 }
 
 // destroyConstant - Remove the constant from the constant table.
 //
 void UndefValue::destroyConstant() {
-  UndefValueConstants.remove(this);
+  UndefValueConstants->remove(this);
   destroyConstantImpl();
 }
 
@@ -1355,7 +1358,8 @@ static ExprMapKeyType getValType(ConstantExpr *CE) {
   return ExprMapKeyType(CE->getOpcode(), Operands);
 }
 
-static ValueMap<ExprMapKeyType, Type, ConstantExpr> ExprConstants;
+static ManagedStatic<ValueMap<ExprMapKeyType, Type,
+                              ConstantExpr> > ExprConstants;
 
 Constant *ConstantExpr::getCast(Constant *C, const Type *Ty) {
   assert(Ty->isFirstClassType() && "Cannot cast to an aggregate type!");
@@ -1366,7 +1370,7 @@ Constant *ConstantExpr::getCast(Constant *C, const Type *Ty) {
   // Look up the constant in the table first to ensure uniqueness
   std::vector<Constant*> argVec(1, C);
   ExprMapKeyType Key = std::make_pair(Instruction::Cast, argVec);
-  return ExprConstants.getOrCreate(Ty, Key);
+  return ExprConstants->getOrCreate(Ty, Key);
 }
 
 Constant *ConstantExpr::getSignExtend(Constant *C, const Type *Ty) {
@@ -1426,7 +1430,7 @@ Constant *ConstantExpr::getTy(const Type *ReqTy, unsigned Opcode,
 
   std::vector<Constant*> argVec(1, C1); argVec.push_back(C2);
   ExprMapKeyType Key = std::make_pair(Opcode, argVec);
-  return ExprConstants.getOrCreate(ReqTy, Key);
+  return ExprConstants->getOrCreate(ReqTy, Key);
 }
 
 Constant *ConstantExpr::get(unsigned Opcode, Constant *C1, Constant *C2) {
@@ -1482,7 +1486,7 @@ Constant *ConstantExpr::getSelectTy(const Type *ReqTy, Constant *C,
   argVec[1] = V1;
   argVec[2] = V2;
   ExprMapKeyType Key = std::make_pair(Instruction::Select, argVec);
-  return ExprConstants.getOrCreate(ReqTy, Key);
+  return ExprConstants->getOrCreate(ReqTy, Key);
 }
 
 /// getShiftTy - Return a shift left or shift right constant expr
@@ -1501,7 +1505,7 @@ Constant *ConstantExpr::getShiftTy(const Type *ReqTy, unsigned Opcode,
   // Look up the constant in the table first to ensure uniqueness
   std::vector<Constant*> argVec(1, C1); argVec.push_back(C2);
   ExprMapKeyType Key = std::make_pair(Opcode, argVec);
-  return ExprConstants.getOrCreate(ReqTy, Key);
+  return ExprConstants->getOrCreate(ReqTy, Key);
 }
 
 
@@ -1522,7 +1526,7 @@ Constant *ConstantExpr::getGetElementPtrTy(const Type *ReqTy, Constant *C,
   for (unsigned i = 0, e = IdxList.size(); i != e; ++i)
     ArgVec.push_back(cast<Constant>(IdxList[i]));
   const ExprMapKeyType &Key = std::make_pair(Instruction::GetElementPtr,ArgVec);
-  return ExprConstants.getOrCreate(ReqTy, Key);
+  return ExprConstants->getOrCreate(ReqTy, Key);
 }
 
 Constant *ConstantExpr::getGetElementPtr(Constant *C,
@@ -1553,7 +1557,7 @@ Constant *ConstantExpr::getExtractElementTy(const Type *ReqTy, Constant *Val,
   std::vector<Constant*> ArgVec(1, Val);
   ArgVec.push_back(Idx);
   const ExprMapKeyType &Key = std::make_pair(Instruction::ExtractElement,ArgVec);
-  return ExprConstants.getOrCreate(ReqTy, Key);
+  return ExprConstants->getOrCreate(ReqTy, Key);
 }
 
 Constant *ConstantExpr::getExtractElement(Constant *Val, Constant *Idx) {
@@ -1574,7 +1578,7 @@ Constant *ConstantExpr::getInsertElementTy(const Type *ReqTy, Constant *Val,
   ArgVec.push_back(Elt);
   ArgVec.push_back(Idx);
   const ExprMapKeyType &Key = std::make_pair(Instruction::InsertElement,ArgVec);
-  return ExprConstants.getOrCreate(ReqTy, Key);
+  return ExprConstants->getOrCreate(ReqTy, Key);
 }
 
 Constant *ConstantExpr::getInsertElement(Constant *Val, Constant *Elt, 
@@ -1598,7 +1602,7 @@ Constant *ConstantExpr::getShuffleVectorTy(const Type *ReqTy, Constant *V1,
   ArgVec.push_back(V2);
   ArgVec.push_back(Mask);
   const ExprMapKeyType &Key = std::make_pair(Instruction::ShuffleVector,ArgVec);
-  return ExprConstants.getOrCreate(ReqTy, Key);
+  return ExprConstants->getOrCreate(ReqTy, Key);
 }
 
 Constant *ConstantExpr::getShuffleVector(Constant *V1, Constant *V2, 
@@ -1612,7 +1616,7 @@ Constant *ConstantExpr::getShuffleVector(Constant *V1, Constant *V2,
 // destroyConstant - Remove the constant from the constant table...
 //
 void ConstantExpr::destroyConstant() {
-  ExprConstants.remove(this);
+  ExprConstants->remove(this);
   destroyConstantImpl();
 }
 
@@ -1661,7 +1665,7 @@ void ConstantArray::replaceUsesOfWithOnConstant(Value *From, Value *To,
     // Check to see if we have this array type already.
     bool Exists;
     ArrayConstantsTy::MapTy::iterator I =
-      ArrayConstants.InsertOrGetItem(Lookup, Exists);
+      ArrayConstants->InsertOrGetItem(Lookup, Exists);
     
     if (Exists) {
       Replacement = I->second;
@@ -1670,7 +1674,7 @@ void ConstantArray::replaceUsesOfWithOnConstant(Value *From, Value *To,
       // creating a new constant array, inserting it, replaceallusesof'ing the
       // old with the new, then deleting the old... just update the current one
       // in place!
-      ArrayConstants.MoveConstantToNewSlot(this, I);
+      ArrayConstants->MoveConstantToNewSlot(this, I);
       
       // Update to the new value.
       setOperand(OperandToUpdate, ToC);
@@ -1726,7 +1730,7 @@ void ConstantStruct::replaceUsesOfWithOnConstant(Value *From, Value *To,
     // Check to see if we have this array type already.
     bool Exists;
     StructConstantsTy::MapTy::iterator I =
-      StructConstants.InsertOrGetItem(Lookup, Exists);
+      StructConstants->InsertOrGetItem(Lookup, Exists);
     
     if (Exists) {
       Replacement = I->second;
@@ -1735,7 +1739,7 @@ void ConstantStruct::replaceUsesOfWithOnConstant(Value *From, Value *To,
       // creating a new constant struct, inserting it, replaceallusesof'ing the
       // old with the new, then deleting the old... just update the current one
       // in place!
-      StructConstants.MoveConstantToNewSlot(this, I);
+      StructConstants->MoveConstantToNewSlot(this, I);
       
       // Update to the new value.
       setOperand(OperandToUpdate, ToC);
@@ -1845,34 +1849,6 @@ void ConstantExpr::replaceUsesOfWithOnConstant(Value *From, Value *ToV,
   destroyConstant();
 }
 
-
-
-/// clearAllValueMaps - This method frees all internal memory used by the
-/// constant subsystem, which can be used in environments where this memory
-/// is otherwise reported as a leak.
-void Constant::clearAllValueMaps() {
-  std::vector<Constant *> Constants;
-
-  DoubleConstants.clear(Constants);
-  FloatConstants.clear(Constants);
-  SIntConstants.clear(Constants);
-  UIntConstants.clear(Constants);
-  AggZeroConstants.clear(Constants);
-  ArrayConstants.clear(Constants);
-  StructConstants.clear(Constants);
-  PackedConstants.clear(Constants);
-  NullPtrConstants.clear(Constants);
-  UndefValueConstants.clear(Constants);
-  ExprConstants.clear(Constants);
-
-  for (std::vector<Constant *>::iterator I = Constants.begin(),
-       E = Constants.end(); I != E; ++I)
-    (*I)->dropAllReferences();
-  for (std::vector<Constant *>::iterator I = Constants.begin(),
-       E = Constants.end(); I != E; ++I)
-    (*I)->destroyConstantImpl();
-  Constants.clear();
-}
 
 /// getStringValue - Turn an LLVM constant pointer that eventually points to a
 /// global into a string value.  Return an empty string if we can't do it.
