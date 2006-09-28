@@ -70,7 +70,8 @@ static void EmitBranchToAt(uint64_t At, uint64_t To, bool isCall, bool is64Bit){
 extern "C" void PPC32CompilationCallback();
 extern "C" void PPC64CompilationCallback();
 
-#if (defined(__POWERPC__) || defined (__ppc__) || defined(_POWER)) && !defined(__ppc64__)
+#if (defined(__POWERPC__) || defined (__ppc__) || defined(_POWER)) && \
+    !defined(__ppc64__)
 // CompilationCallback stub - We can't use a C function with inline assembly in
 // it, because we the prolog/epilog inserted by GCC won't work for us.  Instead,
 // write our own wrapper, which does things our way, so we have complete control
@@ -135,7 +136,8 @@ void PPC32CompilationCallback() {
 }
 #endif
 
-#if (defined(__POWERPC__) || defined (__ppc__) || defined(_POWER)) && defined(__ppc64__)
+#if (defined(__POWERPC__) || defined (__ppc__) || defined(_POWER)) && \
+    defined(__ppc64__)
 asm(
     ".text\n"
     ".align 2\n"
