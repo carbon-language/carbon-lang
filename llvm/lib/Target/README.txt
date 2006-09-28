@@ -1,6 +1,20 @@
 Target Independent Opportunities:
 
-===-------------------------------------------------------------------------===
+//===---------------------------------------------------------------------===//
+
+We should make the following changes to clean up MachineInstr:
+
+1. Add an Opcode field to TargetInstrDescriptor, so you can tell the opcode of
+   an instruction with just a TargetInstrDescriptor*.
+2. Remove the Opcode field from MachineInstr, replacing it with a
+   TargetInstrDescriptor*.
+3. Getting information about a machine instr then becomes:
+     MI->getInfo()->isTwoAddress()
+   instead of:
+     const TargetInstrInfo &TII = ...
+     TII.isTwoAddrInstr(MI->getOpcode())
+
+//===---------------------------------------------------------------------===//
 
 FreeBench/mason contains code like this:
 
