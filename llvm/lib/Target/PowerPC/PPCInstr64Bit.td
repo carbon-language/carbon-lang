@@ -168,15 +168,15 @@ def CMPDI  : DForm_5_ext<11, (ops CRRC:$crD, G8RC:$rA, s16imm:$imm),
 def CMPLDI : DForm_6_ext<10, (ops CRRC:$dst, G8RC:$src1, u16imm:$src2),
                          "cmpldi $dst, $src1, $src2", IntCompare>, isPPC64;
 
-def SLD  : XForm_6<31,  27, (ops G8RC:$rA, G8RC:$rS, G8RC:$rB),
+def SLD  : XForm_6<31,  27, (ops G8RC:$rA, G8RC:$rS, GPRC:$rB),
                    "sld $rA, $rS, $rB", IntRotateD,
-                   [(set G8RC:$rA, (shl G8RC:$rS, G8RC:$rB))]>, isPPC64;
-def SRD  : XForm_6<31, 539, (ops G8RC:$rA, G8RC:$rS, G8RC:$rB),
+                   [(set G8RC:$rA, (shl G8RC:$rS, GPRC:$rB))]>, isPPC64;
+def SRD  : XForm_6<31, 539, (ops G8RC:$rA, G8RC:$rS, GPRC:$rB),
                    "srd $rA, $rS, $rB", IntRotateD,
-                   [(set G8RC:$rA, (srl G8RC:$rS, G8RC:$rB))]>, isPPC64;
-def SRAD : XForm_6<31, 794, (ops G8RC:$rA, G8RC:$rS, G8RC:$rB),
+                   [(set G8RC:$rA, (srl G8RC:$rS, GPRC:$rB))]>, isPPC64;
+def SRAD : XForm_6<31, 794, (ops G8RC:$rA, G8RC:$rS, GPRC:$rB),
                    "srad $rA, $rS, $rB", IntRotateD,
-                   [(set G8RC:$rA, (sra G8RC:$rS, G8RC:$rB))]>, isPPC64;
+                   [(set G8RC:$rA, (sra G8RC:$rS, GPRC:$rB))]>, isPPC64;
 def EXTSW  : XForm_11<31, 986, (ops G8RC:$rA, G8RC:$rS),
                       "extsw $rA, $rS", IntGeneral,
                       [(set G8RC:$rA, (sext_inreg G8RC:$rS, i32))]>, isPPC64;
