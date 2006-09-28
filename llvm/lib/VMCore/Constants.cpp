@@ -681,7 +681,6 @@ namespace llvm {
     ///
     AbstractTypeMapTy AbstractTypeMap;
 
-    friend void Constant::clearAllValueMaps();
   private:
     void clear(std::vector<Constant *> &Constants) {
       for(typename MapTy::iterator I = Map.begin(); I != Map.end(); ++I)
