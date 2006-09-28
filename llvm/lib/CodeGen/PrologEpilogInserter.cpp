@@ -190,7 +190,12 @@ void PEI::calculateCalleeSavedRegisters(MachineFunction &Fn) {
     int FrameIdx;
     if (FixedSlot == FixedSpillSlots+NumFixedSpillSlots) {
       // Nope, just spill it anywhere convenient.
-      FrameIdx = FFI->CreateStackObject(RC->getSize(), RC->getAlignment());
+      unsigned Align = RC->getAlignment();
+      unsigned StackAlign = TFI->getStackAlignment();
+      // We may not be able to sastify the desired alignment specification of
+      // the TargetRegisterClass if the stack alignment is smaller. Use the min.
+      Align = std::min(Align, StackAlign);
+      FrameIdx = FFI->CreateStackObject(RC->getSize(), Align);
       if ((unsigned)FrameIdx < MinCSFrameIndex) MinCSFrameIndex = FrameIdx;
       if ((unsigned)FrameIdx > MaxCSFrameIndex) MaxCSFrameIndex = FrameIdx;
     } else {
