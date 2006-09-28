@@ -283,7 +283,9 @@ public:
   }
 
   /// getCalleeSaveRegs - Return a null-terminated list of all of the
-  /// callee-save registers on this target.
+  /// callee-save registers on this target. The register should be in the
+  /// order of desired callee-save stack frame offset. The first register is
+  /// closed to the incoming stack pointer if stack grows down, and vice versa.
   virtual const unsigned* getCalleeSaveRegs() const = 0;
 
   /// getCalleeSaveRegClasses - Return a null-terminated list of the preferred
@@ -371,12 +373,16 @@ public:
     assert(0 && "Call Frame Pseudo Instructions do not exist on this target!");
   }
 
+  /// processFunctionBeforeCalleeSaveScan - This method is called immediately
+  /// before PrologEpilogInserter scans the physical registers used to determine
+  /// what callee-save registers should be spilled. This method is optional.
+  virtual void processFunctionBeforeCalleeSaveScan(MachineFunction &MF) const {
+  }
+
   /// processFunctionBeforeFrameFinalized - This method is called immediately
   /// before the specified functions frame layout (MF.getFrameInfo()) is
   /// finalized.  Once the frame is finalized, MO_FrameIndex operands are
-  /// replaced with direct constants.  This method is optional. The return value
-  /// is the number of instructions added to (negative if removed from) the
-  /// basic block
+  /// replaced with direct constants.  This method is optional.
   ///
   virtual void processFunctionBeforeFrameFinalized(MachineFunction &MF) const {
   }
