@@ -382,44 +382,32 @@ const Type *StructType::getTypeAtIndex(const Value *V) const {
 
 
 //===----------------------------------------------------------------------===//
-//                           Static 'Type' data
+//                          Primitive 'Type' data
 //===----------------------------------------------------------------------===//
 
-#define DeclarePrimType(TY, Str)                     \
-  struct VISIBILITY_HIDDEN TY##Type : public Type {  \
-    TY##Type() : Type(Str, Type::TY##TyID) {}        \
-  };                                                 \
-  static ManagedStatic<TY##Type> The##TY##Ty
+#define DeclarePrimType(TY, Str)                       \
+  namespace {                                          \
+    struct VISIBILITY_HIDDEN TY##Type : public Type {  \
+      TY##Type() : Type(Str, Type::TY##TyID) {}        \
+    };                                                 \
+  }                                                    \
+  static ManagedStatic<TY##Type> The##TY##Ty;          \
+  Type *Type::TY##Ty = &*The##TY##Ty
 
-namespace {
-  DeclarePrimType(Void,   "void");
-  DeclarePrimType(Bool,   "bool");
-  DeclarePrimType(SByte,  "sbyte");
-  DeclarePrimType(UByte,  "ubyte");
-  DeclarePrimType(Short,  "short");
-  DeclarePrimType(UShort, "ushort");
-  DeclarePrimType(Int,    "int");
-  DeclarePrimType(UInt,   "uint");
-  DeclarePrimType(Long,   "long");
-  DeclarePrimType(ULong,  "ulong");
-  DeclarePrimType(Float,  "float");
-  DeclarePrimType(Double, "double");
-  DeclarePrimType(Label,  "label");
-}
-
-Type *Type::VoidTy   = &*TheVoidTy;
-Type *Type::BoolTy   = &*TheBoolTy;
-Type *Type::SByteTy  = &*TheSByteTy;
-Type *Type::UByteTy  = &*TheUByteTy;
-Type *Type::ShortTy  = &*TheShortTy;
-Type *Type::UShortTy = &*TheUShortTy;
-Type *Type::IntTy    = &*TheIntTy;
-Type *Type::UIntTy   = &*TheUIntTy;
-Type *Type::LongTy   = &*TheLongTy;
-Type *Type::ULongTy  = &*TheULongTy;
-Type *Type::FloatTy  = &*TheFloatTy;
-Type *Type::DoubleTy = &*TheDoubleTy;
-Type *Type::LabelTy  = &*TheLabelTy;
+DeclarePrimType(Void,   "void");
+DeclarePrimType(Bool,   "bool");
+DeclarePrimType(SByte,  "sbyte");
+DeclarePrimType(UByte,  "ubyte");
+DeclarePrimType(Short,  "short");
+DeclarePrimType(UShort, "ushort");
+DeclarePrimType(Int,    "int");
+DeclarePrimType(UInt,   "uint");
+DeclarePrimType(Long,   "long");
+DeclarePrimType(ULong,  "ulong");
+DeclarePrimType(Float,  "float");
+DeclarePrimType(Double, "double");
+DeclarePrimType(Label,  "label");
+#undef DeclarePrimType
 
 
 //===----------------------------------------------------------------------===//
