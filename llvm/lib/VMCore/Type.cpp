@@ -21,6 +21,7 @@
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/Support/MathExtras.h"
 #include "llvm/Support/Compiler.h"
+#include "llvm/Support/ManagedStatic.h"
 #include <algorithm>
 #include <iostream>
 using namespace llvm;
@@ -57,13 +58,15 @@ Type* PATypeHolder::get() const {
 // for types as they are needed.  Because resolution of types must invalidate
 // all of the abstract type descriptions, we keep them in a seperate map to make
 // this easy.
-static std::map<const Type*, std::string> ConcreteTypeDescriptions;
-static std::map<const Type*, std::string> AbstractTypeDescriptions;
+static ManagedStatic<std::map<const Type*, 
+                              std::string> > ConcreteTypeDescriptions;
+static ManagedStatic<std::map<const Type*,
+                              std::string> > AbstractTypeDescriptions;
 
 Type::Type(const char *Name, TypeID id)
   : ID(id), Abstract(false),  RefCount(0), ForwardType(0) {
   assert(Name && Name[0] && "Should use other ctor if no name!");
-  ConcreteTypeDescriptions[this] = Name;
+  (*ConcreteTypeDescriptions)[this] = Name;
 }
 
 
@@ -250,18 +253,18 @@ static std::string getTypeDescription(const Type *Ty,
                                       std::vector<const Type *> &TypeStack) {
   if (isa<OpaqueType>(Ty)) {                     // Base case for the recursion
     std::map<const Type*, std::string>::iterator I =
-      AbstractTypeDescriptions.lower_bound(Ty);
-    if (I != AbstractTypeDescriptions.end() && I->first == Ty)
+      AbstractTypeDescriptions->lower_bound(Ty);
+    if (I != AbstractTypeDescriptions->end() && I->first == Ty)
       return I->second;
     std::string Desc = "opaque";
-    AbstractTypeDescriptions.insert(std::make_pair(Ty, Desc));
+    AbstractTypeDescriptions->insert(std::make_pair(Ty, Desc));
     return Desc;
   }
 
   if (!Ty->isAbstract()) {                       // Base case for the recursion
     std::map<const Type*, std::string>::iterator I =
-      ConcreteTypeDescriptions.find(Ty);
-    if (I != ConcreteTypeDescriptions.end()) return I->second;
+      ConcreteTypeDescriptions->find(Ty);
+    if (I != ConcreteTypeDescriptions->end()) return I->second;
   }
 
   // Check to see if the Type is already on the stack...
@@ -354,9 +357,9 @@ static const std::string &getOrCreateDesc(std::map<const Type*,std::string>&Map,
 
 const std::string &Type::getDescription() const {
   if (isAbstract())
-    return getOrCreateDesc(AbstractTypeDescriptions, this);
+    return getOrCreateDesc(*AbstractTypeDescriptions, this);
   else
-    return getOrCreateDesc(ConcreteTypeDescriptions, this);
+    return getOrCreateDesc(*ConcreteTypeDescriptions, this);
 }
 
 
@@ -382,39 +385,41 @@ const Type *StructType::getTypeAtIndex(const Value *V) const {
 //                           Static 'Type' data
 //===----------------------------------------------------------------------===//
 
+#define DeclarePrimType(TY, Str)                     \
+  struct VISIBILITY_HIDDEN TY##Type : public Type {  \
+    TY##Type() : Type(Str, Type::TY##TyID) {}        \
+  };                                                 \
+  static ManagedStatic<TY##Type> The##TY##Ty
+
 namespace {
-  struct VISIBILITY_HIDDEN PrimType : public Type {
-    PrimType(const char *S, TypeID ID) : Type(S, ID) {}
-  };
+  DeclarePrimType(Void,   "void");
+  DeclarePrimType(Bool,   "bool");
+  DeclarePrimType(SByte,  "sbyte");
+  DeclarePrimType(UByte,  "ubyte");
+  DeclarePrimType(Short,  "short");
+  DeclarePrimType(UShort, "ushort");
+  DeclarePrimType(Int,    "int");
+  DeclarePrimType(UInt,   "uint");
+  DeclarePrimType(Long,   "long");
+  DeclarePrimType(ULong,  "ulong");
+  DeclarePrimType(Float,  "float");
+  DeclarePrimType(Double, "double");
+  DeclarePrimType(Label,  "label");
 }
 
-static PrimType TheVoidTy  ("void"  , Type::VoidTyID);
-static PrimType TheBoolTy  ("bool"  , Type::BoolTyID);
-static PrimType TheSByteTy ("sbyte" , Type::SByteTyID);
-static PrimType TheUByteTy ("ubyte" , Type::UByteTyID);
-static PrimType TheShortTy ("short" , Type::ShortTyID);
-static PrimType TheUShortTy("ushort", Type::UShortTyID);
-static PrimType TheIntTy   ("int"   , Type::IntTyID);
-static PrimType TheUIntTy  ("uint"  , Type::UIntTyID);
-static PrimType TheLongTy  ("long"  , Type::LongTyID);
-static PrimType TheULongTy ("ulong" , Type::ULongTyID);
-static PrimType TheFloatTy ("float" , Type::FloatTyID);
-static PrimType TheDoubleTy("double", Type::DoubleTyID);
-static PrimType TheLabelTy ("label" , Type::LabelTyID);
-
-Type *Type::VoidTy   = &TheVoidTy;
-Type *Type::BoolTy   = &TheBoolTy;
-Type *Type::SByteTy  = &TheSByteTy;
-Type *Type::UByteTy  = &TheUByteTy;
-Type *Type::ShortTy  = &TheShortTy;
-Type *Type::UShortTy = &TheUShortTy;
-Type *Type::IntTy    = &TheIntTy;
-Type *Type::UIntTy   = &TheUIntTy;
-Type *Type::LongTy   = &TheLongTy;
-Type *Type::ULongTy  = &TheULongTy;
-Type *Type::FloatTy  = &TheFloatTy;
-Type *Type::DoubleTy = &TheDoubleTy;
-Type *Type::LabelTy  = &TheLabelTy;
+Type *Type::VoidTy   = &*TheVoidTy;
+Type *Type::BoolTy   = &*TheBoolTy;
+Type *Type::SByteTy  = &*TheSByteTy;
+Type *Type::UByteTy  = &*TheUByteTy;
+Type *Type::ShortTy  = &*TheShortTy;
+Type *Type::UShortTy = &*TheUShortTy;
+Type *Type::IntTy    = &*TheIntTy;
+Type *Type::UIntTy   = &*TheUIntTy;
+Type *Type::LongTy   = &*TheLongTy;
+Type *Type::ULongTy  = &*TheULongTy;
+Type *Type::FloatTy  = &*TheFloatTy;
+Type *Type::DoubleTy = &*TheDoubleTy;
+Type *Type::LabelTy  = &*TheLabelTy;
 
 
 //===----------------------------------------------------------------------===//
@@ -990,7 +995,7 @@ public:
 }
 
 // Define the actual map itself now...
-static TypeMap<FunctionValType, FunctionType> FunctionTypes;
+static ManagedStatic<TypeMap<FunctionValType, FunctionType> > FunctionTypes;
 
 FunctionValType FunctionValType::get(const FunctionType *FT) {
   // Build up a FunctionValType
@@ -1007,10 +1012,10 @@ FunctionType *FunctionType::get(const Type *ReturnType,
                                 const std::vector<const Type*> &Params,
                                 bool isVarArg) {
   FunctionValType VT(ReturnType, Params, isVarArg);
-  FunctionType *MT = FunctionTypes.get(VT);
+  FunctionType *MT = FunctionTypes->get(VT);
   if (MT) return MT;
 
-  FunctionTypes.add(VT, MT = new FunctionType(ReturnType, Params, isVarArg));
+  FunctionTypes->add(VT, MT = new FunctionType(ReturnType, Params, isVarArg));
 
 #ifdef DEBUG_MERGE_TYPES
   std::cerr << "Derived new type: " << MT << "\n";
@@ -1048,18 +1053,18 @@ public:
   }
 };
 }
-static TypeMap<ArrayValType, ArrayType> ArrayTypes;
+static ManagedStatic<TypeMap<ArrayValType, ArrayType> > ArrayTypes;
 
 
 ArrayType *ArrayType::get(const Type *ElementType, uint64_t NumElements) {
   assert(ElementType && "Can't get array of null types!");
 
   ArrayValType AVT(ElementType, NumElements);
-  ArrayType *AT = ArrayTypes.get(AVT);
+  ArrayType *AT = ArrayTypes->get(AVT);
   if (AT) return AT;           // Found a match, return it!
 
   // Value not found.  Derive a new type!
-  ArrayTypes.add(AVT, AT = new ArrayType(ElementType, NumElements));
+  ArrayTypes->add(AVT, AT = new ArrayType(ElementType, NumElements));
 
 #ifdef DEBUG_MERGE_TYPES
   std::cerr << "Derived new type: " << *AT << "\n";
@@ -1098,7 +1103,7 @@ public:
   }
 };
 }
-static TypeMap<PackedValType, PackedType> PackedTypes;
+static ManagedStatic<TypeMap<PackedValType, PackedType> > PackedTypes;
 
 
 PackedType *PackedType::get(const Type *ElementType, unsigned NumElements) {
@@ -1106,11 +1111,11 @@ PackedType *PackedType::get(const Type *ElementType, unsigned NumElements) {
   assert(isPowerOf2_32(NumElements) && "Vector length should be a power of 2!");
 
   PackedValType PVT(ElementType, NumElements);
-  PackedType *PT = PackedTypes.get(PVT);
+  PackedType *PT = PackedTypes->get(PVT);
   if (PT) return PT;           // Found a match, return it!
 
   // Value not found.  Derive a new type!
-  PackedTypes.add(PVT, PT = new PackedType(ElementType, NumElements));
+  PackedTypes->add(PVT, PT = new PackedType(ElementType, NumElements));
 
 #ifdef DEBUG_MERGE_TYPES
   std::cerr << "Derived new type: " << *PT << "\n";
@@ -1155,15 +1160,15 @@ public:
 };
 }
 
-static TypeMap<StructValType, StructType> StructTypes;
+static ManagedStatic<TypeMap<StructValType, StructType> > StructTypes;
 
 StructType *StructType::get(const std::vector<const Type*> &ETypes) {
   StructValType STV(ETypes);
-  StructType *ST = StructTypes.get(STV);
+  StructType *ST = StructTypes->get(STV);
   if (ST) return ST;
 
   // Value not found.  Derive a new type!
-  StructTypes.add(STV, ST = new StructType(ETypes));
+  StructTypes->add(STV, ST = new StructType(ETypes));
 
 #ifdef DEBUG_MERGE_TYPES
   std::cerr << "Derived new type: " << *ST << "\n";
@@ -1205,7 +1210,7 @@ public:
 };
 }
 
-static TypeMap<PointerValType, PointerType> PointerTypes;
+static ManagedStatic<TypeMap<PointerValType, PointerType> > PointerTypes;
 
 PointerType *PointerType::get(const Type *ValueType) {
   assert(ValueType && "Can't get a pointer to <null> type!");
@@ -1213,11 +1218,11 @@ PointerType *PointerType::get(const Type *ValueType) {
          "Pointer to void is not valid, use sbyte* instead!");
   PointerValType PVT(ValueType);
 
-  PointerType *PT = PointerTypes.get(PVT);
+  PointerType *PT = PointerTypes->get(PVT);
   if (PT) return PT;
 
   // Value not found.  Derive a new type!
-  PointerTypes.add(PVT, PT = new PointerType(ValueType));
+  PointerTypes->add(PVT, PT = new PointerType(ValueType));
 
 #ifdef DEBUG_MERGE_TYPES
   std::cerr << "Derived new type: " << *PT << "\n";
@@ -1274,7 +1279,7 @@ void DerivedType::refineAbstractTypeTo(const Type *NewType) {
   assert(ForwardType == 0 && "This type has already been refined!");
 
   // The descriptions may be out of date.  Conservatively clear them all!
-  AbstractTypeDescriptions.clear();
+  AbstractTypeDescriptions->clear();
 
 #ifdef DEBUG_MERGE_TYPES
   std::cerr << "REFINING abstract type [" << (void*)this << " "
@@ -1356,11 +1361,11 @@ void DerivedType::notifyUsesThatTypeBecameConcrete() {
 //
 void FunctionType::refineAbstractType(const DerivedType *OldType,
                                       const Type *NewType) {
-  FunctionTypes.RefineAbstractType(this, OldType, NewType);
+  FunctionTypes->RefineAbstractType(this, OldType, NewType);
 }
 
 void FunctionType::typeBecameConcrete(const DerivedType *AbsTy) {
-  FunctionTypes.TypeBecameConcrete(this, AbsTy);
+  FunctionTypes->TypeBecameConcrete(this, AbsTy);
 }
 
 
@@ -1370,11 +1375,11 @@ void FunctionType::typeBecameConcrete(const DerivedType *AbsTy) {
 //
 void ArrayType::refineAbstractType(const DerivedType *OldType,
                                    const Type *NewType) {
-  ArrayTypes.RefineAbstractType(this, OldType, NewType);
+  ArrayTypes->RefineAbstractType(this, OldType, NewType);
 }
 
 void ArrayType::typeBecameConcrete(const DerivedType *AbsTy) {
-  ArrayTypes.TypeBecameConcrete(this, AbsTy);
+  ArrayTypes->TypeBecameConcrete(this, AbsTy);
 }
 
 // refineAbstractType - Called when a contained type is found to be more
@@ -1383,11 +1388,11 @@ void ArrayType::typeBecameConcrete(const DerivedType *AbsTy) {
 //
 void PackedType::refineAbstractType(const DerivedType *OldType,
                                    const Type *NewType) {
-  PackedTypes.RefineAbstractType(this, OldType, NewType);
+  PackedTypes->RefineAbstractType(this, OldType, NewType);
 }
 
 void PackedType::typeBecameConcrete(const DerivedType *AbsTy) {
-  PackedTypes.TypeBecameConcrete(this, AbsTy);
+  PackedTypes->TypeBecameConcrete(this, AbsTy);
 }
 
 // refineAbstractType - Called when a contained type is found to be more
@@ -1396,11 +1401,11 @@ void PackedType::typeBecameConcrete(const DerivedType *AbsTy) {
 //
 void StructType::refineAbstractType(const DerivedType *OldType,
                                     const Type *NewType) {
-  StructTypes.RefineAbstractType(this, OldType, NewType);
+  StructTypes->RefineAbstractType(this, OldType, NewType);
 }
 
 void StructType::typeBecameConcrete(const DerivedType *AbsTy) {
-  StructTypes.TypeBecameConcrete(this, AbsTy);
+  StructTypes->TypeBecameConcrete(this, AbsTy);
 }
 
 // refineAbstractType - Called when a contained type is found to be more
@@ -1409,11 +1414,11 @@ void StructType::typeBecameConcrete(const DerivedType *AbsTy) {
 //
 void PointerType::refineAbstractType(const DerivedType *OldType,
                                      const Type *NewType) {
-  PointerTypes.RefineAbstractType(this, OldType, NewType);
+  PointerTypes->RefineAbstractType(this, OldType, NewType);
 }
 
 void PointerType::typeBecameConcrete(const DerivedType *AbsTy) {
-  PointerTypes.TypeBecameConcrete(this, AbsTy);
+  PointerTypes->TypeBecameConcrete(this, AbsTy);
 }
 
 bool SequentialType::indexValid(const Value *V) const {
@@ -1443,26 +1448,3 @@ std::ostream &operator<<(std::ostream &OS, const Type &T) {
   return OS;
 }
 }
-
-/// clearAllTypeMaps - This method frees all internal memory used by the
-/// type subsystem, which can be used in environments where this memory is
-/// otherwise reported as a leak.
-void Type::clearAllTypeMaps() {
-  std::vector<Type *> DerivedTypes;
-
-  FunctionTypes.clear(DerivedTypes);
-  PointerTypes.clear(DerivedTypes);
-  StructTypes.clear(DerivedTypes);
-  ArrayTypes.clear(DerivedTypes);
-  PackedTypes.clear(DerivedTypes);
-
-  for(std::vector<Type *>::iterator I = DerivedTypes.begin(),
-      E = DerivedTypes.end(); I != E; ++I)
-    (*I)->ContainedTys.clear();
-  for(std::vector<Type *>::iterator I = DerivedTypes.begin(),
-      E = DerivedTypes.end(); I != E; ++I)
-    delete *I;
-  DerivedTypes.clear();
-}
-
-// vim: sw=2

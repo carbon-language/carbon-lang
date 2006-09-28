@@ -347,11 +347,6 @@ public:
   ///
   void removeAbstractTypeUser(AbstractTypeUser *U) const;
 
-  /// clearAllTypeMaps - This method frees all internal memory used by the
-  /// type subsystem, which can be used in environments where this memory is
-  /// otherwise reported as a leak.
-  static void clearAllTypeMaps();
-
 private:
   /// isSizedDerivedType - Derived types like structures and arrays are sized
   /// iff all of the members of the type are sized as well.  Since asking for
