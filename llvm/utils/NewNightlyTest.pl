@@ -660,7 +660,7 @@ if (!$BuildError) {
   $afiles.= `find lib/ -iname '*.a' -ls`;
   $afiles.= `find tools/ -iname '*.a' -ls`;
   if($BUILDTYPE eq "release"){
-    $afiles.= `find Release/ -iname '*.a' -ls`;
+    $afiles.= `find Release+Asserts/ -iname '*.a' -ls`;
   } elsif($BUILDTYPE eq "release-asserts") {
    $afiles.= `find Release-Asserts/ -iname '*.a' -ls`;
   } else {
@@ -671,7 +671,7 @@ if (!$BuildError) {
   $ofiles.= `find lib/ -iname '*.o' -ls`;
   $ofiles.= `find tools/ -iname '*.o' -ls`;
   if($BUILDTYPE eq "release"){
-    $ofiles.= `find Release/ -iname '*.o' -ls`;
+    $ofiles.= `find Release+Asserts/ -iname '*.o' -ls`;
   } elsif($BUILDTYPE eq "release-asserts") {
     $ofiles.= `find Release-Asserts/ -iname '*.o' -ls`;
   } else {
