@@ -146,7 +146,7 @@ namespace llvm {
       /// at function entry, used for PIC code.
       GlobalBaseReg,
 
-      /// TCPWrapper - A wrapper node for TargetConstantPool,
+      /// Wrapper - A wrapper node for TargetConstantPool,
       /// TargetExternalSymbol, and TargetGlobalAddress.
       Wrapper,
 
