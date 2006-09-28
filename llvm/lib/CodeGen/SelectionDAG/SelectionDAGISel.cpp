@@ -845,8 +845,6 @@ void SelectionDAGLowering::visitSwitchCase(SelectionDAGISel::CaseBlock &CB) {
   CurMBB->addSuccessor(CB.RHSBB);
 }
 
-/// visitSwitchCase - Emits the necessary code to represent a single node in
-/// the binary search tree resulting from lowering a switch instruction.
 void SelectionDAGLowering::visitJumpTable(SelectionDAGISel::JumpTable &JT) {
   // FIXME: Need to emit different code for PIC vs. Non-PIC, specifically,
   // we need to add the address of the jump table to the value loaded, since
@@ -3207,6 +3205,21 @@ static bool OptimizeGEPExpression(GetElementPtrInst *GEPI,
   return true;
 }
 
+/// SplitCritEdgesForPHIConstants - If this block has any PHI nodes with
+/// constant operands, and if any of the edges feeding the PHI node are
+/// critical, split them so that the assignments of a constant to a register
+/// will not be executed on a path that isn't relevant.
+void SelectionDAGISel::SplitCritEdgesForPHIConstants(BasicBlock *BB) {
+  PHINode *PN;
+  BasicBlock::iterator BBI = BB->begin();
+  while ((PN = dyn_cast<PHINode>(BBI++))) {
+    for (unsigned i = 0, e = PN->getNumIncomingValues(); i != e; ++i)
+      if (isa<Constant>(PN->getIncomingValue(i)))
+        SplitCriticalEdge(PN->getIncomingBlock(i), BB);
+  }
+}
+
+
 bool SelectionDAGISel::runOnFunction(Function &Fn) {
   MachineFunction &MF = MachineFunction::construct(&Fn, TLI.getTargetMachine());
   RegMap = MF.getSSARegMap();
@@ -3225,14 +3238,12 @@ bool SelectionDAGISel::runOnFunction(Function &Fn) {
   while (MadeChange) {
     MadeChange = false;
   for (Function::iterator BB = Fn.begin(), E = Fn.end(); BB != E; ++BB) {
-    PHINode *PN;
-    BasicBlock::iterator BBI;
-    for (BBI = BB->begin(); (PN = dyn_cast<PHINode>(BBI)); ++BBI)
-      for (unsigned i = 0, e = PN->getNumIncomingValues(); i != e; ++i)
-        if (isa<Constant>(PN->getIncomingValue(i)))
-          SplitCriticalEdge(PN->getIncomingBlock(i), BB);
+    // If this block has any PHI nodes with constant operands, and if any of the
+    // edges feeding the PHI node are critical, split them.
+    if (isa<PHINode>(BB->begin()))
+      SplitCritEdgesForPHIConstants(BB);
     
-    for (BasicBlock::iterator E = BB->end(); BBI != E; ) {
+    for (BasicBlock::iterator BBI = BB->begin(), E = BB->end(); BBI != E; ) {
       Instruction *I = BBI++;
       if (GetElementPtrInst *GEPI = dyn_cast<GetElementPtrInst>(I)) {
         MadeChange |= OptimizeGEPExpression(GEPI, TLI.getTargetData());

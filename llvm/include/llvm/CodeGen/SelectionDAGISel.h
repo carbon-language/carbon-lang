@@ -124,6 +124,7 @@ protected:
                                      SelectionDAG &DAG);
 
 private:
+  void SplitCritEdgesForPHIConstants(BasicBlock *BB);
   SDOperand CopyValueToVirtualRegister(SelectionDAGLowering &SDL,
                                        Value *V, unsigned Reg);
   void SelectBasicBlock(BasicBlock *BB, MachineFunction &MF,
