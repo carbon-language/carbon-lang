@@ -29,6 +29,7 @@ use Socket;
 #  -nodejagnu       Do not run feature or regression tests
 #  -parallel        Run two parallel jobs with GNU Make.
 #  -release         Build an LLVM Release version
+#  -release-asserts Build an LLVM ReleaseAsserts version
 #  -enable-llcbeta  Enable testing of beta features in llc.
 #  -disable-llc     Disable LLC tests in the nightly tester.
 #  -disable-jit     Disable JIT tests in the nightly tester.
@@ -133,6 +134,9 @@ while (scalar(@ARGV) and ($_ = $ARGV[0], /^[-+]/)) {
   if (/^-parallel$/)       { $MAKEOPTS = "$MAKEOPTS -j2 -l3.0"; next; }
   if (/^-release$/)        { $MAKEOPTS = "$MAKEOPTS ENABLE_OPTIMIZED=1 ".
                              "OPTIMIZE_OPTION=-O2"; $BUILDTYPE="release"; next;}
+  if (/^-release-asserts$/){ $MAKEOPTS = "$MAKEOPTS ENABLE_OPTIMIZED=1 ".
+                             "DISABLE-ASSERTIONS=1 ".
+                             "OPTIMIZE_OPTION=-O2"; $BUILDTYPE="release-asserts"; next;}
   if (/^-enable-llcbeta$/) { $PROGTESTOPTS .= " ENABLE_LLCBETA=1"; next; }
   if (/^-disable-llc$/)    { $PROGTESTOPTS .= " DISABLE_LLC=1";
                              $CONFIGUREARGS .= " --disable-llc_diffs"; next; } 
@@ -206,7 +210,7 @@ if ($nickname eq "") {
        "\"-nickname <nickname>\"");
 }
 
-if ($BUILDTYPE ne "release") {
+if ($BUILDTYPE ne "release" && $BUILDTYPE ne "release-asserts") {
   $BUILDTYPE = "debug";
 }
 
@@ -657,6 +661,8 @@ if (!$BuildError) {
   $afiles.= `find tools/ -iname '*.a' -ls`;
   if($BUILDTYPE eq "release"){
     $afiles.= `find Release/ -iname '*.a' -ls`;
+  } elsif($BUILDTYPE eq "release-asserts") {
+   $afiles.= `find Release-Asserts/ -iname '*.a' -ls`;
   } else {
    $afiles.= `find Debug/ -iname '*.a' -ls`;
   }
@@ -666,6 +672,8 @@ if (!$BuildError) {
   $ofiles.= `find tools/ -iname '*.o' -ls`;
   if($BUILDTYPE eq "release"){
     $ofiles.= `find Release/ -iname '*.o' -ls`;
+  } elsif($BUILDTYPE eq "release-asserts") {
+    $ofiles.= `find Release-Asserts/ -iname '*.o' -ls`;
   } else {
     $ofiles.= `find Debug/ -iname '*.o' -ls`;
   }
