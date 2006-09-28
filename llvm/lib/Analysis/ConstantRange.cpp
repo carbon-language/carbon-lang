@@ -30,8 +30,8 @@
 using namespace llvm;
 
 static ConstantIntegral *Next(ConstantIntegral *CI) {
-  if (CI->getType() == Type::BoolTy)
-    return CI == ConstantBool::True ? ConstantBool::False : ConstantBool::True;
+  if (ConstantBool *CB = dyn_cast<ConstantBool>(CI))
+    return ConstantBool::get(!CB->getValue());
 
   Constant *Result = ConstantExpr::getAdd(CI,
                                           ConstantInt::get(CI->getType(), 1));
