@@ -25,6 +25,7 @@
 #include "llvm/Target/TargetFrameInfo.h"
 #include "llvm/Target/TargetInstrInfo.h"
 #include "llvm/Support/Compiler.h"
+#include <climits>
 using namespace llvm;
 
 namespace {
@@ -42,15 +43,19 @@ namespace {
       if (MachineDebugInfo *DI = getAnalysisToUpdate<MachineDebugInfo>()) {
         Fn.getFrameInfo()->setMachineDebugInfo(DI);
       }
-      
+
+      // Allow the target machine to make some adjustments to the function
+      // e.g. UsedPhysRegs before calculateCalleeSavedRegisters.
+      Fn.getTarget().getRegisterInfo()->processFunctionBeforeCalleeSaveScan(Fn);
+
       // Scan the function for modified callee saved registers and insert spill
       // code for any callee saved registers that are modified.  Also calculate
       // the MaxCallFrameSize and HasCalls variables for the function's frame
       // information and eliminates call frame pseudo instructions.
       calculateCalleeSavedRegisters(Fn);
 
-      // Add the code to save and restore the caller saved registers
-      saveCallerSavedRegisters(Fn);
+      // Add the code to save and restore the callee saved registers
+      saveCalleeSavedRegisters(Fn);
 
       // Allow the target machine to make final modifications to the function
       // before the frame layout is finalized.
@@ -75,8 +80,12 @@ namespace {
     }
   
   private:
+    // MinCSFrameIndex, MaxCSFrameIndex - Keeps the range of callee save
+    // stack frame indexes.
+    unsigned MinCSFrameIndex, MaxCSFrameIndex;
+
     void calculateCalleeSavedRegisters(MachineFunction &Fn);
-    void saveCallerSavedRegisters(MachineFunction &Fn);
+    void saveCalleeSavedRegisters(MachineFunction &Fn);
     void calculateFrameObjectOffsets(MachineFunction &Fn);
     void replaceFrameIndices(MachineFunction &Fn);
     void insertPrologEpilogCode(MachineFunction &Fn);
@@ -90,7 +99,7 @@ namespace {
 FunctionPass *llvm::createPrologEpilogCodeInserter() { return new PEI(); }
 
 
-/// calculateCalleeSavedRegisters - Scan the function for modified caller saved
+/// calculateCalleeSavedRegisters - Scan the function for modified callee saved
 /// registers.  Also calculate the MaxCallFrameSize and HasCalls variables for
 /// the function's frame information and eliminates call frame pseudo
 /// instructions.
@@ -157,7 +166,7 @@ void PEI::calculateCalleeSavedRegisters(MachineFunction &Fn) {
   }
 
   if (CSI.empty())
-    return;   // Early exit if no caller saved registers are modified!
+    return;   // Early exit if no callee saved registers are modified!
 
   unsigned NumFixedSpillSlots;
   const std::pair<unsigned,int> *FixedSpillSlots =
@@ -165,6 +174,8 @@ void PEI::calculateCalleeSavedRegisters(MachineFunction &Fn) {
 
   // Now that we know which registers need to be saved and restored, allocate
   // stack slots for them.
+  MinCSFrameIndex = INT_MAX;
+  MaxCSFrameIndex = 0;
   for (unsigned i = 0, e = CSI.size(); i != e; ++i) {
     unsigned Reg = CSI[i].getReg();
     const TargetRegisterClass *RC = CSI[i].getRegClass();
@@ -180,6 +191,8 @@ void PEI::calculateCalleeSavedRegisters(MachineFunction &Fn) {
     if (FixedSlot == FixedSpillSlots+NumFixedSpillSlots) {
       // Nope, just spill it anywhere convenient.
       FrameIdx = FFI->CreateStackObject(RC->getSize(), RC->getAlignment());
+      if ((unsigned)FrameIdx < MinCSFrameIndex) MinCSFrameIndex = FrameIdx;
+      if ((unsigned)FrameIdx > MaxCSFrameIndex) MaxCSFrameIndex = FrameIdx;
     } else {
       // Spill it to the stack where we must.
       FrameIdx = FFI->CreateFixedObject(RC->getSize(), FixedSlot->second);
@@ -190,15 +203,15 @@ void PEI::calculateCalleeSavedRegisters(MachineFunction &Fn) {
   FFI->setCalleeSavedInfo(CSI);
 }
 
-/// saveCallerSavedRegisters -  Insert spill code for any caller saved registers
+/// saveCalleeSavedRegisters -  Insert spill code for any callee saved registers
 /// that are modified in the function.
 ///
-void PEI::saveCallerSavedRegisters(MachineFunction &Fn) {
+void PEI::saveCalleeSavedRegisters(MachineFunction &Fn) {
   // Get callee saved register information.
   MachineFrameInfo *FFI = Fn.getFrameInfo();
   const std::vector<CalleeSavedInfo> &CSI = FFI->getCalleeSavedInfo();
   
-  // Early exit if no caller saved registers are modified!
+  // Early exit if no callee saved registers are modified!
   if (CSI.empty())
     return;
 
@@ -298,7 +311,49 @@ void PEI::calculateFrameObjectOffsets(MachineFunction &Fn) {
     if (FixedOff > Offset) Offset = FixedOff;
   }
 
+  // First assign frame offsets to stack objects that are used to spill
+  // callee save registers.
+  if (StackGrowsDown) {
+    for (unsigned i = 0, e = FFI->getObjectIndexEnd(); i != e; ++i) {
+      if (i < MinCSFrameIndex || i > MaxCSFrameIndex)
+        continue;
+
+      // If stack grows down, we need to add size of find the lowest
+      // address of the object.
+      Offset += FFI->getObjectSize(i);
+
+      unsigned Align = FFI->getObjectAlignment(i);
+      // If the alignment of this object is greater than that of the stack, then
+      // increase the stack alignment to match.
+      MaxAlign = std::max(MaxAlign, Align);
+      // Adjust to alignment boundary
+      Offset = (Offset+Align-1)/Align*Align;
+
+      FFI->setObjectOffset(i, -Offset);        // Set the computed offset
+    }
+  } else {
+    for (int i = FFI->getObjectIndexEnd()-1; i >= 0; --i) {
+      if ((unsigned)i < MinCSFrameIndex || (unsigned)i > MaxCSFrameIndex)
+        continue;
+
+      unsigned Align = FFI->getObjectAlignment(i);
+      // If the alignment of this object is greater than that of the stack, then
+      // increase the stack alignment to match.
+      MaxAlign = std::max(MaxAlign, Align);
+      // Adjust to alignment boundary
+      Offset = (Offset+Align-1)/Align*Align;
+
+      FFI->setObjectOffset(i, Offset);
+      Offset += FFI->getObjectSize(i);
+    }
+  }
+
+  // Then assign frame offsets to stack objects that are not used to spill
+  // callee save registers.
   for (unsigned i = 0, e = FFI->getObjectIndexEnd(); i != e; ++i) {
+    if (i >= MinCSFrameIndex && i <= MaxCSFrameIndex)
+      continue;
+
     // If stack grows down, we need to add size of find the lowest
     // address of the object.
     if (StackGrowsDown)
@@ -319,6 +374,7 @@ void PEI::calculateFrameObjectOffsets(MachineFunction &Fn) {
     }
   }
 
+
   // Align the final stack pointer offset, but only if there are calls in the
   // function.  This ensures that any calls to subroutines have their stack
   // frames suitable aligned.
@@ -335,8 +391,8 @@ void PEI::calculateFrameObjectOffsets(MachineFunction &Fn) {
 }
 
 
-/// insertPrologEpilogCode - Scan the function for modified caller saved
-/// registers, insert spill code for these caller saved registers, then add
+/// insertPrologEpilogCode - Scan the function for modified callee saved
+/// registers, insert spill code for these callee saved registers, then add
 /// prolog and epilog code to the function.
 ///
 void PEI::insertPrologEpilogCode(MachineFunction &Fn) {
