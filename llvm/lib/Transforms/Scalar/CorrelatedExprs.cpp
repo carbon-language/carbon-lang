@@ -788,12 +788,12 @@ void CEE::PropagateBranchInfo(BranchInst *BI) {
 
   // Propagate information into the true block...
   //
-  PropagateEquality(BI->getCondition(), ConstantBool::True,
+  PropagateEquality(BI->getCondition(), ConstantBool::getTrue(),
                     getRegionInfo(BI->getSuccessor(0)));
 
   // Propagate information into the false block...
   //
-  PropagateEquality(BI->getCondition(), ConstantBool::False,
+  PropagateEquality(BI->getCondition(), ConstantBool::getFalse(),
                     getRegionInfo(BI->getSuccessor(1)));
 }
 
@@ -971,8 +971,7 @@ void CEE::IncorporateInstruction(Instruction *Inst, RegionInfo &RI) {
     // See if we can figure out a result for this instruction...
     Relation::KnownResult Result = getSetCCResult(SCI, RI);
     if (Result != Relation::Unknown) {
-      PropagateEquality(SCI, Result ? ConstantBool::True : ConstantBool::False,
-                        RI);
+      PropagateEquality(SCI, ConstantBool::get(Result != 0), RI);
     }
   }
 }

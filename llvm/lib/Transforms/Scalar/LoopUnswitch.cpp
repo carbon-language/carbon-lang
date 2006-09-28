@@ -173,7 +173,8 @@ bool LoopUnswitch::visitLoop(Loop *L) {
         // See if this, or some part of it, is loop invariant.  If so, we can
         // unswitch on it if we desire.
         Value *LoopCond = FindLIVLoopCondition(BI->getCondition(), L, Changed);
-        if (LoopCond && UnswitchIfProfitable(LoopCond, ConstantBool::True, L)) {
+        if (LoopCond && UnswitchIfProfitable(LoopCond, ConstantBool::getTrue(),
+                                             L)) {
           ++NumBranches;
           return true;
         }
@@ -196,7 +197,8 @@ bool LoopUnswitch::visitLoop(Loop *L) {
          BBI != E; ++BBI)
       if (SelectInst *SI = dyn_cast<SelectInst>(BBI)) {
         Value *LoopCond = FindLIVLoopCondition(SI->getCondition(), L, Changed);
-        if (LoopCond && UnswitchIfProfitable(LoopCond, ConstantBool::True, L)) {
+        if (LoopCond && UnswitchIfProfitable(LoopCond, ConstantBool::getTrue(),
+                                             L)) {
           ++NumSelects;
           return true;
         }
@@ -286,9 +288,9 @@ static bool IsTrivialUnswitchCondition(Loop *L, Value *Cond, Constant **Val = 0,
     // side-effects.  If so, determine the value of Cond that causes it to do
     // this.
     if ((LoopExitBB = isTrivialLoopExitBlock(L, BI->getSuccessor(0)))) {
-      if (Val) *Val = ConstantBool::True;
+      if (Val) *Val = ConstantBool::getTrue();
     } else if ((LoopExitBB = isTrivialLoopExitBlock(L, BI->getSuccessor(1)))) {
-      if (Val) *Val = ConstantBool::False;
+      if (Val) *Val = ConstantBool::getFalse();
     }
   } else if (SwitchInst *SI = dyn_cast<SwitchInst>(HeaderTerm)) {
     // If this isn't a switch on Cond, we can't handle it.
@@ -488,7 +490,7 @@ static void EmitPreheaderBranchOnCondition(Value *LIC, Constant *Val,
   Value *BranchVal = LIC;
   if (!isa<ConstantBool>(Val)) {
     BranchVal = BinaryOperator::createSetEQ(LIC, Val, "tmp", InsertPt);
-  } else if (Val != ConstantBool::True) {
+  } else if (Val != ConstantBool::getTrue()) {
     // We want to enter the new loop when the condition is true.
     std::swap(TrueDest, FalseDest);
   }
@@ -964,10 +966,9 @@ void LoopUnswitch::RewriteLoopBodyWithConditionConstant(Loop *L, Value *LIC,
               BasicBlock* Split = SplitBlock(Old, SI);
               
               Instruction* OldTerm = Old->getTerminator();
-              BranchInst* Branch = new BranchInst(Split,
-                                        SI->getSuccessor(i),
-                                        ConstantBool::True,
-                                        OldTerm);
+              BranchInst* Branch = new BranchInst(Split, SI->getSuccessor(i),
+                                                  ConstantBool::getTrue(),
+                                                  OldTerm);
               
               Old->getTerminator()->eraseFromParent();
               

@@ -709,7 +709,7 @@ static GlobalVariable *OptimizeGlobalAddressOfMalloc(GlobalVariable *GV,
   // keep track of whether the global was initialized yet or not.
   GlobalVariable *InitBool =
     new GlobalVariable(Type::BoolTy, false, GlobalValue::InternalLinkage,
-                       ConstantBool::False, GV->getName()+".init");
+                       ConstantBool::getFalse(), GV->getName()+".init");
   bool InitBoolUsed = false;
 
   // Loop over all uses of GV, processing them in turn.
@@ -728,7 +728,7 @@ static GlobalVariable *OptimizeGlobalAddressOfMalloc(GlobalVariable *GV,
           switch (SCI->getOpcode()) {
           default: assert(0 && "Unknown opcode!");
           case Instruction::SetLT:
-            LV = ConstantBool::False;   // X < null -> always false
+            LV = ConstantBool::getFalse();   // X < null -> always false
             break;
           case Instruction::SetEQ:
           case Instruction::SetLE:
@@ -747,7 +747,7 @@ static GlobalVariable *OptimizeGlobalAddressOfMalloc(GlobalVariable *GV,
     } else {
       StoreInst *SI = cast<StoreInst>(GV->use_back());
       // The global is initialized when the store to it occurs.
-      new StoreInst(ConstantBool::True, InitBool, SI);
+      new StoreInst(ConstantBool::getTrue(), InitBool, SI);
       SI->eraseFromParent();
     }
 
@@ -859,7 +859,8 @@ static bool OptimizeOnceStoredGlobal(GlobalVariable *GV, Value *StoredOnceVal,
 static void ShrinkGlobalToBoolean(GlobalVariable *GV, Constant *OtherVal) {
   // Create the new global, initializing it to false.
   GlobalVariable *NewGV = new GlobalVariable(Type::BoolTy, false,
-         GlobalValue::InternalLinkage, ConstantBool::False, GV->getName()+".b");
+         GlobalValue::InternalLinkage, ConstantBool::getFalse(),
+                                             GV->getName()+".b");
   GV->getParent()->getGlobalList().insert(GV, NewGV);
 
   Constant *InitVal = GV->getInitializer();

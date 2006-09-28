@@ -315,51 +315,47 @@ namespace {
       if (BinaryOperator *BO = dyn_cast<BinaryOperator>(V2)) {
         switch (BO->getOpcode()) {
         case Instruction::SetEQ:
-          if (V1 == ConstantBool::True)
-            add(Opcode, BO->getOperand(0), BO->getOperand(1), false);
-          if (V1 == ConstantBool::False)
-            add(Opcode, BO->getOperand(0), BO->getOperand(1), true);
+          if (ConstantBool *V1CB = dyn_cast<ConstantBool>(V1))
+            add(Opcode, BO->getOperand(0), BO->getOperand(1),!V1CB->getValue());
           break;
         case Instruction::SetNE:
-          if (V1 == ConstantBool::True)
-            add(Opcode, BO->getOperand(0), BO->getOperand(1), true);
-          if (V1 == ConstantBool::False)
-            add(Opcode, BO->getOperand(0), BO->getOperand(1), false);
+          if (ConstantBool *V1CB = dyn_cast<ConstantBool>(V1))
+            add(Opcode, BO->getOperand(0), BO->getOperand(1), V1CB->getValue());
           break;
         case Instruction::SetLT:
         case Instruction::SetGT:
-          if (V1 == ConstantBool::True)
+          if (V1 == ConstantBool::getTrue())
             add(Opcode, BO->getOperand(0), BO->getOperand(1), true);
           break;
         case Instruction::SetLE:
         case Instruction::SetGE:
-          if (V1 == ConstantBool::False)
+          if (V1 == ConstantBool::getFalse())
             add(Opcode, BO->getOperand(0), BO->getOperand(1), true);
           break;
         case Instruction::And:
-          if (V1 == ConstantBool::True) {
-            add(Opcode, ConstantBool::True, BO->getOperand(0), false);
-            add(Opcode, ConstantBool::True, BO->getOperand(1), false);
+          if (V1 == ConstantBool::getTrue()) {
+            add(Opcode, V1, BO->getOperand(0), false);
+            add(Opcode, V1, BO->getOperand(1), false);
           }
           break;
         case Instruction::Or:
-          if (V1 == ConstantBool::False) {
-            add(Opcode, ConstantBool::False, BO->getOperand(0), false);
-            add(Opcode, ConstantBool::False, BO->getOperand(1), false);
+          if (V1 == ConstantBool::getFalse()) {
+            add(Opcode, V1, BO->getOperand(0), false);
+            add(Opcode, V1, BO->getOperand(1), false);
           }
           break;
         case Instruction::Xor:
-          if (V1 == ConstantBool::True) {
-            if (BO->getOperand(0) == ConstantBool::True)
-              add(Opcode, ConstantBool::False, BO->getOperand(1), false);
-            if (BO->getOperand(1) == ConstantBool::True)
-              add(Opcode, ConstantBool::False, BO->getOperand(0), false);
+          if (V1 == ConstantBool::getTrue()) {
+            if (BO->getOperand(0) == V1)
+              add(Opcode, ConstantBool::getFalse(), BO->getOperand(1), false);
+            if (BO->getOperand(1) == V1)
+              add(Opcode, ConstantBool::getFalse(), BO->getOperand(0), false);
           }
-          if (V1 == ConstantBool::False) {
-            if (BO->getOperand(0) == ConstantBool::True)
-              add(Opcode, ConstantBool::True, BO->getOperand(1), false);
-            if (BO->getOperand(1) == ConstantBool::True)
-              add(Opcode, ConstantBool::True, BO->getOperand(0), false);
+          if (V1 == ConstantBool::getFalse()) {
+            if (BO->getOperand(0) == ConstantBool::getTrue())
+              add(Opcode, ConstantBool::getTrue(), BO->getOperand(1), false);
+            if (BO->getOperand(1) == ConstantBool::getTrue())
+              add(Opcode, ConstantBool::getTrue(), BO->getOperand(0), false);
           }
           break;
         default:
@@ -368,10 +364,8 @@ namespace {
       } else if (SelectInst *SI = dyn_cast<SelectInst>(V2)) {
         if (Opcode != EQ && Opcode != NE) return;
 
-        ConstantBool *True  = (Opcode==EQ) ? ConstantBool::True
-                                           : ConstantBool::False,
-                     *False = (Opcode==EQ) ? ConstantBool::False
-                                           : ConstantBool::True;
+        ConstantBool *True  = ConstantBool::get(Opcode==EQ),
+                     *False = ConstantBool::get(Opcode!=EQ);
 
         if (V1 == SI->getTrueValue())
           addEqual(SI->getCondition(), True);
@@ -525,8 +519,8 @@ Value *PredicateSimplifier::resolve(SetCondInst *SCI,
 
   if (NE != KP.Properties.end()) {
     switch (SCI->getOpcode()) {
-      case Instruction::SetEQ: return ConstantBool::False;
-      case Instruction::SetNE: return ConstantBool::True;
+      case Instruction::SetEQ: return ConstantBool::getFalse();
+      case Instruction::SetNE: return ConstantBool::getTrue();
       case Instruction::SetLE:
       case Instruction::SetGE:
       case Instruction::SetLT:
@@ -558,10 +552,9 @@ Value *PredicateSimplifier::resolve(BinaryOperator *BO,
 
 Value *PredicateSimplifier::resolve(SelectInst *SI, const PropertySet &KP) {
   Value *Condition = resolve(SI->getCondition(), KP);
-  if (Condition == ConstantBool::True)
-    return resolve(SI->getTrueValue(), KP);
-  else if (Condition == ConstantBool::False)
-    return resolve(SI->getFalseValue(), KP);
+  if (ConstantBool *CB = dyn_cast<ConstantBool>(Condition))
+    return resolve(CB->getValue() ? SI->getTrueValue() : SI->getFalseValue(),
+                   KP);
   return SI;
 }
 
@@ -674,10 +667,10 @@ void PredicateSimplifier::visit(BranchInst *BI, PropertySet &KP) {
   BasicBlock *TrueDest  = BI->getSuccessor(0),
              *FalseDest = BI->getSuccessor(1);
 
-  if (Condition == ConstantBool::True || TrueDest == FalseDest) {
+  if (Condition == ConstantBool::getTrue() || TrueDest == FalseDest) {
     proceedToSuccessors(KP, BB);
     return;
-  } else if (Condition == ConstantBool::False) {
+  } else if (Condition == ConstantBool::getFalse()) {
     proceedToSuccessors(KP, BB);
     return;
   }
@@ -686,14 +679,14 @@ void PredicateSimplifier::visit(BranchInst *BI, PropertySet &KP) {
   for (DTNodeType::iterator I = Node->begin(), E = Node->end(); I != E; ++I) {
     if ((*I)->getBlock() == TrueDest) {
       PropertySet TrueProperties(KP);
-      TrueProperties.addEqual(ConstantBool::True, Condition);
+      TrueProperties.addEqual(ConstantBool::getTrue(), Condition);
       proceedToSuccessor(BI, 0, KP, TrueProperties);
       continue;
     }
 
     if ((*I)->getBlock() == FalseDest) {
       PropertySet FalseProperties(KP);
-      FalseProperties.addEqual(ConstantBool::False, Condition);
+      FalseProperties.addEqual(ConstantBool::getFalse(), Condition);
       proceedToSuccessor(BI, 1, KP, FalseProperties);
       continue;
     }

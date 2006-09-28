@@ -1562,11 +1562,11 @@ ConstVal : SIntType EINT64VAL {      // integral constants
     CHECK_FOR_ERROR
   }
   | BOOL TRUETOK {                      // Boolean constants
-    $$ = ConstantBool::True;
+    $$ = ConstantBool::getTrue();
     CHECK_FOR_ERROR
   }
   | BOOL FALSETOK {                     // Boolean constants
-    $$ = ConstantBool::False;
+    $$ = ConstantBool::getFalse();
     CHECK_FOR_ERROR
   }
   | FPType FPVAL {                   // Float & Double constants
@@ -2076,11 +2076,11 @@ ConstValueRef : ESINT64VAL {    // A reference to a direct constant
     CHECK_FOR_ERROR
   }
   | TRUETOK {
-    $$ = ValID::create(ConstantBool::True);
+    $$ = ValID::create(ConstantBool::getTrue());
     CHECK_FOR_ERROR
   } 
   | FALSETOK {
-    $$ = ValID::create(ConstantBool::False);
+    $$ = ValID::create(ConstantBool::getFalse());
     CHECK_FOR_ERROR
   }
   | NULL_TOK {

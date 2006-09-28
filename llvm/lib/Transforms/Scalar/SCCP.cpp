@@ -374,7 +374,7 @@ void SCCPSolver::getFeasibleSuccessors(TerminatorInst &TI,
         Succs[0] = Succs[1] = true;
       } else if (BCValue.isConstant()) {
         // Constant condition variables mean the branch can only go a single way
-        Succs[BCValue.getConstant() == ConstantBool::False] = true;
+        Succs[BCValue.getConstant() == ConstantBool::getFalse()] = true;
       }
     }
   } else if (InvokeInst *II = dyn_cast<InvokeInst>(&TI)) {
@@ -432,7 +432,7 @@ bool SCCPSolver::isEdgeFeasible(BasicBlock *From, BasicBlock *To) {
 
         // Constant condition variables mean the branch can only go a single way
         return BI->getSuccessor(BCValue.getConstant() ==
-                                       ConstantBool::False) == To;
+                                       ConstantBool::getFalse()) == To;
       }
       return false;
     }
@@ -598,12 +598,9 @@ void SCCPSolver::visitSelectInst(SelectInst &I) {
   if (CondValue.isUndefined())
     return;
   if (CondValue.isConstant()) {
-    Value *InVal = 0;
-    if (CondValue.getConstant() == ConstantBool::True) {
-      mergeInValue(&I, getValueState(I.getTrueValue()));
-      return;
-    } else if (CondValue.getConstant() == ConstantBool::False) {
-      mergeInValue(&I, getValueState(I.getFalseValue()));
+    if (ConstantBool *CondCB = dyn_cast<ConstantBool>(CondValue.getConstant())){
+      mergeInValue(&I, getValueState(CondCB->getValue() ? I.getTrueValue()
+                                                        : I.getFalseValue()));
       return;
     }
   }
@@ -1035,7 +1032,7 @@ bool SCCPSolver::ResolveBranchesIn(Function &F) {
         if (BI->isConditional()) {
           LatticeVal &BCValue = getValueState(BI->getCondition());
           if (BCValue.isUndefined()) {
-            BI->setCondition(ConstantBool::True);
+            BI->setCondition(ConstantBool::getTrue());
             BranchesResolved = true;
             visit(BI);
           }

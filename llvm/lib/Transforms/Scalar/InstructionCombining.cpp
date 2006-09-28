@@ -1989,7 +1989,7 @@ Instruction *InstCombiner::visitDiv(BinaryOperator &I) {
       if (ST->isNullValue()) {
         Instruction *CondI = dyn_cast<Instruction>(SI->getOperand(0));
         if (CondI && CondI->getParent() == I.getParent())
-          UpdateValueUsesWith(CondI, ConstantBool::False);
+          UpdateValueUsesWith(CondI, ConstantBool::getFalse());
         else if (I.getParent() != SI->getParent() || SI->hasOneUse())
           I.setOperand(1, SI->getOperand(2));
         else
@@ -2001,7 +2001,7 @@ Instruction *InstCombiner::visitDiv(BinaryOperator &I) {
       if (ST->isNullValue()) {
         Instruction *CondI = dyn_cast<Instruction>(SI->getOperand(0));
         if (CondI && CondI->getParent() == I.getParent())
-          UpdateValueUsesWith(CondI, ConstantBool::True);
+          UpdateValueUsesWith(CondI, ConstantBool::getTrue());
         else if (I.getParent() != SI->getParent() || SI->hasOneUse())
           I.setOperand(1, SI->getOperand(1));
         else
@@ -2213,7 +2213,7 @@ Instruction *InstCombiner::visitRem(BinaryOperator &I) {
         if (ST->isNullValue()) {
           Instruction *CondI = dyn_cast<Instruction>(SI->getOperand(0));
           if (CondI && CondI->getParent() == I.getParent())
-            UpdateValueUsesWith(CondI, ConstantBool::False);
+            UpdateValueUsesWith(CondI, ConstantBool::getFalse());
           else if (I.getParent() != SI->getParent() || SI->hasOneUse())
             I.setOperand(1, SI->getOperand(2));
           else
@@ -2225,7 +2225,7 @@ Instruction *InstCombiner::visitRem(BinaryOperator &I) {
         if (ST->isNullValue()) {
           Instruction *CondI = dyn_cast<Instruction>(SI->getOperand(0));
           if (CondI && CondI->getParent() == I.getParent())
-            UpdateValueUsesWith(CondI, ConstantBool::True);
+            UpdateValueUsesWith(CondI, ConstantBool::getTrue());
           else if (I.getParent() != SI->getParent() || SI->hasOneUse())
             I.setOperand(1, SI->getOperand(1));
           else
@@ -2344,14 +2344,14 @@ static unsigned getSetCondCode(const SetCondInst *SCI) {
 /// SetCC instruction.
 static Value *getSetCCValue(unsigned Opcode, Value *LHS, Value *RHS) {
   switch (Opcode) {
-  case 0: return ConstantBool::False;
+  case 0: return ConstantBool::getFalse();
   case 1: return new SetCondInst(Instruction::SetGT, LHS, RHS);
   case 2: return new SetCondInst(Instruction::SetEQ, LHS, RHS);
   case 3: return new SetCondInst(Instruction::SetGE, LHS, RHS);
   case 4: return new SetCondInst(Instruction::SetLT, LHS, RHS);
   case 5: return new SetCondInst(Instruction::SetNE, LHS, RHS);
   case 6: return new SetCondInst(Instruction::SetLE, LHS, RHS);
-  case 7: return ConstantBool::True;
+  case 7: return ConstantBool::getTrue();
   default: assert(0 && "Illegal SetCCCode!"); return 0;
   }
 }
@@ -2851,7 +2851,7 @@ Instruction *InstCombiner::visitAnd(BinaryOperator &I) {
             default: assert(0 && "Unknown integer condition code!");
             case Instruction::SetEQ:  // (X == 13 & X == 15) -> false
             case Instruction::SetGT:  // (X == 13 & X > 15)  -> false
-              return ReplaceInstUsesWith(I, ConstantBool::False);
+              return ReplaceInstUsesWith(I, ConstantBool::getFalse());
             case Instruction::SetNE:  // (X == 13 & X != 15) -> X == 13
             case Instruction::SetLT:  // (X == 13 & X < 15)  -> X == 13
               return ReplaceInstUsesWith(I, LHS);
@@ -2886,7 +2886,7 @@ Instruction *InstCombiner::visitAnd(BinaryOperator &I) {
             default: assert(0 && "Unknown integer condition code!");
             case Instruction::SetEQ:  // (X < 13 & X == 15) -> false
             case Instruction::SetGT:  // (X < 13 & X > 15)  -> false
-              return ReplaceInstUsesWith(I, ConstantBool::False);
+              return ReplaceInstUsesWith(I, ConstantBool::getFalse());
             case Instruction::SetNE:  // (X < 13 & X != 15) -> X < 13
             case Instruction::SetLT:  // (X < 13 & X < 15) -> X < 13
               return ReplaceInstUsesWith(I, LHS);
@@ -3254,7 +3254,7 @@ Instruction *InstCombiner::visitOr(BinaryOperator &I) {
               return ReplaceInstUsesWith(I, LHS);
             case Instruction::SetNE:        // (X != 13 | X != 15) -> true
             case Instruction::SetLT:        // (X != 13 | X < 15)  -> true
-              return ReplaceInstUsesWith(I, ConstantBool::True);
+              return ReplaceInstUsesWith(I, ConstantBool::getTrue());
             }
             break;
           case Instruction::SetLT:
@@ -3277,7 +3277,7 @@ Instruction *InstCombiner::visitOr(BinaryOperator &I) {
               return ReplaceInstUsesWith(I, LHS);
             case Instruction::SetNE:  // (X > 13 | X != 15)  -> true
             case Instruction::SetLT:  // (X > 13 | X < 15) -> true
-              return ReplaceInstUsesWith(I, ConstantBool::True);
+              return ReplaceInstUsesWith(I, ConstantBool::getTrue());
             }
           }
         }
@@ -3339,7 +3339,7 @@ Instruction *InstCombiner::visitXor(BinaryOperator &I) {
     if (BinaryOperator *Op0I = dyn_cast<BinaryOperator>(Op0)) {
       // xor (setcc A, B), true = not (setcc A, B) = setncc A, B
       if (SetCondInst *SCI = dyn_cast<SetCondInst>(Op0I))
-        if (RHS == ConstantBool::True && SCI->hasOneUse())
+        if (RHS == ConstantBool::getTrue() && SCI->hasOneUse())
           return new SetCondInst(SCI->getInverseCondition(),
                                  SCI->getOperand(0), SCI->getOperand(1));
 
@@ -3781,9 +3781,9 @@ Instruction *InstCombiner::visitSetCondInst(SetCondInst &I) {
     // Check to see if we are comparing against the minimum or maximum value...
     if (CI->isMinValue()) {
       if (I.getOpcode() == Instruction::SetLT)       // A < MIN -> FALSE
-        return ReplaceInstUsesWith(I, ConstantBool::False);
+        return ReplaceInstUsesWith(I, ConstantBool::getFalse());
       if (I.getOpcode() == Instruction::SetGE)       // A >= MIN -> TRUE
-        return ReplaceInstUsesWith(I, ConstantBool::True);
+        return ReplaceInstUsesWith(I, ConstantBool::getTrue());
       if (I.getOpcode() == Instruction::SetLE)       // A <= MIN -> A == MIN
         return BinaryOperator::createSetEQ(Op0, Op1);
       if (I.getOpcode() == Instruction::SetGT)       // A > MIN -> A != MIN
@@ -3791,9 +3791,9 @@ Instruction *InstCombiner::visitSetCondInst(SetCondInst &I) {
 
     } else if (CI->isMaxValue()) {
       if (I.getOpcode() == Instruction::SetGT)       // A > MAX -> FALSE
-        return ReplaceInstUsesWith(I, ConstantBool::False);
+        return ReplaceInstUsesWith(I, ConstantBool::getFalse());
       if (I.getOpcode() == Instruction::SetLE)       // A <= MAX -> TRUE
-        return ReplaceInstUsesWith(I, ConstantBool::True);
+        return ReplaceInstUsesWith(I, ConstantBool::getTrue());
       if (I.getOpcode() == Instruction::SetGE)       // A >= MAX -> A == MAX
         return BinaryOperator::createSetEQ(Op0, Op1);
       if (I.getOpcode() == Instruction::SetLT)       // A < MAX -> A != MAX
@@ -3842,19 +3842,23 @@ Instruction *InstCombiner::visitSetCondInst(SetCondInst &I) {
         default: assert(0 && "Unknown setcc opcode!");
         case Instruction::SetEQ:
           if (Max < RHSVal || Min > RHSVal)
-            return ReplaceInstUsesWith(I, ConstantBool::False);
+            return ReplaceInstUsesWith(I, ConstantBool::getFalse());
           break;
         case Instruction::SetNE:
           if (Max < RHSVal || Min > RHSVal)
-            return ReplaceInstUsesWith(I, ConstantBool::True);
+            return ReplaceInstUsesWith(I, ConstantBool::getTrue());
           break;
         case Instruction::SetLT:
-          if (Max < RHSVal) return ReplaceInstUsesWith(I, ConstantBool::True);
-          if (Min > RHSVal) return ReplaceInstUsesWith(I, ConstantBool::False);
+          if (Max < RHSVal)
+            return ReplaceInstUsesWith(I, ConstantBool::getTrue());
+          if (Min > RHSVal)
+            return ReplaceInstUsesWith(I, ConstantBool::getFalse());
           break;
         case Instruction::SetGT:
-          if (Min > RHSVal) return ReplaceInstUsesWith(I, ConstantBool::True);
-          if (Max < RHSVal) return ReplaceInstUsesWith(I, ConstantBool::False);
+          if (Min > RHSVal)
+            return ReplaceInstUsesWith(I, ConstantBool::getTrue());
+          if (Max < RHSVal)
+            return ReplaceInstUsesWith(I, ConstantBool::getFalse());
           break;
         }
       } else {              // Signed comparison.
@@ -3866,19 +3870,23 @@ Instruction *InstCombiner::visitSetCondInst(SetCondInst &I) {
         default: assert(0 && "Unknown setcc opcode!");
         case Instruction::SetEQ:
           if (Max < RHSVal || Min > RHSVal)
-            return ReplaceInstUsesWith(I, ConstantBool::False);
+            return ReplaceInstUsesWith(I, ConstantBool::getFalse());
           break;
         case Instruction::SetNE:
           if (Max < RHSVal || Min > RHSVal)
-            return ReplaceInstUsesWith(I, ConstantBool::True);
+            return ReplaceInstUsesWith(I, ConstantBool::getTrue());
           break;
         case Instruction::SetLT:
-          if (Max < RHSVal) return ReplaceInstUsesWith(I, ConstantBool::True);
-          if (Min > RHSVal) return ReplaceInstUsesWith(I, ConstantBool::False);
+          if (Max < RHSVal)
+            return ReplaceInstUsesWith(I, ConstantBool::getTrue());
+          if (Min > RHSVal)
+            return ReplaceInstUsesWith(I, ConstantBool::getFalse());
           break;
         case Instruction::SetGT:
-          if (Min > RHSVal) return ReplaceInstUsesWith(I, ConstantBool::True);
-          if (Max < RHSVal) return ReplaceInstUsesWith(I, ConstantBool::False);
+          if (Min > RHSVal)
+            return ReplaceInstUsesWith(I, ConstantBool::getTrue());
+          if (Max < RHSVal)
+            return ReplaceInstUsesWith(I, ConstantBool::getFalse());
           break;
         }
       }
@@ -3978,9 +3986,9 @@ Instruction *InstCombiner::visitSetCondInst(SetCondInst &I) {
                 // As a special case, check to see if this means that the
                 // result is always true or false now.
                 if (I.getOpcode() == Instruction::SetEQ)
-                  return ReplaceInstUsesWith(I, ConstantBool::False);
+                  return ReplaceInstUsesWith(I, ConstantBool::getFalse());
                 if (I.getOpcode() == Instruction::SetNE)
-                  return ReplaceInstUsesWith(I, ConstantBool::True);
+                  return ReplaceInstUsesWith(I, ConstantBool::getTrue());
               } else {
                 I.setOperand(1, NewCst);
                 Constant *NewAndCST;
@@ -4200,7 +4208,7 @@ Instruction *InstCombiner::visitSetCondInst(SetCondInst &I) {
             default: assert(0 && "Unhandled setcc opcode!");
             case Instruction::SetEQ:
               if (LoOverflow && HiOverflow)
-                return ReplaceInstUsesWith(I, ConstantBool::False);
+                return ReplaceInstUsesWith(I, ConstantBool::getFalse());
               else if (HiOverflow)
                 return new SetCondInst(Instruction::SetGE, X, LoBound);
               else if (LoOverflow)
@@ -4209,7 +4217,7 @@ Instruction *InstCombiner::visitSetCondInst(SetCondInst &I) {
                 return InsertRangeTest(X, LoBound, HiBound, true, I);
             case Instruction::SetNE:
               if (LoOverflow && HiOverflow)
-                return ReplaceInstUsesWith(I, ConstantBool::True);
+                return ReplaceInstUsesWith(I, ConstantBool::getTrue());
               else if (HiOverflow)
                 return new SetCondInst(Instruction::SetLT, X, LoBound);
               else if (LoOverflow)
@@ -4218,11 +4226,11 @@ Instruction *InstCombiner::visitSetCondInst(SetCondInst &I) {
                 return InsertRangeTest(X, LoBound, HiBound, false, I);
             case Instruction::SetLT:
               if (LoOverflow)
-                return ReplaceInstUsesWith(I, ConstantBool::False);
+                return ReplaceInstUsesWith(I, ConstantBool::getFalse());
               return new SetCondInst(Instruction::SetLT, X, LoBound);
             case Instruction::SetGT:
               if (HiOverflow)
-                return ReplaceInstUsesWith(I, ConstantBool::False);
+                return ReplaceInstUsesWith(I, ConstantBool::getFalse());
               return new SetCondInst(Instruction::SetGE, X, HiBound);
             }
           }
@@ -4558,9 +4566,9 @@ Instruction *InstCombiner::visitSetCondInstWithCastAndCast(SetCondInst &SCI) {
       // If the value cannot be represented in the shorter type, we cannot emit
       // a simple comparison.
       if (SCI.getOpcode() == Instruction::SetEQ)
-        return ReplaceInstUsesWith(SCI, ConstantBool::False);
+        return ReplaceInstUsesWith(SCI, ConstantBool::getFalse());
       if (SCI.getOpcode() == Instruction::SetNE)
-        return ReplaceInstUsesWith(SCI, ConstantBool::True);
+        return ReplaceInstUsesWith(SCI, ConstantBool::getTrue());
 
       // Evaluate the comparison for LT.
       Value *Result;
@@ -4569,21 +4577,21 @@ Instruction *InstCombiner::visitSetCondInstWithCastAndCast(SetCondInst &SCI) {
         if (isSignSrc) {
           // Signed extend and signed comparison.
           if (cast<ConstantSInt>(CI)->getValue() < 0) // X < (small) --> false
-            Result = ConstantBool::False;
+            Result = ConstantBool::getFalse();
           else
-            Result = ConstantBool::True;              // X < (large) --> true
+            Result = ConstantBool::getTrue();         // X < (large) --> true
         } else {
           // Unsigned extend and signed comparison.
           if (cast<ConstantSInt>(CI)->getValue() < 0)
-            Result = ConstantBool::False;
+            Result = ConstantBool::getFalse();
           else
-            Result = ConstantBool::True;
+            Result = ConstantBool::getTrue();
         }
       } else {
         // We're performing an unsigned comparison.
         if (!isSignSrc) {
           // Unsigned extend & compare -> always true.
-          Result = ConstantBool::True;
+          Result = ConstantBool::getTrue();
         } else {
           // We're performing an unsigned comp with a sign extended value.
           // This is true if the input is >= 0. [aka >s -1]
@@ -5389,7 +5397,7 @@ Instruction *InstCombiner::visitCastInst(CastInst &CI) {
 
         // cast (xor bool X, true) to int  --> xor (cast bool X to int), 1
         if (SrcBitSize == 1 && SrcI->getOpcode() == Instruction::Xor &&
-            Op1 == ConstantBool::True &&
+            Op1 == ConstantBool::getTrue() &&
             (!Op0->hasOneUse() || !isa<SetCondInst>(Op0))) {
           Value *New = InsertOperandCastBefore(Op0, DestTy, &CI);
           return BinaryOperator::createXor(New,
@@ -5648,12 +5656,7 @@ Instruction *InstCombiner::visitSelectInst(SelectInst &SI) {
   // select true, X, Y  -> X
   // select false, X, Y -> Y
   if (ConstantBool *C = dyn_cast<ConstantBool>(CondVal))
-    if (C == ConstantBool::True)
-      return ReplaceInstUsesWith(SI, TrueVal);
-    else {
-      assert(C == ConstantBool::False);
-      return ReplaceInstUsesWith(SI, FalseVal);
-    }
+    return ReplaceInstUsesWith(SI, C->getValue() ? TrueVal : FalseVal);
 
   // select C, X, X -> X
   if (TrueVal == FalseVal)
@@ -5672,7 +5675,7 @@ Instruction *InstCombiner::visitSelectInst(SelectInst &SI) {
 
   if (SI.getType() == Type::BoolTy)
     if (ConstantBool *C = dyn_cast<ConstantBool>(TrueVal)) {
-      if (C == ConstantBool::True) {
+      if (C->getValue()) {
         // Change: A = select B, true, C --> A = or B, C
         return BinaryOperator::createOr(CondVal, FalseVal);
       } else {
@@ -5683,7 +5686,7 @@ Instruction *InstCombiner::visitSelectInst(SelectInst &SI) {
         return BinaryOperator::createAnd(NotCond, FalseVal);
       }
     } else if (ConstantBool *C = dyn_cast<ConstantBool>(FalseVal)) {
-      if (C == ConstantBool::False) {
+      if (C->getValue() == false) {
         // Change: A = select B, C, false --> A = and B, C
         return BinaryOperator::createAnd(CondVal, TrueVal);
       } else {
@@ -6193,7 +6196,7 @@ Instruction *InstCombiner::visitCallSite(CallSite CS) {
       Instruction *OldCall = CS.getInstruction();
       // If the call and callee calling conventions don't match, this call must
       // be unreachable, as the call is undefined.
-      new StoreInst(ConstantBool::True,
+      new StoreInst(ConstantBool::getTrue(),
                     UndefValue::get(PointerType::get(Type::BoolTy)), OldCall);
       if (!OldCall->use_empty())
         OldCall->replaceAllUsesWith(UndefValue::get(OldCall->getType()));
@@ -6206,7 +6209,7 @@ Instruction *InstCombiner::visitCallSite(CallSite CS) {
     // This instruction is not reachable, just remove it.  We insert a store to
     // undef so that we know that this code is not reachable, despite the fact
     // that we can't modify the CFG here.
-    new StoreInst(ConstantBool::True,
+    new StoreInst(ConstantBool::getTrue(),
                   UndefValue::get(PointerType::get(Type::BoolTy)),
                   CS.getInstruction());
 
@@ -6217,7 +6220,7 @@ Instruction *InstCombiner::visitCallSite(CallSite CS) {
     if (InvokeInst *II = dyn_cast<InvokeInst>(CS.getInstruction())) {
       // Don't break the CFG, insert a dummy cond branch.
       new BranchInst(II->getNormalDest(), II->getUnwindDest(),
-                     ConstantBool::True, II);
+                     ConstantBool::getTrue(), II);
     }
     return EraseInstFromFunction(*CS.getInstruction());
   }
@@ -6901,7 +6904,7 @@ Instruction *InstCombiner::visitFreeInst(FreeInst &FI) {
   // free undef -> unreachable.
   if (isa<UndefValue>(Op)) {
     // Insert a new store to null because we cannot modify the CFG here.
-    new StoreInst(ConstantBool::True,
+    new StoreInst(ConstantBool::getTrue(),
                   UndefValue::get(PointerType::get(Type::BoolTy)), &FI);
     return EraseInstFromFunction(FI);
   }

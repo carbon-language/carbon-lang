@@ -172,8 +172,8 @@ struct ValID {
     case ConstUIntVal  :
     case ConstSIntVal  : return std::string("%") + itostr(ConstPool64);
     case ConstantVal:
-      if (ConstantValue == ConstantBool::True) return "true";
-      if (ConstantValue == ConstantBool::False) return "false";
+      if (ConstantValue == ConstantBool::getTrue()) return "true";
+      if (ConstantValue == ConstantBool::getFalse()) return "false";
       return "<constant expression>";
     default:
       assert(0 && "Unknown value!");
