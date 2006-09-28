@@ -225,7 +225,7 @@ namespace {
 struct VISIBILITY_HIDDEN EmptyRules
   : public TemplateRules<Constant, EmptyRules> {
   static Constant *EqualTo(const Constant *V1, const Constant *V2) {
-    if (V1 == V2) return ConstantBool::True;
+    if (V1 == V2) return ConstantBool::getTrue();
     return 0;
   }
 };
@@ -296,10 +296,10 @@ namespace {
 struct VISIBILITY_HIDDEN NullPointerRules
   : public TemplateRules<ConstantPointerNull, NullPointerRules> {
   static Constant *EqualTo(const Constant *V1, const Constant *V2) {
-    return ConstantBool::True;  // Null pointers are always equal
+    return ConstantBool::getTrue();  // Null pointers are always equal
   }
   static Constant *CastToBool(const Constant *V) {
-    return ConstantBool::False;
+    return ConstantBool::getFalse();
   }
   static Constant *CastToSByte (const Constant *V) {
     return ConstantSInt::get(Type::SByteTy, 0);
@@ -729,7 +729,7 @@ Constant *llvm::ConstantFoldCastInstruction(const Constant *V,
       // FIXME: When we support 'external weak' references, we have to prevent
       // this transformation from happening.  This code will need to be updated
       // to ignore external weak symbols when we support it.
-      return ConstantBool::True;
+      return ConstantBool::getTrue();
   } else if (const ConstantExpr *CE = dyn_cast<ConstantExpr>(V)) {
     if (CE->getOpcode() == Instruction::Cast) {
       Constant *Op = const_cast<Constant*>(CE->getOperand(0));
@@ -842,10 +842,8 @@ Constant *llvm::ConstantFoldCastInstruction(const Constant *V,
 Constant *llvm::ConstantFoldSelectInstruction(const Constant *Cond,
                                               const Constant *V1,
                                               const Constant *V2) {
-  if (Cond == ConstantBool::True)
-    return const_cast<Constant*>(V1);
-  else if (Cond == ConstantBool::False)
-    return const_cast<Constant*>(V2);
+  if (const ConstantBool *CB = dyn_cast<ConstantBool>(Cond))
+    return const_cast<Constant*>(CB->getValue() ? V1 : V2);
 
   if (isa<UndefValue>(V1)) return const_cast<Constant*>(V2);
   if (isa<UndefValue>(V2)) return const_cast<Constant*>(V1);
@@ -1011,11 +1009,11 @@ static Instruction::BinaryOps evaluateRelation(Constant *V1, Constant *V2) {
       // We distilled this down to a simple case, use the standard constant
       // folder.
       ConstantBool *R = dyn_cast<ConstantBool>(ConstantExpr::getSetEQ(V1, V2));
-      if (R == ConstantBool::True) return Instruction::SetEQ;
+      if (R && R->getValue()) return Instruction::SetEQ;
       R = dyn_cast<ConstantBool>(ConstantExpr::getSetLT(V1, V2));
-      if (R == ConstantBool::True) return Instruction::SetLT;
+      if (R && R->getValue()) return Instruction::SetLT;
       R = dyn_cast<ConstantBool>(ConstantExpr::getSetGT(V1, V2));
-      if (R == ConstantBool::True) return Instruction::SetGT;
+      if (R && R->getValue()) return Instruction::SetGT;
       
       // If we couldn't figure it out, bail.
       return Instruction::BinaryOpsEnd;
@@ -1240,20 +1238,20 @@ Constant *llvm::ConstantFoldBinaryInstruction(unsigned Opcode,
                                Opcode == Instruction::SetGE);
     case Instruction::SetLE:
       // If we know that V1 <= V2, we can only partially decide this relation.
-      if (Opcode == Instruction::SetGT) return ConstantBool::False;
-      if (Opcode == Instruction::SetLT) return ConstantBool::True;
+      if (Opcode == Instruction::SetGT) return ConstantBool::getFalse();
+      if (Opcode == Instruction::SetLT) return ConstantBool::getTrue();
       break;
 
     case Instruction::SetGE:
       // If we know that V1 >= V2, we can only partially decide this relation.
-      if (Opcode == Instruction::SetLT) return ConstantBool::False;
-      if (Opcode == Instruction::SetGT) return ConstantBool::True;
+      if (Opcode == Instruction::SetLT) return ConstantBool::getFalse();
+      if (Opcode == Instruction::SetGT) return ConstantBool::getTrue();
       break;
 
     case Instruction::SetNE:
       // If we know that V1 != V2, we can only partially decide this relation.
-      if (Opcode == Instruction::SetEQ) return ConstantBool::False;
-      if (Opcode == Instruction::SetNE) return ConstantBool::True;
+      if (Opcode == Instruction::SetEQ) return ConstantBool::getFalse();
+      if (Opcode == Instruction::SetNE) return ConstantBool::getTrue();
       break;
     }
   }
