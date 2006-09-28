@@ -103,11 +103,6 @@ public:
     assert(0 && "Constants that do not have operands cannot be using 'From'!");
   }
 
-  /// clearAllValueMaps - This method frees all internal memory used by the
-  /// constant subsystem, which can be used in environments where this memory
-  /// is otherwise reported as a leak.
-  static void clearAllValueMaps();
-  
   /// getStringValue - Turn an LLVM constant pointer that eventually points to a
   /// global into a string value.  Return an empty string if we can't do it.
   /// Parameter Chop determines if the result is chopped at the first null
