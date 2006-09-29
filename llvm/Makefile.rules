@@ -426,16 +426,16 @@ CPP.Flags     += -I$(PROJ_OBJ_DIR) -I$(PROJ_SRC_DIR) \
 	         -I$(LLVM_SRC_ROOT)/include \
 		 $(CPP.BaseFlags)
 
-Compile.C     = $(CC) $(CPP.Flags) $(CompileCommonOpts) -c $(C.Flags)
+Compile.C     = $(CC) $(CPP.Flags) $(C.Flags) $(CompileCommonOpts) -c
 LTCompile.C   = $(LIBTOOL) $(LibTool.Flags) --mode=compile $(Compile.C)
-BCCompile.C   = $(LLVMGCCWITHPATH) $(CPP.Flags) $(CompileCommonOpts) \
-                $(C.Flags)
-Preprocess.C  = $(CC) $(CPP.Flags) $(CompileCommonOpts) -E $(C.Flags)
+BCCompile.C   = $(LLVMGCCWITHPATH) $(CPP.Flags) $(C.Flags) $(CompileCommonOpts)
+Preprocess.C  = $(CC) $(CPP.Flags) $(C.Flags) $(CompileCommonOpts) -E
 
-Compile.CXX   = $(CXX) $(CPP.Flags) $(CompileCommonOpts) $(CXX.Flags) -c
+Compile.CXX   = $(CXX) $(CPP.Flags) $(CXX.Flags) $(CompileCommonOpts) -c
 LTCompile.CXX = $(LIBTOOL) $(LibTool.Flags) --mode=compile $(Compile.CXX)
-BCCompile.CXX = $(LLVMGXXWITHPATH) $(CPP.Flags) $(CompileCommonOpts) \
-                $(CXX.Flags)
+BCCompile.CXX = $(LLVMGXXWITHPATH) $(CPP.Flags) $(CXX.Flags) \
+                $(CompileCommonOpts)
+
 Preprocess.CXX= $(CXX) $(CPP.Flags) $(CompileCommonOpts) $(CXX.Flags) -E
 Link          = $(CXX) $(CPP.Flags) $(CXX.Flags) $(CompileCommonOpts) \
 		$(LD.Flags) $(Strip)
