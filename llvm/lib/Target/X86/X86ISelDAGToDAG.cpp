@@ -34,7 +34,6 @@
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/MathExtras.h"
 #include "llvm/ADT/Statistic.h"
-#include <deque>
 #include <iostream>
 #include <queue>
 #include <set>
