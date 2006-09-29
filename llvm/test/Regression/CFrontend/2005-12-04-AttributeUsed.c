@@ -3,6 +3,5 @@
 int X __attribute__((used));
 int Y;
 
-void foo() __attribute__((used));
+__attribute__((used)) void foo() {}
 
-void foo() {}
