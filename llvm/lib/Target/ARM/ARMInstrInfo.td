@@ -74,6 +74,8 @@ def armbr          : SDNode<"ARMISD::BR", SDTarmbr, [SDNPHasChain, SDNPInFlag]>;
 def SDTVoidBinOp : SDTypeProfile<0, 2, [SDTCisSameAs<0, 1>]>;
 def armcmp       : SDNode<"ARMISD::CMP",  SDTVoidBinOp, [SDNPOutFlag]>;
 
+def armfsitos    : SDNode<"ARMISD::FSITOS", SDTUnaryOp>;
+
 def ADJCALLSTACKUP : InstARM<(ops i32imm:$amt),
                             "!ADJCALLSTACKUP $amt",
                             [(callseq_end imm:$amt)]>;
@@ -150,3 +152,17 @@ def b      : InstARM<(ops brtarget:$dst),
 def cmp      : InstARM<(ops IntRegs:$a, op_addr_mode1:$b),
 	               "cmp $a, $b",
 		       [(armcmp IntRegs:$a, addr_mode1:$b)]>;
+
+
+// Floating Point Conversion
+// We use bitconvert for moving the data between the register classes.
+// The format conversion is done with ARM specific nodes
+
+def FMSR    : InstARM<(ops FPRegs:$dst, IntRegs:$src),
+                       "fmsr $dst, $src", [(set FPRegs:$dst, (bitconvert IntRegs:$src))]>;
+
+def FMRS    : InstARM<(ops IntRegs:$dst, FPRegs:$src),
+                       "fmrs $dst, $src", [(set IntRegs:$dst, (bitconvert FPRegs:$src))]>;
+
+def FSITOS  : InstARM<(ops FPRegs:$dst, FPRegs:$src),
+                       "fsitos $dst, $src", [(set FPRegs:$dst, (armfsitos FPRegs:$src))]>;
