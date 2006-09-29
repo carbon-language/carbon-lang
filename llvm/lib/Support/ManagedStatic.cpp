@@ -46,7 +46,7 @@ void ManagedStaticBase::destroy() const {
 }
 
 /// llvm_shutdown - Deallocate and destroy all ManagedStatic variables.
-void llvm_shutdown() {
+void llvm::llvm_shutdown() {
   while (StaticList)
     StaticList->destroy();
 }
