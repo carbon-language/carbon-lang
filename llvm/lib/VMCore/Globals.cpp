@@ -91,6 +91,27 @@ GlobalVariable::GlobalVariable(const Type *Ty, bool constant, LinkageTypes Link,
     ParentModule->getGlobalList().push_back(this);
 }
 
+GlobalVariable::GlobalVariable(const Type *Ty, bool constant, LinkageTypes Link,
+                               Constant *InitVal,
+                               const std::string &Name, GlobalVariable *Before)
+  : GlobalValue(PointerType::get(Ty), Value::GlobalVariableVal,
+                &Initializer, InitVal != 0, Link, Name), 
+    isConstantGlobal(constant) {
+  if (InitVal) {
+    assert(InitVal->getType() == Ty &&
+           "Initializer should be the same type as the GlobalVariable!");
+    Initializer.init(InitVal, this);
+  } else {
+    Initializer.init(0, this);
+  }
+  
+  LeakDetector::addGarbageObject(this);
+  
+  if (Before)
+    Before->getParent()->getGlobalList().insert(Before, this);
+}
+
+
 void GlobalVariable::setParent(Module *parent) {
   if (getParent())
     LeakDetector::addGarbageObject(this);
