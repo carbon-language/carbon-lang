@@ -913,7 +913,7 @@ static void RewriteUsesOfLoadForHeapSRoA(LoadInst *Ptr,
 /// PerformHeapAllocSRoA - MI is an allocation of an array of structures.  Break
 /// it up into multiple allocations of arrays of the fields.
 static GlobalVariable *PerformHeapAllocSRoA(GlobalVariable *GV, MallocInst *MI){
-  /*DEBUG*/(std::cerr << "SROA HEAP ALLOC: " << *GV << "  MALLOC = " << *MI);
+  DEBUG(std::cerr << "SROA HEAP ALLOC: " << *GV << "  MALLOC = " << *MI);
   const StructType *STy = cast<StructType>(MI->getAllocatedType());
 
   // There is guaranteed to be at least one use of the malloc (storing
@@ -1869,7 +1869,6 @@ static bool EvaluateStaticConstructor(Function *F) {
   
   return EvalSuccess;
 }
-
 
 
 
