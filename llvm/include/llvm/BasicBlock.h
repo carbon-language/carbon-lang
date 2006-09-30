@@ -85,6 +85,11 @@ public:
         BasicBlock *getPrev()       { return Prev; }
   const BasicBlock *getPrev() const { return Prev; }
 
+  /// use_back - Specialize the methods defined in Value, as we know that an
+  /// BasicBlock can only be used by Instructions (specifically PHI and terms).
+  Instruction       *use_back()       { return cast<Instruction>(*use_begin());}
+  const Instruction *use_back() const { return cast<Instruction>(*use_begin());}
+  
   /// getTerminator() - If this is a well formed basic block, then this returns
   /// a pointer to the terminator instruction.  If it is not, then you get a
   /// null pointer back.

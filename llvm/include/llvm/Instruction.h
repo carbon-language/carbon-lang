@@ -71,7 +71,11 @@ public:
   /// extra information (e.g. load is volatile) agree.
   bool isIdenticalTo(Instruction *I) const;
 
-
+  /// use_back - Specialize the methods defined in Value, as we know that an
+  /// instruction can only be used by other instructions.
+  Instruction       *use_back()       { return cast<Instruction>(*use_begin());}
+  const Instruction *use_back() const { return cast<Instruction>(*use_begin());}
+  
   // Accessor methods...
   //
   inline const BasicBlock *getParent() const { return Parent; }
