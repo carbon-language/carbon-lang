@@ -36,6 +36,7 @@ namespace {
   Statistic<> NumMarked   ("globalopt", "Number of globals marked constant");
   Statistic<> NumSRA      ("globalopt", "Number of aggregate globals broken "
                            "into scalars");
+  Statistic<> NumHeapSRA  ("globalopt", "Number of heap objects SRA'd");
   Statistic<> NumSubstitute("globalopt",
                         "Number of globals with initializers stored into them");
   Statistic<> NumDeleted  ("globalopt", "Number of globals deleted");
@@ -794,8 +795,234 @@ static bool ValueIsOnlyUsedLocallyOrStoredToOneGlobal(Instruction *V,
       return false;
     }
   return true;
-
 }
+
+/// ReplaceUsesOfMallocWithGlobal - The Alloc pointer is stored into GV
+/// somewhere.  Transform all uses of the allocation into loads from the
+/// global and uses of the resultant pointer.  Further, delete the store into
+/// GV.  This assumes that these value pass the 
+/// 'ValueIsOnlyUsedLocallyOrStoredToOneGlobal' predicate.
+static void ReplaceUsesOfMallocWithGlobal(Instruction *Alloc, 
+                                          GlobalVariable *GV) {
+  while (!Alloc->use_empty()) {
+    Instruction *U = Alloc->use_back();
+    if (StoreInst *SI = dyn_cast<StoreInst>(U)) {
+      // If this is the store of the allocation into the global, remove it.
+      if (SI->getOperand(1) == GV) {
+        SI->eraseFromParent();
+        continue;
+      }
+    }
+    
+    // Insert a load from the global, and use it instead of the malloc.
+    Value *NL = new LoadInst(GV, GV->getName()+".val", U);
+    U->replaceUsesOfWith(Alloc, NL);
+  }
+}
+
+/// GlobalLoadUsesSimpleEnoughForHeapSRA - If all users of values loaded from
+/// GV are simple enough to perform HeapSRA, return true.
+static bool GlobalLoadUsesSimpleEnoughForHeapSRA(GlobalVariable *GV) {
+  for (Value::use_iterator UI = GV->use_begin(), E = GV->use_end(); UI != E; 
+       ++UI)
+    if (LoadInst *LI = dyn_cast<LoadInst>(*UI)) {
+      // We permit two users of the load: setcc comparing against the null
+      // pointer, and a getelementptr of a specific form.
+      for (Value::use_iterator UI = LI->use_begin(), E = LI->use_end(); UI != E; 
+           ++UI) {
+        // Comparison against null is ok.
+        if (SetCondInst *SCI = dyn_cast<SetCondInst>(*UI)) {
+          if (!isa<ConstantPointerNull>(SCI->getOperand(1)))
+            return false;
+          continue;
+        }
+        
+        // getelementptr is also ok, but only a simple form.
+        GetElementPtrInst *GEPI = dyn_cast<GetElementPtrInst>(*UI);
+        if (!GEPI) return false;
+        
+        // Must index into the array and into the struct.
+        if (GEPI->getNumOperands() < 3)
+          return false;
+        
+        // Otherwise the GEP is ok.
+        continue;
+      }
+    }
+  return true;
+}
+
+/// RewriteUsesOfLoadForHeapSRoA - We are performing Heap SRoA on a global.  Ptr
+/// is a value loaded from the global.  Eliminate all uses of Ptr, making them
+/// use FieldGlobals instead.  All uses of loaded values satisfy
+/// GlobalLoadUsesSimpleEnoughForHeapSRA.
+static void RewriteUsesOfLoadForHeapSRoA(LoadInst *Ptr, 
+                             const std::vector<GlobalVariable*> &FieldGlobals) {
+  std::vector<Value *> InsertedLoadsForPtr;
+  //InsertedLoadsForPtr.resize(FieldGlobals.size());
+  while (!Ptr->use_empty()) {
+    Instruction *User = Ptr->use_back();
+    
+    // If this is a comparison against null, handle it.
+    if (SetCondInst *SCI = dyn_cast<SetCondInst>(User)) {
+      assert(isa<ConstantPointerNull>(SCI->getOperand(1)));
+      // If we have a setcc of the loaded pointer, we can use a setcc of any
+      // field.
+      Value *NPtr;
+      if (InsertedLoadsForPtr.empty()) {
+        NPtr = new LoadInst(FieldGlobals[0], Ptr->getName()+".f0", Ptr);
+        InsertedLoadsForPtr.push_back(Ptr);
+      } else {
+        NPtr = InsertedLoadsForPtr.back();
+      }
+      
+      Value *New = new SetCondInst(SCI->getOpcode(), NPtr,
+                                   Constant::getNullValue(NPtr->getType()),
+                                   SCI->getName(), SCI);
+      SCI->replaceAllUsesWith(New);
+      SCI->eraseFromParent();
+      continue;
+    }
+    
+    // Otherwise, this should be: 'getelementptr Ptr, Idx, uint FieldNo ...'
+    GetElementPtrInst *GEPI = cast<GetElementPtrInst>(User);
+    assert(GEPI->getNumOperands() >= 3 && isa<ConstantUInt>(GEPI->getOperand(2))
+           && "Unexpected GEPI!");
+    
+    // Load the pointer for this field.
+    unsigned FieldNo = cast<ConstantUInt>(GEPI->getOperand(2))->getValue();
+    if (InsertedLoadsForPtr.size() <= FieldNo)
+      InsertedLoadsForPtr.resize(FieldNo+1);
+    if (InsertedLoadsForPtr[FieldNo] == 0)
+      InsertedLoadsForPtr[FieldNo] = new LoadInst(FieldGlobals[FieldNo],
+                                                  Ptr->getName()+".f" + 
+                                                  utostr(FieldNo), Ptr);
+    Value *NewPtr = InsertedLoadsForPtr[FieldNo];
+
+    // Create the new GEP idx vector.
+    std::vector<Value*> GEPIdx;
+    GEPIdx.push_back(GEPI->getOperand(1));
+    GEPIdx.insert(GEPIdx.end(), GEPI->op_begin()+3, GEPI->op_end());
+
+    Value *NGEPI = new GetElementPtrInst(NewPtr, GEPIdx, GEPI->getName(), GEPI);
+    GEPI->replaceAllUsesWith(NGEPI);
+    GEPI->eraseFromParent();
+  }
+}
+
+/// PerformHeapAllocSRoA - MI is an allocation of an array of structures.  Break
+/// it up into multiple allocations of arrays of the fields.
+static GlobalVariable *PerformHeapAllocSRoA(GlobalVariable *GV, MallocInst *MI){
+  /*DEBUG*/(std::cerr << "SROA HEAP ALLOC: " << *GV << "  MALLOC = " << *MI);
+  const StructType *STy = cast<StructType>(MI->getAllocatedType());
+
+  // There is guaranteed to be at least one use of the malloc (storing
+  // it into GV).  If there are other uses, change them to be uses of
+  // the global to simplify later code.  This also deletes the store
+  // into GV.
+  ReplaceUsesOfMallocWithGlobal(MI, GV);
+  
+  // Okay, at this point, there are no users of the malloc.  Insert N
+  // new mallocs at the same place as MI, and N globals.
+  std::vector<GlobalVariable*> FieldGlobals;
+  std::vector<MallocInst*> FieldMallocs;
+  
+  for (unsigned FieldNo = 0, e = STy->getNumElements(); FieldNo != e;++FieldNo){
+    const Type *FieldTy = STy->getElementType(FieldNo);
+    const Type *PFieldTy = PointerType::get(FieldTy);
+    
+    GlobalVariable *NGV =
+      new GlobalVariable(PFieldTy, false, GlobalValue::InternalLinkage,
+                         Constant::getNullValue(PFieldTy),
+                         GV->getName() + ".f" + utostr(FieldNo), GV);
+    FieldGlobals.push_back(NGV);
+    
+    MallocInst *NMI = new MallocInst(FieldTy, MI->getArraySize(),
+                                     MI->getName() + ".f" + utostr(FieldNo),MI);
+    FieldMallocs.push_back(NMI);
+    new StoreInst(NMI, NGV, MI);
+  }
+  
+  // The tricky aspect of this transformation is handling the case when malloc
+  // fails.  In the original code, malloc failing would set the result pointer
+  // of malloc to null.  In this case, some mallocs could succeed and others
+  // could fail.  As such, we emit code that looks like this:
+  //    F0 = malloc(field0)
+  //    F1 = malloc(field1)
+  //    F2 = malloc(field2)
+  //    if (F0 == 0 || F1 == 0 || F2 == 0) {
+  //      if (F0) { free(F0); F0 = 0; }
+  //      if (F1) { free(F1); F1 = 0; }
+  //      if (F2) { free(F2); F2 = 0; }
+  //    }
+  Value *RunningOr = 0;
+  for (unsigned i = 0, e = FieldMallocs.size(); i != e; ++i) {
+    Value *Cond = new SetCondInst(Instruction::SetEQ, FieldMallocs[i],
+                             Constant::getNullValue(FieldMallocs[i]->getType()),
+                                  "isnull", MI);
+    if (!RunningOr)
+      RunningOr = Cond;   // First seteq
+    else
+      RunningOr = BinaryOperator::createOr(RunningOr, Cond, "tmp", MI);
+  }
+
+  // Split the basic block at the old malloc.
+  BasicBlock *OrigBB = MI->getParent();
+  BasicBlock *ContBB = OrigBB->splitBasicBlock(MI, "malloc_cont");
+  
+  // Create the block to check the first condition.  Put all these blocks at the
+  // end of the function as they are unlikely to be executed.
+  BasicBlock *NullPtrBlock = new BasicBlock("malloc_ret_null",
+                                            OrigBB->getParent());
+  
+  // Remove the uncond branch from OrigBB to ContBB, turning it into a cond
+  // branch on RunningOr.
+  OrigBB->getTerminator()->eraseFromParent();
+  new BranchInst(NullPtrBlock, ContBB, RunningOr, OrigBB);
+  
+  // Within the NullPtrBlock, we need to emit a comparison and branch for each
+  // pointer, because some may be null while others are not.
+  for (unsigned i = 0, e = FieldGlobals.size(); i != e; ++i) {
+    Value *GVVal = new LoadInst(FieldGlobals[i], "tmp", NullPtrBlock);
+    Value *Cmp = new SetCondInst(Instruction::SetNE, GVVal, 
+                                 Constant::getNullValue(GVVal->getType()),
+                                 "tmp", NullPtrBlock);
+    BasicBlock *FreeBlock = new BasicBlock("free_it", OrigBB->getParent());
+    BasicBlock *NextBlock = new BasicBlock("next", OrigBB->getParent());
+    new BranchInst(FreeBlock, NextBlock, Cmp, NullPtrBlock);
+
+    // Fill in FreeBlock.
+    new FreeInst(GVVal, FreeBlock);
+    new StoreInst(Constant::getNullValue(GVVal->getType()), FieldGlobals[i],
+                  FreeBlock);
+    new BranchInst(NextBlock, FreeBlock);
+    
+    NullPtrBlock = NextBlock;
+  }
+  
+  new BranchInst(ContBB, NullPtrBlock);
+  
+  
+  // MI is no longer needed, remove it.
+  MI->eraseFromParent();
+
+  
+  // Okay, the malloc site is completely handled.  All of the uses of GV are now
+  // loads, and all uses of those loads are simple.  Rewrite them to use loads
+  // of the per-field globals instead.
+  while (!GV->use_empty()) {
+    LoadInst *LI = cast<LoadInst>(GV->use_back());
+    RewriteUsesOfLoadForHeapSRoA(LI, FieldGlobals);
+    LI->eraseFromParent();
+  }
+
+  // The old global is now dead, remove it.
+  GV->eraseFromParent();
+
+  ++NumHeapSRA;
+  return FieldGlobals[0];
+}
+
 
 // OptimizeOnceStoredGlobal - Try to optimize globals based on the knowledge
 // that only one value (besides its initializer) is ever stored to the global.
@@ -835,20 +1062,49 @@ static bool OptimizeOnceStoredGlobal(GlobalVariable *GV, Value *StoredOnceVal,
       if (!MI->getAllocatedType()->isSized())
         return false;
       
+      // We can't optimize this global unless all uses of it are *known* to be
+      // of the malloc value, not of the null initializer value (consider a use
+      // that compares the global's value against zero to see if the malloc has
+      // been reached).  To do this, we check to see if all uses of the global
+      // would trap if the global were null: this proves that they must all
+      // happen after the malloc.
+      if (!AllUsesOfLoadedValueWillTrapIfNull(GV))
+        return false;
+
+      // We can't optimize this if the malloc itself is used in a complex way,
+      // for example, being stored into multiple globals.  This allows the
+      // malloc to be stored into the specified global, loaded setcc'd, and
+      // GEP'd.  These are all things we could transform to using the global
+      // for.
+      if (!ValueIsOnlyUsedLocallyOrStoredToOneGlobal(MI, GV))
+        return false;
+
+      
       // If we have a global that is only initialized with a fixed size malloc,
-      // and if all users of the malloc trap, and if the malloc'd address is not
-      // put anywhere else, transform the program to use global memory instead
-      // of malloc'd memory.  This eliminates dynamic allocation (good) and
-      // exposes the resultant global to further GlobalOpt (even better).  Note
-      // that we restrict this transformation to only working on small
-      // allocations (2048 bytes currently), as we don't want to introduce a 16M
-      // global or something.
+      // transform the program to use global memory instead of malloc'd memory.
+      // This eliminates dynamic allocation, avoids an indirection accessing the
+      // data, and exposes the resultant global to further GlobalOpt.
       if (ConstantInt *NElements = dyn_cast<ConstantInt>(MI->getArraySize())) {
+        // Restrict this transformation to only working on small allocations
+        // (2048 bytes currently), as we don't want to introduce a 16M global or
+        // something.
         if (NElements->getRawValue()*
-                     TD.getTypeSize(MI->getAllocatedType()) < 2048 &&
-            AllUsesOfLoadedValueWillTrapIfNull(GV) &&
-            ValueIsOnlyUsedLocallyOrStoredToOneGlobal(MI, GV)) {
+                     TD.getTypeSize(MI->getAllocatedType()) < 2048) {
           GVI = OptimizeGlobalAddressOfMalloc(GV, MI);
+          return true;
+        }
+      }
+
+      // If the allocation is an array of structures, consider transforming this
+      // into multiple malloc'd arrays, one for each field.  This is basically
+      // SRoA for malloc'd memory.
+      if (const StructType *AllocTy = 
+                  dyn_cast<StructType>(MI->getAllocatedType())) {
+        // This the structure has an unreasonable number of fields, leave it
+        // alone.
+        if (AllocTy->getNumElements() <= 16 && AllocTy->getNumElements() > 0 &&
+            GlobalLoadUsesSimpleEnoughForHeapSRA(GV)) {
+          GVI = PerformHeapAllocSRoA(GV, MI);
           return true;
         }
       }
