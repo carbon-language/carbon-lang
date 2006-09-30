@@ -831,6 +831,10 @@ static bool OptimizeOnceStoredGlobal(GlobalVariable *GV, Value *StoredOnceVal,
       if (OptimizeAwayTrappingUsesOfLoads(GV, SOVC))
         return true;
     } else if (MallocInst *MI = dyn_cast<MallocInst>(StoredOnceVal)) {
+      // If this is a malloc of an abstract type, don't touch it.
+      if (!MI->getAllocatedType()->isSized())
+        return false;
+      
       // If we have a global that is only initialized with a fixed size malloc,
       // and if all users of the malloc trap, and if the malloc'd address is not
       // put anywhere else, transform the program to use global memory instead
@@ -839,15 +843,15 @@ static bool OptimizeOnceStoredGlobal(GlobalVariable *GV, Value *StoredOnceVal,
       // that we restrict this transformation to only working on small
       // allocations (2048 bytes currently), as we don't want to introduce a 16M
       // global or something.
-      if (ConstantInt *NElements = dyn_cast<ConstantInt>(MI->getArraySize()))
-        if (MI->getAllocatedType()->isSized() &&
-            NElements->getRawValue()*
+      if (ConstantInt *NElements = dyn_cast<ConstantInt>(MI->getArraySize())) {
+        if (NElements->getRawValue()*
                      TD.getTypeSize(MI->getAllocatedType()) < 2048 &&
             AllUsesOfLoadedValueWillTrapIfNull(GV) &&
             ValueIsOnlyUsedLocallyOrStoredToOneGlobal(MI, GV)) {
           GVI = OptimizeGlobalAddressOfMalloc(GV, MI);
           return true;
         }
+      }
     }
   }
 
@@ -938,6 +942,28 @@ bool GlobalOpt::ProcessInternalGlobal(GlobalVariable *GV,
   }
 
   if (!AnalyzeGlobal(GV, GS, PHIUsers)) {
+#if 0
+    std::cerr << "Global: " << *GV;
+    std::cerr << "  isLoaded = " << GS.isLoaded << "\n";
+    std::cerr << "  StoredType = ";
+    switch (GS.StoredType) {
+    case GlobalStatus::NotStored: std::cerr << "NEVER STORED\n"; break;
+    case GlobalStatus::isInitializerStored: std::cerr << "INIT STORED\n"; break;
+    case GlobalStatus::isStoredOnce: std::cerr << "STORED ONCE\n"; break;
+    case GlobalStatus::isStored: std::cerr << "stored\n"; break;
+    }
+    if (GS.StoredType == GlobalStatus::isStoredOnce && GS.StoredOnceValue)
+      std::cerr << "  StoredOnceValue = " << *GS.StoredOnceValue << "\n";
+    if (GS.AccessingFunction && !GS.HasMultipleAccessingFunctions)
+      std::cerr << "  AccessingFunction = " << GS.AccessingFunction->getName()
+                << "\n";
+    std::cerr << "  HasMultipleAccessingFunctions =  "
+              << GS.HasMultipleAccessingFunctions << "\n";
+    std::cerr << "  HasNonInstructionUser = " << GS.HasNonInstructionUser<<"\n";
+    std::cerr << "  isNotSuitableForSRA = " << GS.isNotSuitableForSRA << "\n";
+    std::cerr << "\n";
+#endif
+    
     // If this is a first class global and has only one accessing function
     // and this function is main (which we know is not recursive we can make
     // this global a local variable) we replace the global with a local alloca
@@ -963,6 +989,7 @@ bool GlobalOpt::ProcessInternalGlobal(GlobalVariable *GV,
       ++NumLocalized;
       return true;
     }
+    
     // If the global is never loaded (but may be stored to), it is dead.
     // Delete it now.
     if (!GS.isLoaded) {
