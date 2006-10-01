@@ -199,3 +199,11 @@ bool %test31(ulong %A) {
 	ret bool %D
 }
 
+
+void %test32(double** %tmp) {
+	%tmp8 = malloc [16 x sbyte]
+        %tmp8 = cast [16 x sbyte]* %tmp8 to double*
+        store double* %tmp8, double** %tmp
+        ret void
+}
+
