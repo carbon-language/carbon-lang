@@ -19,6 +19,7 @@
 #include "llvm/Pass.h"
 #include "llvm/Instructions.h"
 #include "llvm/Constants.h"
+#include "llvm/DerivedTypes.h"
 #include "llvm/Analysis/AliasAnalysis.h"
 #include "llvm/Analysis/CallGraph.h"
 #include "llvm/Support/InstIterator.h"
@@ -41,7 +42,10 @@ namespace {
   Statistic<>
   NumReadMemFunctions("globalsmodref-aa",
                       "Number of functions that only read memory");
-
+  Statistic<>
+  NumIndirectGlobalVars("globalsmodref-aa",
+                        "Number of indirect global objects");
+  
   /// FunctionRecord - One instance of this structure is stored for every
   /// function in the program.  Later, the entries for these functions are
   /// removed if the function is found to call an external function (in which
@@ -72,6 +76,14 @@ namespace {
     /// taken.
     std::set<GlobalValue*> NonAddressTakenGlobals;
 
+    /// IndirectGlobals - The memory pointed to by this global is known to be
+    /// 'owned' by the global.
+    std::set<GlobalValue*> IndirectGlobals;
+    
+    /// AllocsForIndirectGlobals - If an instruction allocates memory for an
+    /// indirect global, this map indicates which one.
+    std::map<Value*, GlobalValue*> AllocsForIndirectGlobals;
+    
     /// FunctionInfo - For each function, keep track of what globals are
     /// modified or read.
     std::map<Function*, FunctionRecord> FunctionInfo;
@@ -131,8 +143,10 @@ namespace {
     void AnalyzeGlobals(Module &M);
     void AnalyzeCallGraph(CallGraph &CG, Module &M);
     void AnalyzeSCC(std::vector<CallGraphNode *> &SCC);
-    bool AnalyzeUsesOfGlobal(Value *V, std::vector<Function*> &Readers,
-                             std::vector<Function*> &Writers);
+    bool AnalyzeUsesOfPointer(Value *V, std::vector<Function*> &Readers,
+                              std::vector<Function*> &Writers,
+                              GlobalValue *OkayStoreDest = 0);
+    bool AnalyzeIndirectGlobalMemory(GlobalValue *GV);
   };
 
   RegisterPass<GlobalsModRef> X("globalsmodref-aa",
@@ -142,8 +156,30 @@ namespace {
 
 Pass *llvm::createGlobalsModRefPass() { return new GlobalsModRef(); }
 
+/// getUnderlyingObject - This traverses the use chain to figure out what object
+/// the specified value points to.  If the value points to, or is derived from,
+/// a global object, return it.
+static Value *getUnderlyingObject(Value *V) {
+  if (!isa<PointerType>(V->getType())) return V;
+  
+  // If we are at some type of object... return it.
+  if (GlobalValue *GV = dyn_cast<GlobalValue>(V)) return GV;
+  
+  // Traverse through different addressing mechanisms.
+  if (Instruction *I = dyn_cast<Instruction>(V)) {
+    if (isa<CastInst>(I) || isa<GetElementPtrInst>(I))
+      return getUnderlyingObject(I->getOperand(0));
+  } else if (ConstantExpr *CE = dyn_cast<ConstantExpr>(V)) {
+    if (CE->getOpcode() == Instruction::Cast ||
+        CE->getOpcode() == Instruction::GetElementPtr)
+      return getUnderlyingObject(CE->getOperand(0));
+  }
+  
+  // Othewise, we don't know what this is, return it as the base pointer.
+  return V;
+}
 
-/// AnalyzeGlobalUses - Scan through the users of all of the internal
+/// AnalyzeGlobals - Scan through the users of all of the internal
 /// GlobalValue's in the program.  If none of them have their "Address taken"
 /// (really, their address passed to something nontrivial), record this fact,
 /// and record the functions that they are used directly in.
@@ -151,7 +187,7 @@ void GlobalsModRef::AnalyzeGlobals(Module &M) {
   std::vector<Function*> Readers, Writers;
   for (Module::iterator I = M.begin(), E = M.end(); I != E; ++I)
     if (I->hasInternalLinkage()) {
-      if (!AnalyzeUsesOfGlobal(I, Readers, Writers)) {
+      if (!AnalyzeUsesOfPointer(I, Readers, Writers)) {
         // Remember that we are tracking this global.
         NonAddressTakenGlobals.insert(I);
         ++NumNonAddrTakenFunctions;
@@ -162,7 +198,7 @@ void GlobalsModRef::AnalyzeGlobals(Module &M) {
   for (Module::global_iterator I = M.global_begin(), E = M.global_end();
        I != E; ++I)
     if (I->hasInternalLinkage()) {
-      if (!AnalyzeUsesOfGlobal(I, Readers, Writers)) {
+      if (!AnalyzeUsesOfPointer(I, Readers, Writers)) {
         // Remember that we are tracking this global, and the mod/ref fns
         NonAddressTakenGlobals.insert(I);
         for (unsigned i = 0, e = Readers.size(); i != e; ++i)
@@ -172,28 +208,39 @@ void GlobalsModRef::AnalyzeGlobals(Module &M) {
           for (unsigned i = 0, e = Writers.size(); i != e; ++i)
             FunctionInfo[Writers[i]].GlobalInfo[I] |= Mod;
         ++NumNonAddrTakenGlobalVars;
+        
+        // If this global holds a pointer type, see if it is an indirect global.
+        if (isa<PointerType>(I->getType()->getElementType()) &&
+            AnalyzeIndirectGlobalMemory(I))
+          ++NumIndirectGlobalVars;
       }
       Readers.clear(); Writers.clear();
     }
 }
 
-/// AnalyzeUsesOfGlobal - Look at all of the users of the specified global value
-/// derived pointer.  If this is used by anything complex (i.e., the address
-/// escapes), return true.  Also, while we are at it, keep track of those
-/// functions that read and write to the value.
-bool GlobalsModRef::AnalyzeUsesOfGlobal(Value *V,
-                                        std::vector<Function*> &Readers,
-                                        std::vector<Function*> &Writers) {
+/// AnalyzeUsesOfPointer - Look at all of the users of the specified pointer.
+/// If this is used by anything complex (i.e., the address escapes), return
+/// true.  Also, while we are at it, keep track of those functions that read and
+/// write to the value.
+///
+/// If OkayStoreDest is non-null, stores into this global are allowed.
+bool GlobalsModRef::AnalyzeUsesOfPointer(Value *V,
+                                         std::vector<Function*> &Readers,
+                                         std::vector<Function*> &Writers,
+                                         GlobalValue *OkayStoreDest) {
   if (!isa<PointerType>(V->getType())) return true;
 
   for (Value::use_iterator UI = V->use_begin(), E = V->use_end(); UI != E; ++UI)
     if (LoadInst *LI = dyn_cast<LoadInst>(*UI)) {
       Readers.push_back(LI->getParent()->getParent());
     } else if (StoreInst *SI = dyn_cast<StoreInst>(*UI)) {
-      if (V == SI->getOperand(0)) return true;  // Storing the pointer
-      Writers.push_back(SI->getParent()->getParent());
+      if (V == SI->getOperand(1)) {
+        Writers.push_back(SI->getParent()->getParent());
+      } else if (SI->getOperand(1) != OkayStoreDest) {
+        return true;  // Storing the pointer
+      }
     } else if (GetElementPtrInst *GEP = dyn_cast<GetElementPtrInst>(*UI)) {
-      if (AnalyzeUsesOfGlobal(GEP, Readers, Writers)) return true;
+      if (AnalyzeUsesOfPointer(GEP, Readers, Writers)) return true;
     } else if (CallInst *CI = dyn_cast<CallInst>(*UI)) {
       // Make sure that this is just the function being called, not that it is
       // passing into the function.
@@ -207,17 +254,89 @@ bool GlobalsModRef::AnalyzeUsesOfGlobal(Value *V,
     } else if (ConstantExpr *CE = dyn_cast<ConstantExpr>(*UI)) {
       if (CE->getOpcode() == Instruction::GetElementPtr ||
           CE->getOpcode() == Instruction::Cast) {
-        if (AnalyzeUsesOfGlobal(CE, Readers, Writers))
+        if (AnalyzeUsesOfPointer(CE, Readers, Writers))
           return true;
       } else {
         return true;
       }
-    } else if (GlobalValue *GV = dyn_cast<GlobalValue>(*UI)) {
-      if (AnalyzeUsesOfGlobal(GV, Readers, Writers)) return true;
+    } else if (SetCondInst *SCI = dyn_cast<SetCondInst>(*UI)) {
+      if (!isa<ConstantPointerNull>(SCI->getOperand(1)))
+        return true;  // Allow comparison against null.
+    } else if (FreeInst *F = dyn_cast<FreeInst>(*UI)) {
+      Writers.push_back(F->getParent()->getParent());
     } else {
       return true;
     }
   return false;
+}
+
+/// AnalyzeIndirectGlobalMemory - We found an non-address-taken global variable
+/// which holds a pointer type.  See if the global always points to non-aliased
+/// heap memory: that is, all initializers of the globals are allocations, and
+/// those allocations have no use other than initialization of the global.
+/// Further, all loads out of GV must directly use the memory, not store the
+/// pointer somewhere.  If this is true, we consider the memory pointed to by
+/// GV to be owned by GV and can disambiguate other pointers from it.
+bool GlobalsModRef::AnalyzeIndirectGlobalMemory(GlobalValue *GV) {
+  // Keep track of values related to the allocation of the memory, f.e. the
+  // value produced by the malloc call and any casts.
+  std::vector<Value*> AllocRelatedValues;
+  
+  // Walk the user list of the global.  If we find anything other than a direct
+  // load or store, bail out.
+  for (Value::use_iterator I = GV->use_begin(), E = GV->use_end(); I != E; ++I){
+    if (LoadInst *LI = dyn_cast<LoadInst>(*I)) {
+      // The pointer loaded from the global can only be used in simple ways:
+      // we allow addressing of it and loading storing to it.  We do *not* allow
+      // storing the loaded pointer somewhere else or passing to a function.
+      std::vector<Function*> ReadersWriters;
+      if (AnalyzeUsesOfPointer(LI, ReadersWriters, ReadersWriters))
+        return false;  // Loaded pointer escapes.
+      // TODO: Could try some IP mod/ref of the loaded pointer.
+    } else if (StoreInst *SI = dyn_cast<StoreInst>(*I)) {
+      // Storing the global itself.
+      if (SI->getOperand(0) == GV) return false;
+      
+      // If storing the null pointer, ignore it.
+      if (isa<ConstantPointerNull>(SI->getOperand(0)))
+        continue;
+      
+      // Check the value being stored.
+      Value *Ptr = getUnderlyingObject(SI->getOperand(0));
+
+      // FIXME: handle calloc.
+      if (isa<MallocInst>(Ptr)) {
+        // Okay, easy case.
+      } else if (CallInst *CI = dyn_cast<CallInst>(Ptr)) {
+        Function *F = CI->getCalledFunction();
+        if (!F || !F->isExternal()) return false;     // Too hard to analyze.
+        if (F->getName() != "calloc") return false;   // Not calloc.
+      } else {
+        return false;  // Too hard to analyze.
+      }
+      
+      // Analyze all uses of the allocation.  If any of them are used in a
+      // non-simple way (e.g. stored to another global) bail out.
+      std::vector<Function*> ReadersWriters;
+      if (AnalyzeUsesOfPointer(Ptr, ReadersWriters, ReadersWriters, GV))
+        return false;  // Loaded pointer escapes.
+
+      // Remember that this allocation is related to the indirect global.
+      AllocRelatedValues.push_back(Ptr);
+    } else {
+      // Something complex, bail out.
+      return false;
+    }
+  }
+  
+  // Okay, this is an indirect global.  Remember all of the allocations for
+  // this global in AllocsForIndirectGlobals.
+  while (!AllocRelatedValues.empty()) {
+    AllocsForIndirectGlobals[AllocRelatedValues.back()] = GV;
+    AllocRelatedValues.pop_back();
+  }
+  IndirectGlobals.insert(GV);
+  return true;
 }
 
 /// AnalyzeCallGraph - At this point, we know the functions where globals are
@@ -328,44 +447,62 @@ void GlobalsModRef::AnalyzeSCC(std::vector<CallGraphNode *> &SCC) {
 
 
 
-/// getUnderlyingObject - This traverses the use chain to figure out what object
-/// the specified value points to.  If the value points to, or is derived from,
-/// a global object, return it.
-static const GlobalValue *getUnderlyingObject(const Value *V) {
-  if (!isa<PointerType>(V->getType())) return 0;
-
-  // If we are at some type of object... return it.
-  if (const GlobalValue *GV = dyn_cast<GlobalValue>(V)) return GV;
-
-  // Traverse through different addressing mechanisms...
-  if (const Instruction *I = dyn_cast<Instruction>(V)) {
-    if (isa<CastInst>(I) || isa<GetElementPtrInst>(I))
-      return getUnderlyingObject(I->getOperand(0));
-  } else if (const ConstantExpr *CE = dyn_cast<ConstantExpr>(V)) {
-    if (CE->getOpcode() == Instruction::Cast ||
-        CE->getOpcode() == Instruction::GetElementPtr)
-      return getUnderlyingObject(CE->getOperand(0));
-  }
-  return 0;
-}
-
 /// alias - If one of the pointers is to a global that we are tracking, and the
 /// other is some random pointer, we know there cannot be an alias, because the
 /// address of the global isn't taken.
 AliasAnalysis::AliasResult
 GlobalsModRef::alias(const Value *V1, unsigned V1Size,
                      const Value *V2, unsigned V2Size) {
-  GlobalValue *GV1 = const_cast<GlobalValue*>(getUnderlyingObject(V1));
-  GlobalValue *GV2 = const_cast<GlobalValue*>(getUnderlyingObject(V2));
+  // Get the base object these pointers point to.
+  Value *UV1 = getUnderlyingObject(const_cast<Value*>(V1));
+  Value *UV2 = getUnderlyingObject(const_cast<Value*>(V2));
+  
+  // If either of the underlying values is a global, they may be non-addr-taken
+  // globals, which we can answer queries about.
+  GlobalValue *GV1 = dyn_cast<GlobalValue>(UV1);
+  GlobalValue *GV2 = dyn_cast<GlobalValue>(UV2);
+  if (GV1 || GV2) {
+    // If the global's address is taken, pretend we don't know it's a pointer to
+    // the global.
+    if (GV1 && !NonAddressTakenGlobals.count(GV1)) GV1 = 0;
+    if (GV2 && !NonAddressTakenGlobals.count(GV2)) GV2 = 0;
 
-  // If the global's address is taken, pretend we don't know it's a pointer to
-  // the global.
-  if (GV1 && !NonAddressTakenGlobals.count(GV1)) GV1 = 0;
-  if (GV2 && !NonAddressTakenGlobals.count(GV2)) GV2 = 0;
+    // If the the two pointers are derived from two different non-addr-taken
+    // globals, or if one is and the other isn't, we know these can't alias.
+    if ((GV1 || GV2) && GV1 != GV2)
+      return NoAlias;
 
+    // Otherwise if they are both derived from the same addr-taken global, we
+    // can't know the two accesses don't overlap.
+  }
+  
+  // These pointers may be based on the memory owned by an indirect global.  If
+  // so, we may be able to handle this.  First check to see if the base pointer
+  // is a direct load from an indirect global.
+  GV1 = GV2 = 0;
+  if (LoadInst *LI = dyn_cast<LoadInst>(UV1))
+    if (GlobalVariable *GV = dyn_cast<GlobalVariable>(LI->getOperand(0)))
+      if (IndirectGlobals.count(GV))
+        GV1 = GV;
+  if (LoadInst *LI = dyn_cast<LoadInst>(UV2))
+    if (GlobalVariable *GV = dyn_cast<GlobalVariable>(LI->getOperand(0)))
+      if (IndirectGlobals.count(GV))
+        GV2 = GV;
+  
+  // These pointers may also be from an allocation for the indirect global.  If
+  // so, also handle them.
+  if (AllocsForIndirectGlobals.count(UV1))
+    GV1 = AllocsForIndirectGlobals[UV1];
+  if (AllocsForIndirectGlobals.count(UV2))
+    GV2 = AllocsForIndirectGlobals[UV2];
+  
+  // Now that we know whether the two pointers are related to indirect globals,
+  // use this to disambiguate the pointers.  If either pointer is based on an
+  // indirect global and if they are not both based on the same indirect global,
+  // they cannot alias.
   if ((GV1 || GV2) && GV1 != GV2)
     return NoAlias;
-
+  
   return AliasAnalysis::alias(V1, V1Size, V2, V2Size);
 }
 
@@ -375,7 +512,7 @@ GlobalsModRef::getModRefInfo(CallSite CS, Value *P, unsigned Size) {
 
   // If we are asking for mod/ref info of a direct call with a pointer to a
   // global we are tracking, return information if we have it.
-  if (GlobalValue *GV = const_cast<GlobalValue*>(getUnderlyingObject(P)))
+  if (GlobalValue *GV = dyn_cast<GlobalValue>(getUnderlyingObject(P)))
     if (GV->hasInternalLinkage())
       if (Function *F = CS.getCalledFunction())
         if (NonAddressTakenGlobals.count(GV))
@@ -392,8 +529,28 @@ GlobalsModRef::getModRefInfo(CallSite CS, Value *P, unsigned Size) {
 // Methods to update the analysis as a result of the client transformation.
 //
 void GlobalsModRef::deleteValue(Value *V) {
-  if (GlobalValue *GV = dyn_cast<GlobalValue>(V))
-    NonAddressTakenGlobals.erase(GV);
+  if (GlobalValue *GV = dyn_cast<GlobalValue>(V)) {
+    if (NonAddressTakenGlobals.erase(GV)) {
+      // This global might be an indirect global.  If so, remove it and remove
+      // any AllocRelatedValues for it.
+      if (IndirectGlobals.erase(GV)) {
+        // Remove any entries in AllocsForIndirectGlobals for this global.
+        for (std::map<Value*, GlobalValue*>::iterator
+             I = AllocsForIndirectGlobals.begin(),
+             E = AllocsForIndirectGlobals.end(); I != E; ) {
+          if (I->second == GV) {
+            AllocsForIndirectGlobals.erase(I++);
+          } else {
+            ++I;
+          }
+        }
+      }
+    }
+  }
+  
+  // Otherwise, if this is an allocation related to an indirect global, remove
+  // it.
+  AllocsForIndirectGlobals.erase(V);
 }
 
 void GlobalsModRef::copyValue(Value *From, Value *To) {
