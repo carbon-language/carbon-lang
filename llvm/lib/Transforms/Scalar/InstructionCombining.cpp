@@ -5053,8 +5053,8 @@ Instruction *InstCombiner::PromoteCastOfAllocation(CastInst &CI,
   const Type *CastElTy = PTy->getElementType();
   if (!AllocElTy->isSized() || !CastElTy->isSized()) return 0;
 
-  unsigned AllocElTyAlign = TD->getTypeSize(AllocElTy);
-  unsigned CastElTyAlign = TD->getTypeSize(CastElTy);
+  unsigned AllocElTyAlign = TD->getTypeAlignment(AllocElTy);
+  unsigned CastElTyAlign = TD->getTypeAlignment(CastElTy);
   if (CastElTyAlign < AllocElTyAlign) return 0;
 
   // If the allocation has multiple uses, only promote it if we are strictly
