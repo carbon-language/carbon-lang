@@ -304,7 +304,6 @@ bool GlobalsModRef::AnalyzeIndirectGlobalMemory(GlobalValue *GV) {
       // Check the value being stored.
       Value *Ptr = getUnderlyingObject(SI->getOperand(0));
 
-      // FIXME: handle calloc.
       if (isa<MallocInst>(Ptr)) {
         // Okay, easy case.
       } else if (CallInst *CI = dyn_cast<CallInst>(Ptr)) {
