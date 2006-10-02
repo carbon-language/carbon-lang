@@ -75,6 +75,10 @@ def SDTVoidBinOp : SDTypeProfile<0, 2, [SDTCisSameAs<0, 1>]>;
 def armcmp       : SDNode<"ARMISD::CMP",  SDTVoidBinOp, [SDNPOutFlag]>;
 
 def armfsitos    : SDNode<"ARMISD::FSITOS", SDTUnaryOp>;
+def armfsitod      : SDNode<"ARMISD::FSITOD", SDTUnaryOp>;
+
+def SDTarmfmrrd    : SDTypeProfile<0, 3, [SDTCisInt<0>, SDTCisInt<1>, SDTCisFP<2>]>;
+def armfmrrd       : SDNode<"ARMISD::FMRRD", SDTarmfmrrd, [SDNPHasChain, SDNPOutFlag]>;
 
 def ADJCALLSTACKUP : InstARM<(ops i32imm:$amt),
                             "!ADJCALLSTACKUP $amt",
@@ -164,5 +168,11 @@ def FMSR    : InstARM<(ops FPRegs:$dst, IntRegs:$src),
 def FMRS    : InstARM<(ops IntRegs:$dst, FPRegs:$src),
                        "fmrs $dst, $src", [(set IntRegs:$dst, (bitconvert FPRegs:$src))]>;
 
+def FMRRD   : InstARM<(ops IntRegs:$i0, IntRegs:$i1, DFPRegs:$src),
+                       "fmrrd $i0, $i1, $src", [(armfmrrd IntRegs:$i0, IntRegs:$i1, DFPRegs:$src)]>;
+
 def FSITOS  : InstARM<(ops FPRegs:$dst, FPRegs:$src),
                        "fsitos $dst, $src", [(set FPRegs:$dst, (armfsitos FPRegs:$src))]>;
+
+def FSITOD  : InstARM<(ops DFPRegs:$dst, FPRegs:$src),
+                       "fsitod $dst, $src", [(set DFPRegs:$dst, (armfsitod FPRegs:$src))]>;

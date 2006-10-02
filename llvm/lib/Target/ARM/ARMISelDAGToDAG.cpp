@@ -82,7 +82,11 @@ namespace llvm {
 
       BR,
 
-      FSITOS
+      FSITOS,
+
+      FSITOD,
+
+      FMRRD
     };
   }
 }
@@ -115,6 +119,8 @@ const char *ARMTargetLowering::getTargetNodeName(unsigned Opcode) const {
   case ARMISD::CMP:           return "ARMISD::CMP";
   case ARMISD::BR:            return "ARMISD::BR";
   case ARMISD::FSITOS:        return "ARMISD::FSITOS";
+  case ARMISD::FSITOD:        return "ARMISD::FSITOD";
+  case ARMISD::FMRRD:         return "ARMISD::FMRRD";
   }
 }
 
@@ -237,6 +243,9 @@ static SDOperand LowerCALL(SDOperand Op, SelectionDAG &DAG) {
 static SDOperand LowerRET(SDOperand Op, SelectionDAG &DAG) {
   SDOperand Copy;
   SDOperand Chain = Op.getOperand(0);
+  SDOperand    R0 = DAG.getRegister(ARM::R0, MVT::i32);
+  SDOperand    R1 = DAG.getRegister(ARM::R1, MVT::i32);
+
   switch(Op.getNumOperands()) {
   default:
     assert(0 && "Do not know how to return this many arguments!");
@@ -248,13 +257,24 @@ static SDOperand LowerRET(SDOperand Op, SelectionDAG &DAG) {
   case 3: {
     SDOperand Val = Op.getOperand(1);
     assert(Val.getValueType() == MVT::i32 ||
-	   Val.getValueType() == MVT::f32);
+	   Val.getValueType() == MVT::f32 ||
+	   Val.getValueType() == MVT::f64);
 
-    if (Val.getValueType() == MVT::f32)
-      Val = DAG.getNode(ISD::BIT_CONVERT, MVT::i32, Val);
-    Copy = DAG.getCopyToReg(Chain, ARM::R0, Val, SDOperand());
-    if (DAG.getMachineFunction().liveout_empty())
+    if (Val.getValueType() == MVT::f64) {
+      SDVTList    VTs = DAG.getVTList(MVT::Other, MVT::Flag);
+      SDOperand Ops[] = {Chain, R0, R1, Val};
+      Copy  = DAG.getNode(ARMISD::FMRRD, VTs, Ops, 4);
+    } else {
+      if (Val.getValueType() == MVT::f32)
+	Val = DAG.getNode(ISD::BIT_CONVERT, MVT::i32, Val);
+      Copy = DAG.getCopyToReg(Chain, R0, Val, SDOperand());
+    }
+
+    if (DAG.getMachineFunction().liveout_empty()) {
       DAG.getMachineFunction().addLiveOut(ARM::R0);
+      if (Val.getValueType() == MVT::f64)
+        DAG.getMachineFunction().addLiveOut(ARM::R1);
+    }
     break;
   }
   case 5:
@@ -421,12 +441,15 @@ static SDOperand LowerBR_CC(SDOperand Op, SelectionDAG &DAG) {
 }
 
 static SDOperand LowerSINT_TO_FP(SDOperand Op, SelectionDAG &DAG) {
-  SDOperand IntVal = Op.getOperand(0);
+  SDOperand IntVal  = Op.getOperand(0);
   assert(IntVal.getValueType() == MVT::i32);
-  assert(Op.getValueType()     == MVT::f32);
+  MVT::ValueType vt = Op.getValueType();
+  assert(vt == MVT::f32 ||
+         vt == MVT::f64);
 
   SDOperand Tmp = DAG.getNode(ISD::BIT_CONVERT, MVT::f32, IntVal);
-  return  DAG.getNode(ARMISD::FSITOS, MVT::f32, Tmp);
+  ARMISD::NodeType op = vt == MVT::f32 ? ARMISD::FSITOS : ARMISD::FSITOD;
+  return DAG.getNode(op, vt, Tmp);
 }
 
 SDOperand ARMTargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {

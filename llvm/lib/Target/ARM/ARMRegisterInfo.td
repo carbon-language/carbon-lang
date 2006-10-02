@@ -88,22 +88,22 @@ def S30 : Rf<30, "S30">, DwarfRegNum<94>;
 def S31 : Rf<31, "S31">, DwarfRegNum<95>;
 
 // Aliases of the S* registers used to hold 64-bit fp values (doubles)
-def D0  : Rd< 0,  "S0", [S0,   S1]>, DwarfRegNum<64>;
-def D1  : Rd< 2,  "S2", [S2,   S3]>, DwarfRegNum<66>;
-def D2  : Rd< 4,  "S4", [S4,   S5]>, DwarfRegNum<68>;
-def D3  : Rd< 6,  "S6", [S6,   S7]>, DwarfRegNum<70>;
-def D4  : Rd< 8,  "S8", [S8,   S9]>, DwarfRegNum<72>;
-def D5  : Rd<10, "S10", [S10, S11]>, DwarfRegNum<74>;
-def D6  : Rd<12, "S12", [S12, S13]>, DwarfRegNum<76>;
-def D7  : Rd<14, "S14", [S14, S15]>, DwarfRegNum<78>;
-def D8  : Rd<16, "S16", [S16, S17]>, DwarfRegNum<80>;
-def D9  : Rd<18, "S18", [S18, S19]>, DwarfRegNum<82>;
-def D10 : Rd<20, "S20", [S20, S21]>, DwarfRegNum<84>;
-def D11 : Rd<22, "S22", [S22, S23]>, DwarfRegNum<86>;
-def D12 : Rd<24, "S24", [S24, S25]>, DwarfRegNum<88>;
-def D13 : Rd<26, "S26", [S26, S27]>, DwarfRegNum<90>;
-def D14 : Rd<28, "S28", [S28, S29]>, DwarfRegNum<92>;
-def D15 : Rd<30, "S30", [S30, S31]>, DwarfRegNum<94>;
+def D0  : Rd< 0,  "D0", [S0,   S1]>, DwarfRegNum<64>;
+def D1  : Rd< 2,  "D1", [S2,   S3]>, DwarfRegNum<66>;
+def D2  : Rd< 4,  "D2", [S4,   S5]>, DwarfRegNum<68>;
+def D3  : Rd< 6,  "D3", [S6,   S7]>, DwarfRegNum<70>;
+def D4  : Rd< 8,  "D4", [S8,   S9]>, DwarfRegNum<72>;
+def D5  : Rd<10,  "D5", [S10, S11]>, DwarfRegNum<74>;
+def D6  : Rd<12,  "D6", [S12, S13]>, DwarfRegNum<76>;
+def D7  : Rd<14,  "D7", [S14, S15]>, DwarfRegNum<78>;
+def D8  : Rd<16,  "D8", [S16, S17]>, DwarfRegNum<80>;
+def D9  : Rd<18,  "D9", [S18, S19]>, DwarfRegNum<82>;
+def D10 : Rd<20, "D10", [S20, S21]>, DwarfRegNum<84>;
+def D11 : Rd<22, "D11", [S22, S23]>, DwarfRegNum<86>;
+def D12 : Rd<24, "D12", [S24, S25]>, DwarfRegNum<88>;
+def D13 : Rd<26, "D13", [S26, S27]>, DwarfRegNum<90>;
+def D14 : Rd<28, "D14", [S28, S29]>, DwarfRegNum<92>;
+def D15 : Rd<30, "D15", [S30, S31]>, DwarfRegNum<94>;
 
 // Register classes.
 //
