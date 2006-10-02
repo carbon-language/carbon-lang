@@ -27,9 +27,6 @@
 using namespace llvm;
 
 namespace llvm {
-#ifndef NDEBUG
-  std::map<const SDNode *, std::string> DagNodeColor;
-#endif
   template<>
   struct DOTGraphTraits<SelectionDAG*> : public DefaultDOTGraphTraits {
     static std::string getGraphName(const SelectionDAG *G) {
