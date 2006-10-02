@@ -516,7 +516,7 @@ instructions in the block.  Similarly, there also exists
 <tt>Function::viewCFGOnly()</tt> (does not include the instructions), the
 <tt>MachineFunction::viewCFG()</tt> and <tt>MachineFunction::viewCFGOnly()</tt>,
 and the <tt>SelectionDAG::viewGraph()</tt> methods.  Within GDB, for example,
-you can usually use something like "<tt>call DAG.viewGraph()</tt>" to pop
+you can usually use something like <tt>call DAG.viewGraph()</tt> to pop
 up a window.  Alternatively, you can sprinkle calls to these functions in your
 code in places you want to debug.</p>
 
@@ -528,6 +528,18 @@ href="http://www.pixelglow.com/graphviz/">Graphviz program</a>, and add
 <tt>/Applications/Graphviz.app/Contents/MacOS/</tt> (or whereever you install
 it) to your path.  Once in your system and path are set up, rerun the LLVM
 configure script and rebuild LLVM to enable this functionality.</p>
+
+<p><tt>SelectionDAG</tt> has been extended to make it easier to locate
+<i>interesting</i> nodes in large complex graphs.  From gdb, if you
+<tt>call DAG.setGraphColor(<i>node</i>, "<i>color</i>")</tt>, then the
+next <tt>call DAG.viewGraph()</tt> would hilight the node in the
+specified color (choices of colors can be found at <a
+href="http://www.graphviz.org/doc/info/colors.html">Colors<a>.) More
+complex node attributes can be provided with <tt>call
+DAG.setGraphAttrs(<i>node</i>, "<i>attributes</i>")</tt> (choices can be
+found at <a href="http://www.graphviz.org/doc/info/attrs.html">Graph
+Attributes</a>.)  If you want to restart and clear all the current graph
+attributes, then you can <tt>call DAG.clearGraphAttrs()</tt>. </p>
 
 </div>
 
