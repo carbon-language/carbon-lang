@@ -60,7 +60,9 @@ struct DefaultDOTGraphTraits {
 
   /// If you want to specify custom node attributes, this is the place to do so
   ///
-  static std::string getNodeAttributes(const void *Node) { return ""; }
+  static std::string getNodeAttributes(const void *Node, const void *Graph) {
+    return "";
+  }
 
   /// If you want to override the dot attributes printed for a particular edge,
   /// override this method.

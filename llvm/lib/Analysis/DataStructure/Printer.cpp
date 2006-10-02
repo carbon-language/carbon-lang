@@ -112,7 +112,7 @@ struct DOTGraphTraits<const DSGraph*> : public DefaultDOTGraphTraits {
     return getCaption(Node, Graph);
   }
 
-  static std::string getNodeAttributes(const DSNode *N) {
+  static std::string getNodeAttributes(const DSNode *N, const DSGraph *Graph) {
     return "shape=Mrecord";
   }
 

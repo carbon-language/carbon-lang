@@ -27,6 +27,9 @@
 using namespace llvm;
 
 namespace llvm {
+#ifndef NDEBUG
+  std::map<const SDNode *, std::string> DagNodeColor;
+#endif
   template<>
   struct DOTGraphTraits<SelectionDAG*> : public DefaultDOTGraphTraits {
     static std::string getGraphName(const SelectionDAG *G) {
@@ -44,7 +47,17 @@ namespace llvm {
 
     static std::string getNodeLabel(const SDNode *Node,
                                     const SelectionDAG *Graph);
-    static std::string getNodeAttributes(const SDNode *N) {
+    static std::string getNodeAttributes(const SDNode *N,
+                                         const SelectionDAG *Graph) {
+#ifndef NDEBUG
+      const std::string &Attrs = Graph->getGraphAttrs(N);
+      if (!Attrs.empty()) {
+        if (Attrs.find("shape=") == std::string::npos)
+          return std::string("shape=Mrecord,") + Attrs;
+        else
+          return Attrs;
+      }
+#endif
       return "shape=Mrecord";
     }
 
@@ -138,3 +151,58 @@ void SelectionDAG::viewGraph() {
             << "systems with Graphviz or gv!\n";
 #endif  // NDEBUG
 }
+
+
+/// clearGraphAttrs - Clear all previously defined node graph attributes.
+/// Intended to be used from a debugging tool (eg. gdb).
+void SelectionDAG::clearGraphAttrs() {
+#ifndef NDEBUG
+  NodeGraphAttrs.clear();
+#else
+  std::cerr << "SelectionDAG::clearGraphAttrs is only available in debug builds"
+            << " on systems with Graphviz or gv!\n";
+#endif
+}
+
+
+/// setGraphAttrs - Set graph attributes for a node. (eg. "color=red".)
+///
+void SelectionDAG::setGraphAttrs(const SDNode *N, const char *Attrs) {
+#ifndef NDEBUG
+  NodeGraphAttrs[N] = Attrs;
+#else
+  std::cerr << "SelectionDAG::setGraphAttrs is only available in debug builds"
+            << " on systems with Graphviz or gv!\n";
+#endif
+}
+
+
+/// getGraphAttrs - Get graph attributes for a node. (eg. "color=red".)
+/// Used from getNodeAttributes.
+const std::string SelectionDAG::getGraphAttrs(const SDNode *N) const {
+#ifndef NDEBUG
+  std::map<const SDNode *, std::string>::const_iterator I =
+    NodeGraphAttrs.find(N);
+    
+  if (I != NodeGraphAttrs.end())
+    return I->second;
+  else
+    return "";
+#else
+  std::cerr << "SelectionDAG::getGraphAttrs is only available in debug builds"
+            << " on systems with Graphviz or gv!\n";
+  return std::string("");
+#endif
+}
+
+/// setGraphColor - Convenience for setting node color attribute.
+///
+void SelectionDAG::setGraphColor(const SDNode *N, const char *Color) {
+#ifndef NDEBUG
+  NodeGraphAttrs[N] = std::string("color=") + Color;
+#else
+  std::cerr << "SelectionDAG::setGraphColor is only available in debug builds"
+            << " on systems with Graphviz or gv!\n";
+#endif
+}
+

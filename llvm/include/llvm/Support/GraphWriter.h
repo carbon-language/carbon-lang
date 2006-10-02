@@ -109,7 +109,7 @@ public:
   }
 
   void writeNode(NodeType *Node) {
-    std::string NodeAttributes = DOTTraits::getNodeAttributes(Node);
+    std::string NodeAttributes = DOTTraits::getNodeAttributes(Node, G);
 
     O << "\tNode" << reinterpret_cast<const void*>(Node) << " [shape=record,";
     if (!NodeAttributes.empty()) O << NodeAttributes << ",";

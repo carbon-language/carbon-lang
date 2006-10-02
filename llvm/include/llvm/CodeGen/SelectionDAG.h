@@ -69,10 +69,29 @@ public:
   TargetLowering &getTargetLoweringInfo() const { return TLI; }
   MachineDebugInfo *getMachineDebugInfo() const { return DI; }
 
-  /// viewGraph - Pop up a ghostview window with the DAG rendered using 'dot'.
+  /// viewGraph - Pop up a GraphViz/gv window with the DAG rendered using 'dot'.
   ///
   void viewGraph();
+  
+#ifndef NDEBUG
+  std::map<const SDNode *, std::string> NodeGraphAttrs;
+#endif
 
+  /// clearGraphAttrs - Clear all previously defined node graph attributes.
+  /// Intended to be used from a debugging tool (eg. gdb).
+  void clearGraphAttrs();
+  
+  /// setGraphAttrs - Set graph attributes for a node. (eg. "color=red".)
+  ///
+  void setGraphAttrs(const SDNode *N, const char *Attrs);
+  
+  /// getGraphAttrs - Get graph attributes for a node. (eg. "color=red".)
+  /// Used from getNodeAttributes.
+  const std::string getGraphAttrs(const SDNode *N) const;
+  
+  /// setGraphColor - Convenience for setting node color attribute.
+  ///
+  void setGraphColor(const SDNode *N, const char *Color);
 
   typedef ilist<SDNode>::const_iterator allnodes_const_iterator;
   allnodes_const_iterator allnodes_begin() const { return AllNodes.begin(); }
