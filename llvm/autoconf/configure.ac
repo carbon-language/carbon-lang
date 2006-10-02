@@ -816,7 +816,7 @@ AC_OUTPUT
 dnl Warn loudly if llvm-gcc was not obviously working
 if test "$llvm_cv_llvmgcc_sanity" = "no" ; then
  AC_MSG_WARN([***** llvm-gcc/llvm-g++ was not found, or does not appear to be ])
- AC_MSG_WARN([***** working. Please make sure you have llvmgcc and llvmg++ in])
+ AC_MSG_WARN([***** working. Please make sure you have llvm-gcc and llvm-g++ in])
  AC_MSG_WARN([***** your path before configuring LLVM. The runtime libraries])
  AC_MSG_WARN([***** (llvm/runtime) will not be built but you should be able to])
  AC_MSG_WARN([***** build the llvm tools.])
