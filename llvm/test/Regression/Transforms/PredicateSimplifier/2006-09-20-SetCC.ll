@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -predsimplify | llvm-dis | grep br | grep bb8 | grep cond_true$ | grep false
+; RUN: llvm-as < %s | opt -predsimplify | llvm-dis | grep br | grep return.i.bb8_crit_edge | grep false
 
 %str = external global [4 x sbyte]		; <[4 x sbyte]*> [#uses=1]
 

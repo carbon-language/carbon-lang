@@ -500,8 +500,10 @@ bool PredicateSimplifier::runOnFunction(Function &F) {
 }
 
 void PredicateSimplifier::getAnalysisUsage(AnalysisUsage &AU) const {
+  AU.addRequiredID(BreakCriticalEdgesID);
   AU.addRequired<DominatorTree>();
   AU.setPreservesCFG();
+  AU.addPreservedID(BreakCriticalEdgesID);
 }
 
 // resolve catches cases addProperty won't because it wasn't used as a
@@ -622,13 +624,7 @@ void PredicateSimplifier::proceedToSuccessor(TerminatorInst *TI,
                                              PropertySet &NextPS) {
   assert(edge < TI->getNumSuccessors() && "Invalid index for edge.");
 
-  BasicBlock *BB     = TI->getParent(),
-             *BBNext = TI->getSuccessor(edge);
-
-  if (BBNext->getSinglePredecessor() == BB)
-    visitBasicBlock(BBNext, NextPS);
-  else
-    visitBasicBlock(BBNext, CurrentPS);
+  visitBasicBlock(TI->getSuccessor(edge), NextPS);
 }
 
 void PredicateSimplifier::proceedToSuccessors(PropertySet &KP,
