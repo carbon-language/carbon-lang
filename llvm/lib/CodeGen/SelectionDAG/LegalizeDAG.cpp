@@ -1398,7 +1398,7 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
       Tmp2 = Result.getValue(1);
       
       if (isCustom) {
-        Tmp3 = TLI.LowerOperation(Tmp3, DAG);
+        Tmp3 = TLI.LowerOperation(Result, DAG);
         if (Tmp3.Val) {
           Tmp1 = LegalizeOp(Tmp3);
           Tmp2 = LegalizeOp(Tmp3.getValue(1));
