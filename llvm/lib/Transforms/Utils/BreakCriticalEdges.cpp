@@ -25,6 +25,7 @@
 #include "llvm/Type.h"
 #include "llvm/Support/CFG.h"
 #include "llvm/Support/Compiler.h"
+#include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/Statistic.h"
 using namespace llvm;
 
@@ -135,10 +136,21 @@ bool llvm::SplitCriticalEdge(TerminatorInst *TI, unsigned SuccNum, Pass *P) {
   // If we don't have a pass object, we can't update anything...
   if (P == 0) return true;
 
-  // Now update analysis information.  These are the analyses that we are
-  // currently capable of updating...
-  //
+  // Now update analysis information.  Since the only predecessor of NewBB is
+  // the TIBB, TIBB clearly dominates NewBB.  TIBB usually doesn't dominate
+  // anything, as there are other successors of DestBB.  However, if all other
+  // predecessors of DestBB are already dominated by DestBB (e.g. DestBB is a
+  // loop header) then NewBB dominates DestBB.
+  SmallVector<BasicBlock*, 8> OtherPreds;
 
+  for (pred_iterator I = pred_begin(DestBB), E = pred_end(DestBB); I != E; ++I)
+    if (*I != NewBB)
+      OtherPreds.push_back(*I);
+  
+  // NewBBDominatesDestBB is valid if OtherPreds is empty, otherwise it isn't
+  // yet computed.
+  bool NewBBDominatesDestBB = true;
+  
   // Should we update DominatorSet information?
   if (DominatorSet *DS = P->getAnalysisToUpdate<DominatorSet>()) {
     // The blocks that dominate the new one are the blocks that dominate TIBB
@@ -146,18 +158,65 @@ bool llvm::SplitCriticalEdge(TerminatorInst *TI, unsigned SuccNum, Pass *P) {
     DominatorSet::DomSetType DomSet = DS->getDominators(TIBB);
     DomSet.insert(NewBB);  // A block always dominates itself.
     DS->addBasicBlock(NewBB, DomSet);
+    
+    // If NewBBDominatesDestBB hasn't been computed yet, do so with DS.
+    if (!OtherPreds.empty()) {
+      while (!OtherPreds.empty() && NewBBDominatesDestBB) {
+        NewBBDominatesDestBB = DS->dominates(DestBB, OtherPreds.back());
+        OtherPreds.pop_back();
+      }
+      OtherPreds.clear();
+    }
+    
+    // If NewBBDominatesDestBB, then NewBB dominates DestBB, otherwise it
+    // doesn't dominate anything.  If NewBB does dominates DestBB, then it
+    // dominates everything that DestBB dominates.
+    if (NewBBDominatesDestBB) {
+      for (DominatorSet::iterator I = DS->begin(), E = DS->end(); I != E; ++I)
+        if (I->second.count(DestBB))
+          I->second.insert(NewBB);
+    }
   }
 
   // Should we update ImmediateDominator information?
   if (ImmediateDominators *ID = P->getAnalysisToUpdate<ImmediateDominators>()) {
-    // TIBB is the new immediate dominator for NewBB.  NewBB doesn't dominate
-    // anything.
+    // TIBB is the new immediate dominator for NewBB.
     ID->addNewBlock(NewBB, TIBB);
+    
+    // If NewBBDominatesDestBB hasn't been computed yet, do so with ID.
+    if (!OtherPreds.empty()) {
+      while (!OtherPreds.empty() && NewBBDominatesDestBB) {
+        NewBBDominatesDestBB = ID->dominates(DestBB, OtherPreds.back());
+        OtherPreds.pop_back();
+      }
+      OtherPreds.clear();
+    }
+    
+    // If NewBBDominatesDestBB, then NewBB dominates DestBB, otherwise it
+    // doesn't dominate anything.
+    if (NewBBDominatesDestBB)
+      ID->setImmediateDominator(DestBB, NewBB);
   }
 
   // Update the forest?
-  if (ETForest *EF = P->getAnalysisToUpdate<ETForest>())
+  if (ETForest *EF = P->getAnalysisToUpdate<ETForest>()) {
+    // NewBB is dominated by TIBB.
     EF->addNewBlock(NewBB, TIBB);
+    
+    // If NewBBDominatesDestBB hasn't been computed yet, do so with EF.
+    if (!OtherPreds.empty()) {
+      while (!OtherPreds.empty() && NewBBDominatesDestBB) {
+        NewBBDominatesDestBB = EF->dominates(DestBB, OtherPreds.back());
+        OtherPreds.pop_back();
+      }
+      OtherPreds.clear();
+    }
+    
+    // If NewBBDominatesDestBB, then NewBB dominates DestBB, otherwise it
+    // doesn't dominate anything.
+    if (NewBBDominatesDestBB)
+      EF->setImmediateDominator(DestBB, NewBB);
+  }
 
   // Should we update DominatorTree information?
   if (DominatorTree *DT = P->getAnalysisToUpdate<DominatorTree>()) {
@@ -166,18 +225,57 @@ bool llvm::SplitCriticalEdge(TerminatorInst *TI, unsigned SuccNum, Pass *P) {
     // The new block is not the immediate dominator for any other nodes, but
     // TINode is the immediate dominator for the new node.
     //
-    if (TINode)        // Don't break unreachable code!
-      DT->createNewNode(NewBB, TINode);
+    if (TINode) {       // Don't break unreachable code!
+      DominatorTree::Node *NewBBNode = DT->createNewNode(NewBB, TINode);
+      DominatorTree::Node *DestBBNode = 0;
+     
+      // If NewBBDominatesDestBB hasn't been computed yet, do so with DT.
+      if (!OtherPreds.empty()) {
+        DestBBNode = DT->getNode(DestBB);
+        while (!OtherPreds.empty() && NewBBDominatesDestBB) {
+          if (DominatorTree::Node *OPNode = DT->getNode(OtherPreds.back()))
+            NewBBDominatesDestBB = DestBBNode->dominates(OPNode);
+          OtherPreds.pop_back();
+        }
+        OtherPreds.clear();
+      }
+      
+      // If NewBBDominatesDestBB, then NewBB dominates DestBB, otherwise it
+      // doesn't dominate anything.
+      if (NewBBDominatesDestBB) {
+        if (!DestBBNode) DestBBNode = DT->getNode(DestBB);
+        DT->changeImmediateDominator(DestBBNode, NewBBNode);
+      }
+    }
   }
 
   // Should we update DominanceFrontier information?
   if (DominanceFrontier *DF = P->getAnalysisToUpdate<DominanceFrontier>()) {
+    // If NewBBDominatesDestBB hasn't been computed yet, do so with DF.
+    if (!OtherPreds.empty()) {
+#if 0
+      // FIXME: IMPLEMENT THIS!
+      OtherPreds.clear();
+#endif
+      NewBBDominatesDestBB = false;
+    }
+    
     // Since the new block is dominated by its only predecessor TIBB,
-    // it cannot be in any block's dominance frontier.  Its dominance
-    // frontier is {DestBB}.
+    // it cannot be in any block's dominance frontier.  If NewBB dominates
+    // DestBB, its dominance frontier is the same as DestBB's, otherwise it is
+    // just {DestBB}.
     DominanceFrontier::DomSetType NewDFSet;
-    NewDFSet.insert(DestBB);
-    DF->addBasicBlock(NewBB, NewDFSet);
+    if (NewBBDominatesDestBB) {
+      DominanceFrontier::iterator I = DF->find(DestBB);
+      if (I != DF->end())
+        DF->addBasicBlock(NewBB, I->second);
+      else
+        DF->addBasicBlock(NewBB, DominanceFrontier::DomSetType());
+    } else {
+      DominanceFrontier::DomSetType NewDFSet;
+      NewDFSet.insert(DestBB);
+      DF->addBasicBlock(NewBB, NewDFSet);
+    }
   }
   
   // Update LoopInfo if it is around.
@@ -190,10 +288,10 @@ bool llvm::SplitCriticalEdge(TerminatorInst *TI, unsigned SuccNum, Pass *P) {
           // Both in the same loop, the NewBB joins loop.
           DestLoop->addBasicBlockToLoop(NewBB, *LI);
         } else if (TIL->contains(DestLoop->getHeader())) {
-          // Edge from an outer loop to an inner loop.  Add to the outer lopo.
+          // Edge from an outer loop to an inner loop.  Add to the outer loop.
           TIL->addBasicBlockToLoop(NewBB, *LI);
         } else if (DestLoop->contains(TIL->getHeader())) {
-          // Edge from an inner loop to an outer loop.  Add to the outer lopo.
+          // Edge from an inner loop to an outer loop.  Add to the outer loop.
           DestLoop->addBasicBlockToLoop(NewBB, *LI);
         } else {
           // Edge from two loops with no containment relation.  Because these
@@ -206,7 +304,6 @@ bool llvm::SplitCriticalEdge(TerminatorInst *TI, unsigned SuccNum, Pass *P) {
             P->addBasicBlockToLoop(NewBB, *LI);
         }
       }
-    
   }
   return true;
 }
