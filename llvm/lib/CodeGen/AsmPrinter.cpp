@@ -694,12 +694,45 @@ void AsmPrinter::printInlineAsm(const MachineInstr *MI) const {
       break;
     case '$': {
       ++LastEmitted;   // Consume '$' character.
-      if (*LastEmitted == '$') { // $$ -> $
+      bool Done = true;
+
+      // Handle escapes.
+      switch (*LastEmitted) {
+      default: Done = false; break;
+      case '$':     // $$ -> $
         if (CurVariant == -1 || CurVariant == AsmPrinterVariant)
           O << '$';
         ++LastEmitted;  // Consume second '$' character.
         break;
+      case '(':             // $( -> same as GCC's { character.
+        ++LastEmitted;      // Consume '(' character.
+        if (CurVariant != -1) {
+          std::cerr << "Nested variants found in inline asm string: '"
+          << AsmStr << "'\n";
+          exit(1);
+        }
+        CurVariant = 0;     // We're in the first variant now.
+        break;
+      case '|':
+        ++LastEmitted;  // consume '|' character.
+        if (CurVariant == -1) {
+          std::cerr << "Found '|' character outside of variant in inline asm "
+          << "string: '" << AsmStr << "'\n";
+          exit(1);
+        }
+        ++CurVariant;   // We're in the next variant.
+        break;
+      case ')':         // $) -> same as GCC's } char.
+        ++LastEmitted;  // consume ')' character.
+        if (CurVariant == -1) {
+          std::cerr << "Found '}' character outside of variant in inline asm "
+                    << "string: '" << AsmStr << "'\n";
+          exit(1);
+        }
+        CurVariant = -1;
+        break;
       }
+      if (Done) break;
       
       bool HasCurlyBraces = false;
       if (*LastEmitted == '{') {     // ${variable}
@@ -786,33 +819,6 @@ void AsmPrinter::printInlineAsm(const MachineInstr *MI) const {
       }
       break;
     }
-    case '{':
-      ++LastEmitted;      // Consume '{' character.
-      if (CurVariant != -1) {
-        std::cerr << "Nested variants found in inline asm string: '"
-                  << AsmStr << "'\n";
-        exit(1);
-      }
-      CurVariant = 0;     // We're in the first variant now.
-      break;
-    case '|':
-      ++LastEmitted;  // consume '|' character.
-      if (CurVariant == -1) {
-        std::cerr << "Found '|' character outside of variant in inline asm "
-                  << "string: '" << AsmStr << "'\n";
-        exit(1);
-      }
-      ++CurVariant;   // We're in the next variant.
-      break;
-    case '}':
-      ++LastEmitted;  // consume '}' character.
-      if (CurVariant == -1) {
-        std::cerr << "Found '}' character outside of variant in inline asm "
-                  << "string: '" << AsmStr << "'\n";
-        exit(1);
-      }
-      CurVariant = -1;
-      break;
     }
   }
   O << "\n\t" << TAI->getInlineAsmEnd() << "\n";
