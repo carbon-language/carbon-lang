@@ -92,7 +92,6 @@ bool LiveVariables::RegisterDefIsDead(MachineInstr *MI, unsigned Reg) const {
   return std::binary_search(I->second.begin(), I->second.end(), Reg);
 }
 
-
 void LiveVariables::MarkVirtRegAliveInBlock(VarInfo &VRInfo,
                                             MachineBasicBlock *MBB) {
   unsigned BBNum = MBB->getNumber();
@@ -212,6 +211,8 @@ bool LiveVariables::runOnMachineFunction(MachineFunction &MF) {
     HandlePhysRegDef(I->first, 0);
   }
 
+  analyzePHINodes(MF);
+
   // Calculate live variable information in depth first order on the CFG of the
   // function.  This guarantees that we will see the definition of a virtual
   // register before its uses due to dominance properties of SSA (except for PHI
@@ -288,26 +289,16 @@ bool LiveVariables::runOnMachineFunction(MachineFunction &MF) {
     // bottom of this basic block.  We check all of our successor blocks to see
     // if they have PHI nodes, and if so, we simulate an assignment at the end
     // of the current block.
-    for (MachineBasicBlock::succ_iterator SI = MBB->succ_begin(),
-           E = MBB->succ_end(); SI != E; ++SI) {
-      MachineBasicBlock *Succ = *SI;
+    if (!PHIVarInfo[MBB].empty()) {
+      std::vector<unsigned>& VarInfoVec = PHIVarInfo[MBB];
 
-      // PHI nodes are guaranteed to be at the top of the block...
-      for (MachineBasicBlock::iterator MI = Succ->begin(), ME = Succ->end();
-           MI != ME && MI->getOpcode() == TargetInstrInfo::PHI; ++MI) {
-        for (unsigned i = 1; ; i += 2) {
-          assert(MI->getNumOperands() > i+1 &&
-                 "Didn't find an entry for our predecessor??");
-          if (MI->getOperand(i+1).getMachineBasicBlock() == MBB) {
-            MachineOperand &MO = MI->getOperand(i);
-            VarInfo &VRInfo = getVarInfo(MO.getReg());
-            assert(VRInfo.DefInst && "Register use before def (or no def)!");
+      for (std::vector<unsigned>::iterator I = VarInfoVec.begin(),
+             E = VarInfoVec.end(); I != E; ++I) {
+        VarInfo& VRInfo = getVarInfo(*I);
+        assert(VRInfo.DefInst && "Register use before def (or no def)!");
 
-            // Only mark it alive only in the block we are representing.
-            MarkVirtRegAliveInBlock(VRInfo, MBB);
-            break;   // Found the PHI entry for this block.
-          }
-        }
+        // Only mark it alive only in the block we are representing.
+        MarkVirtRegAliveInBlock(VRInfo, MBB);
       }
     }
 
@@ -362,6 +353,7 @@ bool LiveVariables::runOnMachineFunction(MachineFunction &MF) {
     assert(Visited.count(&*i) != 0 && "unreachable basic block found");
 #endif
 
+  PHIVarInfo.clear();
   return false;
 }
 
@@ -450,4 +442,17 @@ void LiveVariables::removeVirtualRegistersDead(MachineInstr *MI) {
   RegistersDead.erase(I);
 }
 
-
+/// analyzePHINodes - Gather information about the PHI nodes in here. In
+/// particular, we want to map the variable information of a virtual
+/// register which is used in a PHI node. We map that to the BB the vreg is
+/// coming from.
+///
+void LiveVariables::analyzePHINodes(const MachineFunction& Fn) {
+  for (MachineFunction::const_iterator I = Fn.begin(), E = Fn.end();
+       I != E; ++I)
+    for (MachineBasicBlock::const_iterator BBI = I->begin(), BBE = I->end();
+         BBI != BBE && BBI->getOpcode() == TargetInstrInfo::PHI; ++BBI)
+      for (unsigned i = 1, e = BBI->getNumOperands(); i != e; i += 2)
+        PHIVarInfo[BBI->getOperand(i + 1).getMachineBasicBlock()].
+          push_back(BBI->getOperand(i).getReg());
+}

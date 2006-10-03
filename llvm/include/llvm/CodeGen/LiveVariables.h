@@ -39,7 +39,7 @@ class MRegisterInfo;
 class LiveVariables : public MachineFunctionPass {
 public:
   /// VarInfo - This represents the regions where a virtual register is live in
-  /// the program.  We represent this with three difference pieces of
+  /// the program.  We represent this with three different pieces of
   /// information: the instruction that uniquely defines the value, the set of
   /// blocks the instruction is live into and live out of, and the set of 
   /// non-phi instructions that are the last users of the value.
@@ -136,9 +136,19 @@ private:   // Intermediate data structures
   MachineInstr **PhysRegInfo;
   bool          *PhysRegUsed;
 
+  typedef std::map<const MachineBasicBlock*,
+                   std::vector<unsigned> > PHIVarInfoMap;
+
+  PHIVarInfoMap PHIVarInfo;
+
   void HandlePhysRegUse(unsigned Reg, MachineInstr *MI);
   void HandlePhysRegDef(unsigned Reg, MachineInstr *MI);
 
+  /// analyzePHINodes - Gather information about the PHI nodes in here. In
+  /// particular, we want to map the variable information of a virtual
+  /// register which is used in a PHI node. We map that to the BB the vreg
+  /// is coming from.
+  void analyzePHINodes(const MachineFunction& Fn);
 public:
 
   virtual bool runOnMachineFunction(MachineFunction &MF);
