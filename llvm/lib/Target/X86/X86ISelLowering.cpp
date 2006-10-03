@@ -1494,6 +1494,7 @@ X86TargetLowering::LowerFastCCArguments(SDOperand Op, SelectionDAG &DAG) {
   switch (getValueType(MF.getFunction()->getReturnType())) {
   default: assert(0 && "Unknown type!");
   case MVT::isVoid: break;
+  case MVT::i1:
   case MVT::i8:
   case MVT::i16:
   case MVT::i32:
@@ -2276,6 +2277,7 @@ X86TargetLowering::LowerFastCallCCArguments(SDOperand Op, SelectionDAG &DAG) {
   switch (getValueType(MF.getFunction()->getReturnType())) {
   default: assert(0 && "Unknown type!");
   case MVT::isVoid: break;
+  case MVT::i1:
   case MVT::i8:
   case MVT::i16:
   case MVT::i32:
