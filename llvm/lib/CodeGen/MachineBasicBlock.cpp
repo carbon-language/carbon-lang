@@ -96,7 +96,7 @@ void MachineBasicBlock::print(std::ostream &OS) const {
   const BasicBlock *LBB = getBasicBlock();
   if (LBB)
     OS << "\n" << LBB->getName() << " (" << (const void*)this
-       << ", LLVM BB @" << (const void*) LBB << "):\n";
+       << ", LLVM BB @" << (const void*) LBB << ", ID#" << getNumber()<< "):\n";
   // Print the preds of this block according to the CFG.
   if (!pred_empty()) {
     OS << "    Predecessors according to CFG:";
