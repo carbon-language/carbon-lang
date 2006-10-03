@@ -25,9 +25,10 @@
 #include "llvm/Target/TargetFrameInfo.h"
 #include "llvm/Function.h"
 #include "llvm/Instructions.h"
-#include "llvm/Support/LeakDetector.h"
-#include "llvm/Support/GraphWriter.h"
 #include "llvm/Support/Compiler.h"
+#include "llvm/Support/GraphWriter.h"
+#include "llvm/Support/LeakDetector.h"
+#include "llvm/ADT/STLExtras.h"
 #include "llvm/Config/config.h"
 #include <fstream>
 #include <iostream>
@@ -148,11 +149,8 @@ void MachineFunction::RenumberBlocks(MachineBasicBlock *MBB) {
   
   // Figure out the block number this should have.
   unsigned BlockNo = 0;
-  if (MBB != &front()) {
-    MachineFunction::iterator I = MBB;
-    --I;
-    BlockNo = I->getNumber()+1;
-  }
+  if (MBBI != begin())
+    BlockNo = prior(MBBI)->getNumber()+1;
   
   for (; MBBI != E; ++MBBI, ++BlockNo) {
     if (MBBI->getNumber() != (int)BlockNo) {
