@@ -413,8 +413,6 @@ namespace {
     // Used by terminator instructions to proceed from the current basic
     // block to the next. Verifies that "current" dominates "next",
     // then calls visitBasicBlock.
-    void proceedToSuccessor(TerminatorInst *TI, unsigned edge,
-                            PropertySet &CurrentPS, PropertySet &NextPS);
     void proceedToSuccessors(PropertySet &CurrentPS, BasicBlock *Current);
 
     // Visits each instruction in the basic block.
@@ -616,17 +614,6 @@ void PredicateSimplifier::visitInstruction(Instruction *I,
     visit(BO, KnownProperties);
 }
 
-// The basic block on the target of the specified edge must be known
-// to be immediately dominated by the parent of the TerminatorInst.
-void PredicateSimplifier::proceedToSuccessor(TerminatorInst *TI,
-                                             unsigned edge,
-                                             PropertySet &CurrentPS,
-                                             PropertySet &NextPS) {
-  assert(edge < TI->getNumSuccessors() && "Invalid index for edge.");
-
-  visitBasicBlock(TI->getSuccessor(edge), NextPS);
-}
-
 void PredicateSimplifier::proceedToSuccessors(PropertySet &KP,
                                               BasicBlock *BBCurrent) {
   DTNodeType *Current = DT->getNode(BBCurrent);
@@ -676,14 +663,14 @@ void PredicateSimplifier::visit(BranchInst *BI, PropertySet &KP) {
     if ((*I)->getBlock() == TrueDest) {
       PropertySet TrueProperties(KP);
       TrueProperties.addEqual(ConstantBool::getTrue(), Condition);
-      proceedToSuccessor(BI, 0, KP, TrueProperties);
+      visitBasicBlock(TrueDest, TrueProperties);
       continue;
     }
 
     if ((*I)->getBlock() == FalseDest) {
       PropertySet FalseProperties(KP);
       FalseProperties.addEqual(ConstantBool::getFalse(), Condition);
-      proceedToSuccessor(BI, 1, KP, FalseProperties);
+      visitBasicBlock(FalseDest, FalseProperties);
       continue;
     }
 
@@ -702,20 +689,15 @@ void PredicateSimplifier::visit(SwitchInst *SI, PropertySet KP) {
   for (DTNodeType::iterator I = Node->begin(), E = Node->end(); I != E; ++I) {
     BasicBlock *BB = (*I)->getBlock();
 
-    PropertySet Copy(KP);
-
+    PropertySet BBProperties(KP);
     if (BB == SI->getDefaultDest()) {
-      PropertySet NewProperties(KP);
       for (unsigned i = 1, e = SI->getNumCases(); i < e; ++i)
-        NewProperties.addNotEqual(Condition, SI->getCaseValue(i));
-
-      proceedToSuccessor(SI, 0, Copy, NewProperties);
+        if (SI->getSuccessor(i) != BB)
+          BBProperties.addNotEqual(Condition, SI->getCaseValue(i));
     } else if (ConstantInt *CI = SI->findCaseDest(BB)) {
-      PropertySet NewProperties(KP);
-      NewProperties.addEqual(Condition, CI);
-      proceedToSuccessor(SI, SI->findCaseValue(CI), Copy, NewProperties);
-    } else 
-      visitBasicBlock(BB, Copy);
+      BBProperties.addEqual(Condition, CI);
+    }
+    visitBasicBlock(BB, BBProperties);
   }
 }
 
