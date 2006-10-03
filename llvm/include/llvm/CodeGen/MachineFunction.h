@@ -224,7 +224,15 @@ public:
   }
 
   /// getNumBlockIDs - Return the number of MBB ID's allocated.
+  ///
   unsigned getNumBlockIDs() const { return MBBNumbering.size(); }
+  
+  /// RenumberBlocks - This discards all of the MachineBasicBlock numbers and
+  /// recomputes them.  This guarantees that the MBB numbers are sequential,
+  /// dense, and match the ordering of the blocks within the function.  If a
+  /// specific MachineBasicBlock is specified, only that block and those after
+  /// it are renumbered.
+  void RenumberBlocks(MachineBasicBlock *MBBFrom = 0);
   
   /// print - Print out the MachineFunction in a format suitable for debugging
   /// to the specified stream.

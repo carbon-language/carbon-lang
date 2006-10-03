@@ -132,6 +132,53 @@ MachineFunction::~MachineFunction() {
   delete[] UsedPhysRegs;
 }
 
+
+/// RenumberBlocks - This discards all of the MachineBasicBlock numbers and
+/// recomputes them.  This guarantees that the MBB numbers are sequential,
+/// dense, and match the ordering of the blocks within the function.  If a
+/// specific MachineBasicBlock is specified, only that block and those after
+/// it are renumbered.
+void MachineFunction::RenumberBlocks(MachineBasicBlock *MBB) {
+  if (empty()) { MBBNumbering.clear(); return; }
+  MachineFunction::iterator MBBI, E = end();
+  if (MBB == 0)
+    MBBI = begin();
+  else
+    MBBI = MBB;
+  
+  // Figure out the block number this should have.
+  unsigned BlockNo = 0;
+  if (MBB != &front()) {
+    MachineFunction::iterator I = MBB;
+    --I;
+    BlockNo = I->getNumber()+1;
+  }
+  
+  for (; MBBI != E; ++MBBI, ++BlockNo) {
+    if (MBBI->getNumber() != (int)BlockNo) {
+      // Remove use of the old number.
+      if (MBBI->getNumber() != -1) {
+        assert(MBBNumbering[MBBI->getNumber()] == &*MBBI &&
+               "MBB number mismatch!");
+        MBBNumbering[MBBI->getNumber()] = 0;
+      }
+      
+      // If BlockNo is already taken, set that block's number to -1.
+      if (MBBNumbering[BlockNo])
+        MBBNumbering[BlockNo]->setNumber(-1);
+
+      MBBNumbering[BlockNo] = MBBI;
+      MBBI->setNumber(BlockNo);
+    }
+  }    
+
+  // Okay, all the blocks are renumbered.  If we have compactified the block
+  // numbering, shrink MBBNumbering now.
+  assert(BlockNo <= MBBNumbering.size() && "Mismatch!");
+  MBBNumbering.resize(BlockNo);
+}
+
+
 void MachineFunction::dump() const { print(std::cerr); }
 
 void MachineFunction::print(std::ostream &OS) const {
