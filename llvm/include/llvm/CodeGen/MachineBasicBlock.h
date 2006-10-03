@@ -179,6 +179,7 @@ public:
   /// will return -1.
   ///
   int getNumber() const { return Number; }
+  void setNumber(int N) { Number = N; }
 
 private:   // Methods used to maintain doubly linked list of blocks...
   friend struct ilist_traits<MachineBasicBlock>;
