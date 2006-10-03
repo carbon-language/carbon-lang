@@ -650,31 +650,22 @@ void PredicateSimplifier::visit(BranchInst *BI, PropertySet &KP) {
   BasicBlock *TrueDest  = BI->getSuccessor(0),
              *FalseDest = BI->getSuccessor(1);
 
-  if (Condition == ConstantBool::getTrue() || TrueDest == FalseDest) {
-    proceedToSuccessors(KP, BB);
-    return;
-  } else if (Condition == ConstantBool::getFalse()) {
+  if (isa<ConstantBool>(Condition) || TrueDest == FalseDest) {
     proceedToSuccessors(KP, BB);
     return;
   }
 
   DTNodeType *Node = DT->getNode(BB);
   for (DTNodeType::iterator I = Node->begin(), E = Node->end(); I != E; ++I) {
-    if ((*I)->getBlock() == TrueDest) {
-      PropertySet TrueProperties(KP);
-      TrueProperties.addEqual(ConstantBool::getTrue(), Condition);
-      visitBasicBlock(TrueDest, TrueProperties);
-      continue;
-    }
+    BasicBlock *Dest = (*I)->getBlock();
+    PropertySet DestProperties(KP);
 
-    if ((*I)->getBlock() == FalseDest) {
-      PropertySet FalseProperties(KP);
-      FalseProperties.addEqual(ConstantBool::getFalse(), Condition);
-      visitBasicBlock(FalseDest, FalseProperties);
-      continue;
-    }
+    if (Dest == TrueDest)
+      DestProperties.addEqual(ConstantBool::getTrue(), Condition);
+    else if (Dest == FalseDest)
+      DestProperties.addEqual(ConstantBool::getFalse(), Condition);
 
-    visitBasicBlock((*I)->getBlock(), KP);
+    visitBasicBlock(Dest, DestProperties);
   }
 }
 
