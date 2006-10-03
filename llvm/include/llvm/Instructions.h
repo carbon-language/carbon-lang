@@ -42,7 +42,7 @@ protected:
 public:
   // Out of line virtual method, so the vtable, etc has a home.
   virtual ~AllocationInst();
-  
+
   /// isArrayAllocation - Return true if there is an allocation size parameter
   /// to the allocation instruction that is not 1.
   ///
@@ -73,7 +73,7 @@ public:
     assert((Align & (Align-1)) == 0 && "Alignment is not a power of 2!");
     Alignment = Align;
   }
-  
+
   virtual Instruction *clone() const = 0;
 
   // Methods for support type inquiry through isa, cast, and dyn_cast:
@@ -104,21 +104,21 @@ public:
   MallocInst(const Type *Ty, Value *ArraySize, const std::string &Name,
              BasicBlock *InsertAtEnd)
     : AllocationInst(Ty, ArraySize, Malloc, 0, Name, InsertAtEnd) {}
-  
-  explicit MallocInst(const Type *Ty, const std::string &Name,
-                      Instruction *InsertBefore = 0)
+
+  MallocInst(const Type *Ty, const std::string &Name,
+             Instruction *InsertBefore = 0)
     : AllocationInst(Ty, 0, Malloc, 0, Name, InsertBefore) {}
   MallocInst(const Type *Ty, const std::string &Name, BasicBlock *InsertAtEnd)
     : AllocationInst(Ty, 0, Malloc, 0, Name, InsertAtEnd) {}
-  
-  MallocInst(const Type *Ty, Value *ArraySize, unsigned Align, 
+
+  MallocInst(const Type *Ty, Value *ArraySize, unsigned Align,
              const std::string &Name, BasicBlock *InsertAtEnd)
     : AllocationInst(Ty, ArraySize, Malloc, Align, Name, InsertAtEnd) {}
   MallocInst(const Type *Ty, Value *ArraySize, unsigned Align,
                       const std::string &Name = "",
                       Instruction *InsertBefore = 0)
     : AllocationInst(Ty, ArraySize, Malloc, Align, Name, InsertBefore) {}
-  
+
   virtual MallocInst *clone() const;
 
   // Methods for support type inquiry through isa, cast, and dyn_cast:
@@ -154,14 +154,14 @@ public:
     : AllocationInst(Ty, 0, Alloca, 0, Name, InsertBefore) {}
   AllocaInst(const Type *Ty, const std::string &Name, BasicBlock *InsertAtEnd)
     : AllocationInst(Ty, 0, Alloca, 0, Name, InsertAtEnd) {}
-  
+
   AllocaInst(const Type *Ty, Value *ArraySize, unsigned Align,
              const std::string &Name = "", Instruction *InsertBefore = 0)
     : AllocationInst(Ty, ArraySize, Alloca, Align, Name, InsertBefore) {}
   AllocaInst(const Type *Ty, Value *ArraySize, unsigned Align,
              const std::string &Name, BasicBlock *InsertAtEnd)
     : AllocationInst(Ty, ArraySize, Alloca, Align, Name, InsertAtEnd) {}
-  
+
   virtual AllocaInst *clone() const;
 
   // Methods for support type inquiry through isa, cast, and dyn_cast:
@@ -222,8 +222,8 @@ class LoadInst : public UnaryInstruction {
 public:
   LoadInst(Value *Ptr, const std::string &Name, Instruction *InsertBefore);
   LoadInst(Value *Ptr, const std::string &Name, BasicBlock *InsertAtEnd);
-  LoadInst(Value *Ptr, const std::string &Name = "", bool isVolatile = false,
-           Instruction *InsertBefore = 0);
+  explicit LoadInst(Value *Ptr, const std::string &Name = "",
+                    bool isVolatile = false, Instruction *InsertBefore = 0);
   LoadInst(Value *Ptr, const std::string &Name, bool isVolatile,
            BasicBlock *InsertAtEnd);
 
@@ -458,13 +458,13 @@ public:
   bool isEquality() const {
     return getOpcode() == SetEQ || getOpcode() == SetNE;
   }
-  
+
   /// isRelational - Return true if this comparison is a </>/<=/>= comparison.
   ///
   bool isRelational() const {
     return !isEquality();
   }
-  
+
   // Methods for support type inquiry through isa, cast, and dyn_cast:
   static inline bool classof(const SetCondInst *) { return true; }
   static inline bool classof(const Instruction *I) {
@@ -501,8 +501,8 @@ public:
   /// isTruncIntCast - Return true if this is a truncating integer cast
   /// instruction, e.g. a cast from long to uint.
   bool isTruncIntCast() const;
-  
-  
+
+
   virtual CastInst *clone() const;
 
   // Methods for support type inquiry through isa, cast, and dyn_cast:
@@ -550,8 +550,7 @@ public:
            BasicBlock *InsertAtEnd);
   explicit CallInst(Value *F, const std::string &Name = "",
                     Instruction *InsertBefore = 0);
-  explicit CallInst(Value *F, const std::string &Name,
-                    BasicBlock *InsertAtEnd);
+  CallInst(Value *F, const std::string &Name, BasicBlock *InsertAtEnd);
   ~CallInst();
 
   virtual CallInst *clone() const;
@@ -640,14 +639,14 @@ public:
   /// isLogicalShift - Return true if this is a logical shift left or a logical
   /// shift right.
   bool isLogicalShift() const;
-  
+
   /// isArithmeticShift - Return true if this is a sign-extending shift right
   /// operation.
   bool isArithmeticShift() const {
     return !isLogicalShift();
   }
-  
-  
+
+
   virtual ShiftInst *clone() const;
 
   // Methods for support type inquiry through isa, cast, and dyn_cast:
@@ -767,7 +766,7 @@ public:
 ///
 class ExtractElementInst : public Instruction {
   Use Ops[2];
-  ExtractElementInst(const ExtractElementInst &EE) : 
+  ExtractElementInst(const ExtractElementInst &EE) :
     Instruction(EE.getType(), ExtractElement, Ops, 2) {
     Ops[0].init(EE.Ops[0], this);
     Ops[1].init(EE.Ops[1], this);
@@ -782,7 +781,7 @@ public:
   /// isValidOperands - Return true if an extractelement instruction can be
   /// formed with the specified operands.
   static bool isValidOperands(const Value *Vec, const Value *Idx);
-  
+
   virtual ExtractElementInst *clone() const;
 
   virtual bool mayWriteToMemory() const { return false; }
@@ -828,7 +827,7 @@ public:
   /// formed with the specified operands.
   static bool isValidOperands(const Value *Vec, const Value *NewElt,
                               const Value *Idx);
-  
+
   virtual InsertElementInst *clone() const;
 
   virtual bool mayWriteToMemory() const { return false; }
@@ -838,7 +837,7 @@ public:
   inline const PackedType *getType() const {
     return reinterpret_cast<const PackedType*>(Instruction::getType());
   }
-  
+
   /// Transparently provide more efficient getOperand methods.
   Value *getOperand(unsigned i) const {
     assert(i < 3 && "getOperand() out of range!");
@@ -869,28 +868,28 @@ public:
 ///
 class ShuffleVectorInst : public Instruction {
   Use Ops[3];
-  ShuffleVectorInst(const ShuffleVectorInst &IE);  
+  ShuffleVectorInst(const ShuffleVectorInst &IE);
 public:
   ShuffleVectorInst(Value *V1, Value *V2, Value *Mask,
                     const std::string &Name = "", Instruction *InsertBefor = 0);
   ShuffleVectorInst(Value *V1, Value *V2, Value *Mask,
                     const std::string &Name, BasicBlock *InsertAtEnd);
-  
+
   /// isValidOperands - Return true if a shufflevector instruction can be
   /// formed with the specified operands.
   static bool isValidOperands(const Value *V1, const Value *V2,
                               const Value *Mask);
-  
+
   virtual ShuffleVectorInst *clone() const;
-  
+
   virtual bool mayWriteToMemory() const { return false; }
-  
+
   /// getType - Overload to return most specific packed type.
   ///
   inline const PackedType *getType() const {
     return reinterpret_cast<const PackedType*>(Instruction::getType());
   }
-  
+
   /// Transparently provide more efficient getOperand methods.
   Value *getOperand(unsigned i) const {
     assert(i < 3 && "getOperand() out of range!");
@@ -901,7 +900,7 @@ public:
     Ops[i] = Val;
   }
   unsigned getNumOperands() const { return 3; }
-  
+
   // Methods for support type inquiry through isa, cast, and dyn_cast:
   static inline bool classof(const ShuffleVectorInst *) { return true; }
   static inline bool classof(const Instruction *I) {
@@ -927,8 +926,8 @@ class PHINode : public Instruction {
   unsigned ReservedSpace;
   PHINode(const PHINode &PN);
 public:
-  PHINode(const Type *Ty, const std::string &Name = "",
-          Instruction *InsertBefore = 0)
+  explicit PHINode(const Type *Ty, const std::string &Name = "",
+                   Instruction *InsertBefore = 0)
     : Instruction(Ty, Instruction::PHI, 0, 0, Name, InsertBefore),
       ReservedSpace(0) {
   }
@@ -1024,11 +1023,11 @@ public:
     return getIncomingValue(getBasicBlockIndex(BB));
   }
 
-  /// hasConstantValue - If the specified PHI node always merges together the 
+  /// hasConstantValue - If the specified PHI node always merges together the
   /// same value, return the value, otherwise return null.
   ///
   Value *hasConstantValue(bool AllowNonDominatingInstruction = false) const;
-  
+
   /// Methods for support type inquiry through isa, cast, and dyn_cast:
   static inline bool classof(const PHINode *) { return true; }
   static inline bool classof(const Instruction *I) {
@@ -1071,7 +1070,7 @@ public:
   //
   // NOTE: If the Value* passed is of type void then the constructor behaves as
   // if it was passed NULL.
-  ReturnInst(Value *retVal = 0, Instruction *InsertBefore = 0)
+  explicit ReturnInst(Value *retVal = 0, Instruction *InsertBefore = 0)
     : TerminatorInst(Instruction::Ret, &RetVal, 0, InsertBefore) {
     init(retVal);
   }
@@ -1079,7 +1078,7 @@ public:
     : TerminatorInst(Instruction::Ret, &RetVal, 0, InsertAtEnd) {
     init(retVal);
   }
-  ReturnInst(BasicBlock *InsertAtEnd)
+  explicit ReturnInst(BasicBlock *InsertAtEnd)
     : TerminatorInst(Instruction::Ret, &RetVal, 0, InsertAtEnd) {
   }
 
@@ -1135,7 +1134,7 @@ public:
   // BranchInst(BB* T, BB *F, Value *C, Inst *I) - 'br C, T, F', insert before I
   // BranchInst(BB* B, BB *I)                    - 'br B'        insert at end
   // BranchInst(BB* T, BB *F, Value *C, BB *I)   - 'br C, T, F', insert at end
-  BranchInst(BasicBlock *IfTrue, Instruction *InsertBefore = 0)
+  explicit BranchInst(BasicBlock *IfTrue, Instruction *InsertBefore = 0)
     : TerminatorInst(Instruction::Br, Ops, 1, InsertBefore) {
     assert(IfTrue != 0 && "Branch destination may not be null!");
     Ops[0].init(reinterpret_cast<Value*>(IfTrue), this);
@@ -1463,10 +1462,10 @@ private:
 ///
 class UnwindInst : public TerminatorInst {
 public:
-  UnwindInst(Instruction *InsertBefore = 0)
+  explicit UnwindInst(Instruction *InsertBefore = 0)
     : TerminatorInst(Instruction::Unwind, 0, 0, InsertBefore) {
   }
-  UnwindInst(BasicBlock *InsertAtEnd)
+  explicit UnwindInst(BasicBlock *InsertAtEnd)
     : TerminatorInst(Instruction::Unwind, 0, 0, InsertAtEnd) {
   }
 
@@ -1499,10 +1498,10 @@ private:
 ///
 class UnreachableInst : public TerminatorInst {
 public:
-  UnreachableInst(Instruction *InsertBefore = 0)
+  explicit UnreachableInst(Instruction *InsertBefore = 0)
     : TerminatorInst(Instruction::Unreachable, 0, 0, InsertBefore) {
   }
-  UnreachableInst(BasicBlock *InsertAtEnd)
+  explicit UnreachableInst(BasicBlock *InsertAtEnd)
     : TerminatorInst(Instruction::Unreachable, 0, 0, InsertAtEnd) {
   }
 
