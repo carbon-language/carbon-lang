@@ -100,6 +100,10 @@ def ldr   : InstARM<(ops IntRegs:$dst, memri:$addr),
                      "ldr $dst, $addr",
                      [(set IntRegs:$dst, (load iaddr:$addr))]>;
 
+def FLDS  : InstARM<(ops FPRegs:$dst, IntRegs:$addr),
+                     "flds $dst, $addr",
+                     [(set FPRegs:$dst, (load IntRegs:$addr))]>;
+
 def str  : InstARM<(ops IntRegs:$src, memri:$addr),
                     "str $src, $addr",
                     [(store IntRegs:$src, iaddr:$addr)]>;
