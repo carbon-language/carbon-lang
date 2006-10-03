@@ -412,6 +412,62 @@ public:
   virtual void print(std::ostream &OS, const Module* = 0) const;
 };
 
+//===-------------------------------------
+/// DominatorTree Class - Concrete subclass of DominatorTreeBase that is used to
+/// compute a normal dominator tree.
+///
+class DominatorTree : public DominatorTreeBase {
+public:
+  DominatorTree() : DominatorTreeBase(false) {}
+  
+  BasicBlock *getRoot() const {
+    assert(Roots.size() == 1 && "Should always have entry node!");
+    return Roots[0];
+  }
+  
+  virtual bool runOnFunction(Function &F) {
+    reset();     // Reset from the last time we were run...
+    ImmediateDominators &ID = getAnalysis<ImmediateDominators>();
+    Roots = ID.getRoots();
+    calculate(ID);
+    return false;
+  }
+  
+  virtual void getAnalysisUsage(AnalysisUsage &AU) const {
+    AU.setPreservesAll();
+    AU.addRequired<ImmediateDominators>();
+  }
+private:
+  void calculate(const ImmediateDominators &ID);
+  Node *getNodeForBlock(BasicBlock *BB);
+};
+
+//===-------------------------------------
+/// DominatorTree GraphTraits specialization so the DominatorTree can be
+/// iterable by generic graph iterators.
+///
+template <> struct GraphTraits<DominatorTree::Node*> {
+  typedef DominatorTree::Node NodeType;
+  typedef NodeType::iterator  ChildIteratorType;
+  
+  static NodeType *getEntryNode(NodeType *N) {
+    return N;
+  }
+  static inline ChildIteratorType child_begin(NodeType* N) {
+    return N->begin();
+  }
+  static inline ChildIteratorType child_end(NodeType* N) {
+    return N->end();
+  }
+};
+
+template <> struct GraphTraits<DominatorTree*>
+  : public GraphTraits<DominatorTree::Node*> {
+  static NodeType *getEntryNode(DominatorTree *DT) {
+    return DT->getRootNode();
+  }
+};
+
 
 //===-------------------------------------
 /// ET-Forest Class - Class used to construct forwards and backwards 
@@ -533,62 +589,6 @@ public:
 
   void calculate(const ImmediateDominators &ID);
   ETNode *getNodeForBlock(BasicBlock *BB);
-};
-
-//===-------------------------------------
-/// DominatorTree Class - Concrete subclass of DominatorTreeBase that is used to
-/// compute a normal dominator tree.
-///
-class DominatorTree : public DominatorTreeBase {
-public:
-  DominatorTree() : DominatorTreeBase(false) {}
-
-  BasicBlock *getRoot() const {
-    assert(Roots.size() == 1 && "Should always have entry node!");
-    return Roots[0];
-  }
-
-  virtual bool runOnFunction(Function &F) {
-    reset();     // Reset from the last time we were run...
-    ImmediateDominators &ID = getAnalysis<ImmediateDominators>();
-    Roots = ID.getRoots();
-    calculate(ID);
-    return false;
-  }
-
-  virtual void getAnalysisUsage(AnalysisUsage &AU) const {
-    AU.setPreservesAll();
-    AU.addRequired<ImmediateDominators>();
-  }
-private:
-  void calculate(const ImmediateDominators &ID);
-  Node *getNodeForBlock(BasicBlock *BB);
-};
-
-//===-------------------------------------
-/// DominatorTree GraphTraits specialization so the DominatorTree can be
-/// iterable by generic graph iterators.
-///
-template <> struct GraphTraits<DominatorTree::Node*> {
-  typedef DominatorTree::Node NodeType;
-  typedef NodeType::iterator  ChildIteratorType;
-
-  static NodeType *getEntryNode(NodeType *N) {
-    return N;
-  }
-  static inline ChildIteratorType child_begin(NodeType* N) {
-    return N->begin();
-  }
-  static inline ChildIteratorType child_end(NodeType* N) {
-    return N->end();
-  }
-};
-
-template <> struct GraphTraits<DominatorTree*>
-  : public GraphTraits<DominatorTree::Node*> {
-  static NodeType *getEntryNode(DominatorTree *DT) {
-    return DT->getRootNode();
-  }
 };
 
 //===----------------------------------------------------------------------===//
