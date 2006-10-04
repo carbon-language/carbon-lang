@@ -253,11 +253,9 @@ bool llvm::SplitCriticalEdge(TerminatorInst *TI, unsigned SuccNum, Pass *P) {
   if (DominanceFrontier *DF = P->getAnalysisToUpdate<DominanceFrontier>()) {
     // If NewBBDominatesDestBB hasn't been computed yet, do so with DF.
     if (!OtherPreds.empty()) {
-#if 0
       // FIXME: IMPLEMENT THIS!
-      OtherPreds.clear();
-#endif
-      NewBBDominatesDestBB = false;
+      assert(0 && "Requiring domfrontiers but not idom/domtree/domset."
+             " not implemented yet!");
     }
     
     // Since the new block is dominated by its only predecessor TIBB,
