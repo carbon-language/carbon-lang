@@ -35,6 +35,15 @@ IA64TargetLowering::IA64TargetLowering(TargetMachine &TM)
       // register class for predicate registers
       addRegisterClass(MVT::i1, IA64::PRRegisterClass);
 
+      setLoadXAction(ISD::EXTLOAD          , MVT::i1   , Promote);
+
+      setLoadXAction(ISD::ZEXTLOAD         , MVT::i1   , Expand);
+
+      setLoadXAction(ISD::SEXTLOAD         , MVT::i1   , Expand);
+      setLoadXAction(ISD::SEXTLOAD         , MVT::i8   , Expand);
+      setLoadXAction(ISD::SEXTLOAD         , MVT::i16  , Expand);
+      setLoadXAction(ISD::SEXTLOAD         , MVT::i32  , Expand);
+
       setOperationAction(ISD::BRIND            , MVT::i64,   Expand);
       setOperationAction(ISD::BR_CC            , MVT::Other, Expand);
       setOperationAction(ISD::FP_ROUND_INREG   , MVT::f32  , Expand);
@@ -49,15 +58,6 @@ IA64TargetLowering::IA64TargetLowering(TargetMachine &TM)
 
       setSetCCResultType(MVT::i1);
       setShiftAmountType(MVT::i64);
-
-      setOperationAction(ISD::EXTLOAD          , MVT::i1   , Promote);
-
-      setOperationAction(ISD::ZEXTLOAD         , MVT::i1   , Expand);
-
-      setOperationAction(ISD::SEXTLOAD         , MVT::i1   , Expand);
-      setOperationAction(ISD::SEXTLOAD         , MVT::i8   , Expand);
-      setOperationAction(ISD::SEXTLOAD         , MVT::i16  , Expand);
-      setOperationAction(ISD::SEXTLOAD         , MVT::i32  , Expand);
 
       setOperationAction(ISD::FREM             , MVT::f32  , Expand);
       setOperationAction(ISD::FREM             , MVT::f64  , Expand);

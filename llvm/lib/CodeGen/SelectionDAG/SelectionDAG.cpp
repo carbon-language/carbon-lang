@@ -1482,11 +1482,12 @@ SDOperand SelectionDAG::getVecLoad(unsigned Count, MVT::ValueType EVT,
   return getNode(ISD::VLOAD, getVTList(MVT::Vector, MVT::Other), Ops, 5);
 }
 
-SDOperand SelectionDAG::getExtLoad(unsigned Opcode, MVT::ValueType VT,
+SDOperand SelectionDAG::getExtLoad(ISD::LoadExtType LType, MVT::ValueType VT,
                                    SDOperand Chain, SDOperand Ptr, SDOperand SV,
                                    MVT::ValueType EVT) {
-  SDOperand Ops[] = { Chain, Ptr, SV, getValueType(EVT) };
-  return getNode(Opcode, getVTList(VT, MVT::Other), Ops, 4);
+  SDOperand Ops[] = { Chain, Ptr, SV, getValueType(EVT),
+                      getConstant(LType, MVT::i32) };
+  return getNode(ISD::LOADX, getVTList(VT, MVT::Other), Ops, 5);
 }
 
 SDOperand SelectionDAG::getVAArg(MVT::ValueType VT,
@@ -1586,11 +1587,10 @@ SDOperand SelectionDAG::getNode(unsigned Opcode, SDVTList VTList,
     return getNode(Opcode, VTList.VTs[0], Ops, NumOps);
 
   switch (Opcode) {
-  case ISD::EXTLOAD:
-  case ISD::SEXTLOAD:
-  case ISD::ZEXTLOAD: {
+  case ISD::LOADX: {
     MVT::ValueType EVT = cast<VTSDNode>(Ops[3])->getVT();
-    assert(NumOps == 4 && VTList.NumVTs == 2 && "Bad *EXTLOAD!");
+    unsigned LType = cast<ConstantSDNode>(Ops[4])->getValue();
+    assert(NumOps == 5 && VTList.NumVTs == 2 && "Bad *EXTLOAD!");
     // If they are asking for an extending load from/to the same thing, return a
     // normal load.
     if (VTList.VTs[0] == EVT)
@@ -1602,7 +1602,7 @@ SDOperand SelectionDAG::getNode(unsigned Opcode, SDVTList VTList,
       assert(EVT < VTList.VTs[0] &&
              "Should only be an extending load, not truncating!");
     }
-    assert((Opcode == ISD::EXTLOAD || MVT::isInteger(VTList.VTs[0])) &&
+    assert((LType == ISD::EXTLOAD || MVT::isInteger(VTList.VTs[0])) &&
            "Cannot sign/zero extend a FP/Vector load!");
     assert(MVT::isInteger(VTList.VTs[0]) == MVT::isInteger(EVT) &&
            "Cannot convert from FP to Int or Int -> FP!");
@@ -2365,6 +2365,11 @@ bool SDNode::isOperand(SDNode *N) const {
   return false;
 }
 
+uint64_t SDNode::getConstantOperandVal(unsigned Num) const {
+  assert(Num < NumOperands && "Invalid child # of SDNode!");
+  return cast<ConstantSDNode>(OperandList[Num])->getValue();
+}
+
 const char *SDNode::getOperationName(const SelectionDAG *G) const {
   switch (getOpcode()) {
   default:
@@ -2525,9 +2530,7 @@ const char *SDNode::getOperationName(const SelectionDAG *G) const {
   case ISD::LOAD:               return "load";
   case ISD::STORE:              return "store";
   case ISD::VLOAD:              return "vload";
-  case ISD::EXTLOAD:            return "extload";
-  case ISD::SEXTLOAD:           return "sextload";
-  case ISD::ZEXTLOAD:           return "zextload";
+  case ISD::LOADX:              return "loadx";
   case ISD::TRUNCSTORE:         return "truncstore";
   case ISD::VAARG:              return "vaarg";
   case ISD::VACOPY:             return "vacopy";

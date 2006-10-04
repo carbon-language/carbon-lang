@@ -48,19 +48,19 @@ AlphaTargetLowering::AlphaTargetLowering(TargetMachine &TM) : TargetLowering(TM)
   addRegisterClass(MVT::f64, Alpha::F8RCRegisterClass);
   addRegisterClass(MVT::f32, Alpha::F4RCRegisterClass);
   
+  setLoadXAction(ISD::EXTLOAD, MVT::i1,  Promote);
+  setLoadXAction(ISD::EXTLOAD, MVT::f32, Expand);
+  
+  setLoadXAction(ISD::ZEXTLOAD, MVT::i1,  Promote);
+  setLoadXAction(ISD::ZEXTLOAD, MVT::i32, Expand);
+  
+  setLoadXAction(ISD::SEXTLOAD, MVT::i1,  Promote);
+  setLoadXAction(ISD::SEXTLOAD, MVT::i8,  Expand);
+  setLoadXAction(ISD::SEXTLOAD, MVT::i16, Expand);
+  
   //  setOperationAction(ISD::BRIND,        MVT::i64,   Expand);
   setOperationAction(ISD::BR_CC,        MVT::Other, Expand);
   setOperationAction(ISD::SELECT_CC,    MVT::Other, Expand);
-  
-  setOperationAction(ISD::EXTLOAD, MVT::i1,  Promote);
-  setOperationAction(ISD::EXTLOAD, MVT::f32, Expand);
-  
-  setOperationAction(ISD::ZEXTLOAD, MVT::i1,  Promote);
-  setOperationAction(ISD::ZEXTLOAD, MVT::i32, Expand);
-  
-  setOperationAction(ISD::SEXTLOAD, MVT::i1,  Promote);
-  setOperationAction(ISD::SEXTLOAD, MVT::i8,  Expand);
-  setOperationAction(ISD::SEXTLOAD, MVT::i16, Expand);
   
   setOperationAction(ISD::TRUNCSTORE, MVT::i1, Promote);
 

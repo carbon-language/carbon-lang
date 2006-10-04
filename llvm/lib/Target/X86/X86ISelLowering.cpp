@@ -75,6 +75,8 @@ X86TargetLowering::X86TargetLowering(TargetMachine &TM)
   if (Subtarget->is64Bit())
     addRegisterClass(MVT::i64, X86::GR64RegisterClass);
 
+  setLoadXAction(ISD::SEXTLOAD, MVT::i1, Expand);
+
   // Promote all UINT_TO_FP to larger SINT_TO_FP's, as X86 doesn't have this
   // operation.
   setOperationAction(ISD::UINT_TO_FP       , MVT::i1   , Promote);
@@ -155,7 +157,6 @@ X86TargetLowering::X86TargetLowering(TargetMachine &TM)
   setOperationAction(ISD::SIGN_EXTEND_INREG, MVT::i8   , Expand);
   setOperationAction(ISD::SIGN_EXTEND_INREG, MVT::i1   , Expand);
   setOperationAction(ISD::FP_ROUND_INREG   , MVT::f32  , Expand);
-  setOperationAction(ISD::SEXTLOAD         , MVT::i1   , Expand);
   setOperationAction(ISD::FREM             , MVT::f64  , Expand);
 
   setOperationAction(ISD::CTPOP            , MVT::i8   , Expand);

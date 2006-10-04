@@ -217,7 +217,7 @@ class VISIBILITY_HIDDEN DAGCombiner {
     SDOperand visitBRCOND(SDNode *N);
     SDOperand visitBR_CC(SDNode *N);
     SDOperand visitLOAD(SDNode *N);
-    SDOperand visitXEXTLOAD(SDNode *N);
+    SDOperand visitLOADX(SDNode *N);
     SDOperand visitSTORE(SDNode *N);
     SDOperand visitINSERT_VECTOR_ELT(SDNode *N);
     SDOperand visitVINSERT_VECTOR_ELT(SDNode *N);
@@ -511,9 +511,7 @@ SDOperand DAGCombiner::visit(SDNode *N) {
   case ISD::BRCOND:             return visitBRCOND(N);
   case ISD::BR_CC:              return visitBR_CC(N);
   case ISD::LOAD:               return visitLOAD(N);
-  case ISD::EXTLOAD:
-  case ISD::SEXTLOAD:
-  case ISD::ZEXTLOAD:           return visitXEXTLOAD(N);
+  case ISD::LOADX:              return visitLOADX(N);
   case ISD::STORE:              return visitSTORE(N);
   case ISD::INSERT_VECTOR_ELT:  return visitINSERT_VECTOR_ELT(N);
   case ISD::VINSERT_VECTOR_ELT: return visitVINSERT_VECTOR_ELT(N);
@@ -1082,12 +1080,12 @@ SDOperand DAGCombiner::visitAND(SDNode *N) {
       SimplifyDemandedBits(SDOperand(N, 0)))
     return SDOperand(N, 0);
   // fold (zext_inreg (extload x)) -> (zextload x)
-  if (N0.getOpcode() == ISD::EXTLOAD) {
+  if (ISD::isEXTLoad(N0.Val)) {
     MVT::ValueType EVT = cast<VTSDNode>(N0.getOperand(3))->getVT();
     // If we zero all the possible extended bits, then we can turn this into
     // a zextload if we are running before legalize or the operation is legal.
     if (TLI.MaskedValueIsZero(N1, ~0ULL << MVT::getSizeInBits(EVT)) &&
-        (!AfterLegalize || TLI.isOperationLegal(ISD::ZEXTLOAD, EVT))) {
+        (!AfterLegalize || TLI.isLoadXLegal(ISD::ZEXTLOAD, EVT))) {
       SDOperand ExtLoad = DAG.getExtLoad(ISD::ZEXTLOAD, VT, N0.getOperand(0),
                                          N0.getOperand(1), N0.getOperand(2),
                                          EVT);
@@ -1097,12 +1095,12 @@ SDOperand DAGCombiner::visitAND(SDNode *N) {
     }
   }
   // fold (zext_inreg (sextload x)) -> (zextload x) iff load has one use
-  if (N0.getOpcode() == ISD::SEXTLOAD && N0.hasOneUse()) {
+  if (ISD::isSEXTLoad(N0.Val) && N0.hasOneUse()) {
     MVT::ValueType EVT = cast<VTSDNode>(N0.getOperand(3))->getVT();
     // If we zero all the possible extended bits, then we can turn this into
     // a zextload if we are running before legalize or the operation is legal.
     if (TLI.MaskedValueIsZero(N1, ~0ULL << MVT::getSizeInBits(EVT)) &&
-        (!AfterLegalize || TLI.isOperationLegal(ISD::ZEXTLOAD, EVT))) {
+        (!AfterLegalize || TLI.isLoadXLegal(ISD::ZEXTLOAD, EVT))) {
       SDOperand ExtLoad = DAG.getExtLoad(ISD::ZEXTLOAD, VT, N0.getOperand(0),
                                          N0.getOperand(1), N0.getOperand(2),
                                          EVT);
@@ -1115,8 +1113,8 @@ SDOperand DAGCombiner::visitAND(SDNode *N) {
   // fold (and (load x), 255) -> (zextload x, i8)
   // fold (and (extload x, i16), 255) -> (zextload x, i8)
   if (N1C &&
-      (N0.getOpcode() == ISD::LOAD || N0.getOpcode() == ISD::EXTLOAD ||
-       N0.getOpcode() == ISD::ZEXTLOAD) &&
+      (N0.getOpcode() == ISD::LOAD || ISD::isEXTLoad(N0.Val) ||
+       ISD::isZEXTLoad(N0.Val)) &&
       N0.hasOneUse()) {
     MVT::ValueType EVT, LoadedVT;
     if (N1C->getValue() == 255)
@@ -1131,7 +1129,7 @@ SDOperand DAGCombiner::visitAND(SDNode *N) {
     LoadedVT = N0.getOpcode() == ISD::LOAD ? VT :
                            cast<VTSDNode>(N0.getOperand(3))->getVT();
     if (EVT != MVT::Other && LoadedVT > EVT &&
-        (!AfterLegalize || TLI.isOperationLegal(ISD::ZEXTLOAD, EVT))) {
+        (!AfterLegalize || TLI.isLoadXLegal(ISD::ZEXTLOAD, EVT))) {
       MVT::ValueType PtrType = N0.getOperand(1).getValueType();
       // For big endian targets, we need to add an offset to the pointer to load
       // the correct bytes.  For little endian systems, we merely need to read
@@ -1863,7 +1861,7 @@ SDOperand DAGCombiner::visitSIGN_EXTEND(SDNode *N) {
   
   // fold (sext (load x)) -> (sext (truncate (sextload x)))
   if (N0.getOpcode() == ISD::LOAD && N0.hasOneUse() &&
-      (!AfterLegalize||TLI.isOperationLegal(ISD::SEXTLOAD, N0.getValueType()))){
+      (!AfterLegalize||TLI.isLoadXLegal(ISD::SEXTLOAD, N0.getValueType()))){
     SDOperand ExtLoad = DAG.getExtLoad(ISD::SEXTLOAD, VT, N0.getOperand(0),
                                        N0.getOperand(1), N0.getOperand(2),
                                        N0.getValueType());
@@ -1875,8 +1873,7 @@ SDOperand DAGCombiner::visitSIGN_EXTEND(SDNode *N) {
 
   // fold (sext (sextload x)) -> (sext (truncate (sextload x)))
   // fold (sext ( extload x)) -> (sext (truncate (sextload x)))
-  if ((N0.getOpcode() == ISD::SEXTLOAD || N0.getOpcode() == ISD::EXTLOAD) &&
-      N0.hasOneUse()) {
+  if ((ISD::isSEXTLoad(N0.Val) || ISD::isEXTLoad(N0.Val)) && N0.hasOneUse()) {
     MVT::ValueType EVT = cast<VTSDNode>(N0.getOperand(3))->getVT();
     SDOperand ExtLoad = DAG.getExtLoad(ISD::SEXTLOAD, VT, N0.getOperand(0),
                                        N0.getOperand(1), N0.getOperand(2), EVT);
@@ -1929,7 +1926,7 @@ SDOperand DAGCombiner::visitZERO_EXTEND(SDNode *N) {
   
   // fold (zext (load x)) -> (zext (truncate (zextload x)))
   if (N0.getOpcode() == ISD::LOAD && N0.hasOneUse() &&
-      (!AfterLegalize||TLI.isOperationLegal(ISD::ZEXTLOAD, N0.getValueType()))){
+      (!AfterLegalize||TLI.isLoadXLegal(ISD::ZEXTLOAD, N0.getValueType()))) {
     SDOperand ExtLoad = DAG.getExtLoad(ISD::ZEXTLOAD, VT, N0.getOperand(0),
                                        N0.getOperand(1), N0.getOperand(2),
                                        N0.getValueType());
@@ -1941,8 +1938,7 @@ SDOperand DAGCombiner::visitZERO_EXTEND(SDNode *N) {
 
   // fold (zext (zextload x)) -> (zext (truncate (zextload x)))
   // fold (zext ( extload x)) -> (zext (truncate (zextload x)))
-  if ((N0.getOpcode() == ISD::ZEXTLOAD || N0.getOpcode() == ISD::EXTLOAD) &&
-      N0.hasOneUse()) {
+  if ((ISD::isZEXTLoad(N0.Val) || ISD::isEXTLoad(N0.Val)) && N0.hasOneUse()) {
     MVT::ValueType EVT = cast<VTSDNode>(N0.getOperand(3))->getVT();
     SDOperand ExtLoad = DAG.getExtLoad(ISD::ZEXTLOAD, VT, N0.getOperand(0),
                                        N0.getOperand(1), N0.getOperand(2), EVT);
@@ -1995,7 +1991,7 @@ SDOperand DAGCombiner::visitANY_EXTEND(SDNode *N) {
   
   // fold (aext (load x)) -> (aext (truncate (extload x)))
   if (N0.getOpcode() == ISD::LOAD && N0.hasOneUse() &&
-      (!AfterLegalize||TLI.isOperationLegal(ISD::EXTLOAD, N0.getValueType()))) {
+      (!AfterLegalize||TLI.isLoadXLegal(ISD::EXTLOAD, N0.getValueType()))) {
     SDOperand ExtLoad = DAG.getExtLoad(ISD::EXTLOAD, VT, N0.getOperand(0),
                                        N0.getOperand(1), N0.getOperand(2),
                                        N0.getValueType());
@@ -2008,12 +2004,12 @@ SDOperand DAGCombiner::visitANY_EXTEND(SDNode *N) {
   // fold (aext (zextload x)) -> (aext (truncate (zextload x)))
   // fold (aext (sextload x)) -> (aext (truncate (sextload x)))
   // fold (aext ( extload x)) -> (aext (truncate (extload  x)))
-  if ((N0.getOpcode() == ISD::ZEXTLOAD || N0.getOpcode() == ISD::EXTLOAD ||
-       N0.getOpcode() == ISD::SEXTLOAD) &&
-      N0.hasOneUse()) {
+  if (N0.getOpcode() == ISD::LOADX && N0.hasOneUse()) {
     MVT::ValueType EVT = cast<VTSDNode>(N0.getOperand(3))->getVT();
-    SDOperand ExtLoad = DAG.getExtLoad(N0.getOpcode(), VT, N0.getOperand(0),
-                                       N0.getOperand(1), N0.getOperand(2), EVT);
+    unsigned LType = N0.getConstantOperandVal(4);
+    SDOperand ExtLoad = DAG.getExtLoad((ISD::LoadExtType)LType, VT,
+                                       N0.getOperand(0), N0.getOperand(1),
+                                       N0.getOperand(2), EVT);
     CombineTo(N, ExtLoad);
     CombineTo(N0.Val, DAG.getNode(ISD::TRUNCATE, N0.getValueType(), ExtLoad),
               ExtLoad.getValue(1));
@@ -2063,9 +2059,9 @@ SDOperand DAGCombiner::visitSIGN_EXTEND_INREG(SDNode *N) {
   }
   
   // fold (sext_inreg (extload x)) -> (sextload x)
-  if (N0.getOpcode() == ISD::EXTLOAD && 
+  if (ISD::isEXTLoad(N0.Val) && 
       EVT == cast<VTSDNode>(N0.getOperand(3))->getVT() &&
-      (!AfterLegalize || TLI.isOperationLegal(ISD::SEXTLOAD, EVT))) {
+      (!AfterLegalize || TLI.isLoadXLegal(ISD::SEXTLOAD, EVT))) {
     SDOperand ExtLoad = DAG.getExtLoad(ISD::SEXTLOAD, VT, N0.getOperand(0),
                                        N0.getOperand(1), N0.getOperand(2),
                                        EVT);
@@ -2074,9 +2070,9 @@ SDOperand DAGCombiner::visitSIGN_EXTEND_INREG(SDNode *N) {
     return SDOperand(N, 0);   // Return N so it doesn't get rechecked!
   }
   // fold (sext_inreg (zextload x)) -> (sextload x) iff load has one use
-  if (N0.getOpcode() == ISD::ZEXTLOAD && N0.hasOneUse() &&
+  if (ISD::isZEXTLoad(N0.Val) && N0.hasOneUse() &&
       EVT == cast<VTSDNode>(N0.getOperand(3))->getVT() &&
-      (!AfterLegalize || TLI.isOperationLegal(ISD::SEXTLOAD, EVT))) {
+      (!AfterLegalize || TLI.isLoadXLegal(ISD::SEXTLOAD, EVT))) {
     SDOperand ExtLoad = DAG.getExtLoad(ISD::SEXTLOAD, VT, N0.getOperand(0),
                                        N0.getOperand(1), N0.getOperand(2),
                                        EVT);
@@ -2525,7 +2521,7 @@ SDOperand DAGCombiner::visitFP_EXTEND(SDNode *N) {
   
   // fold (fpext (load x)) -> (fpext (fpround (extload x)))
   if (N0.getOpcode() == ISD::LOAD && N0.hasOneUse() &&
-      (!AfterLegalize||TLI.isOperationLegal(ISD::EXTLOAD, N0.getValueType()))) {
+      (!AfterLegalize||TLI.isLoadXLegal(ISD::EXTLOAD, N0.getValueType()))) {
     SDOperand ExtLoad = DAG.getExtLoad(ISD::EXTLOAD, VT, N0.getOperand(0),
                                        N0.getOperand(1), N0.getOperand(2),
                                        N0.getValueType());
@@ -2666,8 +2662,8 @@ SDOperand DAGCombiner::visitLOAD(SDNode *N) {
   return SDOperand();
 }
 
-/// visitXEXTLOAD - Handle EXTLOAD/ZEXTLOAD/SEXTLOAD.
-SDOperand DAGCombiner::visitXEXTLOAD(SDNode *N) {
+/// visitLOADX - Handle EXTLOAD/ZEXTLOAD/SEXTLOAD.
+SDOperand DAGCombiner::visitLOADX(SDNode *N) {
   SDOperand Chain    = N->getOperand(0);
   SDOperand Ptr      = N->getOperand(1);
   SDOperand SrcValue = N->getOperand(2);
@@ -3299,9 +3295,7 @@ bool DAGCombiner::SimplifySelectOps(SDNode *TheSelect, SDOperand LHS,
     // This triggers in things like "select bool X, 10.0, 123.0" after the FP
     // constants have been dropped into the constant pool.
     if ((LHS.getOpcode() == ISD::LOAD ||
-         LHS.getOpcode() == ISD::EXTLOAD ||
-         LHS.getOpcode() == ISD::ZEXTLOAD ||
-         LHS.getOpcode() == ISD::SEXTLOAD) &&
+         LHS.getOpcode() == ISD::LOADX ) &&
         // Token chains must be identical.
         LHS.getOperand(0) == RHS.getOperand(0) &&
         // If this is an EXTLOAD, the VT's must match.
@@ -3326,10 +3320,13 @@ bool DAGCombiner::SimplifySelectOps(SDNode *TheSelect, SDOperand LHS,
       if (LHS.getOpcode() == ISD::LOAD)
         Load = DAG.getLoad(TheSelect->getValueType(0), LHS.getOperand(0),
                            Addr, LHS.getOperand(2));
-      else
-        Load = DAG.getExtLoad(LHS.getOpcode(), TheSelect->getValueType(0),
+      else {
+        unsigned LType = LHS.getConstantOperandVal(4);
+        Load = DAG.getExtLoad((ISD::LoadExtType)LType,
+                              TheSelect->getValueType(0),
                               LHS.getOperand(0), Addr, LHS.getOperand(2),
                               cast<VTSDNode>(LHS.getOperand(3))->getVT());
+      }
       // Users of the select now use the result of the load.
       CombineTo(TheSelect, Load);
       

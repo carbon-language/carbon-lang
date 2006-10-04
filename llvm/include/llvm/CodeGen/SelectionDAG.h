@@ -303,8 +303,9 @@ public:
                     SDOperand SV);
   SDOperand getVecLoad(unsigned Count, MVT::ValueType VT, SDOperand Chain, 
                        SDOperand Ptr, SDOperand SV);
-  SDOperand getExtLoad(unsigned Opcode, MVT::ValueType VT, SDOperand Chain,
-                       SDOperand Ptr, SDOperand SV, MVT::ValueType EVT);
+  SDOperand getExtLoad(ISD::LoadExtType LType, MVT::ValueType VT,
+                       SDOperand Chain, SDOperand Ptr, SDOperand SV,
+                       MVT::ValueType EVT);
 
   // getSrcValue - construct a node to track a Value* through the backend
   SDOperand getSrcValue(const Value* I, int offset = 0);

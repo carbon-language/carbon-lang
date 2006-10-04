@@ -454,8 +454,7 @@ SDNode *IA64DAGToDAGISel::Select(SDOperand Op) {
 */
 
   case ISD::LOAD:
-  case ISD::EXTLOAD: // FIXME: load -1, not 1, for bools?
-  case ISD::ZEXTLOAD: {
+  case ISD::LOADX: { // FIXME: load -1, not 1, for bools?
     SDOperand Chain = N->getOperand(0);
     SDOperand Address = N->getOperand(1);
     AddToISelQueue(Chain);

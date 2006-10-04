@@ -380,11 +380,11 @@ namespace ISD {
     // the elements, a token chain, a pointer operand, and a SRCVALUE node.
     VLOAD,
 
-    // EXTLOAD, SEXTLOAD, ZEXTLOAD - These three operators all load a value from
-    // memory and extend them to a larger value (e.g. load a byte into a word
-    // register).  All three of these have four operands, a token chain, a
-    // pointer to load from, a SRCVALUE for alias analysis, and a VALUETYPE node
-    // indicating the type to load.
+    // Load a value from memory and extend them to a larger value (e.g. load a
+    // byte into a word register).  All three of these have four operands, a
+    // token chain, a pointer to load from, a SRCVALUE for alias analysis, a
+    // VALUETYPE node indicating the type to load, and an enum indicating what
+    // sub-type of LOADX it is:
     //
     // SEXTLOAD loads the integer operand and sign extends it to a larger
     //          integer result type.
@@ -393,7 +393,7 @@ namespace ISD {
     // EXTLOAD  is used for three things: floating point extending loads, 
     //          integer extending loads [the top bits are undefined], and vector
     //          extending loads [load into low elt].
-    EXTLOAD, SEXTLOAD, ZEXTLOAD,
+    LOADX,
 
     // TRUNCSTORE - This operators truncates (for integer) or rounds (for FP) a
     // value and stores it to memory in one operation.  This can be used for
@@ -534,6 +534,17 @@ namespace ISD {
   bool isBuildVectorAllZeros(const SDNode *N);
   
   //===--------------------------------------------------------------------===//
+  /// LoadExtType enum - This enum defines the three variants of LOADEXT
+  /// (load with extension).
+  ///
+  enum LoadExtType {
+    EXTLOAD,
+    SEXTLOAD,
+    ZEXTLOAD,
+    LAST_LOADX_TYPE
+  };
+
+  //===--------------------------------------------------------------------===//
   /// ISD::CondCode enum - These are ordered carefully to make the bitfields
   /// below work out, when considering SETFALSE (something that never exists
   /// dynamically) as 0.  "U" -> Unsigned (for integer operands) or Unordered
@@ -671,6 +682,7 @@ public:
   inline unsigned getOpcode() const;
   inline unsigned getNumOperands() const;
   inline const SDOperand &getOperand(unsigned i) const;
+  inline uint64_t getConstantOperandVal(unsigned i) const;
   inline bool isTargetOpcode() const;
   inline unsigned getTargetOpcode() const;
 
@@ -775,10 +787,15 @@ public:
   ///
   unsigned getNumOperands() const { return NumOperands; }
 
+  /// getConstantOperandVal - Helper method returns the integer value of a 
+  /// ConstantSDNode operand.
+  uint64_t getConstantOperandVal(unsigned Num) const;
+
   const SDOperand &getOperand(unsigned Num) const {
     assert(Num < NumOperands && "Invalid child # of SDNode!");
     return OperandList[Num];
   }
+
   typedef const SDOperand* op_iterator;
   op_iterator op_begin() const { return OperandList; }
   op_iterator op_end() const { return OperandList+NumOperands; }
@@ -996,6 +1013,9 @@ inline unsigned SDOperand::getNumOperands() const {
 }
 inline const SDOperand &SDOperand::getOperand(unsigned i) const {
   return Val->getOperand(i);
+}
+inline uint64_t SDOperand::getConstantOperandVal(unsigned i) const {
+  return Val->getConstantOperandVal(i);
 }
 inline bool SDOperand::isTargetOpcode() const {
   return Val->isTargetOpcode();
@@ -1398,6 +1418,30 @@ struct ilist_traits<SDNode> {
                              const ilist_iterator<SDNode> &X,
                              const ilist_iterator<SDNode> &Y) {}
 };
+
+namespace ISD {
+  /// isEXTLoad - Returns true if the specified node is a EXTLOAD.
+  ///
+  inline bool isEXTLoad(const SDNode *N) {
+    return N->getOpcode() == ISD::LOADX &&
+      N->getConstantOperandVal(4) == ISD::EXTLOAD;
+  }
+
+  /// isSEXTLoad - Returns true if the specified node is a SEXTLOAD.
+  ///
+  inline bool isSEXTLoad(const SDNode *N) {
+    return N->getOpcode() == ISD::LOADX &&
+      N->getConstantOperandVal(4) == ISD::SEXTLOAD;
+  }
+
+  /// isZEXTLoad - Returns true if the specified node is a ZEXTLOAD.
+  ///
+  inline bool isZEXTLoad(const SDNode *N) {
+    return N->getOpcode() == ISD::LOADX &&
+      N->getConstantOperandVal(4) == ISD::ZEXTLOAD;
+  }
+}
+
 
 } // end llvm namespace
 

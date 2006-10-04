@@ -27,6 +27,7 @@ TargetLowering::TargetLowering(TargetMachine &tm)
          "Fixed size array in TargetLowering is not large enough!");
   // All operations default to being supported.
   memset(OpActions, 0, sizeof(OpActions));
+  memset(LoadXActions, 0, sizeof(LoadXActions));
 
   IsLittleEndian = TD->isLittleEndian();
   ShiftAmountTy = SetCCResultTy = PointerTy = getValueType(TD->getIntPtrType());
@@ -550,9 +551,11 @@ bool TargetLowering::SimplifyDemandedBits(SDOperand Op, uint64_t DemandedMask,
     KnownOne  = 0;
     break;
   }
-  case ISD::ZEXTLOAD: {
-    MVT::ValueType VT = cast<VTSDNode>(Op.getOperand(3))->getVT();
-    KnownZero |= ~MVT::getIntVTBitMask(VT) & DemandedMask;
+  case ISD::LOADX: {
+    if (ISD::isZEXTLoad(Op.Val)) {
+      MVT::ValueType VT = cast<VTSDNode>(Op.getOperand(3))->getVT();
+      KnownZero |= ~MVT::getIntVTBitMask(VT) & DemandedMask;
+    }
     break;
   }
   case ISD::ZERO_EXTEND: {
@@ -888,9 +891,11 @@ void TargetLowering::ComputeMaskedBits(SDOperand Op, uint64_t Mask,
     KnownOne  = 0;
     return;
   }
-  case ISD::ZEXTLOAD: {
-    MVT::ValueType VT = cast<VTSDNode>(Op.getOperand(3))->getVT();
-    KnownZero |= ~MVT::getIntVTBitMask(VT) & Mask;
+  case ISD::LOADX: {
+    if (ISD::isZEXTLoad(Op.Val)) {
+      MVT::ValueType VT = cast<VTSDNode>(Op.getOperand(3))->getVT();
+      KnownZero |= ~MVT::getIntVTBitMask(VT) & Mask;
+    }
     return;
   }
   case ISD::ZERO_EXTEND: {
@@ -1047,13 +1052,6 @@ unsigned TargetLowering::ComputeNumSignBits(SDOperand Op, unsigned Depth) const{
   case ISD::AssertZext:
     Tmp = MVT::getSizeInBits(cast<VTSDNode>(Op.getOperand(1))->getVT());
     return VTBits-Tmp;
-
-  case ISD::SEXTLOAD:    // '17' bits known
-    Tmp = MVT::getSizeInBits(cast<VTSDNode>(Op.getOperand(3))->getVT());
-    return VTBits-Tmp+1;
-  case ISD::ZEXTLOAD:    // '16' bits known
-    Tmp = MVT::getSizeInBits(cast<VTSDNode>(Op.getOperand(3))->getVT());
-    return VTBits-Tmp;
     
   case ISD::Constant: {
     uint64_t Val = cast<ConstantSDNode>(Op)->getValue();
@@ -1197,6 +1195,20 @@ unsigned TargetLowering::ComputeNumSignBits(SDOperand Op, unsigned Depth) const{
     break;
   }
   
+  // Handle LOADX separately here. EXTLOAD case will fallthrough.
+  if (Op.getOpcode() == ISD::LOADX) {
+    unsigned LType = Op.getConstantOperandVal(4);
+    switch (LType) {
+    default: break;
+    case ISD::SEXTLOAD:    // '17' bits known
+      Tmp = MVT::getSizeInBits(cast<VTSDNode>(Op.getOperand(3))->getVT());
+      return VTBits-Tmp+1;
+    case ISD::ZEXTLOAD:    // '16' bits known
+      Tmp = MVT::getSizeInBits(cast<VTSDNode>(Op.getOperand(3))->getVT());
+      return VTBits-Tmp;
+    }
+  }
+
   // Allow the target to implement this method for its nodes.
   if (Op.getOpcode() >= ISD::BUILTIN_OP_END ||
       Op.getOpcode() == ISD::INTRINSIC_WO_CHAIN || 

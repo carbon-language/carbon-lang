@@ -137,6 +137,9 @@ SparcTargetLowering::SparcTargetLowering(TargetMachine &TM)
   addRegisterClass(MVT::f32, SP::FPRegsRegisterClass);
   addRegisterClass(MVT::f64, SP::DFPRegsRegisterClass);
 
+  // Turn FP extload into load/fextend
+  setLoadXAction(ISD::EXTLOAD, MVT::f32, Expand);
+  
   // Custom legalize GlobalAddress nodes into LO/HI parts.
   setOperationAction(ISD::GlobalAddress, MVT::i32, Custom);
   setOperationAction(ISD::ConstantPool , MVT::i32, Custom);
@@ -160,9 +163,6 @@ SparcTargetLowering::SparcTargetLowering(TargetMachine &TM)
   
   setOperationAction(ISD::BIT_CONVERT, MVT::f32, Expand);
   setOperationAction(ISD::BIT_CONVERT, MVT::i32, Expand);
-  
-  // Turn FP extload into load/fextend
-  setOperationAction(ISD::EXTLOAD, MVT::f32, Expand);
   
   // Sparc has no select or setcc: expand to SELECT_CC.
   setOperationAction(ISD::SELECT, MVT::i32, Expand);
@@ -332,7 +332,7 @@ SparcTargetLowering::LowerArguments(Function &F, SelectionDAG &DAG) {
         if (ObjectVT == MVT::i32) {
           Load = DAG.getLoad(MVT::i32, Root, FIPtr, DAG.getSrcValue(0));
         } else {
-          unsigned LoadOp =
+          ISD::LoadExtType LoadOp =
             I->getType()->isSigned() ? ISD::SEXTLOAD : ISD::ZEXTLOAD;
 
           // Sparc is big endian, so add an offset based on the ObjectVT.

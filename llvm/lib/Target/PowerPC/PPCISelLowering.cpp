@@ -43,6 +43,10 @@ PPCTargetLowering::PPCTargetLowering(TargetMachine &TM)
   addRegisterClass(MVT::f32, PPC::F4RCRegisterClass);
   addRegisterClass(MVT::f64, PPC::F8RCRegisterClass);
   
+  // PowerPC has an i16 but no i8 (or i1) SEXTLOAD
+  setLoadXAction(ISD::SEXTLOAD, MVT::i1, Expand);
+  setLoadXAction(ISD::SEXTLOAD, MVT::i8, Expand);
+  
   setOperationAction(ISD::ConstantFP, MVT::f64, Expand);
   setOperationAction(ISD::ConstantFP, MVT::f32, Expand);
 
@@ -50,10 +54,6 @@ PPCTargetLowering::PPCTargetLowering(TargetMachine &TM)
   setOperationAction(ISD::MEMMOVE, MVT::Other, Expand);
   setOperationAction(ISD::MEMSET, MVT::Other, Expand);
   setOperationAction(ISD::MEMCPY, MVT::Other, Expand);
-  
-  // PowerPC has an i16 but no i8 (or i1) SEXTLOAD
-  setOperationAction(ISD::SEXTLOAD, MVT::i1, Expand);
-  setOperationAction(ISD::SEXTLOAD, MVT::i8, Expand);
   
   // PowerPC has no SREM/UREM instructions
   setOperationAction(ISD::SREM, MVT::i32, Expand);
@@ -311,7 +311,7 @@ const char *PPCTargetLowering::getTargetNodeName(unsigned Opcode) const {
 static bool isFloatingPointZero(SDOperand Op) {
   if (ConstantFPSDNode *CFP = dyn_cast<ConstantFPSDNode>(Op))
     return CFP->isExactlyValue(-0.0) || CFP->isExactlyValue(0.0);
-  else if (Op.getOpcode() == ISD::EXTLOAD || Op.getOpcode() == ISD::LOAD) {
+  else if (ISD::isEXTLoad(Op.Val) || Op.getOpcode() == ISD::LOAD) {
     // Maybe this has already been legalized into the constant pool?
     if (ConstantPoolSDNode *CP = dyn_cast<ConstantPoolSDNode>(Op.getOperand(1)))
       if (ConstantFP *CFP = dyn_cast<ConstantFP>(CP->getConstVal()))

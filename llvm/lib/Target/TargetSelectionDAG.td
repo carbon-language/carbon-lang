@@ -164,10 +164,10 @@ def SDTStore : SDTypeProfile<0, 2, [ // store
   SDTCisPtrTy<1>  
 ]>;
 
-def SDTExtLoad : SDTypeProfile<1, 3, [  // extload
-  SDTCisPtrTy<1>, SDTCisVT<2, OtherVT>, SDTCisVT<3, OtherVT>
+def SDTLoadX : SDTypeProfile<1, 4, [  // loadX
+  SDTCisPtrTy<1>, SDTCisVT<2, OtherVT>, SDTCisVT<3, OtherVT>, SDTCisVT<4, i32>
 ]>;
-def SDTIntExtLoad : SDTypeProfile<1, 3, [  // sextload, zextload
+def SDTIntExtLoad : SDTypeProfile<1, 3, [  // extload, sextload, zextload
   SDTCisInt<0>, SDTCisPtrTy<1>, SDTCisVT<2, OtherVT>, SDTCisVT<3, OtherVT>
 ]>;
 def SDTTruncStore : SDTypeProfile<0, 4, [  // truncstore
@@ -308,11 +308,9 @@ def ret        : SDNode<"ISD::RET"        , SDTRet,    [SDNPHasChain]>;
 def load       : SDNode<"ISD::LOAD"       , SDTLoad,  [SDNPHasChain]>;
 def store      : SDNode<"ISD::STORE"      , SDTStore, [SDNPHasChain]>;
 
-// Do not use sextld and zextld directly. Use sextload and zextload (see
-// below) which pass in a dummy srcvalue node which tblgen will skip over.
-def sextld     : SDNode<"ISD::SEXTLOAD"   , SDTIntExtLoad, [SDNPHasChain]>;
-def zextld     : SDNode<"ISD::ZEXTLOAD"   , SDTIntExtLoad, [SDNPHasChain]>;
-def extld      : SDNode<"ISD::EXTLOAD"    , SDTExtLoad,    [SDNPHasChain]>;
+// Do not use loadx directly. Use extload, sextload and zextload (see below)
+// which pass in a dummy srcvalue node which tblgen will skip over.
+def loadx      : SDNode<"ISD::LOADX"      , SDTLoadX,      [SDNPHasChain]>;
 def truncst    : SDNode<"ISD::TRUNCSTORE" , SDTTruncStore, [SDNPHasChain]>;
 
 def vector_shuffle : SDNode<"ISD::VECTOR_SHUFFLE", SDTVecShuffle, []>;
@@ -415,12 +413,12 @@ def vnot_conv : PatFrag<(ops node:$in), (xor node:$in, immAllOnesV_bc)>;
 def ineg : PatFrag<(ops node:$in), (sub 0, node:$in)>;
 
 // extending load & truncstore fragments.
-def sextload      : PatFrag<(ops node:$ptr, node:$vt),
-                            (sextld node:$ptr, srcvalue:$dummy, node:$vt)>;
-def zextload      : PatFrag<(ops node:$ptr, node:$vt),
-                            (zextld node:$ptr, srcvalue:$dummy, node:$vt)>;
 def extload       : PatFrag<(ops node:$ptr, node:$vt),
-                            (extld node:$ptr, srcvalue:$dummy, node:$vt)>;
+                            (loadx node:$ptr, srcvalue:$dummy, node:$vt, 0)>;
+def sextload      : PatFrag<(ops node:$ptr, node:$vt),
+                            (loadx node:$ptr, srcvalue:$dummy, node:$vt, 1)>;
+def zextload      : PatFrag<(ops node:$ptr, node:$vt),
+                            (loadx node:$ptr, srcvalue:$dummy, node:$vt, 2)>;
 def truncstore    : PatFrag<(ops node:$val, node:$ptr, node:$vt),
                             (truncst node:$val, node:$ptr, srcvalue:$dummy, 
                             node:$vt)>;
