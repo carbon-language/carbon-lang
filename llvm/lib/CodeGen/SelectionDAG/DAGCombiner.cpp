@@ -50,7 +50,7 @@ namespace {
 static cl::opt<bool>
   CombinerAA("combiner-alias-analysis", cl::Hidden,
              cl::desc("Turn on alias analysis turning testing"));
- 
+             
 class VISIBILITY_HIDDEN DAGCombiner {
     SelectionDAG &DAG;
     TargetLowering &TLI;
@@ -66,7 +66,7 @@ class VISIBILITY_HIDDEN DAGCombiner {
     void AddUsersToWorkList(SDNode *N) {
       for (SDNode::use_iterator UI = N->use_begin(), UE = N->use_end();
            UI != UE; ++UI)
-        WorkList.push_back(*UI);
+        AddToWorkList(*UI);
     }
 
     /// removeFromWorkList - remove all instances of N from the worklist.
@@ -77,14 +77,17 @@ class VISIBILITY_HIDDEN DAGCombiner {
     }
     
   public:
+    /// AddToWorkList - Add to the work list making sure it's instance is at the
+    /// the back (next to be processed.)
     void AddToWorkList(SDNode *N) {
+      removeFromWorkList(N);
       WorkList.push_back(N);
     }
-    
+
     SDOperand CombineTo(SDNode *N, const SDOperand *To, unsigned NumTo) {
       assert(N->getNumValues() == NumTo && "Broken CombineTo call!");
       ++NodesCombined;
-      DEBUG(std::cerr << "\nReplacing "; N->dump();
+      DEBUG(std::cerr << "\nReplacing.1 "; N->dump();
             std::cerr << "\nWith: "; To[0].Val->dump(&DAG);
             std::cerr << " and " << NumTo-1 << " other values\n");
       std::vector<SDNode*> NowDead;
@@ -92,12 +95,12 @@ class VISIBILITY_HIDDEN DAGCombiner {
       
       // Push the new nodes and any users onto the worklist
       for (unsigned i = 0, e = NumTo; i != e; ++i) {
-        WorkList.push_back(To[i].Val);
+        AddToWorkList(To[i].Val);
         AddUsersToWorkList(To[i].Val);
       }
       
-      // Nodes can end up on the worklist more than once.  Make sure we do
-      // not process a node that has been replaced.
+      // Nodes can be reintroduced into the worklist.  Make sure we do not
+      // process a node that has been replaced.
       removeFromWorkList(N);
       for (unsigned i = 0, e = NowDead.size(); i != e; ++i)
         removeFromWorkList(NowDead[i]);
@@ -128,11 +131,11 @@ class VISIBILITY_HIDDEN DAGCombiner {
         return false;
 
       // Revisit the node.
-      WorkList.push_back(Op.Val);
+      AddToWorkList(Op.Val);
       
       // Replace the old value with the new one.
       ++NodesCombined;
-      DEBUG(std::cerr << "\nReplacing "; TLO.Old.Val->dump();
+      DEBUG(std::cerr << "\nReplacing.2 "; TLO.Old.Val->dump();
             std::cerr << "\nWith: "; TLO.New.Val->dump(&DAG);
             std::cerr << '\n');
 
@@ -140,7 +143,7 @@ class VISIBILITY_HIDDEN DAGCombiner {
       DAG.ReplaceAllUsesOfValueWith(TLO.Old, TLO.New, NowDead);
       
       // Push the new node and any (possibly new) users onto the worklist.
-      WorkList.push_back(TLO.New.Val);
+      AddToWorkList(TLO.New.Val);
       AddUsersToWorkList(TLO.New.Val);
       
       // Nodes can end up on the worklist more than once.  Make sure we do
@@ -240,13 +243,12 @@ class VISIBILITY_HIDDEN DAGCombiner {
     SDOperand BuildUDIV(SDNode *N);
     SDNode *MatchRotate(SDOperand LHS, SDOperand RHS);
     
-    /// FindBaseOffset - Return true if we can determine base and offset
-    /// information from a given pointer operand.  Provides base and offset as a
-    /// result.
+    /// FindBaseOffset - Return true if base is known not to alias with anything
+    /// but itself.  Provides base object and offset as results.
     static bool FindBaseOffset(SDOperand Ptr,
                                SDOperand &Object, int64_t &Offset);
     
-    /// isAlias - Return true if there is the possibility that the two addresses
+    /// isAlias - Return true if there is any possibility that the two addresses
     /// overlap.
     static bool isAlias(SDOperand Ptr1, int64_t Size1, SDOperand SrcValue1,
                         SDOperand Ptr2, int64_t Size2, SDOperand SrcValue2);
@@ -256,12 +258,13 @@ class VISIBILITY_HIDDEN DAGCombiner {
     static void FindAliasInfo(SDNode *N,
                            SDOperand &Ptr, int64_t &Size, SDOperand &SrcValue);
     
-    /// hasChain - Return true if Op has a chain.  Provides chain if present.
-    ///
-    static bool hasChain(SDOperand Op, SDOperand &Chain);
- 
+    /// GatherAllAliases - Walk up chain skipping non-aliasing memory nodes,
+    /// looking for aliasing nodes and adding them to the Aliases vector.
+    void GatherAllAliases(SDNode *N, SDOperand Chain,
+                          SmallVector<SDOperand, 8> &Aliases);
+
     /// FindBetterChain - Walk up chain skipping non-aliasing memory nodes,
-    /// looking for a better chain.
+    /// looking for a better chain (aliasing node.)
     SDOperand FindBetterChain(SDNode *N, SDOperand Chain);
     
 public:
@@ -388,7 +391,7 @@ void DAGCombiner::Run(bool RunningAfterLegalize) {
   /// DagCombineInfo - Expose the DAG combiner to the target combiner impls.
   TargetLowering::DAGCombinerInfo 
     DagCombineInfo(DAG, !RunningAfterLegalize, this);
-  
+
   // while the worklist isn't empty, inspect the node on the end of it and
   // try and combine it.
   while (!WorkList.empty()) {
@@ -400,9 +403,8 @@ void DAGCombiner::Run(bool RunningAfterLegalize) {
     // reduced number of uses, allowing other xforms.
     if (N->use_empty() && N != &Dummy) {
       for (unsigned i = 0, e = N->getNumOperands(); i != e; ++i)
-        WorkList.push_back(N->getOperand(i).Val);
+        AddToWorkList(N->getOperand(i).Val);
       
-      removeFromWorkList(N);
       DAG.DeleteNode(N);
       continue;
     }
@@ -429,7 +431,7 @@ void DAGCombiner::Run(bool RunningAfterLegalize) {
                RV.Val->getOpcode() != ISD::DELETED_NODE &&
                "Node was deleted but visit returned new node!");
 
-        DEBUG(std::cerr << "\nReplacing "; N->dump();
+        DEBUG(std::cerr << "\nReplacing.3 "; N->dump();
               std::cerr << "\nWith: "; RV.Val->dump(&DAG);
               std::cerr << '\n');
         std::vector<SDNode*> NowDead;
@@ -442,11 +444,11 @@ void DAGCombiner::Run(bool RunningAfterLegalize) {
         }
           
         // Push the new node and any users onto the worklist
-        WorkList.push_back(RV.Val);
+        AddToWorkList(RV.Val);
         AddUsersToWorkList(RV.Val);
           
-        // Nodes can end up on the worklist more than once.  Make sure we do
-        // not process a node that has been replaced.
+        // Nodes can be reintroduced into the worklist.  Make sure we do not
+        // process a node that has been replaced.
         removeFromWorkList(N);
         for (unsigned i = 0, e = NowDead.size(); i != e; ++i)
           removeFromWorkList(NowDead[i]);
@@ -455,6 +457,8 @@ void DAGCombiner::Run(bool RunningAfterLegalize) {
         DAG.DeleteNode(N);
       }
     }
+    
+//    DetectCycle();
   }
   
   // If the root changed (e.g. it was a dead load, update the root).
@@ -531,80 +535,65 @@ SDOperand DAGCombiner::visit(SDNode *N) {
 }
 
 SDOperand DAGCombiner::visitTokenFactor(SDNode *N) {
-  // If the token factor has two operands and one is the entry token, replace
-  // the token factor with the other operand.
-  if (N->getNumOperands() == 2) {
-    if (N->getOperand(0).getOpcode() == ISD::EntryToken ||
-        N->getOperand(0) == N->getOperand(1))
-      return N->getOperand(1);
-    if (N->getOperand(1).getOpcode() == ISD::EntryToken)
-      return N->getOperand(0);
-  }
-  
-  SmallVector<SDNode *, 8> TFs;   // Set of token factor nodes.
+  SmallVector<SDNode *, 8> TFs;   // List of token factors to visit.
   SmallVector<SDOperand, 8> Ops;  // Ops for replacing token factor.
-
-  // Add this ndoe to the token factor set.
+  bool Changed = false;           // If we should replace this token factor.
+  std::set<SDNode *> Visited;     // Visited node set.
+  
+  // Start out with this token factor.
   TFs.push_back(N);
-
-  // Separate token factors from other operands.
-  for (unsigned i = 0, ie = N->getNumOperands(); i != ie; ++i) {
-    SDOperand Op = N->getOperand(i);
-    if (Op.getOpcode() == ISD::TokenFactor)
-      TFs.push_back(Op.Val);
-    else if (Op.getOpcode() != ISD::EntryToken)
-      Ops.push_back(Op);
-  }
   
-  // If there are token factor operands.
-  if (TFs.size() > 1) {
-    bool Changed = false; // If we should replace this token factor.
-    
-    // For each token factor.
-    for (unsigned j = 1, je = TFs.size(); j != je; ++j) {
-      SDNode *TF = TFs[j];
-      bool CanMerge = true; // Can we merge this token factor.
+  while (!TFs.empty()) {
+    SDNode *TF = TFs.back();
+    TFs.pop_back();
+  
+    // Check each of the operands.
+    for (unsigned i = 0, ie = TF->getNumOperands(); i != ie; ++i) {
+      SDOperand Op = TF->getOperand(i);
       
-      if (CombinerAA) {
-        if (!TF->hasOneUse()) {
-          // Check to see if all users point to members of the token factor set.
-          for (SDNode::use_iterator UI = TF->use_begin(), UE = TF->use_end();
-               CanMerge && UI != UE; ++UI) {
-            SDNode *User = *UI;
-            CanMerge = User->getOpcode() == ISD::TokenFactor &&
-                       std::find(TFs.begin(), TFs.end(), User) != TFs.end();
-          }
-        }
-      } else {
-        CanMerge = TF->hasOneUse();
-      }
+      // Don't bother if we've seen this node before.
+      if (Visited.find(Op.Val) != Visited.end()) continue;
+      Visited.insert(Op.Val);
       
-      // If it's valid to merge.
-      if (CanMerge) {
-        // Remove dead token factor node.
-        AddToWorkList(TF); 
+      switch (Op.getOpcode()) {
+      case ISD::EntryToken:
+        // Entry tokens don't need to be added to the list (picked up later.)
+        break;
         
-        // Make sure we don't duplicate operands.
-        unsigned m = Ops.size(); // Number of prior operands.
-        for (unsigned l = 0, le = TF->getNumOperands(); l != le; ++l) {
-          SDOperand Op = TF->getOperand(l);
-          if (std::find(Ops.begin(), Ops.end(), Op) == Ops.end())
-            Ops.push_back(Op);
+      case ISD::TokenFactor:
+        // FIXME - Old code only merged when use of one.
+        if (CombinerAA || Op.hasOneUse()) {
+          // Queue up for processing.
+          TFs.push_back(Op.Val);
+          // Clean up in case the token factor is removed.
+          AddToWorkList(Op.Val);
+          Changed = true;
+          break;
         }
+        // Fall thru
+        
+      default:
+        Ops.push_back(Op);
         Changed = true;
-      } else  {
-        // Can't merge this token factor.
-        Ops.push_back(SDOperand(TF, 0));
+        break;
       }
     }
-    
-    // If we've change things around then replace token factor.
-    if (Changed) {
-      return DAG.getNode(ISD::TokenFactor, MVT::Other, &Ops[0], Ops.size());
+  }
+
+  SDOperand Result;
+
+  // If we've change things around then replace token factor.
+  if (Changed) {
+    if (Ops.size() == 0) {
+      // The entry token is the only possible outcome.
+      Result = DAG.getEntryNode();
+    } else {
+      // New and improved token factor.
+      Result = DAG.getNode(ISD::TokenFactor, MVT::Other, &Ops[0], Ops.size());
     }
   }
   
-  return SDOperand();
+  return Result;
 }
 
 SDOperand DAGCombiner::visitADD(SDNode *N) {
@@ -2622,7 +2611,7 @@ SDOperand DAGCombiner::visitLOAD(SDNode *N) {
   SDOperand Chain    = N->getOperand(0);
   SDOperand Ptr      = N->getOperand(1);
   SDOperand SrcValue = N->getOperand(2);
-
+  
   // If there are no uses of the loaded value, change uses of the chain value
   // into uses of the chain input (i.e. delete the dead load).
   if (N->hasNUsesOfValue(0, 0))
@@ -2635,27 +2624,23 @@ SDOperand DAGCombiner::visitLOAD(SDNode *N) {
   if (Chain.getOpcode() == ISD::STORE && Chain.getOperand(2) == Ptr &&
       Chain.getOperand(1).getValueType() == N->getValueType(0))
     return CombineTo(N, Chain.getOperand(1), Chain);
-  
-  // We can only move the load if it has a user of it's chain result.  Otherwise
-  // there is no place to attach it's old chain.
+    
   if (CombinerAA) { 
     // Walk up chain skipping non-aliasing memory nodes.
     SDOperand BetterChain = FindBetterChain(N, Chain);
     
-    // If the there is a better chain.
+    // If there is a better chain.
     if (Chain != BetterChain) {
       // Replace the chain to void dependency.
       SDOperand ReplLoad = DAG.getLoad(N->getValueType(0), BetterChain, Ptr,
                                        SrcValue);
 
-      // Create token factor to keep chain around.
+      // Create token factor to keep old chain connected.
       SDOperand Token = DAG.getNode(ISD::TokenFactor, MVT::Other,
                                     Chain, ReplLoad.getValue(1));
-
-      // Replace uses with load and token factor.
-      CombineTo(N, ReplLoad.getValue(0), Token);
-
-      return SDOperand(N, 0);
+      
+      // Replace uses with load result and token factor.
+      return CombineTo(N, ReplLoad.getValue(0), Token);
     }
   }
 
@@ -2720,23 +2705,14 @@ SDOperand DAGCombiner::visitSTORE(SDNode *N) {
     // Walk up chain skipping non-aliasing memory nodes.
     SDOperand BetterChain = FindBetterChain(N, Chain);
     
-    // If the there is a better chain.
+    // If there is a better chain.
     if (Chain != BetterChain) {
-      // Replace the chain to void dependency.
+      // Replace the chain to avoid dependency.
       SDOperand ReplStore = DAG.getNode(ISD::STORE, MVT::Other,
                                         BetterChain, Value, Ptr,
                                         SrcValue);
       // Create token to keep both nodes around.
-      SDOperand Token = DAG.getNode(ISD::TokenFactor, MVT::Other,
-                                    Chain, ReplStore);
-
-      // Make sure we merge token factors.
-      AddUsersToWorkList(N);
-      
-      // Old chain needs to be cleaned up.
-      AddToWorkList(Chain.Val);
-         
-      return Token;
+      return DAG.getNode(ISD::TokenFactor, MVT::Other, Chain, ReplStore);
     }
   }
   
@@ -3946,30 +3922,37 @@ SDOperand DAGCombiner::BuildUDIV(SDNode *N) {
   return S;
 }
 
-/// FindBaseOffset - Return true if we can determine base and offset information
-/// from a given pointer operand.  Provides base and offset as a result.
+/// FindBaseOffset - Return true if base is known not to alias with anything
+/// but itself.  Provides base object and offset as results.
 bool DAGCombiner::FindBaseOffset(SDOperand Ptr,
                                  SDOperand &Object, int64_t &Offset) {
-  
-  // Is it a frame variable, global or constant.
-  if (isa<FrameIndexSDNode>(Ptr) ||
-      isa<ConstantPoolSDNode>(Ptr) ||
-      isa<GlobalAddressSDNode>(Ptr)) {
-    Object = Ptr; Offset = 0;
-    return true;
-  } else if (Ptr.getOpcode() == ISD::ADD &&
-             FindBaseOffset(Ptr.getOperand(0), Object, Offset)) {
-    // If it's an add of an simple constant then include it in the offset.
+  // If it's an adding or subtracting a simple constant then add the constant
+  // to the offset.
+  if (Ptr.getOpcode() == ISD::ADD) {
     if (ConstantSDNode *C = dyn_cast<ConstantSDNode>(Ptr.getOperand(1))) {
+      bool IsNonAliasing = FindBaseOffset(Ptr.getOperand(0), Object, Offset);
       Offset += C->getValue();
-      return true;
+      return IsNonAliasing;
+    }
+  } else if (Ptr.getOpcode() == ISD::SUB) {
+  // FIXME - Aren't all subtract constants converted to add negative constant.
+    if (ConstantSDNode *C = dyn_cast<ConstantSDNode>(Ptr.getOperand(1))) {
+      bool IsNonAliasing = FindBaseOffset(Ptr.getOperand(0), Object, Offset);
+      Offset -= C->getValue();
+      return IsNonAliasing;
     }
   }
-                                 
-  return false;                               
+  
+  // Primitive operation.
+  Object = Ptr; Offset = 0;
+  
+  // If it's any of the following then it can't alias with anything but itself.
+  return isa<FrameIndexSDNode>(Ptr) ||
+         isa<ConstantPoolSDNode>(Ptr) ||
+         isa<GlobalAddressSDNode>(Ptr);
 }
 
-/// isAlias - Return true if there is the possibility that the two addresses
+/// isAlias - Return true if there is any possibility that the two addresses
 /// overlap.
 bool DAGCombiner::isAlias(SDOperand Ptr1, int64_t Size1,
                           SDOperand SrcValue1,
@@ -3978,22 +3961,20 @@ bool DAGCombiner::isAlias(SDOperand Ptr1, int64_t Size1,
   // If they are the same then they must be aliases.
   if (Ptr1 == Ptr2) return true;
   
-  // Gather base offset information.  Objects can be frame variables, globals
-  // or constants.
+  // Gather base node and offset information.
   SDOperand Object1, Object2;
   int64_t Offset1, Offset2;
-  if (FindBaseOffset(Ptr1, Object1, Offset1) &&
-      FindBaseOffset(Ptr2, Object2, Offset2)) {
-    // If they have a different base address, then they can't alias.
-    if (Object1 != Object2) return false;
-    
+  bool IsNonAliasing1 = FindBaseOffset(Ptr1, Object1, Offset1);
+  bool IsNonAliasing2 = FindBaseOffset(Ptr2, Object2, Offset2);
+  
+  // If they have a same base address then...
+  if (Object1 == Object2) {
     // Check to see if the addresses overlap.
-    if ((Offset1 + Size1) <= Offset2 || (Offset2 + Size2) <= Offset1)
-      return false;
+    return !((Offset1 + Size1) <= Offset2 || (Offset2 + Size2) <= Offset1);
   }
   
-  // Otherwise we don't know and have to play it safe.
-  return true;
+  // Otherwise they alias if they are both non aliasing.
+  return !IsNonAliasing1 && IsNonAliasing2;
 }
 
 /// FindAliasInfo - Extracts the relevant alias information from the memory
@@ -4012,87 +3993,108 @@ void DAGCombiner::FindAliasInfo(SDNode *N,
     SrcValue = N->getOperand(3);
     break;
   default:
-    assert(0 && "getAliasInfo expected a memory op");
+    assert(0 && "FindAliasInfo expected a memory operand");
   }
 }
 
-/// hasChain - Return true if Op has a chain.  Provides chain if present.
-///
-bool DAGCombiner::hasChain(SDOperand Op, SDOperand &Chain) {
-  if (Op.getNumOperands() == 0) return false;
-  Chain = Op.getOperand(0);
-  return Chain.getValueType() == MVT::Other;
-}
-
-/// FindBetterChain - Walk up chain skipping non-aliasing memory nodes, looking
-/// for a better chain.
-SDOperand DAGCombiner::FindBetterChain(SDNode *N, SDOperand Chain) {
+/// GatherAllAliases - Walk up chain skipping non-aliasing memory nodes,
+/// looking for aliasing nodes and adding them to the Aliases vector.
+void DAGCombiner::GatherAllAliases(SDNode *N, SDOperand Chain,
+                                   SmallVector<SDOperand, 8> &Aliases) {
+  SmallVector<SDOperand, 8> Ops;        // List of operands to visit.
+  std::set<SDNode *> Visited;           // Visited node set.
+  
   // Get alias information for node.
   SDOperand Ptr;
   int64_t Size;
   SDOperand SrcValue;
   FindAliasInfo(N, Ptr, Size, SrcValue);
 
-  // While we don't encounter any aliasing memory nodes walk up chain.
-  while (true) {
-    switch (Chain.getOpcode()) {
-    case ISD::EntryToken:
-      // Entry token is ideal chain operand.
-      return Chain;
-    case ISD::LOAD:
-    case ISD::STORE: {
-      // Get alias information for chain.
-      SDOperand ChainPtr;
-      int64_t ChainSize;
-      SDOperand ChainSrcValue;
-      FindAliasInfo(Chain.Val, ChainPtr, ChainSize, ChainSrcValue);
-      
-      // If chain is alias then stop here, otherwise continue up chain.
-      if (isAlias(Ptr, Size, SrcValue, ChainPtr, ChainSize, ChainSrcValue))
-        return Chain;
-      else
-        Chain = Chain.getOperand(0);
-      
-      break;
-    }
-    case ISD::TokenFactor: {
-      // Continue up each of token factor operand and accumulate results in
-      // a new token factor.  CSE will handle duplicate elimination.
-      SmallVector<SDOperand, 8> Ops;  // Ops for replacing token factor.
-      bool Change = false;
-      
-      // For each token factor operand. 
-      for (unsigned i = 0, e = Chain.getNumOperands(); i != e; ++i) {
-        SDOperand Op = Chain.getOperand(i);
-        SDOperand OpChain = FindBetterChain(N, Op);
+  // Starting off.
+  Ops.push_back(Chain);
+  
+  // While there are nodes to process.
+  while (!Ops.empty()) {
+    SDOperand Op = Ops.back();
+    Ops.pop_back();
+    
+    for (bool Done = false; !Done;) {
+      // Don't bother if we've been before.
+      if (Visited.find(Op.Val) != Visited.end()) break;
+      Visited.insert(Op.Val);
+    
+      // Assume we're done.
+      Done = true;
+
+      switch (Op.getOpcode()) {
+      case ISD::EntryToken:
+        // Entry token is ideal chain operand, but handled in FindBetterChain.
+        break;
         
-        // Make sure we don't duplicate an operand.
-        if (OpChain.getOpcode() != ISD::EntryToken &&
-            std::find(Ops.begin(), Ops.end(), OpChain) == Ops.end()) {
-          Ops.push_back(OpChain);
+      case ISD::LOAD:
+      case ISD::STORE: {
+        // Get alias information for Op.
+        SDOperand OpPtr;
+        int64_t OpSize;
+        SDOperand OpSrcValue;
+        FindAliasInfo(Op.Val, OpPtr, OpSize, OpSrcValue);
+        
+        // If chain is alias then stop here.
+        if (isAlias(Ptr, Size, SrcValue, OpPtr, OpSize, OpSrcValue)) {
+          Aliases.push_back(Op);
+        } else {
+          // Otherwise walk up the chain.
+          // Clean up old chain.
+          AddToWorkList(Op.Val);
+          // Try up further.
+          Op = Op.getOperand(0);      
+          // We're not done yet.
+          Done = false;
         }
+        break;
+      }
+      
+      case ISD::TokenFactor:
+        // Queue up operands in reverse order to maintain prior order.
+        for (unsigned n = Op.getNumOperands(); n;)
+          Ops.push_back(Op.getOperand(--n));
+        // Eliminate the token factor if we can.
+        AddToWorkList(Op.Val);
+        break;
         
-        // If we added a new operand.
-        Change = Change || Op != OpChain; 
+      default:
+        // For all other instructions we will just have to take what we can get.
+        Aliases.push_back(Op);
+        break;
       }
-      
-      // If we have new operands.
-      if (Change) {
-        // Create a specialized token factor for this chain. getNode CSE will
-        // handle duplicates. If it's a single operand, getNode will just
-        // return the opernand instead of a new token factor.
-        return DAG.getNode(ISD::TokenFactor, MVT::Other, &Ops[0], Ops.size());
-      }
-      
-      // Leave things alone.
-      return Chain;
-    }
-    // For all other instructions we will just have to take what we can get.
-    default: return Chain;
     }
   }
+}
+
+/// FindBetterChain - Walk up chain skipping non-aliasing memory nodes, looking
+/// for a better chain (aliasing node.)
+SDOperand DAGCombiner::FindBetterChain(SDNode *N, SDOperand OldChain) {
+  SmallVector<SDOperand, 8> Aliases;  // Ops for replacing token factor.
   
-  return Chain;
+  // Accumulate all the aliases to this node.
+  GatherAllAliases(N, OldChain, Aliases);
+  
+  if (Aliases.size() == 0) {
+    // If no operands then chain to entry token.
+    return DAG.getEntryNode();
+  } else if (Aliases.size() == 1) {
+    // If a single operand then chain to it.  We don't need to revisit it.
+    return Aliases[0];
+  }
+
+  // Construct a custom tailored token factor.
+  SDOperand NewChain = DAG.getNode(ISD::TokenFactor, MVT::Other,
+                                   &Aliases[0], Aliases.size());
+
+  // Make sure the old chain gets cleaned up.
+  if (NewChain != OldChain) AddToWorkList(OldChain.Val);
+  
+  return NewChain;
 }
 
 // SelectionDAG::Combine - This is the entry point for the file.
