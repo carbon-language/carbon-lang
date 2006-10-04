@@ -70,9 +70,10 @@
 #include "llvm/Transforms/Scalar.h"
 #include "llvm/Support/CFG.h"
 #include "llvm/Support/CommandLine.h"
+#include "llvm/Support/Compiler.h"
 #include "llvm/Support/ConstantRange.h"
 #include "llvm/Support/InstIterator.h"
-#include "llvm/Support/Compiler.h"
+#include "llvm/Support/ManagedStatic.h"
 #include "llvm/ADT/Statistic.h"
 #include <cmath>
 #include <iostream>
@@ -165,11 +166,11 @@ bool SCEVCouldNotCompute::classof(const SCEV *S) {
 // SCEVConstants - Only allow the creation of one SCEVConstant for any
 // particular value.  Don't use a SCEVHandle here, or else the object will
 // never be deleted!
-static std::map<ConstantInt*, SCEVConstant*> SCEVConstants;
+static ManagedStatic<std::map<ConstantInt*, SCEVConstant*> > SCEVConstants;
 
 
 SCEVConstant::~SCEVConstant() {
-  SCEVConstants.erase(V);
+  SCEVConstants->erase(V);
 }
 
 SCEVHandle SCEVConstant::get(ConstantInt *V) {
@@ -179,7 +180,7 @@ SCEVHandle SCEVConstant::get(ConstantInt *V) {
     V = cast<ConstantUInt>(ConstantExpr::getCast(V, NewTy));
   }
 
-  SCEVConstant *&R = SCEVConstants[V];
+  SCEVConstant *&R = (*SCEVConstants)[V];
   if (R == 0) R = new SCEVConstant(V);
   return R;
 }
@@ -197,7 +198,8 @@ void SCEVConstant::print(std::ostream &OS) const {
 // SCEVTruncates - Only allow the creation of one SCEVTruncateExpr for any
 // particular input.  Don't use a SCEVHandle here, or else the object will
 // never be deleted!
-static std::map<std::pair<SCEV*, const Type*>, SCEVTruncateExpr*> SCEVTruncates;
+static ManagedStatic<std::map<std::pair<SCEV*, const Type*>, 
+                     SCEVTruncateExpr*> > SCEVTruncates;
 
 SCEVTruncateExpr::SCEVTruncateExpr(const SCEVHandle &op, const Type *ty)
   : SCEV(scTruncate), Op(op), Ty(ty) {
@@ -209,7 +211,7 @@ SCEVTruncateExpr::SCEVTruncateExpr(const SCEVHandle &op, const Type *ty)
 }
 
 SCEVTruncateExpr::~SCEVTruncateExpr() {
-  SCEVTruncates.erase(std::make_pair(Op, Ty));
+  SCEVTruncates->erase(std::make_pair(Op, Ty));
 }
 
 ConstantRange SCEVTruncateExpr::getValueRange() const {
@@ -223,8 +225,8 @@ void SCEVTruncateExpr::print(std::ostream &OS) const {
 // SCEVZeroExtends - Only allow the creation of one SCEVZeroExtendExpr for any
 // particular input.  Don't use a SCEVHandle here, or else the object will never
 // be deleted!
-static std::map<std::pair<SCEV*, const Type*>,
-                SCEVZeroExtendExpr*> SCEVZeroExtends;
+static ManagedStatic<std::map<std::pair<SCEV*, const Type*>,
+                     SCEVZeroExtendExpr*> > SCEVZeroExtends;
 
 SCEVZeroExtendExpr::SCEVZeroExtendExpr(const SCEVHandle &op, const Type *ty)
   : SCEV(scTruncate), Op(op), Ty(ty) {
@@ -236,7 +238,7 @@ SCEVZeroExtendExpr::SCEVZeroExtendExpr(const SCEVHandle &op, const Type *ty)
 }
 
 SCEVZeroExtendExpr::~SCEVZeroExtendExpr() {
-  SCEVZeroExtends.erase(std::make_pair(Op, Ty));
+  SCEVZeroExtends->erase(std::make_pair(Op, Ty));
 }
 
 ConstantRange SCEVZeroExtendExpr::getValueRange() const {
@@ -250,13 +252,13 @@ void SCEVZeroExtendExpr::print(std::ostream &OS) const {
 // SCEVCommExprs - Only allow the creation of one SCEVCommutativeExpr for any
 // particular input.  Don't use a SCEVHandle here, or else the object will never
 // be deleted!
-static std::map<std::pair<unsigned, std::vector<SCEV*> >,
-                SCEVCommutativeExpr*> SCEVCommExprs;
+static ManagedStatic<std::map<std::pair<unsigned, std::vector<SCEV*> >,
+                     SCEVCommutativeExpr*> > SCEVCommExprs;
 
 SCEVCommutativeExpr::~SCEVCommutativeExpr() {
-  SCEVCommExprs.erase(std::make_pair(getSCEVType(),
-                                     std::vector<SCEV*>(Operands.begin(),
-                                                        Operands.end())));
+  SCEVCommExprs->erase(std::make_pair(getSCEVType(),
+                                      std::vector<SCEV*>(Operands.begin(),
+                                                         Operands.end())));
 }
 
 void SCEVCommutativeExpr::print(std::ostream &OS) const {
@@ -298,10 +300,11 @@ replaceSymbolicValuesWithConcrete(const SCEVHandle &Sym,
 // SCEVSDivs - Only allow the creation of one SCEVSDivExpr for any particular
 // input.  Don't use a SCEVHandle here, or else the object will never be
 // deleted!
-static std::map<std::pair<SCEV*, SCEV*>, SCEVSDivExpr*> SCEVSDivs;
+static ManagedStatic<std::map<std::pair<SCEV*, SCEV*>, 
+                     SCEVSDivExpr*> > SCEVSDivs;
 
 SCEVSDivExpr::~SCEVSDivExpr() {
-  SCEVSDivs.erase(std::make_pair(LHS, RHS));
+  SCEVSDivs->erase(std::make_pair(LHS, RHS));
 }
 
 void SCEVSDivExpr::print(std::ostream &OS) const {
@@ -317,13 +320,13 @@ const Type *SCEVSDivExpr::getType() const {
 // SCEVAddRecExprs - Only allow the creation of one SCEVAddRecExpr for any
 // particular input.  Don't use a SCEVHandle here, or else the object will never
 // be deleted!
-static std::map<std::pair<const Loop *, std::vector<SCEV*> >,
-                SCEVAddRecExpr*> SCEVAddRecExprs;
+static ManagedStatic<std::map<std::pair<const Loop *, std::vector<SCEV*> >,
+                     SCEVAddRecExpr*> > SCEVAddRecExprs;
 
 SCEVAddRecExpr::~SCEVAddRecExpr() {
-  SCEVAddRecExprs.erase(std::make_pair(L,
-                                       std::vector<SCEV*>(Operands.begin(),
-                                                          Operands.end())));
+  SCEVAddRecExprs->erase(std::make_pair(L,
+                                        std::vector<SCEV*>(Operands.begin(),
+                                                           Operands.end())));
 }
 
 SCEVHandle SCEVAddRecExpr::
@@ -366,9 +369,9 @@ void SCEVAddRecExpr::print(std::ostream &OS) const {
 // SCEVUnknowns - Only allow the creation of one SCEVUnknown for any particular
 // value.  Don't use a SCEVHandle here, or else the object will never be
 // deleted!
-static std::map<Value*, SCEVUnknown*> SCEVUnknowns;
+static ManagedStatic<std::map<Value*, SCEVUnknown*> > SCEVUnknowns;
 
-SCEVUnknown::~SCEVUnknown() { SCEVUnknowns.erase(V); }
+SCEVUnknown::~SCEVUnknown() { SCEVUnknowns->erase(V); }
 
 bool SCEVUnknown::isLoopInvariant(const Loop *L) const {
   // All non-instruction values are loop invariant.  All instructions are loop
@@ -571,7 +574,7 @@ SCEVHandle SCEVTruncateExpr::get(const SCEVHandle &Op, const Type *Ty) {
       return SCEVAddRecExpr::get(Operands, AddRec->getLoop());
   }
 
-  SCEVTruncateExpr *&Result = SCEVTruncates[std::make_pair(Op, Ty)];
+  SCEVTruncateExpr *&Result = (*SCEVTruncates)[std::make_pair(Op, Ty)];
   if (Result == 0) Result = new SCEVTruncateExpr(Op, Ty);
   return Result;
 }
@@ -585,7 +588,7 @@ SCEVHandle SCEVZeroExtendExpr::get(const SCEVHandle &Op, const Type *Ty) {
   // operands (often constants).  This would allow analysis of something like
   // this:  for (unsigned char X = 0; X < 100; ++X) { int Y = X; }
 
-  SCEVZeroExtendExpr *&Result = SCEVZeroExtends[std::make_pair(Op, Ty)];
+  SCEVZeroExtendExpr *&Result = (*SCEVZeroExtends)[std::make_pair(Op, Ty)];
   if (Result == 0) Result = new SCEVZeroExtendExpr(Op, Ty);
   return Result;
 }
@@ -813,8 +816,8 @@ SCEVHandle SCEVAddExpr::get(std::vector<SCEVHandle> &Ops) {
   // Okay, it looks like we really DO need an add expr.  Check to see if we
   // already have one, otherwise create a new one.
   std::vector<SCEV*> SCEVOps(Ops.begin(), Ops.end());
-  SCEVCommutativeExpr *&Result = SCEVCommExprs[std::make_pair(scAddExpr,
-                                                              SCEVOps)];
+  SCEVCommutativeExpr *&Result = (*SCEVCommExprs)[std::make_pair(scAddExpr,
+                                                                 SCEVOps)];
   if (Result == 0) Result = new SCEVAddExpr(Ops);
   return Result;
 }
@@ -976,8 +979,8 @@ SCEVHandle SCEVMulExpr::get(std::vector<SCEVHandle> &Ops) {
   // Okay, it looks like we really DO need an mul expr.  Check to see if we
   // already have one, otherwise create a new one.
   std::vector<SCEV*> SCEVOps(Ops.begin(), Ops.end());
-  SCEVCommutativeExpr *&Result = SCEVCommExprs[std::make_pair(scMulExpr,
-                                                              SCEVOps)];
+  SCEVCommutativeExpr *&Result = (*SCEVCommExprs)[std::make_pair(scMulExpr,
+                                                                 SCEVOps)];
   if (Result == 0)
     Result = new SCEVMulExpr(Ops);
   return Result;
@@ -1004,7 +1007,7 @@ SCEVHandle SCEVSDivExpr::get(const SCEVHandle &LHS, const SCEVHandle &RHS) {
 
   // FIXME: implement folding of (X*4)/4 when we know X*4 doesn't overflow.
 
-  SCEVSDivExpr *&Result = SCEVSDivs[std::make_pair(LHS, RHS)];
+  SCEVSDivExpr *&Result = (*SCEVSDivs)[std::make_pair(LHS, RHS)];
   if (Result == 0) Result = new SCEVSDivExpr(LHS, RHS);
   return Result;
 }
@@ -1040,8 +1043,8 @@ SCEVHandle SCEVAddRecExpr::get(std::vector<SCEVHandle> &Operands,
     }
 
   SCEVAddRecExpr *&Result =
-    SCEVAddRecExprs[std::make_pair(L, std::vector<SCEV*>(Operands.begin(),
-                                                         Operands.end()))];
+    (*SCEVAddRecExprs)[std::make_pair(L, std::vector<SCEV*>(Operands.begin(),
+                                                            Operands.end()))];
   if (Result == 0) Result = new SCEVAddRecExpr(Operands, L);
   return Result;
 }
@@ -1049,7 +1052,7 @@ SCEVHandle SCEVAddRecExpr::get(std::vector<SCEVHandle> &Operands,
 SCEVHandle SCEVUnknown::get(Value *V) {
   if (ConstantInt *CI = dyn_cast<ConstantInt>(V))
     return SCEVConstant::get(CI);
-  SCEVUnknown *&Result = SCEVUnknowns[V];
+  SCEVUnknown *&Result = (*SCEVUnknowns)[V];
   if (Result == 0) Result = new SCEVUnknown(V);
   return Result;
 }
