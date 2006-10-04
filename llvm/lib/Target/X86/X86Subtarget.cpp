@@ -167,7 +167,7 @@ static const char *GetCurrentX86CPU() {
 }
 
 X86Subtarget::X86Subtarget(const Module &M, const std::string &FS, bool is64Bit)
-  :  AsmFlavor(AsmWriterFlavor)
+  : AsmFlavor(AsmWriterFlavor)
   , X86SSELevel(NoMMXSSE)
   , X863DNowLevel(NoThreeDNow)
   , HasX86_64(false)
