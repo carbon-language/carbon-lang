@@ -1777,8 +1777,8 @@ SDOperand RegsForValue::getCopyFromRegs(SelectionDAG &DAG,
     assert(Regs.size() == 2 &&
            "Cannot expand to more than 2 elts yet!");
     SDOperand Hi = DAG.getCopyFromReg(Chain, Regs[1], RegVT, Flag);
-    Chain = Val.getValue(1);
-    Flag  = Val.getValue(2);
+    Chain = Hi.getValue(1);
+    Flag  = Hi.getValue(2);
     if (DAG.getTargetLoweringInfo().isLittleEndian())
       return DAG.getNode(ISD::BUILD_PAIR, ValueVT, Val, Hi);
     else
