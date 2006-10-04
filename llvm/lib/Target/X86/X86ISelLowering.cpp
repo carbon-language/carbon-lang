@@ -386,6 +386,7 @@ X86TargetLowering::X86TargetLowering(TargetMachine &TM)
 
   // We have target-specific dag combine patterns for the following nodes:
   setTargetDAGCombine(ISD::VECTOR_SHUFFLE);
+  setTargetDAGCombine(ISD::SELECT);
 
   computeRegisterProperties();
 
@@ -5355,6 +5356,69 @@ static SDOperand PerformShuffleCombine(SDNode *N, SelectionDAG &DAG,
   }
 }
 
+/// PerformSELECTCombine - Do target-specific dag combines on SELECT nodes.
+static SDOperand PerformSELECTCombine(SDNode *N, SelectionDAG &DAG,
+                                      const X86Subtarget *Subtarget) {
+  SDOperand Cond = N->getOperand(0);
+  
+  // If we have SSE[12] support, try to form min/max nodes.
+  if (Subtarget->hasSSE2() &&
+      (N->getValueType(0) == MVT::f32 || N->getValueType(0) == MVT::f64)) {
+    if (Cond.getOpcode() == ISD::SETCC) {
+      // Get the LHS/RHS of the select.
+      SDOperand LHS = N->getOperand(1);
+      SDOperand RHS = N->getOperand(2);
+      ISD::CondCode CC = cast<CondCodeSDNode>(Cond.getOperand(2))->get();
+      
+      unsigned IntNo = 0;
+      if (LHS == Cond.getOperand(0) && RHS == Cond.getOperand(1)) {
+        // (X olt Y) ? X : Y -> min
+        if (CC == ISD::SETOLT || CC == ISD::SETLT)
+          IntNo = LHS.getValueType() == MVT::f32 ? Intrinsic::x86_sse_min_ss :
+                                                   Intrinsic::x86_sse2_min_sd;
+        // (X uge Y) ? X : Y -> max
+        if (CC == ISD::SETUGE || CC == ISD::SETGE)
+          IntNo = LHS.getValueType() == MVT::f32 ? Intrinsic::x86_sse_max_ss :
+            Intrinsic::x86_sse2_max_sd;
+        // TODO: Handle more cases if unsafe math!
+      } else if (LHS == Cond.getOperand(1) && RHS == Cond.getOperand(0)) {
+        // (X uge Y) ? Y : X -> min
+        if (CC == ISD::SETUGE || CC == ISD::SETGE)
+          IntNo = LHS.getValueType() == MVT::f32 ? Intrinsic::x86_sse_min_ss :
+            Intrinsic::x86_sse2_min_sd;
+        // (X olt Y) ? Y : X -> max
+        if (CC == ISD::SETOLT || CC == ISD::SETLT)
+          IntNo = LHS.getValueType() == MVT::f32 ? Intrinsic::x86_sse_max_ss :
+            Intrinsic::x86_sse2_max_sd;
+        // TODO: Handle more cases if unsafe math!
+      }
+      
+      // minss/maxss take a v4f32 operand.
+      if (IntNo) {
+        if (LHS.getValueType() == MVT::f32) {
+          LHS = DAG.getNode(ISD::SCALAR_TO_VECTOR, MVT::v4f32, LHS);
+          RHS = DAG.getNode(ISD::SCALAR_TO_VECTOR, MVT::v4f32, RHS);
+        } else {
+          LHS = DAG.getNode(ISD::SCALAR_TO_VECTOR, MVT::v2f64, LHS);
+          RHS = DAG.getNode(ISD::SCALAR_TO_VECTOR, MVT::v2f64, RHS);
+        }
+        
+        MVT::ValueType PtrTy = Subtarget->is64Bit() ? MVT::i64 : MVT::i32;
+        SDOperand IntNoN = DAG.getConstant(IntNo, PtrTy);
+        
+        SDOperand Val = DAG.getNode(ISD::INTRINSIC_WO_CHAIN, LHS.getValueType(),
+                                    IntNoN, LHS, RHS);
+        return DAG.getNode(ISD::EXTRACT_VECTOR_ELT, N->getValueType(0), Val,
+                           DAG.getConstant(0, PtrTy));
+      }
+    }
+    
+  }
+
+  return SDOperand();
+}
+
+
 SDOperand X86TargetLowering::PerformDAGCombine(SDNode *N, 
                                                DAGCombinerInfo &DCI) const {
   TargetMachine &TM = getTargetMachine();
@@ -5363,6 +5427,8 @@ SDOperand X86TargetLowering::PerformDAGCombine(SDNode *N,
   default: break;
   case ISD::VECTOR_SHUFFLE:
     return PerformShuffleCombine(N, DAG, Subtarget);
+  case ISD::SELECT:
+    return PerformSELECTCombine(N, DAG, Subtarget);
   }
 
   return SDOperand();
