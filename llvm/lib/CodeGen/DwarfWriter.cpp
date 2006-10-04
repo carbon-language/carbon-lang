@@ -1259,16 +1259,26 @@ DIE *DwarfWriter::NewType(DIE *Context, TypeDesc *TyDesc, CompileUnit *Unit) {
     Unit->getDie()->AddChild(Die);
     return Die;
   }
-  
+ 
   // Check for pre-existence.
   DIE *&Slot = Unit->getDieMapSlotFor(TyDesc);
   if (Slot) return Slot;
 
+  // Type DIE result.
+  DIE *Ty = NULL;
+
+  // Short cut for handling subprogram types (not really a TyDesc.)
+  if (SubprogramDesc *SubprogramTy = dyn_cast<SubprogramDesc>(TyDesc)) {
+    Slot = Ty = new DIE(DW_TAG_pointer_type);
+    Ty->AddUInt(DW_AT_byte_size, 0, TAI->getAddressSize());
+    Ty->AddString(DW_AT_name, DW_FORM_string, SubprogramTy->getName());
+    Context->AddChild(Ty);
+    return Slot;
+  }
+  
   // Get core information.
   const std::string &Name = TyDesc->getName();
   uint64_t Size = TyDesc->getSize() >> 3;
-  
-  DIE *Ty = NULL;
   
   if (BasicTypeDesc *BasicTy = dyn_cast<BasicTypeDesc>(TyDesc)) {
     // Fundamental types like int, float, bool
@@ -1526,14 +1536,8 @@ DIE *DwarfWriter::NewType(DIE *Context, TypeDesc *TyDesc, CompileUnit *Unit) {
     }
     default: break;
     }
-  } else if (SubprogramDesc *SubprogramTy = dyn_cast<SubprogramDesc>(TyDesc)) {
-    Slot =  Ty = new DIE(DW_TAG_pointer_type);
-    Ty->AddUInt(DW_AT_byte_size, 0, TAI->getAddressSize());
-    Ty->AddString(DW_AT_name, DW_FORM_string, SubprogramTy->getName());
-    Context->AddChild(Ty);
-    return Slot;
   }
-  
+    
   assert(Ty && "Type not supported yet");
  
   // Add size if non-zero (derived types don't have a size.)
