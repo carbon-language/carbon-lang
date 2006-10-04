@@ -4,6 +4,30 @@
 
 //===---------------------------------------------------------------------===//
 
+There are serious issues folding loads into "scalar sse" intrinsics.  For
+example, this:
+
+float minss4( float x, float *y ) { 
+  return _mm_cvtss_f32(_mm_min_ss(_mm_set_ss(x),_mm_set_ss(*y)));
+}
+
+compiles to:
+
+_minss4:
+        subl $4, %esp
+        movl 12(%esp), %eax
+***     movss 8(%esp), %xmm0
+***     movss (%eax), %xmm1
+***     minss %xmm1, %xmm0
+        movss %xmm0, (%esp)
+        flds (%esp)
+        addl $4, %esp
+        ret
+
+Each operand of the minss is a load.  At least one should be folded!
+
+//===---------------------------------------------------------------------===//
+
 When compiled with unsafemath enabled, "main" should enable SSE DAZ mode and
 other fast SSE modes.
 
