@@ -12,6 +12,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Support/Annotation.h"
+#include "llvm/Support/ManagedStatic.h"
 #include <map>
 using namespace llvm;
 
@@ -30,7 +31,7 @@ typedef std::map<const std::string, unsigned> IDMapType;
 static unsigned IDCounter = 0;  // Unique ID counter
 
 // Static member to ensure initialiation on demand.
-static IDMapType &getIDMap() { static IDMapType TheMap; return TheMap; }
+static ManagedStatic<IDMapType> IDMap;
 
 // On demand annotation creation support...
 typedef Annotation *(*AnnFactory)(AnnotationID, const Annotable *, void *);
@@ -53,9 +54,9 @@ static void eraseFromFactMap(unsigned ID) {
 }
 
 AnnotationID AnnotationManager::getID(const std::string &Name) {  // Name -> ID
-  IDMapType::iterator I = getIDMap().find(Name);
-  if (I == getIDMap().end()) {
-    getIDMap()[Name] = IDCounter++;   // Add a new element
+  IDMapType::iterator I = IDMap->find(Name);
+  if (I == IDMap->end()) {
+    (*IDMap)[Name] = IDCounter++;   // Add a new element
     return IDCounter-1;
   }
   return I->second;
@@ -74,7 +75,7 @@ AnnotationID AnnotationManager::getID(const std::string &Name, Factory Fact,
 // only be used for debugging.
 //
 const std::string &AnnotationManager::getName(AnnotationID ID) {  // ID -> Name
-  IDMapType &TheMap = getIDMap();
+  IDMapType &TheMap = *IDMap;
   for (IDMapType::iterator I = TheMap.begin(); ; ++I) {
     assert(I != TheMap.end() && "Annotation ID is unknown!");
     if (I->second == ID.ID) return I->first;
