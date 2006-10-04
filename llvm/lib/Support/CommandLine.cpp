@@ -18,6 +18,7 @@
 
 #include "llvm/Config/config.h"
 #include "llvm/Support/CommandLine.h"
+#include "llvm/Support/ManagedStatic.h"
 #include "llvm/System/Path.h"
 #include <algorithm>
 #include <functional>
@@ -61,36 +62,23 @@ static std::string ProgramName = "<premain>";
 static const char *ProgramOverview = 0;
 
 // This collects additional help to be printed.
-static std::vector<const char*> &MoreHelp() {
-  static std::vector<const char*> moreHelp;
-  return moreHelp;
-}
+static ManagedStatic<std::vector<const char*> > MoreHelp;
 
-extrahelp::extrahelp(const char* Help)
+extrahelp::extrahelp(const char *Help)
   : morehelp(Help) {
-  MoreHelp().push_back(Help);
+  MoreHelp->push_back(Help);
 }
 
 //===----------------------------------------------------------------------===//
 // Basic, shared command line option processing machinery.
 //
 
-// Return the global command line option vector.  Making it a function scoped
-// static ensures that it will be initialized correctly before its first use.
-//
-static std::map<std::string, Option*> &getOpts() {
-  static std::map<std::string, Option*> CommandLineOptions;
-  return CommandLineOptions;
-}
+static ManagedStatic<std::map<std::string, Option*> > Options;
+static ManagedStatic<std::vector<Option*> > PositionalOptions;
 
 static Option *getOption(const std::string &Str) {
-  std::map<std::string,Option*>::iterator I = getOpts().find(Str);
-  return I != getOpts().end() ? I->second : 0;
-}
-
-static std::vector<Option*> &getPositionalOpts() {
-  static std::vector<Option*> Positional;
-  return Positional;
+  std::map<std::string,Option*>::iterator I = Options->find(Str);
+  return I != Options->end() ? I->second : 0;
 }
 
 static void AddArgument(const char *ArgName, Option *Opt) {
@@ -99,7 +87,7 @@ static void AddArgument(const char *ArgName, Option *Opt) {
               << ArgName << "' defined more than once!\n";
   } else {
     // Add argument to the argument map!
-    getOpts()[ArgName] = Opt;
+    (*Options)[ArgName] = Opt;
   }
 }
 
@@ -107,7 +95,7 @@ static void AddArgument(const char *ArgName, Option *Opt) {
 // options have already been processed and the map has been deleted!
 //
 static void RemoveArgument(const char *ArgName, Option *Opt) {
-  if(getOpts().empty()) return;
+  if (Options->empty()) return;
 
 #ifndef NDEBUG
   // This disgusting HACK is brought to you courtesy of GCC 3.3.2, which ICE's
@@ -115,7 +103,7 @@ static void RemoveArgument(const char *ArgName, Option *Opt) {
   std::string Tmp = ArgName;
   assert(getOption(Tmp) == Opt && "Arg not in map!");
 #endif
-  getOpts().erase(ArgName);
+  Options->erase(ArgName);
 }
 
 static inline bool ProvideOption(Option *Handler, const char *ArgName,
@@ -303,7 +291,7 @@ static Option *LookupOption(const char *&Arg, const char *&Value) {
   if (*Arg == 0) return 0;
 
   // Look up the option.
-  std::map<std::string, Option*> &Opts = getOpts();
+  std::map<std::string, Option*> &Opts = *Options;
   std::map<std::string, Option*>::iterator I =
     Opts.find(std::string(Arg, ArgEnd));
   return (I != Opts.end()) ? I->second : 0;
@@ -311,7 +299,7 @@ static Option *LookupOption(const char *&Arg, const char *&Value) {
 
 void cl::ParseCommandLineOptions(int &argc, char **argv,
                                  const char *Overview) {
-  assert((!getOpts().empty() || !getPositionalOpts().empty()) &&
+  assert((!Options->empty() || !PositionalOptions->empty()) &&
          "No options specified, or ParseCommandLineOptions called more"
          " than once!");
   sys::Path progname(argv[0]);
@@ -319,8 +307,8 @@ void cl::ParseCommandLineOptions(int &argc, char **argv,
   ProgramOverview = Overview;
   bool ErrorParsing = false;
 
-  std::map<std::string, Option*> &Opts = getOpts();
-  std::vector<Option*> &PositionalOpts = getPositionalOpts();
+  std::map<std::string, Option*> &Opts = *Options;
+  std::vector<Option*> &PositionalOpts = *PositionalOptions;
 
   // Check out the positional arguments to collect information about them.
   unsigned NumPositionalRequired = 0;
@@ -608,9 +596,9 @@ void cl::ParseCommandLineOptions(int &argc, char **argv,
 
   // Free all of the memory allocated to the map.  Command line options may only
   // be processed once!
-  getOpts().clear();
+  Opts.clear();
   PositionalOpts.clear();
-  MoreHelp().clear();
+  MoreHelp->clear();
 
   // If we had an error processing our arguments, don't let the program execute
   if (ErrorParsing) exit(1);
@@ -661,12 +649,12 @@ void Option::addArgument(const char *ArgStr) {
     AddArgument(ArgStr, this);
 
   if (getFormattingFlag() == Positional)
-    getPositionalOpts().push_back(this);
+    PositionalOptions->push_back(this);
   else if (getNumOccurrencesFlag() == ConsumeAfter) {
-    if (!getPositionalOpts().empty() &&
-        getPositionalOpts().front()->getNumOccurrencesFlag() == ConsumeAfter)
+    if (!PositionalOptions->empty() &&
+        PositionalOptions->front()->getNumOccurrencesFlag() == ConsumeAfter)
       error("Cannot specify more than one option with cl::ConsumeAfter!");
-    getPositionalOpts().insert(getPositionalOpts().begin(), this);
+    PositionalOptions->insert(PositionalOptions->begin(), this);
   }
 }
 
@@ -676,13 +664,13 @@ void Option::removeArgument(const char *ArgStr) {
 
   if (getFormattingFlag() == Positional) {
     std::vector<Option*>::iterator I =
-      std::find(getPositionalOpts().begin(), getPositionalOpts().end(), this);
-    assert(I != getPositionalOpts().end() && "Arg not registered!");
-    getPositionalOpts().erase(I);
+      std::find(PositionalOptions->begin(), PositionalOptions->end(), this);
+    assert(I != PositionalOptions->end() && "Arg not registered!");
+    PositionalOptions->erase(I);
   } else if (getNumOccurrencesFlag() == ConsumeAfter) {
-    assert(!getPositionalOpts().empty() && getPositionalOpts()[0] == this &&
+    assert(!PositionalOptions->empty() && (*PositionalOptions)[0] == this &&
            "Arg not registered correctly!");
-    getPositionalOpts().erase(getPositionalOpts().begin());
+    PositionalOptions->erase(PositionalOptions->begin());
   }
 }
 
@@ -904,22 +892,22 @@ public:
     if (Value == false) return;
 
     // Copy Options into a vector so we can sort them as we like...
-    std::vector<std::pair<std::string, Option*> > Options;
-    copy(getOpts().begin(), getOpts().end(), std::back_inserter(Options));
+    std::vector<std::pair<std::string, Option*> > Opts;
+    copy(Options->begin(), Options->end(), std::back_inserter(Opts));
 
     // Eliminate Hidden or ReallyHidden arguments, depending on ShowHidden
-    Options.erase(std::remove_if(Options.begin(), Options.end(),
-                         std::ptr_fun(ShowHidden ? isReallyHidden : isHidden)),
-                  Options.end());
+    Opts.erase(std::remove_if(Opts.begin(), Opts.end(),
+                          std::ptr_fun(ShowHidden ? isReallyHidden : isHidden)),
+               Opts.end());
 
     // Eliminate duplicate entries in table (from enum flags options, f.e.)
     {  // Give OptionSet a scope
       std::set<Option*> OptionSet;
-      for (unsigned i = 0; i != Options.size(); ++i)
-        if (OptionSet.count(Options[i].second) == 0)
-          OptionSet.insert(Options[i].second);   // Add new entry to set
+      for (unsigned i = 0; i != Opts.size(); ++i)
+        if (OptionSet.count(Opts[i].second) == 0)
+          OptionSet.insert(Opts[i].second);   // Add new entry to set
         else
-          Options.erase(Options.begin()+i--);    // Erase duplicate
+          Opts.erase(Opts.begin()+i--);    // Erase duplicate
     }
 
     if (ProgramOverview)
@@ -927,8 +915,8 @@ public:
 
     std::cout << "USAGE: " << ProgramName << " [options]";
 
-    // Print out the positional options...
-    std::vector<Option*> &PosOpts = getPositionalOpts();
+    // Print out the positional options.
+    std::vector<Option*> &PosOpts = *PositionalOptions;
     Option *CAOpt = 0;   // The cl::ConsumeAfter option, if it exists...
     if (!PosOpts.empty() && PosOpts[0]->getNumOccurrencesFlag() == ConsumeAfter)
       CAOpt = PosOpts[0];
@@ -946,21 +934,21 @@ public:
 
     // Compute the maximum argument length...
     MaxArgLen = 0;
-    for (unsigned i = 0, e = Options.size(); i != e; ++i)
-      MaxArgLen = std::max(MaxArgLen, Options[i].second->getOptionWidth());
+    for (unsigned i = 0, e = Opts.size(); i != e; ++i)
+      MaxArgLen = std::max(MaxArgLen, Opts[i].second->getOptionWidth());
 
     std::cout << "OPTIONS:\n";
-    for (unsigned i = 0, e = Options.size(); i != e; ++i)
-      Options[i].second->printOptionInfo(MaxArgLen);
+    for (unsigned i = 0, e = Opts.size(); i != e; ++i)
+      Opts[i].second->printOptionInfo(MaxArgLen);
 
     // Print any extra help the user has declared.
-    for (std::vector<const char *>::iterator I = MoreHelp().begin(),
-          E = MoreHelp().end(); I != E; ++I)
+    for (std::vector<const char *>::iterator I = MoreHelp->begin(),
+          E = MoreHelp->end(); I != E; ++I)
       std::cout << *I;
-    MoreHelp().clear();
+    MoreHelp->clear();
 
     // Halt the program since help information was printed
-    getOpts().clear();  // Don't bother making option dtors remove from map.
+    Options->clear();  // Don't bother making option dtors remove from map.
     exit(1);
   }
 };
@@ -1001,7 +989,7 @@ public:
         std::cout << " with assertions";
 #endif
         std::cout << ".\n";
-        getOpts().clear();  // Don't bother making option dtors remove from map.
+        Options->clear();  // Don't bother making option dtors remove from map.
         exit(1);
       } else {
         (*OverrideVersionPrinter)();

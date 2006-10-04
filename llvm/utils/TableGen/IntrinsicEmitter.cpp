@@ -182,11 +182,11 @@ void IntrinsicEmitter::EmitModRefInfo(const std::vector<CodeGenIntrinsic> &Ints,
     switch (Ints[i].ModRef) {
     default: break;
     case CodeGenIntrinsic::NoMem:
-      OS << "  NoMemoryTable.push_back(\"" << Ints[i].Name << "\");\n";
+      OS << "  NoMemoryTable->push_back(\"" << Ints[i].Name << "\");\n";
       break;
     case CodeGenIntrinsic::ReadArgMem:
     case CodeGenIntrinsic::ReadMem:
-      OS << "  OnlyReadsMemoryTable.push_back(\"" << Ints[i].Name << "\");\n";
+      OS << "  OnlyReadsMemoryTable->push_back(\"" << Ints[i].Name << "\");\n";
       break;
     }
   }

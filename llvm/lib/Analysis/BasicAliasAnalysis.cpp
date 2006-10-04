@@ -22,8 +22,9 @@
 #include "llvm/Instructions.h"
 #include "llvm/Pass.h"
 #include "llvm/Target/TargetData.h"
-#include "llvm/Support/GetElementPtrTypeIterator.h"
 #include "llvm/Support/Compiler.h"
+#include "llvm/Support/GetElementPtrTypeIterator.h"
+#include "llvm/Support/ManagedStatic.h"
 #include <algorithm>
 using namespace llvm;
 
@@ -801,21 +802,23 @@ static const char *OnlyReadsMemoryFns[] = {
   "feof_unlocked", "ferror_unlocked", "fileno_unlocked"
 };
 
+static ManagedStatic<std::vector<const char*> > NoMemoryTable;
+static ManagedStatic<std::vector<const char*> > OnlyReadsMemoryTable;
+
+
 AliasAnalysis::ModRefBehavior
 BasicAliasAnalysis::getModRefBehavior(Function *F, CallSite CS,
                                       std::vector<PointerAccessInfo> *Info) {
   if (!F->isExternal()) return UnknownModRefBehavior;
 
-  static std::vector<const char*> NoMemoryTable, OnlyReadsMemoryTable;
-
   static bool Initialized = false;
   if (!Initialized) {
-    NoMemoryTable.insert(NoMemoryTable.end(),
-                         DoesntAccessMemoryFns, 
-                         DoesntAccessMemoryFns+
+    NoMemoryTable->insert(NoMemoryTable->end(),
+                          DoesntAccessMemoryFns, 
+                          DoesntAccessMemoryFns+
                 sizeof(DoesntAccessMemoryFns)/sizeof(DoesntAccessMemoryFns[0]));
 
-    OnlyReadsMemoryTable.insert(OnlyReadsMemoryTable.end(),
+    OnlyReadsMemoryTable->insert(OnlyReadsMemoryTable->end(),
                                 OnlyReadsMemoryFns, 
                                 OnlyReadsMemoryFns+
                       sizeof(OnlyReadsMemoryFns)/sizeof(OnlyReadsMemoryFns[0]));
@@ -824,22 +827,22 @@ BasicAliasAnalysis::getModRefBehavior(Function *F, CallSite CS,
 #undef GET_MODREF_BEHAVIOR
     
     // Sort the table the first time through.
-    std::sort(NoMemoryTable.begin(), NoMemoryTable.end(), StringCompare());
-    std::sort(OnlyReadsMemoryTable.begin(), OnlyReadsMemoryTable.end(),
+    std::sort(NoMemoryTable->begin(), NoMemoryTable->end(), StringCompare());
+    std::sort(OnlyReadsMemoryTable->begin(), OnlyReadsMemoryTable->end(),
               StringCompare());
     Initialized = true;
   }
 
   std::vector<const char*>::iterator Ptr =
-    std::lower_bound(NoMemoryTable.begin(), NoMemoryTable.end(),
+    std::lower_bound(NoMemoryTable->begin(), NoMemoryTable->end(),
                      F->getName().c_str(), StringCompare());
-  if (Ptr != NoMemoryTable.end() && *Ptr == F->getName())
+  if (Ptr != NoMemoryTable->end() && *Ptr == F->getName())
     return DoesNotAccessMemory;
 
-  Ptr = std::lower_bound(OnlyReadsMemoryTable.begin(),
-                         OnlyReadsMemoryTable.end(),
+  Ptr = std::lower_bound(OnlyReadsMemoryTable->begin(),
+                         OnlyReadsMemoryTable->end(),
                          F->getName().c_str(), StringCompare());
-  if (Ptr != OnlyReadsMemoryTable.end() && *Ptr == F->getName())
+  if (Ptr != OnlyReadsMemoryTable->end() && *Ptr == F->getName())
     return OnlyReadsMemory;
 
   return UnknownModRefBehavior;

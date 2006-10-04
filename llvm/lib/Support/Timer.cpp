@@ -13,6 +13,7 @@
 
 #include "llvm/Support/Timer.h"
 #include "llvm/Support/CommandLine.h"
+#include "llvm/Support/ManagedStatic.h"
 #include "llvm/System/Process.h"
 #include <algorithm>
 #include <fstream>
@@ -32,8 +33,8 @@ namespace llvm { extern std::ostream *GetLibSupportInfoOutputFile(); }
 // would get destroyed before the Statistic, causing havoc to ensue.  We "fix"
 // this by creating the string the first time it is needed and never destroying
 // it.
+static ManagedStatic<std::string> LibSupportInfoOutputFilename;
 static std::string &getLibSupportInfoOutputFilename() {
-  static std::string *LibSupportInfoOutputFilename = new std::string();
   return *LibSupportInfoOutputFilename;
 }
 
@@ -127,7 +128,7 @@ static TimeRecord getTimeRecord(bool Start) {
   return Result;
 }
 
-static std::vector<Timer*> ActiveTimers;
+static ManagedStatic<std::vector<Timer*> > ActiveTimers;
 
 void Timer::startTimer() {
   Started = true;
@@ -137,7 +138,7 @@ void Timer::startTimer() {
   SystemTime -= TR.SystemTime;
   MemUsed    -= TR.MemUsed;
   PeakMemBase = TR.MemUsed;
-  ActiveTimers.push_back(this);
+  ActiveTimers->push_back(this);
 }
 
 void Timer::stopTimer() {
@@ -147,13 +148,13 @@ void Timer::stopTimer() {
   SystemTime += TR.SystemTime;
   MemUsed    += TR.MemUsed;
 
-  if (ActiveTimers.back() == this) {
-    ActiveTimers.pop_back();
+  if (ActiveTimers->back() == this) {
+    ActiveTimers->pop_back();
   } else {
     std::vector<Timer*>::iterator I =
-      std::find(ActiveTimers.begin(), ActiveTimers.end(), this);
-    assert(I != ActiveTimers.end() && "stop but no startTimer?");
-    ActiveTimers.erase(I);
+      std::find(ActiveTimers->begin(), ActiveTimers->end(), this);
+    assert(I != ActiveTimers->end() && "stop but no startTimer?");
+    ActiveTimers->erase(I);
   }
 }
 
@@ -172,8 +173,8 @@ void Timer::sum(const Timer &T) {
 void Timer::addPeakMemoryMeasurement() {
   size_t MemUsed = getMemUsage();
 
-  for (std::vector<Timer*>::iterator I = ActiveTimers.begin(),
-         E = ActiveTimers.end(); I != E; ++I)
+  for (std::vector<Timer*>::iterator I = ActiveTimers->begin(),
+         E = ActiveTimers->end(); I != E; ++I)
     (*I)->PeakMem = std::max((*I)->PeakMem, MemUsed-(*I)->PeakMemBase);
 }
 
@@ -181,14 +182,14 @@ void Timer::addPeakMemoryMeasurement() {
 //   NamedRegionTimer Implementation
 //===----------------------------------------------------------------------===//
 
-static Timer &getNamedRegionTimer(const std::string &Name) {
-  static std::map<std::string, Timer> NamedTimers;
+static ManagedStatic<std::map<std::string, Timer> > NamedTimers;
 
-  std::map<std::string, Timer>::iterator I = NamedTimers.lower_bound(Name);
-  if (I != NamedTimers.end() && I->first == Name)
+static Timer &getNamedRegionTimer(const std::string &Name) {
+  std::map<std::string, Timer>::iterator I = NamedTimers->lower_bound(Name);
+  if (I != NamedTimers->end() && I->first == Name)
     return I->second;
 
-  return NamedTimers.insert(I, std::make_pair(Name, Timer(Name)))->second;
+  return NamedTimers->insert(I, std::make_pair(Name, Timer(Name)))->second;
 }
 
 NamedRegionTimer::NamedRegionTimer(const std::string &Name)
