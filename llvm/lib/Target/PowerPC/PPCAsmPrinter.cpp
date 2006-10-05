@@ -420,9 +420,6 @@ bool DarwinAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
   // Print out constants referenced by the function
   EmitConstantPool(MF.getConstantPool());
 
-  // Print out jump tables referenced by the function
-  EmitJumpTableInfo(MF.getJumpTableInfo());
-
   // Print out labels for the function.
   const Function *F = MF.getFunction();
   switch (F->getLinkage()) {
@@ -466,6 +463,9 @@ bool DarwinAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
 
   // Emit post-function debug information.
   DW.EndFunction();
+  
+  // Print out jump tables referenced by the function.
+  EmitJumpTableInfo(MF.getJumpTableInfo());
 
   // We didn't modify anything.
   return false;
