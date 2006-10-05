@@ -85,6 +85,9 @@ bool X86IntelAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
     }
   }
 
+  // Print out jump tables referenced by the function.
+  EmitJumpTableInfo(MF.getJumpTableInfo(), MF);
+
   O << CurrentFnName << "\tendp\n";
 
   // We didn't modify anything.

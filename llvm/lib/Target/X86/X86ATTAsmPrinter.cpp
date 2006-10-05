@@ -126,10 +126,11 @@ bool X86ATTAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
     }
   }
 
-  // Print out jump tables referenced by the function
-  // Mac OS X requires at least one non-local (e.g. L1) labels before local
-  // lables that are used in jump table expressions (e.g. LBB1_1-LJT1_0).
-  EmitJumpTableInfo(MF.getJumpTableInfo());
+  // Print out jump tables referenced by the function.
+  
+  // Mac OS X requires that the jump table follow the function, so that the jump
+  // table is part of the same atom that the function is in.
+  EmitJumpTableInfo(MF.getJumpTableInfo(), MF);
   
   if (TAI->hasDotTypeDotSizeDirective())
     O << "\t.size " << CurrentFnName << ", .-" << CurrentFnName << "\n";

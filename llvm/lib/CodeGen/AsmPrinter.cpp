@@ -183,7 +183,8 @@ void AsmPrinter::EmitConstantPool(unsigned Alignment, const char *Section,
 /// EmitJumpTableInfo - Print assembly representations of the jump tables used
 /// by the current function to the current output stream.  
 ///
-void AsmPrinter::EmitJumpTableInfo(MachineJumpTableInfo *MJTI) {
+void AsmPrinter::EmitJumpTableInfo(MachineJumpTableInfo *MJTI,
+                                   MachineFunction &MF) {
   const std::vector<MachineJumpTableEntry> &JT = MJTI->getJumpTables();
   if (JT.empty()) return;
   const TargetData *TD = TM.getTargetData();

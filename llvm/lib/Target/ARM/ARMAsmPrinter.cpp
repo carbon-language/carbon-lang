@@ -117,7 +117,7 @@ bool ARMAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
   EmitConstantPool(MF.getConstantPool());
 
   // Print out jump tables referenced by the function
-  EmitJumpTableInfo(MF.getJumpTableInfo());
+  EmitJumpTableInfo(MF.getJumpTableInfo(), MF);
 
   // Print out labels for the function.
   const Function *F = MF.getFunction();

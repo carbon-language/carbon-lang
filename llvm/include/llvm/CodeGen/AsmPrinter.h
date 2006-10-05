@@ -161,7 +161,7 @@ namespace llvm {
     /// EmitJumpTableInfo - Print assembly representations of the jump tables 
     /// used by the current function to the current output stream.  
     ///
-    void EmitJumpTableInfo(MachineJumpTableInfo *MJTI);
+    void EmitJumpTableInfo(MachineJumpTableInfo *MJTI, MachineFunction &MF);
     
     /// EmitSpecialLLVMGlobal - Check to see if the specified global is a
     /// special global used by LLVM.  If so, emit it and return true, otherwise
