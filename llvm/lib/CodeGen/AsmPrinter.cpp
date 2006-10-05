@@ -857,7 +857,7 @@ void AsmPrinter::printBasicBlockLabel(const MachineBasicBlock *MBB,
     << MBB->getNumber();
   if (printColon)
     O << ':';
-  if (printComment)
+  if (printComment && MBB->getBasicBlock())
     O << '\t' << TAI->getCommentString() << MBB->getBasicBlock()->getName();
 }
 
