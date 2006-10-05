@@ -1393,8 +1393,8 @@ void SelectionDAGLowering::visitStore(StoreInst &I) {
   Value *SrcV = I.getOperand(0);
   SDOperand Src = getValue(SrcV);
   SDOperand Ptr = getValue(I.getOperand(1));
-  DAG.setRoot(DAG.getNode(ISD::STORE, MVT::Other, getRoot(), Src, Ptr,
-                          DAG.getSrcValue(I.getOperand(1))));
+  DAG.setRoot(DAG.getStore(getRoot(), Src, Ptr,
+                           DAG.getSrcValue(I.getOperand(1))));
 }
 
 /// IntrinsicCannotAccessMemory - Return true if the specified intrinsic cannot
@@ -2285,8 +2285,7 @@ void SelectionDAGLowering::visitInlineAsm(CallInst &I) {
   // Emit the non-flagged stores from the physregs.
   SmallVector<SDOperand, 8> OutChains;
   for (unsigned i = 0, e = StoresToEmit.size(); i != e; ++i)
-    OutChains.push_back(DAG.getNode(ISD::STORE, MVT::Other, Chain, 
-                                    StoresToEmit[i].first,
+    OutChains.push_back(DAG.getStore(Chain,  StoresToEmit[i].first,
                                     getValue(StoresToEmit[i].second),
                                     DAG.getSrcValue(StoresToEmit[i].second)));
   if (!OutChains.empty())
@@ -2863,8 +2862,7 @@ void SelectionDAGLowering::visitMemIntrinsic(CallInst &I, unsigned Op) {
           MVT::ValueType VT = MemOps[i];
           unsigned VTSize = getSizeInBits(VT) / 8;
           SDOperand Value = getMemsetValue(Op2, VT, DAG);
-          SDOperand Store = DAG.getNode(ISD::STORE, MVT::Other, getRoot(),
-                                        Value,
+          SDOperand Store = DAG.getStore(getRoot(), Value,
                                     getMemBasePlusOffset(Op1, Offset, DAG, TLI),
                                       DAG.getSrcValue(I.getOperand(1), Offset));
           OutChains.push_back(Store);
@@ -2910,18 +2908,18 @@ void SelectionDAGLowering::visitMemIntrinsic(CallInst &I, unsigned Op) {
             Value = getMemsetStringVal(VT, DAG, TLI, Str, SrcOff);
             Chain = getRoot();
             Store =
-              DAG.getNode(ISD::STORE, MVT::Other, Chain, Value,
-                          getMemBasePlusOffset(Op1, DstOff, DAG, TLI),
-                          DAG.getSrcValue(I.getOperand(1), DstOff));
+              DAG.getStore(Chain, Value,
+                           getMemBasePlusOffset(Op1, DstOff, DAG, TLI),
+                           DAG.getSrcValue(I.getOperand(1), DstOff));
           } else {
             Value = DAG.getLoad(VT, getRoot(),
                         getMemBasePlusOffset(Op2, SrcOff, DAG, TLI),
                         DAG.getSrcValue(I.getOperand(2), SrcOff));
             Chain = Value.getValue(1);
             Store =
-              DAG.getNode(ISD::STORE, MVT::Other, Chain, Value,
-                          getMemBasePlusOffset(Op1, DstOff, DAG, TLI),
-                          DAG.getSrcValue(I.getOperand(1), DstOff));
+              DAG.getStore(Chain, Value,
+                           getMemBasePlusOffset(Op1, DstOff, DAG, TLI),
+                           DAG.getSrcValue(I.getOperand(1), DstOff));
           }
           OutChains.push_back(Store);
           SrcOff += VTSize;

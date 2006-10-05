@@ -387,8 +387,7 @@ IA64TargetLowering::LowerCallTo(SDOperand Chain,
         }
         SDOperand PtrOff = DAG.getConstant(ArgOffset, getPointerTy());
         PtrOff = DAG.getNode(ISD::ADD, MVT::i64, StackPtr, PtrOff);
-        Stores.push_back(DAG.getNode(ISD::STORE, MVT::Other, Chain,
-                                     ValToStore, PtrOff, NullSV));
+        Stores.push_back(DAG.getStore(Chain, ValToStore, PtrOff, NullSV));
         ArgOffset += ObjSize;
       }
 
@@ -591,8 +590,8 @@ LowerOperation(SDOperand Op, SelectionDAG &DAG) {
                                    DAG.getConstant(MVT::getSizeInBits(VT)/8, 
                                                    VT));
     // Store the incremented VAList to the legalized pointer
-    VAIncr = DAG.getNode(ISD::STORE, MVT::Other, VAList.getValue(1), VAIncr,
-                         Op.getOperand(1), Op.getOperand(2));
+    VAIncr = DAG.getStore(VAList.getValue(1), VAIncr,
+                          Op.getOperand(1), Op.getOperand(2));
     // Load the actual argument out of the pointer VAList
     return DAG.getLoad(Op.getValueType(), VAIncr, VAList, DAG.getSrcValue(0));
   }
@@ -600,8 +599,8 @@ LowerOperation(SDOperand Op, SelectionDAG &DAG) {
     // vastart just stores the address of the VarArgsFrameIndex slot into the
     // memory location argument.
     SDOperand FR = DAG.getFrameIndex(VarArgsFrameIndex, MVT::i64);
-    return DAG.getNode(ISD::STORE, MVT::Other, Op.getOperand(0), FR, 
-                       Op.getOperand(1), Op.getOperand(2));
+    return DAG.getStore(Op.getOperand(0), FR, 
+                        Op.getOperand(1), Op.getOperand(2));
   }
   }
 }

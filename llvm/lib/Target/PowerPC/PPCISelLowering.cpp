@@ -743,8 +743,7 @@ static SDOperand LowerVASTART(SDOperand Op, SelectionDAG &DAG,
   // memory location argument.
   MVT::ValueType PtrVT = DAG.getTargetLoweringInfo().getPointerTy();
   SDOperand FR = DAG.getFrameIndex(VarArgsFrameIndex, PtrVT);
-  return DAG.getNode(ISD::STORE, MVT::Other, Op.getOperand(0), FR, 
-                     Op.getOperand(1), Op.getOperand(2));
+  return DAG.getStore(Op.getOperand(0), FR, Op.getOperand(1), Op.getOperand(2));
 }
 
 static SDOperand LowerFORMAL_ARGUMENTS(SDOperand Op, SelectionDAG &DAG,
@@ -900,8 +899,8 @@ static SDOperand LowerFORMAL_ARGUMENTS(SDOperand Op, SelectionDAG &DAG,
       unsigned VReg = RegMap->createVirtualRegister(&PPC::GPRCRegClass);
       MF.addLiveIn(GPR[GPR_idx], VReg);
       SDOperand Val = DAG.getCopyFromReg(Root, VReg, PtrVT);
-      SDOperand Store = DAG.getNode(ISD::STORE, MVT::Other, Val.getValue(1),
-                                    Val, FIN, DAG.getSrcValue(NULL));
+      SDOperand Store = DAG.getStore(Val.getValue(1), Val, FIN,
+                                     DAG.getSrcValue(NULL));
       MemOps.push_back(Store);
       // Increment the address by four for the next argument to store
       SDOperand PtrOff = DAG.getConstant(MVT::getSizeInBits(PtrVT)/8, PtrVT);
@@ -1035,8 +1034,8 @@ static SDOperand LowerCALL(SDOperand Op, SelectionDAG &DAG) {
       if (GPR_idx != NumGPRs) {
         RegsToPass.push_back(std::make_pair(GPR[GPR_idx++], Arg));
       } else {
-        MemOpChains.push_back(DAG.getNode(ISD::STORE, MVT::Other, Chain,
-                                          Arg, PtrOff, DAG.getSrcValue(NULL)));
+        MemOpChains.push_back(DAG.getStore(Chain, Arg, PtrOff,
+                                           DAG.getSrcValue(NULL)));
       }
       ArgOffset += PtrByteSize;
       break;
@@ -1046,9 +1045,8 @@ static SDOperand LowerCALL(SDOperand Op, SelectionDAG &DAG) {
         RegsToPass.push_back(std::make_pair(FPR[FPR_idx++], Arg));
 
         if (isVarArg) {
-          SDOperand Store = DAG.getNode(ISD::STORE, MVT::Other, Chain,
-                                        Arg, PtrOff,
-                                        DAG.getSrcValue(NULL));
+          SDOperand Store = DAG.getStore(Chain, Arg, PtrOff,
+                                         DAG.getSrcValue(NULL));
           MemOpChains.push_back(Store);
 
           // Float varargs are always shadowed in available integer registers
@@ -1076,8 +1074,8 @@ static SDOperand LowerCALL(SDOperand Op, SelectionDAG &DAG) {
             ++GPR_idx;
         }
       } else {
-        MemOpChains.push_back(DAG.getNode(ISD::STORE, MVT::Other, Chain,
-                                          Arg, PtrOff, DAG.getSrcValue(NULL)));
+        MemOpChains.push_back(DAG.getStore(Chain, Arg, PtrOff,
+                                           DAG.getSrcValue(NULL)));
       }
       if (isPPC64)
         ArgOffset += 8;
@@ -2123,8 +2121,8 @@ static SDOperand LowerSCALAR_TO_VECTOR(SDOperand Op, SelectionDAG &DAG) {
   SDOperand FIdx = DAG.getFrameIndex(FrameIdx, PtrVT);
   
   // Store the input value into Value#0 of the stack slot.
-  SDOperand Store = DAG.getNode(ISD::STORE, MVT::Other, DAG.getEntryNode(),
-                                Op.getOperand(0), FIdx,DAG.getSrcValue(NULL));
+  SDOperand Store = DAG.getStore(DAG.getEntryNode(),
+                                 Op.getOperand(0), FIdx,DAG.getSrcValue(NULL));
   // Load it out.
   return DAG.getLoad(Op.getValueType(), Store, FIdx, DAG.getSrcValue(NULL));
 }

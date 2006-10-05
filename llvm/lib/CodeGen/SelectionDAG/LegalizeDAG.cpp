@@ -928,8 +928,8 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
       MVT::ValueType PtrVT = TLI.getPointerTy();
       SDOperand StackPtr = CreateStackTemporary(VT);
       // Store the vector.
-      SDOperand Ch = DAG.getNode(ISD::STORE, MVT::Other, DAG.getEntryNode(),
-                                 Tmp1, StackPtr, DAG.getSrcValue(NULL));
+      SDOperand Ch = DAG.getStore(DAG.getEntryNode(),
+                                  Tmp1, StackPtr, DAG.getSrcValue(NULL));
 
       // Truncate or zero extend offset to target pointer type.
       unsigned CastOpc = (IdxVT > PtrVT) ? ISD::TRUNCATE : ISD::ZERO_EXTEND;
@@ -939,8 +939,7 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
       Tmp3 = DAG.getNode(ISD::MUL, IdxVT, Tmp3,DAG.getConstant(EltSize, IdxVT));
       SDOperand StackPtr2 = DAG.getNode(ISD::ADD, IdxVT, Tmp3, StackPtr);
       // Store the scalar value.
-      Ch = DAG.getNode(ISD::STORE, MVT::Other, Ch,
-                       Tmp2, StackPtr2, DAG.getSrcValue(NULL));
+      Ch = DAG.getStore(Ch, Tmp2, StackPtr2, DAG.getSrcValue(NULL));
       // Load the updated vector.
       Result = DAG.getLoad(VT, Ch, StackPtr, DAG.getSrcValue(NULL));
       break;
@@ -1615,8 +1614,7 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
         assert(CFP->getValueType(0) == MVT::f64 && "Unknown FP type!");
         Tmp3 = DAG.getConstant(DoubleToBits(CFP->getValue()), MVT::i64);
       }
-      Result = DAG.getNode(ISD::STORE, MVT::Other, Tmp1, Tmp3, Tmp2, 
-                           Node->getOperand(3));
+      Result = DAG.getStore(Tmp1, Tmp3, Tmp2, Node->getOperand(3));
       break;
     }
 
@@ -1696,16 +1694,14 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
           std::swap(Lo, Hi);
       }
 
-      Lo = DAG.getNode(ISD::STORE, MVT::Other, Tmp1, Lo, Tmp2,
-                       Node->getOperand(3));
+      Lo = DAG.getStore(Tmp1, Lo, Tmp2, Node->getOperand(3));
       Tmp2 = DAG.getNode(ISD::ADD, Tmp2.getValueType(), Tmp2,
                          getIntPtrConstant(IncrementSize));
       assert(isTypeLegal(Tmp2.getValueType()) &&
              "Pointers must be legal!");
       // FIXME: This sets the srcvalue of both halves to be the same, which is
       // wrong.
-      Hi = DAG.getNode(ISD::STORE, MVT::Other, Tmp1, Hi, Tmp2,
-                       Node->getOperand(3));
+      Hi = DAG.getStore(Tmp1, Hi, Tmp2, Node->getOperand(3));
       Result = DAG.getNode(ISD::TokenFactor, MVT::Other, Lo, Hi);
       break;
     }
@@ -2398,8 +2394,7 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
                          DAG.getConstant(MVT::getSizeInBits(VT)/8, 
                                          TLI.getPointerTy()));
       // Store the incremented VAList to the legalized pointer
-      Tmp3 = DAG.getNode(ISD::STORE, MVT::Other, VAList.getValue(1), Tmp3, Tmp2, 
-                         Node->getOperand(2));
+      Tmp3 = DAG.getStore(VAList.getValue(1), Tmp3, Tmp2,  Node->getOperand(2));
       // Load the actual argument out of the pointer VAList
       Result = DAG.getLoad(VT, Tmp3, VAList, DAG.getSrcValue(0));
       Tmp1 = LegalizeOp(Result.getValue(1));
@@ -2436,8 +2431,7 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
       // This defaults to loading a pointer from the input and storing it to the
       // output, returning the chain.
       Tmp4 = DAG.getLoad(TLI.getPointerTy(), Tmp1, Tmp3, Node->getOperand(3));
-      Result = DAG.getNode(ISD::STORE, MVT::Other, Tmp4.getValue(1), Tmp4, Tmp2,
-                           Node->getOperand(4));
+      Result = DAG.getStore(Tmp4.getValue(1), Tmp4, Tmp2, Node->getOperand(4));
       break;
     }
     break;
@@ -3225,8 +3219,7 @@ SDOperand SelectionDAGLegalize::PromoteOp(SDOperand Op) {
                          DAG.getConstant(MVT::getSizeInBits(VT)/8, 
                                          TLI.getPointerTy()));
       // Store the incremented VAList to the legalized pointer
-      Tmp3 = DAG.getNode(ISD::STORE, MVT::Other, VAList.getValue(1), Tmp3, Tmp2, 
-                         Node->getOperand(2));
+      Tmp3 = DAG.getStore(VAList.getValue(1), Tmp3, Tmp2, Node->getOperand(2));
       // Load the actual argument out of the pointer VAList
       Result = DAG.getExtLoad(ISD::EXTLOAD, NVT, Tmp3, VAList,
                               DAG.getSrcValue(0), VT);
@@ -3368,8 +3361,8 @@ SDOperand SelectionDAGLegalize::ExpandEXTRACT_VECTOR_ELT(SDOperand Op) {
   // If the target doesn't support this, store the value to a temporary
   // stack slot, then LOAD the scalar element back out.
   SDOperand StackPtr = CreateStackTemporary(Vector.getValueType());
-  SDOperand Ch = DAG.getNode(ISD::STORE, MVT::Other, DAG.getEntryNode(),
-                             Vector, StackPtr, DAG.getSrcValue(NULL));
+  SDOperand Ch = DAG.getStore(DAG.getEntryNode(),
+                              Vector, StackPtr, DAG.getSrcValue(NULL));
   
   // Add the offset to the index.
   unsigned EltSize = MVT::getSizeInBits(Op.getValueType())/8;
@@ -3512,8 +3505,8 @@ SDOperand SelectionDAGLegalize::ExpandBIT_CONVERT(MVT::ValueType DestVT,
   SDOperand FIPtr = CreateStackTemporary(DestVT);
   
   // Emit a store to the stack slot.
-  SDOperand Store = DAG.getNode(ISD::STORE, MVT::Other, DAG.getEntryNode(),
-                                SrcOp, FIPtr, DAG.getSrcValue(NULL));
+  SDOperand Store = DAG.getStore(DAG.getEntryNode(),
+                                 SrcOp, FIPtr, DAG.getSrcValue(NULL));
   // Result is a load from the stack slot.
   return DAG.getLoad(DestVT, Store, FIPtr, DAG.getSrcValue(0));
 }
@@ -3522,9 +3515,8 @@ SDOperand SelectionDAGLegalize::ExpandSCALAR_TO_VECTOR(SDNode *Node) {
   // Create a vector sized/aligned stack slot, store the value to element #0,
   // then load the whole vector back out.
   SDOperand StackPtr = CreateStackTemporary(Node->getValueType(0));
-  SDOperand Ch = DAG.getNode(ISD::STORE, MVT::Other, DAG.getEntryNode(),
-                             Node->getOperand(0), StackPtr,
-                             DAG.getSrcValue(NULL));
+  SDOperand Ch = DAG.getStore(DAG.getEntryNode(), Node->getOperand(0), StackPtr,
+                              DAG.getSrcValue(NULL));
   return DAG.getLoad(Node->getValueType(0), Ch, StackPtr,DAG.getSrcValue(NULL));
 }
 
@@ -3673,9 +3665,8 @@ SDOperand SelectionDAGLegalize::ExpandBUILD_VECTOR(SDNode *Node) {
     SDOperand Idx = DAG.getConstant(Offset, FIPtr.getValueType());
     Idx = DAG.getNode(ISD::ADD, FIPtr.getValueType(), FIPtr, Idx);
     
-    Stores.push_back(DAG.getNode(ISD::STORE, MVT::Other, DAG.getEntryNode(),
-                                 Node->getOperand(i), Idx, 
-                                 DAG.getSrcValue(NULL)));
+    Stores.push_back(DAG.getStore(DAG.getEntryNode(), Node->getOperand(i), Idx, 
+                                  DAG.getSrcValue(NULL)));
   }
   
   SDOperand StoreChain;
@@ -4019,13 +4010,12 @@ SDOperand SelectionDAGLegalize::ExpandLegalINT_TO_FP(bool isSigned,
       Op0Mapped = Op0;
     }
     // store the lo of the constructed double - based on integer input
-    SDOperand Store1 = DAG.getNode(ISD::STORE, MVT::Other, DAG.getEntryNode(),
-                                   Op0Mapped, Lo, DAG.getSrcValue(NULL));
+    SDOperand Store1 = DAG.getStore(DAG.getEntryNode(),
+                                    Op0Mapped, Lo, DAG.getSrcValue(NULL));
     // initial hi portion of constructed double
     SDOperand InitialHi = DAG.getConstant(0x43300000u, MVT::i32);
     // store the hi of the constructed double - biased exponent
-    SDOperand Store2 = DAG.getNode(ISD::STORE, MVT::Other, Store1,
-                                   InitialHi, Hi, DAG.getSrcValue(NULL));
+    SDOperand Store2=DAG.getStore(Store1, InitialHi, Hi, DAG.getSrcValue(NULL));
     // load the constructed double
     SDOperand Load = DAG.getLoad(MVT::f64, Store2, StackSlot,
                                DAG.getSrcValue(NULL));
@@ -4925,8 +4915,8 @@ void SelectionDAGLegalize::SplitVectorOp(SDOperand Op, SDOperand &Lo,
       // Lower to a store/load.  FIXME: this could be improved probably.
       SDOperand Ptr = CreateStackTemporary(Op.getOperand(0).getValueType());
 
-      SDOperand St = DAG.getNode(ISD::STORE, MVT::Other, DAG.getEntryNode(),
-                                 Op.getOperand(0), Ptr, DAG.getSrcValue(0));
+      SDOperand St = DAG.getStore(DAG.getEntryNode(),
+                                  Op.getOperand(0), Ptr, DAG.getSrcValue(0));
       MVT::ValueType EVT = cast<VTSDNode>(TypeNode)->getVT();
       St = DAG.getVecLoad(NumElements, EVT, St, Ptr, DAG.getSrcValue(0));
       SplitVectorOp(St, Lo, Hi);

@@ -2738,9 +2738,8 @@ SDOperand DAGCombiner::visitSTORE(SDNode *N) {
     SDNode *PrevStore = Chain.Val;
     if (PrevStore->getOperand(1) == Value) // Same value multiply stored.
       return Chain;
-    SDOperand NewStore = DAG.getNode(ISD::STORE, MVT::Other,
-                                     PrevStore->getOperand(0), Value, Ptr,
-                                     SrcValue);
+    SDOperand NewStore = DAG.getStore(PrevStore->getOperand(0), Value, Ptr,
+                                      SrcValue);
     CombineTo(N, NewStore);                 // Nuke this store.
     CombineTo(PrevStore, NewStore);  // Nuke the previous store.
     return SDOperand(N, 0);
@@ -2750,8 +2749,7 @@ SDOperand DAGCombiner::visitSTORE(SDNode *N) {
   // FIXME: This needs to know that the resultant store does not need a 
   // higher alignment than the original.
   if (0 && Value.getOpcode() == ISD::BIT_CONVERT) {
-    return DAG.getNode(ISD::STORE, MVT::Other, Chain, Value.getOperand(0),
-                       Ptr, SrcValue);
+    return DAG.getStore(Chain, Value.getOperand(0), Ptr, SrcValue);
   }
   
   if (CombinerAA) { 
@@ -2768,9 +2766,7 @@ SDOperand DAGCombiner::visitSTORE(SDNode *N) {
     // If there is a better chain.
     if (Chain != BetterChain) {
       // Replace the chain to avoid dependency.
-      SDOperand ReplStore = DAG.getNode(ISD::STORE, MVT::Other,
-                                        BetterChain, Value, Ptr,
-                                        SrcValue);
+      SDOperand ReplStore = DAG.getStore(BetterChain, Value, Ptr, SrcValue);
       // Create token to keep both nodes around.
       return DAG.getNode(ISD::TokenFactor, MVT::Other, Chain, ReplStore);
     }

@@ -437,8 +437,8 @@ SparcTargetLowering::LowerArguments(Function &F, SelectionDAG &DAG) {
       int FrameIdx = MF.getFrameInfo()->CreateFixedObject(4, ArgOffset);
       SDOperand FIPtr = DAG.getFrameIndex(FrameIdx, MVT::i32);
 
-      OutChains.push_back(DAG.getNode(ISD::STORE, MVT::Other, DAG.getRoot(),
-                                      Arg, FIPtr, DAG.getSrcValue(0)));
+      OutChains.push_back(DAG.getStore(DAG.getRoot(),
+                                       Arg, FIPtr, DAG.getSrcValue(0)));
       ArgOffset += 4;
     }
   }
@@ -589,8 +589,7 @@ SparcTargetLowering::LowerCallTo(SDOperand Chain, const Type *RetTy,
       }
       SDOperand PtrOff = DAG.getConstant(ArgOffset, getPointerTy());
       PtrOff = DAG.getNode(ISD::ADD, MVT::i32, StackPtr, PtrOff);
-      Stores.push_back(DAG.getNode(ISD::STORE, MVT::Other, Chain,
-                                   ValToStore, PtrOff, NullSV));
+      Stores.push_back(DAG.getStore(Chain, ValToStore, PtrOff, NullSV));
     }
     ArgOffset += ObjSize;
   }
@@ -787,8 +786,8 @@ LowerOperation(SDOperand Op, SelectionDAG &DAG) {
     SDOperand Offset = DAG.getNode(ISD::ADD, MVT::i32,
                                    DAG.getRegister(SP::I6, MVT::i32),
                                 DAG.getConstant(VarArgsFrameOffset, MVT::i32));
-    return DAG.getNode(ISD::STORE, MVT::Other, Op.getOperand(0), Offset, 
-                       Op.getOperand(1), Op.getOperand(2));
+    return DAG.getStore(Op.getOperand(0), Offset, 
+                        Op.getOperand(1), Op.getOperand(2));
   }
   case ISD::VAARG: {
     SDNode *Node = Op.Val;
@@ -802,8 +801,8 @@ LowerOperation(SDOperand Op, SelectionDAG &DAG) {
                                     DAG.getConstant(MVT::getSizeInBits(VT)/8, 
                                                     getPointerTy()));
     // Store the incremented VAList to the legalized pointer
-    InChain = DAG.getNode(ISD::STORE, MVT::Other, VAList.getValue(1), NextPtr,
-                          VAListPtr, Node->getOperand(2));
+    InChain = DAG.getStore(VAList.getValue(1), NextPtr,
+                           VAListPtr, Node->getOperand(2));
     // Load the actual argument out of the pointer VAList, unless this is an
     // f64 load.
     if (VT != MVT::f64) {
