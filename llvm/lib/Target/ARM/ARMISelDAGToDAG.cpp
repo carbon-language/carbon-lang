@@ -27,8 +27,7 @@
 #include "llvm/Target/TargetLowering.h"
 #include "llvm/Support/Debug.h"
 #include <iostream>
-#include <queue>
-#include <set>
+#include <vector>
 using namespace llvm;
 
 namespace {
@@ -89,7 +88,9 @@ namespace llvm {
 
       FSITOD,
 
-      FMRRD
+      FMRRD,
+
+      FMDRR
     };
   }
 }
@@ -124,8 +125,86 @@ const char *ARMTargetLowering::getTargetNodeName(unsigned Opcode) const {
   case ARMISD::FSITOS:        return "ARMISD::FSITOS";
   case ARMISD::FSITOD:        return "ARMISD::FSITOD";
   case ARMISD::FMRRD:         return "ARMISD::FMRRD";
+  case ARMISD::FMDRR:         return "ARMISD::FMDRR";
   }
 }
+
+class ArgumentLayout {
+  std::vector<bool>           is_reg;
+  std::vector<unsigned>       pos;
+  std::vector<MVT::ValueType> types;
+public:
+  ArgumentLayout(std::vector<MVT::ValueType> Types) {
+    types = Types;
+
+    unsigned      RegNum = 0;
+    unsigned StackOffset = 0;
+    for(std::vector<MVT::ValueType>::iterator I = Types.begin();
+        I != Types.end();
+        ++I) {
+      MVT::ValueType VT = *I;
+      assert(VT == MVT::i32 || VT == MVT::f32 || VT == MVT::f64);
+      unsigned     size = MVT::getSizeInBits(VT)/32;
+
+      RegNum = ((RegNum + size - 1) / size) * size;
+      if (RegNum < 4) {
+        pos.push_back(RegNum);
+        is_reg.push_back(true);
+        RegNum += size;
+      } else {
+        unsigned bytes = size * 32/8;
+        StackOffset = ((StackOffset + bytes - 1) / bytes) * bytes;
+        pos.push_back(StackOffset);
+        is_reg.push_back(false);
+        StackOffset += bytes;
+      }
+    }
+  }
+  unsigned getRegisterNum(unsigned argNum) {
+    assert(isRegister(argNum));
+    return pos[argNum];
+  }
+  unsigned getOffset(unsigned argNum) {
+    assert(isOffset(argNum));
+    return pos[argNum];
+  }
+  unsigned isRegister(unsigned argNum) {
+    assert(argNum < is_reg.size());
+    return is_reg[argNum];
+  }
+  unsigned isOffset(unsigned argNum) {
+    return !isRegister(argNum);
+  }
+  MVT::ValueType getType(unsigned argNum) {
+    assert(argNum < types.size());
+    return types[argNum];
+  }
+  unsigned getStackSize(void) {
+    int last = is_reg.size() - 1;
+    if (isRegister(last))
+      return 0;
+    return getOffset(last) + MVT::getSizeInBits(getType(last))/8;
+  }
+  int lastRegArg(void) {
+    int size = is_reg.size();
+    int last = 0;
+    while(last < size && isRegister(last))
+      last++;
+    last--;
+    return last;
+  }
+  unsigned lastRegNum(void) {
+    int            l = lastRegArg();
+    if (l < 0)
+      return -1;
+    unsigned       r = getRegisterNum(l);
+    MVT::ValueType t = getType(l);
+    assert(t == MVT::i32 || t == MVT::f32 || t == MVT::f64);
+    if (t == MVT::f64)
+      return r + 1;
+    return r;
+  }
+};
 
 // This transforms a ISD::CALL node into a
 // callseq_star <- ARMISD:CALL <- callseq_end
@@ -139,58 +218,36 @@ static SDOperand LowerCALL(SDOperand Op, SelectionDAG &DAG) {
   assert(isTailCall == false && "tail call not supported");
   SDOperand Callee   = Op.getOperand(4);
   unsigned NumOps    = (Op.getNumOperands() - 5) / 2;
-
-  // Count how many bytes are to be pushed on the stack.
-  unsigned NumBytes = 0;
-
-  // Add up all the space actually used.
-  for (unsigned i = 4; i < NumOps; ++i)
-    NumBytes += MVT::getSizeInBits(Op.getOperand(5+2*i).getValueType())/8;
-
-  // Adjust the stack pointer for the new arguments...
-  // These operations are automatically eliminated by the prolog/epilog pass
-  Chain = DAG.getCALLSEQ_START(Chain,
-                               DAG.getConstant(NumBytes, MVT::i32));
-
   SDOperand StackPtr = DAG.getRegister(ARM::R13, MVT::i32);
-
-  static const unsigned int num_regs = 4;
-  static const unsigned regs[num_regs] = {
+  static const unsigned regs[] = {
     ARM::R0, ARM::R1, ARM::R2, ARM::R3
   };
 
-  std::vector<std::pair<unsigned, SDOperand> > RegsToPass;
-  std::vector<SDOperand> MemOpChains;
+  std::vector<MVT::ValueType> Types;
+  for (unsigned i = 0; i < NumOps; ++i) {
+    MVT::ValueType VT = Op.getOperand(5+2*i).getValueType();
+    Types.push_back(VT);
+  }
+  ArgumentLayout Layout(Types);
 
-  for (unsigned i = 0; i != NumOps; ++i) {
-    SDOperand Arg = Op.getOperand(5+2*i);
-    assert(Arg.getValueType() == MVT::i32);
-    if (i < num_regs)
-      RegsToPass.push_back(std::make_pair(regs[i], Arg));
-    else {
-      unsigned ArgOffset = (i - num_regs) * 4;
-      SDOperand PtrOff = DAG.getConstant(ArgOffset, StackPtr.getValueType());
-      PtrOff = DAG.getNode(ISD::ADD, MVT::i32, StackPtr, PtrOff);
-      MemOpChains.push_back(DAG.getNode(ISD::STORE, MVT::Other, Chain,
-                                          Arg, PtrOff, DAG.getSrcValue(NULL)));
-    }
+  unsigned NumBytes = Layout.getStackSize();
+
+  Chain = DAG.getCALLSEQ_START(Chain,
+                               DAG.getConstant(NumBytes, MVT::i32));
+
+  //Build a sequence of stores
+  std::vector<SDOperand> MemOpChains;
+  for (unsigned i = Layout.lastRegArg() + 1; i < NumOps; ++i) {
+    SDOperand      Arg = Op.getOperand(5+2*i);
+    unsigned ArgOffset = Layout.getOffset(i);
+    SDOperand   PtrOff = DAG.getConstant(ArgOffset, StackPtr.getValueType());
+    PtrOff             = DAG.getNode(ISD::ADD, MVT::i32, StackPtr, PtrOff);
+    MemOpChains.push_back(DAG.getNode(ISD::STORE, MVT::Other, Chain,
+                                      Arg, PtrOff, DAG.getSrcValue(NULL)));
   }
   if (!MemOpChains.empty())
     Chain = DAG.getNode(ISD::TokenFactor, MVT::Other,
                         &MemOpChains[0], MemOpChains.size());
-
-  // Build a sequence of copy-to-reg nodes chained together with token chain
-  // and flag operands which copy the outgoing args into the appropriate regs.
-  SDOperand InFlag;
-  for (unsigned i = 0, e = RegsToPass.size(); i != e; ++i) {
-    Chain = DAG.getCopyToReg(Chain, RegsToPass[i].first, RegsToPass[i].second,
-                             InFlag);
-    InFlag = Chain.getValue(1);
-  }
-
-  std::vector<MVT::ValueType> NodeTys;
-  NodeTys.push_back(MVT::Other);   // Returns a chain
-  NodeTys.push_back(MVT::Flag);    // Returns a flag for retval copy to use.
 
   // If the callee is a GlobalAddress/ExternalSymbol node (quite common, every
   // direct call is) turn it into a TargetGlobalAddress/TargetExternalSymbol
@@ -204,11 +261,25 @@ static SDOperand LowerCALL(SDOperand Op, SelectionDAG &DAG) {
   Ops.push_back(Chain);
   Ops.push_back(Callee);
 
-  // Add argument registers to the end of the list so that they are known live
-  // into the call.
-  for (unsigned i = 0, e = RegsToPass.size(); i != e; ++i)
-    Ops.push_back(DAG.getRegister(RegsToPass[i].first,
-                                  RegsToPass[i].second.getValueType()));
+  // Build a sequence of copy-to-reg nodes chained together with token chain
+  // and flag operands which copy the outgoing args into the appropriate regs.
+  SDOperand InFlag;
+  for (unsigned i = 0, e = Layout.lastRegArg(); i <= e; ++i) {
+    SDOperand Arg = Op.getOperand(5+2*i);
+    unsigned  Reg = regs[Layout.getRegisterNum(i)];
+    assert(Layout.getType(i) == Arg.getValueType());
+    assert(Layout.getType(i) == MVT::i32);
+    Chain         = DAG.getCopyToReg(Chain, Reg, Arg, InFlag);
+    InFlag        = Chain.getValue(1);
+
+    // Add argument register to the end of the list so that it is known live
+    // into the call.
+    Ops.push_back(DAG.getRegister(Reg, Arg.getValueType()));
+  }
+
+  std::vector<MVT::ValueType> NodeTys;
+  NodeTys.push_back(MVT::Other);   // Returns a chain
+  NodeTys.push_back(MVT::Flag);    // Returns a flag for retval copy to use.
 
   unsigned CallOpc = ARMISD::CALL;
   if (InFlag.Val)
@@ -295,44 +366,6 @@ static SDOperand LowerRET(SDOperand Op, SelectionDAG &DAG) {
   return DAG.getNode(ARMISD::RET_FLAG, MVT::Other, Copy, Copy.getValue(1));
 }
 
-static SDOperand LowerFORMAL_ARGUMENT(SDOperand Op, SelectionDAG &DAG,
-				      unsigned *vRegs,
-				      unsigned ArgNo) {
-  MachineFunction &MF = DAG.getMachineFunction();
-  MVT::ValueType ObjectVT = Op.getValue(ArgNo).getValueType();
-  assert (ObjectVT == MVT::i32);
-  SDOperand Root = Op.getOperand(0);
-  SSARegMap *RegMap = MF.getSSARegMap();
-
-  unsigned num_regs = 4;
-  static const unsigned REGS[] = {
-    ARM::R0, ARM::R1, ARM::R2, ARM::R3
-  };
-
-  if(ArgNo < num_regs) {
-    unsigned VReg = RegMap->createVirtualRegister(&ARM::IntRegsRegClass);
-    MF.addLiveIn(REGS[ArgNo], VReg);
-    vRegs[ArgNo] = VReg;
-    return DAG.getCopyFromReg(Root, VReg, MVT::i32);
-  } else {
-    // If the argument is actually used, emit a load from the right stack
-      // slot.
-    if (!Op.Val->hasNUsesOfValue(0, ArgNo)) {
-      unsigned ArgOffset = (ArgNo - num_regs) * 4;
-
-      MachineFrameInfo *MFI = MF.getFrameInfo();
-      unsigned ObjSize = MVT::getSizeInBits(ObjectVT)/8;
-      int FI = MFI->CreateFixedObject(ObjSize, ArgOffset);
-      SDOperand FIN = DAG.getFrameIndex(FI, MVT::i32);
-      return DAG.getLoad(ObjectVT, Root, FIN,
-			 DAG.getSrcValue(NULL));
-    } else {
-      // Don't emit a dead load.
-      return DAG.getNode(ISD::UNDEF, ObjectVT);
-    }
-  }
-}
-
 static SDOperand LowerConstantPool(SDOperand Op, SelectionDAG &DAG) {
   MVT::ValueType PtrVT = Op.getValueType();
   ConstantPoolSDNode *CP = cast<ConstantPoolSDNode>(Op);
@@ -363,45 +396,75 @@ static SDOperand LowerVASTART(SDOperand Op, SelectionDAG &DAG,
 
 static SDOperand LowerFORMAL_ARGUMENTS(SDOperand Op, SelectionDAG &DAG,
 				       int &VarArgsFrameIndex) {
+  MachineFunction   &MF = DAG.getMachineFunction();
+  MachineFrameInfo *MFI = MF.getFrameInfo();
+  SSARegMap     *RegMap = MF.getSSARegMap();
+  unsigned      NumArgs = Op.Val->getNumValues()-1;
+  SDOperand        Root = Op.getOperand(0);
+  bool         isVarArg = cast<ConstantSDNode>(Op.getOperand(2))->getValue() != 0;
+  static const unsigned REGS[] = {
+    ARM::R0, ARM::R1, ARM::R2, ARM::R3
+  };
+
+  std::vector<MVT::ValueType> Types(Op.Val->value_begin(), Op.Val->value_end() - 1);
+  ArgumentLayout Layout(Types);
+
   std::vector<SDOperand> ArgValues;
-  SDOperand Root = Op.getOperand(0);
-  unsigned VRegs[4];
-
-  unsigned NumArgs = Op.Val->getNumValues()-1;
   for (unsigned ArgNo = 0; ArgNo < NumArgs; ++ArgNo) {
-    SDOperand ArgVal = LowerFORMAL_ARGUMENT(Op, DAG, VRegs, ArgNo);
+    MVT::ValueType VT = Types[ArgNo];
 
-    ArgValues.push_back(ArgVal);
+    SDOperand Value;
+    if (Layout.isRegister(ArgNo)) {
+      assert(VT == MVT::i32 || VT == MVT::f32 || VT == MVT::f64);
+      unsigned  RegNum = Layout.getRegisterNum(ArgNo);
+      unsigned    Reg1 = REGS[RegNum];
+      unsigned   VReg1 = RegMap->createVirtualRegister(&ARM::IntRegsRegClass);
+      SDOperand Value1 = DAG.getCopyFromReg(Root, VReg1, MVT::i32);
+      MF.addLiveIn(Reg1, VReg1);
+      if (VT == MVT::f64) {
+        unsigned    Reg2 = REGS[RegNum + 1];
+        unsigned   VReg2 = RegMap->createVirtualRegister(&ARM::IntRegsRegClass);
+        SDOperand Value2 = DAG.getCopyFromReg(Root, VReg2, MVT::i32);
+        MF.addLiveIn(Reg2, VReg2);
+        Value            = DAG.getNode(ARMISD::FMDRR, MVT::f64, Value1, Value2);
+      } else {
+        Value = Value1;
+        if (VT == MVT::f32)
+          Value = DAG.getNode(ISD::BIT_CONVERT, VT, Value);
+      }
+    } else {
+      // If the argument is actually used, emit a load from the right stack
+      // slot.
+      if (!Op.Val->hasNUsesOfValue(0, ArgNo)) {
+        unsigned Offset = Layout.getOffset(ArgNo);
+        unsigned   Size = MVT::getSizeInBits(VT)/8;
+        int          FI = MFI->CreateFixedObject(Size, Offset);
+        SDOperand   FIN = DAG.getFrameIndex(FI, VT);
+        Value = DAG.getLoad(VT, Root, FIN, DAG.getSrcValue(NULL));
+      } else {
+        Value = DAG.getNode(ISD::UNDEF, VT);
+      }
+    }
+    ArgValues.push_back(Value);
   }
 
-  bool isVarArg = cast<ConstantSDNode>(Op.getOperand(2))->getValue() != 0;
+  unsigned NextRegNum = Layout.lastRegNum() + 1;
+
   if (isVarArg) {
-    MachineFunction &MF = DAG.getMachineFunction();
-    SSARegMap *RegMap = MF.getSSARegMap();
-    MachineFrameInfo *MFI = MF.getFrameInfo();
+    //If this function is vararg we must store the remaing
+    //registers so that they can be acessed with va_start
     VarArgsFrameIndex = MFI->CreateFixedObject(MVT::getSizeInBits(MVT::i32)/8,
-                                               -16 + NumArgs * 4);
+                                               -16 + NextRegNum * 4);
 
-
-    static const unsigned REGS[] = {
-      ARM::R0, ARM::R1, ARM::R2, ARM::R3
-    };
-    // If this function is vararg, store r0-r3 to their spots on the stack
-    // so that they may be loaded by deferencing the result of va_next.
     SmallVector<SDOperand, 4> MemOps;
-    for (unsigned ArgNo = 0; ArgNo < 4; ++ArgNo) {
-      int ArgOffset = - (4 - ArgNo) * 4;
+    for (unsigned RegNo = NextRegNum; RegNo < 4; ++RegNo) {
+      int RegOffset = - (4 - RegNo) * 4;
       int FI = MFI->CreateFixedObject(MVT::getSizeInBits(MVT::i32)/8,
-				      ArgOffset);
+				      RegOffset);
       SDOperand FIN = DAG.getFrameIndex(FI, MVT::i32);
 
-      unsigned VReg;
-      if (ArgNo < NumArgs)
-	VReg = VRegs[ArgNo];
-      else
-	VReg = RegMap->createVirtualRegister(&ARM::IntRegsRegClass);
-      if (ArgNo >= NumArgs)
-	MF.addLiveIn(REGS[ArgNo], VReg);
+      unsigned VReg = RegMap->createVirtualRegister(&ARM::IntRegsRegClass);
+      MF.addLiveIn(REGS[RegNo], VReg);
 
       SDOperand Val = DAG.getCopyFromReg(Root, VReg, MVT::i32);
       SDOperand Store = DAG.getNode(ISD::STORE, MVT::Other, Val.getValue(1),

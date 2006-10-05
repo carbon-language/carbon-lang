@@ -80,6 +80,9 @@ def armfsitod      : SDNode<"ARMISD::FSITOD", SDTUnaryOp>;
 def SDTarmfmrrd    : SDTypeProfile<0, 3, [SDTCisInt<0>, SDTCisInt<1>, SDTCisFP<2>]>;
 def armfmrrd       : SDNode<"ARMISD::FMRRD", SDTarmfmrrd, [SDNPHasChain, SDNPOutFlag]>;
 
+def SDTarmfmdrr    : SDTypeProfile<1, 2, [SDTCisFP<0>, SDTCisInt<1>, SDTCisInt<2>]>;
+def armfmdrr       : SDNode<"ARMISD::FMDRR", SDTarmfmdrr, []>;
+
 def ADJCALLSTACKUP : InstARM<(ops i32imm:$amt),
                             "!ADJCALLSTACKUP $amt",
                             [(callseq_end imm:$amt)]>;
@@ -174,6 +177,9 @@ def FMRS    : InstARM<(ops IntRegs:$dst, FPRegs:$src),
 
 def FMRRD   : InstARM<(ops IntRegs:$i0, IntRegs:$i1, DFPRegs:$src),
                        "fmrrd $i0, $i1, $src", [(armfmrrd IntRegs:$i0, IntRegs:$i1, DFPRegs:$src)]>;
+
+def FMDRR   : InstARM<(ops DFPRegs:$dst, IntRegs:$i0, IntRegs:$i1),
+                       "fmdrr $dst, $i0, $i1", [(set DFPRegs:$dst, (armfmdrr IntRegs:$i0, IntRegs:$i1))]>;
 
 def FSITOS  : InstARM<(ops FPRegs:$dst, FPRegs:$src),
                        "fsitos $dst, $src", [(set FPRegs:$dst, (armfsitos FPRegs:$src))]>;
