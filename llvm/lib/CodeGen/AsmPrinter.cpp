@@ -200,7 +200,10 @@ void AsmPrinter::EmitJumpTableInfo(MachineJumpTableInfo *MJTI,
   // Pick the directive to use to print the jump table entries, and switch to 
   // the appropriate section.
   if (TM.getRelocationModel() == Reloc::PIC_) {
-    SwitchToTextSection(TAI->getJumpTableTextSection(), 0);
+    // In PIC mode, we need to emit the jump table to the same section as the
+    // function body itself, otherwise the label differences won't make sense.
+    const Function *F = MF.getFunction();
+    SwitchToTextSection(getSectionForFunction(*F).c_str(), F);
   } else {
     SwitchToDataSection(TAI->getJumpTableDataSection(), 0);
     if (TD->getPointerSize() == 8)
