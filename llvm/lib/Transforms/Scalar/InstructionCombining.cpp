@@ -88,6 +88,25 @@ namespace {
         if (Instruction *Op = dyn_cast<Instruction>(I.getOperand(i)))
           WorkList.push_back(Op);
     }
+    
+    /// AddSoonDeadInstToWorklist - The specified instruction is about to become
+    /// dead.  Add all of its operands to the worklist, turning them into
+    /// undef's to reduce the number of uses of those instructions.
+    ///
+    /// Return the specified operand before it is turned into an undef.
+    ///
+    Value *AddSoonDeadInstToWorklist(Instruction &I, unsigned op) {
+      Value *R = I.getOperand(op);
+      
+      for (unsigned i = 0, e = I.getNumOperands(); i != e; ++i)
+        if (Instruction *Op = dyn_cast<Instruction>(I.getOperand(i))) {
+          WorkList.push_back(Op);
+          // Set the operand to undef to drop the use.
+          I.setOperand(i, UndefValue::get(Op->getType()));
+        }
+      
+      return R;
+    }
 
     // removeFromWorkList - remove all instances of I from the worklist.
     void removeFromWorkList(Instruction *I);
@@ -241,6 +260,9 @@ namespace {
                               uint64_t &KnownZero, uint64_t &KnownOne,
                               unsigned Depth = 0);
 
+    Value *SimplifyDemandedVectorElts(Value *V, uint64_t DemandedElts,
+                                      uint64_t &UndefElts, unsigned Depth = 0);
+      
     // FoldOpIntoPhi - Given a binary operator or cast instruction which has a
     // PHI node as operand #0, see if we can fold the instruction into the PHI
     // (which is only possible if all operands to the PHI are constants).
@@ -1172,6 +1194,208 @@ bool InstCombiner::SimplifyDemandedBits(Value *V, uint64_t DemandedMask,
     return UpdateValueUsesWith(I, GetConstantInType(I->getType(), KnownOne));
   return false;
 }  
+
+
+/// SimplifyDemandedVectorElts - The specified value producecs a vector with
+/// 64 or fewer elements.  DemandedElts contains the set of elements that are
+/// actually used by the caller.  This method analyzes which elements of the
+/// operand are undef and returns that information in UndefElts.
+///
+/// If the information about demanded elements can be used to simplify the
+/// operation, the operation is simplified, then the resultant value is
+/// returned.  This returns null if no change was made.
+Value *InstCombiner::SimplifyDemandedVectorElts(Value *V, uint64_t DemandedElts,
+                                                uint64_t &UndefElts,
+                                                unsigned Depth) {
+  unsigned VWidth = cast<PackedType>(V->getType())->getNumElements();
+  assert(VWidth <= 64 && "Vector too wide to analyze!");
+  uint64_t EltMask = ~0ULL >> (64-VWidth);
+  assert(DemandedElts != EltMask && (DemandedElts & ~EltMask) == 0 &&
+         "Invalid DemandedElts!");
+
+  if (isa<UndefValue>(V)) {
+    // If the entire vector is undefined, just return this info.
+    UndefElts = EltMask;
+    return 0;
+  } else if (DemandedElts == 0) { // If nothing is demanded, provide undef.
+    UndefElts = EltMask;
+    return UndefValue::get(V->getType());
+  }
+  
+  UndefElts = 0;
+  if (ConstantPacked *CP = dyn_cast<ConstantPacked>(V)) {
+    const Type *EltTy = cast<PackedType>(V->getType())->getElementType();
+    Constant *Undef = UndefValue::get(EltTy);
+
+    std::vector<Constant*> Elts;
+    for (unsigned i = 0; i != VWidth; ++i)
+      if (!(DemandedElts & (1ULL << i))) {   // If not demanded, set to undef.
+        Elts.push_back(Undef);
+        UndefElts |= (1ULL << i);
+      } else if (isa<UndefValue>(CP->getOperand(i))) {   // Already undef.
+        Elts.push_back(Undef);
+        UndefElts |= (1ULL << i);
+      } else {                               // Otherwise, defined.
+        Elts.push_back(CP->getOperand(i));
+      }
+        
+    // If we changed the constant, return it.
+    Constant *NewCP = ConstantPacked::get(Elts);
+    return NewCP != CP ? NewCP : 0;
+  } else if (isa<ConstantAggregateZero>(V)) {
+    // Simplify the CAZ to a ConstantPacked where the non-demanded elements are
+    // set to undef.
+    const Type *EltTy = cast<PackedType>(V->getType())->getElementType();
+    Constant *Zero = Constant::getNullValue(EltTy);
+    Constant *Undef = UndefValue::get(EltTy);
+    std::vector<Constant*> Elts;
+    for (unsigned i = 0; i != VWidth; ++i)
+      Elts.push_back((DemandedElts & (1ULL << i)) ? Zero : Undef);
+    UndefElts = DemandedElts ^ EltMask;
+    return ConstantPacked::get(Elts);
+  }
+  
+  if (!V->hasOneUse()) {    // Other users may use these bits.
+    if (Depth != 0) {       // Not at the root.
+      // TODO: Just compute the UndefElts information recursively.
+      return false;
+    }
+    return false;
+  } else if (Depth == 10) {        // Limit search depth.
+    return false;
+  }
+  
+  Instruction *I = dyn_cast<Instruction>(V);
+  if (!I) return false;        // Only analyze instructions.
+  
+  bool MadeChange = false;
+  uint64_t UndefElts2;
+  Value *TmpV;
+  switch (I->getOpcode()) {
+  default: break;
+    
+  case Instruction::InsertElement: {
+    // If this is a variable index, we don't know which element it overwrites.
+    // demand exactly the same input as we produce.
+    ConstantUInt *Idx = dyn_cast<ConstantUInt>(I->getOperand(2));
+    if (Idx == 0) {
+      // Note that we can't propagate undef elt info, because we don't know
+      // which elt is getting updated.
+      TmpV = SimplifyDemandedVectorElts(I->getOperand(0), DemandedElts,
+                                        UndefElts2, Depth+1);
+      if (TmpV) { I->setOperand(0, TmpV); MadeChange = true; }
+      break;
+    }
+    
+    // If this is inserting an element that isn't demanded, remove this
+    // insertelement.
+    unsigned IdxNo = Idx->getValue();
+    if (IdxNo >= VWidth || (DemandedElts & (1ULL << IdxNo)) == 0)
+      return AddSoonDeadInstToWorklist(*I, 0);
+    
+    // Otherwise, the element inserted overwrites whatever was there, so the
+    // input demanded set is simpler than the output set.
+    TmpV = SimplifyDemandedVectorElts(I->getOperand(0),
+                                      DemandedElts & ~(1ULL << IdxNo),
+                                      UndefElts, Depth+1);
+    if (TmpV) { I->setOperand(0, TmpV); MadeChange = true; }
+
+    // The inserted element is defined.
+    UndefElts |= 1ULL << IdxNo;
+    break;
+  }
+    
+  case Instruction::And:
+  case Instruction::Or:
+  case Instruction::Xor:
+  case Instruction::Add:
+  case Instruction::Sub:
+  case Instruction::Mul:
+    // div/rem demand all inputs, because they don't want divide by zero.
+    TmpV = SimplifyDemandedVectorElts(I->getOperand(0), DemandedElts,
+                                      UndefElts, Depth+1);
+    if (TmpV) { I->setOperand(0, TmpV); MadeChange = true; }
+    TmpV = SimplifyDemandedVectorElts(I->getOperand(1), DemandedElts,
+                                      UndefElts2, Depth+1);
+    if (TmpV) { I->setOperand(1, TmpV); MadeChange = true; }
+      
+    // Output elements are undefined if both are undefined.  Consider things
+    // like undef&0.  The result is known zero, not undef.
+    UndefElts &= UndefElts2;
+    break;
+    
+  case Instruction::Call: {
+    IntrinsicInst *II = dyn_cast<IntrinsicInst>(I);
+    if (!II) break;
+    switch (II->getIntrinsicID()) {
+    default: break;
+      
+    // Binary vector operations that work column-wise.  A dest element is a
+    // function of the corresponding input elements from the two inputs.
+    case Intrinsic::x86_sse_sub_ss:
+    case Intrinsic::x86_sse_mul_ss:
+    case Intrinsic::x86_sse_min_ss:
+    case Intrinsic::x86_sse_max_ss:
+    case Intrinsic::x86_sse2_sub_sd:
+    case Intrinsic::x86_sse2_mul_sd:
+    case Intrinsic::x86_sse2_min_sd:
+    case Intrinsic::x86_sse2_max_sd:
+      TmpV = SimplifyDemandedVectorElts(II->getOperand(1), DemandedElts,
+                                        UndefElts, Depth+1);
+      if (TmpV) { II->setOperand(1, TmpV); MadeChange = true; }
+      TmpV = SimplifyDemandedVectorElts(II->getOperand(2), DemandedElts,
+                                        UndefElts2, Depth+1);
+      if (TmpV) { II->setOperand(2, TmpV); MadeChange = true; }
+
+      // If only the low elt is demanded and this is a scalarizable intrinsic,
+      // scalarize it now.
+      if (DemandedElts == 1) {
+        switch (II->getIntrinsicID()) {
+        default: break;
+        case Intrinsic::x86_sse_sub_ss:
+        case Intrinsic::x86_sse_mul_ss:
+        case Intrinsic::x86_sse2_sub_sd:
+        case Intrinsic::x86_sse2_mul_sd:
+          // TODO: Lower MIN/MAX/ABS/etc
+          Value *LHS = II->getOperand(1);
+          Value *RHS = II->getOperand(2);
+          // Extract the element as scalars.
+          LHS = InsertNewInstBefore(new ExtractElementInst(LHS, 0U,"tmp"), *II);
+          RHS = InsertNewInstBefore(new ExtractElementInst(RHS, 0U,"tmp"), *II);
+          
+          switch (II->getIntrinsicID()) {
+          default: assert(0 && "Case stmts out of sync!");
+          case Intrinsic::x86_sse_sub_ss:
+          case Intrinsic::x86_sse2_sub_sd:
+            TmpV = InsertNewInstBefore(BinaryOperator::createSub(LHS, RHS,
+                                                        II->getName()), *II);
+            break;
+          case Intrinsic::x86_sse_mul_ss:
+          case Intrinsic::x86_sse2_mul_sd:
+            TmpV = InsertNewInstBefore(BinaryOperator::createMul(LHS, RHS,
+                                                         II->getName()), *II);
+            break;
+          }
+          
+          Instruction *New =
+            new InsertElementInst(UndefValue::get(II->getType()), TmpV, 0U,
+                                  II->getName());
+          InsertNewInstBefore(New, *II);
+          AddSoonDeadInstToWorklist(*II, 0);
+          return New;
+        }            
+      }
+        
+      // Output elements are undefined if both are undefined.  Consider things
+      // like undef&0.  The result is known zero, not undef.
+      UndefElts &= UndefElts2;
+      break;
+    }
+    break;
+  }
+  }
+  return MadeChange ? I : 0;
+}
 
 // isTrueWhenEqual - Return true if the specified setcondinst instruction is
 // true when both operands are equal...
@@ -6088,6 +6312,19 @@ Instruction *InstCombiner::visitCallInst(CallInst &CI) {
         return new StoreInst(II->getOperand(2), Ptr);
       }
       break;
+      
+    case Intrinsic::x86_sse_cvttss2si: {
+      // These intrinsics only demands the 0th element of its input vector.  If
+      // we can simplify the input based on that, do so now.
+      uint64_t UndefElts;
+      if (Value *V = SimplifyDemandedVectorElts(II->getOperand(1), 1, 
+                                                UndefElts)) {
+        II->setOperand(1, V);
+        return II;
+      }
+      break;
+    }
+      
     case Intrinsic::ppc_altivec_vperm:
       // Turn vperm(V1,V2,mask) -> shuffle(V1,V2,mask) if mask is a constant.
       if (ConstantPacked *Mask = dyn_cast<ConstantPacked>(II->getOperand(3))) {
@@ -6121,17 +6358,13 @@ Instruction *InstCombiner::visitCallInst(CallInst &CI) {
             
             if (ExtractedElts[Idx] == 0) {
               Instruction *Elt = 
-                new ExtractElementInst(Idx < 16 ? Op0 : Op1,
-                                       ConstantUInt::get(Type::UIntTy, Idx&15),
-                                       "tmp");
+                new ExtractElementInst(Idx < 16 ? Op0 : Op1, Idx&15, "tmp");
               InsertNewInstBefore(Elt, CI);
               ExtractedElts[Idx] = Elt;
             }
           
             // Insert this value into the result vector.
-            Result = new InsertElementInst(Result, ExtractedElts[Idx],
-                                           ConstantUInt::get(Type::UIntTy, i),
-                                           "tmp");
+            Result = new InsertElementInst(Result, ExtractedElts[Idx], i,"tmp");
             InsertNewInstBefore(cast<Instruction>(Result), CI);
           }
           return new CastInst(Result, CI.getType());
@@ -7512,6 +7745,19 @@ Instruction *InstCombiner::visitExtractElementInst(ExtractElementInst &EI) {
   // If extracting a specified index from the vector, see if we can recursively
   // find a previously computed scalar that was inserted into the vector.
   if (ConstantUInt *IdxC = dyn_cast<ConstantUInt>(EI.getOperand(1))) {
+    // This instruction only demands the single element from the input vector.
+    // If the input vector has a single use, simplify it based on this use
+    // property.
+    if (EI.getOperand(0)->hasOneUse()) {
+      uint64_t UndefElts;
+      if (Value *V = SimplifyDemandedVectorElts(EI.getOperand(0),
+                                                1 << IdxC->getValue(),
+                                                UndefElts)) {
+        EI.setOperand(0, V);
+        return &EI;
+      }
+    }
+    
     if (Value *Elt = FindScalarElement(EI.getOperand(0), IdxC->getValue()))
       return ReplaceInstUsesWith(EI, Elt);
   }
@@ -7569,8 +7815,7 @@ Instruction *InstCombiner::visitExtractElementInst(ExtractElementInst &EI) {
         } else {
           return ReplaceInstUsesWith(EI, UndefValue::get(EI.getType()));
         }
-        return new ExtractElementInst(Src,
-                                      ConstantUInt::get(Type::UIntTy, SrcIdx));
+        return new ExtractElementInst(Src, SrcIdx);
       }
     }
   }
@@ -7782,6 +8027,7 @@ Instruction *InstCombiner::visitShuffleVectorInst(ShuffleVectorInst &SVI) {
 
   bool MadeChange = false;
   
+  // Undefined shuffle mask -> undefined value.
   if (isa<UndefValue>(SVI.getOperand(2)))
     return ReplaceInstUsesWith(SVI, UndefValue::get(SVI.getType()));
   
