@@ -94,15 +94,17 @@ bool SparcAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
   // What's my mangled name?
   CurrentFnName = Mang->getValueName(MF.getFunction());
 
-  // Print out labels for the function.
-  SwitchToTextSection(".text", MF.getFunction());
-  EmitAlignment(4, MF.getFunction());
+  // Print out the label for the function.
+  const Function *F = MF.getFunction();
+  SwitchToTextSection(getSectionForFunction(*F).c_str(), F);
+  EmitAlignment(4, F);
   O << "\t.globl\t" << CurrentFnName << "\n";
   O << "\t.type\t" << CurrentFnName << ", #function\n";
   O << CurrentFnName << ":\n";
 
   // Number each basic block so that we can consistently refer to them
   // in PC-relative references.
+  // FIXME: Why not use the MBB numbers?
   NumberForBB.clear();
   for (MachineFunction::const_iterator I = MF.begin(), E = MF.end();
        I != E; ++I) {
