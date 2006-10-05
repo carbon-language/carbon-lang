@@ -46,7 +46,6 @@ TargetAsmInfo::TargetAsmInfo() :
   SectionEndDirectiveSuffix(0),
   ConstantPoolSection("\t.section .rodata\n"),
   JumpTableDataSection("\t.section .rodata\n"),
-  JumpTableTextSection("\t.text\n"),
   JumpTableDirective(0),
   StaticCtorsSection("\t.section .ctors,\"aw\",@progbits"),
   StaticDtorsSection("\t.section .dtors,\"aw\",@progbits"),
