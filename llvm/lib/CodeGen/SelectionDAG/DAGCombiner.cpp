@@ -51,6 +51,84 @@ static cl::opt<bool>
   CombinerAA("combiner-alias-analysis", cl::Hidden,
              cl::desc("Turn on alias analysis turning testing"));
              
+             
+/// FindBaseOffset - Return true if base is known not to alias with anything
+/// but itself.  Provides base object and offset as results.
+bool FindBaseOffset(SDOperand Ptr, SDOperand &Object, int64_t &Offset) {
+  // If it's an adding or subtracting a simple constant then add the constant
+  // to the offset.
+  if (Ptr.getOpcode() == ISD::ADD) {
+    if (ConstantSDNode *C = dyn_cast<ConstantSDNode>(Ptr.getOperand(1))) {
+      bool IsNonAliasing = FindBaseOffset(Ptr.getOperand(0), Object, Offset);
+      Offset += C->getValue();
+      return IsNonAliasing;
+    }
+  } else if (Ptr.getOpcode() == ISD::SUB) {
+  // FIXME - Aren't all subtract constants converted to add negative constant.
+    if (ConstantSDNode *C = dyn_cast<ConstantSDNode>(Ptr.getOperand(1))) {
+      bool IsNonAliasing = FindBaseOffset(Ptr.getOperand(0), Object, Offset);
+      Offset -= C->getValue();
+      return IsNonAliasing;
+    }
+  }
+  
+  // Primitive operation.
+  Object = Ptr; Offset = 0;
+  
+  // If it's any of the following then it can't alias with anything but itself.
+  return isa<FrameIndexSDNode>(Ptr) ||
+         isa<ConstantPoolSDNode>(Ptr) ||
+         isa<GlobalAddressSDNode>(Ptr);
+}
+
+/// isAlias - Return true if there is any possibility that the two addresses
+/// overlap.
+bool isAlias(SDOperand Ptr1, int64_t Size1, SDOperand SrcValue1,
+             SDOperand Ptr2, int64_t Size2,  SDOperand SrcValue2) {
+  // If they are the same then they must be aliases.
+  if (Ptr1 == Ptr2) return true;
+  
+  // Gather base node and offset information.
+  SDOperand Object1, Object2;
+  int64_t Offset1, Offset2;
+  bool IsNonAliasing1 = FindBaseOffset(Ptr1, Object1, Offset1);
+  bool IsNonAliasing2 = FindBaseOffset(Ptr2, Object2, Offset2);
+  
+  // If they have a same base address then...
+  if (Object1 == Object2) {
+    // Check to see if the addresses overlap.
+    return !((Offset1 + Size1) <= Offset2 || (Offset2 + Size2) <= Offset1);
+  }
+  
+  // Otherwise they alias if they are both non aliasing.
+  return !IsNonAliasing1 && IsNonAliasing2;
+}
+
+/// FindAliasInfo - Extracts the relevant alias information from the memory
+/// node.  Returns true if the operand was a load.
+bool FindAliasInfo(SDNode *N,
+                   SDOperand &Ptr, int64_t &Size, SDOperand &SrcValue) {
+  switch (N->getOpcode()) {
+  case ISD::LOAD:
+    Ptr = N->getOperand(1);
+    Size = MVT::getSizeInBits(N->getValueType(0)) >> 3;
+    SrcValue = N->getOperand(2);
+    return true;
+  case ISD::STORE:
+    Ptr = N->getOperand(2);
+    Size = MVT::getSizeInBits(N->getOperand(1).getValueType()) >> 3;
+    SrcValue = N->getOperand(3);
+    return false;
+  default:
+    assert(0 && "FindAliasInfo expected a memory operand");
+    return false;
+  }
+  
+  return false;
+}
+
+//------------------------------ DAGCombiner ---------------------------------//
+
 class VISIBILITY_HIDDEN DAGCombiner {
     SelectionDAG &DAG;
     TargetLowering &TLI;
@@ -243,24 +321,9 @@ class VISIBILITY_HIDDEN DAGCombiner {
     SDOperand BuildUDIV(SDNode *N);
     SDNode *MatchRotate(SDOperand LHS, SDOperand RHS);
     
-    /// FindBaseOffset - Return true if base is known not to alias with anything
-    /// but itself.  Provides base object and offset as results.
-    static bool FindBaseOffset(SDOperand Ptr,
-                               SDOperand &Object, int64_t &Offset);
-    
-    /// isAlias - Return true if there is any possibility that the two addresses
-    /// overlap.
-    static bool isAlias(SDOperand Ptr1, int64_t Size1, SDOperand SrcValue1,
-                        SDOperand Ptr2, int64_t Size2, SDOperand SrcValue2);
-    
-    /// FindAliasInfo - Extracts the relevant alias information from the memory
-    /// node.
-    static void FindAliasInfo(SDNode *N,
-                           SDOperand &Ptr, int64_t &Size, SDOperand &SrcValue);
-    
     /// GatherAllAliases - Walk up chain skipping non-aliasing memory nodes,
     /// looking for aliasing nodes and adding them to the Aliases vector.
-    void GatherAllAliases(SDNode *N, SDOperand Chain,
+    void GatherAllAliases(SDNode *N, SDOperand OriginalChain,
                           SmallVector<SDOperand, 8> &Aliases);
 
     /// FindBetterChain - Walk up chain skipping non-aliasing memory nodes,
@@ -457,8 +520,6 @@ void DAGCombiner::Run(bool RunningAfterLegalize) {
         DAG.DeleteNode(N);
       }
     }
-    
-//    DetectCycle();
   }
   
   // If the root changed (e.g. it was a dead load, update the root).
@@ -538,31 +599,29 @@ SDOperand DAGCombiner::visitTokenFactor(SDNode *N) {
   SmallVector<SDNode *, 8> TFs;   // List of token factors to visit.
   SmallVector<SDOperand, 8> Ops;  // Ops for replacing token factor.
   bool Changed = false;           // If we should replace this token factor.
-  std::set<SDNode *> Visited;     // Visited node set.
   
   // Start out with this token factor.
   TFs.push_back(N);
   
-  while (!TFs.empty()) {
-    SDNode *TF = TFs.back();
-    TFs.pop_back();
-  
+  // Iterate through token factors.  The TFs grows a new token factors are
+  // encountered.
+  for (unsigned i = 0; i < TFs.size(); ++i) {
+    SDNode *TF = TFs[i];
+    
     // Check each of the operands.
     for (unsigned i = 0, ie = TF->getNumOperands(); i != ie; ++i) {
       SDOperand Op = TF->getOperand(i);
       
-      // Don't bother if we've seen this node before.
-      if (Visited.find(Op.Val) != Visited.end()) continue;
-      Visited.insert(Op.Val);
-      
       switch (Op.getOpcode()) {
       case ISD::EntryToken:
-        // Entry tokens don't need to be added to the list (picked up later.)
+        // Entry tokens don't need to be added to the list. They are
+        // rededundant.
+        Changed = true;
         break;
         
       case ISD::TokenFactor:
-        // FIXME - Old code only merged when use of one.
-        if (CombinerAA || Op.hasOneUse()) {
+        if ((CombinerAA || Op.hasOneUse()) &&
+            std::find(TFs.begin(), TFs.end(), Op.Val) == TFs.end()) {
           // Queue up for processing.
           TFs.push_back(Op.Val);
           // Clean up in case the token factor is removed.
@@ -573,8 +632,9 @@ SDOperand DAGCombiner::visitTokenFactor(SDNode *N) {
         // Fall thru
         
       default:
-        Ops.push_back(Op);
-        Changed = true;
+        // Only add if not there prior.
+        if (std::find(Ops.begin(), Ops.end(), Op) == Ops.end())
+          Ops.push_back(Op);
         break;
       }
     }
@@ -3922,151 +3982,74 @@ SDOperand DAGCombiner::BuildUDIV(SDNode *N) {
   return S;
 }
 
-/// FindBaseOffset - Return true if base is known not to alias with anything
-/// but itself.  Provides base object and offset as results.
-bool DAGCombiner::FindBaseOffset(SDOperand Ptr,
-                                 SDOperand &Object, int64_t &Offset) {
-  // If it's an adding or subtracting a simple constant then add the constant
-  // to the offset.
-  if (Ptr.getOpcode() == ISD::ADD) {
-    if (ConstantSDNode *C = dyn_cast<ConstantSDNode>(Ptr.getOperand(1))) {
-      bool IsNonAliasing = FindBaseOffset(Ptr.getOperand(0), Object, Offset);
-      Offset += C->getValue();
-      return IsNonAliasing;
-    }
-  } else if (Ptr.getOpcode() == ISD::SUB) {
-  // FIXME - Aren't all subtract constants converted to add negative constant.
-    if (ConstantSDNode *C = dyn_cast<ConstantSDNode>(Ptr.getOperand(1))) {
-      bool IsNonAliasing = FindBaseOffset(Ptr.getOperand(0), Object, Offset);
-      Offset -= C->getValue();
-      return IsNonAliasing;
-    }
-  }
-  
-  // Primitive operation.
-  Object = Ptr; Offset = 0;
-  
-  // If it's any of the following then it can't alias with anything but itself.
-  return isa<FrameIndexSDNode>(Ptr) ||
-         isa<ConstantPoolSDNode>(Ptr) ||
-         isa<GlobalAddressSDNode>(Ptr);
-}
-
-/// isAlias - Return true if there is any possibility that the two addresses
-/// overlap.
-bool DAGCombiner::isAlias(SDOperand Ptr1, int64_t Size1,
-                          SDOperand SrcValue1,
-                          SDOperand Ptr2, int64_t Size2,
-                          SDOperand SrcValue2) {
-  // If they are the same then they must be aliases.
-  if (Ptr1 == Ptr2) return true;
-  
-  // Gather base node and offset information.
-  SDOperand Object1, Object2;
-  int64_t Offset1, Offset2;
-  bool IsNonAliasing1 = FindBaseOffset(Ptr1, Object1, Offset1);
-  bool IsNonAliasing2 = FindBaseOffset(Ptr2, Object2, Offset2);
-  
-  // If they have a same base address then...
-  if (Object1 == Object2) {
-    // Check to see if the addresses overlap.
-    return !((Offset1 + Size1) <= Offset2 || (Offset2 + Size2) <= Offset1);
-  }
-  
-  // Otherwise they alias if they are both non aliasing.
-  return !IsNonAliasing1 && IsNonAliasing2;
-}
-
-/// FindAliasInfo - Extracts the relevant alias information from the memory
-/// node.
-void DAGCombiner::FindAliasInfo(SDNode *N,
-                          SDOperand &Ptr, int64_t &Size, SDOperand &SrcValue) {
-  switch (N->getOpcode()) {
-  case ISD::LOAD:
-    Ptr = N->getOperand(1);
-    Size = MVT::getSizeInBits(N->getValueType(0)) >> 3;
-    SrcValue = N->getOperand(2);
-    break;
-  case ISD::STORE:
-    Ptr = N->getOperand(2);
-    Size = MVT::getSizeInBits(N->getOperand(1).getValueType()) >> 3;
-    SrcValue = N->getOperand(3);
-    break;
-  default:
-    assert(0 && "FindAliasInfo expected a memory operand");
-  }
-}
-
 /// GatherAllAliases - Walk up chain skipping non-aliasing memory nodes,
 /// looking for aliasing nodes and adding them to the Aliases vector.
-void DAGCombiner::GatherAllAliases(SDNode *N, SDOperand Chain,
+void DAGCombiner::GatherAllAliases(SDNode *N, SDOperand OriginalChain,
                                    SmallVector<SDOperand, 8> &Aliases) {
-  SmallVector<SDOperand, 8> Ops;        // List of operands to visit.
+  SmallVector<SDOperand, 8> Chains;     // List of chains to visit.
   std::set<SDNode *> Visited;           // Visited node set.
   
   // Get alias information for node.
   SDOperand Ptr;
   int64_t Size;
   SDOperand SrcValue;
-  FindAliasInfo(N, Ptr, Size, SrcValue);
+  bool IsLoad = FindAliasInfo(N, Ptr, Size, SrcValue);
 
   // Starting off.
-  Ops.push_back(Chain);
+  Chains.push_back(OriginalChain);
   
-  // While there are nodes to process.
-  while (!Ops.empty()) {
-    SDOperand Op = Ops.back();
-    Ops.pop_back();
+  // Look at each chain and determine if it is an alias.  If so, add it to the
+  // aliases list.  If not, then continue up the chain looking for the next
+  // candidate.  
+  while (!Chains.empty()) {
+    SDOperand Chain = Chains.back();
+    Chains.pop_back();
     
-    for (bool Done = false; !Done;) {
-      // Don't bother if we've been before.
-      if (Visited.find(Op.Val) != Visited.end()) break;
-      Visited.insert(Op.Val);
-    
-      // Assume we're done.
-      Done = true;
-
-      switch (Op.getOpcode()) {
-      case ISD::EntryToken:
-        // Entry token is ideal chain operand, but handled in FindBetterChain.
-        break;
-        
-      case ISD::LOAD:
-      case ISD::STORE: {
-        // Get alias information for Op.
-        SDOperand OpPtr;
-        int64_t OpSize;
-        SDOperand OpSrcValue;
-        FindAliasInfo(Op.Val, OpPtr, OpSize, OpSrcValue);
-        
-        // If chain is alias then stop here.
-        if (isAlias(Ptr, Size, SrcValue, OpPtr, OpSize, OpSrcValue)) {
-          Aliases.push_back(Op);
-        } else {
-          // Otherwise walk up the chain.
-          // Clean up old chain.
-          AddToWorkList(Op.Val);
-          // Try up further.
-          Op = Op.getOperand(0);      
-          // We're not done yet.
-          Done = false;
-        }
-        break;
-      }
+     // Don't bother if we've been before.
+    if (Visited.find(Chain.Val) != Visited.end()) continue;
+    Visited.insert(Chain.Val);
+  
+    switch (Chain.getOpcode()) {
+    case ISD::EntryToken:
+      // Entry token is ideal chain operand, but handled in FindBetterChain.
+      break;
       
-      case ISD::TokenFactor:
-        // Queue up operands in reverse order to maintain prior order.
-        for (unsigned n = Op.getNumOperands(); n;)
-          Ops.push_back(Op.getOperand(--n));
-        // Eliminate the token factor if we can.
-        AddToWorkList(Op.Val);
-        break;
-        
-      default:
-        // For all other instructions we will just have to take what we can get.
-        Aliases.push_back(Op);
-        break;
+    case ISD::LOAD:
+    case ISD::STORE: {
+      // Get alias information for Chain.
+      SDOperand OpPtr;
+      int64_t OpSize;
+      SDOperand OpSrcValue;
+      bool IsOpLoad = FindAliasInfo(Chain.Val, OpPtr, OpSize, OpSrcValue);
+      
+      // If chain is alias then stop here.
+      if (!(IsLoad && IsOpLoad) &&
+          isAlias(Ptr, Size, SrcValue, OpPtr, OpSize, OpSrcValue)) {
+        Aliases.push_back(Chain);
+      } else {
+        // Look further up the chain.
+        Chains.push_back(Chain.getOperand(0));      
+        // Clean up old chain.
+        AddToWorkList(Chain.Val);
       }
+      break;
+    }
+    
+    case ISD::TokenFactor:
+      // We have to check each of the operands of the token factor, so we queue
+      // then up.  Adding the  operands to the queue (stack) in reverse order
+      // maintains the original order and increases the likelihood that getNode
+      // will find a matching token factor (CSE.)
+      for (unsigned n = Chain.getNumOperands(); n;)
+        Chains.push_back(Chain.getOperand(--n));
+      // Eliminate the token factor if we can.
+      AddToWorkList(Chain.Val);
+      break;
+      
+    default:
+      // For all other instructions we will just have to take what we can get.
+      Aliases.push_back(Chain);
+      break;
     }
   }
 }
