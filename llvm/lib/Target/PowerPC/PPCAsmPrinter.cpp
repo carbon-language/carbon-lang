@@ -461,12 +461,12 @@ bool DarwinAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
     }
   }
 
+  // Print out jump tables referenced by the function.
+  EmitJumpTableInfo(MF.getJumpTableInfo());
+  
   // Emit post-function debug information.
   DW.EndFunction();
   
-  // Print out jump tables referenced by the function.
-  EmitJumpTableInfo(MF.getJumpTableInfo());
-
   // We didn't modify anything.
   return false;
 }
