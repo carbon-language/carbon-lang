@@ -150,11 +150,6 @@ namespace llvm {
     /// is not PIC.
     const char *JumpTableDataSection;     // Defaults to "\t.section .rodata\n"
     
-    /// JumpTableTextSection - This is the section that we SwitchToSection right
-    /// before emitting the jump tables for a function when the relocation model
-    /// is PIC.
-    const char *JumpTableTextSection;     // Defaults to "\t.text\n"
-    
     /// JumpTableDirective - if non-null, the directive to emit before a jump
     /// table.
     const char *JumpTableDirective;
@@ -358,9 +353,6 @@ namespace llvm {
     }
     const char *getJumpTableDataSection() const {
       return JumpTableDataSection;
-    }
-    const char *getJumpTableTextSection() const {
-      return JumpTableTextSection;
     }
     const char *getStaticCtorsSection() const {
       return StaticCtorsSection;
