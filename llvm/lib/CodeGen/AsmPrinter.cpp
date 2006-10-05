@@ -32,6 +32,10 @@ AsmPrinter::AsmPrinter(std::ostream &o, TargetMachine &tm,
 : FunctionNumber(0), O(o), TM(tm), TAI(T)
 {}
 
+std::string AsmPrinter::getSectionForFunction(const Function &F) const {
+  return TAI->getTextSection();
+}
+
 
 /// SwitchToTextSection - Switch to the specified text section of the executable
 /// if we are not already in it!
