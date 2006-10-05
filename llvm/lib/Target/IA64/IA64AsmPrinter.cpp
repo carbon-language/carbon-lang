@@ -105,6 +105,8 @@ namespace {
       printOp(MI->getOperand(OpNo), true); // this is a br.call instruction
     }
 
+    std::string getSectionForFunction(const Function &F) const;
+
     void printMachineInstruction(const MachineInstr *MI);
     void printOp(const MachineOperand &MO, bool isBRCALLinsn= false);
     bool runOnMachineFunction(MachineFunction &F);
@@ -118,6 +120,11 @@ namespace {
 #include "IA64GenAsmWriter.inc"
 
 
+std::string IA64AsmPrinter::getSectionForFunction(const Function &F) const {
+  // This means "Allocated instruXions in mem, initialized".
+  return "\n\t.section .text, \"ax\", \"progbits\"\n";
+}
+
 /// runOnMachineFunction - This uses the printMachineInstruction()
 /// method to print assembly for each instruction.
 ///
@@ -128,10 +135,10 @@ bool IA64AsmPrinter::runOnMachineFunction(MachineFunction &MF) {
   // Print out constants referenced by the function
   EmitConstantPool(MF.getConstantPool());
 
+  const Function *F = MF.getFunction();
+  SwitchToTextSection(getSectionForFunction(*F).c_str(), F);
+
   // Print out labels for the function.
-  SwitchToTextSection("\n\t.section .text, \"ax\", \"progbits\"\n", 
-                      MF.getFunction());
-  // ^^  means "Allocated instruXions in mem, initialized"
   EmitAlignment(5);
   O << "\t.global\t" << CurrentFnName << "\n";
   O << "\t.type\t" << CurrentFnName << ", @function\n";
