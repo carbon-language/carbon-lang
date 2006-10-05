@@ -307,6 +307,11 @@ public:
                        SDOperand Chain, SDOperand Ptr, SDOperand SV,
                        MVT::ValueType EVT);
 
+  /// getStore - Helper function to build ISD::STORE nodes.
+  ///
+  SDOperand getStore(SDOperand Chain, SDOperand Value, SDOperand Ptr,
+                     SDOperand SV);
+
   // getSrcValue - construct a node to track a Value* through the backend
   SDOperand getSrcValue(const Value* I, int offset = 0);
 

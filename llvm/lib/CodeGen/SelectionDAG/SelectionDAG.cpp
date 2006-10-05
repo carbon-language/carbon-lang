@@ -1490,6 +1490,21 @@ SDOperand SelectionDAG::getExtLoad(ISD::LoadExtType LType, MVT::ValueType VT,
   return getNode(ISD::LOADX, getVTList(VT, MVT::Other), Ops, 5);
 }
 
+SDOperand SelectionDAG::getStore(SDOperand Chain, SDOperand Value,
+                                 SDOperand Ptr, SDOperand SV) {
+  SDVTList VTs = getVTList(MVT::Other);
+  SDOperand Ops[] = { Chain, Value, Ptr, SV };
+  SelectionDAGCSEMap::NodeID ID(ISD::STORE, VTs, Ops, 4);
+  void *IP = 0;
+  if (SDNode *E = CSEMap.FindNodeOrInsertPos(ID, IP))
+    return SDOperand(E, 0);
+  SDNode *N = new SDNode(ISD::STORE, Chain, Value, Ptr, SV);
+  N->setValueTypes(VTs);
+  CSEMap.InsertNode(N, IP);
+  AllNodes.push_back(N);
+  return SDOperand(N, 0);
+}
+
 SDOperand SelectionDAG::getVAArg(MVT::ValueType VT,
                                  SDOperand Chain, SDOperand Ptr,
                                  SDOperand SV) {
@@ -1523,7 +1538,7 @@ SDOperand SelectionDAG::getNode(unsigned Opcode, MVT::ValueType VT,
     // Also for ConstantFP?
 #endif
     if (Ops[0].getValueType() == EVT)       // Normal store?
-      return getNode(ISD::STORE, VT, Ops[0], Ops[1], Ops[2], Ops[3]);
+      return getStore(Ops[0], Ops[1], Ops[2], Ops[3]);
     assert(Ops[1].getValueType() > EVT && "Not a truncation?");
     assert(MVT::isInteger(Ops[1].getValueType()) == MVT::isInteger(EVT) &&
            "Can't do FP-INT conversion!");
