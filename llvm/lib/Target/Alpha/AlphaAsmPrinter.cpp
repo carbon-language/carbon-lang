@@ -58,7 +58,7 @@ namespace {
     bool runOnMachineFunction(MachineFunction &F);
     bool doInitialization(Module &M);
     bool doFinalization(Module &M);
-
+    
     bool PrintAsmOperand(const MachineInstr *MI, unsigned OpNo,
                          unsigned AsmVariant, const char *ExtraCode);
     bool PrintAsmMemoryOperand(const MachineInstr *MI, 
@@ -73,8 +73,8 @@ namespace {
 /// using the given target machine description.  This should work
 /// regardless of whether the function is in SSA form.
 ///
-FunctionPass *llvm::createAlphaCodePrinterPass (std::ostream &o,
-                                                  TargetMachine &tm) {
+FunctionPass *llvm::createAlphaCodePrinterPass(std::ostream &o,
+                                               TargetMachine &tm) {
   return new AlphaAsmPrinter(o, tm, tm.getTargetAsmInfo());
 }
 
@@ -166,7 +166,8 @@ bool AlphaAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
 
   // Print out labels for the function.
   const Function *F = MF.getFunction();
-  SwitchToTextSection(".text", F);
+  SwitchToTextSection(getSectionForFunction(*F).c_str(), F);
+  
   EmitAlignment(4, F);
   switch (F->getLinkage()) {
   default: assert(0 && "Unknown linkage type!");
