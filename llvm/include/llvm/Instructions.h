@@ -775,7 +775,11 @@ class ExtractElementInst : public Instruction {
 public:
   ExtractElementInst(Value *Vec, Value *Idx, const std::string &Name = "",
                      Instruction *InsertBefore = 0);
+  ExtractElementInst(Value *Vec, unsigned Idx, const std::string &Name = "",
+                     Instruction *InsertBefore = 0);
   ExtractElementInst(Value *Vec, Value *Idx, const std::string &Name,
+                     BasicBlock *InsertAtEnd);
+  ExtractElementInst(Value *Vec, unsigned Idx, const std::string &Name,
                      BasicBlock *InsertAtEnd);
 
   /// isValidOperands - Return true if an extractelement instruction can be
@@ -820,7 +824,11 @@ class InsertElementInst : public Instruction {
 public:
   InsertElementInst(Value *Vec, Value *NewElt, Value *Idx,
                     const std::string &Name = "",Instruction *InsertBefore = 0);
+  InsertElementInst(Value *Vec, Value *NewElt, unsigned Idx,
+                    const std::string &Name = "",Instruction *InsertBefore = 0);
   InsertElementInst(Value *Vec, Value *NewElt, Value *Idx,
+                    const std::string &Name, BasicBlock *InsertAtEnd);
+  InsertElementInst(Value *Vec, Value *NewElt, unsigned Idx,
                     const std::string &Name, BasicBlock *InsertAtEnd);
 
   /// isValidOperands - Return true if an insertelement instruction can be

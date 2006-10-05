@@ -844,6 +844,19 @@ ExtractElementInst::ExtractElementInst(Value *Val, Value *Index,
   Ops[1].init(Index, this);
 }
 
+ExtractElementInst::ExtractElementInst(Value *Val, unsigned IndexV,
+                                       const std::string &Name,
+                                       Instruction *InsertBef)
+  : Instruction(cast<PackedType>(Val->getType())->getElementType(),
+                ExtractElement, Ops, 2, Name, InsertBef) {
+  Constant *Index = ConstantUInt::get(Type::UIntTy, IndexV);
+  assert(isValidOperands(Val, Index) &&
+         "Invalid extractelement instruction operands!");
+  Ops[0].init(Val, this);
+  Ops[1].init(Index, this);
+}
+
+
 ExtractElementInst::ExtractElementInst(Value *Val, Value *Index,
                                        const std::string &Name,
                                        BasicBlock *InsertAE)
@@ -855,6 +868,20 @@ ExtractElementInst::ExtractElementInst(Value *Val, Value *Index,
   Ops[0].init(Val, this);
   Ops[1].init(Index, this);
 }
+
+ExtractElementInst::ExtractElementInst(Value *Val, unsigned IndexV,
+                                       const std::string &Name,
+                                       BasicBlock *InsertAE)
+  : Instruction(cast<PackedType>(Val->getType())->getElementType(),
+                ExtractElement, Ops, 2, Name, InsertAE) {
+  Constant *Index = ConstantUInt::get(Type::UIntTy, IndexV);
+  assert(isValidOperands(Val, Index) &&
+         "Invalid extractelement instruction operands!");
+  
+  Ops[0].init(Val, this);
+  Ops[1].init(Index, this);
+}
+
 
 bool ExtractElementInst::isValidOperands(const Value *Val, const Value *Index) {
   if (!isa<PackedType>(Val->getType()) || Index->getType() != Type::UIntTy)
@@ -884,6 +911,19 @@ InsertElementInst::InsertElementInst(Value *Vec, Value *Elt, Value *Index,
   Ops[2].init(Index, this);
 }
 
+InsertElementInst::InsertElementInst(Value *Vec, Value *Elt, unsigned IndexV,
+                                     const std::string &Name,
+                                     Instruction *InsertBef)
+  : Instruction(Vec->getType(), InsertElement, Ops, 3, Name, InsertBef) {
+  Constant *Index = ConstantUInt::get(Type::UIntTy, IndexV);
+  assert(isValidOperands(Vec, Elt, Index) &&
+         "Invalid insertelement instruction operands!");
+  Ops[0].init(Vec, this);
+  Ops[1].init(Elt, this);
+  Ops[2].init(Index, this);
+}
+
+
 InsertElementInst::InsertElementInst(Value *Vec, Value *Elt, Value *Index,
                                      const std::string &Name,
                                      BasicBlock *InsertAE)
@@ -891,6 +931,19 @@ InsertElementInst::InsertElementInst(Value *Vec, Value *Elt, Value *Index,
   assert(isValidOperands(Vec, Elt, Index) &&
          "Invalid insertelement instruction operands!");
 
+  Ops[0].init(Vec, this);
+  Ops[1].init(Elt, this);
+  Ops[2].init(Index, this);
+}
+
+InsertElementInst::InsertElementInst(Value *Vec, Value *Elt, unsigned IndexV,
+                                     const std::string &Name,
+                                     BasicBlock *InsertAE)
+: Instruction(Vec->getType(), InsertElement, Ops, 3, Name, InsertAE) {
+  Constant *Index = ConstantUInt::get(Type::UIntTy, IndexV);
+  assert(isValidOperands(Vec, Elt, Index) &&
+         "Invalid insertelement instruction operands!");
+  
   Ops[0].init(Vec, this);
   Ops[1].init(Elt, this);
   Ops[2].init(Index, this);
