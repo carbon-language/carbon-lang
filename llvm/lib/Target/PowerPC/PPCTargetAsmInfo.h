@@ -23,12 +23,6 @@ namespace llvm {
 
   struct DarwinTargetAsmInfo : public TargetAsmInfo {
     DarwinTargetAsmInfo(const PPCTargetMachine &TM);
-    
-    /// getSectionForFunction - Return the section that we should emit the
-    /// specified function body into.  This defaults to 'TextSection'.  This
-    /// should most likely be overridden by the target to put linkonce/weak
-    /// functions into special sections.
-    virtual const char *getSectionForFunction(const Function &F) const;
   };
 
 } // namespace llvm

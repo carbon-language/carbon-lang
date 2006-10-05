@@ -238,7 +238,6 @@ namespace {
     
     virtual bool runOnMachineFunction(MachineFunction &F) = 0;
     virtual bool doFinalization(Module &M) = 0;
-    
   };
 
   /// DarwinAsmPrinter - PowerPC assembly printer, customized for Darwin/Mac OS
@@ -267,6 +266,9 @@ namespace {
       PPCAsmPrinter::getAnalysisUsage(AU);
     }
 
+    /// getSectionForFunction - Return the section that we should emit the
+    /// specified function body into.
+    virtual std::string getSectionForFunction(const Function &F) const;
   };
 } // end of anonymous namespace
 
@@ -408,6 +410,19 @@ void PPCAsmPrinter::printMachineInstruction(const MachineInstr *MI) {
   return;
 }
 
+
+
+std::string DarwinAsmPrinter::getSectionForFunction(const Function &F) const {
+  switch (F.getLinkage()) {
+  default: assert(0 && "Unknown linkage type!");
+  case Function::ExternalLinkage:
+  case Function::InternalLinkage: return TAI->getTextSection();
+  case Function::WeakLinkage:
+  case Function::LinkOnceLinkage:
+    return ".section __TEXT,__textcoal_nt,coalesced,pure_instructions";
+  }
+}
+
 /// runOnMachineFunction - This uses the printMachineInstruction()
 /// method to print assembly for each instruction.
 ///
@@ -422,7 +437,7 @@ bool DarwinAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
 
   // Print out labels for the function.
   const Function *F = MF.getFunction();
-  SwitchToTextSection(TAI->getSectionForFunction(*F), F);
+  SwitchToTextSection(getSectionForFunction(*F).c_str(), F);
   
   switch (F->getLinkage()) {
   default: assert(0 && "Unknown linkage type!");
