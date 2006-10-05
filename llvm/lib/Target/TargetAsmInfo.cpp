@@ -74,3 +74,6 @@ TargetAsmInfo::TargetAsmInfo() :
   DwarfRangesSection(".debug_ranges"),
   DwarfMacInfoSection(".debug_macinfo")
 {}
+
+TargetAsmInfo::~TargetAsmInfo() {
+}
