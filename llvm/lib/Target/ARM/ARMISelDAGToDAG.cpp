@@ -134,12 +134,12 @@ class ArgumentLayout {
   std::vector<unsigned>       pos;
   std::vector<MVT::ValueType> types;
 public:
-  ArgumentLayout(std::vector<MVT::ValueType> Types) {
+  ArgumentLayout(const std::vector<MVT::ValueType> &Types) {
     types = Types;
 
     unsigned      RegNum = 0;
     unsigned StackOffset = 0;
-    for(std::vector<MVT::ValueType>::iterator I = Types.begin();
+    for(std::vector<MVT::ValueType>::const_iterator I = Types.begin();
         I != Types.end();
         ++I) {
       MVT::ValueType VT = *I;
