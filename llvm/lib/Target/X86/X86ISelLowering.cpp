@@ -5377,25 +5377,55 @@ static SDOperand PerformSELECTCombine(SDNode *N, SelectionDAG &DAG,
       
       unsigned IntNo = 0;
       if (LHS == Cond.getOperand(0) && RHS == Cond.getOperand(1)) {
-        // (X olt Y) ? X : Y -> min
-        if (CC == ISD::SETOLT || CC == ISD::SETLT)
+        switch (CC) {
+        default: break;
+        case ISD::SETOLE: // (X <= Y) ? X : Y -> min
+        case ISD::SETULE:
+        case ISD::SETLE:
+          if (!UnsafeFPMath) break;
+          // FALL THROUGH.
+        case ISD::SETOLT:  // (X olt/lt Y) ? X : Y -> min
+        case ISD::SETLT:
           IntNo = LHS.getValueType() == MVT::f32 ? Intrinsic::x86_sse_min_ss :
                                                    Intrinsic::x86_sse2_min_sd;
-        // (X uge Y) ? X : Y -> max
-        if (CC == ISD::SETUGE || CC == ISD::SETGE)
+          break;
+          
+        case ISD::SETOGT: // (X > Y) ? X : Y -> max
+        case ISD::SETUGT:
+        case ISD::SETGT:
+          if (!UnsafeFPMath) break;
+          // FALL THROUGH.
+        case ISD::SETUGE:  // (X uge/ge Y) ? X : Y -> max
+        case ISD::SETGE:
           IntNo = LHS.getValueType() == MVT::f32 ? Intrinsic::x86_sse_max_ss :
-            Intrinsic::x86_sse2_max_sd;
-        // TODO: Handle more cases if unsafe math!
+                                                   Intrinsic::x86_sse2_max_sd;
+          break;
+        }
       } else if (LHS == Cond.getOperand(1) && RHS == Cond.getOperand(0)) {
-        // (X uge Y) ? Y : X -> min
-        if (CC == ISD::SETUGE || CC == ISD::SETGE)
+        switch (CC) {
+        default: break;
+        case ISD::SETOGT: // (X > Y) ? Y : X -> min
+        case ISD::SETUGT:
+        case ISD::SETGT:
+          if (!UnsafeFPMath) break;
+          // FALL THROUGH.
+        case ISD::SETUGE:  // (X uge/ge Y) ? Y : X -> min
+        case ISD::SETGE:
           IntNo = LHS.getValueType() == MVT::f32 ? Intrinsic::x86_sse_min_ss :
-            Intrinsic::x86_sse2_min_sd;
-        // (X olt Y) ? Y : X -> max
-        if (CC == ISD::SETOLT || CC == ISD::SETLT)
+                                                   Intrinsic::x86_sse2_min_sd;
+          break;
+          
+        case ISD::SETOLE:   // (X <= Y) ? Y : X -> max
+        case ISD::SETULE:
+        case ISD::SETLE:
+          if (!UnsafeFPMath) break;
+          // FALL THROUGH.
+        case ISD::SETOLT:   // (X olt/lt Y) ? Y : X -> max
+        case ISD::SETLT:
           IntNo = LHS.getValueType() == MVT::f32 ? Intrinsic::x86_sse_max_ss :
-            Intrinsic::x86_sse2_max_sd;
-        // TODO: Handle more cases if unsafe math!
+                                                   Intrinsic::x86_sse2_max_sd;
+          break;
+        }
       }
       
       // minss/maxss take a v4f32 operand.
