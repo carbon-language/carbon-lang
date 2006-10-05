@@ -25,6 +25,11 @@
 #include "llvm/Target/TargetOptions.h"
 using namespace llvm;
 
+std::string X86IntelAsmPrinter::getSectionForFunction(const Function &F) const {
+  // Intel asm always emits functions to _text.
+  return "_text";
+}
+
 /// runOnMachineFunction - This uses the printMachineInstruction()
 /// method to print assembly for each instruction.
 ///
@@ -46,10 +51,11 @@ bool X86IntelAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
 
   X86SharedAsmPrinter::decorateName(CurrentFnName, F);
 
+  SwitchToTextSection(getSectionForFunction(*F).c_str(), F);
+
   switch (F->getLinkage()) {
   default: assert(0 && "Unsupported linkage type!");
   case Function::InternalLinkage:
-    SwitchToTextSection("_text", F);
     EmitAlignment(4);
     break;    
   case Function::DLLExportLinkage:
@@ -57,7 +63,6 @@ bool X86IntelAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
     //FALLS THROUGH
   case Function::ExternalLinkage:
     O << "\tpublic " << CurrentFnName << "\n";
-    SwitchToTextSection("_text", F);
     EmitAlignment(4);
     break;    
   }

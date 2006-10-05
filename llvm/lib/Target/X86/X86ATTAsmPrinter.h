@@ -76,6 +76,10 @@ struct X86ATTAsmPrinter : public X86SharedAsmPrinter {
                          const char *Modifier=NULL);
   void printPICLabel(const MachineInstr *MI, unsigned Op);
   bool runOnMachineFunction(MachineFunction &F);
+  
+  /// getSectionForFunction - Return the section that we should emit the
+  /// specified function body into.
+  virtual std::string getSectionForFunction(const Function &F) const;
 };
 
 } // end namespace llvm

@@ -24,8 +24,6 @@ namespace llvm {
   struct X86TargetAsmInfo : public TargetAsmInfo {
     X86TargetAsmInfo(const X86TargetMachine &TM);
   };
-
-
 } // namespace llvm
 
 #endif

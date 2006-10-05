@@ -99,6 +99,10 @@ struct X86IntelAsmPrinter : public X86SharedAsmPrinter {
   bool runOnMachineFunction(MachineFunction &F);
   bool doInitialization(Module &M);
   bool doFinalization(Module &M);
+  
+  /// getSectionForFunction - Return the section that we should emit the
+  /// specified function body into.
+  virtual std::string getSectionForFunction(const Function &F) const;
 
   virtual void EmitString(const ConstantArray *CVA) const;
 };

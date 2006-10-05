@@ -20,7 +20,7 @@ using namespace llvm;
 X86TargetAsmInfo::X86TargetAsmInfo(const X86TargetMachine &TM) {
   const X86Subtarget *Subtarget = &TM.getSubtarget<X86Subtarget>();
   
-  //FIXME - Should to be simplified.
+  // FIXME - Should be simplified.
    
   switch (Subtarget->TargetType) {
   case X86Subtarget::isDarwin:
@@ -31,7 +31,7 @@ X86TargetAsmInfo::X86TargetAsmInfo(const X86TargetMachine &TM) {
     ZeroDirective = "\t.space\t";  // ".space N" emits N zeros.
     PrivateGlobalPrefix = "L";     // Marker for constant pool idxs
     ConstantPoolSection = "\t.const\n";
-    JumpTableDataSection = "\t.const\n"; // FIXME: depends on PIC mode
+    JumpTableDataSection = "\t.const\n";
     FourByteConstantSection = "\t.literal4\n";
     EightByteConstantSection = "\t.literal8\n";
     if (Subtarget->is64Bit())
@@ -97,3 +97,4 @@ X86TargetAsmInfo::X86TargetAsmInfo(const X86TargetMachine &TM) {
     SectionEndDirectiveSuffix = "\tends\n";
   }
 }
+

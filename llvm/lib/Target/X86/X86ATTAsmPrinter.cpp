@@ -26,6 +26,28 @@
 #include <iostream>
 using namespace llvm;
 
+/// getSectionForFunction - Return the section that we should emit the
+/// specified function body into.
+std::string X86ATTAsmPrinter::getSectionForFunction(const Function &F) const {
+  switch (F.getLinkage()) {
+  default: assert(0 && "Unknown linkage type!");
+  case Function::InternalLinkage: 
+  case Function::DLLExportLinkage:
+  case Function::ExternalLinkage:
+    return TAI->getTextSection();
+  case Function::WeakLinkage:
+  case Function::LinkOnceLinkage:
+    if (Subtarget->isTargetDarwin()) {
+      return ".section __TEXT,__textcoal_nt,coalesced,pure_instructions";
+    } else if (Subtarget->isTargetCygwin()) {
+      return "\t.section\t.llvm.linkonce.t." + CurrentFnName + ",\"ax\"\n";
+    } else {
+      return "\t.section\t.llvm.linkonce.t." + CurrentFnName +
+             ",\"ax\",@progbits\n";
+    }
+  }
+}
+
 /// runOnMachineFunction - This uses the printMachineInstruction()
 /// method to print assembly for each instruction.
 ///
@@ -53,38 +75,30 @@ bool X86ATTAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
 
   X86SharedAsmPrinter::decorateName(CurrentFnName, F);
 
+  SwitchToTextSection(getSectionForFunction(*F).c_str(), F);
+  
   switch (F->getLinkage()) {
   default: assert(0 && "Unknown linkage type!");
   case Function::InternalLinkage:  // Symbols default to internal.
-    SwitchToTextSection(TAI->getTextSection(), F);
     EmitAlignment(4, F);     // FIXME: This should be parameterized somewhere.
     break;
   case Function::DLLExportLinkage:
     DLLExportedFns.insert(Mang->makeNameProper(F->getName(), ""));
     //FALLS THROUGH
   case Function::ExternalLinkage:
-    SwitchToTextSection(TAI->getTextSection(), F);
     EmitAlignment(4, F);     // FIXME: This should be parameterized somewhere.
     O << "\t.globl\t" << CurrentFnName << "\n";    
     break;
   case Function::WeakLinkage:
   case Function::LinkOnceLinkage:
     if (Subtarget->isTargetDarwin()) {
-      SwitchToTextSection(
-                ".section __TEXT,__textcoal_nt,coalesced,pure_instructions", F);
       O << "\t.globl\t" << CurrentFnName << "\n";
       O << "\t.weak_definition\t" << CurrentFnName << "\n";
     } else if (Subtarget->isTargetCygwin()) {
       EmitAlignment(4, F);     // FIXME: This should be parameterized somewhere.
-      O << "\t.section\t.llvm.linkonce.t." << CurrentFnName
-        << ",\"ax\"\n";
-      SwitchToTextSection("", F);
       O << "\t.weak " << CurrentFnName << "\n";
     } else {
       EmitAlignment(4, F);     // FIXME: This should be parameterized somewhere.
-      O << "\t.section\t.llvm.linkonce.t." << CurrentFnName
-        << ",\"ax\",@progbits\n";
-      SwitchToTextSection("", F);
       O << "\t.weak " << CurrentFnName << "\n";
     }
     break;
