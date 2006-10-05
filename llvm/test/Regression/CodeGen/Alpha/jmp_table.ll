@@ -1,7 +1,8 @@
 ; try to check that we have the most important instructions, which shouldn't appear otherwise
 ; RUN: llvm-as < %s | llc -march=alpha | grep 'jmp' &&
 ; RUN: llvm-as < %s | llc -march=alpha | grep 'gprel32' &&
-; RUN: llvm-as < %s | llc -march=alpha | grep 'ldl'
+; RUN: llvm-as < %s | llc -march=alpha | grep 'ldl' &&
+; RUN: llvm-as < %s | llc -march=alpha | grep 'rodata'
 
 target endian = little
 target pointersize = 64
