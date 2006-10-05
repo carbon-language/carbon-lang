@@ -266,14 +266,6 @@ namespace llvm {
     TargetAsmInfo();
     virtual ~TargetAsmInfo();
 
-    /// getSectionForFunction - Return the section that we should emit the
-    /// specified function body into.  This defaults to 'TextSection'.  This
-    /// should most likely be overridden by the target to put linkonce/weak
-    /// functions into special sections.
-    virtual const char *getSectionForFunction(const Function &F) const {
-      return TextSection;
-    }
-    
     //
     // Accessors.
     //
