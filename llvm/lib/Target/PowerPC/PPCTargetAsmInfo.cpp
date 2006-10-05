@@ -13,7 +13,7 @@
 
 #include "PPCTargetAsmInfo.h"
 #include "PPCTargetMachine.h"
-
+#include "llvm/Function.h"
 using namespace llvm;
 
 DarwinTargetAsmInfo::DarwinTargetAsmInfo(const PPCTargetMachine &TM) {
@@ -49,4 +49,16 @@ DarwinTargetAsmInfo::DarwinTargetAsmInfo(const PPCTargetMachine &TM) {
   DwarfARangesSection = ".section __DWARF,__debug_aranges";
   DwarfRangesSection = ".section __DWARF,__debug_ranges";
   DwarfMacInfoSection = ".section __DWARF,__debug_macinfo";
+}
+
+
+const char *DarwinTargetAsmInfo::getSectionForFunction(const Function &F) const{
+  switch (F.getLinkage()) {
+  default: assert(0 && "Unknown linkage type!");
+  case Function::ExternalLinkage:
+  case Function::InternalLinkage: return TextSection;
+  case Function::WeakLinkage:
+  case Function::LinkOnceLinkage:
+    return ".section __TEXT,__textcoal_nt,coalesced,pure_instructions";
+  }
 }

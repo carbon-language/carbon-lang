@@ -422,19 +422,17 @@ bool DarwinAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
 
   // Print out labels for the function.
   const Function *F = MF.getFunction();
+  SwitchToTextSection(TAI->getSectionForFunction(*F), F);
+  
   switch (F->getLinkage()) {
   default: assert(0 && "Unknown linkage type!");
   case Function::InternalLinkage:  // Symbols default to internal.
-    SwitchToTextSection("\t.text", F);
     break;
   case Function::ExternalLinkage:
-    SwitchToTextSection("\t.text", F);
     O << "\t.globl\t" << CurrentFnName << "\n";
     break;
   case Function::WeakLinkage:
   case Function::LinkOnceLinkage:
-    SwitchToTextSection(
-                ".section __TEXT,__textcoal_nt,coalesced,pure_instructions", F);
     O << "\t.globl\t" << CurrentFnName << "\n";
     O << "\t.weak_definition\t" << CurrentFnName << "\n";
     break;
