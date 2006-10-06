@@ -44,6 +44,8 @@ AlphaTargetLowering::AlphaTargetLowering(TargetMachine &TM) : TargetLowering(TM)
   setSetCCResultType(MVT::i64);
   setSetCCResultContents(ZeroOrOneSetCCResult);
   
+  setUsesGlobalOffsetTable(true);
+  
   addRegisterClass(MVT::i64, Alpha::GPRCRegisterClass);
   addRegisterClass(MVT::f64, Alpha::F8RCRegisterClass);
   addRegisterClass(MVT::f32, Alpha::F4RCRegisterClass);
