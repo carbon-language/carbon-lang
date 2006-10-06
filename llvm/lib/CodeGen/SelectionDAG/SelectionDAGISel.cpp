@@ -846,11 +846,6 @@ void SelectionDAGLowering::visitSwitchCase(SelectionDAGISel::CaseBlock &CB) {
 }
 
 void SelectionDAGLowering::visitJumpTable(SelectionDAGISel::JumpTable &JT) {
-  // FIXME: Need to emit different code for PIC vs. Non-PIC, specifically,
-  // we need to add the address of the jump table to the value loaded, since
-  // the entries in the jump table will be differences rather than absolute
-  // addresses.
-  
   // Emit the code for the jump table
   MVT::ValueType PTy = TLI.getPointerTy();
   assert((PTy == MVT::i32 || PTy == MVT::i64) &&
