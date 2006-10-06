@@ -40,18 +40,15 @@ class Decl {
   ///
   SourceLocation Loc;
   
-#if 0
-  /// Next - Decls are chained together in a singly-linked list by their owning
-  /// object.  Currently we allow decls to be owned by a translation unit or a
-  /// function.  This way we can deallocate a function body and all the
-  /// declarations within it.
-#endif
-  // Scope stack info when parsing, otherwise decl list when scope is popped.
+  /// Scope stack info when parsing, otherwise decl list when scope is popped.
+  ///
   Decl *Next;
 public:
   Decl(IdentifierInfo *Id, const DeclSpec &DS, SourceLocation loc, Decl *next)
     : Identifier(Id), DeclarationSpecifier(DS), Loc(loc), Next(next) {}
   
+  
+  const IdentifierInfo *getIdentifier() const { return Identifier; }
   
   const DeclSpec &getDeclSpecs() const { return DeclarationSpecifier; }
   
