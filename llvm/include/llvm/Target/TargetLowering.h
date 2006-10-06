@@ -85,6 +85,10 @@ public:
   MVT::ValueType getShiftAmountTy() const { return ShiftAmountTy; }
   OutOfRangeShiftAmount getShiftAmountFlavor() const {return ShiftAmtHandling; }
 
+  /// usesGlobalOffsetTable - Return true if this target uses a GOT for PIC
+  /// codegen.
+  bool usesGlobalOffsetTable() const { return UsesGlobalOffsetTable; }
+  
   /// isSetCCExpensive - Return true if the setcc operation is expensive for
   /// this target.
   bool isSetCCExpensive() const { return SetCCIsExpensive; }
@@ -469,6 +473,9 @@ public:
   //
 
 protected:
+  /// setUsesGlobalOffsetTable - Specify that this target does or doesn't use a
+  /// GOT for PC-relative code.
+  void setUsesGlobalOffsetTable(bool V) { UsesGlobalOffsetTable = V; }
 
   /// setShiftAmountType - Describe the type that should be used for shift
   /// amounts.  This type defaults to the pointer type.
@@ -731,6 +738,10 @@ private:
   ///
   MVT::ValueType PointerTy;
 
+  /// UsesGlobalOffsetTable - True if this target uses a GOT for PIC codegen.
+  ///
+  bool UsesGlobalOffsetTable;
+  
   /// ShiftAmountTy - The type to use for shift amounts, usually i8 or whatever
   /// PointerTy is.
   MVT::ValueType ShiftAmountTy;
