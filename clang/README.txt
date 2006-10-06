@@ -36,6 +36,7 @@ I. Introduction:
                  'complete' mode, which captures *full* location info for every
                  token in the AST.
    libast2llvm - [Planned] Lower the AST to LLVM IR for optimization & codegen.
+   clang       - An example client of the libraries at various levels.
 
  This front-end has been intentionally built as a stack, making it trivial
  to replace anything below a particular point.  For example, if you want a
