@@ -139,6 +139,9 @@ void ARMRegisterInfo::emitPrologue(MachineFunction &MF) const {
     NumBytes += MFI->getMaxCallFrameSize();
   }
 
+  // Align to 8 bytes
+  NumBytes = ((NumBytes + 7) / 8) * 8;
+
   MFI->setStackSize(NumBytes);
 
   //sub sp, sp, #NumBytes
