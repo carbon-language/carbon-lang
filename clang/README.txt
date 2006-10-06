@@ -8,10 +8,53 @@ I. Introduction:
     1. A loud, resonant, metallic sound.
     2. The strident call of a crane or goose.
     3. C-language front-end toolkit.
-    
- Why?
- Supports Objective-C.
 
+ The world needs better compiler tools, tools which are built as libraries. This
+ design point allows reuse of the tools in new and novel ways. However, building
+ the tools as libraries isn't enough: they must have clean APIs, be as
+ decoupled from each other as possible, and be easy to modify/extend.  This
+ requires clean layering, decent design, and avoiding tying the libraries to a
+ specific use.  Oh yeah, did I mention that we want the resultant libraries to
+ be as fast as possible? :)
+
+ This front-end is built as a component of the LLVM toolkit (which really really
+ needs a better name) that can be used with the LLVM backend or independently of
+ it.  In this spirit, the API has been carefully designed to include the
+ following components:
+ 
+   libsupport  - Basic support library, reused from LLVM.
+   libsystem   - System abstraction library, reused from LLVM.
+   libbasic    - Diagnostics, Tokens, Locations, SourceBuffer abstraction,
+                 file system caching for read source files.
+   liblex      - C/C++/ObjC lexing and preprocessing.
+   libparse    - C99 (for now), eventually ObjC + C90 parsing as well.  This
+                 library invokes coarse-grained 'Actions' provided by the client
+                 to do stuff (great idea shamelessly stolen from Devkit by
+                 snaroff).  C++ can be added, but not a high priority.
+   libast      - Provides a set of parser actions to build a standardized AST
+                 for programs.  AST can be built in two forms: streamlined and
+                 'complete' mode, which captures *full* location info for every
+                 token in the AST.
+   libast2llvm - [Planned] Lower the AST to LLVM IR for optimization & codegen.
+
+ This front-end has been intentionally built as a stack, making it trivial
+ to replace anything below a particular point.  For example, if you want a
+ preprocessor, you take the Basic and Lexer libraries.  If you want an indexer,
+ you take those plus the Parser library and provide some actions for indexing.
+ If you want a refactoring, static analysis, or source-to-source compiler tool,
+ it makes sense to take those plus the AST building library.  Finally, if you
+ want to use this with the LLVM backend, you'd take these components plus the
+ AST to LLVM lowering code.
+ 
+ In the future I hope this toolkit will grow to include new and interesting
+ components, including a C++ front-end, ObjC support, AST pretty printing
+ support, and a whole lot of other things.
+
+ Finally, it should be pointed out that the goal here is to build something that
+ is high-quality and industrial-strength: all the obnoxious features of the C
+ family must be correctly supported (trigraphs, preprocessor arcana, K&R-style
+ prototypes, GCC/MS extensions, etc).  It cannot be used if it's not 'real'.
+ 
 
 II. Current advantages over GCC:
 
@@ -29,17 +72,17 @@ II. Current advantages over GCC:
 Future Features:
 
  * Fine grained diag control within the source (#pragma enable/disable warning).
- * Faster than GCC at IR generation.
+ * Faster than GCC at IR generation [measure when complete].
  * Better token tracking within macros?  (Token came from this line, which is
    a macro argument instantiated here, recursively instantiated here).
  * Fast #import!
  * Dependency tracking: change to header file doesn't recompile every function
-   that texually depends on it: only recompile those that need to change.
+   that texually depends on it: recompile only those functions that need it.
  * Defers exposing platform-specific stuff to as late as possible, tracks use of
-   platform-specific features (e.g. #ifdef PPC).
+   platform-specific features (e.g. #ifdef PPC) to allow 'portable bytecodes'.
 
 
-III. Missing Functionality
+III. Missing Functionality / Improvements
 
 File Manager:
  * We currently do a lot of stat'ing for files that don't exist, particularly
@@ -79,17 +122,15 @@ Traditional Preprocessor:
  * All.
 
 Parser:
- * C90/K&R modes.  Need to get C90 spec.
- * __extension__
+ * C90/K&R modes.  Need to get a copy of the C90 spec.
+ * __extension__, __attribute__ [currently just skipped and ignored].
 
 Parser Callbacks:
  * Enough to do devkit-style "indexing".
- * All.
+ * All that are missing.
  
 Parser Actions:
  * All.
- * Need some way to effeciently either work in 'callback'/devkit mode or in
-   default AST building mode.
  * Would like to either lazily resolve types [refactoring] or aggressively
    resolve them [c compiler].  Need to know whether something is a type or not
    to compile, but don't need to know what it is.
@@ -97,8 +138,8 @@ Parser Actions:
 Fast #Import:
  * All.
  * Get frameworks that don't use #import to do so, e.g. 
-   DirectoryService, AudioToolbox, CoreFoundation, etc.  Why not using #import,
-   because they work in C mode?
+   DirectoryService, AudioToolbox, CoreFoundation, etc.  Why not using #import?
+   Because they work in C mode? C has #import.
  * Have the lexer return a token for #import instead of handling it itself.
    - Create a new preprocessor object with no external state (no -D/U options
      from the command line, etc).  Alternatively, keep track of exactly which
@@ -144,7 +185,8 @@ Fast #Import:
 New language feature: Configuration queries:
   - Instead of #ifdef __POWERPC__, use "if (strcmp(`cpu`, __POWERPC__))", or
     some other syntax.
-  - Use it to increase the number of "architecture-clean" #import'd files.
+  - Use it to increase the number of "architecture-clean" #import'd files,
+    allowing a single index to be used for all fat slices.
 
 Cocoa GUI Front-end:
  * All.
