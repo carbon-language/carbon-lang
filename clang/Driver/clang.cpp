@@ -59,7 +59,7 @@ enum ProgActions {
 
 static cl::opt<ProgActions> 
 ProgAction(cl::desc("Choose output type:"), cl::ZeroOrMore,
-           cl::init(ParsePrintASTs),
+           cl::init(ParseNoop),
            cl::values(
              clEnumValN(RunPreprocessorOnly, "Eonly",
                         "Just run preprocessor, no output (for timings)"),
