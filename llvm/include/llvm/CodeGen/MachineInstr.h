@@ -189,6 +189,11 @@ public:
         "Wrong MachineOperand accessor");
     offset = Offset;
   }
+  void setConstantPoolIndex(unsigned Idx) {
+    assert(isConstantPoolIndex() && "Wrong MachineOperand accessor");
+    contents.immedVal = Idx;
+  }
+  
   
   /// ChangeToImmediate - Replace this operand with a new immediate operand of
   /// the specified value.  If an operand is known to be an immediate already,
