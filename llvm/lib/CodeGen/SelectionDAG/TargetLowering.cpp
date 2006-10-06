@@ -30,6 +30,7 @@ TargetLowering::TargetLowering(TargetMachine &tm)
   memset(LoadXActions, 0, sizeof(LoadXActions));
 
   IsLittleEndian = TD->isLittleEndian();
+  UsesGlobalOffsetTable = false;
   ShiftAmountTy = SetCCResultTy = PointerTy = getValueType(TD->getIntPtrType());
   ShiftAmtHandling = Undefined;
   memset(RegClassForVT, 0,MVT::LAST_VALUETYPE*sizeof(TargetRegisterClass*));
