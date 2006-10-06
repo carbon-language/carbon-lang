@@ -1,6 +1,7 @@
 //===----------------------------------------------------------------------===//
 // C Language Family Front-end
 //===----------------------------------------------------------------------===//
+                                                             Chris Lattner
 
 I. Introduction:
  
@@ -24,17 +25,22 @@ I. Introduction:
  
    libsupport  - Basic support library, reused from LLVM.
    libsystem   - System abstraction library, reused from LLVM.
-   libbasic    - Diagnostics, Tokens, Locations, SourceBuffer abstraction,
-                 file system caching for read source files.
-   liblex      - C/C++/ObjC lexing and preprocessing.
-   libparse    - C99 (for now), eventually ObjC + C90 parsing as well.  This
-                 library invokes coarse-grained 'Actions' provided by the client
-                 to do stuff (great idea shamelessly stolen from Devkit by
-                 snaroff).  C++ can be added, but not a high priority.
+   libbasic    - Diagnostics, SourceLocations, SourceBuffer abstraction,
+                 file system caching for input source files.
+   liblex      - C/C++/ObjC lexing and preprocessing, identifier hash table,
+                 pragma handling, tokens, and macros.
+   libparse    - C99 (for now) parsing and local semantic analysis. This library
+                 invokes coarse-grained 'Actions' provided by the client to do
+                 stuff (great idea shamelessly stolen from Devkit).  ObjC/C90
+                 need to be added soon, K&R C and C++ can be added in the
+                 future, but are not a high priority.
    libast      - Provides a set of parser actions to build a standardized AST
                  for programs.  AST can be built in two forms: streamlined and
                  'complete' mode, which captures *full* location info for every
-                 token in the AST.
+                 token in the AST.  AST's are 'streamed' out a top-level
+                 declaration at a time, allowing clients to use decl-at-a-time
+                 processing, build up entire translation units, or even build
+                 'whole program' ASTs depending on how the use the APIs.
    libast2llvm - [Planned] Lower the AST to LLVM IR for optimization & codegen.
    clang       - An example client of the libraries at various levels.
 
