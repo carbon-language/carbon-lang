@@ -284,8 +284,8 @@ static SDOperand LowerCALL(SDOperand Op, SelectionDAG &DAG) {
 
       Ops.push_back(DAG.getRegister(Reg2, MVT::i32));
       SDVTList    VTs = DAG.getVTList(MVT::Other, MVT::Flag);
-      SDOperand Ops[] = {Chain, SDReg1, SDReg2, Arg}; //missing flag
-      Chain = DAG.getNode(ARMISD::FMRRD, VTs, Ops, 4);
+      SDOperand Ops[] = {Chain, SDReg1, SDReg2, Arg, InFlag};
+      Chain = DAG.getNode(ARMISD::FMRRD, VTs, Ops, InFlag.Val ? 5 : 4);
     } else {
       if (VT == MVT::f32)
         Arg = DAG.getNode(ISD::BIT_CONVERT, MVT::i32, Arg);

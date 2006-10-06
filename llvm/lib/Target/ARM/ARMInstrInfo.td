@@ -78,7 +78,8 @@ def armfsitos    : SDNode<"ARMISD::FSITOS", SDTUnaryOp>;
 def armfsitod      : SDNode<"ARMISD::FSITOD", SDTUnaryOp>;
 
 def SDTarmfmrrd    : SDTypeProfile<0, 3, [SDTCisInt<0>, SDTCisInt<1>, SDTCisFP<2>]>;
-def armfmrrd       : SDNode<"ARMISD::FMRRD", SDTarmfmrrd, [SDNPHasChain, SDNPOutFlag]>;
+def armfmrrd       : SDNode<"ARMISD::FMRRD", SDTarmfmrrd,
+                            [SDNPHasChain, SDNPOptInFlag, SDNPOutFlag]>;
 
 def SDTarmfmdrr    : SDTypeProfile<1, 2, [SDTCisFP<0>, SDTCisInt<1>, SDTCisInt<2>]>;
 def armfmdrr       : SDNode<"ARMISD::FMDRR", SDTarmfmdrr, []>;
