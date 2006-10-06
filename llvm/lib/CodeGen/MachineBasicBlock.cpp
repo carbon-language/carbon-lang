@@ -66,12 +66,12 @@ void ilist_traits<MachineInstr>::removeNodeFromList(MachineInstr* N) {
 }
 
 void ilist_traits<MachineInstr>::transferNodesFromList(
-  iplist<MachineInstr, ilist_traits<MachineInstr> >& toList,
+  iplist<MachineInstr, ilist_traits<MachineInstr> >& fromList,
   ilist_iterator<MachineInstr> first,
   ilist_iterator<MachineInstr> last) {
-  if (parent != toList.parent)
+  if (parent != fromList.parent)
     for (; first != last; ++first)
-      first->parent = toList.parent;
+      first->parent = parent;
 }
 
 MachineBasicBlock::iterator MachineBasicBlock::getFirstTerminator() {
