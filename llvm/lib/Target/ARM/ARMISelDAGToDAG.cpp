@@ -308,14 +308,25 @@ static SDOperand LowerCALL(SDOperand Op, SelectionDAG &DAG) {
   NodeTys.clear();
 
   // If the call has results, copy the values out of the ret val registers.
-  switch (Op.Val->getValueType(0)) {
-  default: assert(0 && "Unexpected ret value!");
-  case MVT::Other:
-    break;
-  case MVT::i32:
-    Chain = DAG.getCopyFromReg(Chain, ARM::R0, MVT::i32, InFlag).getValue(1);
-    ResultVals.push_back(Chain.getValue(0));
-    NodeTys.push_back(MVT::i32);
+  MVT::ValueType VT = Op.Val->getValueType(0);
+  if (VT != MVT::Other) {
+    assert(VT == MVT::i32 || VT == MVT::f32 || VT == MVT::f64);
+    SDOperand Value;
+
+    SDOperand Value1 = DAG.getCopyFromReg(Chain, ARM::R0, MVT::i32, InFlag);
+    Chain            = Value1.getValue(1);
+    InFlag           = Value1.getValue(2);
+    if (VT == MVT::i32)
+      Value = Value1;
+    if (VT == MVT::f32)
+      Value = DAG.getNode(ISD::BIT_CONVERT, MVT::f32, Value1);
+    if (VT == MVT::f64) {
+      SDOperand Value2 = DAG.getCopyFromReg(Chain, ARM::R1, MVT::i32, InFlag);
+      Chain            = Value2.getValue(1);
+      Value            = DAG.getNode(ARMISD::FMDRR, MVT::f64, Value1, Value2);
+    }
+    ResultVals.push_back(Value);
+    NodeTys.push_back(VT);
   }
 
   Chain = DAG.getNode(ISD::CALLSEQ_END, MVT::Other, Chain,

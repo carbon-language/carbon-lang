@@ -29,8 +29,12 @@ double %f2(double %a) {
         ret double %a
 }
 
-void %f3(double %a) {
-        call void %f4( double %a)
-        ret void
+void %f3() {
+entry:
+	%tmp = call double %f5()		; <double> [#uses=1]
+	call void %f4(double %tmp )
+	ret void
 }
+
 declare void %f4(double)
+declare double %f5()
