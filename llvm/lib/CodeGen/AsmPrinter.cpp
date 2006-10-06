@@ -22,6 +22,7 @@
 #include "llvm/Support/MathExtras.h"
 #include "llvm/Target/TargetAsmInfo.h"
 #include "llvm/Target/TargetData.h"
+#include "llvm/Target/TargetLowering.h"
 #include "llvm/Target/TargetMachine.h"
 #include <iostream>
 #include <cerrno>
@@ -200,10 +201,17 @@ void AsmPrinter::EmitJumpTableInfo(MachineJumpTableInfo *MJTI,
   // Pick the directive to use to print the jump table entries, and switch to 
   // the appropriate section.
   if (TM.getRelocationModel() == Reloc::PIC_) {
-    // In PIC mode, we need to emit the jump table to the same section as the
-    // function body itself, otherwise the label differences won't make sense.
-    const Function *F = MF.getFunction();
-    SwitchToTextSection(getSectionForFunction(*F).c_str(), F);
+    TargetLowering *LoweringInfo = TM.getTargetLowering();
+    if (LoweringInfo && LoweringInfo->usesGlobalOffsetTable()) {
+      SwitchToDataSection(TAI->getJumpTableDataSection(), 0);
+      if (TD->getPointerSize() == 8)
+        JTEntryDirective = TAI->getData64bitsDirective();
+    } else {      
+      // In PIC mode, we need to emit the jump table to the same section as the
+      // function body itself, otherwise the label differences won't make sense.
+      const Function *F = MF.getFunction();
+      SwitchToTextSection(getSectionForFunction(*F).c_str(), F);
+    }
   } else {
     SwitchToDataSection(TAI->getJumpTableDataSection(), 0);
     if (TD->getPointerSize() == 8)
