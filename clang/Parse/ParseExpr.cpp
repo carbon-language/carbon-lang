@@ -305,7 +305,7 @@ Parser::ParseRHSOfBinaryExpression(ExprResult LHS, unsigned MinPrec) {
     ConsumeToken();
     
     // Special case handling for the ternary operator.
-    ExprResult TernaryMiddle;
+    ExprResult TernaryMiddle(true);
     if (NextTokPrec == prec::Conditional) {
       if (Tok.getKind() != tok::colon) {
         // Handle this production specially:
@@ -361,7 +361,7 @@ Parser::ParseRHSOfBinaryExpression(ExprResult LHS, unsigned MinPrec) {
     assert(NextTokPrec <= ThisPrec && "Recursion didn't work!");
   
     // Combine the LHS and RHS into the LHS (e.g. build AST).
-    if (NextTokPrec != prec::Conditional)
+    if (TernaryMiddle.isInvalid)
       LHS = Actions.ParseBinOp(OpToken, LHS.Val, RHS.Val);
     else
       LHS = Actions.ParseConditionalOp(OpToken.getLocation(), ColonLoc,
