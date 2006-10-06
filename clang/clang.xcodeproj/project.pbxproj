@@ -22,17 +22,17 @@
 		DE0FCB340A9C21F100248FD5 /* Expr.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DE0FCB330A9C21F100248FD5 /* Expr.cpp */; };
 		DE1F22030A7D852A00FBF588 /* Parser.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = DE1F22020A7D852A00FBF588 /* Parser.h */; };
 		DE1F24820A7DCD3800FBF588 /* Declarations.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = DE1F24810A7DCD3800FBF588 /* Declarations.h */; };
+		DE5932D10AD60FF400BC794C /* clang.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DE5932CD0AD60FF400BC794C /* clang.cpp */; };
+		DE5932D20AD60FF400BC794C /* clang.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = DE5932CE0AD60FF400BC794C /* clang.h */; };
+		DE5932D30AD60FF400BC794C /* PrintParserCallbacks.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DE5932CF0AD60FF400BC794C /* PrintParserCallbacks.cpp */; };
+		DE5932D40AD60FF400BC794C /* PrintPreprocessedOutput.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DE5932D00AD60FF400BC794C /* PrintPreprocessedOutput.cpp */; };
 		DEAEE98B0A5A2B970045101B /* MultipleIncludeOpt.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = DEAEE98A0A5A2B970045101B /* MultipleIncludeOpt.h */; };
-		DEAEECAD0A5AF0E30045101B /* clang.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = DEAEECAC0A5AF0E30045101B /* clang.h */; };
-		DEAEECD50A5AF1FE0045101B /* PrintPreprocessedOutput.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DEAEECD40A5AF1FE0045101B /* PrintPreprocessedOutput.cpp */; };
 		DEAEED4B0A5AF89A0045101B /* NOTES.txt in CopyFiles */ = {isa = PBXBuildFile; fileRef = DEAEED4A0A5AF89A0045101B /* NOTES.txt */; };
 		DEC8D9910A9433CD00353FCA /* Decl.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = DEC8D9900A9433CD00353FCA /* Decl.h */; };
 		DEC8D9A40A94346E00353FCA /* AST.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = DEC8D9A30A94346E00353FCA /* AST.h */; };
 		DEC8D9B60A9434FA00353FCA /* Builder.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DEC8D9B50A9434FA00353FCA /* Builder.cpp */; };
-		DEC8DA1E0A94388B00353FCA /* PrintParserCallbacks.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DEC8DA1D0A94388B00353FCA /* PrintParserCallbacks.cpp */; };
 		DEC8DAAD0A94400300353FCA /* ASTStreamer.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DEC8DAAC0A94400300353FCA /* ASTStreamer.cpp */; };
 		DEC8DAC00A94402500353FCA /* ASTStreamer.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = DEC8DABF0A94402500353FCA /* ASTStreamer.h */; };
-		DED7D72D0A524281003AD0FB /* clang.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DED7D72C0A524281003AD0FB /* clang.cpp */; };
 		DED7D7410A524295003AD0FB /* Diagnostic.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = DED7D7310A524295003AD0FB /* Diagnostic.h */; };
 		DED7D7420A524295003AD0FB /* DiagnosticKinds.def in CopyFiles */ = {isa = PBXBuildFile; fileRef = DED7D7320A524295003AD0FB /* DiagnosticKinds.def */; };
 		DED7D7430A524295003AD0FB /* FileManager.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = DED7D7330A524295003AD0FB /* FileManager.h */; };
@@ -90,7 +90,6 @@
 				DED7D7D80A524302003AD0FB /* README.txt in CopyFiles */,
 				DED7D9180A52518C003AD0FB /* ScratchBuffer.h in CopyFiles */,
 				DEAEE98B0A5A2B970045101B /* MultipleIncludeOpt.h in CopyFiles */,
-				DEAEECAD0A5AF0E30045101B /* clang.h in CopyFiles */,
 				DEAEED4B0A5AF89A0045101B /* NOTES.txt in CopyFiles */,
 				DE1F22030A7D852A00FBF588 /* Parser.h in CopyFiles */,
 				DE1F24820A7DCD3800FBF588 /* Declarations.h in CopyFiles */,
@@ -101,6 +100,7 @@
 				DEC8D9A40A94346E00353FCA /* AST.h in CopyFiles */,
 				DEC8DAC00A94402500353FCA /* ASTStreamer.h in CopyFiles */,
 				DE0FCA630A95859D00248FD5 /* Expr.h in CopyFiles */,
+				DE5932D20AD60FF400BC794C /* clang.h in CopyFiles */,
 			);
 			runOnlyForDeploymentPostprocessing = 1;
 		};
@@ -123,17 +123,17 @@
 		DE0FCB330A9C21F100248FD5 /* Expr.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; name = Expr.cpp; path = AST/Expr.cpp; sourceTree = "<group>"; };
 		DE1F22020A7D852A00FBF588 /* Parser.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; name = Parser.h; path = clang/Parse/Parser.h; sourceTree = "<group>"; };
 		DE1F24810A7DCD3800FBF588 /* Declarations.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; name = Declarations.h; path = clang/Parse/Declarations.h; sourceTree = "<group>"; };
+		DE5932CD0AD60FF400BC794C /* clang.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; name = clang.cpp; path = Driver/clang.cpp; sourceTree = "<group>"; };
+		DE5932CE0AD60FF400BC794C /* clang.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; name = clang.h; path = Driver/clang.h; sourceTree = "<group>"; };
+		DE5932CF0AD60FF400BC794C /* PrintParserCallbacks.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; name = PrintParserCallbacks.cpp; path = Driver/PrintParserCallbacks.cpp; sourceTree = "<group>"; };
+		DE5932D00AD60FF400BC794C /* PrintPreprocessedOutput.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; name = PrintPreprocessedOutput.cpp; path = Driver/PrintPreprocessedOutput.cpp; sourceTree = "<group>"; };
 		DEAEE98A0A5A2B970045101B /* MultipleIncludeOpt.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = MultipleIncludeOpt.h; sourceTree = "<group>"; };
-		DEAEECAC0A5AF0E30045101B /* clang.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = clang.h; sourceTree = "<group>"; };
-		DEAEECD40A5AF1FE0045101B /* PrintPreprocessedOutput.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = PrintPreprocessedOutput.cpp; sourceTree = "<group>"; };
 		DEAEED4A0A5AF89A0045101B /* NOTES.txt */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = text; path = NOTES.txt; sourceTree = "<group>"; };
 		DEC8D9900A9433CD00353FCA /* Decl.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; name = Decl.h; path = clang/AST/Decl.h; sourceTree = "<group>"; };
 		DEC8D9A30A94346E00353FCA /* AST.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; name = AST.h; path = clang/AST/AST.h; sourceTree = "<group>"; };
 		DEC8D9B50A9434FA00353FCA /* Builder.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; name = Builder.cpp; path = AST/Builder.cpp; sourceTree = "<group>"; };
-		DEC8DA1D0A94388B00353FCA /* PrintParserCallbacks.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = PrintParserCallbacks.cpp; sourceTree = "<group>"; };
 		DEC8DAAC0A94400300353FCA /* ASTStreamer.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; name = ASTStreamer.cpp; path = AST/ASTStreamer.cpp; sourceTree = "<group>"; };
 		DEC8DABF0A94402500353FCA /* ASTStreamer.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; name = ASTStreamer.h; path = clang/AST/ASTStreamer.h; sourceTree = "<group>"; };
-		DED7D72C0A524281003AD0FB /* clang.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = clang.cpp; sourceTree = "<group>"; };
 		DED7D7310A524295003AD0FB /* Diagnostic.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = Diagnostic.h; sourceTree = "<group>"; };
 		DED7D7320A524295003AD0FB /* DiagnosticKinds.def */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = text; path = DiagnosticKinds.def; sourceTree = "<group>"; };
 		DED7D7330A524295003AD0FB /* FileManager.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = FileManager.h; sourceTree = "<group>"; };
@@ -246,10 +246,10 @@
 		DEAEECAE0A5AF0FA0045101B /* Driver */ = {
 			isa = PBXGroup;
 			children = (
-				DED7D72C0A524281003AD0FB /* clang.cpp */,
-				DEAEECAC0A5AF0E30045101B /* clang.h */,
-				DEAEECD40A5AF1FE0045101B /* PrintPreprocessedOutput.cpp */,
-				DEC8DA1D0A94388B00353FCA /* PrintParserCallbacks.cpp */,
+				DE5932CD0AD60FF400BC794C /* clang.cpp */,
+				DE5932CE0AD60FF400BC794C /* clang.h */,
+				DE5932CF0AD60FF400BC794C /* PrintParserCallbacks.cpp */,
+				DE5932D00AD60FF400BC794C /* PrintPreprocessedOutput.cpp */,
 			);
 			name = Driver;
 			sourceTree = "<group>";
@@ -388,7 +388,6 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				DED7D72D0A524281003AD0FB /* clang.cpp in Sources */,
 				DED7D77A0A5242C7003AD0FB /* Diagnostic.cpp in Sources */,
 				DED7D77B0A5242C7003AD0FB /* FileManager.cpp in Sources */,
 				DED7D7880A5242C7003AD0FB /* SourceBuffer.cpp in Sources */,
@@ -402,7 +401,6 @@
 				DED7D7C80A5242E6003AD0FB /* Pragma.cpp in Sources */,
 				DED7D7C90A5242E6003AD0FB /* Preprocessor.cpp in Sources */,
 				DED7D9E50A5257F6003AD0FB /* ScratchBuffer.cpp in Sources */,
-				DEAEECD50A5AF1FE0045101B /* PrintPreprocessedOutput.cpp in Sources */,
 				DE06BEC90A854E390050E87E /* Scope.cpp in Sources */,
 				DE06CC180A899E110050E87E /* Statement.cpp in Sources */,
 				DE06CEC00A8AE7800050E87E /* Expression.cpp in Sources */,
@@ -411,10 +409,12 @@
 				DE06D4410A8BB55C0050E87E /* Declaration.cpp in Sources */,
 				DE06E4D70A8FBF7A0050E87E /* Initializer.cpp in Sources */,
 				DEC8D9B60A9434FA00353FCA /* Builder.cpp in Sources */,
-				DEC8DA1E0A94388B00353FCA /* PrintParserCallbacks.cpp in Sources */,
 				DEC8DAAD0A94400300353FCA /* ASTStreamer.cpp in Sources */,
 				DE0FCA210A95710600248FD5 /* EmptyAction.cpp in Sources */,
 				DE0FCB340A9C21F100248FD5 /* Expr.cpp in Sources */,
+				DE5932D10AD60FF400BC794C /* clang.cpp in Sources */,
+				DE5932D30AD60FF400BC794C /* PrintParserCallbacks.cpp in Sources */,
+				DE5932D40AD60FF400BC794C /* PrintPreprocessedOutput.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
