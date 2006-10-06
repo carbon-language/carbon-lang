@@ -28,8 +28,9 @@ AsmWriterFlavor("x86-asm-syntax", cl::init(X86Subtarget::unset),
 
 /// GetCpuIDAndInfo - Execute the specified cpuid and return the 4 values in the
 /// specified arguments.  If we can't run cpuid on the host, return true.
-static inline bool GetCpuIDAndInfo(unsigned value, unsigned *rEAX, unsigned *rEBX,
-                            unsigned *rECX, unsigned *rEDX) {
+static inline bool GetCpuIDAndInfo(unsigned value, unsigned *rEAX,
+                                   unsigned *rEBX, unsigned *rECX,
+                                   unsigned *rEDX) {
 #if defined(__x86_64__)
   asm ("pushq\t%%rbx\n\t"
        "cpuid\n\t"
@@ -103,7 +104,7 @@ static const char *GetCurrentX86CPU() {
   unsigned Family  = (EAX >> 8) & 0xf; // Bits 8 - 11
   unsigned Model   = (EAX >> 4) & 0xf; // Bits 4 - 7
   GetCpuIDAndInfo(0x80000001, &EAX, &EBX, &ECX, &EDX);
-  bool Em64T = EDX & (1 << 29);
+  bool Em64T = (EDX >> 29) & 0x1;
 
   union {
     unsigned u[3];
