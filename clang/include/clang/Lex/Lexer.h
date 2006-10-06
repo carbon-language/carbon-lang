@@ -329,7 +329,7 @@ private:
   // Helper functions to lex the remainder of a token of the specific type.
   void LexIdentifier         (LexerToken &Result, const char *CurPtr);
   void LexNumericConstant    (LexerToken &Result, const char *CurPtr);
-  void LexStringLiteral      (LexerToken &Result, const char *CurPtr);
+  void LexStringLiteral      (LexerToken &Result, const char *CurPtr,bool Wide);
   void LexAngledStringLiteral(LexerToken &Result, const char *CurPtr);
   void LexCharConstant       (LexerToken &Result, const char *CurPtr);
   bool LexEndOfFile          (LexerToken &Result, const char *CurPtr);

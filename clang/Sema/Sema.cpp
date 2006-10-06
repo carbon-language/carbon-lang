@@ -18,18 +18,23 @@
 #include "clang/Parse/Scope.h"
 #include "clang/Lex/IdentifierTable.h"
 #include "clang/Lex/LexerToken.h"
-#include "llvm/Support/Visibility.h"
+#include "clang/Lex/Preprocessor.h"
+#include "llvm/Support/Compiler.h"
 using namespace llvm;
 using namespace clang;
 
 /// ASTBuilder
 namespace {
 class VISIBILITY_HIDDEN ASTBuilder : public Action {
+  Preprocessor &PP;
+  
   /// FullLocInfo - If this is true, the ASTBuilder constructs AST Nodes that
   /// capture maximal location information for each source-language construct.
   bool FullLocInfo;
 public:
-  ASTBuilder(bool fullLocInfo) : FullLocInfo(fullLocInfo) {}
+  ASTBuilder(Preprocessor &pp, bool fullLocInfo)
+    : PP(pp), FullLocInfo(fullLocInfo) {}
+  
   //===--------------------------------------------------------------------===//
   // Symbol table tracking callbacks.
   //
@@ -47,6 +52,9 @@ public:
   virtual ExprResult ParseFloatingConstant(const LexerToken &Tok);
   virtual ExprResult ParseParenExpr(SourceLocation L, SourceLocation R,
                                     ExprTy *Val);
+  virtual ExprResult ParseStringExpr(const char *StrData, unsigned StrLen,
+                                     bool isWide,
+                                     const LexerToken *Toks, unsigned NumToks);
   
   // Binary/Unary Operators.  'Tok' is the token for the operator.
   virtual ExprResult ParseUnaryOp(const LexerToken &Tok, ExprTy *Input);
@@ -165,6 +173,26 @@ Action::ExprResult ASTBuilder::ParseParenExpr(SourceLocation L,
   
   return new ParenExpr(L, R, (Expr*)Val);
 }
+
+/// ParseStringExpr - This accepts a string after semantic analysis. This string
+/// may be the result of string concatenation ([C99 5.1.1.2, translation phase
+/// #6]), so it may come from multiple tokens.
+/// 
+Action::ExprResult ASTBuilder::
+ParseStringExpr(const char *StrData, unsigned StrLen, bool isWide,
+                const LexerToken *Toks, unsigned NumToks) {
+  assert(NumToks && "Must have at least one string!");
+  
+  if (!FullLocInfo)
+    return new StringExpr(StrData, StrLen, isWide);
+  else {
+    SmallVector<SourceLocation, 4> Locs;
+    for (unsigned i = 0; i != NumToks; ++i)
+      Locs.push_back(Toks[i].getLocation());
+    return new StringExprLOC(StrData, StrLen, isWide, &Locs[0], Locs.size());
+  }
+}
+
 
 // Unary Operators.  'Tok' is the token for the operator.
 Action::ExprResult ASTBuilder::ParseUnaryOp(const LexerToken &Tok,
@@ -326,8 +354,8 @@ Action::ExprResult ASTBuilder::ParseConditionalOp(SourceLocation QuestionLoc,
 
 /// Interface to the Builder.cpp file.
 ///
-Action *CreateASTBuilderActions(bool FullLocInfo) {
-  return new ASTBuilder(FullLocInfo);
+Action *CreateASTBuilderActions(Preprocessor &PP, bool FullLocInfo) {
+  return new ASTBuilder(PP, FullLocInfo);
 }
 
 

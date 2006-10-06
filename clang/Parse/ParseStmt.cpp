@@ -597,7 +597,7 @@ void Parser::ParseAsmStatement() {
   if (Tok.getKind() == tok::colon) {
     ConsumeToken();
     
-    if (Tok.getKind() == tok::string_literal) {
+    if (isTokenStringLiteral()) {
       // Parse the asm-string list for clobbers.
       while (1) {
         ParseAsmStringLiteral();
@@ -629,7 +629,7 @@ void Parser::ParseAsmOperandsOpt() {
   ConsumeToken();
   
   // 'asm-operands' isn't present?
-  if (Tok.getKind() != tok::string_literal && Tok.getKind() != tok::l_square)
+  if (!isTokenStringLiteral() && Tok.getKind() != tok::l_square)
     return;
   
   while (1) {

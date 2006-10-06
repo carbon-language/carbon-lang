@@ -161,8 +161,9 @@ static LexerToken StringifyArgument(const LexerToken *ArgToks,
     
     // If this is a string or character constant, escape the token as specified
     // by 6.10.3.2p2.
-    if (Tok.getKind() == tok::string_literal ||  // "foo" and L"foo".
-        Tok.getKind() == tok::char_constant) {   // 'x' and L'x'.
+    if (Tok.getKind() == tok::string_literal ||      // "foo"
+        Tok.getKind() == tok::wide_string_literal || // L"foo"
+        Tok.getKind() == tok::char_constant) {       // 'x' and L'x'.
       Result += Lexer::Stringify(PP.getSpelling(Tok));
     } else {
       // Otherwise, just append the token.

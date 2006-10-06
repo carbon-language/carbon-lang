@@ -444,7 +444,7 @@ void Lexer::LexNumericConstant(LexerToken &Result, const char *CurPtr) {
 
 /// LexStringLiteral - Lex the remainder of a string literal, after having lexed
 /// either " or L".
-void Lexer::LexStringLiteral(LexerToken &Result, const char *CurPtr) {
+void Lexer::LexStringLiteral(LexerToken &Result, const char *CurPtr, bool Wide){
   const char *NulCharacter = 0; // Does this string contain the \0 character?
   
   char C = getAndAdvanceChar(CurPtr, Result);
@@ -468,7 +468,7 @@ void Lexer::LexStringLiteral(LexerToken &Result, const char *CurPtr) {
   // If a nul character existed in the string, warn about it.
   if (NulCharacter) Diag(NulCharacter, diag::null_in_string);
 
-  Result.SetKind(tok::string_literal);
+  Result.SetKind(Wide ? tok::wide_string_literal : tok::string_literal);
 
   // Update the location of the token as well as the BufferPtr instance var.
   FormTokenWithChars(Result, CurPtr);
@@ -1104,7 +1104,8 @@ LexNextToken:
 
     // Wide string literal.
     if (Char == '"')
-      return LexStringLiteral(Result, ConsumeChar(CurPtr, SizeTmp, Result));
+      return LexStringLiteral(Result, ConsumeChar(CurPtr, SizeTmp, Result),
+                              true);
 
     // Wide character constant.
     if (Char == '\'')
@@ -1143,7 +1144,7 @@ LexNextToken:
   case '"':
     // Notify MIOpt that we read a non-whitespace/non-comment token.
     MIOpt.ReadToken();
-    return LexStringLiteral(Result, CurPtr);
+    return LexStringLiteral(Result, CurPtr, false);
 
   // C99 6.4.6: Punctuators.
   case '?':

@@ -43,6 +43,28 @@ void FloatingConstant::dump_impl() const {
   std::cerr << "1.0";
 }
 
+
+
+StringExpr::StringExpr(const char *strData, unsigned byteLength, bool Wide) {
+  // OPTIMIZE: could allocate this appended to the StringExpr.
+  char *AStrData = new char[byteLength];
+  memcpy(AStrData, strData, byteLength);
+  StrData = AStrData;
+  ByteLength = byteLength;
+  isWide = Wide;
+}
+
+StringExpr::~StringExpr() {
+  delete[] StrData;
+}
+
+void StringExpr::dump_impl() const {
+  if (isWide) std::cerr << 'L';
+  std::cerr << '"' << StrData << '"';
+}
+
+
+
 void ParenExpr::dump_impl() const {
   std::cerr << "'('";
   Val->dump();

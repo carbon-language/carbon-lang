@@ -94,10 +94,18 @@ public:
   virtual ExprResult ParseSimplePrimaryExpr(const LexerToken &Tok) { return 0; }
   virtual ExprResult ParseIntegerConstant(const LexerToken &Tok) { return 0; }
   virtual ExprResult ParseFloatingConstant(const LexerToken &Tok) { return 0; }
-
   virtual ExprResult ParseParenExpr(SourceLocation L, SourceLocation R,
                                     ExprTy *Val) {
     return Val;  // Default impl returns operand.
+  }
+  
+  /// ParseStringExpr - The (null terminated) string data is specified with
+  /// StrData+StrLen.  isWide is true if this is a wide string. The Toks/NumToks
+  /// array exposes the input tokens to provide location information.
+  virtual ExprResult ParseStringExpr(const char *StrData, unsigned StrLen,
+                                     bool isWide,
+                                     const LexerToken *Toks, unsigned NumToks) {
+    return 0;
   }
 
   // Postfix Expressions.

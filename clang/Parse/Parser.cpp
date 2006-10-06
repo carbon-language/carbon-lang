@@ -152,6 +152,7 @@ bool Parser::SkipUntil(tok::TokenKind T, bool StopAtSemi, bool DontConsume) {
       break;
       
     case tok::string_literal:
+    case tok::wide_string_literal:
       ConsumeStringToken();
       break;
     case tok::semi:
@@ -405,7 +406,7 @@ void Parser::ParseFunctionDefinition(Declarator &D) {
 ///         string-literal
 ///
 void Parser::ParseAsmStringLiteral() {
-  if (Tok.getKind() != tok::string_literal) {
+  if (!isTokenStringLiteral()) {
     Diag(Tok, diag::err_expected_string_literal);
     return;
   }

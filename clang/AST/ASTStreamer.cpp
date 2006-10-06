@@ -19,7 +19,7 @@ using namespace clang;
 
 /// Interface to the Builder.cpp file.
 ///
-Action *CreateASTBuilderActions(bool FullLocInfo);
+Action *CreateASTBuilderActions(Preprocessor &PP, bool FullLocInfo);
 
 
 namespace {
@@ -27,7 +27,7 @@ namespace {
     Parser P;
   public:
     ASTStreamer(Preprocessor &PP, unsigned MainFileID, bool FullLocInfo)
-      : P(PP, *CreateASTBuilderActions(FullLocInfo)) {
+      : P(PP, *CreateASTBuilderActions(PP, FullLocInfo)) {
       PP.EnterSourceFile(MainFileID, 0, true);
       
       // Initialize the parser.

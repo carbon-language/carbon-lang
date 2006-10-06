@@ -22,6 +22,8 @@
 #include "clang/Parse/Parser.h"
 #include "clang/Basic/Diagnostic.h"
 #include "llvm/ADT/SmallVector.h"
+#include "llvm/ADT/StringExtras.h"
+#include "llvm/Config/Alloca.h"
 using namespace llvm;
 using namespace clang;
 
@@ -490,6 +492,7 @@ Parser::ExprResult Parser::ParseCastExpression(bool isUnaryExpression) {
     // These can be followed by postfix-expr pieces.
     return ParsePostfixExpressionSuffix(Res);
   case tok::string_literal:    // primary-expression: string-literal
+  case tok::wide_string_literal:
     Res = ParseStringLiteralExpression();
     if (Res.isInvalid) return Res;
     // This can be followed by postfix-expr pieces (e.g. "foo"[1]).
@@ -809,24 +812,6 @@ Parser::ExprResult Parser::ParseBuiltinPrimaryExpression() {
   return ParsePostfixExpressionSuffix(Res);
 }
 
-/// ParseStringLiteralExpression - This handles the various token types that
-/// form string literals, and also handles string concatenation [C99 5.1.1.2,
-/// translation phase #6].
-///
-///       primary-expression: [C99 6.5.1]
-///         string-literal
-Parser::ExprResult Parser::ParseStringLiteralExpression() {
-  assert(isTokenStringLiteral() && "Not a string literal!");
-  ConsumeStringToken();
-  
-  // String concat.  Note that keywords like __func__ and __FUNCTION__ aren't
-  // considered to be strings.
-  while (isTokenStringLiteral())
-    ConsumeStringToken();
-  // TODO: Build AST for string literals.
-  return ExprResult(false);
-}
-
 
 /// ParseParenExpression - This parses the unit that starts with a '(' token,
 /// based on what is allowed by ExprType.  The actual thing parsed is returned
@@ -906,3 +891,223 @@ Parser::ExprResult Parser::ParseParenExpression(ParenParseOption &ExprType,
   
   return Result;
 }
+
+/// HexDigitValue - Return the value of the specified hex digit, or -1 if it's
+/// not valid.
+static int HexDigitValue(char C) {
+  if (C >= '0' && C <= '9') return C-'0';
+  if (C >= 'a' && C <= 'f') return C-'a'+10;
+  if (C >= 'A' && C <= 'F') return C-'A'+10;
+  return -1;
+}
+
+/// ParseStringLiteralExpression - This handles the various token types that
+/// form string literals, and also handles string concatenation [C99 5.1.1.2,
+/// translation phase #6].
+///
+///       primary-expression: [C99 6.5.1]
+///         string-literal
+Parser::ExprResult Parser::ParseStringLiteralExpression() {
+  assert(isTokenStringLiteral() && "Not a string literal!");
+  
+  // String concat.  Note that keywords like __func__ and __FUNCTION__ are not
+  // considered to be strings for concatenation purposes.
+  SmallVector<LexerToken, 4> StringToks;
+  
+  // While we're looking at all of the string portions, remember the max
+  // individual token length, computing a bound on the concatenated string
+  // length, and see whether any piece is a wide-string.  If any of the string
+  // portions is a wide-string literal, the result is also a wide-string literal
+  // [C99 6.4.5p4].
+  unsigned SizeBound = 0, MaxTokenLength = 0;
+  bool AnyWide = false;
+  do {
+    // The string could be shorter than this if it needs cleaning, but this is a
+    // reasonable bound, which is all we need.
+    SizeBound += Tok.getLength()-2;  // -2 for "".
+    
+    // Find maximum string piece length.
+    if (Tok.getLength() > MaxTokenLength) 
+      MaxTokenLength = Tok.getLength();
+    
+    // Remember if we see any wide strings.
+    AnyWide |= Tok.getKind() == tok::wide_string_literal;
+    
+    // Remember the string token.
+    StringToks.push_back(Tok);
+    ConsumeStringToken();
+  } while (isTokenStringLiteral());
+  
+  // Include space for the null terminator.
+  ++SizeBound;
+  
+  // TODO: K&R warning: "traditional C rejects string constant concatenation"
+  
+  // FIXME: Size of wchar_t should not be hardcoded!
+  unsigned wchar_tByteWidth = 4;
+  
+  // The output buffer size needs to be large enough to hold wide characters.
+  // This is a worst-case assumption which basically corresponds to L"" "long".
+  if (AnyWide)
+    SizeBound *= wchar_tByteWidth;
+  
+  // Create a temporary buffer to hold the result string data.  If it is "big",
+  // use malloc, otherwise use alloca.
+  char *ResultBuf;
+  if (SizeBound > 512)
+    ResultBuf = (char*)malloc(SizeBound);
+  else
+    ResultBuf = (char*)alloca(SizeBound);
+  
+  // Likewise, but for each string piece.
+  char *TokenBuf;
+  if (MaxTokenLength > 512)
+    TokenBuf = (char*)malloc(MaxTokenLength);
+  else
+    TokenBuf = (char*)alloca(MaxTokenLength);
+  
+  // Loop over all the strings, getting their spelling, and expanding them to
+  // wide strings as appropriate.
+  char *ResultPtr = ResultBuf;   // Next byte to fill in.
+  
+  for (unsigned i = 0, e = StringToks.size(); i != e; ++i) {
+    const char *ThisTokBuf = TokenBuf;
+    // Get the spelling of the token, which eliminates trigraphs, etc.  We know
+    // that ThisTokBuf points to a buffer that is big enough for the whole token
+    // and 'spelled' tokens can only shrink.
+    unsigned ThisTokLen = PP.getSpelling(StringToks[i], ThisTokBuf);
+    const char *ThisTokEnd = ThisTokBuf+ThisTokLen-1;  // Skip end quote.
+    
+    // TODO: Input character set mapping support.
+    
+    // Skip L marker for wide strings.
+    if (ThisTokBuf[0] == 'L') ++ThisTokBuf;
+    
+    assert(ThisTokBuf[0] == '"' && "Expected quote, lexer broken?");
+    ++ThisTokBuf;
+    
+    while (ThisTokBuf != ThisTokEnd) {
+      // Is this a span of non-escape characters?
+      if (ThisTokBuf[0] != '\\') {
+        const char *InStart = ThisTokBuf;
+        do {
+          ++ThisTokBuf;
+        } while (ThisTokBuf != ThisTokEnd && ThisTokBuf[0] != '\\');
+        
+        // Copy the character span over.
+        unsigned Len = ThisTokBuf-InStart;
+        if (!AnyWide) {
+          memcpy(ResultPtr, InStart, Len);
+          ResultPtr += Len;
+        } else {
+          // Note: our internal rep of wide char tokens is always little-endian.
+          for (; Len; --Len, ++InStart) {
+            *ResultPtr++ = InStart[0];
+            // Add zeros at the end.
+            for (unsigned i = 1, e = wchar_tByteWidth; i != e; ++i)
+              *ResultPtr++ = 0;
+          }
+        }
+        continue;
+      }
+      
+      // Otherwise, this is an escape character.  Skip the '\' char.
+      ++ThisTokBuf;
+      
+      // We know that this character can't be off the end of the buffer, because
+      // that would have been \", which would not have been the end of string.
+      unsigned ResultChar = *ThisTokBuf++;
+      switch (ResultChar) {
+      // These map to themselves.
+      case '\\': case '\'': case '"': case '?': break;
+        
+      // These have fixed mappings.
+      case 'a':
+        // TODO: K&R: the meaning of '\\a' is different in traditional C
+        ResultChar = 7;
+        break;
+      case 'b':
+        ResultChar = 8;
+        break;
+      case 'e':
+        PP.Diag(StringToks[i], diag::ext_nonstandard_escape, "e");
+        ResultChar = 27;
+        break;
+      case 'f':
+        ResultChar = 12;
+        break;
+      case 'n':
+        ResultChar = 10;
+        break;
+      case 'r':
+        ResultChar = 13;
+        break;
+      case 't':
+        ResultChar = 9;
+        break;
+      case 'v':
+        ResultChar = 11;
+        break;
+        
+      //case 'u': case 'U':  // FIXME: UCNs.
+      case 'x': // Hex escape.
+        if (ThisTokBuf == ThisTokEnd ||
+            (ResultChar = HexDigitValue(*ThisTokBuf)) == ~0U) {
+          PP.Diag(StringToks[i], diag::err_hex_escape_no_digits);
+          ResultChar = 0;
+          break;
+        }
+        ++ThisTokBuf; // Consumed one hex digit.
+        
+        assert(0 && "hex escape: unimp!");
+        break;
+      case '0': case '1': case '2': case '3':
+      case '4': case '5': case '6': case '7':
+        // Octal escapes.
+        assert(0 && "octal escape: unimp!");
+        break;
+        
+      // Otherwise, these are not valid escapes.
+      case '(': case '{': case '[': case '%':
+        // GCC accepts these as extensions.  We warn about them as such though.
+        if (!PP.getLangOptions().NoExtensions) {
+          PP.Diag(StringToks[i], diag::ext_nonstandard_escape,
+                  std::string()+(char)ResultChar);
+          break;
+        }
+        // FALL THROUGH.
+      default:
+        if (isgraph(ThisTokBuf[0])) {
+          PP.Diag(StringToks[i], diag::ext_unknown_escape,
+                  std::string()+(char)ResultChar);
+        } else {
+          PP.Diag(StringToks[i], diag::ext_unknown_escape,
+                  "x"+utohexstr(ResultChar));
+        }
+      }
+
+      // Note: our internal rep of wide char tokens is always little-endian.
+      for (unsigned i = 0, e = wchar_tByteWidth; i != e; ++i)
+        *ResultPtr++ = ResultChar >> i*8;
+    }
+  }
+  
+  // Add zero terminator.
+  *ResultPtr = 0;
+  if (AnyWide) {
+    for (unsigned i = 1, e = wchar_tByteWidth; i != e; ++i)
+      *ResultPtr++ = 0;
+  }
+  
+  // Hand this off to the Actions.
+  ExprResult Res = Actions.ParseStringExpr(ResultBuf, ResultPtr-ResultBuf,
+                                           AnyWide,
+                                           &StringToks[0], StringToks.size());
+  
+  // If either buffer was heap allocated, release it now.
+  if (MaxTokenLength > 512) free(TokenBuf);
+  if (SizeBound > 512) free(ResultBuf);
+  
+  return Res;
+}
+

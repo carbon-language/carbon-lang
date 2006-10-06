@@ -96,7 +96,8 @@ void Preprocessor::Handle_Pragma(LexerToken &Tok) {
 
   // Read the '"..."'.
   Lex(Tok);
-  if (Tok.getKind() != tok::string_literal)
+  if (Tok.getKind() != tok::string_literal &&
+      Tok.getKind() != tok::wide_string_literal)
     return Diag(PragmaLoc, diag::err__Pragma_malformed);
   
   // Remember the string.

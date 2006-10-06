@@ -15,7 +15,7 @@
 #define LLVM_CLANG_AST_EXPR_H
 
 #include "clang/Basic/SourceLocation.h"
-#include <cassert>
+#include "llvm/ADT/SmallVector.h"
 
 namespace llvm {
 namespace clang {
@@ -62,6 +62,26 @@ class FloatingConstant : public Expr {
 public:
   FloatingConstant() {}
   virtual void dump_impl() const;
+};
+
+class StringExpr : public Expr {
+  const char *StrData;
+  unsigned ByteLength;
+  bool isWide;
+public:
+  StringExpr(const char *strData, unsigned byteLength, bool Wide);
+  virtual ~StringExpr();
+  virtual void dump_impl() const;
+};
+
+class StringExprLOC : public StringExpr {
+  // Locations for the string tokens before string concatenation.
+  SmallVector<SourceLocation, 4> Locs;
+public:
+  StringExprLOC(const char *StrData, unsigned ByteLength, bool isWide,
+                SourceLocation *L, unsigned NumLocs)
+    : StringExpr(StrData, ByteLength, isWide), Locs(L, L+NumLocs) {
+  }
 };
 
 /// ParenExpr - This represents a parethesized expression, e.g. "(1)".  This

@@ -89,7 +89,8 @@ private:
   /// isTokenStringLiteral - True if this token is a string-literal.
   ///
   bool isTokenStringLiteral() const {
-    return Tok.getKind() == tok::string_literal;
+    return Tok.getKind() == tok::string_literal ||
+           Tok.getKind() == tok::wide_string_literal;
   }
   
   /// ConsumeToken - Consume the current 'peek token' and lex the next one.

@@ -42,7 +42,8 @@ TOK(numeric_constant)    // 0x123
 TOK(char_constant)       // 'a'   L'b'
 
 // C99 6.4.5: String Literals.
-TOK(string_literal)      // "foo"  L"foo"
+TOK(string_literal)      // "foo"
+TOK(wide_string_literal) // L"foo"
 TOK(angle_string_literal)// <foo>
 
 // C99 6.4.6: Punctuators.

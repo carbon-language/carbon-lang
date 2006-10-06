@@ -444,7 +444,6 @@ void Preprocessor::EnterSourceFileWithLexer(Lexer *TheLexer,
 /// tokens from it instead of the current buffer.
 void Preprocessor::EnterMacro(LexerToken &Tok, MacroArgs *Args) {
   IdentifierInfo *Identifier = Tok.getIdentifierInfo();
-  MacroInfo &MI = *Identifier->getMacroInfo();
   IncludeMacroStack.push_back(IncludeStackInfo(CurLexer, CurDirLookup,
                                                CurMacroExpander));
   CurLexer     = 0;
@@ -1492,7 +1491,8 @@ void Preprocessor::HandleIdentSCCSDirective(LexerToken &Tok) {
   Lex(StrTok);
   
   // If the token kind isn't a string, it's a malformed directive.
-  if (StrTok.getKind() != tok::string_literal)
+  if (StrTok.getKind() != tok::string_literal &&
+      StrTok.getKind() != tok::wide_string_literal)
     return Diag(StrTok, diag::err_pp_malformed_ident);
   
   // Verify that there is nothing after the string, other than EOM.
