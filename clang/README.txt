@@ -61,14 +61,34 @@ I. Introduction:
  is high-quality and industrial-strength: all the obnoxious features of the C
  family must be correctly supported (trigraphs, preprocessor arcana, K&R-style
  prototypes, GCC/MS extensions, etc).  It cannot be used if it's not 'real'.
- 
 
-II. Current advantages over GCC:
+
+II. Usage of clang driver:
+
+ * Basic Command-Line Options:
+   - Help: clang --help
+   - Standard GCC options accepted: -E, -I*, -i*, -pedantic, etc.
+   - Make diagnostics more gcc-like: -fno-caret-diagnostics -fno-show-column
+   - Enable metric printing: --stats
+
+ * -parse-noop is the default mode.
+
+ * -E mode gives output nearly identical to GCC, though not all bugs in
+   whitespace calculation have been emulated.
+ 
+ * -parse-print-callbacks doesn't print all callbacks yet.
+ 
+ * -parse-print-ast isn't complete, it currently prints decls and stuff nested
+   in parens.  This will improve as more AST nodes are implemented.
+
+ * -fsyntax-only is currently identical to -parse-noop.
+
+III. Current advantages over GCC:
 
  * Column numbers are fully tracked (no 256 col limit, no GCC-style pruning).
  * All diagnostics have column numbers, includes 'caret diagnostics'.
  * Full diagnostic customization by client (can format diagnostics however they
-   like, e.g. in an IDE or refactoring tool).
+   like, e.g. in an IDE or refactoring tool) through DiagnosticClient interface.
  * Built as a framework, can be reused by multiple tools.
  * All languages supported linked into same library (no cc1,cc1obj, ...).
  * mmap's code in read-only, does not dirty the pages like GCC (mem footprint).
@@ -89,7 +109,10 @@ Future Features:
    platform-specific features (e.g. #ifdef PPC) to allow 'portable bytecodes'.
 
 
-III. Missing Functionality / Improvements
+IV. Missing Functionality / Improvements
+
+clang driver:
+ * predefined macros/search paths are hard-coded into the driver.
 
 File Manager:
  * We currently do a lot of stat'ing for files that don't exist, particularly
