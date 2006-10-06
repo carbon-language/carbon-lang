@@ -131,16 +131,18 @@ Traditional Preprocessor:
 Parser:
  * C90/K&R modes.  Need to get a copy of the C90 spec.
  * __extension__, __attribute__ [currently just skipped and ignored].
+ * A lot of semantic analysis is missing.
 
-Parser Callbacks:
- * Enough to do devkit-style "indexing".
- * All that are missing.
- 
 Parser Actions:
- * All.
+ * All that are missing.
  * Would like to either lazily resolve types [refactoring] or aggressively
    resolve them [c compiler].  Need to know whether something is a type or not
    to compile, but don't need to know what it is.
+ * Implement a little devkit-style "indexer".
+ 
+AST Builder:
+ * Implement more nodes as actions are available.
+ * Types.
 
 Fast #Import:
  * All.
