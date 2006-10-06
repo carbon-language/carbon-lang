@@ -562,10 +562,6 @@ is pessimized by -loop-reduce and -indvars
 
 //===---------------------------------------------------------------------===//
 
-Use cpuid to auto-detect CPU features such as SSE, SSE2, and SSE3.
-
-//===---------------------------------------------------------------------===//
-
 u32 to float conversion improvement:
 
 float uint32_2_float( unsigned u ) {
