@@ -181,6 +181,8 @@ public:
   }
   unsigned getStackSize(void) {
     int last = is_reg.size() - 1;
+    if (last < 0)
+      return 0;
     if (isRegister(last))
       return 0;
     return getOffset(last) + MVT::getSizeInBits(getType(last))/8;
@@ -193,7 +195,7 @@ public:
     last--;
     return last;
   }
-  unsigned lastRegNum(void) {
+  int lastRegNum(void) {
     int            l = lastRegArg();
     if (l < 0)
       return -1;
@@ -264,7 +266,7 @@ static SDOperand LowerCALL(SDOperand Op, SelectionDAG &DAG) {
   // Build a sequence of copy-to-reg nodes chained together with token chain
   // and flag operands which copy the outgoing args into the appropriate regs.
   SDOperand InFlag;
-  for (unsigned i = 0, e = Layout.lastRegArg(); i <= e; ++i) {
+  for (int i = 0, e = Layout.lastRegArg(); i <= e; ++i) {
     SDOperand     Arg = Op.getOperand(5+2*i);
     unsigned   RegNum = Layout.getRegisterNum(i);
     unsigned     Reg1 = regs[RegNum];
