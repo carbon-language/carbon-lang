@@ -265,16 +265,31 @@ static SDOperand LowerCALL(SDOperand Op, SelectionDAG &DAG) {
   // and flag operands which copy the outgoing args into the appropriate regs.
   SDOperand InFlag;
   for (unsigned i = 0, e = Layout.lastRegArg(); i <= e; ++i) {
-    SDOperand Arg = Op.getOperand(5+2*i);
-    unsigned  Reg = regs[Layout.getRegisterNum(i)];
-    assert(Layout.getType(i) == Arg.getValueType());
-    assert(Layout.getType(i) == MVT::i32);
-    Chain         = DAG.getCopyToReg(Chain, Reg, Arg, InFlag);
-    InFlag        = Chain.getValue(1);
+    SDOperand     Arg = Op.getOperand(5+2*i);
+    unsigned   RegNum = Layout.getRegisterNum(i);
+    unsigned     Reg1 = regs[RegNum];
+    MVT::ValueType VT = Layout.getType(i);
+    assert(VT == Arg.getValueType());
+    assert(VT == MVT::i32 || VT == MVT::f32 || VT == MVT::f64);
 
     // Add argument register to the end of the list so that it is known live
     // into the call.
-    Ops.push_back(DAG.getRegister(Reg, Arg.getValueType()));
+    Ops.push_back(DAG.getRegister(Reg1, MVT::i32));
+    if (VT == MVT::f64) {
+      unsigned    Reg2 = regs[RegNum + 1];
+      SDOperand SDReg1 = DAG.getRegister(Reg1, MVT::i32);
+      SDOperand SDReg2 = DAG.getRegister(Reg2, MVT::i32);
+
+      Ops.push_back(DAG.getRegister(Reg2, MVT::i32));
+      SDVTList    VTs = DAG.getVTList(MVT::Other, MVT::Flag);
+      SDOperand Ops[] = {Chain, SDReg1, SDReg2, Arg}; //missing flag
+      Chain = DAG.getNode(ARMISD::FMRRD, VTs, Ops, 4);
+    } else {
+      if (VT == MVT::f32)
+        Arg = DAG.getNode(ISD::BIT_CONVERT, MVT::i32, Arg);
+      Chain = DAG.getCopyToReg(Chain, Reg1, Arg, InFlag);
+    }
+    InFlag = Chain.getValue(1);
   }
 
   std::vector<MVT::ValueType> NodeTys;

@@ -3,8 +3,8 @@
 ; RUN: llvm-as < %s | llc -march=arm | grep fsitos &&
 ; RUN: llvm-as < %s | llc -march=arm | grep fmrs &&
 ; RUN: llvm-as < %s | llc -march=arm | grep fsitod &&
-; RUN: llvm-as < %s | llc -march=arm | grep fmrrd | wc -l | grep 2 &&
-; RUN: llvm-as < %s | llc -march=arm | grep fmdrr | wc -l | grep 1 &&
+; RUN: llvm-as < %s | llc -march=arm | grep fmrrd | wc -l | grep 3 &&
+; RUN: llvm-as < %s | llc -march=arm | grep fmdrr | wc -l | grep 2 &&
 ; RUN: llvm-as < %s | llc -march=arm | grep flds &&
 ; RUN: llvm-as < %s | llc -march=arm | grep ".word.*1065353216"
 
@@ -28,3 +28,9 @@ entry:
 double %f2(double %a) {
         ret double %a
 }
+
+void %f3(double %a) {
+        call void %f4( double %a)
+        ret void
+}
+declare void %f4(double)
