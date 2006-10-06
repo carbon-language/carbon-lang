@@ -4349,12 +4349,14 @@ void SelectionDAGLegalize::ExpandOp(SDOperand Op, SDOperand &Lo, SDOperand &Hi){
     
   case ISD::SIGN_EXTEND_INREG:
     ExpandOp(Node->getOperand(0), Lo, Hi);
-    // Sign extend the lo-part.
+    // sext_inreg the low part if needed.
+    Lo = DAG.getNode(ISD::SIGN_EXTEND_INREG, NVT, Lo, Node->getOperand(1));
+    
+    // The high part gets the sign extension from the lo-part.  This handles
+    // things like sextinreg V:i64 from i8.
     Hi = DAG.getNode(ISD::SRA, NVT, Lo,
                      DAG.getConstant(MVT::getSizeInBits(NVT)-1,
                                      TLI.getShiftAmountTy()));
-    // sext_inreg the low part if needed.
-    Lo = DAG.getNode(ISD::SIGN_EXTEND_INREG, NVT, Lo, Node->getOperand(1));
     break;
 
   case ISD::BSWAP: {
