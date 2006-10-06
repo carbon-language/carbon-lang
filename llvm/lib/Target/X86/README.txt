@@ -711,4 +711,26 @@ bool %test(ulong %x) {
 
 into x.h == 0
 
+//===---------------------------------------------------------------------===//
 
+We currently compile sign_extend_inreg into two shifts:
+
+long foo(long X) {
+  return (long)(signed char)X;
+}
+
+becomes:
+
+_foo:
+        movl 4(%esp), %eax
+        shll $24, %eax
+        sarl $24, %eax
+        ret
+
+This could be:
+
+_foo:
+        movsbl  4(%esp),%eax
+        ret
+
+//===---------------------------------------------------------------------===//
