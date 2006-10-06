@@ -152,8 +152,8 @@ Action::ExprResult ASTBuilder::ParseSimplePrimaryExpr(const LexerToken &Tok) {
   case tok::kw___func__:       // primary-expression: __func__ [C99 6.4.2.2]
   case tok::kw___FUNCTION__:   // primary-expression: __FUNCTION__ [GNU]
   case tok::kw___PRETTY_FUNCTION__:  // primary-expression: __P..Y_F..N__ [GNU]
-    assert(0 && "Unimp so far!");
-    return 0;
+    //assert(0 && "FIXME: Unimp so far!");
+    return new DeclExpr(*(Decl*)0);
   }
 }
 
