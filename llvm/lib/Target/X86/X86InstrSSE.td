@@ -17,10 +17,8 @@
 // SSE specific DAG Nodes.
 //===----------------------------------------------------------------------===//
 
-def X86loadp   : SDNode<"X86ISD::LOAD_PACK", SDTLoad, 
-                        [SDNPHasChain]>;
-def X86loadu   : SDNode<"X86ISD::LOAD_UA",   SDTLoad, 
-                        [SDNPHasChain]>;
+def X86loadp   : SDNode<"X86ISD::LOAD_PACK", SDTLoad, [SDNPHasChain]>;
+def X86loadu   : SDNode<"X86ISD::LOAD_UA",   SDTLoad, [SDNPHasChain]>;
 def X86fand    : SDNode<"X86ISD::FAND",      SDTFPBinOp,
                         [SDNPCommutative, SDNPAssociative]>;
 def X86fxor    : SDNode<"X86ISD::FXOR",      SDTFPBinOp,
@@ -29,12 +27,9 @@ def X86comi    : SDNode<"X86ISD::COMI",      SDTX86CmpTest,
                         [SDNPHasChain, SDNPOutFlag]>;
 def X86ucomi   : SDNode<"X86ISD::UCOMI",     SDTX86CmpTest,
                         [SDNPHasChain, SDNPOutFlag]>;
-def X86s2vec   : SDNode<"X86ISD::S2VEC",
-                        SDTypeProfile<1, 1, []>, []>;
-def X86pextrw  : SDNode<"X86ISD::PEXTRW",
-                        SDTypeProfile<1, 2, []>, []>;
-def X86pinsrw  : SDNode<"X86ISD::PINSRW",
-                        SDTypeProfile<1, 3, []>, []>;
+def X86s2vec   : SDNode<"X86ISD::S2VEC",  SDTypeProfile<1, 1, []>, []>;
+def X86pextrw  : SDNode<"X86ISD::PEXTRW", SDTypeProfile<1, 2, []>, []>;
+def X86pinsrw  : SDNode<"X86ISD::PINSRW", SDTypeProfile<1, 3, []>, []>;
 
 //===----------------------------------------------------------------------===//
 // SSE pattern fragments
@@ -1394,12 +1389,21 @@ defm PSRAW : PDI_binop_rmi_int<0xE1, 0x71, MRM4r, "psraw", int_x86_sse2_psra_w>;
 defm PSRAD : PDI_binop_rmi_int<0xE2, 0x72, MRM4r, "psrad", int_x86_sse2_psra_d>;
 // PSRAQ doesn't exist in SSE[1-3].
 
+
+// 128-bit logical shifts.
 let isTwoAddress = 1 in {
 def PSLLDQri : PDIi8<0x73, MRM7r, (ops VR128:$dst, VR128:$src1, i32i8imm:$src2),
                      "pslldq {$src2, $dst|$dst, $src2}", []>;
 def PSRLDQri : PDIi8<0x73, MRM3r, (ops VR128:$dst, VR128:$src1, i32i8imm:$src2),
                      "psrldq {$src2, $dst|$dst, $src2}", []>;
 // PSRADQri doesn't exist in SSE[1-3].
+}
+
+let Predicates = [HasSSE2] in {
+  def : Pat<(int_x86_sse2_psll_dq VR128:$src1, imm:$src2),
+            (v2i64 (PSLLDQri VR128:$src1, (PSxLDQ_imm imm:$src2)))>;
+  def : Pat<(int_x86_sse2_psrl_dq VR128:$src1, imm:$src2),
+            (v2i64 (PSRLDQri VR128:$src1, (PSxLDQ_imm imm:$src2)))>;
 }
 
 // Logical
@@ -1632,15 +1636,12 @@ def MASKMOVDQU : PDI<0xF7, MRMSrcReg, (ops VR128:$src, VR128:$mask),
                      [(int_x86_sse2_maskmov_dqu VR128:$src, VR128:$mask, EDI)]>,
                  Imp<[EDI],[]>;
 
-// Prefetching loads
-def PREFETCHT0   : PSI<0x18, MRM1m, (ops i8mem:$src),
-                       "prefetcht0 $src", []>;
-def PREFETCHT1   : PSI<0x18, MRM2m, (ops i8mem:$src),
-                       "prefetcht1 $src", []>;
-def PREFETCHT2   : PSI<0x18, MRM3m, (ops i8mem:$src),
-                       "prefetcht2 $src", []>;
-def PREFETCHTNTA : PSI<0x18, MRM0m, (ops i8mem:$src),
-                       "prefetchtnta $src", []>;
+// Prefetching loads.
+// TODO: no intrinsics for these?
+def PREFETCHT0   : PSI<0x18, MRM1m, (ops i8mem:$src), "prefetcht0 $src", []>;
+def PREFETCHT1   : PSI<0x18, MRM2m, (ops i8mem:$src), "prefetcht1 $src", []>;
+def PREFETCHT2   : PSI<0x18, MRM3m, (ops i8mem:$src), "prefetcht2 $src", []>;
+def PREFETCHTNTA : PSI<0x18, MRM0m, (ops i8mem:$src), "prefetchtnta $src", []>;
 
 // Non-temporal stores
 def MOVNTPSmr : PSI<0x2B, MRMDestMem, (ops i128mem:$dst, VR128:$src),
@@ -1663,8 +1664,7 @@ def CLFLUSH : I<0xAE, MRM7m, (ops i8mem:$src),
               TB, Requires<[HasSSE2]>;
 
 // Load, store, and memory fence
-def SFENCE : I<0xAE, MRM7m, (ops),
-               "sfence", [(int_x86_sse_sfence)]>, TB, Requires<[HasSSE1]>;
+def SFENCE : PSI<0xAE, MRM7m, (ops), "sfence", [(int_x86_sse_sfence)]>;
 def LFENCE : I<0xAE, MRM5m, (ops),
                "lfence", [(int_x86_sse2_lfence)]>, TB, Requires<[HasSSE2]>;
 def MFENCE : I<0xAE, MRM6m, (ops),
@@ -1680,11 +1680,9 @@ def STMXCSR : I<0xAE, MRM3m, (ops i32mem:$dst),
 
 // Thread synchronization
 def MONITOR : I<0xC8, RawFrm, (ops), "monitor",
-                [(int_x86_sse3_monitor EAX, ECX, EDX)]>,
-              TB, Requires<[HasSSE3]>;
-def MWAIT : I<0xC9, RawFrm, (ops), "mwait",
-                [(int_x86_sse3_mwait ECX, EAX)]>,
-              TB, Requires<[HasSSE3]>;
+                [(int_x86_sse3_monitor EAX, ECX, EDX)]>,TB, Requires<[HasSSE3]>;
+def MWAIT   : I<0xC9, RawFrm, (ops), "mwait",
+                [(int_x86_sse3_mwait ECX, EAX)]>, TB, Requires<[HasSSE3]>;
 
 //===----------------------------------------------------------------------===//
 // Alias Instructions
@@ -2089,14 +2087,6 @@ def : Pat<(int_x86_sse2_punpckl_qdq VR128:$src1, VR128:$src2),
           (v2i64 (PUNPCKLQDQrr VR128:$src1, VR128:$src2))>, Requires<[HasSSE2]>;
 def : Pat<(int_x86_sse2_punpckl_qdq VR128:$src1, (load addr:$src2)),
           (PUNPCKLQDQrm VR128:$src1, addr:$src2)>, Requires<[HasSSE2]>;
-
-// 128-bit logical shifts
-def : Pat<(int_x86_sse2_psll_dq VR128:$src1, imm:$src2),
-          (v2i64 (PSLLDQri VR128:$src1, (PSxLDQ_imm imm:$src2)))>,
-      Requires<[HasSSE2]>;
-def : Pat<(int_x86_sse2_psrl_dq VR128:$src1, imm:$src2),
-          (v2i64 (PSRLDQri VR128:$src1, (PSxLDQ_imm imm:$src2)))>,
-      Requires<[HasSSE2]>;
 
 // Some special case pandn patterns.
 def : Pat<(v2i64 (and (xor VR128:$src1, (bc_v2i64 (v4i32 immAllOnesV))),
