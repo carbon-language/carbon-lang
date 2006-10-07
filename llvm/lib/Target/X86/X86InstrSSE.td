@@ -224,17 +224,21 @@ class SD_Intrm<bits<8> o, string OpcodeStr, Intrinsic IntId>
         !strconcat(OpcodeStr, " {$src2, $dst|$dst, $src2}"),
         [(set VR128:$dst, (v2f64 (IntId VR128:$src1, (load addr:$src2))))]>;
 
-class PS_Intr<bits<8> o, string asm, Intrinsic IntId>
-  : PSI<o, MRMSrcReg, (ops VR128:$dst, VR128:$src), asm,
+class PS_Intr<bits<8> o, string OpcodeStr, Intrinsic IntId>
+  : PSI<o, MRMSrcReg, (ops VR128:$dst, VR128:$src),
+        !strconcat(OpcodeStr, " {$src, $dst|$dst, $src}"),
         [(set VR128:$dst, (IntId VR128:$src))]>;
-class PS_Intm<bits<8> o, string asm, Intrinsic IntId>
-  : PSI<o, MRMSrcMem, (ops VR128:$dst, f32mem:$src), asm,
+class PS_Intm<bits<8> o, string OpcodeStr, Intrinsic IntId>
+  : PSI<o, MRMSrcMem, (ops VR128:$dst, f32mem:$src),
+        !strconcat(OpcodeStr, " {$src, $dst|$dst, $src}"),
         [(set VR128:$dst, (IntId (loadv4f32 addr:$src)))]>;
-class PD_Intr<bits<8> o, string asm, Intrinsic IntId>
-  : PDI<o, MRMSrcReg, (ops VR128:$dst, VR128:$src), asm,
+class PD_Intr<bits<8> o, string OpcodeStr, Intrinsic IntId>
+  : PDI<o, MRMSrcReg, (ops VR128:$dst, VR128:$src),
+        !strconcat(OpcodeStr, " {$src, $dst|$dst, $src}"),
         [(set VR128:$dst, (IntId VR128:$src))]>;
-class PD_Intm<bits<8> o, string asm, Intrinsic IntId>
-  : PDI<o, MRMSrcMem, (ops VR128:$dst, f64mem:$src), asm,
+class PD_Intm<bits<8> o, string OpcodeStr, Intrinsic IntId>
+  : PDI<o, MRMSrcMem, (ops VR128:$dst, f64mem:$src),
+        !strconcat(OpcodeStr, " {$src, $dst|$dst, $src}"),
         [(set VR128:$dst, (IntId (loadv2f64 addr:$src)))]>;
 
 class PS_Intrr<bits<8> o, string OpcodeStr, Intrinsic IntId>
@@ -1029,35 +1033,27 @@ def ADDSUBPDrm : S3I<0xD0, MRMSrcMem,
                                          (loadv2f64 addr:$src2)))]>;
 }
 
-def SQRTPSr : PS_Intr<0x51, "sqrtps {$src, $dst|$dst, $src}",
-                      int_x86_sse_sqrt_ps>;
-def SQRTPSm : PS_Intm<0x51, "sqrtps {$src, $dst|$dst, $src}",
-                      int_x86_sse_sqrt_ps>;
-def SQRTPDr : PD_Intr<0x51, "sqrtpd {$src, $dst|$dst, $src}",
-                      int_x86_sse2_sqrt_pd>;
-def SQRTPDm : PD_Intm<0x51, "sqrtpd {$src, $dst|$dst, $src}",
-                      int_x86_sse2_sqrt_pd>;
+def SQRTPSr  : PS_Intr<0x51, "sqrtps", int_x86_sse_sqrt_ps>;
+def SQRTPSm  : PS_Intm<0x51, "sqrtps", int_x86_sse_sqrt_ps>;
+def SQRTPDr  : PD_Intr<0x51, "sqrtpd", int_x86_sse2_sqrt_pd>;
+def SQRTPDm  : PD_Intm<0x51, "sqrtpd", int_x86_sse2_sqrt_pd>;
 
-def RSQRTPSr : PS_Intr<0x52, "rsqrtps {$src, $dst|$dst, $src}",
-                       int_x86_sse_rsqrt_ps>;
-def RSQRTPSm : PS_Intm<0x52, "rsqrtps {$src, $dst|$dst, $src}",
-                       int_x86_sse_rsqrt_ps>;
-def RCPPSr : PS_Intr<0x53, "rcpps {$src, $dst|$dst, $src}",
-                     int_x86_sse_rcp_ps>;
-def RCPPSm : PS_Intm<0x53, "rcpps {$src, $dst|$dst, $src}",
-                     int_x86_sse_rcp_ps>;
+def RSQRTPSr : PS_Intr<0x52, "rsqrtps", int_x86_sse_rsqrt_ps>;
+def RSQRTPSm : PS_Intm<0x52, "rsqrtps", int_x86_sse_rsqrt_ps>;
+def RCPPSr   : PS_Intr<0x53, "rcpps", int_x86_sse_rcp_ps>;
+def RCPPSm   : PS_Intm<0x53, "rcpps", int_x86_sse_rcp_ps>;
 
 let isTwoAddress = 1 in {
 let isCommutable = 1 in {
-def MAXPSrr : PS_Intrr<0x5F, "maxps", int_x86_sse_max_ps>;
-def MAXPDrr : PD_Intrr<0x5F, "maxpd", int_x86_sse2_max_pd>;
-def MINPSrr : PS_Intrr<0x5D, "minps", int_x86_sse_min_ps>;
-def MINPDrr : PD_Intrr<0x5D, "minpd", int_x86_sse2_min_pd>;
+def MAXPSrr  : PS_Intrr<0x5F, "maxps", int_x86_sse_max_ps>;
+def MAXPDrr  : PD_Intrr<0x5F, "maxpd", int_x86_sse2_max_pd>;
+def MINPSrr  : PS_Intrr<0x5D, "minps", int_x86_sse_min_ps>;
+def MINPDrr  : PD_Intrr<0x5D, "minpd", int_x86_sse2_min_pd>;
 }
-def MAXPSrm : PS_Intrm<0x5F, "maxps", int_x86_sse_max_ps>;
-def MAXPDrm : PD_Intrm<0x5F, "maxpd", int_x86_sse2_max_pd>;
-def MINPSrm : PS_Intrm<0x5D, "minps", int_x86_sse_min_ps>;
-def MINPDrm : PD_Intrm<0x5D, "minpd", int_x86_sse2_min_pd>;
+def MAXPSrm  : PS_Intrm<0x5F, "maxps", int_x86_sse_max_ps>;
+def MAXPDrm  : PD_Intrm<0x5F, "maxpd", int_x86_sse2_max_pd>;
+def MINPSrm  : PS_Intrm<0x5D, "minps", int_x86_sse_min_ps>;
+def MINPDrm  : PD_Intrm<0x5D, "minpd", int_x86_sse2_min_pd>;
 }
 
 // Logical
