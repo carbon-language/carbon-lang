@@ -1275,8 +1275,8 @@ def LDDQUrm : S3DI<0xF0, MRMSrcMem, (ops VR128:$dst, i128mem:$src),
 
 
 let isTwoAddress = 1 in {
-multiclass PDI_binop_rm<bits<8> opc, string OpcodeStr, Intrinsic IntId,
-                        bit Commutable = 0> {
+multiclass PDI_binop_rm_int<bits<8> opc, string OpcodeStr, Intrinsic IntId,
+                            bit Commutable = 0> {
   def rr : PDI<opc, MRMSrcReg, (ops VR128:$dst, VR128:$src1, VR128:$src2),
                !strconcat(OpcodeStr, " {$src2, $dst|$dst, $src2"),
                [(set VR128:$dst, (IntId VR128:$src1, VR128:$src2))]> {
@@ -1290,8 +1290,8 @@ multiclass PDI_binop_rm<bits<8> opc, string OpcodeStr, Intrinsic IntId,
 }
 
 let isTwoAddress = 1 in {
-multiclass PDI_binop_rmi<bits<8> opc, bits<8> opc2, Format ImmForm,
-                         string OpcodeStr, Intrinsic IntId> {
+multiclass PDI_binop_rmi_int<bits<8> opc, bits<8> opc2, Format ImmForm,
+                             string OpcodeStr, Intrinsic IntId> {
   def rr : PDI<opc, MRMSrcReg, (ops VR128:$dst, VR128:$src1, VR128:$src2),
                !strconcat(OpcodeStr, " {$src2, $dst|$dst, $src2"),
                [(set VR128:$dst, (IntId VR128:$src1, VR128:$src2))]>;
@@ -1341,10 +1341,10 @@ def PADDQrm : PDI<0xD4, MRMSrcMem, (ops VR128:$dst, VR128:$src1, i128mem:$src2),
                                  (loadv2i64 addr:$src2)))]>;
 
 
-defm PADDSB  : PDI_binop_rm<0xEC, "paddsb" , int_x86_sse2_padds_b, 1>;
-defm PADDSW  : PDI_binop_rm<0xED, "paddsw" , int_x86_sse2_padds_w, 1>;
-defm PADDUSB : PDI_binop_rm<0xDC, "paddusb", int_x86_sse2_paddus_b, 1>;
-defm PADDUSW : PDI_binop_rm<0xDD, "paddusw", int_x86_sse2_paddus_w, 1>;
+defm PADDSB  : PDI_binop_rm_int<0xEC, "paddsb" , int_x86_sse2_padds_b, 1>;
+defm PADDSW  : PDI_binop_rm_int<0xED, "paddsw" , int_x86_sse2_padds_w, 1>;
+defm PADDUSB : PDI_binop_rm_int<0xDC, "paddusb", int_x86_sse2_paddus_b, 1>;
+defm PADDUSW : PDI_binop_rm_int<0xDD, "paddusw", int_x86_sse2_paddus_w, 1>;
 
 def PSUBBrr : PDI<0xF8, MRMSrcReg, (ops VR128:$dst, VR128:$src1, VR128:$src2),
                   "psubb {$src2, $dst|$dst, $src2}",
@@ -1376,10 +1376,10 @@ def PSUBQrm : PDI<0xFB, MRMSrcMem, (ops VR128:$dst, VR128:$src1, i128mem:$src2),
               [(set VR128:$dst, (sub VR128:$src1,
                                  (loadv2i64 addr:$src2)))]>;
 
-defm PSUBSB  : PDI_binop_rm<0xE8, "psubsb" , int_x86_sse2_psubs_b>;
-defm PSUBSW  : PDI_binop_rm<0xE9, "psubsw" , int_x86_sse2_psubs_w>;
-defm PSUBUSB : PDI_binop_rm<0xD8, "psubusb", int_x86_sse2_psubus_b>;
-defm PSUBUSW : PDI_binop_rm<0xD9, "psubusw", int_x86_sse2_psubus_w>;
+defm PSUBSB  : PDI_binop_rm_int<0xE8, "psubsb" , int_x86_sse2_psubs_b>;
+defm PSUBSW  : PDI_binop_rm_int<0xE9, "psubsw" , int_x86_sse2_psubs_w>;
+defm PSUBUSB : PDI_binop_rm_int<0xD8, "psubusb", int_x86_sse2_psubus_b>;
+defm PSUBUSW : PDI_binop_rm_int<0xD9, "psubusw", int_x86_sse2_psubus_w>;
 
 
 let isCommutable = 1 in {
@@ -1394,33 +1394,33 @@ def PMULLWrm : PDI<0xD5, MRMSrcMem,
                                        (bitconvert (loadv2i64 addr:$src2)))))]>;
 }
 
-defm PMULHUW : PDI_binop_rm<0xE4, "pmulhuw", int_x86_sse2_pmulhu_w, 1>;
-defm PMULHW  : PDI_binop_rm<0xE5, "pmulhw" , int_x86_sse2_pmulh_w , 1>;
-defm PMULUDQ : PDI_binop_rm<0xF4, "pmuludq", int_x86_sse2_pmulu_dq, 1>;
+defm PMULHUW : PDI_binop_rm_int<0xE4, "pmulhuw", int_x86_sse2_pmulhu_w, 1>;
+defm PMULHW  : PDI_binop_rm_int<0xE5, "pmulhw" , int_x86_sse2_pmulh_w , 1>;
+defm PMULUDQ : PDI_binop_rm_int<0xF4, "pmuludq", int_x86_sse2_pmulu_dq, 1>;
 
-defm PMADDWD : PDI_binop_rm<0xF5, "pmaddwd", int_x86_sse2_pmadd_wd, 1>;
+defm PMADDWD : PDI_binop_rm_int<0xF5, "pmaddwd", int_x86_sse2_pmadd_wd, 1>;
 
-defm PAVGB  : PDI_binop_rm<0xE0, "pavgb", int_x86_sse2_pavg_b, 1>;
-defm PAVGW  : PDI_binop_rm<0xE3, "pavgw", int_x86_sse2_pavg_w, 1>;
-
-
-defm PMINUB : PDI_binop_rm<0xDA, "pminub", int_x86_sse2_pminu_b, 1>;
-defm PMINSW : PDI_binop_rm<0xEA, "pminsw", int_x86_sse2_pmins_w, 1>;
-defm PMAXUB : PDI_binop_rm<0xDE, "pmaxub", int_x86_sse2_pmaxu_b, 1>;
-defm PMAXSW : PDI_binop_rm<0xEE, "pmaxsw", int_x86_sse2_pmaxs_w, 1>;
-defm PSADBW : PDI_binop_rm<0xE0, "psadbw", int_x86_sse2_psad_bw, 1>;
+defm PAVGB  : PDI_binop_rm_int<0xE0, "pavgb", int_x86_sse2_pavg_b, 1>;
+defm PAVGW  : PDI_binop_rm_int<0xE3, "pavgw", int_x86_sse2_pavg_w, 1>;
 
 
-defm PSLLW : PDI_binop_rmi<0xF1, 0x71, MRM6r, "psllw", int_x86_sse2_psll_w>;
-defm PSLLD : PDI_binop_rmi<0xF2, 0x72, MRM6r, "pslld", int_x86_sse2_psll_d>;
-defm PSLLQ : PDI_binop_rmi<0xF3, 0x73, MRM6r, "psllq", int_x86_sse2_psll_q>;
+defm PMINUB : PDI_binop_rm_int<0xDA, "pminub", int_x86_sse2_pminu_b, 1>;
+defm PMINSW : PDI_binop_rm_int<0xEA, "pminsw", int_x86_sse2_pmins_w, 1>;
+defm PMAXUB : PDI_binop_rm_int<0xDE, "pmaxub", int_x86_sse2_pmaxu_b, 1>;
+defm PMAXSW : PDI_binop_rm_int<0xEE, "pmaxsw", int_x86_sse2_pmaxs_w, 1>;
+defm PSADBW : PDI_binop_rm_int<0xE0, "psadbw", int_x86_sse2_psad_bw, 1>;
 
-defm PSRLW : PDI_binop_rmi<0xD1, 0x71, MRM2r, "psrlw", int_x86_sse2_psrl_w>;
-defm PSRLD : PDI_binop_rmi<0xD2, 0x72, MRM2r, "psrld", int_x86_sse2_psrl_d>;
-defm PSRLQ : PDI_binop_rmi<0xD3, 0x73, MRM2r, "psrlq", int_x86_sse2_psrl_q>;
 
-defm PSRAW : PDI_binop_rmi<0xE1, 0x71, MRM4r, "psraw", int_x86_sse2_psra_w>;
-defm PSRAD : PDI_binop_rmi<0xE2, 0x72, MRM4r, "psrad", int_x86_sse2_psra_d>;
+defm PSLLW : PDI_binop_rmi_int<0xF1, 0x71, MRM6r, "psllw", int_x86_sse2_psll_w>;
+defm PSLLD : PDI_binop_rmi_int<0xF2, 0x72, MRM6r, "pslld", int_x86_sse2_psll_d>;
+defm PSLLQ : PDI_binop_rmi_int<0xF3, 0x73, MRM6r, "psllq", int_x86_sse2_psll_q>;
+
+defm PSRLW : PDI_binop_rmi_int<0xD1, 0x71, MRM2r, "psrlw", int_x86_sse2_psrl_w>;
+defm PSRLD : PDI_binop_rmi_int<0xD2, 0x72, MRM2r, "psrld", int_x86_sse2_psrl_d>;
+defm PSRLQ : PDI_binop_rmi_int<0xD3, 0x73, MRM2r, "psrlq", int_x86_sse2_psrl_q>;
+
+defm PSRAW : PDI_binop_rmi_int<0xE1, 0x71, MRM4r, "psraw", int_x86_sse2_psra_w>;
+defm PSRAD : PDI_binop_rmi_int<0xE2, 0x72, MRM4r, "psrad", int_x86_sse2_psra_d>;
 // PSRAQ doesn't exist in SSE[1-3].
 
 let isTwoAddress = 1 in {
@@ -1470,17 +1470,17 @@ def PANDNrm : PDI<0xDF, MRMSrcMem, (ops VR128:$dst, VR128:$src1, i128mem:$src2),
 }
 
 // SSE2 Integer comparison
-defm PCMPEQB : PDI_binop_rm<0x74, "pcmpeqb", int_x86_sse2_pcmpeq_b>;
-defm PCMPEQW : PDI_binop_rm<0x75, "pcmpeqw", int_x86_sse2_pcmpeq_w>;
-defm PCMPEQD : PDI_binop_rm<0x76, "pcmpeqd", int_x86_sse2_pcmpeq_d>;
-defm PCMPGTB : PDI_binop_rm<0x64, "pcmpgtb", int_x86_sse2_pcmpgt_b>;
-defm PCMPGTW : PDI_binop_rm<0x65, "pcmpgtw", int_x86_sse2_pcmpgt_w>;
-defm PCMPGTD : PDI_binop_rm<0x66, "pcmpgtd", int_x86_sse2_pcmpgt_d>;
+defm PCMPEQB : PDI_binop_rm_int<0x74, "pcmpeqb", int_x86_sse2_pcmpeq_b>;
+defm PCMPEQW : PDI_binop_rm_int<0x75, "pcmpeqw", int_x86_sse2_pcmpeq_w>;
+defm PCMPEQD : PDI_binop_rm_int<0x76, "pcmpeqd", int_x86_sse2_pcmpeq_d>;
+defm PCMPGTB : PDI_binop_rm_int<0x64, "pcmpgtb", int_x86_sse2_pcmpgt_b>;
+defm PCMPGTW : PDI_binop_rm_int<0x65, "pcmpgtw", int_x86_sse2_pcmpgt_w>;
+defm PCMPGTD : PDI_binop_rm_int<0x66, "pcmpgtd", int_x86_sse2_pcmpgt_d>;
 
 // Pack instructions
-defm PACKSSWB : PDI_binop_rm<0x63, "packsswb", int_x86_sse2_packsswb_128>;
-defm PACKSSDW : PDI_binop_rm<0x6B, "packssdw", int_x86_sse2_packssdw_128>;
-defm PACKUSWB : PDI_binop_rm<0x67, "packuswb", int_x86_sse2_packuswb_128>;
+defm PACKSSWB : PDI_binop_rm_int<0x63, "packsswb", int_x86_sse2_packsswb_128>;
+defm PACKSSDW : PDI_binop_rm_int<0x6B, "packssdw", int_x86_sse2_packssdw_128>;
+defm PACKUSWB : PDI_binop_rm_int<0x67, "packuswb", int_x86_sse2_packuswb_128>;
 
 // Shuffle and unpack instructions
 def PSHUFDri : PDIi8<0x70, MRMSrcReg,
