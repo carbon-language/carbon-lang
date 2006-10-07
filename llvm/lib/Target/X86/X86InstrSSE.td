@@ -194,6 +194,15 @@ class SS_Intr<bits<8> o, string asm, Intrinsic IntId>
 class SS_Intm<bits<8> o, string asm, Intrinsic IntId>
   : SSI<o, MRMSrcMem, (ops VR128:$dst, f32mem:$src), asm,
         [(set VR128:$dst, (v4f32 (IntId (load addr:$src))))]>;
+
+
+multiclass SS_IntUnary<bits<8> o, string asm, Intrinsic IntId> {
+  def r : SSI<o, MRMSrcReg, (ops VR128:$dst, VR128:$src), asm,
+              [(set VR128:$dst, (v4f32 (IntId VR128:$src)))]>;
+  def m : SSI<o, MRMSrcMem, (ops VR128:$dst, f32mem:$src), asm,
+              [(set VR128:$dst, (v4f32 (IntId (load addr:$src))))]>;
+}
+
 class SD_Intr<bits<8> o, string asm, Intrinsic IntId>
   : SDI<o, MRMSrcReg, (ops VR128:$dst, VR128:$src), asm,
         [(set VR128:$dst, (v2f64 (IntId VR128:$src)))]>;
@@ -380,15 +389,6 @@ def SQRTSDm : SDI<0x51, MRMSrcMem, (ops FR64:$dst, f64mem:$src),
                  "sqrtsd {$src, $dst|$dst, $src}",
                  [(set FR64:$dst, (fsqrt (loadf64 addr:$src)))]>;
 
-def RSQRTSSr : SSI<0x52, MRMSrcReg, (ops FR32:$dst, FR32:$src),
-                   "rsqrtss {$src, $dst|$dst, $src}", []>;
-def RSQRTSSm : SSI<0x52, MRMSrcMem, (ops FR32:$dst, f32mem:$src),
-                   "rsqrtss {$src, $dst|$dst, $src}", []>;
-def RCPSSr : SSI<0x53, MRMSrcReg, (ops FR32:$dst, FR32:$src),
-                 "rcpss {$src, $dst|$dst, $src}", []>;
-def RCPSSm : SSI<0x53, MRMSrcMem, (ops FR32:$dst, f32mem:$src),
-                 "rcpss {$src, $dst|$dst, $src}", []>;
-
 let isTwoAddress = 1 in {
 let isCommutable = 1 in {
 def MAXSSrr : SSI<0x5F, MRMSrcReg, (ops FR32:$dst, FR32:$src1, FR32:$src2),
@@ -451,23 +451,18 @@ def Int_SUBSDrm : SD_Intrm<0x5C, "subsd {$src2, $dst|$dst, $src2}",
                            int_x86_sse2_sub_sd>;
 }
 
-def Int_SQRTSSr : SS_Intr<0x51, "sqrtss {$src, $dst|$dst, $src}",
-                          int_x86_sse_sqrt_ss>;
-def Int_SQRTSSm : SS_Intm<0x51, "sqrtss {$src, $dst|$dst, $src}",
-                          int_x86_sse_sqrt_ss>;
+defm Int_SQRTSS : SS_IntUnary<0x51, "sqrtss {$src, $dst|$dst, $src}",
+                              int_x86_sse_sqrt_ss>;
+
 def Int_SQRTSDr : SD_Intr<0x51, "sqrtsd {$src, $dst|$dst, $src}",
                           int_x86_sse2_sqrt_sd>;
 def Int_SQRTSDm : SD_Intm<0x51, "sqrtsd {$src, $dst|$dst, $src}",
                           int_x86_sse2_sqrt_sd>;
 
-def Int_RSQRTSSr : SS_Intr<0x52, "rsqrtss {$src, $dst|$dst, $src}",
-                           int_x86_sse_rsqrt_ss>;
-def Int_RSQRTSSm : SS_Intm<0x52, "rsqrtss {$src, $dst|$dst, $src}",
-                           int_x86_sse_rsqrt_ss>;
-def Int_RCPSSr   : SS_Intr<0x53, "rcpss {$src, $dst|$dst, $src}",
-                           int_x86_sse_rcp_ss>;
-def Int_RCPSSm   : SS_Intm<0x53, "rcpss {$src, $dst|$dst, $src}",
-                           int_x86_sse_rcp_ss>;
+defm Int_RSQRTSS : SS_IntUnary<0x52, "rsqrtss {$src, $dst|$dst, $src}",
+                               int_x86_sse_rsqrt_ss>;
+defm Int_RCPSS   : SS_IntUnary<0x53, "rcpss {$src, $dst|$dst, $src}",
+                               int_x86_sse_rcp_ss>;
 
 let isTwoAddress = 1 in {
 let isCommutable = 1 in {
