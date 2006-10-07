@@ -305,62 +305,36 @@ def MOVSDmr : SDI<0x11, MRMDestMem, (ops f64mem:$dst, FR64:$src),
                 "movsd {$src, $dst|$dst, $src}",
                 [(store FR64:$src, addr:$dst)]>;
 
-// Arithmetic instructions
 let isTwoAddress = 1 in {
-let isCommutable = 1 in {
-def ADDSSrr : SSI<0x58, MRMSrcReg, (ops FR32:$dst, FR32:$src1, FR32:$src2),
-                "addss {$src2, $dst|$dst, $src2}",
-                [(set FR32:$dst, (fadd FR32:$src1, FR32:$src2))]>;
-def ADDSDrr : SDI<0x58, MRMSrcReg, (ops FR64:$dst, FR64:$src1, FR64:$src2),
-                "addsd {$src2, $dst|$dst, $src2}",
-                [(set FR64:$dst, (fadd FR64:$src1, FR64:$src2))]>;
-def MULSSrr : SSI<0x59, MRMSrcReg, (ops FR32:$dst, FR32:$src1, FR32:$src2),
-                "mulss {$src2, $dst|$dst, $src2}",
-                [(set FR32:$dst, (fmul FR32:$src1, FR32:$src2))]>;
-def MULSDrr : SDI<0x59, MRMSrcReg, (ops FR64:$dst, FR64:$src1, FR64:$src2),
-                "mulsd {$src2, $dst|$dst, $src2}",
-                [(set FR64:$dst, (fmul FR64:$src1, FR64:$src2))]>;
+/// scalar_sse12_fp_binop_rm - Define 4 scalar sse instructions.
+multiclass scalar_sse12_fp_binop_rm<bits<8> opc, string OpcodeStr,
+                                    SDNode OpNode, bit Commutable = 0> {
+  def SSrr : SSI<opc, MRMSrcReg, (ops FR32:$dst, FR32:$src1, FR32:$src2),
+               !strconcat(OpcodeStr, "ss {$src2, $dst|$dst, $src2"),
+               [(set FR32:$dst, (OpNode FR32:$src1, FR32:$src2))]> {
+    let isCommutable = Commutable;
+  }
+  def SDrr : SDI<opc, MRMSrcReg, (ops FR64:$dst, FR64:$src1, FR64:$src2),
+               !strconcat(OpcodeStr, "sd {$src2, $dst|$dst, $src2"),
+               [(set FR64:$dst, (OpNode FR64:$src1, FR64:$src2))]> {
+    let isCommutable = Commutable;
+  }
+  def SSrm : SSI<opc, MRMSrcMem, (ops FR32:$dst, FR32:$src1, f32mem:$src2),
+                 !strconcat(OpcodeStr, "ss {$src2, $dst|$dst, $src2"),
+                 [(set FR32:$dst, (OpNode FR32:$src1, (loadf32 addr:$src2)))]>;
+  def SDrm : SDI<opc, MRMSrcMem, (ops FR64:$dst, FR64:$src1, f64mem:$src2),
+                 !strconcat(OpcodeStr, "sd {$src2, $dst|$dst, $src2"),
+                 [(set FR64:$dst, (OpNode FR64:$src1, (loadf64 addr:$src2)))]>;
+}
 }
 
-def ADDSSrm : SSI<0x58, MRMSrcMem, (ops FR32:$dst, FR32:$src1, f32mem:$src2),
-                "addss {$src2, $dst|$dst, $src2}",
-                [(set FR32:$dst, (fadd FR32:$src1, (loadf32 addr:$src2)))]>;
-def ADDSDrm : SDI<0x58, MRMSrcMem, (ops FR64:$dst, FR64:$src1, f64mem:$src2),
-                "addsd {$src2, $dst|$dst, $src2}",
-                [(set FR64:$dst, (fadd FR64:$src1, (loadf64 addr:$src2)))]>;
-def MULSSrm : SSI<0x59, MRMSrcMem, (ops FR32:$dst, FR32:$src1, f32mem:$src2),
-                "mulss {$src2, $dst|$dst, $src2}",
-                [(set FR32:$dst, (fmul FR32:$src1, (loadf32 addr:$src2)))]>;
-def MULSDrm : SDI<0x59, MRMSrcMem, (ops FR64:$dst, FR64:$src1, f64mem:$src2),
-                "mulsd {$src2, $dst|$dst, $src2}",
-                [(set FR64:$dst, (fmul FR64:$src1, (loadf64 addr:$src2)))]>;
+// Arithmetic instructions
 
-def DIVSSrr : SSI<0x5E, MRMSrcReg, (ops FR32:$dst, FR32:$src1, FR32:$src2),
-                "divss {$src2, $dst|$dst, $src2}",
-                [(set FR32:$dst, (fdiv FR32:$src1, FR32:$src2))]>;
-def DIVSSrm : SSI<0x5E, MRMSrcMem, (ops FR32:$dst, FR32:$src1, f32mem:$src2),
-                "divss {$src2, $dst|$dst, $src2}",
-                [(set FR32:$dst, (fdiv FR32:$src1, (loadf32 addr:$src2)))]>;
-def DIVSDrr : SDI<0x5E, MRMSrcReg, (ops FR64:$dst, FR64:$src1, FR64:$src2),
-                "divsd {$src2, $dst|$dst, $src2}",
-                [(set FR64:$dst, (fdiv FR64:$src1, FR64:$src2))]>;
-def DIVSDrm : SDI<0x5E, MRMSrcMem, (ops FR64:$dst, FR64:$src1, f64mem:$src2),
-                "divsd {$src2, $dst|$dst, $src2}",
-                [(set FR64:$dst, (fdiv FR64:$src1, (loadf64 addr:$src2)))]>;
+defm ADD : scalar_sse12_fp_binop_rm<0x58, "add", fadd, 1>;
+defm MUL : scalar_sse12_fp_binop_rm<0x59, "mul", fmul, 1>;
+defm DIV : scalar_sse12_fp_binop_rm<0x5E, "div", fdiv>;
+defm SUB : scalar_sse12_fp_binop_rm<0x5C, "sub", fsub>;
 
-def SUBSSrr : SSI<0x5C, MRMSrcReg, (ops FR32:$dst, FR32:$src1, FR32:$src2),
-                "subss {$src2, $dst|$dst, $src2}",
-                [(set FR32:$dst, (fsub FR32:$src1, FR32:$src2))]>;
-def SUBSSrm : SSI<0x5C, MRMSrcMem, (ops FR32:$dst, FR32:$src1, f32mem:$src2),
-                "subss {$src2, $dst|$dst, $src2}",
-                [(set FR32:$dst, (fsub FR32:$src1, (loadf32 addr:$src2)))]>;
-def SUBSDrr : SDI<0x5C, MRMSrcReg, (ops FR64:$dst, FR64:$src1, FR64:$src2),
-                "subsd {$src2, $dst|$dst, $src2}",
-                [(set FR64:$dst, (fsub FR64:$src1, FR64:$src2))]>;
-def SUBSDrm : SDI<0x5C, MRMSrcMem, (ops FR64:$dst, FR64:$src1, f64mem:$src2),
-                "subsd {$src2, $dst|$dst, $src2}",
-                [(set FR64:$dst, (fsub FR64:$src1, (loadf64 addr:$src2)))]>;
-}
 
 def SQRTSSr : SSI<0x51, MRMSrcReg, (ops FR32:$dst, FR32:$src),
                 "sqrtss {$src, $dst|$dst, $src}",
