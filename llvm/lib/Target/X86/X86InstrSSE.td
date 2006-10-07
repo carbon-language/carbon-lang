@@ -1476,51 +1476,17 @@ def PAVGWrm : PDI<0xE3, MRMSrcMem, (ops VR128:$dst, VR128:$src1, i128mem:$src2),
                    "pavgw {$src2, $dst|$dst, $src2}",
                    [(set VR128:$dst, (int_x86_sse2_pavg_w VR128:$src1,
                                       (bitconvert (loadv2i64 addr:$src2))))]>;
-
-let isCommutable = 1 in {
-def PMAXUBrr : PDI<0xDE, MRMSrcReg, (ops VR128:$dst, VR128:$src1, VR128:$src2),
-                   "pmaxub {$src2, $dst|$dst, $src2}",
-                   [(set VR128:$dst, (int_x86_sse2_pmaxu_b VR128:$src1,
-                                      VR128:$src2))]>;
-def PMAXSWrr : PDI<0xEE, MRMSrcReg, (ops VR128:$dst, VR128:$src1, VR128:$src2),
-                   "pmaxsw {$src2, $dst|$dst, $src2}",
-                   [(set VR128:$dst, (int_x86_sse2_pmaxs_w VR128:$src1,
-                                      VR128:$src2))]>;
 }
-def PMAXUBrm : PDI<0xDE, MRMSrcMem, (ops VR128:$dst, VR128:$src1, i128mem:$src2),
-                   "pmaxub {$src2, $dst|$dst, $src2}",
-                   [(set VR128:$dst, (int_x86_sse2_pmaxu_b VR128:$src1,
-                                      (bitconvert (loadv2i64 addr:$src2))))]>;
-def PMAXSWrm : PDI<0xEE, MRMSrcMem, (ops VR128:$dst, VR128:$src1, i128mem:$src2),
-                   "pmaxsw {$src2, $dst|$dst, $src2}",
-                   [(set VR128:$dst, (int_x86_sse2_pmaxs_w VR128:$src1,
-                                      (bitconvert (loadv2i64 addr:$src2))))]>;
-
-let isCommutable = 1 in {
-def PMINUBrr : PDI<0xDA, MRMSrcReg, (ops VR128:$dst, VR128:$src1, VR128:$src2),
-                   "pminub {$src2, $dst|$dst, $src2}",
-                   [(set VR128:$dst, (int_x86_sse2_pminu_b VR128:$src1,
-                                      VR128:$src2))]>;
-def PMINSWrr : PDI<0xEA, MRMSrcReg, (ops VR128:$dst, VR128:$src1, VR128:$src2),
-                   "pminsw {$src2, $dst|$dst, $src2}",
-                   [(set VR128:$dst, (int_x86_sse2_pmins_w VR128:$src1,
-                                      VR128:$src2))]>;
-}
-def PMINUBrm : PDI<0xDA, MRMSrcMem, (ops VR128:$dst, VR128:$src1,i128mem:$src2),
-                   "pminub {$src2, $dst|$dst, $src2}",
-                   [(set VR128:$dst, (int_x86_sse2_pminu_b VR128:$src1,
-                                      (bitconvert (loadv2i64 addr:$src2))))]>;
-def PMINSWrm : PDI<0xEA, MRMSrcMem, (ops VR128:$dst, VR128:$src1,i128mem:$src2),
-                   "pminsw {$src2, $dst|$dst, $src2}",
-                   [(set VR128:$dst, (int_x86_sse2_pmins_w VR128:$src1,
-                                      (bitconvert (loadv2i64 addr:$src2))))]>;
 
 
 let isTwoAddress = 1 in {
-multiclass PDI_binop_rm<bits<8> opc, string OpcodeStr, Intrinsic IntId> {
+multiclass PDI_binop_rm<bits<8> opc, string OpcodeStr, Intrinsic IntId,
+                        bit Commutable = 0> {
   def rr : PDI<opc, MRMSrcReg, (ops VR128:$dst, VR128:$src1, VR128:$src2),
                !strconcat(OpcodeStr, " {$src2, $dst|$dst, $src2"),
-               [(set VR128:$dst, (IntId VR128:$src1, VR128:$src2))]>;
+               [(set VR128:$dst, (IntId VR128:$src1, VR128:$src2))]> {
+    let isCommutable = Commutable;
+  }
   def rm : PDI<opc, MRMSrcMem, (ops VR128:$dst, VR128:$src1, i128mem:$src2),
                !strconcat(OpcodeStr, " {$src2, $dst|$dst, $src2"),
                [(set VR128:$dst, (IntId VR128:$src1,
@@ -1545,17 +1511,11 @@ multiclass PDI_binop_rmi<bits<8> opc, bits<8> opc2, Format ImmForm,
 }
 }
 
-let isCommutable = 1 in {
-def PSADBWrr : PDI<0xE0, MRMSrcReg, (ops VR128:$dst, VR128:$src1, VR128:$src2),
-                   "psadbw {$src2, $dst|$dst, $src2}",
-                   [(set VR128:$dst, (int_x86_sse2_psad_bw VR128:$src1,
-                                      VR128:$src2))]>;
-}
-def PSADBWrm : PDI<0xE0, MRMSrcMem, (ops VR128:$dst, VR128:$src1,i128mem:$src2),
-                   "psadbw {$src2, $dst|$dst, $src2}",
-                   [(set VR128:$dst, (int_x86_sse2_psad_bw VR128:$src1,
-                                      (bitconvert (loadv2i64 addr:$src2))))]>;
-}
+defm PMINUB : PDI_binop_rm<0xDA, "pminub", int_x86_sse2_pminu_b, 1>;
+defm PMINSW : PDI_binop_rm<0xEA, "pminsw", int_x86_sse2_pmins_w, 1>;
+defm PMAXUB : PDI_binop_rm<0xDE, "pmaxub", int_x86_sse2_pmaxu_b, 1>;
+defm PMAXSW : PDI_binop_rm<0xEE, "pmaxsw", int_x86_sse2_pmaxs_w, 1>;
+defm PSADBW : PDI_binop_rm<0xE0, "psadbw", int_x86_sse2_psad_bw, 1>;
 
 
 defm PSLLW : PDI_binop_rmi<0xF1, 0x71, MRM6r, "psllw", int_x86_sse2_psll_w>;
