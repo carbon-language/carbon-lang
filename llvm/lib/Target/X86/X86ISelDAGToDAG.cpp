@@ -147,6 +147,8 @@ namespace {
                     SDOperand &Index, SDOperand &Disp);
     bool SelectLEAAddr(SDOperand N, SDOperand &Base, SDOperand &Scale,
                        SDOperand &Index, SDOperand &Disp);
+    bool SelectScalarSSELoad(SDOperand N, SDOperand &Base, SDOperand &Scale,
+                             SDOperand &Index, SDOperand &Disp);
     bool TryFoldLoad(SDOperand P, SDOperand N,
                      SDOperand &Base, SDOperand &Scale,
                      SDOperand &Index, SDOperand &Disp);
@@ -723,6 +725,29 @@ bool X86DAGToDAGISel::SelectAddr(SDOperand N, SDOperand &Base, SDOperand &Scale,
   getAddressOperands(AM, Base, Scale, Index, Disp);
   return true;
 }
+
+/// SelectScalarSSELoad - Match a scalar SSE load.  In particular, we want to
+/// match a load whose top elements are either undef or zeros.  The load flavor
+/// is derived from the type of N, which is either v4f32 or v2f64.
+bool X86DAGToDAGISel::SelectScalarSSELoad(SDOperand N, SDOperand &Base,
+                                          SDOperand &Scale,
+                                          SDOperand &Index, SDOperand &Disp) {
+#if 0
+  if (N.getOpcode() == ISD::SCALAR_TO_VECTOR) {
+    if (N.getOperand(0).getOpcode() == ISD::LOAD) {
+      SDOperand LoadAddr = N.getOperand(0).getOperand(0);
+      if (!SelectAddr(LoadAddr, Base, Scale, Index, Disp))
+        return false;
+      return true;
+    }
+  }
+  // TODO: Also handle the case where we explicitly require zeros in the top
+  // elements.  This is a vector shuffle from the zero vector.
+#endif
+  
+  return false;
+}
+
 
 /// SelectLEAAddr - it calls SelectAddr and determines if the maximal addressing
 /// mode it matches can be cost effectively emitted as an LEA instruction.

@@ -13,6 +13,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+
 //===----------------------------------------------------------------------===//
 // SSE specific DAG Nodes.
 //===----------------------------------------------------------------------===//
@@ -30,6 +31,27 @@ def X86ucomi   : SDNode<"X86ISD::UCOMI",     SDTX86CmpTest,
 def X86s2vec   : SDNode<"X86ISD::S2VEC",  SDTypeProfile<1, 1, []>, []>;
 def X86pextrw  : SDNode<"X86ISD::PEXTRW", SDTypeProfile<1, 2, []>, []>;
 def X86pinsrw  : SDNode<"X86ISD::PINSRW", SDTypeProfile<1, 3, []>, []>;
+
+//===----------------------------------------------------------------------===//
+// SSE Complex Patterns
+//===----------------------------------------------------------------------===//
+
+// These are 'extloads' from a scalar to the low element of a vector, zeroing
+// the top elements.  These are used for the SSE 'ss' and 'sd' instruction
+// forms.
+def sse_load_f32 : ComplexPattern<v4f32, 4, "SelectScalarSSELoad", []>;
+def sse_load_f64 : ComplexPattern<v2f64, 4, "SelectScalarSSELoad", []>;
+
+def ssmem : Operand<v4f32> {
+  let PrintMethod = "printf32mem";
+  let NumMIOperands = 4;
+  let MIOperandInfo = (ops ptr_rc, i8imm, ptr_rc, i32imm);
+}
+def sdmem : Operand<v2f64> {
+  let PrintMethod = "printf64mem";
+  let NumMIOperands = 4;
+  let MIOperandInfo = (ops ptr_rc, i8imm, ptr_rc, i32imm);
+}
 
 //===----------------------------------------------------------------------===//
 // SSE pattern fragments
@@ -185,18 +207,18 @@ multiclass SS_IntUnary<bits<8> o, string OpcodeStr, Intrinsic IntId> {
   def r : SSI<o, MRMSrcReg, (ops VR128:$dst, VR128:$src),
               !strconcat(OpcodeStr, " {$src, $dst|$dst, $src"),
               [(set VR128:$dst, (v4f32 (IntId VR128:$src)))]>;
-  def m : SSI<o, MRMSrcMem, (ops VR128:$dst, f32mem:$src),
+  def m : SSI<o, MRMSrcMem, (ops VR128:$dst, ssmem:$src),
               !strconcat(OpcodeStr, " {$src, $dst|$dst, $src"),
-              [(set VR128:$dst, (v4f32 (IntId (load addr:$src))))]>;
+              [(set VR128:$dst, (v4f32 (IntId sse_load_f32:$src)))]>;
 }
 
 multiclass SD_IntUnary<bits<8> o, string OpcodeStr, Intrinsic IntId> {
   def r : SDI<o, MRMSrcReg, (ops VR128:$dst, VR128:$src),
               !strconcat(OpcodeStr, " {$src, $dst|$dst, $src"),
               [(set VR128:$dst, (v2f64 (IntId VR128:$src)))]>;
-  def m : SDI<o, MRMSrcMem, (ops VR128:$dst, f64mem:$src),
+  def m : SDI<o, MRMSrcMem, (ops VR128:$dst, sdmem:$src),
               !strconcat(OpcodeStr, " {$src, $dst|$dst, $src"),
-              [(set VR128:$dst, (v2f64 (IntId (load addr:$src))))]>;
+              [(set VR128:$dst, (v2f64 (IntId sse_load_f64:$src)))]>;
 }
 
 class PS_Intr<bits<8> o, string OpcodeStr, Intrinsic IntId>
@@ -315,10 +337,10 @@ multiclass scalar_sse12_fp_binop_rm<bits<8> opc, string OpcodeStr,
   // Scalar operation, reg+mem.
   def SSrm : SSI<opc, MRMSrcMem, (ops FR32:$dst, FR32:$src1, f32mem:$src2),
                  !strconcat(OpcodeStr, "ss {$src2, $dst|$dst, $src2"),
-                 [(set FR32:$dst, (OpNode FR32:$src1, (loadf32 addr:$src2)))]>;
+                 [(set FR32:$dst, (OpNode FR32:$src1, (load addr:$src2)))]>;
   def SDrm : SDI<opc, MRMSrcMem, (ops FR64:$dst, FR64:$src1, f64mem:$src2),
                  !strconcat(OpcodeStr, "sd {$src2, $dst|$dst, $src2"),
-                 [(set FR64:$dst, (OpNode FR64:$src1, (loadf64 addr:$src2)))]>;
+                 [(set FR64:$dst, (OpNode FR64:$src1, (load addr:$src2)))]>;
                  
   // Vector intrinsic operation, reg+reg.
   def SSrr_Int : SSI<opc, MRMSrcReg, (ops VR128:$dst, VR128:$src1, VR128:$src2),
@@ -332,14 +354,14 @@ multiclass scalar_sse12_fp_binop_rm<bits<8> opc, string OpcodeStr,
     let isCommutable = Commutable;
   }
   // Vector intrinsic operation, reg+mem.
-  def SSrm_Int : SSI<opc, MRMSrcMem, (ops VR128:$dst, VR128:$src1, f32mem:$src2),
+  def SSrm_Int : SSI<opc, MRMSrcMem, (ops VR128:$dst, VR128:$src1, ssmem:$src2),
                      !strconcat(OpcodeStr, "ss {$src2, $dst|$dst, $src2"),
                      [(set VR128:$dst, (F32Int VR128:$src1,
-                                               (load addr:$src2)))]>;
-  def SDrm_Int : SDI<opc, MRMSrcMem, (ops VR128:$dst, VR128:$src1, f64mem:$src2),
+                                               sse_load_f32:$src2))]>;
+  def SDrm_Int : SDI<opc, MRMSrcMem, (ops VR128:$dst, VR128:$src1, sdmem:$src2),
                      !strconcat(OpcodeStr, "sd {$src2, $dst|$dst, $src2"),
                      [(set VR128:$dst, (F64Int VR128:$src1,
-                                               (load addr:$src2)))]>;
+                                               sse_load_f64:$src2))]>;
 }
 }
 
@@ -373,17 +395,17 @@ class SS_Intrr<bits<8> o, string OpcodeStr, Intrinsic IntId>
         !strconcat(OpcodeStr, " {$src2, $dst|$dst, $src2}"),
         [(set VR128:$dst, (v4f32 (IntId VR128:$src1, VR128:$src2)))]>;
 class SS_Intrm<bits<8> o, string OpcodeStr, Intrinsic IntId>
-  : SSI<o, MRMSrcMem, (ops VR128:$dst, VR128:$src1, f32mem:$src2),
+  : SSI<o, MRMSrcMem, (ops VR128:$dst, VR128:$src1, ssmem:$src2),
         !strconcat(OpcodeStr, " {$src2, $dst|$dst, $src2}"),
-        [(set VR128:$dst, (v4f32 (IntId VR128:$src1, (load addr:$src2))))]>;
+        [(set VR128:$dst, (v4f32 (IntId VR128:$src1, sse_load_f32:$src2)))]>;
 class SD_Intrr<bits<8> o, string OpcodeStr, Intrinsic IntId>
   : SDI<o, MRMSrcReg, (ops VR128:$dst, VR128:$src1, VR128:$src2),
         !strconcat(OpcodeStr, " {$src2, $dst|$dst, $src2}"),
         [(set VR128:$dst, (v2f64 (IntId VR128:$src1, VR128:$src2)))]>;
 class SD_Intrm<bits<8> o, string OpcodeStr, Intrinsic IntId>
-  : SDI<o, MRMSrcMem, (ops VR128:$dst, VR128:$src1, f64mem:$src2),
+  : SDI<o, MRMSrcMem, (ops VR128:$dst, VR128:$src1, sdmem:$src2),
         !strconcat(OpcodeStr, " {$src2, $dst|$dst, $src2}"),
-        [(set VR128:$dst, (v2f64 (IntId VR128:$src1, (load addr:$src2))))]>;
+        [(set VR128:$dst, (v2f64 (IntId VR128:$src1, sse_load_f64:$src2)))]>;
 
 
 // Aliases to match intrinsics which expect XMM operand(s).
