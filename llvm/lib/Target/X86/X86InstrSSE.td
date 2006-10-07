@@ -231,7 +231,7 @@ class PS_Intr<bits<8> o, string OpcodeStr, Intrinsic IntId>
 class PS_Intm<bits<8> o, string OpcodeStr, Intrinsic IntId>
   : PSI<o, MRMSrcMem, (ops VR128:$dst, f32mem:$src),
         !strconcat(OpcodeStr, " {$src, $dst|$dst, $src}"),
-        [(set VR128:$dst, (IntId (loadv4f32 addr:$src)))]>;
+        [(set VR128:$dst, (IntId (load addr:$src)))]>;
 class PD_Intr<bits<8> o, string OpcodeStr, Intrinsic IntId>
   : PDI<o, MRMSrcReg, (ops VR128:$dst, VR128:$src),
         !strconcat(OpcodeStr, " {$src, $dst|$dst, $src}"),
@@ -239,7 +239,7 @@ class PD_Intr<bits<8> o, string OpcodeStr, Intrinsic IntId>
 class PD_Intm<bits<8> o, string OpcodeStr, Intrinsic IntId>
   : PDI<o, MRMSrcMem, (ops VR128:$dst, f64mem:$src),
         !strconcat(OpcodeStr, " {$src, $dst|$dst, $src}"),
-        [(set VR128:$dst, (IntId (loadv2f64 addr:$src)))]>;
+        [(set VR128:$dst, (IntId (load addr:$src)))]>;
 
 class PS_Intrr<bits<8> o, string OpcodeStr, Intrinsic IntId>
   : PSI<o, MRMSrcReg, (ops VR128:$dst, VR128:$src1, VR128:$src2),
@@ -248,7 +248,7 @@ class PS_Intrr<bits<8> o, string OpcodeStr, Intrinsic IntId>
 class PS_Intrm<bits<8> o, string OpcodeStr, Intrinsic IntId>
   : PSI<o, MRMSrcMem, (ops VR128:$dst, VR128:$src1, f32mem:$src2),
         !strconcat(OpcodeStr, " {$src2, $dst|$dst, $src2}"),
-        [(set VR128:$dst, (IntId VR128:$src1, (loadv4f32 addr:$src2)))]>;
+        [(set VR128:$dst, (IntId VR128:$src1, (load addr:$src2)))]>;
 class PD_Intrr<bits<8> o, string OpcodeStr, Intrinsic IntId>
   : PDI<o, MRMSrcReg, (ops VR128:$dst, VR128:$src1, VR128:$src2),
         !strconcat(OpcodeStr, " {$src2, $dst|$dst, $src2}"),
@@ -256,22 +256,21 @@ class PD_Intrr<bits<8> o, string OpcodeStr, Intrinsic IntId>
 class PD_Intrm<bits<8> o, string OpcodeStr, Intrinsic IntId>
   : PDI<o, MRMSrcMem, (ops VR128:$dst, VR128:$src1, f64mem:$src2),
         !strconcat(OpcodeStr, " {$src2, $dst|$dst, $src2}"),
-        [(set VR128:$dst, (IntId VR128:$src1, (loadv2f64 addr:$src2)))]>;
+        [(set VR128:$dst, (IntId VR128:$src1, (load addr:$src2)))]>;
 
 class S3D_Intrr<bits<8> o, string asm, Intrinsic IntId>
   : S3DI<o, MRMSrcReg, (ops VR128:$dst, VR128:$src1, VR128:$src2), asm,
          [(set VR128:$dst, (v4f32 (IntId VR128:$src1, VR128:$src2)))]>;
 class S3D_Intrm<bits<8> o, string asm, Intrinsic IntId>
   : S3DI<o, MRMSrcMem, (ops VR128:$dst, VR128:$src1, f128mem:$src2), asm,
-         [(set VR128:$dst, (v4f32 (IntId VR128:$src1,
-                                   (loadv4f32 addr:$src2))))]>;
+         [(set VR128:$dst, (v4f32 (IntId VR128:$src1, (load addr:$src2))))]>;
 class S3_Intrr<bits<8> o, string asm, Intrinsic IntId>
   : S3I<o, MRMSrcReg, (ops VR128:$dst, VR128:$src1, VR128:$src2), asm,
          [(set VR128:$dst, (v2f64 (IntId VR128:$src1, VR128:$src2)))]>;
 class S3_Intrm<bits<8> o, string asm, Intrinsic IntId>
   : S3I<o, MRMSrcMem, (ops VR128:$dst, VR128:$src1, f128mem:$src2), asm,
          [(set VR128:$dst, (v2f64 (IntId VR128:$src1,
-                                   (loadv2f64 addr:$src2))))]>;
+                                   (load addr:$src2))))]>;
 
 // Some 'special' instructions
 def IMPLICIT_DEF_FR32 : I<0, Pseudo, (ops FR32:$dst),
@@ -490,14 +489,14 @@ def Int_CVTSS2SIrr: SSI<0x2D, MRMSrcReg, (ops GR32:$dst, VR128:$src),
 def Int_CVTSS2SIrm: SSI<0x2D, MRMSrcMem, (ops GR32:$dst, f32mem:$src),
                         "cvtss2si {$src, $dst|$dst, $src}",
                         [(set GR32:$dst, (int_x86_sse_cvtss2si
-                                          (loadv4f32 addr:$src)))]>;
+                                          (load addr:$src)))]>;
 def Int_CVTSD2SIrr: SDI<0x2D, MRMSrcReg, (ops GR32:$dst, VR128:$src),
                         "cvtsd2si {$src, $dst|$dst, $src}",
                         [(set GR32:$dst, (int_x86_sse2_cvtsd2si VR128:$src))]>;
 def Int_CVTSD2SIrm: SDI<0x2D, MRMSrcMem, (ops GR32:$dst, f128mem:$src),
                         "cvtsd2si {$src, $dst|$dst, $src}",
                         [(set GR32:$dst, (int_x86_sse2_cvtsd2si
-                                          (loadv2f64 addr:$src)))]>;
+                                          (load addr:$src)))]>;
 
 // Aliases for intrinsics
 def Int_CVTTSS2SIrr: SSI<0x2C, MRMSrcReg, (ops GR32:$dst, VR128:$src),
@@ -505,15 +504,14 @@ def Int_CVTTSS2SIrr: SSI<0x2C, MRMSrcReg, (ops GR32:$dst, VR128:$src),
                     [(set GR32:$dst, (int_x86_sse_cvttss2si VR128:$src))]>;
 def Int_CVTTSS2SIrm: SSI<0x2C, MRMSrcMem, (ops GR32:$dst, f32mem:$src),
                     "cvttss2si {$src, $dst|$dst, $src}",
-                    [(set GR32:$dst, (int_x86_sse_cvttss2si
-                                     (loadv4f32 addr:$src)))]>;
+                    [(set GR32:$dst, (int_x86_sse_cvttss2si(load addr:$src)))]>;
 def Int_CVTTSD2SIrr: SDI<0x2C, MRMSrcReg, (ops GR32:$dst, VR128:$src),
                          "cvttsd2si {$src, $dst|$dst, $src}",
                          [(set GR32:$dst, (int_x86_sse2_cvttsd2si VR128:$src))]>;
 def Int_CVTTSD2SIrm: SDI<0x2C, MRMSrcMem, (ops GR32:$dst, f128mem:$src),
                          "cvttsd2si {$src, $dst|$dst, $src}",
                          [(set GR32:$dst, (int_x86_sse2_cvttsd2si
-                                          (loadv2f64 addr:$src)))]>;
+                                          (load addr:$src)))]>;
 
 let isTwoAddress = 1 in {
 def Int_CVTSI2SSrr: SSI<0x2A, MRMSrcReg,
@@ -583,26 +581,26 @@ def Int_UCOMISSrr: PSI<0x2E, MRMSrcReg, (ops VR128:$src1, VR128:$src2),
                        [(X86ucomi (v4f32 VR128:$src1), VR128:$src2)]>;
 def Int_UCOMISSrm: PSI<0x2E, MRMSrcMem, (ops VR128:$src1, f128mem:$src2),
                        "ucomiss {$src2, $src1|$src1, $src2}",
-                      [(X86ucomi (v4f32 VR128:$src1), (loadv4f32 addr:$src2))]>;
+                      [(X86ucomi (v4f32 VR128:$src1), (load addr:$src2))]>;
 def Int_UCOMISDrr: PDI<0x2E, MRMSrcReg, (ops VR128:$src1, VR128:$src2),
                        "ucomisd {$src2, $src1|$src1, $src2}",
                        [(X86ucomi (v2f64 VR128:$src1), (v2f64 VR128:$src2))]>;
 def Int_UCOMISDrm: PDI<0x2E, MRMSrcMem, (ops VR128:$src1, f128mem:$src2),
                        "ucomisd {$src2, $src1|$src1, $src2}",
-                      [(X86ucomi (v2f64 VR128:$src1), (loadv2f64 addr:$src2))]>;
+                      [(X86ucomi (v2f64 VR128:$src1), (load addr:$src2))]>;
 
 def Int_COMISSrr: PSI<0x2F, MRMSrcReg, (ops VR128:$src1, VR128:$src2),
                       "comiss {$src2, $src1|$src1, $src2}",
                       [(X86comi (v4f32 VR128:$src1), VR128:$src2)]>;
 def Int_COMISSrm: PSI<0x2F, MRMSrcMem, (ops VR128:$src1, f128mem:$src2),
                       "comiss {$src2, $src1|$src1, $src2}",
-                      [(X86comi (v4f32 VR128:$src1), (loadv4f32 addr:$src2))]>;
+                      [(X86comi (v4f32 VR128:$src1), (load addr:$src2))]>;
 def Int_COMISDrr: PDI<0x2F, MRMSrcReg, (ops VR128:$src1, VR128:$src2),
                       "comisd {$src2, $src1|$src1, $src2}",
                       [(X86comi (v2f64 VR128:$src1), (v2f64 VR128:$src2))]>;
 def Int_COMISDrm: PDI<0x2F, MRMSrcMem, (ops VR128:$src1, f128mem:$src2),
                       "comisd {$src2, $src1|$src1, $src2}",
-                      [(X86comi (v2f64 VR128:$src1), (loadv2f64 addr:$src2))]>;
+                      [(X86comi (v2f64 VR128:$src1), (load addr:$src2))]>;
 
 // Aliases of packed instructions for scalar use. These all have names that
 // start with 'Fs'.
@@ -861,7 +859,7 @@ def Int_CVTPS2DQrr : PDI<0x5B, MRMSrcReg, (ops VR128:$dst, VR128:$src),
 def Int_CVTPS2DQrm : PDI<0x5B, MRMSrcMem, (ops VR128:$dst, f128mem:$src),
                          "cvtps2dq {$src, $dst|$dst, $src}",
                          [(set VR128:$dst, (int_x86_sse2_cvtps2dq
-                                            (loadv4f32 addr:$src)))]>;
+                                            (load addr:$src)))]>;
 // SSE2 packed instructions with XS prefix
 def Int_CVTTPS2DQrr : I<0x5B, MRMSrcReg, (ops VR128:$dst, VR128:$src),
                         "cvttps2dq {$src, $dst|$dst, $src}",
@@ -870,7 +868,7 @@ def Int_CVTTPS2DQrr : I<0x5B, MRMSrcReg, (ops VR128:$dst, VR128:$src),
 def Int_CVTTPS2DQrm : I<0x5B, MRMSrcMem, (ops VR128:$dst, f128mem:$src),
                         "cvttps2dq {$src, $dst|$dst, $src}",
                         [(set VR128:$dst, (int_x86_sse2_cvttps2dq
-                                           (loadv4f32 addr:$src)))]>,
+                                           (load addr:$src)))]>,
                       XS, Requires<[HasSSE2]>;
 
 // SSE2 packed instructions with XD prefix
@@ -881,7 +879,7 @@ def Int_CVTPD2DQrr : I<0xE6, MRMSrcReg, (ops VR128:$dst, VR128:$src),
 def Int_CVTPD2DQrm : I<0xE6, MRMSrcMem, (ops VR128:$dst, f128mem:$src),
                        "cvtpd2dq {$src, $dst|$dst, $src}",
                        [(set VR128:$dst, (int_x86_sse2_cvtpd2dq
-                                          (loadv2f64 addr:$src)))]>,
+                                          (load addr:$src)))]>,
                      XD, Requires<[HasSSE2]>;
 def Int_CVTTPD2DQrr : PDI<0xE6, MRMSrcReg, (ops VR128:$dst, VR128:$src),
                           "cvttpd2dq {$src, $dst|$dst, $src}",
@@ -889,7 +887,7 @@ def Int_CVTTPD2DQrr : PDI<0xE6, MRMSrcReg, (ops VR128:$dst, VR128:$src),
 def Int_CVTTPD2DQrm : PDI<0xE6, MRMSrcMem, (ops VR128:$dst, f128mem:$src),
                           "cvttpd2dq {$src, $dst|$dst, $src}",
                           [(set VR128:$dst, (int_x86_sse2_cvttpd2dq
-                                             (loadv2f64 addr:$src)))]>;
+                                             (load addr:$src)))]>;
 
 // SSE2 instructions without OpSize prefix
 def Int_CVTPS2PDrr : I<0x5A, MRMSrcReg, (ops VR128:$dst, VR128:$src),
@@ -899,7 +897,7 @@ def Int_CVTPS2PDrr : I<0x5A, MRMSrcReg, (ops VR128:$dst, VR128:$src),
 def Int_CVTPS2PDrm : I<0x5A, MRMSrcReg, (ops VR128:$dst, f64mem:$src),
                        "cvtps2pd {$src, $dst|$dst, $src}",
                        [(set VR128:$dst, (int_x86_sse2_cvtps2pd
-                                          (loadv4f32 addr:$src)))]>,
+                                          (load addr:$src)))]>,
                      TB, Requires<[HasSSE2]>;
 
 def Int_CVTPD2PSrr : PDI<0x5A, MRMSrcReg, (ops VR128:$dst, VR128:$src),
@@ -908,7 +906,7 @@ def Int_CVTPD2PSrr : PDI<0x5A, MRMSrcReg, (ops VR128:$dst, VR128:$src),
 def Int_CVTPD2PSrm : PDI<0x5A, MRMSrcReg, (ops VR128:$dst, f128mem:$src),
                          "cvtpd2ps {$src, $dst|$dst, $src}",
                          [(set VR128:$dst, (int_x86_sse2_cvtpd2ps
-                                            (loadv2f64 addr:$src)))]>;
+                                            (load addr:$src)))]>;
 
 // Match intrinsics which expect XMM operand(s).
 // Aliases for intrinsics
@@ -932,7 +930,7 @@ def Int_CVTSD2SSrm: SDI<0x5A, MRMSrcMem,
                         (ops VR128:$dst, VR128:$src1, f64mem:$src2), 
                    "cvtsd2ss {$src2, $dst|$dst, $src2}",
                    [(set VR128:$dst, (int_x86_sse2_cvtsd2ss VR128:$src1,
-                                      (loadv2f64 addr:$src2)))]>;
+                                      (load addr:$src2)))]>;
 def Int_CVTSS2SDrr: I<0x5A, MRMSrcReg,
                       (ops VR128:$dst, VR128:$src1, VR128:$src2),
                     "cvtss2sd {$src2, $dst|$dst, $src2}",
@@ -943,7 +941,7 @@ def Int_CVTSS2SDrm: I<0x5A, MRMSrcMem,
                       (ops VR128:$dst, VR128:$src1, f32mem:$src2),
                     "cvtss2sd {$src2, $dst|$dst, $src2}",
                     [(set VR128:$dst, (int_x86_sse2_cvtss2sd VR128:$src1,
-                                       (loadv4f32 addr:$src2)))]>, XS,
+                                       (load addr:$src2)))]>, XS,
                     Requires<[HasSSE2]>;
 }
 
@@ -1020,7 +1018,7 @@ def ADDSUBPSrm : S3DI<0xD0, MRMSrcMem,
                       (ops VR128:$dst, VR128:$src1, f128mem:$src2),
                       "addsubps {$src2, $dst|$dst, $src2}",
                       [(set VR128:$dst, (int_x86_sse3_addsub_ps VR128:$src1,
-                                         (loadv4f32 addr:$src2)))]>;
+                                         (load addr:$src2)))]>;
 def ADDSUBPDrr : S3I<0xD0, MRMSrcReg,
                       (ops VR128:$dst, VR128:$src1, VR128:$src2),
                       "addsubpd {$src2, $dst|$dst, $src2}",
@@ -1030,7 +1028,7 @@ def ADDSUBPDrm : S3I<0xD0, MRMSrcMem,
                       (ops VR128:$dst, VR128:$src1, f128mem:$src2),
                       "addsubpd {$src2, $dst|$dst, $src2}",
                       [(set VR128:$dst, (int_x86_sse3_addsub_pd VR128:$src1,
-                                         (loadv2f64 addr:$src2)))]>;
+                                         (load addr:$src2)))]>;
 }
 
 def SQRTPSr  : PS_Intr<0x51, "sqrtps", int_x86_sse_sqrt_ps>;
@@ -1092,7 +1090,7 @@ def ANDPDrm : PDI<0x54, MRMSrcMem, (ops VR128:$dst, VR128:$src1, f128mem:$src2),
                   "andpd {$src2, $dst|$dst, $src2}",
                 [(set VR128:$dst,
                   (and (bc_v2i64 (v2f64 VR128:$src1)),
-                   (bc_v2i64 (loadv2f64 addr:$src2))))]>;
+                       (bc_v2i64 (loadv2f64 addr:$src2))))]>;
 def ORPSrm  : PSI<0x56, MRMSrcMem, (ops VR128:$dst, VR128:$src1, f128mem:$src2),
                   "orps {$src2, $dst|$dst, $src2}",
                   [(set VR128:$dst, (or VR128:$src1,
@@ -1101,7 +1099,7 @@ def ORPDrm  : PDI<0x56, MRMSrcMem, (ops VR128:$dst, VR128:$src1, f128mem:$src2),
                 "orpd {$src2, $dst|$dst, $src2}",
                  [(set VR128:$dst,
                    (or (bc_v2i64 (v2f64 VR128:$src1)),
-                    (bc_v2i64 (loadv2f64 addr:$src2))))]>;
+                       (bc_v2i64 (loadv2f64 addr:$src2))))]>;
 def XORPSrm : PSI<0x57, MRMSrcMem, (ops VR128:$dst, VR128:$src1, f128mem:$src2),
                   "xorps {$src2, $dst|$dst, $src2}",
                   [(set VR128:$dst, (xor VR128:$src1,
@@ -1110,7 +1108,7 @@ def XORPDrm : PDI<0x57, MRMSrcMem, (ops VR128:$dst, VR128:$src1, f128mem:$src2),
                   "xorpd {$src2, $dst|$dst, $src2}",
                 [(set VR128:$dst,
                   (xor (bc_v2i64 (v2f64 VR128:$src1)),
-                   (bc_v2i64 (loadv2f64 addr:$src2))))]>;
+                       (bc_v2i64 (loadv2f64 addr:$src2))))]>;
 def ANDNPSrr : PSI<0x55, MRMSrcReg, (ops VR128:$dst, VR128:$src1, VR128:$src2),
                   "andnps {$src2, $dst|$dst, $src2}",
                   [(set VR128:$dst, (v2i64 (and (xor VR128:$src1,
@@ -1130,7 +1128,7 @@ def ANDNPDrm : PDI<0x55, MRMSrcMem, (ops VR128:$dst, VR128:$src1,f128mem:$src2),
                   "andnpd {$src2, $dst|$dst, $src2}",
                   [(set VR128:$dst,
                     (and (vnot (bc_v2i64 (v2f64 VR128:$src1))),
-                     (bc_v2i64 (loadv2f64 addr:$src2))))]>;
+                         (bc_v2i64 (loadv2f64 addr:$src2))))]>;
 }
 
 let isTwoAddress = 1 in {
