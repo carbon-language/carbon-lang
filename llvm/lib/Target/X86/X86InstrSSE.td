@@ -237,17 +237,21 @@ class PD_Intm<bits<8> o, string asm, Intrinsic IntId>
   : PDI<o, MRMSrcMem, (ops VR128:$dst, f64mem:$src), asm,
         [(set VR128:$dst, (IntId (loadv2f64 addr:$src)))]>;
 
-class PS_Intrr<bits<8> o, string asm, Intrinsic IntId>
-  : PSI<o, MRMSrcReg, (ops VR128:$dst, VR128:$src1, VR128:$src2), asm,
+class PS_Intrr<bits<8> o, string OpcodeStr, Intrinsic IntId>
+  : PSI<o, MRMSrcReg, (ops VR128:$dst, VR128:$src1, VR128:$src2),
+        !strconcat(OpcodeStr, " {$src2, $dst|$dst, $src2}"),
         [(set VR128:$dst, (IntId VR128:$src1, VR128:$src2))]>;
-class PS_Intrm<bits<8> o, string asm, Intrinsic IntId>
-  : PSI<o, MRMSrcMem, (ops VR128:$dst, VR128:$src1, f32mem:$src2), asm,
+class PS_Intrm<bits<8> o, string OpcodeStr, Intrinsic IntId>
+  : PSI<o, MRMSrcMem, (ops VR128:$dst, VR128:$src1, f32mem:$src2),
+        !strconcat(OpcodeStr, " {$src2, $dst|$dst, $src2}"),
         [(set VR128:$dst, (IntId VR128:$src1, (loadv4f32 addr:$src2)))]>;
-class PD_Intrr<bits<8> o, string asm, Intrinsic IntId>
-  : PDI<o, MRMSrcReg, (ops VR128:$dst, VR128:$src1, VR128:$src2), asm,
+class PD_Intrr<bits<8> o, string OpcodeStr, Intrinsic IntId>
+  : PDI<o, MRMSrcReg, (ops VR128:$dst, VR128:$src1, VR128:$src2),
+        !strconcat(OpcodeStr, " {$src2, $dst|$dst, $src2}"),
         [(set VR128:$dst, (IntId VR128:$src1, VR128:$src2))]>;
-class PD_Intrm<bits<8> o, string asm, Intrinsic IntId>
-  : PDI<o, MRMSrcMem, (ops VR128:$dst, VR128:$src1, f64mem:$src2), asm,
+class PD_Intrm<bits<8> o, string OpcodeStr, Intrinsic IntId>
+  : PDI<o, MRMSrcMem, (ops VR128:$dst, VR128:$src1, f64mem:$src2),
+        !strconcat(OpcodeStr, " {$src2, $dst|$dst, $src2}"),
         [(set VR128:$dst, (IntId VR128:$src1, (loadv2f64 addr:$src2)))]>;
 
 class S3D_Intrr<bits<8> o, string asm, Intrinsic IntId>
@@ -1045,23 +1049,15 @@ def RCPPSm : PS_Intm<0x53, "rcpps {$src, $dst|$dst, $src}",
 
 let isTwoAddress = 1 in {
 let isCommutable = 1 in {
-def MAXPSrr : PS_Intrr<0x5F, "maxps {$src2, $dst|$dst, $src2}",
-                       int_x86_sse_max_ps>;
-def MAXPDrr : PD_Intrr<0x5F, "maxpd {$src2, $dst|$dst, $src2}",
-                       int_x86_sse2_max_pd>;
-def MINPSrr : PS_Intrr<0x5D, "minps {$src2, $dst|$dst, $src2}",
-                       int_x86_sse_min_ps>;
-def MINPDrr : PD_Intrr<0x5D, "minpd {$src2, $dst|$dst, $src2}",
-                       int_x86_sse2_min_pd>;
+def MAXPSrr : PS_Intrr<0x5F, "maxps", int_x86_sse_max_ps>;
+def MAXPDrr : PD_Intrr<0x5F, "maxpd", int_x86_sse2_max_pd>;
+def MINPSrr : PS_Intrr<0x5D, "minps", int_x86_sse_min_ps>;
+def MINPDrr : PD_Intrr<0x5D, "minpd", int_x86_sse2_min_pd>;
 }
-def MAXPSrm : PS_Intrm<0x5F, "maxps {$src2, $dst|$dst, $src2}",
-                       int_x86_sse_max_ps>;
-def MAXPDrm : PD_Intrm<0x5F, "maxpd {$src2, $dst|$dst, $src2}",
-                       int_x86_sse2_max_pd>;
-def MINPSrm : PS_Intrm<0x5D, "minps {$src2, $dst|$dst, $src2}",
-                       int_x86_sse_min_ps>;
-def MINPDrm : PD_Intrm<0x5D, "minpd {$src2, $dst|$dst, $src2}",
-                       int_x86_sse2_min_pd>;
+def MAXPSrm : PS_Intrm<0x5F, "maxps", int_x86_sse_max_ps>;
+def MAXPDrm : PD_Intrm<0x5F, "maxpd", int_x86_sse2_max_pd>;
+def MINPSrm : PS_Intrm<0x5D, "minps", int_x86_sse_min_ps>;
+def MINPDrm : PD_Intrm<0x5D, "minpd", int_x86_sse2_min_pd>;
 }
 
 // Logical
