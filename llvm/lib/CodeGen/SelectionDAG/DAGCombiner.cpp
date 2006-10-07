@@ -46,90 +46,13 @@ namespace {
   static Statistic<> NodesCombined ("dagcombiner", 
 				    "Number of dag nodes combined");
             
-
-static cl::opt<bool>
-  CombinerAA("combiner-alias-analysis", cl::Hidden,
-             cl::desc("Turn on alias analysis turning testing"));
+  static cl::opt<bool>
+    CombinerAA("combiner-alias-analysis", cl::Hidden,
+               cl::desc("Turn on alias analysis turning testing"));
              
-             
-/// FindBaseOffset - Return true if base is known not to alias with anything
-/// but itself.  Provides base object and offset as results.
-bool FindBaseOffset(SDOperand Ptr, SDOperand &Object, int64_t &Offset) {
-  // If it's an adding or subtracting a simple constant then add the constant
-  // to the offset.
-  if (Ptr.getOpcode() == ISD::ADD) {
-    if (ConstantSDNode *C = dyn_cast<ConstantSDNode>(Ptr.getOperand(1))) {
-      bool IsNonAliasing = FindBaseOffset(Ptr.getOperand(0), Object, Offset);
-      Offset += C->getValue();
-      return IsNonAliasing;
-    }
-  } else if (Ptr.getOpcode() == ISD::SUB) {
-  // FIXME - Aren't all subtract constants converted to add negative constant.
-    if (ConstantSDNode *C = dyn_cast<ConstantSDNode>(Ptr.getOperand(1))) {
-      bool IsNonAliasing = FindBaseOffset(Ptr.getOperand(0), Object, Offset);
-      Offset -= C->getValue();
-      return IsNonAliasing;
-    }
-  }
-  
-  // Primitive operation.
-  Object = Ptr; Offset = 0;
-  
-  // If it's any of the following then it can't alias with anything but itself.
-  return isa<FrameIndexSDNode>(Ptr) ||
-         isa<ConstantPoolSDNode>(Ptr) ||
-         isa<GlobalAddressSDNode>(Ptr);
-}
-
-/// isAlias - Return true if there is any possibility that the two addresses
-/// overlap.
-bool isAlias(SDOperand Ptr1, int64_t Size1, SDOperand SrcValue1,
-             SDOperand Ptr2, int64_t Size2,  SDOperand SrcValue2) {
-  // If they are the same then they must be aliases.
-  if (Ptr1 == Ptr2) return true;
-  
-  // Gather base node and offset information.
-  SDOperand Object1, Object2;
-  int64_t Offset1, Offset2;
-  bool IsNonAliasing1 = FindBaseOffset(Ptr1, Object1, Offset1);
-  bool IsNonAliasing2 = FindBaseOffset(Ptr2, Object2, Offset2);
-  
-  // If they have a same base address then...
-  if (Object1 == Object2) {
-    // Check to see if the addresses overlap.
-    return !((Offset1 + Size1) <= Offset2 || (Offset2 + Size2) <= Offset1);
-  }
-  
-  // Otherwise they alias if they are both non aliasing.
-  return !IsNonAliasing1 && IsNonAliasing2;
-}
-
-/// FindAliasInfo - Extracts the relevant alias information from the memory
-/// node.  Returns true if the operand was a load.
-bool FindAliasInfo(SDNode *N,
-                   SDOperand &Ptr, int64_t &Size, SDOperand &SrcValue) {
-  switch (N->getOpcode()) {
-  case ISD::LOAD:
-    Ptr = N->getOperand(1);
-    Size = MVT::getSizeInBits(N->getValueType(0)) >> 3;
-    SrcValue = N->getOperand(2);
-    return true;
-  case ISD::STORE:
-    Ptr = N->getOperand(2);
-    Size = MVT::getSizeInBits(N->getOperand(1).getValueType()) >> 3;
-    SrcValue = N->getOperand(3);
-    return false;
-  default:
-    assert(0 && "FindAliasInfo expected a memory operand");
-    return false;
-  }
-  
-  return false;
-}
-
 //------------------------------ DAGCombiner ---------------------------------//
 
-class VISIBILITY_HIDDEN DAGCombiner {
+  class VISIBILITY_HIDDEN DAGCombiner {
     SelectionDAG &DAG;
     TargetLowering &TLI;
     bool AfterLegalize;
@@ -603,7 +526,7 @@ SDOperand DAGCombiner::visitTokenFactor(SDNode *N) {
   // Start out with this token factor.
   TFs.push_back(N);
   
-  // Iterate through token factors.  The TFs grows a new token factors are
+  // Iterate through token factors.  The TFs grows when new token factors are
   // encountered.
   for (unsigned i = 0; i < TFs.size(); ++i) {
     SDNode *TF = TFs[i];
@@ -3316,12 +3239,6 @@ bool DAGCombiner::SimplifySelectOps(SDNode *TheSelect, SDOperand LHS,
   // If this is a select from two identical things, try to pull the operation
   // through the select.
   if (LHS.getOpcode() == RHS.getOpcode() && LHS.hasOneUse() && RHS.hasOneUse()){
-#if 0
-    std::cerr << "SELECT: ["; LHS.Val->dump();
-    std::cerr << "] ["; RHS.Val->dump();
-    std::cerr << "]\n";
-#endif
-    
     // If this is a load and the token chain is identical, replace the select
     // of two loads with a load through a select of the address to load from.
     // This triggers in things like "select bool X, 10.0, 123.0" after the FP
@@ -3976,6 +3893,72 @@ SDOperand DAGCombiner::BuildUDIV(SDNode *N) {
        ii != ee; ++ii)
     AddToWorkList(*ii);
   return S;
+}
+
+/// FindBaseOffset - Return true if base is known not to alias with anything
+/// but itself.  Provides base object and offset as results.
+static bool FindBaseOffset(SDOperand Ptr, SDOperand &Base, int64_t &Offset) {
+  // Assume it is a primitive operation.
+  Base = Ptr; Offset = 0;
+  
+  // If it's an adding a simple constant then integrate the offset.
+  if (Base.getOpcode() == ISD::ADD) {
+    if (ConstantSDNode *C = dyn_cast<ConstantSDNode>(Base.getOperand(1))) {
+      Base = Base.getOperand(0);
+      Offset += C->getValue();
+    }
+  }
+  
+  // If it's any of the following then it can't alias with anything but itself.
+  return isa<FrameIndexSDNode>(Base) ||
+         isa<ConstantPoolSDNode>(Base) ||
+         isa<GlobalAddressSDNode>(Base);
+}
+
+/// isAlias - Return true if there is any possibility that the two addresses
+/// overlap.
+static bool isAlias(SDOperand Ptr1, int64_t Size1, SDOperand SrcValue1,
+                    SDOperand Ptr2, int64_t Size2, SDOperand SrcValue2) {
+  // If they are the same then they must be aliases.
+  if (Ptr1 == Ptr2) return true;
+  
+  // Gather base node and offset information.
+  SDOperand Base1, Base2;
+  int64_t Offset1, Offset2;
+  bool KnownBase1 = FindBaseOffset(Ptr1, Base1, Offset1);
+  bool KnownBase2 = FindBaseOffset(Ptr2, Base2, Offset2);
+  
+  // If they have a same base address then...
+  if (Base1 == Base2) {
+    // Check to see if the addresses overlap.
+    return!((Offset1 + Size1) <= Offset2 || (Offset2 + Size2) <= Offset1);
+  }
+  
+  // Otherwise they alias if either is unknown.
+  return !KnownBase1 || !KnownBase2;
+}
+
+/// FindAliasInfo - Extracts the relevant alias information from the memory
+/// node.  Returns true if the operand was a load.
+static bool FindAliasInfo(SDNode *N,
+                          SDOperand &Ptr, int64_t &Size, SDOperand &SrcValue) {
+  switch (N->getOpcode()) {
+  case ISD::LOAD:
+    Ptr = N->getOperand(1);
+    Size = MVT::getSizeInBits(N->getValueType(0)) >> 3;
+    SrcValue = N->getOperand(2);
+    return true;
+  case ISD::STORE:
+    Ptr = N->getOperand(2);
+    Size = MVT::getSizeInBits(N->getOperand(1).getValueType()) >> 3;
+    SrcValue = N->getOperand(3);
+    break;
+  default:
+    assert(0 && "FindAliasInfo expected a memory operand");
+    break;
+  }
+  
+  return false;
 }
 
 /// GatherAllAliases - Walk up chain skipping non-aliasing memory nodes,
