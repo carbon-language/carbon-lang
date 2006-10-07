@@ -196,10 +196,12 @@ class SS_Intm<bits<8> o, string asm, Intrinsic IntId>
         [(set VR128:$dst, (v4f32 (IntId (load addr:$src))))]>;
 
 
-multiclass SS_IntUnary<bits<8> o, string asm, Intrinsic IntId> {
-  def r : SSI<o, MRMSrcReg, (ops VR128:$dst, VR128:$src), asm,
+multiclass SS_IntUnary<bits<8> o, string OpcodeStr, Intrinsic IntId> {
+  def r : SSI<o, MRMSrcReg, (ops VR128:$dst, VR128:$src),
+              !strconcat(OpcodeStr, " {$src, $dst|$dst, $src"),
               [(set VR128:$dst, (v4f32 (IntId VR128:$src)))]>;
-  def m : SSI<o, MRMSrcMem, (ops VR128:$dst, f32mem:$src), asm,
+  def m : SSI<o, MRMSrcMem, (ops VR128:$dst, f32mem:$src),
+              !strconcat(OpcodeStr, " {$src, $dst|$dst, $src"),
               [(set VR128:$dst, (v4f32 (IntId (load addr:$src))))]>;
 }
 
@@ -451,18 +453,15 @@ def Int_SUBSDrm : SD_Intrm<0x5C, "subsd {$src2, $dst|$dst, $src2}",
                            int_x86_sse2_sub_sd>;
 }
 
-defm Int_SQRTSS : SS_IntUnary<0x51, "sqrtss {$src, $dst|$dst, $src}",
-                              int_x86_sse_sqrt_ss>;
+defm Int_SQRTSS  : SS_IntUnary<0x51, "sqrtss" , int_x86_sse_sqrt_ss>;
+defm Int_RSQRTSS : SS_IntUnary<0x52, "rsqrtss", int_x86_sse_rsqrt_ss>;
+defm Int_RCPSS   : SS_IntUnary<0x53, "rcpss"  , int_x86_sse_rcp_ss>;
+
 
 def Int_SQRTSDr : SD_Intr<0x51, "sqrtsd {$src, $dst|$dst, $src}",
                           int_x86_sse2_sqrt_sd>;
 def Int_SQRTSDm : SD_Intm<0x51, "sqrtsd {$src, $dst|$dst, $src}",
                           int_x86_sse2_sqrt_sd>;
-
-defm Int_RSQRTSS : SS_IntUnary<0x52, "rsqrtss {$src, $dst|$dst, $src}",
-                               int_x86_sse_rsqrt_ss>;
-defm Int_RCPSS   : SS_IntUnary<0x53, "rcpss {$src, $dst|$dst, $src}",
-                               int_x86_sse_rcp_ss>;
 
 let isTwoAddress = 1 in {
 let isCommutable = 1 in {
