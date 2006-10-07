@@ -255,19 +255,22 @@ class PD_Intrm<bits<8> o, string OpcodeStr, Intrinsic IntId>
         !strconcat(OpcodeStr, " {$src2, $dst|$dst, $src2}"),
         [(set VR128:$dst, (IntId VR128:$src1, (load addr:$src2)))]>;
 
-class S3D_Intrr<bits<8> o, string asm, Intrinsic IntId>
-  : S3DI<o, MRMSrcReg, (ops VR128:$dst, VR128:$src1, VR128:$src2), asm,
+class S3D_Intrr<bits<8> o, string OpcodeStr, Intrinsic IntId>
+  : S3DI<o, MRMSrcReg, (ops VR128:$dst, VR128:$src1, VR128:$src2),
+         !strconcat(OpcodeStr, " {$src2, $dst|$dst, $src2}"),
          [(set VR128:$dst, (v4f32 (IntId VR128:$src1, VR128:$src2)))]>;
-class S3D_Intrm<bits<8> o, string asm, Intrinsic IntId>
-  : S3DI<o, MRMSrcMem, (ops VR128:$dst, VR128:$src1, f128mem:$src2), asm,
+class S3D_Intrm<bits<8> o, string OpcodeStr, Intrinsic IntId>
+  : S3DI<o, MRMSrcMem, (ops VR128:$dst, VR128:$src1, f128mem:$src2),
+         !strconcat(OpcodeStr, " {$src2, $dst|$dst, $src2}"),
          [(set VR128:$dst, (v4f32 (IntId VR128:$src1, (load addr:$src2))))]>;
-class S3_Intrr<bits<8> o, string asm, Intrinsic IntId>
-  : S3I<o, MRMSrcReg, (ops VR128:$dst, VR128:$src1, VR128:$src2), asm,
+class S3_Intrr<bits<8> o, string OpcodeStr, Intrinsic IntId>
+  : S3I<o, MRMSrcReg, (ops VR128:$dst, VR128:$src1, VR128:$src2),
+         !strconcat(OpcodeStr, " {$src2, $dst|$dst, $src2}"),
          [(set VR128:$dst, (v2f64 (IntId VR128:$src1, VR128:$src2)))]>;
-class S3_Intrm<bits<8> o, string asm, Intrinsic IntId>
-  : S3I<o, MRMSrcMem, (ops VR128:$dst, VR128:$src1, f128mem:$src2), asm,
-         [(set VR128:$dst, (v2f64 (IntId VR128:$src1,
-                                   (load addr:$src2))))]>;
+class S3_Intrm<bits<8> o, string OpcodeStr, Intrinsic IntId>
+  : S3I<o, MRMSrcMem, (ops VR128:$dst, VR128:$src1, f128mem:$src2),
+         !strconcat(OpcodeStr, " {$src2, $dst|$dst, $src2}"),
+         [(set VR128:$dst, (v2f64 (IntId VR128:$src1, (load addr:$src2))))]>;
 
 // Some 'special' instructions
 def IMPLICIT_DEF_FR32 : I<0, Pseudo, (ops FR32:$dst),
@@ -1234,22 +1237,14 @@ def UNPCKLPDrm : PDI<0x14, MRMSrcMem,
 
 // Horizontal ops
 let isTwoAddress = 1 in {
-def HADDPSrr : S3D_Intrr<0x7C, "haddps {$src2, $dst|$dst, $src2}",
-                          int_x86_sse3_hadd_ps>;
-def HADDPSrm : S3D_Intrm<0x7C, "haddps {$src2, $dst|$dst, $src2}",
-                          int_x86_sse3_hadd_ps>;
-def HADDPDrr : S3_Intrr<0x7C, "haddpd {$src2, $dst|$dst, $src2}",
-                          int_x86_sse3_hadd_pd>;
-def HADDPDrm : S3_Intrm<0x7C, "haddpd {$src2, $dst|$dst, $src2}",
-                          int_x86_sse3_hadd_pd>;
-def HSUBPSrr : S3D_Intrr<0x7D, "hsubps {$src2, $dst|$dst, $src2}",
-                          int_x86_sse3_hsub_ps>;
-def HSUBPSrm : S3D_Intrm<0x7D, "hsubps {$src2, $dst|$dst, $src2}",
-                          int_x86_sse3_hsub_ps>;
-def HSUBPDrr : S3_Intrr<0x7D, "hsubpd {$src2, $dst|$dst, $src2}",
-                          int_x86_sse3_hsub_pd>;
-def HSUBPDrm : S3_Intrm<0x7D, "hsubpd {$src2, $dst|$dst, $src2}",
-                          int_x86_sse3_hsub_pd>;
+def HADDPSrr : S3D_Intrr<0x7C, "haddps", int_x86_sse3_hadd_ps>;
+def HADDPSrm : S3D_Intrm<0x7C, "haddps", int_x86_sse3_hadd_ps>;
+def HADDPDrr : S3_Intrr <0x7C, "haddpd", int_x86_sse3_hadd_pd>;
+def HADDPDrm : S3_Intrm <0x7C, "haddpd", int_x86_sse3_hadd_pd>;
+def HSUBPSrr : S3D_Intrr<0x7D, "hsubps", int_x86_sse3_hsub_ps>;
+def HSUBPSrm : S3D_Intrm<0x7D, "hsubps", int_x86_sse3_hsub_ps>;
+def HSUBPDrr : S3_Intrr <0x7D, "hsubpd", int_x86_sse3_hsub_pd>;
+def HSUBPDrm : S3_Intrm <0x7D, "hsubpd", int_x86_sse3_hsub_pd>;
 }
 
 //===----------------------------------------------------------------------===//
