@@ -1340,7 +1340,7 @@ def PADDQrr : PDI<0xD4, MRMSrcReg, (ops VR128:$dst, VR128:$src1, VR128:$src2),
               [(set VR128:$dst, (v2i64 (add VR128:$src1, VR128:$src2)))]>;
 }
 def PADDQrm : PDI<0xD4, MRMSrcMem, (ops VR128:$dst, VR128:$src1, i128mem:$src2),
-                  "paddd {$src2, $dst|$dst, $src2}",
+                  "paddq {$src2, $dst|$dst, $src2}",
               [(set VR128:$dst, (add VR128:$src1,
                                  (loadv2i64 addr:$src2)))]>;
 }
