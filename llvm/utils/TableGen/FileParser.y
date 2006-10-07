@@ -90,7 +90,8 @@ static void setValue(const std::string &ValName,
                      std::vector<unsigned> *BitList, Init *V) {
   if (!V) return;
 
-  RecordVal *RV = CurRec->getValue(ValName);
+  Record *TheRec = getActiveRec();
+  RecordVal *RV = TheRec->getValue(ValName);
   if (RV == 0) {
     err() << "Value '" << ValName << "' unknown!\n";
     exit(1);
