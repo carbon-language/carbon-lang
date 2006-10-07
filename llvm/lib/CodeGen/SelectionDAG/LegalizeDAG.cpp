@@ -4474,13 +4474,12 @@ void SelectionDAGLegalize::ExpandOp(SDOperand Op, SDOperand &Lo, SDOperand &Hi){
     SDOperand Chain = Node->getOperand(0);
     SDOperand Ptr   = Node->getOperand(1);
     MVT::ValueType EVT = cast<VTSDNode>(Node->getOperand(3))->getVT();
-    unsigned LType = Node->getConstantOperandVal(4);
+    ISD::LoadExtType LType = (ISD::LoadExtType)Node->getConstantOperandVal(4);
     
     if (EVT == NVT)
       Lo = DAG.getLoad(NVT, Chain, Ptr, Node->getOperand(2));
     else
-      Lo = DAG.getExtLoad(ISD::SEXTLOAD, NVT, Chain, Ptr, Node->getOperand(2),
-                          EVT);
+      Lo = DAG.getExtLoad(LType, NVT, Chain, Ptr, Node->getOperand(2), EVT);
     
     // Remember that we legalized the chain.
     AddLegalizedOperand(SDOperand(Node, 1), LegalizeOp(Lo.getValue(1)));
