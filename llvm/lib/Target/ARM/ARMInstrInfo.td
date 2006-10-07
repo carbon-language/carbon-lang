@@ -187,3 +187,21 @@ def FSITOS  : InstARM<(ops FPRegs:$dst, FPRegs:$src),
 
 def FSITOD  : InstARM<(ops DFPRegs:$dst, FPRegs:$src),
                        "fsitod $dst, $src", [(set DFPRegs:$dst, (armfsitod FPRegs:$src))]>;
+
+
+// Floating Point Arithmetic
+def FADDS   : InstARM<(ops FPRegs:$dst, FPRegs:$a, FPRegs:$b),
+                       "fadds $dst, $a, $b",
+		       [(set FPRegs:$dst, (fadd FPRegs:$a, FPRegs:$b))]>;
+
+def FADDD   : InstARM<(ops DFPRegs:$dst, DFPRegs:$a, DFPRegs:$b),
+                       "faddd $dst, $a, $b",
+		       [(set DFPRegs:$dst, (fadd DFPRegs:$a, DFPRegs:$b))]>;
+
+def FMULS   : InstARM<(ops FPRegs:$dst, FPRegs:$a, FPRegs:$b),
+                       "fmuls $dst, $a, $b",
+		       [(set FPRegs:$dst, (fmul FPRegs:$a, FPRegs:$b))]>;
+
+def FMULD   : InstARM<(ops DFPRegs:$dst, DFPRegs:$a, DFPRegs:$b),
+                       "fmuld $dst, $a, $b",
+		       [(set DFPRegs:$dst, (fmul DFPRegs:$a, DFPRegs:$b))]>;
