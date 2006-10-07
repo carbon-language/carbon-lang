@@ -1306,93 +1306,72 @@ multiclass PDI_binop_rmi_int<bits<8> opc, bits<8> opc2, Format ImmForm,
 }
 }
 
-// 128-bit Integer Arithmetic
-let isTwoAddress = 1 in {
-let isCommutable = 1 in {
-def PADDBrr : PDI<0xFC, MRMSrcReg, (ops VR128:$dst, VR128:$src1, VR128:$src2),
-                  "paddb {$src2, $dst|$dst, $src2}",
-              [(set VR128:$dst, (v16i8 (add VR128:$src1, VR128:$src2)))]>;
-def PADDWrr : PDI<0xFD, MRMSrcReg, (ops VR128:$dst, VR128:$src1, VR128:$src2),
-                  "paddw {$src2, $dst|$dst, $src2}",
-              [(set VR128:$dst, (v8i16 (add VR128:$src1, VR128:$src2)))]>;
-def PADDDrr : PDI<0xFE, MRMSrcReg, (ops VR128:$dst, VR128:$src1, VR128:$src2),
-                  "paddd {$src2, $dst|$dst, $src2}",
-              [(set VR128:$dst, (v4i32 (add VR128:$src1, VR128:$src2)))]>;
 
+let isTwoAddress = 1 in {
+/// PDI_binop_rm - Simple SSE2 binary operator.
+multiclass PDI_binop_rm<bits<8> opc, string OpcodeStr, SDNode OpNode,
+                        ValueType OpVT, bit Commutable = 0> {
+  def rr : PDI<opc, MRMSrcReg, (ops VR128:$dst, VR128:$src1, VR128:$src2),
+               !strconcat(OpcodeStr, " {$src2, $dst|$dst, $src2"),
+               [(set VR128:$dst, (OpVT (OpNode VR128:$src1, VR128:$src2)))]> {
+    let isCommutable = Commutable;
+  }
+  def rm : PDI<opc, MRMSrcMem, (ops VR128:$dst, VR128:$src1, i128mem:$src2),
+               !strconcat(OpcodeStr, " {$src2, $dst|$dst, $src2"),
+               [(set VR128:$dst, (OpVT (OpNode VR128:$src1,
+                                       (bitconvert (loadv2i64 addr:$src2)))))]>;
+}
+}
+
+
+// 128-bit Integer Arithmetic
+
+defm PADDB : PDI_binop_rm<0xFC, "paddb", add, v16i8, 1>;
+defm PADDW : PDI_binop_rm<0xFD, "paddw", add, v8i16, 1>;
+defm PADDD : PDI_binop_rm<0xFE, "paddd", add, v4i32, 1>;
+
+//defm PADDQ : PDI_binop_rm<0xD4, "paddq", add, v2i64, 1>;
+
+let isTwoAddress = 1 in {
+
+let isCommutable = 1 in {
 def PADDQrr : PDI<0xD4, MRMSrcReg, (ops VR128:$dst, VR128:$src1, VR128:$src2),
                   "paddq {$src2, $dst|$dst, $src2}",
               [(set VR128:$dst, (v2i64 (add VR128:$src1, VR128:$src2)))]>;
 }
-def PADDBrm : PDI<0xFC, MRMSrcMem, (ops VR128:$dst, VR128:$src1, i128mem:$src2),
-                  "paddb {$src2, $dst|$dst, $src2}",
-              [(set VR128:$dst, (add VR128:$src1,
-                                 (bc_v16i8 (loadv2i64 addr:$src2))))]>;
-def PADDWrm : PDI<0xFD, MRMSrcMem, (ops VR128:$dst, VR128:$src1, i128mem:$src2),
-                  "paddw {$src2, $dst|$dst, $src2}",
-              [(set VR128:$dst, (add VR128:$src1,
-                                 (bc_v8i16 (loadv2i64 addr:$src2))))]>;
-def PADDDrm : PDI<0xFE, MRMSrcMem, (ops VR128:$dst, VR128:$src1, i128mem:$src2),
-                  "paddd {$src2, $dst|$dst, $src2}",
-              [(set VR128:$dst, (add VR128:$src1,
-                                 (bc_v4i32 (loadv2i64 addr:$src2))))]>;
 def PADDQrm : PDI<0xD4, MRMSrcMem, (ops VR128:$dst, VR128:$src1, i128mem:$src2),
                   "paddd {$src2, $dst|$dst, $src2}",
               [(set VR128:$dst, (add VR128:$src1,
                                  (loadv2i64 addr:$src2)))]>;
-
+}
 
 defm PADDSB  : PDI_binop_rm_int<0xEC, "paddsb" , int_x86_sse2_padds_b, 1>;
 defm PADDSW  : PDI_binop_rm_int<0xED, "paddsw" , int_x86_sse2_padds_w, 1>;
 defm PADDUSB : PDI_binop_rm_int<0xDC, "paddusb", int_x86_sse2_paddus_b, 1>;
 defm PADDUSW : PDI_binop_rm_int<0xDD, "paddusw", int_x86_sse2_paddus_w, 1>;
 
-def PSUBBrr : PDI<0xF8, MRMSrcReg, (ops VR128:$dst, VR128:$src1, VR128:$src2),
-                  "psubb {$src2, $dst|$dst, $src2}",
-              [(set VR128:$dst, (v16i8 (sub VR128:$src1, VR128:$src2)))]>;
-def PSUBWrr : PDI<0xF9, MRMSrcReg, (ops VR128:$dst, VR128:$src1, VR128:$src2),
-                  "psubw {$src2, $dst|$dst, $src2}",
-              [(set VR128:$dst, (v8i16 (sub VR128:$src1, VR128:$src2)))]>;
-def PSUBDrr : PDI<0xFA, MRMSrcReg, (ops VR128:$dst, VR128:$src1, VR128:$src2),
-                  "psubd {$src2, $dst|$dst, $src2}",
-              [(set VR128:$dst, (v4i32 (sub VR128:$src1, VR128:$src2)))]>;
+defm PSUBB : PDI_binop_rm<0xF8, "psubb", sub, v16i8>;
+defm PSUBW : PDI_binop_rm<0xF9, "psubw", sub, v8i16>;
+defm PSUBD : PDI_binop_rm<0xFA, "psubd", sub, v4i32>;
+
+
+let isTwoAddress = 1 in {
 def PSUBQrr : PDI<0xFB, MRMSrcReg, (ops VR128:$dst, VR128:$src1, VR128:$src2),
                   "psubq {$src2, $dst|$dst, $src2}",
               [(set VR128:$dst, (v2i64 (sub VR128:$src1, VR128:$src2)))]>;
 
-def PSUBBrm : PDI<0xF8, MRMSrcMem, (ops VR128:$dst, VR128:$src1, i128mem:$src2),
-                  "psubb {$src2, $dst|$dst, $src2}",
-              [(set VR128:$dst, (sub VR128:$src1,
-                                 (bc_v16i8 (loadv2i64 addr:$src2))))]>;
-def PSUBWrm : PDI<0xF9, MRMSrcMem, (ops VR128:$dst, VR128:$src1, i128mem:$src2),
-                  "psubw {$src2, $dst|$dst, $src2}",
-              [(set VR128:$dst, (sub VR128:$src1,
-                                 (bc_v8i16 (loadv2i64 addr:$src2))))]>;
-def PSUBDrm : PDI<0xFA, MRMSrcMem, (ops VR128:$dst, VR128:$src1, i128mem:$src2),
-                  "psubd {$src2, $dst|$dst, $src2}",
-              [(set VR128:$dst, (sub VR128:$src1,
-                                 (bc_v4i32 (loadv2i64 addr:$src2))))]>;
 def PSUBQrm : PDI<0xFB, MRMSrcMem, (ops VR128:$dst, VR128:$src1, i128mem:$src2),
                   "psubd {$src2, $dst|$dst, $src2}",
               [(set VR128:$dst, (sub VR128:$src1,
                                  (loadv2i64 addr:$src2)))]>;
+}
 
 defm PSUBSB  : PDI_binop_rm_int<0xE8, "psubsb" , int_x86_sse2_psubs_b>;
 defm PSUBSW  : PDI_binop_rm_int<0xE9, "psubsw" , int_x86_sse2_psubs_w>;
 defm PSUBUSB : PDI_binop_rm_int<0xD8, "psubusb", int_x86_sse2_psubus_b>;
 defm PSUBUSW : PDI_binop_rm_int<0xD9, "psubusw", int_x86_sse2_psubus_w>;
 
-
-let isCommutable = 1 in {
-def PMULLWrr : PDI<0xD5, MRMSrcReg, (ops VR128:$dst, VR128:$src1, VR128:$src2),
-                  "pmullw {$src2, $dst|$dst, $src2}",
-                  [(set VR128:$dst, (v8i16 (mul VR128:$src1, VR128:$src2)))]>;
-}
-def PMULLWrm : PDI<0xD5, MRMSrcMem,
-                   (ops VR128:$dst, VR128:$src1, i128mem:$src2),
-                   "pmullw {$src2, $dst|$dst, $src2}",
-                   [(set VR128:$dst, (v8i16 (mul VR128:$src1,
-                                       (bitconvert (loadv2i64 addr:$src2)))))]>;
-}
+defm PMULLW : PDI_binop_rm<0xD5, "pmullw", mul, v8i16, 1>;
 
 defm PMULHUW : PDI_binop_rm_int<0xE4, "pmulhuw", int_x86_sse2_pmulhu_w, 1>;
 defm PMULHW  : PDI_binop_rm_int<0xE5, "pmulhw" , int_x86_sse2_pmulh_w , 1>;
