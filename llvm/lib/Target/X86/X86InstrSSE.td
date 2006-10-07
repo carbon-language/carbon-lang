@@ -1321,6 +1321,23 @@ multiclass PDI_binop_rm<bits<8> opc, string OpcodeStr, SDNode OpNode,
                [(set VR128:$dst, (OpVT (OpNode VR128:$src1,
                                        (bitconvert (loadv2i64 addr:$src2)))))]>;
 }
+
+/// PDI_binop_rm_v2i64 - Simple SSE2 binary operator whose type is v2i64.
+///
+/// FIXME: we could eliminate this and use PDI_binop_rm instead if tblgen knew
+/// to collapse (bitconvert VT to VT) into its operand.
+///
+multiclass PDI_binop_rm_v2i64<bits<8> opc, string OpcodeStr, SDNode OpNode,
+                              bit Commutable = 0> {
+  def rr : PDI<opc, MRMSrcReg, (ops VR128:$dst, VR128:$src1, VR128:$src2),
+               !strconcat(OpcodeStr, " {$src2, $dst|$dst, $src2"),
+               [(set VR128:$dst, (v2i64 (OpNode VR128:$src1, VR128:$src2)))]> {
+    let isCommutable = Commutable;
+  }
+  def rm : PDI<opc, MRMSrcMem, (ops VR128:$dst, VR128:$src1, i128mem:$src2),
+               !strconcat(OpcodeStr, " {$src2, $dst|$dst, $src2"),
+               [(set VR128:$dst, (OpNode VR128:$src1,(loadv2i64 addr:$src2)))]>;
+}
 }
 
 
@@ -1329,21 +1346,7 @@ multiclass PDI_binop_rm<bits<8> opc, string OpcodeStr, SDNode OpNode,
 defm PADDB : PDI_binop_rm<0xFC, "paddb", add, v16i8, 1>;
 defm PADDW : PDI_binop_rm<0xFD, "paddw", add, v8i16, 1>;
 defm PADDD : PDI_binop_rm<0xFE, "paddd", add, v4i32, 1>;
-
-//defm PADDQ : PDI_binop_rm<0xD4, "paddq", add, v2i64, 1>;
-
-let isTwoAddress = 1 in {
-
-let isCommutable = 1 in {
-def PADDQrr : PDI<0xD4, MRMSrcReg, (ops VR128:$dst, VR128:$src1, VR128:$src2),
-                  "paddq {$src2, $dst|$dst, $src2}",
-              [(set VR128:$dst, (v2i64 (add VR128:$src1, VR128:$src2)))]>;
-}
-def PADDQrm : PDI<0xD4, MRMSrcMem, (ops VR128:$dst, VR128:$src1, i128mem:$src2),
-                  "paddq {$src2, $dst|$dst, $src2}",
-              [(set VR128:$dst, (add VR128:$src1,
-                                 (loadv2i64 addr:$src2)))]>;
-}
+defm PADDQ : PDI_binop_rm_v2i64<0xD4, "paddq", add, 1>;
 
 defm PADDSB  : PDI_binop_rm_int<0xEC, "paddsb" , int_x86_sse2_padds_b, 1>;
 defm PADDSW  : PDI_binop_rm_int<0xED, "paddsw" , int_x86_sse2_padds_w, 1>;
@@ -1353,18 +1356,7 @@ defm PADDUSW : PDI_binop_rm_int<0xDD, "paddusw", int_x86_sse2_paddus_w, 1>;
 defm PSUBB : PDI_binop_rm<0xF8, "psubb", sub, v16i8>;
 defm PSUBW : PDI_binop_rm<0xF9, "psubw", sub, v8i16>;
 defm PSUBD : PDI_binop_rm<0xFA, "psubd", sub, v4i32>;
-
-
-let isTwoAddress = 1 in {
-def PSUBQrr : PDI<0xFB, MRMSrcReg, (ops VR128:$dst, VR128:$src1, VR128:$src2),
-                  "psubq {$src2, $dst|$dst, $src2}",
-              [(set VR128:$dst, (v2i64 (sub VR128:$src1, VR128:$src2)))]>;
-
-def PSUBQrm : PDI<0xFB, MRMSrcMem, (ops VR128:$dst, VR128:$src1, i128mem:$src2),
-                  "psubd {$src2, $dst|$dst, $src2}",
-              [(set VR128:$dst, (sub VR128:$src1,
-                                 (loadv2i64 addr:$src2)))]>;
-}
+defm PSUBQ : PDI_binop_rm_v2i64<0xFB, "psubq", sub>;
 
 defm PSUBSB  : PDI_binop_rm_int<0xE8, "psubsb" , int_x86_sse2_psubs_b>;
 defm PSUBSW  : PDI_binop_rm_int<0xE9, "psubsw" , int_x86_sse2_psubs_w>;
