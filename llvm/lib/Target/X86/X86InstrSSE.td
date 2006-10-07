@@ -390,27 +390,6 @@ def SQRTSDm : SDI<0x51, MRMSrcMem, (ops FR64:$dst, f64mem:$src),
                  "sqrtsd {$src, $dst|$dst, $src}",
                  [(set FR64:$dst, (fsqrt (loadf64 addr:$src)))]>;
 
-let isTwoAddress = 1 in {
-let isCommutable = 1 in {
-def MAXSSrr : SSI<0x5F, MRMSrcReg, (ops FR32:$dst, FR32:$src1, FR32:$src2),
-                  "maxss {$src2, $dst|$dst, $src2}", []>;
-def MAXSDrr : SDI<0x5F, MRMSrcReg, (ops FR64:$dst, FR32:$src1, FR64:$src2),
-                  "maxsd {$src2, $dst|$dst, $src2}", []>;
-def MINSSrr : SSI<0x5D, MRMSrcReg, (ops FR32:$dst, FR32:$src1, FR32:$src2),
-                  "minss {$src2, $dst|$dst, $src2}", []>;
-def MINSDrr : SDI<0x5D, MRMSrcReg, (ops FR64:$dst, FR32:$src1, FR64:$src2),
-                  "minsd {$src2, $dst|$dst, $src2}", []>;
-}
-def MAXSSrm : SSI<0x5F, MRMSrcMem, (ops FR32:$dst, FR32:$src1, f32mem:$src2),
-                  "maxss {$src2, $dst|$dst, $src2}", []>;
-def MAXSDrm : SDI<0x5F, MRMSrcMem, (ops FR64:$dst, FR32:$src1, f64mem:$src2),
-                  "maxsd {$src2, $dst|$dst, $src2}", []>;
-def MINSSrm : SSI<0x5D, MRMSrcMem, (ops FR32:$dst, FR32:$src1, f32mem:$src2),
-                  "minss {$src2, $dst|$dst, $src2}", []>;
-def MINSDrm : SDI<0x5D, MRMSrcMem, (ops FR64:$dst, FR32:$src1, f64mem:$src2),
-                  "minsd {$src2, $dst|$dst, $src2}", []>;
-}
-
 // Aliases to match intrinsics which expect XMM operand(s).
 let isTwoAddress = 1 in {
 let isCommutable = 1 in {
