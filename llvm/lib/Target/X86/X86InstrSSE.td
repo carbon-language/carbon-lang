@@ -288,8 +288,6 @@ def MOVSDmr : SDI<0x11, MRMDestMem, (ops f64mem:$dst, FR64:$src),
                 "movsd {$src, $dst|$dst, $src}",
                 [(store FR64:$src, addr:$dst)]>;
 
-let isTwoAddress = 1 in {
-
 /// scalar_sse12_fp_binop_rm - Scalar SSE binops come in four basic forms:
 ///  1. f32 vs f64 - These come in SSE1/SSE2 forms for float/doubles.
 ///  2. rr vs rm - They include a reg+reg form and a ref+mem form.
@@ -299,6 +297,7 @@ let isTwoAddress = 1 in {
 /// leave the top elements undefined.  This adds another two variants of the
 /// above permutations, giving us 8 forms for 'instruction'.
 ///
+let isTwoAddress = 1 in {
 multiclass scalar_sse12_fp_binop_rm<bits<8> opc, string OpcodeStr,
                                     SDNode OpNode, Intrinsic F32Int,
                                     Intrinsic F64Int, bit Commutable = 0> {
@@ -573,7 +572,6 @@ def Int_COMISDrm: PDI<0x2F, MRMSrcMem, (ops VR128:$src1, f128mem:$src2),
 // start with 'Fs'.
 
 // Alias instructions that map fld0 to pxor for sse.
-// FIXME: remove when we can teach regalloc that xor reg, reg is ok.
 def FsFLD0SS : I<0xEF, MRMInitReg, (ops FR32:$dst),
                  "pxor $dst, $dst", [(set FR32:$dst, fp32imm0)]>,
                Requires<[HasSSE1]>, TB, OpSize;
@@ -912,70 +910,41 @@ def Int_CVTSS2SDrm: I<0x5A, MRMSrcMem,
                     Requires<[HasSSE2]>;
 }
 
-// Arithmetic
+/// packed_sse12_fp_binop_rm - Packed SSE binops come in four basic forms:
+///  1. v4f32 vs v2f64 - These come in SSE1/SSE2 forms for float/doubles.
+///  2. rr vs rm - They include a reg+reg form and a ref+mem form.
+///
 let isTwoAddress = 1 in {
-let isCommutable = 1 in {
-def ADDPSrr : PSI<0x58, MRMSrcReg, (ops VR128:$dst, VR128:$src1, VR128:$src2),
-                  "addps {$src2, $dst|$dst, $src2}",
-                  [(set VR128:$dst, (v4f32 (fadd VR128:$src1, VR128:$src2)))]>;
-def ADDPDrr : PDI<0x58, MRMSrcReg, (ops VR128:$dst, VR128:$src1, VR128:$src2),
-                  "addpd {$src2, $dst|$dst, $src2}",
-                  [(set VR128:$dst, (v2f64 (fadd VR128:$src1, VR128:$src2)))]>;
-def MULPSrr : PSI<0x59, MRMSrcReg, (ops VR128:$dst, VR128:$src1, VR128:$src2),
-                  "mulps {$src2, $dst|$dst, $src2}",
-                  [(set VR128:$dst, (v4f32 (fmul VR128:$src1, VR128:$src2)))]>;
-def MULPDrr : PDI<0x59, MRMSrcReg, (ops VR128:$dst, VR128:$src1, VR128:$src2),
-                  "mulpd {$src2, $dst|$dst, $src2}",
-                  [(set VR128:$dst, (v2f64 (fmul VR128:$src1, VR128:$src2)))]>;
+multiclass packed_sse12_fp_binop_rm<bits<8> opc, string OpcodeStr,
+                                    SDNode OpNode, bit Commutable = 0> {
+  // Packed operation, reg+reg.
+  def PSrr : PSI<opc, MRMSrcReg, (ops VR128:$dst, VR128:$src1, VR128:$src2),
+               !strconcat(OpcodeStr, "ps {$src2, $dst|$dst, $src2"),
+               [(set VR128:$dst, (v4f32 (OpNode VR128:$src1, VR128:$src2)))]> {
+    let isCommutable = Commutable;
+  }
+  def PDrr : PDI<opc, MRMSrcReg, (ops VR128:$dst, VR128:$src1, VR128:$src2),
+               !strconcat(OpcodeStr, "pd {$src2, $dst|$dst, $src2"),
+               [(set VR128:$dst, (v2f64 (OpNode VR128:$src1, VR128:$src2)))]> {
+    let isCommutable = Commutable;
+  }
+  // Packed operation, reg+mem.
+  def PSrm : PSI<opc, MRMSrcMem, (ops VR128:$dst, VR128:$src1, f128mem:$src2),
+                 !strconcat(OpcodeStr, "ps {$src2, $dst|$dst, $src2"),
+                 [(set VR128:$dst, (OpNode VR128:$src1, (loadv4f32 addr:$src2)))]>;
+  def PDrm : PDI<opc, MRMSrcMem, (ops VR128:$dst, VR128:$src1, f128mem:$src2),
+                 !strconcat(OpcodeStr, "pd {$src2, $dst|$dst, $src2"),
+                 [(set VR128:$dst, (OpNode VR128:$src1, (loadv2f64 addr:$src2)))]>;
+}
 }
 
-def ADDPSrm : PSI<0x58, MRMSrcMem, (ops VR128:$dst, VR128:$src1, f128mem:$src2),
-                  "addps {$src2, $dst|$dst, $src2}",
-                  [(set VR128:$dst, (v4f32 (fadd VR128:$src1,
-                                            (load addr:$src2))))]>;
-def ADDPDrm : PDI<0x58, MRMSrcMem, (ops VR128:$dst, VR128:$src1, f128mem:$src2),
-                  "addpd {$src2, $dst|$dst, $src2}",
-                  [(set VR128:$dst, (v2f64 (fadd VR128:$src1,
-                                            (load addr:$src2))))]>;
-def MULPSrm : PSI<0x59, MRMSrcMem, (ops VR128:$dst, VR128:$src1, f128mem:$src2),
-                  "mulps {$src2, $dst|$dst, $src2}",
-                  [(set VR128:$dst, (v4f32 (fmul VR128:$src1,
-                                            (load addr:$src2))))]>;
-def MULPDrm : PDI<0x59, MRMSrcMem, (ops VR128:$dst, VR128:$src1, f128mem:$src2),
-                  "mulpd {$src2, $dst|$dst, $src2}",
-                  [(set VR128:$dst, (v2f64 (fmul VR128:$src1,
-                                            (load addr:$src2))))]>;
+defm ADD : packed_sse12_fp_binop_rm<0x58, "add", fadd, 1>;
+defm MUL : packed_sse12_fp_binop_rm<0x59, "mul", fmul, 1>;
+defm DIV : packed_sse12_fp_binop_rm<0x5E, "div", fdiv>;
+defm SUB : packed_sse12_fp_binop_rm<0x5C, "sub", fsub>;
 
-def DIVPSrr : PSI<0x5E, MRMSrcReg, (ops VR128:$dst, VR128:$src1, VR128:$src2),
-                  "divps {$src2, $dst|$dst, $src2}",
-                  [(set VR128:$dst, (v4f32 (fdiv VR128:$src1, VR128:$src2)))]>;
-def DIVPSrm : PSI<0x5E, MRMSrcMem, (ops VR128:$dst, VR128:$src1, f128mem:$src2),
-                  "divps {$src2, $dst|$dst, $src2}",
-                  [(set VR128:$dst, (v4f32 (fdiv VR128:$src1,
-                                            (load addr:$src2))))]>;
-def DIVPDrr : PDI<0x5E, MRMSrcReg, (ops VR128:$dst, VR128:$src1, VR128:$src2),
-                "divpd {$src2, $dst|$dst, $src2}",
-                  [(set VR128:$dst, (v2f64 (fdiv VR128:$src1, VR128:$src2)))]>;
-def DIVPDrm : PDI<0x5E, MRMSrcMem, (ops VR128:$dst, VR128:$src1, f128mem:$src2),
-                "divpd {$src2, $dst|$dst, $src2}",
-                  [(set VR128:$dst, (v2f64 (fdiv VR128:$src1,
-                                            (load addr:$src2))))]>;
-
-def SUBPSrr : PSI<0x5C, MRMSrcReg, (ops VR128:$dst, VR128:$src1, VR128:$src2),
-                  "subps {$src2, $dst|$dst, $src2}",
-                  [(set VR128:$dst, (v4f32 (fsub VR128:$src1, VR128:$src2)))]>;
-def SUBPSrm : PSI<0x5C, MRMSrcMem, (ops VR128:$dst, VR128:$src1, f128mem:$src2),
-                  "subps {$src2, $dst|$dst, $src2}",
-                  [(set VR128:$dst, (v4f32 (fsub VR128:$src1,
-                                            (load addr:$src2))))]>;
-def SUBPDrr : PDI<0x5C, MRMSrcReg, (ops VR128:$dst, VR128:$src1, VR128:$src2),
-                  "subpd {$src2, $dst|$dst, $src2}",
-                  [(set VR128:$dst, (v2f64 (fsub VR128:$src1, VR128:$src2)))]>;
-def SUBPDrm : PDI<0x5C, MRMSrcMem, (ops VR128:$dst, VR128:$src1, f128mem:$src2),
-                  "subpd {$src2, $dst|$dst, $src2}",
-                  [(set VR128:$dst, (v2f64 (fsub VR128:$src1,
-                                            (load addr:$src2))))]>;
-
+// Arithmetic
+let isTwoAddress = 1 in {
 def ADDSUBPSrr : S3DI<0xD0, MRMSrcReg,
                       (ops VR128:$dst, VR128:$src1, VR128:$src2),
                       "addsubps {$src2, $dst|$dst, $src2}",
