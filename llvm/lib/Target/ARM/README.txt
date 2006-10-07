@@ -29,6 +29,6 @@ add r0, r1, r0
 
 ----------------------------------------------------------
 
-add an offset to FLDS addressing mode
+add an offset to FLDS/FLDD addressing mode
 
 ----------------------------------------------------------

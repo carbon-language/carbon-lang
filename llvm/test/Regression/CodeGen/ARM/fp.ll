@@ -3,8 +3,9 @@
 ; RUN: llvm-as < %s | llc -march=arm | grep fsitos &&
 ; RUN: llvm-as < %s | llc -march=arm | grep fmrs &&
 ; RUN: llvm-as < %s | llc -march=arm | grep fsitod &&
-; RUN: llvm-as < %s | llc -march=arm | grep fmrrd | wc -l | grep 3 &&
+; RUN: llvm-as < %s | llc -march=arm | grep fmrrd | wc -l | grep 4 &&
 ; RUN: llvm-as < %s | llc -march=arm | grep fmdrr | wc -l | grep 2 &&
+; RUN: llvm-as < %s | llc -march=arm | grep fldd &&
 ; RUN: llvm-as < %s | llc -march=arm | grep flds &&
 ; RUN: llvm-as < %s | llc -march=arm | grep ".word.*1065353216"
 
@@ -18,6 +19,12 @@ double %g(int %a) {
 entry:
         %tmp = cast int %a to double            ; <double> [#uses=1]
         ret double %tmp
+}
+
+double %h(double* %v) {
+entry:
+	%tmp = load double* %v		; <double> [#uses=1]
+	ret double %tmp
 }
 
 float %h() {
