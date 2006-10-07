@@ -207,17 +207,21 @@ multiclass SD_IntUnary<bits<8> o, string OpcodeStr, Intrinsic IntId> {
               [(set VR128:$dst, (v2f64 (IntId (load addr:$src))))]>;
 }
 
-class SS_Intrr<bits<8> o, string asm, Intrinsic IntId>
-  : SSI<o, MRMSrcReg, (ops VR128:$dst, VR128:$src1, VR128:$src2), asm,
+class SS_Intrr<bits<8> o, string OpcodeStr, Intrinsic IntId>
+  : SSI<o, MRMSrcReg, (ops VR128:$dst, VR128:$src1, VR128:$src2),
+        !strconcat(OpcodeStr, " {$src2, $dst|$dst, $src2}"),
         [(set VR128:$dst, (v4f32 (IntId VR128:$src1, VR128:$src2)))]>;
-class SS_Intrm<bits<8> o, string asm, Intrinsic IntId>
-  : SSI<o, MRMSrcMem, (ops VR128:$dst, VR128:$src1, f32mem:$src2), asm,
+class SS_Intrm<bits<8> o, string OpcodeStr, Intrinsic IntId>
+  : SSI<o, MRMSrcMem, (ops VR128:$dst, VR128:$src1, f32mem:$src2),
+        !strconcat(OpcodeStr, " {$src2, $dst|$dst, $src2}"),
         [(set VR128:$dst, (v4f32 (IntId VR128:$src1, (load addr:$src2))))]>;
-class SD_Intrr<bits<8> o, string asm, Intrinsic IntId>
-  : SDI<o, MRMSrcReg, (ops VR128:$dst, VR128:$src1, VR128:$src2), asm,
+class SD_Intrr<bits<8> o, string OpcodeStr, Intrinsic IntId>
+  : SDI<o, MRMSrcReg, (ops VR128:$dst, VR128:$src1, VR128:$src2),
+        !strconcat(OpcodeStr, " {$src2, $dst|$dst, $src2}"),
         [(set VR128:$dst, (v2f64 (IntId VR128:$src1, VR128:$src2)))]>;
-class SD_Intrm<bits<8> o, string asm, Intrinsic IntId>
-  : SDI<o, MRMSrcMem, (ops VR128:$dst, VR128:$src1, f64mem:$src2), asm,
+class SD_Intrm<bits<8> o, string OpcodeStr, Intrinsic IntId>
+  : SDI<o, MRMSrcMem, (ops VR128:$dst, VR128:$src1, f64mem:$src2),
+        !strconcat(OpcodeStr, " {$src2, $dst|$dst, $src2}"),
         [(set VR128:$dst, (v2f64 (IntId VR128:$src1, (load addr:$src2))))]>;
 
 class PS_Intr<bits<8> o, string asm, Intrinsic IntId>
@@ -410,42 +414,26 @@ def MINSDrm : SDI<0x5D, MRMSrcMem, (ops FR64:$dst, FR32:$src1, f64mem:$src2),
 // Aliases to match intrinsics which expect XMM operand(s).
 let isTwoAddress = 1 in {
 let isCommutable = 1 in {
-def Int_ADDSSrr : SS_Intrr<0x58, "addss {$src2, $dst|$dst, $src2}",
-                           int_x86_sse_add_ss>;
-def Int_ADDSDrr : SD_Intrr<0x58, "addsd {$src2, $dst|$dst, $src2}",
-                           int_x86_sse2_add_sd>;
-def Int_MULSSrr : SS_Intrr<0x59, "mulss {$src2, $dst|$dst, $src2}",
-                           int_x86_sse_mul_ss>;
-def Int_MULSDrr : SD_Intrr<0x59, "mulsd {$src2, $dst|$dst, $src2}",
-                           int_x86_sse2_mul_sd>;
+def Int_ADDSSrr : SS_Intrr<0x58, "addss", int_x86_sse_add_ss>;
+def Int_ADDSDrr : SD_Intrr<0x58, "addsd", int_x86_sse2_add_sd>;
+def Int_MULSSrr : SS_Intrr<0x59, "mulss", int_x86_sse_mul_ss>;
+def Int_MULSDrr : SD_Intrr<0x59, "mulsd", int_x86_sse2_mul_sd>;
 }
 
-def Int_ADDSSrm : SS_Intrm<0x58, "addss {$src2, $dst|$dst, $src2}",
-                           int_x86_sse_add_ss>;
-def Int_ADDSDrm : SD_Intrm<0x58, "addsd {$src2, $dst|$dst, $src2}",
-                           int_x86_sse2_add_sd>;
-def Int_MULSSrm : SS_Intrm<0x59, "mulss {$src2, $dst|$dst, $src2}",
-                           int_x86_sse_mul_ss>;
-def Int_MULSDrm : SD_Intrm<0x59, "mulsd {$src2, $dst|$dst, $src2}",
-                           int_x86_sse2_mul_sd>;
+def Int_ADDSSrm : SS_Intrm<0x58, "addss", int_x86_sse_add_ss>;
+def Int_ADDSDrm : SD_Intrm<0x58, "addsd", int_x86_sse2_add_sd>;
+def Int_MULSSrm : SS_Intrm<0x59, "mulss", int_x86_sse_mul_ss>;
+def Int_MULSDrm : SD_Intrm<0x59, "mulsd", int_x86_sse2_mul_sd>;
 
-def Int_DIVSSrr : SS_Intrr<0x5E, "divss {$src2, $dst|$dst, $src2}",
-                           int_x86_sse_div_ss>;
-def Int_DIVSSrm : SS_Intrm<0x5E, "divss {$src2, $dst|$dst, $src2}",
-                           int_x86_sse_div_ss>;
-def Int_DIVSDrr : SD_Intrr<0x5E, "divsd {$src2, $dst|$dst, $src2}",
-                           int_x86_sse2_div_sd>;
-def Int_DIVSDrm : SD_Intrm<0x5E, "divsd {$src2, $dst|$dst, $src2}",
-                           int_x86_sse2_div_sd>;
+def Int_DIVSSrr : SS_Intrr<0x5E, "divss", int_x86_sse_div_ss>;
+def Int_DIVSSrm : SS_Intrm<0x5E, "divss", int_x86_sse_div_ss>;
+def Int_DIVSDrr : SD_Intrr<0x5E, "divsd", int_x86_sse2_div_sd>;
+def Int_DIVSDrm : SD_Intrm<0x5E, "divsd", int_x86_sse2_div_sd>;
 
-def Int_SUBSSrr : SS_Intrr<0x5C, "subss {$src2, $dst|$dst, $src2}",
-                           int_x86_sse_sub_ss>;
-def Int_SUBSSrm : SS_Intrm<0x5C, "subss {$src2, $dst|$dst, $src2}",
-                           int_x86_sse_sub_ss>;
-def Int_SUBSDrr : SD_Intrr<0x5C, "subsd {$src2, $dst|$dst, $src2}",
-                           int_x86_sse2_sub_sd>;
-def Int_SUBSDrm : SD_Intrm<0x5C, "subsd {$src2, $dst|$dst, $src2}",
-                           int_x86_sse2_sub_sd>;
+def Int_SUBSSrr : SS_Intrr<0x5C, "subss", int_x86_sse_sub_ss>;
+def Int_SUBSSrm : SS_Intrm<0x5C, "subss", int_x86_sse_sub_ss>;
+def Int_SUBSDrr : SD_Intrr<0x5C, "subsd", int_x86_sse2_sub_sd>;
+def Int_SUBSDrm : SD_Intrm<0x5C, "subsd", int_x86_sse2_sub_sd>;
 }
 
 defm Int_SQRTSS  : SS_IntUnary<0x51, "sqrtss" , int_x86_sse_sqrt_ss>;
@@ -455,23 +443,15 @@ defm Int_RCPSS   : SS_IntUnary<0x53, "rcpss"  , int_x86_sse_rcp_ss>;
 
 let isTwoAddress = 1 in {
 let isCommutable = 1 in {
-def Int_MAXSSrr : SS_Intrr<0x5F, "maxss {$src2, $dst|$dst, $src2}",
-                           int_x86_sse_max_ss>;
-def Int_MAXSDrr : SD_Intrr<0x5F, "maxsd {$src2, $dst|$dst, $src2}",
-                           int_x86_sse2_max_sd>;
-def Int_MINSSrr : SS_Intrr<0x5D, "minss {$src2, $dst|$dst, $src2}",
-                           int_x86_sse_min_ss>;
-def Int_MINSDrr : SD_Intrr<0x5D, "minsd {$src2, $dst|$dst, $src2}",
-                           int_x86_sse2_min_sd>;
+def Int_MAXSSrr : SS_Intrr<0x5F, "maxss", int_x86_sse_max_ss>;
+def Int_MAXSDrr : SD_Intrr<0x5F, "maxsd", int_x86_sse2_max_sd>;
+def Int_MINSSrr : SS_Intrr<0x5D, "minss", int_x86_sse_min_ss>;
+def Int_MINSDrr : SD_Intrr<0x5D, "minsd", int_x86_sse2_min_sd>;
 }
-def Int_MAXSSrm : SS_Intrm<0x5F, "maxss {$src2, $dst|$dst, $src2}",
-                           int_x86_sse_max_ss>;
-def Int_MAXSDrm : SD_Intrm<0x5F, "maxsd {$src2, $dst|$dst, $src2}",
-                           int_x86_sse2_max_sd>;
-def Int_MINSSrm : SS_Intrm<0x5D, "minss {$src2, $dst|$dst, $src2}",
-                           int_x86_sse_min_ss>;
-def Int_MINSDrm : SD_Intrm<0x5D, "minsd {$src2, $dst|$dst, $src2}",
-                           int_x86_sse2_min_sd>;
+def Int_MAXSSrm : SS_Intrm<0x5F, "maxss", int_x86_sse_max_ss>;
+def Int_MAXSDrm : SD_Intrm<0x5F, "maxsd", int_x86_sse2_max_sd>;
+def Int_MINSSrm : SS_Intrm<0x5D, "minss", int_x86_sse_min_ss>;
+def Int_MINSDrm : SD_Intrm<0x5D, "minsd", int_x86_sse2_min_sd>;
 }
 
 // Conversion instructions
