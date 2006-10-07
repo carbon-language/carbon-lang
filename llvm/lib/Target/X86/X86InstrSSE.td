@@ -199,23 +199,6 @@ multiclass SD_IntUnary<bits<8> o, string OpcodeStr, Intrinsic IntId> {
               [(set VR128:$dst, (v2f64 (IntId (load addr:$src))))]>;
 }
 
-class SS_Intrr<bits<8> o, string OpcodeStr, Intrinsic IntId>
-  : SSI<o, MRMSrcReg, (ops VR128:$dst, VR128:$src1, VR128:$src2),
-        !strconcat(OpcodeStr, " {$src2, $dst|$dst, $src2}"),
-        [(set VR128:$dst, (v4f32 (IntId VR128:$src1, VR128:$src2)))]>;
-class SS_Intrm<bits<8> o, string OpcodeStr, Intrinsic IntId>
-  : SSI<o, MRMSrcMem, (ops VR128:$dst, VR128:$src1, f32mem:$src2),
-        !strconcat(OpcodeStr, " {$src2, $dst|$dst, $src2}"),
-        [(set VR128:$dst, (v4f32 (IntId VR128:$src1, (load addr:$src2))))]>;
-class SD_Intrr<bits<8> o, string OpcodeStr, Intrinsic IntId>
-  : SDI<o, MRMSrcReg, (ops VR128:$dst, VR128:$src1, VR128:$src2),
-        !strconcat(OpcodeStr, " {$src2, $dst|$dst, $src2}"),
-        [(set VR128:$dst, (v2f64 (IntId VR128:$src1, VR128:$src2)))]>;
-class SD_Intrm<bits<8> o, string OpcodeStr, Intrinsic IntId>
-  : SDI<o, MRMSrcMem, (ops VR128:$dst, VR128:$src1, f64mem:$src2),
-        !strconcat(OpcodeStr, " {$src2, $dst|$dst, $src2}"),
-        [(set VR128:$dst, (v2f64 (IntId VR128:$src1, (load addr:$src2))))]>;
-
 class PS_Intr<bits<8> o, string OpcodeStr, Intrinsic IntId>
   : PSI<o, MRMSrcReg, (ops VR128:$dst, VR128:$src),
         !strconcat(OpcodeStr, " {$src, $dst|$dst, $src}"),
@@ -306,9 +289,20 @@ def MOVSDmr : SDI<0x11, MRMDestMem, (ops f64mem:$dst, FR64:$src),
                 [(store FR64:$src, addr:$dst)]>;
 
 let isTwoAddress = 1 in {
-/// scalar_sse12_fp_binop_rm - Define 4 scalar sse instructions.
+
+/// scalar_sse12_fp_binop_rm - Scalar SSE binops come in four basic forms:
+///  1. f32 vs f64 - These come in SSE1/SSE2 forms for float/doubles.
+///  2. rr vs rm - They include a reg+reg form and a ref+mem form.
+///
+/// In addition, scalar SSE ops have an intrinsic form.  This form is unlike the
+/// normal form, in that they take an entire vector (instead of a scalar) and
+/// leave the top elements undefined.  This adds another two variants of the
+/// above permutations, giving us 8 forms for 'instruction'.
+///
 multiclass scalar_sse12_fp_binop_rm<bits<8> opc, string OpcodeStr,
-                                    SDNode OpNode, bit Commutable = 0> {
+                                    SDNode OpNode, Intrinsic F32Int,
+                                    Intrinsic F64Int, bit Commutable = 0> {
+  // Scalar operation, reg+reg.
   def SSrr : SSI<opc, MRMSrcReg, (ops FR32:$dst, FR32:$src1, FR32:$src2),
                !strconcat(OpcodeStr, "ss {$src2, $dst|$dst, $src2"),
                [(set FR32:$dst, (OpNode FR32:$src1, FR32:$src2))]> {
@@ -319,21 +313,47 @@ multiclass scalar_sse12_fp_binop_rm<bits<8> opc, string OpcodeStr,
                [(set FR64:$dst, (OpNode FR64:$src1, FR64:$src2))]> {
     let isCommutable = Commutable;
   }
+  // Scalar operation, reg+mem.
   def SSrm : SSI<opc, MRMSrcMem, (ops FR32:$dst, FR32:$src1, f32mem:$src2),
                  !strconcat(OpcodeStr, "ss {$src2, $dst|$dst, $src2"),
                  [(set FR32:$dst, (OpNode FR32:$src1, (loadf32 addr:$src2)))]>;
   def SDrm : SDI<opc, MRMSrcMem, (ops FR64:$dst, FR64:$src1, f64mem:$src2),
                  !strconcat(OpcodeStr, "sd {$src2, $dst|$dst, $src2"),
                  [(set FR64:$dst, (OpNode FR64:$src1, (loadf64 addr:$src2)))]>;
+                 
+  // Vector intrinsic operation, reg+reg.
+  def SSrr_Int : SSI<opc, MRMSrcReg, (ops VR128:$dst, VR128:$src1, VR128:$src2),
+                     !strconcat(OpcodeStr, "ss {$src2, $dst|$dst, $src2"),
+                     [(set VR128:$dst, (F32Int VR128:$src1, VR128:$src2))]> {
+    let isCommutable = Commutable;
+  }
+  def SDrr_Int : SDI<opc, MRMSrcReg, (ops VR128:$dst, VR128:$src1, VR128:$src2),
+               !strconcat(OpcodeStr, "sd {$src2, $dst|$dst, $src2"),
+               [(set VR128:$dst, (F64Int VR128:$src1, VR128:$src2))]> {
+    let isCommutable = Commutable;
+  }
+  // Vector intrinsic operation, reg+mem.
+  def SSrm_Int : SSI<opc, MRMSrcMem, (ops VR128:$dst, VR128:$src1, f32mem:$src2),
+                     !strconcat(OpcodeStr, "ss {$src2, $dst|$dst, $src2"),
+                     [(set VR128:$dst, (F32Int VR128:$src1,
+                                               (load addr:$src2)))]>;
+  def SDrm_Int : SDI<opc, MRMSrcMem, (ops VR128:$dst, VR128:$src1, f64mem:$src2),
+                     !strconcat(OpcodeStr, "sd {$src2, $dst|$dst, $src2"),
+                     [(set VR128:$dst, (F64Int VR128:$src1,
+                                               (load addr:$src2)))]>;
 }
 }
 
 // Arithmetic instructions
 
-defm ADD : scalar_sse12_fp_binop_rm<0x58, "add", fadd, 1>;
-defm MUL : scalar_sse12_fp_binop_rm<0x59, "mul", fmul, 1>;
-defm DIV : scalar_sse12_fp_binop_rm<0x5E, "div", fdiv>;
-defm SUB : scalar_sse12_fp_binop_rm<0x5C, "sub", fsub>;
+defm ADD : scalar_sse12_fp_binop_rm<0x58, "add", fadd, 
+                                    int_x86_sse_add_ss, int_x86_sse2_add_sd, 1>;
+defm MUL : scalar_sse12_fp_binop_rm<0x59, "mul", fmul, 
+                                    int_x86_sse_mul_ss, int_x86_sse2_mul_sd, 1>;
+defm SUB : scalar_sse12_fp_binop_rm<0x5C, "sub", fsub,
+                                    int_x86_sse_sub_ss, int_x86_sse2_sub_sd>;
+defm DIV : scalar_sse12_fp_binop_rm<0x5E, "div", fdiv,
+                                    int_x86_sse_div_ss, int_x86_sse2_div_sd>;
 
 
 def SQRTSSr : SSI<0x51, MRMSrcReg, (ops FR32:$dst, FR32:$src),
@@ -349,35 +369,30 @@ def SQRTSDm : SDI<0x51, MRMSrcMem, (ops FR64:$dst, f64mem:$src),
                  "sqrtsd {$src, $dst|$dst, $src}",
                  [(set FR64:$dst, (fsqrt (loadf64 addr:$src)))]>;
 
+class SS_Intrr<bits<8> o, string OpcodeStr, Intrinsic IntId>
+  : SSI<o, MRMSrcReg, (ops VR128:$dst, VR128:$src1, VR128:$src2),
+        !strconcat(OpcodeStr, " {$src2, $dst|$dst, $src2}"),
+        [(set VR128:$dst, (v4f32 (IntId VR128:$src1, VR128:$src2)))]>;
+class SS_Intrm<bits<8> o, string OpcodeStr, Intrinsic IntId>
+  : SSI<o, MRMSrcMem, (ops VR128:$dst, VR128:$src1, f32mem:$src2),
+        !strconcat(OpcodeStr, " {$src2, $dst|$dst, $src2}"),
+        [(set VR128:$dst, (v4f32 (IntId VR128:$src1, (load addr:$src2))))]>;
+class SD_Intrr<bits<8> o, string OpcodeStr, Intrinsic IntId>
+  : SDI<o, MRMSrcReg, (ops VR128:$dst, VR128:$src1, VR128:$src2),
+        !strconcat(OpcodeStr, " {$src2, $dst|$dst, $src2}"),
+        [(set VR128:$dst, (v2f64 (IntId VR128:$src1, VR128:$src2)))]>;
+class SD_Intrm<bits<8> o, string OpcodeStr, Intrinsic IntId>
+  : SDI<o, MRMSrcMem, (ops VR128:$dst, VR128:$src1, f64mem:$src2),
+        !strconcat(OpcodeStr, " {$src2, $dst|$dst, $src2}"),
+        [(set VR128:$dst, (v2f64 (IntId VR128:$src1, (load addr:$src2))))]>;
+
+
 // Aliases to match intrinsics which expect XMM operand(s).
-let isTwoAddress = 1 in {
-let isCommutable = 1 in {
-def Int_ADDSSrr : SS_Intrr<0x58, "addss", int_x86_sse_add_ss>;
-def Int_ADDSDrr : SD_Intrr<0x58, "addsd", int_x86_sse2_add_sd>;
-def Int_MULSSrr : SS_Intrr<0x59, "mulss", int_x86_sse_mul_ss>;
-def Int_MULSDrr : SD_Intrr<0x59, "mulsd", int_x86_sse2_mul_sd>;
-}
 
-def Int_ADDSSrm : SS_Intrm<0x58, "addss", int_x86_sse_add_ss>;
-def Int_ADDSDrm : SD_Intrm<0x58, "addsd", int_x86_sse2_add_sd>;
-def Int_MULSSrm : SS_Intrm<0x59, "mulss", int_x86_sse_mul_ss>;
-def Int_MULSDrm : SD_Intrm<0x59, "mulsd", int_x86_sse2_mul_sd>;
-
-def Int_DIVSSrr : SS_Intrr<0x5E, "divss", int_x86_sse_div_ss>;
-def Int_DIVSSrm : SS_Intrm<0x5E, "divss", int_x86_sse_div_ss>;
-def Int_DIVSDrr : SD_Intrr<0x5E, "divsd", int_x86_sse2_div_sd>;
-def Int_DIVSDrm : SD_Intrm<0x5E, "divsd", int_x86_sse2_div_sd>;
-
-def Int_SUBSSrr : SS_Intrr<0x5C, "subss", int_x86_sse_sub_ss>;
-def Int_SUBSSrm : SS_Intrm<0x5C, "subss", int_x86_sse_sub_ss>;
-def Int_SUBSDrr : SD_Intrr<0x5C, "subsd", int_x86_sse2_sub_sd>;
-def Int_SUBSDrm : SD_Intrm<0x5C, "subsd", int_x86_sse2_sub_sd>;
-}
-
-defm Int_SQRTSS  : SS_IntUnary<0x51, "sqrtss" , int_x86_sse_sqrt_ss>;
-defm Int_SQRTSD  : SD_IntUnary<0x51, "sqrtsd" , int_x86_sse2_sqrt_sd>;
-defm Int_RSQRTSS : SS_IntUnary<0x52, "rsqrtss", int_x86_sse_rsqrt_ss>;
-defm Int_RCPSS   : SS_IntUnary<0x53, "rcpss"  , int_x86_sse_rcp_ss>;
+defm SQRTSS_Int  : SS_IntUnary<0x51, "sqrtss" , int_x86_sse_sqrt_ss>;
+defm SQRTSD_Int  : SD_IntUnary<0x51, "sqrtsd" , int_x86_sse2_sqrt_sd>;
+defm RSQRTSS_Int : SS_IntUnary<0x52, "rsqrtss", int_x86_sse_rsqrt_ss>;
+defm RCPSS_Int   : SS_IntUnary<0x53, "rcpss"  , int_x86_sse_rcp_ss>;
 
 let isTwoAddress = 1 in {
 let isCommutable = 1 in {
