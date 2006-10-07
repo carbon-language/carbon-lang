@@ -74,8 +74,10 @@ def armbr          : SDNode<"ARMISD::BR", SDTarmbr, [SDNPHasChain, SDNPInFlag]>;
 def SDTVoidBinOp : SDTypeProfile<0, 2, [SDTCisSameAs<0, 1>]>;
 def armcmp       : SDNode<"ARMISD::CMP",  SDTVoidBinOp, [SDNPOutFlag]>;
 
-def armfsitos    : SDNode<"ARMISD::FSITOS", SDTUnaryOp>;
+def armfsitos      : SDNode<"ARMISD::FSITOS", SDTUnaryOp>;
 def armfsitod      : SDNode<"ARMISD::FSITOD", SDTUnaryOp>;
+def armfuitos      : SDNode<"ARMISD::FUITOS", SDTUnaryOp>;
+def armfuitod      : SDNode<"ARMISD::FUITOD", SDTUnaryOp>;
 
 def SDTarmfmrrd    : SDTypeProfile<0, 3, [SDTCisInt<0>, SDTCisInt<1>, SDTCisFP<2>]>;
 def armfmrrd       : SDNode<"ARMISD::FMRRD", SDTarmfmrrd,
@@ -183,6 +185,12 @@ def FSITOS  : InstARM<(ops FPRegs:$dst, FPRegs:$src),
 
 def FSITOD  : InstARM<(ops DFPRegs:$dst, FPRegs:$src),
                        "fsitod $dst, $src", [(set DFPRegs:$dst, (armfsitod FPRegs:$src))]>;
+
+def FUITOS  : InstARM<(ops FPRegs:$dst, FPRegs:$src),
+                       "fuitos $dst, $src", [(set FPRegs:$dst, (armfuitos FPRegs:$src))]>;
+
+def FUITOD  : InstARM<(ops DFPRegs:$dst, FPRegs:$src),
+                       "fuitod $dst, $src", [(set DFPRegs:$dst, (armfuitod FPRegs:$src))]>;
 
 
 // Floating Point Arithmetic

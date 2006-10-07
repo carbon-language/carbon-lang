@@ -49,6 +49,8 @@ ARMTargetLowering::ARMTargetLowering(TargetMachine &TM)
 
   setOperationAction(ISD::SINT_TO_FP, MVT::i32, Custom);
 
+  setOperationAction(ISD::UINT_TO_FP, MVT::i32, Custom);
+
   setOperationAction(ISD::RET,           MVT::Other, Custom);
   setOperationAction(ISD::GlobalAddress, MVT::i32,   Custom);
   setOperationAction(ISD::ConstantPool,  MVT::i32,   Custom);
@@ -88,6 +90,10 @@ namespace llvm {
 
       FSITOD,
 
+      FUITOS,
+
+      FUITOD,
+
       FMRRD,
 
       FMDRR
@@ -124,6 +130,8 @@ const char *ARMTargetLowering::getTargetNodeName(unsigned Opcode) const {
   case ARMISD::BR:            return "ARMISD::BR";
   case ARMISD::FSITOS:        return "ARMISD::FSITOS";
   case ARMISD::FSITOD:        return "ARMISD::FSITOD";
+  case ARMISD::FUITOS:        return "ARMISD::FUITOS";
+  case ARMISD::FUITOD:        return "ARMISD::FUITOD";
   case ARMISD::FMRRD:         return "ARMISD::FMRRD";
   case ARMISD::FMDRR:         return "ARMISD::FMDRR";
   }
@@ -545,6 +553,18 @@ static SDOperand LowerSINT_TO_FP(SDOperand Op, SelectionDAG &DAG) {
   return DAG.getNode(op, vt, Tmp);
 }
 
+static SDOperand LowerUINT_TO_FP(SDOperand Op, SelectionDAG &DAG) {
+  SDOperand IntVal  = Op.getOperand(0);
+  assert(IntVal.getValueType() == MVT::i32);
+  MVT::ValueType vt = Op.getValueType();
+  assert(vt == MVT::f32 ||
+         vt == MVT::f64);
+
+  SDOperand Tmp = DAG.getNode(ISD::BIT_CONVERT, MVT::f32, IntVal);
+  ARMISD::NodeType op = vt == MVT::f32 ? ARMISD::FUITOS : ARMISD::FUITOD;
+  return DAG.getNode(op, vt, Tmp);
+}
+
 SDOperand ARMTargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
   switch (Op.getOpcode()) {
   default:
@@ -556,6 +576,8 @@ SDOperand ARMTargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
     return LowerGlobalAddress(Op, DAG);
   case ISD::SINT_TO_FP:
     return LowerSINT_TO_FP(Op, DAG);
+  case ISD::UINT_TO_FP:
+    return LowerUINT_TO_FP(Op, DAG);
   case ISD::FORMAL_ARGUMENTS:
     return LowerFORMAL_ARGUMENTS(Op, DAG, VarArgsFrameIndex);
   case ISD::CALL:
