@@ -1585,23 +1585,9 @@ defm PCMPGTW : PDI_binop_rm<0x65, "pcmpgtw", int_x86_sse2_pcmpgt_w>;
 defm PCMPGTD : PDI_binop_rm<0x66, "pcmpgtd", int_x86_sse2_pcmpgt_d>;
 
 // Pack instructions
-let isTwoAddress = 1 in {
-def PACKSSWBrr : PDI<0x63, MRMSrcReg, (ops VR128:$dst, VR128:$src1,
-                                       VR128:$src2),
-                 "packsswb {$src2, $dst|$dst, $src2}",
-                 [(set VR128:$dst, (v8i16 (int_x86_sse2_packsswb_128
-                                           VR128:$src1,
-                                           VR128:$src2)))]>;
-def PACKSSWBrm : PDI<0x63, MRMSrcMem, (ops VR128:$dst, VR128:$src1,
-                                       i128mem:$src2),
-                 "packsswb {$src2, $dst|$dst, $src2}",
-                 [(set VR128:$dst, (v8i16 (int_x86_sse2_packsswb_128
-                                           VR128:$src1,
-                                       (bitconvert (loadv2f64 addr:$src2)))))]>;
-                                       
+defm PACKSSWB : PDI_binop_rm<0x63, "packsswb", int_x86_sse2_packsswb_128>;
 defm PACKSSDW : PDI_binop_rm<0x6B, "packssdw", int_x86_sse2_packssdw_128>;
 defm PACKUSWB : PDI_binop_rm<0x67, "packuswb", int_x86_sse2_packuswb_128>;
-}
 
 // Shuffle and unpack instructions
 def PSHUFDri : PDIi8<0x70, MRMSrcReg,
