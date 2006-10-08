@@ -518,7 +518,32 @@ SDOperand DAGCombiner::visit(SDNode *N) {
   return SDOperand();
 }
 
+/// getInputChainForNode - Given a node, return its input chain if it has one,
+/// otherwise return a null sd operand.
+static SDOperand getInputChainForNode(SDNode *N) {
+  if (unsigned NumOps = N->getNumOperands()) {
+    if (N->getOperand(0).getValueType() == MVT::Other)
+      return N->getOperand(0);
+    else if (N->getOperand(NumOps-1).getValueType() == MVT::Other)
+      return N->getOperand(NumOps-1);
+    for (unsigned i = 1; i < NumOps-1; ++i)
+      if (N->getOperand(i).getValueType() == MVT::Other)
+        return N->getOperand(i);
+  }
+  return SDOperand(0, 0);
+}
+
 SDOperand DAGCombiner::visitTokenFactor(SDNode *N) {
+  // If N has two operands, where one has an input chain equal to the other,
+  // the 'other' chain is redundant.
+  if (N->getNumOperands() == 2) {
+    if (getInputChainForNode(N->getOperand(0).Val) == N->getOperand(1))
+      return N->getOperand(0);
+    if (getInputChainForNode(N->getOperand(1).Val) == N->getOperand(0))
+      return N->getOperand(1);
+  }
+  
+  
   SmallVector<SDNode *, 8> TFs;   // List of token factors to visit.
   SmallVector<SDOperand, 8> Ops;  // Ops for replacing token factor.
   bool Changed = false;           // If we should replace this token factor.
