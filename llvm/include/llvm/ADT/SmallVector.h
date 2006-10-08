@@ -33,12 +33,17 @@ class SmallVectorImpl {
   // aligned sufficiently.  Instead, we either use GCC extensions, or some
   // number of union instances for the space, which guarantee maximal alignment.
 protected:
+#ifdef __GNUC__
+  typedef char U;
+  U FirstEl __attribute__((aligned(__alignof__(double))));
+#else
   union U {
     double D;
     long double LD;
     long long L;
     void *P;
   } FirstEl;
+#endif
   // Space after 'FirstEl' is clobbered, do not add any instance vars after it.
 public:
   // Default ctor - Initialize to empty.
