@@ -422,7 +422,8 @@ void SROA::CanonicalizeAllocaUsers(AllocationInst *AI) {
 ///      smaller integers (common with byte swap and other idioms).
 ///   2) A union of a vector and its elements.  Here we turn element accesses
 ///      into insert/extract element operations.
-static bool MergeInType(const Type *In, const Type *&Accum) {
+static bool MergeInType(const Type *In, const Type *&Accum,
+                        const TargetData &TD) {
   // If this is our first type, just use it.
   const PackedType *PTy;
   if (Accum == Type::VoidTy || In == Accum) {
@@ -431,6 +432,9 @@ static bool MergeInType(const Type *In, const Type *&Accum) {
     // Otherwise pick whichever type is larger.
     if (In->getTypeID() > Accum->getTypeID())
       Accum = In;
+  } else if (isa<PointerType>(In) && isa<PointerType>(Accum)) {
+    // Pointer unions just stay as a pointer.
+    // Nothing.
   } else if ((PTy = dyn_cast<PackedType>(Accum)) && 
              PTy->getElementType() == In) {
     // Accum is a vector, and we are accessing an element: ok.
@@ -470,7 +474,7 @@ const Type *SROA::CanConvertToScalar(Value *V, bool &IsNotTrivial) {
     Instruction *User = cast<Instruction>(*UI);
     
     if (LoadInst *LI = dyn_cast<LoadInst>(User)) {
-      if (MergeInType(LI->getType(), UsedType))
+      if (MergeInType(LI->getType(), UsedType, TD))
         return 0;
       
     } else if (StoreInst *SI = dyn_cast<StoreInst>(User)) {
@@ -479,13 +483,13 @@ const Type *SROA::CanConvertToScalar(Value *V, bool &IsNotTrivial) {
       
       // NOTE: We could handle storing of FP imms into integers here!
       
-      if (MergeInType(SI->getOperand(0)->getType(), UsedType))
+      if (MergeInType(SI->getOperand(0)->getType(), UsedType, TD))
         return 0;
     } else if (CastInst *CI = dyn_cast<CastInst>(User)) {
       if (!isa<PointerType>(CI->getType())) return 0;
       IsNotTrivial = true;
       const Type *SubTy = CanConvertToScalar(CI, IsNotTrivial);
-      if (!SubTy || MergeInType(SubTy, UsedType)) return 0;
+      if (!SubTy || MergeInType(SubTy, UsedType, TD)) return 0;
     } else if (GetElementPtrInst *GEP = dyn_cast<GetElementPtrInst>(User)) {
       // Check to see if this is stepping over an element: GEP Ptr, int C
       if (GEP->getNumOperands() == 2 && isa<ConstantInt>(GEP->getOperand(1))) {
@@ -500,7 +504,7 @@ const Type *SROA::CanConvertToScalar(Value *V, bool &IsNotTrivial) {
         if (SubElt != Type::VoidTy && SubElt->isInteger()) {
           const Type *NewTy = 
             getUIntAtLeastAsBitAs(SubElt->getPrimitiveSizeInBits()+BitOffset);
-          if (NewTy == 0 || MergeInType(NewTy, UsedType)) return 0;
+          if (NewTy == 0 || MergeInType(NewTy, UsedType, TD)) return 0;
           continue;
         }
       } else if (GEP->getNumOperands() == 3 && 
@@ -519,12 +523,12 @@ const Type *SROA::CanConvertToScalar(Value *V, bool &IsNotTrivial) {
           if (Idx >= PackedTy->getNumElements()) return 0;  // Out of range.
 
           // Merge in the packed type.
-          if (MergeInType(PackedTy, UsedType)) return 0;
+          if (MergeInType(PackedTy, UsedType, TD)) return 0;
           
           const Type *SubTy = CanConvertToScalar(GEP, IsNotTrivial);
           if (SubTy == 0) return 0;
           
-          if (SubTy != Type::VoidTy && MergeInType(SubTy, UsedType))
+          if (SubTy != Type::VoidTy && MergeInType(SubTy, UsedType, TD))
             return 0;
 
           // We'll need to change this to an insert/extract element operation.
@@ -537,10 +541,10 @@ const Type *SROA::CanConvertToScalar(Value *V, bool &IsNotTrivial) {
           return 0;
         }
         const Type *NTy = getUIntAtLeastAsBitAs(TD.getTypeSize(AggTy)*8);
-        if (NTy == 0 || MergeInType(NTy, UsedType)) return 0;
+        if (NTy == 0 || MergeInType(NTy, UsedType, TD)) return 0;
         const Type *SubTy = CanConvertToScalar(GEP, IsNotTrivial);
         if (SubTy == 0) return 0;
-        if (SubTy != Type::VoidTy && MergeInType(SubTy, UsedType))
+        if (SubTy != Type::VoidTy && MergeInType(SubTy, UsedType, TD))
           return 0;
         continue;    // Everything looks ok
       }
