@@ -433,8 +433,7 @@ static bool MergeInType(const Type *In, const Type *&Accum,
     if (In->getTypeID() > Accum->getTypeID())
       Accum = In;
   } else if (isa<PointerType>(In) && isa<PointerType>(Accum)) {
-    // Pointer unions just stay as a pointer.
-    // Nothing.
+    // Pointer unions just stay as one of the pointers.
   } else if ((PTy = dyn_cast<PackedType>(Accum)) && 
              PTy->getElementType() == In) {
     // Accum is a vector, and we are accessing an element: ok.
@@ -442,6 +441,13 @@ static bool MergeInType(const Type *In, const Type *&Accum,
              PTy->getElementType() == Accum) {
     // In is a vector, and accum is an element: ok, remember In.
     Accum = In;
+  } else if (isa<PointerType>(In) && Accum->isIntegral()) {
+    // Pointer/Integer unions merge together as integers.
+    return MergeInType(TD.getIntPtrType(), Accum, TD);
+  } else if (isa<PointerType>(Accum) && In->isIntegral()) {
+    // Pointer/Integer unions merge together as integers.
+    Accum = TD.getIntPtrType();
+    return MergeInType(In, Accum, TD);
   } else {
     return true;
   }
@@ -503,7 +509,7 @@ const Type *SROA::CanConvertToScalar(Value *V, bool &IsNotTrivial) {
         if (SubElt == 0) return 0;
         if (SubElt != Type::VoidTy && SubElt->isInteger()) {
           const Type *NewTy = 
-            getUIntAtLeastAsBitAs(SubElt->getPrimitiveSizeInBits()+BitOffset);
+            getUIntAtLeastAsBitAs(TD.getTypeSize(SubElt)*8+BitOffset);
           if (NewTy == 0 || MergeInType(NewTy, UsedType, TD)) return 0;
           continue;
         }
@@ -591,6 +597,7 @@ void SROA::ConvertToScalar(AllocationInst *AI, const Type *ActualTy) {
 /// shifted to the right.  By the end of this, there should be no uses of Ptr.
 void SROA::ConvertUsesToScalar(Value *Ptr, AllocaInst *NewAI, unsigned Offset) {
   bool isVectorInsert = isa<PackedType>(NewAI->getType()->getElementType());
+  const TargetData &TD = getAnalysis<TargetData>();
   while (!Ptr->use_empty()) {
     Instruction *User = cast<Instruction>(Ptr->use_back());
     
@@ -600,12 +607,12 @@ void SROA::ConvertUsesToScalar(Value *Ptr, AllocaInst *NewAI, unsigned Offset) {
       if (NV->getType() != LI->getType()) {
         if (const PackedType *PTy = dyn_cast<PackedType>(NV->getType())) {
           // Must be an element access.
-          unsigned Elt = Offset/PTy->getElementType()->getPrimitiveSizeInBits();
+          unsigned Elt = Offset/(TD.getTypeSize(PTy->getElementType())*8);
           NV = new ExtractElementInst(NV, ConstantUInt::get(Type::UIntTy, Elt),
                                       "tmp", LI);
         } else {
           assert(NV->getType()->isInteger() && "Unknown promotion!");
-          if (Offset && Offset < NV->getType()->getPrimitiveSizeInBits())
+          if (Offset && Offset < TD.getTypeSize(NV->getType())*8)
             NV = new ShiftInst(Instruction::Shr, NV,
                                ConstantUInt::get(Type::UByteTy, Offset),
                                LI->getName(), LI);
@@ -626,7 +633,7 @@ void SROA::ConvertUsesToScalar(Value *Ptr, AllocaInst *NewAI, unsigned Offset) {
         
         if (const PackedType *PTy = dyn_cast<PackedType>(AllocaType)) {
           // Must be an element insertion.
-          unsigned Elt = Offset/PTy->getElementType()->getPrimitiveSizeInBits();
+          unsigned Elt = Offset/(TD.getTypeSize(PTy->getElementType())*8);
           SV = new InsertElementInst(Old, SV,
                                      ConstantUInt::get(Type::UIntTy, Elt),
                                      "tmp", SI);
@@ -637,14 +644,13 @@ void SROA::ConvertUsesToScalar(Value *Ptr, AllocaInst *NewAI, unsigned Offset) {
             SV = new CastInst(SV, SV->getType()->getUnsignedVersion(),
                               SV->getName(), SI);
           SV = new CastInst(SV, Old->getType(), SV->getName(), SI);
-          if (Offset && Offset < SV->getType()->getPrimitiveSizeInBits())
+          if (Offset && Offset < TD.getTypeSize(SV->getType())*8)
             SV = new ShiftInst(Instruction::Shl, SV,
                                ConstantUInt::get(Type::UByteTy, Offset),
                                SV->getName()+".adj", SI);
           // Mask out the bits we are about to insert from the old value.
-          unsigned TotalBits = SV->getType()->getPrimitiveSizeInBits();
-          unsigned InsertBits =
-            SI->getOperand(0)->getType()->getPrimitiveSizeInBits();
+          unsigned TotalBits = TD.getTypeSize(SV->getType())*8;
+          unsigned InsertBits = TD.getTypeSize(SI->getOperand(0)->getType())*8;
           if (TotalBits != InsertBits) {
             assert(TotalBits > InsertBits);
             uint64_t Mask = ~(((1ULL << InsertBits)-1) << Offset);
