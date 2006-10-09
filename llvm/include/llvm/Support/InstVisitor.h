@@ -53,7 +53,7 @@ class AllocationInst;
 ///    unsigned Count;
 ///    CountMallocVisitor() : Count(0) {}
 ///
-///    void visitMallocInst(MallocInst *MI) { ++Count; }
+///    void visitMallocInst(MallocInst &MI) { ++Count; }
 ///  };
 ///
 ///  And this class would be used like this:
