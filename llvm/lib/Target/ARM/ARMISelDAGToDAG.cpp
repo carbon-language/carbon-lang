@@ -47,6 +47,8 @@ ARMTargetLowering::ARMTargetLowering(TargetMachine &TM)
   addRegisterClass(MVT::f32, ARM::FPRegsRegisterClass);
   addRegisterClass(MVT::f64, ARM::DFPRegsRegisterClass);
 
+  setLoadXAction(ISD::EXTLOAD, MVT::f32, Expand);
+
   setOperationAction(ISD::SINT_TO_FP, MVT::i32, Custom);
 
   setOperationAction(ISD::UINT_TO_FP, MVT::i32, Custom);
