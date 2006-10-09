@@ -193,7 +193,7 @@ void CallGraph::initialize(Module &M) {
 }
 
 void CallGraph::destroy() {
-  if(!FunctionMap.size()) {
+  if (!FunctionMap.empty()) {
     for (FunctionMapTy::iterator I = FunctionMap.begin(), E = FunctionMap.end();
         I != E; ++I)
       delete I->second;
