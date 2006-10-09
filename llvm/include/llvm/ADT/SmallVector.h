@@ -35,7 +35,7 @@ class SmallVectorImpl {
 protected:
 #ifdef __GNUC__
   typedef char U;
-  U FirstEl __attribute__((aligned(__alignof__(double))));
+  U FirstEl __attribute__((aligned));
 #else
   union U {
     double D;
