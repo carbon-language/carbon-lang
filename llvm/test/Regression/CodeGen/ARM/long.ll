@@ -3,7 +3,9 @@
 ; RUN: llvm-as < %s | llc -march=arm | grep "mov r0, #1" | wc -l | grep 1 &&
 ; RUN: llvm-as < %s | llc -march=arm | grep ".word.*2147483647" | wc -l | grep 2 &&
 ; RUN: llvm-as < %s | llc -march=arm | grep "mov r0, #-2147483648" | wc -l | grep 1 &&
-; RUN: llvm-as < %s | llc -march=arm | grep ".word.*4294967295" | wc -l | grep 1
+; RUN: llvm-as < %s | llc -march=arm | grep ".word.*4294967295" | wc -l | grep 1 &&
+; RUN: llvm-as < %s | llc -march=arm | grep "adds" | wc -l | grep 1 &&
+; RUN: llvm-as < %s | llc -march=arm | grep "adcs" | wc -l | grep 1
 
 long %f1() {
 entry:
@@ -28,4 +30,10 @@ entry:
 long %f5() {
 entry:
 	ret long 9223372036854775807
+}
+
+ulong %f6(ulong %x, ulong %y) {
+entry:
+	%tmp1 = add ulong %y, 1
+	ret ulong %tmp1
 }
