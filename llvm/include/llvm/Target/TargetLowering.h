@@ -219,14 +219,12 @@ public:
   /// expanded to some other code sequence, or the target has a custom expander
   /// for it.
   LegalizeAction getOperationAction(unsigned Op, MVT::ValueType VT) const {
-    assert(Op != ISD::LOADX && "Should use getLoadXAction instead");
     return (LegalizeAction)((OpActions[Op] >> (2*VT)) & 3);
   }
   
   /// isOperationLegal - Return true if the specified operation is legal on this
   /// target.
   bool isOperationLegal(unsigned Op, MVT::ValueType VT) const {
-    assert(Op != ISD::LOADX && "Should use isLoadXLegal instead");
     return getOperationAction(Op, VT) == Legal ||
            getOperationAction(Op, VT) == Custom;
   }
@@ -545,7 +543,6 @@ protected:
   /// with the specified type and indicate what to do about it.
   void setOperationAction(unsigned Op, MVT::ValueType VT,
                           LegalizeAction Action) {
-    assert(Op != ISD::LOADX && "Should use setLoadXAction instead");
     assert(VT < 32 && Op < sizeof(OpActions)/sizeof(OpActions[0]) &&
            "Table isn't big enough!");
     OpActions[Op] &= ~(uint64_t(3UL) << VT*2);
@@ -554,11 +551,12 @@ protected:
   
   /// setLoadXAction - Indicate that the specified load with extension does not
   /// work with the with specified type and indicate what to do about it.
-  void setLoadXAction(unsigned LType, MVT::ValueType VT, LegalizeAction Action){
-    assert(VT < 32 && LType < sizeof(LoadXActions)/sizeof(LoadXActions[0]) &&
+  void setLoadXAction(unsigned ExtType, MVT::ValueType VT,
+                      LegalizeAction Action) {
+    assert(VT < 32 && ExtType < sizeof(LoadXActions)/sizeof(LoadXActions[0]) &&
            "Table isn't big enough!");
-    LoadXActions[LType] &= ~(uint64_t(3UL) << VT*2);
-    LoadXActions[LType] |= (uint64_t)Action << VT*2;
+    LoadXActions[ExtType] &= ~(uint64_t(3UL) << VT*2);
+    LoadXActions[ExtType] |= (uint64_t)Action << VT*2;
   }
   
   /// AddPromotedToType - If Opc/OrigVT is specified as being promoted, the

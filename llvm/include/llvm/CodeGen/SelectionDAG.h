@@ -300,12 +300,12 @@ public:
   /// determined by their operands, and they produce a value AND a token chain.
   ///
   SDOperand getLoad(MVT::ValueType VT, SDOperand Chain, SDOperand Ptr,
-                    SDOperand SV);
+                    const Value *SV, int SVOffset, bool isVolatile=false);
+  SDOperand getExtLoad(ISD::LoadExtType ExtType, MVT::ValueType VT,
+                       SDOperand Chain, SDOperand Ptr, const Value *SV,
+                       int SVOffset, MVT::ValueType EVT, bool isVolatile=false);
   SDOperand getVecLoad(unsigned Count, MVT::ValueType VT, SDOperand Chain, 
                        SDOperand Ptr, SDOperand SV);
-  SDOperand getExtLoad(ISD::LoadExtType LType, MVT::ValueType VT,
-                       SDOperand Chain, SDOperand Ptr, SDOperand SV,
-                       MVT::ValueType EVT);
 
   /// getStore - Helper function to build ISD::STORE nodes.
   ///

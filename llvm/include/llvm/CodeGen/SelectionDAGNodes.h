@@ -380,21 +380,6 @@ namespace ISD {
     // the elements, a token chain, a pointer operand, and a SRCVALUE node.
     VLOAD,
 
-    // Load a value from memory and extend them to a larger value (e.g. load a
-    // byte into a word register).  All three of these have four operands, a
-    // token chain, a pointer to load from, a SRCVALUE for alias analysis, a
-    // VALUETYPE node indicating the type to load, and an enum indicating what
-    // sub-type of LOADX it is:
-    //
-    // SEXTLOAD loads the integer operand and sign extends it to a larger
-    //          integer result type.
-    // ZEXTLOAD loads the integer operand and zero extends it to a larger
-    //          integer result type.
-    // EXTLOAD  is used for three things: floating point extending loads, 
-    //          integer extending loads [the top bits are undefined], and vector
-    //          extending loads [load into low elt].
-    LOADX,
-
     // TRUNCSTORE - This operators truncates (for integer) or rounds (for FP) a
     // value and stores it to memory in one operation.  This can be used for
     // either integer or floating point operands.  The first four operands of
@@ -534,10 +519,52 @@ namespace ISD {
   bool isBuildVectorAllZeros(const SDNode *N);
   
   //===--------------------------------------------------------------------===//
+  /// MemOpAddrMode enum - This enum defines the three load / store addressing
+  /// modes.
+  ///
+  /// UNINDEXED    "Normal" load / store. The effective address is already
+  ///              computed and is available in the base pointer. The offset
+  ///              operand is always undefined. An unindexed load produces one
+  ///              value (result of the load); an unindexed store does not
+  ///              produces a value.
+  ///
+  /// PRE_INDEXED  Similar to the unindexed mode where the effective address is
+  ///              the result of computation of the base pointer. However, it
+  ///              considers the computation as being folded into the load /
+  ///              store operation (i.e. the load / store does the address
+  ///              computation as well as performing the memory transaction).
+  ///              The base operand is always undefined. A pre-indexed load
+  ///              produces two values (result of the load and the result of
+  ///              the address computation); a pre-indexed store produces one
+  ///              value (result of the address computation).
+  ///
+  /// POST_INDEXED The effective address is the value of the base pointer. The
+  ///              value of the offset operand is then added to the base after
+  ///              memory transaction. A post-indexed load produces two values
+  ///              (the result of the load and the result of the base + offset
+  ///              computation); a post-indexed store produces one value (the
+  ///              the result of the base + offset computation).
+  ///
+  enum MemOpAddrMode {
+    UNINDEXED = 0,
+    PRE_INDEXED,
+    POST_INDEXED
+  };
+
+  //===--------------------------------------------------------------------===//
   /// LoadExtType enum - This enum defines the three variants of LOADEXT
   /// (load with extension).
   ///
+  /// SEXTLOAD loads the integer operand and sign extends it to a larger
+  ///          integer result type.
+  /// ZEXTLOAD loads the integer operand and zero extends it to a larger
+  ///          integer result type.
+  /// EXTLOAD  is used for three things: floating point extending loads, 
+  ///          integer extending loads [the top bits are undefined], and vector
+  ///          extending loads [load into low elt].
+  ///
   enum LoadExtType {
+    NON_EXTLOAD = 0,
     EXTLOAD,
     SEXTLOAD,
     ZEXTLOAD,
@@ -1345,6 +1372,95 @@ public:
   }
 };
 
+/// LoadSDNode - This class is used to represent ISD::LOAD nodes.
+///
+class LoadSDNode : public SDNode {
+  ISD::MemOpAddrMode AddrMode;  // unindexed, pre-indexed, post-indexed.
+  ISD::LoadExtType ExtType;     // non-ext, anyext, sext, zext.
+  MVT::ValueType LoadVT;        // VT of loaded value before extension.
+  const Value *SrcValue;
+  int SVOffset;
+  unsigned Alignment;
+  bool IsVolatile;
+protected:
+  friend class SelectionDAG;
+  LoadSDNode(SDOperand Chain, SDOperand Ptr, SDOperand Off,
+             ISD::MemOpAddrMode AM, ISD::LoadExtType ETy, MVT::ValueType LVT,
+             const Value *SV, int O=0, unsigned Align=1, bool Vol=false)
+    : SDNode(ISD::LOAD, Chain, Ptr, Off),
+      AddrMode(AM), ExtType(ETy), LoadVT(LVT), SrcValue(SV), SVOffset(O),
+      Alignment(Align), IsVolatile(Vol) {
+    assert((Off.getOpcode() == ISD::UNDEF || AddrMode == ISD::POST_INDEXED) &&
+           "Only post-indexed load has a non-undef offset operand");
+  }
+  LoadSDNode(SDOperand Chain, SDOperand Ptr, SDOperand Off,
+             ISD::LoadExtType ETy, MVT::ValueType LVT,
+             const Value *SV, int O=0, unsigned Align=1, bool Vol=false)
+    : SDNode(ISD::LOAD, Chain, Ptr, Off),
+      AddrMode(ISD::UNINDEXED), ExtType(ETy), LoadVT(LVT), SrcValue(SV),
+      SVOffset(O), Alignment(Align), IsVolatile(Vol) {
+    assert((Off.getOpcode() == ISD::UNDEF || AddrMode == ISD::POST_INDEXED) &&
+           "Only post-indexed load has a non-undef offset operand");
+  }
+public:
+
+  const SDOperand &getChain() const { return getOperand(0); }
+  const SDOperand &getBasePtr() const { return getOperand(1); }
+  const SDOperand &getOffset() const { return getOperand(2); }
+  ISD::MemOpAddrMode getAddressingMode() const { return AddrMode; }
+  ISD::LoadExtType getExtensionType() const { return ExtType; }
+  MVT::ValueType getLoadVT() const { return LoadVT; }
+  const Value *getSrcValue() const { return SrcValue; }
+  int getSrcValueOffset() const { return SVOffset; }
+  unsigned getAlignment() const { return Alignment; }
+  bool isVolatile() const { return IsVolatile; }
+
+  static bool classof(const LoadSDNode *) { return true; }
+  static bool classof(const SDNode *N) {
+    return N->getOpcode() == ISD::LOAD;
+  }
+};
+
+/// StoreSDNode - This class is used to represent ISD::STORE nodes.
+///
+class StoreSDNode : public SDNode {
+  ISD::MemOpAddrMode AddrMode;  // unindexed, pre-indexed, post-indexed.
+  bool IsTruncStore;            // is value truncated before store?
+  MVT::ValueType StoredVT;      // VT of value that's actually stored.
+  const Value *SrcValue;
+  int SVOffset;
+  unsigned Alignment;
+  bool IsVolatile;
+protected:
+  friend class SelectionDAG;
+  StoreSDNode(SDOperand Chain, SDOperand Ptr, SDOperand Off,
+              ISD::MemOpAddrMode AM, bool isTrunc, MVT::ValueType SVT,
+              const Value *SV, int O=0, unsigned Align=0, bool Vol=false)
+    : SDNode(ISD::STORE, Chain, Ptr, Off),
+      AddrMode(AM), IsTruncStore(isTrunc), StoredVT(SVT), SrcValue(SV),
+      SVOffset(O), Alignment(Align), IsVolatile(Vol) {
+    assert((Off.getOpcode() == ISD::UNDEF || AddrMode == ISD::POST_INDEXED) &&
+           "Only post-indexed store has a non-undef offset operand");
+  }
+public:
+
+  const SDOperand &getChain() const { return getOperand(0); }
+  const SDOperand &getBasePtr() const { return getOperand(1); }
+  const SDOperand &getOffset() const { return getOperand(2); }
+  ISD::MemOpAddrMode getAddressingMode() const { return AddrMode; }
+  bool isTruncatingStore() const { return IsTruncStore; }
+  MVT::ValueType getStoredVT() const { return StoredVT; }
+  const Value *getSrcValue() const { return SrcValue; }
+  int getSrcValueOffset() const { return SVOffset; }
+  unsigned getAlignment() const { return Alignment; }
+  bool isVolatile() const { return IsVolatile; }
+
+  static bool classof(const LoadSDNode *) { return true; }
+  static bool classof(const SDNode *N) {
+    return N->getOpcode() == ISD::STORE;
+  }
+};
+
 
 class SDNodeIterator : public forward_iterator<SDNode, ptrdiff_t> {
   SDNode *Node;
@@ -1420,25 +1536,32 @@ struct ilist_traits<SDNode> {
 };
 
 namespace ISD {
+  /// isNON_EXTLoad - Returns true if the specified node is a non-extending
+  /// load.
+  inline bool isNON_EXTLoad(const SDNode *N) {
+    return N->getOpcode() == ISD::LOAD &&
+      cast<LoadSDNode>(N)->getExtensionType() == ISD::NON_EXTLOAD;
+  }
+
   /// isEXTLoad - Returns true if the specified node is a EXTLOAD.
   ///
   inline bool isEXTLoad(const SDNode *N) {
-    return N->getOpcode() == ISD::LOADX &&
-      N->getConstantOperandVal(4) == ISD::EXTLOAD;
+    return N->getOpcode() == ISD::LOAD &&
+      cast<LoadSDNode>(N)->getExtensionType() == ISD::EXTLOAD;
   }
 
   /// isSEXTLoad - Returns true if the specified node is a SEXTLOAD.
   ///
   inline bool isSEXTLoad(const SDNode *N) {
-    return N->getOpcode() == ISD::LOADX &&
-      N->getConstantOperandVal(4) == ISD::SEXTLOAD;
+    return N->getOpcode() == ISD::LOAD &&
+      cast<LoadSDNode>(N)->getExtensionType() == ISD::SEXTLOAD;
   }
 
   /// isZEXTLoad - Returns true if the specified node is a ZEXTLOAD.
   ///
   inline bool isZEXTLoad(const SDNode *N) {
-    return N->getOpcode() == ISD::LOADX &&
-      N->getConstantOperandVal(4) == ISD::ZEXTLOAD;
+    return N->getOpcode() == ISD::LOAD &&
+      cast<LoadSDNode>(N)->getExtensionType() == ISD::ZEXTLOAD;
   }
 }
 
