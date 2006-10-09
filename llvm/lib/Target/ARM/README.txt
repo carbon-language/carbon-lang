@@ -32,3 +32,17 @@ add r0, r1, r0
 add an offset to FLDS/FLDD addressing mode
 
 ----------------------------------------------------------
+
+the function
+
+void %f() {
+entry:
+	call void %g( int 1, int 2, int 3, int 4, int 5 )
+	ret void
+}
+
+declare void %g(int, int, int, int, int)
+
+Only needs 8 bytes of stack space. We currently allocate 16.
+
+----------------------------------------------------------
