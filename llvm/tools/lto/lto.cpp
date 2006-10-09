@@ -341,18 +341,28 @@ LTO::optimizeModules(const std::string &OutputFilename,
       exportList[i] = allSymbols[name]->getName();
   }
 
-  sys::Path tmpAsmFilePath("/tmp/");
+
   std::string ErrMsg;
+  sys::Path TempDir = sys::Path::GetTemporaryDirectory(&ErrMsg);
+  sys::Path tmpAsmFilePath(TempDir);
+  if (!tmpAsmFilePath.appendComponent("lto")) {
+    std::cerr << "lto: " << ErrMsg << "\n";
+    TempDir.eraseFromDisk(true);
+    return LTO_WRITE_FAILURE;
+  }
   if (tmpAsmFilePath.createTemporaryFileOnDisk(&ErrMsg)) {
     std::cerr << "lto: " << ErrMsg << "\n";
+    TempDir.eraseFromDisk(true);
     return LTO_WRITE_FAILURE;
   }
   sys::RemoveFileOnSignal(tmpAsmFilePath);
 
   std::ofstream asmFile(tmpAsmFilePath.c_str(), io_mode);
   if (!asmFile.is_open() || asmFile.bad()) {
-    if (tmpAsmFilePath.exists())
+    if (tmpAsmFilePath.exists()) {
       tmpAsmFilePath.eraseFromDisk();
+      TempDir.eraseFromDisk(true);
+    }
     return LTO_WRITE_FAILURE;
   }
 
@@ -360,6 +370,7 @@ LTO::optimizeModules(const std::string &OutputFilename,
   asmFile.close();
   if (status != LTO_OPT_SUCCESS) {
     tmpAsmFilePath.eraseFromDisk();
+    TempDir.eraseFromDisk(true);
     return status;
   }
 
@@ -374,6 +385,7 @@ LTO::optimizeModules(const std::string &OutputFilename,
   const sys::Path gcc = FindExecutable("gcc", "/");
   if (gcc.isEmpty()) {
     tmpAsmFilePath.eraseFromDisk();
+    TempDir.eraseFromDisk(true);
     return LTO_ASM_FAILURE;
   }
 
@@ -390,6 +402,7 @@ LTO::optimizeModules(const std::string &OutputFilename,
   sys::Program::ExecuteAndWait(gcc, &args[0], 0, 0, 1);
 
   tmpAsmFilePath.eraseFromDisk();
+  TempDir.eraseFromDisk(true);
 
   return LTO_OPT_SUCCESS;
 }
