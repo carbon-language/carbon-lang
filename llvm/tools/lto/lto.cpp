@@ -344,6 +344,10 @@ LTO::optimizeModules(const std::string &OutputFilename,
 
   std::string ErrMsg;
   sys::Path TempDir = sys::Path::GetTemporaryDirectory(&ErrMsg);
+  if (TempDir.isEmpty()) {
+    std::cerr << "lto: " << ErrMsg << "\n";
+    return LTO_WRITE_FAILURE;
+  }
   sys::Path tmpAsmFilePath(TempDir);
   if (!tmpAsmFilePath.appendComponent("lto")) {
     std::cerr << "lto: " << ErrMsg << "\n";
@@ -399,7 +403,10 @@ LTO::optimizeModules(const std::string &OutputFilename,
   args.push_back(tmpAsmFilePath.c_str());
   args.push_back(0);
 
-  sys::Program::ExecuteAndWait(gcc, &args[0], 0, 0, 1);
+  if (sys::Program::ExecuteAndWait(gcc, &args[0], 0, 0, 1, &ErrMsg)) {
+    std::cerr << "lto: " << ErrMsg << "\n";
+    return LTO_ASM_FAILURE;
+  }
 
   tmpAsmFilePath.eraseFromDisk();
   TempDir.eraseFromDisk(true);
