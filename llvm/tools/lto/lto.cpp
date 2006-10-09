@@ -386,7 +386,7 @@ LTO::optimizeModules(const std::string &OutputFilename,
   //  We can't just assemble and link the file with the system assembler
   //  and linker because we don't know where to put the _start symbol.
   //  GCC mysteriously knows how to do it.
-  const sys::Path gcc = FindExecutable("gcc", "/");
+  const sys::Path gcc = sys::Program::FindProgramByName("gcc");
   if (gcc.isEmpty()) {
     tmpAsmFilePath.eraseFromDisk();
     TempDir.eraseFromDisk(true);
