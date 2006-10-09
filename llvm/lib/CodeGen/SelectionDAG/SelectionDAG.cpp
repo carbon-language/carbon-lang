@@ -1460,14 +1460,66 @@ SDOperand SelectionDAG::getNode(unsigned Opcode, MVT::ValueType VT,
 
 SDOperand SelectionDAG::getLoad(MVT::ValueType VT,
                                 SDOperand Chain, SDOperand Ptr,
-                                SDOperand SV) {
+                                const Value *SV, int SVOffset,
+                                bool isVolatile) {
+  // FIXME: Alignment == 1 for now.
+  unsigned Alignment = 1;
   SDVTList VTs = getVTList(VT, MVT::Other);
-  
-  SelectionDAGCSEMap::NodeID ID(ISD::LOAD, VTs, Chain, Ptr, SV);
+  SDOperand Undef = getNode(ISD::UNDEF, VT);
+  SelectionDAGCSEMap::NodeID ID(ISD::LOAD, VTs, Chain, Ptr, Undef);
+  ID.AddInteger(ISD::UNINDEXED);
+  ID.AddInteger(ISD::NON_EXTLOAD);
+  ID.AddInteger(VT);
+  ID.AddPointer(SV);
+  ID.AddInteger(SVOffset);
+  ID.AddInteger(Alignment);
+  ID.AddInteger(isVolatile);
   void *IP = 0;
   if (SDNode *E = CSEMap.FindNodeOrInsertPos(ID, IP))
     return SDOperand(E, 0);
-  SDNode *N = new SDNode(ISD::LOAD, Chain, Ptr, SV);
+  SDNode *N = new LoadSDNode(Chain, Ptr, Undef, ISD::NON_EXTLOAD, VT,
+                             SV, SVOffset, Alignment, isVolatile);
+  N->setValueTypes(VTs);
+  CSEMap.InsertNode(N, IP);
+  AllNodes.push_back(N);
+  return SDOperand(N, 0);
+}
+
+SDOperand SelectionDAG::getExtLoad(ISD::LoadExtType ExtType, MVT::ValueType VT,
+                                   SDOperand Chain, SDOperand Ptr, const Value *SV,
+                                   int SVOffset, MVT::ValueType EVT,
+                                   bool isVolatile) {
+  // If they are asking for an extending load from/to the same thing, return a
+  // normal load.
+  if (VT == EVT)
+    ExtType = ISD::NON_EXTLOAD;
+
+  if (MVT::isVector(VT))
+    assert(EVT == MVT::getVectorBaseType(VT) && "Invalid vector extload!");
+  else
+    assert(EVT < VT && "Should only be an extending load, not truncating!");
+  assert((ExtType == ISD::EXTLOAD || MVT::isInteger(VT)) &&
+         "Cannot sign/zero extend a FP/Vector load!");
+  assert(MVT::isInteger(VT) == MVT::isInteger(EVT) &&
+         "Cannot convert from FP to Int or Int -> FP!");
+
+  // FIXME: Alignment == 1 for now.
+  unsigned Alignment = 1;
+  SDVTList VTs = getVTList(VT, MVT::Other);
+  SDOperand Undef = getNode(ISD::UNDEF, VT);
+  SelectionDAGCSEMap::NodeID ID(ISD::LOAD, VTs, Chain, Ptr, Undef);
+  ID.AddInteger(ISD::UNINDEXED);
+  ID.AddInteger(ExtType);
+  ID.AddInteger(EVT);
+  ID.AddPointer(SV);
+  ID.AddInteger(SVOffset);
+  ID.AddInteger(Alignment);
+  ID.AddInteger(isVolatile);
+  void *IP = 0;
+  if (SDNode *E = CSEMap.FindNodeOrInsertPos(ID, IP))
+    return SDOperand(E, 0);
+  SDNode *N = new LoadSDNode(Chain, Ptr, Undef, ExtType, EVT, SV, SVOffset,
+                             Alignment, isVolatile);
   N->setValueTypes(VTs);
   CSEMap.InsertNode(N, IP);
   AllNodes.push_back(N);
@@ -1480,14 +1532,6 @@ SDOperand SelectionDAG::getVecLoad(unsigned Count, MVT::ValueType EVT,
   SDOperand Ops[] = { Chain, Ptr, SV, getConstant(Count, MVT::i32), 
                       getValueType(EVT) };
   return getNode(ISD::VLOAD, getVTList(MVT::Vector, MVT::Other), Ops, 5);
-}
-
-SDOperand SelectionDAG::getExtLoad(ISD::LoadExtType LType, MVT::ValueType VT,
-                                   SDOperand Chain, SDOperand Ptr, SDOperand SV,
-                                   MVT::ValueType EVT) {
-  SDOperand Ops[] = { Chain, Ptr, SV, getValueType(EVT),
-                      getConstant(LType, MVT::i32) };
-  return getNode(ISD::LOADX, getVTList(VT, MVT::Other), Ops, 5);
 }
 
 SDOperand SelectionDAG::getStore(SDOperand Chain, SDOperand Value,
@@ -1602,28 +1646,6 @@ SDOperand SelectionDAG::getNode(unsigned Opcode, SDVTList VTList,
     return getNode(Opcode, VTList.VTs[0], Ops, NumOps);
 
   switch (Opcode) {
-  case ISD::LOADX: {
-    MVT::ValueType EVT = cast<VTSDNode>(Ops[3])->getVT();
-    unsigned LType = cast<ConstantSDNode>(Ops[4])->getValue();
-    assert(NumOps == 5 && VTList.NumVTs == 2 && "Bad *EXTLOAD!");
-    // If they are asking for an extending load from/to the same thing, return a
-    // normal load.
-    if (VTList.VTs[0] == EVT)
-      return getLoad(VTList.VTs[0], Ops[0], Ops[1], Ops[2]);
-    if (MVT::isVector(VTList.VTs[0])) {
-      assert(EVT == MVT::getVectorBaseType(VTList.VTs[0]) &&
-             "Invalid vector extload!");
-    } else {
-      assert(EVT < VTList.VTs[0] &&
-             "Should only be an extending load, not truncating!");
-    }
-    assert((LType == ISD::EXTLOAD || MVT::isInteger(VTList.VTs[0])) &&
-           "Cannot sign/zero extend a FP/Vector load!");
-    assert(MVT::isInteger(VTList.VTs[0]) == MVT::isInteger(EVT) &&
-           "Cannot convert from FP to Int or Int -> FP!");
-    break;
-  }
-
   // FIXME: figure out how to safely handle things like
   // int foo(int x) { return 1 << (x & 255); }
   // int bar() { return foo(256); }
@@ -2545,7 +2567,6 @@ const char *SDNode::getOperationName(const SelectionDAG *G) const {
   case ISD::LOAD:               return "load";
   case ISD::STORE:              return "store";
   case ISD::VLOAD:              return "vload";
-  case ISD::LOADX:              return "loadx";
   case ISD::TRUNCSTORE:         return "truncstore";
   case ISD::VAARG:              return "vaarg";
   case ISD::VACOPY:             return "vacopy";

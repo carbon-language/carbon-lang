@@ -330,7 +330,7 @@ SparcTargetLowering::LowerArguments(Function &F, SelectionDAG &DAG) {
         SDOperand FIPtr = DAG.getFrameIndex(FrameIdx, MVT::i32);
         SDOperand Load;
         if (ObjectVT == MVT::i32) {
-          Load = DAG.getLoad(MVT::i32, Root, FIPtr, DAG.getSrcValue(0));
+          Load = DAG.getLoad(MVT::i32, Root, FIPtr, NULL, 0);
         } else {
           ISD::LoadExtType LoadOp =
             I->getType()->isSigned() ? ISD::SEXTLOAD : ISD::ZEXTLOAD;
@@ -340,7 +340,7 @@ SparcTargetLowering::LowerArguments(Function &F, SelectionDAG &DAG) {
           FIPtr = DAG.getNode(ISD::ADD, MVT::i32, FIPtr,
                               DAG.getConstant(Offset, MVT::i32));
           Load = DAG.getExtLoad(LoadOp, MVT::i32, Root, FIPtr,
-                                DAG.getSrcValue(0), ObjectVT);
+                                NULL, 0, ObjectVT);
           Load = DAG.getNode(ISD::TRUNCATE, ObjectVT, Load);
         }
         ArgValues.push_back(Load);
@@ -363,7 +363,7 @@ SparcTargetLowering::LowerArguments(Function &F, SelectionDAG &DAG) {
       } else {
         int FrameIdx = MF.getFrameInfo()->CreateFixedObject(4, ArgOffset);
         SDOperand FIPtr = DAG.getFrameIndex(FrameIdx, MVT::i32);
-        SDOperand Load = DAG.getLoad(MVT::f32, Root, FIPtr, DAG.getSrcValue(0));
+        SDOperand Load = DAG.getLoad(MVT::f32, Root, FIPtr, NULL, 0);
         ArgValues.push_back(Load);
       }
       ArgOffset += 4;
@@ -384,8 +384,7 @@ SparcTargetLowering::LowerArguments(Function &F, SelectionDAG &DAG) {
         // because the double wouldn't be aligned!
         int FrameIdx = MF.getFrameInfo()->CreateFixedObject(8, ArgOffset);
         SDOperand FIPtr = DAG.getFrameIndex(FrameIdx, MVT::i32);
-        ArgValues.push_back(DAG.getLoad(MVT::f64, Root, FIPtr, 
-                                        DAG.getSrcValue(0)));
+        ArgValues.push_back(DAG.getLoad(MVT::f64, Root, FIPtr, NULL, 0));
       } else {
         SDOperand HiVal;
         if (CurArgReg < ArgRegEnd) {  // Lives in an incoming GPR
@@ -395,7 +394,7 @@ SparcTargetLowering::LowerArguments(Function &F, SelectionDAG &DAG) {
         } else {
           int FrameIdx = MF.getFrameInfo()->CreateFixedObject(4, ArgOffset);
           SDOperand FIPtr = DAG.getFrameIndex(FrameIdx, MVT::i32);
-          HiVal = DAG.getLoad(MVT::i32, Root, FIPtr, DAG.getSrcValue(0));
+          HiVal = DAG.getLoad(MVT::i32, Root, FIPtr, NULL, 0);
         }
         
         SDOperand LoVal;
@@ -406,7 +405,7 @@ SparcTargetLowering::LowerArguments(Function &F, SelectionDAG &DAG) {
         } else {
           int FrameIdx = MF.getFrameInfo()->CreateFixedObject(4, ArgOffset+4);
           SDOperand FIPtr = DAG.getFrameIndex(FrameIdx, MVT::i32);
-          LoVal = DAG.getLoad(MVT::i32, Root, FIPtr, DAG.getSrcValue(0));
+          LoVal = DAG.getLoad(MVT::i32, Root, FIPtr, NULL, 0);
         }
         
         // Compose the two halves together into an i64 unit.
@@ -794,8 +793,9 @@ LowerOperation(SDOperand Op, SelectionDAG &DAG) {
     MVT::ValueType VT = Node->getValueType(0);
     SDOperand InChain = Node->getOperand(0);
     SDOperand VAListPtr = Node->getOperand(1);
+    SrcValueSDNode *SV = cast<SrcValueSDNode>(Node->getOperand(2));
     SDOperand VAList = DAG.getLoad(getPointerTy(), InChain, VAListPtr,
-                                   Node->getOperand(2));
+                                   SV->getValue(), SV->getOffset());
     // Increment the pointer, VAList, to the next vaarg
     SDOperand NextPtr = DAG.getNode(ISD::ADD, getPointerTy(), VAList, 
                                     DAG.getConstant(MVT::getSizeInBits(VT)/8, 
@@ -806,10 +806,10 @@ LowerOperation(SDOperand Op, SelectionDAG &DAG) {
     // Load the actual argument out of the pointer VAList, unless this is an
     // f64 load.
     if (VT != MVT::f64) {
-      return DAG.getLoad(VT, InChain, VAList, DAG.getSrcValue(0));
+      return DAG.getLoad(VT, InChain, VAList, NULL, 0);
     } else {
       // Otherwise, load it as i64, then do a bitconvert.
-      SDOperand V = DAG.getLoad(MVT::i64, InChain, VAList, DAG.getSrcValue(0));
+      SDOperand V = DAG.getLoad(MVT::i64, InChain, VAList, NULL, 0);
       std::vector<MVT::ValueType> Tys;
       Tys.push_back(MVT::f64);
       Tys.push_back(MVT::Other);

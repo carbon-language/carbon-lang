@@ -311,7 +311,7 @@ const char *PPCTargetLowering::getTargetNodeName(unsigned Opcode) const {
 static bool isFloatingPointZero(SDOperand Op) {
   if (ConstantFPSDNode *CFP = dyn_cast<ConstantFPSDNode>(Op))
     return CFP->isExactlyValue(-0.0) || CFP->isExactlyValue(0.0);
-  else if (ISD::isEXTLoad(Op.Val) || Op.getOpcode() == ISD::LOAD) {
+  else if (ISD::isEXTLoad(Op.Val) || ISD::isNON_EXTLoad(Op.Val)) {
     // Maybe this has already been legalized into the constant pool?
     if (ConstantPoolSDNode *CP = dyn_cast<ConstantPoolSDNode>(Op.getOperand(1)))
       if (ConstantFP *CFP = dyn_cast<ConstantFP>(CP->getConstVal()))
@@ -694,7 +694,7 @@ static SDOperand LowerGlobalAddress(SDOperand Op, SelectionDAG &DAG) {
   
   // If the global is weak or external, we have to go through the lazy
   // resolution stub.
-  return DAG.getLoad(PtrVT, DAG.getEntryNode(), Lo, DAG.getSrcValue(0));
+  return DAG.getLoad(PtrVT, DAG.getEntryNode(), Lo, NULL, 0);
 }
 
 static SDOperand LowerSETCC(SDOperand Op, SelectionDAG &DAG) {
@@ -873,8 +873,7 @@ static SDOperand LowerFORMAL_ARGUMENTS(SDOperand Op, SelectionDAG &DAG,
       if (!Op.Val->hasNUsesOfValue(0, ArgNo)) {
         int FI = MFI->CreateFixedObject(ObjSize, CurArgOffset);
         SDOperand FIN = DAG.getFrameIndex(FI, PtrVT);
-        ArgVal = DAG.getLoad(ObjectVT, Root, FIN,
-                             DAG.getSrcValue(NULL));
+        ArgVal = DAG.getLoad(ObjectVT, Root, FIN, NULL, 0);
       } else {
         // Don't emit a dead load.
         ArgVal = DAG.getNode(ISD::UNDEF, ObjectVT);
@@ -1051,16 +1050,14 @@ static SDOperand LowerCALL(SDOperand Op, SelectionDAG &DAG) {
 
           // Float varargs are always shadowed in available integer registers
           if (GPR_idx != NumGPRs) {
-            SDOperand Load = DAG.getLoad(PtrVT, Store, PtrOff,
-                                         DAG.getSrcValue(NULL));
+            SDOperand Load = DAG.getLoad(PtrVT, Store, PtrOff, NULL, 0);
             MemOpChains.push_back(Load.getValue(1));
             RegsToPass.push_back(std::make_pair(GPR[GPR_idx++], Load));
           }
           if (GPR_idx != NumGPRs && Arg.getValueType() == MVT::f64) {
             SDOperand ConstFour = DAG.getConstant(4, PtrOff.getValueType());
             PtrOff = DAG.getNode(ISD::ADD, PtrVT, PtrOff, ConstFour);
-            SDOperand Load = DAG.getLoad(PtrVT, Store, PtrOff,
-                                         DAG.getSrcValue(NULL));
+            SDOperand Load = DAG.getLoad(PtrVT, Store, PtrOff, NULL, 0);
             MemOpChains.push_back(Load.getValue(1));
             RegsToPass.push_back(std::make_pair(GPR[GPR_idx++], Load));
           }
@@ -1401,7 +1398,7 @@ static SDOperand LowerSINT_TO_FP(SDOperand Op, SelectionDAG &DAG) {
                                 DAG.getEntryNode(), Ext64, FIdx,
                                 DAG.getSrcValue(NULL));
   // Load the value as a double.
-  SDOperand Ld = DAG.getLoad(MVT::f64, Store, FIdx, DAG.getSrcValue(NULL));
+  SDOperand Ld = DAG.getLoad(MVT::f64, Store, FIdx, NULL, 0);
   
   // FCFID it and return it.
   SDOperand FP = DAG.getNode(PPCISD::FCFID, MVT::f64, Ld);
@@ -2124,7 +2121,7 @@ static SDOperand LowerSCALAR_TO_VECTOR(SDOperand Op, SelectionDAG &DAG) {
   SDOperand Store = DAG.getStore(DAG.getEntryNode(),
                                  Op.getOperand(0), FIdx,DAG.getSrcValue(NULL));
   // Load it out.
-  return DAG.getLoad(Op.getValueType(), Store, FIdx, DAG.getSrcValue(NULL));
+  return DAG.getLoad(Op.getValueType(), Store, FIdx, NULL, 0);
 }
 
 static SDOperand LowerMUL(SDOperand Op, SelectionDAG &DAG) {
@@ -2383,18 +2380,20 @@ SDOperand PPCTargetLowering::PerformDAGCombine(SDNode *N,
     break;
   case ISD::BSWAP:
     // Turn BSWAP (LOAD) -> lhbrx/lwbrx.
-    if (N->getOperand(0).getOpcode() == ISD::LOAD &&
+    if (ISD::isNON_EXTLoad(N->getOperand(0).Val) &&
         N->getOperand(0).hasOneUse() &&
         (N->getValueType(0) == MVT::i32 || N->getValueType(0) == MVT::i16)) {
       SDOperand Load = N->getOperand(0);
+      LoadSDNode *LD = cast<LoadSDNode>(Load);
       // Create the byte-swapping load.
       std::vector<MVT::ValueType> VTs;
       VTs.push_back(MVT::i32);
       VTs.push_back(MVT::Other);
+      SDOperand SV = DAG.getSrcValue(LD->getSrcValue(), LD->getSrcValueOffset());
       SDOperand Ops[] = {
-        Load.getOperand(0),   // Chain
-        Load.getOperand(1),   // Ptr
-        Load.getOperand(2),   // SrcValue
+        LD->getChain(),    // Chain
+        LD->getBasePtr(),  // Ptr
+        SV,                // SrcValue
         DAG.getValueType(N->getValueType(0)) // VT
       };
       SDOperand BSLoad = DAG.getNode(PPCISD::LBRX, VTs, Ops, 4);

@@ -164,12 +164,6 @@ def SDTStore : SDTypeProfile<0, 2, [ // store
   SDTCisPtrTy<1>  
 ]>;
 
-def SDTLoadX : SDTypeProfile<1, 4, [  // loadX
-  SDTCisPtrTy<1>, SDTCisVT<2, OtherVT>, SDTCisVT<3, OtherVT>, SDTCisVT<4, i32>
-]>;
-def SDTIntExtLoad : SDTypeProfile<1, 3, [  // extload, sextload, zextload
-  SDTCisInt<0>, SDTCisPtrTy<1>, SDTCisVT<2, OtherVT>, SDTCisVT<3, OtherVT>
-]>;
 def SDTTruncStore : SDTypeProfile<0, 4, [  // truncstore
   SDTCisPtrTy<1>, SDTCisVT<2, OtherVT>, SDTCisVT<3, OtherVT>
 ]>;
@@ -305,12 +299,10 @@ def brind      : SDNode<"ISD::BRIND"      , SDTBrind,  [SDNPHasChain]>;
 def br         : SDNode<"ISD::BR"         , SDTBr,     [SDNPHasChain]>;
 def ret        : SDNode<"ISD::RET"        , SDTRet,    [SDNPHasChain]>;
 
-def load       : SDNode<"ISD::LOAD"       , SDTLoad,  [SDNPHasChain]>;
+// Do not use ld directly. Use load, extload, sextload, zextload (see below).
+def ld         : SDNode<"ISD::LOAD"       , SDTLoad,  [SDNPHasChain]>;
 def store      : SDNode<"ISD::STORE"      , SDTStore, [SDNPHasChain]>;
 
-// Do not use loadx directly. Use extload, sextload and zextload (see below)
-// which pass in a dummy srcvalue node which tblgen will skip over.
-def loadx      : SDNode<"ISD::LOADX"      , SDTLoadX,      [SDNPHasChain]>;
 def truncst    : SDNode<"ISD::TRUNCSTORE" , SDTTruncStore, [SDNPHasChain]>;
 
 def vector_shuffle : SDNode<"ISD::VECTOR_SHUFFLE", SDTVecShuffle, []>;
@@ -412,13 +404,79 @@ def vnot : PatFrag<(ops node:$in), (xor node:$in, immAllOnesV)>;
 def vnot_conv : PatFrag<(ops node:$in), (xor node:$in, immAllOnesV_bc)>;
 def ineg : PatFrag<(ops node:$in), (sub 0, node:$in)>;
 
+def load : PatFrag<(ops node:$ptr), (ld node:$ptr), [{
+  return ISD::isNON_EXTLoad(N);
+}]>;
+
 // extending load & truncstore fragments.
-def extload       : PatFrag<(ops node:$ptr, node:$vt),
-                            (loadx node:$ptr, srcvalue:$dummy, node:$vt, 0)>;
-def sextload      : PatFrag<(ops node:$ptr, node:$vt),
-                            (loadx node:$ptr, srcvalue:$dummy, node:$vt, 1)>;
-def zextload      : PatFrag<(ops node:$ptr, node:$vt),
-                            (loadx node:$ptr, srcvalue:$dummy, node:$vt, 2)>;
+def extloadi1  : PatFrag<(ops node:$ptr), (ld node:$ptr), [{
+  if (ISD::isEXTLoad(N))
+    return cast<LoadSDNode>(N)->getLoadVT() == MVT::i1;
+  return false;
+}]>;
+def extloadi8  : PatFrag<(ops node:$ptr), (ld node:$ptr), [{
+  if (ISD::isEXTLoad(N))
+    return cast<LoadSDNode>(N)->getLoadVT() == MVT::i8;
+  return false;
+}]>;
+def extloadi16 : PatFrag<(ops node:$ptr), (ld node:$ptr), [{
+  if (ISD::isEXTLoad(N))
+    return cast<LoadSDNode>(N)->getLoadVT() == MVT::i16;
+  return false;
+}]>;
+def extloadi32 : PatFrag<(ops node:$ptr), (ld node:$ptr), [{
+  if (ISD::isEXTLoad(N))
+    return cast<LoadSDNode>(N)->getLoadVT() == MVT::i32;
+  return false;
+}]>;
+def extloadf32 : PatFrag<(ops node:$ptr), (ld node:$ptr), [{
+  if (ISD::isEXTLoad(N))
+    return cast<LoadSDNode>(N)->getLoadVT() == MVT::f32;
+  return false;
+}]>;
+
+def sextloadi1 : PatFrag<(ops node:$ptr), (ld node:$ptr), [{
+  if (ISD::isSEXTLoad(N))
+    return cast<LoadSDNode>(N)->getLoadVT() == MVT::i1;
+  return false;
+}]>;
+def sextloadi8 : PatFrag<(ops node:$ptr), (ld node:$ptr), [{
+  if (ISD::isSEXTLoad(N))
+    return cast<LoadSDNode>(N)->getLoadVT() == MVT::i8;
+  return false;
+}]>;
+def sextloadi16 : PatFrag<(ops node:$ptr), (ld node:$ptr), [{
+  if (ISD::isSEXTLoad(N))
+    return cast<LoadSDNode>(N)->getLoadVT() == MVT::i16;
+  return false;
+}]>;
+def sextloadi32 : PatFrag<(ops node:$ptr), (ld node:$ptr), [{
+  if (ISD::isSEXTLoad(N))
+    return cast<LoadSDNode>(N)->getLoadVT() == MVT::i32;
+  return false;
+}]>;
+
+def zextloadi1 : PatFrag<(ops node:$ptr), (ld node:$ptr), [{
+  if (ISD::isZEXTLoad(N))
+    return cast<LoadSDNode>(N)->getLoadVT() == MVT::i1;
+  return false;
+}]>;
+def zextloadi8 : PatFrag<(ops node:$ptr), (ld node:$ptr), [{
+  if (ISD::isZEXTLoad(N))
+    return cast<LoadSDNode>(N)->getLoadVT() == MVT::i8;
+  return false;
+}]>;
+def zextloadi16 : PatFrag<(ops node:$ptr), (ld node:$ptr), [{
+  if (ISD::isZEXTLoad(N))
+    return cast<LoadSDNode>(N)->getLoadVT() == MVT::i16;
+  return false;
+}]>;
+def zextloadi32 : PatFrag<(ops node:$ptr), (ld node:$ptr), [{
+  if (ISD::isZEXTLoad(N))
+    return cast<LoadSDNode>(N)->getLoadVT() == MVT::i32;
+  return false;
+}]>;
+
 def truncstore    : PatFrag<(ops node:$val, node:$ptr, node:$vt),
                             (truncst node:$val, node:$ptr, srcvalue:$dummy, 
                             node:$vt)>;

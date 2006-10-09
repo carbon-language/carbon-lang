@@ -254,7 +254,7 @@ static SDOperand LowerFORMAL_ARGUMENTS(SDOperand Op, SelectionDAG &DAG,
       // Create the SelectionDAG nodes corresponding to a load
       //from this parameter
       SDOperand FIN = DAG.getFrameIndex(FI, MVT::i64);
-      ArgVal = DAG.getLoad(ObjectVT, Root, FIN, DAG.getSrcValue(NULL));
+      ArgVal = DAG.getLoad(ObjectVT, Root, FIN, NULL, 0);
     }
     ArgValues.push_back(ArgVal);
   }
@@ -430,7 +430,7 @@ SDOperand AlphaTargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
       SDOperand FI = DAG.getFrameIndex(FrameIdx, MVT::i64);
       SDOperand ST = DAG.getStore(DAG.getEntryNode(),
                                   Op.getOperand(0), FI, DAG.getSrcValue(0));
-      LD = DAG.getLoad(MVT::f64, ST, FI, DAG.getSrcValue(0));
+      LD = DAG.getLoad(MVT::f64, ST, FI, NULL, 0);
       }
     SDOperand FP = DAG.getNode(isDouble?AlphaISD::CVTQT_:AlphaISD::CVTQS_,
                                isDouble?MVT::f64:MVT::f32, LD);
@@ -453,7 +453,7 @@ SDOperand AlphaTargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
       SDOperand FI = DAG.getFrameIndex(FrameIdx, MVT::i64);
       SDOperand ST = DAG.getStore(DAG.getEntryNode(),
                                   src, FI, DAG.getSrcValue(0));
-      return DAG.getLoad(MVT::i64, ST, FI, DAG.getSrcValue(0));
+      return DAG.getLoad(MVT::i64, ST, FI, NULL, 0);
       }
   }
   case ISD::ConstantPool: {
@@ -523,13 +523,14 @@ SDOperand AlphaTargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
   case ISD::VAARG: {
     SDOperand Chain = Op.getOperand(0);
     SDOperand VAListP = Op.getOperand(1);
-    SDOperand VAListS = Op.getOperand(2);
+    SrcValueSDNode *VAListS = cast<SrcValueSDNode>(Op.getOperand(2));
     
-    SDOperand Base = DAG.getLoad(MVT::i64, Chain, VAListP, VAListS);
+    SDOperand Base = DAG.getLoad(MVT::i64, Chain, VAListP, VAListS->getValue(),
+                                 VAListS->getOffset());
     SDOperand Tmp = DAG.getNode(ISD::ADD, MVT::i64, VAListP,
                                 DAG.getConstant(8, MVT::i64));
     SDOperand Offset = DAG.getExtLoad(ISD::SEXTLOAD, MVT::i64, Base.getValue(1),
-                                      Tmp, DAG.getSrcValue(0), MVT::i32);
+                                      Tmp, NULL, 0, MVT::i32);
     SDOperand DataPtr = DAG.getNode(ISD::ADD, MVT::i64, Base, Offset);
     if (MVT::isFloatingPoint(Op.getValueType()))
     {
@@ -551,10 +552,9 @@ SDOperand AlphaTargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
     SDOperand Result;
     if (Op.getValueType() == MVT::i32)
       Result = DAG.getExtLoad(ISD::SEXTLOAD, MVT::i64, Update, DataPtr,
-                              DAG.getSrcValue(0), MVT::i32);
+                              NULL, 0, MVT::i32);
     else
-      Result = DAG.getLoad(Op.getValueType(), Update, DataPtr, 
-                           DAG.getSrcValue(0));
+      Result = DAG.getLoad(Op.getValueType(), Update, DataPtr, NULL, 0);
     return Result;
   }
   case ISD::VACOPY: {
@@ -562,14 +562,14 @@ SDOperand AlphaTargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
     SDOperand DestP = Op.getOperand(1);
     SDOperand SrcP = Op.getOperand(2);
     SDOperand DestS = Op.getOperand(3);
-    SDOperand SrcS = Op.getOperand(4);
+    SrcValueSDNode *SrcS = cast<SrcValueSDNode>(Op.getOperand(4));
     
-    SDOperand Val = DAG.getLoad(getPointerTy(), Chain, SrcP, SrcS);
+    SDOperand Val = DAG.getLoad(getPointerTy(), Chain, SrcP,
+                                SrcS->getValue(), SrcS->getOffset());
     SDOperand Result = DAG.getStore(Val.getValue(1), Val, DestP, DestS);
     SDOperand NP = DAG.getNode(ISD::ADD, MVT::i64, SrcP, 
                                DAG.getConstant(8, MVT::i64));
-    Val = DAG.getExtLoad(ISD::SEXTLOAD, MVT::i64, Result, NP,
-                         DAG.getSrcValue(0), MVT::i32);
+    Val = DAG.getExtLoad(ISD::SEXTLOAD, MVT::i64, Result, NP, NULL,0, MVT::i32);
     SDOperand NPD = DAG.getNode(ISD::ADD, MVT::i64, DestP,
                                 DAG.getConstant(8, MVT::i64));
     return DAG.getNode(ISD::TRUNCSTORE, MVT::Other, Val.getValue(1),

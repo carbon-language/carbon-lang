@@ -808,10 +808,9 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
       SDOperand CPIdx = DAG.getConstantPool(LLVMC, TLI.getPointerTy());
       if (Extend) {
         Result = DAG.getExtLoad(ISD::EXTLOAD, MVT::f64, DAG.getEntryNode(),
-                                CPIdx, DAG.getSrcValue(NULL), MVT::f32);
+                                CPIdx, NULL, 0, MVT::f32);
       } else {
-        Result = DAG.getLoad(VT, DAG.getEntryNode(), CPIdx,
-                             DAG.getSrcValue(NULL));
+        Result = DAG.getLoad(VT, DAG.getEntryNode(), CPIdx, NULL, 0);
       }
     }
     break;
@@ -941,7 +940,7 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
       // Store the scalar value.
       Ch = DAG.getStore(Ch, Tmp2, StackPtr2, DAG.getSrcValue(NULL));
       // Load the updated vector.
-      Result = DAG.getLoad(VT, Ch, StackPtr, DAG.getSrcValue(NULL));
+      Result = DAG.getLoad(VT, Ch, StackPtr, NULL, 0);
       break;
     }
     }
@@ -1335,104 +1334,106 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
     }
     break;
   case ISD::LOAD: {
-    Tmp1 = LegalizeOp(Node->getOperand(0));  // Legalize the chain.
-    Tmp2 = LegalizeOp(Node->getOperand(1));  // Legalize the pointer.
+    LoadSDNode *LD = cast<LoadSDNode>(Node);
+    Tmp1 = LegalizeOp(LD->getChain());   // Legalize the chain.
+    Tmp2 = LegalizeOp(LD->getBasePtr()); // Legalize the base pointer.
 
-    MVT::ValueType VT = Node->getValueType(0);
-    Result = DAG.UpdateNodeOperands(Result, Tmp1, Tmp2, Node->getOperand(2));
-    Tmp3 = Result.getValue(0);
-    Tmp4 = Result.getValue(1);
+    ISD::LoadExtType ExtType = LD->getExtensionType();
+    if (ExtType == ISD::NON_EXTLOAD) {
+      MVT::ValueType VT = Node->getValueType(0);
+      Result = DAG.UpdateNodeOperands(Result, Tmp1, Tmp2, LD->getOffset());
+      Tmp3 = Result.getValue(0);
+      Tmp4 = Result.getValue(1);
     
-    switch (TLI.getOperationAction(Node->getOpcode(), VT)) {
-    default: assert(0 && "This action is not supported yet!");
-    case TargetLowering::Legal: break;
-    case TargetLowering::Custom:
-      Tmp1 = TLI.LowerOperation(Tmp3, DAG);
-      if (Tmp1.Val) {
-        Tmp3 = LegalizeOp(Tmp1);
-        Tmp4 = LegalizeOp(Tmp1.getValue(1));
-      }
-      break;
-    case TargetLowering::Promote: {
-      // Only promote a load of vector type to another.
-      assert(MVT::isVector(VT) && "Cannot promote this load!");
-      // Change base type to a different vector type.
-      MVT::ValueType NVT = TLI.getTypeToPromoteTo(Node->getOpcode(), VT);
-
-      Tmp1 = DAG.getLoad(NVT, Tmp1, Tmp2, Node->getOperand(2));
-      Tmp3 = LegalizeOp(DAG.getNode(ISD::BIT_CONVERT, VT, Tmp1));
-      Tmp4 = LegalizeOp(Tmp1.getValue(1));
-      break;
-    }
-    }
-    // Since loads produce two values, make sure to remember that we 
-    // legalized both of them.
-    AddLegalizedOperand(SDOperand(Node, 0), Tmp3);
-    AddLegalizedOperand(SDOperand(Node, 1), Tmp4);
-    return Op.ResNo ? Tmp4 : Tmp3;
-  }
-  case ISD::LOADX: {
-    Tmp1 = LegalizeOp(Node->getOperand(0));  // Legalize the chain.
-    Tmp2 = LegalizeOp(Node->getOperand(1));  // Legalize the pointer.
-
-    MVT::ValueType SrcVT = cast<VTSDNode>(Node->getOperand(3))->getVT();
-    unsigned LType = cast<ConstantSDNode>(Node->getOperand(4))->getValue();
-    switch (TLI.getLoadXAction(LType, SrcVT)) {
-    default: assert(0 && "This action is not supported yet!");
-    case TargetLowering::Promote:
-      assert(SrcVT == MVT::i1 && "Can only promote LOADX from i1 -> i8!");
-      Result = DAG.UpdateNodeOperands(Result, Tmp1, Tmp2, Node->getOperand(2),
-                                      DAG.getValueType(MVT::i8),
-                                      Node->getOperand(4));
-      Tmp1 = Result.getValue(0);
-      Tmp2 = Result.getValue(1);
-      break;
-    case TargetLowering::Custom:
-      isCustom = true;
-      // FALLTHROUGH
-    case TargetLowering::Legal:
-      Result = DAG.UpdateNodeOperands(Result, Tmp1, Tmp2, Node->getOperand(2),
-                                      Node->getOperand(3), Node->getOperand(4));
-      Tmp1 = Result.getValue(0);
-      Tmp2 = Result.getValue(1);
-      
-      if (isCustom) {
-        Tmp3 = TLI.LowerOperation(Result, DAG);
-        if (Tmp3.Val) {
-          Tmp1 = LegalizeOp(Tmp3);
-          Tmp2 = LegalizeOp(Tmp3.getValue(1));
+      switch (TLI.getOperationAction(Node->getOpcode(), VT)) {
+      default: assert(0 && "This action is not supported yet!");
+      case TargetLowering::Legal: break;
+      case TargetLowering::Custom:
+        Tmp1 = TLI.LowerOperation(Tmp3, DAG);
+        if (Tmp1.Val) {
+          Tmp3 = LegalizeOp(Tmp1);
+          Tmp4 = LegalizeOp(Tmp1.getValue(1));
         }
-      }
-      break;
-    case TargetLowering::Expand:
-      // f64 = EXTLOAD f32 should expand to LOAD, FP_EXTEND
-      if (SrcVT == MVT::f32 && Node->getValueType(0) == MVT::f64) {
-        SDOperand Load = DAG.getLoad(SrcVT, Tmp1, Tmp2, Node->getOperand(2));
-        Result = DAG.getNode(ISD::FP_EXTEND, Node->getValueType(0), Load);
-        Tmp1 = LegalizeOp(Result);  // Relegalize new nodes.
-        Tmp2 = LegalizeOp(Load.getValue(1));
+        break;
+      case TargetLowering::Promote: {
+        // Only promote a load of vector type to another.
+        assert(MVT::isVector(VT) && "Cannot promote this load!");
+        // Change base type to a different vector type.
+        MVT::ValueType NVT = TLI.getTypeToPromoteTo(Node->getOpcode(), VT);
+
+        Tmp1 = DAG.getLoad(NVT, Tmp1, Tmp2, LD->getSrcValue(),
+                           LD->getSrcValueOffset());
+        Tmp3 = LegalizeOp(DAG.getNode(ISD::BIT_CONVERT, VT, Tmp1));
+        Tmp4 = LegalizeOp(Tmp1.getValue(1));
         break;
       }
-      assert(LType != ISD::EXTLOAD && "EXTLOAD should always be supported!");
-      // Turn the unsupported load into an EXTLOAD followed by an explicit
-      // zero/sign extend inreg.
-      Result = DAG.getExtLoad(ISD::EXTLOAD, Node->getValueType(0),
-                              Tmp1, Tmp2, Node->getOperand(2), SrcVT);
-      SDOperand ValRes;
-      if (LType == ISD::SEXTLOAD)
-        ValRes = DAG.getNode(ISD::SIGN_EXTEND_INREG, Result.getValueType(),
-                             Result, DAG.getValueType(SrcVT));
-      else
-        ValRes = DAG.getZeroExtendInReg(Result, SrcVT);
-      Tmp1 = LegalizeOp(ValRes);  // Relegalize new nodes.
-      Tmp2 = LegalizeOp(Result.getValue(1));  // Relegalize new nodes.
+      }
+      // Since loads produce two values, make sure to remember that we 
+      // legalized both of them.
+      AddLegalizedOperand(SDOperand(Node, 0), Tmp3);
+      AddLegalizedOperand(SDOperand(Node, 1), Tmp4);
+      return Op.ResNo ? Tmp4 : Tmp3;
+    } else {
+      MVT::ValueType SrcVT = LD->getLoadVT();
+      switch (TLI.getLoadXAction(ExtType, SrcVT)) {
+      default: assert(0 && "This action is not supported yet!");
+      case TargetLowering::Promote:
+        assert(SrcVT == MVT::i1 &&
+               "Can only promote extending LOAD from i1 -> i8!");
+        Result = DAG.getExtLoad(ExtType, Node->getValueType(0), Tmp1, Tmp2,
+                                LD->getSrcValue(), LD->getSrcValueOffset(),
+                                MVT::i8);
+      Tmp1 = Result.getValue(0);
+      Tmp2 = Result.getValue(1);
       break;
+      case TargetLowering::Custom:
+        isCustom = true;
+        // FALLTHROUGH
+      case TargetLowering::Legal:
+        Result = DAG.UpdateNodeOperands(Result, Tmp1, Tmp2, LD->getOffset());
+        Tmp1 = Result.getValue(0);
+        Tmp2 = Result.getValue(1);
+      
+        if (isCustom) {
+          Tmp3 = TLI.LowerOperation(Result, DAG);
+          if (Tmp3.Val) {
+            Tmp1 = LegalizeOp(Tmp3);
+            Tmp2 = LegalizeOp(Tmp3.getValue(1));
+          }
+        }
+        break;
+      case TargetLowering::Expand:
+        // f64 = EXTLOAD f32 should expand to LOAD, FP_EXTEND
+        if (SrcVT == MVT::f32 && Node->getValueType(0) == MVT::f64) {
+          SDOperand Load = DAG.getLoad(SrcVT, Tmp1, Tmp2, LD->getSrcValue(),
+                                       LD->getSrcValueOffset());
+          Result = DAG.getNode(ISD::FP_EXTEND, Node->getValueType(0), Load);
+          Tmp1 = LegalizeOp(Result);  // Relegalize new nodes.
+          Tmp2 = LegalizeOp(Load.getValue(1));
+          break;
+        }
+        assert(ExtType != ISD::EXTLOAD && "EXTLOAD should always be supported!");
+        // Turn the unsupported load into an EXTLOAD followed by an explicit
+        // zero/sign extend inreg.
+        Result = DAG.getExtLoad(ISD::EXTLOAD, Node->getValueType(0),
+                                Tmp1, Tmp2, LD->getSrcValue(),
+                                LD->getSrcValueOffset(), SrcVT);
+        SDOperand ValRes;
+        if (ExtType == ISD::SEXTLOAD)
+          ValRes = DAG.getNode(ISD::SIGN_EXTEND_INREG, Result.getValueType(),
+                               Result, DAG.getValueType(SrcVT));
+        else
+          ValRes = DAG.getZeroExtendInReg(Result, SrcVT);
+        Tmp1 = LegalizeOp(ValRes);  // Relegalize new nodes.
+        Tmp2 = LegalizeOp(Result.getValue(1));  // Relegalize new nodes.
+        break;
+      }
+      // Since loads produce two values, make sure to remember that we legalized
+      // both of them.
+      AddLegalizedOperand(SDOperand(Node, 0), Tmp1);
+      AddLegalizedOperand(SDOperand(Node, 1), Tmp2);
+      return Op.ResNo ? Tmp2 : Tmp1;
     }
-    // Since loads produce two values, make sure to remember that we legalized
-    // both of them.
-    AddLegalizedOperand(SDOperand(Node, 0), Tmp1);
-    AddLegalizedOperand(SDOperand(Node, 1), Tmp2);
-    return Op.ResNo ? Tmp2 : Tmp1;
   }
   case ISD::EXTRACT_ELEMENT: {
     MVT::ValueType OpTy = Node->getOperand(0).getValueType();
@@ -2387,8 +2388,9 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
       }
       break;
     case TargetLowering::Expand: {
+      SrcValueSDNode *SV = cast<SrcValueSDNode>(Node->getOperand(2));
       SDOperand VAList = DAG.getLoad(TLI.getPointerTy(), Tmp1, Tmp2,
-                                     Node->getOperand(2));
+                                     SV->getValue(), SV->getOffset());
       // Increment the pointer, VAList, to the next vaarg
       Tmp3 = DAG.getNode(ISD::ADD, TLI.getPointerTy(), VAList, 
                          DAG.getConstant(MVT::getSizeInBits(VT)/8, 
@@ -2396,7 +2398,7 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
       // Store the incremented VAList to the legalized pointer
       Tmp3 = DAG.getStore(VAList.getValue(1), Tmp3, Tmp2,  Node->getOperand(2));
       // Load the actual argument out of the pointer VAList
-      Result = DAG.getLoad(VT, Tmp3, VAList, DAG.getSrcValue(0));
+      Result = DAG.getLoad(VT, Tmp3, VAList, NULL, 0);
       Tmp1 = LegalizeOp(Result.getValue(1));
       Result = LegalizeOp(Result);
       break;
@@ -2430,7 +2432,10 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
     case TargetLowering::Expand:
       // This defaults to loading a pointer from the input and storing it to the
       // output, returning the chain.
-      Tmp4 = DAG.getLoad(TLI.getPointerTy(), Tmp1, Tmp3, Node->getOperand(3));
+      SrcValueSDNode *SVD = cast<SrcValueSDNode>(Node->getOperand(3));
+      SrcValueSDNode *SVS = cast<SrcValueSDNode>(Node->getOperand(4));
+      Tmp4 = DAG.getLoad(TLI.getPointerTy(), Tmp1, Tmp3, SVD->getValue(),
+                         SVD->getOffset());
       Result = DAG.getStore(Tmp4.getValue(1), Tmp4, Tmp2, Node->getOperand(4));
       break;
     }
@@ -2874,8 +2879,7 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
                              Node->getOperand(0), StackSlot,
                              DAG.getSrcValue(NULL), DAG.getValueType(ExtraVT));
         Result = DAG.getExtLoad(ISD::EXTLOAD, Node->getValueType(0),
-                                Result, StackSlot, DAG.getSrcValue(NULL),
-                                ExtraVT);
+                                Result, StackSlot, NULL, 0, ExtraVT);
       } else {
         assert(0 && "Unknown op");
       }
@@ -3212,8 +3216,9 @@ SDOperand SelectionDAGLegalize::PromoteOp(SDOperand Op) {
       Tmp3 = DAG.getVAArg(VT, Tmp1, Tmp2, Node->getOperand(2));
       Result = TLI.CustomPromoteOperation(Tmp3, DAG);
     } else {
+      SrcValueSDNode *SV = cast<SrcValueSDNode>(Node->getOperand(2));
       SDOperand VAList = DAG.getLoad(TLI.getPointerTy(), Tmp1, Tmp2,
-                                     Node->getOperand(2));
+                                     SV->getValue(), SV->getOffset());
       // Increment the pointer, VAList, to the next vaarg
       Tmp3 = DAG.getNode(ISD::ADD, TLI.getPointerTy(), VAList, 
                          DAG.getConstant(MVT::getSizeInBits(VT)/8, 
@@ -3221,28 +3226,20 @@ SDOperand SelectionDAGLegalize::PromoteOp(SDOperand Op) {
       // Store the incremented VAList to the legalized pointer
       Tmp3 = DAG.getStore(VAList.getValue(1), Tmp3, Tmp2, Node->getOperand(2));
       // Load the actual argument out of the pointer VAList
-      Result = DAG.getExtLoad(ISD::EXTLOAD, NVT, Tmp3, VAList,
-                              DAG.getSrcValue(0), VT);
+      Result = DAG.getExtLoad(ISD::EXTLOAD, NVT, Tmp3, VAList, NULL, 0, VT);
     }
     // Remember that we legalized the chain.
     AddLegalizedOperand(Op.getValue(1), LegalizeOp(Result.getValue(1)));
     break;
 
-  case ISD::LOAD:
-    Result = DAG.getExtLoad(ISD::EXTLOAD, NVT, Node->getOperand(0),
-                            Node->getOperand(1), Node->getOperand(2), VT);
+  case ISD::LOAD: {
+    LoadSDNode *LD = cast<LoadSDNode>(Node);
+    Result = DAG.getExtLoad(ISD::EXTLOAD, NVT, LD->getChain(), LD->getBasePtr(),
+                            LD->getSrcValue(), LD->getSrcValueOffset(), VT);
     // Remember that we legalized the chain.
     AddLegalizedOperand(Op.getValue(1), LegalizeOp(Result.getValue(1)));
     break;
-  case ISD::LOADX:
-    Result =
-      DAG.getExtLoad((ISD::LoadExtType)Node->getConstantOperandVal(4),
-                     NVT, Node->getOperand(0), Node->getOperand(1),
-                     Node->getOperand(2),
-                     cast<VTSDNode>(Node->getOperand(3))->getVT());
-    // Remember that we legalized the chain.
-    AddLegalizedOperand(Op.getValue(1), LegalizeOp(Result.getValue(1)));
-    break;
+  }
   case ISD::SELECT:
     Tmp2 = PromoteOp(Node->getOperand(1));   // Legalize the op0
     Tmp3 = PromoteOp(Node->getOperand(2));   // Legalize the op1
@@ -3370,7 +3367,7 @@ SDOperand SelectionDAGLegalize::ExpandEXTRACT_VECTOR_ELT(SDOperand Op) {
                     DAG.getConstant(EltSize, Idx.getValueType()));
   StackPtr = DAG.getNode(ISD::ADD, Idx.getValueType(), Idx, StackPtr);
   
-  return DAG.getLoad(Op.getValueType(), Ch, StackPtr, DAG.getSrcValue(NULL));
+  return DAG.getLoad(Op.getValueType(), Ch, StackPtr, NULL, 0);
 }
 
 
@@ -3508,7 +3505,7 @@ SDOperand SelectionDAGLegalize::ExpandBIT_CONVERT(MVT::ValueType DestVT,
   SDOperand Store = DAG.getStore(DAG.getEntryNode(),
                                  SrcOp, FIPtr, DAG.getSrcValue(NULL));
   // Result is a load from the stack slot.
-  return DAG.getLoad(DestVT, Store, FIPtr, DAG.getSrcValue(0));
+  return DAG.getLoad(DestVT, Store, FIPtr, NULL, 0);
 }
 
 SDOperand SelectionDAGLegalize::ExpandSCALAR_TO_VECTOR(SDNode *Node) {
@@ -3517,7 +3514,7 @@ SDOperand SelectionDAGLegalize::ExpandSCALAR_TO_VECTOR(SDNode *Node) {
   SDOperand StackPtr = CreateStackTemporary(Node->getValueType(0));
   SDOperand Ch = DAG.getStore(DAG.getEntryNode(), Node->getOperand(0), StackPtr,
                               DAG.getSrcValue(NULL));
-  return DAG.getLoad(Node->getValueType(0), Ch, StackPtr,DAG.getSrcValue(NULL));
+  return DAG.getLoad(Node->getValueType(0), Ch, StackPtr, NULL, 0);
 }
 
 
@@ -3581,8 +3578,7 @@ SDOperand SelectionDAGLegalize::ExpandBUILD_VECTOR(SDNode *Node) {
     }
     Constant *CP = ConstantPacked::get(CV);
     SDOperand CPIdx = DAG.getConstantPool(CP, TLI.getPointerTy());
-    return DAG.getLoad(VT, DAG.getEntryNode(), CPIdx,
-                       DAG.getSrcValue(NULL));
+    return DAG.getLoad(VT, DAG.getEntryNode(), CPIdx, NULL, 0);
   }
   
   if (SplatValue.Val) {   // Splat of one value?
@@ -3677,7 +3673,7 @@ SDOperand SelectionDAGLegalize::ExpandBUILD_VECTOR(SDNode *Node) {
     StoreChain = DAG.getEntryNode();
   
   // Result is a load from the stack slot.
-  return DAG.getLoad(VT, StoreChain, FIPtr, DAG.getSrcValue(0));
+  return DAG.getLoad(VT, StoreChain, FIPtr, NULL, 0);
 }
 
 /// CreateStackTemporary - Create a stack temporary, suitable for holding the
@@ -3933,12 +3929,11 @@ ExpandIntToFP(bool isSigned, MVT::ValueType DestTy, SDOperand Source) {
     CPIdx = DAG.getNode(ISD::ADD, TLI.getPointerTy(), CPIdx, CstOffset);
     SDOperand FudgeInReg;
     if (DestTy == MVT::f32)
-      FudgeInReg = DAG.getLoad(MVT::f32, DAG.getEntryNode(), CPIdx,
-                               DAG.getSrcValue(NULL));
+      FudgeInReg = DAG.getLoad(MVT::f32, DAG.getEntryNode(), CPIdx, NULL, 0);
     else {
       assert(DestTy == MVT::f64 && "Unexpected conversion");
       FudgeInReg = DAG.getExtLoad(ISD::EXTLOAD, MVT::f64, DAG.getEntryNode(),
-                                  CPIdx, DAG.getSrcValue(NULL), MVT::f32);
+                                  CPIdx, NULL, 0, MVT::f32);
     }
     return DAG.getNode(ISD::FADD, DestTy, SignedConv, FudgeInReg);
   }
@@ -4017,8 +4012,7 @@ SDOperand SelectionDAGLegalize::ExpandLegalINT_TO_FP(bool isSigned,
     // store the hi of the constructed double - biased exponent
     SDOperand Store2=DAG.getStore(Store1, InitialHi, Hi, DAG.getSrcValue(NULL));
     // load the constructed double
-    SDOperand Load = DAG.getLoad(MVT::f64, Store2, StackSlot,
-                               DAG.getSrcValue(NULL));
+    SDOperand Load = DAG.getLoad(MVT::f64, Store2, StackSlot, NULL, 0);
     // FP constant to bias correct the final result
     SDOperand Bias = DAG.getConstantFP(isSigned ?
                                             BitsToDouble(0x4330000080000000ULL)
@@ -4066,13 +4060,12 @@ SDOperand SelectionDAGLegalize::ExpandLegalINT_TO_FP(bool isSigned,
   CPIdx = DAG.getNode(ISD::ADD, TLI.getPointerTy(), CPIdx, CstOffset);
   SDOperand FudgeInReg;
   if (DestVT == MVT::f32)
-    FudgeInReg = DAG.getLoad(MVT::f32, DAG.getEntryNode(), CPIdx,
-                             DAG.getSrcValue(NULL));
+    FudgeInReg = DAG.getLoad(MVT::f32, DAG.getEntryNode(), CPIdx, NULL, 0);
   else {
     assert(DestVT == MVT::f64 && "Unexpected conversion");
     FudgeInReg = LegalizeOp(DAG.getExtLoad(ISD::EXTLOAD, MVT::f64,
                                            DAG.getEntryNode(), CPIdx,
-                                           DAG.getSrcValue(NULL), MVT::f32));
+                                           NULL, 0, MVT::f32));
   }
 
   return DAG.getNode(ISD::FADD, DestVT, Tmp1, FudgeInReg);
@@ -4420,26 +4413,57 @@ void SelectionDAGLegalize::ExpandOp(SDOperand Op, SDOperand &Lo, SDOperand &Hi){
   }
     
   case ISD::LOAD: {
-    SDOperand Ch = Node->getOperand(0);   // Legalize the chain.
-    SDOperand Ptr = Node->getOperand(1);  // Legalize the pointer.
-    Lo = DAG.getLoad(NVT, Ch, Ptr, Node->getOperand(2));
+    LoadSDNode *LD = cast<LoadSDNode>(Node);
+    SDOperand Ch  = LD->getChain();    // Legalize the chain.
+    SDOperand Ptr = LD->getBasePtr();  // Legalize the pointer.
+    ISD::LoadExtType ExtType = LD->getExtensionType();
 
-    // Increment the pointer to the other half.
-    unsigned IncrementSize = MVT::getSizeInBits(Lo.getValueType())/8;
-    Ptr = DAG.getNode(ISD::ADD, Ptr.getValueType(), Ptr,
-                      getIntPtrConstant(IncrementSize));
-    // FIXME: This creates a bogus srcvalue!
-    Hi = DAG.getLoad(NVT, Ch, Ptr, Node->getOperand(2));
+    if (ExtType == ISD::NON_EXTLOAD) {
+      Lo = DAG.getLoad(NVT, Ch, Ptr, LD->getSrcValue(), LD->getSrcValueOffset());
 
-    // Build a factor node to remember that this load is independent of the
-    // other one.
-    SDOperand TF = DAG.getNode(ISD::TokenFactor, MVT::Other, Lo.getValue(1),
-                               Hi.getValue(1));
+      // Increment the pointer to the other half.
+      unsigned IncrementSize = MVT::getSizeInBits(Lo.getValueType())/8;
+      Ptr = DAG.getNode(ISD::ADD, Ptr.getValueType(), Ptr,
+                        getIntPtrConstant(IncrementSize));
+      // FIXME: This creates a bogus srcvalue!
+      Hi = DAG.getLoad(NVT, Ch, Ptr, LD->getSrcValue(), LD->getSrcValueOffset());
 
-    // Remember that we legalized the chain.
-    AddLegalizedOperand(Op.getValue(1), LegalizeOp(TF));
-    if (!TLI.isLittleEndian())
-      std::swap(Lo, Hi);
+      // Build a factor node to remember that this load is independent of the
+      // other one.
+      SDOperand TF = DAG.getNode(ISD::TokenFactor, MVT::Other, Lo.getValue(1),
+                                 Hi.getValue(1));
+
+      // Remember that we legalized the chain.
+      AddLegalizedOperand(Op.getValue(1), LegalizeOp(TF));
+      if (!TLI.isLittleEndian())
+        std::swap(Lo, Hi);
+    } else {
+      MVT::ValueType EVT = LD->getLoadVT();
+    
+      if (EVT == NVT)
+        Lo = DAG.getLoad(NVT, Ch, Ptr, LD->getSrcValue(),
+                         LD->getSrcValueOffset());
+      else
+        Lo = DAG.getExtLoad(ExtType, NVT, Ch, Ptr, LD->getSrcValue(),
+                            LD->getSrcValueOffset(), EVT);
+    
+      // Remember that we legalized the chain.
+      AddLegalizedOperand(SDOperand(Node, 1), LegalizeOp(Lo.getValue(1)));
+
+      if (ExtType == ISD::SEXTLOAD) {
+        // The high part is obtained by SRA'ing all but one of the bits of the
+        // lo part.
+        unsigned LoSize = MVT::getSizeInBits(Lo.getValueType());
+        Hi = DAG.getNode(ISD::SRA, NVT, Lo,
+                         DAG.getConstant(LoSize-1, TLI.getShiftAmountTy()));
+      } else if (ExtType == ISD::ZEXTLOAD) {
+        // The high part is just a zero.
+        Hi = DAG.getConstant(0, NVT);
+      } else /* if (ExtType == ISD::EXTLOAD) */ {
+        // The high part is undefined.
+        Hi = DAG.getNode(ISD::UNDEF, NVT);
+      }
+    }
     break;
   }
   case ISD::AND:
@@ -4468,35 +4492,6 @@ void SelectionDAGLegalize::ExpandOp(SDOperand Op, SDOperand &Lo, SDOperand &Hi){
                      Node->getOperand(1), TL, FL, Node->getOperand(4));
     Hi = DAG.getNode(ISD::SELECT_CC, NVT, Node->getOperand(0),
                      Node->getOperand(1), TH, FH, Node->getOperand(4));
-    break;
-  }
-  case ISD::LOADX: {
-    SDOperand Chain = Node->getOperand(0);
-    SDOperand Ptr   = Node->getOperand(1);
-    MVT::ValueType EVT = cast<VTSDNode>(Node->getOperand(3))->getVT();
-    ISD::LoadExtType LType = (ISD::LoadExtType)Node->getConstantOperandVal(4);
-    
-    if (EVT == NVT)
-      Lo = DAG.getLoad(NVT, Chain, Ptr, Node->getOperand(2));
-    else
-      Lo = DAG.getExtLoad(LType, NVT, Chain, Ptr, Node->getOperand(2), EVT);
-    
-    // Remember that we legalized the chain.
-    AddLegalizedOperand(SDOperand(Node, 1), LegalizeOp(Lo.getValue(1)));
-
-    if (LType == ISD::SEXTLOAD) {
-      // The high part is obtained by SRA'ing all but one of the bits of the lo
-      // part.
-      unsigned LoSize = MVT::getSizeInBits(Lo.getValueType());
-      Hi = DAG.getNode(ISD::SRA, NVT, Lo, DAG.getConstant(LoSize-1,
-                                                          TLI.getShiftAmountTy()));
-    } else if (LType == ISD::ZEXTLOAD) {
-      // The high part is just a zero.
-      Hi = DAG.getConstant(0, NVT);
-    } else /* if (LType == ISD::EXTLOAD) */ {
-      // The high part is undefined.
-      Hi = DAG.getNode(ISD::UNDEF, NVT);
-    }
     break;
   }
   case ISD::ANY_EXTEND:
@@ -4995,7 +4990,8 @@ SDOperand SelectionDAGLegalize::PackVectorOp(SDOperand Op,
     SDOperand Ch = LegalizeOp(Node->getOperand(0));   // Legalize the chain.
     SDOperand Ptr = LegalizeOp(Node->getOperand(1));  // Legalize the pointer.
     
-    Result = DAG.getLoad(NewVT, Ch, Ptr, Node->getOperand(2));
+    SrcValueSDNode *SV = cast<SrcValueSDNode>(Node->getOperand(2));
+    Result = DAG.getLoad(NewVT, Ch, Ptr, SV->getValue(), SV->getOffset());
     
     // Remember that we legalized the chain.
     AddLegalizedOperand(Op.getValue(1), LegalizeOp(Result.getValue(1)));

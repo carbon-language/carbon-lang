@@ -420,8 +420,7 @@ static SDOperand LowerGlobalAddress(SDOperand Op,
   GlobalValue  *GV = cast<GlobalAddressSDNode>(Op)->getGlobal();
   int alignment = 2;
   SDOperand CPAddr = DAG.getConstantPool(GV, MVT::i32, alignment);
-  return DAG.getLoad(MVT::i32, DAG.getEntryNode(), CPAddr,
-		     DAG.getSrcValue(NULL));
+  return DAG.getLoad(MVT::i32, DAG.getEntryNode(), CPAddr, NULL, 0);
 }
 
 static SDOperand LowerVASTART(SDOperand Op, SelectionDAG &DAG,
@@ -479,7 +478,7 @@ static SDOperand LowerFORMAL_ARGUMENTS(SDOperand Op, SelectionDAG &DAG,
         unsigned   Size = MVT::getSizeInBits(VT)/8;
         int          FI = MFI->CreateFixedObject(Size, Offset);
         SDOperand   FIN = DAG.getFrameIndex(FI, VT);
-        Value = DAG.getLoad(VT, Root, FIN, DAG.getSrcValue(NULL));
+        Value = DAG.getLoad(VT, Root, FIN, NULL, 0);
       } else {
         Value = DAG.getNode(ISD::UNDEF, VT);
       }

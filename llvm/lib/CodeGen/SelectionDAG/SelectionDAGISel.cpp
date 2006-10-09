@@ -460,7 +460,7 @@ public:
   void setCurrentBasicBlock(MachineBasicBlock *MBB) { CurMBB = MBB; }
 
   SDOperand getLoadFrom(const Type *Ty, SDOperand Ptr,
-                        SDOperand SrcValue, SDOperand Root,
+                        const Value *SV, SDOperand Root,
                         bool isVolatile);
 
   SDOperand getIntPtrConstant(uint64_t Val) {
@@ -859,7 +859,7 @@ void SelectionDAGLowering::visitJumpTable(SelectionDAGISel::JumpTable &JT) {
   SDOperand TAB = DAG.getJumpTable(JT.JTI,PTy);
   SDOperand ADD = DAG.getNode(ISD::ADD, PTy, IDX, TAB);
   SDOperand LD  = DAG.getLoad(isPIC ? MVT::i32 : PTy, Copy.getValue(1), ADD,
-                              DAG.getSrcValue(0));
+                              NULL, 0);
   if (isPIC) {
     // For Pic, the sequence is:
     // BRIND(load(Jumptable + index) + RelocBase)
@@ -1360,19 +1360,20 @@ void SelectionDAGLowering::visitLoad(LoadInst &I) {
     Root = DAG.getRoot();
   }
 
-  setValue(&I, getLoadFrom(I.getType(), Ptr, DAG.getSrcValue(I.getOperand(0)),
+  setValue(&I, getLoadFrom(I.getType(), Ptr, I.getOperand(0),
                            Root, I.isVolatile()));
 }
 
 SDOperand SelectionDAGLowering::getLoadFrom(const Type *Ty, SDOperand Ptr,
-                                            SDOperand SrcValue, SDOperand Root,
+                                            const Value *SV, SDOperand Root,
                                             bool isVolatile) {
   SDOperand L;
   if (const PackedType *PTy = dyn_cast<PackedType>(Ty)) {
     MVT::ValueType PVT = TLI.getValueType(PTy->getElementType());
-    L = DAG.getVecLoad(PTy->getNumElements(), PVT, Root, Ptr, SrcValue);
+    L = DAG.getVecLoad(PTy->getNumElements(), PVT, Root, Ptr,
+                       DAG.getSrcValue(SV));
   } else {
-    L = DAG.getLoad(TLI.getValueType(Ty), Root, Ptr, SrcValue);
+    L = DAG.getLoad(TLI.getValueType(Ty), Root, Ptr, SV, isVolatile);
   }
 
   if (isVolatile)
@@ -2909,7 +2910,7 @@ void SelectionDAGLowering::visitMemIntrinsic(CallInst &I, unsigned Op) {
           } else {
             Value = DAG.getLoad(VT, getRoot(),
                         getMemBasePlusOffset(Op2, SrcOff, DAG, TLI),
-                        DAG.getSrcValue(I.getOperand(2), SrcOff));
+                        I.getOperand(2), SrcOff);
             Chain = Value.getValue(1);
             Store =
               DAG.getStore(Chain, Value,

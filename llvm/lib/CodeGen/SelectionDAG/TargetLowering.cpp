@@ -552,9 +552,10 @@ bool TargetLowering::SimplifyDemandedBits(SDOperand Op, uint64_t DemandedMask,
     KnownOne  = 0;
     break;
   }
-  case ISD::LOADX: {
+  case ISD::LOAD: {
     if (ISD::isZEXTLoad(Op.Val)) {
-      MVT::ValueType VT = cast<VTSDNode>(Op.getOperand(3))->getVT();
+      LoadSDNode *LD = cast<LoadSDNode>(Op);
+      MVT::ValueType VT = LD->getLoadVT();
       KnownZero |= ~MVT::getIntVTBitMask(VT) & DemandedMask;
     }
     break;
@@ -892,9 +893,10 @@ void TargetLowering::ComputeMaskedBits(SDOperand Op, uint64_t Mask,
     KnownOne  = 0;
     return;
   }
-  case ISD::LOADX: {
+  case ISD::LOAD: {
     if (ISD::isZEXTLoad(Op.Val)) {
-      MVT::ValueType VT = cast<VTSDNode>(Op.getOperand(3))->getVT();
+      LoadSDNode *LD = cast<LoadSDNode>(Op);
+      MVT::ValueType VT = LD->getLoadVT();
       KnownZero |= ~MVT::getIntVTBitMask(VT) & Mask;
     }
     return;
@@ -1197,15 +1199,16 @@ unsigned TargetLowering::ComputeNumSignBits(SDOperand Op, unsigned Depth) const{
   }
   
   // Handle LOADX separately here. EXTLOAD case will fallthrough.
-  if (Op.getOpcode() == ISD::LOADX) {
-    unsigned LType = Op.getConstantOperandVal(4);
-    switch (LType) {
+  if (Op.getOpcode() == ISD::LOAD) {
+    LoadSDNode *LD = cast<LoadSDNode>(Op);
+    unsigned ExtType = LD->getExtensionType();
+    switch (ExtType) {
     default: break;
     case ISD::SEXTLOAD:    // '17' bits known
-      Tmp = MVT::getSizeInBits(cast<VTSDNode>(Op.getOperand(3))->getVT());
+      Tmp = MVT::getSizeInBits(LD->getLoadVT());
       return VTBits-Tmp+1;
     case ISD::ZEXTLOAD:    // '16' bits known
-      Tmp = MVT::getSizeInBits(cast<VTSDNode>(Op.getOperand(3))->getVT());
+      Tmp = MVT::getSizeInBits(LD->getLoadVT());
       return VTBits-Tmp;
     }
   }

@@ -346,9 +346,9 @@ void X86DAGToDAGISel::InstructionSelectPreprocess(SelectionDAG &DAG) {
       case ISD::ADDE: {
         SDOperand N10 = N1.getOperand(0);
         SDOperand N11 = N1.getOperand(1);
-        if (N10.Val->getOpcode() == ISD::LOAD)
+        if (ISD::isNON_EXTLoad(N10.Val))
           RModW = true;
-        else if (N11.Val->getOpcode() == ISD::LOAD) {
+        else if (ISD::isNON_EXTLoad(N11.Val)) {
           RModW = true;
           std::swap(N10, N11);
         }
@@ -370,7 +370,7 @@ void X86DAGToDAGISel::InstructionSelectPreprocess(SelectionDAG &DAG) {
       case X86ISD::SHLD:
       case X86ISD::SHRD: {
         SDOperand N10 = N1.getOperand(0);
-        if (N10.Val->getOpcode() == ISD::LOAD)
+        if (ISD::isNON_EXTLoad(N10.Val))
           RModW = N10.Val->isOperand(Chain.Val) && N10.hasOneUse() &&
             (N10.getOperand(1) == N2) &&
             (N10.Val->getValueType(0) == N1.getValueType());
@@ -806,7 +806,7 @@ bool X86DAGToDAGISel::SelectLEAAddr(SDOperand N, SDOperand &Base,
 bool X86DAGToDAGISel::TryFoldLoad(SDOperand P, SDOperand N,
                                   SDOperand &Base, SDOperand &Scale,
                                   SDOperand &Index, SDOperand &Disp) {
-  if (N.getOpcode() == ISD::LOAD &&
+  if (ISD::isNON_EXTLoad(N.Val) &&
       N.hasOneUse() &&
       CanBeFoldedBy(N.Val, P.Val))
     return SelectAddr(N.getOperand(1), Base, Scale, Index, Disp);

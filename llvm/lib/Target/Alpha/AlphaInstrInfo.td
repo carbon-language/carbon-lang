@@ -484,17 +484,17 @@ def LDQ   : MForm<0x29, 0, 1, "ldq $RA,$DISP($RB)",
 def LDQr  : MForm<0x29, 0, 1, "ldq $RA,$DISP($RB)\t\t!gprellow",
                  [(set GPRC:$RA, (load (Alpha_gprello tglobaladdr:$DISP, GPRC:$RB)))], s_ild>;
 def LDL   : MForm<0x28, 0, 1, "ldl $RA,$DISP($RB)",
-                 [(set GPRC:$RA, (sextload (add GPRC:$RB, immSExt16:$DISP), i32))], s_ild>;
+                 [(set GPRC:$RA, (sextloadi32 (add GPRC:$RB, immSExt16:$DISP)))], s_ild>;
 def LDLr  : MForm<0x28, 0, 1, "ldl $RA,$DISP($RB)\t\t!gprellow",
-                 [(set GPRC:$RA, (sextload (Alpha_gprello tglobaladdr:$DISP, GPRC:$RB), i32))], s_ild>;
+                 [(set GPRC:$RA, (sextloadi32 (Alpha_gprello tglobaladdr:$DISP, GPRC:$RB)))], s_ild>;
 def LDBU  : MForm<0x0A, 0, 1, "ldbu $RA,$DISP($RB)",
-                 [(set GPRC:$RA, (zextload (add GPRC:$RB, immSExt16:$DISP), i8))], s_ild>;
+                 [(set GPRC:$RA, (zextloadi8 (add GPRC:$RB, immSExt16:$DISP)))], s_ild>;
 def LDBUr : MForm<0x0A, 0, 1, "ldbu $RA,$DISP($RB)\t\t!gprellow",
-                 [(set GPRC:$RA, (zextload (Alpha_gprello tglobaladdr:$DISP, GPRC:$RB), i8))], s_ild>;
+                 [(set GPRC:$RA, (zextloadi8 (Alpha_gprello tglobaladdr:$DISP, GPRC:$RB)))], s_ild>;
 def LDWU  : MForm<0x0C, 0, 1, "ldwu $RA,$DISP($RB)",
-                 [(set GPRC:$RA, (zextload (add GPRC:$RB, immSExt16:$DISP), i16))], s_ild>;
+                 [(set GPRC:$RA, (zextloadi16 (add GPRC:$RB, immSExt16:$DISP)))], s_ild>;
 def LDWUr : MForm<0x0C, 0, 1, "ldwu $RA,$DISP($RB)\t\t!gprellow",
-                 [(set GPRC:$RA, (zextload (Alpha_gprello tglobaladdr:$DISP, GPRC:$RB), i16))], s_ild>;
+                 [(set GPRC:$RA, (zextloadi16 (Alpha_gprello tglobaladdr:$DISP, GPRC:$RB)))], s_ild>;
 def STB   : MForm<0x0E, 1, 0, "stb $RA,$DISP($RB)",
 		 [(truncstore GPRC:$RA, (add GPRC:$RB, immSExt16:$DISP), i8)], s_ist>;
 def STBr  : MForm<0x0E, 1, 0, "stb $RA,$DISP($RB)\t\t!gprellow",
@@ -548,11 +548,11 @@ def LDTr : MForm<0x23, 0, 1, "ldt $RA,$DISP($RB)\t\t!gprellow",
 //constpool rels
 def : Pat<(i64 (load (Alpha_gprello tconstpool:$DISP, GPRC:$RB))),
           (LDQr tconstpool:$DISP, GPRC:$RB)>;
-def : Pat<(i64 (sextload (Alpha_gprello tconstpool:$DISP, GPRC:$RB), i32)),
+def : Pat<(i64 (sextloadi32 (Alpha_gprello tconstpool:$DISP, GPRC:$RB))),
           (LDLr tconstpool:$DISP, GPRC:$RB)>;
-def : Pat<(i64 (zextload (Alpha_gprello tconstpool:$DISP, GPRC:$RB), i8)),
+def : Pat<(i64 (zextloadi8 (Alpha_gprello tconstpool:$DISP, GPRC:$RB))),
           (LDBUr tconstpool:$DISP, GPRC:$RB)>;
-def : Pat<(i64 (zextload (Alpha_gprello tconstpool:$DISP, GPRC:$RB), i16)),
+def : Pat<(i64 (zextloadi16 (Alpha_gprello tconstpool:$DISP, GPRC:$RB))),
           (LDWUr tconstpool:$DISP, GPRC:$RB)>;
 def : Pat<(i64 (Alpha_gprello tconstpool:$DISP, GPRC:$RB)),
           (LDAr tconstpool:$DISP, GPRC:$RB)>;
@@ -571,11 +571,11 @@ def : Pat<(i64 (Alpha_gprello tjumptable:$DISP, GPRC:$RB)),
 
 
 //misc ext patterns
-def : Pat<(i64 (extload (add GPRC:$RB, immSExt16:$DISP), i8)),
+def : Pat<(i64 (extloadi8 (add GPRC:$RB, immSExt16:$DISP))),
           (LDBU   immSExt16:$DISP, GPRC:$RB)>;
-def : Pat<(i64 (extload (add GPRC:$RB, immSExt16:$DISP), i16)),
+def : Pat<(i64 (extloadi16 (add GPRC:$RB, immSExt16:$DISP))),
           (LDWU  immSExt16:$DISP, GPRC:$RB)>;
-def : Pat<(i64 (extload (add GPRC:$RB, immSExt16:$DISP), i32)),
+def : Pat<(i64 (extloadi32 (add GPRC:$RB, immSExt16:$DISP))),
           (LDL   immSExt16:$DISP, GPRC:$RB)>;
 
 //0 disp patterns
@@ -585,17 +585,17 @@ def : Pat<(f64 (load GPRC:$addr)),
           (LDT  0, GPRC:$addr)>;
 def : Pat<(f32 (load GPRC:$addr)),
           (LDS  0, GPRC:$addr)>;
-def : Pat<(i64 (sextload GPRC:$addr, i32)),
+def : Pat<(i64 (sextloadi32 GPRC:$addr)),
           (LDL  0, GPRC:$addr)>;
-def : Pat<(i64 (zextload GPRC:$addr, i16)),
+def : Pat<(i64 (zextloadi16 GPRC:$addr)),
           (LDWU 0, GPRC:$addr)>;
-def : Pat<(i64 (zextload GPRC:$addr, i8)),
+def : Pat<(i64 (zextloadi8 GPRC:$addr)),
           (LDBU 0, GPRC:$addr)>;
-def : Pat<(i64 (extload GPRC:$addr, i8)),
+def : Pat<(i64 (extloadi8 GPRC:$addr)),
           (LDBU 0, GPRC:$addr)>;
-def : Pat<(i64 (extload GPRC:$addr, i16)),
+def : Pat<(i64 (extloadi16 GPRC:$addr)),
           (LDWU 0, GPRC:$addr)>;
-def : Pat<(i64 (extload GPRC:$addr, i32)),
+def : Pat<(i64 (extloadi32 GPRC:$addr)),
           (LDL  0, GPRC:$addr)>;
 
 def : Pat<(store GPRC:$DATA, GPRC:$addr),

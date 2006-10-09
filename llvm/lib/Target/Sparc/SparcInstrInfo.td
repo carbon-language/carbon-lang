@@ -278,35 +278,35 @@ let isReturn = 1, isTerminator = 1, hasDelaySlot = 1, noResults = 1 in {
 def LDSBrr : F3_1<3, 0b001001,
                   (ops IntRegs:$dst, MEMrr:$addr),
                   "ldsb [$addr], $dst",
-                  [(set IntRegs:$dst, (sextload ADDRrr:$addr, i8))]>;
+                  [(set IntRegs:$dst, (sextloadi8 ADDRrr:$addr))]>;
 def LDSBri : F3_2<3, 0b001001,
                   (ops IntRegs:$dst, MEMri:$addr),
                   "ldsb [$addr], $dst",
-                  [(set IntRegs:$dst, (sextload ADDRri:$addr, i8))]>;
+                  [(set IntRegs:$dst, (sextloadi8 ADDRri:$addr))]>;
 def LDSHrr : F3_1<3, 0b001010,
                   (ops IntRegs:$dst, MEMrr:$addr),
                   "ldsh [$addr], $dst",
-                  [(set IntRegs:$dst, (sextload ADDRrr:$addr, i16))]>;
+                  [(set IntRegs:$dst, (sextloadi16 ADDRrr:$addr))]>;
 def LDSHri : F3_2<3, 0b001010,
                   (ops IntRegs:$dst, MEMri:$addr),
                   "ldsh [$addr], $dst",
-                  [(set IntRegs:$dst, (sextload ADDRri:$addr, i16))]>;
+                  [(set IntRegs:$dst, (sextloadi16 ADDRri:$addr))]>;
 def LDUBrr : F3_1<3, 0b000001,
                   (ops IntRegs:$dst, MEMrr:$addr),
                   "ldub [$addr], $dst",
-                  [(set IntRegs:$dst, (zextload ADDRrr:$addr, i8))]>;
+                  [(set IntRegs:$dst, (zextloadi8 ADDRrr:$addr))]>;
 def LDUBri : F3_2<3, 0b000001,
                   (ops IntRegs:$dst, MEMri:$addr),
                   "ldub [$addr], $dst",
-                  [(set IntRegs:$dst, (zextload ADDRri:$addr, i8))]>;
+                  [(set IntRegs:$dst, (zextloadi8 ADDRri:$addr))]>;
 def LDUHrr : F3_1<3, 0b000010,
                   (ops IntRegs:$dst, MEMrr:$addr),
                   "lduh [$addr], $dst",
-                  [(set IntRegs:$dst, (zextload ADDRrr:$addr, i16))]>;
+                  [(set IntRegs:$dst, (zextloadi16 ADDRrr:$addr))]>;
 def LDUHri : F3_2<3, 0b000010,
                   (ops IntRegs:$dst, MEMri:$addr),
                   "lduh [$addr], $dst",
-                  [(set IntRegs:$dst, (zextload ADDRri:$addr, i16))]>;
+                  [(set IntRegs:$dst, (zextloadi16 ADDRri:$addr))]>;
 def LDrr   : F3_1<3, 0b000000,
                   (ops IntRegs:$dst, MEMrr:$addr),
                   "ld [$addr], $dst",
@@ -760,16 +760,16 @@ def : Pat<(call texternalsym:$dst),
 def : Pat<(ret), (RETL)>;
 
 // Map integer extload's to zextloads.
-def : Pat<(i32 (extload ADDRrr:$src, i1)), (LDUBrr ADDRrr:$src)>;
-def : Pat<(i32 (extload ADDRri:$src, i1)), (LDUBri ADDRri:$src)>;
-def : Pat<(i32 (extload ADDRrr:$src, i8)), (LDUBrr ADDRrr:$src)>;
-def : Pat<(i32 (extload ADDRri:$src, i8)), (LDUBri ADDRri:$src)>;
-def : Pat<(i32 (extload ADDRrr:$src, i16)), (LDUHrr ADDRrr:$src)>;
-def : Pat<(i32 (extload ADDRri:$src, i16)), (LDUHri ADDRri:$src)>;
+def : Pat<(i32 (extloadi1 ADDRrr:$src)), (LDUBrr ADDRrr:$src)>;
+def : Pat<(i32 (extloadi1 ADDRri:$src)), (LDUBri ADDRri:$src)>;
+def : Pat<(i32 (extloadi8 ADDRrr:$src)), (LDUBrr ADDRrr:$src)>;
+def : Pat<(i32 (extloadi8 ADDRri:$src)), (LDUBri ADDRri:$src)>;
+def : Pat<(i32 (extloadi16 ADDRrr:$src)), (LDUHrr ADDRrr:$src)>;
+def : Pat<(i32 (extloadi16 ADDRri:$src)), (LDUHri ADDRri:$src)>;
 
 // zextload bool -> zextload byte
-def : Pat<(i32 (zextload ADDRrr:$src, i1)), (LDUBrr ADDRrr:$src)>;
-def : Pat<(i32 (zextload ADDRri:$src, i1)), (LDUBri ADDRri:$src)>;
+def : Pat<(i32 (zextloadi1 ADDRrr:$src)), (LDUBrr ADDRrr:$src)>;
+def : Pat<(i32 (zextloadi1 ADDRri:$src)), (LDUBri ADDRri:$src)>;
 
 // truncstore bool -> truncstore byte.
 def : Pat<(truncstore IntRegs:$src, ADDRrr:$addr, i1), 

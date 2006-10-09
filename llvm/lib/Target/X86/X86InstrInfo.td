@@ -297,25 +297,25 @@ def loadi64 : PatFrag<(ops node:$ptr), (i64 (load node:$ptr))>;
 def loadf32 : PatFrag<(ops node:$ptr), (f32 (load node:$ptr))>;
 def loadf64 : PatFrag<(ops node:$ptr), (f64 (load node:$ptr))>;
 
-def sextloadi16i1  : PatFrag<(ops node:$ptr), (i16 (sextload node:$ptr, i1))>;
-def sextloadi32i1  : PatFrag<(ops node:$ptr), (i32 (sextload node:$ptr, i1))>;
-def sextloadi16i8  : PatFrag<(ops node:$ptr), (i16 (sextload node:$ptr, i8))>;
-def sextloadi32i8  : PatFrag<(ops node:$ptr), (i32 (sextload node:$ptr, i8))>;
-def sextloadi32i16 : PatFrag<(ops node:$ptr), (i32 (sextload node:$ptr, i16))>;
+def sextloadi16i1  : PatFrag<(ops node:$ptr), (i16 (sextloadi1 node:$ptr))>;
+def sextloadi32i1  : PatFrag<(ops node:$ptr), (i32 (sextloadi1 node:$ptr))>;
+def sextloadi16i8  : PatFrag<(ops node:$ptr), (i16 (sextloadi8 node:$ptr))>;
+def sextloadi32i8  : PatFrag<(ops node:$ptr), (i32 (sextloadi8 node:$ptr))>;
+def sextloadi32i16 : PatFrag<(ops node:$ptr), (i32 (sextloadi16 node:$ptr))>;
 
-def zextloadi8i1   : PatFrag<(ops node:$ptr), (i8  (zextload node:$ptr, i1))>;
-def zextloadi16i1  : PatFrag<(ops node:$ptr), (i16 (zextload node:$ptr, i1))>;
-def zextloadi32i1  : PatFrag<(ops node:$ptr), (i32 (zextload node:$ptr, i1))>;
-def zextloadi16i8  : PatFrag<(ops node:$ptr), (i16 (zextload node:$ptr, i8))>;
-def zextloadi32i8  : PatFrag<(ops node:$ptr), (i32 (zextload node:$ptr, i8))>;
-def zextloadi32i16 : PatFrag<(ops node:$ptr), (i32 (zextload node:$ptr, i16))>;
+def zextloadi8i1   : PatFrag<(ops node:$ptr), (i8  (zextloadi1 node:$ptr))>;
+def zextloadi16i1  : PatFrag<(ops node:$ptr), (i16 (zextloadi1 node:$ptr))>;
+def zextloadi32i1  : PatFrag<(ops node:$ptr), (i32 (zextloadi1 node:$ptr))>;
+def zextloadi16i8  : PatFrag<(ops node:$ptr), (i16 (zextloadi8 node:$ptr))>;
+def zextloadi32i8  : PatFrag<(ops node:$ptr), (i32 (zextloadi8 node:$ptr))>;
+def zextloadi32i16 : PatFrag<(ops node:$ptr), (i32 (zextloadi16 node:$ptr))>;
 
-def extloadi8i1    : PatFrag<(ops node:$ptr), (i8  (extload node:$ptr, i1))>;
-def extloadi16i1   : PatFrag<(ops node:$ptr), (i16 (extload node:$ptr, i1))>;
-def extloadi32i1   : PatFrag<(ops node:$ptr), (i32 (extload node:$ptr, i1))>;
-def extloadi16i8   : PatFrag<(ops node:$ptr), (i16 (extload node:$ptr, i8))>;
-def extloadi32i8   : PatFrag<(ops node:$ptr), (i32 (extload node:$ptr, i8))>;
-def extloadi32i16  : PatFrag<(ops node:$ptr), (i32 (extload node:$ptr, i16))>;
+def extloadi8i1    : PatFrag<(ops node:$ptr), (i8  (extloadi1 node:$ptr))>;
+def extloadi16i1   : PatFrag<(ops node:$ptr), (i16 (extloadi1 node:$ptr))>;
+def extloadi32i1   : PatFrag<(ops node:$ptr), (i32 (extloadi1 node:$ptr))>;
+def extloadi16i8   : PatFrag<(ops node:$ptr), (i16 (extloadi8 node:$ptr))>;
+def extloadi32i8   : PatFrag<(ops node:$ptr), (i32 (extloadi8 node:$ptr))>;
+def extloadi32i16  : PatFrag<(ops node:$ptr), (i32 (extloadi16 node:$ptr))>;
 
 //===----------------------------------------------------------------------===//
 // Instruction templates...

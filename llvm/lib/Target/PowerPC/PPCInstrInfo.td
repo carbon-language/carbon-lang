@@ -379,14 +379,14 @@ def DCBZL : DCB_Form<1014, 1, (ops memrr:$dst),
 let isLoad = 1, PPC970_Unit = 2 in {
 def LBZ : DForm_1<34, (ops GPRC:$rD, memri:$src),
                   "lbz $rD, $src", LdStGeneral,
-                  [(set GPRC:$rD, (zextload iaddr:$src, i8))]>;
+                  [(set GPRC:$rD, (zextloadi8 iaddr:$src))]>;
 def LHA : DForm_1<42, (ops GPRC:$rD, memri:$src),
                   "lha $rD, $src", LdStLHA,
-                  [(set GPRC:$rD, (sextload iaddr:$src, i16))]>,
+                  [(set GPRC:$rD, (sextloadi16 iaddr:$src))]>,
                   PPC970_DGroup_Cracked;
 def LHZ : DForm_1<40, (ops GPRC:$rD, memri:$src),
                   "lhz $rD, $src", LdStGeneral,
-                  [(set GPRC:$rD, (zextload iaddr:$src, i16))]>;
+                  [(set GPRC:$rD, (zextloadi16 iaddr:$src))]>;
 def LWZ : DForm_1<32, (ops GPRC:$rD, memri:$src),
                   "lwz $rD, $src", LdStGeneral,
                   [(set GPRC:$rD, (load iaddr:$src))]>;
@@ -490,14 +490,14 @@ def STFD : DForm_9<54, (ops F8RC:$rS, memri:$dst),
 let isLoad = 1, PPC970_Unit = 2 in {
 def LBZX : XForm_1<31,  87, (ops GPRC:$rD, memrr:$src),
                    "lbzx $rD, $src", LdStGeneral,
-                   [(set GPRC:$rD, (zextload xaddr:$src, i8))]>;
+                   [(set GPRC:$rD, (zextloadi8 xaddr:$src))]>;
 def LHAX : XForm_1<31, 343, (ops GPRC:$rD, memrr:$src),
                    "lhax $rD, $src", LdStLHA,
-                   [(set GPRC:$rD, (sextload xaddr:$src, i16))]>,
+                   [(set GPRC:$rD, (sextloadi16 xaddr:$src))]>,
                    PPC970_DGroup_Cracked;
 def LHZX : XForm_1<31, 279, (ops GPRC:$rD, memrr:$src),
                    "lhzx $rD, $src", LdStGeneral,
-                   [(set GPRC:$rD, (zextload xaddr:$src, i16))]>;
+                   [(set GPRC:$rD, (zextloadi16 xaddr:$src))]>;
 def LWZX : XForm_1<31,  23, (ops GPRC:$rD, memrr:$src),
                    "lwzx $rD, $src", LdStGeneral,
                    [(set GPRC:$rD, (load xaddr:$src))]>;
@@ -990,25 +990,25 @@ def : Pat<(srl GPRC:$rS, GPRC:$rB),
 def : Pat<(shl GPRC:$rS, GPRC:$rB),
           (SLW GPRC:$rS, GPRC:$rB)>;
 
-def : Pat<(zextload iaddr:$src, i1),
+def : Pat<(zextloadi1 iaddr:$src),
           (LBZ iaddr:$src)>;
-def : Pat<(zextload xaddr:$src, i1),
+def : Pat<(zextloadi1 xaddr:$src),
           (LBZX xaddr:$src)>;
-def : Pat<(extload iaddr:$src, i1),
+def : Pat<(extloadi1 iaddr:$src),
           (LBZ iaddr:$src)>;
-def : Pat<(extload xaddr:$src, i1),
+def : Pat<(extloadi1 xaddr:$src),
           (LBZX xaddr:$src)>;
-def : Pat<(extload iaddr:$src, i8),
+def : Pat<(extloadi8 iaddr:$src),
           (LBZ iaddr:$src)>;
-def : Pat<(extload xaddr:$src, i8),
+def : Pat<(extloadi8 xaddr:$src),
           (LBZX xaddr:$src)>;
-def : Pat<(extload iaddr:$src, i16),
+def : Pat<(extloadi16 iaddr:$src),
           (LHZ iaddr:$src)>;
-def : Pat<(extload xaddr:$src, i16),
+def : Pat<(extloadi16 xaddr:$src),
           (LHZX xaddr:$src)>;
-def : Pat<(extload iaddr:$src, f32),
+def : Pat<(extloadf32 iaddr:$src),
           (FMRSD (LFS iaddr:$src))>;
-def : Pat<(extload xaddr:$src, f32),
+def : Pat<(extloadf32 xaddr:$src),
           (FMRSD (LFSX xaddr:$src))>;
 
 include "PPCInstrAltivec.td"

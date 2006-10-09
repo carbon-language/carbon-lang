@@ -66,7 +66,7 @@ def fp64immneg1 : PatLeaf<(f64 fpimm), [{
   return N->isExactlyValue(-1.0);
 }]>;
 
-def extloadf64f32  : PatFrag<(ops node:$ptr), (f64 (extload node:$ptr, f32))>;
+def extloadf64f32  : PatFrag<(ops node:$ptr), (f64 (extloadf32 node:$ptr))>;
 
 // Some 'special' instructions
 let usesCustomDAGSchedInserter = 1 in {  // Expanded by the scheduler.

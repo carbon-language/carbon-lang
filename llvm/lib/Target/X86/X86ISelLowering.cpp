@@ -490,8 +490,7 @@ SDOperand X86TargetLowering::LowerCCCArguments(SDOperand Op, SelectionDAG &DAG) 
       // Create the frame index object for this incoming parameter...
       int FI = MFI->CreateFixedObject(ObjSize, ArgOffset);
       SDOperand FIN = DAG.getFrameIndex(FI, getPointerTy());
-      ArgValue = DAG.getLoad(Op.Val->getValueType(i), Root, FIN,
-                             DAG.getSrcValue(NULL));
+      ArgValue = DAG.getLoad(Op.Val->getValueType(i), Root, FIN, NULL, 0);
       ArgValues.push_back(ArgValue);
       ArgOffset += ArgIncrement;   // Move on to the next argument...
     }
@@ -763,8 +762,7 @@ SDOperand X86TargetLowering::LowerCCCCallTo(SDOperand Op, SelectionDAG &DAG) {
       Ops.push_back(DAG.getValueType(RetVT));
       Ops.push_back(InFlag);
       Chain = DAG.getNode(X86ISD::FST, Tys, &Ops[0], Ops.size());
-      RetVal = DAG.getLoad(RetVT, Chain, StackSlot,
-                           DAG.getSrcValue(NULL));
+      RetVal = DAG.getLoad(RetVT, Chain, StackSlot, NULL, 0);
       Chain = RetVal.getValue(1);
     }
 
@@ -963,8 +961,7 @@ X86TargetLowering::LowerX86_64CCCArguments(SDOperand Op, SelectionDAG &DAG) {
       // parameter.
       int FI = MFI->CreateFixedObject(ObjSize, ArgOffset);
       SDOperand FIN = DAG.getFrameIndex(FI, getPointerTy());
-      ArgValue = DAG.getLoad(Op.Val->getValueType(i), Root, FIN,
-                             DAG.getSrcValue(NULL));
+      ArgValue = DAG.getLoad(Op.Val->getValueType(i), Root, FIN, NULL, 0);
       ArgOffset += ArgIncrement;   // Move on to the next argument.
     }
 
@@ -1470,11 +1467,10 @@ X86TargetLowering::LowerFastCCArguments(SDOperand Op, SelectionDAG &DAG) {
       SDOperand FIN = DAG.getFrameIndex(FI, getPointerTy());
       if (ObjectVT == MVT::i64 && ObjIntRegs) {
         SDOperand ArgValue2 = DAG.getLoad(Op.Val->getValueType(i), Root, FIN,
-                                          DAG.getSrcValue(NULL));
+                                          NULL, 0);
         ArgValue = DAG.getNode(ISD::BUILD_PAIR, MVT::i64, ArgValue, ArgValue2);
       } else
-        ArgValue = DAG.getLoad(Op.Val->getValueType(i), Root, FIN,
-                               DAG.getSrcValue(NULL));
+        ArgValue = DAG.getLoad(Op.Val->getValueType(i), Root, FIN, NULL, 0);
       ArgOffset += ArgIncrement;   // Move on to the next argument.
     }
 
@@ -1800,8 +1796,7 @@ SDOperand X86TargetLowering::LowerFastCCCallTo(SDOperand Op, SelectionDAG &DAG,
       Ops.push_back(DAG.getValueType(RetVT));
       Ops.push_back(InFlag);
       Chain = DAG.getNode(X86ISD::FST, Tys, &Ops[0], Ops.size());
-      RetVal = DAG.getLoad(RetVT, Chain, StackSlot,
-                           DAG.getSrcValue(NULL));
+      RetVal = DAG.getLoad(RetVT, Chain, StackSlot, NULL, 0);
       Chain = RetVal.getValue(1);
     }
 
@@ -1880,8 +1875,7 @@ SDOperand X86TargetLowering::LowerStdCallCCArguments(SDOperand Op,
     // Create the frame index object for this incoming parameter...
     int FI = MFI->CreateFixedObject(ObjSize, ArgOffset);
     SDOperand FIN = DAG.getFrameIndex(FI, getPointerTy());
-    ArgValue = DAG.getLoad(Op.Val->getValueType(i), Root, FIN,
-                           DAG.getSrcValue(NULL));
+    ArgValue = DAG.getLoad(Op.Val->getValueType(i), Root, FIN, NULL, 0);
     ArgValues.push_back(ArgValue);
     ArgOffset += ArgIncrement;   // Move on to the next argument...
   }
@@ -2086,8 +2080,7 @@ SDOperand X86TargetLowering::LowerStdCallCCCallTo(SDOperand Op,
       Ops.push_back(DAG.getValueType(RetVT));
       Ops.push_back(InFlag);
       Chain = DAG.getNode(X86ISD::FST, Tys, &Ops[0], Ops.size());
-      RetVal = DAG.getLoad(RetVT, Chain, StackSlot,
-                           DAG.getSrcValue(NULL));
+      RetVal = DAG.getLoad(RetVT, Chain, StackSlot, NULL, 0);
       Chain = RetVal.getValue(1);
     }
 
@@ -2251,11 +2244,10 @@ X86TargetLowering::LowerFastCallCCArguments(SDOperand Op, SelectionDAG &DAG) {
       SDOperand FIN = DAG.getFrameIndex(FI, getPointerTy());
       if (ObjectVT == MVT::i64 && ObjIntRegs) {
         SDOperand ArgValue2 = DAG.getLoad(Op.Val->getValueType(i), Root, FIN,
-                                          DAG.getSrcValue(NULL));
+                                          NULL, 0);
         ArgValue = DAG.getNode(ISD::BUILD_PAIR, MVT::i64, ArgValue, ArgValue2);
       } else
-        ArgValue = DAG.getLoad(Op.Val->getValueType(i), Root, FIN,
-                               DAG.getSrcValue(NULL));
+        ArgValue = DAG.getLoad(Op.Val->getValueType(i), Root, FIN, NULL, 0);
       ArgOffset += ArgIncrement;   // Move on to the next argument.
     }
 
@@ -2329,7 +2321,7 @@ LowerFrameReturnAddress(bool isFrameAddress, SDOperand Chain, unsigned Depth,
     if (!isFrameAddress)
       // Just load the return address
       Result = DAG.getLoad(getPointerTy(), DAG.getEntryNode(), RetAddrFI,
-                           DAG.getSrcValue(NULL));
+                           NULL, 0);
     else
       Result = DAG.getNode(ISD::SUB, getPointerTy(), RetAddrFI,
                            DAG.getConstant(4, getPointerTy()));
@@ -3051,7 +3043,7 @@ static bool ShouldXformToMOVHLPS(SDNode *Mask) {
 static inline bool isScalarLoadToVector(SDNode *N) {
   if (N->getOpcode() == ISD::SCALAR_TO_VECTOR) {
     N = N->getOperand(0).Val;
-    return (N->getOpcode() == ISD::LOAD);
+    return ISD::isNON_EXTLoad(N);
   }
   return false;
 }
@@ -3062,7 +3054,7 @@ static inline bool isScalarLoadToVector(SDNode *N) {
 /// half of V2 (and in order). And since V1 will become the source of the
 /// MOVLP, it must be either a vector load or a scalar load to vector.
 static bool ShouldXformToMOVLP(SDNode *V1, SDNode *Mask) {
-  if (V1->getOpcode() != ISD::LOAD && !isScalarLoadToVector(V1))
+  if (!ISD::isNON_EXTLoad(V1) && !isScalarLoadToVector(V1))
     return false;
 
   unsigned NumElems = Mask->getNumOperands();
@@ -3809,10 +3801,11 @@ X86TargetLowering::LowerINSERT_VECTOR_ELT(SDOperand Op, SelectionDAG &DAG) {
       // Use two pinsrw instructions to insert a 32 bit value.
       Idx <<= 1;
       if (MVT::isFloatingPoint(N1.getValueType())) {
-        if (N1.getOpcode() == ISD::LOAD) {
+        if (ISD::isNON_EXTLoad(N1.Val)) {
           // Just load directly from f32mem to GR32.
-          N1 = DAG.getLoad(MVT::i32, N1.getOperand(0), N1.getOperand(1),
-                           N1.getOperand(2));
+          LoadSDNode *LD = cast<LoadSDNode>(N1);
+          N1 = DAG.getLoad(MVT::i32, LD->getChain(), LD->getBasePtr(),
+                           LD->getSrcValue(), LD->getSrcValueOffset());
         } else {
           N1 = DAG.getNode(ISD::SCALAR_TO_VECTOR, MVT::v4f32, N1);
           N1 = DAG.getNode(ISD::BIT_CONVERT, MVT::v4i32, N1);
@@ -3883,14 +3876,11 @@ X86TargetLowering::LowerGlobalAddress(SDOperand Op, SelectionDAG &DAG) {
     // not the GV offset field.
     if (getTargetMachine().getRelocationModel() != Reloc::Static &&
         DarwinGVRequiresExtraLoad(GV))
-      Result = DAG.getLoad(getPointerTy(), DAG.getEntryNode(),
-                           Result, DAG.getSrcValue(NULL));
+      Result = DAG.getLoad(getPointerTy(), DAG.getEntryNode(), Result, NULL, 0);
   } else if (Subtarget->isTargetCygwin() || Subtarget->isTargetWindows()) {
-    // FIXME: What's about PIC?
-    if (WindowsGVRequiresExtraLoad(GV)) {
-      Result = DAG.getLoad(getPointerTy(), DAG.getEntryNode(),
-                           Result, DAG.getSrcValue(NULL));      
-    }    
+    // FIXME: What about PIC?
+    if (WindowsGVRequiresExtraLoad(GV))
+      Result = DAG.getLoad(getPointerTy(), DAG.getEntryNode(), Result, NULL, 0);
   }
   
 
@@ -4028,8 +4018,7 @@ SDOperand X86TargetLowering::LowerSINT_TO_FP(SDOperand Op, SelectionDAG &DAG) {
     Ops.push_back(DAG.getValueType(Op.getValueType()));
     Ops.push_back(InFlag);
     Chain = DAG.getNode(X86ISD::FST, Tys, &Ops[0], Ops.size());
-    Result = DAG.getLoad(Op.getValueType(), Chain, StackSlot,
-                         DAG.getSrcValue(NULL));
+    Result = DAG.getLoad(Op.getValueType(), Chain, StackSlot, NULL, 0);
   }
 
   return Result;
@@ -4079,8 +4068,7 @@ SDOperand X86TargetLowering::LowerFP_TO_SINT(SDOperand Op, SelectionDAG &DAG) {
   SDOperand FIST = DAG.getNode(Opc, MVT::Other, &Ops[0], Ops.size());
 
   // Load the result.
-  return DAG.getLoad(Op.getValueType(), FIST, StackSlot,
-                     DAG.getSrcValue(NULL));
+  return DAG.getLoad(Op.getValueType(), FIST, StackSlot, NULL, 0);
 }
 
 SDOperand X86TargetLowering::LowerFABS(SDOperand Op, SelectionDAG &DAG) {
@@ -4364,7 +4352,7 @@ SDOperand X86TargetLowering::LowerRET(SDOperand Op, SelectionDAG &DAG) {
         SDOperand Chain = Op.getOperand(0);
         SDOperand Value = Op.getOperand(1);
 
-        if (Value.getOpcode() == ISD::LOAD &&
+        if (ISD::isNON_EXTLoad(Value.Val) &&
             (Chain == Value.getValue(1) || Chain == Value.getOperand(0))) {
           Chain  = Value.getOperand(0);
           MemLoc = Value.getOperand(1);
@@ -4708,7 +4696,7 @@ SDOperand X86TargetLowering::LowerMEMCPY(SDOperand Op, SelectionDAG &DAG) {
       Value = DAG.getLoad(MVT::i32, Chain,
                           DAG.getNode(ISD::ADD, SrcVT, SrcAddr,
                                       DAG.getConstant(Offset, SrcVT)),
-                          DAG.getSrcValue(NULL));
+                          NULL, 0);
       Chain = Value.getValue(1);
       Chain = DAG.getStore(Chain, Value,
                            DAG.getNode(ISD::ADD, DstVT, DstAddr,
@@ -4721,7 +4709,7 @@ SDOperand X86TargetLowering::LowerMEMCPY(SDOperand Op, SelectionDAG &DAG) {
       Value = DAG.getLoad(MVT::i16, Chain,
                           DAG.getNode(ISD::ADD, SrcVT, SrcAddr,
                                       DAG.getConstant(Offset, SrcVT)),
-                          DAG.getSrcValue(NULL));
+                          NULL, 0);
       Chain = Value.getValue(1);
       Chain = DAG.getStore(Chain, Value,
                            DAG.getNode(ISD::ADD, DstVT, DstAddr,
@@ -4735,7 +4723,7 @@ SDOperand X86TargetLowering::LowerMEMCPY(SDOperand Op, SelectionDAG &DAG) {
       Value = DAG.getLoad(MVT::i8, Chain,
                           DAG.getNode(ISD::ADD, SrcVT, SrcAddr,
                                       DAG.getConstant(Offset, SrcVT)),
-                          DAG.getSrcValue(NULL));
+                          NULL, 0);
       Chain = Value.getValue(1);
       Chain = DAG.getStore(Chain, Value,
                            DAG.getNode(ISD::ADD, DstVT, DstAddr,
@@ -5328,7 +5316,7 @@ static SDOperand PerformShuffleCombine(SDNode *N, SelectionDAG &DAG,
     } else {
       SDOperand Arg =
         getShuffleScalarElt(N, cast<ConstantSDNode>(Idx)->getValue(), DAG);
-      if (!Arg.Val || Arg.getOpcode() != ISD::LOAD)
+      if (!Arg.Val || !ISD::isNON_EXTLoad(Arg.Val))
         return SDOperand();
       if (!Base)
         Base = Arg.Val;
@@ -5339,10 +5327,11 @@ static SDOperand PerformShuffleCombine(SDNode *N, SelectionDAG &DAG,
   }
 
   bool isAlign16 = isBaseAlignment16(Base->getOperand(1).Val, MFI, Subtarget);
-  if (isAlign16)
-    return DAG.getLoad(VT, Base->getOperand(0), Base->getOperand(1),
-                       Base->getOperand(2));
-  else {
+  if (isAlign16) {
+    LoadSDNode *LD = cast<LoadSDNode>(Base);
+    return DAG.getLoad(VT, LD->getChain(), LD->getBasePtr(), LD->getSrcValue(),
+                       LD->getSrcValueOffset());
+  } else {
     // Just use movups, it's shorter.
     std::vector<MVT::ValueType> Tys;
     Tys.push_back(MVT::v4f32);

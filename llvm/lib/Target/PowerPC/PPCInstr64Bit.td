@@ -233,41 +233,41 @@ let isLoad = 1, PPC970_Unit = 2 in {
 // Sign extending loads.
 def LHA8: DForm_1<42, (ops G8RC:$rD, memri:$src),
                   "lha $rD, $src", LdStLHA,
-                  [(set G8RC:$rD, (sextload iaddr:$src, i16))]>,
+                  [(set G8RC:$rD, (sextloadi16 iaddr:$src))]>,
                   PPC970_DGroup_Cracked;
 def LWA  : DSForm_1<58, 2, (ops G8RC:$rD, memrix:$src),
                     "lwa $rD, $src", LdStLWA,
-                    [(set G8RC:$rD, (sextload ixaddr:$src, i32))]>, isPPC64,
+                    [(set G8RC:$rD, (sextloadi32 ixaddr:$src))]>, isPPC64,
                     PPC970_DGroup_Cracked;
 def LHAX8: XForm_1<31, 343, (ops G8RC:$rD, memrr:$src),
                    "lhax $rD, $src", LdStLHA,
-                   [(set G8RC:$rD, (sextload xaddr:$src, i16))]>,
+                   [(set G8RC:$rD, (sextloadi16 xaddr:$src))]>,
                    PPC970_DGroup_Cracked;
 def LWAX : XForm_1<31, 341, (ops G8RC:$rD, memrr:$src),
                    "lwax $rD, $src", LdStLHA,
-                   [(set G8RC:$rD, (sextload xaddr:$src, i32))]>, isPPC64,
+                   [(set G8RC:$rD, (sextloadi32 xaddr:$src))]>, isPPC64,
                    PPC970_DGroup_Cracked;
 
 // Zero extending loads.
 def LBZ8 : DForm_1<34, (ops G8RC:$rD, memri:$src),
                   "lbz $rD, $src", LdStGeneral,
-                  [(set G8RC:$rD, (zextload iaddr:$src, i8))]>;
+                  [(set G8RC:$rD, (zextloadi8 iaddr:$src))]>;
 def LHZ8 : DForm_1<40, (ops G8RC:$rD, memri:$src),
                   "lhz $rD, $src", LdStGeneral,
-                  [(set G8RC:$rD, (zextload iaddr:$src, i16))]>;
+                  [(set G8RC:$rD, (zextloadi16 iaddr:$src))]>;
 def LWZ8 : DForm_1<32, (ops G8RC:$rD, memri:$src),
                   "lwz $rD, $src", LdStGeneral,
-                  [(set G8RC:$rD, (zextload iaddr:$src, i32))]>, isPPC64;
+                  [(set G8RC:$rD, (zextloadi32 iaddr:$src))]>, isPPC64;
 
 def LBZX8 : XForm_1<31,  87, (ops G8RC:$rD, memrr:$src),
                    "lbzx $rD, $src", LdStGeneral,
-                   [(set G8RC:$rD, (zextload xaddr:$src, i8))]>;
+                   [(set G8RC:$rD, (zextloadi8 xaddr:$src))]>;
 def LHZX8 : XForm_1<31, 279, (ops G8RC:$rD, memrr:$src),
                    "lhzx $rD, $src", LdStGeneral,
-                   [(set G8RC:$rD, (zextload xaddr:$src, i16))]>;
+                   [(set G8RC:$rD, (zextloadi16 xaddr:$src))]>;
 def LWZX8 : XForm_1<31,  23, (ops G8RC:$rD, memrr:$src),
                    "lwzx $rD, $src", LdStGeneral,
-                   [(set G8RC:$rD, (zextload xaddr:$src, i32))]>;
+                   [(set G8RC:$rD, (zextloadi32 xaddr:$src))]>;
 
 
 // Full 8-byte loads.
@@ -397,25 +397,25 @@ def : Pat<(i32 (trunc G8RC:$in)),
           (OR8To4 G8RC:$in, G8RC:$in)>;
 
 // Extending loads with i64 targets.
-def : Pat<(zextload iaddr:$src, i1),
+def : Pat<(zextloadi1 iaddr:$src),
           (LBZ8 iaddr:$src)>;
-def : Pat<(zextload xaddr:$src, i1),
+def : Pat<(zextloadi1 xaddr:$src),
           (LBZX8 xaddr:$src)>;
-def : Pat<(extload iaddr:$src, i1),
+def : Pat<(extloadi1 iaddr:$src),
           (LBZ8 iaddr:$src)>;
-def : Pat<(extload xaddr:$src, i1),
+def : Pat<(extloadi1 xaddr:$src),
           (LBZX8 xaddr:$src)>;
-def : Pat<(extload iaddr:$src, i8),
+def : Pat<(extloadi8 iaddr:$src),
           (LBZ8 iaddr:$src)>;
-def : Pat<(extload xaddr:$src, i8),
+def : Pat<(extloadi8 xaddr:$src),
           (LBZX8 xaddr:$src)>;
-def : Pat<(extload iaddr:$src, i16),
+def : Pat<(extloadi16 iaddr:$src),
           (LHZ8 iaddr:$src)>;
-def : Pat<(extload xaddr:$src, i16),
+def : Pat<(extloadi16 xaddr:$src),
           (LHZX8 xaddr:$src)>;
-def : Pat<(extload iaddr:$src, i32),
+def : Pat<(extloadi32 iaddr:$src),
           (LWZ8 iaddr:$src)>;
-def : Pat<(extload xaddr:$src, i32),
+def : Pat<(extloadi32 xaddr:$src),
           (LWZX8 xaddr:$src)>;
 
 // SHL/SRL

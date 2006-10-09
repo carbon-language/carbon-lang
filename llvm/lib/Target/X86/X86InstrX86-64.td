@@ -84,20 +84,20 @@ def i64immSExt8  : PatLeaf<(i64 imm), [{
   return (int64_t)N->getValue() == (int8_t)N->getValue();
 }]>;
 
-def sextloadi64i1  : PatFrag<(ops node:$ptr), (i64 (sextload node:$ptr, i1))>;
-def sextloadi64i8  : PatFrag<(ops node:$ptr), (i64 (sextload node:$ptr, i8))>;
-def sextloadi64i16 : PatFrag<(ops node:$ptr), (i64 (sextload node:$ptr, i16))>;
-def sextloadi64i32 : PatFrag<(ops node:$ptr), (i64 (sextload node:$ptr, i32))>;
+def sextloadi64i1  : PatFrag<(ops node:$ptr), (i64 (sextloadi1 node:$ptr))>;
+def sextloadi64i8  : PatFrag<(ops node:$ptr), (i64 (sextloadi8 node:$ptr))>;
+def sextloadi64i16 : PatFrag<(ops node:$ptr), (i64 (sextloadi16 node:$ptr))>;
+def sextloadi64i32 : PatFrag<(ops node:$ptr), (i64 (sextloadi32 node:$ptr))>;
 
-def zextloadi64i1  : PatFrag<(ops node:$ptr), (i64 (zextload node:$ptr, i1))>;
-def zextloadi64i8  : PatFrag<(ops node:$ptr), (i64 (zextload node:$ptr, i8))>;
-def zextloadi64i16 : PatFrag<(ops node:$ptr), (i64 (zextload node:$ptr, i16))>;
-def zextloadi64i32 : PatFrag<(ops node:$ptr), (i64 (zextload node:$ptr, i32))>;
+def zextloadi64i1  : PatFrag<(ops node:$ptr), (i64 (zextloadi1 node:$ptr))>;
+def zextloadi64i8  : PatFrag<(ops node:$ptr), (i64 (zextloadi8 node:$ptr))>;
+def zextloadi64i16 : PatFrag<(ops node:$ptr), (i64 (zextloadi16 node:$ptr))>;
+def zextloadi64i32 : PatFrag<(ops node:$ptr), (i64 (zextloadi32 node:$ptr))>;
 
-def extloadi64i1   : PatFrag<(ops node:$ptr), (i64 (extload node:$ptr, i1))>;
-def extloadi64i8   : PatFrag<(ops node:$ptr), (i64 (extload node:$ptr, i8))>;
-def extloadi64i16  : PatFrag<(ops node:$ptr), (i64 (extload node:$ptr, i16))>;
-def extloadi64i32  : PatFrag<(ops node:$ptr), (i64 (extload node:$ptr, i32))>;
+def extloadi64i1   : PatFrag<(ops node:$ptr), (i64 (extloadi1 node:$ptr))>;
+def extloadi64i8   : PatFrag<(ops node:$ptr), (i64 (extloadi8 node:$ptr))>;
+def extloadi64i16  : PatFrag<(ops node:$ptr), (i64 (extloadi16 node:$ptr))>;
+def extloadi64i32  : PatFrag<(ops node:$ptr), (i64 (extloadi32 node:$ptr))>;
 
 //===----------------------------------------------------------------------===//
 // Instruction list...

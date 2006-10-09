@@ -133,7 +133,7 @@ const char *IA64TargetLowering::getTargetNodeName(unsigned Opcode) const {
 static bool isFloatingPointZero(SDOperand Op) {
   if (ConstantFPSDNode *CFP = dyn_cast<ConstantFPSDNode>(Op))
     return CFP->isExactlyValue(-0.0) || CFP->isExactlyValue(0.0);
-  else if (Op.getOpcode() == ISD::EXTLOAD || Op.getOpcode() == ISD::LOAD) {
+  else if (ISD::isEXTLoad(Op.Val) || ISD::isNON_EXTLoad(Op.Val)) {
     // Maybe this has already been legalized into the constant pool?
     if (ConstantPoolSDNode *CP = dyn_cast<ConstantPoolSDNode>(Op.getOperand(1)))
       if (ConstantFP *CFP = dyn_cast<ConstantFP>(CP->getConstVal()))
@@ -226,7 +226,7 @@ IA64TargetLowering::LowerArguments(Function &F, SelectionDAG &DAG) {
         //from this parameter
         SDOperand FIN = DAG.getFrameIndex(FI, MVT::i64);
         argt = newroot = DAG.getLoad(getValueType(I->getType()),
-                                     DAG.getEntryNode(), FIN, DAG.getSrcValue(NULL));
+                                     DAG.getEntryNode(), FIN, NULL, 0);
       }
       ++count;
       DAG.setRoot(newroot.getValue(1));
@@ -583,8 +583,9 @@ LowerOperation(SDOperand Op, SelectionDAG &DAG) {
   }
   case ISD::VAARG: {
     MVT::ValueType VT = getPointerTy();
+    SrcValueSDNode *SV = cast<SrcValueSDNode>(Op.getOperand(2));
     SDOperand VAList = DAG.getLoad(VT, Op.getOperand(0), Op.getOperand(1), 
-                                   Op.getOperand(2));
+                                   SV->getValue(), SV->getOffset());
     // Increment the pointer, VAList, to the next vaarg
     SDOperand VAIncr = DAG.getNode(ISD::ADD, VT, VAList, 
                                    DAG.getConstant(MVT::getSizeInBits(VT)/8, 
@@ -593,7 +594,7 @@ LowerOperation(SDOperand Op, SelectionDAG &DAG) {
     VAIncr = DAG.getStore(VAList.getValue(1), VAIncr,
                           Op.getOperand(1), Op.getOperand(2));
     // Load the actual argument out of the pointer VAList
-    return DAG.getLoad(Op.getValueType(), VAIncr, VAList, DAG.getSrcValue(0));
+    return DAG.getLoad(Op.getValueType(), VAIncr, VAList, NULL, 0);
   }
   case ISD::VASTART: {
     // vastart just stores the address of the VarArgsFrameIndex slot into the

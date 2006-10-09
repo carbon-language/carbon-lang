@@ -453,15 +453,14 @@ SDNode *IA64DAGToDAGISel::Select(SDOperand Op) {
  }
 */
 
-  case ISD::LOAD:
-  case ISD::LOADX: { // FIXME: load -1, not 1, for bools?
-    SDOperand Chain = N->getOperand(0);
-    SDOperand Address = N->getOperand(1);
+  case ISD::LOAD: { // FIXME: load -1, not 1, for bools?
+    LoadSDNode *LD = cast<LoadSDNode>(N);
+    SDOperand Chain = LD->getChain();
+    SDOperand Address = LD->getBasePtr();
     AddToISelQueue(Chain);
     AddToISelQueue(Address);
 
-    MVT::ValueType TypeBeingLoaded = (N->getOpcode() == ISD::LOAD) ?
-      N->getValueType(0) : cast<VTSDNode>(N->getOperand(3))->getVT();
+    MVT::ValueType TypeBeingLoaded = LD->getLoadVT();
     unsigned Opc;
     switch (TypeBeingLoaded) {
     default:
