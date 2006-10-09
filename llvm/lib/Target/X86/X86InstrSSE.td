@@ -769,7 +769,7 @@ def MOVHPDmr : PDI<0x17, MRMDestMem, (ops f64mem:$dst, VR128:$src),
                      addr:$dst)]>;
 
 let isTwoAddress = 1 in {
-let AddedComplexity = 20 in {
+let AddedComplexity = 15 in {
 def MOVLHPSrr : PSI<0x16, MRMSrcReg, (ops VR128:$dst, VR128:$src1, VR128:$src2),
                     "movlhps {$src2, $dst|$dst, $src2}",
                     [(set VR128:$dst,
@@ -1753,7 +1753,7 @@ def MOVLSS2PSrr : SSI<0x10, MRMSrcReg, (ops VR128:$dst, VR128:$src1, FR32:$src2)
 def MOVLSD2PDrr : SDI<0x10, MRMSrcReg, (ops VR128:$dst, VR128:$src1, FR64:$src2),
                       "movsd {$src2, $dst|$dst, $src2}", []>;
 
-let AddedComplexity = 20 in {
+let AddedComplexity = 15 in {
 def MOVLPSrr : SSI<0x10, MRMSrcReg, (ops VR128:$dst, VR128:$src1, VR128:$src2),
                       "movss {$src2, $dst|$dst, $src2}",
                    [(set VR128:$dst,
@@ -1785,28 +1785,32 @@ def MOVZSD2PDrm : SDI<0x10, MRMSrcMem, (ops VR128:$dst, f64mem:$src),
                       [(set VR128:$dst, (v2f64 (vector_shuffle immAllZerosV,
                                  (v2f64 (scalar_to_vector (loadf64 addr:$src))),
                                                 MOVL_shuffle_mask)))]>;
+}
+let AddedComplexity = 15 in
 // movd / movq to XMM register zero-extends
 def MOVZDI2PDIrr : PDI<0x6E, MRMSrcReg, (ops VR128:$dst, GR32:$src),
                        "movd {$src, $dst|$dst, $src}",
                       [(set VR128:$dst, (v4i32 (vector_shuffle immAllZerosV,
                                            (v4i32 (scalar_to_vector GR32:$src)),
                                                 MOVL_shuffle_mask)))]>;
+let AddedComplexity = 20 in
 def MOVZDI2PDIrm : PDI<0x6E, MRMSrcMem, (ops VR128:$dst, i32mem:$src),
                        "movd {$src, $dst|$dst, $src}",
                       [(set VR128:$dst, (v4i32 (vector_shuffle immAllZerosV,
                                  (v4i32 (scalar_to_vector (loadi32 addr:$src))),
                                                 MOVL_shuffle_mask)))]>;
 // Moving from XMM to XMM but still clear upper 64 bits.
+let AddedComplexity = 15 in
 def MOVZQI2PQIrr : I<0x7E, MRMSrcReg, (ops VR128:$dst, VR128:$src),
                      "movq {$src, $dst|$dst, $src}",
                      [(set VR128:$dst, (int_x86_sse2_movl_dq VR128:$src))]>,
                    XS, Requires<[HasSSE2]>;
+let AddedComplexity = 20 in
 def MOVZQI2PQIrm : I<0x7E, MRMSrcMem, (ops VR128:$dst, i64mem:$src),
                      "movq {$src, $dst|$dst, $src}",
                    [(set VR128:$dst, (int_x86_sse2_movl_dq
                                       (bitconvert (loadv2i64 addr:$src))))]>,
                    XS, Requires<[HasSSE2]>;
-}
 
 //===----------------------------------------------------------------------===//
 // Non-Instruction Patterns
@@ -1884,7 +1888,7 @@ let Predicates = [HasSSE2] in {
 
 // Move scalar to XMM zero-extended
 // movd to XMM register zero-extends
-let AddedComplexity = 20 in {
+let AddedComplexity = 15 in {
 def : Pat<(v8i16 (vector_shuffle immAllZerosV,
                   (v8i16 (X86s2vec GR32:$src)), MOVL_shuffle_mask)),
           (MOVZDI2PDIrr GR32:$src)>, Requires<[HasSSE2]>;
@@ -1950,25 +1954,27 @@ def : Pat<(v4i32 (vector_shuffle VR128:$src, (undef),
           (PUNPCKLDQrr VR128:$src, VR128:$src)>, Requires<[HasSSE1]>;
 }
 
-let AddedComplexity = 20 in {
+let AddedComplexity = 15 in
 // vector_shuffle v1, <undef> <1, 1, 3, 3>
 def : Pat<(v4i32 (vector_shuffle VR128:$src, (undef),
                   MOVSHDUP_shuffle_mask)),
           (MOVSHDUPrr VR128:$src)>, Requires<[HasSSE3]>;
+let AddedComplexity = 20 in
 def : Pat<(v4i32 (vector_shuffle (bc_v4i32 (loadv2i64 addr:$src)), (undef),
                   MOVSHDUP_shuffle_mask)),
           (MOVSHDUPrm addr:$src)>, Requires<[HasSSE3]>;
 
 // vector_shuffle v1, <undef> <0, 0, 2, 2>
+let AddedComplexity = 15 in
 def : Pat<(v4i32 (vector_shuffle VR128:$src, (undef),
                   MOVSLDUP_shuffle_mask)),
           (MOVSLDUPrr VR128:$src)>, Requires<[HasSSE3]>;
+let AddedComplexity = 20 in
 def : Pat<(v4i32 (vector_shuffle (bc_v4i32 (loadv2i64 addr:$src)), (undef),
                   MOVSLDUP_shuffle_mask)),
           (MOVSLDUPrm addr:$src)>, Requires<[HasSSE3]>;
-}
 
-let AddedComplexity = 20 in {
+let AddedComplexity = 15 in {
 // vector_shuffle v1, v2 <0, 1, 4, 5> using MOVLHPS
 def : Pat<(v4i32 (vector_shuffle VR128:$src1, VR128:$src2,
                   MOVHP_shuffle_mask)),
@@ -1986,7 +1992,9 @@ def : Pat<(v4f32 (vector_shuffle VR128:$src1, (undef),
 def : Pat<(v4i32 (vector_shuffle VR128:$src1, (undef),
                   UNPCKH_shuffle_mask)),
           (MOVHLPSrr VR128:$src1, VR128:$src1)>;
+}
 
+  let AddedComplexity = 20 in {
 // vector_shuffle v1, (load v2) <4, 5, 2, 3> using MOVLPS
 // vector_shuffle v1, (load v2) <0, 1, 4, 5> using MOVHPS
 def : Pat<(v4f32 (vector_shuffle VR128:$src1, (loadv4f32 addr:$src2),
@@ -2014,7 +2022,9 @@ def : Pat<(v4i32 (vector_shuffle VR128:$src1, (bc_v4i32 (loadv2i64 addr:$src2)),
 def : Pat<(v2i64 (vector_shuffle VR128:$src1, (loadv2i64 addr:$src2),
                   MOVLP_shuffle_mask)),
           (MOVLPDrm VR128:$src1, addr:$src2)>, Requires<[HasSSE2]>;
+}
 
+let AddedComplexity = 15 in {
 // Setting the lowest element in the vector.
 def : Pat<(v4i32 (vector_shuffle VR128:$src1, VR128:$src2,
                   MOVL_shuffle_mask)),
@@ -2030,13 +2040,14 @@ def : Pat<(v4f32 (vector_shuffle VR128:$src1, VR128:$src2,
 def : Pat<(v4i32 (vector_shuffle VR128:$src1, VR128:$src2,
                   MOVLP_shuffle_mask)),
           (MOVLPDrr VR128:$src1, VR128:$src2)>, Requires<[HasSSE2]>;
+}
 
 // Set lowest element and zero upper elements.
+let AddedComplexity = 20 in
 def : Pat<(bc_v2i64 (vector_shuffle immAllZerosV,
                      (v2f64 (scalar_to_vector (loadf64 addr:$src))),
                      MOVL_shuffle_mask)),
           (MOVZQI2PQIrm addr:$src)>, Requires<[HasSSE2]>;
-}
 
 // FIXME: Temporary workaround since 2-wide shuffle is broken.
 def : Pat<(int_x86_sse2_movs_d  VR128:$src1, VR128:$src2),
