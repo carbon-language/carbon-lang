@@ -34,7 +34,7 @@ const TargetAsmInfo *ARMTargetMachine::createTargetAsmInfo() const {
 /// TargetMachine ctor - Create an ILP32 architecture model
 ///
 ARMTargetMachine::ARMTargetMachine(const Module &M, const std::string &FS)
-  : DataLayout("E-p:32:32") {
+  : DataLayout("e-p:32:32") {
 }
 
 unsigned ARMTargetMachine::getModuleMatchQuality(const Module &M) {
