@@ -200,6 +200,11 @@ def FUITOS  : InstARM<(ops FPRegs:$dst, FPRegs:$src),
 def FUITOD  : InstARM<(ops DFPRegs:$dst, FPRegs:$src),
                        "fuitod $dst, $src", [(set DFPRegs:$dst, (armfuitod FPRegs:$src))]>;
 
+def FCVTDS  : InstARM<(ops DFPRegs:$dst, FPRegs:$src),
+                       "fcvtds $dst, $src", [(set DFPRegs:$dst, (fextend FPRegs:$src))]>;
+
+def FCVTSD  : InstARM<(ops FPRegs:$dst, DFPRegs:$src),
+                       "fcvtsd $dst, $src", [(set FPRegs:$dst, (fround DFPRegs:$src))]>;
 
 // Floating Point Arithmetic
 def FADDS   : InstARM<(ops FPRegs:$dst, FPRegs:$a, FPRegs:$b),
