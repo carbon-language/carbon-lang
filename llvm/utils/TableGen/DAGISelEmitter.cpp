@@ -2312,6 +2312,10 @@ public:
       }
     }
 
+    // If there is a node predicate for this, emit the call.
+    if (!N->getPredicateFn().empty())
+      emitCheck(N->getPredicateFn() + "(" + RootName + ".Val)");
+
     const ComplexPattern *CP;
     for (unsigned i = 0, e = N->getNumChildren(); i != e; ++i, ++OpNo) {
       emitInit("SDOperand " + RootName + utostr(OpNo) + " = " +
@@ -2420,10 +2424,6 @@ public:
         Code += ", CPTmp" + utostr(i);
       emitCheck(Code + ")");
     }
-
-    // If there is a node predicate for this, emit the call.
-    if (!N->getPredicateFn().empty())
-      emitCheck(N->getPredicateFn() + "(" + RootName + ".Val)");
   }
 
   /// EmitResultCode - Emit the action for a pattern.  Now that it has matched
