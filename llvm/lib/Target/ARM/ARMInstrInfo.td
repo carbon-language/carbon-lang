@@ -117,6 +117,14 @@ def ADD     : InstARM<(ops IntRegs:$dst, IntRegs:$a, op_addr_mode1:$b),
                        "add $dst, $a, $b",
 		       [(set IntRegs:$dst, (add IntRegs:$a, addr_mode1:$b))]>;
 
+def ADCS    : InstARM<(ops IntRegs:$dst, IntRegs:$a, op_addr_mode1:$b),
+                       "adcs $dst, $a, $b",
+		       [(set IntRegs:$dst, (adde IntRegs:$a, addr_mode1:$b))]>;
+
+def ADDS    : InstARM<(ops IntRegs:$dst, IntRegs:$a, op_addr_mode1:$b),
+                       "adds $dst, $a, $b",
+		       [(set IntRegs:$dst, (addc IntRegs:$a, addr_mode1:$b))]>;
+
 // "LEA" forms of add
 def lea_addri : InstARM<(ops IntRegs:$dst, memri:$addr),
 			 "add $dst, ${addr:arith}",
