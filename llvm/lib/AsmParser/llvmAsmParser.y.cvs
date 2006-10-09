@@ -39,7 +39,7 @@
 // immediately invokes YYERROR. This would be so much cleaner if it was a 
 // recursive descent parser.
 static bool TriggerError = false;
-#define CHECK_FOR_ERROR { if (TriggerError) { TriggerError = false; YYERROR; } }
+#define CHECK_FOR_ERROR { if (TriggerError) { TriggerError = false; YYABORT; } }
 #define GEN_ERROR(msg) { GenerateError(msg); YYERROR; }
 
 int yyerror(const char *ErrorMsg); // Forward declarations to prevent "implicit
@@ -820,12 +820,20 @@ static Module* RunParser(Module * M) {
   llvmAsmlineno = 1;      // Reset the current line number...
   ObsoleteVarArgs = false;
   NewVarArgs = false;
-
   CurModule.CurrentModule = M;
-  yyparse();       // Parse the file, potentially throwing exception
+
+  // Check to make sure the parser succeeded
+  if (yyparse()) {
+    if (ParserResult)
+      delete ParserResult;
+    return 0;
+  }
+
+  // Check to make sure that parsing produced a result
   if (!ParserResult)
     return 0;
 
+  // Reset ParserResult variable while saving its value for the result.
   Module *Result = ParserResult;
   ParserResult = 0;
 
@@ -1721,7 +1729,7 @@ GlobalType : GLOBAL { $$ = false; } | CONSTANT { $$ = true; };
 Module : FunctionList {
   $$ = ParserResult = $1;
   CurModule.ModuleDone();
-  CHECK_FOR_ERROR
+  CHECK_FOR_ERROR;
 };
 
 // FunctionList - A list of functions, preceeded by a constant pool.
