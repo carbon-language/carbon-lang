@@ -1,4 +1,5 @@
-; RUN: llvm-as < %s | llc -march=x86 -mattr=+sse2 | grep movsd | wc -l | grep 1
+; RUN: llvm-as < %s | llc -march=x86 -mattr=+sse2 | grep movhlps | wc -l | grep 1 &&
+; RUN: llvm-as < %s | llc -march=x86 -mattr=+sse2 | grep shufps  | wc -l | grep 1
 
 void %test() {
 	%tmp1 = load <4 x float>* null
