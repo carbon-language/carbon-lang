@@ -3053,8 +3053,12 @@ static inline bool isScalarLoadToVector(SDNode *N) {
 /// V1 (and in order), and the upper half elements should come from the upper
 /// half of V2 (and in order). And since V1 will become the source of the
 /// MOVLP, it must be either a vector load or a scalar load to vector.
-static bool ShouldXformToMOVLP(SDNode *V1, SDNode *Mask) {
+static bool ShouldXformToMOVLP(SDNode *V1, SDNode *V2, SDNode *Mask) {
   if (!ISD::isNON_EXTLoad(V1) && !isScalarLoadToVector(V1))
+    return false;
+  // Is V2 is a vector load, don't do this transformation. We will try to use
+  // load folding shufps op.
+  if (ISD::isNON_EXTLoad(V2))
     return false;
 
   unsigned NumElems = Mask->getNumOperands();
@@ -3497,7 +3501,7 @@ X86TargetLowering::LowerVECTOR_SHUFFLE(SDOperand Op, SelectionDAG &DAG) {
       return Op;
 
     if (ShouldXformToMOVHLPS(PermMask.Val) ||
-        ShouldXformToMOVLP(V1.Val, PermMask.Val))
+        ShouldXformToMOVLP(V1.Val, V2.Val, PermMask.Val))
       return CommuteVectorShuffle(Op, DAG);
 
     bool V1IsSplat = isSplatVector(V1.Val);
