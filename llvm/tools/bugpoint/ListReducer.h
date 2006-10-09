@@ -103,7 +103,6 @@ struct ListReducer {
       std::vector<ElTy> EmptyList;
       while (Changed) {
         Changed = false;
-        std::vector<ElTy> TrimmedList;
         for (unsigned i = 1; i < TheList.size()-1; ++i) { // Check interior elts
           if (BugpointIsInterrupted) {
             std::cerr << "\n\n*** Reduction Interrupted, cleaning up...\n\n";
