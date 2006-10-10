@@ -60,8 +60,13 @@ ARMTargetLowering::ARMTargetLowering(TargetMachine &TM)
   setOperationAction(ISD::SELECT, MVT::i32, Expand);
 
   setOperationAction(ISD::SETCC, MVT::i32, Expand);
+  setOperationAction(ISD::SETCC, MVT::f32, Expand);
+  setOperationAction(ISD::SETCC, MVT::f64, Expand);
+
   setOperationAction(ISD::SELECT_CC, MVT::i32, Custom);
   setOperationAction(ISD::BR_CC, MVT::i32, Custom);
+  setOperationAction(ISD::BR_CC, MVT::f32, Custom);
+  setOperationAction(ISD::BR_CC, MVT::f64, Custom);
 
   setOperationAction(ISD::VASTART,       MVT::Other, Custom);
   setOperationAction(ISD::VAEND,         MVT::Other, Expand);
@@ -100,12 +105,17 @@ namespace llvm {
 
       FMRRD,
 
-      FMDRR
+      FMDRR,
+
+      FMSTAT
     };
   }
 }
 
 /// DAGCCToARMCC - Convert a DAG integer condition code to an ARM CC
+//Note: ARM doesn't have condition codes corresponding to the ordered
+//condition codes of LLVM. We use exception raising instructions so
+//that we can be sure that V == 0 and test only the rest of the expression.
 static ARMCC::CondCodes DAGCCToARMCC(ISD::CondCode CC) {
   switch (CC) {
   default:
@@ -113,12 +123,17 @@ static ARMCC::CondCodes DAGCCToARMCC(ISD::CondCode CC) {
     assert(0 && "Unknown condition code!");
   case ISD::SETUGT: return ARMCC::HI;
   case ISD::SETULE: return ARMCC::LS;
-  case ISD::SETLE:  return ARMCC::LE;
-  case ISD::SETLT:  return ARMCC::LT;
-  case ISD::SETGT:  return ARMCC::GT;
+  case ISD::SETLE:
+  case ISD::SETOLE: return ARMCC::LE;
+  case ISD::SETLT:
+  case ISD::SETOLT: return ARMCC::LT;
+  case ISD::SETGT:
+  case ISD::SETOGT: return ARMCC::GT;
   case ISD::SETNE:  return ARMCC::NE;
-  case ISD::SETEQ:  return ARMCC::EQ;
-  case ISD::SETGE:  return ARMCC::GE;
+  case ISD::SETEQ:
+  case ISD::SETOEQ: return ARMCC::EQ;
+  case ISD::SETGE:
+  case ISD::SETOGE: return ARMCC::GE;
   case ISD::SETUGE: return ARMCC::CS;
   case ISD::SETULT: return ARMCC::CC;
   }
@@ -138,6 +153,7 @@ const char *ARMTargetLowering::getTargetNodeName(unsigned Opcode) const {
   case ARMISD::FUITOD:        return "ARMISD::FUITOD";
   case ARMISD::FMRRD:         return "ARMISD::FMRRD";
   case ARMISD::FMDRR:         return "ARMISD::FMDRR";
+  case ARMISD::FMSTAT:        return "ARMISD::FMSTAT";
   }
 }
 
@@ -520,15 +536,30 @@ static SDOperand LowerFORMAL_ARGUMENTS(SDOperand Op, SelectionDAG &DAG,
   return DAG.getNode(ISD::MERGE_VALUES, RetVT, &ArgValues[0], ArgValues.size());
 }
 
+static SDOperand GetCMP(ISD::CondCode CC, SDOperand LHS, SDOperand RHS,
+                        SelectionDAG &DAG) {
+  MVT::ValueType vt = LHS.getValueType();
+  assert(vt == MVT::i32 || vt == MVT::f32);
+  //Note: unordered floating point compares should use a non throwing
+  //compare.
+  bool isUnorderedFloat = vt == MVT::f32 &&
+    (CC >= ISD::SETUO && CC <= ISD::SETUNE);
+  assert(!isUnorderedFloat && "Unordered float compares are not supported");
+
+  SDOperand Cmp = DAG.getNode(ARMISD::CMP, MVT::Flag, LHS, RHS);
+  if (vt != MVT::i32)
+    Cmp = DAG.getNode(ARMISD::FMSTAT, MVT::Flag, Cmp);
+  return Cmp;
+}
+
 static SDOperand LowerSELECT_CC(SDOperand Op, SelectionDAG &DAG) {
   SDOperand LHS = Op.getOperand(0);
   SDOperand RHS = Op.getOperand(1);
   ISD::CondCode CC = cast<CondCodeSDNode>(Op.getOperand(4))->get();
   SDOperand TrueVal = Op.getOperand(2);
   SDOperand FalseVal = Op.getOperand(3);
+  SDOperand      Cmp = GetCMP(CC, LHS, RHS, DAG);
   SDOperand    ARMCC = DAG.getConstant(DAGCCToARMCC(CC), MVT::i32);
-
-  SDOperand Cmp = DAG.getNode(ARMISD::CMP, MVT::Flag, LHS, RHS);
   return DAG.getNode(ARMISD::SELECT, MVT::i32, TrueVal, FalseVal, ARMCC, Cmp);
 }
 
@@ -538,9 +569,8 @@ static SDOperand LowerBR_CC(SDOperand Op, SelectionDAG &DAG) {
   SDOperand    LHS = Op.getOperand(2);
   SDOperand    RHS = Op.getOperand(3);
   SDOperand   Dest = Op.getOperand(4);
+  SDOperand    Cmp = GetCMP(CC, LHS, RHS, DAG);
   SDOperand  ARMCC = DAG.getConstant(DAGCCToARMCC(CC), MVT::i32);
-
-  SDOperand Cmp = DAG.getNode(ARMISD::CMP, MVT::Flag, LHS, RHS);
   return DAG.getNode(ARMISD::BR, MVT::Other, Chain, Dest, ARMCC, Cmp);
 }
 

@@ -65,8 +65,10 @@ def retflag        : SDNode<"ARMISD::RET_FLAG", SDTRet,
 	                   [SDNPHasChain, SDNPOptInFlag]>;
 
 def SDTarmselect   : SDTypeProfile<1, 3, [SDTCisSameAs<0, 1>, SDTCisSameAs<0, 2>, SDTCisInt<0>, SDTCisVT<2, i32>]>;
-
 def armselect      : SDNode<"ARMISD::SELECT", SDTarmselect, [SDNPInFlag, SDNPOutFlag]>;
+
+def SDTarmfmstat   : SDTypeProfile<0, 0, []>;
+def armfmstat      : SDNode<"ARMISD::FMSTAT", SDTarmfmstat, [SDNPInFlag, SDNPOutFlag]>;
 
 def SDTarmbr       : SDTypeProfile<0, 2, [SDTCisVT<0, OtherVT>, SDTCisVT<1, i32>]>;
 def armbr          : SDNode<"ARMISD::BR", SDTarmbr, [SDNPHasChain, SDNPInFlag]>;
@@ -171,6 +173,10 @@ def cmp      : InstARM<(ops IntRegs:$a, op_addr_mode1:$b),
 	               "cmp $a, $b",
 		       [(armcmp IntRegs:$a, addr_mode1:$b)]>;
 
+// Floating Point Compare
+def fcmpes  : InstARM<(ops FPRegs:$a, FPRegs:$b),
+	               "fcmpes $a, $b",
+		       [(armcmp FPRegs:$a, FPRegs:$b)]>;
 
 // Floating Point Conversion
 // We use bitconvert for moving the data between the register classes.
@@ -205,6 +211,8 @@ def FCVTDS  : InstARM<(ops DFPRegs:$dst, FPRegs:$src),
 
 def FCVTSD  : InstARM<(ops FPRegs:$dst, DFPRegs:$src),
                        "fcvtsd $dst, $src", [(set FPRegs:$dst, (fround DFPRegs:$src))]>;
+
+def FMSTAT  : InstARM<(ops ), "fmstat", [(armfmstat)]>;
 
 // Floating Point Arithmetic
 def FADDS   : InstARM<(ops FPRegs:$dst, FPRegs:$a, FPRegs:$b),
