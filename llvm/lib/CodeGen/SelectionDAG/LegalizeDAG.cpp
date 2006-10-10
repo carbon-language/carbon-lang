@@ -3237,7 +3237,8 @@ SDOperand SelectionDAGLegalize::PromoteOp(SDOperand Op) {
       ? ISD::EXTLOAD : LD->getExtensionType();
     Result = DAG.getExtLoad(ExtType, NVT,
                             LD->getChain(), LD->getBasePtr(),
-                            LD->getSrcValue(), LD->getSrcValueOffset(), VT);
+                            LD->getSrcValue(), LD->getSrcValueOffset(),
+                            LD->getLoadVT());
     // Remember that we legalized the chain.
     AddLegalizedOperand(Op.getValue(1), LegalizeOp(Result.getValue(1)));
     break;
