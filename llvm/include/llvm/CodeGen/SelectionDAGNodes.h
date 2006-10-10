@@ -524,26 +524,28 @@ namespace ISD {
   ///
   /// UNINDEXED    "Normal" load / store. The effective address is already
   ///              computed and is available in the base pointer. The offset
-  ///              operand is always undefined. An unindexed load produces one
-  ///              value (result of the load); an unindexed store does not
-  ///              produces a value.
+  ///              operand is always undefined. In addition to producing a
+  ///              chain, an unindexed load produces one value (result of the
+  ///              load); an unindexed store does not produces a value.
   ///
   /// PRE_INDEXED  Similar to the unindexed mode where the effective address is
   ///              the result of computation of the base pointer. However, it
   ///              considers the computation as being folded into the load /
   ///              store operation (i.e. the load / store does the address
   ///              computation as well as performing the memory transaction).
-  ///              The base operand is always undefined. A pre-indexed load
-  ///              produces two values (result of the load and the result of
-  ///              the address computation); a pre-indexed store produces one
-  ///              value (result of the address computation).
+  ///              The base operand is always undefined. In addition to
+  ///              producing a chain, pre-indexed load produces two values
+  ///              (result of the load and the result of the address
+  ///              computation); a pre-indexed store produces one value (result
+  ///              of the address computation).
   ///
   /// POST_INDEXED The effective address is the value of the base pointer. The
   ///              value of the offset operand is then added to the base after
-  ///              memory transaction. A post-indexed load produces two values
-  ///              (the result of the load and the result of the base + offset
-  ///              computation); a post-indexed store produces one value (the
-  ///              the result of the base + offset computation).
+  ///              memory transaction. In addition to producing a chain,
+  ///              post-indexed load produces two values (the result of the load
+  ///              and the result of the base + offset computation); a
+  ///              post-indexed store produces one value (the the result of the
+  ///              base + offset computation).
   ///
   enum MemOpAddrMode {
     UNINDEXED = 0,
@@ -1375,12 +1377,25 @@ public:
 /// LoadSDNode - This class is used to represent ISD::LOAD nodes.
 ///
 class LoadSDNode : public SDNode {
-  ISD::MemOpAddrMode AddrMode;  // unindexed, pre-indexed, post-indexed.
-  ISD::LoadExtType ExtType;     // non-ext, anyext, sext, zext.
-  MVT::ValueType LoadVT;        // VT of loaded value before extension.
+  // AddrMode - unindexed, pre-indexed, post-indexed.
+  ISD::MemOpAddrMode AddrMode;
+
+  // ExtType - non-ext, anyext, sext, zext.
+  ISD::LoadExtType ExtType;
+
+  // LoadVT - VT of loaded value before extension.
+  MVT::ValueType LoadVT;
+
+  // SrcValue - Memory location for alias analysis.
   const Value *SrcValue;
+
+  // SVOffset - Memory location offset.
   int SVOffset;
+
+  // Alignment - Alignment of memory location in bytes.
   unsigned Alignment;
+
+  // IsVolatile - True if the load is volatile.
   bool IsVolatile;
 protected:
   friend class SelectionDAG;
@@ -1404,9 +1419,9 @@ protected:
   }
 public:
 
-  const SDOperand &getChain() const { return getOperand(0); }
-  const SDOperand &getBasePtr() const { return getOperand(1); }
-  const SDOperand &getOffset() const { return getOperand(2); }
+  const SDOperand getChain() const { return getOperand(0); }
+  const SDOperand getBasePtr() const { return getOperand(1); }
+  const SDOperand getOffset() const { return getOperand(2); }
   ISD::MemOpAddrMode getAddressingMode() const { return AddrMode; }
   ISD::LoadExtType getExtensionType() const { return ExtType; }
   MVT::ValueType getLoadVT() const { return LoadVT; }
@@ -1424,12 +1439,25 @@ public:
 /// StoreSDNode - This class is used to represent ISD::STORE nodes.
 ///
 class StoreSDNode : public SDNode {
-  ISD::MemOpAddrMode AddrMode;  // unindexed, pre-indexed, post-indexed.
-  bool IsTruncStore;            // is value truncated before store?
-  MVT::ValueType StoredVT;      // VT of value that's actually stored.
+  // AddrMode - unindexed, pre-indexed, post-indexed.
+  ISD::MemOpAddrMode AddrMode;
+
+  // IsTruncStore - True is the op does a truncation before store.
+  bool IsTruncStore;
+
+  // StoreVT - VT of the value after truncation.
+  MVT::ValueType StoredVT;
+
+  // SrcValue - Memory location for alias analysis.
   const Value *SrcValue;
+
+  // SVOffset - Memory location offset.
   int SVOffset;
+
+  // Alignment - Alignment of memory location in bytes.
   unsigned Alignment;
+
+  // IsVolatile - True if the store is volatile.
   bool IsVolatile;
 protected:
   friend class SelectionDAG;
@@ -1444,9 +1472,9 @@ protected:
   }
 public:
 
-  const SDOperand &getChain() const { return getOperand(0); }
-  const SDOperand &getBasePtr() const { return getOperand(1); }
-  const SDOperand &getOffset() const { return getOperand(2); }
+  const SDOperand getChain() const { return getOperand(0); }
+  const SDOperand getBasePtr() const { return getOperand(1); }
+  const SDOperand getOffset() const { return getOperand(2); }
   ISD::MemOpAddrMode getAddressingMode() const { return AddrMode; }
   bool isTruncatingStore() const { return IsTruncStore; }
   MVT::ValueType getStoredVT() const { return StoredVT; }
