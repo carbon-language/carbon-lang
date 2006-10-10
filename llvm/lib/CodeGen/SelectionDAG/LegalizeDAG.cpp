@@ -2433,7 +2433,6 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
       // This defaults to loading a pointer from the input and storing it to the
       // output, returning the chain.
       SrcValueSDNode *SVD = cast<SrcValueSDNode>(Node->getOperand(3));
-      SrcValueSDNode *SVS = cast<SrcValueSDNode>(Node->getOperand(4));
       Tmp4 = DAG.getLoad(TLI.getPointerTy(), Tmp1, Tmp3, SVD->getValue(),
                          SVD->getOffset());
       Result = DAG.getStore(Tmp4.getValue(1), Tmp4, Tmp2, Node->getOperand(4));
@@ -3234,7 +3233,10 @@ SDOperand SelectionDAGLegalize::PromoteOp(SDOperand Op) {
 
   case ISD::LOAD: {
     LoadSDNode *LD = cast<LoadSDNode>(Node);
-    Result = DAG.getExtLoad(ISD::EXTLOAD, NVT, LD->getChain(), LD->getBasePtr(),
+    ISD::LoadExtType ExtType = ISD::isNON_EXTLoad(Node)
+      ? ISD::EXTLOAD : LD->getExtensionType();
+    Result = DAG.getExtLoad(ExtType, NVT,
+                            LD->getChain(), LD->getBasePtr(),
                             LD->getSrcValue(), LD->getSrcValueOffset(), VT);
     // Remember that we legalized the chain.
     AddLegalizedOperand(Op.getValue(1), LegalizeOp(Result.getValue(1)));
