@@ -2691,6 +2691,27 @@ void SDNode::dump(const SelectionDAG *G) const {
       std::cerr << "<null:" << M->getOffset() << ">";
   } else if (const VTSDNode *N = dyn_cast<VTSDNode>(this)) {
     std::cerr << ":" << getValueTypeString(N->getVT());
+  } else if (const LoadSDNode *LD = dyn_cast<LoadSDNode>(this)) {
+    bool doExt = true;
+    switch (LD->getExtensionType()) {
+    default: doExt = false; break;
+    case ISD::EXTLOAD:
+      std::cerr << " <anyext ";
+      break;
+    case ISD::SEXTLOAD:
+      std::cerr << " <sext ";
+      break;
+    case ISD::ZEXTLOAD:
+      std::cerr << " <zext ";
+      break;
+    }
+    if (doExt)
+      std::cerr << MVT::getValueTypeString(LD->getLoadVT()) << ">";
+
+    if (LD->getAddressingMode() == ISD::PRE_INDEXED)
+      std::cerr << " <pre>";
+    else if (LD->getAddressingMode() == ISD::POST_INDEXED)
+      std::cerr << " <post>";
   }
 }
 
