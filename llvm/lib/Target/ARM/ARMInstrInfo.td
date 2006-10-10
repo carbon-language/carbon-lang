@@ -235,6 +235,14 @@ def FADDD   : InstARM<(ops DFPRegs:$dst, DFPRegs:$a, DFPRegs:$b),
                        "faddd $dst, $a, $b",
 		       [(set DFPRegs:$dst, (fadd DFPRegs:$a, DFPRegs:$b))]>;
 
+def FSUBS   : InstARM<(ops FPRegs:$dst, FPRegs:$a, FPRegs:$b),
+                       "fsubs $dst, $a, $b",
+		       [(set FPRegs:$dst, (fsub FPRegs:$a, FPRegs:$b))]>;
+
+def FSUBD   : InstARM<(ops DFPRegs:$dst, DFPRegs:$a, DFPRegs:$b),
+                       "fsubd $dst, $a, $b",
+		       [(set DFPRegs:$dst, (fsub DFPRegs:$a, DFPRegs:$b))]>;
+
 def FMULS   : InstARM<(ops FPRegs:$dst, FPRegs:$a, FPRegs:$b),
                        "fmuls $dst, $a, $b",
 		       [(set FPRegs:$dst, (fmul FPRegs:$a, FPRegs:$b))]>;
