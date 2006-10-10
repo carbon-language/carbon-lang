@@ -17,6 +17,8 @@
 
 #include <vector>
 #include <iostream>
+#include <cstdlib>
+#include <algorithm>
 
 namespace llvm {
   
@@ -46,6 +48,7 @@ struct ListReducer {
   //
   bool reduceList(std::vector<ElTy> &TheList) {
     std::vector<ElTy> empty;
+    std::srand(0x6e5ea738); // Seed the random number generator
     switch (doTest(TheList, empty)) {
     case KeepPrefix:
       if (TheList.size() == 1) // we are done, it's the base case and it fails
@@ -62,12 +65,45 @@ struct ListReducer {
       return false; // there is no failure with the full set of passes/funcs!
     }
 
+    // Maximal number of allowed splitting iterations,
+    // before the elements are randomly shuffled.
+    const unsigned MaxIterationsWithoutProgress = 3;
+    bool ShufflingEnabled = true;
+
+Backjump:
     unsigned MidTop = TheList.size();
-    while (MidTop > 1) {
+    unsigned MaxIterations = MaxIterationsWithoutProgress;
+    unsigned NumOfIterationsWithoutProgress = 0;
+    while (MidTop > 1) { // Binary split reduction loop
       // Halt if the user presses ctrl-c.
       if (BugpointIsInterrupted) {
         std::cerr << "\n\n*** Reduction Interrupted, cleaning up...\n\n";
         return true;
+      }
+          	
+      // If the loop doesn't make satisfying progress, try shuffling.
+      // The purpose of shuffling is to avoid the heavy tails of the
+      // distribution (improving the speed of convergence).
+      if (ShufflingEnabled && 
+      	NumOfIterationsWithoutProgress > MaxIterations) {
+      		
+      	std::vector<ElTy> ShuffledList(TheList);
+      	std::random_shuffle(ShuffledList.begin(), ShuffledList.end());
+      	std::cerr << "\n\n*** Testing shuffled set...\n\n";
+      	// Check that random shuffle doesn't loose the bug
+      	if (doTest(ShuffledList, empty) == KeepPrefix) {
+          // If the bug is still here, use the shuffled list.
+          TheList.swap(ShuffledList);
+          MidTop = TheList.size();
+          // Must increase the shuffling treshold to avoid the small 
+          // probability of inifinite looping without making progress.
+          MaxIterations += 2;
+          std::cerr << "\n\n*** Shuffling does not hide the bug...\n\n";
+      	} else {
+          ShufflingEnabled = false; // Disable shuffling further on
+          std::cerr << "\n\n*** Shuffling hides the bug...\n\n";
+      	}
+      	NumOfIterationsWithoutProgress = 0;
       }
       
       unsigned Mid = MidTop / 2;
@@ -80,19 +116,30 @@ struct ListReducer {
         // shorten the list to the "kept" elements.
         TheList.swap(Suffix);
         MidTop = TheList.size();
+        // Reset progress treshold and progress counter
+        MaxIterations = MaxIterationsWithoutProgress;
+        NumOfIterationsWithoutProgress = 0;
         break;
       case KeepPrefix:
         // The predicate still holds, shorten the list to the prefix elements.
         TheList.swap(Prefix);
         MidTop = TheList.size();
+        // Reset progress treshold and progress counter
+        MaxIterations = MaxIterationsWithoutProgress;
+        NumOfIterationsWithoutProgress = 0;
         break;
       case NoFailure:
         // Otherwise the property doesn't hold.  Some of the elements we removed
         // must be necessary to maintain the property.
         MidTop = Mid;
+        NumOfIterationsWithoutProgress++;
         break;
       }
     }
+
+    // Probability of backjumping from the trimming loop back to the binary
+    // split reduction loop.
+    const int BackjumpProbability = 10;
 
     // Okay, we trimmed as much off the top and the bottom of the list as we
     // could.  If there is more than two elements in the list, try deleting 
@@ -101,8 +148,17 @@ struct ListReducer {
     if (TheList.size() > 2) {
       bool Changed = true;
       std::vector<ElTy> EmptyList;
-      while (Changed) {
+      while (Changed) {  // Trimming loop.
         Changed = false;
+        
+        // If the binary split reduction loop made an unfortunate sequence of
+        // splits, the trimming loop might be left off with a huge number of
+        // remaining elements (large search space). Backjumping out of that
+        // search space and attempting a different split can significantly 
+        // improve the convergence speed.
+        if (std::rand() % 100 < BackjumpProbability)
+          goto Backjump;
+        
         for (unsigned i = 1; i < TheList.size()-1; ++i) { // Check interior elts
           if (BugpointIsInterrupted) {
             std::cerr << "\n\n*** Reduction Interrupted, cleaning up...\n\n";
