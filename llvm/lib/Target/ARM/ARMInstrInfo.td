@@ -178,6 +178,10 @@ def fcmpes  : InstARM<(ops FPRegs:$a, FPRegs:$b),
 	               "fcmpes $a, $b",
 		       [(armcmp FPRegs:$a, FPRegs:$b)]>;
 
+def fcmped  : InstARM<(ops DFPRegs:$a, DFPRegs:$b),
+	               "fcmped $a, $b",
+		       [(armcmp DFPRegs:$a, DFPRegs:$b)]>;
+
 // Floating Point Conversion
 // We use bitconvert for moving the data between the register classes.
 // The format conversion is done with ARM specific nodes

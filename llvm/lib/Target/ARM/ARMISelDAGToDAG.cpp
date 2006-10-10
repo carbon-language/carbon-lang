@@ -539,10 +539,10 @@ static SDOperand LowerFORMAL_ARGUMENTS(SDOperand Op, SelectionDAG &DAG,
 static SDOperand GetCMP(ISD::CondCode CC, SDOperand LHS, SDOperand RHS,
                         SelectionDAG &DAG) {
   MVT::ValueType vt = LHS.getValueType();
-  assert(vt == MVT::i32 || vt == MVT::f32);
+  assert(vt == MVT::i32 || vt == MVT::f32 || vt == MVT::f64);
   //Note: unordered floating point compares should use a non throwing
   //compare.
-  bool isUnorderedFloat = vt == MVT::f32 &&
+  bool isUnorderedFloat = (vt == MVT::f32 || vt == MVT::f64) &&
     (CC >= ISD::SETUO && CC <= ISD::SETUNE);
   assert(!isUnorderedFloat && "Unordered float compares are not supported");
 
