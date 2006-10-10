@@ -130,6 +130,27 @@ std::string DOTGraphTraits<SelectionDAG*>::getNodeLabel(const SDNode *Node,
     Op = Op + " VT=" + getValueTypeString(N->getVT());
   } else if (const StringSDNode *N = dyn_cast<StringSDNode>(Node)) {
     Op = Op + "\"" + N->getValue() + "\"";
+  } else if (const LoadSDNode *LD = dyn_cast<LoadSDNode>(Node)) {
+    bool doExt = true;
+    switch (LD->getExtensionType()) {
+    default: doExt = false; break;
+    case ISD::EXTLOAD:
+      Op = Op + "<anyext ";
+      break;
+    case ISD::SEXTLOAD:
+      Op = Op + " <sext ";
+      break;
+    case ISD::ZEXTLOAD:
+      Op = Op + " <zext ";
+      break;
+    }
+    if (doExt)
+      Op = Op + MVT::getValueTypeString(LD->getLoadVT()) + ">";
+
+    if (LD->getAddressingMode() == ISD::PRE_INDEXED)
+      Op = Op + "<pre>";
+    else if (LD->getAddressingMode() == ISD::POST_INDEXED)
+      Op = Op + "<post>";
   }
   
   return Op;
