@@ -213,7 +213,20 @@ namespace {
   };
 }
 
-static void findNonImmUse(SDNode* Use, SDNode* Def, bool &found,
+static SDNode *findFlagUse(SDNode *N) {
+  unsigned FlagResNo = N->getNumValues()-1;
+  for (SDNode::use_iterator I = N->use_begin(), E = N->use_end(); I != E; ++I) {
+    SDNode *User = *I;
+    for (unsigned i = 0, e = User->getNumOperands(); i != e; ++i) {
+      SDOperand Op = User->getOperand(i);
+      if (Op.ResNo == FlagResNo)
+        return User;
+    }
+  }
+  return NULL;
+}
+
+static void findNonImmUse(SDNode* Use, SDNode* Def, SDNode *Ignore, bool &found,
                           std::set<SDNode *> &Visited) {
   if (found ||
       Use->getNodeId() > Def->getNodeId() ||
@@ -222,8 +235,10 @@ static void findNonImmUse(SDNode* Use, SDNode* Def, bool &found,
 
   for (unsigned i = 0, e = Use->getNumOperands(); i != e; ++i) {
     SDNode *N = Use->getOperand(i).Val;
+    if (N == Ignore)
+      continue;
     if (N != Def) {
-      findNonImmUse(N, Def, found, Visited);
+      findNonImmUse(N, Def, Ignore, found, Visited);
     } else {
       found = true;
       break;
@@ -231,14 +246,25 @@ static void findNonImmUse(SDNode* Use, SDNode* Def, bool &found,
   }
 }
 
-static inline bool isNonImmUse(SDNode* Use, SDNode* Def) {
+static inline bool isNonImmUse(SDNode* Use, SDNode* Def, SDNode *Ignore=NULL) {
   std::set<SDNode *> Visited;
   bool found = false;
   for (unsigned i = 0, e = Use->getNumOperands(); i != e; ++i) {
     SDNode *N = Use->getOperand(i).Val;
-    if (N != Def) {
-      findNonImmUse(N, Def, found, Visited);
+    if (N != Def && N != Ignore) {
+      findNonImmUse(N, Def, Ignore, found, Visited);
       if (found) break;
+    }
+  }
+
+  if (!found && Ignore) {
+    // We must be checking for reachability between Def and a flag use. Go down
+    // recursively if Use also produces a flag.
+    MVT::ValueType VT = Use->getValueType(Use->getNumValues()-1);
+    if (VT == MVT::Flag && !Use->use_empty()) {
+      SDNode *FU = findFlagUse(Use);
+      if (FU)
+        return !isNonImmUse(FU, Def, Use);
     }
   }
   return found;
@@ -258,7 +284,32 @@ bool X86DAGToDAGISel::CanBeFoldedBy(SDNode *N, SDNode *U) {
   //      /        [X]
   //      |         ^
   //     [U]--------|
-  return !FastISel && !isNonImmUse(U, N);
+  if (!FastISel && !isNonImmUse(U, N)) {
+    // If U produces a flag, then it gets (even more) interesting. Since it
+    // would have been "glued" together with its flag use, we need to check if
+    // it might reach N:
+    //
+    //      [ N ]
+    //        ^ ^
+    //        | |
+    //       [U] \--
+    //        ^   [TF]
+    //        |    |
+    //         \  /
+    //          [FU]
+    //
+    // If FU (flag use) indirectly reach N (the load), and U fold N (call it
+    // NU), then TF is a predecessor of FU and a successor of NU. But since
+    // NU and FU are flagged together, this effectively creates a cycle.
+    MVT::ValueType VT = U->getValueType(U->getNumValues()-1);
+    if (VT == MVT::Flag && !U->use_empty()) {
+      SDNode *FU = findFlagUse(U);
+      if (FU)
+        return !isNonImmUse(FU, N, U);
+    }
+    return true;
+  }
+  return false;
 }
 
 /// MoveBelowTokenFactor - Replace TokenFactor operand with load's chain operand
