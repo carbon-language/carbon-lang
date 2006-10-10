@@ -25,3 +25,15 @@ entry:
         %tmp = cast double %x to int
         ret int %tmp
 }
+
+uint %f5(float %x) {
+entry:
+        %tmp = cast float %x to uint
+        ret uint %tmp
+}
+
+uint %f6(double %x) {
+entry:
+        %tmp = cast double %x to uint
+        ret uint %tmp
+}

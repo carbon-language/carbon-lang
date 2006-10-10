@@ -52,6 +52,7 @@ ARMTargetLowering::ARMTargetLowering(TargetMachine &TM)
   setOperationAction(ISD::FP_TO_SINT, MVT::i32, Custom);
   setOperationAction(ISD::SINT_TO_FP, MVT::i32, Custom);
 
+  setOperationAction(ISD::FP_TO_UINT, MVT::i32, Custom);
   setOperationAction(ISD::UINT_TO_FP, MVT::i32, Custom);
 
   setOperationAction(ISD::RET,           MVT::Other, Custom);
@@ -103,8 +104,10 @@ namespace llvm {
       FTOSID,
 
       FUITOS,
+      FTOUIS,
 
       FUITOD,
+      FTOUID,
 
       FMRRD,
 
@@ -155,7 +158,9 @@ const char *ARMTargetLowering::getTargetNodeName(unsigned Opcode) const {
   case ARMISD::FSITOD:        return "ARMISD::FSITOD";
   case ARMISD::FTOSID:        return "ARMISD::FTOSID";
   case ARMISD::FUITOS:        return "ARMISD::FUITOS";
+  case ARMISD::FTOUIS:        return "ARMISD::FTOUIS";
   case ARMISD::FUITOD:        return "ARMISD::FUITOD";
+  case ARMISD::FTOUID:        return "ARMISD::FTOUID";
   case ARMISD::FMRRD:         return "ARMISD::FMRRD";
   case ARMISD::FMDRR:         return "ARMISD::FMDRR";
   case ARMISD::FMSTAT:        return "ARMISD::FMSTAT";
@@ -614,6 +619,17 @@ static SDOperand LowerUINT_TO_FP(SDOperand Op, SelectionDAG &DAG) {
   return DAG.getNode(op, vt, Tmp);
 }
 
+static SDOperand LowerFP_TO_UINT(SDOperand Op, SelectionDAG &DAG) {
+  assert(Op.getValueType() == MVT::i32);
+  SDOperand FloatVal = Op.getOperand(0);
+  MVT::ValueType  vt = FloatVal.getValueType();
+  assert(vt == MVT::f32 || vt == MVT::f64);
+
+  ARMISD::NodeType op = vt == MVT::f32 ? ARMISD::FTOUIS : ARMISD::FTOUID;
+  SDOperand Tmp = DAG.getNode(op, MVT::f32, FloatVal);
+  return DAG.getNode(ISD::BIT_CONVERT, MVT::i32, Tmp);
+}
+
 SDOperand ARMTargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
   switch (Op.getOpcode()) {
   default:
@@ -627,6 +643,8 @@ SDOperand ARMTargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
     return LowerFP_TO_SINT(Op, DAG);
   case ISD::SINT_TO_FP:
     return LowerSINT_TO_FP(Op, DAG);
+  case ISD::FP_TO_UINT:
+    return LowerFP_TO_UINT(Op, DAG);
   case ISD::UINT_TO_FP:
     return LowerUINT_TO_FP(Op, DAG);
   case ISD::FORMAL_ARGUMENTS:

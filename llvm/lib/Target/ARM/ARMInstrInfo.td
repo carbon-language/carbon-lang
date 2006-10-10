@@ -81,7 +81,9 @@ def armftosis      : SDNode<"ARMISD::FTOSIS", SDTUnaryOp>;
 def armfsitod      : SDNode<"ARMISD::FSITOD", SDTUnaryOp>;
 def armftosid      : SDNode<"ARMISD::FTOSID", SDTUnaryOp>;
 def armfuitos      : SDNode<"ARMISD::FUITOS", SDTUnaryOp>;
+def armftouis      : SDNode<"ARMISD::FTOUIS", SDTUnaryOp>;
 def armfuitod      : SDNode<"ARMISD::FUITOD", SDTUnaryOp>;
+def armftouid      : SDNode<"ARMISD::FTOUID", SDTUnaryOp>;
 
 def SDTarmfmrrd    : SDTypeProfile<0, 3, [SDTCisInt<0>, SDTCisInt<1>, SDTCisFP<2>]>;
 def armfmrrd       : SDNode<"ARMISD::FMRRD", SDTarmfmrrd,
@@ -215,8 +217,14 @@ def FTOSID  : InstARM<(ops FPRegs:$dst, DFPRegs:$src),
 def FUITOS  : InstARM<(ops FPRegs:$dst, FPRegs:$src),
                        "fuitos $dst, $src", [(set FPRegs:$dst, (armfuitos FPRegs:$src))]>;
 
+def FTOUIS  : InstARM<(ops FPRegs:$dst, FPRegs:$src),
+                       "ftouis $dst, $src", [(set FPRegs:$dst, (armftouis FPRegs:$src))]>;
+
 def FUITOD  : InstARM<(ops DFPRegs:$dst, FPRegs:$src),
                        "fuitod $dst, $src", [(set DFPRegs:$dst, (armfuitod FPRegs:$src))]>;
+
+def FTOUID  : InstARM<(ops FPRegs:$dst, DFPRegs:$src),
+                       "ftouid $dst, $src", [(set FPRegs:$dst, (armftouid DFPRegs:$src))]>;
 
 def FCVTDS  : InstARM<(ops DFPRegs:$dst, FPRegs:$src),
                        "fcvtds $dst, $src", [(set DFPRegs:$dst, (fextend FPRegs:$src))]>;
