@@ -77,7 +77,9 @@ def SDTVoidBinOp : SDTypeProfile<0, 2, [SDTCisSameAs<0, 1>]>;
 def armcmp       : SDNode<"ARMISD::CMP",  SDTVoidBinOp, [SDNPOutFlag]>;
 
 def armfsitos      : SDNode<"ARMISD::FSITOS", SDTUnaryOp>;
+def armftosis      : SDNode<"ARMISD::FTOSIS", SDTUnaryOp>;
 def armfsitod      : SDNode<"ARMISD::FSITOD", SDTUnaryOp>;
+def armftosid      : SDNode<"ARMISD::FTOSID", SDTUnaryOp>;
 def armfuitos      : SDNode<"ARMISD::FUITOS", SDTUnaryOp>;
 def armfuitod      : SDNode<"ARMISD::FUITOD", SDTUnaryOp>;
 
@@ -201,8 +203,14 @@ def FMDRR   : InstARM<(ops DFPRegs:$dst, IntRegs:$i0, IntRegs:$i1),
 def FSITOS  : InstARM<(ops FPRegs:$dst, FPRegs:$src),
                        "fsitos $dst, $src", [(set FPRegs:$dst, (armfsitos FPRegs:$src))]>;
 
+def FTOSIS  : InstARM<(ops FPRegs:$dst, FPRegs:$src),
+                       "ftosis $dst, $src", [(set FPRegs:$dst, (armftosis FPRegs:$src))]>;
+
 def FSITOD  : InstARM<(ops DFPRegs:$dst, FPRegs:$src),
                        "fsitod $dst, $src", [(set DFPRegs:$dst, (armfsitod FPRegs:$src))]>;
+
+def FTOSID  : InstARM<(ops FPRegs:$dst, DFPRegs:$src),
+                       "ftosid $dst, $src", [(set FPRegs:$dst, (armftosid DFPRegs:$src))]>;
 
 def FUITOS  : InstARM<(ops FPRegs:$dst, FPRegs:$src),
                        "fuitos $dst, $src", [(set FPRegs:$dst, (armfuitos FPRegs:$src))]>;
