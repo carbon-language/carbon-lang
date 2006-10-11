@@ -1,5 +1,5 @@
 
-/*  A Bison parser, made from /Users/sabre/cvs/llvm/utils/TableGen/FileParser.y
+/*  A Bison parser, made from /Volumes/ProjectsDisk/cvs/llvm/utils/TableGen/FileParser.y
     by GNU Bison version 1.28  */
 
 #define YYBISON 1  /* Identify Bison output.  */
@@ -35,7 +35,7 @@
 #define	STRVAL	278
 #define	CODEFRAGMENT	279
 
-#line 14 "/Users/sabre/cvs/llvm/utils/TableGen/FileParser.y"
+#line 14 "/Volumes/ProjectsDisk/cvs/llvm/utils/TableGen/FileParser.y"
 
 #include "Record.h"
 #include "llvm/ADT/StringExtras.h"
@@ -230,7 +230,7 @@ static void addSubClass(Record *SC, const std::vector<Init*> &TemplateArgs) {
 using namespace llvm;
 
 
-#line 209 "/Users/sabre/cvs/llvm/utils/TableGen/FileParser.y"
+#line 209 "/Volumes/ProjectsDisk/cvs/llvm/utils/TableGen/FileParser.y"
 typedef union {
   std::string*                StrVal;
   int                         IntVal;
@@ -352,9 +352,9 @@ static const short yyrline[] = { 0,
    524,   526,   532,   532,   533,   533,   535,   537,   541,   546,
    551,   554,   558,   561,   566,   567,   567,   569,   569,   571,
    578,   596,   621,   635,   640,   642,   644,   648,   658,   672,
-   675,   679,   690,   692,   694,   699,   699,   765,   765,   766,
-   766,   768,   773,   773,   776,   776,   779,   782,   786,   786,
-   788
+   675,   679,   690,   692,   694,   699,   699,   773,   773,   774,
+   774,   776,   781,   781,   784,   784,   787,   790,   794,   794,
+   796
 };
 #endif
 
@@ -1059,7 +1059,7 @@ yyreduce:
   switch (yyn) {
 
 case 1:
-#line 245 "/Users/sabre/cvs/llvm/utils/TableGen/FileParser.y"
+#line 245 "/Volumes/ProjectsDisk/cvs/llvm/utils/TableGen/FileParser.y"
 {
     if (CurDefmPrefix) {
       // If CurDefmPrefix is set, we're parsing a defm, which means that this is
@@ -1081,71 +1081,71 @@ case 1:
   ;
     break;}
 case 2:
-#line 267 "/Users/sabre/cvs/llvm/utils/TableGen/FileParser.y"
+#line 267 "/Volumes/ProjectsDisk/cvs/llvm/utils/TableGen/FileParser.y"
 {                       // string type
     yyval.Ty = new StringRecTy();
   ;
     break;}
 case 3:
-#line 269 "/Users/sabre/cvs/llvm/utils/TableGen/FileParser.y"
+#line 269 "/Volumes/ProjectsDisk/cvs/llvm/utils/TableGen/FileParser.y"
 {                           // bit type
     yyval.Ty = new BitRecTy();
   ;
     break;}
 case 4:
-#line 271 "/Users/sabre/cvs/llvm/utils/TableGen/FileParser.y"
+#line 271 "/Volumes/ProjectsDisk/cvs/llvm/utils/TableGen/FileParser.y"
 {           // bits<x> type
     yyval.Ty = new BitsRecTy(yyvsp[-1].IntVal);
   ;
     break;}
 case 5:
-#line 273 "/Users/sabre/cvs/llvm/utils/TableGen/FileParser.y"
+#line 273 "/Volumes/ProjectsDisk/cvs/llvm/utils/TableGen/FileParser.y"
 {                           // int type
     yyval.Ty = new IntRecTy();
   ;
     break;}
 case 6:
-#line 275 "/Users/sabre/cvs/llvm/utils/TableGen/FileParser.y"
+#line 275 "/Volumes/ProjectsDisk/cvs/llvm/utils/TableGen/FileParser.y"
 {          // list<x> type
     yyval.Ty = new ListRecTy(yyvsp[-1].Ty);
   ;
     break;}
 case 7:
-#line 277 "/Users/sabre/cvs/llvm/utils/TableGen/FileParser.y"
+#line 277 "/Volumes/ProjectsDisk/cvs/llvm/utils/TableGen/FileParser.y"
 {                          // code type
     yyval.Ty = new CodeRecTy();
   ;
     break;}
 case 8:
-#line 279 "/Users/sabre/cvs/llvm/utils/TableGen/FileParser.y"
+#line 279 "/Volumes/ProjectsDisk/cvs/llvm/utils/TableGen/FileParser.y"
 {                           // dag type
     yyval.Ty = new DagRecTy();
   ;
     break;}
 case 9:
-#line 281 "/Users/sabre/cvs/llvm/utils/TableGen/FileParser.y"
+#line 281 "/Volumes/ProjectsDisk/cvs/llvm/utils/TableGen/FileParser.y"
 {                       // Record Type
     yyval.Ty = new RecordRecTy(yyvsp[0].Rec);
   ;
     break;}
 case 10:
-#line 285 "/Users/sabre/cvs/llvm/utils/TableGen/FileParser.y"
+#line 285 "/Volumes/ProjectsDisk/cvs/llvm/utils/TableGen/FileParser.y"
 { yyval.IntVal = 0; ;
     break;}
 case 11:
-#line 285 "/Users/sabre/cvs/llvm/utils/TableGen/FileParser.y"
+#line 285 "/Volumes/ProjectsDisk/cvs/llvm/utils/TableGen/FileParser.y"
 { yyval.IntVal = 1; ;
     break;}
 case 12:
-#line 287 "/Users/sabre/cvs/llvm/utils/TableGen/FileParser.y"
+#line 287 "/Volumes/ProjectsDisk/cvs/llvm/utils/TableGen/FileParser.y"
 { yyval.Initializer = 0; ;
     break;}
 case 13:
-#line 287 "/Users/sabre/cvs/llvm/utils/TableGen/FileParser.y"
+#line 287 "/Volumes/ProjectsDisk/cvs/llvm/utils/TableGen/FileParser.y"
 { yyval.Initializer = yyvsp[0].Initializer; ;
     break;}
 case 14:
-#line 289 "/Users/sabre/cvs/llvm/utils/TableGen/FileParser.y"
+#line 289 "/Volumes/ProjectsDisk/cvs/llvm/utils/TableGen/FileParser.y"
 {
   if (const RecordVal *RV = (CurRec ? CurRec->getValue(*yyvsp[0].StrVal) : 0)) {
     yyval.Initializer = new VarInit(*yyvsp[0].StrVal, RV->getType());
@@ -1170,39 +1170,39 @@ case 14:
 ;
     break;}
 case 15:
-#line 312 "/Users/sabre/cvs/llvm/utils/TableGen/FileParser.y"
+#line 312 "/Volumes/ProjectsDisk/cvs/llvm/utils/TableGen/FileParser.y"
 {
     yyval.Initializer = yyvsp[0].Initializer;
   ;
     break;}
 case 16:
-#line 314 "/Users/sabre/cvs/llvm/utils/TableGen/FileParser.y"
+#line 314 "/Volumes/ProjectsDisk/cvs/llvm/utils/TableGen/FileParser.y"
 {
     yyval.Initializer = new IntInit(yyvsp[0].IntVal);
   ;
     break;}
 case 17:
-#line 316 "/Users/sabre/cvs/llvm/utils/TableGen/FileParser.y"
+#line 316 "/Volumes/ProjectsDisk/cvs/llvm/utils/TableGen/FileParser.y"
 {
     yyval.Initializer = new StringInit(*yyvsp[0].StrVal);
     delete yyvsp[0].StrVal;
   ;
     break;}
 case 18:
-#line 319 "/Users/sabre/cvs/llvm/utils/TableGen/FileParser.y"
+#line 319 "/Volumes/ProjectsDisk/cvs/llvm/utils/TableGen/FileParser.y"
 {
     yyval.Initializer = new CodeInit(*yyvsp[0].StrVal);
     delete yyvsp[0].StrVal;
   ;
     break;}
 case 19:
-#line 322 "/Users/sabre/cvs/llvm/utils/TableGen/FileParser.y"
+#line 322 "/Volumes/ProjectsDisk/cvs/llvm/utils/TableGen/FileParser.y"
 {
     yyval.Initializer = new UnsetInit();
   ;
     break;}
 case 20:
-#line 324 "/Users/sabre/cvs/llvm/utils/TableGen/FileParser.y"
+#line 324 "/Volumes/ProjectsDisk/cvs/llvm/utils/TableGen/FileParser.y"
 {
     BitsInit *Init = new BitsInit(yyvsp[-1].FieldList->size());
     for (unsigned i = 0, e = yyvsp[-1].FieldList->size(); i != e; ++i) {
@@ -1219,7 +1219,7 @@ case 20:
   ;
     break;}
 case 21:
-#line 337 "/Users/sabre/cvs/llvm/utils/TableGen/FileParser.y"
+#line 337 "/Volumes/ProjectsDisk/cvs/llvm/utils/TableGen/FileParser.y"
 {
     // This is a CLASS<initvalslist> expression.  This is supposed to synthesize
     // a new anonymous definition, deriving from CLASS<initvalslist> with no
@@ -1251,7 +1251,7 @@ case 21:
   ;
     break;}
 case 22:
-#line 365 "/Users/sabre/cvs/llvm/utils/TableGen/FileParser.y"
+#line 365 "/Volumes/ProjectsDisk/cvs/llvm/utils/TableGen/FileParser.y"
 {
     yyval.Initializer = yyvsp[-3].Initializer->convertInitializerBitRange(*yyvsp[-1].BitList);
     if (yyval.Initializer == 0) {
@@ -1262,14 +1262,14 @@ case 22:
   ;
     break;}
 case 23:
-#line 372 "/Users/sabre/cvs/llvm/utils/TableGen/FileParser.y"
+#line 372 "/Volumes/ProjectsDisk/cvs/llvm/utils/TableGen/FileParser.y"
 {
     yyval.Initializer = new ListInit(*yyvsp[-1].FieldList);
     delete yyvsp[-1].FieldList;
   ;
     break;}
 case 24:
-#line 375 "/Users/sabre/cvs/llvm/utils/TableGen/FileParser.y"
+#line 375 "/Volumes/ProjectsDisk/cvs/llvm/utils/TableGen/FileParser.y"
 {
     if (!yyvsp[-2].Initializer->getFieldType(*yyvsp[0].StrVal)) {
       err() << "Cannot access field '" << *yyvsp[0].StrVal << "' of value '" << *yyvsp[-2].Initializer << "!\n";
@@ -1280,14 +1280,14 @@ case 24:
   ;
     break;}
 case 25:
-#line 382 "/Users/sabre/cvs/llvm/utils/TableGen/FileParser.y"
+#line 382 "/Volumes/ProjectsDisk/cvs/llvm/utils/TableGen/FileParser.y"
 {
     yyval.Initializer = new DagInit(yyvsp[-2].Initializer, *yyvsp[-1].DagValueList);
     delete yyvsp[-1].DagValueList;
   ;
     break;}
 case 26:
-#line 385 "/Users/sabre/cvs/llvm/utils/TableGen/FileParser.y"
+#line 385 "/Volumes/ProjectsDisk/cvs/llvm/utils/TableGen/FileParser.y"
 {
     std::reverse(yyvsp[-1].BitList->begin(), yyvsp[-1].BitList->end());
     yyval.Initializer = yyvsp[-3].Initializer->convertInitListSlice(*yyvsp[-1].BitList);
@@ -1299,43 +1299,43 @@ case 26:
   ;
     break;}
 case 27:
-#line 393 "/Users/sabre/cvs/llvm/utils/TableGen/FileParser.y"
+#line 393 "/Volumes/ProjectsDisk/cvs/llvm/utils/TableGen/FileParser.y"
 {
     yyval.Initializer = (new BinOpInit(BinOpInit::SHL, yyvsp[-3].Initializer, yyvsp[-1].Initializer))->Fold();
   ;
     break;}
 case 28:
-#line 395 "/Users/sabre/cvs/llvm/utils/TableGen/FileParser.y"
+#line 395 "/Volumes/ProjectsDisk/cvs/llvm/utils/TableGen/FileParser.y"
 {
     yyval.Initializer = (new BinOpInit(BinOpInit::SRA, yyvsp[-3].Initializer, yyvsp[-1].Initializer))->Fold();
   ;
     break;}
 case 29:
-#line 397 "/Users/sabre/cvs/llvm/utils/TableGen/FileParser.y"
+#line 397 "/Volumes/ProjectsDisk/cvs/llvm/utils/TableGen/FileParser.y"
 {
     yyval.Initializer = (new BinOpInit(BinOpInit::SRL, yyvsp[-3].Initializer, yyvsp[-1].Initializer))->Fold();
   ;
     break;}
 case 30:
-#line 399 "/Users/sabre/cvs/llvm/utils/TableGen/FileParser.y"
+#line 399 "/Volumes/ProjectsDisk/cvs/llvm/utils/TableGen/FileParser.y"
 {
     yyval.Initializer = (new BinOpInit(BinOpInit::STRCONCAT, yyvsp[-3].Initializer, yyvsp[-1].Initializer))->Fold();
   ;
     break;}
 case 31:
-#line 403 "/Users/sabre/cvs/llvm/utils/TableGen/FileParser.y"
+#line 403 "/Volumes/ProjectsDisk/cvs/llvm/utils/TableGen/FileParser.y"
 {
     yyval.StrVal = new std::string();
   ;
     break;}
 case 32:
-#line 406 "/Users/sabre/cvs/llvm/utils/TableGen/FileParser.y"
+#line 406 "/Volumes/ProjectsDisk/cvs/llvm/utils/TableGen/FileParser.y"
 {
     yyval.StrVal = yyvsp[0].StrVal;
   ;
     break;}
 case 33:
-#line 410 "/Users/sabre/cvs/llvm/utils/TableGen/FileParser.y"
+#line 410 "/Volumes/ProjectsDisk/cvs/llvm/utils/TableGen/FileParser.y"
 {
     yyval.DagValueList = new std::vector<std::pair<Init*, std::string> >();
     yyval.DagValueList->push_back(std::make_pair(yyvsp[-1].Initializer, *yyvsp[0].StrVal));
@@ -1343,7 +1343,7 @@ case 33:
   ;
     break;}
 case 34:
-#line 415 "/Users/sabre/cvs/llvm/utils/TableGen/FileParser.y"
+#line 415 "/Volumes/ProjectsDisk/cvs/llvm/utils/TableGen/FileParser.y"
 {
     yyvsp[-3].DagValueList->push_back(std::make_pair(yyvsp[-1].Initializer, *yyvsp[0].StrVal));
     delete yyvsp[0].StrVal;
@@ -1351,24 +1351,24 @@ case 34:
   ;
     break;}
 case 35:
-#line 421 "/Users/sabre/cvs/llvm/utils/TableGen/FileParser.y"
+#line 421 "/Volumes/ProjectsDisk/cvs/llvm/utils/TableGen/FileParser.y"
 {
     yyval.DagValueList = new std::vector<std::pair<Init*, std::string> >();
   ;
     break;}
 case 36:
-#line 424 "/Users/sabre/cvs/llvm/utils/TableGen/FileParser.y"
+#line 424 "/Volumes/ProjectsDisk/cvs/llvm/utils/TableGen/FileParser.y"
 { yyval.DagValueList = yyvsp[0].DagValueList; ;
     break;}
 case 37:
-#line 427 "/Users/sabre/cvs/llvm/utils/TableGen/FileParser.y"
+#line 427 "/Volumes/ProjectsDisk/cvs/llvm/utils/TableGen/FileParser.y"
 {
     yyval.BitList = new std::vector<unsigned>();
     yyval.BitList->push_back(yyvsp[0].IntVal);
   ;
     break;}
 case 38:
-#line 430 "/Users/sabre/cvs/llvm/utils/TableGen/FileParser.y"
+#line 430 "/Volumes/ProjectsDisk/cvs/llvm/utils/TableGen/FileParser.y"
 {
     if (yyvsp[-2].IntVal < 0 || yyvsp[0].IntVal < 0) {
       err() << "Invalid range: " << yyvsp[-2].IntVal << "-" << yyvsp[0].IntVal << "!\n";
@@ -1385,7 +1385,7 @@ case 38:
   ;
     break;}
 case 39:
-#line 443 "/Users/sabre/cvs/llvm/utils/TableGen/FileParser.y"
+#line 443 "/Volumes/ProjectsDisk/cvs/llvm/utils/TableGen/FileParser.y"
 {
     yyvsp[0].IntVal = -yyvsp[0].IntVal;
     if (yyvsp[-1].IntVal < 0 || yyvsp[0].IntVal < 0) {
@@ -1403,13 +1403,13 @@ case 39:
   ;
     break;}
 case 40:
-#line 457 "/Users/sabre/cvs/llvm/utils/TableGen/FileParser.y"
+#line 457 "/Volumes/ProjectsDisk/cvs/llvm/utils/TableGen/FileParser.y"
 {
     (yyval.BitList=yyvsp[-2].BitList)->push_back(yyvsp[0].IntVal);
   ;
     break;}
 case 41:
-#line 459 "/Users/sabre/cvs/llvm/utils/TableGen/FileParser.y"
+#line 459 "/Volumes/ProjectsDisk/cvs/llvm/utils/TableGen/FileParser.y"
 {
     if (yyvsp[-2].IntVal < 0 || yyvsp[0].IntVal < 0) {
       err() << "Invalid range: " << yyvsp[-2].IntVal << "-" << yyvsp[0].IntVal << "!\n";
@@ -1426,7 +1426,7 @@ case 41:
   ;
     break;}
 case 42:
-#line 472 "/Users/sabre/cvs/llvm/utils/TableGen/FileParser.y"
+#line 472 "/Volumes/ProjectsDisk/cvs/llvm/utils/TableGen/FileParser.y"
 {
     yyvsp[0].IntVal = -yyvsp[0].IntVal;
     if (yyvsp[-1].IntVal < 0 || yyvsp[0].IntVal < 0) {
@@ -1444,44 +1444,44 @@ case 42:
   ;
     break;}
 case 43:
-#line 488 "/Users/sabre/cvs/llvm/utils/TableGen/FileParser.y"
+#line 488 "/Volumes/ProjectsDisk/cvs/llvm/utils/TableGen/FileParser.y"
 { yyval.BitList = yyvsp[0].BitList; std::reverse(yyvsp[0].BitList->begin(), yyvsp[0].BitList->end()); ;
     break;}
 case 44:
-#line 490 "/Users/sabre/cvs/llvm/utils/TableGen/FileParser.y"
+#line 490 "/Volumes/ProjectsDisk/cvs/llvm/utils/TableGen/FileParser.y"
 { yyval.BitList = 0; ;
     break;}
 case 45:
-#line 490 "/Users/sabre/cvs/llvm/utils/TableGen/FileParser.y"
+#line 490 "/Volumes/ProjectsDisk/cvs/llvm/utils/TableGen/FileParser.y"
 { yyval.BitList = yyvsp[-1].BitList; ;
     break;}
 case 46:
-#line 494 "/Users/sabre/cvs/llvm/utils/TableGen/FileParser.y"
+#line 494 "/Volumes/ProjectsDisk/cvs/llvm/utils/TableGen/FileParser.y"
 {
     yyval.FieldList = new std::vector<Init*>();
   ;
     break;}
 case 47:
-#line 496 "/Users/sabre/cvs/llvm/utils/TableGen/FileParser.y"
+#line 496 "/Volumes/ProjectsDisk/cvs/llvm/utils/TableGen/FileParser.y"
 {
     yyval.FieldList = yyvsp[0].FieldList;
   ;
     break;}
 case 48:
-#line 500 "/Users/sabre/cvs/llvm/utils/TableGen/FileParser.y"
+#line 500 "/Volumes/ProjectsDisk/cvs/llvm/utils/TableGen/FileParser.y"
 {
     yyval.FieldList = new std::vector<Init*>();
     yyval.FieldList->push_back(yyvsp[0].Initializer);
   ;
     break;}
 case 49:
-#line 503 "/Users/sabre/cvs/llvm/utils/TableGen/FileParser.y"
+#line 503 "/Volumes/ProjectsDisk/cvs/llvm/utils/TableGen/FileParser.y"
 {
     (yyval.FieldList = yyvsp[-2].FieldList)->push_back(yyvsp[0].Initializer);
   ;
     break;}
 case 50:
-#line 507 "/Users/sabre/cvs/llvm/utils/TableGen/FileParser.y"
+#line 507 "/Volumes/ProjectsDisk/cvs/llvm/utils/TableGen/FileParser.y"
 {
   std::string DecName = *yyvsp[-1].StrVal;
   if (ParsingTemplateArgs) {
@@ -1500,13 +1500,13 @@ case 50:
 ;
     break;}
 case 51:
-#line 524 "/Users/sabre/cvs/llvm/utils/TableGen/FileParser.y"
+#line 524 "/Volumes/ProjectsDisk/cvs/llvm/utils/TableGen/FileParser.y"
 {
   delete yyvsp[-1].StrVal;
 ;
     break;}
 case 52:
-#line 526 "/Users/sabre/cvs/llvm/utils/TableGen/FileParser.y"
+#line 526 "/Volumes/ProjectsDisk/cvs/llvm/utils/TableGen/FileParser.y"
 {
   setValue(*yyvsp[-4].StrVal, yyvsp[-3].BitList, yyvsp[-1].Initializer);
   delete yyvsp[-4].StrVal;
@@ -1514,19 +1514,19 @@ case 52:
 ;
     break;}
 case 57:
-#line 535 "/Users/sabre/cvs/llvm/utils/TableGen/FileParser.y"
+#line 535 "/Volumes/ProjectsDisk/cvs/llvm/utils/TableGen/FileParser.y"
 {
     yyval.SubClassRef = new SubClassRefTy(yyvsp[0].Rec, new std::vector<Init*>());
   ;
     break;}
 case 58:
-#line 537 "/Users/sabre/cvs/llvm/utils/TableGen/FileParser.y"
+#line 537 "/Volumes/ProjectsDisk/cvs/llvm/utils/TableGen/FileParser.y"
 {
     yyval.SubClassRef = new SubClassRefTy(yyvsp[-3].Rec, yyvsp[-1].FieldList);
   ;
     break;}
 case 59:
-#line 541 "/Users/sabre/cvs/llvm/utils/TableGen/FileParser.y"
+#line 541 "/Volumes/ProjectsDisk/cvs/llvm/utils/TableGen/FileParser.y"
 {
     yyval.SubClassList = new std::vector<SubClassRefTy>();
     yyval.SubClassList->push_back(*yyvsp[0].SubClassRef);
@@ -1534,52 +1534,52 @@ case 59:
   ;
     break;}
 case 60:
-#line 546 "/Users/sabre/cvs/llvm/utils/TableGen/FileParser.y"
+#line 546 "/Volumes/ProjectsDisk/cvs/llvm/utils/TableGen/FileParser.y"
 {
     (yyval.SubClassList=yyvsp[-2].SubClassList)->push_back(*yyvsp[0].SubClassRef);
     delete yyvsp[0].SubClassRef;
   ;
     break;}
 case 61:
-#line 551 "/Users/sabre/cvs/llvm/utils/TableGen/FileParser.y"
+#line 551 "/Volumes/ProjectsDisk/cvs/llvm/utils/TableGen/FileParser.y"
 {
     yyval.SubClassList = new std::vector<SubClassRefTy>();
   ;
     break;}
 case 62:
-#line 554 "/Users/sabre/cvs/llvm/utils/TableGen/FileParser.y"
+#line 554 "/Volumes/ProjectsDisk/cvs/llvm/utils/TableGen/FileParser.y"
 {
     yyval.SubClassList = yyvsp[0].SubClassList;
   ;
     break;}
 case 63:
-#line 558 "/Users/sabre/cvs/llvm/utils/TableGen/FileParser.y"
+#line 558 "/Volumes/ProjectsDisk/cvs/llvm/utils/TableGen/FileParser.y"
 {
   getActiveRec()->addTemplateArg(*yyvsp[0].StrVal);
   delete yyvsp[0].StrVal;
 ;
     break;}
 case 64:
-#line 561 "/Users/sabre/cvs/llvm/utils/TableGen/FileParser.y"
+#line 561 "/Volumes/ProjectsDisk/cvs/llvm/utils/TableGen/FileParser.y"
 {
   getActiveRec()->addTemplateArg(*yyvsp[0].StrVal);
   delete yyvsp[0].StrVal;
 ;
     break;}
 case 65:
-#line 566 "/Users/sabre/cvs/llvm/utils/TableGen/FileParser.y"
+#line 566 "/Volumes/ProjectsDisk/cvs/llvm/utils/TableGen/FileParser.y"
 {;
     break;}
 case 68:
-#line 569 "/Users/sabre/cvs/llvm/utils/TableGen/FileParser.y"
+#line 569 "/Volumes/ProjectsDisk/cvs/llvm/utils/TableGen/FileParser.y"
 { yyval.StrVal = yyvsp[0].StrVal; ;
     break;}
 case 69:
-#line 569 "/Users/sabre/cvs/llvm/utils/TableGen/FileParser.y"
+#line 569 "/Volumes/ProjectsDisk/cvs/llvm/utils/TableGen/FileParser.y"
 { yyval.StrVal = new std::string(); ;
     break;}
 case 70:
-#line 571 "/Users/sabre/cvs/llvm/utils/TableGen/FileParser.y"
+#line 571 "/Volumes/ProjectsDisk/cvs/llvm/utils/TableGen/FileParser.y"
 {
   static unsigned AnonCounter = 0;
   if (yyvsp[0].StrVal->empty())
@@ -1588,7 +1588,7 @@ case 70:
 ;
     break;}
 case 71:
-#line 578 "/Users/sabre/cvs/llvm/utils/TableGen/FileParser.y"
+#line 578 "/Volumes/ProjectsDisk/cvs/llvm/utils/TableGen/FileParser.y"
 {
   // If a class of this name already exists, it must be a forward ref.
   if ((CurRec = Records.getClass(*yyvsp[0].StrVal))) {
@@ -1608,7 +1608,7 @@ case 71:
 ;
     break;}
 case 72:
-#line 596 "/Users/sabre/cvs/llvm/utils/TableGen/FileParser.y"
+#line 596 "/Volumes/ProjectsDisk/cvs/llvm/utils/TableGen/FileParser.y"
 {
   CurRec = new Record(*yyvsp[0].StrVal);
   delete yyvsp[0].StrVal;
@@ -1635,16 +1635,16 @@ case 72:
 ;
     break;}
 case 73:
-#line 621 "/Users/sabre/cvs/llvm/utils/TableGen/FileParser.y"
+#line 621 "/Volumes/ProjectsDisk/cvs/llvm/utils/TableGen/FileParser.y"
 {
            for (unsigned i = 0, e = yyvsp[0].SubClassList->size(); i != e; ++i) {
              addSubClass((*yyvsp[0].SubClassList)[i].first, *(*yyvsp[0].SubClassList)[i].second);
              // Delete the template arg values for the class
              delete (*yyvsp[0].SubClassList)[i].second;
            }
-           delete yyvsp[0].SubClassList;   // Delete the class list...
+           delete yyvsp[0].SubClassList;   // Delete the class list.
   
-           // Process any variables on the set stack...
+           // Process any variables on the let stack.
            for (unsigned i = 0, e = LetStack.size(); i != e; ++i)
              for (unsigned j = 0, e = LetStack[i].size(); j != e; ++j)
                setValue(LetStack[i][j].Name,
@@ -1653,32 +1653,32 @@ case 73:
          ;
     break;}
 case 74:
-#line 635 "/Users/sabre/cvs/llvm/utils/TableGen/FileParser.y"
+#line 635 "/Volumes/ProjectsDisk/cvs/llvm/utils/TableGen/FileParser.y"
 {
            yyval.Rec = CurRec;
            CurRec = 0;
          ;
     break;}
 case 75:
-#line 640 "/Users/sabre/cvs/llvm/utils/TableGen/FileParser.y"
+#line 640 "/Volumes/ProjectsDisk/cvs/llvm/utils/TableGen/FileParser.y"
 {
                 ParsingTemplateArgs = true;
             ;
     break;}
 case 76:
-#line 642 "/Users/sabre/cvs/llvm/utils/TableGen/FileParser.y"
+#line 642 "/Volumes/ProjectsDisk/cvs/llvm/utils/TableGen/FileParser.y"
 {
                 ParsingTemplateArgs = false;
             ;
     break;}
 case 77:
-#line 644 "/Users/sabre/cvs/llvm/utils/TableGen/FileParser.y"
+#line 644 "/Volumes/ProjectsDisk/cvs/llvm/utils/TableGen/FileParser.y"
 {
         yyval.Rec = yyvsp[0].Rec;
      ;
     break;}
 case 78:
-#line 648 "/Users/sabre/cvs/llvm/utils/TableGen/FileParser.y"
+#line 648 "/Volumes/ProjectsDisk/cvs/llvm/utils/TableGen/FileParser.y"
 {
   if (CurMultiClass == 0)  // Def's in multiclasses aren't really defs.
     yyvsp[0].Rec->resolveReferences();
@@ -1689,7 +1689,7 @@ case 78:
 ;
     break;}
 case 79:
-#line 658 "/Users/sabre/cvs/llvm/utils/TableGen/FileParser.y"
+#line 658 "/Volumes/ProjectsDisk/cvs/llvm/utils/TableGen/FileParser.y"
 {
   yyval.Rec = yyvsp[0].Rec;
   // Copy the template arguments for the multiclass into the def.
@@ -1703,20 +1703,20 @@ case 79:
 ;
     break;}
 case 80:
-#line 672 "/Users/sabre/cvs/llvm/utils/TableGen/FileParser.y"
+#line 672 "/Volumes/ProjectsDisk/cvs/llvm/utils/TableGen/FileParser.y"
 {
   yyval.RecList = new std::vector<Record*>();
   yyval.RecList->push_back(yyvsp[0].Rec);
 ;
     break;}
 case 81:
-#line 675 "/Users/sabre/cvs/llvm/utils/TableGen/FileParser.y"
+#line 675 "/Volumes/ProjectsDisk/cvs/llvm/utils/TableGen/FileParser.y"
 {
   yyval.RecList->push_back(yyvsp[0].Rec);  
 ;
     break;}
 case 82:
-#line 679 "/Users/sabre/cvs/llvm/utils/TableGen/FileParser.y"
+#line 679 "/Volumes/ProjectsDisk/cvs/llvm/utils/TableGen/FileParser.y"
 {
   MultiClass *&MCE = MultiClasses[*yyvsp[0].StrVal];
   if (MCE) {
@@ -1728,29 +1728,29 @@ case 82:
 ;
     break;}
 case 83:
-#line 690 "/Users/sabre/cvs/llvm/utils/TableGen/FileParser.y"
+#line 690 "/Volumes/ProjectsDisk/cvs/llvm/utils/TableGen/FileParser.y"
 {
                                              ParsingTemplateArgs = true;
                                            ;
     break;}
 case 84:
-#line 692 "/Users/sabre/cvs/llvm/utils/TableGen/FileParser.y"
+#line 692 "/Volumes/ProjectsDisk/cvs/llvm/utils/TableGen/FileParser.y"
 {
                                              ParsingTemplateArgs = false;
                                            ;
     break;}
 case 85:
-#line 694 "/Users/sabre/cvs/llvm/utils/TableGen/FileParser.y"
+#line 694 "/Volumes/ProjectsDisk/cvs/llvm/utils/TableGen/FileParser.y"
 {
   CurMultiClass = 0;
 ;
     break;}
 case 86:
-#line 699 "/Users/sabre/cvs/llvm/utils/TableGen/FileParser.y"
+#line 699 "/Volumes/ProjectsDisk/cvs/llvm/utils/TableGen/FileParser.y"
 { CurDefmPrefix = yyvsp[0].StrVal; ;
     break;}
 case 87:
-#line 699 "/Users/sabre/cvs/llvm/utils/TableGen/FileParser.y"
+#line 699 "/Volumes/ProjectsDisk/cvs/llvm/utils/TableGen/FileParser.y"
 {
   // To instantiate a multiclass, we need to first get the multiclass, then
   // instantiate each def contained in the multiclass with the SubClassRef
@@ -1798,6 +1798,14 @@ case 87:
       }
     }
     
+    // If the mdef is inside a 'let' expression, add to each def.
+    for (unsigned i = 0, e = LetStack.size(); i != e; ++i)
+      for (unsigned j = 0, e = LetStack[i].size(); j != e; ++j)
+        setValue(LetStack[i][j].Name,
+                 LetStack[i][j].HasBits ? &LetStack[i][j].Bits : 0,
+                 LetStack[i][j].Value);
+    
+    
     // Ensure redefinition doesn't happen.
     if (Records.getDef(CurRec->getName())) {
       err() << "def '" << CurRec->getName() << "' already defined, "
@@ -1818,42 +1826,42 @@ case 87:
 ;
     break;}
 case 88:
-#line 765 "/Users/sabre/cvs/llvm/utils/TableGen/FileParser.y"
+#line 773 "/Volumes/ProjectsDisk/cvs/llvm/utils/TableGen/FileParser.y"
 {;
     break;}
 case 89:
-#line 765 "/Users/sabre/cvs/llvm/utils/TableGen/FileParser.y"
+#line 773 "/Volumes/ProjectsDisk/cvs/llvm/utils/TableGen/FileParser.y"
 {;
     break;}
 case 92:
-#line 768 "/Users/sabre/cvs/llvm/utils/TableGen/FileParser.y"
+#line 776 "/Volumes/ProjectsDisk/cvs/llvm/utils/TableGen/FileParser.y"
 {
   LetStack.back().push_back(LetRecord(*yyvsp[-3].StrVal, yyvsp[-2].BitList, yyvsp[0].Initializer));
   delete yyvsp[-3].StrVal; delete yyvsp[-2].BitList;
 ;
     break;}
 case 95:
-#line 776 "/Users/sabre/cvs/llvm/utils/TableGen/FileParser.y"
+#line 784 "/Volumes/ProjectsDisk/cvs/llvm/utils/TableGen/FileParser.y"
 { LetStack.push_back(std::vector<LetRecord>()); ;
     break;}
 case 97:
-#line 779 "/Users/sabre/cvs/llvm/utils/TableGen/FileParser.y"
+#line 787 "/Volumes/ProjectsDisk/cvs/llvm/utils/TableGen/FileParser.y"
 {
     LetStack.pop_back();
   ;
     break;}
 case 98:
-#line 782 "/Users/sabre/cvs/llvm/utils/TableGen/FileParser.y"
+#line 790 "/Volumes/ProjectsDisk/cvs/llvm/utils/TableGen/FileParser.y"
 {
     LetStack.pop_back();
   ;
     break;}
 case 99:
-#line 786 "/Users/sabre/cvs/llvm/utils/TableGen/FileParser.y"
+#line 794 "/Volumes/ProjectsDisk/cvs/llvm/utils/TableGen/FileParser.y"
 {;
     break;}
 case 100:
-#line 786 "/Users/sabre/cvs/llvm/utils/TableGen/FileParser.y"
+#line 794 "/Volumes/ProjectsDisk/cvs/llvm/utils/TableGen/FileParser.y"
 {;
     break;}
 }
@@ -2078,7 +2086,7 @@ yyerrhandle:
     }
   return 1;
 }
-#line 790 "/Users/sabre/cvs/llvm/utils/TableGen/FileParser.y"
+#line 798 "/Volumes/ProjectsDisk/cvs/llvm/utils/TableGen/FileParser.y"
 
 
 int yyerror(const char *ErrorMsg) {
