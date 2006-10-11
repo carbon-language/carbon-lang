@@ -2320,6 +2320,41 @@ public:
       emitCheck(N->getPredicateFn() + "(" + RootName + ".Val)");
 
     
+    // If this is an 'and R, 1234' where the operation is AND/OR and the RHS is
+    // a constant without a predicate fn that has more that one bit set, handle
+    // this as a special case.  This is usually for targets that have special
+    // handling of certain large constants (e.g. alpha with it's 8/16/32-bit
+    // handling stuff).  Using these instructions is often far more efficient
+    // than materializing the constant.  Unfortunately, both the instcombiner
+    // and the dag combiner can often infer that bits are dead, and thus drop
+    // them from the mask in the dag.  For example, it might turn 'AND X, 255'
+    // into 'AND X, 254' if it knows the low bit is set.  Emit code that checks
+    // to handle this.
+    if (!N->isLeaf() && 
+        (N->getOperator()->getName() == "and" || 
+         N->getOperator()->getName() == "or") &&
+        N->getChild(1)->isLeaf() &&
+        N->getChild(1)->getPredicateFn().empty()) {
+      if (IntInit *II = dynamic_cast<IntInit*>(N->getChild(1)->getLeafValue())) {
+        if (!isPowerOf2_32(II->getValue())) {  // Don't bother with single bits.
+          emitInit("SDOperand " + RootName + "0" + " = " +
+                   RootName + ".getOperand(" + utostr(0) + ");");
+          emitInit("SDOperand " + RootName + "1" + " = " +
+                   RootName + ".getOperand(" + utostr(1) + ");");
+
+          emitCheck("isa<ConstantSDNode>(" + RootName + "1)");
+          const char *MaskPredicate = N->getOperator()->getName() == "or"
+            ? "CheckOrMask(" : "CheckAndMask(";
+          emitCheck(MaskPredicate + RootName + "0, cast<ConstantSDNode>(" +
+                    RootName + "1), " + itostr(II->getValue()) + ")");
+          
+          EmitChildMatchCode(N->getChild(0), N, RootName + utostr(0),
+                             ChainSuffix + utostr(0), FoundChain);
+          return;
+        }
+      }
+    }
+    
     for (unsigned i = 0, e = N->getNumChildren(); i != e; ++i, ++OpNo) {
       emitInit("SDOperand " + RootName + utostr(OpNo) + " = " +
                RootName + ".getOperand(" +utostr(OpNo) + ");");
@@ -2344,7 +2379,7 @@ public:
       emitCheck(Code + ")");
     }
   }
-  
+
   void EmitChildMatchCode(TreePatternNode *Child, TreePatternNode *Parent,
                           const std::string &RootName,
                           const std::string &ChainSuffix, bool &FoundChain) {
