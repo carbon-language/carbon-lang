@@ -460,7 +460,7 @@ SDNode *IA64DAGToDAGISel::Select(SDOperand Op) {
     AddToISelQueue(Chain);
     AddToISelQueue(Address);
 
-    MVT::ValueType TypeBeingLoaded = LD->getLoadVT();
+    MVT::ValueType TypeBeingLoaded = LD->getLoadedVT();
     unsigned Opc;
     switch (TypeBeingLoaded) {
     default:

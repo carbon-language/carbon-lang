@@ -411,69 +411,69 @@ def load : PatFrag<(ops node:$ptr), (ld node:$ptr), [{
 // extending load & truncstore fragments.
 def extloadi1  : PatFrag<(ops node:$ptr), (ld node:$ptr), [{
   if (ISD::isEXTLoad(N))
-    return cast<LoadSDNode>(N)->getLoadVT() == MVT::i1;
+    return cast<LoadSDNode>(N)->getLoadedVT() == MVT::i1;
   return false;
 }]>;
 def extloadi8  : PatFrag<(ops node:$ptr), (ld node:$ptr), [{
   if (ISD::isEXTLoad(N))
-    return cast<LoadSDNode>(N)->getLoadVT() == MVT::i8;
+    return cast<LoadSDNode>(N)->getLoadedVT() == MVT::i8;
   return false;
 }]>;
 def extloadi16 : PatFrag<(ops node:$ptr), (ld node:$ptr), [{
   if (ISD::isEXTLoad(N))
-    return cast<LoadSDNode>(N)->getLoadVT() == MVT::i16;
+    return cast<LoadSDNode>(N)->getLoadedVT() == MVT::i16;
   return false;
 }]>;
 def extloadi32 : PatFrag<(ops node:$ptr), (ld node:$ptr), [{
   if (ISD::isEXTLoad(N))
-    return cast<LoadSDNode>(N)->getLoadVT() == MVT::i32;
+    return cast<LoadSDNode>(N)->getLoadedVT() == MVT::i32;
   return false;
 }]>;
 def extloadf32 : PatFrag<(ops node:$ptr), (ld node:$ptr), [{
   if (ISD::isEXTLoad(N))
-    return cast<LoadSDNode>(N)->getLoadVT() == MVT::f32;
+    return cast<LoadSDNode>(N)->getLoadedVT() == MVT::f32;
   return false;
 }]>;
 
 def sextloadi1 : PatFrag<(ops node:$ptr), (ld node:$ptr), [{
   if (ISD::isSEXTLoad(N))
-    return cast<LoadSDNode>(N)->getLoadVT() == MVT::i1;
+    return cast<LoadSDNode>(N)->getLoadedVT() == MVT::i1;
   return false;
 }]>;
 def sextloadi8 : PatFrag<(ops node:$ptr), (ld node:$ptr), [{
   if (ISD::isSEXTLoad(N))
-    return cast<LoadSDNode>(N)->getLoadVT() == MVT::i8;
+    return cast<LoadSDNode>(N)->getLoadedVT() == MVT::i8;
   return false;
 }]>;
 def sextloadi16 : PatFrag<(ops node:$ptr), (ld node:$ptr), [{
   if (ISD::isSEXTLoad(N))
-    return cast<LoadSDNode>(N)->getLoadVT() == MVT::i16;
+    return cast<LoadSDNode>(N)->getLoadedVT() == MVT::i16;
   return false;
 }]>;
 def sextloadi32 : PatFrag<(ops node:$ptr), (ld node:$ptr), [{
   if (ISD::isSEXTLoad(N))
-    return cast<LoadSDNode>(N)->getLoadVT() == MVT::i32;
+    return cast<LoadSDNode>(N)->getLoadedVT() == MVT::i32;
   return false;
 }]>;
 
 def zextloadi1 : PatFrag<(ops node:$ptr), (ld node:$ptr), [{
   if (ISD::isZEXTLoad(N))
-    return cast<LoadSDNode>(N)->getLoadVT() == MVT::i1;
+    return cast<LoadSDNode>(N)->getLoadedVT() == MVT::i1;
   return false;
 }]>;
 def zextloadi8 : PatFrag<(ops node:$ptr), (ld node:$ptr), [{
   if (ISD::isZEXTLoad(N))
-    return cast<LoadSDNode>(N)->getLoadVT() == MVT::i8;
+    return cast<LoadSDNode>(N)->getLoadedVT() == MVT::i8;
   return false;
 }]>;
 def zextloadi16 : PatFrag<(ops node:$ptr), (ld node:$ptr), [{
   if (ISD::isZEXTLoad(N))
-    return cast<LoadSDNode>(N)->getLoadVT() == MVT::i16;
+    return cast<LoadSDNode>(N)->getLoadedVT() == MVT::i16;
   return false;
 }]>;
 def zextloadi32 : PatFrag<(ops node:$ptr), (ld node:$ptr), [{
   if (ISD::isZEXTLoad(N))
-    return cast<LoadSDNode>(N)->getLoadVT() == MVT::i32;
+    return cast<LoadSDNode>(N)->getLoadedVT() == MVT::i32;
   return false;
 }]>;
 

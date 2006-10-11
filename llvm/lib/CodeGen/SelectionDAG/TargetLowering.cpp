@@ -555,7 +555,7 @@ bool TargetLowering::SimplifyDemandedBits(SDOperand Op, uint64_t DemandedMask,
   case ISD::LOAD: {
     if (ISD::isZEXTLoad(Op.Val)) {
       LoadSDNode *LD = cast<LoadSDNode>(Op);
-      MVT::ValueType VT = LD->getLoadVT();
+      MVT::ValueType VT = LD->getLoadedVT();
       KnownZero |= ~MVT::getIntVTBitMask(VT) & DemandedMask;
     }
     break;
@@ -896,7 +896,7 @@ void TargetLowering::ComputeMaskedBits(SDOperand Op, uint64_t Mask,
   case ISD::LOAD: {
     if (ISD::isZEXTLoad(Op.Val)) {
       LoadSDNode *LD = cast<LoadSDNode>(Op);
-      MVT::ValueType VT = LD->getLoadVT();
+      MVT::ValueType VT = LD->getLoadedVT();
       KnownZero |= ~MVT::getIntVTBitMask(VT) & Mask;
     }
     return;
@@ -1205,10 +1205,10 @@ unsigned TargetLowering::ComputeNumSignBits(SDOperand Op, unsigned Depth) const{
     switch (ExtType) {
     default: break;
     case ISD::SEXTLOAD:    // '17' bits known
-      Tmp = MVT::getSizeInBits(LD->getLoadVT());
+      Tmp = MVT::getSizeInBits(LD->getLoadedVT());
       return VTBits-Tmp+1;
     case ISD::ZEXTLOAD:    // '16' bits known
-      Tmp = MVT::getSizeInBits(LD->getLoadVT());
+      Tmp = MVT::getSizeInBits(LD->getLoadedVT());
       return VTBits-Tmp;
     }
   }

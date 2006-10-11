@@ -1383,8 +1383,8 @@ class LoadSDNode : public SDNode {
   // ExtType - non-ext, anyext, sext, zext.
   ISD::LoadExtType ExtType;
 
-  // LoadVT - VT of loaded value before extension.
-  MVT::ValueType LoadVT;
+  // LoadedVT - VT of loaded value before extension.
+  MVT::ValueType LoadedVT;
 
   // SrcValue - Memory location for alias analysis.
   const Value *SrcValue;
@@ -1403,7 +1403,7 @@ protected:
              ISD::MemOpAddrMode AM, ISD::LoadExtType ETy, MVT::ValueType LVT,
              const Value *SV, int O=0, unsigned Align=1, bool Vol=false)
     : SDNode(ISD::LOAD, Chain, Ptr, Off),
-      AddrMode(AM), ExtType(ETy), LoadVT(LVT), SrcValue(SV), SVOffset(O),
+      AddrMode(AM), ExtType(ETy), LoadedVT(LVT), SrcValue(SV), SVOffset(O),
       Alignment(Align), IsVolatile(Vol) {
     assert((Off.getOpcode() == ISD::UNDEF || AddrMode == ISD::POST_INDEXED) &&
            "Only post-indexed load has a non-undef offset operand");
@@ -1412,7 +1412,7 @@ protected:
              ISD::LoadExtType ETy, MVT::ValueType LVT,
              const Value *SV, int O=0, unsigned Align=1, bool Vol=false)
     : SDNode(ISD::LOAD, Chain, Ptr, Off),
-      AddrMode(ISD::UNINDEXED), ExtType(ETy), LoadVT(LVT), SrcValue(SV),
+      AddrMode(ISD::UNINDEXED), ExtType(ETy), LoadedVT(LVT), SrcValue(SV),
       SVOffset(O), Alignment(Align), IsVolatile(Vol) {
     assert((Off.getOpcode() == ISD::UNDEF || AddrMode == ISD::POST_INDEXED) &&
            "Only post-indexed load has a non-undef offset operand");
@@ -1424,7 +1424,7 @@ public:
   const SDOperand getOffset() const { return getOperand(2); }
   ISD::MemOpAddrMode getAddressingMode() const { return AddrMode; }
   ISD::LoadExtType getExtensionType() const { return ExtType; }
-  MVT::ValueType getLoadVT() const { return LoadVT; }
+  MVT::ValueType getLoadedVT() const { return LoadedVT; }
   const Value *getSrcValue() const { return SrcValue; }
   int getSrcValueOffset() const { return SVOffset; }
   unsigned getAlignment() const { return Alignment; }
@@ -1445,7 +1445,7 @@ class StoreSDNode : public SDNode {
   // IsTruncStore - True is the op does a truncation before store.
   bool IsTruncStore;
 
-  // StoreVT - VT of the value after truncation.
+  // StoredVT - VT of the value after truncation.
   MVT::ValueType StoredVT;
 
   // SrcValue - Memory location for alias analysis.

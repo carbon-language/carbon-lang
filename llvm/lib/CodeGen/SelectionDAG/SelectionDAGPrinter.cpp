@@ -145,7 +145,7 @@ std::string DOTGraphTraits<SelectionDAG*>::getNodeLabel(const SDNode *Node,
       break;
     }
     if (doExt)
-      Op = Op + MVT::getValueTypeString(LD->getLoadVT()) + ">";
+      Op = Op + MVT::getValueTypeString(LD->getLoadedVT()) + ">";
 
     if (LD->getAddressingMode() == ISD::PRE_INDEXED)
       Op = Op + "<pre>";

@@ -1364,7 +1364,7 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
       AddLegalizedOperand(SDOperand(Node, 1), Tmp4);
       return Op.ResNo ? Tmp4 : Tmp3;
     } else {
-      MVT::ValueType SrcVT = LD->getLoadVT();
+      MVT::ValueType SrcVT = LD->getLoadedVT();
       switch (TLI.getLoadXAction(ExtType, SrcVT)) {
       default: assert(0 && "This action is not supported yet!");
       case TargetLowering::Promote:
@@ -3228,7 +3228,7 @@ SDOperand SelectionDAGLegalize::PromoteOp(SDOperand Op) {
     Result = DAG.getExtLoad(ExtType, NVT,
                             LD->getChain(), LD->getBasePtr(),
                             LD->getSrcValue(), LD->getSrcValueOffset(),
-                            LD->getLoadVT());
+                            LD->getLoadedVT());
     // Remember that we legalized the chain.
     AddLegalizedOperand(Op.getValue(1), LegalizeOp(Result.getValue(1)));
     break;
@@ -4431,7 +4431,7 @@ void SelectionDAGLegalize::ExpandOp(SDOperand Op, SDOperand &Lo, SDOperand &Hi){
       if (!TLI.isLittleEndian())
         std::swap(Lo, Hi);
     } else {
-      MVT::ValueType EVT = LD->getLoadVT();
+      MVT::ValueType EVT = LD->getLoadedVT();
     
       if (EVT == NVT)
         Lo = DAG.getLoad(NVT, Ch, Ptr, LD->getSrcValue(),

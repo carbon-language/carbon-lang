@@ -457,7 +457,7 @@ SDNode *SelectionDAG::FindModifiedNodeSlot(SDNode *N,
   if (const LoadSDNode *LD = dyn_cast<LoadSDNode>(N)) {
     ID.AddInteger(LD->getAddressingMode());
     ID.AddInteger(LD->getExtensionType());
-    ID.AddInteger(LD->getLoadVT());
+    ID.AddInteger(LD->getLoadedVT());
     ID.AddPointer(LD->getSrcValue());
     ID.AddInteger(LD->getSrcValueOffset());
     ID.AddInteger(LD->getAlignment());
@@ -2715,7 +2715,7 @@ void SDNode::dump(const SelectionDAG *G) const {
       break;
     }
     if (doExt)
-      std::cerr << MVT::getValueTypeString(LD->getLoadVT()) << ">";
+      std::cerr << MVT::getValueTypeString(LD->getLoadedVT()) << ">";
 
     if (LD->getAddressingMode() == ISD::PRE_INDEXED)
       std::cerr << " <pre>";

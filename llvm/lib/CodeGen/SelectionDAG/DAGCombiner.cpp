@@ -1077,7 +1077,7 @@ SDOperand DAGCombiner::visitAND(SDNode *N) {
   // fold (zext_inreg (extload x)) -> (zextload x)
   if (ISD::isEXTLoad(N0.Val)) {
     LoadSDNode *LN0 = cast<LoadSDNode>(N0);
-    MVT::ValueType EVT = LN0->getLoadVT();
+    MVT::ValueType EVT = LN0->getLoadedVT();
     // If we zero all the possible extended bits, then we can turn this into
     // a zextload if we are running before legalize or the operation is legal.
     if (TLI.MaskedValueIsZero(N1, ~0ULL << MVT::getSizeInBits(EVT)) &&
@@ -1093,7 +1093,7 @@ SDOperand DAGCombiner::visitAND(SDNode *N) {
   // fold (zext_inreg (sextload x)) -> (zextload x) iff load has one use
   if (ISD::isSEXTLoad(N0.Val) && N0.hasOneUse()) {
     LoadSDNode *LN0 = cast<LoadSDNode>(N0);
-    MVT::ValueType EVT = LN0->getLoadVT();
+    MVT::ValueType EVT = LN0->getLoadedVT();
     // If we zero all the possible extended bits, then we can turn this into
     // a zextload if we are running before legalize or the operation is legal.
     if (TLI.MaskedValueIsZero(N1, ~0ULL << MVT::getSizeInBits(EVT)) &&
@@ -1123,7 +1123,7 @@ SDOperand DAGCombiner::visitAND(SDNode *N) {
       else
         EVT = MVT::Other;
     
-      LoadedVT = LN0->getLoadVT();
+      LoadedVT = LN0->getLoadedVT();
       if (EVT != MVT::Other && LoadedVT > EVT &&
           (!AfterLegalize || TLI.isLoadXLegal(ISD::ZEXTLOAD, EVT))) {
         MVT::ValueType PtrType = N0.getOperand(1).getValueType();
@@ -1874,7 +1874,7 @@ SDOperand DAGCombiner::visitSIGN_EXTEND(SDNode *N) {
   // fold (sext ( extload x)) -> (sext (truncate (sextload x)))
   if ((ISD::isSEXTLoad(N0.Val) || ISD::isEXTLoad(N0.Val)) && N0.hasOneUse()) {
     LoadSDNode *LN0 = cast<LoadSDNode>(N0);
-    MVT::ValueType EVT = LN0->getLoadVT();
+    MVT::ValueType EVT = LN0->getLoadedVT();
     SDOperand ExtLoad = DAG.getExtLoad(ISD::SEXTLOAD, VT, LN0->getChain(),
                                        LN0->getBasePtr(), LN0->getSrcValue(),
                                        LN0->getSrcValueOffset(), EVT);
@@ -1943,7 +1943,7 @@ SDOperand DAGCombiner::visitZERO_EXTEND(SDNode *N) {
   // fold (zext ( extload x)) -> (zext (truncate (zextload x)))
   if ((ISD::isZEXTLoad(N0.Val) || ISD::isEXTLoad(N0.Val)) && N0.hasOneUse()) {
     LoadSDNode *LN0 = cast<LoadSDNode>(N0);
-    MVT::ValueType EVT = LN0->getLoadVT();
+    MVT::ValueType EVT = LN0->getLoadedVT();
     SDOperand ExtLoad = DAG.getExtLoad(ISD::ZEXTLOAD, VT, LN0->getChain(),
                                        LN0->getBasePtr(), LN0->getSrcValue(),
                                        LN0->getSrcValueOffset(), EVT);
@@ -2014,7 +2014,7 @@ SDOperand DAGCombiner::visitANY_EXTEND(SDNode *N) {
   if (N0.getOpcode() == ISD::LOAD && !ISD::isNON_EXTLoad(N0.Val) &&
       N0.hasOneUse()) {
     LoadSDNode *LN0 = cast<LoadSDNode>(N0);
-    MVT::ValueType EVT = LN0->getLoadVT();
+    MVT::ValueType EVT = LN0->getLoadedVT();
     SDOperand ExtLoad = DAG.getExtLoad(LN0->getExtensionType(), VT,
                                        LN0->getChain(), LN0->getBasePtr(),
                                        LN0->getSrcValue(),
@@ -2069,7 +2069,7 @@ SDOperand DAGCombiner::visitSIGN_EXTEND_INREG(SDNode *N) {
   
   // fold (sext_inreg (extload x)) -> (sextload x)
   if (ISD::isEXTLoad(N0.Val) && 
-      EVT == cast<LoadSDNode>(N0)->getLoadVT() &&
+      EVT == cast<LoadSDNode>(N0)->getLoadedVT() &&
       (!AfterLegalize || TLI.isLoadXLegal(ISD::SEXTLOAD, EVT))) {
     LoadSDNode *LN0 = cast<LoadSDNode>(N0);
     SDOperand ExtLoad = DAG.getExtLoad(ISD::SEXTLOAD, VT, LN0->getChain(),
@@ -2081,7 +2081,7 @@ SDOperand DAGCombiner::visitSIGN_EXTEND_INREG(SDNode *N) {
   }
   // fold (sext_inreg (zextload x)) -> (sextload x) iff load has one use
   if (ISD::isZEXTLoad(N0.Val) && N0.hasOneUse() &&
-      EVT == cast<LoadSDNode>(N0)->getLoadVT() &&
+      EVT == cast<LoadSDNode>(N0)->getLoadedVT() &&
       (!AfterLegalize || TLI.isLoadXLegal(ISD::SEXTLOAD, EVT))) {
     LoadSDNode *LN0 = cast<LoadSDNode>(N0);
     SDOperand ExtLoad = DAG.getExtLoad(ISD::SEXTLOAD, VT, LN0->getChain(),
@@ -3282,7 +3282,7 @@ bool DAGCombiner::SimplifySelectOps(SDNode *TheSelect, SDOperand LHS,
       LoadSDNode *RLD = cast<LoadSDNode>(RHS);
 
       // If this is an EXTLOAD, the VT's must match.
-      if (LLD->getLoadVT() == RLD->getLoadVT()) {
+      if (LLD->getLoadedVT() == RLD->getLoadedVT()) {
         // FIXME: this conflates two src values, discarding one.  This is not
         // the right thing to do, but nothing uses srcvalues now.  When they do,
         // turn SrcValue into a list of locations.
@@ -3307,7 +3307,7 @@ bool DAGCombiner::SimplifySelectOps(SDNode *TheSelect, SDOperand LHS,
                                 TheSelect->getValueType(0),
                                 LLD->getChain(), Addr, LLD->getSrcValue(),
                                 LLD->getSrcValueOffset(),
-                                LLD->getLoadVT());
+                                LLD->getLoadedVT());
         }
         // Users of the select now use the result of the load.
         CombineTo(TheSelect, Load);
