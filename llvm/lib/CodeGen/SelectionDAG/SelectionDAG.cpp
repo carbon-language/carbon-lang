@@ -454,6 +454,15 @@ SDNode *SelectionDAG::FindModifiedNodeSlot(SDNode *N,
   SelectionDAGCSEMap::NodeID ID;
   ID.SetOpcode(N->getOpcode());
   ID.SetValueTypes(N->getVTList());
+  if (const LoadSDNode *LD = dyn_cast<LoadSDNode>(N)) {
+    ID.AddInteger(LD->getAddressingMode());
+    ID.AddInteger(LD->getExtensionType());
+    ID.AddInteger(LD->getLoadVT());
+    ID.AddPointer(LD->getSrcValue());
+    ID.AddInteger(LD->getSrcValueOffset());
+    ID.AddInteger(LD->getAlignment());
+    ID.AddInteger(LD->isVolatile());
+  }
   ID.SetOperands(Ops, NumOps);
   return CSEMap.FindNodeOrInsertPos(ID, InsertPos);
 }
