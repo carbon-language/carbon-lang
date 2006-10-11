@@ -1227,7 +1227,16 @@ defining instruction is encountered.</p>
 </div>
 
 <div class="doc_text">
-<p>To Be Written</p>
+
+<p>We now have the information available to perform the liver intervals analysis
+and build the live intervals themselves.  We start off by numbering the basic
+blocks and machine instructions.  We then handle the "live-in" values.  These
+are in physical registers, so the physical register is assumed to be killed by
+the end of the basic block.  Live intervals for virtual registers are computed
+for some ordering of the machine instructions <tt>[1,N]</tt>.  A live interval
+is an interval <tt>[i,j)</tt>, where <tt>1 <= i <= j < N</tt>, for which a
+variable is live.</p>
+
 </ol>
 
 </div>
@@ -1239,14 +1248,14 @@ defining instruction is encountered.</p>
 
 <div class="doc_text">
 
-<p>The <i>Register Allocation problem</i> consists in mapping a
-program <i>P<sub>v</sub></i>, that can use an unbounded number of
-virtual registers, to a program <i>P<sub>p</sub></i> that contains a
-finite (possibly small) number of physical registers. Each target
-architecture has a different number of physical registers. If the
-number of physical registers is not enough to accommodate all the
-virtual registers, some of them will have to be mapped into
-memory. These virtuals are called <i>spilled virtuals</i>.</p>
+<p>The <i>Register Allocation problem</i> consists in mapping a program
+<i>P<sub>v</sub></i>, that can use an unbounded number of virtual
+registers, to a program <i>P<sub>p</sub></i> that contains a finite
+(possibly small) number of physical registers. Each target architecture has
+a different number of physical registers. If the number of physical
+registers is not enough to accommodate all the virtual registers, some of
+them will have to be mapped into memory. These virtuals are called
+<i>spilled virtuals</i>.</p>
 
 </div>
 
