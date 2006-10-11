@@ -67,8 +67,8 @@ def SETHIimm : PatLeaf<(imm), [{
 }], HI22>;
 
 // Addressing modes.
-def ADDRrr : ComplexPattern<i32, 2, "SelectADDRrr", []>;
-def ADDRri : ComplexPattern<i32, 2, "SelectADDRri", [frameindex]>;
+def ADDRrr : ComplexPattern<i32, 2, "SelectADDRrr", [], []>;
+def ADDRri : ComplexPattern<i32, 2, "SelectADDRri", [frameindex], []>;
 
 // Address operands
 def MEMrr : Operand<i32> {

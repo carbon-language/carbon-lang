@@ -554,11 +554,13 @@ class Pat<dag pattern, dag result> : Pattern<pattern, [result]>;
 // RootNodes are the list of possible root nodes of the sub-dags to match.
 // e.g. X86 addressing mode - def addr : ComplexPattern<4, "SelectAddr", [add]>;
 //
-class ComplexPattern<ValueType ty, int numops, string fn, list<SDNode> roots = []> {
+class ComplexPattern<ValueType ty, int numops, string fn,
+                     list<SDNode> roots = [], list<SDNodeProperty> props = []> {
   ValueType Ty = ty;
   int NumOperands = numops;
   string SelectFunc = fn;
   list<SDNode> RootNodes = roots;
+  list<SDNodeProperty> Properties = props;
 }
 
 //===----------------------------------------------------------------------===//

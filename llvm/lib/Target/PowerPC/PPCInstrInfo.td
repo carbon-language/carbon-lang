@@ -259,10 +259,10 @@ def memrix : Operand<iPTR> {   // memri where the imm is shifted 2 bits.
 }
 
 // Define PowerPC specific addressing mode.
-def iaddr  : ComplexPattern<iPTR, 2, "SelectAddrImm",    []>;
-def xaddr  : ComplexPattern<iPTR, 2, "SelectAddrIdx",    []>;
-def xoaddr : ComplexPattern<iPTR, 2, "SelectAddrIdxOnly",[]>;
-def ixaddr : ComplexPattern<iPTR, 2, "SelectAddrImmShift", []>; // "std"
+def iaddr  : ComplexPattern<iPTR, 2, "SelectAddrImm",    [], []>;
+def xaddr  : ComplexPattern<iPTR, 2, "SelectAddrIdx",    [], []>;
+def xoaddr : ComplexPattern<iPTR, 2, "SelectAddrIdxOnly",[], []>;
+def ixaddr : ComplexPattern<iPTR, 2, "SelectAddrImmShift", [], []>; // "std"
 
 //===----------------------------------------------------------------------===//
 // PowerPC Instruction Predicate Definitions.

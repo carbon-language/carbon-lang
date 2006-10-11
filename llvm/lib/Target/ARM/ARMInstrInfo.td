@@ -27,12 +27,13 @@ def memri : Operand<iPTR> {
 
 // Define ARM specific addressing mode.
 //Addressing Mode 1: data processing operands
-def addr_mode1 : ComplexPattern<iPTR, 3, "SelectAddrMode1", [imm, sra, shl, srl]>;
+def addr_mode1 : ComplexPattern<iPTR, 3, "SelectAddrMode1", [imm, sra, shl, srl],
+                                []>;
 
 //register plus/minus 12 bit offset
-def iaddr  : ComplexPattern<iPTR, 2, "SelectAddrRegImm", [frameindex]>;
+def iaddr  : ComplexPattern<iPTR, 2, "SelectAddrRegImm", [frameindex], []>;
 //register plus scaled register
-//def raddr  : ComplexPattern<iPTR, 2, "SelectAddrRegReg", []>;
+//def raddr  : ComplexPattern<iPTR, 2, "SelectAddrRegReg", [], []>;
 
 //===----------------------------------------------------------------------===//
 // Instructions
