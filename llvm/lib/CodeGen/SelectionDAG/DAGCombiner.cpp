@@ -2649,16 +2649,15 @@ SDOperand DAGCombiner::visitLOAD(SDNode *N) {
   if (N->hasNUsesOfValue(0, 0))
     return CombineTo(N, DAG.getNode(ISD::UNDEF, N->getValueType(0)), Chain);
   
-  if (!ISD::isNON_EXTLoad(N))
-    return SDOperand();
-
   // If this load is directly stored, replace the load value with the stored
   // value.
   // TODO: Handle store large -> read small portion.
-  // TODO: Handle TRUNCSTORE/EXTLOAD
-  if (Chain.getOpcode() == ISD::STORE && Chain.getOperand(2) == Ptr &&
-      Chain.getOperand(1).getValueType() == N->getValueType(0))
-    return CombineTo(N, Chain.getOperand(1), Chain);
+  // TODO: Handle TRUNCSTORE/LOADEXT
+  if (LD->getExtensionType() == ISD::NON_EXTLOAD) {
+    if (Chain.getOpcode() == ISD::STORE && Chain.getOperand(2) == Ptr &&
+        Chain.getOperand(1).getValueType() == N->getValueType(0))
+      return CombineTo(N, Chain.getOperand(1), Chain);
+  }
     
   if (CombinerAA) {
     // Walk up chain skipping non-aliasing memory nodes.
@@ -2666,9 +2665,19 @@ SDOperand DAGCombiner::visitLOAD(SDNode *N) {
     
     // If there is a better chain.
     if (Chain != BetterChain) {
+      SDOperand ReplLoad;
+
       // Replace the chain to void dependency.
-      SDOperand ReplLoad = DAG.getLoad(N->getValueType(0), BetterChain, Ptr,
-                                    LD->getSrcValue(), LD->getSrcValueOffset());
+      if (LD->getExtensionType() == ISD::NON_EXTLOAD) {
+        ReplLoad = DAG.getLoad(N->getValueType(0), BetterChain, Ptr,
+                              LD->getSrcValue(), LD->getSrcValueOffset());
+      } else {
+        ReplLoad = DAG.getExtLoad(LD->getExtensionType(),
+                                  LD->getValueType(0),
+                                  BetterChain, Ptr, LD->getSrcValue(),
+                                  LD->getSrcValueOffset(),
+                                  LD->getLoadedVT());
+      }
 
       // Create token factor to keep old chain connected.
       SDOperand Token = DAG.getNode(ISD::TokenFactor, MVT::Other,
@@ -3983,7 +3992,7 @@ bool DAGCombiner::FindAliasInfo(SDNode *N,
                         SDOperand &Ptr, int64_t &Size, const Value *&SrcValue) {
   if (LoadSDNode *LD = dyn_cast<LoadSDNode>(N)) {
     Ptr = LD->getBasePtr();
-    Size = MVT::getSizeInBits(N->getValueType(0)) >> 3;
+    Size = MVT::getSizeInBits(LD->getLoadedVT()) >> 3;
     SrcValue = LD->getSrcValue();
     return true;
   } else if (StoreSDNode *ST = dyn_cast<StoreSDNode>(N)) {
@@ -4036,11 +4045,6 @@ void DAGCombiner::GatherAllAliases(SDNode *N, SDOperand OriginalChain,
       break;
       
     case ISD::LOAD:
-      if (!ISD::isNON_EXTLoad(N)) {
-        Aliases.push_back(Chain);
-        break;
-      }
-      // Pass thru.
     case ISD::STORE: {
       // Get alias information for Chain.
       SDOperand OpPtr;
