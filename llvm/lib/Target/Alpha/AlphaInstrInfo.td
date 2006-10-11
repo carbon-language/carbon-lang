@@ -59,8 +59,9 @@ def LL16 : SDNodeXForm<imm, [{ //lda part of constant
 def LH16 : SDNodeXForm<imm, [{ //ldah part of constant (or more if too big)
   return getI64Imm(get_ldah16(N->getValue()));
 }]>;
-def iZAPX : SDNodeXForm<imm, [{ // get imm to ZAPi
-  return getI64Imm(get_zapImm((uint64_t)N->getValue()));
+def iZAPX : SDNodeXForm<and, [{ // get imm to ZAPi
+  ConstantSDNode *RHS = cast<ConstantSDNode>(N->getOperand(1));
+  return getI64Imm(get_zapImm(SDOperand(), RHS->getValue()));
 }]>;
 def nearP2X : SDNodeXForm<imm, [{
   return getI64Imm(Log2_64(getNearPower2((uint64_t)N->getValue())));
@@ -85,10 +86,15 @@ def immSExt16  : PatLeaf<(imm), [{ //imm fits in 16 bit sign extended field
 def immSExt16int  : PatLeaf<(imm), [{ //(int)imm fits in a 16 bit sign extended field
   return ((int64_t)N->getValue() << 48) >> 48 == ((int64_t)N->getValue() << 32) >> 32;
 }], SExt16>;
-def immZAP  : PatLeaf<(imm), [{ //imm is good for zapi
-  uint64_t build = get_zapImm((uint64_t)N->getValue());
-  return build != 0;
-}], iZAPX>;
+
+def zappat : PatFrag<(ops node:$LHS), (and node:$LHS, imm:$L), [{
+  if (ConstantSDNode *RHS = dyn_cast<ConstantSDNode>(N->getOperand(1))) {
+    uint64_t build = get_zapImm(N->getOperand(0), (uint64_t)RHS->getValue());
+    return build != 0;
+  }
+  return false;
+}]>;
+
 def immFPZ  : PatLeaf<(fpimm), [{ //the only fpconstant nodes are +/- 0.0
   return true;
 }]>;
@@ -386,8 +392,12 @@ def XOR      : OForm< 0x11, 0x40, "xor $RA,$RB,$RC",
 def XORi     : OFormL<0x11, 0x40, "xor $RA,$L,$RC",
                       [(set GPRC:$RC, (xor GPRC:$RA, immUExt8:$L))], s_ilog>;
                       
-def ZAPNOTi  : OFormL<0x12, 0x31, "zapnot $RA,$L,$RC", 
-                      [(set GPRC:$RC, (and GPRC:$RA, immZAP:$L))], s_ishf>; 
+def ZAPNOTi  : OFormL<0x12, 0x31, "zapnot $RA,$L,$RC", [], s_ishf>;
+
+// Define the pattern that produces ZAPNOTi.
+def : Pat<(i64 (zappat GPRC:$RA):$imm),
+          (ZAPNOTi GPRC:$RA, (iZAPX GPRC:$imm))>;
+
 
 //Comparison, int
 //So this is a waste of what this instruction can do, but it still saves something

@@ -59,19 +59,57 @@ namespace {
       return x - get_ldah16(x) * IMM_MULT;
     }
 
+    /// get_zapImm - Return a zap mask if X is a valid immediate for a zapnot
+    /// instruction (if not, return 0).  Note that this code accepts partial
+    /// zap masks.  For example (and LHS, 1) is a valid zap, as long we know
+    /// that the bits 1-7 of LHS are already zero.  If LHS is non-null, we are
+    /// in checking mode.  If LHS is null, we assume that the mask has already
+    /// been validated before.
+    uint64_t get_zapImm(SDOperand LHS, uint64_t Constant) {
+      uint64_t BitsToCheck = 0;
+      unsigned Result = 0;
+      for (unsigned i = 0; i != 8; ++i) {
+        if (((Constant >> 8*i) & 0xFF) == 0) {
+          // nothing to do.
+        } else {
+          Result |= 1 << i;
+          if (((Constant >> 8*i) & 0xFF) == 0xFF) {
+            // If the entire byte is set, zapnot the byte.
+          } else if (LHS.Val == 0) {
+            // Otherwise, if the mask was previously validated, we know its okay
+            // to zapnot this entire byte even though all the bits aren't set.
+          } else {
+            // Otherwise we don't know that the it's okay to zapnot this entire
+            // byte.  Only do this iff we can prove that the missing bits are
+            // already null, so the bytezap doesn't need to really null them.
+            BitsToCheck |= ~Constant & (0xFF << 8*i);
+          }
+        }
+      }
+      
+      // If there are missing bits in a byte (for example, X & 0xEF00), check to
+      // see if the missing bits (0x1000) are already known zero if not, the zap
+      // isn't okay to do, as it won't clear all the required bits.
+      if (BitsToCheck &&
+          !getTargetLowering().MaskedValueIsZero(LHS, BitsToCheck))
+        return 0;
+      
+      return Result;
+    }
+    
     static uint64_t get_zapImm(uint64_t x) {
-      unsigned int build = 0;
-      for(int i = 0; i < 8; ++i)
-	{
-	  if ((x & 0x00FF) == 0x00FF)
-	    build |= 1 << i;
-	  else if ((x & 0x00FF) != 0)
-	    { build = 0; break; }
-	  x >>= 8;
-	}
+      unsigned build = 0;
+      for(int i = 0; i != 8; ++i) {
+        if ((x & 0x00FF) == 0x00FF)
+          build |= 1 << i;
+        else if ((x & 0x00FF) != 0)
+          return 0;
+        x >>= 8;
+      }
       return build;
     }
-
+      
+    
     static uint64_t getNearPower2(uint64_t x) {
       if (!x) return 0;
       unsigned at = CountLeadingZeros_64(x);
@@ -380,10 +418,11 @@ SDNode *AlphaDAGToDAGISel::Select(SDOperand Op) {
       {
 	uint64_t sval = SC->getValue();
 	uint64_t mval = MC->getValue();
-	if (get_zapImm(mval)) //the result is a zap, let the autogened stuff deal
+        // If the result is a zap, let the autogened stuff handle it.
+	if (get_zapImm(N->getOperand(0), mval))
 	  break;
-	// given mask X, and shift S, we want to see if there is any zap in the mask
-	// if we play around with the botton S bits
+	// given mask X, and shift S, we want to see if there is any zap in the
+        // mask if we play around with the botton S bits
 	uint64_t dontcare = (~0ULL) >> (64 - sval);
 	uint64_t mask = mval << sval;
 
