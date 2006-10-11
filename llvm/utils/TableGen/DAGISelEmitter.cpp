@@ -834,7 +834,7 @@ bool TreePatternNode::canPatternMatch(std::string &Reason, DAGISelEmitter &ISE){
   // If this node is a commutative operator, check that the LHS isn't an
   // immediate.
   const SDNodeInfo &NodeInfo = ISE.getSDNodeInfo(getOperator());
-  if (NodeInfo.hasProperty(SDNodeInfo::SDNPCommutative)) {
+  if (NodeInfo.hasProperty(SDNPCommutative)) {
     // Scan all of the operands of the node and make sure that only the last one
     // is a constant node, unless the RHS also is.
     if (!OnlyOnRHSOfCommutative(getChild(getNumChildren()-1))) {
@@ -1782,7 +1782,7 @@ static void GenerateVariantsOf(TreePatternNode *N,
   const SDNodeInfo &NodeInfo = ISE.getSDNodeInfo(N->getOperator());
 
   // If this node is associative, reassociate.
-  if (NodeInfo.hasProperty(SDNodeInfo::SDNPAssociative)) {
+  if (NodeInfo.hasProperty(SDNPAssociative)) {
     // Reassociate by pulling together all of the linked operators 
     std::vector<TreePatternNode*> MaximalChildren;
     GatherChildrenOfAssociativeOpcode(N, MaximalChildren);
@@ -1843,7 +1843,7 @@ static void GenerateVariantsOf(TreePatternNode *N,
   CombineChildVariants(N, ChildVariants, OutVariants, ISE);
 
   // If this node is commutative, consider the commuted order.
-  if (NodeInfo.hasProperty(SDNodeInfo::SDNPCommutative)) {
+  if (NodeInfo.hasProperty(SDNPCommutative)) {
     assert(N->getNumChildren()==2 &&"Commutative but doesn't have 2 children!");
     // Don't count children which are actually register references.
     unsigned NC = 0;
@@ -2088,10 +2088,15 @@ Record *DAGISelEmitter::getSDNodeNamed(const std::string &Name) const {
 
 /// NodeHasProperty - return true if TreePatternNode has the specified
 /// property.
-static bool NodeHasProperty(TreePatternNode *N, SDNodeInfo::SDNP Property,
+static bool NodeHasProperty(TreePatternNode *N, SDNP Property,
                             DAGISelEmitter &ISE)
 {
-  if (N->isLeaf()) return false;
+  if (N->isLeaf()) {
+    const ComplexPattern *CP = NodeGetComplexPattern(N, ISE);
+    if (CP)
+      return CP->hasProperty(Property);
+    return false;
+  }
   Record *Operator = N->getOperator();
   if (!Operator->isSubClassOf("SDNode")) return false;
 
@@ -2099,7 +2104,7 @@ static bool NodeHasProperty(TreePatternNode *N, SDNodeInfo::SDNP Property,
   return NodeInfo.hasProperty(Property);
 }
 
-static bool PatternHasProperty(TreePatternNode *N, SDNodeInfo::SDNP Property,
+static bool PatternHasProperty(TreePatternNode *N, SDNP Property,
                                DAGISelEmitter &ISE)
 {
   if (NodeHasProperty(N, Property, ISE))
@@ -2250,9 +2255,9 @@ public:
 
     // Emit code to load the child nodes and match their contents recursively.
     unsigned OpNo = 0;
-    bool NodeHasChain = NodeHasProperty   (N, SDNodeInfo::SDNPHasChain, ISE);
-    bool HasChain     = PatternHasProperty(N, SDNodeInfo::SDNPHasChain, ISE);
-    bool HasOutFlag   = PatternHasProperty(N, SDNodeInfo::SDNPOutFlag,  ISE);
+    bool NodeHasChain = NodeHasProperty   (N, SDNPHasChain, ISE);
+    bool HasChain     = PatternHasProperty(N, SDNPHasChain, ISE);
+    bool HasOutFlag   = PatternHasProperty(N, SDNPOutFlag,  ISE);
     bool EmittedUseCheck = false;
     if (HasChain) {
       if (NodeHasChain)
@@ -2278,9 +2283,9 @@ public:
           //     [XX]-------|
           const SDNodeInfo &PInfo = ISE.getSDNodeInfo(P->getOperator());
           if (PInfo.getNumOperands() > 1 ||
-              PInfo.hasProperty(SDNodeInfo::SDNPHasChain) ||
-              PInfo.hasProperty(SDNodeInfo::SDNPInFlag) ||
-              PInfo.hasProperty(SDNodeInfo::SDNPOptInFlag)) {
+              PInfo.hasProperty(SDNPHasChain) ||
+              PInfo.hasProperty(SDNPInFlag) ||
+              PInfo.hasProperty(SDNPOptInFlag)) {
             std::string ParentName(RootName.begin(), RootName.end()-1);
             emitCheck("CanBeFoldedBy(" + RootName + ".Val, " + ParentName +
                       ".Val)");
@@ -2305,9 +2310,9 @@ public:
     // FIXME: If the optional incoming flag does not exist. Then it is ok to
     // fold it.
     if (!isRoot &&
-        (PatternHasProperty(N, SDNodeInfo::SDNPInFlag, ISE) ||
-         PatternHasProperty(N, SDNodeInfo::SDNPOptInFlag, ISE) ||
-         PatternHasProperty(N, SDNodeInfo::SDNPOutFlag, ISE))) {
+        (PatternHasProperty(N, SDNPInFlag, ISE) ||
+         PatternHasProperty(N, SDNPOptInFlag, ISE) ||
+         PatternHasProperty(N, SDNPOutFlag, ISE))) {
       const SDNodeInfo &CInfo = ISE.getSDNodeInfo(N->getOperator());
       if (!EmittedUseCheck) {
         // Multiple uses of actual result?
@@ -2372,10 +2377,20 @@ public:
         emitDecl("CPTmp" + utostr(i));
         emitCode("SDOperand CPTmp" + utostr(i) + ";");
       }
+      if (CP->hasProperty(SDNPHasChain)) {
+        emitDecl("CPInChain");
+        emitDecl("Chain" + ChainSuffix);
+        emitCode("SDOperand CPInChain;");
+        emitCode("SDOperand Chain" + ChainSuffix + ";");
+      }
 
       std::string Code = Fn + "(" + RootName;
       for (unsigned i = 0; i < NumOps; i++)
         Code += ", CPTmp" + utostr(i);
+      if (CP->hasProperty(SDNPHasChain)) {
+        ChainName = "Chain" + ChainSuffix;
+        Code += ", CPInChain, Chain" + ChainSuffix;
+      }
       emitCheck(Code + ")");
     }
   }
@@ -2389,7 +2404,7 @@ public:
       emitCheck(RootName + ".getOpcode() == " +
                 CInfo.getEnumName());
       EmitMatchCode(Child, Parent, RootName, ChainSuffix, FoundChain);
-      if (NodeHasProperty(Child, SDNodeInfo::SDNPHasChain, ISE))
+      if (NodeHasProperty(Child, SDNPHasChain, ISE))
         FoldedChains.push_back(std::make_pair(RootName, CInfo.getNumResults()));
     } else {
       // If this child has a name associated with it, capture it in VarMap. If
@@ -2425,10 +2440,22 @@ public:
             emitDecl("CPTmp" + utostr(i));
             emitCode("SDOperand CPTmp" + utostr(i) + ";");
           }
+          if (CP->hasProperty(SDNPHasChain)) {
+            const SDNodeInfo &PInfo = ISE.getSDNodeInfo(Parent->getOperator());
+            FoldedChains.push_back(std::make_pair("CPInChain",
+                                                  PInfo.getNumResults()));
+            ChainName = "Chain" + ChainSuffix;
+            emitDecl("CPInChain");
+            emitDecl(ChainName);
+            emitCode("SDOperand CPInChain;");
+            emitCode("SDOperand " + ChainName + ";");
+          }
           
           std::string Code = Fn + "(" + RootName;
           for (unsigned i = 0; i < NumOps; i++)
             Code += ", CPTmp" + utostr(i);
+          if (CP->hasProperty(SDNPHasChain))
+            Code += ", CPInChain, Chain" + ChainSuffix;
           emitCheck(Code + ")");
         } else if (LeafRec->getName() == "srcvalue") {
           // Place holder for SRCVALUE nodes. Nothing to do here.
@@ -2613,15 +2640,15 @@ public:
       bool HasImpInputs  = isRoot && Inst.getNumImpOperands() > 0;
       bool HasImpResults = isRoot && Inst.getNumImpResults() > 0;
       bool NodeHasOptInFlag = isRoot &&
-        PatternHasProperty(Pattern, SDNodeInfo::SDNPOptInFlag, ISE);
+        PatternHasProperty(Pattern, SDNPOptInFlag, ISE);
       bool NodeHasInFlag  = isRoot &&
-        PatternHasProperty(Pattern, SDNodeInfo::SDNPInFlag, ISE);
+        PatternHasProperty(Pattern, SDNPInFlag, ISE);
       bool NodeHasOutFlag = HasImpResults || (isRoot &&
-        PatternHasProperty(Pattern, SDNodeInfo::SDNPOutFlag, ISE));
+        PatternHasProperty(Pattern, SDNPOutFlag, ISE));
       bool NodeHasChain = InstPatNode &&
-        PatternHasProperty(InstPatNode, SDNodeInfo::SDNPHasChain, ISE);
+        PatternHasProperty(InstPatNode, SDNPHasChain, ISE);
       bool InputHasChain = isRoot &&
-        NodeHasProperty(Pattern, SDNodeInfo::SDNPHasChain, ISE);
+        NodeHasProperty(Pattern, SDNPHasChain, ISE);
 
       if (NodeHasOptInFlag) {
         emitCode("bool HasInFlag = "
@@ -2916,7 +2943,7 @@ public:
     }
   
     unsigned OpNo =
-      (unsigned) NodeHasProperty(Pat, SDNodeInfo::SDNPHasChain, ISE);
+      (unsigned) NodeHasProperty(Pat, SDNPHasChain, ISE);
     for (unsigned i = 0, e = Pat->getNumChildren(); i != e; ++i, ++OpNo)
       if (InsertOneTypeCheck(Pat->getChild(i), Other->getChild(i),
                              Prefix + utostr(OpNo)))
@@ -2932,8 +2959,8 @@ private:
                             bool &ResNodeDecled, bool isRoot = false) {
     const CodeGenTarget &T = ISE.getTargetInfo();
     unsigned OpNo =
-      (unsigned) NodeHasProperty(N, SDNodeInfo::SDNPHasChain, ISE);
-    bool HasInFlag = NodeHasProperty(N, SDNodeInfo::SDNPInFlag, ISE);
+      (unsigned) NodeHasProperty(N, SDNPHasChain, ISE);
+    bool HasInFlag = NodeHasProperty(N, SDNPInFlag, ISE);
     for (unsigned i = 0, e = N->getNumChildren(); i != e; ++i, ++OpNo) {
       TreePatternNode *Child = N->getChild(i);
       if (!Child->isLeaf()) {
@@ -3554,7 +3581,7 @@ void DAGISelEmitter::EmitInstructionSelector(std::ostream &OS) {
     } else {
       if (OpcodeInfo.getNumResults())
         OS << "    MVT::ValueType NVT = N.Val->getValueType(0);\n";
-      else if (OpcodeInfo.hasProperty(SDNodeInfo::SDNPHasChain))
+      else if (OpcodeInfo.hasProperty(SDNPHasChain))
         OS << "    MVT::ValueType NVT = (N.getNumOperands() > 1) ?"
            << " N.getOperand(1).Val->getValueType(0) : MVT::isVoid;\n";
       else

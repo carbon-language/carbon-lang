@@ -106,10 +106,6 @@ namespace llvm {
       return TypeConstraints;
     }
     
-    // SelectionDAG node properties.
-    enum SDNP { SDNPCommutative, SDNPAssociative, SDNPHasChain,
-                SDNPOutFlag, SDNPInFlag, SDNPOptInFlag  };
-
     /// hasProperty - Return true if this node has the specified property.
     ///
     bool hasProperty(enum SDNP Prop) const { return Properties & (1 << Prop); }

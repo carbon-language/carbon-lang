@@ -362,6 +362,20 @@ ComplexPattern::ComplexPattern(Record *R) {
   NumOperands = R->getValueAsInt("NumOperands");
   SelectFunc  = R->getValueAsString("SelectFunc");
   RootNodes   = R->getValueAsListOfDefs("RootNodes");
+
+  // Parse the properties.
+  Properties = 0;
+  std::vector<Record*> PropList = R->getValueAsListOfDefs("Properties");
+  for (unsigned i = 0, e = PropList.size(); i != e; ++i)
+    if (PropList[i]->getName() == "SDNPHasChain") {
+      Properties |= 1 << SDNPHasChain;
+    } else if (PropList[i]->getName() == "SDNPOptInFlag") {
+      Properties |= 1 << SDNPOptInFlag;
+    } else {
+      std::cerr << "Unsupported SD Node property '" << PropList[i]->getName()
+                << "' on ComplexPattern '" << R->getName() << "'!\n";
+      exit(1);
+    }
 }
 
 //===----------------------------------------------------------------------===//

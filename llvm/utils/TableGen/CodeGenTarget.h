@@ -29,6 +29,10 @@ class RecordKeeper;
 struct CodeGenRegister;
 class CodeGenTarget;
 
+// SelectionDAG node properties.
+enum SDNP { SDNPCommutative, SDNPAssociative, SDNPHasChain,
+            SDNPOutFlag, SDNPInFlag, SDNPOptInFlag  };
+
 /// getValueType - Return the MVT::ValueType that the specified TableGen record
 /// corresponds to.
 MVT::ValueType getValueType(Record *Rec, const CodeGenTarget *CGT = 0);
@@ -157,6 +161,7 @@ class ComplexPattern {
   unsigned NumOperands;
   std::string SelectFunc;
   std::vector<Record*> RootNodes;
+  unsigned Properties;
 public:
   ComplexPattern() : NumOperands(0) {};
   ComplexPattern(Record *R);
@@ -167,6 +172,8 @@ public:
   const std::vector<Record*> &getRootNodes() const {
     return RootNodes;
   }
+  bool hasProperty(enum SDNP Prop) const { return Properties & (1 << Prop); }
+
 };
 
 } // End llvm namespace
