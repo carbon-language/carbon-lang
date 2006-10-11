@@ -248,6 +248,11 @@ namespace {
     void GatherAllAliases(SDNode *N, SDOperand OriginalChain,
                           SmallVector<SDOperand, 8> &Aliases);
 
+    /// FindAliasInfo - Extracts the relevant alias information from the memory
+    /// node.  Returns true if the operand was a load.
+    bool FindAliasInfo(SDNode *N,
+                       SDOperand &Ptr, int64_t &Size, const Value *&SrcValue);
+                       
     /// FindBetterChain - Walk up chain skipping non-aliasing memory nodes,
     /// looking for a better chain (aliasing node.)
     SDOperand FindBetterChain(SDNode *N, SDOperand Chain);
@@ -2655,7 +2660,7 @@ SDOperand DAGCombiner::visitLOAD(SDNode *N) {
       Chain.getOperand(1).getValueType() == N->getValueType(0))
     return CombineTo(N, Chain.getOperand(1), Chain);
     
-  if (CombinerAA) { 
+  if (CombinerAA) {
     // Walk up chain skipping non-aliasing memory nodes.
     SDOperand BetterChain = FindBetterChain(N, Chain);
     
@@ -3951,8 +3956,8 @@ static bool FindBaseOffset(SDOperand Ptr, SDOperand &Base, int64_t &Offset) {
 
 /// isAlias - Return true if there is any possibility that the two addresses
 /// overlap.
-static bool isAlias(SDOperand Ptr1, int64_t Size1, SDOperand SrcValue1,
-                    SDOperand Ptr2, int64_t Size2, SDOperand SrcValue2) {
+static bool isAlias(SDOperand Ptr1, int64_t Size1, const Value *SrcValue1,
+                    SDOperand Ptr2, int64_t Size2, const Value *SrcValue2) {
   // If they are the same then they must be aliases.
   if (Ptr1 == Ptr2) return true;
   
@@ -3974,24 +3979,25 @@ static bool isAlias(SDOperand Ptr1, int64_t Size1, SDOperand SrcValue1,
 
 /// FindAliasInfo - Extracts the relevant alias information from the memory
 /// node.  Returns true if the operand was a load.
-static bool FindAliasInfo(SDNode *N, SDOperand &Ptr, int64_t &Size,
-                          SDOperand &SrcValue, SelectionDAG &DAG) {
-  switch (N->getOpcode()) {
-  case ISD::LOAD:
-    if (!ISD::isNON_EXTLoad(N))
-      return false;
-    Ptr = N->getOperand(1);
+bool DAGCombiner::FindAliasInfo(SDNode *N,
+                        SDOperand &Ptr, int64_t &Size, const Value *&SrcValue) {
+  if (LoadSDNode *LD = dyn_cast<LoadSDNode>(N)) {
+    Ptr = LD->getBasePtr();
     Size = MVT::getSizeInBits(N->getValueType(0)) >> 3;
-    SrcValue = N->getOperand(2);
+    SrcValue = LD->getSrcValue();
     return true;
-  case ISD::STORE:
-    Ptr = N->getOperand(2);
-    Size = MVT::getSizeInBits(N->getOperand(1).getValueType()) >> 3;
-    SrcValue = N->getOperand(3);
-    break;
-  default:
+  } else if (StoreSDNode *ST = dyn_cast<StoreSDNode>(N)) {
+#if 1 //FIXME - Switch over after StoreSDNode comes online.
+    Ptr = ST->getOperand(2);
+    Size = MVT::getSizeInBits(ST->getOperand(1).getValueType()) >> 3;
+    SrcValue = 0;
+#else
+    Ptr = ST->getBasePtr();
+    Size = MVT::getSizeInBits(ST->getOperand(1).getValueType()) >> 3;
+    SrcValue = ST->getSrcValue();
+#endif
+  } else {
     assert(0 && "FindAliasInfo expected a memory operand");
-    break;
   }
   
   return false;
@@ -4007,8 +4013,8 @@ void DAGCombiner::GatherAllAliases(SDNode *N, SDOperand OriginalChain,
   // Get alias information for node.
   SDOperand Ptr;
   int64_t Size;
-  SDOperand SrcValue;
-  bool IsLoad = FindAliasInfo(N, Ptr, Size, SrcValue, DAG);
+  const Value *SrcValue;
+  bool IsLoad = FindAliasInfo(N, Ptr, Size, SrcValue);
 
   // Starting off.
   Chains.push_back(OriginalChain);
@@ -4030,12 +4036,17 @@ void DAGCombiner::GatherAllAliases(SDNode *N, SDOperand OriginalChain,
       break;
       
     case ISD::LOAD:
+      if (!ISD::isNON_EXTLoad(N)) {
+        Aliases.push_back(Chain);
+        break;
+      }
+      // Pass thru.
     case ISD::STORE: {
       // Get alias information for Chain.
       SDOperand OpPtr;
       int64_t OpSize;
-      SDOperand OpSrcValue;
-      bool IsOpLoad = FindAliasInfo(Chain.Val, OpPtr, OpSize, OpSrcValue, DAG);
+      const Value *OpSrcValue;
+      bool IsOpLoad = FindAliasInfo(Chain.Val, OpPtr, OpSize, OpSrcValue);
       
       // If chain is alias then stop here.
       if (!(IsLoad && IsOpLoad) &&
