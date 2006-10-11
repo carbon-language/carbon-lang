@@ -201,17 +201,15 @@ static SDOperand LowerJumpTable(SDOperand Op, SelectionDAG &DAG) {
 
 static SDOperand LowerFORMAL_ARGUMENTS(SDOperand Op, SelectionDAG &DAG,
 				       int &VarArgsBase,
-				       int &VarArgsOffset,
-				       unsigned int &GP,
-				       unsigned int &RA) {
+				       int &VarArgsOffset) {
   MachineFunction &MF = DAG.getMachineFunction();
   MachineFrameInfo *MFI = MF.getFrameInfo();
   SSARegMap *RegMap = MF.getSSARegMap();
   std::vector<SDOperand> ArgValues;
   SDOperand Root = Op.getOperand(0);
 
-  GP = AddLiveIn(MF, Alpha::R29, &Alpha::GPRCRegClass);
-  RA = AddLiveIn(MF, Alpha::R26, &Alpha::GPRCRegClass);
+  AddLiveIn(MF, Alpha::R29, &Alpha::GPRCRegClass); //GP
+  AddLiveIn(MF, Alpha::R26, &Alpha::GPRCRegClass); //RA
 
   unsigned args_int[] = {
     Alpha::R16, Alpha::R17, Alpha::R18, Alpha::R19, Alpha::R20, Alpha::R21};
@@ -291,7 +289,7 @@ static SDOperand LowerFORMAL_ARGUMENTS(SDOperand Op, SelectionDAG &DAG,
   return DAG.getNode(ISD::MERGE_VALUES, RetVT, &ArgValues[0], ArgValues.size());
 }
 
-static SDOperand LowerRET(SDOperand Op, SelectionDAG &DAG, unsigned int RA) {
+static SDOperand LowerRET(SDOperand Op, SelectionDAG &DAG) {
   SDOperand Copy = DAG.getCopyToReg(Op.getOperand(0), Alpha::R26, 
 				    DAG.getNode(AlphaISD::GlobalRetAddr, 
                                     MVT::i64),
@@ -386,15 +384,6 @@ AlphaTargetLowering::LowerCallTo(SDOperand Chain,
   return std::make_pair(RetVal, Chain);
 }
 
-void AlphaTargetLowering::restoreGP(MachineBasicBlock* BB)
-{
-  BuildMI(BB, Alpha::BIS, 2, Alpha::R29).addReg(GP).addReg(GP);
-}
-void AlphaTargetLowering::restoreRA(MachineBasicBlock* BB)
-{
-  BuildMI(BB, Alpha::BIS, 2, Alpha::R26).addReg(RA).addReg(RA);
-}
-
 static int getUID()
 {
   static int id = 0;
@@ -408,9 +397,9 @@ SDOperand AlphaTargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
   default: assert(0 && "Wasn't expecting to be able to lower this!");
   case ISD::FORMAL_ARGUMENTS: return LowerFORMAL_ARGUMENTS(Op, DAG, 
 							   VarArgsBase,
-							   VarArgsOffset,
-							   GP, RA);
-  case ISD::RET: return LowerRET(Op,DAG, getVRegRA());
+							   VarArgsOffset);
+
+  case ISD::RET: return LowerRET(Op,DAG);
   case ISD::JumpTable: return LowerJumpTable(Op, DAG);
 
   case ISD::SINT_TO_FP: {

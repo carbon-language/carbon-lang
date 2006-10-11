@@ -193,17 +193,33 @@ private:
 /// GOT address into a register.
 ///
 SDOperand AlphaDAGToDAGISel::getGlobalBaseReg() {
+  MachineFunction* MF = BB->getParent();
+  unsigned GP = 0;
+  for(MachineFunction::livein_iterator ii = MF->livein_begin(), 
+	ee = MF->livein_end(); ii != ee; ++ii)
+    if (ii->first == Alpha::R29) {
+      GP = ii->second;
+      break;
+    }
+  assert(GP && "GOT PTR not in liveins");
   return CurDAG->getCopyFromReg(CurDAG->getEntryNode(), 
-                                AlphaLowering.getVRegGP(), 
-                                MVT::i64);
+                                GP, MVT::i64);
 }
 
 /// getRASaveReg - Grab the return address
 ///
 SDOperand AlphaDAGToDAGISel::getGlobalRetAddr() {
+  MachineFunction* MF = BB->getParent();
+  unsigned RA = 0;
+  for(MachineFunction::livein_iterator ii = MF->livein_begin(), 
+	ee = MF->livein_end(); ii != ee; ++ii)
+    if (ii->first == Alpha::R26) {
+      RA = ii->second;
+      break;
+    }
+  assert(RA && "RA PTR not in liveins");
   return CurDAG->getCopyFromReg(CurDAG->getEntryNode(),
-                                AlphaLowering.getVRegRA(), 
-                                MVT::i64);
+                                RA, MVT::i64);
 }
 
 /// InstructionSelectBasicBlock - This callback is invoked by

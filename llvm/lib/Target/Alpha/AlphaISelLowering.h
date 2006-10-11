@@ -54,8 +54,6 @@ namespace llvm {
   class AlphaTargetLowering : public TargetLowering {
     int VarArgsOffset;  // What is the offset to the first vaarg
     int VarArgsBase;    // What is the base FrameIndex
-    unsigned GP; //GOT vreg
-    unsigned RA; //Return Address
     bool useITOF;
   public:
     AlphaTargetLowering(TargetMachine &TM);
@@ -81,10 +79,6 @@ namespace llvm {
       getRegClassForInlineAsmConstraint(const std::string &Constraint,
                                         MVT::ValueType VT) const;
 
-    void restoreGP(MachineBasicBlock* BB);
-    void restoreRA(MachineBasicBlock* BB);
-    unsigned getVRegGP() { return GP; }
-    unsigned getVRegRA() { return RA; }
     bool hasITOF() { return useITOF; }
   };
 }
