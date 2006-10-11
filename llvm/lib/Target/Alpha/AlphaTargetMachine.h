@@ -19,6 +19,7 @@
 #include "llvm/Target/TargetFrameInfo.h"
 #include "AlphaInstrInfo.h"
 #include "AlphaJITInfo.h"
+#include "AlphaISelLowering.h"
 #include "AlphaSubtarget.h"
 
 namespace llvm {
@@ -31,6 +32,7 @@ class AlphaTargetMachine : public LLVMTargetMachine {
   TargetFrameInfo FrameInfo;
   AlphaJITInfo JITInfo;
   AlphaSubtarget Subtarget;
+  AlphaTargetLowering TLInfo;
   
 protected:
   virtual const TargetAsmInfo *createTargetAsmInfo() const;
@@ -43,6 +45,9 @@ public:
   virtual const TargetSubtarget  *getSubtargetImpl() const{ return &Subtarget; }
   virtual const MRegisterInfo *getRegisterInfo() const {
     return &InstrInfo.getRegisterInfo();
+  }
+  virtual TargetLowering* getTargetLowering() const { 
+    return const_cast<AlphaTargetLowering*>(&TLInfo);
   }
   virtual const TargetData       *getTargetData() const { return &DataLayout; }
   virtual TargetJITInfo* getJITInfo() {

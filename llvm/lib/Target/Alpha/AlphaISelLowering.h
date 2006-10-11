@@ -36,9 +36,6 @@ namespace llvm {
       /// RetLit - Literal Relocation of a Global
       RelLit,
 
-      /// GlobalBaseReg - used to restore the GOT ptr
-      GlobalBaseReg,
-
       /// GlobalRetAddr - used to restore the return address
       GlobalRetAddr,
       

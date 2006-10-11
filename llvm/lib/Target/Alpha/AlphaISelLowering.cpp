@@ -132,7 +132,6 @@ AlphaTargetLowering::AlphaTargetLowering(TargetMachine &TM) : TargetLowering(TM)
 
   setOperationAction(ISD::JumpTable, MVT::i64, Custom);
   setOperationAction(ISD::JumpTable, MVT::i32, Custom);
-  setOperationAction(ISD::JumpTableRelocBase, MVT::i64, Custom);
 
   setStackPointerRegisterToSaveRestore(Alpha::R30);
 
@@ -160,7 +159,6 @@ const char *AlphaTargetLowering::getTargetNodeName(unsigned Opcode) const {
   case AlphaISD::GPRelHi: return "Alpha::GPRelHi";
   case AlphaISD::GPRelLo: return "Alpha::GPRelLo";
   case AlphaISD::RelLit: return "Alpha::RelLit";
-  case AlphaISD::GlobalBaseReg: return "Alpha::GlobalBaseReg";
   case AlphaISD::GlobalRetAddr: return "Alpha::GlobalRetAddr";
   case AlphaISD::CALL:   return "Alpha::CALL";
   case AlphaISD::DivCall: return "Alpha::DivCall";
@@ -177,7 +175,7 @@ static SDOperand LowerJumpTable(SDOperand Op, SelectionDAG &DAG) {
   const TargetMachine &TM = DAG.getTarget();
 
   SDOperand Hi = DAG.getNode(AlphaISD::GPRelHi,  MVT::i64, JTI,
-			     DAG.getNode(AlphaISD::GlobalBaseReg, MVT::i64));
+			     DAG.getNode(ISD::GLOBAL_OFFSET_TABLE, MVT::i64));
   SDOperand Lo = DAG.getNode(AlphaISD::GPRelLo, MVT::i64, JTI, Hi);
   return Lo;
 }
@@ -414,8 +412,6 @@ SDOperand AlphaTargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
 							   GP, RA);
   case ISD::RET: return LowerRET(Op,DAG, getVRegRA());
   case ISD::JumpTable: return LowerJumpTable(Op, DAG);
-  case ISD::JumpTableRelocBase: 
-    return DAG.getNode(AlphaISD::GlobalBaseReg, MVT::i64);
 
   case ISD::SINT_TO_FP: {
     assert(MVT::i64 == Op.getOperand(0).getValueType() && 
@@ -462,7 +458,7 @@ SDOperand AlphaTargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
     SDOperand CPI = DAG.getTargetConstantPool(C, MVT::i64, CP->getAlignment());
     
     SDOperand Hi = DAG.getNode(AlphaISD::GPRelHi,  MVT::i64, CPI,
-			       DAG.getNode(AlphaISD::GlobalBaseReg, MVT::i64));
+			       DAG.getNode(ISD::GLOBAL_OFFSET_TABLE, MVT::i64));
     SDOperand Lo = DAG.getNode(AlphaISD::GPRelLo, MVT::i64, CPI, Hi);
     return Lo;
   }
@@ -474,16 +470,18 @@ SDOperand AlphaTargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
     //    if (!GV->hasWeakLinkage() && !GV->isExternal() && !GV->hasLinkOnceLinkage()) {
     if (GV->hasInternalLinkage()) {
       SDOperand Hi = DAG.getNode(AlphaISD::GPRelHi,  MVT::i64, GA,
-				 DAG.getNode(AlphaISD::GlobalBaseReg, MVT::i64));
+				 DAG.getNode(ISD::GLOBAL_OFFSET_TABLE, MVT::i64));
       SDOperand Lo = DAG.getNode(AlphaISD::GPRelLo, MVT::i64, GA, Hi);
       return Lo;
     } else
-      return DAG.getNode(AlphaISD::RelLit, MVT::i64, GA, DAG.getNode(AlphaISD::GlobalBaseReg, MVT::i64));
+      return DAG.getNode(AlphaISD::RelLit, MVT::i64, GA, 
+			 DAG.getNode(ISD::GLOBAL_OFFSET_TABLE, MVT::i64));
   }
   case ISD::ExternalSymbol: {
     return DAG.getNode(AlphaISD::RelLit, MVT::i64, 
-		       DAG.getTargetExternalSymbol(cast<ExternalSymbolSDNode>(Op)->getSymbol(), MVT::i64),
-		       DAG.getNode(AlphaISD::GlobalBaseReg, MVT::i64));
+		       DAG.getTargetExternalSymbol(cast<ExternalSymbolSDNode>(Op)
+						   ->getSymbol(), MVT::i64),
+		       DAG.getNode(ISD::GLOBAL_OFFSET_TABLE, MVT::i64));
   }
 
   case ISD::UREM:

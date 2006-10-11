@@ -4,8 +4,6 @@
 ; RUN: llvm-as < %s | llc -march=alpha | grep 'ldl' &&
 ; RUN: llvm-as < %s | llc -march=alpha | grep 'rodata'
 
-; XFAIL: *
-
 target endian = little
 target pointersize = 64
 target triple = "alphaev67-unknown-linux-gnu"

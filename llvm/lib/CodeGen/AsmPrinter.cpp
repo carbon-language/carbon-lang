@@ -204,7 +204,7 @@ void AsmPrinter::EmitJumpTableInfo(MachineJumpTableInfo *MJTI,
     TargetLowering *LoweringInfo = TM.getTargetLowering();
     if (LoweringInfo && LoweringInfo->usesGlobalOffsetTable()) {
       SwitchToDataSection(TAI->getJumpTableDataSection(), 0);
-      if (TD->getPointerSize() == 8)
+      if (TD->getPointerSize() == 8 && !JTEntryDirective)
         JTEntryDirective = TAI->getData64bitsDirective();
     } else {      
       // In PIC mode, we need to emit the jump table to the same section as the

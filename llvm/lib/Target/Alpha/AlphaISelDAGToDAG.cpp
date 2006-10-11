@@ -99,7 +99,8 @@ namespace {
 
   public:
     AlphaDAGToDAGISel(TargetMachine &TM)
-      : SelectionDAGISel(AlphaLowering), AlphaLowering(TM) 
+      : SelectionDAGISel(AlphaLowering), 
+	AlphaLowering(*(AlphaTargetLowering*)(TM.getTargetLowering())) 
     {}
 
     /// getI64Imm - Return a target constant with the specified value, of type
@@ -201,7 +202,7 @@ SDNode *AlphaDAGToDAGISel::Select(SDOperand Op) {
                                 CurDAG->getTargetFrameIndex(FI, MVT::i32),
                                 getI64Imm(0));
   }
-  case AlphaISD::GlobalBaseReg: {
+  case ISD::GLOBAL_OFFSET_TABLE: {
     SDOperand Result = getGlobalBaseReg();
     ReplaceUses(Op, Result);
     return NULL;

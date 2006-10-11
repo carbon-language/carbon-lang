@@ -864,7 +864,11 @@ void SelectionDAGLowering::visitJumpTable(SelectionDAGISel::JumpTable &JT) {
     // For Pic, the sequence is:
     // BRIND(load(Jumptable + index) + RelocBase)
     // RelocBase is the JumpTable on PPC and X86, GOT on Alpha
-    SDOperand Reloc = DAG.getNode(ISD::JumpTableRelocBase, PTy, TAB);
+    SDOperand Reloc;
+    if (TLI.usesGlobalOffsetTable())
+      Reloc = DAG.getNode(ISD::GLOBAL_OFFSET_TABLE, PTy);
+    else
+      Reloc = TAB;
     ADD = DAG.getNode(ISD::ADD, PTy,
         ((PTy != MVT::i32) ? DAG.getNode(ISD::SIGN_EXTEND, PTy, LD) : LD), Reloc);
     DAG.setRoot(DAG.getNode(ISD::BRIND, MVT::Other, LD.getValue(1), ADD));
