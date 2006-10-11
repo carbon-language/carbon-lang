@@ -2851,7 +2851,7 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
         Result = DAG.getNode(ISD::SRA, Node->getValueType(0),
                              Result, ShiftCst);
       } else if (Node->getOpcode() == ISD::FP_ROUND_INREG) {
-        // The only way we can lower this is to turn it into a STORETRUNC,
+        // The only way we can lower this is to turn it into a TRUNCSTORE,
         // EXTLOAD pair, targetting a temporary location (a stack slot).
 
         // NOTE: there is a choice here between constantly creating new stack
