@@ -385,12 +385,7 @@ def XOR      : OForm< 0x11, 0x40, "xor $RA,$RB,$RC",
                       [(set GPRC:$RC, (xor GPRC:$RA, GPRC:$RB))], s_ilog>;
 def XORi     : OFormL<0x11, 0x40, "xor $RA,$L,$RC",
                       [(set GPRC:$RC, (xor GPRC:$RA, immUExt8:$L))], s_ilog>;
-//FIXME: what to do about zap? the cases it catches are very complex
-def ZAP      : OForm< 0x12, 0x30, "zap $RA,$RB,$RC", [], s_ishf>; //Zero bytes
-//ZAPi is useless give ZAPNOTi
-def ZAPi     : OFormL<0x12, 0x30, "zap $RA,$L,$RC", [], s_ishf>; //Zero bytes
-//FIXME: what to do about zapnot? see ZAP :)
-def ZAPNOT   : OForm< 0x12, 0x31, "zapnot $RA,$RB,$RC", [], s_ishf>; //Zero bytes not
+                      
 def ZAPNOTi  : OFormL<0x12, 0x31, "zapnot $RA,$L,$RC", 
                       [(set GPRC:$RC, (and GPRC:$RA, immZAP:$L))], s_ishf>; 
 
