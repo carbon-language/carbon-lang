@@ -15,6 +15,7 @@
 #include "Record.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/Support/Debug.h"
+#include "llvm/Support/MathExtras.h"
 #include <algorithm>
 #include <set>
 using namespace llvm;
@@ -2192,7 +2193,7 @@ public:
   /// if the match fails. At this point, we already know that the opcode for N
   /// matches, and the SDNode for the result has the RootName specified name.
   void EmitMatchCode(TreePatternNode *N, TreePatternNode *P,
-                     const std::string &RootName, const std::string &ParentName,
+                     const std::string &RootName,
                      const std::string &ChainSuffix, bool &FoundChain) {
     bool isRoot = (P == NULL);
     // Emit instruction predicates. Each predicate is just a string for now.
@@ -2279,9 +2280,11 @@ public:
           if (PInfo.getNumOperands() > 1 ||
               PInfo.hasProperty(SDNodeInfo::SDNPHasChain) ||
               PInfo.hasProperty(SDNodeInfo::SDNPInFlag) ||
-              PInfo.hasProperty(SDNodeInfo::SDNPOptInFlag))
+              PInfo.hasProperty(SDNodeInfo::SDNPOptInFlag)) {
+            std::string ParentName(RootName.begin(), RootName.end()-1);
             emitCheck("CanBeFoldedBy(" + RootName + ".Val, " + ParentName +
                       ".Val)");
+          }
         }
       }
 
@@ -2316,101 +2319,17 @@ public:
     if (!N->getPredicateFn().empty())
       emitCheck(N->getPredicateFn() + "(" + RootName + ".Val)");
 
-    const ComplexPattern *CP;
+    
     for (unsigned i = 0, e = N->getNumChildren(); i != e; ++i, ++OpNo) {
       emitInit("SDOperand " + RootName + utostr(OpNo) + " = " +
                RootName + ".getOperand(" +utostr(OpNo) + ");");
 
-      TreePatternNode *Child = N->getChild(i);    
-      if (!Child->isLeaf()) {
-        // If it's not a leaf, recursively match.
-        const SDNodeInfo &CInfo = ISE.getSDNodeInfo(Child->getOperator());
-        emitCheck(RootName + utostr(OpNo) + ".getOpcode() == " +
-                  CInfo.getEnumName());
-        EmitMatchCode(Child, N, RootName + utostr(OpNo), RootName,
-                      ChainSuffix + utostr(OpNo), FoundChain);
-        if (NodeHasProperty(Child, SDNodeInfo::SDNPHasChain, ISE))
-          FoldedChains.push_back(std::make_pair(RootName + utostr(OpNo),
-                                                CInfo.getNumResults()));
-      } else {
-        // If this child has a name associated with it, capture it in VarMap. If
-        // we already saw this in the pattern, emit code to verify dagness.
-        if (!Child->getName().empty()) {
-          std::string &VarMapEntry = VariableMap[Child->getName()];
-          if (VarMapEntry.empty()) {
-            VarMapEntry = RootName + utostr(OpNo);
-          } else {
-            // If we get here, this is a second reference to a specific name.
-            // Since we already have checked that the first reference is valid,
-            // we don't have to recursively match it, just check that it's the
-            // same as the previously named thing.
-            emitCheck(VarMapEntry + " == " + RootName + utostr(OpNo));
-            Duplicates.insert(RootName + utostr(OpNo));
-            continue;
-          }
-        }
-      
-        // Handle leaves of various types.
-        if (DefInit *DI = dynamic_cast<DefInit*>(Child->getLeafValue())) {
-          Record *LeafRec = DI->getDef();
-          if (LeafRec->isSubClassOf("RegisterClass")) {
-            // Handle register references.  Nothing to do here.
-          } else if (LeafRec->isSubClassOf("Register")) {
-            // Handle register references.
-          } else if (LeafRec->isSubClassOf("ComplexPattern")) {
-            // Handle complex pattern.
-            CP = NodeGetComplexPattern(Child, ISE);
-            std::string Fn = CP->getSelectFunc();
-            unsigned NumOps = CP->getNumOperands();
-            for (unsigned i = 0; i < NumOps; ++i) {
-              emitDecl("CPTmp" + utostr(i));
-              emitCode("SDOperand CPTmp" + utostr(i) + ";");
-            }
-
-            std::string Code = Fn + "(" + RootName + utostr(OpNo);
-            for (unsigned i = 0; i < NumOps; i++)
-              Code += ", CPTmp" + utostr(i);
-            emitCheck(Code + ")");
-          } else if (LeafRec->getName() == "srcvalue") {
-            // Place holder for SRCVALUE nodes. Nothing to do here.
-          } else if (LeafRec->isSubClassOf("ValueType")) {
-            // Make sure this is the specified value type.
-            emitCheck("cast<VTSDNode>(" + RootName + utostr(OpNo) +
-                      ")->getVT() == MVT::" + LeafRec->getName());
-          } else if (LeafRec->isSubClassOf("CondCode")) {
-            // Make sure this is the specified cond code.
-            emitCheck("cast<CondCodeSDNode>(" + RootName + utostr(OpNo) +
-                      ")->get() == ISD::" + LeafRec->getName());
-          } else {
-#ifndef NDEBUG
-            Child->dump();
-            std::cerr << " ";
-#endif
-            assert(0 && "Unknown leaf type!");
-          }
-
-          // If there is a node predicate for this, emit the call.
-          if (!Child->getPredicateFn().empty())
-            emitCheck(Child->getPredicateFn() + "(" + RootName + utostr(OpNo) +
-                      ".Val)");
-        } else if (IntInit *II =
-                       dynamic_cast<IntInit*>(Child->getLeafValue())) {
-          emitCheck("isa<ConstantSDNode>(" + RootName + utostr(OpNo) + ")");
-          unsigned CTmp = TmpNo++;
-          emitCode("int64_t CN"+utostr(CTmp)+" = cast<ConstantSDNode>("+
-                   RootName + utostr(OpNo) + ")->getSignExtended();");
-
-          emitCheck("CN" + utostr(CTmp) + " == " +itostr(II->getValue()));
-        } else {
-#ifndef NDEBUG
-          Child->dump();
-#endif
-          assert(0 && "Unknown leaf type!");
-        }
-      }
+      EmitChildMatchCode(N->getChild(i), N, RootName + utostr(OpNo),
+                         ChainSuffix + utostr(OpNo), FoundChain);
     }
 
     // Handle cases when root is a complex pattern.
+    const ComplexPattern *CP;
     if (isRoot && N->isLeaf() && (CP = NodeGetComplexPattern(N, ISE))) {
       std::string Fn = CP->getSelectFunc();
       unsigned NumOps = CP->getNumOperands();
@@ -2423,6 +2342,95 @@ public:
       for (unsigned i = 0; i < NumOps; i++)
         Code += ", CPTmp" + utostr(i);
       emitCheck(Code + ")");
+    }
+  }
+  
+  void EmitChildMatchCode(TreePatternNode *Child, TreePatternNode *Parent,
+                          const std::string &RootName,
+                          const std::string &ChainSuffix, bool &FoundChain) {
+    if (!Child->isLeaf()) {
+      // If it's not a leaf, recursively match.
+      const SDNodeInfo &CInfo = ISE.getSDNodeInfo(Child->getOperator());
+      emitCheck(RootName + ".getOpcode() == " +
+                CInfo.getEnumName());
+      EmitMatchCode(Child, Parent, RootName, ChainSuffix, FoundChain);
+      if (NodeHasProperty(Child, SDNodeInfo::SDNPHasChain, ISE))
+        FoldedChains.push_back(std::make_pair(RootName, CInfo.getNumResults()));
+    } else {
+      // If this child has a name associated with it, capture it in VarMap. If
+      // we already saw this in the pattern, emit code to verify dagness.
+      if (!Child->getName().empty()) {
+        std::string &VarMapEntry = VariableMap[Child->getName()];
+        if (VarMapEntry.empty()) {
+          VarMapEntry = RootName;
+        } else {
+          // If we get here, this is a second reference to a specific name.
+          // Since we already have checked that the first reference is valid,
+          // we don't have to recursively match it, just check that it's the
+          // same as the previously named thing.
+          emitCheck(VarMapEntry + " == " + RootName);
+          Duplicates.insert(RootName);
+          return;
+        }
+      }
+      
+      // Handle leaves of various types.
+      if (DefInit *DI = dynamic_cast<DefInit*>(Child->getLeafValue())) {
+        Record *LeafRec = DI->getDef();
+        if (LeafRec->isSubClassOf("RegisterClass")) {
+          // Handle register references.  Nothing to do here.
+        } else if (LeafRec->isSubClassOf("Register")) {
+          // Handle register references.
+        } else if (LeafRec->isSubClassOf("ComplexPattern")) {
+          // Handle complex pattern.
+          const ComplexPattern *CP = NodeGetComplexPattern(Child, ISE);
+          std::string Fn = CP->getSelectFunc();
+          unsigned NumOps = CP->getNumOperands();
+          for (unsigned i = 0; i < NumOps; ++i) {
+            emitDecl("CPTmp" + utostr(i));
+            emitCode("SDOperand CPTmp" + utostr(i) + ";");
+          }
+          
+          std::string Code = Fn + "(" + RootName;
+          for (unsigned i = 0; i < NumOps; i++)
+            Code += ", CPTmp" + utostr(i);
+          emitCheck(Code + ")");
+        } else if (LeafRec->getName() == "srcvalue") {
+          // Place holder for SRCVALUE nodes. Nothing to do here.
+        } else if (LeafRec->isSubClassOf("ValueType")) {
+          // Make sure this is the specified value type.
+          emitCheck("cast<VTSDNode>(" + RootName +
+                    ")->getVT() == MVT::" + LeafRec->getName());
+        } else if (LeafRec->isSubClassOf("CondCode")) {
+          // Make sure this is the specified cond code.
+          emitCheck("cast<CondCodeSDNode>(" + RootName +
+                    ")->get() == ISD::" + LeafRec->getName());
+        } else {
+#ifndef NDEBUG
+          Child->dump();
+          std::cerr << " ";
+#endif
+          assert(0 && "Unknown leaf type!");
+        }
+        
+        // If there is a node predicate for this, emit the call.
+        if (!Child->getPredicateFn().empty())
+          emitCheck(Child->getPredicateFn() + "(" + RootName +
+                    ".Val)");
+      } else if (IntInit *II =
+                 dynamic_cast<IntInit*>(Child->getLeafValue())) {
+        emitCheck("isa<ConstantSDNode>(" + RootName + ")");
+        unsigned CTmp = TmpNo++;
+        emitCode("int64_t CN"+utostr(CTmp)+" = cast<ConstantSDNode>("+
+                 RootName + ")->getSignExtended();");
+        
+        emitCheck("CN" + utostr(CTmp) + " == " +itostr(II->getValue()));
+      } else {
+#ifndef NDEBUG
+        Child->dump();
+#endif
+        assert(0 && "Unknown leaf type!");
+      }
     }
   }
 
@@ -3003,8 +3011,7 @@ void DAGISelEmitter::GenerateCodeForPattern(PatternToMatch &Pattern,
 
   // Emit the matcher, capturing named arguments in VariableMap.
   bool FoundChain = false;
-  Emitter.EmitMatchCode(Pattern.getSrcPattern(), NULL, "N", "", "",
-                        FoundChain);
+  Emitter.EmitMatchCode(Pattern.getSrcPattern(), NULL, "N", "", FoundChain);
 
   // TP - Get *SOME* tree pattern, we don't care which.
   TreePattern &TP = *PatternFragments.begin()->second;
