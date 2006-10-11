@@ -1228,14 +1228,16 @@ defining instruction is encountered.</p>
 
 <div class="doc_text">
 
-<p>We now have the information available to perform the liver intervals analysis
+<p>We now have the information available to perform the live intervals analysis
 and build the live intervals themselves.  We start off by numbering the basic
 blocks and machine instructions.  We then handle the "live-in" values.  These
 are in physical registers, so the physical register is assumed to be killed by
 the end of the basic block.  Live intervals for virtual registers are computed
-for some ordering of the machine instructions <tt>[1,N]</tt>.  A live interval
-is an interval <tt>[i,j)</tt>, where <tt>1 <= i <= j < N</tt>, for which a
+for some ordering of the machine instructions <tt>[1, N]</tt>.  A live interval
+is an interval <tt>[i, j)</tt>, where <tt>1 <= i <= j < N</tt>, for which a
 variable is live.</p>
+
+<p><i><b>More to come...</b></i></p>
 
 </ol>
 

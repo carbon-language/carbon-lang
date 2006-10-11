@@ -303,7 +303,7 @@ static bool isLoopInvariant(const <a href="#Value">Value</a> *V, const Loop *L) 
   if (isa&lt;<a href="#Constant">Constant</a>&gt;(V) || isa&lt;<a href="#Argument">Argument</a>&gt;(V) || isa&lt;<a href="#GlobalValue">GlobalValue</a>&gt;(V))
     return true;
 
-  <i>// Otherwise, it must be an instruction...</i>
+  // <i>Otherwise, it must be an instruction...</i>
   return !L-&gt;contains(cast&lt;<a href="#Instruction">Instruction</a>&gt;(V)-&gt;getParent());
 }
 </pre>
@@ -329,7 +329,7 @@ static bool isLoopInvariant(const <a href="#Value">Value</a> *V, const Loop *L) 
 <div class="doc_code">
 <pre>
 if (<a href="#AllocationInst">AllocationInst</a> *AI = dyn_cast&lt;<a href="#AllocationInst">AllocationInst</a>&gt;(Val)) {
-  // ...
+  // <i>...</i>
 }
 </pre>
 </div>
@@ -404,7 +404,7 @@ DEBUG(std::cerr &lt;&lt; "I am here!\n");
 <div class="doc_code">
 <pre>
 $ opt &lt; a.bc &gt; /dev/null -mypass
-&lt;no output&gt;
+<i>&lt;no output&gt;</i>
 $ opt &lt; a.bc &gt; /dev/null -mypass -debug
 I am here!
 </pre>
@@ -458,7 +458,7 @@ DEBUG(std::cerr &lt;&lt; "No debug type (2)\n");
 <div class="doc_code">
 <pre>
 $ opt &lt; a.bc &gt; /dev/null -mypass
-&lt;no output&gt;
+<i>&lt;no output&gt;</i>
 $ opt &lt; a.bc &gt; /dev/null -mypass -debug
 No debug type
 'foo' debug type
@@ -525,7 +525,7 @@ static Statistic&lt;&gt; NumXForms("mypassname", "The # of times I did stuff");
 
 <div class="doc_code">
 <pre>
-++NumXForms;   // I did stuff!
+++NumXForms;   // <i>I did stuff!</i>
 </pre>
 </div>
 
@@ -538,7 +538,7 @@ static Statistic&lt;&gt; NumXForms("mypassname", "The # of times I did stuff");
 <div class="doc_code">
 <pre>
 $ opt -stats -mypassname &lt; program.bc &gt; /dev/null
-... statistic output ...
+<i>... statistics output ...</i>
 </pre>
 </div>
 
@@ -691,13 +691,12 @@ an example that prints the name of a <tt>BasicBlock</tt> and the number of
 
 <div class="doc_code">
 <pre>
-// func is a pointer to a Function instance
-for (Function::iterator i = func-&gt;begin(), e = func-&gt;end(); i != e; ++i) {
-  // print out the name of the basic block if it has one, and then the
-  // number of instructions that it contains
+// <i>func is a pointer to a Function instance</i>
+for (Function::iterator i = func-&gt;begin(), e = func-&gt;end(); i != e; ++i)
+  // <i>Print out the name of the basic block if it has one, and then the</i>
+  // <i>number of instructions that it contains</i>
   std::cerr &lt;&lt; "Basic block (name=" &lt;&lt; i-&gt;getName() &lt;&lt; ") has "
             &lt;&lt; i-&gt;size() &lt;&lt; " instructions.\n";
-}
 </pre>
 </div>
 
@@ -725,10 +724,10 @@ a <tt>BasicBlock</tt>:</p>
 
 <div class="doc_code">
 <pre>
-// blk is a pointer to a BasicBlock instance
+// <i>blk is a pointer to a BasicBlock instance</i>
 for (BasicBlock::iterator i = blk-&gt;begin(), e = blk-&gt;end(); i != e; ++i)
-   // the next statement works since operator&lt;&lt;(ostream&amp;,...)
-   // is overloaded for Instruction&amp;
+   // <i>The next statement works since operator&lt;&lt;(ostream&amp;,...)</i>
+   // <i>is overloaded for Instruction&amp;</i>
    std::cerr &lt;&lt; *i &lt;&lt; "\n";
 </pre>
 </div>
@@ -760,7 +759,7 @@ small example that shows how to dump all instructions in a function to the stand
 <pre>
 #include "<a href="/doxygen/InstIterator_8h-source.html">llvm/Support/InstIterator.h</a>"
 
-// Suppose F is a ptr to a function
+// <i>F is a ptr to a Function instance</i>
 for (inst_iterator i = inst_begin(F), e = inst_end(F); i != e; ++i)
   std::cerr &lt;&lt; *i &lt;&lt; "\n";
 </pre>
@@ -799,8 +798,8 @@ is a <tt>BasicBlock::const_iterator</tt>:</p>
 
 <div class="doc_code">
 <pre>
-Instruction&amp; inst = *i;   // grab reference to instruction reference
-Instruction* pinst = &amp;*i; // grab pointer to instruction reference
+Instruction&amp; inst = *i;   // <i>Grab reference to instruction reference</i>
+Instruction* pinst = &amp;*i; // <i>Grab pointer to instruction reference</i>
 const Instruction&amp; inst = *j;
 </pre>
 </div>
@@ -837,7 +836,7 @@ without actually obtaining it via iteration over some structure:</p>
 <pre>
 void printNextInstruction(Instruction* inst) {
   BasicBlock::iterator it(inst);
-  ++it; // after this line, it refers to the instruction after *inst.
+  ++it; // <i>After this line, it refers to the instruction after *inst</i>
   if (it != inst-&gt;getParent()-&gt;end()) std::cerr &lt;&lt; *it &lt;&lt; "\n";
 }
 </pre>
@@ -889,16 +888,16 @@ class OurFunctionPass : public FunctionPass {
         for (BasicBlock::iterator i = b-&gt;begin(); ie = b-&gt;end(); i != ie; ++i) {
           if (<a href="#CallInst">CallInst</a>* callInst = <a href="#isa">dyn_cast</a>&lt;<a
  href="#CallInst">CallInst</a>&gt;(&amp;*i)) {
-            // we know we've encountered a call instruction, so we
-            // need to determine if it's a call to the
-            // function pointed to by m_func or not.
+            // <i>We know we've encountered a call instruction, so we</i>
+            // <i>need to determine if it's a call to the</i>
+            // <i>function pointed to by m_func or not</i>
 
             if (callInst-&gt;getCalledFunction() == targetFunc)
               ++callCounter;
           }
         }
       }
-
+    }
 
   private:
     unsigned  callCounter;
@@ -955,12 +954,11 @@ of <tt>F</tt>:</p>
 <pre>
 Function* F = ...;
 
-for (Value::use_iterator i = F-&gt;use_begin(), e = F-&gt;use_end(); i != e; ++i) {
+for (Value::use_iterator i = F-&gt;use_begin(), e = F-&gt;use_end(); i != e; ++i)
   if (Instruction *Inst = dyn_cast&lt;Instruction&gt;(*i)) {
     std::cerr &lt;&lt; "F is used in instruction:\n";
     std::cerr &lt;&lt; *Inst &lt;&lt; "\n";
   }
-}
 </pre>
 </div>
 
@@ -978,7 +976,7 @@ Instruction* pi = ...;
 
 for (User::op_iterator i = pi-&gt;op_begin(), e = pi-&gt;op_end(); i != e; ++i) {
   Value* v = *i;
-  ...
+  // <i>...</i>
 }
 </pre>
 </div>
@@ -1075,7 +1073,7 @@ BasicBlock *pb = ...;
 Instruction *pi = ...;
 Instruction *newInst = new Instruction(...);
 
-pb-&gt;getInstList().insert(pi, newInst); // inserts newInst before pi in pb
+pb-&gt;getInstList().insert(pi, newInst); // <i>Inserts newInst before pi in pb</i>
 </pre>
 </div>
 
@@ -1090,7 +1088,7 @@ pb-&gt;getInstList().insert(pi, newInst); // inserts newInst before pi in pb
 BasicBlock *pb = ...;
 Instruction *newInst = new Instruction(...);
 
-pb-&gt;getInstList().push_back(newInst); // appends newInst to pb
+pb-&gt;getInstList().push_back(newInst); // <i>Appends newInst to pb</i>
 </pre>
 </div>
 
@@ -1310,22 +1308,22 @@ To build this, use the following LLVM APIs:
 
 <div class="doc_code">
 <pre>
-//<i> Create the initial outer struct.</i>
+// <i>Create the initial outer struct</i>
 <a href="#PATypeHolder">PATypeHolder</a> StructTy = OpaqueType::get();
 std::vector&lt;const Type*&gt; Elts;
 Elts.push_back(PointerType::get(StructTy));
 Elts.push_back(Type::IntTy);
 StructType *NewSTy = StructType::get(Elts);
 
-//<i> At this point, NewSTy = "{ opaque*, int }". Tell VMCore that</i>
-//<i> the struct and the opaque type are actually the same.</i>
+// <i>At this point, NewSTy = "{ opaque*, int }". Tell VMCore that</i>
+// <i>the struct and the opaque type are actually the same.</i>
 cast&lt;OpaqueType&gt;(StructTy.get())-&gt;<a href="#refineAbstractTypeTo">refineAbstractTypeTo</a>(NewSTy);
 
 // <i>NewSTy is potentially invalidated, but StructTy (a <a href="#PATypeHolder">PATypeHolder</a>) is</i>
-// <i>kept up-to-date.</i>
+// <i>kept up-to-date</i>
 NewSTy = cast&lt;StructType&gt;(StructTy.get());
 
-// <i>Add a name for the type to the module symbol table (optional).</i>
+// <i>Add a name for the type to the module symbol table (optional)</i>
 MyModule-&gt;addTypeName("mylist", NewSTy);
 </pre>
 </div>
@@ -1545,8 +1543,8 @@ three idioms worth pointing out:</p>
     <td align="left"><pre><tt>
 for (SymbolTable::plane_const_iterator PI = ST.plane_begin(),
      PE = ST.plane_end(); PI != PE; ++PI ) {
-  PI-&gt;first // This is the Type* of the plane
-  PI-&gt;second // This is the SymbolTable::ValueMap of name/Value pairs
+  PI-&gt;first  // <i>This is the Type* of the plane</i>
+  PI-&gt;second // <i>This is the SymbolTable::ValueMap of name/Value pairs</i>
 }
     </tt></pre></td>
   </tr>
@@ -1555,8 +1553,8 @@ for (SymbolTable::plane_const_iterator PI = ST.plane_begin(),
     <td align="left"><pre><tt>
 for (SymbolTable::type_const_iterator TI = ST.type_begin(),
      TE = ST.type_end(); TI != TE; ++TI ) {
-  TI-&gt;first  // This is the name of the type
-  TI-&gt;second // This is the Type* value associated with the name
+  TI-&gt;first  // <i>This is the name of the type</i>
+  TI-&gt;second // <i>This is the Type* value associated with the name</i>
 }
     </tt></pre></td>
   </tr>
@@ -1565,8 +1563,8 @@ for (SymbolTable::type_const_iterator TI = ST.type_begin(),
     <td align="left"><pre><tt>
 for (SymbolTable::value_const_iterator VI = ST.value_begin(SomeType),
      VE = ST.value_end(SomeType); VI != VE; ++VI ) {
-  VI-&gt;first  // This is the name of the Value
-  VI-&gt;second // This is the Value* value associated with the name
+  VI-&gt;first  // <i>This is the name of the Value</i>
+  VI-&gt;second // <i>This is the Value* value associated with the name</i>
 }
     </tt></pre></td>
   </tr>
