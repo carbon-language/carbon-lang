@@ -1,7 +1,10 @@
-// RUN: tblgen %s
+// RUN: tblgen %s &&
+// RUN: tblgen %s | grep 'zing = 4' | wc -l | grep 2
+
 class C1<int A, string B> { 
   int bar = A;
   string thestr = B;
+  int zing;
 }
 
 def T : C1<4, "blah">;
@@ -17,3 +20,7 @@ multiclass t<int a> {
 defm FOO : t<42>;
 
 def T4 : C1<6, "foo">;
+
+let zing = 4 in
+  defm BAZ : t<3>;
+
