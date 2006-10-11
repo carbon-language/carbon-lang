@@ -624,9 +624,9 @@ ObjectBody : ClassList {
              // Delete the template arg values for the class
              delete (*$1)[i].second;
            }
-           delete $1;   // Delete the class list...
+           delete $1;   // Delete the class list.
   
-           // Process any variables on the set stack...
+           // Process any variables on the let stack.
            for (unsigned i = 0, e = LetStack.size(); i != e; ++i)
              for (unsigned j = 0, e = LetStack[i].size(); j != e; ++j)
                setValue(LetStack[i][j].Name,
@@ -742,6 +742,14 @@ DefMInst : DEFM ID { CurDefmPrefix = $2; } ':' SubClassRef ';' {
         exit(1);
       }
     }
+    
+    // If the mdef is inside a 'let' expression, add to each def.
+    for (unsigned i = 0, e = LetStack.size(); i != e; ++i)
+      for (unsigned j = 0, e = LetStack[i].size(); j != e; ++j)
+        setValue(LetStack[i][j].Name,
+                 LetStack[i][j].HasBits ? &LetStack[i][j].Bits : 0,
+                 LetStack[i][j].Value);
+    
     
     // Ensure redefinition doesn't happen.
     if (Records.getDef(CurRec->getName())) {
