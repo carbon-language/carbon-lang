@@ -148,7 +148,8 @@ namespace {
     bool SelectLEAAddr(SDOperand N, SDOperand &Base, SDOperand &Scale,
                        SDOperand &Index, SDOperand &Disp);
     bool SelectScalarSSELoad(SDOperand N, SDOperand &Base, SDOperand &Scale,
-                             SDOperand &Index, SDOperand &Disp);
+                             SDOperand &Index, SDOperand &Disp,
+                             SDOperand &InChain, SDOperand &OutChain);
     bool TryFoldLoad(SDOperand P, SDOperand N,
                      SDOperand &Base, SDOperand &Scale,
                      SDOperand &Index, SDOperand &Disp);
@@ -781,20 +782,22 @@ bool X86DAGToDAGISel::SelectAddr(SDOperand N, SDOperand &Base, SDOperand &Scale,
 /// match a load whose top elements are either undef or zeros.  The load flavor
 /// is derived from the type of N, which is either v4f32 or v2f64.
 bool X86DAGToDAGISel::SelectScalarSSELoad(SDOperand N, SDOperand &Base,
-                                          SDOperand &Scale,
-                                          SDOperand &Index, SDOperand &Disp) {
-#if 0
+                                          SDOperand &Scale, SDOperand &Index,
+                                          SDOperand &Disp, SDOperand &InChain,
+                                          SDOperand &OutChain) {
   if (N.getOpcode() == ISD::SCALAR_TO_VECTOR) {
-    if (N.getOperand(0).getOpcode() == ISD::LOAD) {
-      SDOperand LoadAddr = N.getOperand(0).getOperand(0);
+    InChain  = N.getOperand(0);
+    if (ISD::isNON_EXTLoad(InChain.Val)) {
+      LoadSDNode *LD = cast<LoadSDNode>(InChain);
+      SDOperand LoadAddr = LD->getBasePtr();
       if (!SelectAddr(LoadAddr, Base, Scale, Index, Disp))
         return false;
+      OutChain = LD->getChain();
       return true;
     }
   }
   // TODO: Also handle the case where we explicitly require zeros in the top
   // elements.  This is a vector shuffle from the zero vector.
-#endif
   
   return false;
 }
