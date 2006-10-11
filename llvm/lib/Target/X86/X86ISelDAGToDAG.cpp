@@ -778,6 +778,16 @@ bool X86DAGToDAGISel::SelectAddr(SDOperand N, SDOperand &Base, SDOperand &Scale,
   return true;
 }
 
+/// isZeroNode - Returns true if Elt is a constant zero or a floating point
+/// constant +0.0.
+static inline bool isZeroNode(SDOperand Elt) {
+  return ((isa<ConstantSDNode>(Elt) &&
+  cast<ConstantSDNode>(Elt)->getValue() == 0) ||
+  (isa<ConstantFPSDNode>(Elt) &&
+  cast<ConstantFPSDNode>(Elt)->isExactlyValue(0.0)));
+}
+
+
 /// SelectScalarSSELoad - Match a scalar SSE load.  In particular, we want to
 /// match a load whose top elements are either undef or zeros.  The load flavor
 /// is derived from the type of N, which is either v4f32 or v2f64.
@@ -786,19 +796,56 @@ bool X86DAGToDAGISel::SelectScalarSSELoad(SDOperand N, SDOperand &Base,
                                           SDOperand &Disp, SDOperand &InChain,
                                           SDOperand &OutChain) {
   if (N.getOpcode() == ISD::SCALAR_TO_VECTOR) {
-    InChain  = N.getOperand(0);
+    InChain = N.getOperand(0).getValue(1);
     if (ISD::isNON_EXTLoad(InChain.Val)) {
       LoadSDNode *LD = cast<LoadSDNode>(InChain);
-      SDOperand LoadAddr = LD->getBasePtr();
-      if (!SelectAddr(LoadAddr, Base, Scale, Index, Disp))
+      if (!SelectAddr(LD->getBasePtr(), Base, Scale, Index, Disp))
         return false;
       OutChain = LD->getChain();
       return true;
     }
   }
-  // TODO: Also handle the case where we explicitly require zeros in the top
+
+  // Also handle the case where we explicitly require zeros in the top
   // elements.  This is a vector shuffle from the zero vector.
-  
+  if (N.getOpcode() == ISD::VECTOR_SHUFFLE && N.Val->hasOneUse() &&
+      N.getOperand(0).getOpcode() == ISD::BUILD_VECTOR &&
+      N.getOperand(1).getOpcode() == ISD::SCALAR_TO_VECTOR && 
+      N.getOperand(1).Val->hasOneUse() &&
+      ISD::isNON_EXTLoad(N.getOperand(1).getOperand(0).Val) &&
+      N.getOperand(1).getOperand(0).hasOneUse()) {
+    // Check to see if the BUILD_VECTOR is building a zero vector.
+    SDOperand BV = N.getOperand(0);
+    for (unsigned i = 0, e = BV.getNumOperands(); i != e; ++i)
+      if (!isZeroNode(BV.getOperand(i)) &&
+          BV.getOperand(i).getOpcode() != ISD::UNDEF)
+        return false;  // Not a zero/undef vector.
+    // Check to see if the shuffle mask is 4/L/L/L or 2/L, where L is something
+    // from the LHS.
+    unsigned VecWidth = BV.getNumOperands();
+    SDOperand ShufMask = N.getOperand(2);
+    assert(ShufMask.getOpcode() == ISD::BUILD_VECTOR && "Invalid shuf mask!");
+    if (ConstantSDNode *C = dyn_cast<ConstantSDNode>(ShufMask.getOperand(0))) {
+      if (C->getValue() == VecWidth) {
+        for (unsigned i = 1; i != VecWidth; ++i) {
+          if (ShufMask.getOperand(i).getOpcode() == ISD::UNDEF) {
+            // ok.
+          } else {
+            ConstantSDNode *C = cast<ConstantSDNode>(ShufMask.getOperand(i));
+            if (C->getValue() >= VecWidth) return false;
+          }
+        }
+      }
+      
+      // Okay, this is a zero extending load.  Fold it.
+      LoadSDNode *LD = cast<LoadSDNode>(N.getOperand(1).getOperand(0));
+      if (!SelectAddr(LD->getBasePtr(), Base, Scale, Index, Disp))
+        return false;
+      OutChain = LD->getChain();
+      InChain = SDOperand(LD, 1);
+      return true;
+    }
+  }
   return false;
 }
 
