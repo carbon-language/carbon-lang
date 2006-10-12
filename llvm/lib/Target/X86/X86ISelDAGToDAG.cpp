@@ -797,7 +797,7 @@ bool X86DAGToDAGISel::SelectScalarSSELoad(SDOperand N, SDOperand &Base,
                                           SDOperand &OutChain) {
   if (N.getOpcode() == ISD::SCALAR_TO_VECTOR) {
     InChain = N.getOperand(0).getValue(1);
-    if (ISD::isNON_EXTLoad(InChain.Val)) {
+    if (ISD::isNON_EXTLoad(InChain.Val) && InChain.getValue(0).hasOneUse()) {
       LoadSDNode *LD = cast<LoadSDNode>(InChain);
       if (!SelectAddr(LD->getBasePtr(), Base, Scale, Index, Disp))
         return false;
