@@ -1664,6 +1664,13 @@ SDOperand DAGCombiner::visitSRL(SDNode *N) {
     return DAG.getNode(ISD::ANY_EXTEND, VT, SmallShift);
   }
   
+  // fold (srl (sra X, Y), 31) -> (srl X, 31).  This srl only looks at the sign
+  // bit, which is unmodified by sra.
+  if (N1C && N1C->getValue()+1 == MVT::getSizeInBits(VT)) {
+    if (N0.getOpcode() == ISD::SRA)
+      return DAG.getNode(ISD::SRL, VT, N0.getOperand(0), N1);
+  }
+  
   // fold (srl (ctlz x), "5") -> x  iff x has one bit set (the low bit).
   if (N1C && N0.getOpcode() == ISD::CTLZ && 
       N1C->getValue() == Log2_32(MVT::getSizeInBits(VT))) {
