@@ -228,11 +228,6 @@ class X86Inst<bits<8> opcod, Format f, ImmType i, dag ops, string AsmStr>
   bits<3> FPFormBits = 0;
 }
 
-class Imp<list<Register> uses, list<Register> defs> {
-  list<Register> Uses = uses;
-  list<Register> Defs = defs;
-}
-
 
 // Prefix byte classes which are used to indicate to the ad-hoc machine code
 // emitter that various prefix bytes are required.
