@@ -706,24 +706,25 @@ void LocalSpiller::RewriteMBB(MachineBasicBlock &MBB, VirtRegMap &VRM) {
       if ((MR & VirtRegMap::isRef) && !(MR & VirtRegMap::isMod)) {
         int FrameIdx;
         if (unsigned DestReg = TII->isLoadFromStackSlot(&MI, FrameIdx)) {
-          // If this spill slot is available, turn it into a copy (or nothing)
-          // instead of leaving it as a load!
-          unsigned InReg;
-          if (FrameIdx == SS && (InReg = Spills.getSpillSlotPhysReg(SS))) {
-            DEBUG(std::cerr << "Promoted Load To Copy: " << MI);
-            MachineFunction &MF = *MBB.getParent();
-            if (DestReg != InReg) {
-              MRI->copyRegToReg(MBB, &MI, DestReg, InReg,
-                                MF.getSSARegMap()->getRegClass(VirtReg));
-              // Revisit the copy so we make sure to notice the effects of the
-              // operation on the destreg (either needing to RA it if it's 
-              // virtual or needing to clobber any values if it's physical).
-              NextMII = &MI;
-              --NextMII;  // backtrack to the copy.
+          if (FrameIdx == SS) {
+            // If this spill slot is available, turn it into a copy (or nothing)
+            // instead of leaving it as a load!
+            if (unsigned InReg = Spills.getSpillSlotPhysReg(SS)) {
+              DEBUG(std::cerr << "Promoted Load To Copy: " << MI);
+              MachineFunction &MF = *MBB.getParent();
+              if (DestReg != InReg) {
+                MRI->copyRegToReg(MBB, &MI, DestReg, InReg,
+                                  MF.getSSARegMap()->getRegClass(VirtReg));
+                // Revisit the copy so we make sure to notice the effects of the
+                // operation on the destreg (either needing to RA it if it's 
+                // virtual or needing to clobber any values if it's physical).
+                NextMII = &MI;
+                --NextMII;  // backtrack to the copy.
+              }
+              VRM.RemoveFromFoldedVirtMap(&MI);
+              MBB.erase(&MI);
+              goto ProcessNextInst;
             }
-            VRM.RemoveFromFoldedVirtMap(&MI);
-            MBB.erase(&MI);
-            goto ProcessNextInst;
           }
         }
       }
@@ -791,7 +792,21 @@ void LocalSpiller::RewriteMBB(MachineBasicBlock &MBB, VirtRegMap &VRM) {
             VRM.RemoveFromFoldedVirtMap(&MI);
             goto ProcessNextInst;
           }
+          
+          // If it's not a no-op copy, it clobbers the value in the destreg.
           Spills.ClobberPhysReg(VirtReg);
+ 
+          // Check to see if this instruction is a load from a stack slot into
+          // a register.  If so, this provides the stack slot value in the reg.
+          int FrameIdx;
+          if (unsigned DestReg = TII->isLoadFromStackSlot(&MI, FrameIdx)) {
+            assert(DestReg == VirtReg && "Unknown load situation!");
+            
+            // Otherwise, if it wasn't available, remember that it is now!
+            Spills.addAvailable(FrameIdx, DestReg);
+            goto ProcessNextInst;
+          }
+            
           continue;
         }
 
