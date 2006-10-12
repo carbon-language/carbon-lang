@@ -161,9 +161,9 @@ def WTF : PseudoInstAlpha<(ops variable_ops), "#wtf", [], s_pseudo>;
 
 let isLoad = 1, hasCtrlDep = 1 in {
 def ADJUSTSTACKUP : PseudoInstAlpha<(ops s64imm:$amt), "; ADJUP $amt", 
-                [(callseq_start imm:$amt)], s_pseudo>;
+                [(callseq_start imm:$amt)], s_pseudo>, Imp<[R30],[R30]>;
 def ADJUSTSTACKDOWN : PseudoInstAlpha<(ops s64imm:$amt), "; ADJDOWN $amt", 
-                [(callseq_end imm:$amt)], s_pseudo>;
+                [(callseq_end imm:$amt)], s_pseudo>, Imp<[R30],[R30]>;
 }
 def ALTENT : PseudoInstAlpha<(ops s64imm:$TARGET), "$$$TARGET..ng:\n", [], s_pseudo>;
 def PCLABEL : PseudoInstAlpha<(ops s64imm:$num), "PCMARKER_$num:\n",[], s_pseudo>;
