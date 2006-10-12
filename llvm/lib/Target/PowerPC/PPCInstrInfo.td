@@ -276,10 +276,10 @@ def FPContractions : Predicate<"!NoExcessFPPrecision">;
 let hasCtrlDep = 1 in {
 def ADJCALLSTACKDOWN : Pseudo<(ops u16imm:$amt),
                               "${:comment} ADJCALLSTACKDOWN",
-                              [(callseq_start imm:$amt)]>;
+                              [(callseq_start imm:$amt)]>, Imp<[R1],[R1]>;
 def ADJCALLSTACKUP   : Pseudo<(ops u16imm:$amt),
                               "${:comment} ADJCALLSTACKUP",
-                              [(callseq_end imm:$amt)]>;
+                              [(callseq_end imm:$amt)]>, Imp<[R1],[R1]>;
 
 def UPDATE_VRSAVE    : Pseudo<(ops GPRC:$rD, GPRC:$rS),
                               "UPDATE_VRSAVE $rD, $rS", []>;
