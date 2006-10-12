@@ -129,7 +129,16 @@ public:
   /// RemoveDeadNodes - This method deletes all unreachable nodes in the
   /// SelectionDAG.
   void RemoveDeadNodes();
+
+  /// RemoveDeadNode - Remove the specified node from the system. If any of its
+  /// operands then becomes dead, remove them as well. The vector Deleted is
+  /// populated with nodes that are deleted.
+  void RemoveDeadNode(SDNode *N, std::vector<SDNode*> &Deleted);
   
+  /// DeleteNode - Remove the specified node from the system.  This node must
+  /// have no referrers.
+  void DeleteNode(SDNode *N);
+
   /// getVTList - Return an SDVTList that represents the list of values
   /// specified.
   SDVTList getVTList(MVT::ValueType VT);
@@ -406,10 +415,6 @@ public:
   /// this method.
   void ReplaceAllUsesOfValueWith(SDOperand From, SDOperand To,
                                  std::vector<SDNode*> &Deleted);
-
-  /// DeleteNode - Remove the specified node from the system.  This node must
-  /// have no referrers.
-  void DeleteNode(SDNode *N);
 
   /// AssignNodeIds - Assign a unique node id for each node in the DAG based on
   /// their allnodes order. It returns the maximum id.

@@ -300,6 +300,39 @@ void SelectionDAG::RemoveDeadNodes() {
   setRoot(Dummy.getValue());
 }
 
+void SelectionDAG::RemoveDeadNode(SDNode *N, std::vector<SDNode*> &Deleted) {
+  SmallVector<SDNode*, 16> DeadNodes;
+  DeadNodes.push_back(N);
+
+  // Process the worklist, deleting the nodes and adding their uses to the
+  // worklist.
+  while (!DeadNodes.empty()) {
+    SDNode *N = DeadNodes.back();
+    DeadNodes.pop_back();
+    
+    // Take the node out of the appropriate CSE map.
+    RemoveNodeFromCSEMaps(N);
+
+    // Next, brutally remove the operand list.  This is safe to do, as there are
+    // no cycles in the graph.
+    for (SDNode::op_iterator I = N->op_begin(), E = N->op_end(); I != E; ++I) {
+      SDNode *Operand = I->Val;
+      Operand->removeUser(N);
+      
+      // Now that we removed this operand, see if there are no uses of it left.
+      if (Operand->use_empty())
+        DeadNodes.push_back(Operand);
+    }
+    delete[] N->OperandList;
+    N->OperandList = 0;
+    N->NumOperands = 0;
+    
+    // Finally, remove N itself.
+    Deleted.push_back(N);
+    AllNodes.erase(N);
+  }
+}
+
 void SelectionDAG::DeleteNode(SDNode *N) {
   assert(N->use_empty() && "Cannot delete a node that is not dead!");
 
