@@ -2138,6 +2138,8 @@ private:
   std::map<std::string, Record*> OperatorMap;
   // Names of all the folded nodes which produce chains.
   std::vector<std::pair<std::string, unsigned> > FoldedChains;
+  // Original input chain(s).
+  std::vector<std::pair<std::string, std::string> > OrigChains;
   std::set<std::string> Duplicates;
 
   /// GeneratedCode - This is the buffer that we emit code to.  The first int
@@ -2294,9 +2296,12 @@ public:
       }
 
       if (NodeHasChain) {
-        if (FoundChain)
-          emitCheck("Chain.Val == " + RootName + ".Val");
-        else
+        if (FoundChain) {
+          emitCheck("(" + ChainName + ".Val == " + RootName + ".Val || "
+                    "IsChainCompatible(" + ChainName + ".Val, " +
+                    RootName + ".Val))");
+          OrigChains.push_back(std::make_pair(ChainName, RootName));
+        } else
           FoundChain = true;
         ChainName = "Chain" + ChainSuffix;
         emitInit("SDOperand " + ChainName + " = " + RootName +
@@ -2663,6 +2668,26 @@ public:
         MVT::ValueType VT = Pattern->getTypeNum(i);
         if (VT != MVT::isVoid && VT != MVT::Flag)
           PatResults++;
+      }
+
+      if (OrigChains.size() > 0) {
+        // The original input chain is being ignored. If it is not just
+        // pointing to the op that's being folded, we should create a
+        // TokenFactor with it and the chain of the folded op as the new chain.
+        // We could potentially be doing multiple levels of folding, in that
+        // case, the TokenFactor can have more operands.
+        emitCode("SmallVector<SDOperand, 8> InChains;");
+        for (unsigned i = 0, e = OrigChains.size(); i < e; ++i) {
+          emitCode("if (" + OrigChains[i].first + ".Val != " +
+                   OrigChains[i].second + ".Val) {");
+          emitCode("  AddToISelQueue(" + OrigChains[i].first + ");");
+          emitCode("  InChains.push_back(" + OrigChains[i].first + ");");
+          emitCode("}");
+        }
+        emitCode("AddToISelQueue(" + ChainName + ");");
+        emitCode("InChains.push_back(" + ChainName + ");");
+        emitCode(ChainName + " = CurDAG->getNode(ISD::TokenFactor, MVT::Other, "
+                 "&InChains[0], InChains.size());");
       }
 
       std::vector<std::string> AllOps;
@@ -3646,6 +3671,21 @@ void DAGISelEmitter::run(std::ostream &OS) {
      << "unsigned char *ISelSelected;\n";
   OS << "/// Dummy parameter to ReplaceAllUsesOfValueWith().\n"
      << "std::vector<SDNode*> ISelKilled;\n\n";
+
+  OS << "/// IsChainCompatible - Returns true if Chain is Op or Chain does\n";
+  OS << "/// not reach Op.\n";
+  OS << "static bool IsChainCompatible(SDNode *Chain, SDNode *Op) {\n";
+  OS << "  if (Chain->getOpcode() == ISD::EntryToken)\n";
+  OS << "    return true;\n";
+  OS << "  else if (Chain->getOpcode() == ISD::TokenFactor)\n";
+  OS << "    return false;\n";
+  OS << "  else if (Chain->getNumOperands() > 0) {\n";
+  OS << "    SDOperand C0 = Chain->getOperand(0);\n";
+  OS << "    if (C0.getValueType() == MVT::Other)\n";
+  OS << "      return C0.Val != Op && IsChainCompatible(C0.Val, Op);\n";
+  OS << "  }\n";
+  OS << "  return true;\n";
+  OS << "}\n";
 
   OS << "/// Sorting functions for the selection queue.\n"
      << "struct isel_sort : public std::binary_function"
