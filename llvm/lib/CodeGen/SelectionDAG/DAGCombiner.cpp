@@ -49,7 +49,7 @@ namespace {
   static cl::opt<bool>
     CombinerAA("combiner-alias-analysis", cl::Hidden,
                cl::desc("Turn on alias analysis turning testing"));
-             
+
 //------------------------------ DAGCombiner ---------------------------------//
 
   class VISIBILITY_HIDDEN DAGCombiner {
@@ -504,7 +504,7 @@ SDOperand DAGCombiner::visit(SDNode *N) {
   case ISD::BR_CC:              return visitBR_CC(N);
   case ISD::LOAD:               return visitLOAD(N);
   // FIXME - Switch over after StoreSDNode comes online.
-  case ISD::TRUNCSTORE:         // Fail thru
+  case ISD::TRUNCSTORE:         // Fall thru
   case ISD::STORE:              return visitSTORE(N);
   case ISD::INSERT_VECTOR_ELT:  return visitINSERT_VECTOR_ELT(N);
   case ISD::VINSERT_VECTOR_ELT: return visitVINSERT_VECTOR_ELT(N);
@@ -2708,7 +2708,10 @@ SDOperand DAGCombiner::visitSTORE(SDNode *N) {
       // If there is a better chain.
       if (Chain != BetterChain) {
         // Replace the chain to avoid dependency.
-        SDOperand ReplTStore = DAG.getStore(BetterChain, Value, Ptr, SrcValue);
+        SDOperand ReplTStore = DAG.getNode(ISD::TRUNCSTORE, MVT::Other,
+                                            BetterChain, Value, Ptr, SrcValue,
+                                            N->getOperand(4));
+
         // Create token to keep both nodes around.
         return DAG.getNode(ISD::TokenFactor, MVT::Other, Chain, ReplTStore);
       }
