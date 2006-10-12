@@ -346,11 +346,15 @@ class Ii32<bits<8> o, Format f, dag ops, string asm, list<dag> pattern>
 // Instruction list...
 //
 
+// ADJCALLSTACKDOWN/UP implicitly use/def ESP because they may be expanded into
+// a stack adjustment and the codegen must know that they may modify the stack
+// pointer before prolog-epilog rewriting occurs.
 def ADJCALLSTACKDOWN : I<0, Pseudo, (ops i32imm:$amt), "#ADJCALLSTACKDOWN",
-                         [(X86callseq_start imm:$amt)]>;
+                         [(X86callseq_start imm:$amt)]>, Imp<[ESP],[ESP]>;
 def ADJCALLSTACKUP   : I<0, Pseudo, (ops i32imm:$amt1, i32imm:$amt2),
                          "#ADJCALLSTACKUP",
-                         [(X86callseq_end imm:$amt1, imm:$amt2)]>;
+                         [(X86callseq_end imm:$amt1, imm:$amt2)]>,
+                         Imp<[ESP],[ESP]>;
 def IMPLICIT_USE     : I<0, Pseudo, (ops variable_ops), "#IMPLICIT_USE", []>;
 def IMPLICIT_DEF     : I<0, Pseudo, (ops variable_ops), "#IMPLICIT_DEF", []>;
 def IMPLICIT_DEF_GR8  : I<0, Pseudo, (ops GR8:$dst),
