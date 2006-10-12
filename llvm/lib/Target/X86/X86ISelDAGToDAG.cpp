@@ -220,7 +220,7 @@ static SDNode *findFlagUse(SDNode *N) {
     SDNode *User = *I;
     for (unsigned i = 0, e = User->getNumOperands(); i != e; ++i) {
       SDOperand Op = User->getOperand(i);
-      if (Op.ResNo == FlagResNo)
+      if (Op.Val == N && Op.ResNo == FlagResNo)
         return User;
     }
   }
