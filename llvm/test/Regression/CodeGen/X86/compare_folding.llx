@@ -1,6 +1,5 @@
-; RUN: llvm-as < %s | llc -march=x86 | grep com | wc -l > %t2
-; RUN: grep 'COM =' %s | grep -v grep | wc -l > %t1
-; RUN: diff %t1 %t2
+; RUN: llvm-as < %s | llc -march=x86 | grep movsd | wc -l | grep 1 &&
+; RUN: llvm-as < %s | llc -march=x86 | grep ucomisd
 declare bool %llvm.isunordered(double,double)
 
 bool %test1(double %X, double %Y) {  ;; Returns isunordered(X,Y)

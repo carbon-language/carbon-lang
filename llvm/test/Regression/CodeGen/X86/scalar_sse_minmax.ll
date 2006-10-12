@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=x86 -mattr=+sse1,+sse2 | grep mins | wc -l | grep 2 &&
+; RUN: llvm-as < %s | llc -march=x86 -mattr=+sse1,+sse2 | grep mins | wc -l | grep 3 &&
 ; RUN: llvm-as < %s | llc -march=x86 -mattr=+sse1,+sse2 | grep maxs | wc -l | grep 2
 
 declare bool %llvm.isunordered.f64( double %x, double %y )
@@ -33,5 +33,10 @@ double %max2(double %x, double %y) {
         ret double %retval
 }
 
+<4 x float> %min3(float %tmp37) {
+        %tmp375 = insertelement <4 x float> undef, float %tmp37, uint 0
+        %tmp48 = tail call <4 x float> %llvm.x86.sse.min.ss( <4 x float> %tmp375, <4 x float> < float 6.553500e+04, float undef, float undef, float undef > )
+	ret <4 x float> %tmp48
+}
 
-
+declare <4 x float> %llvm.x86.sse.min.ss(<4 x float>, <4 x float>)
