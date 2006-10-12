@@ -205,10 +205,10 @@ class Pseudo<dag ops, string asmstr, list<dag> pattern>
 
 def ADJCALLSTACKDOWN : Pseudo<(ops i32imm:$amt),
                                "!ADJCALLSTACKDOWN $amt",
-                               [(callseq_start imm:$amt)]>;
+                               [(callseq_start imm:$amt)]>, Imp<[O6],[O6]>;
 def ADJCALLSTACKUP : Pseudo<(ops i32imm:$amt),
                             "!ADJCALLSTACKUP $amt",
-                            [(callseq_end imm:$amt)]>;
+                            [(callseq_end imm:$amt)]>, Imp<[O6],[O6]>;
 def IMPLICIT_DEF_Int : Pseudo<(ops IntRegs:$dst),
                               "!IMPLICIT_DEF $dst",
                               [(set IntRegs:$dst, (undef))]>;
