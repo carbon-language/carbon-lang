@@ -3723,7 +3723,8 @@ OS << "  unsigned NumKilled = ISelKilled.size();\n";
   OS << "  if (NumKilled) {\n";
   OS << "    for (unsigned i = 0; i != NumKilled; ++i) {\n";
   OS << "      SDNode *Temp = ISelKilled[i];\n";
-  OS << "      std::remove(ISelQueue.begin(), ISelQueue.end(), Temp);\n";
+  OS << "      ISelQueue.erase(std::remove(ISelQueue.begin(), ISelQueue.end(), "
+     << "Temp), ISelQueue.end());\n";
   OS << "    };\n";
  OS << "    std::make_heap(ISelQueue.begin(), ISelQueue.end(), isel_sort());\n";
   OS << "    ISelKilled.clear();\n";
