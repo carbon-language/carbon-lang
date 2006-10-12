@@ -4135,40 +4135,40 @@ SDOperand X86TargetLowering::LowerSETCC(SDOperand Op, SelectionDAG &DAG,
   SDOperand Op1 = Op.getOperand(1);
   SDOperand CC = Op.getOperand(2);
   ISD::CondCode SetCCOpcode = cast<CondCodeSDNode>(CC)->get();
-  const MVT::ValueType *VTs = DAG.getNodeValueTypes(MVT::Other, MVT::Flag);
+  const MVT::ValueType *VTs1 = DAG.getNodeValueTypes(MVT::Other, MVT::Flag);
+  const MVT::ValueType *VTs2 = DAG.getNodeValueTypes(MVT::i8, MVT::Flag);
   bool isFP = MVT::isFloatingPoint(Op.getOperand(1).getValueType());
   unsigned X86CC;
 
-  VTs = DAG.getNodeValueTypes(MVT::i8, MVT::Flag);
   if (translateX86CC(cast<CondCodeSDNode>(CC)->get(), isFP, X86CC, 
                      Op0, Op1, DAG)) {
     SDOperand Ops1[] = { Chain, Op0, Op1 };
-    Cond = DAG.getNode(X86ISD::CMP, VTs, 2, Ops1, 3).getValue(1);
+    Cond = DAG.getNode(X86ISD::CMP, VTs1, 2, Ops1, 3).getValue(1);
     SDOperand Ops2[] = { DAG.getConstant(X86CC, MVT::i8), Cond };
-    return DAG.getNode(X86ISD::SETCC, VTs, 2, Ops2, 2);
+    return DAG.getNode(X86ISD::SETCC, VTs2, 2, Ops2, 2);
   }
 
   assert(isFP && "Illegal integer SetCC!");
 
   SDOperand COps[] = { Chain, Op0, Op1 };
-  Cond = DAG.getNode(X86ISD::CMP, VTs, 2, COps, 3).getValue(1);
+  Cond = DAG.getNode(X86ISD::CMP, VTs1, 2, COps, 3).getValue(1);
 
   switch (SetCCOpcode) {
   default: assert(false && "Illegal floating point SetCC!");
   case ISD::SETOEQ: {  // !PF & ZF
     SDOperand Ops1[] = { DAG.getConstant(X86ISD::COND_NP, MVT::i8), Cond };
-    SDOperand Tmp1 = DAG.getNode(X86ISD::SETCC, VTs, 2, Ops1, 2);
+    SDOperand Tmp1 = DAG.getNode(X86ISD::SETCC, VTs2, 2, Ops1, 2);
     SDOperand Ops2[] = { DAG.getConstant(X86ISD::COND_E, MVT::i8),
                          Tmp1.getValue(1) };
-    SDOperand Tmp2 = DAG.getNode(X86ISD::SETCC, VTs, 2, Ops2, 2);
+    SDOperand Tmp2 = DAG.getNode(X86ISD::SETCC, VTs2, 2, Ops2, 2);
     return DAG.getNode(ISD::AND, MVT::i8, Tmp1, Tmp2);
   }
   case ISD::SETUNE: {  // PF | !ZF
     SDOperand Ops1[] = { DAG.getConstant(X86ISD::COND_P, MVT::i8), Cond };
-    SDOperand Tmp1 = DAG.getNode(X86ISD::SETCC, VTs, 2, Ops1, 2);
+    SDOperand Tmp1 = DAG.getNode(X86ISD::SETCC, VTs2, 2, Ops1, 2);
     SDOperand Ops2[] = { DAG.getConstant(X86ISD::COND_NE, MVT::i8),
                          Tmp1.getValue(1) };
-    SDOperand Tmp2 = DAG.getNode(X86ISD::SETCC, VTs, 2, Ops2, 2);
+    SDOperand Tmp2 = DAG.getNode(X86ISD::SETCC, VTs2, 2, Ops2, 2);
     return DAG.getNode(ISD::OR, MVT::i8, Tmp1, Tmp2);
   }
   }
