@@ -198,11 +198,7 @@ public:
   void setValueStr(const char *S) { ValueStr = S; }
 
   void setFlag(unsigned Flag, unsigned FlagMask) {
-    if (Flags & FlagMask) {
-      error(": Specified two settings for the same option!");
-      exit(1);
-    }
-
+    Flags &= ~FlagMask;
     Flags |= Flag;
   }
 
