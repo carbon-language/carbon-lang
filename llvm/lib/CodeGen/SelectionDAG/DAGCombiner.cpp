@@ -885,6 +885,18 @@ SDOperand DAGCombiner::visitSREM(SDNode *N) {
   if (TLI.MaskedValueIsZero(N1, SignBit) &&
       TLI.MaskedValueIsZero(N0, SignBit))
     return DAG.getNode(ISD::UREM, VT, N0, N1);
+  
+  // Unconditionally lower X%C -> X-X/C*C.  This allows the X/C logic to hack on
+  // the remainder operation.
+  if (N1C && !N1C->isNullValue()) {
+    SDOperand Div = DAG.getNode(ISD::SDIV, VT, N0, N1);
+    SDOperand Mul = DAG.getNode(ISD::MUL, VT, Div, N1);
+    SDOperand Sub = DAG.getNode(ISD::SUB, VT, N0, Mul);
+    AddToWorkList(Div.Val);
+    AddToWorkList(Mul.Val);
+    return Sub;
+  }
+  
   return SDOperand();
 }
 
@@ -911,6 +923,18 @@ SDOperand DAGCombiner::visitUREM(SDNode *N) {
       }
     }
   }
+  
+  // Unconditionally lower X%C -> X-X/C*C.  This allows the X/C logic to hack on
+  // the remainder operation.
+  if (N1C && !N1C->isNullValue()) {
+    SDOperand Div = DAG.getNode(ISD::UDIV, VT, N0, N1);
+    SDOperand Mul = DAG.getNode(ISD::MUL, VT, Div, N1);
+    SDOperand Sub = DAG.getNode(ISD::SUB, VT, N0, Mul);
+    AddToWorkList(Div.Val);
+    AddToWorkList(Mul.Val);
+    return Sub;
+  }
+  
   return SDOperand();
 }
 
