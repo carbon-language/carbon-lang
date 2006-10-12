@@ -3741,16 +3741,6 @@ OS << "  unsigned NumKilled = ISelKilled.size();\n";
   OS << "  RemoveKilled();\n";
   OS << "}\n\n";
 
-  OS << "void DeleteNode(SDNode *N) {\n";
-  OS << "  CurDAG->DeleteNode(N);\n";
-  OS << "  for (SDNode::op_iterator I = N->op_begin(), E = N->op_end(); "
-     << "I != E; ++I) {\n";
-  OS << "    SDNode *Operand = I->Val;\n";
-  OS << "    if (Operand->use_empty())\n";
-  OS << "      DeleteNode(Operand);\n";
-  OS << "  }\n";
-  OS << "}\n";
-
   OS << "// SelectRoot - Top level entry to DAG isel.\n";
   OS << "SDOperand SelectRoot(SDOperand Root) {\n";
   OS << "  SelectRootInit();\n";
@@ -3774,8 +3764,10 @@ OS << "  unsigned NumKilled = ISelKilled.size();\n";
   OS << "      if (ResNode != Node) {\n";
   OS << "        if (ResNode)\n";
   OS << "          ReplaceUses(Node, ResNode);\n";
-  OS << "        if (Node->use_empty()) // Don't delete EntryToken, etc.\n";
-  OS << "          DeleteNode(Node);\n";
+  OS << "        if (Node->use_empty()) { // Don't delete EntryToken, etc.\n";
+  OS << "          CurDAG->RemoveDeadNode(Node, ISelKilled);\n";
+  OS << "          RemoveKilled();\n";
+  OS << "        }\n";
   OS << "      }\n";
   OS << "    }\n";
   OS << "  }\n";
