@@ -248,6 +248,12 @@ protected:
   /// @brief Parse a string constants block
   void ParseStringConstants(unsigned NumEntries, ValueTable &Tab);
 
+  /// @brief Release our memory.
+  void freeState() {
+    freeTable(FunctionValues);
+    freeTable(ModuleValues);
+  }
+  
 /// @}
 /// @name Data
 /// @{
@@ -466,12 +472,6 @@ private:
   /// @brief Resolve all references to the placeholder (if any) for the
   /// given constant.
   void ResolveReferencesToConstant(Constant *C, unsigned Typ, unsigned Slot);
-
-  /// @brief Release our memory.
-  void freeState() {
-    freeTable(FunctionValues);
-    freeTable(ModuleValues);
-  }
 
   /// @brief Free a table, making sure to free the ValueList in the table.
   void freeTable(ValueTable &Tab) {
