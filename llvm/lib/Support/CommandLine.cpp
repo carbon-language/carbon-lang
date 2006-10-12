@@ -952,23 +952,25 @@ public:
     exit(1);
   }
 };
+} // End anonymous namespace
 
 // Define the two HelpPrinter instances that are used to print out help, or
 // help-hidden...
 //
-HelpPrinter NormalPrinter(false);
-HelpPrinter HiddenPrinter(true);
+static HelpPrinter NormalPrinter(false);
+static HelpPrinter HiddenPrinter(true);
 
-cl::opt<HelpPrinter, true, parser<bool> >
+static cl::opt<HelpPrinter, true, parser<bool> >
 HOp("help", cl::desc("Display available options (--help-hidden for more)"),
     cl::location(NormalPrinter), cl::ValueDisallowed);
 
-cl::opt<HelpPrinter, true, parser<bool> >
+static cl::opt<HelpPrinter, true, parser<bool> >
 HHOp("help-hidden", cl::desc("Display all available options"),
      cl::location(HiddenPrinter), cl::Hidden, cl::ValueDisallowed);
 
-void (*OverrideVersionPrinter)() = 0;
+static void (*OverrideVersionPrinter)() = 0;
 
+namespace {
 class VersionPrinter {
 public:
   void operator=(bool OptionWasSpecified) {
@@ -998,16 +1000,15 @@ public:
     }
   }
 };
+} // End anonymous namespace
 
 
 // Define the --version option that prints out the LLVM version for the tool
-VersionPrinter VersionPrinterInstance;
-cl::opt<VersionPrinter, true, parser<bool> >
+static VersionPrinter VersionPrinterInstance;
+
+static cl::opt<VersionPrinter, true, parser<bool> >
 VersOp("version", cl::desc("Display the version of this program"),
     cl::location(VersionPrinterInstance), cl::ValueDisallowed);
-
-
-} // End anonymous namespace
 
 // Utility function for printing the help message.
 void cl::PrintHelpMessage() {
