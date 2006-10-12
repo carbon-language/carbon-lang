@@ -95,11 +95,11 @@ def armfmdrr       : SDNode<"ARMISD::FMDRR", SDTarmfmdrr, []>;
 
 def ADJCALLSTACKUP : InstARM<(ops i32imm:$amt),
                             "!ADJCALLSTACKUP $amt",
-                            [(callseq_end imm:$amt)]>;
+                            [(callseq_end imm:$amt)]>, Imp<[R13],[R13]>;
 
 def ADJCALLSTACKDOWN : InstARM<(ops i32imm:$amt),
                                "!ADJCALLSTACKDOWN $amt",
-                               [(callseq_start imm:$amt)]>;
+                               [(callseq_start imm:$amt)]>, Imp<[R13],[R13]>;
 
 let isReturn = 1 in {
   def bx: InstARM<(ops), "bx r14", [(retflag)]>;
