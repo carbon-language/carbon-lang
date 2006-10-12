@@ -734,3 +734,30 @@ _foo:
         ret
 
 //===---------------------------------------------------------------------===//
+
+Consider the expansion of:
+
+uint %test3(uint %X) {
+        %tmp1 = rem uint %X, 255
+        ret uint %tmp1
+}
+
+Currently it compiles to:
+
+...
+        movl $2155905153, %ecx
+        movl 8(%esp), %esi
+        movl %esi, %eax
+        mull %ecx
+...
+
+This could be "reassociated" into:
+
+        movl $2155905153, %eax
+        movl 8(%esp), %ecx
+        mull %ecx
+
+to avoid the copy.  In fact, the existing two-address stuff would do this
+except that mul isn't a commutative 2-addr instruction.  I guess this has
+to be done at isel time based on the #uses to mul?
+
