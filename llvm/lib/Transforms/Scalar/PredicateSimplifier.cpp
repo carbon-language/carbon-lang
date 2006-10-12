@@ -38,6 +38,7 @@
 #include "llvm/Analysis/Dominators.h"
 #include "llvm/Support/CFG.h"
 #include "llvm/Support/Debug.h"
+#include "llvm/Support/InstVisitor.h"
 #include <iostream>
 using namespace llvm;
 
@@ -175,7 +176,7 @@ namespace {
 
     PropertySet(DominatorTree *DT) : union_find(this), DT(DT) {}
 
-    class Synonyms<Value *> union_find;
+    Synonyms<Value *> union_find;
 
     typedef std::vector<Property>::iterator       PropertyIterator;
     typedef std::vector<Property>::const_iterator ConstPropertyIterator;
@@ -404,31 +405,64 @@ namespace {
     virtual void getAnalysisUsage(AnalysisUsage &AU) const;
 
   private:
-    // Try to replace the Use of the instruction with something simpler.
-    Value *resolve(SetCondInst *SCI, const PropertySet &);
-    Value *resolve(BinaryOperator *BO, const PropertySet &);
-    Value *resolve(SelectInst *SI, const PropertySet &);
-    Value *resolve(Value *V, const PropertySet &);
+    /// Backwards - Try to replace the Use of the instruction with
+    /// something simpler. This resolves a value by walking backwards
+    /// through its definition and the operands of that definition to
+    /// see if any values can now be solved for with the properties
+    /// that are in effect now, but weren't at definition time.
+    class Backwards : public InstVisitor<Backwards, Value &> {
+      friend class InstVisitor<Backwards, Value &>;
+      const PropertySet &KP;
+
+      Value &visitSetCondInst(SetCondInst &SCI);
+      Value &visitBinaryOperator(BinaryOperator &BO);
+      Value &visitSelectInst(SelectInst &SI);
+      Value &visitInstruction(Instruction &I);
+
+    public:
+      explicit Backwards(const PropertySet &KP) : KP(KP) {}
+
+      Value *resolve(Value *V);
+    };
+
+    /// Forwards - Adds new properties into PropertySet and uses them to
+    /// simplify instructions. Because new properties sometimes apply to
+    /// a transition from one BasicBlock to another, this will use the
+    /// PredicateSimplifier::proceedToSuccessor(s) interface to enter the
+    /// basic block with the new PropertySet.
+    class Forwards : public InstVisitor<Forwards> {
+      friend class InstVisitor<Forwards>;
+      PredicateSimplifier *PS;
+    public:
+      PropertySet &KP;
+
+      Forwards(PredicateSimplifier *PS, PropertySet &KP) : PS(PS), KP(KP) {}
+
+      // Tries to simplify each Instruction and add new properties to
+      // the PropertySet. Returns true if it erase the instruction.
+      //void visitInstruction(Instruction *I);
+
+      void visitTerminatorInst(TerminatorInst &TI);
+      void visitBranchInst(BranchInst &BI);
+      void visitSwitchInst(SwitchInst &SI);
+
+      void visitLoadInst(LoadInst &LI);
+      void visitStoreInst(StoreInst &SI);
+      void visitBinaryOperator(BinaryOperator &BO);
+    };
 
     // Used by terminator instructions to proceed from the current basic
     // block to the next. Verifies that "current" dominates "next",
     // then calls visitBasicBlock.
     void proceedToSuccessors(PropertySet &CurrentPS, BasicBlock *Current);
+    void proceedToSuccessor(PropertySet &Properties, BasicBlock *Next);
 
     // Visits each instruction in the basic block.
     void visitBasicBlock(BasicBlock *Block, PropertySet &KnownProperties);
 
     // Tries to simplify each Instruction and add new properties to
-    // the PropertySet. Returns true if it erase the instruction.
+    // the PropertySet.
     void visitInstruction(Instruction *I, PropertySet &);
-    // For each instruction, add the properties to KnownProperties.
-
-    void visit(TerminatorInst *TI, PropertySet &);
-    void visit(BranchInst *BI, PropertySet &);
-    void visit(SwitchInst *SI, PropertySet);
-    void visit(LoadInst *LI, PropertySet &);
-    void visit(StoreInst *SI, PropertySet &);
-    void visit(BinaryOperator *BO, PropertySet &);
 
     DominatorTree *DT;
     bool modified;
@@ -504,23 +538,20 @@ void PredicateSimplifier::getAnalysisUsage(AnalysisUsage &AU) const {
   AU.addPreservedID(BreakCriticalEdgesID);
 }
 
-// resolve catches cases addProperty won't because it wasn't used as a
-// condition in the branch, and that visit won't, because the instruction
-// was defined outside of the scope that the properties apply to.
-Value *PredicateSimplifier::resolve(SetCondInst *SCI,
-                                    const PropertySet &KP) {
-  // Attempt to resolve the SetCondInst to a boolean.
+Value &PredicateSimplifier::Backwards::visitSetCondInst(SetCondInst &SCI) {
+  Value &vBO = visitBinaryOperator(SCI);
+  if (&vBO !=  &SCI) return vBO;
 
-  Value *SCI0 = resolve(SCI->getOperand(0), KP),
-        *SCI1 = resolve(SCI->getOperand(1), KP);
+  Value *SCI0 = resolve(SCI.getOperand(0)),
+        *SCI1 = resolve(SCI.getOperand(1));
 
   PropertySet::ConstPropertyIterator NE =
       KP.findProperty(PropertySet::NE, SCI0, SCI1);
 
   if (NE != KP.Properties.end()) {
-    switch (SCI->getOpcode()) {
-      case Instruction::SetEQ: return ConstantBool::getFalse();
-      case Instruction::SetNE: return ConstantBool::getTrue();
+    switch (SCI.getOpcode()) {
+      case Instruction::SetEQ: return *ConstantBool::getFalse();
+      case Instruction::SetNE: return *ConstantBool::getTrue();
       case Instruction::SetLE:
       case Instruction::SetGE:
       case Instruction::SetLT:
@@ -534,41 +565,40 @@ Value *PredicateSimplifier::resolve(SetCondInst *SCI,
   return SCI;
 }
 
-Value *PredicateSimplifier::resolve(BinaryOperator *BO,
-                                    const PropertySet &KP) {
-  Value *lhs = resolve(BO->getOperand(0), KP),
-        *rhs = resolve(BO->getOperand(1), KP);
+Value &PredicateSimplifier::Backwards::visitBinaryOperator(BinaryOperator &BO) {
+  Value *V = KP.canonicalize(&BO);
+  if (V != &BO) return *V;
+
+  Value *lhs = resolve(BO.getOperand(0)),
+        *rhs = resolve(BO.getOperand(1));
 
   ConstantIntegral *CI1 = dyn_cast<ConstantIntegral>(lhs),
                    *CI2 = dyn_cast<ConstantIntegral>(rhs);
 
-  if (CI1 && CI2) return ConstantExpr::get(BO->getOpcode(), CI1, CI2);
-
-  if (SetCondInst *SCI = dyn_cast<SetCondInst>(BO))
-    return resolve(SCI, KP);
+  if (CI1 && CI2) return *ConstantExpr::get(BO.getOpcode(), CI1, CI2);
 
   return BO;
 }
 
-Value *PredicateSimplifier::resolve(SelectInst *SI, const PropertySet &KP) {
-  Value *Condition = resolve(SI->getCondition(), KP);
+Value &PredicateSimplifier::Backwards::visitSelectInst(SelectInst &SI) {
+  Value *V = KP.canonicalize(&SI);
+  if (V != &SI) return *V;
+
+  Value *Condition = resolve(SI.getCondition());
   if (ConstantBool *CB = dyn_cast<ConstantBool>(Condition))
-    return resolve(CB->getValue() ? SI->getTrueValue() : SI->getFalseValue(),
-                   KP);
+    return *resolve(CB->getValue() ? SI.getTrueValue() : SI.getFalseValue());
   return SI;
 }
 
-Value *PredicateSimplifier::resolve(Value *V, const PropertySet &KP) {
+Value &PredicateSimplifier::Backwards::visitInstruction(Instruction &I) {
+  return *KP.canonicalize(&I);
+}
+
+Value *PredicateSimplifier::Backwards::resolve(Value *V) {
   if (isa<Constant>(V) || isa<BasicBlock>(V) || KP.empty()) return V;
 
-  V = KP.canonicalize(V);
-
-  if (BinaryOperator *BO = dyn_cast<BinaryOperator>(V))
-    return resolve(BO, KP);
-  else if (SelectInst *SI = dyn_cast<SelectInst>(V))
-    return resolve(SI, KP);
-
-  return V;
+  if (Instruction *I = dyn_cast<Instruction>(V)) return &visit(*I);
+  return KP.canonicalize(V);
 }
 
 void PredicateSimplifier::visitBasicBlock(BasicBlock *BB,
@@ -581,7 +611,8 @@ void PredicateSimplifier::visitBasicBlock(BasicBlock *BB,
 void PredicateSimplifier::visitInstruction(Instruction *I,
                                            PropertySet &KnownProperties) {
   // Try to replace the whole instruction.
-  Value *V = resolve(I, KnownProperties);
+  Backwards resolve(KnownProperties);
+  Value *V = resolve.resolve(I);
   if (V != I) {
     modified = true;
     ++NumInstruction;
@@ -594,7 +625,7 @@ void PredicateSimplifier::visitInstruction(Instruction *I,
   // Try to substitute operands.
   for (unsigned i = 0, e = I->getNumOperands(); i != e; ++i) {
     Value *Oper = I->getOperand(i);
-    Value *V = resolve(Oper, KnownProperties);
+    Value *V = resolve.resolve(Oper);
     if (V != Oper) {
       modified = true;
       ++NumVarsReplaced;
@@ -604,14 +635,8 @@ void PredicateSimplifier::visitInstruction(Instruction *I,
     }
   }
 
-  if (TerminatorInst *TI = dyn_cast<TerminatorInst>(I))
-    visit(TI, KnownProperties);
-  else if (LoadInst *LI = dyn_cast<LoadInst>(I))
-    visit(LI, KnownProperties);
-  else if (StoreInst *SI = dyn_cast<StoreInst>(I))
-    visit(SI, KnownProperties);
-  else if (BinaryOperator *BO = dyn_cast<BinaryOperator>(I))
-    visit(BO, KnownProperties);
+  Forwards visit(this, KnownProperties);
+  visit.visit(*I);
 }
 
 void PredicateSimplifier::proceedToSuccessors(PropertySet &KP,
@@ -624,38 +649,33 @@ void PredicateSimplifier::proceedToSuccessors(PropertySet &KP,
   }
 }
 
-void PredicateSimplifier::visit(TerminatorInst *TI, PropertySet &KP) {
-  if (BranchInst *BI = dyn_cast<BranchInst>(TI)) {
-    visit(BI, KP);
-    return;
-  }
-  if (SwitchInst *SI = dyn_cast<SwitchInst>(TI)) {
-    visit(SI, KP);
-    return;
-  }
-
-  proceedToSuccessors(KP, TI->getParent());
+void PredicateSimplifier::proceedToSuccessor(PropertySet &KP, BasicBlock *BB) {
+  visitBasicBlock(BB, KP);
 }
 
-void PredicateSimplifier::visit(BranchInst *BI, PropertySet &KP) {
-  BasicBlock *BB = BI->getParent();
+void PredicateSimplifier::Forwards::visitTerminatorInst(TerminatorInst &TI) {
+  PS->proceedToSuccessors(KP, TI.getParent());
+}
 
-  if (BI->isUnconditional()) {
-    proceedToSuccessors(KP, BB);
+void PredicateSimplifier::Forwards::visitBranchInst(BranchInst &BI) {
+  BasicBlock *BB = BI.getParent();
+
+  if (BI.isUnconditional()) {
+    PS->proceedToSuccessors(KP, BB);
     return;
   }
 
-  Value *Condition = BI->getCondition();
+  Value *Condition = BI.getCondition();
 
-  BasicBlock *TrueDest  = BI->getSuccessor(0),
-             *FalseDest = BI->getSuccessor(1);
+  BasicBlock *TrueDest  = BI.getSuccessor(0),
+             *FalseDest = BI.getSuccessor(1);
 
   if (isa<ConstantBool>(Condition) || TrueDest == FalseDest) {
-    proceedToSuccessors(KP, BB);
+    PS->proceedToSuccessors(KP, BB);
     return;
   }
 
-  DTNodeType *Node = DT->getNode(BB);
+  DTNodeType *Node = PS->DT->getNode(BB);
   for (DTNodeType::iterator I = Node->begin(), E = Node->end(); I != E; ++I) {
     BasicBlock *Dest = (*I)->getBlock();
     PropertySet DestProperties(KP);
@@ -665,50 +685,50 @@ void PredicateSimplifier::visit(BranchInst *BI, PropertySet &KP) {
     else if (Dest == FalseDest)
       DestProperties.addEqual(ConstantBool::getFalse(), Condition);
 
-    visitBasicBlock(Dest, DestProperties);
+    PS->proceedToSuccessor(DestProperties, Dest);
   }
 }
 
-void PredicateSimplifier::visit(SwitchInst *SI, PropertySet KP) {
-  Value *Condition = SI->getCondition();
+void PredicateSimplifier::Forwards::visitSwitchInst(SwitchInst &SI) {
+  Value *Condition = SI.getCondition();
 
   // Set the EQProperty in each of the cases BBs,
   // and the NEProperties in the default BB.
   PropertySet DefaultProperties(KP);
 
-  DTNodeType *Node = DT->getNode(SI->getParent());
+  DTNodeType *Node = PS->DT->getNode(SI.getParent());
   for (DTNodeType::iterator I = Node->begin(), E = Node->end(); I != E; ++I) {
     BasicBlock *BB = (*I)->getBlock();
 
     PropertySet BBProperties(KP);
-    if (BB == SI->getDefaultDest()) {
-      for (unsigned i = 1, e = SI->getNumCases(); i < e; ++i)
-        if (SI->getSuccessor(i) != BB)
-          BBProperties.addNotEqual(Condition, SI->getCaseValue(i));
-    } else if (ConstantInt *CI = SI->findCaseDest(BB)) {
+    if (BB == SI.getDefaultDest()) {
+      for (unsigned i = 1, e = SI.getNumCases(); i < e; ++i)
+        if (SI.getSuccessor(i) != BB)
+          BBProperties.addNotEqual(Condition, SI.getCaseValue(i));
+    } else if (ConstantInt *CI = SI.findCaseDest(BB)) {
       BBProperties.addEqual(Condition, CI);
     }
-    visitBasicBlock(BB, BBProperties);
+    PS->proceedToSuccessor(BBProperties, BB);
   }
 }
 
-void PredicateSimplifier::visit(LoadInst *LI, PropertySet &KP) {
-  Value *Ptr = LI->getPointerOperand();
+void PredicateSimplifier::Forwards::visitLoadInst(LoadInst &LI) {
+  Value *Ptr = LI.getPointerOperand();
   KP.addNotEqual(Constant::getNullValue(Ptr->getType()), Ptr);
 }
 
-void PredicateSimplifier::visit(StoreInst *SI, PropertySet &KP) {
-  Value *Ptr = SI->getPointerOperand();
+void PredicateSimplifier::Forwards::visitStoreInst(StoreInst &SI) {
+  Value *Ptr = SI.getPointerOperand();
   KP.addNotEqual(Constant::getNullValue(Ptr->getType()), Ptr);
 }
 
-void PredicateSimplifier::visit(BinaryOperator *BO, PropertySet &KP) {
-  Instruction::BinaryOps ops = BO->getOpcode();
+void PredicateSimplifier::Forwards::visitBinaryOperator(BinaryOperator &BO) {
+  Instruction::BinaryOps ops = BO.getOpcode();
 
   switch (ops) {
     case Instruction::Div:
     case Instruction::Rem: {
-      Value *Divisor = BO->getOperand(1);
+      Value *Divisor = BO.getOperand(1);
       KP.addNotEqual(Constant::getNullValue(Divisor->getType()), Divisor);
       break;
     }
