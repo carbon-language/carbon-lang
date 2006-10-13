@@ -63,6 +63,9 @@ bool LLVMTargetMachine::addPassesToEmitFile(FunctionPassManager &PM,
   // Insert prolog/epilog code.  Eliminate abstract frame index references...
   PM.add(createPrologEpilogCodeInserter());
   
+  // Branch folding must be run after regalloc and prolog/epilog insertion.
+  PM.add(createBranchFoldingPass());
+  
   if (PrintMachineCode)  // Print the register-allocated code
     PM.add(createMachineFunctionPrinterPass(&std::cerr));
   
