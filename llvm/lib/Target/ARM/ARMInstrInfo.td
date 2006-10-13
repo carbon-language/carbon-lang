@@ -76,6 +76,7 @@ def armbr          : SDNode<"ARMISD::BR", SDTarmbr, [SDNPHasChain, SDNPInFlag]>;
 
 def SDTVoidBinOp : SDTypeProfile<0, 2, [SDTCisSameAs<0, 1>]>;
 def armcmp       : SDNode<"ARMISD::CMP",  SDTVoidBinOp, [SDNPOutFlag]>;
+def armcmpe      : SDNode<"ARMISD::CMPE", SDTVoidBinOp, [SDNPOutFlag]>;
 
 def armfsitos      : SDNode<"ARMISD::FSITOS", SDTUnaryOp>;
 def armftosis      : SDNode<"ARMISD::FTOSIS", SDTUnaryOp>;
@@ -179,12 +180,20 @@ def cmp      : InstARM<(ops IntRegs:$a, op_addr_mode1:$b),
 		       [(armcmp IntRegs:$a, addr_mode1:$b)]>;
 
 // Floating Point Compare
+def fcmps   : InstARM<(ops FPRegs:$a, FPRegs:$b),
+	               "fcmps $a, $b",
+		       [(armcmp FPRegs:$a, FPRegs:$b)]>;
+
 def fcmpes  : InstARM<(ops FPRegs:$a, FPRegs:$b),
 	               "fcmpes $a, $b",
-		       [(armcmp FPRegs:$a, FPRegs:$b)]>;
+		       [(armcmpe FPRegs:$a, FPRegs:$b)]>;
 
 def fcmped  : InstARM<(ops DFPRegs:$a, DFPRegs:$b),
 	               "fcmped $a, $b",
+		       [(armcmpe DFPRegs:$a, DFPRegs:$b)]>;
+
+def fcmpd   : InstARM<(ops DFPRegs:$a, DFPRegs:$b),
+	               "fcmpd $a, $b",
 		       [(armcmp DFPRegs:$a, DFPRegs:$b)]>;
 
 // Floating Point Conversion
