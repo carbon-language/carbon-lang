@@ -493,15 +493,15 @@ SDNode *IA64DAGToDAGISel::Select(SDOperand Op) {
                                 Address, Chain);
   }
   
-  case ISD::TRUNCSTORE:
   case ISD::STORE: {
-    SDOperand Address = N->getOperand(2);
-    SDOperand Chain = N->getOperand(0);
+    StoreSDNode *ST = cast<StoreSDNode>(N);
+    SDOperand Address = ST->getBasePtr();
+    SDOperand Chain = ST->getChain();
     AddToISelQueue(Address);
     AddToISelQueue(Chain);
    
     unsigned Opc;
-    if (N->getOpcode() == ISD::STORE) {
+    if (ISD::isNON_TRUNCStore(N)) {
       switch (N->getOperand(1).getValueType()) {
       default: assert(0 && "unknown type in store");
       case MVT::i1: { // this is a bool
@@ -510,7 +510,7 @@ SDNode *IA64DAGToDAGISel::Select(SDOperand Op) {
 	SDOperand Initial = CurDAG->getCopyFromReg(Chain, IA64::r0, MVT::i64);
 	Chain = Initial.getValue(1);
 	// then load 1 into the same reg iff the predicate to store is 1
-        SDOperand Tmp = N->getOperand(1);
+        SDOperand Tmp = ST->getValue();
         AddToISelQueue(Tmp);
         Tmp = SDOperand(CurDAG->getTargetNode(IA64::TPCADDS, MVT::i64, Initial,
                                               CurDAG->getConstant(1, MVT::i64),
@@ -520,8 +520,8 @@ SDNode *IA64DAGToDAGISel::Select(SDOperand Op) {
       case MVT::i64: Opc = IA64::ST8;  break;
       case MVT::f64: Opc = IA64::STF8; break;
       }
-    } else { //ISD::TRUNCSTORE
-      switch(cast<VTSDNode>(N->getOperand(4))->getVT()) {
+    } else { // Truncating store
+      switch(ST->getStoredVT()) {
       default: assert(0 && "unknown type in truncstore");
       case MVT::i8:  Opc = IA64::ST1;  break;
       case MVT::i16: Opc = IA64::ST2;  break;

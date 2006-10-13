@@ -503,8 +503,6 @@ SDOperand DAGCombiner::visit(SDNode *N) {
   case ISD::BRCOND:             return visitBRCOND(N);
   case ISD::BR_CC:              return visitBR_CC(N);
   case ISD::LOAD:               return visitLOAD(N);
-  // FIXME - Switch over after StoreSDNode comes online.
-  case ISD::TRUNCSTORE:         // Fall thru
   case ISD::STORE:              return visitSTORE(N);
   case ISD::INSERT_VECTOR_ELT:  return visitINSERT_VECTOR_ELT(N);
   case ISD::VINSERT_VECTOR_ELT: return visitVINSERT_VECTOR_ELT(N);
@@ -2687,9 +2685,12 @@ SDOperand DAGCombiner::visitLOAD(SDNode *N) {
   // TODO: Handle store large -> read small portion.
   // TODO: Handle TRUNCSTORE/LOADEXT
   if (LD->getExtensionType() == ISD::NON_EXTLOAD) {
-    if (Chain.getOpcode() == ISD::STORE && Chain.getOperand(2) == Ptr &&
-        Chain.getOperand(1).getValueType() == N->getValueType(0))
+    if (ISD::isNON_TRUNCStore(Chain.Val)) {
+      StoreSDNode *PrevST = cast<StoreSDNode>(Chain);
+      if (PrevST->getBasePtr() == Ptr &&
+          PrevST->getValue().getValueType() == N->getValueType(0))
       return CombineTo(N, Chain.getOperand(1), Chain);
+    }
   }
     
   if (CombinerAA) {
@@ -2725,13 +2726,13 @@ SDOperand DAGCombiner::visitLOAD(SDNode *N) {
 }
 
 SDOperand DAGCombiner::visitSTORE(SDNode *N) {
-  SDOperand Chain    = N->getOperand(0);
-  SDOperand Value    = N->getOperand(1);
-  SDOperand Ptr      = N->getOperand(2);
-  SDOperand SrcValue = N->getOperand(3);
+  StoreSDNode *ST  = cast<StoreSDNode>(N);
+  SDOperand Chain = ST->getChain();
+  SDOperand Value = ST->getValue();
+  SDOperand Ptr   = ST->getBasePtr();
   
   // FIXME - Switch over after StoreSDNode comes online.
-  if (N->getOpcode() == ISD::TRUNCSTORE) {
+  if (ST->isTruncatingStore()) {
     if (CombinerAA) {
       // Walk up chain skipping non-aliasing memory nodes.
       SDOperand BetterChain = FindBetterChain(N, Chain);
@@ -2739,9 +2740,9 @@ SDOperand DAGCombiner::visitSTORE(SDNode *N) {
       // If there is a better chain.
       if (Chain != BetterChain) {
         // Replace the chain to avoid dependency.
-        SDOperand ReplTStore = DAG.getNode(ISD::TRUNCSTORE, MVT::Other,
-                                            BetterChain, Value, Ptr, SrcValue,
-                                            N->getOperand(4));
+        SDOperand ReplTStore =
+          DAG.getTruncStore(BetterChain, Value, Ptr, ST->getSrcValue(),
+                            ST->getSrcValueOffset(), ST->getStoredVT());
 
         // Create token to keep both nodes around.
         return DAG.getNode(ISD::TokenFactor, MVT::Other, Chain, ReplTStore);
@@ -2752,27 +2753,30 @@ SDOperand DAGCombiner::visitSTORE(SDNode *N) {
   }
  
   // If this is a store that kills a previous store, remove the previous store.
-  if (Chain.getOpcode() == ISD::STORE && Chain.getOperand(2) == Ptr &&
-      Chain.Val->hasOneUse() /* Avoid introducing DAG cycles */ &&
-      // Make sure that these stores are the same value type:
-      // FIXME: we really care that the second store is >= size of the first.
-      Value.getValueType() == Chain.getOperand(1).getValueType()) {
-    // Create a new store of Value that replaces both stores.
-    SDNode *PrevStore = Chain.Val;
-    if (PrevStore->getOperand(1) == Value) // Same value multiply stored.
-      return Chain;
-    SDOperand NewStore = DAG.getStore(PrevStore->getOperand(0), Value, Ptr,
-                                      SrcValue);
-    CombineTo(N, NewStore);                 // Nuke this store.
-    CombineTo(PrevStore, NewStore);  // Nuke the previous store.
-    return SDOperand(N, 0);
+  if (ISD::isNON_TRUNCStore(Chain.Val)) {
+    StoreSDNode *PrevST = cast<StoreSDNode>(Chain);
+    if (PrevST->getBasePtr() == Ptr &&
+        Chain.Val->hasOneUse() /* Avoid introducing DAG cycles */ &&
+        // Make sure that these stores are the same value type:
+        // FIXME: we really care that the second store is >= size of the first.
+        Value.getValueType() == PrevST->getValue().getValueType()) {
+      // Create a new store of Value that replaces both stores.
+      if (PrevST->getValue() == Value) // Same value multiply stored.
+        return Chain;
+      SDOperand NewStore = DAG.getStore(PrevST->getChain(), Value, Ptr,
+                                    ST->getSrcValue(), ST->getSrcValueOffset());
+      CombineTo(N, NewStore);                 // Nuke this store.
+      CombineTo(Chain.Val, NewStore);  // Nuke the previous store.
+      return SDOperand(N, 0);
+    }
   }
   
   // If this is a store of a bit convert, store the input value.
   // FIXME: This needs to know that the resultant store does not need a 
   // higher alignment than the original.
   if (0 && Value.getOpcode() == ISD::BIT_CONVERT) {
-    return DAG.getStore(Chain, Value.getOperand(0), Ptr, SrcValue);
+    return DAG.getStore(Chain, Value.getOperand(0), Ptr, ST->getSrcValue(),
+                        ST->getSrcValueOffset());
   }
   
   if (CombinerAA) { 
@@ -2789,7 +2793,8 @@ SDOperand DAGCombiner::visitSTORE(SDNode *N) {
     // If there is a better chain.
     if (Chain != BetterChain) {
       // Replace the chain to avoid dependency.
-      SDOperand ReplStore = DAG.getStore(BetterChain, Value, Ptr, SrcValue);
+      SDOperand ReplStore = DAG.getStore(BetterChain, Value, Ptr,
+                                    ST->getSrcValue(), ST->getSrcValueOffset());
       // Create token to keep both nodes around.
       return DAG.getNode(ISD::TokenFactor, MVT::Other, Chain, ReplStore);
     }
@@ -4050,20 +4055,9 @@ bool DAGCombiner::FindAliasInfo(SDNode *N,
     SrcValue = LD->getSrcValue();
     return true;
   } else if (StoreSDNode *ST = dyn_cast<StoreSDNode>(N)) {
-#if 1 // FIXME - Switch over after StoreSDNode comes online.
-    Ptr = ST->getOperand(2);
-    Size = MVT::getSizeInBits(ST->getOperand(1).getValueType()) >> 3;
-    SrcValue = 0;
-#else
     Ptr = ST->getBasePtr();
-    Size = MVT::getSizeInBits(ST->getOperand(1).getValueType()) >> 3;
+    Size = MVT::getSizeInBits(ST->getStoredVT()) >> 3;
     SrcValue = ST->getSrcValue();
-#endif
-  // FIXME - Switch over after StoreSDNode comes online.
-  } else if (N->getOpcode() == ISD::TRUNCSTORE) {
-    Ptr = N->getOperand(2);
-    Size = MVT::getSizeInBits(cast<VTSDNode>(N->getOperand(4))->getVT()) >> 3;
-    SrcValue = 0;
   } else {
     assert(0 && "FindAliasInfo expected a memory operand");
   }
@@ -4104,8 +4098,6 @@ void DAGCombiner::GatherAllAliases(SDNode *N, SDOperand OriginalChain,
       break;
       
     case ISD::LOAD:
-    // FIXME - Switch over after StoreSDNode comes online.
-    case ISD::TRUNCSTORE:
     case ISD::STORE: {
       // Get alias information for Chain.
       SDOperand OpPtr;

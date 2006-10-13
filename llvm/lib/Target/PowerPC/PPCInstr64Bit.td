@@ -304,24 +304,24 @@ def STDX_32  : XForm_8<31, 149, (ops GPRC:$rT, memrr:$dst),
 // Truncating stores.                       
 def STB8 : DForm_3<38, (ops G8RC:$rS, memri:$src),
                    "stb $rS, $src", LdStGeneral,
-                   [(truncstore G8RC:$rS, iaddr:$src, i8)]>;
+                   [(truncstorei8 G8RC:$rS, iaddr:$src)]>;
 def STH8 : DForm_3<44, (ops G8RC:$rS, memri:$src),
                    "sth $rS, $src", LdStGeneral,
-                   [(truncstore G8RC:$rS, iaddr:$src, i16)]>;
+                   [(truncstorei16 G8RC:$rS, iaddr:$src)]>;
 def STW8 : DForm_3<36, (ops G8RC:$rS, memri:$src),
                    "stw $rS, $src", LdStGeneral,
-                   [(truncstore G8RC:$rS, iaddr:$src, i32)]>;
+                   [(truncstorei32 G8RC:$rS, iaddr:$src)]>;
 def STBX8 : XForm_8<31, 215, (ops G8RC:$rS, memrr:$dst),
                    "stbx $rS, $dst", LdStGeneral,
-                   [(truncstore G8RC:$rS, xaddr:$dst, i8)]>, 
+                   [(truncstorei8 G8RC:$rS, xaddr:$dst)]>, 
                    PPC970_DGroup_Cracked;
 def STHX8 : XForm_8<31, 407, (ops G8RC:$rS, memrr:$dst),
                    "sthx $rS, $dst", LdStGeneral,
-                   [(truncstore G8RC:$rS, xaddr:$dst, i16)]>, 
+                   [(truncstorei16 G8RC:$rS, xaddr:$dst)]>, 
                    PPC970_DGroup_Cracked;
 def STWX8 : XForm_8<31, 151, (ops G8RC:$rS, memrr:$dst),
                    "stwx $rS, $dst", LdStGeneral,
-                   [(truncstore G8RC:$rS, xaddr:$dst, i32)]>,
+                   [(truncstorei32 G8RC:$rS, xaddr:$dst)]>,
                    PPC970_DGroup_Cracked;
 }
 

@@ -309,8 +309,7 @@ static SDOperand LowerCALL(SDOperand Op, SelectionDAG &DAG) {
     unsigned ArgOffset = Layout.getOffset(i);
     SDOperand   PtrOff = DAG.getConstant(ArgOffset, StackPtr.getValueType());
     PtrOff             = DAG.getNode(ISD::ADD, MVT::i32, StackPtr, PtrOff);
-    MemOpChains.push_back(DAG.getStore(Chain, Arg, PtrOff,
-                                       DAG.getSrcValue(NULL)));
+    MemOpChains.push_back(DAG.getStore(Chain, Arg, PtrOff, NULL, 0));
   }
   if (!MemOpChains.empty())
     Chain = DAG.getNode(ISD::TokenFactor, MVT::Other,
@@ -490,7 +489,9 @@ static SDOperand LowerVASTART(SDOperand Op, SelectionDAG &DAG,
   // memory location argument.
   MVT::ValueType PtrVT = DAG.getTargetLoweringInfo().getPointerTy();
   SDOperand FR = DAG.getFrameIndex(VarArgsFrameIndex, PtrVT);
-  return DAG.getStore(Op.getOperand(0), FR, Op.getOperand(1), Op.getOperand(2));
+  SrcValueSDNode *SV = cast<SrcValueSDNode>(Op.getOperand(2));
+  return DAG.getStore(Op.getOperand(0), FR, Op.getOperand(1), SV->getValue(),
+                      SV->getOffset());
 }
 
 static SDOperand LowerFORMAL_ARGUMENTS(SDOperand Op, SelectionDAG &DAG,
@@ -566,8 +567,7 @@ static SDOperand LowerFORMAL_ARGUMENTS(SDOperand Op, SelectionDAG &DAG,
       MF.addLiveIn(REGS[RegNo], VReg);
 
       SDOperand Val = DAG.getCopyFromReg(Root, VReg, MVT::i32);
-      SDOperand Store = DAG.getStore(Val.getValue(1), Val, FIN,
-                                     DAG.getSrcValue(NULL));
+      SDOperand Store = DAG.getStore(Val.getValue(1), Val, FIN, NULL, 0);
       MemOps.push_back(Store);
     }
     Root = DAG.getNode(ISD::TokenFactor, MVT::Other,&MemOps[0],MemOps.size());

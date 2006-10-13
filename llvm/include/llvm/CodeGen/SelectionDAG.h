@@ -319,7 +319,10 @@ public:
   /// getStore - Helper function to build ISD::STORE nodes.
   ///
   SDOperand getStore(SDOperand Chain, SDOperand Value, SDOperand Ptr,
-                     SDOperand SV);
+                     const Value *SV, int SVOffset, bool isVolatile=false);
+  SDOperand getTruncStore(SDOperand Chain, SDOperand Value, SDOperand Ptr,
+                          const Value *SV, int SVOffset, MVT::ValueType TVT,
+                          bool isVolatile=false);
 
   // getSrcValue - construct a node to track a Value* through the backend
   SDOperand getSrcValue(const Value* I, int offset = 0);

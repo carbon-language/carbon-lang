@@ -436,8 +436,7 @@ SparcTargetLowering::LowerArguments(Function &F, SelectionDAG &DAG) {
       int FrameIdx = MF.getFrameInfo()->CreateFixedObject(4, ArgOffset);
       SDOperand FIPtr = DAG.getFrameIndex(FrameIdx, MVT::i32);
 
-      OutChains.push_back(DAG.getStore(DAG.getRoot(),
-                                       Arg, FIPtr, DAG.getSrcValue(0)));
+      OutChains.push_back(DAG.getStore(DAG.getRoot(), Arg, FIPtr, NULL, 0));
       ArgOffset += 4;
     }
   }
@@ -504,7 +503,7 @@ SparcTargetLowering::LowerCallTo(SDOperand Chain, const Type *RetTy,
 
   Chain = DAG.getCALLSEQ_START(Chain,DAG.getConstant(ArgsSize, getPointerTy()));
   
-  SDOperand StackPtr, NullSV;
+  SDOperand StackPtr;
   std::vector<SDOperand> Stores;
   std::vector<SDOperand> RegValuesToPass;
   unsigned ArgOffset = 68;
@@ -584,11 +583,10 @@ SparcTargetLowering::LowerCallTo(SDOperand Chain, const Type *RetTy,
     if (ValToStore.Val) {
       if (!StackPtr.Val) {
         StackPtr = DAG.getRegister(SP::O6, MVT::i32);
-        NullSV = DAG.getSrcValue(NULL);
       }
       SDOperand PtrOff = DAG.getConstant(ArgOffset, getPointerTy());
       PtrOff = DAG.getNode(ISD::ADD, MVT::i32, StackPtr, PtrOff);
-      Stores.push_back(DAG.getStore(Chain, ValToStore, PtrOff, NullSV));
+      Stores.push_back(DAG.getStore(Chain, ValToStore, PtrOff, NULL, 0));
     }
     ArgOffset += ObjSize;
   }
@@ -785,8 +783,9 @@ LowerOperation(SDOperand Op, SelectionDAG &DAG) {
     SDOperand Offset = DAG.getNode(ISD::ADD, MVT::i32,
                                    DAG.getRegister(SP::I6, MVT::i32),
                                 DAG.getConstant(VarArgsFrameOffset, MVT::i32));
+    SrcValueSDNode *SV = cast<SrcValueSDNode>(Op.getOperand(2));
     return DAG.getStore(Op.getOperand(0), Offset, 
-                        Op.getOperand(1), Op.getOperand(2));
+                        Op.getOperand(1), SV->getValue(), SV->getOffset());
   }
   case ISD::VAARG: {
     SDNode *Node = Op.Val;
@@ -802,7 +801,7 @@ LowerOperation(SDOperand Op, SelectionDAG &DAG) {
                                                     getPointerTy()));
     // Store the incremented VAList to the legalized pointer
     InChain = DAG.getStore(VAList.getValue(1), NextPtr,
-                           VAListPtr, Node->getOperand(2));
+                           VAListPtr, SV->getValue(), SV->getOffset());
     // Load the actual argument out of the pointer VAList, unless this is an
     // f64 load.
     if (VT != MVT::f64) {

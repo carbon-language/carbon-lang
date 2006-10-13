@@ -47,6 +47,9 @@ PPCTargetLowering::PPCTargetLowering(TargetMachine &TM)
   setLoadXAction(ISD::SEXTLOAD, MVT::i1, Expand);
   setLoadXAction(ISD::SEXTLOAD, MVT::i8, Expand);
   
+  // PowerPC does not have truncstore for i1.
+  setStoreXAction(MVT::i1, Promote);
+
   setOperationAction(ISD::ConstantFP, MVT::f64, Expand);
   setOperationAction(ISD::ConstantFP, MVT::f32, Expand);
 
@@ -116,9 +119,6 @@ PPCTargetLowering::PPCTargetLowering(TargetMachine &TM)
   setOperationAction(ISD::BIT_CONVERT, MVT::i32, Expand);
   setOperationAction(ISD::BIT_CONVERT, MVT::i64, Expand);
   setOperationAction(ISD::BIT_CONVERT, MVT::f64, Expand);
-
-  // PowerPC does not have truncstore for i1.
-  setOperationAction(ISD::TRUNCSTORE, MVT::i1, Promote);
 
   // We cannot sextinreg(i1).  Expand to shifts.
   setOperationAction(ISD::SIGN_EXTEND_INREG, MVT::i1, Expand);
@@ -743,7 +743,9 @@ static SDOperand LowerVASTART(SDOperand Op, SelectionDAG &DAG,
   // memory location argument.
   MVT::ValueType PtrVT = DAG.getTargetLoweringInfo().getPointerTy();
   SDOperand FR = DAG.getFrameIndex(VarArgsFrameIndex, PtrVT);
-  return DAG.getStore(Op.getOperand(0), FR, Op.getOperand(1), Op.getOperand(2));
+  SrcValueSDNode *SV = cast<SrcValueSDNode>(Op.getOperand(2));
+  return DAG.getStore(Op.getOperand(0), FR, Op.getOperand(1), SV->getValue(),
+                      SV->getOffset());
 }
 
 static SDOperand LowerFORMAL_ARGUMENTS(SDOperand Op, SelectionDAG &DAG,
@@ -898,8 +900,7 @@ static SDOperand LowerFORMAL_ARGUMENTS(SDOperand Op, SelectionDAG &DAG,
       unsigned VReg = RegMap->createVirtualRegister(&PPC::GPRCRegClass);
       MF.addLiveIn(GPR[GPR_idx], VReg);
       SDOperand Val = DAG.getCopyFromReg(Root, VReg, PtrVT);
-      SDOperand Store = DAG.getStore(Val.getValue(1), Val, FIN,
-                                     DAG.getSrcValue(NULL));
+      SDOperand Store = DAG.getStore(Val.getValue(1), Val, FIN, NULL, 0);
       MemOps.push_back(Store);
       // Increment the address by four for the next argument to store
       SDOperand PtrOff = DAG.getConstant(MVT::getSizeInBits(PtrVT)/8, PtrVT);
@@ -1033,8 +1034,7 @@ static SDOperand LowerCALL(SDOperand Op, SelectionDAG &DAG) {
       if (GPR_idx != NumGPRs) {
         RegsToPass.push_back(std::make_pair(GPR[GPR_idx++], Arg));
       } else {
-        MemOpChains.push_back(DAG.getStore(Chain, Arg, PtrOff,
-                                           DAG.getSrcValue(NULL)));
+        MemOpChains.push_back(DAG.getStore(Chain, Arg, PtrOff, NULL, 0));
       }
       ArgOffset += PtrByteSize;
       break;
@@ -1044,8 +1044,7 @@ static SDOperand LowerCALL(SDOperand Op, SelectionDAG &DAG) {
         RegsToPass.push_back(std::make_pair(FPR[FPR_idx++], Arg));
 
         if (isVarArg) {
-          SDOperand Store = DAG.getStore(Chain, Arg, PtrOff,
-                                         DAG.getSrcValue(NULL));
+          SDOperand Store = DAG.getStore(Chain, Arg, PtrOff, NULL, 0);
           MemOpChains.push_back(Store);
 
           // Float varargs are always shadowed in available integer registers
@@ -1071,8 +1070,7 @@ static SDOperand LowerCALL(SDOperand Op, SelectionDAG &DAG) {
             ++GPR_idx;
         }
       } else {
-        MemOpChains.push_back(DAG.getStore(Chain, Arg, PtrOff,
-                                           DAG.getSrcValue(NULL)));
+        MemOpChains.push_back(DAG.getStore(Chain, Arg, PtrOff, NULL, 0));
       }
       if (isPPC64)
         ArgOffset += 8;
@@ -2119,7 +2117,7 @@ static SDOperand LowerSCALAR_TO_VECTOR(SDOperand Op, SelectionDAG &DAG) {
   
   // Store the input value into Value#0 of the stack slot.
   SDOperand Store = DAG.getStore(DAG.getEntryNode(),
-                                 Op.getOperand(0), FIdx,DAG.getSrcValue(NULL));
+                                 Op.getOperand(0), FIdx, NULL, 0);
   // Load it out.
   return DAG.getLoad(Op.getValueType(), Store, FIdx, NULL, 0);
 }

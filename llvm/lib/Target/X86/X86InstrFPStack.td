@@ -366,7 +366,7 @@ def FpILD64m : FpI<(ops RFP:$dst, i64mem:$src), ZeroArgFP,
                    [(set RFP:$dst, (X86fild addr:$src, i64))]>;
 
 def FpST32m   : FpI<(ops f32mem:$op, RFP:$src), OneArgFP,
-                [(truncstore RFP:$src, addr:$op, f32)]>;
+                [(truncstoref32 RFP:$src, addr:$op)]>;
 def FpST64m   : FpI<(ops f64mem:$op, RFP:$src), OneArgFP,
                 [(store RFP:$src, addr:$op)]>;
 

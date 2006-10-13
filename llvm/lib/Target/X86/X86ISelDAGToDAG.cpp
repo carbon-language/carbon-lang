@@ -372,7 +372,7 @@ static void MoveBelowTokenFactor(SelectionDAG &DAG, SDOperand Load,
 void X86DAGToDAGISel::InstructionSelectPreprocess(SelectionDAG &DAG) {
   for (SelectionDAG::allnodes_iterator I = DAG.allnodes_begin(),
          E = DAG.allnodes_end(); I != E; ++I) {
-    if (I->getOpcode() != ISD::STORE)
+    if (!ISD::isNON_TRUNCStore(I))
       continue;
     SDOperand Chain = I->getOperand(0);
     if (Chain.Val->getOpcode() != ISD::TokenFactor)

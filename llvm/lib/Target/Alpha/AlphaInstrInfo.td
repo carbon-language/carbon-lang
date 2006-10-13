@@ -501,17 +501,17 @@ def LDWU  : MForm<0x0C, 0, 1, "ldwu $RA,$DISP($RB)",
 def LDWUr : MForm<0x0C, 0, 1, "ldwu $RA,$DISP($RB)\t\t!gprellow",
                  [(set GPRC:$RA, (zextloadi16 (Alpha_gprello tglobaladdr:$DISP, GPRC:$RB)))], s_ild>;
 def STB   : MForm<0x0E, 1, 0, "stb $RA,$DISP($RB)",
-		 [(truncstore GPRC:$RA, (add GPRC:$RB, immSExt16:$DISP), i8)], s_ist>;
+		 [(truncstorei8 GPRC:$RA, (add GPRC:$RB, immSExt16:$DISP))], s_ist>;
 def STBr  : MForm<0x0E, 1, 0, "stb $RA,$DISP($RB)\t\t!gprellow",
-		 [(truncstore GPRC:$RA, (Alpha_gprello tglobaladdr:$DISP, GPRC:$RB), i8)], s_ist>;
+		 [(truncstorei8 GPRC:$RA, (Alpha_gprello tglobaladdr:$DISP, GPRC:$RB))], s_ist>;
 def STW   : MForm<0x0D, 1, 0, "stw $RA,$DISP($RB)",
-		 [(truncstore GPRC:$RA, (add GPRC:$RB, immSExt16:$DISP), i16)], s_ist>;
+		 [(truncstorei16 GPRC:$RA, (add GPRC:$RB, immSExt16:$DISP))], s_ist>;
 def STWr  : MForm<0x0D, 1, 0, "stw $RA,$DISP($RB)\t\t!gprellow",
-		 [(truncstore GPRC:$RA, (Alpha_gprello tglobaladdr:$DISP, GPRC:$RB), i16)], s_ist>;
+		 [(truncstorei16 GPRC:$RA, (Alpha_gprello tglobaladdr:$DISP, GPRC:$RB))], s_ist>;
 def STL   : MForm<0x2C, 1, 0, "stl $RA,$DISP($RB)",
-		 [(truncstore GPRC:$RA, (add GPRC:$RB, immSExt16:$DISP), i32)], s_ist>;
+		 [(truncstorei32 GPRC:$RA, (add GPRC:$RB, immSExt16:$DISP))], s_ist>;
 def STLr  : MForm<0x2C, 1, 0, "stl $RA,$DISP($RB)\t\t!gprellow",
-		 [(truncstore GPRC:$RA, (Alpha_gprello tglobaladdr:$DISP, GPRC:$RB), i32)], s_ist>;
+		 [(truncstorei32 GPRC:$RA, (Alpha_gprello tglobaladdr:$DISP, GPRC:$RB))], s_ist>;
 def STQ   : MForm<0x2D, 1, 0, "stq $RA,$DISP($RB)",
 		 [(store GPRC:$RA, (add GPRC:$RB, immSExt16:$DISP))], s_ist>;
 def STQr  : MForm<0x2D, 1, 0, "stq $RA,$DISP($RB)\t\t!gprellow",
@@ -609,11 +609,11 @@ def : Pat<(store F8RC:$DATA, GPRC:$addr),
           (STT  F8RC:$DATA, 0, GPRC:$addr)>;
 def : Pat<(store F4RC:$DATA, GPRC:$addr),
           (STS  F4RC:$DATA, 0, GPRC:$addr)>;
-def : Pat<(truncstore GPRC:$DATA, GPRC:$addr, i32),
+def : Pat<(truncstorei32 GPRC:$DATA, GPRC:$addr),
           (STL  GPRC:$DATA, 0, GPRC:$addr)>;
-def : Pat<(truncstore GPRC:$DATA, GPRC:$addr, i16),
+def : Pat<(truncstorei16 GPRC:$DATA, GPRC:$addr),
           (STW GPRC:$DATA, 0, GPRC:$addr)>;
-def : Pat<(truncstore GPRC:$DATA, GPRC:$addr, i8),
+def : Pat<(truncstorei8 GPRC:$DATA, GPRC:$addr),
           (STB GPRC:$DATA, 0, GPRC:$addr)>;
 
 

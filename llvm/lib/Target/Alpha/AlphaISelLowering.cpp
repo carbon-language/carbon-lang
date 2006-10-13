@@ -59,12 +59,12 @@ AlphaTargetLowering::AlphaTargetLowering(TargetMachine &TM) : TargetLowering(TM)
   setLoadXAction(ISD::SEXTLOAD, MVT::i1,  Promote);
   setLoadXAction(ISD::SEXTLOAD, MVT::i8,  Expand);
   setLoadXAction(ISD::SEXTLOAD, MVT::i16, Expand);
+
+  setStoreXAction(MVT::i1, Promote);
   
   //  setOperationAction(ISD::BRIND,        MVT::i64,   Expand);
   setOperationAction(ISD::BR_CC,        MVT::Other, Expand);
-  setOperationAction(ISD::SELECT_CC,    MVT::Other, Expand);
-  
-  setOperationAction(ISD::TRUNCSTORE, MVT::i1, Promote);
+  setOperationAction(ISD::SELECT_CC,    MVT::Other, Expand);  
 
   setOperationAction(ISD::SIGN_EXTEND_INREG, MVT::i1, Expand);
 
@@ -267,14 +267,14 @@ static SDOperand LowerFORMAL_ARGUMENTS(SDOperand Op, SelectionDAG &DAG,
       int FI = MFI->CreateFixedObject(8, -8 * (6 - i));
       if (i == 0) VarArgsBase = FI;
       SDOperand SDFI = DAG.getFrameIndex(FI, MVT::i64);
-      LS.push_back(DAG.getStore(Root, argt, SDFI, DAG.getSrcValue(NULL)));
+      LS.push_back(DAG.getStore(Root, argt, SDFI, NULL, 0));
 
       if (MRegisterInfo::isPhysicalRegister(args_float[i]))
         args_float[i] = AddLiveIn(MF, args_float[i], &Alpha::F8RCRegClass);
       argt = DAG.getCopyFromReg(Root, args_float[i], MVT::f64);
       FI = MFI->CreateFixedObject(8, - 8 * (12 - i));
       SDFI = DAG.getFrameIndex(FI, MVT::i64);
-      LS.push_back(DAG.getStore(Root, argt, SDFI, DAG.getSrcValue(NULL)));
+      LS.push_back(DAG.getStore(Root, argt, SDFI, NULL, 0));
     }
 
     //Set up a token factor with all the stack traffic
@@ -414,7 +414,7 @@ SDOperand AlphaTargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
         DAG.getMachineFunction().getFrameInfo()->CreateStackObject(8, 8);
       SDOperand FI = DAG.getFrameIndex(FrameIdx, MVT::i64);
       SDOperand ST = DAG.getStore(DAG.getEntryNode(),
-                                  Op.getOperand(0), FI, DAG.getSrcValue(0));
+                                  Op.getOperand(0), FI, NULL, 0);
       LD = DAG.getLoad(MVT::f64, ST, FI, NULL, 0);
       }
     SDOperand FP = DAG.getNode(isDouble?AlphaISD::CVTQT_:AlphaISD::CVTQS_,
@@ -436,8 +436,7 @@ SDOperand AlphaTargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
       int FrameIdx =
         DAG.getMachineFunction().getFrameInfo()->CreateStackObject(8, 8);
       SDOperand FI = DAG.getFrameIndex(FrameIdx, MVT::i64);
-      SDOperand ST = DAG.getStore(DAG.getEntryNode(),
-                                  src, FI, DAG.getSrcValue(0));
+      SDOperand ST = DAG.getStore(DAG.getEntryNode(), src, FI, NULL, 0);
       return DAG.getLoad(MVT::i64, ST, FI, NULL, 0);
       }
   }
@@ -531,10 +530,8 @@ SDOperand AlphaTargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
 
     SDOperand NewOffset = DAG.getNode(ISD::ADD, MVT::i64, Offset,
                                       DAG.getConstant(8, MVT::i64));
-    SDOperand Update = DAG.getNode(ISD::TRUNCSTORE, MVT::Other,
-                                   Offset.getValue(1), NewOffset,
-                                   Tmp, DAG.getSrcValue(0),
-                                   DAG.getValueType(MVT::i32));
+    SDOperand Update = DAG.getTruncStore(Offset.getValue(1), NewOffset,
+                                         Tmp, NULL, 0, MVT::i32);
     
     SDOperand Result;
     if (Op.getValueType() == MVT::i32)
@@ -548,33 +545,33 @@ SDOperand AlphaTargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
     SDOperand Chain = Op.getOperand(0);
     SDOperand DestP = Op.getOperand(1);
     SDOperand SrcP = Op.getOperand(2);
-    SDOperand DestS = Op.getOperand(3);
+    SrcValueSDNode *DestS = cast<SrcValueSDNode>(Op.getOperand(3));
     SrcValueSDNode *SrcS = cast<SrcValueSDNode>(Op.getOperand(4));
     
     SDOperand Val = DAG.getLoad(getPointerTy(), Chain, SrcP,
                                 SrcS->getValue(), SrcS->getOffset());
-    SDOperand Result = DAG.getStore(Val.getValue(1), Val, DestP, DestS);
+    SDOperand Result = DAG.getStore(Val.getValue(1), Val, DestP, DestS->getValue(),
+                                    DestS->getOffset());
     SDOperand NP = DAG.getNode(ISD::ADD, MVT::i64, SrcP, 
                                DAG.getConstant(8, MVT::i64));
     Val = DAG.getExtLoad(ISD::SEXTLOAD, MVT::i64, Result, NP, NULL,0, MVT::i32);
     SDOperand NPD = DAG.getNode(ISD::ADD, MVT::i64, DestP,
                                 DAG.getConstant(8, MVT::i64));
-    return DAG.getNode(ISD::TRUNCSTORE, MVT::Other, Val.getValue(1),
-                       Val, NPD, DAG.getSrcValue(0),DAG.getValueType(MVT::i32));
+    return DAG.getTruncStore(Val.getValue(1), Val, NPD, NULL, 0, MVT::i32);
   }
   case ISD::VASTART: {
     SDOperand Chain = Op.getOperand(0);
     SDOperand VAListP = Op.getOperand(1);
-    SDOperand VAListS = Op.getOperand(2);
+    SrcValueSDNode *VAListS = cast<SrcValueSDNode>(Op.getOperand(3));
     
     // vastart stores the address of the VarArgsBase and VarArgsOffset
     SDOperand FR  = DAG.getFrameIndex(VarArgsBase, MVT::i64);
-    SDOperand S1  = DAG.getStore(Chain, FR, VAListP, VAListS);
+    SDOperand S1  = DAG.getStore(Chain, FR, VAListP, VAListS->getValue(),
+                                 VAListS->getOffset());
     SDOperand SA2 = DAG.getNode(ISD::ADD, MVT::i64, VAListP,
                                 DAG.getConstant(8, MVT::i64));
-    return DAG.getNode(ISD::TRUNCSTORE, MVT::Other, S1,
-                       DAG.getConstant(VarArgsOffset, MVT::i64), SA2,
-                       DAG.getSrcValue(0), DAG.getValueType(MVT::i32));
+    return DAG.getTruncStore(S1, DAG.getConstant(VarArgsOffset, MVT::i64),
+                             SA2, NULL, 0, MVT::i32);
   }
   }
 

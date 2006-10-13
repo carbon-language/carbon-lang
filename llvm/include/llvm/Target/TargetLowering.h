@@ -238,12 +238,26 @@ public:
   }
   
   /// isLoadXLegal - Return true if the specified load with extension is legal
-  /// is legal on this target.
+  /// on this target.
   bool isLoadXLegal(unsigned LType, MVT::ValueType VT) const {
     return getLoadXAction(LType, VT) == Legal ||
            getLoadXAction(LType, VT) == Custom;
   }
   
+  /// getStoreXAction - Return how this store with truncation should be treated:
+  /// either it is legal, needs to be promoted to a larger size, needs to be
+  /// expanded to some other code sequence, or the target has a custom expander
+  /// for it.
+  LegalizeAction getStoreXAction(MVT::ValueType VT) const {
+    return (LegalizeAction)((StoreXActions >> (2*VT)) & 3);
+  }
+  
+  /// isStoreXLegal - Return true if the specified store with truncation is
+  /// legal on this target.
+  bool isStoreXLegal(MVT::ValueType VT) const {
+    return getStoreXAction(VT) == Legal || getStoreXAction(VT) == Custom;
+  }
+
   /// getTypeToPromoteTo - If the action for this operation is to promote, this
   /// method returns the ValueType to promote to.
   MVT::ValueType getTypeToPromoteTo(unsigned Op, MVT::ValueType VT) const {
@@ -559,6 +573,14 @@ protected:
     LoadXActions[ExtType] |= (uint64_t)Action << VT*2;
   }
   
+  /// setStoreXAction - Indicate that the specified store with truncation does
+  /// not work with the with specified type and indicate what to do about it.
+  void setStoreXAction(MVT::ValueType VT, LegalizeAction Action) {
+    assert(VT < 32 && "Table isn't big enough!");
+    StoreXActions &= ~(uint64_t(3UL) << VT*2);
+    StoreXActions |= (uint64_t)Action << VT*2;
+  }
+
   /// AddPromotedToType - If Opc/OrigVT is specified as being promoted, the
   /// promotion code defaults to trying a larger integer/fp until it can find
   /// one that works.  If that default is insufficient, this method can be used
@@ -813,6 +835,11 @@ private:
   /// keep a LegalizeAction that indicates how instruction selection should deal
   /// with the load.
   uint64_t LoadXActions[ISD::LAST_LOADX_TYPE];
+  
+  /// StoreXActions - For each store with truncation of each value type, keep a
+  /// LegalizeAction that indicates how instruction selection should deal with
+  /// the store.
+  uint64_t StoreXActions;
   
   ValueTypeActionImpl ValueTypeActions;
 

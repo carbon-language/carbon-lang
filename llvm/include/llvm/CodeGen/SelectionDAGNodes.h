@@ -1408,15 +1408,6 @@ protected:
     assert((Off.getOpcode() == ISD::UNDEF || AddrMode == ISD::POST_INDEXED) &&
            "Only post-indexed load has a non-undef offset operand");
   }
-  LoadSDNode(SDOperand Chain, SDOperand Ptr, SDOperand Off,
-             ISD::LoadExtType ETy, MVT::ValueType LVT,
-             const Value *SV, int O=0, unsigned Align=1, bool Vol=false)
-    : SDNode(ISD::LOAD, Chain, Ptr, Off),
-      AddrMode(ISD::UNINDEXED), ExtType(ETy), LoadedVT(LVT), SrcValue(SV),
-      SVOffset(O), Alignment(Align), IsVolatile(Vol) {
-    assert((Off.getOpcode() == ISD::UNDEF || AddrMode == ISD::POST_INDEXED) &&
-           "Only post-indexed load has a non-undef offset operand");
-  }
 public:
 
   const SDOperand getChain() const { return getOperand(0); }
@@ -1461,10 +1452,10 @@ class StoreSDNode : public SDNode {
   bool IsVolatile;
 protected:
   friend class SelectionDAG;
-  StoreSDNode(SDOperand Chain, SDOperand Ptr, SDOperand Off,
+  StoreSDNode(SDOperand Chain, SDOperand Value, SDOperand Ptr, SDOperand Off,
               ISD::MemOpAddrMode AM, bool isTrunc, MVT::ValueType SVT,
               const Value *SV, int O=0, unsigned Align=0, bool Vol=false)
-    : SDNode(ISD::STORE, Chain, Ptr, Off),
+    : SDNode(ISD::STORE, Chain, Value, Ptr, Off),
       AddrMode(AM), IsTruncStore(isTrunc), StoredVT(SVT), SrcValue(SV),
       SVOffset(O), Alignment(Align), IsVolatile(Vol) {
     assert((Off.getOpcode() == ISD::UNDEF || AddrMode == ISD::POST_INDEXED) &&
@@ -1473,8 +1464,9 @@ protected:
 public:
 
   const SDOperand getChain() const { return getOperand(0); }
-  const SDOperand getBasePtr() const { return getOperand(1); }
-  const SDOperand getOffset() const { return getOperand(2); }
+  const SDOperand getValue() const { return getOperand(1); }
+  const SDOperand getBasePtr() const { return getOperand(2); }
+  const SDOperand getOffset() const { return getOperand(3); }
   ISD::MemOpAddrMode getAddressingMode() const { return AddrMode; }
   bool isTruncatingStore() const { return IsTruncStore; }
   MVT::ValueType getStoredVT() const { return StoredVT; }
@@ -1590,6 +1582,20 @@ namespace ISD {
   inline bool isZEXTLoad(const SDNode *N) {
     return N->getOpcode() == ISD::LOAD &&
       cast<LoadSDNode>(N)->getExtensionType() == ISD::ZEXTLOAD;
+  }
+
+  /// isNON_TRUNCStore - Returns true if the specified node is a non-truncating
+  /// store.
+  inline bool isNON_TRUNCStore(const SDNode *N) {
+    return N->getOpcode() == ISD::STORE &&
+      !cast<StoreSDNode>(N)->isTruncatingStore();
+  }
+
+  /// isTRUNCStore - Returns true if the specified node is a truncating
+  /// store.
+  inline bool isTRUNCStore(const SDNode *N) {
+    return N->getOpcode() == ISD::STORE &&
+      cast<StoreSDNode>(N)->isTruncatingStore();
   }
 }
 

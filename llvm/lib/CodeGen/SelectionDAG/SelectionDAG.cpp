@@ -495,6 +495,14 @@ SDNode *SelectionDAG::FindModifiedNodeSlot(SDNode *N,
     ID.AddInteger(LD->getSrcValueOffset());
     ID.AddInteger(LD->getAlignment());
     ID.AddInteger(LD->isVolatile());
+  } else if (const StoreSDNode *ST = dyn_cast<StoreSDNode>(N)) {
+    ID.AddInteger(ST->getAddressingMode());
+    ID.AddInteger(ST->isTruncatingStore());
+    ID.AddInteger(ST->getStoredVT());
+    ID.AddPointer(ST->getSrcValue());
+    ID.AddInteger(ST->getSrcValueOffset());
+    ID.AddInteger(ST->getAlignment());
+    ID.AddInteger(ST->isVolatile());
   }
   ID.SetOperands(Ops, NumOps);
   return CSEMap.FindNodeOrInsertPos(ID, InsertPos);
@@ -1507,7 +1515,7 @@ SDOperand SelectionDAG::getLoad(MVT::ValueType VT,
   // FIXME: Alignment == 1 for now.
   unsigned Alignment = 1;
   SDVTList VTs = getVTList(VT, MVT::Other);
-  SDOperand Undef = getNode(ISD::UNDEF, VT);
+  SDOperand Undef = getNode(ISD::UNDEF, Ptr.getValueType());
   SelectionDAGCSEMap::NodeID ID(ISD::LOAD, VTs, Chain, Ptr, Undef);
   ID.AddInteger(ISD::UNINDEXED);
   ID.AddInteger(ISD::NON_EXTLOAD);
@@ -1519,8 +1527,9 @@ SDOperand SelectionDAG::getLoad(MVT::ValueType VT,
   void *IP = 0;
   if (SDNode *E = CSEMap.FindNodeOrInsertPos(ID, IP))
     return SDOperand(E, 0);
-  SDNode *N = new LoadSDNode(Chain, Ptr, Undef, ISD::NON_EXTLOAD, VT,
-                             SV, SVOffset, Alignment, isVolatile);
+  SDNode *N = new LoadSDNode(Chain, Ptr, Undef, ISD::UNINDEXED,
+                             ISD::NON_EXTLOAD, VT, SV, SVOffset, Alignment,
+                             isVolatile);
   N->setValueTypes(VTs);
   CSEMap.InsertNode(N, IP);
   AllNodes.push_back(N);
@@ -1548,7 +1557,7 @@ SDOperand SelectionDAG::getExtLoad(ISD::LoadExtType ExtType, MVT::ValueType VT,
   // FIXME: Alignment == 1 for now.
   unsigned Alignment = 1;
   SDVTList VTs = getVTList(VT, MVT::Other);
-  SDOperand Undef = getNode(ISD::UNDEF, VT);
+  SDOperand Undef = getNode(ISD::UNDEF, Ptr.getValueType());
   SelectionDAGCSEMap::NodeID ID(ISD::LOAD, VTs, Chain, Ptr, Undef);
   ID.AddInteger(ISD::UNINDEXED);
   ID.AddInteger(ExtType);
@@ -1560,8 +1569,8 @@ SDOperand SelectionDAG::getExtLoad(ISD::LoadExtType ExtType, MVT::ValueType VT,
   void *IP = 0;
   if (SDNode *E = CSEMap.FindNodeOrInsertPos(ID, IP))
     return SDOperand(E, 0);
-  SDNode *N = new LoadSDNode(Chain, Ptr, Undef, ExtType, EVT, SV, SVOffset,
-                             Alignment, isVolatile);
+  SDNode *N = new LoadSDNode(Chain, Ptr, Undef, ISD::UNINDEXED, ExtType, EVT,
+                             SV, SVOffset, Alignment, isVolatile);
   N->setValueTypes(VTs);
   CSEMap.InsertNode(N, IP);
   AllNodes.push_back(N);
@@ -1577,14 +1586,63 @@ SDOperand SelectionDAG::getVecLoad(unsigned Count, MVT::ValueType EVT,
 }
 
 SDOperand SelectionDAG::getStore(SDOperand Chain, SDOperand Value,
-                                 SDOperand Ptr, SDOperand SV) {
+                                 SDOperand Ptr, const Value *SV, int SVOffset,
+                                 bool isVolatile) {
+  MVT::ValueType VT = Value.getValueType();
+
+  // FIXME: Alignment == 1 for now.
+  unsigned Alignment = 1;
   SDVTList VTs = getVTList(MVT::Other);
-  SDOperand Ops[] = { Chain, Value, Ptr, SV };
+  SDOperand Undef = getNode(ISD::UNDEF, Ptr.getValueType());
+  SDOperand Ops[] = { Chain, Value, Ptr, Undef };
   SelectionDAGCSEMap::NodeID ID(ISD::STORE, VTs, Ops, 4);
+  ID.AddInteger(ISD::UNINDEXED);
+  ID.AddInteger(false);
+  ID.AddInteger(VT);
+  ID.AddPointer(SV);
+  ID.AddInteger(SVOffset);
+  ID.AddInteger(Alignment);
+  ID.AddInteger(isVolatile);
   void *IP = 0;
   if (SDNode *E = CSEMap.FindNodeOrInsertPos(ID, IP))
     return SDOperand(E, 0);
-  SDNode *N = new SDNode(ISD::STORE, Chain, Value, Ptr, SV);
+  SDNode *N = new StoreSDNode(Chain, Value, Ptr, Undef, ISD::UNINDEXED, false,
+                              VT, SV, SVOffset, Alignment, isVolatile);
+  N->setValueTypes(VTs);
+  CSEMap.InsertNode(N, IP);
+  AllNodes.push_back(N);
+  return SDOperand(N, 0);
+}
+
+SDOperand SelectionDAG::getTruncStore(SDOperand Chain, SDOperand Value,
+                                      SDOperand Ptr, const Value *SV,
+                                      int SVOffset, MVT::ValueType SVT,
+                                      bool isVolatile) {
+  MVT::ValueType VT = Value.getValueType();
+  bool isTrunc = VT != SVT;
+
+  assert(VT > SVT && "Not a truncation?");
+  assert(MVT::isInteger(VT) == MVT::isInteger(SVT) &&
+         "Can't do FP-INT conversion!");
+
+  // FIXME: Alignment == 1 for now.
+  unsigned Alignment = 1;
+  SDVTList VTs = getVTList(MVT::Other);
+  SDOperand Undef = getNode(ISD::UNDEF, Ptr.getValueType());
+  SDOperand Ops[] = { Chain, Value, Ptr, Undef };
+  SelectionDAGCSEMap::NodeID ID(ISD::STORE, VTs, Ops, 4);
+  ID.AddInteger(ISD::UNINDEXED);
+  ID.AddInteger(isTrunc);
+  ID.AddInteger(SVT);
+  ID.AddPointer(SV);
+  ID.AddInteger(SVOffset);
+  ID.AddInteger(Alignment);
+  ID.AddInteger(isVolatile);
+  void *IP = 0;
+  if (SDNode *E = CSEMap.FindNodeOrInsertPos(ID, IP))
+    return SDOperand(E, 0);
+  SDNode *N = new StoreSDNode(Chain, Value, Ptr, Undef, ISD::UNINDEXED, isTrunc,
+                              SVT, SV, SVOffset, Alignment, isVolatile);
   N->setValueTypes(VTs);
   CSEMap.InsertNode(N, IP);
   AllNodes.push_back(N);
@@ -1610,26 +1668,6 @@ SDOperand SelectionDAG::getNode(unsigned Opcode, MVT::ValueType VT,
   
   switch (Opcode) {
   default: break;
-  case ISD::TRUNCSTORE: {
-    assert(NumOps == 5 && "TRUNCSTORE takes 5 operands!");
-    MVT::ValueType EVT = cast<VTSDNode>(Ops[4])->getVT();
-#if 0 // FIXME: If the target supports EVT natively, convert to a truncate/store
-    // If this is a truncating store of a constant, convert to the desired type
-    // and store it instead.
-    if (isa<Constant>(Ops[0])) {
-      SDOperand Op = getNode(ISD::TRUNCATE, EVT, N1);
-      if (isa<Constant>(Op))
-        N1 = Op;
-    }
-    // Also for ConstantFP?
-#endif
-    if (Ops[0].getValueType() == EVT)       // Normal store?
-      return getStore(Ops[0], Ops[1], Ops[2], Ops[3]);
-    assert(Ops[1].getValueType() > EVT && "Not a truncation?");
-    assert(MVT::isInteger(Ops[1].getValueType()) == MVT::isInteger(EVT) &&
-           "Can't do FP-INT conversion!");
-    break;
-  }
   case ISD::SELECT_CC: {
     assert(NumOps == 5 && "SELECT_CC takes 5 operands!");
     assert(Ops[0].getValueType() == Ops[1].getValueType() &&
@@ -2609,7 +2647,6 @@ const char *SDNode::getOperationName(const SelectionDAG *G) const {
   case ISD::LOAD:               return "load";
   case ISD::STORE:              return "store";
   case ISD::VLOAD:              return "vload";
-  case ISD::TRUNCSTORE:         return "truncstore";
   case ISD::VAARG:              return "vaarg";
   case ISD::VACOPY:             return "vacopy";
   case ISD::VAEND:              return "vaend";

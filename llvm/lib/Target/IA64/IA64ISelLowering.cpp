@@ -331,7 +331,7 @@ IA64TargetLowering::LowerCallTo(SDOperand Chain,
   
   Chain = DAG.getCALLSEQ_START(Chain,DAG.getConstant(NumBytes, getPointerTy()));
 
-  SDOperand StackPtr, NullSV;
+  SDOperand StackPtr;
   std::vector<SDOperand> Stores;
   std::vector<SDOperand> Converts;
   std::vector<SDOperand> RegValuesToPass;
@@ -383,11 +383,10 @@ IA64TargetLowering::LowerCallTo(SDOperand Chain,
       if(ValToStore.Val) {
         if(!StackPtr.Val) {
           StackPtr = DAG.getRegister(IA64::r12, MVT::i64);
-          NullSV = DAG.getSrcValue(NULL);
         }
         SDOperand PtrOff = DAG.getConstant(ArgOffset, getPointerTy());
         PtrOff = DAG.getNode(ISD::ADD, MVT::i64, StackPtr, PtrOff);
-        Stores.push_back(DAG.getStore(Chain, ValToStore, PtrOff, NullSV));
+        Stores.push_back(DAG.getStore(Chain, ValToStore, PtrOff, NULL, 0));
         ArgOffset += ObjSize;
       }
 
@@ -592,7 +591,7 @@ LowerOperation(SDOperand Op, SelectionDAG &DAG) {
                                                    VT));
     // Store the incremented VAList to the legalized pointer
     VAIncr = DAG.getStore(VAList.getValue(1), VAIncr,
-                          Op.getOperand(1), Op.getOperand(2));
+                          Op.getOperand(1), SV->getValue(), SV->getOffset());
     // Load the actual argument out of the pointer VAList
     return DAG.getLoad(Op.getValueType(), VAIncr, VAList, NULL, 0);
   }
@@ -600,8 +599,9 @@ LowerOperation(SDOperand Op, SelectionDAG &DAG) {
     // vastart just stores the address of the VarArgsFrameIndex slot into the
     // memory location argument.
     SDOperand FR = DAG.getFrameIndex(VarArgsFrameIndex, MVT::i64);
+    SrcValueSDNode *SV = cast<SrcValueSDNode>(Op.getOperand(2));
     return DAG.getStore(Op.getOperand(0), FR, 
-                        Op.getOperand(1), Op.getOperand(2));
+                        Op.getOperand(1), SV->getValue(), SV->getOffset());
   }
   }
 }

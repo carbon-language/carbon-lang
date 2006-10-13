@@ -1393,8 +1393,8 @@ void SelectionDAGLowering::visitStore(StoreInst &I) {
   Value *SrcV = I.getOperand(0);
   SDOperand Src = getValue(SrcV);
   SDOperand Ptr = getValue(I.getOperand(1));
-  DAG.setRoot(DAG.getStore(getRoot(), Src, Ptr,
-                           DAG.getSrcValue(I.getOperand(1))));
+  DAG.setRoot(DAG.getStore(getRoot(), Src, Ptr, I.getOperand(1),
+                           I.isVolatile()));
 }
 
 /// IntrinsicCannotAccessMemory - Return true if the specified intrinsic cannot
@@ -2287,7 +2287,7 @@ void SelectionDAGLowering::visitInlineAsm(CallInst &I) {
   for (unsigned i = 0, e = StoresToEmit.size(); i != e; ++i)
     OutChains.push_back(DAG.getStore(Chain,  StoresToEmit[i].first,
                                     getValue(StoresToEmit[i].second),
-                                    DAG.getSrcValue(StoresToEmit[i].second)));
+                                    StoresToEmit[i].second, 0));
   if (!OutChains.empty())
     Chain = DAG.getNode(ISD::TokenFactor, MVT::Other,
                         &OutChains[0], OutChains.size());
@@ -2864,7 +2864,7 @@ void SelectionDAGLowering::visitMemIntrinsic(CallInst &I, unsigned Op) {
           SDOperand Value = getMemsetValue(Op2, VT, DAG);
           SDOperand Store = DAG.getStore(getRoot(), Value,
                                     getMemBasePlusOffset(Op1, Offset, DAG, TLI),
-                                      DAG.getSrcValue(I.getOperand(1), Offset));
+                                         I.getOperand(1), Offset);
           OutChains.push_back(Store);
           Offset += VTSize;
         }
@@ -2910,7 +2910,7 @@ void SelectionDAGLowering::visitMemIntrinsic(CallInst &I, unsigned Op) {
             Store =
               DAG.getStore(Chain, Value,
                            getMemBasePlusOffset(Op1, DstOff, DAG, TLI),
-                           DAG.getSrcValue(I.getOperand(1), DstOff));
+                           I.getOperand(1), DstOff);
           } else {
             Value = DAG.getLoad(VT, getRoot(),
                         getMemBasePlusOffset(Op2, SrcOff, DAG, TLI),
@@ -2919,7 +2919,7 @@ void SelectionDAGLowering::visitMemIntrinsic(CallInst &I, unsigned Op) {
             Store =
               DAG.getStore(Chain, Value,
                            getMemBasePlusOffset(Op1, DstOff, DAG, TLI),
-                           DAG.getSrcValue(I.getOperand(1), DstOff));
+                           I.getOperand(1), DstOff);
           }
           OutChains.push_back(Store);
           SrcOff += VTSize;

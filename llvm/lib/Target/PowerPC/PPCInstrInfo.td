@@ -431,10 +431,10 @@ def LIS : DForm_2_r0<15, (ops GPRC:$rD, symbolHi:$imm),
 let isStore = 1, noResults = 1, PPC970_Unit = 2 in {
 def STB  : DForm_3<38, (ops GPRC:$rS, memri:$src),
                    "stb $rS, $src", LdStGeneral,
-                   [(truncstore GPRC:$rS, iaddr:$src, i8)]>;
+                   [(truncstorei8 GPRC:$rS, iaddr:$src)]>;
 def STH  : DForm_3<44, (ops GPRC:$rS, memri:$src),
                    "sth $rS, $src", LdStGeneral,
-                   [(truncstore GPRC:$rS, iaddr:$src, i16)]>;
+                   [(truncstorei16 GPRC:$rS, iaddr:$src)]>;
 def STW  : DForm_3<36, (ops GPRC:$rS, memri:$src),
                    "stw $rS, $src", LdStGeneral,
                    [(store GPRC:$rS, iaddr:$src)]>;
@@ -553,11 +553,11 @@ def SRAW : XForm_6<31, 792, (ops GPRC:$rA, GPRC:$rS, GPRC:$rB),
 let isStore = 1, noResults = 1, PPC970_Unit = 2 in {
 def STBX  : XForm_8<31, 215, (ops GPRC:$rS, memrr:$dst),
                    "stbx $rS, $dst", LdStGeneral,
-                   [(truncstore GPRC:$rS, xaddr:$dst, i8)]>, 
+                   [(truncstorei8 GPRC:$rS, xaddr:$dst)]>, 
                    PPC970_DGroup_Cracked;
 def STHX  : XForm_8<31, 407, (ops GPRC:$rS, memrr:$dst),
                    "sthx $rS, $dst", LdStGeneral,
-                   [(truncstore GPRC:$rS, xaddr:$dst, i16)]>, 
+                   [(truncstorei16 GPRC:$rS, xaddr:$dst)]>, 
                    PPC970_DGroup_Cracked;
 def STWX  : XForm_8<31, 151, (ops GPRC:$rS, memrr:$dst),
                    "stwx $rS, $dst", LdStGeneral,

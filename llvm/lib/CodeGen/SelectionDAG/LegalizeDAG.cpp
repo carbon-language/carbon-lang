@@ -917,8 +917,7 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
       MVT::ValueType PtrVT = TLI.getPointerTy();
       SDOperand StackPtr = CreateStackTemporary(VT);
       // Store the vector.
-      SDOperand Ch = DAG.getStore(DAG.getEntryNode(),
-                                  Tmp1, StackPtr, DAG.getSrcValue(NULL));
+      SDOperand Ch = DAG.getStore(DAG.getEntryNode(), Tmp1, StackPtr, NULL, 0);
 
       // Truncate or zero extend offset to target pointer type.
       unsigned CastOpc = (IdxVT > PtrVT) ? ISD::TRUNCATE : ISD::ZERO_EXTEND;
@@ -928,7 +927,7 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
       Tmp3 = DAG.getNode(ISD::MUL, IdxVT, Tmp3,DAG.getConstant(EltSize, IdxVT));
       SDOperand StackPtr2 = DAG.getNode(ISD::ADD, IdxVT, Tmp3, StackPtr);
       // Store the scalar value.
-      Ch = DAG.getStore(Ch, Tmp2, StackPtr2, DAG.getSrcValue(NULL));
+      Ch = DAG.getStore(Ch, Tmp2, StackPtr2, NULL, 0);
       // Load the updated vector.
       Result = DAG.getLoad(VT, Ch, StackPtr, NULL, 0);
       break;
@@ -1592,109 +1591,144 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
     }
     break;
   case ISD::STORE: {
-    Tmp1 = LegalizeOp(Node->getOperand(0));  // Legalize the chain.
-    Tmp2 = LegalizeOp(Node->getOperand(2));  // Legalize the pointer.
+    StoreSDNode *ST = cast<StoreSDNode>(Node);
+    Tmp1 = LegalizeOp(ST->getChain());    // Legalize the chain.
+    Tmp2 = LegalizeOp(ST->getBasePtr());  // Legalize the pointer.
 
-    // Turn 'store float 1.0, Ptr' -> 'store int 0x12345678, Ptr'
-    // FIXME: We shouldn't do this for TargetConstantFP's.
-    // FIXME: move this to the DAG Combiner!
-    if (ConstantFPSDNode *CFP =dyn_cast<ConstantFPSDNode>(Node->getOperand(1))){
-      if (CFP->getValueType(0) == MVT::f32) {
-        Tmp3 = DAG.getConstant(FloatToBits(CFP->getValue()), MVT::i32);
-      } else {
-        assert(CFP->getValueType(0) == MVT::f64 && "Unknown FP type!");
-        Tmp3 = DAG.getConstant(DoubleToBits(CFP->getValue()), MVT::i64);
+    if (!ST->isTruncatingStore()) {
+      // Turn 'store float 1.0, Ptr' -> 'store int 0x12345678, Ptr'
+      // FIXME: We shouldn't do this for TargetConstantFP's.
+      // FIXME: move this to the DAG Combiner!
+      if (ConstantFPSDNode *CFP =dyn_cast<ConstantFPSDNode>(ST->getValue())) {
+        if (CFP->getValueType(0) == MVT::f32) {
+          Tmp3 = DAG.getConstant(FloatToBits(CFP->getValue()), MVT::i32);
+        } else {
+          assert(CFP->getValueType(0) == MVT::f64 && "Unknown FP type!");
+          Tmp3 = DAG.getConstant(DoubleToBits(CFP->getValue()), MVT::i64);
+        }
+        Result = DAG.getStore(Tmp1, Tmp3, Tmp2, ST->getSrcValue(),
+                              ST->getSrcValueOffset());
+        break;
       }
-      Result = DAG.getStore(Tmp1, Tmp3, Tmp2, Node->getOperand(3));
-      break;
-    }
 
-    switch (getTypeAction(Node->getOperand(1).getValueType())) {
-    case Legal: {
-      Tmp3 = LegalizeOp(Node->getOperand(1));
-      Result = DAG.UpdateNodeOperands(Result, Tmp1, Tmp3, Tmp2, 
-                                      Node->getOperand(3));
+      switch (getTypeAction(ST->getStoredVT())) {
+      case Legal: {
+        Tmp3 = LegalizeOp(ST->getValue());
+        Result = DAG.UpdateNodeOperands(Result, Tmp1, Tmp3, Tmp2, 
+                                        ST->getOffset());
 
-      MVT::ValueType VT = Tmp3.getValueType();
-      switch (TLI.getOperationAction(ISD::STORE, VT)) {
+        MVT::ValueType VT = Tmp3.getValueType();
+        switch (TLI.getOperationAction(ISD::STORE, VT)) {
+        default: assert(0 && "This action is not supported yet!");
+        case TargetLowering::Legal:  break;
+        case TargetLowering::Custom:
+          Tmp1 = TLI.LowerOperation(Result, DAG);
+          if (Tmp1.Val) Result = Tmp1;
+          break;
+        case TargetLowering::Promote:
+          assert(MVT::isVector(VT) && "Unknown legal promote case!");
+          Tmp3 = DAG.getNode(ISD::BIT_CONVERT, 
+                             TLI.getTypeToPromoteTo(ISD::STORE, VT), Tmp3);
+          Result = DAG.getStore(Tmp1, Tmp3, Tmp2,
+                                ST->getSrcValue(), ST->getSrcValueOffset());
+          break;
+        }
+        break;
+      }
+      case Promote:
+        // Truncate the value and store the result.
+        Tmp3 = PromoteOp(ST->getValue());
+        Result = DAG.getTruncStore(Tmp1, Tmp3, Tmp2, ST->getSrcValue(),
+                                   ST->getSrcValueOffset(), ST->getStoredVT());
+        break;
+
+      case Expand:
+        unsigned IncrementSize = 0;
+        SDOperand Lo, Hi;
+      
+        // If this is a vector type, then we have to calculate the increment as
+        // the product of the element size in bytes, and the number of elements
+        // in the high half of the vector.
+        if (ST->getValue().getValueType() == MVT::Vector) {
+          SDNode *InVal = ST->getValue().Val;
+          unsigned NumElems =
+            cast<ConstantSDNode>(*(InVal->op_end()-2))->getValue();
+          MVT::ValueType EVT = cast<VTSDNode>(*(InVal->op_end()-1))->getVT();
+
+          // Figure out if there is a Packed type corresponding to this Vector
+          // type.  If so, convert to the packed type.
+          MVT::ValueType TVT = MVT::getVectorType(EVT, NumElems);
+          if (TVT != MVT::Other && TLI.isTypeLegal(TVT)) {
+            // Turn this into a normal store of the packed type.
+            Tmp3 = PackVectorOp(Node->getOperand(1), TVT);
+            Result = DAG.getStore(Tmp1, Tmp3, Tmp2, ST->getSrcValue(),
+                                  ST->getSrcValueOffset());
+            Result = LegalizeOp(Result);
+            break;
+          } else if (NumElems == 1) {
+            // Turn this into a normal store of the scalar type.
+            Tmp3 = PackVectorOp(Node->getOperand(1), EVT);
+            Result = DAG.getStore(Tmp1, Tmp3, Tmp2, ST->getSrcValue(),
+                                  ST->getSrcValueOffset());
+            // The scalarized value type may not be legal, e.g. it might require
+            // promotion or expansion.  Relegalize the scalar store.
+            Result = LegalizeOp(Result);
+            break;
+          } else {
+            SplitVectorOp(Node->getOperand(1), Lo, Hi);
+            IncrementSize = NumElems/2 * MVT::getSizeInBits(EVT)/8;
+          }
+        } else {
+          ExpandOp(Node->getOperand(1), Lo, Hi);
+          IncrementSize = MVT::getSizeInBits(Hi.getValueType())/8;
+
+          if (!TLI.isLittleEndian())
+            std::swap(Lo, Hi);
+        }
+
+        Lo = DAG.getStore(Tmp1, Lo, Tmp2, ST->getSrcValue(),
+                          ST->getSrcValueOffset());
+        Tmp2 = DAG.getNode(ISD::ADD, Tmp2.getValueType(), Tmp2,
+                           getIntPtrConstant(IncrementSize));
+        assert(isTypeLegal(Tmp2.getValueType()) &&
+               "Pointers must be legal!");
+        // FIXME: This sets the srcvalue of both halves to be the same, which is
+        // wrong.
+        Hi = DAG.getStore(Tmp1, Hi, Tmp2, ST->getSrcValue(),
+                          ST->getSrcValueOffset());
+        Result = DAG.getNode(ISD::TokenFactor, MVT::Other, Lo, Hi);
+        break;
+      }
+    } else {
+      // Truncating store
+      assert(isTypeLegal(ST->getValue().getValueType()) &&
+             "Cannot handle illegal TRUNCSTORE yet!");
+      Tmp3 = LegalizeOp(ST->getValue());
+    
+      // The only promote case we handle is TRUNCSTORE:i1 X into
+      //   -> TRUNCSTORE:i8 (and X, 1)
+      if (ST->getStoredVT() == MVT::i1 &&
+          TLI.getStoreXAction(MVT::i1) == TargetLowering::Promote) {
+        // Promote the bool to a mask then store.
+        Tmp3 = DAG.getNode(ISD::AND, Tmp3.getValueType(), Tmp3,
+                           DAG.getConstant(1, Tmp3.getValueType()));
+        Result = DAG.getTruncStore(Tmp1, Tmp3, Tmp2, ST->getSrcValue(),
+                                   ST->getSrcValueOffset(), MVT::i8);
+      } else if (Tmp1 != ST->getChain() || Tmp3 != ST->getValue() ||
+                 Tmp2 != ST->getBasePtr()) {
+        Result = DAG.UpdateNodeOperands(Result, Tmp1, Tmp3, Tmp2,
+                                        ST->getOffset());
+      }
+
+      MVT::ValueType StVT = cast<StoreSDNode>(Result.Val)->getStoredVT();
+      switch (TLI.getStoreXAction(StVT)) {
       default: assert(0 && "This action is not supported yet!");
-      case TargetLowering::Legal:  break;
+      case TargetLowering::Legal: break;
       case TargetLowering::Custom:
         Tmp1 = TLI.LowerOperation(Result, DAG);
         if (Tmp1.Val) Result = Tmp1;
         break;
-      case TargetLowering::Promote:
-        assert(MVT::isVector(VT) && "Unknown legal promote case!");
-        Tmp3 = DAG.getNode(ISD::BIT_CONVERT, 
-                           TLI.getTypeToPromoteTo(ISD::STORE, VT), Tmp3);
-        Result = DAG.UpdateNodeOperands(Result, Tmp1, Tmp3, Tmp2, 
-                                        Node->getOperand(3));
-        break;
       }
-      break;
-    }
-    case Promote:
-      // Truncate the value and store the result.
-      Tmp3 = PromoteOp(Node->getOperand(1));
-      Result = DAG.getNode(ISD::TRUNCSTORE, MVT::Other, Tmp1, Tmp3, Tmp2,
-                           Node->getOperand(3),
-                          DAG.getValueType(Node->getOperand(1).getValueType()));
-      break;
-
-    case Expand:
-      unsigned IncrementSize = 0;
-      SDOperand Lo, Hi;
-      
-      // If this is a vector type, then we have to calculate the increment as
-      // the product of the element size in bytes, and the number of elements
-      // in the high half of the vector.
-      if (Node->getOperand(1).getValueType() == MVT::Vector) {
-        SDNode *InVal = Node->getOperand(1).Val;
-        unsigned NumElems =
-          cast<ConstantSDNode>(*(InVal->op_end()-2))->getValue();
-        MVT::ValueType EVT = cast<VTSDNode>(*(InVal->op_end()-1))->getVT();
-
-        // Figure out if there is a Packed type corresponding to this Vector
-        // type.  If so, convert to the packed type.
-        MVT::ValueType TVT = MVT::getVectorType(EVT, NumElems);
-        if (TVT != MVT::Other && TLI.isTypeLegal(TVT)) {
-          // Turn this into a normal store of the packed type.
-          Tmp3 = PackVectorOp(Node->getOperand(1), TVT);
-          Result = DAG.UpdateNodeOperands(Result, Tmp1, Tmp3, Tmp2, 
-                                          Node->getOperand(3));
-          Result = LegalizeOp(Result);
-          break;
-        } else if (NumElems == 1) {
-          // Turn this into a normal store of the scalar type.
-          Tmp3 = PackVectorOp(Node->getOperand(1), EVT);
-          Result = DAG.UpdateNodeOperands(Result, Tmp1, Tmp3, Tmp2, 
-                                          Node->getOperand(3));
-          // The scalarized value type may not be legal, e.g. it might require
-          // promotion or expansion.  Relegalize the scalar store.
-          Result = LegalizeOp(Result);
-          break;
-        } else {
-          SplitVectorOp(Node->getOperand(1), Lo, Hi);
-          IncrementSize = NumElems/2 * MVT::getSizeInBits(EVT)/8;
-        }
-      } else {
-        ExpandOp(Node->getOperand(1), Lo, Hi);
-        IncrementSize = MVT::getSizeInBits(Hi.getValueType())/8;
-
-        if (!TLI.isLittleEndian())
-          std::swap(Lo, Hi);
-      }
-
-      Lo = DAG.getStore(Tmp1, Lo, Tmp2, Node->getOperand(3));
-      Tmp2 = DAG.getNode(ISD::ADD, Tmp2.getValueType(), Tmp2,
-                         getIntPtrConstant(IncrementSize));
-      assert(isTypeLegal(Tmp2.getValueType()) &&
-             "Pointers must be legal!");
-      // FIXME: This sets the srcvalue of both halves to be the same, which is
-      // wrong.
-      Hi = DAG.getStore(Tmp1, Hi, Tmp2, Node->getOperand(3));
-      Result = DAG.getNode(ISD::TokenFactor, MVT::Other, Lo, Hi);
-      break;
     }
     break;
   }
@@ -1772,42 +1806,6 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
     AddLegalizedOperand(SDOperand(Node, 1), Result.getValue(1));
     return Result;
 
-  case ISD::TRUNCSTORE: {
-    Tmp1 = LegalizeOp(Node->getOperand(0));  // Legalize the chain.
-    Tmp3 = LegalizeOp(Node->getOperand(2));  // Legalize the pointer.
-
-    assert(isTypeLegal(Node->getOperand(1).getValueType()) &&
-           "Cannot handle illegal TRUNCSTORE yet!");
-    Tmp2 = LegalizeOp(Node->getOperand(1));
-    
-    // The only promote case we handle is TRUNCSTORE:i1 X into
-    //   -> TRUNCSTORE:i8 (and X, 1)
-    if (cast<VTSDNode>(Node->getOperand(4))->getVT() == MVT::i1 &&
-        TLI.getOperationAction(ISD::TRUNCSTORE, MVT::i1) == 
-              TargetLowering::Promote) {
-      // Promote the bool to a mask then store.
-      Tmp2 = DAG.getNode(ISD::AND, Tmp2.getValueType(), Tmp2,
-                         DAG.getConstant(1, Tmp2.getValueType()));
-      Result = DAG.getNode(ISD::TRUNCSTORE, MVT::Other, Tmp1, Tmp2, Tmp3,
-                           Node->getOperand(3), DAG.getValueType(MVT::i8));
-
-    } else if (Tmp1 != Node->getOperand(0) || Tmp2 != Node->getOperand(1) ||
-               Tmp3 != Node->getOperand(2)) {
-      Result = DAG.UpdateNodeOperands(Result, Tmp1, Tmp2, Tmp3,
-                                      Node->getOperand(3), Node->getOperand(4));
-    }
-
-    MVT::ValueType StVT = cast<VTSDNode>(Result.Val->getOperand(4))->getVT();
-    switch (TLI.getOperationAction(Result.Val->getOpcode(), StVT)) {
-    default: assert(0 && "This action is not supported yet!");
-    case TargetLowering::Legal: break;
-    case TargetLowering::Custom:
-      Tmp1 = TLI.LowerOperation(Result, DAG);
-      if (Tmp1.Val) Result = Tmp1;
-      break;
-    }
-    break;
-  }
   case ISD::SELECT:
     switch (getTypeAction(Node->getOperand(0).getValueType())) {
     case Expand: assert(0 && "It's impossible to expand bools");
@@ -2386,7 +2384,8 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
                          DAG.getConstant(MVT::getSizeInBits(VT)/8, 
                                          TLI.getPointerTy()));
       // Store the incremented VAList to the legalized pointer
-      Tmp3 = DAG.getStore(VAList.getValue(1), Tmp3, Tmp2,  Node->getOperand(2));
+      Tmp3 = DAG.getStore(VAList.getValue(1), Tmp3, Tmp2, SV->getValue(),
+                          SV->getOffset());
       // Load the actual argument out of the pointer VAList
       Result = DAG.getLoad(VT, Tmp3, VAList, NULL, 0);
       Tmp1 = LegalizeOp(Result.getValue(1));
@@ -2423,9 +2422,11 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
       // This defaults to loading a pointer from the input and storing it to the
       // output, returning the chain.
       SrcValueSDNode *SVD = cast<SrcValueSDNode>(Node->getOperand(3));
+      SrcValueSDNode *SVS = cast<SrcValueSDNode>(Node->getOperand(4));
       Tmp4 = DAG.getLoad(TLI.getPointerTy(), Tmp1, Tmp3, SVD->getValue(),
                          SVD->getOffset());
-      Result = DAG.getStore(Tmp4.getValue(1), Tmp4, Tmp2, Node->getOperand(4));
+      Result = DAG.getStore(Tmp4.getValue(1), Tmp4, Tmp2, SVS->getValue(),
+                            SVS->getOffset());
       break;
     }
     break;
@@ -2864,9 +2865,8 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
         int SSFI =
           MF.getFrameInfo()->CreateStackObject((unsigned)TySize, Align);
         SDOperand StackSlot = DAG.getFrameIndex(SSFI, TLI.getPointerTy());
-        Result = DAG.getNode(ISD::TRUNCSTORE, MVT::Other, DAG.getEntryNode(),
-                             Node->getOperand(0), StackSlot,
-                             DAG.getSrcValue(NULL), DAG.getValueType(ExtraVT));
+        Result = DAG.getTruncStore(DAG.getEntryNode(), Node->getOperand(0),
+                                   StackSlot, NULL, 0, ExtraVT);
         Result = DAG.getExtLoad(ISD::EXTLOAD, Node->getValueType(0),
                                 Result, StackSlot, NULL, 0, ExtraVT);
       } else {
@@ -3213,7 +3213,8 @@ SDOperand SelectionDAGLegalize::PromoteOp(SDOperand Op) {
                          DAG.getConstant(MVT::getSizeInBits(VT)/8, 
                                          TLI.getPointerTy()));
       // Store the incremented VAList to the legalized pointer
-      Tmp3 = DAG.getStore(VAList.getValue(1), Tmp3, Tmp2, Node->getOperand(2));
+      Tmp3 = DAG.getStore(VAList.getValue(1), Tmp3, Tmp2, SV->getValue(),
+                          SV->getOffset());
       // Load the actual argument out of the pointer VAList
       Result = DAG.getExtLoad(ISD::EXTLOAD, NVT, Tmp3, VAList, NULL, 0, VT);
     }
@@ -3351,8 +3352,7 @@ SDOperand SelectionDAGLegalize::ExpandEXTRACT_VECTOR_ELT(SDOperand Op) {
   // If the target doesn't support this, store the value to a temporary
   // stack slot, then LOAD the scalar element back out.
   SDOperand StackPtr = CreateStackTemporary(Vector.getValueType());
-  SDOperand Ch = DAG.getStore(DAG.getEntryNode(),
-                              Vector, StackPtr, DAG.getSrcValue(NULL));
+  SDOperand Ch = DAG.getStore(DAG.getEntryNode(), Vector, StackPtr, NULL, 0);
   
   // Add the offset to the index.
   unsigned EltSize = MVT::getSizeInBits(Op.getValueType())/8;
@@ -3495,8 +3495,7 @@ SDOperand SelectionDAGLegalize::ExpandBIT_CONVERT(MVT::ValueType DestVT,
   SDOperand FIPtr = CreateStackTemporary(DestVT);
   
   // Emit a store to the stack slot.
-  SDOperand Store = DAG.getStore(DAG.getEntryNode(),
-                                 SrcOp, FIPtr, DAG.getSrcValue(NULL));
+  SDOperand Store = DAG.getStore(DAG.getEntryNode(), SrcOp, FIPtr, NULL, 0);
   // Result is a load from the stack slot.
   return DAG.getLoad(DestVT, Store, FIPtr, NULL, 0);
 }
@@ -3506,7 +3505,7 @@ SDOperand SelectionDAGLegalize::ExpandSCALAR_TO_VECTOR(SDNode *Node) {
   // then load the whole vector back out.
   SDOperand StackPtr = CreateStackTemporary(Node->getValueType(0));
   SDOperand Ch = DAG.getStore(DAG.getEntryNode(), Node->getOperand(0), StackPtr,
-                              DAG.getSrcValue(NULL));
+                              NULL, 0);
   return DAG.getLoad(Node->getValueType(0), Ch, StackPtr, NULL, 0);
 }
 
@@ -3655,7 +3654,7 @@ SDOperand SelectionDAGLegalize::ExpandBUILD_VECTOR(SDNode *Node) {
     Idx = DAG.getNode(ISD::ADD, FIPtr.getValueType(), FIPtr, Idx);
     
     Stores.push_back(DAG.getStore(DAG.getEntryNode(), Node->getOperand(i), Idx, 
-                                  DAG.getSrcValue(NULL)));
+                                  NULL, 0));
   }
   
   SDOperand StoreChain;
@@ -3999,11 +3998,11 @@ SDOperand SelectionDAGLegalize::ExpandLegalINT_TO_FP(bool isSigned,
     }
     // store the lo of the constructed double - based on integer input
     SDOperand Store1 = DAG.getStore(DAG.getEntryNode(),
-                                    Op0Mapped, Lo, DAG.getSrcValue(NULL));
+                                    Op0Mapped, Lo, NULL, 0);
     // initial hi portion of constructed double
     SDOperand InitialHi = DAG.getConstant(0x43300000u, MVT::i32);
     // store the hi of the constructed double - biased exponent
-    SDOperand Store2=DAG.getStore(Store1, InitialHi, Hi, DAG.getSrcValue(NULL));
+    SDOperand Store2=DAG.getStore(Store1, InitialHi, Hi, NULL, 0);
     // load the constructed double
     SDOperand Load = DAG.getLoad(MVT::f64, Store2, StackSlot, NULL, 0);
     // FP constant to bias correct the final result
@@ -4905,7 +4904,7 @@ void SelectionDAGLegalize::SplitVectorOp(SDOperand Op, SDOperand &Lo,
       SDOperand Ptr = CreateStackTemporary(Op.getOperand(0).getValueType());
 
       SDOperand St = DAG.getStore(DAG.getEntryNode(),
-                                  Op.getOperand(0), Ptr, DAG.getSrcValue(0));
+                                  Op.getOperand(0), Ptr, NULL, 0);
       MVT::ValueType EVT = cast<VTSDNode>(TypeNode)->getVT();
       St = DAG.getVecLoad(NumElements, EVT, St, Ptr, DAG.getSrcValue(0));
       SplitVectorOp(St, Lo, Hi);

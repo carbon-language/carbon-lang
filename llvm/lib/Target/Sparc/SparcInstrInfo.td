@@ -338,19 +338,19 @@ def LDDFri : F3_2<3, 0b100011,
 def STBrr : F3_1<3, 0b000101,
                  (ops MEMrr:$addr, IntRegs:$src),
                  "stb $src, [$addr]",
-                 [(truncstore IntRegs:$src, ADDRrr:$addr, i8)]>;
+                 [(truncstorei8 IntRegs:$src, ADDRrr:$addr)]>;
 def STBri : F3_2<3, 0b000101,
                  (ops MEMri:$addr, IntRegs:$src),
                  "stb $src, [$addr]",
-                 [(truncstore IntRegs:$src, ADDRri:$addr, i8)]>;
+                 [(truncstorei8 IntRegs:$src, ADDRri:$addr)]>;
 def STHrr : F3_1<3, 0b000110,
                  (ops MEMrr:$addr, IntRegs:$src),
                  "sth $src, [$addr]",
-                 [(truncstore IntRegs:$src, ADDRrr:$addr, i16)]>;
+                 [(truncstorei16 IntRegs:$src, ADDRrr:$addr)]>;
 def STHri : F3_2<3, 0b000110,
                  (ops MEMri:$addr, IntRegs:$src),
                  "sth $src, [$addr]",
-                 [(truncstore IntRegs:$src, ADDRri:$addr, i16)]>;
+                 [(truncstorei16 IntRegs:$src, ADDRri:$addr)]>;
 def STrr  : F3_1<3, 0b000100,
                  (ops MEMrr:$addr, IntRegs:$src),
                  "st $src, [$addr]",
@@ -772,7 +772,7 @@ def : Pat<(i32 (zextloadi1 ADDRrr:$src)), (LDUBrr ADDRrr:$src)>;
 def : Pat<(i32 (zextloadi1 ADDRri:$src)), (LDUBri ADDRri:$src)>;
 
 // truncstore bool -> truncstore byte.
-def : Pat<(truncstore IntRegs:$src, ADDRrr:$addr, i1), 
+def : Pat<(truncstorei1 IntRegs:$src, ADDRrr:$addr),
           (STBrr ADDRrr:$addr, IntRegs:$src)>;
-def : Pat<(truncstore IntRegs:$src, ADDRri:$addr, i1), 
+def : Pat<(truncstorei1 IntRegs:$src, ADDRri:$addr), 
           (STBri ADDRri:$addr, IntRegs:$src)>;

@@ -164,10 +164,6 @@ def SDTStore : SDTypeProfile<0, 2, [ // store
   SDTCisPtrTy<1>  
 ]>;
 
-def SDTTruncStore : SDTypeProfile<0, 4, [  // truncstore
-  SDTCisPtrTy<1>, SDTCisVT<2, OtherVT>, SDTCisVT<3, OtherVT>
-]>;
-
 def SDTVecShuffle : SDTypeProfile<1, 3, [
   SDTCisSameAs<0, 1>, SDTCisSameAs<1, 2>, SDTCisIntVectorOfSameSize<3, 0>
 ]>;
@@ -299,11 +295,10 @@ def brind      : SDNode<"ISD::BRIND"      , SDTBrind,  [SDNPHasChain]>;
 def br         : SDNode<"ISD::BR"         , SDTBr,     [SDNPHasChain]>;
 def ret        : SDNode<"ISD::RET"        , SDTRet,    [SDNPHasChain]>;
 
-// Do not use ld directly. Use load, extload, sextload, zextload (see below).
+// Do not use ld, st directly. Use load, extload, sextload, zextload, store,
+// and truncst (see below).
 def ld         : SDNode<"ISD::LOAD"       , SDTLoad,  [SDNPHasChain]>;
-def store      : SDNode<"ISD::STORE"      , SDTStore, [SDNPHasChain]>;
-
-def truncst    : SDNode<"ISD::TRUNCSTORE" , SDTTruncStore, [SDNPHasChain]>;
+def st         : SDNode<"ISD::STORE"      , SDTStore, [SDNPHasChain]>;
 
 def vector_shuffle : SDNode<"ISD::VECTOR_SHUFFLE", SDTVecShuffle, []>;
 def build_vector : SDNode<"ISD::BUILD_VECTOR", SDTypeProfile<1, 0, []>, []>;
@@ -408,7 +403,7 @@ def load : PatFrag<(ops node:$ptr), (ld node:$ptr), [{
   return ISD::isNON_EXTLoad(N);
 }]>;
 
-// extending load & truncstore fragments.
+// extending load fragments.
 def extloadi1  : PatFrag<(ops node:$ptr), (ld node:$ptr), [{
   if (ISD::isEXTLoad(N))
     return cast<LoadSDNode>(N)->getLoadedVT() == MVT::i1;
@@ -477,9 +472,42 @@ def zextloadi32 : PatFrag<(ops node:$ptr), (ld node:$ptr), [{
   return false;
 }]>;
 
-def truncstore    : PatFrag<(ops node:$val, node:$ptr, node:$vt),
-                            (truncst node:$val, node:$ptr, srcvalue:$dummy, 
-                            node:$vt)>;
+def store : PatFrag<(ops node:$val, node:$ptr),
+                    (st node:$val, node:$ptr), [{
+  return ISD::isNON_TRUNCStore(N);
+}]>;
+
+// truncstore fragments.
+def truncstorei1 : PatFrag<(ops node:$val, node:$ptr),
+                           (st node:$val, node:$ptr), [{
+  if (ISD::isTRUNCStore(N))
+    return cast<StoreSDNode>(N)->getStoredVT() == MVT::i1;
+  return false;
+}]>;
+def truncstorei8 : PatFrag<(ops node:$val, node:$ptr),
+                           (st node:$val, node:$ptr), [{
+  if (ISD::isTRUNCStore(N))
+    return cast<StoreSDNode>(N)->getStoredVT() == MVT::i8;
+  return false;
+}]>;
+def truncstorei16 : PatFrag<(ops node:$val, node:$ptr),
+                            (st node:$val, node:$ptr), [{
+  if (ISD::isTRUNCStore(N))
+    return cast<StoreSDNode>(N)->getStoredVT() == MVT::i16;
+  return false;
+}]>;
+def truncstorei32 : PatFrag<(ops node:$val, node:$ptr),
+                            (st node:$val, node:$ptr), [{
+  if (ISD::isTRUNCStore(N))
+    return cast<StoreSDNode>(N)->getStoredVT() == MVT::i32;
+  return false;
+}]>;
+def truncstoref32 : PatFrag<(ops node:$val, node:$ptr),
+                            (st node:$val, node:$ptr), [{
+  if (ISD::isTRUNCStore(N))
+    return cast<StoreSDNode>(N)->getStoredVT() == MVT::f32;
+  return false;
+}]>;
 
 // setcc convenience fragments.
 def setoeq : PatFrag<(ops node:$lhs, node:$rhs),
