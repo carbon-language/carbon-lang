@@ -1267,11 +1267,21 @@ DIE *DwarfWriter::NewType(DIE *Context, TypeDesc *TyDesc, CompileUnit *Unit) {
   // Type DIE result.
   DIE *Ty = NULL;
 
+  // FIXME - Not sure why programs and variables are coming through here.
   // Short cut for handling subprogram types (not really a TyDesc.)
   if (SubprogramDesc *SubprogramTy = dyn_cast<SubprogramDesc>(TyDesc)) {
     Slot = Ty = new DIE(DW_TAG_pointer_type);
     Ty->AddUInt(DW_AT_byte_size, 0, TAI->getAddressSize());
     Ty->AddString(DW_AT_name, DW_FORM_string, SubprogramTy->getName());
+    Context->AddChild(Ty);
+    return Slot;
+  }
+  // Short cut for handling global variable types (not really a TyDesc.)
+  if (GlobalVariableDesc *GlobalVariableTy =
+                                         dyn_cast<GlobalVariableDesc>(TyDesc)) {
+    Slot = Ty = new DIE(DW_TAG_pointer_type);
+    Ty->AddUInt(DW_AT_byte_size, 0, TAI->getAddressSize());
+    Ty->AddString(DW_AT_name, DW_FORM_string, GlobalVariableTy->getName());
     Context->AddChild(Ty);
     return Slot;
   }
