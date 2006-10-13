@@ -143,6 +143,14 @@ def SUB     : InstARM<(ops IntRegs:$dst, IntRegs:$a, op_addr_mode1:$b),
                        "sub $dst, $a, $b",
 		       [(set IntRegs:$dst, (sub IntRegs:$a, addr_mode1:$b))]>;
 
+def SBCS    : InstARM<(ops IntRegs:$dst, IntRegs:$a, op_addr_mode1:$b),
+                       "sbcs $dst, $a, $b",
+		       [(set IntRegs:$dst, (sube IntRegs:$a, addr_mode1:$b))]>;
+
+def SUBS    : InstARM<(ops IntRegs:$dst, IntRegs:$a, op_addr_mode1:$b),
+                       "subs $dst, $a, $b",
+		       [(set IntRegs:$dst, (subc IntRegs:$a, addr_mode1:$b))]>;
+
 def AND     : InstARM<(ops IntRegs:$dst, IntRegs:$a, op_addr_mode1:$b),
                        "and $dst, $a, $b",
 		       [(set IntRegs:$dst, (and IntRegs:$a, addr_mode1:$b))]>;

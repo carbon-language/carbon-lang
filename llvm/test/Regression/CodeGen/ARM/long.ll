@@ -5,7 +5,9 @@
 ; RUN: llvm-as < %s | llc -march=arm | grep "mov r0, #-2147483648" | wc -l | grep 1 &&
 ; RUN: llvm-as < %s | llc -march=arm | grep ".word.*4294967295" | wc -l | grep 1 &&
 ; RUN: llvm-as < %s | llc -march=arm | grep "adds" | wc -l | grep 1 &&
-; RUN: llvm-as < %s | llc -march=arm | grep "adcs" | wc -l | grep 1
+; RUN: llvm-as < %s | llc -march=arm | grep "adcs" | wc -l | grep 1 &&
+; RUN: llvm-as < %s | llc -march=arm | grep "subs" | wc -l | grep 1 &&
+; RUN: llvm-as < %s | llc -march=arm | grep "sbcs" | wc -l | grep 1
 
 long %f1() {
 entry:
@@ -44,3 +46,9 @@ entry:
 	ret void
 }
 declare long %f8()
+
+long %f9(long %a, long %b) {
+entry:
+	%tmp = sub long %a, %b
+	ret long %tmp
+}
