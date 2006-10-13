@@ -910,7 +910,7 @@ SDOperand SelectionDAG::SimplifySetCC(MVT::ValueType VT, SDOperand N1,
                     dyn_cast<ConstantSDNode>(N1.getOperand(1))) {
           if (Cond == ISD::SETNE && C2 == 0) {// (X & 8) != 0  -->  (X & 8) >> 3
             // Perform the xform if the AND RHS is a single bit.
-            if ((AndRHS->getValue() & (AndRHS->getValue()-1)) == 0) {
+            if (isPowerOf2_64(AndRHS->getValue())) {
               return getNode(ISD::SRL, VT, N1,
                              getConstant(Log2_64(AndRHS->getValue()),
                                                    TLI.getShiftAmountTy()));
@@ -918,7 +918,7 @@ SDOperand SelectionDAG::SimplifySetCC(MVT::ValueType VT, SDOperand N1,
           } else if (Cond == ISD::SETEQ && C2 == AndRHS->getValue()) {
             // (X & 8) == 8  -->  (X & 8) >> 3
             // Perform the xform if C2 is a single bit.
-            if ((C2 & (C2-1)) == 0) {
+            if (isPowerOf2_64(C2)) {
               return getNode(ISD::SRL, VT, N1,
                              getConstant(Log2_64(C2),TLI.getShiftAmountTy()));
             }
