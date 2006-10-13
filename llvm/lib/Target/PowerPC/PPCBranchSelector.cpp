@@ -20,12 +20,15 @@
 #include "PPCInstrInfo.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
 #include "llvm/Support/Compiler.h"
+#include "llvm/Target/TargetMachine.h"
+#include "llvm/Target/TargetAsmInfo.h"
 #include <map>
 using namespace llvm;
 
 namespace {
   struct VISIBILITY_HIDDEN PPCBSel : public MachineFunctionPass {
-    // OffsetMap - Mapping between BB and byte offset from start of function
+    /// OffsetMap - Mapping between BB and byte offset from start of function.
+    /// TODO: replace this with a vector, using the MBB idx as the key.
     std::map<MachineBasicBlock*, unsigned> OffsetMap;
 
     virtual bool runOnMachineFunction(MachineFunction &Fn);
@@ -55,20 +58,14 @@ static unsigned getNumBytesForInstruction(MachineInstr *MI) {
     return 8;
   case PPC::IMPLICIT_DEF_GPRC: // no asm emitted
   case PPC::IMPLICIT_DEF_G8RC: // no asm emitted
-  case PPC::IMPLICIT_DEF_F4: // no asm emitted
-  case PPC::IMPLICIT_DEF_F8: // no asm emitted
+  case PPC::IMPLICIT_DEF_F4:   // no asm emitted
+  case PPC::IMPLICIT_DEF_F8:   // no asm emitted
     return 0;
-  case PPC::INLINEASM:    // Inline Asm: Variable size.
-    for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i)
-      if (MI->getOperand(i).isExternalSymbol()) {
-        const char *AsmStr = MI->getOperand(i).getSymbolName();
-        // Count the number of newline's in the asm string.
-        unsigned NumInstrs = 0;
-        for (; *AsmStr; ++AsmStr)
-          NumInstrs += *AsmStr == '\n';
-        return NumInstrs*4;
-      }
-    assert(0 && "INLINEASM didn't have format string??");
+  case PPC::INLINEASM: {       // Inline Asm: Variable size.
+    MachineFunction *MF = MI->getParent()->getParent();
+    const char *AsmStr = MI->getOperand(0).getSymbolName();
+    return MF->getTarget().getTargetAsmInfo()->getInlineAsmLength(AsmStr);
+  }
   default:
     return 4; // PowerPC instructions are all 4 bytes
   }
