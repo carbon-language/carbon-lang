@@ -308,10 +308,11 @@ public:
     assert(0 && "Target didn't implement TargetInstrInfo::RemoveBranch!"); 
   }
   
-  /// Reverses the branch condition of the MachineInstr pointed by
-  /// MI. The instruction is replaced and the new MI is returned.
-  virtual void ReverseBranchCondition(std::vector<MachineOperand> &Cond) const {
-    assert(0 && "Target didn't implement ReverseBranchCondition!");
+  /// ReverseBranchCondition - Reverses the branch condition of the specified
+  /// condition list, returning false on success and true if it cannot be
+  /// reversed.
+  virtual bool ReverseBranchCondition(std::vector<MachineOperand> &Cond) const {
+    return true;
   }
   
   /// insertNoop - Insert a noop into the instruction stream at the specified
