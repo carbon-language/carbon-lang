@@ -27,7 +27,6 @@ namespace llvm {
   /// TargetAsmInfo - This class is intended to be used as a base class for asm
   /// properties and features specific to the target.
   class TargetAsmInfo {
-  
   protected:
     //===------------------------------------------------------------------===//
     // Properties to be set by the target writer, used to configure asm printer.
@@ -48,6 +47,15 @@ namespace llvm {
     /// NeedsSet - True if target asm can't compute addresses on data
     /// directives.
     bool NeedsSet;                        // Defaults to false.
+    
+    /// MaxInstLength - This is the maximum possible length of an instruction,
+    /// which is needed to compute the size of an inline asm.
+    unsigned MaxInstLength;               // Defaults to 4.
+    
+    /// SeparatorChar - This character, if specified, is used to separate
+    /// instructions from each other when on the same line.  This is used to
+    /// measure inline asm instructions.
+    char SeparatorChar;                   // Defaults to ';'
 
     /// CommentString - This indicates the comment character used by the
     /// assembler.
@@ -261,6 +269,10 @@ namespace llvm {
     TargetAsmInfo();
     virtual ~TargetAsmInfo();
 
+    /// Measure the specified inline asm to determine an approximation of its
+    /// length.
+    unsigned getInlineAsmLength(const char *Str) const;
+    
     //
     // Accessors.
     //
@@ -430,7 +442,6 @@ namespace llvm {
       return DwarfMacInfoSection;
     }
   };
-  
 }
 
 #endif

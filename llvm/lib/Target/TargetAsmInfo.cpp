@@ -21,6 +21,8 @@ TargetAsmInfo::TargetAsmInfo() :
   DataSection(".data"),
   AddressSize(4),
   NeedsSet(false),
+  MaxInstLength(4),
+  SeparatorChar(';'),
   CommentString("#"),
   GlobalPrefix(""),
   PrivateGlobalPrefix("."),
@@ -71,8 +73,22 @@ TargetAsmInfo::TargetAsmInfo() :
   DwarfLocSection(".debug_loc"),
   DwarfARangesSection(".debug_aranges"),
   DwarfRangesSection(".debug_ranges"),
-  DwarfMacInfoSection(".debug_macinfo")
-{}
+  DwarfMacInfoSection(".debug_macinfo") {
+}
 
 TargetAsmInfo::~TargetAsmInfo() {
+}
+
+/// Measure the specified inline asm to determine an approximation of its
+/// length.
+unsigned TargetAsmInfo::getInlineAsmLength(const char *Str) const {
+  // Count the number of instructions in the asm.
+  unsigned NumInsts = 0;
+  for (; *Str; ++Str) {
+    if (*Str == '\n' || *Str == SeparatorChar)
+      ++NumInsts;
+  }
+
+  // Multiply by the worst-case length for each instruction.
+  return NumInsts * MaxInstLength;
 }
