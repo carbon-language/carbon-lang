@@ -23,9 +23,10 @@
 #include "llvm/Instructions.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/Function.h"
-#include "llvm/Support/GetElementPtrTypeIterator.h"
-#include "llvm/Support/MathExtras.h"
 #include "llvm/Support/Compiler.h"
+#include "llvm/Support/GetElementPtrTypeIterator.h"
+#include "llvm/Support/ManagedStatic.h"
+#include "llvm/Support/MathExtras.h"
 #include <limits>
 #include <cmath>
 using namespace llvm;
@@ -584,49 +585,58 @@ struct VISIBILITY_HIDDEN DirectFPRules
 };
 }  // end anonymous namespace
 
+static ManagedStatic<EmptyRules>       EmptyR;
+static ManagedStatic<BoolRules>        BoolR;
+static ManagedStatic<NullPointerRules> NullPointerR;
+static ManagedStatic<ConstantPackedRules> ConstantPackedR;
+static ManagedStatic<GeneralPackedRules> GeneralPackedR;
+static ManagedStatic<DirectIntRules<ConstantSInt,   signed char ,
+                                    &Type::SByteTy> > SByteR;
+static ManagedStatic<DirectIntRules<ConstantUInt, unsigned char ,
+                                    &Type::UByteTy> > UByteR;
+static ManagedStatic<DirectIntRules<ConstantSInt,   signed short,
+                                    &Type::ShortTy> > ShortR;
+static ManagedStatic<DirectIntRules<ConstantUInt, unsigned short,
+                                    &Type::UShortTy> > UShortR;
+static ManagedStatic<DirectIntRules<ConstantSInt,   signed int  ,
+                                    &Type::IntTy> >   IntR;
+static ManagedStatic<DirectIntRules<ConstantUInt, unsigned int  ,
+                                    &Type::UIntTy> >  UIntR;
+static ManagedStatic<DirectIntRules<ConstantSInt,  int64_t      ,
+                                    &Type::LongTy> >  LongR;
+static ManagedStatic<DirectIntRules<ConstantUInt, uint64_t      ,
+                                    &Type::ULongTy> > ULongR;
+static ManagedStatic<DirectFPRules <ConstantFP  , float         ,
+                                    &Type::FloatTy> > FloatR;
+static ManagedStatic<DirectFPRules <ConstantFP  , double        ,
+                                    &Type::DoubleTy> > DoubleR;
 
 /// ConstRules::get - This method returns the constant rules implementation that
 /// implements the semantics of the two specified constants.
 ConstRules &ConstRules::get(const Constant *V1, const Constant *V2) {
-  static EmptyRules       EmptyR;
-  static BoolRules        BoolR;
-  static NullPointerRules NullPointerR;
-  static ConstantPackedRules ConstantPackedR;
-  static GeneralPackedRules GeneralPackedR;
-  static DirectIntRules<ConstantSInt,   signed char , &Type::SByteTy>  SByteR;
-  static DirectIntRules<ConstantUInt, unsigned char , &Type::UByteTy>  UByteR;
-  static DirectIntRules<ConstantSInt,   signed short, &Type::ShortTy>  ShortR;
-  static DirectIntRules<ConstantUInt, unsigned short, &Type::UShortTy> UShortR;
-  static DirectIntRules<ConstantSInt,   signed int  , &Type::IntTy>    IntR;
-  static DirectIntRules<ConstantUInt, unsigned int  , &Type::UIntTy>   UIntR;
-  static DirectIntRules<ConstantSInt,  int64_t      , &Type::LongTy>   LongR;
-  static DirectIntRules<ConstantUInt, uint64_t      , &Type::ULongTy>  ULongR;
-  static DirectFPRules <ConstantFP  , float         , &Type::FloatTy>  FloatR;
-  static DirectFPRules <ConstantFP  , double        , &Type::DoubleTy> DoubleR;
-
   if (isa<ConstantExpr>(V1) || isa<ConstantExpr>(V2) ||
       isa<GlobalValue>(V1) || isa<GlobalValue>(V2) ||
       isa<UndefValue>(V1) || isa<UndefValue>(V2))
-    return EmptyR;
+    return *EmptyR;
 
   switch (V1->getType()->getTypeID()) {
   default: assert(0 && "Unknown value type for constant folding!");
-  case Type::BoolTyID:    return BoolR;
-  case Type::PointerTyID: return NullPointerR;
-  case Type::SByteTyID:   return SByteR;
-  case Type::UByteTyID:   return UByteR;
-  case Type::ShortTyID:   return ShortR;
-  case Type::UShortTyID:  return UShortR;
-  case Type::IntTyID:     return IntR;
-  case Type::UIntTyID:    return UIntR;
-  case Type::LongTyID:    return LongR;
-  case Type::ULongTyID:   return ULongR;
-  case Type::FloatTyID:   return FloatR;
-  case Type::DoubleTyID:  return DoubleR;
+  case Type::BoolTyID:    return *BoolR;
+  case Type::PointerTyID: return *NullPointerR;
+  case Type::SByteTyID:   return *SByteR;
+  case Type::UByteTyID:   return *UByteR;
+  case Type::ShortTyID:   return *ShortR;
+  case Type::UShortTyID:  return *UShortR;
+  case Type::IntTyID:     return *IntR;
+  case Type::UIntTyID:    return *UIntR;
+  case Type::LongTyID:    return *LongR;
+  case Type::ULongTyID:   return *ULongR;
+  case Type::FloatTyID:   return *FloatR;
+  case Type::DoubleTyID:  return *DoubleR;
   case Type::PackedTyID:
     if (isa<ConstantPacked>(V1) && isa<ConstantPacked>(V2))
-      return ConstantPackedR;
-    return GeneralPackedR;  // Constant folding rules for ConstantAggregateZero.
+      return *ConstantPackedR;
+    return *GeneralPackedR; // Constant folding rules for ConstantAggregateZero.
   }
 }
 
