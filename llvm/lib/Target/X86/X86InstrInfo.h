@@ -223,16 +223,6 @@ public:
   virtual MachineInstr *commuteInstruction(MachineInstr *MI) const;
 
 
-  /// Insert a goto (unconditional branch) sequence to TMBB, at the
-  /// end of MBB
-  virtual void insertGoto(MachineBasicBlock& MBB,
-                          MachineBasicBlock& TMBB) const;
-
-  /// Reverses the branch condition of the MachineInstr pointed by
-  /// MI. The instruction is replaced and the new MI is returned.
-  virtual MachineBasicBlock::iterator
-  reverseBranchCondition(MachineBasicBlock::iterator MI) const;
-
   const TargetRegisterClass *getPointerRegClass() const;
 
   // getBaseOpcodeFor - This function returns the "base" X86 opcode for the
