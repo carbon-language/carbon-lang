@@ -371,8 +371,8 @@ void TDDataStructures::InlineCallersIntoGraph(DSGraph &DSG) {
 
     // If we already have this graph, recycle it.
     if (IndCallRecI != IndCallMap.end() && IndCallRecI->first == Callees) {
-      std::cerr << "  [TD] *** Reuse of indcall graph for " << Callees.size()
-                << " callees!\n";
+      DEBUG(std::cerr << "  [TD] *** Reuse of indcall graph for " << Callees.size()
+            << " callees!\n");
       IndCallGraph = IndCallRecI->second;
     } else {
       // Otherwise, create a new DSGraph to represent this.

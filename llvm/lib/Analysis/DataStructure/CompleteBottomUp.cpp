@@ -52,16 +52,15 @@ bool CompleteBUDataStructures::runOnModule(Module &M) {
     if (!MainFunc->isExternal())
       calculateSCCGraphs(getOrCreateGraph(*MainFunc), Stack, NextID, ValMap);
   } else {
-    std::cerr << "CBU-DSA: No 'main' function found!\n";
+    DEBUG(std::cerr << "CBU-DSA: No 'main' function found!\n");
   }
 
   for (Module::iterator I = M.begin(), E = M.end(); I != E; ++I)
     if (!I->isExternal() && !DSInfo.count(I)) {
-#ifndef NDEBUG
-      if (MainFunc)
-        std::cerr << "*** CBU: Function unreachable from main: "
-                  << I->getName() << "\n";
-#endif
+      if (MainFunc) {
+        DEBUG(std::cerr << "*** CBU: Function unreachable from main: "
+              << I->getName() << "\n");
+      }
       calculateSCCGraphs(getOrCreateGraph(*I), Stack, NextID, ValMap);
     }
 

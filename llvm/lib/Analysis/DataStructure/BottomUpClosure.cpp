@@ -171,11 +171,9 @@ bool BUDataStructures::runOnModule(Module &M) {
   // Calculate the graphs for any functions that are unreachable from main...
   for (Module::iterator I = M.begin(), E = M.end(); I != E; ++I)
     if (!I->isExternal() && !DSInfo.count(I)) {
-#ifndef NDEBUG
       if (MainFunc)
-        std::cerr << "*** BU: Function unreachable from main: "
-                  << I->getName() << "\n";
-#endif
+        DEBUG(std::cerr << "*** BU: Function unreachable from main: "
+              << I->getName() << "\n");
       calculateGraphs(I, Stack, NextID, ValMap);     // Calculate all graphs.
     }
 
@@ -206,7 +204,7 @@ bool BUDataStructures::runOnModule(Module &M) {
   BuildGlobalECs(*GlobalsGraph, ECGlobals);
   if (!ECGlobals.empty()) {
     NamedRegionTimer X("Bottom-UP EC Cleanup");
-    std::cerr << "Eliminating " << ECGlobals.size() << " EC Globals!\n";
+    DEBUG(std::cerr << "Eliminating " << ECGlobals.size() << " EC Globals!\n");
     for (hash_map<Function*, DSGraph*>::iterator I = DSInfo.begin(),
            E = DSInfo.end(); I != E; ++I)
       EliminateUsesOfECGlobals(*I->second, ECGlobals);
@@ -237,11 +235,12 @@ bool BUDataStructures::runOnModule(Module &M) {
 	  ee = MainGraph.afc_end(); ii != ee; ++ii) {
       std::vector<Function*> Funcs;
       GetAllCallees(*ii, Funcs);
-      std::cerr << "Lost site\n";
+      DEBUG(std::cerr << "Lost site\n");
+      DEBUG(ii->getCallSite().getInstruction()->dump());
       for (std::vector<Function*>::iterator iif = Funcs.begin(), eef = Funcs.end();
 	   iif != eef; ++iif) {
 	AddGlobalToNode(this, *ii, *iif);
-	std::cerr << "Adding\n";
+	DEBUG(std::cerr << "Adding\n");
 	ActualCallees.insert(std::make_pair(ii->getCallSite().getInstruction(), *iif));
       }
     }
@@ -421,8 +420,8 @@ unsigned BUDataStructures::calculateGraphs(Function *F,
     }
     Stack.pop_back();
 
-    std::cerr << "Calculating graph for SCC #: " << MyID << " of size: "
-              << SCCSize << "\n";
+    DEBUG(std::cerr << "Calculating graph for SCC #: " << MyID << " of size: "
+          << SCCSize << "\n");
 
     // Compute the Max SCC Size.
     if (MaxSCC < SCCSize)
@@ -441,7 +440,7 @@ unsigned BUDataStructures::calculateGraphs(Function *F,
       DEBUG(std::cerr << "MISSING REDO\n");
     }
 
-    std::cerr << "DONE with SCC #: " << MyID << "\n";
+    DEBUG(std::cerr << "DONE with SCC #: " << MyID << "\n");
 
     // We never have to revisit "SCC" processed functions...
     return MyID;

@@ -544,6 +544,9 @@ void GraphBuilder::visitCallSite(CallSite CS) {
           mergeWith(getValueDest(**(CS.arg_begin())));
         return;
       case Intrinsic::vaend:
+      case Intrinsic::dbg_func_start:
+      case Intrinsic::dbg_region_end:
+      case Intrinsic::dbg_stoppoint:
         return;  // noop
       case Intrinsic::memcpy_i32: 
       case Intrinsic::memcpy_i64:
@@ -1028,9 +1031,10 @@ void GraphBuilder::visitCallSite(CallSite CS) {
                 Warn = true;
                 break;
               }
-          if (Warn)
-            std::cerr << "WARNING: Call to unknown external function '"
-                      << F->getName() << "' will cause pessimistic results!\n";
+          if (Warn) {
+            DEBUG(std::cerr << "WARNING: Call to unknown external function '"
+                  << F->getName() << "' will cause pessimistic results!\n");
+          }
         }
       }
 
