@@ -85,7 +85,8 @@ namespace {
       WorkList.push_back(N);
     }
 
-    SDOperand CombineTo(SDNode *N, const SDOperand *To, unsigned NumTo) {
+    SDOperand CombineTo(SDNode *N, const SDOperand *To, unsigned NumTo,
+                        bool AddTo = true) {
       assert(N->getNumValues() == NumTo && "Broken CombineTo call!");
       ++NodesCombined;
       DEBUG(std::cerr << "\nReplacing.1 "; N->dump();
@@ -94,10 +95,12 @@ namespace {
       std::vector<SDNode*> NowDead;
       DAG.ReplaceAllUsesWith(N, To, &NowDead);
       
-      // Push the new nodes and any users onto the worklist
-      for (unsigned i = 0, e = NumTo; i != e; ++i) {
-        AddToWorkList(To[i].Val);
-        AddUsersToWorkList(To[i].Val);
+      if (AddTo) {
+        // Push the new nodes and any users onto the worklist
+        for (unsigned i = 0, e = NumTo; i != e; ++i) {
+          AddToWorkList(To[i].Val);
+          AddUsersToWorkList(To[i].Val);
+        }
       }
       
       // Nodes can be reintroduced into the worklist.  Make sure we do not
@@ -111,13 +114,14 @@ namespace {
       return SDOperand(N, 0);
     }
     
-    SDOperand CombineTo(SDNode *N, SDOperand Res) {
-      return CombineTo(N, &Res, 1);
+    SDOperand CombineTo(SDNode *N, SDOperand Res, bool AddTo = true) {
+      return CombineTo(N, &Res, 1, AddTo);
     }
     
-    SDOperand CombineTo(SDNode *N, SDOperand Res0, SDOperand Res1) {
+    SDOperand CombineTo(SDNode *N, SDOperand Res0, SDOperand Res1,
+                        bool AddTo = true) {
       SDOperand To[] = { Res0, Res1 };
-      return CombineTo(N, To, 2);
+      return CombineTo(N, To, 2, AddTo);
     }
   private:    
     
@@ -602,6 +606,9 @@ SDOperand DAGCombiner::visitTokenFactor(SDNode *N) {
       // New and improved token factor.
       Result = DAG.getNode(ISD::TokenFactor, MVT::Other, &Ops[0], Ops.size());
     }
+    
+    // Don't add users to work list.
+    return CombineTo(N, Result, false);
   }
   
   return Result;
@@ -2717,8 +2724,9 @@ SDOperand DAGCombiner::visitLOAD(SDNode *N) {
       SDOperand Token = DAG.getNode(ISD::TokenFactor, MVT::Other,
                                     Chain, ReplLoad.getValue(1));
       
-      // Replace uses with load result and token factor.
-      return CombineTo(N, ReplLoad.getValue(0), Token);
+      // Replace uses with load result and token factor. Don't add users
+      // to work list.
+      return CombineTo(N, ReplLoad.getValue(0), Token, false);
     }
   }
 
@@ -2745,7 +2753,11 @@ SDOperand DAGCombiner::visitSTORE(SDNode *N) {
                             ST->getSrcValueOffset(), ST->getStoredVT());
 
         // Create token to keep both nodes around.
-        return DAG.getNode(ISD::TokenFactor, MVT::Other, Chain, ReplTStore);
+        SDOperand Token =
+          DAG.getNode(ISD::TokenFactor, MVT::Other, Chain, ReplTStore);
+        
+        // Don't add users to work list.
+        return CombineTo(N, Token, false);
       }
     }
   
@@ -2796,7 +2808,11 @@ SDOperand DAGCombiner::visitSTORE(SDNode *N) {
       SDOperand ReplStore = DAG.getStore(BetterChain, Value, Ptr,
                                     ST->getSrcValue(), ST->getSrcValueOffset());
       // Create token to keep both nodes around.
-      return DAG.getNode(ISD::TokenFactor, MVT::Other, Chain, ReplStore);
+      SDOperand Token =
+        DAG.getNode(ISD::TokenFactor, MVT::Other, Chain, ReplStore);
+        
+      // Don't add users to work list.
+      return CombineTo(N, Token, false);
     }
   }
   
