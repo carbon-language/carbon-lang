@@ -11,6 +11,25 @@ still a codesize win.
 
 ===-------------------------------------------------------------------------===
 
+Compile:
+
+void foo(int *P) {
+ if (P)  *P = 0;
+}
+
+into:
+
+_foo:
+        cmpwi cr0,r3,0
+        beqlr cr0
+        li r0,0
+        stw r0,0(r3)
+        blr
+
+This is effectively a simple form of predication.
+
+===-------------------------------------------------------------------------===
+
 Teach the .td file to pattern match PPC::BR_COND to appropriate bc variant, so
 we don't have to always run the branch selector for small functions.
 
