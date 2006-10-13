@@ -57,8 +57,9 @@ void parser<std::string>::anchor() {}
 
 //===----------------------------------------------------------------------===//
 
-// Globals for name and overview of program
-static std::string ProgramName = "<premain>";
+// Globals for name and overview of program.  Program name is not a string to
+// avoid static ctor/dtor issues.
+static char ProgramName[80] = "<premain>";
 static const char *ProgramOverview = 0;
 
 // This collects additional help to be printed.
@@ -303,7 +304,12 @@ void cl::ParseCommandLineOptions(int &argc, char **argv,
          "No options specified, or ParseCommandLineOptions called more"
          " than once!");
   sys::Path progname(argv[0]);
-  ProgramName = sys::Path(argv[0]).getLast();
+
+  // Copy the program name into ProgName, making sure not to overflow it.
+  std::string ProgName = sys::Path(argv[0]).getLast();
+  if (ProgName.size() > 79) ProgName.resize(79);
+  strcpy(ProgramName, ProgName.c_str());
+  
   ProgramOverview = Overview;
   bool ErrorParsing = false;
 
