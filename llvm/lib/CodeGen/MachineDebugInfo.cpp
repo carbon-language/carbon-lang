@@ -1115,7 +1115,7 @@ void GlobalVariableDesc::dump() {
             << "DisplayName(\"" << getDisplayName() << "\"), "
             << "File(" << getFile() << "),"
             << "Line(" << getLine() << "),"
-            << "Type(\"" << getType() << "\"), "
+            << "Type(" << getType() << "), "
             << "IsStatic(" << (isStatic() ? "true" : "false") << "), "
             << "IsDefinition(" << (isDefinition() ? "true" : "false") << "), "
             << "Global(" << Global << ")\n";
@@ -1168,7 +1168,7 @@ void SubprogramDesc::dump() {
             << "DisplayName(\"" << getDisplayName() << "\"), "
             << "File(" << getFile() << "),"
             << "Line(" << getLine() << "),"
-            << "Type(\"" << getType() << "\"), "
+            << "Type(" << getType() << "), "
             << "IsStatic(" << (isStatic() ? "true" : "false") << "), "
             << "IsDefinition(" << (isDefinition() ? "true" : "false") << ")\n";
 }
