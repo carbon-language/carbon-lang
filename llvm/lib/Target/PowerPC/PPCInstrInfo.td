@@ -312,7 +312,7 @@ let usesCustomDAGSchedInserter = 1,    // Expanded by the scheduler.
                               []>;
 }
 
-let isTerminator = 1, noResults = 1, PPC970_Unit = 7 in {
+let isTerminator = 1, isBarrier = 1, noResults = 1, PPC970_Unit = 7 in {
   let isReturn = 1 in
     def BLR : XLForm_2_ext<19, 16, 20, 0, 0, (ops), "blr", BrB, [(retflag)]>;
   def BCTR : XLForm_2_ext<19, 528, 20, 0, 0, (ops), "bctr", BrB, []>;
@@ -324,12 +324,15 @@ let Defs = [LR] in
 
 let isBranch = 1, isTerminator = 1, hasCtrlDep = 1, 
     noResults = 1, PPC970_Unit = 7 in {
+  // COND_BRANCH is formed before branch selection, it is turned into Bcc below.
   def COND_BRANCH : Pseudo<(ops CRRC:$crS, u16imm:$opc, target:$dst),
                            "${:comment} COND_BRANCH $crS, $opc, $dst",
                            [(PPCcondbranch CRRC:$crS, imm:$opc, bb:$dst)]>;
+  let isBarrier = 1 in {
   def B   : IForm<18, 0, 0, (ops target:$dst),
                   "b $dst", BrB,
                   [(br bb:$dst)]>;
+  }
 
   def BLT : BForm<16, 0, 0, 12, 0, (ops CRRC:$crS, target:$block),
                   "blt $crS, $block", BrB>;
