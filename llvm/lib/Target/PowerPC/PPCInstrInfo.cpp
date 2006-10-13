@@ -162,3 +162,96 @@ void PPCInstrInfo::insertNoop(MachineBasicBlock &MBB,
                               MachineBasicBlock::iterator MI) const {
   BuildMI(MBB, MI, PPC::NOP, 0);
 }
+
+
+// Branch analysis.
+bool PPCInstrInfo::AnalyzeBranch(MachineBasicBlock &MBB,MachineBasicBlock *&TBB,
+                                 MachineBasicBlock *&FBB,
+                                 std::vector<MachineOperand> &Cond) const {
+  // If the block has no terminators, it just falls into the block after it.
+  MachineBasicBlock::iterator I = MBB.end();
+  if (I == MBB.begin() || !isTerminatorInstr((--I)->getOpcode()))
+    return false;
+
+  // Get the last instruction in the block.
+  MachineInstr *LastInst = I;
+  
+  // If there is only one terminator instruction, process it.
+  if (I == MBB.begin() || !isTerminatorInstr((--I)->getOpcode())) {
+    if (LastInst->getOpcode() == PPC::B) {
+      TBB = LastInst->getOperand(0).getMachineBasicBlock();
+      return false;
+    } else if (LastInst->getOpcode() == PPC::COND_BRANCH) {
+      // Block ends with fall-through condbranch.
+      TBB = LastInst->getOperand(2).getMachineBasicBlock();
+      Cond.push_back(LastInst->getOperand(0));
+      Cond.push_back(LastInst->getOperand(1));
+      return true;
+    }
+    // Otherwise, don't know what this is.
+    return true;
+  }
+  
+  // Get the instruction before it if it's a terminator.
+  MachineInstr *SecondLastInst = I;
+
+  // If there are three terminators, we don't know what sort of block this is.
+  if (SecondLastInst && I != MBB.begin() &&
+      isTerminatorInstr((--I)->getOpcode()))
+    return true;
+  
+  // If the block ends with PPC::B and PPC:COND_BRANCH, handle it.
+  if (SecondLastInst->getOpcode() == PPC::COND_BRANCH && 
+      LastInst->getOpcode() == PPC::B) {
+    TBB =  SecondLastInst->getOperand(2).getMachineBasicBlock();
+    Cond.push_back(SecondLastInst->getOperand(0));
+    Cond.push_back(SecondLastInst->getOperand(1));
+    FBB = LastInst->getOperand(0).getMachineBasicBlock();
+    return false;
+  }
+  
+  // Otherwise, can't handle this.
+  return true;
+}
+
+void PPCInstrInfo::RemoveBranch(MachineBasicBlock &MBB) const {
+  MachineBasicBlock::iterator I = MBB.end();
+  if (I == MBB.begin()) return;
+  --I;
+  if (I->getOpcode() != PPC::B && I->getOpcode() != PPC::COND_BRANCH)
+    return;
+  
+  // Remove the branch.
+  I->eraseFromParent();
+  
+  I = MBB.end();
+
+  if (I == MBB.begin()) return;
+  --I;
+  if (I->getOpcode() != PPC::COND_BRANCH)
+    return;
+  
+  // Remove the branch.
+  I->eraseFromParent();
+}
+
+void PPCInstrInfo::InsertBranch(MachineBasicBlock &MBB, MachineBasicBlock *TBB,
+                                MachineBasicBlock *FBB,
+                                const std::vector<MachineOperand> &Cond) const {
+  // Fall through?
+  if (TBB == 0 && FBB == 0) return;
+  
+  assert(Cond.size() == 2 && "PPC branch conditions have two components!");
+  
+  // Conditional branch
+  BuildMI(&MBB, PPC::COND_BRANCH, 3)
+    .addReg(Cond[0].getReg()).addImm(Cond[1].getImm()).addMBB(TBB);
+  
+  if (FBB)  // Two-way branch.
+    BuildMI(&MBB, PPC::B, 1).addMBB(FBB);
+}
+
+bool PPCInstrInfo::
+ReverseBranchCondition(std::vector<MachineOperand> &Cond) const {
+  return true;
+}

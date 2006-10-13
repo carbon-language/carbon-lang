@@ -94,6 +94,19 @@ public:
   virtual void insertNoop(MachineBasicBlock &MBB, 
                           MachineBasicBlock::iterator MI) const;
 
+
+  // Branch analysis.
+  virtual bool AnalyzeBranch(MachineBasicBlock &MBB, MachineBasicBlock *&TBB,
+                             MachineBasicBlock *&FBB,
+                             std::vector<MachineOperand> &Cond) const;
+  virtual void RemoveBranch(MachineBasicBlock &MBB) const;
+  virtual void InsertBranch(MachineBasicBlock &MBB, MachineBasicBlock *TBB,
+                            MachineBasicBlock *FBB,
+                            const std::vector<MachineOperand> &Cond) const;
+  virtual bool ReverseBranchCondition(std::vector<MachineOperand> &Cond) const;
+  
+  
+  
   static unsigned invertPPCBranchOpcode(unsigned Opcode) {
     switch (Opcode) {
     default: assert(0 && "Unknown PPC branch opcode!");
