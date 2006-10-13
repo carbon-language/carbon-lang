@@ -294,7 +294,7 @@ public:
   
   /// RemoveBranch - Remove the branching code at the end of the specific MBB.
   /// this is only invoked in cases where AnalyzeBranch returns success.
-  void RemoveBranch(MachineBasicBlock &MBB) const {
+  virtual void RemoveBranch(MachineBasicBlock &MBB) const {
     assert(0 && "Target didn't implement TargetInstrInfo::RemoveBranch!"); 
   }
   
@@ -302,9 +302,9 @@ public:
   /// MachineBasicBlock.  This operands to this method are the same as those
   /// returned by AnalyzeBranch.  This nis invoked in cases where AnalyzeBranch
   /// returns success.
-  void InsertBranch(MachineBasicBlock &MBB, MachineBasicBlock *TBB,
-                    MachineBasicBlock *FBB,
-                    const std::vector<MachineOperand> &Cond) const {
+  virtual void InsertBranch(MachineBasicBlock &MBB, MachineBasicBlock *TBB,
+                            MachineBasicBlock *FBB,
+                            const std::vector<MachineOperand> &Cond) const {
     assert(0 && "Target didn't implement TargetInstrInfo::RemoveBranch!"); 
   }
   
