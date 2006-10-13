@@ -202,6 +202,12 @@ public:
     return get(Opcode).Flags & M_STORE_FLAG;
   }
   
+  /// hasDelaySlot - Returns true if the specified instruction has a delay slot
+  /// which must be filled by the code generator.
+  bool hasDelaySlot(unsigned Opcode) const {
+    return get(Opcode).Flags & M_DELAY_SLOT_FLAG;
+  }
+  
   /// usesCustomDAGSchedInsertionHook - Return true if this instruction requires
   /// custom insertion support when the DAG scheduler is inserting it into a
   /// machine basic block.
@@ -265,20 +271,47 @@ public:
   ///
   virtual MachineInstr *commuteInstruction(MachineInstr *MI) const;
 
-  /// Insert a goto (unconditional branch) sequence to TMBB, at the
-  /// end of MBB
-  virtual void insertGoto(MachineBasicBlock& MBB,
-                          MachineBasicBlock& TMBB) const {
-    assert(0 && "Target didn't implement insertGoto!");
+  /// AnalyzeBranch - Analyze the branching code at the end of MBB, returning
+  /// true if it cannot be understood (e.g. it's a switch dispatch or isn't
+  /// implemented for a target).  Upon success, this returns false and returns
+  /// with the following information in various cases:
+  ///
+  /// 1. If this block ends with only an unconditional branch, it sets TBB to be
+  ///    the destination block.
+  /// 2. If this block ends with an conditional branch, it returns the 'true'
+  ///    destination in TBB, the 'false' destination in FBB, and a list of
+  ///    operands that evaluate the condition.  These operands can be passed to
+  ///    other TargetInstrInfo methods to create new branches.
+  ///
+  /// Note that RemoveBranch and InsertBranch must be implemented to support
+  /// cases where this method returns success.
+  ///
+  virtual bool AnalyzeBranch(MachineBasicBlock &MBB, MachineBasicBlock *&TBB,
+                             MachineBasicBlock *&FBB,
+                             std::vector<MachineOperand> &Cond) const {
+    return true;
   }
-
+  
+  /// RemoveBranch - Remove the branching code at the end of the specific MBB.
+  /// this is only invoked in cases where AnalyzeBranch returns success.
+  void RemoveBranch(MachineBasicBlock &MBB) const {
+    assert(0 && "Target didn't implement TargetInstrInfo::RemoveBranch!"); 
+  }
+  
+  /// InsertBranch - Insert a branch into the end of the specified
+  /// MachineBasicBlock.  This operands to this method are the same as those
+  /// returned by AnalyzeBranch.  This nis invoked in cases where AnalyzeBranch
+  /// returns success.
+  void InsertBranch(MachineBasicBlock &MBB, MachineBasicBlock *TBB,
+                    MachineBasicBlock *FBB,
+                    const std::vector<MachineOperand> &Cond) const {
+    assert(0 && "Target didn't implement TargetInstrInfo::RemoveBranch!"); 
+  }
+  
   /// Reverses the branch condition of the MachineInstr pointed by
   /// MI. The instruction is replaced and the new MI is returned.
-  virtual MachineBasicBlock::iterator
-  reverseBranchCondition(MachineBasicBlock::iterator MI) const {
-    assert(0 && "Target didn't implement reverseBranchCondition!");
-    abort();
-    return MI;
+  virtual void ReverseBranchCondition(std::vector<MachineOperand> &Cond) const {
+    assert(0 && "Target didn't implement ReverseBranchCondition!");
   }
   
   /// insertNoop - Insert a noop into the instruction stream at the specified
@@ -294,12 +327,6 @@ public:
   virtual const TargetRegisterClass *getPointerRegClass() const {
     assert(0 && "Target didn't implement getPointerRegClass!");
     abort();
-  }
-  
-  /// hasDelaySlot - Returns true if the specified instruction has a delay slot
-  /// which must be filled by the code generator.
-  bool hasDelaySlot(unsigned Opcode) const {
-    return get(Opcode).Flags & M_DELAY_SLOT_FLAG;
   }
 };
 
