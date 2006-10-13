@@ -2,7 +2,9 @@
 ; RUN: llvm-as < %s | llc -march=arm | grep fadds &&
 ; RUN: llvm-as < %s | llc -march=arm | grep faddd &&
 ; RUN: llvm-as < %s | llc -march=arm | grep fmuls &&
-; RUN: llvm-as < %s | llc -march=arm | grep fmuld
+; RUN: llvm-as < %s | llc -march=arm | grep fmuld &&
+; RUN: llvm-as < %s | llc -march=arm | grep fnegs &&
+; RUN: llvm-as < %s | llc -march=arm | grep fnegd
 
 float %f1(float %a, float %b) {
 entry:
@@ -38,4 +40,16 @@ double %f6(double %a, double %b) {
 entry:
 	%tmp = sub double %a, %b
 	ret double %tmp
+}
+
+float %f7(float %a) {
+entry:
+	%tmp1 = sub float -0.000000e+00, %a
+	ret float %tmp1
+}
+
+double %f8(double %a) {
+entry:
+	%tmp1 = sub double -0.000000e+00, %a
+	ret double %tmp1
 }

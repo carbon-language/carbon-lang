@@ -269,6 +269,14 @@ def FSUBD   : InstARM<(ops DFPRegs:$dst, DFPRegs:$a, DFPRegs:$b),
                        "fsubd $dst, $a, $b",
 		       [(set DFPRegs:$dst, (fsub DFPRegs:$a, DFPRegs:$b))]>;
 
+def FNEGS   : InstARM<(ops FPRegs:$dst, FPRegs:$src),
+                       "fnegs $dst, $src",
+		       [(set FPRegs:$dst, (fneg FPRegs:$src))]>;
+
+def FNEGD   : InstARM<(ops DFPRegs:$dst, DFPRegs:$src),
+                       "fnegd $dst, $src",
+		       [(set DFPRegs:$dst, (fneg DFPRegs:$src))]>;
+
 def FMULS   : InstARM<(ops FPRegs:$dst, FPRegs:$a, FPRegs:$b),
                        "fmuls $dst, $a, $b",
 		       [(set FPRegs:$dst, (fmul FPRegs:$a, FPRegs:$b))]>;
