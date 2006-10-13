@@ -94,11 +94,7 @@ static void ReplaceUsesOfBlockWith(MachineBasicBlock *BB,
         I->getOperand(i).setMachineBasicBlock(New);
   }
 
-  // If BB falls through into Old, insert an unconditional branch to New.
-  MachineFunction::iterator BBSucc = BB; ++BBSucc;
-  if (BBSucc != BB->getParent()->end() && &*BBSucc == Old)
-    TII.insertGoto(*BB, *New);
-
+  // Update the successor information.
   std::vector<MachineBasicBlock*> Succs(BB->succ_begin(), BB->succ_end());
   for (int i = Succs.size()-1; i >= 0; --i)
     if (Succs[i] == Old) {
@@ -110,7 +106,7 @@ static void ReplaceUsesOfBlockWith(MachineBasicBlock *BB,
 
 bool BranchFolder::OptimizeBlock(MachineFunction::iterator MBB,
                                  const TargetInstrInfo &TII) {
-  // If this block is empty, make everyone use it's fall-through, not the block
+  // If this block is empty, make everyone use its fall-through, not the block
   // explicitly.
   if (MBB->empty()) {
     if (MBB->pred_empty()) return false;
@@ -124,6 +120,8 @@ bool BranchFolder::OptimizeBlock(MachineFunction::iterator MBB,
     return true;
   }
 
+#if 0
+
   if (MBB->pred_size() == 1) {
     // If this block has a single predecessor, and if that block has a single
     // successor, merge this block into that block.
@@ -131,6 +129,43 @@ bool BranchFolder::OptimizeBlock(MachineFunction::iterator MBB,
     if (Pred->succ_size() == 1) {
       // Delete all of the terminators from end of the pred block.  NOTE, this
       // assumes that terminators do not have side effects!
+      // FIXME: This doesn't work for FP_REG_KILL.
+      
+      while (!Pred->empty() && TII.isTerminatorInstr(Pred->back().getOpcode()))
+        Pred->pop_back();
+      
+      // Splice the instructions over.
+      Pred->splice(Pred->end(), MBB, MBB->begin(), MBB->end());
+      
+      // If MBB does not end with a barrier, add a goto instruction to the end.
+      if (Pred->empty() || !TII.isBarrier(Pred->back().getOpcode()))
+        TII.insertGoto(*Pred, *next(MBB));
+      
+      // Update the CFG now.
+      Pred->removeSuccessor(Pred->succ_begin());
+      while (!MBB->succ_empty()) {
+        Pred->addSuccessor(*(MBB->succ_end()-1));
+        MBB->removeSuccessor(MBB->succ_end()-1);
+      }
+      return true;
+    }
+  }
+  
+  // If BB falls through into Old, insert an unconditional branch to New.
+  MachineFunction::iterator BBSucc = BB; ++BBSucc;
+  if (BBSucc != BB->getParent()->end() && &*BBSucc == Old)
+    TII.insertGoto(*BB, *New);
+  
+  
+  if (MBB->pred_size() == 1) {
+    // If this block has a single predecessor, and if that block has a single
+    // successor, merge this block into that block.
+    MachineBasicBlock *Pred = *MBB->pred_begin();
+    if (Pred->succ_size() == 1) {
+      // Delete all of the terminators from end of the pred block.  NOTE, this
+      // assumes that terminators do not have side effects!
+      // FIXME: This doesn't work for FP_REG_KILL.
+      
       while (!Pred->empty() && TII.isTerminatorInstr(Pred->back().getOpcode()))
         Pred->pop_back();
 
@@ -199,6 +234,6 @@ bool BranchFolder::OptimizeBlock(MachineFunction::iterator MBB,
       }
     }
   }
-
+#endif
   return false;
 }
