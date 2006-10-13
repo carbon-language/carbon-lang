@@ -37,3 +37,10 @@ entry:
 	%tmp1 = add ulong %y, 1
 	ret ulong %tmp1
 }
+
+void %f7() {
+entry:
+	%tmp = call long %f8()
+	ret void
+}
+declare long %f8()

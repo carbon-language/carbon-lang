@@ -283,7 +283,6 @@ static SDOperand LowerCALL(SDOperand Op, SelectionDAG &DAG) {
   assert(CallConv == CallingConv::C && "unknown calling convention");
   bool isVarArg      = cast<ConstantSDNode>(Op.getOperand(2))->getValue() != 0;
   bool isTailCall    = cast<ConstantSDNode>(Op.getOperand(3))->getValue() != 0;
-  assert(isTailCall == false && "tail call not supported");
   SDOperand Callee   = Op.getOperand(4);
   unsigned NumOps    = (Op.getNumOperands() - 5) / 2;
   SDOperand StackPtr = DAG.getRegister(ARM::R13, MVT::i32);
@@ -377,22 +376,30 @@ static SDOperand LowerCALL(SDOperand Op, SelectionDAG &DAG) {
   MVT::ValueType VT = Op.Val->getValueType(0);
   if (VT != MVT::Other) {
     assert(VT == MVT::i32 || VT == MVT::f32 || VT == MVT::f64);
-    SDOperand Value;
 
     SDOperand Value1 = DAG.getCopyFromReg(Chain, ARM::R0, MVT::i32, InFlag);
     Chain            = Value1.getValue(1);
     InFlag           = Value1.getValue(2);
-    if (VT == MVT::i32)
-      Value = Value1;
-    if (VT == MVT::f32)
-      Value = DAG.getNode(ISD::BIT_CONVERT, MVT::f32, Value1);
+    NodeTys.push_back(VT);
+    if (VT == MVT::i32) {
+      ResultVals.push_back(Value1);
+      if (Op.Val->getValueType(1) == MVT::i32) {
+        SDOperand Value2 = DAG.getCopyFromReg(Chain, ARM::R1, MVT::i32, InFlag);
+        Chain            = Value2.getValue(1);
+        ResultVals.push_back(Value2);
+        NodeTys.push_back(VT);
+      }
+    }
+    if (VT == MVT::f32) {
+      SDOperand Value = DAG.getNode(ISD::BIT_CONVERT, MVT::f32, Value1);
+      ResultVals.push_back(Value);
+    }
     if (VT == MVT::f64) {
       SDOperand Value2 = DAG.getCopyFromReg(Chain, ARM::R1, MVT::i32, InFlag);
       Chain            = Value2.getValue(1);
-      Value            = DAG.getNode(ARMISD::FMDRR, MVT::f64, Value1, Value2);
+      SDOperand Value  = DAG.getNode(ARMISD::FMDRR, MVT::f64, Value1, Value2);
+      ResultVals.push_back(Value);
     }
-    ResultVals.push_back(Value);
-    NodeTys.push_back(VT);
   }
 
   Chain = DAG.getNode(ISD::CALLSEQ_END, MVT::Other, Chain,
