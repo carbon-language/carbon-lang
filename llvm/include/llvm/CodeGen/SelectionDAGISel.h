@@ -71,8 +71,8 @@ public:
   }
 
   /// CanBeFoldedBy - Returns true if the specific operand node N of U can be
-  /// folded during instruction selection?
-  virtual bool CanBeFoldedBy(SDNode *N, SDNode *U) { return true; }
+  /// folded during instruction selection that starts at Root?
+  virtual bool CanBeFoldedBy(SDNode *N, SDNode *U, SDNode *Root) { return true;}
   
   /// CreateTargetHazardRecognizer - Return a newly allocated hazard recognizer
   /// to use for this target when scheduling the DAG.
