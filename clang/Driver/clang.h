@@ -19,6 +19,8 @@ namespace clang {
 class Preprocessor;
 class LangOptions;
 class Action;
+class TargetInfo;
+class Diagnostic;
 
 /// DoPrintPreprocessedInput - Implement -E mode.
 void DoPrintPreprocessedInput(unsigned MainFileID, Preprocessor &PP,
@@ -27,6 +29,10 @@ void DoPrintPreprocessedInput(unsigned MainFileID, Preprocessor &PP,
 /// CreatePrintParserActionsAction - Return the actions implementation that
 /// implements the -parse-print-callbacks option.
 Action *CreatePrintParserActionsAction();
+
+/// CreateTargetInfo - Return the set of target info objects as specified by
+/// the -arch command line option.
+TargetInfo *CreateTargetInfo(Diagnostic &Diags);
 
 }  // end namespace clang
 }  // end namespace llvm

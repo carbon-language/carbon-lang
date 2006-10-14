@@ -678,6 +678,15 @@ int main(int argc, char **argv) {
   Options.DollarIdents = Options.Digraphs = 1;
   Options.ObjC1 = Options.ObjC2 = 1;
 
+  // Get information about the targets being compiled for.  Note that this
+  // pointer and the TargetInfoImpl objects are never deleted by this toy
+  // driver.
+  TargetInfo *Target = CreateTargetInfo(OurDiagnostics);
+  if (Target == 0) {
+    std::cerr << "Sorry, don't know what target this is, please use -arch.\n";
+    return 1;
+  }
+  
   // Create a file manager object to provide access to and cache the filesystem.
   FileManager FileMgr;
   
