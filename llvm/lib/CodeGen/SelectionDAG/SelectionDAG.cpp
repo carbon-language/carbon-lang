@@ -736,8 +736,8 @@ SDOperand SelectionDAG::getSrcValue(const Value *V, int Offset) {
   return SDOperand(N, 0);
 }
 
-SDOperand SelectionDAG::SimplifySetCC(MVT::ValueType VT, SDOperand N1,
-                                      SDOperand N2, ISD::CondCode Cond) {
+SDOperand SelectionDAG::FoldSetCC(MVT::ValueType VT, SDOperand N1,
+                                  SDOperand N2, ISD::CondCode Cond) {
   // These setcc operations always fold.
   switch (Cond) {
   default: break;
@@ -759,18 +759,18 @@ SDOperand SelectionDAG::SimplifySetCC(MVT::ValueType VT, SDOperand N1,
     assert(!MVT::isInteger(N1.getValueType()) && "Illegal setcc for integer!");
     break;
   }
-
+  
   if (ConstantSDNode *N2C = dyn_cast<ConstantSDNode>(N2.Val)) {
     uint64_t C2 = N2C->getValue();
     if (ConstantSDNode *N1C = dyn_cast<ConstantSDNode>(N1.Val)) {
       uint64_t C1 = N1C->getValue();
-
+      
       // Sign extend the operands if required
       if (ISD::isSignedIntSetCC(Cond)) {
         C1 = N1C->getSignExtended();
         C2 = N2C->getSignExtended();
       }
-
+      
       switch (Cond) {
       default: assert(0 && "Unknown integer setcc!");
       case ISD::SETEQ:  return getConstant(C1 == C2, VT);
@@ -784,156 +784,12 @@ SDOperand SelectionDAG::SimplifySetCC(MVT::ValueType VT, SDOperand N1,
       case ISD::SETLE:  return getConstant((int64_t)C1 <= (int64_t)C2, VT);
       case ISD::SETGE:  return getConstant((int64_t)C1 >= (int64_t)C2, VT);
       }
-    } else {
-      // If the LHS is a ZERO_EXTEND, perform the comparison on the input.
-      if (N1.getOpcode() == ISD::ZERO_EXTEND) {
-        unsigned InSize = MVT::getSizeInBits(N1.getOperand(0).getValueType());
-
-        // If the comparison constant has bits in the upper part, the
-        // zero-extended value could never match.
-        if (C2 & (~0ULL << InSize)) {
-          unsigned VSize = MVT::getSizeInBits(N1.getValueType());
-          switch (Cond) {
-          case ISD::SETUGT:
-          case ISD::SETUGE:
-          case ISD::SETEQ: return getConstant(0, VT);
-          case ISD::SETULT:
-          case ISD::SETULE:
-          case ISD::SETNE: return getConstant(1, VT);
-          case ISD::SETGT:
-          case ISD::SETGE:
-            // True if the sign bit of C2 is set.
-            return getConstant((C2 & (1ULL << VSize)) != 0, VT);
-          case ISD::SETLT:
-          case ISD::SETLE:
-            // True if the sign bit of C2 isn't set.
-            return getConstant((C2 & (1ULL << VSize)) == 0, VT);
-          default:
-            break;
-          }
-        }
-
-        // Otherwise, we can perform the comparison with the low bits.
-        switch (Cond) {
-        case ISD::SETEQ:
-        case ISD::SETNE:
-        case ISD::SETUGT:
-        case ISD::SETUGE:
-        case ISD::SETULT:
-        case ISD::SETULE:
-          return getSetCC(VT, N1.getOperand(0),
-                          getConstant(C2, N1.getOperand(0).getValueType()),
-                          Cond);
-        default:
-          break;   // todo, be more careful with signed comparisons
-        }
-      } else if (N1.getOpcode() == ISD::SIGN_EXTEND_INREG &&
-                 (Cond == ISD::SETEQ || Cond == ISD::SETNE)) {
-        MVT::ValueType ExtSrcTy = cast<VTSDNode>(N1.getOperand(1))->getVT();
-        unsigned ExtSrcTyBits = MVT::getSizeInBits(ExtSrcTy);
-        MVT::ValueType ExtDstTy = N1.getValueType();
-        unsigned ExtDstTyBits = MVT::getSizeInBits(ExtDstTy);
-
-        // If the extended part has any inconsistent bits, it cannot ever
-        // compare equal.  In other words, they have to be all ones or all
-        // zeros.
-        uint64_t ExtBits =
-          (~0ULL >> (64-ExtSrcTyBits)) & (~0ULL << (ExtDstTyBits-1));
-        if ((C2 & ExtBits) != 0 && (C2 & ExtBits) != ExtBits)
-          return getConstant(Cond == ISD::SETNE, VT);
-        
-        // Otherwise, make this a use of a zext.
-        return getSetCC(VT, getZeroExtendInReg(N1.getOperand(0), ExtSrcTy),
-                        getConstant(C2 & (~0ULL>>(64-ExtSrcTyBits)), ExtDstTy),
-                        Cond);
-      }
-
-      uint64_t MinVal, MaxVal;
-      unsigned OperandBitSize = MVT::getSizeInBits(N2C->getValueType(0));
-      if (ISD::isSignedIntSetCC(Cond)) {
-        MinVal = 1ULL << (OperandBitSize-1);
-        if (OperandBitSize != 1)   // Avoid X >> 64, which is undefined.
-          MaxVal = ~0ULL >> (65-OperandBitSize);
-        else
-          MaxVal = 0;
-      } else {
-        MinVal = 0;
-        MaxVal = ~0ULL >> (64-OperandBitSize);
-      }
-
-      // Canonicalize GE/LE comparisons to use GT/LT comparisons.
-      if (Cond == ISD::SETGE || Cond == ISD::SETUGE) {
-        if (C2 == MinVal) return getConstant(1, VT);   // X >= MIN --> true
-        --C2;                                          // X >= C1 --> X > (C1-1)
-        return getSetCC(VT, N1, getConstant(C2, N2.getValueType()),
-                        (Cond == ISD::SETGE) ? ISD::SETGT : ISD::SETUGT);
-      }
-
-      if (Cond == ISD::SETLE || Cond == ISD::SETULE) {
-        if (C2 == MaxVal) return getConstant(1, VT);   // X <= MAX --> true
-        ++C2;                                          // X <= C1 --> X < (C1+1)
-        return getSetCC(VT, N1, getConstant(C2, N2.getValueType()),
-                        (Cond == ISD::SETLE) ? ISD::SETLT : ISD::SETULT);
-      }
-
-      if ((Cond == ISD::SETLT || Cond == ISD::SETULT) && C2 == MinVal)
-        return getConstant(0, VT);      // X < MIN --> false
-
-      // Canonicalize setgt X, Min --> setne X, Min
-      if ((Cond == ISD::SETGT || Cond == ISD::SETUGT) && C2 == MinVal)
-        return getSetCC(VT, N1, N2, ISD::SETNE);
-
-      // If we have setult X, 1, turn it into seteq X, 0
-      if ((Cond == ISD::SETLT || Cond == ISD::SETULT) && C2 == MinVal+1)
-        return getSetCC(VT, N1, getConstant(MinVal, N1.getValueType()),
-                        ISD::SETEQ);
-      // If we have setugt X, Max-1, turn it into seteq X, Max
-      else if ((Cond == ISD::SETGT || Cond == ISD::SETUGT) && C2 == MaxVal-1)
-        return getSetCC(VT, N1, getConstant(MaxVal, N1.getValueType()),
-                        ISD::SETEQ);
-
-      // If we have "setcc X, C1", check to see if we can shrink the immediate
-      // by changing cc.
-
-      // SETUGT X, SINTMAX  -> SETLT X, 0
-      if (Cond == ISD::SETUGT && OperandBitSize != 1 &&
-          C2 == (~0ULL >> (65-OperandBitSize)))
-        return getSetCC(VT, N1, getConstant(0, N2.getValueType()), ISD::SETLT);
-
-      // FIXME: Implement the rest of these.
-
-
-      // Fold bit comparisons when we can.
-      if ((Cond == ISD::SETEQ || Cond == ISD::SETNE) &&
-          VT == N1.getValueType() && N1.getOpcode() == ISD::AND)
-        if (ConstantSDNode *AndRHS =
-                    dyn_cast<ConstantSDNode>(N1.getOperand(1))) {
-          if (Cond == ISD::SETNE && C2 == 0) {// (X & 8) != 0  -->  (X & 8) >> 3
-            // Perform the xform if the AND RHS is a single bit.
-            if (isPowerOf2_64(AndRHS->getValue())) {
-              return getNode(ISD::SRL, VT, N1,
-                             getConstant(Log2_64(AndRHS->getValue()),
-                                                   TLI.getShiftAmountTy()));
-            }
-          } else if (Cond == ISD::SETEQ && C2 == AndRHS->getValue()) {
-            // (X & 8) == 8  -->  (X & 8) >> 3
-            // Perform the xform if C2 is a single bit.
-            if (isPowerOf2_64(C2)) {
-              return getNode(ISD::SRL, VT, N1,
-                             getConstant(Log2_64(C2),TLI.getShiftAmountTy()));
-            }
-          }
-        }
     }
-  } else if (isa<ConstantSDNode>(N1.Val)) {
-      // Ensure that the constant occurs on the RHS.
-    return getSetCC(VT, N2, N1, ISD::getSetCCSwappedOperands(Cond));
   }
-
   if (ConstantFPSDNode *N1C = dyn_cast<ConstantFPSDNode>(N1.Val))
     if (ConstantFPSDNode *N2C = dyn_cast<ConstantFPSDNode>(N2.Val)) {
       double C1 = N1C->getValue(), C2 = N2C->getValue();
-
+      
       switch (Cond) {
       default: break; // FIXME: Implement the rest of these!
       case ISD::SETEQ:  return getConstant(C1 == C2, VT);
@@ -947,10 +803,11 @@ SDOperand SelectionDAG::SimplifySetCC(MVT::ValueType VT, SDOperand N1,
       // Ensure that the constant occurs on the RHS.
       return getSetCC(VT, N2, N1, ISD::getSetCCSwappedOperands(Cond));
     }
-
+      
   // Could not fold it.
   return SDOperand();
 }
+
 
 /// getNode - Gets or creates the specified node.
 ///
@@ -1369,8 +1226,14 @@ SDOperand SelectionDAG::getNode(unsigned Opcode, MVT::ValueType VT,
     }
   }
 
-  // Finally, fold operations that do not require constants.
+  // Fold operations.
   switch (Opcode) {
+  case ISD::AND:
+    // (X & 0) -> 0.  This commonly occurs when legalizing i64 values, so it's
+    // worth handling here.
+    if (N2C && N2C->getValue() == 0)
+      return N2;
+    break;
   case ISD::FP_ROUND_INREG:
     if (cast<VTSDNode>(N2)->getVT() == VT) return N1;  // Not actually rounding.
     break;
@@ -1445,8 +1308,8 @@ SDOperand SelectionDAG::getNode(unsigned Opcode, MVT::ValueType VT,
   //ConstantSDNode *N3C = dyn_cast<ConstantSDNode>(N3.Val);
   switch (Opcode) {
   case ISD::SETCC: {
-    // Use SimplifySetCC  to simplify SETCC's.
-    SDOperand Simp = SimplifySetCC(VT, N1, N2, cast<CondCodeSDNode>(N3)->get());
+    // Use FoldSetCC to simplify SETCC's.
+    SDOperand Simp = FoldSetCC(VT, N1, N2, cast<CondCodeSDNode>(N3)->get());
     if (Simp.Val) return Simp;
     break;
   }

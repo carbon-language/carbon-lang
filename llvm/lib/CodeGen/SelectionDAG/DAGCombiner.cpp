@@ -3586,27 +3586,7 @@ SDOperand DAGCombiner::SimplifySetCC(MVT::ValueType VT, SDOperand N0,
   if (ConstantSDNode *N1C = dyn_cast<ConstantSDNode>(N1.Val)) {
     uint64_t C1 = N1C->getValue();
     if (ConstantSDNode *N0C = dyn_cast<ConstantSDNode>(N0.Val)) {
-      uint64_t C0 = N0C->getValue();
-
-      // Sign extend the operands if required
-      if (ISD::isSignedIntSetCC(Cond)) {
-        C0 = N0C->getSignExtended();
-        C1 = N1C->getSignExtended();
-      }
-
-      switch (Cond) {
-      default: assert(0 && "Unknown integer setcc!");
-      case ISD::SETEQ:  return DAG.getConstant(C0 == C1, VT);
-      case ISD::SETNE:  return DAG.getConstant(C0 != C1, VT);
-      case ISD::SETULT: return DAG.getConstant(C0 <  C1, VT);
-      case ISD::SETUGT: return DAG.getConstant(C0 >  C1, VT);
-      case ISD::SETULE: return DAG.getConstant(C0 <= C1, VT);
-      case ISD::SETUGE: return DAG.getConstant(C0 >= C1, VT);
-      case ISD::SETLT:  return DAG.getConstant((int64_t)C0 <  (int64_t)C1, VT);
-      case ISD::SETGT:  return DAG.getConstant((int64_t)C0 >  (int64_t)C1, VT);
-      case ISD::SETLE:  return DAG.getConstant((int64_t)C0 <= (int64_t)C1, VT);
-      case ISD::SETGE:  return DAG.getConstant((int64_t)C0 >= (int64_t)C1, VT);
-      }
+      return DAG.FoldSetCC(VT, N0, N1, Cond);
     } else {
       // If the LHS is '(srl (ctlz x), 5)', the RHS is 0/1, and this is an
       // equality comparison, then we're just comparing whether X itself is
@@ -3797,7 +3777,7 @@ SDOperand DAGCombiner::SimplifySetCC(MVT::ValueType VT, SDOperand N0,
                     dyn_cast<ConstantSDNode>(N0.getOperand(1))) {
           if (Cond == ISD::SETNE && C1 == 0) {// (X & 8) != 0  -->  (X & 8) >> 3
             // Perform the xform if the AND RHS is a single bit.
-            if ((AndRHS->getValue() & (AndRHS->getValue()-1)) == 0) {
+            if (isPowerOf2_64(AndRHS->getValue())) {
               return DAG.getNode(ISD::SRL, VT, N0,
                              DAG.getConstant(Log2_64(AndRHS->getValue()),
                                                    TLI.getShiftAmountTy()));
@@ -3805,7 +3785,7 @@ SDOperand DAGCombiner::SimplifySetCC(MVT::ValueType VT, SDOperand N0,
           } else if (Cond == ISD::SETEQ && C1 == AndRHS->getValue()) {
             // (X & 8) == 8  -->  (X & 8) >> 3
             // Perform the xform if C1 is a single bit.
-            if ((C1 & (C1-1)) == 0) {
+            if (isPowerOf2_64(C1)) {
               return DAG.getNode(ISD::SRL, VT, N0,
                           DAG.getConstant(Log2_64(C1),TLI.getShiftAmountTy()));
             }
@@ -3817,23 +3797,11 @@ SDOperand DAGCombiner::SimplifySetCC(MVT::ValueType VT, SDOperand N0,
     return DAG.getSetCC(VT, N1, N0, ISD::getSetCCSwappedOperands(Cond));
   }
 
-  if (ConstantFPSDNode *N0C = dyn_cast<ConstantFPSDNode>(N0.Val))
-    if (ConstantFPSDNode *N1C = dyn_cast<ConstantFPSDNode>(N1.Val)) {
-      double C0 = N0C->getValue(), C1 = N1C->getValue();
-
-      switch (Cond) {
-      default: break; // FIXME: Implement the rest of these!
-      case ISD::SETEQ:  return DAG.getConstant(C0 == C1, VT);
-      case ISD::SETNE:  return DAG.getConstant(C0 != C1, VT);
-      case ISD::SETLT:  return DAG.getConstant(C0 < C1, VT);
-      case ISD::SETGT:  return DAG.getConstant(C0 > C1, VT);
-      case ISD::SETLE:  return DAG.getConstant(C0 <= C1, VT);
-      case ISD::SETGE:  return DAG.getConstant(C0 >= C1, VT);
-      }
-    } else {
-      // Ensure that the constant occurs on the RHS.
-      return DAG.getSetCC(VT, N1, N0, ISD::getSetCCSwappedOperands(Cond));
-    }
+  if (ConstantFPSDNode *N0C = dyn_cast<ConstantFPSDNode>(N0.Val)) {
+    // Constant fold or commute setcc.
+    SDOperand O = DAG.FoldSetCC(VT, N0, N1, Cond);    
+    if (O.Val) return O;
+  }
 
   if (N0 == N1) {
     // We can always fold X == Y for integer setcc's.

@@ -449,6 +449,10 @@ public:
 
   void dump() const;
 
+  /// FoldSetCC - Constant fold a setcc to true or false.
+  SDOperand FoldSetCC(MVT::ValueType VT, SDOperand N1,
+                      SDOperand N2, ISD::CondCode Cond);
+  
 private:
   void RemoveNodeFromCSEMaps(SDNode *N);
   SDNode *AddNonLeafNodeToCSEMaps(SDNode *N);
@@ -459,11 +463,6 @@ private:
                                void *&InsertPos);
 
   void DeleteNodeNotInCSEMaps(SDNode *N);
-  
-  /// SimplifySetCC - Try to simplify a setcc built with the specified operands 
-  /// and cc.  If unable to simplify it, return a null SDOperand.
-  SDOperand SimplifySetCC(MVT::ValueType VT, SDOperand N1,
-                          SDOperand N2, ISD::CondCode Cond);
   
   // List of non-single value types.
   std::list<std::vector<MVT::ValueType> > VTList;
