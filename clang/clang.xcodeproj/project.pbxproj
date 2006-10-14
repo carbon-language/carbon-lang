@@ -35,6 +35,7 @@
 		DEC8DAAD0A94400300353FCA /* ASTStreamer.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DEC8DAAC0A94400300353FCA /* ASTStreamer.cpp */; };
 		DEC8DAC00A94402500353FCA /* ASTStreamer.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = DEC8DABF0A94402500353FCA /* ASTStreamer.h */; };
 		DED626C90AE0C065001E80A4 /* TargetInfo.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DED626C80AE0C065001E80A4 /* TargetInfo.cpp */; };
+		DED627030AE0C51D001E80A4 /* Targets.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DED627020AE0C51D001E80A4 /* Targets.cpp */; };
 		DED7D7410A524295003AD0FB /* Diagnostic.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = DED7D7310A524295003AD0FB /* Diagnostic.h */; };
 		DED7D7420A524295003AD0FB /* DiagnosticKinds.def in CopyFiles */ = {isa = PBXBuildFile; fileRef = DED7D7320A524295003AD0FB /* DiagnosticKinds.def */; };
 		DED7D7430A524295003AD0FB /* FileManager.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = DED7D7330A524295003AD0FB /* FileManager.h */; };
@@ -139,6 +140,7 @@
 		DEC8DAAC0A94400300353FCA /* ASTStreamer.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; name = ASTStreamer.cpp; path = AST/ASTStreamer.cpp; sourceTree = "<group>"; };
 		DEC8DABF0A94402500353FCA /* ASTStreamer.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; name = ASTStreamer.h; path = clang/AST/ASTStreamer.h; sourceTree = "<group>"; };
 		DED626C80AE0C065001E80A4 /* TargetInfo.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = TargetInfo.cpp; sourceTree = "<group>"; };
+		DED627020AE0C51D001E80A4 /* Targets.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; name = Targets.cpp; path = Driver/Targets.cpp; sourceTree = "<group>"; };
 		DED7D7310A524295003AD0FB /* Diagnostic.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = Diagnostic.h; sourceTree = "<group>"; };
 		DED7D7320A524295003AD0FB /* DiagnosticKinds.def */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = text; path = DiagnosticKinds.def; sourceTree = "<group>"; };
 		DED7D7330A524295003AD0FB /* FileManager.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = FileManager.h; sourceTree = "<group>"; };
@@ -253,6 +255,7 @@
 			children = (
 				DE5932CD0AD60FF400BC794C /* clang.cpp */,
 				DE5932CE0AD60FF400BC794C /* clang.h */,
+				DED627020AE0C51D001E80A4 /* Targets.cpp */,
 				DE5932CF0AD60FF400BC794C /* PrintParserCallbacks.cpp */,
 				DE5932D00AD60FF400BC794C /* PrintPreprocessedOutput.cpp */,
 			);
@@ -423,6 +426,7 @@
 				DE5932D30AD60FF400BC794C /* PrintParserCallbacks.cpp in Sources */,
 				DE5932D40AD60FF400BC794C /* PrintPreprocessedOutput.cpp in Sources */,
 				DED626C90AE0C065001E80A4 /* TargetInfo.cpp in Sources */,
+				DED627030AE0C51D001E80A4 /* Targets.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
