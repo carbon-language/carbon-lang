@@ -532,7 +532,7 @@ private:
   void HandleImportDirective(LexerToken &Tok);
   
   // Macro handling.
-  void HandleDefineDirective(LexerToken &Tok);
+  void HandleDefineDirective(LexerToken &Tok, bool isTargetSpecific);
   void HandleUndefDirective(LexerToken &Tok);
   // HandleAssertDirective(LexerToken &Tok);
   // HandleUnassertDirective(LexerToken &Tok);

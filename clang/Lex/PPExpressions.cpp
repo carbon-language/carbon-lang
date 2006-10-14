@@ -21,6 +21,7 @@
 
 #include "clang/Lex/Preprocessor.h"
 #include "clang/Lex/MacroInfo.h"
+#include "clang/Basic/TargetInfo.h"
 #include "clang/Basic/TokenKinds.h"
 #include "clang/Basic/Diagnostic.h"
 using namespace llvm;
@@ -95,7 +96,17 @@ static bool EvaluateValue(int &Result, LexerToken &PeekTok, DefinedTracker &DT,
     Result = II->getMacroInfo() != 0;
     
     // If there is a macro, mark it used.
-    if (Result) II->getMacroInfo()->setIsUsed(true);
+    if (Result) {
+      II->getMacroInfo()->setIsUsed(true);
+      
+      // If this is the first use of a target-specific macro, warn about it.
+      if (II->getMacroInfo()->isTargetSpecific()) {
+        // Don't warn on second use.
+        II->getMacroInfo()->setIsTargetSpecific(false);
+        PP.getTargetInfo().DiagnoseNonPortability(PeekTok.getLocation(),
+                                                  diag::port_target_macro_use);
+      }
+    }
 
     // Consume identifier.
     PP.Lex(PeekTok);

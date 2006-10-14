@@ -85,7 +85,12 @@ public:
   }
   
   ///===---- Target property query methods --------------------------------===//
-  
+
+  /// DiagnoseNonPortability - Emit a diagnostic indicating that the current
+  /// translation unit is non-portable due to a construct at the specified
+  /// location.  DiagKind indicates what went wrong.
+  void DiagnoseNonPortability(SourceLocation Loc, unsigned DiagKind);
+
   /// getTargetDefines - Appends the target-specific #define values for this
   /// target set to the specified buffer.
   void getTargetDefines(std::vector<char> &DefineBuffer);
@@ -96,8 +101,8 @@ public:
     if (!WCharWidth) ComputeWCharWidth(Loc);
     return WCharWidth;
   }
+
 private:
-  void DiagnoseNonPortability(SourceLocation Loc, unsigned DiagKind);
   void ComputeWCharWidth(SourceLocation Loc);
 };
 

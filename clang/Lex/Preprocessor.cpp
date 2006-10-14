@@ -32,6 +32,7 @@
 #include "clang/Basic/Diagnostic.h"
 #include "clang/Basic/FileManager.h"
 #include "clang/Basic/SourceManager.h"
+#include "clang/Basic/TargetInfo.h"
 #include "llvm/ADT/SmallVector.h"
 #include <iostream>
 using namespace llvm;
@@ -590,6 +591,13 @@ bool Preprocessor::HandleMacroExpandedIdentifier(LexerToken &Identifier,
   if (MI->isBuiltinMacro()) {
     ExpandBuiltinMacro(Identifier);
     return false;
+  }
+  
+  // If this is the first use of a target-specific macro, warn about it.
+  if (MI->isTargetSpecific()) {
+    MI->setIsTargetSpecific(false);  // Don't warn on second use.
+    getTargetInfo().DiagnoseNonPortability(Identifier.getLocation(),
+                                           diag::port_target_macro_use);
   }
   
   /// Args - If this is a function-like macro expansion, this contains,
@@ -1428,7 +1436,7 @@ void Preprocessor::HandleDirective(LexerToken &Result) {
       break;
     case 6:
       if (Directive[0] == 'd' && !strcmp(Directive, "define"))
-        return HandleDefineDirective(Result);
+        return HandleDefineDirective(Result, false);
       if (Directive[0] == 'i' && !strcmp(Directive, "ifndef"))
         return HandleIfdefDirective(Result, true, ReadAnyTokensBeforeDirective);
       if (Directive[0] == 'i' && !strcmp(Directive, "import"))
@@ -1454,6 +1462,10 @@ void Preprocessor::HandleDirective(LexerToken &Result) {
     case 12:
       if (Directive[0] == 'i' && !strcmp(Directive, "include_next"))
         return HandleIncludeNextDirective(Result);      // Handle #include_next.
+      break;
+    case 13:
+      if (Directive[0] == 'd' && !strcmp(Directive, "define_target"))
+        return HandleDefineDirective(Result, true);
       break;
     }
     break;
@@ -1693,9 +1705,11 @@ bool Preprocessor::ReadMacroDefinitionArgList(MacroInfo *MI) {
 }
 
 /// HandleDefineDirective - Implements #define.  This consumes the entire macro
-/// line then lets the caller lex the next real token.
+/// line then lets the caller lex the next real token.  If 'isTargetSpecific' is
+/// true, then this is a "#define_target", otherwise this is a "#define".
 ///
-void Preprocessor::HandleDefineDirective(LexerToken &DefineTok) {
+void Preprocessor::HandleDefineDirective(LexerToken &DefineTok,
+                                         bool isTargetSpecific) {
   ++NumDefined;
 
   LexerToken MacroNameTok;
@@ -1710,6 +1724,7 @@ void Preprocessor::HandleDefineDirective(LexerToken &DefineTok) {
   CurLexer->KeepCommentMode = Features.KeepMacroComments;
   
   MacroInfo *MI = new MacroInfo(MacroNameTok.getLocation());
+  if (isTargetSpecific) MI->setIsTargetSpecific();
   
   LexerToken Tok;
   LexUnexpandedToken(Tok);
@@ -1897,8 +1912,18 @@ void Preprocessor::HandleIfdefDirective(LexerToken &Result, bool isIfndef,
   
   MacroInfo *MI = MacroNameTok.getIdentifierInfo()->getMacroInfo();
 
-  // If there is a macro, mark it used.
-  if (MI) MI->setIsUsed(true);
+  // If there is a macro, process it.
+  if (MI) {
+    // Mark it used.
+    MI->setIsUsed(true);
+
+    // If this is the first use of a target-specific macro, warn about it.
+    if (MI->isTargetSpecific()) {
+      MI->setIsTargetSpecific(false);  // Don't warn on second use.
+      getTargetInfo().DiagnoseNonPortability(MacroNameTok.getLocation(),
+                                             diag::port_target_macro_use);
+    }
+  }
   
   // Should we include the stuff contained by this directive?
   if (!MI == isIfndef) {
