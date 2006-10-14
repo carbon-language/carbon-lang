@@ -40,6 +40,10 @@ bool BranchFolder::runOnMachineFunction(MachineFunction &MF) {
   TII = MF.getTarget().getInstrInfo();
   if (!TII) return false;
 
+  
+  // DISABLED FOR NOW.
+  return false;
+  
   //MF.dump();
   
   bool EverMadeChange = false;
