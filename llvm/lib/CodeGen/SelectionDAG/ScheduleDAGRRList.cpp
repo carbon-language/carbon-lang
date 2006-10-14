@@ -90,10 +90,10 @@ void ScheduleDAGRRList::Schedule() {
   // Build scheduling units.
   BuildSchedUnits();
 
-  CalculateDepths();
-  CalculateHeights();
   DEBUG(for (unsigned su = 0, e = SUnits.size(); su != e; ++su)
           SUnits[su].dumpAll(&DAG));
+  CalculateDepths();
+  CalculateHeights();
 
   AvailableQueue->initNodes(SUnits);
 

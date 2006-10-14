@@ -656,7 +656,7 @@ void SUnit::dumpAll(const SelectionDAG *G) const {
         std::cerr << "   ch  #";
       else
         std::cerr << "   val #";
-      std::cerr << I->first << "\n";
+      std::cerr << I->first << " - SU(" << I->first->NodeNum << ")\n";
     }
   }
   if (Succs.size() != 0) {
@@ -667,7 +667,7 @@ void SUnit::dumpAll(const SelectionDAG *G) const {
         std::cerr << "   ch  #";
       else
         std::cerr << "   val #";
-      std::cerr << I->first << "\n";
+      std::cerr << I->first << " - SU(" << I->first->NodeNum << ")\n";
     }
   }
   std::cerr << "\n";
