@@ -37,49 +37,76 @@ Archs("arch", cl::desc("Architectures to compile for"),
                  clEnumValEnd));
 
 //===----------------------------------------------------------------------===//
-//  Common code shared among the Darwin targets.
+//  Common code shared among targets.
 //===----------------------------------------------------------------------===//
 
 namespace {
 class DarwinTargetInfo : public TargetInfoImpl {
 public:
-  
-  // nothing so far.
+  virtual void getTargetDefines(std::vector<std::string> &Defines) const {
+    Defines.push_back("__APPLE__");
+  }
+
 };
 } // end anonymous namespace.
 
+
+/// getPowerPCDefines - Return a set of the PowerPC-specific #defines that are
+/// not tied to a specific subtarget.
+static void getPowerPCDefines(std::vector<std::string> &Defines, bool is64Bit) {
+  Defines.push_back("__ppc__");
+
+}
+
+/// getX86Defines - Return a set of the X86-specific #defines that are
+/// not tied to a specific subtarget.
+static void getX86Defines(std::vector<std::string> &Defines, bool is64Bit) {
+  Defines.push_back("__i386__");
+
+}
 
 //===----------------------------------------------------------------------===//
 // Specific target implementations.
 //===----------------------------------------------------------------------===//
 
-// FIXME: Move target-specific preprocessor definitions here.
 
 namespace {
 class DarwinPPCTargetInfo : public DarwinTargetInfo {
 public:
-  // nothing so far.
+  virtual void getTargetDefines(std::vector<std::string> &Defines) const {
+    DarwinTargetInfo::getTargetDefines(Defines);
+    getPowerPCDefines(Defines, false);
+  }
 };
 } // end anonymous namespace.
 
 namespace {
 class DarwinPPC64TargetInfo : public DarwinTargetInfo {
 public:
-    // nothing so far.
+  virtual void getTargetDefines(std::vector<std::string> &Defines) const {
+    DarwinTargetInfo::getTargetDefines(Defines);
+    getPowerPCDefines(Defines, true);
+  }
 };
 } // end anonymous namespace.
 
 namespace {
 class DarwinI386TargetInfo : public DarwinTargetInfo {
 public:
-    // nothing so far.
+  virtual void getTargetDefines(std::vector<std::string> &Defines) const {
+    DarwinTargetInfo::getTargetDefines(Defines);
+    getX86Defines(Defines, false);
+  }
 };
 } // end anonymous namespace.
 
 namespace {
 class DarwinX86_64TargetInfo : public DarwinTargetInfo {
 public:
-    // nothing so far.
+  virtual void getTargetDefines(std::vector<std::string> &Defines) const {
+    DarwinTargetInfo::getTargetDefines(Defines);
+    getX86Defines(Defines, true);
+  }
 };
 } // end anonymous namespace.
 
@@ -89,6 +116,11 @@ public:
   LinuxTargetInfo() {
     // Note: I have no idea if this is right, just for testing.
     WCharWidth = 2;
+  }
+  
+  virtual void getTargetDefines(std::vector<std::string> &Defines) const {
+    // TODO: linux-specific stuff.
+    getX86Defines(Defines, false);
   }
 };
 } // end anonymous namespace.
