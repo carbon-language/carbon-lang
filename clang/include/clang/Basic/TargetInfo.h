@@ -32,17 +32,17 @@ class Diagnostic;
 /// target, it will warn the first time the size of the 'long' datatype is
 /// queried.
 ///
-/// Note that TargetInfo does not take ownership of the various targets, but
-/// does expect them to be alive for as long as it is.
+/// Note that TargetInfo does not take ownership of the various targets or the 
+/// diagnostic info, but does expect them to be alive for as long as it is.
 ///
 class TargetInfo {
   /// Primary - This tracks the primary target in the target set.
   ///
-  TargetInfoImpl *PrimaryTarget;
+  const TargetInfoImpl *PrimaryTarget;
   
   /// SecondaryTargets - This tracks the set of secondary targets.
   ///
-  std::vector<TargetInfoImpl*> SecondaryTargets;
+  std::vector<const TargetInfoImpl*> SecondaryTargets;
   
   /// Diag - If non-null, this object is used to report the first use of
   /// non-portable functionality in the translation unit.
@@ -57,7 +57,7 @@ class TargetInfo {
   unsigned WCharWidth;
   
 public:
-  TargetInfo(TargetInfoImpl *Primary, Diagnostic *D = 0) {
+  TargetInfo(const TargetInfoImpl *Primary, Diagnostic *D = 0) {
     PrimaryTarget = Primary;
     Diag = D;
     NonPortable = false;
@@ -79,7 +79,7 @@ public:
   }
   
   /// AddSecondaryTarget - Add a secondary target to the target set.
-  void AddSecondaryTarget(TargetInfoImpl *Secondary) {
+  void AddSecondaryTarget(const TargetInfoImpl *Secondary) {
     SecondaryTargets.push_back(Secondary);
   }
   
