@@ -29,6 +29,7 @@
 #include "clang/Basic/FileManager.h"
 #include "clang/Basic/SourceBuffer.h"
 #include "clang/Basic/SourceManager.h"
+#include "clang/Basic/TargetInfo.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/System/MappedFile.h"
 #include "llvm/System/Signals.h"
@@ -298,12 +299,16 @@ static void InitializePredefinedMacros(Preprocessor &PP,
   DefineBuiltinMacro(Buf, "__STDC_HOSTED__=1");
   //DefineBuiltinMacro(Buf, "__OBJC__=1");
   
+  // Get the target #defines.
+  PP.getTargetInfo().getTargetDefines(Buf);
+  
   // FIXME: This is obviously silly.  It should be more like gcc/c-cppbuiltin.c.
   // Macros predefined by GCC 4.0.1.
+  DefineBuiltinMacro(Buf, "__APPLE_CC__=5250");
+
   DefineBuiltinMacro(Buf, "_ARCH_PPC=1");
   DefineBuiltinMacro(Buf, "_BIG_ENDIAN=1");
-  DefineBuiltinMacro(Buf, "__APPLE_CC__=5250");
-  DefineBuiltinMacro(Buf, "__APPLE__=1");
+  //XXX DONE DefineBuiltinMacro(Buf, "__APPLE__=1");
   DefineBuiltinMacro(Buf, "__BIG_ENDIAN__=1");
   DefineBuiltinMacro(Buf, "__CHAR_BIT__=8");
   DefineBuiltinMacro(Buf, "__CONSTANT_CFSTRINGS__=1");
