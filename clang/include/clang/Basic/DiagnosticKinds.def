@@ -20,6 +20,12 @@
 //     ERROR     - Error, compilation will stop after parsing completes.
 //     FATAL     - Fatal error: parsing must stop.
 
+//===----------------------------------------------------------------------===//
+// Portability
+//===----------------------------------------------------------------------===//
+
+DIAG(port_wchar_t, NOTE,
+     "sizeof(wchar_t) varies between targets")
 
 //===----------------------------------------------------------------------===//
 // Lexer Diagnostics
