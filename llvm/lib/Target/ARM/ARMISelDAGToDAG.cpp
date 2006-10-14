@@ -70,6 +70,8 @@ ARMTargetLowering::ARMTargetLowering(TargetMachine &TM)
   setOperationAction(ISD::BR_CC, MVT::f32, Custom);
   setOperationAction(ISD::BR_CC, MVT::f64, Custom);
 
+  setOperationAction(ISD::BRCOND,        MVT::Other, Expand);
+
   setOperationAction(ISD::VASTART,       MVT::Other, Custom);
   setOperationAction(ISD::VAEND,         MVT::Other, Expand);
 
