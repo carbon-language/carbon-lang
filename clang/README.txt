@@ -40,7 +40,7 @@ I. Introduction:
                  token in the AST.  AST's are 'streamed' out a top-level
                  declaration at a time, allowing clients to use decl-at-a-time
                  processing, build up entire translation units, or even build
-                 'whole program' ASTs depending on how the use the APIs.
+                 'whole program' ASTs depending on how they use the APIs.
    libast2llvm - [Planned] Lower the AST to LLVM IR for optimization & codegen.
    clang       - An example client of the libraries at various levels.
 
@@ -69,7 +69,7 @@ II. Usage of clang driver:
    - Help: clang --help
    - Standard GCC options accepted: -E, -I*, -i*, -pedantic, etc.
    - Make diagnostics more gcc-like: -fno-caret-diagnostics -fno-show-column
-   - Enable metric printing: --stats
+   - Enable metric printing: -stats
 
  * -parse-noop is the default mode.
 
@@ -99,7 +99,7 @@ III. Current advantages over GCC:
 Future Features:
 
  * Fine grained diag control within the source (#pragma enable/disable warning).
- * Faster than GCC at IR generation [measure when complete].
+ * Faster than GCC at AST generation [measure when complete].
  * Better token tracking within macros?  (Token came from this line, which is
    a macro argument instantiated here, recursively instantiated here).
  * Fast #import!
@@ -216,7 +216,7 @@ Fast #Import:
 
 New language feature: Configuration queries:
   - Instead of #ifdef __POWERPC__, use "if (strcmp(`cpu`, __POWERPC__))", or
-    some other syntax.
+    some other, better, syntax.
   - Use it to increase the number of "architecture-clean" #import'd files,
     allowing a single index to be used for all fat slices.
 
