@@ -2743,50 +2743,6 @@ SDOperand DAGCombiner::visitSTORE(SDNode *N) {
   SDOperand Value = ST->getValue();
   SDOperand Ptr   = ST->getBasePtr();
   
-  // FIXME - Switch over after StoreSDNode comes online.
-  if (ST->isTruncatingStore()) {
-    if (CombinerAA) {
-      // Walk up chain skipping non-aliasing memory nodes.
-      SDOperand BetterChain = FindBetterChain(N, Chain);
-      
-      // If there is a better chain.
-      if (Chain != BetterChain) {
-        // Replace the chain to avoid dependency.
-        SDOperand ReplTStore =
-          DAG.getTruncStore(BetterChain, Value, Ptr, ST->getSrcValue(),
-                            ST->getSrcValueOffset(), ST->getStoredVT());
-
-        // Create token to keep both nodes around.
-        SDOperand Token =
-          DAG.getNode(ISD::TokenFactor, MVT::Other, Chain, ReplTStore);
-        
-        // Don't add users to work list.
-        return CombineTo(N, Token, false);
-      }
-    }
-  
-    return SDOperand();
-  }
- 
-  // If this is a store that kills a previous store, remove the previous store.
-  if (ISD::isNON_TRUNCStore(Chain.Val)) {
-    StoreSDNode *PrevST = cast<StoreSDNode>(Chain);
-    if (PrevST->getBasePtr() == Ptr &&
-        Chain.Val->hasOneUse() /* Avoid introducing DAG cycles */ &&
-        // Make sure that these stores are the same value type:
-        // FIXME: we really care that the second store is >= size of the first.
-        Value.getValueType() == PrevST->getValue().getValueType()) {
-      // Create a new store of Value that replaces both stores.
-      if (PrevST->getValue() == Value) // Same value multiply stored.
-        return Chain;
-      SDOperand NewStore = DAG.getStore(PrevST->getChain(), Value, Ptr,
-                                    ST->getSrcValue(), ST->getSrcValueOffset());
-      CombineTo(N, NewStore);                 // Nuke this store.
-      CombineTo(Chain.Val, NewStore);  // Nuke the previous store.
-      return SDOperand(N, 0);
-    }
-  }
-  
   // If this is a store of a bit convert, store the input value.
   // FIXME: This needs to know that the resultant store does not need a 
   // higher alignment than the original.
@@ -2809,8 +2765,15 @@ SDOperand DAGCombiner::visitSTORE(SDNode *N) {
     // If there is a better chain.
     if (Chain != BetterChain) {
       // Replace the chain to avoid dependency.
-      SDOperand ReplStore = DAG.getStore(BetterChain, Value, Ptr,
-                                    ST->getSrcValue(), ST->getSrcValueOffset());
+      SDOperand ReplStore;
+      if (ST->isTruncatingStore()) {
+        ReplStore = DAG.getTruncStore(BetterChain, Value, Ptr,
+          ST->getSrcValue(),ST->getSrcValueOffset(), ST->getStoredVT());
+      } else {
+        ReplStore = DAG.getStore(BetterChain, Value, Ptr,
+          ST->getSrcValue(), ST->getSrcValueOffset());
+      }
+      
       // Create token to keep both nodes around.
       SDOperand Token =
         DAG.getNode(ISD::TokenFactor, MVT::Other, Chain, ReplStore);
