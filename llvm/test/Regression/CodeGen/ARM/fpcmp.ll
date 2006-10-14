@@ -1,12 +1,10 @@
 ; RUN: llvm-as < %s | llc -march=arm &&
-; RUN: llvm-as < %s | llc -march=arm  | grep movlt &&
+; RUN: llvm-as < %s | llc -march=arm  | grep movmi &&
 ; RUN: llvm-as < %s | llc -march=arm  | grep moveq &&
 ; RUN: llvm-as < %s | llc -march=arm  | grep movgt &&
 ; RUN: llvm-as < %s | llc -march=arm  | grep movge &&
-; RUN: llvm-as < %s | llc -march=arm  | grep movle &&
-; RUN: llvm-as < %s | llc -march=arm  | grep fcmpes &&
+; RUN: llvm-as < %s | llc -march=arm  | grep movls &&
 ; RUN: llvm-as < %s | llc -march=arm  | grep fcmps &&
-; RUN: llvm-as < %s | llc -march=arm  | grep fcmped &&
 ; RUN: llvm-as < %s | llc -march=arm  | grep fcmpd
 
 int %f1(float %a) {

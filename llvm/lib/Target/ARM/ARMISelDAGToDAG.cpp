@@ -92,7 +92,6 @@ namespace llvm {
       RET_FLAG,
 
       CMP,
-      CMPE,
 
       SELECT,
 
@@ -120,36 +119,42 @@ namespace llvm {
 }
 
 /// DAGFPCCToARMCC - Convert a DAG fp condition code to an ARM CC
+// Unordered = !N & !Z & C & V = V
+// Ordered   =  N | Z | !C | !V = N | Z | !V
 static ARMCC::CondCodes DAGFPCCToARMCC(ISD::CondCode CC) {
   switch (CC) {
   default:
     assert(0 && "Unknown fp condition code!");
-// For the following conditions we use a comparison that throws exceptions,
-// so we may assume that V=0
+// SETOEQ = (N | Z | !V) & Z = Z                               = EQ
+  case ISD::SETEQ:
   case ISD::SETOEQ: return ARMCC::EQ;
+// SETOGT = (N | Z | !V) & !N & !Z = !V &!N &!Z = (N = V) & !Z = GT
+  case ISD::SETGT:
   case ISD::SETOGT: return ARMCC::GT;
+// SETOGE = (N | Z | !V) & !N = (Z | !V) & !N = !V & !N        = GE
+  case ISD::SETGE:
   case ISD::SETOGE: return ARMCC::GE;
-  case ISD::SETOLT: return ARMCC::LT;
-  case ISD::SETOLE: return ARMCC::LE;
+// SETOLT = (N | Z | !V) & N = N                               = MI
+  case ISD::SETLT:
+  case ISD::SETOLT: return ARMCC::MI;
+// SETOLE = (N | Z | !V) & (N | Z) = N | Z = !C | Z            = LS
+  case ISD::SETLE:
+  case ISD::SETOLE: return ARMCC::LS;
+// SETONE = (N | Z | !V) & !Z = (N | !V) & Z = !V & Z = Z      = NE
+  case ISD::SETNE:
   case ISD::SETONE: return ARMCC::NE;
-// For the following conditions the result is undefined in case of a nan,
-// so we may assume that V=0
-  case ISD::SETEQ:  return ARMCC::EQ;
-  case ISD::SETGT:  return ARMCC::GT;
-  case ISD::SETGE:  return ARMCC::GE;
-  case ISD::SETLT:  return ARMCC::LT;
-  case ISD::SETLE:  return ARMCC::LE;
-  case ISD::SETNE:  return ARMCC::NE;
-// For the following we may not assume anything
-//    SETO      =  N | Z | !C | !V              = ???
-//    SETUO     = (!N & !Z & C & V)             = ???
-//    SETUEQ    = (!N & !Z & C & V) | Z         = ???
-//    SETUGT    = (!N & !Z & C & V) | (!Z & !N) = ???
-//    SETUGE    = (!N & !Z & C & V) | !N        = !N  = PL
+// SETO   = N | Z | !V = Z | !V = !V                           = VC
+  case ISD::SETO:   return ARMCC::VC;
+// SETUO  = V                                                  = VS
+  case ISD::SETUO:  return ARMCC::VS;
+// SETUEQ = V | Z                                              = ??
+// SETUGT = V | (!Z & !N) = !Z & !N = !Z & C                   = HI
+  case ISD::SETUGT: return ARMCC::HI;
+// SETUGE = V | !N = !N                                        = PL
   case ISD::SETUGE: return ARMCC::PL;
-//    SETULT    = (!N & !Z & C & V) | N         = ???
-//    SETULE    = (!N & !Z & C & V) | Z | N     = ???
-//    SETUNE    = (!N & !Z & C & V) | !Z        = !Z  = NE
+// SETULT = V | N                                              = ??
+// SETULE = V | Z | N                                          = ??
+// SETUNE = V | !Z = !Z                                        = NE
   case ISD::SETUNE: return ARMCC::NE;
   }
 }
@@ -179,7 +184,6 @@ const char *ARMTargetLowering::getTargetNodeName(unsigned Opcode) const {
   case ARMISD::RET_FLAG:      return "ARMISD::RET_FLAG";
   case ARMISD::SELECT:        return "ARMISD::SELECT";
   case ARMISD::CMP:           return "ARMISD::CMP";
-  case ARMISD::CMPE:          return "ARMISD::CMPE";
   case ARMISD::BR:            return "ARMISD::BR";
   case ARMISD::FSITOS:        return "ARMISD::FSITOS";
   case ARMISD::FTOSIS:        return "ARMISD::FTOSIS";
@@ -586,15 +590,7 @@ static SDOperand GetCMP(ISD::CondCode CC, SDOperand LHS, SDOperand RHS,
   MVT::ValueType vt = LHS.getValueType();
   assert(vt == MVT::i32 || vt == MVT::f32 || vt == MVT::f64);
 
-  bool isOrderedFloat = (vt == MVT::f32 || vt == MVT::f64) &&
-    (CC >= ISD::SETOEQ && CC <= ISD::SETONE);
-
-  SDOperand Cmp;
-  if (isOrderedFloat) {
-    Cmp = DAG.getNode(ARMISD::CMPE, MVT::Flag, LHS, RHS);
-  } else {
-    Cmp = DAG.getNode(ARMISD::CMP,  MVT::Flag, LHS, RHS);
-  }
+  SDOperand Cmp = DAG.getNode(ARMISD::CMP,  MVT::Flag, LHS, RHS);
 
   if (vt != MVT::i32)
     Cmp = DAG.getNode(ARMISD::FMSTAT, MVT::Flag, Cmp);
