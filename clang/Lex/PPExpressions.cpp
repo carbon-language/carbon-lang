@@ -106,6 +106,13 @@ static bool EvaluateValue(int &Result, LexerToken &PeekTok, DefinedTracker &DT,
         PP.getTargetInfo().DiagnoseNonPortability(PeekTok.getLocation(),
                                                   diag::port_target_macro_use);
       }
+    } else {
+      // Use of a target-specific macro for some other target?  If so, warn.
+      if (II->isOtherTargetMacro()) {
+        II->setIsOtherTargetMacro(false);  // Don't warn on second use.
+        PP.getTargetInfo().DiagnoseNonPortability(PeekTok.getLocation(),
+                                                  diag::port_target_macro_use);
+      }
     }
 
     // Consume identifier.

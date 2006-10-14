@@ -1012,7 +1012,7 @@ void Preprocessor::HandleIdentifier(LexerToken &Identifier) {
   }
   
   // If this is a macro to be expanded, do it.
-  if (MacroInfo *MI = II.getMacroInfo())
+  if (MacroInfo *MI = II.getMacroInfo()) {
     if (!DisableMacroExpansion && !Identifier.isExpandDisabled()) {
       if (MI->isEnabled()) {
         if (!HandleMacroExpandedIdentifier(Identifier, MI))
@@ -1024,6 +1024,15 @@ void Preprocessor::HandleIdentifier(LexerToken &Identifier) {
         Identifier.setFlag(LexerToken::DisableExpand);
       }
     }
+  } else if (II.isOtherTargetMacro() && !DisableMacroExpansion) {
+    // If this identifier is a macro on some other target, emit a diagnostic.
+    // This diagnosic is only emitted when macro expansion is enabled, because
+    // the macro would not have been expanded for the other target either.
+    II.setIsOtherTargetMacro(false);  // Don't warn on second use.
+    getTargetInfo().DiagnoseNonPortability(Identifier.getLocation(),
+                                           diag::port_target_macro_use);
+    
+  }
 
   // Change the kind of this identifier to the appropriate token kind, e.g.
   // turning "for" into a keyword.
@@ -1467,6 +1476,10 @@ void Preprocessor::HandleDirective(LexerToken &Result) {
       if (Directive[0] == 'd' && !strcmp(Directive, "define_target"))
         return HandleDefineDirective(Result, true);
       break;
+    case 19:
+      if (Directive[0] == 'd' && !strcmp(Directive, "define_other_target"))
+        return HandleDefineOtherTargetDirective(Result);
+      break;
     }
     break;
   }
@@ -1723,8 +1736,13 @@ void Preprocessor::HandleDefineDirective(LexerToken &DefineTok,
   // mode.
   CurLexer->KeepCommentMode = Features.KeepMacroComments;
   
+  // Create the new macro.
   MacroInfo *MI = new MacroInfo(MacroNameTok.getLocation());
   if (isTargetSpecific) MI->setIsTargetSpecific();
+  
+  // If the identifier is an 'other target' macro, clear this bit.
+  MacroNameTok.getIdentifierInfo()->setIsOtherTargetMacro(false);
+
   
   LexerToken Tok;
   LexUnexpandedToken(Tok);
@@ -1848,6 +1866,29 @@ void Preprocessor::HandleDefineDirective(LexerToken &DefineTok,
   MacroNameTok.getIdentifierInfo()->setMacroInfo(MI);
 }
 
+/// HandleDefineOtherTargetDirective - Implements #define_other_target.
+void Preprocessor::HandleDefineOtherTargetDirective(LexerToken &Tok) {
+  LexerToken MacroNameTok;
+  ReadMacroName(MacroNameTok, 1);
+  
+  // Error reading macro name?  If so, diagnostic already issued.
+  if (MacroNameTok.getKind() == tok::eom)
+    return;
+
+  // Check to see if this is the last token on the #undef line.
+  CheckEndOfDirective("#define_other_target");
+
+  // If there is already a macro defined by this name, turn it into a
+  // target-specific define.
+  if (MacroInfo *MI = MacroNameTok.getIdentifierInfo()->getMacroInfo()) {
+    MI->setIsTargetSpecific(true);
+    return;
+  }
+
+  // Mark the identifier as being a macro on some other target.
+  MacroNameTok.getIdentifierInfo()->setIsOtherTargetMacro();
+}
+
 
 /// HandleUndefDirective - Implements #undef.
 ///
@@ -1866,6 +1907,9 @@ void Preprocessor::HandleUndefDirective(LexerToken &UndefTok) {
   
   // Okay, we finally have a valid identifier to undef.
   MacroInfo *MI = MacroNameTok.getIdentifierInfo()->getMacroInfo();
+  
+  // #undef untaints an identifier if it were marked by define_other_target.
+  MacroNameTok.getIdentifierInfo()->setIsOtherTargetMacro(false);
   
   // If the macro is not defined, this is a noop undef, just return.
   if (MI == 0) return;
@@ -1910,7 +1954,8 @@ void Preprocessor::HandleIfdefDirective(LexerToken &Result, bool isIfndef,
     CurLexer->MIOpt.EnterTopLevelIFNDEF(MacroNameTok.getIdentifierInfo());
   }
   
-  MacroInfo *MI = MacroNameTok.getIdentifierInfo()->getMacroInfo();
+  IdentifierInfo *MII = MacroNameTok.getIdentifierInfo();
+  MacroInfo *MI = MII->getMacroInfo();
 
   // If there is a macro, process it.
   if (MI) {
@@ -1920,6 +1965,13 @@ void Preprocessor::HandleIfdefDirective(LexerToken &Result, bool isIfndef,
     // If this is the first use of a target-specific macro, warn about it.
     if (MI->isTargetSpecific()) {
       MI->setIsTargetSpecific(false);  // Don't warn on second use.
+      getTargetInfo().DiagnoseNonPortability(MacroNameTok.getLocation(),
+                                             diag::port_target_macro_use);
+    }
+  } else {
+    // Use of a target-specific macro for some other target?  If so, warn.
+    if (MII->isOtherTargetMacro()) {
+      MII->setIsOtherTargetMacro(false);  // Don't warn on second use.
       getTargetInfo().DiagnoseNonPortability(MacroNameTok.getLocation(),
                                              diag::port_target_macro_use);
     }

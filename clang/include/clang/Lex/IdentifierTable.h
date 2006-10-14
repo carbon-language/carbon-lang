@@ -29,12 +29,13 @@ namespace clang {
 /// variable or function name).  The preprocessor keeps this information in a
 /// set, and all tok::identifier tokens have a pointer to one of these.  
 class IdentifierInfo {
-  unsigned NameLen;         // String that is the identifier.
-  MacroInfo *Macro;         // Set if this identifier is #define'd.
-  tok::TokenKind TokenID:8; // Front-end token ID or tok::identifier.
-  bool IsExtension    : 1;  // True if this identifier is a language extension.
-  bool IsPoisoned     : 1;  // True if this identifier is poisoned.
-  void *FETokenInfo;        // Managed by the language front-end.
+  unsigned NameLen;            // String that is the identifier.
+  MacroInfo *Macro;            // Set if this identifier is #define'd.
+  tok::TokenKind TokenID  : 8; // Front-end token ID or tok::identifier.
+  bool IsExtension        : 1; // True if identifier is a lang extension.
+  bool IsPoisoned         : 1; // True if identifier is poisoned.
+  bool IsOtherTargetMacro : 1; // True if ident is a macro on another target.
+  void *FETokenInfo;           // Managed by the language front-end.
   friend class IdentifierTable;
 public:
   /// getName - Return the actual string for this identifier.  The length of
@@ -75,6 +76,11 @@ public:
   
   /// isPoisoned - Return true if this token has been poisoned.
   bool isPoisoned() const { return IsPoisoned; }
+  
+  /// setIsOtherTargetMacro/isOtherTargetMacro control whether this identifier
+  /// is seen as being a macro on some other target.
+  void setIsOtherTargetMacro(bool Val = true) { IsOtherTargetMacro = Val; }
+  bool isOtherTargetMacro() const { return IsOtherTargetMacro; }
   
   /// getFETokenInfo/setFETokenInfo - The language front-end is allowed to
   /// associate arbitrary metadata with this token.
