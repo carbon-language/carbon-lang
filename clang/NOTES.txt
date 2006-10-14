@@ -1,12 +1,50 @@
 
+//===---------------------------------------------------------------------===//
 
 To time GCC preprocessing speed without output, use:
    "time gcc -MM file"
+This is similar to -Eonly.
+
+//===---------------------------------------------------------------------===//
 
 Interesting fact:
   clang -Eonly INPUTS/carbon-header-C-E.c
 
-is faster than:
+is much faster than:
   wc -w INPUTS/carbon-header-C-E.c
 !!
    
+//===---------------------------------------------------------------------===//
+
+The 'portability' model in clang is sufficient to catch translation units (or
+their parts) that are not portable, but it doesn't help if the system headers
+are non-portable and not fixed.  An alternative model that would be easy to use
+is a 'tainting' scheme.  Consider:
+
+inline int foo() {
+#ifdef __i386__
+  return 1;
+#else
+  return 2;
+#endif
+}
+
+It would be trivial to mark 'foo' as being non-portable (tainted) instead of
+marking the entire translation unit.  Then, if foo is never called/used by the
+current translation unit, the t-u wouldn't be marked non-portable.  However,
+there is no good way to handle stuff like:
+
+extern int X, Y;
+
+#ifndef __POWERPC__
+#define X Y
+#endif
+
+int bar() { return X; }
+
+When compiling for powerpc, the #define is skipped, so it doesn't know that bar
+uses a #define that is set on some other target.  In practice, limited cases
+could be handled by scanning the skipped region of a #if, but the fully general
+case cannot be implemented efficiently.
+
+//===---------------------------------------------------------------------===//
