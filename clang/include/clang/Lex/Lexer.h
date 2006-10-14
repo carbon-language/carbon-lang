@@ -124,12 +124,12 @@ public:
   /// the preprocessor.
   void Lex(LexerToken &Result) {
     // Start a new token.
-    Result.StartToken();
+    Result.startToken();
     
     // NOTE, any changes here should also change code after calls to 
     // Preprocessor::HandleDirective
     if (IsAtStartOfLine) {
-      Result.SetFlag(LexerToken::StartOfLine);
+      Result.setFlag(LexerToken::StartOfLine);
       IsAtStartOfLine = false;
     }
    
@@ -185,8 +185,8 @@ private:
   /// addition, since tokens cannot overlap, this also updates BufferPtr to be
   /// TokEnd.
   void FormTokenWithChars(LexerToken &Result, const char *TokEnd) {
-    Result.SetLocation(getSourceLocation(BufferPtr));
-    Result.SetLength(TokEnd-BufferPtr);
+    Result.setLocation(getSourceLocation(BufferPtr));
+    Result.setLength(TokEnd-BufferPtr);
     BufferPtr = TokEnd;
   }
   

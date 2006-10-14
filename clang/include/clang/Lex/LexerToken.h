@@ -52,45 +52,45 @@ public:
   };
 
   tok::TokenKind getKind() const { return Kind; }
-  void SetKind(tok::TokenKind K) { Kind = K; }
+  void setKind(tok::TokenKind K) { Kind = K; }
 
   /// getLocation - Return a source location identifier for the specified
   /// offset in the current file.
   SourceLocation getLocation() const { return Loc; }
   unsigned getLength() const { return Length; }
 
-  void SetLocation(SourceLocation L) { Loc = L; }
-  void SetLength(unsigned Len) { Length = Len; }
+  void setLocation(SourceLocation L) { Loc = L; }
+  void setLength(unsigned Len) { Length = Len; }
   
-  /// StartToken - Reset all flags to cleared.
+  /// startToken - Reset all flags to cleared.
   ///
-  void StartToken() {
+  void startToken() {
     Flags = 0;
     IdentInfo = 0;
     Loc = SourceLocation();
   }
   
   IdentifierInfo *getIdentifierInfo() const { return IdentInfo; }
-  void SetIdentifierInfo(IdentifierInfo *II) {
+  void setIdentifierInfo(IdentifierInfo *II) {
     IdentInfo = II;
   }
 
-  /// SetFlag - Set the specified flag.
-  void SetFlag(TokenFlags Flag) {
+  /// setFlag - Set the specified flag.
+  void setFlag(TokenFlags Flag) {
     Flags |= Flag;
   }
   
-  /// ClearFlag - Unset the specified flag.
-  void ClearFlag(TokenFlags Flag) {
+  /// clearFlag - Unset the specified flag.
+  void clearFlag(TokenFlags Flag) {
     Flags &= ~Flag;
   }
 
-  /// SetFlagValue - Set a flag to either true or false.
-  void SetFlagValue(TokenFlags Flag, bool Val) {
+  /// setFlagValue - Set a flag to either true or false.
+  void setFlagValue(TokenFlags Flag, bool Val) {
     if (Val) 
-      SetFlag(Flag);
+      setFlag(Flag);
     else
-      ClearFlag(Flag);
+      clearFlag(Flag);
   }
   
   /// isAtStartOfLine - Return true if this token is at the start of a line.
