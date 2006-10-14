@@ -2199,8 +2199,8 @@ public:
   /// EmitMatchCode - Emit a matcher for N, going to the label for PatternNo
   /// if the match fails. At this point, we already know that the opcode for N
   /// matches, and the SDNode for the result has the RootName specified name.
-  void EmitMatchCode(TreePatternNode *N, TreePatternNode *P,
-                     const std::string &RootName,
+  void EmitMatchCode(TreePatternNode *Root, TreePatternNode *N,
+                     TreePatternNode *P, const std::string &RootName,
                      const std::string &ChainSuffix, bool &FoundChain) {
     bool isRoot = (P == NULL);
     // Emit instruction predicates. Each predicate is just a string for now.
@@ -2284,13 +2284,14 @@ public:
           //      |         ^
           //     [XX]-------|
           const SDNodeInfo &PInfo = ISE.getSDNodeInfo(P->getOperator());
-          if (PInfo.getNumOperands() > 1 ||
+          if (P != Root ||
+              PInfo.getNumOperands() > 1 ||
               PInfo.hasProperty(SDNPHasChain) ||
               PInfo.hasProperty(SDNPInFlag) ||
               PInfo.hasProperty(SDNPOptInFlag)) {
             std::string ParentName(RootName.begin(), RootName.end()-1);
             emitCheck("CanBeFoldedBy(" + RootName + ".Val, " + ParentName +
-                      ".Val)");
+                      ".Val, N.Val)");
           }
         }
       }
@@ -2358,7 +2359,7 @@ public:
           emitCheck(MaskPredicate + RootName + "0, cast<ConstantSDNode>(" +
                     RootName + "1), " + itostr(II->getValue()) + ")");
           
-          EmitChildMatchCode(N->getChild(0), N, RootName + utostr(0),
+          EmitChildMatchCode(Root, N->getChild(0), N, RootName + utostr(0),
                              ChainSuffix + utostr(0), FoundChain);
           return;
         }
@@ -2369,7 +2370,7 @@ public:
       emitInit("SDOperand " + RootName + utostr(OpNo) + " = " +
                RootName + ".getOperand(" +utostr(OpNo) + ");");
 
-      EmitChildMatchCode(N->getChild(i), N, RootName + utostr(OpNo),
+      EmitChildMatchCode(Root, N->getChild(i), N, RootName + utostr(OpNo),
                          ChainSuffix + utostr(OpNo), FoundChain);
     }
 
@@ -2400,15 +2401,15 @@ public:
     }
   }
 
-  void EmitChildMatchCode(TreePatternNode *Child, TreePatternNode *Parent,
-                          const std::string &RootName,
+  void EmitChildMatchCode(TreePatternNode *Root, TreePatternNode *Child,
+                          TreePatternNode *Parent, const std::string &RootName,
                           const std::string &ChainSuffix, bool &FoundChain) {
     if (!Child->isLeaf()) {
       // If it's not a leaf, recursively match.
       const SDNodeInfo &CInfo = ISE.getSDNodeInfo(Child->getOperator());
       emitCheck(RootName + ".getOpcode() == " +
                 CInfo.getEnumName());
-      EmitMatchCode(Child, Parent, RootName, ChainSuffix, FoundChain);
+      EmitMatchCode(Root, Child, Parent, RootName, ChainSuffix, FoundChain);
       if (NodeHasProperty(Child, SDNPHasChain, ISE))
         FoldedChains.push_back(std::make_pair(RootName, CInfo.getNumResults()));
     } else {
@@ -3098,7 +3099,8 @@ void DAGISelEmitter::GenerateCodeForPattern(PatternToMatch &Pattern,
 
   // Emit the matcher, capturing named arguments in VariableMap.
   bool FoundChain = false;
-  Emitter.EmitMatchCode(Pattern.getSrcPattern(), NULL, "N", "", FoundChain);
+  Emitter.EmitMatchCode(Pattern.getSrcPattern(), Pattern.getSrcPattern(), NULL,
+                        "N", "", FoundChain);
 
   // TP - Get *SOME* tree pattern, we don't care which.
   TreePattern &TP = *PatternFragments.begin()->second;
