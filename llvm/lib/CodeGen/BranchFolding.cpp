@@ -26,32 +26,30 @@ using namespace llvm;
 namespace {
   struct BranchFolder : public MachineFunctionPass {
     virtual bool runOnMachineFunction(MachineFunction &MF);
-    virtual const char *getPassName() const { return "Branch Folder"; }
+    virtual const char *getPassName() const { return "Control Flow Optimizer"; }
+    const TargetInstrInfo *TII;
+    bool MadeChange;
   private:
-    bool OptimizeBlock(MachineFunction::iterator MBB,
-                       const TargetInstrInfo &TII);
-
-    bool isUncondBranch(const MachineInstr *MI, const TargetInstrInfo &TII) {
-      return TII.isBarrier(MI->getOpcode()) && TII.isBranch(MI->getOpcode());
-    }
-    bool isCondBranch(const MachineInstr *MI, const TargetInstrInfo &TII) {
-      return TII.isBranch(MI->getOpcode()) && !TII.isBarrier(MI->getOpcode());
-    }
+    void OptimizeBlock(MachineFunction::iterator MBB);
   };
 }
 
 FunctionPass *llvm::createBranchFoldingPass() { return new BranchFolder(); }
 
 bool BranchFolder::runOnMachineFunction(MachineFunction &MF) {
+  TII = MF.getTarget().getInstrInfo();
+  if (!TII) return false;
+
+  //MF.dump();
+  
   bool EverMadeChange = false;
-  bool MadeChange = true;
-  const TargetInstrInfo &TII = *MF.getTarget().getInstrInfo();
+  MadeChange = true;
   while (MadeChange) {
     MadeChange = false;
     for (MachineFunction::iterator MBB = ++MF.begin(), E = MF.end(); MBB != E;
          ++MBB)
-      MadeChange |= OptimizeBlock(MBB, TII);
-
+      OptimizeBlock(MBB);
+    
     // If branches were folded away somehow, do a quick scan and delete any dead
     // blocks.
     if (MadeChange) {
@@ -78,13 +76,13 @@ bool BranchFolder::runOnMachineFunction(MachineFunction &MF) {
 static void ReplaceUsesOfBlockWith(MachineBasicBlock *BB,
                                    MachineBasicBlock *Old,
                                    MachineBasicBlock *New,
-                                   const TargetInstrInfo &TII) {
+                                   const TargetInstrInfo *TII) {
   assert(Old != New && "Cannot replace self with self!");
 
   MachineBasicBlock::iterator I = BB->end();
   while (I != BB->begin()) {
     --I;
-    if (!TII.isTerminatorInstr(I->getOpcode())) break;
+    if (!TII->isTerminatorInstr(I->getOpcode())) break;
 
     // Scan the operands of this machine instruction, replacing any uses of Old
     // with New.
@@ -103,23 +101,55 @@ static void ReplaceUsesOfBlockWith(MachineBasicBlock *BB,
     }
 }
 
-
-bool BranchFolder::OptimizeBlock(MachineFunction::iterator MBB,
-                                 const TargetInstrInfo &TII) {
+/// OptimizeBlock - Analyze and optimize control flow related to the specified
+/// block.  This is never called on the entry block.
+void BranchFolder::OptimizeBlock(MachineFunction::iterator MBB) {
   // If this block is empty, make everyone use its fall-through, not the block
   // explicitly.
   if (MBB->empty()) {
-    if (MBB->pred_empty()) return false;
-    MachineFunction::iterator FallThrough =next(MBB);
-    assert(FallThrough != MBB->getParent()->end() &&
-           "Fell off the end of the function!");
-    while (!MBB->pred_empty()) {
-      MachineBasicBlock *Pred = *(MBB->pred_end()-1);
-      ReplaceUsesOfBlockWith(Pred, MBB, FallThrough, TII);
+    if (MBB->pred_empty()) return;  // dead block?  Leave for cleanup later.
+    
+    MachineFunction::iterator FallThrough = next(MBB);
+    
+    if (FallThrough != MBB->getParent()->end()) {
+      while (!MBB->pred_empty()) {
+        MachineBasicBlock *Pred = *(MBB->pred_end()-1);
+        ReplaceUsesOfBlockWith(Pred, MBB, FallThrough, TII);
+      }
+      MadeChange = true;
     }
-    return true;
+    // TODO: CHANGE STUFF TO NOT BRANCH HERE!
+    return;
   }
 
+  // Check to see if we can simplify the terminator of the block before this
+  // one.
+#if 0
+  MachineBasicBlock *PriorTBB = 0, *PriorFBB = 0;
+  std::vector<MachineOperand> PriorCond;
+  if (!TII->AnalyzeBranch(*prior(MBB), PriorTBB, PriorFBB, PriorCond)) {
+    // If the previous branch is conditional and both conditions go to the same
+    // destination, remove the branch, replacing it with an unconditional one.
+    if (PriorTBB && PriorTBB == PriorFBB) {
+      TII->RemoveBranch(*prior(MBB));
+      PriorCond.clear(); 
+      if (PriorTBB != &*MBB)
+        TII->InsertBranch(*prior(MBB), PriorTBB, 0, PriorCond);
+      MadeChange = true;
+      return OptimizeBlock(MBB);
+    }
+    
+    // If the previous branch *only* branches to *this* block (conditional or
+    // not) remove the branch.
+    if (PriorTBB == &*MBB && PriorFBB == 0) {
+      TII->RemoveBranch(*prior(MBB));
+      MadeChange = true;
+      return OptimizeBlock(MBB);
+    }
+  }
+#endif
+  
+  
 #if 0
 
   if (MBB->pred_size() == 1) {
@@ -235,5 +265,4 @@ bool BranchFolder::OptimizeBlock(MachineFunction::iterator MBB,
     }
   }
 #endif
-  return false;
 }
