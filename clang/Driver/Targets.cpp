@@ -53,6 +53,8 @@ public:
 // Specific target implementations.
 //===----------------------------------------------------------------------===//
 
+// FIXME: Move target-specific preprocessor definitions here.
+
 namespace {
 class DarwinPPCTargetInfo : public DarwinTargetInfo {
 public:

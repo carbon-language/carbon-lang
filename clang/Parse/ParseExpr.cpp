@@ -21,6 +21,7 @@
 
 #include "clang/Parse/Parser.h"
 #include "clang/Basic/Diagnostic.h"
+#include "clang/Basic/TargetInfo.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/Config/Alloca.h"
@@ -943,8 +944,11 @@ Parser::ExprResult Parser::ParseStringLiteralExpression() {
   
   // TODO: K&R warning: "traditional C rejects string constant concatenation"
   
-  // FIXME: Size of wchar_t should not be hardcoded!
-  unsigned wchar_tByteWidth = 4;
+  // Get the width in bytes of wchar_t.  If no wchar_t strings are used, do not
+  // query the target.  As such, wchar_tByteWidth is only valid if AnyWide=true.
+  unsigned wchar_tByteWidth = ~0U;
+  if (AnyWide)
+    wchar_tByteWidth=getTargetInfo().getWCharWidth(StringToks[0].getLocation());
   
   // The output buffer size needs to be large enough to hold wide characters.
   // This is a worst-case assumption which basically corresponds to L"" "long".
@@ -1087,8 +1091,12 @@ Parser::ExprResult Parser::ParseStringLiteralExpression() {
       }
 
       // Note: our internal rep of wide char tokens is always little-endian.
-      for (unsigned i = 0, e = wchar_tByteWidth; i != e; ++i)
-        *ResultPtr++ = ResultChar >> i*8;
+      *ResultPtr++ = ResultChar & 0xFF;
+      
+      if (AnyWide) {
+        for (unsigned i = 1, e = wchar_tByteWidth; i != e; ++i)
+          *ResultPtr++ = ResultChar >> i*8;
+      }
     }
   }
   

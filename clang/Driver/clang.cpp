@@ -691,7 +691,7 @@ int main(int argc, char **argv) {
   FileManager FileMgr;
   
   // Set up the preprocessor with these options.
-  Preprocessor PP(OurDiagnostics, Options, FileMgr, SourceMgr);
+  Preprocessor PP(OurDiagnostics, Options, *Target, FileMgr, SourceMgr);
   
   // Install things like __POWERPC__, __GNUC__, etc into the macro table.
   std::vector<char> PrologMacros;

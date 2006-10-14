@@ -29,6 +29,7 @@ class FileEntry;
 class PragmaNamespace;
 class PragmaHandler;
 class ScratchBuffer;
+class TargetInfo;
 
 /// DirectoryLookup - This class is used to specify the search order for
 /// directories in #include directives.
@@ -74,11 +75,12 @@ public:
 /// like the #include stack, token expansion, etc.
 ///
 class Preprocessor {
-  Diagnostic &Diags;
+  Diagnostic        &Diags;
   const LangOptions &Features;
-  FileManager   &FileMgr;
-  SourceManager &SourceMgr;
-  ScratchBuffer *ScratchBuf;
+  TargetInfo        &Target;
+  FileManager       &FileMgr;
+  SourceManager     &SourceMgr;
+  ScratchBuffer     *ScratchBuf;
   
   // #include search path information.  Requests for #include "x" search the
   /// directory of the #including file first, then each directory in SearchDirs
@@ -201,12 +203,13 @@ private:
   unsigned NumFastMacroExpanded, NumTokenPaste, NumFastTokenPaste;
   unsigned NumSkipped;
 public:
-  Preprocessor(Diagnostic &diags, const LangOptions &opts, FileManager &FM,
-               SourceManager &SM);
+  Preprocessor(Diagnostic &diags, const LangOptions &opts, TargetInfo &target,
+               FileManager &FM, SourceManager &SM);
   ~Preprocessor();
 
   Diagnostic &getDiagnostics() const { return Diags; }
   const LangOptions &getLangOptions() const { return Features; }
+  TargetInfo &getTargetInfo() const { return Target; }
   FileManager &getFileManager() const { return FileMgr; }
   SourceManager &getSourceManager() const { return SourceMgr; }
 

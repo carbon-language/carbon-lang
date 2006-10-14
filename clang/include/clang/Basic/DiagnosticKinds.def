@@ -25,7 +25,7 @@
 //===----------------------------------------------------------------------===//
 
 DIAG(port_wchar_t, NOTE,
-     "sizeof(wchar_t) varies between targets")
+     "sizeof(wchar_t) varies between targets, source is not 'portable'")
 
 //===----------------------------------------------------------------------===//
 // Lexer Diagnostics

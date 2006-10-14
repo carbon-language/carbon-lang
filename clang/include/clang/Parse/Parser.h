@@ -42,6 +42,7 @@ public:
   ~Parser();
 
   const LangOptions &getLang() const { return PP.getLangOptions(); }
+  TargetInfo &getTargetInfo() const { return PP.getTargetInfo(); }
   Action &getActions() const { return Actions; }
   
   // Type forwarding.  All of these are statically 'void*', but they may all be
