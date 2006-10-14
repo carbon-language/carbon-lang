@@ -1845,6 +1845,7 @@ SDOperand DAGCombiner::visitSELECT_CC(SDNode *N) {
   
   // Determine if the condition we're dealing with is constant
   SDOperand SCC = SimplifySetCC(TLI.getSetCCResultTy(), N0, N1, CC, false);
+  if (SCC.Val) AddToWorkList(SCC.Val);
 
   if (ConstantSDNode *SCCC = dyn_cast_or_null<ConstantSDNode>(SCC.Val)) {
     if (SCCC->getValue())
@@ -2660,6 +2661,8 @@ SDOperand DAGCombiner::visitBR_CC(SDNode *N) {
   
   // Use SimplifySetCC  to simplify SETCC's.
   SDOperand Simp = SimplifySetCC(MVT::i1, CondLHS, CondRHS, CC->get(), false);
+  if (Simp.Val) AddToWorkList(Simp.Val);
+
   ConstantSDNode *SCCC = dyn_cast_or_null<ConstantSDNode>(Simp.Val);
 
   // fold br_cc true, dest -> br dest (unconditional branch)
@@ -2669,6 +2672,7 @@ SDOperand DAGCombiner::visitBR_CC(SDNode *N) {
   // fold br_cc false, dest -> unconditional fall through
   if (SCCC && SCCC->isNullValue())
     return N->getOperand(0);
+
   // fold to a simpler setcc
   if (Simp.Val && Simp.getOpcode() == ISD::SETCC)
     return DAG.getNode(ISD::BR_CC, MVT::Other, N->getOperand(0), 
@@ -3424,6 +3428,7 @@ SDOperand DAGCombiner::SimplifySelectCC(SDOperand N0, SDOperand N1,
 
   // Determine if the condition we're dealing with is constant
   SDOperand SCC = SimplifySetCC(TLI.getSetCCResultTy(), N0, N1, CC, false);
+  if (SCC.Val) AddToWorkList(SCC.Val);
   ConstantSDNode *SCCC = dyn_cast_or_null<ConstantSDNode>(SCC.Val);
 
   // fold select_cc true, x, y -> x
