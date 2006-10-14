@@ -1,3 +1,28 @@
+//===---------------------------------------------------------------------===//
+// Random Notes
+//===---------------------------------------------------------------------===//
+
+
+//===---------------------------------------------------------------------===//
+Extensions:
+
+ * "#define_target X Y"
+   This preprocessor directive works exactly the same was as #define, but it
+   notes that 'X' is a target-specific preprocessor directive.  When used, a
+   diagnostic is emitted indicating that the translation unit is non-portable.
+   
+   If a target-define is #undef'd before use, no diagnostic is emitted.  If 'X'
+   were previously a normal #define macro, the macro is tainted.  If 'X' is
+   subsequently #defined as a non-target-specific define, the taint bit is
+   cleared.
+   
+ * "#define_other_target X"
+    The preprocessor directive takes a single identifier argument.  It notes
+    that this identifier is a target-specific #define for some target other than
+    the current one.  Use of this identifier will result in a diagnostic.
+    
+    If 'X' is later #undef'd or #define'd, the taint bit is cleared.  If 'X' is
+    already defined, X is marked as a target-specific define. 
 
 //===---------------------------------------------------------------------===//
 
