@@ -643,8 +643,8 @@ bool Preprocessor::HandleMacroExpandedIdentifier(LexerToken &Identifier,
     // stuff like "! XX," -> "! ," and "   XX," -> "    ,", when XX is
     // empty.
     if (!Identifier.isAtStartOfLine()) {
-      if (IsAtStartOfLine) Identifier.SetFlag(LexerToken::StartOfLine);
-      if (HadLeadingSpace) Identifier.SetFlag(LexerToken::LeadingSpace);
+      if (IsAtStartOfLine) Identifier.setFlag(LexerToken::StartOfLine);
+      if (HadLeadingSpace) Identifier.setFlag(LexerToken::LeadingSpace);
     }
     ++NumFastMacroExpanded;
     return false;
@@ -667,19 +667,19 @@ bool Preprocessor::HandleMacroExpandedIdentifier(LexerToken &Identifier,
     Identifier = MI->getReplacementToken(0);
     
     // Restore the StartOfLine/LeadingSpace markers.
-    Identifier.SetFlagValue(LexerToken::StartOfLine , isAtStartOfLine);
-    Identifier.SetFlagValue(LexerToken::LeadingSpace, hasLeadingSpace);
+    Identifier.setFlagValue(LexerToken::StartOfLine , isAtStartOfLine);
+    Identifier.setFlagValue(LexerToken::LeadingSpace, hasLeadingSpace);
     
     // Update the tokens location to include both its logical and physical
     // locations.
     SourceLocation Loc =
       SourceMgr.getInstantiationLoc(Identifier.getLocation(), InstantiateLoc);
-    Identifier.SetLocation(Loc);
+    Identifier.setLocation(Loc);
     
     // If this is #define X X, we must mark the result as unexpandible.
     if (IdentifierInfo *NewII = Identifier.getIdentifierInfo())
       if (NewII->getMacroInfo() == MI)
-        Identifier.SetFlag(LexerToken::DisableExpand);
+        Identifier.setFlag(LexerToken::DisableExpand);
     
     // Since this is not an identifier token, it can't be macro expanded, so
     // we're done.
@@ -707,7 +707,7 @@ MacroArgs *Preprocessor::ReadFunctionLikeMacroArgs(LexerToken &MacroName,
   
   // Outer loop, while there are more arguments, keep reading them.
   LexerToken Tok;
-  Tok.SetKind(tok::comma);
+  Tok.setKind(tok::comma);
   --NumFixedArgsLeft;  // Start reading the first arg.
 
   // ArgTokens - Build up a list of tokens that make up each argument.  Each
@@ -765,10 +765,10 @@ MacroArgs *Preprocessor::ReadFunctionLikeMacroArgs(LexerToken &MacroName,
     
     // Add a marker EOF token to the end of the token list for this argument.
     LexerToken EOFTok;
-    EOFTok.StartToken();
-    EOFTok.SetKind(tok::eof);
-    EOFTok.SetLocation(Tok.getLocation());
-    EOFTok.SetLength(0);
+    EOFTok.startToken();
+    EOFTok.setKind(tok::eof);
+    EOFTok.setLocation(Tok.getLocation());
+    EOFTok.setLength(0);
     ArgTokens.push_back(EOFTok);
     ++NumActuals;
     --NumFixedArgsLeft;
@@ -809,10 +809,10 @@ MacroArgs *Preprocessor::ReadFunctionLikeMacroArgs(LexerToken &MacroName,
     
     // Add a marker EOF token to the end of the token list for this argument.
     SourceLocation EndLoc = Tok.getLocation();
-    Tok.StartToken();
-    Tok.SetKind(tok::eof);
-    Tok.SetLocation(EndLoc);
-    Tok.SetLength(0);
+    Tok.startToken();
+    Tok.setKind(tok::eof);
+    Tok.setLocation(EndLoc);
+    Tok.setLength(0);
     ArgTokens.push_back(Tok);
   }
   
@@ -857,16 +857,16 @@ void Preprocessor::ExpandBuiltinMacro(LexerToken &Tok) {
   char TmpBuffer[100];
 
   // Set up the return result.
-  Tok.SetIdentifierInfo(0);
-  Tok.ClearFlag(LexerToken::NeedsCleaning);
+  Tok.setIdentifierInfo(0);
+  Tok.clearFlag(LexerToken::NeedsCleaning);
   
   if (II == Ident__LINE__) {
     // __LINE__ expands to a simple numeric value.
     sprintf(TmpBuffer, "%u", SourceMgr.getLineNumber(Tok.getLocation()));
     unsigned Length = strlen(TmpBuffer);
-    Tok.SetKind(tok::numeric_constant);
-    Tok.SetLength(Length);
-    Tok.SetLocation(CreateString(TmpBuffer, Length, Tok.getLocation()));
+    Tok.setKind(tok::numeric_constant);
+    Tok.setLength(Length);
+    Tok.setLocation(CreateString(TmpBuffer, Length, Tok.getLocation()));
   } else if (II == Ident__FILE__ || II == Ident__BASE_FILE__) {
     SourceLocation Loc = Tok.getLocation();
     if (II == Ident__BASE_FILE__) {
@@ -881,21 +881,21 @@ void Preprocessor::ExpandBuiltinMacro(LexerToken &Tok) {
     // Escape this filename.  Turn '\' -> '\\' '"' -> '\"'
     std::string FN = SourceMgr.getSourceName(Loc);
     FN = '"' + Lexer::Stringify(FN) + '"';
-    Tok.SetKind(tok::string_literal);
-    Tok.SetLength(FN.size());
-    Tok.SetLocation(CreateString(&FN[0], FN.size(), Tok.getLocation()));
+    Tok.setKind(tok::string_literal);
+    Tok.setLength(FN.size());
+    Tok.setLocation(CreateString(&FN[0], FN.size(), Tok.getLocation()));
   } else if (II == Ident__DATE__) {
     if (!DATELoc.isValid())
       ComputeDATE_TIME(DATELoc, TIMELoc, *this);
-    Tok.SetKind(tok::string_literal);
-    Tok.SetLength(strlen("\"Mmm dd yyyy\""));
-    Tok.SetLocation(SourceMgr.getInstantiationLoc(DATELoc, Tok.getLocation()));
+    Tok.setKind(tok::string_literal);
+    Tok.setLength(strlen("\"Mmm dd yyyy\""));
+    Tok.setLocation(SourceMgr.getInstantiationLoc(DATELoc, Tok.getLocation()));
   } else if (II == Ident__TIME__) {
     if (!TIMELoc.isValid())
       ComputeDATE_TIME(DATELoc, TIMELoc, *this);
-    Tok.SetKind(tok::string_literal);
-    Tok.SetLength(strlen("\"hh:mm:ss\""));
-    Tok.SetLocation(SourceMgr.getInstantiationLoc(TIMELoc, Tok.getLocation()));
+    Tok.setKind(tok::string_literal);
+    Tok.setLength(strlen("\"hh:mm:ss\""));
+    Tok.setLocation(SourceMgr.getInstantiationLoc(TIMELoc, Tok.getLocation()));
   } else if (II == Ident__INCLUDE_LEVEL__) {
     Diag(Tok, diag::ext_pp_include_level);
 
@@ -908,9 +908,9 @@ void Preprocessor::ExpandBuiltinMacro(LexerToken &Tok) {
     // __INCLUDE_LEVEL__ expands to a simple numeric value.
     sprintf(TmpBuffer, "%u", Depth);
     unsigned Length = strlen(TmpBuffer);
-    Tok.SetKind(tok::numeric_constant);
-    Tok.SetLength(Length);
-    Tok.SetLocation(CreateString(TmpBuffer, Length, Tok.getLocation()));
+    Tok.setKind(tok::numeric_constant);
+    Tok.setLength(Length);
+    Tok.setLocation(CreateString(TmpBuffer, Length, Tok.getLocation()));
   } else if (II == Ident__TIMESTAMP__) {
     // MSVC, ICC, GCC, VisualAge C++ extension.  The generated string should be
     // of the form "Ddd Mmm dd hh::mm::ss yyyy", which is returned by asctime.
@@ -937,9 +937,9 @@ void Preprocessor::ExpandBuiltinMacro(LexerToken &Tok) {
     strcpy(TmpBuffer+1, Result);
     unsigned Len = strlen(TmpBuffer);
     TmpBuffer[Len-1] = '"';  // Replace the newline with a quote.
-    Tok.SetKind(tok::string_literal);
-    Tok.SetLength(Len);
-    Tok.SetLocation(CreateString(TmpBuffer, Len, Tok.getLocation()));
+    Tok.setKind(tok::string_literal);
+    Tok.setLength(Len);
+    Tok.setLocation(CreateString(TmpBuffer, Len, Tok.getLocation()));
   } else {
     assert(0 && "Unknown identifier!");
   }  
@@ -979,7 +979,7 @@ IdentifierInfo *Preprocessor::LookUpIdentifierInfo(LexerToken &Identifier,
     unsigned Size = getSpelling(Identifier, TmpBuf);
     II = getIdentifierInfo(TmpBuf, TmpBuf+Size);
   }
-  Identifier.SetIdentifierInfo(II);
+  Identifier.setIdentifierInfo(II);
   return II;
 }
 
@@ -1012,13 +1012,13 @@ void Preprocessor::HandleIdentifier(LexerToken &Identifier) {
         // C99 6.10.3.4p2 says that a disabled macro may never again be
         // expanded, even if it's in a context where it could be expanded in the
         // future.
-        Identifier.SetFlag(LexerToken::DisableExpand);
+        Identifier.setFlag(LexerToken::DisableExpand);
       }
     }
 
   // Change the kind of this identifier to the appropriate token kind, e.g.
   // turning "for" into a keyword.
-  Identifier.SetKind(II.getTokenID());
+  Identifier.setKind(II.getTokenID());
     
   // If this is an extension token, diagnose its use.
   if (II.isExtensionToken()) Diag(Identifier, diag::ext_token_used);
@@ -1065,10 +1065,10 @@ bool Preprocessor::HandleEndOfFile(LexerToken &Result, bool isEndOfMacro) {
     return false;
   }
   
-  Result.StartToken();
+  Result.startToken();
   CurLexer->BufferPtr = CurLexer->BufferEnd;
   CurLexer->FormTokenWithChars(Result, CurLexer->BufferEnd);
-  Result.SetKind(tok::eof);
+  Result.setKind(tok::eof);
   
   // We're done with the #included file.
   delete CurLexer;
@@ -1148,7 +1148,7 @@ void Preprocessor::ReadMacroName(LexerToken &MacroNameTok, char isDefineUndef) {
   
   // Invalid macro name, read and discard the rest of the line.  Then set the
   // token kind to tok::eom.
-  MacroNameTok.SetKind(tok::eom);
+  MacroNameTok.setKind(tok::eom);
   return DiscardUntilEndOfDirective();
 }
 
@@ -1744,7 +1744,7 @@ void Preprocessor::HandleDefineDirective(LexerToken &DefineTok) {
   } else {
     // This is a normal token with leading space.  Clear the leading space
     // marker on the first token to get proper expansion.
-    Tok.ClearFlag(LexerToken::LeadingSpace);
+    Tok.clearFlag(LexerToken::LeadingSpace);
   }
   
   // If this is a definition of a variadic C99 function-like macro, not using

@@ -144,8 +144,8 @@ MacroArgs::getPreExpArgument(unsigned Arg, Preprocessor &PP) {
 static LexerToken StringifyArgument(const LexerToken *ArgToks,
                                     Preprocessor &PP, bool Charify = false) {
   LexerToken Tok;
-  Tok.StartToken();
-  Tok.SetKind(tok::string_literal);
+  Tok.startToken();
+  Tok.setKind(tok::string_literal);
 
   const LexerToken *ArgTokStart = ArgToks;
   
@@ -209,8 +209,8 @@ static LexerToken StringifyArgument(const LexerToken *ArgToks,
     }
   }
   
-  Tok.SetLength(Result.size());
-  Tok.SetLocation(PP.CreateString(&Result[0], Result.size()));
+  Tok.setLength(Result.size());
+  Tok.setLocation(PP.CreateString(&Result[0], Result.size()));
   return Tok;
 }
 
@@ -319,7 +319,7 @@ void MacroExpander::ExpandFunctionArguments() {
       // The stringified/charified string leading space flag gets set to match
       // the #/#@ operator.
       if (CurTok.hasLeadingSpace() || NextTokGetsSpace)
-        Res.SetFlag(LexerToken::LeadingSpace);
+        Res.setFlag(LexerToken::LeadingSpace);
       
       ResultToks.push_back(Res);
       MadeChange = true;
@@ -337,7 +337,7 @@ void MacroExpander::ExpandFunctionArguments() {
       ResultToks.push_back(CurTok);
 
       if (NextTokGetsSpace) {
-        ResultToks.back().SetFlag(LexerToken::LeadingSpace);
+        ResultToks.back().setFlag(LexerToken::LeadingSpace);
         NextTokGetsSpace = false;
       }
       continue;
@@ -376,7 +376,7 @@ void MacroExpander::ExpandFunctionArguments() {
         // If any tokens were substituted from the argument, the whitespace
         // before the first token should match the whitespace of the arg
         // identifier.
-        ResultToks[FirstResult].SetFlagValue(LexerToken::LeadingSpace,
+        ResultToks[FirstResult].setFlagValue(LexerToken::LeadingSpace,
                                              CurTok.hasLeadingSpace() ||
                                              NextTokGetsSpace);
         NextTokGetsSpace = false;
@@ -398,7 +398,7 @@ void MacroExpander::ExpandFunctionArguments() {
       // If the next token was supposed to get leading whitespace, ensure it has
       // it now.
       if (NextTokGetsSpace) {
-        ResultToks[ResultToks.size()-NumToks].SetFlag(LexerToken::LeadingSpace);
+        ResultToks[ResultToks.size()-NumToks].setFlag(LexerToken::LeadingSpace);
         NextTokGetsSpace = false;
       }
       continue;
@@ -489,14 +489,14 @@ void MacroExpander::Lex(LexerToken &Tok) {
     // ignore the macro expand part to get to the physloc.  This happens for
     // stuff like:  #define A(X) X    A(A(X))    A(1)
     SourceLocation PhysLoc = SrcMgr.getPhysicalLoc(Tok.getLocation());
-    Tok.SetLocation(SrcMgr.getInstantiationLoc(PhysLoc, InstantiateLoc));
+    Tok.setLocation(SrcMgr.getInstantiationLoc(PhysLoc, InstantiateLoc));
   }
   
   // If this is the first token, set the lexical properties of the token to
   // match the lexical properties of the macro identifier.
   if (isFirstToken) {
-    Tok.SetFlagValue(LexerToken::StartOfLine , AtStartOfLine);
-    Tok.SetFlagValue(LexerToken::LeadingSpace, HasLeadingSpace);
+    Tok.setFlagValue(LexerToken::StartOfLine , AtStartOfLine);
+    Tok.setFlagValue(LexerToken::LeadingSpace, HasLeadingSpace);
   }
   
   // Handle recursive expansion!
@@ -555,10 +555,10 @@ void MacroExpander::PasteTokens(LexerToken &Tok) {
       // Common paste case: identifier+identifier = identifier.  Avoid creating
       // a lexer and other overhead.
       PP.IncrementPasteCounter(true);
-      Result.StartToken();
-      Result.SetKind(tok::identifier);
-      Result.SetLocation(ResultTokLoc);
-      Result.SetLength(LHSLen+RHSLen);
+      Result.startToken();
+      Result.setKind(tok::identifier);
+      Result.setLocation(ResultTokLoc);
+      Result.setLength(LHSLen+RHSLen);
     } else {
       PP.IncrementPasteCounter(false);
       
@@ -601,12 +601,12 @@ void MacroExpander::PasteTokens(LexerToken &Tok) {
     
     // Turn ## into 'other' to avoid # ## # from looking like a paste operator.
     if (Result.getKind() == tok::hashhash)
-      Result.SetKind(tok::unknown);
+      Result.setKind(tok::unknown);
     // FIXME: Turn __VARRGS__ into "not a token"?
     
     // Transfer properties of the LHS over the the Result.
-    Result.SetFlagValue(LexerToken::StartOfLine , Tok.isAtStartOfLine());
-    Result.SetFlagValue(LexerToken::LeadingSpace, Tok.hasLeadingSpace());
+    Result.setFlagValue(LexerToken::StartOfLine , Tok.isAtStartOfLine());
+    Result.setFlagValue(LexerToken::LeadingSpace, Tok.hasLeadingSpace());
     
     // Finally, replace LHS with the result, consume the RHS, and iterate.
     ++CurToken;
@@ -619,7 +619,7 @@ void MacroExpander::PasteTokens(LexerToken &Tok) {
   if (Tok.getKind() == tok::identifier) {
     // Look up the identifier info for the token.  We disabled identifier lookup
     // by saying we're skipping contents, so we need to do this manually.
-    Tok.SetIdentifierInfo(PP.LookUpIdentifierInfo(Tok));
+    Tok.setIdentifierInfo(PP.LookUpIdentifierInfo(Tok));
   }
 }
 

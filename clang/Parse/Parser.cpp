@@ -19,7 +19,7 @@ using namespace clang;
 
 Parser::Parser(Preprocessor &pp, Action &actions)
   : PP(pp), Actions(actions), Diags(PP.getDiagnostics()) {
-  Tok.SetKind(tok::eof);
+  Tok.setKind(tok::eof);
   CurScope = 0;
   
   ParenCount = BracketCount = BraceCount = 0;

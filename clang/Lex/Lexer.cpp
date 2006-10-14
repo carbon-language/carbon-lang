@@ -245,7 +245,7 @@ Slash:
         ++SizeTmp;
         if (Ptr[SizeTmp-1] == '\n' || Ptr[SizeTmp-1] == '\r') {
           // Remember that this token needs to be cleaned.
-          if (Tok) Tok->SetFlag(LexerToken::NeedsCleaning);
+          if (Tok) Tok->setFlag(LexerToken::NeedsCleaning);
 
           // Warn if there was whitespace between the backslash and newline.
           if (SizeTmp != 1 && Tok)
@@ -275,7 +275,7 @@ Slash:
     // a trigraph warning.  If so, and if trigraphs are enabled, return it.
     if (char C = DecodeTrigraphChar(Ptr+2, Tok ? this : 0)) {
       // Remember that this token needs to be cleaned.
-      if (Tok) Tok->SetFlag(LexerToken::NeedsCleaning);
+      if (Tok) Tok->setFlag(LexerToken::NeedsCleaning);
 
       Ptr += 3;
       Size += 3;
@@ -369,7 +369,7 @@ void Lexer::LexIdentifier(LexerToken &Result, const char *CurPtr) {
 FinishIdentifier:
     const char *IdStart = BufferPtr;
     FormTokenWithChars(Result, CurPtr);
-    Result.SetKind(tok::identifier);
+    Result.setKind(tok::identifier);
     
     // If we are in raw mode, return this identifier raw.  There is no need to
     // look up identifier information or attempt to macro expand it.
@@ -436,7 +436,7 @@ void Lexer::LexNumericConstant(LexerToken &Result, const char *CurPtr) {
       (C == '-' || C == '+') && (PrevCh == 'P' || PrevCh == 'p'))
     return LexNumericConstant(Result, ConsumeChar(CurPtr, Size, Result));
   
-  Result.SetKind(tok::numeric_constant);
+  Result.setKind(tok::numeric_constant);
 
   // Update the location of token as well as BufferPtr.
   FormTokenWithChars(Result, CurPtr);
@@ -456,7 +456,7 @@ void Lexer::LexStringLiteral(LexerToken &Result, const char *CurPtr, bool Wide){
     } else if (C == '\n' || C == '\r' ||             // Newline.
                (C == 0 && CurPtr-1 == BufferEnd)) {  // End of file.
       if (!LexingRawMode) Diag(BufferPtr, diag::err_unterminated_string);
-      Result.SetKind(tok::unknown);
+      Result.setKind(tok::unknown);
       FormTokenWithChars(Result, CurPtr-1);
       return;
     } else if (C == 0) {
@@ -468,7 +468,7 @@ void Lexer::LexStringLiteral(LexerToken &Result, const char *CurPtr, bool Wide){
   // If a nul character existed in the string, warn about it.
   if (NulCharacter) Diag(NulCharacter, diag::null_in_string);
 
-  Result.SetKind(Wide ? tok::wide_string_literal : tok::string_literal);
+  Result.setKind(Wide ? tok::wide_string_literal : tok::string_literal);
 
   // Update the location of the token as well as the BufferPtr instance var.
   FormTokenWithChars(Result, CurPtr);
@@ -488,7 +488,7 @@ void Lexer::LexAngledStringLiteral(LexerToken &Result, const char *CurPtr) {
     } else if (C == '\n' || C == '\r' ||             // Newline.
                (C == 0 && CurPtr-1 == BufferEnd)) {  // End of file.
       if (!LexingRawMode) Diag(BufferPtr, diag::err_unterminated_string);
-      Result.SetKind(tok::unknown);
+      Result.setKind(tok::unknown);
       FormTokenWithChars(Result, CurPtr-1);
       return;
     } else if (C == 0) {
@@ -500,7 +500,7 @@ void Lexer::LexAngledStringLiteral(LexerToken &Result, const char *CurPtr) {
   // If a nul character existed in the string, warn about it.
   if (NulCharacter) Diag(NulCharacter, diag::null_in_string);
   
-  Result.SetKind(tok::angle_string_literal);
+  Result.setKind(tok::angle_string_literal);
   
   // Update the location of token as well as BufferPtr.
   FormTokenWithChars(Result, CurPtr);
@@ -516,7 +516,7 @@ void Lexer::LexCharConstant(LexerToken &Result, const char *CurPtr) {
   char C = getAndAdvanceChar(CurPtr, Result);
   if (C == '\'') {
     if (!LexingRawMode) Diag(BufferPtr, diag::err_empty_character);
-    Result.SetKind(tok::unknown);
+    Result.setKind(tok::unknown);
     FormTokenWithChars(Result, CurPtr);
     return;
   } else if (C == '\\') {
@@ -537,7 +537,7 @@ void Lexer::LexCharConstant(LexerToken &Result, const char *CurPtr) {
       } else if (C == '\n' || C == '\r' ||               // Newline.
                  (C == 0 && CurPtr-1 == BufferEnd)) {    // End of file.
         if (!LexingRawMode) Diag(BufferPtr, diag::err_unterminated_char);
-        Result.SetKind(tok::unknown);
+        Result.setKind(tok::unknown);
         FormTokenWithChars(Result, CurPtr-1);
         return;
       } else if (C == 0) {
@@ -549,7 +549,7 @@ void Lexer::LexCharConstant(LexerToken &Result, const char *CurPtr) {
   
   if (NulCharacter) Diag(NulCharacter, diag::null_in_char);
 
-  Result.SetKind(tok::char_constant);
+  Result.setKind(tok::char_constant);
   
   // Update the location of token as well as BufferPtr.
   FormTokenWithChars(Result, CurPtr);
@@ -577,16 +577,16 @@ void Lexer::SkipWhitespace(LexerToken &Result, const char *CurPtr) {
     
     // ok, but handle newline.
     // The returned token is at the start of the line.
-    Result.SetFlag(LexerToken::StartOfLine);
+    Result.setFlag(LexerToken::StartOfLine);
     // No leading whitespace seen so far.
-    Result.ClearFlag(LexerToken::LeadingSpace);
+    Result.clearFlag(LexerToken::LeadingSpace);
     Char = *++CurPtr;
   }
 
   // If this isn't immediately after a newline, there is leading space.
   char PrevChar = CurPtr[-1];
   if (PrevChar != '\n' && PrevChar != '\r')
-    Result.SetFlag(LexerToken::LeadingSpace);
+    Result.setFlag(LexerToken::LeadingSpace);
 
   // If the next token is obviously a // or /* */ comment, skip it efficiently
   // too (without going through the big switch stmt).
@@ -674,15 +674,15 @@ bool Lexer::SkipBCPLComment(LexerToken &Result, const char *CurPtr) {
   ++CurPtr;
     
   // The next returned token is at the start of the line.
-  Result.SetFlag(LexerToken::StartOfLine);
+  Result.setFlag(LexerToken::StartOfLine);
   // No leading whitespace seen so far.
-  Result.ClearFlag(LexerToken::LeadingSpace);
+  Result.clearFlag(LexerToken::LeadingSpace);
     
   // It is common for the tokens immediately after a // comment to be
   // whitespace (indentation for the next line).  Instead of going through the
   // big switch, handle it efficiently now.
   if (isWhitespace(*CurPtr)) {
-    Result.SetFlag(LexerToken::LeadingSpace);
+    Result.setFlag(LexerToken::LeadingSpace);
     SkipWhitespace(Result, CurPtr+1);
     return true;
   }
@@ -694,7 +694,7 @@ bool Lexer::SkipBCPLComment(LexerToken &Result, const char *CurPtr) {
 /// SaveBCPLComment - If in save-comment mode, package up this BCPL comment in
 /// an appropriate way and return it.
 bool Lexer::SaveBCPLComment(LexerToken &Result, const char *CurPtr) {
-  Result.SetKind(tok::comment);
+  Result.setKind(tok::comment);
   FormTokenWithChars(Result, CurPtr);
   
   // If this BCPL-style comment is in a macro definition, transmogrify it into
@@ -705,9 +705,9 @@ bool Lexer::SaveBCPLComment(LexerToken &Result, const char *CurPtr) {
     Spelling[1] = '*';   // Change prefix to "/*".
     Spelling += "*/";    // add suffix.
     
-    Result.SetLocation(PP.CreateString(&Spelling[0], Spelling.size(),
+    Result.setLocation(PP.CreateString(&Spelling[0], Spelling.size(),
                                        Result.getLocation()));
-    Result.SetLength(Spelling.size());
+    Result.setLength(Spelling.size());
   }
   return false;
 }
@@ -823,7 +823,7 @@ bool Lexer::SkipBlockComment(LexerToken &Result, const char *CurPtr) {
   
   // If we are returning comments as tokens, return this comment as a token.
   if (KeepCommentMode) {
-    Result.SetKind(tok::comment);
+    Result.setKind(tok::comment);
     FormTokenWithChars(Result, CurPtr);
     return false;
   }
@@ -832,14 +832,14 @@ bool Lexer::SkipBlockComment(LexerToken &Result, const char *CurPtr) {
   // whitespace.  Instead of going through the big switch, handle it
   // efficiently now.
   if (isHorizontalWhitespace(*CurPtr)) {
-    Result.SetFlag(LexerToken::LeadingSpace);
+    Result.setFlag(LexerToken::LeadingSpace);
     SkipWhitespace(Result, CurPtr+1);
     return true;
   }
 
   // Otherwise, just return so that the next character will be lexed as a token.
   BufferPtr = CurPtr;
-  Result.SetFlag(LexerToken::LeadingSpace);
+  Result.setFlag(LexerToken::LeadingSpace);
   return true;
 }
 
@@ -877,25 +877,25 @@ std::string Lexer::LexIncludeFilename(LexerToken &FilenameTok) {
   if (Filename[0] == '<') {
     if (Filename[Filename.size()-1] != '>') {
       Diag(FilenameTok.getLocation(), diag::err_pp_expects_filename);
-      FilenameTok.SetKind(tok::eom);
+      FilenameTok.setKind(tok::eom);
       return "";
     }
   } else if (Filename[0] == '"') {
     if (Filename[Filename.size()-1] != '"') {
       Diag(FilenameTok.getLocation(), diag::err_pp_expects_filename);
-      FilenameTok.SetKind(tok::eom);
+      FilenameTok.setKind(tok::eom);
       return "";
     }
   } else {
     Diag(FilenameTok.getLocation(), diag::err_pp_expects_filename);
-    FilenameTok.SetKind(tok::eom);
+    FilenameTok.setKind(tok::eom);
     return "";
   }
   
   // Diagnose #include "" as invalid.
   if (Filename.size() == 2) {
     Diag(FilenameTok.getLocation(), diag::err_pp_empty_filename);
-    FilenameTok.SetKind(tok::eom);
+    FilenameTok.setKind(tok::eom);
     return "";
   }
         
@@ -953,7 +953,7 @@ bool Lexer::LexEndOfFile(LexerToken &Result, const char *CurPtr) {
   if (ParsingPreprocessorDirective) {
     // Done parsing the "line".
     ParsingPreprocessorDirective = false;
-    Result.SetKind(tok::eom);
+    Result.setKind(tok::eom);
     // Update the location of token as well as BufferPtr.
     FormTokenWithChars(Result, CurPtr);
     
@@ -965,10 +965,10 @@ bool Lexer::LexEndOfFile(LexerToken &Result, const char *CurPtr) {
   // If we are in raw mode, return this event as an EOF token.  Let the caller
   // that put us in raw mode handle the event.
   if (LexingRawMode) {
-    Result.StartToken();
+    Result.startToken();
     BufferPtr = BufferEnd;
     FormTokenWithChars(Result, BufferEnd);
-    Result.SetKind(tok::eof);
+    Result.setKind(tok::eof);
     return true;
   }
   
@@ -1006,7 +1006,7 @@ unsigned Lexer::isNextPPTokenLParen() {
   const char *TmpBufferPtr = BufferPtr;
   
   LexerToken Tok;
-  Tok.StartToken();
+  Tok.startToken();
   LexTokenInternal(Tok);
   
   // Restore state that may have changed.
@@ -1031,8 +1031,8 @@ unsigned Lexer::isNextPPTokenLParen() {
 void Lexer::LexTokenInternal(LexerToken &Result) {
 LexNextToken:
   // New token, can't need cleaning yet.
-  Result.ClearFlag(LexerToken::NeedsCleaning);
-  Result.SetIdentifierInfo(0);
+  Result.clearFlag(LexerToken::NeedsCleaning);
+  Result.setIdentifierInfo(0);
   
   // CurPtr - Cache BufferPtr in an automatic variable.
   const char *CurPtr = BufferPtr;
@@ -1043,7 +1043,7 @@ LexNextToken:
     while ((*CurPtr == ' ') || (*CurPtr == '\t'))
       ++CurPtr;
     BufferPtr = CurPtr;
-    Result.SetFlag(LexerToken::LeadingSpace);
+    Result.setFlag(LexerToken::LeadingSpace);
   }
   
   unsigned SizeTmp, SizeTmp2;   // Temporaries for use in cases below.
@@ -1063,7 +1063,7 @@ LexNextToken:
     }
     
     Diag(CurPtr-1, diag::null_in_file);
-    Result.SetFlag(LexerToken::LeadingSpace);
+    Result.setFlag(LexerToken::LeadingSpace);
     SkipWhitespace(Result, CurPtr);
     goto LexNextToken;   // GCC isn't tail call eliminating.
   case '\n':
@@ -1080,20 +1080,20 @@ LexNextToken:
       // Since we consumed a newline, we are back at the start of a line.
       IsAtStartOfLine = true;
       
-      Result.SetKind(tok::eom);
+      Result.setKind(tok::eom);
       break;
     }
     // The returned token is at the start of the line.
-    Result.SetFlag(LexerToken::StartOfLine);
+    Result.setFlag(LexerToken::StartOfLine);
     // No leading whitespace seen so far.
-    Result.ClearFlag(LexerToken::LeadingSpace);
+    Result.clearFlag(LexerToken::LeadingSpace);
     SkipWhitespace(Result, CurPtr);
     goto LexNextToken;   // GCC isn't tail call eliminating.
   case ' ':
   case '\t':
   case '\f':
   case '\v':
-    Result.SetFlag(LexerToken::LeadingSpace);
+    Result.setFlag(LexerToken::LeadingSpace);
     SkipWhitespace(Result, CurPtr);
     goto LexNextToken;   // GCC isn't tail call eliminating.
 
@@ -1148,25 +1148,25 @@ LexNextToken:
 
   // C99 6.4.6: Punctuators.
   case '?':
-    Result.SetKind(tok::question);
+    Result.setKind(tok::question);
     break;
   case '[':
-    Result.SetKind(tok::l_square);
+    Result.setKind(tok::l_square);
     break;
   case ']':
-    Result.SetKind(tok::r_square);
+    Result.setKind(tok::r_square);
     break;
   case '(':
-    Result.SetKind(tok::l_paren);
+    Result.setKind(tok::l_paren);
     break;
   case ')':
-    Result.SetKind(tok::r_paren);
+    Result.setKind(tok::r_paren);
     break;
   case '{':
-    Result.SetKind(tok::l_brace);
+    Result.setKind(tok::l_brace);
     break;
   case '}':
-    Result.SetKind(tok::r_brace);
+    Result.setKind(tok::r_brace);
     break;
   case '.':
     Char = getCharAndSize(CurPtr, SizeTmp);
@@ -1176,78 +1176,78 @@ LexNextToken:
 
       return LexNumericConstant(Result, ConsumeChar(CurPtr, SizeTmp, Result));
     } else if (Features.CPlusPlus && Char == '*') {
-      Result.SetKind(tok::periodstar);
+      Result.setKind(tok::periodstar);
       CurPtr += SizeTmp;
     } else if (Char == '.' &&
                getCharAndSize(CurPtr+SizeTmp, SizeTmp2) == '.') {
-      Result.SetKind(tok::ellipsis);
+      Result.setKind(tok::ellipsis);
       CurPtr = ConsumeChar(ConsumeChar(CurPtr, SizeTmp, Result),
                            SizeTmp2, Result);
     } else {
-      Result.SetKind(tok::period);
+      Result.setKind(tok::period);
     }
     break;
   case '&':
     Char = getCharAndSize(CurPtr, SizeTmp);
     if (Char == '&') {
-      Result.SetKind(tok::ampamp);
+      Result.setKind(tok::ampamp);
       CurPtr = ConsumeChar(CurPtr, SizeTmp, Result);
     } else if (Char == '=') {
-      Result.SetKind(tok::ampequal);
+      Result.setKind(tok::ampequal);
       CurPtr = ConsumeChar(CurPtr, SizeTmp, Result);
     } else {
-      Result.SetKind(tok::amp);
+      Result.setKind(tok::amp);
     }
     break;
   case '*': 
     if (getCharAndSize(CurPtr, SizeTmp) == '=') {
-      Result.SetKind(tok::starequal);
+      Result.setKind(tok::starequal);
       CurPtr = ConsumeChar(CurPtr, SizeTmp, Result);
     } else {
-      Result.SetKind(tok::star);
+      Result.setKind(tok::star);
     }
     break;
   case '+':
     Char = getCharAndSize(CurPtr, SizeTmp);
     if (Char == '+') {
-      Result.SetKind(tok::plusplus);
+      Result.setKind(tok::plusplus);
       CurPtr = ConsumeChar(CurPtr, SizeTmp, Result);
     } else if (Char == '=') {
-      Result.SetKind(tok::plusequal);
+      Result.setKind(tok::plusequal);
       CurPtr = ConsumeChar(CurPtr, SizeTmp, Result);
     } else {
-      Result.SetKind(tok::plus);
+      Result.setKind(tok::plus);
     }
     break;
   case '-':
     Char = getCharAndSize(CurPtr, SizeTmp);
     if (Char == '-') {
-      Result.SetKind(tok::minusminus);
+      Result.setKind(tok::minusminus);
       CurPtr = ConsumeChar(CurPtr, SizeTmp, Result);
     } else if (Char == '>' && Features.CPlusPlus && 
                getCharAndSize(CurPtr+SizeTmp, SizeTmp2) == '*') {
-      Result.SetKind(tok::arrowstar);  // C++ ->*
+      Result.setKind(tok::arrowstar);  // C++ ->*
       CurPtr = ConsumeChar(ConsumeChar(CurPtr, SizeTmp, Result),
                            SizeTmp2, Result);
     } else if (Char == '>') {
-      Result.SetKind(tok::arrow);
+      Result.setKind(tok::arrow);
       CurPtr = ConsumeChar(CurPtr, SizeTmp, Result);
     } else if (Char == '=') {
-      Result.SetKind(tok::minusequal);
+      Result.setKind(tok::minusequal);
       CurPtr = ConsumeChar(CurPtr, SizeTmp, Result);
     } else {
-      Result.SetKind(tok::minus);
+      Result.setKind(tok::minus);
     }
     break;
   case '~':
-    Result.SetKind(tok::tilde);
+    Result.setKind(tok::tilde);
     break;
   case '!':
     if (getCharAndSize(CurPtr, SizeTmp) == '=') {
-      Result.SetKind(tok::exclaimequal);
+      Result.setKind(tok::exclaimequal);
       CurPtr = ConsumeChar(CurPtr, SizeTmp, Result);
     } else {
-      Result.SetKind(tok::exclaim);
+      Result.setKind(tok::exclaim);
     }
     break;
   case '/':
@@ -1262,33 +1262,33 @@ LexNextToken:
         goto LexNextToken;   // GCC isn't tail call eliminating.
       return; // KeepCommentMode
     } else if (Char == '=') {
-      Result.SetKind(tok::slashequal);
+      Result.setKind(tok::slashequal);
       CurPtr = ConsumeChar(CurPtr, SizeTmp, Result);
     } else {
-      Result.SetKind(tok::slash);
+      Result.setKind(tok::slash);
     }
     break;
   case '%':
     Char = getCharAndSize(CurPtr, SizeTmp);
     if (Char == '=') {
-      Result.SetKind(tok::percentequal);
+      Result.setKind(tok::percentequal);
       CurPtr = ConsumeChar(CurPtr, SizeTmp, Result);
     } else if (Features.Digraphs && Char == '>') {
-      Result.SetKind(tok::r_brace);    // '%>' -> '}'
+      Result.setKind(tok::r_brace);    // '%>' -> '}'
       CurPtr = ConsumeChar(CurPtr, SizeTmp, Result);
     } else if (Features.Digraphs && Char == ':') {
       CurPtr = ConsumeChar(CurPtr, SizeTmp, Result);
       Char = getCharAndSize(CurPtr, SizeTmp);
       if (Char == '%' && getCharAndSize(CurPtr+SizeTmp, SizeTmp2) == ':') {
-        Result.SetKind(tok::hashhash);   // '%:%:' -> '##'
+        Result.setKind(tok::hashhash);   // '%:%:' -> '##'
         CurPtr = ConsumeChar(ConsumeChar(CurPtr, SizeTmp, Result),
                              SizeTmp2, Result);
       } else if (Char == '@' && Features.Microsoft) {  // %:@ -> #@ -> Charize
-        Result.SetKind(tok::hashat);
+        Result.setKind(tok::hashat);
         CurPtr = ConsumeChar(CurPtr, SizeTmp, Result);
         Diag(BufferPtr, diag::charize_microsoft_ext);
       } else {
-        Result.SetKind(tok::hash);       // '%:' -> '#'
+        Result.setKind(tok::hash);       // '%:' -> '#'
         
         // We parsed a # character.  If this occurs at the start of the line,
         // it's actually the start of a preprocessing directive.  Callback to
@@ -1305,7 +1305,7 @@ LexNextToken:
             // want us starting at the beginning of the line again.  If so, set
             // the StartOfLine flag.
             if (IsAtStartOfLine) {
-              Result.SetFlag(LexerToken::StartOfLine);
+              Result.setFlag(LexerToken::StartOfLine);
               IsAtStartOfLine = false;
             }
             goto LexNextToken;   // GCC isn't tail call eliminating.
@@ -1315,7 +1315,7 @@ LexNextToken:
         }
       }
     } else {
-      Result.SetKind(tok::percent);
+      Result.setKind(tok::percent);
     }
     break;
   case '<':
@@ -1324,121 +1324,121 @@ LexNextToken:
       return LexAngledStringLiteral(Result, CurPtr+SizeTmp);
     } else if (Char == '<' &&
                getCharAndSize(CurPtr+SizeTmp, SizeTmp2) == '=') {
-      Result.SetKind(tok::lesslessequal);
+      Result.setKind(tok::lesslessequal);
       CurPtr = ConsumeChar(ConsumeChar(CurPtr, SizeTmp, Result),
                            SizeTmp2, Result);
     } else if (Char == '<') {
-      Result.SetKind(tok::lessless);
+      Result.setKind(tok::lessless);
       CurPtr = ConsumeChar(CurPtr, SizeTmp, Result);
     } else if (Char == '=') {
-      Result.SetKind(tok::lessequal);
+      Result.setKind(tok::lessequal);
       CurPtr = ConsumeChar(CurPtr, SizeTmp, Result);
     } else if (Features.Digraphs && Char == ':') {
-      Result.SetKind(tok::l_square); // '<:' -> '['
+      Result.setKind(tok::l_square); // '<:' -> '['
       CurPtr = ConsumeChar(CurPtr, SizeTmp, Result);
     } else if (Features.Digraphs && Char == '>') {
-      Result.SetKind(tok::l_brace); // '<%' -> '{'
+      Result.setKind(tok::l_brace); // '<%' -> '{'
       CurPtr = ConsumeChar(CurPtr, SizeTmp, Result);
     } else if (Features.CPPMinMax && Char == '?') {     // <?
       CurPtr = ConsumeChar(CurPtr, SizeTmp, Result);
       Diag(BufferPtr, diag::min_max_deprecated);
 
       if (getCharAndSize(CurPtr, SizeTmp) == '=') {     // <?= 
-        Result.SetKind(tok::lessquestionequal);
+        Result.setKind(tok::lessquestionequal);
         CurPtr = ConsumeChar(CurPtr, SizeTmp, Result);
       } else {
-        Result.SetKind(tok::lessquestion);
+        Result.setKind(tok::lessquestion);
       }
     } else {
-      Result.SetKind(tok::less);
+      Result.setKind(tok::less);
     }
     break;
   case '>':
     Char = getCharAndSize(CurPtr, SizeTmp);
     if (Char == '=') {
-      Result.SetKind(tok::greaterequal);
+      Result.setKind(tok::greaterequal);
       CurPtr = ConsumeChar(CurPtr, SizeTmp, Result);
     } else if (Char == '>' && 
                getCharAndSize(CurPtr+SizeTmp, SizeTmp2) == '=') {
-      Result.SetKind(tok::greatergreaterequal);
+      Result.setKind(tok::greatergreaterequal);
       CurPtr = ConsumeChar(ConsumeChar(CurPtr, SizeTmp, Result),
                            SizeTmp2, Result);
     } else if (Char == '>') {
-      Result.SetKind(tok::greatergreater);
+      Result.setKind(tok::greatergreater);
       CurPtr = ConsumeChar(CurPtr, SizeTmp, Result);
     } else if (Features.CPPMinMax && Char == '?') {
       CurPtr = ConsumeChar(CurPtr, SizeTmp, Result);
       Diag(BufferPtr, diag::min_max_deprecated);
 
       if (getCharAndSize(CurPtr, SizeTmp) == '=') {
-        Result.SetKind(tok::greaterquestionequal);    // >?=
+        Result.setKind(tok::greaterquestionequal);    // >?=
         CurPtr = ConsumeChar(CurPtr, SizeTmp, Result);
       } else {
-        Result.SetKind(tok::greaterquestion);         // >?
+        Result.setKind(tok::greaterquestion);         // >?
       }
     } else {
-      Result.SetKind(tok::greater);
+      Result.setKind(tok::greater);
     }
     break;
   case '^':
     Char = getCharAndSize(CurPtr, SizeTmp);
     if (Char == '=') {
-      Result.SetKind(tok::caretequal);
+      Result.setKind(tok::caretequal);
       CurPtr = ConsumeChar(CurPtr, SizeTmp, Result);
     } else {
-      Result.SetKind(tok::caret);
+      Result.setKind(tok::caret);
     }
     break;
   case '|':
     Char = getCharAndSize(CurPtr, SizeTmp);
     if (Char == '=') {
-      Result.SetKind(tok::pipeequal);
+      Result.setKind(tok::pipeequal);
       CurPtr = ConsumeChar(CurPtr, SizeTmp, Result);
     } else if (Char == '|') {
-      Result.SetKind(tok::pipepipe);
+      Result.setKind(tok::pipepipe);
       CurPtr = ConsumeChar(CurPtr, SizeTmp, Result);
     } else {
-      Result.SetKind(tok::pipe);
+      Result.setKind(tok::pipe);
     }
     break;
   case ':':
     Char = getCharAndSize(CurPtr, SizeTmp);
     if (Features.Digraphs && Char == '>') {
-      Result.SetKind(tok::r_square); // ':>' -> ']'
+      Result.setKind(tok::r_square); // ':>' -> ']'
       CurPtr = ConsumeChar(CurPtr, SizeTmp, Result);
     } else if (Features.CPlusPlus && Char == ':') {
-      Result.SetKind(tok::coloncolon);
+      Result.setKind(tok::coloncolon);
       CurPtr = ConsumeChar(CurPtr, SizeTmp, Result);
     } else {    
-      Result.SetKind(tok::colon);
+      Result.setKind(tok::colon);
     }
     break;
   case ';':
-    Result.SetKind(tok::semi);
+    Result.setKind(tok::semi);
     break;
   case '=':
     Char = getCharAndSize(CurPtr, SizeTmp);
     if (Char == '=') {
-      Result.SetKind(tok::equalequal);
+      Result.setKind(tok::equalequal);
       CurPtr = ConsumeChar(CurPtr, SizeTmp, Result);
     } else {      
-      Result.SetKind(tok::equal);
+      Result.setKind(tok::equal);
     }
     break;
   case ',':
-    Result.SetKind(tok::comma);
+    Result.setKind(tok::comma);
     break;
   case '#':
     Char = getCharAndSize(CurPtr, SizeTmp);
     if (Char == '#') {
-      Result.SetKind(tok::hashhash);
+      Result.setKind(tok::hashhash);
       CurPtr = ConsumeChar(CurPtr, SizeTmp, Result);
     } else if (Char == '@' && Features.Microsoft) {  // #@ -> Charize
-      Result.SetKind(tok::hashat);
+      Result.setKind(tok::hashat);
       Diag(BufferPtr, diag::charize_microsoft_ext);
       CurPtr = ConsumeChar(CurPtr, SizeTmp, Result);
     } else {
-      Result.SetKind(tok::hash);
+      Result.setKind(tok::hash);
       // We parsed a # character.  If this occurs at the start of the line,
       // it's actually the start of a preprocessing directive.  Callback to
       // the preprocessor to handle it.
@@ -1454,7 +1454,7 @@ LexNextToken:
           // want us starting at the beginning of the line again.  If so, set
           // the StartOfLine flag.
           if (IsAtStartOfLine) {
-            Result.SetFlag(LexerToken::StartOfLine);
+            Result.setFlag(LexerToken::StartOfLine);
             IsAtStartOfLine = false;
           }
           goto LexNextToken;   // GCC isn't tail call eliminating.
@@ -1470,7 +1470,7 @@ LexNextToken:
   default:
     // Objective C support.
     if (CurPtr[-1] == '@' && Features.ObjC1) {
-      Result.SetKind(tok::at);
+      Result.setKind(tok::at);
       break;
     } else if (CurPtr[-1] == '$' && Features.DollarIdents) {// $ in identifiers.
       Diag(CurPtr-1, diag::ext_dollar_in_identifier);
@@ -1479,7 +1479,7 @@ LexNextToken:
       return LexIdentifier(Result, CurPtr);
     }
     
-    Result.SetKind(tok::unknown);
+    Result.setKind(tok::unknown);
     break;
   }
   
