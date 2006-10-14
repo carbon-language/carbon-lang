@@ -16,6 +16,7 @@
 
 #include "clang/Basic/SourceLocation.h"
 #include <vector>
+#include <string>
 
 namespace llvm {
 namespace clang {
@@ -85,6 +86,10 @@ public:
   
   ///===---- Target property query methods --------------------------------===//
   
+  /// getTargetDefines - Appends the target-specific #define values for this
+  /// target set to the specified buffer.
+  void getTargetDefines(std::vector<char> &DefineBuffer);
+  
   /// getWCharWidth - Return the size of wchar_t in bytes.
   ///
   unsigned getWCharWidth(SourceLocation Loc) {
@@ -108,11 +113,19 @@ protected:
   unsigned WCharWidth;    /// sizeof(wchar_t) in bytes.  Default value is 4.
 public:
   TargetInfoImpl() : WCharWidth(4) {}
+  virtual ~TargetInfoImpl() {}
   
+  /// getTargetDefines - Return a list of the target-specific #define values set
+  /// when compiling to this target.  Each string should be of the form "X",
+  /// which results in '#define X 1' or "X=Y" which results in "#define X Y"
+  virtual void getTargetDefines(std::vector<std::string> &Defines) const = 0;
+
   /// getWCharWidth - Return the size of wchar_t in bytes.
   ///
   unsigned getWCharWidth() const { return WCharWidth; }
   
+private:
+  virtual void ANCHOR(); // out-of-line virtual method for class.
 };
 
 }  // end namespace clang
