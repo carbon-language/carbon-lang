@@ -46,18 +46,21 @@ their parts) that are not portable, but it doesn't help if the system headers
 are non-portable and not fixed.  An alternative model that would be easy to use
 is a 'tainting' scheme.  Consider:
 
-inline int foo() {
-#ifdef __i386__
-  return 1;
+int32_t
+OSHostByteOrder(void) {
+#if defined(__LITTLE_ENDIAN__)
+    return OSLittleEndian;
+#elif defined(__BIG_ENDIAN__)
+    return OSBigEndian;
 #else
-  return 2;
+    return OSUnknownByteOrder;
 #endif
 }
 
-It would be trivial to mark 'foo' as being non-portable (tainted) instead of
-marking the entire translation unit.  Then, if foo is never called/used by the
-current translation unit, the t-u wouldn't be marked non-portable.  However,
-there is no good way to handle stuff like:
+It would be trivial to mark 'OSHostByteOrder' as being non-portable (tainted)
+instead of marking the entire translation unit.  Then, if OSHostByteOrder is
+never called/used by the current translation unit, the t-u wouldn't be marked
+non-portable.  However, there is no good way to handle stuff like:
 
 extern int X, Y;
 
@@ -70,18 +73,62 @@ int bar() { return X; }
 When compiling for powerpc, the #define is skipped, so it doesn't know that bar
 uses a #define that is set on some other target.  In practice, limited cases
 could be handled by scanning the skipped region of a #if, but the fully general
-case cannot be implemented efficiently.
+case cannot be implemented efficiently.  In particular, code like this (from
+OSByteOrder.h):
 
-We probably have to do something like this in the future.  The C++ header
+  #if (defined(__ppc__) || defined(__ppc64__))
+  #include <libkern/ppc/OSByteOrder.h>
+  #elif (defined(__i386__) || defined(__x86_64__))
+  #include <libkern/i386/OSByteOrder.h>
+  #else
+  #include <libkern/machine/OSByteOrder.h>
+  #endif
+
+... should be fixed by having an initial #ifdef __llvm__ that defines its
+contents in terms of the llvm bswap intrinsics.  Other things should be handled
+on a case-by-case basis.
+
+
+We probably have to do something smarter like this in the future. The C++ header
 <limits> contains a lot of code like this:
+
    static const int digits10 = __LDBL_DIG__;
    static const int min_exponent = __LDBL_MIN_EXP__;
    static const int min_exponent10 = __LDBL_MIN_10_EXP__;
    static const float_denorm_style has_denorm
      = bool(__LDBL_DENORM_MIN__) ? denorm_present : denorm_absent;
+
  ... since this isn't being used in an #ifdef, it should be easy enough to taint
 the decl for these ivars.
 
 
+/usr/include/sys/cdefs.h contains stuff like this:
+
+#if defined(__ppc__)
+#  if defined(__LDBL_MANT_DIG__) && defined(__DBL_MANT_DIG__) && \
+	__LDBL_MANT_DIG__ > __DBL_MANT_DIG__
+#    if __ENVIRONMENT_MAC_OS_X_VERSION_MIN_REQUIRED__-0 < 1040
+#      define	__DARWIN_LDBL_COMPAT(x)	__asm("_" __STRING(x) "$LDBLStub")
+#    else
+#      define	__DARWIN_LDBL_COMPAT(x)	__asm("_" __STRING(x) "$LDBL128")
+#    endif
+#    define	__DARWIN_LDBL_COMPAT2(x) __asm("_" __STRING(x) "$LDBL128")
+#    define	__DARWIN_LONG_DOUBLE_IS_DOUBLE	0
+#  else
+#   define	__DARWIN_LDBL_COMPAT(x) /* nothing */
+#   define	__DARWIN_LDBL_COMPAT2(x) /* nothing */
+#   define	__DARWIN_LONG_DOUBLE_IS_DOUBLE	1
+#  endif
+#elif defined(__i386__) || defined(__ppc64__) || defined(__x86_64__)
+#  define	__DARWIN_LDBL_COMPAT(x)	/* nothing */
+#  define	__DARWIN_LDBL_COMPAT2(x) /* nothing */
+#  define	__DARWIN_LONG_DOUBLE_IS_DOUBLE	0
+#else
+#  error Unknown architecture
+#endif
+
+An ideal way to solve this issue is to mark __DARWIN_LDBL_COMPAT / 
+__DARWIN_LDBL_COMPAT2 / __DARWIN_LONG_DOUBLE_IS_DOUBLE as being non-portable
+because they depend on non-portable macros.
 
 //===---------------------------------------------------------------------===//
