@@ -72,4 +72,16 @@ uses a #define that is set on some other target.  In practice, limited cases
 could be handled by scanning the skipped region of a #if, but the fully general
 case cannot be implemented efficiently.
 
+We probably have to do something like this in the future.  The C++ header
+<limits> contains a lot of code like this:
+   static const int digits10 = __LDBL_DIG__;
+   static const int min_exponent = __LDBL_MIN_EXP__;
+   static const int min_exponent10 = __LDBL_MIN_10_EXP__;
+   static const float_denorm_style has_denorm
+     = bool(__LDBL_DENORM_MIN__) ? denorm_present : denorm_absent;
+ ... since this isn't being used in an #ifdef, it should be easy enough to taint
+the decl for these ivars.
+
+
+
 //===---------------------------------------------------------------------===//
