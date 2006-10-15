@@ -1296,6 +1296,8 @@ UpRTypes : '\\' EUINT64VAL {                   // Type UpReference
     CHECK_FOR_ERROR
   }
   | UpRTypes '*' {                             // Pointer type?
+    if (*$1 == Type::LabelTy)
+      GEN_ERROR("Cannot form a pointer to a basic block");
     $$ = new PATypeHolder(HandleUpRefs(PointerType::get(*$1)));
     delete $1;
     CHECK_FOR_ERROR
