@@ -3181,8 +3181,9 @@ be implemented with code generator support.
 <h5>Overview:</h5>
 
 <p>
-The '<tt>llvm.returnaddress</tt>' intrinsic returns a target-specific value
-indicating the return address of the current function or one of its callers.
+The '<tt>llvm.returnaddress</tt>' intrinsic attempts to compute a 
+target-specific value indicating the return address of the current function 
+or one of its callers.
 </p>
 
 <h5>Arguments:</h5>
@@ -3225,8 +3226,8 @@ source-language caller.
 <h5>Overview:</h5>
 
 <p>
-The '<tt>llvm.frameaddress</tt>' intrinsic returns the target-specific frame
-pointer value for the specified stack frame.
+The '<tt>llvm.frameaddress</tt>' intrinsic attempts to return the 
+target-specific frame pointer value for the specified stack frame.
 </p>
 
 <h5>Arguments:</h5>
