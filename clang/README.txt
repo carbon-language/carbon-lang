@@ -147,6 +147,8 @@ Preprocessor:
  * #assert/#unassert
  * #line / #file directives
  * MSExtension: "L#param" stringizes to a wide string literal.
+ * Consider merging the parser's expression parser into the preprocessor to
+   eliminate duplicate code.
 
 Traditional Preprocessor:
  * All.
@@ -166,6 +168,9 @@ Parser Actions:
 AST Builder:
  * Implement more nodes as actions are available.
  * Types.
+ * Allow the AST Builder to be subclassed.  This will allow clients to extend it
+   and create their own specialized nodes for specific scenarios.  Maybe the
+   "full loc info" use case is just one extension.
 
 Fast #Import:
  * All.

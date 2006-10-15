@@ -73,7 +73,9 @@ int bar() { return X; }
 When compiling for powerpc, the #define is skipped, so it doesn't know that bar
 uses a #define that is set on some other target.  In practice, limited cases
 could be handled by scanning the skipped region of a #if, but the fully general
-case cannot be implemented efficiently.  In particular, code like this (from
+case cannot be implemented efficiently.  In this case, for example, the #define
+in the protected region could be turned into either a #define_target or
+#define_other_target as appropriate.  The harder case is code like this (from
 OSByteOrder.h):
 
   #if (defined(__ppc__) || defined(__ppc64__))
@@ -84,9 +86,9 @@ OSByteOrder.h):
   #include <libkern/machine/OSByteOrder.h>
   #endif
 
-... should be fixed by having an initial #ifdef __llvm__ that defines its
-contents in terms of the llvm bswap intrinsics.  Other things should be handled
-on a case-by-case basis.
+The realistic way to fix this is by having an initial #ifdef __llvm__ that
+defines its contents in terms of the llvm bswap intrinsics.  Other things should
+be handled on a case-by-case basis.
 
 
 We probably have to do something smarter like this in the future. The C++ header
@@ -129,6 +131,8 @@ the decl for these ivars.
 
 An ideal way to solve this issue is to mark __DARWIN_LDBL_COMPAT / 
 __DARWIN_LDBL_COMPAT2 / __DARWIN_LONG_DOUBLE_IS_DOUBLE as being non-portable
-because they depend on non-portable macros.
+because they depend on non-portable macros.  In practice though, this may end
+up being a serious problem: every use of printf will mark the translation unit
+non-portable if targetting ppc32 and something else.
 
 //===---------------------------------------------------------------------===//
