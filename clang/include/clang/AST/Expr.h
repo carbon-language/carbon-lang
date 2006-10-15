@@ -107,8 +107,9 @@ public:
     AddrOf, Deref,    // [C99 6.5.3.2] Address and indirection operators.
     Plus, Minus,      // [C99 6.5.3.3] Unary arithmetic operators.
     Not, LNot,        // [C99 6.5.3.3] Unary arithmetic operators.
+    SizeOf, AlignOf,  // [C99 6.5.3.4] Sizeof (expr, not type) operator.
     Real, Imag,       // "__real expr"/"__imag expr" Extension.
-    SizeOf, AlignOf   // [C99 6.5.3.4] Sizeof (expr, not type) operator.
+    AddrLabel         // && label Extension.
   };
 
   UnaryOperator(Expr *input, Opcode opc)

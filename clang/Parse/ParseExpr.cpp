@@ -534,15 +534,18 @@ Parser::ExprResult Parser::ParseCastExpression(bool isUnaryExpression) {
     return ParseSizeofAlignofExpression();
   case tok::ampamp:        // unary-expression: '&&' identifier
     Diag(Tok, diag::ext_gnu_address_of_label);
+    SavedTok = Tok;
     ConsumeToken();
-    // TODO: Build AST.
-    if (Tok.getKind() == tok::identifier) {
-      ConsumeToken();
-    } else {
+    
+    if (Tok.getKind() != tok::identifier) {
       Diag(Tok, diag::err_expected_ident);
       return ExprResult(true);
     }
-    return ExprResult(false);
+    // FIXME: Create a label ref for Tok.Ident.
+    Res = Actions.ParseUnaryOp(SavedTok, 0);
+    ConsumeToken();
+      
+    return Res;
   default:
     Diag(Tok, diag::err_expected_expression);
     return ExprResult(true);
