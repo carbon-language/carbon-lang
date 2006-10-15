@@ -289,105 +289,41 @@ static void InitializePredefinedMacros(Preprocessor &PP,
       number = 1;
     break;
 #endif    
-  // FIXME: These should all be defined in the preprocessor according to the
+  // These should all be defined in the preprocessor according to the
   // current language configuration.
   DefineBuiltinMacro(Buf, "__STDC__=1");
-  //DefineBuiltinMacro(Buf, "__cplusplus=1");
   //DefineBuiltinMacro(Buf, "__ASSEMBLER__=1");
-  //DefineBuiltinMacro(Buf, "__STDC_VERSION__=199409L");
-  DefineBuiltinMacro(Buf, "__STDC_VERSION__=199901L");
-  DefineBuiltinMacro(Buf, "__STDC_HOSTED__=1");
-  //DefineBuiltinMacro(Buf, "__OBJC__=1");
+  if (PP.getLangOptions().C99)
+    DefineBuiltinMacro(Buf, "__STDC_VERSION__=199901L");
+  else
+    DefineBuiltinMacro(Buf, "__STDC_VERSION__=199409L");
   
+  DefineBuiltinMacro(Buf, "__STDC_HOSTED__=1");
+  if (PP.getLangOptions().ObjC1)
+    DefineBuiltinMacro(Buf, "__OBJC__=1");
+  if (PP.getLangOptions().ObjC2)
+    DefineBuiltinMacro(Buf, "__OBJC2__=1");
+
   // Get the target #defines.
   PP.getTargetInfo().getTargetDefines(Buf);
   
-  // FIXME: This is obviously silly.  It should be more like gcc/c-cppbuiltin.c.
-  // Macros predefined by GCC 4.0.1.
+  // Compiler set macros.
   DefineBuiltinMacro(Buf, "__APPLE_CC__=5250");
-
-  DefineBuiltinMacro(Buf, "_ARCH_PPC=1");
-  DefineBuiltinMacro(Buf, "_BIG_ENDIAN=1");
-  //XXX DONE DefineBuiltinMacro(Buf, "__APPLE__=1");
-  DefineBuiltinMacro(Buf, "__BIG_ENDIAN__=1");
-  DefineBuiltinMacro(Buf, "__CHAR_BIT__=8");
-  DefineBuiltinMacro(Buf, "__CONSTANT_CFSTRINGS__=1");
-  DefineBuiltinMacro(Buf, "__DBL_DENORM_MIN__=4.9406564584124654e-324");
-  DefineBuiltinMacro(Buf, "__DBL_DIG__=15");
-  DefineBuiltinMacro(Buf, "__DBL_EPSILON__=2.2204460492503131e-16");
-  DefineBuiltinMacro(Buf, "__DBL_HAS_INFINITY__=1");
-  DefineBuiltinMacro(Buf, "__DBL_HAS_QUIET_NAN__=1");
-  DefineBuiltinMacro(Buf, "__DBL_MANT_DIG__=53");
-  DefineBuiltinMacro(Buf, "__DBL_MAX_10_EXP__=308");
-  DefineBuiltinMacro(Buf, "__DBL_MAX_EXP__=1024");
-  DefineBuiltinMacro(Buf, "__DBL_MAX__=1.7976931348623157e+308");
-  DefineBuiltinMacro(Buf, "__DBL_MIN_10_EXP__=(-307)");
-  DefineBuiltinMacro(Buf, "__DBL_MIN_EXP__=(-1021)");
-  DefineBuiltinMacro(Buf, "__DBL_MIN__=2.2250738585072014e-308");
-  DefineBuiltinMacro(Buf, "__DECIMAL_DIG__=33");
-  DefineBuiltinMacro(Buf, "__DYNAMIC__=1");
   DefineBuiltinMacro(Buf, "__ENVIRONMENT_MAC_OS_X_VERSION_MIN_REQUIRED__=1030");
-  DefineBuiltinMacro(Buf, "__FINITE_MATH_ONLY__=0");
-  DefineBuiltinMacro(Buf, "__FLT_DENORM_MIN__=1.40129846e-45F");
-  DefineBuiltinMacro(Buf, "__FLT_DIG__=6");
-  DefineBuiltinMacro(Buf, "__FLT_EPSILON__=1.19209290e-7F");
-  DefineBuiltinMacro(Buf, "__FLT_EVAL_METHOD__=0");
-  DefineBuiltinMacro(Buf, "__FLT_HAS_INFINITY__=1");
-  DefineBuiltinMacro(Buf, "__FLT_HAS_QUIET_NAN__=1");
-  DefineBuiltinMacro(Buf, "__FLT_MANT_DIG__=24");
-  DefineBuiltinMacro(Buf, "__FLT_MAX_10_EXP__=38");
-  DefineBuiltinMacro(Buf, "__FLT_MAX_EXP__=128");
-  DefineBuiltinMacro(Buf, "__FLT_MAX__=3.40282347e+38F");
-  DefineBuiltinMacro(Buf, "__FLT_MIN_10_EXP__=(-37)");
-  DefineBuiltinMacro(Buf, "__FLT_MIN_EXP__=(-125)");
-  DefineBuiltinMacro(Buf, "__FLT_MIN__=1.17549435e-38F");
-  DefineBuiltinMacro(Buf, "__FLT_RADIX__=2");
   DefineBuiltinMacro(Buf, "__GNUC_MINOR__=0");
   DefineBuiltinMacro(Buf, "__GNUC_PATCHLEVEL__=1");
   DefineBuiltinMacro(Buf, "__GNUC__=4");
   DefineBuiltinMacro(Buf, "__GXX_ABI_VERSION=1002");
-  DefineBuiltinMacro(Buf, "__INTMAX_MAX__=9223372036854775807LL");
-  DefineBuiltinMacro(Buf, "__INTMAX_TYPE__=long long int");
-  DefineBuiltinMacro(Buf, "__INT_MAX__=2147483647");
-  DefineBuiltinMacro(Buf, "__LDBL_DENORM_MIN__=4.940656458412465441765687"
-                        "92868221e-324L");
-  DefineBuiltinMacro(Buf, "__LDBL_DIG__=31");
-  DefineBuiltinMacro(Buf, "__LDBL_EPSILON__=4.9406564584124654417656879286822"
-                        "1e-324L");
-  DefineBuiltinMacro(Buf, "__LDBL_HAS_INFINITY__=1");
-  DefineBuiltinMacro(Buf, "__LDBL_HAS_QUIET_NAN__=1");
-  DefineBuiltinMacro(Buf, "__LDBL_MANT_DIG__=106");
-  DefineBuiltinMacro(Buf, "__LDBL_MAX_10_EXP__=308");
-  DefineBuiltinMacro(Buf, "__LDBL_MAX_EXP__=1024");
-  DefineBuiltinMacro(Buf, "__LDBL_MAX__=1.7976931348623158079372897140"
-                        "5301e+308L");
-  DefineBuiltinMacro(Buf, "__LDBL_MIN_10_EXP__=(-291)");
-  DefineBuiltinMacro(Buf, "__LDBL_MIN_EXP__=(-968)");
-  DefineBuiltinMacro(Buf, "__LDBL_MIN__=2.004168360008972777996108051350"
-                        "16e-292L");
-  DefineBuiltinMacro(Buf, "__LONG_DOUBLE_128__=1");
-  DefineBuiltinMacro(Buf, "__LONG_LONG_MAX__=9223372036854775807LL");
-  DefineBuiltinMacro(Buf, "__LONG_MAX__=2147483647L");
-  DefineBuiltinMacro(Buf, "__MACH__=1");
-  DefineBuiltinMacro(Buf, "__NATURAL_ALIGNMENT__=1");
+  DefineBuiltinMacro(Buf, "__VERSION__=\"4.0.1 (Apple Computer, Inc. "
+                     "build 5250)\"");
+
+  // Build configuration options.
+  DefineBuiltinMacro(Buf, "__DYNAMIC__=1");
+  DefineBuiltinMacro(Buf, "__FINITE_MATH_ONLY__=0");
   DefineBuiltinMacro(Buf, "__NO_INLINE__=1");
   DefineBuiltinMacro(Buf, "__PIC__=1");
-  DefineBuiltinMacro(Buf, "__POWERPC__=1");
-  DefineBuiltinMacro(Buf, "__PTRDIFF_TYPE__=int");
-  DefineBuiltinMacro(Buf, "__REGISTER_PREFIX__");
-  DefineBuiltinMacro(Buf, "__SCHAR_MAX__=127");
-  DefineBuiltinMacro(Buf, "__SHRT_MAX__=32767");
-  DefineBuiltinMacro(Buf, "__SIZE_TYPE__=long unsigned int");
-  DefineBuiltinMacro(Buf, "__UINTMAX_TYPE__=long long unsigned int");
-  DefineBuiltinMacro(Buf, "__USER_LABEL_PREFIX__=_");
-  DefineBuiltinMacro(Buf, "__VERSION__=\"4.0.1 (Apple Computer, Inc. "
-                        "build 5250)\"");
-  DefineBuiltinMacro(Buf, "__WCHAR_MAX__=2147483647");
-  DefineBuiltinMacro(Buf, "__WCHAR_TYPE__=int");
-  DefineBuiltinMacro(Buf, "__WINT_TYPE__=int");
-  DefineBuiltinMacro(Buf, "__ppc__=1");
-  DefineBuiltinMacro(Buf, "__strong");
-  DefineBuiltinMacro(Buf, "__weak");
+
+  
   if (PP.getLangOptions().CPlusPlus) {
     DefineBuiltinMacro(Buf, "__DEPRECATED=1");
     DefineBuiltinMacro(Buf, "__EXCEPTIONS=1");
