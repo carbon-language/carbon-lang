@@ -338,13 +338,13 @@ void Parser::ParseDeclarationOrFunctionDefinition() {
       Tok.getKind() == tok::kw_asm || // int X() __asm__ -> not a fn def
       Tok.getKind() == tok::kw___attribute) {// int X() __attr__ -> not a fn def
     // FALL THROUGH.
-  } else if (DeclaratorInfo.isInnermostFunctionType() &&
+  } else if (DeclaratorInfo.isFunctionDeclarator() &&
              (Tok.getKind() == tok::l_brace ||  // int X() {}
               isDeclarationSpecifier())) {      // int X(f) int f; {}
     ParseFunctionDefinition(DeclaratorInfo);
     return;
   } else {
-    if (DeclaratorInfo.isInnermostFunctionType())
+    if (DeclaratorInfo.isFunctionDeclarator())
       Diag(Tok, diag::err_expected_fn_body);
     else
       Diag(Tok, diag::err_expected_after_declarator);

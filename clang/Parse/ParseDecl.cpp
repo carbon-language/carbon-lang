@@ -136,6 +136,7 @@ void Parser::ParseInitDeclaratorListAfterFirstDeclarator(Declarator &D) {
     }
     
     // Inform the current actions module that we just parsed a declarator.
+    // TODO: pass asm & attributes.
     Actions.ParseDeclarator(Tok.getLocation(), CurScope, D, Init.Val);
     
     // If we don't have a comma, it is either the end of the list (a ';') or an

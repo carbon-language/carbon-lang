@@ -36,6 +36,7 @@
 		DEC8DAC00A94402500353FCA /* ASTStreamer.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = DEC8DABF0A94402500353FCA /* ASTStreamer.h */; };
 		DED626C90AE0C065001E80A4 /* TargetInfo.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DED626C80AE0C065001E80A4 /* TargetInfo.cpp */; };
 		DED627030AE0C51D001E80A4 /* Targets.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DED627020AE0C51D001E80A4 /* Targets.cpp */; };
+		DED62ABB0AE2EDF1001E80A4 /* Decl.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DED62ABA0AE2EDF1001E80A4 /* Decl.cpp */; };
 		DED7D7410A524295003AD0FB /* Diagnostic.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = DED7D7310A524295003AD0FB /* Diagnostic.h */; };
 		DED7D7420A524295003AD0FB /* DiagnosticKinds.def in CopyFiles */ = {isa = PBXBuildFile; fileRef = DED7D7320A524295003AD0FB /* DiagnosticKinds.def */; };
 		DED7D7430A524295003AD0FB /* FileManager.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = DED7D7330A524295003AD0FB /* FileManager.h */; };
@@ -141,6 +142,7 @@
 		DEC8DABF0A94402500353FCA /* ASTStreamer.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; name = ASTStreamer.h; path = clang/AST/ASTStreamer.h; sourceTree = "<group>"; };
 		DED626C80AE0C065001E80A4 /* TargetInfo.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = TargetInfo.cpp; sourceTree = "<group>"; };
 		DED627020AE0C51D001E80A4 /* Targets.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; name = Targets.cpp; path = Driver/Targets.cpp; sourceTree = "<group>"; };
+		DED62ABA0AE2EDF1001E80A4 /* Decl.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; name = Decl.cpp; path = AST/Decl.cpp; sourceTree = SOURCE_ROOT; };
 		DED7D7310A524295003AD0FB /* Diagnostic.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = Diagnostic.h; sourceTree = "<group>"; };
 		DED7D7320A524295003AD0FB /* DiagnosticKinds.def */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = text; path = DiagnosticKinds.def; sourceTree = "<group>"; };
 		DED7D7330A524295003AD0FB /* FileManager.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = FileManager.h; sourceTree = "<group>"; };
@@ -229,6 +231,7 @@
 			children = (
 				DE06E8130A8FF9330050E87E /* Action.h */,
 				DE1F24810A7DCD3800FBF588 /* Declarations.h */,
+				DED62ABA0AE2EDF1001E80A4 /* Decl.cpp */,
 				DE1F22020A7D852A00FBF588 /* Parser.h */,
 				DE06BECA0A854E4B0050E87E /* Scope.h */,
 			);
@@ -427,6 +430,7 @@
 				DE5932D40AD60FF400BC794C /* PrintPreprocessedOutput.cpp in Sources */,
 				DED626C90AE0C065001E80A4 /* TargetInfo.cpp in Sources */,
 				DED627030AE0C51D001E80A4 /* Targets.cpp in Sources */,
+				DED62ABB0AE2EDF1001E80A4 /* Decl.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

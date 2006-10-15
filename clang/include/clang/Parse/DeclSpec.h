@@ -318,9 +318,9 @@ public:
     return DeclTypeInfo[i];
   }
   
-  /// isInnermostFunctionType - Once this declarator is fully parsed and formed,
+  /// isFunctionDeclarator - Once this declarator is fully parsed and formed,
   /// this method returns true if the identifier is a function declarator.
-  bool isInnermostFunctionType() const {
+  bool isFunctionDeclarator() const {
     return !DeclTypeInfo.empty() &&
            DeclTypeInfo[0].Kind == DeclaratorTypeInfo::Function;
   }

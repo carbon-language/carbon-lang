@@ -100,7 +100,7 @@ public:
 
 bool ASTBuilder::isTypedefName(const IdentifierInfo &II, Scope *S) const {
   Decl *D = II.getFETokenInfo<Decl>();
-  return D != 0 && D->getDeclSpecs().StorageClassSpec == DeclSpec::SCS_typedef;
+  return D != 0 && D->getDeclSpec().StorageClassSpec == DeclSpec::SCS_typedef;
 }
 
 void ASTBuilder::ParseDeclarator(SourceLocation Loc, Scope *S, Declarator &D,
@@ -108,7 +108,11 @@ void ASTBuilder::ParseDeclarator(SourceLocation Loc, Scope *S, Declarator &D,
   IdentifierInfo *II = D.getIdentifier();
   Decl *PrevDecl = II ? II->getFETokenInfo<Decl>() : 0;
 
-  Decl *New = new Decl(II, D.getDeclSpec(), Loc, PrevDecl);
+  Decl *New;
+  if (D.isFunctionDeclarator())
+    New = new FunctionDecl(II, D, Loc, PrevDecl);
+  else
+    New = new VarDecl(II, D, Loc, PrevDecl);
   
   // If this has an identifier, add it to the scope stack.
   if (II) {
@@ -208,10 +212,11 @@ Action::ExprResult ASTBuilder::ParseUnaryOp(const LexerToken &Tok,
   case tok::minus:        Opc = UnaryOperator::Minus; break;
   case tok::tilde:        Opc = UnaryOperator::Not; break;
   case tok::exclaim:      Opc = UnaryOperator::LNot; break;
-  case tok::kw___real:    Opc = UnaryOperator::Real; break;
-  case tok::kw___imag:    Opc = UnaryOperator::Imag; break;
   case tok::kw_sizeof:    Opc = UnaryOperator::SizeOf; break;
   case tok::kw___alignof: Opc = UnaryOperator::AlignOf; break;
+  case tok::kw___real:    Opc = UnaryOperator::Real; break;
+  case tok::kw___imag:    Opc = UnaryOperator::Imag; break;
+  case tok::ampamp:       Opc = UnaryOperator::AddrLabel; break;
   }
 
   if (!FullLocInfo)

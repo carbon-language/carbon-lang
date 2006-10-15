@@ -44,16 +44,34 @@ class Decl {
   ///
   Decl *Next;
 public:
-  Decl(IdentifierInfo *Id, const DeclSpec &DS, SourceLocation loc, Decl *next)
-    : Identifier(Id), DeclarationSpecifier(DS), Loc(loc), Next(next) {}
-  
+  Decl(IdentifierInfo *Id, const Declarator &D, SourceLocation loc, Decl *next)
+    : Identifier(Id), DeclarationSpecifier(D.getDeclSpec()), Loc(loc),
+      Next(next) {}
   
   const IdentifierInfo *getIdentifier() const { return Identifier; }
   
-  const DeclSpec &getDeclSpecs() const { return DeclarationSpecifier; }
+  const DeclSpec &getDeclSpec() const { return DeclarationSpecifier; }
   
   Decl *getNext() const { return Next; }
-  
+};
+
+/// FunctionDecl - An instance of this class is created to represent a function
+/// declaration or definition.
+class FunctionDecl : public Decl {
+  // Args etc.
+public:
+  FunctionDecl(IdentifierInfo *Id, const Declarator &D,
+               SourceLocation Loc, Decl *Next) : Decl(Id, D, Loc, Next) {}
+
+};
+
+/// VarDecl - An instance of this class is created to represent a variable
+/// declaration or definition.
+class VarDecl : public Decl {
+  // Initializer.
+public:
+  VarDecl(IdentifierInfo *Id, const Declarator &D,
+          SourceLocation Loc, Decl *Next) : Decl(Id, D, Loc, Next) {}
   
 };
   
