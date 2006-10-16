@@ -397,12 +397,12 @@ Parser::DeclTy *Parser::ParseFunctionDefinition(Declarator &D) {
       return 0;
   }
   
-  // TODO: Get stmt info.
-  StmtTy *FnBody = 0;
-  ParseCompoundStatement();
+  // Parse the function body as a compound stmt.
+  StmtResult FnBody = ParseCompoundStatement();
+  if (FnBody.isInvalid) return 0;
 
   // TODO: Pass argument information.
-  return Actions.ParseFunctionDefinition(CurScope, D, FnBody);
+  return Actions.ParseFunctionDefinition(CurScope, D, FnBody.Val);
 }
 
 /// ParseAsmStringLiteral - This is just a normal string-literal, but is not

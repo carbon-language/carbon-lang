@@ -20,6 +20,7 @@
 namespace llvm {
 namespace clang {
 class IdentifierInfo;
+class Stmt;
   
 /// Decl - This represents one declaration (or definition), e.g. a variable, 
 /// typedef, function, struct, etc.  
@@ -54,10 +55,13 @@ public:
 /// declaration or definition.
 class FunctionDecl : public Decl {
   // Args etc.
+  Stmt *Body;  // Null if a prototype.
 public:
   FunctionDecl(IdentifierInfo *Id, const Declarator &D, Decl *Next)
-    : Decl(Id, D, Next) {}
-
+    : Decl(Id, D, Next), Body(0) {}
+  
+  Stmt *getBody() const { return Body; }
+  void setBody(Stmt *B) { Body = B; }
 };
 
 /// VarDecl - An instance of this class is created to represent a variable

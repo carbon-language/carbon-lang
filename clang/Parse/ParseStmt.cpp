@@ -68,10 +68,10 @@ using namespace clang;
 /// [OBC]   '@' 'throw' expression ';'    [TODO]
 /// [OBC]   '@' 'throw' ';'               [TODO]
 /// 
-void Parser::ParseStatementOrDeclaration(bool OnlyStatement) {
+Parser::StmtResult Parser::ParseStatementOrDeclaration(bool OnlyStatement) {
   const char *SemiError = 0;
+  Parser::StmtResult Res;
   
-ParseNextStatement:
   // Cases in this switch statement should fall through if the parser expects
   // the token to end in a semicolon (in which case SemiError should be set),
   // or they directly 'return;' if not.
@@ -86,9 +86,11 @@ ParseNextStatement:
     if (!OnlyStatement && isDeclarationSpecifier()) {
       // TODO: warn/disable if declaration is in the middle of a block and !C99.
       ParseDeclaration(Declarator::BlockContext);
-      return;
+      // FIXME: Make a DeclStmt node!
+      return 0;
     } else if (Tok.getKind() == tok::r_brace) {
       Diag(Tok, diag::err_expected_statement);
+      return true;
     } else {
       // expression[opt] ';'
       ExprResult Res = ParseExpression();
@@ -97,71 +99,59 @@ ParseNextStatement:
         // doing this opens us up to the possibility of infinite loops if
         // ParseExpression does not consume any tokens.
         SkipUntil(tok::semi);
+        return true;
+      } else {
+        return Actions.ParseExprStmt(Res.Val);
       }
     }
-    return;
     
   case tok::kw_case:                // C99 6.8.1: labeled-statement
-    ParseCaseStatement();
-    if (Tok.getKind() == tok::r_brace) {
-      Diag(Tok, diag::err_label_end_of_compound_statement);
-      return;
-    }
-    OnlyStatement = true;
-    goto ParseNextStatement;
+    return ParseCaseStatement();
   case tok::kw_default:             // C99 6.8.1: labeled-statement
-    ParseDefaultStatement();
-    if (Tok.getKind() == tok::r_brace) {
-      Diag(Tok, diag::err_label_end_of_compound_statement);
-      return;
-    }
-    OnlyStatement = true;
-    goto ParseNextStatement;
+    return ParseDefaultStatement();
     
   case tok::l_brace:                // C99 6.8.2: compound-statement
-    ParseCompoundStatement();
-    return;
+    return ParseCompoundStatement();
   case tok::semi:                   // C99 6.8.3: expression[opt] ';'
+    // TODO: Could return a NullStmt action result if we cared to.
     ConsumeToken();
-    return;
+    return 0;
     
   case tok::kw_if:                  // C99 6.8.4.1: if-statement
-    ParseIfStatement();
-    return;
+    return ParseIfStatement();
   case tok::kw_switch:              // C99 6.8.4.2: switch-statement
-    ParseSwitchStatement();
-    return;
+    return ParseSwitchStatement();
     
   case tok::kw_while:               // C99 6.8.5.1: while-statement
-    ParseWhileStatement();
-    return;
+    return ParseWhileStatement();
   case tok::kw_do:                  // C99 6.8.5.2: do-statement
-    ParseDoStatement();
+    Res = ParseDoStatement();
     SemiError = "do/while loop";
     break;
   case tok::kw_for:                 // C99 6.8.5.3: for-statement
-    ParseForStatement();
-    return;
+    return ParseForStatement();
 
   case tok::kw_goto:                // C99 6.8.6.1: goto-statement
-    ParseGotoStatement();
+    Res = ParseGotoStatement();
     SemiError = "goto statement";
     break;
   case tok::kw_continue:            // C99 6.8.6.2: continue-statement
+    Res = Actions.ParseContinueStmt(Tok.getLocation());
     ConsumeToken();  // eat the 'continue'.
     SemiError = "continue statement";
     break;
   case tok::kw_break:               // C99 6.8.6.3: break-statement
+    Res = Actions.ParseBreakStmt(Tok.getLocation());
     ConsumeToken();  // eat the 'break'.
     SemiError = "break statement";
     break;
   case tok::kw_return:              // C99 6.8.6.4: return-statement
-    ParseReturnStatement();
+    Res = ParseReturnStatement();
     SemiError = "return statement";
     break;
     
   case tok::kw_asm:
-    ParseAsmStatement();
+    Res = ParseAsmStatement();
     SemiError = "asm statement";
     break;
   }
@@ -173,6 +163,7 @@ ParseNextStatement:
     Diag(Tok, diag::err_expected_semi_after, SemiError);
     SkipUntil(tok::semi);
   }
+  return Res;
 }
 
 /// ParseIdentifierStatement - Because we don't have two-token lookahead, we
@@ -187,26 +178,31 @@ ParseNextStatement:
 ///         declaration                  (if !OnlyStatement)
 ///         expression[opt] ';'
 ///
-void Parser::ParseIdentifierStatement(bool OnlyStatement) {
+Parser::StmtResult Parser::ParseIdentifierStatement(bool OnlyStatement) {
   IdentifierInfo *II = Tok.getIdentifierInfo();
   assert(Tok.getKind() == tok::identifier && II && "Not an identifier!");
 
-  LexerToken IdentTok = Tok;  // Save the token.
+  LexerToken IdentTok = Tok;  // Save the whole token.
   ConsumeToken();  // eat the identifier.
   
   // identifier ':' statement
   if (Tok.getKind() == tok::colon) {
+    SourceLocation ColonLoc = Tok.getLocation();
     ConsumeToken();
 
     // Read label attributes, if present.
     if (Tok.getKind() == tok::kw___attribute)
+      // TODO: save these somewhere.
       ParseAttributes();
 
-    ParseStatement();
-    return;
+    StmtResult SubStmt = ParseStatement();
+    if (SubStmt.isInvalid) return true;
+    
+    // FIXME: Enter this label into the symbol table for the function.
+    return Actions.ParseLabelStmt(IdentTok, ColonLoc, SubStmt.Val);
   }
   
-  // declaration
+  // Check to see if this is a declaration.
   if (!OnlyStatement &&
       Actions.isTypedefName(*IdentTok.getIdentifierInfo(), CurScope)) {
     // Handle this.  Warn/disable if in middle of block and !C99.
@@ -223,7 +219,8 @@ void Parser::ParseIdentifierStatement(bool OnlyStatement) {
       // if (!DS.isMissingDeclaratorOk()) Diag(...);
       
       ConsumeToken();
-      return;
+      // FIXME: Return this as a type decl.
+      return 0;
     }
     
     // Parse all the declarators.
@@ -231,18 +228,22 @@ void Parser::ParseIdentifierStatement(bool OnlyStatement) {
     ParseDeclarator(DeclaratorInfo);
     
     ParseInitDeclaratorListAfterFirstDeclarator(DeclaratorInfo);
-    return;
+    // FIXME: Return this as a declstmt.
+    return 0;
   }
   
   // Otherwise, this is an expression.  Seed it with II and parse it.
   ExprResult Res = ParseExpressionWithLeadingIdentifier(IdentTok);
-  if (Res.isInvalid)
+  if (Res.isInvalid) {
     SkipUntil(tok::semi);
-  else if (Tok.getKind() == tok::semi)
-    ConsumeToken();
-  else {
+    return true;
+  } else if (Tok.getKind() != tok::semi) {
     Diag(Tok, diag::err_expected_semi_after, "expression");
     SkipUntil(tok::semi);
+    return true;
+  } else {
+    ConsumeToken();
+    return Actions.ParseExprStmt(Res.Val);
   }
 }
 
@@ -253,17 +254,20 @@ void Parser::ParseIdentifierStatement(bool OnlyStatement) {
 ///
 /// Note that this does not parse the 'statement' at the end.
 ///
-void Parser::ParseCaseStatement() {
+Parser::StmtResult Parser::ParseCaseStatement() {
   assert(Tok.getKind() == tok::kw_case && "Not a case stmt!");
+  SourceLocation CaseLoc = Tok.getLocation();
   ConsumeToken();  // eat the 'case'.
 
-  ExprResult Res = ParseConstantExpression();
-  if (Res.isInvalid) {
+  ExprResult LHS = ParseConstantExpression();
+  if (LHS.isInvalid) {
     SkipUntil(tok::colon);
-    return;
+    return true;
   }
   
   // GNU case range extension.
+  SourceLocation DotDotDotLoc;
+  ExprTy *RHSVal = 0;
   if (Tok.getKind() == tok::ellipsis) {
     Diag(Tok, diag::ext_gnu_case_range);
     ConsumeToken();
@@ -271,16 +275,33 @@ void Parser::ParseCaseStatement() {
     ExprResult RHS = ParseConstantExpression();
     if (RHS.isInvalid) {
       SkipUntil(tok::colon);
-      return;
+      return true;
     }
+    RHSVal = RHS.Val;
   }
   
-  if (Tok.getKind() == tok::colon) {
-    ConsumeToken();
-  } else {
+  if (Tok.getKind() != tok::colon) {
     Diag(Tok, diag::err_expected_colon_after, "'case'");
     SkipUntil(tok::colon);
+    return true;
   }
+  
+  SourceLocation ColonLoc = Tok.getLocation();
+  ConsumeToken();
+  
+  // Diagnose the common error "switch (X) { case 4: }", which is not valid.
+  if (Tok.getKind() == tok::r_brace) {
+    Diag(Tok, diag::err_label_end_of_compound_statement);
+    return true;
+  }
+  
+  StmtResult SubStmt = ParseStatement();
+  if (SubStmt.isInvalid)
+    return true;
+  
+  // TODO: look up enclosing switch stmt.
+  return Actions.ParseCaseStmt(CaseLoc, LHS.Val, DotDotDotLoc, RHSVal, ColonLoc,
+                               SubStmt.Val);
 }
 
 /// ParseDefaultStatement
@@ -288,16 +309,32 @@ void Parser::ParseCaseStatement() {
 ///         'default' ':' statement
 /// Note that this does not parse the 'statement' at the end.
 ///
-void Parser::ParseDefaultStatement() {
+Parser::StmtResult Parser::ParseDefaultStatement() {
   assert(Tok.getKind() == tok::kw_default && "Not a default stmt!");
+  SourceLocation DefaultLoc = Tok.getLocation();
   ConsumeToken();  // eat the 'default'.
 
-  if (Tok.getKind() == tok::colon) {
-    ConsumeToken();
-  } else {
+  if (Tok.getKind() != tok::colon) {
     Diag(Tok, diag::err_expected_colon_after, "'default'");
     SkipUntil(tok::colon);
+    return true;
   }
+  
+  SourceLocation ColonLoc = Tok.getLocation();
+  ConsumeToken();
+  
+  // Diagnose the common error "switch (X) {... default: }", which is not valid.
+  if (Tok.getKind() == tok::r_brace) {
+    Diag(Tok, diag::err_label_end_of_compound_statement);
+    return true;
+  }
+
+  StmtResult SubStmt = ParseStatement();
+  if (SubStmt.isInvalid)
+    return true;
+  
+  // TODO: look up enclosing switch stmt.
+  return Actions.ParseDefaultStmt(DefaultLoc, ColonLoc, SubStmt.Val);
 }
 
 
@@ -327,122 +364,162 @@ void Parser::ParseDefaultStatement() {
 /// [OMP] openmp-directive:             [TODO]
 /// [OMP]   barrier-directive
 /// [OMP]   flush-directive
-void Parser::ParseCompoundStatement() {
+///
+Parser::StmtResult Parser::ParseCompoundStatement() {
   assert(Tok.getKind() == tok::l_brace && "Not a compount stmt!");
+  SourceLocation LBraceLoc = Tok.getLocation();
   ConsumeBrace();  // eat the '{'.
   
-  while (Tok.getKind() != tok::r_brace && Tok.getKind() != tok::eof)
-    ParseStatementOrDeclaration(false);
+  SmallVector<StmtTy*, 32> Stmts;
+  while (Tok.getKind() != tok::r_brace && Tok.getKind() != tok::eof) {
+    StmtResult R = ParseStatementOrDeclaration(false);
+    if (!R.isInvalid && R.Val)
+      Stmts.push_back(R.Val);
+  }
   
   // We broke out of the while loop because we found a '}' or EOF.
-  if (Tok.getKind() == tok::r_brace)
-    ConsumeBrace();
-  else
+  if (Tok.getKind() != tok::r_brace) {
     Diag(Tok, diag::err_expected_rbrace);
+    return 0;
+  }
+
+  SourceLocation RBraceLoc = Tok.getLocation();
+  ConsumeBrace();
+  return Actions.ParseCompoundStmt(LBraceLoc, RBraceLoc,
+                                   &Stmts[0], Stmts.size());
 }
 
 /// ParseIfStatement
 ///       if-statement: [C99 6.8.4.1]
 ///         'if' '(' expression ')' statement
 ///         'if' '(' expression ')' statement 'else' statement
-void Parser::ParseIfStatement() {
+///
+Parser::StmtResult Parser::ParseIfStatement() {
   assert(Tok.getKind() == tok::kw_if && "Not an if stmt!");
+  SourceLocation IfLoc = Tok.getLocation();
   ConsumeToken();  // eat the 'if'.
 
   if (Tok.getKind() != tok::l_paren) {
     Diag(Tok, diag::err_expected_lparen_after, "if");
     SkipUntil(tok::semi);
-    return;
+    return true;
   }
   
   // Parse the condition.
-  ParseSimpleParenExpression();
+  ExprResult CondExp = ParseSimpleParenExpression();
+  if (CondExp.isInvalid) {
+    SkipUntil(tok::semi);
+    return true;
+  }
   
   // Read the if condition.
-  ParseStatement();
+  StmtResult CondStmt = ParseStatement();
   
   // If it has an else, parse it.
+  SourceLocation ElseLoc;
+  StmtResult ElseStmt(false);
   if (Tok.getKind() == tok::kw_else) {
+    ElseLoc = Tok.getLocation();
     ConsumeToken();
-    ParseStatement();
+    ElseStmt = ParseStatement();
   }
+  
+  if (CondStmt.isInvalid || ElseStmt.isInvalid)
+    return true;
+  
+  return Actions.ParseIfStmt(IfLoc, CondExp.Val, CondStmt.Val,
+                             ElseLoc, ElseStmt.Val);
 }
 
 /// ParseSwitchStatement
 ///       switch-statement:
 ///         'switch' '(' expression ')' statement
-void Parser::ParseSwitchStatement() {
+Parser::StmtResult Parser::ParseSwitchStatement() {
   assert(Tok.getKind() == tok::kw_switch && "Not a switch stmt!");
+  SourceLocation SwitchLoc = Tok.getLocation();
   ConsumeToken();  // eat the 'switch'.
 
   if (Tok.getKind() != tok::l_paren) {
     Diag(Tok, diag::err_expected_lparen_after, "switch");
     SkipUntil(tok::semi);
-    return;
+    return true;
   }
   
   // Parse the condition.
-  ParseSimpleParenExpression();
+  ExprResult Cond = ParseSimpleParenExpression();
   
   // Read the body statement.
-  ParseStatement();
+  StmtResult Body = ParseStatement();
+  
+  if (Cond.isInvalid || Body.isInvalid) return true;
+  
+  return Actions.ParseSwitchStmt(SwitchLoc, Cond.Val, Body.Val);
 }
 
 /// ParseWhileStatement
 ///       while-statement: [C99 6.8.5.1]
 ///         'while' '(' expression ')' statement
-void Parser::ParseWhileStatement() {
+Parser::StmtResult Parser::ParseWhileStatement() {
   assert(Tok.getKind() == tok::kw_while && "Not a while stmt!");
+  SourceLocation WhileLoc = Tok.getLocation();
   ConsumeToken();  // eat the 'while'.
   
   if (Tok.getKind() != tok::l_paren) {
     Diag(Tok, diag::err_expected_lparen_after, "while");
     SkipUntil(tok::semi);
-    return;
+    return true;
   }
   
   // Parse the condition.
-  ParseSimpleParenExpression();
+  ExprResult Cond = ParseSimpleParenExpression();
   
   // Read the body statement.
-  ParseStatement();
+  StmtResult Body = ParseStatement();
+  
+  if (Cond.isInvalid || Body.isInvalid) return true;
+  
+  return Actions.ParseWhileStmt(WhileLoc, Cond.Val, Body.Val);
 }
 
 /// ParseDoStatement
 ///       do-statement: [C99 6.8.5.2]
 ///         'do' statement 'while' '(' expression ')' ';'
 /// Note: this lets the caller parse the end ';'.
-void Parser::ParseDoStatement() {
+Parser::StmtResult Parser::ParseDoStatement() {
   assert(Tok.getKind() == tok::kw_do && "Not a do stmt!");
   SourceLocation DoLoc = Tok.getLocation();
   ConsumeToken();  // eat the 'do'.
   
   // Read the body statement.
-  ParseStatement();
+  StmtResult Body = ParseStatement();
 
   if (Tok.getKind() != tok::kw_while) {
     Diag(Tok, diag::err_expected_while);
     Diag(DoLoc, diag::err_matching, "do");
     SkipUntil(tok::semi);
-    return;
+    return true;
   }
+  SourceLocation WhileLoc = Tok.getLocation();
   ConsumeToken();
   
   if (Tok.getKind() != tok::l_paren) {
     Diag(Tok, diag::err_expected_lparen_after, "do/while");
     SkipUntil(tok::semi);
-    return;
+    return true;
   }
   
   // Parse the condition.
-  ParseSimpleParenExpression();
+  ExprResult Cond = ParseSimpleParenExpression();
+  if (Cond.isInvalid || Body.isInvalid) return true;
+  
+  return Actions.ParseDoStmt(DoLoc, Body.Val, WhileLoc, Cond.Val);
 }
 
 /// ParseForStatement
 ///       for-statement: [C99 6.8.5.3]
 ///         'for' '(' expr[opt] ';' expr[opt] ';' expr[opt] ')' statement
 ///         'for' '(' declaration expr[opt] ';' expr[opt] ')' statement
-void Parser::ParseForStatement() {
+Parser::StmtResult Parser::ParseForStatement() {
   assert(Tok.getKind() == tok::kw_for && "Not a for stmt!");
   SourceLocation ForLoc = Tok.getLocation();
   ConsumeToken();  // eat the 'for'.
@@ -450,7 +527,7 @@ void Parser::ParseForStatement() {
   if (Tok.getKind() != tok::l_paren) {
     Diag(Tok, diag::err_expected_lparen_after, "for");
     SkipUntil(tok::semi);
-    return;
+    return true;
   }
 
   SourceLocation LParenLoc = Tok.getLocation();
@@ -506,6 +583,9 @@ void Parser::ParseForStatement() {
   
   // Read the body statement.
   ParseStatement();
+  
+  // FIXME: ACTION FOR FOR STMT.
+  return false;
 }
 
 /// ParseGotoStatement
@@ -515,34 +595,47 @@ void Parser::ParseForStatement() {
 ///
 /// Note: this lets the caller parse the end ';'.
 ///
-void Parser::ParseGotoStatement() {
+Parser::StmtResult Parser::ParseGotoStatement() {
   assert(Tok.getKind() == tok::kw_goto && "Not a goto stmt!");
+  SourceLocation GotoLoc;
   ConsumeToken();  // eat the 'goto'.
   
+  StmtResult Res;
   if (Tok.getKind() == tok::identifier) {
+    Res = Actions.ParseGotoStmt(GotoLoc, Tok);
     ConsumeToken();
   } else if (Tok.getKind() == tok::star && !getLang().NoExtensions) {
     // GNU indirect goto extension.
     Diag(Tok, diag::ext_gnu_indirect_goto);
+    SourceLocation StarLoc = Tok.getLocation();
     ConsumeToken();
     ExprResult R = ParseExpression();
-    if (R.isInvalid)   // Skip to the semicolon, but don't consume it.
+    if (R.isInvalid) {  // Skip to the semicolon, but don't consume it.
       SkipUntil(tok::semi, false, true);
+      return true;
+    }
+    Res = Actions.ParseIndirectGotoStmt(GotoLoc, StarLoc, R.Val);
   }
+  return Res;
 }
 
 /// ParseReturnStatement
 ///       jump-statement:
 ///         'return' expression[opt] ';'
-void Parser::ParseReturnStatement() {
+Parser::StmtResult Parser::ParseReturnStatement() {
   assert(Tok.getKind() == tok::kw_return && "Not a return stmt!");
+  SourceLocation ReturnLoc = Tok.getLocation();
   ConsumeToken();  // eat the 'return'.
   
+  ExprResult R(0);
   if (Tok.getKind() != tok::semi) {
-    ExprResult R = ParseExpression();
-    if (R.isInvalid)   // Skip to the semicolon, but don't consume it.
+    R = ParseExpression();
+    if (R.isInvalid) {  // Skip to the semicolon, but don't consume it.
       SkipUntil(tok::semi, false, true);
+      return true;
+    }
   }
+  return Actions.ParseReturnStmt(ReturnLoc, R.Val);
 }
 
 /// ParseAsmStatement - Parse a GNU extended asm statement.
@@ -560,7 +653,7 @@ void Parser::ParseReturnStatement() {
 ///         asm-string-literal
 ///         asm-clobbers ',' asm-string-literal
 ///
-void Parser::ParseAsmStatement() {
+Parser::StmtResult Parser::ParseAsmStatement() {
   assert(Tok.getKind() == tok::kw_asm && "Not an asm stmt");
   ConsumeToken();
   
@@ -580,7 +673,7 @@ void Parser::ParseAsmStatement() {
   if (Tok.getKind() != tok::l_paren) {
     Diag(Tok, diag::err_expected_lparen_after, "asm");
     SkipUntil(tok::r_paren);
-    return;
+    return true;
   }
   Loc = Tok.getLocation();
   ConsumeParen();
@@ -609,6 +702,9 @@ void Parser::ParseAsmStatement() {
   }
   
   MatchRHSPunctuation(tok::r_paren, Loc);
+  
+  // FIXME: Implement action for asm parsing.
+  return false;
 }
 
 /// ParseAsmOperands - Parse the asm-operands production as used by

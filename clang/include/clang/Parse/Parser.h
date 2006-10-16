@@ -225,6 +225,7 @@ private:
   // C99 6.5: Expressions.
 
   typedef Action::ExprResult ExprResult;
+  typedef Action::StmtResult StmtResult;
   
   ExprResult ParseExpression();
   ExprResult ParseConstantExpression();
@@ -266,20 +267,20 @@ private:
   //===--------------------------------------------------------------------===//
   // C99 6.8: Statements and Blocks.
   
-  void ParseStatement() { ParseStatementOrDeclaration(true); }
-  void ParseStatementOrDeclaration(bool OnlyStatement = false);
-  void ParseIdentifierStatement(bool OnlyStatement);
-  void ParseCaseStatement();
-  void ParseDefaultStatement();
-  void ParseCompoundStatement();
-  void ParseIfStatement();
-  void ParseSwitchStatement();
-  void ParseWhileStatement();
-  void ParseDoStatement();
-  void ParseForStatement();
-  void ParseGotoStatement();
-  void ParseReturnStatement();
-  void ParseAsmStatement();
+  StmtResult ParseStatement() { return ParseStatementOrDeclaration(true); }
+  StmtResult ParseStatementOrDeclaration(bool OnlyStatement = false);
+  StmtResult ParseIdentifierStatement(bool OnlyStatement);
+  StmtResult ParseCaseStatement();
+  StmtResult ParseDefaultStatement();
+  StmtResult ParseCompoundStatement();
+  StmtResult ParseIfStatement();
+  StmtResult ParseSwitchStatement();
+  StmtResult ParseWhileStatement();
+  StmtResult ParseDoStatement();
+  StmtResult ParseForStatement();
+  StmtResult ParseGotoStatement();
+  StmtResult ParseReturnStatement();
+  StmtResult ParseAsmStatement();
   void ParseAsmOperandsOpt();
 
   //===--------------------------------------------------------------------===//

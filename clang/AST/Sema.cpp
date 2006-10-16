@@ -139,7 +139,9 @@ ASTBuilder::ParseDeclarator(Scope *S, Declarator &D, ExprTy *Init,
 Action::DeclTy *
 ASTBuilder::ParseFunctionDefinition(Scope *S, Declarator &D, StmtTy *Body) {
   FunctionDecl *FD = (FunctionDecl *)ParseDeclarator(S, D, 0, 0);
-  // TODO: more stuff.
+  
+  FD->setBody((Stmt*)Body);
+
   return FD;
 }
 

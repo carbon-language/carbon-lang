@@ -51,23 +51,29 @@ public:
   typedef void DeclTy;
   typedef void TypeTy;
   
-  /// ExprResult - This structure is used while parsing/acting on expressions.
-  /// It encapsulates both the expression object returned by the action, plus
+  /// ActionResult - This structure is used while parsing/acting on expressions,
+  /// stmts, etc.  It encapsulates both the object returned by the action, plus
   /// a sense of whether or not it is valid.
-  struct ExprResult {
-    ExprTy *Val;
+  template<unsigned UID>
+  struct ActionResult {
+    void *Val;
     bool isInvalid;
     
-    ExprResult(bool Invalid = false) : Val(0), isInvalid(Invalid) {}
+    ActionResult(bool Invalid = false) : Val(0), isInvalid(Invalid) {}
     template<typename ActualExprTy>
-    ExprResult(ActualExprTy *val) : Val(val), isInvalid(false) {}
+    ActionResult(ActualExprTy *val) : Val(val), isInvalid(false) {}
     
-    const ExprResult &operator=(ExprTy *RHS) {
+    const ActionResult &operator=(void *RHS) {
       Val = RHS;
       isInvalid = false;
       return *this;
     }
   };
+
+  /// Expr/StmtResult - Provide a unique type to wrap ExprTy/StmtTy, etc,
+  /// providing strong typing and allowing for failure.
+  typedef ActionResult<0> ExprResult;
+  typedef ActionResult<1> StmtResult;
   
   //===--------------------------------------------------------------------===//
   // Symbol Table Tracking Callbacks.
@@ -105,6 +111,75 @@ public:
   //===--------------------------------------------------------------------===//
   // 'External Declaration' (Top Level) Parsing Callbacks.
   //===--------------------------------------------------------------------===//
+  
+  //===--------------------------------------------------------------------===//
+  // Statement Parsing Callbacks.
+  //===--------------------------------------------------------------------===//
+  
+  virtual StmtResult ParseCompoundStmt(SourceLocation L, SourceLocation R,
+                                       StmtTy **Elts, unsigned NumElts) {
+    return 0;
+  }
+  virtual StmtResult ParseExprStmt(ExprTy *Expr) {
+    return 0;
+  }
+  
+  /// ParseCaseStmt - Note that this handles the GNU 'case 1 ... 4' extension,
+  /// which can specify an RHS value.
+  virtual StmtResult ParseCaseStmt(SourceLocation CaseLoc, ExprTy *LHSVal,
+                                   SourceLocation DotDotDotLoc, ExprTy *RHSVal,
+                                   SourceLocation ColonLoc, StmtTy *SubStmt) {
+    return 0;
+  }
+  virtual StmtResult ParseDefaultStmt(SourceLocation DefaultLoc,
+                                      SourceLocation ColonLoc, StmtTy *SubStmt){
+    return 0;
+  }
+  
+  virtual StmtResult ParseLabelStmt(const LexerToken &IdentTok,
+                                    SourceLocation ColonLoc, StmtTy *SubStmt) {
+    return 0;
+  }
+  
+  virtual StmtResult ParseIfStmt(SourceLocation IfLoc, ExprTy *CondVal,
+                                 StmtTy *ThenVal, SourceLocation ElseLoc,
+                                 StmtTy *ElseVal) {
+    return 0; 
+  }
+  
+  virtual StmtResult ParseSwitchStmt(SourceLocation SwitchLoc, ExprTy *Cond,
+                                     StmtTy *Body) {
+    return 0;
+  }
+  virtual StmtResult ParseWhileStmt(SourceLocation WhileLoc, ExprTy *Cond,
+                                     StmtTy *Body) {
+    return 0;
+  }
+  virtual StmtResult ParseDoStmt(SourceLocation DoLoc, StmtTy *Body,
+                                 SourceLocation WhileLoc, ExprTy *Cond) {
+    return 0;
+  }
+  // PARSE FOR STMT.
+  virtual StmtResult ParseGotoStmt(SourceLocation GotoLoc,
+                                   const LexerToken &LabelTok) {
+    return 0;
+  }
+  virtual StmtResult ParseContinueStmt(SourceLocation GotoLoc) {
+    return 0;
+  }
+  virtual StmtResult ParseBreakStmt(SourceLocation GotoLoc) {
+    return 0;
+  }
+  virtual StmtResult ParseIndirectGotoStmt(SourceLocation GotoLoc,
+                                           SourceLocation StarLoc,
+                                           ExprTy *DestExp) {
+    return 0;
+  }
+  virtual StmtResult ParseReturnStmt(SourceLocation ReturnLoc,
+                                           ExprTy *RetValExp) {
+    return 0;
+  }
+  
   
   //===--------------------------------------------------------------------===//
   // Expression Parsing Callbacks.
