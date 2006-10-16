@@ -3413,7 +3413,7 @@ X86TargetLowering::LowerBUILD_VECTOR(SDOperand Op, SelectionDAG &DAG) {
     // FIXME: we can do the same for v4f32 case when we know both parts of
     // the lower half come from scalar_to_vector (loadf32). We should do
     // that in post legalizer dag combiner with target specific hooks.
-    if (MVT::isInteger(EVT) && (NonZeros & (0x3 << 2)) == 0)
+    if (!NoShuffleOpti && MVT::isInteger(EVT) && (NonZeros & (0x3 << 2)) == 0)
       return V[0];
     MVT::ValueType MaskVT = MVT::getIntVectorWithNumElements(NumElems);
     MVT::ValueType EVT = MVT::getVectorBaseType(MaskVT);
@@ -3466,6 +3466,8 @@ X86TargetLowering::LowerVECTOR_SHUFFLE(SDOperand Op, SelectionDAG &DAG) {
   unsigned NumElems = PermMask.getNumOperands();
   bool V1IsUndef = V1.getOpcode() == ISD::UNDEF;
   bool V2IsUndef = V2.getOpcode() == ISD::UNDEF;
+  bool V1IsSplat = false;
+  bool V2IsSplat = false;
 
   if (isUndefShuffle(Op.Val))
     return DAG.getNode(ISD::UNDEF, VT);
@@ -3492,8 +3494,8 @@ X86TargetLowering::LowerVECTOR_SHUFFLE(SDOperand Op, SelectionDAG &DAG) {
         ShouldXformToMOVLP(V1.Val, V2.Val, PermMask.Val))
       return CommuteVectorShuffle(Op, DAG);
 
-    bool V1IsSplat = isSplatVector(V1.Val);
-    bool V2IsSplat = isSplatVector(V2.Val);
+    V1IsSplat = isSplatVector(V1.Val);
+    V2IsSplat = isSplatVector(V2.Val);
     if ((V1IsSplat || V1IsUndef) && !(V2IsSplat || V2IsUndef)) {
       Op = CommuteVectorShuffle(Op, DAG);
       V1 = Op.getOperand(0);
@@ -3519,12 +3521,14 @@ X86TargetLowering::LowerVECTOR_SHUFFLE(SDOperand Op, SelectionDAG &DAG) {
       }
       return Op;
     }
+  }
 
-    if (X86::isUNPCKL_v_undef_Mask(PermMask.Val) ||
-        X86::isUNPCKLMask(PermMask.Val) ||
-        X86::isUNPCKHMask(PermMask.Val))
-      return Op;
+  if (X86::isUNPCKL_v_undef_Mask(PermMask.Val) ||
+      X86::isUNPCKLMask(PermMask.Val) ||
+      X86::isUNPCKHMask(PermMask.Val))
+    return Op;
 
+  if (!NoShuffleOpti) {
     if (V2IsSplat) {
       // Normalize mask so all entries that point to V2 points to its first
       // element then try to match unpck{h|l} again. If match, return a 
@@ -3543,7 +3547,7 @@ X86TargetLowering::LowerVECTOR_SHUFFLE(SDOperand Op, SelectionDAG &DAG) {
   }
 
   // Normalize the node to match x86 shuffle ops if needed
-  if (V2.getOpcode() != ISD::UNDEF)
+  if (!NoShuffleOpti && V2.getOpcode() != ISD::UNDEF)
     if (isCommutedSHUFP(PermMask.Val)) {
       Op = CommuteVectorShuffle(Op, DAG);
       V1 = Op.getOperand(0);
