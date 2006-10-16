@@ -362,8 +362,7 @@ Parser::StmtResult Parser::ParseDefaultStatement() {
 ///
 Parser::StmtResult Parser::ParseCompoundStatement() {
   assert(Tok.getKind() == tok::l_brace && "Not a compount stmt!");
-  SourceLocation LBraceLoc = Tok.getLocation();
-  ConsumeBrace();  // eat the '{'.
+  SourceLocation LBraceLoc = ConsumeBrace();  // eat the '{'.
   
   SmallVector<StmtTy*, 32> Stmts;
   while (Tok.getKind() != tok::r_brace && Tok.getKind() != tok::eof) {
@@ -378,8 +377,7 @@ Parser::StmtResult Parser::ParseCompoundStatement() {
     return 0;
   }
 
-  SourceLocation RBraceLoc = Tok.getLocation();
-  ConsumeBrace();
+  SourceLocation RBraceLoc = ConsumeBrace();
   return Actions.ParseCompoundStmt(LBraceLoc, RBraceLoc,
                                    &Stmts[0], Stmts.size());
 }
@@ -519,8 +517,7 @@ Parser::StmtResult Parser::ParseForStatement() {
     return true;
   }
 
-  SourceLocation LParenLoc = Tok.getLocation();
-  ConsumeParen();
+  SourceLocation LParenLoc = ConsumeParen();
   
   ExprResult Value;
   
@@ -661,8 +658,7 @@ Parser::StmtResult Parser::ParseAsmStatement() {
     SkipUntil(tok::r_paren);
     return true;
   }
-  Loc = Tok.getLocation();
-  ConsumeParen();
+  Loc = ConsumeParen();
   
   ParseAsmStringLiteral();
   
@@ -717,8 +713,7 @@ void Parser::ParseAsmOperandsOpt() {
   while (1) {
     // Read the [id] if present.
     if (Tok.getKind() == tok::l_square) {
-      SourceLocation Loc = Tok.getLocation();
-      ConsumeBracket();
+      SourceLocation Loc = ConsumeBracket();
       
       if (Tok.getKind() != tok::identifier) {
         Diag(Tok, diag::err_expected_ident);

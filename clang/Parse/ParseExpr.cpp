@@ -582,8 +582,7 @@ Parser::ExprResult Parser::ParsePostfixExpressionSuffix(ExprResult LHS) {
     default:  // Not a postfix-expression suffix.
       return LHS;
     case tok::l_square: {  // postfix-expression: p-e '[' expression ']'
-      Loc = Tok.getLocation();
-      ConsumeBracket();
+      Loc = ConsumeBracket();
       ExprResult Idx = ParseExpression();
       
       SourceLocation RLoc = Tok.getLocation();
@@ -603,8 +602,7 @@ Parser::ExprResult Parser::ParsePostfixExpressionSuffix(ExprResult LHS) {
       SmallVector<SourceLocation, 8> CommaLocs;
       bool ArgExprsOk = true;
       
-      Loc = Tok.getLocation();
-      ConsumeParen();
+      Loc = ConsumeParen();
       
       if (Tok.getKind() != tok::r_paren) {
         while (1) {
@@ -729,8 +727,7 @@ Parser::ExprResult Parser::ParseBuiltinPrimaryExpression() {
     return ExprResult(true);
   }
   
-  SourceLocation LParenLoc = Tok.getLocation();
-  ConsumeParen();
+  SourceLocation LParenLoc = ConsumeParen();
   // TODO: Build AST.
 
   switch (T) {
@@ -769,8 +766,7 @@ Parser::ExprResult Parser::ParseBuiltinPrimaryExpression() {
           return ExprResult(true);
       } else if (Tok.getKind() == tok::l_square) {
         // offsetof-member-designator: offsetof-member-design '[' expression ']'
-        SourceLocation LSquareLoc = Tok.getLocation();
-        ConsumeBracket();
+        SourceLocation LSquareLoc = ConsumeBracket();
         Res = ParseExpression();
         if (Res.isInvalid) {
           SkipUntil(tok::r_paren);
@@ -831,8 +827,7 @@ Parser::ExprResult Parser::ParseParenExpression(ParenParseOption &ExprType,
                                                 TypeTy *&CastTy,
                                                 SourceLocation &RParenLoc) {
   assert(Tok.getKind() == tok::l_paren && "Not a paren expr!");
-  SourceLocation OpenLoc = Tok.getLocation();
-  ConsumeParen();
+  SourceLocation OpenLoc = ConsumeParen();
   ExprResult Result(false);
   CastTy = 0;
   
@@ -847,12 +842,10 @@ Parser::ExprResult Parser::ParseParenExpression(ParenParseOption &ExprType,
     TypeTy *Ty = ParseTypeName();
 
     // Match the ')'.
-    if (Tok.getKind() == tok::r_paren) {
-      RParenLoc = Tok.getLocation();
-      ConsumeParen();
-    } else {
+    if (Tok.getKind() == tok::r_paren)
+      RParenLoc = ConsumeParen();
+    else
       MatchRHSPunctuation(tok::r_paren, OpenLoc);
-    }
     
     if (Tok.getKind() == tok::l_brace) {
       if (!getLang().C99)   // Compound literals don't exist in C90.
@@ -882,12 +875,10 @@ Parser::ExprResult Parser::ParseParenExpression(ParenParseOption &ExprType,
   if (Result.isInvalid)
     SkipUntil(tok::r_paren);
   else {
-    if (Tok.getKind() == tok::r_paren) {
-      RParenLoc = Tok.getLocation();
-      ConsumeParen();
-    } else {
+    if (Tok.getKind() == tok::r_paren)
+      RParenLoc = ConsumeParen();
+    else
       MatchRHSPunctuation(tok::r_paren, OpenLoc);
-    }
   }
   
   return Result;

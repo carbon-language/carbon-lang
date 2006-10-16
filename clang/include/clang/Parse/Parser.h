@@ -124,37 +124,43 @@ private:
   
   /// ConsumeParen - This consume method keeps the paren count up-to-date.
   ///
-  void ConsumeParen() {
+  SourceLocation ConsumeParen() {
     assert(isTokenParen() && "wrong consume method");
     if (Tok.getKind() == tok::l_paren)
       ++ParenCount;
     else if (ParenCount)
       --ParenCount;       // Don't let unbalanced )'s drive the count negative.
+    SourceLocation L = Tok.getLocation();
     PP.Lex(Tok);
+    return L;
   }
   
   /// ConsumeBracket - This consume method keeps the bracket count up-to-date.
   ///
-  void ConsumeBracket() {
+  SourceLocation ConsumeBracket() {
     assert(isTokenBracket() && "wrong consume method");
     if (Tok.getKind() == tok::l_square)
       ++BracketCount;
     else if (BracketCount)
       --BracketCount;     // Don't let unbalanced ]'s drive the count negative.
     
+    SourceLocation L = Tok.getLocation();
     PP.Lex(Tok);
+    return L;
   }
       
   /// ConsumeBrace - This consume method keeps the brace count up-to-date.
   ///
-  void ConsumeBrace() {
+  SourceLocation ConsumeBrace() {
     assert(isTokenBrace() && "wrong consume method");
     if (Tok.getKind() == tok::l_brace)
       ++BraceCount;
     else if (BraceCount)
       --BraceCount;     // Don't let unbalanced }'s drive the count negative.
     
+    SourceLocation L = Tok.getLocation();
     PP.Lex(Tok);
+    return L;
   }
   
   
@@ -162,10 +168,12 @@ private:
   /// and returning the token kind.  This method is specific to strings, as it
   /// handles string literal concatenation, as per C99 5.1.1.2, translation
   /// phase #6.
-  void ConsumeStringToken() {
+  SourceLocation ConsumeStringToken() {
     assert(isTokenStringLiteral() &&
            "Should only consume string literals with this method");
+    SourceLocation L = Tok.getLocation();
     PP.Lex(Tok);
+    return L;
   }
   
   /// MatchRHSPunctuation - For punctuation with a LHS and RHS (e.g. '['/']'),

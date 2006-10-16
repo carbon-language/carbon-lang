@@ -437,8 +437,7 @@ void Parser::ParseSimpleAsm() {
     return;
   }
   
-  SourceLocation Loc = Tok.getLocation();
-  ConsumeParen();
+  SourceLocation Loc = ConsumeParen();
   
   ParseAsmStringLiteral();
   

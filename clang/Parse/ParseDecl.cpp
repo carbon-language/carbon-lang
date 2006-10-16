@@ -448,8 +448,7 @@ void Parser::ParseStructUnionSpecifier(DeclSpec &DS) {
     ConsumeToken();
   
   if (Tok.getKind() == tok::l_brace) {
-    SourceLocation LBraceLoc = Tok.getLocation();
-    ConsumeBrace();
+    SourceLocation LBraceLoc = ConsumeBrace();
 
     if (Tok.getKind() == tok::r_brace)
       Diag(Tok, diag::ext_empty_struct_union_enum, isUnion ? "union":"struct");
@@ -569,8 +568,7 @@ void Parser::ParseEnumSpecifier(DeclSpec &DS) {
     ConsumeToken();
   
   if (Tok.getKind() == tok::l_brace) {
-    SourceLocation LBraceLoc = Tok.getLocation();
-    ConsumeBrace();
+    SourceLocation LBraceLoc = ConsumeBrace();
     
     if (Tok.getKind() == tok::r_brace)
       Diag(Tok, diag::ext_empty_struct_union_enum, "enum");
@@ -864,8 +862,7 @@ void Parser::ParseDirectDeclarator(Declarator &D) {
 ///         identifier-list ',' identifier
 ///
 void Parser::ParseParenDeclarator(Declarator &D) {
-  SourceLocation StartLoc = Tok.getLocation();
-  ConsumeParen();
+  SourceLocation StartLoc = ConsumeParen();
   
   // If we haven't past the identifier yet (or where the identifier would be
   // stored, if this is an abstract declarator), then this is probably just
@@ -1029,8 +1026,7 @@ void Parser::ParseParenDeclarator(Declarator &D) {
 /// [C99]   direct-declarator '[' type-qual-list 'static' assignment-expr ']'
 /// [C99]   direct-declarator '[' type-qual-list[opt] '*' ']'
 void Parser::ParseBracketDeclarator(Declarator &D) {
-  SourceLocation StartLoc = Tok.getLocation();
-  ConsumeBracket();
+  SourceLocation StartLoc = ConsumeBracket();
   
   // If valid, this location is the position where we read the 'static' keyword.
   SourceLocation StaticLoc;

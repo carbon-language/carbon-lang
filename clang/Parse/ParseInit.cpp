@@ -86,8 +86,7 @@ Parser::ExprResult Parser::ParseInitializerWithPotentialDesignator() {
     case tok::l_square: {
       // array-designator: '[' constant-expression ']'
       // array-designator: '[' constant-expression '...' constant-expression ']'
-      SourceLocation StartLoc = Tok.getLocation();
-      ConsumeBracket();
+      SourceLocation StartLoc = ConsumeBracket();
       
       ExprResult Idx = ParseConstantExpression();
       if (Idx.isInvalid) {
@@ -150,8 +149,7 @@ Parser::ExprResult Parser::ParseInitializer() {
   if (Tok.getKind() != tok::l_brace)
     return ParseAssignmentExpression();
 
-  SourceLocation LBraceLoc = Tok.getLocation();
-  ConsumeBrace();
+  SourceLocation LBraceLoc = ConsumeBrace();
   
   // We support empty initializers, but tell the user that they aren't using
   // C99-clean code.
