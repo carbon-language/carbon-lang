@@ -256,6 +256,7 @@ TargetJITInfo::LazyResolverFn
 X86JITInfo::getLazyResolverFunction(JITCompilerFn F) {
   JITCompilerFunction = F;
 
+#if !defined(__x86_64__)
   unsigned EAX = 0, EBX = 0, ECX = 0, EDX = 0;
   union {
     unsigned u[3];
@@ -270,6 +271,7 @@ X86JITInfo::getLazyResolverFunction(JITCompilerFn F) {
         return X86CompilationCallback_SSE;
     }
   }
+#endif
 
   return X86CompilationCallback;
 }
@@ -277,8 +279,13 @@ X86JITInfo::getLazyResolverFunction(JITCompilerFn F) {
 void *X86JITInfo::emitFunctionStub(void *Fn, MachineCodeEmitter &MCE) {
   // Note, we cast to intptr_t here to silence a -pedantic warning that 
   // complains about casting a function pointer to a normal pointer.
-  if (Fn != (void*)(intptr_t)X86CompilationCallback &&
-      Fn != (void*)(intptr_t)X86CompilationCallback_SSE) {
+#if defined(__x86_64__)
+  bool NotCC = Fn != (void*)(intptr_t)X86CompilationCallback;
+#else
+  bool NotCC = (Fn != (void*)(intptr_t)X86CompilationCallback &&
+                Fn != (void*)(intptr_t)X86CompilationCallback_SSE);
+#endif
+  if (NotCC) {
     MCE.startFunctionStub(5);
     MCE.emitByte(0xE9);
     MCE.emitWordLE((intptr_t)Fn-MCE.getCurrentPCValue()-4);
