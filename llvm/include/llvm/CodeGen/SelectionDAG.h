@@ -25,6 +25,7 @@
 #include <string>
 
 namespace llvm {
+  class AliasAnalysis;
   class TargetLowering;
   class TargetMachine;
   class MachineDebugInfo;
@@ -116,7 +117,7 @@ public:
   /// certain types of nodes together, or eliminating superfluous nodes.  When
   /// the AfterLegalize argument is set to 'true', Combine takes care not to
   /// generate any nodes that will be illegal on the target.
-  void Combine(bool AfterLegalize);
+  void Combine(bool AfterLegalize, AliasAnalysis &AA);
   
   /// Legalize - This transforms the SelectionDAG into a SelectionDAG that is
   /// compatible with the target instruction selector, as indicated by the

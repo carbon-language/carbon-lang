@@ -12,6 +12,7 @@
 //===----------------------------------------------------------------------===//
 
 #define DEBUG_TYPE "isel"
+#include "llvm/Analysis/AliasAnalysis.h"
 #include "llvm/CodeGen/SelectionDAGISel.h"
 #include "llvm/CodeGen/ScheduleDAG.h"
 #include "llvm/CallingConv.h"
@@ -2951,6 +2952,7 @@ unsigned SelectionDAGISel::MakeReg(MVT::ValueType VT) {
 void SelectionDAGISel::getAnalysisUsage(AnalysisUsage &AU) const {
   // FIXME: we only modify the CFG to split critical edges.  This
   // updates dom and loop info.
+  AU.addRequired<AliasAnalysis>();
 }
 
 
@@ -3546,8 +3548,11 @@ void SelectionDAGISel::BuildSelectionDAG(SelectionDAG &DAG, BasicBlock *LLVMBB,
 }
 
 void SelectionDAGISel::CodeGenAndEmitDAG(SelectionDAG &DAG) {
+  // Get alias analysis for load/store combining.
+  AliasAnalysis &AA = getAnalysis<AliasAnalysis>();
+
   // Run the DAG combiner in pre-legalize mode.
-  DAG.Combine(false);
+  DAG.Combine(false, AA);
   
   DEBUG(std::cerr << "Lowered selection DAG:\n");
   DEBUG(DAG.dump());
@@ -3560,7 +3565,7 @@ void SelectionDAGISel::CodeGenAndEmitDAG(SelectionDAG &DAG) {
   DEBUG(DAG.dump());
   
   // Run the DAG combiner in post-legalize mode.
-  DAG.Combine(true);
+  DAG.Combine(true, AA);
   
   if (ViewISelDAGs) DAG.viewGraph();
 

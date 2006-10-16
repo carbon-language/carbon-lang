@@ -30,6 +30,7 @@
 
 #define DEBUG_TYPE "dagcombine"
 #include "llvm/ADT/Statistic.h"
+#include "llvm/Analysis/AliasAnalysis.h"
 #include "llvm/CodeGen/SelectionDAG.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/MathExtras.h"
@@ -59,6 +60,9 @@ namespace {
 
     // Worklist of all of the nodes that need to be simplified.
     std::vector<SDNode*> WorkList;
+
+    // AA - Used for DAG load/store alias analysis.
+    AliasAnalysis &AA;
 
     /// AddUsersToWorkList - When an instruction is simplified, add all users of
     /// the instruction to the work lists because they might get more simplified
@@ -262,8 +266,11 @@ namespace {
     SDOperand FindBetterChain(SDNode *N, SDOperand Chain);
     
 public:
-    DAGCombiner(SelectionDAG &D)
-      : DAG(D), TLI(D.getTargetLoweringInfo()), AfterLegalize(false) {}
+    DAGCombiner(SelectionDAG &D, AliasAnalysis &A)
+      : DAG(D),
+        TLI(D.getTargetLoweringInfo()),
+        AfterLegalize(false),
+        AA(A) {}
     
     /// Run - runs the dag combiner on all nodes in the work list
     void Run(bool RunningAfterLegalize); 
@@ -4133,8 +4140,8 @@ SDOperand DAGCombiner::FindBetterChain(SDNode *N, SDOperand OldChain) {
 
 // SelectionDAG::Combine - This is the entry point for the file.
 //
-void SelectionDAG::Combine(bool RunningAfterLegalize) {
+void SelectionDAG::Combine(bool RunningAfterLegalize, AliasAnalysis &AA) {
   /// run - This is the main entry point to this class.
   ///
-  DAGCombiner(*this).Run(RunningAfterLegalize);
+  DAGCombiner(*this, AA).Run(RunningAfterLegalize);
 }
