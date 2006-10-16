@@ -36,9 +36,8 @@ def iaddr  : ComplexPattern<iPTR, 2, "SelectAddrRegImm", [frameindex], []>;
 //def raddr  : ComplexPattern<iPTR, 2, "SelectAddrRegReg", [], []>;
 
 //===----------------------------------------------------------------------===//
-// Instructions
+// Instruction Class Templates
 //===----------------------------------------------------------------------===//
-
 class InstARM<dag ops, string asmstr, list<dag> pattern> : Instruction {
   let Namespace = "ARM";
 
@@ -46,6 +45,15 @@ class InstARM<dag ops, string asmstr, list<dag> pattern> : Instruction {
   let AsmString   = asmstr;
   let Pattern = pattern;
 }
+
+class IntBinOp<string OpcStr, SDNode OpNode> :
+        InstARM<(ops IntRegs:$dst, IntRegs:$a, IntRegs:$b),
+                 !strconcat(OpcStr, " $dst, $a, $b"),
+                 [(set IntRegs:$dst, (OpNode IntRegs:$a, IntRegs:$b))]>;
+
+//===----------------------------------------------------------------------===//
+// Instructions
+//===----------------------------------------------------------------------===//
 
 def brtarget : Operand<OtherVT>;
 
@@ -186,18 +194,11 @@ let isTwoAddress = 1 in {
 			   IntRegs:$false, imm:$cc))]>;
 }
 
-def MUL     : InstARM<(ops IntRegs:$dst, IntRegs:$a, IntRegs:$b),
-                       "mul $dst, $a, $b",
-		       [(set IntRegs:$dst, (mul IntRegs:$a, IntRegs:$b))]>;
+def MUL     : IntBinOp<"mul", mul>;
 
 let Defs = [R0] in {
-  def SMULL   : InstARM<(ops IntRegs:$dst, IntRegs:$a, IntRegs:$b),
-                         "smull r12, $dst, $a, $b",
-                         [(set IntRegs:$dst, (mulhs IntRegs:$a, IntRegs:$b))]>;
-
-  def UMULL   : InstARM<(ops IntRegs:$dst, IntRegs:$a, IntRegs:$b),
-                         "umull r12, $dst, $a, $b",
-                         [(set IntRegs:$dst, (mulhu IntRegs:$a, IntRegs:$b))]>;
+  def SMULL   : IntBinOp<"smull r12,", mulhs>;
+  def UMULL   : IntBinOp<"umull r12,", mulhu>;
 }
 
 def bcond      : InstARM<(ops brtarget:$dst, CCOp:$cc),
