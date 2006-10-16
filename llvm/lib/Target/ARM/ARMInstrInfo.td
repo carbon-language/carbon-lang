@@ -276,7 +276,8 @@ def FNEGD   : InstARM<(ops DFPRegs:$dst, DFPRegs:$src),
 
 def FMULS   : FPBinOp<"fmuls", fmul>;
 def FMULD   : DFPBinOp<"fmuld", fmul>;
-
+def FDIVS   : FPBinOp<"fdivs", fdiv>;
+def FDIVD   : DFPBinOp<"fdivd", fdiv>;
 
 // Floating Point Load
 def FLDS  : InstARM<(ops FPRegs:$dst, IntRegs:$addr),
