@@ -51,3 +51,7 @@ Only needs 8 bytes of stack space. We currently allocate 16.
 should try to declare smull and umull as returning two values.
 
 ----------------------------------------------------------
+
+Implement addressing modes 2 (ldrb) and 3 (ldrsb)
+
+----------------------------------------------------------
