@@ -72,6 +72,10 @@ ARMTargetLowering::ARMTargetLowering(TargetMachine &TM)
 
   setOperationAction(ISD::BRCOND,        MVT::Other, Expand);
 
+  setOperationAction(ISD::SHL_PARTS, MVT::i32, Expand);
+  setOperationAction(ISD::SRA_PARTS, MVT::i32, Expand);
+  setOperationAction(ISD::SRL_PARTS, MVT::i32, Expand);
+
   setOperationAction(ISD::VASTART,       MVT::Other, Custom);
   setOperationAction(ISD::VAEND,         MVT::Other, Expand);
 
@@ -321,11 +325,14 @@ static SDOperand LowerCALL(SDOperand Op, SelectionDAG &DAG) {
     Chain = DAG.getNode(ISD::TokenFactor, MVT::Other,
                         &MemOpChains[0], MemOpChains.size());
 
-  // If the callee is a GlobalAddress/ExternalSymbol node (quite common, every
-  // direct call is) turn it into a TargetGlobalAddress/TargetExternalSymbol
-  // node so that legalize doesn't hack it.
+  // If the callee is a GlobalAddress node (quite common, every direct call is)
+  // turn it into a TargetGlobalAddress node so that legalize doesn't hack it.
+  // Likewise ExternalSymbol -> TargetExternalSymbol.
+  assert(Callee.getValueType() == MVT::i32);
   if (GlobalAddressSDNode *G = dyn_cast<GlobalAddressSDNode>(Callee))
-    Callee = DAG.getTargetGlobalAddress(G->getGlobal(), Callee.getValueType());
+    Callee = DAG.getTargetGlobalAddress(G->getGlobal(), MVT::i32);
+  else if (ExternalSymbolSDNode *E = dyn_cast<ExternalSymbolSDNode>(Callee))
+    Callee = DAG.getTargetExternalSymbol(E->getSymbol(), MVT::i32);
 
   // If this is a direct call, pass the chain and the callee.
   assert (Callee.Val);

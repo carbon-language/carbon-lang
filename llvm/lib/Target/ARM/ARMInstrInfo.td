@@ -128,8 +128,8 @@ let isReturn = 1 in {
   def bx: InstARM<(ops), "bx r14", [(retflag)]>;
 }
 
-let  Defs = [R0, R1, R2, R3, R14] in {
-  def bl: InstARM<(ops i32imm:$func, variable_ops), "bl $func", [(ARMcall tglobaladdr:$func)]>;
+let noResults = 1, Defs = [R0, R1, R2, R3, R14] in {
+  def bl: InstARM<(ops i32imm:$func, variable_ops), "bl $func", []>;
 }
 
 def ldr   : InstARM<(ops IntRegs:$dst, memri:$addr),
@@ -286,3 +286,9 @@ def FLDS  : InstARM<(ops FPRegs:$dst, IntRegs:$addr),
 def FLDD  : InstARM<(ops DFPRegs:$dst, IntRegs:$addr),
                      "fldd $dst, $addr",
                      [(set DFPRegs:$dst, (load IntRegs:$addr))]>;
+
+def : Pat<(ARMcall tglobaladdr:$dst),
+          (bl tglobaladdr:$dst)>;
+
+def : Pat<(ARMcall texternalsym:$dst),
+          (bl texternalsym:$dst)>;

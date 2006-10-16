@@ -216,8 +216,7 @@ void ARMAsmPrinter::printOperand(const MachineInstr *MI, int opNum) {
   }
     break;
   case MachineOperand::MO_ExternalSymbol:
-    assert(0 && "not implemented");
-    abort();
+    O << TAI->getGlobalPrefix() << MO.getSymbolName();
     break;
   case MachineOperand::MO_ConstantPoolIndex:
     O << TAI->getPrivateGlobalPrefix() << "CPI" << getFunctionNumber()
