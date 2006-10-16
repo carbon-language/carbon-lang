@@ -174,6 +174,16 @@ def MUL     : InstARM<(ops IntRegs:$dst, IntRegs:$a, IntRegs:$b),
                        "mul $dst, $a, $b",
 		       [(set IntRegs:$dst, (mul IntRegs:$a, IntRegs:$b))]>;
 
+let Defs = [R0] in {
+  def SMULL   : InstARM<(ops IntRegs:$dst, IntRegs:$a, IntRegs:$b),
+                         "smull r12, $dst, $a, $b",
+                         [(set IntRegs:$dst, (mulhs IntRegs:$a, IntRegs:$b))]>;
+
+  def UMULL   : InstARM<(ops IntRegs:$dst, IntRegs:$a, IntRegs:$b),
+                         "umull r12, $dst, $a, $b",
+                         [(set IntRegs:$dst, (mulhu IntRegs:$a, IntRegs:$b))]>;
+}
+
 def bcond      : InstARM<(ops brtarget:$dst, CCOp:$cc),
 		         "b$cc $dst",
 		         [(armbr bb:$dst, imm:$cc)]>;

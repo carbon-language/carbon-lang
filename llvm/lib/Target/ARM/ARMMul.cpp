@@ -8,7 +8,7 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// Modify the ARM multiplication instructions so that Rd and Rm are distinct
+// Modify the ARM multiplication instructions so that Rd{Hi,Lo} and Rm are distinct
 //
 //===----------------------------------------------------------------------===//
 
@@ -39,7 +39,10 @@ bool FixMul::runOnMachineFunction(MachineFunction &MF) {
          I != E; ++I) {
       MachineInstr *MI = I;
 
-      if (MI->getOpcode() == ARM::MUL) {
+      int Op = MI->getOpcode();
+      if (Op == ARM::MUL ||
+          Op == ARM::SMULL ||
+          Op == ARM::UMULL) {
         MachineOperand &RdOp = MI->getOperand(0);
         MachineOperand &RmOp = MI->getOperand(1);
         MachineOperand &RsOp = MI->getOperand(2);
@@ -48,7 +51,7 @@ bool FixMul::runOnMachineFunction(MachineFunction &MF) {
         unsigned Rm = RmOp.getReg();
         unsigned Rs = RsOp.getReg();
 
-        if(Rd == Rm) {
+        if (Rd == Rm) {
           Changed = true;
           if (Rd != Rs) {
 	    //Rd and Rm must be distinct, but Rd can be equal to Rs.
@@ -56,9 +59,10 @@ bool FixMul::runOnMachineFunction(MachineFunction &MF) {
             RmOp.setReg(Rs);
             RsOp.setReg(Rm);
           } else {
-            BuildMI(MBB, I, ARM::MOV, 3, ARM::R12).addReg(Rm).addImm(0)
+            unsigned scratch = Op == ARM::MUL ? ARM::R12 : ARM::R0;
+            BuildMI(MBB, I, ARM::MOV, 3, scratch).addReg(Rm).addImm(0)
               .addImm(ARMShift::LSL);
-            RmOp.setReg(ARM::R12);
+            RmOp.setReg(scratch);
           }
         }
       }

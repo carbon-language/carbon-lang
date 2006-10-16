@@ -46,3 +46,8 @@ declare void %g(int, int, int, int, int)
 Only needs 8 bytes of stack space. We currently allocate 16.
 
 ----------------------------------------------------------
+
+32 x 32 -> 64 multiplications currently uses two instructions. We
+should try to declare smull and umull as returning two values.
+
+----------------------------------------------------------

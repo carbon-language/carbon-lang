@@ -7,7 +7,9 @@
 ; RUN: llvm-as < %s | llc -march=arm | grep "adds" | wc -l | grep 1 &&
 ; RUN: llvm-as < %s | llc -march=arm | grep "adcs" | wc -l | grep 1 &&
 ; RUN: llvm-as < %s | llc -march=arm | grep "subs" | wc -l | grep 1 &&
-; RUN: llvm-as < %s | llc -march=arm | grep "sbcs" | wc -l | grep 1
+; RUN: llvm-as < %s | llc -march=arm | grep "sbcs" | wc -l | grep 1 &&
+; RUN: llvm-as < %s | llc -march=arm | grep "smull" | wc -l | grep 1 &&
+; RUN: llvm-as < %s | llc -march=arm | grep "umull" | wc -l | grep 1
 
 long %f1() {
 entry:
@@ -51,4 +53,20 @@ long %f9(long %a, long %b) {
 entry:
 	%tmp = sub long %a, %b
 	ret long %tmp
+}
+
+long %f(int %a, int %b) {
+entry:
+	%tmp = cast int %a to long
+	%tmp1 = cast int %b to long
+	%tmp2 = mul long %tmp1, %tmp
+	ret long %tmp2
+}
+
+ulong %g(uint %a, uint %b) {
+entry:
+	%tmp = cast uint %a to ulong
+	%tmp1 = cast uint %b to ulong
+	%tmp2 = mul ulong %tmp1, %tmp
+	ret ulong %tmp2
 }
