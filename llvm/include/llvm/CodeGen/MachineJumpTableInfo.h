@@ -26,6 +26,7 @@
 namespace llvm {
 
 class MachineBasicBlock;
+class TargetData;
 
 /// MachineJumpTableEntry - One jump table in the jump table info.
 ///
@@ -52,6 +53,17 @@ public:
 
   const std::vector<MachineJumpTableEntry> &getJumpTables() const {
     return JumpTables;
+  }
+  
+  /// ReplaceMBBInJumpTables - If Old is the target of any jump tables, update
+  /// the jump tables to branch to New instead.
+  void ReplaceMBBInJumpTables(MachineBasicBlock *Old, MachineBasicBlock *New) {
+    for (unsigned i = 0, e = JumpTables.size(); i != e; ++i) {
+      MachineJumpTableEntry &JTE = JumpTables[i];
+      for (unsigned j = 0, e = JTE.MBBs.size(); j != e; ++j)
+        if (JTE.MBBs[j] == Old)
+          JTE.MBBs[j] = New;
+    }
   }
   
   /// getEntrySize - returns the size of an individual field in a jump table 
