@@ -112,7 +112,13 @@ void Parser::ParseDeclaration(unsigned Context) {
 /// [GNU]   declarator simple-asm-expr[opt] attributes[opt]
 /// [GNU]   declarator simple-asm-expr[opt] attributes[opt] '=' initializer
 ///
-void Parser::ParseInitDeclaratorListAfterFirstDeclarator(Declarator &D) {
+Parser::DeclTy *Parser::
+ParseInitDeclaratorListAfterFirstDeclarator(Declarator &D) {
+  
+  // Declarators may be grouped together ("int X, *Y, Z();").  Provide info so
+  // that they can be chained properly if the actions want this.
+  Parser::DeclTy *LastDeclInGroup = 0;
+  
   // At this point, we know that it is not a function definition.  Parse the
   // rest of the init-declarator-list.
   while (1) {
@@ -129,15 +135,16 @@ void Parser::ParseInitDeclaratorListAfterFirstDeclarator(Declarator &D) {
     if (Tok.getKind() == tok::equal) {
       ConsumeToken();
       Init = ParseInitializer();
-      if (!Init.isInvalid) {
+      if (Init.isInvalid) {
         SkipUntil(tok::semi);
-        return;
+        return 0;
       }
     }
     
     // Inform the current actions module that we just parsed a declarator.
     // TODO: pass asm & attributes.
-    Actions.ParseDeclarator(Tok.getLocation(), CurScope, D, Init.Val);
+    LastDeclInGroup = Actions.ParseDeclarator(CurScope, D, Init.Val,
+                                              LastDeclInGroup);
     
     // If we don't have a comma, it is either the end of the list (a ';') or an
     // error, bail out.
@@ -154,12 +161,14 @@ void Parser::ParseInitDeclaratorListAfterFirstDeclarator(Declarator &D) {
   
   if (Tok.getKind() == tok::semi) {
     ConsumeToken();
+    return LastDeclInGroup;
   } else {
     Diag(Tok, diag::err_parse_error);
     // Skip to end of block or statement
     SkipUntil(tok::r_brace, true);
     if (Tok.getKind() == tok::semi)
       ConsumeToken();
+    return 0;
   }
 }
 

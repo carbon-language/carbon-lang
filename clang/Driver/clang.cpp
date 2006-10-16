@@ -577,12 +577,11 @@ static void PrintASTs(Preprocessor &PP, unsigned MainFileID) {
   ASTStreamerTy *Streamer = ASTStreamer_Init(PP, MainFileID, true);
   
   while (Decl *D = ASTStreamer_ReadTopLevelDecl(Streamer)) {
-    std::cerr << "Read top-level decl!\n";
-    //if (const IdentifierInfo *II = D->getIdentifier())
-    //  std::cerr << II->getName() << "\n";
-    //else
-    //  std::cerr << "\n";
-    
+    std::cerr << "Read top-level decl: ";
+    if (const IdentifierInfo *II = D->getIdentifier())
+      std::cerr << II->getName() << "\n";
+    else
+      std::cerr << "\n";
   }
   
   ASTStreamer_Terminate(Streamer);

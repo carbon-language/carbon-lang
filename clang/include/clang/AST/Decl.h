@@ -36,17 +36,12 @@ class Decl {
   /// Type.
   /// Kind.
   
-  /// Loc - The location of the declaration in the source code.
-  ///
-  SourceLocation Loc;
-  
   /// Scope stack info when parsing, otherwise decl list when scope is popped.
   ///
   Decl *Next;
 public:
-  Decl(IdentifierInfo *Id, const Declarator &D, SourceLocation loc, Decl *next)
-    : Identifier(Id), DeclarationSpecifier(D.getDeclSpec()), Loc(loc),
-      Next(next) {}
+  Decl(IdentifierInfo *Id, const Declarator &D, Decl *next)
+    : Identifier(Id), DeclarationSpecifier(D.getDeclSpec()), Next(next) {}
   
   const IdentifierInfo *getIdentifier() const { return Identifier; }
   
@@ -60,8 +55,8 @@ public:
 class FunctionDecl : public Decl {
   // Args etc.
 public:
-  FunctionDecl(IdentifierInfo *Id, const Declarator &D,
-               SourceLocation Loc, Decl *Next) : Decl(Id, D, Loc, Next) {}
+  FunctionDecl(IdentifierInfo *Id, const Declarator &D, Decl *Next)
+    : Decl(Id, D, Next) {}
 
 };
 
@@ -70,8 +65,8 @@ public:
 class VarDecl : public Decl {
   // Initializer.
 public:
-  VarDecl(IdentifierInfo *Id, const Declarator &D,
-          SourceLocation Loc, Decl *Next) : Decl(Id, D, Loc, Next) {}
+  VarDecl(IdentifierInfo *Id, const Declarator &D, Decl *Next)
+    : Decl(Id, D, Next) {}
   
 };
   

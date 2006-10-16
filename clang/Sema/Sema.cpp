@@ -31,16 +31,25 @@ class VISIBILITY_HIDDEN ASTBuilder : public Action {
   /// FullLocInfo - If this is true, the ASTBuilder constructs AST Nodes that
   /// capture maximal location information for each source-language construct.
   bool FullLocInfo;
+  
+  /// LastInGroupList - This vector is populated when there are multiple
+  /// declarators in a single decl group (e.g. "int A, B, C").  In this case,
+  /// all but the last decl will be entered into this.  This is used by the
+  /// ASTStreamer.
+  std::vector<Decl*> &LastInGroupList;
 public:
-  ASTBuilder(Preprocessor &pp, bool fullLocInfo)
-    : PP(pp), FullLocInfo(fullLocInfo) {}
+  ASTBuilder(Preprocessor &pp, bool fullLocInfo,
+             std::vector<Decl*> &prevInGroup)
+    : PP(pp), FullLocInfo(fullLocInfo), LastInGroupList(prevInGroup) {}
   
   //===--------------------------------------------------------------------===//
   // Symbol table tracking callbacks.
   //
   virtual bool isTypedefName(const IdentifierInfo &II, Scope *S) const;
-  virtual void ParseDeclarator(SourceLocation Loc, Scope *S, Declarator &D,
-                               ExprTy *Init);
+  virtual DeclTy *ParseDeclarator(Scope *S, Declarator &D, ExprTy *Init,
+                                  DeclTy *LastInGroup);
+  virtual DeclTy *ParseFunctionDefinition(Scope *S, Declarator &D,
+                                          StmtTy *Body);
   virtual void PopScope(SourceLocation Loc, Scope *S);
   
   //===--------------------------------------------------------------------===//
@@ -103,16 +112,17 @@ bool ASTBuilder::isTypedefName(const IdentifierInfo &II, Scope *S) const {
   return D != 0 && D->getDeclSpec().StorageClassSpec == DeclSpec::SCS_typedef;
 }
 
-void ASTBuilder::ParseDeclarator(SourceLocation Loc, Scope *S, Declarator &D,
-                                 ExprTy *Init) {
+Action::DeclTy *
+ASTBuilder::ParseDeclarator(Scope *S, Declarator &D, ExprTy *Init, 
+                            DeclTy *LastInGroup) {
   IdentifierInfo *II = D.getIdentifier();
   Decl *PrevDecl = II ? II->getFETokenInfo<Decl>() : 0;
 
   Decl *New;
   if (D.isFunctionDeclarator())
-    New = new FunctionDecl(II, D, Loc, PrevDecl);
+    New = new FunctionDecl(II, D, PrevDecl);
   else
-    New = new VarDecl(II, D, Loc, PrevDecl);
+    New = new VarDecl(II, D, PrevDecl);
   
   // If this has an identifier, add it to the scope stack.
   if (II) {
@@ -120,6 +130,17 @@ void ASTBuilder::ParseDeclarator(SourceLocation Loc, Scope *S, Declarator &D,
     II->setFETokenInfo(New);
     S->AddDecl(II);
   }
+  
+  if (LastInGroup) LastInGroupList.push_back((Decl*)LastInGroup);
+  
+  return New;
+}
+
+Action::DeclTy *
+ASTBuilder::ParseFunctionDefinition(Scope *S, Declarator &D, StmtTy *Body) {
+  FunctionDecl *FD = (FunctionDecl *)ParseDeclarator(S, D, 0, 0);
+  // TODO: more stuff.
+  return FD;
 }
 
 void ASTBuilder::PopScope(SourceLocation Loc, Scope *S) {
@@ -359,9 +380,8 @@ Action::ExprResult ASTBuilder::ParseConditionalOp(SourceLocation QuestionLoc,
 
 /// Interface to the Builder.cpp file.
 ///
-Action *CreateASTBuilderActions(Preprocessor &PP, bool FullLocInfo) {
-  return new ASTBuilder(PP, FullLocInfo);
+Action *CreateASTBuilderActions(Preprocessor &PP, bool FullLocInfo,
+                                std::vector<Decl*> &LastInGroupList) {
+  return new ASTBuilder(PP, FullLocInfo, LastInGroupList);
 }
-
-
 

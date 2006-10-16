@@ -47,6 +47,7 @@ public:
   // Types - Though these don't actually enforce strong typing, they document
   // what types are required to be identical for the actions.
   typedef void ExprTy;
+  typedef void StmtTy;
   typedef void DeclTy;
   typedef void TypeTy;
   
@@ -79,12 +80,31 @@ public:
   /// ParseDeclarator - This callback is invoked when a declarator is parsed and
   /// 'Init' specifies the initializer if any.  This is for things like:
   /// "int X = 4" or "typedef int foo".
-  virtual void ParseDeclarator(SourceLocation Loc, Scope *S, Declarator &D,
-                               ExprTy *Init) {}
-  
+  ///
+  /// LastInGroup is non-null for cases where one declspec has multiple
+  /// declarators on it.  For example in 'int A, B', ParseDeclarator will be
+  /// called with LastInGroup=A when invoked for B.
+  virtual DeclTy *ParseDeclarator(Scope *S, Declarator &D,
+                                  ExprTy *Init, DeclTy *LastInGroup) {
+    return 0;
+  }
+
+  /// ParseFunctionDefinition - This is called when a function definition is
+  /// parsed.  The declarator that is part of this is not passed to
+  /// ParseDeclarator.
+  virtual DeclTy *ParseFunctionDefinition(Scope *S, Declarator &D,
+                                          // TODO: FORMAL ARG INFO.
+                                          StmtTy *Body) {
+    return 0;
+  }
+
   /// PopScope - This callback is called immediately before the specified scope
   /// is popped and deleted.
   virtual void PopScope(SourceLocation Loc, Scope *S) {}
+  
+  //===--------------------------------------------------------------------===//
+  // 'External Declaration' (Top Level) Parsing Callbacks.
+  //===--------------------------------------------------------------------===//
   
   //===--------------------------------------------------------------------===//
   // Expression Parsing Callbacks.
@@ -178,8 +198,8 @@ public:
   /// ParseDeclarator - If this is a typedef declarator, we modify the
   /// IdentifierInfo::FETokenInfo field to keep track of this fact, until S is
   /// popped.
-  virtual void ParseDeclarator(SourceLocation Loc, Scope *S, Declarator &D,
-                               ExprTy *Init);
+  virtual DeclTy *ParseDeclarator(Scope *S, Declarator &D, ExprTy *Init,
+                                  DeclTy *LastInGroup);
   
   /// PopScope - When a scope is popped, if any typedefs are now out-of-scope,
   /// they are removed from the IdentifierInfo::FETokenInfo field.

@@ -19,15 +19,17 @@ using namespace clang;
 
 /// Interface to the Builder.cpp file.
 ///
-Action *CreateASTBuilderActions(Preprocessor &PP, bool FullLocInfo);
+Action *CreateASTBuilderActions(Preprocessor &PP, bool FullLocInfo,
+                                std::vector<Decl*> &LastInGroupList);
 
 
 namespace {
   class ASTStreamer {
     Parser P;
+    std::vector<Decl*> LastInGroupList;
   public:
     ASTStreamer(Preprocessor &PP, unsigned MainFileID, bool FullLocInfo)
-      : P(PP, *CreateASTBuilderActions(PP, FullLocInfo)) {
+      : P(PP, *CreateASTBuilderActions(PP, FullLocInfo, LastInGroupList)) {
       PP.EnterSourceFile(MainFileID, 0, true);
       
       // Initialize the parser.
@@ -37,9 +39,33 @@ namespace {
     /// ReadTopLevelDecl - Parse and return the next top-level declaration.
     Decl *ReadTopLevelDecl() {
       Parser::DeclTy *Result;
-      if (P.ParseTopLevelDecl(Result))
-        return 0;
-      Result = (Decl*)1; // FIXME!
+      
+      /// If the previous time through we read something like 'int X, Y', return
+      /// the next declarator.
+      if (!LastInGroupList.empty()) {
+        Result = LastInGroupList.back();
+        LastInGroupList.pop_back();
+        return (Decl*)Result;
+      }
+
+      do {
+        if (P.ParseTopLevelDecl(Result))
+          return 0;  // End of file.
+
+        // If we got a null return and something *was* parsed, try again.  This
+        // is due to a top-level semicolon, an action override, or a parse error
+        // skipping something.
+      } while (Result == 0);
+
+      // If we parsed a declspec with multiple declarators, reverse the list and
+      // return the first one.
+      if (!LastInGroupList.empty()) {
+        LastInGroupList.push_back((Decl*)Result);
+        std::reverse(LastInGroupList.begin(), LastInGroupList.end());
+        Result = LastInGroupList.back();
+        LastInGroupList.pop_back();
+      }
+
       return (Decl*)Result;
     }
     

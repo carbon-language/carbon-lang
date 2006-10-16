@@ -48,6 +48,7 @@ public:
   // Type forwarding.  All of these are statically 'void*', but they may all be
   // different actual classes based on the actions in place.
   typedef Action::ExprTy ExprTy;
+  typedef Action::StmtTy StmtTy;
   typedef Action::DeclTy DeclTy;
   typedef Action::TypeTy TypeTy;
   
@@ -214,9 +215,9 @@ private:
     
   //===--------------------------------------------------------------------===//
   // C99 6.9: External Definitions.
-  void ParseExternalDeclaration();
-  void ParseDeclarationOrFunctionDefinition();
-  void ParseFunctionDefinition(Declarator &D);
+  DeclTy *ParseExternalDeclaration();
+  DeclTy *ParseDeclarationOrFunctionDefinition();
+  DeclTy *ParseFunctionDefinition(Declarator &D);
   void ParseSimpleAsm();
   void ParseAsmStringLiteral();
   
@@ -285,7 +286,7 @@ private:
   // C99 6.7: Declarations.
   
   void ParseDeclaration(unsigned Context);
-  void ParseInitDeclaratorListAfterFirstDeclarator(Declarator &D);
+  DeclTy *ParseInitDeclaratorListAfterFirstDeclarator(Declarator &D);
   void ParseDeclarationSpecifiers(DeclSpec &DS);
   void ParseSpecifierQualifierList(DeclSpec &DS);
 

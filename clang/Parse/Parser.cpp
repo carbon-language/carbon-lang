@@ -219,7 +219,7 @@ void Parser::Initialize() {
     
     Declarator D(DS, Declarator::FileContext);
     D.SetIdentifier(PP.getIdentifierInfo("__builtin_va_list"),SourceLocation());
-    Actions.ParseDeclarator(SourceLocation(), CurScope, D, 0);
+    Actions.ParseDeclarator(CurScope, D, 0, 0);
   }
   
   if (Tok.getKind() == tok::eof)  // Empty source file is an extension.
@@ -232,7 +232,7 @@ bool Parser::ParseTopLevelDecl(DeclTy*& Result) {
   Result = 0;
   if (Tok.getKind() == tok::eof) return true;
   
-  ParseExternalDeclaration();
+  Result = ParseExternalDeclaration();
   return false;
 }
 
@@ -274,21 +274,22 @@ void Parser::ParseTranslationUnit() {
 /// [GNU] asm-definition:
 ///         simple-asm-expr ';'
 ///
-void Parser::ParseExternalDeclaration() {
+Parser::DeclTy *Parser::ParseExternalDeclaration() {
   switch (Tok.getKind()) {
   case tok::semi:
     Diag(diag::ext_top_level_semi);
     ConsumeToken();
-    break;
+    // TODO: Invoke action for top-level semicolon.
+    return 0;
   case tok::kw_asm:
     ParseSimpleAsm();
     ExpectAndConsume(tok::semi, diag::err_expected_semi_after,
                      "top-level asm block");
-    break;
+    // TODO: Invoke action for top-level asm.
+    return 0;
   default:
     // We can't tell whether this is a function-definition or declaration yet.
-    ParseDeclarationOrFunctionDefinition();
-    break;
+    return ParseDeclarationOrFunctionDefinition();
   }
 }
 
@@ -304,7 +305,7 @@ void Parser::ParseExternalDeclaration() {
 /// [!C99]  init-declarator-list ';'                             [TODO]
 /// [OMP]   threadprivate-directive                              [TODO]
 ///
-void Parser::ParseDeclarationOrFunctionDefinition() {
+Parser::DeclTy *Parser::ParseDeclarationOrFunctionDefinition() {
   // Parse the common declaration-specifiers piece.
   DeclSpec DS;
   ParseDeclarationSpecifiers(DS);
@@ -316,7 +317,8 @@ void Parser::ParseDeclarationOrFunctionDefinition() {
     // if (!DS.isMissingDeclaratorOk()) Diag(...);
     
     ConsumeToken();
-    return;
+    // TODO: Return type definition.
+    return 0;
   }
   
   // Parse the first declarator.
@@ -328,32 +330,31 @@ void Parser::ParseDeclarationOrFunctionDefinition() {
     SkipUntil(tok::r_brace, true);
     if (Tok.getKind() == tok::semi)
       ConsumeToken();
-    return;
+    return 0;
   }
 
   // If the declarator is the start of a function definition, handle it.
   if (Tok.getKind() == tok::equal ||  // int X()=  -> not a function def
       Tok.getKind() == tok::comma ||  // int X(),  -> not a function def
-      Tok.getKind() == tok::semi ||   // int X();  -> not a function def
+      Tok.getKind() == tok::semi  ||  // int X();  -> not a function def
       Tok.getKind() == tok::kw_asm || // int X() __asm__ -> not a fn def
       Tok.getKind() == tok::kw___attribute) {// int X() __attr__ -> not a fn def
     // FALL THROUGH.
   } else if (DeclaratorInfo.isFunctionDeclarator() &&
              (Tok.getKind() == tok::l_brace ||  // int X() {}
               isDeclarationSpecifier())) {      // int X(f) int f; {}
-    ParseFunctionDefinition(DeclaratorInfo);
-    return;
+    return ParseFunctionDefinition(DeclaratorInfo);
   } else {
     if (DeclaratorInfo.isFunctionDeclarator())
       Diag(Tok, diag::err_expected_fn_body);
     else
       Diag(Tok, diag::err_expected_after_declarator);
     SkipUntil(tok::semi);
-    return;
+    return 0;
   }
 
   // Parse the init-declarator-list for a normal declaration.
-  ParseInitDeclaratorListAfterFirstDeclarator(DeclaratorInfo);
+  return ParseInitDeclaratorListAfterFirstDeclarator(DeclaratorInfo);
 }
 
 /// ParseFunctionDefinition - We parsed and verified that the specified
@@ -363,7 +364,7 @@ void Parser::ParseDeclarationOrFunctionDefinition() {
 ///         declaration-specifiers[opt] declarator declaration-list[opt] 
 ///                 compound-statement                           [TODO]
 ///
-void Parser::ParseFunctionDefinition(Declarator &D) {
+Parser::DeclTy *Parser::ParseFunctionDefinition(Declarator &D) {
   const DeclaratorTypeInfo &FnTypeInfo = D.getTypeObject(0);
   assert(FnTypeInfo.Kind == DeclaratorTypeInfo::Function &&
          "This isn't a function declarator!");
@@ -393,10 +394,15 @@ void Parser::ParseFunctionDefinition(Declarator &D) {
     
     // If we didn't find the '{', bail out.
     if (Tok.getKind() != tok::l_brace)
-      return;
+      return 0;
   }
   
+  // TODO: Get stmt info.
+  StmtTy *FnBody = 0;
   ParseCompoundStatement();
+
+  // TODO: Pass argument information.
+  return Actions.ParseFunctionDefinition(CurScope, D, FnBody);
 }
 
 /// ParseAsmStringLiteral - This is just a normal string-literal, but is not

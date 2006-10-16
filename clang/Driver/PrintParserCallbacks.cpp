@@ -24,11 +24,11 @@ using namespace clang;
 namespace {
   class ParserPrintActions : public EmptyAction {
     
-    /// ParseDeclarator - This callback is invoked when a declarator is parsed and
-    /// 'Init' specifies the initializer if any.  This is for things like:
+    /// ParseDeclarator - This callback is invoked when a declarator is parsed
+    /// and 'Init' specifies the initializer if any.  This is for things like:
     /// "int X = 4" or "typedef int foo".
-    virtual void ParseDeclarator(SourceLocation Loc, Scope *S, Declarator &D,
-                                 ExprTy *Init) {
+    virtual DeclTy *ParseDeclarator(Scope *S, Declarator &D, ExprTy *Init,
+                                    DeclTy *LastInGroup) {
       std::cout << "ParseDeclarator ";
       if (IdentifierInfo *II = D.getIdentifier()) {
         std::cout << "'" << II->getName() << "'";
@@ -38,7 +38,7 @@ namespace {
       std::cout << "\n";
       
       // Pass up to EmptyActions so that the symbol table is maintained right.
-      EmptyAction::ParseDeclarator(Loc, S, D, Init);
+      return EmptyAction::ParseDeclarator(S, D, Init, LastInGroup);
     }
     
     /// PopScope - This callback is called immediately before the specified scope

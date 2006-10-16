@@ -34,10 +34,11 @@ bool EmptyAction::isTypedefName(const IdentifierInfo &II, Scope *S) const {
 /// ParseDeclarator - If this is a typedef declarator, we modify the
 /// IdentifierInfo::FETokenInfo field to keep track of this fact, until S is
 /// popped.
-void EmptyAction::ParseDeclarator(SourceLocation Loc, Scope *S, Declarator &D,
-                                  ExprTy *Init) {
+Action::DeclTy *
+EmptyAction::ParseDeclarator(Scope *S, Declarator &D, ExprTy *Init,
+                             DeclTy *LastInGroup) {
   // If there is no identifier associated with this declarator, bail out.
-  if (D.getIdentifier() == 0) return;
+  if (D.getIdentifier() == 0) return 0;
   
   // Remember whether or not this declarator is a typedef.
   TypedefInfo *TI = new TypedefInfo();
@@ -50,6 +51,7 @@ void EmptyAction::ParseDeclarator(SourceLocation Loc, Scope *S, Declarator &D,
   
   // Remember that this needs to be removed when the scope is popped.
   S->AddDecl(&II);
+  return 0;
 }
 
 /// PopScope - When a scope is popped, if any typedefs are now out-of-scope,
