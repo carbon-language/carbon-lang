@@ -26,21 +26,22 @@ AsmWriterFlavor("x86-asm-syntax", cl::init(X86Subtarget::unset),
     clEnumValN(X86Subtarget::intel, "intel", "  Emit Intel-style assembly"),
     clEnumValEnd));
 
+
 /// GetCpuIDAndInfo - Execute the specified cpuid and return the 4 values in the
 /// specified arguments.  If we can't run cpuid on the host, return true.
-static inline bool GetCpuIDAndInfo(unsigned value, unsigned *rEAX,
-                                   unsigned *rEBX, unsigned *rECX,
-                                   unsigned *rEDX) {
+bool X86::GetCpuIDAndInfo(unsigned value, unsigned *rEAX, unsigned *rEBX,
+                          unsigned *rECX, unsigned *rEDX) {
 #if defined(__x86_64__)
-  asm ("pushq\t%%rbx\n\t"
-       "cpuid\n\t"
+  unsigned long long saveRBX;
+  asm ("nop" : "=b" (saveRBX));
+  asm ("cpuid\n\t"
        "movl\t%%ebx, %%esi\n\t"
-       "popq\t%%rbx"
        : "=a" (*rEAX),
          "=S" (*rEBX),
          "=c" (*rECX),
          "=d" (*rEDX)
        :  "a" (value));
+  asm ("nop" :: "b" (saveRBX));
   return false;
 #elif defined(i386) || defined(__i386__) || defined(__x86__) || defined(_M_IX86)
 #if defined(__GNUC__)
@@ -80,30 +81,30 @@ void X86Subtarget::AutoDetectSubtargetFeatures() {
     char     c[12];
   } text;
 
-  if (GetCpuIDAndInfo(0, &EAX, text.u+0, text.u+2, text.u+1))
+  if (X86::GetCpuIDAndInfo(0, &EAX, text.u+0, text.u+2, text.u+1))
     return;
 
   // FIXME: support for AMD family of processors.
   if (memcmp(text.c, "GenuineIntel", 12) == 0) {
-    GetCpuIDAndInfo(0x1, &EAX, &EBX, &ECX, &EDX);
+    X86::GetCpuIDAndInfo(0x1, &EAX, &EBX, &ECX, &EDX);
 
     if ((EDX >> 23) & 0x1) X86SSELevel = MMX;
     if ((EDX >> 25) & 0x1) X86SSELevel = SSE1;
     if ((EDX >> 26) & 0x1) X86SSELevel = SSE2;
     if (ECX & 0x1)         X86SSELevel = SSE3;
 
-    GetCpuIDAndInfo(0x80000001, &EAX, &EBX, &ECX, &EDX);
+    X86::GetCpuIDAndInfo(0x80000001, &EAX, &EBX, &ECX, &EDX);
     HasX86_64 = (EDX >> 29) & 0x1;
   }
 }
 
 static const char *GetCurrentX86CPU() {
   unsigned EAX = 0, EBX = 0, ECX = 0, EDX = 0;
-  if (GetCpuIDAndInfo(0x1, &EAX, &EBX, &ECX, &EDX))
+  if (X86::GetCpuIDAndInfo(0x1, &EAX, &EBX, &ECX, &EDX))
     return "generic";
   unsigned Family  = (EAX >> 8) & 0xf; // Bits 8 - 11
   unsigned Model   = (EAX >> 4) & 0xf; // Bits 4 - 7
-  GetCpuIDAndInfo(0x80000001, &EAX, &EBX, &ECX, &EDX);
+  X86::GetCpuIDAndInfo(0x80000001, &EAX, &EBX, &ECX, &EDX);
   bool Em64T = (EDX >> 29) & 0x1;
 
   union {
@@ -111,7 +112,7 @@ static const char *GetCurrentX86CPU() {
     char     c[12];
   } text;
 
-  GetCpuIDAndInfo(0, &EAX, text.u+0, text.u+2, text.u+1);
+  X86::GetCpuIDAndInfo(0, &EAX, text.u+0, text.u+2, text.u+1);
   if (memcmp(text.c, "GenuineIntel", 12) == 0) {
     switch (Family) {
       case 3:

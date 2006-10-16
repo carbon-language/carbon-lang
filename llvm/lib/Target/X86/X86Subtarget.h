@@ -106,6 +106,14 @@ public:
   bool isTargetWindows() const { return TargetType == isWindows; }
   bool isTargetCygwin() const { return TargetType == isCygwin; }  
 };
+
+namespace X86 {
+  /// GetCpuIDAndInfo - Execute the specified cpuid and return the 4 values in
+  /// the specified arguments.  If we can't run cpuid on the host, return true.
+  bool GetCpuIDAndInfo(unsigned value, unsigned *rEAX, unsigned *rEBX,
+                       unsigned *rECX, unsigned *rEDX);
+}
+
 } // End llvm namespace
 
 #endif
