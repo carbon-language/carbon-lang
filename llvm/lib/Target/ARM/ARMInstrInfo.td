@@ -51,6 +51,11 @@ class IntBinOp<string OpcStr, SDNode OpNode> :
                  !strconcat(OpcStr, " $dst, $a, $b"),
                  [(set IntRegs:$dst, (OpNode IntRegs:$a, IntRegs:$b))]>;
 
+class FPBinOp<string OpcStr, SDNode OpNode> :
+        InstARM<(ops FPRegs:$dst, FPRegs:$a, FPRegs:$b),
+                 !strconcat(OpcStr, " $dst, $a, $b"),
+                 [(set FPRegs:$dst, (OpNode FPRegs:$a, FPRegs:$b))]>;
+
 class Addr1BinOp<string OpcStr, SDNode OpNode> :
         InstARM<(ops IntRegs:$dst, IntRegs:$a, op_addr_mode1:$b),
                  !strconcat(OpcStr, " $dst, $a, $b"),
@@ -251,17 +256,13 @@ def FCVTSD  : InstARM<(ops FPRegs:$dst, DFPRegs:$src),
 def FMSTAT  : InstARM<(ops ), "fmstat", [(armfmstat)]>;
 
 // Floating Point Arithmetic
-def FADDS   : InstARM<(ops FPRegs:$dst, FPRegs:$a, FPRegs:$b),
-                       "fadds $dst, $a, $b",
-		       [(set FPRegs:$dst, (fadd FPRegs:$a, FPRegs:$b))]>;
+def FADDS   : FPBinOp<"fadds", fadd>;
 
 def FADDD   : InstARM<(ops DFPRegs:$dst, DFPRegs:$a, DFPRegs:$b),
                        "faddd $dst, $a, $b",
 		       [(set DFPRegs:$dst, (fadd DFPRegs:$a, DFPRegs:$b))]>;
 
-def FSUBS   : InstARM<(ops FPRegs:$dst, FPRegs:$a, FPRegs:$b),
-                       "fsubs $dst, $a, $b",
-		       [(set FPRegs:$dst, (fsub FPRegs:$a, FPRegs:$b))]>;
+def FSUBS   : FPBinOp<"fsubs", fsub>;
 
 def FSUBD   : InstARM<(ops DFPRegs:$dst, DFPRegs:$a, DFPRegs:$b),
                        "fsubd $dst, $a, $b",
@@ -275,9 +276,7 @@ def FNEGD   : InstARM<(ops DFPRegs:$dst, DFPRegs:$src),
                        "fnegd $dst, $src",
 		       [(set DFPRegs:$dst, (fneg DFPRegs:$src))]>;
 
-def FMULS   : InstARM<(ops FPRegs:$dst, FPRegs:$a, FPRegs:$b),
-                       "fmuls $dst, $a, $b",
-		       [(set FPRegs:$dst, (fmul FPRegs:$a, FPRegs:$b))]>;
+def FMULS   : FPBinOp<"fmuls", fmul>;
 
 def FMULD   : InstARM<(ops DFPRegs:$dst, DFPRegs:$a, DFPRegs:$b),
                        "fmuld $dst, $a, $b",
