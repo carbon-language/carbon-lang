@@ -1632,11 +1632,15 @@ DIE *DwarfWriter::NewGlobalVariable(GlobalVariableDesc *GVD) {
   
   // Add source line info if available.
   AddSourceLine(VariableDie, UnitDesc, GVD->getLine());
+  
+  // Work up linkage name.
+  std::string LinkageName(TAI->getGlobalPrefix());
+  LinkageName += GV->getName();
 
   // Add address.
   DIEBlock *Block = new DIEBlock();
   Block->AddUInt(DW_FORM_data1, DW_OP_addr);
-  Block->AddObjectLabel(DW_FORM_udata, MangledName);
+  Block->AddObjectLabel(DW_FORM_udata, LinkageName);
   Block->ComputeSize(*this);
   VariableDie->AddBlock(DW_AT_location,  0, Block);
   
