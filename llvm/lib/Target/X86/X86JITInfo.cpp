@@ -14,6 +14,7 @@
 #define DEBUG_TYPE "jit"
 #include "X86JITInfo.h"
 #include "X86Relocations.h"
+#include "X86Subtarget.h"
 #include "llvm/CodeGen/MachineCodeEmitter.h"
 #include "llvm/Config/alloca.h"
 #include <cstdlib>
@@ -138,6 +139,45 @@ extern "C" {
 #endif
     "popl    %ebp\n"
     "ret\n");
+
+  // Same as X86CompilationCallback but also saves XMM argument registers.
+  void X86CompilationCallback_SSE(void);
+  asm(
+    ".text\n"
+    ".align 8\n"
+    ".globl " ASMPREFIX  "X86CompilationCallback_SSE\n"
+  ASMPREFIX "X86CompilationCallback_SSE:\n"
+    "pushl   %ebp\n"
+    "movl    %esp, %ebp\n"    // Standard prologue
+#if FASTCC_NUM_INT_ARGS_INREGS > 0
+    "pushl   %eax\n"
+    "pushl   %edx\n"          // Save EAX/EDX
+#endif
+    "andl    $-16, %esp\n"    // Align ESP on 16-byte boundary
+    // Save all XMM arg registers
+    "subl    $64, %esp\n"
+    "movaps  %xmm0, (%esp)\n"
+    "movaps  %xmm1, 16(%esp)\n"
+    "movaps  %xmm2, 32(%esp)\n"
+    "movaps  %xmm3, 48(%esp)\n"
+    "subl    $16, %esp\n"
+    "movl    4(%ebp), %eax\n" // Pass prev frame and return address
+    "movl    %eax, 4(%esp)\n"
+    "movl    %ebp, (%esp)\n"
+    "call    " ASMPREFIX "X86CompilationCallback2\n"
+    "addl    $16, %esp\n"
+    "movaps  48(%esp), %xmm3\n"
+    "movaps  32(%esp), %xmm2\n"
+    "movaps  16(%esp), %xmm1\n"
+    "movaps  (%esp), %xmm0\n"
+    "movl    %ebp, %esp\n"    // Restore ESP
+#if FASTCC_NUM_INT_ARGS_INREGS > 0
+    "subl    $8, %esp\n"
+    "popl    %edx\n"
+    "popl    %eax\n"
+#endif
+    "popl    %ebp\n"
+    "ret\n");
 #else
   void X86CompilationCallback2(void);
 
@@ -215,13 +255,30 @@ extern "C" void X86CompilationCallback2(intptr_t *StackPtr, intptr_t RetAddr) {
 TargetJITInfo::LazyResolverFn
 X86JITInfo::getLazyResolverFunction(JITCompilerFn F) {
   JITCompilerFunction = F;
+
+  unsigned EAX = 0, EBX = 0, ECX = 0, EDX = 0;
+  union {
+    unsigned u[3];
+    char     c[12];
+  } text;
+
+  if (!X86::GetCpuIDAndInfo(0, &EAX, text.u+0, text.u+2, text.u+1)) {
+    // FIXME: support for AMD family of processors.
+    if (memcmp(text.c, "GenuineIntel", 12) == 0) {
+      X86::GetCpuIDAndInfo(0x1, &EAX, &EBX, &ECX, &EDX);
+      if ((EDX >> 25) & 0x1)
+        return X86CompilationCallback_SSE;
+    }
+  }
+
   return X86CompilationCallback;
 }
 
 void *X86JITInfo::emitFunctionStub(void *Fn, MachineCodeEmitter &MCE) {
   // Note, we cast to intptr_t here to silence a -pedantic warning that 
   // complains about casting a function pointer to a normal pointer.
-  if (Fn != (void*)(intptr_t)X86CompilationCallback) {
+  if (Fn != (void*)(intptr_t)X86CompilationCallback &&
+      Fn != (void*)(intptr_t)X86CompilationCallback_SSE) {
     MCE.startFunctionStub(5);
     MCE.emitByte(0xE9);
     MCE.emitWordLE((intptr_t)Fn-MCE.getCurrentPCValue()-4);
