@@ -329,8 +329,7 @@ Parser::ParseRHSOfBinaryExpression(ExprResult LHS, unsigned MinPrec) {
       }
       
       // Eat the colon.
-      ColonLoc = Tok.getLocation();
-      ConsumeToken();
+      ColonLoc = ConsumeToken();
     }
     
     // Parse another leaf here for the RHS of the operator.
@@ -617,8 +616,8 @@ Parser::ExprResult Parser::ParsePostfixExpressionSuffix(ExprResult LHS) {
           
           if (Tok.getKind() != tok::comma)
             break;
-          CommaLocs.push_back(Tok.getLocation());
-          ConsumeToken();  // Next argument.
+          // Move to the next argument, remember where the comma was.
+          CommaLocs.push_back(ConsumeToken());
         }
       }
         
@@ -635,9 +634,8 @@ Parser::ExprResult Parser::ParsePostfixExpressionSuffix(ExprResult LHS) {
     }
     case tok::arrow:       // postfix-expression: p-e '->' identifier
     case tok::period: {    // postfix-expression: p-e '.' identifier
-      SourceLocation OpLoc = Tok.getLocation();
       tok::TokenKind OpKind = Tok.getKind();
-      ConsumeToken();  // Eat the "." or "->" token.
+      SourceLocation OpLoc = ConsumeToken();  // Eat the "." or "->" token.
       
       if (Tok.getKind() != tok::identifier) {
         Diag(Tok, diag::err_expected_ident);
@@ -720,11 +718,10 @@ Parser::ExprResult Parser::ParseSizeofAlignofExpression() {
 ///
 Parser::ExprResult Parser::ParseBuiltinPrimaryExpression() {
   ExprResult Res(false);
-  SourceLocation StartLoc = Tok.getLocation();
   const IdentifierInfo *BuiltinII = Tok.getIdentifierInfo();
 
   tok::TokenKind T = Tok.getKind();
-  ConsumeToken();   // Eat the builtin identifier.
+  SourceLocation StartLoc = ConsumeToken();   // Eat the builtin identifier.
 
   // All of these start with an open paren.
   if (Tok.getKind() != tok::l_paren) {

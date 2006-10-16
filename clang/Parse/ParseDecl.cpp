@@ -430,9 +430,8 @@ void Parser::ParseDeclarationSpecifiers(DeclSpec &DS) {
 void Parser::ParseStructUnionSpecifier(DeclSpec &DS) {
   assert((Tok.getKind() == tok::kw_struct ||
           Tok.getKind() == tok::kw_union) && "Not a struct/union specifier");
-  SourceLocation Start = Tok.getLocation();
   bool isUnion = Tok.getKind() == tok::kw_union;
-  ConsumeToken();
+  SourceLocation Start = ConsumeToken();
 
   // If attributes exist after tag, parse them.
   if (Tok.getKind() == tok::kw___attribute)
@@ -554,8 +553,7 @@ void Parser::ParseStructUnionSpecifier(DeclSpec &DS) {
 ///
 void Parser::ParseEnumSpecifier(DeclSpec &DS) {
   assert(Tok.getKind() == tok::kw_enum && "Not an enum specifier");
-  SourceLocation Start = Tok.getLocation();
-  ConsumeToken();
+  SourceLocation Start = ConsumeToken();
   
   if (Tok.getKind() == tok::kw___attribute)
     ParseAttributes();
@@ -589,8 +587,7 @@ void Parser::ParseEnumSpecifier(DeclSpec &DS) {
       
       if (Tok.getKind() != tok::comma)
         break;
-      SourceLocation CommaLoc = Tok.getLocation();
-      ConsumeToken();
+      SourceLocation CommaLoc = ConsumeToken();
       
       if (Tok.getKind() != tok::identifier && !getLang().C99)
         Diag(CommaLoc, diag::ext_c99_enumerator_list_comma);
@@ -780,8 +777,7 @@ void Parser::ParseDeclaratorInternal(Declarator &D) {
     return ParseDirectDeclarator(D);
   
   // Otherwise, '*' -> pointer.
-  SourceLocation Loc = Tok.getLocation();
-  ConsumeToken();  // Eat the *.
+  SourceLocation Loc = ConsumeToken();  // Eat the *.
   DeclSpec DS;
   ParseTypeQualifierListOpt(DS);
   
@@ -1038,10 +1034,8 @@ void Parser::ParseBracketDeclarator(Declarator &D) {
   
   // If valid, this location is the position where we read the 'static' keyword.
   SourceLocation StaticLoc;
-  if (Tok.getKind() == tok::kw_static) {
-    StaticLoc = Tok.getLocation();
-    ConsumeToken();
-  }
+  if (Tok.getKind() == tok::kw_static)
+    StaticLoc = ConsumeToken();
   
   // If there is a type-qualifier-list, read it now.
   DeclSpec DS;
@@ -1049,10 +1043,8 @@ void Parser::ParseBracketDeclarator(Declarator &D) {
   
   // If we haven't already read 'static', check to see if there is one after the
   // type-qualifier-list.
-  if (!StaticLoc.isValid() && Tok.getKind() == tok::kw_static) {
-    StaticLoc = Tok.getLocation();
-    ConsumeToken();
-  }
+  if (!StaticLoc.isValid() && Tok.getKind() == tok::kw_static)
+    StaticLoc = ConsumeToken();
   
   // Handle "direct-declarator [ type-qual-list[opt] * ]".
   bool isStar = false;

@@ -97,12 +97,15 @@ private:
   
   /// ConsumeToken - Consume the current 'peek token' and lex the next one.
   /// This does not work will all kinds of tokens: strings and specific other
-  /// tokens must be consumed with custom methods below.
-  void ConsumeToken() {
+  /// tokens must be consumed with custom methods below.  This returns the
+  /// location of the consumed token.
+  SourceLocation ConsumeToken() {
     assert(!isTokenStringLiteral() && !isTokenParen() && !isTokenBracket() &&
            !isTokenBrace() &&
            "Should consume special tokens with Consume*Token");
+    SourceLocation L = Tok.getLocation();
     PP.Lex(Tok);
+    return L;
   }
   
   /// ConsumeAnyToken - Dispatch to the right Consume* method based on the

@@ -187,8 +187,7 @@ Parser::StmtResult Parser::ParseIdentifierStatement(bool OnlyStatement) {
   
   // identifier ':' statement
   if (Tok.getKind() == tok::colon) {
-    SourceLocation ColonLoc = Tok.getLocation();
-    ConsumeToken();
+    SourceLocation ColonLoc = ConsumeToken();
 
     // Read label attributes, if present.
     if (Tok.getKind() == tok::kw___attribute)
@@ -256,8 +255,7 @@ Parser::StmtResult Parser::ParseIdentifierStatement(bool OnlyStatement) {
 ///
 Parser::StmtResult Parser::ParseCaseStatement() {
   assert(Tok.getKind() == tok::kw_case && "Not a case stmt!");
-  SourceLocation CaseLoc = Tok.getLocation();
-  ConsumeToken();  // eat the 'case'.
+  SourceLocation CaseLoc = ConsumeToken();  // eat the 'case'.
 
   ExprResult LHS = ParseConstantExpression();
   if (LHS.isInvalid) {
@@ -270,7 +268,7 @@ Parser::StmtResult Parser::ParseCaseStatement() {
   ExprTy *RHSVal = 0;
   if (Tok.getKind() == tok::ellipsis) {
     Diag(Tok, diag::ext_gnu_case_range);
-    ConsumeToken();
+    DotDotDotLoc = ConsumeToken();
     
     ExprResult RHS = ParseConstantExpression();
     if (RHS.isInvalid) {
@@ -286,8 +284,7 @@ Parser::StmtResult Parser::ParseCaseStatement() {
     return true;
   }
   
-  SourceLocation ColonLoc = Tok.getLocation();
-  ConsumeToken();
+  SourceLocation ColonLoc = ConsumeToken();
   
   // Diagnose the common error "switch (X) { case 4: }", which is not valid.
   if (Tok.getKind() == tok::r_brace) {
@@ -311,8 +308,7 @@ Parser::StmtResult Parser::ParseCaseStatement() {
 ///
 Parser::StmtResult Parser::ParseDefaultStatement() {
   assert(Tok.getKind() == tok::kw_default && "Not a default stmt!");
-  SourceLocation DefaultLoc = Tok.getLocation();
-  ConsumeToken();  // eat the 'default'.
+  SourceLocation DefaultLoc = ConsumeToken();  // eat the 'default'.
 
   if (Tok.getKind() != tok::colon) {
     Diag(Tok, diag::err_expected_colon_after, "'default'");
@@ -320,8 +316,7 @@ Parser::StmtResult Parser::ParseDefaultStatement() {
     return true;
   }
   
-  SourceLocation ColonLoc = Tok.getLocation();
-  ConsumeToken();
+  SourceLocation ColonLoc = ConsumeToken();
   
   // Diagnose the common error "switch (X) {... default: }", which is not valid.
   if (Tok.getKind() == tok::r_brace) {
@@ -396,8 +391,7 @@ Parser::StmtResult Parser::ParseCompoundStatement() {
 ///
 Parser::StmtResult Parser::ParseIfStatement() {
   assert(Tok.getKind() == tok::kw_if && "Not an if stmt!");
-  SourceLocation IfLoc = Tok.getLocation();
-  ConsumeToken();  // eat the 'if'.
+  SourceLocation IfLoc = ConsumeToken();  // eat the 'if'.
 
   if (Tok.getKind() != tok::l_paren) {
     Diag(Tok, diag::err_expected_lparen_after, "if");
@@ -419,8 +413,7 @@ Parser::StmtResult Parser::ParseIfStatement() {
   SourceLocation ElseLoc;
   StmtResult ElseStmt(false);
   if (Tok.getKind() == tok::kw_else) {
-    ElseLoc = Tok.getLocation();
-    ConsumeToken();
+    ElseLoc = ConsumeToken();
     ElseStmt = ParseStatement();
   }
   
@@ -436,8 +429,7 @@ Parser::StmtResult Parser::ParseIfStatement() {
 ///         'switch' '(' expression ')' statement
 Parser::StmtResult Parser::ParseSwitchStatement() {
   assert(Tok.getKind() == tok::kw_switch && "Not a switch stmt!");
-  SourceLocation SwitchLoc = Tok.getLocation();
-  ConsumeToken();  // eat the 'switch'.
+  SourceLocation SwitchLoc = ConsumeToken();  // eat the 'switch'.
 
   if (Tok.getKind() != tok::l_paren) {
     Diag(Tok, diag::err_expected_lparen_after, "switch");
@@ -487,8 +479,7 @@ Parser::StmtResult Parser::ParseWhileStatement() {
 /// Note: this lets the caller parse the end ';'.
 Parser::StmtResult Parser::ParseDoStatement() {
   assert(Tok.getKind() == tok::kw_do && "Not a do stmt!");
-  SourceLocation DoLoc = Tok.getLocation();
-  ConsumeToken();  // eat the 'do'.
+  SourceLocation DoLoc = ConsumeToken();  // eat the 'do'.
   
   // Read the body statement.
   StmtResult Body = ParseStatement();
@@ -499,8 +490,7 @@ Parser::StmtResult Parser::ParseDoStatement() {
     SkipUntil(tok::semi);
     return true;
   }
-  SourceLocation WhileLoc = Tok.getLocation();
-  ConsumeToken();
+  SourceLocation WhileLoc = ConsumeToken();
   
   if (Tok.getKind() != tok::l_paren) {
     Diag(Tok, diag::err_expected_lparen_after, "do/while");
@@ -521,8 +511,7 @@ Parser::StmtResult Parser::ParseDoStatement() {
 ///         'for' '(' declaration expr[opt] ';' expr[opt] ')' statement
 Parser::StmtResult Parser::ParseForStatement() {
   assert(Tok.getKind() == tok::kw_for && "Not a for stmt!");
-  SourceLocation ForLoc = Tok.getLocation();
-  ConsumeToken();  // eat the 'for'.
+  SourceLocation ForLoc = ConsumeToken();  // eat the 'for'.
   
   if (Tok.getKind() != tok::l_paren) {
     Diag(Tok, diag::err_expected_lparen_after, "for");
@@ -597,8 +586,7 @@ Parser::StmtResult Parser::ParseForStatement() {
 ///
 Parser::StmtResult Parser::ParseGotoStatement() {
   assert(Tok.getKind() == tok::kw_goto && "Not a goto stmt!");
-  SourceLocation GotoLoc;
-  ConsumeToken();  // eat the 'goto'.
+  SourceLocation GotoLoc = ConsumeToken();  // eat the 'goto'.
   
   StmtResult Res;
   if (Tok.getKind() == tok::identifier) {
@@ -607,8 +595,7 @@ Parser::StmtResult Parser::ParseGotoStatement() {
   } else if (Tok.getKind() == tok::star && !getLang().NoExtensions) {
     // GNU indirect goto extension.
     Diag(Tok, diag::ext_gnu_indirect_goto);
-    SourceLocation StarLoc = Tok.getLocation();
-    ConsumeToken();
+    SourceLocation StarLoc = ConsumeToken();
     ExprResult R = ParseExpression();
     if (R.isInvalid) {  // Skip to the semicolon, but don't consume it.
       SkipUntil(tok::semi, false, true);
@@ -624,8 +611,7 @@ Parser::StmtResult Parser::ParseGotoStatement() {
 ///         'return' expression[opt] ';'
 Parser::StmtResult Parser::ParseReturnStatement() {
   assert(Tok.getKind() == tok::kw_return && "Not a return stmt!");
-  SourceLocation ReturnLoc = Tok.getLocation();
-  ConsumeToken();  // eat the 'return'.
+  SourceLocation ReturnLoc = ConsumeToken();  // eat the 'return'.
   
   ExprResult R(0);
   if (Tok.getKind() != tok::semi) {
