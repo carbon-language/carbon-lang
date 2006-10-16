@@ -147,7 +147,8 @@ namespace {
                     SDOperand &Index, SDOperand &Disp);
     bool SelectLEAAddr(SDOperand N, SDOperand &Base, SDOperand &Scale,
                        SDOperand &Index, SDOperand &Disp);
-    bool SelectScalarSSELoad(SDOperand N, SDOperand &Base, SDOperand &Scale,
+    bool SelectScalarSSELoad(SDOperand Root, SDOperand Pred,
+                             SDOperand N, SDOperand &Base, SDOperand &Scale,
                              SDOperand &Index, SDOperand &Disp,
                              SDOperand &InChain, SDOperand &OutChain);
     bool TryFoldLoad(SDOperand P, SDOperand N,
@@ -804,13 +805,16 @@ static inline bool isZeroNode(SDOperand Elt) {
 /// SelectScalarSSELoad - Match a scalar SSE load.  In particular, we want to
 /// match a load whose top elements are either undef or zeros.  The load flavor
 /// is derived from the type of N, which is either v4f32 or v2f64.
-bool X86DAGToDAGISel::SelectScalarSSELoad(SDOperand N, SDOperand &Base,
+bool X86DAGToDAGISel::SelectScalarSSELoad(SDOperand Root, SDOperand Pred,
+                                          SDOperand N, SDOperand &Base,
                                           SDOperand &Scale, SDOperand &Index,
                                           SDOperand &Disp, SDOperand &InChain,
                                           SDOperand &OutChain) {
   if (N.getOpcode() == ISD::SCALAR_TO_VECTOR) {
     InChain = N.getOperand(0).getValue(1);
-    if (ISD::isNON_EXTLoad(InChain.Val) && InChain.getValue(0).hasOneUse()) {
+    if (ISD::isNON_EXTLoad(InChain.Val) &&
+        InChain.getValue(0).hasOneUse() &&
+        CanBeFoldedBy(N.Val, Pred.Val, Root.Val)) {
       LoadSDNode *LD = cast<LoadSDNode>(InChain);
       if (!SelectAddr(LD->getBasePtr(), Base, Scale, Index, Disp))
         return false;
