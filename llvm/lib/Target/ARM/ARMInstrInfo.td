@@ -51,6 +51,11 @@ class IntBinOp<string OpcStr, SDNode OpNode> :
                  !strconcat(OpcStr, " $dst, $a, $b"),
                  [(set IntRegs:$dst, (OpNode IntRegs:$a, IntRegs:$b))]>;
 
+class Addr1BinOp<string OpcStr, SDNode OpNode> :
+        InstARM<(ops IntRegs:$dst, IntRegs:$a, op_addr_mode1:$b),
+                 !strconcat(OpcStr, " $dst, $a, $b"),
+                 [(set IntRegs:$dst, (OpNode IntRegs:$a, addr_mode1:$b))]>;
+
 //===----------------------------------------------------------------------===//
 // Instructions
 //===----------------------------------------------------------------------===//
@@ -144,17 +149,9 @@ def str  : InstARM<(ops IntRegs:$src, memri:$addr),
 def MOV   : InstARM<(ops IntRegs:$dst, op_addr_mode1:$src),
                     "mov $dst, $src", [(set IntRegs:$dst, addr_mode1:$src)]>;
 
-def ADD     : InstARM<(ops IntRegs:$dst, IntRegs:$a, op_addr_mode1:$b),
-                       "add $dst, $a, $b",
-		       [(set IntRegs:$dst, (add IntRegs:$a, addr_mode1:$b))]>;
-
-def ADCS    : InstARM<(ops IntRegs:$dst, IntRegs:$a, op_addr_mode1:$b),
-                       "adcs $dst, $a, $b",
-		       [(set IntRegs:$dst, (adde IntRegs:$a, addr_mode1:$b))]>;
-
-def ADDS    : InstARM<(ops IntRegs:$dst, IntRegs:$a, op_addr_mode1:$b),
-                       "adds $dst, $a, $b",
-		       [(set IntRegs:$dst, (addc IntRegs:$a, addr_mode1:$b))]>;
+def ADD     : Addr1BinOp<"add",  add>;
+def ADCS    : Addr1BinOp<"adcs", adde>;
+def ADDS    : Addr1BinOp<"adds", addc>;
 
 // "LEA" forms of add
 def lea_addri : InstARM<(ops IntRegs:$dst, memri:$addr),
@@ -162,29 +159,12 @@ def lea_addri : InstARM<(ops IntRegs:$dst, memri:$addr),
                 	 [(set IntRegs:$dst, iaddr:$addr)]>;
 
 
-def SUB     : InstARM<(ops IntRegs:$dst, IntRegs:$a, op_addr_mode1:$b),
-                       "sub $dst, $a, $b",
-		       [(set IntRegs:$dst, (sub IntRegs:$a, addr_mode1:$b))]>;
-
-def SBCS    : InstARM<(ops IntRegs:$dst, IntRegs:$a, op_addr_mode1:$b),
-                       "sbcs $dst, $a, $b",
-		       [(set IntRegs:$dst, (sube IntRegs:$a, addr_mode1:$b))]>;
-
-def SUBS    : InstARM<(ops IntRegs:$dst, IntRegs:$a, op_addr_mode1:$b),
-                       "subs $dst, $a, $b",
-		       [(set IntRegs:$dst, (subc IntRegs:$a, addr_mode1:$b))]>;
-
-def AND     : InstARM<(ops IntRegs:$dst, IntRegs:$a, op_addr_mode1:$b),
-                       "and $dst, $a, $b",
-		       [(set IntRegs:$dst, (and IntRegs:$a, addr_mode1:$b))]>;
-
-def EOR     : InstARM<(ops IntRegs:$dst, IntRegs:$a, op_addr_mode1:$b),
-                       "eor $dst, $a, $b",
-		       [(set IntRegs:$dst, (xor IntRegs:$a, addr_mode1:$b))]>;
-
-def ORR     : InstARM<(ops IntRegs:$dst, IntRegs:$a, op_addr_mode1:$b),
-                       "orr $dst, $a, $b",
-		       [(set IntRegs:$dst, (or IntRegs:$a, addr_mode1:$b))]>;
+def SUB     : Addr1BinOp<"sub",  sub>;
+def SBCS    : Addr1BinOp<"sbcs", sube>;
+def SUBS    : Addr1BinOp<"subs", subc>;
+def AND     : Addr1BinOp<"and",  and>;
+def EOR     : Addr1BinOp<"eor",  xor>;
+def ORR     : Addr1BinOp<"orr",  or>;
 
 let isTwoAddress = 1 in {
   def movcond : InstARM<(ops IntRegs:$dst, IntRegs:$false,
