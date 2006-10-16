@@ -3108,8 +3108,17 @@ SDOperand DAGCombiner::visitVVECTOR_SHUFFLE(SDNode *N) {
   // all scalar elements the same.
   if (isSplat) {
     SDNode *V = N0.Val;
-    if (V->getOpcode() == ISD::VBIT_CONVERT)
-      V = V->getOperand(0).Val;
+
+    // If this is a vbit convert that changes the element type of the vector but
+    // not the number of vector elements, look through it.  Be careful not to
+    // look though conversions that change things like v4f32 to v2f64.
+    if (V->getOpcode() == ISD::VBIT_CONVERT) {
+      SDOperand ConvInput = V->getOperand(0);
+      if (NumElts ==
+          ConvInput.getConstantOperandVal(ConvInput.getNumOperands()-2))
+        V = ConvInput.Val;
+    }
+
     if (V->getOpcode() == ISD::VBUILD_VECTOR) {
       unsigned NumElems = V->getNumOperands()-2;
       if (NumElems > BaseIdx) {
