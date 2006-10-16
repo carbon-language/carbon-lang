@@ -2199,9 +2199,9 @@ public:
   /// EmitMatchCode - Emit a matcher for N, going to the label for PatternNo
   /// if the match fails. At this point, we already know that the opcode for N
   /// matches, and the SDNode for the result has the RootName specified name.
-  void EmitMatchCode(TreePatternNode *Root, TreePatternNode *N,
-                     TreePatternNode *P, const std::string &RootName,
-                     const std::string &ChainSuffix, bool &FoundChain) {
+  void EmitMatchCode(TreePatternNode *N, TreePatternNode *P,
+                     const std::string &RootName, const std::string &ChainSuffix,
+                     bool &FoundChain) {
     bool isRoot = (P == NULL);
     // Emit instruction predicates. Each predicate is just a string for now.
     if (isRoot) {
@@ -2283,12 +2283,22 @@ public:
           //      /        [YY]
           //      |         ^
           //     [XX]-------|
-          const SDNodeInfo &PInfo = ISE.getSDNodeInfo(P->getOperator());
-          if (P != Root ||
+          bool NeedCheck = false;
+          if (P != Pattern)
+            NeedCheck = true;
+          else {
+            const SDNodeInfo &PInfo = ISE.getSDNodeInfo(P->getOperator());
+            NeedCheck =
+              P->getOperator() == ISE.get_intrinsic_void_sdnode() ||
+              P->getOperator() == ISE.get_intrinsic_w_chain_sdnode() ||
+              P->getOperator() == ISE.get_intrinsic_wo_chain_sdnode() ||
               PInfo.getNumOperands() > 1 ||
               PInfo.hasProperty(SDNPHasChain) ||
               PInfo.hasProperty(SDNPInFlag) ||
-              PInfo.hasProperty(SDNPOptInFlag)) {
+              PInfo.hasProperty(SDNPOptInFlag);
+          }
+
+          if (NeedCheck) {
             std::string ParentName(RootName.begin(), RootName.end()-1);
             emitCheck("CanBeFoldedBy(" + RootName + ".Val, " + ParentName +
                       ".Val, N.Val)");
@@ -2359,7 +2369,7 @@ public:
           emitCheck(MaskPredicate + RootName + "0, cast<ConstantSDNode>(" +
                     RootName + "1), " + itostr(II->getValue()) + ")");
           
-          EmitChildMatchCode(Root, N->getChild(0), N, RootName + utostr(0),
+          EmitChildMatchCode(N->getChild(0), N, RootName + utostr(0),
                              ChainSuffix + utostr(0), FoundChain);
           return;
         }
@@ -2370,7 +2380,7 @@ public:
       emitInit("SDOperand " + RootName + utostr(OpNo) + " = " +
                RootName + ".getOperand(" +utostr(OpNo) + ");");
 
-      EmitChildMatchCode(Root, N->getChild(i), N, RootName + utostr(OpNo),
+      EmitChildMatchCode(N->getChild(i), N, RootName + utostr(OpNo),
                          ChainSuffix + utostr(OpNo), FoundChain);
     }
 
@@ -2401,15 +2411,15 @@ public:
     }
   }
 
-  void EmitChildMatchCode(TreePatternNode *Root, TreePatternNode *Child,
-                          TreePatternNode *Parent, const std::string &RootName,
+  void EmitChildMatchCode(TreePatternNode *Child, TreePatternNode *Parent,
+                          const std::string &RootName,
                           const std::string &ChainSuffix, bool &FoundChain) {
     if (!Child->isLeaf()) {
       // If it's not a leaf, recursively match.
       const SDNodeInfo &CInfo = ISE.getSDNodeInfo(Child->getOperator());
       emitCheck(RootName + ".getOpcode() == " +
                 CInfo.getEnumName());
-      EmitMatchCode(Root, Child, Parent, RootName, ChainSuffix, FoundChain);
+      EmitMatchCode(Child, Parent, RootName, ChainSuffix, FoundChain);
       if (NodeHasProperty(Child, SDNPHasChain, ISE))
         FoldedChains.push_back(std::make_pair(RootName, CInfo.getNumResults()));
     } else {
@@ -2457,7 +2467,12 @@ public:
             emitCode("SDOperand " + ChainName + ";");
           }
           
-          std::string Code = Fn + "(" + RootName;
+          std::string Code = Fn + "(";
+          if (CP->hasProperty(SDNPHasChain)) {
+            std::string ParentName(RootName.begin(), RootName.end()-1);
+            Code += "N, " + ParentName + ", ";
+          }
+          Code += RootName;
           for (unsigned i = 0; i < NumOps; i++)
             Code += ", CPTmp" + utostr(i);
           if (CP->hasProperty(SDNPHasChain))
@@ -3099,8 +3114,7 @@ void DAGISelEmitter::GenerateCodeForPattern(PatternToMatch &Pattern,
 
   // Emit the matcher, capturing named arguments in VariableMap.
   bool FoundChain = false;
-  Emitter.EmitMatchCode(Pattern.getSrcPattern(), Pattern.getSrcPattern(), NULL,
-                        "N", "", FoundChain);
+  Emitter.EmitMatchCode(Pattern.getSrcPattern(), NULL, "N", "", FoundChain);
 
   // TP - Get *SOME* tree pattern, we don't care which.
   TreePattern &TP = *PatternFragments.begin()->second;
