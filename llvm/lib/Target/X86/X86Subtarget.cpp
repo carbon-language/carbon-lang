@@ -32,16 +32,15 @@ AsmWriterFlavor("x86-asm-syntax", cl::init(X86Subtarget::unset),
 bool X86::GetCpuIDAndInfo(unsigned value, unsigned *rEAX, unsigned *rEBX,
                           unsigned *rECX, unsigned *rEDX) {
 #if defined(__x86_64__)
-  unsigned long long saveRBX;
-  asm ("nop" : "=b" (saveRBX));
-  asm ("cpuid\n\t"
-       "movl\t%%ebx, %%esi\n\t"
+  // gcc doesn't know cpuid would clobber ebx/rbx. Preseve it manually.
+  asm ("movq\t%%rbx, %%rsi\n\t"
+       "cpuid\n\t"
+       "xchgq\t%%rbx, %%rsi\n\t"
        : "=a" (*rEAX),
          "=S" (*rEBX),
          "=c" (*rECX),
          "=d" (*rEDX)
        :  "a" (value));
-  asm ("nop" :: "b" (saveRBX));
   return false;
 #elif defined(i386) || defined(__i386__) || defined(__x86__) || defined(_M_IX86)
 #if defined(__GNUC__)
