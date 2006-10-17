@@ -304,11 +304,11 @@ def FLDD  : InstARM<(ops DFPRegs:$dst, op_addr_mode5:$addr),
 
 // Floating Point Store
 def FSTS    : InstARM<(ops FPRegs:$src, op_addr_mode5:$addr),
-                       "fsts $src, [$addr]",
+                       "fsts $src, $addr",
                        [(store FPRegs:$src, addr_mode5:$addr)]>;
 
 def FSTD    : InstARM<(ops DFPRegs:$src, op_addr_mode5:$addr),
-                       "fstd $src, [$addr]",
+                       "fstd $src, $addr",
                        [(store DFPRegs:$src, addr_mode5:$addr)]>;
 
 def : Pat<(ARMcall tglobaladdr:$dst),
