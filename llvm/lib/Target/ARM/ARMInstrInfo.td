@@ -70,6 +70,16 @@ class DFPBinOp<string OpcStr, SDNode OpNode> :
                  !strconcat(OpcStr, " $dst, $a, $b"),
                  [(set DFPRegs:$dst, (OpNode DFPRegs:$a, DFPRegs:$b))]>;
 
+class FPUnaryOp<string OpcStr, SDNode OpNode> :
+        InstARM<(ops FPRegs:$dst, FPRegs:$src),
+                 !strconcat(OpcStr, " $dst, $src"),
+                 [(set FPRegs:$dst, (OpNode FPRegs:$src))]>;
+
+class DFPUnaryOp<string OpcStr, SDNode OpNode> :
+        InstARM<(ops DFPRegs:$dst, DFPRegs:$src),
+                 !strconcat(OpcStr, " $dst, $src"),
+                 [(set DFPRegs:$dst, (OpNode DFPRegs:$src))]>;
+
 class Addr1BinOp<string OpcStr, SDNode OpNode> :
         InstARM<(ops IntRegs:$dst, IntRegs:$a, op_addr_mode1:$b),
                  !strconcat(OpcStr, " $dst, $a, $b"),
@@ -280,21 +290,10 @@ def FADDD   : DFPBinOp<"faddd", fadd>;
 def FSUBS   : FPBinOp<"fsubs",  fsub>;
 def FSUBD   : DFPBinOp<"fsubd", fsub>;
 
-def FNEGS   : InstARM<(ops FPRegs:$dst, FPRegs:$src),
-                       "fnegs $dst, $src",
-		       [(set FPRegs:$dst, (fneg FPRegs:$src))]>;
-
-def FNEGD   : InstARM<(ops DFPRegs:$dst, DFPRegs:$src),
-                       "fnegd $dst, $src",
-		       [(set DFPRegs:$dst, (fneg DFPRegs:$src))]>;
-
-def FABSS   : InstARM<(ops FPRegs:$dst, FPRegs:$src),
-                       "fabss $dst, $src",
-		       [(set FPRegs:$dst, (fabs FPRegs:$src))]>;
-
-def FABSD   : InstARM<(ops DFPRegs:$dst, DFPRegs:$src),
-                       "fabsd $dst, $src",
-		       [(set DFPRegs:$dst, (fabs DFPRegs:$src))]>;
+def FNEGS   : FPUnaryOp<"fnegs",  fneg>;
+def FNEGD   : DFPUnaryOp<"fnegd", fneg>;
+def FABSS   : FPUnaryOp<"fabss",  fabs>;
+def FABSD   : DFPUnaryOp<"fabsd", fabs>;
 
 def FMULS   : FPBinOp<"fmuls", fmul>;
 def FMULD   : DFPBinOp<"fmuld", fmul>;
