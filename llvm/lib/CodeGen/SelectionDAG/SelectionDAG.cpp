@@ -1440,6 +1440,48 @@ SDOperand SelectionDAG::getExtLoad(ISD::LoadExtType ExtType, MVT::ValueType VT,
   return SDOperand(N, 0);
 }
 
+SDOperand SelectionDAG::getPreIndexedLoad(SDOperand OrigLoad, SDOperand Base) {
+  LoadSDNode *LD = cast<LoadSDNode>(OrigLoad);
+  SDOperand Ptr = LD->getBasePtr();
+  MVT::ValueType PtrVT = Ptr.getValueType();
+  unsigned Opc = Ptr.getOpcode();
+  SDOperand Offset = LD->getOffset();
+  assert(Offset.getOpcode() == ISD::UNDEF);
+  assert((Opc == ISD::ADD || Opc == ISD::SUB) &&
+         "Load address must be <base +/- offset>!");
+  ISD::MemOpAddrMode AM = (Opc == ISD::ADD) ? ISD::PRE_INC : ISD::PRE_DEC;
+  if (Ptr.getOperand(0) == Base) {
+    Offset = Ptr.getOperand(1);
+    Ptr = Ptr.getOperand(0);
+  } else {
+    assert(Ptr.getOperand(1) == Base);
+    Offset = Ptr.getOperand(0);
+    Ptr = Ptr.getOperand(1);
+  }
+
+  MVT::ValueType VT = OrigLoad.getValueType();
+  SDVTList VTs = getVTList(VT, PtrVT, MVT::Other);
+  SelectionDAGCSEMap::NodeID ID(ISD::LOAD, VTs, LD->getChain(), Ptr, Offset);
+  ID.AddInteger(AM);
+  ID.AddInteger(LD->getExtensionType());
+  ID.AddInteger(LD->getLoadedVT());
+  ID.AddPointer(LD->getSrcValue());
+  ID.AddInteger(LD->getSrcValueOffset());
+  ID.AddInteger(LD->getAlignment());
+  ID.AddInteger(LD->isVolatile());
+  void *IP = 0;
+  if (SDNode *E = CSEMap.FindNodeOrInsertPos(ID, IP))
+    return SDOperand(E, 0);
+  SDNode *N = new LoadSDNode(LD->getChain(), Ptr, Offset, AM,
+                             LD->getExtensionType(), LD->getLoadedVT(),
+                             LD->getSrcValue(), LD->getSrcValueOffset(),
+                             LD->getAlignment(), LD->isVolatile());
+  N->setValueTypes(VTs);
+  CSEMap.InsertNode(N, IP);
+  AllNodes.push_back(N);
+  return SDOperand(N, 0);
+}
+
 SDOperand SelectionDAG::getVecLoad(unsigned Count, MVT::ValueType EVT,
                                    SDOperand Chain, SDOperand Ptr,
                                    SDOperand SV) {
@@ -2565,6 +2607,21 @@ const char *SDNode::getOperationName(const SelectionDAG *G) const {
   }
 }
 
+const char *SDNode::getAddressingModeName(ISD::MemOpAddrMode AM) {
+  switch (AM) {
+  default:
+    return "";
+  case ISD::PRE_INC:
+    return "<pre-inc>";
+  case ISD::PRE_DEC:
+    return "<pre-dec>";
+  case ISD::POST_INC:
+    return "<post-inc>";
+  case ISD::POST_DEC:
+    return "<post-dec>";
+  }
+}
+
 void SDNode::dump() const { dump(0); }
 void SDNode::dump(const SelectionDAG *G) const {
   std::cerr << (void*)this << ": ";
@@ -2650,10 +2707,17 @@ void SDNode::dump(const SelectionDAG *G) const {
     if (doExt)
       std::cerr << MVT::getValueTypeString(LD->getLoadedVT()) << ">";
 
-    if (LD->getAddressingMode() == ISD::PRE_INDEXED)
-      std::cerr << " <pre>";
-    else if (LD->getAddressingMode() == ISD::POST_INDEXED)
-      std::cerr << " <post>";
+    const char *AM = getAddressingModeName(LD->getAddressingMode());
+    if (AM != "")
+      std::cerr << " " << AM;
+  } else if (const StoreSDNode *ST = dyn_cast<StoreSDNode>(this)) {
+    if (ST->isTruncatingStore())
+      std::cerr << " <trunc "
+                << MVT::getValueTypeString(ST->getStoredVT()) << ">";
+
+    const char *AM = getAddressingModeName(ST->getAddressingMode());
+    if (AM != "")
+      std::cerr << " " << AM;
   }
 }
 
