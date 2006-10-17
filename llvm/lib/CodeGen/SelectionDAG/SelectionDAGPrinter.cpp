@@ -61,7 +61,8 @@ namespace llvm {
     static void addCustomGraphFeatures(SelectionDAG *G,
                                        GraphWriter<SelectionDAG*> &GW) {
       GW.emitSimpleNode(0, "plaintext=circle", "GraphRoot");
-      GW.emitEdge(0, -1, G->getRoot().Val, -1, "");
+      if (G->getRoot().Val)
+        GW.emitEdge(0, -1, G->getRoot().Val, -1, "");
     }
   };
 }

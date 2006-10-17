@@ -2684,7 +2684,7 @@ void SelectionDAG::dump() const {
       DumpNodes(Nodes[i], 2, this);
   }
 
-  DumpNodes(getRoot().Val, 2, this);
+  if (getRoot().Val) DumpNodes(getRoot().Val, 2, this);
 
   std::cerr << "\n\n";
 }

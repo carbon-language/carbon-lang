@@ -49,7 +49,7 @@ namespace {
             
   static cl::opt<bool>
     CombinerAA("combiner-alias-analysis", cl::Hidden,
-               cl::desc("Turn on alias analysis turning testing"));
+               cl::desc("Turn on alias analysis during testing"));
 
 //------------------------------ DAGCombiner ---------------------------------//
 
@@ -388,6 +388,9 @@ void DAGCombiner::Run(bool RunningAfterLegalize) {
   // changes of the root.
   HandleSDNode Dummy(DAG.getRoot());
   
+  // The root of the dag may dangle to deleted nodes until the dag combiner is
+  // done.  Set it to null to avoid confusion.
+  DAG.setRoot(SDOperand());
   
   /// DagCombineInfo - Expose the DAG combiner to the target combiner impls.
   TargetLowering::DAGCombinerInfo 
@@ -2759,13 +2762,6 @@ SDOperand DAGCombiner::visitSTORE(SDNode *N) {
   }
   
   if (CombinerAA) { 
-    // If the store ptr is a frame index and the frame index has a use of one
-    // and this is a return block, then the store is redundant.
-    if (Ptr.hasOneUse() && isa<FrameIndexSDNode>(Ptr) &&
-        DAG.getRoot().getOpcode() == ISD::RET) {
-      return Chain;
-    }
-
     // Walk up chain skipping non-aliasing memory nodes.
     SDOperand BetterChain = FindBetterChain(N, Chain);
     
