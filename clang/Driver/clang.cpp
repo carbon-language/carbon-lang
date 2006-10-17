@@ -598,7 +598,7 @@ static std::vector<DirectoryLookup> IncludeGroup[4];
 ///
 static void AddPath(const std::string &Path, IncludeDirGroup Group,
                     bool isCXXAware, bool isUserSupplied,
-                    FileManager &FM) {
+                    bool isFramework, FileManager &FM) {
   const DirectoryEntry *DE = FM.getDirectory(Path);
   if (DE == 0) {
     if (Verbose)
@@ -614,7 +614,8 @@ static void AddPath(const std::string &Path, IncludeDirGroup Group,
   else
     Type = DirectoryLookup::ExternCSystemHeaderDir;
   
-  IncludeGroup[Group].push_back(DirectoryLookup(DE, Type, isUserSupplied));
+  IncludeGroup[Group].push_back(DirectoryLookup(DE, Type, isUserSupplied,
+                                                isFramework));
 }
 
 /// RemoveDuplicates - If there are duplicate directory entries in the specified
@@ -644,21 +645,21 @@ static void InitializeIncludePaths(Preprocessor &PP) {
       PP.getDiagnostics().Report(SourceLocation(),
                                  diag::err_pp_I_dash_not_supported);
     } else {
-      AddPath(I_dirs[i], Angled, false, true, FM);
+      AddPath(I_dirs[i], Angled, false, true, false, FM);
     }
   }
   
   // Handle -idirafter... options.
   for (unsigned i = 0, e = idirafter_dirs.size(); i != e; ++i)
-    AddPath(idirafter_dirs[i], After, false, true, FM);
+    AddPath(idirafter_dirs[i], After, false, true, false, FM);
   
   // Handle -iquote... options.
   for (unsigned i = 0, e = iquote_dirs.size(); i != e; ++i)
-    AddPath(iquote_dirs[i], Quoted, false, true, FM);
+    AddPath(iquote_dirs[i], Quoted, false, true, false, FM);
   
   // Handle -isystem... options.
   for (unsigned i = 0, e = isystem_dirs.size(); i != e; ++i)
-    AddPath(isystem_dirs[i], System, false, true, FM);
+    AddPath(isystem_dirs[i], System, false, true, false, FM);
 
   // Walk the -iprefix/-iwithprefix/-iwithprefixbefore argument lists in
   // parallel, processing the values in order of occurance to get the right
@@ -687,12 +688,12 @@ static void InitializeIncludePaths(Preprocessor &PP) {
                   iwithprefix_vals.getPosition(iwithprefix_idx) < 
                   iwithprefixbefore_vals.getPosition(iwithprefixbefore_idx))) {
         AddPath(Prefix+iwithprefix_vals[iwithprefix_idx], 
-                System, false, false, FM);
+                System, false, false, false, FM);
         ++iwithprefix_idx;
         iwithprefix_done = iwithprefix_idx == iwithprefix_vals.size();
       } else {
         AddPath(Prefix+iwithprefixbefore_vals[iwithprefixbefore_idx], 
-                Angled, false, false, FM);
+                Angled, false, false, false, FM);
         ++iwithprefixbefore_idx;
         iwithprefixbefore_done = 
           iwithprefixbefore_idx == iwithprefixbefore_vals.size();
@@ -704,16 +705,17 @@ static void InitializeIncludePaths(Preprocessor &PP) {
   // OBJC_INCLUDE_PATH, OBJCPLUS_INCLUDE_PATH environment variables.
   
   // FIXME: temporary hack: hard-coded paths.
+  // FIXME: get these from the target?
   if (!nostdinc) {
-    AddPath("/usr/local/include", System, false, false, FM);
+    AddPath("/usr/local/include", System, false, false, false, FM);
     AddPath("/usr/lib/gcc/powerpc-apple-darwin8/4.0.1/include", 
-            System, false, false, FM);
+            System, false, false, false, FM);
     AddPath("/usr/lib/gcc/powerpc-apple-darwin8/"
             "4.0.1/../../../../powerpc-apple-darwin8/include", 
-            System, false, false, FM);
-    AddPath("/usr/include", System, false, false, FM);
-    AddPath("/System/Library/Frameworks", System, false, false, FM);
-    AddPath("/Library/Frameworks", System, false, false, FM);
+            System, false, false, false, FM);
+    AddPath("/usr/include", System, false, false, false, FM);
+    AddPath("/System/Library/Frameworks", System, true, false, true, FM);
+    AddPath("/Library/Frameworks", System, true, false, true, FM);
   }
 
   // Now that we have collected all of the include paths, merge them all

@@ -51,10 +51,16 @@ private:
   
   /// UserSupplied - True if this is a user-supplied directory.
   ///
-  bool UserSupplied;
+  bool UserSupplied : 1;
+  
+  /// Framework - True if this is a framework directory search-path.
+  ///
+  bool Framework : 1;
 public:
-  DirectoryLookup(const DirectoryEntry *dir, DirType DT, bool isUser)
-    : Dir(dir), DirCharacteristic(DT), UserSupplied(isUser) {}
+  DirectoryLookup(const DirectoryEntry *dir, DirType DT, bool isUser,
+                  bool isFramework)
+    : Dir(dir), DirCharacteristic(DT), UserSupplied(isUser),
+      Framework(isFramework) {}
     
   /// getDir - Return the directory that this entry refers to.
   ///
@@ -67,6 +73,10 @@ public:
   /// isUserSupplied - True if this is a user-supplied directory.
   ///
   bool isUserSupplied() const { return UserSupplied; }
+  
+  /// isFramework - True if this is a framework directory.
+  ///
+  bool isFramework() const { return Framework; }
 };
 
 /// Preprocessor - This object forms engages in a tight little dance to
