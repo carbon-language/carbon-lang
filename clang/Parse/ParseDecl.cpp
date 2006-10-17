@@ -276,7 +276,7 @@ void Parser::ParseDeclarationSpecifiers(DeclSpec &DS) {
     // GNU attributes support.
     case tok::kw___attribute:
       ParseAttributes();
-      break;
+      continue;
       
     // storage-class-specifier
     case tok::kw_typedef:
