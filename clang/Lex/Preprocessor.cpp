@@ -102,6 +102,12 @@ Preprocessor::PerFileInfo &Preprocessor::getFileInfo(const FileEntry *FE) {
   return FileInfo[FE->getUID()];
 }  
 
+/// AddPPKeyword - Register a preprocessor keyword like "define" "undef" or 
+/// "elif".
+static void AddPPKeyword(tok::PPKeywordKind PPID, 
+                         const char *Name, unsigned NameLen, Preprocessor &PP) {
+  PP.getIdentifierInfo(Name, Name+NameLen)->setPPKeywordID(PPID);
+}
 
 /// AddKeywords - Add all keywords to the symbol table.
 ///
@@ -127,8 +133,33 @@ void Preprocessor::AddKeywords() {
              ((FLAGS) >> CPPShift) & Mask);
 #define ALIAS(NAME, TOK) \
   AddKeyword(NAME, tok::kw_ ## TOK, 0, 0, 0);
+#define PPKEYWORD(NAME) \
+  AddPPKeyword(tok::pp_##NAME, #NAME, strlen(#NAME), *this);
 #include "clang/Basic/TokenKinds.def"
 }
+
+/// AddKeyword - This method is used to associate a token ID with specific
+/// identifiers because they are language keywords.  This causes the lexer to
+/// automatically map matching identifiers to specialized token codes.
+///
+/// The C90/C99/CPP flags are set to 0 if the token should be enabled in the
+/// specified langauge, set to 1 if it is an extension in the specified
+/// language, and set to 2 if disabled in the specified language.
+void Preprocessor::AddKeyword(const std::string &Keyword,
+                              tok::TokenKind TokenCode,
+                              int C90, int C99, int CPP) {
+  int Flags = Features.CPlusPlus ? CPP : (Features.C99 ? C99 : C90);
+  
+  // Don't add this keyword if disabled in this language or if an extension
+  // and extensions are disabled.
+  if (Flags+Features.NoExtensions >= 2) return;
+  
+  const char *Str = &Keyword[0];
+  IdentifierInfo &Info = *getIdentifierInfo(Str, Str+Keyword.size());
+  Info.setTokenID(TokenCode);
+  Info.setIsExtensionToken(Flags == 1);
+}
+
 
 /// Diag - Forwarding function for diagnostics.  This emits a diagnostic at
 /// the specified LexerToken's location, translating the token's start
@@ -1405,7 +1436,6 @@ void Preprocessor::HandleDirective(LexerToken &Result) {
     Diag(Result, diag::ext_embedded_directive);
   
   switch (Result.getKind()) {
-  default: break;
   case tok::eom:
     return;   // null directive.
 
@@ -1413,75 +1443,76 @@ void Preprocessor::HandleDirective(LexerToken &Result) {
     // FIXME: implement # 7 line numbers!
     DiscardUntilEndOfDirective();
     return;
-  case tok::kw_else:
-    return HandleElseDirective(Result);
-  case tok::kw_if:
-    return HandleIfDirective(Result, ReadAnyTokensBeforeDirective);
-  case tok::identifier:
-    // Get the identifier name without trigraphs or embedded newlines.
-    const char *Directive = Result.getIdentifierInfo()->getName();
-    bool isExtension = false;
-    switch (Result.getIdentifierInfo()->getNameLength()) {
-    case 4:
-      if (Directive[0] == 'l' && !strcmp(Directive, "line")) {
-        // FIXME: implement #line
-        DiscardUntilEndOfDirective();
-        return;
-      }
-      if (Directive[0] == 'e' && !strcmp(Directive, "elif"))
-        return HandleElifDirective(Result);
-      if (Directive[0] == 's' && !strcmp(Directive, "sccs"))
-        return HandleIdentSCCSDirective(Result);
+  default:
+    IdentifierInfo *II = Result.getIdentifierInfo();
+    if (II == 0) break;  // Not an identifier.
+      
+    // Ask what the preprocessor keyword ID is.
+    switch (II->getPPKeywordID()) {
+    default: break;
+    // C99 6.10.1 - Conditional Inclusion.
+    case tok::pp_if:
+      return HandleIfDirective(Result, ReadAnyTokensBeforeDirective);
+    case tok::pp_ifdef:
+      return HandleIfdefDirective(Result, false, true/*not valid for miopt*/);
+    case tok::pp_ifndef:
+      return HandleIfdefDirective(Result, true, ReadAnyTokensBeforeDirective);
+    case tok::pp_elif:
+      return HandleElifDirective(Result);
+    case tok::pp_else:
+      return HandleElseDirective(Result);
+    case tok::pp_endif:
+      return HandleEndifDirective(Result);
+      
+    // C99 6.10.2 - Source File Inclusion.
+    case tok::pp_include:
+      return HandleIncludeDirective(Result);            // Handle #include.
+
+    // C99 6.10.3 - Macro Replacement.
+    case tok::pp_define:
+      return HandleDefineDirective(Result, false);
+    case tok::pp_undef:
+      return HandleUndefDirective(Result);
+
+    // C99 6.10.4 - Line Control.
+    case tok::pp_line:
+      // FIXME: implement #line
+      DiscardUntilEndOfDirective();
+      return;
+      
+    // C99 6.10.5 - Error Directive.
+    case tok::pp_error:
+      return HandleUserDiagnosticDirective(Result, false);
+      
+    // C99 6.10.6 - Pragma Directive.
+    case tok::pp_pragma:
+      return HandlePragmaDirective();
+      
+    // GNU Extensions.
+    case tok::pp_import:
+      return HandleImportDirective(Result);
+    case tok::pp_include_next:
+      return HandleIncludeNextDirective(Result);
+      
+    case tok::pp_warning:
+      Diag(Result, diag::ext_pp_warning_directive);
+      return HandleUserDiagnosticDirective(Result, true);
+    case tok::pp_ident:
+      return HandleIdentSCCSDirective(Result);
+    case tok::pp_sccs:
+      return HandleIdentSCCSDirective(Result);
+    case tok::pp_assert:
+      //isExtension = true;  // FIXME: implement #assert
       break;
-    case 5:
-      if (Directive[0] == 'e' && !strcmp(Directive, "endif"))
-        return HandleEndifDirective(Result);
-      if (Directive[0] == 'i' && !strcmp(Directive, "ifdef"))
-        return HandleIfdefDirective(Result, false, true/*not valid for miopt*/);
-      if (Directive[0] == 'u' && !strcmp(Directive, "undef"))
-        return HandleUndefDirective(Result);
-      if (Directive[0] == 'e' && !strcmp(Directive, "error"))
-        return HandleUserDiagnosticDirective(Result, false);
-      if (Directive[0] == 'i' && !strcmp(Directive, "ident"))
-        return HandleIdentSCCSDirective(Result);
+    case tok::pp_unassert:
+      //isExtension = true;  // FIXME: implement #unassert
       break;
-    case 6:
-      if (Directive[0] == 'd' && !strcmp(Directive, "define"))
-        return HandleDefineDirective(Result, false);
-      if (Directive[0] == 'i' && !strcmp(Directive, "ifndef"))
-        return HandleIfdefDirective(Result, true, ReadAnyTokensBeforeDirective);
-      if (Directive[0] == 'i' && !strcmp(Directive, "import"))
-        return HandleImportDirective(Result);
-      if (Directive[0] == 'p' && !strcmp(Directive, "pragma"))
-        return HandlePragmaDirective();
-      if (Directive[0] == 'a' && !strcmp(Directive, "assert"))
-        isExtension = true;  // FIXME: implement #assert
-      break;
-    case 7:
-      if (Directive[0] == 'i' && !strcmp(Directive, "include"))
-        return HandleIncludeDirective(Result);            // Handle #include.
-      if (Directive[0] == 'w' && !strcmp(Directive, "warning")) {
-        Diag(Result, diag::ext_pp_warning_directive);
-        return HandleUserDiagnosticDirective(Result, true);
-      }
-      break;
-    case 8:
-      if (Directive[0] == 'u' && !strcmp(Directive, "unassert")) {
-        isExtension = true;  // FIXME: implement #unassert
-      }
-      break;
-    case 12:
-      if (Directive[0] == 'i' && !strcmp(Directive, "include_next"))
-        return HandleIncludeNextDirective(Result);      // Handle #include_next.
-      break;
-    case 13:
-      if (Directive[0] == 'd' && !strcmp(Directive, "define_target"))
-        return HandleDefineDirective(Result, true);
-      break;
-    case 19:
-      if (Directive[0] == 'd' && !strcmp(Directive, "define_other_target"))
-        return HandleDefineOtherTargetDirective(Result);
-      break;
+      
+    // clang extensions.
+    case tok::pp_define_target:
+      return HandleDefineDirective(Result, true);
+    case tok::pp_define_other_target:
+      return HandleDefineOtherTargetDirective(Result);
     }
     break;
   }

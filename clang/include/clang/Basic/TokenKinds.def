@@ -7,10 +7,10 @@
 //
 //===----------------------------------------------------------------------===//
 //
-//  This file defines the TokenKind database.  This includes normal tokens like
-//  tok::ampamp (corresponding to the && token) as well as keywords for various
-//  languages.  Users of this file must optionally #define the TOK/KEYWORD/ALIAS
-//  macros to make use of this file.
+// This file defines the TokenKind database.  This includes normal tokens like
+// tok::ampamp (corresponding to the && token) as well as keywords for various
+// languages.  Users of this file must optionally #define the TOK, KEYWORD,
+// ALIAS, or PPKEYWORD macros to make use of this file.
 //
 //===----------------------------------------------------------------------===//
 
@@ -23,6 +23,61 @@
 #ifndef ALIAS
 #define ALIAS(X,Y)
 #endif
+#ifndef PPKEYWORD
+#define PPKEYWORD(X)
+#endif
+
+//===----------------------------------------------------------------------===//
+// Preprocessor keywords.
+//===----------------------------------------------------------------------===//
+
+// These have meaning after a '#' at the start of a line. These define enums in
+// the tok::pp_* namespace.
+PPKEYWORD(not_keyword)
+
+// C99 6.10.1 - Conditional Inclusion.
+PPKEYWORD(if)
+PPKEYWORD(ifdef)
+PPKEYWORD(ifndef)
+PPKEYWORD(elif)
+PPKEYWORD(else)
+PPKEYWORD(endif)
+
+// C99 6.10.2 - Source File Inclusion.
+PPKEYWORD(include)
+
+// C99 6.10.3 - Macro Replacement.
+PPKEYWORD(define)
+PPKEYWORD(undef)
+
+// C99 6.10.4 - Line Control.
+PPKEYWORD(line)
+
+// C99 6.10.5 - Error Directive.
+PPKEYWORD(error)
+
+// C99 6.10.6 - Pragma Directive.
+PPKEYWORD(pragma)
+
+// GNU Extensions.
+PPKEYWORD(import)
+PPKEYWORD(include_next)
+PPKEYWORD(warning)
+PPKEYWORD(ident)
+PPKEYWORD(sccs)
+PPKEYWORD(assert)
+PPKEYWORD(unassert)
+
+// clang extensions.
+PPKEYWORD(define_target)
+PPKEYWORD(define_other_target)
+
+
+//===----------------------------------------------------------------------===//
+// Language keywords.
+//===----------------------------------------------------------------------===//
+
+// These define members of the tok::kw_* namespace.
 
 TOK(unknown)             // Not a token.
 TOK(eof)                 // End of file.
@@ -239,6 +294,7 @@ ALIAS("__typeof__"   , typeof     )
 ALIAS("__volatile"   , volatile   )
 ALIAS("__volatile__" , volatile   )
 
+#undef PPKEYWORD
 #undef ALIAS
 #undef KEYWORD
 #undef TOK

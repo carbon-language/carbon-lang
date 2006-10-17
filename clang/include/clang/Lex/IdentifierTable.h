@@ -32,6 +32,7 @@ class IdentifierInfo {
   unsigned NameLen;            // String that is the identifier.
   MacroInfo *Macro;            // Set if this identifier is #define'd.
   tok::TokenKind TokenID  : 8; // Front-end token ID or tok::identifier.
+  tok::PPKeywordKind PPID : 5; // ID for preprocessor command like 'ifdef'.
   bool IsExtension        : 1; // True if identifier is a lang extension.
   bool IsPoisoned         : 1; // True if identifier is poisoned.
   bool IsOtherTargetMacro : 1; // True if ident is a macro on another target.
@@ -63,6 +64,9 @@ public:
   /// tokens.
   tok::TokenKind getTokenID() const { return TokenID; }
   void setTokenID(tok::TokenKind ID) { TokenID = ID; }
+  
+  tok::PPKeywordKind getPPKeywordID() const { return PPID; }
+  void setPPKeywordID(tok::PPKeywordKind ID) { PPID = ID; }
   
   /// get/setExtension - Initialize information about whether or not this
   /// language token is an extension.  This controls extension warnings, and is

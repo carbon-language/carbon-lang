@@ -27,6 +27,12 @@ enum TokenKind {
   NUM_TOKENS
 };
 
+enum PPKeywordKind {
+#define PPKEYWORD(X) pp_##X, 
+#include "clang/Basic/TokenKinds.def"
+  NUM_PP_KEYWORDS
+};
+
 const char *getTokenName(enum TokenKind Kind);
 
 }  // end namespace tok

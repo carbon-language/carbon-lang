@@ -276,18 +276,7 @@ public:
   /// specified langauge, set to 1 if it is an extension in the specified
   /// language, and set to 2 if disabled in the specified language.
   void AddKeyword(const std::string &Keyword, tok::TokenKind TokenCode,
-                  int C90, int C99, int CPP) {
-    int Flags = Features.CPlusPlus ? CPP : (Features.C99 ? C99 : C90);
-    
-    // Don't add this keyword if disabled in this language or if an extension
-    // and extensions are disabled.
-    if (Flags+Features.NoExtensions >= 2) return;
-    
-    const char *Str = &Keyword[0];
-    IdentifierInfo &Info = *getIdentifierInfo(Str, Str+Keyword.size());
-    Info.setTokenID(TokenCode);
-    Info.setIsExtensionToken(Flags == 1);
-  }
+                  int C90, int C99, int CPP);
   
   /// AddKeywords - Add all keywords to the symbol table.
   ///
