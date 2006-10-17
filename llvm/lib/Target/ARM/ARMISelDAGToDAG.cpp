@@ -75,6 +75,10 @@ ARMTargetLowering::ARMTargetLowering(TargetMachine &TM)
   setOperationAction(ISD::SHL_PARTS, MVT::i32, Expand);
   setOperationAction(ISD::SRA_PARTS, MVT::i32, Expand);
   setOperationAction(ISD::SRL_PARTS, MVT::i32, Expand);
+  setOperationAction(ISD::SDIV,      MVT::i32, Expand);
+  setOperationAction(ISD::UDIV,      MVT::i32, Expand);
+  setOperationAction(ISD::SREM,      MVT::i32, Expand);
+  setOperationAction(ISD::UREM,      MVT::i32, Expand);
 
   setOperationAction(ISD::VASTART,       MVT::Other, Custom);
   setOperationAction(ISD::VAEND,         MVT::Other, Expand);
