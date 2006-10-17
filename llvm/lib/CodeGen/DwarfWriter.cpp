@@ -1634,8 +1634,8 @@ DIE *DwarfWriter::NewGlobalVariable(GlobalVariableDesc *GVD) {
   AddSourceLine(VariableDie, UnitDesc, GVD->getLine());
   
   // Work up linkage name.
-  std::string LinkageName(TAI->getGlobalPrefix());
-  LinkageName += GV->getName();
+  std::string LinkageName;
+  Asm->getGlobalLinkName(GV, LinkageName);
 
   // Add address.
   DIEBlock *Block = new DIEBlock();

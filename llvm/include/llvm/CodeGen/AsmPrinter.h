@@ -99,6 +99,13 @@ namespace llvm {
     /// specified global, returned in log form.  This includes an explicitly
     /// requested alignment (if the global has one).
     unsigned getPreferredAlignmentLog(const GlobalVariable *GV) const;
+    
+    /// getGlobalLinkName - Returns the asm/link name of of the specified
+    /// global variable.  Should be overridden by each target asm printer to
+    /// generate the appropriate value.
+    virtual void getGlobalLinkName(const GlobalVariable *GV,
+                                   std::string &LinkName);
+
   protected:
     /// doInitialization - Set up the AsmPrinter when we are working on a new
     /// module.  If your pass overrides this, it must make sure to explicitly
@@ -167,7 +174,7 @@ namespace llvm {
     /// special global used by LLVM.  If so, emit it and return true, otherwise
     /// do nothing and return false.
     bool EmitSpecialLLVMGlobal(const GlobalVariable *GV);
-
+    
     /// EmitAlignment - Emit an alignment directive to the specified power of
     /// two boundary.  For example, if you pass in 3 here, you will get an 8
     /// byte alignment.  If a global value is specified, and if that global has
