@@ -352,11 +352,12 @@ unsigned AsmPrinter::getPreferredAlignmentLog(const GlobalVariable *GV) const {
 /// getGlobalLinkName - Returns the asm/link name of of the specified
 /// global variable.  Should be overridden by each target asm printer to
 /// generate the appropriate value.
-void AsmPrinter::getGlobalLinkName(const GlobalVariable *GV,
-                                  std::string &LinkName) {
+const std::string AsmPrinter::getGlobalLinkName(const GlobalVariable *GV) const{
+  std::string LinkName;
   // Default action is to use a global symbol.                              
   LinkName = TAI->getGlobalPrefix();
   LinkName += GV->getName();
+  return LinkName;
 }
 
 // EmitAlignment - Emit an alignment directive to the specified power of two.

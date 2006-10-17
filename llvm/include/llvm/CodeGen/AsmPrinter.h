@@ -103,8 +103,7 @@ namespace llvm {
     /// getGlobalLinkName - Returns the asm/link name of of the specified
     /// global variable.  Should be overridden by each target asm printer to
     /// generate the appropriate value.
-    virtual void getGlobalLinkName(const GlobalVariable *GV,
-                                   std::string &LinkName);
+    virtual const std::string getGlobalLinkName(const GlobalVariable *GV) const;
 
   protected:
     /// doInitialization - Set up the AsmPrinter when we are working on a new
