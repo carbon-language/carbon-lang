@@ -19,6 +19,12 @@ def op_addr_mode1 : Operand<iPTR> {
   let MIOperandInfo = (ops ptr_rc, ptr_rc, i32imm);
 }
 
+def op_addr_mode5 : Operand<iPTR> {
+  let PrintMethod = "printAddrMode5";
+  let NumMIOperands = 2;
+  let MIOperandInfo = (ops ptr_rc, i32imm);
+}
+
 def memri : Operand<iPTR> {
   let PrintMethod = "printMemRegImm";
   let NumMIOperands = 2;
@@ -29,6 +35,9 @@ def memri : Operand<iPTR> {
 //Addressing Mode 1: data processing operands
 def addr_mode1 : ComplexPattern<iPTR, 3, "SelectAddrMode1", [imm, sra, shl, srl],
                                 []>;
+
+//Addressing Mode 5: VFP load/store
+def addr_mode5 : ComplexPattern<iPTR, 2, "SelectAddrMode5", [], []>;
 
 //register plus/minus 12 bit offset
 def iaddr  : ComplexPattern<iPTR, 2, "SelectAddrRegImm", [frameindex], []>;
@@ -285,22 +294,22 @@ def FDIVS   : FPBinOp<"fdivs", fdiv>;
 def FDIVD   : DFPBinOp<"fdivd", fdiv>;
 
 // Floating Point Load
-def FLDS  : InstARM<(ops FPRegs:$dst, IntRegs:$addr),
-                     "flds $dst, [$addr]",
-                     [(set FPRegs:$dst, (load IntRegs:$addr))]>;
+def FLDS  : InstARM<(ops FPRegs:$dst, op_addr_mode5:$addr),
+                     "flds $dst, $addr",
+                     [(set FPRegs:$dst, (load addr_mode5:$addr))]>;
 
-def FLDD  : InstARM<(ops DFPRegs:$dst, IntRegs:$addr),
-                     "fldd $dst, [$addr]",
-                     [(set DFPRegs:$dst, (load IntRegs:$addr))]>;
+def FLDD  : InstARM<(ops DFPRegs:$dst, op_addr_mode5:$addr),
+                     "fldd $dst, $addr",
+                     [(set DFPRegs:$dst, (load addr_mode5:$addr))]>;
 
 // Floating Point Store
-def FSTS    : InstARM<(ops FPRegs:$src, IntRegs:$addr),
+def FSTS    : InstARM<(ops FPRegs:$src, op_addr_mode5:$addr),
                        "fsts $src, [$addr]",
-                       [(store FPRegs:$src, IntRegs:$addr)]>;
+                       [(store FPRegs:$src, addr_mode5:$addr)]>;
 
-def FSTD    : InstARM<(ops DFPRegs:$src, IntRegs:$addr),
+def FSTD    : InstARM<(ops DFPRegs:$src, op_addr_mode5:$addr),
                        "fstd $src, [$addr]",
-                       [(store DFPRegs:$src, IntRegs:$addr)]>;
+                       [(store DFPRegs:$src, addr_mode5:$addr)]>;
 
 def : Pat<(ARMcall tglobaladdr:$dst),
           (bl tglobaladdr:$dst)>;
