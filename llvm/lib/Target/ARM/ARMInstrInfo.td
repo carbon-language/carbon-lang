@@ -212,6 +212,11 @@ def fcmpd   : InstARM<(ops DFPRegs:$a, DFPRegs:$b),
 	               "fcmpd $a, $b",
 		       [(armcmp DFPRegs:$a, DFPRegs:$b)]>;
 
+// Floating Point Copy
+def FCPYS   : InstARM<(ops FPRegs:$dst, FPRegs:$src), "fcpys $dst, $src", []>;
+
+def FCPYD   : InstARM<(ops DFPRegs:$dst, DFPRegs:$src), "fcpyd $dst, $src", []>;
+
 // Floating Point Conversion
 // We use bitconvert for moving the data between the register classes.
 // The format conversion is done with ARM specific nodes

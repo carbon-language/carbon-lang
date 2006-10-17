@@ -47,9 +47,17 @@ void ARMRegisterInfo::copyRegToReg(MachineBasicBlock &MBB,
                                      MachineBasicBlock::iterator I,
                                      unsigned DestReg, unsigned SrcReg,
                                      const TargetRegisterClass *RC) const {
-  assert (RC == ARM::IntRegsRegisterClass);
-  BuildMI(MBB, I, ARM::MOV, 3, DestReg).addReg(SrcReg).addImm(0)
-	  .addImm(ARMShift::LSL);
+  assert(RC == ARM::IntRegsRegisterClass ||
+         RC == ARM::FPRegsRegisterClass  ||
+         RC == ARM::DFPRegsRegisterClass);
+
+  if (RC == ARM::IntRegsRegisterClass)
+    BuildMI(MBB, I, ARM::MOV, 3, DestReg).addReg(SrcReg).addImm(0)
+      .addImm(ARMShift::LSL);
+  else if (RC == ARM::FPRegsRegisterClass)
+    BuildMI(MBB, I, ARM::FCPYS, 1, DestReg).addReg(SrcReg);
+  else
+    BuildMI(MBB, I, ARM::FCPYD, 1, DestReg).addReg(SrcReg);
 }
 
 MachineInstr *ARMRegisterInfo::foldMemoryOperand(MachineInstr* MI,
