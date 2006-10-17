@@ -1029,6 +1029,11 @@ public:
   /// provide correspondence to the source line list.
   unsigned RecordLabel(unsigned Line, unsigned Column, unsigned Source);
   
+  /// RemoveLabelInfo - Remove the specified label # from MachineDebugInfo, for
+  /// example because the code was deleted.
+  void RemoveLabelInfo(unsigned LabelUID);
+  
+  
   /// RecordSource - Register a source file with debug info. Returns an source
   /// ID.
   unsigned RecordSource(const std::string &Directory,

@@ -1542,6 +1542,20 @@ unsigned MachineDebugInfo::RecordLabel(unsigned Line, unsigned Column,
   return ID;
 }
 
+static bool LabelUIDComparison(const SourceLineInfo &LI, unsigned UID) {
+  return LI.getLabelID() < UID;
+}
+
+/// RemoveLabelInfo - Remove the specified label # from MachineDebugInfo, for
+/// example because the code was deleted.
+void MachineDebugInfo::RemoveLabelInfo(unsigned LabelUID) {
+  std::vector<SourceLineInfo>::iterator I =
+    std::lower_bound(Lines.begin(), Lines.end(), LabelUID, LabelUIDComparison);
+  assert(I != Lines.end() && "Didn't find label UID in MachineDebugInfo!");
+  Lines.erase(I);
+}
+
+
 /// RecordSource - Register a source file with debug info. Returns an source
 /// ID.
 unsigned MachineDebugInfo::RecordSource(const std::string &Directory,
