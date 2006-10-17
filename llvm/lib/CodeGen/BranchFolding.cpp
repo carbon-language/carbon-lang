@@ -17,6 +17,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/CodeGen/Passes.h"
+#include "llvm/CodeGen/MachineDebugInfo.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
 #include "llvm/CodeGen/MachineJumpTableInfo.h"
 #include "llvm/Target/TargetInstrInfo.h"
@@ -29,9 +30,11 @@ namespace {
     virtual bool runOnMachineFunction(MachineFunction &MF);
     virtual const char *getPassName() const { return "Control Flow Optimizer"; }
     const TargetInstrInfo *TII;
+    MachineDebugInfo *MDI;
     bool MadeChange;
   private:
     void OptimizeBlock(MachineFunction::iterator MBB);
+    void RemoveDeadBlock(MachineBasicBlock *MBB);
   };
 }
 
@@ -39,12 +42,30 @@ FunctionPass *llvm::createBranchFoldingPass() { return new BranchFolder(); }
 
 /// RemoveDeadBlock - Remove the specified dead machine basic block from the
 /// function, updating the CFG.
-static void RemoveDeadBlock(MachineBasicBlock *MBB) {
+void BranchFolder::RemoveDeadBlock(MachineBasicBlock *MBB) {
   assert(MBB->pred_empty() && "MBB must be dead!");
+  
   MachineFunction *MF = MBB->getParent();
   // drop all successors.
   while (!MBB->succ_empty())
     MBB->removeSuccessor(MBB->succ_end()-1);
+  
+  // If there is DWARF info to active, check to see if there are any DWARF_LABEL
+  // records in the basic block.  If so, unregister them from MachineDebugInfo.
+  if (MDI && !MBB->empty()) {
+    unsigned DWARF_LABELOpc = TII->getDWARF_LABELOpcode();
+    assert(DWARF_LABELOpc &&
+           "Target supports dwarf but didn't implement getDWARF_LABELOpcode!");
+    
+    for (MachineBasicBlock::iterator I = MBB->begin(), E = MBB->end();
+         I != E; ++I) {
+      if ((unsigned)I->getOpcode() == DWARF_LABELOpc) {
+        // The label ID # is always operand #0, an immediate.
+        MDI->RemoveLabelInfo(I->getOperand(0).getImm());
+      }
+    }
+  }
+  
   // Remove the block.
   MF->getBasicBlockList().erase(MBB);
 }
@@ -53,7 +74,7 @@ bool BranchFolder::runOnMachineFunction(MachineFunction &MF) {
   TII = MF.getTarget().getInstrInfo();
   if (!TII) return false;
 
-  //MF.dump();
+  MDI = getAnalysisToUpdate<MachineDebugInfo>();
   
   bool EverMadeChange = false;
   MadeChange = true;
