@@ -106,8 +106,8 @@ ARMRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II) const {
 
   int FrameIndex = MI.getOperand(FrameIdx).getFrameIndex();
 
-  int Offset = MF.getFrameInfo()->getObjectOffset(FrameIndex);
-  assert (MI.getOperand(OffIdx).getImmedValue() == 0);
+  int Offset = MF.getFrameInfo()->getObjectOffset(FrameIndex) +
+               MI.getOperand(OffIdx).getImmedValue();
 
   unsigned StackSize = MF.getFrameInfo()->getStackSize();
 

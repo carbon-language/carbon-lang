@@ -70,3 +70,10 @@ entry:
 	%tmp2 = mul ulong %tmp1, %tmp
 	ret ulong %tmp2
 }
+
+ulong %f10() {
+entry:
+	%a = alloca ulong, align 8
+	%retval = load ulong* %a
+	ret ulong %retval
+}
