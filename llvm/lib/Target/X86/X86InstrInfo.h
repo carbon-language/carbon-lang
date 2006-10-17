@@ -205,6 +205,11 @@ public:
   unsigned isLoadFromStackSlot(MachineInstr *MI, int &FrameIndex) const;
   unsigned isStoreToStackSlot(MachineInstr *MI, int &FrameIndex) const;
   
+  /// getDWARF_LABELOpcode - Return the opcode of the target's DWARF_LABEL
+  /// instruction if it has one.  This is used by codegen passes that update
+  /// DWARF line number info as they modify the code.
+  virtual unsigned getDWARF_LABELOpcode() const;
+  
   /// convertToThreeAddress - This method must be implemented by targets that
   /// set the M_CONVERTIBLE_TO_3_ADDR flag.  When this flag is set, the target
   /// may be able to convert a two-address instruction into a true

@@ -25,6 +25,13 @@ X86InstrInfo::X86InstrInfo(X86TargetMachine &tm)
     TM(tm), RI(tm, *this) {
 }
 
+/// getDWARF_LABELOpcode - Return the opcode of the target's DWARF_LABEL
+/// instruction if it has one.  This is used by codegen passes that update
+/// DWARF line number info as they modify the code.
+unsigned X86InstrInfo::getDWARF_LABELOpcode() const {
+  return X86::DWARF_LABEL;
+}
+
 
 bool X86InstrInfo::isMoveInstr(const MachineInstr& MI,
                                unsigned& sourceReg,
