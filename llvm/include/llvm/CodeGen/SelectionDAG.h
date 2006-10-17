@@ -314,6 +314,7 @@ public:
   SDOperand getExtLoad(ISD::LoadExtType ExtType, MVT::ValueType VT,
                        SDOperand Chain, SDOperand Ptr, const Value *SV,
                        int SVOffset, MVT::ValueType EVT, bool isVolatile=false);
+  SDOperand getPreIndexedLoad(SDOperand OrigLoad, SDOperand Base);
   SDOperand getVecLoad(unsigned Count, MVT::ValueType VT, SDOperand Chain, 
                        SDOperand Ptr, SDOperand SV);
 

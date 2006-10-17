@@ -528,8 +528,8 @@ namespace ISD {
   ///              chain, an unindexed load produces one value (result of the
   ///              load); an unindexed store does not produces a value.
   ///
-  /// PRE_INDEXED  Similar to the unindexed mode where the effective address is
-  ///              the result of computation of the base pointer. However, it
+  /// PRE_INC      Similar to the unindexed mode where the effective address is
+  /// PRE_DEC      the result of computation of the base pointer. However, it
   ///              considers the computation as being folded into the load /
   ///              store operation (i.e. the load / store does the address
   ///              computation as well as performing the memory transaction).
@@ -539,8 +539,8 @@ namespace ISD {
   ///              computation); a pre-indexed store produces one value (result
   ///              of the address computation).
   ///
-  /// POST_INDEXED The effective address is the value of the base pointer. The
-  ///              value of the offset operand is then added to the base after
+  /// POST_INC     The effective address is the value of the base pointer. The
+  /// POST_DEC     value of the offset operand is then added to the base after
   ///              memory transaction. In addition to producing a chain,
   ///              post-indexed load produces two values (the result of the load
   ///              and the result of the base + offset computation); a
@@ -549,8 +549,10 @@ namespace ISD {
   ///
   enum MemOpAddrMode {
     UNINDEXED = 0,
-    PRE_INDEXED,
-    POST_INDEXED
+    PRE_INC,
+    PRE_DEC,
+    POST_INC,
+    POST_DEC
   };
 
   //===--------------------------------------------------------------------===//
@@ -854,6 +856,7 @@ public:
   /// getOperationName - Return the opcode of this operation for printing.
   ///
   const char* getOperationName(const SelectionDAG *G = 0) const;
+  static const char* getAddressingModeName(ISD::MemOpAddrMode AM);
   void dump() const;
   void dump(const SelectionDAG *G) const;
 
@@ -1405,7 +1408,8 @@ protected:
     : SDNode(ISD::LOAD, Chain, Ptr, Off),
       AddrMode(AM), ExtType(ETy), LoadedVT(LVT), SrcValue(SV), SVOffset(O),
       Alignment(Align), IsVolatile(Vol) {
-    assert((Off.getOpcode() == ISD::UNDEF || AddrMode == ISD::POST_INDEXED) &&
+    assert((Off.getOpcode() == ISD::UNDEF ||
+            AddrMode == ISD::POST_INC || AddrMode == ISD::POST_DEC) &&
            "Only post-indexed load has a non-undef offset operand");
   }
 public:
@@ -1458,7 +1462,8 @@ protected:
     : SDNode(ISD::STORE, Chain, Value, Ptr, Off),
       AddrMode(AM), IsTruncStore(isTrunc), StoredVT(SVT), SrcValue(SV),
       SVOffset(O), Alignment(Align), IsVolatile(Vol) {
-    assert((Off.getOpcode() == ISD::UNDEF || AddrMode == ISD::POST_INDEXED) &&
+    assert((Off.getOpcode() == ISD::UNDEF ||
+            AddrMode == ISD::POST_INC || AddrMode == ISD::POST_DEC) &&
            "Only post-indexed store has a non-undef offset operand");
   }
 public:
