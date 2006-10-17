@@ -194,8 +194,6 @@ Action::ExprResult ASTBuilder::ParseFloatingConstant(const LexerToken &Tok) {
 Action::ExprResult ASTBuilder::ParseParenExpr(SourceLocation L, 
                                               SourceLocation R,
                                               ExprTy *Val) {
-  // FIXME: This is obviously just for testing.
-  ((Expr*)Val)->dump();
   if (!FullLocInfo) return Val;
   
   return new ParenExpr(L, R, (Expr*)Val);
