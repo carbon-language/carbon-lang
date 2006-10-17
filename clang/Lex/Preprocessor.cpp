@@ -1409,11 +1409,10 @@ void Preprocessor::HandleDirective(LexerToken &Result) {
   case tok::eom:
     return;   // null directive.
 
-#if 0
   case tok::numeric_constant:
     // FIXME: implement # 7 line numbers!
-    break;
-#endif
+    DiscardUntilEndOfDirective();
+    return;
   case tok::kw_else:
     return HandleElseDirective(Result);
   case tok::kw_if:
@@ -1424,8 +1423,11 @@ void Preprocessor::HandleDirective(LexerToken &Result) {
     bool isExtension = false;
     switch (Result.getIdentifierInfo()->getNameLength()) {
     case 4:
-      if (Directive[0] == 'l' && !strcmp(Directive, "line"))
-        ;  // FIXME: implement #line
+      if (Directive[0] == 'l' && !strcmp(Directive, "line")) {
+        // FIXME: implement #line
+        DiscardUntilEndOfDirective();
+        return;
+      }
       if (Directive[0] == 'e' && !strcmp(Directive, "elif"))
         return HandleElifDirective(Result);
       if (Directive[0] == 's' && !strcmp(Directive, "sccs"))
