@@ -967,7 +967,7 @@ private:
   UniqueVector<SourceFileInfo> SourceFiles;
 
   // Lines - List of of source line correspondence.
-  std::vector<SourceLineInfo *> Lines;
+  std::vector<SourceLineInfo> Lines;
   
   // LabelID - Current number assigned to unique label numbers.
   unsigned LabelID;
@@ -1049,8 +1049,13 @@ public:
   
   /// getSourceLines - Return a vector of source lines.
   ///
-  std::vector<SourceLineInfo *> &getSourceLines() {
+  const std::vector<SourceLineInfo> &getSourceLines() const {
     return Lines;
+  }
+  
+  // FIXME: nuke this.
+  void ClearLineInfo() {
+    Lines.clear();
   }
   
   /// SetupCompileUnits - Set up the unique vector of compile units.

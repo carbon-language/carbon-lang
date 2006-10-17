@@ -1538,7 +1538,7 @@ MachineDebugInfo::getGlobalVariablesUsing(Module &M,
 unsigned MachineDebugInfo::RecordLabel(unsigned Line, unsigned Column,
                                        unsigned Source) {
   unsigned ID = NextLabelID();
-  Lines.push_back(new SourceLineInfo(Line, Column, Source, ID));
+  Lines.push_back(SourceLineInfo(Line, Column, Source, ID));
   return ID;
 }
 

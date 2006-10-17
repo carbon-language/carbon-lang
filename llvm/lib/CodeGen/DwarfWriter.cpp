@@ -2178,7 +2178,7 @@ void DwarfWriter::EmitDebugLines() const {
   // A sequence for each text section.
   for (unsigned j = 0, M = SectionSourceLines.size(); j < M; ++j) {
     // Isolate current sections line info.
-    const std::vector<SourceLineInfo *> &LineInfos = SectionSourceLines[j];
+    const std::vector<SourceLineInfo> &LineInfos = SectionSourceLines[j];
     
     if (DwarfVerbose) {
       O << "\t"
@@ -2193,40 +2193,40 @@ void DwarfWriter::EmitDebugLines() const {
     
     // Construct rows of the address, source, line, column matrix.
     for (unsigned i = 0, N = LineInfos.size(); i < N; ++i) {
-      SourceLineInfo *LineInfo = LineInfos[i];
+      const SourceLineInfo &LineInfo = LineInfos[i];
       
       if (DwarfVerbose) {
-        unsigned SourceID = LineInfo->getSourceID();
+        unsigned SourceID = LineInfo.getSourceID();
         const SourceFileInfo &SourceFile = SourceFiles[SourceID];
         unsigned DirectoryID = SourceFile.getDirectoryID();
         O << "\t"
           << TAI->getCommentString() << " "
           << Directories[DirectoryID]
           << SourceFile.getName() << ":"
-          << LineInfo->getLine() << "\n"; 
+          << LineInfo.getLine() << "\n"; 
       }
 
       // Define the line address.
       EmitInt8(0); EOL("Extended Op");
       EmitInt8(4 + 1); EOL("Op size");
       EmitInt8(DW_LNE_set_address); EOL("DW_LNE_set_address");
-      EmitReference("loc",  LineInfo->getLabelID()); EOL("Location label");
+      EmitReference("loc",  LineInfo.getLabelID()); EOL("Location label");
       
       // If change of source, then switch to the new source.
-      if (Source != LineInfo->getSourceID()) {
-        Source = LineInfo->getSourceID();
+      if (Source != LineInfo.getSourceID()) {
+        Source = LineInfo.getSourceID();
         EmitInt8(DW_LNS_set_file); EOL("DW_LNS_set_file");
         EmitULEB128Bytes(Source); EOL("New Source");
       }
       
       // If change of line.
-      if (Line != LineInfo->getLine()) {
+      if (Line != LineInfo.getLine()) {
         // Determine offset.
-        int Offset = LineInfo->getLine() - Line;
+        int Offset = LineInfo.getLine() - Line;
         int Delta = Offset - MinLineDelta;
         
         // Update line.
-        Line = LineInfo->getLine();
+        Line = LineInfo.getLine();
         
         // If delta is small enough and in range...
         if (Delta >= 0 && Delta < (MaxLineDelta - 1)) {
@@ -2635,13 +2635,13 @@ void DwarfWriter::EndFunction() {
   EmitLabel("func_end", SubprogramCount);
     
   // Get function line info.
-  std::vector<SourceLineInfo *> &LineInfos = DebugInfo->getSourceLines();
+  const std::vector<SourceLineInfo> &LineInfos = DebugInfo->getSourceLines();
 
   if (!LineInfos.empty()) {
     // Get section line info.
     unsigned ID = SectionMap.insert(Asm->CurrentSection);
     if (SectionSourceLines.size() < ID) SectionSourceLines.resize(ID);
-    std::vector<SourceLineInfo *> &SectionLineInfos =SectionSourceLines[ID-1];
+    std::vector<SourceLineInfo> &SectionLineInfos = SectionSourceLines[ID-1];
     // Append the function info to section info.
     SectionLineInfos.insert(SectionLineInfos.end(),
                             LineInfos.begin(), LineInfos.end());
@@ -2654,7 +2654,8 @@ void DwarfWriter::EndFunction() {
   EmitFunctionDebugFrame();
   
   // Reset the line numbers for the next function.
-  LineInfos.clear();
+  // FIXME: move this to release memory of the debuginfo object.
+  DebugInfo->ClearLineInfo();
 
   // Clear function debug information.
   DebugInfo->EndFunction();

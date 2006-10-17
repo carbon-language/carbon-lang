@@ -151,7 +151,7 @@ private:
   
   /// SectionSourceLines - Tracks line numbers per text section.
   ///
-  std::vector<std::vector<SourceLineInfo *> > SectionSourceLines;
+  std::vector<std::vector<SourceLineInfo> > SectionSourceLines;
 
 
 public:
