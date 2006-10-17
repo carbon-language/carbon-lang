@@ -29,14 +29,15 @@ namespace clang {
 /// variable or function name).  The preprocessor keeps this information in a
 /// set, and all tok::identifier tokens have a pointer to one of these.  
 class IdentifierInfo {
-  unsigned NameLen;            // String that is the identifier.
-  MacroInfo *Macro;            // Set if this identifier is #define'd.
-  tok::TokenKind TokenID  : 8; // Front-end token ID or tok::identifier.
-  tok::PPKeywordKind PPID : 5; // ID for preprocessor command like 'ifdef'.
-  bool IsExtension        : 1; // True if identifier is a lang extension.
-  bool IsPoisoned         : 1; // True if identifier is poisoned.
-  bool IsOtherTargetMacro : 1; // True if ident is a macro on another target.
-  void *FETokenInfo;           // Managed by the language front-end.
+  unsigned NameLen;                // String that is the identifier.
+  MacroInfo *Macro;                // Set if this identifier is #define'd.
+  tok::TokenKind TokenID      : 8; // Front-end token ID or tok::identifier.
+  tok::PPKeywordKind PPID     : 5; // ID for preprocessor command like 'ifdef'.
+  tok::ObjCKeywordKind ObjCID : 5; // ID for preprocessor command like 'ifdef'.
+  bool IsExtension            : 1; // True if identifier is a lang extension.
+  bool IsPoisoned             : 1; // True if identifier is poisoned.
+  bool IsOtherTargetMacro     : 1; // True if ident is macro on another target.
+  void *FETokenInfo;               // Managed by the language front-end.
   friend class IdentifierTable;
 public:
   /// getName - Return the actual string for this identifier.  The length of
@@ -65,8 +66,16 @@ public:
   tok::TokenKind getTokenID() const { return TokenID; }
   void setTokenID(tok::TokenKind ID) { TokenID = ID; }
   
+  /// getPPKeywordID - Return the preprocessor keyword ID for this identifier.
+  /// For example, define will return tok::pp_define.
   tok::PPKeywordKind getPPKeywordID() const { return PPID; }
   void setPPKeywordID(tok::PPKeywordKind ID) { PPID = ID; }
+  
+  /// getObjCKeywordID - Return the Objective-C keyword ID for the this
+  /// identifier.  For example, 'class' will return tok::objc_class if ObjC is
+  /// enabled.
+  tok::ObjCKeywordKind getObjCKeywordID() const { return ObjCID; }
+  void setObjCKeywordID(tok::ObjCKeywordKind ID) { ObjCID = ID; }
   
   /// get/setExtension - Initialize information about whether or not this
   /// language token is an extension.  This controls extension warnings, and is

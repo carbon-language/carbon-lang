@@ -208,6 +208,7 @@ IdentifierInfo &IdentifierTable::get(const char *NameStart,
   Identifier->TokInfo.Macro = 0;
   Identifier->TokInfo.TokenID = tok::identifier;
   Identifier->TokInfo.PPID = tok::pp_not_keyword;
+  Identifier->TokInfo.ObjCID = tok::objc_not_keyword;
   Identifier->TokInfo.IsExtension = false;
   Identifier->TokInfo.IsPoisoned = false;
   Identifier->TokInfo.IsOtherTargetMacro = false;

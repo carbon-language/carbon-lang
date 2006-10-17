@@ -27,10 +27,21 @@ enum TokenKind {
   NUM_TOKENS
 };
 
+/// PPKeywordKind - This provides a namespace for preprocessor keywords which
+/// start with a '#' at the beginning of the line.
 enum PPKeywordKind {
 #define PPKEYWORD(X) pp_##X, 
 #include "clang/Basic/TokenKinds.def"
   NUM_PP_KEYWORDS
+};
+
+/// ObjCKeywordKind - This provides a namespace for Objective-C keywords which
+/// start with an '@'.
+enum ObjCKeywordKind {
+#define OBJC1_AT_KEYWORD(X) objc_##X,
+#define OBJC2_AT_KEYWORD(X) objc_##X,
+#include "clang/Basic/TokenKinds.def"
+  NUM_OBJC_KEYWORDS
 };
 
 const char *getTokenName(enum TokenKind Kind);

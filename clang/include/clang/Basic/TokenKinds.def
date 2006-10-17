@@ -26,6 +26,12 @@
 #ifndef PPKEYWORD
 #define PPKEYWORD(X)
 #endif
+#ifndef OBJC1_AT_KEYWORD
+#define OBJC1_AT_KEYWORD(X)
+#endif
+#ifndef OBJC2_AT_KEYWORD
+#define OBJC2_AT_KEYWORD(X)
+#endif
 
 //===----------------------------------------------------------------------===//
 // Preprocessor keywords.
@@ -294,6 +300,41 @@ ALIAS("__typeof__"   , typeof     )
 ALIAS("__volatile"   , volatile   )
 ALIAS("__volatile__" , volatile   )
 
+
+//===----------------------------------------------------------------------===//
+// Objective-C @-preceeded keywords.
+//===----------------------------------------------------------------------===//
+
+// These have meaning after an '@' in Objective-C mode. These define enums in
+// the tok::objc_* namespace.
+
+OBJC1_AT_KEYWORD(not_keyword)
+OBJC1_AT_KEYWORD(class)
+OBJC1_AT_KEYWORD(compatibility_alias)
+OBJC1_AT_KEYWORD(defs)
+OBJC1_AT_KEYWORD(encode)
+OBJC1_AT_KEYWORD(end)
+OBJC1_AT_KEYWORD(implementation)
+OBJC1_AT_KEYWORD(interface)
+OBJC1_AT_KEYWORD(private)
+OBJC1_AT_KEYWORD(protected)
+OBJC1_AT_KEYWORD(protocol)
+OBJC1_AT_KEYWORD(public)
+OBJC1_AT_KEYWORD(selector)
+OBJC1_AT_KEYWORD(throw)
+OBJC1_AT_KEYWORD(try)
+OBJC1_AT_KEYWORD(catch)
+OBJC1_AT_KEYWORD(finally)
+OBJC1_AT_KEYWORD(synchronized)
+
+// I'm guessing this is an objc2 keyword, what are the others?
+OBJC2_AT_KEYWORD(property)
+
+// TODO: What to do about context-sensitive keywords like:
+//       bycopy/byref/in/inout/oneway/out?
+
+#undef OBJC2_AT_KEYWORD
+#undef OBJC1_AT_KEYWORD
 #undef PPKEYWORD
 #undef ALIAS
 #undef KEYWORD

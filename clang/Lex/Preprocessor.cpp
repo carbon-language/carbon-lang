@@ -109,6 +109,14 @@ static void AddPPKeyword(tok::PPKeywordKind PPID,
   PP.getIdentifierInfo(Name, Name+NameLen)->setPPKeywordID(PPID);
 }
 
+/// AddObjCKeyword - Register an Objective-C @keyword like "class" "selector" or 
+/// "property".
+static void AddObjCKeyword(tok::ObjCKeywordKind ObjCID, 
+                           const char *Name, unsigned NameLen,
+                           Preprocessor &PP) {
+  PP.getIdentifierInfo(Name, Name+NameLen)->setObjCKeywordID(ObjCID);
+}
+
 /// AddKeywords - Add all keywords to the symbol table.
 ///
 void Preprocessor::AddKeywords() {
@@ -135,6 +143,12 @@ void Preprocessor::AddKeywords() {
   AddKeyword(NAME, tok::kw_ ## TOK, 0, 0, 0);
 #define PPKEYWORD(NAME) \
   AddPPKeyword(tok::pp_##NAME, #NAME, strlen(#NAME), *this);
+#define OBJC1_AT_KEYWORD(NAME) \
+  if (Features.ObjC1)          \
+    AddObjCKeyword(tok::objc_##NAME, #NAME, strlen(#NAME), *this);
+#define OBJC2_AT_KEYWORD(NAME) \
+  if (Features.ObjC2)          \
+    AddObjCKeyword(tok::objc_##NAME, #NAME, strlen(#NAME), *this);
 #include "clang/Basic/TokenKinds.def"
 }
 
