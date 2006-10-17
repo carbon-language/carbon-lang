@@ -112,6 +112,7 @@ static void InitCharacterInfo() {
   CharInfo[(int)'\n'] = CharInfo[(int)'\r'] = CHAR_VERT_WS;
   
   CharInfo[(int)'_'] = CHAR_UNDER;
+  CharInfo[(int)'.'] = CHAR_PERIOD;
   for (unsigned i = 'a'; i <= 'z'; ++i)
     CharInfo[i] = CharInfo[i+'A'-'a'] = CHAR_LETTER;
   for (unsigned i = '0'; i <= '9'; ++i)
