@@ -3689,7 +3689,7 @@ SDOperand DAGCombiner::SimplifySetCC(MVT::ValueType VT, SDOperand N0,
             cast<ConstantSDNode>(N0.getOperand(1))->getValue() == 1) {
           // If this is (X^1) == 0/1, swap the RHS and eliminate the xor.  We
           // can only do this if the top bits are known zero.
-          if (TLI.MaskedValueIsZero(N1, 
+          if (TLI.MaskedValueIsZero(N0, 
                                     MVT::getIntVTBitMask(N0.getValueType())-1)){
             // Okay, get the un-inverted input value.
             SDOperand Val;
