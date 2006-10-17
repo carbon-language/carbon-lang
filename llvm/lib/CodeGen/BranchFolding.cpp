@@ -18,6 +18,7 @@
 
 #include "llvm/CodeGen/Passes.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
+#include "llvm/CodeGen/MachineJumpTableInfo.h"
 #include "llvm/Target/TargetInstrInfo.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/ADT/STLExtras.h"
@@ -36,39 +37,39 @@ namespace {
 
 FunctionPass *llvm::createBranchFoldingPass() { return new BranchFolder(); }
 
+/// RemoveDeadBlock - Remove the specified dead machine basic block from the
+/// function, updating the CFG.
+static void RemoveDeadBlock(MachineBasicBlock *MBB) {
+  assert(MBB->pred_empty() && "MBB must be dead!");
+  MachineFunction *MF = MBB->getParent();
+  // drop all successors.
+  while (!MBB->succ_empty())
+    MBB->removeSuccessor(MBB->succ_end()-1);
+  // Remove the block.
+  MF->getBasicBlockList().erase(MBB);
+}
+
 bool BranchFolder::runOnMachineFunction(MachineFunction &MF) {
   TII = MF.getTarget().getInstrInfo();
   if (!TII) return false;
 
-  
-  // DISABLED FOR NOW.
-  return false;
-  
   //MF.dump();
   
   bool EverMadeChange = false;
   MadeChange = true;
   while (MadeChange) {
     MadeChange = false;
-    for (MachineFunction::iterator MBB = ++MF.begin(), E = MF.end(); MBB != E;
-         ++MBB)
-      OptimizeBlock(MBB);
     
-    // If branches were folded away somehow, do a quick scan and delete any dead
-    // blocks.
-    if (MadeChange) {
-      for (MachineFunction::iterator I = ++MF.begin(), E = MF.end(); I != E; ) {
-        MachineBasicBlock *MBB = I++;
-        // Is it dead?
-        if (MBB->pred_empty()) {
-          // drop all successors.
-          while (!MBB->succ_empty())
-            MBB->removeSuccessor(MBB->succ_end()-1);
-          MF.getBasicBlockList().erase(MBB);
-        }
+    for (MachineFunction::iterator I = ++MF.begin(), E = MF.end(); I != E; ) {
+      MachineBasicBlock *MBB = I++;
+      OptimizeBlock(MBB);
+      
+      // If it is dead, remove it.
+      if (MBB->pred_empty()) {
+        RemoveDeadBlock(MBB);
+        MadeChange = true;
       }
-    }
-
+    }      
     EverMadeChange |= MadeChange;
   }
 
@@ -115,14 +116,22 @@ void BranchFolder::OptimizeBlock(MachineFunction::iterator MBB) {
     
     MachineFunction::iterator FallThrough = next(MBB);
     
-    if (FallThrough != MBB->getParent()->end()) {
+    if (FallThrough == MBB->getParent()->end()) {
+      // TODO: Simplify preds to not branch here if possible!
+    } else {
+      // Rewrite all predecessors of the old block to go to the fallthrough
+      // instead.
       while (!MBB->pred_empty()) {
         MachineBasicBlock *Pred = *(MBB->pred_end()-1);
         ReplaceUsesOfBlockWith(Pred, MBB, FallThrough, TII);
       }
+      
+      // If MBB was the target of a jump table, update jump tables to go to the
+      // fallthrough instead.
+      MBB->getParent()->getJumpTableInfo()->ReplaceMBBInJumpTables(MBB,
+                                                                   FallThrough);
       MadeChange = true;
     }
-    // TODO: CHANGE STUFF TO NOT BRANCH HERE!
     return;
   }
 
