@@ -67,7 +67,7 @@ II. Usage of clang driver:
 
  * Basic Command-Line Options:
    - Help: clang --help
-   - Standard GCC options accepted: -E, -I*, -i*, -pedantic, etc.
+   - Standard GCC options accepted: -E, -I*, -i*, -pedantic, -std=c90, etc.
    - Make diagnostics more gcc-like: -fno-caret-diagnostics -fno-show-column
    - Enable metric printing: -stats
 
