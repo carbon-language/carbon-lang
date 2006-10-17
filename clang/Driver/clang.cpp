@@ -18,7 +18,6 @@
 //
 //   -ffatal-errors
 //   -ftabstop=width
-//   -fdollars-in-identifiers
 //
 //===----------------------------------------------------------------------===//
 
@@ -78,6 +77,207 @@ ProgAction(cl::desc("Choose output type:"), cl::ZeroOrMore,
                         "Run parser and perform semantic analysis"),
              clEnumValEnd));
 
+//===----------------------------------------------------------------------===//
+// Language Options
+//===----------------------------------------------------------------------===//
+
+enum LangKind {
+  langkind_unspecified,
+  langkind_c,
+  langkind_c_cpp,
+  langkind_cxx,
+  langkind_cxx_cpp,
+  langkind_objc,
+  langkind_objc_cpp,
+  langkind_objcxx,
+  langkind_objcxx_cpp
+};
+
+/* TODO: GCC also accepts:
+   c-header c++-header objective-c-header objective-c++-header
+   assembler  assembler-with-cpp
+   ada, f77*, ratfor (!), f95, java, treelang
+ */
+static cl::opt<LangKind>
+BaseLang("x", cl::desc("Base language to compile"),
+         cl::init(langkind_unspecified),
+         cl::values(clEnumValN(langkind_c,     "c",            "C"),
+                    clEnumValN(langkind_cxx,   "c++",          "C++"),
+                    clEnumValN(langkind_objc,  "objective-c",  "Objective C"),
+                    clEnumValN(langkind_objcxx,"objective-c++","Objective C++"),
+                    clEnumValN(langkind_c_cpp,     "c-cpp-output",
+                               "Preprocessed C"),
+                    clEnumValN(langkind_cxx_cpp,   "c++-cpp-output",
+                               "Preprocessed C++"),
+                    clEnumValN(langkind_objc_cpp,  "objective-c-cpp-output",
+                               "Preprocessed Objective C"),
+                    clEnumValN(langkind_objcxx_cpp,"objective-c++-cpp-output",
+                               "Preprocessed Objective C++"),
+                    clEnumValEnd));
+
+static cl::opt<bool>
+LangObjC("ObjC", cl::desc("Set base language to Objective-C"),
+         cl::Hidden);
+static cl::opt<bool>
+LangObjCXX("ObjC++", cl::desc("Set base language to Objective-C++"),
+           cl::Hidden);
+
+/// InitializeBaseLanguage - Handle the -x foo options or infer a base language
+/// from the input filename.
+static void InitializeBaseLanguage(LangOptions &Options,
+                                   const std::string &Filename) {
+  if (BaseLang == langkind_unspecified) {
+    std::string::size_type DotPos = Filename.rfind('.');
+    if (LangObjC) {
+      BaseLang = langkind_objc;
+    } else if (LangObjCXX) {
+      BaseLang = langkind_objcxx;
+    } else if (DotPos == std::string::npos) {
+      BaseLang = langkind_c;  // Default to C if no extension.
+    } else {
+      std::string Ext = std::string(Filename.begin()+DotPos+1, Filename.end());
+      // C header: .h
+      // C++ header: .hh or .H;
+      // assembler no preprocessing: .s
+      // assembler: .S
+      if (Ext == "c")
+        BaseLang = langkind_c;
+      else if (Ext == "i")
+        BaseLang = langkind_c_cpp;
+      else if (Ext == "ii")
+        BaseLang = langkind_cxx_cpp;
+      else if (Ext == "m")
+        BaseLang = langkind_objc;
+      else if (Ext == "mi")
+        BaseLang = langkind_objc_cpp;
+      else if (Ext == "mm" || Ext == "M")
+        BaseLang = langkind_objcxx;
+      else if (Ext == "mii")
+        BaseLang = langkind_objcxx_cpp;
+      else if (Ext == "C" || Ext == "cc" || Ext == "cpp" || Ext == "CPP" ||
+               Ext == "c++" || Ext == "cp" || Ext == "cxx")
+        BaseLang = langkind_cxx;
+      else
+        BaseLang = langkind_c;
+    }
+  }
+  
+  // FIXME: implement -fpreprocessed mode.
+  bool NoPreprocess = false;
+  
+  switch (BaseLang) {
+  default: assert(0 && "Unknown language kind!");
+  case langkind_c_cpp:
+    NoPreprocess = true;
+    // FALLTHROUGH
+  case langkind_c:
+    break;
+  case langkind_cxx_cpp:
+    NoPreprocess = true;
+    // FALLTHROUGH
+  case langkind_cxx:
+    Options.CPlusPlus = 1;
+    break;
+  case langkind_objc_cpp:
+    NoPreprocess = true;
+    // FALLTHROUGH
+  case langkind_objc:
+    Options.ObjC1 = Options.ObjC2 = 1;
+    break;
+  case langkind_objcxx_cpp:
+    NoPreprocess = true;
+    // FALLTHROUGH
+  case langkind_objcxx:
+    Options.ObjC1 = Options.ObjC2 = 1;
+    Options.CPlusPlus = 1;
+    break;
+  }
+}
+
+/// LangStds - Language standards we support.
+enum LangStds {
+  lang_unspecified,  
+  lang_c89, lang_c94, lang_c99,
+  lang_gnu89, lang_gnu99,
+  lang_cxx98, lang_gnucxx98
+};
+
+static cl::opt<LangStds>
+LangStd("std", cl::desc("Language standard to compile for"),
+        cl::init(lang_unspecified),
+        cl::values(clEnumValN(lang_c89,      "c89",            "ISO C 1990"),
+                   clEnumValN(lang_c89,      "iso9899:1990",   "ISO C 1990"),
+                   clEnumValN(lang_c94,      "iso9899:199409",
+                              "ISO C 1990 with amendment 1"),
+                   clEnumValN(lang_c99,      "c99",            "ISO C 1999"),
+//                 clEnumValN(lang_c99,      "c9x",            "ISO C 1999"),
+                   clEnumValN(lang_c99,      "iso9899:1999",   "ISO C 1999"),
+//                 clEnumValN(lang_c99,      "iso9899:199x",   "ISO C 1999"),
+                   clEnumValN(lang_gnu89,    "gnu89",
+                              "ISO C 1990 with GNU extensions (default for C)"),
+                   clEnumValN(lang_gnu99,    "gnu99",
+                              "ISO C 1999 with GNU extensions"),
+                   clEnumValN(lang_gnu99,    "gnu9x",
+                              "ISO C 1999 with GNU extensions"),
+                   clEnumValN(lang_cxx98,    "c++98",
+                              "ISO C++ 1998 with amendments"),
+                   clEnumValN(lang_gnucxx98, "gnu++98",
+                              "ISO C++ 1998 with amendments and GNU "
+                              "extensions (default for C++)"),
+                   clEnumValEnd));
+
+// FIXME: add:
+//   -ansi
+//   -trigraphs
+//   -fdollars-in-identifiers
+static void InitializeLanguageStandard(LangOptions &Options) {
+  if (LangStd == lang_unspecified) {
+    // Based on the base language, pick one.
+    switch (BaseLang) {
+    default: assert(0 && "Unknown base language");
+    case langkind_c:
+    case langkind_c_cpp:
+    case langkind_objc:
+    case langkind_objc_cpp:
+      LangStd = lang_gnu89;
+      break;
+    case langkind_cxx:
+    case langkind_cxx_cpp:
+    case langkind_objcxx:
+    case langkind_objcxx_cpp:
+      LangStd = lang_gnucxx98;
+      break;
+    }
+  }
+  
+  switch (LangStd) {
+  default: assert(0 && "Unknown language standard!");
+
+  // Fall through from newer standards to older ones.  This isn't really right.
+  // FIXME: Enable specifically the right features based on the language stds.
+  case lang_gnucxx98:
+    Options.CPPMinMax = 1;
+    // FALL THROUGH.
+  case lang_cxx98:
+    Options.CPlusPlus = 1;
+    // FALL THROUGH.
+  case lang_gnu99:
+  case lang_c99:
+    Options.Digraphs = 1;
+    Options.C99 = 1;
+    Options.HexFloats = 1;
+    // FALL THROUGH.
+  case lang_gnu89:
+    Options.BCPLComment = 1;  // Only for C99/C++.
+    // FALL THROUGH.
+  case lang_c94:
+  case lang_c89:
+    break;
+  }
+  
+  Options.Trigraphs = 1; // -trigraphs or -ansi
+  Options.DollarIdents = 1;  // FIXME: Really a target property.
+}
 
 //===----------------------------------------------------------------------===//
 // Our DiagnosticClient implementation
@@ -610,13 +810,9 @@ int main(int argc, char **argv) {
   InitializeDiagnostics(OurDiagnostics);
   
   // Turn all options on.
-  // FIXME: add -ansi and -std= options.
   LangOptions Options;
-  Options.Trigraphs = 1;
-  Options.BCPLComment = 1;  // Only for C99/C++.
-  Options.C99 = 1;
-  Options.DollarIdents = Options.Digraphs = 1;
-  Options.ObjC1 = Options.ObjC2 = 1;
+  InitializeBaseLanguage(Options, InputFilename);
+  InitializeLanguageStandard(Options);
 
   // Get information about the targets being compiled for.  Note that this
   // pointer and the TargetInfoImpl objects are never deleted by this toy
