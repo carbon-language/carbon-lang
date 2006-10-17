@@ -238,8 +238,14 @@ void PPCInstrInfo::RemoveBranch(MachineBasicBlock &MBB) const {
 void PPCInstrInfo::InsertBranch(MachineBasicBlock &MBB, MachineBasicBlock *TBB,
                                 MachineBasicBlock *FBB,
                                 const std::vector<MachineOperand> &Cond) const {
-  // Fall through?
-  if (TBB == 0 && FBB == 0) return;
+  // Shouldn't be a fall through.
+  assert(TBB && "InsertBranch must not be told to insert a fallthrough");
+  
+  // Unconditional branch?
+  if (FBB == 0) {
+    BuildMI(&MBB, PPC::B, 1).addMBB(TBB);
+    return;
+  }
   
   assert(Cond.size() == 2 && "PPC branch conditions have two components!");
   
