@@ -67,3 +67,19 @@ entry:
 	%tmp1 = div double %a, %b
 	ret double %tmp1
 }
+
+float %f11(float %a) {
+entry:
+	%tmp1 = call float %fabsf(float %a)
+	ret float %tmp1
+}
+
+declare float %fabsf(float)
+
+double %f12(double %a) {
+entry:
+	%tmp1 = call double %fabs(double %a)
+	ret double %tmp1
+}
+
+declare double %fabs(double)

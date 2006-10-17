@@ -288,6 +288,14 @@ def FNEGD   : InstARM<(ops DFPRegs:$dst, DFPRegs:$src),
                        "fnegd $dst, $src",
 		       [(set DFPRegs:$dst, (fneg DFPRegs:$src))]>;
 
+def FABSS   : InstARM<(ops FPRegs:$dst, FPRegs:$src),
+                       "fabss $dst, $src",
+		       [(set FPRegs:$dst, (fabs FPRegs:$src))]>;
+
+def FABSD   : InstARM<(ops DFPRegs:$dst, DFPRegs:$src),
+                       "fabsd $dst, $src",
+		       [(set DFPRegs:$dst, (fabs DFPRegs:$src))]>;
+
 def FMULS   : FPBinOp<"fmuls", fmul>;
 def FMULD   : DFPBinOp<"fmuld", fmul>;
 def FDIVS   : FPBinOp<"fdivs", fdiv>;
