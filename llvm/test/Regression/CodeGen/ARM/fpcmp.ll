@@ -4,6 +4,7 @@
 ; RUN: llvm-as < %s | llc -march=arm  | grep movgt &&
 ; RUN: llvm-as < %s | llc -march=arm  | grep movge &&
 ; RUN: llvm-as < %s | llc -march=arm  | grep movls &&
+; RUN: llvm-as < %s | llc -march=arm  | grep movne &&
 ; RUN: llvm-as < %s | llc -march=arm  | grep fcmps &&
 ; RUN: llvm-as < %s | llc -march=arm  | grep fcmpd
 
@@ -52,13 +53,6 @@ entry:
 int %g1(double %a) {
 entry:
 	%tmp = setlt double %a, 1.000000e+00		; <bool> [#uses=1]
-	%tmp = cast bool %tmp to int		; <int> [#uses=1]
-	ret int %tmp
-}
-
-int %g2(double %a) {
-entry:
-	%tmp = setne double %a, 1.000000e+00		; <bool> [#uses=1]
 	%tmp = cast bool %tmp to int		; <int> [#uses=1]
 	ret int %tmp
 }
