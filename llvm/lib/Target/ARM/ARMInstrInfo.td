@@ -286,12 +286,21 @@ def FDIVD   : DFPBinOp<"fdivd", fdiv>;
 
 // Floating Point Load
 def FLDS  : InstARM<(ops FPRegs:$dst, IntRegs:$addr),
-                     "flds $dst, $addr",
+                     "flds $dst, [$addr]",
                      [(set FPRegs:$dst, (load IntRegs:$addr))]>;
 
 def FLDD  : InstARM<(ops DFPRegs:$dst, IntRegs:$addr),
-                     "fldd $dst, $addr",
+                     "fldd $dst, [$addr]",
                      [(set DFPRegs:$dst, (load IntRegs:$addr))]>;
+
+// Floating Point Store
+def FSTS    : InstARM<(ops FPRegs:$src, IntRegs:$addr),
+                       "fsts $src, [$addr]",
+                       [(store FPRegs:$src, IntRegs:$addr)]>;
+
+def FSTD    : InstARM<(ops DFPRegs:$src, IntRegs:$addr),
+                       "fstd $src, [$addr]",
+                       [(store DFPRegs:$src, IntRegs:$addr)]>;
 
 def : Pat<(ARMcall tglobaladdr:$dst),
           (bl tglobaladdr:$dst)>;
