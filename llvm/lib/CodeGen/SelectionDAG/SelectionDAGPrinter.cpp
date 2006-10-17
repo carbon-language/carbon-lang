@@ -148,10 +148,11 @@ std::string DOTGraphTraits<SelectionDAG*>::getNodeLabel(const SDNode *Node,
     if (doExt)
       Op = Op + MVT::getValueTypeString(LD->getLoadedVT()) + ">";
 
-    if (LD->getAddressingMode() == ISD::PRE_INDEXED)
-      Op = Op + "<pre>";
-    else if (LD->getAddressingMode() == ISD::POST_INDEXED)
-      Op = Op + "<post>";
+    Op += LD->getAddressingModeName(LD->getAddressingMode());
+  } else if (const StoreSDNode *ST = dyn_cast<StoreSDNode>(Node)) {
+    if (ST->isTruncatingStore())
+      Op = Op + "<trunc " + MVT::getValueTypeString(ST->getStoredVT()) + ">";
+    Op += ST->getAddressingModeName(ST->getAddressingMode());
   }
   
   return Op;
