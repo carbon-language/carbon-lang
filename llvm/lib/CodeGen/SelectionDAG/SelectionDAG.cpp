@@ -1234,6 +1234,13 @@ SDOperand SelectionDAG::getNode(unsigned Opcode, MVT::ValueType VT,
     if (N2C && N2C->getValue() == 0)
       return N2;
     break;
+  case ISD::OR:
+  case ISD::XOR:
+    // (X ^| 0) -> X.  This commonly occurs when legalizing i64 values, so it's
+    // worth handling here.
+    if (N2C && N2C->getValue() == 0)
+      return N1;
+    break;
   case ISD::FP_ROUND_INREG:
     if (cast<VTSDNode>(N2)->getVT() == VT) return N1;  // Not actually rounding.
     break;
