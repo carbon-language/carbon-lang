@@ -3114,7 +3114,8 @@ SDOperand DAGCombiner::visitVVECTOR_SHUFFLE(SDNode *N) {
     // look though conversions that change things like v4f32 to v2f64.
     if (V->getOpcode() == ISD::VBIT_CONVERT) {
       SDOperand ConvInput = V->getOperand(0);
-      if (NumElts ==
+      if (ConvInput.getValueType() == MVT::Vector &&
+          NumElts ==
           ConvInput.getConstantOperandVal(ConvInput.getNumOperands()-2))
         V = ConvInput.Val;
     }
