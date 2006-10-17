@@ -89,8 +89,20 @@ bool X86ATTAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
     EmitAlignment(4, F);     // FIXME: This should be parameterized somewhere.
     O << "\t.globl\t" << CurrentFnName << "\n";    
     break;
-  case Function::WeakLinkage:
   case Function::LinkOnceLinkage:
+    if (Subtarget->isTargetDarwin()) {
+      O << "\t.globl\t" << CurrentFnName << "\n";
+      O << "\t.weak_definition\t" << CurrentFnName << "\n";
+    } else if (Subtarget->isTargetCygwin()) {
+      EmitAlignment(4, F);     // FIXME: This should be parameterized somewhere.
+      O << "\t.linkonce discard\n";
+      O << "\t.globl " << CurrentFnName << "\n";
+    } else {
+      EmitAlignment(4, F);     // FIXME: This should be parameterized somewhere.
+      O << "\t.weak " << CurrentFnName << "\n";
+    }
+    break;
+  case Function::WeakLinkage:
     if (Subtarget->isTargetDarwin()) {
       O << "\t.globl\t" << CurrentFnName << "\n";
       O << "\t.weak_definition\t" << CurrentFnName << "\n";
