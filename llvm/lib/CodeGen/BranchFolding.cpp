@@ -137,10 +137,11 @@ void BranchFolder::OptimizeBlock(MachineFunction::iterator MBB) {
 
   // Check to see if we can simplify the terminator of the block before this
   // one.
-#if 0
+  MachineBasicBlock &PrevBB = *prior(MBB);
+
   MachineBasicBlock *PriorTBB = 0, *PriorFBB = 0;
   std::vector<MachineOperand> PriorCond;
-  if (!TII->AnalyzeBranch(*prior(MBB), PriorTBB, PriorFBB, PriorCond)) {
+  if (!TII->AnalyzeBranch(PrevBB, PriorTBB, PriorFBB, PriorCond)) {
     // If the previous branch is conditional and both conditions go to the same
     // destination, remove the branch, replacing it with an unconditional one.
     if (PriorTBB && PriorTBB == PriorFBB) {
@@ -160,8 +161,6 @@ void BranchFolder::OptimizeBlock(MachineFunction::iterator MBB) {
       return OptimizeBlock(MBB);
     }
   }
-#endif
-  
   
 #if 0
 
