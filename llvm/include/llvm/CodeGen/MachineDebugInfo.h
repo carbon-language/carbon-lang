@@ -20,7 +20,7 @@
 //     string and assigned a sequential numeric ID (base 1.)
 //  -- Source files - Files are also uniqued based on their name and directory
 //     ID.  A file ID is sequential number (base 1.)
-//  -- Source line coorespondence - A vector of file ID, line#, column# triples.
+//  -- Source line correspondence - A vector of file ID, line#, column# triples.
 //     A DEBUG_LOCATION instruction is generated  by the DAG Legalizer
 //     corresponding to each entry in the source line list.  This allows a debug
 //     emitter to generate labels referenced by debug information tables.
@@ -35,10 +35,6 @@
 #include "llvm/ADT/UniqueVector.h"
 #include "llvm/GlobalValue.h"
 #include "llvm/Pass.h"
-#include "llvm/User.h"
-
-#include <string>
-#include <set>
 
 namespace llvm {
 
