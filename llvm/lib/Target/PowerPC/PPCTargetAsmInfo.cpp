@@ -37,16 +37,16 @@ DarwinTargetAsmInfo::DarwinTargetAsmInfo(const PPCTargetMachine &TM) {
   
   NeedsSet = true;
   AddressSize = isPPC64 ? 8 : 4;
-  DwarfAbbrevSection = ".section __DWARF,__debug_abbrev";
-  DwarfInfoSection = ".section __DWARF,__debug_info";
-  DwarfLineSection = ".section __DWARF,__debug_line";
-  DwarfFrameSection = ".section __DWARF,__debug_frame";
-  DwarfPubNamesSection = ".section __DWARF,__debug_pubnames";
-  DwarfPubTypesSection = ".section __DWARF,__debug_pubtypes";
-  DwarfStrSection = ".section __DWARF,__debug_str";
-  DwarfLocSection = ".section __DWARF,__debug_loc";
-  DwarfARangesSection = ".section __DWARF,__debug_aranges";
-  DwarfRangesSection = ".section __DWARF,__debug_ranges";
-  DwarfMacInfoSection = ".section __DWARF,__debug_macinfo";
+  DwarfAbbrevSection = ".section __DWARF,__debug_abbrev,regular,debug";
+  DwarfInfoSection = ".section __DWARF,__debug_info,regular,debug";
+  DwarfLineSection = ".section __DWARF,__debug_line,regular,debug";
+  DwarfFrameSection = ".section __DWARF,__debug_frame,regular,debug";
+  DwarfPubNamesSection = ".section __DWARF,__debug_pubnames,regular,debug";
+  DwarfPubTypesSection = ".section __DWARF,__debug_pubtypes,regular,debug";
+  DwarfStrSection = ".section __DWARF,__debug_str,regular,debug";
+  DwarfLocSection = ".section __DWARF,__debug_loc,regular,debug";
+  DwarfARangesSection = ".section __DWARF,__debug_aranges,regular,debug";
+  DwarfRangesSection = ".section __DWARF,__debug_ranges,regular,debug";
+  DwarfMacInfoSection = ".section __DWARF,__debug_macinfo,regular,debug";
 }
 
