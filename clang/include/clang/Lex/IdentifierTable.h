@@ -22,6 +22,7 @@ namespace llvm {
 namespace clang {
   class IdentifierTable;
   class MacroInfo;
+  class LangOptions;
   
 /// IdentifierInfo - One of these records is kept for each identifier that
 /// is lexed.  This contains information about whether the token was #define'd,
@@ -121,7 +122,9 @@ class IdentifierTable {
   void *TheMemory;
   unsigned NumIdentifiers;
 public:
-  IdentifierTable();
+  /// IdentifierTable ctor - Create the identifier table, populating it with
+  /// info about the language keywords for the language specified by LangOpts.
+  IdentifierTable(const LangOptions &LangOpts);
   ~IdentifierTable();
   
   /// get - Return the identifier token info for the specified named identifier.
@@ -136,6 +139,8 @@ public:
   /// PrintStats - Print some statistics to stderr that indicate how well the
   /// hashing is doing.
   void PrintStats() const;
+private:
+  void AddKeywords(const LangOptions &LangOpts);
 };
 
 }  // end namespace llvm

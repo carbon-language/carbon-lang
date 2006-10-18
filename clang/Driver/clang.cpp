@@ -843,9 +843,6 @@ int main(int argc, char **argv) {
   // Read any files specified by -imacros or -include.
   ReadPrologFiles(PP, PrologMacros);
   
-  // Set up keywords.
-  PP.AddKeywords();
-  
   // Figure out where to get and map in the main file.
   unsigned MainFileID = 0;
   if (InputFilename != "-") {

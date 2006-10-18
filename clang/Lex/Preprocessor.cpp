@@ -45,7 +45,7 @@ Preprocessor::Preprocessor(Diagnostic &diags, const LangOptions &opts,
                            FileManager &FM, SourceManager &SM, 
                            HeaderSearch &Headers) 
   : Diags(diags), Features(opts), Target(target), FileMgr(FM), SourceMgr(SM),
-    HeaderInfo(Headers), 
+    HeaderInfo(Headers), Identifiers(opts),
     CurLexer(0), CurDirLookup(0), CurMacroExpander(0) {
   ScratchBuf = new ScratchBuffer(SourceMgr);
       
@@ -95,77 +95,6 @@ Preprocessor::~Preprocessor() {
   delete ScratchBuf;
 }
 
-/// AddPPKeyword - Register a preprocessor keyword like "define" "undef" or 
-/// "elif".
-static void AddPPKeyword(tok::PPKeywordKind PPID, 
-                         const char *Name, unsigned NameLen, Preprocessor &PP) {
-  PP.getIdentifierInfo(Name, Name+NameLen)->setPPKeywordID(PPID);
-}
-
-/// AddObjCKeyword - Register an Objective-C @keyword like "class" "selector" or 
-/// "property".
-static void AddObjCKeyword(tok::ObjCKeywordKind ObjCID, 
-                           const char *Name, unsigned NameLen,
-                           Preprocessor &PP) {
-  PP.getIdentifierInfo(Name, Name+NameLen)->setObjCKeywordID(ObjCID);
-}
-
-/// AddKeywords - Add all keywords to the symbol table.
-///
-void Preprocessor::AddKeywords() {
-  enum {
-    C90Shift = 0,
-    EXTC90   = 1 << C90Shift,
-    NOTC90   = 2 << C90Shift,
-    C99Shift = 2,
-    EXTC99   = 1 << C99Shift,
-    NOTC99   = 2 << C99Shift,
-    CPPShift = 4,
-    EXTCPP   = 1 << CPPShift,
-    NOTCPP   = 2 << CPPShift,
-    Mask     = 3
-  };
-
-  // Add keywords and tokens for the current language.
-#define KEYWORD(NAME, FLAGS) \
-  AddKeyword(#NAME, tok::kw_ ## NAME,  \
-             ((FLAGS) >> C90Shift) & Mask, \
-             ((FLAGS) >> C99Shift) & Mask, \
-             ((FLAGS) >> CPPShift) & Mask);
-#define ALIAS(NAME, TOK) \
-  AddKeyword(NAME, tok::kw_ ## TOK, 0, 0, 0);
-#define PPKEYWORD(NAME) \
-  AddPPKeyword(tok::pp_##NAME, #NAME, strlen(#NAME), *this);
-#define OBJC1_AT_KEYWORD(NAME) \
-  if (Features.ObjC1)          \
-    AddObjCKeyword(tok::objc_##NAME, #NAME, strlen(#NAME), *this);
-#define OBJC2_AT_KEYWORD(NAME) \
-  if (Features.ObjC2)          \
-    AddObjCKeyword(tok::objc_##NAME, #NAME, strlen(#NAME), *this);
-#include "clang/Basic/TokenKinds.def"
-}
-
-/// AddKeyword - This method is used to associate a token ID with specific
-/// identifiers because they are language keywords.  This causes the lexer to
-/// automatically map matching identifiers to specialized token codes.
-///
-/// The C90/C99/CPP flags are set to 0 if the token should be enabled in the
-/// specified langauge, set to 1 if it is an extension in the specified
-/// language, and set to 2 if disabled in the specified language.
-void Preprocessor::AddKeyword(const std::string &Keyword,
-                              tok::TokenKind TokenCode,
-                              int C90, int C99, int CPP) {
-  int Flags = Features.CPlusPlus ? CPP : (Features.C99 ? C99 : C90);
-  
-  // Don't add this keyword if disabled in this language or if an extension
-  // and extensions are disabled.
-  if (Flags+Features.NoExtensions >= 2) return;
-  
-  const char *Str = &Keyword[0];
-  IdentifierInfo &Info = *getIdentifierInfo(Str, Str+Keyword.size());
-  Info.setTokenID(TokenCode);
-  Info.setIsExtensionToken(Flags == 1);
-}
 
 
 /// Diag - Forwarding function for diagnostics.  This emits a diagnostic at

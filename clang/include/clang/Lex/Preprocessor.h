@@ -184,21 +184,6 @@ public:
     return getIdentifierInfo(NameStr, NameStr+strlen(NameStr));
   }
   
-  /// AddKeyword - This method is used to associate a token ID with specific
-  /// identifiers because they are language keywords.  This causes the lexer to
-  /// automatically map matching identifiers to specialized token codes.
-  ///
-  /// The C90/C99/CPP flags are set to 0 if the token should be enabled in the
-  /// specified langauge, set to 1 if it is an extension in the specified
-  /// language, and set to 2 if disabled in the specified language.
-  void AddKeyword(const std::string &Keyword, tok::TokenKind TokenCode,
-                  int C90, int C99, int CPP);
-  
-  /// AddKeywords - Add all keywords to the symbol table.
-  ///
-  void AddKeywords();
-  
-  
   /// AddPragmaHandler - Add the specified pragma handler to the preprocessor.
   /// If 'Namespace' is non-null, then it is a token required to exist on the
   /// pragma line before the pragma string starts, e.g. "STDC" or "GCC".
