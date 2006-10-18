@@ -339,6 +339,42 @@ CreateString(const char *Buf, unsigned Len, SourceLocation SLoc) {
 // Source File Location Methods.
 //===----------------------------------------------------------------------===//
 
+#include "llvm/System/Path.h"
+
+static std::string DoFrameworkLookup(const DirectoryEntry *Dir,
+                                     const std::string &Filename) {
+  // TODO: caching.
+  
+  // Framework names must have a '/' in the filename.
+  std::string::size_type SlashPos = Filename.find('/');
+  if (SlashPos == std::string::npos) return "";
+
+  // FrameworkName = "/System/Library/Frameworks/"
+  std::string FrameworkName = Dir->getName();
+  if (FrameworkName.empty() || FrameworkName[FrameworkName.size()-1] != '/')
+    FrameworkName += '/';
+  
+  // FrameworkName = "/System/Library/Frameworks/Cocoa"
+  FrameworkName += std::string(Filename.begin(), Filename.begin()+SlashPos);
+
+  // FrameworkName = "/System/Library/Frameworks/Cocoa.framework/"
+  FrameworkName += ".framework/";
+  
+  // If the dir doesn't exist, give up.
+  if (!sys::Path(FrameworkName).exists()) return "";
+
+  // Check "/System/Library/Frameworks/Cocoa.framework/Headers/file.h"
+  std::string HeadersFilename = FrameworkName + "Headers/" +
+    std::string(Filename.begin()+SlashPos+1, Filename.end());
+  if (sys::Path(HeadersFilename).exists()) return HeadersFilename;
+
+  // Check "/System/Library/Frameworks/Cocoa.framework/PrivateHeaders/file.h"
+  std::string PrivateHeadersFilename = FrameworkName + "PrivateHeaders/" +
+    std::string(Filename.begin()+SlashPos+1, Filename.end());
+  if (sys::Path(PrivateHeadersFilename).exists()) return HeadersFilename;
+  
+  return "";
+}
 
 /// LookupFile - Given a "foo" or <foo> reference, look up the indicated file,
 /// return null on failure.  isAngled indicates whether the file reference is
@@ -394,8 +430,16 @@ const FileEntry *Preprocessor::LookupFile(const std::string &Filename,
   // Check each directory in sequence to see if it contains this file.
   for (; i != SearchDirs.size(); ++i) {
     // Concatenate the requested file onto the directory.
-    // FIXME: Portability.  Adding file to dir should be in sys::Path.
-    std::string SearchDir = SearchDirs[i].getDir()->getName()+"/"+Filename;
+    std::string SearchDir;
+
+    if (!SearchDirs[i].isFramework()) {
+      // FIXME: Portability.  Adding file to dir should be in sys::Path.
+      SearchDir = SearchDirs[i].getDir()->getName()+"/"+Filename;
+    } else {
+      SearchDir = DoFrameworkLookup(SearchDirs[i].getDir(), Filename);
+      if (SearchDir.empty()) continue;
+    }
+    
     if (const FileEntry *FE = FileMgr.getFile(SearchDir)) {
       CurDir = &SearchDirs[i];
       
@@ -490,7 +534,6 @@ void Preprocessor::EnterSourceFileWithLexer(Lexer *TheLexer,
 /// EnterMacro - Add a Macro to the top of the include stack and start lexing
 /// tokens from it instead of the current buffer.
 void Preprocessor::EnterMacro(LexerToken &Tok, MacroArgs *Args) {
-  IdentifierInfo *Identifier = Tok.getIdentifierInfo();
   IncludeMacroStack.push_back(IncludeStackInfo(CurLexer, CurDirLookup,
                                                CurMacroExpander));
   CurLexer     = 0;
