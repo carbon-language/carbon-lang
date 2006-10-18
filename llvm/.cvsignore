@@ -7,3 +7,4 @@ autom4te.cache
 configure.out
 LLVM-*
 _distcheckdir
+llvm.spec
