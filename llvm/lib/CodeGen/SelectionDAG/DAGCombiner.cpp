@@ -51,6 +51,10 @@ namespace {
     CombinerAA("combiner-alias-analysis", cl::Hidden,
                cl::desc("Turn on alias analysis during testing"));
 
+  static cl::opt<bool>
+    CombinerGlobalAA("combiner-global-alias-analysis", cl::Hidden,
+               cl::desc("Include global information in alias analysis"));
+
 //------------------------------ DAGCombiner ---------------------------------//
 
   class VISIBILITY_HIDDEN DAGCombiner {
@@ -4036,13 +4040,15 @@ bool DAGCombiner::isAlias(SDOperand Ptr1, int64_t Size1,
   // If we know both bases then they can't alias.
   if (KnownBase1 && KnownBase2) return false;
 
-  // Use alias analysis information.
-  int Overlap1 = Size1 + SrcValueOffset1 + Offset1;
-  int Overlap2 = Size2 + SrcValueOffset2 + Offset2;
-  AliasAnalysis::AliasResult AAResult = 
+  if (CombinerGlobalAA) {
+    // Use alias analysis information.
+    int Overlap1 = Size1 + SrcValueOffset1 + Offset1;
+    int Overlap2 = Size2 + SrcValueOffset2 + Offset2;
+    AliasAnalysis::AliasResult AAResult = 
                              AA.alias(SrcValue1, Overlap1, SrcValue2, Overlap2);
-  if (AAResult == AliasAnalysis::NoAlias)
-    return false;
+    if (AAResult == AliasAnalysis::NoAlias)
+      return false;
+  }
 
   // Otherwise we have to assume they alias.
   return true;
