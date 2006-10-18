@@ -294,7 +294,9 @@ public:
 static SDOperand LowerCALL(SDOperand Op, SelectionDAG &DAG) {
   SDOperand Chain    = Op.getOperand(0);
   unsigned CallConv  = cast<ConstantSDNode>(Op.getOperand(1))->getValue();
-  assert(CallConv == CallingConv::C && "unknown calling convention");
+  assert((CallConv == CallingConv::C ||
+          CallConv == CallingConv::Fast)
+         && "unknown calling convention");
   bool isVarArg      = cast<ConstantSDNode>(Op.getOperand(2))->getValue() != 0;
   bool isTailCall    = cast<ConstantSDNode>(Op.getOperand(3))->getValue() != 0;
   SDOperand Callee   = Op.getOperand(4);
