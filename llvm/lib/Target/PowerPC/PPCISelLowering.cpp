@@ -261,7 +261,11 @@ PPCTargetLowering::PPCTargetLowering(TargetMachine &TM)
   setSetCCResultType(MVT::i32);
   setShiftAmountType(MVT::i32);
   setSetCCResultContents(ZeroOrOneSetCCResult);
-  setStackPointerRegisterToSaveRestore(PPC::R1);
+  
+  if (TM.getSubtarget<PPCSubtarget>().isPPC64())
+    setStackPointerRegisterToSaveRestore(PPC::X1);
+  else 
+    setStackPointerRegisterToSaveRestore(PPC::R1);
   
   // We have target-specific dag combine patterns for the following nodes:
   setTargetDAGCombine(ISD::SINT_TO_FP);
