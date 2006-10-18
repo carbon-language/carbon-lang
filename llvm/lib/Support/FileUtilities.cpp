@@ -85,7 +85,13 @@ static bool CompareNumbers(char *&F1P, char *&F2P, char *F1End, char *F2End,
   }
 
   if (F1NumEnd == F1P || F2NumEnd == F2P) {
-    if (ErrorMsg) *ErrorMsg = "Comparison failed, not a numeric difference.";
+    if (ErrorMsg) {
+      *ErrorMsg = "FP Comparison failed, not a numeric difference between '";
+      *ErrorMsg += F1P[0];
+      *ErrorMsg += "' and '";
+      *ErrorMsg += F2P[0];
+      *ErrorMsg += "'";
+    }
     return true;
   }
 
@@ -160,9 +166,13 @@ int llvm::DiffFilesWithTolerance(const sys::Path &FileA,
   // If they are both zero sized then they're the same
   if (A_size == 0 && B_size == 0)
     return 0;
+
   // If only one of them is zero sized then they can't be the same
-  if ((A_size == 0 || B_size == 0))
+  if ((A_size == 0 || B_size == 0)) {
+    if (Error)
+      *Error = "Files differ: one is zero-sized, the other isn't";
     return 1;
+  }
 
   // Now its safe to mmap the files into memory becasue both files
   // have a non-zero size.
@@ -190,8 +200,11 @@ int llvm::DiffFilesWithTolerance(const sys::Path &FileA,
     if (std::memcmp(File1Start, File2Start, A_size) == 0)
       return 0;
 
-    if (AbsTol == 0 && RelTol == 0)
+    if (AbsTol == 0 && RelTol == 0) {
+      if (Error)
+        *Error = "Files differ without tolerance allowance";
       return 1;   // Files different!
+    }
   }
 
   char *OrigFile1Start = File1Start;
