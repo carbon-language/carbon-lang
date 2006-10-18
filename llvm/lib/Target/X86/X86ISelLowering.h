@@ -50,8 +50,8 @@ namespace llvm {
       /// FP_TO_INT*_IN_MEM - This instruction implements FP_TO_SINT with the
       /// integer destination in memory and a FP reg source.  This corresponds
       /// to the X86::FIST*m instructions and the rounding mode change stuff. It
-      /// has two inputs (token chain and address) and two outputs (int value and
-      /// token chain).
+      /// has two inputs (token chain and address) and two outputs (int value
+      /// and token chain).
       FP_TO_INT16_IN_MEM,
       FP_TO_INT32_IN_MEM,
       FP_TO_INT64_IN_MEM,
@@ -113,9 +113,9 @@ namespace llvm {
       SETCC,
 
       /// X86 conditional moves. Operand 1 and operand 2 are the two values
-      /// to select from (operand 1 is a R/W operand). Operand 3 is the condition
-      /// code, and operand 4 is the flag operand produced by a CMP or TEST
-      /// instruction. It also writes a flag result.
+      /// to select from (operand 1 is a R/W operand). Operand 3 is the
+      /// condition code, and operand 4 is the flag operand produced by a CMP
+      /// or TEST instruction. It also writes a flag result.
       CMOV,
 
       /// X86 conditional branches. Operand 1 is the chain operand, operand 2
@@ -263,7 +263,7 @@ namespace llvm {
    unsigned getShufflePSHUFLWImmediate(SDNode *N);
  }
 
-  //===----------------------------------------------------------------------===//
+  //===--------------------------------------------------------------------===//
   //  X86TargetLowering - X86 Implementation of the TargetLowering interface
   class X86TargetLowering : public TargetLowering {
     int VarArgsFrameIndex;            // FrameIndex for start of varargs area.
@@ -319,10 +319,10 @@ namespace llvm {
       getRegClassForInlineAsmConstraint(const std::string &Constraint,
                                         MVT::ValueType VT) const;
 
-    /// getRegForInlineAsmConstraint - Given a physical register constraint (e.g.
-    /// {edx}), return the register number and the register class for the
-    /// register.  This should only be used for C_Register constraints.  On error,
-    /// this returns a register number of 0.
+    /// getRegForInlineAsmConstraint - Given a physical register constraint
+    /// (e.g. {edx}), return the register number and the register class for the
+    /// register.  This should only be used for C_Register constraints.  On
+    /// error, this returns a register number of 0.
     std::pair<unsigned, const TargetRegisterClass*> 
       getRegForInlineAsmConstraint(const std::string &Constraint,
                                    MVT::ValueType VT) const;
@@ -334,8 +334,8 @@ namespace llvm {
 
     /// isShuffleMaskLegal - Targets can use this to indicate that they only
     /// support *some* VECTOR_SHUFFLE operations, those with specific masks.
-    /// By default, if a target supports the VECTOR_SHUFFLE node, all mask values
-    /// are assumed to be legal.
+    /// By default, if a target supports the VECTOR_SHUFFLE node, all mask
+    /// values are assumed to be legal.
     virtual bool isShuffleMaskLegal(SDOperand Mask, MVT::ValueType VT) const;
 
     /// isVectorClearMaskLegal - Similar to isShuffleMaskLegal. This is
