@@ -256,10 +256,18 @@ namespace {
     void GatherAllAliases(SDNode *N, SDOperand OriginalChain,
                           SmallVector<SDOperand, 8> &Aliases);
 
+    /// isAlias - Return true if there is any possibility that the two addresses
+    /// overlap.
+    bool isAlias(SDOperand Ptr1, int64_t Size1,
+                 const Value *SrcValue1, int SrcValueOffset1,
+                 SDOperand Ptr2, int64_t Size2,
+                 const Value *SrcValue2, int SrcValueOffset1);
+                 
     /// FindAliasInfo - Extracts the relevant alias information from the memory
     /// node.  Returns true if the operand was a load.
     bool FindAliasInfo(SDNode *N,
-                       SDOperand &Ptr, int64_t &Size, const Value *&SrcValue);
+                       SDOperand &Ptr, int64_t &Size,
+                       const Value *&SrcValue, int &SrcValueOffset);
                        
     /// FindBetterChain - Walk up chain skipping non-aliasing memory nodes,
     /// looking for a better chain (aliasing node.)
@@ -4005,8 +4013,11 @@ static bool FindBaseOffset(SDOperand Ptr, SDOperand &Base, int64_t &Offset) {
 
 /// isAlias - Return true if there is any possibility that the two addresses
 /// overlap.
-static bool isAlias(SDOperand Ptr1, int64_t Size1, const Value *SrcValue1,
-                    SDOperand Ptr2, int64_t Size2, const Value *SrcValue2) {
+bool DAGCombiner::isAlias(SDOperand Ptr1, int64_t Size1,
+                          const Value *SrcValue1, int SrcValueOffset1,
+                          SDOperand Ptr2, int64_t Size2,
+                          const Value *SrcValue2, int SrcValueOffset2)
+{
   // If they are the same then they must be aliases.
   if (Ptr1 == Ptr2) return true;
   
@@ -4022,23 +4033,37 @@ static bool isAlias(SDOperand Ptr1, int64_t Size1, const Value *SrcValue1,
     return!((Offset1 + Size1) <= Offset2 || (Offset2 + Size2) <= Offset1);
   }
   
-  // Otherwise they alias if either is unknown.
-  return !KnownBase1 || !KnownBase2;
+  // If we know both bases then they can't alias.
+  if (KnownBase1 && KnownBase2) return false;
+
+  // Use alias analysis information.
+  int Overlap1 = Size1 + SrcValueOffset1 + Offset1;
+  int Overlap2 = Size2 + SrcValueOffset2 + Offset2;
+  AliasAnalysis::AliasResult AAResult = 
+                             AA.alias(SrcValue1, Overlap1, SrcValue2, Overlap2);
+  if (AAResult == AliasAnalysis::NoAlias)
+    return false;
+
+  // Otherwise we have to assume they alias.
+  return true;
 }
 
 /// FindAliasInfo - Extracts the relevant alias information from the memory
 /// node.  Returns true if the operand was a load.
 bool DAGCombiner::FindAliasInfo(SDNode *N,
-                        SDOperand &Ptr, int64_t &Size, const Value *&SrcValue) {
+                        SDOperand &Ptr, int64_t &Size,
+                        const Value *&SrcValue, int &SrcValueOffset) {
   if (LoadSDNode *LD = dyn_cast<LoadSDNode>(N)) {
     Ptr = LD->getBasePtr();
     Size = MVT::getSizeInBits(LD->getLoadedVT()) >> 3;
     SrcValue = LD->getSrcValue();
+    SrcValueOffset = LD->getSrcValueOffset();
     return true;
   } else if (StoreSDNode *ST = dyn_cast<StoreSDNode>(N)) {
     Ptr = ST->getBasePtr();
     Size = MVT::getSizeInBits(ST->getStoredVT()) >> 3;
     SrcValue = ST->getSrcValue();
+    SrcValueOffset = ST->getSrcValueOffset();
   } else {
     assert(0 && "FindAliasInfo expected a memory operand");
   }
@@ -4057,7 +4082,8 @@ void DAGCombiner::GatherAllAliases(SDNode *N, SDOperand OriginalChain,
   SDOperand Ptr;
   int64_t Size;
   const Value *SrcValue;
-  bool IsLoad = FindAliasInfo(N, Ptr, Size, SrcValue);
+  int SrcValueOffset;
+  bool IsLoad = FindAliasInfo(N, Ptr, Size, SrcValue, SrcValueOffset);
 
   // Starting off.
   Chains.push_back(OriginalChain);
@@ -4084,11 +4110,14 @@ void DAGCombiner::GatherAllAliases(SDNode *N, SDOperand OriginalChain,
       SDOperand OpPtr;
       int64_t OpSize;
       const Value *OpSrcValue;
-      bool IsOpLoad = FindAliasInfo(Chain.Val, OpPtr, OpSize, OpSrcValue);
+      int OpSrcValueOffset;
+      bool IsOpLoad = FindAliasInfo(Chain.Val, OpPtr, OpSize,
+                                    OpSrcValue, OpSrcValueOffset);
       
       // If chain is alias then stop here.
       if (!(IsLoad && IsOpLoad) &&
-          isAlias(Ptr, Size, SrcValue, OpPtr, OpSize, OpSrcValue)) {
+          isAlias(Ptr, Size, SrcValue, SrcValueOffset,
+                  OpPtr, OpSize, OpSrcValue, OpSrcValueOffset)) {
         Aliases.push_back(Chain);
       } else {
         // Look further up the chain.
