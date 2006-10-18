@@ -40,7 +40,7 @@ std::string X86ATTAsmPrinter::getSectionForFunction(const Function &F) const {
     if (Subtarget->isTargetDarwin()) {
       return ".section __TEXT,__textcoal_nt,coalesced,pure_instructions";
     } else if (Subtarget->isTargetCygwin()) {
-      return "\t.section\t.llvm.linkonce.t." + CurrentFnName + ",\"ax\"\n";
+      return "\t.section\t.text$linkonce." + CurrentFnName + ",\"ax\"\n";
     } else {
       return "\t.section\t.llvm.linkonce.t." + CurrentFnName +
              ",\"ax\",@progbits\n";
@@ -90,6 +90,7 @@ bool X86ATTAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
     O << "\t.globl\t" << CurrentFnName << "\n";    
     break;
   case Function::LinkOnceLinkage:
+  case Function::WeakLinkage:
     if (Subtarget->isTargetDarwin()) {
       O << "\t.globl\t" << CurrentFnName << "\n";
       O << "\t.weak_definition\t" << CurrentFnName << "\n";
@@ -102,20 +103,13 @@ bool X86ATTAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
       O << "\t.weak " << CurrentFnName << "\n";
     }
     break;
-  case Function::WeakLinkage:
-    if (Subtarget->isTargetDarwin()) {
-      O << "\t.globl\t" << CurrentFnName << "\n";
-      O << "\t.weak_definition\t" << CurrentFnName << "\n";
-    } else if (Subtarget->isTargetCygwin()) {
-      EmitAlignment(4, F);     // FIXME: This should be parameterized somewhere.
-      O << "\t.weak " << CurrentFnName << "\n";
-    } else {
-      EmitAlignment(4, F);     // FIXME: This should be parameterized somewhere.
-      O << "\t.weak " << CurrentFnName << "\n";
-    }
-    break;
   }
   O << CurrentFnName << ":\n";
+  // Add some workaround for linkonce linkage on Cygwin\MinGW
+  if (Subtarget->isTargetCygwin() &&
+      (F->getLinkage() == Function::LinkOnceLinkage ||
+       F->getLinkage() == Function::WeakLinkage))
+    O << "_llvm$workaround$fake$stub_" << CurrentFnName << ":\n";
 
   if (Subtarget->isTargetDarwin()) {
     // Emit pre-function debug information.

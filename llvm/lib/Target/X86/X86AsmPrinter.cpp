@@ -174,27 +174,15 @@ bool X86SharedAsmPrinter::doFinalization(Module &M) {
     } else {
       switch (I->getLinkage()) {
       case GlobalValue::LinkOnceLinkage:
-        if (Subtarget->isTargetDarwin()) {
-          O << "\t.globl " << name << "\n"
-            << "\t.weak_definition " << name << "\n";
-          SwitchToDataSection(".section __DATA,__const_coal,coalesced", I);
-        } else if (Subtarget->isTargetCygwin()) {
-          O << "\t.section\t.llvm.linkonce.d." << name << ",\"aw\"\n"
-            << "\t.globl " << name << "\n"
-            << "\t.linkonce same_size\n";
-        } else {
-          O << "\t.section\t.llvm.linkonce.d." << name << ",\"aw\",@progbits\n"
-            << "\t.weak " << name << "\n";
-        }
-        break;
       case GlobalValue::WeakLinkage:
         if (Subtarget->isTargetDarwin()) {
           O << "\t.globl " << name << "\n"
             << "\t.weak_definition " << name << "\n";
           SwitchToDataSection(".section __DATA,__const_coal,coalesced", I);
         } else if (Subtarget->isTargetCygwin()) {
-          O << "\t.section\t.llvm.linkonce.d." << name << ",\"aw\"\n"
-            << "\t.weak " << name << "\n";
+          O << "\t.section\t.data$linkonce." << name << ",\"aw\"\n"
+            << "\t.globl " << name << "\n"
+            << "\t.linkonce same_size\n";
         } else {
           O << "\t.section\t.llvm.linkonce.d." << name << ",\"aw\",@progbits\n"
             << "\t.weak " << name << "\n";
