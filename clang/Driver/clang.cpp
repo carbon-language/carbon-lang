@@ -634,16 +634,15 @@ static void RemoveDuplicates(std::vector<DirectoryLookup> &SearchList) {
   }
 }
 
-// Process the -I options and set them in the preprocessor.
-static void InitializeIncludePaths(Preprocessor &PP) {
-  FileManager &FM = PP.getFileManager();
-
+/// InitializeIncludePaths - Process the -I options and set them in the
+/// HeaderSearch object.
+static void InitializeIncludePaths(HeaderSearch &Headers, FileManager &FM,
+                                   Diagnostic &Diags) {
   // Handle -I... options.
   for (unsigned i = 0, e = I_dirs.size(); i != e; ++i) {
     if (I_dirs[i] == "-") {
       // -I- is a deprecated GCC feature.
-      PP.getDiagnostics().Report(SourceLocation(),
-                                 diag::err_pp_I_dash_not_supported);
+      Diags.Report(SourceLocation(), diag::err_pp_I_dash_not_supported);
     } else {
       AddPath(I_dirs[i], Angled, false, true, false, FM);
     }
@@ -737,8 +736,8 @@ static void InitializeIncludePaths(Preprocessor &PP) {
   
 
   bool DontSearchCurDir = false;  // TODO: set to true if -I- is set?
-  PP.SetSearchPaths(SearchList, IncludeGroup[Quoted].size(),
-                    DontSearchCurDir);
+  Headers.SetSearchPaths(SearchList, IncludeGroup[Quoted].size(),
+                         DontSearchCurDir);
 
   // If verbose, print the list of directories that will be searched.
   if (Verbose) {
@@ -828,16 +827,19 @@ int main(int argc, char **argv) {
   // Create a file manager object to provide access to and cache the filesystem.
   FileManager FileMgr;
   
+  // Process the -I options and set them in the HeaderInfo.
+  HeaderSearch HeaderInfo(FileMgr);
+  InitializeIncludePaths(HeaderInfo, FileMgr, OurDiagnostics);
+  
+  
   // Set up the preprocessor with these options.
-  Preprocessor PP(OurDiagnostics, Options, *Target, FileMgr, SourceMgr);
+  Preprocessor PP(OurDiagnostics, Options, *Target, FileMgr, SourceMgr,
+                  HeaderInfo);
   
   // Install things like __POWERPC__, __GNUC__, etc into the macro table.
   std::vector<char> PrologMacros;
   InitializePredefinedMacros(PP, PrologMacros);
   
-  // Process the -I options and set them in the preprocessor.
-  InitializeIncludePaths(PP);
-
   // Read any files specified by -imacros or -include.
   ReadPrologFiles(PP, PrologMacros);
   
@@ -932,6 +934,7 @@ int main(int argc, char **argv) {
   if (Stats) {
     // Printed from low-to-high level.
     PP.getFileManager().PrintStats();
+    PP.getHeaderSearchInfo().PrintStats();
     PP.getSourceManager().PrintStats();
     PP.getIdentifierTable().PrintStats();
     PP.PrintStats();

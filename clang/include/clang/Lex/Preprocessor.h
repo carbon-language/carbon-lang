@@ -14,9 +14,10 @@
 #ifndef LLVM_CLANG_LEX_PREPROCESSOR_H
 #define LLVM_CLANG_LEX_PREPROCESSOR_H
 
+#include "clang/Lex/HeaderSearch.h"
+#include "clang/Lex/IdentifierTable.h"
 #include "clang/Lex/Lexer.h"
 #include "clang/Lex/MacroExpander.h"
-#include "clang/Lex/IdentifierTable.h"
 #include "clang/Basic/SourceLocation.h"
 
 namespace llvm {
@@ -24,60 +25,11 @@ namespace clang {
   
 class SourceManager;
 class FileManager;
-class DirectoryEntry;
 class FileEntry;
 class PragmaNamespace;
 class PragmaHandler;
 class ScratchBuffer;
 class TargetInfo;
-
-/// DirectoryLookup - This class is used to specify the search order for
-/// directories in #include directives.
-class DirectoryLookup {
-public:
-  enum DirType {
-    NormalHeaderDir,
-    SystemHeaderDir,
-    ExternCSystemHeaderDir
-  };
-private:  
-  /// Dir - This is the actual directory that we're referring to.
-  ///
-  const DirectoryEntry *Dir;
-  
-  /// DirCharacteristic - The type of directory this is, one of the DirType enum
-  /// values.
-  DirType DirCharacteristic : 2;
-  
-  /// UserSupplied - True if this is a user-supplied directory.
-  ///
-  bool UserSupplied : 1;
-  
-  /// Framework - True if this is a framework directory search-path.
-  ///
-  bool Framework : 1;
-public:
-  DirectoryLookup(const DirectoryEntry *dir, DirType DT, bool isUser,
-                  bool isFramework)
-    : Dir(dir), DirCharacteristic(DT), UserSupplied(isUser),
-      Framework(isFramework) {}
-    
-  /// getDir - Return the directory that this entry refers to.
-  ///
-  const DirectoryEntry *getDir() const { return Dir; }
-  
-  /// DirCharacteristic - The type of directory this is, one of the DirType enum
-  /// values.
-  DirType getDirCharacteristic() const { return DirCharacteristic; }
-  
-  /// isUserSupplied - True if this is a user-supplied directory.
-  ///
-  bool isUserSupplied() const { return UserSupplied; }
-  
-  /// isFramework - True if this is a framework directory.
-  ///
-  bool isFramework() const { return Framework; }
-};
 
 /// Preprocessor - This object forms engages in a tight little dance to
 /// efficiently preprocess tokens.  Lexers know only about tokens within a
@@ -91,17 +43,8 @@ class Preprocessor {
   FileManager       &FileMgr;
   SourceManager     &SourceMgr;
   ScratchBuffer     *ScratchBuf;
-  
-  // #include search path information.  Requests for #include "x" search the
-  /// directory of the #including file first, then each directory in SearchDirs
-  /// consequtively. Requests for <x> search the current dir first, then each
-  /// directory in SearchDirs, starting at SystemDirIdx, consequtively.  If
-  /// NoCurDirSearch is true, then the check for the file in the current
-  /// directory is supressed.
-  std::vector<DirectoryLookup> SearchDirs;
-  unsigned SystemDirIdx;
-  bool NoCurDirSearch;
-  
+  HeaderSearch      &HeaderInfo;
+    
   /// Identifiers for builtin macros and other builtins.
   IdentifierInfo *Ident__LINE__, *Ident__FILE__;   // __LINE__, __FILE__
   IdentifierInfo *Ident__DATE__, *Ident__TIME__;   // __DATE__, __TIME__
@@ -176,45 +119,16 @@ private:
   std::vector<IncludeStackInfo> IncludeMacroStack;
   
   
-  /// PreFileInfo - The preprocessor keeps track of this information for each
-  /// file that is #included.
-  struct PerFileInfo {
-    /// isImport - True if this is a #import'd or #pragma once file.
-    bool isImport : 1;
-    
-    /// DirInfo - Keep track of whether this is a system header, and if so,
-    /// whether it is C++ clean or not.  This can be set by the include paths or
-    /// by #pragma gcc system_header.
-    DirectoryLookup::DirType DirInfo : 2;
-    
-    /// NumIncludes - This is the number of times the file has been included
-    /// already.
-    unsigned short NumIncludes;
-    
-    /// ControllingMacro - If this file has a #ifndef XXX (or equivalent) guard
-    /// that protects the entire contents of the file, this is the identifier
-    /// for the macro that controls whether or not it has any effect.
-    const IdentifierInfo *ControllingMacro;
-    
-    PerFileInfo() : isImport(false), DirInfo(DirectoryLookup::NormalHeaderDir),
-                    NumIncludes(0), ControllingMacro(0) {}
-  };
-  
-  /// FileInfo - This contains all of the preprocessor-specific data about files
-  /// that are included.  The vector is indexed by the FileEntry's UID.
-  ///
-  std::vector<PerFileInfo> FileInfo;
-  
   // Various statistics we track for performance analysis.
   unsigned NumDirectives, NumIncluded, NumDefined, NumUndefined, NumPragma;
   unsigned NumIf, NumElse, NumEndif;
-  unsigned NumEnteredSourceFiles, MaxIncludeStackDepth,NumMultiIncludeFileOptzn;
+  unsigned NumEnteredSourceFiles, MaxIncludeStackDepth;
   unsigned NumMacroExpanded, NumFnMacroExpanded, NumBuiltinMacroExpanded;
   unsigned NumFastMacroExpanded, NumTokenPaste, NumFastTokenPaste;
   unsigned NumSkipped;
 public:
   Preprocessor(Diagnostic &diags, const LangOptions &opts, TargetInfo &target,
-               FileManager &FM, SourceManager &SM);
+               FileManager &FM, SourceManager &SM, HeaderSearch &Headers);
   ~Preprocessor();
 
   Diagnostic &getDiagnostics() const { return Diags; }
@@ -222,6 +136,7 @@ public:
   TargetInfo &getTargetInfo() const { return Target; }
   FileManager &getFileManager() const { return FileMgr; }
   SourceManager &getSourceManager() const { return SourceMgr; }
+  HeaderSearch &getHeaderSearchInfo() const { return HeaderInfo; }
 
   IdentifierTable &getIdentifierTable() { return Identifiers; }
 
@@ -240,15 +155,6 @@ public:
   /// expansions going on at the time.
   Lexer *getCurrentFileLexer() const;
   
-  
-  /// SetSearchPaths - Interface for setting the file search paths.
-  ///
-  void SetSearchPaths(const std::vector<DirectoryLookup> &dirs,
-                      unsigned systemDirIdx, bool noCurDirSearch) {
-    SearchDirs = dirs;
-    SystemDirIdx = systemDirIdx;
-    NoCurDirSearch = noCurDirSearch;
-  }
   
   /// setFileChangeHandler - Set the callback invoked whenever a source file is
   /// entered or exited.  The SourceLocation indicates the new location, and
@@ -298,16 +204,6 @@ public:
   /// pragma line before the pragma string starts, e.g. "STDC" or "GCC".
   void AddPragmaHandler(const char *Namespace, PragmaHandler *Handler);
 
-  /// LookupFile - Given a "foo" or <foo> reference, look up the indicated file,
-  /// return null on failure.  isAngled indicates whether the file reference is
-  /// a <> reference.  If successful, this returns 'UsedDir', the
-  /// DirectoryLookup member the file was found in, or null if not applicable.
-  /// If CurDir is non-null, the file was found in the specified directory
-  /// search location.  This is used to implement #include_next.
-  const FileEntry *LookupFile(const std::string &Filename, bool isAngled,
-                              const DirectoryLookup *FromDir,
-                              const DirectoryLookup *&CurDir);
-  
   /// EnterSourceFile - Add a source file to the top of the include stack and
   /// start lexing tokens from it instead of the current buffer.  If isMainFile
   /// is true, this is the main file for the translation unit.
@@ -442,9 +338,6 @@ public:
   /// not, emit a diagnostic and consume up until the eom.
   void CheckEndOfDirective(const char *Directive);
 private:
-  /// getFileInfo - Return the PerFileInfo structure for the specified
-  /// FileEntry.
-  PerFileInfo &getFileInfo(const FileEntry *FE);
 
   /// DiscardUntilEndOfDirective - Read and discard all tokens remaining on the
   /// current line until the tok::eom token is found.
@@ -515,6 +408,13 @@ private:
   /// start lexing tokens from it instead of the current buffer.
   void EnterSourceFileWithLexer(Lexer *TheLexer, const DirectoryLookup *Dir);
   
+  /// LookupFile - Given a "foo" or <foo> reference, look up the indicated file,
+  /// return null on failure.  isAngled indicates whether the file reference is
+  /// for system #include's or not (i.e. using <> instead of "").
+  const FileEntry *LookupFile(const std::string &Filename, bool isAngled,
+                              const DirectoryLookup *FromDir,
+                              const DirectoryLookup *&CurDir);
+    
   //===--------------------------------------------------------------------===//
   /// Handle*Directive - implement the various preprocessor directives.  These
   /// should side-effect the current preprocessor object so that the next call

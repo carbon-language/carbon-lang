@@ -176,7 +176,7 @@ void Preprocessor::HandlePragmaOnce(LexerToken &OnceTok) {
   unsigned FileID = getCurrentFileLexer()->getCurFileID();
   
   // Mark the file as a once-only file now.
-  getFileInfo(SourceMgr.getFileEntryForFileID(FileID)).isImport = true;
+  HeaderInfo.MarkFileIncludeOnce(SourceMgr.getFileEntryForFileID(FileID));
 }
 
 /// HandlePragmaPoison - Handle #pragma GCC poison.  PoisonTok is the 'poison'.
@@ -233,7 +233,7 @@ void Preprocessor::HandlePragmaSystemHeader(LexerToken &SysHeaderTok) {
   // Mark the file as a system header.
   const FileEntry *File = 
     SourceMgr.getFileEntryForFileID(TheLexer->getCurFileID());
-  getFileInfo(File).DirInfo = DirectoryLookup::SystemHeaderDir;
+  HeaderInfo.MarkFileSystemHeader(File);
   
   // Notify the client, if desired, that we are in a new source file.
   if (FileChangeHandler)
@@ -257,7 +257,7 @@ void Preprocessor::HandlePragmaDependency(LexerToken &DependencyTok) {
   // Remove the quotes.
   Filename = std::string(Filename.begin()+1, Filename.end()-1);
   
-  // Search include directories.
+  // Search include directories for this file.
   const DirectoryLookup *CurDir;
   const FileEntry *File = LookupFile(Filename, isAngled, 0, CurDir);
   if (File == 0)
