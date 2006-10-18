@@ -149,6 +149,7 @@ let isReturn = 1 in {
 
 let noResults = 1, Defs = [R0, R1, R2, R3, R14] in {
   def bl: InstARM<(ops i32imm:$func, variable_ops), "bl $func", []>;
+  def blx     : InstARM<(ops IntRegs:$func, variable_ops), "blx $func", [(ARMcall IntRegs:$func)]>;
 }
 
 def ldr   : InstARM<(ops IntRegs:$dst, memri:$addr),
