@@ -1068,6 +1068,7 @@ Module *llvm::RunVMAsmParser(const char * AsmString, Module * M) {
 %token DEPLIBS CALL TAIL ASM_TOK MODULE SIDEEFFECT
 %token CC_TOK CCC_TOK CSRETCC_TOK FASTCC_TOK COLDCC_TOK
 %token X86_STDCALLCC_TOK X86_FASTCALLCC_TOK
+%token DATA
 %type <UIntVal> OptCallingConv
 
 // Basic Block Terminating Operators
@@ -1870,6 +1871,11 @@ TargetDefinition : ENDIAN '=' BigOrLittle {
   }
   | TRIPLE '=' STRINGCONSTANT {
     CurModule.CurrentModule->setTargetTriple($3);
+    free($3);
+    CHECK_FOR_ERROR
+  };
+  | DATA '=' STRINGCONSTANT {
+    CurModule.CurrentModule->setDataLayout($3);
     free($3);
     CHECK_FOR_ERROR
   };
