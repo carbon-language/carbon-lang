@@ -28,6 +28,11 @@ Each operand of the minss is a load.  At least one should be folded!
 
 //===---------------------------------------------------------------------===//
 
+Expand libm rounding functions inline:  Significant speedups possible.
+http://gcc.gnu.org/ml/gcc-patches/2006-10/msg00909.html
+
+//===---------------------------------------------------------------------===//
+
 When compiled with unsafemath enabled, "main" should enable SSE DAZ mode and
 other fast SSE modes.
 
