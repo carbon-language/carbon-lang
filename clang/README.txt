@@ -144,6 +144,7 @@ Lexer:
 
 Preprocessor:
  * Know enough about darwin filesystem to search frameworks.
+ * Know about apple header maps.
  * #assert/#unassert
  * #line / #file directives
  * MSExtension: "L#param" stringizes to a wide string literal.
