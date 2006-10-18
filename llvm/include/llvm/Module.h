@@ -116,6 +116,11 @@ public:
   /// @returns the module identifier as a string
   const std::string &getModuleIdentifier() const { return ModuleID; }
 
+  /// Get the data layout string for the module's target platform.  This encodes
+  /// the type sizes and alignments expected by this module.
+  /// @returns the data layout as a string
+  std::string getDataLayout() const { return DataLayout; }
+
   /// Get the target triple which is a string describing the target host.
   /// @returns a string containing the target triple.
   const std::string &getTargetTriple() const { return TargetTriple; }
@@ -138,6 +143,9 @@ public:
 
   /// Set the module identifier.
   void setModuleIdentifier(const std::string &ID) { ModuleID = ID; }
+
+  /// Set the data layout
+  void setDataLayout(std::string DL) { DataLayout = DL; }
 
   /// Set the target triple.
   void setTargetTriple(const std::string &T) { TargetTriple = T; }
