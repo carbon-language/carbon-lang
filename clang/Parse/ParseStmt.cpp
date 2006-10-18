@@ -651,7 +651,7 @@ Parser::StmtResult Parser::ParseAsmStatement() {
     Diag(Loc, diag::w_asm_qualifier_ignored, "restrict");
   
   // Remember if this was a volatile asm.
-  bool isVolatile = DS.TypeQualifiers & DeclSpec::TQ_volatile;
+  //bool isVolatile = DS.TypeQualifiers & DeclSpec::TQ_volatile;
   
   if (Tok.getKind() != tok::l_paren) {
     Diag(Tok, diag::err_expected_lparen_after, "asm");
