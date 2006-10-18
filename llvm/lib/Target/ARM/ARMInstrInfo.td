@@ -210,13 +210,15 @@ let Defs = [R0] in {
   def UMULL   : IntBinOp<"umull r12,", mulhu>;
 }
 
-def bcond      : InstARM<(ops brtarget:$dst, CCOp:$cc),
-		         "b$cc $dst",
-		         [(armbr bb:$dst, imm:$cc)]>;
+let isTerminator = 1 in {
+  def bcond   : InstARM<(ops brtarget:$dst, CCOp:$cc),
+	                    "b$cc $dst",
+		            [(armbr bb:$dst, imm:$cc)]>;
 
-def b      : InstARM<(ops brtarget:$dst),
-		         "b $dst",
-		         [(br bb:$dst)]>;
+  def b       : InstARM<(ops brtarget:$dst),
+                        "b $dst",
+                        [(br bb:$dst)]>;
+}
 
 def cmp      : InstARM<(ops IntRegs:$a, op_addr_mode1:$b),
 	               "cmp $a, $b",
