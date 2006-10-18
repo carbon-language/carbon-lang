@@ -299,7 +299,9 @@ static bool AvoidConcat(const LexerToken &PrevTok, const LexerToken &Tok,
     // Avoid spelling identifiers, the most common form of token.
     FirstChar = II->getName()[0];
   } else if (Tok.getLength() < 256) {
-    FirstChar = Buffer[0];
+    const char *TokPtr = Buffer;
+    PP.getSpelling(Tok, TokPtr);
+    FirstChar = TokPtr[0];
   } else {
     FirstChar = PP.getSpelling(Tok)[0];
   }
