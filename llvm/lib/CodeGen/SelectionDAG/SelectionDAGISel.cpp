@@ -882,6 +882,7 @@ void SelectionDAGLowering::visitSwitch(SwitchInst &I) {
   // Figure out which block is immediately after the current one.
   MachineBasicBlock *NextBlock = 0;
   MachineFunction::iterator BBI = CurMBB;
+
   if (++BBI != CurMBB->getParent()->end())
     NextBlock = BBI;
   
@@ -890,10 +891,12 @@ void SelectionDAGLowering::visitSwitch(SwitchInst &I) {
   if (I.getNumOperands() == 2) {
     // Update machine-CFG edges.
     MachineBasicBlock *DefaultMBB = FuncInfo.MBBMap[I.getDefaultDest()];
+
     // If this is not a fall-through branch, emit the branch.
     if (DefaultMBB != NextBlock)
       DAG.setRoot(DAG.getNode(ISD::BR, MVT::Other, getRoot(),
                               DAG.getBasicBlock(DefaultMBB)));
+
     CurMBB->addSuccessor(DefaultMBB);
     return;
   }
@@ -902,10 +905,12 @@ void SelectionDAGLowering::visitSwitch(SwitchInst &I) {
   // representing each one, and sort the vector so that we can efficiently
   // create a binary search tree from them.
   std::vector<Case> Cases;
+
   for (unsigned i = 1; i < I.getNumSuccessors(); ++i) {
     MachineBasicBlock *SMBB = FuncInfo.MBBMap[I.getSuccessor(i)];
     Cases.push_back(Case(I.getSuccessorValue(i), SMBB));
   }
+
   std::sort(Cases.begin(), Cases.end(), CaseCmp());
   
   // Get the Value to be switched on and default basic blocks, which will be
@@ -956,6 +961,7 @@ void SelectionDAGLowering::visitSwitch(SwitchInst &I) {
         SwitchOp = DAG.getNode(ISD::TRUNCATE, TLI.getPointerTy(), SUB);
       else
         SwitchOp = DAG.getNode(ISD::ZERO_EXTEND, TLI.getPointerTy(), SUB);
+
       unsigned JumpTableReg = FuncInfo.MakeReg(TLI.getPointerTy());
       SDOperand CopyTo = DAG.getCopyToReg(getRoot(), JumpTableReg, SwitchOp);
       
@@ -973,14 +979,14 @@ void SelectionDAGLowering::visitSwitch(SwitchInst &I) {
       // the default BB.
       std::vector<MachineBasicBlock*> DestBBs;
       uint64_t TEI = First;
-      for (CaseItr ii = Cases.begin(), ee = Cases.end(); ii != ee; ++TEI) {
+
+      for (CaseItr ii = Cases.begin(), ee = Cases.end(); ii != ee; ++TEI)
         if (cast<ConstantIntegral>(ii->first)->getRawValue() == TEI) {
           DestBBs.push_back(ii->second);
           ++ii;
         } else {
           DestBBs.push_back(Default);
         }
-      }
       
       // Update successor info
       for (std::vector<MachineBasicBlock*>::iterator I = DestBBs.begin(), 
@@ -1024,16 +1030,15 @@ void SelectionDAGLowering::visitSwitch(SwitchInst &I) {
       MachineBasicBlock *Target = CR.Range.first->second;
       SelectionDAGISel::CaseBlock CB(ISD::SETEQ, SV, C, Target, Default, 
                                      CR.CaseBB);
+
       // If the MBB representing the leaf node is the current MBB, then just
       // call visitSwitchCase to emit the code into the current block.
       // Otherwise, push the CaseBlock onto the vector to be later processed
       // by SDISel, and insert the node's MBB before the next MBB.
       if (CR.CaseBB == CurMBB)
         visitSwitchCase(CB);
-      else {
+      else
         SwitchCases.push_back(CB);
-        CurMF->getBasicBlockList().insert(BBI, CR.CaseBB);
-      }
     } else {
       // split case range at pivot
       CaseItr Pivot = CR.Range.first + (Size / 2);
@@ -1041,6 +1046,7 @@ void SelectionDAGLowering::visitSwitch(SwitchInst &I) {
       CaseRange RHSR(Pivot, CR.Range.second);
       Constant *C = Pivot->first;
       MachineBasicBlock *RHSBB = 0, *LHSBB = 0;
+
       // We know that we branch to the LHS if the Value being switched on is
       // less than the Pivot value, C.  We use this to optimize our binary 
       // tree a bit, by recognizing that if SV is greater than or equal to the
@@ -1054,8 +1060,10 @@ void SelectionDAGLowering::visitSwitch(SwitchInst &I) {
         LHSBB = LHSR.first->second;
       } else {
         LHSBB = new MachineBasicBlock(LLVMBB);
+        CurMF->getBasicBlockList().insert(BBI, LHSBB);
         CaseVec.push_back(CaseRec(LHSBB,C,CR.GE,LHSR));
       }
+
       // Similar to the optimization above, if the Value being switched on is
       // known to be less than the Constant CR.LT, and the current Case Value
       // is CR.LT - 1, then we can branch directly to the target block for
@@ -1066,19 +1074,20 @@ void SelectionDAGLowering::visitSwitch(SwitchInst &I) {
         RHSBB = RHSR.first->second;
       } else {
         RHSBB = new MachineBasicBlock(LLVMBB);
+        CurMF->getBasicBlockList().insert(BBI, RHSBB);
         CaseVec.push_back(CaseRec(RHSBB,CR.LT,C,RHSR));
       }
+
       // Create a CaseBlock record representing a conditional branch to
       // the LHS node if the value being switched on SV is less than C. 
       // Otherwise, branch to LHS.
       ISD::CondCode CC = C->getType()->isSigned() ? ISD::SETLT : ISD::SETULT;
       SelectionDAGISel::CaseBlock CB(CC, SV, C, LHSBB, RHSBB, CR.CaseBB);
+
       if (CR.CaseBB == CurMBB)
         visitSwitchCase(CB);
-      else {
+      else
         SwitchCases.push_back(CB);
-        CurMF->getBasicBlockList().insert(BBI, CR.CaseBB);
-      }
     }
   }
 }
