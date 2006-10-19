@@ -143,6 +143,14 @@ def ADJCALLSTACKDOWN : InstARM<(ops i32imm:$amt),
                                "!ADJCALLSTACKDOWN $amt",
                                [(callseq_start imm:$amt)]>, Imp<[R13],[R13]>;
 
+def IMPLICIT_DEF_Int : InstARM<(ops IntRegs:$dst),
+                               "@IMPLICIT_DEF $dst",
+                               [(set IntRegs:$dst, (undef))]>;
+def IMPLICIT_DEF_FP  : InstARM<(ops FPRegs:$dst), "@IMPLICIT_DEF $dst",
+                               [(set FPRegs:$dst, (undef))]>;
+def IMPLICIT_DEF_DFP : InstARM<(ops DFPRegs:$dst), "@IMPLICIT_DEF $dst",
+                               [(set DFPRegs:$dst, (undef))]>;
+
 let isReturn = 1 in {
   def bx: InstARM<(ops), "bx r14", [(retflag)]>;
 }
