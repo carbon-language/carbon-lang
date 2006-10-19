@@ -4785,7 +4785,21 @@ Instruction *InstCombiner::visitSetCondInstWithCastAndCast(SetCondInst &SCI) {
     Constant *Res = ConstantExpr::getCast(CI, SrcTy);
 
     if (ConstantExpr::getCast(Res, DestTy) == CI) {
-      RHSCIOp = Res;
+      // Make sure that src sign and dest sign match. For example,
+      //
+      // %A = cast short %X to uint
+      // %B = setgt uint %A, 1330
+      //
+      // It is incorrect to transformt this into 
+      //
+      // %B = setgt short %X, 1330 
+      // 
+      // because %A may have negative value. 
+      // However, it is OK if SrcTy is bool. See cast-set.ll testcase.
+      if (isSignSrc == isSignDest || SrcTy == Type::BoolTy)
+        RHSCIOp = Res;
+      else
+        return 0;
     } else {
       // If the value cannot be represented in the shorter type, we cannot emit
       // a simple comparison.

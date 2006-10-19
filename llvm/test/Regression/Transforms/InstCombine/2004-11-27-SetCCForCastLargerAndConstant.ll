@@ -31,12 +31,6 @@ bool %lt_signed_to_large_negative(sbyte %SB) {
   ret bool %C
 }
 
-bool %lt_signed_to_small_unsigned(sbyte %SB) {
-  %Y = cast sbyte %SB to uint		; <uint> [#uses=1]
-  %C = setlt uint %Y, 17		; <bool> [#uses=1]
-  ret bool %C
-}
-
 bool %lt_signed_to_small_signed(sbyte %SB) {
   %Y = cast sbyte %SB to int
   %C = setlt int %Y, 17
@@ -73,12 +67,6 @@ bool %lt_unsigned_to_small_unsigned(ubyte %SB) {
   ret bool %C
 }
 
-bool %lt_unsigned_to_small_signed(ubyte %SB) {
-  %Y = cast ubyte %SB to int
-  %C = setlt int %Y, 17
-  ret bool %C
-}
-
 bool %lt_unsigned_to_small_negative(ubyte %SB) {
   %Y = cast ubyte %SB to int
   %C = setlt int %Y, -17
@@ -100,12 +88,6 @@ bool %gt_signed_to_large_signed(sbyte %SB) {
 bool %gt_signed_to_large_negative(sbyte %SB) {
   %Y = cast sbyte %SB to int
   %C = setgt int %Y, -1024
-  ret bool %C
-}
-
-bool %gt_signed_to_small_unsigned(sbyte %SB) {
-  %Y = cast sbyte %SB to uint		; <uint> [#uses=1]
-  %C = setgt uint %Y, 17		; <bool> [#uses=1]
   ret bool %C
 }
 
@@ -142,12 +124,6 @@ bool %gt_unsigned_to_large_negative(ubyte %SB) {
 bool %gt_unsigned_to_small_unsigned(ubyte %SB) {
   %Y = cast ubyte %SB to uint		; <uint> [#uses=1]
   %C = setgt uint %Y, 17		; <bool> [#uses=1]
-  ret bool %C
-}
-
-bool %gt_unsigned_to_small_signed(ubyte %SB) {
-  %Y = cast ubyte %SB to int
-  %C = setgt int %Y, 17
   ret bool %C
 }
 
