@@ -136,7 +136,8 @@ while (scalar(@ARGV) and ($_ = $ARGV[0], /^[-+]/)) {
                              "OPTIMIZE_OPTION=-O2"; $BUILDTYPE="release"; next;}
   if (/^-release-asserts$/){ $MAKEOPTS = "$MAKEOPTS ENABLE_OPTIMIZED=1 ".
                              "DISABLE-ASSERTIONS=1 ".
-                             "OPTIMIZE_OPTION=-O2"; $BUILDTYPE="release-asserts"; next;}
+                             "OPTIMIZE_OPTION=-O2"; 
+                             $BUILDTYPE="release-asserts"; next;}
   if (/^-enable-llcbeta$/) { $PROGTESTOPTS .= " ENABLE_LLCBETA=1"; next; }
   if (/^-disable-llc$/)    { $PROGTESTOPTS .= " DISABLE_LLC=1";
                              $CONFIGUREARGS .= " --disable-llc_diffs"; next; } 
