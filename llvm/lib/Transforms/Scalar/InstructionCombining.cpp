@@ -4795,8 +4795,9 @@ Instruction *InstCombiner::visitSetCondInstWithCastAndCast(SetCondInst &SCI) {
       // %B = setgt short %X, 1330 
       // 
       // because %A may have negative value. 
-      // However, it is OK if SrcTy is bool. See cast-set.ll testcase.
-      if (isSignSrc == isSignDest || SrcTy == Type::BoolTy)
+      // However, it is OK if SrcTy is bool (See cast-set.ll testcase)
+      // OR operation is EQ/NE.
+      if (isSignSrc == isSignDest || SrcTy == Type::BoolTy || SCI.isEquality())
         RHSCIOp = Res;
       else
         return 0;
