@@ -168,10 +168,6 @@ def LDRB    : InstARM<(ops IntRegs:$dst, IntRegs:$addr),
                        "ldrb $dst, [$addr]",
                        [(set IntRegs:$dst, (zextloadi8 IntRegs:$addr))]>;
 
-def LDRB2   : InstARM<(ops IntRegs:$dst, IntRegs:$addr),
-                       "ldrb $dst, [$addr]",
-                       [(set IntRegs:$dst, (extloadi8 IntRegs:$addr))]>;
-
 def LDRSB   : InstARM<(ops IntRegs:$dst, IntRegs:$addr),
                        "ldrsb $dst, [$addr]",
                        [(set IntRegs:$dst, (sextloadi8 IntRegs:$addr))]>;
@@ -179,10 +175,6 @@ def LDRSB   : InstARM<(ops IntRegs:$dst, IntRegs:$addr),
 def LDRH    : InstARM<(ops IntRegs:$dst, IntRegs:$addr),
                        "ldrh $dst, [$addr]",
                        [(set IntRegs:$dst, (zextloadi16 IntRegs:$addr))]>;
-
-def LDRH2   : InstARM<(ops IntRegs:$dst, IntRegs:$addr),
-                       "ldrh $dst, [$addr]",
-                       [(set IntRegs:$dst, (extloadi16 IntRegs:$addr))]>;
 
 def LDRSH   : InstARM<(ops IntRegs:$dst, IntRegs:$addr),
                        "ldrsh $dst, [$addr]",
@@ -342,3 +334,8 @@ def : Pat<(ARMcall tglobaladdr:$dst),
 
 def : Pat<(ARMcall texternalsym:$dst),
           (bl texternalsym:$dst)>;
+
+def : Pat<(extloadi8 IntRegs:$addr),
+          (LDRB IntRegs:$addr)>;
+def : Pat<(extloadi16 IntRegs:$addr),
+          (LDRH IntRegs:$addr)>;
