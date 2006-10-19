@@ -4790,7 +4790,7 @@ Instruction *InstCombiner::visitSetCondInstWithCastAndCast(SetCondInst &SCI) {
       // %A = cast short %X to uint
       // %B = setgt uint %A, 1330
       //
-      // It is incorrect to transformt this into 
+      // It is incorrect to tranform this into 
       //
       // %B = setgt short %X, 1330 
       // 
