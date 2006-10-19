@@ -278,26 +278,42 @@ bool ARMAsmPrinter::doFinalization(Module &M) {
     unsigned Size = TD->getTypeSize(C->getType());
     unsigned Align = TD->getTypeAlignment(C->getType());
 
-    switch (I->getLinkage()) {
-    default:
-      assert(0 && "Unknown linkage type!");
-      break;
-    case GlobalValue::ExternalLinkage:
-      O << "\t.globl " << name << "\n";
-      break;
-    case GlobalValue::InternalLinkage:
-      break;
+    if (C->isNullValue() &&
+        (I->hasLinkOnceLinkage() || I->hasInternalLinkage() ||
+         I->hasWeakLinkage())) {
+      SwitchToDataSection(".data", I);
+      if (I->hasInternalLinkage())
+        O << "\t.local " << name << "\n";
+
+      O << "\t.comm " << name << "," << TD->getTypeSize(C->getType())
+        << "," << (unsigned)TD->getTypeAlignment(C->getType());
+      O << "\t\t";
+      O << TAI->getCommentString() << " ";
+      WriteAsOperand(O, I, true, true, &M);
+      O << "\n";
+    } else {
+      switch (I->getLinkage()) {
+      default:
+        assert(0 && "Unknown linkage type!");
+        break;
+      case GlobalValue::ExternalLinkage:
+        O << "\t.globl " << name << "\n";
+        break;
+      case GlobalValue::InternalLinkage:
+        break;
+      }
+
+      assert (!C->isNullValue());
+      SwitchToDataSection(".data", I);
+
+      EmitAlignment(Align, I);
+      O << "\t.type " << name << ", %object\n";
+      O << "\t.size " << name << ", " << Size << "\n";
+      O << name << ":\n";
+      EmitGlobalConstant(C);
     }
-
-    assert (!C->isNullValue());
-    SwitchToDataSection(".data", I);
-
-    EmitAlignment(Align, I);
-    O << "\t.type " << name << ", %object\n";
-    O << "\t.size " << name << ", " << Size << "\n";
-    O << name << ":\n";
-    EmitGlobalConstant(C);
   }
+
   AsmPrinter::doFinalization(M);
   return false; // success
 }
