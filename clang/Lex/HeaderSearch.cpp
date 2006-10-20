@@ -19,6 +19,15 @@
 using namespace llvm;
 using namespace clang;
 
+HeaderSearch::HeaderSearch(FileManager &FM) : FileMgr(FM) {
+  SystemDirIdx = 0;
+  NoCurDirSearch = false;
+  
+  NumIncluded = 0;
+  NumMultiIncludeFileOptzn = 0;
+  NumFrameworkLookups = NumSubFrameworkLookups = 0;
+}
+
 void HeaderSearch::PrintStats() {
   std::cerr << "\n*** HeaderSearch Stats:\n";
   std::cerr << FileInfo.size() << " files tracked.\n";
@@ -36,21 +45,23 @@ void HeaderSearch::PrintStats() {
   std::cerr << "  " << NumIncluded << " #include/#include_next/#import.\n";
   std::cerr << "    " << NumMultiIncludeFileOptzn << " #includes skipped due to"
             << " the multi-include optimization.\n";
-
+  
+  std::cerr << NumFrameworkLookups << " framework lookups.\n";
+  std::cerr << NumSubFrameworkLookups << " subframework lookups.\n";
 }
 
 //===----------------------------------------------------------------------===//
 // Header File Location.
 //===----------------------------------------------------------------------===//
 
-static const FileEntry *DoFrameworkLookup(const DirectoryEntry *Dir,
-                                          const std::string &Filename,
-                                          FileManager &FM) {
-  // TODO: caching.
-  
+const FileEntry *HeaderSearch::DoFrameworkLookup(const DirectoryEntry *Dir,
+                                                 const std::string &Filename) {
   // Framework names must have a '/' in the filename.
   std::string::size_type SlashPos = Filename.find('/');
   if (SlashPos == std::string::npos) return 0;
+  
+  // TODO: caching.
+  ++NumFrameworkLookups;
   
   // FrameworkName = "/System/Library/Frameworks/"
   std::string FrameworkName = Dir->getName();
@@ -66,13 +77,13 @@ static const FileEntry *DoFrameworkLookup(const DirectoryEntry *Dir,
   // Check "/System/Library/Frameworks/Cocoa.framework/Headers/file.h"
   std::string HeadersFilename = FrameworkName + "Headers/" +
     std::string(Filename.begin()+SlashPos+1, Filename.end());
-  if (const FileEntry *FE = FM.getFile(HeadersFilename))
+  if (const FileEntry *FE = FileMgr.getFile(HeadersFilename))
     return FE;
   
   // Check "/System/Library/Frameworks/Cocoa.framework/PrivateHeaders/file.h"
   std::string PrivateHeadersFilename = FrameworkName + "PrivateHeaders/" +
     std::string(Filename.begin()+SlashPos+1, Filename.end());
-  return FM.getFile(PrivateHeadersFilename);
+  return FileMgr.getFile(PrivateHeadersFilename);
 }
 
 /// LookupFile - Given a "foo" or <foo> reference, look up the indicated file,
@@ -131,10 +142,9 @@ const FileEntry *HeaderSearch::LookupFile(const std::string &Filename,
     const FileEntry *FE = 0;
     if (!SearchDirs[i].isFramework()) {
       // FIXME: Portability.  Adding file to dir should be in sys::Path.
-      std::string SearchDir = SearchDirs[i].getDir()->getName()+"/"+Filename;
-      FE = FileMgr.getFile(SearchDir);
+      FE = FileMgr.getFile(SearchDirs[i].getDir()->getName()+"/"+Filename);
     } else {
-      FE = DoFrameworkLookup(SearchDirs[i].getDir(), Filename, FileMgr);
+      FE = DoFrameworkLookup(SearchDirs[i].getDir(), Filename);
     }
     
     if (FE) {
@@ -163,6 +173,7 @@ LookupSubframeworkHeader(const std::string &Filename,
   if (SlashPos == std::string::npos) return 0;
   
   // TODO: Cache subframework.
+  ++NumSubFrameworkLookups;
   
   // Look up the base framework name of the ContextFileEnt.
   const std::string &ContextName = ContextFileEnt->getName();

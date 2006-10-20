@@ -120,14 +120,9 @@ class HeaderSearch {
   // Various statistics we track for performance analysis.
   unsigned NumIncluded;
   unsigned NumMultiIncludeFileOptzn;
+  unsigned NumFrameworkLookups, NumSubFrameworkLookups;
 public:
-  HeaderSearch(FileManager &FM) : FileMgr(FM) {
-    SystemDirIdx = 0;
-    NoCurDirSearch = false;
-
-    NumIncluded = 0;
-    NumMultiIncludeFileOptzn = 0;
-  }
+  HeaderSearch(FileManager &FM);
     
   /// SetSearchPaths - Interface for setting the file search paths.
   ///
@@ -193,6 +188,9 @@ public:
   
   void PrintStats();
 private:
+  const FileEntry *DoFrameworkLookup(const DirectoryEntry *Dir,
+                                     const std::string &Filename);
+      
   /// getFileInfo - Return the PerFileInfo structure for the specified
   /// FileEntry.
   PerFileInfo &getFileInfo(const FileEntry *FE);
