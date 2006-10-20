@@ -707,6 +707,8 @@ static void InitializeIncludePaths(HeaderSearch &Headers, FileManager &FM,
   // FIXME: get these from the target?
   if (!nostdinc) {
     AddPath("/usr/local/include", System, false, false, false, FM);
+    AddPath("/usr/lib/gcc/i686-apple-darwin8/4.0.1/include", System, 
+            false, false, false, FM);
     AddPath("/usr/lib/gcc/powerpc-apple-darwin8/4.0.1/include", 
             System, false, false, false, FM);
     AddPath("/usr/lib/gcc/powerpc-apple-darwin8/"
