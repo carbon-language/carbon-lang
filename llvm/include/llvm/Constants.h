@@ -176,10 +176,10 @@ public:
     return Val == V;
   }
 
-  /// Return a ConstantInt with the specified value for the specified type. 
-  /// Overloads for ll the integer types are provided to ensure that implicit
-  /// conversions don't bite us and to get around compiler errors where the 
-  /// compiler can't find a suitable overload for a given integer value.
+  /// Return a ConstantInt with the specified value for the specified type. The
+  /// value V will be canonicalized to a uint64_t but accessing it with either
+  /// getSExtValue() or getZExtValue() (ConstantIntegral) will yield the correct
+  /// sized/signed value for the type Ty.
   /// @brief Get a ConstantInt for a specific value.
   static ConstantInt *get(const Type *Ty, int64_t V);
 
