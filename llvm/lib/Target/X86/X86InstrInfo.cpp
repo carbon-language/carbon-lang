@@ -381,7 +381,7 @@ void X86InstrInfo::InsertBranch(MachineBasicBlock &MBB, MachineBasicBlock *TBB,
     return;
   }
   
-  assert(Cond.size() == 2 && "PPC branch conditions have two components!");
+  assert(Cond.size() == 1 && "X86 branch conditions have two components!");
   
   // Conditional branch.
   unsigned Opc = GetCondBranchFromCond((X86::CondCode)Cond[0].getImm());
