@@ -58,6 +58,33 @@ void Constant::destroyConstantImpl() {
   delete this;
 }
 
+/// canTrap - Return true if evaluation of this constant could trap.  This is
+/// true for things like constant expressions that could divide by zero.
+bool Constant::canTrap() const {
+  assert(getType()->isFirstClassType() && "Cannot evaluate aggregate vals!");
+  // The only thing that could possibly trap are constant exprs.
+  const ConstantExpr *CE = dyn_cast<ConstantExpr>(this);
+  if (!CE) return false;
+  
+  // ConstantExpr traps if any operands can trap. 
+  for (unsigned i = 0, e = getNumOperands(); i != e; ++i)
+    if (getOperand(i)->canTrap()) 
+      return true;
+
+  // Otherwise, only specific operations can trap.
+  switch (CE->getOpcode()) {
+  default:
+    return false;
+  case Instruction::Div:
+  case Instruction::Rem:
+    // Div and rem can trap if the RHS is not known to be non-zero.
+    if (!isa<ConstantInt>(getOperand(1)) || getOperand(1)->isNullValue())
+      return true;
+    return false;
+  }
+}
+
+
 // Static constructor to create a '0' constant of arbitrary type...
 Constant *Constant::getNullValue(const Type *Ty) {
   switch (Ty->getTypeID()) {
