@@ -120,7 +120,7 @@ static bool isGlobalVariable(Value *V) {
 
 /// getUIntOperand - Return ith operand if it is an unsigned integer.
 ///
-static ConstantUInt *getUIntOperand(GlobalVariable *GV, unsigned i) {
+static ConstantInt *getUIntOperand(GlobalVariable *GV, unsigned i) {
   // Make sure the GlobalVariable has an initializer.
   if (!GV->hasInitializer()) return NULL;
   
@@ -133,8 +133,9 @@ static ConstantUInt *getUIntOperand(GlobalVariable *GV, unsigned i) {
   if (i >= N) return NULL;
 
   // Check constant.
-  return dyn_cast<ConstantUInt>(CI->getOperand(i));
+  return dyn_cast<ConstantInt>(CI->getOperand(i));
 }
+
 //===----------------------------------------------------------------------===//
 
 /// ApplyToFields - Target the visitor to each field of the debug information
@@ -192,19 +193,19 @@ public:
   ///
   virtual void Apply(int &Field) {
     Constant *C = CI->getOperand(I++);
-    Field = cast<ConstantSInt>(C)->getValue();
+    Field = cast<ConstantInt>(C)->getSExtValue();
   }
   virtual void Apply(unsigned &Field) {
     Constant *C = CI->getOperand(I++);
-    Field = cast<ConstantUInt>(C)->getValue();
+    Field = cast<ConstantInt>(C)->getZExtValue();
   }
   virtual void Apply(int64_t &Field) {
     Constant *C = CI->getOperand(I++);
-    Field = cast<ConstantSInt>(C)->getValue();
+    Field = cast<ConstantInt>(C)->getSExtValue();
   }
   virtual void Apply(uint64_t &Field) {
     Constant *C = CI->getOperand(I++);
-    Field = cast<ConstantUInt>(C)->getValue();
+    Field = cast<ConstantInt>(C)->getZExtValue();
   }
   virtual void Apply(bool &Field) {
     Constant *C = CI->getOperand(I++);
@@ -261,16 +262,16 @@ public:
   /// Apply - Set the value of each of the fields.
   ///
   virtual void Apply(int &Field) {
-    Elements.push_back(ConstantSInt::get(Type::IntTy, Field));
+    Elements.push_back(ConstantInt::get(Type::IntTy, int32_t(Field)));
   }
   virtual void Apply(unsigned &Field) {
-    Elements.push_back(ConstantUInt::get(Type::UIntTy, Field));
+    Elements.push_back(ConstantInt::get(Type::UIntTy, uint32_t(Field)));
   }
   virtual void Apply(int64_t &Field) {
-    Elements.push_back(ConstantSInt::get(Type::LongTy, Field));
+    Elements.push_back(ConstantInt::get(Type::LongTy, int64_t(Field)));
   }
   virtual void Apply(uint64_t &Field) {
-    Elements.push_back(ConstantUInt::get(Type::ULongTy, Field));
+    Elements.push_back(ConstantInt::get(Type::ULongTy, uint64_t(Field)));
   }
   virtual void Apply(bool &Field) {
     Elements.push_back(ConstantBool::get(Field));
@@ -467,8 +468,8 @@ public:
 /// TagFromGlobal - Returns the tag number from a debug info descriptor
 /// GlobalVariable.   Return DIIValid if operand is not an unsigned int. 
 unsigned DebugInfoDesc::TagFromGlobal(GlobalVariable *GV) {
-  ConstantUInt *C = getUIntOperand(GV, 0);
-  return C ? ((unsigned)C->getValue() & ~LLVMDebugVersionMask) :
+  ConstantInt *C = getUIntOperand(GV, 0);
+  return C ? ((unsigned)C->getZExtValue() & ~LLVMDebugVersionMask) :
              (unsigned)DW_TAG_invalid;
 }
 
@@ -476,8 +477,8 @@ unsigned DebugInfoDesc::TagFromGlobal(GlobalVariable *GV) {
 /// descriptor GlobalVariable.  Return DIIValid if operand is not an unsigned
 /// int.
 unsigned  DebugInfoDesc::VersionFromGlobal(GlobalVariable *GV) {
-  ConstantUInt *C = getUIntOperand(GV, 0);
-  return C ? ((unsigned)C->getValue() & LLVMDebugVersionMask) :
+  ConstantInt *C = getUIntOperand(GV, 0);
+  return C ? ((unsigned)C->getZExtValue() & LLVMDebugVersionMask) :
              (unsigned)DW_TAG_invalid;
 }
 

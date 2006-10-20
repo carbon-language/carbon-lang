@@ -513,7 +513,7 @@ void BranchInst::setSuccessorV(unsigned idx, BasicBlock *B) {
 
 static Value *getAISize(Value *Amt) {
   if (!Amt)
-    Amt = ConstantUInt::get(Type::UIntTy, 1);
+    Amt = ConstantInt::get(Type::UIntTy, 1);
   else {
     assert(!isa<BasicBlock>(Amt) &&
            "Passed basic block into allocation size parameter!  Ue other ctor");
@@ -546,8 +546,8 @@ AllocationInst::~AllocationInst() {
 }
 
 bool AllocationInst::isArrayAllocation() const {
-  if (ConstantUInt *CUI = dyn_cast<ConstantUInt>(getOperand(0)))
-    return CUI->getValue() != 1;
+  if (ConstantInt *CUI = dyn_cast<ConstantInt>(getOperand(0)))
+    return CUI->getZExtValue() != 1;
   return true;
 }
 
@@ -849,7 +849,7 @@ ExtractElementInst::ExtractElementInst(Value *Val, unsigned IndexV,
                                        Instruction *InsertBef)
   : Instruction(cast<PackedType>(Val->getType())->getElementType(),
                 ExtractElement, Ops, 2, Name, InsertBef) {
-  Constant *Index = ConstantUInt::get(Type::UIntTy, IndexV);
+  Constant *Index = ConstantInt::get(Type::UIntTy, IndexV);
   assert(isValidOperands(Val, Index) &&
          "Invalid extractelement instruction operands!");
   Ops[0].init(Val, this);
@@ -874,7 +874,7 @@ ExtractElementInst::ExtractElementInst(Value *Val, unsigned IndexV,
                                        BasicBlock *InsertAE)
   : Instruction(cast<PackedType>(Val->getType())->getElementType(),
                 ExtractElement, Ops, 2, Name, InsertAE) {
-  Constant *Index = ConstantUInt::get(Type::UIntTy, IndexV);
+  Constant *Index = ConstantInt::get(Type::UIntTy, IndexV);
   assert(isValidOperands(Val, Index) &&
          "Invalid extractelement instruction operands!");
   
@@ -915,7 +915,7 @@ InsertElementInst::InsertElementInst(Value *Vec, Value *Elt, unsigned IndexV,
                                      const std::string &Name,
                                      Instruction *InsertBef)
   : Instruction(Vec->getType(), InsertElement, Ops, 3, Name, InsertBef) {
-  Constant *Index = ConstantUInt::get(Type::UIntTy, IndexV);
+  Constant *Index = ConstantInt::get(Type::UIntTy, IndexV);
   assert(isValidOperands(Vec, Elt, Index) &&
          "Invalid insertelement instruction operands!");
   Ops[0].init(Vec, this);
@@ -940,7 +940,7 @@ InsertElementInst::InsertElementInst(Value *Vec, Value *Elt, unsigned IndexV,
                                      const std::string &Name,
                                      BasicBlock *InsertAE)
 : Instruction(Vec->getType(), InsertElement, Ops, 3, Name, InsertAE) {
-  Constant *Index = ConstantUInt::get(Type::UIntTy, IndexV);
+  Constant *Index = ConstantInt::get(Type::UIntTy, IndexV);
   assert(isValidOperands(Vec, Elt, Index) &&
          "Invalid insertelement instruction operands!");
   

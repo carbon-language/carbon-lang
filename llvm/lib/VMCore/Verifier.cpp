@@ -586,7 +586,7 @@ void Verifier::visitShuffleVectorInst(ShuffleVectorInst &SV) {
   // Check to see if Mask is valid.
   if (const ConstantPacked *MV = dyn_cast<ConstantPacked>(SV.getOperand(2))) {
     for (unsigned i = 0, e = MV->getNumOperands(); i != e; ++i) {
-      Assert1(isa<ConstantUInt>(MV->getOperand(i)) ||
+      Assert1(isa<ConstantInt>(MV->getOperand(i)) ||
               isa<UndefValue>(MV->getOperand(i)),
               "Invalid shufflevector shuffle mask!", &SV);
     }

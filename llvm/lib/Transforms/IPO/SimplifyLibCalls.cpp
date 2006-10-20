@@ -517,8 +517,8 @@ public:
     std::vector<Value*> vals;
     vals.push_back(gep); // destination
     vals.push_back(ci->getOperand(2)); // source
-    vals.push_back(ConstantUInt::get(SLC.getIntPtrType(),len)); // length
-    vals.push_back(ConstantUInt::get(Type::UIntTy,1)); // alignment
+    vals.push_back(ConstantInt::get(SLC.getIntPtrType(),len)); // length
+    vals.push_back(ConstantInt::get(Type::UIntTy,1)); // alignment
     new CallInst(SLC.get_memcpy(), vals, "", ci);
 
     // Finally, substitute the first operand of the strcat call for the
@@ -556,38 +556,38 @@ public:
     // Check that the first argument to strchr is a constant array of sbyte.
     // If it is, get the length and data, otherwise return false.
     uint64_t len = 0;
-    ConstantArray* CA;
+    ConstantArray* CA = 0;
     if (!getConstantStringLength(ci->getOperand(1),len,&CA))
       return false;
 
-    // Check that the second argument to strchr is a constant int, return false
-    // if it isn't
-    ConstantSInt* CSI = dyn_cast<ConstantSInt>(ci->getOperand(2));
-    if (!CSI) {
-      // Just lower this to memchr since we know the length of the string as
-      // it is constant.
+    // Check that the second argument to strchr is a constant int. If it isn't
+    // a constant signed integer, we can try an alternate optimization
+    ConstantInt* CSI = dyn_cast<ConstantInt>(ci->getOperand(2));
+    if (!CSI || CSI->getType()->isUnsigned() ) {
+      // The second operand is not constant, or not signed. Just lower this to 
+      // memchr since we know the length of the string since it is constant.
       Function* f = SLC.get_memchr();
       std::vector<Value*> args;
       args.push_back(ci->getOperand(1));
       args.push_back(ci->getOperand(2));
-      args.push_back(ConstantUInt::get(SLC.getIntPtrType(),len));
+      args.push_back(ConstantInt::get(SLC.getIntPtrType(),len));
       ci->replaceAllUsesWith( new CallInst(f,args,ci->getName(),ci));
       ci->eraseFromParent();
       return true;
     }
 
     // Get the character we're looking for
-    int64_t chr = CSI->getValue();
+    int64_t chr = CSI->getSExtValue();
 
     // Compute the offset
     uint64_t offset = 0;
     bool char_found = false;
     for (uint64_t i = 0; i < len; ++i) {
-      if (ConstantSInt* CI = dyn_cast<ConstantSInt>(CA->getOperand(i))) {
+      if (ConstantInt* CI = dyn_cast<ConstantInt>(CA->getOperand(i))) {
         // Check for the null terminator
         if (CI->isNullValue())
           break; // we found end of string
-        else if (CI->getValue() == chr) {
+        else if (CI->getSExtValue() == chr) {
           char_found = true;
           offset = i;
           break;
@@ -599,7 +599,7 @@ public:
     //    (if c is a constant integer and s is a constant string)
     if (char_found) {
       std::vector<Value*> indices;
-      indices.push_back(ConstantUInt::get(Type::ULongTy,offset));
+      indices.push_back(ConstantInt::get(Type::ULongTy,offset));
       GetElementPtrInst* GEP = new GetElementPtrInst(ci->getOperand(1),indices,
           ci->getOperand(1)->getName()+".strchr",ci);
       ci->replaceAllUsesWith(GEP);
@@ -679,7 +679,7 @@ public:
       std::string str1 = A1->getAsString();
       std::string str2 = A2->getAsString();
       int result = strcmp(str1.c_str(), str2.c_str());
-      ci->replaceAllUsesWith(ConstantSInt::get(Type::IntTy,result));
+      ci->replaceAllUsesWith(ConstantInt::get(Type::IntTy,result));
       ci->eraseFromParent();
       return true;
     }
@@ -723,7 +723,7 @@ public:
     bool len_arg_is_const = false;
     if (ConstantInt* len_CI = dyn_cast<ConstantInt>(ci->getOperand(3))) {
       len_arg_is_const = true;
-      len_arg = len_CI->getRawValue();
+      len_arg = len_CI->getZExtValue();
       if (len_arg == 0) {
         // strncmp(x,y,0)   -> 0
         ci->replaceAllUsesWith(ConstantInt::get(Type::IntTy,0));
@@ -769,7 +769,7 @@ public:
       std::string str1 = A1->getAsString();
       std::string str2 = A2->getAsString();
       int result = strncmp(str1.c_str(), str2.c_str(), len_arg);
-      ci->replaceAllUsesWith(ConstantSInt::get(Type::IntTy,result));
+      ci->replaceAllUsesWith(ConstantInt::get(Type::IntTy,result));
       ci->eraseFromParent();
       return true;
     }
@@ -843,8 +843,8 @@ public:
     std::vector<Value*> vals;
     vals.push_back(dest); // destination
     vals.push_back(src); // source
-    vals.push_back(ConstantUInt::get(SLC.getIntPtrType(),len)); // length
-    vals.push_back(ConstantUInt::get(Type::UIntTy,1)); // alignment
+    vals.push_back(ConstantInt::get(SLC.getIntPtrType(),len)); // length
+    vals.push_back(ConstantInt::get(Type::UIntTy,1)); // alignment
     new CallInst(SLC.get_memcpy(), vals, "", ci);
 
     // Finally, substitute the first operand of the strcat call for the
@@ -891,7 +891,7 @@ struct StrLenOptimization : public LibCallOptimization {
         if (ConstantInt* CI = dyn_cast<ConstantInt>(bop->getOperand(1)))
         {
           // Get the value the strlen result is compared to
-          uint64_t val = CI->getRawValue();
+          uint64_t val = CI->getZExtValue();
 
           // If its compared against length 0 with == or !=
           if (val == 0 &&
@@ -902,7 +902,7 @@ struct StrLenOptimization : public LibCallOptimization {
             // strlen(x) == 0 -> *x == 0
             LoadInst* load = new LoadInst(str,str->getName()+".first",ci);
             BinaryOperator* rbop = BinaryOperator::create(bop->getOpcode(),
-              load, ConstantSInt::get(Type::SByteTy,0),
+              load, ConstantInt::get(Type::SByteTy,0),
               bop->getName()+".strlen", ci);
             bop->replaceAllUsesWith(rbop);
             bop->eraseFromParent();
@@ -919,9 +919,9 @@ struct StrLenOptimization : public LibCallOptimization {
     // strlen("xyz") -> 3 (for example)
     const Type *Ty = SLC.getTargetData()->getIntPtrType();
     if (Ty->isSigned())
-      ci->replaceAllUsesWith(ConstantSInt::get(Ty, len));
+      ci->replaceAllUsesWith(ConstantInt::get(Ty, len));
     else
-      ci->replaceAllUsesWith(ConstantUInt::get(Ty, len));
+      ci->replaceAllUsesWith(ConstantInt::get(Ty, len));
      
     ci->eraseFromParent();
     return true;
@@ -985,7 +985,7 @@ struct memcmpOptimization : public LibCallOptimization {
     // Make sure we have a constant length.
     ConstantInt *LenC = dyn_cast<ConstantInt>(CI->getOperand(3));
     if (!LenC) return false;
-    uint64_t Len = LenC->getRawValue();
+    uint64_t Len = LenC->getZExtValue();
       
     // If the length is zero, this returns 0.
     switch (Len) {
@@ -1075,8 +1075,8 @@ struct LLVMMemCpyMoveOptzn : public LibCallOptimization {
       return false;
 
     // If the length is larger than the alignment, we can't optimize
-    uint64_t len = LEN->getRawValue();
-    uint64_t alignment = ALIGN->getRawValue();
+    uint64_t len = LEN->getZExtValue();
+    uint64_t alignment = ALIGN->getZExtValue();
     if (alignment == 0)
       alignment = 1; // Alignment 0 is identity for alignment 1
     if (len > alignment)
@@ -1154,8 +1154,8 @@ struct LLVMMemSetOptimization : public LibCallOptimization {
       return false;
 
     // Extract the length and alignment
-    uint64_t len = LEN->getRawValue();
-    uint64_t alignment = ALIGN->getRawValue();
+    uint64_t len = LEN->getZExtValue();
+    uint64_t alignment = ALIGN->getZExtValue();
 
     // Alignment 0 is identity for alignment 1
     if (alignment == 0)
@@ -1174,7 +1174,7 @@ struct LLVMMemSetOptimization : public LibCallOptimization {
 
     // Make sure we have a constant ubyte to work with so we can extract
     // the value to be filled.
-    ConstantUInt* FILL = dyn_cast<ConstantUInt>(ci->getOperand(2));
+    ConstantInt* FILL = dyn_cast<ConstantInt>(ci->getOperand(2));
     if (!FILL)
       return false;
     if (FILL->getType() != Type::UByteTy)
@@ -1183,7 +1183,7 @@ struct LLVMMemSetOptimization : public LibCallOptimization {
     // memset(s,c,n) -> store s, c (for n=1,2,4,8)
 
     // Extract the fill character
-    uint64_t fill_char = FILL->getValue();
+    uint64_t fill_char = FILL->getZExtValue();
     uint64_t fill_value = fill_char;
 
     // Get the type we will cast to, based on size of memory area to fill, and
@@ -1215,7 +1215,7 @@ struct LLVMMemSetOptimization : public LibCallOptimization {
     // Cast dest to the right sized primitive and then load/store
     CastInst* DestCast =
       new CastInst(dest,PointerType::get(castType),dest->getName()+".cast",ci);
-    new StoreInst(ConstantUInt::get(castType,fill_value),DestCast, ci);
+    new StoreInst(ConstantInt::get(castType,fill_value),DestCast, ci);
     ci->eraseFromParent();
     return true;
   }
@@ -1325,16 +1325,16 @@ public:
 
     // The first character has to be a %
     if (ConstantInt* CI = dyn_cast<ConstantInt>(CA->getOperand(0)))
-      if (CI->getRawValue() != '%')
+      if (CI->getZExtValue() != '%')
         return false;
 
     // Get the second character and switch on its value
     ConstantInt* CI = dyn_cast<ConstantInt>(CA->getOperand(1));
-    switch (CI->getRawValue()) {
+    switch (CI->getZExtValue()) {
       case 's':
       {
         if (len != 3 ||
-            dyn_cast<ConstantInt>(CA->getOperand(2))->getRawValue() != '\n')
+            dyn_cast<ConstantInt>(CA->getOperand(2))->getZExtValue() != '\n')
           return false;
 
         // printf("%s\n",str) -> puts(str)
@@ -1344,7 +1344,7 @@ public:
         std::vector<Value*> args;
         args.push_back(CastToCStr(ci->getOperand(2), *ci));
         new CallInst(puts_func,args,ci->getName(),ci);
-        ci->replaceAllUsesWith(ConstantSInt::get(Type::IntTy,len));
+        ci->replaceAllUsesWith(ConstantInt::get(Type::IntTy,len));
         break;
       }
       case 'c':
@@ -1359,7 +1359,7 @@ public:
         CastInst* cast = new CastInst(ci->getOperand(2), Type::IntTy,
                                       CI->getName()+".int", ci);
         new CallInst(putchar_func, cast, "", ci);
-        ci->replaceAllUsesWith(ConstantSInt::get(Type::IntTy, 1));
+        ci->replaceAllUsesWith(ConstantInt::get(Type::IntTy, 1));
         break;
       }
       default:
@@ -1409,7 +1409,7 @@ public:
       for (unsigned i = 0; i < len; ++i) {
         if (ConstantInt* CI = dyn_cast<ConstantInt>(CA->getOperand(i))) {
           // Check for the null terminator
-          if (CI->getRawValue() == '%')
+          if (CI->getZExtValue() == '%')
             return false; // we found end of string
         } else {
           return false;
@@ -1430,11 +1430,11 @@ public:
 
       std::vector<Value*> args;
       args.push_back(ci->getOperand(2));
-      args.push_back(ConstantUInt::get(SLC.getIntPtrType(),len));
-      args.push_back(ConstantUInt::get(SLC.getIntPtrType(),1));
+      args.push_back(ConstantInt::get(SLC.getIntPtrType(),len));
+      args.push_back(ConstantInt::get(SLC.getIntPtrType(),1));
       args.push_back(ci->getOperand(1));
       new CallInst(fwrite_func,args,ci->getName(),ci);
-      ci->replaceAllUsesWith(ConstantSInt::get(Type::IntTy,len));
+      ci->replaceAllUsesWith(ConstantInt::get(Type::IntTy,len));
       ci->eraseFromParent();
       return true;
     }
@@ -1446,12 +1446,12 @@ public:
 
     // The first character has to be a %
     if (ConstantInt* CI = dyn_cast<ConstantInt>(CA->getOperand(0)))
-      if (CI->getRawValue() != '%')
+      if (CI->getZExtValue() != '%')
         return false;
 
     // Get the second character and switch on its value
     ConstantInt* CI = dyn_cast<ConstantInt>(CA->getOperand(1));
-    switch (CI->getRawValue()) {
+    switch (CI->getZExtValue()) {
       case 's':
       {
         uint64_t len = 0;
@@ -1464,11 +1464,11 @@ public:
             return false;
           std::vector<Value*> args;
           args.push_back(CastToCStr(ci->getOperand(3), *ci));
-          args.push_back(ConstantUInt::get(SLC.getIntPtrType(),len));
-          args.push_back(ConstantUInt::get(SLC.getIntPtrType(),1));
+          args.push_back(ConstantInt::get(SLC.getIntPtrType(),len));
+          args.push_back(ConstantInt::get(SLC.getIntPtrType(),1));
           args.push_back(ci->getOperand(1));
           new CallInst(fwrite_func,args,ci->getName(),ci);
-          ci->replaceAllUsesWith(ConstantSInt::get(Type::IntTy,len));
+          ci->replaceAllUsesWith(ConstantInt::get(Type::IntTy,len));
         } else {
           // fprintf(file,"%s",str) -> fputs(str,file)
           const Type* FILEptr_type = ci->getOperand(1)->getType();
@@ -1479,7 +1479,7 @@ public:
           args.push_back(CastToCStr(ci->getOperand(3), *ci));
           args.push_back(ci->getOperand(1));
           new CallInst(fputs_func,args,ci->getName(),ci);
-          ci->replaceAllUsesWith(ConstantSInt::get(Type::IntTy,len));
+          ci->replaceAllUsesWith(ConstantInt::get(Type::IntTy,len));
         }
         break;
       }
@@ -1493,7 +1493,7 @@ public:
         CastInst* cast = new CastInst(ci->getOperand(3), Type::IntTy,
                                       CI->getName()+".int", ci);
         new CallInst(fputc_func,cast,ci->getOperand(1),"",ci);
-        ci->replaceAllUsesWith(ConstantSInt::get(Type::IntTy,1));
+        ci->replaceAllUsesWith(ConstantInt::get(Type::IntTy,1));
         break;
       }
       default:
@@ -1537,7 +1537,7 @@ public:
       if (len == 0) {
         // If the length is 0, we just need to store a null byte
         new StoreInst(ConstantInt::get(Type::SByteTy,0),ci->getOperand(1),ci);
-        ci->replaceAllUsesWith(ConstantSInt::get(Type::IntTy,0));
+        ci->replaceAllUsesWith(ConstantInt::get(Type::IntTy,0));
         ci->eraseFromParent();
         return true;
       }
@@ -1546,7 +1546,7 @@ public:
       for (unsigned i = 0; i < len; ++i) {
         if (ConstantInt* CI = dyn_cast<ConstantInt>(CA->getOperand(i))) {
           // Check for the null terminator
-          if (CI->getRawValue() == '%')
+          if (CI->getZExtValue() == '%')
             return false; // we found a %, can't optimize
         } else {
           return false; // initializer is not constant int, can't optimize
@@ -1563,10 +1563,10 @@ public:
       std::vector<Value*> args;
       args.push_back(ci->getOperand(1));
       args.push_back(ci->getOperand(2));
-      args.push_back(ConstantUInt::get(SLC.getIntPtrType(),len));
-      args.push_back(ConstantUInt::get(Type::UIntTy,1));
+      args.push_back(ConstantInt::get(SLC.getIntPtrType(),len));
+      args.push_back(ConstantInt::get(Type::UIntTy,1));
       new CallInst(memcpy_func,args,"",ci);
-      ci->replaceAllUsesWith(ConstantSInt::get(Type::IntTy,len));
+      ci->replaceAllUsesWith(ConstantInt::get(Type::IntTy,len));
       ci->eraseFromParent();
       return true;
     }
@@ -1578,12 +1578,12 @@ public:
 
     // The first character has to be a %
     if (ConstantInt* CI = dyn_cast<ConstantInt>(CA->getOperand(0)))
-      if (CI->getRawValue() != '%')
+      if (CI->getZExtValue() != '%')
         return false;
 
     // Get the second character and switch on its value
     ConstantInt* CI = dyn_cast<ConstantInt>(CA->getOperand(1));
-    switch (CI->getRawValue()) {
+    switch (CI->getZExtValue()) {
     case 's': {
       // sprintf(dest,"%s",str) -> llvm.memcpy(dest, str, strlen(str)+1, 1)
       Function* strlen_func = SLC.get_strlen();
@@ -1602,7 +1602,7 @@ public:
       args.push_back(CastToCStr(ci->getOperand(1), *ci));
       args.push_back(CastToCStr(ci->getOperand(3), *ci));
       args.push_back(Len1);
-      args.push_back(ConstantUInt::get(Type::UIntTy,1));
+      args.push_back(ConstantInt::get(Type::UIntTy,1));
       new CallInst(memcpy_func, args, "", ci);
       
       // The strlen result is the unincremented number of bytes in the string.
@@ -1619,10 +1619,10 @@ public:
       CastInst* cast = new CastInst(ci->getOperand(3),Type::SByteTy,"char",ci);
       new StoreInst(cast, ci->getOperand(1), ci);
       GetElementPtrInst* gep = new GetElementPtrInst(ci->getOperand(1),
-        ConstantUInt::get(Type::UIntTy,1),ci->getOperand(1)->getName()+".end",
+        ConstantInt::get(Type::UIntTy,1),ci->getOperand(1)->getName()+".end",
         ci);
       new StoreInst(ConstantInt::get(Type::SByteTy,0),gep,ci);
-      ci->replaceAllUsesWith(ConstantSInt::get(Type::IntTy,1));
+      ci->replaceAllUsesWith(ConstantInt::get(Type::IntTy,1));
       ci->eraseFromParent();
       return true;
     }
@@ -1686,8 +1686,8 @@ public:
           return false;
         std::vector<Value*> parms;
         parms.push_back(ci->getOperand(1));
-        parms.push_back(ConstantUInt::get(SLC.getIntPtrType(),len));
-        parms.push_back(ConstantUInt::get(SLC.getIntPtrType(),1));
+        parms.push_back(ConstantInt::get(SLC.getIntPtrType(),len));
+        parms.push_back(ConstantInt::get(SLC.getIntPtrType(),1));
         parms.push_back(ci->getOperand(2));
         new CallInst(fwrite_func,parms,"",ci);
         break;
@@ -1716,11 +1716,11 @@ public:
   virtual bool OptimizeCall(CallInst *ci, SimplifyLibCalls &SLC) {
     if (ConstantInt* CI = dyn_cast<ConstantInt>(ci->getOperand(1))) {
       // isdigit(c)   -> 0 or 1, if 'c' is constant
-      uint64_t val = CI->getRawValue();
+      uint64_t val = CI->getZExtValue();
       if (val >= '0' && val <='9')
-        ci->replaceAllUsesWith(ConstantSInt::get(Type::IntTy,1));
+        ci->replaceAllUsesWith(ConstantInt::get(Type::IntTy,1));
       else
-        ci->replaceAllUsesWith(ConstantSInt::get(Type::IntTy,0));
+        ci->replaceAllUsesWith(ConstantInt::get(Type::IntTy,0));
       ci->eraseFromParent();
       return true;
     }
@@ -1730,10 +1730,10 @@ public:
       new CastInst(ci->getOperand(1),Type::UIntTy,
         ci->getOperand(1)->getName()+".uint",ci);
     BinaryOperator* sub_inst = BinaryOperator::createSub(cast,
-        ConstantUInt::get(Type::UIntTy,0x30),
+        ConstantInt::get(Type::UIntTy,0x30),
         ci->getOperand(1)->getName()+".sub",ci);
     SetCondInst* setcond_inst = new SetCondInst(Instruction::SetLE,sub_inst,
-        ConstantUInt::get(Type::UIntTy,9),
+        ConstantInt::get(Type::UIntTy,9),
         ci->getOperand(1)->getName()+".cmp",ci);
     CastInst* c2 =
       new CastInst(setcond_inst,Type::IntTy,
@@ -1760,7 +1760,7 @@ public:
     Value *V = CI->getOperand(1);
     if (V->getType()->isSigned())
       V = new CastInst(V, V->getType()->getUnsignedVersion(), V->getName(), CI);
-    Value *Cmp = BinaryOperator::createSetLT(V, ConstantUInt::get(V->getType(),
+    Value *Cmp = BinaryOperator::createSetLT(V, ConstantInt::get(V->getType(),
                                                                   128),
                                              V->getName()+".isascii", CI);
     if (Cmp->getType() != CI->getType())
@@ -1828,7 +1828,7 @@ public:
       // ffs(cnst)  -> bit#
       // ffsl(cnst) -> bit#
       // ffsll(cnst) -> bit#
-      uint64_t val = CI->getRawValue();
+      uint64_t val = CI->getZExtValue();
       int result = 0;
       if (val) {
         ++result;
@@ -1837,7 +1837,7 @@ public:
           val >>= 1;
         }
       }
-      TheCall->replaceAllUsesWith(ConstantSInt::get(Type::IntTy, result));
+      TheCall->replaceAllUsesWith(ConstantInt::get(Type::IntTy, result));
       TheCall->eraseFromParent();
       return true;
     }
@@ -1861,7 +1861,7 @@ public:
     Value *V = new CastInst(TheCall->getOperand(1), ArgType, "tmp", TheCall);
     Value *V2 = new CallInst(F, V, "tmp", TheCall);
     V2 = new CastInst(V2, Type::IntTy, "tmp", TheCall);
-    V2 = BinaryOperator::createAdd(V2, ConstantSInt::get(Type::IntTy, 1),
+    V2 = BinaryOperator::createAdd(V2, ConstantInt::get(Type::IntTy, 1),
                                    "tmp", TheCall);
     Value *Cond = 
       BinaryOperator::createSetEQ(V, Constant::getNullValue(V->getType()),
@@ -2048,7 +2048,7 @@ bool getConstantStringLength(Value *V, uint64_t &len, ConstantArray **CA) {
   // value. We'll need this later for indexing the ConstantArray.
   uint64_t start_idx = 0;
   if (ConstantInt* CI = dyn_cast<ConstantInt>(GEP->getOperand(2)))
-    start_idx = CI->getRawValue();
+    start_idx = CI->getZExtValue();
   else
     return false;
 

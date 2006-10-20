@@ -271,14 +271,14 @@ struct VISIBILITY_HIDDEN BoolRules
   }
 
   DEF_CAST(Bool  , ConstantBool, bool)
-  DEF_CAST(SByte , ConstantSInt, signed char)
-  DEF_CAST(UByte , ConstantUInt, unsigned char)
-  DEF_CAST(Short , ConstantSInt, signed short)
-  DEF_CAST(UShort, ConstantUInt, unsigned short)
-  DEF_CAST(Int   , ConstantSInt, signed int)
-  DEF_CAST(UInt  , ConstantUInt, unsigned int)
-  DEF_CAST(Long  , ConstantSInt, int64_t)
-  DEF_CAST(ULong , ConstantUInt, uint64_t)
+  DEF_CAST(SByte , ConstantInt, signed char)
+  DEF_CAST(UByte , ConstantInt, unsigned char)
+  DEF_CAST(Short , ConstantInt, signed short)
+  DEF_CAST(UShort, ConstantInt, unsigned short)
+  DEF_CAST(Int   , ConstantInt, signed int)
+  DEF_CAST(UInt  , ConstantInt, unsigned int)
+  DEF_CAST(Long  , ConstantInt, int64_t)
+  DEF_CAST(ULong , ConstantInt, uint64_t)
   DEF_CAST(Float , ConstantFP  , float)
   DEF_CAST(Double, ConstantFP  , double)
 #undef DEF_CAST
@@ -303,28 +303,28 @@ struct VISIBILITY_HIDDEN NullPointerRules
     return ConstantBool::getFalse();
   }
   static Constant *CastToSByte (const Constant *V) {
-    return ConstantSInt::get(Type::SByteTy, 0);
+    return ConstantInt::get(Type::SByteTy, 0);
   }
   static Constant *CastToUByte (const Constant *V) {
-    return ConstantUInt::get(Type::UByteTy, 0);
+    return ConstantInt::get(Type::UByteTy, 0);
   }
   static Constant *CastToShort (const Constant *V) {
-    return ConstantSInt::get(Type::ShortTy, 0);
+    return ConstantInt::get(Type::ShortTy, 0);
   }
   static Constant *CastToUShort(const Constant *V) {
-    return ConstantUInt::get(Type::UShortTy, 0);
+    return ConstantInt::get(Type::UShortTy, 0);
   }
   static Constant *CastToInt   (const Constant *V) {
-    return ConstantSInt::get(Type::IntTy, 0);
+    return ConstantInt::get(Type::IntTy, 0);
   }
   static Constant *CastToUInt  (const Constant *V) {
-    return ConstantUInt::get(Type::UIntTy, 0);
+    return ConstantInt::get(Type::UIntTy, 0);
   }
   static Constant *CastToLong  (const Constant *V) {
-    return ConstantSInt::get(Type::LongTy, 0);
+    return ConstantInt::get(Type::LongTy, 0);
   }
   static Constant *CastToULong (const Constant *V) {
-    return ConstantUInt::get(Type::ULongTy, 0);
+    return ConstantInt::get(Type::ULongTy, 0);
   }
   static Constant *CastToFloat (const Constant *V) {
     return ConstantFP::get(Type::FloatTy, 0);
@@ -428,49 +428,46 @@ struct VISIBILITY_HIDDEN GeneralPackedRules
 
 
 //===----------------------------------------------------------------------===//
-//                             DirectRules Class
+//                           DirectIntRules Class
 //===----------------------------------------------------------------------===//
 //
-// DirectRules provides a concrete base classes of ConstRules for a variety of
-// different types.  This allows the C++ compiler to automatically generate our
-// constant handling operations in a typesafe and accurate manner.
+// DirectIntRules provides implementations of functions that are valid on
+// integer types, but not all types in general.
 //
 namespace {
-template<class ConstantClass, class BuiltinType, Type **Ty, class SuperClass>
-struct VISIBILITY_HIDDEN DirectRules
-  : public TemplateRules<ConstantClass, SuperClass> {
-  static Constant *Add(const ConstantClass *V1, const ConstantClass *V2) {
-    BuiltinType R = (BuiltinType)V1->getValue() + (BuiltinType)V2->getValue();
-    return ConstantClass::get(*Ty, R);
+template <class BuiltinType, Type **Ty>
+struct VISIBILITY_HIDDEN DirectIntRules
+  : public TemplateRules<ConstantInt, DirectIntRules<BuiltinType, Ty> > {
+
+  static Constant *Add(const ConstantInt *V1, const ConstantInt *V2) {
+    BuiltinType R = (BuiltinType)V1->getZExtValue() + 
+                    (BuiltinType)V2->getZExtValue();
+    return ConstantInt::get(*Ty, R);
   }
 
-  static Constant *Sub(const ConstantClass *V1, const ConstantClass *V2) {
-    BuiltinType R = (BuiltinType)V1->getValue() - (BuiltinType)V2->getValue();
-    return ConstantClass::get(*Ty, R);
+  static Constant *Sub(const ConstantInt *V1, const ConstantInt *V2) {
+    BuiltinType R = (BuiltinType)V1->getZExtValue() - 
+                    (BuiltinType)V2->getZExtValue();
+    return ConstantInt::get(*Ty, R);
   }
 
-  static Constant *Mul(const ConstantClass *V1, const ConstantClass *V2) {
-    BuiltinType R = (BuiltinType)V1->getValue() * (BuiltinType)V2->getValue();
-    return ConstantClass::get(*Ty, R);
+  static Constant *Mul(const ConstantInt *V1, const ConstantInt *V2) {
+    BuiltinType R = (BuiltinType)V1->getZExtValue() * 
+                    (BuiltinType)V2->getZExtValue();
+    return ConstantInt::get(*Ty, R);
   }
 
-  static Constant *Div(const ConstantClass *V1, const ConstantClass *V2) {
-    if (V2->isNullValue()) return 0;
-    BuiltinType R = (BuiltinType)V1->getValue() / (BuiltinType)V2->getValue();
-    return ConstantClass::get(*Ty, R);
-  }
-
-  static Constant *LessThan(const ConstantClass *V1, const ConstantClass *V2) {
-    bool R = (BuiltinType)V1->getValue() < (BuiltinType)V2->getValue();
+  static Constant *LessThan(const ConstantInt *V1, const ConstantInt *V2) {
+    bool R = (BuiltinType)V1->getZExtValue() < (BuiltinType)V2->getZExtValue();
     return ConstantBool::get(R);
   }
 
-  static Constant *EqualTo(const ConstantClass *V1, const ConstantClass *V2) {
-    bool R = (BuiltinType)V1->getValue() == (BuiltinType)V2->getValue();
+  static Constant *EqualTo(const ConstantInt *V1, const ConstantInt *V2) {
+    bool R = (BuiltinType)V1->getZExtValue() == (BuiltinType)V2->getZExtValue();
     return ConstantBool::get(R);
   }
 
-  static Constant *CastToPointer(const ConstantClass *V,
+  static Constant *CastToPointer(const ConstantInt *V,
                                  const PointerType *PTy) {
     if (V->isNullValue())    // Is it a FP or Integral null value?
       return ConstantPointerNull::get(PTy);
@@ -479,79 +476,70 @@ struct VISIBILITY_HIDDEN DirectRules
 
   // Casting operators.  ick
 #define DEF_CAST(TYPE, CLASS, CTYPE) \
-  static Constant *CastTo##TYPE  (const ConstantClass *V) {    \
-    return CLASS::get(Type::TYPE##Ty, (CTYPE)(BuiltinType)V->getValue()); \
+  static Constant *CastTo##TYPE  (const ConstantInt *V) {    \
+    return CLASS::get(Type::TYPE##Ty, (CTYPE)(BuiltinType)V->getZExtValue()); \
   }
 
   DEF_CAST(Bool  , ConstantBool, bool)
-  DEF_CAST(SByte , ConstantSInt, signed char)
-  DEF_CAST(UByte , ConstantUInt, unsigned char)
-  DEF_CAST(Short , ConstantSInt, signed short)
-  DEF_CAST(UShort, ConstantUInt, unsigned short)
-  DEF_CAST(Int   , ConstantSInt, signed int)
-  DEF_CAST(UInt  , ConstantUInt, unsigned int)
-  DEF_CAST(Long  , ConstantSInt, int64_t)
-  DEF_CAST(ULong , ConstantUInt, uint64_t)
-  DEF_CAST(Float , ConstantFP  , float)
-  DEF_CAST(Double, ConstantFP  , double)
+  DEF_CAST(SByte , ConstantInt, signed char)
+  DEF_CAST(UByte , ConstantInt, unsigned char)
+  DEF_CAST(Short , ConstantInt, signed short)
+  DEF_CAST(UShort, ConstantInt, unsigned short)
+  DEF_CAST(Int   , ConstantInt, signed int)
+  DEF_CAST(UInt  , ConstantInt, unsigned int)
+  DEF_CAST(Long  , ConstantInt, int64_t)
+  DEF_CAST(ULong , ConstantInt, uint64_t)
+  DEF_CAST(Float , ConstantFP , float)
+  DEF_CAST(Double, ConstantFP , double)
 #undef DEF_CAST
-};
-}  // end anonymous namespace
 
-
-//===----------------------------------------------------------------------===//
-//                           DirectIntRules Class
-//===----------------------------------------------------------------------===//
-//
-// DirectIntRules provides implementations of functions that are valid on
-// integer types, but not all types in general.
-//
-namespace {
-template <class ConstantClass, class BuiltinType, Type **Ty>
-struct VISIBILITY_HIDDEN DirectIntRules
-  : public DirectRules<ConstantClass, BuiltinType, Ty,
-                       DirectIntRules<ConstantClass, BuiltinType, Ty> > {
-
-  static Constant *Div(const ConstantClass *V1, const ConstantClass *V2) {
+  static Constant *Div(const ConstantInt *V1, const ConstantInt *V2) {
     if (V2->isNullValue()) return 0;
     if (V2->isAllOnesValue() &&              // MIN_INT / -1
-        (BuiltinType)V1->getValue() == -(BuiltinType)V1->getValue())
+        (BuiltinType)V1->getZExtValue() == -(BuiltinType)V1->getZExtValue())
       return 0;
-    BuiltinType R = (BuiltinType)V1->getValue() / (BuiltinType)V2->getValue();
-    return ConstantClass::get(*Ty, R);
+    BuiltinType R = 
+      (BuiltinType)V1->getZExtValue() / (BuiltinType)V2->getZExtValue();
+    return ConstantInt::get(*Ty, R);
   }
 
-  static Constant *Rem(const ConstantClass *V1,
-                       const ConstantClass *V2) {
+  static Constant *Rem(const ConstantInt *V1,
+                        const ConstantInt *V2) {
     if (V2->isNullValue()) return 0;         // X / 0
     if (V2->isAllOnesValue() &&              // MIN_INT / -1
-        (BuiltinType)V1->getValue() == -(BuiltinType)V1->getValue())
+        (BuiltinType)V1->getZExtValue() == -(BuiltinType)V1->getZExtValue())
       return 0;
-    BuiltinType R = (BuiltinType)V1->getValue() % (BuiltinType)V2->getValue();
-    return ConstantClass::get(*Ty, R);
+    BuiltinType R = 
+      (BuiltinType)V1->getZExtValue() % (BuiltinType)V2->getZExtValue();
+    return ConstantInt::get(*Ty, R);
   }
 
-  static Constant *And(const ConstantClass *V1, const ConstantClass *V2) {
-    BuiltinType R = (BuiltinType)V1->getValue() & (BuiltinType)V2->getValue();
-    return ConstantClass::get(*Ty, R);
+  static Constant *And(const ConstantInt *V1, const ConstantInt *V2) {
+    BuiltinType R = 
+      (BuiltinType)V1->getZExtValue() & (BuiltinType)V2->getZExtValue();
+    return ConstantInt::get(*Ty, R);
   }
-  static Constant *Or(const ConstantClass *V1, const ConstantClass *V2) {
-    BuiltinType R = (BuiltinType)V1->getValue() | (BuiltinType)V2->getValue();
-    return ConstantClass::get(*Ty, R);
+  static Constant *Or(const ConstantInt *V1, const ConstantInt *V2) {
+    BuiltinType R = 
+      (BuiltinType)V1->getZExtValue() | (BuiltinType)V2->getZExtValue();
+    return ConstantInt::get(*Ty, R);
   }
-  static Constant *Xor(const ConstantClass *V1, const ConstantClass *V2) {
-    BuiltinType R = (BuiltinType)V1->getValue() ^ (BuiltinType)V2->getValue();
-    return ConstantClass::get(*Ty, R);
-  }
-
-  static Constant *Shl(const ConstantClass *V1, const ConstantClass *V2) {
-    BuiltinType R = (BuiltinType)V1->getValue() << (BuiltinType)V2->getValue();
-    return ConstantClass::get(*Ty, R);
+  static Constant *Xor(const ConstantInt *V1, const ConstantInt *V2) {
+    BuiltinType R = 
+      (BuiltinType)V1->getZExtValue() ^ (BuiltinType)V2->getZExtValue();
+    return ConstantInt::get(*Ty, R);
   }
 
-  static Constant *Shr(const ConstantClass *V1, const ConstantClass *V2) {
-    BuiltinType R = (BuiltinType)V1->getValue() >> (BuiltinType)V2->getValue();
-    return ConstantClass::get(*Ty, R);
+  static Constant *Shl(const ConstantInt *V1, const ConstantInt *V2) {
+    BuiltinType R = 
+      (BuiltinType)V1->getZExtValue() << (BuiltinType)V2->getZExtValue();
+    return ConstantInt::get(*Ty, R);
+  }
+
+  static Constant *Shr(const ConstantInt *V1, const ConstantInt *V2) {
+    BuiltinType R = 
+      (BuiltinType)V1->getZExtValue() >> (BuiltinType)V2->getZExtValue();
+    return ConstantInt::get(*Ty, R);
   }
 };
 }  // end anonymous namespace
@@ -565,22 +553,74 @@ struct VISIBILITY_HIDDEN DirectIntRules
 /// floating point types, but not all types in general.
 ///
 namespace {
-template <class ConstantClass, class BuiltinType, Type **Ty>
+template <class BuiltinType, Type **Ty>
 struct VISIBILITY_HIDDEN DirectFPRules
-  : public DirectRules<ConstantClass, BuiltinType, Ty,
-                       DirectFPRules<ConstantClass, BuiltinType, Ty> > {
-  static Constant *Rem(const ConstantClass *V1, const ConstantClass *V2) {
+  : public TemplateRules<ConstantFP, DirectFPRules<BuiltinType, Ty> > {
+
+  static Constant *Add(const ConstantFP *V1, const ConstantFP *V2) {
+    BuiltinType R = (BuiltinType)V1->getValue() + 
+                    (BuiltinType)V2->getValue();
+    return ConstantFP::get(*Ty, R);
+  }
+
+  static Constant *Sub(const ConstantFP *V1, const ConstantFP *V2) {
+    BuiltinType R = (BuiltinType)V1->getValue() - (BuiltinType)V2->getValue();
+    return ConstantFP::get(*Ty, R);
+  }
+
+  static Constant *Mul(const ConstantFP *V1, const ConstantFP *V2) {
+    BuiltinType R = (BuiltinType)V1->getValue() * (BuiltinType)V2->getValue();
+    return ConstantFP::get(*Ty, R);
+  }
+
+  static Constant *LessThan(const ConstantFP *V1, const ConstantFP *V2) {
+    bool R = (BuiltinType)V1->getValue() < (BuiltinType)V2->getValue();
+    return ConstantBool::get(R);
+  }
+
+  static Constant *EqualTo(const ConstantFP *V1, const ConstantFP *V2) {
+    bool R = (BuiltinType)V1->getValue() == (BuiltinType)V2->getValue();
+    return ConstantBool::get(R);
+  }
+
+  static Constant *CastToPointer(const ConstantFP *V,
+                                 const PointerType *PTy) {
+    if (V->isNullValue())    // Is it a FP or Integral null value?
+      return ConstantPointerNull::get(PTy);
+    return 0;  // Can't const prop other types of pointers
+  }
+
+  // Casting operators.  ick
+#define DEF_CAST(TYPE, CLASS, CTYPE) \
+  static Constant *CastTo##TYPE  (const ConstantFP *V) {    \
+    return CLASS::get(Type::TYPE##Ty, (CTYPE)(BuiltinType)V->getValue()); \
+  }
+
+  DEF_CAST(Bool  , ConstantBool, bool)
+  DEF_CAST(SByte , ConstantInt, signed char)
+  DEF_CAST(UByte , ConstantInt, unsigned char)
+  DEF_CAST(Short , ConstantInt, signed short)
+  DEF_CAST(UShort, ConstantInt, unsigned short)
+  DEF_CAST(Int   , ConstantInt, signed int)
+  DEF_CAST(UInt  , ConstantInt, unsigned int)
+  DEF_CAST(Long  , ConstantInt, int64_t)
+  DEF_CAST(ULong , ConstantInt, uint64_t)
+  DEF_CAST(Float , ConstantFP , float)
+  DEF_CAST(Double, ConstantFP , double)
+#undef DEF_CAST
+
+  static Constant *Rem(const ConstantFP *V1, const ConstantFP *V2) {
     if (V2->isNullValue()) return 0;
     BuiltinType Result = std::fmod((BuiltinType)V1->getValue(),
                                    (BuiltinType)V2->getValue());
-    return ConstantClass::get(*Ty, Result);
+    return ConstantFP::get(*Ty, Result);
   }
-  static Constant *Div(const ConstantClass *V1, const ConstantClass *V2) {
+  static Constant *Div(const ConstantFP *V1, const ConstantFP *V2) {
     BuiltinType inf = std::numeric_limits<BuiltinType>::infinity();
-    if (V2->isExactlyValue(0.0)) return ConstantClass::get(*Ty, inf);
-    if (V2->isExactlyValue(-0.0)) return ConstantClass::get(*Ty, -inf);
+    if (V2->isExactlyValue(0.0)) return ConstantFP::get(*Ty, inf);
+    if (V2->isExactlyValue(-0.0)) return ConstantFP::get(*Ty, -inf);
     BuiltinType R = (BuiltinType)V1->getValue() / (BuiltinType)V2->getValue();
-    return ConstantClass::get(*Ty, R);
+    return ConstantFP::get(*Ty, R);
   }
 };
 }  // end anonymous namespace
@@ -590,26 +630,16 @@ static ManagedStatic<BoolRules>        BoolR;
 static ManagedStatic<NullPointerRules> NullPointerR;
 static ManagedStatic<ConstantPackedRules> ConstantPackedR;
 static ManagedStatic<GeneralPackedRules> GeneralPackedR;
-static ManagedStatic<DirectIntRules<ConstantSInt,   signed char ,
-                                    &Type::SByteTy> > SByteR;
-static ManagedStatic<DirectIntRules<ConstantUInt, unsigned char ,
-                                    &Type::UByteTy> > UByteR;
-static ManagedStatic<DirectIntRules<ConstantSInt,   signed short,
-                                    &Type::ShortTy> > ShortR;
-static ManagedStatic<DirectIntRules<ConstantUInt, unsigned short,
-                                    &Type::UShortTy> > UShortR;
-static ManagedStatic<DirectIntRules<ConstantSInt,   signed int  ,
-                                    &Type::IntTy> >   IntR;
-static ManagedStatic<DirectIntRules<ConstantUInt, unsigned int  ,
-                                    &Type::UIntTy> >  UIntR;
-static ManagedStatic<DirectIntRules<ConstantSInt,  int64_t      ,
-                                    &Type::LongTy> >  LongR;
-static ManagedStatic<DirectIntRules<ConstantUInt, uint64_t      ,
-                                    &Type::ULongTy> > ULongR;
-static ManagedStatic<DirectFPRules <ConstantFP  , float         ,
-                                    &Type::FloatTy> > FloatR;
-static ManagedStatic<DirectFPRules <ConstantFP  , double        ,
-                                    &Type::DoubleTy> > DoubleR;
+static ManagedStatic<DirectIntRules<signed char   , &Type::SByteTy> > SByteR;
+static ManagedStatic<DirectIntRules<unsigned char , &Type::UByteTy> > UByteR;
+static ManagedStatic<DirectIntRules<signed short  , &Type::ShortTy> > ShortR;
+static ManagedStatic<DirectIntRules<unsigned short, &Type::UShortTy> > UShortR;
+static ManagedStatic<DirectIntRules<signed int    , &Type::IntTy> >   IntR;
+static ManagedStatic<DirectIntRules<unsigned int  , &Type::UIntTy> >  UIntR;
+static ManagedStatic<DirectIntRules<int64_t       , &Type::LongTy> >  LongR;
+static ManagedStatic<DirectIntRules<uint64_t      , &Type::ULongTy> > ULongR;
+static ManagedStatic<DirectFPRules <float         , &Type::FloatTy> > FloatR;
+static ManagedStatic<DirectFPRules <double        , &Type::DoubleTy> > DoubleR;
 
 /// ConstRules::get - This method returns the constant rules implementation that
 /// implements the semantics of the two specified constants.
@@ -684,7 +714,7 @@ static Constant *CastConstantPacked(ConstantPacked *CP,
       if (DstEltTy->getTypeID() == Type::DoubleTyID) {
         for (unsigned i = 0; i != SrcNumElts; ++i) {
           double V =
-            BitsToDouble(cast<ConstantInt>(CP->getOperand(i))->getRawValue());
+            BitsToDouble(cast<ConstantInt>(CP->getOperand(i))->getZExtValue());
           Result.push_back(ConstantFP::get(Type::DoubleTy, V));
         }
         return ConstantPacked::get(Result);
@@ -692,7 +722,7 @@ static Constant *CastConstantPacked(ConstantPacked *CP,
       assert(DstEltTy == Type::FloatTy && "Unknown fp type!");
       for (unsigned i = 0; i != SrcNumElts; ++i) {
         float V =
-        BitsToFloat(cast<ConstantInt>(CP->getOperand(i))->getRawValue());
+        BitsToFloat(cast<ConstantInt>(CP->getOperand(i))->getZExtValue());
         Result.push_back(ConstantFP::get(Type::FloatTy, V));
       }
       return ConstantPacked::get(Result);
@@ -705,7 +735,7 @@ static Constant *CastConstantPacked(ConstantPacked *CP,
       for (unsigned i = 0; i != SrcNumElts; ++i) {
         uint64_t V =
           DoubleToBits(cast<ConstantFP>(CP->getOperand(i))->getValue());
-        Constant *C = ConstantUInt::get(Type::ULongTy, V);
+        Constant *C = ConstantInt::get(Type::ULongTy, V);
         Result.push_back(ConstantExpr::getCast(C, DstEltTy));
       }
       return ConstantPacked::get(Result);
@@ -713,8 +743,8 @@ static Constant *CastConstantPacked(ConstantPacked *CP,
 
     assert(SrcEltTy->getTypeID() == Type::FloatTyID);
     for (unsigned i = 0; i != SrcNumElts; ++i) {
-      unsigned V = FloatToBits(cast<ConstantFP>(CP->getOperand(i))->getValue());
-      Constant *C = ConstantUInt::get(Type::UIntTy, V);
+      uint32_t V = FloatToBits(cast<ConstantFP>(CP->getOperand(i))->getValue());
+      Constant *C = ConstantInt::get(Type::UIntTy, V);
       Result.push_back(ConstantExpr::getCast(C, DstEltTy));
     }
     return ConstantPacked::get(Result);
@@ -871,8 +901,8 @@ Constant *llvm::ConstantFoldExtractElementInstruction(const Constant *Val,
                           cast<PackedType>(Val->getType())->getElementType());
   
   if (const ConstantPacked *CVal = dyn_cast<ConstantPacked>(Val)) {
-    if (const ConstantUInt *CIdx = dyn_cast<ConstantUInt>(Idx)) {
-      return const_cast<Constant*>(CVal->getOperand(CIdx->getValue()));
+    if (const ConstantInt *CIdx = dyn_cast<ConstantInt>(Idx)) {
+      return const_cast<Constant*>(CVal->getOperand(CIdx->getZExtValue()));
     } else if (isa<UndefValue>(Idx)) {
       // ee({w,x,y,z}, undef) -> w (an arbitrary value).
       return const_cast<Constant*>(CVal->getOperand(0));
@@ -884,9 +914,9 @@ Constant *llvm::ConstantFoldExtractElementInstruction(const Constant *Val,
 Constant *llvm::ConstantFoldInsertElementInstruction(const Constant *Val,
                                                      const Constant *Elt,
                                                      const Constant *Idx) {
-  const ConstantUInt *CIdx = dyn_cast<ConstantUInt>(Idx);
+  const ConstantInt *CIdx = dyn_cast<ConstantInt>(Idx);
   if (!CIdx) return 0;
-  unsigned idxVal = CIdx->getValue();
+  uint64_t idxVal = CIdx->getZExtValue();
   if (const UndefValue *UVal = dyn_cast<UndefValue>(Val)) {
     // Insertion of scalar constant into packed undef
     // Optimize away insertion of undef
@@ -991,7 +1021,8 @@ static int IdxCompare(Constant *C1, Constant *C2, const Type *ElTy) {
 
   // If they are really different, now that they are the same type, then we
   // found a difference!
-  if (cast<ConstantSInt>(C1)->getValue() < cast<ConstantSInt>(C2)->getValue())
+  if (cast<ConstantInt>(C1)->getSExtValue() < 
+      cast<ConstantInt>(C2)->getSExtValue())
     return -1;
   else
     return 1;
@@ -1324,17 +1355,17 @@ Constant *llvm::ConstantFoldBinaryInstruction(unsigned Opcode,
       case Instruction::Mul:
         if (V2->isNullValue()) return const_cast<Constant*>(V2);  // X * 0 == 0
         if (const ConstantInt *CI = dyn_cast<ConstantInt>(V2))
-          if (CI->getRawValue() == 1)
+          if (CI->getZExtValue() == 1)
             return const_cast<Constant*>(V1);                     // X * 1 == X
         break;
       case Instruction::Div:
         if (const ConstantInt *CI = dyn_cast<ConstantInt>(V2))
-          if (CI->getRawValue() == 1)
+          if (CI->getZExtValue() == 1)
             return const_cast<Constant*>(V1);                     // X / 1 == X
         break;
       case Instruction::Rem:
         if (const ConstantInt *CI = dyn_cast<ConstantInt>(V2))
-          if (CI->getRawValue() == 1)
+          if (CI->getZExtValue() == 1)
             return Constant::getNullValue(CI->getType()); // X % 1 == 0
         break;
       case Instruction::And:
@@ -1348,7 +1379,7 @@ Constant *llvm::ConstantFoldBinaryInstruction(unsigned Opcode,
           // Functions are at least 4-byte aligned.  If and'ing the address of a
           // function with a constant < 4, fold it to zero.
           if (const ConstantInt *CI = dyn_cast<ConstantInt>(V2))
-            if (CI->getRawValue() < 4 && isa<Function>(CPR))
+            if (CI->getZExtValue() < 4 && isa<Function>(CPR))
               return Constant::getNullValue(CI->getType());
         }
         break;
@@ -1427,10 +1458,10 @@ Constant *llvm::ConstantFoldGetElementPtr(const Constant *C,
 
     if (IdxList.size() == 1) {
       const Type *ElTy = cast<PointerType>(C->getType())->getElementType();
-      if (unsigned ElSize = ElTy->getPrimitiveSize()) {
+      if (uint32_t ElSize = ElTy->getPrimitiveSize()) {
         // gep null, C is equal to C*sizeof(nullty).  If nullty is a known llvm
         // type, we can statically fold this.
-        Constant *R = ConstantUInt::get(Type::UIntTy, ElSize);
+        Constant *R = ConstantInt::get(Type::UIntTy, ElSize);
         R = ConstantExpr::getCast(R, Idx0->getType());
         R = ConstantExpr::getMul(R, Idx0);
         return ConstantExpr::getCast(R, C->getType());

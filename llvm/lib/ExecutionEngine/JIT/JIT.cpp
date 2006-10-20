@@ -196,22 +196,22 @@ GenericValue JIT::runFunction(Function *F,
     switch (ArgTy->getTypeID()) {
     default: assert(0 && "Unknown argument type for function call!");
     case Type::BoolTyID:   C = ConstantBool::get(AV.BoolVal); break;
-    case Type::SByteTyID:  C = ConstantSInt::get(ArgTy, AV.SByteVal);  break;
-    case Type::UByteTyID:  C = ConstantUInt::get(ArgTy, AV.UByteVal);  break;
-    case Type::ShortTyID:  C = ConstantSInt::get(ArgTy, AV.ShortVal);  break;
-    case Type::UShortTyID: C = ConstantUInt::get(ArgTy, AV.UShortVal); break;
-    case Type::IntTyID:    C = ConstantSInt::get(ArgTy, AV.IntVal);    break;
-    case Type::UIntTyID:   C = ConstantUInt::get(ArgTy, AV.UIntVal);   break;
-    case Type::LongTyID:   C = ConstantSInt::get(ArgTy, AV.LongVal);   break;
-    case Type::ULongTyID:  C = ConstantUInt::get(ArgTy, AV.ULongVal);  break;
-    case Type::FloatTyID:  C = ConstantFP  ::get(ArgTy, AV.FloatVal);  break;
-    case Type::DoubleTyID: C = ConstantFP  ::get(ArgTy, AV.DoubleVal); break;
+    case Type::SByteTyID:  C = ConstantInt::get(ArgTy, AV.SByteVal);  break;
+    case Type::UByteTyID:  C = ConstantInt::get(ArgTy, AV.UByteVal);  break;
+    case Type::ShortTyID:  C = ConstantInt::get(ArgTy, AV.ShortVal);  break;
+    case Type::UShortTyID: C = ConstantInt::get(ArgTy, AV.UShortVal); break;
+    case Type::IntTyID:    C = ConstantInt::get(ArgTy, AV.IntVal);    break;
+    case Type::UIntTyID:   C = ConstantInt::get(ArgTy, AV.UIntVal);   break;
+    case Type::LongTyID:   C = ConstantInt::get(ArgTy, AV.LongVal);   break;
+    case Type::ULongTyID:  C = ConstantInt::get(ArgTy, AV.ULongVal);  break;
+    case Type::FloatTyID:  C = ConstantFP ::get(ArgTy, AV.FloatVal);  break;
+    case Type::DoubleTyID: C = ConstantFP ::get(ArgTy, AV.DoubleVal); break;
     case Type::PointerTyID:
       void *ArgPtr = GVTOP(AV);
       if (sizeof(void*) == 4) {
-        C = ConstantSInt::get(Type::IntTy, (int)(intptr_t)ArgPtr);
+        C = ConstantInt::get(Type::IntTy, (int)(intptr_t)ArgPtr);
       } else {
-        C = ConstantSInt::get(Type::LongTy, (intptr_t)ArgPtr);
+        C = ConstantInt::get(Type::LongTy, (intptr_t)ArgPtr);
       }
       C = ConstantExpr::getCast(C, ArgTy);  // Cast the integer to pointer
       break;

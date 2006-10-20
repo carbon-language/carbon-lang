@@ -810,8 +810,7 @@ bool ARMDAGToDAGISel::SelectAddrMode1(SDOperand N,
   case ISD::Constant: {
     uint32_t val = cast<ConstantSDNode>(N)->getValue();
     if(!isRotInt8Immediate(val)) {
-      const Type  *t =  MVT::getTypeForValueType(MVT::i32);
-      Constant    *C = ConstantUInt::get(t, val);
+      Constant    *C = ConstantInt::get(Type::UIntTy, val);
       int  alignment = 2;
       SDOperand Addr = CurDAG->getTargetConstantPool(C, MVT::i32, alignment);
       SDOperand    Z = CurDAG->getTargetConstant(0,     MVT::i32);

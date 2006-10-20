@@ -188,10 +188,10 @@ static void getBackEdges(Function& F, T& BackEdges);
   
 GlobalRandomCounter::GlobalRandomCounter(Module& M, const Type* t, 
                                          uint64_t resetval) : T(t) {
+  ConstantInt* Init = ConstantInt::get(T, resetval); 
+  ResetValue = Init;
   Counter = new GlobalVariable(T, false, GlobalValue::InternalLinkage,
-                               ConstantUInt::get(T, resetval),
-                               "RandomSteeringCounter", &M);
-  ResetValue = ConstantUInt::get(T, resetval);
+                               Init, "RandomSteeringCounter", &M);
 }
 
 GlobalRandomCounter::~GlobalRandomCounter() {}
@@ -205,7 +205,7 @@ void GlobalRandomCounter::ProcessChoicePoint(BasicBlock* bb) {
   LoadInst* l = new LoadInst(Counter, "counter", t);
   
   SetCondInst* s = new SetCondInst(Instruction::SetEQ, l, 
-				   ConstantUInt::get(T, 0), 
+				   ConstantInt::get(T, 0), 
                                    "countercc", t);
   Value* nv = BinaryOperator::createSub(l, ConstantInt::get(T, 1),
                                      "counternew", t);
@@ -225,10 +225,10 @@ void GlobalRandomCounter::ProcessChoicePoint(BasicBlock* bb) {
 GlobalRandomCounterOpt::GlobalRandomCounterOpt(Module& M, const Type* t, 
                                                uint64_t resetval) 
   : AI(0), T(t) {
+  ConstantInt* Init = ConstantInt::get(T, resetval);
+  ResetValue  = Init;
   Counter = new GlobalVariable(T, false, GlobalValue::InternalLinkage,
-                               ConstantUInt::get(T, resetval),
-                               "RandomSteeringCounter", &M);
-  ResetValue = ConstantUInt::get(T, resetval);
+                               Init, "RandomSteeringCounter", &M);
 }
 
 GlobalRandomCounterOpt::~GlobalRandomCounterOpt() {}
@@ -278,7 +278,7 @@ void GlobalRandomCounterOpt::ProcessChoicePoint(BasicBlock* bb) {
   LoadInst* l = new LoadInst(AI, "counter", t);
   
   SetCondInst* s = new SetCondInst(Instruction::SetEQ, l, 
-				   ConstantUInt::get(T, 0), 
+				   ConstantInt::get(T, 0), 
                                    "countercc", t);
   Value* nv = BinaryOperator::createSub(l, ConstantInt::get(T, 1),
                                      "counternew", t);
@@ -309,11 +309,11 @@ void CycleCounter::ProcessChoicePoint(BasicBlock* bb) {
   
   CallInst* c = new CallInst(F, "rdcc", t);
   BinaryOperator* b = 
-    BinaryOperator::createAnd(c, ConstantUInt::get(Type::ULongTy, rm),
+    BinaryOperator::createAnd(c, ConstantInt::get(Type::ULongTy, rm),
 			      "mrdcc", t);
   
   SetCondInst* s = new SetCondInst(Instruction::SetEQ, b, 
-				   ConstantUInt::get(Type::ULongTy, 0), 
+				   ConstantInt::get(Type::ULongTy, 0), 
                                    "mrdccc", t);
   t->setCondition(s);
 }
@@ -339,7 +339,7 @@ void RSProfilers_std::IncrementCounterInBlock(BasicBlock *BB, unsigned CounterNu
   // Create the getelementptr constant expression
   std::vector<Constant*> Indices(2);
   Indices[0] = Constant::getNullValue(Type::IntTy);
-  Indices[1] = ConstantSInt::get(Type::IntTy, CounterNum);
+  Indices[1] = ConstantInt::get(Type::IntTy, CounterNum);
   Constant *ElementPtr = ConstantExpr::getGetElementPtr(CounterArray, Indices);
   
   // Load, increment and store the value back.

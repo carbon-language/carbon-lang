@@ -144,7 +144,7 @@ Value *SCEVExpander::visitAddRecExpr(SCEVAddRecExpr *S) {
     
     // IF the step is by one, just return the inserted IV.
     if (ConstantIntegral *CI = dyn_cast<ConstantIntegral>(F))
-      if (CI->getRawValue() == 1)
+      if (CI->getZExtValue() == 1)
         return I;
     
     // If the insert point is directly inside of the loop, emit the multiply at

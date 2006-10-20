@@ -463,7 +463,7 @@ Instruction*
 StackerCompiler::push_integer(BasicBlock* bb, int64_t value )
 {
     // Just push a constant integer value
-    return push_value( bb, ConstantSInt::get( Type::LongTy, value ) );
+    return push_value( bb, ConstantInt::get( Type::LongTy, value ) );
 }
 
 Instruction*
@@ -721,7 +721,7 @@ StackerCompiler::handle_if( char* ifTrue, char* ifFalse )
 
     // Compare the condition against 0
     SetCondInst* cond_inst = new SetCondInst( Instruction::SetNE, cond,
-        ConstantSInt::get( Type::LongTy, 0) );
+        ConstantInt::get( Type::LongTy, 0) );
     bb->getInstList().push_back( cond_inst );
 
     // Create an exit block
@@ -805,7 +805,7 @@ StackerCompiler::handle_while( char* todo )
 
     // Compare the condition against 0
     SetCondInst* cond_inst = new SetCondInst(
-        Instruction::SetNE, cond, ConstantSInt::get( Type::LongTy, 0) );
+        Instruction::SetNE, cond, ConstantInt::get( Type::LongTy, 0));
     test->getInstList().push_back( cond_inst );
 
     // Add the branch instruction
@@ -1019,7 +1019,7 @@ StackerCompiler::handle_word( int tkn )
         if (echo) bb->setName("DECR");
         LoadInst* op1 = cast<LoadInst>(pop_integer(bb));
         BinaryOperator* subop = BinaryOperator::create( Instruction::Sub, op1,
-            ConstantSInt::get( Type::LongTy, 1 ) );
+            ConstantInt::get( Type::LongTy, 1 ) );
         bb->getInstList().push_back( subop );
         push_value( bb, subop );
         break;
@@ -1089,7 +1089,7 @@ StackerCompiler::handle_word( int tkn )
         // bb->getInstList().push_back( negop );
         // So we'll multiply by -1 (ugh)
         BinaryOperator* multop = BinaryOperator::create( Instruction::Mul, op1,
-            ConstantSInt::get( Type::LongTy, -1 ) );
+            ConstantInt::get( Type::LongTy, -1 ) );
         bb->getInstList().push_back( multop );
         push_value( bb, multop );
         break;
@@ -1601,7 +1601,7 @@ StackerCompiler::handle_word( int tkn )
         bb->getInstList().push_back( format_gep );
 
         // Get the character to print (a tab)
-        ConstantSInt* newline = ConstantSInt::get(Type::IntTy,
+        ConstantInt* newline = ConstantInt::get(Type::IntTy,
             static_cast<int>('\t'));
 
         // Call printf
@@ -1623,7 +1623,7 @@ StackerCompiler::handle_word( int tkn )
         bb->getInstList().push_back( format_gep );
 
         // Get the character to print (a space)
-        ConstantSInt* newline = ConstantSInt::get(Type::IntTy,
+        ConstantInt* newline = ConstantInt::get(Type::IntTy,
             static_cast<int>(' '));
 
         // Call printf
@@ -1645,7 +1645,7 @@ StackerCompiler::handle_word( int tkn )
         bb->getInstList().push_back( format_gep );
 
         // Get the character to print (a newline)
-        ConstantSInt* newline = ConstantSInt::get(Type::IntTy,
+        ConstantInt* newline = ConstantInt::get(Type::IntTy,
             static_cast<int>('\n'));
 
         // Call printf

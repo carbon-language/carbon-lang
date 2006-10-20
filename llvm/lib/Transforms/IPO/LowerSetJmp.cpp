@@ -378,7 +378,7 @@ void LowerSetJmp::TransformSetJmpCall(CallInst* Inst)
   CastInst* BufPtr = new CastInst(Inst->getOperand(1), SBPTy, "SBJmpBuf", Inst);
   new CallInst(AddSJToMap,
                make_vector<Value*>(GetSetJmpMap(Func), BufPtr,
-                                   ConstantUInt::get(Type::UIntTy,
+                                   ConstantInt::get(Type::UIntTy,
                                                      SetJmpIDMap[Func]++), 0),
                "", Inst);
 
@@ -429,7 +429,7 @@ void LowerSetJmp::TransformSetJmpCall(CallInst* Inst)
 
   // Add the case for this setjmp's number...
   SwitchValuePair SVP = GetSJSwitch(Func, GetRethrowBB(Func));
-  SVP.first->addCase(ConstantUInt::get(Type::UIntTy, SetJmpIDMap[Func] - 1),
+  SVP.first->addCase(ConstantInt::get(Type::UIntTy, SetJmpIDMap[Func] - 1),
                      SetJmpContBlock);
 
   // Value coming from the handling of the exception.

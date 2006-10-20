@@ -236,21 +236,22 @@ FunctionLoweringInfo::FunctionLoweringInfo(TargetLowering &tli,
   Function::iterator BB = Fn.begin(), EB = Fn.end();
   for (BasicBlock::iterator I = BB->begin(), E = BB->end(); I != E; ++I)
     if (AllocaInst *AI = dyn_cast<AllocaInst>(I))
-      if (ConstantUInt *CUI = dyn_cast<ConstantUInt>(AI->getArraySize())) {
+      if (ConstantInt *CUI = dyn_cast<ConstantInt>(AI->getArraySize())) {
         const Type *Ty = AI->getAllocatedType();
         uint64_t TySize = TLI.getTargetData()->getTypeSize(Ty);
         unsigned Align = 
           std::max((unsigned)TLI.getTargetData()->getTypeAlignment(Ty),
                    AI->getAlignment());
 
-        // If the alignment of the value is smaller than the size of the value,
-        // and if the size of the value is particularly small (<= 8 bytes),
-        // round up to the size of the value for potentially better performance.
+        // If the alignment of the value is smaller than the size of the 
+        // value, and if the size of the value is particularly small 
+        // (<= 8 bytes), round up to the size of the value for potentially 
+        // better performance.
         //
         // FIXME: This could be made better with a preferred alignment hook in
         // TargetData.  It serves primarily to 8-byte align doubles for X86.
         if (Align < TySize && TySize <= 8) Align = TySize;
-        TySize *= CUI->getValue();   // Get total allocated size.
+        TySize *= CUI->getZExtValue();   // Get total allocated size.
         if (TySize == 0) TySize = 1; // Don't create zero-sized stack objects.
         StaticAllocaMap[AI] =
           MF.getFrameInfo()->CreateStackObject((unsigned)TySize, Align);
@@ -393,11 +394,13 @@ class SelectionDAGLowering {
   /// The comparison function for sorting Case values.
   struct CaseCmp {
     bool operator () (const Case& C1, const Case& C2) {
-      if (const ConstantUInt* U1 = dyn_cast<const ConstantUInt>(C1.first))
-        return U1->getValue() < cast<const ConstantUInt>(C2.first)->getValue();
+      if (const ConstantInt* I1 = dyn_cast<const ConstantInt>(C1.first))
+        if (I1->getType()->isUnsigned())
+          return I1->getZExtValue() <
+            cast<const ConstantInt>(C2.first)->getZExtValue();
       
-      const ConstantSInt* S1 = dyn_cast<const ConstantSInt>(C1.first);
-      return S1->getValue() < cast<const ConstantSInt>(C2.first)->getValue();
+      return cast<const ConstantInt>(C1.first)->getSExtValue() <
+         cast<const ConstantInt>(C2.first)->getSExtValue();
     }
   };
   
@@ -637,7 +640,7 @@ SDOperand SelectionDAGLowering::getValue(const Value *V) {
       return N = DAG.getNode(ISD::VBUILD_VECTOR,MVT::Vector,&Ops[0],Ops.size());
     } else {
       // Canonicalize all constant ints to be unsigned.
-      return N = DAG.getConstant(cast<ConstantIntegral>(C)->getRawValue(),VT);
+      return N = DAG.getConstant(cast<ConstantIntegral>(C)->getZExtValue(),VT);
     }
   }
       
@@ -930,8 +933,8 @@ void SelectionDAGLowering::visitSwitch(SwitchInst &I) {
   // lowering the switch to a binary tree of conditional branches.
   if (TLI.isOperationLegal(ISD::BRIND, TLI.getPointerTy()) &&
       Cases.size() > 5) {
-    uint64_t First = cast<ConstantIntegral>(Cases.front().first)->getRawValue();
-    uint64_t Last  = cast<ConstantIntegral>(Cases.back().first)->getRawValue();
+    uint64_t First =cast<ConstantIntegral>(Cases.front().first)->getZExtValue();
+    uint64_t Last  = cast<ConstantIntegral>(Cases.back().first)->getZExtValue();
     double Density = (double)Cases.size() / (double)((Last - First) + 1ULL);
     
     if (Density >= 0.3125) {
@@ -979,9 +982,8 @@ void SelectionDAGLowering::visitSwitch(SwitchInst &I) {
       // the default BB.
       std::vector<MachineBasicBlock*> DestBBs;
       uint64_t TEI = First;
-
       for (CaseItr ii = Cases.begin(), ee = Cases.end(); ii != ee; ++TEI)
-        if (cast<ConstantIntegral>(ii->first)->getRawValue() == TEI) {
+        if (cast<ConstantIntegral>(ii->first)->getZExtValue() == TEI) {
           DestBBs.push_back(ii->second);
           ++ii;
         } else {
@@ -1055,8 +1057,8 @@ void SelectionDAGLowering::visitSwitch(SwitchInst &I) {
       // rather than creating a leaf node for it.
       if ((LHSR.second - LHSR.first) == 1 &&
           LHSR.first->first == CR.GE &&
-          cast<ConstantIntegral>(C)->getRawValue() ==
-          (cast<ConstantIntegral>(CR.GE)->getRawValue() + 1ULL)) {
+          cast<ConstantIntegral>(C)->getZExtValue() ==
+          (cast<ConstantIntegral>(CR.GE)->getZExtValue() + 1ULL)) {
         LHSBB = LHSR.first->second;
       } else {
         LHSBB = new MachineBasicBlock(LLVMBB);
@@ -1069,8 +1071,8 @@ void SelectionDAGLowering::visitSwitch(SwitchInst &I) {
       // is CR.LT - 1, then we can branch directly to the target block for
       // the current Case Value, rather than emitting a RHS leaf node for it.
       if ((RHSR.second - RHSR.first) == 1 && CR.LT &&
-          cast<ConstantIntegral>(RHSR.first->first)->getRawValue() ==
-          (cast<ConstantIntegral>(CR.LT)->getRawValue() - 1ULL)) {
+          cast<ConstantIntegral>(RHSR.first->first)->getZExtValue() ==
+          (cast<ConstantIntegral>(CR.LT)->getZExtValue() - 1ULL)) {
         RHSBB = RHSR.first->second;
       } else {
         RHSBB = new MachineBasicBlock(LLVMBB);
@@ -1259,7 +1261,7 @@ void SelectionDAGLowering::visitGetElementPtr(User &I) {
        OI != E; ++OI) {
     Value *Idx = *OI;
     if (const StructType *StTy = dyn_cast<StructType>(Ty)) {
-      unsigned Field = cast<ConstantUInt>(Idx)->getValue();
+      unsigned Field = cast<ConstantInt>(Idx)->getZExtValue();
       if (Field) {
         // N = N + Offset
         uint64_t Offset = TD->getStructLayout(StTy)->MemberOffsets[Field];
@@ -1272,13 +1274,14 @@ void SelectionDAGLowering::visitGetElementPtr(User &I) {
 
       // If this is a constant subscript, handle it quickly.
       if (ConstantInt *CI = dyn_cast<ConstantInt>(Idx)) {
-        if (CI->getRawValue() == 0) continue;
-
+        if (CI->getZExtValue() == 0) continue;
         uint64_t Offs;
-        if (ConstantSInt *CSI = dyn_cast<ConstantSInt>(CI))
-          Offs = (int64_t)TD->getTypeSize(Ty)*CSI->getValue();
+        if (CI->getType()->isSigned()) 
+          Offs = (int64_t)
+            TD->getTypeSize(Ty)*cast<ConstantInt>(CI)->getSExtValue();
         else
-          Offs = TD->getTypeSize(Ty)*cast<ConstantUInt>(CI)->getValue();
+          Offs = 
+            TD->getTypeSize(Ty)*cast<ConstantInt>(CI)->getZExtValue();
         N = DAG.getNode(ISD::ADD, N.getValueType(), N, getIntPtrConstant(Offs));
         continue;
       }
@@ -2732,7 +2735,7 @@ SDOperand TargetLowering::CustomPromoteOperation(SDOperand Op,
 }
 
 void SelectionDAGLowering::visitFrameReturnAddress(CallInst &I, bool isFrame) {
-  unsigned Depth = (unsigned)cast<ConstantUInt>(I.getOperand(1))->getValue();
+  unsigned Depth = (unsigned)cast<ConstantInt>(I.getOperand(1))->getZExtValue();
   std::pair<SDOperand,SDOperand> Result =
     TLI.LowerFrameReturnAddress(isFrame, getRoot(), Depth, DAG);
   setValue(&I, Result.first);
@@ -3126,7 +3129,7 @@ static bool OptimizeGEPExpression(GetElementPtrInst *GEPI,
   for (GetElementPtrInst::op_iterator OI = GEPI->op_begin()+1,
        E = GEPI->op_end(); OI != E; ++OI) {
     if (ConstantInt *CI = dyn_cast<ConstantInt>(*OI)) {
-      if (CI->getRawValue()) {
+      if (CI->getZExtValue()) {
         hasConstantIndex = true;
         break;
       }
@@ -3159,7 +3162,7 @@ static bool OptimizeGEPExpression(GetElementPtrInst *GEPI,
        E = GEPI->op_end(); OI != E; ++OI) {
     Value *Idx = *OI;
     if (const StructType *StTy = dyn_cast<StructType>(Ty)) {
-      unsigned Field = cast<ConstantUInt>(Idx)->getValue();
+      unsigned Field = cast<ConstantInt>(Idx)->getZExtValue();
       if (Field)
         ConstantOffset += TD->getStructLayout(StTy)->MemberOffsets[Field];
       Ty = StTy->getElementType(Field);
@@ -3168,12 +3171,11 @@ static bool OptimizeGEPExpression(GetElementPtrInst *GEPI,
 
       // Handle constant subscripts.
       if (ConstantInt *CI = dyn_cast<ConstantInt>(Idx)) {
-        if (CI->getRawValue() == 0) continue;
-        
-        if (ConstantSInt *CSI = dyn_cast<ConstantSInt>(CI))
-          ConstantOffset += (int64_t)TD->getTypeSize(Ty)*CSI->getValue();
+        if (CI->getZExtValue() == 0) continue;
+        if (CI->getType()->isSigned())
+          ConstantOffset += (int64_t)TD->getTypeSize(Ty)*CI->getSExtValue();
         else
-          ConstantOffset+=TD->getTypeSize(Ty)*cast<ConstantUInt>(CI)->getValue();
+          ConstantOffset += TD->getTypeSize(Ty)*CI->getZExtValue();
         continue;
       }
       
@@ -3185,7 +3187,7 @@ static bool OptimizeGEPExpression(GetElementPtrInst *GEPI,
       uint64_t ElementSize = TD->getTypeSize(Ty);
       // Mask off bits that should not be set.
       ElementSize &= ~0ULL >> (64-UIntPtrTy->getPrimitiveSizeInBits());
-      Constant *SizeCst = ConstantUInt::get(UIntPtrTy, ElementSize);
+      Constant *SizeCst = ConstantInt::get(UIntPtrTy, ElementSize);
 
       // Multiply by the element size and add to the base.
       Idx = BinaryOperator::createMul(Idx, SizeCst, "", GEPI);
@@ -3195,7 +3197,7 @@ static bool OptimizeGEPExpression(GetElementPtrInst *GEPI,
   
   // Make sure that the offset fits in uintptr_t.
   ConstantOffset &= ~0ULL >> (64-UIntPtrTy->getPrimitiveSizeInBits());
-  Constant *PtrOffset = ConstantUInt::get(UIntPtrTy, ConstantOffset);
+  Constant *PtrOffset = ConstantInt::get(UIntPtrTy, ConstantOffset);
   
   // Okay, we have now emitted all of the variable index parts to the BB that
   // the GEP is defined in.  Loop over all of the using instructions, inserting

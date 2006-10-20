@@ -177,7 +177,7 @@ SCEVHandle SCEVConstant::get(ConstantInt *V) {
   // Make sure that SCEVConstant instances are all unsigned.
   if (V->getType()->isSigned()) {
     const Type *NewTy = V->getType()->getUnsignedVersion();
-    V = cast<ConstantUInt>(ConstantExpr::getCast(V, NewTy));
+    V = cast<ConstantInt>(ConstantExpr::getCast(V, NewTy));
   }
 
   SCEVConstant *&R = (*SCEVConstants)[V];
@@ -463,9 +463,9 @@ SCEVHandle SCEVUnknown::getIntegerSCEV(int Val, const Type *Ty) {
   else if (Ty->isFloatingPoint())
     C = ConstantFP::get(Ty, Val);
   else if (Ty->isSigned())
-    C = ConstantSInt::get(Ty, Val);
+    C = ConstantInt::get(Ty, Val);
   else {
-    C = ConstantSInt::get(Ty->getSignedVersion(), Val);
+    C = ConstantInt::get(Ty->getSignedVersion(), Val);
     C = ConstantExpr::getCast(C, Ty);
   }
   return SCEVUnknown::get(C);
@@ -507,11 +507,11 @@ static SCEVHandle PartialFact(SCEVHandle V, unsigned NumSteps) {
   // Handle this case efficiently, it is common to have constant iteration
   // counts while computing loop exit values.
   if (SCEVConstant *SC = dyn_cast<SCEVConstant>(V)) {
-    uint64_t Val = SC->getValue()->getRawValue();
+    uint64_t Val = SC->getValue()->getZExtValue();
     uint64_t Result = 1;
     for (; NumSteps; --NumSteps)
       Result *= Val-(NumSteps-1);
-    Constant *Res = ConstantUInt::get(Type::ULongTy, Result);
+    Constant *Res = ConstantInt::get(Type::ULongTy, Result);
     return SCEVUnknown::get(ConstantExpr::getCast(Res, V->getType()));
   }
 
@@ -1605,7 +1605,7 @@ GetAddressedElementFromGlobal(GlobalVariable *GV,
                               const std::vector<ConstantInt*> &Indices) {
   Constant *Init = GV->getInitializer();
   for (unsigned i = 0, e = Indices.size(); i != e; ++i) {
-    uint64_t Idx = Indices[i]->getRawValue();
+    uint64_t Idx = Indices[i]->getZExtValue();
     if (ConstantStruct *CS = dyn_cast<ConstantStruct>(Init)) {
       assert(Idx < CS->getNumOperands() && "Bad struct index!");
       Init = cast<Constant>(CS->getOperand(Idx));
@@ -1679,8 +1679,8 @@ ComputeLoadConstantCompareIterationCount(LoadInst *LI, Constant *RHS,
 
   unsigned MaxSteps = MaxBruteForceIterations;
   for (unsigned IterationNum = 0; IterationNum != MaxSteps; ++IterationNum) {
-    ConstantUInt *ItCst =
-      ConstantUInt::get(IdxExpr->getType()->getUnsignedVersion(), IterationNum);
+    ConstantInt *ItCst =
+      ConstantInt::get(IdxExpr->getType()->getUnsignedVersion(), IterationNum);
     ConstantInt *Val = EvaluateConstantChrecAtConstant(IdxExpr, ItCst);
 
     // Form the GEP offset.
@@ -1896,7 +1896,7 @@ ComputeIterationCountExhaustively(const Loop *L, Value *Cond, bool ExitWhen) {
     if (CondVal->getValue() == ExitWhen) {
       ConstantEvolutionLoopExitValue[PN] = PHIVal;
       ++NumBruteForceTripCountsComputed;
-      return SCEVConstant::get(ConstantUInt::get(Type::UIntTy, IterationNum));
+      return SCEVConstant::get(ConstantInt::get(Type::UIntTy, IterationNum));
     }
 
     // Compute the value of the PHI node for the next iteration.
@@ -1935,7 +1935,7 @@ SCEVHandle ScalarEvolutionsImpl::getSCEVAtScope(SCEV *V, const Loop *L) {
               // this is a constant evolving PHI node, get the final value at
               // the specified iteration number.
               Constant *RV = getConstantEvolutionLoopExitValue(PN,
-                                               ICC->getValue()->getRawValue(),
+                                               ICC->getValue()->getZExtValue(),
                                                                LI);
               if (RV) return SCEVUnknown::get(RV);
             }
@@ -2076,10 +2076,10 @@ SolveQuadraticEquation(const SCEVAddRecExpr *AddRec) {
   SqrtTerm = ConstantExpr::getSub(ConstantExpr::getMul(B, B), SqrtTerm);
 
   // Compute floor(sqrt(B^2-4ac))
-  ConstantUInt *SqrtVal =
-    cast<ConstantUInt>(ConstantExpr::getCast(SqrtTerm,
+  ConstantInt *SqrtVal =
+    cast<ConstantInt>(ConstantExpr::getCast(SqrtTerm,
                                    SqrtTerm->getType()->getUnsignedVersion()));
-  uint64_t SqrtValV = SqrtVal->getValue();
+  uint64_t SqrtValV = SqrtVal->getZExtValue();
   uint64_t SqrtValV2 = (uint64_t)sqrt((double)SqrtValV);
   // The square root might not be precise for arbitrary 64-bit integer
   // values.  Do some sanity checks to ensure it's correct.
@@ -2089,7 +2089,7 @@ SolveQuadraticEquation(const SCEVAddRecExpr *AddRec) {
     return std::make_pair(CNC, CNC);
   }
 
-  SqrtVal = ConstantUInt::get(Type::ULongTy, SqrtValV2);
+  SqrtVal = ConstantInt::get(Type::ULongTy, SqrtValV2);
   SqrtTerm = ConstantExpr::getCast(SqrtVal, SqrtTerm->getType());
 
   Constant *NegB = ConstantExpr::getNeg(B);

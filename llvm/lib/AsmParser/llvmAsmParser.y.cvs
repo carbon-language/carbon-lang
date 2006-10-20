@@ -307,25 +307,25 @@ static Value *getValNonImprovising(const Type *Ty, const ValID &D) {
   // Check to make sure that "Ty" is an integral type, and that our
   // value will fit into the specified type...
   case ValID::ConstSIntVal:    // Is it a constant pool reference??
-    if (!ConstantSInt::isValueValidForType(Ty, D.ConstPool64)) {
+    if (!ConstantInt::isValueValidForType(Ty, D.ConstPool64)) {
       GenerateError("Signed integral constant '" +
                      itostr(D.ConstPool64) + "' is invalid for type '" +
                      Ty->getDescription() + "'!");
       return 0;
     }
-    return ConstantSInt::get(Ty, D.ConstPool64);
+    return ConstantInt::get(Ty, D.ConstPool64);
 
   case ValID::ConstUIntVal:     // Is it an unsigned const pool reference?
-    if (!ConstantUInt::isValueValidForType(Ty, D.UConstPool64)) {
-      if (!ConstantSInt::isValueValidForType(Ty, D.ConstPool64)) {
+    if (!ConstantInt::isValueValidForType(Ty, D.UConstPool64)) {
+      if (!ConstantInt::isValueValidForType(Ty, D.ConstPool64)) {
         GenerateError("Integral constant '" + utostr(D.UConstPool64) +
                        "' is invalid or out of range!");
         return 0;
       } else {     // This is really a signed reference.  Transmogrify.
-        return ConstantSInt::get(Ty, D.ConstPool64);
+        return ConstantInt::get(Ty, D.ConstPool64);
       }
     } else {
-      return ConstantUInt::get(Ty, D.UConstPool64);
+      return ConstantInt::get(Ty, D.UConstPool64);
     }
 
   case ValID::ConstFPVal:        // Is it a floating point const pool reference?
@@ -1394,11 +1394,11 @@ ConstVal: Types '[' ConstVector ']' { // Nonempty unsized arr
     std::vector<Constant*> Vals;
     if (ETy == Type::SByteTy) {
       for (signed char *C = (signed char *)$3; C != (signed char *)EndStr; ++C)
-        Vals.push_back(ConstantSInt::get(ETy, *C));
+        Vals.push_back(ConstantInt::get(ETy, *C));
     } else if (ETy == Type::UByteTy) {
       for (unsigned char *C = (unsigned char *)$3; 
            C != (unsigned char*)EndStr; ++C)
-        Vals.push_back(ConstantUInt::get(ETy, *C));
+        Vals.push_back(ConstantInt::get(ETy, *C));
     } else {
       free($3);
       GEN_ERROR("Cannot build string arrays of non byte sized elements!");
@@ -1561,15 +1561,15 @@ ConstVal: Types '[' ConstVector ']' { // Nonempty unsized arr
   };
 
 ConstVal : SIntType EINT64VAL {      // integral constants
-    if (!ConstantSInt::isValueValidForType($1, $2))
+    if (!ConstantInt::isValueValidForType($1, $2))
       GEN_ERROR("Constant value doesn't fit in type!");
-    $$ = ConstantSInt::get($1, $2);
+    $$ = ConstantInt::get($1, $2);
     CHECK_FOR_ERROR
   }
   | UIntType EUINT64VAL {            // integral constants
-    if (!ConstantUInt::isValueValidForType($1, $2))
+    if (!ConstantInt::isValueValidForType($1, $2))
       GEN_ERROR("Constant value doesn't fit in type!");
-    $$ = ConstantUInt::get($1, $2);
+    $$ = ConstantInt::get($1, $2);
     CHECK_FOR_ERROR
   }
   | BOOL TRUETOK {                      // Boolean constants
@@ -1610,7 +1610,7 @@ ConstExpr: CAST '(' ConstVal TO Types ')' {
       GTE = gep_type_end($3->getType(), $4->begin(), $4->end());
     for (unsigned i = 0, e = $4->size(); i != e && GTI != GTE; ++i, ++GTI)
       if (isa<StructType>(*GTI))        // Only change struct indices
-        if (ConstantUInt *CUI = dyn_cast<ConstantUInt>((*$4)[i]))
+        if (ConstantInt *CUI = dyn_cast<ConstantInt>((*$4)[i]))
           if (CUI->getType() == Type::UByteTy)
             (*$4)[i] = ConstantExpr::getCast(CUI, Type::UIntTy);
 
@@ -2737,7 +2737,7 @@ MemoryInst : MALLOC Types OptCAlign {
       GTE = gep_type_end($2->get(), $4->begin(), $4->end());
     for (unsigned i = 0, e = $4->size(); i != e && GTI != GTE; ++i, ++GTI)
       if (isa<StructType>(*GTI))        // Only change struct indices
-        if (ConstantUInt *CUI = dyn_cast<ConstantUInt>((*$4)[i]))
+        if (ConstantInt *CUI = dyn_cast<ConstantInt>((*$4)[i]))
           if (CUI->getType() == Type::UByteTy)
             (*$4)[i] = ConstantExpr::getCast(CUI, Type::UIntTy);
 

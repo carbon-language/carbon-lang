@@ -460,7 +460,7 @@ void CWriter::printConstantArray(ConstantArray *CPA) {
 
     // Do not include the last character, which we know is null
     for (unsigned i = 0, e = CPA->getNumOperands()-1; i != e; ++i) {
-      unsigned char C = cast<ConstantInt>(CPA->getOperand(i))->getRawValue();
+      unsigned char C = cast<ConstantInt>(CPA->getOperand(i))->getZExtValue();
 
       // Print it out literally if it is a printable character.  The only thing
       // to be careful about is when the last letter output was a hex escape
@@ -642,31 +642,31 @@ void CWriter::printConstant(Constant *CPV) {
     break;
   case Type::SByteTyID:
   case Type::ShortTyID:
-    Out << cast<ConstantSInt>(CPV)->getValue();
+    Out << cast<ConstantInt>(CPV)->getSExtValue();
     break;
   case Type::IntTyID:
-    if ((int)cast<ConstantSInt>(CPV)->getValue() == (int)0x80000000)
+    if ((int)cast<ConstantInt>(CPV)->getSExtValue() == (int)0x80000000)
       Out << "((int)0x80000000U)";   // Handle MININT specially to avoid warning
     else
-      Out << cast<ConstantSInt>(CPV)->getValue();
+      Out << cast<ConstantInt>(CPV)->getSExtValue();
     break;
 
   case Type::LongTyID:
-    if (cast<ConstantSInt>(CPV)->isMinValue())
+    if (cast<ConstantInt>(CPV)->isMinValue())
       Out << "(/*INT64_MIN*/(-9223372036854775807LL)-1)";
     else
-      Out << cast<ConstantSInt>(CPV)->getValue() << "ll";
+      Out << cast<ConstantInt>(CPV)->getSExtValue() << "ll";
     break;
 
   case Type::UByteTyID:
   case Type::UShortTyID:
-    Out << cast<ConstantUInt>(CPV)->getValue();
+    Out << cast<ConstantInt>(CPV)->getZExtValue();
     break;
   case Type::UIntTyID:
-    Out << cast<ConstantUInt>(CPV)->getValue() << 'u';
+    Out << cast<ConstantInt>(CPV)->getZExtValue() << 'u';
     break;
   case Type::ULongTyID:
-    Out << cast<ConstantUInt>(CPV)->getValue() << "ull";
+    Out << cast<ConstantInt>(CPV)->getZExtValue() << "ull";
     break;
 
   case Type::FloatTyID:
@@ -2002,14 +2002,14 @@ void CWriter::printIndexingExpression(Value *Ptr, gep_type_iterator I,
     // Print out the -> operator if possible...
     if (TmpI != E && isa<StructType>(*TmpI)) {
       Out << (HasImplicitAddress ? "." : "->");
-      Out << "field" << cast<ConstantUInt>(TmpI.getOperand())->getValue();
+      Out << "field" << cast<ConstantInt>(TmpI.getOperand())->getZExtValue();
       I = ++TmpI;
     }
   }
 
   for (; I != E; ++I)
     if (isa<StructType>(*I)) {
-      Out << ".field" << cast<ConstantUInt>(I.getOperand())->getValue();
+      Out << ".field" << cast<ConstantInt>(I.getOperand())->getZExtValue();
     } else {
       Out << '[';
       writeOperand(I.getOperand());

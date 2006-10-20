@@ -181,7 +181,7 @@ static Constant *GetTorInit(std::vector<std::pair<Function*, int> > &TorList) {
   std::vector<Constant*> ArrayElts;
   for (unsigned i = 0, e = TorList.size(); i != e; ++i) {
     std::vector<Constant*> Elts;
-    Elts.push_back(ConstantSInt::get(Type::IntTy, TorList[i].second));
+    Elts.push_back(ConstantInt::get(Type::IntTy, TorList[i].second));
     Elts.push_back(TorList[i].first);
     ArrayElts.push_back(ConstantStruct::get(Elts));
   }
@@ -210,8 +210,8 @@ static void SplitStaticCtorDtor(const char *GlobalName, Module *M1, Module *M2){
       if (CS->getOperand(1)->isNullValue())
         break;  // Found a null terminator, stop here.
       
-      ConstantSInt *CI = dyn_cast<ConstantSInt>(CS->getOperand(0));
-      int Priority = CI ? CI->getValue() : 0;
+      ConstantInt *CI = dyn_cast<ConstantInt>(CS->getOperand(0));
+      int Priority = CI ? CI->getSExtValue() : 0;
       
       Constant *FP = CS->getOperand(1);
       if (ConstantExpr *CE = dyn_cast<ConstantExpr>(FP))

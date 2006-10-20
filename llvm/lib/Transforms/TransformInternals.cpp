@@ -34,7 +34,7 @@ static const Type *getStructOffsetStep(const StructType *STy, uint64_t &Offset,
          (i == SL->MemberOffsets.size()-1 || Offset < SL->MemberOffsets[i+1]));
 
   // Make sure to save the current index...
-  Indices.push_back(ConstantUInt::get(Type::UIntTy, i));
+  Indices.push_back(ConstantInt::get(Type::UIntTy, i));
   Offset = SL->MemberOffsets[i];
   return STy->getContainedType(i);
 }
@@ -73,10 +73,11 @@ const Type *llvm::getStructOffsetType(const Type *Ty, unsigned &Offset,
 
     NextType = ATy->getElementType();
     unsigned ChildSize = (unsigned)TD.getTypeSize(NextType);
-    if (ConstantSInt::isValueValidForType(Type::IntTy, Offset/ChildSize))
-      Indices.push_back(ConstantSInt::get(Type::IntTy, Offset/ChildSize));
+    if (ConstantInt::isValueValidForType(Type::IntTy, 
+                                         uint64_t(Offset/ChildSize)))
+      Indices.push_back(ConstantInt::get(Type::IntTy, Offset/ChildSize));
     else
-      Indices.push_back(ConstantSInt::get(Type::LongTy, Offset/ChildSize));
+      Indices.push_back(ConstantInt::get(Type::LongTy, Offset/ChildSize));
     ThisOffset = (Offset/ChildSize)*ChildSize;
   } else {
     Offset = 0;   // Return the offset that we were able to achieve

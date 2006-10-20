@@ -317,8 +317,7 @@ SDNode *AlphaDAGToDAGISel::Select(SDOperand Op) {
       break; //(zext (LDAH (LDA)))
     //Else use the constant pool
     MachineConstantPool *CP = BB->getParent()->getConstantPool();
-    ConstantUInt *C =
-      ConstantUInt::get(Type::getPrimitiveType(Type::ULongTyID) , uval);
+    ConstantInt *C = ConstantInt::get(Type::ULongTy, uval);
     SDOperand CPI = CurDAG->getTargetConstantPool(C, MVT::i64);
     SDNode *Tmp = CurDAG->getTargetNode(Alpha::LDAHr, MVT::i64, CPI,
                                         getGlobalBaseReg());

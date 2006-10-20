@@ -422,10 +422,11 @@ static void WriteConstantInt(std::ostream &Out, const Constant *CV,
   static std::string Indent = "\n";
   if (const ConstantBool *CB = dyn_cast<ConstantBool>(CV)) {
     Out << (CB->getValue() ? "true" : "false");
-  } else if (const ConstantSInt *CI = dyn_cast<ConstantSInt>(CV)) {
-    Out << CI->getValue();
-  } else if (const ConstantUInt *CI = dyn_cast<ConstantUInt>(CV)) {
-    Out << CI->getValue();
+  } else if (const ConstantInt *CI = dyn_cast<ConstantInt>(CV)) {
+    if (CI->getType()->isSigned())
+      Out << CI->getSExtValue();
+    else
+      Out << CI->getZExtValue();
   } else if (const ConstantFP *CFP = dyn_cast<ConstantFP>(CV)) {
     // We would like to output the FP constant value in exponential notation,
     // but we cannot do this if doing so will lose precision.  Check here to

@@ -40,8 +40,8 @@ int main() {
   BasicBlock *BB = new BasicBlock("EntryBlock", F);
 
   // Get pointers to the constant integers...
-  Value *Two = ConstantSInt::get(Type::IntTy, 2);
-  Value *Three = ConstantSInt::get(Type::IntTy, 3);
+  Value *Two = ConstantInt::get(Type::IntTy, 2);
+  Value *Three = ConstantInt::get(Type::IntTy, 3);
 
   // Create the add instruction... does not insert...
   Instruction *Add = BinaryOperator::create(Instruction::Add, Two, Three,

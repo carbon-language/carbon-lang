@@ -330,7 +330,7 @@ uint64_t TargetData::getIndexedOffset(const Type *ptrTy,
   for (unsigned CurIDX = 0; CurIDX != Idx.size(); ++CurIDX, ++TI) {
     if (const StructType *STy = dyn_cast<StructType>(*TI)) {
       assert(Idx[CurIDX]->getType() == Type::UIntTy && "Illegal struct idx");
-      unsigned FieldNo = cast<ConstantUInt>(Idx[CurIDX])->getValue();
+      unsigned FieldNo = cast<ConstantInt>(Idx[CurIDX])->getZExtValue();
 
       // Get structure layout information...
       const StructLayout *Layout = getStructLayout(STy);
@@ -346,7 +346,7 @@ uint64_t TargetData::getIndexedOffset(const Type *ptrTy,
       Ty = cast<SequentialType>(Ty)->getElementType();
 
       // Get the array index and the size of each array element.
-      int64_t arrayIdx = cast<ConstantInt>(Idx[CurIDX])->getRawValue();
+      int64_t arrayIdx = cast<ConstantInt>(Idx[CurIDX])->getSExtValue();
       Result += arrayIdx * (int64_t)getTypeSize(Ty);
     }
   }

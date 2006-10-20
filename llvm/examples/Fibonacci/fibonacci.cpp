@@ -45,8 +45,8 @@ static Function *CreateFibFunction(Module *M) {
   BasicBlock *BB = new BasicBlock("EntryBlock", FibF);
 
   // Get pointers to the constants.
-  Value *One = ConstantSInt::get(Type::IntTy, 1);
-  Value *Two = ConstantSInt::get(Type::IntTy, 2);
+  Value *One = ConstantInt::get(Type::IntTy, 1);
+  Value *Two = ConstantInt::get(Type::IntTy, 2);
 
   // Get pointer to the integer argument of the add1 function...
   Argument *ArgX = FibF->arg_begin();   // Get the arg.

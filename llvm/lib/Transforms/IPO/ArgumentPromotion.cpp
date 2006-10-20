@@ -307,8 +307,8 @@ namespace {
       unsigned idx = 0;
       for (; idx < LHS.size() && idx < RHS.size(); ++idx) {
         if (LHS[idx] != RHS[idx]) {
-          return cast<ConstantInt>(LHS[idx])->getRawValue() <
-                 cast<ConstantInt>(RHS[idx])->getRawValue();
+          return cast<ConstantInt>(LHS[idx])->getZExtValue() <
+                 cast<ConstantInt>(RHS[idx])->getZExtValue();
         }
       }
 
@@ -518,7 +518,7 @@ Function *ArgPromotion::DoPromotion(Function *F,
           std::string NewName = I->getName();
           for (unsigned i = 0, e = Operands.size(); i != e; ++i)
             if (ConstantInt *CI = dyn_cast<ConstantInt>(Operands[i]))
-              NewName += "."+itostr((int64_t)CI->getRawValue());
+              NewName += "."+itostr((int64_t)CI->getZExtValue());
             else
               NewName += ".x";
           TheArg->setName(NewName+".val");

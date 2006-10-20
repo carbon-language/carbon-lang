@@ -264,7 +264,7 @@ SCEVHandle LoopStrengthReduce::GetExpressionSCEV(Instruction *Exp, Loop *L) {
     // operand.
     if (const StructType *STy = dyn_cast<StructType>(*GTI)) {
       const StructLayout *SL = TD->getStructLayout(STy);
-      unsigned Idx = cast<ConstantUInt>(GEP->getOperand(i))->getValue();
+      unsigned Idx = cast<ConstantInt>(GEP->getOperand(i))->getZExtValue();
       uint64_t Offset = SL->MemberOffsets[Idx];
       GEPVal = SCEVAddExpr::get(GEPVal,
                                 SCEVUnknown::getIntegerSCEV(Offset, UIntPtrTy));
@@ -275,7 +275,7 @@ SCEVHandle LoopStrengthReduce::GetExpressionSCEV(Instruction *Exp, Loop *L) {
       uint64_t TypeSize = TD->getTypeSize(GTI.getIndexedType());
       if (TypeSize != 1)
         Idx = SCEVMulExpr::get(Idx,
-                               SCEVConstant::get(ConstantUInt::get(UIntPtrTy,
+                               SCEVConstant::get(ConstantInt::get(UIntPtrTy,
                                                                    TypeSize)));
       GEPVal = SCEVAddExpr::get(GEPVal, Idx);
     }
@@ -861,7 +861,7 @@ RemoveCommonExpressionsFromUseBases(std::vector<BasedUser> &Uses) {
 ///
 static bool isZero(SCEVHandle &V) {
   if (SCEVConstant *SC = dyn_cast<SCEVConstant>(V))
-    return SC->getValue()->getRawValue() == 0;
+    return SC->getValue()->getZExtValue() == 0;
   return false;
 }
 

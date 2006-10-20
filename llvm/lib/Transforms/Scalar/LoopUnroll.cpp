@@ -190,8 +190,8 @@ bool LoopUnroll::visitLoop(Loop *L) {
   ConstantInt *TripCountC = dyn_cast_or_null<ConstantInt>(L->getTripCount());
   if (!TripCountC) return Changed;  // Must have constant trip count!
 
-  uint64_t TripCountFull = TripCountC->getRawValue();
-  if (TripCountFull != TripCountC->getRawValue() || TripCountFull == 0)
+  uint64_t TripCountFull = TripCountC->getZExtValue();
+  if (TripCountFull != TripCountC->getZExtValue() || TripCountFull == 0)
     return Changed; // More than 2^32 iterations???
 
   unsigned LoopSize = ApproximateLoopSize(L);

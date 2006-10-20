@@ -549,7 +549,7 @@ Value *Reassociate::OptimizeExpression(BinaryOperator *I,
       if (CstVal->isNullValue()) {           // ... * 0 -> 0
         ++NumAnnihil;
         return CstVal;
-      } else if (cast<ConstantInt>(CstVal)->getRawValue() == 1) {
+      } else if (cast<ConstantInt>(CstVal)->getZExtValue() == 1) {
         Ops.pop_back();                      // ... * 1 -> ...
       }
       break;

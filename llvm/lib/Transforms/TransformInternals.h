@@ -25,7 +25,7 @@
 namespace llvm {
 
 static inline int64_t getConstantValue(const ConstantInt *CPI) {
-  return (int64_t)cast<ConstantInt>(CPI)->getRawValue();
+  return (int64_t)cast<ConstantInt>(CPI)->getZExtValue();
 }
 
 

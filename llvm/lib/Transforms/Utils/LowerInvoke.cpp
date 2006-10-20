@@ -269,7 +269,7 @@ bool LowerInvoke::insertCheapEHSupport(Function &F) {
 void LowerInvoke::rewriteExpensiveInvoke(InvokeInst *II, unsigned InvokeNo,
                                          AllocaInst *InvokeNum,
                                          SwitchInst *CatchSwitch) {
-  ConstantUInt *InvokeNoC = ConstantUInt::get(Type::UIntTy, InvokeNo);
+  ConstantInt *InvokeNoC = ConstantInt::get(Type::UIntTy, InvokeNo);
 
   // Insert a store of the invoke num before the invoke and store zero into the
   // location afterward.
@@ -461,7 +461,7 @@ bool LowerInvoke::insertExpensiveEHSupport(Function &F) {
     
     std::vector<Value*> Idx;
     Idx.push_back(Constant::getNullValue(Type::IntTy));
-    Idx.push_back(ConstantUInt::get(Type::UIntTy, 1));
+    Idx.push_back(ConstantInt::get(Type::UIntTy, 1));
     OldJmpBufPtr = new GetElementPtrInst(JmpBuf, Idx, "OldBuf",
                                          EntryBB->getTerminator());
 
@@ -500,7 +500,7 @@ bool LowerInvoke::insertExpensiveEHSupport(Function &F) {
     BasicBlock *ContBlock = EntryBB->splitBasicBlock(EntryBB->getTerminator(),
                                                      "setjmp.cont");
 
-    Idx[1] = ConstantUInt::get(Type::UIntTy, 0);
+    Idx[1] = ConstantInt::get(Type::UIntTy, 0);
     Value *JmpBufPtr = new GetElementPtrInst(JmpBuf, Idx, "TheJmpBuf",
                                              EntryBB->getTerminator());
     Value *SJRet = new CallInst(SetJmpFn, JmpBufPtr, "sjret",
@@ -550,7 +550,7 @@ bool LowerInvoke::insertExpensiveEHSupport(Function &F) {
   // Get a pointer to the jmpbuf and longjmp.
   std::vector<Value*> Idx;
   Idx.push_back(Constant::getNullValue(Type::IntTy));
-  Idx.push_back(ConstantUInt::get(Type::UIntTy, 0));
+  Idx.push_back(ConstantInt::get(Type::UIntTy, 0));
   Idx[0] = new GetElementPtrInst(BufPtr, Idx, "JmpBuf", UnwindBlock);
   Idx[1] = ConstantInt::get(Type::IntTy, 1);
   new CallInst(LongJmpFn, Idx, "", UnwindBlock);

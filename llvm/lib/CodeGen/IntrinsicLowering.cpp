@@ -166,10 +166,10 @@ static Value *LowerBSWAP(Value *V, Instruction *IP) {
     Value *Tmp1 = new ShiftInst(Instruction::Shr, V,
                               ConstantInt::get(Type::UByteTy,24),"bswap.1", IP);
     Tmp3 = BinaryOperator::createAnd(Tmp3, 
-                                     ConstantUInt::get(Type::UIntTy, 0xFF0000),
+                                     ConstantInt::get(Type::UIntTy, 0xFF0000),
                                      "bswap.and3", IP);
     Tmp2 = BinaryOperator::createAnd(Tmp2, 
-                                     ConstantUInt::get(Type::UIntTy, 0xFF00),
+                                     ConstantInt::get(Type::UIntTy, 0xFF00),
                                      "bswap.and2", IP);
     Tmp4 = BinaryOperator::createOr(Tmp4, Tmp3, "bswap.or1", IP);
     Tmp2 = BinaryOperator::createOr(Tmp2, Tmp1, "bswap.or2", IP);
@@ -194,23 +194,24 @@ static Value *LowerBSWAP(Value *V, Instruction *IP) {
     Value *Tmp1 = new ShiftInst(Instruction::Shr, V,
                               ConstantInt::get(Type::UByteTy,56),"bswap.1", IP);
     Tmp7 = BinaryOperator::createAnd(Tmp7,
-                          ConstantUInt::get(Type::ULongTy, 0xFF000000000000ULL),
-                          "bswap.and7", IP);
+                             ConstantInt::get(Type::ULongTy, 
+                               0xFF000000000000ULL),
+                             "bswap.and7", IP);
     Tmp6 = BinaryOperator::createAnd(Tmp6,
-                            ConstantUInt::get(Type::ULongTy, 0xFF0000000000ULL),
-                            "bswap.and6", IP);
+                             ConstantInt::get(Type::ULongTy, 0xFF0000000000ULL),
+                             "bswap.and6", IP);
     Tmp5 = BinaryOperator::createAnd(Tmp5,
-                              ConstantUInt::get(Type::ULongTy, 0xFF00000000ULL),
-                              "bswap.and5", IP);
+                             ConstantInt::get(Type::ULongTy, 0xFF00000000ULL),
+                             "bswap.and5", IP);
     Tmp4 = BinaryOperator::createAnd(Tmp4,
-                                ConstantUInt::get(Type::ULongTy, 0xFF000000ULL),
-                                "bswap.and4", IP);
+                             ConstantInt::get(Type::ULongTy, 0xFF000000ULL),
+                             "bswap.and4", IP);
     Tmp3 = BinaryOperator::createAnd(Tmp3,
-                                  ConstantUInt::get(Type::ULongTy, 0xFF0000ULL),
-                                  "bswap.and3", IP);
+                             ConstantInt::get(Type::ULongTy, 0xFF0000ULL),
+                             "bswap.and3", IP);
     Tmp2 = BinaryOperator::createAnd(Tmp2,
-                                    ConstantUInt::get(Type::ULongTy, 0xFF00ULL),
-                                    "bswap.and2", IP);
+                             ConstantInt::get(Type::ULongTy, 0xFF00ULL),
+                             "bswap.and2", IP);
     Tmp8 = BinaryOperator::createOr(Tmp8, Tmp7, "bswap.or1", IP);
     Tmp6 = BinaryOperator::createOr(Tmp6, Tmp5, "bswap.or2", IP);
     Tmp4 = BinaryOperator::createOr(Tmp4, Tmp3, "bswap.or3", IP);
@@ -247,8 +248,8 @@ static Value *LowerCTPOP(Value *V, Instruction *IP) {
   unsigned BitSize = V->getType()->getPrimitiveSizeInBits();
   for (unsigned i = 1, ct = 0; i != BitSize; i <<= 1, ++ct) {
     Value *MaskCst =
-      ConstantExpr::getCast(ConstantUInt::get(Type::ULongTy,
-                                              MaskValues[ct]), V->getType());
+      ConstantExpr::getCast(ConstantInt::get(Type::ULongTy, MaskValues[ct]),
+                                             V->getType());
     Value *LHS = BinaryOperator::createAnd(V, MaskCst, "cppop.and1", IP);
     Value *VShift = new ShiftInst(Instruction::Shr, V,
                       ConstantInt::get(Type::UByteTy, i), "ctpop.sh", IP);
@@ -395,7 +396,7 @@ void DefaultIntrinsicLowering::LowerIntrinsicCall(CallInst *CI) {
   case Intrinsic::readcyclecounter: {
     std::cerr << "WARNING: this target does not support the llvm.readcyclecoun"
               << "ter intrinsic.  It is being lowered to a constant 0\n";
-    CI->replaceAllUsesWith(ConstantUInt::get(Type::ULongTy, 0));
+    CI->replaceAllUsesWith(ConstantInt::get(Type::ULongTy, 0));
     break;
   }
 

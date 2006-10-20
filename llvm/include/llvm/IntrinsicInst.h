@@ -97,10 +97,10 @@ namespace llvm {
     }
 
     unsigned getLine() const {
-      return unsigned(cast<ConstantInt>(getOperand(1))->getRawValue());
+      return unsigned(cast<ConstantInt>(getOperand(1))->getZExtValue());
     }
     unsigned getColumn() const {
-      return unsigned(cast<ConstantInt>(getOperand(2))->getRawValue());
+      return unsigned(cast<ConstantInt>(getOperand(2))->getZExtValue());
     }
     
     std::string getFileName() const;

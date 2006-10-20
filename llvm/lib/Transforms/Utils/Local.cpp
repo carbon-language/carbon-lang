@@ -272,10 +272,10 @@ Constant *llvm::ConstantFoldLoadThroughGEPConstantExpr(Constant *C,
   gep_type_iterator I = gep_type_begin(CE), E = gep_type_end(CE);
   for (++I; I != E; ++I)
     if (const StructType *STy = dyn_cast<StructType>(*I)) {
-      ConstantUInt *CU = cast<ConstantUInt>(I.getOperand());
-      assert(CU->getValue() < STy->getNumElements() &&
+      ConstantInt *CU = cast<ConstantInt>(I.getOperand());
+      assert(CU->getZExtValue() < STy->getNumElements() &&
              "Struct index out of range!");
-      unsigned El = (unsigned)CU->getValue();
+      unsigned El = (unsigned)CU->getZExtValue();
       if (ConstantStruct *CS = dyn_cast<ConstantStruct>(C)) {
         C = CS->getOperand(El);
       } else if (isa<ConstantAggregateZero>(C)) {
@@ -287,10 +287,10 @@ Constant *llvm::ConstantFoldLoadThroughGEPConstantExpr(Constant *C,
       }
     } else if (ConstantInt *CI = dyn_cast<ConstantInt>(I.getOperand())) {
       if (const ArrayType *ATy = dyn_cast<ArrayType>(*I)) {
-        if ((uint64_t)CI->getRawValue() >= ATy->getNumElements())
+        if (CI->getZExtValue() >= ATy->getNumElements())
          return 0;
         if (ConstantArray *CA = dyn_cast<ConstantArray>(C))
-          C = CA->getOperand((unsigned)CI->getRawValue());
+          C = CA->getOperand(CI->getZExtValue());
         else if (isa<ConstantAggregateZero>(C))
           C = Constant::getNullValue(ATy->getElementType());
         else if (isa<UndefValue>(C))
@@ -298,10 +298,10 @@ Constant *llvm::ConstantFoldLoadThroughGEPConstantExpr(Constant *C,
         else
           return 0;
       } else if (const PackedType *PTy = dyn_cast<PackedType>(*I)) {
-        if ((uint64_t)CI->getRawValue() >= PTy->getNumElements())
+        if (CI->getZExtValue() >= PTy->getNumElements())
           return 0;
         if (ConstantPacked *CP = dyn_cast<ConstantPacked>(C))
-          C = CP->getOperand((unsigned)CI->getRawValue());
+          C = CP->getOperand(CI->getZExtValue());
         else if (isa<ConstantAggregateZero>(C))
           C = Constant::getNullValue(PTy->getElementType());
         else if (isa<UndefValue>(C))

@@ -390,19 +390,19 @@ GenericValue ExecutionEngine::getConstantValue(const Constant *C) {
   }
 
   switch (C->getType()->getTypeID()) {
-#define GET_CONST_VAL(TY, CTY, CLASS) \
-  case Type::TY##TyID: Result.TY##Val = (CTY)cast<CLASS>(C)->getValue(); break
-    GET_CONST_VAL(Bool   , bool          , ConstantBool);
-    GET_CONST_VAL(UByte  , unsigned char , ConstantUInt);
-    GET_CONST_VAL(SByte  , signed char   , ConstantSInt);
-    GET_CONST_VAL(UShort , unsigned short, ConstantUInt);
-    GET_CONST_VAL(Short  , signed short  , ConstantSInt);
-    GET_CONST_VAL(UInt   , unsigned int  , ConstantUInt);
-    GET_CONST_VAL(Int    , signed int    , ConstantSInt);
-    GET_CONST_VAL(ULong  , uint64_t      , ConstantUInt);
-    GET_CONST_VAL(Long   , int64_t       , ConstantSInt);
-    GET_CONST_VAL(Float  , float         , ConstantFP);
-    GET_CONST_VAL(Double , double        , ConstantFP);
+#define GET_CONST_VAL(TY, CTY, CLASS, GETMETH) \
+  case Type::TY##TyID: Result.TY##Val = (CTY)cast<CLASS>(C)->GETMETH(); break
+    GET_CONST_VAL(Bool   , bool          , ConstantBool, getValue);
+    GET_CONST_VAL(UByte  , unsigned char , ConstantInt, getZExtValue);
+    GET_CONST_VAL(SByte  , signed char   , ConstantInt, getSExtValue);
+    GET_CONST_VAL(UShort , unsigned short, ConstantInt, getZExtValue);
+    GET_CONST_VAL(Short  , signed short  , ConstantInt, getSExtValue);
+    GET_CONST_VAL(UInt   , unsigned int  , ConstantInt, getZExtValue);
+    GET_CONST_VAL(Int    , signed int    , ConstantInt, getSExtValue);
+    GET_CONST_VAL(ULong  , uint64_t      , ConstantInt, getZExtValue);
+    GET_CONST_VAL(Long   , int64_t       , ConstantInt, getSExtValue);
+    GET_CONST_VAL(Float  , float         , ConstantFP, getValue);
+    GET_CONST_VAL(Double , double        , ConstantFP, getValue);
 #undef GET_CONST_VAL
   case Type::PointerTyID:
     if (isa<ConstantPointerNull>(C))

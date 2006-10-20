@@ -119,14 +119,14 @@ bool LowerAllocations::runOnBasicBlock(BasicBlock &BB) {
       // malloc(type) becomes sbyte *malloc(size)
       Value *MallocArg;
       if (LowerMallocArgToInteger)
-        MallocArg = ConstantUInt::get(Type::ULongTy, TD.getTypeSize(AllocTy));
+        MallocArg = ConstantInt::get(Type::ULongTy, TD.getTypeSize(AllocTy));
       else
         MallocArg = ConstantExpr::getSizeOf(AllocTy);
       MallocArg = ConstantExpr::getCast(cast<Constant>(MallocArg), IntPtrTy);
 
       if (MI->isArrayAllocation()) {
         if (isa<ConstantInt>(MallocArg) &&
-            cast<ConstantInt>(MallocArg)->getRawValue() == 1) {
+            cast<ConstantInt>(MallocArg)->getZExtValue() == 1) {
           MallocArg = MI->getOperand(0);         // Operand * 1 = Operand
         } else if (Constant *CO = dyn_cast<Constant>(MI->getOperand(0))) {
           CO = ConstantExpr::getCast(CO, IntPtrTy);

@@ -293,7 +293,7 @@ void BytecodeWriter::outputConstant(const Constant *CPV) {
     assert(CE->getNumOperands() > 0 && "ConstantExpr with 0 operands");
     assert(CE->getNumOperands() != 1 || CE->getOpcode() == Instruction::Cast);
     output_vbr(1+CE->getNumOperands());   // flags as an expr
-    output_vbr(CE->getOpcode());        // flags as an expr
+    output_vbr(CE->getOpcode());          // Put out the CE op code
 
     for (User::const_op_iterator OI = CE->op_begin(); OI != CE->op_end(); ++OI){
       int Slot = Table.getSlot(*OI);
@@ -307,7 +307,7 @@ void BytecodeWriter::outputConstant(const Constant *CPV) {
     output_vbr(1U);       // 1 -> UndefValue constant.
     return;
   } else {
-    output_vbr(0U);       // flag as not a ConstantExpr
+    output_vbr(0U);       // flag as not a ConstantExpr (i.e. 0 operands)
   }
 
   switch (CPV->getType()->getTypeID()) {
@@ -322,14 +322,14 @@ void BytecodeWriter::outputConstant(const Constant *CPV) {
   case Type::UShortTyID:
   case Type::UIntTyID:
   case Type::ULongTyID:
-    output_vbr(cast<ConstantUInt>(CPV)->getValue());
+    output_vbr(cast<ConstantInt>(CPV)->getZExtValue());
     break;
 
   case Type::SByteTyID:   // Signed integer types...
   case Type::ShortTyID:
   case Type::IntTyID:
   case Type::LongTyID:
-    output_vbr(cast<ConstantSInt>(CPV)->getValue());
+    output_vbr(cast<ConstantInt>(CPV)->getSExtValue());
     break;
 
   case Type::ArrayTyID: {
@@ -881,11 +881,11 @@ void BytecodeWriter::outputConstantsInPlane(const std::vector<const Value*>
   // FIXME: Most slabs only have 1 or 2 entries!  We should encode this much
   // more compactly.
 
-  // Output type header: [num entries][type id number]
+  // Put out type header: [num entries][type id number]
   //
   output_vbr(NC);
 
-  // Output the Type ID Number...
+  // Put out the Type ID Number...
   int Slot = Table.getSlot(Plane.front()->getType());
   assert (Slot != -1 && "Type in constant pool but not in function!!");
   output_typeid((unsigned)Slot);

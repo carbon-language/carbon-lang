@@ -678,12 +678,11 @@ void CppWriter::printConstant(const Constant *CV) {
   if (const ConstantBool *CB = dyn_cast<ConstantBool>(CV)) {
     Out << "ConstantBool* " << constName << " = ConstantBool::get(" 
         << (CB->getValue() ? "true" : "false") << ");";
-  } else if (const ConstantSInt *CI = dyn_cast<ConstantSInt>(CV)) {
-    Out << "ConstantSInt* " << constName << " = ConstantSInt::get(" 
-        << typeName << ", " << CI->getValue() << ");";
-  } else if (const ConstantUInt *CI = dyn_cast<ConstantUInt>(CV)) {
-    Out << "ConstantUInt* " << constName << " = ConstantUInt::get(" 
-        << typeName << ", " << CI->getValue() << ");";
+  } else if (const ConstantInt *CI = dyn_cast<ConstantInt>(CV)) {
+    Out << "ConstantInt* " << constName << " = ConstantInt::get(" 
+        << typeName << ", " 
+        << (CV->getType()->isSigned() ? CI->getSExtValue() : CI->getZExtValue())
+        << ");";
   } else if (isa<ConstantAggregateZero>(CV)) {
     Out << "ConstantAggregateZero* " << constName 
         << " = ConstantAggregateZero::get(" << typeName << ");";

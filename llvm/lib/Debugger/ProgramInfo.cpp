@@ -114,8 +114,8 @@ SourceFileInfo::SourceFileInfo(const GlobalVariable *Desc,
   if (Desc && Desc->hasInitializer())
     if (ConstantStruct *CS = dyn_cast<ConstantStruct>(Desc->getInitializer()))
       if (CS->getNumOperands() > 4) {
-        if (ConstantUInt *CUI = dyn_cast<ConstantUInt>(CS->getOperand(1)))
-          Version = CUI->getValue();
+        if (ConstantInt *CUI = dyn_cast<ConstantInt>(CS->getOperand(1)))
+          Version = CUI->getZExtValue();
 
         BaseName  = CS->getOperand(3)->getStringValue();
         Directory = CS->getOperand(4)->getStringValue();
@@ -237,8 +237,8 @@ ProgramInfo::getSourceFile(const GlobalVariable *Desc) {
   if (Desc && Desc->hasInitializer())
     if (ConstantStruct *CS = dyn_cast<ConstantStruct>(Desc->getInitializer()))
       if (CS->getNumOperands() > 2)
-        if (ConstantUInt *CUI = dyn_cast<ConstantUInt>(CS->getOperand(2)))
-          LangID = CUI->getValue();
+        if (ConstantInt *CUI = dyn_cast<ConstantInt>(CS->getOperand(2)))
+          LangID = CUI->getZExtValue();
 
   const SourceLanguage &Lang = SourceLanguage::get(LangID);
   SourceFileInfo *New = Lang.createSourceFileInfo(Desc, *this);

@@ -60,11 +60,12 @@ namespace {
   struct CaseCmp {
     bool operator () (const LowerSwitch::Case& C1,
                       const LowerSwitch::Case& C2) {
-      if (const ConstantUInt* U1 = dyn_cast<const ConstantUInt>(C1.first))
-        return U1->getValue() < cast<const ConstantUInt>(C2.first)->getValue();
 
-      const ConstantSInt* S1 = dyn_cast<const ConstantSInt>(C1.first);
-      return S1->getValue() < cast<const ConstantSInt>(C2.first)->getValue();
+      const ConstantInt* CI1 = cast<const ConstantInt>(C1.first);
+      const ConstantInt* CI2 = cast<const ConstantInt>(C2.first);
+      if (CI1->getType()->isUnsigned()) 
+        return CI1->getZExtValue() < CI2->getZExtValue();
+      return CI1->getSExtValue() < CI2->getSExtValue();
     }
   };
 
@@ -129,7 +130,7 @@ BasicBlock* LowerSwitch::switchConvert(CaseItr Begin, CaseItr End,
 
   Case& Pivot = *(Begin + Mid);
   DEBUG(std::cerr << "Pivot ==> "
-                  << (int64_t)cast<ConstantInt>(Pivot.first)->getRawValue()
+                  << cast<ConstantInt>(Pivot.first)->getSExtValue()
                   << "\n");
 
   BasicBlock* LBranch = switchConvert(LHS.begin(), LHS.end(), Val,

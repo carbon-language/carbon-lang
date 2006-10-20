@@ -51,7 +51,7 @@ void llvm::InsertProfilingInitCall(Function *MainFn, const char *FnName,
     // pass null.
     Args[2] = ConstantPointerNull::get(UIntPtr);
   }
-  Args[3] = ConstantUInt::get(Type::UIntTy, NumElements);
+  Args[3] = ConstantInt::get(Type::UIntTy, NumElements);
 
   Instruction *InitCall = new CallInst(InitFn, Args, "newargc", InsertPos);
 
@@ -96,7 +96,7 @@ void llvm::IncrementCounterInBlock(BasicBlock *BB, unsigned CounterNum,
   // Create the getelementptr constant expression
   std::vector<Constant*> Indices(2);
   Indices[0] = Constant::getNullValue(Type::IntTy);
-  Indices[1] = ConstantSInt::get(Type::IntTy, CounterNum);
+  Indices[1] = ConstantInt::get(Type::IntTy, CounterNum);
   Constant *ElementPtr = ConstantExpr::getGetElementPtr(CounterArray, Indices);
 
   // Load, increment and store the value back.

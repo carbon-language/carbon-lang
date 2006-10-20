@@ -163,14 +163,15 @@ llvm::ConstantFoldCall(Function *F, const std::vector<Constant*> &Operands) {
         default:
           break;
       }
-    } else if (ConstantUInt *Op = dyn_cast<ConstantUInt>(Operands[0])) {
-      uint64_t V = Op->getValue();
+    } else if (ConstantInt *Op = dyn_cast<ConstantInt>(Operands[0])) {
+      assert(Op->getType()->isUnsigned() && "bswap args must be unsigned");
+      uint64_t V = Op->getZExtValue();
       if (Name == "llvm.bswap.i16")
-        return ConstantUInt::get(Ty, ByteSwap_16(V));
+        return ConstantInt::get(Ty, ByteSwap_16(V));
       else if (Name == "llvm.bswap.i32")
-        return ConstantUInt::get(Ty, ByteSwap_32(V));
+        return ConstantInt::get(Ty, ByteSwap_32(V));
       else if (Name == "llvm.bswap.i64")
-        return ConstantUInt::get(Ty, ByteSwap_64(V));
+        return ConstantInt::get(Ty, ByteSwap_64(V));
     }
   } else if (Operands.size() == 2) {
     if (ConstantFP *Op1 = dyn_cast<ConstantFP>(Operands[0])) {

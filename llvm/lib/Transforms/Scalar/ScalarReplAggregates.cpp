@@ -203,7 +203,7 @@ bool SROA::performScalarRepl(Function &F) {
       GetElementPtrInst *GEPI = cast<GetElementPtrInst>(User);
       // We now know that the GEP is of the form: GEP <ptr>, 0, <cst>
       unsigned Idx =
-         (unsigned)cast<ConstantInt>(GEPI->getOperand(2))->getRawValue();
+         (unsigned)cast<ConstantInt>(GEPI->getOperand(2))->getZExtValue();
 
       assert(Idx < ElementAllocas.size() && "Index out of range?");
       AllocaInst *AllocaToUse = ElementAllocas[Idx];
@@ -306,7 +306,7 @@ int SROA::isSafeUseOfAllocation(Instruction *User) {
       // Check to make sure that index falls within the array.  If not,
       // something funny is going on, so we won't do the optimization.
       //
-      if (cast<ConstantInt>(GEPI->getOperand(2))->getRawValue() >= NumElements)
+      if (cast<ConstantInt>(GEPI->getOperand(2))->getZExtValue() >= NumElements)
         return 0;
 
       // We cannot scalar repl this level of the array unless any array
@@ -320,7 +320,7 @@ int SROA::isSafeUseOfAllocation(Instruction *User) {
         const ArrayType *SubArrayTy = cast<ArrayType>(*I);
         uint64_t NumElements = SubArrayTy->getNumElements();
         if (!isa<ConstantInt>(I.getOperand())) return 0;
-        if (cast<ConstantInt>(I.getOperand())->getRawValue() >= NumElements)
+        if (cast<ConstantInt>(I.getOperand())->getZExtValue() >= NumElements)
           return 0;
       }
       
@@ -499,7 +499,7 @@ const Type *SROA::CanConvertToScalar(Value *V, bool &IsNotTrivial) {
     } else if (GetElementPtrInst *GEP = dyn_cast<GetElementPtrInst>(User)) {
       // Check to see if this is stepping over an element: GEP Ptr, int C
       if (GEP->getNumOperands() == 2 && isa<ConstantInt>(GEP->getOperand(1))) {
-        unsigned Idx = cast<ConstantInt>(GEP->getOperand(1))->getRawValue();
+        unsigned Idx = cast<ConstantInt>(GEP->getOperand(1))->getZExtValue();
         unsigned ElSize = TD.getTypeSize(PTy->getElementType());
         unsigned BitOffset = Idx*ElSize*8;
         if (BitOffset > 64 || !isPowerOf2_32(ElSize)) return 0;
@@ -520,7 +520,7 @@ const Type *SROA::CanConvertToScalar(Value *V, bool &IsNotTrivial) {
         // We are stepping into an element, e.g. a structure or an array:
         // GEP Ptr, int 0, uint C
         const Type *AggTy = PTy->getElementType();
-        unsigned Idx = cast<ConstantInt>(GEP->getOperand(2))->getRawValue();
+        unsigned Idx = cast<ConstantInt>(GEP->getOperand(2))->getZExtValue();
         
         if (const ArrayType *ATy = dyn_cast<ArrayType>(AggTy)) {
           if (Idx >= ATy->getNumElements()) return 0;  // Out of range.
@@ -608,13 +608,13 @@ void SROA::ConvertUsesToScalar(Value *Ptr, AllocaInst *NewAI, unsigned Offset) {
         if (const PackedType *PTy = dyn_cast<PackedType>(NV->getType())) {
           // Must be an element access.
           unsigned Elt = Offset/(TD.getTypeSize(PTy->getElementType())*8);
-          NV = new ExtractElementInst(NV, ConstantUInt::get(Type::UIntTy, Elt),
+          NV = new ExtractElementInst(NV, ConstantInt::get(Type::UIntTy, Elt),
                                       "tmp", LI);
         } else {
           assert(NV->getType()->isInteger() && "Unknown promotion!");
           if (Offset && Offset < TD.getTypeSize(NV->getType())*8)
             NV = new ShiftInst(Instruction::Shr, NV,
-                               ConstantUInt::get(Type::UByteTy, Offset),
+                               ConstantInt::get(Type::UByteTy, Offset),
                                LI->getName(), LI);
           NV = new CastInst(NV, LI->getType(), LI->getName(), LI);
         }
@@ -635,7 +635,7 @@ void SROA::ConvertUsesToScalar(Value *Ptr, AllocaInst *NewAI, unsigned Offset) {
           // Must be an element insertion.
           unsigned Elt = Offset/(TD.getTypeSize(PTy->getElementType())*8);
           SV = new InsertElementInst(Old, SV,
-                                     ConstantUInt::get(Type::UIntTy, Elt),
+                                     ConstantInt::get(Type::UIntTy, Elt),
                                      "tmp", SI);
         } else {
           // If SV is signed, convert it to unsigned, so that the next cast zero
@@ -646,7 +646,7 @@ void SROA::ConvertUsesToScalar(Value *Ptr, AllocaInst *NewAI, unsigned Offset) {
           SV = new CastInst(SV, Old->getType(), SV->getName(), SI);
           if (Offset && Offset < TD.getTypeSize(SV->getType())*8)
             SV = new ShiftInst(Instruction::Shl, SV,
-                               ConstantUInt::get(Type::UByteTy, Offset),
+                               ConstantInt::get(Type::UByteTy, Offset),
                                SV->getName()+".adj", SI);
           // Mask out the bits we are about to insert from the old value.
           unsigned TotalBits = TD.getTypeSize(SV->getType())*8;
@@ -657,7 +657,7 @@ void SROA::ConvertUsesToScalar(Value *Ptr, AllocaInst *NewAI, unsigned Offset) {
             if (TotalBits != 64)
               Mask = Mask & ((1ULL << TotalBits)-1);
             Old = BinaryOperator::createAnd(Old,
-                                        ConstantUInt::get(Old->getType(), Mask),
+                                        ConstantInt::get(Old->getType(), Mask),
                                             Old->getName()+".mask", SI);
             SV = BinaryOperator::createOr(Old, SV, SV->getName()+".ins", SI);
           }
@@ -688,7 +688,7 @@ void SROA::ConvertUsesToScalar(Value *Ptr, AllocaInst *NewAI, unsigned Offset) {
       // Check to see if this is stepping over an element: GEP Ptr, int C
       unsigned NewOffset = Offset;
       if (GEP->getNumOperands() == 2) {
-        unsigned Idx = cast<ConstantInt>(GEP->getOperand(1))->getRawValue();
+        unsigned Idx = cast<ConstantInt>(GEP->getOperand(1))->getZExtValue();
         unsigned BitOffset = Idx*AggSizeInBits;
         
         if (TD.isLittleEndian() || isVectorInsert)
@@ -698,7 +698,7 @@ void SROA::ConvertUsesToScalar(Value *Ptr, AllocaInst *NewAI, unsigned Offset) {
         
       } else if (GEP->getNumOperands() == 3) {
         // We know that operand #2 is zero.
-        unsigned Idx = cast<ConstantInt>(GEP->getOperand(2))->getRawValue();
+        unsigned Idx = cast<ConstantInt>(GEP->getOperand(2))->getZExtValue();
         const Type *AggTy = AggPtrTy->getElementType();
         if (const SequentialType *SeqTy = dyn_cast<SequentialType>(AggTy)) {
           unsigned ElSizeBits = TD.getTypeSize(SeqTy->getElementType())*8;

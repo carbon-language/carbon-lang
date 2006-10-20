@@ -49,7 +49,7 @@ static void InsertInstrumentationCall (BasicBlock *BB,
   Function *InstrFn = M.getOrInsertFunction (FnName, Type::VoidTy,
                                              Type::UIntTy, (Type *)0);
   std::vector<Value*> Args (1);
-  Args[0] = ConstantUInt::get (Type::UIntTy, BBNumber);
+  Args[0] = ConstantInt::get (Type::UIntTy, BBNumber);
 
   // Insert the call after any alloca or PHI instructions...
   BasicBlock::iterator InsertPos = BB->begin();

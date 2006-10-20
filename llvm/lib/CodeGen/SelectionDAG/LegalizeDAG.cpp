@@ -3562,7 +3562,7 @@ SDOperand SelectionDAGLegalize::ExpandBUILD_VECTOR(SDNode *Node) {
         CV.push_back(ConstantFP::get(OpNTy, V->getValue()));
       } else if (ConstantSDNode *V = 
                  dyn_cast<ConstantSDNode>(Node->getOperand(i))) {
-        CV.push_back(ConstantUInt::get(OpNTy, V->getValue()));
+        CV.push_back(ConstantInt::get(OpNTy, V->getValue()));
       } else {
         assert(Node->getOperand(i).getOpcode() == ISD::UNDEF);
         CV.push_back(UndefValue::get(OpNTy));
@@ -3915,7 +3915,7 @@ ExpandIntToFP(bool isSigned, MVT::ValueType DestTy, SDOperand Source) {
                                       SignSet, Four, Zero);
     uint64_t FF = 0x5f800000ULL;
     if (TLI.isLittleEndian()) FF <<= 32;
-    static Constant *FudgeFactor = ConstantUInt::get(Type::ULongTy, FF);
+    static Constant *FudgeFactor = ConstantInt::get(Type::ULongTy, FF);
 
     SDOperand CPIdx = DAG.getConstantPool(FudgeFactor, TLI.getPointerTy());
     CPIdx = DAG.getNode(ISD::ADD, TLI.getPointerTy(), CPIdx, CstOffset);
@@ -4046,7 +4046,7 @@ SDOperand SelectionDAGLegalize::ExpandLegalINT_TO_FP(bool isSigned,
   case MVT::i64: FF = 0x5F800000ULL; break;  // 2^64 (as a float)
   }
   if (TLI.isLittleEndian()) FF <<= 32;
-  static Constant *FudgeFactor = ConstantUInt::get(Type::ULongTy, FF);
+  static Constant *FudgeFactor = ConstantInt::get(Type::ULongTy, FF);
 
   SDOperand CPIdx = DAG.getConstantPool(FudgeFactor, TLI.getPointerTy());
   CPIdx = DAG.getNode(ISD::ADD, TLI.getPointerTy(), CPIdx, CstOffset);

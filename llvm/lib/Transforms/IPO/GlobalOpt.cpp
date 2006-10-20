@@ -270,7 +270,7 @@ static bool AnalyzeGlobal(Value *V, GlobalStatus &GS,
 static Constant *getAggregateConstantElement(Constant *Agg, Constant *Idx) {
   ConstantInt *CI = dyn_cast<ConstantInt>(Idx);
   if (!CI) return 0;
-  unsigned IdxV = (unsigned)CI->getRawValue();
+  unsigned IdxV = CI->getZExtValue();
 
   if (ConstantStruct *CS = dyn_cast<ConstantStruct>(Agg)) {
     if (IdxV < CS->getNumOperands()) return CS->getOperand(IdxV);
@@ -384,7 +384,7 @@ static GlobalVariable *SRAGlobal(GlobalVariable *GV) {
     NewGlobals.reserve(STy->getNumElements());
     for (unsigned i = 0, e = STy->getNumElements(); i != e; ++i) {
       Constant *In = getAggregateConstantElement(Init,
-                                            ConstantUInt::get(Type::UIntTy, i));
+                                            ConstantInt::get(Type::UIntTy, i));
       assert(In && "Couldn't get element of initializer?");
       GlobalVariable *NGV = new GlobalVariable(STy->getElementType(i), false,
                                                GlobalVariable::InternalLinkage,
@@ -406,7 +406,7 @@ static GlobalVariable *SRAGlobal(GlobalVariable *GV) {
     NewGlobals.reserve(NumElements);
     for (unsigned i = 0, e = NumElements; i != e; ++i) {
       Constant *In = getAggregateConstantElement(Init,
-                                            ConstantUInt::get(Type::UIntTy, i));
+                                            ConstantInt::get(Type::UIntTy, i));
       assert(In && "Couldn't get element of initializer?");
 
       GlobalVariable *NGV = new GlobalVariable(STy->getElementType(), false,
@@ -435,8 +435,7 @@ static GlobalVariable *SRAGlobal(GlobalVariable *GV) {
     // Ignore the 1th operand, which has to be zero or else the program is quite
     // broken (undefined).  Get the 2nd operand, which is the structure or array
     // index.
-    unsigned Val =
-       (unsigned)cast<ConstantInt>(GEP->getOperand(2))->getRawValue();
+    unsigned Val = cast<ConstantInt>(GEP->getOperand(2))->getZExtValue();
     if (Val >= NewGlobals.size()) Val = 0; // Out of bound array access.
 
     Value *NewPtr = NewGlobals[Val];
@@ -673,11 +672,11 @@ static GlobalVariable *OptimizeGlobalAddressOfMalloc(GlobalVariable *GV,
   DEBUG(std::cerr << "PROMOTING MALLOC GLOBAL: " << *GV << "  MALLOC = " <<*MI);
   ConstantInt *NElements = cast<ConstantInt>(MI->getArraySize());
 
-  if (NElements->getRawValue() != 1) {
+  if (NElements->getZExtValue() != 1) {
     // If we have an array allocation, transform it to a single element
     // allocation to make the code below simpler.
     Type *NewTy = ArrayType::get(MI->getAllocatedType(),
-                                 (unsigned)NElements->getRawValue());
+                                 NElements->getZExtValue());
     MallocInst *NewMI =
       new MallocInst(NewTy, Constant::getNullValue(Type::UIntTy),
                      MI->getAlignment(), MI->getName(), MI);
@@ -886,11 +885,12 @@ static void RewriteUsesOfLoadForHeapSRoA(LoadInst *Ptr,
     
     // Otherwise, this should be: 'getelementptr Ptr, Idx, uint FieldNo ...'
     GetElementPtrInst *GEPI = cast<GetElementPtrInst>(User);
-    assert(GEPI->getNumOperands() >= 3 && isa<ConstantUInt>(GEPI->getOperand(2))
+    assert(GEPI->getNumOperands() >= 3 && isa<ConstantInt>(GEPI->getOperand(2))
+           && GEPI->getOperand(2)->getType()->isUnsigned()
            && "Unexpected GEPI!");
     
     // Load the pointer for this field.
-    unsigned FieldNo = cast<ConstantUInt>(GEPI->getOperand(2))->getValue();
+    unsigned FieldNo = cast<ConstantInt>(GEPI->getOperand(2))->getZExtValue();
     if (InsertedLoadsForPtr.size() <= FieldNo)
       InsertedLoadsForPtr.resize(FieldNo+1);
     if (InsertedLoadsForPtr[FieldNo] == 0)
@@ -1088,7 +1088,7 @@ static bool OptimizeOnceStoredGlobal(GlobalVariable *GV, Value *StoredOnceVal,
         // Restrict this transformation to only working on small allocations
         // (2048 bytes currently), as we don't want to introduce a 16M global or
         // something.
-        if (NElements->getRawValue()*
+        if (NElements->getZExtValue()*
                      TD.getTypeSize(MI->getAllocatedType()) < 2048) {
           GVI = OptimizeGlobalAddressOfMalloc(GV, MI);
           return true;
@@ -1431,7 +1431,7 @@ GlobalVariable *GlobalOpt::FindGlobalCtors(Module &M) {
           
           // Init priority must be standard.
           ConstantInt *CI = dyn_cast<ConstantInt>(CS->getOperand(0));
-          if (!CI || CI->getRawValue() != 65535)
+          if (!CI || CI->getZExtValue() != 65535)
             return 0;
         } else {
           return 0;
@@ -1461,7 +1461,7 @@ static GlobalVariable *InstallGlobalCtors(GlobalVariable *GCL,
                                           const std::vector<Function*> &Ctors) {
   // If we made a change, reassemble the initializer list.
   std::vector<Constant*> CSVals;
-  CSVals.push_back(ConstantSInt::get(Type::IntTy, 65535));
+  CSVals.push_back(ConstantInt::get(Type::IntTy, 65535));
   CSVals.push_back(0);
   
   // Create the new init list.
@@ -1474,7 +1474,7 @@ static GlobalVariable *InstallGlobalCtors(GlobalVariable *GCL,
                                           std::vector<const Type*>(), false);
       const PointerType *PFTy = PointerType::get(FTy);
       CSVals[1] = Constant::getNullValue(PFTy);
-      CSVals[0] = ConstantSInt::get(Type::IntTy, 2147483647);
+      CSVals[0] = ConstantInt::get(Type::IntTy, 2147483647);
     }
     CAList.push_back(ConstantStruct::get(CSVals));
   }
@@ -1575,10 +1575,9 @@ static Constant *EvaluateStoreInto(Constant *Init, Constant *Val,
     }
     
     // Replace the element that we are supposed to.
-    ConstantUInt *CU = cast<ConstantUInt>(Addr->getOperand(OpNo));
-    assert(CU->getValue() < STy->getNumElements() &&
-           "Struct index out of range!");
-    unsigned Idx = (unsigned)CU->getValue();
+    ConstantInt *CU = cast<ConstantInt>(Addr->getOperand(OpNo));
+    unsigned Idx = CU->getZExtValue();
+    assert(Idx < STy->getNumElements() && "Struct index out of range!");
     Elts[Idx] = EvaluateStoreInto(Elts[Idx], Val, Addr, OpNo+1);
     
     // Return the modified struct.
@@ -1603,9 +1602,9 @@ static Constant *EvaluateStoreInto(Constant *Init, Constant *Val,
              " ConstantFoldLoadThroughGEPConstantExpr");
     }
     
-    assert((uint64_t)CI->getRawValue() < ATy->getNumElements());
-    Elts[(uint64_t)CI->getRawValue()] =
-      EvaluateStoreInto(Elts[(uint64_t)CI->getRawValue()], Val, Addr, OpNo+1);
+    assert(CI->getZExtValue() < ATy->getNumElements());
+    Elts[CI->getZExtValue()] =
+      EvaluateStoreInto(Elts[CI->getZExtValue()], Val, Addr, OpNo+1);
     return ConstantArray::get(ATy, Elts);
   }    
 }

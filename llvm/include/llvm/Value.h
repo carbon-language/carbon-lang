@@ -151,8 +151,7 @@ public:
     ConstantExprVal,          // This is an instance of ConstantExpr
     ConstantAggregateZeroVal, // This is an instance of ConstantAggregateNull
     ConstantBoolVal,          // This is an instance of ConstantBool
-    ConstantSIntVal,          // This is an instance of ConstantSInt
-    ConstantUIntVal,          // This is an instance of ConstantUInt
+    ConstantIntVal,           // This is an instance of ConstantInt
     ConstantFPVal,            // This is an instance of ConstantFP
     ConstantArrayVal,         // This is an instance of ConstantArray
     ConstantStructVal,        // This is an instance of ConstantStruct

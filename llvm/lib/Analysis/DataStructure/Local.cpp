@@ -407,7 +407,7 @@ void GraphBuilder::visitGetElementPtrInst(User &GEP) {
        I != E; ++I)
     if (const StructType *STy = dyn_cast<StructType>(*I)) {
       unsigned FieldNo =
-           (unsigned)cast<ConstantUInt>(I.getOperand())->getValue();
+           (unsigned)cast<ConstantInt>(I.getOperand())->getZExtValue();
       Offset += (unsigned)TD.getStructLayout(STy)->MemberOffsets[FieldNo];
     } else if (const PointerType *PTy = dyn_cast<PointerType>(*I)) {
       if (!isa<Constant>(I.getOperand()) ||

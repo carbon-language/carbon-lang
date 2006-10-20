@@ -366,8 +366,8 @@ const std::string &Type::getDescription() const {
 bool StructType::indexValid(const Value *V) const {
   // Structure indexes require unsigned integer constants.
   if (V->getType() == Type::UIntTy)
-    if (const ConstantUInt *CU = dyn_cast<ConstantUInt>(V))
-      return CU->getValue() < ContainedTys.size();
+    if (const ConstantInt *CU = dyn_cast<ConstantInt>(V))
+      return CU->getZExtValue() < ContainedTys.size();
   return false;
 }
 
@@ -376,7 +376,7 @@ bool StructType::indexValid(const Value *V) const {
 //
 const Type *StructType::getTypeAtIndex(const Value *V) const {
   assert(indexValid(V) && "Invalid structure index!");
-  unsigned Idx = (unsigned)cast<ConstantUInt>(V)->getValue();
+  unsigned Idx = (unsigned)cast<ConstantInt>(V)->getZExtValue();
   return ContainedTys[Idx];
 }
 

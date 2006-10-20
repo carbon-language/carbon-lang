@@ -1010,8 +1010,9 @@ void BytecodeReader::ParseInstruction(std::vector<unsigned> &Oprnds,
 
       // Convert ubyte struct indices into uint struct indices.
       if (isa<StructType>(TopTy) && hasRestrictedGEPTypes)
-        if (ConstantUInt *C = dyn_cast<ConstantUInt>(Idx.back()))
-          Idx[Idx.size()-1] = ConstantExpr::getCast(C, Type::UIntTy);
+        if (ConstantInt *C = dyn_cast<ConstantInt>(Idx.back()))
+          if (C->getType() == Type::UByteTy)
+            Idx[Idx.size()-1] = ConstantExpr::getCast(C, Type::UIntTy);
 
       NextTy = GetElementPtrInst::getIndexedType(InstTy, Idx, true);
     }
@@ -1549,15 +1550,15 @@ Value *BytecodeReader::ParseConstantPoolValue(unsigned TypeID) {
   case Type::UShortTyID:
   case Type::UIntTyID: {
     unsigned Val = read_vbr_uint();
-    if (!ConstantUInt::isValueValidForType(Ty, Val))
+    if (!ConstantInt::isValueValidForType(Ty, uint64_t(Val)))
       error("Invalid unsigned byte/short/int read.");
-    Result = ConstantUInt::get(Ty, Val);
+    Result = ConstantInt::get(Ty, Val);
     if (Handler) Handler->handleConstantValue(Result);
     break;
   }
 
   case Type::ULongTyID:
-    Result = ConstantUInt::get(Ty, read_vbr_uint64());
+    Result = ConstantInt::get(Ty, read_vbr_uint64());
     if (Handler) Handler->handleConstantValue(Result);
     break;
     
@@ -1566,9 +1567,9 @@ Value *BytecodeReader::ParseConstantPoolValue(unsigned TypeID) {
   case Type::IntTyID:
   case Type::LongTyID: {
     int64_t Val = read_vbr_int64();
-    if (!ConstantSInt::isValueValidForType(Ty, Val))
+    if (!ConstantInt::isValueValidForType(Ty, Val))
       error("Invalid signed byte/short/int/long read.");
-    Result = ConstantSInt::get(Ty, Val);
+    Result = ConstantInt::get(Ty, Val);
     if (Handler) Handler->handleConstantValue(Result);
     break;
   }
@@ -1699,12 +1700,9 @@ void BytecodeReader::ParseStringConstants(unsigned NumEntries, ValueTable &Tab){
     read_data(Data, Data+ATy->getNumElements());
 
     std::vector<Constant*> Elements(ATy->getNumElements());
-    if (ATy->getElementType() == Type::SByteTy)
-      for (unsigned i = 0, e = ATy->getNumElements(); i != e; ++i)
-        Elements[i] = ConstantSInt::get(Type::SByteTy, (signed char)Data[i]);
-    else
-      for (unsigned i = 0, e = ATy->getNumElements(); i != e; ++i)
-        Elements[i] = ConstantUInt::get(Type::UByteTy, (unsigned char)Data[i]);
+    const Type* ElemType = ATy->getElementType();
+    for (unsigned i = 0, e = ATy->getNumElements(); i != e; ++i)
+      Elements[i] = ConstantInt::get(ElemType, (unsigned char)Data[i]);
 
     // Create the constant, inserting it as needed.
     Constant *C = ConstantArray::get(ATy, Elements);

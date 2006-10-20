@@ -209,7 +209,7 @@ void LowerPacked::visitLoadInst(LoadInst& LI)
    if (const PackedType* PKT = dyn_cast<PackedType>(LI.getType())) {
        // Initialization, Idx is needed for getelementptr needed later
        std::vector<Value*> Idx(2);
-       Idx[0] = ConstantUInt::get(Type::UIntTy,0);
+       Idx[0] = ConstantInt::get(Type::UIntTy,0);
 
        ArrayType* AT = ArrayType::get(PKT->getContainedType(0),
                                       PKT->getNumElements());
@@ -227,7 +227,7 @@ void LowerPacked::visitLoadInst(LoadInst& LI)
 
        for (unsigned i = 0, e = PKT->getNumElements(); i != e; ++i) {
             // Calculate the second index we will need
-            Idx[1] = ConstantUInt::get(Type::UIntTy,i);
+            Idx[1] = ConstantInt::get(Type::UIntTy,i);
 
             // Get the pointer
             Value* val = new GetElementPtrInst(array,
@@ -283,7 +283,7 @@ void LowerPacked::visitStoreInst(StoreInst& SI)
        dyn_cast<PackedType>(SI.getOperand(0)->getType())) {
        // We will need this for getelementptr
        std::vector<Value*> Idx(2);
-       Idx[0] = ConstantUInt::get(Type::UIntTy,0);
+       Idx[0] = ConstantInt::get(Type::UIntTy,0);
 
        ArrayType* AT = ArrayType::get(PKT->getContainedType(0),
                                       PKT->getNumElements());
@@ -301,7 +301,7 @@ void LowerPacked::visitStoreInst(StoreInst& SI)
 
        for (unsigned i = 0, e = PKT->getNumElements(); i != e; ++i) {
             // Generate the indices for getelementptr
-            Idx[1] = ConstantUInt::get(Type::UIntTy,i);
+            Idx[1] = ConstantInt::get(Type::UIntTy,i);
             Value* val = new GetElementPtrInst(array,
                                                Idx,
                                                "store.ge." +
@@ -346,17 +346,17 @@ void LowerPacked::visitExtractElementInst(ExtractElementInst& EI)
   const PackedType *PTy = cast<PackedType>(EI.getOperand(0)->getType());
   Value *op1 = EI.getOperand(1);
 
-  if (ConstantUInt *C = dyn_cast<ConstantUInt>(op1)) {
-    EI.replaceAllUsesWith(op0Vals[C->getValue()]);
+  if (ConstantInt *C = dyn_cast<ConstantInt>(op1)) {
+    EI.replaceAllUsesWith(op0Vals[C->getZExtValue()]);
   } else {
     AllocaInst *alloca = 
       new AllocaInst(PTy->getElementType(),
-                     ConstantUInt::get(Type::UIntTy, PTy->getNumElements()),
+                     ConstantInt::get(Type::UIntTy, PTy->getNumElements()),
                      EI.getName() + ".alloca", 
 		     EI.getParent()->getParent()->getEntryBlock().begin());
     for (unsigned i = 0; i < PTy->getNumElements(); ++i) {
       GetElementPtrInst *GEP = 
-        new GetElementPtrInst(alloca, ConstantUInt::get(Type::UIntTy, i),
+        new GetElementPtrInst(alloca, ConstantInt::get(Type::UIntTy, i),
                               "store.ge", &EI);
       new StoreInst(op0Vals[i], GEP, &EI);
     }
@@ -378,8 +378,8 @@ void LowerPacked::visitInsertElementInst(InsertElementInst& IE)
   std::vector<Value*> result;
   result.reserve(Vals.size());
 
-  if (ConstantUInt *C = dyn_cast<ConstantUInt>(Idx)) {
-    unsigned idxVal = C->getValue();
+  if (ConstantInt *C = dyn_cast<ConstantInt>(Idx)) {
+    unsigned idxVal = C->getZExtValue();
     for (unsigned i = 0; i != Vals.size(); ++i) {
       result.push_back(i == idxVal ? Elt : Vals[i]);
     }
@@ -387,7 +387,7 @@ void LowerPacked::visitInsertElementInst(InsertElementInst& IE)
     for (unsigned i = 0; i != Vals.size(); ++i) {
       SetCondInst *setcc =
         new SetCondInst(Instruction::SetEQ, Idx, 
-                        ConstantUInt::get(Type::UIntTy, i),
+                        ConstantInt::get(Type::UIntTy, i),
                         "setcc", &IE);
       SelectInst *select =
         new SelectInst(setcc, Elt, Vals[i], "select", &IE);

@@ -161,7 +161,7 @@ uint64_t ConstantRange::getSetSize() const {
 
   // Simply subtract the bounds...
   Constant *Result = ConstantExpr::getSub(Upper, Lower);
-  return cast<ConstantInt>(Result)->getRawValue();
+  return cast<ConstantInt>(Result)->getZExtValue();
 }
 
 /// contains - Return true if the specified value is in the set.
@@ -288,7 +288,7 @@ ConstantRange ConstantRange::zeroExtend(const Type *Ty) const {
     // Change a source full set into [0, 1 << 8*numbytes)
     unsigned SrcTySize = getLower()->getType()->getPrimitiveSize();
     return ConstantRange(Constant::getNullValue(Ty),
-                         ConstantUInt::get(Ty, 1ULL << SrcTySize*8));
+                         ConstantInt::get(Ty, 1ULL << SrcTySize*8));
   }
 
   Constant *Lower = getLower();

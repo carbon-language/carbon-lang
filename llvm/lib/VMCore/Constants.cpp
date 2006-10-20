@@ -93,35 +93,35 @@ Constant *Constant::getNullValue(const Type *Ty) {
     return NullBool;
   }
   case Type::SByteTyID: {
-    static Constant *NullSByte = ConstantSInt::get(Type::SByteTy, 0);
+    static Constant *NullSByte = ConstantInt::get(Type::SByteTy, 0);
     return NullSByte;
   }
   case Type::UByteTyID: {
-    static Constant *NullUByte = ConstantUInt::get(Type::UByteTy, 0);
+    static Constant *NullUByte = ConstantInt::get(Type::UByteTy, 0);
     return NullUByte;
   }
   case Type::ShortTyID: {
-    static Constant *NullShort = ConstantSInt::get(Type::ShortTy, 0);
+    static Constant *NullShort = ConstantInt::get(Type::ShortTy, 0);
     return NullShort;
   }
   case Type::UShortTyID: {
-    static Constant *NullUShort = ConstantUInt::get(Type::UShortTy, 0);
+    static Constant *NullUShort = ConstantInt::get(Type::UShortTy, 0);
     return NullUShort;
   }
   case Type::IntTyID: {
-    static Constant *NullInt = ConstantSInt::get(Type::IntTy, 0);
+    static Constant *NullInt = ConstantInt::get(Type::IntTy, 0);
     return NullInt;
   }
   case Type::UIntTyID: {
-    static Constant *NullUInt = ConstantUInt::get(Type::UIntTy, 0);
+    static Constant *NullUInt = ConstantInt::get(Type::UIntTy, 0);
     return NullUInt;
   }
   case Type::LongTyID: {
-    static Constant *NullLong = ConstantSInt::get(Type::LongTy, 0);
+    static Constant *NullLong = ConstantInt::get(Type::LongTy, 0);
     return NullLong;
   }
   case Type::ULongTyID: {
-    static Constant *NullULong = ConstantUInt::get(Type::ULongTy, 0);
+    static Constant *NullULong = ConstantInt::get(Type::ULongTy, 0);
     return NullULong;
   }
 
@@ -160,7 +160,7 @@ ConstantIntegral *ConstantIntegral::getMaxValue(const Type *Ty) {
     unsigned TypeBits = Ty->getPrimitiveSize()*8;
     int64_t Val = INT64_MAX;             // All ones
     Val >>= 64-TypeBits;                 // Shift out unwanted 1 bits...
-    return ConstantSInt::get(Ty, Val);
+    return ConstantInt::get(Ty, Val);
   }
 
   case Type::UByteTyID:
@@ -184,13 +184,13 @@ ConstantIntegral *ConstantIntegral::getMinValue(const Type *Ty) {
      unsigned TypeBits = Ty->getPrimitiveSize()*8;
      int64_t Val = -1;                    // All ones
      Val <<= TypeBits-1;                  // Shift over to the right spot
-     return ConstantSInt::get(Ty, Val);
+     return ConstantInt::get(Ty, Val);
   }
 
   case Type::UByteTyID:
   case Type::UShortTyID:
   case Type::UIntTyID:
-  case Type::ULongTyID:  return ConstantUInt::get(Ty, 0);
+  case Type::ULongTyID:  return ConstantInt::get(Ty, 0);
 
   default: return 0;
   }
@@ -203,7 +203,7 @@ ConstantIntegral *ConstantIntegral::getAllOnesValue(const Type *Ty) {
   case Type::SByteTyID:
   case Type::ShortTyID:
   case Type::IntTyID:
-  case Type::LongTyID:   return ConstantSInt::get(Ty, -1);
+  case Type::LongTyID:   return ConstantInt::get(Ty, -1);
 
   case Type::UByteTyID:
   case Type::UShortTyID:
@@ -213,19 +213,11 @@ ConstantIntegral *ConstantIntegral::getAllOnesValue(const Type *Ty) {
     unsigned TypeBits = Ty->getPrimitiveSize()*8;
     uint64_t Val = ~0ULL;                // All ones
     Val >>= 64-TypeBits;                 // Shift out unwanted 1 bits...
-    return ConstantUInt::get(Ty, Val);
+    return ConstantInt::get(Ty, Val);
   }
   default: return 0;
   }
 }
-
-bool ConstantUInt::isAllOnesValue() const {
-  unsigned TypeBits = getType()->getPrimitiveSize()*8;
-  uint64_t Val = ~0ULL;                // All ones
-  Val >>= 64-TypeBits;                 // Shift out inappropriate bits
-  return getValue() == Val;
-}
-
 
 //===----------------------------------------------------------------------===//
 //                            ConstantXXX Classes
@@ -235,30 +227,15 @@ bool ConstantUInt::isAllOnesValue() const {
 //                             Normal Constructors
 
 ConstantIntegral::ConstantIntegral(const Type *Ty, ValueTy VT, uint64_t V)
-  : Constant(Ty, VT, 0, 0) {
-    Val.Unsigned = V;
+  : Constant(Ty, VT, 0, 0), Val(V) {
 }
 
 ConstantBool::ConstantBool(bool V) 
-  : ConstantIntegral(Type::BoolTy, ConstantBoolVal, V) {
+  : ConstantIntegral(Type::BoolTy, ConstantBoolVal, uint64_t(V)) {
 }
 
-ConstantInt::ConstantInt(const Type *Ty, ValueTy VT, uint64_t V)
-  : ConstantIntegral(Ty, VT, V) {
-}
-
-ConstantSInt::ConstantSInt(const Type *Ty, int64_t V)
-  : ConstantInt(Ty, ConstantSIntVal, V) {
-  assert(Ty->isInteger() && Ty->isSigned() &&
-         "Illegal type for signed integer constant!");
-  assert(isValueValidForType(Ty, V) && "Value too large for type!");
-}
-
-ConstantUInt::ConstantUInt(const Type *Ty, uint64_t V)
-  : ConstantInt(Ty, ConstantUIntVal, V) {
-  assert(Ty->isInteger() && Ty->isUnsigned() &&
-         "Illegal type for unsigned integer constant!");
-  assert(isValueValidForType(Ty, V) && "Value too large for type!");
+ConstantInt::ConstantInt(const Type *Ty, uint64_t V)
+  : ConstantIntegral(Ty, ConstantIntVal, V) {
 }
 
 ConstantFP::ConstantFP(const Type *Ty, double V)
@@ -611,36 +588,26 @@ getWithOperands(const std::vector<Constant*> &Ops) const {
 //===----------------------------------------------------------------------===//
 //                      isValueValidForType implementations
 
-bool ConstantSInt::isValueValidForType(const Type *Ty, int64_t Val) {
+bool ConstantInt::isValueValidForType(const Type *Ty, int64_t Val) {
   switch (Ty->getTypeID()) {
   default:
     return false;         // These can't be represented as integers!!!
     // Signed types...
   case Type::SByteTyID:
     return (Val <= INT8_MAX && Val >= INT8_MIN);
+  case Type::UByteTyID:
+    return (Val >= 0) && (Val <= UINT8_MAX);
   case Type::ShortTyID:
     return (Val <= INT16_MAX && Val >= INT16_MIN);
+  case Type::UShortTyID:
+    return (Val >= 0) && (Val <= UINT16_MAX);
   case Type::IntTyID:
     return (Val <= int(INT32_MAX) && Val >= int(INT32_MIN));
-  case Type::LongTyID:
-    return true;          // This is the largest type...
-  }
-}
-
-bool ConstantUInt::isValueValidForType(const Type *Ty, uint64_t Val) {
-  switch (Ty->getTypeID()) {
-  default:
-    return false;         // These can't be represented as integers!!!
-
-    // Unsigned types...
-  case Type::UByteTyID:
-    return (Val <= UINT8_MAX);
-  case Type::UShortTyID:
-    return (Val <= UINT16_MAX);
   case Type::UIntTyID:
-    return (Val <= UINT32_MAX);
+    return (Val >= 0) && (Val <= UINT32_MAX);
+  case Type::LongTyID:
   case Type::ULongTyID:
-    return true;          // This is the largest type...
+    return true; // always true, has to fit in largest type
   }
 }
 
@@ -756,8 +723,9 @@ public:
     ConstantClass *getOrCreate(const TypeClass *Ty, const ValType &V) {
       MapKey Lookup(Ty, V);
       typename MapTy::iterator I = Map.lower_bound(Lookup);
+      // Is it in the map?      
       if (I != Map.end() && I->first == Lookup)
-        return static_cast<ConstantClass *>(I->second);  // Is it in the map?
+        return static_cast<ConstantClass *>(I->second);  
 
       // If no preexisting value, create one now...
       ConstantClass *Result =
@@ -914,23 +882,19 @@ ConstantBool *ConstantBool::getFalse() {
   return F = new ConstantBool(false);
 }
 
-//---- ConstantUInt::get() and ConstantSInt::get() implementations...
+//---- ConstantInt::get() implementations...
 //
-static ManagedStatic<ValueMap< int64_t, Type, ConstantSInt> > SIntConstants;
-static ManagedStatic<ValueMap<uint64_t, Type, ConstantUInt> > UIntConstants;
+static ManagedStatic<ValueMap<uint64_t, Type, ConstantInt> > IntConstants;
 
-ConstantSInt *ConstantSInt::get(const Type *Ty, int64_t V) {
-  return SIntConstants->getOrCreate(Ty, V);
-}
-
-ConstantUInt *ConstantUInt::get(const Type *Ty, uint64_t V) {
-  return UIntConstants->getOrCreate(Ty, V);
-}
-
-ConstantInt *ConstantInt::get(const Type *Ty, unsigned char V) {
-  assert(V <= 127 && "Can only be used with very small positive constants!");
-  if (Ty->isSigned()) return ConstantSInt::get(Ty, V);
-  return ConstantUInt::get(Ty, V);
+// Get a ConstantInt from an int64_t. Note here that we canoncialize the value
+// to a uint64_t value that has been zero extended down to the size of the
+// integer type of the ConstantInt. This allows the getZExtValue method to 
+// just return the stored value while getSExtValue has to convert back to sign
+// extended. getZExtValue is more common in LLVM than getSExtValue().
+ConstantInt *ConstantInt::get(const Type *Ty, int64_t V) {
+  unsigned Size = Ty->getPrimitiveSizeInBits();
+  uint64_t ZeroExtendedCanonicalization = V & (~uint64_t(0UL) >> (64-Size));
+  return IntConstants->getOrCreate(Ty, ZeroExtendedCanonicalization );
 }
 
 //---- ConstantFP::get() implementation...
@@ -1075,11 +1039,11 @@ void ConstantArray::destroyConstant() {
 Constant *ConstantArray::get(const std::string &Str, bool AddNull) {
   std::vector<Constant*> ElementVals;
   for (unsigned i = 0; i < Str.length(); ++i)
-    ElementVals.push_back(ConstantSInt::get(Type::SByteTy, Str[i]));
+    ElementVals.push_back(ConstantInt::get(Type::SByteTy, Str[i]));
 
   // Add a null terminator to the string...
   if (AddNull) {
-    ElementVals.push_back(ConstantSInt::get(Type::SByteTy, 0));
+    ElementVals.push_back(ConstantInt::get(Type::SByteTy, 0));
   }
 
   ArrayType *ATy = ArrayType::get(Type::SByteTy, ElementVals.size());
@@ -1109,7 +1073,7 @@ std::string ConstantArray::getAsString() const {
   assert(isString() && "Not a string!");
   std::string Result;
   for (unsigned i = 0, e = getNumOperands(); i != e; ++i)
-    Result += (char)cast<ConstantInt>(getOperand(i))->getRawValue();
+    Result += (char)cast<ConstantInt>(getOperand(i))->getZExtValue();
   return Result;
 }
 
@@ -1443,7 +1407,7 @@ Constant *ConstantExpr::getSizeOf(const Type *Ty) {
 
 Constant *ConstantExpr::getPtrPtrFromArrayPtr(Constant *C) {
   // pointer from array is implemented as: getelementptr arr ptr, 0, 0
-  static std::vector<Constant*> Indices(2, ConstantUInt::get(Type::UIntTy, 0));
+  static std::vector<Constant*> Indices(2, ConstantInt::get(Type::UIntTy, 0));
 
   return ConstantExpr::getGetElementPtr(C, Indices);
 }
@@ -1920,7 +1884,7 @@ std::string Constant::getStringValue(bool Chop, unsigned Offset) {
         if (CE->getNumOperands() == 3 &&
             cast<Constant>(CE->getOperand(1))->isNullValue() &&
             isa<ConstantInt>(CE->getOperand(2))) {
-          Offset += cast<ConstantInt>(CE->getOperand(2))->getRawValue();
+          Offset += cast<ConstantInt>(CE->getOperand(2))->getZExtValue();
           return CE->getOperand(0)->getStringValue(Chop, Offset);
         }
       }

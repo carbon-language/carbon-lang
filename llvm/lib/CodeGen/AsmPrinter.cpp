@@ -393,14 +393,15 @@ void AsmPrinter::EmitConstantValueOnly(const Constant *CV) {
   else if (const ConstantBool *CB = dyn_cast<ConstantBool>(CV)) {
     assert(CB->getValue());
     O << "1";
-  } else if (const ConstantSInt *CI = dyn_cast<ConstantSInt>(CV))
-    if (((CI->getValue() << 32) >> 32) == CI->getValue())
-      O << CI->getValue();
-    else
-      O << (uint64_t)CI->getValue();
-  else if (const ConstantUInt *CI = dyn_cast<ConstantUInt>(CV))
-    O << CI->getValue();
-  else if (const GlobalValue *GV = dyn_cast<GlobalValue>(CV)) {
+  } else if (const ConstantInt *CI = dyn_cast<ConstantInt>(CV)) {
+    if (CI->getType()->isSigned()) {
+      if (((CI->getSExtValue() << 32) >> 32) == CI->getSExtValue())
+        O << CI->getSExtValue();
+      else
+        O << (uint64_t)CI->getSExtValue();
+    } else 
+      O << CI->getZExtValue();
+  } else if (const GlobalValue *GV = dyn_cast<GlobalValue>(CV)) {
     // This is a constant address for a global variable or function. Use the
     // name of the variable or function as the address value, possibly
     // decorating it with GlobalVarAddrPrefix/Suffix or
@@ -492,7 +493,7 @@ static void printAsCString(std::ostream &O, const ConstantArray *CVA,
   O << "\"";
   for (unsigned i = 0; i != LastElt; ++i) {
     unsigned char C =
-        (unsigned char)cast<ConstantInt>(CVA->getOperand(i))->getRawValue();
+        (unsigned char)cast<ConstantInt>(CVA->getOperand(i))->getZExtValue();
 
     if (C == '"') {
       O << "\\\"";
@@ -524,7 +525,7 @@ static void printAsCString(std::ostream &O, const ConstantArray *CVA,
 void AsmPrinter::EmitString(const ConstantArray *CVA) const {
   unsigned NumElts = CVA->getNumOperands();
   if (TAI->getAscizDirective() && NumElts && 
-      cast<ConstantInt>(CVA->getOperand(NumElts-1))->getRawValue() == 0) {
+      cast<ConstantInt>(CVA->getOperand(NumElts-1))->getZExtValue() == 0) {
     O << TAI->getAscizDirective();
     printAsCString(O, CVA, NumElts-1);
   } else {
@@ -604,7 +605,7 @@ void AsmPrinter::EmitGlobalConstant(const Constant *CV) {
     }
   } else if (CV->getType() == Type::ULongTy || CV->getType() == Type::LongTy) {
     if (const ConstantInt *CI = dyn_cast<ConstantInt>(CV)) {
-      uint64_t Val = CI->getRawValue();
+      uint64_t Val = CI->getZExtValue();
 
       if (TAI->getData64bitsDirective())
         O << TAI->getData64bitsDirective() << Val << "\n";

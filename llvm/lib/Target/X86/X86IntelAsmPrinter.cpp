@@ -474,7 +474,7 @@ void X86IntelAsmPrinter::EmitString(const ConstantArray *CVA) const {
     unsigned len = 0;
     bool inString = false;
     for (unsigned i = 0; i < NumElts; i++) {
-      int n = cast<ConstantInt>(CVA->getOperand(i))->getRawValue() & 255;
+      int n = cast<ConstantInt>(CVA->getOperand(i))->getZExtValue() & 255;
       if (len == 0)
         O << "\tdb ";
 

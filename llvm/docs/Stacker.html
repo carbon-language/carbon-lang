@@ -139,7 +139,7 @@ this: </p>
 Value* 
 expression(BasicBlock* bb, Value* a, Value* b, Value* x, Value* y )
 {
-    ConstantSInt* one = ConstantSInt::get(Type::IntTy, 1);
+    ConstantInt* one = ConstantInt::get(Type::IntTy, 1);
     BinaryOperator* or1 = BinaryOperator::createOr(a, b, "", bb);
     BinaryOperator* add1 = BinaryOperator::createAdd(x, one, "", bb);
     BinaryOperator* add2 = BinaryOperator::createAdd(y, one, "", bb);
@@ -308,7 +308,7 @@ things, this leads to the idiom:
 </p>
 <pre>
 std::vector&lt;Value*&gt; index_vector;
-index_vector.push_back( ConstantSInt::get( Type::LongTy, 0 );
+index_vector.push_back( ConstantInt::get( Type::LongTy, 0 );
 // ... push other indices ...
 GetElementPtrInst* gep = new GetElementPtrInst( ptr, index_vector );
 </pre>
@@ -367,9 +367,9 @@ functions in the LLVM IR that make things easier. Here's what I learned: </p>
 <ul>
  <li>Constants are Values like anything else and can be operands of instructions</li>
  <li>Integer constants, frequently needed, can be created using the static "get"
- methods of the ConstantInt, ConstantSInt, and ConstantUInt classes. The nice thing
- about these is that you can "get" any kind of integer quickly.</li>
- <li>There's a special method on Constant class which allows you to get the null 
+ methods of the ConstantInt class. The nice thing about these is that you can 
+ "get" any kind of integer quickly.</li>
+ <li>There's a special method on Constant class which allows you to get the null
  constant for <em>any</em> type. This is really handy for initializing large 
  arrays or structures, etc.</li>
 </ul>

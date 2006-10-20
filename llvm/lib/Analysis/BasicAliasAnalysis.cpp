@@ -468,11 +468,10 @@ static bool ValuesEqual(Value *V1, Value *V2) {
 /// CheckGEPInstructions - Check two GEP instructions with known must-aliasing
 /// base pointers.  This checks to see if the index expressions preclude the
 /// pointers from aliasing...
-AliasAnalysis::AliasResult BasicAliasAnalysis::
-CheckGEPInstructions(const Type* BasePtr1Ty, std::vector<Value*> &GEP1Ops,
-                     unsigned G1S,
-                     const Type *BasePtr2Ty, std::vector<Value*> &GEP2Ops,
-                     unsigned G2S) {
+AliasAnalysis::AliasResult 
+BasicAliasAnalysis::CheckGEPInstructions(
+  const Type* BasePtr1Ty, std::vector<Value*> &GEP1Ops, unsigned G1S,
+  const Type *BasePtr2Ty, std::vector<Value*> &GEP2Ops, unsigned G2S) {
   // We currently can't handle the case when the base pointers have different
   // primitive types.  Since this is uncommon anyway, we are happy being
   // extremely conservative.
@@ -670,7 +669,7 @@ CheckGEPInstructions(const Type* BasePtr1Ty, std::vector<Value*> &GEP1Ops,
         if (const ConstantInt *Op1C = dyn_cast<ConstantInt>(Op1)) {
           // If this is an array index, make sure the array element is in range.
           if (const ArrayType *AT = dyn_cast<ArrayType>(BasePtr1Ty))
-            if (Op1C->getRawValue() >= AT->getNumElements())
+            if (Op1C->getZExtValue() >= AT->getNumElements())
               return MayAlias;  // Be conservative with out-of-range accesses
 
         } else {
@@ -685,7 +684,7 @@ CheckGEPInstructions(const Type* BasePtr1Ty, std::vector<Value*> &GEP1Ops,
           // value possible.
           //
           if (const ArrayType *AT = dyn_cast<ArrayType>(BasePtr1Ty))
-            GEP1Ops[i] = ConstantSInt::get(Type::LongTy,AT->getNumElements()-1);
+            GEP1Ops[i] = ConstantInt::get(Type::LongTy, AT->getNumElements()-1);
         }
       }
 
@@ -693,7 +692,7 @@ CheckGEPInstructions(const Type* BasePtr1Ty, std::vector<Value*> &GEP1Ops,
         if (const ConstantInt *Op2C = dyn_cast<ConstantInt>(Op2)) {
           // If this is an array index, make sure the array element is in range.
           if (const ArrayType *AT = dyn_cast<ArrayType>(BasePtr1Ty))
-            if (Op2C->getRawValue() >= AT->getNumElements())
+            if (Op2C->getZExtValue() >= AT->getNumElements())
               return MayAlias;  // Be conservative with out-of-range accesses
         } else {  // Conservatively assume the minimum value for this index
           GEP2Ops[i] = Constant::getNullValue(Op2->getType());

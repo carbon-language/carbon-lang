@@ -60,7 +60,7 @@ int main() {
   BasicBlock *BB = new BasicBlock("EntryBlock", Add1F);
 
   // Get pointers to the constant `1'.
-  Value *One = ConstantSInt::get(Type::IntTy, 1);
+  Value *One = ConstantInt::get(Type::IntTy, 1);
 
   // Get pointers to the integer argument of the add1 function...
   assert(Add1F->arg_begin() != Add1F->arg_end()); // Make sure there's an arg
@@ -84,7 +84,7 @@ int main() {
   BB = new BasicBlock("EntryBlock", FooF);
 
   // Get pointers to the constant `10'.
-  Value *Ten = ConstantSInt::get(Type::IntTy, 10);
+  Value *Ten = ConstantInt::get(Type::IntTy, 10);
 
   // Pass Ten to the call call:
   std::vector<Value*> Params;

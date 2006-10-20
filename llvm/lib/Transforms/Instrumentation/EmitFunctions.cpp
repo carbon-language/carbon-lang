@@ -110,7 +110,7 @@ bool EmitFunctionTable::runOnModule(Module &M){
 
   M.getGlobalList().push_back(funcArray);
 
-  ConstantInt *cnst = ConstantSInt::get(Type::IntTy, counter);
+  ConstantInt *cnst = ConstantInt::get(Type::IntTy, counter);
   GlobalVariable *fnCount = new GlobalVariable(Type::IntTy, true,
                                                GlobalValue::ExternalLinkage,
                                                cnst, "llvmFunctionCount");
