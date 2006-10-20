@@ -247,7 +247,6 @@ CreateString(const char *Buf, unsigned Len, SourceLocation SLoc) {
 // Source File Location Methods.
 //===----------------------------------------------------------------------===//
 
-
 /// LookupFile - Given a "foo" or <foo> reference, look up the indicated file,
 /// return null on failure.  isAngled indicates whether the file reference is
 /// for system #include's or not (i.e. using <> instead of "").
@@ -258,13 +257,38 @@ const FileEntry *Preprocessor::LookupFile(const std::string &Filename,
   // If the header lookup mechanism may be relative to the current file, pass in
   // info about where the current file is.
   const FileEntry *CurFileEnt = 0;
-  if (!isAngled && !FromDir) {
+  if (!FromDir) {
     unsigned TheFileID = getCurrentFileLexer()->getCurFileID();
     CurFileEnt = SourceMgr.getFileEntryForFileID(TheFileID);
   }
   
+  // Do a standard file entry lookup.
   CurDir = CurDirLookup;
-  return HeaderInfo.LookupFile(Filename, isAngled, FromDir, CurDir, CurFileEnt);
+  const FileEntry *FE =
+    HeaderInfo.LookupFile(Filename, isAngled, FromDir, CurDir, CurFileEnt);
+  if (FE) return FE;
+  
+  // Otherwise, see if this is a subframework header.  If so, this is relative
+  // to one of the headers on the #include stack.  Walk the list of the current
+  // headers on the #include stack and pass them to HeaderInfo.
+  if (CurLexer) {
+    CurFileEnt = SourceMgr.getFileEntryForFileID(CurLexer->getCurFileID());
+    if ((FE = HeaderInfo.LookupSubframeworkHeader(Filename, CurFileEnt)))
+      return FE;
+  }
+  
+  for (unsigned i = 0, e = IncludeMacroStack.size(); i != e; ++i) {
+    IncludeStackInfo &ISEntry = IncludeMacroStack[e-i-1];
+    if (ISEntry.TheLexer) {
+      CurFileEnt =
+        SourceMgr.getFileEntryForFileID(ISEntry.TheLexer->getCurFileID());
+      if ((FE = HeaderInfo.LookupSubframeworkHeader(Filename, CurFileEnt)))
+        return FE;
+    }
+  }
+  
+  // Otherwise, we really couldn't find the file.
+  return 0;
 }
 
 /// isInPrimaryFile - Return true if we're in the top-level file, not in a

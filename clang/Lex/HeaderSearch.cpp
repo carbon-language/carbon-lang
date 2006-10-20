@@ -35,7 +35,7 @@ void HeaderSearch::PrintStats() {
   
   std::cerr << "  " << NumIncluded << " #include/#include_next/#import.\n";
   std::cerr << "    " << NumMultiIncludeFileOptzn << " #includes skipped due to"
-    << " the multi-include optimization.\n";
+            << " the multi-include optimization.\n";
 
 }
 
@@ -68,12 +68,14 @@ static std::string DoFrameworkLookup(const DirectoryEntry *Dir,
   // Check "/System/Library/Frameworks/Cocoa.framework/Headers/file.h"
   std::string HeadersFilename = FrameworkName + "Headers/" +
     std::string(Filename.begin()+SlashPos+1, Filename.end());
-  if (sys::Path(HeadersFilename).exists()) return HeadersFilename;
+  if (sys::Path(HeadersFilename).exists())
+    return HeadersFilename;
   
   // Check "/System/Library/Frameworks/Cocoa.framework/PrivateHeaders/file.h"
   std::string PrivateHeadersFilename = FrameworkName + "PrivateHeaders/" +
     std::string(Filename.begin()+SlashPos+1, Filename.end());
-  if (sys::Path(PrivateHeadersFilename).exists()) return HeadersFilename;
+  if (sys::Path(PrivateHeadersFilename).exists())
+    return PrivateHeadersFilename;
   
   return "";
 }
@@ -103,7 +105,7 @@ const FileEntry *HeaderSearch::LookupFile(const std::string &Filename,
   
   // Step #0, unless disabled, check to see if the file is in the #includer's
   // directory.  This search is not done for <> headers.
-  if (CurFileEnt && !NoCurDirSearch) {
+  if (CurFileEnt && !isAngled && !NoCurDirSearch) {
     // Concatenate the requested file onto the directory.
     // FIXME: Portability.  Filename concatenation should be in sys::Path.
     if (const FileEntry *FE = 
@@ -111,7 +113,7 @@ const FileEntry *HeaderSearch::LookupFile(const std::string &Filename,
       // Leave CurDir unset.
       
       // This file is a system header or C++ unfriendly if the old file is.
-      getFileInfo(CurFileEnt).DirInfo = getFileInfo(CurFileEnt).DirInfo;
+      getFileInfo(FE).DirInfo = getFileInfo(CurFileEnt).DirInfo;
       return FE;
     }
   }
@@ -149,6 +151,58 @@ const FileEntry *HeaderSearch::LookupFile(const std::string &Filename,
   }
   
   // Otherwise, didn't find it.
+  return 0;
+}
+
+/// LookupSubframeworkHeader - Look up a subframework for the specified
+/// #include file.  For example, if #include'ing <HIToolbox/HIToolbox.h> from
+/// within ".../Carbon.framework/Headers/Carbon.h", check to see if HIToolbox
+/// is a subframework within Carbon.framework.  If so, return the FileEntry
+/// for the designated file, otherwise return null.
+const FileEntry *HeaderSearch::
+LookupSubframeworkHeader(const std::string &Filename,
+                         const FileEntry *ContextFileEnt) {
+  // Framework names must have a '/' in the filename.  Find it.
+  std::string::size_type SlashPos = Filename.find('/');
+  if (SlashPos == std::string::npos) return 0;
+  
+  // TODO: Cache subframework.
+  
+  // Look up the base framework name of the ContextFileEnt.
+  const std::string &ContextName = ContextFileEnt->getName();
+  std::string::size_type FrameworkPos = ContextName.find(".framework/");
+  // If the context info wasn't a framework, couldn't be a subframework.
+  if (FrameworkPos == std::string::npos)
+    return 0;
+  
+  std::string FrameworkName(ContextName.begin(),
+                        ContextName.begin()+FrameworkPos+strlen(".framework/"));
+  // Append Frameworks/HIToolbox.framework/
+  FrameworkName += "Frameworks/";
+  FrameworkName += std::string(Filename.begin(), Filename.begin()+SlashPos);
+  FrameworkName += ".framework/";
+  
+  // Check ".../Frameworks/HIToolbox.framework/Headers/HIToolbox.h"
+  std::string HeadersFilename = FrameworkName + "Headers/" +
+    std::string(Filename.begin()+SlashPos+1, Filename.end());
+  if (!sys::Path(HeadersFilename).exists()) {
+    
+    // Check ".../Frameworks/HIToolbox.framework/PrivateHeaders/HIToolbox.h"
+    std::string PrivateHeadersFilename = FrameworkName + "PrivateHeaders/" +
+      std::string(Filename.begin()+SlashPos+1, Filename.end());
+    if (!sys::Path(PrivateHeadersFilename).exists())
+      return 0;
+    HeadersFilename = PrivateHeadersFilename;
+  }
+  
+  
+  // Concatenate the requested file onto the directory.
+  if (const FileEntry *FE = FileMgr.getFile(HeadersFilename)) {
+    // This file is a system header or C++ unfriendly if the old file is.
+    getFileInfo(FE).DirInfo = getFileInfo(ContextFileEnt).DirInfo;
+    return FE;
+  }
+  
   return 0;
 }
 

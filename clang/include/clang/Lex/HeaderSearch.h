@@ -151,6 +151,14 @@ public:
                               const DirectoryLookup *&CurDir,
                               const FileEntry *CurFileEnt);
   
+  /// LookupSubframeworkHeader - Look up a subframework for the specified
+  /// #include file.  For example, if #include'ing <HIToolbox/HIToolbox.h> from
+  /// within ".../Carbon.framework/Headers/Carbon.h", check to see if HIToolbox
+  /// is a subframework within Carbon.framework.  If so, return the FileEntry
+  /// for the designated file, otherwise return null.
+  const FileEntry *LookupSubframeworkHeader(const std::string &Filename,
+                                            const FileEntry *RelativeFileEnt);
+  
   /// ShouldEnterIncludeFile - Mark the specified file as a target of of a
   /// #include, #include_next, or #import directive.  Return false if #including
   /// the file will have no effect or true if we should include it.
