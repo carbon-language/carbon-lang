@@ -1032,7 +1032,7 @@ bool SCCPSolver::ResolveBranchesIn(Function &F) {
         if (BI->isConditional()) {
           LatticeVal &BCValue = getValueState(BI->getCondition());
           if (BCValue.isUndefined()) {
-            BI->setCondition(ConstantBool::getTrue());
+            BCValue.markOverdefined();
             BranchesResolved = true;
             visit(BI);
           }
@@ -1041,7 +1041,8 @@ bool SCCPSolver::ResolveBranchesIn(Function &F) {
         LatticeVal &SCValue = getValueState(SI->getCondition());
         if (SCValue.isUndefined()) {
           const Type *CondTy = SI->getCondition()->getType();
-          SI->setCondition(Constant::getNullValue(CondTy));
+          // Pick and arbitrary direction for the switch to go.
+          SCValue.markOverdefined();
           BranchesResolved = true;
           visit(SI);
         }
