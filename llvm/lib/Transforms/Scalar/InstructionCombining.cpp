@@ -5595,7 +5595,7 @@ Instruction *InstCombiner::visitCastInst(CastInst &CI) {
             unsigned SrcBitSize = Src->getType()->getPrimitiveSizeInBits();
             unsigned DestBitSize = CI.getType()->getPrimitiveSizeInBits();
             assert(SrcBitSize < DestBitSize && "Not a zext?");
-            Constant *C = ConstantUInt::get(Type::ULongTy, (1 << SrcBitSize)-1);
+            Constant *C = ConstantUInt::get(Type::ULongTy, (1ULL << SrcBitSize)-1);
             C = ConstantExpr::getCast(C, CI.getType());
             return BinaryOperator::createAnd(Res, C);
           }
