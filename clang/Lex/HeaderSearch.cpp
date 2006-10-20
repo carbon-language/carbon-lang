@@ -43,13 +43,14 @@ void HeaderSearch::PrintStats() {
 // Header File Location.
 //===----------------------------------------------------------------------===//
 
-static std::string DoFrameworkLookup(const DirectoryEntry *Dir,
-                                     const std::string &Filename) {
+static const FileEntry *DoFrameworkLookup(const DirectoryEntry *Dir,
+                                          const std::string &Filename,
+                                          FileManager &FM) {
   // TODO: caching.
   
   // Framework names must have a '/' in the filename.
   std::string::size_type SlashPos = Filename.find('/');
-  if (SlashPos == std::string::npos) return "";
+  if (SlashPos == std::string::npos) return 0;
   
   // FrameworkName = "/System/Library/Frameworks/"
   std::string FrameworkName = Dir->getName();
@@ -62,22 +63,16 @@ static std::string DoFrameworkLookup(const DirectoryEntry *Dir,
   // FrameworkName = "/System/Library/Frameworks/Cocoa.framework/"
   FrameworkName += ".framework/";
   
-  // If the dir doesn't exist, give up.
-  if (!sys::Path(FrameworkName).exists()) return "";
-  
   // Check "/System/Library/Frameworks/Cocoa.framework/Headers/file.h"
   std::string HeadersFilename = FrameworkName + "Headers/" +
     std::string(Filename.begin()+SlashPos+1, Filename.end());
-  if (sys::Path(HeadersFilename).exists())
-    return HeadersFilename;
+  if (const FileEntry *FE = FM.getFile(HeadersFilename))
+    return FE;
   
   // Check "/System/Library/Frameworks/Cocoa.framework/PrivateHeaders/file.h"
   std::string PrivateHeadersFilename = FrameworkName + "PrivateHeaders/" +
     std::string(Filename.begin()+SlashPos+1, Filename.end());
-  if (sys::Path(PrivateHeadersFilename).exists())
-    return PrivateHeadersFilename;
-  
-  return "";
+  return FM.getFile(PrivateHeadersFilename);
 }
 
 /// LookupFile - Given a "foo" or <foo> reference, look up the indicated file,
@@ -133,15 +128,16 @@ const FileEntry *HeaderSearch::LookupFile(const std::string &Filename,
     // Concatenate the requested file onto the directory.
     std::string SearchDir;
     
+    const FileEntry *FE = 0;
     if (!SearchDirs[i].isFramework()) {
       // FIXME: Portability.  Adding file to dir should be in sys::Path.
-      SearchDir = SearchDirs[i].getDir()->getName()+"/"+Filename;
+      std::string SearchDir = SearchDirs[i].getDir()->getName()+"/"+Filename;
+      FE = FileMgr.getFile(SearchDir);
     } else {
-      SearchDir = DoFrameworkLookup(SearchDirs[i].getDir(), Filename);
-      if (SearchDir.empty()) continue;
+      FE = DoFrameworkLookup(SearchDirs[i].getDir(), Filename, FileMgr);
     }
     
-    if (const FileEntry *FE = FileMgr.getFile(SearchDir)) {
+    if (FE) {
       CurDir = &SearchDirs[i];
       
       // This file is a system header or C++ unfriendly if the dir is.
@@ -181,29 +177,24 @@ LookupSubframeworkHeader(const std::string &Filename,
   FrameworkName += "Frameworks/";
   FrameworkName += std::string(Filename.begin(), Filename.begin()+SlashPos);
   FrameworkName += ".framework/";
-  
+
+  const FileEntry *FE = 0;
+
   // Check ".../Frameworks/HIToolbox.framework/Headers/HIToolbox.h"
   std::string HeadersFilename = FrameworkName + "Headers/" +
     std::string(Filename.begin()+SlashPos+1, Filename.end());
-  if (!sys::Path(HeadersFilename).exists()) {
+  if (!(FE = FileMgr.getFile(HeadersFilename))) {
     
     // Check ".../Frameworks/HIToolbox.framework/PrivateHeaders/HIToolbox.h"
     std::string PrivateHeadersFilename = FrameworkName + "PrivateHeaders/" +
       std::string(Filename.begin()+SlashPos+1, Filename.end());
-    if (!sys::Path(PrivateHeadersFilename).exists())
+    if (!(FE = FileMgr.getFile(PrivateHeadersFilename)))
       return 0;
-    HeadersFilename = PrivateHeadersFilename;
   }
   
-  
-  // Concatenate the requested file onto the directory.
-  if (const FileEntry *FE = FileMgr.getFile(HeadersFilename)) {
-    // This file is a system header or C++ unfriendly if the old file is.
-    getFileInfo(FE).DirInfo = getFileInfo(ContextFileEnt).DirInfo;
-    return FE;
-  }
-  
-  return 0;
+  // This file is a system header or C++ unfriendly if the old file is.
+  getFileInfo(FE).DirInfo = getFileInfo(ContextFileEnt).DirInfo;
+  return FE;
 }
 
 //===----------------------------------------------------------------------===//
