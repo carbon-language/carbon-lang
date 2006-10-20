@@ -41,6 +41,20 @@ namespace llvm {
                                     const SelectionDAG *Graph) {
       return true;
     }
+    
+    /// If you want to override the dot attributes printed for a particular
+    /// edge, override this method.
+    template<typename EdgeIter>
+    static std::string getEdgeAttributes(const void *Node, EdgeIter EI) {
+      SDOperand Op = EI.getNode()->getOperand(EI.getOperand());
+      MVT::ValueType VT = Op.getValueType();
+      if (VT == MVT::Flag)
+        return "color=red,style=bold";
+      else if (VT == MVT::Other)
+        return "style=dashed";
+      return "";
+    }
+    
 
     static std::string getNodeLabel(const SDNode *Node,
                                     const SelectionDAG *Graph);
@@ -114,7 +128,8 @@ std::string DOTGraphTraits<SelectionDAG*>::getNodeLabel(const SDNode *Node,
       Op += LBB->getName();
     //Op += " " + (const void*)BBDN->getBasicBlock();
   } else if (const RegisterSDNode *R = dyn_cast<RegisterSDNode>(Node)) {
-    if (G && R->getReg() != 0 && MRegisterInfo::isPhysicalRegister(R->getReg())) {
+    if (G && R->getReg() != 0 &&
+        MRegisterInfo::isPhysicalRegister(R->getReg())) {
       Op = Op + " " + G->getTarget().getRegisterInfo()->getName(R->getReg());
     } else {
       Op += " #" + utostr(R->getReg());
