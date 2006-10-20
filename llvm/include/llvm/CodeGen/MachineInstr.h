@@ -70,9 +70,18 @@ public:
   MachineOperand(const MachineOperand &M) {
     *this = M;
   }
-
+  
   ~MachineOperand() {}
-
+  
+  static MachineOperand CreateImm(int64_t Val) {
+    MachineOperand Op;
+    Op.opType = MachineOperand::MO_Immediate;
+    Op.contents.immedVal = Val;
+    Op.IsDef = false;
+    Op.offset = 0;
+    return Op;
+  }
+  
   const MachineOperand &operator=(const MachineOperand &MO) {
     contents = MO.contents;
     IsDef    = MO.IsDef;
