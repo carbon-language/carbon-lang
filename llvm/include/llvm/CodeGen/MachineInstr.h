@@ -291,7 +291,7 @@ public:
   /// opcode and same operands as) the specified instruction.
   bool isIdenticalTo(const MachineInstr *Other) const {
     if (Other->getOpcode() != getOpcode() ||
-        getNumOperands() != getNumOperands())
+        Other->getNumOperands() != getNumOperands())
       return false;
     for (unsigned i = 0, e = getNumOperands(); i != e; ++i)
       if (!getOperand(i).isIdenticalTo(Other->getOperand(i)))
