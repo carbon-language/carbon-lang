@@ -246,6 +246,157 @@ MachineInstr *X86InstrInfo::commuteInstruction(MachineInstr *MI) const {
   }
 }
 
+static X86::CondCode GetCondFromBranchOpc(unsigned BrOpc) {
+  switch (BrOpc) {
+  default: return X86::COND_INVALID;
+  case X86::JE:  return X86::COND_E;
+  case X86::JNE: return X86::COND_NE;
+  case X86::JL:  return X86::COND_L;
+  case X86::JLE: return X86::COND_LE;
+  case X86::JG:  return X86::COND_G;
+  case X86::JGE: return X86::COND_GE;
+  case X86::JB:  return X86::COND_B;
+  case X86::JBE: return X86::COND_BE;
+  case X86::JA:  return X86::COND_A;
+  case X86::JAE: return X86::COND_AE;
+  case X86::JS:  return X86::COND_S;
+  case X86::JNS: return X86::COND_NS;
+  case X86::JP:  return X86::COND_P;
+  case X86::JNP: return X86::COND_NP;
+  case X86::JO:  return X86::COND_O;
+  case X86::JNO: return X86::COND_NO;
+  }
+}
+
+unsigned X86::GetCondBranchFromCond(X86::CondCode CC) {
+  switch (CC) {
+  default: assert(0 && "Illegal condition code!");
+  case X86::COND_E:  return X86::JE;
+  case X86::COND_NE: return X86::JNE;
+  case X86::COND_L:  return X86::JL;
+  case X86::COND_LE: return X86::JLE;
+  case X86::COND_G:  return X86::JG;
+  case X86::COND_GE: return X86::JGE;
+  case X86::COND_B:  return X86::JB;
+  case X86::COND_BE: return X86::JBE;
+  case X86::COND_A:  return X86::JA;
+  case X86::COND_AE: return X86::JAE;
+  case X86::COND_S:  return X86::JS;
+  case X86::COND_NS: return X86::JNS;
+  case X86::COND_P:  return X86::JP;
+  case X86::COND_NP: return X86::JNP;
+  case X86::COND_O:  return X86::JO;
+  case X86::COND_NO: return X86::JNO;
+  }
+}
+
+bool X86InstrInfo::AnalyzeBranch(MachineBasicBlock &MBB, 
+                                 MachineBasicBlock *&TBB,
+                                 MachineBasicBlock *&FBB,
+                                 std::vector<MachineOperand> &Cond) const {
+  // TODO: If FP_REG_KILL is around, ignore it.
+                                   
+  // If the block has no terminators, it just falls into the block after it.
+  MachineBasicBlock::iterator I = MBB.end();
+  if (I == MBB.begin() || !isTerminatorInstr((--I)->getOpcode()))
+    return false;
+
+  // Get the last instruction in the block.
+  MachineInstr *LastInst = I;
+  
+  // If there is only one terminator instruction, process it.
+  if (I == MBB.begin() || !isTerminatorInstr((--I)->getOpcode())) {
+    if (!isBranch(LastInst->getOpcode()))
+      return true;
+    
+    // If the block ends with a branch there are 3 possibilities:
+    // it's an unconditional, conditional, or indirect branch.
+    
+    if (LastInst->getOpcode() == X86::JMP) {
+      TBB = LastInst->getOperand(0).getMachineBasicBlock();
+      return false;
+    }
+    X86::CondCode BranchCode = GetCondFromBranchOpc(LastInst->getOpcode());
+    if (BranchCode == X86::COND_INVALID)
+      return true;  // Can't handle indirect branch.
+
+    // Otherwise, block ends with fall-through condbranch.
+    TBB = LastInst->getOperand(0).getMachineBasicBlock();
+    Cond.push_back(MachineOperand::CreateImm(BranchCode));
+    return false;
+  }
+  
+  // Get the instruction before it if it's a terminator.
+  MachineInstr *SecondLastInst = I;
+  
+  // If there are three terminators, we don't know what sort of block this is.
+  if (SecondLastInst && I != MBB.begin() &&
+      isTerminatorInstr((--I)->getOpcode()))
+    return true;
+
+  // If the block ends with X86::JMP and a COND_BRANCH, handle it.
+  X86::CondCode BranchCode = GetCondFromBranchOpc(SecondLastInst->getOpcode());
+  if (BranchCode != X86::COND_INVALID && LastInst->getOpcode() == X86::JMP) {
+      TBB =  SecondLastInst->getOperand(0).getMachineBasicBlock();
+      Cond.push_back(MachineOperand::CreateImm(BranchCode));
+      FBB = LastInst->getOperand(0).getMachineBasicBlock();
+      return false;
+    }
+
+  // Otherwise, can't handle this.
+  return true;
+}
+
+void X86InstrInfo::RemoveBranch(MachineBasicBlock &MBB) const {
+  MachineBasicBlock::iterator I = MBB.end();
+  if (I == MBB.begin()) return;
+  --I;
+  if (I->getOpcode() != X86::JMP && 
+      GetCondFromBranchOpc(I->getOpcode()) == X86::COND_INVALID)
+    return;
+  
+  // Remove the branch.
+  I->eraseFromParent();
+  
+  I = MBB.end();
+  
+  if (I == MBB.begin()) return;
+  --I;
+  if (GetCondFromBranchOpc(I->getOpcode()) == X86::COND_INVALID)
+    return;
+  
+  // Remove the branch.
+  I->eraseFromParent();
+}
+
+void X86InstrInfo::InsertBranch(MachineBasicBlock &MBB, MachineBasicBlock *TBB,
+                                MachineBasicBlock *FBB,
+                                const std::vector<MachineOperand> &Cond) const {
+  // Shouldn't be a fall through.
+  assert(TBB && "InsertBranch must not be told to insert a fallthrough");
+  
+  // Unconditional branch?
+  if (FBB == 0) {
+    BuildMI(&MBB, X86::JMP, 1).addMBB(TBB);
+    return;
+  }
+  
+  assert(Cond.size() == 2 && "PPC branch conditions have two components!");
+  
+  // Conditional branch.
+  unsigned Opc = GetCondBranchFromCond((X86::CondCode)Cond[0].getImm());
+  BuildMI(&MBB, Opc, 1).addMBB(TBB);
+  
+  if (FBB)  // Two-way branch.
+    BuildMI(&MBB, X86::JMP, 1).addMBB(FBB);
+}
+
+bool X86InstrInfo::
+ReverseBranchCondition(std::vector<MachineOperand> &Cond) const {
+  // TODO: IMPLEMENT.
+  return true;
+}
+
 const TargetRegisterClass *X86InstrInfo::getPointerRegClass() const {
   const X86Subtarget *Subtarget = &TM.getSubtarget<X86Subtarget>();
   if (Subtarget->is64Bit())

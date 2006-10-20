@@ -2317,30 +2317,6 @@ LowerFrameReturnAddress(bool isFrameAddress, SDOperand Chain, unsigned Depth,
   return std::make_pair(Result, Chain);
 }
 
-/// getCondBrOpcodeForX86CC - Returns the X86 conditional branch opcode
-/// which corresponds to the condition code.
-static unsigned getCondBrOpcodeForX86CC(unsigned X86CC) {
-  switch (X86CC) {
-  default: assert(0 && "Unknown X86 conditional code!");
-  case X86ISD::COND_A:  return X86::JA;
-  case X86ISD::COND_AE: return X86::JAE;
-  case X86ISD::COND_B:  return X86::JB;
-  case X86ISD::COND_BE: return X86::JBE;
-  case X86ISD::COND_E:  return X86::JE;
-  case X86ISD::COND_G:  return X86::JG;
-  case X86ISD::COND_GE: return X86::JGE;
-  case X86ISD::COND_L:  return X86::JL;
-  case X86ISD::COND_LE: return X86::JLE;
-  case X86ISD::COND_NE: return X86::JNE;
-  case X86ISD::COND_NO: return X86::JNO;
-  case X86ISD::COND_NP: return X86::JNP;
-  case X86ISD::COND_NS: return X86::JNS;
-  case X86ISD::COND_O:  return X86::JO;
-  case X86ISD::COND_P:  return X86::JP;
-  case X86ISD::COND_S:  return X86::JS;
-  }
-}
-
 /// translateX86CC - do a one to one translation of a ISD::CondCode to the X86
 /// specific condition code. It returns a false if it cannot do a direct
 /// translation. X86CC is the translated CondCode.  LHS/RHS are modified as
@@ -2348,33 +2324,33 @@ static unsigned getCondBrOpcodeForX86CC(unsigned X86CC) {
 static bool translateX86CC(ISD::CondCode SetCCOpcode, bool isFP,
                            unsigned &X86CC, SDOperand &LHS, SDOperand &RHS,
                            SelectionDAG &DAG) {
-  X86CC = X86ISD::COND_INVALID;
+  X86CC = X86::COND_INVALID;
   if (!isFP) {
     if (ConstantSDNode *RHSC = dyn_cast<ConstantSDNode>(RHS)) {
       if (SetCCOpcode == ISD::SETGT && RHSC->isAllOnesValue()) {
         // X > -1   -> X == 0, jump !sign.
         RHS = DAG.getConstant(0, RHS.getValueType());
-        X86CC = X86ISD::COND_NS;
+        X86CC = X86::COND_NS;
         return true;
       } else if (SetCCOpcode == ISD::SETLT && RHSC->isNullValue()) {
         // X < 0   -> X == 0, jump on sign.
-        X86CC = X86ISD::COND_S;
+        X86CC = X86::COND_S;
         return true;
       }
     }
     
     switch (SetCCOpcode) {
     default: break;
-    case ISD::SETEQ:  X86CC = X86ISD::COND_E;  break;
-    case ISD::SETGT:  X86CC = X86ISD::COND_G;  break;
-    case ISD::SETGE:  X86CC = X86ISD::COND_GE; break;
-    case ISD::SETLT:  X86CC = X86ISD::COND_L;  break;
-    case ISD::SETLE:  X86CC = X86ISD::COND_LE; break;
-    case ISD::SETNE:  X86CC = X86ISD::COND_NE; break;
-    case ISD::SETULT: X86CC = X86ISD::COND_B;  break;
-    case ISD::SETUGT: X86CC = X86ISD::COND_A;  break;
-    case ISD::SETULE: X86CC = X86ISD::COND_BE; break;
-    case ISD::SETUGE: X86CC = X86ISD::COND_AE; break;
+    case ISD::SETEQ:  X86CC = X86::COND_E;  break;
+    case ISD::SETGT:  X86CC = X86::COND_G;  break;
+    case ISD::SETGE:  X86CC = X86::COND_GE; break;
+    case ISD::SETLT:  X86CC = X86::COND_L;  break;
+    case ISD::SETLE:  X86CC = X86::COND_LE; break;
+    case ISD::SETNE:  X86CC = X86::COND_NE; break;
+    case ISD::SETULT: X86CC = X86::COND_B;  break;
+    case ISD::SETUGT: X86CC = X86::COND_A;  break;
+    case ISD::SETULE: X86CC = X86::COND_BE; break;
+    case ISD::SETUGE: X86CC = X86::COND_AE; break;
     }
   } else {
     // On a floating point condition, the flags are set as follows:
@@ -2387,29 +2363,29 @@ static bool translateX86CC(ISD::CondCode SetCCOpcode, bool isFP,
     switch (SetCCOpcode) {
     default: break;
     case ISD::SETUEQ:
-    case ISD::SETEQ: X86CC = X86ISD::COND_E;  break;
+    case ISD::SETEQ: X86CC = X86::COND_E;  break;
     case ISD::SETOLT: Flip = true; // Fallthrough
     case ISD::SETOGT:
-    case ISD::SETGT: X86CC = X86ISD::COND_A;  break;
+    case ISD::SETGT: X86CC = X86::COND_A;  break;
     case ISD::SETOLE: Flip = true; // Fallthrough
     case ISD::SETOGE:
-    case ISD::SETGE: X86CC = X86ISD::COND_AE; break;
+    case ISD::SETGE: X86CC = X86::COND_AE; break;
     case ISD::SETUGT: Flip = true; // Fallthrough
     case ISD::SETULT:
-    case ISD::SETLT: X86CC = X86ISD::COND_B;  break;
+    case ISD::SETLT: X86CC = X86::COND_B;  break;
     case ISD::SETUGE: Flip = true; // Fallthrough
     case ISD::SETULE:
-    case ISD::SETLE: X86CC = X86ISD::COND_BE; break;
+    case ISD::SETLE: X86CC = X86::COND_BE; break;
     case ISD::SETONE:
-    case ISD::SETNE: X86CC = X86ISD::COND_NE; break;
-    case ISD::SETUO: X86CC = X86ISD::COND_P;  break;
-    case ISD::SETO:  X86CC = X86ISD::COND_NP; break;
+    case ISD::SETNE: X86CC = X86::COND_NE; break;
+    case ISD::SETUO: X86CC = X86::COND_P;  break;
+    case ISD::SETO:  X86CC = X86::COND_NP; break;
     }
     if (Flip)
       std::swap(LHS, RHS);
   }
 
-  return X86CC != X86ISD::COND_INVALID;
+  return X86CC != X86::COND_INVALID;
 }
 
 /// hasFPCMov - is there a floating point cmov for the specific X86 condition
@@ -2419,14 +2395,14 @@ static bool hasFPCMov(unsigned X86CC) {
   switch (X86CC) {
   default:
     return false;
-  case X86ISD::COND_B:
-  case X86ISD::COND_BE:
-  case X86ISD::COND_E:
-  case X86ISD::COND_P:
-  case X86ISD::COND_A:
-  case X86ISD::COND_AE:
-  case X86ISD::COND_NE:
-  case X86ISD::COND_NP:
+  case X86::COND_B:
+  case X86::COND_BE:
+  case X86::COND_E:
+  case X86::COND_P:
+  case X86::COND_A:
+  case X86::COND_AE:
+  case X86::COND_NE:
+  case X86::COND_NP:
     return true;
   }
 }
@@ -3928,7 +3904,7 @@ SDOperand X86TargetLowering::LowerShift(SDOperand Op, SelectionDAG &DAG) {
     SDOperand InFlag = DAG.getNode(X86ISD::CMP, VTs, 2, COps, 3).getValue(1);
 
     SDOperand Hi, Lo;
-    SDOperand CC = DAG.getConstant(X86ISD::COND_NE, MVT::i8);
+    SDOperand CC = DAG.getConstant(X86::COND_NE, MVT::i8);
 
     VTs = DAG.getNodeValueTypes(MVT::i32, MVT::Flag);
     SmallVector<SDOperand, 4> Ops;
@@ -4148,17 +4124,17 @@ SDOperand X86TargetLowering::LowerSETCC(SDOperand Op, SelectionDAG &DAG,
   switch (SetCCOpcode) {
   default: assert(false && "Illegal floating point SetCC!");
   case ISD::SETOEQ: {  // !PF & ZF
-    SDOperand Ops1[] = { DAG.getConstant(X86ISD::COND_NP, MVT::i8), Cond };
+    SDOperand Ops1[] = { DAG.getConstant(X86::COND_NP, MVT::i8), Cond };
     SDOperand Tmp1 = DAG.getNode(X86ISD::SETCC, VTs2, 2, Ops1, 2);
-    SDOperand Ops2[] = { DAG.getConstant(X86ISD::COND_E, MVT::i8),
+    SDOperand Ops2[] = { DAG.getConstant(X86::COND_E, MVT::i8),
                          Tmp1.getValue(1) };
     SDOperand Tmp2 = DAG.getNode(X86ISD::SETCC, VTs2, 2, Ops2, 2);
     return DAG.getNode(ISD::AND, MVT::i8, Tmp1, Tmp2);
   }
   case ISD::SETUNE: {  // PF | !ZF
-    SDOperand Ops1[] = { DAG.getConstant(X86ISD::COND_P, MVT::i8), Cond };
+    SDOperand Ops1[] = { DAG.getConstant(X86::COND_P, MVT::i8), Cond };
     SDOperand Tmp1 = DAG.getNode(X86ISD::SETCC, VTs2, 2, Ops1, 2);
-    SDOperand Ops2[] = { DAG.getConstant(X86ISD::COND_NE, MVT::i8),
+    SDOperand Ops2[] = { DAG.getConstant(X86::COND_NE, MVT::i8),
                          Tmp1.getValue(1) };
     SDOperand Tmp2 = DAG.getNode(X86ISD::SETCC, VTs2, 2, Ops2, 2);
     return DAG.getNode(ISD::OR, MVT::i8, Tmp1, Tmp2);
@@ -4199,7 +4175,7 @@ SDOperand X86TargetLowering::LowerSELECT(SDOperand Op, SelectionDAG &DAG) {
   }
 
   if (addTest) {
-    CC = DAG.getConstant(X86ISD::COND_NE, MVT::i8);
+    CC = DAG.getConstant(X86::COND_NE, MVT::i8);
     SDOperand Ops[] = { Chain, Cond, DAG.getConstant(0, MVT::i8) };
     Cond = DAG.getNode(X86ISD::CMP, VTs, 2, Ops, 3);
   }
@@ -4245,7 +4221,7 @@ SDOperand X86TargetLowering::LowerBRCOND(SDOperand Op, SelectionDAG &DAG) {
   }
 
   if (addTest) {
-    CC = DAG.getConstant(X86ISD::COND_NE, MVT::i8);
+    CC = DAG.getConstant(X86::COND_NE, MVT::i8);
     SDOperand Ops[] = { Chain, Cond, DAG.getConstant(0, MVT::i8) };
     Cond = DAG.getNode(X86ISD::CMP, VTs, 2, Ops, 3);
   }
@@ -5069,7 +5045,8 @@ X86TargetLowering::InsertAtEndOfBasicBlock(MachineInstr *MI,
     MachineBasicBlock *thisMBB = BB;
     MachineBasicBlock *copy0MBB = new MachineBasicBlock(LLVM_BB);
     MachineBasicBlock *sinkMBB = new MachineBasicBlock(LLVM_BB);
-    unsigned Opc = getCondBrOpcodeForX86CC(MI->getOperand(3).getImmedValue());
+    unsigned Opc = 
+      X86::GetCondBranchFromCond((X86::CondCode)MI->getOperand(3).getImm());
     BuildMI(BB, Opc, 1).addMBB(sinkMBB);
     MachineFunction *F = BB->getParent();
     F->getBasicBlockList().insert(It, copy0MBB);
@@ -5149,15 +5126,15 @@ X86TargetLowering::InsertAtEndOfBasicBlock(MachineInstr *MI,
     }
     Op = MI->getOperand(1);
     if (Op.isImmediate())
-      AM.Scale = Op.getImmedValue();
+      AM.Scale = Op.getImm();
     Op = MI->getOperand(2);
     if (Op.isImmediate())
-      AM.IndexReg = Op.getImmedValue();
+      AM.IndexReg = Op.getImm();
     Op = MI->getOperand(3);
     if (Op.isGlobalAddress()) {
       AM.GV = Op.getGlobal();
     } else {
-      AM.Disp = Op.getImmedValue();
+      AM.Disp = Op.getImm();
     }
     addFullAddress(BuildMI(BB, Opc, 5), AM).addReg(MI->getOperand(4).getReg());
 

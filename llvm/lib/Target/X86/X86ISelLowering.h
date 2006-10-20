@@ -162,28 +162,6 @@ namespace llvm {
       /// corresponds to X86::PINSRW.
       PINSRW
     };
-
-    // X86 specific condition code. These correspond to X86_*_COND in
-    // X86InstrInfo.td. They must be kept in synch.
-    enum CondCode {
-      COND_A  = 0,
-      COND_AE = 1,
-      COND_B  = 2,
-      COND_BE = 3,
-      COND_E  = 4,
-      COND_G  = 5,
-      COND_GE = 6,
-      COND_L  = 7,
-      COND_LE = 8,
-      COND_NE = 9,
-      COND_NO = 10,
-      COND_NP = 11,
-      COND_NS = 12,
-      COND_O  = 13,
-      COND_P  = 14,
-      COND_S  = 15,
-      COND_INVALID
-    };
   }
 
  /// Define some predicates that are used for node matching.
