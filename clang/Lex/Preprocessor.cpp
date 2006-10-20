@@ -271,7 +271,7 @@ const FileEntry *Preprocessor::LookupFile(const std::string &Filename,
   // Otherwise, see if this is a subframework header.  If so, this is relative
   // to one of the headers on the #include stack.  Walk the list of the current
   // headers on the #include stack and pass them to HeaderInfo.
-  if (CurLexer) {
+  if (CurLexer && !CurLexer->Is_PragmaLexer) {
     CurFileEnt = SourceMgr.getFileEntryForFileID(CurLexer->getCurFileID());
     if ((FE = HeaderInfo.LookupSubframeworkHeader(Filename, CurFileEnt)))
       return FE;
@@ -279,7 +279,7 @@ const FileEntry *Preprocessor::LookupFile(const std::string &Filename,
   
   for (unsigned i = 0, e = IncludeMacroStack.size(); i != e; ++i) {
     IncludeStackInfo &ISEntry = IncludeMacroStack[e-i-1];
-    if (ISEntry.TheLexer) {
+    if (ISEntry.TheLexer && !ISEntry.TheLexer->Is_PragmaLexer) {
       CurFileEnt =
         SourceMgr.getFileEntryForFileID(ISEntry.TheLexer->getCurFileID());
       if ((FE = HeaderInfo.LookupSubframeworkHeader(Filename, CurFileEnt)))
