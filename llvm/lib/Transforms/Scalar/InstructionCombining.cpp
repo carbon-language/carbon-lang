@@ -4913,7 +4913,7 @@ Instruction *InstCombiner::visitShiftInst(ShiftInst &I) {
   // shr int -1, X = -1   (for any arithmetic shift rights of ~0)
   if (!isLeftShift)
     if (ConstantInt *CSI = dyn_cast<ConstantInt>(Op0))
-      if (CSI->isAllOnesValue())
+      if (CSI->isAllOnesValue() && Op0->getType()->isSigned())
         return ReplaceInstUsesWith(I, CSI);
 
   // Try to fold constant and into select arguments.
