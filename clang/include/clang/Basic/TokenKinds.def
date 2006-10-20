@@ -205,7 +205,7 @@ KEYWORD(inline                      , EXTC90)  // Ext in C90, ok in C99/C++
 KEYWORD(int                         , 0)
 KEYWORD(long                        , 0)
 KEYWORD(register                    , 0)
-KEYWORD(restrict                    , NOTC90)    // Not in C90
+KEYWORD(restrict                    , EXTC90)    // Ext in C90
 KEYWORD(return                      , 0)
 KEYWORD(short                       , 0)
 KEYWORD(signed                      , 0)
@@ -219,9 +219,9 @@ KEYWORD(unsigned                    , 0)
 KEYWORD(void                        , 0)
 KEYWORD(volatile                    , 0)
 KEYWORD(while                       , 0)
-KEYWORD(_Bool                       , NOTC90|EXTCPP)  // C99 only
-KEYWORD(_Complex                    , NOTC90)         // C99/C++
-KEYWORD(_Imaginary                  , NOTC90|NOTCPP)  // C90 only
+KEYWORD(_Bool                       , EXTC90|EXTCPP)  // C99 only
+KEYWORD(_Complex                    , EXTC90)         // C99/C++
+KEYWORD(_Imaginary                  , EXTC90|NOTCPP)  // C90 only
 
 // Special tokens to the compiler.
 KEYWORD(__func__                    , EXTC90|EXTCPP) // Only in C99.
