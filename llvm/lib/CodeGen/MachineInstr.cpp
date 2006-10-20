@@ -97,6 +97,35 @@ bool MachineInstr::OperandsComplete() const {
   return false;
 }
 
+/// isIdenticalTo - Return true if this operand is identical to the specified
+/// operand.
+bool MachineOperand::isIdenticalTo(const MachineOperand &Other) const {
+  if (getType() != Other.getType()) return false;
+  
+  switch (getType()) {
+  default: assert(0 && "Unrecognized operand type");
+  case MachineOperand::MO_Register:
+    return getReg() == Other.getReg() && isDef() == Other.isDef();
+  case MachineOperand::MO_Immediate:
+    return getImm() == Other.getImm();
+  case MachineOperand::MO_MachineBasicBlock:
+    return getMBB() == Other.getMBB();
+  case MachineOperand::MO_FrameIndex:
+    return getFrameIndex() == Other.getFrameIndex();
+  case MachineOperand::MO_ConstantPoolIndex:
+    return getConstantPoolIndex() == Other.getConstantPoolIndex() &&
+           getOffset() == Other.getOffset();
+  case MachineOperand::MO_JumpTableIndex:
+    return getJumpTableIndex() == Other.getJumpTableIndex();
+  case MachineOperand::MO_GlobalAddress:
+    return getGlobal() == Other.getGlobal() && getOffset() == Other.getOffset();
+  case MachineOperand::MO_ExternalSymbol:
+    return getSymbolName() == Other.getSymbolName() &&
+           getOffset() == Other.getOffset();
+  }
+}
+
+
 void MachineInstr::dump() const {
   std::cerr << "  " << *this;
 }
