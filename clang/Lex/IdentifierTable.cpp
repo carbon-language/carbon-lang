@@ -259,9 +259,9 @@ void IdentifierTable::VisitIdentifiers(const IdentifierVisitor &IV) {
 /// specified langauge, set to 1 if it is an extension in the specified
 /// language, and set to 2 if disabled in the specified language.
 static void AddKeyword(const std::string &Keyword, tok::TokenKind TokenCode,
-                       int C90, int C99, int CPP,
+                       int C90, int C99, int CXX,
                        const LangOptions &LangOpts, IdentifierTable &Table) {
-  int Flags = LangOpts.CPlusPlus ? CPP : (LangOpts.C99 ? C99 : C90);
+  int Flags = LangOpts.CPlusPlus ? CXX : (LangOpts.C99 ? C99 : C90);
   
   // Don't add this keyword if disabled in this language or if an extension
   // and extensions are disabled.
