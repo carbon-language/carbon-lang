@@ -33,11 +33,11 @@ namespace {
         Named = M.getMainFunction();
         if (Named == 0) return false;  // No function to extract
       }
-
+      
       if (deleteFunc)
         return deleteFunction();
-      else
-        return isolateFunction(M);
+      M.setModuleInlineAsm("");
+      return isolateFunction(M);
     }
 
     bool deleteFunction() {
