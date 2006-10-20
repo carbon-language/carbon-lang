@@ -64,6 +64,13 @@ public:
   static SourceBuffer *getNewMemBuffer(unsigned Size,
                                        const char *BufferName = "");
   
+  /// getNewUninitMemBuffer - Allocate a new SourceBuffer of the specified size
+  /// that is not initialized.  Note that the caller should initialize the
+  /// memory allocated by this method.  The memory is owned by the SourceBuffer
+  /// object.
+  static SourceBuffer *getNewUninitMemBuffer(unsigned Size,
+                                             const char *BufferName = "");
+  
   /// getSTDIN - Read all of stdin into a file buffer, and return it.  This
   /// fails if stdin is empty.
   static SourceBuffer *getSTDIN();

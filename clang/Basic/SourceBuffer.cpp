@@ -17,6 +17,12 @@
 #include "llvm/System/Process.h"
 #include <cstdio>
 #include <cstring>
+#include <unistd.h>
+#include <sys/types.h>
+#include <sys/uio.h>
+#include <cerrno>
+#include <sys/fcntl.h>
+
 using namespace llvm;
 using namespace clang;
 
@@ -77,40 +83,51 @@ SourceBuffer *SourceBuffer::getMemBuffer(const char *StartPtr,
   return new SourceBufferMem(StartPtr, EndPtr, BufferName);
 }
 
-/// getNewMemBuffer - Allocate a new SourceBuffer of the specified size that
+/// getNewUninitMemBuffer - Allocate a new SourceBuffer of the specified size that
 /// is completely initialized to zeros.  Note that the caller should
 /// initialize the memory allocated by this method.  The memory is owned by
 /// the SourceBuffer object.
-SourceBuffer *SourceBuffer::getNewMemBuffer(unsigned Size,
-                                            const char *BufferName) {
+SourceBuffer *SourceBuffer::getNewUninitMemBuffer(unsigned Size,
+                                                  const char *BufferName) {
   char *Buf = new char[Size+1];
-  memset(Buf, 0, Size+1);
+  Buf[Size] = 0;
   SourceBufferMem *SB = new SourceBufferMem(Buf, Buf+Size, BufferName);
   // The memory for this buffer is owned by the SourceBuffer.
   SB->MustDeleteBuffer = true;
   return SB;
 }
 
+/// getNewMemBuffer - Allocate a new SourceBuffer of the specified size that
+/// is completely initialized to zeros.  Note that the caller should
+/// initialize the memory allocated by this method.  The memory is owned by
+/// the SourceBuffer object.
+SourceBuffer *SourceBuffer::getNewMemBuffer(unsigned Size,
+                                            const char *BufferName) {
+  SourceBuffer *SB = getNewUninitMemBuffer(Size, BufferName);
+  memset(const_cast<char*>(SB->getBufferStart()), 0, Size+1);
+  return SB;
+}
+
 
 //===----------------------------------------------------------------------===//
-// SourceBufferFile implementation.
+// SourceBufferMMapFile implementation.
 //===----------------------------------------------------------------------===//
 
 namespace {
-class SourceBufferFile : public SourceBuffer {
+class SourceBufferMMapFile : public SourceBuffer {
   sys::MappedFile File;
 public:
-  SourceBufferFile(const sys::Path &Filename);
+  SourceBufferMMapFile(const sys::Path &Filename);
   
   virtual const char *getBufferIdentifier() const {
     return File.path().c_str();
   }
     
-  ~SourceBufferFile();
+  ~SourceBufferMMapFile();
 };
 }
 
-SourceBufferFile::SourceBufferFile(const sys::Path &Filename) {
+SourceBufferMMapFile::SourceBufferMMapFile(const sys::Path &Filename) {
   // FIXME: This does an extra stat syscall to figure out the size, but we
   // already know the size!
   bool Failure = File.open(Filename);
@@ -137,14 +154,49 @@ SourceBufferFile::SourceBufferFile(const sys::Path &Filename) {
   }
 }
 
-SourceBufferFile::~SourceBufferFile() {
+SourceBufferMMapFile::~SourceBufferMMapFile() {
   File.unmap();
 }
 
+//===----------------------------------------------------------------------===//
+// SourceBufferReadFile implementation.
+//===----------------------------------------------------------------------===//
 
+#include <iostream>
 SourceBuffer *SourceBuffer::getFile(const FileEntry *FileEnt) {
   try {
-    return new SourceBufferFile(sys::Path(FileEnt->getName()));
+    // If the file is larger than some threshold, use 'read', otherwise use mmap.
+    if (FileEnt->getSize() >= 4096*4)
+      return new SourceBufferMMapFile(sys::Path(FileEnt->getName()));
+
+    SourceBuffer *SB = getNewUninitMemBuffer(FileEnt->getSize(),
+                                             FileEnt->getName().c_str());
+    char *BufPtr = const_cast<char*>(SB->getBufferStart());
+    
+    int FD = ::open(FileEnt->getName().c_str(), O_RDONLY);
+    if (FD == -1) {
+      delete SB;
+      return 0;
+    }
+    
+    unsigned BytesLeft = FileEnt->getSize();
+    while (BytesLeft) {
+      ssize_t NumRead = ::read(FD, BufPtr, BytesLeft);
+      if (NumRead != -1) {
+        BytesLeft -= NumRead;
+        BufPtr += NumRead;
+      } else if (errno == EINTR) {
+        // try again
+      } else {
+        // error reading.
+        close(FD);
+        delete SB;
+        return 0;
+      }
+    }
+    close(FD);
+    
+    return SB;
   } catch (...) {
     return 0;
   }
