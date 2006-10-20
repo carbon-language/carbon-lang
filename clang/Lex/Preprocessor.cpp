@@ -1576,11 +1576,15 @@ bool Preprocessor::ReadMacroDefinitionArgList(MacroInfo *MI) {
     case tok::eom:  // #define X(
       Diag(Tok, diag::err_pp_missing_rparen_in_macro_def);
       return true;
-    default:        // #define X(1
-      Diag(Tok, diag::err_pp_invalid_tok_in_arg_list);
-      return true;
-    case tok::identifier:
+    default:
+      // Handle keywords and identifiers here to accept things like
+      // #define Foo(for) for.
       IdentifierInfo *II = Tok.getIdentifierInfo();
+      if (II == 0) {
+        // #define X(1
+        Diag(Tok, diag::err_pp_invalid_tok_in_arg_list);
+        return true;
+      }
 
       // If this is already used as an argument, it is used multiple times (e.g.
       // #define X(A,A.
