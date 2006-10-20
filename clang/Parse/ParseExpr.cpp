@@ -518,7 +518,8 @@ Parser::ExprResult Parser::ParseCastExpression(bool isUnaryExpression) {
   case tok::exclaim:       // unary-expression: '!' cast-expression
   case tok::kw___real:     // unary-expression: '__real' cast-expression [GNU]
   case tok::kw___imag:     // unary-expression: '__imag' cast-expression [GNU]
-  //case tok::kw__extension__:  [TODO]
+  case tok::kw___extension__://unary-expression: '__extension__' cast-expr [GNU]
+    // FIXME: Extension not handled correctly here!
     SavedTok = Tok;
     ConsumeToken();
     Res = ParseCastExpression(false);
