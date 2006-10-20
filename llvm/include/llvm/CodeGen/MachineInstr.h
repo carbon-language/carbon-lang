@@ -118,6 +118,10 @@ public:
     assert(isImm() && "Wrong MachineOperand accessor");
     return contents.immedVal;
   }
+  MachineBasicBlock *getMBB() const {
+    assert(isMachineBasicBlock() && "Wrong MachineOperand accessor");
+    return contents.MBB;
+  }
   MachineBasicBlock *getMachineBasicBlock() const {
     assert(isMachineBasicBlock() && "Wrong MachineOperand accessor");
     return contents.MBB;
@@ -203,6 +207,9 @@ public:
     contents.immedVal = Idx;
   }
   
+  /// isIdenticalTo - Return true if this operand is identical to the specified
+  /// operand.
+  bool isIdenticalTo(const MachineOperand &Other) const;
   
   /// ChangeToImmediate - Replace this operand with a new immediate operand of
   /// the specified value.  If an operand is known to be an immediate already,
@@ -279,6 +286,18 @@ public:
     return Operands[i];
   }
 
+  
+  /// isIdenticalTo - Return true if this instruction is identical to (same
+  /// opcode and same operands as) the specified instruction.
+  bool isIdenticalTo(const MachineInstr *Other) const {
+    if (Other->getOpcode() != getOpcode() ||
+        getNumOperands() != getNumOperands())
+      return false;
+    for (unsigned i = 0, e = getNumOperands(); i != e; ++i)
+      if (!getOperand(i).isIdenticalTo(Other->getOperand(i)))
+        return false;
+    return true;
+  }
 
   /// clone - Create a copy of 'this' instruction that is identical in
   /// all ways except the the instruction has no parent, prev, or next.
