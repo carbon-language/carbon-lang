@@ -323,7 +323,14 @@ static Value *GetIfCondition(BasicBlock *BB,
 static bool DominatesMergePoint(Value *V, BasicBlock *BB,
                                 std::set<Instruction*> *AggressiveInsts) {
   Instruction *I = dyn_cast<Instruction>(V);
-  if (!I) return true;    // Non-instructions all dominate instructions.
+  if (!I) {
+    // Non-instructions all dominate instructions, but not all constantexprs
+    // can be executed unconditionally.
+    if (ConstantExpr *C = dyn_cast<ConstantExpr>(V))
+      if (C->canTrap())
+        return false;
+    return true;
+  }
   BasicBlock *PBB = I->getParent();
 
   // We don't want to allow weird loops that might have the "if condition" in
@@ -1297,28 +1304,38 @@ bool llvm::SimplifyCFG(BasicBlock *BB) {
               if (FVPN->getParent() == FalseSucc)
                 FalseValue = FVPN->getIncomingValueForBlock(BI->getParent());
 
-            TrueSucc->removePredecessor(BI->getParent());
-            FalseSucc->removePredecessor(BI->getParent());
+            // In order for this transformation to be safe, we must be able to
+            // unconditionally execute both operands to the return.  This is
+            // normally the case, but we could have a potentially-trapping
+            // constant expression that prevents this transformation from being
+            // safe.
+            if ((!isa<ConstantExpr>(TrueValue) ||
+                 !cast<ConstantExpr>(TrueValue)->canTrap()) &&
+                (!isa<ConstantExpr>(TrueValue) ||
+                 !cast<ConstantExpr>(TrueValue)->canTrap())) {
+              TrueSucc->removePredecessor(BI->getParent());
+              FalseSucc->removePredecessor(BI->getParent());
 
-            // Insert a new select instruction.
-            Value *NewRetVal;
-            Value *BrCond = BI->getCondition();
-            if (TrueValue != FalseValue)
-              NewRetVal = new SelectInst(BrCond, TrueValue,
-                                         FalseValue, "retval", BI);
-            else
-              NewRetVal = TrueValue;
-            
-            DEBUG(std::cerr << "\nCHANGING BRANCH TO TWO RETURNS INTO SELECT:"
-                  << "\n  " << *BI << "Select = " << *NewRetVal
-                  << "TRUEBLOCK: " << *TrueSucc << "FALSEBLOCK: "<< *FalseSucc);
+              // Insert a new select instruction.
+              Value *NewRetVal;
+              Value *BrCond = BI->getCondition();
+              if (TrueValue != FalseValue)
+                NewRetVal = new SelectInst(BrCond, TrueValue,
+                                           FalseValue, "retval", BI);
+              else
+                NewRetVal = TrueValue;
+              
+              DEBUG(std::cerr << "\nCHANGING BRANCH TO TWO RETURNS INTO SELECT:"
+                    << "\n  " << *BI << "Select = " << *NewRetVal
+                    << "TRUEBLOCK: " << *TrueSucc << "FALSEBLOCK: "<< *FalseSucc);
 
-            new ReturnInst(NewRetVal, BI);
-            BI->eraseFromParent();
-            if (Instruction *BrCondI = dyn_cast<Instruction>(BrCond))
-              if (isInstructionTriviallyDead(BrCondI))
-                BrCondI->eraseFromParent();
-            return true;
+              new ReturnInst(NewRetVal, BI);
+              BI->eraseFromParent();
+              if (Instruction *BrCondI = dyn_cast<Instruction>(BrCond))
+                if (isInstructionTriviallyDead(BrCondI))
+                  BrCondI->eraseFromParent();
+              return true;
+            }
           }
         }
       }
