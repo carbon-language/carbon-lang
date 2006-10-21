@@ -30,7 +30,7 @@ using namespace llvm;
 static Statistic<> NumDeadBlocks("branchfold", "Number of dead blocks removed");
 static Statistic<> NumBranchOpts("branchfold", "Number of branches optimized");
 static Statistic<> NumTailMerge ("branchfold", "Number of block tails merged");
-static cl::opt<bool> EnableTailMerge("enable-tail-merge");
+static cl::opt<bool> EnableTailMerge("enable-tail-merge", cl::init(false));
 
 namespace {
   struct BranchFolder : public MachineFunctionPass {
@@ -442,7 +442,8 @@ void BranchFolder::OptimizeBlock(MachineFunction::iterator MBB) {
                                        !PriorCond.empty(), MBB);
     
     // If the previous branch is conditional and both conditions go to the same
-    // destination, remove the branch, replacing it with an unconditional one.
+    // destination, remove the branch, replacing it with an unconditional one or
+    // a fall-through.
     if (PriorTBB && PriorTBB == PriorFBB) {
       TII->RemoveBranch(PrevBB);
       PriorCond.clear(); 
@@ -457,6 +458,16 @@ void BranchFolder::OptimizeBlock(MachineFunction::iterator MBB) {
     // not) remove the branch.
     if (PriorTBB == &*MBB && PriorFBB == 0) {
       TII->RemoveBranch(PrevBB);
+      MadeChange = true;
+      ++NumBranchOpts;
+      return OptimizeBlock(MBB);
+    }
+    
+    // If the prior block branches somewhere else on the condition and here if
+    // the condition is false, remove the uncond second branch.
+    if (PriorFBB == &*MBB) {
+      TII->RemoveBranch(PrevBB);
+      TII->InsertBranch(PrevBB, PriorTBB, 0, PriorCond);
       MadeChange = true;
       ++NumBranchOpts;
       return OptimizeBlock(MBB);
