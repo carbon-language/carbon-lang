@@ -112,18 +112,18 @@ public:
   typedef std::vector<MachineBasicBlock *>::iterator       succ_iterator;
   typedef std::vector<MachineBasicBlock *>::const_iterator const_succ_iterator;
 
-  pred_iterator        pred_begin()       { return Predecessors.begin (); }
-  const_pred_iterator  pred_begin() const { return Predecessors.begin (); }
-  pred_iterator        pred_end()         { return Predecessors.end ();   }
-  const_pred_iterator  pred_end()   const { return Predecessors.end ();   }
-  unsigned             pred_size()  const { return Predecessors.size ();  }
-  bool                 pred_empty() const { return Predecessors.empty();  }
-  succ_iterator        succ_begin()       { return Successors.begin ();   }
-  const_succ_iterator  succ_begin() const { return Successors.begin ();   }
-  succ_iterator        succ_end()         { return Successors.end ();     }
-  const_succ_iterator  succ_end()   const { return Successors.end ();     }
-  unsigned             succ_size()  const { return Successors.size ();    }
-  bool                 succ_empty() const { return Successors.empty();    }
+  pred_iterator        pred_begin()       { return Predecessors.begin(); }
+  const_pred_iterator  pred_begin() const { return Predecessors.begin(); }
+  pred_iterator        pred_end()         { return Predecessors.end();   }
+  const_pred_iterator  pred_end()   const { return Predecessors.end();   }
+  unsigned             pred_size()  const { return Predecessors.size();  }
+  bool                 pred_empty() const { return Predecessors.empty(); }
+  succ_iterator        succ_begin()       { return Successors.begin();   }
+  const_succ_iterator  succ_begin() const { return Successors.begin();   }
+  succ_iterator        succ_end()         { return Successors.end();     }
+  const_succ_iterator  succ_end()   const { return Successors.end();     }
+  unsigned             succ_size()  const { return Successors.size();    }
+  bool                 succ_empty() const { return Successors.empty();   }
 
   // Machine-CFG mutators
 
@@ -142,6 +142,15 @@ public:
   /// updated.
   ///
   void removeSuccessor(succ_iterator I);
+  
+  /// isSuccessor - Return true if the specified MBB is a successor of this
+  /// block.
+  bool isSuccessor(MachineBasicBlock *MBB) const {
+    for (const_succ_iterator I = succ_begin(), E = succ_end(); I != E; ++I)
+      if (*I == MBB)
+        return true;
+    return false;
+  }
 
   /// getFirstTerminator - returns an iterator to the first terminator
   /// instruction of this basic block. If a terminator does not exist,
