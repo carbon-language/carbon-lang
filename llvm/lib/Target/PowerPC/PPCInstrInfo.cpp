@@ -240,14 +240,18 @@ void PPCInstrInfo::InsertBranch(MachineBasicBlock &MBB, MachineBasicBlock *TBB,
                                 const std::vector<MachineOperand> &Cond) const {
   // Shouldn't be a fall through.
   assert(TBB && "InsertBranch must not be told to insert a fallthrough");
+  assert((Cond.size() == 2 || Cond.size() == 0) && 
+         "PPC branch conditions have two components!");
   
-  // Unconditional branch?
+  // One-way branch.
   if (FBB == 0) {
-    BuildMI(&MBB, PPC::B, 1).addMBB(TBB);
+    if (Cond.empty())   // Unconditional branch
+      BuildMI(&MBB, PPC::B, 1).addMBB(TBB);
+    else                // Conditional branch
+      BuildMI(&MBB, PPC::COND_BRANCH, 3)
+        .addReg(Cond[0].getReg()).addImm(Cond[1].getImm()).addMBB(TBB);
     return;
   }
-  
-  assert(Cond.size() == 2 && "PPC branch conditions have two components!");
   
   // Conditional branch
   BuildMI(&MBB, PPC::COND_BRANCH, 3)
