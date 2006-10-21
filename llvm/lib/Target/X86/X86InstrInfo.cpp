@@ -374,14 +374,20 @@ void X86InstrInfo::InsertBranch(MachineBasicBlock &MBB, MachineBasicBlock *TBB,
                                 const std::vector<MachineOperand> &Cond) const {
   // Shouldn't be a fall through.
   assert(TBB && "InsertBranch must not be told to insert a fallthrough");
-  
-  // Unconditional branch?
-  if (FBB == 0) {
-    BuildMI(&MBB, X86::JMP, 1).addMBB(TBB);
+  assert((Cond.size() == 1 || Cond.size() == 0) &&
+         "X86 branch conditions have one component!");
+
+  if (FBB == 0) { // One way branch.
+    if (Cond.empty()) {
+      // Unconditional branch?
+      BuildMI(&MBB, X86::JMP, 1).addMBB(TBB);
+    } else {
+      // Conditional branch.
+      unsigned Opc = GetCondBranchFromCond((X86::CondCode)Cond[0].getImm());
+      BuildMI(&MBB, Opc, 1).addMBB(TBB);
+    }
     return;
   }
-  
-  assert(Cond.size() == 1 && "X86 branch conditions have one component!");
   
   // Conditional branch.
   unsigned Opc = GetCondBranchFromCond((X86::CondCode)Cond[0].getImm());
