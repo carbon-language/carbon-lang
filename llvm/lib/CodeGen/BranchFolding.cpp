@@ -22,8 +22,15 @@
 #include "llvm/CodeGen/MachineJumpTableInfo.h"
 #include "llvm/Target/TargetInstrInfo.h"
 #include "llvm/Target/TargetMachine.h"
+#include "llvm/Support/CommandLine.h"
+#include "llvm/ADT/Statistic.h"
 #include "llvm/ADT/STLExtras.h"
 using namespace llvm;
+
+static Statistic<> NumDeadBlocks("branchfold", "Number of dead blocks removed");
+static Statistic<> NumBranchOpts("branchfold", "Number of branches optimized");
+static Statistic<> NumTailMerge ("branchfold", "Number of block tails merged");
+static cl::opt<bool> EnableTailMerge("enable-tail-merge");
 
 namespace {
   struct BranchFolder : public MachineFunctionPass {
@@ -33,6 +40,13 @@ namespace {
     MachineDebugInfo *MDI;
     bool MadeChange;
   private:
+    // Tail Merging.
+    bool TailMergeBlocks(MachineFunction &MF);
+    void ReplaceTailWithBranchTo(MachineBasicBlock::iterator OldInst,
+                                 MachineBasicBlock *NewDest);
+
+    // Branch optzn.
+    bool OptimizeBranches(MachineFunction &MF);
     void OptimizeBlock(MachineFunction::iterator MBB);
     void RemoveDeadBlock(MachineBasicBlock *MBB);
   };
@@ -77,25 +91,227 @@ bool BranchFolder::runOnMachineFunction(MachineFunction &MF) {
   MDI = getAnalysisToUpdate<MachineDebugInfo>();
   
   bool EverMadeChange = false;
-  MadeChange = true;
-  while (MadeChange) {
-    MadeChange = false;
-    
-    for (MachineFunction::iterator I = ++MF.begin(), E = MF.end(); I != E; ) {
-      MachineBasicBlock *MBB = I++;
-      OptimizeBlock(MBB);
-      
-      // If it is dead, remove it.
-      if (MBB->pred_empty()) {
-        RemoveDeadBlock(MBB);
-        MadeChange = true;
-      }
-    }      
-    EverMadeChange |= MadeChange;
+  bool MadeChangeThisIteration = true;
+  while (MadeChangeThisIteration) {
+    MadeChangeThisIteration = false;
+    MadeChangeThisIteration |= TailMergeBlocks(MF);
+    MadeChangeThisIteration |= OptimizeBranches(MF);
+    EverMadeChange |= MadeChangeThisIteration;
   }
 
   return EverMadeChange;
 }
+
+//===----------------------------------------------------------------------===//
+//  Tail Merging of Blocks
+//===----------------------------------------------------------------------===//
+
+/// HashMachineInstr - Compute a hash value for MI and its operands.
+static unsigned HashMachineInstr(const MachineInstr *MI) {
+  unsigned Hash = MI->getOpcode();
+  for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
+    const MachineOperand &Op = MI->getOperand(i);
+    
+    // Merge in bits from the operand if easy.
+    unsigned OperandHash = 0;
+    switch (Op.getType()) {
+    case MachineOperand::MO_Register:          OperandHash = Op.getReg(); break;
+    case MachineOperand::MO_Immediate:         OperandHash = Op.getImm(); break;
+    case MachineOperand::MO_MachineBasicBlock:
+      OperandHash = Op.getMachineBasicBlock()->getNumber();
+      break;
+    case MachineOperand::MO_FrameIndex: OperandHash = Op.getFrameIndex(); break;
+    case MachineOperand::MO_ConstantPoolIndex:
+      OperandHash = Op.getConstantPoolIndex();
+      break;
+    case MachineOperand::MO_JumpTableIndex:
+      OperandHash = Op.getJumpTableIndex();
+      break;
+    case MachineOperand::MO_GlobalAddress:
+    case MachineOperand::MO_ExternalSymbol:
+      // Global address / external symbol are too hard, don't bother, but do
+      // pull in the offset.
+      OperandHash = Op.getOffset();
+      break;
+    default: break;
+    }
+    
+    Hash += ((OperandHash << 3) | Op.getType()) << (i&31);
+  }
+  return Hash;
+}
+
+/// HashEndOfMBB - Hash the last two instructions in the MBB.  We hash two
+/// instructions, because cross-jumping only saves code when at least two
+/// instructions are removed (since a branch must be inserted).
+static unsigned HashEndOfMBB(const MachineBasicBlock *MBB) {
+  MachineBasicBlock::const_iterator I = MBB->end();
+  if (I == MBB->begin())
+    return 0;   // Empty MBB.
+  
+  --I;
+  unsigned Hash = HashMachineInstr(I);
+    
+  if (I == MBB->begin())
+    return Hash;   // Single instr MBB.
+  
+  --I;
+  // Hash in the second-to-last instruction.
+  Hash ^= HashMachineInstr(I) << 2;
+  return Hash;
+}
+
+/// ComputeCommonTailLength - Given two machine basic blocks, compute the number
+/// of instructions they actually have in common together at their end.  Return
+/// iterators for the first shared instruction in each block.
+static unsigned ComputeCommonTailLength(MachineBasicBlock *MBB1,
+                                        MachineBasicBlock *MBB2,
+                                        MachineBasicBlock::iterator &I1,
+                                        MachineBasicBlock::iterator &I2) {
+  I1 = MBB1->end();
+  I2 = MBB2->end();
+  
+  unsigned TailLen = 0;
+  while (I1 != MBB1->begin() && I2 != MBB2->begin()) {
+    --I1; --I2;
+    if (!I1->isIdenticalTo(I2)) {
+      ++I1; ++I2;
+      break;
+    }
+    ++TailLen;
+  }
+  return TailLen;
+}
+
+/// ReplaceTailWithBranchTo - Delete the instruction OldInst and everything
+/// after it, replacing it with an unconditional branch to NewDest.
+void BranchFolder::ReplaceTailWithBranchTo(MachineBasicBlock::iterator OldInst,
+                                           MachineBasicBlock *NewDest) {
+  MachineBasicBlock *OldBB = OldInst->getParent();
+  
+  // Remove all the old successors of OldBB from the CFG.
+  while (!OldBB->succ_empty())
+    OldBB->removeSuccessor(OldBB->succ_begin());
+  
+  // Remove all the dead instructions from the end of OldBB.
+  OldBB->erase(OldInst, OldBB->end());
+
+  TII->InsertBranch(*OldBB, NewDest, 0, std::vector<MachineOperand>());
+  OldBB->addSuccessor(NewDest);
+  ++NumTailMerge;
+}
+
+bool BranchFolder::TailMergeBlocks(MachineFunction &MF) {
+  MadeChange = false;
+  
+  if (!EnableTailMerge)
+    return false;
+  
+  // Find blocks with no successors.
+  std::vector<std::pair<unsigned,MachineBasicBlock*> > MergePotentials;
+  for (MachineFunction::iterator I = MF.begin(), E = MF.end(); I != E; ++I) {
+    if (I->succ_empty())
+      MergePotentials.push_back(std::make_pair(HashEndOfMBB(I), I));
+  }
+  
+  // Sort by hash value so that blocks with identical end sequences sort
+  // together.
+  std::stable_sort(MergePotentials.begin(), MergePotentials.end());
+
+  // Walk through equivalence sets looking for actual exact matches.
+  while (MergePotentials.size() > 1) {
+    unsigned CurHash  = (MergePotentials.end()-1)->first;
+    unsigned PrevHash = (MergePotentials.end()-2)->first;
+    MachineBasicBlock *CurMBB = (MergePotentials.end()-1)->second;
+    
+    // If there is nothing that matches the hash of the current basic block,
+    // give up.
+    if (CurHash != PrevHash) {
+      MergePotentials.pop_back();
+      continue;
+    }
+    
+    // Determine the actual length of the shared tail between these two basic
+    // blocks.  Because the hash can have collisions, it's possible that this is
+    // less than 2.
+    MachineBasicBlock::iterator BBI1, BBI2;
+    unsigned CommonTailLen = 
+      ComputeCommonTailLength(CurMBB, (MergePotentials.end()-2)->second, 
+                              BBI1, BBI2);
+    
+    // If the tails don't have at least two instructions in common, see if there
+    // is anything else in the equivalence class that does match.
+    if (CommonTailLen < 2) {
+      unsigned FoundMatch = ~0U;
+      for (int i = MergePotentials.size()-2;
+           i != -1 && MergePotentials[i].first == CurHash; --i) {
+        CommonTailLen = ComputeCommonTailLength(CurMBB, 
+                                                MergePotentials[i].second,
+                                                BBI1, BBI2);
+        if (CommonTailLen >= 2) {
+          FoundMatch = i;
+          break;
+        }
+      }
+      
+      // If we didn't find anything that has at least two instructions matching
+      // this one, bail out.
+      if (FoundMatch == ~0U) {
+        MergePotentials.pop_back();
+        continue;
+      }
+      
+      // Otherwise, move the matching block to the right position.
+      std::swap(MergePotentials[FoundMatch], *(MergePotentials.end()-2));
+    }
+    
+    // If either block is the entire common tail, make the longer one branch to
+    // the shorter one.
+    MachineBasicBlock *MBB2 = (MergePotentials.end()-2)->second;
+    if (CurMBB->begin() == BBI1) {
+      // Hack the end off MBB2, making it jump to CurMBB instead.
+      ReplaceTailWithBranchTo(BBI2, CurMBB);
+      // This modifies MBB2, so remove it from the worklist.
+      MergePotentials.erase(MergePotentials.end()-2);
+      MadeChange = true;
+      continue;
+    } else if (MBB2->begin() == BBI2) {
+      // Hack the end off CurMBB, making it jump to MBBI@ instead.
+      ReplaceTailWithBranchTo(BBI1, MBB2);
+      // This modifies CurMBB, so remove it from the worklist.
+      MergePotentials.pop_back();
+      MadeChange = true;
+      continue;
+    }
+    
+    MergePotentials.pop_back();
+  }
+  
+  return MadeChange;
+}
+
+
+//===----------------------------------------------------------------------===//
+//  Branch Optimization
+//===----------------------------------------------------------------------===//
+
+bool BranchFolder::OptimizeBranches(MachineFunction &MF) {
+  MadeChange = false;
+  
+  for (MachineFunction::iterator I = ++MF.begin(), E = MF.end(); I != E; ) {
+    MachineBasicBlock *MBB = I++;
+    OptimizeBlock(MBB);
+    
+    // If it is dead, remove it.
+    if (MBB->pred_empty()) {
+      RemoveDeadBlock(MBB);
+      MadeChange = true;
+      ++NumDeadBlocks;
+    }
+  }
+  return MadeChange;
+}
+
 
 /// ReplaceUsesOfBlockWith - Given a machine basic block 'BB' that branched to
 /// 'Old', change the code and CFG so that it branches to 'New' instead.
@@ -171,6 +387,7 @@ void BranchFolder::OptimizeBlock(MachineFunction::iterator MBB) {
       if (PriorTBB != &*MBB)
         TII->InsertBranch(*prior(MBB), PriorTBB, 0, PriorCond);
       MadeChange = true;
+      ++NumBranchOpts;
       return OptimizeBlock(MBB);
     }
     
@@ -179,6 +396,7 @@ void BranchFolder::OptimizeBlock(MachineFunction::iterator MBB) {
     if (PriorTBB == &*MBB && PriorFBB == 0) {
       TII->RemoveBranch(*prior(MBB));
       MadeChange = true;
+      ++NumBranchOpts;
       return OptimizeBlock(MBB);
     }
   }
