@@ -186,7 +186,7 @@ bool PPCInstrInfo::AnalyzeBranch(MachineBasicBlock &MBB,MachineBasicBlock *&TBB,
       TBB = LastInst->getOperand(2).getMachineBasicBlock();
       Cond.push_back(LastInst->getOperand(0));
       Cond.push_back(LastInst->getOperand(1));
-      return true;
+      return false;
     }
     // Otherwise, don't know what this is.
     return true;
@@ -261,5 +261,8 @@ void PPCInstrInfo::InsertBranch(MachineBasicBlock &MBB, MachineBasicBlock *TBB,
 
 bool PPCInstrInfo::
 ReverseBranchCondition(std::vector<MachineOperand> &Cond) const {
-  return true;
+  assert(Cond.size() == 2 && "Invalid PPC branch opcode!");
+  // Leave the CR# the same, but invert the condition.
+  Cond[1].setImm(invertPPCBranchOpcode(Cond[1].getImm()));
+  return false;
 }
