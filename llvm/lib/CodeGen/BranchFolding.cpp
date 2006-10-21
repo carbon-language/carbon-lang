@@ -472,6 +472,20 @@ void BranchFolder::OptimizeBlock(MachineFunction::iterator MBB) {
       ++NumBranchOpts;
       return OptimizeBlock(MBB);
     }
+    
+    // If the prior block branches here on true and somewhere else on false, and
+    // if the branch condition is reversible, reverse the branch to create a
+    // fall-through.
+    if (PriorTBB == &*MBB) {
+      std::vector<MachineOperand> NewPriorCond(PriorCond);
+      if (!TII->ReverseBranchCondition(NewPriorCond)) {
+        TII->RemoveBranch(PrevBB);
+        TII->InsertBranch(PrevBB, PriorFBB, 0, NewPriorCond);
+        MadeChange = true;
+        ++NumBranchOpts;
+        return OptimizeBlock(MBB);
+      }
+    }
   }
   
   // Analyze the branch in the current block.
