@@ -184,7 +184,8 @@ static unsigned ComputeCommonTailLength(MachineBasicBlock *MBB1,
 }
 
 /// ReplaceTailWithBranchTo - Delete the instruction OldInst and everything
-/// after it, replacing it with an unconditional branch to NewDest.
+/// after it, replacing it with an unconditional branch to NewDest.  This
+/// returns true if OldInst's block is modified, false if NewDest is modified.
 void BranchFolder::ReplaceTailWithBranchTo(MachineBasicBlock::iterator OldInst,
                                            MachineBasicBlock *NewDest) {
   MachineBasicBlock *OldBB = OldInst->getParent();
@@ -196,7 +197,9 @@ void BranchFolder::ReplaceTailWithBranchTo(MachineBasicBlock::iterator OldInst,
   // Remove all the dead instructions from the end of OldBB.
   OldBB->erase(OldInst, OldBB->end());
 
-  TII->InsertBranch(*OldBB, NewDest, 0, std::vector<MachineOperand>());
+  // If OldBB isn't immediately before OldBB, insert a branch to it.
+  if (++MachineFunction::iterator(OldBB) != MachineFunction::iterator(NewDest))
+    TII->InsertBranch(*OldBB, NewDest, 0, std::vector<MachineOperand>());
   OldBB->addSuccessor(NewDest);
   ++NumTailMerge;
 }
@@ -313,6 +316,58 @@ bool BranchFolder::OptimizeBranches(MachineFunction &MF) {
 }
 
 
+/// CorrectExtraCFGEdges - Various pieces of code can cause excess edges in the
+/// CFG to be inserted.  If we have proven that MBB can only branch to DestA and
+/// DestB, remove any other MBB successors from the CFG.  DestA and DestB can
+/// be null.
+static bool CorrectExtraCFGEdges(MachineBasicBlock &MBB, 
+                                 MachineBasicBlock *DestA,
+                                 MachineBasicBlock *DestB,
+                                 bool isCond, 
+                                 MachineFunction::iterator FallThru) {
+  bool MadeChange = false;
+  bool AddedFallThrough = false;
+  
+  // If this block ends with a conditional branch that falls through to its
+  // successor, set DestB as the successor.
+  if (isCond) {
+    if (DestB == 0 && FallThru != MBB.getParent()->end()) {
+      DestB = FallThru;
+      AddedFallThrough = true;
+    }
+  } else {
+    // If this is an unconditional branch with no explicit dest, it must just be
+    // a fallthrough into DestB.
+    if (DestA == 0 && FallThru != MBB.getParent()->end()) {
+      DestA = FallThru;
+      AddedFallThrough = true;
+    }
+  }
+  
+  MachineBasicBlock::pred_iterator SI = MBB.succ_begin();
+  while (SI != MBB.succ_end()) {
+    if (*SI == DestA) {
+      DestA = 0;
+      ++SI;
+    } else if (*SI == DestB) {
+      DestB = 0;
+      ++SI;
+    } else {
+      // Otherwise, this is a superfluous edge, remove it.
+      MBB.removeSuccessor(SI);
+      MadeChange = true;
+    }
+  }
+  if (!AddedFallThrough) {
+    assert(DestA == 0 && DestB == 0 &&
+           "MachineCFG is missing edges!");
+  } else if (isCond) {
+    assert(DestA == 0 && "MachineCFG is missing edges!");
+  }
+  return MadeChange;
+}
+
+
 /// ReplaceUsesOfBlockWith - Given a machine basic block 'BB' that branched to
 /// 'Old', change the code and CFG so that it branches to 'New' instead.
 static void ReplaceUsesOfBlockWith(MachineBasicBlock *BB,
@@ -349,7 +404,8 @@ void BranchFolder::OptimizeBlock(MachineFunction::iterator MBB) {
   // If this block is empty, make everyone use its fall-through, not the block
   // explicitly.
   if (MBB->empty()) {
-    if (MBB->pred_empty()) return;  // dead block?  Leave for cleanup later.
+    // Dead block?  Leave for cleanup later.
+    if (MBB->pred_empty()) return;
     
     MachineFunction::iterator FallThrough = next(MBB);
     
@@ -378,14 +434,20 @@ void BranchFolder::OptimizeBlock(MachineFunction::iterator MBB) {
 
   MachineBasicBlock *PriorTBB = 0, *PriorFBB = 0;
   std::vector<MachineOperand> PriorCond;
-  if (!TII->AnalyzeBranch(PrevBB, PriorTBB, PriorFBB, PriorCond)) {
+  bool PriorUnAnalyzable = false;
+  PriorUnAnalyzable = TII->AnalyzeBranch(PrevBB, PriorTBB, PriorFBB, PriorCond);
+  if (!PriorUnAnalyzable) {
+    // If the CFG for the prior block has extra edges, remove them.
+    MadeChange |= CorrectExtraCFGEdges(PrevBB, PriorTBB, PriorFBB,
+                                       !PriorCond.empty(), MBB);
+    
     // If the previous branch is conditional and both conditions go to the same
     // destination, remove the branch, replacing it with an unconditional one.
     if (PriorTBB && PriorTBB == PriorFBB) {
-      TII->RemoveBranch(*prior(MBB));
+      TII->RemoveBranch(PrevBB);
       PriorCond.clear(); 
       if (PriorTBB != &*MBB)
-        TII->InsertBranch(*prior(MBB), PriorTBB, 0, PriorCond);
+        TII->InsertBranch(PrevBB, PriorTBB, 0, PriorCond);
       MadeChange = true;
       ++NumBranchOpts;
       return OptimizeBlock(MBB);
@@ -394,126 +456,64 @@ void BranchFolder::OptimizeBlock(MachineFunction::iterator MBB) {
     // If the previous branch *only* branches to *this* block (conditional or
     // not) remove the branch.
     if (PriorTBB == &*MBB && PriorFBB == 0) {
-      TII->RemoveBranch(*prior(MBB));
+      TII->RemoveBranch(PrevBB);
       MadeChange = true;
       ++NumBranchOpts;
       return OptimizeBlock(MBB);
     }
   }
   
-#if 0
+  // Analyze the branch in the current block.
+  MachineBasicBlock *CurTBB = 0, *CurFBB = 0;
+  std::vector<MachineOperand> CurCond;
+  if (!TII->AnalyzeBranch(*MBB, CurTBB, CurFBB, CurCond)) {
+    // If the CFG for the prior block has extra edges, remove them.
+    MadeChange |= CorrectExtraCFGEdges(*MBB, CurTBB, CurFBB,
+                                       !CurCond.empty(), next(MBB));
 
-  if (MBB->pred_size() == 1) {
-    // If this block has a single predecessor, and if that block has a single
-    // successor, merge this block into that block.
-    MachineBasicBlock *Pred = *MBB->pred_begin();
-    if (Pred->succ_size() == 1) {
-      // Delete all of the terminators from end of the pred block.  NOTE, this
-      // assumes that terminators do not have side effects!
-      // FIXME: This doesn't work for FP_REG_KILL.
-      
-      while (!Pred->empty() && TII.isTerminatorInstr(Pred->back().getOpcode()))
-        Pred->pop_back();
-      
-      // Splice the instructions over.
-      Pred->splice(Pred->end(), MBB, MBB->begin(), MBB->end());
-      
-      // If MBB does not end with a barrier, add a goto instruction to the end.
-      if (Pred->empty() || !TII.isBarrier(Pred->back().getOpcode()))
-        TII.insertGoto(*Pred, *next(MBB));
-      
-      // Update the CFG now.
-      Pred->removeSuccessor(Pred->succ_begin());
-      while (!MBB->succ_empty()) {
-        Pred->addSuccessor(*(MBB->succ_end()-1));
-        MBB->removeSuccessor(MBB->succ_end()-1);
+    // If this branch is the only thing in its block, see if we can forward
+    // other blocks across it.
+    if (CurTBB && CurCond.empty() && CurFBB == 0 && 
+        TII->isBranch(MBB->begin()->getOpcode())) {
+      // This block may contain just an unconditional branch.  Because there can
+      // be 'non-branch terminators' in the block, try removing the branch and
+      // then seeing if the block is empty.
+      TII->RemoveBranch(*MBB);
+
+      // If this block is just an unconditional branch to CurTBB, we can
+      // usually completely eliminate the block.  The only case we cannot
+      // completely eliminate the block is when the block before this one
+      // falls through into MBB and we can't understand the prior block's branch
+      // condition.
+      if (MBB->empty() && (!PriorUnAnalyzable || !PrevBB.isSuccessor(MBB))) {
+        // If the prior block falls through into us, turn it into an
+        // explicit branch to us to make updates simpler.
+        if (PrevBB.isSuccessor(MBB) && PriorTBB != &*MBB && PriorFBB != &*MBB) {
+          if (PriorTBB == 0) {
+            assert(PriorCond.empty() && PriorFBB == 0 && "Bad branch analysis");
+            PriorTBB = MBB;
+          } else {
+            assert(PriorFBB == 0 && "Machine CFG out of date!");
+            PriorFBB = MBB;
+          }
+          TII->RemoveBranch(PrevBB);
+          TII->InsertBranch(PrevBB, PriorTBB, PriorFBB, PriorCond);
+        }
+
+        // Iterate through all the predecessors, revectoring each in-turn.
+        while (!MBB->pred_empty())
+          ReplaceUsesOfBlockWith(*(MBB->pred_end()-1), MBB, CurTBB, TII);
+
+        // Change any jumptables to go to the new MBB.
+        MBB->getParent()->getJumpTableInfo()->ReplaceMBBInJumpTables(MBB,
+                                                                     CurTBB);
+        ++NumBranchOpts;
+        MadeChange = true;
+        return;
       }
-      return true;
-    }
-  }
-  
-  // If BB falls through into Old, insert an unconditional branch to New.
-  MachineFunction::iterator BBSucc = BB; ++BBSucc;
-  if (BBSucc != BB->getParent()->end() && &*BBSucc == Old)
-    TII.insertGoto(*BB, *New);
-  
-  
-  if (MBB->pred_size() == 1) {
-    // If this block has a single predecessor, and if that block has a single
-    // successor, merge this block into that block.
-    MachineBasicBlock *Pred = *MBB->pred_begin();
-    if (Pred->succ_size() == 1) {
-      // Delete all of the terminators from end of the pred block.  NOTE, this
-      // assumes that terminators do not have side effects!
-      // FIXME: This doesn't work for FP_REG_KILL.
       
-      while (!Pred->empty() && TII.isTerminatorInstr(Pred->back().getOpcode()))
-        Pred->pop_back();
-
-      // Splice the instructions over.
-      Pred->splice(Pred->end(), MBB, MBB->begin(), MBB->end());
-
-      // If MBB does not end with a barrier, add a goto instruction to the end.
-      if (Pred->empty() || !TII.isBarrier(Pred->back().getOpcode()))
-        TII.insertGoto(*Pred, *next(MBB));
-
-      // Update the CFG now.
-      Pred->removeSuccessor(Pred->succ_begin());
-      while (!MBB->succ_empty()) {
-        Pred->addSuccessor(*(MBB->succ_end()-1));
-        MBB->removeSuccessor(MBB->succ_end()-1);
-      }
-      return true;
+      // Add the branch back if the block is more than just an uncond branch.
+      TII->InsertBranch(*MBB, CurTBB, 0, CurCond);
     }
   }
-
-  // If the first instruction in this block is an unconditional branch, and if
-  // there are predecessors, fold the branch into the predecessors.
-  if (!MBB->pred_empty() && isUncondBranch(MBB->begin(), TII)) {
-    MachineInstr *Br = MBB->begin();
-    assert(Br->getNumOperands() == 1 && Br->getOperand(0).isMachineBasicBlock()
-           && "Uncond branch should take one MBB argument!");
-    MachineBasicBlock *Dest = Br->getOperand(0).getMachineBasicBlock();
-
-    while (!MBB->pred_empty()) {
-      MachineBasicBlock *Pred = *(MBB->pred_end()-1);
-      ReplaceUsesOfBlockWith(Pred, MBB, Dest, TII);
-    }
-    return true;
-  }
-
-  // If the last instruction is an unconditional branch and the fall through
-  // block is the destination, just delete the branch.
-  if (isUncondBranch(--MBB->end(), TII)) {
-    MachineBasicBlock::iterator MI = --MBB->end();
-    MachineInstr *UncondBr = MI;
-    MachineFunction::iterator FallThrough = next(MBB);
-
-    MachineFunction::iterator UncondDest =
-      MI->getOperand(0).getMachineBasicBlock();
-    if (UncondDest == FallThrough) {
-      // Just delete the branch.  This does not effect the CFG.
-      MBB->erase(UncondBr);
-      return true;
-    }
-
-    // Okay, so we don't have a fall-through.  Check to see if we have an
-    // conditional branch that would be a fall through if we reversed it.  If
-    // so, invert the condition and delete the uncond branch.
-    if (MI != MBB->begin() && isCondBranch(--MI, TII)) {
-      // We assume that conditional branches always have the branch dest as the
-      // last operand.  This could be generalized in the future if needed.
-      unsigned LastOpnd = MI->getNumOperands()-1;
-      if (MachineFunction::iterator(
-            MI->getOperand(LastOpnd).getMachineBasicBlock()) == FallThrough) {
-        // Change the cond branch to go to the uncond dest, nuke the uncond,
-        // then reverse the condition.
-        MI->getOperand(LastOpnd).setMachineBasicBlock(UncondDest);
-        MBB->erase(UncondBr);
-        TII.reverseBranchCondition(MI);
-        return true;
-      }
-    }
-  }
-#endif
 }
