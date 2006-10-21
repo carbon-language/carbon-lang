@@ -499,7 +499,7 @@ void BranchFolder::OptimizeBlock(MachineFunction::iterator MBB) {
     // If this branch is the only thing in its block, see if we can forward
     // other blocks across it.
     if (CurTBB && CurCond.empty() && CurFBB == 0 && 
-        TII->isBranch(MBB->begin()->getOpcode())) {
+        TII->isBranch(MBB->begin()->getOpcode()) && CurTBB != &*MBB) {
       // This block may contain just an unconditional branch.  Because there can
       // be 'non-branch terminators' in the block, try removing the branch and
       // then seeing if the block is empty.
@@ -526,15 +526,28 @@ void BranchFolder::OptimizeBlock(MachineFunction::iterator MBB) {
         }
 
         // Iterate through all the predecessors, revectoring each in-turn.
-        while (!MBB->pred_empty())
-          ReplaceUsesOfBlockWith(*(MBB->pred_end()-1), MBB, CurTBB, TII);
+        MachineBasicBlock::pred_iterator PI = MBB->pred_begin();
+        bool DidChange = false;
+        bool HasBranchToSelf = false;
+        while (PI != MBB->pred_end()) {
+          if (*PI == &*MBB) {
+            // If this block has an uncond branch to itself, leave it.
+            ++PI;
+            HasBranchToSelf = true;
+          } else {
+            DidChange = true;
+            ReplaceUsesOfBlockWith(*PI, MBB, CurTBB, TII);
+          }
+        }
 
         // Change any jumptables to go to the new MBB.
         MBB->getParent()->getJumpTableInfo()->ReplaceMBBInJumpTables(MBB,
                                                                      CurTBB);
-        ++NumBranchOpts;
-        MadeChange = true;
-        return;
+        if (DidChange) {
+          ++NumBranchOpts;
+          MadeChange = true;
+          if (!HasBranchToSelf) return;
+        }
       }
       
       // Add the branch back if the block is more than just an uncond branch.
