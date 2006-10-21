@@ -253,12 +253,10 @@ void PPCInstrInfo::InsertBranch(MachineBasicBlock &MBB, MachineBasicBlock *TBB,
     return;
   }
   
-  // Conditional branch
+  // Two-way Conditional Branch.
   BuildMI(&MBB, PPC::COND_BRANCH, 3)
     .addReg(Cond[0].getReg()).addImm(Cond[1].getImm()).addMBB(TBB);
-  
-  if (FBB)  // Two-way branch.
-    BuildMI(&MBB, PPC::B, 1).addMBB(FBB);
+  BuildMI(&MBB, PPC::B, 1).addMBB(FBB);
 }
 
 bool PPCInstrInfo::

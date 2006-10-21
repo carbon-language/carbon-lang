@@ -389,12 +389,10 @@ void X86InstrInfo::InsertBranch(MachineBasicBlock &MBB, MachineBasicBlock *TBB,
     return;
   }
   
-  // Conditional branch.
+  // Two-way Conditional branch.
   unsigned Opc = GetCondBranchFromCond((X86::CondCode)Cond[0].getImm());
   BuildMI(&MBB, Opc, 1).addMBB(TBB);
-  
-  if (FBB)  // Two-way branch.
-    BuildMI(&MBB, X86::JMP, 1).addMBB(FBB);
+  BuildMI(&MBB, X86::JMP, 1).addMBB(FBB);
 }
 
 bool X86InstrInfo::
