@@ -46,6 +46,11 @@ namespace X86 {
   
   // Turn condition code into conditional branch opcode.
   unsigned GetCondBranchFromCond(CondCode CC);
+  
+  /// GetOppositeBranchCondition - Return the inverse of the specified cond,
+  /// e.g. turning COND_E to COND_NE.
+  CondCode GetOppositeBranchCondition(X86::CondCode CC);
+
 }
   
 /// X86II - This namespace holds all of the target specific flags that

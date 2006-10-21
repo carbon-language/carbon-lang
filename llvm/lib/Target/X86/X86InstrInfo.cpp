@@ -290,6 +290,31 @@ unsigned X86::GetCondBranchFromCond(X86::CondCode CC) {
   }
 }
 
+/// GetOppositeBranchCondition - Return the inverse of the specified condition,
+/// e.g. turning COND_E to COND_NE.
+X86::CondCode X86::GetOppositeBranchCondition(X86::CondCode CC) {
+  switch (CC) {
+  default: assert(0 && "Illegal condition code!");
+  case X86::COND_E:  return X86::COND_NE;
+  case X86::COND_NE: return X86::COND_E;
+  case X86::COND_L:  return X86::COND_GE;
+  case X86::COND_LE: return X86::COND_G;
+  case X86::COND_G:  return X86::COND_LE;
+  case X86::COND_GE: return X86::COND_L;
+  case X86::COND_B:  return X86::COND_AE;
+  case X86::COND_BE: return X86::COND_A;
+  case X86::COND_A:  return X86::COND_BE;
+  case X86::COND_AE: return X86::COND_B;
+  case X86::COND_S:  return X86::COND_NS;
+  case X86::COND_NS: return X86::COND_S;
+  case X86::COND_P:  return X86::COND_NP;
+  case X86::COND_NP: return X86::COND_P;
+  case X86::COND_O:  return X86::COND_NO;
+  case X86::COND_NO: return X86::COND_O;
+  }
+}
+
+
 bool X86InstrInfo::AnalyzeBranch(MachineBasicBlock &MBB, 
                                  MachineBasicBlock *&TBB,
                                  MachineBasicBlock *&FBB,
@@ -397,8 +422,9 @@ void X86InstrInfo::InsertBranch(MachineBasicBlock &MBB, MachineBasicBlock *TBB,
 
 bool X86InstrInfo::
 ReverseBranchCondition(std::vector<MachineOperand> &Cond) const {
-  // TODO: IMPLEMENT.
-  return true;
+  assert(Cond.size() == 1 && "Invalid X86 branch condition!");
+  Cond[0].setImm(GetOppositeBranchCondition((X86::CondCode)Cond[0].getImm()));
+  return false;
 }
 
 const TargetRegisterClass *X86InstrInfo::getPointerRegClass() const {
