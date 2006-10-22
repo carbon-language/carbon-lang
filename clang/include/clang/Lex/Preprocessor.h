@@ -14,7 +14,7 @@
 #ifndef LLVM_CLANG_LEX_PREPROCESSOR_H
 #define LLVM_CLANG_LEX_PREPROCESSOR_H
 
-#include "clang/Lex/HeaderSearch.h"
+#include "clang/Lex/DirectoryLookup.h"
 #include "clang/Lex/IdentifierTable.h"
 #include "clang/Lex/Lexer.h"
 #include "clang/Lex/MacroExpander.h"
@@ -26,6 +26,7 @@ namespace clang {
 class SourceManager;
 class FileManager;
 class FileEntry;
+class HeaderSearch;
 class PragmaNamespace;
 class PragmaHandler;
 class ScratchBuffer;
