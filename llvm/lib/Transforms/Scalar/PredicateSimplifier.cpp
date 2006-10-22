@@ -349,19 +349,28 @@ namespace {
           }
         } break;
         case Instruction::Xor: {
-          ConstantIntegral *CI = dyn_cast<ConstantIntegral>(V1);
-	  if (!CI) break;
-          if (CI->isAllOnesValue()) {
-            if (BO->getOperand(0) == V1)
-              add(Opcode, ConstantBool::getFalse(), BO->getOperand(1), false);
-            if (BO->getOperand(1) == V1)
-              add(Opcode, ConstantBool::getFalse(), BO->getOperand(0), false);
-          }
-          if (CI->isNullValue()) {
-            if (BO->getOperand(0) == ConstantBool::getTrue())
-              add(Opcode, ConstantBool::getTrue(), BO->getOperand(1), false);
-            if (BO->getOperand(1) == ConstantBool::getTrue())
-              add(Opcode, ConstantBool::getTrue(), BO->getOperand(0), false);
+          if (ConstantIntegral *CI = dyn_cast<ConstantIntegral>(V1)) {
+            const Type *Ty = BO->getType();
+            if (CI->isAllOnesValue()) {
+              if (BO->getOperand(0) == V1)
+                add(Opcode, Constant::getNullValue(Ty),
+                    BO->getOperand(1), false);
+              if (BO->getOperand(1) == V1)
+                add(Opcode, Constant::getNullValue(Ty),
+                    BO->getOperand(0), false);
+            }
+            if (CI->isNullValue()) {
+              ConstantIntegral *Op0 =
+                  dyn_cast<ConstantIntegral>(BO->getOperand(0));
+              ConstantIntegral *Op1 =
+                  dyn_cast<ConstantIntegral>(BO->getOperand(1));
+              if (Op0 && Op0->isAllOnesValue())
+                add(Opcode, ConstantIntegral::getAllOnesValue(Ty),
+                    BO->getOperand(1), false);
+              if (Op1 && Op1->isAllOnesValue())
+                add(Opcode, ConstantIntegral::getAllOnesValue(Ty),
+                    BO->getOperand(0), false);
+            }
           }
         } break;
         default:
