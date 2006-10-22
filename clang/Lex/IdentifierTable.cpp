@@ -125,6 +125,8 @@ struct IdentifierBucket {
 };
 
 // FIXME: start hashtablesize off at 8K entries, GROW when density gets to 3.
+/// HASH_TABLE_SIZE - The current size of the hash table.  Note that this must
+/// always be a power of two!
 static unsigned HASH_TABLE_SIZE = 8096;
 
 IdentifierTable::IdentifierTable(const LangOptions &LangOpts) {
@@ -177,7 +179,7 @@ IdentifierInfo &IdentifierTable::get(const char *NameStart,
                                      const char *NameEnd) {
   IdentifierBucket **TableArray = (IdentifierBucket**)TheTable;
 
-  unsigned Hash = HashString(NameStart, NameEnd) % HASH_TABLE_SIZE;
+  unsigned Hash = HashString(NameStart, NameEnd) & (HASH_TABLE_SIZE-1);
   unsigned Length = NameEnd-NameStart;
   
   IdentifierBucket *IdentHead = TableArray[Hash];
