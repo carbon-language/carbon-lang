@@ -140,6 +140,14 @@ bool TailCallElim::runOnFunction(Function &F) {
     FunctionContainsEscapingAllocas |=
       CheckForEscapingAllocas(BB, CannotTCETailMarkedCall);
   }
+  
+  /// FIXME: The code generator produces really bad code when an 'escaping
+  /// alloca' is changed from being a static alloca to being a dynamic alloca.
+  /// Until this is resolved, disable this transformation if that would ever
+  /// happen.  This bug is PR962.
+  if (FunctionContainsEscapingAllocas)
+    return false;
+  
 
   // Second pass, change any tail calls to loops.
   for (Function::iterator BB = F.begin(), E = F.end(); BB != E; ++BB)
