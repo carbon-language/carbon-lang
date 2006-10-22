@@ -180,12 +180,18 @@ bool X86SharedAsmPrinter::doFinalization(Module &M) {
             << "\t.weak_definition " << name << "\n";
           SwitchToDataSection(".section __DATA,__const_coal,coalesced", I);
         } else if (Subtarget->isTargetCygwin()) {
-          O << "\t.section\t.data$linkonce." << name << ",\"aw\"\n"
-            << "\t.globl " << name << "\n"
+          std::string SectionName(".section\t.data$linkonce." +
+                                  name +
+                                  ",\"aw\"\n");
+          SwitchToDataSection(SectionName.c_str(), I);
+          O << "\t.globl " << name << "\n"
             << "\t.linkonce same_size\n";
         } else {
-          O << "\t.section\t.llvm.linkonce.d." << name << ",\"aw\",@progbits\n"
-            << "\t.weak " << name << "\n";
+          std::string SectionName("\t.section\t.llvm.linkonce.d." +
+                                  name +
+                                  ",\"aw\",@progbits\n");
+          SwitchToDataSection(SectionName.c_str(), I);
+          O << "\t.weak " << name << "\n";
         }
         break;
       case GlobalValue::AppendingLinkage:
