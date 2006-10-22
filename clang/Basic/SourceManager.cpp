@@ -93,6 +93,8 @@ unsigned SourceManager::createFileID(const InfoRec *File,
   unsigned FileSize = File->second.Buffer->getBufferSize();
   if (FileSize+1 < (1 << SourceLocation::FilePosBits)) {
     FileIDs.push_back(FileIDInfo::getNormalBuffer(IncludePos, 0, File));
+    assert(FileIDs.size() < (1 << SourceLocation::FileIDBits) &&
+           "Ran out of file ID's!");
     return FileIDs.size();
   }
   
@@ -107,6 +109,8 @@ unsigned SourceManager::createFileID(const InfoRec *File,
     FileSize -= (1 << SourceLocation::FilePosBits);
   }
 
+  assert(FileIDs.size() < (1 << SourceLocation::FileIDBits) &&
+         "Ran out of file ID's!");
   return Result;
 }
 
