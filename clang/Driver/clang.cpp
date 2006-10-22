@@ -24,6 +24,7 @@
 #include "clang.h"
 #include "clang/AST/AST.h"
 #include "clang/Parse/Parser.h"
+#include "clang/Lex/HeaderSearch.h"
 #include "clang/Basic/Diagnostic.h"
 #include "clang/Basic/FileManager.h"
 #include "clang/Basic/SourceBuffer.h"
