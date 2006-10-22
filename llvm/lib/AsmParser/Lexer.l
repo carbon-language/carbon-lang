@@ -210,7 +210,7 @@ triple          { return TRIPLE; }
 deplibs         { return DEPLIBS; }
 endian          { return ENDIAN; }
 pointersize     { return POINTERSIZE; }
-data          { return DATA; }
+datalayout      { return DATALAYOUT; }
 little          { return LITTLE; }
 big             { return BIG; }
 volatile        { return VOLATILE; }
