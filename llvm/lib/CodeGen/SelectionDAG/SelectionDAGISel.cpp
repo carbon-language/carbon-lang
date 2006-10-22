@@ -889,18 +889,19 @@ void SelectionDAGLowering::visitSwitch(SwitchInst &I) {
   if (++BBI != CurMBB->getParent()->end())
     NextBlock = BBI;
   
+  MachineBasicBlock *Default = FuncInfo.MBBMap[I.getDefaultDest()];
+
   // If there is only the default destination, branch to it if it is not the
   // next basic block.  Otherwise, just fall through.
   if (I.getNumOperands() == 2) {
     // Update machine-CFG edges.
-    MachineBasicBlock *DefaultMBB = FuncInfo.MBBMap[I.getDefaultDest()];
 
     // If this is not a fall-through branch, emit the branch.
-    if (DefaultMBB != NextBlock)
+    if (Default != NextBlock)
       DAG.setRoot(DAG.getNode(ISD::BR, MVT::Other, getRoot(),
-                              DAG.getBasicBlock(DefaultMBB)));
+                              DAG.getBasicBlock(Default)));
 
-    CurMBB->addSuccessor(DefaultMBB);
+    CurMBB->addSuccessor(Default);
     return;
   }
   
@@ -920,13 +921,51 @@ void SelectionDAGLowering::visitSwitch(SwitchInst &I) {
   // inserted into CaseBlock records, representing basic blocks in the binary
   // search tree.
   Value *SV = I.getOperand(0);
-  MachineBasicBlock *Default = FuncInfo.MBBMap[I.getDefaultDest()];
 
   // Get the MachineFunction which holds the current MBB.  This is used during
   // emission of jump tables, and when inserting any additional MBBs necessary
   // to represent the switch.
   MachineFunction *CurMF = CurMBB->getParent();
   const BasicBlock *LLVMBB = CurMBB->getBasicBlock();
+  
+  // If the switch has few cases (two or less) emit a series of specific
+  // tests.
+  if (Cases.size() < 3) {
+    // TODO: If any two of the cases has the same destination, and if one value
+    // is the same as the other, but has one bit unset that the other has set,
+    // use bit manipulation to do two compares at once.  For example:
+    // "if (X == 6 || X == 4)" -> "if ((X|2) == 6)"
+    
+    // Create a CaseBlock record representing a conditional branch to
+    // the Case's target mbb if the value being switched on SV is equal
+    // to C.
+    MachineBasicBlock *CurBlock = CurMBB;
+    for (unsigned i = 0, e = Cases.size(); i != e; ++i) {
+      MachineBasicBlock *FallThrough;
+      if (i != e-1) {
+        FallThrough = new MachineBasicBlock(CurMBB->getBasicBlock());
+        CurMF->getBasicBlockList().insert(BBI, FallThrough);
+      } else {
+        // If the last case doesn't match, go to the default block.
+        FallThrough = Default;
+      }
+      
+      SelectionDAGISel::CaseBlock CB(ISD::SETEQ, SV, Cases[i].first,
+                                     Cases[i].second, FallThrough, CurBlock);
+    
+      // If emitting the first comparison, just call visitSwitchCase to emit the
+      // code into the current block.  Otherwise, push the CaseBlock onto the
+      // vector to be later processed by SDISel, and insert the node's MBB
+      // before the next MBB.
+      if (CurBlock == CurMBB)
+        visitSwitchCase(CB);
+      else
+        SwitchCases.push_back(CB);
+      
+      CurBlock = FallThrough;
+    }
+    return;
+  }
 
   // If the switch has more than 5 blocks, and at least 31.25% dense, and the 
   // target supports indirect branches, then emit a jump table rather than 
