@@ -930,7 +930,7 @@ void SelectionDAGLowering::visitSwitch(SwitchInst &I) {
   
   // If the switch has few cases (two or less) emit a series of specific
   // tests.
-  if (0 && Cases.size() < 3) {
+  if (Cases.size() < 3) {
     // TODO: If any two of the cases has the same destination, and if one value
     // is the same as the other, but has one bit unset that the other has set,
     // use bit manipulation to do two compares at once.  For example:
@@ -3687,6 +3687,18 @@ void SelectionDAGISel::SelectBasicBlock(BasicBlock *LLVMBB, MachineFunction &MF,
       }
     }
     return;
+  }
+  
+  // If the switch block involved a branch to one of the actual successors, we
+  // need to update PHI nodes in that block.
+  for (unsigned i = 0, e = PHINodesToUpdate.size(); i != e; ++i) {
+    MachineInstr *PHI = PHINodesToUpdate[i].first;
+    assert(PHI->getOpcode() == TargetInstrInfo::PHI &&
+           "This is not a machine PHI node that we are updating!");
+    if (BB->isSuccessor(PHI->getParent())) {
+      PHI->addRegOperand(PHINodesToUpdate[i].second, false);
+      PHI->addMachineBasicBlockOperand(BB);
+    }
   }
   
   // If we generated any switch lowering information, build and codegen any
