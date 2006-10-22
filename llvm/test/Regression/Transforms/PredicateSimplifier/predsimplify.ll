@@ -1,5 +1,5 @@
 ; RUN: llvm-as < %s | opt -predsimplify -instcombine -simplifycfg | llvm-dis | grep -v declare | not grep fail &&
-; RUN: llvm-as < %s | opt -predsimplify -instcombine -simplifycfg | llvm-dis | grep -v declare | grep pass | wc -l | grep 3
+; RUN: llvm-as < %s | opt -predsimplify -instcombine -simplifycfg | llvm-dis | grep -v declare | grep -c pass | grep 4
 
 void %test1(int %x) {
 entry:
@@ -146,6 +146,21 @@ oops:
   ret void
 
 return:
+  ret void
+}
+
+void %test10()  {
+entry:
+  %A = alloca int
+  %B = seteq int* %A, null
+  br bool %B, label %cond_true, label %cond_false
+
+cond_true:
+  call void (...)* %fail ( )
+  ret void
+
+cond_false:
+  call void (...)* %pass ( )
   ret void
 }
 

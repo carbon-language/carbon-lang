@@ -31,6 +31,7 @@
 #define DEBUG_TYPE "predsimplify"
 #include "llvm/Transforms/Scalar.h"
 #include "llvm/Constants.h"
+#include "llvm/DerivedTypes.h"
 #include "llvm/Instructions.h"
 #include "llvm/Pass.h"
 #include "llvm/ADT/Statistic.h"
@@ -446,6 +447,7 @@ namespace {
       void visitBranchInst(BranchInst &BI);
       void visitSwitchInst(SwitchInst &SI);
 
+      void visitAllocaInst(AllocaInst &AI);
       void visitLoadInst(LoadInst &LI);
       void visitStoreInst(StoreInst &SI);
       void visitBinaryOperator(BinaryOperator &BO);
@@ -710,6 +712,10 @@ void PredicateSimplifier::Forwards::visitSwitchInst(SwitchInst &SI) {
     }
     PS->proceedToSuccessor(BBProperties, BB);
   }
+}
+
+void PredicateSimplifier::Forwards::visitAllocaInst(AllocaInst &AI) {
+  KP.addNotEqual(Constant::getNullValue(AI.getType()), &AI);
 }
 
 void PredicateSimplifier::Forwards::visitLoadInst(LoadInst &LI) {
