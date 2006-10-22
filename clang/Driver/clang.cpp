@@ -562,6 +562,9 @@ nostdinc("nostdinc", cl::desc("Disable standard #include directories"));
 
 // Various command line options.  These four add directories to each chain.
 static cl::list<std::string>
+F_dirs("F", cl::value_desc("directory"), cl::Prefix,
+       cl::desc("Add directory to framework include search path"));
+static cl::list<std::string>
 I_dirs("I", cl::value_desc("directory"), cl::Prefix,
        cl::desc("Add directory to include search path"));
 static cl::list<std::string>
@@ -639,6 +642,10 @@ static void RemoveDuplicates(std::vector<DirectoryLookup> &SearchList) {
 /// HeaderSearch object.
 static void InitializeIncludePaths(HeaderSearch &Headers, FileManager &FM,
                                    Diagnostic &Diags) {
+  // Handle -F... options.
+  for (unsigned i = 0, e = F_dirs.size(); i != e; ++i)
+    AddPath(F_dirs[i], Angled, false, true, true, FM);
+  
   // Handle -I... options.
   for (unsigned i = 0, e = I_dirs.size(); i != e; ++i) {
     if (I_dirs[i] == "-") {
