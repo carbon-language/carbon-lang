@@ -24,7 +24,7 @@ class SourceLocation {
   unsigned ID;
 public:
   enum {
-    FileIDBits  = 12,
+    FileIDBits  = 14,
     FilePosBits = 32-FileIDBits
   };
 
