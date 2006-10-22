@@ -16,6 +16,7 @@
 
 #include <vector>
 #include <string>
+#include <map>
 
 namespace llvm {
 namespace clang {
@@ -116,7 +117,11 @@ class HeaderSearch {
   /// that are included.  The vector is indexed by the FileEntry's UID.
   ///
   std::vector<PerFileInfo> FileInfo;
-  
+
+  /// FrameworkMap - This is a collection mapping a framework or subframework
+  /// name like "Carbon" to the Carbon.framework directory.
+  std::map<std::string, const DirectoryEntry *> FrameworkMap;
+
   // Various statistics we track for performance analysis.
   unsigned NumIncluded;
   unsigned NumMultiIncludeFileOptzn;

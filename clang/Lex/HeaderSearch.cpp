@@ -60,9 +60,13 @@ const FileEntry *HeaderSearch::DoFrameworkLookup(const DirectoryEntry *Dir,
   std::string::size_type SlashPos = Filename.find('/');
   if (SlashPos == std::string::npos) return 0;
   
-  // TODO: caching.
-  ++NumFrameworkLookups;
+  const DirectoryEntry *&CacheLookup =
+    FrameworkMap[std::string(Filename.begin(), Filename.begin()+SlashPos)];
   
+  // If it is some other directory, fail.
+  if (CacheLookup && CacheLookup != Dir)
+    return 0;
+
   // FrameworkName = "/System/Library/Frameworks/"
   std::string FrameworkName = Dir->getName();
   if (FrameworkName.empty() || FrameworkName[FrameworkName.size()-1] != '/')
@@ -73,6 +77,18 @@ const FileEntry *HeaderSearch::DoFrameworkLookup(const DirectoryEntry *Dir,
   
   // FrameworkName = "/System/Library/Frameworks/Cocoa.framework/"
   FrameworkName += ".framework/";
+ 
+  if (CacheLookup == 0) {
+    ++NumFrameworkLookups;
+    
+    // If the framework dir doesn't exist, we fail.
+    if (!sys::Path(FrameworkName).exists())
+      return 0;
+    
+    // Otherwise, if it does, remember that this is the right direntry for this
+    // framework.
+    CacheLookup = Dir;
+  }
   
   // Check "/System/Library/Frameworks/Cocoa.framework/Headers/file.h"
   std::string HeadersFilename = FrameworkName + "Headers/" +
@@ -172,9 +188,6 @@ LookupSubframeworkHeader(const std::string &Filename,
   std::string::size_type SlashPos = Filename.find('/');
   if (SlashPos == std::string::npos) return 0;
   
-  // TODO: Cache subframework.
-  ++NumSubFrameworkLookups;
-  
   // Look up the base framework name of the ContextFileEnt.
   const std::string &ContextName = ContextFileEnt->getName();
   std::string::size_type FrameworkPos = ContextName.find(".framework/");
@@ -184,11 +197,32 @@ LookupSubframeworkHeader(const std::string &Filename,
   
   std::string FrameworkName(ContextName.begin(),
                         ContextName.begin()+FrameworkPos+strlen(".framework/"));
+
   // Append Frameworks/HIToolbox.framework/
   FrameworkName += "Frameworks/";
   FrameworkName += std::string(Filename.begin(), Filename.begin()+SlashPos);
   FrameworkName += ".framework/";
 
+  const DirectoryEntry *&CacheLookup =
+    FrameworkMap[std::string(Filename.begin(), Filename.begin()+SlashPos)];
+  
+  // Some other location?
+  if (CacheLookup && CacheLookup->getName() != FrameworkName)
+    return 0;
+  
+  // Cache subframework.
+  if (CacheLookup == 0) {
+    ++NumSubFrameworkLookups;
+    
+    // If the framework dir doesn't exist, we fail.
+    const DirectoryEntry *Dir = FileMgr.getDirectory(FrameworkName);
+    if (Dir == 0) return 0;
+    
+    // Otherwise, if it does, remember that this is the right direntry for this
+    // framework.
+    CacheLookup = Dir;
+  }
+  
   const FileEntry *FE = 0;
 
   // Check ".../Frameworks/HIToolbox.framework/Headers/HIToolbox.h"
