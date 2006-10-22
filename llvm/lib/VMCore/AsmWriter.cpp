@@ -783,7 +783,7 @@ void AssemblyWriter::printModule(const Module *M) {
     Out << "; ModuleID = '" << M->getModuleIdentifier() << "'\n";
 
   if (!M->getDataLayout().empty())
-    Out << "target data = \"" << M->getDataLayout() << "\"\n";
+    Out << "target datalayout = \"" << M->getDataLayout() << "\"\n";
 
   switch (M->getEndianness()) {
   case Module::LittleEndian: Out << "target endian = little\n"; break;
