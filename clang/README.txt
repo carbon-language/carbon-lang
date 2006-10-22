@@ -143,7 +143,6 @@ Lexer:
  * -fpreprocessed mode.
 
 Preprocessor:
- * Know enough about darwin filesystem to search frameworks.
  * Know about apple header maps.
  * #assert/#unassert
  * #line / #file directives
