@@ -1023,33 +1023,44 @@ void SCCPSolver::Solve() {
 /// However, this is not a safe assumption.  After we solve dataflow, this
 /// method should be use to handle this.  If this returns true, the solver
 /// should be rerun.
+///
+/// This method handles this by finding an unresolved branch and marking it one
+/// of the edges from the block as being feasible, even though the condition
+/// doesn't say it would otherwise be.  This allows SCCP to find the rest of the
+/// CFG and only slightly pessimizes the analysis results (by marking one,
+/// potentially unfeasible, edge feasible).  This cannot usefully modify the
+/// constraints on the condition of the branch, as that would impact other users
+/// of the value.
 bool SCCPSolver::ResolveBranchesIn(Function &F) {
-  bool BranchesResolved = false;
-  for (Function::iterator BB = F.begin(), E = F.end(); BB != E; ++BB)
-    if (BBExecutable.count(BB)) {
-      TerminatorInst *TI = BB->getTerminator();
-      if (BranchInst *BI = dyn_cast<BranchInst>(TI)) {
-        if (BI->isConditional()) {
-          LatticeVal &BCValue = getValueState(BI->getCondition());
-          if (BCValue.isUndefined()) {
-            BCValue.markOverdefined();
-            BranchesResolved = true;
-            visit(BI);
-          }
-        }
-      } else if (SwitchInst *SI = dyn_cast<SwitchInst>(TI)) {
-        LatticeVal &SCValue = getValueState(SI->getCondition());
-        if (SCValue.isUndefined()) {
-          const Type *CondTy = SI->getCondition()->getType();
-          // Pick and arbitrary direction for the switch to go.
-          SCValue.markOverdefined();
-          BranchesResolved = true;
-          visit(SI);
-        }
-      }
+  for (Function::iterator BB = F.begin(), E = F.end(); BB != E; ++BB) {
+    if (!BBExecutable.count(BB))
+      continue;
+  
+    TerminatorInst *TI = BB->getTerminator();
+    if (BranchInst *BI = dyn_cast<BranchInst>(TI)) {
+      if (!BI->isConditional()) continue;
+      if (!getValueState(BI->getCondition()).isUndefined())
+        continue;
+    } else if (SwitchInst *SI = dyn_cast<SwitchInst>(TI)) {
+      if (!getValueState(SI->getCondition()).isUndefined())
+        continue;
+    } else {
+      continue;
     }
+    
+    // If the edge to the first successor isn't thought to be feasible yet, mark
+    // it so now.
+    if (KnownFeasibleEdges.count(Edge(BB, TI->getSuccessor(0))))
+      continue;
+    
+    // Otherwise, it isn't already thought to be feasible.  Mark it as such now
+    // and return.  This will make other blocks reachable, which will allow new
+    // values to be discovered and existing ones to be moved in the lattice.
+    markEdgeExecutable(BB, TI->getSuccessor(0));
+    return true;
+  }
 
-  return BranchesResolved;
+  return false;
 }
 
 
