@@ -350,6 +350,7 @@ namespace {
         } break;
         case Instruction::Xor: {
           ConstantIntegral *CI = dyn_cast<ConstantIntegral>(V1);
+	  if (!CI) break;
           if (CI->isAllOnesValue()) {
             if (BO->getOperand(0) == V1)
               add(Opcode, ConstantBool::getFalse(), BO->getOperand(1), false);
