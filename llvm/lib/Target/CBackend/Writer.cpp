@@ -1075,8 +1075,8 @@ bool CWriter::doInitialization(Module &M) {
   
   for (Module::iterator I = M.begin(), E = M.end(); I != E; ++I) {
     // Don't print declarations for intrinsic functions.
-    if (!I->getIntrinsicID() &&
-        I->getName() != "setjmp" && I->getName() != "longjmp") {
+    if (!I->getIntrinsicID() && I->getName() != "setjmp" && 
+        I->getName() != "longjmp" && I->getName() != "_setjmp") {
       printFunctionSignature(I, true);
       if (I->hasWeakLinkage() || I->hasLinkOnceLinkage()) 
         Out << " __ATTRIBUTE_WEAK__";
