@@ -334,32 +334,35 @@ namespace {
           if (V1 == ConstantBool::getFalse())
             add(Opcode, BO->getOperand(0), BO->getOperand(1), true);
           break;
-        case Instruction::And:
-          if (V1 == ConstantBool::getTrue()) {
+        case Instruction::And: {
+          ConstantIntegral *CI = dyn_cast<ConstantIntegral>(V1);
+          if (CI && CI->isAllOnesValue()) {
             add(Opcode, V1, BO->getOperand(0), false);
             add(Opcode, V1, BO->getOperand(1), false);
           }
-          break;
-        case Instruction::Or:
-          if (V1 == ConstantBool::getFalse()) {
+        } break;
+        case Instruction::Or: {
+          ConstantIntegral *CI = dyn_cast<ConstantIntegral>(V1);
+          if (CI && CI->isNullValue()) {
             add(Opcode, V1, BO->getOperand(0), false);
             add(Opcode, V1, BO->getOperand(1), false);
           }
-          break;
-        case Instruction::Xor:
-          if (V1 == ConstantBool::getTrue()) {
+        } break;
+        case Instruction::Xor: {
+          ConstantIntegral *CI = dyn_cast<ConstantIntegral>(V1);
+          if (CI->isAllOnesValue()) {
             if (BO->getOperand(0) == V1)
               add(Opcode, ConstantBool::getFalse(), BO->getOperand(1), false);
             if (BO->getOperand(1) == V1)
               add(Opcode, ConstantBool::getFalse(), BO->getOperand(0), false);
           }
-          if (V1 == ConstantBool::getFalse()) {
+          if (CI->isNullValue()) {
             if (BO->getOperand(0) == ConstantBool::getTrue())
               add(Opcode, ConstantBool::getTrue(), BO->getOperand(1), false);
             if (BO->getOperand(1) == ConstantBool::getTrue())
               add(Opcode, ConstantBool::getTrue(), BO->getOperand(0), false);
           }
-          break;
+        } break;
         default:
           break;
         }
