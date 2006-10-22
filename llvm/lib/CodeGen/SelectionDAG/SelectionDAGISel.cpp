@@ -873,8 +873,8 @@ void SelectionDAGLowering::visitJumpTable(SelectionDAGISel::JumpTable &JT) {
       Reloc = DAG.getNode(ISD::GLOBAL_OFFSET_TABLE, PTy);
     else
       Reloc = TAB;
-    ADD = DAG.getNode(ISD::ADD, PTy,
-        ((PTy != MVT::i32) ? DAG.getNode(ISD::SIGN_EXTEND, PTy, LD) : LD), Reloc);
+    ADD = (PTy != MVT::i32) ? DAG.getNode(ISD::SIGN_EXTEND, PTy, LD) : LD;
+    ADD = DAG.getNode(ISD::ADD, PTy, ADD, Reloc);
     DAG.setRoot(DAG.getNode(ISD::BRIND, MVT::Other, LD.getValue(1), ADD));
   } else {
     DAG.setRoot(DAG.getNode(ISD::BRIND, MVT::Other, LD.getValue(1), LD));
@@ -930,7 +930,7 @@ void SelectionDAGLowering::visitSwitch(SwitchInst &I) {
   
   // If the switch has few cases (two or less) emit a series of specific
   // tests.
-  if (Cases.size() < 3) {
+  if (0 && Cases.size() < 3) {
     // TODO: If any two of the cases has the same destination, and if one value
     // is the same as the other, but has one bit unset that the other has set,
     // use bit manipulation to do two compares at once.  For example:
