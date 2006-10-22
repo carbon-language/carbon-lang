@@ -7,71 +7,23 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This file defines the DirectoryLookup and HeaderSearch interfaces.
+// This file defines the HeaderSearch interface.
 //
 //===----------------------------------------------------------------------===//
 
 #ifndef LLVM_CLANG_LEX_HEADERSEARCH_H
 #define LLVM_CLANG_LEX_HEADERSEARCH_H
 
+#include "clang/Lex/DirectoryLookup.h"
 #include <vector>
 #include <string>
 #include <map>
 
 namespace llvm {
 namespace clang {
-class DirectoryEntry;
 class FileEntry;
 class FileManager;
 class IdentifierInfo;
-
-/// DirectoryLookup - This class is used to specify the search order for
-/// directories in #include directives.
-class DirectoryLookup {
-public:
-  enum DirType {
-    NormalHeaderDir,
-    SystemHeaderDir,
-    ExternCSystemHeaderDir
-  };
-private:  
-  /// Dir - This is the actual directory that we're referring to.
-  ///
-  const DirectoryEntry *Dir;
-  
-  /// DirCharacteristic - The type of directory this is, one of the DirType enum
-  /// values.
-  DirType DirCharacteristic : 2;
-  
-  /// UserSupplied - True if this is a user-supplied directory.
-  ///
-  bool UserSupplied : 1;
-  
-  /// Framework - True if this is a framework directory search-path.
-  ///
-  bool Framework : 1;
-public:
-  DirectoryLookup(const DirectoryEntry *dir, DirType DT, bool isUser,
-                  bool isFramework)
-    : Dir(dir), DirCharacteristic(DT), UserSupplied(isUser),
-      Framework(isFramework) {}
-  
-  /// getDir - Return the directory that this entry refers to.
-  ///
-  const DirectoryEntry *getDir() const { return Dir; }
-  
-  /// DirCharacteristic - The type of directory this is, one of the DirType enum
-  /// values.
-  DirType getDirCharacteristic() const { return DirCharacteristic; }
-  
-  /// isUserSupplied - True if this is a user-supplied directory.
-  ///
-  bool isUserSupplied() const { return UserSupplied; }
-  
-  /// isFramework - True if this is a framework directory.
-  ///
-  bool isFramework() const { return Framework; }
-};
 
   
 /// HeaderSearch - This class encapsulates the information needed to find the
