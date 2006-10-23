@@ -125,8 +125,16 @@ public:
   unsigned             succ_size()  const { return Successors.size();    }
   bool                 succ_empty() const { return Successors.empty();   }
 
+  // Code Layout methods.
+  
+  /// moveBefore/moveAfter - move 'this' block before or after the specified
+  /// block.  This only moves the block, it does not modify the CFG or adjust
+  /// potential fall-throughs at the end of the block.
+  void moveBefore(MachineBasicBlock *NewAfter);
+  void moveAfter(MachineBasicBlock *NewBefore);
+  
   // Machine-CFG mutators
-
+  
   /// addSuccessor - Add succ as a successor of this MachineBasicBlock.
   /// The Predecessors list of succ is automatically updated.
   ///
