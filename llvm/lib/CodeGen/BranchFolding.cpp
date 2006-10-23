@@ -75,7 +75,7 @@ void BranchFolder::RemoveDeadBlock(MachineBasicBlock *MBB) {
          I != E; ++I) {
       if ((unsigned)I->getOpcode() == DWARF_LABELOpc) {
         // The label ID # is always operand #0, an immediate.
-        MDI->RemoveLabelInfo(I->getOperand(0).getImm());
+        MDI->InvalidateLabel(I->getOperand(0).getImm());
       }
     }
   }

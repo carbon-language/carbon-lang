@@ -30,6 +30,8 @@
 #ifndef LLVM_CODEGEN_MACHINEDEBUGINFO_H
 #define LLVM_CODEGEN_MACHINEDEBUGINFO_H
 
+#include <set>
+
 #include "llvm/Support/Dwarf.h"
 #include "llvm/Support/DataTypes.h"
 #include "llvm/ADT/UniqueVector.h"
@@ -979,6 +981,10 @@ private:
   //
   DebugScope *RootScope;
   
+  // DeletedLabelIDs - List of label IDs that have been removed from the
+  // module.
+  std::set<unsigned> DeletedLabelIDs;
+  
   // FrameMoves - List of moves done by a function's prolog.  Used to construct
   // frame maps by debug consumers.
   std::vector<MachineMove *> FrameMoves;
@@ -1029,11 +1035,14 @@ public:
   /// provide correspondence to the source line list.
   unsigned RecordLabel(unsigned Line, unsigned Column, unsigned Source);
   
-  /// RemoveLabelInfo - Remove the specified label # from MachineDebugInfo, for
-  /// example because the code was deleted.
-  void RemoveLabelInfo(unsigned LabelUID);
+  /// InvalidateLabel - Inhibit use of the specified label # from
+  /// MachineDebugInfo, for example because the code was deleted.
+  void InvalidateLabel(unsigned LabelID);
   
-  
+  /// isLabelValid - Check to make sure the label is still valid before
+  /// attempting to use.
+  bool isLabelValid(unsigned LabelID);
+
   /// RecordSource - Register a source file with debug info. Returns an source
   /// ID.
   unsigned RecordSource(const std::string &Directory,

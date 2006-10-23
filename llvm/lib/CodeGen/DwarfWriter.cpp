@@ -1755,17 +1755,24 @@ void DwarfWriter::ConstructScope(DebugScope *ParentScope,
     // FIXME - Ignore inlined functions for the time being.
     if (!Scope->getParent()) continue;
     
+    unsigned StartID = Scope->getStartLabelID();
+    unsigned EndID = Scope->getEndLabelID();
+    
+    // Throw out scope if block is discarded.
+    if (StartID && !DebugInfo->isLabelValid(StartID)) continue;
+    if (EndID && !DebugInfo->isLabelValid(EndID)) continue;
+    
     DIE *ScopeDie = new DIE(DW_TAG_lexical_block);
     
     // Add the scope bounds.
-    if (unsigned StartID = Scope->getStartLabelID()) {
+    if (StartID) {
       ScopeDie->AddLabel(DW_AT_low_pc, DW_FORM_addr,
                          DWLabel("loc", StartID));
     } else {
       ScopeDie->AddLabel(DW_AT_low_pc, DW_FORM_addr,
                          DWLabel("func_begin", SubprogramCount));
     }
-    if (unsigned EndID = Scope->getEndLabelID()) {
+    if (EndID) {
       ScopeDie->AddLabel(DW_AT_high_pc, DW_FORM_addr,
                          DWLabel("loc", EndID));
     } else {
@@ -1975,6 +1982,10 @@ void DwarfWriter::EmitFrameMoves(const char *BaseLabel, unsigned BaseLabelID,
   for (unsigned i = 0, N = Moves.size(); i < N; ++i) {
     MachineMove *Move = Moves[i];
     unsigned LabelID = Move->getLabelID();
+    
+    // Throw out move if the label is invalid.
+    if (LabelID && !DebugInfo->isLabelValid(LabelID)) continue;
+    
     const MachineLocation &Dst = Move->getDestination();
     const MachineLocation &Src = Move->getSource();
     
@@ -2194,6 +2205,10 @@ void DwarfWriter::EmitDebugLines() const {
     // Construct rows of the address, source, line, column matrix.
     for (unsigned i = 0, N = LineInfos.size(); i < N; ++i) {
       const SourceLineInfo &LineInfo = LineInfos[i];
+      unsigned LabelID = LineInfo.getLabelID();
+      
+      // Throw out line info if label is invalid.
+      if (!DebugInfo->isLabelValid(LabelID)) continue;
       
       if (DwarfVerbose) {
         unsigned SourceID = LineInfo.getSourceID();
@@ -2210,7 +2225,7 @@ void DwarfWriter::EmitDebugLines() const {
       EmitInt8(0); EOL("Extended Op");
       EmitInt8(4 + 1); EOL("Op size");
       EmitInt8(DW_LNE_set_address); EOL("DW_LNE_set_address");
-      EmitReference("loc",  LineInfo.getLabelID()); EOL("Location label");
+      EmitReference("loc",  LabelID); EOL("Location label");
       
       // If change of source, then switch to the new source.
       if (Source != LineInfo.getSourceID()) {
