@@ -184,6 +184,14 @@ def str  : InstARM<(ops IntRegs:$src, memri:$addr),
                     "str $src, $addr",
                     [(store IntRegs:$src, iaddr:$addr)]>;
 
+def STRB    : InstARM<(ops IntRegs:$src, IntRegs:$addr),
+                       "strb $src, [$addr]",
+                       [(truncstorei8 IntRegs:$src, IntRegs:$addr)]>;
+
+def STRH    : InstARM<(ops IntRegs:$src, IntRegs:$addr),
+                       "strh $src, [$addr]",
+                       [(truncstorei16 IntRegs:$src, IntRegs:$addr)]>;
+
 def MOV   : InstARM<(ops IntRegs:$dst, op_addr_mode1:$src),
                     "mov $dst, $src", [(set IntRegs:$dst, addr_mode1:$src)]>;
 
