@@ -102,6 +102,18 @@ findExternalRefs(Value *value, std::set<std::string> &references,
       findExternalRefs(c->getOperand(i), references, mangler);
 }
 
+/// If Moduel with InputFilename is available then remove it.
+void
+LTO::removeModule (const std::string &InputFilename)
+{
+  NameToModuleMap::iterator pos = allModules.find(InputFilename.c_str());
+  if (pos != allModules.end()) {
+    Module *m = allModules[InputFilename.c_str()];
+    allModules.erase(pos);
+    delete m;
+  }
+}
+
 /// InputFilename is a LLVM bytecode file. If Module with InputFilename is
 /// available then return it. Otherwise parseInputFilename.
 Module *

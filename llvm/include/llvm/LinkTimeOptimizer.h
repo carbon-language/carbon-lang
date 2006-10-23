@@ -91,6 +91,7 @@ namespace llvm {
                                    std::vector<const char*> &,
                                    std::string &) = 0;
     virtual void getTargetTriple(const std::string &, std::string &) = 0;
+    virtual void removeModule (const std::string &InputFilename) = 0;
     virtual ~LinkTimeOptimizer() = 0;
   };
 
@@ -111,6 +112,7 @@ namespace llvm {
                                    std::vector<const char*> &exportList,
                                    std::string &targetTriple);
     void getTargetTriple(const std::string &InputFilename, std::string &targetTriple);
+    void removeModule (const std::string &InputFilename);
 
   private:
     Module *getModule (const std::string &InputFilename);
