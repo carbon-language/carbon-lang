@@ -31,10 +31,10 @@ namespace {
   Statistic<> NumCallEdges("budatastructures", "Number of 'actual' call edges");
 
   cl::opt<bool>
-  AddGlobals("budatastructures-annotate-calls",
+  AddGlobals("budatastructures-annotate-calls", cl::Hidden,
 	     cl::desc("Annotate call sites with functions as they are resolved"));
   cl::opt<bool>
-  UpdateGlobals("budatastructures-update-from-globals",
+  UpdateGlobals("budatastructures-update-from-globals", cl::Hidden,
 		cl::desc("Update local graph from global graph when processing function"));
 
   RegisterPass<BUDataStructures>
