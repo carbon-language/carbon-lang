@@ -936,6 +936,19 @@ void SelectionDAGLowering::visitSwitch(SwitchInst &I) {
     // use bit manipulation to do two compares at once.  For example:
     // "if (X == 6 || X == 4)" -> "if ((X|2) == 6)"
     
+    // Rearrange the case blocks so that the last one falls through if possible.
+    if (NextBlock && Default != NextBlock && Cases.back().second != NextBlock) {
+      // The last case block won't fall through into 'NextBlock' if we emit the
+      // branches in this order.  See if rearranging a case value would help.
+      for (unsigned i = 0, e = Cases.size()-1; i != e; ++i) {
+        if (Cases[i].second == NextBlock) {
+          std::swap(Cases[i], Cases.back());
+          break;
+        }
+      }
+    }
+    
+    
     // Create a CaseBlock record representing a conditional branch to
     // the Case's target mbb if the value being switched on SV is equal
     // to C.
