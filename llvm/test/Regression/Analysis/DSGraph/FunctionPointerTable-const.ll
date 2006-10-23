@@ -1,6 +1,4 @@
-; FIXME: this should be SHM for bu, but change it for now since besides incompleteness
-;        this is working
-; RUN: llvm-as < %s | opt -analyze -datastructure-gc -dsgc-dspass=bu -dsgc-check-flags=Y:SHIM && \
+; RUN: llvm-as < %s | opt -analyze -datastructure-gc -dsgc-dspass=bu -dsgc-check-flags=Y:SHM && \
 ; RUN: llvm-as < %s | opt -analyze -datastructure-gc -dsgc-dspass=td -dsgc-check-flags=P1:SHM,P2:SHM
 
 %G = internal constant [2 x int*(int*)*] [ 
