@@ -9,21 +9,18 @@ implementation   ; Functions:
 
 internal fastcc int %dct_chroma(int %uv, int %cr_cbp) {
 entry:
-	br bool false, label %bb2611, label %cond_true129
+	br bool true, label %cond_true2732.preheader, label %cond_true129
 
 cond_true129:		; preds = %entry
 	ret int 0
 
-bb2611:		; preds = %entry
-	br bool false, label %cond_true2732.preheader, label %cond_next2752
-
 cond_true2732.preheader:		; preds = %bb2611
 	%tmp2666 = getelementptr %struct.Macroblock* null, int 0, uint 13		; <long*> [#uses=2]
 	%tmp2674 = cast int 0 to ubyte		; <ubyte> [#uses=1]
-	br bool false, label %cond_true2732.preheader.split.us, label %cond_true2732.preheader.split
+	br bool true, label %cond_true2732.preheader.split.us, label %cond_true2732.preheader.split
 
 cond_true2732.preheader.split.us:		; preds = %cond_true2732.preheader
-	br bool false, label %cond_true2732.outer.us.us, label %cond_true2732.outer.us
+	br bool true, label %cond_true2732.outer.us.us, label %cond_true2732.outer.us
 
 cond_true2732.outer.us.us:		; preds = %cond_true2732.preheader.split.us
 	%tmp2667.us.us = load long* %tmp2666		; <long> [#uses=1]
