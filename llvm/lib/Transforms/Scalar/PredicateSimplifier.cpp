@@ -41,6 +41,7 @@
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/InstVisitor.h"
 #include <iostream>
+#include <list>
 using namespace llvm;
 
 typedef DominatorTree::Node DTNodeType;
@@ -74,14 +75,14 @@ namespace {
       return leaders.empty();
     }
 
-    iterator findLeader(ElemTy e) {
+    iterator findLeader(ElemTy &e) {
       typename std::map<ElemTy, unsigned>::iterator MI = mapping.find(e);
       if (MI == mapping.end()) return 0;
 
       return MI->second;
     }
 
-    const_iterator findLeader(ElemTy e) const {
+    const_iterator findLeader(ElemTy &e) const {
       typename std::map<ElemTy, unsigned>::const_iterator MI =
           mapping.find(e);
       if (MI == mapping.end()) return 0;
@@ -116,6 +117,11 @@ namespace {
 
     // Mutators
 
+    void remove(ElemTy &e) {
+      ElemTy E = e;      // The parameter to erase must not be a reference to
+      mapping.erase(E);  // an element contained in the map.
+    }
+
     /// Combine two sets referring to the same element, inserting the
     /// elements as needed. Returns a valid iterator iff two already
     /// existing disjoint synonym sets were combined. The iterator
@@ -124,7 +130,7 @@ namespace {
 
     /// Returns an iterator pointing to the synonym set containing
     /// element e. If none exists, a new one is created and returned.
-    iterator findOrInsert(ElemTy e) {
+    iterator findOrInsert(ElemTy &e) {
       iterator I = findLeader(e);
       if (I) return I;
 
@@ -203,6 +209,19 @@ namespace {
       return union_find.empty();
     }
 
+    void remove(Value *V) {
+      SynonymIterator I = union_find.findLeader(V);
+      if (!I) return;
+
+      union_find.remove(V);
+
+      for (PropertyIterator PI = Properties.begin(), PE = Properties.end();
+           PI != PE;) {
+        Property &P = *PI++;
+        if (P.I1 == I || P.I2 == I) Properties.erase(PI);
+      }
+    }
+
     void addEqual(Value *V1, Value *V2) {
       // If %x = 0. and %y = -0., seteq %x, %y is true, but
       // copysign(%x) is not the same as copysign(%y).
@@ -210,6 +229,10 @@ namespace {
 
       order(V1, V2);
       if (isa<Constant>(V2)) return; // refuse to set false == true.
+
+      if (union_find.findLeader(V1) &&
+          union_find.findLeader(V1) == union_find.findLeader(V2))
+        return; // no-op
 
       SynonymIterator deleted = union_find.unionSets(V1, V2);
       if (deleted) {
@@ -234,7 +257,7 @@ namespace {
       if (isa<Constant>(V1) && isa<Constant>(V2)) return;
 
       if (findProperty(NE, V1, V2) != Properties.end())
-        return; // found.
+        return; // no-op.
 
       // Add the property.
       SynonymIterator I1 = union_find.findOrInsert(V1),
@@ -306,6 +329,73 @@ namespace {
         default:
           assert(0 && "Unknown property opcode.");
       }
+    }
+
+    void addToResolve(Value *V, std::list<Value *> &WorkList) {
+      if (!isa<Constant>(V) && !isa<BasicBlock>(V)) {
+        for (Value::use_iterator UI = V->use_begin(), UE = V->use_end();
+             UI != UE; ++UI) {
+          if (!isa<Constant>(*UI) && !isa<BasicBlock>(*UI)) {
+            WorkList.push_back(*UI);
+          }
+        }
+      }
+    }
+
+    void resolve(std::list<Value *> &WorkList) {
+      if (WorkList.empty()) return;
+
+      Value *V = WorkList.front();
+      WorkList.pop_front();
+
+      if (empty()) return;
+
+      Instruction *I = dyn_cast<Instruction>(V);
+      if (!I) return;
+
+      if (BinaryOperator *BO = dyn_cast<BinaryOperator>(I)) {
+        Value *lhs = canonicalize(BO->getOperand(0)),
+              *rhs = canonicalize(BO->getOperand(1));
+
+        ConstantIntegral *CI1 = dyn_cast<ConstantIntegral>(lhs),
+                         *CI2 = dyn_cast<ConstantIntegral>(rhs);
+
+        if (CI1 && CI2) {
+          addToResolve(BO, WorkList);
+          addEqual(BO, ConstantExpr::get(BO->getOpcode(), CI1, CI2));
+        } else if (SetCondInst *SCI = dyn_cast<SetCondInst>(BO)) {
+          PropertySet::ConstPropertyIterator NE =
+             findProperty(PropertySet::NE, lhs, rhs);
+
+          if (NE != Properties.end()) {
+            switch (SCI->getOpcode()) {
+            case Instruction::SetEQ:
+              addToResolve(SCI, WorkList);
+              addEqual(SCI, ConstantBool::getFalse());
+              break;
+            case Instruction::SetNE:
+              addToResolve(SCI, WorkList);
+              addEqual(SCI, ConstantBool::getTrue());
+              break;
+            case Instruction::SetLE:
+            case Instruction::SetGE:
+            case Instruction::SetLT:
+            case Instruction::SetGT:
+              break;
+            default:
+              assert(0 && "Unknown opcode in SetCondInst.");
+              break;
+            }
+          }
+        }
+      } else if (SelectInst *SI = dyn_cast<SelectInst>(I)) {
+        Value *Condition = canonicalize(SI->getCondition());
+        if (ConstantBool *CB = dyn_cast<ConstantBool>(Condition)) {
+          addToResolve(SI, WorkList);
+          addEqual(SI, CB->getValue() ? SI->getTrueValue() : SI->getFalseValue());
+        }
+      }
+      if (!WorkList.empty()) resolve(WorkList);
     }
 
     // Finds the properties implied by an equivalence and adds them too.
@@ -389,6 +479,11 @@ namespace {
         else if (Opcode == EQ)
           assert("Result of select not equal to either value.");
       }
+
+      std::list<Value *> WorkList;
+      addToResolve(V1, WorkList);
+      addToResolve(V2, WorkList);
+      resolve(WorkList);
     }
 
     DominatorTree *DT;
@@ -419,26 +514,6 @@ namespace {
     virtual void getAnalysisUsage(AnalysisUsage &AU) const;
 
   private:
-    /// Backwards - Try to replace the Use of the instruction with
-    /// something simpler. This resolves a value by walking backwards
-    /// through its definition and the operands of that definition to
-    /// see if any values can now be solved for with the properties
-    /// that are in effect now, but weren't at definition time.
-    class Backwards : public InstVisitor<Backwards, Value &> {
-      friend class InstVisitor<Backwards, Value &>;
-      const PropertySet &KP;
-
-      Value &visitSetCondInst(SetCondInst &SCI);
-      Value &visitBinaryOperator(BinaryOperator &BO);
-      Value &visitSelectInst(SelectInst &SI);
-      Value &visitInstruction(Instruction &I);
-
-    public:
-      explicit Backwards(const PropertySet &KP) : KP(KP) {}
-
-      Value *resolve(Value *V);
-    };
-
     /// Forwards - Adds new properties into PropertySet and uses them to
     /// simplify instructions. Because new properties sometimes apply to
     /// a transition from one BasicBlock to another, this will use the
@@ -553,69 +628,6 @@ void PredicateSimplifier::getAnalysisUsage(AnalysisUsage &AU) const {
   AU.addPreservedID(BreakCriticalEdgesID);
 }
 
-Value &PredicateSimplifier::Backwards::visitSetCondInst(SetCondInst &SCI) {
-  Value &vBO = visitBinaryOperator(SCI);
-  if (&vBO !=  &SCI) return vBO;
-
-  Value *SCI0 = resolve(SCI.getOperand(0)),
-        *SCI1 = resolve(SCI.getOperand(1));
-
-  PropertySet::ConstPropertyIterator NE =
-      KP.findProperty(PropertySet::NE, SCI0, SCI1);
-
-  if (NE != KP.Properties.end()) {
-    switch (SCI.getOpcode()) {
-      case Instruction::SetEQ: return *ConstantBool::getFalse();
-      case Instruction::SetNE: return *ConstantBool::getTrue();
-      case Instruction::SetLE:
-      case Instruction::SetGE:
-      case Instruction::SetLT:
-      case Instruction::SetGT:
-        break;
-      default:
-        assert(0 && "Unknown opcode in SetCondInst.");
-        break;
-    }
-  }
-  return SCI;
-}
-
-Value &PredicateSimplifier::Backwards::visitBinaryOperator(BinaryOperator &BO) {
-  Value *V = KP.canonicalize(&BO);
-  if (V != &BO) return *V;
-
-  Value *lhs = resolve(BO.getOperand(0)),
-        *rhs = resolve(BO.getOperand(1));
-
-  ConstantIntegral *CI1 = dyn_cast<ConstantIntegral>(lhs),
-                   *CI2 = dyn_cast<ConstantIntegral>(rhs);
-
-  if (CI1 && CI2) return *ConstantExpr::get(BO.getOpcode(), CI1, CI2);
-
-  return BO;
-}
-
-Value &PredicateSimplifier::Backwards::visitSelectInst(SelectInst &SI) {
-  Value *V = KP.canonicalize(&SI);
-  if (V != &SI) return *V;
-
-  Value *Condition = resolve(SI.getCondition());
-  if (ConstantBool *CB = dyn_cast<ConstantBool>(Condition))
-    return *resolve(CB->getValue() ? SI.getTrueValue() : SI.getFalseValue());
-  return SI;
-}
-
-Value &PredicateSimplifier::Backwards::visitInstruction(Instruction &I) {
-  return *KP.canonicalize(&I);
-}
-
-Value *PredicateSimplifier::Backwards::resolve(Value *V) {
-  if (isa<Constant>(V) || isa<BasicBlock>(V) || KP.empty()) return V;
-
-  if (Instruction *I = dyn_cast<Instruction>(V)) return &visit(*I);
-  return KP.canonicalize(V);
-}
-
 void PredicateSimplifier::visitBasicBlock(BasicBlock *BB,
                                           PropertySet &KnownProperties) {
   for (BasicBlock::iterator I = BB->begin(), E = BB->end(); I != E;) {
@@ -626,12 +638,12 @@ void PredicateSimplifier::visitBasicBlock(BasicBlock *BB,
 void PredicateSimplifier::visitInstruction(Instruction *I,
                                            PropertySet &KnownProperties) {
   // Try to replace the whole instruction.
-  Backwards resolve(KnownProperties);
-  Value *V = resolve.resolve(I);
+  Value *V = KnownProperties.canonicalize(I);
   if (V != I) {
     modified = true;
     ++NumInstruction;
     DEBUG(std::cerr << "Removing " << *I);
+    KnownProperties.remove(I);
     I->replaceAllUsesWith(V);
     I->eraseFromParent();
     return;
@@ -640,7 +652,7 @@ void PredicateSimplifier::visitInstruction(Instruction *I,
   // Try to substitute operands.
   for (unsigned i = 0, e = I->getNumOperands(); i != e; ++i) {
     Value *Oper = I->getOperand(i);
-    Value *V = resolve.resolve(Oper);
+    Value *V = KnownProperties.canonicalize(Oper);
     if (V != Oper) {
       modified = true;
       ++NumVarsReplaced;
