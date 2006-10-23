@@ -185,7 +185,7 @@ public:
   }
 
 private:
-  bool calculateGraph(DSGraph &G);
+  void calculateGraph(DSGraph &G);
 
   DSGraph &getOrCreateGraph(Function *F);
 
