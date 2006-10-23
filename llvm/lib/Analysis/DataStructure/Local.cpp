@@ -419,7 +419,7 @@ void GraphBuilder::visitGetElementPtrInst(User &GEP) {
 #if 0
     if (const SequentialType *STy = cast<SequentialType>(*I)) {
       CurTy = STy->getElementType();
-      if (ConstantSInt *CS = dyn_cast<ConstantSInt>(GEP.getOperand(i))) {
+      if (ConstantInt *CS = dyn_cast<ConstantInt>(GEP.getOperand(i))) {
         Offset += CS->getValue()*TD.getTypeSize(CurTy);
       } else {
         // Variable index into a node.  We must merge all of the elements of the
