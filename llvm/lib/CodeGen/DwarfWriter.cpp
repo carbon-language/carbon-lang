@@ -2207,8 +2207,7 @@ void DwarfWriter::EmitDebugLines() const {
       const SourceLineInfo &LineInfo = LineInfos[i];
       unsigned LabelID = LineInfo.getLabelID();
       
-      // Throw out line info if label is invalid.
-      if (!DebugInfo->isLabelValid(LabelID)) continue;
+      // Source line labels are validated at the MachineDebugInfo level.
       
       if (DwarfVerbose) {
         unsigned SourceID = LineInfo.getSourceID();

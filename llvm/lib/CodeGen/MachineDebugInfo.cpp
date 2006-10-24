@@ -1544,16 +1544,33 @@ unsigned MachineDebugInfo::RecordLabel(unsigned Line, unsigned Column,
   return ID;
 }
 
+static bool LabelUIDComparison(const SourceLineInfo &LI, unsigned UID) {
+  return LI.getLabelID() < UID;
+}
+ 
 /// InvalidateLabel - Inhibit use of the specified label # from
 /// MachineDebugInfo, for example because the code was deleted.
 void MachineDebugInfo::InvalidateLabel(unsigned LabelID) {
-  DeletedLabelIDs.insert(LabelID);
+  // Check source line list first.  SourceLineInfo is sorted by LabelID.
+  std::vector<SourceLineInfo>::iterator I =
+    std::lower_bound(Lines.begin(), Lines.end(), LabelID, LabelUIDComparison);
+  if (I != Lines.end() && I->getLabelID() == LabelID) {
+    Lines.erase(I);
+    return;
+  }
+  
+  // Otherwise add for use by isLabelValid.
+  std::vector<unsigned>::iterator J =
+    std::lower_bound(DeletedLabelIDs.begin(), DeletedLabelIDs.end(), LabelID);
+  DeletedLabelIDs.insert(J, LabelID);
 }
 
 /// isLabelValid - Check to make sure the label is still valid before
 /// attempting to use.
 bool MachineDebugInfo::isLabelValid(unsigned LabelID) {
-  return DeletedLabelIDs.find(LabelID) == DeletedLabelIDs.end();
+  std::vector<unsigned>::iterator I =
+    std::lower_bound(DeletedLabelIDs.begin(), DeletedLabelIDs.end(), LabelID);
+  return I != DeletedLabelIDs.end() && *I == LabelID;
 }
 
 /// RecordSource - Register a source file with debug info. Returns an source

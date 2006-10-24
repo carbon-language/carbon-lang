@@ -30,8 +30,6 @@
 #ifndef LLVM_CODEGEN_MACHINEDEBUGINFO_H
 #define LLVM_CODEGEN_MACHINEDEBUGINFO_H
 
-#include <set>
-
 #include "llvm/Support/Dwarf.h"
 #include "llvm/Support/DataTypes.h"
 #include "llvm/ADT/UniqueVector.h"
@@ -981,9 +979,9 @@ private:
   //
   DebugScope *RootScope;
   
-  // DeletedLabelIDs - List of label IDs that have been removed from the
+  // DeletedLabelIDs - Sorted list of label IDs that have been removed from the
   // module.
-  std::set<unsigned> DeletedLabelIDs;
+  std::vector<unsigned> DeletedLabelIDs;
   
   // FrameMoves - List of moves done by a function's prolog.  Used to construct
   // frame maps by debug consumers.
