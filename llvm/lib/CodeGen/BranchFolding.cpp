@@ -46,7 +46,7 @@ namespace {
 
     // Branch optzn.
     bool OptimizeBranches(MachineFunction &MF);
-    void OptimizeBlock(MachineFunction::iterator MBB);
+    void OptimizeBlock(MachineBasicBlock *MBB);
     void RemoveDeadBlock(MachineBasicBlock *MBB);
   };
 }
@@ -394,16 +394,41 @@ static void ReplaceUsesOfBlockWith(MachineBasicBlock *BB,
     }
 }
 
+/// CanFallThrough - Return true of the specified branch condition can transfer
+/// control to FallthroughBlock, the block immediately after the branch.
+static bool CanFallThrough(MachineBasicBlock *TBB,
+                           MachineBasicBlock *FBB,
+                           const std::vector<MachineOperand> &Cond,
+                           MachineFunction::iterator FallthroughBlock) {
+  // If there is no branch, control always falls through.
+  if (TBB == 0) return true;
+
+  // If there is some explicit branch to the fallthrough block, it can obviously
+  // reach, even though the branch should get folded to fall through implicitly.
+  if (MachineFunction::iterator(TBB) == FallthroughBlock ||
+      MachineFunction::iterator(FBB) == FallthroughBlock)
+    return true;
+  
+  // If it's an unconditional branch to some block not the fall through, it 
+  // doesn't fall through.
+  if (Cond.empty()) return false;
+  
+  // Otherwise, if it is conditional and has no explicit false block, it falls
+  // through.
+  return !Cond.empty() && FBB == 0;
+}
+
 /// OptimizeBlock - Analyze and optimize control flow related to the specified
 /// block.  This is never called on the entry block.
-void BranchFolder::OptimizeBlock(MachineFunction::iterator MBB) {
+void BranchFolder::OptimizeBlock(MachineBasicBlock *MBB) {
+  MachineFunction::iterator FallThrough = MBB;
+  ++FallThrough;
+  
   // If this block is empty, make everyone use its fall-through, not the block
   // explicitly.
   if (MBB->empty()) {
     // Dead block?  Leave for cleanup later.
     if (MBB->pred_empty()) return;
-    
-    MachineFunction::iterator FallThrough = next(MBB);
     
     if (FallThrough == MBB->getParent()->end()) {
       // TODO: Simplify preds to not branch here if possible!
@@ -426,7 +451,7 @@ void BranchFolder::OptimizeBlock(MachineFunction::iterator MBB) {
 
   // Check to see if we can simplify the terminator of the block before this
   // one.
-  MachineBasicBlock &PrevBB = *prior(MBB);
+  MachineBasicBlock &PrevBB = *prior(MachineFunction::iterator(MBB));
 
   MachineBasicBlock *PriorTBB = 0, *PriorFBB = 0;
   std::vector<MachineOperand> PriorCond;
@@ -443,7 +468,7 @@ void BranchFolder::OptimizeBlock(MachineFunction::iterator MBB) {
     if (PriorTBB && PriorTBB == PriorFBB) {
       TII->RemoveBranch(PrevBB);
       PriorCond.clear(); 
-      if (PriorTBB != &*MBB)
+      if (PriorTBB != MBB)
         TII->InsertBranch(PrevBB, PriorTBB, 0, PriorCond);
       MadeChange = true;
       ++NumBranchOpts;
@@ -452,7 +477,7 @@ void BranchFolder::OptimizeBlock(MachineFunction::iterator MBB) {
     
     // If the previous branch *only* branches to *this* block (conditional or
     // not) remove the branch.
-    if (PriorTBB == &*MBB && PriorFBB == 0) {
+    if (PriorTBB == MBB && PriorFBB == 0) {
       TII->RemoveBranch(PrevBB);
       MadeChange = true;
       ++NumBranchOpts;
@@ -461,7 +486,7 @@ void BranchFolder::OptimizeBlock(MachineFunction::iterator MBB) {
     
     // If the prior block branches somewhere else on the condition and here if
     // the condition is false, remove the uncond second branch.
-    if (PriorFBB == &*MBB) {
+    if (PriorFBB == MBB) {
       TII->RemoveBranch(PrevBB);
       TII->InsertBranch(PrevBB, PriorTBB, 0, PriorCond);
       MadeChange = true;
@@ -472,7 +497,7 @@ void BranchFolder::OptimizeBlock(MachineFunction::iterator MBB) {
     // If the prior block branches here on true and somewhere else on false, and
     // if the branch condition is reversible, reverse the branch to create a
     // fall-through.
-    if (PriorTBB == &*MBB) {
+    if (PriorTBB == MBB) {
       std::vector<MachineOperand> NewPriorCond(PriorCond);
       if (!TII->ReverseBranchCondition(NewPriorCond)) {
         TII->RemoveBranch(PrevBB);
@@ -490,12 +515,13 @@ void BranchFolder::OptimizeBlock(MachineFunction::iterator MBB) {
   if (!TII->AnalyzeBranch(*MBB, CurTBB, CurFBB, CurCond)) {
     // If the CFG for the prior block has extra edges, remove them.
     MadeChange |= CorrectExtraCFGEdges(*MBB, CurTBB, CurFBB,
-                                       !CurCond.empty(), next(MBB));
+                                       !CurCond.empty(),
+                                       ++MachineFunction::iterator(MBB));
 
     // If this branch is the only thing in its block, see if we can forward
     // other blocks across it.
     if (CurTBB && CurCond.empty() && CurFBB == 0 && 
-        TII->isBranch(MBB->begin()->getOpcode()) && CurTBB != &*MBB) {
+        TII->isBranch(MBB->begin()->getOpcode()) && CurTBB != MBB) {
       // This block may contain just an unconditional branch.  Because there can
       // be 'non-branch terminators' in the block, try removing the branch and
       // then seeing if the block is empty.
@@ -509,7 +535,7 @@ void BranchFolder::OptimizeBlock(MachineFunction::iterator MBB) {
       if (MBB->empty() && (!PriorUnAnalyzable || !PrevBB.isSuccessor(MBB))) {
         // If the prior block falls through into us, turn it into an
         // explicit branch to us to make updates simpler.
-        if (PrevBB.isSuccessor(MBB) && PriorTBB != &*MBB && PriorFBB != &*MBB) {
+        if (PrevBB.isSuccessor(MBB) && PriorTBB != MBB && PriorFBB != MBB) {
           if (PriorTBB == 0) {
             assert(PriorCond.empty() && PriorFBB == 0 && "Bad branch analysis");
             PriorTBB = MBB;
@@ -526,7 +552,7 @@ void BranchFolder::OptimizeBlock(MachineFunction::iterator MBB) {
         bool DidChange = false;
         bool HasBranchToSelf = false;
         while (PI != MBB->pred_end()) {
-          if (*PI == &*MBB) {
+          if (*PI == MBB) {
             // If this block has an uncond branch to itself, leave it.
             ++PI;
             HasBranchToSelf = true;
@@ -548,6 +574,63 @@ void BranchFolder::OptimizeBlock(MachineFunction::iterator MBB) {
       
       // Add the branch back if the block is more than just an uncond branch.
       TII->InsertBranch(*MBB, CurTBB, 0, CurCond);
+    }
+    
+    // If the prior block doesn't fall through into this block, and if this
+    // block doesn't fall through into some other block, see if we can find a
+    // place to move this block where a fall-through will happen.
+    if (!PriorUnAnalyzable && !CanFallThrough(PriorTBB, PriorFBB,
+                                              PriorCond, MBB)) {
+      // Now we know that there was no fall-through into this block, check to
+      // see if it has fall-throughs.
+      if (!CanFallThrough(CurTBB, CurFBB, CurCond, FallThrough)) {
+        
+        // Check all the predecessors of this block.  If one of them has no fall
+        // throughs, move this block right after it.
+        for (MachineBasicBlock::pred_iterator PI = MBB->pred_begin(),
+             E = MBB->pred_end(); PI != E; ++PI) {
+          // Analyze the branch at the end of the pred.
+          MachineBasicBlock *PredBB = *PI;
+          MachineFunction::iterator PredFallthrough = PredBB; ++PredFallthrough;
+          MachineBasicBlock *PredTBB = 0, *PredFBB = 0;
+          std::vector<MachineOperand> PredCond;
+          if (PredBB != MBB &&
+              !TII->AnalyzeBranch(*PredBB, PredTBB, PredFBB, PredCond) &&
+              !CanFallThrough(PredTBB, PredFBB, PredCond, PredFallthrough)) {
+            MBB->moveAfter(PredBB);
+            MadeChange = true;
+            return OptimizeBlock(MBB);
+          }
+        }
+        
+        // Check all successors to see if we can move this block before it.
+        for (MachineBasicBlock::succ_iterator SI = MBB->succ_begin(),
+             E = MBB->succ_end(); SI != E; ++SI) {
+          // Analyze the branch at the end of the block before the succ.
+          MachineBasicBlock *SuccBB = *SI;
+          MachineFunction::iterator SuccPrev = SuccBB; --SuccPrev;
+          MachineBasicBlock *SuccPrevTBB = 0, *SuccPrevFBB = 0;
+          std::vector<MachineOperand> SuccPrevCond;
+          if (SuccBB != MBB &&
+              !TII->AnalyzeBranch(*SuccPrev, SuccPrevTBB, SuccPrevFBB,
+                                  SuccPrevCond) &&
+              !CanFallThrough(SuccPrevTBB, SuccPrevFBB, SuccPrevCond, SuccBB)) {
+            MBB->moveBefore(SuccBB);
+            MadeChange = true;
+            return OptimizeBlock(MBB);
+          }
+        }
+        
+        // Okay, there is no really great place to put this block.  If, however,
+        // the block before this one would be a fall-through if this block were
+        // removed, move this block to the end of the function.
+        if (FallThrough != MBB->getParent()->end() &&
+            CanFallThrough(PriorTBB, PriorFBB, PriorCond, FallThrough)) {
+          MBB->moveAfter(--MBB->getParent()->end());
+          MadeChange = true;
+          return;
+        }
+      }
     }
   }
 }
