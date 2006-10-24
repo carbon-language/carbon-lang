@@ -24,6 +24,7 @@ namespace llvm {
 
   class Module;
   class GlobalValue;
+  class TargetMachine;
 
   enum LTOStatus {
     LTO_UNKNOWN,
@@ -114,13 +115,24 @@ namespace llvm {
     void getTargetTriple(const std::string &InputFilename, std::string &targetTriple);
     void removeModule (const std::string &InputFilename);
 
+    // Constructors and destructors
+    LTO() { 
+      /// TODO: Use Target info, it is available at this time.
+      Target = NULL; 
+    }
+    ~LTO();
+
   private:
     Module *getModule (const std::string &InputFilename);
+    enum LTOStatus optimize(Module *, std::ostream &, 
+                            std::vector<const char *> &);
+    void getTarget(Module *);
 
   private:
     std::vector<Module *> modules;
     NameToSymbolMap allSymbols;
     NameToModuleMap allModules;
+    TargetMachine *Target;
   };
 
 } // End llvm namespace

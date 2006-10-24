@@ -32,6 +32,7 @@
 #include "llvm/Target/TargetData.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetMachineRegistry.h"
+#include "llvm/Target/TargetAsmInfo.h"
 #include "llvm/Transforms/IPO.h"
 #include "llvm/Transforms/Scalar.h"
 #include "llvm/Analysis/LoadValueNumbering.h"
@@ -54,16 +55,6 @@ llvm::LinkTimeOptimizer *createLLVMOptimizer()
 /// care of it.
 void LLVMSymbol::mayBeNotUsed() { 
   gv->setLinkage(GlobalValue::InternalLinkage); 
-}
-
-// Helper routine
-// FIXME : Take advantage of GlobalPrefix from AsmPrinter
-static const char *addUnderscore(const char *name) {
-  size_t namelen = strlen(name);
-  char *symName = (char*)malloc(namelen+2);
-  symName[0] = '_';
-  strcpy(&symName[1], name);
-  return symName;
 }
 
 // Map LLVM LinkageType to LTO LinakgeType
@@ -157,10 +148,16 @@ LTO::readLLVMObjectFile(const std::string &InputFilename,
   if (!m)
     return LTO_READ_FAILURE;
 
+  // Collect Target info
+  if (!Target) 
+    getTarget(m);
+
+  if (!Target)
+    return LTO_READ_FAILURE;
+  
   // Use mangler to add GlobalPrefix to names to match linker names.
   // FIXME : Instead of hard coding "-" use GlobalPrefix.
-  Mangler mangler(*m, "_");
-  
+  Mangler mangler(*m, Target->getTargetAsmInfo()->getGlobalPrefix());
   modules.push_back(m);
   
   for (Module::iterator f = m->begin(), e = m->end(); f != e; ++f) {
@@ -204,37 +201,46 @@ LTO::readLLVMObjectFile(const std::string &InputFilename,
   return LTO_READ_SUCCESS;
 }
 
-/// Optimize module M using various IPO passes. Use exportList to 
-/// internalize selected symbols. Target platform is selected
-/// based on information available to module M. No new target
-/// features are selected. 
-static enum LTOStatus lto_optimize(Module *M, std::ostream &Out,
-                                   std::vector<const char *> &exportList)
-{
-  // Instantiate the pass manager to organize the passes.
-  PassManager Passes;
-  
-  // Collect Target info
+/// Get TargetMachine.
+/// Use module M to find appropriate Target.
+void
+LTO::getTarget (Module *M) {
+
   std::string Err;
   const TargetMachineRegistry::Entry* March = 
     TargetMachineRegistry::getClosestStaticTargetForModule(*M, Err);
   
   if (March == 0)
-    return LTO_NO_TARGET;
+    return;
   
   // Create target
   std::string Features;
-  std::auto_ptr<TargetMachine> target(March->CtorFn(*M, Features));
-  if (!target.get())
-    return LTO_NO_TARGET;
+  Target = March->CtorFn(*M, Features);
+}
+
+/// Optimize module M using various IPO passes. Use exportList to 
+/// internalize selected symbols. Target platform is selected
+/// based on information available to module M. No new target
+/// features are selected. 
+enum LTOStatus 
+LTO::optimize(Module *M, std::ostream &Out,
+              std::vector<const char *> &exportList)
+{
+  // Instantiate the pass manager to organize the passes.
+  PassManager Passes;
   
-  TargetMachine &Target = *target.get();
+  // Collect Target info
+  if (!Target) 
+    getTarget(M);
+
+  if (!Target)
+    return LTO_NO_TARGET;
   
   // Start off with a verification pass.
   Passes.add(createVerifierPass());
   
   // Add an appropriate TargetData instance for this module...
-  Passes.add(new TargetData(*Target.getTargetData()));
+  Passes.add(new TargetData(*Target->getTargetData()));
   
   // Often if the programmer does not specify proper prototypes for the
   // functions they are calling, they end up calling a vararg version of the
@@ -302,8 +308,8 @@ static enum LTOStatus lto_optimize(Module *M, std::ostream &Out,
   FunctionPassManager *CodeGenPasses =
     new FunctionPassManager(new ExistingModuleProvider(M));
 
-  CodeGenPasses->add(new TargetData(*Target.getTargetData()));
-  Target.addPassesToEmitFile(*CodeGenPasses, Out, TargetMachine::AssemblyFile, 
+  CodeGenPasses->add(new TargetData(*Target->getTargetData()));
+  Target->addPassesToEmitFile(*CodeGenPasses, Out, TargetMachine::AssemblyFile, 
 			     true);
 
   // Run our queue of passes all at once now, efficiently.
@@ -384,7 +390,7 @@ LTO::optimizeModules(const std::string &OutputFilename,
     return LTO_WRITE_FAILURE;
   }
 
-  enum LTOStatus status = lto_optimize(bigOne, asmFile, exportList);
+  enum LTOStatus status = optimize(bigOne, asmFile, exportList);
   asmFile.close();
   if (status != LTO_OPT_SUCCESS) {
     tmpAsmFilePath.eraseFromDisk();
@@ -426,4 +432,22 @@ LTO::optimizeModules(const std::string &OutputFilename,
   TempDir.eraseFromDisk(true);
 
   return LTO_OPT_SUCCESS;
+}
+
+/// Destruct LTO. Delete all modules, symbols and target.
+LTO::~LTO() {
+  
+  for (std::vector<Module *>::iterator itr = modules.begin(), e = modules.end();
+       itr != e; ++itr)
+    delete *itr;
+
+  modules.clear();
+
+  for (NameToSymbolMap::iterator itr = allSymbols.begin(), e = allSymbols.end(); 
+       itr != e; ++itr)
+    delete itr->second;
+
+  allSymbols.clear();
+
+  delete Target;
 }
