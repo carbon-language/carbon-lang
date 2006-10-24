@@ -369,12 +369,30 @@ let isCall = 1, noResults = 1, PPC970_Unit = 7,
 }
 
 // DCB* instructions.
-def DCBZ : DCB_Form<1014, 0, (ops memrr:$dst),
-                    "dcbz $dst", LdStDCBF, [(int_ppc_dcbz xoaddr:$dst)]>,
-                    PPC970_DGroup_Single;
-def DCBZL : DCB_Form<1014, 1, (ops memrr:$dst),
-                     "dcbzl $dst", LdStDCBF, [(int_ppc_dcbzl xoaddr:$dst)]>,
-                     PPC970_DGroup_Single;
+def DCBA   : DCB_Form<758, 0, (ops memrr:$dst),
+                      "dcba $dst", LdStDCBF, [(int_ppc_dcba xoaddr:$dst)]>,
+                      PPC970_DGroup_Single;
+def DCBF   : DCB_Form<86, 0, (ops memrr:$dst),
+                      "dcbf $dst", LdStDCBF, [(int_ppc_dcbf xoaddr:$dst)]>,
+                      PPC970_DGroup_Single;
+def DCBI   : DCB_Form<470, 0, (ops memrr:$dst),
+                      "dcbi $dst", LdStDCBF, [(int_ppc_dcbi xoaddr:$dst)]>,
+                      PPC970_DGroup_Single;
+def DCBST  : DCB_Form<54, 0, (ops memrr:$dst),
+                      "dcbst $dst", LdStDCBF, [(int_ppc_dcbst xoaddr:$dst)]>,
+                      PPC970_DGroup_Single;
+def DCBT   : DCB_Form<278, 0, (ops memrr:$dst),
+                      "dcbt $dst", LdStDCBF, [(int_ppc_dcbt xoaddr:$dst)]>,
+                      PPC970_DGroup_Single;
+def DCBTST : DCB_Form<246, 0, (ops memrr:$dst),
+                      "dcbtst $dst", LdStDCBF, [(int_ppc_dcbtst xoaddr:$dst)]>,
+                      PPC970_DGroup_Single;
+def DCBZ   : DCB_Form<1014, 0, (ops memrr:$dst),
+                      "dcbz $dst", LdStDCBF, [(int_ppc_dcbz xoaddr:$dst)]>,
+                      PPC970_DGroup_Single;
+def DCBZL  : DCB_Form<1014, 1, (ops memrr:$dst),
+                      "dcbzl $dst", LdStDCBF, [(int_ppc_dcbzl xoaddr:$dst)]>,
+                      PPC970_DGroup_Single;
                        
 // D-Form instructions.  Most instructions that perform an operation on a
 // register and an immediate are of this type.
