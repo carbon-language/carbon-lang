@@ -17,9 +17,14 @@
 
 // Non-altivec intrinsics.
 let TargetPrefix = "ppc" in {  // All intrinsics start with "llvm.ppc.".
-  // dcbz instruction.
-  def int_ppc_dcbz :  Intrinsic<[llvm_void_ty, llvm_ptr_ty], [IntrWriteMem]>;
-  // dcbzl (PPC970) instruction.
+  // dcba/dcbf/dcbi/dcbst/dcbt/dcbz/dcbzl(PPC970) instructions.
+  def int_ppc_dcba  : Intrinsic<[llvm_void_ty, llvm_ptr_ty], [IntrWriteMem]>;
+  def int_ppc_dcbf  : Intrinsic<[llvm_void_ty, llvm_ptr_ty], [IntrWriteMem]>;
+  def int_ppc_dcbi  : Intrinsic<[llvm_void_ty, llvm_ptr_ty], [IntrWriteMem]>;
+  def int_ppc_dcbst : Intrinsic<[llvm_void_ty, llvm_ptr_ty], [IntrWriteMem]>;
+  def int_ppc_dcbt  : Intrinsic<[llvm_void_ty, llvm_ptr_ty], [IntrWriteMem]>;
+  def int_ppc_dcbtst: Intrinsic<[llvm_void_ty, llvm_ptr_ty], [IntrWriteMem]>;
+  def int_ppc_dcbz  : Intrinsic<[llvm_void_ty, llvm_ptr_ty], [IntrWriteMem]>;
   def int_ppc_dcbzl : Intrinsic<[llvm_void_ty, llvm_ptr_ty], [IntrWriteMem]>;
 }
 
