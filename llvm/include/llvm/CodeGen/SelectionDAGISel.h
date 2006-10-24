@@ -83,17 +83,17 @@ public:
   /// case switch statements.
   struct CaseBlock {
     CaseBlock(ISD::CondCode cc, Value *cmplhs, Value *cmprhs, 
-              MachineBasicBlock *lhs, MachineBasicBlock *rhs,
-              MachineBasicBlock *me) : 
-    CC(cc), CmpLHS(cmplhs), CmpRHS(cmprhs), LHSBB(lhs), RHSBB(rhs), ThisBB(me){}
+              MachineBasicBlock *truebb, MachineBasicBlock *falsebb,
+              MachineBasicBlock *me)
+      : CC(cc), CmpLHS(cmplhs), CmpRHS(cmprhs),
+        TrueBB(truebb), FalseBB(falsebb), ThisBB(me) {}
     // CC - the condition code to use for the case block's setcc node
     ISD::CondCode CC;
-    // CmpLHS/CmpRHS - The LHS/RHS of the comparison to emit.
+    // CmpLHS/CmpRHS - The LHS/RHS of the comparison to emit.  If CmpRHS is
+    // null, CmpLHS is treated as a bool condition for the branch.
     Value *CmpLHS, *CmpRHS;
-    // LHSBB - the block to branch to if the setcc is true
-    MachineBasicBlock *LHSBB;
-    // RHSBB - the block to branch to if the setcc is false
-    MachineBasicBlock *RHSBB;
+    // TrueBB/FalseBB - the block to branch to if the setcc is true/false.
+    MachineBasicBlock *TrueBB, *FalseBB;
     // ThisBB - the block into which to emit the code for the setcc and branches
     MachineBasicBlock *ThisBB;
   };

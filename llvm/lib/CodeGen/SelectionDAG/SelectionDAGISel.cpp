@@ -766,7 +766,6 @@ void SelectionDAGLowering::visitRet(ReturnInst &I) {
 void SelectionDAGLowering::visitBr(BranchInst &I) {
   // Update machine-CFG edges.
   MachineBasicBlock *Succ0MBB = FuncInfo.MBBMap[I.getSuccessor(0)];
-  CurMBB->addSuccessor(Succ0MBB);
 
   // Figure out which block is immediately after the current one.
   MachineBasicBlock *NextBlock = 0;
@@ -779,48 +778,67 @@ void SelectionDAGLowering::visitBr(BranchInst &I) {
     if (Succ0MBB != NextBlock)
       DAG.setRoot(DAG.getNode(ISD::BR, MVT::Other, getRoot(),
                               DAG.getBasicBlock(Succ0MBB)));
-  } else {
-    MachineBasicBlock *Succ1MBB = FuncInfo.MBBMap[I.getSuccessor(1)];
-    CurMBB->addSuccessor(Succ1MBB);
 
-    SDOperand Cond = getValue(I.getCondition());
-    if (Succ1MBB == NextBlock) {
-      // If the condition is false, fall through.  This means we should branch
-      // if the condition is true to Succ #0.
-      DAG.setRoot(DAG.getNode(ISD::BRCOND, MVT::Other, getRoot(),
-                              Cond, DAG.getBasicBlock(Succ0MBB)));
-    } else if (Succ0MBB == NextBlock) {
-      // If the condition is true, fall through.  This means we should branch if
-      // the condition is false to Succ #1.  Invert the condition first.
+    // Update machine-CFG edges.
+    CurMBB->addSuccessor(Succ0MBB);
+
+    return;
+  }
+
+  // If this condition is one of the special cases we handle, do special stuff
+  // now.
+  Value *CondVal = I.getCondition();
+  
+  
+  // Update machine-CFG edges.
+  CurMBB->addSuccessor(Succ0MBB);
+  MachineBasicBlock *Succ1MBB = FuncInfo.MBBMap[I.getSuccessor(1)];
+  CurMBB->addSuccessor(Succ1MBB);
+
+  SDOperand Cond = getValue(CondVal);
+  if (Succ1MBB == NextBlock) {
+    // If the condition is false, fall through.  This means we should branch
+    // if the condition is true to Succ #0.
+    DAG.setRoot(DAG.getNode(ISD::BRCOND, MVT::Other, getRoot(),
+                            Cond, DAG.getBasicBlock(Succ0MBB)));
+  } else if (Succ0MBB == NextBlock) {
+    // If the condition is true, fall through.  This means we should branch if
+    // the condition is false to Succ #1.  Invert the condition first.
+    SDOperand True = DAG.getConstant(1, Cond.getValueType());
+    Cond = DAG.getNode(ISD::XOR, Cond.getValueType(), Cond, True);
+    DAG.setRoot(DAG.getNode(ISD::BRCOND, MVT::Other, getRoot(),
+                            Cond, DAG.getBasicBlock(Succ1MBB)));
+  } else {
+    std::vector<SDOperand> Ops;
+    Ops.push_back(getRoot());
+    // If the false case is the current basic block, then this is a self
+    // loop. We do not want to emit "Loop: ... brcond Out; br Loop", as it
+    // adds an extra instruction in the loop.  Instead, invert the
+    // condition and emit "Loop: ... br!cond Loop; br Out. 
+    if (CurMBB == Succ1MBB) {
+      std::swap(Succ0MBB, Succ1MBB);
       SDOperand True = DAG.getConstant(1, Cond.getValueType());
       Cond = DAG.getNode(ISD::XOR, Cond.getValueType(), Cond, True);
-      DAG.setRoot(DAG.getNode(ISD::BRCOND, MVT::Other, getRoot(),
-                              Cond, DAG.getBasicBlock(Succ1MBB)));
-    } else {
-      std::vector<SDOperand> Ops;
-      Ops.push_back(getRoot());
-      // If the false case is the current basic block, then this is a self
-      // loop. We do not want to emit "Loop: ... brcond Out; br Loop", as it
-      // adds an extra instruction in the loop.  Instead, invert the
-      // condition and emit "Loop: ... br!cond Loop; br Out. 
-      if (CurMBB == Succ1MBB) {
-        std::swap(Succ0MBB, Succ1MBB);
-        SDOperand True = DAG.getConstant(1, Cond.getValueType());
-        Cond = DAG.getNode(ISD::XOR, Cond.getValueType(), Cond, True);
-      }
-      SDOperand True = DAG.getNode(ISD::BRCOND, MVT::Other, getRoot(), Cond,
-                                   DAG.getBasicBlock(Succ0MBB));
-      DAG.setRoot(DAG.getNode(ISD::BR, MVT::Other, True, 
-                              DAG.getBasicBlock(Succ1MBB)));
     }
+    SDOperand True = DAG.getNode(ISD::BRCOND, MVT::Other, getRoot(), Cond,
+                                 DAG.getBasicBlock(Succ0MBB));
+    DAG.setRoot(DAG.getNode(ISD::BR, MVT::Other, True, 
+                            DAG.getBasicBlock(Succ1MBB)));
   }
 }
 
 /// visitSwitchCase - Emits the necessary code to represent a single node in
 /// the binary search tree resulting from lowering a switch instruction.
 void SelectionDAGLowering::visitSwitchCase(SelectionDAGISel::CaseBlock &CB) {
-  SDOperand Cond = DAG.getSetCC(MVT::i1, getValue(CB.CmpLHS),
-                                getValue(CB.CmpRHS), CB.CC);
+  SDOperand Cond;
+  SDOperand CondLHS = getValue(CB.CmpLHS);
+  
+  // If the CaseBlock has both LHS/RHS comparisons, build the setcc now,
+  // otherwise, just use the LHS value as a bool comparison value.
+  if (CB.CmpRHS)
+    Cond = DAG.getSetCC(MVT::i1, CondLHS, getValue(CB.CmpRHS), CB.CC);
+  else
+    Cond = CondLHS;
   
   // Set NextBlock to be the MBB immediately after the current one, if any.
   // This is used to avoid emitting unnecessary branches to the next block.
@@ -831,21 +849,21 @@ void SelectionDAGLowering::visitSwitchCase(SelectionDAGISel::CaseBlock &CB) {
   
   // If the lhs block is the next block, invert the condition so that we can
   // fall through to the lhs instead of the rhs block.
-  if (CB.LHSBB == NextBlock) {
-    std::swap(CB.LHSBB, CB.RHSBB);
+  if (CB.TrueBB == NextBlock) {
+    std::swap(CB.TrueBB, CB.FalseBB);
     SDOperand True = DAG.getConstant(1, Cond.getValueType());
     Cond = DAG.getNode(ISD::XOR, Cond.getValueType(), Cond, True);
   }
   SDOperand BrCond = DAG.getNode(ISD::BRCOND, MVT::Other, getRoot(), Cond,
-                                 DAG.getBasicBlock(CB.LHSBB));
-  if (CB.RHSBB == NextBlock)
+                                 DAG.getBasicBlock(CB.TrueBB));
+  if (CB.FalseBB == NextBlock)
     DAG.setRoot(BrCond);
   else
     DAG.setRoot(DAG.getNode(ISD::BR, MVT::Other, BrCond, 
-                            DAG.getBasicBlock(CB.RHSBB)));
+                            DAG.getBasicBlock(CB.FalseBB)));
   // Update successor info
-  CurMBB->addSuccessor(CB.LHSBB);
-  CurMBB->addSuccessor(CB.RHSBB);
+  CurMBB->addSuccessor(CB.TrueBB);
+  CurMBB->addSuccessor(CB.FalseBB);
 }
 
 void SelectionDAGLowering::visitJumpTable(SelectionDAGISel::JumpTable &JT) {
@@ -946,7 +964,6 @@ void SelectionDAGLowering::visitSwitch(SwitchInst &I) {
         }
       }
     }
-    
     
     // Create a CaseBlock record representing a conditional branch to
     // the Case's target mbb if the value being switched on SV is equal
@@ -1098,7 +1115,7 @@ void SelectionDAGLowering::visitSwitch(SwitchInst &I) {
       CaseRange LHSR(CR.Range.first, Pivot);
       CaseRange RHSR(Pivot, CR.Range.second);
       Constant *C = Pivot->first;
-      MachineBasicBlock *RHSBB = 0, *LHSBB = 0;
+      MachineBasicBlock *FalseBB = 0, *TrueBB = 0;
 
       // We know that we branch to the LHS if the Value being switched on is
       // less than the Pivot value, C.  We use this to optimize our binary 
@@ -1110,11 +1127,11 @@ void SelectionDAGLowering::visitSwitch(SwitchInst &I) {
           LHSR.first->first == CR.GE &&
           cast<ConstantIntegral>(C)->getZExtValue() ==
           (cast<ConstantIntegral>(CR.GE)->getZExtValue() + 1ULL)) {
-        LHSBB = LHSR.first->second;
+        TrueBB = LHSR.first->second;
       } else {
-        LHSBB = new MachineBasicBlock(LLVMBB);
-        CurMF->getBasicBlockList().insert(BBI, LHSBB);
-        CaseVec.push_back(CaseRec(LHSBB,C,CR.GE,LHSR));
+        TrueBB = new MachineBasicBlock(LLVMBB);
+        CurMF->getBasicBlockList().insert(BBI, TrueBB);
+        CaseVec.push_back(CaseRec(TrueBB, C, CR.GE, LHSR));
       }
 
       // Similar to the optimization above, if the Value being switched on is
@@ -1124,18 +1141,18 @@ void SelectionDAGLowering::visitSwitch(SwitchInst &I) {
       if ((RHSR.second - RHSR.first) == 1 && CR.LT &&
           cast<ConstantIntegral>(RHSR.first->first)->getZExtValue() ==
           (cast<ConstantIntegral>(CR.LT)->getZExtValue() - 1ULL)) {
-        RHSBB = RHSR.first->second;
+        FalseBB = RHSR.first->second;
       } else {
-        RHSBB = new MachineBasicBlock(LLVMBB);
-        CurMF->getBasicBlockList().insert(BBI, RHSBB);
-        CaseVec.push_back(CaseRec(RHSBB,CR.LT,C,RHSR));
+        FalseBB = new MachineBasicBlock(LLVMBB);
+        CurMF->getBasicBlockList().insert(BBI, FalseBB);
+        CaseVec.push_back(CaseRec(FalseBB,CR.LT,C,RHSR));
       }
 
       // Create a CaseBlock record representing a conditional branch to
       // the LHS node if the value being switched on SV is less than C. 
       // Otherwise, branch to LHS.
       ISD::CondCode CC = C->getType()->isSigned() ? ISD::SETLT : ISD::SETULT;
-      SelectionDAGISel::CaseBlock CB(CC, SV, C, LHSBB, RHSBB, CR.CaseBB);
+      SelectionDAGISel::CaseBlock CB(CC, SV, C, TrueBB, FalseBB, CR.CaseBB);
 
       if (CR.CaseBB == CurMBB)
         visitSwitchCase(CB);
@@ -3733,7 +3750,7 @@ void SelectionDAGISel::SelectBasicBlock(BasicBlock *LLVMBB, MachineFunction &MF,
     // from the original BB before switch expansion.  Note that PHI nodes can
     // occur multiple times in PHINodesToUpdate.  We have to be very careful to
     // handle them the right number of times.
-    while ((BB = SwitchCases[i].LHSBB)) {  // Handle LHS and RHS.
+    while ((BB = SwitchCases[i].TrueBB)) {  // Handle LHS and RHS.
       for (MachineBasicBlock::iterator Phi = BB->begin();
            Phi != BB->end() && Phi->getOpcode() == TargetInstrInfo::PHI; ++Phi){
         // This value for this PHI node is recorded in PHINodesToUpdate, get it.
@@ -3748,14 +3765,14 @@ void SelectionDAGISel::SelectBasicBlock(BasicBlock *LLVMBB, MachineFunction &MF,
       }
       
       // Don't process RHS if same block as LHS.
-      if (BB == SwitchCases[i].RHSBB)
-        SwitchCases[i].RHSBB = 0;
+      if (BB == SwitchCases[i].FalseBB)
+        SwitchCases[i].FalseBB = 0;
       
       // If we haven't handled the RHS, do so now.  Otherwise, we're done.
-      SwitchCases[i].LHSBB = SwitchCases[i].RHSBB;
-      SwitchCases[i].RHSBB = 0;
+      SwitchCases[i].TrueBB = SwitchCases[i].TrueBB;
+      SwitchCases[i].FalseBB = 0;
     }
-    assert(SwitchCases[i].LHSBB == 0 && SwitchCases[i].RHSBB == 0);
+    assert(SwitchCases[i].TrueBB == 0 && SwitchCases[i].FalseBB == 0);
   }
 }
 
