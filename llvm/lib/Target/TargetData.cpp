@@ -354,3 +354,26 @@ uint64_t TargetData::getIndexedOffset(const Type *ptrTy,
   return Result;
 }
 
+/// getPreferredAlignmentLog - Return the preferred alignment of the
+/// specified global, returned in log form.  This includes an explicitly
+/// requested alignment (if the global has one).
+unsigned TargetData::getPreferredAlignmentLog(const GlobalVariable *GV) const {
+  const Type *ElemType = GV->getType()->getElementType();
+  unsigned Alignment = getTypeAlignmentShift(ElemType);
+  if (GV->getAlignment() > (1U << Alignment))
+    Alignment = Log2_32(GV->getAlignment());
+  
+  if (GV->hasInitializer()) {
+    // Always round up alignment of global doubles to 8 bytes.
+    if (GV->getType()->getElementType() == Type::DoubleTy && Alignment < 3)
+      Alignment = 3;
+    if (Alignment < 4) {
+      // If the global is not external, see if it is large.  If so, give it a
+      // larger alignment.
+      if (getTypeSize(ElemType) > 128)
+        Alignment = 4;    // 16-byte alignment.
+    }
+  }
+  return Alignment;
+}
+

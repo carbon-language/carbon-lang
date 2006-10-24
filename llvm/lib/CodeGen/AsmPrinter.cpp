@@ -326,29 +326,6 @@ void AsmPrinter::EmitXXStructorList(Constant *List) {
     }
 }
 
-/// getPreferredAlignmentLog - Return the preferred alignment of the
-/// specified global, returned in log form.  This includes an explicitly
-/// requested alignment (if the global has one).
-unsigned AsmPrinter::getPreferredAlignmentLog(const GlobalVariable *GV) const {
-  const Type *ElemType = GV->getType()->getElementType();
-  unsigned Alignment = TM.getTargetData()->getTypeAlignmentShift(ElemType);
-  if (GV->getAlignment() > (1U << Alignment))
-    Alignment = Log2_32(GV->getAlignment());
-  
-  if (GV->hasInitializer()) {
-    // Always round up alignment of global doubles to 8 bytes.
-    if (GV->getType()->getElementType() == Type::DoubleTy && Alignment < 3)
-      Alignment = 3;
-    if (Alignment < 4) {
-      // If the global is not external, see if it is large.  If so, give it a
-      // larger alignment.
-      if (TM.getTargetData()->getTypeSize(ElemType) > 128)
-        Alignment = 4;    // 16-byte alignment.
-    }
-  }
-  return Alignment;
-}
-
 /// getGlobalLinkName - Returns the asm/link name of of the specified
 /// global variable.  Should be overridden by each target asm printer to
 /// generate the appropriate value.

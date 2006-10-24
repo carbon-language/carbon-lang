@@ -95,11 +95,6 @@ namespace llvm {
     ///
     void SwitchToDataSection(const char *NewSection, const GlobalValue *GV);
     
-    /// getPreferredAlignmentLog - Return the preferred alignment of the
-    /// specified global, returned in log form.  This includes an explicitly
-    /// requested alignment (if the global has one).
-    unsigned getPreferredAlignmentLog(const GlobalVariable *GV) const;
-    
     /// getGlobalLinkName - Returns the asm/link name of of the specified
     /// global variable.  Should be overridden by each target asm printer to
     /// generate the appropriate value.

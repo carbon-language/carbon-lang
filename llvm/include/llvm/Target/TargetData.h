@@ -31,6 +31,7 @@ class Value;
 class Type;
 class StructType;
 class StructLayout;
+class GlobalVariable;
 
 class TargetData : public ImmutablePass {
   bool          LittleEndian;          // Defaults to false
@@ -142,6 +143,11 @@ public:
   /// removed, this method must be called whenever a StructType is removed to
   /// avoid a dangling pointer in this cache.
   void InvalidateStructLayoutInfo(const StructType *Ty) const;
+
+  /// getPreferredAlignmentLog - Return the preferred alignment of the
+  /// specified global, returned in log form.  This includes an explicitly
+  /// requested alignment (if the global has one).
+  virtual unsigned getPreferredAlignmentLog(const GlobalVariable *GV) const;
 };
 
 /// StructLayout - used to lazily calculate structure layout information for a

@@ -232,7 +232,7 @@ bool AlphaAsmPrinter::doFinalization(Module &M) {
       Constant *C = I->getInitializer();
       unsigned Size = TD->getTypeSize(C->getType());
       //      unsigned Align = TD->getTypeAlignmentShift(C->getType());
-      unsigned Align = getPreferredAlignmentLog(I);
+      unsigned Align = TD->getPreferredAlignmentLog(I);
 
       if (C->isNullValue() &&
           (I->hasLinkOnceLinkage() || I->hasInternalLinkage() ||
