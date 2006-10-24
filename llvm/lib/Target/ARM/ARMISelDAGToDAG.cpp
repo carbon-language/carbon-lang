@@ -89,6 +89,7 @@ ARMTargetLowering::ARMTargetLowering(TargetMachine &TM)
   setOperationAction(ISD::UREM,      MVT::i32, Expand);
 
   setOperationAction(ISD::VASTART,       MVT::Other, Custom);
+  setOperationAction(ISD::VACOPY,            MVT::Other, Expand);
   setOperationAction(ISD::VAEND,         MVT::Other, Expand);
 
   setOperationAction(ISD::ConstantFP, MVT::f64, Expand);
