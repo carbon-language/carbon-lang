@@ -147,7 +147,7 @@ public:
   /// getPreferredAlignmentLog - Return the preferred alignment of the
   /// specified global, returned in log form.  This includes an explicitly
   /// requested alignment (if the global has one).
-  virtual unsigned getPreferredAlignmentLog(const GlobalVariable *GV) const;
+  unsigned getPreferredAlignmentLog(const GlobalVariable *GV) const;
 };
 
 /// StructLayout - used to lazily calculate structure layout information for a
