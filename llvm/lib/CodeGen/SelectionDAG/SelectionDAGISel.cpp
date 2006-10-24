@@ -819,9 +819,8 @@ void SelectionDAGLowering::visitBr(BranchInst &I) {
 /// visitSwitchCase - Emits the necessary code to represent a single node in
 /// the binary search tree resulting from lowering a switch instruction.
 void SelectionDAGLowering::visitSwitchCase(SelectionDAGISel::CaseBlock &CB) {
-  SDOperand SwitchOp = getValue(CB.SwitchV);
-  SDOperand CaseOp = getValue(CB.CaseC);
-  SDOperand Cond = DAG.getSetCC(MVT::i1, SwitchOp, CaseOp, CB.CC);
+  SDOperand Cond = DAG.getSetCC(MVT::i1, getValue(CB.CmpLHS),
+                                getValue(CB.CmpRHS), CB.CC);
   
   // Set NextBlock to be the MBB immediately after the current one, if any.
   // This is used to avoid emitting unnecessary branches to the next block.

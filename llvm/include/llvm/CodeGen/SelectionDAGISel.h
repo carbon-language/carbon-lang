@@ -82,20 +82,19 @@ public:
   /// SDISel for the code generation of additional basic blocks needed by multi-
   /// case switch statements.
   struct CaseBlock {
-    CaseBlock(ISD::CondCode cc, Value *s, Constant *c, MachineBasicBlock *lhs,
-              MachineBasicBlock *rhs, MachineBasicBlock *me) : 
-    CC(cc), SwitchV(s), CaseC(c), LHSBB(lhs), RHSBB(rhs), ThisBB(me) {}
+    CaseBlock(ISD::CondCode cc, Value *cmplhs, Value *cmprhs, 
+              MachineBasicBlock *lhs, MachineBasicBlock *rhs,
+              MachineBasicBlock *me) : 
+    CC(cc), CmpLHS(cmplhs), CmpRHS(cmprhs), LHSBB(lhs), RHSBB(rhs), ThisBB(me){}
     // CC - the condition code to use for the case block's setcc node
     ISD::CondCode CC;
-    // SwitchV - the value to be switched on, 'foo' in switch(foo)
-    Value *SwitchV;
-    // CaseC - the constant the setcc node will compare against SwitchV
-    Constant *CaseC;
+    // CmpLHS/CmpRHS - The LHS/RHS of the comparison to emit.
+    Value *CmpLHS, *CmpRHS;
     // LHSBB - the block to branch to if the setcc is true
     MachineBasicBlock *LHSBB;
     // RHSBB - the block to branch to if the setcc is false
     MachineBasicBlock *RHSBB;
-    // ThisBB - the blcok into which to emit the code for the setcc and branches
+    // ThisBB - the block into which to emit the code for the setcc and branches
     MachineBasicBlock *ThisBB;
   };
   struct JumpTable {
