@@ -300,3 +300,22 @@ unsigned short read_16_be(const unsigned char *adr) {
 }
 
 //===---------------------------------------------------------------------===//
+
+-scalarrepl should promote this to be a vector scalar.
+
+        %struct..0anon = type { <4 x float> }
+implementation   ; Functions:
+void %test1(<4 x float> %V, float* %P) {
+entry:
+        %u = alloca %struct..0anon, align 16            ; <%struct..0anon*> [#uses=2]
+        %tmp = getelementptr %struct..0anon* %u, int 0, uint 0          ; <<4 x float>*> [#uses=1]
+        store <4 x float> %V, <4 x float>* %tmp
+        %tmp1 = cast %struct..0anon* %u to [4 x float]*         ; <[4 x float]*> [#uses=1]
+        %tmp = getelementptr [4 x float]* %tmp1, int 0, int 1           ; <float*> [#uses=1]
+        %tmp = load float* %tmp         ; <float> [#uses=1]
+        %tmp3 = mul float %tmp, 2.000000e+00            ; <float> [#uses=1]
+        store float %tmp3, float* %P
+        ret void
+}
+
+//===---------------------------------------------------------------------===//
