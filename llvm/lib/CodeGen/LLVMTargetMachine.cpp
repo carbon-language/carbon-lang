@@ -64,7 +64,8 @@ bool LLVMTargetMachine::addPassesToEmitFile(FunctionPassManager &PM,
   PM.add(createPrologEpilogCodeInserter());
   
   // Branch folding must be run after regalloc and prolog/epilog insertion.
-  PM.add(createBranchFoldingPass());
+  if (!Fast)
+    PM.add(createBranchFoldingPass());
   
   if (PrintMachineCode)  // Print the register-allocated code
     PM.add(createMachineFunctionPrinterPass(&std::cerr));
