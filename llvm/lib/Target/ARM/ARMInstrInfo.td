@@ -227,7 +227,7 @@ let Defs = [R0] in {
   def UMULL   : IntBinOp<"umull r12,", mulhu>;
 }
 
-let isTerminator = 1 in {
+let isTerminator = 1, isBranch = 1 in {
   def bcond   : InstARM<(ops brtarget:$dst, CCOp:$cc),
 	                    "b$cc $dst",
 		            [(armbr bb:$dst, imm:$cc)]>;
