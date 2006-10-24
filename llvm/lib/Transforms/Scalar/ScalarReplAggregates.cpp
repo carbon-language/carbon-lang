@@ -611,11 +611,16 @@ void SROA::ConvertUsesToScalar(Value *Ptr, AllocaInst *NewAI, unsigned Offset) {
           NV = new ExtractElementInst(NV, ConstantInt::get(Type::UIntTy, Elt),
                                       "tmp", LI);
         } else {
-          assert(NV->getType()->isInteger() && "Unknown promotion!");
-          if (Offset && Offset < TD.getTypeSize(NV->getType())*8)
-            NV = new ShiftInst(Instruction::Shr, NV,
-                               ConstantInt::get(Type::UByteTy, Offset),
-                               LI->getName(), LI);
+          if (Offset) {
+            assert(NV->getType()->isInteger() && "Unknown promotion!");
+            if (Offset < TD.getTypeSize(NV->getType())*8)
+              NV = new ShiftInst(Instruction::Shr, NV,
+                                 ConstantInt::get(Type::UByteTy, Offset),
+                                 LI->getName(), LI);
+          } else {
+            assert((NV->getType()->isInteger() ||
+                    isa<PointerType>(NV->getType())) && "Unknown promotion!");
+          }
           NV = new CastInst(NV, LI->getType(), LI->getName(), LI);
         }
       }
