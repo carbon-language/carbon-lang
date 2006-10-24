@@ -309,8 +309,9 @@ public:
   
   /// InsertBranch - Insert a branch into the end of the specified
   /// MachineBasicBlock.  This operands to this method are the same as those
-  /// returned by AnalyzeBranch.  This nis invoked in cases where AnalyzeBranch
-  /// returns success.
+  /// returned by AnalyzeBranch.  This is invoked in cases where AnalyzeBranch
+  /// returns success and when an unconditional branch (TBB is non-null, FBB is
+  /// null, Cond is empty) needs to be inserted.
   virtual void InsertBranch(MachineBasicBlock &MBB, MachineBasicBlock *TBB,
                             MachineBasicBlock *FBB,
                             const std::vector<MachineOperand> &Cond) const {
