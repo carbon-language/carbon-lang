@@ -788,43 +788,14 @@ void SelectionDAGLowering::visitBr(BranchInst &I) {
   // If this condition is one of the special cases we handle, do special stuff
   // now.
   Value *CondVal = I.getCondition();
-  
-  
-  // Update machine-CFG edges.
-  CurMBB->addSuccessor(Succ0MBB);
   MachineBasicBlock *Succ1MBB = FuncInfo.MBBMap[I.getSuccessor(1)];
-  CurMBB->addSuccessor(Succ1MBB);
-
-  SDOperand Cond = getValue(CondVal);
-  if (Succ1MBB == NextBlock) {
-    // If the condition is false, fall through.  This means we should branch
-    // if the condition is true to Succ #0.
-    DAG.setRoot(DAG.getNode(ISD::BRCOND, MVT::Other, getRoot(),
-                            Cond, DAG.getBasicBlock(Succ0MBB)));
-  } else if (Succ0MBB == NextBlock) {
-    // If the condition is true, fall through.  This means we should branch if
-    // the condition is false to Succ #1.  Invert the condition first.
-    SDOperand True = DAG.getConstant(1, Cond.getValueType());
-    Cond = DAG.getNode(ISD::XOR, Cond.getValueType(), Cond, True);
-    DAG.setRoot(DAG.getNode(ISD::BRCOND, MVT::Other, getRoot(),
-                            Cond, DAG.getBasicBlock(Succ1MBB)));
-  } else {
-    std::vector<SDOperand> Ops;
-    Ops.push_back(getRoot());
-    // If the false case is the current basic block, then this is a self
-    // loop. We do not want to emit "Loop: ... brcond Out; br Loop", as it
-    // adds an extra instruction in the loop.  Instead, invert the
-    // condition and emit "Loop: ... br!cond Loop; br Out. 
-    if (CurMBB == Succ1MBB) {
-      std::swap(Succ0MBB, Succ1MBB);
-      SDOperand True = DAG.getConstant(1, Cond.getValueType());
-      Cond = DAG.getNode(ISD::XOR, Cond.getValueType(), Cond, True);
-    }
-    SDOperand True = DAG.getNode(ISD::BRCOND, MVT::Other, getRoot(), Cond,
-                                 DAG.getBasicBlock(Succ0MBB));
-    DAG.setRoot(DAG.getNode(ISD::BR, MVT::Other, True, 
-                            DAG.getBasicBlock(Succ1MBB)));
-  }
+  
+  // Create a CaseBlock record representing this branch.
+  SelectionDAGISel::CaseBlock CB(ISD::SETEQ, CondVal, 0,
+                                 Succ0MBB, Succ1MBB, CurMBB);
+  // Use visitSwitchCase to actually insert the fast branch sequence for this
+  // cond branch.
+  visitSwitchCase(CB);
 }
 
 /// visitSwitchCase - Emits the necessary code to represent a single node in
@@ -3769,7 +3740,7 @@ void SelectionDAGISel::SelectBasicBlock(BasicBlock *LLVMBB, MachineFunction &MF,
         SwitchCases[i].FalseBB = 0;
       
       // If we haven't handled the RHS, do so now.  Otherwise, we're done.
-      SwitchCases[i].TrueBB = SwitchCases[i].TrueBB;
+      SwitchCases[i].TrueBB = SwitchCases[i].FalseBB;
       SwitchCases[i].FalseBB = 0;
     }
     assert(SwitchCases[i].TrueBB == 0 && SwitchCases[i].FalseBB == 0);
