@@ -408,12 +408,16 @@ SDNode *IA64DAGToDAGISel::Select(SDOperand Op) {
   case ISD::TargetConstantFP: {
     SDOperand Chain = CurDAG->getEntryNode(); // this is a constant, so..
 
+    SDOperand V;
     if (cast<ConstantFPSDNode>(N)->isExactlyValue(+0.0)) {
-      return CurDAG->getCopyFromReg(Chain, IA64::F0, MVT::f64).Val;
+      V = CurDAG->getCopyFromReg(Chain, IA64::F0, MVT::f64);
     } else if (cast<ConstantFPSDNode>(N)->isExactlyValue(+1.0)) {
-      return CurDAG->getCopyFromReg(Chain, IA64::F1, MVT::f64).Val;
+      V = CurDAG->getCopyFromReg(Chain, IA64::F1, MVT::f64);
     } else
       assert(0 && "Unexpected FP constant!");
+    
+    ReplaceUses(SDOperand(N, 0), V);
+    return 0;
   }
 
   case ISD::FrameIndex: { // TODO: reduce creepyness
