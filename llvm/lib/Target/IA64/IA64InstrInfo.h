@@ -19,11 +19,7 @@
 
 namespace llvm {
 
-/// IA64II - This namespace holds all of the target specific flags that
-/// instruction info tracks.
-/// FIXME: now gone!
-
-  class IA64InstrInfo : public TargetInstrInfo {
+class IA64InstrInfo : public TargetInstrInfo {
   const IA64RegisterInfo RI;
 public:
   IA64InstrInfo();
@@ -41,6 +37,9 @@ public:
   virtual bool isMoveInstr(const MachineInstr& MI,
                            unsigned& sourceReg,
                            unsigned& destReg) const;
+  virtual void InsertBranch(MachineBasicBlock &MBB, MachineBasicBlock *TBB,
+                            MachineBasicBlock *FBB,
+                            const std::vector<MachineOperand> &Cond) const;
 
 };
 
