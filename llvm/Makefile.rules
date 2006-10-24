@@ -1129,7 +1129,8 @@ ifdef TARGET
 TDFiles := $(strip $(wildcard $(PROJ_SRC_DIR)/*.td) \
            $(LLVM_SRC_ROOT)/lib/Target/Target.td \
            $(LLVM_SRC_ROOT)/lib/Target/TargetSelectionDAG.td \
-           $(LLVM_SRC_ROOT)/include/llvm/CodeGen/ValueTypes.td)
+           $(LLVM_SRC_ROOT)/include/llvm/CodeGen/ValueTypes.td) \
+           $(wildcard $(LLVM_SRC_ROOT)/include/llvm/Intrinsics*.td)
 INCFiles := $(filter %.inc,$(BUILT_SOURCES))
 INCTMPFiles := $(INCFiles:%=$(ObjDir)/%.tmp)
 .PRECIOUS: $(INCTMPFiles) $(INCFiles)
