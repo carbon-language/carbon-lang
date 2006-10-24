@@ -120,6 +120,18 @@ void MachineBasicBlock::print(std::ostream &OS) const {
   }
 }
 
+void MachineBasicBlock::moveBefore(MachineBasicBlock *NewAfter) {
+  MachineFunction::BasicBlockListType &BBList =getParent()->getBasicBlockList();
+  getParent()->getBasicBlockList().splice(NewAfter, BBList, this);
+}
+
+void MachineBasicBlock::moveAfter(MachineBasicBlock *NewBefore) {
+  MachineFunction::BasicBlockListType &BBList =getParent()->getBasicBlockList();
+  MachineFunction::iterator BBI = NewBefore;
+  getParent()->getBasicBlockList().splice(++BBI, BBList, this);
+}
+
+
 void MachineBasicBlock::addSuccessor(MachineBasicBlock *succ) {
   Successors.push_back(succ);
   succ->addPredecessor(this);
