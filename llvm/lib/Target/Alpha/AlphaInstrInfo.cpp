@@ -83,3 +83,10 @@ AlphaInstrInfo::isStoreToStackSlot(MachineInstr *MI, int &FrameIndex) const {
   return 0;
 }
 
+void AlphaInstrInfo::InsertBranch(MachineBasicBlock &MBB,MachineBasicBlock *TBB,
+                                  MachineBasicBlock *FBB,
+                                  const std::vector<MachineOperand> &Cond)const{
+  // Can only insert uncond branches so far.
+  assert(Cond.empty() && !FBB && TBB && "Can only handle uncond branches!");
+  BuildMI(&MBB, Alpha::BR, 1).addMBB(TBB);
+}

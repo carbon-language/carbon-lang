@@ -38,6 +38,10 @@ public:
   
   virtual unsigned isLoadFromStackSlot(MachineInstr *MI, int &FrameIndex) const;
   virtual unsigned isStoreToStackSlot(MachineInstr *MI, int &FrameIndex) const;
+  
+  virtual void InsertBranch(MachineBasicBlock &MBB, MachineBasicBlock *TBB,
+                            MachineBasicBlock *FBB,
+                            const std::vector<MachineOperand> &Cond) const;
 };
 
 }
