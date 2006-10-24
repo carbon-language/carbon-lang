@@ -314,7 +314,7 @@ public:
   virtual void InsertBranch(MachineBasicBlock &MBB, MachineBasicBlock *TBB,
                             MachineBasicBlock *FBB,
                             const std::vector<MachineOperand> &Cond) const {
-    assert(0 && "Target didn't implement TargetInstrInfo::RemoveBranch!"); 
+    assert(0 && "Target didn't implement TargetInstrInfo::InsertBranch!"); 
   }
   
   /// ReverseBranchCondition - Reverses the branch condition of the specified
