@@ -1872,7 +1872,7 @@ TargetDefinition : ENDIAN '=' BigOrLittle {
   | TRIPLE '=' STRINGCONSTANT {
     CurModule.CurrentModule->setTargetTriple($3);
     free($3);
-  };
+  }
   | DATALAYOUT '=' STRINGCONSTANT {
     CurModule.CurrentModule->setDataLayout($3);
     free($3);
