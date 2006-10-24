@@ -460,11 +460,10 @@ void RA::assignRegOrStackSlotAtInterval(LiveInterval* cur)
     
     bool ConflictsWithFixed = false;
     for (unsigned i = 0, e = fixed_.size(); i != e; ++i) {
-      if (physReg == fixed_[i].first->reg ||
-          RegAliases.count(fixed_[i].first->reg)) {
+      IntervalPtr &IP = fixed_[i];
+      if (physReg == IP.first->reg || RegAliases.count(IP.first->reg)) {
         // Okay, this reg is on the fixed list.  Check to see if we actually
         // conflict.
-        IntervalPtr &IP = fixed_[i];
         LiveInterval *I = IP.first;
         if (I->endNumber() > StartPosition) {
           LiveInterval::iterator II = I->advanceTo(IP.second, StartPosition);
