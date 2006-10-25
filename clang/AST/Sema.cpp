@@ -17,7 +17,6 @@
 #include "clang/AST/Expr.h"
 #include "clang/Parse/Scope.h"
 #include "clang/Lex/IdentifierTable.h"
-#include "clang/Lex/LexerToken.h"
 #include "clang/Lex/Preprocessor.h"
 #include "llvm/Support/Compiler.h"
 using namespace llvm;
@@ -56,14 +55,15 @@ public:
   // Expression Parsing Callbacks.
 
   // Primary Expressions.
-  virtual ExprResult ParseSimplePrimaryExpr(const LexerToken &Tok);
-  virtual ExprResult ParseIntegerConstant(const LexerToken &Tok);
-  virtual ExprResult ParseFloatingConstant(const LexerToken &Tok);
+  virtual ExprResult ParseSimplePrimaryExpr(SourceLocation Loc,
+                                            tok::TokenKind Kind);
+  virtual ExprResult ParseIntegerConstant(SourceLocation Loc);
+  virtual ExprResult ParseFloatingConstant(SourceLocation Loc);
   virtual ExprResult ParseParenExpr(SourceLocation L, SourceLocation R,
                                     ExprTy *Val);
   virtual ExprResult ParseStringExpr(const char *StrData, unsigned StrLen,
                                      bool isWide,
-                                     const LexerToken *Toks, unsigned NumToks);
+                                     SourceLocation *TokLocs, unsigned NumToks);
   
   // Binary/Unary Operators.  'Tok' is the token for the operator.
   virtual ExprResult ParseUnaryOp(SourceLocation OpLoc, tok::TokenKind Op,
@@ -73,7 +73,8 @@ public:
                                SourceLocation LParenLoc, TypeTy *Ty,
                                SourceLocation RParenLoc);
   
-  virtual ExprResult ParsePostfixUnaryOp(const LexerToken &Tok, ExprTy *Input);
+  virtual ExprResult ParsePostfixUnaryOp(SourceLocation OpLoc, 
+                                         tok::TokenKind Kind, ExprTy *Input);
   
   virtual ExprResult ParseArraySubscriptExpr(ExprTy *Base, SourceLocation LLoc,
                                              ExprTy *Idx, SourceLocation RLoc);
@@ -93,7 +94,8 @@ public:
   virtual ExprResult ParseCastExpr(SourceLocation LParenLoc, TypeTy *Ty,
                                    SourceLocation RParenLoc, ExprTy *Op);
   
-  virtual ExprResult ParseBinOp(const LexerToken &Tok, ExprTy *LHS,ExprTy *RHS);
+  virtual ExprResult ParseBinOp(SourceLocation TokLoc, tok::TokenKind Kind,
+                                ExprTy *LHS,ExprTy *RHS);
   
   /// ParseConditionalOp - Parse a ?: operation.  Note that 'LHS' may be null
   /// in the case of a the GNU conditional expr extension.
@@ -166,8 +168,9 @@ void ASTBuilder::PopScope(SourceLocation Loc, Scope *S) {
 // Expression Parsing Callbacks.
 //===--------------------------------------------------------------------===//
 
-Action::ExprResult ASTBuilder::ParseSimplePrimaryExpr(const LexerToken &Tok) {
-  switch (Tok.getKind()) {
+Action::ExprResult ASTBuilder::ParseSimplePrimaryExpr(SourceLocation Loc,
+                                                      tok::TokenKind Kind) {
+  switch (Kind) {
   default:
     assert(0 && "Unknown simple primary expr!");
   case tok::identifier: {
@@ -185,10 +188,10 @@ Action::ExprResult ASTBuilder::ParseSimplePrimaryExpr(const LexerToken &Tok) {
   }
 }
 
-Action::ExprResult ASTBuilder::ParseIntegerConstant(const LexerToken &Tok) {
+Action::ExprResult ASTBuilder::ParseIntegerConstant(SourceLocation Loc) {
   return new IntegerConstant();
 }
-Action::ExprResult ASTBuilder::ParseFloatingConstant(const LexerToken &Tok) {
+Action::ExprResult ASTBuilder::ParseFloatingConstant(SourceLocation Loc) {
   return new FloatingConstant();
 }
 
@@ -206,17 +209,13 @@ Action::ExprResult ASTBuilder::ParseParenExpr(SourceLocation L,
 /// 
 Action::ExprResult ASTBuilder::
 ParseStringExpr(const char *StrData, unsigned StrLen, bool isWide,
-                const LexerToken *Toks, unsigned NumToks) {
+                SourceLocation *TokLocs, unsigned NumToks) {
   assert(NumToks && "Must have at least one string!");
   
   if (!FullLocInfo)
     return new StringExpr(StrData, StrLen, isWide);
-  else {
-    SmallVector<SourceLocation, 4> Locs;
-    for (unsigned i = 0; i != NumToks; ++i)
-      Locs.push_back(Toks[i].getLocation());
-    return new StringExprLOC(StrData, StrLen, isWide, &Locs[0], Locs.size());
-  }
+  else
+    return new StringExprLOC(StrData, StrLen, isWide, TokLocs, NumToks);
 }
 
 
@@ -260,10 +259,11 @@ ParseSizeOfAlignOfTypeExpr(SourceLocation OpLoc, bool isSizeof,
 }
 
 
-Action::ExprResult ASTBuilder::ParsePostfixUnaryOp(const LexerToken &Tok,
+Action::ExprResult ASTBuilder::ParsePostfixUnaryOp(SourceLocation OpLoc, 
+                                                   tok::TokenKind Kind,
                                                    ExprTy *Input) {
   UnaryOperator::Opcode Opc;
-  switch (Tok.getKind()) {
+  switch (Kind) {
   default: assert(0 && "Unknown unary op!");
   case tok::plusplus:   Opc = UnaryOperator::PostInc; break;
   case tok::minusminus: Opc = UnaryOperator::PostDec; break;
@@ -272,7 +272,7 @@ Action::ExprResult ASTBuilder::ParsePostfixUnaryOp(const LexerToken &Tok,
   if (!FullLocInfo)
     return new UnaryOperator((Expr*)Input, Opc);
   else
-    return new UnaryOperatorLOC(Tok.getLocation(), (Expr*)Input, Opc);
+    return new UnaryOperatorLOC(OpLoc, (Expr*)Input, Opc);
 }
 
 Action::ExprResult ASTBuilder::
@@ -323,10 +323,11 @@ ParseCastExpr(SourceLocation LParenLoc, TypeTy *Ty,
 
 
 // Binary Operators.  'Tok' is the token for the operator.
-Action::ExprResult ASTBuilder::ParseBinOp(const LexerToken &Tok, ExprTy *LHS,
+Action::ExprResult ASTBuilder::ParseBinOp(SourceLocation TokLoc, 
+                                          tok::TokenKind Kind, ExprTy *LHS,
                                           ExprTy *RHS) {
   BinaryOperator::Opcode Opc;
-  switch (Tok.getKind()) {
+  switch (Kind) {
   default: assert(0 && "Unknown binop!");
   case tok::star:                 Opc = BinaryOperator::Mul; break;
   case tok::slash:                Opc = BinaryOperator::Div; break;
@@ -363,7 +364,7 @@ Action::ExprResult ASTBuilder::ParseBinOp(const LexerToken &Tok, ExprTy *LHS,
   if (!FullLocInfo)
     return new BinaryOperator((Expr*)LHS, (Expr*)RHS, Opc);
   else
-    return new BinaryOperatorLOC((Expr*)LHS, Tok.getLocation(), (Expr*)RHS,Opc);
+    return new BinaryOperatorLOC((Expr*)LHS, TokLoc, (Expr*)RHS, Opc);
 }
 
 /// ParseConditionalOp - Parse a ?: operation.  Note that 'LHS' may be null

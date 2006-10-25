@@ -362,7 +362,8 @@ Parser::ParseRHSOfBinaryExpression(ExprResult LHS, unsigned MinPrec) {
   
     // Combine the LHS and RHS into the LHS (e.g. build AST).
     if (TernaryMiddle.isInvalid)
-      LHS = Actions.ParseBinOp(OpToken, LHS.Val, RHS.Val);
+      LHS = Actions.ParseBinOp(OpToken.getLocation(), OpToken.getKind(),
+                               LHS.Val, RHS.Val);
     else
       LHS = Actions.ParseConditionalOp(OpToken.getLocation(), ColonLoc,
                                        LHS.Val, TernaryMiddle.Val, RHS.Val);
@@ -431,7 +432,7 @@ Parser::ExprResult Parser::ParseCastExpression(bool isUnaryExpression) {
   // call ParsePostfixExpressionSuffix to handle the postfix expression
   // suffixes.  Cases that cannot be followed by postfix exprs should
   // return without invoking ParsePostfixExpressionSuffix.
-  switch (Tok.getKind()) {
+  switch (SavedKind) {
   case tok::l_paren: {
     // If this expression is limited to being a unary-expression, the parent can
     // not start a cast expression.
@@ -472,9 +473,9 @@ Parser::ExprResult Parser::ParseCastExpression(bool isUnaryExpression) {
     // TODO: Validate whether this is an integer or floating-constant or
     // neither.
     if (1) {
-      Res = Actions.ParseIntegerConstant(Tok);
+      Res = Actions.ParseIntegerConstant(Tok.getLocation());
     } else {
-      Res = Actions.ParseFloatingConstant(Tok);
+      Res = Actions.ParseFloatingConstant(Tok.getLocation());
     }
     ConsumeToken();
     
@@ -487,7 +488,7 @@ Parser::ExprResult Parser::ParseCastExpression(bool isUnaryExpression) {
   case tok::kw___func__:       // primary-expression: __func__ [C99 6.4.2.2]
   case tok::kw___FUNCTION__:   // primary-expression: __FUNCTION__ [GNU]
   case tok::kw___PRETTY_FUNCTION__:  // primary-expression: __P..Y_F..N__ [GNU]
-    Res = Actions.ParseSimplePrimaryExpr(Tok);
+    Res = Actions.ParseSimplePrimaryExpr(Tok.getLocation(), SavedKind);
     ConsumeToken();
     // These can be followed by postfix-expr pieces.
     return ParsePostfixExpressionSuffix(Res);
@@ -650,7 +651,8 @@ Parser::ExprResult Parser::ParsePostfixExpressionSuffix(ExprResult LHS) {
     case tok::plusplus:    // postfix-expression: postfix-expression '++'
     case tok::minusminus:  // postfix-expression: postfix-expression '--'
       if (!LHS.isInvalid)
-        LHS = Actions.ParsePostfixUnaryOp(Tok, LHS.Val);
+        LHS = Actions.ParsePostfixUnaryOp(Tok.getLocation(), Tok.getKind(),
+                                          LHS.Val);
       ConsumeToken();
       break;
     }
@@ -1099,10 +1101,14 @@ Parser::ExprResult Parser::ParseStringLiteralExpression() {
       *ResultPtr++ = 0;
   }
   
+  SmallVector<SourceLocation, 4> StringTokLocs;
+  for (unsigned i = 0; i != StringToks.size(); ++i)
+    StringTokLocs.push_back(StringToks[i].getLocation());
+  
   // Hand this off to the Actions.
   ExprResult Res = Actions.ParseStringExpr(ResultBuf, ResultPtr-ResultBuf,
-                                           AnyWide,
-                                           &StringToks[0], StringToks.size());
+                                           AnyWide, &StringTokLocs[0],
+                                           StringTokLocs.size());
   
   // If either buffer was heap allocated, release it now.
   if (MaxTokenLength > 512) free(TokenBuf);

@@ -26,7 +26,6 @@ namespace clang {
   class Action;
   // Lex.
   class IdentifierInfo;
-  class LexerToken;
 
 /// Action - As the parser reads the input file and recognizes the productions
 /// of the grammar, it invokes methods on this class to turn the parsed input
@@ -187,9 +186,12 @@ public:
   //===--------------------------------------------------------------------===//
   
   // Primary Expressions.
-  virtual ExprResult ParseSimplePrimaryExpr(const LexerToken &Tok) { return 0; }
-  virtual ExprResult ParseIntegerConstant(const LexerToken &Tok) { return 0; }
-  virtual ExprResult ParseFloatingConstant(const LexerToken &Tok) { return 0; }
+  virtual ExprResult ParseSimplePrimaryExpr(SourceLocation Loc,
+                                            tok::TokenKind Kind) {
+    return 0;
+  }
+  virtual ExprResult ParseIntegerConstant(SourceLocation Loc) { return 0; }
+  virtual ExprResult ParseFloatingConstant(SourceLocation Loc) { return 0; }
   virtual ExprResult ParseParenExpr(SourceLocation L, SourceLocation R,
                                     ExprTy *Val) {
     return Val;  // Default impl returns operand.
@@ -200,12 +202,13 @@ public:
   /// array exposes the input tokens to provide location information.
   virtual ExprResult ParseStringExpr(const char *StrData, unsigned StrLen,
                                      bool isWide,
-                                     const LexerToken *Toks, unsigned NumToks) {
+                                     SourceLocation *TokLocs, unsigned NumToks){
     return 0;
   }
 
   // Postfix Expressions.
-  virtual ExprResult ParsePostfixUnaryOp(const LexerToken &Tok, ExprTy *Input) {
+  virtual ExprResult ParsePostfixUnaryOp(SourceLocation OpLoc, 
+                                         tok::TokenKind Kind, ExprTy *Input) {
     return 0;
   }
   virtual ExprResult ParseArraySubscriptExpr(ExprTy *Base, SourceLocation LLoc,
@@ -247,7 +250,7 @@ public:
     return 0;
   }
   
-  virtual ExprResult ParseBinOp(const LexerToken &Tok,
+  virtual ExprResult ParseBinOp(SourceLocation TokLoc, tok::TokenKind Kind,
                                 ExprTy *LHS, ExprTy *RHS) {
     return 0;
   }
