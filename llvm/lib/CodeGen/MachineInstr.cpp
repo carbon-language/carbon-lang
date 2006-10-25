@@ -120,7 +120,7 @@ bool MachineOperand::isIdenticalTo(const MachineOperand &Other) const {
   case MachineOperand::MO_GlobalAddress:
     return getGlobal() == Other.getGlobal() && getOffset() == Other.getOffset();
   case MachineOperand::MO_ExternalSymbol:
-    return getSymbolName() == Other.getSymbolName() &&
+    return !strcmp(getSymbolName(), Other.getSymbolName()) &&
            getOffset() == Other.getOffset();
   }
 }
