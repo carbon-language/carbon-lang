@@ -1580,7 +1580,7 @@ def PEXTRWri : PDIi8<0xC5, MRMSrcReg,
                     (ops GR32:$dst, VR128:$src1, i32i8imm:$src2),
                     "pextrw {$src2, $src1, $dst|$dst, $src1, $src2}",
                     [(set GR32:$dst, (X86pextrw (v8i16 VR128:$src1),
-                                     (i32 imm:$src2)))]>;
+                                     (iPTR imm:$src2)))]>;
 let isTwoAddress = 1 in {
 def PINSRWrri : PDIi8<0xC4, MRMSrcReg,
                      (ops VR128:$dst, VR128:$src1, GR32:$src2, i32i8imm:$src3),
