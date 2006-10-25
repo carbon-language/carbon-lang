@@ -21,11 +21,9 @@ namespace llvm {
 namespace clang {
   class Expr;
   
-/// Stmt - This represents one statement.  Note that statements are modelled as
-/// subclasses of exprs so that 
+/// Stmt - This represents one statement.
 ///
 class Stmt {
-  /// Type.
 public:
   Stmt() {}
   virtual ~Stmt() {}
