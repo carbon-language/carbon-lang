@@ -2954,10 +2954,9 @@ static bool isPSHUFHW_PSHUFLWMask(SDNode *N) {
 
 /// CommuteVectorShuffle - Swap vector_shuffle operandsas well as
 /// values in ther permute mask.
-static SDOperand CommuteVectorShuffle(SDOperand Op, SelectionDAG &DAG) {
-  SDOperand V1 = Op.getOperand(0);
-  SDOperand V2 = Op.getOperand(1);
-  SDOperand Mask = Op.getOperand(2);
+static SDOperand CommuteVectorShuffle(SDOperand Op, SDOperand &V1,
+                                      SDOperand &V2, SDOperand &Mask,
+                                      SelectionDAG &DAG) {
   MVT::ValueType VT = Op.getValueType();
   MVT::ValueType MaskVT = Mask.getValueType();
   MVT::ValueType EltVT = MVT::getVectorBaseType(MaskVT);
@@ -2978,8 +2977,9 @@ static SDOperand CommuteVectorShuffle(SDOperand Op, SelectionDAG &DAG) {
       MaskVec.push_back(DAG.getConstant(Val - NumElems, EltVT));
   }
 
+  std::swap(V1, V2);
   Mask = DAG.getNode(ISD::BUILD_VECTOR, MaskVT, &MaskVec[0], MaskVec.size());
-  return DAG.getNode(ISD::VECTOR_SHUFFLE, VT, V2, V1, Mask);
+  return DAG.getNode(ISD::VECTOR_SHUFFLE, VT, V1, V2, Mask);
 }
 
 /// ShouldXformToMOVHLPS - Return true if the node should be transformed to
@@ -3463,25 +3463,21 @@ X86TargetLowering::LowerVECTOR_SHUFFLE(SDOperand Op, SelectionDAG &DAG) {
 
   if (ShouldXformToMOVHLPS(PermMask.Val) ||
       ShouldXformToMOVLP(V1.Val, V2.Val, PermMask.Val))
-    return CommuteVectorShuffle(Op, DAG);
+    return CommuteVectorShuffle(Op, V1, V2, PermMask, DAG);
 
+  bool Commuted = false;
   V1IsSplat = isSplatVector(V1.Val);
   V2IsSplat = isSplatVector(V2.Val);
   if ((V1IsSplat || V1IsUndef) && !(V2IsSplat || V2IsUndef)) {
-    Op = CommuteVectorShuffle(Op, DAG);
-    V1 = Op.getOperand(0);
-    V2 = Op.getOperand(1);
-    PermMask = Op.getOperand(2);
+    Op = CommuteVectorShuffle(Op, V1, V2, PermMask, DAG);
     std::swap(V1IsSplat, V2IsSplat);
     std::swap(V1IsUndef, V2IsUndef);
+    Commuted = true;
   }
 
   if (isCommutedMOVL(PermMask.Val, V2IsSplat, V2IsUndef)) {
     if (V2IsUndef) return V1;
-    Op = CommuteVectorShuffle(Op, DAG);
-    V1 = Op.getOperand(0);
-    V2 = Op.getOperand(1);
-    PermMask = Op.getOperand(2);
+    Op = CommuteVectorShuffle(Op, V1, V2, PermMask, DAG);
     if (V2IsSplat) {
       // V2 is a splat, so the mask may be malformed. That is, it may point
       // to any V2 element. The instruction selectior won't like this. Get
@@ -3515,13 +3511,17 @@ X86TargetLowering::LowerVECTOR_SHUFFLE(SDOperand Op, SelectionDAG &DAG) {
   }
 
   // Normalize the node to match x86 shuffle ops if needed
-  if (V2.getOpcode() != ISD::UNDEF)
-    if (isCommutedSHUFP(PermMask.Val)) {
-      Op = CommuteVectorShuffle(Op, DAG);
-      V1 = Op.getOperand(0);
-      V2 = Op.getOperand(1);
-      PermMask = Op.getOperand(2);
-    }
+  if (V2.getOpcode() != ISD::UNDEF && isCommutedSHUFP(PermMask.Val))
+      Op = CommuteVectorShuffle(Op, V1, V2, PermMask, DAG);
+
+  if (Commuted) {
+    // Commute is back and try unpck* again.
+    Op = CommuteVectorShuffle(Op, V1, V2, PermMask, DAG);
+    if (X86::isUNPCKL_v_undef_Mask(PermMask.Val) ||
+        X86::isUNPCKLMask(PermMask.Val) ||
+        X86::isUNPCKHMask(PermMask.Val))
+      return Op;
+  }
 
   // If VT is integer, try PSHUF* first, then SHUFP*.
   if (MVT::isInteger(VT)) {
