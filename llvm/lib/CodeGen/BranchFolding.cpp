@@ -417,7 +417,7 @@ static bool CanFallThrough(MachineBasicBlock *TBB,
   
   // Otherwise, if it is conditional and has no explicit false block, it falls
   // through.
-  return !Cond.empty() && FBB == 0;
+  return FBB == 0;
 }
 
 /// OptimizeBlock - Analyze and optimize control flow related to the specified
