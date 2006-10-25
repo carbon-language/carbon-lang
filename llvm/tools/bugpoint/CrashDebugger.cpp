@@ -15,12 +15,12 @@
 #include "ToolRunner.h"
 #include "ListReducer.h"
 #include "llvm/Constant.h"
+#include "llvm/DerivedTypes.h"
 #include "llvm/Instructions.h"
 #include "llvm/Module.h"
 #include "llvm/Pass.h"
 #include "llvm/PassManager.h"
 #include "llvm/SymbolTable.h"
-#include "llvm/Type.h"
 #include "llvm/Analysis/Verifier.h"
 #include "llvm/Bytecode/Writer.h"
 #include "llvm/Support/CFG.h"
@@ -94,7 +94,81 @@ ReducePassList::doTest(std::vector<const PassInfo*> &Prefix,
   return NoFailure;
 }
 
+namespace {
+  /// ReduceCrashingGlobalVariables - This works by removing the global
+  /// variable's initializer and seeing if the program still crashes. If it
+  /// does, then we keep that program and try again.
+  ///
+  class ReduceCrashingGlobalVariables : public ListReducer<GlobalVariable*> {
+    BugDriver &BD;
+    bool (*TestFn)(BugDriver &, Module *);
+  public:
+    ReduceCrashingGlobalVariables(BugDriver &bd,
+                                  bool (*testFn)(BugDriver&, Module*))
+      : BD(bd), TestFn(testFn) {}
+
+    virtual TestResult doTest(std::vector<GlobalVariable*>& Prefix,
+                              std::vector<GlobalVariable*>& Kept) {
+      if (!Kept.empty() && TestGlobalVariables(Kept))
+        return KeepSuffix;
+
+      if (!Prefix.empty() && TestGlobalVariables(Prefix))
+        return KeepPrefix;
+
+      return NoFailure;
+    }
+
+    bool TestGlobalVariables(std::vector<GlobalVariable*>& GVs);
+  };
+}
+
+bool
+ReduceCrashingGlobalVariables::TestGlobalVariables(
+                              std::vector<GlobalVariable*>& GVs) {
+  // Clone the program to try hacking it apart...
+  Module *M = CloneModule(BD.getProgram());
+
+  // Convert list to set for fast lookup...
+  std::set<GlobalVariable*> GVSet;
+
+  for (unsigned i = 0, e = GVs.size(); i != e; ++i) {
+    GlobalVariable* CMGV = M->getNamedGlobal(GVs[i]->getName());
+    assert(CMGV && "Global Variable not in module?!");
+    GVSet.insert(CMGV);
+  }
+
+  std::cout << "Checking for crash with only these global variables: ";
+  PrintGlobalVariableList(GVs);
+  std::cout << ": ";
+
+  // Loop over and delete any global variables which we aren't supposed to be
+  // playing with...
+  for (Module::global_iterator I = M->global_begin(), E = M->global_end();
+       I != E; ++I)
+    if (I->hasInitializer()) {
+      I->setInitializer(0);
+      I->setLinkage(GlobalValue::ExternalLinkage);
+    }
+
+  // Try running the hacked up program...
+  if (TestFn(BD, M)) {
+    BD.setNewProgram(M);        // It crashed, keep the trimmed version...
+
+    // Make sure to use global variable pointers that point into the now-current
+    // module.
+    GVs.assign(GVSet.begin(), GVSet.end());
+    return true;
+  }
+
+  delete M;
+  return false;
+}
+
 namespace llvm {
+  /// ReduceCrashingFunctions reducer - This works by removing functions and
+  /// seeing if the program still crashes. If it does, then keep the newer,
+  /// smaller program.
+  ///
   class ReduceCrashingFunctions : public ListReducer<Function*> {
     BugDriver &BD;
     bool (*TestFn)(BugDriver &, Module *);
@@ -119,7 +193,8 @@ namespace llvm {
 bool ReduceCrashingFunctions::TestFuncs(std::vector<Function*> &Funcs) {
 
   //if main isn't present, claim there is no problem
-  if (KeepMain && find(Funcs.begin(), Funcs.end(), BD.getProgram()->getMainFunction()) == Funcs.end())
+  if (KeepMain && find(Funcs.begin(), Funcs.end(),
+                       BD.getProgram()->getMainFunction()) == Funcs.end())
     return false;
 
   // Clone the program to try hacking it apart...
@@ -277,30 +352,27 @@ bool ReduceCrashingBlocks::TestBlocks(std::vector<const BasicBlock*> &BBs) {
 /// on a program, try to destructively reduce the program while still keeping
 /// the predicate true.
 static bool DebugACrash(BugDriver &BD,  bool (*TestFn)(BugDriver &, Module *)) {
-  // See if we can get away with nuking all of the global variable initializers
+  // See if we can get away with nuking some of the global variable initializers
   // in the program...
   if (BD.getProgram()->global_begin() != BD.getProgram()->global_end()) {
-    Module *M = CloneModule(BD.getProgram());
-    bool DeletedInit = false;
-    for (Module::global_iterator I = M->global_begin(), E = M->global_end(); I != E; ++I)
-      if (I->hasInitializer()) {
-        I->setInitializer(0);
-        I->setLinkage(GlobalValue::ExternalLinkage);
-        DeletedInit = true;
-      }
+    // Now try to reduce the number of global variable initializers in the
+    // module to something small.
+    std::vector<GlobalVariable*> GVs;
 
-    if (!DeletedInit) {
-      delete M;  // No change made...
-    } else {
-      // See if the program still causes a crash...
-      std::cout << "\nChecking to see if we can delete global inits: ";
-      if (TestFn(BD, M)) {  // Still crashes?
-        BD.setNewProgram(M);
-        std::cout << "\n*** Able to remove all global initializers!\n";
-      } else {                       // No longer crashes?
-        std::cout << "  - Removing all global inits hides problem!\n";
-        delete M;
-      }
+    for (Module::global_iterator I = BD.getProgram()->global_begin(),
+           E = BD.getProgram()->global_end(); I != E; ++I)
+      if (I->hasInitializer())
+        GVs.push_back(I);
+
+    if (GVs.size() > 1 && !BugpointIsInterrupted) {
+      std::cout << "\n*** Attempting to reduce the number of global variables "
+                << "in the testcase\n";
+
+      unsigned OldSize = GVs.size();
+      ReduceCrashingGlobalVariables(BD, TestFn).reduceList(GVs);
+
+      if (GVs.size() < OldSize)
+        BD.EmitProgressBytecode("reduced-global-variables");
     }
   }
 

@@ -221,3 +221,13 @@ void llvm::PrintFunctionList(const std::vector<Function*> &Funcs) {
     std::cout << "... <" << Funcs.size() << " total>";
   std::cout << std::flush;
 }
+
+void llvm::PrintGlobalVariableList(const std::vector<GlobalVariable*> &GVs) {
+  unsigned NumPrint = GVs.size();
+  if (NumPrint > 10) NumPrint = 10;
+  for (unsigned i = 0; i != NumPrint; ++i)
+    std::cout << " " << GVs[i]->getName();
+  if (NumPrint < GVs.size())
+    std::cout << "... <" << GVs.size() << " total>";
+  std::cout << std::flush;
+}

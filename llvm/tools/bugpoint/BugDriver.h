@@ -23,6 +23,7 @@ namespace llvm {
 
 class PassInfo;
 class Module;
+class GlobalVariable;
 class Function;
 class BasicBlock;
 class AbstractInterpreter;
@@ -294,6 +295,10 @@ std::string getPassesString(const std::vector<const PassInfo*> &Passes);
 /// PrintFunctionList - prints out list of problematic functions
 ///
 void PrintFunctionList(const std::vector<Function*> &Funcs);
+
+/// PrintGlobalVariableList - prints out list of problematic global variables
+///
+void PrintGlobalVariableList(const std::vector<GlobalVariable*> &GVs);
 
 // DeleteFunctionBody - "Remove" the function by deleting all of it's basic
 // blocks, making it external.
