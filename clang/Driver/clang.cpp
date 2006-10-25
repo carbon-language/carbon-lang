@@ -38,6 +38,7 @@ using namespace llvm;
 using namespace clang;
 
 static unsigned NumDiagnostics = 0;
+static unsigned NumErrors = 0;
 
 //===----------------------------------------------------------------------===//
 // Global options.
@@ -398,11 +399,12 @@ void DiagnosticPrinterSTDERR::HandleDiagnostic(Diagnostic::Level Level,
   
   switch (Level) {
   default: assert(0 && "Unknown diagnostic type!");
-  case Diagnostic::Note: std::cerr << "note: "; break;
-  case Diagnostic::Warning: std::cerr << "warning: "; break;
-  case Diagnostic::Error: std::cerr << "error: "; break;
-  case Diagnostic::Fatal: std::cerr << "fatal error: "; break;
-  case Diagnostic::Sorry: std::cerr << "sorry, unimplemented: "; break;
+  case Diagnostic::Note:                 std::cerr << "note: "; break;
+  case Diagnostic::Warning:              std::cerr << "warning: "; break;
+  case Diagnostic::Error:   ++NumErrors; std::cerr << "error: "; break;
+  case Diagnostic::Fatal:   ++NumErrors; std::cerr << "fatal error: "; break;
+  case Diagnostic::Sorry:   ++NumErrors; std::cerr << "sorry, unimplemented: ";
+    break;
   }
   
   std::string Msg = Diagnostic::getDescription(ID);
@@ -947,4 +949,6 @@ int main(int argc, char **argv) {
     PP.PrintStats();
     std::cerr << "\n";
   }
+  
+  return NumErrors != 0;
 }
