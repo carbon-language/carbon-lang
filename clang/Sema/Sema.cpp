@@ -61,6 +61,10 @@ public:
     return Expr; // Exprs are Stmts.
   }
   
+  virtual StmtResult ParseIfStmt(SourceLocation IfLoc, ExprTy *CondVal,
+                                 StmtTy *ThenVal, SourceLocation ElseLoc,
+                                 StmtTy *ElseVal);
+  
   virtual StmtResult ParseReturnStmt(SourceLocation ReturnLoc,
                                      ExprTy *RetValExp);
   
@@ -195,6 +199,12 @@ ASTBuilder::ParseCompoundStmt(SourceLocation L, SourceLocation R,
     return 0;              // {}  -> ;
 }
 
+Action::StmtResult 
+ASTBuilder::ParseIfStmt(SourceLocation IfLoc, ExprTy *CondVal,
+                        StmtTy *ThenVal, SourceLocation ElseLoc,
+                        StmtTy *ElseVal) {
+  return new IfStmt((Expr*)CondVal, (Stmt*)ThenVal, (Stmt*)ElseVal);
+}
 
 Action::StmtResult
 ASTBuilder::ParseReturnStmt(SourceLocation ReturnLoc,

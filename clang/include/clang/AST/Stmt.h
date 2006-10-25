@@ -51,6 +51,17 @@ public:
   virtual void dump_impl() const;
 };
 
+/// IfStmt - This represents an if/then/else.
+///
+class IfStmt : public Stmt {
+  Expr *Cond;
+  Stmt *Then, *Else;
+public:
+  IfStmt(Expr *cond, Stmt *then, Stmt *elsev = 0)
+    : Cond(cond), Then(then), Else(elsev) {}
+  
+  virtual void dump_impl() const;
+};
 
 
 

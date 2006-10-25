@@ -38,6 +38,14 @@ void CompoundStmt::dump_impl() const {
   std::cerr << "}";
 }
 
+void IfStmt::dump_impl() const {
+  std::cerr << "if ";
+  Cond->dump();
+  std::cerr << " then\n";
+  Then->dump();
+  std::cerr << "\n else ";
+  Else->dump();
+}
 
 void ReturnStmt::dump_impl() const {
   std::cerr << "return ";
