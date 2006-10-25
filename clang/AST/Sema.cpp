@@ -147,7 +147,10 @@ ASTBuilder::ParseDeclarator(Scope *S, Declarator &D, ExprTy *Init,
     S->AddDecl(II);
   }
   
-  if (LastInGroup) LastInGroupList.push_back((Decl*)LastInGroup);
+  // If this is a top-level decl that is chained to some other (e.g. int A,B,C;)
+  // remember this in the LastInGroupList list.
+  if (LastInGroup && S->getParent() == 0)
+    LastInGroupList.push_back((Decl*)LastInGroup);
   
   return New;
 }
