@@ -198,7 +198,9 @@ Parser::StmtResult Parser::ParseIdentifierStatement(bool OnlyStatement) {
     if (SubStmt.isInvalid) return true;
     
     // FIXME: Enter this label into the symbol table for the function.
-    return Actions.ParseLabelStmt(IdentTok, ColonLoc, SubStmt.Val);
+    return Actions.ParseLabelStmt(IdentTok.getLocation(), 
+                                  IdentTok.getIdentifierInfo(),
+                                  ColonLoc, SubStmt.Val);
   }
   
   // Check to see if this is a declaration.
@@ -364,7 +366,7 @@ Parser::StmtResult Parser::ParseCompoundStatement() {
   assert(Tok.getKind() == tok::l_brace && "Not a compount stmt!");
   SourceLocation LBraceLoc = ConsumeBrace();  // eat the '{'.
   
-  // Enter a scope to hold everything within the function.
+  // Enter a scope to hold everything within the compound stmt.
   EnterScope();
   
   SmallVector<StmtTy*, 32> Stmts;
@@ -592,7 +594,8 @@ Parser::StmtResult Parser::ParseGotoStatement() {
   
   StmtResult Res;
   if (Tok.getKind() == tok::identifier) {
-    Res = Actions.ParseGotoStmt(GotoLoc, Tok);
+    Res = Actions.ParseGotoStmt(GotoLoc, Tok.getLocation(),
+                                Tok.getIdentifierInfo());
     ConsumeToken();
   } else if (Tok.getKind() == tok::star && !getLang().NoExtensions) {
     // GNU indirect goto extension.

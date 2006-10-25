@@ -8,7 +8,6 @@
 
 /* Begin PBXBuildFile section */
 		DE06B73E0A8307640050E87E /* LangOptions.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = DE06B73D0A8307640050E87E /* LangOptions.h */; };
-		DE06BEC90A854E390050E87E /* Scope.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DE06BEC80A854E390050E87E /* Scope.cpp */; };
 		DE06BECB0A854E4B0050E87E /* Scope.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = DE06BECA0A854E4B0050E87E /* Scope.h */; };
 		DE06CC180A899E110050E87E /* Statement.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DE06CC170A899E110050E87E /* Statement.cpp */; };
 		DE06CEC00A8AE7800050E87E /* Expression.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DE06CEBF0A8AE7800050E87E /* Expression.cpp */; };
@@ -25,6 +24,7 @@
 		DE344AB80AE5DF6D00DBC861 /* HeaderSearch.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = DE344AB70AE5DF6D00DBC861 /* HeaderSearch.h */; };
 		DE344B540AE5E46C00DBC861 /* HeaderSearch.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DE344B530AE5E46C00DBC861 /* HeaderSearch.cpp */; };
 		DE3450D70AEB543100DBC861 /* DirectoryLookup.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = DE3450D60AEB543100DBC861 /* DirectoryLookup.h */; };
+		DE3451580AEC176100DBC861 /* MacroExpander.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DE3451570AEC176100DBC861 /* MacroExpander.cpp */; };
 		DE46BF280AE0A82D00CC047C /* TargetInfo.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = DE46BF270AE0A82D00CC047C /* TargetInfo.h */; };
 		DE5932D10AD60FF400BC794C /* clang.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DE5932CD0AD60FF400BC794C /* clang.cpp */; };
 		DE5932D20AD60FF400BC794C /* clang.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = DE5932CE0AD60FF400BC794C /* clang.h */; };
@@ -62,7 +62,6 @@
 		DED7D78A0A5242C7003AD0FB /* TokenKinds.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DED7D76E0A5242C7003AD0FB /* TokenKinds.cpp */; };
 		DED7D7C20A5242E6003AD0FB /* IdentifierTable.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DED7D79D0A5242E6003AD0FB /* IdentifierTable.cpp */; };
 		DED7D7C30A5242E6003AD0FB /* Lexer.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DED7D79E0A5242E6003AD0FB /* Lexer.cpp */; };
-		DED7D7C40A5242E6003AD0FB /* MacroExpander.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DED7D79F0A5242E6003AD0FB /* MacroExpander.cpp */; };
 		DED7D7C50A5242E6003AD0FB /* MacroInfo.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DED7D7A00A5242E6003AD0FB /* MacroInfo.cpp */; };
 		DED7D7C70A5242E6003AD0FB /* PPExpressions.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DED7D7A20A5242E6003AD0FB /* PPExpressions.cpp */; };
 		DED7D7C80A5242E6003AD0FB /* Pragma.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DED7D7A30A5242E6003AD0FB /* Pragma.cpp */; };
@@ -119,7 +118,6 @@
 /* Begin PBXFileReference section */
 		8DD76F6C0486A84900D96B5E /* clang */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = clang; sourceTree = BUILT_PRODUCTS_DIR; };
 		DE06B73D0A8307640050E87E /* LangOptions.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = LangOptions.h; sourceTree = "<group>"; };
-		DE06BEC80A854E390050E87E /* Scope.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; name = Scope.cpp; path = Parse/Scope.cpp; sourceTree = "<group>"; };
 		DE06BECA0A854E4B0050E87E /* Scope.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; name = Scope.h; path = clang/Parse/Scope.h; sourceTree = "<group>"; };
 		DE06CC170A899E110050E87E /* Statement.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; name = Statement.cpp; path = Parse/Statement.cpp; sourceTree = "<group>"; };
 		DE06CEBF0A8AE7800050E87E /* Expression.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; name = Expression.cpp; path = Parse/Expression.cpp; sourceTree = "<group>"; };
@@ -136,6 +134,7 @@
 		DE344AB70AE5DF6D00DBC861 /* HeaderSearch.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = HeaderSearch.h; sourceTree = "<group>"; };
 		DE344B530AE5E46C00DBC861 /* HeaderSearch.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = HeaderSearch.cpp; sourceTree = "<group>"; };
 		DE3450D60AEB543100DBC861 /* DirectoryLookup.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = DirectoryLookup.h; sourceTree = "<group>"; };
+		DE3451570AEC176100DBC861 /* MacroExpander.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = MacroExpander.cpp; sourceTree = "<group>"; };
 		DE46BF270AE0A82D00CC047C /* TargetInfo.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = TargetInfo.h; sourceTree = "<group>"; };
 		DE5932CD0AD60FF400BC794C /* clang.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; name = clang.cpp; path = Driver/clang.cpp; sourceTree = "<group>"; };
 		DE5932CE0AD60FF400BC794C /* clang.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; name = clang.h; path = Driver/clang.h; sourceTree = "<group>"; };
@@ -173,7 +172,6 @@
 		DED7D76E0A5242C7003AD0FB /* TokenKinds.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = TokenKinds.cpp; sourceTree = "<group>"; };
 		DED7D79D0A5242E6003AD0FB /* IdentifierTable.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = IdentifierTable.cpp; sourceTree = "<group>"; };
 		DED7D79E0A5242E6003AD0FB /* Lexer.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = Lexer.cpp; sourceTree = "<group>"; };
-		DED7D79F0A5242E6003AD0FB /* MacroExpander.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = MacroExpander.cpp; sourceTree = "<group>"; };
 		DED7D7A00A5242E6003AD0FB /* MacroInfo.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = MacroInfo.cpp; sourceTree = "<group>"; };
 		DED7D7A20A5242E6003AD0FB /* PPExpressions.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = PPExpressions.cpp; sourceTree = "<group>"; };
 		DED7D7A30A5242E6003AD0FB /* Pragma.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = Pragma.cpp; sourceTree = "<group>"; };
@@ -255,7 +253,6 @@
 				DE06CEBF0A8AE7800050E87E /* Expression.cpp */,
 				DE06E4D60A8FBF7A0050E87E /* Initializer.cpp */,
 				DE06D42F0A8BB52D0050E87E /* Parser.cpp */,
-				DE06BEC80A854E390050E87E /* Scope.cpp */,
 				DE06CC170A899E110050E87E /* Statement.cpp */,
 			);
 			name = Parse;
@@ -361,7 +358,7 @@
 				DE344B530AE5E46C00DBC861 /* HeaderSearch.cpp */,
 				DED7D79D0A5242E6003AD0FB /* IdentifierTable.cpp */,
 				DED7D79E0A5242E6003AD0FB /* Lexer.cpp */,
-				DED7D79F0A5242E6003AD0FB /* MacroExpander.cpp */,
+				DE3451570AEC176100DBC861 /* MacroExpander.cpp */,
 				DED7D7A00A5242E6003AD0FB /* MacroInfo.cpp */,
 				DED7D7A20A5242E6003AD0FB /* PPExpressions.cpp */,
 				DED7D7A30A5242E6003AD0FB /* Pragma.cpp */,
@@ -419,13 +416,11 @@
 				DED7D78A0A5242C7003AD0FB /* TokenKinds.cpp in Sources */,
 				DED7D7C20A5242E6003AD0FB /* IdentifierTable.cpp in Sources */,
 				DED7D7C30A5242E6003AD0FB /* Lexer.cpp in Sources */,
-				DED7D7C40A5242E6003AD0FB /* MacroExpander.cpp in Sources */,
 				DED7D7C50A5242E6003AD0FB /* MacroInfo.cpp in Sources */,
 				DED7D7C70A5242E6003AD0FB /* PPExpressions.cpp in Sources */,
 				DED7D7C80A5242E6003AD0FB /* Pragma.cpp in Sources */,
 				DED7D7C90A5242E6003AD0FB /* Preprocessor.cpp in Sources */,
 				DED7D9E50A5257F6003AD0FB /* ScratchBuffer.cpp in Sources */,
-				DE06BEC90A854E390050E87E /* Scope.cpp in Sources */,
 				DE06CC180A899E110050E87E /* Statement.cpp in Sources */,
 				DE06CEC00A8AE7800050E87E /* Expression.cpp in Sources */,
 				DE06D4300A8BB52D0050E87E /* DeclarationSemantics.cpp in Sources */,
@@ -443,6 +438,7 @@
 				DED627030AE0C51D001E80A4 /* Targets.cpp in Sources */,
 				DED62ABB0AE2EDF1001E80A4 /* Decl.cpp in Sources */,
 				DE344B540AE5E46C00DBC861 /* HeaderSearch.cpp in Sources */,
+				DE3451580AEC176100DBC861 /* MacroExpander.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

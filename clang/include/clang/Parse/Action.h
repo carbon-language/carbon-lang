@@ -136,7 +136,7 @@ public:
     return 0;
   }
   
-  virtual StmtResult ParseLabelStmt(const LexerToken &IdentTok,
+  virtual StmtResult ParseLabelStmt(SourceLocation IdentLoc, IdentifierInfo *II,
                                     SourceLocation ColonLoc, StmtTy *SubStmt) {
     return 0;
   }
@@ -161,7 +161,8 @@ public:
   }
   // PARSE FOR STMT.
   virtual StmtResult ParseGotoStmt(SourceLocation GotoLoc,
-                                   const LexerToken &LabelTok) {
+                                   SourceLocation LabelLoc,
+                                   IdentifierInfo *LabelII) {
     return 0;
   }
   virtual StmtResult ParseContinueStmt(SourceLocation GotoLoc) {
@@ -230,7 +231,8 @@ public:
   }
   
   // Unary Operators.  'Tok' is the token for the operator.
-  virtual ExprResult ParseUnaryOp(const LexerToken &Tok, ExprTy *Input) {
+  virtual ExprResult ParseUnaryOp(SourceLocation OpLoc, tok::TokenKind Op,
+                                  ExprTy *Input) {
     return 0;
   }
   virtual ExprResult 

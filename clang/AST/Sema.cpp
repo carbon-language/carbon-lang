@@ -66,7 +66,8 @@ public:
                                      const LexerToken *Toks, unsigned NumToks);
   
   // Binary/Unary Operators.  'Tok' is the token for the operator.
-  virtual ExprResult ParseUnaryOp(const LexerToken &Tok, ExprTy *Input);
+  virtual ExprResult ParseUnaryOp(SourceLocation OpLoc, tok::TokenKind Op,
+                                  ExprTy *Input);
   virtual ExprResult 
     ParseSizeOfAlignOfTypeExpr(SourceLocation OpLoc, bool isSizeof, 
                                SourceLocation LParenLoc, TypeTy *Ty,
@@ -220,10 +221,11 @@ ParseStringExpr(const char *StrData, unsigned StrLen, bool isWide,
 
 
 // Unary Operators.  'Tok' is the token for the operator.
-Action::ExprResult ASTBuilder::ParseUnaryOp(const LexerToken &Tok,
+Action::ExprResult ASTBuilder::ParseUnaryOp(SourceLocation OpLoc,
+                                            tok::TokenKind Op,
                                             ExprTy *Input) {
   UnaryOperator::Opcode Opc;
-  switch (Tok.getKind()) {
+  switch (Op) {
   default: assert(0 && "Unknown unary op!");
   case tok::plusplus:     Opc = UnaryOperator::PreInc; break;
   case tok::minusminus:   Opc = UnaryOperator::PreDec; break;
@@ -243,7 +245,7 @@ Action::ExprResult ASTBuilder::ParseUnaryOp(const LexerToken &Tok,
   if (!FullLocInfo)
     return new UnaryOperator((Expr*)Input, Opc);
   else
-    return new UnaryOperatorLOC(Tok.getLocation(), (Expr*)Input, Opc);
+    return new UnaryOperatorLOC(OpLoc, (Expr*)Input, Opc);
 }
 
 Action::ExprResult ASTBuilder::

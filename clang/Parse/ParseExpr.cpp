@@ -419,7 +419,7 @@ Parser::ParseRHSOfBinaryExpression(ExprResult LHS, unsigned MinPrec) {
 ///
 Parser::ExprResult Parser::ParseCastExpression(bool isUnaryExpression) {
   ExprResult Res;
-  LexerToken SavedTok;
+  tok::TokenKind SavedKind = Tok.getKind();
   
   // This handles all of cast-expression, unary-expression, postfix-expression,
   // and primary-expression.  We handle them together like this for efficiency
@@ -503,13 +503,13 @@ Parser::ExprResult Parser::ParseCastExpression(bool isUnaryExpression) {
   case tok::kw___builtin_types_compatible_p:
     return ParseBuiltinPrimaryExpression();
   case tok::plusplus:      // unary-expression: '++' unary-expression
-  case tok::minusminus:    // unary-expression: '--' unary-expression
-    SavedTok = Tok;
-    ConsumeToken();
+  case tok::minusminus: {  // unary-expression: '--' unary-expression
+    SourceLocation SavedLoc = ConsumeToken();
     Res = ParseCastExpression(true);
     if (!Res.isInvalid)
-      Res = Actions.ParseUnaryOp(SavedTok, Res.Val);
+      Res = Actions.ParseUnaryOp(SavedLoc, SavedKind, Res.Val);
     return Res;
+  }
   case tok::amp:           // unary-expression: '&' cast-expression
   case tok::star:          // unary-expression: '*' cast-expression
   case tok::plus:          // unary-expression: '+' cast-expression
@@ -518,34 +518,33 @@ Parser::ExprResult Parser::ParseCastExpression(bool isUnaryExpression) {
   case tok::exclaim:       // unary-expression: '!' cast-expression
   case tok::kw___real:     // unary-expression: '__real' cast-expression [GNU]
   case tok::kw___imag:     // unary-expression: '__imag' cast-expression [GNU]
-  case tok::kw___extension__://unary-expression: '__extension__' cast-expr [GNU]
+  case tok::kw___extension__:{//unary-expression:'__extension__' cast-expr [GNU]
     // FIXME: Extension not handled correctly here!
-    SavedTok = Tok;
-    ConsumeToken();
+    SourceLocation SavedLoc = ConsumeToken();
     Res = ParseCastExpression(false);
     if (!Res.isInvalid)
-      Res = Actions.ParseUnaryOp(SavedTok, Res.Val);
+      Res = Actions.ParseUnaryOp(SavedLoc, SavedKind, Res.Val);
     return Res;
-    
+  }
   case tok::kw_sizeof:     // unary-expression: 'sizeof' unary-expression
                            // unary-expression: 'sizeof' '(' type-name ')'
   case tok::kw___alignof:  // unary-expression: '__alignof' unary-expression
                            // unary-expression: '__alignof' '(' type-name ')'
     return ParseSizeofAlignofExpression();
-  case tok::ampamp:        // unary-expression: '&&' identifier
+  case tok::ampamp: {      // unary-expression: '&&' identifier
     Diag(Tok, diag::ext_gnu_address_of_label);
-    SavedTok = Tok;
-    ConsumeToken();
+    SourceLocation SavedLoc = ConsumeToken();
     
     if (Tok.getKind() != tok::identifier) {
       Diag(Tok, diag::err_expected_ident);
       return ExprResult(true);
     }
     // FIXME: Create a label ref for Tok.Ident.
-    Res = Actions.ParseUnaryOp(SavedTok, 0);
+    Res = Actions.ParseUnaryOp(SavedLoc, SavedKind, 0);
     ConsumeToken();
       
     return Res;
+  }
   default:
     Diag(Tok, diag::err_expected_expression);
     return ExprResult(true);
@@ -697,7 +696,8 @@ Parser::ExprResult Parser::ParseSizeofAlignofExpression() {
   
   // If we get here, the operand to the sizeof/alignof was an expresion.
   if (!Operand.isInvalid)
-    Operand = Actions.ParseUnaryOp(OpTok, Operand.Val);
+    Operand = Actions.ParseUnaryOp(OpTok.getLocation(), OpTok.getKind(),
+                                   Operand.Val);
   return Operand;
 }
 
