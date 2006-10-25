@@ -364,6 +364,9 @@ Parser::StmtResult Parser::ParseCompoundStatement() {
   assert(Tok.getKind() == tok::l_brace && "Not a compount stmt!");
   SourceLocation LBraceLoc = ConsumeBrace();  // eat the '{'.
   
+  // Enter a scope to hold everything within the function.
+  EnterScope();
+  
   SmallVector<StmtTy*, 32> Stmts;
   while (Tok.getKind() != tok::r_brace && Tok.getKind() != tok::eof) {
     StmtResult R = ParseStatementOrDeclaration(false);
@@ -376,6 +379,8 @@ Parser::StmtResult Parser::ParseCompoundStatement() {
     Diag(Tok, diag::err_expected_rbrace);
     return 0;
   }
+
+  ExitScope();
 
   SourceLocation RBraceLoc = ConsumeBrace();
   return Actions.ParseCompoundStmt(LBraceLoc, RBraceLoc,
