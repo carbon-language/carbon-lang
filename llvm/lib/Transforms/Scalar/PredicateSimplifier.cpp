@@ -400,7 +400,7 @@ namespace {
   /// PredicateSimplifier - This class is a simplifier that replaces
   /// one equivalent variable with another. It also tracks what
   /// can't be equal and will solve setcc instructions when possible.
-  class PredicateSimplifier : public FunctionPass {
+  class VISIBILITY_HIDDEN PredicateSimplifier : public FunctionPass {
   public:
     bool runOnFunction(Function &F);
     virtual void getAnalysisUsage(AnalysisUsage &AU) const;
