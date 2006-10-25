@@ -52,6 +52,19 @@ public:
   virtual void PopScope(SourceLocation Loc, Scope *S);
   
   //===--------------------------------------------------------------------===//
+  // Statement Parsing Callbacks.
+
+  virtual StmtResult ParseCompoundStmt(SourceLocation L, SourceLocation R,
+                                       StmtTy **Elts, unsigned NumElts);
+  virtual StmtResult ParseExprStmt(ExprTy *Expr) {
+    // TODO: Full info should track this with a node.
+    return Expr; // Exprs are Stmts.
+  }
+  
+  virtual StmtResult ParseReturnStmt(SourceLocation ReturnLoc,
+                                     ExprTy *RetValExp);
+  
+  //===--------------------------------------------------------------------===//
   // Expression Parsing Callbacks.
 
   // Primary Expressions.
@@ -162,6 +175,28 @@ void ASTBuilder::PopScope(SourceLocation Loc, Scope *S) {
     
     II.setFETokenInfo(Next);
   }
+}
+
+//===--------------------------------------------------------------------===//
+// Statement Parsing Callbacks.
+//===--------------------------------------------------------------------===//
+
+Action::StmtResult 
+ASTBuilder::ParseCompoundStmt(SourceLocation L, SourceLocation R,
+                              StmtTy **Elts, unsigned NumElts) {
+  if (FullLocInfo || NumElts > 1)
+    return new CompoundStmt((Stmt**)Elts, NumElts);
+  else if (NumElts == 1)
+    return Elts[0];        // {stmt} -> stmt
+  else
+    return 0;              // {}  -> ;
+}
+
+
+Action::StmtResult
+ASTBuilder::ParseReturnStmt(SourceLocation ReturnLoc,
+                            ExprTy *RetValExp) {
+  
 }
 
 //===--------------------------------------------------------------------===//

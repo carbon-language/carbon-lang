@@ -19,6 +19,7 @@
 
 namespace llvm {
 namespace clang {
+  class Expr;
   
 /// Stmt - This represents one statement.  Note that statements are modelled as
 /// subclasses of exprs so that 
@@ -36,21 +37,31 @@ private:
   virtual void dump_impl() const = 0;
 };
 
-//===----------------------------------------------------------------------===//
-// Primary Expressions.
-//===----------------------------------------------------------------------===//
-
-#if 0
-/// DeclRefExpr - [C99 6.5.1p2] - A reference to a declared variable, function,
-/// enum, etc.
-class DeclRefExpr : public Stmt {
-  // TODO: Union with the decl when resolved.
-  Decl &D;
+/// CompoundStmt - This represents a group of statements like { stmt stmt }.
+///
+class CompoundStmt : public Stmt {
+  SmallVector<Stmt*, 16> Body;
 public:
-  DeclRef(Decl &d) : D(d) {}
+  CompoundStmt(Stmt **StmtStart, unsigned NumStmts)
+    : Body(StmtStart, StmtStart+NumStmts) {}
+  
   virtual void dump_impl() const;
 };
-#endif
+
+
+
+
+/// ReturnStmt - This represents a return, optionally of an expression.
+///
+class ReturnStmt : public Stmt {
+  Expr *RetExpr;
+public:
+  ReturnStmt(Expr *E = 0) : RetExpr(E) {}
+  
+  virtual void dump_impl() const;
+};
+
+
   
 }  // end namespace clang
 }  // end namespace llvm

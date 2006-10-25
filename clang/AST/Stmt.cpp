@@ -27,3 +27,19 @@ void Stmt::dump() const {
   dump_impl();
   if (isExpr) std::cerr << ")";
 }
+
+
+
+void CompoundStmt::dump_impl() const {
+  std::cerr << "{\n";
+  for (unsigned i = 0, e = Body.size(); i != e; ++i)
+    Body[i]->dump();
+  std::cerr << "}";
+}
+
+
+void ReturnStmt::dump_impl() const {
+  std::cerr << "return ";
+  if (RetExpr)
+    RetExpr->dump();
+}
