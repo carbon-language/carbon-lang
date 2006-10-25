@@ -206,6 +206,8 @@ void BranchFolder::ReplaceTailWithBranchTo(MachineBasicBlock::iterator OldInst,
 bool BranchFolder::TailMergeBlocks(MachineFunction &MF) {
   MadeChange = false;
   
+  return false;
+  
   // Find blocks with no successors.
   std::vector<std::pair<unsigned,MachineBasicBlock*> > MergePotentials;
   for (MachineFunction::iterator I = MF.begin(), E = MF.end(); I != E; ++I) {
