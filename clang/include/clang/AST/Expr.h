@@ -108,7 +108,8 @@ public:
     Not, LNot,        // [C99 6.5.3.3] Unary arithmetic operators.
     SizeOf, AlignOf,  // [C99 6.5.3.4] Sizeof (expr, not type) operator.
     Real, Imag,       // "__real expr"/"__imag expr" Extension.
-    AddrLabel         // && label Extension.
+    AddrLabel,        // && label Extension.
+    Extension         // __extension__ marker.
   };
 
   UnaryOperator(Expr *input, Opcode opc)

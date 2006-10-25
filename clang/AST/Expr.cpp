@@ -65,7 +65,7 @@ void ParenExpr::dump_impl() const {
 /// corresponds to, e.g. "sizeof" or "[pre]++".
 const char *UnaryOperator::getOpcodeStr(Opcode Op) {
   switch (Op) {
-  default: assert(0 && "Unknown binary operator");
+  default: assert(0 && "Unknown unary operator");
   case PostInc: return "[post]++";
   case PostDec: return "[post]--";
   case PreInc:  return "[pre]++";
@@ -80,6 +80,7 @@ const char *UnaryOperator::getOpcodeStr(Opcode Op) {
   case Imag:    return "__imag";
   case SizeOf:  return "sizeof";
   case AlignOf: return "alignof";
+  case Extension: return "__extension__";
   }
 }
 

@@ -277,6 +277,10 @@ Action::ExprResult ASTBuilder::ParseUnaryOp(SourceLocation OpLoc,
   case tok::kw___real:    Opc = UnaryOperator::Real; break;
   case tok::kw___imag:    Opc = UnaryOperator::Imag; break;
   case tok::ampamp:       Opc = UnaryOperator::AddrLabel; break;
+  case tok::kw___extension__: 
+    if (!FullLocInfo) return Input;
+    Opc = UnaryOperator::Extension;
+    break;
   }
 
   if (!FullLocInfo)
