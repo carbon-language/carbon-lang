@@ -36,6 +36,7 @@
 #include "llvm/Transforms/IPO.h"
 #include "llvm/Transforms/Scalar.h"
 #include "llvm/Analysis/LoadValueNumbering.h"
+#include "llvm/Support/MathExtras.h"
 #include "llvm/LinkTimeOptimizer.h"
 #include <fstream>
 #include <iostream>
@@ -149,8 +150,7 @@ LTO::readLLVMObjectFile(const std::string &InputFilename,
     return LTO_READ_FAILURE;
 
   // Collect Target info
-  if (!Target) 
-    getTarget(m);
+  getTarget(m);
 
   if (!Target)
     return LTO_READ_FAILURE;
@@ -166,8 +166,10 @@ LTO::readLLVMObjectFile(const std::string &InputFilename,
 
     if (!f->isExternal() && lt != LTOInternalLinkage
         && strncmp (f->getName().c_str(), "llvm.", 5)) {
+      int alignment = ( 16 > f->getAlignment() ? 16 : f->getAlignment());
       LLVMSymbol *newSymbol = new LLVMSymbol(lt, f, f->getName(), 
-                                             mangler.getValueName(f));
+                                             mangler.getValueName(f),
+                                             Log2_32(alignment));
       symbols[newSymbol->getMangledName()] = newSymbol;
       allSymbols[newSymbol->getMangledName()] = newSymbol;
     }
@@ -186,8 +188,10 @@ LTO::readLLVMObjectFile(const std::string &InputFilename,
     LTOLinkageTypes lt = getLTOLinkageType(v);
     if (!v->isExternal() && lt != LTOInternalLinkage
         && strncmp (v->getName().c_str(), "llvm.", 5)) {
+      const TargetData *TD = Target->getTargetData();
       LLVMSymbol *newSymbol = new LLVMSymbol(lt, v, v->getName(), 
-                                             mangler.getValueName(v));
+                                             mangler.getValueName(v),
+                                             TD->getPreferredAlignmentLog(v));
       symbols[newSymbol->getMangledName()] = newSymbol;
       allSymbols[newSymbol->getMangledName()] = newSymbol;
 
@@ -205,6 +209,9 @@ LTO::readLLVMObjectFile(const std::string &InputFilename,
 /// Use module M to find appropriate Target.
 void
 LTO::getTarget (Module *M) {
+
+  if (Target)
+    return;
 
   std::string Err;
   const TargetMachineRegistry::Entry* March = 
@@ -230,8 +237,7 @@ LTO::optimize(Module *M, std::ostream &Out,
   PassManager Passes;
   
   // Collect Target info
-  if (!Target) 
-    getTarget(M);
+  getTarget(M);
 
   if (!Target)
     return LTO_NO_TARGET;

@@ -57,17 +57,19 @@ namespace llvm {
     void mayBeNotUsed();
 
     LLVMSymbol (enum LTOLinkageTypes lt, GlobalValue *g, const std::string &n, 
-                const std::string &m) : linkage(lt), gv(g), name(n), 
-                                        mangledName(m) {}
+                const std::string &m, int a) : linkage(lt), gv(g), name(n), 
+                                               mangledName(m), alignment(a) {}
 
     const char *getName() { return name.c_str(); }
     const char *getMangledName() { return mangledName.c_str(); }
+    int getAlignment() { return alignment; }
 
   private:
     enum LTOLinkageTypes linkage;
     GlobalValue *gv;
     std::string name;
     std::string mangledName;
+    int alignment;
   };
 
   class string_compare {
