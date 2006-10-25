@@ -14,7 +14,7 @@
 LEVEL = ../../..
 LIBRARYNAME := clangBasic
 BUILD_ARCHIVE = 1
-CXXFLAGS = -fno-rtti -fno-exceptions
+CXXFLAGS = -fno-rtti
 
 CPPFLAGS += -I$(LEVEL)/tools/clang/include
 
