@@ -176,7 +176,7 @@ Action::ExprResult ASTBuilder::ParseSimplePrimaryExpr(SourceLocation Loc,
   case tok::identifier: {
     // Could be enum-constant or decl.
     //Tok.getIdentifierInfo()
-    return new DeclExpr(*(Decl*)0);
+    return new DeclRefExpr(*(Decl*)0);
   }
     
   case tok::char_constant:     // constant: character-constant
@@ -184,7 +184,7 @@ Action::ExprResult ASTBuilder::ParseSimplePrimaryExpr(SourceLocation Loc,
   case tok::kw___FUNCTION__:   // primary-expression: __FUNCTION__ [GNU]
   case tok::kw___PRETTY_FUNCTION__:  // primary-expression: __P..Y_F..N__ [GNU]
     //assert(0 && "FIXME: Unimp so far!");
-    return new DeclExpr(*(Decl*)0);
+    return new DeclRefExpr(*(Decl*)0);
   }
 }
 

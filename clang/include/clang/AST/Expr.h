@@ -14,8 +14,7 @@
 #ifndef LLVM_CLANG_AST_EXPR_H
 #define LLVM_CLANG_AST_EXPR_H
 
-#include "clang/Basic/SourceLocation.h"
-#include "llvm/ADT/SmallVector.h"
+#include "clang/AST/Stmt.h"
 
 namespace llvm {
 namespace clang {
@@ -23,32 +22,29 @@ namespace clang {
   class Decl;
   class Type;
   
-/// Expr - This represents one expression etc.  
+/// Expr - This represents one expression.  Note that Expr's are subclasses of
+/// Stmt.  This allows an expression to be transparently used any place a Stmt
+/// is required.
 ///
-class Expr {
-  /// Type.
+class Expr : public Stmt {
+  /// TODO: Type.
 public:
   Expr() {}
-  virtual ~Expr() {}
+  ~Expr() {}
   
-  // FIXME: Change to non-virtual method that uses visitor pattern to do this.
-  void dump() const;
-  
-private:
-  virtual void dump_impl() const = 0;
 };
 
 //===----------------------------------------------------------------------===//
 // Primary Expressions.
 //===----------------------------------------------------------------------===//
 
-/// DeclExpr - [C99 6.5.1p2] - A reference to a declared variable, function,
+/// DeclRefExpr - [C99 6.5.1p2] - A reference to a declared variable, function,
 /// enum, etc.
-class DeclExpr : public Expr {
+class DeclRefExpr : public Expr {
   // TODO: Union with the decl when resolved.
   Decl &D;
 public:
-  DeclExpr(Decl &d) : D(d) {}
+  DeclRefExpr(Decl &d) : D(d) {}
   virtual void dump_impl() const;
 };
 

@@ -17,21 +17,11 @@
 using namespace llvm;
 using namespace clang;
 
-void Expr::dump() const {
-  if (this == 0) {
-    std::cerr << "<null expr>";
-    return;
-  }
-  std::cerr << "(";
-  dump_impl();
-  std::cerr << ")";
-}
-
 //===----------------------------------------------------------------------===//
 // Primary Expressions.
 //===----------------------------------------------------------------------===//
 
-void DeclExpr::dump_impl() const {
+void DeclRefExpr::dump_impl() const {
   std::cerr << "x";
 }
 
