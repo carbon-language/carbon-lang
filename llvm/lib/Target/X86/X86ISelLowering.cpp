@@ -37,9 +37,6 @@ using namespace llvm;
 // FIXME: temporary.
 static cl::opt<bool> EnableFastCC("enable-x86-fastcc", cl::Hidden,
                                   cl::desc("Enable fastcc on X86"));
-static cl::opt<bool> NoShuffleOpti("disable-x86-shuffle-opti", cl::Hidden,
-                       cl::desc("Disable vector shuffle optimizations on X86"));
-
 X86TargetLowering::X86TargetLowering(TargetMachine &TM)
   : TargetLowering(TM) {
   Subtarget = &TM.getSubtarget<X86Subtarget>();
@@ -3310,7 +3307,7 @@ X86TargetLowering::LowerBUILD_VECTOR(SDOperand Op, SelectionDAG &DAG) {
     return SDOperand();
 
   // Special case for single non-zero element.
-  if (!NoShuffleOpti && NumNonZero == 1) {
+  if (NumNonZero == 1) {
     unsigned Idx = CountTrailingZeros_32(NonZeros);
     SDOperand Item = Op.getOperand(Idx);
     Item = DAG.getNode(ISD::SCALAR_TO_VECTOR, VT, Item);
@@ -3389,7 +3386,7 @@ X86TargetLowering::LowerBUILD_VECTOR(SDOperand Op, SelectionDAG &DAG) {
     // FIXME: we can do the same for v4f32 case when we know both parts of
     // the lower half come from scalar_to_vector (loadf32). We should do
     // that in post legalizer dag combiner with target specific hooks.
-    if (!NoShuffleOpti && MVT::isInteger(EVT) && (NonZeros & (0x3 << 2)) == 0)
+    if (MVT::isInteger(EVT) && (NonZeros & (0x3 << 2)) == 0)
       return V[0];
     MVT::ValueType MaskVT = MVT::getIntVectorWithNumElements(NumElems);
     MVT::ValueType EVT = MVT::getVectorBaseType(MaskVT);
@@ -3451,52 +3448,49 @@ X86TargetLowering::LowerVECTOR_SHUFFLE(SDOperand Op, SelectionDAG &DAG) {
   if (isSplatMask(PermMask.Val)) {
     if (NumElems <= 4) return Op;
     // Promote it to a v4i32 splat.
-    if (!NoShuffleOpti)
-      return PromoteSplat(Op, DAG);
+    return PromoteSplat(Op, DAG);
   }
 
-  if (!NoShuffleOpti) {
-    if (X86::isMOVLMask(PermMask.Val))
-      return (V1IsUndef) ? V2 : Op;
+  if (X86::isMOVLMask(PermMask.Val))
+    return (V1IsUndef) ? V2 : Op;
       
-    if (X86::isMOVSHDUPMask(PermMask.Val) ||
-        X86::isMOVSLDUPMask(PermMask.Val) ||
-        X86::isMOVHLPSMask(PermMask.Val) ||
-        X86::isMOVHPMask(PermMask.Val) ||
-        X86::isMOVLPMask(PermMask.Val))
-      return Op;
+  if (X86::isMOVSHDUPMask(PermMask.Val) ||
+      X86::isMOVSLDUPMask(PermMask.Val) ||
+      X86::isMOVHLPSMask(PermMask.Val) ||
+      X86::isMOVHPMask(PermMask.Val) ||
+      X86::isMOVLPMask(PermMask.Val))
+    return Op;
 
-    if (ShouldXformToMOVHLPS(PermMask.Val) ||
-        ShouldXformToMOVLP(V1.Val, V2.Val, PermMask.Val))
-      return CommuteVectorShuffle(Op, DAG);
+  if (ShouldXformToMOVHLPS(PermMask.Val) ||
+      ShouldXformToMOVLP(V1.Val, V2.Val, PermMask.Val))
+    return CommuteVectorShuffle(Op, DAG);
 
-    V1IsSplat = isSplatVector(V1.Val);
-    V2IsSplat = isSplatVector(V2.Val);
-    if ((V1IsSplat || V1IsUndef) && !(V2IsSplat || V2IsUndef)) {
-      Op = CommuteVectorShuffle(Op, DAG);
-      V1 = Op.getOperand(0);
-      V2 = Op.getOperand(1);
-      PermMask = Op.getOperand(2);
-      std::swap(V1IsSplat, V2IsSplat);
-      std::swap(V1IsUndef, V2IsUndef);
+  V1IsSplat = isSplatVector(V1.Val);
+  V2IsSplat = isSplatVector(V2.Val);
+  if ((V1IsSplat || V1IsUndef) && !(V2IsSplat || V2IsUndef)) {
+    Op = CommuteVectorShuffle(Op, DAG);
+    V1 = Op.getOperand(0);
+    V2 = Op.getOperand(1);
+    PermMask = Op.getOperand(2);
+    std::swap(V1IsSplat, V2IsSplat);
+    std::swap(V1IsUndef, V2IsUndef);
+  }
+
+  if (isCommutedMOVL(PermMask.Val, V2IsSplat, V2IsUndef)) {
+    if (V2IsUndef) return V1;
+    Op = CommuteVectorShuffle(Op, DAG);
+    V1 = Op.getOperand(0);
+    V2 = Op.getOperand(1);
+    PermMask = Op.getOperand(2);
+    if (V2IsSplat) {
+      // V2 is a splat, so the mask may be malformed. That is, it may point
+      // to any V2 element. The instruction selectior won't like this. Get
+      // a corrected mask and commute to form a proper MOVS{S|D}.
+      SDOperand NewMask = getMOVLMask(NumElems, DAG);
+      if (NewMask.Val != PermMask.Val)
+        Op = DAG.getNode(ISD::VECTOR_SHUFFLE, VT, V1, V2, NewMask);
     }
-
-    if (isCommutedMOVL(PermMask.Val, V2IsSplat, V2IsUndef)) {
-      if (V2IsUndef) return V1;
-      Op = CommuteVectorShuffle(Op, DAG);
-      V1 = Op.getOperand(0);
-      V2 = Op.getOperand(1);
-      PermMask = Op.getOperand(2);
-      if (V2IsSplat) {
-        // V2 is a splat, so the mask may be malformed. That is, it may point
-        // to any V2 element. The instruction selectior won't like this. Get
-        // a corrected mask and commute to form a proper MOVS{S|D}.
-        SDOperand NewMask = getMOVLMask(NumElems, DAG);
-        if (NewMask.Val != PermMask.Val)
-          Op = DAG.getNode(ISD::VECTOR_SHUFFLE, VT, V1, V2, NewMask);
-      }
-      return Op;
-    }
+    return Op;
   }
 
   if (X86::isUNPCKL_v_undef_Mask(PermMask.Val) ||
@@ -3504,26 +3498,24 @@ X86TargetLowering::LowerVECTOR_SHUFFLE(SDOperand Op, SelectionDAG &DAG) {
       X86::isUNPCKHMask(PermMask.Val))
     return Op;
 
-  if (!NoShuffleOpti) {
-    if (V2IsSplat) {
-      // Normalize mask so all entries that point to V2 points to its first
-      // element then try to match unpck{h|l} again. If match, return a 
-      // new vector_shuffle with the corrected mask.
-      SDOperand NewMask = NormalizeMask(PermMask, DAG);
-      if (NewMask.Val != PermMask.Val) {
-        if (X86::isUNPCKLMask(PermMask.Val, true)) {
-          SDOperand NewMask = getUnpacklMask(NumElems, DAG);
-          return DAG.getNode(ISD::VECTOR_SHUFFLE, VT, V1, V2, NewMask);
-        } else if (X86::isUNPCKHMask(PermMask.Val, true)) {
-          SDOperand NewMask = getUnpackhMask(NumElems, DAG);
-          return DAG.getNode(ISD::VECTOR_SHUFFLE, VT, V1, V2, NewMask);
-        }
+  if (V2IsSplat) {
+    // Normalize mask so all entries that point to V2 points to its first
+    // element then try to match unpck{h|l} again. If match, return a 
+    // new vector_shuffle with the corrected mask.
+    SDOperand NewMask = NormalizeMask(PermMask, DAG);
+    if (NewMask.Val != PermMask.Val) {
+      if (X86::isUNPCKLMask(PermMask.Val, true)) {
+        SDOperand NewMask = getUnpacklMask(NumElems, DAG);
+        return DAG.getNode(ISD::VECTOR_SHUFFLE, VT, V1, V2, NewMask);
+      } else if (X86::isUNPCKHMask(PermMask.Val, true)) {
+        SDOperand NewMask = getUnpackhMask(NumElems, DAG);
+        return DAG.getNode(ISD::VECTOR_SHUFFLE, VT, V1, V2, NewMask);
       }
     }
   }
 
   // Normalize the node to match x86 shuffle ops if needed
-  if (!NoShuffleOpti && V2.getOpcode() != ISD::UNDEF)
+  if (V2.getOpcode() != ISD::UNDEF)
     if (isCommutedSHUFP(PermMask.Val)) {
       Op = CommuteVectorShuffle(Op, DAG);
       V1 = Op.getOperand(0);
