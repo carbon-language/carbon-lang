@@ -32,6 +32,9 @@ public:
   Expr() {}
   ~Expr() {}
   
+  
+  // FIXME: move to isa/dyncast etc.
+  virtual bool isExpr() const { return true; }
 };
 
 //===----------------------------------------------------------------------===//

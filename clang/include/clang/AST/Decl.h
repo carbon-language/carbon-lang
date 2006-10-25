@@ -21,6 +21,7 @@ namespace llvm {
 namespace clang {
 class IdentifierInfo;
 class Stmt;
+class FunctionDecl;
   
 /// Decl - This represents one declaration (or definition), e.g. a variable, 
 /// typedef, function, struct, etc.  
@@ -43,12 +44,17 @@ class Decl {
 public:
   Decl(IdentifierInfo *Id, const Declarator &D, Decl *next)
     : Identifier(Id), DeclarationSpecifier(D.getDeclSpec()), Next(next) {}
+  virtual ~Decl();
   
   const IdentifierInfo *getIdentifier() const { return Identifier; }
   
   const DeclSpec &getDeclSpec() const { return DeclarationSpecifier; }
   
   Decl *getNext() const { return Next; }
+  
+  // FIXME: Implement cast/dyn_cast/etc
+  virtual FunctionDecl *isFunctionDecl() { return 0; }
+  virtual const FunctionDecl *isFunctionDecl() const { return 0; }
 };
 
 /// FunctionDecl - An instance of this class is created to represent a function
@@ -62,6 +68,11 @@ public:
   
   Stmt *getBody() const { return Body; }
   void setBody(Stmt *B) { Body = B; }
+  
+  
+  // FIXME: Implement cast/dyn_cast/etc
+  virtual FunctionDecl *isFunctionDecl() { return this; }
+  virtual const FunctionDecl *isFunctionDecl() const { return this; }
 };
 
 /// VarDecl - An instance of this class is created to represent a variable

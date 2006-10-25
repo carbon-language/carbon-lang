@@ -196,7 +196,7 @@ ASTBuilder::ParseCompoundStmt(SourceLocation L, SourceLocation R,
 Action::StmtResult
 ASTBuilder::ParseReturnStmt(SourceLocation ReturnLoc,
                             ExprTy *RetValExp) {
-  
+  return new ReturnStmt((Expr*)RetValExp);
 }
 
 //===--------------------------------------------------------------------===//

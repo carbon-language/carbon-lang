@@ -22,18 +22,19 @@ void Stmt::dump() const {
     std::cerr << "<null>";
     return;
   }
-  bool isExpr = dynamic_cast<const Expr*>(this) != 0;
-  if (isExpr) std::cerr << "(";
+  if (isExpr()) std::cerr << "(";
   dump_impl();
-  if (isExpr) std::cerr << ")";
+  if (isExpr()) std::cerr << ")";
 }
 
 
 
 void CompoundStmt::dump_impl() const {
   std::cerr << "{\n";
-  for (unsigned i = 0, e = Body.size(); i != e; ++i)
+  for (unsigned i = 0, e = Body.size(); i != e; ++i) {
     Body[i]->dump();
+    std::cerr << "\n";
+  }
   std::cerr << "}";
 }
 

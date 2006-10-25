@@ -33,6 +33,9 @@ public:
   // FIXME: Change to non-virtual method that uses visitor pattern to do this.
   void dump() const;
   
+  // FIXME: move to isa/dyncast etc.
+  virtual bool isExpr() const { return false; }
+  
 private:
   virtual void dump_impl() const = 0;
 };

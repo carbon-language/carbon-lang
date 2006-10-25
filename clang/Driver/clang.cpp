@@ -790,11 +790,15 @@ static void PrintASTs(Preprocessor &PP, unsigned MainFileID) {
   ASTStreamerTy *Streamer = ASTStreamer_Init(PP, MainFileID, true);
   
   while (Decl *D = ASTStreamer_ReadTopLevelDecl(Streamer)) {
-    std::cerr << "Read top-level decl: ";
+    std::cerr << "Read top-level decl: '";
     if (const IdentifierInfo *II = D->getIdentifier())
-      std::cerr << II->getName() << "\n";
+      std::cerr << II->getName() << "'\n";
     else
       std::cerr << "\n";
+    if (FunctionDecl *FD = D->isFunctionDecl()) {
+      FD->getBody()->dump();
+      std::cerr << "\n";
+    }
   }
   
   ASTStreamer_Terminate(Streamer);
