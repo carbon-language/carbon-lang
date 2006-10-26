@@ -187,6 +187,7 @@ IdentifierInfo &IdentifierTable::get(const char *NameStart,
   for (IdentifierBucket *Identifier = IdentHead, *LastID = 0; Identifier; 
        LastID = Identifier, Identifier = Identifier->Next) {
     if (Identifier->TokInfo.getNameLength() == Length &&
+        Identifier->TokInfo.HashValue == FullHash &&
         memcmp(Identifier->TokInfo.getName(), NameStart, Length) == 0) {
       // If found identifier wasn't at start of bucket, move it there so
       // that frequently searched for identifiers are found earlier, even if
