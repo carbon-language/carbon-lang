@@ -16,7 +16,7 @@ LIBRARYNAME := clangLex
 BUILD_ARCHIVE = 1
 CXXFLAGS = -fno-rtti 
 
-CPPFLAGS += -I$(LEVEL)/tools/clang/include
+CPPFLAGS += -I$(PROJ_SRC_DIR)/../include
 
 include $(LEVEL)/Makefile.common
 

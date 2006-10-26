@@ -1,5 +1,5 @@
 LEVEL = ../../..
-CPPFLAGS += -I$(LEVEL)/tools/clang/include
+CPPFLAGS += -I$(PROJ_SRC_DIR)/../include
 CXXFLAGS = -fno-rtti
 
 TOOLNAME = clang
