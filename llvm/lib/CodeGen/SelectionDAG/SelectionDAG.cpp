@@ -1447,28 +1447,14 @@ SDOperand SelectionDAG::getExtLoad(ISD::LoadExtType ExtType, MVT::ValueType VT,
   return SDOperand(N, 0);
 }
 
-SDOperand SelectionDAG::getPreIndexedLoad(SDOperand OrigLoad, SDOperand Base) {
+SDOperand SelectionDAG::getIndexedLoad(SDOperand OrigLoad, SDOperand Base,
+                                       SDOperand Offset, ISD::MemOpAddrMode AM){
   LoadSDNode *LD = cast<LoadSDNode>(OrigLoad);
-  SDOperand Ptr = LD->getBasePtr();
-  MVT::ValueType PtrVT = Ptr.getValueType();
-  unsigned Opc = Ptr.getOpcode();
-  SDOperand Offset = LD->getOffset();
-  assert(Offset.getOpcode() == ISD::UNDEF);
-  assert((Opc == ISD::ADD || Opc == ISD::SUB) &&
-         "Load address must be <base +/- offset>!");
-  ISD::MemOpAddrMode AM = (Opc == ISD::ADD) ? ISD::PRE_INC : ISD::PRE_DEC;
-  if (Ptr.getOperand(0) == Base) {
-    Offset = Ptr.getOperand(1);
-    Ptr = Ptr.getOperand(0);
-  } else {
-    assert(Ptr.getOperand(1) == Base);
-    Offset = Ptr.getOperand(0);
-    Ptr = Ptr.getOperand(1);
-  }
-
+  assert(LD->getOffset().getOpcode() == ISD::UNDEF &&
+         "Load is already a indexed load!");
   MVT::ValueType VT = OrigLoad.getValueType();
-  SDVTList VTs = getVTList(VT, PtrVT, MVT::Other);
-  SelectionDAGCSEMap::NodeID ID(ISD::LOAD, VTs, LD->getChain(), Ptr, Offset);
+  SDVTList VTs = getVTList(VT, Base.getValueType(), MVT::Other);
+  SelectionDAGCSEMap::NodeID ID(ISD::LOAD, VTs, LD->getChain(), Base, Offset);
   ID.AddInteger(AM);
   ID.AddInteger(LD->getExtensionType());
   ID.AddInteger(LD->getLoadedVT());
@@ -1479,7 +1465,7 @@ SDOperand SelectionDAG::getPreIndexedLoad(SDOperand OrigLoad, SDOperand Base) {
   void *IP = 0;
   if (SDNode *E = CSEMap.FindNodeOrInsertPos(ID, IP))
     return SDOperand(E, 0);
-  SDNode *N = new LoadSDNode(LD->getChain(), Ptr, Offset, AM,
+  SDNode *N = new LoadSDNode(LD->getChain(), Base, Offset, AM,
                              LD->getExtensionType(), LD->getLoadedVT(),
                              LD->getSrcValue(), LD->getSrcValueOffset(),
                              LD->getAlignment(), LD->isVolatile());
