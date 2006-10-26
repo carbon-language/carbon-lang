@@ -19,9 +19,19 @@
 #include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/CodeGen/MachineLocation.h"
 #include "llvm/Type.h"
+#include "llvm/Target/TargetOptions.h"
 #include "llvm/ADT/STLExtras.h"
 #include <iostream>
 using namespace llvm;
+
+// hasFP - Return true if the specified function should have a dedicated frame
+// pointer register.  This is true if the function has variable sized allocas or
+// if frame pointer elimination is disabled.
+//
+static bool hasFP(const MachineFunction &MF) {
+  const MachineFrameInfo *MFI = MF.getFrameInfo();
+  return NoFramePointerElim || MFI->hasVarSizedObjects();
+}
 
 ARMRegisterInfo::ARMRegisterInfo()
   : ARMGenRegisterInfo(ARM::ADJCALLSTACKDOWN, ARM::ADJCALLSTACKUP) {
@@ -88,6 +98,9 @@ ARMRegisterInfo::getCalleeSaveRegClasses() const {
 void ARMRegisterInfo::
 eliminateCallFramePseudoInstr(MachineFunction &MF, MachineBasicBlock &MBB,
                               MachineBasicBlock::iterator I) const {
+  if (hasFP(MF)) {
+    assert(0);
+  }
   MBB.erase(I);
 }
 
@@ -114,17 +127,18 @@ ARMRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II) const {
   Offset += StackSize;
 
   assert (Offset >= 0);
+  unsigned BaseRegister = hasFP(MF) ? ARM::R11 : ARM::R13;
   if (Offset < 4096) {
     // Replace the FrameIndex with r13
-    MI.getOperand(FrameIdx).ChangeToRegister(ARM::R13, false);
+    MI.getOperand(FrameIdx).ChangeToRegister(BaseRegister, false);
     // Replace the ldr offset with Offset
     MI.getOperand(OffIdx).ChangeToImmediate(Offset);
   } else {
     // Insert a set of r12 with the full address
     // r12 = r13 + offset
     MachineBasicBlock *MBB2 = MI.getParent();
-    BuildMI(*MBB2, II, ARM::ADD, 4, ARM::R12).addReg(ARM::R13).addImm(Offset)
-	    .addImm(0).addImm(ARMShift::LSL);
+    BuildMI(*MBB2, II, ARM::ADD, 4, ARM::R12).addReg(BaseRegister)
+      .addImm(Offset).addImm(0).addImm(ARMShift::LSL);
 
     // Replace the FrameIndex with r12
     MI.getOperand(FrameIdx).ChangeToRegister(ARM::R12, false);
@@ -140,12 +154,18 @@ void ARMRegisterInfo::emitPrologue(MachineFunction &MF) const {
   MachineFrameInfo  *MFI = MF.getFrameInfo();
   int           NumBytes = (int) MFI->getStackSize();
 
+  bool HasFP = hasFP(MF);
+
   if (MFI->hasCalls()) {
     // We reserve argument space for call sites in the function immediately on
     // entry to the current function.  This eliminates the need for add/sub
     // brackets around call sites.
     NumBytes += MFI->getMaxCallFrameSize();
   }
+
+  if (HasFP)
+    // Add space for storing the FP
+    NumBytes += 4;
 
   // Align to 8 bytes
   NumBytes = ((NumBytes + 7) / 8) * 8;
@@ -155,6 +175,13 @@ void ARMRegisterInfo::emitPrologue(MachineFunction &MF) const {
   //sub sp, sp, #NumBytes
   BuildMI(MBB, MBBI, ARM::SUB, 4, ARM::R13).addReg(ARM::R13).addImm(NumBytes)
 	  .addImm(0).addImm(ARMShift::LSL);
+
+  if (HasFP) {
+    BuildMI(MBB, MBBI, ARM::str, 3)
+      .addReg(ARM::R11).addImm(0).addReg(ARM::R13);
+    BuildMI(MBB, MBBI, ARM::MOV, 3, ARM::R11).addReg(ARM::R13).addImm(0).
+      addImm(ARMShift::LSL);
+  }
 }
 
 void ARMRegisterInfo::emitEpilogue(MachineFunction &MF,
@@ -166,6 +193,12 @@ void ARMRegisterInfo::emitEpilogue(MachineFunction &MF,
   MachineFrameInfo *MFI = MF.getFrameInfo();
   int          NumBytes = (int) MFI->getStackSize();
 
+  if (hasFP(MF)) {
+    BuildMI(MBB, MBBI, ARM::MOV, 3, ARM::R13).addReg(ARM::R11).addImm(0).
+      addImm(ARMShift::LSL);
+    BuildMI(MBB, MBBI, ARM::ldr, 2, ARM::R11).addImm(0).addReg(ARM::R13);
+  }
+
   //add sp, sp, #NumBytes
   BuildMI(MBB, MBBI, ARM::ADD, 4, ARM::R13).addReg(ARM::R13).addImm(NumBytes)
 	  .addImm(0).addImm(ARMShift::LSL);
@@ -176,7 +209,7 @@ unsigned ARMRegisterInfo::getRARegister() const {
 }
 
 unsigned ARMRegisterInfo::getFrameRegister(MachineFunction &MF) const {
-  return ARM::R13;
+  return hasFP(MF) ? ARM::R11 : ARM::R13;
 }
 
 #include "ARMGenRegisterInfo.inc"

@@ -125,7 +125,10 @@ def IntRegs : RegisterClass<"ARM", [i32], 32, [R0, R1, R2, R3, R4, R5, R6,
       // r12 == ip (scratch)
       // r11 == Frame Pointer
       // r10 == Stack Limit
-      return end() - 4;
+      if (hasFP(MF))
+        return end() - 5;
+      else
+        return end() - 4;
     }
   }];
 }
