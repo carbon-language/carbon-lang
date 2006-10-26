@@ -28,6 +28,7 @@ DarwinTargetAsmInfo::DarwinTargetAsmInfo(const PPCTargetMachine &TM) {
   AlignmentIsInBytes = false;
   ConstantPoolSection = "\t.const\t";
   JumpTableDataSection = ".const";
+  CStringSection = "\t.cstring";
   LCOMMDirective = "\t.lcomm\t";
   StaticCtorsSection = ".mod_init_func";
   StaticDtorsSection = ".mod_term_func";

@@ -548,6 +548,14 @@ bool DarwinAsmPrinter::doFinalization(Module &M) {
         O << "\t.globl " << name << "\n";
         // FALL THROUGH
       case GlobalValue::InternalLinkage:
+        if (TAI->getCStringSection()) {
+          const ConstantArray *CVA = dyn_cast<ConstantArray>(C);
+          if (CVA && CVA->isCString()) {
+            SwitchToDataSection(TAI->getCStringSection(), I);
+            break;
+          }
+        }
+
         SwitchToDataSection("\t.data", I);
         break;
       default:
