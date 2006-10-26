@@ -1022,7 +1022,7 @@ void BinaryOperator::init(BinaryOps iType)
 #ifndef NDEBUG
   switch (iType) {
   case Add: case Sub:
-  case Mul: case Div:
+  case Mul: 
   case Rem:
     assert(getType() == LHS->getType() &&
            "Arithmetic operation should return same type as operands!");
@@ -1030,6 +1030,22 @@ void BinaryOperator::init(BinaryOps iType)
             isa<PackedType>(getType())) &&
           "Tried to create an arithmetic operation on a non-arithmetic type!");
     break;
+  case UDiv: 
+  case SDiv: 
+    assert(getType() == LHS->getType() &&
+           "Arithmetic operation should return same type as operands!");
+    assert((getType()->isInteger() || (isa<PackedType>(getType()) && 
+            cast<PackedType>(getType())->getElementType()->isInteger())) &&
+           "Incorrect operand type (not integer) for S/UDIV");
+    break;
+  case FDiv:
+    assert(getType() == LHS->getType() &&
+           "Arithmetic operation should return same type as operands!");
+    assert((getType()->isFloatingPoint() || (isa<PackedType>(getType()) &&
+            cast<PackedType>(getType())->getElementType()->isFloatingPoint())) 
+            && "Incorrect operand type (not floating point) for FDIV");
+    break;
+
   case And: case Or:
   case Xor:
     assert(getType() == LHS->getType() &&

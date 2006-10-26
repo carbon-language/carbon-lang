@@ -319,3 +319,16 @@ entry:
 }
 
 //===---------------------------------------------------------------------===//
+
+-instcombine should handle this transform:
+   setcc (sdiv X / C1 ), C2
+when X, C1, and C2 are unsigned.  Similarly for udiv and signed operands. 
+
+Currently InstCombine avoids this transform but will do it when the signs of
+the operands and the sign of the divide match. See the FIXME in 
+InstructionCombining.cpp in the visitSetCondInst method after the switch case 
+for Instruction::UDiv (around line 4447) for more details.
+
+The SingleSource/Benchmarks/Shootout-C++/hash and hash2 tests have examples of
+this construct. 
+//===---------------------------------------------------------------------===//

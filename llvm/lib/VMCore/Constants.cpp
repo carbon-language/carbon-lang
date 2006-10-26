@@ -75,7 +75,9 @@ bool Constant::canTrap() const {
   switch (CE->getOpcode()) {
   default:
     return false;
-  case Instruction::Div:
+  case Instruction::UDiv:
+  case Instruction::SDiv:
+  case Instruction::FDiv:
   case Instruction::Rem:
     // Div and rem can trap if the RHS is not known to be non-zero.
     if (!isa<ConstantInt>(getOperand(1)) || getOperand(1)->isNullValue())
@@ -446,8 +448,14 @@ Constant *ConstantExpr::getSub(Constant *C1, Constant *C2) {
 Constant *ConstantExpr::getMul(Constant *C1, Constant *C2) {
   return get(Instruction::Mul, C1, C2);
 }
-Constant *ConstantExpr::getDiv(Constant *C1, Constant *C2) {
-  return get(Instruction::Div, C1, C2);
+Constant *ConstantExpr::getUDiv(Constant *C1, Constant *C2) {
+  return get(Instruction::UDiv, C1, C2);
+}
+Constant *ConstantExpr::getSDiv(Constant *C1, Constant *C2) {
+  return get(Instruction::SDiv, C1, C2);
+}
+Constant *ConstantExpr::getFDiv(Constant *C1, Constant *C2) {
+  return get(Instruction::FDiv, C1, C2);
 }
 Constant *ConstantExpr::getRem(Constant *C1, Constant *C2) {
   return get(Instruction::Rem, C1, C2);
@@ -1437,12 +1445,26 @@ Constant *ConstantExpr::get(unsigned Opcode, Constant *C1, Constant *C2) {
 #ifndef NDEBUG
   switch (Opcode) {
   case Instruction::Add: case Instruction::Sub:
-  case Instruction::Mul: case Instruction::Div:
+  case Instruction::Mul: 
   case Instruction::Rem:
     assert(C1->getType() == C2->getType() && "Op types should be identical!");
     assert((C1->getType()->isInteger() || C1->getType()->isFloatingPoint() ||
             isa<PackedType>(C1->getType())) &&
            "Tried to create an arithmetic operation on a non-arithmetic type!");
+    break;
+
+  case Instruction::UDiv: 
+  case Instruction::SDiv: 
+    assert(C1->getType() == C2->getType() && "Op types should be identical!");
+    assert((C1->getType()->isInteger() || (isa<PackedType>(C1->getType()) &&
+      cast<PackedType>(C1->getType())->getElementType()->isInteger())) &&
+           "Tried to create an arithmetic operation on a non-arithmetic type!");
+    break;
+  case Instruction::FDiv:
+    assert(C1->getType() == C2->getType() && "Op types should be identical!");
+    assert((C1->getType()->isFloatingPoint() || (isa<PackedType>(C1->getType())
+      && cast<PackedType>(C1->getType())->getElementType()->isFloatingPoint())) 
+      && "Tried to create an arithmetic operation on a non-arithmetic type!");
     break;
   case Instruction::And:
   case Instruction::Or:

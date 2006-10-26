@@ -1275,7 +1275,7 @@ public:
         return true;
       } else if (Op2V == -1.0) {
         // pow(x,-1.0)    -> 1.0/x
-        BinaryOperator* div_inst= BinaryOperator::createDiv(
+        BinaryOperator* div_inst= BinaryOperator::createFDiv(
           ConstantFP::get(Ty,1.0), base, ci->getName()+".pow", ci);
         ci->replaceAllUsesWith(div_inst);
         ci->eraseFromParent();

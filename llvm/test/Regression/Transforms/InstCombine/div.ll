@@ -57,13 +57,12 @@ bool %test9(ubyte %A) {
 
 uint %test10(uint %X, bool %C) {
         %V = select bool %C, uint 64, uint 8
-        %R = div uint %X, %V
+        %R = udiv uint %X, %V
         ret uint %R
 }
 
-uint %test10(uint %X, ubyte %B) {
-	%Amt = shl uint 32, ubyte %B
-	%V = div uint %X, %Amt
-	ret uint %V
+int %test11(int %X, bool %C) {
+        %A = select bool %C, int 1024, int 32
+        %B = udiv int %X, %A
+        ret int %B
 }
-

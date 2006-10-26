@@ -226,6 +226,18 @@ protected:
     Function* F   ///< The function into which BBs will be inserted
   );
 
+  /// Convert previous opcode values into the current value and/or construct
+  /// the instruction. This function handles all *abnormal* cases for 
+  /// instruction generation based on obsolete opcode values. The normal cases 
+  /// are handled by the ParseInstruction function.
+  Instruction* handleObsoleteOpcodes(
+    unsigned &opcode,   ///< The old opcode, possibly updated by this function
+    std::vector<unsigned> &Oprnds, ///< The operands to the instruction
+    unsigned &iType,    ///< The type code from the bytecode file
+    const Type* InstTy, ///< The type of the instruction
+    BasicBlock* BB      ///< The basic block to insert into, if we need to
+  );
+
   /// @brief Parse a single instruction.
   void ParseInstruction(
     std::vector<unsigned>& Args,   ///< The arguments to be filled in
@@ -335,6 +347,13 @@ private:
   // In version 4 and earlier, there was no opcode space reserved for the
   // unreachable instruction.
   bool hasNoUnreachableInst;
+
+  // In version 5 and prior, instructions were signless. In version 6, 
+  // instructions became signed. For example in version 5 we have the DIV 
+  // instruction but in version 6 we have FDIV, SDIV and UDIV to replace it. 
+  // This causes a renumbering of the instruction codes in version 6 that must 
+  // be dealt with when reading old bytecode files.
+  bool hasSignlessInstructions;
 
   /// In release 1.7 we changed intrinsic functions to not be overloaded. There
   /// is no bytecode change for this, but to optimize the auto-upgrade of calls

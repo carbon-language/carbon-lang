@@ -543,7 +543,9 @@ public:
   static Constant *getAdd(Constant *C1, Constant *C2);
   static Constant *getSub(Constant *C1, Constant *C2);
   static Constant *getMul(Constant *C1, Constant *C2);
-  static Constant *getDiv(Constant *C1, Constant *C2);
+  static Constant *getUDiv(Constant *C1, Constant *C2);
+  static Constant *getSDiv(Constant *C1, Constant *C2);
+  static Constant *getFDiv(Constant *C1, Constant *C2);
   static Constant *getRem(Constant *C1, Constant *C2);
   static Constant *getAnd(Constant *C1, Constant *C2);
   static Constant *getOr(Constant *C1, Constant *C2);

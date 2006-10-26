@@ -112,9 +112,21 @@ inline BinaryOp_match<LHS, RHS, Instruction::Mul> m_Mul(const LHS &L,
 }
 
 template<typename LHS, typename RHS>
-inline BinaryOp_match<LHS, RHS, Instruction::Div> m_Div(const LHS &L,
+inline BinaryOp_match<LHS, RHS, Instruction::UDiv> m_UDiv(const LHS &L,
                                                         const RHS &R) {
-  return BinaryOp_match<LHS, RHS, Instruction::Div>(L, R);
+  return BinaryOp_match<LHS, RHS, Instruction::UDiv>(L, R);
+}
+
+template<typename LHS, typename RHS>
+inline BinaryOp_match<LHS, RHS, Instruction::SDiv> m_SDiv(const LHS &L,
+                                                        const RHS &R) {
+  return BinaryOp_match<LHS, RHS, Instruction::SDiv>(L, R);
+}
+
+template<typename LHS, typename RHS>
+inline BinaryOp_match<LHS, RHS, Instruction::FDiv> m_FDiv(const LHS &L,
+                                                        const RHS &R) {
+  return BinaryOp_match<LHS, RHS, Instruction::FDiv>(L, R);
 }
 
 template<typename LHS, typename RHS>

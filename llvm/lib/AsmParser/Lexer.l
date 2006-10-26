@@ -39,8 +39,18 @@ void set_scan_string (const char * str) {
   yy_scan_string (str);
 }
 
+// Construct a token value for a non-obsolete token
 #define RET_TOK(type, Enum, sym) \
-  llvmAsmlval.type = Instruction::Enum; return sym
+  llvmAsmlval.type.opcode = Instruction::Enum; \
+  llvmAsmlval.type.obsolete = false; \
+  return sym
+
+// Construct a token value for an obsolete token
+#define RET_TOK_OBSOLETE(type, Enum, sym) \
+  llvmAsmlval.type.opcode = Instruction::Enum; \
+  llvmAsmlval.type.obsolete = true; \
+  return sym
+
 
 namespace llvm {
 
@@ -247,7 +257,10 @@ opaque          { return OPAQUE; }
 add             { RET_TOK(BinaryOpVal, Add, ADD); }
 sub             { RET_TOK(BinaryOpVal, Sub, SUB); }
 mul             { RET_TOK(BinaryOpVal, Mul, MUL); }
-div             { RET_TOK(BinaryOpVal, Div, DIV); }
+div             { RET_TOK_OBSOLETE(BinaryOpVal, UDiv, UDIV); }
+udiv            { RET_TOK(BinaryOpVal, UDiv, UDIV); }
+sdiv            { RET_TOK(BinaryOpVal, SDiv, SDIV); }
+fdiv            { RET_TOK(BinaryOpVal, FDiv, FDIV); }
 rem             { RET_TOK(BinaryOpVal, Rem, REM); }
 and             { RET_TOK(BinaryOpVal, And, AND); }
 or              { RET_TOK(BinaryOpVal, Or , OR ); }

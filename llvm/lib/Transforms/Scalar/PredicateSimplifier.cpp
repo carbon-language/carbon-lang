@@ -788,7 +788,9 @@ void PredicateSimplifier::Forwards::visitBinaryOperator(BinaryOperator &BO) {
   Instruction::BinaryOps ops = BO.getOpcode();
 
   switch (ops) {
-    case Instruction::Div:
+    case Instruction::UDiv:
+    case Instruction::SDiv:
+    case Instruction::FDiv:
     case Instruction::Rem: {
       Value *Divisor = BO.getOperand(1);
       KP.addNotEqual(Constant::getNullValue(Divisor->getType()), Divisor);

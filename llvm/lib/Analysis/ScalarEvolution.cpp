@@ -989,9 +989,9 @@ SCEVHandle SCEVMulExpr::get(std::vector<SCEVHandle> &Ops) {
 SCEVHandle SCEVSDivExpr::get(const SCEVHandle &LHS, const SCEVHandle &RHS) {
   if (SCEVConstant *RHSC = dyn_cast<SCEVConstant>(RHS)) {
     if (RHSC->getValue()->equalsInt(1))
-      return LHS;                            // X /s 1 --> x
+      return LHS;                            // X sdiv 1 --> x
     if (RHSC->getValue()->isAllOnesValue())
-      return SCEV::getNegativeSCEV(LHS);           // X /s -1  -->  -x
+      return SCEV::getNegativeSCEV(LHS);           // X sdiv -1  -->  -x
 
     if (SCEVConstant *LHSC = dyn_cast<SCEVConstant>(LHS)) {
       Constant *LHSCV = LHSC->getValue();
@@ -1001,7 +1001,7 @@ SCEVHandle SCEVSDivExpr::get(const SCEVHandle &LHS, const SCEVHandle &RHS) {
                                       LHSCV->getType()->getSignedVersion());
       if (RHSCV->getType()->isUnsigned())
         RHSCV = ConstantExpr::getCast(RHSCV, LHSCV->getType());
-      return SCEVUnknown::get(ConstantExpr::getDiv(LHSCV, RHSCV));
+      return SCEVUnknown::get(ConstantExpr::getSDiv(LHSCV, RHSCV));
     }
   }
 
@@ -1384,10 +1384,9 @@ SCEVHandle ScalarEvolutionsImpl::createSCEV(Value *V) {
     case Instruction::Mul:
       return SCEVMulExpr::get(getSCEV(I->getOperand(0)),
                               getSCEV(I->getOperand(1)));
-    case Instruction::Div:
-      if (V->getType()->isInteger() && V->getType()->isSigned())
-        return SCEVSDivExpr::get(getSCEV(I->getOperand(0)),
-                                 getSCEV(I->getOperand(1)));
+    case Instruction::SDiv:
+      return SCEVSDivExpr::get(getSCEV(I->getOperand(0)),
+                              getSCEV(I->getOperand(1)));
       break;
 
     case Instruction::Sub:
@@ -2058,16 +2057,16 @@ SolveQuadraticEquation(const SCEVAddRecExpr *AddRec) {
     return std::make_pair(CNC, CNC);
   }
 
-  Constant *Two = ConstantInt::get(L->getValue()->getType(), 2);
+  Constant *C = L->getValue();
+  Constant *Two = ConstantInt::get(C->getType(), 2);
 
   // Convert from chrec coefficients to polynomial coefficients AX^2+BX+C
-  Constant *C = L->getValue();
   // The B coefficient is M-N/2
   Constant *B = ConstantExpr::getSub(M->getValue(),
-                                     ConstantExpr::getDiv(N->getValue(),
+                                     ConstantExpr::getSDiv(N->getValue(),
                                                           Two));
   // The A coefficient is N/2
-  Constant *A = ConstantExpr::getDiv(N->getValue(), Two);
+  Constant *A = ConstantExpr::getSDiv(N->getValue(), Two);
 
   // Compute the B^2-4ac term.
   Constant *SqrtTerm =
@@ -2102,9 +2101,9 @@ SolveQuadraticEquation(const SCEVAddRecExpr *AddRec) {
   SqrtTerm = ConstantExpr::getCast(SqrtTerm, SignedTy);
 
   Constant *Solution1 =
-    ConstantExpr::getDiv(ConstantExpr::getAdd(NegB, SqrtTerm), TwoA);
+    ConstantExpr::getSDiv(ConstantExpr::getAdd(NegB, SqrtTerm), TwoA);
   Constant *Solution2 =
-    ConstantExpr::getDiv(ConstantExpr::getSub(NegB, SqrtTerm), TwoA);
+    ConstantExpr::getSDiv(ConstantExpr::getSub(NegB, SqrtTerm), TwoA);
   return std::make_pair(SCEVUnknown::get(Solution1),
                         SCEVUnknown::get(Solution2));
 }
@@ -2150,7 +2149,7 @@ SCEVHandle ScalarEvolutionsImpl::HowFarToZero(SCEV *V, const Loop *L) {
         Constant *StartNegC = ConstantExpr::getNeg(StartCC);
         Constant *Rem = ConstantExpr::getRem(StartNegC, StepC->getValue());
         if (Rem->isNullValue()) {
-          Constant *Result =ConstantExpr::getDiv(StartNegC,StepC->getValue());
+          Constant *Result =ConstantExpr::getSDiv(StartNegC,StepC->getValue());
           return SCEVUnknown::get(Result);
         }
       }
@@ -2352,7 +2351,7 @@ SCEVHandle SCEVAddRecExpr::getNumIterationsInRange(ConstantRange Range) const {
     Constant *ExitValue = Upper;
     if (A != One) {
       ExitValue = ConstantExpr::getSub(ConstantExpr::getAdd(Upper, A), One);
-      ExitValue = ConstantExpr::getDiv(ExitValue, A);
+      ExitValue = ConstantExpr::getSDiv(ExitValue, A);
     }
     assert(isa<ConstantInt>(ExitValue) &&
            "Constant folding of integers not implemented?");

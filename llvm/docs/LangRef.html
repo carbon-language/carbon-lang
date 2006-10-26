@@ -77,7 +77,9 @@
           <li><a href="#i_add">'<tt>add</tt>' Instruction</a></li>
           <li><a href="#i_sub">'<tt>sub</tt>' Instruction</a></li>
           <li><a href="#i_mul">'<tt>mul</tt>' Instruction</a></li>
-          <li><a href="#i_div">'<tt>div</tt>' Instruction</a></li>
+          <li><a href="#i_udiv">'<tt>udiv</tt>' Instruction</a></li>
+          <li><a href="#i_sdiv">'<tt>sdiv</tt>' Instruction</a></li>
+          <li><a href="#i_fdiv">'<tt>fdiv</tt>' Instruction</a></li>
           <li><a href="#i_rem">'<tt>rem</tt>' Instruction</a></li>
           <li><a href="#i_setcc">'<tt>set<i>cc</i></tt>' Instructions</a></li>
         </ol>
@@ -1630,26 +1632,70 @@ action is taken based on the type of the operand.</p>
 </pre>
 </div>
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection"> <a name="i_div">'<tt>div</tt>'
+<div class="doc_subsubsection"> <a name="i_udiv">'<tt>udiv</tt>' Instruction
+</a></div>
+<div class="doc_text">
+<h5>Syntax:</h5>
+<pre>  &lt;result&gt; = udiv &lt;ty&gt; &lt;var1&gt;, &lt;var2&gt;   <i>; yields {ty}:result</i>
+</pre>
+<h5>Overview:</h5>
+<p>The '<tt>udiv</tt>' instruction returns the quotient of its two
+operands.</p>
+<h5>Arguments:</h5>
+<p>The two arguments to the '<tt>udiv</tt>' instruction must be 
+<a href="#t_integer">integer</a> values. Both arguments must have identical 
+types. This instruction can also take <a href="#t_packed">packed</a> versions 
+of the values in which case the elements must be integers.</p>
+<h5>Semantics:</h5>
+<p>The value produced is the unsigned integer quotient of the two operands. This
+instruction always performs an unsigned division operation, regardless of 
+whether the arguments are unsigned or not.</p>
+<h5>Example:</h5>
+<pre>  &lt;result&gt; = udiv uint 4, %var          <i>; yields {uint}:result = 4 / %var</i>
+</pre>
+</div>
+<!-- _______________________________________________________________________ -->
+<div class="doc_subsubsection"> <a name="i_sdiv">'<tt>sdiv</tt>' Instruction
+</a> </div>
+<div class="doc_text">
+<h5>Syntax:</h5>
+<pre>  &lt;result&gt; = sdiv &lt;ty&gt; &lt;var1&gt;, &lt;var2&gt;   <i>; yields {ty}:result</i>
+</pre>
+<h5>Overview:</h5>
+<p>The '<tt>sdiv</tt>' instruction returns the quotient of its two
+operands.</p>
+<h5>Arguments:</h5>
+<p>The two arguments to the '<tt>sdiv</tt>' instruction must be
+<a href="#t_integer">integer</a> values.  Both arguments must have identical 
+types. This instruction can also take <a href="#t_packed">packed</a> versions 
+of the values in which case the elements must be integers.</p>
+<h5>Semantics:</h5>
+<p>The value produced is the signed integer quotient of the two operands. This
+instruction always performs a signed division operation, regardless of whether
+the arguments are signed or not.</p>
+<h5>Example:</h5>
+<pre>  &lt;result&gt; = sdiv int 4, %var          <i>; yields {int}:result = 4 / %var</i>
+</pre>
+</div>
+<!-- _______________________________________________________________________ -->
+<div class="doc_subsubsection"> <a name="i_fdiv">'<tt>fdiv</tt>'
 Instruction</a> </div>
 <div class="doc_text">
 <h5>Syntax:</h5>
-<pre>  &lt;result&gt; = div &lt;ty&gt; &lt;var1&gt;, &lt;var2&gt;   <i>; yields {ty}:result</i>
+<pre>  &lt;result&gt; = fdiv &lt;ty&gt; &lt;var1&gt;, &lt;var2&gt;   <i>; yields {ty}:result</i>
 </pre>
 <h5>Overview:</h5>
-<p>The '<tt>div</tt>' instruction returns the quotient of its two
+<p>The '<tt>fdiv</tt>' instruction returns the quotient of its two
 operands.</p>
 <h5>Arguments:</h5>
-<p>The two arguments to the '<tt>div</tt>' instruction must be either <a
- href="#t_integer">integer</a> or <a href="#t_floating">floating point</a>
-values. 
-This instruction can also take <a href="#t_packed">packed</a> versions of the values.
-Both arguments must have identical types.</p>
+<p>The two arguments to the '<tt>div</tt>' instruction must be
+<a href="#t_floating">floating point</a> values.  Both arguments must have
+identical types.  This instruction can also take <a href="#t_packed">packed</a>
+versions of the values in which case the elements must be floating point.</p>
 <h5>Semantics:</h5>
-<p>The value produced is the integer or floating point quotient of the
-two operands.</p>
+<p>The value produced is the floating point quotient of the two operands.</p>
 <h5>Example:</h5>
-<pre>  &lt;result&gt; = div int 4, %var          <i>; yields {int}:result = 4 / %var</i>
+<pre>  &lt;result&gt; = fdiv float 4.0, %var          <i>; yields {float}:result = 4.0 / %var</i>
 </pre>
 </div>
 <!-- _______________________________________________________________________ -->

@@ -131,7 +131,11 @@ namespace {
     Instruction *visitAdd(BinaryOperator &I);
     Instruction *visitSub(BinaryOperator &I);
     Instruction *visitMul(BinaryOperator &I);
-    Instruction *visitDiv(BinaryOperator &I);
+    Instruction *commonDivTransforms(BinaryOperator &I);
+    Instruction *commonIDivTransforms(BinaryOperator &I);
+    Instruction *visitUDiv(BinaryOperator &I);
+    Instruction *visitSDiv(BinaryOperator &I);
+    Instruction *visitFDiv(BinaryOperator &I);
     Instruction *visitRem(BinaryOperator &I);
     Instruction *visitAnd(BinaryOperator &I);
     Instruction *visitOr (BinaryOperator &I);
@@ -1822,7 +1826,9 @@ FoundSExt:
         return R;
   }
 
-  // add (cast *A to intptrtype) B -> cast (GEP (cast *A to sbyte*) B) -> intptrtype
+  // add (cast *A to intptrtype) B -> 
+  //   cast (GEP (cast *A to sbyte*) B) -> 
+  //     intptrtype
   {
     CastInst* CI = dyn_cast<CastInst>(LHS);
     Value* Other = RHS;
@@ -1975,11 +1981,11 @@ Instruction *InstCombiner::visitSub(BinaryOperator &I) {
       }
 
       // 0 - (X sdiv C)  -> (X sdiv -C)
-      if (Op1I->getOpcode() == Instruction::Div)
+      if (Op1I->getOpcode() == Instruction::SDiv)
         if (ConstantInt *CSI = dyn_cast<ConstantInt>(Op0))
-          if (CSI->getType()->isSigned() && CSI->isNullValue())
+          if (CSI->isNullValue())
             if (Constant *DivRHS = dyn_cast<Constant>(Op1I->getOperand(1)))
-              return BinaryOperator::createDiv(Op1I->getOperand(0),
+              return BinaryOperator::createSDiv(Op1I->getOperand(0),
                                                ConstantExpr::getNeg(DivRHS));
 
       // X - X*C --> X * (1-C)
@@ -2156,64 +2162,28 @@ Instruction *InstCombiner::visitMul(BinaryOperator &I) {
   return Changed ? &I : 0;
 }
 
-Instruction *InstCombiner::visitDiv(BinaryOperator &I) {
+/// This function implements the transforms on div instructions that work
+/// regardless of the kind of div instruction it is (udiv, sdiv, or fdiv). It is
+/// used by the visitors to those instructions.
+/// @brief Transforms common to all three div instructions
+Instruction* InstCombiner::commonDivTransforms(BinaryOperator &I) {
   Value *Op0 = I.getOperand(0), *Op1 = I.getOperand(1);
 
-  if (isa<UndefValue>(Op0))              // undef / X -> 0
+  // undef / X -> 0
+  if (isa<UndefValue>(Op0))
     return ReplaceInstUsesWith(I, Constant::getNullValue(I.getType()));
+
+  // X / undef -> undef
   if (isa<UndefValue>(Op1))
-    return ReplaceInstUsesWith(I, Op1);  // X / undef -> undef
+    return ReplaceInstUsesWith(I, Op1);
 
-  if (ConstantInt *RHS = dyn_cast<ConstantInt>(Op1)) {
-    // div X, 1 == X
-    if (RHS->equalsInt(1))
-      return ReplaceInstUsesWith(I, Op0);
-
-    // div X, -1 == -X
-    if (RHS->isAllOnesValue())
-      return BinaryOperator::createNeg(Op0);
-
-    if (Instruction *LHS = dyn_cast<Instruction>(Op0))
-      if (LHS->getOpcode() == Instruction::Div)
-        if (ConstantInt *LHSRHS = dyn_cast<ConstantInt>(LHS->getOperand(1))) {
-          // (X / C1) / C2  -> X / (C1*C2)
-          return BinaryOperator::createDiv(LHS->getOperand(0),
-                                           ConstantExpr::getMul(RHS, LHSRHS));
-        }
-
-    // Check to see if this is an unsigned division with an exact power of 2,
-    // if so, convert to a right shift.
-    if (ConstantInt *C = dyn_cast<ConstantInt>(RHS)) 
-      if (C->getType()->isUnsigned())
-        if (uint64_t Val = C->getZExtValue())    // Don't break X / 0
-          if (isPowerOf2_64(Val)) {
-            uint64_t C = Log2_64(Val);
-            return new ShiftInst(Instruction::Shr, Op0,
-                                 ConstantInt::get(Type::UByteTy, C));
-          }
-
-    // -X/C -> X/-C
-    if (RHS->getType()->isSigned())
-      if (Value *LHSNeg = dyn_castNegVal(Op0))
-        return BinaryOperator::createDiv(LHSNeg, ConstantExpr::getNeg(RHS));
-
-    if (!RHS->isNullValue()) {
-      if (SelectInst *SI = dyn_cast<SelectInst>(Op0))
-        if (Instruction *R = FoldOpIntoSelect(I, SI, this))
-          return R;
-      if (isa<PHINode>(Op0))
-        if (Instruction *NV = FoldOpIntoPhi(I))
-          return NV;
-    }
-  }
-
-  // Handle div X, Cond?Y:Z
+  // Handle cases involving: div X, (select Cond, Y, Z)
   if (SelectInst *SI = dyn_cast<SelectInst>(Op1)) {
     // div X, (Cond ? 0 : Y) -> div X, Y.  If the div and the select are in the
-    // same basic block, then we replace the select with Y, and the condition of
-    // the select with false (if the cond value is in the same BB).  If the
+    // same basic block, then we replace the select with Y, and the condition 
+    // of the select with false (if the cond value is in the same BB).  If the
     // select has uses other than the div, this allows them to be simplified
-    // also.
+    // also. Note that div X, Y is just as good as div X, 0 (undef)
     if (Constant *ST = dyn_cast<Constant>(SI->getOperand(1)))
       if (ST->isNullValue()) {
         Instruction *CondI = dyn_cast<Instruction>(SI->getOperand(0));
@@ -2225,6 +2195,7 @@ Instruction *InstCombiner::visitDiv(BinaryOperator &I) {
           UpdateValueUsesWith(SI, SI->getOperand(2));
         return &I;
       }
+
     // Likewise for: div X, (Cond ? Y : 0) -> div X, Y
     if (Constant *ST = dyn_cast<Constant>(SI->getOperand(2)))
       if (ST->isNullValue()) {
@@ -2237,28 +2208,42 @@ Instruction *InstCombiner::visitDiv(BinaryOperator &I) {
           UpdateValueUsesWith(SI, SI->getOperand(1));
         return &I;
       }
+  }
 
-    // If this is 'udiv X, (Cond ? C1, C2)' where C1&C2 are powers of two,
-    // transform this into: '(Cond ? (udiv X, C1) : (udiv X, C2))'.
-    if (ConstantInt *STO = dyn_cast<ConstantInt>(SI->getOperand(1)))
-      if (ConstantInt *SFO = dyn_cast<ConstantInt>(SI->getOperand(2))) 
-        if (STO->getType()->isUnsigned() && SFO->getType()->isUnsigned()) {
-          // STO == 0 and SFO == 0 handled above.
-          uint64_t TVA = STO->getZExtValue(), FVA = SFO->getZExtValue();
-          if (isPowerOf2_64(TVA) && isPowerOf2_64(FVA)) {
-            unsigned TSA = Log2_64(TVA), FSA = Log2_64(FVA);
-            Constant *TC = ConstantInt::get(Type::UByteTy, TSA);
-            Instruction *TSI = new ShiftInst(Instruction::Shr, Op0,
-                                             TC, SI->getName()+".t");
-            TSI = InsertNewInstBefore(TSI, I);
+  return 0;
+}
 
-            Constant *FC = ConstantInt::get(Type::UByteTy, FSA);
-            Instruction *FSI = new ShiftInst(Instruction::Shr, Op0,
-                                             FC, SI->getName()+".f");
-            FSI = InsertNewInstBefore(FSI, I);
-            return new SelectInst(SI->getOperand(0), TSI, FSI);
-          }
+/// This function implements the transforms common to both integer division
+/// instructions (udiv and sdiv). It is called by the visitors to those integer
+/// division instructions.
+/// @brief Common integer divide transforms
+Instruction* InstCombiner::commonIDivTransforms(BinaryOperator &I) {
+  Value *Op0 = I.getOperand(0), *Op1 = I.getOperand(1);
+
+  if (Instruction *Common = commonDivTransforms(I))
+    return Common;
+
+  if (ConstantInt *RHS = dyn_cast<ConstantInt>(Op1)) {
+    // div X, 1 == X
+    if (RHS->equalsInt(1))
+      return ReplaceInstUsesWith(I, Op0);
+
+    // (X / C1) / C2  -> X / (C1*C2)
+    if (Instruction *LHS = dyn_cast<Instruction>(Op0))
+      if (Instruction::BinaryOps(LHS->getOpcode()) == I.getOpcode())
+        if (ConstantInt *LHSRHS = dyn_cast<ConstantInt>(LHS->getOperand(1))) {
+          return BinaryOperator::create(I.getOpcode(), LHS->getOperand(0),
+                                        ConstantExpr::getMul(RHS, LHSRHS));
         }
+
+    if (!RHS->isNullValue()) { // avoid X udiv 0
+      if (SelectInst *SI = dyn_cast<SelectInst>(Op0))
+        if (Instruction *R = FoldOpIntoSelect(I, SI, this))
+          return R;
+      if (isa<PHINode>(Op0))
+        if (Instruction *NV = FoldOpIntoPhi(I))
+          return NV;
+    }
   }
 
   // 0 / X == 0, we don't need to preserve faults!
@@ -2266,48 +2251,137 @@ Instruction *InstCombiner::visitDiv(BinaryOperator &I) {
     if (LHS->equalsInt(0))
       return ReplaceInstUsesWith(I, Constant::getNullValue(I.getType()));
 
-  if (I.getType()->isSigned()) {
-    // If the sign bits of both operands are zero (i.e. we can prove they are
-    // unsigned inputs), turn this into a udiv.
-    uint64_t Mask = 1ULL << (I.getType()->getPrimitiveSizeInBits()-1);
-    if (MaskedValueIsZero(Op1, Mask) && MaskedValueIsZero(Op0, Mask)) {
-      const Type *NTy = Op0->getType()->getUnsignedVersion();
-      Instruction *LHS = new CastInst(Op0, NTy, Op0->getName());
-      InsertNewInstBefore(LHS, I);
-      Value *RHS;
-      if (Constant *R = dyn_cast<Constant>(Op1))
-        RHS = ConstantExpr::getCast(R, NTy);
-      else
-        RHS = InsertNewInstBefore(new CastInst(Op1, NTy, Op1->getName()), I);
-      Instruction *Div = BinaryOperator::createDiv(LHS, RHS, I.getName());
-      InsertNewInstBefore(Div, I);
-      return new CastInst(Div, I.getType());
-    }      
-  } else {
-    // Known to be an unsigned division.
-    if (Instruction *RHSI = dyn_cast<Instruction>(I.getOperand(1))) {
-      // Turn A / (C1 << N), where C1 is "1<<C2" into A >> (N+C2) [udiv only].
-      if (RHSI->getOpcode() == Instruction::Shl &&
-          isa<ConstantInt>(RHSI->getOperand(0)) &&
-          RHSI->getOperand(0)->getType()->isUnsigned()) {
-        uint64_t C1 = cast<ConstantInt>(RHSI->getOperand(0))->getZExtValue();
-        if (isPowerOf2_64(C1)) {
-          uint64_t C2 = Log2_64(C1);
-          Value *Add = RHSI->getOperand(1);
-          if (C2) {
-            Constant *C2V = ConstantInt::get(Add->getType(), C2);
-            Add = InsertNewInstBefore(BinaryOperator::createAdd(Add, C2V,
-                                                                "tmp"), I);
+  return 0;
+}
+
+Instruction *InstCombiner::visitUDiv(BinaryOperator &I) {
+  Value *Op0 = I.getOperand(0), *Op1 = I.getOperand(1);
+
+  // Handle the integer div common cases
+  if (Instruction *Common = commonIDivTransforms(I))
+    return Common;
+
+  // X udiv C^2 -> X >> C
+  // Check to see if this is an unsigned division with an exact power of 2,
+  // if so, convert to a right shift.
+  if (ConstantInt *C = dyn_cast<ConstantInt>(Op1)) {
+    if (uint64_t Val = C->getZExtValue())    // Don't break X / 0
+      if (isPowerOf2_64(Val)) {
+        uint64_t ShiftAmt = Log2_64(Val);
+        Value* X = Op0;
+        const Type* XTy = X->getType();
+        bool isSigned = XTy->isSigned();
+        if (isSigned)
+          X = InsertCastBefore(X, XTy->getUnsignedVersion(), I);
+        Instruction* Result = 
+          new ShiftInst(Instruction::Shr, X, 
+                        ConstantInt::get(Type::UByteTy, ShiftAmt));
+        if (!isSigned)
+          return Result;
+        InsertNewInstBefore(Result, I);
+        return new CastInst(Result, XTy->getSignedVersion(), I.getName());
+      }
+  }
+
+  // X udiv (C1 << N), where C1 is "1<<C2"  -->  X >> (N+C2)
+  if (ShiftInst *RHSI = dyn_cast<ShiftInst>(I.getOperand(1))) {
+    if (RHSI->getOpcode() == Instruction::Shl &&
+        isa<ConstantInt>(RHSI->getOperand(0))) {
+      uint64_t C1 = cast<ConstantInt>(RHSI->getOperand(0))->getZExtValue();
+      if (isPowerOf2_64(C1)) {
+        Value *N = RHSI->getOperand(1);
+        const Type* NTy = N->getType();
+        bool isSigned = NTy->isSigned();
+        if (uint64_t C2 = Log2_64(C1)) {
+          if (isSigned) {
+            NTy = NTy->getUnsignedVersion();
+            N = InsertCastBefore(N, NTy, I);
           }
-          return new ShiftInst(Instruction::Shr, Op0, Add);
+          Constant *C2V = ConstantInt::get(NTy, C2);
+          N = InsertNewInstBefore(BinaryOperator::createAdd(N, C2V, "tmp"), I);
         }
+        Instruction* Result = new ShiftInst(Instruction::Shr, Op0, N);
+        if (!isSigned)
+          return Result;
+        InsertNewInstBefore(Result, I);
+        return new CastInst(Result, NTy->getSignedVersion(), I.getName());
       }
     }
   }
   
+  // udiv X, (Select Cond, C1, C2) --> Select Cond, (shr X, C1), (shr X, C2)
+  // where C1&C2 are powers of two.
+  if (SelectInst *SI = dyn_cast<SelectInst>(Op1)) {
+    if (ConstantInt *STO = dyn_cast<ConstantInt>(SI->getOperand(1)))
+      if (ConstantInt *SFO = dyn_cast<ConstantInt>(SI->getOperand(2))) 
+        if (!STO->isNullValue() && !STO->isNullValue()) {
+          uint64_t TVA = STO->getZExtValue(), FVA = SFO->getZExtValue();
+          if (isPowerOf2_64(TVA) && isPowerOf2_64(FVA)) {
+            // Compute the shift amounts
+            unsigned TSA = Log2_64(TVA), FSA = Log2_64(FVA);
+            // Make sure we get the unsigned version of X
+            Value* X = Op0;
+            const Type* origXTy = X->getType();
+            bool isSigned = origXTy->isSigned();
+            if (isSigned)
+              X = InsertCastBefore(X, X->getType()->getUnsignedVersion(), I);
+            // Construct the "on true" case of the select
+            Constant *TC = ConstantInt::get(Type::UByteTy, TSA);
+            Instruction *TSI = 
+              new ShiftInst(Instruction::Shr, X, TC, SI->getName()+".t");
+            TSI = InsertNewInstBefore(TSI, I);
+    
+            // Construct the "on false" case of the select
+            Constant *FC = ConstantInt::get(Type::UByteTy, FSA); 
+            Instruction *FSI = 
+              new ShiftInst(Instruction::Shr, X, FC, SI->getName()+".f");
+            FSI = InsertNewInstBefore(FSI, I);
+
+            // construct the select instruction and return it.
+            SelectInst* NewSI = 
+              new SelectInst(SI->getOperand(0), TSI, FSI, SI->getName());
+            if (!isSigned)
+              return NewSI;
+            InsertNewInstBefore(NewSI, I);
+            return new CastInst(NewSI, origXTy, NewSI->getName());
+          }
+        }
+  }
   return 0;
 }
 
+Instruction *InstCombiner::visitSDiv(BinaryOperator &I) {
+  Value *Op0 = I.getOperand(0), *Op1 = I.getOperand(1);
+
+  // Handle the integer div common cases
+  if (Instruction *Common = commonIDivTransforms(I))
+    return Common;
+
+  if (ConstantInt *RHS = dyn_cast<ConstantInt>(Op1)) {
+    // sdiv X, -1 == -X
+    if (RHS->isAllOnesValue())
+      return BinaryOperator::createNeg(Op0);
+
+    // -X/C -> X/-C
+    if (Value *LHSNeg = dyn_castNegVal(Op0))
+      return BinaryOperator::createSDiv(LHSNeg, ConstantExpr::getNeg(RHS));
+  }
+
+  // If the sign bits of both operands are zero (i.e. we can prove they are
+  // unsigned inputs), turn this into a udiv.
+  if (I.getType()->isInteger()) {
+    uint64_t Mask = 1ULL << (I.getType()->getPrimitiveSizeInBits()-1);
+    if (MaskedValueIsZero(Op1, Mask) && MaskedValueIsZero(Op0, Mask)) {
+      return BinaryOperator::createUDiv(Op0, Op1, I.getName());
+    }
+  }      
+  
+  return 0;
+}
+
+Instruction *InstCombiner::visitFDiv(BinaryOperator &I) {
+  return commonDivTransforms(I);
+}
 
 /// GetFactor - If we can prove that the specified value is at least a multiple
 /// of some factor, return that factor.
@@ -2376,13 +2450,12 @@ Instruction *InstCombiner::visitRem(BinaryOperator &I) {
     uint64_t Mask = 1ULL << (I.getType()->getPrimitiveSizeInBits()-1);
     if (MaskedValueIsZero(Op1, Mask) && MaskedValueIsZero(Op0, Mask)) {
       const Type *NTy = Op0->getType()->getUnsignedVersion();
-      Instruction *LHS = new CastInst(Op0, NTy, Op0->getName());
-      InsertNewInstBefore(LHS, I);
+      Value *LHS = InsertCastBefore(Op0, NTy, I);
       Value *RHS;
       if (Constant *R = dyn_cast<Constant>(Op1))
         RHS = ConstantExpr::getCast(R, NTy);
       else
-        RHS = InsertNewInstBefore(new CastInst(Op1, NTy, Op1->getName()), I);
+        RHS = InsertCastBefore(Op1, NTy, I);
       Instruction *Rem = BinaryOperator::createRem(LHS, RHS, I.getName());
       InsertNewInstBefore(Rem, I);
       return new CastInst(Rem, I.getType());
@@ -3717,14 +3790,6 @@ Instruction *InstCombiner::visitXor(BinaryOperator &I) {
   return Changed ? &I : 0;
 }
 
-/// MulWithOverflow - Compute Result = In1*In2, returning true if the result
-/// overflowed for this type.
-static bool MulWithOverflow(ConstantInt *&Result, ConstantInt *In1,
-                            ConstantInt *In2) {
-  Result = cast<ConstantInt>(ConstantExpr::getMul(In1, In2));
-  return !In2->isNullValue() && ConstantExpr::getDiv(Result, In2) != In1;
-}
-
 static bool isPositive(ConstantInt *C) {
   return C->getSExtValue() >= 0;
 }
@@ -4126,7 +4191,9 @@ Instruction *InstCombiner::visitSetCondInst(SetCondInst &I) {
       }
     }
           
-    
+    // Since the RHS is a constantInt (CI), if the left hand side is an 
+    // instruction, see if that instruction also has constants so that the 
+    // instruction can be folded into the setcc
     if (Instruction *LHSI = dyn_cast<Instruction>(Op0))
       switch (LHSI->getOpcode()) {
       case Instruction::And:
@@ -4379,27 +4446,60 @@ Instruction *InstCombiner::visitSetCondInst(SetCondInst &I) {
         }
         break;
 
-      case Instruction::Div:
-        // Fold: (div X, C1) op C2 -> range check
+      case Instruction::SDiv:
+      case Instruction::UDiv:
+        // Fold: setcc ([us]div X, C1), C2 -> range test
+        // Fold this div into the comparison, producing a range check. 
+        // Determine, based on the divide type, what the range is being 
+        // checked.  If there is an overflow on the low or high side, remember 
+        // it, otherwise compute the range [low, hi) bounding the new value.
+        // See: InsertRangeTest above for the kinds of replacements possible.
         if (ConstantInt *DivRHS = dyn_cast<ConstantInt>(LHSI->getOperand(1))) {
-          // Fold this div into the comparison, producing a range check.
-          // Determine, based on the divide type, what the range is being
-          // checked.  If there is an overflow on the low or high side, remember
-          // it, otherwise compute the range [low, hi) bounding the new value.
-          bool LoOverflow = false, HiOverflow = 0;
+          // FIXME: If the operand types don't match the type of the divide 
+          // then don't attempt this transform. The code below doesn't have the
+          // logic to deal with a signed divide and an unsigned compare (and
+          // vice versa). This is because (x /s C1) <s C2  produces different 
+          // results than (x /s C1) <u C2 or (x /u C1) <s C2 or even
+          // (x /u C1) <u C2.  Simply casting the operands and result won't 
+          // work. :(  The if statement below tests that condition and bails 
+          // if it finds it. 
+          const Type* DivRHSTy = DivRHS->getType();
+          unsigned DivOpCode = LHSI->getOpcode();
+          if (I.isEquality() &&
+              ((DivOpCode == Instruction::SDiv && DivRHSTy->isUnsigned()) ||
+               (DivOpCode == Instruction::UDiv && DivRHSTy->isSigned())))
+            break;
+
+          // Initialize the variables that will indicate the nature of the
+          // range check.
+          bool LoOverflow = false, HiOverflow = false;
           ConstantInt *LoBound = 0, *HiBound = 0;
 
-          ConstantInt *Prod;
-          bool ProdOV = MulWithOverflow(Prod, CI, DivRHS);
+          // Compute Prod = CI * DivRHS. We are essentially solving an equation
+          // of form X/C1=C2. We solve for X by multiplying C1 (DivRHS) and 
+          // C2 (CI). By solving for X we can turn this into a range check 
+          // instead of computing a divide. 
+          ConstantInt *Prod = 
+            cast<ConstantInt>(ConstantExpr::getMul(CI, DivRHS));
 
+          // Determine if the product overflows by seeing if the product is
+          // not equal to the divide. Make sure we do the same kind of divide
+          // as in the LHS instruction that we're folding. 
+          bool ProdOV = !DivRHS->isNullValue() && 
+            (DivOpCode == Instruction::SDiv ?  
+             ConstantExpr::getSDiv(Prod, DivRHS) :
+              ConstantExpr::getUDiv(Prod, DivRHS)) != CI;
+
+          // Get the SetCC opcode
           Instruction::BinaryOps Opcode = I.getOpcode();
 
-          if (DivRHS->isNullValue()) {  // Don't hack on divide by zeros.
-          } else if (LHSI->getType()->isUnsigned()) {  // udiv
+          if (DivRHS->isNullValue()) {  
+            // Don't hack on divide by zeros!
+          } else if (DivOpCode == Instruction::UDiv) {  // udiv
             LoBound = Prod;
             LoOverflow = ProdOV;
             HiOverflow = ProdOV || AddWithOverflow(HiBound, LoBound, DivRHS);
-          } else if (isPositive(DivRHS)) {             // Divisor is > 0.
+          } else if (isPositive(DivRHS)) { // Divisor is > 0.
             if (CI->isNullValue()) {       // (X / pos) op 0
               // Can't overflow.
               LoBound = cast<ConstantInt>(ConstantExpr::getNeg(SubOne(DivRHS)));
@@ -4415,12 +4515,12 @@ Instruction *InstCombiner::visitSetCondInst(SetCondInst &I) {
               HiBound = Prod;
               HiOverflow = ProdOV;
             }
-          } else {                                     // Divisor is < 0.
+          } else {                         // Divisor is < 0.
             if (CI->isNullValue()) {       // (X / neg) op 0
               LoBound = AddOne(DivRHS);
               HiBound = cast<ConstantInt>(ConstantExpr::getNeg(DivRHS));
               if (HiBound == DivRHS)
-                LoBound = 0;  // - INTMIN = INTMIN
+                LoBound = 0;               // - INTMIN = INTMIN
             } else if (isPositive(CI)) {   // (X / neg) op pos
               HiOverflow = LoOverflow = ProdOV;
               if (!LoOverflow)
@@ -5679,6 +5779,23 @@ Instruction *InstCombiner::visitCastInst(CastInst &CI) {
                                            ConstantInt::get(CI.getType(), 1));
         }
         break;
+      case Instruction::SDiv:
+      case Instruction::UDiv:
+        // If we are just changing the sign, rewrite.
+        if (DestBitSize == SrcBitSize) {
+          // Don't insert two casts if they cannot be eliminated.  We allow two
+          // casts to be inserted if the sizes are the same.  This could only be
+          // converting signedness, which is a noop.
+          if (!ValueRequiresCast(Op1, DestTy,TD) || 
+              !ValueRequiresCast(Op0, DestTy, TD)) {
+            Value *Op0c = InsertOperandCastBefore(Op0, DestTy, SrcI);
+            Value *Op1c = InsertOperandCastBefore(Op1, DestTy, SrcI);
+            return BinaryOperator::create(
+              cast<BinaryOperator>(SrcI)->getOpcode(), Op0c, Op1c);
+          }
+        }
+        break;
+
       case Instruction::Shl:
         // Allow changing the sign of the source operand.  Do not allow changing
         // the size of the shift, UNLESS the shift amount is a constant.  We

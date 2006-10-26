@@ -293,7 +293,7 @@ namespace llvm {
 
 
   //===--------------------------------------------------------------------===//
-  /// SCEVSDivExpr - This class represents a binary unsigned division operation.
+  /// SCEVSDivExpr - This class represents a binary signed division operation.
   ///
   class SCEVSDivExpr : public SCEV {
     SCEVHandle LHS, RHS;

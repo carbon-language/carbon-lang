@@ -562,6 +562,244 @@ void BytecodeReader::insertArguments(Function* F) {
     insertValue(AI, getTypeSlot(AI->getType()), FunctionValues);
 }
 
+// Convert previous opcode values into the current value and/or construct
+// the instruction. This function handles all *abnormal* cases for instruction
+// generation based on obsolete opcode values. The normal cases are handled
+// in ParseInstruction below.  Generally this function just produces a new
+// Opcode value (first argument). In a few cases (VAArg, VANext) the upgrade
+// path requies that the instruction (sequence) be generated differently from
+// the normal case in order to preserve the original semantics. In these 
+// cases the result of the function will be a non-zero Instruction pointer. In
+// all other cases, zero will be returned indicating that the *normal*
+// instruction generation should be used, but with the new Opcode value.
+// 
+Instruction*
+BytecodeReader::handleObsoleteOpcodes(
+  unsigned &Opcode,   ///< The old opcode, possibly updated by this function
+  std::vector<unsigned> &Oprnds, ///< The operands to the instruction
+  unsigned &iType,    ///< The type code from the bytecode file
+  const Type* InstTy, ///< The type of the instruction
+  BasicBlock* BB      ///< The basic block to insert into, if we need to
+) {
+
+  // First, short circuit this if no conversion is required. When signless
+  // instructions were implemented the entire opcode sequence was revised so
+  // we key on this first which means that the opcode value read is the one
+  // we should use.
+  if (!hasSignlessInstructions)
+    return 0; // The opcode is fine the way it is.
+
+  // Declare the resulting instruction we might build. In general we just 
+  // change the Opcode argument but in a few cases we need to generate the 
+  // Instruction here because the upgrade case is significantly different from 
+  // the normal case.
+  Instruction *Result = 0;
+
+  // If this is a bytecode format that did not include the unreachable
+  // instruction, bump up the opcode number to adjust it.
+  if (hasNoUnreachableInst)
+    if (Opcode >= Instruction::Unreachable && Opcode < 62)
+      ++Opcode;
+
+  // We're dealing with an upgrade situation. For each of the opcode values,
+  // perform the necessary conversion.
+  switch (Opcode) {
+    default: // Error
+      // This switch statement provides cases for all known opcodes prior to
+      // version 6 bytecode format. We know we're in an upgrade situation so
+      // if there isn't a match in this switch, then something is horribly
+      // wrong.
+      error("Unknown obsolete opcode encountered.");
+      break;
+    case 1: // Ret
+      Opcode = Instruction::Ret;
+      break;
+    case 2: // Br
+      Opcode = Instruction::Br;
+      break;
+    case 3: // Switch
+      Opcode = Instruction::Switch;
+      break;
+    case 4: // Invoke
+      Opcode = Instruction::Invoke;
+      break;
+    case 5: // Unwind
+      Opcode = Instruction::Unwind;
+      break;
+    case 6: // Unreachable
+      Opcode = Instruction::Unreachable;
+      break;
+    case 7: // Add
+      Opcode = Instruction::Add;
+      break;
+    case 8: // Sub
+      Opcode = Instruction::Sub;
+      break;
+    case 9: // Mul
+      Opcode = Instruction::Mul;
+      break;
+    case 10: // Div 
+      // The type of the instruction is based on the operands. We need to select
+      // fdiv, udiv or sdiv based on that type. The iType values are hardcoded
+      // to the values used in bytecode version 5 (and prior) because it is
+      // likely these codes will change in future versions of LLVM.
+      if (iType == 10 || iType == 11 )
+        Opcode = Instruction::FDiv;
+      else if (iType >= 2 && iType <= 9 && iType % 2 != 0)
+        Opcode = Instruction::SDiv;
+      else
+        Opcode = Instruction::UDiv;
+      break;
+
+    case 11: // Rem
+        Opcode = Instruction::Rem;
+      break;
+    case 12: // And
+      Opcode = Instruction::And;
+      break;
+    case 13: // Or
+      Opcode = Instruction::Or;
+      break;
+    case 14: // Xor
+      Opcode = Instruction::Xor;
+      break;
+    case 15: // SetEQ
+      Opcode = Instruction::SetEQ;
+      break;
+    case 16: // SetNE
+      Opcode = Instruction::SetNE;
+      break;
+    case 17: // SetLE
+      Opcode = Instruction::SetLE;
+      break;
+    case 18: // SetGE
+      Opcode = Instruction::SetGE;
+      break;
+    case 19: // SetLT
+      Opcode = Instruction::SetLT;
+      break;
+    case 20: // SetGT
+      Opcode = Instruction::SetGT;
+      break;
+    case 21: // Malloc
+      Opcode = Instruction::Malloc;
+      break;
+    case 22: // Free
+      Opcode = Instruction::Free;
+      break;
+    case 23: // Alloca
+      Opcode = Instruction::Alloca;
+      break;
+    case 24: // Load
+      Opcode = Instruction::Load;
+      break;
+    case 25: // Store
+      Opcode = Instruction::Store;
+      break;
+    case 26: // GetElementPtr
+      Opcode = Instruction::GetElementPtr;
+      break;
+    case 27: // PHI
+      Opcode = Instruction::PHI;
+      break;
+    case 28: // Cast
+      Opcode = Instruction::Cast;
+      break;
+    case 29: // Call
+      Opcode = Instruction::Call;
+      break;
+    case 30: // Shl
+      Opcode = Instruction::Shl;
+      break;
+    case 31: // Shr
+      Opcode = Instruction::Shr;
+      break;
+    case 32: { //VANext_old ( <= llvm 1.5 )
+      const Type* ArgTy = getValue(iType, Oprnds[0])->getType();
+      Function* NF = TheModule->getOrInsertFunction(
+        "llvm.va_copy", ArgTy, ArgTy, (Type *)0);
+
+      // In llvm 1.6 the VANext instruction was dropped because it was only 
+      // necessary to have a VAArg instruction. The code below transforms an
+      // old vanext instruction into the equivalent code given only the 
+      // availability of the new vaarg instruction. Essentially, the transform
+      // is as follows:
+      //    b = vanext a, t ->
+      //    foo = alloca 1 of t
+      //    bar = vacopy a
+      //    store bar -> foo
+      //    tmp = vaarg foo, t
+      //    b = load foo
+      AllocaInst* foo = new AllocaInst(ArgTy, 0, "vanext.fix");
+      BB->getInstList().push_back(foo);
+      CallInst* bar = new CallInst(NF, getValue(iType, Oprnds[0]));
+      BB->getInstList().push_back(bar);
+      BB->getInstList().push_back(new StoreInst(bar, foo));
+      Instruction* tmp = new VAArgInst(foo, getSanitizedType(Oprnds[1]));
+      BB->getInstList().push_back(tmp);
+      Result = new LoadInst(foo);
+      break;
+    }
+    case 33: { //VAArg_old
+      const Type* ArgTy = getValue(iType, Oprnds[0])->getType();
+      Function* NF = TheModule->getOrInsertFunction(
+        "llvm.va_copy", ArgTy, ArgTy, (Type *)0);
+
+      // In llvm 1.6 the VAArg's instruction semantics were changed.  The code 
+      // below transforms an old vaarg instruction into the equivalent code 
+      // given only the availability of the new vaarg instruction. Essentially,
+      // the transform is as follows:
+      //    b = vaarg a, t ->
+      //    foo = alloca 1 of t
+      //    bar = vacopy a
+      //    store bar -> foo
+      //    b = vaarg foo, t
+      AllocaInst* foo = new AllocaInst(ArgTy, 0, "vaarg.fix");
+      BB->getInstList().push_back(foo);
+      CallInst* bar = new CallInst(NF, getValue(iType, Oprnds[0]));
+      BB->getInstList().push_back(bar);
+      BB->getInstList().push_back(new StoreInst(bar, foo));
+      Result = new VAArgInst(foo, getSanitizedType(Oprnds[1]));
+      break;
+    }
+    case 34: // Select
+      Opcode = Instruction::Select;
+      break;
+    case 35: // UserOp1
+      Opcode = Instruction::UserOp1;
+      break;
+    case 36: // UserOp2
+      Opcode = Instruction::UserOp2;
+      break;
+    case 37: // VAArg
+      Opcode = Instruction::VAArg;
+      break;
+    case 38: // ExtractElement
+      Opcode = Instruction::ExtractElement;
+      break;
+    case 39: // InsertElement
+      Opcode = Instruction::InsertElement;
+      break;
+    case 40: // ShuffleVector
+      Opcode = Instruction::ShuffleVector;
+      break;
+    case 56: // Invoke with encoded CC
+    case 57: // Invoke Fast CC
+    case 58: // Call with extra operand for calling conv
+    case 59: // tail call, Fast CC
+    case 60: // normal call, Fast CC
+    case 61: // tail call, C Calling Conv
+    case 62: // volatile load
+    case 63: // volatile store
+      // In all these cases, we pass the opcode through. The new version uses
+      // the same code (for now, this might change in 2.0). These are listed
+      // here to document the opcodes in use in vers 5 bytecode and to make it
+      // easier to migrate these opcodes in the future.
+      break;
+  }
+  return Result;
+}
+
 //===----------------------------------------------------------------------===//
 // Bytecode Parsing Methods
 //===----------------------------------------------------------------------===//
@@ -643,411 +881,376 @@ void BytecodeReader::ParseInstruction(std::vector<unsigned> &Oprnds,
 
   const Type *InstTy = getSanitizedType(iType);
 
+  // Make the necessary adjustments for dealing with backwards compatibility
+  // of opcodes.
+  Instruction* Result = 
+    handleObsoleteOpcodes(Opcode, Oprnds, iType, InstTy, BB);
+
   // We have enough info to inform the handler now.
-  if (Handler) Handler->handleInstruction(Opcode, InstTy, Oprnds, At-SaveAt);
+  if (Handler) 
+    Handler->handleInstruction(Opcode, InstTy, Oprnds, At-SaveAt);
 
-  // Declare the resulting instruction we'll build.
-  Instruction *Result = 0;
+  // If the backwards compatibility code didn't produce an instruction then
+  // we do the *normal* thing ..
+  if (!Result) {
+    // First, handle the easy binary operators case
+    if (Opcode >= Instruction::BinaryOpsBegin &&
+        Opcode <  Instruction::BinaryOpsEnd  && Oprnds.size() == 2)
+      Result = BinaryOperator::create(Instruction::BinaryOps(Opcode),
+                                      getValue(iType, Oprnds[0]),
+                                      getValue(iType, Oprnds[1]));
 
-  // If this is a bytecode format that did not include the unreachable
-  // instruction, bump up all opcodes numbers to make space.
-  if (hasNoUnreachableInst) {
-    if (Opcode >= Instruction::Unreachable &&
-        Opcode < 62) {
-      ++Opcode;
-    }
-  }
-
-  // Handle binary operators
-  if (Opcode >= Instruction::BinaryOpsBegin &&
-      Opcode <  Instruction::BinaryOpsEnd  && Oprnds.size() == 2)
-    Result = BinaryOperator::create((Instruction::BinaryOps)Opcode,
-                                    getValue(iType, Oprnds[0]),
-                                    getValue(iType, Oprnds[1]));
-
-  bool isCall = false;
-  switch (Opcode) {
-  default:
-    if (Result == 0)
-      error("Illegal instruction read!");
-    break;
-  case Instruction::VAArg:
-    Result = new VAArgInst(getValue(iType, Oprnds[0]),
-                           getSanitizedType(Oprnds[1]));
-    break;
-  case 32: { //VANext_old
-    const Type* ArgTy = getValue(iType, Oprnds[0])->getType();
-    Function* NF = TheModule->getOrInsertFunction("llvm.va_copy", ArgTy, ArgTy,
-                                                  (Type *)0);
-
-    //b = vanext a, t ->
-    //foo = alloca 1 of t
-    //bar = vacopy a
-    //store bar -> foo
-    //tmp = vaarg foo, t
-    //b = load foo
-    AllocaInst* foo = new AllocaInst(ArgTy, 0, "vanext.fix");
-    BB->getInstList().push_back(foo);
-    CallInst* bar = new CallInst(NF, getValue(iType, Oprnds[0]));
-    BB->getInstList().push_back(bar);
-    BB->getInstList().push_back(new StoreInst(bar, foo));
-    Instruction* tmp = new VAArgInst(foo, getSanitizedType(Oprnds[1]));
-    BB->getInstList().push_back(tmp);
-    Result = new LoadInst(foo);
-    break;
-  }
-  case 33: { //VAArg_old
-    const Type* ArgTy = getValue(iType, Oprnds[0])->getType();
-    Function* NF = TheModule->getOrInsertFunction("llvm.va_copy", ArgTy, ArgTy,
-                                                  (Type *)0);
-
-    //b = vaarg a, t ->
-    //foo = alloca 1 of t
-    //bar = vacopy a
-    //store bar -> foo
-    //b = vaarg foo, t
-    AllocaInst* foo = new AllocaInst(ArgTy, 0, "vaarg.fix");
-    BB->getInstList().push_back(foo);
-    CallInst* bar = new CallInst(NF, getValue(iType, Oprnds[0]));
-    BB->getInstList().push_back(bar);
-    BB->getInstList().push_back(new StoreInst(bar, foo));
-    Result = new VAArgInst(foo, getSanitizedType(Oprnds[1]));
-    break;
-  }
-  case Instruction::ExtractElement: {
-    if (Oprnds.size() != 2)
-      error("Invalid extractelement instruction!");
-    Value *V1 = getValue(iType, Oprnds[0]);
-    Value *V2 = getValue(Type::UIntTyID, Oprnds[1]);
-    
-    if (!ExtractElementInst::isValidOperands(V1, V2))
-      error("Invalid extractelement instruction!");
-
-    Result = new ExtractElementInst(V1, V2);
-    break;
-  }
-  case Instruction::InsertElement: {
-    const PackedType *PackedTy = dyn_cast<PackedType>(InstTy);
-    if (!PackedTy || Oprnds.size() != 3)
-      error("Invalid insertelement instruction!");
-    
-    Value *V1 = getValue(iType, Oprnds[0]);
-    Value *V2 = getValue(getTypeSlot(PackedTy->getElementType()), Oprnds[1]);
-    Value *V3 = getValue(Type::UIntTyID, Oprnds[2]);
+    // Indicate that we don't think this is a call instruction (yet).
+    // Process based on the Opcode read
+    switch (Opcode) {
+    default: // There was an error, this shouldn't happen.
+      if (Result == 0)
+        error("Illegal instruction read!");
+      break;
+    case Instruction::VAArg:
+      if (Oprnds.size() != 2)
+        error("Invalid VAArg instruction!");
+      Result = new VAArgInst(getValue(iType, Oprnds[0]),
+                             getSanitizedType(Oprnds[1]));
+      break;
+    case Instruction::ExtractElement: {
+      if (Oprnds.size() != 2)
+        error("Invalid extractelement instruction!");
+      Value *V1 = getValue(iType, Oprnds[0]);
+      Value *V2 = getValue(Type::UIntTyID, Oprnds[1]);
       
-    if (!InsertElementInst::isValidOperands(V1, V2, V3))
-      error("Invalid insertelement instruction!");
-    Result = new InsertElementInst(V1, V2, V3);
-    break;
-  }
-  case Instruction::ShuffleVector: {
-    const PackedType *PackedTy = dyn_cast<PackedType>(InstTy);
-    if (!PackedTy || Oprnds.size() != 3)
-      error("Invalid shufflevector instruction!");
-    Value *V1 = getValue(iType, Oprnds[0]);
-    Value *V2 = getValue(iType, Oprnds[1]);
-    const PackedType *EltTy = 
-      PackedType::get(Type::UIntTy, PackedTy->getNumElements());
-    Value *V3 = getValue(getTypeSlot(EltTy), Oprnds[2]);
-    if (!ShuffleVectorInst::isValidOperands(V1, V2, V3))
-      error("Invalid shufflevector instruction!");
-    Result = new ShuffleVectorInst(V1, V2, V3);
-    break;
-  }
-  case Instruction::Cast:
-    Result = new CastInst(getValue(iType, Oprnds[0]),
-                          getSanitizedType(Oprnds[1]));
-    break;
-  case Instruction::Select:
-    Result = new SelectInst(getValue(Type::BoolTyID, Oprnds[0]),
-                            getValue(iType, Oprnds[1]),
-                            getValue(iType, Oprnds[2]));
-    break;
-  case Instruction::PHI: {
-    if (Oprnds.size() == 0 || (Oprnds.size() & 1))
-      error("Invalid phi node encountered!");
+      if (!ExtractElementInst::isValidOperands(V1, V2))
+        error("Invalid extractelement instruction!");
 
-    PHINode *PN = new PHINode(InstTy);
-    PN->reserveOperandSpace(Oprnds.size());
-    for (unsigned i = 0, e = Oprnds.size(); i != e; i += 2)
-      PN->addIncoming(getValue(iType, Oprnds[i]), getBasicBlock(Oprnds[i+1]));
-    Result = PN;
-    break;
-  }
-
-  case Instruction::Shl:
-  case Instruction::Shr:
-    Result = new ShiftInst((Instruction::OtherOps)Opcode,
-                           getValue(iType, Oprnds[0]),
-                           getValue(Type::UByteTyID, Oprnds[1]));
-    break;
-  case Instruction::Ret:
-    if (Oprnds.size() == 0)
-      Result = new ReturnInst();
-    else if (Oprnds.size() == 1)
-      Result = new ReturnInst(getValue(iType, Oprnds[0]));
-    else
-      error("Unrecognized instruction!");
-    break;
-
-  case Instruction::Br:
-    if (Oprnds.size() == 1)
-      Result = new BranchInst(getBasicBlock(Oprnds[0]));
-    else if (Oprnds.size() == 3)
-      Result = new BranchInst(getBasicBlock(Oprnds[0]),
-          getBasicBlock(Oprnds[1]), getValue(Type::BoolTyID , Oprnds[2]));
-    else
-      error("Invalid number of operands for a 'br' instruction!");
-    break;
-  case Instruction::Switch: {
-    if (Oprnds.size() & 1)
-      error("Switch statement with odd number of arguments!");
-
-    SwitchInst *I = new SwitchInst(getValue(iType, Oprnds[0]),
-                                   getBasicBlock(Oprnds[1]),
-                                   Oprnds.size()/2-1);
-    for (unsigned i = 2, e = Oprnds.size(); i != e; i += 2)
-      I->addCase(cast<ConstantInt>(getValue(iType, Oprnds[i])),
-                 getBasicBlock(Oprnds[i+1]));
-    Result = I;
-    break;
-  }
-
-  case 58:                   // Call with extra operand for calling conv
-  case 59:                   // tail call, Fast CC
-  case 60:                   // normal call, Fast CC
-  case 61:                   // tail call, C Calling Conv
-  case Instruction::Call: {  // Normal Call, C Calling Convention
-    if (Oprnds.size() == 0)
-      error("Invalid call instruction encountered!");
-
-    Value *F = getValue(iType, Oprnds[0]);
-
-    unsigned CallingConv = CallingConv::C;
-    bool isTailCall = false;
-
-    if (Opcode == 61 || Opcode == 59)
-      isTailCall = true;
-    
-    if (Opcode == 58) {
-      isTailCall = Oprnds.back() & 1;
-      CallingConv = Oprnds.back() >> 1;
-      Oprnds.pop_back();
-    } else if (Opcode == 59 || Opcode == 60) {
-      CallingConv = CallingConv::Fast;
+      Result = new ExtractElementInst(V1, V2);
+      break;
     }
-    
-    // Check to make sure we have a pointer to function type
-    const PointerType *PTy = dyn_cast<PointerType>(F->getType());
-    if (PTy == 0) error("Call to non function pointer value!");
-    const FunctionType *FTy = dyn_cast<FunctionType>(PTy->getElementType());
-    if (FTy == 0) error("Call to non function pointer value!");
+    case Instruction::InsertElement: {
+      const PackedType *PackedTy = dyn_cast<PackedType>(InstTy);
+      if (!PackedTy || Oprnds.size() != 3)
+        error("Invalid insertelement instruction!");
+      
+      Value *V1 = getValue(iType, Oprnds[0]);
+      Value *V2 = getValue(getTypeSlot(PackedTy->getElementType()),Oprnds[1]);
+      Value *V3 = getValue(Type::UIntTyID, Oprnds[2]);
+        
+      if (!InsertElementInst::isValidOperands(V1, V2, V3))
+        error("Invalid insertelement instruction!");
+      Result = new InsertElementInst(V1, V2, V3);
+      break;
+    }
+    case Instruction::ShuffleVector: {
+      const PackedType *PackedTy = dyn_cast<PackedType>(InstTy);
+      if (!PackedTy || Oprnds.size() != 3)
+        error("Invalid shufflevector instruction!");
+      Value *V1 = getValue(iType, Oprnds[0]);
+      Value *V2 = getValue(iType, Oprnds[1]);
+      const PackedType *EltTy = 
+        PackedType::get(Type::UIntTy, PackedTy->getNumElements());
+      Value *V3 = getValue(getTypeSlot(EltTy), Oprnds[2]);
+      if (!ShuffleVectorInst::isValidOperands(V1, V2, V3))
+        error("Invalid shufflevector instruction!");
+      Result = new ShuffleVectorInst(V1, V2, V3);
+      break;
+    }
+    case Instruction::Cast:
+      if (Oprnds.size() != 2)
+        error("Invalid Cast instruction!");
+      Result = new CastInst(getValue(iType, Oprnds[0]),
+                            getSanitizedType(Oprnds[1]));
+      break;
+    case Instruction::Select:
+      if (Oprnds.size() != 3)
+        error("Invalid Select instruction!");
+      Result = new SelectInst(getValue(Type::BoolTyID, Oprnds[0]),
+                              getValue(iType, Oprnds[1]),
+                              getValue(iType, Oprnds[2]));
+      break;
+    case Instruction::PHI: {
+      if (Oprnds.size() == 0 || (Oprnds.size() & 1))
+        error("Invalid phi node encountered!");
 
-    std::vector<Value *> Params;
-    if (!FTy->isVarArg()) {
-      FunctionType::param_iterator It = FTy->param_begin();
+      PHINode *PN = new PHINode(InstTy);
+      PN->reserveOperandSpace(Oprnds.size());
+      for (unsigned i = 0, e = Oprnds.size(); i != e; i += 2)
+        PN->addIncoming(
+          getValue(iType, Oprnds[i]), getBasicBlock(Oprnds[i+1]));
+      Result = PN;
+      break;
+    }
 
-      for (unsigned i = 1, e = Oprnds.size(); i != e; ++i) {
-        if (It == FTy->param_end())
+    case Instruction::Shl:
+    case Instruction::Shr:
+      Result = new ShiftInst(Instruction::OtherOps(Opcode),
+                             getValue(iType, Oprnds[0]),
+                             getValue(Type::UByteTyID, Oprnds[1]));
+      break;
+    case Instruction::Ret:
+      if (Oprnds.size() == 0)
+        Result = new ReturnInst();
+      else if (Oprnds.size() == 1)
+        Result = new ReturnInst(getValue(iType, Oprnds[0]));
+      else
+        error("Unrecognized instruction!");
+      break;
+
+    case Instruction::Br:
+      if (Oprnds.size() == 1)
+        Result = new BranchInst(getBasicBlock(Oprnds[0]));
+      else if (Oprnds.size() == 3)
+        Result = new BranchInst(getBasicBlock(Oprnds[0]),
+            getBasicBlock(Oprnds[1]), getValue(Type::BoolTyID , Oprnds[2]));
+      else
+        error("Invalid number of operands for a 'br' instruction!");
+      break;
+    case Instruction::Switch: {
+      if (Oprnds.size() & 1)
+        error("Switch statement with odd number of arguments!");
+
+      SwitchInst *I = new SwitchInst(getValue(iType, Oprnds[0]),
+                                     getBasicBlock(Oprnds[1]),
+                                     Oprnds.size()/2-1);
+      for (unsigned i = 2, e = Oprnds.size(); i != e; i += 2)
+        I->addCase(cast<ConstantInt>(getValue(iType, Oprnds[i])),
+                   getBasicBlock(Oprnds[i+1]));
+      Result = I;
+      break;
+    }
+    case 58:                   // Call with extra operand for calling conv
+    case 59:                   // tail call, Fast CC
+    case 60:                   // normal call, Fast CC
+    case 61:                   // tail call, C Calling Conv
+    case Instruction::Call: {  // Normal Call, C Calling Convention
+      if (Oprnds.size() == 0)
+        error("Invalid call instruction encountered!");
+
+      Value *F = getValue(iType, Oprnds[0]);
+
+      unsigned CallingConv = CallingConv::C;
+      bool isTailCall = false;
+
+      if (Opcode == 61 || Opcode == 59)
+        isTailCall = true;
+      
+      if (Opcode == 58) {
+        isTailCall = Oprnds.back() & 1;
+        CallingConv = Oprnds.back() >> 1;
+        Oprnds.pop_back();
+      } else if (Opcode == 59 || Opcode == 60) {
+        CallingConv = CallingConv::Fast;
+      }
+      
+      // Check to make sure we have a pointer to function type
+      const PointerType *PTy = dyn_cast<PointerType>(F->getType());
+      if (PTy == 0) error("Call to non function pointer value!");
+      const FunctionType *FTy = dyn_cast<FunctionType>(PTy->getElementType());
+      if (FTy == 0) error("Call to non function pointer value!");
+
+      std::vector<Value *> Params;
+      if (!FTy->isVarArg()) {
+        FunctionType::param_iterator It = FTy->param_begin();
+
+        for (unsigned i = 1, e = Oprnds.size(); i != e; ++i) {
+          if (It == FTy->param_end())
+            error("Invalid call instruction!");
+          Params.push_back(getValue(getTypeSlot(*It++), Oprnds[i]));
+        }
+        if (It != FTy->param_end())
           error("Invalid call instruction!");
-        Params.push_back(getValue(getTypeSlot(*It++), Oprnds[i]));
+      } else {
+        Oprnds.erase(Oprnds.begin(), Oprnds.begin()+1);
+
+        unsigned FirstVariableOperand;
+        if (Oprnds.size() < FTy->getNumParams())
+          error("Call instruction missing operands!");
+
+        // Read all of the fixed arguments
+        for (unsigned i = 0, e = FTy->getNumParams(); i != e; ++i)
+          Params.push_back(
+            getValue(getTypeSlot(FTy->getParamType(i)),Oprnds[i]));
+
+        FirstVariableOperand = FTy->getNumParams();
+
+        if ((Oprnds.size()-FirstVariableOperand) & 1)
+          error("Invalid call instruction!");   // Must be pairs of type/value
+
+        for (unsigned i = FirstVariableOperand, e = Oprnds.size();
+             i != e; i += 2)
+          Params.push_back(getValue(Oprnds[i], Oprnds[i+1]));
       }
-      if (It != FTy->param_end())
-        error("Invalid call instruction!");
-    } else {
-      Oprnds.erase(Oprnds.begin(), Oprnds.begin()+1);
 
-      unsigned FirstVariableOperand;
-      if (Oprnds.size() < FTy->getNumParams())
-        error("Call instruction missing operands!");
-
-      // Read all of the fixed arguments
-      for (unsigned i = 0, e = FTy->getNumParams(); i != e; ++i)
-        Params.push_back(getValue(getTypeSlot(FTy->getParamType(i)),Oprnds[i]));
-
-      FirstVariableOperand = FTy->getNumParams();
-
-      if ((Oprnds.size()-FirstVariableOperand) & 1)
-        error("Invalid call instruction!");   // Must be pairs of type/value
-
-      for (unsigned i = FirstVariableOperand, e = Oprnds.size();
-           i != e; i += 2)
-        Params.push_back(getValue(Oprnds[i], Oprnds[i+1]));
+      Result = new CallInst(F, Params);
+      if (isTailCall) cast<CallInst>(Result)->setTailCall();
+      if (CallingConv) cast<CallInst>(Result)->setCallingConv(CallingConv);
+      break;
     }
+    case 56:                     // Invoke with encoded CC
+    case 57:                     // Invoke Fast CC
+    case Instruction::Invoke: {  // Invoke C CC
+      if (Oprnds.size() < 3)
+        error("Invalid invoke instruction!");
+      Value *F = getValue(iType, Oprnds[0]);
 
-    Result = new CallInst(F, Params);
-    if (isTailCall) cast<CallInst>(Result)->setTailCall();
-    if (CallingConv) cast<CallInst>(Result)->setCallingConv(CallingConv);
-    break;
-  }
-  case 56:                     // Invoke with encoded CC
-  case 57:                     // Invoke Fast CC
-  case Instruction::Invoke: {  // Invoke C CC
-    if (Oprnds.size() < 3)
-      error("Invalid invoke instruction!");
-    Value *F = getValue(iType, Oprnds[0]);
+      // Check to make sure we have a pointer to function type
+      const PointerType *PTy = dyn_cast<PointerType>(F->getType());
+      if (PTy == 0)
+        error("Invoke to non function pointer value!");
+      const FunctionType *FTy = dyn_cast<FunctionType>(PTy->getElementType());
+      if (FTy == 0)
+        error("Invoke to non function pointer value!");
 
-    // Check to make sure we have a pointer to function type
-    const PointerType *PTy = dyn_cast<PointerType>(F->getType());
-    if (PTy == 0)
-      error("Invoke to non function pointer value!");
-    const FunctionType *FTy = dyn_cast<FunctionType>(PTy->getElementType());
-    if (FTy == 0)
-      error("Invoke to non function pointer value!");
+      std::vector<Value *> Params;
+      BasicBlock *Normal, *Except;
+      unsigned CallingConv = CallingConv::C;
 
-    std::vector<Value *> Params;
-    BasicBlock *Normal, *Except;
-    unsigned CallingConv = CallingConv::C;
+      if (Opcode == 57)
+        CallingConv = CallingConv::Fast;
+      else if (Opcode == 56) {
+        CallingConv = Oprnds.back();
+        Oprnds.pop_back();
+      }
 
-    if (Opcode == 57)
-      CallingConv = CallingConv::Fast;
-    else if (Opcode == 56) {
-      CallingConv = Oprnds.back();
-      Oprnds.pop_back();
-    }
+      if (!FTy->isVarArg()) {
+        Normal = getBasicBlock(Oprnds[1]);
+        Except = getBasicBlock(Oprnds[2]);
 
-    if (!FTy->isVarArg()) {
-      Normal = getBasicBlock(Oprnds[1]);
-      Except = getBasicBlock(Oprnds[2]);
-
-      FunctionType::param_iterator It = FTy->param_begin();
-      for (unsigned i = 3, e = Oprnds.size(); i != e; ++i) {
-        if (It == FTy->param_end())
+        FunctionType::param_iterator It = FTy->param_begin();
+        for (unsigned i = 3, e = Oprnds.size(); i != e; ++i) {
+          if (It == FTy->param_end())
+            error("Invalid invoke instruction!");
+          Params.push_back(getValue(getTypeSlot(*It++), Oprnds[i]));
+        }
+        if (It != FTy->param_end())
           error("Invalid invoke instruction!");
-        Params.push_back(getValue(getTypeSlot(*It++), Oprnds[i]));
+      } else {
+        Oprnds.erase(Oprnds.begin(), Oprnds.begin()+1);
+
+        Normal = getBasicBlock(Oprnds[0]);
+        Except = getBasicBlock(Oprnds[1]);
+
+        unsigned FirstVariableArgument = FTy->getNumParams()+2;
+        for (unsigned i = 2; i != FirstVariableArgument; ++i)
+          Params.push_back(getValue(getTypeSlot(FTy->getParamType(i-2)),
+                                    Oprnds[i]));
+
+        // Must be type/value pairs. If not, error out.
+        if (Oprnds.size()-FirstVariableArgument & 1) 
+          error("Invalid invoke instruction!");
+
+        for (unsigned i = FirstVariableArgument; i < Oprnds.size(); i += 2)
+          Params.push_back(getValue(Oprnds[i], Oprnds[i+1]));
       }
-      if (It != FTy->param_end())
-        error("Invalid invoke instruction!");
-    } else {
-      Oprnds.erase(Oprnds.begin(), Oprnds.begin()+1);
 
-      Normal = getBasicBlock(Oprnds[0]);
-      Except = getBasicBlock(Oprnds[1]);
-
-      unsigned FirstVariableArgument = FTy->getNumParams()+2;
-      for (unsigned i = 2; i != FirstVariableArgument; ++i)
-        Params.push_back(getValue(getTypeSlot(FTy->getParamType(i-2)),
-                                  Oprnds[i]));
-
-      if (Oprnds.size()-FirstVariableArgument & 1) // Must be type/value pairs
-        error("Invalid invoke instruction!");
-
-      for (unsigned i = FirstVariableArgument; i < Oprnds.size(); i += 2)
-        Params.push_back(getValue(Oprnds[i], Oprnds[i+1]));
+      Result = new InvokeInst(F, Normal, Except, Params);
+      if (CallingConv) cast<InvokeInst>(Result)->setCallingConv(CallingConv);
+      break;
     }
+    case Instruction::Malloc: {
+      unsigned Align = 0;
+      if (Oprnds.size() == 2)
+        Align = (1 << Oprnds[1]) >> 1;
+      else if (Oprnds.size() > 2)
+        error("Invalid malloc instruction!");
+      if (!isa<PointerType>(InstTy))
+        error("Invalid malloc instruction!");
 
-    Result = new InvokeInst(F, Normal, Except, Params);
-    if (CallingConv) cast<InvokeInst>(Result)->setCallingConv(CallingConv);
-    break;
-  }
-  case Instruction::Malloc: {
-    unsigned Align = 0;
-    if (Oprnds.size() == 2)
-      Align = (1 << Oprnds[1]) >> 1;
-    else if (Oprnds.size() > 2)
-      error("Invalid malloc instruction!");
-    if (!isa<PointerType>(InstTy))
-      error("Invalid malloc instruction!");
+      Result = new MallocInst(cast<PointerType>(InstTy)->getElementType(),
+                              getValue(Type::UIntTyID, Oprnds[0]), Align);
+      break;
+    }
+    case Instruction::Alloca: {
+      unsigned Align = 0;
+      if (Oprnds.size() == 2)
+        Align = (1 << Oprnds[1]) >> 1;
+      else if (Oprnds.size() > 2)
+        error("Invalid alloca instruction!");
+      if (!isa<PointerType>(InstTy))
+        error("Invalid alloca instruction!");
 
-    Result = new MallocInst(cast<PointerType>(InstTy)->getElementType(),
-                            getValue(Type::UIntTyID, Oprnds[0]), Align);
-    break;
-  }
-
-  case Instruction::Alloca: {
-    unsigned Align = 0;
-    if (Oprnds.size() == 2)
-      Align = (1 << Oprnds[1]) >> 1;
-    else if (Oprnds.size() > 2)
-      error("Invalid alloca instruction!");
-    if (!isa<PointerType>(InstTy))
-      error("Invalid alloca instruction!");
-
-    Result = new AllocaInst(cast<PointerType>(InstTy)->getElementType(),
-                            getValue(Type::UIntTyID, Oprnds[0]), Align);
-    break;
-  }
-  case Instruction::Free:
-    if (!isa<PointerType>(InstTy))
-      error("Invalid free instruction!");
-    Result = new FreeInst(getValue(iType, Oprnds[0]));
-    break;
-  case Instruction::GetElementPtr: {
-    if (Oprnds.size() == 0 || !isa<PointerType>(InstTy))
-      error("Invalid getelementptr instruction!");
-
-    std::vector<Value*> Idx;
-
-    const Type *NextTy = InstTy;
-    for (unsigned i = 1, e = Oprnds.size(); i != e; ++i) {
-      const CompositeType *TopTy = dyn_cast_or_null<CompositeType>(NextTy);
-      if (!TopTy)
+      Result = new AllocaInst(cast<PointerType>(InstTy)->getElementType(),
+                              getValue(Type::UIntTyID, Oprnds[0]), Align);
+      break;
+    }
+    case Instruction::Free:
+      if (!isa<PointerType>(InstTy))
+        error("Invalid free instruction!");
+      Result = new FreeInst(getValue(iType, Oprnds[0]));
+      break;
+    case Instruction::GetElementPtr: {
+      if (Oprnds.size() == 0 || !isa<PointerType>(InstTy))
         error("Invalid getelementptr instruction!");
 
-      unsigned ValIdx = Oprnds[i];
-      unsigned IdxTy = 0;
-      if (!hasRestrictedGEPTypes) {
-        // Struct indices are always uints, sequential type indices can be any
-        // of the 32 or 64-bit integer types.  The actual choice of type is
-        // encoded in the low two bits of the slot number.
-        if (isa<StructType>(TopTy))
-          IdxTy = Type::UIntTyID;
-        else {
-          switch (ValIdx & 3) {
-          default:
-          case 0: IdxTy = Type::UIntTyID; break;
-          case 1: IdxTy = Type::IntTyID; break;
-          case 2: IdxTy = Type::ULongTyID; break;
-          case 3: IdxTy = Type::LongTyID; break;
+      std::vector<Value*> Idx;
+
+      const Type *NextTy = InstTy;
+      for (unsigned i = 1, e = Oprnds.size(); i != e; ++i) {
+        const CompositeType *TopTy = dyn_cast_or_null<CompositeType>(NextTy);
+        if (!TopTy)
+          error("Invalid getelementptr instruction!");
+
+        unsigned ValIdx = Oprnds[i];
+        unsigned IdxTy = 0;
+        if (!hasRestrictedGEPTypes) {
+          // Struct indices are always uints, sequential type indices can be 
+          // any of the 32 or 64-bit integer types.  The actual choice of 
+          // type is encoded in the low two bits of the slot number.
+          if (isa<StructType>(TopTy))
+            IdxTy = Type::UIntTyID;
+          else {
+            switch (ValIdx & 3) {
+            default:
+            case 0: IdxTy = Type::UIntTyID; break;
+            case 1: IdxTy = Type::IntTyID; break;
+            case 2: IdxTy = Type::ULongTyID; break;
+            case 3: IdxTy = Type::LongTyID; break;
+            }
+            ValIdx >>= 2;
           }
-          ValIdx >>= 2;
+        } else {
+          IdxTy = isa<StructType>(TopTy) ? Type::UByteTyID : Type::LongTyID;
         }
-      } else {
-        IdxTy = isa<StructType>(TopTy) ? Type::UByteTyID : Type::LongTyID;
+
+        Idx.push_back(getValue(IdxTy, ValIdx));
+
+        // Convert ubyte struct indices into uint struct indices.
+        if (isa<StructType>(TopTy) && hasRestrictedGEPTypes)
+          if (ConstantInt *C = dyn_cast<ConstantInt>(Idx.back()))
+            if (C->getType() == Type::UByteTy)
+              Idx[Idx.size()-1] = ConstantExpr::getCast(C, Type::UIntTy);
+
+        NextTy = GetElementPtrInst::getIndexedType(InstTy, Idx, true);
       }
 
-      Idx.push_back(getValue(IdxTy, ValIdx));
-
-      // Convert ubyte struct indices into uint struct indices.
-      if (isa<StructType>(TopTy) && hasRestrictedGEPTypes)
-        if (ConstantInt *C = dyn_cast<ConstantInt>(Idx.back()))
-          if (C->getType() == Type::UByteTy)
-            Idx[Idx.size()-1] = ConstantExpr::getCast(C, Type::UIntTy);
-
-      NextTy = GetElementPtrInst::getIndexedType(InstTy, Idx, true);
+      Result = new GetElementPtrInst(getValue(iType, Oprnds[0]), Idx);
+      break;
     }
+    case 62:   // volatile load
+    case Instruction::Load:
+      if (Oprnds.size() != 1 || !isa<PointerType>(InstTy))
+        error("Invalid load instruction!");
+      Result = new LoadInst(getValue(iType, Oprnds[0]), "", Opcode == 62);
+      break;
+    case 63:   // volatile store
+    case Instruction::Store: {
+      if (!isa<PointerType>(InstTy) || Oprnds.size() != 2)
+        error("Invalid store instruction!");
 
-    Result = new GetElementPtrInst(getValue(iType, Oprnds[0]), Idx);
-    break;
-  }
-
-  case 62:   // volatile load
-  case Instruction::Load:
-    if (Oprnds.size() != 1 || !isa<PointerType>(InstTy))
-      error("Invalid load instruction!");
-    Result = new LoadInst(getValue(iType, Oprnds[0]), "", Opcode == 62);
-    break;
-
-  case 63:   // volatile store
-  case Instruction::Store: {
-    if (!isa<PointerType>(InstTy) || Oprnds.size() != 2)
-      error("Invalid store instruction!");
-
-    Value *Ptr = getValue(iType, Oprnds[1]);
-    const Type *ValTy = cast<PointerType>(Ptr->getType())->getElementType();
-    Result = new StoreInst(getValue(getTypeSlot(ValTy), Oprnds[0]), Ptr,
-                           Opcode == 63);
-    break;
-  }
-  case Instruction::Unwind:
-    if (Oprnds.size() != 0) error("Invalid unwind instruction!");
-    Result = new UnwindInst();
-    break;
-  case Instruction::Unreachable:
-    if (Oprnds.size() != 0) error("Invalid unreachable instruction!");
-    Result = new UnreachableInst();
-    break;
-  }  // end switch(Opcode)
+      Value *Ptr = getValue(iType, Oprnds[1]);
+      const Type *ValTy = cast<PointerType>(Ptr->getType())->getElementType();
+      Result = new StoreInst(getValue(getTypeSlot(ValTy), Oprnds[0]), Ptr,
+                             Opcode == 63);
+      break;
+    }
+    case Instruction::Unwind:
+      if (Oprnds.size() != 0) error("Invalid unwind instruction!");
+      Result = new UnwindInst();
+      break;
+    case Instruction::Unreachable:
+      if (Oprnds.size() != 0) error("Invalid unreachable instruction!");
+      Result = new UnreachableInst();
+      break;
+    }  // end switch(Opcode)
+  } // end if *normal*
 
   BB->getInstList().push_back(Result);
 
@@ -1414,6 +1617,110 @@ void BytecodeReader::ParseTypes(TypeListTy &Tab, unsigned NumEntries){
   }
 }
 
+// Upgrade obsolete constant expression opcodes (ver. 5 and prior) to the new 
+// values used after ver 6. bytecode format. The operands are provided to the
+// function so that decisions based on the operand type can be made when 
+// auto-upgrading obsolete opcodes to the new ones.
+// NOTE: This code needs to be kept synchronized with handleObsoleteOpcodes. 
+// We can't use that function because of that functions argument requirements.
+// This function only deals with the subset of opcodes that are applicable to
+// constant expressions and is therefore simpler than handleObsoleteOpcodes.
+inline unsigned fixCEOpcodes(
+  unsigned Opcode, const std::vector<Constant*> &ArgVec
+) {
+  switch (Opcode) {
+    default: // Pass Through
+      // If we don't match any of the cases here then the opcode is fine the
+      // way it is.
+      break;
+    case 7: // Add
+      Opcode = Instruction::Add;
+      break;
+    case 8: // Sub
+      Opcode = Instruction::Sub;
+      break;
+    case 9: // Mul
+      Opcode = Instruction::Mul;
+      break;
+    case 10: // Div 
+      // The type of the instruction is based on the operands. We need to select
+      // either udiv or sdiv based on that type. This expression selects the
+      // cases where the type is floating point or signed in which case we
+      // generated an sdiv instruction.
+      if (ArgVec[0]->getType()->isFloatingPoint())
+        Opcode = Instruction::FDiv;
+      else if (ArgVec[0]->getType()->isSigned())
+        Opcode = Instruction::SDiv;
+      else
+        Opcode = Instruction::UDiv;
+      break;
+
+    case 11: // Rem
+      // As with "Div", make the signed/unsigned Rem instruction choice based
+      // on the type of the instruction.
+      if (ArgVec[0]->getType()->isFloatingPoint())
+        Opcode = Instruction::Rem;
+      else if (ArgVec[0]->getType()->isSigned())
+        Opcode = Instruction::Rem;
+      else
+        Opcode = Instruction::Rem;
+      break;
+
+    case 12: // And
+      Opcode = Instruction::And;
+      break;
+    case 13: // Or
+      Opcode = Instruction::Or;
+      break;
+    case 14: // Xor
+      Opcode = Instruction::Xor;
+      break;
+    case 15: // SetEQ
+      Opcode = Instruction::SetEQ;
+      break;
+    case 16: // SetNE
+      Opcode = Instruction::SetNE;
+      break;
+    case 17: // SetLE
+      Opcode = Instruction::SetLE;
+      break;
+    case 18: // SetGE
+      Opcode = Instruction::SetGE;
+      break;
+    case 19: // SetLT
+      Opcode = Instruction::SetLT;
+      break;
+    case 20: // SetGT
+      Opcode = Instruction::SetGT;
+      break;
+    case 26: // GetElementPtr
+      Opcode = Instruction::GetElementPtr;
+      break;
+    case 28: // Cast
+      Opcode = Instruction::Cast;
+      break;
+    case 30: // Shl
+      Opcode = Instruction::Shl;
+      break;
+    case 31: // Shr
+      Opcode = Instruction::Shr;
+      break;
+    case 34: // Select
+      Opcode = Instruction::Select;
+      break;
+    case 38: // ExtractElement
+      Opcode = Instruction::ExtractElement;
+      break;
+    case 39: // InsertElement
+      Opcode = Instruction::InsertElement;
+      break;
+    case 40: // ShuffleVector
+      Opcode = Instruction::ShuffleVector;
+      break;
+  }
+  return Opcode;
+}
+
 /// Parse a single constant value
 Value *BytecodeReader::ParseConstantPoolValue(unsigned TypeID) {
   // We must check for a ConstantExpr before switching by type because
@@ -1467,6 +1774,10 @@ Value *BytecodeReader::ParseConstantPoolValue(unsigned TypeID) {
       // Get the arg value from its slot if it exists, otherwise a placeholder
       ArgVec.push_back(getConstantValue(ArgTypeSlot, ArgValSlot));
     }
+
+    // Handle backwards compatibility for the opcode numbers
+    if (hasSignlessInstructions)
+      Opcode = fixCEOpcodes(Opcode, ArgVec);
 
     // Construct a ConstantExpr of the appropriate kind
     if (isExprNumArgs == 1) {           // All one-operand expressions
@@ -2240,7 +2551,10 @@ void BytecodeReader::ParseVersionInfo() {
   hasNoUndefValue = false;
   hasNoFlagsForFunctions = false;
   hasNoUnreachableInst = false;
+  hasSignlessInstructions = false;
 
+  // Determine which backwards compatibility flags to set based on the
+  // bytecode file's version number
   switch (RevisionNum) {
   case 0:               //  LLVM 1.0, 1.1 (Released)
     // Base LLVM 1.0 bytecode format.
@@ -2311,11 +2625,21 @@ void BytecodeReader::ParseVersionInfo() {
     // In version 4 and above, we did not include the 'unreachable' instruction
     // in the opcode numbering in the bytecode file.
     hasNoUnreachableInst = true;
-    break;
 
     // FALL THROUGH
 
   case 5:               // 1.4 (Released)
+    // In version 5 and prior, instructions were signless while integer types
+    // were signed. In version 6, instructions became signed and types became
+    // signless. For example in version 5 we have the DIV instruction but in
+    // version 6 we have FDIV, SDIV and UDIV to replace it. This caused a 
+    // renumbering of the instruction codes in version 6 that must be dealt with
+    // when reading old bytecode files.
+    hasSignlessInstructions = true;
+
+    // FALL THROUGH
+    
+  case 6:               // SignlessTypes Implementation (1.9 release)
     break;
 
   default:

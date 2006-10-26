@@ -107,34 +107,36 @@
      ADD = 333,
      SUB = 334,
      MUL = 335,
-     DIV = 336,
-     REM = 337,
-     AND = 338,
-     OR = 339,
-     XOR = 340,
-     SETLE = 341,
-     SETGE = 342,
-     SETLT = 343,
-     SETGT = 344,
-     SETEQ = 345,
-     SETNE = 346,
-     MALLOC = 347,
-     ALLOCA = 348,
-     FREE = 349,
-     LOAD = 350,
-     STORE = 351,
-     GETELEMENTPTR = 352,
-     PHI_TOK = 353,
-     CAST = 354,
-     SELECT = 355,
-     SHL = 356,
-     SHR = 357,
-     VAARG = 358,
-     EXTRACTELEMENT = 359,
-     INSERTELEMENT = 360,
-     SHUFFLEVECTOR = 361,
-     VAARG_old = 362,
-     VANEXT_old = 363
+     UDIV = 336,
+     SDIV = 337,
+     FDIV = 338,
+     REM = 339,
+     AND = 340,
+     OR = 341,
+     XOR = 342,
+     SETLE = 343,
+     SETGE = 344,
+     SETLT = 345,
+     SETGT = 346,
+     SETEQ = 347,
+     SETNE = 348,
+     MALLOC = 349,
+     ALLOCA = 350,
+     FREE = 351,
+     LOAD = 352,
+     STORE = 353,
+     GETELEMENTPTR = 354,
+     PHI_TOK = 355,
+     CAST = 356,
+     SELECT = 357,
+     SHL = 358,
+     SHR = 359,
+     VAARG = 360,
+     EXTRACTELEMENT = 361,
+     INSERTELEMENT = 362,
+     SHUFFLEVECTOR = 363,
+     VAARG_old = 364,
+     VANEXT_old = 365
    };
 #endif
 /* Tokens.  */
@@ -216,40 +218,42 @@
 #define ADD 333
 #define SUB 334
 #define MUL 335
-#define DIV 336
-#define REM 337
-#define AND 338
-#define OR 339
-#define XOR 340
-#define SETLE 341
-#define SETGE 342
-#define SETLT 343
-#define SETGT 344
-#define SETEQ 345
-#define SETNE 346
-#define MALLOC 347
-#define ALLOCA 348
-#define FREE 349
-#define LOAD 350
-#define STORE 351
-#define GETELEMENTPTR 352
-#define PHI_TOK 353
-#define CAST 354
-#define SELECT 355
-#define SHL 356
-#define SHR 357
-#define VAARG 358
-#define EXTRACTELEMENT 359
-#define INSERTELEMENT 360
-#define SHUFFLEVECTOR 361
-#define VAARG_old 362
-#define VANEXT_old 363
+#define UDIV 336
+#define SDIV 337
+#define FDIV 338
+#define REM 339
+#define AND 340
+#define OR 341
+#define XOR 342
+#define SETLE 343
+#define SETGE 344
+#define SETLT 345
+#define SETGT 346
+#define SETEQ 347
+#define SETNE 348
+#define MALLOC 349
+#define ALLOCA 350
+#define FREE 351
+#define LOAD 352
+#define STORE 353
+#define GETELEMENTPTR 354
+#define PHI_TOK 355
+#define CAST 356
+#define SELECT 357
+#define SHL 358
+#define SHR 359
+#define VAARG 360
+#define EXTRACTELEMENT 361
+#define INSERTELEMENT 362
+#define SHUFFLEVECTOR 363
+#define VAARG_old 364
+#define VANEXT_old 365
 
 
 
 
 #if ! defined (YYSTYPE) && ! defined (YYSTYPE_IS_DECLARED)
-#line 974 "/proj/llvm/llvm_nc/lib/AsmParser/llvmAsmParser.y"
+#line 1011 "/proj/llvm/llvm/lib/AsmParser/llvmAsmParser.y"
 typedef union YYSTYPE {
   llvm::Module                           *ModuleVal;
   llvm::Function                         *FunctionVal;
@@ -281,16 +285,16 @@ typedef union YYSTYPE {
   bool                              BoolVal;
 
   char                             *StrVal;   // This memory is strdup'd!
-  llvm::ValID                             ValIDVal; // strdup'd memory maybe!
+  llvm::ValID                       ValIDVal; // strdup'd memory maybe!
 
-  llvm::Instruction::BinaryOps            BinaryOpVal;
-  llvm::Instruction::TermOps              TermOpVal;
-  llvm::Instruction::MemoryOps            MemOpVal;
-  llvm::Instruction::OtherOps             OtherOpVal;
-  llvm::Module::Endianness                Endianness;
+  BinaryOpInfo                      BinaryOpVal;
+  TermOpInfo                        TermOpVal;
+  MemOpInfo                         MemOpVal;
+  OtherOpInfo                       OtherOpVal;
+  llvm::Module::Endianness          Endianness;
 } YYSTYPE;
 /* Line 1447 of yacc.c.  */
-#line 294 "llvmAsmParser.tab.h"
+#line 298 "llvmAsmParser.tab.h"
 # define yystype YYSTYPE /* obsolescent; will be withdrawn */
 # define YYSTYPE_IS_DECLARED 1
 # define YYSTYPE_IS_TRIVIAL 1

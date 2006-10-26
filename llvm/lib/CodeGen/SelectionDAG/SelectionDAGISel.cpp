@@ -499,28 +499,35 @@ public:
   void visitInvoke(InvokeInst &I) { assert(0 && "TODO"); }
   void visitUnwind(UnwindInst &I) { assert(0 && "TODO"); }
 
-  void visitBinary(User &I, unsigned IntOp, unsigned FPOp, unsigned VecOp);
+  void visitIntBinary(User &I, unsigned IntOp, unsigned VecOp);
+  void visitFPBinary(User &I, unsigned FPOp, unsigned VecOp);
   void visitShift(User &I, unsigned Opcode);
   void visitAdd(User &I) { 
-    visitBinary(I, ISD::ADD, ISD::FADD, ISD::VADD); 
+    if (I.getType()->isFloatingPoint())
+      visitFPBinary(I, ISD::FADD, ISD::VADD); 
+    else
+      visitIntBinary(I, ISD::ADD, ISD::VADD); 
   }
   void visitSub(User &I);
-  void visitMul(User &I) { 
-    visitBinary(I, ISD::MUL, ISD::FMUL, ISD::VMUL); 
+  void visitMul(User &I) {
+    if (I.getType()->isFloatingPoint()) 
+      visitFPBinary(I, ISD::FMUL, ISD::VMUL); 
+    else
+      visitIntBinary(I, ISD::MUL, ISD::VMUL); 
   }
-  void visitDiv(User &I) {
-    const Type *Ty = I.getType();
-    visitBinary(I,
-                Ty->isSigned() ? ISD::SDIV : ISD::UDIV, ISD::FDIV,
-                Ty->isSigned() ? ISD::VSDIV : ISD::VUDIV);
-  }
+  void visitUDiv(User &I) { visitIntBinary(I, ISD::UDIV, ISD::VUDIV); }
+  void visitSDiv(User &I) { visitIntBinary(I, ISD::SDIV, ISD::VSDIV); }
+  void visitFDiv(User &I) { visitFPBinary(I, ISD::FDIV,  ISD::VSDIV); }
   void visitRem(User &I) {
     const Type *Ty = I.getType();
-    visitBinary(I, Ty->isSigned() ? ISD::SREM : ISD::UREM, ISD::FREM, 0);
+    if (Ty->isFloatingPoint())
+      visitFPBinary(I, ISD::FREM, 0);
+    else 
+      visitIntBinary(I, Ty->isSigned() ? ISD::SREM : ISD::UREM, 0);
   }
-  void visitAnd(User &I) { visitBinary(I, ISD::AND, 0, ISD::VAND); }
-  void visitOr (User &I) { visitBinary(I, ISD::OR,  0, ISD::VOR); }
-  void visitXor(User &I) { visitBinary(I, ISD::XOR, 0, ISD::VXOR); }
+  void visitAnd(User &I) { visitIntBinary(I, ISD::AND, ISD::VAND); }
+  void visitOr (User &I) { visitIntBinary(I, ISD::OR,  ISD::VOR); }
+  void visitXor(User &I) { visitIntBinary(I, ISD::XOR, ISD::VXOR); }
   void visitShl(User &I) { visitShift(I, ISD::SHL); }
   void visitShr(User &I) { 
     visitShift(I, I.getType()->isUnsigned() ? ISD::SRL : ISD::SRA);
@@ -1142,25 +1149,38 @@ void SelectionDAGLowering::visitSub(User &I) {
         setValue(&I, DAG.getNode(ISD::FNEG, Op2.getValueType(), Op2));
         return;
       }
-  }
-  visitBinary(I, ISD::SUB, ISD::FSUB, ISD::VSUB);
+    visitFPBinary(I, ISD::FSUB, ISD::VSUB);
+  } else 
+    visitIntBinary(I, ISD::SUB, ISD::VSUB);
 }
 
-void SelectionDAGLowering::visitBinary(User &I, unsigned IntOp, unsigned FPOp, 
-                                       unsigned VecOp) {
+void 
+SelectionDAGLowering::visitIntBinary(User &I, unsigned IntOp, unsigned VecOp) {
   const Type *Ty = I.getType();
   SDOperand Op1 = getValue(I.getOperand(0));
   SDOperand Op2 = getValue(I.getOperand(1));
 
-  if (Ty->isIntegral()) {
-    setValue(&I, DAG.getNode(IntOp, Op1.getValueType(), Op1, Op2));
-  } else if (Ty->isFloatingPoint()) {
-    setValue(&I, DAG.getNode(FPOp, Op1.getValueType(), Op1, Op2));
-  } else {
-    const PackedType *PTy = cast<PackedType>(Ty);
+  if (const PackedType *PTy = dyn_cast<PackedType>(Ty)) {
     SDOperand Num = DAG.getConstant(PTy->getNumElements(), MVT::i32);
     SDOperand Typ = DAG.getValueType(TLI.getValueType(PTy->getElementType()));
     setValue(&I, DAG.getNode(VecOp, MVT::Vector, Op1, Op2, Num, Typ));
+  } else {
+    setValue(&I, DAG.getNode(IntOp, Op1.getValueType(), Op1, Op2));
+  }
+}
+
+void 
+SelectionDAGLowering::visitFPBinary(User &I, unsigned FPOp, unsigned VecOp) {
+  const Type *Ty = I.getType();
+  SDOperand Op1 = getValue(I.getOperand(0));
+  SDOperand Op2 = getValue(I.getOperand(1));
+
+  if (const PackedType *PTy = dyn_cast<PackedType>(Ty)) {
+    SDOperand Num = DAG.getConstant(PTy->getNumElements(), MVT::i32);
+    SDOperand Typ = DAG.getValueType(TLI.getValueType(PTy->getElementType()));
+    setValue(&I, DAG.getNode(VecOp, MVT::Vector, Op1, Op2, Num, Typ));
+  } else {
+    setValue(&I, DAG.getNode(FPOp, Op1.getValueType(), Op1, Op2));
   }
 }
 

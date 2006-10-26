@@ -121,6 +121,8 @@ namespace {
     
     void writeOperand(Value *Operand);
     void writeOperandInternal(Value *Operand);
+    void writeOperandWithCast(Value* Operand, unsigned Opcode);
+    bool writeInstructionCast(const Instruction &I);
 
   private :
     void lowerIntrinsics(Function &F);
@@ -136,6 +138,8 @@ namespace {
     void printLoop(Loop *L);
 
     void printConstant(Constant *CPV);
+    void printConstantWithCast(Constant *CPV, unsigned Opcode);
+    bool printConstExprCast(const ConstantExpr *CE);
     void printConstantArray(ConstantArray *CPA);
     void printConstantPacked(ConstantPacked *CP);
 
@@ -586,7 +590,9 @@ void CWriter::printConstant(Constant *CPV) {
     case Instruction::Add:
     case Instruction::Sub:
     case Instruction::Mul:
-    case Instruction::Div:
+    case Instruction::SDiv:
+    case Instruction::UDiv:
+    case Instruction::FDiv:
     case Instruction::Rem:
     case Instruction::And:
     case Instruction::Or:
@@ -600,12 +606,15 @@ void CWriter::printConstant(Constant *CPV) {
     case Instruction::Shl:
     case Instruction::Shr:
       Out << '(';
-      printConstant(CE->getOperand(0));
+      bool NeedsClosingParens = printConstExprCast(CE); 
+      printConstantWithCast(CE->getOperand(0), CE->getOpcode());
       switch (CE->getOpcode()) {
       case Instruction::Add: Out << " + "; break;
       case Instruction::Sub: Out << " - "; break;
       case Instruction::Mul: Out << " * "; break;
-      case Instruction::Div: Out << " / "; break;
+      case Instruction::UDiv: 
+      case Instruction::SDiv: 
+      case Instruction::FDiv: Out << " / "; break;
       case Instruction::Rem: Out << " % "; break;
       case Instruction::And: Out << " & "; break;
       case Instruction::Or:  Out << " | "; break;
@@ -620,7 +629,9 @@ void CWriter::printConstant(Constant *CPV) {
       case Instruction::Shr: Out << " >> "; break;
       default: assert(0 && "Illegal opcode here!");
       }
-      printConstant(CE->getOperand(1));
+      printConstantWithCast(CE->getOperand(1), CE->getOpcode());
+      if (NeedsClosingParens)
+        Out << "))";
       Out << ')';
       return;
 
@@ -805,6 +816,71 @@ void CWriter::printConstant(Constant *CPV) {
   }
 }
 
+// Some constant expressions need to be casted back to the original types
+// because their operands were casted to the expected type. This function takes
+// care of detecting that case and printing the cast for the ConstantExpr.
+bool CWriter::printConstExprCast(const ConstantExpr* CE) {
+  bool Result = false;
+  const Type* Ty = CE->getOperand(0)->getType();
+  switch (CE->getOpcode()) {
+  case Instruction::UDiv: Result = Ty->isSigned(); break;
+  case Instruction::SDiv: Result = Ty->isUnsigned(); break;
+  default: break;
+  }
+  if (Result) {
+    Out << "((";
+    printType(Out, Ty);
+    Out << ")(";
+  }
+  return Result;
+}
+
+//  Print a constant assuming that it is the operand for a given Opcode. The
+//  opcodes that care about sign need to cast their operands to the expected
+//  type before the operation proceeds. This function does the casting.
+void CWriter::printConstantWithCast(Constant* CPV, unsigned Opcode) {
+
+  // Extract the operand's type, we'll need it.
+  const Type* OpTy = CPV->getType();
+
+  // Indicate whether to do the cast or not.
+  bool shouldCast = false;
+
+  // Based on the Opcode for which this Constant is being written, determine
+  // the new type to which the operand should be casted by setting the value
+  // of OpTy. If we change OpTy, also set shouldCast to true.
+  switch (Opcode) {
+    default:
+      // for most instructions, it doesn't matter
+      break; 
+    case Instruction::UDiv:
+      // For UDiv to have unsigned operands
+      if (OpTy->isSigned()) {
+        OpTy = OpTy->getUnsignedVersion();
+        shouldCast = true;
+      }
+      break;
+    case Instruction::SDiv:
+      if (OpTy->isUnsigned()) {
+        OpTy = OpTy->getSignedVersion();
+        shouldCast = true;
+      }
+      break;
+  }
+
+  // Write out the casted constnat if we should, otherwise just write the
+  // operand.
+  if (shouldCast) {
+    Out << "((";
+    printType(Out, OpTy);
+    Out << ")";
+    printConstant(CPV);
+    Out << ")";
+  } else 
+    writeOperand(CPV);
+
+}
+
 void CWriter::writeOperandInternal(Value *Operand) {
   if (Instruction *I = dyn_cast<Instruction>(Operand))
     if (isInlinableInst(*I) && !isDirectAlloca(I)) {
@@ -831,6 +907,72 @@ void CWriter::writeOperand(Value *Operand) {
 
   if (isa<GlobalVariable>(Operand) || isDirectAlloca(Operand))
     Out << ')';
+}
+
+// Some instructions need to have their result value casted back to the 
+// original types because their operands were casted to the expected type. 
+// This function takes care of detecting that case and printing the cast 
+// for the Instruction.
+bool CWriter::writeInstructionCast(const Instruction &I) {
+  bool Result = false;
+  const Type* Ty = I.getOperand(0)->getType();
+  switch (I.getOpcode()) {
+  case Instruction::UDiv: Result = Ty->isSigned(); break;
+  case Instruction::SDiv: Result = Ty->isUnsigned(); break;
+  default: break;
+  }
+  if (Result) {
+    Out << "((";
+    printType(Out, Ty);
+    Out << ")(";
+  }
+  return Result;
+}
+
+// Write the operand with a cast to another type based on the Opcode being used.
+// This will be used in cases where an instruction has specific type
+// requirements (usually signedness) for its operands. 
+void CWriter::writeOperandWithCast(Value* Operand, unsigned Opcode) {
+
+  // Extract the operand's type, we'll need it.
+  const Type* OpTy = Operand->getType();
+
+  // Indicate whether to do the cast or not.
+  bool shouldCast = false;
+
+  // Based on the Opcode for which this Operand is being written, determine
+  // the new type to which the operand should be casted by setting the value
+  // of OpTy. If we change OpTy, also set shouldCast to true.
+  switch (Opcode) {
+    default:
+      // for most instructions, it doesn't matter
+      break; 
+    case Instruction::UDiv:
+      // For UDiv to have unsigned operands
+      if (OpTy->isSigned()) {
+        OpTy = OpTy->getUnsignedVersion();
+        shouldCast = true;
+      }
+      break;
+    case Instruction::SDiv:
+      if (OpTy->isUnsigned()) {
+        OpTy = OpTy->getSignedVersion();
+        shouldCast = true;
+      }
+      break;
+  }
+
+  // Write out the casted operand if we should, otherwise just write the
+  // operand.
+  if (shouldCast) {
+    Out << "((";
+    printType(Out, OpTy);
+    Out << ")";
+    writeOperand(Operand);
+    Out << ")";
+  } else 
+    writeOperand(Operand);
+
 }
 
 // generateCompilerSpecificCode - This is where we add conditional compilation
@@ -1642,13 +1784,23 @@ void CWriter::visitBinaryOperator(Instruction &I) {
     writeOperand(I.getOperand(1));
     Out << ")";
   } else {
-    writeOperand(I.getOperand(0));
+
+    // Write out the cast of the instruction's value back to the proper type
+    // if necessary.
+    bool NeedsClosingParens = writeInstructionCast(I);
+
+    // Certain instructions require the operand to be forced to a specific type
+    // so we use writeOperandWithCast here instead of writeOperand. Similarly
+    // below for operand 1
+    writeOperandWithCast(I.getOperand(0), I.getOpcode());
 
     switch (I.getOpcode()) {
     case Instruction::Add: Out << " + "; break;
     case Instruction::Sub: Out << " - "; break;
     case Instruction::Mul: Out << '*'; break;
-    case Instruction::Div: Out << '/'; break;
+    case Instruction::UDiv:
+    case Instruction::SDiv: 
+    case Instruction::FDiv: Out << '/'; break;
     case Instruction::Rem: Out << '%'; break;
     case Instruction::And: Out << " & "; break;
     case Instruction::Or: Out << " | "; break;
@@ -1664,7 +1816,9 @@ void CWriter::visitBinaryOperator(Instruction &I) {
     default: std::cerr << "Invalid operator type!" << I; abort();
     }
 
-    writeOperand(I.getOperand(1));
+    writeOperandWithCast(I.getOperand(1), I.getOpcode());
+    if (NeedsClosingParens)
+      Out << "))";
   }
 
   if (needsCast) {

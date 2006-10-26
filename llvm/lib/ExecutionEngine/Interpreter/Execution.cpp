@@ -42,8 +42,12 @@ static GenericValue executeMulInst(GenericValue Src1, GenericValue Src2,
                                    const Type *Ty);
 static GenericValue executeRemInst(GenericValue Src1, GenericValue Src2,
                                    const Type *Ty);
-static GenericValue executeDivInst(GenericValue Src1, GenericValue Src2,
-                                   const Type *Ty);
+static GenericValue executeUDivInst(GenericValue Src1, GenericValue Src2,
+                                    const Type *Ty);
+static GenericValue executeSDivInst(GenericValue Src1, GenericValue Src2,
+                                    const Type *Ty);
+static GenericValue executeFDivInst(GenericValue Src1, GenericValue Src2,
+                                    const Type *Ty);
 static GenericValue executeAndInst(GenericValue Src1, GenericValue Src2,
                                    const Type *Ty);
 static GenericValue executeOrInst(GenericValue Src1, GenericValue Src2,
@@ -89,10 +93,18 @@ GenericValue Interpreter::getConstantExprValue (ConstantExpr *CE,
     return executeMulInst(getOperandValue(CE->getOperand(0), SF),
                           getOperandValue(CE->getOperand(1), SF),
                           CE->getOperand(0)->getType());
-  case Instruction::Div:
-    return executeDivInst(getOperandValue(CE->getOperand(0), SF),
-                          getOperandValue(CE->getOperand(1), SF),
-                          CE->getOperand(0)->getType());
+  case Instruction::SDiv:
+    return executeSDivInst(getOperandValue(CE->getOperand(0), SF),
+                           getOperandValue(CE->getOperand(1), SF),
+                           CE->getOperand(0)->getType());
+  case Instruction::UDiv:
+    return executeUDivInst(getOperandValue(CE->getOperand(0), SF),
+                           getOperandValue(CE->getOperand(1), SF),
+                           CE->getOperand(0)->getType());
+  case Instruction::FDiv:
+    return executeFDivInst(getOperandValue(CE->getOperand(0), SF),
+                           getOperandValue(CE->getOperand(1), SF),
+                           CE->getOperand(0)->getType());
   case Instruction::Rem:
     return executeRemInst(getOperandValue(CE->getOperand(0), SF),
                           getOperandValue(CE->getOperand(1), SF),
@@ -242,18 +254,44 @@ static GenericValue executeMulInst(GenericValue Src1, GenericValue Src2,
   return Dest;
 }
 
-static GenericValue executeDivInst(GenericValue Src1, GenericValue Src2,
+static GenericValue executeUDivInst(GenericValue Src1, GenericValue Src2,
+                                   const Type *Ty) {
+  GenericValue Dest;
+  if (Ty->isSigned())
+    Ty = Ty->getUnsignedVersion();
+  switch (Ty->getTypeID()) {
+    IMPLEMENT_BINARY_OPERATOR(/, UByte);
+    IMPLEMENT_BINARY_OPERATOR(/, UShort);
+    IMPLEMENT_BINARY_OPERATOR(/, UInt);
+    IMPLEMENT_BINARY_OPERATOR(/, ULong);
+  default:
+    std::cout << "Unhandled type for UDiv instruction: " << *Ty << "\n";
+    abort();
+  }
+  return Dest;
+}
+
+static GenericValue executeSDivInst(GenericValue Src1, GenericValue Src2,
+                                   const Type *Ty) {
+  GenericValue Dest;
+  if (Ty->isUnsigned())
+    Ty = Ty->getSignedVersion();
+  switch (Ty->getTypeID()) {
+    IMPLEMENT_BINARY_OPERATOR(/, SByte);
+    IMPLEMENT_BINARY_OPERATOR(/, Short);
+    IMPLEMENT_BINARY_OPERATOR(/, Int);
+    IMPLEMENT_BINARY_OPERATOR(/, Long);
+  default:
+    std::cout << "Unhandled type for SDiv instruction: " << *Ty << "\n";
+    abort();
+  }
+  return Dest;
+}
+
+static GenericValue executeFDivInst(GenericValue Src1, GenericValue Src2,
                                    const Type *Ty) {
   GenericValue Dest;
   switch (Ty->getTypeID()) {
-    IMPLEMENT_BINARY_OPERATOR(/, UByte);
-    IMPLEMENT_BINARY_OPERATOR(/, SByte);
-    IMPLEMENT_BINARY_OPERATOR(/, UShort);
-    IMPLEMENT_BINARY_OPERATOR(/, Short);
-    IMPLEMENT_BINARY_OPERATOR(/, UInt);
-    IMPLEMENT_BINARY_OPERATOR(/, Int);
-    IMPLEMENT_BINARY_OPERATOR(/, ULong);
-    IMPLEMENT_BINARY_OPERATOR(/, Long);
     IMPLEMENT_BINARY_OPERATOR(/, Float);
     IMPLEMENT_BINARY_OPERATOR(/, Double);
   default:
@@ -504,7 +542,9 @@ void Interpreter::visitBinaryOperator(BinaryOperator &I) {
   case Instruction::Add:   R = executeAddInst  (Src1, Src2, Ty); break;
   case Instruction::Sub:   R = executeSubInst  (Src1, Src2, Ty); break;
   case Instruction::Mul:   R = executeMulInst  (Src1, Src2, Ty); break;
-  case Instruction::Div:   R = executeDivInst  (Src1, Src2, Ty); break;
+  case Instruction::UDiv:  R = executeUDivInst (Src1, Src2, Ty); break;
+  case Instruction::SDiv:  R = executeSDivInst (Src1, Src2, Ty); break;
+  case Instruction::FDiv:  R = executeFDivInst (Src1, Src2, Ty); break;
   case Instruction::Rem:   R = executeRemInst  (Src1, Src2, Ty); break;
   case Instruction::And:   R = executeAndInst  (Src1, Src2, Ty); break;
   case Instruction::Or:    R = executeOrInst   (Src1, Src2, Ty); break;

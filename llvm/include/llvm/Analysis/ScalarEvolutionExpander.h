@@ -140,7 +140,7 @@ namespace llvm {
       const Type *Ty = S->getType();
       Value *LHS = expandInTy(S->getLHS(), Ty);
       Value *RHS = expandInTy(S->getRHS(), Ty);
-      return BinaryOperator::createDiv(LHS, RHS, "tmp.", InsertPt);
+      return BinaryOperator::createSDiv(LHS, RHS, "tmp.", InsertPt);
     }
 
     Value *visitAddRecExpr(SCEVAddRecExpr *S);

@@ -113,7 +113,9 @@ static bool isUnmovableInstruction(Instruction *I) {
       I->getOpcode() == Instruction::Malloc ||
       I->getOpcode() == Instruction::Invoke ||
       I->getOpcode() == Instruction::Call ||
-      I->getOpcode() == Instruction::Div ||
+      I->getOpcode() == Instruction::UDiv || 
+      I->getOpcode() == Instruction::SDiv ||
+      I->getOpcode() == Instruction::FDiv ||
       I->getOpcode() == Instruction::Rem)
     return true;
   return false;

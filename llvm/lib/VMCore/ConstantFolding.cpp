@@ -40,7 +40,9 @@ namespace {
     virtual Constant *add(const Constant *V1, const Constant *V2) const = 0;
     virtual Constant *sub(const Constant *V1, const Constant *V2) const = 0;
     virtual Constant *mul(const Constant *V1, const Constant *V2) const = 0;
-    virtual Constant *div(const Constant *V1, const Constant *V2) const = 0;
+    virtual Constant *udiv(const Constant *V1, const Constant *V2) const = 0;
+    virtual Constant *sdiv(const Constant *V1, const Constant *V2) const = 0;
+    virtual Constant *fdiv(const Constant *V1, const Constant *V2) const = 0;
     virtual Constant *rem(const Constant *V1, const Constant *V2) const = 0;
     virtual Constant *op_and(const Constant *V1, const Constant *V2) const = 0;
     virtual Constant *op_or (const Constant *V1, const Constant *V2) const = 0;
@@ -106,8 +108,14 @@ class VISIBILITY_HIDDEN TemplateRules : public ConstRules {
   virtual Constant *mul(const Constant *V1, const Constant *V2) const {
     return SubClassName::Mul((const ArgType *)V1, (const ArgType *)V2);
   }
-  virtual Constant *div(const Constant *V1, const Constant *V2) const {
-    return SubClassName::Div((const ArgType *)V1, (const ArgType *)V2);
+  virtual Constant *udiv(const Constant *V1, const Constant *V2) const {
+    return SubClassName::UDiv((const ArgType *)V1, (const ArgType *)V2);
+  }
+  virtual Constant *sdiv(const Constant *V1, const Constant *V2) const {
+    return SubClassName::SDiv((const ArgType *)V1, (const ArgType *)V2);
+  }
+  virtual Constant *fdiv(const Constant *V1, const Constant *V2) const {
+    return SubClassName::FDiv((const ArgType *)V1, (const ArgType *)V2);
   }
   virtual Constant *rem(const Constant *V1, const Constant *V2) const {
     return SubClassName::Rem((const ArgType *)V1, (const ArgType *)V2);
@@ -178,16 +186,18 @@ class VISIBILITY_HIDDEN TemplateRules : public ConstRules {
   // Default "noop" implementations
   //===--------------------------------------------------------------------===//
 
-  static Constant *Add(const ArgType *V1, const ArgType *V2) { return 0; }
-  static Constant *Sub(const ArgType *V1, const ArgType *V2) { return 0; }
-  static Constant *Mul(const ArgType *V1, const ArgType *V2) { return 0; }
-  static Constant *Div(const ArgType *V1, const ArgType *V2) { return 0; }
-  static Constant *Rem(const ArgType *V1, const ArgType *V2) { return 0; }
-  static Constant *And(const ArgType *V1, const ArgType *V2) { return 0; }
-  static Constant *Or (const ArgType *V1, const ArgType *V2) { return 0; }
-  static Constant *Xor(const ArgType *V1, const ArgType *V2) { return 0; }
-  static Constant *Shl(const ArgType *V1, const ArgType *V2) { return 0; }
-  static Constant *Shr(const ArgType *V1, const ArgType *V2) { return 0; }
+  static Constant *Add (const ArgType *V1, const ArgType *V2) { return 0; }
+  static Constant *Sub (const ArgType *V1, const ArgType *V2) { return 0; }
+  static Constant *Mul (const ArgType *V1, const ArgType *V2) { return 0; }
+  static Constant *SDiv(const ArgType *V1, const ArgType *V2) { return 0; }
+  static Constant *UDiv(const ArgType *V1, const ArgType *V2) { return 0; }
+  static Constant *FDiv(const ArgType *V1, const ArgType *V2) { return 0; }
+  static Constant *Rem (const ArgType *V1, const ArgType *V2) { return 0; }
+  static Constant *And (const ArgType *V1, const ArgType *V2) { return 0; }
+  static Constant *Or  (const ArgType *V1, const ArgType *V2) { return 0; }
+  static Constant *Xor (const ArgType *V1, const ArgType *V2) { return 0; }
+  static Constant *Shl (const ArgType *V1, const ArgType *V2) { return 0; }
+  static Constant *Shr (const ArgType *V1, const ArgType *V2) { return 0; }
   static Constant *LessThan(const ArgType *V1, const ArgType *V2) {
     return 0;
   }
@@ -373,8 +383,14 @@ struct VISIBILITY_HIDDEN ConstantPackedRules
   static Constant *Mul(const ConstantPacked *V1, const ConstantPacked *V2) {
     return EvalVectorOp(V1, V2, ConstantExpr::getMul);
   }
-  static Constant *Div(const ConstantPacked *V1, const ConstantPacked *V2) {
-    return EvalVectorOp(V1, V2, ConstantExpr::getDiv);
+  static Constant *UDiv(const ConstantPacked *V1, const ConstantPacked *V2) {
+    return EvalVectorOp(V1, V2, ConstantExpr::getUDiv);
+  }
+  static Constant *SDiv(const ConstantPacked *V1, const ConstantPacked *V2) {
+    return EvalVectorOp(V1, V2, ConstantExpr::getSDiv);
+  }
+  static Constant *FDiv(const ConstantPacked *V1, const ConstantPacked *V2) {
+    return EvalVectorOp(V1, V2, ConstantExpr::getFDiv);
   }
   static Constant *Rem(const ConstantPacked *V1, const ConstantPacked *V2) {
     return EvalVectorOp(V1, V2, ConstantExpr::getRem);
@@ -493,18 +509,25 @@ struct VISIBILITY_HIDDEN DirectIntRules
   DEF_CAST(Double, ConstantFP , double)
 #undef DEF_CAST
 
-  static Constant *Div(const ConstantInt *V1, const ConstantInt *V2) {
-    if (V2->isNullValue()) return 0;
-    if (V2->isAllOnesValue() &&              // MIN_INT / -1
-        (BuiltinType)V1->getZExtValue() == -(BuiltinType)V1->getZExtValue())
+  static Constant *UDiv(const ConstantInt *V1, const ConstantInt *V2) {
+    if (V2->isNullValue()) 
       return 0;
-    BuiltinType R = 
-      (BuiltinType)V1->getZExtValue() / (BuiltinType)V2->getZExtValue();
+    BuiltinType R = (BuiltinType)(V1->getZExtValue() / V2->getZExtValue());
     return ConstantInt::get(*Ty, R);
   }
 
-  static Constant *Rem(const ConstantInt *V1,
-                        const ConstantInt *V2) {
+  static Constant *SDiv(const ConstantInt *V1, const ConstantInt *V2) {
+    if (V2->isNullValue()) 
+      return 0;
+    if (V2->isAllOnesValue() &&              // MIN_INT / -1
+        (BuiltinType)V1->getSExtValue() == -(BuiltinType)V1->getSExtValue())
+      return 0;
+    BuiltinType R = 
+      (BuiltinType)(V1->getSExtValue() / V2->getSExtValue());
+    return ConstantInt::get(*Ty, R);
+  }
+
+  static Constant *Rem(const ConstantInt *V1, const ConstantInt *V2) {
     if (V2->isNullValue()) return 0;         // X / 0
     if (V2->isAllOnesValue() &&              // MIN_INT / -1
         (BuiltinType)V1->getZExtValue() == -(BuiltinType)V1->getZExtValue())
@@ -615,7 +638,7 @@ struct VISIBILITY_HIDDEN DirectFPRules
                                    (BuiltinType)V2->getValue());
     return ConstantFP::get(*Ty, Result);
   }
-  static Constant *Div(const ConstantFP *V1, const ConstantFP *V2) {
+  static Constant *FDiv(const ConstantFP *V1, const ConstantFP *V2) {
     BuiltinType inf = std::numeric_limits<BuiltinType>::infinity();
     if (V2->isExactlyValue(0.0)) return ConstantFP::get(*Ty, inf);
     if (V2->isExactlyValue(-0.0)) return ConstantFP::get(*Ty, -inf);
@@ -1224,7 +1247,9 @@ Constant *llvm::ConstantFoldBinaryInstruction(unsigned Opcode,
   case Instruction::Add:     C = ConstRules::get(V1, V2).add(V1, V2); break;
   case Instruction::Sub:     C = ConstRules::get(V1, V2).sub(V1, V2); break;
   case Instruction::Mul:     C = ConstRules::get(V1, V2).mul(V1, V2); break;
-  case Instruction::Div:     C = ConstRules::get(V1, V2).div(V1, V2); break;
+  case Instruction::UDiv:    C = ConstRules::get(V1, V2).udiv(V1, V2); break;
+  case Instruction::SDiv:    C = ConstRules::get(V1, V2).sdiv(V1, V2); break;
+  case Instruction::FDiv:    C = ConstRules::get(V1, V2).fdiv(V1, V2); break;
   case Instruction::Rem:     C = ConstRules::get(V1, V2).rem(V1, V2); break;
   case Instruction::And:     C = ConstRules::get(V1, V2).op_and(V1, V2); break;
   case Instruction::Or:      C = ConstRules::get(V1, V2).op_or (V1, V2); break;
@@ -1307,7 +1332,9 @@ Constant *llvm::ConstantFoldBinaryInstruction(unsigned Opcode,
     case Instruction::Mul:
     case Instruction::And:
       return Constant::getNullValue(V1->getType());
-    case Instruction::Div:
+    case Instruction::UDiv:
+    case Instruction::SDiv:
+    case Instruction::FDiv:
     case Instruction::Rem:
       if (!isa<UndefValue>(V2))     // undef/X -> 0
         return Constant::getNullValue(V1->getType());
@@ -1358,7 +1385,8 @@ Constant *llvm::ConstantFoldBinaryInstruction(unsigned Opcode,
           if (CI->getZExtValue() == 1)
             return const_cast<Constant*>(V1);                     // X * 1 == X
         break;
-      case Instruction::Div:
+      case Instruction::UDiv:
+      case Instruction::SDiv:
         if (const ConstantInt *CI = dyn_cast<ConstantInt>(V2))
           if (CI->getZExtValue() == 1)
             return const_cast<Constant*>(V1);                     // X / 1 == X
@@ -1419,7 +1447,9 @@ Constant *llvm::ConstantFoldBinaryInstruction(unsigned Opcode,
     case Instruction::Shl:
     case Instruction::Shr:
     case Instruction::Sub:
-    case Instruction::Div:
+    case Instruction::SDiv:
+    case Instruction::UDiv:
+    case Instruction::FDiv:
     case Instruction::Rem:
     default:  // These instructions cannot be flopped around.
       break;

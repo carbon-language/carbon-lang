@@ -94,7 +94,9 @@ const char *Instruction::getOpcodeName(unsigned OpCode) {
   case Add: return "add";
   case Sub: return "sub";
   case Mul: return "mul";
-  case Div: return "div";
+  case UDiv: return "udiv";
+  case SDiv: return "sdiv";
+  case FDiv: return "fdiv";
   case Rem: return "rem";
 
   // Logical operators...
@@ -221,7 +223,9 @@ bool Instruction::isComparison(unsigned op) {
 ///
 bool Instruction::isTrapping(unsigned op) {
   switch(op) {
-  case Div:
+  case UDiv:
+  case SDiv:
+  case FDiv:
   case Rem:
   case Load:
   case Store:

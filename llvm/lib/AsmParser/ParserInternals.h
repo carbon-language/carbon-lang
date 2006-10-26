@@ -201,4 +201,20 @@ struct ValID {
 
 } // End llvm namespace
 
+// This structure is used to keep track of obsolete opcodes. The lexer will
+// retain the ability to parse obsolete opcode mnemonics. In this case it will
+// set "obsolete" to true and the opcode will be the replacement opcode. For
+// example if "rem" is encountered then opcode will be set to "urem" and the
+// "obsolete" flag will be true. If the opcode is not obsolete then "obsolete"
+// will be false. 
+template <class Enum> 
+struct OpcodeInfo {
+  Enum opcode;
+  bool obsolete;
+};
+typedef OpcodeInfo<llvm::Instruction::BinaryOps>  BinaryOpInfo;
+typedef OpcodeInfo<llvm::Instruction::TermOps>    TermOpInfo;
+typedef OpcodeInfo<llvm::Instruction::MemoryOps>  MemOpInfo;
+typedef OpcodeInfo<llvm::Instruction::OtherOps>   OtherOpInfo;
+
 #endif

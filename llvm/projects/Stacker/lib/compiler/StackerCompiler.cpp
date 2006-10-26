@@ -1041,7 +1041,7 @@ StackerCompiler::handle_word( int tkn )
         LoadInst* op1 = cast<LoadInst>(pop_integer(bb));
         LoadInst* op2 = cast<LoadInst>(pop_integer(bb));
         BinaryOperator* divop =
-            BinaryOperator::create( Instruction::Div, op1, op2);
+            BinaryOperator::create( Instruction::SDiv, op1, op2);
         bb->getInstList().push_back( divop );
         push_value( bb, divop );
         break;
@@ -1072,7 +1072,7 @@ StackerCompiler::handle_word( int tkn )
 
         // Divide by the third operand
         BinaryOperator* divop =
-            BinaryOperator::create( Instruction::Div, multop, op3);
+            BinaryOperator::create( Instruction::SDiv, multop, op3);
         bb->getInstList().push_back( divop );
 
         // Push the result
