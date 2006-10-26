@@ -24,7 +24,9 @@ $(ObjDir)/Intrinsics.gen.tmp: $(ObjDir)/.dir $(INTRINSICTDS) $(TBLGEN)
 	$(Verb) $(TableGen) $(INTRINSICTD) -o $@ -gen-intrinsic
 
 $(GENFILE): $(ObjDir)/Intrinsics.gen.tmp
-	$(Verb) $(CMP) -s $@ $< || $(CP) $< $@
+	$(Verb) $(CMP) -s $@ $< || ( $(CP) $< $@ && \
+	  $(EchoCmd) Updated Intrinsics.gen because Intrinsics.gen.tmp \
+	    changed significantly. )
 
 install-local:: $(GENFILE)
 	$(Echo) Installing $(PROJ_includedir)/llvm/Intrinsics.gen
