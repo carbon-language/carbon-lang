@@ -91,8 +91,9 @@ namespace llvm {
                                               NameToSymbolMap &,
                                               std::set<std::string> &) = 0;
     virtual enum LTOStatus optimizeModules(const std::string &,
-                                   std::vector<const char*> &,
-                                   std::string &) = 0;
+                                           std::vector<const char*> &,
+                                           std::string &, bool, 
+                                           const char *) = 0;
     virtual void getTargetTriple(const std::string &, std::string &) = 0;
     virtual void removeModule (const std::string &InputFilename) = 0;
     virtual ~LinkTimeOptimizer() = 0;
@@ -113,8 +114,10 @@ namespace llvm {
                                       std::set<std::string> &references);
     enum LTOStatus optimizeModules(const std::string &OutputFilename,
                                    std::vector<const char*> &exportList,
-                                   std::string &targetTriple);
-    void getTargetTriple(const std::string &InputFilename, std::string &targetTriple);
+                                   std::string &targetTriple, bool saveTemps,
+                                   const char *);
+    void getTargetTriple(const std::string &InputFilename, 
+                         std::string &targetTriple);
     void removeModule (const std::string &InputFilename);
 
     // Constructors and destructors

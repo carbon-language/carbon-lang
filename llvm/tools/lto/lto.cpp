@@ -129,7 +129,7 @@ LTO::getModule(const std::string &InputFilename)
 /// set corresponding target triplet string.
 void
 LTO::getTargetTriple(const std::string &InputFilename, 
-				   std::string &targetTriple)
+                     std::string &targetTriple)
 {
   Module *m = getModule(InputFilename);
   if (m)
@@ -142,8 +142,8 @@ LTO::getTargetTriple(const std::string &InputFilename,
 /// Return LTO_READ_SUCCESS if there is no error.
 enum LTOStatus
 LTO::readLLVMObjectFile(const std::string &InputFilename,
-                                      NameToSymbolMap &symbols,
-                                      std::set<std::string> &references)
+                        NameToSymbolMap &symbols,
+                        std::set<std::string> &references)
 {
   Module *m = getModule(InputFilename);
   if (!m)
@@ -316,7 +316,7 @@ LTO::optimize(Module *M, std::ostream &Out,
 
   CodeGenPasses->add(new TargetData(*Target->getTargetData()));
   Target->addPassesToEmitFile(*CodeGenPasses, Out, TargetMachine::AssemblyFile, 
-			     true);
+                              true);
 
   // Run our queue of passes all at once now, efficiently.
   Passes.run(*M);
@@ -337,8 +337,10 @@ LTO::optimize(Module *M, std::ostream &Out,
 /// Return appropriate LTOStatus.
 enum LTOStatus
 LTO::optimizeModules(const std::string &OutputFilename,
-                                   std::vector<const char *> &exportList,
-                                   std::string &targetTriple)
+                     std::vector<const char *> &exportList,
+                     std::string &targetTriple,
+                     bool saveTemps,
+                     const char *FinalOutputFilename)
 {
   if (modules.empty())
     return LTO_NO_WORK;
@@ -352,11 +354,15 @@ LTO::optimizeModules(const std::string &OutputFilename,
     if (theLinker.LinkModules(bigOne, modules[i], errMsg))
       return LTO_MODULE_MERGE_FAILURE;
 
-#if 0
-  // Enable this when -save-temps is used
-  std::ofstream Out("big.bc", io_mode);
-  WriteBytecodeToFile(bigOne, Out, true);
-#endif
+  sys::Path FinalOutputPath(FinalOutputFilename);
+  FinalOutputPath.eraseSuffix();
+
+  if (saveTemps) {
+    std::string tempFileName(FinalOutputPath.c_str());
+    tempFileName += "0.bc";
+    std::ofstream Out(tempFileName.c_str(), io_mode);
+    WriteBytecodeToFile(bigOne, Out, true);
+  }
 
   // Strip leading underscore because it was added to match names
   // seen by linker.
@@ -402,6 +408,13 @@ LTO::optimizeModules(const std::string &OutputFilename,
     tmpAsmFilePath.eraseFromDisk();
     TempDir.eraseFromDisk(true);
     return status;
+  }
+
+  if (saveTemps) {
+    std::string tempFileName(FinalOutputPath.c_str());
+    tempFileName += "1.bc";
+    std::ofstream Out(tempFileName.c_str(), io_mode);
+    WriteBytecodeToFile(bigOne, Out, true);
   }
 
   targetTriple = bigOne->getTargetTriple();
