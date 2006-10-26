@@ -334,6 +334,11 @@ public:
   /// ubyte, and if the elements of the array are all ConstantInt's.
   bool isString() const;
 
+  /// isCString - This method returns true if the array is a string (see
+  /// isString) and it ends in a null byte \0 and does not contains any other
+  /// null bytes except its terminator.
+  bool isCString() const;
+
   /// getAsString - If this array is isString(), then this method converts the
   /// array to an std::string and returns it.  Otherwise, it asserts out.
   ///

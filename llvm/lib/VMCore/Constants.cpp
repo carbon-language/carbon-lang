@@ -1073,6 +1073,19 @@ bool ConstantArray::isString() const {
   return true;
 }
 
+/// isCString - This method returns true if the array is a string (see
+/// isString) and it ends in a null byte \0 and does not contains any other
+/// null bytes except its terminator.
+bool ConstantArray::isCString() const {
+  if (!isString()) return false;
+  // This is safe because a ConstantArray cannot be a zero array.
+  for (unsigned i = 0, e = getNumOperands()-1; i != e; ++i)
+    if (cast<ConstantInt>(getOperand(i))->getZExtValue() == 0)
+      return false;
+  return true;
+}
+
+
 // getAsString - If the sub-element type of this array is either sbyte or ubyte,
 // then this method converts the array to an std::string and returns it.
 // Otherwise, it asserts out.
