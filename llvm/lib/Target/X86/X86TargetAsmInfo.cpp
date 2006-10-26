@@ -32,6 +32,7 @@ X86TargetAsmInfo::X86TargetAsmInfo(const X86TargetMachine &TM) {
     PrivateGlobalPrefix = "L";     // Marker for constant pool idxs
     ConstantPoolSection = "\t.const\n";
     JumpTableDataSection = "\t.const\n";
+    CStringSection = "\t.cstring";
     FourByteConstantSection = "\t.literal4\n";
     EightByteConstantSection = "\t.literal8\n";
     if (Subtarget->is64Bit())

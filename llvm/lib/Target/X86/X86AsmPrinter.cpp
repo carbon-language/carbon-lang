@@ -204,9 +204,17 @@ bool X86SharedAsmPrinter::doFinalization(Module &M) {
         // If external or appending, declare as a global symbol
         O << "\t.globl " << name << "\n";
         // FALL THROUGH
-      case GlobalValue::InternalLinkage:
+      case GlobalValue::InternalLinkage: {
+        if (TAI->getCStringSection()) {
+          const ConstantArray *CVA = dyn_cast<ConstantArray>(C);
+          if (CVA && CVA->isCString()) {
+            SwitchToDataSection(TAI->getCStringSection(), I);
+            break;
+          }
+        }
         SwitchToDataSection(TAI->getDataSection(), I);
         break;
+      }
       default:
         assert(0 && "Unknown linkage type!");
       }
