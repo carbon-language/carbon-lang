@@ -605,6 +605,7 @@ void CWriter::printConstant(Constant *CPV) {
     case Instruction::SetGE:
     case Instruction::Shl:
     case Instruction::Shr:
+    {
       Out << '(';
       bool NeedsClosingParens = printConstExprCast(CE); 
       printConstantWithCast(CE->getOperand(0), CE->getOpcode());
@@ -634,6 +635,7 @@ void CWriter::printConstant(Constant *CPV) {
         Out << "))";
       Out << ')';
       return;
+    }
 
     default:
       std::cerr << "CWriter Error: Unhandled constant expression: "
