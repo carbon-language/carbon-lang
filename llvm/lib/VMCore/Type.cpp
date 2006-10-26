@@ -90,6 +90,16 @@ const Type *Type::getPrimitiveType(TypeID IDNumber) {
   }
 }
 
+/// isFPOrFPVector - Return true if this is a FP type or a vector of FP types.
+///
+bool Type::isFPOrFPVector() const {
+  if (ID == Type::FloatTyID || ID == Type::DoubleTyID) return true;
+  if (ID != Type::PackedTyID) return false;
+  
+  return cast<PackedType>(this)->getElementType()->isFloatingPoint();
+}
+
+
 // isLosslesslyConvertibleTo - Return true if this type can be converted to
 // 'Ty' without any reinterpretation of bits.  For example, uint to int.
 //

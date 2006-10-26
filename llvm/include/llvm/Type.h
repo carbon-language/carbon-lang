@@ -185,6 +185,10 @@ public:
   /// types
   bool isFloatingPoint() const { return ID == FloatTyID || ID == DoubleTyID; }
 
+  /// isFPOrFPVector - Return true if this is a FP type or a vector of FP types.
+  ///
+  bool isFPOrFPVector() const;
+  
   /// isAbstract - True if the type is either an Opaque type, or is a derived
   /// type that includes an opaque type somewhere in it.
   ///
