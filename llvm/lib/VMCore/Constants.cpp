@@ -1077,11 +1077,21 @@ bool ConstantArray::isString() const {
 /// isString) and it ends in a null byte \0 and does not contains any other
 /// null bytes except its terminator.
 bool ConstantArray::isCString() const {
-  if (!isString()) return false;
-  // This is safe because a ConstantArray cannot be a zero array.
-  for (unsigned i = 0, e = getNumOperands()-1; i != e; ++i)
-    if (cast<ConstantInt>(getOperand(i))->getZExtValue() == 0)
+  // Check the element type for sbyte or ubyte...
+  if (getType()->getElementType() != Type::UByteTy &&
+      getType()->getElementType() != Type::SByteTy)
+    return false;
+  Constant *Zero = Constant::getNullValue(getOperand(0)->getType());
+  // Last element must be a null.
+  if (getOperand(getNumOperands()-1) != Zero)
+    return false;
+  // Other elements must be non-null integers.
+  for (unsigned i = 0, e = getNumOperands()-1; i != e; ++i) {
+    if (!isa<ConstantInt>(getOperand(i)))
       return false;
+    if (getOperand(i) == Zero)
+      return false;
+  }
   return true;
 }
 
