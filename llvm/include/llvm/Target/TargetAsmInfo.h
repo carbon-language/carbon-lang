@@ -162,6 +162,12 @@ namespace llvm {
     /// table.
     const char *JumpTableDirective;
 
+    /// CStringSection - If not null, this allows for special handling of
+    /// cstring constants (\0 terminated string that does not contain any
+    /// other null bytes) on this target. This is commonly supported as
+    /// ".cstring".
+    const char *CStringSection;           // Defaults to NULL
+
     /// StaticCtorsSection - This is the directive that is emitted to switch to
     /// a section to emit the static constructor list.
     /// Defaults to "\t.section .ctors,\"aw\",@progbits".
@@ -365,6 +371,9 @@ namespace llvm {
     }
     const char *getJumpTableDataSection() const {
       return JumpTableDataSection;
+    }
+    const char *getCStringSection() const {
+      return CStringSection;
     }
     const char *getStaticCtorsSection() const {
       return StaticCtorsSection;
