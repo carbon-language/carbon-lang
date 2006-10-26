@@ -30,7 +30,7 @@ namespace clang {
 /// variable or function name).  The preprocessor keeps this information in a
 /// set, and all tok::identifier tokens have a pointer to one of these.  
 class IdentifierInfo {
-  unsigned NameLen;                // String that is the identifier.
+  unsigned NameLen;                // Length of the identifier string.
   MacroInfo *Macro;                // Set if this identifier is #define'd.
   tok::TokenKind TokenID      : 8; // Front-end token ID or tok::identifier.
   tok::PPKeywordKind PPID     : 5; // ID for preprocessor command like 'ifdef'.
@@ -39,6 +39,7 @@ class IdentifierInfo {
   bool IsPoisoned             : 1; // True if identifier is poisoned.
   bool IsOtherTargetMacro     : 1; // True if ident is macro on another target.
   void *FETokenInfo;               // Managed by the language front-end.
+  unsigned HashValue;              // The full (non-truncated) hash value.
   friend class IdentifierTable;
 public:
   /// getName - Return the actual string for this identifier.  The length of

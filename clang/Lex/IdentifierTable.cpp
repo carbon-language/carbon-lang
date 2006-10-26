@@ -179,7 +179,8 @@ IdentifierInfo &IdentifierTable::get(const char *NameStart,
                                      const char *NameEnd) {
   IdentifierBucket **TableArray = (IdentifierBucket**)TheTable;
 
-  unsigned Hash = HashString(NameStart, NameEnd) & (HASH_TABLE_SIZE-1);
+  unsigned FullHash = HashString(NameStart, NameEnd);
+  unsigned Hash = FullHash & (HASH_TABLE_SIZE-1);
   unsigned Length = NameEnd-NameStart;
   
   IdentifierBucket *IdentHead = TableArray[Hash];
@@ -218,6 +219,7 @@ IdentifierInfo &IdentifierTable::get(const char *NameStart,
   Identifier->TokInfo.IsPoisoned = false;
   Identifier->TokInfo.IsOtherTargetMacro = false;
   Identifier->TokInfo.FETokenInfo = 0;
+  Identifier->TokInfo.HashValue = FullHash;
 
   // Copy the string information.
   char *StrBuffer = (char*)(Identifier+1);
@@ -350,8 +352,19 @@ void IdentifierTable::PrintStats() const {
         MaxIdentifierLength = Id->TokInfo.getNameLength();
       ++NumIdentifiersInBucket;
     }
-    if (NumIdentifiersInBucket > MaxBucketLength) 
+    if (NumIdentifiersInBucket > MaxBucketLength) {
       MaxBucketLength = NumIdentifiersInBucket;
+      
+#if 0 // This code can be enabled to see (with -stats) a sample of some of the
+      // longest buckets in the hash table.  Useful for inspecting density of
+      // buckets etc.
+      std::cerr << "Bucket length " << MaxBucketLength << ":\n";
+      for (IdentifierBucket *Id = TableArray[i]; Id; Id = Id->Next) {
+        std::cerr << "  " << Id->TokInfo.getName() << " hash = "
+                  << Id->TokInfo.HashValue << "\n";
+      }
+#endif
+    }
     if (NumIdentifiersInBucket == 0)
       ++NumEmptyBuckets;
 
