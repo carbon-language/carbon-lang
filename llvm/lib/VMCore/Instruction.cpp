@@ -172,11 +172,12 @@ bool Instruction::isIdenticalTo(Instruction *I) const {
 /// applied to floating point types.
 ///
 bool Instruction::isAssociative(unsigned Opcode, const Type *Ty) {
-  if (Opcode == Add || Opcode == Mul ||
-      Opcode == And || Opcode == Or || Opcode == Xor) {
-    // Floating point operations do not associate!
-    return !Ty->isFloatingPoint();
-  }
+  if (Opcode == And || Opcode == Or || Opcode == Xor)
+    return true;
+
+  // Add/Mul reassociate unless they are FP or FP vectors.
+  if (Opcode == Add || Opcode == Mul)
+    return !Ty->isFPOrFPVector();
   return 0;
 }
 
