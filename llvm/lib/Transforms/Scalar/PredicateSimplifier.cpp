@@ -316,21 +316,6 @@ namespace {
       Iter I1, I2;
     };
 
-    void add(Ops Opcode, Value *V1, Value *V2, bool invert) {
-      switch (Opcode) {
-        case EQ:
-          if (invert) addNotEqual(V1, V2);
-          else        addEqual(V1, V2);
-          break;
-        case NE:
-          if (invert) addEqual(V1, V2);
-          else        addNotEqual(V1, V2);
-          break;
-        default:
-          assert(0 && "Unknown property opcode.");
-      }
-    }
-
     void addToResolve(Value *V, std::list<Value *> &WorkList) {
       if (!isa<Constant>(V) && !isa<BasicBlock>(V)) {
         for (Value::use_iterator UI = V->use_begin(), UE = V->use_end();
@@ -398,31 +383,65 @@ namespace {
       if (!WorkList.empty()) resolve(WorkList);
     }
 
-    // Finds the properties implied by an equivalence and adds them too.
-    // Example: ("seteq %a, %b", true,  EQ) --> (%a, %b, EQ)
-    //          ("seteq %a, %b", false, EQ) --> (%a, %b, NE)
+    void add(Ops Opcode, Value *V1, Value *V2, bool invert) {
+      switch (Opcode) {
+        case EQ:
+          if (invert) addNotEqual(V1, V2);
+          else        addEqual(V1, V2);
+          break;
+        case NE:
+          if (invert) addEqual(V1, V2);
+          else        addNotEqual(V1, V2);
+          break;
+        default:
+          assert(0 && "Unknown property opcode.");
+      }
+    }
+
+    /// Finds the properties implied by an equivalence and adds them too.
+    /// Example: ("seteq %a, %b", true,  EQ) --> (%a, %b, EQ)
+    ///          ("seteq %a, %b", false, EQ) --> (%a, %b, NE)
     void addImpliedProperties(Ops Opcode, Value *V1, Value *V2) {
       order(V1, V2);
 
       if (BinaryOperator *BO = dyn_cast<BinaryOperator>(V2)) {
         switch (BO->getOpcode()) {
         case Instruction::SetEQ:
+          // "seteq int %a, %b" EQ true  then %a EQ %b
+          // "seteq int %a, %b" EQ false then %a NE %b
+          // "seteq int %a, %b" NE true  then %a NE %b
+          // "seteq int %a, %b" NE false then %a EQ %b
           if (ConstantBool *V1CB = dyn_cast<ConstantBool>(V1))
             add(Opcode, BO->getOperand(0), BO->getOperand(1),!V1CB->getValue());
           break;
         case Instruction::SetNE:
+          // "setne int %a, %b" EQ true  then %a NE %b
+          // "setne int %a, %b" EQ false then %a EQ %b
+          // "setne int %a, %b" NE true  then %a EQ %b
+          // "setne int %a, %b" NE false then %a NE %b
           if (ConstantBool *V1CB = dyn_cast<ConstantBool>(V1))
             add(Opcode, BO->getOperand(0), BO->getOperand(1), V1CB->getValue());
           break;
         case Instruction::SetLT:
         case Instruction::SetGT:
-          if (V1 == ConstantBool::getTrue())
-            add(Opcode, BO->getOperand(0), BO->getOperand(1), true);
+          // "setlt/gt int %a, %b" EQ true  then %a NE %b
+          // "setlt/gt int %a, %b" NE false then %a NE %b
+
+          // "setlt int %a, %b" NE true then %a EQ %b
+
+          if (ConstantBool *CB = dyn_cast<ConstantBool>(V1)) {
+            if (CB->getValue() ^ Opcode==NE)
+              addNotEqual(BO->getOperand(0), BO->getOperand(1));
+	  }
           break;
         case Instruction::SetLE:
         case Instruction::SetGE:
-          if (V1 == ConstantBool::getFalse())
-            add(Opcode, BO->getOperand(0), BO->getOperand(1), true);
+          // "setle/ge int %a, %b" EQ false then %a NE %b
+          // "setle/ge int %a, %b" NE true  then %a NE %b
+          if (ConstantBool *CB = dyn_cast<ConstantBool>(V1)) {
+            if (CB->getValue() ^ Opcode==EQ)
+              addNotEqual(BO->getOperand(0), BO->getOperand(1));
+	  }
           break;
         case Instruction::And: {
           // "and int %a, %b"  EQ 0xff  then %a EQ 0xff and %b EQ 0xff
@@ -461,15 +480,15 @@ namespace {
           //    "EQ true" and "NE true" in place of "EQ false".
           // "xor int %c, %a" EQ %c then %a = 0
           // "xor int %c, %a" NE %c then %a != 0
-          // 2. Repeat all of the above, with the operands swapped.
+          // 2. Repeat all of the above, with order of operands reversed.
 
           Value *LHS = BO->getOperand(0), *RHS = BO->getOperand(1);
           if (!isa<Constant>(LHS)) std::swap(LHS, RHS);
 
           if (ConstantBool *CB = dyn_cast<ConstantBool>(V1)) {
             if (ConstantBool *A = dyn_cast<ConstantBool>(LHS)) {
-                addEqual(RHS, ConstantBool::get(A->getValue() ^ CB->getValue()
-                                                ^ Opcode==NE));
+              addEqual(RHS, ConstantBool::get(A->getValue() ^ CB->getValue()
+                                              ^ Opcode==NE));
             }
           }
           else if (ConstantIntegral *CI = dyn_cast<ConstantIntegral>(V1)) {
@@ -486,9 +505,9 @@ namespace {
         ConstantBool *True  = ConstantBool::get(Opcode==EQ),
                      *False = ConstantBool::get(Opcode!=EQ);
 
-        if (V1 == SI->getTrueValue())
+        if (V1 == canonicalize(SI->getTrueValue()))
           addEqual(SI->getCondition(), True);
-        else if (V1 == SI->getFalseValue())
+        else if (V1 == canonicalize(SI->getFalseValue()))
           addEqual(SI->getCondition(), False);
       }
 
