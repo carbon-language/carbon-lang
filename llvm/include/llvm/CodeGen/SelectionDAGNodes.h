@@ -370,9 +370,10 @@ namespace ISD {
     // operations.
     FNEG, FABS, FSQRT, FSIN, FCOS, FPOWI,
     
-    // Other operators.  LOAD and STORE have token chains as their first
-    // operand, then the same operands as an LLVM load/store instruction, then a
-    // SRCVALUE node that provides alias analysis information.
+    // LOAD and STORE have token chains as their first operand, then the same
+    // operands as an LLVM load/store instruction, then an offset node that
+    // is added / subtracted from the base pointer to form the address (for
+    // indexed memory ops).
     LOAD, STORE,
     
     // Abstract vector version of LOAD.  VLOAD has a constant element count as
@@ -529,8 +530,8 @@ namespace ISD {
   ///              load); an unindexed store does not produces a value.
   ///
   /// PRE_INC      Similar to the unindexed mode where the effective address is
-  /// PRE_DEC      the result of computation of the base pointer. However, it
-  ///              considers the computation as being folded into the load /
+  /// PRE_DEC      the value of the base pointer add / subtract the offset.
+  ///              It considers the computation as being folded into the load /
   ///              store operation (i.e. the load / store does the address
   ///              computation as well as performing the memory transaction).
   ///              The base operand is always undefined. In addition to
@@ -540,12 +541,12 @@ namespace ISD {
   ///              of the address computation).
   ///
   /// POST_INC     The effective address is the value of the base pointer. The
-  /// POST_DEC     value of the offset operand is then added to the base after
-  ///              memory transaction. In addition to producing a chain,
-  ///              post-indexed load produces two values (the result of the load
-  ///              and the result of the base + offset computation); a
-  ///              post-indexed store produces one value (the the result of the
-  ///              base + offset computation).
+  /// POST_DEC     value of the offset operand is then added to / subtracted
+  ///              from the base after memory transaction. In addition to
+  ///              producing a chain, post-indexed load produces two values
+  ///              (the result of the load and the result of the base +/- offset
+  ///              computation); a post-indexed store produces one value (the
+  ///              the result of the base +/- offset computation).
   ///
   enum MemOpAddrMode {
     UNINDEXED = 0,
@@ -1408,9 +1409,8 @@ protected:
     : SDNode(ISD::LOAD, Chain, Ptr, Off),
       AddrMode(AM), ExtType(ETy), LoadedVT(LVT), SrcValue(SV), SVOffset(O),
       Alignment(Align), IsVolatile(Vol) {
-    assert((Off.getOpcode() == ISD::UNDEF ||
-            AddrMode == ISD::POST_INC || AddrMode == ISD::POST_DEC) &&
-           "Only post-indexed load has a non-undef offset operand");
+    assert((Off.getOpcode() == ISD::UNDEF || AddrMode != ISD::UNINDEXED) &&
+           "Only indexed load has a non-undef offset operand");
   }
 public:
 
@@ -1462,9 +1462,8 @@ protected:
     : SDNode(ISD::STORE, Chain, Value, Ptr, Off),
       AddrMode(AM), IsTruncStore(isTrunc), StoredVT(SVT), SrcValue(SV),
       SVOffset(O), Alignment(Align), IsVolatile(Vol) {
-    assert((Off.getOpcode() == ISD::UNDEF ||
-            AddrMode == ISD::POST_INC || AddrMode == ISD::POST_DEC) &&
-           "Only post-indexed store has a non-undef offset operand");
+    assert((Off.getOpcode() == ISD::UNDEF || AddrMode != ISD::UNINDEXED) &&
+           "Only indexed store has a non-undef offset operand");
   }
 public:
 
