@@ -192,7 +192,6 @@ IdentifierInfo &IdentifierTable::get(const char *NameStart,
     // being non-null and for the full hash value) not at the identifiers.  This
     // is important for cache locality.
     if (Bucket.FullHashValue == FullHashValue &&
-        BucketII->getNameLength() == Length &&
         memcmp(BucketII->getName(), NameStart, Length) == 0)
       // We found a match!
       return *BucketII;
@@ -215,7 +214,6 @@ IdentifierInfo &IdentifierTable::get(const char *NameStart,
 #else
   IdentifierInfo *Identifier = (IdentifierInfo*)malloc(AllocSize);
 #endif
-  Identifier->NameLen = Length;
   Identifier->Macro = 0;
   Identifier->TokenID = tok::identifier;
   Identifier->PPID = tok::pp_not_keyword;
@@ -394,10 +392,10 @@ void IdentifierTable::PrintStats() const {
       continue;
     }
     IdentifierInfo *Id = TableArray[i].Info;
-    
-    AverageIdentifierSize += Id->getNameLength();
-    if (MaxIdentifierLength < Id->getNameLength())
-      MaxIdentifierLength = Id->getNameLength();
+    unsigned IdLen = strlen(Id->getName());
+    AverageIdentifierSize += IdLen;
+    if (MaxIdentifierLength < IdLen)
+      MaxIdentifierLength = IdLen;
 
     // Count the number of times something was probed.
     if ((TableArray[i].FullHashValue & (e-1)) != i)

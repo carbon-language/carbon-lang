@@ -50,12 +50,6 @@ public:
     return (const char*)(this+1);
   }
   
-  /// getNameLength - Return the length of the identifier string.
-  ///
-  unsigned getNameLength() const {
-    return NameLen;
-  }
-  
   /// getMacroInfo - Return macro information about this identifier, or null if
   /// it is not a macro.
   MacroInfo *getMacroInfo() const { return Macro; }
