@@ -398,6 +398,7 @@ static bool DebugACrash(BugDriver &BD,  bool (*TestFn)(BugDriver &, Module *)) {
           if (GVs.size() < OldSize)
             BD.EmitProgressBytecode("reduced-global-variables");
         }
+      }
     }
   }
 
