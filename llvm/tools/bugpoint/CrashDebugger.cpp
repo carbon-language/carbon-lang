@@ -357,22 +357,47 @@ static bool DebugACrash(BugDriver &BD,  bool (*TestFn)(BugDriver &, Module *)) {
   if (BD.getProgram()->global_begin() != BD.getProgram()->global_end()) {
     // Now try to reduce the number of global variable initializers in the
     // module to something small.
-    std::vector<GlobalVariable*> GVs;
+    Module *M = CloneModule(BD.getProgram());
+    bool DeletedInit = false;
 
-    for (Module::global_iterator I = BD.getProgram()->global_begin(),
-           E = BD.getProgram()->global_end(); I != E; ++I)
-      if (I->hasInitializer())
-        GVs.push_back(I);
+    for (Module::global_iterator I = M->global_begin(), E = M->global_end();
+         I != E; ++I)
+      if (I->hasInitializer()) {
+        I->setInitializer(0);
+        I->setLinkage(GlobalValue::ExternalLinkage);
+        DeletedInit = true;
+      }
 
-    if (GVs.size() > 1 && !BugpointIsInterrupted) {
-      std::cout << "\n*** Attempting to reduce the number of global variables "
-                << "in the testcase\n";
+    if (!DeletedInit) {
+      delete M;  // No change made...
+    } else {
+      // See if the program still causes a crash...
+      std::cout << "\nChecking to see if we can delete global inits: ";
 
-      unsigned OldSize = GVs.size();
-      ReduceCrashingGlobalVariables(BD, TestFn).reduceList(GVs);
+      if (TestFn(BD, M)) {      // Still crashes?
+        BD.setNewProgram(M);
+        std::cout << "\n*** Able to remove all global initializers!\n";
+      } else {                  // No longer crashes?
+        std::cout << "  - Removing all global inits hides problem!\n";
+        delete M;
 
-      if (GVs.size() < OldSize)
-        BD.EmitProgressBytecode("reduced-global-variables");
+        std::vector<GlobalVariable*> GVs;
+
+        for (Module::global_iterator I = BD.getProgram()->global_begin(),
+               E = BD.getProgram()->global_end(); I != E; ++I)
+          if (I->hasInitializer())
+            GVs.push_back(I);
+
+        if (GVs.size() > 1 && !BugpointIsInterrupted) {
+          std::cout << "\n*** Attempting to reduce the number of global "
+                    << "variables in the testcase\n";
+
+          unsigned OldSize = GVs.size();
+          ReduceCrashingGlobalVariables(BD, TestFn).reduceList(GVs);
+
+          if (GVs.size() < OldSize)
+            BD.EmitProgressBytecode("reduced-global-variables");
+        }
     }
   }
 
