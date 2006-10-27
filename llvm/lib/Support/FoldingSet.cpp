@@ -56,10 +56,14 @@ void FoldingSetImpl::NodeID::AddString(const std::string &String) {
   const unsigned *Base = (const unsigned *)String.data();
   
   // If the string is aligned do a bulk transfer.
+#if 0  // FIXME - Add insert to SmallVector (tested with vector)
   if (!((intptr_t)Base & 3)) {
     Bits.insert(Bits.end(), Base, Base + Units);
     Pos = Units * sizeof(unsigned);
   } else {
+#else
+  }
+#endif
     // Otherwise do it the hard way.
     for ( Pos += 4; Pos < Size; Pos += 4) {
       unsigned V = ((unsigned char)String[Pos - 4] << 24) |
