@@ -150,36 +150,6 @@ Probably not a win on x86.
 
 ===-------------------------------------------------------------------------===
 
-PowerPC i1/setcc stuff (depends on subreg stuff):
-
-Check out the PPC code we get for 'compare' in this testcase:
-http://gcc.gnu.org/bugzilla/show_bug.cgi?id=19672
-
-oof.  on top of not doing the logical crnand instead of (mfcr, mfcr,
-invert, invert, or), we then have to compare it against zero instead of
-using the value already in a CR!
-
-that should be something like
-        cmpw cr7, r8, r5
-        cmpw cr0, r7, r3
-        crnand cr0, cr0, cr7
-        bne cr0, LBB_compare_4
-
-instead of
-        cmpw cr7, r8, r5
-        cmpw cr0, r7, r3
-        mfcr r7, 1
-        mcrf cr7, cr0
-        mfcr r8, 1
-        rlwinm r7, r7, 30, 31, 31
-        rlwinm r8, r8, 30, 31, 31
-        xori r7, r7, 1
-        xori r8, r8, 1
-        addi r2, r2, 1
-        or r7, r8, r7
-        cmpwi cr0, r7, 0
-        bne cr0, LBB_compare_4  ; loopexit
-
 FreeBench/mason has a basic block that looks like this:
 
          %tmp.130 = seteq int %p.0__, 5          ; <bool> [#uses=1]
