@@ -275,8 +275,8 @@ void IdentifierTable::RehashTable() {
       } while (NewTableArray[NewBucket].Info);
         
       // Finally found a slot.  Fill it in.
-      NewTableArray[FullHash & (NewSize-1)].Info = IB->Info;
-      NewTableArray[FullHash & (NewSize-1)].FullHashValue = FullHash;
+      NewTableArray[NewBucket].Info = IB->Info;
+      NewTableArray[NewBucket].FullHashValue = FullHash;
     }
   }
 
