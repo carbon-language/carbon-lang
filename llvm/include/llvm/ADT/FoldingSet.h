@@ -118,7 +118,7 @@ private:
   
 public:
   FoldingSetImpl();
-  ~FoldingSetImpl();
+  virtual ~FoldingSetImpl();
   
   // Forward declaration.
   class Node;
@@ -245,7 +245,7 @@ public:
   }
 };
 
-}; // End of namespace llvm.
+} // End of namespace llvm.
 
 
 #endif
