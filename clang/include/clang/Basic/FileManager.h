@@ -45,7 +45,7 @@ class FileEntry {
   friend class FileManager;
 public:
   
-  const std::string &getName() const { return Name; }
+  const char *getName() const { return Name.c_str(); }
   off_t getSize() const { return Size; }
   unsigned getUID() const { return UID; }
   time_t getModificationTime() const { return ModTime; }

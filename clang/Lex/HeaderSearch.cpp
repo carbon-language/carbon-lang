@@ -189,14 +189,14 @@ LookupSubframeworkHeader(const std::string &Filename,
   if (SlashPos == std::string::npos) return 0;
   
   // Look up the base framework name of the ContextFileEnt.
-  const std::string &ContextName = ContextFileEnt->getName();
-  std::string::size_type FrameworkPos = ContextName.find(".framework/");
+  const char *ContextName = ContextFileEnt->getName();
+    
   // If the context info wasn't a framework, couldn't be a subframework.
-  if (FrameworkPos == std::string::npos)
+  const char *FrameworkPos = strstr(ContextName, ".framework/");
+  if (FrameworkPos == 0)
     return 0;
   
-  std::string FrameworkName(ContextName.begin(),
-                        ContextName.begin()+FrameworkPos+strlen(".framework/"));
+  std::string FrameworkName(ContextName, FrameworkPos+strlen(".framework/"));
 
   // Append Frameworks/HIToolbox.framework/
   FrameworkName += "Frameworks/";

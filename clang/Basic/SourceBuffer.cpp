@@ -170,10 +170,10 @@ SourceBuffer *SourceBuffer::getFile(const FileEntry *FileEnt) {
       return new SourceBufferMMapFile(sys::Path(FileEnt->getName()));
 
     SourceBuffer *SB = getNewUninitMemBuffer(FileEnt->getSize(),
-                                             FileEnt->getName().c_str());
+                                             FileEnt->getName());
     char *BufPtr = const_cast<char*>(SB->getBufferStart());
     
-    int FD = ::open(FileEnt->getName().c_str(), O_RDONLY);
+    int FD = ::open(FileEnt->getName(), O_RDONLY);
     if (FD == -1) {
       delete SB;
       return 0;
