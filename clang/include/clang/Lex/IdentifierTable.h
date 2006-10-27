@@ -30,7 +30,6 @@ namespace clang {
 /// variable or function name).  The preprocessor keeps this information in a
 /// set, and all tok::identifier tokens have a pointer to one of these.  
 class IdentifierInfo {
-  unsigned NameLen;                // Length of the identifier string.
   MacroInfo *Macro;                // Set if this identifier is #define'd.
   tok::TokenKind TokenID      : 8; // Front-end token ID or tok::identifier.
   tok::PPKeywordKind PPID     : 5; // ID for preprocessor command like 'ifdef'.
