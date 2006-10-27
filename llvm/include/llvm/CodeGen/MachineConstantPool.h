@@ -15,7 +15,8 @@
 #ifndef LLVM_CODEGEN_MACHINECONSTANTPOOL_H
 #define LLVM_CODEGEN_MACHINECONSTANTPOOL_H
 
-#include "llvm/CodeGen/SelectionDAGCSEMap.h"
+#include "llvm/ADT/FoldingSet.h"
+#include "llvm/CodeGen/SelectionDAGNodes.h"
 #include <vector>
 #include <iosfwd>
 
@@ -43,7 +44,7 @@ public:
   virtual int getExistingMachineCPValue(MachineConstantPool *CP,
                                         unsigned Alignment) = 0;
 
-  virtual void AddSelectionDAGCSEId(SelectionDAGCSEMap::NodeID *Id) = 0;
+  virtual void AddSelectionDAGCSEId(FoldingSetNodeID &ID) = 0;
 
   /// print - Implement operator<<...
   ///

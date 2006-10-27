@@ -15,8 +15,9 @@
 #ifndef LLVM_CODEGEN_SELECTIONDAG_H
 #define LLVM_CODEGEN_SELECTIONDAG_H
 
-#include "llvm/CodeGen/SelectionDAGCSEMap.h"
+#include "llvm/ADT/FoldingSet.h"
 #include "llvm/ADT/ilist"
+#include "llvm/CodeGen/SelectionDAGNodes.h"
 
 #include <list>
 #include <vector>
@@ -31,6 +32,7 @@ namespace llvm {
   class MachineDebugInfo;
   class MachineFunction;
   class MachineConstantPoolValue;
+  class SDOperand;
 
 /// SelectionDAG class - This is used to represent a portion of an LLVM function
 /// in a low-level Data Dependence DAG representation suitable for instruction
@@ -56,7 +58,7 @@ class SelectionDAG {
 
   /// CSEMap - This structure is used to memoize nodes, automatically performing
   /// CSE with existing nodes with a duplicate is requested.
-  SelectionDAGCSEMap CSEMap;
+  FoldingSet<SDNode> CSEMap;
 
 public:
   SelectionDAG(TargetLowering &tli, MachineFunction &mf, MachineDebugInfo *di)

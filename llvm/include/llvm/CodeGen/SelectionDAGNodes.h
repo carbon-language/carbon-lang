@@ -20,6 +20,7 @@
 #define LLVM_CODEGEN_SELECTIONDAGNODES_H
 
 #include "llvm/Value.h"
+#include "llvm/ADT/FoldingSet.h"
 #include "llvm/ADT/GraphTraits.h"
 #include "llvm/ADT/iterator"
 #include "llvm/ADT/SmallVector.h"
@@ -742,7 +743,7 @@ template<> struct simplify_type<const SDOperand> {
 
 /// SDNode - Represents one node in the SelectionDAG.
 ///
-class SDNode {
+class SDNode : public FoldingSetNode {
   /// NodeType - The operation that this node performs.
   ///
   unsigned short NodeType;
@@ -766,9 +767,6 @@ class SDNode {
   SDNode *Prev, *Next;
   friend struct ilist_traits<SDNode>;
 
-  /// NextInBucket - This is used by the SelectionDAGCSEMap.
-  void *NextInBucket;
-  
   /// Uses - These are all of the SDNode's that use a value produced by this
   /// node.
   SmallVector<SDNode*,3> Uses;
@@ -778,7 +776,6 @@ class SDNode {
 public:
   virtual ~SDNode() {
     assert(NumOperands == 0 && "Operand list not cleared before deletion");
-    assert(NextInBucket == 0 && "Still in CSEMap?");
     NodeType = ISD::DELETED_NODE;
   }
   
@@ -863,11 +860,10 @@ public:
 
   static bool classof(const SDNode *) { return true; }
 
-  
-  /// NextInBucket accessors, these are private to SelectionDAGCSEMap.
-  void *getNextInBucket() const { return NextInBucket; }
-  void SetNextInBucket(void *N) { NextInBucket = N; }
-  
+  /// Profile - Gather unique data for the node.
+  ///
+  void Profile(FoldingSetNodeID &ID);
+
 protected:
   friend class SelectionDAG;
   
@@ -880,7 +876,6 @@ protected:
     ValueList = getValueTypeList(VT);
     NumValues = 1;
     Prev = 0; Next = 0;
-    NextInBucket = 0;
   }
   SDNode(unsigned NT, SDOperand Op)
     : NodeType(NT), NodeId(-1) {
@@ -891,7 +886,6 @@ protected:
     ValueList = 0;
     NumValues = 0;
     Prev = 0; Next = 0;
-    NextInBucket = 0;
   }
   SDNode(unsigned NT, SDOperand N1, SDOperand N2)
     : NodeType(NT), NodeId(-1) {
@@ -903,7 +897,6 @@ protected:
     ValueList = 0;
     NumValues = 0;
     Prev = 0; Next = 0;
-    NextInBucket = 0;
   }
   SDNode(unsigned NT, SDOperand N1, SDOperand N2, SDOperand N3)
     : NodeType(NT), NodeId(-1) {
@@ -918,7 +911,6 @@ protected:
     ValueList = 0;
     NumValues = 0;
     Prev = 0; Next = 0;
-    NextInBucket = 0;
   }
   SDNode(unsigned NT, SDOperand N1, SDOperand N2, SDOperand N3, SDOperand N4)
     : NodeType(NT), NodeId(-1) {
@@ -934,7 +926,6 @@ protected:
     ValueList = 0;
     NumValues = 0;
     Prev = 0; Next = 0;
-    NextInBucket = 0;
   }
   SDNode(unsigned Opc, const SDOperand *Ops, unsigned NumOps)
     : NodeType(Opc), NodeId(-1) {
@@ -949,7 +940,6 @@ protected:
     ValueList = 0;
     NumValues = 0;
     Prev = 0; Next = 0;
-    NextInBucket = 0;
   }
 
   /// MorphNodeTo - This clears the return value and operands list, and sets the
