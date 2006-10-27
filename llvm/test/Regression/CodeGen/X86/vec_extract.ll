@@ -1,6 +1,7 @@
 ; RUN: llvm-as < %s | llc -march=x86 -mattr=+sse2 | grep movss    | wc -l | grep 3 &&
 ; RUN: llvm-as < %s | llc -march=x86 -mattr=+sse2 | grep movhlps  | wc -l | grep 1 &&
-; RUN: llvm-as < %s | llc -march=x86 -mattr=+sse2 | grep pshufd   | wc -l | grep 1
+; RUN: llvm-as < %s | llc -march=x86 -mattr=+sse2 | grep pshufd   | wc -l | grep 1 &&
+; RUN: llvm-as < %s | llc -march=x86 -mattr=+sse2 | grep unpckhpd | wc -l | grep 1
 
 void %test1(<4 x float>* %F, float* %f) {
 	%tmp = load <4 x float>* %F
@@ -17,9 +18,18 @@ float %test2(<4 x float>* %F, float* %f) {
         ret float %tmp2
 }
 
-void %test2(float* %R, <4 x float>* %P1) {
+void %test3(float* %R, <4 x float>* %P1) {
 	%X = load <4 x float>* %P1
 	%tmp = extractelement <4 x float> %X, uint 3
 	store float %tmp, float* %R
 	ret void
 }
+
+double %test4(double %A) {
+        %tmp1 = call <2 x double> %foo()
+        %tmp2 = extractelement <2 x double> %tmp1, uint 1
+        %tmp3 = add double %tmp2, %A
+        ret double %tmp3
+}
+
+declare <2 x double> %foo()
