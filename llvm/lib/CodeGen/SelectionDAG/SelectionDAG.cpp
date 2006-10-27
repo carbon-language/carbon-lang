@@ -260,6 +260,9 @@ const TargetMachine &SelectionDAG::getTarget() const {
 static unsigned getNodeIDOpcode(FoldingSetNodeID &ID)  {
   return ID.getRawData(0);
 }
+
+/// AddNodeIDOpcode - Add the node opcode to the NodeID data.
+///
 static void AddNodeIDOpcode(FoldingSetNodeID &ID, unsigned OpC)  {
   ID.AddInteger(OpC);
 }
@@ -270,15 +273,18 @@ void AddNodeIDValueTypes(FoldingSetNodeID &ID, SDVTList VTList) {
   ID.AddPointer(VTList.VTs);  
 }
 
-
+/// AddNodeIDOperand - Add an operands data to the NodeID data.
+///
 static void AddNodeIDOperand(FoldingSetNodeID &ID, SDOperand Op) {
   ID.AddPointer(Op.Val);
   ID.AddInteger(Op.ResNo);
 }
 
+/// AddNodeIDOperands - Various routines for adding operands to the NodeID data.
+///
 static void AddNodeIDOperands(FoldingSetNodeID &ID) {
 }
-void AddNodeIDOperands(FoldingSetNodeID &ID, SDOperand Op) {
+static void AddNodeIDOperands(FoldingSetNodeID &ID, SDOperand Op) {
   AddNodeIDOperand(ID, Op);
 }
 static void AddNodeIDOperands(FoldingSetNodeID &ID,
@@ -298,6 +304,8 @@ static void AddNodeIDOperands(FoldingSetNodeID &ID,
     AddNodeIDOperand(ID, *Ops);
 }
 
+/// AddNodeIDOperands - Various routines for adding node info to the NodeID
+/// data.
 static void AddNodeIDNode(FoldingSetNodeID &ID,
                           unsigned short OpC, SDVTList VTList) {
   AddNodeIDOpcode(ID, OpC);
@@ -333,6 +341,8 @@ static void AddNodeIDNode(FoldingSetNodeID &ID,
   AddNodeIDOperands(ID, OpList, N);
 }
 
+/// AddNodeIDNode - Generic routine for adding a nodes info to the NodeID
+/// data.
 static void AddNodeIDNode(FoldingSetNodeID &ID, SDNode *N) {
   AddNodeIDOpcode(ID, N->getOpcode());
   // Add the return value info.
