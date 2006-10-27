@@ -1357,11 +1357,11 @@ void Argument::print(std::ostream &o) const {
 
 // Value::dump - allow easy printing of  Values from the debugger.
 // Located here because so much of the needed functionality is here.
-void Value::dump() const { print(std::cerr); }
+void Value::dump() const { print(std::cerr); std::cerr << '\n'; }
 
 // Type::dump - allow easy printing of  Values from the debugger.
 // Located here because so much of the needed functionality is here.
-void Type::dump() const { print(std::cerr); }
+void Type::dump() const { print(std::cerr); std::cerr << '\n'; }
 
 //===----------------------------------------------------------------------===//
 //  CachedWriter Class Implementation
