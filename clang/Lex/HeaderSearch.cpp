@@ -130,8 +130,8 @@ const FileEntry *HeaderSearch::LookupFile(const std::string &Filename,
   if (CurFileEnt && !isAngled && !NoCurDirSearch) {
     // Concatenate the requested file onto the directory.
     // FIXME: Portability.  Filename concatenation should be in sys::Path.
-    if (const FileEntry *FE = 
-          FileMgr.getFile(CurFileEnt->getDir()->getName()+"/"+Filename)) {
+    std::string Name = CurFileEnt->getDir()->getName();
+    if (const FileEntry *FE = FileMgr.getFile(Name+"/"+Filename)) {
       // Leave CurDir unset.
       
       // This file is a system header or C++ unfriendly if the old file is.
@@ -158,7 +158,8 @@ const FileEntry *HeaderSearch::LookupFile(const std::string &Filename,
     const FileEntry *FE = 0;
     if (!SearchDirs[i].isFramework()) {
       // FIXME: Portability.  Adding file to dir should be in sys::Path.
-      FE = FileMgr.getFile(SearchDirs[i].getDir()->getName()+"/"+Filename);
+      std::string Name = SearchDirs[i].getDir()->getName();
+      FE = FileMgr.getFile(Name+"/"+Filename);
     } else {
       FE = DoFrameworkLookup(SearchDirs[i].getDir(), Filename);
     }

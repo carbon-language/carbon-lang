@@ -30,7 +30,7 @@ class DirectoryEntry {
   DirectoryEntry() {}
   friend class FileManager;
 public:
-  const std::string &getName() const { return Name; }
+  const char *getName() const { return Name.c_str(); }
 };
 
 /// FileEntry - Cached information about one file on the disk.
