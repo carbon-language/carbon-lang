@@ -44,8 +44,6 @@ DIAG(nested_block_comment, WARNING,
      "\"/*\" within block comment")
 DIAG(escaped_newline_block_comment_end, WARNING,
      "escaped newline between */ characters at block comment end")
-DIAG(min_max_deprecated, WARNING,
-     "minimum/maximum operators are deprecated")
 DIAG(backslash_newline_space, WARNING,
      "backslash and newline separated by space")
 

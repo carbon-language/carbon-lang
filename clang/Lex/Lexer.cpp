@@ -1374,16 +1374,6 @@ LexNextToken:
     } else if (Features.Digraphs && Char == '>') {
       Result.setKind(tok::l_brace); // '<%' -> '{'
       CurPtr = ConsumeChar(CurPtr, SizeTmp, Result);
-    } else if (Features.CPPMinMax && Char == '?') {     // <?
-      CurPtr = ConsumeChar(CurPtr, SizeTmp, Result);
-      Diag(BufferPtr, diag::min_max_deprecated);
-
-      if (getCharAndSize(CurPtr, SizeTmp) == '=') {     // <?= 
-        Result.setKind(tok::lessquestionequal);
-        CurPtr = ConsumeChar(CurPtr, SizeTmp, Result);
-      } else {
-        Result.setKind(tok::lessquestion);
-      }
     } else {
       Result.setKind(tok::less);
     }
@@ -1401,16 +1391,6 @@ LexNextToken:
     } else if (Char == '>') {
       Result.setKind(tok::greatergreater);
       CurPtr = ConsumeChar(CurPtr, SizeTmp, Result);
-    } else if (Features.CPPMinMax && Char == '?') {
-      CurPtr = ConsumeChar(CurPtr, SizeTmp, Result);
-      Diag(BufferPtr, diag::min_max_deprecated);
-
-      if (getCharAndSize(CurPtr, SizeTmp) == '=') {
-        Result.setKind(tok::greaterquestionequal);    // >?=
-        CurPtr = ConsumeChar(CurPtr, SizeTmp, Result);
-      } else {
-        Result.setKind(tok::greaterquestion);         // >?
-      }
     } else {
       Result.setKind(tok::greater);
     }

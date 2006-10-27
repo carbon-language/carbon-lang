@@ -42,12 +42,11 @@ namespace prec {
     InclusiveOr    = 6,    // |
     ExclusiveOr    = 7,    // ^
     And            = 8,    // &
-    MinMax         = 9,   // <?, >?           min, max (GCC extensions)
-    Equality       = 10,   // ==, !=
-    Relational     = 11,   //  >=, <=, >, <
-    Shift          = 12,   // <<, >>
-    Additive       = 13,   // -, +
-    Multiplicative = 14    // *, /, %
+    Equality       = 9,    // ==, !=
+    Relational     = 10,   //  >=, <=, >, <
+    Shift          = 11,   // <<, >>
+    Additive       = 12,   // -, +
+    Multiplicative = 13    // *, /, %
   };
 }
 
@@ -76,8 +75,6 @@ static prec::Level getBinOpPrecedence(tok::TokenKind Kind) {
   case tok::pipe:                 return prec::InclusiveOr;
   case tok::caret:                return prec::ExclusiveOr;
   case tok::amp:                  return prec::And;
-  case tok::lessquestion:
-  case tok::greaterquestion:      return prec::MinMax;
   case tok::exclaimequal:
   case tok::equalequal:           return prec::Equality;
   case tok::lessequal:

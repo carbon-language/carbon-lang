@@ -211,12 +211,11 @@ static bool EvaluateValue(int &Result, LexerToken &PeekTok, DefinedTracker &DT,
 /// getPrecedence - Return the precedence of the specified binary operator
 /// token.  This returns:
 ///   ~0 - Invalid token.
-///   15 - *,/,%
-///   14 - -,+
-///   13 - <<,>>
-///   12 - >=, <=, >, <
-///   11 - ==, !=
-///   10 - <?, >?           min, max (GCC extensions)
+///   14 - *,/,%
+///   13 - -,+
+///   12 - <<,>>
+///   11 - >=, <=, >, <
+///   10 - ==, !=
 ///    9 - &
 ///    8 - ^
 ///    7 - |
@@ -230,19 +229,17 @@ static unsigned getPrecedence(tok::TokenKind Kind) {
   default: return ~0U;
   case tok::percent:
   case tok::slash:
-  case tok::star:                 return 15;
+  case tok::star:                 return 14;
   case tok::plus:
-  case tok::minus:                return 14;
+  case tok::minus:                return 13;
   case tok::lessless:
-  case tok::greatergreater:       return 13;
+  case tok::greatergreater:       return 12;
   case tok::lessequal:
   case tok::less:
   case tok::greaterequal:
-  case tok::greater:              return 12;
+  case tok::greater:              return 11;
   case tok::exclaimequal:
-  case tok::equalequal:           return 11;
-  case tok::lessquestion:
-  case tok::greaterquestion:      return 10;
+  case tok::equalequal:           return 10;
   case tok::amp:                  return 9;
   case tok::caret:                return 8;
   case tok::pipe:                 return 7;
@@ -335,12 +332,6 @@ static bool EvaluateDirectiveSubExpr(int &LHS, unsigned MinPrec,
     case tok::greater:         LHS = LHS >  RHS; break;
     case tok::exclaimequal:    LHS = LHS != RHS; break;
     case tok::equalequal:      LHS = LHS == RHS; break;
-    case tok::lessquestion:    // Deprecation warning emitted by the lexer.
-      LHS = std::min(LHS, RHS);
-      break; 
-    case tok::greaterquestion: // Deprecation warning emitted by the lexer.
-      LHS = std::max(LHS, RHS);
-      break;
     case tok::amp:             LHS &= RHS; break;
     case tok::caret:           LHS ^= RHS; break;
     case tok::pipe:            LHS |= RHS; break;

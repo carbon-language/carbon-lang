@@ -258,8 +258,6 @@ static void InitializeLanguageStandard(LangOptions &Options) {
   // Fall through from newer standards to older ones.  This isn't really right.
   // FIXME: Enable specifically the right features based on the language stds.
   case lang_gnucxx98:
-    Options.CPPMinMax = 1;
-    // FALL THROUGH.
   case lang_cxx98:
     Options.CPlusPlus = 1;
     // FALL THROUGH.

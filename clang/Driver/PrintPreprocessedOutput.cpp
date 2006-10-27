@@ -350,9 +350,6 @@ static bool AvoidConcat(const LexerToken &PrevTok, const LexerToken &Tok,
   case tok::greaterequal:    // >>=
   case tok::caret:           // ^=
   case tok::equal:           // ==
-  case tok::lessquestion:    // <?=
-  case tok::greaterquestion: // >?=
-  case tok::question:        // <?=, >?=, check for <?= in case <? is disabled.
     // Cases that concatenate only if the next char is =.
     return FirstChar == '=';
   }

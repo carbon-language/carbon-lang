@@ -163,12 +163,6 @@ TOK(periodstar)          // .*
 TOK(arrowstar)           // ->*
 TOK(coloncolon)          // ::
 
-// GNU C++ Extensions
-TOK(lessquestionequal)   // <?=
-TOK(greaterquestionequal)// >?=
-TOK(lessquestion)        // <?
-TOK(greaterquestion)     // >?
-
 // Objective C support.
 TOK(at)                  // @
 
