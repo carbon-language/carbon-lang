@@ -770,6 +770,10 @@ static bool isEndOfBlockCommentWithEscapedNewLine(const char *CurPtr,
   return true;
 }
 
+#ifdef __SSE2__
+#include <emmintrin.h>
+#endif
+
 /// SkipBlockComment - We have just read the /* characters from input.  Read
 /// until we find the */ characters that terminate the comment.  Note that we
 /// don't bother decoding trigraphs or escaped newlines in block comments,
@@ -799,7 +803,15 @@ bool Lexer::SkipBlockComment(LexerToken &Result, const char *CurPtr) {
         C = *CurPtr++;
       
       if (C == '/') goto FoundSlash;
-      
+
+#ifdef __SSE2__
+      __m128i Slashes = _mm_set_epi8('/', '/', '/', '/', '/', '/', '/', '/',
+                                     '/', '/', '/', '/', '/', '/', '/', '/');
+      while (CurPtr+16 <= BufferEnd &&
+             _mm_movemask_epi8(_mm_cmpeq_epi8(*(__m128i*)CurPtr, Slashes)) == 0)
+        CurPtr += 16;
+#else             
+      // Scan for '/' quickly.  Many block comments are very large.
       while (CurPtr[0] != '/' &&
              CurPtr[1] != '/' &&
              CurPtr[2] != '/' &&
@@ -807,9 +819,13 @@ bool Lexer::SkipBlockComment(LexerToken &Result, const char *CurPtr) {
              CurPtr+4 < BufferEnd) {
         CurPtr += 4;
       }
+#endif
+      
+      // It has to be one of the bytes scanned, increment to it and read one.
       C = *CurPtr++;
     }
     
+    // Loop to scan the remainder.
     while (C != '/' && C != '\0')
       C = *CurPtr++;
     
