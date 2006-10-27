@@ -88,7 +88,7 @@ conservative escape analysis.
     <li> Input source file <tt>a.c</tt> is compiled into LLVM byte code form.
     <li> Input source file <tt>main.c</tt> is compiled into native object code.
   </ul>
-<pre>
+<div class="doc_code"><pre>
 --- a.h ---
 extern int foo1(void);
 extern void foo2(void);
@@ -132,7 +132,7 @@ int main() {
 $ llvm-gcc4 --emit-llvm -c a.c -o a.o  # &lt;-- a.o is LLVM bytecode file
 $ llvm-gcc4 -c main.c -o main.o # &lt;-- main.o is native object file
 $ llvm-gcc4 a.o main.o -o main # &lt;-- standard link command without any modifications
-</pre>
+</pre></div>
   <p>In this example, the linker recognizes that <tt>foo2()</tt> is an 
   externally visible symbol defined in LLVM byte code file. This information 
   is collected using <a href="#readllvmobjectfile"> readLLVMObjectFile()</a>. 
