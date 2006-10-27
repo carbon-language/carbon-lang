@@ -136,4 +136,3 @@ up being a serious problem: every use of printf will mark the translation unit
 non-portable if targetting ppc32 and something else.
 
 //===---------------------------------------------------------------------===//
-
