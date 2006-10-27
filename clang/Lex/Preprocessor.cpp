@@ -1104,6 +1104,9 @@ void Preprocessor::CheckEndOfDirective(const char *DirType) {
   Lex(Tmp);
   // There should be no tokens after the directive, but we allow them as an
   // extension.
+  while (Tmp.getKind() == tok::comment)  // Skip comments in -C mode.
+    Lex(Tmp);
+  
   if (Tmp.getKind() != tok::eom) {
     Diag(Tmp, diag::ext_pp_extra_tokens_at_eol, DirType);
     DiscardUntilEndOfDirective();
@@ -1331,9 +1334,14 @@ void Preprocessor::HandleDirective(LexerToken &Result) {
   if (InMacroArgs)
     Diag(Result, diag::ext_embedded_directive);
   
+TryAgain:
   switch (Result.getKind()) {
   case tok::eom:
     return;   // null directive.
+  case tok::comment:
+    // Handle stuff like "# /*foo*/ define X" in -E -C mode.
+    LexUnexpandedToken(Result);
+    goto TryAgain;
 
   case tok::numeric_constant:
     // FIXME: implement # 7 line numbers!

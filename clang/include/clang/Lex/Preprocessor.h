@@ -222,6 +222,15 @@ public:
       CurMacroExpander->Lex(Result);
   }
   
+  /// LexNonComment - Lex a token.  If it's a comment, keep lexing until we get
+  /// something not a comment.  This is useful in -E -C mode where comments
+  /// would foul up preprocessor directive handling.
+  void LexNonComment(LexerToken &Result) {
+    do
+      Lex(Result);
+    while (Result.getKind() == tok::comment);
+  }
+  
   /// LexUnexpandedToken - This is just like Lex, but this disables macro
   /// expansion of identifier tokens.
   void LexUnexpandedToken(LexerToken &Result) {

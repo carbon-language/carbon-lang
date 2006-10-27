@@ -69,7 +69,7 @@ static bool EvaluateValue(int &Result, LexerToken &PeekTok, DefinedTracker &DT,
     // into a simple 0.
     if (strcmp(II->getName(), "defined")) {
       Result = 0;
-      PP.Lex(PeekTok);
+      PP.LexNonComment(PeekTok);
       return false;
     }
 
@@ -116,7 +116,7 @@ static bool EvaluateValue(int &Result, LexerToken &PeekTok, DefinedTracker &DT,
     }
 
     // Consume identifier.
-    PP.Lex(PeekTok);
+    PP.LexNonComment(PeekTok);
 
     // If we are in parens, ensure we have a trailing ).
     if (InParens) {
@@ -125,7 +125,7 @@ static bool EvaluateValue(int &Result, LexerToken &PeekTok, DefinedTracker &DT,
         return true;
       }
       // Consume the ).
-      PP.Lex(PeekTok);
+      PP.LexNonComment(PeekTok);
     }
     
     // Success, remember that we saw defined(X).
@@ -148,11 +148,11 @@ static bool EvaluateValue(int &Result, LexerToken &PeekTok, DefinedTracker &DT,
     std::string Spell = PP.getSpelling(PeekTok);
     // FIXME: COMPUTE integer constants CORRECTLY.
     Result = atoi(Spell.c_str());
-    PP.Lex(PeekTok);
+    PP.LexNonComment(PeekTok);
     return false;
   }
   case tok::l_paren:
-    PP.Lex(PeekTok);  // Eat the (.
+    PP.LexNonComment(PeekTok);  // Eat the (.
     // Parse the value and if there are any binary operators involved, parse
     // them.
     if (EvaluateValue(Result, PeekTok, DT, PP)) return true;
@@ -170,29 +170,29 @@ static bool EvaluateValue(int &Result, LexerToken &PeekTok, DefinedTracker &DT,
       }
       DT.State = DefinedTracker::Unknown;
     }
-    PP.Lex(PeekTok);  // Eat the ).
+    PP.LexNonComment(PeekTok);  // Eat the ).
     return false;
  
   case tok::plus:
     // Unary plus doesn't modify the value.
-    PP.Lex(PeekTok);
+    PP.LexNonComment(PeekTok);
     return EvaluateValue(Result, PeekTok, DT, PP);
   case tok::minus:
-    PP.Lex(PeekTok);
+    PP.LexNonComment(PeekTok);
     if (EvaluateValue(Result, PeekTok, DT, PP)) return true;
     Result = -Result;
     DT.State = DefinedTracker::Unknown;
     return false;
     
   case tok::tilde:
-    PP.Lex(PeekTok);
+    PP.LexNonComment(PeekTok);
     if (EvaluateValue(Result, PeekTok, DT, PP)) return true;
     Result = ~Result;
     DT.State = DefinedTracker::Unknown;
     return false;
     
   case tok::exclaim:
-    PP.Lex(PeekTok);
+    PP.LexNonComment(PeekTok);
     if (EvaluateValue(Result, PeekTok, DT, PP)) return true;
     Result = !Result;
     
@@ -275,7 +275,7 @@ static bool EvaluateDirectiveSubExpr(int &LHS, unsigned MinPrec,
 
     // Consume the operator, saving the operator token for error reporting.
     LexerToken OpToken = PeekTok;
-    PP.Lex(PeekTok);
+    PP.LexNonComment(PeekTok);
 
     int RHS;
     // Parse the RHS of the operator.
@@ -348,7 +348,7 @@ static bool EvaluateDirectiveSubExpr(int &LHS, unsigned MinPrec,
         return true;
       }
       // Consume the :.
-      PP.Lex(PeekTok);
+      PP.LexNonComment(PeekTok);
 
       // Evaluate the value after the :.
       int AfterColonVal = 0;
