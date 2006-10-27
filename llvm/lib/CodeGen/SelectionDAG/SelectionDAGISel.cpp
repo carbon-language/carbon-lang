@@ -282,24 +282,24 @@ FunctionLoweringInfo::FunctionLoweringInfo(TargetLowering &tli,
     // Create Machine PHI nodes for LLVM PHI nodes, lowering them as
     // appropriate.
     PHINode *PN;
-    for (BasicBlock::iterator I = BB->begin();
-         (PN = dyn_cast<PHINode>(I)); ++I)
-      if (!PN->use_empty()) {
-        MVT::ValueType VT = TLI.getValueType(PN->getType());
-        unsigned NumElements;
-        if (VT != MVT::Vector)
-          NumElements = TLI.getNumElements(VT);
-        else {
-          MVT::ValueType VT1,VT2;
-          NumElements = 
-            TLI.getPackedTypeBreakdown(cast<PackedType>(PN->getType()),
-                                       VT1, VT2);
-        }
-        unsigned PHIReg = ValueMap[PN];
-        assert(PHIReg &&"PHI node does not have an assigned virtual register!");
-        for (unsigned i = 0; i != NumElements; ++i)
-          BuildMI(MBB, TargetInstrInfo::PHI, PN->getNumOperands(), PHIReg+i);
+    for (BasicBlock::iterator I = BB->begin();(PN = dyn_cast<PHINode>(I)); ++I){
+      if (PN->use_empty()) continue;
+      
+      MVT::ValueType VT = TLI.getValueType(PN->getType());
+      unsigned NumElements;
+      if (VT != MVT::Vector)
+        NumElements = TLI.getNumElements(VT);
+      else {
+        MVT::ValueType VT1,VT2;
+        NumElements = 
+          TLI.getPackedTypeBreakdown(cast<PackedType>(PN->getType()),
+                                     VT1, VT2);
       }
+      unsigned PHIReg = ValueMap[PN];
+      assert(PHIReg && "PHI node does not have an assigned virtual register!");
+      for (unsigned i = 0; i != NumElements; ++i)
+        BuildMI(MBB, TargetInstrInfo::PHI, PN->getNumOperands(), PHIReg+i);
+    }
   }
 }
 
@@ -497,6 +497,7 @@ public:
   void FindMergedConditions(Value *Cond, MachineBasicBlock *TBB,
                             MachineBasicBlock *FBB, MachineBasicBlock *CurBB,
                             unsigned Opc);
+  bool isExportableFromCurrentBlock(Value *V, const BasicBlock *FromBB);
   void ExportFromCurrentBlock(Value *V);
     
   // Terminator instructions.
@@ -798,15 +799,39 @@ void SelectionDAGLowering::ExportFromCurrentBlock(Value *V) {
   PendingLoads.push_back(CopyValueToVirtualRegister(V, Reg));
 }
 
+bool SelectionDAGLowering::isExportableFromCurrentBlock(Value *V,
+                                                    const BasicBlock *FromBB) {
+  // The operands of the setcc have to be in this block.  We don't know
+  // how to export them from some other block.
+  if (Instruction *VI = dyn_cast<Instruction>(V)) {
+    // Can export from current BB.
+    if (VI->getParent() == FromBB)
+      return true;
+    
+    // Is already exported, noop.
+    return FuncInfo.isExportedInst(V);
+  }
+  
+  // If this is an argument, we can export it if the BB is the entry block or
+  // if it is already exported.
+  if (isa<Argument>(V)) {
+    if (FromBB == &FromBB->getParent()->getEntryBlock())
+      return true;
+
+    // Otherwise, can only export this if it is already exported.
+    return FuncInfo.isExportedInst(V);
+  }
+  
+  // Otherwise, constants can always be exported.
+  return true;
+}
+
 /// FindMergedConditions - If Cond is an expression like 
 void SelectionDAGLowering::FindMergedConditions(Value *Cond,
                                                 MachineBasicBlock *TBB,
                                                 MachineBasicBlock *FBB,
                                                 MachineBasicBlock *CurBB,
                                                 unsigned Opc) {
-  // FIXME: HANDLE AND.
-  // FIXME: HANDLE NOT
-
   // If this node is not part of the or/and tree, emit it as a branch.
   BinaryOperator *BOp = dyn_cast<BinaryOperator>(Cond);
 
@@ -819,12 +844,8 @@ void SelectionDAGLowering::FindMergedConditions(Value *Cond,
     if (BOp && isa<SetCondInst>(BOp) &&
         // The operands of the setcc have to be in this block.  We don't know
         // how to export them from some other block.
-        (!isa<Instruction>(BOp->getOperand(0)) || 
-         cast<Instruction>(BOp->getOperand(0))->getParent() == BB ||
-         FuncInfo.isExportedInst(BOp->getOperand(0))) &&
-        (!isa<Instruction>(BOp->getOperand(1)) || 
-         cast<Instruction>(BOp->getOperand(1))->getParent() == BB ||
-         FuncInfo.isExportedInst(BOp->getOperand(1)))) {
+        isExportableFromCurrentBlock(BOp->getOperand(0), BB) &&
+        isExportableFromCurrentBlock(BOp->getOperand(1), BB)) {
       ExportFromCurrentBlock(BOp->getOperand(0));
       ExportFromCurrentBlock(BOp->getOperand(1));
 
@@ -1222,10 +1243,18 @@ void SelectionDAGLowering::visitSwitch(SwitchInst &I) {
           DestBBs.push_back(Default);
         }
       
-      // Update successor info
+      // Update successor info.  Add one edge to each unique successor.
+      // Vector bool would be better, but vector<bool> is really slow.
+      std::vector<unsigned char> SuccsHandled;
+      SuccsHandled.resize(CurMBB->getParent()->getNumBlockIDs());
+      
       for (std::vector<MachineBasicBlock*>::iterator I = DestBBs.begin(), 
-           E = DestBBs.end(); I != E; ++I)
-        JumpTableBB->addSuccessor(*I);
+           E = DestBBs.end(); I != E; ++I) {
+        if (!SuccsHandled[(*I)->getNumber()]) {
+          SuccsHandled[(*I)->getNumber()] = true;
+          JumpTableBB->addSuccessor(*I);
+        }
+      }
       
       // Create a jump table index for this jump table, or return an existing
       // one.
@@ -3710,63 +3739,77 @@ void SelectionDAGISel::BuildSelectionDAG(SelectionDAG &DAG, BasicBlock *LLVMBB,
   // BB.  As such, the start of the BB might correspond to a different MBB than
   // the end.
   //
+  TerminatorInst *TI = LLVMBB->getTerminator();
 
   // Emit constants only once even if used by multiple PHI nodes.
   std::map<Constant*, unsigned> ConstantsOut;
   
+  // Vector bool would be better, but vector<bool> is really slow.
+  std::vector<unsigned char> SuccsHandled;
+  if (TI->getNumSuccessors())
+    SuccsHandled.resize(BB->getParent()->getNumBlockIDs());
+    
   // Check successor nodes PHI nodes that expect a constant to be available from
   // this block.
-  TerminatorInst *TI = LLVMBB->getTerminator();
   for (unsigned succ = 0, e = TI->getNumSuccessors(); succ != e; ++succ) {
     BasicBlock *SuccBB = TI->getSuccessor(succ);
     if (!isa<PHINode>(SuccBB->begin())) continue;
+    MachineBasicBlock *SuccMBB = FuncInfo.MBBMap[SuccBB];
     
-    MachineBasicBlock::iterator MBBI = FuncInfo.MBBMap[SuccBB]->begin();
+    // If this terminator has multiple identical successors (common for
+    // switches), only handle each succ once.
+    unsigned SuccMBBNo = SuccMBB->getNumber();
+    if (SuccsHandled[SuccMBBNo]) continue;
+    SuccsHandled[SuccMBBNo] = true;
+    
+    MachineBasicBlock::iterator MBBI = SuccMBB->begin();
     PHINode *PN;
 
     // At this point we know that there is a 1-1 correspondence between LLVM PHI
     // nodes and Machine PHI nodes, but the incoming operands have not been
     // emitted yet.
     for (BasicBlock::iterator I = SuccBB->begin();
-         (PN = dyn_cast<PHINode>(I)); ++I)
-      if (!PN->use_empty()) {
-        unsigned Reg;
-        Value *PHIOp = PN->getIncomingValueForBlock(LLVMBB);
-        if (Constant *C = dyn_cast<Constant>(PHIOp)) {
-          unsigned &RegOut = ConstantsOut[C];
-          if (RegOut == 0) {
-            RegOut = FuncInfo.CreateRegForValue(C);
-            UnorderedChains.push_back(
-                             SDL.CopyValueToVirtualRegister(C, RegOut));
-          }
-          Reg = RegOut;
-        } else {
-          Reg = FuncInfo.ValueMap[PHIOp];
-          if (Reg == 0) {
-            assert(isa<AllocaInst>(PHIOp) &&
-                   FuncInfo.StaticAllocaMap.count(cast<AllocaInst>(PHIOp)) &&
-                   "Didn't codegen value into a register!??");
-            Reg = FuncInfo.CreateRegForValue(PHIOp);
-            UnorderedChains.push_back(
-                             SDL.CopyValueToVirtualRegister(PHIOp, Reg));
-          }
+         (PN = dyn_cast<PHINode>(I)); ++I) {
+      // Ignore dead phi's.
+      if (PN->use_empty()) continue;
+      
+      unsigned Reg;
+      Value *PHIOp = PN->getIncomingValueForBlock(LLVMBB);
+      if (Constant *C = dyn_cast<Constant>(PHIOp)) {
+        unsigned &RegOut = ConstantsOut[C];
+        if (RegOut == 0) {
+          RegOut = FuncInfo.CreateRegForValue(C);
+          UnorderedChains.push_back(
+                           SDL.CopyValueToVirtualRegister(C, RegOut));
         }
-
-        // Remember that this register needs to added to the machine PHI node as
-        // the input for this MBB.
-        MVT::ValueType VT = TLI.getValueType(PN->getType());
-        unsigned NumElements;
-        if (VT != MVT::Vector)
-          NumElements = TLI.getNumElements(VT);
-        else {
-          MVT::ValueType VT1,VT2;
-          NumElements = 
-            TLI.getPackedTypeBreakdown(cast<PackedType>(PN->getType()),
-                                       VT1, VT2);
+        Reg = RegOut;
+      } else {
+        Reg = FuncInfo.ValueMap[PHIOp];
+        if (Reg == 0) {
+          assert(isa<AllocaInst>(PHIOp) &&
+                 FuncInfo.StaticAllocaMap.count(cast<AllocaInst>(PHIOp)) &&
+                 "Didn't codegen value into a register!??");
+          Reg = FuncInfo.CreateRegForValue(PHIOp);
+          UnorderedChains.push_back(
+                           SDL.CopyValueToVirtualRegister(PHIOp, Reg));
         }
-        for (unsigned i = 0, e = NumElements; i != e; ++i)
-          PHINodesToUpdate.push_back(std::make_pair(MBBI++, Reg+i));
       }
+
+      // Remember that this register needs to added to the machine PHI node as
+      // the input for this MBB.
+      MVT::ValueType VT = TLI.getValueType(PN->getType());
+      unsigned NumElements;
+      if (VT != MVT::Vector)
+        NumElements = TLI.getNumElements(VT);
+      else {
+        MVT::ValueType VT1,VT2;
+        NumElements = 
+          TLI.getPackedTypeBreakdown(cast<PackedType>(PN->getType()),
+                                     VT1, VT2);
+      }
+      for (unsigned i = 0, e = NumElements; i != e; ++i)
+        PHINodesToUpdate.push_back(std::make_pair(MBBI++, Reg+i));
+    }
   }
   ConstantsOut.clear();
 
