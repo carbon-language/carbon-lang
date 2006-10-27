@@ -287,7 +287,15 @@ X86TargetLowering::X86TargetLowering(TargetMachine &TM)
        VT != (unsigned)MVT::LAST_VALUETYPE; VT++) {
     setOperationAction(ISD::ADD , (MVT::ValueType)VT, Expand);
     setOperationAction(ISD::SUB , (MVT::ValueType)VT, Expand);
+    setOperationAction(ISD::FADD, (MVT::ValueType)VT, Expand);
+    setOperationAction(ISD::FSUB, (MVT::ValueType)VT, Expand);
     setOperationAction(ISD::MUL , (MVT::ValueType)VT, Expand);
+    setOperationAction(ISD::FMUL, (MVT::ValueType)VT, Expand);
+    setOperationAction(ISD::SDIV, (MVT::ValueType)VT, Expand);
+    setOperationAction(ISD::UDIV, (MVT::ValueType)VT, Expand);
+    setOperationAction(ISD::FDIV, (MVT::ValueType)VT, Expand);
+    setOperationAction(ISD::SREM, (MVT::ValueType)VT, Expand);
+    setOperationAction(ISD::UREM, (MVT::ValueType)VT, Expand);
     setOperationAction(ISD::LOAD, (MVT::ValueType)VT, Expand);
     setOperationAction(ISD::VECTOR_SHUFFLE,     (MVT::ValueType)VT, Expand);
     setOperationAction(ISD::EXTRACT_VECTOR_ELT, (MVT::ValueType)VT, Expand);
@@ -308,12 +316,10 @@ X86TargetLowering::X86TargetLowering(TargetMachine &TM)
   if (Subtarget->hasSSE1()) {
     addRegisterClass(MVT::v4f32, X86::VR128RegisterClass);
 
-    setOperationAction(ISD::AND,                MVT::v4f32, Legal);
-    setOperationAction(ISD::OR,                 MVT::v4f32, Legal);
-    setOperationAction(ISD::XOR,                MVT::v4f32, Legal);
-    setOperationAction(ISD::ADD,                MVT::v4f32, Legal);
-    setOperationAction(ISD::SUB,                MVT::v4f32, Legal);
-    setOperationAction(ISD::MUL,                MVT::v4f32, Legal);
+    setOperationAction(ISD::FADD,               MVT::v4f32, Legal);
+    setOperationAction(ISD::FSUB,               MVT::v4f32, Legal);
+    setOperationAction(ISD::FMUL,               MVT::v4f32, Legal);
+    setOperationAction(ISD::FDIV,               MVT::v4f32, Legal);
     setOperationAction(ISD::LOAD,               MVT::v4f32, Legal);
     setOperationAction(ISD::BUILD_VECTOR,       MVT::v4f32, Custom);
     setOperationAction(ISD::VECTOR_SHUFFLE,     MVT::v4f32, Custom);
@@ -328,16 +334,17 @@ X86TargetLowering::X86TargetLowering(TargetMachine &TM)
     addRegisterClass(MVT::v4i32, X86::VR128RegisterClass);
     addRegisterClass(MVT::v2i64, X86::VR128RegisterClass);
 
-    setOperationAction(ISD::ADD,                MVT::v2f64, Legal);
     setOperationAction(ISD::ADD,                MVT::v16i8, Legal);
     setOperationAction(ISD::ADD,                MVT::v8i16, Legal);
     setOperationAction(ISD::ADD,                MVT::v4i32, Legal);
-    setOperationAction(ISD::SUB,                MVT::v2f64, Legal);
     setOperationAction(ISD::SUB,                MVT::v16i8, Legal);
     setOperationAction(ISD::SUB,                MVT::v8i16, Legal);
     setOperationAction(ISD::SUB,                MVT::v4i32, Legal);
     setOperationAction(ISD::MUL,                MVT::v8i16, Legal);
-    setOperationAction(ISD::MUL,                MVT::v2f64, Legal);
+    setOperationAction(ISD::FADD,               MVT::v2f64, Legal);
+    setOperationAction(ISD::FSUB,               MVT::v2f64, Legal);
+    setOperationAction(ISD::FMUL,               MVT::v2f64, Legal);
+    setOperationAction(ISD::FDIV,               MVT::v2f64, Legal);
 
     setOperationAction(ISD::SCALAR_TO_VECTOR,   MVT::v16i8, Custom);
     setOperationAction(ISD::SCALAR_TO_VECTOR,   MVT::v8i16, Custom);
