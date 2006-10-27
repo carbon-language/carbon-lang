@@ -35,6 +35,8 @@ namespace llvm {
 /// establish the unique bits of data for the node.  The Profile method is
 /// passed a FoldingSetNodeID object which is used to gather the bits.  Just 
 /// call one of the Add* functions defined in the FoldingSetImpl::NodeID class.
+/// NOTE: That the folding set does not own the nodes and it is the
+/// responsibility of the user to dispose of the nodes.
 ///
 /// Eg.
 ///    class MyNode : public FoldingSetNode {
@@ -81,7 +83,7 @@ namespace llvm {
 /// If found then M with be non-NULL, else InsertPoint will point to where it
 /// should be inserted using InsertNode.
 ///
-/// 3) If you get a NULL result from FindNodeOrInsertPos then you can ass a new
+/// 3) If you get a NULL result from FindNodeOrInsertPos then you can as a new
 /// node with FindNodeOrInsertPos;
 ///
 ///    InsertNode(N, InsertPoint);
@@ -90,7 +92,7 @@ namespace llvm {
 ///
 ///    bool WasRemoved = RemoveNode(N);
 ///
-/// The result indicates whether the node did exist in the folding set.
+/// The result indicates whether the node existed in the folding set.
 
 
 //===----------------------------------------------------------------------===//
@@ -102,14 +104,16 @@ namespace llvm {
 /// 
 class FoldingSetImpl {
 private:
-  // Buckets - Array of bucket chains.
+  /// Buckets - Array of bucket chains.
+  ///
   void **Buckets;
   
-  // NumBuckets - Length of the Buckets array.  Always a power of 2.
+  /// NumBuckets - Length of the Buckets array.  Always a power of 2.
+  ///
   unsigned NumBuckets;
   
-  // NumNodes - Number of nodes in the folding set.  Growth occurs when NumNodes
-  // is greater than twice teh number of buckets.
+  /// NumNodes - Number of nodes in the folding set.  Growth occurs when NumNodes
+  /// is greater than twice the number of buckets.
   unsigned NumNodes;
   
 public:
@@ -163,16 +167,16 @@ public:
   ///
   class Node {
   private:
-    // nextInBucket - next linek in the bucket list.
-    void *nextInBucket;
+    // NextInFoldingSetBucket - next link in the bucket list.
+    void *NextInFoldingSetBucket;
     
   public:
 
-    Node() : nextInBucket(0) {}
+    Node() : NextInFoldingSetBucket(0) {}
     
     // Accessors
-    void *getNextInBucket() const { return nextInBucket; }
-    void SetNextInBucket(void *N) { nextInBucket = N; }
+    void *getNextInBucket() const { return NextInFoldingSetBucket; }
+    void SetNextInBucket(void *N) { NextInFoldingSetBucket = N; }
   };
 
   /// RemoveNode - Remove a node from the folding set, returning true if one
@@ -194,85 +198,52 @@ public:
   /// FindNodeOrInsertPos.
   void InsertNode(Node *N, void *InsertPos);
     
-  private:
-    /// GetNextPtr - In order to save space, each bucket is a
-    /// singly-linked-list. In order to make deletion more efficient, we make
-    /// the list circular, so we can delete a node without computing its hash.
-    /// The problem with this is that the start of the hash buckets are not
-    /// Nodes.  If NextInBucketPtr is a bucket pointer, this method returns null
-    /// : use GetBucketPtr when this happens.
-    Node *GetNextPtr(void *NextInBucketPtr);
-    
-    /// GetNextPtr - This is just like the previous GetNextPtr implementation,
-    /// but allows a bucket array to be specified.
-    Node *GetNextPtr(void *NextInBucketPtr, void **Buckets, unsigned NumBuck);
-    
-    /// GetBucketPtr - Provides a casting of a bucket pointer for isNode
-    /// testing.
-    void **GetBucketPtr(void *NextInBucketPtr);
-    
-    /// GetBucketFor - Hash the specified node ID and return the hash bucket for
-    /// the specified ID.
-    void **GetBucketFor(const NodeID &ID) const;
-    
-    /// GrowHashTable - Double the size of the hash table and rehash everything.
-    ///
-    void GrowHashTable();
-    
-  protected:
-  
-    /// GetNodeProfile - Instantiations of the FoldingSet template implement
-    /// this function to gather data bits for teh given node.
-    virtual void GetNodeProfile(NodeID &ID, Node *N) = 0;
-  };
+private:
 
-  // Convenence types to hide the implementation of the folding set.
-  typedef FoldingSetImpl::Node FoldingSetNode;
-  typedef FoldingSetImpl::NodeID FoldingSetNodeID;
-
-  //===--------------------------------------------------------------------===//
-  /// FoldingSet - This template class is used to instantiate a specialized
-  /// implementation of the folding set to the node class T.  T must be a 
-  /// subclass of FoldingSetNode and implement a Profile function.
+  /// GrowHashTable - Double the size of the hash table and rehash everything.
   ///
-  template<class T> class FoldingSet : public FoldingSetImpl {
-  private:
-    /// GetNodeProfile - Each instantiatation of the FoldingSet 
-    virtual void GetNodeProfile(NodeID &ID, Node *N) {
-      T *TN = static_cast<T *>(N);
-      TN->Profile(ID);
-    }
-    
-  public:
-    /// RemoveNode - Remove a node from the folding set, returning true if one
-    /// was removed or false if the node was not in the folding set.
-    bool RemoveNode(T *N) {
-      return FoldingSetImpl::RemoveNode(static_cast<FoldingSetNode *>(N));
-    }
-    
-    /// GetOrInsertNode - If there is an existing simple Node exactly
-    /// equal to the specified node, return it.  Otherwise, insert 'N' and
-    /// return it instead.
-    T *GetOrInsertNode(Node *N) {
-      return static_cast<T *>(FoldingSetImpl::GetOrInsertNode(
-                                             static_cast<FoldingSetNode *>(N)));
-    }
-    
-    /// FindNodeOrInsertPos - Look up the node specified by ID.  If it exists,
-    /// return it.  If not, return the insertion token that will make insertion
-    /// faster.
-    T *FindNodeOrInsertPos(const FoldingSetNodeID &ID, void *&InsertPos) {
-      return static_cast<T *>(FoldingSetImpl::FindNodeOrInsertPos(ID,
-                                                                  InsertPos));
-    }
-    
-    /// InsertNode - Insert the specified node into the folding set, knowing
-    /// that it is not already in the folding set.  InsertPos must be obtained
-    /// from  FindNodeOrInsertPos.
-    void InsertNode(T *N, void *InsertPos) {
-      FoldingSetImpl::InsertNode(static_cast<FoldingSetNode *>(N), InsertPos);
-    }
-  };
+  void GrowHashTable();
+  
+protected:
+
+  /// GetNodeProfile - Instantiations of the FoldingSet template implement
+  /// this function to gather data bits for the given node.
+  virtual void GetNodeProfile(NodeID &ID, Node *N) const = 0;
+};
+
+// Convenience types to hide the implementation of the folding set.
+typedef FoldingSetImpl::Node FoldingSetNode;
+typedef FoldingSetImpl::NodeID FoldingSetNodeID;
+
+//===--------------------------------------------------------------------===//
+/// FoldingSet - This template class is used to instantiate a specialized
+/// implementation of the folding set to the node class T.  T must be a 
+/// subclass of FoldingSetNode and implement a Profile function.
+///
+template<class T> class FoldingSet : public FoldingSetImpl {
+private:
+  /// GetNodeProfile - Each instantiatation of the FoldingSet 
+  virtual void GetNodeProfile(NodeID &ID, Node *N) const {
+    T *TN = static_cast<T *>(N);
+    TN->Profile(ID);
+  }
+  
+public:
+  /// GetOrInsertNode - If there is an existing simple Node exactly
+  /// equal to the specified node, return it.  Otherwise, insert 'N' and
+  /// return it instead.
+  T *GetOrInsertNode(Node *N) {
+    return static_cast<T *>(FoldingSetImpl::GetOrInsertNode(N));
+  }
+  
+  /// FindNodeOrInsertPos - Look up the node specified by ID.  If it exists,
+  /// return it.  If not, return the insertion token that will make insertion
+  /// faster.
+  T *FindNodeOrInsertPos(const FoldingSetNodeID &ID, void *&InsertPos) {
+    return static_cast<T *>(FoldingSetImpl::FindNodeOrInsertPos(ID,
+                                                                InsertPos));
+  }
+};
 
 }; // End of namespace llvm.
 
