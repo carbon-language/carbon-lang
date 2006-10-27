@@ -49,6 +49,7 @@ TargetAsmInfo::TargetAsmInfo() :
   ConstantPoolSection("\t.section .rodata\n"),
   JumpTableDataSection("\t.section .rodata\n"),
   JumpTableDirective(0),
+  CStringSection(0),
   StaticCtorsSection("\t.section .ctors,\"aw\",@progbits"),
   StaticDtorsSection("\t.section .dtors,\"aw\",@progbits"),
   FourByteConstantSection(0),
