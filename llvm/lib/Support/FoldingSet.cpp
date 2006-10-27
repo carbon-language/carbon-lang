@@ -62,7 +62,7 @@ void FoldingSetImpl::NodeID::AddString(const std::string &String) {
     Pos = Units * sizeof(unsigned);
   } else {
 #else
-  }
+  {
 #endif
     // Otherwise do it the hard way.
     for ( Pos += 4; Pos < Size; Pos += 4) {
