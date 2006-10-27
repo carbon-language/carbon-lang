@@ -104,8 +104,8 @@ def SSE_splat_mask : PatLeaf<(build_vector), [{
   return X86::isSplatMask(N);
 }], SHUFFLE_get_shuf_imm>;
 
-def SSE_splat_v2_mask : PatLeaf<(build_vector), [{
-  return X86::isSplatMask(N);
+def SSE_splat_lo_mask : PatLeaf<(build_vector), [{
+  return X86::isSplatLoMask(N);
 }]>;
 
 def MOVHLPS_shuffle_mask : PatLeaf<(build_vector), [{
@@ -812,13 +812,13 @@ def MOVDDUPrr : S3DI<0x12, MRMSrcReg, (ops VR128:$dst, VR128:$src),
                       "movddup {$src, $dst|$dst, $src}",
                   [(set VR128:$dst, (v2f64 (vector_shuffle
                                             VR128:$src, (undef),
-                                            SSE_splat_v2_mask)))]>;
+                                            SSE_splat_lo_mask)))]>;
 def MOVDDUPrm : S3DI<0x12, MRMSrcMem, (ops VR128:$dst, f64mem:$src),
                   "movddup {$src, $dst|$dst, $src}",
                   [(set VR128:$dst, (v2f64 (vector_shuffle
                                          (scalar_to_vector (loadf64 addr:$src)),
                                              (undef),
-                                            SSE_splat_v2_mask)))]>;
+                                            SSE_splat_lo_mask)))]>;
 
 // SSE2 instructions without OpSize prefix
 def Int_CVTDQ2PSrr : I<0x5B, MRMSrcReg, (ops VR128:$dst, VR128:$src),
@@ -1908,10 +1908,14 @@ def : Pat<(v4f32 (vector_shuffle immAllZerosV,
 
 // Splat v2f64 / v2i64
 let AddedComplexity = 10 in {
-def : Pat<(vector_shuffle (v2f64 VR128:$src), (undef), SSE_splat_v2_mask:$sm),
+def : Pat<(vector_shuffle (v2f64 VR128:$src), (undef), SSE_splat_lo_mask:$sm),
           (UNPCKLPDrr VR128:$src, VR128:$src)>,   Requires<[HasSSE2]>;
-def : Pat<(vector_shuffle (v2i64 VR128:$src), (undef), SSE_splat_v2_mask:$sm),
+def : Pat<(vector_shuffle (v2f64 VR128:$src), (undef), UNPCKH_shuffle_mask:$sm),
+          (UNPCKHPDrr VR128:$src, VR128:$src)>,   Requires<[HasSSE2]>;
+def : Pat<(vector_shuffle (v2i64 VR128:$src), (undef), SSE_splat_lo_mask:$sm),
           (PUNPCKLQDQrr VR128:$src, VR128:$src)>, Requires<[HasSSE2]>;
+def : Pat<(vector_shuffle (v2i64 VR128:$src), (undef), UNPCKH_shuffle_mask:$sm),
+          (PUNPCKHQDQrr VR128:$src, VR128:$src)>, Requires<[HasSSE2]>;
 }
 
 // Splat v4f32

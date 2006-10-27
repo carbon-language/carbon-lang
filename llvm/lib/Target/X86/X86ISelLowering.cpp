@@ -2868,6 +2868,17 @@ bool X86::isSplatMask(SDNode *N) {
   return ::isSplatMask(N);
 }
 
+/// isSplatLoMask - Return true if the specified VECTOR_SHUFFLE operand
+/// specifies a splat of zero element.
+bool X86::isSplatLoMask(SDNode *N) {
+  assert(N->getOpcode() == ISD::BUILD_VECTOR);
+
+  for (unsigned i = 0, e = N->getNumOperands(); i < e; ++i) 
+    if (!isUndefOrEqual(N->getOperand(i), 0))
+      return false;
+  return true;
+}
+
 /// getShuffleSHUFImmediate - Return the appropriate immediate to shuffle
 /// the specified isShuffleMask VECTOR_SHUFFLE mask with PSHUF* and SHUFP*
 /// instructions.
