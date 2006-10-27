@@ -795,8 +795,6 @@ bool Lexer::SkipBlockComment(LexerToken &Result, const char *CurPtr) {
   while (1) {
     // Skip over all non-interesting characters until we find end of buffer or a
     // (probably ending) '/' character.
-    // TODO: Vectorize this.  Note: memchr on Darwin is slower than this loop.
-    
     if (CurPtr + 24 < BufferEnd) {
       // While not aligned to a 16-byte boundary.
       while (C != '/' && ((intptr_t)CurPtr & 0x0F) != 0)
