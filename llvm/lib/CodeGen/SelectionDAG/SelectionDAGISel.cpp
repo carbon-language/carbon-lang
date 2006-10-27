@@ -184,6 +184,12 @@ namespace llvm {
     unsigned MakeReg(MVT::ValueType VT) {
       return RegMap->createVirtualRegister(TLI.getRegClassFor(VT));
     }
+    
+    /// isExportedInst - Return true if the specified value is an instruction
+    /// exported from its block.
+    bool isExportedInst(const Value *V) {
+      return ValueMap.count(V);
+    }
 
     unsigned CreateRegForValue(const Value *V);
     
@@ -203,6 +209,7 @@ static bool isUsedOutsideOfDefiningBlock(Instruction *I) {
   BasicBlock *BB = I->getParent();
   for (Value::use_iterator UI = I->use_begin(), E = I->use_end(); UI != E; ++UI)
     if (cast<Instruction>(*UI)->getParent() != BB || isa<PHINode>(*UI) ||
+        // FIXME: Remove switchinst special case.
         isa<SwitchInst>(*UI))
       return true;
   return false;
@@ -448,6 +455,8 @@ public:
     return Root;
   }
 
+  SDOperand CopyValueToVirtualRegister(Value *V, unsigned Reg);
+
   void visit(Instruction &I) { visit(I.getOpcode(), I); }
 
   void visit(unsigned Opcode, User &I) {
@@ -485,6 +494,11 @@ public:
                                     std::set<unsigned> &OutputRegs, 
                                     std::set<unsigned> &InputRegs);
 
+  void FindMergedConditions(Value *Cond, MachineBasicBlock *TBB,
+                            MachineBasicBlock *FBB, MachineBasicBlock *CurBB,
+                            unsigned Opc);
+  void ExportFromCurrentBlock(Value *V);
+    
   // Terminator instructions.
   void visitRet(ReturnInst &I);
   void visitBr(BranchInst &I);
@@ -770,6 +784,128 @@ void SelectionDAGLowering::visitRet(ReturnInst &I) {
                           &NewValues[0], NewValues.size()));
 }
 
+/// ExportFromCurrentBlock - If this condition isn't known to be exported from
+/// the current basic block, add it to ValueMap now so that we'll get a
+/// CopyTo/FromReg.
+void SelectionDAGLowering::ExportFromCurrentBlock(Value *V) {
+  // No need to export constants.
+  if (!isa<Instruction>(V) && !isa<Argument>(V)) return;
+  
+  // Already exported?
+  if (FuncInfo.isExportedInst(V)) return;
+
+  unsigned Reg = FuncInfo.InitializeRegForValue(V);
+  PendingLoads.push_back(CopyValueToVirtualRegister(V, Reg));
+}
+
+/// FindMergedConditions - If Cond is an expression like 
+void SelectionDAGLowering::FindMergedConditions(Value *Cond,
+                                                MachineBasicBlock *TBB,
+                                                MachineBasicBlock *FBB,
+                                                MachineBasicBlock *CurBB,
+                                                unsigned Opc) {
+  // FIXME: HANDLE AND.
+  // FIXME: HANDLE NOT
+
+  // If this node is not part of the or/and tree, emit it as a branch.
+  BinaryOperator *BOp = dyn_cast<BinaryOperator>(Cond);
+
+  if (!BOp || (unsigned)BOp->getOpcode() != Opc || !BOp->hasOneUse() ||
+      BOp->getParent() != CurBB->getBasicBlock()) {
+    const BasicBlock *BB = CurBB->getBasicBlock();
+    
+    // If the leaf of the tree is a setcond inst, merge the condition into the
+    // caseblock.
+    if (BOp && isa<SetCondInst>(BOp) &&
+        // The operands of the setcc have to be in this block.  We don't know
+        // how to export them from some other block.
+        (!isa<Instruction>(BOp->getOperand(0)) || 
+         cast<Instruction>(BOp->getOperand(0))->getParent() == BB ||
+         FuncInfo.isExportedInst(BOp->getOperand(0))) &&
+        (!isa<Instruction>(BOp->getOperand(1)) || 
+         cast<Instruction>(BOp->getOperand(1))->getParent() == BB ||
+         FuncInfo.isExportedInst(BOp->getOperand(1)))) {
+      ExportFromCurrentBlock(BOp->getOperand(0));
+      ExportFromCurrentBlock(BOp->getOperand(1));
+
+      ISD::CondCode SignCond, UnsCond, FPCond, Condition;
+      switch (BOp->getOpcode()) {
+      default: assert(0 && "Unknown setcc opcode!");
+      case Instruction::SetEQ:
+        SignCond = ISD::SETEQ;
+        UnsCond  = ISD::SETEQ;
+        FPCond   = ISD::SETOEQ;
+        break;
+      case Instruction::SetNE:
+        SignCond = ISD::SETNE;
+        UnsCond  = ISD::SETNE;
+        FPCond   = ISD::SETUNE;
+        break;
+      case Instruction::SetLE:
+        SignCond = ISD::SETLE;
+        UnsCond  = ISD::SETULE;
+        FPCond   = ISD::SETOLE;
+        break;
+      case Instruction::SetGE:
+        SignCond = ISD::SETGE;
+        UnsCond  = ISD::SETUGE;
+        FPCond   = ISD::SETOGE;
+        break;
+      case Instruction::SetLT:
+        SignCond = ISD::SETLT;
+        UnsCond  = ISD::SETULT;
+        FPCond   = ISD::SETOLT;
+        break;
+      case Instruction::SetGT:
+        SignCond = ISD::SETGT;
+        UnsCond  = ISD::SETUGT;
+        FPCond   = ISD::SETOGT;
+        break;
+      }
+      
+      const Type *OpType = BOp->getOperand(0)->getType();
+      if (const PackedType *PTy = dyn_cast<PackedType>(OpType))
+        OpType = PTy->getElementType();
+      
+      if (!FiniteOnlyFPMath() && OpType->isFloatingPoint())
+        Condition = FPCond;
+      else if (OpType->isUnsigned())
+        Condition = UnsCond;
+      else
+        Condition = SignCond;
+      
+      SelectionDAGISel::CaseBlock CB(Condition, BOp->getOperand(0), 
+                                     BOp->getOperand(1), TBB, FBB, CurBB);
+      SwitchCases.push_back(CB);
+      return;
+    }
+    
+    // Create a CaseBlock record representing this branch.
+    SelectionDAGISel::CaseBlock CB(ISD::SETEQ, Cond, ConstantBool::getTrue(),
+                                   TBB, FBB, CurBB);
+    SwitchCases.push_back(CB);
+    ExportFromCurrentBlock(Cond);
+    return;
+  }
+  
+  // Codegen X | Y as:
+  //   jmp_if_X TBB
+  // TmpBB:
+  //   jmp_if_Y TBB
+  //   jmp FBB
+  //
+  //  This requires creation of TmpBB after CurBB.
+  MachineFunction::iterator BBI = CurBB;
+  MachineBasicBlock *TmpBB = new MachineBasicBlock(CurBB->getBasicBlock());
+  CurBB->getParent()->getBasicBlockList().insert(++BBI, TmpBB);
+  
+  // Emit the LHS condition.
+  FindMergedConditions(BOp->getOperand(0), TBB, TmpBB, CurBB, Opc);
+  
+  // Emit the RHS condition into TmpBB.
+  FindMergedConditions(BOp->getOperand(1), TBB, FBB, TmpBB, Opc);
+}
+
 void SelectionDAGLowering::visitBr(BranchInst &I) {
   // Update machine-CFG edges.
   MachineBasicBlock *Succ0MBB = FuncInfo.MBBMap[I.getSuccessor(0)];
@@ -796,9 +932,38 @@ void SelectionDAGLowering::visitBr(BranchInst &I) {
   // now.
   Value *CondVal = I.getCondition();
   MachineBasicBlock *Succ1MBB = FuncInfo.MBBMap[I.getSuccessor(1)];
+
+  // If this is a series of conditions that are or'd or and'd together, emit
+  // this as a sequence of branches instead of setcc's with and/or operations.
+  // For example, instead of something like:
+  //     cmp A, B
+  //     C = seteq 
+  //     cmp D, E
+  //     F = setle 
+  //     or C, F
+  //     jnz foo
+  // Emit:
+  //     cmp A, B
+  //     je foo
+  //     cmp D, E
+  //     jle foo
+  //
+  if (BinaryOperator *BOp = dyn_cast<BinaryOperator>(CondVal)) {
+    if (BOp->hasOneUse() && 
+        (/*BOp->getOpcode() == Instruction::And ||*/
+         BOp->getOpcode() == Instruction::Or)) {
+      FindMergedConditions(BOp, Succ0MBB, Succ1MBB, CurMBB, BOp->getOpcode());
+      //std::cerr << "FOUND: " << SwitchCases.size() << " merged conditions:\n";
+      //I.getParent()->dump();
+      
+      visitSwitchCase(SwitchCases[0]);
+      SwitchCases.erase(SwitchCases.begin());
+      return;
+    }
+  }
   
   // Create a CaseBlock record representing this branch.
-  SelectionDAGISel::CaseBlock CB(ISD::SETEQ, CondVal, 0,
+  SelectionDAGISel::CaseBlock CB(ISD::SETEQ, CondVal, ConstantBool::getTrue(),
                                  Succ0MBB, Succ1MBB, CurMBB);
   // Use visitSwitchCase to actually insert the fast branch sequence for this
   // cond branch.
@@ -811,12 +976,15 @@ void SelectionDAGLowering::visitSwitchCase(SelectionDAGISel::CaseBlock &CB) {
   SDOperand Cond;
   SDOperand CondLHS = getValue(CB.CmpLHS);
   
-  // If the CaseBlock has both LHS/RHS comparisons, build the setcc now,
-  // otherwise, just use the LHS value as a bool comparison value.
-  if (CB.CmpRHS)
-    Cond = DAG.getSetCC(MVT::i1, CondLHS, getValue(CB.CmpRHS), CB.CC);
-  else
+  // Build the setcc now, fold "(X == true)" to X and "(X == false)" to !X to
+  // handle common cases produced by branch lowering.
+  if (CB.CmpRHS == ConstantBool::getTrue() && CB.CC == ISD::SETEQ)
     Cond = CondLHS;
+  else if (CB.CmpRHS == ConstantBool::getFalse() && CB.CC == ISD::SETEQ) {
+    SDOperand True = DAG.getConstant(1, CondLHS.getValueType());
+    Cond = DAG.getNode(ISD::XOR, CondLHS.getValueType(), CondLHS, True);
+  } else
+    Cond = DAG.getSetCC(MVT::i1, CondLHS, getValue(CB.CmpRHS), CB.CC);
   
   // Set NextBlock to be the MBB immediately after the current one, if any.
   // This is used to avoid emitting unnecessary branches to the next block.
@@ -3385,10 +3553,9 @@ bool SelectionDAGISel::runOnFunction(Function &Fn) {
   return true;
 }
 
-
-SDOperand SelectionDAGISel::
-CopyValueToVirtualRegister(SelectionDAGLowering &SDL, Value *V, unsigned Reg) {
-  SDOperand Op = SDL.getValue(V);
+SDOperand SelectionDAGLowering::CopyValueToVirtualRegister(Value *V, 
+                                                           unsigned Reg) {
+  SDOperand Op = getValue(V);
   assert((Op.getOpcode() != ISD::CopyFromReg ||
           cast<RegisterSDNode>(Op.getOperand(1))->getReg() != Reg) &&
          "Copy from a reg to the same reg!");
@@ -3397,9 +3564,8 @@ CopyValueToVirtualRegister(SelectionDAGLowering &SDL, Value *V, unsigned Reg) {
   // register use.
   MVT::ValueType SrcVT = Op.getValueType();
   MVT::ValueType DestVT = TLI.getTypeToTransformTo(SrcVT);
-  SelectionDAG &DAG = SDL.DAG;
   if (SrcVT == DestVT) {
-    return DAG.getCopyToReg(SDL.getRoot(), Reg, Op);
+    return DAG.getCopyToReg(getRoot(), Reg, Op);
   } else if (SrcVT == MVT::Vector) {
     // Handle copies from generic vectors to registers.
     MVT::ValueType PTyElementVT, PTyLegalElementVT;
@@ -3416,7 +3582,7 @@ CopyValueToVirtualRegister(SelectionDAGLowering &SDL, Value *V, unsigned Reg) {
     // VEXTRACT_VECTOR_ELT'ing them, converting them to PTyLegalElementVT, then
     // copying them into output registers.
     SmallVector<SDOperand, 8> OutChains;
-    SDOperand Root = SDL.getRoot();
+    SDOperand Root = getRoot();
     for (unsigned i = 0; i != NE; ++i) {
       SDOperand Elt = DAG.getNode(ISD::VEXTRACT_VECTOR_ELT, PTyElementVT,
                                   Op, DAG.getConstant(i, TLI.getPointerTy()));
@@ -3449,14 +3615,14 @@ CopyValueToVirtualRegister(SelectionDAGLowering &SDL, Value *V, unsigned Reg) {
       Op = DAG.getNode(ISD::FP_EXTEND, DestVT, Op);
     else
       Op = DAG.getNode(ISD::ANY_EXTEND, DestVT, Op);
-    return DAG.getCopyToReg(SDL.getRoot(), Reg, Op);
+    return DAG.getCopyToReg(getRoot(), Reg, Op);
   } else  {
     // The src value is expanded into multiple registers.
     SDOperand Lo = DAG.getNode(ISD::EXTRACT_ELEMENT, DestVT,
                                Op, DAG.getConstant(0, TLI.getPointerTy()));
     SDOperand Hi = DAG.getNode(ISD::EXTRACT_ELEMENT, DestVT,
                                Op, DAG.getConstant(1, TLI.getPointerTy()));
-    Op = DAG.getCopyToReg(SDL.getRoot(), Reg, Lo);
+    Op = DAG.getCopyToReg(getRoot(), Reg, Lo);
     return DAG.getCopyToReg(Op, Reg+1, Hi);
   }
 }
@@ -3480,7 +3646,7 @@ LowerArguments(BasicBlock *BB, SelectionDAGLowering &SDL,
       // whereever we got it to the vreg that other BB's will reference it as.
       if (FuncInfo.ValueMap.count(AI)) {
         SDOperand Copy =
-          CopyValueToVirtualRegister(SDL, AI, FuncInfo.ValueMap[AI]);
+          SDL.CopyValueToVirtualRegister(AI, FuncInfo.ValueMap[AI]);
         UnorderedChains.push_back(Copy);
       }
     }
@@ -3516,7 +3682,7 @@ void SelectionDAGISel::BuildSelectionDAG(SelectionDAG &DAG, BasicBlock *LLVMBB,
       std::map<const Value*, unsigned>::iterator VMI =FuncInfo.ValueMap.find(I);
       if (VMI != FuncInfo.ValueMap.end())
         UnorderedChains.push_back(
-                           CopyValueToVirtualRegister(SDL, I, VMI->second));
+                                SDL.CopyValueToVirtualRegister(I, VMI->second));
     }
 
   // Handle PHI nodes in successor blocks.  Emit code into the SelectionDAG to
@@ -3553,7 +3719,7 @@ void SelectionDAGISel::BuildSelectionDAG(SelectionDAG &DAG, BasicBlock *LLVMBB,
           if (RegOut == 0) {
             RegOut = FuncInfo.CreateRegForValue(C);
             UnorderedChains.push_back(
-                             CopyValueToVirtualRegister(SDL, C, RegOut));
+                             SDL.CopyValueToVirtualRegister(C, RegOut));
           }
           Reg = RegOut;
         } else {
@@ -3564,7 +3730,7 @@ void SelectionDAGISel::BuildSelectionDAG(SelectionDAG &DAG, BasicBlock *LLVMBB,
                    "Didn't codegen value into a register!??");
             Reg = FuncInfo.CreateRegForValue(PHIOp);
             UnorderedChains.push_back(
-                             CopyValueToVirtualRegister(SDL, PHIOp, Reg));
+                             SDL.CopyValueToVirtualRegister(PHIOp, Reg));
           }
         }
 

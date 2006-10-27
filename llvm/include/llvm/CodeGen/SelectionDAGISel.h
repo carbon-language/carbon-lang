@@ -89,8 +89,7 @@ public:
         TrueBB(truebb), FalseBB(falsebb), ThisBB(me) {}
     // CC - the condition code to use for the case block's setcc node
     ISD::CondCode CC;
-    // CmpLHS/CmpRHS - The LHS/RHS of the comparison to emit.  If CmpRHS is
-    // null, CmpLHS is treated as a bool condition for the branch.
+    // CmpLHS/CmpRHS - The LHS/RHS of the comparison to emit.
     Value *CmpLHS, *CmpRHS;
     // TrueBB/FalseBB - the block to branch to if the setcc is true/false.
     MachineBasicBlock *TrueBB, *FalseBB;
@@ -128,8 +127,6 @@ protected:
   
 private:
   void SplitCritEdgesForPHIConstants(BasicBlock *BB);
-  SDOperand CopyValueToVirtualRegister(SelectionDAGLowering &SDL,
-                                       Value *V, unsigned Reg);
   void SelectBasicBlock(BasicBlock *BB, MachineFunction &MF,
                         FunctionLoweringInfo &FuncInfo);
 
