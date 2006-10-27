@@ -113,24 +113,22 @@ public:
 //===----------------------------------------------------------------------===//
 
 
-/// IdentifierLink - There is one of these allocated by IdentifierInfo.
-/// These form the linked list of buckets for the hash table.
+/// IdentifierBucket - The hash table consists of an array of these.  If Info is
+/// non-null, this is an extant entry, otherwise, it is a hole.
 struct IdentifierBucket {
-  /// Next - This is the next bucket in the linked list.
-  IdentifierBucket *Next;
+  /// FullHashValue - This remembers the full hash value of the identifier for
+  /// easy scanning.
+  unsigned FullHashValue;
   
-  IdentifierInfo TokInfo;
-  // NOTE: TokInfo must be the last element in this structure, as the string
-  // information for the identifier is allocated right after it.
+  /// Info - This is a pointer to the actual identifier info object.
+  IdentifierInfo *Info;
 };
 
-// FIXME: start hashtablesize off at 8K entries, GROW when density gets to 3.
-/// HASH_TABLE_SIZE - The current size of the hash table.  Note that this must
-/// always be a power of two!
-static unsigned HASH_TABLE_SIZE = 8096*4;
-
 IdentifierTable::IdentifierTable(const LangOptions &LangOpts) {
-  IdentifierBucket **TableArray = new IdentifierBucket*[HASH_TABLE_SIZE]();
+  HashTableSize = 8192;   // Start with space for 8K identifiers.
+  IdentifierBucket *TableArray = new IdentifierBucket[HashTableSize]();
+  memset(TableArray, 0, HashTableSize*sizeof(IdentifierBucket));
+
   TheTable = TableArray;
   NumIdentifiers = 0;
 #if USE_ALLOCATOR
@@ -138,24 +136,22 @@ IdentifierTable::IdentifierTable(const LangOptions &LangOpts) {
   ((MemRegion*)TheMemory)->Init(8*4096, 0);
 #endif
   
-  memset(TheTable, 0, HASH_TABLE_SIZE*sizeof(IdentifierBucket*));
-  
+  // Populate the identifier table with info about keywords for the current
+  // language.
   AddKeywords(LangOpts);
 }
 
 IdentifierTable::~IdentifierTable() {
-  IdentifierBucket **TableArray = (IdentifierBucket**)TheTable;
-  for (unsigned i = 0, e = HASH_TABLE_SIZE; i != e; ++i) {
-    IdentifierBucket *Id = TableArray[i]; 
-    while (Id) {
+  IdentifierBucket *TableArray = (IdentifierBucket*)TheTable;
+  for (unsigned i = 0, e = HashTableSize; i != e; ++i) {
+    if (IdentifierInfo *Id = TableArray[i].Info) {
       // Free memory referenced by the identifier (e.g. macro info).
-      Id->TokInfo.Destroy();
+      Id->Destroy();
       
-      IdentifierBucket *Next = Id->Next;
 #if !USE_ALLOCATOR
+      // Free the memory for the identifier itself.
       free(Id);
 #endif
-      Id = Next;
     }
   }
 #if USE_ALLOCATOR
@@ -177,62 +173,73 @@ static unsigned HashString(const char *Start, const char *End) {
 
 IdentifierInfo &IdentifierTable::get(const char *NameStart,
                                      const char *NameEnd) {
-  IdentifierBucket **TableArray = (IdentifierBucket**)TheTable;
+  IdentifierBucket *TableArray = (IdentifierBucket*)TheTable;
 
-  unsigned FullHash = HashString(NameStart, NameEnd);
-  unsigned Hash = FullHash & (HASH_TABLE_SIZE-1);
+  unsigned HTSize = HashTableSize;
+  unsigned FullHashValue = HashString(NameStart, NameEnd);
+  unsigned BucketNo = FullHashValue & (HTSize-1);
   unsigned Length = NameEnd-NameStart;
   
-  IdentifierBucket *IdentHead = TableArray[Hash];
-  for (IdentifierBucket *Identifier = IdentHead, *LastID = 0; Identifier; 
-       LastID = Identifier, Identifier = Identifier->Next) {
-    if (Identifier->TokInfo.getNameLength() == Length &&
-        Identifier->TokInfo.HashValue == FullHash &&
-        memcmp(Identifier->TokInfo.getName(), NameStart, Length) == 0) {
-      // If found identifier wasn't at start of bucket, move it there so
-      // that frequently searched for identifiers are found earlier, even if
-      // they first occur late in the source file.
-      if (LastID) {
-        LastID->Next = Identifier->Next;
-        Identifier->Next = IdentHead;
-        TableArray[Hash] = Identifier;
-      }
-      
-      return Identifier->TokInfo;
-    }
-  }
+  unsigned ProbeAmt = 1;
+  while (1) {
+    IdentifierBucket &Bucket = TableArray[BucketNo];
+    IdentifierInfo *BucketII = Bucket.Info;
+    // If we found an empty bucket, this identifier isn't in the table yet.
+    if (BucketII == 0) break;
 
-  // Allocate a new identifier, with space for the null-terminated string at the
-  // end.
-  unsigned AllocSize = sizeof(IdentifierBucket)+Length+1;
+    // If the full hash value matches, check deeply for a match.  The common
+    // case here is that we are only looking at the buckets (for identifier info
+    // being non-null and for the full hash value) not at the identifiers.  This
+    // is important for cache locality.
+    if (Bucket.FullHashValue == FullHashValue &&
+        BucketII->getNameLength() == Length &&
+        memcmp(BucketII->getName(), NameStart, Length) == 0)
+      // We found a match!
+      return *BucketII;
+   
+    // Okay, we didn't find the identifier.  Probe to the next bucket.
+    BucketNo = (BucketNo+ProbeAmt) & (HashTableSize-1);
+    
+    // Use quadratic probing, it has fewer clumping artifacts than linear
+    // probing and has good cache behavior in the common case.
+    ++ProbeAmt;
+  }
+  
+  // Okay, the identifier doesn't already exist, and BucketNo is the bucket to
+  // fill in.  Allocate a new identifier with space for the null-terminated
+  // string at the end.
+  unsigned AllocSize = sizeof(IdentifierInfo)+Length+1;
 #if USE_ALLOCATOR
-  IdentifierBucket *Identifier = (IdentifierBucket*)
+  IdentifierInfo *Identifier = (IdentifierInfo*)
     ((MemRegion*)TheMemory)->Allocate(AllocSize, (MemRegion**)&TheMemory);
 #else
-  IdentifierBucket *Identifier = (IdentifierBucket*)malloc(AllocSize);
+  IdentifierInfo *Identifier = (IdentifierInfo*)malloc(AllocSize);
 #endif
-  Identifier->TokInfo.NameLen = Length;
-  Identifier->TokInfo.Macro = 0;
-  Identifier->TokInfo.TokenID = tok::identifier;
-  Identifier->TokInfo.PPID = tok::pp_not_keyword;
-  Identifier->TokInfo.ObjCID = tok::objc_not_keyword;
-  Identifier->TokInfo.IsExtension = false;
-  Identifier->TokInfo.IsPoisoned = false;
-  Identifier->TokInfo.IsOtherTargetMacro = false;
-  Identifier->TokInfo.FETokenInfo = 0;
-  Identifier->TokInfo.HashValue = FullHash;
+  Identifier->NameLen = Length;
+  Identifier->Macro = 0;
+  Identifier->TokenID = tok::identifier;
+  Identifier->PPID = tok::pp_not_keyword;
+  Identifier->ObjCID = tok::objc_not_keyword;
+  Identifier->IsExtension = false;
+  Identifier->IsPoisoned = false;
+  Identifier->IsOtherTargetMacro = false;
+  Identifier->FETokenInfo = 0;
+  ++NumIdentifiers;
 
   // Copy the string information.
   char *StrBuffer = (char*)(Identifier+1);
   memcpy(StrBuffer, NameStart, Length);
   StrBuffer[Length] = 0;  // Null terminate string.
   
-  // Link it into the hash table.  Adding it to the start of the hash table is
-  // useful for buckets with lots of entries.  This means that more recently
-  // referenced identifiers will be near the head of the bucket.
-  Identifier->Next = IdentHead;
-  TableArray[Hash] = Identifier;
-  return Identifier->TokInfo;
+  // Fill in the bucket for the hash table.
+  TableArray[BucketNo].Info = Identifier;
+  TableArray[BucketNo].FullHashValue = FullHashValue;
+  
+  // If the hash table is now more than 3/4 full, rehash into a larger table.
+  if (NumIdentifiers > HashTableSize*3/4)
+    RehashTable();
+  
+  return *Identifier;
 }
 
 IdentifierInfo &IdentifierTable::get(const std::string &Name) {
@@ -242,13 +249,51 @@ IdentifierInfo &IdentifierTable::get(const std::string &Name) {
   return get(NameBytes, NameBytes+Size);
 }
 
+void IdentifierTable::RehashTable() {
+  unsigned NewSize = HashTableSize*2;
+  IdentifierBucket *NewTableArray = new IdentifierBucket[NewSize]();
+  memset(NewTableArray, 0, NewSize*sizeof(IdentifierBucket));
+
+  // Rehash all the identifier into their new buckets.  Luckily we already have
+  // the hash values available :).
+  IdentifierBucket *CurTable = (IdentifierBucket *)TheTable;
+  for (IdentifierBucket *IB = CurTable, *E = CurTable+HashTableSize;
+       IB != E; ++IB) {
+    if (IB->Info) {
+      // Fast case, bucket available.
+      unsigned FullHash = IB->FullHashValue;
+      unsigned NewBucket = FullHash & (NewSize-1);
+      if (NewTableArray[NewBucket].Info == 0) {
+        NewTableArray[FullHash & (NewSize-1)].Info = IB->Info;
+        NewTableArray[FullHash & (NewSize-1)].FullHashValue = FullHash;
+        continue;
+      }
+      
+      unsigned ProbeSize = 1;
+      do {
+        NewBucket = (NewBucket + ProbeSize++) & (NewSize-1);
+      } while (NewTableArray[NewBucket].Info);
+        
+      // Finally found a slot.  Fill it in.
+      NewTableArray[FullHash & (NewSize-1)].Info = IB->Info;
+      NewTableArray[FullHash & (NewSize-1)].FullHashValue = FullHash;
+    }
+  }
+
+  delete[] CurTable;
+  
+  TheTable = NewTableArray;
+  HashTableSize = NewSize;
+}
+
+
 /// VisitIdentifiers - This method walks through all of the identifiers,
 /// invoking IV->VisitIdentifier for each of them.
 void IdentifierTable::VisitIdentifiers(const IdentifierVisitor &IV) {
-  IdentifierBucket **TableArray = (IdentifierBucket**)TheTable;
-  for (unsigned i = 0, e = HASH_TABLE_SIZE; i != e; ++i) {
-    for (IdentifierBucket *Id = TableArray[i]; Id; Id = Id->Next)
-      IV.VisitIdentifier(Id->TokInfo);
+  IdentifierBucket *TableArray = (IdentifierBucket*)TheTable;
+  for (unsigned i = 0, e = HashTableSize; i != e; ++i) {
+    if (IdentifierInfo *Id = TableArray[i].Info)
+      IV.VisitIdentifier(*Id);
   }
 }
 
@@ -337,49 +382,37 @@ void IdentifierTable::AddKeywords(const LangOptions &LangOpts) {
 /// PrintStats - Print statistics about how well the identifier table is doing
 /// at hashing identifiers.
 void IdentifierTable::PrintStats() const {
-  unsigned NumIdentifiers = 0;
   unsigned NumEmptyBuckets = 0;
-  unsigned MaxBucketLength = 0;
   unsigned AverageIdentifierSize = 0;
   unsigned MaxIdentifierLength = 0;
+  unsigned NumProbed = 0;
   
-  IdentifierBucket **TableArray = (IdentifierBucket**)TheTable;
-  for (unsigned i = 0, e = HASH_TABLE_SIZE; i != e; ++i) {
-    
-    unsigned NumIdentifiersInBucket = 0;
-    for (IdentifierBucket *Id = TableArray[i]; Id; Id = Id->Next) {
-      AverageIdentifierSize += Id->TokInfo.getNameLength();
-      if (MaxIdentifierLength < Id->TokInfo.getNameLength())
-        MaxIdentifierLength = Id->TokInfo.getNameLength();
-      ++NumIdentifiersInBucket;
-    }
-    if (NumIdentifiersInBucket > MaxBucketLength) {
-      MaxBucketLength = NumIdentifiersInBucket;
-      
-#if 0 // This code can be enabled to see (with -stats) a sample of some of the
-      // longest buckets in the hash table.  Useful for inspecting density of
-      // buckets etc.
-      std::cerr << "Bucket length " << MaxBucketLength << ":\n";
-      for (IdentifierBucket *Id = TableArray[i]; Id; Id = Id->Next) {
-        std::cerr << "  " << Id->TokInfo.getName() << " hash = "
-                  << Id->TokInfo.HashValue << "\n";
-      }
-#endif
-    }
-    if (NumIdentifiersInBucket == 0)
+  IdentifierBucket *TableArray = (IdentifierBucket*)TheTable;
+  for (unsigned i = 0, e = HashTableSize; i != e; ++i) {
+    if (TableArray[i].Info == 0) {
       ++NumEmptyBuckets;
+      continue;
+    }
+    IdentifierInfo *Id = TableArray[i].Info;
+    
+    AverageIdentifierSize += Id->getNameLength();
+    if (MaxIdentifierLength < Id->getNameLength())
+      MaxIdentifierLength = Id->getNameLength();
 
-    NumIdentifiers += NumIdentifiersInBucket;
+    // Count the number of times something was probed.
+    if ((TableArray[i].FullHashValue & (e-1)) != i)
+      ++NumProbed;
+
+    // TODO: Figure out maximum times an identifier had to probe for -stats.
   }
   
   std::cerr << "\n*** Identifier Table Stats:\n";
   std::cerr << "# Identifiers:   " << NumIdentifiers << "\n";
   std::cerr << "# Empty Buckets: " << NumEmptyBuckets << "\n";
-  std::cerr << "Max identifiers in one bucket: " << MaxBucketLength << "\n";
   std::cerr << "Hash density (#identifiers per bucket): "
-            << NumIdentifiers/(double)HASH_TABLE_SIZE << "\n";
-  std::cerr << "Nonempty hash density (average chain length): "
-            << NumIdentifiers/(double)(HASH_TABLE_SIZE-NumEmptyBuckets) << "\n";
+            << NumIdentifiers/(double)HashTableSize << "\n";
+  std::cerr << "Num probed identifiers: " << NumProbed << " ("
+            << NumProbed*100.0/NumIdentifiers << "%)\n";
   std::cerr << "Ave identifier length: "
             << (AverageIdentifierSize/(double)NumIdentifiers) << "\n";
   std::cerr << "Max identifier length: " << MaxIdentifierLength << "\n";

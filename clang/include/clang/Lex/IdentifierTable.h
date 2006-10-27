@@ -39,7 +39,6 @@ class IdentifierInfo {
   bool IsPoisoned             : 1; // True if identifier is poisoned.
   bool IsOtherTargetMacro     : 1; // True if ident is macro on another target.
   void *FETokenInfo;               // Managed by the language front-end.
-  unsigned HashValue;              // The full (non-truncated) hash value.
   friend class IdentifierTable;
 public:
   /// getName - Return the actual string for this identifier.  The length of
@@ -121,6 +120,7 @@ public:
 class IdentifierTable {
   void *TheTable;
   void *TheMemory;
+  unsigned HashTableSize;
   unsigned NumIdentifiers;
 public:
   /// IdentifierTable ctor - Create the identifier table, populating it with
@@ -142,6 +142,7 @@ public:
   void PrintStats() const;
 private:
   void AddKeywords(const LangOptions &LangOpts);
+  void RehashTable();
 };
 
 }  // end namespace llvm
