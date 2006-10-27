@@ -15,7 +15,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/ADT/FoldingSet.h"
-#include "llvm/ADT/MathExtras.h"
+#include "llvm/Support/MathExtras.h"
 using namespace llvm;
 
 //===----------------------------------------------------------------------===//
