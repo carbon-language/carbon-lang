@@ -262,7 +262,7 @@ void Parser::ParseDeclarationSpecifiers(DeclSpec &DS) {
           DS.TypeSpecComplex == DeclSpec::TSC_unspecified &&
           DS.TypeSpecSign == DeclSpec::TSS_unspecified &&
           // It has to be available as a typedef too!
-          Actions.isTypedefName(*Tok.getIdentifierInfo(), CurScope)) {
+          Actions.isTypeName(*Tok.getIdentifierInfo(), CurScope)) {
         isInvalid = DS.SetTypeSpecType(DeclSpec::TST_typedef, PrevSpec);
         break;
       }
@@ -645,7 +645,7 @@ bool Parser::isTypeSpecifierQualifier() const {
     
     // typedef-name
   case tok::identifier:
-    return Actions.isTypedefName(*Tok.getIdentifierInfo(), CurScope);
+    return Actions.isTypeName(*Tok.getIdentifierInfo(), CurScope);
     
     // TODO: Attributes.
   }
@@ -698,7 +698,7 @@ bool Parser::isDeclarationSpecifier() const {
     
     // typedef-name
   case tok::identifier:
-    return Actions.isTypedefName(*Tok.getIdentifierInfo(), CurScope);
+    return Actions.isTypeName(*Tok.getIdentifierInfo(), CurScope);
     // TODO: Attributes.
   }
 }
@@ -923,7 +923,7 @@ void Parser::ParseParenDeclarator(Declarator &D) {
     HasPrototype = false;
     IsEmpty      = true;
   } else if (Tok.getKind() == tok::identifier &&
-             !Actions.isTypedefName(*Tok.getIdentifierInfo(), CurScope)) {
+             !Actions.isTypeName(*Tok.getIdentifierInfo(), CurScope)) {
     // Identifier list.  Note that '(' identifier-list ')' is only allowed for
     // normal declarators, not for abstract-declarators.
     assert(D.isPastIdentifier() && "Identifier (if present) must be passed!");

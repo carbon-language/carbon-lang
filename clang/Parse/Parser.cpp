@@ -287,6 +287,15 @@ Parser::DeclTy *Parser::ParseExternalDeclaration() {
                      "top-level asm block");
     // TODO: Invoke action for top-level asm.
     return 0;
+  case tok::at:
+    ObjCParseAtDirectives();
+    return 0;
+  case tok::minus:
+    ObjCParseInstanceMethodDeclaration();
+	return 0;
+  case tok::plus:
+    ObjCParseClassMethodDeclaration();
+    return 0;
   default:
     // We can't tell whether this is a function-definition or declaration yet.
     return ParseDeclarationOrFunctionDefinition();
@@ -442,4 +451,70 @@ void Parser::ParseSimpleAsm() {
   ParseAsmStringLiteral();
   
   MatchRHSPunctuation(tok::r_paren, Loc);
+}
+
+void Parser::ObjCParseAtDirectives() {
+  SourceLocation atLoc = ConsumeToken(); // the "@"
+
+  IdentifierInfo *II = Tok.getIdentifierInfo();
+  if (II == 0) return;  // Not an identifier.
+      
+  switch (II->getObjCKeywordID()) {
+    case tok::objc_class:
+	  ObjCParseClassDeclaration(atLoc);
+    case tok::objc_interface:
+	  ObjCParseInterfaceDeclaration();
+    case tok::objc_protocol:
+	  ObjCParseProtocolDeclaration();
+    case tok::objc_implementation:
+	  ObjCParseImplementationDeclaration();
+    case tok::objc_end:
+	  ObjCParseEndDeclaration();
+    case tok::objc_compatibility_alias:
+	  ObjCParseAliasDeclaration();
+	default:
+	  ; // TODO: need to issue a diagnostic...
+  }
+}
+
+///
+/// objc-class-declaration: 
+///    @class identifier-list ;
+///  
+void Parser::ObjCParseClassDeclaration(SourceLocation atLoc) {
+  ConsumeToken(); // the identifier "class"
+  SmallVector<IdentifierInfo *, 8> classNames;
+  
+  while (1) {
+    if (Tok.getKind() == tok::identifier) {
+	  classNames.push_back(Tok.getIdentifierInfo());
+	} else {
+	  Diag(diag::err_expected_ident);
+	}
+	ConsumeToken();
+	if (Tok.getKind() == tok::comma)
+	  ConsumeToken();
+	else
+	  break;
+  }
+  if (Tok.getKind() == tok::semi) {
+    SourceLocation semiLoc = ConsumeToken();
+	Actions.ParsedClassDeclaration(CurScope,&classNames[0],classNames.size());
+  }
+}
+void Parser::ObjCParseInterfaceDeclaration() {
+}
+void Parser::ObjCParseProtocolDeclaration() {
+}
+void Parser::ObjCParseImplementationDeclaration() {
+}
+void Parser::ObjCParseEndDeclaration() {
+}
+void Parser::ObjCParseAliasDeclaration() {
+}
+
+void Parser::ObjCParseInstanceMethodDeclaration() {
+}
+
+void Parser::ObjCParseClassMethodDeclaration() {
 }

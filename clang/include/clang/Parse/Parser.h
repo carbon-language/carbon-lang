@@ -231,7 +231,18 @@ private:
   DeclTy *ParseFunctionDefinition(Declarator &D);
   void ParseSimpleAsm();
   void ParseAsmStringLiteral();
-  
+
+  // Objective-C External Declarations 
+  void ObjCParseAtDirectives(); 
+  void   ObjCParseClassDeclaration(SourceLocation atLoc);
+  void   ObjCParseInterfaceDeclaration();
+  void   ObjCParseProtocolDeclaration();
+  void   ObjCParseImplementationDeclaration();
+  void   ObjCParseEndDeclaration();
+  void   ObjCParseAliasDeclaration();
+  void ObjCParseInstanceMethodDeclaration();
+  void ObjCParseClassMethodDeclaration();
+
   //===--------------------------------------------------------------------===//
   // C99 6.5: Expressions.
 

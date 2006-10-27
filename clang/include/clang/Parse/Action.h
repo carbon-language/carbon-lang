@@ -35,7 +35,7 @@ namespace clang {
 /// the parser has just done or is about to do when the method is called.  They
 /// are not requests that the actions module do the specified action.
 ///
-/// All of the methods here are optional except isTypedefName(), which must be
+/// All of the methods here are optional except isTypeName(), which must be
 /// specified in order for the parse to complete accurately.  The EmptyAction
 /// class does this bare-minimum of tracking to implement this functionality.
 class Action {
@@ -78,9 +78,9 @@ public:
   // Symbol Table Tracking Callbacks.
   //===--------------------------------------------------------------------===//
   
-  /// isTypedefName - Return true if the specified identifier is a typedef name
+  /// isTypeName - Return true if the specified identifier is a typedef name
   /// in the current scope.
-  virtual bool isTypedefName(const IdentifierInfo &II, Scope *S) const = 0;
+  virtual bool isTypeName(const IdentifierInfo &II, Scope *S) const = 0;
   
   /// ParseDeclarator - This callback is invoked when a declarator is parsed and
   /// 'Init' specifies the initializer if any.  This is for things like:
@@ -111,6 +111,11 @@ public:
   // 'External Declaration' (Top Level) Parsing Callbacks.
   //===--------------------------------------------------------------------===//
   
+  virtual DeclTy *ParsedClassDeclaration(Scope *S,
+                                         IdentifierInfo **identList, unsigned nElements) {
+    return 0;
+  }
+										 
   //===--------------------------------------------------------------------===//
   // Statement Parsing Callbacks.
   //===--------------------------------------------------------------------===//
@@ -271,9 +276,9 @@ public:
 /// to reimplement all of the scoping rules.
 class EmptyAction : public Action {
 public:
-  /// isTypedefName - This looks at the IdentifierInfo::FETokenInfo field to
+  /// isTypeName - This looks at the IdentifierInfo::FETokenInfo field to
   /// determine whether the name is a typedef or not in this scope.
-  virtual bool isTypedefName(const IdentifierInfo &II, Scope *S) const;
+  virtual bool isTypeName(const IdentifierInfo &II, Scope *S) const;
   
   /// ParseDeclarator - If this is a typedef declarator, we modify the
   /// IdentifierInfo::FETokenInfo field to keep track of this fact, until S is
@@ -284,6 +289,10 @@ public:
   /// PopScope - When a scope is popped, if any typedefs are now out-of-scope,
   /// they are removed from the IdentifierInfo::FETokenInfo field.
   virtual void PopScope(SourceLocation Loc, Scope *S);
+  
+  virtual DeclTy *ParsedClassDeclaration(Scope *S,
+									IdentifierInfo **identList, unsigned nElements);
+
 };
   
 }  // end namespace clang

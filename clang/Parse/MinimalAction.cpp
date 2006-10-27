@@ -17,18 +17,24 @@
 using namespace llvm;
 using namespace clang;
 
-/// TypedefInfo - A link exists here for each scope that an identifier is
+/// TypeNameInfo - A link exists here for each scope that an identifier is
 /// defined.
-struct TypedefInfo {
-  TypedefInfo *Prev;
-  bool isTypedef;
+struct TypeNameInfo {
+  TypeNameInfo *Prev;
+  bool isTypeName;
+  
+  TypeNameInfo(bool istypename, TypeNameInfo *prev) {
+    isTypeName = istypename;
+	Prev = prev;
+  }
+    
 };
 
 /// isTypedefName - This looks at the IdentifierInfo::FETokenInfo field to
 /// determine whether the name is a typedef or not in this scope.
-bool EmptyAction::isTypedefName(const IdentifierInfo &II, Scope *S) const {
-  TypedefInfo *TI = II.getFETokenInfo<TypedefInfo>();
-  return TI != 0 && TI->isTypedef;
+bool EmptyAction::isTypeName(const IdentifierInfo &II, Scope *S) const {
+  TypeNameInfo *TI = II.getFETokenInfo<TypeNameInfo>();
+  return TI != 0 && TI->isTypeName;
 }
 
 /// ParseDeclarator - If this is a typedef declarator, we modify the
@@ -37,20 +43,41 @@ bool EmptyAction::isTypedefName(const IdentifierInfo &II, Scope *S) const {
 Action::DeclTy *
 EmptyAction::ParseDeclarator(Scope *S, Declarator &D, ExprTy *Init,
                              DeclTy *LastInGroup) {
+  IdentifierInfo *II = D.getIdentifier();
+  
   // If there is no identifier associated with this declarator, bail out.
-  if (D.getIdentifier() == 0) return 0;
+  if (II == 0) return 0;
   
-  // Remember whether or not this declarator is a typedef.
-  TypedefInfo *TI = new TypedefInfo();
-  TI->isTypedef = D.getDeclSpec().StorageClassSpec == DeclSpec::SCS_typedef;
+  TypeNameInfo *weCurrentlyHaveTypeInfo = II->getFETokenInfo<TypeNameInfo>();
+  bool isTypeName = D.getDeclSpec().StorageClassSpec == DeclSpec::SCS_typedef;
 
-  // Add this to the linked-list hanging off the identifier.
-  IdentifierInfo &II = *D.getIdentifier();
-  TI->Prev = II.getFETokenInfo<TypedefInfo>();
-  II.setFETokenInfo(TI);
+  // this check avoids creating TypeNameInfo objects for the common case.
+  // It does need to handle the uncommon case of shadowing a typedef name with a 
+  // non-typedef name. e.g. { typedef int a; a xx; { int a; } }
+  if (weCurrentlyHaveTypeInfo || isTypeName) {
+    TypeNameInfo *TI = new TypeNameInfo(isTypeName, weCurrentlyHaveTypeInfo);
+
+    II->setFETokenInfo(TI);
   
-  // Remember that this needs to be removed when the scope is popped.
-  S->AddDecl(&II);
+    // Remember that this needs to be removed when the scope is popped.
+    S->AddDecl(II);
+  } 
+  return 0;
+}
+
+// Scope will always be top level file scope. 
+
+Action::DeclTy *
+EmptyAction::ParsedClassDeclaration(Scope *S,
+									IdentifierInfo **identList, unsigned nElements) {
+  for (unsigned i = 0; i < nElements; i++) {
+    TypeNameInfo *TI = new TypeNameInfo(1, identList[i]->getFETokenInfo<TypeNameInfo>());
+
+    identList[i]->setFETokenInfo(TI);
+  
+    // Remember that this needs to be removed when the scope is popped.
+    S->AddDecl(identList[i]);
+  }
   return 0;
 }
 
@@ -60,12 +87,14 @@ void EmptyAction::PopScope(SourceLocation Loc, Scope *S) {
   for (Scope::decl_iterator I = S->decl_begin(), E = S->decl_end();
        I != E; ++I) {
     IdentifierInfo &II = *static_cast<IdentifierInfo*>(*I);
-    TypedefInfo *TI = II.getFETokenInfo<TypedefInfo>();
+    TypeNameInfo *TI = II.getFETokenInfo<TypeNameInfo>();
     assert(TI && "This decl didn't get pushed??");
-
-    TypedefInfo *Next = TI->Prev;
-    delete TI;
     
-    II.setFETokenInfo(Next);
+	if (TI) {
+      TypeNameInfo *Next = TI->Prev;
+      delete TI;
+    
+      II.setFETokenInfo(Next);
+	}
   }
 }

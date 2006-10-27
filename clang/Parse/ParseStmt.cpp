@@ -205,7 +205,7 @@ Parser::StmtResult Parser::ParseIdentifierStatement(bool OnlyStatement) {
   
   // Check to see if this is a declaration.
   if (!OnlyStatement &&
-      Actions.isTypedefName(*IdentTok.getIdentifierInfo(), CurScope)) {
+      Actions.isTypeName(*IdentTok.getIdentifierInfo(), CurScope)) {
     // Handle this.  Warn/disable if in middle of block and !C99.
     DeclSpec DS;
     
