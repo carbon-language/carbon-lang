@@ -973,8 +973,6 @@ void SelectionDAGLowering::visitBr(BranchInst &I) {
     if (BOp->hasOneUse() && 
         (BOp->getOpcode() == Instruction::And ||
          BOp->getOpcode() == Instruction::Or)) {
-      if (BOp->getOpcode() == Instruction::And)
-        I.getParent()->dump();
       FindMergedConditions(BOp, Succ0MBB, Succ1MBB, CurMBB, BOp->getOpcode());
       visitSwitchCase(SwitchCases[0]);
       SwitchCases.erase(SwitchCases.begin());
