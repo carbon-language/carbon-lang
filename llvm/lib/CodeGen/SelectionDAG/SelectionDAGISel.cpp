@@ -888,22 +888,43 @@ void SelectionDAGLowering::FindMergedConditions(Value *Cond,
     return;
   }
   
-  // Codegen X | Y as:
-  //   jmp_if_X TBB
-  // TmpBB:
-  //   jmp_if_Y TBB
-  //   jmp FBB
-  //
-  //  This requires creation of TmpBB after CurBB.
+  
+  //  Create TmpBB after CurBB.
   MachineFunction::iterator BBI = CurBB;
   MachineBasicBlock *TmpBB = new MachineBasicBlock(CurBB->getBasicBlock());
   CurBB->getParent()->getBasicBlockList().insert(++BBI, TmpBB);
   
-  // Emit the LHS condition.
-  FindMergedConditions(BOp->getOperand(0), TBB, TmpBB, CurBB, Opc);
+  if (Opc == Instruction::Or) {
+    // Codegen X | Y as:
+    //   jmp_if_X TBB
+    //   jmp TmpBB
+    // TmpBB:
+    //   jmp_if_Y TBB
+    //   jmp FBB
+    //
   
-  // Emit the RHS condition into TmpBB.
-  FindMergedConditions(BOp->getOperand(1), TBB, FBB, TmpBB, Opc);
+    // Emit the LHS condition.
+    FindMergedConditions(BOp->getOperand(0), TBB, TmpBB, CurBB, Opc);
+  
+    // Emit the RHS condition into TmpBB.
+    FindMergedConditions(BOp->getOperand(1), TBB, FBB, TmpBB, Opc);
+  } else {
+    assert(Opc == Instruction::And && "Unknown merge op!");
+    // Codegen X & Y as:
+    //   jmp_if_X TmpBB
+    //   jmp FBB
+    // TmpBB:
+    //   jmp_if_Y TBB
+    //   jmp FBB
+    //
+    //  This requires creation of TmpBB after CurBB.
+    
+    // Emit the LHS condition.
+    FindMergedConditions(BOp->getOperand(0), TmpBB, FBB, CurBB, Opc);
+    
+    // Emit the RHS condition into TmpBB.
+    FindMergedConditions(BOp->getOperand(1), TBB, FBB, TmpBB, Opc);
+  }
 }
 
 void SelectionDAGLowering::visitBr(BranchInst &I) {
@@ -950,12 +971,11 @@ void SelectionDAGLowering::visitBr(BranchInst &I) {
   //
   if (BinaryOperator *BOp = dyn_cast<BinaryOperator>(CondVal)) {
     if (BOp->hasOneUse() && 
-        (/*BOp->getOpcode() == Instruction::And ||*/
+        (BOp->getOpcode() == Instruction::And ||
          BOp->getOpcode() == Instruction::Or)) {
+      if (BOp->getOpcode() == Instruction::And)
+        I.getParent()->dump();
       FindMergedConditions(BOp, Succ0MBB, Succ1MBB, CurMBB, BOp->getOpcode());
-      //std::cerr << "FOUND: " << SwitchCases.size() << " merged conditions:\n";
-      //I.getParent()->dump();
-      
       visitSwitchCase(SwitchCases[0]);
       SwitchCases.erase(SwitchCases.begin());
       return;
