@@ -205,9 +205,9 @@ bool X86SharedAsmPrinter::doFinalization(Module &M) {
         O << "\t.globl " << name << "\n";
         // FALL THROUGH
       case GlobalValue::InternalLinkage: {
-        if (TAI->getCStringSection()) {
+        if (I->isConstant()) {
           const ConstantArray *CVA = dyn_cast<ConstantArray>(C);
-          if (CVA && CVA->isCString()) {
+          if (TAI->getCStringSection() && CVA && CVA->isCString()) {
             SwitchToDataSection(TAI->getCStringSection(), I);
             break;
           }
