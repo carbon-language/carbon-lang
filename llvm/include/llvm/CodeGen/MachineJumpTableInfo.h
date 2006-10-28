@@ -64,6 +64,7 @@ public:
   /// ReplaceMBBInJumpTables - If Old is the target of any jump tables, update
   /// the jump tables to branch to New instead.
   bool ReplaceMBBInJumpTables(MachineBasicBlock *Old, MachineBasicBlock *New) {
+    assert(Old != New && "Not making a change?");
     bool MadeChange = false;
     for (unsigned i = 0, e = JumpTables.size(); i != e; ++i) {
       MachineJumpTableEntry &JTE = JumpTables[i];
