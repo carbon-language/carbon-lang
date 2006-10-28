@@ -23,7 +23,18 @@ using namespace clang;
 // IdentifierInfo Implementation
 //===----------------------------------------------------------------------===//
 
-void IdentifierInfo::Destroy() {
+IdentifierInfo::IdentifierInfo() {
+  Macro = 0;
+  TokenID = tok::identifier;
+  PPID = tok::pp_not_keyword;
+  ObjCID = tok::objc_not_keyword;
+  IsExtension = false;
+  IsPoisoned = false;
+  IsOtherTargetMacro = false;
+  FETokenInfo = 0;
+}
+
+IdentifierInfo::~IdentifierInfo() {
   delete Macro;
 }
 
@@ -146,7 +157,7 @@ IdentifierTable::~IdentifierTable() {
   for (unsigned i = 0, e = HashTableSize; i != e; ++i) {
     if (IdentifierInfo *Id = TableArray[i].Info) {
       // Free memory referenced by the identifier (e.g. macro info).
-      Id->Destroy();
+      Id->~IdentifierInfo();
       
 #if !USE_ALLOCATOR
       // Free the memory for the identifier itself.
@@ -214,14 +225,7 @@ IdentifierInfo &IdentifierTable::get(const char *NameStart,
 #else
   IdentifierInfo *Identifier = (IdentifierInfo*)malloc(AllocSize);
 #endif
-  Identifier->Macro = 0;
-  Identifier->TokenID = tok::identifier;
-  Identifier->PPID = tok::pp_not_keyword;
-  Identifier->ObjCID = tok::objc_not_keyword;
-  Identifier->IsExtension = false;
-  Identifier->IsPoisoned = false;
-  Identifier->IsOtherTargetMacro = false;
-  Identifier->FETokenInfo = 0;
+  new (Identifier) IdentifierInfo();
   ++NumIdentifiers;
 
   // Copy the string information.

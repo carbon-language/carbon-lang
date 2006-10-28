@@ -39,7 +39,11 @@ class IdentifierInfo {
   bool IsOtherTargetMacro     : 1; // True if ident is macro on another target.
   void *FETokenInfo;               // Managed by the language front-end.
   friend class IdentifierTable;
+  IdentifierInfo(const IdentifierInfo&);  // NONCOPYABLE.
 public:
+  IdentifierInfo();
+  ~IdentifierInfo();
+  
   /// getName - Return the actual string for this identifier.  The length of
   /// this string is stored in NameLen, and the returned string is properly null
   /// terminated.
@@ -94,8 +98,6 @@ public:
   template<typename T>
   T *getFETokenInfo() const { return static_cast<T*>(FETokenInfo); }
   void setFETokenInfo(void *T) { FETokenInfo = T; }
-private:
-  void Destroy();
 };
 
 /// IdentifierVisitor - Subclasses of this class may be implemented to walk all
