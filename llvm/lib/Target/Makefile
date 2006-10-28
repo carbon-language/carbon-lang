@@ -10,7 +10,6 @@
 LEVEL = ../..
 LIBRARYNAME = LLVMTarget
 BUILD_ARCHIVE = 1
-EXTRA_DIST = README.txt
 
 # We include this early so we can access the value of TARGETS_TO_BUILD as the
 # value for PARALLEL_DIRS which must be set before Makefile.rules is included

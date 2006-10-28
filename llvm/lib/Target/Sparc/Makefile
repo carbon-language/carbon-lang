@@ -9,7 +9,6 @@
 LEVEL = ../../..
 LIBRARYNAME = LLVMSparc
 TARGET = Sparc
-EXTRA_DIST = README.txt
 
 # Make sure that tblgen is run, first thing.
 BUILT_SOURCES = SparcGenRegisterInfo.h.inc SparcGenRegisterNames.inc \
