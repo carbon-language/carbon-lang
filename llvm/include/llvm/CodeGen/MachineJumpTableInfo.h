@@ -34,7 +34,7 @@ struct MachineJumpTableEntry {
   /// MBBs - The vector of basic blocks from which to create the jump table.
   std::vector<MachineBasicBlock*> MBBs;
   
-  MachineJumpTableEntry(std::vector<MachineBasicBlock*> &M) : MBBs(M) {}
+  MachineJumpTableEntry(const std::vector<MachineBasicBlock*> &M) : MBBs(M) {}
 };
   
 class MachineJumpTableInfo {
@@ -45,7 +45,7 @@ public:
     
   /// getJumpTableIndex - Create a new jump table or return an existing one.
   ///
-  unsigned getJumpTableIndex(std::vector<MachineBasicBlock*> &DestBBs);
+  unsigned getJumpTableIndex(const std::vector<MachineBasicBlock*> &DestBBs);
   
   /// isEmpty - Return true if there are no jump tables.
   ///
