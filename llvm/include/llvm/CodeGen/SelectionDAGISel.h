@@ -126,7 +126,6 @@ protected:
   bool CheckOrMask(SDOperand LHS, ConstantSDNode *RHS, int64_t DesiredMaskS);  
   
 private:
-  void SplitCritEdgesForPHIConstants(BasicBlock *BB);
   void SelectBasicBlock(BasicBlock *BB, MachineFunction &MF,
                         FunctionLoweringInfo &FuncInfo);
 
