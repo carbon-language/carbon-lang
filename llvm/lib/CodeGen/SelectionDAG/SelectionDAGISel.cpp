@@ -3490,64 +3490,28 @@ static bool OptimizeGEPExpression(GetElementPtrInst *GEPI,
   return true;
 }
 
-/// SplitCritEdgesForPHIConstants - If this block has any PHI nodes with
-/// constant operands, and if any of the edges feeding the PHI node are
-/// critical, split them so that the assignments of a constant to a register
-/// will not be executed on a path that isn't relevant.
-void SelectionDAGISel::SplitCritEdgesForPHIConstants(BasicBlock *BB) {
-  // The most common case is that this is a PHI node with two incoming
-  // successors handle this case efficiently, because it is simple.
-  PHINode *PN = cast<PHINode>(BB->begin());
-  if (PN->getNumIncomingValues() == 2) {
-    // If neither edge is critical, we never need to split.
-    if (PN->getIncomingBlock(0)->getTerminator()->getNumSuccessors() == 1 &&
-        PN->getIncomingBlock(1)->getTerminator()->getNumSuccessors() == 1)
-      return;
-    
-    BasicBlock::iterator BBI = BB->begin();
-    while ((PN = dyn_cast<PHINode>(BBI++))) {
-      for (unsigned i = 0, e = PN->getNumIncomingValues(); i != e; ++i)
-        if (isa<Constant>(PN->getIncomingValue(i)))
-          SplitCriticalEdge(PN->getIncomingBlock(i), BB);
-    }
-    return;
-  }
-  
-  // Otherwise, things are a bit trickier.
-  
-  // BE SMART HERE.
-  
-  BasicBlock::iterator BBI = BB->begin();
-  while ((PN = dyn_cast<PHINode>(BBI++))) {
-    for (unsigned i = 0, e = PN->getNumIncomingValues(); i != e; ++i)
-      if (isa<Constant>(PN->getIncomingValue(i)))
-        SplitCriticalEdge(PN->getIncomingBlock(i), BB);
-  }
-}
-
-
 bool SelectionDAGISel::runOnFunction(Function &Fn) {
   MachineFunction &MF = MachineFunction::construct(&Fn, TLI.getTargetMachine());
   RegMap = MF.getSSARegMap();
   DEBUG(std::cerr << "\n\n\n=== " << Fn.getName() << "\n");
 
-  // First, split all critical edges for PHI nodes with incoming values that are
-  // constants, this way the load of the constant into a vreg will not be placed
-  // into MBBs that are used some other way.
+  // First, split all critical edges.
   //
   // In this pass we also look for GEP and cast instructions that are used
   // across basic blocks and rewrite them to improve basic-block-at-a-time
   // selection.
   //
-  // 
   bool MadeChange = true;
   while (MadeChange) {
     MadeChange = false;
   for (Function::iterator BB = Fn.begin(), E = Fn.end(); BB != E; ++BB) {
-    // If this block has any PHI nodes with constant operands, and if any of the
-    // edges feeding the PHI node are critical, split them.
-    if (isa<PHINode>(BB->begin()))
-      SplitCritEdgesForPHIConstants(BB);
+    // Split all critical edges.
+    TerminatorInst *BBTI = BB->getTerminator();
+    if (BBTI->getNumSuccessors() > 1) {
+      for (unsigned i = 0, e = BBTI->getNumSuccessors(); i != e; ++i)
+        SplitCriticalEdge(BBTI, i, this, true);
+    }
+    
     
     for (BasicBlock::iterator BBI = BB->begin(), E = BB->end(); BBI != E; ) {
       Instruction *I = BBI++;
