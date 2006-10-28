@@ -63,9 +63,15 @@ bool isCriticalEdge(const TerminatorInst *TI, unsigned SuccNum);
 /// split the critical edge.  This will update DominatorSet, ImmediateDominator,
 /// DominatorTree, and DominatorFrontier information if it is available, thus
 /// calling this pass will not invalidate either of them.  This returns true if
-/// the edge was split, false otherwise.
+/// the edge was split, false otherwise.  If MergeIdenticalEdges is true (the
+/// default), *all* edges from TI to the specified successor will be merged into
+/// the same critical edge block.  This is most commonly interesting with switch
+/// instructions, which may have many edges to any one destination.  This
+/// ensures that all edges to that dest go to one block instead of each going to
+/// a different block, but isn't the standard definition of a "critical edge".
 ///
-bool SplitCriticalEdge(TerminatorInst *TI, unsigned SuccNum, Pass *P = 0);
+bool SplitCriticalEdge(TerminatorInst *TI, unsigned SuccNum, Pass *P = 0,
+                       bool MergeIdenticalEdges = false);
 
 inline bool SplitCriticalEdge(BasicBlock *BB, succ_iterator SI, Pass *P = 0) {
   return SplitCriticalEdge(BB->getTerminator(), SI.getSuccessorIndex(), P);
@@ -89,13 +95,14 @@ inline bool SplitCriticalEdge(BasicBlock *Succ, pred_iterator PI, Pass *P = 0) {
 /// and return true, otherwise return false.  This method requires that there be
 /// an edge between the two blocks.  If P is specified, it updates the analyses
 /// described above.
-inline bool SplitCriticalEdge(BasicBlock *Src, BasicBlock *Dst, Pass *P = 0) {
+inline bool SplitCriticalEdge(BasicBlock *Src, BasicBlock *Dst, Pass *P = 0,
+                              bool MergeIdenticalEdges = false) {
   TerminatorInst *TI = Src->getTerminator();
   unsigned i = 0;
   while (1) {
     assert(i != TI->getNumSuccessors() && "Edge doesn't exist!");
     if (TI->getSuccessor(i) == Dst)
-      return SplitCriticalEdge(TI, i, P);
+      return SplitCriticalEdge(TI, i, P, MergeIdenticalEdges);
     ++i;
   }
 }

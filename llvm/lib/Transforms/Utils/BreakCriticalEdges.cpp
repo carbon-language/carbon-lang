@@ -100,10 +100,12 @@ bool llvm::isCriticalEdge(const TerminatorInst *TI, unsigned SuccNum) {
 // SplitCriticalEdge - If this edge is a critical edge, insert a new node to
 // split the critical edge.  This will update DominatorSet, ImmediateDominator,
 // DominatorTree, and DominatorFrontier information if it is available, thus
-// calling this pass will not invalidate either of them.  This returns true if
-// the edge was split, false otherwise.
+// calling this pass will not invalidate any of them.  This returns true if
+// the edge was split, false otherwise.  This ensures that all edges to that
+// dest go to one block instead of each going to a different block.
 //
-bool llvm::SplitCriticalEdge(TerminatorInst *TI, unsigned SuccNum, Pass *P) {
+bool llvm::SplitCriticalEdge(TerminatorInst *TI, unsigned SuccNum, Pass *P,
+                             bool MergeIdenticalEdges) {
   if (!isCriticalEdge(TI, SuccNum)) return false;
   BasicBlock *TIBB = TI->getParent();
   BasicBlock *DestBB = TI->getSuccessor(SuccNum);
@@ -114,13 +116,13 @@ bool llvm::SplitCriticalEdge(TerminatorInst *TI, unsigned SuccNum, Pass *P) {
   // Create our unconditional branch...
   new BranchInst(DestBB, NewBB);
 
-  // Branch to the new block, breaking the edge...
+  // Branch to the new block, breaking the edge.
   TI->setSuccessor(SuccNum, NewBB);
 
   // Insert the block into the function... right after the block TI lives in.
   Function &F = *TIBB->getParent();
   F.getBasicBlockList().insert(TIBB->getNext(), NewBB);
-
+  
   // If there are any PHI nodes in DestBB, we need to update them so that they
   // merge incoming values from NewBB instead of from TIBB.
   //
@@ -132,6 +134,23 @@ bool llvm::SplitCriticalEdge(TerminatorInst *TI, unsigned SuccNum, Pass *P) {
     int BBIdx = PN->getBasicBlockIndex(TIBB);
     PN->setIncomingBlock(BBIdx, NewBB);
   }
+  
+  // If there are any other edges from TIBB to DestBB, update those to go
+  // through the split block, making those edges non-critical as well (and
+  // reducing the number of phi entries in the DestBB if relevant).
+  if (MergeIdenticalEdges) {
+    for (unsigned i = SuccNum+1, e = TI->getNumSuccessors(); i != e; ++i) {
+      if (TI->getSuccessor(i) != DestBB) continue;
+      
+      // Remove an entry for TIBB from DestBB phi nodes.
+      DestBB->removePredecessor(TIBB);
+      
+      // We found another edge to DestBB, go to NewBB instead.
+      TI->setSuccessor(i, NewBB);
+    }
+  }
+  
+  
 
   // If we don't have a pass object, we can't update anything...
   if (P == 0) return true;
