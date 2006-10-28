@@ -534,43 +534,48 @@ void BranchFolder::OptimizeBlock(MachineBasicBlock *MBB) {
       // completely eliminate the block is when the block before this one
       // falls through into MBB and we can't understand the prior block's branch
       // condition.
-      if (MBB->empty() && (!PriorUnAnalyzable || !PrevBB.isSuccessor(MBB))) {
-        // If the prior block falls through into us, turn it into an
-        // explicit branch to us to make updates simpler.
-        if (PrevBB.isSuccessor(MBB) && PriorTBB != MBB && PriorFBB != MBB) {
-          if (PriorTBB == 0) {
-            assert(PriorCond.empty() && PriorFBB == 0 && "Bad branch analysis");
-            PriorTBB = MBB;
-          } else {
-            assert(PriorFBB == 0 && "Machine CFG out of date!");
-            PriorFBB = MBB;
+      if (MBB->empty()) {
+        bool PredHasNoFallThrough = TII->BlockHasNoFallThrough(PrevBB);
+        if (PredHasNoFallThrough || !PriorUnAnalyzable ||
+            !PrevBB.isSuccessor(MBB)) {
+          // If the prior block falls through into us, turn it into an
+          // explicit branch to us to make updates simpler.
+          if (!PredHasNoFallThrough && PrevBB.isSuccessor(MBB) && 
+              PriorTBB != MBB && PriorFBB != MBB) {
+            if (PriorTBB == 0) {
+              assert(PriorCond.empty() && PriorFBB == 0 && "Bad branch analysis");
+              PriorTBB = MBB;
+            } else {
+              assert(PriorFBB == 0 && "Machine CFG out of date!");
+              PriorFBB = MBB;
+            }
+            TII->RemoveBranch(PrevBB);
+            TII->InsertBranch(PrevBB, PriorTBB, PriorFBB, PriorCond);
           }
-          TII->RemoveBranch(PrevBB);
-          TII->InsertBranch(PrevBB, PriorTBB, PriorFBB, PriorCond);
-        }
 
-        // Iterate through all the predecessors, revectoring each in-turn.
-        MachineBasicBlock::pred_iterator PI = MBB->pred_begin();
-        bool DidChange = false;
-        bool HasBranchToSelf = false;
-        while (PI != MBB->pred_end()) {
-          if (*PI == MBB) {
-            // If this block has an uncond branch to itself, leave it.
-            ++PI;
-            HasBranchToSelf = true;
-          } else {
-            DidChange = true;
-            ReplaceUsesOfBlockWith(*PI, MBB, CurTBB, TII);
+          // Iterate through all the predecessors, revectoring each in-turn.
+          MachineBasicBlock::pred_iterator PI = MBB->pred_begin();
+          bool DidChange = false;
+          bool HasBranchToSelf = false;
+          while (PI != MBB->pred_end()) {
+            if (*PI == MBB) {
+              // If this block has an uncond branch to itself, leave it.
+              ++PI;
+              HasBranchToSelf = true;
+            } else {
+              DidChange = true;
+              ReplaceUsesOfBlockWith(*PI, MBB, CurTBB, TII);
+            }
           }
-        }
 
-        // Change any jumptables to go to the new MBB.
-        MBB->getParent()->getJumpTableInfo()->ReplaceMBBInJumpTables(MBB,
-                                                                     CurTBB);
-        if (DidChange) {
-          ++NumBranchOpts;
-          MadeChange = true;
-          if (!HasBranchToSelf) return;
+          // Change any jumptables to go to the new MBB.
+          MBB->getParent()->getJumpTableInfo()->ReplaceMBBInJumpTables(MBB,
+                                                                       CurTBB);
+          if (DidChange) {
+            ++NumBranchOpts;
+            MadeChange = true;
+            if (!HasBranchToSelf) return;
+          }
         }
       }
       
