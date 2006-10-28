@@ -55,6 +55,12 @@ public:
     return JumpTables;
   }
   
+  /// RemoveJumpTable - Mark the specific index as being dead.  This will cause
+  /// it to not be emitted.
+  void RemoveJumpTable(unsigned Idx) {
+    JumpTables[Idx].MBBs.clear();
+  }
+  
   /// ReplaceMBBInJumpTables - If Old is the target of any jump tables, update
   /// the jump tables to branch to New instead.
   bool ReplaceMBBInJumpTables(MachineBasicBlock *Old, MachineBasicBlock *New) {
