@@ -378,7 +378,8 @@ static bool IVUseShouldUsePostIncValue(Instruction *User, Instruction *IV,
   // post-incremented value.
   for (unsigned i = 0, e = PN->getNumIncomingValues(); i != e; ++i)
     if (PN->getIncomingValue(i) == IV) {
-      SplitCriticalEdge(PN->getIncomingBlock(i), PN->getParent(), P);
+      SplitCriticalEdge(PN->getIncomingBlock(i), PN->getParent(), P,
+                        true);
       // Splitting the critical edge can reduce the number of entries in this
       // PHI.
       e = PN->getNumIncomingValues();
@@ -582,7 +583,7 @@ void BasedUser::RewriteInstructionToUseNewBase(const SCEVHandle &NewBase,
           (PN->getParent() != L->getHeader() || !L->contains(PHIPred))) {
         
         // First step, split the critical edge.
-        SplitCriticalEdge(PHIPred, PN->getParent(), P);
+        SplitCriticalEdge(PHIPred, PN->getParent(), P, true);
             
         // Next step: move the basic block.  In particular, if the PHI node
         // is outside of the loop, and PredTI is in the loop, we want to
