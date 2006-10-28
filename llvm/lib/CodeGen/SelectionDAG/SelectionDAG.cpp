@@ -363,20 +363,24 @@ static void AddNodeIDNode(FoldingSetNodeID &ID, SDNode *N) {
       ID.AddDouble(cast<ConstantFPSDNode>(N)->getValue());
       break;
     case ISD::TargetGlobalAddress:
-    case ISD::GlobalAddress:
-      ID.AddPointer(cast<GlobalAddressSDNode>(N)->getGlobal());
-      ID.AddInteger(cast<GlobalAddressSDNode>(N)->getOffset());
+    case ISD::GlobalAddress: {
+      GlobalAddressSDNode *GA = cast<GlobalAddressSDNode>(N);
+      ID.AddPointer(GA->getGlobal());
+      ID.AddInteger(GA->getOffset());
       break;
+    }
     case ISD::BasicBlock:
       ID.AddPointer(cast<BasicBlockSDNode>(N)->getBasicBlock());
       break;
     case ISD::Register:
       ID.AddInteger(cast<RegisterSDNode>(N)->getReg());
       break;
-    case ISD::SRCVALUE:
-      ID.AddPointer(cast<SrcValueSDNode>(N)->getValue());
-      ID.AddInteger(cast<SrcValueSDNode>(N)->getOffset());
+    case ISD::SRCVALUE: {
+      SrcValueSDNode *SV = cast<SrcValueSDNode>(N);
+      ID.AddPointer(SV->getValue());
+      ID.AddInteger(SV->getOffset());
       break;
+    }
     case ISD::FrameIndex:
     case ISD::TargetFrameIndex:
       ID.AddInteger(cast<FrameIndexSDNode>(N)->getIndex());
@@ -386,15 +390,40 @@ static void AddNodeIDNode(FoldingSetNodeID &ID, SDNode *N) {
       ID.AddInteger(cast<JumpTableSDNode>(N)->getIndex());
       break;
     case ISD::ConstantPool:
-    case ISD::TargetConstantPool:
-      ID.AddInteger(cast<ConstantPoolSDNode>(N)->getAlignment());
-      ID.AddInteger(cast<ConstantPoolSDNode>(N)->getOffset());
-      if (cast<ConstantPoolSDNode>(N)->isMachineConstantPoolEntry())
-        cast<ConstantPoolSDNode>(N)->getMachineCPVal()->
-          AddSelectionDAGCSEId(ID);
+    case ISD::TargetConstantPool: {
+      ConstantPoolSDNode *CP = cast<ConstantPoolSDNode>(N);
+      ID.AddInteger(CP->getAlignment());
+      ID.AddInteger(CP->getOffset());
+      if (CP->isMachineConstantPoolEntry())
+        CP->getMachineCPVal()->AddSelectionDAGCSEId(ID);
       else
-        ID.AddPointer(cast<ConstantPoolSDNode>(N)->getConstVal());
+        ID.AddPointer(CP->getConstVal());
       break;
+    }
+    case ISD::VLOAD:
+    case ISD::EXTLOAD:
+    case ISD::LOAD: {
+      LoadSDNode *LD = cast<LoadSDNode>(N);
+      ID.AddInteger(LD->getAddressingMode());
+      ID.AddInteger(LD->getExtensionType());
+      ID.AddInteger(LD->getLoadedVT());
+      ID.AddPointer(LD->getSrcValue());
+      ID.AddInteger(LD->getSrcValueOffset());
+      ID.AddInteger(LD->getAlignment());
+      ID.AddInteger(LD->isVolatile());
+      break;
+    }
+    case ISD::STORE: {
+      StoreSDNode *ST = cast<StoreSDNode>(N);
+      ID.AddInteger(ST->getAddressingMode());
+      ID.AddInteger(ST->isTruncatingStore());
+      ID.AddInteger(ST->getStoredVT());
+      ID.AddPointer(ST->getSrcValue());
+      ID.AddInteger(ST->getSrcValueOffset());
+      ID.AddInteger(ST->getAlignment());
+      ID.AddInteger(ST->isVolatile());
+      break;
+    }
     }
   }
 }
