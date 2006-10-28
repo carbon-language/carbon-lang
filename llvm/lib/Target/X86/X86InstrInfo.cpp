@@ -420,6 +420,18 @@ void X86InstrInfo::InsertBranch(MachineBasicBlock &MBB, MachineBasicBlock *TBB,
   BuildMI(&MBB, X86::JMP, 1).addMBB(FBB);
 }
 
+bool X86InstrInfo::BlockHasNoFallThrough(MachineBasicBlock &MBB) const {
+  if (MBB.empty()) return false;
+  
+  switch (MBB.back().getOpcode()) {
+  case X86::JMP:     // Uncond branch.
+  case X86::JMP32r:  // Indirect branch.
+  case X86::JMP32m:  // Indirect branch through mem.
+    return true;
+  default: return false;
+  }
+}
+
 bool X86InstrInfo::
 ReverseBranchCondition(std::vector<MachineOperand> &Cond) const {
   assert(Cond.size() == 1 && "Invalid X86 branch condition!");

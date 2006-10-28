@@ -318,6 +318,14 @@ public:
     assert(0 && "Target didn't implement TargetInstrInfo::InsertBranch!"); 
   }
   
+  /// BlockHasNoFallThrough - Return true if the specified block does not
+  /// fall-through into its successor block.  This is primarily used when a
+  /// branch is unanalyzable.  It is useful for things like unconditional
+  /// indirect branches (jump tables).
+  virtual bool BlockHasNoFallThrough(MachineBasicBlock &MBB) const {
+    return false;
+  }
+  
   /// ReverseBranchCondition - Reverses the branch condition of the specified
   /// condition list, returning false on success and true if it cannot be
   /// reversed.

@@ -267,6 +267,7 @@ public:
   virtual void InsertBranch(MachineBasicBlock &MBB, MachineBasicBlock *TBB,
                             MachineBasicBlock *FBB,
                             const std::vector<MachineOperand> &Cond) const;
+  virtual bool BlockHasNoFallThrough(MachineBasicBlock &MBB) const;
   virtual bool ReverseBranchCondition(std::vector<MachineOperand> &Cond) const;
 
   const TargetRegisterClass *getPointerRegClass() const;
