@@ -57,13 +57,17 @@ public:
   
   /// ReplaceMBBInJumpTables - If Old is the target of any jump tables, update
   /// the jump tables to branch to New instead.
-  void ReplaceMBBInJumpTables(MachineBasicBlock *Old, MachineBasicBlock *New) {
+  bool ReplaceMBBInJumpTables(MachineBasicBlock *Old, MachineBasicBlock *New) {
+    bool MadeChange = false;
     for (unsigned i = 0, e = JumpTables.size(); i != e; ++i) {
       MachineJumpTableEntry &JTE = JumpTables[i];
       for (unsigned j = 0, e = JTE.MBBs.size(); j != e; ++j)
-        if (JTE.MBBs[j] == Old)
+        if (JTE.MBBs[j] == Old) {
           JTE.MBBs[j] = New;
+          MadeChange = true;
+        }
     }
+    return MadeChange;
   }
   
   /// getEntrySize - returns the size of an individual field in a jump table 
