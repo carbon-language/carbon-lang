@@ -1,6 +1,6 @@
-; RUN: llvm-as < %s | opt -predsimplify -instcombine -simplifycfg &&
-; RUN: llvm-as < %s | opt -predsimplify -instcombine -simplifycfg | llvm-dis | grep -v declare | grep -c fail | grep 1 &&
-; RUN: llvm-as < %s | opt -predsimplify -instcombine -simplifycfg | llvm-dis | grep -v declare | grep -c pass | grep 1
+; RUN: llvm-as < %s | opt -predsimplify -instcombine -simplifycfg -disable-output &&
+; RUN: llvm-as < %s | opt -predsimplify -instcombine -simplifycfg | llvm-dis | grep -v declare | not grep fail &&
+; RUN: llvm-as < %s | opt -predsimplify -instcombine -simplifycfg | llvm-dis | grep -v declare | grep -c pass | grep 3
 
 int %test1(int %x, int %y) {
 entry:
@@ -10,11 +10,15 @@ entry:
 
 cond_true:		; preds = %entry
 	%tmp4 = seteq int %x, 0		; <bool> [#uses=1]
-	br bool %tmp4, label %cond_true5, label %return
+	br bool %tmp4, label %cond_true5, label %cond_false
 
 cond_true5:		; preds = %cond_true
-	%tmp6 = call int %fail( )		; <int> [#uses=0]
+	%tmp6 = call int %pass( )		; <int> [#uses=1]
 	ret int %tmp6
+
+cond_false:
+	%tmp8 = call int %fail ( )		; <int> [#uses=1]
+	ret int %tmp8
 
 return:		; preds = %cond_next7
 	ret int 0
@@ -28,11 +32,15 @@ entry:
 
 cond_true:		; preds = %entry
 	%tmp4 = seteq int %x, 0		; <bool> [#uses=1]
-	br bool %tmp4, label %cond_true5, label %return
+	br bool %tmp4, label %cond_true5, label %cond_false
 
 cond_true5:		; preds = %cond_true
-	%tmp6 = call int %pass( )		; <int> [#uses=0]
+	%tmp6 = call int %pass1( )		; <int> [#uses=1]
 	ret int %tmp6
+
+cond_false:
+	%tmp8 = call int %pass2( )		; <int> [#uses=1]
+	ret int %tmp8
 
 return:		; preds = %cond_next7
 	ret int 0
@@ -40,3 +48,5 @@ return:		; preds = %cond_next7
 
 declare int %fail()
 declare int %pass()
+declare int %pass1()
+declare int %pass2()
