@@ -621,8 +621,7 @@ void CEE::ForwardSuccessorTo(TerminatorInst *TI, unsigned SuccNo,
   // Make sure that we don't introduce critical edges from oldsucc now!
   for (unsigned i = 0, e = OldSucc->getTerminator()->getNumSuccessors();
        i != e; ++i)
-    if (isCriticalEdge(OldSucc->getTerminator(), i))
-      SplitCriticalEdge(OldSucc->getTerminator(), i, this);
+    SplitCriticalEdge(OldSucc->getTerminator(), i, this);
 
   // Since we invalidated the CFG, recalculate the dominator set so that it is
   // useful for later processing!
