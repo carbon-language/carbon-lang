@@ -259,6 +259,17 @@ void PPCInstrInfo::InsertBranch(MachineBasicBlock &MBB, MachineBasicBlock *TBB,
   BuildMI(&MBB, PPC::B, 1).addMBB(FBB);
 }
 
+bool PPCInstrInfo::BlockHasNoFallThrough(MachineBasicBlock &MBB) const {
+  if (MBB.empty()) return false;
+  
+  switch (MBB.back().getOpcode()) {
+  case PPC::B:     // Uncond branch.
+  case PPC::BCTR:  // Indirect branch.
+    return true;
+  default: return false;
+  }
+}
+
 bool PPCInstrInfo::
 ReverseBranchCondition(std::vector<MachineOperand> &Cond) const {
   assert(Cond.size() == 2 && "Invalid PPC branch opcode!");
