@@ -44,8 +44,6 @@
 #include "llvm/Support/MathExtras.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/Compiler.h"
-#include <map>
-#include <set>
 #include <iostream>
 #include <algorithm>
 using namespace llvm;
@@ -3490,6 +3488,63 @@ static bool OptimizeGEPExpression(GetElementPtrInst *GEPI,
   return true;
 }
 
+
+/// SplitEdgeNicely - Split the critical edge from TI to it's specified
+/// successor if it will improve codegen.  We only do this if the successor has
+/// phi nodes (otherwise critical edges are ok).  If there is already another
+/// predecessor of the succ that is empty (and thus has no phi nodes), use it
+/// instead of introducing a new block.
+static void SplitEdgeNicely(TerminatorInst *TI, unsigned SuccNum, Pass *P) {
+  BasicBlock *TIBB = TI->getParent();
+  BasicBlock *Dest = TI->getSuccessor(SuccNum);
+  assert(isa<PHINode>(Dest->begin()) &&
+         "This should only be called if Dest has a PHI!");
+
+  /// TIPHIValues - This array is lazily computed to determine the values of
+  /// PHIs in Dest that TI would provide.
+  std::vector<Value*> TIPHIValues;
+  
+  // Check to see if Dest has any blocks that can be used as a split edge for
+  // this terminator.
+  for (pred_iterator PI = pred_begin(Dest), E = pred_end(Dest); PI != E; ++PI) {
+    BasicBlock *Pred = *PI;
+    // To be usable, the pred has to end with an uncond branch to the dest.
+    BranchInst *PredBr = dyn_cast<BranchInst>(Pred->getTerminator());
+    if (!PredBr || !PredBr->isUnconditional() ||
+        // Must be empty other than the branch.
+        &Pred->front() != PredBr)
+      continue;
+    
+    // Finally, since we know that Dest has phi nodes in it, we have to make
+    // sure that jumping to Pred will have the same affect as going to Dest in
+    // terms of PHI values.
+    PHINode *PN;
+    unsigned PHINo = 0;
+    bool FoundMatch = true;
+    for (BasicBlock::iterator I = Dest->begin();
+         (PN = dyn_cast<PHINode>(I)); ++I, ++PHINo) {
+      if (PHINo == TIPHIValues.size())
+        TIPHIValues.push_back(PN->getIncomingValueForBlock(TIBB));
+
+      // If the PHI entry doesn't work, we can't use this pred.
+      if (TIPHIValues[PHINo] != PN->getIncomingValueForBlock(Pred)) {
+        FoundMatch = false;
+        break;
+      }
+    }
+    
+    // If we found a workable predecessor, change TI to branch to Succ.
+    if (FoundMatch) {
+      Dest->removePredecessor(TIBB);
+      TI->setSuccessor(SuccNum, Pred);
+      return;
+    }
+  }
+  
+  SplitCriticalEdge(TI, SuccNum, P, true);  
+}
+
+
 bool SelectionDAGISel::runOnFunction(Function &Fn) {
   MachineFunction &MF = MachineFunction::construct(&Fn, TLI.getTargetMachine());
   RegMap = MF.getSSARegMap();
@@ -3505,11 +3560,13 @@ bool SelectionDAGISel::runOnFunction(Function &Fn) {
   while (MadeChange) {
     MadeChange = false;
   for (Function::iterator BB = Fn.begin(), E = Fn.end(); BB != E; ++BB) {
-    // Split all critical edges.
+    // Split all critical edges where the dest block has a PHI.
     TerminatorInst *BBTI = BB->getTerminator();
     if (BBTI->getNumSuccessors() > 1) {
       for (unsigned i = 0, e = BBTI->getNumSuccessors(); i != e; ++i)
-        SplitCriticalEdge(BBTI, i, this, true);
+        if (isa<PHINode>(BBTI->getSuccessor(i)->begin()) &&
+            isCriticalEdge(BBTI, i, true))
+          SplitEdgeNicely(BBTI, i, this);
     }
     
     
