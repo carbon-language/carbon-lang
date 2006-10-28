@@ -331,7 +331,7 @@ static void AddNodeIDNode(FoldingSetNodeID &ID,
                           SDOperand Op1, SDOperand Op2, SDOperand Op3) {
   AddNodeIDOpcode(ID, OpC);
   AddNodeIDValueTypes(ID, VTList);
-  AddNodeIDOperands(ID, Op1, Op2);
+  AddNodeIDOperands(ID, Op1, Op2, Op3);
 }
 static void AddNodeIDNode(FoldingSetNodeID &ID,
                           unsigned short OpC, SDVTList VTList, 
