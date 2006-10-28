@@ -332,6 +332,26 @@ void LoopInfo::removeBlock(BasicBlock *BB) {
 // APIs for simple analysis of the loop.
 //
 
+/// getExitingBlocks - Return all blocks inside the loop that have successors
+/// outside of the loop.  These are the blocks _inside of the current loop_
+/// which branch out.  The returned list is always unique.
+///
+void Loop::getExitingBlocks(std::vector<BasicBlock*> &ExitingBlocks) const {
+  // Sort the blocks vector so that we can use binary search to do quick
+  // lookups.
+  std::vector<BasicBlock*> LoopBBs(block_begin(), block_end());
+  std::sort(LoopBBs.begin(), LoopBBs.end());
+  
+  for (std::vector<BasicBlock*>::const_iterator BI = Blocks.begin(),
+       BE = Blocks.end(); BI != BE; ++BI)
+    for (succ_iterator I = succ_begin(*BI), E = succ_end(*BI); I != E; ++I)
+      if (!std::binary_search(LoopBBs.begin(), LoopBBs.end(), *I)) {
+        // Not in current loop? It must be an exit block.
+        ExitingBlocks.push_back(*BI);
+        break;
+      }
+}
+
 /// getExitBlocks - Return all of the successor blocks of this loop.  These
 /// are the blocks _outside of the current loop_ which are branched to.
 ///

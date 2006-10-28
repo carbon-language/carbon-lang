@@ -107,6 +107,12 @@ public:
   // induction variable canonicalization pass should be used to normalize loops
   // for easy analysis.  These methods assume canonical loops.
 
+  /// getExitingBlocks - Return all blocks inside the loop that have successors
+  /// outside of the loop.  These are the blocks _inside of the current loop_
+  /// which branch out.  The returned list is always unique.
+  ///
+  void getExitingBlocks(std::vector<BasicBlock*> &Blocks) const;
+
   /// getExitBlocks - Return all of the successor blocks of this loop.  These
   /// are the blocks _outside of the current loop_ which are branched to.
   ///
