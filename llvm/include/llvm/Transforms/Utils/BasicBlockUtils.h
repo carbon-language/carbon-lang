@@ -57,7 +57,8 @@ void RemoveSuccessor(TerminatorInst *TI, unsigned SuccNum);
 /// Critical edges are edges from a block with multiple successors to a block
 /// with multiple predecessors.
 ///
-bool isCriticalEdge(const TerminatorInst *TI, unsigned SuccNum);
+bool isCriticalEdge(const TerminatorInst *TI, unsigned SuccNum,
+                    bool AllowIdenticalEdges = false);
 
 /// SplitCriticalEdge - If this edge is a critical edge, insert a new node to
 /// split the critical edge.  This will update DominatorSet, ImmediateDominator,

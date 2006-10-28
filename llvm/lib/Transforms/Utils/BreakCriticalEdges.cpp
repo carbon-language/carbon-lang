@@ -84,7 +84,8 @@ bool BreakCriticalEdges::runOnFunction(Function &F) {
 // Critical edges are edges from a block with multiple successors to a block
 // with multiple predecessors.
 //
-bool llvm::isCriticalEdge(const TerminatorInst *TI, unsigned SuccNum) {
+bool llvm::isCriticalEdge(const TerminatorInst *TI, unsigned SuccNum,
+                          bool AllowIdenticalEdges) {
   assert(SuccNum < TI->getNumSuccessors() && "Illegal edge specification!");
   if (TI->getNumSuccessors() == 1) return false;
 
@@ -93,8 +94,16 @@ bool llvm::isCriticalEdge(const TerminatorInst *TI, unsigned SuccNum) {
 
   // If there is more than one predecessor, this is a critical edge...
   assert(I != E && "No preds, but we have an edge to the block?");
+  const BasicBlock *FirstPred = *I;
   ++I;        // Skip one edge due to the incoming arc from TI.
-  return I != E;
+  if (!AllowIdenticalEdges)
+    return I != E;
+  
+  // If AllowIdenticalEdges is true, then we allow this edge to be considered
+  // non-critical iff all preds come from TI's block.
+  for (; I != E; ++I)
+    if (*I != FirstPred) return true;
+  return false;
 }
 
 // SplitCriticalEdge - If this edge is a critical edge, insert a new node to
@@ -106,7 +115,7 @@ bool llvm::isCriticalEdge(const TerminatorInst *TI, unsigned SuccNum) {
 //
 bool llvm::SplitCriticalEdge(TerminatorInst *TI, unsigned SuccNum, Pass *P,
                              bool MergeIdenticalEdges) {
-  if (!isCriticalEdge(TI, SuccNum)) return false;
+  if (!isCriticalEdge(TI, SuccNum, MergeIdenticalEdges)) return false;
   BasicBlock *TIBB = TI->getParent();
   BasicBlock *DestBB = TI->getSuccessor(SuccNum);
 
