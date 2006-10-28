@@ -44,7 +44,7 @@ public:
   //===--------------------------------------------------------------------===//
   // Symbol table tracking callbacks.
   //
-  virtual bool isTypedefName(const IdentifierInfo &II, Scope *S) const;
+  virtual bool isTypeName(const IdentifierInfo &II, Scope *S) const;
   virtual DeclTy *ParseDeclarator(Scope *S, Declarator &D, ExprTy *Init,
                                   DeclTy *LastInGroup);
   virtual DeclTy *ParseFunctionDefinition(Scope *S, Declarator &D,
@@ -127,7 +127,7 @@ public:
 // Symbol table tracking callbacks.
 //===----------------------------------------------------------------------===//
 
-bool ASTBuilder::isTypedefName(const IdentifierInfo &II, Scope *S) const {
+bool ASTBuilder::isTypeName(const IdentifierInfo &II, Scope *S) const {
   Decl *D = II.getFETokenInfo<Decl>();
   return D != 0 && D->getDeclSpec().StorageClassSpec == DeclSpec::SCS_typedef;
 }
