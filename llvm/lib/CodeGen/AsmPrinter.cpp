@@ -221,6 +221,9 @@ void AsmPrinter::EmitJumpTableInfo(MachineJumpTableInfo *MJTI,
   
   for (unsigned i = 0, e = JT.size(); i != e; ++i) {
     const std::vector<MachineBasicBlock*> &JTBBs = JT[i].MBBs;
+    
+    // If this jump table was deleted, ignore it. 
+    if (JTBBs.empty()) continue;
 
     // For PIC codegen, if possible we want to use the SetDirective to reduce
     // the number of relocations the assembler will generate for the jump table.
