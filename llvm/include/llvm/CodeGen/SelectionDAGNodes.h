@@ -23,7 +23,6 @@
 #include "llvm/ADT/FoldingSet.h"
 #include "llvm/ADT/GraphTraits.h"
 #include "llvm/ADT/iterator"
-#include "llvm/ADT/SmallVector.h"
 #include "llvm/CodeGen/ValueTypes.h"
 #include "llvm/Support/DataTypes.h"
 #include <cassert>

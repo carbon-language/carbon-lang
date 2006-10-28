@@ -32,7 +32,6 @@ namespace llvm {
   class MachineDebugInfo;
   class MachineFunction;
   class MachineConstantPoolValue;
-  class SDOperand;
 
 /// SelectionDAG class - This is used to represent a portion of an LLVM function
 /// in a low-level Data Dependence DAG representation suitable for instruction
