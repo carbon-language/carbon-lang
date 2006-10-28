@@ -98,6 +98,53 @@ bool BranchFolder::runOnMachineFunction(MachineFunction &MF) {
     EverMadeChange |= MadeChangeThisIteration;
   }
 
+  // See if any jump tables have become mergable or dead as the code generator
+  // did its thing.
+  MachineJumpTableInfo *JTI = MF.getJumpTableInfo();
+  const std::vector<MachineJumpTableEntry> &JTs = JTI->getJumpTables();
+  if (!JTs.empty()) {
+    // Figure out how these jump tables should be merged.
+    std::vector<unsigned> JTMapping;
+    JTMapping.reserve(JTs.size());
+    
+    // We always keep the 0th jump table.
+    JTMapping.push_back(0);
+
+    // Scan the jump tables, seeing if there are any duplicates.  Note that this
+    // is N^2, which should be fixed someday.
+    for (unsigned i = 1, e = JTs.size(); i != e; ++i)
+      JTMapping.push_back(JTI->getJumpTableIndex(JTs[i].MBBs));
+    
+    // If a jump table was merge with another one, walk the function rewriting
+    // references to jump tables to reference the new JT ID's.  Keep track of
+    // whether we see a jump table idx, if not, we can delete the JT.
+    std::vector<bool> JTIsLive;
+    JTIsLive.resize(JTs.size());
+    for (MachineFunction::iterator BB = MF.begin(), E = MF.end();
+         BB != E; ++BB) {
+      for (MachineBasicBlock::iterator I = BB->begin(), E = BB->end();
+           I != E; ++I)
+        for (unsigned op = 0, e = I->getNumOperands(); op != e; ++op) {
+          MachineOperand &Op = I->getOperand(op);
+          if (!Op.isJumpTableIndex()) continue;
+          unsigned NewIdx = JTMapping[Op.getJumpTableIndex()];
+          Op.setJumpTableIndex(NewIdx);
+
+          // Remember that this JT is live.
+          JTIsLive[NewIdx] = true;
+        }
+    }
+   
+    // Finally, remove dead jump tables.  This happens either because the
+    // indirect jump was unreachable (and thus deleted) or because the jump
+    // table was merged with some other one.
+    for (unsigned i = 0, e = JTIsLive.size(); i != e; ++i)
+      if (!JTIsLive[i]) {
+        JTI->RemoveJumpTable(i);
+        EverMadeChange = true;
+      }
+  }
+  
   return EverMadeChange;
 }
 
@@ -444,8 +491,8 @@ void BranchFolder::OptimizeBlock(MachineBasicBlock *MBB) {
       
       // If MBB was the target of a jump table, update jump tables to go to the
       // fallthrough instead.
-      MBB->getParent()->getJumpTableInfo()->ReplaceMBBInJumpTables(MBB,
-                                                                   FallThrough);
+      MBB->getParent()->getJumpTableInfo()->
+        ReplaceMBBInJumpTables(MBB, FallThrough);
       MadeChange = true;
     }
     return;
@@ -543,7 +590,8 @@ void BranchFolder::OptimizeBlock(MachineBasicBlock *MBB) {
           if (!PredHasNoFallThrough && PrevBB.isSuccessor(MBB) && 
               PriorTBB != MBB && PriorFBB != MBB) {
             if (PriorTBB == 0) {
-              assert(PriorCond.empty() && PriorFBB == 0 && "Bad branch analysis");
+              assert(PriorCond.empty() && PriorFBB == 0 &&
+                     "Bad branch analysis");
               PriorTBB = MBB;
             } else {
               assert(PriorFBB == 0 && "Machine CFG out of date!");
@@ -569,8 +617,8 @@ void BranchFolder::OptimizeBlock(MachineBasicBlock *MBB) {
           }
 
           // Change any jumptables to go to the new MBB.
-          MBB->getParent()->getJumpTableInfo()->ReplaceMBBInJumpTables(MBB,
-                                                                       CurTBB);
+          MBB->getParent()->getJumpTableInfo()->
+            ReplaceMBBInJumpTables(MBB, CurTBB);
           if (DidChange) {
             ++NumBranchOpts;
             MadeChange = true;
