@@ -379,6 +379,9 @@ static bool IVUseShouldUsePostIncValue(Instruction *User, Instruction *IV,
   for (unsigned i = 0, e = PN->getNumIncomingValues(); i != e; ++i)
     if (PN->getIncomingValue(i) == IV) {
       SplitCriticalEdge(PN->getIncomingBlock(i), PN->getParent(), P);
+      // Splitting the critical edge can reduce the number of entries in this
+      // PHI.
+      e = PN->getNumIncomingValues();
       if (--NumUses == 0) break;
     }
   
@@ -589,6 +592,9 @@ void BasedUser::RewriteInstructionToUseNewBase(const SCEVHandle &NewBase,
           BasicBlock *NewBB = PN->getIncomingBlock(i);
           NewBB->moveBefore(PN->getParent());
         }
+        
+        // Splitting the edge can reduce the number of PHI entries we have.
+        e = PN->getNumIncomingValues();
       }
 
       Value *&Code = InsertedCode[PN->getIncomingBlock(i)];
