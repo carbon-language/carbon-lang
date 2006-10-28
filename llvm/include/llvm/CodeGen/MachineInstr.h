@@ -206,6 +206,10 @@ public:
     assert(isConstantPoolIndex() && "Wrong MachineOperand accessor");
     contents.immedVal = Idx;
   }
+  void setJumpTableIndex(unsigned Idx) {
+    assert(isJumpTableIndex() && "Wrong MachineOperand accessor");
+    contents.immedVal = Idx;
+  }
   
   /// isIdenticalTo - Return true if this operand is identical to the specified
   /// operand.
