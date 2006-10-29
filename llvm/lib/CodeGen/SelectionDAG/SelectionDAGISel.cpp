@@ -841,12 +841,11 @@ void SelectionDAGLowering::FindMergedConditions(Value *Cond,
     // caseblock.
     if (BOp && isa<SetCondInst>(BOp) &&
         // The operands of the setcc have to be in this block.  We don't know
-        // how to export them from some other block.
-        isExportableFromCurrentBlock(BOp->getOperand(0), BB) &&
-        isExportableFromCurrentBlock(BOp->getOperand(1), BB)) {
-      ExportFromCurrentBlock(BOp->getOperand(0));
-      ExportFromCurrentBlock(BOp->getOperand(1));
-
+        // how to export them from some other block.  If this is the first block
+        // of the sequence, no exporting is needed.
+        (CurBB == CurMBB ||
+         (isExportableFromCurrentBlock(BOp->getOperand(0), BB) &&
+          isExportableFromCurrentBlock(BOp->getOperand(1), BB)))) {
       ISD::CondCode SignCond, UnsCond, FPCond, Condition;
       switch (BOp->getOpcode()) {
       default: assert(0 && "Unknown setcc opcode!");
@@ -903,7 +902,6 @@ void SelectionDAGLowering::FindMergedConditions(Value *Cond,
     SelectionDAGISel::CaseBlock CB(ISD::SETEQ, Cond, ConstantBool::getTrue(),
                                    TBB, FBB, CurBB);
     SwitchCases.push_back(CB);
-    ExportFromCurrentBlock(Cond);
     return;
   }
   
@@ -993,6 +991,18 @@ void SelectionDAGLowering::visitBr(BranchInst &I) {
         (BOp->getOpcode() == Instruction::And ||
          BOp->getOpcode() == Instruction::Or)) {
       FindMergedConditions(BOp, Succ0MBB, Succ1MBB, CurMBB, BOp->getOpcode());
+
+      // If the compares in later blocks need to use values not currently
+      // exported from this block, export them now.  This block should always be
+      // the first entry.
+      assert(SwitchCases[0].ThisBB == CurMBB && "Unexpected lowering!");
+      
+      for (unsigned i = 1, e = SwitchCases.size(); i != e; ++i) {
+        ExportFromCurrentBlock(SwitchCases[i].CmpLHS);
+        ExportFromCurrentBlock(SwitchCases[i].CmpRHS);
+      }
+      
+      // Emit the branch for this block.
       visitSwitchCase(SwitchCases[0]);
       SwitchCases.erase(SwitchCases.begin());
       return;
