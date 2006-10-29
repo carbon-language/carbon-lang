@@ -401,7 +401,6 @@ static void AddNodeIDNode(FoldingSetNodeID &ID, SDNode *N) {
       break;
     }
     case ISD::VLOAD:
-    case ISD::EXTLOAD:
     case ISD::LOAD: {
       LoadSDNode *LD = cast<LoadSDNode>(N);
       ID.AddInteger(LD->getAddressingMode());
