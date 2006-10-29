@@ -61,7 +61,7 @@ void FoldingSetImpl::NodeID::AddString(const std::string &String) {
     Pos = Units * sizeof(unsigned);
   } else {
     // Otherwise do it the hard way.
-    for ( Pos += 4; Pos < Size; Pos += 4) {
+    for ( Pos += 4; Pos <= Size; Pos += 4) {
       unsigned V = ((unsigned char)String[Pos - 4] << 24) |
                    ((unsigned char)String[Pos - 3] << 16) |
                    ((unsigned char)String[Pos - 2] << 8) |
@@ -77,7 +77,7 @@ void FoldingSetImpl::NodeID::AddString(const std::string &String) {
   case 1: V = (V << 8) | (unsigned char)String[Size - 3]; // Fall thru.
   case 2: V = (V << 8) | (unsigned char)String[Size - 2]; // Fall thru.
   case 3: V = (V << 8) | (unsigned char)String[Size - 1]; break;
-  case 0: return; // Nothing left.
+  default: return; // Nothing left.
   }
 
   Bits.push_back(V);
