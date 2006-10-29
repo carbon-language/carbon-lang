@@ -51,6 +51,9 @@ void FoldingSetImpl::NodeID::AddDouble(double D) {
 }
 void FoldingSetImpl::NodeID::AddString(const std::string &String) {
   unsigned Size = String.size();
+  Bits.push_back(Size);
+  if (!Size) return;
+
   unsigned Units = Size / 4;
   unsigned Pos = 0;
   const unsigned *Base = (const unsigned *)String.data();
@@ -58,7 +61,7 @@ void FoldingSetImpl::NodeID::AddString(const std::string &String) {
   // If the string is aligned do a bulk transfer.
   if (!((intptr_t)Base & 3)) {
     Bits.append(Base, Base + Units);
-    Pos = Units * sizeof(unsigned);
+    Pos = (Units + 1) * 4;
   } else {
     // Otherwise do it the hard way.
     for ( Pos += 4; Pos <= Size; Pos += 4) {
