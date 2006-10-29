@@ -48,6 +48,11 @@ namespace {
     bool OptimizeBranches(MachineFunction &MF);
     void OptimizeBlock(MachineBasicBlock *MBB);
     void RemoveDeadBlock(MachineBasicBlock *MBB);
+    
+    bool CanFallThrough(MachineBasicBlock *CurBB);
+    bool CanFallThrough(MachineBasicBlock *CurBB, bool BranchUnAnalyzable,
+                        MachineBasicBlock *TBB, MachineBasicBlock *FBB,
+                        const std::vector<MachineOperand> &Cond);
   };
 }
 
@@ -443,19 +448,37 @@ static void ReplaceUsesOfBlockWith(MachineBasicBlock *BB,
     }
 }
 
-/// CanFallThrough - Return true of the specified branch condition can transfer
-/// control to FallthroughBlock, the block immediately after the branch.
-static bool CanFallThrough(MachineBasicBlock *TBB,
-                           MachineBasicBlock *FBB,
-                           const std::vector<MachineOperand> &Cond,
-                           MachineFunction::iterator FallthroughBlock) {
+/// CanFallThrough - Return true if the specified block (with the specified
+/// branch condition) can implicitly transfer control to the block after it by
+/// falling off the end of it.  This should return false if it can reach the
+/// block after it, but it uses an explicit branch to do so (e.g. a table jump).
+///
+/// True is a conservative answer.
+///
+bool BranchFolder::CanFallThrough(MachineBasicBlock *CurBB,
+                                  bool BranchUnAnalyzable,
+                                  MachineBasicBlock *TBB, MachineBasicBlock *FBB,
+                                  const std::vector<MachineOperand> &Cond) {
+  MachineFunction::iterator Fallthrough = CurBB;
+  ++Fallthrough;
+  // If FallthroughBlock is off the end of the function, it can't fall through.
+  if (Fallthrough == CurBB->getParent()->end())
+    return false;
+  
+  // If FallthroughBlock isn't a successor of CurBB, no fallthrough is possible.
+  if (!CurBB->isSuccessor(Fallthrough))
+    return false;
+  
+  // If we couldn't analyze the branch, assume it could fall through.
+  if (BranchUnAnalyzable) return true;
+  
   // If there is no branch, control always falls through.
   if (TBB == 0) return true;
 
   // If there is some explicit branch to the fallthrough block, it can obviously
   // reach, even though the branch should get folded to fall through implicitly.
-  if (MachineFunction::iterator(TBB) == FallthroughBlock ||
-      MachineFunction::iterator(FBB) == FallthroughBlock)
+  if (MachineFunction::iterator(TBB) == Fallthrough ||
+      MachineFunction::iterator(FBB) == Fallthrough)
     return true;
   
   // If it's an unconditional branch to some block not the fall through, it 
@@ -465,6 +488,20 @@ static bool CanFallThrough(MachineBasicBlock *TBB,
   // Otherwise, if it is conditional and has no explicit false block, it falls
   // through.
   return FBB == 0;
+}
+
+/// CanFallThrough - Return true if the specified can implicitly transfer
+/// control to the block after it by falling off the end of it.  This should
+/// return false if it can reach the block after it, but it uses an explicit
+/// branch to do so (e.g. a table jump).
+///
+/// True is a conservative answer.
+///
+bool BranchFolder::CanFallThrough(MachineBasicBlock *CurBB) {
+  MachineBasicBlock *TBB = 0, *FBB = 0;
+  std::vector<MachineOperand> Cond;
+  bool CurUnAnalyzable = TII->AnalyzeBranch(*CurBB, TBB, FBB, Cond);
+  return CanFallThrough(CurBB, CurUnAnalyzable, TBB, FBB, Cond);
 }
 
 /// OptimizeBlock - Analyze and optimize control flow related to the specified
@@ -504,8 +541,8 @@ void BranchFolder::OptimizeBlock(MachineBasicBlock *MBB) {
 
   MachineBasicBlock *PriorTBB = 0, *PriorFBB = 0;
   std::vector<MachineOperand> PriorCond;
-  bool PriorUnAnalyzable = false;
-  PriorUnAnalyzable = TII->AnalyzeBranch(PrevBB, PriorTBB, PriorFBB, PriorCond);
+  bool PriorUnAnalyzable =
+    TII->AnalyzeBranch(PrevBB, PriorTBB, PriorFBB, PriorCond);
   if (!PriorUnAnalyzable) {
     // If the CFG for the prior block has extra edges, remove them.
     MadeChange |= CorrectExtraCFGEdges(PrevBB, PriorTBB, PriorFBB,
@@ -561,7 +598,8 @@ void BranchFolder::OptimizeBlock(MachineBasicBlock *MBB) {
   // Analyze the branch in the current block.
   MachineBasicBlock *CurTBB = 0, *CurFBB = 0;
   std::vector<MachineOperand> CurCond;
-  if (!TII->AnalyzeBranch(*MBB, CurTBB, CurFBB, CurCond)) {
+  bool CurUnAnalyzable = TII->AnalyzeBranch(*MBB, CurTBB, CurFBB, CurCond);
+  if (!CurUnAnalyzable) {
     // If the CFG for the prior block has extra edges, remove them.
     MadeChange |= CorrectExtraCFGEdges(*MBB, CurTBB, CurFBB,
                                        !CurCond.empty(),
@@ -630,61 +668,55 @@ void BranchFolder::OptimizeBlock(MachineBasicBlock *MBB) {
       // Add the branch back if the block is more than just an uncond branch.
       TII->InsertBranch(*MBB, CurTBB, 0, CurCond);
     }
-    
-    // If the prior block doesn't fall through into this block, and if this
-    // block doesn't fall through into some other block, see if we can find a
-    // place to move this block where a fall-through will happen.
-    if (!PriorUnAnalyzable && !CanFallThrough(PriorTBB, PriorFBB,
-                                              PriorCond, MBB)) {
-      // Now we know that there was no fall-through into this block, check to
-      // see if it has fall-throughs.
-      if (!CanFallThrough(CurTBB, CurFBB, CurCond, FallThrough)) {
-        
-        // Check all the predecessors of this block.  If one of them has no fall
-        // throughs, move this block right after it.
-        for (MachineBasicBlock::pred_iterator PI = MBB->pred_begin(),
-             E = MBB->pred_end(); PI != E; ++PI) {
-          // Analyze the branch at the end of the pred.
-          MachineBasicBlock *PredBB = *PI;
-          MachineFunction::iterator PredFallthrough = PredBB; ++PredFallthrough;
-          MachineBasicBlock *PredTBB = 0, *PredFBB = 0;
-          std::vector<MachineOperand> PredCond;
-          if (PredBB != MBB &&
-              !TII->AnalyzeBranch(*PredBB, PredTBB, PredFBB, PredCond) &&
-              !CanFallThrough(PredTBB, PredFBB, PredCond, PredFallthrough)) {
-            MBB->moveAfter(PredBB);
-            MadeChange = true;
-            return OptimizeBlock(MBB);
-          }
-        }
-        
-        // Check all successors to see if we can move this block before it.
-        for (MachineBasicBlock::succ_iterator SI = MBB->succ_begin(),
-             E = MBB->succ_end(); SI != E; ++SI) {
-          // Analyze the branch at the end of the block before the succ.
-          MachineBasicBlock *SuccBB = *SI;
-          MachineFunction::iterator SuccPrev = SuccBB; --SuccPrev;
-          MachineBasicBlock *SuccPrevTBB = 0, *SuccPrevFBB = 0;
-          std::vector<MachineOperand> SuccPrevCond;
-          if (SuccBB != MBB &&
-              !TII->AnalyzeBranch(*SuccPrev, SuccPrevTBB, SuccPrevFBB,
-                                  SuccPrevCond) &&
-              !CanFallThrough(SuccPrevTBB, SuccPrevFBB, SuccPrevCond, SuccBB)) {
-            MBB->moveBefore(SuccBB);
-            MadeChange = true;
-            return OptimizeBlock(MBB);
-          }
-        }
-        
-        // Okay, there is no really great place to put this block.  If, however,
-        // the block before this one would be a fall-through if this block were
-        // removed, move this block to the end of the function.
-        if (FallThrough != MBB->getParent()->end() &&
-            CanFallThrough(PriorTBB, PriorFBB, PriorCond, FallThrough)) {
-          MBB->moveAfter(--MBB->getParent()->end());
+  }
+
+  // If the prior block doesn't fall through into this block, and if this
+  // block doesn't fall through into some other block, see if we can find a
+  // place to move this block where a fall-through will happen.
+  if (!CanFallThrough(&PrevBB, PriorUnAnalyzable,
+                      PriorTBB, PriorFBB, PriorCond)) {
+    // Now we know that there was no fall-through into this block, check to
+    // see if it has a fall-through into its successor.
+    if (!CanFallThrough(MBB, CurUnAnalyzable, CurTBB, CurFBB, CurCond)) {
+      // Check all the predecessors of this block.  If one of them has no fall
+      // throughs, move this block right after it.
+      for (MachineBasicBlock::pred_iterator PI = MBB->pred_begin(),
+           E = MBB->pred_end(); PI != E; ++PI) {
+        // Analyze the branch at the end of the pred.
+        MachineBasicBlock *PredBB = *PI;
+        MachineFunction::iterator PredFallthrough = PredBB; ++PredFallthrough;
+        MachineBasicBlock *PredTBB = 0, *PredFBB = 0;
+        std::vector<MachineOperand> PredCond;
+        if (PredBB != MBB && !CanFallThrough(PredBB)) {
+          MBB->moveAfter(PredBB);
           MadeChange = true;
-          return;
+          return OptimizeBlock(MBB);
         }
+      }
+        
+      // Check all successors to see if we can move this block before it.
+      for (MachineBasicBlock::succ_iterator SI = MBB->succ_begin(),
+           E = MBB->succ_end(); SI != E; ++SI) {
+        // Analyze the branch at the end of the block before the succ.
+        MachineBasicBlock *SuccBB = *SI;
+        MachineFunction::iterator SuccPrev = SuccBB; --SuccPrev;
+        MachineBasicBlock *SuccPrevTBB = 0, *SuccPrevFBB = 0;
+        std::vector<MachineOperand> SuccPrevCond;
+        if (SuccBB != MBB && !CanFallThrough(SuccPrev)) {
+          MBB->moveBefore(SuccBB);
+          MadeChange = true;
+          return OptimizeBlock(MBB);
+        }
+      }
+      
+      // Okay, there is no really great place to put this block.  If, however,
+      // the block before this one would be a fall-through if this block were
+      // removed, move this block to the end of the function.
+      if (FallThrough != MBB->getParent()->end() &&
+          PrevBB.isSuccessor(FallThrough)) {
+        MBB->moveAfter(--MBB->getParent()->end());
+        MadeChange = true;
+        return;
       }
     }
   }
