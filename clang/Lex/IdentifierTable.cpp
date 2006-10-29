@@ -45,16 +45,10 @@ IdentifierInfo::~IdentifierInfo() {
 IdentifierTable::IdentifierTable(const LangOptions &LangOpts)
   // Start with space for 8K identifiers.
   : HashTable(8192) {
-  
-  IdentifierInfo &Def = get("define");
-    
+
   // Populate the identifier table with info about keywords for the current
   // language.
   AddKeywords(LangOpts);
-  
-  IdentifierInfo &Def2 = get("define");
-
-  std::cerr << "FOO\n";
 }
 
 //===----------------------------------------------------------------------===//
