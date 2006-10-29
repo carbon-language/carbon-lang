@@ -1,4 +1,4 @@
-//===--- Preprocess.cpp - C Language Family Preprocessor Implementation ---===//
+//===--- IdentifierTable.cpp - Hash table for identifier lookup -----------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -45,84 +45,10 @@ IdentifierInfo::~IdentifierInfo() {
 IdentifierVisitor::~IdentifierVisitor() {
 }
 
-//===----------------------------------------------------------------------===//
-// Memory Allocation Support
-//===----------------------------------------------------------------------===//
-
-/// The identifier table has a very simple memory allocation pattern: it just
-/// keeps allocating identifiers, then never frees them unless it frees them
-/// all.  As such, we use a simple bump-pointer memory allocator to make
-/// allocation speedy.  Shark showed that malloc was 27% of the time spent in
-/// IdentifierTable::getIdentifier with malloc, and takes a 4.3% time with this.
-#define USE_ALLOCATOR 1
-#if USE_ALLOCATOR
-
-namespace {
-class MemRegion {
-  unsigned RegionSize;
-  MemRegion *Next;
-  char *NextPtr;
-public:
-  void Init(unsigned size, MemRegion *next) {
-    RegionSize = size;
-    Next = next;
-    NextPtr = (char*)(this+1);
-    
-    // FIXME: uses GCC extension.
-    unsigned Alignment = __alignof__(IdentifierInfo);
-    NextPtr = (char*)((intptr_t)(NextPtr+Alignment-1) &
-                      ~(intptr_t)(Alignment-1));
-  }
-  
-  const MemRegion *getNext() const { return Next; }
-  unsigned getNumBytesAllocated() const {
-    return NextPtr-(const char*)this;
-  }
-  
-  /// Allocate - Allocate and return at least the specified number of bytes.
-  ///
-  void *Allocate(unsigned AllocSize, MemRegion **RegPtr) {
-    // FIXME: uses GCC extension.
-    unsigned Alignment = __alignof__(IdentifierInfo);
-    // Round size up to an even multiple of the alignment.
-    AllocSize = (AllocSize+Alignment-1) & ~(Alignment-1);
-    
-    // If there is space in this region for the identifier, return it.
-    if (unsigned(NextPtr+AllocSize-(char*)this) <= RegionSize) {
-      void *Result = NextPtr;
-      NextPtr += AllocSize;
-      return Result;
-    }
-    
-    // Otherwise, we have to allocate a new chunk.  Create one twice as big as
-    // this one.
-    MemRegion *NewRegion = (MemRegion *)malloc(RegionSize*2);
-    NewRegion->Init(RegionSize*2, this);
-
-    // Update the current "first region" pointer  to point to the new region.
-    *RegPtr = NewRegion;
-    
-    // Try allocating from it now.
-    return NewRegion->Allocate(AllocSize, RegPtr);
-  }
-  
-  /// Deallocate - Release all memory for this region to the system.
-  ///
-  void Deallocate() {
-    MemRegion *next = Next;
-    free(this);
-    if (next)
-      next->Deallocate();
-  }
-};
-}
-
-#endif
 
 //===----------------------------------------------------------------------===//
 // IdentifierTable Implementation
 //===----------------------------------------------------------------------===//
-
 
 /// IdentifierBucket - The hash table consists of an array of these.  If Info is
 /// non-null, this is an extant entry, otherwise, it is a hole.
@@ -142,10 +68,6 @@ IdentifierTable::IdentifierTable(const LangOptions &LangOpts) {
 
   TheTable = TableArray;
   NumIdentifiers = 0;
-#if USE_ALLOCATOR
-  TheMemory = malloc(8*4096);
-  ((MemRegion*)TheMemory)->Init(8*4096, 0);
-#endif
   
   // Populate the identifier table with info about keywords for the current
   // language.
@@ -158,16 +80,9 @@ IdentifierTable::~IdentifierTable() {
     if (IdentifierInfo *Id = TableArray[i].Info) {
       // Free memory referenced by the identifier (e.g. macro info).
       Id->~IdentifierInfo();
-      
-#if !USE_ALLOCATOR
-      // Free the memory for the identifier itself.
-      free(Id);
-#endif
+      Allocator.Deallocate(Id);
     }
   }
-#if USE_ALLOCATOR
-  ((MemRegion*)TheMemory)->Deallocate();
-#endif
   delete [] TableArray;
 }
 
@@ -219,12 +134,11 @@ IdentifierInfo &IdentifierTable::get(const char *NameStart,
   // fill in.  Allocate a new identifier with space for the null-terminated
   // string at the end.
   unsigned AllocSize = sizeof(IdentifierInfo)+Length+1;
-#if USE_ALLOCATOR
-  IdentifierInfo *Identifier = (IdentifierInfo*)
-    ((MemRegion*)TheMemory)->Allocate(AllocSize, (MemRegion**)&TheMemory);
-#else
-  IdentifierInfo *Identifier = (IdentifierInfo*)malloc(AllocSize);
-#endif
+
+  // FIXME: uses GCC extension.
+  unsigned Alignment = __alignof__(IdentifierInfo);
+  IdentifierInfo *Identifier =
+    (IdentifierInfo*)Allocator.Allocate(AllocSize, Alignment);
   new (Identifier) IdentifierInfo();
   ++NumIdentifiers;
 
@@ -420,16 +334,7 @@ void IdentifierTable::PrintStats() const {
   std::cerr << "Max identifier length: " << MaxIdentifierLength << "\n";
   
   // Compute statistics about the memory allocated for identifiers.
-#if USE_ALLOCATOR
-  unsigned BytesUsed = 0;
-  unsigned NumRegions = 0;
-  const MemRegion *R = (MemRegion*)TheMemory;
-  for (; R; R = R->getNext(), ++NumRegions) {
-    BytesUsed += R->getNumBytesAllocated();
-  }
-  std::cerr << "\nNumber of memory regions: " << NumRegions << "\n";
-  std::cerr << "Bytes allocated for identifiers: " << BytesUsed << "\n";
-#endif
+  Allocator.PrintStats();
 }
 
 

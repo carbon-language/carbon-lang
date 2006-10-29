@@ -16,6 +16,7 @@
 #define LLVM_CLANG_IDENTIFIERTABLE_H
 
 #include "clang/Basic/TokenKinds.h"
+#include "llvm/Support/Allocator.h"
 #include <string> 
 
 namespace llvm {
@@ -106,13 +107,21 @@ public:
   virtual void VisitIdentifier(IdentifierInfo &II) const = 0;
 };
 
+
+
 /// IdentifierTable - This table implements an efficient mapping from strings to
 /// IdentifierInfo nodes.  It has no other purpose, but this is an
 /// extremely performance-critical piece of the code, as each occurrance of
 /// every identifier goes through here when lexed.
 class IdentifierTable {
   void *TheTable;
-  void *TheMemory;
+  // Shark shows that using MallocAllocator is *much* slower than using this
+  // BumpPtrAllocator!
+#if 1
+  BumpPtrAllocator Allocator;
+#else
+  MallocAllocator Allocator;
+#endif
   unsigned HashTableSize;
   unsigned NumIdentifiers;
 public:
