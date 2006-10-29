@@ -20,7 +20,6 @@
 
 namespace llvm {
 namespace clang {
-  class IdentifierTable;
   class MacroInfo;
   class LangOptions;
   
@@ -38,7 +37,6 @@ class IdentifierInfo {
   bool IsPoisoned             : 1; // True if identifier is poisoned.
   bool IsOtherTargetMacro     : 1; // True if ident is macro on another target.
   void *FETokenInfo;               // Managed by the language front-end.
-  friend class IdentifierTable;
   IdentifierInfo(const IdentifierInfo&);  // NONCOPYABLE.
 public:
   IdentifierInfo();
