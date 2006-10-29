@@ -824,6 +824,12 @@ bool SelectionDAGLowering::isExportableFromCurrentBlock(Value *V,
   return true;
 }
 
+static bool InBlock(const Value *V, const BasicBlock *BB) {
+  if (const Instruction *I = dyn_cast<Instruction>(V))
+    return I->getParent() == BB;
+  return true;
+}
+
 /// FindMergedConditions - If Cond is an expression like 
 void SelectionDAGLowering::FindMergedConditions(Value *Cond,
                                                 MachineBasicBlock *TBB,
@@ -834,7 +840,9 @@ void SelectionDAGLowering::FindMergedConditions(Value *Cond,
   BinaryOperator *BOp = dyn_cast<BinaryOperator>(Cond);
 
   if (!BOp || (unsigned)BOp->getOpcode() != Opc || !BOp->hasOneUse() ||
-      BOp->getParent() != CurBB->getBasicBlock()) {
+      BOp->getParent() != CurBB->getBasicBlock() ||
+      !InBlock(BOp->getOperand(0), CurBB->getBasicBlock()) ||
+      !InBlock(BOp->getOperand(1), CurBB->getBasicBlock())) {
     const BasicBlock *BB = CurBB->getBasicBlock();
     
     // If the leaf of the tree is a setcond inst, merge the condition into the
