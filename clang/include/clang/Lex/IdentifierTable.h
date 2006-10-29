@@ -7,8 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This file defines the IdentifierInfo, IdentifierVisitor, and
-// IdentifierTable interfaces.
+// This file defines the IdentifierInfo and IdentifierTable interfaces.
 //
 //===----------------------------------------------------------------------===//
 
@@ -16,7 +15,7 @@
 #define LLVM_CLANG_IDENTIFIERTABLE_H
 
 #include "clang/Basic/TokenKinds.h"
-#include "llvm/Support/Allocator.h"
+#include "llvm/ADT/CStringMap.h"
 #include <string> 
 
 namespace llvm {
@@ -42,7 +41,7 @@ class IdentifierInfo {
 public:
   IdentifierInfo();
   ~IdentifierInfo();
-  
+
   /// getName - Return the actual string for this identifier.  The length of
   /// this string is stored in NameLen, and the returned string is properly null
   /// terminated.
@@ -99,14 +98,6 @@ public:
   void setFETokenInfo(void *T) { FETokenInfo = T; }
 };
 
-/// IdentifierVisitor - Subclasses of this class may be implemented to walk all
-/// of the defined identifiers.
-class IdentifierVisitor {
-public:
-  virtual ~IdentifierVisitor();
-  virtual void VisitIdentifier(IdentifierInfo &II) const = 0;
-};
-
 
 
 /// IdentifierTable - This table implements an efficient mapping from strings to
@@ -114,37 +105,40 @@ public:
 /// extremely performance-critical piece of the code, as each occurrance of
 /// every identifier goes through here when lexed.
 class IdentifierTable {
-  void *TheTable;
   // Shark shows that using MallocAllocator is *much* slower than using this
   // BumpPtrAllocator!
-#if 1
-  BumpPtrAllocator Allocator;
-#else
-  MallocAllocator Allocator;
-#endif
-  unsigned HashTableSize;
-  unsigned NumIdentifiers;
+  CStringMap<IdentifierInfo, BumpPtrAllocator> HashTable;
 public:
   /// IdentifierTable ctor - Create the identifier table, populating it with
   /// info about the language keywords for the language specified by LangOpts.
   IdentifierTable(const LangOptions &LangOpts);
-  ~IdentifierTable();
   
   /// get - Return the identifier token info for the specified named identifier.
   ///
-  IdentifierInfo &get(const char *NameStart, const char *NameEnd);
-  IdentifierInfo &get(const std::string &Name);
+  IdentifierInfo &get(const char *NameStart, const char *NameEnd) {
+    return HashTable.GetOrCreateValue(NameStart, NameEnd);
+  }
+  
+  IdentifierInfo &get(const char *Name) {
+    return get(Name, Name+strlen(Name));
+  }
+  IdentifierInfo &get(const std::string &Name) {
+    // Don't use c_str() here: no need to be null terminated.
+    const char *NameBytes = &Name[0];
+    return get(NameBytes, NameBytes+Name.size());
+  }
   
   /// VisitIdentifiers - This method walks through all of the identifiers,
   /// invoking IV->VisitIdentifier for each of them.
-  void VisitIdentifiers(const IdentifierVisitor &IV);
+  void VisitIdentifiers(const CStringMapVisitor &IV) {
+    HashTable.VisitEntries(IV);
+  }
   
   /// PrintStats - Print some statistics to stderr that indicate how well the
   /// hashing is doing.
   void PrintStats() const;
 private:
   void AddKeywords(const LangOptions &LangOpts);
-  void RehashTable();
 };
 
 }  // end namespace llvm

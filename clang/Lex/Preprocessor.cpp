@@ -882,11 +882,12 @@ void Preprocessor::ExpandBuiltinMacro(LexerToken &Tok) {
 }
 
 namespace {
-struct UnusedIdentifierReporter : public IdentifierVisitor {
+struct UnusedIdentifierReporter : public CStringMapVisitor {
   Preprocessor &PP;
   UnusedIdentifierReporter(Preprocessor &pp) : PP(pp) {}
 
-  void VisitIdentifier(IdentifierInfo &II) const {
+  void Visit(const char *Key, void *Value) const {
+    IdentifierInfo &II = *static_cast<IdentifierInfo*>(Value);
     if (II.getMacroInfo() && !II.getMacroInfo()->isUsed())
       PP.Diag(II.getMacroInfo()->getDefinitionLoc(), diag::pp_macro_not_used);
   }
