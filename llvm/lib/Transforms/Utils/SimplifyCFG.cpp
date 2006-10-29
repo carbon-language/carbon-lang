@@ -853,7 +853,7 @@ static bool HoistThenElseCodeToIf(BranchInst *BI) {
 
   Instruction *I1 = BB1->begin(), *I2 = BB2->begin();
   if (I1->getOpcode() != I2->getOpcode() || !I1->isIdenticalTo(I2) ||
-      isa<PHINode>(I1))
+      isa<PHINode>(I1) || isa<InvokeInst>(I1))
     return false;
 
   // If we get here, we can hoist at least one instruction.
