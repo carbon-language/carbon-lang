@@ -95,24 +95,23 @@ const FileEntry *FileManager::getFile(const char *NameStart,
   // By default, initialize it to invalid.
   NamedFileEnt = NON_EXISTANT_FILE;
 
-  // Figure out what directory it is in.
-  SmallString<1024> DirName;
-  
-  // If the string contains a / in it, strip off everything after it.
+  // Figure out what directory it is in.   If the string contains a / in it,
+  // strip off everything after it.
   // FIXME: this logic should be in sys::Path.
   const char *SlashPos = NameEnd-1;
   while (SlashPos >= NameStart && SlashPos[0] != '/')
     --SlashPos;
   
+  const DirectoryEntry *DirInfo;
   if (SlashPos < NameStart) {
     // Use the current directory if file has no path component.
-    DirName.push_back('.');
+    const char *Name = ".";
+    DirInfo = getDirectory(Name, Name+1);
   } else if (SlashPos == NameEnd-1)
     return 0;       // If filename ends with a /, it's a directory.
   else
-    DirName.append(NameStart, SlashPos);
-
-  const DirectoryEntry *DirInfo = getDirectory(DirName.begin(), DirName.end());
+    DirInfo = getDirectory(NameStart, SlashPos);
+  
   if (DirInfo == 0)  // Directory doesn't exist, file can't exist.
     return 0;
   
