@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -fast -march=x86 -mcpu=i386 | not grep 'movl %eax, %edx'
+; RUN: llvm-as < %s | llc -march=x86 -mcpu=i386 | not grep 'movl %eax, %edx'
 
 int %foo(int %t, int %C) {
 entry:
