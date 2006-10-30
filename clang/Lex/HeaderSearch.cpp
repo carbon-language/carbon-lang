@@ -62,7 +62,7 @@ const FileEntry *HeaderSearch::DoFrameworkLookup(const DirectoryEntry *Dir,
   if (SlashPos == std::string::npos) return 0;
   
   const DirectoryEntry *&CacheLookup =
-    FrameworkMap[std::string(Filename.begin(), Filename.begin()+SlashPos)];
+    FrameworkMap.GetOrCreateValue(&Filename[0], &Filename[0]+SlashPos);
   
   // If it is some other directory, fail.
   if (CacheLookup && CacheLookup != Dir)
@@ -220,7 +220,7 @@ LookupSubframeworkHeader(const std::string &Filename,
   FrameworkName += ".framework/";
 
   const DirectoryEntry *&CacheLookup =
-    FrameworkMap[std::string(Filename.begin(), Filename.begin()+SlashPos)];
+    FrameworkMap.GetOrCreateValue(&Filename[0], &Filename[0]+SlashPos);
   
   // Some other location?
   if (CacheLookup && strcmp(CacheLookup->getName(), FrameworkName.c_str()) != 0)
