@@ -25,6 +25,7 @@ namespace llvm {
 /// template parameter.
 template <typename T>
 class SmallVectorImpl {
+protected:
   T *Begin, *End, *Capacity;
   
   // Allocate raw space for N elements of type T.  If T has a ctor or dtor, we
