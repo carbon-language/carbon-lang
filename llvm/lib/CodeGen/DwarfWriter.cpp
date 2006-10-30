@@ -2627,7 +2627,7 @@ void Dwarf::EmitDebugLines() const {
 /// EmitInitialDebugFrame - Emit common frame info into a debug frame section.
 ///
 void Dwarf::EmitInitialDebugFrame() {
-  if (TAI->getDwarfRequiresFrameSection())
+  if (!TAI->getDwarfRequiresFrameSection())
     return;
 
   int stackGrowth =
@@ -2665,7 +2665,7 @@ void Dwarf::EmitInitialDebugFrame() {
 /// EmitFunctionDebugFrame - Emit per function frame info into a debug frame
 /// section.
 void Dwarf::EmitFunctionDebugFrame() {
-  if (TAI->getDwarfRequiresFrameSection())
+  if (!TAI->getDwarfRequiresFrameSection())
     return;
 
   // Start the dwarf frame section.
