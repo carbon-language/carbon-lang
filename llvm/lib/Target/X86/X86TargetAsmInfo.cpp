@@ -60,6 +60,30 @@ X86TargetAsmInfo::X86TargetAsmInfo(const X86TargetMachine &TM) {
     DwarfRangesSection = ".section __DWARF,__debug_ranges,regular,debug";
     DwarfMacInfoSection = ".section __DWARF,__debug_macinfo,regular,debug";
     break;
+
+  case X86Subtarget::isELF:
+    // Set up DWARF directives
+    HasLEB128 = true;  // Target asm supports leb128 directives (little-endian)
+    // bool HasLEB128; // Defaults to false.
+    // hasDotLoc - True if target asm supports .loc directives.
+    // bool HasDotLoc; // Defaults to false.
+    // HasDotFile - True if target asm supports .file directives.
+    // bool HasDotFile; // Defaults to false.
+    PrivateGlobalPrefix = ".";  // Prefix for private global symbols
+    DwarfRequiresFrameSection = false;
+    DwarfAbbrevSection =  "\t.section\t.debug_abbrev,\"\",@progbits";
+    DwarfInfoSection =    "\t.section\t.debug_info,\"\",@progbits";
+    DwarfLineSection =    "\t.section\t.debug_line,\"\",@progbits";
+    DwarfFrameSection =   "\t.section\t.debug_frame,\"\",@progbits";
+    DwarfPubNamesSection ="\t.section\t.debug_pubnames,\"\",@progbits";
+    DwarfPubTypesSection ="\t.section\t.debug_pubtypes,\"\",@progbits";
+    DwarfStrSection =     "\t.section\t.debug_str,\"\",@progbits";
+    DwarfLocSection =     "\t.section\t.debug_loc,\"\",@progbits";
+    DwarfARangesSection = "\t.section\t.debug_aranges,\"\",@progbits";
+    DwarfRangesSection =  "\t.section\t.debug_ranges,\"\",@progbits";
+    DwarfMacInfoSection = "\t.section\t.debug_macinfo,\"\",@progbits";
+    break;
+
   case X86Subtarget::isCygwin:
     GlobalPrefix = "_";
     COMMDirectiveTakesAlignment = false;

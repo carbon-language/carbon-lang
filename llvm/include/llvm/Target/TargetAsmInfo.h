@@ -227,6 +227,10 @@ namespace llvm {
     ///
     bool HasDotFile; // Defaults to false.
     
+    /// RequiresFrameSection - true if the Dwarf2 output needs a frame section
+    ///
+    bool DwarfRequiresFrameSection; // Defaults to false.
+
     /// DwarfAbbrevSection - Section directive for Dwarf abbrev.
     ///
     const char *DwarfAbbrevSection; // Defaults to ".debug_abbrev".
@@ -416,6 +420,9 @@ namespace llvm {
     }
     bool hasDotFile() const {
       return HasDotFile;
+    }
+    bool getDwarfRequiresFrameSection() const {
+      return DwarfRequiresFrameSection;
     }
     const char *getDwarfAbbrevSection() const {
       return DwarfAbbrevSection;

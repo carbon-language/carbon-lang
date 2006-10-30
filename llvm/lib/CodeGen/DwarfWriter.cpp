@@ -1921,8 +1921,8 @@ CompileUnit *Dwarf::NewCompileUnit(CompileUnitDesc *UnitDesc,
                                          unsigned ID) {
   // Construct debug information entry.
   DIE *Die = new DIE(DW_TAG_compile_unit);
-  Die->AddDelta (DW_AT_stmt_list, DW_FORM_data4,  DWLabel("line", 0),
-                                                  DWLabel("section_line", 0));
+  Die->AddDelta (DW_AT_stmt_list, DW_FORM_data4, DWLabel("section_line", 0), 
+                                                 DWLabel("section_line", 0));
 //  Die->AddLabel (DW_AT_high_pc,   DW_FORM_addr,   DWLabel("text_end", 0));
 //  Die->AddLabel (DW_AT_low_pc,    DW_FORM_addr,   DWLabel("text_begin", 0));
   Die->AddString(DW_AT_producer,  DW_FORM_string, UnitDesc->getProducer());
@@ -2175,21 +2175,20 @@ void Dwarf::EmitInitial() {
   didInitial = true;
   
   // Dwarf sections base addresses.
-  Asm->SwitchToDataSection(TAI->getDwarfFrameSection(), 0);
-  EmitLabel("section_frame", 0);
+  if (TAI->getDwarfRequiresFrameSection()) {
+    Asm->SwitchToDataSection(TAI->getDwarfFrameSection(), 0);
+    EmitLabel("section_frame", 0);
+  }
   Asm->SwitchToDataSection(TAI->getDwarfInfoSection(), 0);
   EmitLabel("section_info", 0);
-  EmitLabel("info", 0);
   Asm->SwitchToDataSection(TAI->getDwarfAbbrevSection(), 0);
   EmitLabel("section_abbrev", 0);
-  EmitLabel("abbrev", 0);
   Asm->SwitchToDataSection(TAI->getDwarfARangesSection(), 0);
   EmitLabel("section_aranges", 0);
   Asm->SwitchToDataSection(TAI->getDwarfMacInfoSection(), 0);
   EmitLabel("section_macinfo", 0);
   Asm->SwitchToDataSection(TAI->getDwarfLineSection(), 0);
   EmitLabel("section_line", 0);
-  EmitLabel("line", 0);
   Asm->SwitchToDataSection(TAI->getDwarfLocSection(), 0);
   EmitLabel("section_loc", 0);
   Asm->SwitchToDataSection(TAI->getDwarfPubNamesSection(), 0);
@@ -2198,7 +2197,6 @@ void Dwarf::EmitInitial() {
   EmitLabel("section_str", 0);
   Asm->SwitchToDataSection(TAI->getDwarfRangesSection(), 0);
   EmitLabel("section_ranges", 0);
-
   Asm->SwitchToTextSection(TAI->getTextSection(), 0);
   EmitLabel("text_begin", 0);
   Asm->SwitchToDataSection(TAI->getDataSection(), 0);
@@ -2629,6 +2627,9 @@ void Dwarf::EmitDebugLines() const {
 /// EmitInitialDebugFrame - Emit common frame info into a debug frame section.
 ///
 void Dwarf::EmitInitialDebugFrame() {
+  if (TAI->getDwarfRequiresFrameSection())
+    return;
+
   int stackGrowth =
       Asm->TM.getFrameInfo()->getStackGrowthDirection() ==
         TargetFrameInfo::StackGrowsUp ?
@@ -2664,6 +2665,9 @@ void Dwarf::EmitInitialDebugFrame() {
 /// EmitFunctionDebugFrame - Emit per function frame info into a debug frame
 /// section.
 void Dwarf::EmitFunctionDebugFrame() {
+  if (TAI->getDwarfRequiresFrameSection())
+    return;
+
   // Start the dwarf frame section.
   Asm->SwitchToDataSection(TAI->getDwarfFrameSection(), 0);
   

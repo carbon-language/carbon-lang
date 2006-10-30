@@ -64,6 +64,7 @@ TargetAsmInfo::TargetAsmInfo() :
   HasLEB128(false),
   HasDotLoc(false),
   HasDotFile(false),
+  DwarfRequiresFrameSection(true),
   DwarfAbbrevSection(".debug_abbrev"),
   DwarfInfoSection(".debug_info"),
   DwarfLineSection(".debug_line"),

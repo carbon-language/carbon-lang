@@ -116,6 +116,9 @@ bool X86SharedAsmPrinter::doInitialization(Module &M) {
 
     // Emit initial debug information.
     DW.BeginModule(&M);
+  } else if (Subtarget->isTargetELF()) {
+    // Emit initial debug information.
+    DW.BeginModule(&M);
   }
 
   return AsmPrinter::doInitialization(M);
@@ -278,7 +281,7 @@ bool X86SharedAsmPrinter::doFinalization(Module &M) {
       O << "\t.long\t0\n";
     }
 
-    // Emit initial debug information.
+    // Emit final debug information.
     DW.EndModule();
 
     // Funny Darwin hack: This flag tells the linker that no global symbols
@@ -287,6 +290,9 @@ bool X86SharedAsmPrinter::doFinalization(Module &M) {
     // linker can safely perform dead code stripping.  Since LLVM never
     // generates code that does this, it is always safe to set.
     O << "\t.subsections_via_symbols\n";
+  } else if (Subtarget->isTargetELF()) {
+    // Emit final debug information.
+    DW.EndModule();
   }
 
   AsmPrinter::doFinalization(M);

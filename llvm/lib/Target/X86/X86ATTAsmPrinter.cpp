@@ -52,7 +52,7 @@ std::string X86ATTAsmPrinter::getSectionForFunction(const Function &F) const {
 /// method to print assembly for each instruction.
 ///
 bool X86ATTAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
-  if (Subtarget->isTargetDarwin()) {
+  if (Subtarget->isTargetDarwin() || Subtarget->isTargetELF()) {
     // Let PassManager know we need debug information and relay
     // the MachineDebugInfo address on to DwarfWriter.
     DW.SetDebugInfo(&getAnalysis<MachineDebugInfo>());
@@ -111,7 +111,7 @@ bool X86ATTAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
        F->getLinkage() == Function::WeakLinkage))
     O << "_llvm$workaround$fake$stub_" << CurrentFnName << ":\n";
 
-  if (Subtarget->isTargetDarwin()) {
+  if (Subtarget->isTargetDarwin() || Subtarget->isTargetELF()) {
     // Emit pre-function debug information.
     DW.BeginFunction(&MF);
   }
@@ -141,7 +141,7 @@ bool X86ATTAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
   if (TAI->hasDotTypeDotSizeDirective())
     O << "\t.size " << CurrentFnName << ", .-" << CurrentFnName << "\n";
 
-  if (Subtarget->isTargetDarwin()) {
+  if (Subtarget->isTargetDarwin() || Subtarget->isTargetELF()) {
     // Emit post-function debug information.
     DW.EndFunction();
   }
