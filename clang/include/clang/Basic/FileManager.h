@@ -27,9 +27,9 @@ class FileManager;
 ///
 class DirectoryEntry {
   std::string Name;   // Name of the directory.
-  DirectoryEntry() {}
   friend class FileManager;
 public:
+  DirectoryEntry() {}
   const char *getName() const { return Name.c_str(); }
 };
 
@@ -41,9 +41,9 @@ class FileEntry {
   time_t ModTime;             // Modification time of file.
   const DirectoryEntry *Dir;  // Directory file lives in.
   unsigned UID;               // A unique (small) ID for the file.
-  FileEntry() {}
   friend class FileManager;
 public:
+  FileEntry() : UID(~0U) {}
   
   const char *getName() const { return Name.c_str(); }
   off_t getSize() const { return Size; }
@@ -62,16 +62,16 @@ public:
 /// names (e.g. symlinked) will be treated as a single file.
 ///
 class FileManager {
+  /// UniqueDirs/UniqueFiles - Cache from ID's to existing directories/files.
+  ///
+  std::map<std::pair<dev_t, ino_t>, DirectoryEntry> UniqueDirs;
+  std::map<std::pair<dev_t, ino_t>, FileEntry> UniqueFiles;
+  
   /// DirEntries/FileEntries - This is a cache of directory/file entries we have
-  /// looked up.
+  /// looked up.  The actual Entry is owned by UniqueFiles/UniqueDirs above.
   ///
   std::map<std::string, DirectoryEntry*> DirEntries;
   std::map<std::string, FileEntry*> FileEntries;
-  
-  /// UniqueDirs/UniqueFiles - Cache from ID's to existing directories/files.
-  ///
-  std::map<std::pair<dev_t, ino_t>, DirectoryEntry*> UniqueDirs;
-  std::map<std::pair<dev_t, ino_t>, FileEntry*> UniqueFiles;
   
   /// NextFileUID - Each FileEntry we create is assigned a unique ID #.
   ///

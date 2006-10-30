@@ -50,16 +50,15 @@ const DirectoryEntry *FileManager::getDirectory(const std::string &Filename) {
   
   // It exists.  See if we have already opened a directory with the same inode.
   // This occurs when one dir is symlinked to another, for example.
-  DirectoryEntry *&UDE = 
+  DirectoryEntry &UDE = 
     UniqueDirs[std::make_pair(StatBuf.st_dev, StatBuf.st_ino)];
   
-  if (UDE)  // Already have an entry with this inode, return it.
-    return Ent = UDE;
+  if (UDE.getName()[0])  // Already have an entry with this inode, return it.
+    return Ent = &UDE;
   
   // Otherwise, we don't have this directory yet, add it.
-  DirectoryEntry *DE = new DirectoryEntry();
-  DE->Name           = Filename;
-  return Ent = UDE = DE;
+  UDE.Name   = Filename;
+  return Ent = &UDE;
 }
 
 /// getFile - Lookup, cache, and verify the specified file.  This returns null
@@ -113,19 +112,20 @@ const FileEntry *FileManager::getFile(const std::string &Filename) {
   
   // It exists.  See if we have already opened a directory with the same inode.
   // This occurs when one dir is symlinked to another, for example.
-  FileEntry *&UFE = UniqueFiles[std::make_pair(StatBuf.st_dev, StatBuf.st_ino)];
+  FileEntry &UFE = UniqueFiles[std::make_pair(StatBuf.st_dev, StatBuf.st_ino)];
   
-  if (UFE)  // Already have an entry with this inode, return it.
-    return Ent = UFE;
+  if (UFE.getUID() != ~0U)  // Already have an entry with this inode, return it.
+    return Ent = &UFE;
 
   // Otherwise, we don't have this directory yet, add it.
-  FileEntry *FE = new FileEntry();
-  FE->Name      = Filename;
-  FE->Size      = StatBuf.st_size;
-  FE->ModTime   = StatBuf.st_mtime;
-  FE->Dir       = DirInfo;
-  FE->UID       = NextFileUID++;
-  return Ent = UFE = FE;
+  // FIXME: Change the name to be a char* that points back to the 'FileEntries'
+  // key.
+  UFE.Name      = Filename;
+  UFE.Size      = StatBuf.st_size;
+  UFE.ModTime   = StatBuf.st_mtime;
+  UFE.Dir       = DirInfo;
+  UFE.UID       = NextFileUID++;
+  return Ent = &UFE;
 }
 
 void FileManager::PrintStats() const {
