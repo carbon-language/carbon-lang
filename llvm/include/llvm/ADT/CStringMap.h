@@ -86,6 +86,14 @@ public:
     return static_cast<ValueTy*>(TheTable[BucketNo].Item);
   }
   
+  /// GetKeyForValueInMap - Given a value that is inserted into this map, return
+  /// the string that corresponds to it.  This is an efficient operation that
+  /// is provided by CStringMap.  The string is live as long as the value is in
+  /// the map.
+  static const char *GetKeyForValueInMap(const ValueTy &Val) {
+    return reinterpret_cast<const char*>(&Val+1);
+  }
+  
   /// GetOrCreateValue - Look up the specified key in the table.  If a value
   /// exists, return it.  Otherwise, default construct a value, insert it, and
   /// return.
