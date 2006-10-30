@@ -255,12 +255,12 @@ void Preprocessor::HandlePragmaDependency(LexerToken &DependencyTok) {
   // Find out whether the filename is <x> or "x".
   bool isAngled = Filename[0] == '<';
   
-  // Remove the quotes.
-  Filename = std::string(Filename.begin()+1, Filename.end()-1);
-  
   // Search include directories for this file.
   const DirectoryLookup *CurDir;
-  const FileEntry *File = LookupFile(Filename, isAngled, 0, CurDir);
+
+  // Remove the quotes.
+  const FileEntry *File = LookupFile(&Filename[1], &Filename[Filename.size()-1],
+                                     isAngled, 0, CurDir);
   if (File == 0)
     return Diag(FilenameTok, diag::err_pp_file_not_found);
   

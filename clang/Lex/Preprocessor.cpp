@@ -251,7 +251,8 @@ CreateString(const char *Buf, unsigned Len, SourceLocation SLoc) {
 /// LookupFile - Given a "foo" or <foo> reference, look up the indicated file,
 /// return null on failure.  isAngled indicates whether the file reference is
 /// for system #include's or not (i.e. using <> instead of "").
-const FileEntry *Preprocessor::LookupFile(const std::string &Filename,
+const FileEntry *Preprocessor::LookupFile(const char *FilenameStart,
+                                          const char *FilenameEnd,
                                           bool isAngled,
                                           const DirectoryLookup *FromDir,
                                           const DirectoryLookup *&CurDir) {
@@ -262,9 +263,6 @@ const FileEntry *Preprocessor::LookupFile(const std::string &Filename,
     unsigned TheFileID = getCurrentFileLexer()->getCurFileID();
     CurFileEnt = SourceMgr.getFileEntryForFileID(TheFileID);
   }
-  
-  const char *FilenameStart = &Filename[0];
-  const char *FilenameEnd = FilenameStart+Filename.size();
   
   // Do a standard file entry lookup.
   CurDir = CurDirLookup;
@@ -1502,12 +1500,11 @@ void Preprocessor::HandleIncludeDirective(LexerToken &IncludeTok,
   // Find out whether the filename is <x> or "x".
   bool isAngled = Filename[0] == '<';
   
-  // Remove the quotes.
-  Filename = std::string(Filename.begin()+1, Filename.end()-1);
-  
   // Search include directories.
   const DirectoryLookup *CurDir;
-  const FileEntry *File = LookupFile(Filename, isAngled, LookupFrom, CurDir);
+  // Remove the quotes from the filename.
+  const FileEntry *File = LookupFile(&Filename[1], &Filename[Filename.size()-1],
+                                     isAngled, LookupFrom, CurDir);
   if (File == 0)
     return Diag(FilenameTok, diag::err_pp_file_not_found);
   

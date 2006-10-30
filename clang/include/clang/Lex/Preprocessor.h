@@ -406,8 +406,8 @@ private:
   /// LookupFile - Given a "foo" or <foo> reference, look up the indicated file,
   /// return null on failure.  isAngled indicates whether the file reference is
   /// for system #include's or not (i.e. using <> instead of "").
-  const FileEntry *LookupFile(const std::string &Filename, bool isAngled,
-                              const DirectoryLookup *FromDir,
+  const FileEntry *LookupFile(const char *FilenameStart,const char *FilenameEnd,
+                              bool isAngled, const DirectoryLookup *FromDir,
                               const DirectoryLookup *&CurDir);
     
   //===--------------------------------------------------------------------===//
