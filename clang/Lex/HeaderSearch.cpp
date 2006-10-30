@@ -15,6 +15,7 @@
 #include "clang/Lex/HeaderSearch.h"
 #include "clang/Lex/IdentifierTable.h"
 #include "llvm/System/Path.h"
+#include "llvm/ADT/SmallString.h"
 #include <iostream>
 using namespace llvm;
 using namespace clang;
@@ -197,18 +198,19 @@ LookupSubframeworkHeader(const std::string &Filename,
   if (FrameworkPos == 0)
     return 0;
   
-  std::string FrameworkName(ContextName, FrameworkPos+strlen(".framework/"));
+  SmallString<1024> FrameworkName(ContextName, 
+                                  FrameworkPos+strlen(".framework/"));
 
   // Append Frameworks/HIToolbox.framework/
   FrameworkName += "Frameworks/";
-  FrameworkName += std::string(Filename.begin(), Filename.begin()+SlashPos);
+  FrameworkName.append(Filename.begin(), Filename.begin()+SlashPos);
   FrameworkName += ".framework/";
 
   const DirectoryEntry *&CacheLookup =
     FrameworkMap[std::string(Filename.begin(), Filename.begin()+SlashPos)];
   
   // Some other location?
-  if (CacheLookup && CacheLookup->getName() != FrameworkName)
+  if (CacheLookup && strcmp(CacheLookup->getName(), FrameworkName.c_str()) != 0)
     return 0;
   
   // Cache subframework.
@@ -216,7 +218,8 @@ LookupSubframeworkHeader(const std::string &Filename,
     ++NumSubFrameworkLookups;
     
     // If the framework dir doesn't exist, we fail.
-    const DirectoryEntry *Dir = FileMgr.getDirectory(FrameworkName);
+    const DirectoryEntry *Dir = FileMgr.getDirectory(FrameworkName.begin(),
+                                                     FrameworkName.end());
     if (Dir == 0) return 0;
     
     // Otherwise, if it does, remember that this is the right direntry for this
@@ -227,14 +230,17 @@ LookupSubframeworkHeader(const std::string &Filename,
   const FileEntry *FE = 0;
 
   // Check ".../Frameworks/HIToolbox.framework/Headers/HIToolbox.h"
-  std::string HeadersFilename = FrameworkName + "Headers/" +
-    std::string(Filename.begin()+SlashPos+1, Filename.end());
-  if (!(FE = FileMgr.getFile(HeadersFilename))) {
+  SmallString<1024> HeadersFilename(FrameworkName);
+  HeadersFilename += "Headers/";
+  HeadersFilename.append(Filename.begin()+SlashPos+1, Filename.end());
+  if (!(FE = FileMgr.getFile(HeadersFilename.begin(),
+                             HeadersFilename.end()))) {
     
     // Check ".../Frameworks/HIToolbox.framework/PrivateHeaders/HIToolbox.h"
-    std::string PrivateHeadersFilename = FrameworkName + "PrivateHeaders/" +
-      std::string(Filename.begin()+SlashPos+1, Filename.end());
-    if (!(FE = FileMgr.getFile(PrivateHeadersFilename)))
+    HeadersFilename = FrameworkName;
+    HeadersFilename += "PrivateHeaders/";
+    HeadersFilename.append(Filename.begin()+SlashPos+1, Filename.end());
+    if (!(FE = FileMgr.getFile(HeadersFilename.begin(), HeadersFilename.end())))
       return 0;
   }
   

@@ -90,12 +90,19 @@ public:
   /// getDirectory - Lookup, cache, and verify the specified directory.  This
   /// returns null if the directory doesn't exist.
   /// 
-  const DirectoryEntry *getDirectory(const std::string &Filename);
+  const DirectoryEntry *getDirectory(const std::string &Filename) {
+    return getDirectory(&Filename[0], &Filename[0] + Filename.size());
+  }
+  const DirectoryEntry *getDirectory(const char *FileStart,const char *FileEnd);
   
   /// getFile - Lookup, cache, and verify the specified file.  This returns null
   /// if the file doesn't exist.
   /// 
   const FileEntry *getFile(const std::string &Filename);
+  const FileEntry *getFile(const char *FilenameStart,
+                           const char *FilenameEnd) {
+    return getFile(std::string(FilenameStart, FilenameEnd));
+  }
   
   void PrintStats() const;
 };

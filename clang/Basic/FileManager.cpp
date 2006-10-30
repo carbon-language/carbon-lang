@@ -33,11 +33,10 @@ using namespace clang;
 /// getDirectory - Lookup, cache, and verify the specified directory.  This
 /// returns null if the directory doesn't exist.
 /// 
-const DirectoryEntry *FileManager::getDirectory(const std::string &Filename) {
+const DirectoryEntry *FileManager::getDirectory(const char *FileStart,
+                                                const char *FileEnd) {
   ++NumDirLookups;
-  
-  DirectoryEntry *&NamedDirEnt =
-    DirEntries.GetOrCreateValue(&Filename[0], &Filename[0] + Filename.size());
+  DirectoryEntry *&NamedDirEnt =DirEntries.GetOrCreateValue(FileStart, FileEnd);
   
   // See if there is already an entry in the map.
   if (NamedDirEnt)
@@ -48,10 +47,14 @@ const DirectoryEntry *FileManager::getDirectory(const std::string &Filename) {
   // By default, initialize it to invalid.
   NamedDirEnt = NON_EXISTANT_DIR;
   
+  // Get the null-terminated directory name as stored as the key of the
+  // DirEntries map.
+  const char *InterndDirName = DirEntries.GetKeyForValueInMap(NamedDirEnt);
+  
   // Check to see if the directory exists.
   struct stat StatBuf;
-  if (stat(Filename.c_str(), &StatBuf) ||   // Error stat'ing.
-      !S_ISDIR(StatBuf.st_mode))            // Not a directory?
+  if (stat(InterndDirName, &StatBuf) ||   // Error stat'ing.
+      !S_ISDIR(StatBuf.st_mode))          // Not a directory?
     return 0;
   
   // It exists.  See if we have already opened a directory with the same inode.
@@ -64,7 +67,7 @@ const DirectoryEntry *FileManager::getDirectory(const std::string &Filename) {
   
   // Otherwise, we don't have this directory yet, add it.  We use the string
   // key from the DirEntries map as the string.
-  UDE.Name  = DirEntries.GetKeyForValueInMap(NamedDirEnt);
+  UDE.Name  = InterndDirName;
   return NamedDirEnt = &UDE;
 }
 
