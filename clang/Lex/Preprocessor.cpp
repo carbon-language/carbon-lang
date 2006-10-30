@@ -263,10 +263,14 @@ const FileEntry *Preprocessor::LookupFile(const std::string &Filename,
     CurFileEnt = SourceMgr.getFileEntryForFileID(TheFileID);
   }
   
+  const char *FilenameStart = &Filename[0];
+  const char *FilenameEnd = FilenameStart+Filename.size();
+  
   // Do a standard file entry lookup.
   CurDir = CurDirLookup;
   const FileEntry *FE =
-    HeaderInfo.LookupFile(Filename, isAngled, FromDir, CurDir, CurFileEnt);
+    HeaderInfo.LookupFile(FilenameStart, FilenameEnd,
+                          isAngled, FromDir, CurDir, CurFileEnt);
   if (FE) return FE;
   
   // Otherwise, see if this is a subframework header.  If so, this is relative
@@ -274,7 +278,8 @@ const FileEntry *Preprocessor::LookupFile(const std::string &Filename,
   // headers on the #include stack and pass them to HeaderInfo.
   if (CurLexer && !CurLexer->Is_PragmaLexer) {
     CurFileEnt = SourceMgr.getFileEntryForFileID(CurLexer->getCurFileID());
-    if ((FE = HeaderInfo.LookupSubframeworkHeader(Filename, CurFileEnt)))
+    if ((FE = HeaderInfo.LookupSubframeworkHeader(FilenameStart, FilenameEnd,
+                                                  CurFileEnt)))
       return FE;
   }
   
@@ -283,7 +288,8 @@ const FileEntry *Preprocessor::LookupFile(const std::string &Filename,
     if (ISEntry.TheLexer && !ISEntry.TheLexer->Is_PragmaLexer) {
       CurFileEnt =
         SourceMgr.getFileEntryForFileID(ISEntry.TheLexer->getCurFileID());
-      if ((FE = HeaderInfo.LookupSubframeworkHeader(Filename, CurFileEnt)))
+      if ((FE = HeaderInfo.LookupSubframeworkHeader(FilenameStart, FilenameEnd,
+                                                    CurFileEnt)))
         return FE;
     }
   }

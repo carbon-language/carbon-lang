@@ -17,7 +17,6 @@
 #include "clang/Lex/DirectoryLookup.h"
 #include "llvm/ADT/CStringMap.h"
 #include <vector>
-#include <string>
 
 namespace llvm {
 namespace clang {
@@ -98,7 +97,8 @@ public:
   /// search location.  This is used to implement #include_next.  CurFileEnt, if
   /// non-null, indicates where the #including file is, in case a relative
   /// search is needed.
-  const FileEntry *LookupFile(const std::string &Filename, bool isAngled,
+  const FileEntry *LookupFile(const char *FilenameStart,
+                              const char *FilenameEnd, bool isAngled,
                               const DirectoryLookup *FromDir,
                               const DirectoryLookup *&CurDir,
                               const FileEntry *CurFileEnt);
@@ -108,7 +108,8 @@ public:
   /// within ".../Carbon.framework/Headers/Carbon.h", check to see if HIToolbox
   /// is a subframework within Carbon.framework.  If so, return the FileEntry
   /// for the designated file, otherwise return null.
-  const FileEntry *LookupSubframeworkHeader(const std::string &Filename,
+  const FileEntry *LookupSubframeworkHeader(const char *FilenameStart,
+                                            const char *FilenameEnd,
                                             const FileEntry *RelativeFileEnt);
   
   /// ShouldEnterIncludeFile - Mark the specified file as a target of of a
@@ -146,7 +147,8 @@ public:
   void PrintStats();
 private:
   const FileEntry *DoFrameworkLookup(const DirectoryEntry *Dir,
-                                     const std::string &Filename);
+                                     const char *FilenameStart,
+                                     const char *FilenameEnd);
       
   /// getFileInfo - Return the PerFileInfo structure for the specified
   /// FileEntry.
