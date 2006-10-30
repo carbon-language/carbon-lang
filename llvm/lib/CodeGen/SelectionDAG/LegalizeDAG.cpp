@@ -16,6 +16,7 @@
 #include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/Target/TargetLowering.h"
 #include "llvm/Target/TargetData.h"
+#include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetOptions.h"
 #include "llvm/CallingConv.h"
 #include "llvm/Constants.h"
@@ -1239,6 +1240,53 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
       break;
     }
     Result = DAG.UpdateNodeOperands(Result, Tmp1, Tmp2);
+    break;
+  case ISD::BR_JT:
+    Tmp1 = LegalizeOp(Node->getOperand(0));  // Legalize the chain.
+    // Ensure that libcalls are emitted before a branch.
+    Tmp1 = DAG.getNode(ISD::TokenFactor, MVT::Other, Tmp1, LastCALLSEQ_END);
+    Tmp1 = LegalizeOp(Tmp1);
+    LastCALLSEQ_END = DAG.getEntryNode();
+
+    Tmp2 = LegalizeOp(Node->getOperand(1));  // Legalize the jumptable node.
+    Result = DAG.UpdateNodeOperands(Result, Tmp1, Tmp2, Node->getOperand(2));
+
+    switch (TLI.getOperationAction(ISD::BR_JT, MVT::Other)) {  
+    default: assert(0 && "This action is not supported yet!");
+    case TargetLowering::Legal: break;
+    case TargetLowering::Custom:
+      Tmp1 = TLI.LowerOperation(Result, DAG);
+      if (Tmp1.Val) Result = Tmp1;
+      break;
+    case TargetLowering::Expand: {
+      SDOperand Chain = Result.getOperand(0);
+      SDOperand Table = Result.getOperand(1);
+      SDOperand Index = Result.getOperand(2);
+
+      MVT::ValueType PTy = TLI.getPointerTy();
+      bool isPIC = TLI.getTargetMachine().getRelocationModel() == Reloc::PIC_;
+      // PIC jump table entries are 32-bit values.
+      unsigned EntrySize = isPIC ? 4 : MVT::getSizeInBits(PTy)/8;
+      Index= DAG.getNode(ISD::MUL, PTy, Index, DAG.getConstant(EntrySize, PTy));
+      SDOperand Addr = DAG.getNode(ISD::ADD, PTy, Index, Table);
+      SDOperand LD = DAG.getLoad(isPIC ? MVT::i32 : PTy, Chain, Addr, NULL, 0);
+      if (isPIC) {
+        // For PIC, the sequence is:
+        // BRIND(load(Jumptable + index) + RelocBase)
+        // RelocBase is the JumpTable on PPC and X86, GOT on Alpha
+        SDOperand Reloc;
+        if (TLI.usesGlobalOffsetTable())
+          Reloc = DAG.getNode(ISD::GLOBAL_OFFSET_TABLE, PTy);
+        else
+          Reloc = Table;
+        Addr= (PTy != MVT::i32) ? DAG.getNode(ISD::SIGN_EXTEND, PTy, LD) : Addr;
+        Addr = DAG.getNode(ISD::ADD, PTy, Addr, Reloc);
+        Result = DAG.getNode(ISD::BRIND, MVT::Other, LD.getValue(1), Addr);
+      } else {
+        Result = DAG.getNode(ISD::BRIND, MVT::Other, LD.getValue(1), LD);
+      }
+    }
+    }
     break;
   case ISD::BRCOND:
     Tmp1 = LegalizeOp(Node->getOperand(0));  // Legalize the chain.

@@ -1070,33 +1070,11 @@ void SelectionDAGLowering::visitSwitchCase(SelectionDAGISel::CaseBlock &CB) {
 void SelectionDAGLowering::visitJumpTable(SelectionDAGISel::JumpTable &JT) {
   // Emit the code for the jump table
   MVT::ValueType PTy = TLI.getPointerTy();
-  assert((PTy == MVT::i32 || PTy == MVT::i64) &&
-         "Jump table entries are 32-bit values");
-  bool isPIC = TLI.getTargetMachine().getRelocationModel() == Reloc::PIC_;
-  // PIC jump table entries are 32-bit values.
-  unsigned EntrySize = isPIC ? 4 : MVT::getSizeInBits(PTy)/8;
-  SDOperand Copy = DAG.getCopyFromReg(getRoot(), JT.Reg, PTy);
-  SDOperand IDX = DAG.getNode(ISD::MUL, PTy, Copy,
-                              DAG.getConstant(EntrySize, PTy));
-  SDOperand TAB = DAG.getJumpTable(JT.JTI,PTy);
-  SDOperand ADD = DAG.getNode(ISD::ADD, PTy, IDX, TAB);
-  SDOperand LD  = DAG.getLoad(isPIC ? MVT::i32 : PTy, Copy.getValue(1), ADD,
-                              NULL, 0);
-  if (isPIC) {
-    // For Pic, the sequence is:
-    // BRIND(load(Jumptable + index) + RelocBase)
-    // RelocBase is the JumpTable on PPC and X86, GOT on Alpha
-    SDOperand Reloc;
-    if (TLI.usesGlobalOffsetTable())
-      Reloc = DAG.getNode(ISD::GLOBAL_OFFSET_TABLE, PTy);
-    else
-      Reloc = TAB;
-    ADD = (PTy != MVT::i32) ? DAG.getNode(ISD::SIGN_EXTEND, PTy, LD) : LD;
-    ADD = DAG.getNode(ISD::ADD, PTy, ADD, Reloc);
-    DAG.setRoot(DAG.getNode(ISD::BRIND, MVT::Other, LD.getValue(1), ADD));
-  } else {
-    DAG.setRoot(DAG.getNode(ISD::BRIND, MVT::Other, LD.getValue(1), LD));
-  }
+  SDOperand Index = DAG.getCopyFromReg(getRoot(), JT.Reg, PTy);
+  SDOperand Table = DAG.getJumpTable(JT.JTI, PTy);
+  DAG.setRoot(DAG.getNode(ISD::BR_JT, MVT::Other, Index.getValue(1),
+                          Table, Index));
+  return;
 }
 
 void SelectionDAGLowering::visitSwitch(SwitchInst &I) {
@@ -1200,7 +1178,8 @@ void SelectionDAGLowering::visitSwitch(SwitchInst &I) {
   // If the switch has more than 5 blocks, and at least 31.25% dense, and the 
   // target supports indirect branches, then emit a jump table rather than 
   // lowering the switch to a binary tree of conditional branches.
-  if (TLI.isOperationLegal(ISD::BRIND, TLI.getPointerTy()) &&
+  if ((TLI.isOperationLegal(ISD::BR_JT, MVT::Other) ||
+       TLI.isOperationLegal(ISD::BRIND, MVT::Other)) &&
       Cases.size() > 5) {
     uint64_t First =cast<ConstantIntegral>(Cases.front().first)->getZExtValue();
     uint64_t Last  = cast<ConstantIntegral>(Cases.back().first)->getZExtValue();
