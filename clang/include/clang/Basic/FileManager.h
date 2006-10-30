@@ -27,11 +27,11 @@ class FileManager;
 /// DirectoryEntry - Cached information about one directory on the disk.
 ///
 class DirectoryEntry {
-  std::string Name;   // Name of the directory.
+  const char *Name;   // Name of the directory.
   friend class FileManager;
 public:
-  DirectoryEntry() {}
-  const char *getName() const { return Name.c_str(); }
+  DirectoryEntry() : Name(0) {}
+  const char *getName() const { return Name; }
 };
 
 /// FileEntry - Cached information about one file on the disk.

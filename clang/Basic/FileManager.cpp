@@ -59,11 +59,12 @@ const DirectoryEntry *FileManager::getDirectory(const std::string &Filename) {
   DirectoryEntry &UDE = 
     UniqueDirs[std::make_pair(StatBuf.st_dev, StatBuf.st_ino)];
   
-  if (UDE.getName()[0])  // Already have an entry with this inode, return it.
+  if (UDE.getName())  // Already have an entry with this inode, return it.
     return NamedDirEnt = &UDE;
   
-  // Otherwise, we don't have this directory yet, add it.
-  UDE.Name   = Filename;
+  // Otherwise, we don't have this directory yet, add it.  We use the string
+  // key from the DirEntries map as the string.
+  UDE.Name  = DirEntries.GetKeyForValueInMap(NamedDirEnt);
   return NamedDirEnt = &UDE;
 }
 
