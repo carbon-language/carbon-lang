@@ -62,7 +62,8 @@ AlphaTargetLowering::AlphaTargetLowering(TargetMachine &TM) : TargetLowering(TM)
 
   setStoreXAction(MVT::i1, Promote);
   
-  //  setOperationAction(ISD::BRIND,        MVT::i64,   Expand);
+  //  setOperationAction(ISD::BRIND,        MVT::Other,   Expand);
+  setOperationAction(ISD::BR_JT,        MVT::Other, Expand);
   setOperationAction(ISD::BR_CC,        MVT::Other, Expand);
   setOperationAction(ISD::SELECT_CC,    MVT::Other, Expand);  
 

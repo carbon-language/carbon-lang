@@ -107,6 +107,8 @@ PPCTargetLowering::PPCTargetLowering(TargetMachine &TM)
   
   // PowerPC does not have BRCOND which requires SetCC
   setOperationAction(ISD::BRCOND, MVT::Other, Expand);
+
+  setOperationAction(ISD::BR_JT,  MVT::Other, Expand);
   
   // PowerPC turns FP_TO_SINT into FCTIWZ and some load/stores.
   setOperationAction(ISD::FP_TO_SINT, MVT::i32, Custom);

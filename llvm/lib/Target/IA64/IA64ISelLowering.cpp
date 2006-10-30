@@ -44,7 +44,8 @@ IA64TargetLowering::IA64TargetLowering(TargetMachine &TM)
       setLoadXAction(ISD::SEXTLOAD         , MVT::i16  , Expand);
       setLoadXAction(ISD::SEXTLOAD         , MVT::i32  , Expand);
 
-      setOperationAction(ISD::BRIND            , MVT::i64,   Expand);
+      setOperationAction(ISD::BRIND            , MVT::Other, Expand);
+      setOperationAction(ISD::BR_JT            , MVT::Other, Expand);
       setOperationAction(ISD::BR_CC            , MVT::Other, Expand);
       setOperationAction(ISD::FP_ROUND_INREG   , MVT::f32  , Expand);
 
