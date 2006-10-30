@@ -207,6 +207,54 @@ public:
     goto Retry;
   }
   
+  template<typename ItTy>
+  iterator insert(iterator I, ItTy From, ItTy To) {
+    if (I == End) {  // Important special case for empty vector.
+      append(From, To);
+      return end()-1;
+    }
+    
+    unsigned NumToInsert = std::distance(From, To);
+    // Convert iterator to elt# to avoid invalidating iterator when we reserve()
+    unsigned InsertElt = I-begin();
+    
+    // Ensure there is enough space.
+    reserve(size() + NumToInsert);
+    
+    // Uninvalidate the iterator.
+    I = begin()+InsertElt;
+    
+    // If we already have this many elements in the collection, append the
+    // dest elements at the end, then copy over the appropriate elements.  Since
+    // we already reserved space, we know that this won't reallocate the vector.
+    if (size() >= NumToInsert) {
+      T *OldEnd = End;
+      append(End-NumToInsert, End);
+      
+      // Copy the existing elements that get replaced.
+      std::copy(I, OldEnd-NumToInsert, I+NumToInsert);
+      
+      std::copy(From, To, I);
+      return I;
+    }
+
+    // Otherwise, we're inserting more elements than exist already, and we're
+    // not inserting at the end.
+    
+    // Copy over the elements that we're about to overwrite.
+    T *OldEnd = End;
+    End += NumToInsert;
+    unsigned NumOverwritten = OldEnd-I;
+    std::uninitialized_copy(I, OldEnd, End-NumOverwritten);
+    
+    // Replace the overwritten part.
+    std::copy(From, From+NumOverwritten, I);
+    
+    // Insert the non-overwritten middle part.
+    std::uninitialized_copy(From+NumOverwritten, To, OldEnd);
+    return I;
+  }
+  
   const SmallVectorImpl &operator=(const SmallVectorImpl &RHS);
   
 private:
@@ -224,7 +272,6 @@ private:
     for (; S != E; ++S)
       new (S) T(Elt);
   }
-
   
   void destroy_range(T *S, T *E) {
     while (S != E) {
