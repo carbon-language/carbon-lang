@@ -884,7 +884,7 @@ bool Lexer::SkipBlockComment(LexerToken &Result, const char *CurPtr) {
 
 /// LexIncludeFilename - After the preprocessor has parsed a #include, lex and
 /// (potentially) macro expand the filename.
-std::string Lexer::LexIncludeFilename(LexerToken &FilenameTok) {
+void Lexer::LexIncludeFilename(LexerToken &FilenameTok) {
   assert(ParsingPreprocessorDirective &&
          ParsingFilename == false &&
          "Must be in a preprocessing directive!");
@@ -895,46 +895,12 @@ std::string Lexer::LexIncludeFilename(LexerToken &FilenameTok) {
   // Lex the filename.
   Lex(FilenameTok);
 
-  // We should have gotten the filename now.
+  // We should have obtained the filename now.
   ParsingFilename = false;
-
+  
   // No filename?
-  if (FilenameTok.getKind() == tok::eom) {
+  if (FilenameTok.getKind() == tok::eom)
     Diag(FilenameTok.getLocation(), diag::err_pp_expects_filename);
-    return "";
-  }
-  
-  // Get the text form of the filename.
-  std::string Filename = PP.getSpelling(FilenameTok);
-  assert(!Filename.empty() && "Can't have tokens with empty spellings!");
-  
-  // Make sure the filename is <x> or "x".
-  if (Filename[0] == '<') {
-    if (Filename[Filename.size()-1] != '>') {
-      Diag(FilenameTok.getLocation(), diag::err_pp_expects_filename);
-      FilenameTok.setKind(tok::eom);
-      return "";
-    }
-  } else if (Filename[0] == '"') {
-    if (Filename[Filename.size()-1] != '"') {
-      Diag(FilenameTok.getLocation(), diag::err_pp_expects_filename);
-      FilenameTok.setKind(tok::eom);
-      return "";
-    }
-  } else {
-    Diag(FilenameTok.getLocation(), diag::err_pp_expects_filename);
-    FilenameTok.setKind(tok::eom);
-    return "";
-  }
-  
-  // Diagnose #include "" as invalid.
-  if (Filename.size() == 2) {
-    Diag(FilenameTok.getLocation(), diag::err_pp_empty_filename);
-    FilenameTok.setKind(tok::eom);
-    return "";
-  }
-        
-  return Filename;
 }
 
 /// ReadToEndOfLine - Read the rest of the current preprocessor line as an

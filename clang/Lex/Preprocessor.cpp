@@ -1474,6 +1474,55 @@ void Preprocessor::HandleIdentSCCSDirective(LexerToken &Tok) {
 // Preprocessor Include Directive Handling.
 //===----------------------------------------------------------------------===//
 
+/// GetIncludeFilenameSpelling - Turn the specified lexer token into a fully
+/// checked and spelled filename, e.g. as an operand of #include. This returns
+/// true if the input filename was in <>'s or false if it were in ""'s.  The
+/// caller is expected to provide a buffer that is large enough to hold the
+/// spelling of the filename, but is also expected to handle the case when
+/// this method decides to use a different buffer.
+bool Preprocessor::GetIncludeFilenameSpelling(const LexerToken &FilenameTok,
+                                              const char *&BufStart,
+                                              const char *&BufEnd) {
+  // Get the text form of the filename.
+  unsigned Len = getSpelling(FilenameTok, BufStart);
+  BufEnd = BufStart+Len;
+  assert(BufStart != BufEnd && "Can't have tokens with empty spellings!");
+  
+  // Make sure the filename is <x> or "x".
+  bool isAngled;
+  if (BufStart[0] == '<') {
+    if (BufEnd[-1] != '>') {
+      Diag(FilenameTok.getLocation(), diag::err_pp_expects_filename);
+      BufStart = 0;
+      return true;
+    }
+    isAngled = true;
+  } else if (BufStart[0] == '"') {
+    if (BufEnd[-1] != '"') {
+      Diag(FilenameTok.getLocation(), diag::err_pp_expects_filename);
+      BufStart = 0;
+      return true;
+    }
+    isAngled = false;
+  } else {
+    Diag(FilenameTok.getLocation(), diag::err_pp_expects_filename);
+    BufStart = 0;
+    return true;
+  }
+  
+  // Diagnose #include "" as invalid.
+  if (BufEnd-BufStart <= 2) {
+    Diag(FilenameTok.getLocation(), diag::err_pp_empty_filename);
+    BufStart = 0;
+    return "";
+  }
+  
+  // Skip the brackets.
+  ++BufStart;
+  --BufEnd;
+  return isAngled;
+}
+
 /// HandleIncludeDirective - The "#include" tokens have just been read, read the
 /// file to be included from the lexer, then include it!  This is a common
 /// routine with functionality shared between #include, #include_next and
@@ -1483,10 +1532,22 @@ void Preprocessor::HandleIncludeDirective(LexerToken &IncludeTok,
                                           bool isImport) {
 
   LexerToken FilenameTok;
-  std::string Filename = CurLexer->LexIncludeFilename(FilenameTok);
+  CurLexer->LexIncludeFilename(FilenameTok);
   
   // If the token kind is EOM, the error has already been diagnosed.
   if (FilenameTok.getKind() == tok::eom)
+    return;
+  
+  // Reserve a buffer to get the spelling.
+  SmallVector<char, 128> FilenameBuffer;
+  FilenameBuffer.resize(FilenameTok.getLength());
+  
+  const char *FilenameStart = &FilenameBuffer[0], *FilenameEnd;
+  bool isAngled = GetIncludeFilenameSpelling(FilenameTok,
+                                             FilenameStart, FilenameEnd);
+  // If GetIncludeFilenameSpelling set the start ptr to null, there was an
+  // error.
+  if (FilenameStart == 0)
     return;
   
   // Verify that there is nothing after the filename, other than EOM.  Use the
@@ -1497,13 +1558,9 @@ void Preprocessor::HandleIncludeDirective(LexerToken &IncludeTok,
   if (IncludeMacroStack.size() == MaxAllowedIncludeStackDepth-1)
     return Diag(FilenameTok, diag::err_pp_include_too_deep);
   
-  // Find out whether the filename is <x> or "x".
-  bool isAngled = Filename[0] == '<';
-  
   // Search include directories.
   const DirectoryLookup *CurDir;
-  // Remove the quotes from the filename.
-  const FileEntry *File = LookupFile(&Filename[1], &Filename[Filename.size()-1],
+  const FileEntry *File = LookupFile(FilenameStart, FilenameEnd,
                                      isAngled, LookupFrom, CurDir);
   if (File == 0)
     return Diag(FilenameTok, diag::err_pp_file_not_found);

@@ -18,6 +18,7 @@
 #include "clang/Basic/Diagnostic.h"
 #include "clang/Basic/FileManager.h"
 #include "clang/Basic/SourceManager.h"
+#include "llvm/ADT/SmallVector.h"
 using namespace llvm;
 using namespace clang;
 
@@ -246,20 +247,27 @@ void Preprocessor::HandlePragmaSystemHeader(LexerToken &SysHeaderTok) {
 ///
 void Preprocessor::HandlePragmaDependency(LexerToken &DependencyTok) {
   LexerToken FilenameTok;
-  std::string Filename = CurLexer->LexIncludeFilename(FilenameTok);
+  CurLexer->LexIncludeFilename(FilenameTok);
 
   // If the token kind is EOM, the error has already been diagnosed.
   if (FilenameTok.getKind() == tok::eom)
     return;
   
-  // Find out whether the filename is <x> or "x".
-  bool isAngled = Filename[0] == '<';
+  // Reserve a buffer to get the spelling.
+  SmallVector<char, 128> FilenameBuffer;
+  FilenameBuffer.resize(FilenameTok.getLength());
+  
+  const char *FilenameStart = &FilenameBuffer[0], *FilenameEnd;
+  bool isAngled = GetIncludeFilenameSpelling(FilenameTok,
+                                             FilenameStart, FilenameEnd);
+  // If GetIncludeFilenameSpelling set the start ptr to null, there was an
+  // error.
+  if (FilenameStart == 0)
+    return;
   
   // Search include directories for this file.
   const DirectoryLookup *CurDir;
-
-  // Remove the quotes.
-  const FileEntry *File = LookupFile(&Filename[1], &Filename[Filename.size()-1],
+  const FileEntry *File = LookupFile(FilenameStart, FilenameEnd,
                                      isAngled, 0, CurDir);
   if (File == 0)
     return Diag(FilenameTok, diag::err_pp_file_not_found);

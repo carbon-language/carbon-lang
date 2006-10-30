@@ -403,6 +403,15 @@ private:
   /// start lexing tokens from it instead of the current buffer.
   void EnterSourceFileWithLexer(Lexer *TheLexer, const DirectoryLookup *Dir);
   
+  /// GetIncludeFilenameSpelling - Turn the specified lexer token into a fully
+  /// checked and spelled filename, e.g. as an operand of #include. This returns
+  /// true if the input filename was in <>'s or false if it were in ""'s.  The
+  /// caller is expected to provide a buffer that is large enough to hold the
+  /// spelling of the filename, but is also expected to handle the case when
+  /// this method decides to use a different buffer.
+  bool GetIncludeFilenameSpelling(const LexerToken &FNTok,
+                                  const char *&BufStart, const char *&BufEnd);
+  
   /// LookupFile - Given a "foo" or <foo> reference, look up the indicated file,
   /// return null on failure.  isAngled indicates whether the file reference is
   /// for system #include's or not (i.e. using <> instead of "").
