@@ -229,7 +229,7 @@ namespace llvm {
     
     /// RequiresFrameSection - true if the Dwarf2 output needs a frame section
     ///
-    bool DwarfRequiresFrameSection; // Defaults to false.
+    bool DwarfRequiresFrameSection; // Defaults to true.
 
     /// DwarfAbbrevSection - Section directive for Dwarf abbrev.
     ///
