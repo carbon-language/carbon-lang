@@ -18,6 +18,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "clang/Basic/FileManager.h"
+#include "llvm/ADT/SmallString.h"
 #include <iostream>
 using namespace llvm;
 using namespace clang;
@@ -33,10 +34,10 @@ using namespace clang;
 /// getDirectory - Lookup, cache, and verify the specified directory.  This
 /// returns null if the directory doesn't exist.
 /// 
-const DirectoryEntry *FileManager::getDirectory(const char *FileStart,
-                                                const char *FileEnd) {
+const DirectoryEntry *FileManager::getDirectory(const char *NameStart,
+                                                const char *NameEnd) {
   ++NumDirLookups;
-  DirectoryEntry *&NamedDirEnt =DirEntries.GetOrCreateValue(FileStart, FileEnd);
+  DirectoryEntry *&NamedDirEnt =DirEntries.GetOrCreateValue(NameStart, NameEnd);
   
   // See if there is already an entry in the map.
   if (NamedDirEnt)
@@ -71,40 +72,53 @@ const DirectoryEntry *FileManager::getDirectory(const char *FileStart,
   return NamedDirEnt = &UDE;
 }
 
+/// NON_EXISTANT_FILE - A special value distinct from null that is used to
+/// represent a filename that doesn't exist on the disk.
+#define NON_EXISTANT_FILE reinterpret_cast<FileEntry*>((intptr_t)-1)
+
 /// getFile - Lookup, cache, and verify the specified file.  This returns null
 /// if the file doesn't exist.
 /// 
-const FileEntry *FileManager::getFile(const std::string &Filename) {
+const FileEntry *FileManager::getFile(const char *NameStart,
+                                      const char *NameEnd) {
   ++NumFileLookups;
   
   // See if there is already an entry in the map.
-  std::map<std::string, FileEntry*>::iterator I = 
-    FileEntries.lower_bound(Filename);
-  if (I != FileEntries.end() && I->first == Filename)
-    return I->second;
+  FileEntry *&NamedFileEnt = FileEntries.GetOrCreateValue(NameStart, NameEnd);
 
+  // See if there is already an entry in the map.
+  if (NamedFileEnt)
+    return NamedFileEnt == NON_EXISTANT_FILE ? 0 : NamedFileEnt;
+  
   ++NumFileCacheMisses;
 
-  // By default, zero initialize it.
-  FileEntry *&Ent =
-    FileEntries.insert(I, std::make_pair(Filename, (FileEntry*)0))->second;
+  // By default, initialize it to invalid.
+  NamedFileEnt = NON_EXISTANT_FILE;
 
   // Figure out what directory it is in.
-  std::string DirName;
+  SmallString<1024> DirName;
   
   // If the string contains a / in it, strip off everything after it.
   // FIXME: this logic should be in sys::Path.
-  std::string::size_type SlashPos = Filename.find_last_of('/');
-  if (SlashPos == std::string::npos)
-    DirName = ".";  // Use the current directory if file has no path component.
-  else if (SlashPos == Filename.size()-1)
+  const char *SlashPos = NameEnd-1;
+  while (SlashPos >= NameStart && SlashPos[0] != '/')
+    --SlashPos;
+  
+  if (SlashPos < NameStart) {
+    // Use the current directory if file has no path component.
+    DirName.push_back('.');
+  } else if (SlashPos == NameEnd-1)
     return 0;       // If filename ends with a /, it's a directory.
   else
-    DirName = std::string(Filename.begin(), Filename.begin()+SlashPos);
+    DirName.append(NameStart, SlashPos);
 
-  const DirectoryEntry *DirInfo = getDirectory(DirName);
+  const DirectoryEntry *DirInfo = getDirectory(DirName.begin(), DirName.end());
   if (DirInfo == 0)  // Directory doesn't exist, file can't exist.
     return 0;
+  
+  // Get the null-terminated file name as stored as the key of the
+  // FileEntries map.
+  const char *InterndFileName = FileEntries.GetKeyForValueInMap(NamedFileEnt);
   
   // FIXME: Use the directory info to prune this, before doing the stat syscall.
   // FIXME: This will reduce the # syscalls.
@@ -112,7 +126,7 @@ const FileEntry *FileManager::getFile(const std::string &Filename) {
   // Nope, there isn't.  Check to see if the file exists.
   struct stat StatBuf;
   //std::cerr << "STATING: " << Filename;
-  if (stat(Filename.c_str(), &StatBuf) ||   // Error stat'ing.
+  if (stat(InterndFileName, &StatBuf) ||   // Error stat'ing.
       S_ISDIR(StatBuf.st_mode)) {           // A directory?
     // If this file doesn't exist, we leave a null in FileEntries for this path.
     //std::cerr << ": Not existing\n";
@@ -124,18 +138,18 @@ const FileEntry *FileManager::getFile(const std::string &Filename) {
   // This occurs when one dir is symlinked to another, for example.
   FileEntry &UFE = UniqueFiles[std::make_pair(StatBuf.st_dev, StatBuf.st_ino)];
   
-  if (UFE.getUID() != ~0U)  // Already have an entry with this inode, return it.
-    return Ent = &UFE;
+  if (UFE.getName())  // Already have an entry with this inode, return it.
+    return NamedFileEnt = &UFE;
 
   // Otherwise, we don't have this directory yet, add it.
   // FIXME: Change the name to be a char* that points back to the 'FileEntries'
   // key.
-  UFE.Name      = Filename;
-  UFE.Size      = StatBuf.st_size;
-  UFE.ModTime   = StatBuf.st_mtime;
-  UFE.Dir       = DirInfo;
-  UFE.UID       = NextFileUID++;
-  return Ent = &UFE;
+  UFE.Name    = InterndFileName;
+  UFE.Size    = StatBuf.st_size;
+  UFE.ModTime = StatBuf.st_mtime;
+  UFE.Dir     = DirInfo;
+  UFE.UID     = NextFileUID++;
+  return NamedFileEnt = &UFE;
 }
 
 void FileManager::PrintStats() const {

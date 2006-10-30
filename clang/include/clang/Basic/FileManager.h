@@ -37,16 +37,16 @@ public:
 /// FileEntry - Cached information about one file on the disk.
 ///
 class FileEntry {
-  std::string Name;           // Name of the directory.
+  const char *Name;           // Name of the directory.
   off_t Size;                 // File size in bytes.
   time_t ModTime;             // Modification time of file.
   const DirectoryEntry *Dir;  // Directory file lives in.
   unsigned UID;               // A unique (small) ID for the file.
   friend class FileManager;
 public:
-  FileEntry() : UID(~0U) {}
+  FileEntry() : Name(0) {}
   
-  const char *getName() const { return Name.c_str(); }
+  const char *getName() const { return Name; }
   off_t getSize() const { return Size; }
   unsigned getUID() const { return UID; }
   time_t getModificationTime() const { return ModTime; }
@@ -72,7 +72,7 @@ class FileManager {
   /// looked up.  The actual Entry is owned by UniqueFiles/UniqueDirs above.
   ///
   CStringMap<DirectoryEntry*> DirEntries;
-  std::map<std::string, FileEntry*> FileEntries;
+  CStringMap<FileEntry*> FileEntries;
   
   /// NextFileUID - Each FileEntry we create is assigned a unique ID #.
   ///
@@ -98,11 +98,11 @@ public:
   /// getFile - Lookup, cache, and verify the specified file.  This returns null
   /// if the file doesn't exist.
   /// 
-  const FileEntry *getFile(const std::string &Filename);
-  const FileEntry *getFile(const char *FilenameStart,
-                           const char *FilenameEnd) {
-    return getFile(std::string(FilenameStart, FilenameEnd));
+  const FileEntry *getFile(const std::string &Filename) {
+    return getFile(&Filename[0], &Filename[0] + Filename.size());
   }
+  const FileEntry *getFile(const char *FilenameStart,
+                           const char *FilenameEnd);
   
   void PrintStats() const;
 };
