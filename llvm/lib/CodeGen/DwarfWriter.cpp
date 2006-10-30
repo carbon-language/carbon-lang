@@ -14,6 +14,7 @@
 #include "llvm/CodeGen/DwarfWriter.h"
 
 #include "llvm/ADT/StringExtras.h"
+#include "llvm/ADT/UniqueVector.h"
 #include "llvm/Module.h"
 #include "llvm/Type.h"
 #include "llvm/CodeGen/AsmPrinter.h"
@@ -22,6 +23,7 @@
 #include "llvm/CodeGen/MachineLocation.h"
 #include "llvm/Support/Dwarf.h"
 #include "llvm/Support/CommandLine.h"
+#include "llvm/Support/DataTypes.h"
 #include "llvm/Support/Mangler.h"
 #include "llvm/Target/TargetAsmInfo.h"
 #include "llvm/Target/MRegisterInfo.h"
@@ -30,6 +32,7 @@
 #include "llvm/Target/TargetFrameInfo.h"
 
 #include <iostream>
+#include <string>
 
 using namespace llvm;
 using namespace llvm::dwarf;
@@ -39,6 +42,20 @@ DwarfVerbose("dwarf-verbose", cl::Hidden,
                               cl::desc("Add comments to Dwarf directives."));
 
 namespace llvm {
+  
+//===----------------------------------------------------------------------===//
+// DWLabel - Labels are used to track locations in the assembler file.
+// Labels appear in the form <prefix>debug_<Tag><Number>, where the tag is a
+// category of label (Ex. location) and number is a value unique in that
+// category.
+class DWLabel {
+public:
+  const char *Tag;                    // Label category tag. Should always be
+                                      // a staticly declared C string.
+  unsigned    Number;                 // Unique number.
+
+  DWLabel(const char *T, unsigned N) : Tag(T), Number(N) {}
+};
 
 //===----------------------------------------------------------------------===//
 // Forward declarations.
@@ -176,7 +193,7 @@ public:
   
   /// Emit - Print the abbreviation using the specified Dwarf writer.
   ///
-  void Emit(const DwarfWriter &DW) const; 
+  void Emit(const Dwarf &DW) const; 
       
 #ifndef NDEBUG
   void print(std::ostream &O);
@@ -209,11 +226,11 @@ public:
   
   /// EmitValue - Emit value via the Dwarf writer.
   ///
-  virtual void EmitValue(const DwarfWriter &DW, unsigned Form) const = 0;
+  virtual void EmitValue(const Dwarf &DW, unsigned Form) const = 0;
   
   /// SizeOf - Return the size of a value in bytes.
   ///
-  virtual unsigned SizeOf(const DwarfWriter &DW, unsigned Form) const = 0;
+  virtual unsigned SizeOf(const Dwarf &DW, unsigned Form) const = 0;
 };
 
 //===----------------------------------------------------------------------===//
@@ -236,11 +253,11 @@ public:
 
   /// EmitValue - Emit integer of appropriate size.
   ///
-  virtual void EmitValue(const DwarfWriter &DW, unsigned Form) const;
+  virtual void EmitValue(const Dwarf &DW, unsigned Form) const;
   
   /// SizeOf - Determine size of integer value in bytes.
   ///
-  virtual unsigned SizeOf(const DwarfWriter &DW, unsigned Form) const;
+  virtual unsigned SizeOf(const Dwarf &DW, unsigned Form) const;
 };
 
 //===----------------------------------------------------------------------===//
@@ -257,11 +274,11 @@ struct DIEString : public DIEValue {
   
   /// EmitValue - Emit string value.
   ///
-  virtual void EmitValue(const DwarfWriter &DW, unsigned Form) const;
+  virtual void EmitValue(const Dwarf &DW, unsigned Form) const;
   
   /// SizeOf - Determine size of string value in bytes.
   ///
-  virtual unsigned SizeOf(const DwarfWriter &DW, unsigned Form) const;
+  virtual unsigned SizeOf(const Dwarf &DW, unsigned Form) const;
 };
 
 //===----------------------------------------------------------------------===//
@@ -278,11 +295,11 @@ struct DIEDwarfLabel : public DIEValue {
   
   /// EmitValue - Emit label value.
   ///
-  virtual void EmitValue(const DwarfWriter &DW, unsigned Form) const;
+  virtual void EmitValue(const Dwarf &DW, unsigned Form) const;
   
   /// SizeOf - Determine size of label value in bytes.
   ///
-  virtual unsigned SizeOf(const DwarfWriter &DW, unsigned Form) const;
+  virtual unsigned SizeOf(const Dwarf &DW, unsigned Form) const;
 };
 
 
@@ -300,11 +317,11 @@ struct DIEObjectLabel : public DIEValue {
   
   /// EmitValue - Emit label value.
   ///
-  virtual void EmitValue(const DwarfWriter &DW, unsigned Form) const;
+  virtual void EmitValue(const Dwarf &DW, unsigned Form) const;
   
   /// SizeOf - Determine size of label value in bytes.
   ///
-  virtual unsigned SizeOf(const DwarfWriter &DW, unsigned Form) const;
+  virtual unsigned SizeOf(const Dwarf &DW, unsigned Form) const;
 };
 
 //===----------------------------------------------------------------------===//
@@ -323,11 +340,11 @@ struct DIEDelta : public DIEValue {
   
   /// EmitValue - Emit delta value.
   ///
-  virtual void EmitValue(const DwarfWriter &DW, unsigned Form) const;
+  virtual void EmitValue(const Dwarf &DW, unsigned Form) const;
   
   /// SizeOf - Determine size of delta value in bytes.
   ///
-  virtual unsigned SizeOf(const DwarfWriter &DW, unsigned Form) const;
+  virtual unsigned SizeOf(const Dwarf &DW, unsigned Form) const;
 };
 
 //===----------------------------------------------------------------------===//
@@ -344,11 +361,11 @@ struct DIEntry : public DIEValue {
   
   /// EmitValue - Emit debug information entry offset.
   ///
-  virtual void EmitValue(const DwarfWriter &DW, unsigned Form) const;
+  virtual void EmitValue(const Dwarf &DW, unsigned Form) const;
   
   /// SizeOf - Determine size of debug information entry in bytes.
   ///
-  virtual unsigned SizeOf(const DwarfWriter &DW, unsigned Form) const;
+  virtual unsigned SizeOf(const Dwarf &DW, unsigned Form) const;
 };
 
 //===----------------------------------------------------------------------===//
@@ -373,7 +390,7 @@ struct DIEBlock : public DIEValue {
   
   /// ComputeSize - calculate the size of the block.
   ///
-  unsigned ComputeSize(DwarfWriter &DW);
+  unsigned ComputeSize(Dwarf &DW);
   
   /// BestForm - Choose the best form for data.
   ///
@@ -381,11 +398,11 @@ struct DIEBlock : public DIEValue {
 
   /// EmitValue - Emit block data.
   ///
-  virtual void EmitValue(const DwarfWriter &DW, unsigned Form) const;
+  virtual void EmitValue(const Dwarf &DW, unsigned Form) const;
   
   /// SizeOf - Determine size of block data in bytes.
   ///
-  virtual unsigned SizeOf(const DwarfWriter &DW, unsigned Form) const;
+  virtual unsigned SizeOf(const Dwarf &DW, unsigned Form) const;
 
   /// AddUInt - Add an unsigned integer value.
   ///
@@ -488,10 +505,362 @@ public:
   /// Complete - Indicate that all attributes have been added and
   /// ready to get an abbreviation ID.
   ///
-  void Complete(DwarfWriter &DW);
+  void Complete(Dwarf &DW);
   
   /// AddChild - Add a child to the DIE.
   void AddChild(DIE *Child);
+};
+
+//===----------------------------------------------------------------------===//
+// Dwarf - Emits Dwarf debug and exception handling directives.
+//
+class Dwarf {
+
+private:
+
+  //===--------------------------------------------------------------------===//
+  // Core attributes used by the Dwarf  writer.
+  //
+  
+  //
+  /// O - Stream to .s file.
+  ///
+  std::ostream &O;
+
+  /// Asm - Target of Dwarf emission.
+  ///
+  AsmPrinter *Asm;
+  
+  /// TAI - Target Asm Printer.
+  const TargetAsmInfo *TAI;
+  
+  /// TD - Target data.
+  const TargetData *TD;
+  
+  /// RI - Register Information.
+  const MRegisterInfo *RI;
+  
+  /// M - Current module.
+  ///
+  Module *M;
+  
+  /// MF - Current machine function.
+  ///
+  MachineFunction *MF;
+  
+  /// DebugInfo - Collected debug information.
+  ///
+  MachineDebugInfo *DebugInfo;
+  
+  /// didInitial - Flag to indicate if initial emission has been done.
+  ///
+  bool didInitial;
+  
+  /// shouldEmit - Flag to indicate if debug information should be emitted.
+  ///
+  bool shouldEmit;
+  
+  /// SubprogramCount - The running count of functions being compiled.
+  ///
+  unsigned SubprogramCount;
+  
+  //===--------------------------------------------------------------------===//
+  // Attributes used to construct specific Dwarf sections.
+  //
+  
+  /// CompileUnits - All the compile units involved in this build.  The index
+  /// of each entry in this vector corresponds to the sources in DebugInfo.
+  std::vector<CompileUnit *> CompileUnits;
+
+  /// Abbreviations - A UniqueVector of TAG structure abbreviations.
+  ///
+  UniqueVector<DIEAbbrev> Abbreviations;
+  
+  /// StringPool - A UniqueVector of strings used by indirect references.
+  /// UnitMap - Map debug information descriptor to compile unit.
+   ///
+  UniqueVector<std::string> StringPool;
+
+  /// UnitMap - Map debug information descriptor to compile unit.
+  ///
+  std::map<DebugInfoDesc *, CompileUnit *> DescToUnitMap;
+  
+  /// DescToDieMap - Tracks the mapping of top level debug informaton
+  /// descriptors to debug information entries.
+  std::map<DebugInfoDesc *, DIE *> DescToDieMap;
+  
+  /// SectionMap - Provides a unique id per text section.
+  ///
+  UniqueVector<std::string> SectionMap;
+  
+  /// SectionSourceLines - Tracks line numbers per text section.
+  ///
+  std::vector<std::vector<SourceLineInfo> > SectionSourceLines;
+
+
+public:
+
+  //===--------------------------------------------------------------------===//
+  // Emission and print routines
+  //
+
+  /// PrintHex - Print a value as a hexidecimal value.
+  ///
+  void PrintHex(int Value) const;
+
+  /// EOL - Print a newline character to asm stream.  If a comment is present
+  /// then it will be printed first.  Comments should not contain '\n'.
+  void EOL(const std::string &Comment) const;
+  
+  /// EmitAlign - Print a align directive.
+  ///
+  void EmitAlign(unsigned Alignment) const;
+                                        
+  /// EmitULEB128Bytes - Emit an assembler byte data directive to compose an
+  /// unsigned leb128 value.
+  void EmitULEB128Bytes(unsigned Value) const;
+  
+  /// EmitSLEB128Bytes - print an assembler byte data directive to compose a
+  /// signed leb128 value.
+  void EmitSLEB128Bytes(int Value) const;
+  
+  /// PrintULEB128 - Print a series of hexidecimal values (separated by
+  /// commas) representing an unsigned leb128 value.
+  void PrintULEB128(unsigned Value) const;
+
+  /// SizeULEB128 - Compute the number of bytes required for an unsigned
+  /// leb128 value.
+  static unsigned SizeULEB128(unsigned Value);
+  
+  /// PrintSLEB128 - Print a series of hexidecimal values (separated by
+  /// commas) representing a signed leb128 value.
+  void PrintSLEB128(int Value) const;
+  
+  /// SizeSLEB128 - Compute the number of bytes required for a signed leb128
+  /// value.
+  static unsigned SizeSLEB128(int Value);
+  
+  /// EmitInt8 - Emit a byte directive and value.
+  ///
+  void EmitInt8(int Value) const;
+
+  /// EmitInt16 - Emit a short directive and value.
+  ///
+  void EmitInt16(int Value) const;
+
+  /// EmitInt32 - Emit a long directive and value.
+  ///
+  void EmitInt32(int Value) const;
+  
+  /// EmitInt64 - Emit a long long directive and value.
+  ///
+  void EmitInt64(uint64_t Value) const;
+  
+  /// EmitString - Emit a string with quotes and a null terminator.
+  /// Special characters are emitted properly. 
+  /// \literal (Eg. '\t') \endliteral
+  void EmitString(const std::string &String) const;
+
+  /// PrintLabelName - Print label name in form used by Dwarf writer.
+  ///
+  void PrintLabelName(DWLabel Label) const {
+    PrintLabelName(Label.Tag, Label.Number);
+  }
+  void PrintLabelName(const char *Tag, unsigned Number) const;
+  
+  /// EmitLabel - Emit location label for internal use by Dwarf.
+  ///
+  void EmitLabel(DWLabel Label) const {
+    EmitLabel(Label.Tag, Label.Number);
+  }
+  void EmitLabel(const char *Tag, unsigned Number) const;
+  
+  /// EmitReference - Emit a reference to a label.
+  ///
+  void EmitReference(DWLabel Label) const {
+    EmitReference(Label.Tag, Label.Number);
+  }
+  void EmitReference(const char *Tag, unsigned Number) const;
+  void EmitReference(const std::string &Name) const;
+
+  /// EmitDifference - Emit the difference between two labels.  Some
+  /// assemblers do not behave with absolute expressions with data directives,
+  /// so there is an option (needsSet) to use an intermediary set expression.
+  void EmitDifference(DWLabel LabelHi, DWLabel LabelLo) const {
+    EmitDifference(LabelHi.Tag, LabelHi.Number, LabelLo.Tag, LabelLo.Number);
+  }
+  void EmitDifference(const char *TagHi, unsigned NumberHi,
+                      const char *TagLo, unsigned NumberLo) const;
+                      
+  /// NewAbbreviation - Add the abbreviation to the Abbreviation vector.
+  ///  
+  unsigned NewAbbreviation(DIEAbbrev *Abbrev);
+  
+  /// NewString - Add a string to the constant pool and returns a label.
+  ///
+  DWLabel NewString(const std::string &String);
+  
+  /// getDieMapSlotFor - Returns the debug information entry map slot for the
+  /// specified debug descriptor.
+  DIE *&getDieMapSlotFor(DebugInfoDesc *DD);
+                                 
+private:
+
+  /// AddSourceLine - Add location information to specified debug information
+  /// entry. 
+  void AddSourceLine(DIE *Die, CompileUnitDesc *File, unsigned Line);
+
+  /// AddAddress - Add an address attribute to a die based on the location
+  /// provided.
+  void AddAddress(DIE *Die, unsigned Attribute,
+                  const MachineLocation &Location);
+
+  /// NewType - Create a new type DIE.
+  ///
+  DIE *NewType(DIE *Context, TypeDesc *TyDesc, CompileUnit *Unit);
+  
+  /// NewCompileUnit - Create new compile unit and it's die.
+  ///
+  CompileUnit *NewCompileUnit(CompileUnitDesc *UnitDesc, unsigned ID);
+  
+  /// FindCompileUnit - Get the compile unit for the given descriptor.
+  ///
+  CompileUnit *FindCompileUnit(CompileUnitDesc *UnitDesc);
+  
+  /// NewGlobalVariable - Make a new global variable DIE.
+  ///
+  DIE *NewGlobalVariable(GlobalVariableDesc *GVD);
+
+  /// NewSubprogram - Add a new subprogram DIE.
+  ///
+  DIE *NewSubprogram(SubprogramDesc *SPD);
+
+  /// NewScopeVariable - Create a new scope variable.
+  ///
+  DIE *NewScopeVariable(DebugVariable *DV, CompileUnit *Unit);
+
+  /// ConstructScope - Construct the components of a scope.
+  ///
+  void ConstructScope(DebugScope *ParentScope, DIE *ParentDie,
+                      CompileUnit *Unit);
+
+  /// ConstructRootScope - Construct the scope for the subprogram.
+  ///
+  void ConstructRootScope(DebugScope *RootScope);
+
+  /// EmitInitial - Emit initial Dwarf declarations.
+  ///
+  void EmitInitial();
+  
+  /// EmitDIE - Recusively Emits a debug information entry.
+  ///
+  void EmitDIE(DIE *Die) const;
+  
+  /// SizeAndOffsetDie - Compute the size and offset of a DIE.
+  ///
+  unsigned SizeAndOffsetDie(DIE *Die, unsigned Offset, bool Last);
+
+  /// SizeAndOffsets - Compute the size and offset of all the DIEs.
+  ///
+  void SizeAndOffsets();
+  
+  /// EmitFrameMoves - Emit frame instructions to describe the layout of the
+  /// frame.
+  void EmitFrameMoves(const char *BaseLabel, unsigned BaseLabelID,
+                      std::vector<MachineMove *> &Moves);
+
+  /// EmitDebugInfo - Emit the debug info section.
+  ///
+  void EmitDebugInfo() const;
+  
+  /// EmitAbbreviations - Emit the abbreviation section.
+  ///
+  void EmitAbbreviations() const;
+  
+  /// EmitDebugLines - Emit source line information.
+  ///
+  void EmitDebugLines() const;
+
+  /// EmitInitialDebugFrame - Emit common frame info into a debug frame section.
+  ///
+  void EmitInitialDebugFrame();
+    
+  /// EmitFunctionDebugFrame - Emit per function frame info into a debug frame
+  /// section.
+  void EmitFunctionDebugFrame();
+
+  /// EmitDebugPubNames - Emit info into a debug pubnames section.
+  ///
+  void EmitDebugPubNames();
+  
+  /// EmitDebugStr - Emit info into a debug str section.
+  ///
+  void EmitDebugStr();
+  
+  /// EmitDebugLoc - Emit info into a debug loc section.
+  ///
+  void EmitDebugLoc();
+  
+  /// EmitDebugARanges - Emit info into a debug aranges section.
+  ///
+  void EmitDebugARanges();
+  
+  /// EmitDebugRanges - Emit info into a debug ranges section.
+  ///
+  void EmitDebugRanges();
+  
+  /// EmitDebugMacInfo - Emit info into a debug macinfo section.
+  ///
+  void EmitDebugMacInfo();
+  
+  /// ConstructCompileUnitDIEs - Create a compile unit DIE for each source and
+  /// header file.
+  void ConstructCompileUnitDIEs();
+  
+  /// ConstructGlobalDIEs - Create DIEs for each of the externally visible
+  /// global variables.
+  void ConstructGlobalDIEs();
+
+  /// ConstructSubprogramDIEs - Create DIEs for each of the externally visible
+  /// subprograms.
+  void ConstructSubprogramDIEs();
+
+  /// ShouldEmitDwarf - Returns true if Dwarf declarations should be made.
+  ///
+  bool ShouldEmitDwarf() const { return shouldEmit; }
+
+public:
+  
+  Dwarf(std::ostream &OS, AsmPrinter *A, const TargetAsmInfo *T);
+  virtual ~Dwarf();
+  
+  // Accessors.
+  //
+  const TargetAsmInfo *getTargetAsmInfo() const { return TAI; }
+  
+  /// SetDebugInfo - Set DebugInfo when it's known that pass manager has
+  /// created it.  Set by the target AsmPrinter.
+  void SetDebugInfo(MachineDebugInfo *DI);
+
+  //===--------------------------------------------------------------------===//
+  // Main entry points.
+  //
+  
+  /// BeginModule - Emit all Dwarf sections that should come prior to the
+  /// content.
+  void BeginModule(Module *M);
+  
+  /// EndModule - Emit all Dwarf sections that should come after the content.
+  ///
+  void EndModule();
+  
+  /// BeginFunction - Gather pre-function debug information.  Assumes being 
+  /// emitted immediately after the function entry point.
+  void BeginFunction(MachineFunction *MF);
+  
+  /// EndFunction - Gather and emit post-function debug information.
+  ///
+  void EndFunction();
 };
 
 } // End of namespace llvm
@@ -546,7 +915,7 @@ bool DIEAbbrev::operator<(const DIEAbbrev &DA) const {
     
 /// Emit - Print the abbreviation using the specified Dwarf writer.
 ///
-void DIEAbbrev::Emit(const DwarfWriter &DW) const {
+void DIEAbbrev::Emit(const Dwarf &DW) const {
   // Emit its Dwarf tag type.
   DW.EmitULEB128Bytes(Tag);
   DW.EOL(TagString(Tag));
@@ -613,7 +982,7 @@ unsigned DIEInteger::BestForm(bool IsSigned) {
     
 /// EmitValue - Emit integer of appropriate size.
 ///
-void DIEInteger::EmitValue(const DwarfWriter &DW, unsigned Form) const {
+void DIEInteger::EmitValue(const Dwarf &DW, unsigned Form) const {
   switch (Form) {
   case DW_FORM_flag:  // Fall thru
   case DW_FORM_ref1:  // Fall thru
@@ -632,7 +1001,7 @@ void DIEInteger::EmitValue(const DwarfWriter &DW, unsigned Form) const {
 
 /// SizeOf - Determine size of integer value in bytes.
 ///
-unsigned DIEInteger::SizeOf(const DwarfWriter &DW, unsigned Form) const {
+unsigned DIEInteger::SizeOf(const Dwarf &DW, unsigned Form) const {
   switch (Form) {
   case DW_FORM_flag:  // Fall thru
   case DW_FORM_ref1:  // Fall thru
@@ -654,13 +1023,13 @@ unsigned DIEInteger::SizeOf(const DwarfWriter &DW, unsigned Form) const {
 
 /// EmitValue - Emit string value.
 ///
-void DIEString::EmitValue(const DwarfWriter &DW, unsigned Form) const {
+void DIEString::EmitValue(const Dwarf &DW, unsigned Form) const {
   DW.EmitString(String);
 }
 
 /// SizeOf - Determine size of string value in bytes.
 ///
-unsigned DIEString::SizeOf(const DwarfWriter &DW, unsigned Form) const {
+unsigned DIEString::SizeOf(const Dwarf &DW, unsigned Form) const {
   return String.size() + sizeof(char); // sizeof('\0');
 }
 
@@ -668,13 +1037,13 @@ unsigned DIEString::SizeOf(const DwarfWriter &DW, unsigned Form) const {
 
 /// EmitValue - Emit label value.
 ///
-void DIEDwarfLabel::EmitValue(const DwarfWriter &DW, unsigned Form) const {
+void DIEDwarfLabel::EmitValue(const Dwarf &DW, unsigned Form) const {
   DW.EmitReference(Label);
 }
 
 /// SizeOf - Determine size of label value in bytes.
 ///
-unsigned DIEDwarfLabel::SizeOf(const DwarfWriter &DW, unsigned Form) const {
+unsigned DIEDwarfLabel::SizeOf(const Dwarf &DW, unsigned Form) const {
   return DW.getTargetAsmInfo()->getAddressSize();
 }
     
@@ -682,13 +1051,13 @@ unsigned DIEDwarfLabel::SizeOf(const DwarfWriter &DW, unsigned Form) const {
 
 /// EmitValue - Emit label value.
 ///
-void DIEObjectLabel::EmitValue(const DwarfWriter &DW, unsigned Form) const {
+void DIEObjectLabel::EmitValue(const Dwarf &DW, unsigned Form) const {
   DW.EmitReference(Label);
 }
 
 /// SizeOf - Determine size of label value in bytes.
 ///
-unsigned DIEObjectLabel::SizeOf(const DwarfWriter &DW, unsigned Form) const {
+unsigned DIEObjectLabel::SizeOf(const Dwarf &DW, unsigned Form) const {
   return DW.getTargetAsmInfo()->getAddressSize();
 }
     
@@ -696,26 +1065,26 @@ unsigned DIEObjectLabel::SizeOf(const DwarfWriter &DW, unsigned Form) const {
 
 /// EmitValue - Emit delta value.
 ///
-void DIEDelta::EmitValue(const DwarfWriter &DW, unsigned Form) const {
+void DIEDelta::EmitValue(const Dwarf &DW, unsigned Form) const {
   DW.EmitDifference(LabelHi, LabelLo);
 }
 
 /// SizeOf - Determine size of delta value in bytes.
 ///
-unsigned DIEDelta::SizeOf(const DwarfWriter &DW, unsigned Form) const {
+unsigned DIEDelta::SizeOf(const Dwarf &DW, unsigned Form) const {
   return DW.getTargetAsmInfo()->getAddressSize();
 }
 
 //===----------------------------------------------------------------------===//
 /// EmitValue - Emit debug information entry offset.
 ///
-void DIEntry::EmitValue(const DwarfWriter &DW, unsigned Form) const {
+void DIEntry::EmitValue(const Dwarf &DW, unsigned Form) const {
   DW.EmitInt32(Entry->getOffset());
 }
 
 /// SizeOf - Determine size of debug information entry value in bytes.
 ///
-unsigned DIEntry::SizeOf(const DwarfWriter &DW, unsigned Form) const {
+unsigned DIEntry::SizeOf(const Dwarf &DW, unsigned Form) const {
   return sizeof(int32_t);
 }
     
@@ -729,7 +1098,7 @@ DIEBlock::~DIEBlock() {
 
 /// ComputeSize - calculate the size of the block.
 ///
-unsigned DIEBlock::ComputeSize(DwarfWriter &DW) {
+unsigned DIEBlock::ComputeSize(Dwarf &DW) {
   Size = 0;
   for (unsigned i = 0, N = Values.size(); i < N; ++i) {
     Size += Values[i]->SizeOf(DW, Forms[i]);
@@ -748,7 +1117,7 @@ unsigned DIEBlock::BestForm() {
 
 /// EmitValue - Emit block data.
 ///
-void DIEBlock::EmitValue(const DwarfWriter &DW, unsigned Form) const {
+void DIEBlock::EmitValue(const Dwarf &DW, unsigned Form) const {
   switch (Form) {
   case DW_FORM_block1: DW.EmitInt8(Size);         break;
   case DW_FORM_block2: DW.EmitInt16(Size);        break;
@@ -764,7 +1133,7 @@ void DIEBlock::EmitValue(const DwarfWriter &DW, unsigned Form) const {
 
 /// SizeOf - Determine size of block data in bytes.
 ///
-unsigned DIEBlock::SizeOf(const DwarfWriter &DW, unsigned Form) const {
+unsigned DIEBlock::SizeOf(const Dwarf &DW, unsigned Form) const {
   switch (Form) {
   case DW_FORM_block1: return Size + sizeof(int8_t);
   case DW_FORM_block2: return Size + sizeof(int16_t);
@@ -927,7 +1296,7 @@ void DIE::AddBlock(unsigned Attribute, unsigned Form, DIEBlock *Block) {
 
 /// Complete - Indicate that all attributes have been added and ready to get an
 /// abbreviation ID.
-void DIE::Complete(DwarfWriter &DW) {
+void DIE::Complete(Dwarf &DW) {
   AbbrevID = DW.NewAbbreviation(Abbrev);
   delete Abbrev;
   Abbrev = NULL;
@@ -943,19 +1312,19 @@ void DIE::AddChild(DIE *Child) {
 
 //===----------------------------------------------------------------------===//
 
-/// DwarfWriter
+/// Dwarf
 
 //===----------------------------------------------------------------------===//
 
 /// PrintHex - Print a value as a hexidecimal value.
 ///
-void DwarfWriter::PrintHex(int Value) const { 
+void Dwarf::PrintHex(int Value) const { 
   O << "0x" << std::hex << Value << std::dec;
 }
 
 /// EOL - Print a newline character to asm stream.  If a comment is present
 /// then it will be printed first.  Comments should not contain '\n'.
-void DwarfWriter::EOL(const std::string &Comment) const {
+void Dwarf::EOL(const std::string &Comment) const {
   if (DwarfVerbose && !Comment.empty()) {
     O << "\t"
       << TAI->getCommentString()
@@ -967,13 +1336,13 @@ void DwarfWriter::EOL(const std::string &Comment) const {
 
 /// EmitAlign - Print a align directive.
 ///
-void DwarfWriter::EmitAlign(unsigned Alignment) const {
+void Dwarf::EmitAlign(unsigned Alignment) const {
   O << TAI->getAlignDirective() << Alignment << "\n";
 }
 
 /// EmitULEB128Bytes - Emit an assembler byte data directive to compose an
 /// unsigned leb128 value.
-void DwarfWriter::EmitULEB128Bytes(unsigned Value) const {
+void Dwarf::EmitULEB128Bytes(unsigned Value) const {
   if (TAI->hasLEB128()) {
     O << "\t.uleb128\t"
       << Value;
@@ -985,7 +1354,7 @@ void DwarfWriter::EmitULEB128Bytes(unsigned Value) const {
 
 /// EmitSLEB128Bytes - Emit an assembler byte data directive to compose a
 /// signed leb128 value.
-void DwarfWriter::EmitSLEB128Bytes(int Value) const {
+void Dwarf::EmitSLEB128Bytes(int Value) const {
   if (TAI->hasLEB128()) {
     O << "\t.sleb128\t"
       << Value;
@@ -997,7 +1366,7 @@ void DwarfWriter::EmitSLEB128Bytes(int Value) const {
 
 /// PrintULEB128 - Print a series of hexidecimal values (separated by commas)
 /// representing an unsigned leb128 value.
-void DwarfWriter::PrintULEB128(unsigned Value) const {
+void Dwarf::PrintULEB128(unsigned Value) const {
   do {
     unsigned Byte = Value & 0x7f;
     Value >>= 7;
@@ -1009,7 +1378,7 @@ void DwarfWriter::PrintULEB128(unsigned Value) const {
 
 /// SizeULEB128 - Compute the number of bytes required for an unsigned leb128
 /// value.
-unsigned DwarfWriter::SizeULEB128(unsigned Value) {
+unsigned Dwarf::SizeULEB128(unsigned Value) {
   unsigned Size = 0;
   do {
     Value >>= 7;
@@ -1020,7 +1389,7 @@ unsigned DwarfWriter::SizeULEB128(unsigned Value) {
 
 /// PrintSLEB128 - Print a series of hexidecimal values (separated by commas)
 /// representing a signed leb128 value.
-void DwarfWriter::PrintSLEB128(int Value) const {
+void Dwarf::PrintSLEB128(int Value) const {
   int Sign = Value >> (8 * sizeof(Value) - 1);
   bool IsMore;
   
@@ -1036,7 +1405,7 @@ void DwarfWriter::PrintSLEB128(int Value) const {
 
 /// SizeSLEB128 - Compute the number of bytes required for a signed leb128
 /// value.
-unsigned DwarfWriter::SizeSLEB128(int Value) {
+unsigned Dwarf::SizeSLEB128(int Value) {
   unsigned Size = 0;
   int Sign = Value >> (8 * sizeof(Value) - 1);
   bool IsMore;
@@ -1052,28 +1421,28 @@ unsigned DwarfWriter::SizeSLEB128(int Value) {
 
 /// EmitInt8 - Emit a byte directive and value.
 ///
-void DwarfWriter::EmitInt8(int Value) const {
+void Dwarf::EmitInt8(int Value) const {
   O << TAI->getData8bitsDirective();
   PrintHex(Value & 0xFF);
 }
 
 /// EmitInt16 - Emit a short directive and value.
 ///
-void DwarfWriter::EmitInt16(int Value) const {
+void Dwarf::EmitInt16(int Value) const {
   O << TAI->getData16bitsDirective();
   PrintHex(Value & 0xFFFF);
 }
 
 /// EmitInt32 - Emit a long directive and value.
 ///
-void DwarfWriter::EmitInt32(int Value) const {
+void Dwarf::EmitInt32(int Value) const {
   O << TAI->getData32bitsDirective();
   PrintHex(Value);
 }
 
 /// EmitInt64 - Emit a long long directive and value.
 ///
-void DwarfWriter::EmitInt64(uint64_t Value) const {
+void Dwarf::EmitInt64(uint64_t Value) const {
   if (TAI->getData64bitsDirective()) {
     O << TAI->getData64bitsDirective() << "0x" << std::hex << Value << std::dec;
   } else {
@@ -1089,7 +1458,7 @@ void DwarfWriter::EmitInt64(uint64_t Value) const {
 
 /// EmitString - Emit a string with quotes and a null terminator.
 /// Special characters are emitted properly. (Eg. '\t')
-void DwarfWriter::EmitString(const std::string &String) const {
+void Dwarf::EmitString(const std::string &String) const {
   O << TAI->getAsciiDirective()
     << "\"";
   for (unsigned i = 0, N = String.size(); i < N; ++i) {
@@ -1122,7 +1491,7 @@ void DwarfWriter::EmitString(const std::string &String) const {
 
 /// PrintLabelName - Print label name in form used by Dwarf writer.
 ///
-void DwarfWriter::PrintLabelName(const char *Tag, unsigned Number) const {
+void Dwarf::PrintLabelName(const char *Tag, unsigned Number) const {
   O << TAI->getPrivateGlobalPrefix()
     << "debug_"
     << Tag;
@@ -1131,14 +1500,14 @@ void DwarfWriter::PrintLabelName(const char *Tag, unsigned Number) const {
 
 /// EmitLabel - Emit location label for internal use by Dwarf.
 ///
-void DwarfWriter::EmitLabel(const char *Tag, unsigned Number) const {
+void Dwarf::EmitLabel(const char *Tag, unsigned Number) const {
   PrintLabelName(Tag, Number);
   O << ":\n";
 }
 
 /// EmitReference - Emit a reference to a label.
 ///
-void DwarfWriter::EmitReference(const char *Tag, unsigned Number) const {
+void Dwarf::EmitReference(const char *Tag, unsigned Number) const {
   if (TAI->getAddressSize() == 4)
     O << TAI->getData32bitsDirective();
   else
@@ -1146,7 +1515,7 @@ void DwarfWriter::EmitReference(const char *Tag, unsigned Number) const {
     
   PrintLabelName(Tag, Number);
 }
-void DwarfWriter::EmitReference(const std::string &Name) const {
+void Dwarf::EmitReference(const std::string &Name) const {
   if (TAI->getAddressSize() == 4)
     O << TAI->getData32bitsDirective();
   else
@@ -1158,7 +1527,7 @@ void DwarfWriter::EmitReference(const std::string &Name) const {
 /// EmitDifference - Emit an label difference as sizeof(pointer) value.  Some
 /// assemblers do not accept absolute expressions with data directives, so there 
 /// is an option (needsSet) to use an intermediary 'set' expression.
-void DwarfWriter::EmitDifference(const char *TagHi, unsigned NumberHi,
+void Dwarf::EmitDifference(const char *TagHi, unsigned NumberHi,
                                  const char *TagLo, unsigned NumberLo) const {
   if (TAI->needsSet()) {
     static unsigned SetCounter = 0;
@@ -1193,20 +1562,20 @@ void DwarfWriter::EmitDifference(const char *TagHi, unsigned NumberHi,
 
 /// NewAbbreviation - Add the abbreviation to the Abbreviation vector.
 ///  
-unsigned DwarfWriter::NewAbbreviation(DIEAbbrev *Abbrev) {
+unsigned Dwarf::NewAbbreviation(DIEAbbrev *Abbrev) {
   return Abbreviations.insert(*Abbrev);
 }
 
 /// NewString - Add a string to the constant pool and returns a label.
 ///
-DWLabel DwarfWriter::NewString(const std::string &String) {
+DWLabel Dwarf::NewString(const std::string &String) {
   unsigned StringID = StringPool.insert(String);
   return DWLabel("string", StringID);
 }
 
 /// AddSourceLine - Add location information to specified debug information
 /// entry.
-void DwarfWriter::AddSourceLine(DIE *Die, CompileUnitDesc *File, unsigned Line){
+void Dwarf::AddSourceLine(DIE *Die, CompileUnitDesc *File, unsigned Line){
   if (File && Line) {
     CompileUnit *FileUnit = FindCompileUnit(File);
     unsigned FileID = FileUnit->getID();
@@ -1217,7 +1586,7 @@ void DwarfWriter::AddSourceLine(DIE *Die, CompileUnitDesc *File, unsigned Line){
 
 /// AddAddress - Add an address attribute to a die based on the location
 /// provided.
-void DwarfWriter::AddAddress(DIE *Die, unsigned Attribute,
+void Dwarf::AddAddress(DIE *Die, unsigned Attribute,
                              const MachineLocation &Location) {
   DIEBlock *Block = new DIEBlock();
   unsigned Reg = RI->getDwarfRegNum(Location.getRegister());
@@ -1244,13 +1613,13 @@ void DwarfWriter::AddAddress(DIE *Die, unsigned Attribute,
 
 /// getDieMapSlotFor - Returns the debug information entry map slot for the
 /// specified debug descriptor.
-DIE *&DwarfWriter::getDieMapSlotFor(DebugInfoDesc *DD) {
+DIE *&Dwarf::getDieMapSlotFor(DebugInfoDesc *DD) {
   return DescToDieMap[DD];
 }
 
 /// NewType - Create a new type DIE.
 ///
-DIE *DwarfWriter::NewType(DIE *Context, TypeDesc *TyDesc, CompileUnit *Unit) {
+DIE *Dwarf::NewType(DIE *Context, TypeDesc *TyDesc, CompileUnit *Unit) {
   if (!TyDesc) {
     // FIXME - Hack for missing types
     DIE *Die = new DIE(DW_TAG_base_type);
@@ -1565,7 +1934,7 @@ DIE *DwarfWriter::NewType(DIE *Context, TypeDesc *TyDesc, CompileUnit *Unit) {
 
 /// NewCompileUnit - Create new compile unit and it's debug information entry.
 ///
-CompileUnit *DwarfWriter::NewCompileUnit(CompileUnitDesc *UnitDesc,
+CompileUnit *Dwarf::NewCompileUnit(CompileUnitDesc *UnitDesc,
                                          unsigned ID) {
   // Construct debug information entry.
   DIE *Die = new DIE(DW_TAG_compile_unit);
@@ -1593,7 +1962,7 @@ CompileUnit *DwarfWriter::NewCompileUnit(CompileUnitDesc *UnitDesc,
 
 /// FindCompileUnit - Get the compile unit for the given descriptor.
 ///
-CompileUnit *DwarfWriter::FindCompileUnit(CompileUnitDesc *UnitDesc) {
+CompileUnit *Dwarf::FindCompileUnit(CompileUnitDesc *UnitDesc) {
   CompileUnit *Unit = DescToUnitMap[UnitDesc];
   assert(Unit && "Missing compile unit.");
   return Unit;
@@ -1601,7 +1970,7 @@ CompileUnit *DwarfWriter::FindCompileUnit(CompileUnitDesc *UnitDesc) {
 
 /// NewGlobalVariable - Add a new global variable DIE.
 ///
-DIE *DwarfWriter::NewGlobalVariable(GlobalVariableDesc *GVD) {
+DIE *Dwarf::NewGlobalVariable(GlobalVariableDesc *GVD) {
   // Get the compile unit context.
   CompileUnitDesc *UnitDesc = static_cast<CompileUnitDesc *>(GVD->getContext());
   CompileUnit *Unit = FindCompileUnit(UnitDesc);
@@ -1658,7 +2027,7 @@ DIE *DwarfWriter::NewGlobalVariable(GlobalVariableDesc *GVD) {
 
 /// NewSubprogram - Add a new subprogram DIE.
 ///
-DIE *DwarfWriter::NewSubprogram(SubprogramDesc *SPD) {
+DIE *Dwarf::NewSubprogram(SubprogramDesc *SPD) {
   // Get the compile unit context.
   CompileUnitDesc *UnitDesc = static_cast<CompileUnitDesc *>(SPD->getContext());
   CompileUnit *Unit = FindCompileUnit(UnitDesc);
@@ -1704,7 +2073,7 @@ DIE *DwarfWriter::NewSubprogram(SubprogramDesc *SPD) {
 
 /// NewScopeVariable - Create a new scope variable.
 ///
-DIE *DwarfWriter::NewScopeVariable(DebugVariable *DV, CompileUnit *Unit) {
+DIE *Dwarf::NewScopeVariable(DebugVariable *DV, CompileUnit *Unit) {
   // Get the descriptor.
   VariableDesc *VD = DV->getDesc();
 
@@ -1738,7 +2107,7 @@ DIE *DwarfWriter::NewScopeVariable(DebugVariable *DV, CompileUnit *Unit) {
 
 /// ConstructScope - Construct the components of a scope.
 ///
-void DwarfWriter::ConstructScope(DebugScope *ParentScope,
+void Dwarf::ConstructScope(DebugScope *ParentScope,
                                  DIE *ParentDie, CompileUnit *Unit) {
   // Add variables to scope.
   std::vector<DebugVariable *> &Variables = ParentScope->getVariables();
@@ -1788,7 +2157,7 @@ void DwarfWriter::ConstructScope(DebugScope *ParentScope,
 
 /// ConstructRootScope - Construct the scope for the subprogram.
 ///
-void DwarfWriter::ConstructRootScope(DebugScope *RootScope) {
+void Dwarf::ConstructRootScope(DebugScope *RootScope) {
   // Exit if there is no root scope.
   if (!RootScope) return;
   
@@ -1817,7 +2186,7 @@ void DwarfWriter::ConstructRootScope(DebugScope *RootScope) {
 /// EmitInitial - Emit initial Dwarf declarations.  This is necessary for cc
 /// tools to recognize the object file contains Dwarf information.
 ///
-void DwarfWriter::EmitInitial() {
+void Dwarf::EmitInitial() {
   // Check to see if we already emitted intial headers.
   if (didInitial) return;
   didInitial = true;
@@ -1858,7 +2227,7 @@ void DwarfWriter::EmitInitial() {
 
 /// EmitDIE - Recusively Emits a debug information entry.
 ///
-void DwarfWriter::EmitDIE(DIE *Die) const {
+void Dwarf::EmitDIE(DIE *Die) const {
   // Get the abbreviation for this DIE.
   unsigned AbbrevID = Die->getAbbrevID();
   const DIEAbbrev &Abbrev = Abbreviations[AbbrevID];
@@ -1911,7 +2280,7 @@ void DwarfWriter::EmitDIE(DIE *Die) const {
 
 /// SizeAndOffsetDie - Compute the size and offset of a DIE.
 ///
-unsigned DwarfWriter::SizeAndOffsetDie(DIE *Die, unsigned Offset, bool Last) {
+unsigned Dwarf::SizeAndOffsetDie(DIE *Die, unsigned Offset, bool Last) {
   // Get the children.
   const std::vector<DIE *> &Children = Die->getChildren();
   
@@ -1959,7 +2328,7 @@ unsigned DwarfWriter::SizeAndOffsetDie(DIE *Die, unsigned Offset, bool Last) {
 
 /// SizeAndOffsets - Compute the size and offset of all the DIEs.
 ///
-void DwarfWriter::SizeAndOffsets() {
+void Dwarf::SizeAndOffsets() {
   
   // Process each compile unit.
   for (unsigned i = 0, N = CompileUnits.size(); i < N; ++i) {
@@ -1977,7 +2346,7 @@ void DwarfWriter::SizeAndOffsets() {
 
 /// EmitFrameMoves - Emit frame instructions to describe the layout of the
 /// frame.
-void DwarfWriter::EmitFrameMoves(const char *BaseLabel, unsigned BaseLabelID,
+void Dwarf::EmitFrameMoves(const char *BaseLabel, unsigned BaseLabelID,
                                  std::vector<MachineMove *> &Moves) {
   for (unsigned i = 0, N = Moves.size(); i < N; ++i) {
     MachineMove *Move = Moves[i];
@@ -2056,7 +2425,7 @@ void DwarfWriter::EmitFrameMoves(const char *BaseLabel, unsigned BaseLabelID,
 
 /// EmitDebugInfo - Emit the debug info section.
 ///
-void DwarfWriter::EmitDebugInfo() const {
+void Dwarf::EmitDebugInfo() const {
   // Start debug info section.
   Asm->SwitchToDataSection(TAI->getDwarfInfoSection(), 0);
   
@@ -2090,7 +2459,7 @@ void DwarfWriter::EmitDebugInfo() const {
 
 /// EmitAbbreviations - Emit the abbreviation section.
 ///
-void DwarfWriter::EmitAbbreviations() const {
+void Dwarf::EmitAbbreviations() const {
   // Check to see if it is worth the effort.
   if (!Abbreviations.empty()) {
     // Start the debug abbrev section.
@@ -2121,7 +2490,7 @@ void DwarfWriter::EmitAbbreviations() const {
 
 /// EmitDebugLines - Emit source line information.
 ///
-void DwarfWriter::EmitDebugLines() const {
+void Dwarf::EmitDebugLines() const {
   // Minimum line delta, thus ranging from -10..(255-10).
   const int MinLineDelta = -(DW_LNS_fixed_advance_pc + 1);
   // Maximum line delta, thus ranging from -10..(255-10).
@@ -2277,7 +2646,7 @@ void DwarfWriter::EmitDebugLines() const {
   
 /// EmitInitialDebugFrame - Emit common frame info into a debug frame section.
 ///
-void DwarfWriter::EmitInitialDebugFrame() {
+void Dwarf::EmitInitialDebugFrame() {
   int stackGrowth =
       Asm->TM.getFrameInfo()->getStackGrowthDirection() ==
         TargetFrameInfo::StackGrowsUp ?
@@ -2312,7 +2681,7 @@ void DwarfWriter::EmitInitialDebugFrame() {
 
 /// EmitFunctionDebugFrame - Emit per function frame info into a debug frame
 /// section.
-void DwarfWriter::EmitFunctionDebugFrame() {
+void Dwarf::EmitFunctionDebugFrame() {
   // Start the dwarf frame section.
   Asm->SwitchToDataSection(TAI->getDwarfFrameSection(), 0);
   
@@ -2342,7 +2711,7 @@ void DwarfWriter::EmitFunctionDebugFrame() {
 
 /// EmitDebugPubNames - Emit visible names into a debug pubnames section.
 ///
-void DwarfWriter::EmitDebugPubNames() {
+void Dwarf::EmitDebugPubNames() {
   // Start the dwarf pubnames section.
   Asm->SwitchToDataSection(TAI->getDwarfPubNamesSection(), 0);
     
@@ -2387,7 +2756,7 @@ void DwarfWriter::EmitDebugPubNames() {
 
 /// EmitDebugStr - Emit visible names into a debug str section.
 ///
-void DwarfWriter::EmitDebugStr() {
+void Dwarf::EmitDebugStr() {
   // Check to see if it is worth the effort.
   if (!StringPool.empty()) {
     // Start the dwarf str section.
@@ -2409,7 +2778,7 @@ void DwarfWriter::EmitDebugStr() {
 
 /// EmitDebugLoc - Emit visible names into a debug loc section.
 ///
-void DwarfWriter::EmitDebugLoc() {
+void Dwarf::EmitDebugLoc() {
   // Start the dwarf loc section.
   Asm->SwitchToDataSection(TAI->getDwarfLocSection(), 0);
   
@@ -2418,7 +2787,7 @@ void DwarfWriter::EmitDebugLoc() {
 
 /// EmitDebugARanges - Emit visible names into a debug aranges section.
 ///
-void DwarfWriter::EmitDebugARanges() {
+void Dwarf::EmitDebugARanges() {
   // Start the dwarf aranges section.
   Asm->SwitchToDataSection(TAI->getDwarfARangesSection(), 0);
   
@@ -2459,7 +2828,7 @@ void DwarfWriter::EmitDebugARanges() {
 
 /// EmitDebugRanges - Emit visible names into a debug ranges section.
 ///
-void DwarfWriter::EmitDebugRanges() {
+void Dwarf::EmitDebugRanges() {
   // Start the dwarf ranges section.
   Asm->SwitchToDataSection(TAI->getDwarfRangesSection(), 0);
   
@@ -2468,7 +2837,7 @@ void DwarfWriter::EmitDebugRanges() {
 
 /// EmitDebugMacInfo - Emit visible names into a debug macinfo section.
 ///
-void DwarfWriter::EmitDebugMacInfo() {
+void Dwarf::EmitDebugMacInfo() {
   // Start the dwarf macinfo section.
   Asm->SwitchToDataSection(TAI->getDwarfMacInfoSection(), 0);
   
@@ -2477,7 +2846,7 @@ void DwarfWriter::EmitDebugMacInfo() {
 
 /// ConstructCompileUnitDIEs - Create a compile unit DIE for each source and
 /// header file.
-void DwarfWriter::ConstructCompileUnitDIEs() {
+void Dwarf::ConstructCompileUnitDIEs() {
   const UniqueVector<CompileUnitDesc *> CUW = DebugInfo->getCompileUnits();
   
   for (unsigned i = 1, N = CUW.size(); i <= N; ++i) {
@@ -2488,7 +2857,7 @@ void DwarfWriter::ConstructCompileUnitDIEs() {
 
 /// ConstructGlobalDIEs - Create DIEs for each of the externally visible global
 /// variables.
-void DwarfWriter::ConstructGlobalDIEs() {
+void Dwarf::ConstructGlobalDIEs() {
   std::vector<GlobalVariableDesc *> GlobalVariables =
       DebugInfo->getAnchoredDescriptors<GlobalVariableDesc>(*M);
   
@@ -2500,7 +2869,7 @@ void DwarfWriter::ConstructGlobalDIEs() {
 
 /// ConstructSubprogramDIEs - Create DIEs for each of the externally visible
 /// subprograms.
-void DwarfWriter::ConstructSubprogramDIEs() {
+void Dwarf::ConstructSubprogramDIEs() {
   std::vector<SubprogramDesc *> Subprograms =
       DebugInfo->getAnchoredDescriptors<SubprogramDesc>(*M);
   
@@ -2511,10 +2880,10 @@ void DwarfWriter::ConstructSubprogramDIEs() {
 }
 
 //===----------------------------------------------------------------------===//
-// Main entry points.
+// Dwarf implemenation.
 //
   
-DwarfWriter::DwarfWriter(std::ostream &OS, AsmPrinter *A,
+Dwarf::Dwarf(std::ostream &OS, AsmPrinter *A,
   const TargetAsmInfo *T)
 : O(OS)
 , Asm(A)
@@ -2535,7 +2904,7 @@ DwarfWriter::DwarfWriter(std::ostream &OS, AsmPrinter *A,
 , SectionMap()
 , SectionSourceLines()
 {}
-DwarfWriter::~DwarfWriter() {
+Dwarf::~Dwarf() {
   for (unsigned i = 0, N = CompileUnits.size(); i < N; ++i) {
     delete CompileUnits[i];
   }
@@ -2543,7 +2912,7 @@ DwarfWriter::~DwarfWriter() {
 
 /// SetDebugInfo - Set DebugInfo when it's known that pass manager has
 /// created it.  Set by the target AsmPrinter.
-void DwarfWriter::SetDebugInfo(MachineDebugInfo *DI) {
+void Dwarf::SetDebugInfo(MachineDebugInfo *DI) {
   // Make sure initial declarations are made.
   if (!DebugInfo && DI->hasInfo()) {
     DebugInfo = DI;
@@ -2568,7 +2937,7 @@ void DwarfWriter::SetDebugInfo(MachineDebugInfo *DI) {
 
 /// BeginModule - Emit all Dwarf sections that should come prior to the content.
 ///
-void DwarfWriter::BeginModule(Module *M) {
+void Dwarf::BeginModule(Module *M) {
   this->M = M;
   
   if (!ShouldEmitDwarf()) return;
@@ -2577,7 +2946,7 @@ void DwarfWriter::BeginModule(Module *M) {
 
 /// EndModule - Emit all Dwarf sections that should come after the content.
 ///
-void DwarfWriter::EndModule() {
+void Dwarf::EndModule() {
   if (!ShouldEmitDwarf()) return;
   EOL("Dwarf End Module");
   
@@ -2626,7 +2995,7 @@ void DwarfWriter::EndModule() {
 
 /// BeginFunction - Gather pre-function debug information.  Assumes being 
 /// emitted immediately after the function entry point.
-void DwarfWriter::BeginFunction(MachineFunction *MF) {
+void Dwarf::BeginFunction(MachineFunction *MF) {
   this->MF = MF;
   
   if (!ShouldEmitDwarf()) return;
@@ -2641,7 +3010,7 @@ void DwarfWriter::BeginFunction(MachineFunction *MF) {
 
 /// EndFunction - Gather and emit post-function debug information.
 ///
-void DwarfWriter::EndFunction() {
+void Dwarf::EndFunction() {
   if (!ShouldEmitDwarf()) return;
   EOL("Dwarf End Function");
   
@@ -2668,9 +3037,51 @@ void DwarfWriter::EndFunction() {
   EmitFunctionDebugFrame();
   
   // Reset the line numbers for the next function.
-  // FIXME: move this to release memory of the debuginfo object.
   DebugInfo->ClearLineInfo();
 
   // Clear function debug information.
   DebugInfo->EndFunction();
+}
+
+
+//===----------------------------------------------------------------------===//
+/// DwarfWriter Implementation
+
+DwarfWriter::DwarfWriter(std::ostream &OS, AsmPrinter *A,
+                         const TargetAsmInfo *T) {
+  DW = new Dwarf(OS, A, T);
+}
+
+DwarfWriter::~DwarfWriter() {
+  delete DW;
+}
+
+/// SetDebugInfo - Set DebugInfo when it's known that pass manager has
+/// created it.  Set by the target AsmPrinter.
+void DwarfWriter::SetDebugInfo(MachineDebugInfo *DI) {
+  DW->SetDebugInfo(DI);
+}
+
+/// BeginModule - Emit all Dwarf sections that should come prior to the
+/// content.
+void DwarfWriter::BeginModule(Module *M) {
+  DW->BeginModule(M);
+}
+
+/// EndModule - Emit all Dwarf sections that should come after the content.
+///
+void DwarfWriter::EndModule() {
+  DW->EndModule();
+}
+
+/// BeginFunction - Gather pre-function debug information.  Assumes being 
+/// emitted immediately after the function entry point.
+void DwarfWriter::BeginFunction(MachineFunction *MF) {
+  DW->BeginFunction(MF);
+}
+
+/// EndFunction - Gather and emit post-function debug information.
+///
+void DwarfWriter::EndFunction() {
+  DW->EndFunction();
 }
