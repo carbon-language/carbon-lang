@@ -822,8 +822,8 @@ static unsigned getBCCForSetCC(ISD::CondCode CC) {
   case ISD::SETUGE:
   case ISD::SETGE:  return PPC::BGE;
     
-  case ISD::SETO:   return PPC::BUN;
-  case ISD::SETUO:  return PPC::BNU;
+  case ISD::SETO:   return PPC::BNU;
+  case ISD::SETUO:  return PPC::BUN;
   }
   return 0;
 }
