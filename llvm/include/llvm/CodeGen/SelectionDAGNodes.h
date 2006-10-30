@@ -406,6 +406,10 @@ namespace ISD {
     // is the value to branch to, which must be of the same type as the target's
     // pointer type.
     BRIND,
+
+    // BR_JT - Jumptable branch. The first operand is the chain, the second
+    // is the jumptable index, the last one is the jumptable entry index.
+    BR_JT,
     
     // BRCOND - Conditional branch.  The first operand is the chain,
     // the second is the condition, the third is the block to branch

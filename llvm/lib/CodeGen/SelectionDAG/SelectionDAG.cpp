@@ -2734,6 +2734,7 @@ const char *SDNode::getOperationName(const SelectionDAG *G) const {
     // Control flow instructions
   case ISD::BR:      return "br";
   case ISD::BRIND:   return "brind";
+  case ISD::BR_JT:   return "br_jt";
   case ISD::BRCOND:  return "brcond";
   case ISD::BR_CC:   return "br_cc";
   case ISD::RET:     return "ret";
