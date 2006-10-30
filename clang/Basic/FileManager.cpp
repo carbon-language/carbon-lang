@@ -25,24 +25,30 @@ using namespace clang;
 // FIXME: Enhance libsystem to support inode and other fields.
 #include <sys/stat.h>
 
+
+/// NON_EXISTANT_DIR - A special value distinct from null that is used to
+/// represent a dir name that doesn't exist on the disk.
+#define NON_EXISTANT_DIR reinterpret_cast<DirectoryEntry*>((intptr_t)-1)
+
 /// getDirectory - Lookup, cache, and verify the specified directory.  This
 /// returns null if the directory doesn't exist.
 /// 
 const DirectoryEntry *FileManager::getDirectory(const std::string &Filename) {
   ++NumDirLookups;
+  
+  DirectoryEntry *&NamedDirEnt =
+    DirEntries.GetOrCreateValue(&Filename[0], &Filename[0] + Filename.size());
+  
   // See if there is already an entry in the map.
-  std::map<std::string, DirectoryEntry*>::iterator I = 
-    DirEntries.lower_bound(Filename);
-  if (I != DirEntries.end() && I->first == Filename)
-    return I->second;
+  if (NamedDirEnt)
+    return NamedDirEnt == NON_EXISTANT_DIR ? 0 : NamedDirEnt;
   
   ++NumDirCacheMisses;
   
-  // By default, zero initialize it.
-  DirectoryEntry *&Ent =
-    DirEntries.insert(I, std::make_pair(Filename, (DirectoryEntry*)0))->second;
+  // By default, initialize it to invalid.
+  NamedDirEnt = NON_EXISTANT_DIR;
   
-  // Nope, there isn't.  Check to see if the directory exists.
+  // Check to see if the directory exists.
   struct stat StatBuf;
   if (stat(Filename.c_str(), &StatBuf) ||   // Error stat'ing.
       !S_ISDIR(StatBuf.st_mode))            // Not a directory?
@@ -54,11 +60,11 @@ const DirectoryEntry *FileManager::getDirectory(const std::string &Filename) {
     UniqueDirs[std::make_pair(StatBuf.st_dev, StatBuf.st_ino)];
   
   if (UDE.getName()[0])  // Already have an entry with this inode, return it.
-    return Ent = &UDE;
+    return NamedDirEnt = &UDE;
   
   // Otherwise, we don't have this directory yet, add it.
   UDE.Name   = Filename;
-  return Ent = &UDE;
+  return NamedDirEnt = &UDE;
 }
 
 /// getFile - Lookup, cache, and verify the specified file.  This returns null

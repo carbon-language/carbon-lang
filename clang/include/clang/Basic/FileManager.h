@@ -14,6 +14,7 @@
 #ifndef LLVM_CLANG_FILEMANAGER_H
 #define LLVM_CLANG_FILEMANAGER_H
 
+#include "llvm/ADT/CStringMap.h"
 #include <map>
 #include <string>
 // FIXME: Enhance libsystem to support inode and other fields in stat.
@@ -70,7 +71,7 @@ class FileManager {
   /// DirEntries/FileEntries - This is a cache of directory/file entries we have
   /// looked up.  The actual Entry is owned by UniqueFiles/UniqueDirs above.
   ///
-  std::map<std::string, DirectoryEntry*> DirEntries;
+  CStringMap<DirectoryEntry*> DirEntries;
   std::map<std::string, FileEntry*> FileEntries;
   
   /// NextFileUID - Each FileEntry we create is assigned a unique ID #.
