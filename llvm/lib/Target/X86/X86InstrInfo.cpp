@@ -359,14 +359,14 @@ bool X86InstrInfo::AnalyzeBranch(MachineBasicBlock &MBB,
       isTerminatorInstr((--I)->getOpcode()))
     return true;
 
-  // If the block ends with X86::JMP and a COND_BRANCH, handle it.
+  // If the block ends with X86::JMP and a conditional branch, handle it.
   X86::CondCode BranchCode = GetCondFromBranchOpc(SecondLastInst->getOpcode());
   if (BranchCode != X86::COND_INVALID && LastInst->getOpcode() == X86::JMP) {
-      TBB =  SecondLastInst->getOperand(0).getMachineBasicBlock();
-      Cond.push_back(MachineOperand::CreateImm(BranchCode));
-      FBB = LastInst->getOperand(0).getMachineBasicBlock();
-      return false;
-    }
+    TBB = SecondLastInst->getOperand(0).getMachineBasicBlock();
+    Cond.push_back(MachineOperand::CreateImm(BranchCode));
+    FBB = LastInst->getOperand(0).getMachineBasicBlock();
+    return false;
+  }
 
   // Otherwise, can't handle this.
   return true;
