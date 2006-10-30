@@ -69,12 +69,13 @@ const FileEntry *HeaderSearch::DoFrameworkLookup(const DirectoryEntry *Dir,
     return 0;
 
   // FrameworkName = "/System/Library/Frameworks/"
-  std::string FrameworkName = Dir->getName();
-  if (FrameworkName.empty() || FrameworkName[FrameworkName.size()-1] != '/')
-    FrameworkName += '/';
+  SmallString<1024> FrameworkName;
+  FrameworkName += Dir->getName();
+  if (FrameworkName.empty() || FrameworkName.back() != '/')
+    FrameworkName.push_back('/');
   
   // FrameworkName = "/System/Library/Frameworks/Cocoa"
-  FrameworkName += std::string(Filename.begin(), Filename.begin()+SlashPos);
+  FrameworkName.append(Filename.begin(), Filename.begin()+SlashPos);
   
   // FrameworkName = "/System/Library/Frameworks/Cocoa.framework/"
   FrameworkName += ".framework/";
@@ -83,7 +84,8 @@ const FileEntry *HeaderSearch::DoFrameworkLookup(const DirectoryEntry *Dir,
     ++NumFrameworkLookups;
     
     // If the framework dir doesn't exist, we fail.
-    if (!sys::Path(FrameworkName).exists())
+    if (!sys::Path(std::string(FrameworkName.begin(), 
+                               FrameworkName.end())).exists())
       return 0;
     
     // Otherwise, if it does, remember that this is the right direntry for this
@@ -92,15 +94,20 @@ const FileEntry *HeaderSearch::DoFrameworkLookup(const DirectoryEntry *Dir,
   }
   
   // Check "/System/Library/Frameworks/Cocoa.framework/Headers/file.h"
-  std::string HeadersFilename = FrameworkName + "Headers/" +
-    std::string(Filename.begin()+SlashPos+1, Filename.end());
-  if (const FileEntry *FE = FileMgr.getFile(HeadersFilename))
+  unsigned OrigSize = FrameworkName.size();
+  
+  FrameworkName += "Headers/";
+  FrameworkName.append(Filename.begin()+SlashPos+1, Filename.end());
+  if (const FileEntry *FE = FileMgr.getFile(FrameworkName.begin(),
+                                            FrameworkName.end())) {
     return FE;
+  }
   
   // Check "/System/Library/Frameworks/Cocoa.framework/PrivateHeaders/file.h"
-  std::string PrivateHeadersFilename = FrameworkName + "PrivateHeaders/" +
-    std::string(Filename.begin()+SlashPos+1, Filename.end());
-  return FileMgr.getFile(PrivateHeadersFilename);
+  const char *Private = "Private";
+  FrameworkName.insert(FrameworkName.begin()+OrigSize, Private, 
+                       Private+strlen(Private));
+  return FileMgr.getFile(FrameworkName.begin(), FrameworkName.end());
 }
 
 /// LookupFile - Given a "foo" or <foo> reference, look up the indicated file,
