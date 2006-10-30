@@ -13,6 +13,7 @@
 
 #include "llvm/CodeGen/DwarfWriter.h"
 
+#include "llvm/ADT/FoldingSet.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/ADT/UniqueVector.h"
 #include "llvm/Module.h"
@@ -44,10 +45,10 @@ DwarfVerbose("dwarf-verbose", cl::Hidden,
 namespace llvm {
   
 //===----------------------------------------------------------------------===//
-// DWLabel - Labels are used to track locations in the assembler file.
-// Labels appear in the form <prefix>debug_<Tag><Number>, where the tag is a
-// category of label (Ex. location) and number is a value unique in that
-// category.
+/// DWLabel - Labels are used to track locations in the assembler file.
+/// Labels appear in the form <prefix>debug_<Tag><Number>, where the tag is a
+/// category of label (Ex. location) and number is a value unique in that
+/// category.
 class DWLabel {
 public:
   const char *Tag;                    // Label category tag. Should always be
@@ -58,13 +59,13 @@ public:
 };
 
 //===----------------------------------------------------------------------===//
-// Forward declarations.
+/// Forward declarations.
 //
 class DIE;
 
 //===----------------------------------------------------------------------===//
-// CompileUnit - This dwarf writer support class manages information associate
-// with a source file.
+/// CompileUnit - This dwarf writer support class manages information associate
+/// with a source file.
 class CompileUnit {
 private:
   CompileUnitDesc *Desc;                // Compile unit debug descriptor.
@@ -110,8 +111,8 @@ public:
 };
 
 //===----------------------------------------------------------------------===//
-// DIEAbbrevData - Dwarf abbreviation data, describes the one attribute of a
-// Dwarf abbreviation.
+/// DIEAbbrevData - Dwarf abbreviation data, describes the one attribute of a
+/// Dwarf abbreviation.
 class DIEAbbrevData {
 private:
   unsigned Attribute;                 // Dwarf attribute code.
@@ -126,32 +127,21 @@ public:
   // Accessors.
   unsigned getAttribute() const { return Attribute; }
   unsigned getForm()      const { return Form; }
-  
-  /// operator== - Used by DIEAbbrev to locate entry.
-  ///
-  bool operator==(const DIEAbbrevData &DAD) const {
-    return Attribute == DAD.Attribute && Form == DAD.Form;
-  }
 
-  /// operator!= - Used by DIEAbbrev to locate entry.
+  /// Profile - Used to gather unique data for the abbreviation folding set.
   ///
-  bool operator!=(const DIEAbbrevData &DAD) const {
-    return Attribute != DAD.Attribute || Form != DAD.Form;
-  }
-  
-  /// operator< - Used by DIEAbbrev to locate entry.
-  ///
-  bool operator<(const DIEAbbrevData &DAD) const {
-    return Attribute < DAD.Attribute ||
-          (Attribute == DAD.Attribute && Form < DAD.Form);
+  void Profile(FoldingSetNodeID &ID) {
+    ID.AddInteger(Attribute);
+    ID.AddInteger(Form);
   }
 };
 
 //===----------------------------------------------------------------------===//
-// DIEAbbrev - Dwarf abbreviation, describes the organization of a debug
-// information object.
-class DIEAbbrev {
+/// DIEAbbrev - Dwarf abbreviation, describes the organization of a debug
+/// information object.
+class DIEAbbrev : public FoldingSetNode {
 private:
+  unsigned Number;                    // Unique number for abbreviation.
   unsigned Tag;                       // Dwarf tag code.
   unsigned ChildrenFlag;              // Dwarf children flag.
   std::vector<DIEAbbrevData> Data;    // Raw data bytes for abbreviation.
@@ -159,25 +149,20 @@ private:
 public:
 
   DIEAbbrev(unsigned T, unsigned C)
-  : Tag(T)
+  : Number(0)
+  , Tag(T)
   , ChildrenFlag(C)
   , Data()
   {}
   ~DIEAbbrev() {}
   
   // Accessors.
+  unsigned getNumber()                        const { return Number; }
   unsigned getTag()                           const { return Tag; }
   unsigned getChildrenFlag()                  const { return ChildrenFlag; }
   const std::vector<DIEAbbrevData> &getData() const { return Data; }
+  void setNumber(unsigned N)                        { Number = N; }
   void setChildrenFlag(unsigned CF)                 { ChildrenFlag = CF; }
-
-  /// operator== - Used by UniqueVector to locate entry.
-  ///
-  bool operator==(const DIEAbbrev &DA) const;
-
-  /// operator< - Used by UniqueVector to locate entry.
-  ///
-  bool operator<(const DIEAbbrev &DA) const;
 
   /// AddAttribute - Adds another set of attribute information to the
   /// abbreviation.
@@ -191,6 +176,17 @@ public:
     Data.insert(Data.begin(), DIEAbbrevData(Attribute, Form));
   }
   
+  /// Profile - Used to gather unique data for the abbreviation folding set.
+  ///
+  void Profile(FoldingSetNodeID &ID) {
+    ID.AddInteger(Tag);
+    ID.AddInteger(ChildrenFlag);
+    
+    // For each attribute description.
+    for (unsigned i = 0, N = Data.size(); i < N; ++i)
+      Data[i].Profile(ID);
+  }
+  
   /// Emit - Print the abbreviation using the specified Dwarf writer.
   ///
   void Emit(const Dwarf &DW) const; 
@@ -202,7 +198,7 @@ public:
 };
 
 //===----------------------------------------------------------------------===//
-// DIEValue - A debug information entry value.
+/// DIEValue - A debug information entry value.
 //
 class DIEValue {
 public:
@@ -234,8 +230,8 @@ public:
 };
 
 //===----------------------------------------------------------------------===//
-// DWInteger - An integer value DIE.
-// 
+/// DWInteger - An integer value DIE.
+/// 
 class DIEInteger : public DIEValue {
 private:
   uint64_t Integer;
@@ -261,8 +257,8 @@ public:
 };
 
 //===----------------------------------------------------------------------===//
-// DIEString - A string value DIE.
-// 
+/// DIEString - A string value DIE.
+/// 
 struct DIEString : public DIEValue {
   const std::string String;
   
@@ -282,7 +278,7 @@ struct DIEString : public DIEValue {
 };
 
 //===----------------------------------------------------------------------===//
-// DIEDwarfLabel - A Dwarf internal label expression DIE.
+/// DIEDwarfLabel - A Dwarf internal label expression DIE.
 //
 struct DIEDwarfLabel : public DIEValue {
   const DWLabel Label;
@@ -304,7 +300,7 @@ struct DIEDwarfLabel : public DIEValue {
 
 
 //===----------------------------------------------------------------------===//
-// DIEObjectLabel - A label to an object in code or data.
+/// DIEObjectLabel - A label to an object in code or data.
 //
 struct DIEObjectLabel : public DIEValue {
   const std::string Label;
@@ -325,8 +321,8 @@ struct DIEObjectLabel : public DIEValue {
 };
 
 //===----------------------------------------------------------------------===//
-// DIEDelta - A simple label difference DIE.
-// 
+/// DIEDelta - A simple label difference DIE.
+/// 
 struct DIEDelta : public DIEValue {
   const DWLabel LabelHi;
   const DWLabel LabelLo;
@@ -348,8 +344,8 @@ struct DIEDelta : public DIEValue {
 };
 
 //===----------------------------------------------------------------------===//
-// DIEntry - A pointer to a debug information entry.
-// 
+/// DIEntry - A pointer to a debug information entry.
+/// 
 struct DIEntry : public DIEValue {
   DIE *Entry;
   
@@ -369,7 +365,7 @@ struct DIEntry : public DIEValue {
 };
 
 //===----------------------------------------------------------------------===//
-// DIEBlock - A block of values.  Primarily used for location expressions.
+/// DIEBlock - A block of values.  Primarily used for location expressions.
 //
 struct DIEBlock : public DIEValue {
   unsigned Size;                        // Size in bytes excluding size header.
@@ -435,12 +431,11 @@ struct DIEBlock : public DIEValue {
 };
 
 //===----------------------------------------------------------------------===//
-// DIE - A structured debug information entry.  Has an abbreviation which
-// describes it's organization.
+/// DIE - A structured debug information entry.  Has an abbreviation which
+/// describes it's organization.
 class DIE {
 private:
-  DIEAbbrev *Abbrev;                    // Temporary buffer for abbreviation.
-  unsigned AbbrevID;                    // Decribing abbreviation ID.
+  DIEAbbrev Abbrev;                     // Buffer for constructing abbreviation.
   unsigned Offset;                      // Offset in debug info section.
   unsigned Size;                        // Size of instance + children.
   std::vector<DIE *> Children;          // Children DIEs.
@@ -451,7 +446,9 @@ public:
   ~DIE();
   
   // Accessors.
-  unsigned   getAbbrevID()                   const { return AbbrevID; }
+  unsigned   getAbbrevNumber()               const {
+    return Abbrev.getNumber();
+  }
   unsigned   getOffset()                     const { return Offset; }
   unsigned   getSize()                       const { return Size; }
   const std::vector<DIE *> &getChildren()    const { return Children; }
@@ -512,7 +509,7 @@ public:
 };
 
 //===----------------------------------------------------------------------===//
-// Dwarf - Emits Dwarf debug and exception handling directives.
+/// Dwarf - Emits Dwarf debug and exception handling directives.
 //
 class Dwarf {
 
@@ -571,10 +568,14 @@ private:
   /// CompileUnits - All the compile units involved in this build.  The index
   /// of each entry in this vector corresponds to the sources in DebugInfo.
   std::vector<CompileUnit *> CompileUnits;
-
-  /// Abbreviations - A UniqueVector of TAG structure abbreviations.
+  
+  /// AbbreviationsSet - Used to uniquely define the abbreviations.
   ///
-  UniqueVector<DIEAbbrev> Abbreviations;
+  FoldingSet<DIEAbbrev> AbbreviationsSet;
+
+  /// Abbreviations - A list of all the unique abbreviations in use.
+  ///
+  std::vector<DIEAbbrev *> Abbreviations;
   
   /// StringPool - A UniqueVector of strings used by indirect references.
   /// UnitMap - Map debug information descriptor to compile unit.
@@ -692,9 +693,9 @@ public:
   void EmitDifference(const char *TagHi, unsigned NumberHi,
                       const char *TagLo, unsigned NumberLo) const;
                       
-  /// NewAbbreviation - Add the abbreviation to the Abbreviation vector.
+  /// AssignAbbrevNumber - Define a unique number for the abbreviation.
   ///  
-  unsigned NewAbbreviation(DIEAbbrev *Abbrev);
+  void AssignAbbrevNumber(DIEAbbrev *Abbrev);
   
   /// NewString - Add a string to the constant pool and returns a label.
   ///
@@ -885,34 +886,6 @@ void CompileUnit::AddGlobal(const std::string &Name, DIE *Die) {
 
 //===----------------------------------------------------------------------===//
 
-/// operator== - Used by UniqueVector to locate entry.
-///
-bool DIEAbbrev::operator==(const DIEAbbrev &DA) const {
-  if (Tag != DA.Tag) return false;
-  if (ChildrenFlag != DA.ChildrenFlag) return false;
-  if (Data.size() != DA.Data.size()) return false;
-  
-  for (unsigned i = 0, N = Data.size(); i < N; ++i) {
-    if (Data[i] != DA.Data[i]) return false;
-  }
-  
-  return true;
-}
-
-/// operator< - Used by UniqueVector to locate entry.
-///
-bool DIEAbbrev::operator<(const DIEAbbrev &DA) const {
-  if (Tag != DA.Tag) return Tag < DA.Tag;
-  if (ChildrenFlag != DA.ChildrenFlag) return ChildrenFlag < DA.ChildrenFlag;
-  if (Data.size() != DA.Data.size()) return Data.size() < DA.Data.size();
-  
-  for (unsigned i = 0, N = Data.size(); i < N; ++i) {
-    if (Data[i] != DA.Data[i]) return Data[i] < DA.Data[i];
-  }
-  
-  return false;
-}
-    
 /// Emit - Print the abbreviation using the specified Dwarf writer.
 ///
 void DIEAbbrev::Emit(const Dwarf &DW) const {
@@ -1200,8 +1173,7 @@ void DIEBlock::AddDIEntry(unsigned Form, DIE *Entry) {
 //===----------------------------------------------------------------------===//
 
 DIE::DIE(unsigned Tag)
-: Abbrev(new DIEAbbrev(Tag, DW_CHILDREN_no))
-, AbbrevID(0)
+: Abbrev(Tag, DW_CHILDREN_no)
 , Offset(0)
 , Size(0)
 , Children()
@@ -1209,8 +1181,6 @@ DIE::DIE(unsigned Tag)
 {}
 
 DIE::~DIE() {
-  if (Abbrev) delete Abbrev;
-  
   for (unsigned i = 0, N = Children.size(); i < N; ++i) {
     delete Children[i];
   }
@@ -1225,7 +1195,7 @@ DIE::~DIE() {
 void DIE::AddSiblingOffset() {
   DIEInteger *DI = new DIEInteger(0);
   Values.insert(Values.begin(), DI);
-  Abbrev->AddFirstAttribute(DW_AT_sibling, DW_FORM_ref4);
+  Abbrev.AddFirstAttribute(DW_AT_sibling, DW_FORM_ref4);
 }
 
 /// AddUInt - Add an unsigned integer attribute data and value.
@@ -1234,7 +1204,7 @@ void DIE::AddUInt(unsigned Attribute, unsigned Form, uint64_t Integer) {
   DIEInteger *DI = new DIEInteger(Integer);
   Values.push_back(DI);
   if (!Form) Form = DI->BestForm(false);
-  Abbrev->AddAttribute(Attribute, Form);
+  Abbrev.AddAttribute(Attribute, Form);
 }
     
 /// AddSInt - Add an signed integer attribute data and value.
@@ -1243,7 +1213,7 @@ void DIE::AddSInt(unsigned Attribute, unsigned Form, int64_t Integer) {
   DIEInteger *DI = new DIEInteger(Integer);
   Values.push_back(DI);
   if (!Form) Form = DI->BestForm(true);
-  Abbrev->AddAttribute(Attribute, Form);
+  Abbrev.AddAttribute(Attribute, Form);
 }
     
 /// AddString - Add a std::string attribute data and value.
@@ -1251,7 +1221,7 @@ void DIE::AddSInt(unsigned Attribute, unsigned Form, int64_t Integer) {
 void DIE::AddString(unsigned Attribute, unsigned Form,
                     const std::string &String) {
   Values.push_back(new DIEString(String));
-  Abbrev->AddAttribute(Attribute, Form);
+  Abbrev.AddAttribute(Attribute, Form);
 }
     
 /// AddLabel - Add a Dwarf label attribute data and value.
@@ -1259,7 +1229,7 @@ void DIE::AddString(unsigned Attribute, unsigned Form,
 void DIE::AddLabel(unsigned Attribute, unsigned Form,
                    const DWLabel &Label) {
   Values.push_back(new DIEDwarfLabel(Label));
-  Abbrev->AddAttribute(Attribute, Form);
+  Abbrev.AddAttribute(Attribute, Form);
 }
     
 /// AddObjectLabel - Add an non-Dwarf label attribute data and value.
@@ -1267,7 +1237,7 @@ void DIE::AddLabel(unsigned Attribute, unsigned Form,
 void DIE::AddObjectLabel(unsigned Attribute, unsigned Form,
                          const std::string &Label) {
   Values.push_back(new DIEObjectLabel(Label));
-  Abbrev->AddAttribute(Attribute, Form);
+  Abbrev.AddAttribute(Attribute, Form);
 }
     
 /// AddDelta - Add a label delta attribute data and value.
@@ -1275,14 +1245,14 @@ void DIE::AddObjectLabel(unsigned Attribute, unsigned Form,
 void DIE::AddDelta(unsigned Attribute, unsigned Form,
                    const DWLabel &Hi, const DWLabel &Lo) {
   Values.push_back(new DIEDelta(Hi, Lo));
-  Abbrev->AddAttribute(Attribute, Form);
+  Abbrev.AddAttribute(Attribute, Form);
 }
     
 /// AddDIEntry - Add a DIE attribute data and value.
 ///
 void DIE::AddDIEntry(unsigned Attribute, unsigned Form, DIE *Entry) {
   Values.push_back(new DIEntry(Entry));
-  Abbrev->AddAttribute(Attribute, Form);
+  Abbrev.AddAttribute(Attribute, Form);
 }
 
 /// AddBlock - Add block data.
@@ -1291,22 +1261,19 @@ void DIE::AddBlock(unsigned Attribute, unsigned Form, DIEBlock *Block) {
   assert(Block->Size && "Block size has not been computed");
   Values.push_back(Block);
   if (!Form) Form = Block->BestForm();
-  Abbrev->AddAttribute(Attribute, Form);
+  Abbrev.AddAttribute(Attribute, Form);
 }
 
 /// Complete - Indicate that all attributes have been added and ready to get an
 /// abbreviation ID.
 void DIE::Complete(Dwarf &DW) {
-  AbbrevID = DW.NewAbbreviation(Abbrev);
-  delete Abbrev;
-  Abbrev = NULL;
+  DW.AssignAbbrevNumber(&Abbrev);
 }
 
 /// AddChild - Add a child to the DIE.
 ///
 void DIE::AddChild(DIE *Child) {
-  assert(Abbrev && "Adding children without an abbreviation");
-  Abbrev->setChildrenFlag(DW_CHILDREN_yes);
+  Abbrev.setChildrenFlag(DW_CHILDREN_yes);
   Children.push_back(Child);
 }
 
@@ -1560,10 +1527,26 @@ void Dwarf::EmitDifference(const char *TagHi, unsigned NumberHi,
   }
 }
 
-/// NewAbbreviation - Add the abbreviation to the Abbreviation vector.
+/// AssignAbbrevNumber - Define a unique number for the abbreviation.
 ///  
-unsigned Dwarf::NewAbbreviation(DIEAbbrev *Abbrev) {
-  return Abbreviations.insert(*Abbrev);
+void Dwarf::AssignAbbrevNumber(DIEAbbrev *Abbrev) {
+  // Profile the node so that we can make it unique.
+  FoldingSetNodeID ID;
+  Abbrev->Profile(ID);
+  
+  // Check the set for priors.
+  DIEAbbrev *InSet = AbbreviationsSet.GetOrInsertNode(Abbrev);
+  
+  // If it's newly added.
+  if (InSet == Abbrev) {
+    // Add to abbreviation list. 
+    Abbreviations.push_back(Abbrev);
+    // Assign the vector position + 1 as its number.
+    Abbrev->setNumber(Abbreviations.size());
+  } else {
+    // Assign existing abbreviation number.
+    Abbrev->setNumber(InSet->getNumber());
+  }
 }
 
 /// NewString - Add a string to the constant pool and returns a label.
@@ -2229,21 +2212,21 @@ void Dwarf::EmitInitial() {
 ///
 void Dwarf::EmitDIE(DIE *Die) const {
   // Get the abbreviation for this DIE.
-  unsigned AbbrevID = Die->getAbbrevID();
-  const DIEAbbrev &Abbrev = Abbreviations[AbbrevID];
+  unsigned AbbrevNumber = Die->getAbbrevNumber();
+  const DIEAbbrev *Abbrev = Abbreviations[AbbrevNumber - 1];
   
   O << "\n";
 
   // Emit the code (index) for the abbreviation.
-  EmitULEB128Bytes(AbbrevID);
+  EmitULEB128Bytes(AbbrevNumber);
   EOL(std::string("Abbrev [" +
-      utostr(AbbrevID) +
+      utostr(AbbrevNumber) +
       "] 0x" + utohexstr(Die->getOffset()) +
       ":0x" + utohexstr(Die->getSize()) + " " +
-      TagString(Abbrev.getTag())));
+      TagString(Abbrev->getTag())));
   
   const std::vector<DIEValue *> &Values = Die->getValues();
-  const std::vector<DIEAbbrevData> &AbbrevData = Abbrev.getData();
+  const std::vector<DIEAbbrevData> &AbbrevData = Abbrev->getData();
   
   // Emit the DIE attribute values.
   for (unsigned i = 0, N = Values.size(); i < N; ++i) {
@@ -2267,7 +2250,7 @@ void Dwarf::EmitDIE(DIE *Die) const {
   }
   
   // Emit the DIE children if any.
-  if (Abbrev.getChildrenFlag() == DW_CHILDREN_yes) {
+  if (Abbrev->getChildrenFlag() == DW_CHILDREN_yes) {
     const std::vector<DIE *> &Children = Die->getChildren();
     
     for (unsigned j = 0, M = Children.size(); j < M; ++j) {
@@ -2291,17 +2274,17 @@ unsigned Dwarf::SizeAndOffsetDie(DIE *Die, unsigned Offset, bool Last) {
   Die->Complete(*this);
   
   // Get the abbreviation for this DIE.
-  unsigned AbbrevID = Die->getAbbrevID();
-  const DIEAbbrev &Abbrev = Abbreviations[AbbrevID];
+  unsigned AbbrevNumber = Die->getAbbrevNumber();
+  const DIEAbbrev *Abbrev = Abbreviations[AbbrevNumber - 1];
 
   // Set DIE offset
   Die->setOffset(Offset);
   
   // Start the size with the size of abbreviation code.
-  Offset += SizeULEB128(AbbrevID);
+  Offset += SizeULEB128(AbbrevNumber);
   
   const std::vector<DIEValue *> &Values = Die->getValues();
-  const std::vector<DIEAbbrevData> &AbbrevData = Abbrev.getData();
+  const std::vector<DIEAbbrevData> &AbbrevData = Abbrev->getData();
 
   // Emit the DIE attribute values.
   for (unsigned i = 0, N = Values.size(); i < N; ++i) {
@@ -2311,7 +2294,7 @@ unsigned Dwarf::SizeAndOffsetDie(DIE *Die, unsigned Offset, bool Last) {
   
   // Emit the DIE children if any.
   if (!Children.empty()) {
-    assert(Abbrev.getChildrenFlag() == DW_CHILDREN_yes &&
+    assert(Abbrev->getChildrenFlag() == DW_CHILDREN_yes &&
            "Children flag not set");
     
     for (unsigned j = 0, M = Children.size(); j < M; ++j) {
@@ -2468,16 +2451,15 @@ void Dwarf::EmitAbbreviations() const {
     EmitLabel("abbrev_begin", 0);
     
     // For each abbrevation.
-    for (unsigned AbbrevID = 1, NAID = Abbreviations.size();
-                  AbbrevID <= NAID; ++AbbrevID) {
+    for (unsigned i = 0, N = Abbreviations.size(); i < N; ++i) {
       // Get abbreviation data
-      const DIEAbbrev &Abbrev = Abbreviations[AbbrevID];
+      const DIEAbbrev *Abbrev = Abbreviations[i];
       
       // Emit the abbrevations code (base 1 index.)
-      EmitULEB128Bytes(AbbrevID); EOL("Abbreviation Code");
+      EmitULEB128Bytes(Abbrev->getNumber()); EOL("Abbreviation Code");
       
       // Emit the abbreviations data.
-      Abbrev.Emit(*this);
+      Abbrev->Emit(*this);
   
       O << "\n";
     }
@@ -2880,7 +2862,7 @@ void Dwarf::ConstructSubprogramDIEs() {
 }
 
 //===----------------------------------------------------------------------===//
-// Dwarf implemenation.
+/// Dwarf implemenation.
 //
   
 Dwarf::Dwarf(std::ostream &OS, AsmPrinter *A,
@@ -2897,13 +2879,15 @@ Dwarf::Dwarf(std::ostream &OS, AsmPrinter *A,
 , shouldEmit(false)
 , SubprogramCount(0)
 , CompileUnits()
+, AbbreviationsSet()
 , Abbreviations()
 , StringPool()
 , DescToUnitMap()
 , DescToDieMap()
 , SectionMap()
 , SectionSourceLines()
-{}
+{
+}
 Dwarf::~Dwarf() {
   for (unsigned i = 0, N = CompileUnits.size(); i < N; ++i) {
     delete CompileUnits[i];
