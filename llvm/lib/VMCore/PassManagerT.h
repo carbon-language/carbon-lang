@@ -282,7 +282,7 @@ public:
     return runPasses(M, LastUserOf);
   }
 
-  // dumpPassStructure - Implement the -debug-passes=PassStructure option
+  // dumpPassStructure - Implement the -debug-passes=Structure option
   inline void dumpPassStructure(unsigned Offset = 0) {
     // Print out the immutable passes...
     
