@@ -772,6 +772,9 @@ static bool isEndOfBlockCommentWithEscapedNewLine(const char *CurPtr,
 
 #ifdef __SSE2__
 #include <emmintrin.h>
+#elif __ALTIVEC__
+#include <altivec.h>
+#undef bool
 #endif
 
 /// SkipBlockComment - We have just read the /* characters from input.  Read
@@ -808,7 +811,15 @@ bool Lexer::SkipBlockComment(LexerToken &Result, const char *CurPtr) {
       while (CurPtr+16 <= BufferEnd &&
              _mm_movemask_epi8(_mm_cmpeq_epi8(*(__m128i*)CurPtr, Slashes)) == 0)
         CurPtr += 16;
-#else             
+#elif __ALTIVEC__
+      __vector unsigned char Slashes = {
+        '/', '/', '/', '/',  '/', '/', '/', '/', 
+        '/', '/', '/', '/',  '/', '/', '/', '/'
+      };
+      while (CurPtr+16 <= BufferEnd &&
+             !vec_any_eq(*(vector unsigned char*)CurPtr, Slashes))
+        CurPtr += 16;
+#else    
       // Scan for '/' quickly.  Many block comments are very large.
       while (CurPtr[0] != '/' &&
              CurPtr[1] != '/' &&

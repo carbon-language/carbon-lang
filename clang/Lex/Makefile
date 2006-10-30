@@ -12,9 +12,15 @@
 ##===----------------------------------------------------------------------===##
 
 LEVEL = ../../..
+include $(LEVEL)/Makefile.config
+
 LIBRARYNAME := clangLex
 BUILD_ARCHIVE = 1
 CXXFLAGS = -fno-rtti 
+
+ifeq ($(ARCH),PowerPC)
+CXXFLAGS += -maltivec
+endif
 
 CPPFLAGS += -I$(PROJ_SRC_DIR)/../include
 
