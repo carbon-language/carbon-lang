@@ -1,4 +1,5 @@
 // RUN: %llvmgcc -O3 -S -o - %s
+// PR954, PR911
 
 extern void foo();
 
