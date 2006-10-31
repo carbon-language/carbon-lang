@@ -975,6 +975,15 @@ static bool
 ShouldEmitAsBranches(const std::vector<SelectionDAGISel::CaseBlock> &Cases) {
   if (Cases.size() != 2) return true;
   
+  // If this is two comparisons of the same values or'd or and'd together, they
+  // will get folded into a single comparison, so don't emit two blocks.
+  if ((Cases[0].CmpLHS == Cases[1].CmpLHS &&
+       Cases[0].CmpRHS == Cases[1].CmpRHS) ||
+      (Cases[0].CmpRHS == Cases[1].CmpLHS &&
+       Cases[0].CmpLHS == Cases[1].CmpRHS)) {
+    return false;
+  }
+  
   return true;
 }
 
@@ -1025,14 +1034,13 @@ void SelectionDAGLowering::visitBr(BranchInst &I) {
         (BOp->getOpcode() == Instruction::And ||
          BOp->getOpcode() == Instruction::Or)) {
       FindMergedConditions(BOp, Succ0MBB, Succ1MBB, CurMBB, BOp->getOpcode());
-
+      // If the compares in later blocks need to use values not currently
+      // exported from this block, export them now.  This block should always
+      // be the first entry.
+      assert(SwitchCases[0].ThisBB == CurMBB && "Unexpected lowering!");
+      
       // Allow some cases to be rejected.
       if (ShouldEmitAsBranches(SwitchCases)) {
-        // If the compares in later blocks need to use values not currently
-        // exported from this block, export them now.  This block should always
-        // be the first entry.
-        assert(SwitchCases[0].ThisBB == CurMBB && "Unexpected lowering!");
-        
         for (unsigned i = 1, e = SwitchCases.size(); i != e; ++i) {
           ExportFromCurrentBlock(SwitchCases[i].CmpLHS);
           ExportFromCurrentBlock(SwitchCases[i].CmpRHS);
@@ -1043,6 +1051,11 @@ void SelectionDAGLowering::visitBr(BranchInst &I) {
         SwitchCases.erase(SwitchCases.begin());
         return;
       }
+      
+      // Okay, we decided not to do this, remove any inserted MBB's and clear
+      // SwitchCases.
+      for (unsigned i = 1, e = SwitchCases.size(); i != e; ++i)
+        CurMBB->getParent()->getBasicBlockList().erase(SwitchCases[i].ThisBB);
       
       SwitchCases.clear();
     }
