@@ -32,6 +32,7 @@ namespace llvm {
   FunctionPass *createAlphaCodeEmitterPass(AlphaTargetMachine &TM,
                                            MachineCodeEmitter &MCE);
   FunctionPass *createAlphaLLRPPass(AlphaTargetMachine &tm);
+  FunctionPass *createAlphaBranchSelectionPass();
 
 } // end namespace llvm;
 

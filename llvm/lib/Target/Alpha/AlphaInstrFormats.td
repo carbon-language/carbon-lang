@@ -22,6 +22,7 @@ def s14imm  : Operand<i64>;
 def s16imm  : Operand<i64>;
 def s21imm  : Operand<i64>;
 def s64imm  : Operand<i64>;
+def u64imm  : Operand<i64>;
 
 //===----------------------------------------------------------------------===//
 // Instruction format superclass
@@ -92,36 +93,25 @@ class MbrpForm<bits<6> opcode, bits<2> TB, dag OL, string asmstr, list<dag> patt
 
 //3.3.2
 def target : Operand<OtherVT> {}
+
+let isBranch = 1, isTerminator = 1, hasCtrlDep = 1, noResults = 1 in {
+class BFormN<bits<6> opcode, dag OL, string asmstr, InstrItinClass itin>
+   : InstAlpha<opcode, asmstr, itin> {
+  let OperandList = OL;
+  bits<64> Opc; //dummy
+  bits<5> Ra;
+  bits<21> disp;
+
+  let Inst{25-21} = Ra;
+  let Inst{20-0} = disp;
+}
+}
+
 let isBranch = 1, isTerminator = 1 in
 class BFormD<bits<6> opcode, string asmstr, list<dag> pattern, InstrItinClass itin> 
     : InstAlpha<opcode, asmstr, itin> {
   let Pattern = pattern;
   let OperandList = (ops target:$DISP);
-  bits<5> Ra;
-  bits<21> disp;
-
-  let Inst{25-21} = Ra;
-  let Inst{20-0} = disp;
-}
-let isBranch = 1, isTerminator = 1 in
-class BForm<bits<6> opcode, string asmstr, list<dag> pattern, InstrItinClass itin> 
-    : InstAlpha<opcode, asmstr, itin> {
-  let Pattern = pattern;
-  let OperandList = (ops GPRC:$RA, target:$DISP);
-
-  bits<5> Ra;
-  bits<21> disp;
-
-  let Inst{25-21} = Ra;
-  let Inst{20-0} = disp;
-}
-
-let isBranch = 1, isTerminator = 1 in
-class FBForm<bits<6> opcode, string asmstr, list<dag> pattern, InstrItinClass itin> 
-    : InstAlpha<opcode, asmstr, itin> {
-  let Pattern = pattern;
-  let OperandList = (ops F8RC:$RA, target:$DISP);
-
   bits<5> Ra;
   bits<21> disp;
 

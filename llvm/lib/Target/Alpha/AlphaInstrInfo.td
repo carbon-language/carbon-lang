@@ -847,120 +847,173 @@ def CVTTS : FPForm<0x16, 0x7AC, "cvtts/sui $RB,$RC",
 /////////////////////////////////////////////////////////
 //Branching
 /////////////////////////////////////////////////////////
+class br_icc<bits<6> opc, string asmstr>
+  : BFormN<opc, (ops u64imm:$opc, GPRC:$R, target:$dst), 
+    !strconcat(asmstr, " $R,$dst"),  s_icbr>;
+class br_fcc<bits<6> opc, string asmstr>
+  : BFormN<opc, (ops u64imm:$opc, F8RC:$R, target:$dst), 
+    !strconcat(asmstr, " $R,$dst"),  s_fbr>;
+
 let isBranch = 1, isTerminator = 1, hasCtrlDep = 1, noResults = 1 in {
 let Ra = 31 in
 def BR : BFormD<0x30, "br $$31,$DISP", [(br bb:$DISP)], s_ubr>;
 
+def COND_BRANCH_I : BFormN<0, (ops u64imm:$opc, GPRC:$R, target:$dst), 
+                    "{:comment} COND_BRANCH imm:$opc, GPRC:$R, bb:$dst", 
+                    s_icbr>;
+def COND_BRANCH_F : BFormN<0, (ops u64imm:$opc, F8RC:$R, target:$dst), 
+                    "{:comment} COND_BRANCH imm:$opc, F8RC:$R, bb:$dst",
+                    s_fbr>;
 //Branches, int
-def BEQ  : BForm<0x39, "beq $RA,$DISP", 
-                 [(brcond (seteq GPRC:$RA, 0), bb:$DISP)], s_icbr>;
-def BGE  : BForm<0x3E, "bge $RA,$DISP", 
-                 [(brcond (setge GPRC:$RA, 0), bb:$DISP)], s_icbr>;
-def BGT  : BForm<0x3F, "bgt $RA,$DISP",
-                 [(brcond (setgt GPRC:$RA, 0), bb:$DISP)], s_icbr>;
-def BLBC : BForm<0x38, "blbc $RA,$DISP", [], s_icbr>; //TODO: Low bit clear
-def BLBS : BForm<0x3C, "blbs $RA,$DISP",
-                 [(brcond (and GPRC:$RA, 1), bb:$DISP)], s_icbr>;
-def BLE  : BForm<0x3B, "ble $RA,$DISP",
-                 [(brcond (setle GPRC:$RA, 0), bb:$DISP)], s_icbr>;
-def BLT  : BForm<0x3A, "blt $RA,$DISP",
-                 [(brcond (setlt GPRC:$RA, 0), bb:$DISP)], s_icbr>;
-def BNE  : BForm<0x3D, "bne $RA,$DISP",
-                 [(brcond (setne GPRC:$RA, 0), bb:$DISP)], s_icbr>;
+def BEQ  : br_icc<0x39, "beq">;
+def BGE  : br_icc<0x3E, "bge">;
+def BGT  : br_icc<0x3F, "bgt">;
+def BLBC : br_icc<0x38, "blbc">;
+def BLBS : br_icc<0x3C, "blbs">;
+def BLE  : br_icc<0x3B, "ble">;
+def BLT  : br_icc<0x3A, "blt">;
+def BNE  : br_icc<0x3D, "bne">;
 
 //Branches, float
-def FBEQ : FBForm<0x31, "fbeq $RA,$DISP", 
-                  [(brcond (seteq F8RC:$RA, immFPZ), bb:$DISP)], s_fbr>;
-def FBGE : FBForm<0x36, "fbge $RA,$DISP",
-                  [(brcond (setge F8RC:$RA, immFPZ), bb:$DISP)], s_fbr>;
-def FBGT : FBForm<0x37, "fbgt $RA,$DISP",
-                  [(brcond (setgt F8RC:$RA, immFPZ), bb:$DISP)], s_fbr>;
-def FBLE : FBForm<0x33, "fble $RA,$DISP",
-                  [(brcond (setle F8RC:$RA, immFPZ), bb:$DISP)], s_fbr>;
-def FBLT : FBForm<0x32, "fblt $RA,$DISP",
-                  [(brcond (setlt F8RC:$RA, immFPZ), bb:$DISP)], s_fbr>;
-def FBNE : FBForm<0x35, "fbne $RA,$DISP",
-                  [(brcond (setne F8RC:$RA, immFPZ), bb:$DISP)], s_fbr>;
+def FBEQ : br_fcc<0x31, "fbeq">;
+def FBGE : br_fcc<0x36, "fbge">;
+def FBGT : br_fcc<0x37, "fbgt">;
+def FBLE : br_fcc<0x33, "fble">;
+def FBLT : br_fcc<0x32, "fblt">;
+def FBNE : br_fcc<0x36, "fbne">;
 }
 
-def : Pat<(brcond GPRC:$RA, bb:$DISP), (BNE GPRC:$RA, bb:$DISP)>;
-def : Pat<(brcond (setne GPRC:$RA, GPRC:$RB), bb:$DISP),
-          (BEQ (CMPEQ GPRC:$RA, GPRC:$RB), bb:$DISP)>;
-def : Pat<(brcond (setne GPRC:$RA, immUExt8:$L), bb:$DISP),
-          (BEQ (CMPEQi GPRC:$RA, immUExt8:$L), bb:$DISP)>;
+//An ugly trick to get the opcode as an imm I can use
+def immBRCond : SDNodeXForm<imm, [{
+  switch((uint64_t)N->getValue()) {
+    case 0:  return getI64Imm(Alpha::BEQ);
+    case 1:  return getI64Imm(Alpha::BNE);
+    case 2:  return getI64Imm(Alpha::BGE);
+    case 3:  return getI64Imm(Alpha::BGT);
+    case 4:  return getI64Imm(Alpha::BLE);
+    case 5:  return getI64Imm(Alpha::BLT);
+    case 6:  return getI64Imm(Alpha::BLBS);
+    case 7:  return getI64Imm(Alpha::BLBC);
+    case 20: return getI64Imm(Alpha::FBEQ);
+    case 21: return getI64Imm(Alpha::FBNE);
+    case 22: return getI64Imm(Alpha::FBGE);
+    case 23: return getI64Imm(Alpha::FBGT);
+    case 24: return getI64Imm(Alpha::FBLE);
+    case 25: return getI64Imm(Alpha::FBLT);
+    default: assert(0 && "Unknown branch type");
+  }
+}]>;
 
-def : Pat<(brcond (seteq F8RC:$RA, F8RC:$RB), bb:$DISP),
-          (FBNE  (CMPTEQ F8RC:$RA, F8RC:$RB), bb:$DISP)>;
-def : Pat<(brcond (setoeq F8RC:$RA, F8RC:$RB), bb:$DISP),
-          (FBNE  (CMPTEQ F8RC:$RA, F8RC:$RB), bb:$DISP)>;
-def : Pat<(brcond (setueq F8RC:$RA, F8RC:$RB), bb:$DISP),
-          (FBNE  (CMPTEQ F8RC:$RA, F8RC:$RB), bb:$DISP)>;
+//Int cond patterns
+def : Pat<(brcond (seteq GPRC:$RA, 0), bb:$DISP), 
+      (COND_BRANCH_I (immBRCond 0),  GPRC:$RA, bb:$DISP)>;
+def : Pat<(brcond (setge GPRC:$RA, 0), bb:$DISP), 
+      (COND_BRANCH_I (immBRCond 2),  GPRC:$RA, bb:$DISP)>;
+def : Pat<(brcond (setgt GPRC:$RA, 0), bb:$DISP), 
+      (COND_BRANCH_I (immBRCond 3),  GPRC:$RA, bb:$DISP)>;
+def : Pat<(brcond (and   GPRC:$RA, 1), bb:$DISP), 
+      (COND_BRANCH_I (immBRCond 6),  GPRC:$RA, bb:$DISP)>;
+def : Pat<(brcond (setle GPRC:$RA, 0), bb:$DISP), 
+      (COND_BRANCH_I (immBRCond 4),  GPRC:$RA, bb:$DISP)>;
+def : Pat<(brcond (setlt GPRC:$RA, 0), bb:$DISP), 
+      (COND_BRANCH_I (immBRCond 5),  GPRC:$RA, bb:$DISP)>;
+def : Pat<(brcond (setne GPRC:$RA, 0), bb:$DISP), 
+      (COND_BRANCH_I (immBRCond 1),  GPRC:$RA, bb:$DISP)>;
 
-def : Pat<(brcond (setlt F8RC:$RA, F8RC:$RB), bb:$DISP),
-          (FBNE  (CMPTLT F8RC:$RA, F8RC:$RB), bb:$DISP)>;
-def : Pat<(brcond (setolt F8RC:$RA, F8RC:$RB), bb:$DISP),
-          (FBNE  (CMPTLT F8RC:$RA, F8RC:$RB), bb:$DISP)>;
-def : Pat<(brcond (setult F8RC:$RA, F8RC:$RB), bb:$DISP),
-          (FBNE  (CMPTLT F8RC:$RA, F8RC:$RB), bb:$DISP)>;
+def : Pat<(brcond GPRC:$RA, bb:$DISP), 
+      (COND_BRANCH_I (immBRCond 1), GPRC:$RA, bb:$DISP)>;
+def : Pat<(brcond (setne GPRC:$RA, GPRC:$RB), bb:$DISP), 
+      (COND_BRANCH_I (immBRCond 0), (CMPEQ GPRC:$RA, GPRC:$RB), bb:$DISP)>;
+def : Pat<(brcond (setne GPRC:$RA, immUExt8:$L), bb:$DISP), 
+      (COND_BRANCH_I (immBRCond 0), (CMPEQi GPRC:$RA, immUExt8:$L), bb:$DISP)>;
 
-def : Pat<(brcond (setle F8RC:$RA, F8RC:$RB), bb:$DISP),
-          (FBNE  (CMPTLE F8RC:$RA, F8RC:$RB), bb:$DISP)>;
-def : Pat<(brcond (setole F8RC:$RA, F8RC:$RB), bb:$DISP),
-          (FBNE  (CMPTLE F8RC:$RA, F8RC:$RB), bb:$DISP)>;
-def : Pat<(brcond (setule F8RC:$RA, F8RC:$RB), bb:$DISP),
-          (FBNE  (CMPTLE F8RC:$RA, F8RC:$RB), bb:$DISP)>;
-
-def : Pat<(brcond (setgt F8RC:$RA, F8RC:$RB), bb:$DISP),
-          (FBNE  (CMPTLT F8RC:$RB, F8RC:$RA), bb:$DISP)>;
-def : Pat<(brcond (setogt F8RC:$RA, F8RC:$RB), bb:$DISP),
-          (FBNE  (CMPTLT F8RC:$RB, F8RC:$RA), bb:$DISP)>;
-def : Pat<(brcond (setugt F8RC:$RA, F8RC:$RB), bb:$DISP),
-          (FBNE  (CMPTLT F8RC:$RB, F8RC:$RA), bb:$DISP)>;
-
-def : Pat<(brcond (setge F8RC:$RA, F8RC:$RB), bb:$DISP),
-          (FBNE  (CMPTLE F8RC:$RB, F8RC:$RA), bb:$DISP)>;
-def : Pat<(brcond (setoge F8RC:$RA, F8RC:$RB), bb:$DISP),
-          (FBNE  (CMPTLE F8RC:$RB, F8RC:$RA), bb:$DISP)>;
-def : Pat<(brcond (setuge F8RC:$RA, F8RC:$RB), bb:$DISP),
-          (FBNE  (CMPTLE F8RC:$RB, F8RC:$RA), bb:$DISP)>;
-
-def : Pat<(brcond (setne F8RC:$RA, F8RC:$RB), bb:$DISP),
-          (FBEQ  (CMPTEQ F8RC:$RA, F8RC:$RB), bb:$DISP)>;
-def : Pat<(brcond (setone F8RC:$RA, F8RC:$RB), bb:$DISP),
-          (FBEQ  (CMPTEQ F8RC:$RA, F8RC:$RB), bb:$DISP)>;
-def : Pat<(brcond (setune F8RC:$RA, F8RC:$RB), bb:$DISP),
-          (FBEQ  (CMPTEQ F8RC:$RA, F8RC:$RB), bb:$DISP)>;
+//FP cond patterns
+def : Pat<(brcond (seteq F8RC:$RA, immFPZ), bb:$DISP), 
+      (COND_BRANCH_F (immBRCond 20),  F8RC:$RA, bb:$DISP)>;
+def : Pat<(brcond (setne F8RC:$RA, immFPZ), bb:$DISP), 
+      (COND_BRANCH_F (immBRCond 21),  F8RC:$RA, bb:$DISP)>;
+def : Pat<(brcond (setge F8RC:$RA, immFPZ), bb:$DISP), 
+      (COND_BRANCH_F (immBRCond 22),  F8RC:$RA, bb:$DISP)>;
+def : Pat<(brcond (setgt F8RC:$RA, immFPZ), bb:$DISP), 
+      (COND_BRANCH_F (immBRCond 23),  F8RC:$RA, bb:$DISP)>;
+def : Pat<(brcond (setle F8RC:$RA, immFPZ), bb:$DISP), 
+      (COND_BRANCH_F (immBRCond 24),  F8RC:$RA, bb:$DISP)>;
+def : Pat<(brcond (setlt F8RC:$RA, immFPZ), bb:$DISP), 
+      (COND_BRANCH_F (immBRCond 25),  F8RC:$RA, bb:$DISP)>;
 
 
-def : Pat<(brcond (setoeq F8RC:$RA, immFPZ), bb:$DISP),
-          (FBEQ F8RC:$RA,bb:$DISP)>;
-def : Pat<(brcond (setueq F8RC:$RA, immFPZ), bb:$DISP),
-          (FBEQ F8RC:$RA,bb:$DISP)>;
+def : Pat<(brcond (seteq F8RC:$RA, F8RC:$RB), bb:$DISP),  
+      (COND_BRANCH_F (immBRCond 21), (CMPTEQ F8RC:$RA, F8RC:$RB), bb:$DISP)>;
+def : Pat<(brcond (setoeq F8RC:$RA, F8RC:$RB), bb:$DISP), 
+      (COND_BRANCH_F (immBRCond 21), (CMPTEQ F8RC:$RA, F8RC:$RB), bb:$DISP)>;
+def : Pat<(brcond (setueq F8RC:$RA, F8RC:$RB), bb:$DISP), 
+      (COND_BRANCH_F (immBRCond 21), (CMPTEQ F8RC:$RA, F8RC:$RB), bb:$DISP)>;
 
-def : Pat<(brcond (setoge F8RC:$RA, immFPZ), bb:$DISP),
-          (FBGE F8RC:$RA,bb:$DISP)>;
-def : Pat<(brcond (setuge F8RC:$RA, immFPZ), bb:$DISP),
-          (FBGE F8RC:$RA,bb:$DISP)>;
+def : Pat<(brcond (setlt F8RC:$RA, F8RC:$RB), bb:$DISP),  
+      (COND_BRANCH_F (immBRCond 21), (CMPTLT F8RC:$RA, F8RC:$RB), bb:$DISP)>;
+def : Pat<(brcond (setolt F8RC:$RA, F8RC:$RB), bb:$DISP), 
+      (COND_BRANCH_F (immBRCond 21), (CMPTLT F8RC:$RA, F8RC:$RB), bb:$DISP)>;
+def : Pat<(brcond (setult F8RC:$RA, F8RC:$RB), bb:$DISP), 
+      (COND_BRANCH_F (immBRCond 21), (CMPTLT F8RC:$RA, F8RC:$RB), bb:$DISP)>;
 
-def : Pat<(brcond (setogt F8RC:$RA, immFPZ), bb:$DISP),
-          (FBGT F8RC:$RA,bb:$DISP)>;
-def : Pat<(brcond (setugt F8RC:$RA, immFPZ), bb:$DISP),
-          (FBGT F8RC:$RA,bb:$DISP)>;
+def : Pat<(brcond (setle F8RC:$RA, F8RC:$RB), bb:$DISP),  
+      (COND_BRANCH_F (immBRCond 21), (CMPTLE F8RC:$RA, F8RC:$RB), bb:$DISP)>;
+def : Pat<(brcond (setole F8RC:$RA, F8RC:$RB), bb:$DISP), 
+      (COND_BRANCH_F (immBRCond 21), (CMPTLE F8RC:$RA, F8RC:$RB), bb:$DISP)>;
+def : Pat<(brcond (setule F8RC:$RA, F8RC:$RB), bb:$DISP), 
+      (COND_BRANCH_F (immBRCond 21), (CMPTLE F8RC:$RA, F8RC:$RB), bb:$DISP)>;
 
-def : Pat<(brcond (setole F8RC:$RA, immFPZ), bb:$DISP),
-          (FBLE F8RC:$RA,bb:$DISP)>;
-def : Pat<(brcond (setule F8RC:$RA, immFPZ), bb:$DISP),
-          (FBLE F8RC:$RA,bb:$DISP)>;
+def : Pat<(brcond (setgt F8RC:$RA, F8RC:$RB), bb:$DISP),  
+      (COND_BRANCH_F (immBRCond 21), (CMPTLT F8RC:$RB, F8RC:$RA), bb:$DISP)>;
+def : Pat<(brcond (setogt F8RC:$RA, F8RC:$RB), bb:$DISP), 
+      (COND_BRANCH_F (immBRCond 21), (CMPTLT F8RC:$RB, F8RC:$RA), bb:$DISP)>;
+def : Pat<(brcond (setugt F8RC:$RA, F8RC:$RB), bb:$DISP), 
+      (COND_BRANCH_F (immBRCond 21), (CMPTLT F8RC:$RB, F8RC:$RA), bb:$DISP)>;
 
-def : Pat<(brcond (setolt F8RC:$RA, immFPZ), bb:$DISP),
-          (FBLT F8RC:$RA,bb:$DISP)>;
-def : Pat<(brcond (setult F8RC:$RA, immFPZ), bb:$DISP),
-          (FBLT F8RC:$RA,bb:$DISP)>;
+def : Pat<(brcond (setge F8RC:$RA, F8RC:$RB), bb:$DISP),  
+      (COND_BRANCH_F (immBRCond 21), (CMPTLE F8RC:$RB, F8RC:$RA), bb:$DISP)>;
+def : Pat<(brcond (setoge F8RC:$RA, F8RC:$RB), bb:$DISP), 
+      (COND_BRANCH_F (immBRCond 21), (CMPTLE F8RC:$RB, F8RC:$RA), bb:$DISP)>;
+def : Pat<(brcond (setuge F8RC:$RA, F8RC:$RB), bb:$DISP), 
+      (COND_BRANCH_F (immBRCond 21), (CMPTLE F8RC:$RB, F8RC:$RA), bb:$DISP)>;
 
-def : Pat<(brcond (setone F8RC:$RA, immFPZ), bb:$DISP),
-          (FBNE F8RC:$RA,bb:$DISP)>;
-def : Pat<(brcond (setune F8RC:$RA, immFPZ), bb:$DISP),
-          (FBNE F8RC:$RA,bb:$DISP)>;
+def : Pat<(brcond (setne F8RC:$RA, F8RC:$RB), bb:$DISP),  
+      (COND_BRANCH_F (immBRCond 20), (CMPTEQ F8RC:$RA, F8RC:$RB), bb:$DISP)>;
+def : Pat<(brcond (setone F8RC:$RA, F8RC:$RB), bb:$DISP), 
+      (COND_BRANCH_F (immBRCond 20), (CMPTEQ F8RC:$RA, F8RC:$RB), bb:$DISP)>;
+def : Pat<(brcond (setune F8RC:$RA, F8RC:$RB), bb:$DISP), 
+      (COND_BRANCH_F (immBRCond 20), (CMPTEQ F8RC:$RA, F8RC:$RB), bb:$DISP)>;
+
+
+def : Pat<(brcond (setoeq F8RC:$RA, immFPZ), bb:$DISP),   
+      (COND_BRANCH_F (immBRCond 20), F8RC:$RA,bb:$DISP)>;
+def : Pat<(brcond (setueq F8RC:$RA, immFPZ), bb:$DISP),   
+      (COND_BRANCH_F (immBRCond 20), F8RC:$RA,bb:$DISP)>;
+
+def : Pat<(brcond (setoge F8RC:$RA, immFPZ), bb:$DISP),   
+      (COND_BRANCH_F (immBRCond 22), F8RC:$RA,bb:$DISP)>;
+def : Pat<(brcond (setuge F8RC:$RA, immFPZ), bb:$DISP),   
+      (COND_BRANCH_F (immBRCond 22), F8RC:$RA,bb:$DISP)>;
+
+def : Pat<(brcond (setogt F8RC:$RA, immFPZ), bb:$DISP),   
+      (COND_BRANCH_F (immBRCond 23), F8RC:$RA,bb:$DISP)>;
+def : Pat<(brcond (setugt F8RC:$RA, immFPZ), bb:$DISP),   
+      (COND_BRANCH_F (immBRCond 23), F8RC:$RA,bb:$DISP)>;
+
+def : Pat<(brcond (setole F8RC:$RA, immFPZ), bb:$DISP),   
+      (COND_BRANCH_F (immBRCond 24), F8RC:$RA,bb:$DISP)>;
+def : Pat<(brcond (setule F8RC:$RA, immFPZ), bb:$DISP),   
+      (COND_BRANCH_F (immBRCond 24), F8RC:$RA,bb:$DISP)>;
+
+def : Pat<(brcond (setolt F8RC:$RA, immFPZ), bb:$DISP),   
+      (COND_BRANCH_F (immBRCond 25), F8RC:$RA,bb:$DISP)>;
+def : Pat<(brcond (setult F8RC:$RA, immFPZ), bb:$DISP),   
+      (COND_BRANCH_F (immBRCond 25), F8RC:$RA,bb:$DISP)>;
+
+def : Pat<(brcond (setone F8RC:$RA, immFPZ), bb:$DISP),   
+      (COND_BRANCH_F (immBRCond 21), F8RC:$RA,bb:$DISP)>;
+def : Pat<(brcond (setune F8RC:$RA, immFPZ), bb:$DISP),   
+      (COND_BRANCH_F (immBRCond 21), F8RC:$RA,bb:$DISP)>;
 
 //End Branches
 

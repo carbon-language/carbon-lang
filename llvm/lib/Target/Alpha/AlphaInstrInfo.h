@@ -42,6 +42,14 @@ public:
   virtual void InsertBranch(MachineBasicBlock &MBB, MachineBasicBlock *TBB,
                             MachineBasicBlock *FBB,
                             const std::vector<MachineOperand> &Cond) const;
+  bool AnalyzeBranch(MachineBasicBlock &MBB,MachineBasicBlock *&TBB,
+                     MachineBasicBlock *&FBB,
+                     std::vector<MachineOperand> &Cond) const;
+  void RemoveBranch(MachineBasicBlock &MBB) const;
+  void insertNoop(MachineBasicBlock &MBB, 
+                  MachineBasicBlock::iterator MI) const;
+  bool BlockHasNoFallThrough(MachineBasicBlock &MBB) const;
+  bool ReverseBranchCondition(std::vector<MachineOperand> &Cond) const;
 };
 
 }

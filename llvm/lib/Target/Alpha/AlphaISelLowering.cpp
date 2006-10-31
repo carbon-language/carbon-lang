@@ -164,6 +164,8 @@ const char *AlphaTargetLowering::getTargetNodeName(unsigned Opcode) const {
   case AlphaISD::CALL:   return "Alpha::CALL";
   case AlphaISD::DivCall: return "Alpha::DivCall";
   case AlphaISD::RET_FLAG: return "Alpha::RET_FLAG";
+  case AlphaISD::COND_BRANCH_I: return "Alpha::COND_BRANCH_I";
+  case AlphaISD::COND_BRANCH_F: return "Alpha::COND_BRANCH_F";
   }
 }
 

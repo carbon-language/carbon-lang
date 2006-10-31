@@ -74,7 +74,7 @@ bool AlphaTargetMachine::addInstSelector(FunctionPassManager &PM, bool Fast) {
 }
 bool AlphaTargetMachine::addPreEmitPass(FunctionPassManager &PM, bool Fast) {
   // Must run branch selection immediately preceding the asm printer
-  //PM.add(createAlphaBranchSelectionPass());
+  PM.add(createAlphaBranchSelectionPass());
   return false;
 }
 bool AlphaTargetMachine::addAssemblyEmitter(FunctionPassManager &PM, bool Fast, 

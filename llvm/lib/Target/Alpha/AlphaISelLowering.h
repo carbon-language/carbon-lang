@@ -46,7 +46,15 @@ namespace llvm {
       DivCall,
       
       /// return flag operand
-      RET_FLAG
+      RET_FLAG,
+
+      /// CHAIN = COND_BRANCH CHAIN, OPC, (G|F)PRC, DESTBB [, INFLAG] - This
+      /// corresponds to the COND_BRANCH pseudo instruction.  
+      /// *PRC is the input register to compare to zero,
+      /// OPC is the branch opcode to use (e.g. Alpha::BEQ),
+      /// DESTBB is the destination block to branch to, and INFLAG is
+      /// an optional input flag argument.
+      COND_BRANCH_I, COND_BRANCH_F
 
     };
   }
