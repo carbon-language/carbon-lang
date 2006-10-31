@@ -184,7 +184,14 @@ void LCSSA::ProcessInstruction(Instruction *Instr,
     
     // Otherwise, patch up uses of the value with the appropriate LCSSA Phi,
     // inserting PHI nodes into join points where needed.
-    Value *Val = GetValueForBlock(DT->getNode(UserBB), Instr, Phis);
+    DominatorTree::Node *UserBBNode = DT->getNode(UserBB);
+         
+    // If the block has no dominator info, it is unreachable.
+    Value *Val;
+    if (UserBBNode)
+      Val = GetValueForBlock(UserBBNode, Instr, Phis);
+    else
+      Val = UndefValue::get(Instr->getType());
     
     // Preincrement the iterator to avoid invalidating it when we change the
     // value.
