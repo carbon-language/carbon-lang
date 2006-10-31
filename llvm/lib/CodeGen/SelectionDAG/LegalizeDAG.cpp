@@ -1279,7 +1279,7 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
           Reloc = DAG.getNode(ISD::GLOBAL_OFFSET_TABLE, PTy);
         else
           Reloc = Table;
-        Addr= (PTy != MVT::i32) ? DAG.getNode(ISD::SIGN_EXTEND, PTy, LD) : Addr;
+        Addr = (PTy != MVT::i32) ? DAG.getNode(ISD::SIGN_EXTEND, PTy, LD) : LD;
         Addr = DAG.getNode(ISD::ADD, PTy, Addr, Reloc);
         Result = DAG.getNode(ISD::BRIND, MVT::Other, LD.getValue(1), Addr);
       } else {
