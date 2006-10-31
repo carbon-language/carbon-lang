@@ -845,6 +845,22 @@ void SelectionDAGLowering::FindMergedConditions(Value *Cond,
       !InBlock(BOp->getOperand(1), CurBB->getBasicBlock())) {
     const BasicBlock *BB = CurBB->getBasicBlock();
     
+    if (IntrinsicInst *II = dyn_cast<IntrinsicInst>(Cond))
+      if ((II->getIntrinsicID() == Intrinsic::isunordered_f32 ||
+           II->getIntrinsicID() == Intrinsic::isunordered_f64) &&
+          // The operands of the setcc have to be in this block.  We don't know
+          // how to export them from some other block.  If this is the first
+          // block of the sequence, no exporting is needed.
+          (CurBB == CurMBB ||
+           (isExportableFromCurrentBlock(II->getOperand(1), BB) &&
+            isExportableFromCurrentBlock(II->getOperand(2), BB)))) {
+        SelectionDAGISel::CaseBlock CB(ISD::SETUO, II->getOperand(1),
+                                       II->getOperand(2), TBB, FBB, CurBB);
+        SwitchCases.push_back(CB);
+        return;
+      }
+        
+    
     // If the leaf of the tree is a setcond inst, merge the condition into the
     // caseblock.
     if (BOp && isa<SetCondInst>(BOp) &&
@@ -952,6 +968,16 @@ void SelectionDAGLowering::FindMergedConditions(Value *Cond,
   }
 }
 
+/// If the set of cases should be emitted as a series of branches, return true.
+/// If we should emit this as a bunch of and/or'd together conditions, return
+/// false.
+static bool 
+ShouldEmitAsBranches(const std::vector<SelectionDAGISel::CaseBlock> &Cases) {
+  if (Cases.size() != 2) return true;
+  
+  return true;
+}
+
 void SelectionDAGLowering::visitBr(BranchInst &I) {
   // Update machine-CFG edges.
   MachineBasicBlock *Succ0MBB = FuncInfo.MBBMap[I.getSuccessor(0)];
@@ -1000,20 +1026,25 @@ void SelectionDAGLowering::visitBr(BranchInst &I) {
          BOp->getOpcode() == Instruction::Or)) {
       FindMergedConditions(BOp, Succ0MBB, Succ1MBB, CurMBB, BOp->getOpcode());
 
-      // If the compares in later blocks need to use values not currently
-      // exported from this block, export them now.  This block should always be
-      // the first entry.
-      assert(SwitchCases[0].ThisBB == CurMBB && "Unexpected lowering!");
-      
-      for (unsigned i = 1, e = SwitchCases.size(); i != e; ++i) {
-        ExportFromCurrentBlock(SwitchCases[i].CmpLHS);
-        ExportFromCurrentBlock(SwitchCases[i].CmpRHS);
+      // Allow some cases to be rejected.
+      if (ShouldEmitAsBranches(SwitchCases)) {
+        // If the compares in later blocks need to use values not currently
+        // exported from this block, export them now.  This block should always
+        // be the first entry.
+        assert(SwitchCases[0].ThisBB == CurMBB && "Unexpected lowering!");
+        
+        for (unsigned i = 1, e = SwitchCases.size(); i != e; ++i) {
+          ExportFromCurrentBlock(SwitchCases[i].CmpLHS);
+          ExportFromCurrentBlock(SwitchCases[i].CmpRHS);
+        }
+        
+        // Emit the branch for this block.
+        visitSwitchCase(SwitchCases[0]);
+        SwitchCases.erase(SwitchCases.begin());
+        return;
       }
       
-      // Emit the branch for this block.
-      visitSwitchCase(SwitchCases[0]);
-      SwitchCases.erase(SwitchCases.begin());
-      return;
+      SwitchCases.clear();
     }
   }
   
