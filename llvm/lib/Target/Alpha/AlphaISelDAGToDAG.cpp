@@ -294,7 +294,7 @@ SDNode *AlphaDAGToDAGISel::Select(SDOperand Op) {
                             Chain, Chain.getValue(1));
     Chain = CurDAG->getCopyFromReg(Chain, Alpha::R27, MVT::i64, 
 				  SDOperand(CNode, 1));
-    return CurDAG->SelectNodeTo(N, Alpha::BIS, MVT::i64, Chain, Chain);
+    return CurDAG->SelectNodeTo(N, Alpha::BISr, MVT::i64, Chain, Chain);
   }
 
   case ISD::READCYCLECOUNTER: {
@@ -458,7 +458,7 @@ SDNode *AlphaDAGToDAGISel::Select(SDOperand Op) {
 	    SDOperand(CurDAG->getTargetNode(Alpha::ZAPNOTi, MVT::i64,
                                             N->getOperand(0).getOperand(0),
 					    getI64Imm(get_zapImm(mask))), 0);
-	  return CurDAG->getTargetNode(Alpha::SRL, MVT::i64, Z, 
+	  return CurDAG->getTargetNode(Alpha::SRLr, MVT::i64, Z, 
                                        getI64Imm(sval));
 	}
       }

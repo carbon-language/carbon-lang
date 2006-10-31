@@ -26,7 +26,7 @@ bool AlphaInstrInfo::isMoveInstr(const MachineInstr& MI,
                                  unsigned& sourceReg,
                                  unsigned& destReg) const {
   MachineOpCode oc = MI.getOpcode();
-  if (oc == Alpha::BIS    || 
+  if (oc == Alpha::BISr   || 
       oc == Alpha::CPYSS  || 
       oc == Alpha::CPYST  ||
       oc == Alpha::CPYSSt || 
@@ -229,7 +229,7 @@ void AlphaInstrInfo::RemoveBranch(MachineBasicBlock &MBB) const {
 
 void AlphaInstrInfo::insertNoop(MachineBasicBlock &MBB, 
                                 MachineBasicBlock::iterator MI) const {
-  BuildMI(MBB, MI, Alpha::BIS, 2, Alpha::R31).addReg(Alpha::R31)
+  BuildMI(MBB, MI, Alpha::BISr, 2, Alpha::R31).addReg(Alpha::R31)
     .addReg(Alpha::R31);
 }
 

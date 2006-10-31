@@ -135,6 +135,7 @@ def add8  : PatFrag<(ops node:$op1, node:$op2),
 def sub8  : PatFrag<(ops node:$op1, node:$op2),
                     (sub (shl node:$op1, 3), node:$op2)>;
 class BinOpFrag<dag res> : PatFrag<(ops node:$LHS, node:$RHS), res>;
+class CmpOpFrag<dag res> : PatFrag<(ops node:$R), res>;
 
 //Pseudo ops for selection
 
@@ -167,68 +168,47 @@ def MEMLABEL : PseudoInstAlpha<(ops s64imm:$i, s64imm:$j, s64imm:$k, s64imm:$m),
 
 //conditional moves, int
 
-def CMOVLBC  : OForm4<  0x11, 0x16, "cmovlbc $RCOND,$RTRUE,$RDEST",
-                [(set GPRC:$RDEST, (select (xor GPRC:$RCOND, 1), GPRC:$RTRUE, GPRC:$RFALSE))], s_cmov>;
-def CMOVLBS  : OForm4<  0x11, 0x14, "cmovlbs $RCOND,$RTRUE,$RDEST",
-                [(set GPRC:$RDEST, (select (and GPRC:$RCOND, 1), GPRC:$RTRUE, GPRC:$RFALSE))], s_cmov>;
-def CMOVEQ   : OForm4<  0x11, 0x24, "cmoveq $RCOND,$RTRUE,$RDEST",
-                [(set GPRC:$RDEST, (select (seteq GPRC:$RCOND, 0), GPRC:$RTRUE, GPRC:$RFALSE))], s_cmov>;
-def CMOVGE   : OForm4<  0x11, 0x46, "cmovge $RCOND,$RTRUE,$RDEST",
-                [(set GPRC:$RDEST, (select (setge GPRC:$RCOND, 0), GPRC:$RTRUE, GPRC:$RFALSE))], s_cmov>;
-def CMOVGT   : OForm4<  0x11, 0x66, "cmovgt $RCOND,$RTRUE,$RDEST",
-                [(set GPRC:$RDEST, (select (setgt GPRC:$RCOND, 0), GPRC:$RTRUE, GPRC:$RFALSE))], s_cmov>;
-def CMOVLE   : OForm4<  0x11, 0x64, "cmovle $RCOND,$RTRUE,$RDEST",
-                [(set GPRC:$RDEST, (select (setle GPRC:$RCOND, 0), GPRC:$RTRUE, GPRC:$RFALSE))], s_cmov>;
-def CMOVLT   : OForm4<  0x11, 0x44, "cmovlt $RCOND,$RTRUE,$RDEST",
-                [(set GPRC:$RDEST, (select (setlt GPRC:$RCOND, 0), GPRC:$RTRUE, GPRC:$RFALSE))], s_cmov>;
-def CMOVNE   : OForm4<  0x11, 0x26, "cmovne $RCOND,$RTRUE,$RDEST",
-                [(set GPRC:$RDEST, (select (setne GPRC:$RCOND, 0), GPRC:$RTRUE, GPRC:$RFALSE))], s_cmov>;
+multiclass cmov_inst<bits<7> fun, string asmstr, PatFrag OpNode> {
+def r : OForm4<0x11, fun, !strconcat(asmstr, " $RCOND,$RTRUE,$RDEST"),
+             [(set GPRC:$RDEST, (select (OpNode GPRC:$RCOND), GPRC:$RTRUE, GPRC:$RFALSE))], s_cmov>;
+def i : OForm4L<0x11, fun, !strconcat(asmstr, " $RCOND,$RTRUE,$RDEST"),
+             [(set GPRC:$RDEST, (select (OpNode GPRC:$RCOND), immUExt8:$RTRUE, GPRC:$RFALSE))], s_cmov>;
+}
 
-def CMOVEQi  : OForm4L< 0x11, 0x24, "cmoveq $RCOND,$RTRUE,$RDEST",
-                [(set GPRC:$RDEST, (select (setne GPRC:$RCOND, 0), GPRC:$RFALSE, immUExt8:$RTRUE))], s_cmov>;
-def CMOVGEi  : OForm4L< 0x11, 0x46, "cmovge $RCOND,$RTRUE,$RDEST",
-                [(set GPRC:$RDEST, (select (setlt GPRC:$RCOND, 0), GPRC:$RFALSE, immUExt8:$RTRUE))], s_cmov>;
-def CMOVGTi  : OForm4L< 0x11, 0x66, "cmovgt $RCOND,$RTRUE,$RDEST",
-                [(set GPRC:$RDEST, (select (setle GPRC:$RCOND, 0), GPRC:$RFALSE, immUExt8:$RTRUE))], s_cmov>;
-def CMOVLEi  : OForm4L< 0x11, 0x64, "cmovle $RCOND,$RTRUE,$RDEST",
-                [(set GPRC:$RDEST, (select (setgt GPRC:$RCOND, 0), GPRC:$RFALSE, immUExt8:$RTRUE))], s_cmov>;
-def CMOVLTi  : OForm4L< 0x11, 0x44, "cmovlt $RCOND,$RTRUE,$RDEST",
-                [(set GPRC:$RDEST, (select (setge GPRC:$RCOND, 0), GPRC:$RFALSE, immUExt8:$RTRUE))], s_cmov>;
-def CMOVNEi  : OForm4L< 0x11, 0x26, "cmovne $RCOND,$RTRUE,$RDEST",
-                [(set GPRC:$RDEST, (select (seteq GPRC:$RCOND, 0), GPRC:$RFALSE, immUExt8:$RTRUE))], s_cmov>;
-def CMOVLBCi : OForm4L< 0x11, 0x16, "cmovlbc $RCOND,$RTRUE,$RDEST",
-                [(set GPRC:$RDEST, (select (and GPRC:$RCOND, 1), GPRC:$RFALSE, immUExt8:$RTRUE))], s_cmov>;
-def CMOVLBSi : OForm4L< 0x11, 0x14, "cmovlbs $RCOND,$RTRUE,$RDEST",
-                [(set GPRC:$RDEST, (select (xor GPRC:$RCOND, 1), GPRC:$RFALSE, immUExt8:$RTRUE))], s_cmov>;
-
+defm CMOVEQ  : cmov_inst<0x24, "cmoveq",  CmpOpFrag<(seteq node:$R, 0)>>;
+defm CMOVNE  : cmov_inst<0x26, "cmovne",  CmpOpFrag<(setne node:$R, 0)>>;
+defm CMOVLT  : cmov_inst<0x44, "cmovlt",  CmpOpFrag<(setlt node:$R, 0)>>;
+defm CMOVLE  : cmov_inst<0x64, "cmovle",  CmpOpFrag<(setle node:$R, 0)>>;
+defm CMOVGT  : cmov_inst<0x66, "cmovgt",  CmpOpFrag<(setgt node:$R, 0)>>;
+defm CMOVGE  : cmov_inst<0x46, "cmovge",  CmpOpFrag<(setge node:$R, 0)>>;
+defm CMOVLBC : cmov_inst<0x16, "cmovlbc", CmpOpFrag<(xor   node:$R, 1)>>;
+defm CMOVLBS : cmov_inst<0x14, "cmovlbs", CmpOpFrag<(and   node:$R, 1)>>;
 
 //General pattern for cmov
 def : Pat<(select GPRC:$which, GPRC:$src1, GPRC:$src2),
-      (CMOVNE GPRC:$src2, GPRC:$src1, GPRC:$which)>;
+      (CMOVNEr GPRC:$src2, GPRC:$src1, GPRC:$which)>;
 def : Pat<(select GPRC:$which, GPRC:$src1, immUExt8:$src2),
       (CMOVEQi GPRC:$src1, immUExt8:$src2, GPRC:$which)>;
 
 //Invert sense when we can for constants:
-def : Pat<(select (seteq GPRC:$RCOND, 0), immUExt8:$RFALSE, GPRC:$RTRUE),
-          (CMOVEQi GPRC:$RTRUE, immUExt8:$RFALSE, GPRC:$RCOND)>;
-def : Pat<(select (setne GPRC:$RCOND, 0), immUExt8:$RFALSE, GPRC:$RTRUE),
-          (CMOVNEi GPRC:$RTRUE, immUExt8:$RFALSE, GPRC:$RCOND)>;
-def : Pat<(select (setgt GPRC:$RCOND, 0), immUExt8:$RFALSE, GPRC:$RTRUE),
-          (CMOVGTi GPRC:$RTRUE, immUExt8:$RFALSE, GPRC:$RCOND)>;
-def : Pat<(select (setge GPRC:$RCOND, 0), immUExt8:$RFALSE, GPRC:$RTRUE),
-          (CMOVGEi GPRC:$RTRUE, immUExt8:$RFALSE, GPRC:$RCOND)>;
-def : Pat<(select (setlt GPRC:$RCOND, 0), immUExt8:$RFALSE, GPRC:$RTRUE),
-          (CMOVLTi GPRC:$RTRUE, immUExt8:$RFALSE, GPRC:$RCOND)>;
-def : Pat<(select (setle GPRC:$RCOND, 0), immUExt8:$RFALSE, GPRC:$RTRUE),
-          (CMOVLEi GPRC:$RTRUE, immUExt8:$RFALSE, GPRC:$RCOND)>;
+//def : Pat<(select (setne GPRC:$RCOND, 0), immUExt8:$RFALSE, GPRC:$RTRUE),
+//          (CMOVNEi GPRC:$RTRUE, immUExt8:$RFALSE, GPRC:$RCOND)>;
+//def : Pat<(select (setgt GPRC:$RCOND, 0), immUExt8:$RFALSE, GPRC:$RTRUE),
+//          (CMOVGTi GPRC:$RTRUE, immUExt8:$RFALSE, GPRC:$RCOND)>;
+//def : Pat<(select (setge GPRC:$RCOND, 0), immUExt8:$RFALSE, GPRC:$RTRUE),
+//          (CMOVGEi GPRC:$RTRUE, immUExt8:$RFALSE, GPRC:$RCOND)>;
+//def : Pat<(select (setlt GPRC:$RCOND, 0), immUExt8:$RFALSE, GPRC:$RTRUE),
+//          (CMOVLTi GPRC:$RTRUE, immUExt8:$RFALSE, GPRC:$RCOND)>;
+//def : Pat<(select (setle GPRC:$RCOND, 0), immUExt8:$RFALSE, GPRC:$RTRUE),
+//          (CMOVLEi GPRC:$RTRUE, immUExt8:$RFALSE, GPRC:$RCOND)>;
 
 multiclass all_inst<bits<6> opc, bits<7> funl, bits<7> funq, 
                     string asmstr, PatFrag OpNode, InstrItinClass itin> {
-  def L  : OForm< opc, funl, !strconcat(asmstr, "l $RA,$RB,$RC"),
+  def Lr : OForm< opc, funl, !strconcat(asmstr, "l $RA,$RB,$RC"),
                [(set GPRC:$RC, (intop (OpNode GPRC:$RA, GPRC:$RB)))], itin>;
   def Li : OFormL<opc, funl, !strconcat(asmstr, "l $RA,$L,$RC"),
                [(set GPRC:$RC, (intop (OpNode GPRC:$RA, immUExt8:$L)))], itin>;
-  def Q  : OForm< opc, funq, !strconcat(asmstr, "q $RA,$RB,$RC"),
+  def Qr : OForm< opc, funq, !strconcat(asmstr, "q $RA,$RB,$RC"),
                [(set GPRC:$RC, (OpNode GPRC:$RA, GPRC:$RB))], itin>;
   def Qi : OFormL<opc, funq, !strconcat(asmstr, "q $RA,$L,$RC"),
                [(set GPRC:$RC, (OpNode GPRC:$RA, immUExt8:$L))], itin>;
@@ -249,35 +229,47 @@ def : Pat<(add4 GPRC:$RA, immUExt8neg:$L), (S4SUBQi GPRC:$RA, immUExt8neg:$L)>;
 def : Pat<(intop (add8 GPRC:$RA, immUExt8neg:$L)), (S8SUBLi GPRC:$RA, immUExt8neg:$L)>;
 def : Pat<(add8 GPRC:$RA, immUExt8neg:$L), (S8SUBQi GPRC:$RA, immUExt8neg:$L)>;
 
+multiclass log_inst<bits<6> opc, bits<7> fun, string asmstr, SDNode OpNode, InstrItinClass itin> {
+def r : OForm<opc, fun, !strconcat(asmstr, " $RA,$RB,$RC"),
+              [(set GPRC:$RC, (OpNode GPRC:$RA, GPRC:$RB))], itin>;
+def i : OFormL<opc, fun, !strconcat(asmstr, " $RA,$L,$RC"),
+              [(set GPRC:$RC, (OpNode GPRC:$RA, immUExt8:$L))], itin>;
+}
+multiclass inv_inst<bits<6> opc, bits<7> fun, string asmstr, SDNode OpNode, InstrItinClass itin> {
+def r : OForm<opc, fun, !strconcat(asmstr, " $RA,$RB,$RC"),
+              [(set GPRC:$RC, (OpNode GPRC:$RA, (not GPRC:$RB)))], itin>;
+def i : OFormL<opc, fun, !strconcat(asmstr, " $RA,$L,$RC"),
+              [(set GPRC:$RC, (OpNode GPRC:$RA, immUExt8inv:$L))], itin>;
+}
 
-def AND      : OForm< 0x11, 0x00, "and $RA,$RB,$RC",
-                      [(set GPRC:$RC, (and GPRC:$RA, GPRC:$RB))], s_ilog>;
-def ANDi     : OFormL<0x11, 0x00, "and $RA,$L,$RC",
-                      [(set GPRC:$RC, (and GPRC:$RA, immUExt8:$L))], s_ilog>;
-def BIC      : OForm< 0x11, 0x08, "bic $RA,$RB,$RC",
-                      [(set GPRC:$RC, (and GPRC:$RA, (not GPRC:$RB)))], s_ilog>;
-def BICi     : OFormL<0x11, 0x08, "bic $RA,$L,$RC", 
-                      [(set GPRC:$RC, (and GPRC:$RA, immUExt8inv:$L))], s_ilog>;
-def BIS      : OForm< 0x11, 0x20, "bis $RA,$RB,$RC",
-                      [(set GPRC:$RC, (or GPRC:$RA, GPRC:$RB))], s_ilog>;
-def BISi     : OFormL<0x11, 0x20, "bis $RA,$L,$RC",
-                      [(set GPRC:$RC, (or GPRC:$RA, immUExt8:$L))], s_ilog>;
+defm AND   : log_inst<0x11, 0x00, "and",   and,   s_ilog>;
+defm BIC   : inv_inst<0x11, 0x08, "bic",   and,   s_ilog>;
+defm BIS   : log_inst<0x11, 0x20, "bis",   or,    s_ilog>;
+defm ORNOT : inv_inst<0x11, 0x28, "ornot", or,    s_ilog>;
+defm XOR   : log_inst<0x11, 0x40, "xor",   xor,   s_ilog>;
+defm EQV   : inv_inst<0x11, 0x48, "eqv",   xor,   s_ilog>;
+
+defm SL    : log_inst<0x12, 0x39, "sll",   shl,   s_ishf>;
+defm SRA   : log_inst<0x12, 0x3c, "sra",   sra,   s_ishf>;
+defm SRL   : log_inst<0x12, 0x34, "srl",   srl,   s_ishf>;
+defm UMULH : log_inst<0x13, 0x30, "umulh", mulhu, s_imul>;
+
 def CTLZ     : OForm2<0x1C, 0x32, "CTLZ $RB,$RC", 
                       [(set GPRC:$RC, (ctlz GPRC:$RB))], s_imisc>;
 def CTPOP    : OForm2<0x1C, 0x30, "CTPOP $RB,$RC", 
                       [(set GPRC:$RC, (ctpop GPRC:$RB))], s_imisc>;
 def CTTZ     : OForm2<0x1C, 0x33, "CTTZ $RB,$RC", 
                       [(set GPRC:$RC, (cttz GPRC:$RB))], s_imisc>;
-def EQV      : OForm< 0x11, 0x48, "eqv $RA,$RB,$RC",
-                      [(set GPRC:$RC, (xor GPRC:$RA, (not GPRC:$RB)))], s_ilog>;
-def EQVi     : OFormL<0x11, 0x48, "eqv $RA,$L,$RC", 
-                      [(set GPRC:$RC, (xor GPRC:$RA, immUExt8inv:$L))], s_ilog>;
 def EXTBL    : OForm< 0x12, 0x06, "EXTBL $RA,$RB,$RC", 
                       [(set GPRC:$RC, (and (srl GPRC:$RA, (shl GPRC:$RB, 3)), 255))], s_ishf>;
 def EXTWL    : OForm< 0x12, 0x16, "EXTWL $RA,$RB,$RC", 
                       [(set GPRC:$RC, (and (srl GPRC:$RA, (shl GPRC:$RB, 3)), 65535))], s_ishf>;
 def EXTLL    : OForm< 0x12, 0x26, "EXTLL $RA,$RB,$RC", 
                       [(set GPRC:$RC, (and (srl GPRC:$RA, (shl GPRC:$RB, 3)), 4294967295))], s_ishf>;
+def SEXTB    : OForm2<0x1C, 0x00, "sextb $RB,$RC", 
+                      [(set GPRC:$RC, (sext_inreg GPRC:$RB, i8))], s_ishf>;
+def SEXTW    : OForm2<0x1C, 0x01, "sextw $RB,$RC", 
+                      [(set GPRC:$RC, (sext_inreg GPRC:$RB, i16))], s_ishf>;
 
 //def EXTBLi   : OFormL<0x12, 0x06, "EXTBL $RA,$L,$RC", []>; //Extract byte low
 //def EXTLH    : OForm< 0x12, 0x6A, "EXTLH $RA,$RB,$RC", []>; //Extract longword high
@@ -291,8 +283,6 @@ def EXTLL    : OForm< 0x12, 0x26, "EXTLL $RA,$RB,$RC",
 //def EXTWHi   : OFormL<0x12, 0x5A, "EXTWH $RA,$L,$RC", []>; //Extract word high
 //def EXTWLi   : OFormL<0x12, 0x16, "EXTWL $RA,$L,$RC", []>; //Extract word low
 
-//def IMPLVER  : OForm< 0x11, 0x6C, "IMPLVER $RA,$RB,$RC", []>; //Implementation version
-//def IMPLVERi : OFormL<0x11, 0x6C, "IMPLVER $RA,$L,$RC", []>; //Implementation version
 //def INSBL    : OForm< 0x12, 0x0B, "INSBL $RA,$RB,$RC", []>; //Insert byte low
 //def INSBLi   : OFormL<0x12, 0x0B, "INSBL $RA,$L,$RC", []>; //Insert byte low
 //def INSLH    : OForm< 0x12, 0x67, "INSLH $RA,$RB,$RC", []>; //Insert longword high
@@ -307,6 +297,7 @@ def EXTLL    : OForm< 0x12, 0x26, "EXTLL $RA,$RB,$RC",
 //def INSWHi   : OFormL<0x12, 0x57, "INSWH $RA,$L,$RC", []>; //Insert word high
 //def INSWL    : OForm< 0x12, 0x1B, "INSWL $RA,$RB,$RC", []>; //Insert word low
 //def INSWLi   : OFormL<0x12, 0x1B, "INSWL $RA,$L,$RC", []>; //Insert word low
+
 //def MSKBL    : OForm< 0x12, 0x02, "MSKBL $RA,$RB,$RC", []>; //Mask byte low
 //def MSKBLi   : OFormL<0x12, 0x02, "MSKBL $RA,$L,$RC", []>; //Mask byte low
 //def MSKLH    : OForm< 0x12, 0x62, "MSKLH $RA,$RB,$RC", []>; //Mask longword high
@@ -321,35 +312,6 @@ def EXTLL    : OForm< 0x12, 0x26, "EXTLL $RA,$RB,$RC",
 //def MSKWHi   : OFormL<0x12, 0x52, "MSKWH $RA,$L,$RC", []>; //Mask word high
 //def MSKWL    : OForm< 0x12, 0x12, "MSKWL $RA,$RB,$RC", []>; //Mask word low
 //def MSKWLi   : OFormL<0x12, 0x12, "MSKWL $RA,$L,$RC", []>; //Mask word low
-
-def ORNOT    : OForm< 0x11, 0x28, "ornot $RA,$RB,$RC",
-                      [(set GPRC:$RC, (or GPRC:$RA, (not GPRC:$RB)))], s_ilog>;
-def ORNOTi   : OFormL<0x11, 0x28, "ornot $RA,$L,$RC", 
-                      [(set GPRC:$RC, (or GPRC:$RA, immUExt8inv:$L))], s_ilog>;
-def SEXTB    : OForm2<0x1C, 0x00, "sextb $RB,$RC", 
-                      [(set GPRC:$RC, (sext_inreg GPRC:$RB, i8))], s_ishf>;
-def SEXTW    : OForm2<0x1C, 0x01, "sextw $RB,$RC", 
-                      [(set GPRC:$RC, (sext_inreg GPRC:$RB, i16))], s_ishf>;
-def SL       : OForm< 0x12, 0x39, "sll $RA,$RB,$RC",
-                      [(set GPRC:$RC, (shl GPRC:$RA, GPRC:$RB))], s_ishf>;
-def SLi      : OFormL<0x12, 0x39, "sll $RA,$L,$RC",
-                      [(set GPRC:$RC, (shl GPRC:$RA, immUExt8:$L))], s_ishf>;
-def SRA      : OForm< 0x12, 0x3C, "sra $RA,$RB,$RC",
-                      [(set GPRC:$RC, (sra GPRC:$RA, GPRC:$RB))], s_ishf>;
-def SRAi     : OFormL<0x12, 0x3C, "sra $RA,$L,$RC",
-                      [(set GPRC:$RC, (sra GPRC:$RA, immUExt8:$L))], s_ishf>;
-def SRL      : OForm< 0x12, 0x34, "srl $RA,$RB,$RC",
-                      [(set GPRC:$RC, (srl GPRC:$RA, GPRC:$RB))], s_ishf>;
-def SRLi     : OFormL<0x12, 0x34, "srl $RA,$L,$RC",
-                      [(set GPRC:$RC, (srl GPRC:$RA, immUExt8:$L))], s_ishf>;
-def UMULH    : OForm< 0x13, 0x30, "umulh $RA,$RB,$RC",
-                      [(set GPRC:$RC, (mulhu GPRC:$RA, GPRC:$RB))], s_imul>;                     
-def UMULHi   : OFormL<0x13, 0x30, "umulh $RA,$L,$RC", 
-                      [(set GPRC:$RC, (mulhu GPRC:$RA, immUExt8:$L))], s_imul>;
-def XOR      : OForm< 0x11, 0x40, "xor $RA,$RB,$RC",
-                      [(set GPRC:$RC, (xor GPRC:$RA, GPRC:$RB))], s_ilog>;
-def XORi     : OFormL<0x11, 0x40, "xor $RA,$L,$RC",
-                      [(set GPRC:$RC, (xor GPRC:$RA, immUExt8:$L))], s_ilog>;
                       
 def ZAPNOTi  : OFormL<0x12, 0x31, "zapnot $RA,$L,$RC", [], s_ishf>;
 
@@ -1084,42 +1046,42 @@ def : Pat<(fcopysign F8RC:$A, (fneg F4RC:$B)),
 
 //Yes, signed multiply high is ugly
 def : Pat<(mulhs GPRC:$RA, GPRC:$RB),
-          (SUBQ (UMULH GPRC:$RA, GPRC:$RB), (ADDQ (CMOVGE GPRC:$RB, R31, GPRC:$RA), 
-                                                 (CMOVGE GPRC:$RA, R31, GPRC:$RB)))>;
+          (SUBQr (UMULHr GPRC:$RA, GPRC:$RB), (ADDQr (CMOVGEr GPRC:$RB, R31, GPRC:$RA), 
+                                                     (CMOVGEr GPRC:$RA, R31, GPRC:$RB)))>;
 
 //Stupid crazy arithmetic stuff:
 let AddedComplexity = 1 in {
-def : Pat<(mul GPRC:$RA, 5), (S4ADDQ GPRC:$RA, GPRC:$RA)>;
-def : Pat<(mul GPRC:$RA, 9), (S8ADDQ GPRC:$RA, GPRC:$RA)>;
-def : Pat<(mul GPRC:$RA, 3), (S4SUBQ GPRC:$RA, GPRC:$RA)>;
-def : Pat<(mul GPRC:$RA, 7), (S8SUBQ GPRC:$RA, GPRC:$RA)>;
+def : Pat<(mul GPRC:$RA, 5), (S4ADDQr GPRC:$RA, GPRC:$RA)>;
+def : Pat<(mul GPRC:$RA, 9), (S8ADDQr GPRC:$RA, GPRC:$RA)>;
+def : Pat<(mul GPRC:$RA, 3), (S4SUBQr GPRC:$RA, GPRC:$RA)>;
+def : Pat<(mul GPRC:$RA, 7), (S8SUBQr GPRC:$RA, GPRC:$RA)>;
 
 //slight tree expansion if we are multiplying near to a power of 2
 //n is above a power of 2
 def : Pat<(mul GPRC:$RA, immRem1:$imm), 
-          (ADDQ (SL GPRC:$RA, (nearP2X immRem1:$imm)), GPRC:$RA)>;
+          (ADDQr (SLr GPRC:$RA, (nearP2X immRem1:$imm)), GPRC:$RA)>;
 def : Pat<(mul GPRC:$RA, immRem2:$imm), 
-          (ADDQ (SL GPRC:$RA, (nearP2X immRem2:$imm)), (ADDQ GPRC:$RA, GPRC:$RA))>;
+          (ADDQr (SLr GPRC:$RA, (nearP2X immRem2:$imm)), (ADDQr GPRC:$RA, GPRC:$RA))>;
 def : Pat<(mul GPRC:$RA, immRem3:$imm),
-          (ADDQ (SL GPRC:$RA, (nearP2X immRem3:$imm)), (S4SUBQ GPRC:$RA, GPRC:$RA))>;
+          (ADDQr (SLr GPRC:$RA, (nearP2X immRem3:$imm)), (S4SUBQr GPRC:$RA, GPRC:$RA))>;
 def : Pat<(mul GPRC:$RA, immRem4:$imm),
-          (S4ADDQ GPRC:$RA, (SL GPRC:$RA, (nearP2X immRem4:$imm)))>;
+          (S4ADDQr GPRC:$RA, (SLr GPRC:$RA, (nearP2X immRem4:$imm)))>;
 def : Pat<(mul GPRC:$RA, immRem5:$imm),
-          (ADDQ (SL GPRC:$RA, (nearP2X immRem5:$imm)), (S4ADDQ GPRC:$RA, GPRC:$RA))>;
+          (ADDQr (SLr GPRC:$RA, (nearP2X immRem5:$imm)), (S4ADDQr GPRC:$RA, GPRC:$RA))>;
 def : Pat<(mul GPRC:$RA, immRemP2:$imm),
-          (ADDQ (SL GPRC:$RA, (nearP2X immRemP2:$imm)), (SLi GPRC:$RA, (nearP2RemX immRemP2:$imm)))>;
+          (ADDQr (SLr GPRC:$RA, (nearP2X immRemP2:$imm)), (SLi GPRC:$RA, (nearP2RemX immRemP2:$imm)))>;
 
 //n is below a power of 2
 def : Pat<(mul GPRC:$RA, immRem1n:$imm), 
-          (SUBQ (SL GPRC:$RA, (nearP2X immRem1n:$imm)), GPRC:$RA)>;
+          (SUBQr (SLr GPRC:$RA, (nearP2X immRem1n:$imm)), GPRC:$RA)>;
 def : Pat<(mul GPRC:$RA, immRem2n:$imm), 
-          (SUBQ (SL GPRC:$RA, (nearP2X immRem2n:$imm)), (ADDQ GPRC:$RA, GPRC:$RA))>;
+          (SUBQr (SLr GPRC:$RA, (nearP2X immRem2n:$imm)), (ADDQr GPRC:$RA, GPRC:$RA))>;
 def : Pat<(mul GPRC:$RA, immRem3n:$imm),
-          (SUBQ (SL GPRC:$RA, (nearP2X immRem3n:$imm)), (S4SUBQ GPRC:$RA, GPRC:$RA))>;
+          (SUBQr (SLr GPRC:$RA, (nearP2X immRem3n:$imm)), (S4SUBQr GPRC:$RA, GPRC:$RA))>;
 def : Pat<(mul GPRC:$RA, immRem4n:$imm),
-          (SUBQ (SL GPRC:$RA, (nearP2X immRem4n:$imm)), (SLi GPRC:$RA, 2))>;
+          (SUBQr (SLr GPRC:$RA, (nearP2X immRem4n:$imm)), (SLi GPRC:$RA, 2))>;
 def : Pat<(mul GPRC:$RA, immRem5n:$imm),
-          (SUBQ (SL GPRC:$RA, (nearP2X immRem5n:$imm)), (S4ADDQ GPRC:$RA, GPRC:$RA))>;
+          (SUBQr (SLr GPRC:$RA, (nearP2X immRem5n:$imm)), (S4ADDQr GPRC:$RA, GPRC:$RA))>;
 def : Pat<(mul GPRC:$RA, immRemP2n:$imm),
-          (SUBQ (SL GPRC:$RA, (nearP2X immRemP2n:$imm)), (SLi GPRC:$RA, (nearP2RemX immRemP2n:$imm)))>;
+          (SUBQr (SLr GPRC:$RA, (nearP2X immRemP2n:$imm)), (SLi GPRC:$RA, (nearP2RemX immRemP2n:$imm)))>;
 } //Added complexity

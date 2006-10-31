@@ -112,19 +112,19 @@ MachineInstr *AlphaRegisterInfo::foldMemoryOperand(MachineInstr *MI,
    switch(Opc) {
    default:
      break;
-   case Alpha::BIS:
+   case Alpha::BISr:
    case Alpha::CPYSS:
    case Alpha::CPYST:
      if (MI->getOperand(1).getReg() == MI->getOperand(2).getReg()) {
        if (OpNum == 0) {  // move -> store
 	 unsigned InReg = MI->getOperand(1).getReg();
-	 Opc = (Opc == Alpha::BIS) ? Alpha::STQ : 
+	 Opc = (Opc == Alpha::BISr) ? Alpha::STQ : 
 	   ((Opc == Alpha::CPYSS) ? Alpha::STS : Alpha::STT);
 	 return BuildMI(Opc, 3).addReg(InReg).addFrameIndex(FrameIndex)
 	   .addReg(Alpha::F31);
        } else {           // load -> move
 	 unsigned OutReg = MI->getOperand(0).getReg();
-	 Opc = (Opc == Alpha::BIS) ? Alpha::LDQ : 
+	 Opc = (Opc == Alpha::BISr) ? Alpha::LDQ : 
 	   ((Opc == Alpha::CPYSS) ? Alpha::LDS : Alpha::LDT);
 	 return BuildMI(Opc, 2, OutReg).addFrameIndex(FrameIndex)
 	   .addReg(Alpha::F31);
@@ -142,7 +142,7 @@ void AlphaRegisterInfo::copyRegToReg(MachineBasicBlock &MBB,
                                      const TargetRegisterClass *RC) const {
   //  std::cerr << "copyRegToReg " << DestReg << " <- " << SrcReg << "\n";
   if (RC == Alpha::GPRCRegisterClass) {
-    BuildMI(MBB, MI, Alpha::BIS, 2, DestReg).addReg(SrcReg).addReg(SrcReg);
+    BuildMI(MBB, MI, Alpha::BISr, 2, DestReg).addReg(SrcReg).addReg(SrcReg);
   } else if (RC == Alpha::F4RCRegisterClass) {
     BuildMI(MBB, MI, Alpha::CPYSS, 2, DestReg).addReg(SrcReg).addReg(SrcReg);
   } else if (RC == Alpha::F8RCRegisterClass) {
@@ -347,7 +347,7 @@ void AlphaRegisterInfo::emitPrologue(MachineFunction &MF) const {
     BuildMI(MBB, MBBI, Alpha::STQ, 3)
       .addReg(Alpha::R15).addImm(0).addReg(Alpha::R30);
     //this must be the last instr in the prolog
-    BuildMI(MBB, MBBI, Alpha::BIS, 2, Alpha::R15)
+    BuildMI(MBB, MBBI, Alpha::BISr, 2, Alpha::R15)
       .addReg(Alpha::R30).addReg(Alpha::R30);
   }
 
@@ -370,7 +370,7 @@ void AlphaRegisterInfo::emitEpilogue(MachineFunction &MF,
   if (FP)
   {
     //copy the FP into the SP (discards allocas)
-    BuildMI(MBB, MBBI, Alpha::BIS, 2, Alpha::R30).addReg(Alpha::R15)
+    BuildMI(MBB, MBBI, Alpha::BISr, 2, Alpha::R30).addReg(Alpha::R15)
       .addReg(Alpha::R15);
     //restore the FP
     BuildMI(MBB, MBBI, Alpha::LDQ, 2, Alpha::R15).addImm(0).addReg(Alpha::R15);
