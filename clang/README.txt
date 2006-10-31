@@ -78,8 +78,8 @@ II. Usage of clang driver:
  
  * -parse-print-callbacks doesn't print all callbacks yet.
  
- * -parse-print-ast isn't complete, it currently prints decls and stuff nested
-   in parens.  This will improve as more AST nodes are implemented.
+ * -parse-print-ast isn't complete.  It will improve as more AST nodes are
+   implemented.
 
  * -fsyntax-only is currently identical to -parse-noop.
 
@@ -95,7 +95,9 @@ III. Current advantages over GCC:
  * BSD License, can be linked into non-GPL projects.
  * Full diagnostic control, per diagnostic.
  * Faster than GCC at parsing, lexing, and preprocessing.
- 
+ * Defers exposing platform-specific stuff to as late as possible, tracks use of
+   platform-specific features (e.g. #ifdef PPC) to allow 'portable bytecodes'.
+
 Future Features:
 
  * Fine grained diag control within the source (#pragma enable/disable warning).
@@ -105,14 +107,12 @@ Future Features:
  * Fast #import!
  * Dependency tracking: change to header file doesn't recompile every function
    that texually depends on it: recompile only those functions that need it.
- * Defers exposing platform-specific stuff to as late as possible, tracks use of
-   platform-specific features (e.g. #ifdef PPC) to allow 'portable bytecodes'.
 
 
 IV. Missing Functionality / Improvements
 
 clang driver:
- * predefined macros/search paths are hard-coded into the driver.
+ * Include search paths are hard-coded into the driver.
 
 File Manager:
  * We currently do a lot of stat'ing for files that don't exist, particularly
@@ -145,7 +145,7 @@ Lexer:
 Preprocessor:
  * Know about apple header maps.
  * #assert/#unassert
- * #line / #file directives
+ * #line / #file directives (currently accepted and ignored).
  * MSExtension: "L#param" stringizes to a wide string literal.
  * Consider merging the parser's expression parser into the preprocessor to
    eliminate duplicate code.
@@ -157,6 +157,7 @@ Parser:
  * C90/K&R modes.  Need to get a copy of the C90 spec.
  * __extension__, __attribute__ [currently just skipped and ignored].
  * A lot of semantic analysis is missing.
+ * "initializers", GCC inline asm.
 
 Parser Actions:
  * All that are missing.
