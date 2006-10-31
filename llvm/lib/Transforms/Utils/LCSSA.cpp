@@ -71,8 +71,8 @@ namespace {
   private:
     SetVector<Instruction*> getLoopValuesUsedOutsideLoop(Loop *L);
 
-    PHINode *GetValueForBlock(DominatorTree::Node *BB, Instruction *OrigInst,
-                              std::map<DominatorTree::Node*, PHINode*> &Phis);
+    Value *GetValueForBlock(DominatorTree::Node *BB, Instruction *OrigInst,
+                            std::map<DominatorTree::Node*, Value*> &Phis);
 
     /// inLoop - returns true if the given block is within the current loop
     const bool inLoop(BasicBlock* B) {
@@ -140,7 +140,7 @@ void LCSSA::ProcessInstruction(Instruction *Instr,
   ++NumLCSSA; // We are applying the transformation
 
   // Keep track of the blocks that have the value available already.
-  std::map<DominatorTree::Node*, PHINode*> Phis;
+  std::map<DominatorTree::Node*, Value*> Phis;
 
   DominatorTree::Node *InstrNode = DT->getNode(Instr->getParent());
 
@@ -150,18 +150,18 @@ void LCSSA::ProcessInstruction(Instruction *Instr,
       BBE = exitBlocks.end(); BBI != BBE; ++BBI) {
     BasicBlock *BB = *BBI;
     DominatorTree::Node *ExitBBNode = DT->getNode(BB);
-    PHINode *&Phi = Phis[ExitBBNode];
+    Value *&Phi = Phis[ExitBBNode];
     if (!Phi && InstrNode->dominates(ExitBBNode)) {
-      Phi = new PHINode(Instr->getType(), Instr->getName()+".lcssa",
-                        BB->begin());
-      Phi->reserveOperandSpace(std::distance(pred_begin(BB), pred_end(BB)));
+      PHINode *PN = new PHINode(Instr->getType(), Instr->getName()+".lcssa",
+                                BB->begin());
+      PN->reserveOperandSpace(std::distance(pred_begin(BB), pred_end(BB)));
+
+      // Remember that this phi makes the value alive in this block.
+      Phi = PN;
 
       // Add inputs from inside the loop for this PHI.
       for (pred_iterator PI = pred_begin(BB), E = pred_end(BB); PI != E; ++PI)
-        Phi->addIncoming(Instr, *PI);
-      
-      // Remember that this phi makes the value alive in this block.
-      Phis[ExitBBNode] = Phi;
+        PN->addIncoming(Instr, *PI);
     }
   }
   
@@ -184,14 +184,7 @@ void LCSSA::ProcessInstruction(Instruction *Instr,
     
     // Otherwise, patch up uses of the value with the appropriate LCSSA Phi,
     // inserting PHI nodes into join points where needed.
-    DominatorTree::Node *UserBBNode = DT->getNode(UserBB);
-         
-    // If the block has no dominator info, it is unreachable.
-    Value *Val;
-    if (UserBBNode)
-      Val = GetValueForBlock(UserBBNode, Instr, Phis);
-    else
-      Val = UndefValue::get(Instr->getType());
+    Value *Val = GetValueForBlock(DT->getNode(UserBB), Instr, Phis);
     
     // Preincrement the iterator to avoid invalidating it when we change the
     // value.
@@ -233,10 +226,14 @@ SetVector<Instruction*> LCSSA::getLoopValuesUsedOutsideLoop(Loop *L) {
 
 /// GetValueForBlock - Get the value to use within the specified basic block.
 /// available values are in Phis.
-PHINode *LCSSA::GetValueForBlock(DominatorTree::Node *BB, Instruction *OrigInst,
-                               std::map<DominatorTree::Node*, PHINode*> &Phis) {
+Value *LCSSA::GetValueForBlock(DominatorTree::Node *BB, Instruction *OrigInst,
+                               std::map<DominatorTree::Node*, Value*> &Phis) {
+  // If there is no dominator info for this BB, it is unreachable.
+  if (BB == 0)
+    return UndefValue::get(OrigInst->getType());
+                                 
   // If we have already computed this value, return the previously computed val.
-  PHINode *&V = Phis[BB];
+  Value *&V = Phis[BB];
   if (V) return V;
 
   DominatorTree::Node *IDom = BB->getIDom();
@@ -262,13 +259,14 @@ PHINode *LCSSA::GetValueForBlock(DominatorTree::Node *BB, Instruction *OrigInst,
   
   // Otherwise, the idom is the loop, so we need to insert a PHI node.  Do so
   // now, then get values to fill in the incoming values for the PHI.
-  V = new PHINode(OrigInst->getType(), OrigInst->getName()+".lcssa",
-                  BBN->begin());
-  V->reserveOperandSpace(std::distance(pred_begin(BBN), pred_end(BBN)));
-
+  PHINode *PN = new PHINode(OrigInst->getType(), OrigInst->getName()+".lcssa",
+                            BBN->begin());
+  PN->reserveOperandSpace(std::distance(pred_begin(BBN), pred_end(BBN)));
+  V = PN;
+                                 
   // Fill in the incoming values for the block.
   for (pred_iterator PI = pred_begin(BBN), E = pred_end(BBN); PI != E; ++PI)
-    V->addIncoming(GetValueForBlock(DT->getNode(*PI), OrigInst, Phis), *PI);
-  return V;
+    PN->addIncoming(GetValueForBlock(DT->getNode(*PI), OrigInst, Phis), *PI);
+  return PN;
 }
 
