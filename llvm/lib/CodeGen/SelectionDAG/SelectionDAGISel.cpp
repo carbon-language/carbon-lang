@@ -2417,7 +2417,11 @@ void SelectionDAGLowering::visitInlineAsm(CallInst &I) {
         GetRegistersForValue(ConstraintCode, ConstraintVTs[i],
                              true, UsesInputRegister, 
                              OutputRegs, InputRegs);
-      assert(!Regs.Regs.empty() && "Couldn't allocate output reg!");
+      if (Regs.Regs.empty()) {
+        std::cerr << "Couldn't allocate output reg for contraint '"
+                  << ConstraintCode << "'!\n";
+        exit(1);
+      }
 
       if (!Constraints[i].isIndirectOutput) {
         assert(RetValRegs.Regs.empty() &&
