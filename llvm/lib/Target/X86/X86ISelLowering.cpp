@@ -32,6 +32,7 @@
 #include "llvm/Support/MathExtras.h"
 #include "llvm/Target/TargetOptions.h"
 #include "llvm/Support/CommandLine.h"
+#include "llvm/ADT/StringExtras.h"
 using namespace llvm;
 
 // FIXME: temporary.
@@ -5532,9 +5533,17 @@ X86TargetLowering::getRegForInlineAsmConstraint(const std::string &Constraint,
   // constraint into a member of a register class.
   std::pair<unsigned, const TargetRegisterClass*> Res;
   Res = TargetLowering::getRegForInlineAsmConstraint(Constraint, VT);
-  
-  // Not found?  Bail out.
-  if (Res.second == 0) return Res;
+
+  // Not found as a standard register?
+  if (Res.second == 0) {
+    // GCC calls "st(0)" just plain "st".
+    if (StringsEqualNoCase("{st}", Constraint)) {
+      Res.first = X86::ST0;
+      Res.second = X86::RSTRegisterClass;
+    }
+    
+    return Res;
+  }
   
   // Otherwise, check to see if this is a register class of the wrong value
   // type.  For example, we want to map "{ax},i32" -> {eax}, we don't want it to
