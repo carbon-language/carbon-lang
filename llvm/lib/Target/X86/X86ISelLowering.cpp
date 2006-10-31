@@ -5466,6 +5466,36 @@ X86TargetLowering::getConstraintType(char ConstraintLetter) const {
   }
 }
 
+/// isOperandValidForConstraint - Return the specified operand (possibly
+/// modified) if the specified SDOperand is valid for the specified target
+/// constraint letter, otherwise return null.
+SDOperand X86TargetLowering::
+isOperandValidForConstraint(SDOperand Op, char Constraint, SelectionDAG &DAG) {
+  switch (Constraint) {
+  default: break;
+  case 'i':
+    // Literal immediates are always ok.
+    if (isa<ConstantSDNode>(Op)) return Op;
+    
+    // If we are in non-pic codegen mode, we allow the address of a global to
+    // be used with 'i'.
+    if (GlobalAddressSDNode *GA = dyn_cast<GlobalAddressSDNode>(Op)) {
+      if (getTargetMachine().getRelocationModel() == Reloc::PIC_)
+        return SDOperand(0, 0);
+      
+      if (GA->getOpcode() != ISD::TargetGlobalAddress)
+        Op = DAG.getTargetGlobalAddress(GA->getGlobal(), GA->getValueType(0),
+                                        GA->getOffset());
+      return Op;
+    }
+    
+    // Otherwise, not valid for this mode.
+    return SDOperand(0, 0);
+  }
+  return TargetLowering::isOperandValidForConstraint(Op, Constraint, DAG);
+}
+
+
 std::vector<unsigned> X86TargetLowering::
 getRegClassForInlineAsmConstraint(const std::string &Constraint,
                                   MVT::ValueType VT) const {
