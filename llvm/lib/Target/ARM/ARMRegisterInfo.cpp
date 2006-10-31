@@ -19,6 +19,8 @@
 #include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/CodeGen/MachineLocation.h"
 #include "llvm/Type.h"
+#include "llvm/Target/TargetFrameInfo.h"
+#include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetOptions.h"
 #include "llvm/ADT/STLExtras.h"
 #include <iostream>
@@ -99,7 +101,23 @@ void ARMRegisterInfo::
 eliminateCallFramePseudoInstr(MachineFunction &MF, MachineBasicBlock &MBB,
                               MachineBasicBlock::iterator I) const {
   if (hasFP(MF)) {
-    assert(0);
+    MachineInstr *Old = I;
+    unsigned Amount = Old->getOperand(0).getImmedValue();
+    if (Amount != 0) {
+      unsigned Align = MF.getTarget().getFrameInfo()->getStackAlignment();
+      Amount = (Amount+Align-1)/Align*Align;
+
+      if (Old->getOpcode() == ARM::ADJCALLSTACKDOWN) {
+        // sub sp, sp, amount
+        BuildMI(MBB, I, ARM::SUB, 2, ARM::R13).addReg(ARM::R13).addImm(Amount)
+          .addImm(0).addImm(ARMShift::LSL);
+      } else {
+        // add sp, sp, amount
+        assert(Old->getOpcode() == ARM::ADJCALLSTACKUP);
+        BuildMI(MBB, I, ARM::ADD, 2, ARM::R13).addReg(ARM::R13).addImm(Amount)
+          .addImm(0).addImm(ARMShift::LSL);
+      }
+    }
   }
   MBB.erase(I);
 }
