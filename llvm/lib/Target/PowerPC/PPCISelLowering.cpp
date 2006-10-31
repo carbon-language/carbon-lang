@@ -2658,8 +2658,8 @@ getRegClassForInlineAsmConstraint(const std::string &Constraint,
 }
 
 // isOperandValidForConstraint
-bool PPCTargetLowering::
-isOperandValidForConstraint(SDOperand Op, char Letter) {
+SDOperand PPCTargetLowering::
+isOperandValidForConstraint(SDOperand Op, char Letter, SelectionDAG &DAG) {
   switch (Letter) {
   default: break;
   case 'I':
@@ -2670,32 +2670,39 @@ isOperandValidForConstraint(SDOperand Op, char Letter) {
   case 'N':
   case 'O':
   case 'P': {
-    if (!isa<ConstantSDNode>(Op)) return false;  // Must be an immediate.
+    if (!isa<ConstantSDNode>(Op)) return SDOperand(0,0);// Must be an immediate.
     unsigned Value = cast<ConstantSDNode>(Op)->getValue();
     switch (Letter) {
     default: assert(0 && "Unknown constraint letter!");
     case 'I':  // "I" is a signed 16-bit constant.
-      return (short)Value == (int)Value;
+      if ((short)Value == (int)Value) return Op;
+      break;
     case 'J':  // "J" is a constant with only the high-order 16 bits nonzero.
     case 'L':  // "L" is a signed 16-bit constant shifted left 16 bits.
-      return (short)Value == 0;
+      if ((short)Value == 0) return Op;
+      break;
     case 'K':  // "K" is a constant with only the low-order 16 bits nonzero.
-      return (Value >> 16) == 0;
+      if ((Value >> 16) == 0) return Op;
+      break;
     case 'M':  // "M" is a constant that is greater than 31.
-      return Value > 31;
+      if (Value > 31) return Op;
+      break;
     case 'N':  // "N" is a positive constant that is an exact power of two.
-      return (int)Value > 0 && isPowerOf2_32(Value);
+      if ((int)Value > 0 && isPowerOf2_32(Value)) return Op;
+      break;
     case 'O':  // "O" is the constant zero. 
-      return Value == 0;
+      if (Value == 0) return Op;
+      break;
     case 'P':  // "P" is a constant whose negation is a signed 16-bit constant.
-      return (short)-Value == (int)-Value;
+      if ((short)-Value == (int)-Value) return Op;
+      break;
     }
     break;
   }
   }
   
   // Handle standard constraint letters.
-  return TargetLowering::isOperandValidForConstraint(Op, Letter);
+  return TargetLowering::isOperandValidForConstraint(Op, Letter, DAG);
 }
 
 /// isLegalAddressImmediate - Return true if the integer value can be used

@@ -194,7 +194,8 @@ namespace llvm {
     std::vector<unsigned> 
       getRegClassForInlineAsmConstraint(const std::string &Constraint,
                                         MVT::ValueType VT) const;
-    bool isOperandValidForConstraint(SDOperand Op, char ConstraintLetter);
+    SDOperand isOperandValidForConstraint(SDOperand Op, char ConstraintLetter,
+                                          SelectionDAG &DAG);
 
     /// isLegalAddressImmediate - Return true if the integer value can be used
     /// as the offset of the target addressing mode.

@@ -694,9 +694,12 @@ public:
                                  MVT::ValueType VT) const;
   
   
-  /// isOperandValidForConstraint - Return true if the specified SDOperand is
-  /// valid for the specified target constraint letter.
-  virtual bool isOperandValidForConstraint(SDOperand Op, char ConstraintLetter);
+  /// isOperandValidForConstraint - Return the specified operand (possibly
+  /// modified) if the specified SDOperand is valid for the specified target
+  /// constraint letter, otherwise return null.
+  virtual SDOperand 
+    isOperandValidForConstraint(SDOperand Op, char ConstraintLetter,
+                                SelectionDAG &DAG);
   
   //===--------------------------------------------------------------------===//
   // Scheduler hooks

@@ -1300,17 +1300,20 @@ TargetLowering::getConstraintType(char ConstraintLetter) const {
   }
 }
 
-bool TargetLowering::isOperandValidForConstraint(SDOperand Op, 
-                                                 char ConstraintLetter) {
+/// isOperandValidForConstraint - Return the specified operand (possibly
+/// modified) if the specified SDOperand is valid for the specified target
+/// constraint letter, otherwise return null.
+SDOperand TargetLowering::isOperandValidForConstraint(SDOperand Op,
+                                                      char ConstraintLetter,
+                                                      SelectionDAG &DAG) {
   switch (ConstraintLetter) {
-  default: return false;
+  default: return SDOperand(0,0);
   case 'i':    // Simple Integer or Relocatable Constant
   case 'n':    // Simple Integer
   case 's':    // Relocatable Constant
-    return true;   // FIXME: not right.
+    return Op;   // FIXME: not right.
   }
 }
-
 
 std::vector<unsigned> TargetLowering::
 getRegClassForInlineAsmConstraint(const std::string &Constraint,
