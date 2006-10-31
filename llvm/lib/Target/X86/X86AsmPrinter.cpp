@@ -145,10 +145,11 @@ bool X86SharedAsmPrinter::doFinalization(Module &M) {
     unsigned Align = TD->getPreferredAlignmentLog(I);
 
     if (C->isNullValue() && /* FIXME: Verify correct */
+        !I->hasSection() &&
         (I->hasInternalLinkage() || I->hasWeakLinkage() ||
          I->hasLinkOnceLinkage() ||
          (Subtarget->isTargetDarwin() && 
-          I->hasExternalLinkage() && !I->hasSection()))) {
+          I->hasExternalLinkage()))) {
       if (Size == 0) Size = 1;   // .comm Foo, 0 is undefined, avoid it.
       if (I->hasExternalLinkage()) {
           O << "\t.globl\t" << name << "\n";
@@ -185,14 +186,14 @@ bool X86SharedAsmPrinter::doFinalization(Module &M) {
         } else if (Subtarget->isTargetCygwin()) {
           std::string SectionName(".section\t.data$linkonce." +
                                   name +
-                                  ",\"aw\"\n");
+                                  ",\"aw\"");
           SwitchToDataSection(SectionName.c_str(), I);
           O << "\t.globl " << name << "\n"
             << "\t.linkonce same_size\n";
         } else {
           std::string SectionName("\t.section\t.llvm.linkonce.d." +
                                   name +
-                                  ",\"aw\",@progbits\n");
+                                  ",\"aw\",@progbits");
           SwitchToDataSection(SectionName.c_str(), I);
           O << "\t.weak " << name << "\n";
         }
@@ -215,7 +216,24 @@ bool X86SharedAsmPrinter::doFinalization(Module &M) {
             break;
           }
         }
-        SwitchToDataSection(TAI->getDataSection(), I);
+        // FIXME: special handling for ".ctors" & ".dtors" sections
+        if (I->hasSection() &&
+            (I->getSection() == ".ctors" ||
+             I->getSection() == ".dtors")) {
+          std::string SectionName = ".section " + I->getSection();
+          
+          if (Subtarget->isTargetCygwin()) {
+            SectionName += ",\"aw\"";
+          } else {
+            assert(!Subtarget->isTargetDarwin());
+            SectionName += ",\"aw\",@progbits";
+          }
+
+          SwitchToDataSection(SectionName.c_str());
+        } else {
+          SwitchToDataSection(TAI->getDataSection(), I);
+        }
+        
         break;
       }
       default:
