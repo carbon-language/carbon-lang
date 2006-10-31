@@ -229,7 +229,7 @@ bool X86SharedAsmPrinter::doFinalization(Module &M) {
             SectionName += ",\"aw\",@progbits";
           }
 
-          SwitchToDataSection(SectionName.c_str(), I);
+          SwitchToDataSection(SectionName.c_str());
         } else {
           SwitchToDataSection(TAI->getDataSection(), I);
         }
