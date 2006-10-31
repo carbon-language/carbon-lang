@@ -399,6 +399,9 @@ bool X86ATTAsmPrinter::PrintAsmOperand(const MachineInstr *MI, unsigned OpNo,
     
     switch (ExtraCode[0]) {
     default: return true;  // Unknown modifier.
+    case 'c': // Don't print "$" before a global var name.
+      printOperand(MI, OpNo, "mem");
+      return false;
     case 'b': // Print QImode register
     case 'h': // Print QImode high register
     case 'w': // Print HImode register
