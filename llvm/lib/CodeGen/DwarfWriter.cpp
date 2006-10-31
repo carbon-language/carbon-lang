@@ -2176,30 +2176,30 @@ void Dwarf::EmitInitial() {
   
   // Dwarf sections base addresses.
   if (TAI->getDwarfRequiresFrameSection()) {
-    Asm->SwitchToDataSection(TAI->getDwarfFrameSection(), 0);
+    Asm->SwitchToDataSection(TAI->getDwarfFrameSection());
     EmitLabel("section_frame", 0);
   }
-  Asm->SwitchToDataSection(TAI->getDwarfInfoSection(), 0);
+  Asm->SwitchToDataSection(TAI->getDwarfInfoSection());
   EmitLabel("section_info", 0);
-  Asm->SwitchToDataSection(TAI->getDwarfAbbrevSection(), 0);
+  Asm->SwitchToDataSection(TAI->getDwarfAbbrevSection());
   EmitLabel("section_abbrev", 0);
-  Asm->SwitchToDataSection(TAI->getDwarfARangesSection(), 0);
+  Asm->SwitchToDataSection(TAI->getDwarfARangesSection());
   EmitLabel("section_aranges", 0);
-  Asm->SwitchToDataSection(TAI->getDwarfMacInfoSection(), 0);
+  Asm->SwitchToDataSection(TAI->getDwarfMacInfoSection());
   EmitLabel("section_macinfo", 0);
-  Asm->SwitchToDataSection(TAI->getDwarfLineSection(), 0);
+  Asm->SwitchToDataSection(TAI->getDwarfLineSection());
   EmitLabel("section_line", 0);
-  Asm->SwitchToDataSection(TAI->getDwarfLocSection(), 0);
+  Asm->SwitchToDataSection(TAI->getDwarfLocSection());
   EmitLabel("section_loc", 0);
-  Asm->SwitchToDataSection(TAI->getDwarfPubNamesSection(), 0);
+  Asm->SwitchToDataSection(TAI->getDwarfPubNamesSection());
   EmitLabel("section_pubnames", 0);
-  Asm->SwitchToDataSection(TAI->getDwarfStrSection(), 0);
+  Asm->SwitchToDataSection(TAI->getDwarfStrSection());
   EmitLabel("section_str", 0);
-  Asm->SwitchToDataSection(TAI->getDwarfRangesSection(), 0);
+  Asm->SwitchToDataSection(TAI->getDwarfRangesSection());
   EmitLabel("section_ranges", 0);
-  Asm->SwitchToTextSection(TAI->getTextSection(), 0);
+  Asm->SwitchToTextSection(TAI->getTextSection());
   EmitLabel("text_begin", 0);
-  Asm->SwitchToDataSection(TAI->getDataSection(), 0);
+  Asm->SwitchToDataSection(TAI->getDataSection());
   EmitLabel("data_begin", 0);
 
   // Emit common frame information.
@@ -2408,7 +2408,7 @@ void Dwarf::EmitFrameMoves(const char *BaseLabel, unsigned BaseLabelID,
 ///
 void Dwarf::EmitDebugInfo() const {
   // Start debug info section.
-  Asm->SwitchToDataSection(TAI->getDwarfInfoSection(), 0);
+  Asm->SwitchToDataSection(TAI->getDwarfInfoSection());
   
   // Process each compile unit.
   for (unsigned i = 0, N = CompileUnits.size(); i < N; ++i) {
@@ -2444,7 +2444,7 @@ void Dwarf::EmitAbbreviations() const {
   // Check to see if it is worth the effort.
   if (!Abbreviations.empty()) {
     // Start the debug abbrev section.
-    Asm->SwitchToDataSection(TAI->getDwarfAbbrevSection(), 0);
+    Asm->SwitchToDataSection(TAI->getDwarfAbbrevSection());
     
     EmitLabel("abbrev_begin", 0);
     
@@ -2477,7 +2477,7 @@ void Dwarf::EmitDebugLines() const {
   const int MaxLineDelta = 255 + MinLineDelta;
 
   // Start the dwarf line section.
-  Asm->SwitchToDataSection(TAI->getDwarfLineSection(), 0);
+  Asm->SwitchToDataSection(TAI->getDwarfLineSection());
   
   // Construct the section header.
   
@@ -2636,7 +2636,7 @@ void Dwarf::EmitInitialDebugFrame() {
       TAI->getAddressSize() : -TAI->getAddressSize();
 
   // Start the dwarf frame section.
-  Asm->SwitchToDataSection(TAI->getDwarfFrameSection(), 0);
+  Asm->SwitchToDataSection(TAI->getDwarfFrameSection());
 
   EmitLabel("frame_common", 0);
   EmitDifference("frame_common_end", 0,
@@ -2669,7 +2669,7 @@ void Dwarf::EmitFunctionDebugFrame() {
     return;
 
   // Start the dwarf frame section.
-  Asm->SwitchToDataSection(TAI->getDwarfFrameSection(), 0);
+  Asm->SwitchToDataSection(TAI->getDwarfFrameSection());
   
   EmitDifference("frame_end", SubprogramCount,
                  "frame_begin", SubprogramCount);
@@ -2699,7 +2699,7 @@ void Dwarf::EmitFunctionDebugFrame() {
 ///
 void Dwarf::EmitDebugPubNames() {
   // Start the dwarf pubnames section.
-  Asm->SwitchToDataSection(TAI->getDwarfPubNamesSection(), 0);
+  Asm->SwitchToDataSection(TAI->getDwarfPubNamesSection());
     
   // Process each compile unit.
   for (unsigned i = 0, N = CompileUnits.size(); i < N; ++i) {
@@ -2746,7 +2746,7 @@ void Dwarf::EmitDebugStr() {
   // Check to see if it is worth the effort.
   if (!StringPool.empty()) {
     // Start the dwarf str section.
-    Asm->SwitchToDataSection(TAI->getDwarfStrSection(), 0);
+    Asm->SwitchToDataSection(TAI->getDwarfStrSection());
     
     // For each of strings in the string pool.
     for (unsigned StringID = 1, N = StringPool.size();
@@ -2766,7 +2766,7 @@ void Dwarf::EmitDebugStr() {
 ///
 void Dwarf::EmitDebugLoc() {
   // Start the dwarf loc section.
-  Asm->SwitchToDataSection(TAI->getDwarfLocSection(), 0);
+  Asm->SwitchToDataSection(TAI->getDwarfLocSection());
   
   O << "\n";
 }
@@ -2775,7 +2775,7 @@ void Dwarf::EmitDebugLoc() {
 ///
 void Dwarf::EmitDebugARanges() {
   // Start the dwarf aranges section.
-  Asm->SwitchToDataSection(TAI->getDwarfARangesSection(), 0);
+  Asm->SwitchToDataSection(TAI->getDwarfARangesSection());
   
   // FIXME - Mock up
 #if 0
@@ -2816,7 +2816,7 @@ void Dwarf::EmitDebugARanges() {
 ///
 void Dwarf::EmitDebugRanges() {
   // Start the dwarf ranges section.
-  Asm->SwitchToDataSection(TAI->getDwarfRangesSection(), 0);
+  Asm->SwitchToDataSection(TAI->getDwarfRangesSection());
   
   O << "\n";
 }
@@ -2825,7 +2825,7 @@ void Dwarf::EmitDebugRanges() {
 ///
 void Dwarf::EmitDebugMacInfo() {
   // Start the dwarf macinfo section.
-  Asm->SwitchToDataSection(TAI->getDwarfMacInfoSection(), 0);
+  Asm->SwitchToDataSection(TAI->getDwarfMacInfoSection());
   
   O << "\n";
 }
@@ -2939,14 +2939,14 @@ void Dwarf::EndModule() {
   EOL("Dwarf End Module");
   
   // Standard sections final addresses.
-  Asm->SwitchToTextSection(TAI->getTextSection(), 0);
+  Asm->SwitchToTextSection(TAI->getTextSection());
   EmitLabel("text_end", 0);
-  Asm->SwitchToDataSection(TAI->getDataSection(), 0);
+  Asm->SwitchToDataSection(TAI->getDataSection());
   EmitLabel("data_end", 0);
   
   // End text sections.
   for (unsigned i = 1, N = SectionMap.size(); i <= N; ++i) {
-    Asm->SwitchToTextSection(SectionMap[i].c_str(), 0);
+    Asm->SwitchToTextSection(SectionMap[i].c_str());
     EmitLabel("section_end", i);
   }
   

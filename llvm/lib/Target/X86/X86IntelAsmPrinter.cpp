@@ -393,14 +393,14 @@ bool X86IntelAsmPrinter::doFinalization(Module &M) {
     switch (I->getLinkage()) {
     case GlobalValue::LinkOnceLinkage:
     case GlobalValue::WeakLinkage:
-      SwitchToDataSection("", 0);
+      SwitchToDataSection("");
       O << name << "?\tsegment common 'COMMON'\n";
       bCustomSegment = true;
       // FIXME: the default alignment is 16 bytes, but 1, 2, 4, and 256
       // are also available.
       break;
     case GlobalValue::AppendingLinkage:
-      SwitchToDataSection("", 0);
+      SwitchToDataSection("");
       O << name << "?\tsegment public 'DATA'\n";
       bCustomSegment = true;
       // FIXME: the default alignment is 16 bytes, but 1, 2, 4, and 256
@@ -434,7 +434,7 @@ bool X86IntelAsmPrinter::doFinalization(Module &M) {
     // Output linker support code for dllexported globals
   if ((DLLExportedGVs.begin() != DLLExportedGVs.end()) ||
       (DLLExportedFns.begin() != DLLExportedFns.end())) {
-    SwitchToDataSection("", 0);
+    SwitchToDataSection("");
     O << "; WARNING: The following code is valid only with MASM v8.x and (possible) higher\n"
       << "; This version of MASM is usually shipped with Microsoft Visual Studio 2005\n"
       << "; or (possible) further versions. Unfortunately, there is no way to support\n"
@@ -461,7 +461,7 @@ bool X86IntelAsmPrinter::doFinalization(Module &M) {
   
   // Bypass X86SharedAsmPrinter::doFinalization().
   AsmPrinter::doFinalization(M);
-  SwitchToDataSection("", 0);
+  SwitchToDataSection("");
   O << "\tend\n";
   return false; // success
 }

@@ -96,7 +96,7 @@ bool AsmPrinter::doInitialization(Module &M) {
       << "\n" << TAI->getCommentString()
       << " End of file scope inline assembly\n";
 
-  SwitchToDataSection("", 0);   // Reset back to no section.
+  SwitchToDataSection("");   // Reset back to no section.
   
   if (MachineDebugInfo *DebugInfo = getAnalysisToUpdate<MachineDebugInfo>()) {
     DebugInfo->AnalyzeModule(M);
@@ -160,7 +160,7 @@ void AsmPrinter::EmitConstantPool(unsigned Alignment, const char *Section,
                std::vector<std::pair<MachineConstantPoolEntry,unsigned> > &CP) {
   if (CP.empty()) return;
 
-  SwitchToDataSection(Section, 0);
+  SwitchToDataSection(Section);
   EmitAlignment(Alignment);
   for (unsigned i = 0, e = CP.size(); i != e; ++i) {
     O << TAI->getPrivateGlobalPrefix() << "CPI" << getFunctionNumber() << '_'
@@ -203,7 +203,7 @@ void AsmPrinter::EmitJumpTableInfo(MachineJumpTableInfo *MJTI,
   if (TM.getRelocationModel() == Reloc::PIC_) {
     TargetLowering *LoweringInfo = TM.getTargetLowering();
     if (LoweringInfo && LoweringInfo->usesGlobalOffsetTable()) {
-      SwitchToDataSection(TAI->getJumpTableDataSection(), 0);
+      SwitchToDataSection(TAI->getJumpTableDataSection());
       if (TD->getPointerSize() == 8 && !JTEntryDirective)
         JTEntryDirective = TAI->getData64bitsDirective();
     } else {      
@@ -213,7 +213,7 @@ void AsmPrinter::EmitJumpTableInfo(MachineJumpTableInfo *MJTI,
       SwitchToTextSection(getSectionForFunction(*F).c_str(), F);
     }
   } else {
-    SwitchToDataSection(TAI->getJumpTableDataSection(), 0);
+    SwitchToDataSection(TAI->getJumpTableDataSection());
     if (TD->getPointerSize() == 8)
       JTEntryDirective = TAI->getData64bitsDirective();
   }
@@ -279,14 +279,14 @@ bool AsmPrinter::EmitSpecialLLVMGlobal(const GlobalVariable *GV) {
   }
 
   if (GV->getName() == "llvm.global_ctors" && GV->use_empty()) {
-    SwitchToDataSection(TAI->getStaticCtorsSection(), 0);
+    SwitchToDataSection(TAI->getStaticCtorsSection());
     EmitAlignment(2, 0);
     EmitXXStructorList(GV->getInitializer());
     return true;
   } 
   
   if (GV->getName() == "llvm.global_dtors" && GV->use_empty()) {
-    SwitchToDataSection(TAI->getStaticDtorsSection(), 0);
+    SwitchToDataSection(TAI->getStaticDtorsSection());
     EmitAlignment(2, 0);
     EmitXXStructorList(GV->getInitializer());
     return true;

@@ -577,7 +577,7 @@ bool DarwinAsmPrinter::doFinalization(Module &M) {
     for (std::set<std::string>::iterator i = FnStubs.begin(), e = FnStubs.end();
          i != e; ++i) {
       SwitchToTextSection(".section __TEXT,__picsymbolstub1,symbol_stubs,"
-                          "pure_instructions,32", 0);
+                          "pure_instructions,32");
       EmitAlignment(4);
       O << "L" << *i << "$stub:\n";
       O << "\t.indirect_symbol " << *i << "\n";
@@ -593,7 +593,7 @@ bool DarwinAsmPrinter::doFinalization(Module &M) {
         O << "\tlwzu r12,lo16(L" << *i << "$lazy_ptr-L0$" << *i << ")(r11)\n";
       O << "\tmtctr r12\n";
       O << "\tbctr\n";
-      SwitchToDataSection(".lazy_symbol_pointer", 0);
+      SwitchToDataSection(".lazy_symbol_pointer");
       O << "L" << *i << "$lazy_ptr:\n";
       O << "\t.indirect_symbol " << *i << "\n";
       if (isPPC64)
@@ -605,7 +605,7 @@ bool DarwinAsmPrinter::doFinalization(Module &M) {
     for (std::set<std::string>::iterator i = FnStubs.begin(), e = FnStubs.end();
          i != e; ++i) {
       SwitchToTextSection(".section __TEXT,__symbol_stub1,symbol_stubs,"
-                          "pure_instructions,16", 0);
+                          "pure_instructions,16");
       EmitAlignment(4);
       O << "L" << *i << "$stub:\n";
       O << "\t.indirect_symbol " << *i << "\n";
@@ -616,7 +616,7 @@ bool DarwinAsmPrinter::doFinalization(Module &M) {
         O << "\tlwzu r12,lo16(L" << *i << "$lazy_ptr)(r11)\n";
       O << "\tmtctr r12\n";
       O << "\tbctr\n";
-      SwitchToDataSection(".lazy_symbol_pointer", 0);
+      SwitchToDataSection(".lazy_symbol_pointer");
       O << "L" << *i << "$lazy_ptr:\n";
       O << "\t.indirect_symbol " << *i << "\n";
       if (isPPC64)
@@ -630,7 +630,7 @@ bool DarwinAsmPrinter::doFinalization(Module &M) {
 
   // Output stubs for external and common global variables.
   if (GVStubs.begin() != GVStubs.end()) {
-    SwitchToDataSection(".non_lazy_symbol_pointer", 0);
+    SwitchToDataSection(".non_lazy_symbol_pointer");
     for (std::set<std::string>::iterator I = GVStubs.begin(),
          E = GVStubs.end(); I != E; ++I) {
       O << "L" << *I << "$non_lazy_ptr:\n";

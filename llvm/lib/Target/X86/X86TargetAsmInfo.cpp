@@ -90,6 +90,24 @@ X86TargetAsmInfo::X86TargetAsmInfo(const X86TargetMachine &TM) {
     HasDotTypeDotSizeDirective = false;
     StaticCtorsSection = "\t.section .ctors,\"aw\"";
     StaticDtorsSection = "\t.section .dtors,\"aw\"";
+
+    // Set up DWARF directives
+    HasLEB128 = true;  // Target asm supports leb128 directives (little-endian)
+    PrivateGlobalPrefix = "L";  // Prefix for private global symbols
+    DwarfRequiresFrameSection = false;
+    DwarfAbbrevSection =  "\t.section\t.debug_abbrev,\"dr\"";
+    DwarfInfoSection =    "\t.section\t.debug_info,\"dr\"";
+    DwarfLineSection =    "\t.section\t.debug_line,\"dr\"";
+    DwarfFrameSection =   "\t.section\t.debug_frame,\"dr\"";
+    DwarfPubNamesSection ="\t.section\t.debug_pubnames,\"dr\"";
+    DwarfPubTypesSection ="\t.section\t.debug_pubtypes,\"dr\"";
+    DwarfStrSection =     "\t.section\t.debug_str,\"dr\"";
+    DwarfLocSection =     "\t.section\t.debug_loc,\"dr\"";
+    DwarfARangesSection = "\t.section\t.debug_aranges,\"dr\"";
+    DwarfRangesSection =  "\t.section\t.debug_ranges,\"dr\"";
+    DwarfMacInfoSection = "\t.section\t.debug_macinfo,\"dr\"";
+    break;
+    
     break;
   case X86Subtarget::isWindows:
     GlobalPrefix = "_";

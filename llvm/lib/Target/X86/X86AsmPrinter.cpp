@@ -116,7 +116,7 @@ bool X86SharedAsmPrinter::doInitialization(Module &M) {
 
     // Emit initial debug information.
     DW.BeginModule(&M);
-  } else if (Subtarget->isTargetELF()) {
+  } else if (Subtarget->isTargetELF() || Subtarget->isTargetCygwin()) {
     // Emit initial debug information.
     DW.BeginModule(&M);
   }
@@ -253,7 +253,7 @@ bool X86SharedAsmPrinter::doFinalization(Module &M) {
   
   // Output linker support code for dllexported globals
   if (DLLExportedGVs.begin() != DLLExportedGVs.end()) {
-    SwitchToDataSection(".section .drectve", 0);    
+    SwitchToDataSection(".section .drectve");
   }
 
   for (std::set<std::string>::iterator i = DLLExportedGVs.begin(),
@@ -263,7 +263,7 @@ bool X86SharedAsmPrinter::doFinalization(Module &M) {
   }    
 
   if (DLLExportedFns.begin() != DLLExportedFns.end()) {
-    SwitchToDataSection(".section .drectve", 0);    
+    SwitchToDataSection(".section .drectve");
   }
 
   for (std::set<std::string>::iterator i = DLLExportedFns.begin(),
@@ -273,7 +273,7 @@ bool X86SharedAsmPrinter::doFinalization(Module &M) {
   }    
  
   if (Subtarget->isTargetDarwin()) {
-    SwitchToDataSection("", 0);
+    SwitchToDataSection("");
 
     // Output stubs for dynamically-linked functions
     unsigned j = 1;
@@ -291,7 +291,7 @@ bool X86SharedAsmPrinter::doFinalization(Module &M) {
     // Output stubs for external and common global variables.
     if (GVStubs.begin() != GVStubs.end())
       SwitchToDataSection(
-                    ".section __IMPORT,__pointers,non_lazy_symbol_pointers", 0);
+                    ".section __IMPORT,__pointers,non_lazy_symbol_pointers");
     for (std::set<std::string>::iterator i = GVStubs.begin(), e = GVStubs.end();
          i != e; ++i) {
       O << "L" << *i << "$non_lazy_ptr:\n";
@@ -308,7 +308,7 @@ bool X86SharedAsmPrinter::doFinalization(Module &M) {
     // linker can safely perform dead code stripping.  Since LLVM never
     // generates code that does this, it is always safe to set.
     O << "\t.subsections_via_symbols\n";
-  } else if (Subtarget->isTargetELF()) {
+  } else if (Subtarget->isTargetELF() || Subtarget->isTargetCygwin()) {
     // Emit final debug information.
     DW.EndModule();
   }

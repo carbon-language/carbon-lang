@@ -67,7 +67,9 @@ struct VISIBILITY_HIDDEN X86SharedAsmPrinter : public AsmPrinter {
 
   void getAnalysisUsage(AnalysisUsage &AU) const {
     AU.setPreservesAll();
-    if (Subtarget->isTargetDarwin() || Subtarget->isTargetELF()) {
+    if (Subtarget->isTargetDarwin() ||
+        Subtarget->isTargetELF() ||
+        Subtarget->isTargetCygwin()) {
       AU.addRequired<MachineDebugInfo>();
     }
     MachineFunctionPass::getAnalysisUsage(AU);
