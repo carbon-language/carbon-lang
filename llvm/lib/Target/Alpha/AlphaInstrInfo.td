@@ -98,30 +98,18 @@ def zappat : PatFrag<(ops node:$LHS), (and node:$LHS, imm:$L), [{
 def immFPZ  : PatLeaf<(fpimm), [{ //the only fpconstant nodes are +/- 0.0
   return true;
 }]>;
-def immRem1 : PatLeaf<(imm), [{
-  return N->getValue() - getNearPower2((uint64_t)N->getValue()) == 1;
-}]>;
-def immRem3 : PatLeaf<(imm), [{
-  return N->getValue() - getNearPower2((uint64_t)N->getValue()) == 3;
-}]>;
-def immRem4 : PatLeaf<(imm), [{
-  return N->getValue() - getNearPower2((uint64_t)N->getValue()) == 4;
-}]>;
-def immRem5 : PatLeaf<(imm), [{
-  return N->getValue() - getNearPower2((uint64_t)N->getValue()) == 5;
-}]>;
-def immRem1n : PatLeaf<(imm), [{
-  return getNearPower2((uint64_t)N->getValue()) - N->getValue() == 1;
-}]>;
-def immRem3n : PatLeaf<(imm), [{
-  return getNearPower2((uint64_t)N->getValue()) - N->getValue() == 3;
-}]>;
-def immRem4n : PatLeaf<(imm), [{
-  return getNearPower2((uint64_t)N->getValue()) - N->getValue() == 4;
-}]>;
-def immRem5n : PatLeaf<(imm), [{
-  return getNearPower2((uint64_t)N->getValue()) - N->getValue() == 5;
-}]>;
+
+def immRem1  : PatLeaf<(imm), [{return chkRemNearPower2(N->getValue(),1, 0);}]>;
+def immRem2  : PatLeaf<(imm), [{return chkRemNearPower2(N->getValue(),2, 0);}]>;
+def immRem3  : PatLeaf<(imm), [{return chkRemNearPower2(N->getValue(),3, 0);}]>;
+def immRem4  : PatLeaf<(imm), [{return chkRemNearPower2(N->getValue(),4, 0);}]>;
+def immRem5  : PatLeaf<(imm), [{return chkRemNearPower2(N->getValue(),5, 0);}]>;
+def immRem1n : PatLeaf<(imm), [{return chkRemNearPower2(N->getValue(),1, 1);}]>;
+def immRem2n : PatLeaf<(imm), [{return chkRemNearPower2(N->getValue(),2, 1);}]>;
+def immRem3n : PatLeaf<(imm), [{return chkRemNearPower2(N->getValue(),3, 1);}]>;
+def immRem4n : PatLeaf<(imm), [{return chkRemNearPower2(N->getValue(),4, 1);}]>;
+def immRem5n : PatLeaf<(imm), [{return chkRemNearPower2(N->getValue(),5, 1);}]>;
+
 def immRemP2n : PatLeaf<(imm), [{
   return isPowerOf2_64(getNearPower2((uint64_t)N->getValue()) - N->getValue());
 }]>;
@@ -146,7 +134,7 @@ def add8  : PatFrag<(ops node:$op1, node:$op2),
                     (add (shl node:$op1, 3), node:$op2)>;
 def sub8  : PatFrag<(ops node:$op1, node:$op2),
                     (sub (shl node:$op1, 3), node:$op2)>;
-
+class BinOpFrag<dag res> : PatFrag<(ops node:$LHS, node:$RHS), res>;
 
 //Pseudo ops for selection
 
@@ -234,15 +222,34 @@ def : Pat<(select (setlt GPRC:$RCOND, 0), immUExt8:$RFALSE, GPRC:$RTRUE),
 def : Pat<(select (setle GPRC:$RCOND, 0), immUExt8:$RFALSE, GPRC:$RTRUE),
           (CMOVLEi GPRC:$RTRUE, immUExt8:$RFALSE, GPRC:$RCOND)>;
 
+multiclass all_inst<bits<6> opc, bits<7> funl, bits<7> funq, 
+                    string asmstr, PatFrag OpNode, InstrItinClass itin> {
+  def L  : OForm< opc, funl, !strconcat(asmstr, "l $RA,$RB,$RC"),
+               [(set GPRC:$RC, (intop (OpNode GPRC:$RA, GPRC:$RB)))], itin>;
+  def Li : OFormL<opc, funl, !strconcat(asmstr, "l $RA,$L,$RC"),
+               [(set GPRC:$RC, (intop (OpNode GPRC:$RA, immUExt8:$L)))], itin>;
+  def Q  : OForm< opc, funq, !strconcat(asmstr, "q $RA,$RB,$RC"),
+               [(set GPRC:$RC, (OpNode GPRC:$RA, GPRC:$RB))], itin>;
+  def Qi : OFormL<opc, funq, !strconcat(asmstr, "q $RA,$L,$RC"),
+               [(set GPRC:$RC, (OpNode GPRC:$RA, immUExt8:$L))], itin>;
+}
 
-def ADDL     : OForm< 0x10, 0x00, "addl $RA,$RB,$RC",
-                      [(set GPRC:$RC, (intop (add GPRC:$RA, GPRC:$RB)))], s_iadd>;
-def ADDLi    : OFormL<0x10, 0x00, "addl $RA,$L,$RC",
-                      [(set GPRC:$RC, (intop (add GPRC:$RA, immUExt8:$L)))], s_iadd>;
-def ADDQ     : OForm< 0x10, 0x20, "addq $RA,$RB,$RC",
-                      [(set GPRC:$RC, (add GPRC:$RA, GPRC:$RB))], s_iadd>;
-def ADDQi    : OFormL<0x10, 0x20, "addq $RA,$L,$RC",
-                      [(set GPRC:$RC, (add GPRC:$RA, immUExt8:$L))], s_iadd>;
+defm MUL   : all_inst<0x13, 0x00, 0x20, "mul",   BinOpFrag<(mul node:$LHS, node:$RHS)>, s_imul>;
+defm ADD   : all_inst<0x10, 0x00, 0x20, "add",   BinOpFrag<(add node:$LHS, node:$RHS)>, s_iadd>;
+defm S4ADD : all_inst<0x10, 0x02, 0x22, "s4add", add4, s_iadd>;
+defm S8ADD : all_inst<0x10, 0x12, 0x32, "s8add", add8, s_iadd>;
+defm S4SUB : all_inst<0x10, 0x0B, 0x2B, "s4sub", sub4, s_iadd>;
+defm S8SUB : all_inst<0x10, 0x1B, 0x3B, "s8sub", sub8, s_iadd>;
+defm SUB   : all_inst<0x10, 0x09, 0x29, "sub",   BinOpFrag<(sub node:$LHS, node:$RHS)>, s_iadd>;
+//Const cases since legalize does sub x, int -> add x, inv(int) + 1
+def : Pat<(intop (add GPRC:$RA, immUExt8neg:$L)), (SUBLi GPRC:$RA, immUExt8neg:$L)>;
+def : Pat<(add GPRC:$RA, immUExt8neg:$L), (SUBQi GPRC:$RA, immUExt8neg:$L)>;
+def : Pat<(intop (add4 GPRC:$RA, immUExt8neg:$L)), (S4SUBLi GPRC:$RA, immUExt8neg:$L)>;
+def : Pat<(add4 GPRC:$RA, immUExt8neg:$L), (S4SUBQi GPRC:$RA, immUExt8neg:$L)>;
+def : Pat<(intop (add8 GPRC:$RA, immUExt8neg:$L)), (S8SUBLi GPRC:$RA, immUExt8neg:$L)>;
+def : Pat<(add8 GPRC:$RA, immUExt8neg:$L), (S8SUBQi GPRC:$RA, immUExt8neg:$L)>;
+
+
 def AND      : OForm< 0x11, 0x00, "and $RA,$RB,$RC",
                       [(set GPRC:$RC, (and GPRC:$RA, GPRC:$RB))], s_ilog>;
 def ANDi     : OFormL<0x11, 0x00, "and $RA,$L,$RC",
@@ -315,50 +322,10 @@ def EXTLL    : OForm< 0x12, 0x26, "EXTLL $RA,$RB,$RC",
 //def MSKWL    : OForm< 0x12, 0x12, "MSKWL $RA,$RB,$RC", []>; //Mask word low
 //def MSKWLi   : OFormL<0x12, 0x12, "MSKWL $RA,$L,$RC", []>; //Mask word low
 
-def MULL     : OForm< 0x13, 0x00, "mull $RA,$RB,$RC",
-                      [(set GPRC:$RC, (intop (mul GPRC:$RA, GPRC:$RB)))], s_imul>;
-def MULLi    : OFormL<0x13, 0x00, "mull $RA,$L,$RC",
-                      [(set GPRC:$RC, (intop (mul GPRC:$RA, immUExt8:$L)))], s_imul>;
-def MULQ     : OForm< 0x13, 0x20, "mulq $RA,$RB,$RC",
-                      [(set GPRC:$RC, (mul GPRC:$RA, GPRC:$RB))], s_imul>;
-def MULQi    : OFormL<0x13, 0x20, "mulq $RA,$L,$RC",
-                      [(set GPRC:$RC, (mul GPRC:$RA, immUExt8ME:$L))], s_imul>;
 def ORNOT    : OForm< 0x11, 0x28, "ornot $RA,$RB,$RC",
                       [(set GPRC:$RC, (or GPRC:$RA, (not GPRC:$RB)))], s_ilog>;
 def ORNOTi   : OFormL<0x11, 0x28, "ornot $RA,$L,$RC", 
                       [(set GPRC:$RC, (or GPRC:$RA, immUExt8inv:$L))], s_ilog>;
-def S4ADDL   : OForm< 0x10, 0x02, "s4addl $RA,$RB,$RC", 
-                      [(set GPRC:$RC, (intop (add4 GPRC:$RA, GPRC:$RB)))], s_iadd>;
-def S4ADDLi  : OFormL<0x10, 0x02, "s4addl $RA,$L,$RC", 
-                      [(set GPRC:$RC, (intop (add4 GPRC:$RA, immUExt8:$L)))], s_iadd>;
-def S4ADDQ   : OForm< 0x10, 0x22, "s4addq $RA,$RB,$RC", 
-                      [(set GPRC:$RC, (add4 GPRC:$RA, GPRC:$RB))], s_iadd>;
-def S4ADDQi  : OFormL<0x10, 0x22, "s4addq $RA,$L,$RC", 
-                      [(set GPRC:$RC, (add4 GPRC:$RA, immUExt8:$L))], s_iadd>;
-def S4SUBL   : OForm< 0x10, 0x0B, "s4subl $RA,$RB,$RC",
-                      [(set GPRC:$RC, (intop (sub4 GPRC:$RA, GPRC:$RB)))], s_iadd>;
-def S4SUBLi  : OFormL<0x10, 0x0B, "s4subl $RA,$L,$RC",
-                      [(set GPRC:$RC, (intop (sub4 GPRC:$RA, immUExt8:$L)))], s_iadd>;
-def S4SUBQ   : OForm< 0x10, 0x2B, "s4subq $RA,$RB,$RC", 
-                      [(set GPRC:$RC, (sub4 GPRC:$RA, GPRC:$RB))], s_iadd>;
-def S4SUBQi  : OFormL<0x10, 0x2B, "s4subq $RA,$L,$RC", 
-                      [(set GPRC:$RC, (sub4 GPRC:$RA, immUExt8:$L))], s_iadd>;
-def S8ADDL   : OForm< 0x10, 0x12, "s8addl $RA,$RB,$RC", 
-                      [(set GPRC:$RC, (intop (add8 GPRC:$RA, GPRC:$RB)))], s_iadd>;
-def S8ADDLi  : OFormL<0x10, 0x12, "s8addl $RA,$L,$RC", 
-                      [(set GPRC:$RC, (intop (add8 GPRC:$RA, immUExt8:$L)))], s_iadd>;
-def S8ADDQ   : OForm< 0x10, 0x32, "s8addq $RA,$RB,$RC", 
-                      [(set GPRC:$RC, (add8 GPRC:$RA, GPRC:$RB))], s_iadd>;
-def S8ADDQi  : OFormL<0x10, 0x32, "s8addq $RA,$L,$RC", 
-                      [(set GPRC:$RC, (add8 GPRC:$RA, immUExt8:$L))], s_iadd>;
-def S8SUBL   : OForm< 0x10, 0x1B, "s8subl $RA,$RB,$RC", 
-                      [(set GPRC:$RC, (intop (sub8 GPRC:$RA, GPRC:$RB)))], s_iadd>;
-def S8SUBLi  : OFormL<0x10, 0x1B, "s8subl $RA,$L,$RC", 
-                      [(set GPRC:$RC, (intop (add8 GPRC:$RA, immUExt8neg:$L)))], s_iadd>;
-def S8SUBQ   : OForm< 0x10, 0x3B, "s8subq $RA,$RB,$RC", 
-                      [(set GPRC:$RC, (sub8 GPRC:$RA, GPRC:$RB))], s_iadd>;
-def S8SUBQi  : OFormL<0x10, 0x3B, "s8subq $RA,$L,$RC", 
-                      [(set GPRC:$RC, (add8 GPRC:$RA, immUExt8neg:$L))], s_iadd>;
 def SEXTB    : OForm2<0x1C, 0x00, "sextb $RB,$RC", 
                       [(set GPRC:$RC, (sext_inreg GPRC:$RB, i8))], s_ishf>;
 def SEXTW    : OForm2<0x1C, 0x01, "sextw $RB,$RC", 
@@ -375,14 +342,6 @@ def SRL      : OForm< 0x12, 0x34, "srl $RA,$RB,$RC",
                       [(set GPRC:$RC, (srl GPRC:$RA, GPRC:$RB))], s_ishf>;
 def SRLi     : OFormL<0x12, 0x34, "srl $RA,$L,$RC",
                       [(set GPRC:$RC, (srl GPRC:$RA, immUExt8:$L))], s_ishf>;
-def SUBL     : OForm< 0x10, 0x09, "subl $RA,$RB,$RC",
-                      [(set GPRC:$RC, (intop (sub GPRC:$RA, GPRC:$RB)))], s_iadd>;
-def SUBLi    : OFormL<0x10, 0x09, "subl $RA,$L,$RC",
-                      [(set GPRC:$RC, (intop (add GPRC:$RA, immUExt8neg:$L)))], s_iadd>;
-def SUBQ     : OForm< 0x10, 0x29, "subq $RA,$RB,$RC",
-                      [(set GPRC:$RC, (sub GPRC:$RA, GPRC:$RB))], s_iadd>;
-def SUBQi    : OFormL<0x10, 0x29, "subq $RA,$L,$RC",
-                      [(set GPRC:$RC, (add GPRC:$RA, immUExt8neg:$L))], s_iadd>;
 def UMULH    : OForm< 0x13, 0x30, "umulh $RA,$RB,$RC",
                       [(set GPRC:$RC, (mulhu GPRC:$RA, GPRC:$RB))], s_imul>;                     
 def UMULHi   : OFormL<0x13, 0x30, "umulh $RA,$L,$RC", 
@@ -1129,25 +1088,38 @@ def : Pat<(mulhs GPRC:$RA, GPRC:$RB),
                                                  (CMOVGE GPRC:$RA, R31, GPRC:$RB)))>;
 
 //Stupid crazy arithmetic stuff:
+let AddedComplexity = 1 in {
 def : Pat<(mul GPRC:$RA, 5), (S4ADDQ GPRC:$RA, GPRC:$RA)>;
+def : Pat<(mul GPRC:$RA, 9), (S8ADDQ GPRC:$RA, GPRC:$RA)>;
 def : Pat<(mul GPRC:$RA, 3), (S4SUBQ GPRC:$RA, GPRC:$RA)>;
+def : Pat<(mul GPRC:$RA, 7), (S8SUBQ GPRC:$RA, GPRC:$RA)>;
 
+//slight tree expansion if we are multiplying near to a power of 2
+//n is above a power of 2
 def : Pat<(mul GPRC:$RA, immRem1:$imm), 
           (ADDQ (SL GPRC:$RA, (nearP2X immRem1:$imm)), GPRC:$RA)>;
+def : Pat<(mul GPRC:$RA, immRem2:$imm), 
+          (ADDQ (SL GPRC:$RA, (nearP2X immRem2:$imm)), (ADDQ GPRC:$RA, GPRC:$RA))>;
 def : Pat<(mul GPRC:$RA, immRem3:$imm),
           (ADDQ (SL GPRC:$RA, (nearP2X immRem3:$imm)), (S4SUBQ GPRC:$RA, GPRC:$RA))>;
-def : Pat<(mul GPRC:$RA, immRem5:$imm),
-          (ADDQ (SL GPRC:$RA, (nearP2X immRem5:$imm)), (S4ADDQ GPRC:$RA, GPRC:$RA))>;
 def : Pat<(mul GPRC:$RA, immRem4:$imm),
           (S4ADDQ GPRC:$RA, (SL GPRC:$RA, (nearP2X immRem4:$imm)))>;
+def : Pat<(mul GPRC:$RA, immRem5:$imm),
+          (ADDQ (SL GPRC:$RA, (nearP2X immRem5:$imm)), (S4ADDQ GPRC:$RA, GPRC:$RA))>;
 def : Pat<(mul GPRC:$RA, immRemP2:$imm),
           (ADDQ (SL GPRC:$RA, (nearP2X immRemP2:$imm)), (SLi GPRC:$RA, (nearP2RemX immRemP2:$imm)))>;
 
+//n is below a power of 2
 def : Pat<(mul GPRC:$RA, immRem1n:$imm), 
           (SUBQ (SL GPRC:$RA, (nearP2X immRem1n:$imm)), GPRC:$RA)>;
+def : Pat<(mul GPRC:$RA, immRem2n:$imm), 
+          (SUBQ (SL GPRC:$RA, (nearP2X immRem2n:$imm)), (ADDQ GPRC:$RA, GPRC:$RA))>;
 def : Pat<(mul GPRC:$RA, immRem3n:$imm),
           (SUBQ (SL GPRC:$RA, (nearP2X immRem3n:$imm)), (S4SUBQ GPRC:$RA, GPRC:$RA))>;
+def : Pat<(mul GPRC:$RA, immRem4n:$imm),
+          (SUBQ (SL GPRC:$RA, (nearP2X immRem4n:$imm)), (SLi GPRC:$RA, 2))>;
 def : Pat<(mul GPRC:$RA, immRem5n:$imm),
           (SUBQ (SL GPRC:$RA, (nearP2X immRem5n:$imm)), (S4ADDQ GPRC:$RA, GPRC:$RA))>;
 def : Pat<(mul GPRC:$RA, immRemP2n:$imm),
           (SUBQ (SL GPRC:$RA, (nearP2X immRemP2n:$imm)), (SLi GPRC:$RA, (nearP2RemX immRemP2n:$imm)))>;
+} //Added complexity

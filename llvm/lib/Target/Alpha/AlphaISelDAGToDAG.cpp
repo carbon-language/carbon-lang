@@ -122,6 +122,14 @@ namespace {
         return comphigh;
     }
 
+    static bool chkRemNearPower2(uint64_t x, uint64_t r, bool swap) {
+      uint64_t y = getNearPower2(x);
+      if (swap)
+        return (y - x) == r;
+      else
+        return (x - y) == r;
+    }
+
     static bool isFPZ(SDOperand N) {
       ConstantFPSDNode *CN = dyn_cast<ConstantFPSDNode>(N);
       return (CN && (CN->isExactlyValue(+0.0) || CN->isExactlyValue(-0.0)));
