@@ -22,6 +22,11 @@ entry:
 
 ulong %foo4ln(ulong %x) {
 entry:
+        %tmp.1 = mul ulong %x, 508
+	ret ulong %tmp.1
+}
+ulong %foo4ln_more(ulong %x) {
+entry:
         %tmp.1 = mul ulong %x, 252
 	ret ulong %tmp.1
 }
