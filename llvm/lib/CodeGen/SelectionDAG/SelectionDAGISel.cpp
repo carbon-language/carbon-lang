@@ -2487,8 +2487,13 @@ void SelectionDAGLowering::visitInlineAsm(CallInst &I) {
         CTy = TLI.getConstraintType(ConstraintCode[0]);
         
       if (CTy == TargetLowering::C_Other) {
-        if (!TLI.isOperandValidForConstraint(InOperandVal, ConstraintCode[0]))
-          assert(0 && "MATCH FAIL!");
+        InOperandVal = TLI.isOperandValidForConstraint(InOperandVal,
+                                                       ConstraintCode[0], DAG);
+        if (!InOperandVal.Val) {
+          std::cerr << "Invalid operand for inline asm constraint '"
+                    << ConstraintCode << "'!\n";
+          exit(1);
+        }
         
         // Add information to the INLINEASM node to know about this input.
         unsigned ResOpType = 3 /*IMM*/ | (1 << 3);
