@@ -171,6 +171,8 @@ class Instruction {
   bit noResults    = 0;     // Does this instruction produce no results?
   
   InstrItinClass Itinerary = NoItinerary;// Execution steps used for scheduling.
+
+  string Constraints = "";
 }
 
 /// Imp - Helper class for specifying the implicit uses/defs set for an
