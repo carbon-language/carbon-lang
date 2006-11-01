@@ -254,16 +254,19 @@ static GenericValue executeMulInst(GenericValue Src1, GenericValue Src2,
   return Dest;
 }
 
+#define IMPLEMENT_SIGNLESS_BINOP(OP, TY1, TY2) \
+   case Type::TY2##TyID: IMPLEMENT_BINARY_OPERATOR(OP, TY1)
+
 static GenericValue executeUDivInst(GenericValue Src1, GenericValue Src2,
                                    const Type *Ty) {
   GenericValue Dest;
   if (Ty->isSigned())
     Ty = Ty->getUnsignedVersion();
   switch (Ty->getTypeID()) {
-    IMPLEMENT_BINARY_OPERATOR(/, UByte);
-    IMPLEMENT_BINARY_OPERATOR(/, UShort);
-    IMPLEMENT_BINARY_OPERATOR(/, UInt);
-    IMPLEMENT_BINARY_OPERATOR(/, ULong);
+    IMPLEMENT_SIGNLESS_BINOP(/, UByte,  SByte);
+    IMPLEMENT_SIGNLESS_BINOP(/, UShort, Short);
+    IMPLEMENT_SIGNLESS_BINOP(/, UInt,   Int);
+    IMPLEMENT_SIGNLESS_BINOP(/, ULong,  Long);
   default:
     std::cout << "Unhandled type for UDiv instruction: " << *Ty << "\n";
     abort();
@@ -277,10 +280,10 @@ static GenericValue executeSDivInst(GenericValue Src1, GenericValue Src2,
   if (Ty->isUnsigned())
     Ty = Ty->getSignedVersion();
   switch (Ty->getTypeID()) {
-    IMPLEMENT_BINARY_OPERATOR(/, SByte);
-    IMPLEMENT_BINARY_OPERATOR(/, Short);
-    IMPLEMENT_BINARY_OPERATOR(/, Int);
-    IMPLEMENT_BINARY_OPERATOR(/, Long);
+    IMPLEMENT_SIGNLESS_BINOP(/, SByte, UByte);
+    IMPLEMENT_SIGNLESS_BINOP(/, Short, UShort);
+    IMPLEMENT_SIGNLESS_BINOP(/, Int,   UInt);
+    IMPLEMENT_SIGNLESS_BINOP(/, Long,  ULong);
   default:
     std::cout << "Unhandled type for SDiv instruction: " << *Ty << "\n";
     abort();
