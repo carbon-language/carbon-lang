@@ -276,7 +276,9 @@ namespace {
     // operator and they all are only used by the PHI, PHI together their
     // inputs, and do the operation once, to the result of the PHI.
     Instruction *FoldPHIArgOpIntoPHI(PHINode &PN);
-
+    Instruction *FoldPHIArgBinOpIntoPHI(PHINode &PN);
+    
+    
     Instruction *OptAndOp(Instruction *Op, ConstantIntegral *OpRHS,
                           ConstantIntegral *AndRHS, BinaryOperator &TheAnd);
     
@@ -6778,6 +6780,56 @@ bool InstCombiner::transformConstExprCastCall(CallSite CS) {
   return true;
 }
 
+/// FoldPHIArgBinOpIntoPHI - If we have something like phi [add (a,b), add(c,d)]
+/// and if a/b/c/d and the add's all have a single use, turn this into two phi's
+/// and a single binop.
+Instruction *InstCombiner::FoldPHIArgBinOpIntoPHI(PHINode &PN) {
+  Instruction *FirstInst = cast<Instruction>(PN.getIncomingValue(0));
+  assert(isa<BinaryOperator>(FirstInst) || isa<ShiftInst>(FirstInst));
+  unsigned Opc = FirstInst->getOpcode();
+  
+  // Scan to see if all operands are the same opcode, all have one use, and all
+  // kill their operands (i.e. the operands have one use).
+  unsigned NumValues = PN.getNumIncomingValues();
+  for (unsigned i = 0; i != NumValues; ++i) {
+    Instruction *I = dyn_cast<Instruction>(PN.getIncomingValue(i));
+    if (!I || I->getOpcode() != Opc || !I->hasOneUse())
+      return 0;
+  }
+  
+  // Otherwise, this is safe and profitable to transform.  Create two phi nodes.
+  PHINode *NewLHS = new PHINode(FirstInst->getOperand(0)->getType(),
+                                FirstInst->getOperand(0)->getName()+".pn");
+  NewLHS->reserveOperandSpace(PN.getNumOperands()/2);
+  PHINode *NewRHS = new PHINode(FirstInst->getOperand(1)->getType(),
+                                FirstInst->getOperand(1)->getName()+".pn");
+  NewRHS->reserveOperandSpace(PN.getNumOperands()/2);
+  
+  Value *InLHS = FirstInst->getOperand(0);
+  NewLHS->addIncoming(InLHS, PN.getIncomingBlock(0));
+  Value *InRHS = FirstInst->getOperand(1);
+  NewRHS->addIncoming(InRHS, PN.getIncomingBlock(0));
+  
+  // Add all operands to the new PHsI.
+  for (unsigned i = 1, e = PN.getNumIncomingValues(); i != e; ++i) {
+    Value *NewInLHS = cast<Instruction>(PN.getIncomingValue(i))->getOperand(0);
+    Value *NewInRHS = cast<Instruction>(PN.getIncomingValue(i))->getOperand(1);
+    if (NewInLHS != InLHS) InLHS = 0;
+    if (NewInRHS != InRHS) InRHS = 0;
+    NewLHS->addIncoming(NewInLHS, PN.getIncomingBlock(i));
+    NewRHS->addIncoming(NewInRHS, PN.getIncomingBlock(i));
+  }
+  
+  InsertNewInstBefore(NewLHS, PN);
+  InsertNewInstBefore(NewRHS, PN);
+ 
+  if (BinaryOperator *BinOp = dyn_cast<BinaryOperator>(FirstInst))
+    return BinaryOperator::create(BinOp->getOpcode(), NewLHS, NewRHS);
+  else
+    return new ShiftInst(cast<ShiftInst>(FirstInst)->getOpcode(),
+                         NewLHS, NewRHS);
+}
+
 
 // FoldPHIArgOpIntoPHI - If all operands to a PHI node are the same "unary"
 // operator and they all are only used by the PHI, PHI together their
@@ -6794,9 +6846,11 @@ Instruction *InstCombiner::FoldPHIArgOpIntoPHI(PHINode &PN) {
   if (isa<CastInst>(FirstInst)) {
     CastSrcTy = FirstInst->getOperand(0)->getType();
   } else if (isa<BinaryOperator>(FirstInst) || isa<ShiftInst>(FirstInst)) {
-    // Can fold binop or shift if the RHS is a constant.
+    // Can fold binop or shift here if the RHS is a constant, otherwise call
+    // FoldPHIArgBinOpIntoPHI.
     ConstantOp = dyn_cast<Constant>(FirstInst->getOperand(1));
-    if (ConstantOp == 0) return 0;
+    if (ConstantOp == 0)
+      return FoldPHIArgBinOpIntoPHI(PN);
   } else {
     return 0;  // Cannot fold this operation.
   }
