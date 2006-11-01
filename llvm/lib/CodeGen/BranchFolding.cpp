@@ -44,7 +44,9 @@ namespace {
     bool TailMergeBlocks(MachineFunction &MF);
     void ReplaceTailWithBranchTo(MachineBasicBlock::iterator OldInst,
                                  MachineBasicBlock *NewDest);
-
+    MachineBasicBlock *SplitMBBAt(MachineBasicBlock &CurMBB,
+                                  MachineBasicBlock::iterator BBI1);
+        
     // Branch optzn.
     bool OptimizeBranches(MachineFunction &MF);
     void OptimizeBlock(MachineBasicBlock *MBB);
@@ -256,6 +258,31 @@ void BranchFolder::ReplaceTailWithBranchTo(MachineBasicBlock::iterator OldInst,
   ++NumTailMerge;
 }
 
+/// SplitMBBAt - Given a machine basic block and an iterator into it, split the
+/// MBB so that the part before the iterator falls into the part starting at the
+/// iterator.  This returns the new MBB.
+MachineBasicBlock *BranchFolder::SplitMBBAt(MachineBasicBlock &CurMBB,
+                                            MachineBasicBlock::iterator BBI1) {
+  // Create the fall-through block.
+  MachineFunction::iterator MBBI = &CurMBB;
+  MachineBasicBlock *NewMBB = new MachineBasicBlock(CurMBB.getBasicBlock());
+  CurMBB.getParent()->getBasicBlockList().insert(++MBBI, NewMBB);
+
+  // Move all the successors of this block to the specified block.
+  while (!CurMBB.succ_empty()) {
+    MachineBasicBlock *S = *(CurMBB.succ_end()-1);
+    NewMBB->addSuccessor(S);
+    CurMBB.removeSuccessor(S);
+  }
+ 
+  // Add an edge from CurMBB to NewMBB for the fall-through.
+  CurMBB.addSuccessor(NewMBB);
+  
+  // Splice the code over.
+  NewMBB->splice(NewMBB->end(), &CurMBB, BBI1, CurMBB.end());
+  return NewMBB;
+}
+
 bool BranchFolder::TailMergeBlocks(MachineFunction &MF) {
   MadeChange = false;
   
@@ -318,27 +345,37 @@ bool BranchFolder::TailMergeBlocks(MachineFunction &MF) {
       // Otherwise, move the matching block to the right position.
       std::swap(MergePotentials[FoundMatch], *(MergePotentials.end()-2));
     }
-    
-    // If either block is the entire common tail, make the longer one branch to
-    // the shorter one.
+
     MachineBasicBlock *MBB2 = (MergePotentials.end()-2)->second;
-    if (CurMBB->begin() == BBI1) {
-      // Hack the end off MBB2, making it jump to CurMBB instead.
-      ReplaceTailWithBranchTo(BBI2, CurMBB);
-      // This modifies MBB2, so remove it from the worklist.
-      MergePotentials.erase(MergePotentials.end()-2);
-      MadeChange = true;
-      continue;
-    } else if (MBB2->begin() == BBI2) {
+
+    // If neither block is the entire common tail, split the tail of one block
+    // to make it redundant with the other tail.
+    if (CurMBB->begin() != BBI1 && MBB2->begin() != BBI2) {
+      if (0) { // Enable this to disable partial tail merges.
+        MergePotentials.pop_back();
+        continue;
+      }
+      // TODO: if we had some notion of which block was hotter, we could split
+      // the hot block, so it is the fall-through.  For now, just split the
+      // second block.
+      MBB2 = SplitMBBAt(*MBB2, BBI2);
+      BBI2 = MBB2->begin();
+      (MergePotentials.end()-2)->second = MBB2;
+    }
+    
+    if (MBB2->begin() == BBI2) {
       // Hack the end off CurMBB, making it jump to MBBI@ instead.
       ReplaceTailWithBranchTo(BBI1, MBB2);
       // This modifies CurMBB, so remove it from the worklist.
       MergePotentials.pop_back();
-      MadeChange = true;
-      continue;
+    } else {
+      assert(CurMBB->begin() == BBI1 && "Didn't split block correctly?");
+      // Hack the end off MBB2, making it jump to CurMBB instead.
+      ReplaceTailWithBranchTo(BBI2, CurMBB);
+      // This modifies MBB2, so remove it from the worklist.
+      MergePotentials.erase(MergePotentials.end()-2);
     }
-    
-    MergePotentials.pop_back();
+    MadeChange = true;
   }
   
   return MadeChange;
