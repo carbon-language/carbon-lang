@@ -260,8 +260,6 @@ static GenericValue executeMulInst(GenericValue Src1, GenericValue Src2,
 static GenericValue executeUDivInst(GenericValue Src1, GenericValue Src2,
                                    const Type *Ty) {
   GenericValue Dest;
-  if (Ty->isSigned())
-    Ty = Ty->getUnsignedVersion();
   switch (Ty->getTypeID()) {
     IMPLEMENT_SIGNLESS_BINOP(/, UByte,  SByte);
     IMPLEMENT_SIGNLESS_BINOP(/, UShort, Short);
@@ -277,8 +275,6 @@ static GenericValue executeUDivInst(GenericValue Src1, GenericValue Src2,
 static GenericValue executeSDivInst(GenericValue Src1, GenericValue Src2,
                                    const Type *Ty) {
   GenericValue Dest;
-  if (Ty->isUnsigned())
-    Ty = Ty->getSignedVersion();
   switch (Ty->getTypeID()) {
     IMPLEMENT_SIGNLESS_BINOP(/, SByte, UByte);
     IMPLEMENT_SIGNLESS_BINOP(/, Short, UShort);
