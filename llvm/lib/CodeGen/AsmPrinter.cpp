@@ -875,6 +875,19 @@ void AsmPrinter::printSetLabel(unsigned uid,
     << '_' << uid << '\n';
 }
 
+void AsmPrinter::printSetLabel(unsigned uid, unsigned uid2,
+                               const MachineBasicBlock *MBB) const {
+  if (!TAI->getSetDirective())
+    return;
+  
+  O << TAI->getSetDirective() << ' ' << TAI->getPrivateGlobalPrefix()
+    << getFunctionNumber() << '_' << uid << '_' << uid2
+    << "_set_" << MBB->getNumber() << ',';
+  printBasicBlockLabel(MBB, false, false);
+  O << '-' << TAI->getPrivateGlobalPrefix() << "JTI" << getFunctionNumber() 
+    << '_' << uid << '_' << uid2 << '\n';
+}
+
 /// printDataDirective - This method prints the asm directive for the
 /// specified type.
 void AsmPrinter::printDataDirective(const Type *type) {

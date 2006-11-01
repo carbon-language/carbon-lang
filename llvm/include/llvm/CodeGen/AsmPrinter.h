@@ -206,6 +206,8 @@ namespace llvm {
     /// printSetLabel - This method prints a set label for the specified
     /// MachineBasicBlock
     void printSetLabel(unsigned uid, const MachineBasicBlock *MBB) const;
+    void printSetLabel(unsigned uid, unsigned uid2,
+                       const MachineBasicBlock *MBB) const;
 
     /// printDataDirective - This method prints the asm directive for the
     /// specified type.
