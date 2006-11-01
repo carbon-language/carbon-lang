@@ -280,6 +280,7 @@ static std::pair<unsigned, unsigned> parseConstraint(const std::string &CStr,
   assert(pos != std::string::npos && "Unrecognized constraint");
   std::string Name = CStr.substr(1, pos); // Skip '$'
 
+  // TIED_TO: $src1 = $dst
   const std::string delims(" \t");
   std::string::size_type wpos = Name.find_first_of(delims);
   if (wpos != std::string::npos)
@@ -291,6 +292,8 @@ static std::pair<unsigned, unsigned> parseConstraint(const std::string &CStr,
   if (wpos != std::string::npos)
     Name = Name.substr(wpos+1);
   unsigned TIdx = I->getOperandNamed(Name);
+  if (TIdx >= FIdx)
+    throw "Illegal tied-to operand constraint '" + CStr + "'";
   return std::make_pair(FIdx, (TIdx << 16) | 1);
 }
 
