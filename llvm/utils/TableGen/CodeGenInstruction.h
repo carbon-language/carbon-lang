@@ -70,6 +70,14 @@ namespace llvm {
     /// type (which is a record).
     std::vector<OperandInfo> OperandList;
 
+    /// ConstraintStr - The operand constraints string.
+    ///
+    std::string ConstraintStr;
+
+    /// ConstraintsList - List of constraints, encoded into one unsigned int per
+    /// operand.
+    std::vector<unsigned> ConstraintsList;
+
     // Various boolean values we track for the instruction.
     bool isReturn;
     bool isBranch;

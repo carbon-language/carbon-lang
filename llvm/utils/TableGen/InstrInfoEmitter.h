@@ -45,7 +45,7 @@ private:
   void emitRecord(const CodeGenInstruction &Inst, unsigned Num,
                   Record *InstrInfo, 
                   std::map<std::vector<Record*>, unsigned> &EL,
-                  std::map<std::vector<Record*>, unsigned> &OpInfo,
+          std::map<std::vector<std::pair<Record*,unsigned> >, unsigned> &OpInfo,
                   std::ostream &OS);
   void GatherItinClasses();
   unsigned ItinClassNumber(std::string ItinName);

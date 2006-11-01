@@ -273,6 +273,51 @@ bool CodeGenTarget::isLittleEndianEncoding() const {
   return getInstructionSet()->getValueAsBit("isLittleEndianEncoding");
 }
 
+static std::pair<unsigned, unsigned> parseConstraint(const std::string &CStr,
+                                                     CodeGenInstruction *I) {
+  const std::string ops("=");  // FIXME: Only supports TIED_TO for now.
+  std::string::size_type pos = CStr.find_first_of(ops);
+  assert(pos != std::string::npos && "Unrecognized constraint");
+  std::string Name = CStr.substr(1, pos); // Skip '$'
+
+  const std::string delims(" \t");
+  std::string::size_type wpos = Name.find_first_of(delims);
+  if (wpos != std::string::npos)
+    Name = Name.substr(0, wpos);
+  unsigned FIdx = I->getOperandNamed(Name);
+
+  Name = CStr.substr(pos+1);
+  wpos = Name.find_first_not_of(delims);
+  if (wpos != std::string::npos)
+    Name = Name.substr(wpos+1);
+  unsigned TIdx = I->getOperandNamed(Name);
+  return std::make_pair(FIdx, (TIdx << 16) | 1);
+}
+
+static std::vector<unsigned> parseConstraints(const std::string &CStr,
+                                              CodeGenInstruction *I) {
+  unsigned NumOps = I->OperandList.size();
+  std::vector<unsigned> Res(NumOps, 0);
+  if (CStr == "")
+    return Res;
+
+  const std::string delims(",");
+  std::string::size_type bidx, eidx;
+
+  bidx = CStr.find_first_not_of(delims);
+  while (bidx != std::string::npos) {
+    eidx = CStr.find_first_of(delims, bidx);
+    if (eidx == std::string::npos)
+      eidx = CStr.length();
+    std::pair<unsigned, unsigned> C =
+      parseConstraint(CStr.substr(bidx, eidx), I);
+    Res[C.first] = C.second;
+    bidx = CStr.find_first_not_of(delims, eidx);
+  }
+
+  return Res;
+}
+
 CodeGenInstruction::CodeGenInstruction(Record *R, const std::string &AsmStr)
   : TheDef(R), AsmString(AsmStr) {
   Name      = R->getValueAsString("Name");
@@ -338,6 +383,9 @@ CodeGenInstruction::CodeGenInstruction(Record *R, const std::string &AsmStr)
                                       MIOperandNo, NumOps, MIOpInfo));
     MIOperandNo += NumOps;
   }
+
+  ConstraintStr = R->getValueAsString("Constraints");
+  ConstraintsList = parseConstraints(ConstraintStr, this);
 }
 
 

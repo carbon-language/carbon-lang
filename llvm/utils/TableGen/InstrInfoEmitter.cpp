@@ -62,11 +62,13 @@ void InstrInfoEmitter::printDefList(const std::vector<Record*> &Uses,
   OS << "0 };\n";
 }
 
-static std::vector<Record*> GetOperandInfo(const CodeGenInstruction &Inst) {
-  std::vector<Record*> Result;
+static std::vector<std::pair<Record*, unsigned> >
+GetOperandInfo(const CodeGenInstruction &Inst) {
+  std::vector<std::pair<Record*, unsigned> > Result;
   for (unsigned i = 0, e = Inst.OperandList.size(); i != e; ++i) {
     if (Inst.OperandList[i].Rec->isSubClassOf("RegisterClass")) {
-      Result.push_back(Inst.OperandList[i].Rec);
+      Result.push_back(std::make_pair(Inst.OperandList[i].Rec,
+                                      Inst.ConstraintsList[i]));
     } else {
       // This might be a multiple operand thing.
       // Targets like X86 have registers in their multi-operand operands.
@@ -74,14 +76,21 @@ static std::vector<Record*> GetOperandInfo(const CodeGenInstruction &Inst) {
       unsigned NumDefs = MIOI->getNumArgs();
       for (unsigned j = 0, e = Inst.OperandList[i].MINumOperands; j != e; ++j) {
         if (NumDefs <= j) {
-          Result.push_back(0);
+          Result.push_back(std::make_pair((Record*)0, Inst.ConstraintsList[i]));
         } else {
           DefInit *Def = dynamic_cast<DefInit*>(MIOI->getArg(j));
-          Result.push_back(Def ? Def->getDef() : 0);
+          Result.push_back(std::make_pair(Def ? Def->getDef() : 0,
+                                          Inst.ConstraintsList[i]));
         }
       }
     }
   }
+
+  // For backward compatibility: isTwoAddress means operand 1 is tied to
+  // operand 0.
+  if (Inst.isTwoAddress)
+    Result[1].second |= 1;
+
   return Result;
 }
 
@@ -117,29 +126,33 @@ void InstrInfoEmitter::run(std::ostream &OS) {
     }
   }
 
-  std::map<std::vector<Record*>, unsigned> OperandInfosEmitted;
+  std::map<std::vector<std::pair<Record*, unsigned> >, unsigned>
+    OperandInfosEmitted;
   unsigned OperandListNum = 0;
-  OperandInfosEmitted[std::vector<Record*>()] = ++OperandListNum;
+  OperandInfosEmitted[std::vector<std::pair<Record*, unsigned> >()] =
+    ++OperandListNum;
   
   // Emit all of the operand info records.
   OS << "\n";
   for (CodeGenTarget::inst_iterator II = Target.inst_begin(),
        E = Target.inst_end(); II != E; ++II) {
-    std::vector<Record*> OperandInfo = GetOperandInfo(II->second);
+    std::vector<std::pair<Record*, unsigned> > OperandInfo = 
+      GetOperandInfo(II->second);
     unsigned &N = OperandInfosEmitted[OperandInfo];
     if (N == 0) {
       N = ++OperandListNum;
       OS << "static const TargetOperandInfo OperandInfo" << N << "[] = { ";
       for (unsigned i = 0, e = OperandInfo.size(); i != e; ++i) {
-        Record *RC = OperandInfo[i];
+        Record *RC = OperandInfo[i].first;
         // FIXME: We only care about register operands for now.
         if (RC && RC->isSubClassOf("RegisterClass"))
-          OS << "{ " << getQualifiedName(RC) << "RegClassID, 0 }, ";
+          OS << "{ " << getQualifiedName(RC) << "RegClassID, 0, ";
         else if (RC && RC->getName() == "ptr_rc")
           // Ptr value whose register class is resolved via callback.
-          OS << "{ 0, 1 }, ";
+          OS << "{ 0, 1, ";
         else
-          OS << "{ 0, 0 }, ";
+          OS << "{ 0, 0, ";
+        OS << OperandInfo[i].second << " }, ";
       }
       OS << "};\n";
     }
@@ -162,7 +175,7 @@ void InstrInfoEmitter::run(std::ostream &OS) {
 void InstrInfoEmitter::emitRecord(const CodeGenInstruction &Inst, unsigned Num,
                                   Record *InstrInfo,
                          std::map<std::vector<Record*>, unsigned> &EmittedLists,
-                               std::map<std::vector<Record*>, unsigned> &OpInfo,
+          std::map<std::vector<std::pair<Record*,unsigned> >, unsigned> &OpInfo,
                                   std::ostream &OS) {
   int MinOperands;
   if (!Inst.OperandList.empty())
@@ -247,7 +260,7 @@ void InstrInfoEmitter::emitRecord(const CodeGenInstruction &Inst, unsigned Num,
     OS << "ImplicitList" << EmittedLists[DefList] << ", ";
 
   // Emit the operand info.
-  std::vector<Record*> OperandInfo = GetOperandInfo(Inst);
+  std::vector<std::pair<Record*,unsigned> > OperandInfo = GetOperandInfo(Inst);
   if (OperandInfo.empty())
     OS << "0";
   else

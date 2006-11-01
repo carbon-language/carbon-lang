@@ -94,6 +94,9 @@ public:
   /// if the operand is a register.  If not, this contains 0.
   unsigned short RegClass;
   unsigned short Flags;
+  /// Lower 16 bits are used to specify which constraints are set. The higher 16
+  /// bits are used to specify the value of constraints (4 bits each).
+  unsigned int Constraints;
   /// Currently no other information.
 };
 
@@ -217,6 +220,24 @@ public:
 
   bool hasVariableOperands(MachineOpCode Opcode) const {
     return get(Opcode).Flags & M_VARIABLE_OPS;
+  }
+
+  // Operand constraints: only "tied_to" for now.
+  enum OperandConstraint {
+    TIED_TO = 0  // Must be allocated the same register as.
+  };
+
+  /// getOperandConstraint - Returns the value of the specific constraint if
+  /// it is set. Returns -1 if it is not set.
+  int getOperandConstraint(MachineOpCode Opcode, unsigned OpNum,
+                           OperandConstraint Constraint) {
+    assert(OpNum < get(Opcode).numOperands &&
+           "Invalid operand # of TargetInstrInfo");
+    if (get(Opcode).OpInfo[OpNum].Constraints & (1 << Constraint)) {
+      unsigned Pos = 16 + Constraint * 4;
+      return (int)(get(Opcode).OpInfo[OpNum].Constraints >> Pos) & 0xf;
+    }
+    return -1;
   }
 
   /// getDWARF_LABELOpcode - Return the opcode of the target's DWARF_LABEL
