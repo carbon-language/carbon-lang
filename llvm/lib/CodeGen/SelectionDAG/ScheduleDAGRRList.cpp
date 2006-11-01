@@ -555,7 +555,7 @@ static bool isFloater(const SUnit *SU) {
         SUnit *PredSU = I->first;
         unsigned Opc = PredSU->Node->getOpcode();
         if (Opc != ISD::EntryToken && Opc != ISD::TokenFactor &&
-            Opc != ISD::CopyFromReg && Opc != ISD::CopyToReg)
+            Opc != ISD::CopyToReg)
           return false;
       }
       return true;
