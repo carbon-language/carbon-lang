@@ -6787,13 +6787,16 @@ Instruction *InstCombiner::FoldPHIArgBinOpIntoPHI(PHINode &PN) {
   Instruction *FirstInst = cast<Instruction>(PN.getIncomingValue(0));
   assert(isa<BinaryOperator>(FirstInst) || isa<ShiftInst>(FirstInst));
   unsigned Opc = FirstInst->getOpcode();
+  const Type *LHSType = FirstInst->getOperand(0)->getType();
   
   // Scan to see if all operands are the same opcode, all have one use, and all
   // kill their operands (i.e. the operands have one use).
-  unsigned NumValues = PN.getNumIncomingValues();
-  for (unsigned i = 0; i != NumValues; ++i) {
+  for (unsigned i = 0; i != PN.getNumIncomingValues(); ++i) {
     Instruction *I = dyn_cast<Instruction>(PN.getIncomingValue(i));
-    if (!I || I->getOpcode() != Opc || !I->hasOneUse())
+    if (!I || I->getOpcode() != Opc || !I->hasOneUse() ||
+        // Verify type of the LHS matches so we don't fold setcc's of different
+        // types.
+        I->getOperand(0)->getType() != LHSType)
       return 0;
   }
   
