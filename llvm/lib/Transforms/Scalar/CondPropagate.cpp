@@ -196,11 +196,10 @@ void CondProp::RevectorBlockTo(BasicBlock *FromBB, BasicBlock *ToBB) {
   // Get the old block we are threading through.
   BasicBlock *OldSucc = FromBr->getSuccessor(0);
 
-  // OldSucc had multiple successors. If ToBB has multiple predecessors, the
-  // edge between them would be critical, which we already took care of.
-  // If ToBB has single operand PHI node than take care of it here.
-  if (isa<PHINode>(ToBB->begin())) {
-    PHINode *PN = cast<PHINode>(ToBB->begin());
+  // OldSucc had multiple successors. If ToBB has multiple predecessors, then 
+  // the edge between them would be critical, which we already took care of.
+  // If ToBB has single operand PHI node then take care of it here.
+  while (PHINode *PN = dyn_cast<PHINode>(ToBB->begin())) {
     assert(PN->getNumIncomingValues() == 1 && "Critical Edge Found!");    
     PN->replaceAllUsesWith(PN->getIncomingValue(0));
     PN->eraseFromParent();
