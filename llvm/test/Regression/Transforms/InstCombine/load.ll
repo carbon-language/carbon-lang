@@ -40,20 +40,6 @@ int %test5(bool %C) {
 	ret int %Z
 }
 
-; load (phi (&V1, &V2, &V3))  --> phi(load &V1, load &V2, load &V3)
-int %test6(bool %C) {
-entry:
-        br bool %C, label %cond_true.i, label %cond_continue.i
-
-cond_true.i:
-        br label %cond_continue.i
-
-cond_continue.i:
-        %mem_tmp.i.0 = phi int* [ %X, %cond_true.i ], [ %X2, %entry ]
-        %tmp.3 = load int* %mem_tmp.i.0
-        ret int %tmp.3
-}
-
 int %test7(int %X) {
 	%V = getelementptr int* null, int %X
 	%R = load int* %V
