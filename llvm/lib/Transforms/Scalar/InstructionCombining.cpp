@@ -6833,6 +6833,19 @@ Instruction *InstCombiner::FoldPHIArgBinOpIntoPHI(PHINode &PN) {
                          NewLHS, NewRHS);
 }
 
+/// isSafeToSinkLoad - Return true if we know that it is safe sink the load out
+/// of the block that defines it.  This means that it must be obvious the value
+/// of the load is not changed from the point of the load to the end of the
+/// block it is in.
+static bool isSafeToSinkLoad(LoadInst *L) {
+  BasicBlock::iterator BBI = L, E = L->getParent()->end();
+  
+  for (++BBI; BBI != E; ++BBI)
+    if (BBI->mayWriteToMemory())
+      return false;
+  return true;
+}
+
 
 // FoldPHIArgOpIntoPHI - If all operands to a PHI node are the same "unary"
 // operator and they all are only used by the PHI, PHI together their
@@ -6846,6 +6859,7 @@ Instruction *InstCombiner::FoldPHIArgOpIntoPHI(PHINode &PN) {
   // code size and simplifying code.
   Constant *ConstantOp = 0;
   const Type *CastSrcTy = 0;
+  bool isVolatile = false;
   if (isa<CastInst>(FirstInst)) {
     CastSrcTy = FirstInst->getOperand(0)->getType();
   } else if (isa<BinaryOperator>(FirstInst) || isa<ShiftInst>(FirstInst)) {
@@ -6854,6 +6868,13 @@ Instruction *InstCombiner::FoldPHIArgOpIntoPHI(PHINode &PN) {
     ConstantOp = dyn_cast<Constant>(FirstInst->getOperand(1));
     if (ConstantOp == 0)
       return FoldPHIArgBinOpIntoPHI(PN);
+  } else if (LoadInst *LI = dyn_cast<LoadInst>(FirstInst)) {
+    isVolatile = LI->isVolatile();
+    // We can't sink the load if the loaded value could be modified between the
+    // load and the PHI.
+    if (LI->getParent() != PN.getIncomingBlock(0) ||
+        !isSafeToSinkLoad(LI))
+      return 0;
   } else {
     return 0;  // Cannot fold this operation.
   }
@@ -6867,6 +6888,13 @@ Instruction *InstCombiner::FoldPHIArgOpIntoPHI(PHINode &PN) {
     if (CastSrcTy) {
       if (I->getOperand(0)->getType() != CastSrcTy)
         return 0;  // Cast operation must match.
+    } else if (LoadInst *LI = dyn_cast<LoadInst>(I)) {
+      // We can't sink the load if the loaded value could be modified between the
+      // load and the PHI.
+      if (LI->isVolatile() != isVolatile ||
+          LI->getParent() != PN.getIncomingBlock(i) ||
+          !isSafeToSinkLoad(LI))
+        return 0;
     } else if (I->getOperand(1) != ConstantOp) {
       return 0;
     }
@@ -6903,6 +6931,8 @@ Instruction *InstCombiner::FoldPHIArgOpIntoPHI(PHINode &PN) {
   // Insert and return the new operation.
   if (isa<CastInst>(FirstInst))
     return new CastInst(PhiVal, PN.getType());
+  else if (LoadInst *LI = dyn_cast<LoadInst>(FirstInst))
+    return new LoadInst(PhiVal, "", isVolatile);
   else if (BinaryOperator *BinOp = dyn_cast<BinaryOperator>(FirstInst))
     return BinaryOperator::create(BinOp->getOpcode(), PhiVal, ConstantOp);
   else
@@ -7537,47 +7567,6 @@ Instruction *InstCombiner::visitLoadInst(LoadInst &LI) {
           LI.setOperand(0, SI->getOperand(1));
           return &LI;
         }
-
-    } else if (PHINode *PN = dyn_cast<PHINode>(Op)) {
-      // load (phi (&V1, &V2, &V3))  --> phi(load &V1, load &V2, load &V3)
-      bool Safe = PN->getParent() == LI.getParent();
-
-      // Scan all of the instructions between the PHI and the load to make
-      // sure there are no instructions that might possibly alter the value
-      // loaded from the PHI.
-      if (Safe) {
-        BasicBlock::iterator I = &LI;
-        for (--I; !isa<PHINode>(I); --I)
-          if (isa<StoreInst>(I) || isa<CallInst>(I)) {
-            Safe = false;
-            break;
-          }
-      }
-
-      for (unsigned i = 0, e = PN->getNumIncomingValues(); i != e && Safe; ++i)
-        if (!isSafeToLoadUnconditionally(PN->getIncomingValue(i),
-                                    PN->getIncomingBlock(i)->getTerminator()))
-          Safe = false;
-
-      if (Safe) {
-        // Create the PHI.
-        PHINode *NewPN = new PHINode(LI.getType(), PN->getName());
-        InsertNewInstBefore(NewPN, *PN);
-        std::map<BasicBlock*,Value*> LoadMap;  // Don't insert duplicate loads
-
-        for (unsigned i = 0, e = PN->getNumIncomingValues(); i != e; ++i) {
-          BasicBlock *BB = PN->getIncomingBlock(i);
-          Value *&TheLoad = LoadMap[BB];
-          if (TheLoad == 0) {
-            Value *InVal = PN->getIncomingValue(i);
-            TheLoad = InsertNewInstBefore(new LoadInst(InVal,
-                                                       InVal->getName()+".val"),
-                                          *BB->getTerminator());
-          }
-          NewPN->addIncoming(TheLoad, BB);
-        }
-        return ReplaceInstUsesWith(LI, NewPN);
-      }
     }
   }
   return 0;
