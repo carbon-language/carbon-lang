@@ -1653,12 +1653,10 @@ def MFENCE : I<0xAE, MRM6m, (ops),
                "mfence", [(int_x86_sse2_mfence)]>, TB, Requires<[HasSSE2]>;
 
 // MXCSR register
-def LDMXCSR : I<0xAE, MRM5m, (ops i32mem:$src),
-                "ldmxcsr $src",
-                [(int_x86_sse_ldmxcsr addr:$src)]>, TB, Requires<[HasSSE1]>;
-def STMXCSR : I<0xAE, MRM3m, (ops i32mem:$dst),
-                "stmxcsr $dst",
-                [(int_x86_sse_stmxcsr addr:$dst)]>, TB, Requires<[HasSSE1]>;
+def LDMXCSR : PSI<0xAE, MRM2m, (ops i32mem:$src),
+                  "ldmxcsr $src", [(int_x86_sse_ldmxcsr addr:$src)]>;
+def STMXCSR : PSI<0xAE, MRM3m, (ops i32mem:$dst),
+                  "stmxcsr $dst", [(int_x86_sse_stmxcsr addr:$dst)]>;
 
 // Thread synchronization
 def MONITOR : I<0xC8, RawFrm, (ops), "monitor",
