@@ -229,7 +229,7 @@ static ManagedStatic<std::map<std::pair<SCEV*, const Type*>,
                      SCEVZeroExtendExpr*> > SCEVZeroExtends;
 
 SCEVZeroExtendExpr::SCEVZeroExtendExpr(const SCEVHandle &op, const Type *ty)
-  : SCEV(scTruncate), Op(op), Ty(ty) {
+  : SCEV(scZeroExtend), Op(op), Ty(ty) {
   assert(Op->getType()->isInteger() && Ty->isInteger() &&
          Ty->isUnsigned() &&
          "Cannot zero extend non-integer value!");
@@ -1359,7 +1359,7 @@ SCEVHandle ScalarEvolutionsImpl::createNodeForCast(CastInst *CI) {
       return SCEVTruncateExpr::get(getSCEV(CI->getOperand(0)),
                                    CI->getType()->getUnsignedVersion());
     if (SrcTy->isUnsigned() &&
-        SrcTy->getPrimitiveSize() > DestTy->getPrimitiveSize())
+        SrcTy->getPrimitiveSize() <= DestTy->getPrimitiveSize())
       return SCEVZeroExtendExpr::get(getSCEV(CI->getOperand(0)),
                                      CI->getType()->getUnsignedVersion());
   }
