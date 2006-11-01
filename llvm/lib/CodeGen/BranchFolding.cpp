@@ -30,6 +30,7 @@ using namespace llvm;
 static Statistic<> NumDeadBlocks("branchfold", "Number of dead blocks removed");
 static Statistic<> NumBranchOpts("branchfold", "Number of branches optimized");
 static Statistic<> NumTailMerge ("branchfold", "Number of block tails merged");
+static cl::opt<bool> EnableTailMerge("enable-tail-merge", cl::Hidden);
 
 namespace {
   struct BranchFolder : public MachineFunctionPass {
@@ -258,7 +259,7 @@ void BranchFolder::ReplaceTailWithBranchTo(MachineBasicBlock::iterator OldInst,
 bool BranchFolder::TailMergeBlocks(MachineFunction &MF) {
   MadeChange = false;
   
-  return false;
+  if (!EnableTailMerge) return false;
   
   // Find blocks with no successors.
   std::vector<std::pair<unsigned,MachineBasicBlock*> > MergePotentials;
