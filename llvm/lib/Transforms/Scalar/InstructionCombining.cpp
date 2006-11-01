@@ -6785,9 +6785,11 @@ bool InstCombiner::transformConstExprCastCall(CallSite CS) {
 /// and a single binop.
 Instruction *InstCombiner::FoldPHIArgBinOpIntoPHI(PHINode &PN) {
   Instruction *FirstInst = cast<Instruction>(PN.getIncomingValue(0));
-  assert(isa<BinaryOperator>(FirstInst) || isa<ShiftInst>(FirstInst));
+  assert(isa<BinaryOperator>(FirstInst) || isa<ShiftInst>(FirstInst) ||
+         isa<GetElementPtrInst>(FirstInst));
   unsigned Opc = FirstInst->getOpcode();
   const Type *LHSType = FirstInst->getOperand(0)->getType();
+  const Type *RHSType = FirstInst->getOperand(1)->getType();
   
   // Scan to see if all operands are the same opcode, all have one use, and all
   // kill their operands (i.e. the operands have one use).
@@ -6795,8 +6797,9 @@ Instruction *InstCombiner::FoldPHIArgBinOpIntoPHI(PHINode &PN) {
     Instruction *I = dyn_cast<Instruction>(PN.getIncomingValue(i));
     if (!I || I->getOpcode() != Opc || !I->hasOneUse() ||
         // Verify type of the LHS matches so we don't fold setcc's of different
-        // types.
-        I->getOperand(0)->getType() != LHSType)
+        // types or GEP's with different index types.
+        I->getOperand(0)->getType() != LHSType ||
+        I->getOperand(1)->getType() != RHSType)
       return 0;
   }
   
@@ -6823,14 +6826,35 @@ Instruction *InstCombiner::FoldPHIArgBinOpIntoPHI(PHINode &PN) {
     NewRHS->addIncoming(NewInRHS, PN.getIncomingBlock(i));
   }
   
-  InsertNewInstBefore(NewLHS, PN);
-  InsertNewInstBefore(NewRHS, PN);
- 
+  Value *LHSVal;
+  if (InLHS) {
+    // The new PHI unions all of the same values together.  This is really
+    // common, so we handle it intelligently here for compile-time speed.
+    LHSVal = InLHS;
+    delete NewLHS;
+  } else {
+    InsertNewInstBefore(NewLHS, PN);
+    LHSVal = NewLHS;
+  }
+  Value *RHSVal;
+  if (InRHS) {
+    // The new PHI unions all of the same values together.  This is really
+    // common, so we handle it intelligently here for compile-time speed.
+    RHSVal = InRHS;
+    delete NewRHS;
+  } else {
+    InsertNewInstBefore(NewRHS, PN);
+    RHSVal = NewRHS;
+  }
+  
   if (BinaryOperator *BinOp = dyn_cast<BinaryOperator>(FirstInst))
-    return BinaryOperator::create(BinOp->getOpcode(), NewLHS, NewRHS);
-  else
-    return new ShiftInst(cast<ShiftInst>(FirstInst)->getOpcode(),
-                         NewLHS, NewRHS);
+    return BinaryOperator::create(BinOp->getOpcode(), LHSVal, RHSVal);
+  else if (ShiftInst *SI = dyn_cast<ShiftInst>(FirstInst))
+    return new ShiftInst(SI->getOpcode(), LHSVal, RHSVal);
+  else {
+    assert(isa<GetElementPtrInst>(FirstInst));
+    return new GetElementPtrInst(LHSVal, RHSVal);
+  }
 }
 
 /// isSafeToSinkLoad - Return true if we know that it is safe sink the load out
@@ -6875,6 +6899,11 @@ Instruction *InstCombiner::FoldPHIArgOpIntoPHI(PHINode &PN) {
     if (LI->getParent() != PN.getIncomingBlock(0) ||
         !isSafeToSinkLoad(LI))
       return 0;
+  } else if (isa<GetElementPtrInst>(FirstInst)) {
+    if (FirstInst->getNumOperands() == 2)
+      return FoldPHIArgBinOpIntoPHI(PN);
+    // Can't handle general GEPs yet.
+    return 0;
   } else {
     return 0;  // Cannot fold this operation.
   }
