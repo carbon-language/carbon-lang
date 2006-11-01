@@ -719,7 +719,14 @@ int BURegReductionPriorityQueue<SF>::CalcNodePriority(const SUnit *SU) {
     return SethiUllmanNumber;
 
   unsigned Opc = SU->Node->getOpcode();
-  if (Opc == ISD::TokenFactor || Opc == ISD::CopyToReg)
+  if (Opc == ISD::CopyFromReg && !isCopyFromLiveIn(SU))
+    // CopyFromReg should be close to its def because it restricts allocation
+    // choices. But if it is a livein then perhaps we want it closer to the
+    // uses so it can be coalesced.
+    SethiUllmanNumber = INT_MIN + 10;
+  else if (Opc == ISD::TokenFactor || Opc == ISD::CopyToReg)
+    // CopyToReg should be close to its uses to facilitate coalescing and avoid
+    // spilling.
     SethiUllmanNumber = INT_MAX - 10;
   else if (SU->NumSuccsLeft == 0)
     // If SU does not have a use, i.e. it doesn't produce a value that would
@@ -727,10 +734,9 @@ int BURegReductionPriorityQueue<SF>::CalcNodePriority(const SUnit *SU) {
     // Give it a small SethiUllman number so it will be scheduled right before its
     // predecessors that it doesn't lengthen their live ranges.
     SethiUllmanNumber = INT_MIN + 10;
-  // FIXME: remove this else if? It seems to reduce register spills but often
-  // ends up increasing runtime. Need to investigate.
-  else if (SU->NumPredsLeft == 0 &&
-           (Opc != ISD::CopyFromReg || isCopyFromLiveIn(SU)))
+  else if (SU->NumPredsLeft == 0)
+    // If SU does not have a def, schedule it close to its uses because it does
+    // not lengthen any live ranges.
     SethiUllmanNumber = INT_MAX - 10;
   else {
     int Extra = 0;
