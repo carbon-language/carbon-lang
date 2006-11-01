@@ -303,8 +303,10 @@ bool ARMAsmPrinter::doFinalization(Module &M) {
         break;
       }
 
-      assert (!C->isNullValue());
-      SwitchToDataSection(".data", I);
+      if (C->isNullValue())
+        SwitchToDataSection(".bss",  I);
+      else
+        SwitchToDataSection(".data", I);
 
       EmitAlignment(Align, I);
       O << "\t.type " << name << ", %object\n";
