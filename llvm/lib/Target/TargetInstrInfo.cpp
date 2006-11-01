@@ -38,8 +38,10 @@ TargetInstrInfo::~TargetInstrInfo() {
   TargetInstrDescriptors = NULL; // reset global variable
 }
 
+/// findTiedToSrcOperand - Returns the operand that is tied to the specified
+/// dest operand. Returns -1 if there isn't one.
 int
-TargetInstrInfo::getTiedToSrcOperand(MachineOpCode Opc, unsigned OpNum) const {
+TargetInstrInfo::findTiedToSrcOperand(MachineOpCode Opc, unsigned OpNum) const {
   for (unsigned i = 0, e = getNumOperands(Opc); i != e; ++i) {
     if (i == OpNum)
       continue;

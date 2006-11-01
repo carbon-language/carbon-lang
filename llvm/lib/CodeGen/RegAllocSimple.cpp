@@ -200,7 +200,7 @@ void RegAllocSimple::AllocateBasicBlock(MachineBasicBlock &MBB) {
         if (physReg == 0) {
           if (op.isDef()) {
             int TiedOp = TM->getInstrInfo()
-              ->getTiedToSrcOperand(MI->getOpcode(), i);
+              ->findTiedToSrcOperand(MI->getOpcode(), i);
             if (TiedOp == -1) {
               physReg = getFreeReg(virtualReg);
             } else {
