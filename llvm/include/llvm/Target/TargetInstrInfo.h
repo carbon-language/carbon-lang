@@ -230,7 +230,7 @@ public:
   /// getOperandConstraint - Returns the value of the specific constraint if
   /// it is set. Returns -1 if it is not set.
   int getOperandConstraint(MachineOpCode Opcode, unsigned OpNum,
-                           OperandConstraint Constraint) {
+                           OperandConstraint Constraint) const {
     assert(OpNum < get(Opcode).numOperands &&
            "Invalid operand # of TargetInstrInfo");
     if (get(Opcode).OpInfo[OpNum].Constraints & (1 << Constraint)) {
@@ -239,6 +239,10 @@ public:
     }
     return -1;
   }
+
+  /// getTiedToSrcOperand - Returns the operand that is tied to the specified
+  /// dest operand. Returns -1 if there isn't one.
+  int getTiedToSrcOperand(MachineOpCode Opcode, unsigned OpNum) const;
 
   /// getDWARF_LABELOpcode - Return the opcode of the target's DWARF_LABEL
   /// instruction if it has one.  This is used by codegen passes that update

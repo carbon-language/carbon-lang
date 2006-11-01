@@ -38,6 +38,18 @@ TargetInstrInfo::~TargetInstrInfo() {
   TargetInstrDescriptors = NULL; // reset global variable
 }
 
+int
+TargetInstrInfo::getTiedToSrcOperand(MachineOpCode Opc, unsigned OpNum) const {
+  for (unsigned i = 0, e = getNumOperands(Opc); i != e; ++i) {
+    if (i == OpNum)
+      continue;
+    int ti = getOperandConstraint(Opc, i, TIED_TO);
+    if (ti == (int)OpNum)
+      return i;
+  }
+  return -1;
+}
+
 
 // commuteInstruction - The default implementation of this method just exchanges
 // operand 1 and 2.
