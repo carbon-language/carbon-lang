@@ -104,17 +104,20 @@ struct GlobalStatus {
   /// ever stored to this global, keep track of what value it is.
   Value *StoredOnceValue;
 
-  // AccessingFunction/HasMultipleAccessingFunctions - These start out
-  // null/false.  When the first accessing function is noticed, it is recorded.
-  // When a second different accessing function is noticed,
-  // HasMultipleAccessingFunctions is set to true.
+  /// AccessingFunction/HasMultipleAccessingFunctions - These start out
+  /// null/false.  When the first accessing function is noticed, it is recorded.
+  /// When a second different accessing function is noticed,
+  /// HasMultipleAccessingFunctions is set to true.
   Function *AccessingFunction;
   bool HasMultipleAccessingFunctions;
 
-  // HasNonInstructionUser - Set to true if this global has a user that is not
-  // an instruction (e.g. a constant expr or GV initializer).
+  /// HasNonInstructionUser - Set to true if this global has a user that is not
+  /// an instruction (e.g. a constant expr or GV initializer).
   bool HasNonInstructionUser;
 
+  /// HasPHIUser - Set to true if this global has a user that is a PHI node.
+  bool HasPHIUser;
+  
   /// isNotSuitableForSRA - Keep track of whether any SRA preventing users of
   /// the global exist.  Such users include GEP instruction with variable
   /// indexes, and non-gep/load/store users like constant expr casts.
@@ -122,7 +125,8 @@ struct GlobalStatus {
 
   GlobalStatus() : isLoaded(false), StoredType(NotStored), StoredOnceValue(0),
                    AccessingFunction(0), HasMultipleAccessingFunctions(false),
-                   HasNonInstructionUser(false), isNotSuitableForSRA(false) {}
+                   HasNonInstructionUser(false), HasPHIUser(false),
+                   isNotSuitableForSRA(false) {}
 };
 
 
@@ -238,6 +242,7 @@ static bool AnalyzeGlobal(Value *V, GlobalStatus &GS,
         if (PHIUsers.insert(PN).second)  // Not already visited.
           if (AnalyzeGlobal(I, GS, PHIUsers)) return true;
         GS.isNotSuitableForSRA = true;
+        GS.HasPHIUser = true;
       } else if (isa<SetCondInst>(I)) {
         GS.isNotSuitableForSRA = true;
       } else if (isa<MemCpyInst>(I) || isa<MemMoveInst>(I)) {
@@ -1321,7 +1326,8 @@ bool GlobalOpt::ProcessInternalGlobal(GlobalVariable *GV,
       // boolean.
       if (Constant *SOVConstant = dyn_cast<Constant>(GS.StoredOnceValue))
         if (GV->getType()->getElementType() != Type::BoolTy &&
-            !GV->getType()->getElementType()->isFloatingPoint()) {
+            !GV->getType()->getElementType()->isFloatingPoint() &&
+            !GS.HasPHIUser) {
           DEBUG(std::cerr << "   *** SHRINKING TO BOOL: " << *GV);
           ShrinkGlobalToBoolean(GV, SOVConstant);
           ++NumShrunkToBool;
