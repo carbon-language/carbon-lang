@@ -199,17 +199,20 @@ void RegAllocSimple::AllocateBasicBlock(MachineBasicBlock &MBB) {
         unsigned physReg = Virt2PhysRegMap[virtualReg];
         if (physReg == 0) {
           if (op.isDef()) {
-            if (!TM->getInstrInfo()->isTwoAddrInstr(MI->getOpcode()) || i) {
+            int TiedOp = TM->getInstrInfo()
+              ->getTiedToSrcOperand(MI->getOpcode(), i);
+            if (TiedOp == -1) {
               physReg = getFreeReg(virtualReg);
             } else {
-              // must be same register number as the first operand
-              // This maps a = b + c into b = b + c, and saves b into a's spot.
-              assert(MI->getOperand(1).isRegister()  &&
-                     MI->getOperand(1).getReg() &&
-                     MI->getOperand(1).isUse() &&
+              // must be same register number as the source operand that is 
+              // tied to. This maps a = b + c into b = b + c, and saves b into
+              // a's spot.
+              assert(MI->getOperand(TiedOp).isRegister()  &&
+                     MI->getOperand(TiedOp).getReg() &&
+                     MI->getOperand(TiedOp).isUse() &&
                      "Two address instruction invalid!");
 
-              physReg = MI->getOperand(1).getReg();
+              physReg = MI->getOperand(TiedOp).getReg();
             }
             spillVirtReg(MBB, next(MI), virtualReg, physReg);
           } else {

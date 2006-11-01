@@ -98,7 +98,8 @@ void VirtRegMap::virtFolded(unsigned VirtReg, MachineInstr *OldMI,
   }
 
   ModRef MRInfo;
-  if (OpNo < 2 && TII.isTwoAddrInstr(OldMI->getOpcode())) {
+  if (TII.getOperandConstraint(OldMI->getOpcode(), OpNo,
+                               TargetInstrInfo::TIED_TO)) {
     // Folded a two-address operand.
     MRInfo = isModRef;
   } else if (OldMI->getOperand(OpNo).isDef()) {
@@ -560,9 +561,11 @@ void LocalSpiller::RewriteMBB(MachineBasicBlock &MBB, VirtRegMap &VRM) {
         // aren't allowed to modify the reused register.  If none of these cases
         // apply, reuse it.
         bool CanReuse = true;
-        if (i == 1 && MI.getOperand(0).isReg() && 
-            MI.getOperand(0).getReg() == VirtReg &&
-            TII->isTwoAddrInstr(MI.getOpcode())) {
+        int ti = TII->getOperandConstraint(MI.getOpcode(), i,
+                                           TargetInstrInfo::TIED_TO);
+        if (ti != -1 &&
+            MI.getOperand(ti).isReg() && 
+            MI.getOperand(ti).getReg() == VirtReg) {
           // Okay, we have a two address operand.  We can reuse this physreg as
           // long as we are allowed to clobber the value.
           CanReuse = Spills.canClobberPhysReg(StackSlot);
@@ -818,8 +821,9 @@ void LocalSpiller::RewriteMBB(MachineBasicBlock &MBB, VirtRegMap &VRM) {
         // If this def is part of a two-address operand, make sure to execute
         // the store from the correct physical register.
         unsigned PhysReg;
-        if (i == 0 && TII->isTwoAddrInstr(MI.getOpcode()))
-          PhysReg = MI.getOperand(1).getReg();
+        int TiedOp = TII->getTiedToSrcOperand(MI.getOpcode(), i);
+        if (TiedOp != -1)
+          PhysReg = MI.getOperand(TiedOp).getReg();
         else
           PhysReg = VRM.getPhys(VirtReg);
 
