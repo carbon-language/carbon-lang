@@ -283,6 +283,44 @@ MachineBasicBlock *BranchFolder::SplitMBBAt(MachineBasicBlock &CurMBB,
   return NewMBB;
 }
 
+/// EstimateRuntime - Make a rough estimate for how long it will take to run
+/// the specified code.
+static unsigned EstimateRuntime(MachineBasicBlock::iterator I,
+                                MachineBasicBlock::iterator E,
+                                const TargetInstrInfo *TII) {
+  unsigned Time = 0;
+  for (; I != E; ++I) {
+    const TargetInstrDescriptor &TID = TII->get(I->getOpcode());
+    if (TID.Flags & M_CALL_FLAG)
+      Time += 10;
+    else if (TID.Flags & (M_LOAD_FLAG|M_STORE_FLAG))
+      Time += 2;
+    else
+      ++Time;
+  }
+  return Time;
+}
+
+/// ShouldSplitFirstBlock - We need to either split MBB1 at MBB1I or MBB2 at
+/// MBB2I and then insert an unconditional branch in the other block.  Determine
+/// which is the best to split
+static bool ShouldSplitFirstBlock(MachineBasicBlock *MBB1,
+                                  MachineBasicBlock::iterator MBB1I,
+                                  MachineBasicBlock *MBB2,
+                                  MachineBasicBlock::iterator MBB2I,
+                                  const TargetInstrInfo *TII) {
+  // TODO: if we had some notion of which block was hotter, we could split
+  // the hot block, so it is the fall-through.  Since we don't have profile info
+  // make a decision based on which will hurt most to split.
+  unsigned MBB1Time = EstimateRuntime(MBB1->begin(), MBB1I, TII);
+  unsigned MBB2Time = EstimateRuntime(MBB2->begin(), MBB2I, TII);
+  
+  // If the MBB1 prefix takes "less time" to run than the MBB2 prefix, split the
+  // MBB1 block so it falls through.  This will penalize the MBB2 path, but will
+  // have a lower overall impact on the program execution.
+  return MBB1Time < MBB2Time;
+}
+
 bool BranchFolder::TailMergeBlocks(MachineFunction &MF) {
   MadeChange = false;
   
@@ -355,12 +393,17 @@ bool BranchFolder::TailMergeBlocks(MachineFunction &MF) {
         MergePotentials.pop_back();
         continue;
       }
-      // TODO: if we had some notion of which block was hotter, we could split
-      // the hot block, so it is the fall-through.  For now, just split the
-      // second block.
-      MBB2 = SplitMBBAt(*MBB2, BBI2);
-      BBI2 = MBB2->begin();
-      (MergePotentials.end()-2)->second = MBB2;
+      
+      // Decide whether we want to split CurMBB or MBB2.
+      if (ShouldSplitFirstBlock(CurMBB, BBI1, MBB2, BBI2, TII)) {
+        CurMBB = SplitMBBAt(*CurMBB, BBI1);
+        BBI1 = CurMBB->begin();
+        MergePotentials.back().second = CurMBB;
+      } else {
+        MBB2 = SplitMBBAt(*MBB2, BBI2);
+        BBI2 = MBB2->begin();
+        (MergePotentials.end()-2)->second = MBB2;
+      }
     }
     
     if (MBB2->begin() == BBI2) {
