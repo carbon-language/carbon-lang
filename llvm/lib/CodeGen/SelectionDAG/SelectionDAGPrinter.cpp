@@ -105,6 +105,8 @@ std::string DOTGraphTraits<SelectionDAG*>::getNodeLabel(const SDNode *Node,
       Op += itostr(offset);
   } else if (const FrameIndexSDNode *FIDN = dyn_cast<FrameIndexSDNode>(Node)) {
     Op += " " + itostr(FIDN->getIndex());
+  } else if (const JumpTableSDNode *JTDN = dyn_cast<JumpTableSDNode>(Node)) {
+    Op += " " + itostr(JTDN->getIndex());
   } else if (const ConstantPoolSDNode *CP = dyn_cast<ConstantPoolSDNode>(Node)){
     if (CP->isMachineConstantPoolEntry()) {
       std::ostringstream SS;

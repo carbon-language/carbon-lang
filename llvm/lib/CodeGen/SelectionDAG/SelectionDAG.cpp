@@ -2851,6 +2851,8 @@ void SDNode::dump(const SelectionDAG *G) const {
       std::cerr << " " << offset;
   } else if (const FrameIndexSDNode *FIDN = dyn_cast<FrameIndexSDNode>(this)) {
     std::cerr << "<" << FIDN->getIndex() << ">";
+  } else if (const JumpTableSDNode *JTDN = dyn_cast<JumpTableSDNode>(this)) {
+    std::cerr << "<" << JTDN->getIndex() << ">";
   } else if (const ConstantPoolSDNode *CP = dyn_cast<ConstantPoolSDNode>(this)){
     int offset = CP->getOffset();
     if (CP->isMachineConstantPoolEntry())
