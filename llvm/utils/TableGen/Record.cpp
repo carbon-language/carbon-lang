@@ -498,7 +498,7 @@ RecTy *VarInit::getFieldType(const std::string &FieldName) const {
 }
 
 Init *VarInit::getFieldInit(Record &R, const std::string &FieldName) const {
-  if (RecordRecTy *RTy = dynamic_cast<RecordRecTy*>(getType()))
+  if (dynamic_cast<RecordRecTy*>(getType()))
     if (const RecordVal *RV = R.getValue(VarName)) {
       Init *TheInit = RV->getValue();
       assert(TheInit != this && "Infinite loop detected!");

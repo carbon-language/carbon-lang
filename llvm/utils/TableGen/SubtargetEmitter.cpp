@@ -355,7 +355,6 @@ void SubtargetEmitter::EmitProcessorData(std::ostream &OS,
     
     // For each itinerary class
     std::vector<InstrItinerary> &ItinList = *ProcListIter++;
-    unsigned ItinIndex = 0;
     for (unsigned j = 0, M = ItinList.size(); j < M;) {
       InstrItinerary &Intinerary = ItinList[j];
       

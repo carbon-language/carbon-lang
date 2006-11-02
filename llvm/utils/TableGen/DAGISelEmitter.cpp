@@ -2259,13 +2259,11 @@ public:
     unsigned OpNo = 0;
     bool NodeHasChain = NodeHasProperty   (N, SDNPHasChain, ISE);
     bool HasChain     = PatternHasProperty(N, SDNPHasChain, ISE);
-    bool HasOutFlag   = PatternHasProperty(N, SDNPOutFlag,  ISE);
     bool EmittedUseCheck = false;
     if (HasChain) {
       if (NodeHasChain)
         OpNo = 1;
       if (!isRoot) {
-        const SDNodeInfo &CInfo = ISE.getSDNodeInfo(N->getOperator());
         // Multiple uses of actual result?
         emitCheck(RootName + ".hasOneUse()");
         EmittedUseCheck = true;
@@ -2329,7 +2327,6 @@ public:
         (PatternHasProperty(N, SDNPInFlag, ISE) ||
          PatternHasProperty(N, SDNPOptInFlag, ISE) ||
          PatternHasProperty(N, SDNPOutFlag, ISE))) {
-      const SDNodeInfo &CInfo = ISE.getSDNodeInfo(N->getOperator());
       if (!EmittedUseCheck) {
         // Multiple uses of actual result?
         emitCheck(RootName + ".hasOneUse()");
@@ -3318,10 +3315,9 @@ void DAGISelEmitter::EmitInstructionSelector(std::ostream &OS) {
       PatternsByOpcode[Node->getOperator()].push_back(&PatternsToMatch[i]);
     } else {
       const ComplexPattern *CP;
-      if (IntInit *II = 
-          dynamic_cast<IntInit*>(Node->getLeafValue())) {
+      if (dynamic_cast<IntInit*>(Node->getLeafValue())) {
         PatternsByOpcode[getSDNodeNamed("imm")].push_back(&PatternsToMatch[i]);
-      } else if ((CP = NodeGetComplexPattern(Node, *this))) {
+      } else if (NodeGetComplexPattern(Node, *this)) {
         std::vector<Record*> OpNodes = CP->getRootNodes();
         for (unsigned j = 0, e = OpNodes.size(); j != e; j++) {
           PatternsByOpcode[OpNodes[j]]
