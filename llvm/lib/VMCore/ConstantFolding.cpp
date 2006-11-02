@@ -809,7 +809,7 @@ Constant *llvm::ConstantFoldCastInstruction(const Constant *V,
   if (V->getType() == DestTy) return (Constant*)V;
 
   // Cast of a global address to boolean is always true.
-  if (const GlobalValue *GV = dyn_cast<GlobalValue>(V)) {
+  if (isa<GlobalValue>(V)) {
     if (DestTy == Type::BoolTy)
       // FIXME: When we support 'external weak' references, we have to prevent
       // this transformation from happening.  This code will need to be updated
@@ -962,7 +962,7 @@ Constant *llvm::ConstantFoldInsertElementInstruction(const Constant *Val,
   const ConstantInt *CIdx = dyn_cast<ConstantInt>(Idx);
   if (!CIdx) return 0;
   uint64_t idxVal = CIdx->getZExtValue();
-  if (const UndefValue *UVal = dyn_cast<UndefValue>(Val)) {
+  if (isa<UndefValue>(Val)) { 
     // Insertion of scalar constant into packed undef
     // Optimize away insertion of undef
     if (isa<UndefValue>(Elt))
@@ -980,8 +980,7 @@ Constant *llvm::ConstantFoldInsertElementInstruction(const Constant *Val,
     }
     return ConstantPacked::get(Ops);
   }
-  if (const ConstantAggregateZero *CVal =
-      dyn_cast<ConstantAggregateZero>(Val)) {
+  if (isa<ConstantAggregateZero>(Val)) {
     // Insertion of scalar constant into packed aggregate zero
     // Optimize away insertion of zero
     if (Elt->isNullValue())
@@ -1387,7 +1386,7 @@ Constant *llvm::ConstantFoldBinaryInstruction(unsigned Opcode,
   }
 
   if (const ConstantExpr *CE1 = dyn_cast<ConstantExpr>(V1)) {
-    if (const ConstantExpr *CE2 = dyn_cast<ConstantExpr>(V2)) {
+    if (isa<ConstantExpr>(V2)) {
       // There are many possible foldings we could do here.  We should probably
       // at least fold add of a pointer with an integer into the appropriate
       // getelementptr.  This will improve alias analysis a bit.
@@ -1444,7 +1443,7 @@ Constant *llvm::ConstantFoldBinaryInstruction(unsigned Opcode,
       }
     }
 
-  } else if (const ConstantExpr *CE2 = dyn_cast<ConstantExpr>(V2)) {
+  } else if (isa<ConstantExpr>(V2)) {
     // If V2 is a constant expr and V1 isn't, flop them around and fold the
     // other way if possible.
     switch (Opcode) {
