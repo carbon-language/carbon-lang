@@ -101,7 +101,7 @@ Mutex::~Mutex()
   {
     pthread_mutex_t* mutex = reinterpret_cast<pthread_mutex_t*>(data_);
     assert(mutex != 0);
-    int errorcode = pthread_mutex_destroy(mutex);
+    pthread_mutex_destroy(mutex);
     assert(mutex != 0);
   }
 }
