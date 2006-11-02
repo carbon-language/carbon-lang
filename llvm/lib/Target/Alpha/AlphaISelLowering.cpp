@@ -565,7 +565,7 @@ SDOperand AlphaTargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
   case ISD::VASTART: {
     SDOperand Chain = Op.getOperand(0);
     SDOperand VAListP = Op.getOperand(1);
-    SrcValueSDNode *VAListS = cast<SrcValueSDNode>(Op.getOperand(3));
+    SrcValueSDNode *VAListS = cast<SrcValueSDNode>(Op.getOperand(2));
     
     // vastart stores the address of the VarArgsBase and VarArgsOffset
     SDOperand FR  = DAG.getFrameIndex(VarArgsBase, MVT::i64);

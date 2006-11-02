@@ -404,6 +404,7 @@ let isCall = 1, noResults = 1, Ra = 23, Rb = 27, disp = 0,
 
 def JSR_COROUTINE : MbrForm< 0x1A, 0x03, (ops GPRC:$RD, GPRC:$RS, s14imm:$DISP), "jsr_coroutine $RD,($RS),$DISP", s_jsr>; //Jump to subroutine return
 
+
 let OperandList = (ops GPRC:$RA, s64imm:$DISP, GPRC:$RB) in {
 def LDQ   : MForm<0x29, 0, 1, "ldq $RA,$DISP($RB)",
                  [(set GPRC:$RA, (load (add GPRC:$RB, immSExt16:$DISP)))], s_ild>;
@@ -421,6 +422,8 @@ def LDWU  : MForm<0x0C, 0, 1, "ldwu $RA,$DISP($RB)",
                  [(set GPRC:$RA, (zextloadi16 (add GPRC:$RB, immSExt16:$DISP)))], s_ild>;
 def LDWUr : MForm<0x0C, 0, 1, "ldwu $RA,$DISP($RB)\t\t!gprellow",
                  [(set GPRC:$RA, (zextloadi16 (Alpha_gprello tglobaladdr:$DISP, GPRC:$RB)))], s_ild>;
+
+
 def STB   : MForm<0x0E, 1, 0, "stb $RA,$DISP($RB)",
 		 [(truncstorei8 GPRC:$RA, (add GPRC:$RB, immSExt16:$DISP))], s_ist>;
 def STBr  : MForm<0x0E, 1, 0, "stb $RA,$DISP($RB)\t\t!gprellow",
@@ -649,6 +652,7 @@ def FCMOVNET : FPForm<0x17, 0x02B, "fcmovne $RCOND,$RTRUE,$RDEST", [], s_fcmov>;
 
 //misc FP selects
 //Select double
+     
 def : Pat<(select (seteq F8RC:$RA, F8RC:$RB), F8RC:$st, F8RC:$sf),
       (FCMOVNET F8RC:$sf, F8RC:$st, (CMPTEQ F8RC:$RA, F8RC:$RB))>;
 def : Pat<(select (setoeq F8RC:$RA, F8RC:$RB), F8RC:$st, F8RC:$sf),
@@ -976,8 +980,6 @@ def : Pat<(brcond (setune F8RC:$RA, immFPZ), bb:$DISP),
 //def UNPKBW : OForm< 0x1C, 0x34, "UNPKBW $RA,$RB,$RC">; //Unpack bytes to words
 //CVTLQ F-P 17.010 Convert longword to quadword
 //CVTQL F-P 17.030 Convert quadword to longword
-//def AMASK    : OForm< 0x11, 0x61, "AMASK $RA,$RB,$RC", []>; //Architecture mask
-//def AMASKi   : OFormL<0x11, 0x61, "AMASK $RA,$L,$RC", []>; //Architecture mask
 
 
 //Constant handling
