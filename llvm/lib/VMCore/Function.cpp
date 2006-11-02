@@ -150,7 +150,7 @@ void Function::renameLocalSymbols() {
   for (SymbolTable::plane_iterator LPI = LST.plane_begin(), E = LST.plane_end();
        LPI != E; ++LPI)
     // All global symbols are of pointer type, ignore any non-pointer planes.
-    if (const PointerType *CurTy = dyn_cast<PointerType>(LPI->first)) {
+    if (isa<PointerType>(LPI->first)) {
       // Only check if the global plane has any symbols of this type.
       SymbolTable::plane_iterator GPI = GST.find(LPI->first);
       if (GPI != GST.plane_end()) {
