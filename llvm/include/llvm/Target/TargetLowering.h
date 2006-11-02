@@ -687,8 +687,14 @@ public:
 
   /// getRegForInlineAsmConstraint - Given a physical register constraint (e.g.
   /// {edx}), return the register number and the register class for the
-  /// register.  This should only be used for C_Register constraints.  On error,
-  /// this returns a register number of 0.
+  /// register.
+  ///
+  /// Given a register class constraint, like 'r', if this corresponds directly
+  /// to an LLVM register class, return a register of 0 and the register class
+  /// pointer.
+  ///
+  /// This should only be used for C_Register constraints.  On error,
+  /// this returns a register number of 0 and a null register class pointer..
   virtual std::pair<unsigned, const TargetRegisterClass*> 
     getRegForInlineAsmConstraint(const std::string &Constraint,
                                  MVT::ValueType VT) const;
