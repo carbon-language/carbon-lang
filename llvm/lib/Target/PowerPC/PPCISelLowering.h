@@ -18,6 +18,7 @@
 #include "llvm/Target/TargetLowering.h"
 #include "llvm/CodeGen/SelectionDAG.h"
 #include "PPC.h"
+#include "PPCSubtarget.h"
 
 namespace llvm {
   namespace PPCISD {
@@ -168,8 +169,9 @@ namespace llvm {
   class PPCTargetLowering : public TargetLowering {
     int VarArgsFrameIndex;            // FrameIndex for start of varargs area.
     int ReturnAddrIndex;              // FrameIndex for return slot.
+    const PPCSubtarget &PPCSubTarget;
   public:
-    PPCTargetLowering(TargetMachine &TM);
+    PPCTargetLowering(PPCTargetMachine &TM);
     
     /// getTargetNodeName() - This method returns the name of a target specific
     /// DAG node.
@@ -191,9 +193,9 @@ namespace llvm {
                                                        MachineBasicBlock *MBB);
     
     ConstraintType getConstraintType(char ConstraintLetter) const;
-    std::vector<unsigned> 
-      getRegClassForInlineAsmConstraint(const std::string &Constraint,
-                                        MVT::ValueType VT) const;
+    std::pair<unsigned, const TargetRegisterClass*> 
+      getRegForInlineAsmConstraint(const std::string &Constraint,
+                                   MVT::ValueType VT) const;
     SDOperand isOperandValidForConstraint(SDOperand Op, char ConstraintLetter,
                                           SelectionDAG &DAG);
 

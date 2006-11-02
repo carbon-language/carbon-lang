@@ -28,8 +28,8 @@
 #include "llvm/Target/TargetOptions.h"
 using namespace llvm;
 
-PPCTargetLowering::PPCTargetLowering(TargetMachine &TM)
-  : TargetLowering(TM) {
+PPCTargetLowering::PPCTargetLowering(PPCTargetMachine &TM)
+  : TargetLowering(TM), PPCSubTarget(*TM.getSubtargetImpl()) {
     
   // Fold away setcc operations if possible.
   setSetCCIsExpensive();
@@ -2600,62 +2600,33 @@ PPCTargetLowering::getConstraintType(char ConstraintLetter) const {
   return TargetLowering::getConstraintType(ConstraintLetter);
 }
 
-
-std::vector<unsigned> PPCTargetLowering::
-getRegClassForInlineAsmConstraint(const std::string &Constraint,
-                                  MVT::ValueType VT) const {
+std::pair<unsigned, const TargetRegisterClass*> 
+PPCTargetLowering::getRegForInlineAsmConstraint(const std::string &Constraint,
+                                                MVT::ValueType VT) const {
   if (Constraint.size() == 1) {
-    switch (Constraint[0]) {      // GCC RS6000 Constraint Letters
-    default: break;  // Unknown constriant letter
-    case 'b': 
-      return make_vector<unsigned>(/*no R0*/ PPC::R1 , PPC::R2 , PPC::R3 ,
-                                   PPC::R4 , PPC::R5 , PPC::R6 , PPC::R7 ,
-                                   PPC::R8 , PPC::R9 , PPC::R10, PPC::R11, 
-                                   PPC::R12, PPC::R13, PPC::R14, PPC::R15, 
-                                   PPC::R16, PPC::R17, PPC::R18, PPC::R19, 
-                                   PPC::R20, PPC::R21, PPC::R22, PPC::R23, 
-                                   PPC::R24, PPC::R25, PPC::R26, PPC::R27, 
-                                   PPC::R28, PPC::R29, PPC::R30, PPC::R31, 
-                                   0);
-    case 'r': 
-      return make_vector<unsigned>(PPC::R0 , PPC::R1 , PPC::R2 , PPC::R3 ,
-                                   PPC::R4 , PPC::R5 , PPC::R6 , PPC::R7 ,
-                                   PPC::R8 , PPC::R9 , PPC::R10, PPC::R11, 
-                                   PPC::R12, PPC::R13, PPC::R14, PPC::R15, 
-                                   PPC::R16, PPC::R17, PPC::R18, PPC::R19, 
-                                   PPC::R20, PPC::R21, PPC::R22, PPC::R23, 
-                                   PPC::R24, PPC::R25, PPC::R26, PPC::R27, 
-                                   PPC::R28, PPC::R29, PPC::R30, PPC::R31, 
-                                   0);
-    case 'f': 
-      return make_vector<unsigned>(PPC::F0 , PPC::F1 , PPC::F2 , PPC::F3 ,
-                                   PPC::F4 , PPC::F5 , PPC::F6 , PPC::F7 ,
-                                   PPC::F8 , PPC::F9 , PPC::F10, PPC::F11, 
-                                   PPC::F12, PPC::F13, PPC::F14, PPC::F15, 
-                                   PPC::F16, PPC::F17, PPC::F18, PPC::F19, 
-                                   PPC::F20, PPC::F21, PPC::F22, PPC::F23, 
-                                   PPC::F24, PPC::F25, PPC::F26, PPC::F27, 
-                                   PPC::F28, PPC::F29, PPC::F30, PPC::F31, 
-                                   0);
+    // GCC RS6000 Constraint Letters
+    switch (Constraint[0]) {
+    case 'b':   // R1-R31
+    case 'r':   // R0-R31
+      if (VT == MVT::i64 && PPCSubTarget.isPPC64())
+        return std::make_pair(0U, PPC::G8RCRegisterClass);
+      return std::make_pair(0U, PPC::GPRCRegisterClass);
+    case 'f':
+      if (VT == MVT::f32)
+        return std::make_pair(0U, PPC::F4RCRegisterClass);
+      else if (VT == MVT::f64)
+        return std::make_pair(0U, PPC::F8RCRegisterClass);
+      break;
     case 'v': 
-      return make_vector<unsigned>(PPC::V0 , PPC::V1 , PPC::V2 , PPC::V3 ,
-                                   PPC::V4 , PPC::V5 , PPC::V6 , PPC::V7 ,
-                                   PPC::V8 , PPC::V9 , PPC::V10, PPC::V11, 
-                                   PPC::V12, PPC::V13, PPC::V14, PPC::V15, 
-                                   PPC::V16, PPC::V17, PPC::V18, PPC::V19, 
-                                   PPC::V20, PPC::V21, PPC::V22, PPC::V23, 
-                                   PPC::V24, PPC::V25, PPC::V26, PPC::V27, 
-                                   PPC::V28, PPC::V29, PPC::V30, PPC::V31, 
-                                   0);
-    case 'y': 
-      return make_vector<unsigned>(PPC::CR0, PPC::CR1, PPC::CR2, PPC::CR3,
-                                   PPC::CR4, PPC::CR5, PPC::CR6, PPC::CR7,
-                                   0);
+      return std::make_pair(0U, PPC::VRRCRegisterClass);
+    case 'y':   // crrc
+      return std::make_pair(0U, PPC::CRRCRegisterClass);
     }
   }
   
-  return std::vector<unsigned>();
+  return TargetLowering::getRegForInlineAsmConstraint(Constraint, VT);
 }
+
 
 // isOperandValidForConstraint
 SDOperand PPCTargetLowering::
