@@ -2231,6 +2231,8 @@ GetRegistersForValue(const std::string &ConstrCode,
   MVT::ValueType RegVT;
   MVT::ValueType ValueVT = VT;
   
+  // If this is a constraint for a specific physical register, like {r17},
+  // assign it now.
   if (PhysReg.first) {
     if (VT == MVT::Other)
       ValueVT = *PhysReg.second->vt_begin();
@@ -2260,10 +2262,36 @@ GetRegistersForValue(const std::string &ConstrCode,
     return RegsForValue(Regs, RegVT, ValueVT);
   }
   
-  // This is a reference to a register class.  Allocate NumRegs consecutive,
-  // available, registers from the class.
-  std::vector<unsigned> RegClassRegs =
-    TLI.getRegClassForInlineAsmConstraint(ConstrCode, VT);
+  // Otherwise, if this was a reference to an LLVM register class, create vregs
+  // for this reference.
+  std::vector<unsigned> RegClassRegs;
+  if (PhysReg.second) {
+    // If this is an early clobber or tied register, our regalloc doesn't know
+    // how to maintain the constraint.  If it isn't, go ahead and create vreg
+    // and let the regalloc do the right thing.
+    if (!isOutReg || !isInReg) {
+      if (VT == MVT::Other)
+        ValueVT = *PhysReg.second->vt_begin();
+      RegVT = *PhysReg.second->vt_begin();
+
+      // Create the appropriate number of virtual registers.
+      SSARegMap *RegMap = DAG.getMachineFunction().getSSARegMap();
+      for (; NumRegs; --NumRegs)
+        Regs.push_back(RegMap->createVirtualRegister(PhysReg.second));
+      
+      return RegsForValue(Regs, RegVT, ValueVT);
+    }
+    
+    // Otherwise, we can't allocate it.  Let the code below figure out how to
+    // maintain these constraints.
+    RegClassRegs.assign(PhysReg.second->begin(), PhysReg.second->end());
+    
+  } else {
+    // This is a reference to a register class that doesn't directly correspond
+    // to an LLVM register class.  Allocate NumRegs consecutive, available,
+    // registers from the class.
+    RegClassRegs = TLI.getRegClassForInlineAsmConstraint(ConstrCode, VT);
+  }
 
   const MRegisterInfo *MRI = DAG.getTarget().getRegisterInfo();
   MachineFunction &MF = *CurMBB->getParent();
