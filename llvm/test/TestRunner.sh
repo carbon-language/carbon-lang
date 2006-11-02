@@ -8,6 +8,9 @@
 #
 #     %s - Replaced with the input name of the program, or the program to
 #          execute, as appropriate.
+#     %llvmgcc - llvm-gcc command
+#     %llvmgxx - llvm-g++ command
+#     %prcontext - prcontext.tcl script
 #
 
 FILENAME=$1
