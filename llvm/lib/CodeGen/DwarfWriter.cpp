@@ -1508,7 +1508,6 @@ private:
           
             // Extract the basic information.
             const std::string &Name = MemberDesc->getName();
-            TypeDesc *MemTy = MemberDesc->getFromType();
             uint64_t Size = MemberDesc->getSize();
             uint64_t Align = MemberDesc->getAlign();
             uint64_t Offset = MemberDesc->getOffset();
