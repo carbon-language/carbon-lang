@@ -354,19 +354,13 @@ public:
   ///
   unsigned Type;
   
-  /// Usage - Number of uses of this value.
-  ///
-  unsigned Usage;
-  
   DIEValue(unsigned T)
   : Type(T)
-  , Usage(1)
   {}
   virtual ~DIEValue() {}
   
+  // Accessors
   unsigned getType()  const { return Type; }
-  unsigned getUsage() const { return Usage; }
-  void IncUsage()           { ++Usage; }
   
   // Implement isa/cast/dyncast.
   static bool classof(const DIEValue *) { return true; }
@@ -445,6 +439,7 @@ public:
   /// Profile - Used to gather unique data for the value folding set.
   ///
   virtual void Profile(FoldingSetNodeID &ID) {
+    ID.AddInteger(isInteger);
     ID.AddInteger(Integer);
   }
   
@@ -482,6 +477,7 @@ public:
   /// Profile - Used to gather unique data for the value folding set.
   ///
   virtual void Profile(FoldingSetNodeID &ID) {
+    ID.AddInteger(isString);
     ID.AddString(String);
   }
   
@@ -517,6 +513,7 @@ public:
   /// Profile - Used to gather unique data for the value folding set.
   ///
   virtual void Profile(FoldingSetNodeID &ID) {
+    ID.AddInteger(isLabel);
     Label.Profile(ID);
   }
   
@@ -553,6 +550,7 @@ public:
   /// Profile - Used to gather unique data for the value folding set.
   ///
   virtual void Profile(FoldingSetNodeID &ID) {
+    ID.AddInteger(isAsIsLabel);
     ID.AddString(Label);
   }
 
@@ -589,6 +587,7 @@ public:
   /// Profile - Used to gather unique data for the value folding set.
   ///
   virtual void Profile(FoldingSetNodeID &ID){
+    ID.AddInteger(isDelta);
     LabelHi.Profile(ID);
     LabelLo.Profile(ID);
   }
@@ -630,6 +629,8 @@ public:
   /// Profile - Used to gather unique data for the value folding set.
   ///
   virtual void Profile(FoldingSetNodeID &ID) {
+    ID.AddInteger(isEntry);
+    
     if (Entry) {
       ID.AddPointer(Entry);
     } else {
@@ -688,6 +689,7 @@ public:
   /// Profile - Used to gather unique data for the value folding set.
   ///
   virtual void DIEBlock::Profile(FoldingSetNodeID &ID) {
+    ID.AddInteger(isBlock);
     DIE::Profile(ID);
   }
   
@@ -1147,10 +1149,7 @@ public:
       void *Where;
       Value = static_cast<DIEntry *>(ValuesSet.FindNodeOrInsertPos(ID, Where));
       
-      if (Value) {
-        Value->IncUsage();
-        return Value;
-      }
+      if (Value) return Value;
       
       Value = new DIEntry(Entry);
       ValuesSet.InsertNode(Value, Where);
@@ -1184,8 +1183,6 @@ public:
       Value = new DIEInteger(Integer);
       ValuesSet.InsertNode(Value, Where);
       Values.push_back(Value);
-    } else {
-      Value->IncUsage();
     }
   
     Die->AddValue(Attribute, Form, Value);
@@ -1204,8 +1201,6 @@ public:
       Value = new DIEInteger(Integer);
       ValuesSet.InsertNode(Value, Where);
       Values.push_back(Value);
-    } else {
-      Value->IncUsage();
     }
   
     Die->AddValue(Attribute, Form, Value);
@@ -1223,8 +1218,6 @@ public:
       Value = new DIEString(String);
       ValuesSet.InsertNode(Value, Where);
       Values.push_back(Value);
-    } else {
-      Value->IncUsage();
     }
   
     Die->AddValue(Attribute, Form, Value);
@@ -1242,8 +1235,6 @@ public:
       Value = new DIEDwarfLabel(Label);
       ValuesSet.InsertNode(Value, Where);
       Values.push_back(Value);
-    } else {
-      Value->IncUsage();
     }
   
     Die->AddValue(Attribute, Form, Value);
@@ -1261,8 +1252,6 @@ public:
       Value = new DIEObjectLabel(Label);
       ValuesSet.InsertNode(Value, Where);
       Values.push_back(Value);
-    } else {
-      Value->IncUsage();
     }
   
     Die->AddValue(Attribute, Form, Value);
@@ -1281,8 +1270,6 @@ public:
       Value = new DIEDelta(Hi, Lo);
       ValuesSet.InsertNode(Value, Where);
       Values.push_back(Value);
-    } else {
-      Value->IncUsage();
     }
   
     Die->AddValue(Attribute, Form, Value);
@@ -1307,7 +1294,6 @@ public:
       ValuesSet.InsertNode(Value, Where);
       Values.push_back(Value);
     } else {
-      Value->IncUsage();
       delete Block;
     }
   
@@ -1402,7 +1388,6 @@ private:
       
       // If it exists then use the existing value.
       if (Slot) {
-        Slot->IncUsage();
         Entity->AddValue(DW_AT_type, DW_FORM_ref4, Slot);
         return;
       }
