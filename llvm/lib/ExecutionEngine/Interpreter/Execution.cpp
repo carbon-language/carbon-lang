@@ -40,8 +40,6 @@ static GenericValue executeSubInst(GenericValue Src1, GenericValue Src2,
                                    const Type *Ty);
 static GenericValue executeMulInst(GenericValue Src1, GenericValue Src2,
                                    const Type *Ty);
-static GenericValue executeRemInst(GenericValue Src1, GenericValue Src2,
-                                   const Type *Ty);
 static GenericValue executeUDivInst(GenericValue Src1, GenericValue Src2,
                                     const Type *Ty);
 static GenericValue executeSDivInst(GenericValue Src1, GenericValue Src2,
