@@ -370,7 +370,6 @@ MachineInstr *PPCRegisterInfo::foldMemoryOperand(MachineInstr *MI,
 //
 static bool hasFP(const MachineFunction &MF) {
   const MachineFrameInfo *MFI = MF.getFrameInfo();
-  unsigned TargetAlign = MF.getTarget().getFrameInfo()->getStackAlignment();
 
   // If frame pointers are forced, or if there are variable sized stack objects,
   // use a frame pointer.

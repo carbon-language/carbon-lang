@@ -1041,7 +1041,6 @@ SDOperand DAGCombiner::visitAND(SDNode *N) {
   ConstantSDNode *N0C = dyn_cast<ConstantSDNode>(N0);
   ConstantSDNode *N1C = dyn_cast<ConstantSDNode>(N1);
   MVT::ValueType VT = N1.getValueType();
-  unsigned OpSizeInBits = MVT::getSizeInBits(VT);
   
   // fold (and c1, c2) -> c1&c2
   if (N0C && N1C)
@@ -1319,7 +1318,7 @@ SDOperand DAGCombiner::visitOR(SDNode *N) {
 /// MatchRotateHalf - Match "(X shl/srl V1) & V2" where V2 may not be present.
 static bool MatchRotateHalf(SDOperand Op, SDOperand &Shift, SDOperand &Mask) {
   if (Op.getOpcode() == ISD::AND) {
-    if (ConstantSDNode *RHSC = dyn_cast<ConstantSDNode>(Op.getOperand(1))) {
+    if (isa<ConstantSDNode>(Op.getOperand(1))) {
       Mask = Op.getOperand(1);
       Op = Op.getOperand(0);
     } else {
@@ -1856,9 +1855,6 @@ SDOperand DAGCombiner::visitSELECT_CC(SDNode *N) {
   SDOperand N2 = N->getOperand(2);
   SDOperand N3 = N->getOperand(3);
   SDOperand N4 = N->getOperand(4);
-  ConstantSDNode *N0C = dyn_cast<ConstantSDNode>(N0);
-  ConstantSDNode *N1C = dyn_cast<ConstantSDNode>(N1);
-  ConstantSDNode *N2C = dyn_cast<ConstantSDNode>(N2);
   ISD::CondCode CC = cast<CondCodeSDNode>(N4)->get();
   
   // fold select_cc lhs, rhs, x, x, cc -> x
@@ -1900,7 +1896,7 @@ SDOperand DAGCombiner::visitSIGN_EXTEND(SDNode *N) {
   MVT::ValueType VT = N->getValueType(0);
 
   // fold (sext c1) -> c1
-  if (ConstantSDNode *N0C = dyn_cast<ConstantSDNode>(N0))
+  if (isa<ConstantSDNode>(N0))
     return DAG.getNode(ISD::SIGN_EXTEND, VT, N0);
   
   // fold (sext (sext x)) -> (sext x)
@@ -1958,7 +1954,7 @@ SDOperand DAGCombiner::visitZERO_EXTEND(SDNode *N) {
   MVT::ValueType VT = N->getValueType(0);
 
   // fold (zext c1) -> c1
-  if (ConstantSDNode *N0C = dyn_cast<ConstantSDNode>(N0))
+  if (isa<ConstantSDNode>(N0))
     return DAG.getNode(ISD::ZERO_EXTEND, VT, N0);
   // fold (zext (zext x)) -> (zext x)
   // fold (zext (aext x)) -> (zext x)
@@ -3578,7 +3574,7 @@ SDOperand DAGCombiner::SimplifySetCC(MVT::ValueType VT, SDOperand N0,
 
   if (ConstantSDNode *N1C = dyn_cast<ConstantSDNode>(N1.Val)) {
     uint64_t C1 = N1C->getValue();
-    if (ConstantSDNode *N0C = dyn_cast<ConstantSDNode>(N0.Val)) {
+    if (isa<ConstantSDNode>(N0.Val)) {
       return DAG.FoldSetCC(VT, N0, N1, Cond);
     } else {
       // If the LHS is '(srl (ctlz x), 5)', the RHS is 0/1, and this is an
@@ -3806,7 +3802,7 @@ SDOperand DAGCombiner::SimplifySetCC(MVT::ValueType VT, SDOperand N0,
     return DAG.getSetCC(VT, N1, N0, ISD::getSetCCSwappedOperands(Cond));
   }
 
-  if (ConstantFPSDNode *N0C = dyn_cast<ConstantFPSDNode>(N0.Val)) {
+  if (isa<ConstantFPSDNode>(N0.Val)) {
     // Constant fold or commute setcc.
     SDOperand O = DAG.FoldSetCC(VT, N0, N1, Cond);    
     if (O.Val) return O;

@@ -161,7 +161,6 @@ bool TailCallElim::runOnFunction(Function &F) {
   // occurs when a function passes an argument straight through to its tail
   // call.
   if (!ArgumentPHIs.empty()) {
-    unsigned NumIncoming = ArgumentPHIs[0]->getNumIncomingValues();
     for (unsigned i = 0, e = ArgumentPHIs.size(); i != e; ++i) {
       PHINode *PN = ArgumentPHIs[i];
 

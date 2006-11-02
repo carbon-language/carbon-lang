@@ -399,7 +399,7 @@ BasicAliasAnalysis::alias(const Value *V1, unsigned V1Size,
   }
 
   if (V1Size != ~0U && V2Size != ~0U)
-    if (const User *GEP = isGEP(V1)) {
+    if (isGEP(V1)) {
       std::vector<Value*> GEPOperands;
       const Value *BasePtr = GetGEPOperands(V1, GEPOperands);
 

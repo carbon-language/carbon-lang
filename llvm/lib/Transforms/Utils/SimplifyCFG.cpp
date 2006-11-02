@@ -1340,7 +1340,7 @@ bool llvm::SimplifyCFG(BasicBlock *BB) {
         }
       }
     }
-  } else if (UnwindInst *UI = dyn_cast<UnwindInst>(BB->begin())) {
+  } else if (isa<UnwindInst>(BB->begin())) {
     // Check to see if the first instruction in this block is just an unwind.
     // If so, replace any invoke instructions which use this as an exception
     // destination with call instructions, and any unconditional branch
@@ -1409,7 +1409,7 @@ bool llvm::SimplifyCFG(BasicBlock *BB) {
           return 1;
       
     } else {  // Conditional branch
-      if (Value *CompVal = isValueEqualityComparison(BI)) {
+      if (isValueEqualityComparison(BI)) {
         // If we only have one predecessor, and if it is a branch on this value,
         // see if that predecessor totally determines the outcome of this
         // switch.
@@ -1764,7 +1764,6 @@ bool llvm::SimplifyCFG(BasicBlock *BB) {
 
   if (OnlySucc) {
     DEBUG(std::cerr << "Merging: " << *BB << "into: " << *OnlyPred);
-    TerminatorInst *Term = OnlyPred->getTerminator();
 
     // Resolve any PHI nodes at the start of the block.  They are all
     // guaranteed to have exactly one entry if they exist, unless there are

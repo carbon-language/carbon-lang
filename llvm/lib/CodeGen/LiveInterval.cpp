@@ -289,7 +289,6 @@ void LiveInterval::join(LiveInterval &Other, int *LHSValNoAssignments,
   //
   // Also, if one range is a physreg and one is a vreg, we always merge from the
   // vreg into the physreg, which leaves the vreg intervals pristine.
-  unsigned OtherOffs = 1, ThisOffs = 0;
   if ((Other.ranges.size() > ranges.size() &&
       MRegisterInfo::isVirtualRegister(reg)) ||
       MRegisterInfo::isPhysicalRegister(Other.reg)) {

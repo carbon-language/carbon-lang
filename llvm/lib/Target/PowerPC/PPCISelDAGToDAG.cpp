@@ -1134,7 +1134,6 @@ SDNode *PPCDAGToDAGISel::Select(SDOperand Op) {
     SDOperand CCReg = SelectCC(N->getOperand(0), N->getOperand(1), CC);
     unsigned BROpc = getBCCForSetCC(CC);
 
-    bool isFP = MVT::isFloatingPoint(N->getValueType(0));
     unsigned SelectCCOp;
     if (N->getValueType(0) == MVT::i32)
       SelectCCOp = PPC::SELECT_CC_I4;
@@ -1218,7 +1217,6 @@ SDNode *PPCDAGToDAGISel::MySelect_PPCcall(SDOperand N) {
   SDOperand Chain(0, 0);
   SDOperand N1(0, 0);
   SDOperand Tmp0(0, 0);
-  SDNode *ResNode;
   Chain = N.getOperand(0);
   N1 = N.getOperand(1);
   

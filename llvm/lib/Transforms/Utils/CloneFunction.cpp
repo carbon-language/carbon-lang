@@ -361,10 +361,7 @@ void llvm::CloneAndPruneFunctionInto(Function *NewFunc, const Function *OldFunc,
   // requires the CFG to be up-to-date.
   for (unsigned phino = 0, e = PHIToResolve.size(); phino != e; ) {
     const PHINode *OPN = PHIToResolve[phino];
-    
     unsigned NumPreds = OPN->getNumIncomingValues();
-    
-    unsigned BBPHIStart = phino;
     const BasicBlock *OldBB = OPN->getParent();
     BasicBlock *NewBB = cast<BasicBlock>(ValueMap[OldBB]);
 

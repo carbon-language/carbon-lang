@@ -386,7 +386,6 @@ bool X86IntelAsmPrinter::doFinalization(Module &M) {
     
     std::string name = Mang->getValueName(I);
     Constant *C = I->getInitializer();
-    unsigned Size = TD->getTypeSize(C->getType());
     unsigned Align = TD->getPreferredAlignmentLog(I);
     bool bCustomSegment = false;
 

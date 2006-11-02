@@ -302,7 +302,7 @@ int SROA::isSafeUseOfAllocation(Instruction *User) {
   if (const ArrayType *AT = dyn_cast<ArrayType>(*I)) {
     uint64_t NumElements = AT->getNumElements();
 
-    if (ConstantInt *CI = dyn_cast<ConstantInt>(I.getOperand())) {
+    if (isa<ConstantInt>(I.getOperand())) {
       // Check to make sure that index falls within the array.  If not,
       // something funny is going on, so we won't do the optimization.
       //

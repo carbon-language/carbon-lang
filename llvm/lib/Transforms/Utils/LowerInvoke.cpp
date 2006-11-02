@@ -370,7 +370,6 @@ splitLiveRangesLiveAcrossInvokes(std::vector<InvokeInst*> &Invokes) {
       // Scan all of the uses and see if the live range is live across an unwind
       // edge.  If we find a use live across an invoke edge, create an alloca
       // and spill the value.
-      AllocaInst *SpillLoc = 0;
       std::set<InvokeInst*> InvokesWithStoreInserted;
 
       // Find all of the blocks that this value is live in.

@@ -763,7 +763,6 @@ void LoopSimplify::UpdateDomInfoForRevectoredPreds(BasicBlock *NewBB,
   // If NewBB dominates some blocks, then it will dominate all blocks that
   // NewBBSucc does.
   if (NewBBDominatesNewBBSucc) {
-    BasicBlock *PredBlock = PredBlocks[0];
     Function *F = NewBB->getParent();
     for (Function::iterator I = F->begin(), E = F->end(); I != E; ++I)
       if (DS.dominates(NewBBSucc, I))

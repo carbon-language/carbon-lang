@@ -505,7 +505,6 @@ enum {
   RSLoadStore = 0x0C000000,  // Two load store units
   RSBranch    = 0x02000000   // One branch unit
 };
-static InstrStage CallStage  = { CallLatency, RSBranch };
 static InstrStage LoadStage  = { 5, RSLoadStore };
 static InstrStage StoreStage = { 2, RSLoadStore };
 static InstrStage IntStage   = { 2, RSInteger };

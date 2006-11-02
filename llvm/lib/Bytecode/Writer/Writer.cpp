@@ -1273,7 +1273,7 @@ void llvm::WriteBytecodeToFile(const Module *M, std::ostream &Out,
     Out.write(compressed_magic,4);
 
     // Compress everything after the magic number (which we altered)
-    uint64_t zipSize = Compressor::compressToStream(
+    Compressor::compressToStream(
       (char*)(FirstByte+4),        // Skip the magic number
       Buffer.size()-4,             // Skip the magic number
       Out                          // Where to write compressed data

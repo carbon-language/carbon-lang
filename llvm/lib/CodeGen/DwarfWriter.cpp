@@ -2132,7 +2132,6 @@ private:
           } else {
             EmitInt8(DW_CFA_def_cfa);
             EOL("DW_CFA_def_cfa");
-            
             EmitULEB128Bytes(RI->getDwarfRegNum(Src.getRegister()));
             EOL("Register");
           }

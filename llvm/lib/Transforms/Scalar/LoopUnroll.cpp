@@ -92,7 +92,7 @@ static unsigned ApproximateLoopSize(const Loop *L) {
         // Ignore PHI nodes in the header.
       } else if (I->hasOneUse() && I->use_back() == Term) {
         // Ignore instructions only used by the loop terminator.
-      } else if (DbgInfoIntrinsic *DbgI = dyn_cast<DbgInfoIntrinsic>(I)) {
+      } else if (isa<DbgInfoIntrinsic>(I)) {
         // Ignore debug instructions
       } else {
         ++Size;
@@ -135,7 +135,6 @@ BasicBlock* LoopUnroll::FoldBlockIntoPredecessor(BasicBlock* BB) {
     return 0;
 
   DEBUG(std::cerr << "Merging: " << *BB << "into: " << *OnlyPred);
-  TerminatorInst *Term = OnlyPred->getTerminator();
 
   // Resolve any PHI nodes at the start of the block.  They are all
   // guaranteed to have exactly one entry if they exist, unless there are

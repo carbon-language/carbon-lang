@@ -256,8 +256,6 @@ void EquivClassGraphs::buildIndirectFunctionSets(Module &M) {
 
     for (++SI; SI != FuncECs.member_end(); ++SI) {
       Function *F = *SI;
-      DSGraph *&FG = DSInfo[F];
-
       DSGraph &CBUGraph = CBU->getDSGraph(*F);
       if (GraphsMerged.insert(&CBUGraph).second) {
         // Record the "folded" graph for the function.

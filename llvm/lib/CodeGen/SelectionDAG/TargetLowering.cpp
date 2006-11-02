@@ -504,7 +504,6 @@ bool TargetLowering::SimplifyDemandedBits(SDOperand Op, uint64_t DemandedMask,
     }
     break;
   case ISD::SIGN_EXTEND_INREG: {
-    MVT::ValueType  VT = Op.getValueType();
     MVT::ValueType EVT = cast<VTSDNode>(Op.getOperand(1))->getVT();
 
     // Sign extension.  Compute the demanded bits in the result that are not 
@@ -852,7 +851,6 @@ void TargetLowering::ComputeMaskedBits(SDOperand Op, uint64_t Mask,
     }
     return;
   case ISD::SIGN_EXTEND_INREG: {
-    MVT::ValueType  VT = Op.getValueType();
     MVT::ValueType EVT = cast<VTSDNode>(Op.getOperand(1))->getVT();
     
     // Sign extension.  Compute the demanded bits in the result that are not 

@@ -57,7 +57,6 @@ main(int argc, char **argv) {
     sys::PrintStackTraceOnErrorSignal();
 
     std::ostream* Out = &std::cout;  // Default to printing to stdout...
-    std::istream* In  = &std::cin;   // Default to reading stdin
     std::string ErrorMessage;
     BytecodeAnalysis bca;
 

@@ -97,7 +97,6 @@ void AlphaAsmPrinter::printOperand(const MachineInstr *MI, int opNum)
 
 void AlphaAsmPrinter::printOp(const MachineOperand &MO, bool IsCallOp) {
   const MRegisterInfo &RI = *TM.getRegisterInfo();
-  int new_symbol;
 
   switch (MO.getType()) {
   case MachineOperand::MO_Register:

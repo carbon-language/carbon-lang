@@ -223,7 +223,6 @@ bool LiveVariables::runOnMachineFunction(MachineFunction &MF) {
   for (df_ext_iterator<MachineBasicBlock*> DFI = df_ext_begin(Entry, Visited),
          E = df_ext_end(Entry, Visited); DFI != E; ++DFI) {
     MachineBasicBlock *MBB = *DFI;
-    unsigned BBNum = MBB->getNumber();
 
     // Loop over all of the instructions, processing them.
     for (MachineBasicBlock::iterator I = MBB->begin(), E = MBB->end();

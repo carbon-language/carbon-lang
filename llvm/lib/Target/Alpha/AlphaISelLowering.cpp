@@ -175,8 +175,6 @@ static SDOperand LowerJumpTable(SDOperand Op, SelectionDAG &DAG) {
   SDOperand JTI = DAG.getTargetJumpTable(JT->getIndex(), PtrVT);
   SDOperand Zero = DAG.getConstant(0, PtrVT);
   
-  const TargetMachine &TM = DAG.getTarget();
-
   SDOperand Hi = DAG.getNode(AlphaISD::GPRelHi,  MVT::i64, JTI,
 			     DAG.getNode(ISD::GLOBAL_OFFSET_TABLE, MVT::i64));
   SDOperand Lo = DAG.getNode(AlphaISD::GPRelLo, MVT::i64, JTI, Hi);
@@ -207,7 +205,6 @@ static SDOperand LowerFORMAL_ARGUMENTS(SDOperand Op, SelectionDAG &DAG,
 				       int &VarArgsOffset) {
   MachineFunction &MF = DAG.getMachineFunction();
   MachineFrameInfo *MFI = MF.getFrameInfo();
-  SSARegMap *RegMap = MF.getSSARegMap();
   std::vector<SDOperand> ArgValues;
   SDOperand Root = Op.getOperand(0);
 
@@ -225,7 +222,6 @@ static SDOperand LowerFORMAL_ARGUMENTS(SDOperand Op, SelectionDAG &DAG,
     SDOperand ArgVal;
 
     if (ArgNo  < 6) {
-      unsigned Vreg;
       switch (ObjectVT) {
       default:
         std::cerr << "Unknown Type " << ObjectVT << "\n";
@@ -480,7 +476,6 @@ SDOperand AlphaTargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
     //Expand only on constant case
     if (Op.getOperand(1).getOpcode() == ISD::Constant) {
       MVT::ValueType VT = Op.Val->getValueType(0);
-      unsigned Opc = Op.Val->getOpcode() == ISD::UREM ? ISD::UDIV : ISD::SDIV;
       SDOperand Tmp1 = Op.Val->getOpcode() == ISD::UREM ?
 	BuildUDIV(Op.Val, DAG, NULL) :
 	BuildSDIV(Op.Val, DAG, NULL);

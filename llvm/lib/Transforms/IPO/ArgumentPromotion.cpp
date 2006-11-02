@@ -259,7 +259,6 @@ bool ArgPromotion::isSafeToPromoteArgument(Argument *Arg) const {
   // it is safe to unconditionally load the pointer.  Use alias analysis to
   // check to see if the pointer is guaranteed to not be modified from entry of
   // the function to each of the load instructions.
-  Function &F = *Arg->getParent();
 
   // Because there could be several/many load instructions, remember which
   // blocks we know to be transparent to the load.
@@ -508,7 +507,6 @@ Function *ArgPromotion::DoPromotion(Function *F,
           GetElementPtrInst *GEP = cast<GetElementPtrInst>(I->use_back());
           std::vector<Value*> Operands(GEP->op_begin()+1, GEP->op_end());
 
-          unsigned ArgNo = 0;
           Function::arg_iterator TheArg = I2;
           for (ScalarizeTable::iterator It = ArgIndices.begin();
                *It != Operands; ++It, ++TheArg) {

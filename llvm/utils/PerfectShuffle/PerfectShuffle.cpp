@@ -296,7 +296,6 @@ int main() {
         
       for (unsigned opnum = 0, e = TheOperators.size(); opnum != e; ++opnum) {
         Operator *Op = TheOperators[opnum];
-        unsigned short Mask = Op->ShuffleMask;
 
         // Evaluate op(LHS,LHS)
         unsigned ResultMask = Op->getTransformedMask(LHS, LHS);

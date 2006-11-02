@@ -702,7 +702,7 @@ void CWriter::printConstant(Constant *CPV) {
         // The prefix for a quiet NaN is 0x7FF8. For a signalling NaN,
         // it's 0x7ff4.
         const unsigned long QuietNaN = 0x7ff8UL;
-        const unsigned long SignalNaN = 0x7ff4UL;
+        //const unsigned long SignalNaN = 0x7ff4UL;
 
         // We need to grab the first part of the FP #
         char Buffer[100];
@@ -2140,7 +2140,7 @@ void CWriter::printIndexingExpression(Value *Ptr, gep_type_iterator I,
                                       gep_type_iterator E) {
   bool HasImplicitAddress = false;
   // If accessing a global value with no indexing, avoid *(&GV) syndrome
-  if (GlobalValue *V = dyn_cast<GlobalValue>(Ptr)) {
+  if (isa<GlobalValue>(Ptr)) {
     HasImplicitAddress = true;
   } else if (isDirectAlloca(Ptr)) {
     HasImplicitAddress = true;

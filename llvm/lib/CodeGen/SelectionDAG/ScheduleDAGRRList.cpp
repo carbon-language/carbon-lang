@@ -257,7 +257,6 @@ void ScheduleDAGRRList::ListScheduleBottomUp() {
   // While Available queue is not empty, grab the node with the highest
   // priority. If it is not ready put it back. Schedule the node.
   std::vector<SUnit*> NotReady;
-  SUnit *CurNode = NULL;
   while (!AvailableQueue->empty()) {
     SUnit *CurNode = AvailableQueue->pop();
     while (CurNode && !isReady(CurNode, CurCycle)) {
@@ -373,7 +372,6 @@ void ScheduleDAGRRList::ListScheduleTopDown() {
   // While Available queue is not empty, grab the node with the highest
   // priority. If it is not ready put it back. Schedule the node.
   std::vector<SUnit*> NotReady;
-  SUnit *CurNode = NULL;
   while (!AvailableQueue->empty()) {
     SUnit *CurNode = AvailableQueue->pop();
     while (CurNode && !isReady(CurNode, CurCycle)) {

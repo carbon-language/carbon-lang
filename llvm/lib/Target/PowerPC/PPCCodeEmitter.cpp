@@ -91,7 +91,6 @@ void PPCCodeEmitter::emitBasicBlock(MachineBasicBlock &MBB) {
   
   for (MachineBasicBlock::iterator I = MBB.begin(), E = MBB.end(); I != E; ++I){
     MachineInstr &MI = *I;
-    unsigned Opcode = MI.getOpcode();
     switch (MI.getOpcode()) {
     default:
       MCE.emitWordBE(getBinaryCodeForInstr(*I));

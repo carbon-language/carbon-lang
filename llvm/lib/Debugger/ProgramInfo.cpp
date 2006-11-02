@@ -61,7 +61,7 @@ static const GlobalVariable *getNextStopPoint(const Value *V, unsigned &LineNo,
       
       // If we found a stop point, check to see if it is earlier than what we
       // already have.  If so, remember it.
-      if (const Function *F = CI->getCalledFunction())
+      if (CI->getCalledFunction())
         if (const DbgStopPointInst *SPI = dyn_cast<DbgStopPointInst>(CI)) {
           unsigned CurLineNo = SPI->getLine();
           unsigned CurColNo = SPI->getColumn();

@@ -245,7 +245,7 @@ int SimpleInliner::getInlineCost(CallSite CS) {
     // significant future optimization possibilities (like scalar promotion, and
     // scalarization), so encourage the inlining of the function.
     //
-    else if (AllocaInst *AI = dyn_cast<AllocaInst>(I)) {
+    else if (isa<AllocaInst>(I)) {
       if (ArgNo < CalleeFI.ArgumentWeights.size())
         InlineCost -= CalleeFI.ArgumentWeights[ArgNo].AllocaWeight;
 

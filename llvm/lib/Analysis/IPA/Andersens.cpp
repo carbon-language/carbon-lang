@@ -374,7 +374,6 @@ Andersens::getModRefInfo(CallSite CS, Value *P, unsigned Size) {
   if (Function *F = CS.getCalledFunction())
     if (F->isExternal()) {
       Node *N1 = getNode(P);
-      bool PointsToUniversalSet = false;
 
       if (N1->begin() == N1->end())
         return NoModRef;  // P doesn't point to anything.

@@ -2343,11 +2343,6 @@ void SelectionDAGLowering::visitInlineAsm(CallInst &I) {
   SDOperand AsmStr = DAG.getTargetExternalSymbol(IA->getAsmString().c_str(),
                                                  MVT::Other);
 
-  // Note, we treat inline asms both with and without side-effects as the same.
-  // If an inline asm doesn't have side effects and doesn't access memory, we
-  // could not choose to not chain it.
-  bool hasSideEffects = IA->hasSideEffects();
-
   std::vector<InlineAsm::ConstraintInfo> Constraints = IA->ParseConstraints();
   std::vector<MVT::ValueType> ConstraintVTs;
   
@@ -3124,7 +3119,6 @@ static SDOperand getMemsetValue(SDOperand Value, MVT::ValueType VT,
 static SDOperand getMemsetStringVal(MVT::ValueType VT,
                                     SelectionDAG &DAG, TargetLowering &TLI,
                                     std::string &Str, unsigned Offset) {
-  MVT::ValueType CurVT = VT;
   uint64_t Val = 0;
   unsigned MSB = getSizeInBits(VT) / 8;
   if (TLI.isLittleEndian())

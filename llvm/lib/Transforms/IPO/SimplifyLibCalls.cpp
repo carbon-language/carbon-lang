@@ -1106,7 +1106,7 @@ struct LLVMMemCpyMoveOptzn : public LibCallOptimization {
     CastInst* DestCast =
       new CastInst(dest,PointerType::get(castType),dest->getName()+".cast",ci);
     LoadInst* LI = new LoadInst(SrcCast,SrcCast->getName()+".val",ci);
-    StoreInst* SI = new StoreInst(LI, DestCast, ci);
+    new StoreInst(LI, DestCast, ci);
     ci->eraseFromParent();
     return true;
   }
@@ -2063,7 +2063,7 @@ bool getConstantStringLength(Value *V, uint64_t &len, ConstantArray **CA) {
   Constant* INTLZR = GV->getInitializer();
 
   // Handle the ConstantAggregateZero case
-  if (ConstantAggregateZero *CAZ = dyn_cast<ConstantAggregateZero>(INTLZR)) {
+  if (isa<ConstantAggregateZero>(INTLZR)) {
     // This is a degenerate case. The initializer is constant zero so the
     // length of the string must be zero.
     len = 0;

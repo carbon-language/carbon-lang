@@ -1383,7 +1383,6 @@ void BytecodeReader::ParseSymbolTable(Function *CurrentFunction,
     unsigned NumEntries = read_vbr_uint();
     unsigned Typ = 0;
     bool isTypeType = read_typeid(Typ);
-    const Type *Ty = getType(Typ);
 
     for (unsigned i = 0; i != NumEntries; ++i) {
       // Symtab entry: [def slot #][name]

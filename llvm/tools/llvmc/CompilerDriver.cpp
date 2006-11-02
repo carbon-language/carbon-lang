@@ -62,13 +62,6 @@ void DumpConfigData(CompilerDriver::ConfigData* cd, const std::string& type ){
   DumpAction(&cd->Linker);
 }
 
-/// This specifies the passes to run for OPT_FAST_COMPILE (-O1)
-/// which should reduce the volume of code and make compilation
-/// faster. This is also safe on any llvm module.
-static const char* DefaultFastCompileOptimizations[] = {
-  "-simplifycfg", "-mem2reg", "-instcombine"
-};
-
 class CompilerDriverImpl : public CompilerDriver {
 /// @name Constructors
 /// @{

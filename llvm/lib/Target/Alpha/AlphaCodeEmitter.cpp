@@ -92,7 +92,6 @@ void AlphaCodeEmitter::emitBasicBlock(MachineBasicBlock &MBB) {
   for (MachineBasicBlock::iterator I = MBB.begin(), E = MBB.end();
        I != E; ++I) {
     MachineInstr &MI = *I;
-    unsigned Opcode = MI.getOpcode();
     switch(MI.getOpcode()) {
     default:
       MCE.emitWordLE(getBinaryCodeForInstr(*I));
@@ -160,10 +159,6 @@ int AlphaCodeEmitter::getMachineOpValue(MachineInstr &MI, MachineOperand &MO) {
   } else if (MO.isGlobalAddress() || MO.isExternalSymbol()
              || MO.isConstantPoolIndex()) {
     DEBUG(std::cerr << MO << " is a relocated op for " << MI << "\n";);
-    bool isExternal = MO.isExternalSymbol() ||
-      (MO.isGlobalAddress() &&
-       ( MO.getGlobal()->hasWeakLinkage() ||
-         MO.getGlobal()->isExternal()) );
     unsigned Reloc = 0;
     int Offset = 0;
     bool useGOT = false;

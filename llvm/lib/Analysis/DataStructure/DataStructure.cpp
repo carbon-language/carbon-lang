@@ -512,7 +512,6 @@ bool DSNode::mergeTypeInfo(const Type *NewTy, unsigned Offset,
       // try merge with NewTy: struct {t1, t2, stuff...} if offset lands exactly on a field in Ty
       if (isa<StructType>(NewTy) && isa<StructType>(Ty)) {
         DEBUG(std::cerr << "Ty: " << *Ty << "\nNewTy: " << *NewTy << "@" << Offset << "\n");
-        unsigned O = 0;
         const StructType *STy = cast<StructType>(Ty);
         const StructLayout &SL = *TD.getStructLayout(STy);
         unsigned i = SL.getElementContainingOffset(Offset);
@@ -537,7 +536,6 @@ bool DSNode::mergeTypeInfo(const Type *NewTy, unsigned Offset,
       //try merge with NewTy: struct : {t1, t2, T} if offset lands on a field in Ty
       if (isa<StructType>(Ty)) {
         DEBUG(std::cerr << "Ty: " << *Ty << "\nNewTy: " << *NewTy << "@" << Offset << "\n");
-        unsigned O = 0;
         const StructType *STy = cast<StructType>(Ty);
         const StructLayout &SL = *TD.getStructLayout(STy);
         unsigned i = SL.getElementContainingOffset(Offset);
@@ -1280,9 +1278,9 @@ DSNode *DSGraph::addObjectToGraph(Value *Ptr, bool UseDeclaredType) {
 
   if (GlobalValue *GV = dyn_cast<GlobalValue>(Ptr)) {
     N->addGlobal(GV);
-  } else if (MallocInst *MI = dyn_cast<MallocInst>(Ptr)) {
+  } else if (isa<MallocInst>(Ptr)) {
     N->setHeapNodeMarker();
-  } else if (AllocaInst *AI = dyn_cast<AllocaInst>(Ptr)) {
+  } else if (isa<AllocaInst>(Ptr)) {
     N->setAllocaNodeMarker();
   } else {
     assert(0 && "Illegal memory object input!");
@@ -1777,8 +1775,10 @@ static void removeIdenticalCalls(std::list<DSCallSite> &Calls) {
 
   // Scan the call list cleaning it up as necessary...
   DSNodeHandle LastCalleeNode;
+#if 0
   Function *LastCalleeFunc = 0;
   unsigned NumDuplicateCalls = 0;
+#endif
   bool LastCalleeContainsExternalFunction = false;
 
   unsigned NumDeleted = 0;
@@ -2187,7 +2187,6 @@ void DSGraph::removeDeadNodes(unsigned Flags) {
   } while (Iterate);
 
   // Move dead aux function calls to the end of the list
-  unsigned CurIdx = 0;
   for (std::list<DSCallSite>::iterator CI = AuxFunctionCalls.begin(),
          E = AuxFunctionCalls.end(); CI != E; )
     if (AuxFCallsAlive.count(&*CI))

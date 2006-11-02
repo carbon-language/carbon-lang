@@ -906,7 +906,6 @@ void JITEmitter::emitJumpTableInfo(MachineJumpTableInfo *MJTI) {
   const std::vector<MachineJumpTableEntry> &JT = MJTI->getJumpTables();
   if (JT.empty() || JumpTableBase == 0) return;
 
-  unsigned Offset = 0;
   assert(MJTI->getEntrySize() == sizeof(void*) && "Cross JIT'ing?");
   
   // For each jump table, map each target in the jump table to the address of 

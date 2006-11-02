@@ -1770,7 +1770,7 @@ static bool EvaluateFunction(Function *F, Constant *&RetVal,
           return false;
         InstResult = RetVal;
       }
-    } else if (TerminatorInst *TI = dyn_cast<TerminatorInst>(CurInst)) {
+    } else if (isa<TerminatorInst>(CurInst)) {
       BasicBlock *NewBB = 0;
       if (BranchInst *BI = dyn_cast<BranchInst>(CurInst)) {
         if (BI->isUnconditional()) {

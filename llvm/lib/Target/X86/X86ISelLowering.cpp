@@ -532,7 +532,6 @@ SDOperand X86TargetLowering::LowerCCCArguments(SDOperand Op, SelectionDAG &DAG) 
 SDOperand X86TargetLowering::LowerCCCCallTo(SDOperand Op, SelectionDAG &DAG) {
   SDOperand Chain     = Op.getOperand(0);
   unsigned CallingConv= cast<ConstantSDNode>(Op.getOperand(1))->getValue();
-  bool isVarArg       = cast<ConstantSDNode>(Op.getOperand(2))->getValue() != 0;
   bool isTailCall     = cast<ConstantSDNode>(Op.getOperand(3))->getValue() != 0;
   SDOperand Callee    = Op.getOperand(4);
   MVT::ValueType RetVT= Op.Val->getValueType(0);
@@ -1031,7 +1030,6 @@ X86TargetLowering::LowerX86_64CCCArguments(SDOperand Op, SelectionDAG &DAG) {
 SDOperand
 X86TargetLowering::LowerX86_64CCCCallTo(SDOperand Op, SelectionDAG &DAG) {
   SDOperand Chain     = Op.getOperand(0);
-  unsigned CallingConv= cast<ConstantSDNode>(Op.getOperand(1))->getValue();
   bool isVarArg       = cast<ConstantSDNode>(Op.getOperand(2))->getValue() != 0;
   bool isTailCall     = cast<ConstantSDNode>(Op.getOperand(3))->getValue() != 0;
   SDOperand Callee    = Op.getOperand(4);
@@ -1528,8 +1526,6 @@ X86TargetLowering::LowerFastCCArguments(SDOperand Op, SelectionDAG &DAG) {
 SDOperand X86TargetLowering::LowerFastCCCallTo(SDOperand Op, SelectionDAG &DAG,
                                                bool isFastCall) {
   SDOperand Chain     = Op.getOperand(0);
-  unsigned CallingConv= cast<ConstantSDNode>(Op.getOperand(1))->getValue();
-  bool isVarArg       = cast<ConstantSDNode>(Op.getOperand(2))->getValue() != 0;
   bool isTailCall     = cast<ConstantSDNode>(Op.getOperand(3))->getValue() != 0;
   SDOperand Callee    = Op.getOperand(4);
   MVT::ValueType RetVT= Op.Val->getValueType(0);
@@ -1549,11 +1545,13 @@ SDOperand X86TargetLowering::LowerFastCCCallTo(SDOperand Op, SelectionDAG &DAG,
     { X86::AX,  X86::DX },
     { X86::EAX, X86::EDX }
   };
+#if 0
   static const unsigned FastCallGPRArgRegs[][2] = {
     { X86::CL,  X86::DL },
     { X86::CX,  X86::DX },
     { X86::ECX, X86::EDX }
   };  
+#endif
   static const unsigned XMMArgRegs[] = {
     X86::XMM0, X86::XMM1, X86::XMM2, X86::XMM3
   };
@@ -1906,7 +1904,6 @@ SDOperand X86TargetLowering::LowerStdCallCCArguments(SDOperand Op,
 SDOperand X86TargetLowering::LowerStdCallCCCallTo(SDOperand Op,
                                                   SelectionDAG &DAG) {
   SDOperand Chain     = Op.getOperand(0);
-  unsigned CallingConv= cast<ConstantSDNode>(Op.getOperand(1))->getValue();
   bool isVarArg       = cast<ConstantSDNode>(Op.getOperand(2))->getValue() != 0;
   bool isTailCall     = cast<ConstantSDNode>(Op.getOperand(3))->getValue() != 0;
   SDOperand Callee    = Op.getOperand(4);
@@ -2841,7 +2838,7 @@ static bool isSplatMask(SDNode *N) {
   unsigned i = 0;
   for (; i != NumElems; ++i) {
     SDOperand Elt = N->getOperand(i);
-    if (ConstantSDNode *EltV = dyn_cast<ConstantSDNode>(Elt)) {
+    if (isa<ConstantSDNode>(Elt)) {
       ElementBase = Elt;
       break;
     }
@@ -5431,7 +5428,6 @@ static SDOperand PerformSELECTCombine(SDNode *N, SelectionDAG &DAG,
 
 SDOperand X86TargetLowering::PerformDAGCombine(SDNode *N, 
                                                DAGCombinerInfo &DCI) const {
-  TargetMachine &TM = getTargetMachine();
   SelectionDAG &DAG = DCI.DAG;
   switch (N->getOpcode()) {
   default: break;

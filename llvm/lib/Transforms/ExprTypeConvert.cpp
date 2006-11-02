@@ -537,7 +537,7 @@ static bool OperandConvertibleToType(User *U, Value *V, const Type *Ty,
         // a whole structure at a time), so the level raiser must be trying to
         // store into the first field.  Check for this and allow it now:
         //
-        if (const StructType *SElTy = dyn_cast<StructType>(ElTy)) {
+        if (isa<StructType>(ElTy)) {
           unsigned Offset = 0;
           std::vector<Value*> Indices;
           ElTy = getStructOffsetType(ElTy, Offset, Indices, TD, false);
@@ -799,9 +799,6 @@ static void ConvertOperandToType(User *U, Value *OldVal, Value *NewVal,
         Value *SrcPtr = VMCI->second;
 
         if (ElTy != NewTy) {
-          // We check that this is a struct in the initial scan...
-          const StructType *SElTy = cast<StructType>(ElTy);
-
           std::vector<Value*> Indices;
           Indices.push_back(Constant::getNullValue(Type::UIntTy));
 

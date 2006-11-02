@@ -576,8 +576,6 @@ void LoopUnswitch::UnswitchNontrivialCondition(Value *LIC, Constant *Val,
 
   // Split all of the edges from inside the loop to their exit blocks.  Update
   // the appropriate Phi nodes as we do so.
-  unsigned NumBlocks = L->getBlocks().size();
-  
   for (unsigned i = 0, e = ExitBlocks.size(); i != e; ++i) {
     BasicBlock *ExitBlock = ExitBlocks[i];
     std::vector<BasicBlock*> Preds(pred_begin(ExitBlock), pred_end(ExitBlock));
@@ -966,9 +964,8 @@ void LoopUnswitch::RewriteLoopBodyWithConditionConstant(Loop *L, Value *LIC,
               BasicBlock* Split = SplitBlock(Old, SI);
               
               Instruction* OldTerm = Old->getTerminator();
-              BranchInst* Branch = new BranchInst(Split, SI->getSuccessor(i),
-                                                  ConstantBool::getTrue(),
-                                                  OldTerm);
+              new BranchInst(Split, SI->getSuccessor(i),
+                             ConstantBool::getTrue(), OldTerm);
               
               Old->getTerminator()->eraseFromParent();
               

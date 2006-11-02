@@ -747,7 +747,7 @@ static void CleanupAndPrepareModules(BugDriver &BD, Module *&Test,
 
           // Pass on the arguments to the real function, return its result
           if (F->getReturnType() == Type::VoidTy) {
-            CallInst *Call = new CallInst(FuncPtr, Args, "", DoCallBB);
+            new CallInst(FuncPtr, Args, "", DoCallBB);
             new ReturnInst(DoCallBB);
           } else {
             CallInst *Call = new CallInst(FuncPtr, Args, "retval", DoCallBB);

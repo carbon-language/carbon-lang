@@ -377,7 +377,7 @@ void SCCPSolver::getFeasibleSuccessors(TerminatorInst &TI,
         Succs[BCValue.getConstant() == ConstantBool::getFalse()] = true;
       }
     }
-  } else if (InvokeInst *II = dyn_cast<InvokeInst>(&TI)) {
+  } else if (isa<InvokeInst>(&TI)) {
     // Invoke instructions successors are always executable.
     Succs[0] = Succs[1] = true;
   } else if (SwitchInst *SI = dyn_cast<SwitchInst>(&TI)) {
@@ -436,7 +436,7 @@ bool SCCPSolver::isEdgeFeasible(BasicBlock *From, BasicBlock *To) {
       }
       return false;
     }
-  } else if (InvokeInst *II = dyn_cast<InvokeInst>(TI)) {
+  } else if (isa<InvokeInst>(TI)) {
     // Invoke instructions successors are always executable.
     return true;
   } else if (SwitchInst *SI = dyn_cast<SwitchInst>(TI)) {

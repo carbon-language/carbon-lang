@@ -836,7 +836,7 @@ sanitizeOpCode(OpcodeInfo<Instruction::BinaryOps> &OI, const PATypeHolder& PATy)
   // Depending on the opcode ..
   switch (OI.opcode) {
     default:
-      GenerateError("Invalid Obsolete OpCode");
+      GenerateError("Invalid obsolete opCode (check Lexer.l)");
       break;
     case Instruction::UDiv:
       // Handle cases where the opcode needs to change
@@ -845,12 +845,17 @@ sanitizeOpCode(OpcodeInfo<Instruction::BinaryOps> &OI, const PATypeHolder& PATy)
       else if (Ty->isSigned())
         OI.opcode = Instruction::SDiv;
       break;
+    case Instruction::URem:
+      if (Ty->isFloatingPoint()) 
+        OI.opcode = Instruction::FRem;
+      else if (Ty->isSigned())
+        OI.opcode = Instruction::SRem;
+      break;
   }
   // Its not obsolete any more, we fixed it.
   OI.obsolete = false;
 }
-
-
+  
 // common code from the two 'RunVMAsmParser' functions
 static Module* RunParser(Module * M) {
 
@@ -1113,7 +1118,7 @@ Module *llvm::RunVMAsmParser(const char * AsmString, Module * M) {
 
 // Binary Operators
 %type  <BinaryOpVal> ArithmeticOps LogicalOps SetCondOps // Binops Subcatagories
-%token <BinaryOpVal> ADD SUB MUL UDIV SDIV FDIV REM AND OR XOR
+%token <BinaryOpVal> ADD SUB MUL UDIV SDIV FDIV UREM SREM FREM AND OR XOR
 %token <BinaryOpVal> SETLE SETGE SETLT SETGT SETEQ SETNE  // Binary Comparators
 
 // Memory Instructions
@@ -1151,7 +1156,7 @@ EINT64VAL : EUINT64VAL {
 // Operations that are notably excluded from this list include:
 // RET, BR, & SWITCH because they end basic blocks and are treated specially.
 //
-ArithmeticOps: ADD | SUB | MUL | UDIV | SDIV | FDIV | REM ;
+ArithmeticOps: ADD | SUB | MUL | UDIV | SDIV | FDIV | UREM | SREM | FREM;
 LogicalOps   : AND | OR | XOR;
 SetCondOps   : SETLE | SETGE | SETLT | SETGT | SETEQ | SETNE;
 
@@ -2465,8 +2470,11 @@ InstVal : ArithmeticOps Types ValueRef ',' ValueRef {
         !isa<PackedType>((*$2).get()))
       GEN_ERROR(
         "Arithmetic operator requires integer, FP, or packed operands!");
-    if (isa<PackedType>((*$2).get()) && $1.opcode == Instruction::Rem)
-      GEN_ERROR("Rem not supported on packed types!");
+    if (isa<PackedType>((*$2).get()) && 
+        ($1.opcode == Instruction::URem || 
+         $1.opcode == Instruction::SRem ||
+         $1.opcode == Instruction::FRem))
+      GEN_ERROR("U/S/FRem not supported on packed types!");
     // Upgrade the opcode from obsolete versions before we do anything with it.
     sanitizeOpCode($1,*$2);
     CHECK_FOR_ERROR;

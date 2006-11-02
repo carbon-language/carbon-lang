@@ -383,7 +383,7 @@ CppWriter::getCppName(const Value* val) {
   if (const GlobalVariable* GV = dyn_cast<GlobalVariable>(val)) {
     name = std::string("gvar_") + 
            getTypePrefix(GV->getType()->getElementType());
-  } else if (const Function* F = dyn_cast<Function>(val)) {
+  } else if (isa<Function>(val)) {
     name = std::string("func_");
   } else if (const Constant* C = dyn_cast<Constant>(val)) {
     name = std::string("const_") + getTypePrefix(C->getType());
@@ -536,7 +536,6 @@ CppWriter::printTypeInternal(const Type* Ty) {
       break;
     }
     case Type::OpaqueTyID: {
-      const OpaqueType* OT = cast<OpaqueType>(Ty);
       Out << "OpaqueType* " << typeName << " = OpaqueType::get();";
       nl(Out);
       break;

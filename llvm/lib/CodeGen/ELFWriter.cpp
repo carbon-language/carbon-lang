@@ -113,7 +113,6 @@ void ELFCodeEmitter::startFunction(MachineFunction &F) {
 
   // Add padding zeros to the end of the buffer to make sure that the
   // function will start on the correct byte alignment within the section.
-  size_t SectionOff = OutBuffer->size();
   ELFWriter::align(*OutBuffer, Align);
 
   FnStart = OutBuffer->size();

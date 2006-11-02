@@ -99,7 +99,7 @@ void PPCMachOWriter::GetTargetRelocation(MachineRelocation &MR,
   case PPC::reloc_pcrel_bx:
     Addr -= MR.getMachineCodeOffset();
     Addr >>= 2;
-    Addr & 0xFFFFFF;
+    // ??? Addr & 0xFFFFFF;  Possibly this was supposed to be Addr &= 0xFFFFFF ?
     Addr <<= 2;
     Addr |= (MOS.SectionData[MR.getMachineCodeOffset()] << 24);
     fixword(MOS.SectionData, Addr, MR.getMachineCodeOffset());

@@ -106,7 +106,6 @@ namespace {
     bool isAtTop(unsigned RegNo) const { return getSlot(RegNo) == StackTop-1; }
     void moveToTop(unsigned RegNo, MachineBasicBlock::iterator &I) {
       if (!isAtTop(RegNo)) {
-        unsigned Slot = getSlot(RegNo);
         unsigned STReg = getSTReg(RegNo);
         unsigned RegOnTop = getStackEntry(0);
 

@@ -726,7 +726,6 @@ void CEE::InsertRegionExitMerges(PHINode *BBVal, Instruction *OldVal,
                              const std::vector<BasicBlock*> &RegionExitBlocks) {
   assert(BBVal->getType() == OldVal->getType() && "Should be derived values!");
   BasicBlock *BB = BBVal->getParent();
-  BasicBlock *OldSucc = OldVal->getParent();
 
   // Loop over all of the blocks we have to place PHIs in, doing it.
   for (unsigned i = 0, e = RegionExitBlocks.size(); i != e; ++i) {

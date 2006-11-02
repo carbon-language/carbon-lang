@@ -129,8 +129,6 @@ bool Inliner::runOnSCC(const std::vector<CallGraphNode*> &SCC) {
           DEBUG(std::cerr << "    Inlining: cost=" << InlineCost
                 << ", Call: " << *CS.getInstruction());
 
-          Function *Caller = CS.getInstruction()->getParent()->getParent();
-
           // Attempt to inline the function...
           if (InlineCallIfPossible(CS, CG, SCCFunctions)) {
             // Remove this call site from the list.

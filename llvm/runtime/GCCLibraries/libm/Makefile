@@ -14,4 +14,3 @@ LIBRARYNAME = m
 BYTECODE_DESTINATION = $(CFERuntimeLibDir)
 
 include $(LEVEL)/Makefile.common
-

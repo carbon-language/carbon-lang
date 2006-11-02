@@ -163,7 +163,6 @@ int main(int argc, char **argv) {
     // FIXME: The choice of target should be controllable on the command line.
     std::auto_ptr<TargetMachine> target;
 
-    TargetMachine* TM = NULL;
     std::string ErrorMessage;
 
     // Load the input module...
@@ -233,9 +232,9 @@ int main(int argc, char **argv) {
         Passes.add(P);
         
         if (AnalyzeOnly) {
-          if (BasicBlockPass *BBP = dynamic_cast<BasicBlockPass*>(P))
+          if (dynamic_cast<BasicBlockPass*>(P))
             Passes.add(new BasicBlockPassPrinter(PassInf));
-          else if (FunctionPass *FP = dynamic_cast<FunctionPass*>(P))
+          else if (dynamic_cast<FunctionPass*>(P))
             Passes.add(new FunctionPassPrinter(PassInf));
           else
             Passes.add(new ModulePassPrinter(PassInf));

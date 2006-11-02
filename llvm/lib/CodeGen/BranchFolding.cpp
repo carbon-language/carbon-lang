@@ -766,7 +766,6 @@ void BranchFolder::OptimizeBlock(MachineBasicBlock *MBB) {
         // Analyze the branch at the end of the pred.
         MachineBasicBlock *PredBB = *PI;
         MachineFunction::iterator PredFallthrough = PredBB; ++PredFallthrough;
-        MachineBasicBlock *PredTBB = 0, *PredFBB = 0;
         std::vector<MachineOperand> PredCond;
         if (PredBB != MBB && !CanFallThrough(PredBB)) {
           MBB->moveAfter(PredBB);
@@ -781,7 +780,6 @@ void BranchFolder::OptimizeBlock(MachineBasicBlock *MBB) {
         // Analyze the branch at the end of the block before the succ.
         MachineBasicBlock *SuccBB = *SI;
         MachineFunction::iterator SuccPrev = SuccBB; --SuccPrev;
-        MachineBasicBlock *SuccPrevTBB = 0, *SuccPrevFBB = 0;
         std::vector<MachineOperand> SuccPrevCond;
         if (SuccBB != MBB && !CanFallThrough(SuccPrev)) {
           MBB->moveBefore(SuccBB);

@@ -409,7 +409,7 @@ void GraphBuilder::visitGetElementPtrInst(User &GEP) {
       unsigned FieldNo =
            (unsigned)cast<ConstantInt>(I.getOperand())->getZExtValue();
       Offset += (unsigned)TD.getStructLayout(STy)->MemberOffsets[FieldNo];
-    } else if (const PointerType *PTy = dyn_cast<PointerType>(*I)) {
+    } else if (isa<PointerType>(*I)) {
       if (!isa<Constant>(I.getOperand()) ||
           !cast<Constant>(I.getOperand())->isNullValue())
         Value.getNode()->setArrayMarker();

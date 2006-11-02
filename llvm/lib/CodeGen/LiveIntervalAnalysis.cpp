@@ -184,7 +184,7 @@ bool LiveIntervals::runOnMachineFunction(MachineFunction &fn) {
       if (tii_->isMoveInstr(*mii, srcReg, dstReg) &&
           (RegRep = rep(srcReg)) == rep(dstReg)) {
         // remove from def list
-        LiveInterval &interval = getOrCreateInterval(RegRep);
+        getOrCreateInterval(RegRep);
         RemoveMachineInstrFromMaps(mii);
         mii = mbbi->erase(mii);
         ++numPeep;

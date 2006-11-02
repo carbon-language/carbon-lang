@@ -1956,7 +1956,6 @@ UpdateNodeOperands(SDOperand InN, SDOperand Op1, SDOperand Op2) {
   assert(N->getNumOperands() == 2 && "Update with wrong number of operands");
   
   // Check to see if there is no change.
-  bool AnyChange = false;
   if (Op1 == N->getOperand(0) && Op2 == N->getOperand(1))
     return InN;   // No operands changed, just return the input node.
   

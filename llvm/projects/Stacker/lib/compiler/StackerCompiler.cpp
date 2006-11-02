@@ -116,7 +116,6 @@ StackerCompiler::compile(
         }
     }
 
-    Module *Result;
     try
     {
         // Create the module we'll return

@@ -23,20 +23,6 @@
 #include <set>
 using namespace llvm;
 
-/// GetAllDefinedSymbols - Modifies its parameter DefinedSymbols to contain the
-/// name of each externally-visible symbol defined in M.
-///
-static void
-GetAllDefinedSymbols(Module *M, std::set<std::string> &DefinedSymbols) {
-  for (Module::iterator I = M->begin(), E = M->end(); I != E; ++I)
-    if (I->hasName() && !I->isExternal() && !I->hasInternalLinkage())
-      DefinedSymbols.insert(I->getName());
-  for (Module::global_iterator I = M->global_begin(), E = M->global_end();
-       I != E; ++I)
-    if (I->hasName() && !I->isExternal() && !I->hasInternalLinkage())
-      DefinedSymbols.insert(I->getName());
-}
-
 /// GetAllUndefinedSymbols - calculates the set of undefined symbols that still
 /// exist in an LLVM module. This is a bit tricky because there may be two
 /// symbols with the same name but different LLVM types that will be resolved to

@@ -249,7 +249,6 @@ namespace {
     DarwinAsmPrinter(std::ostream &O, PPCTargetMachine &TM,
                      const TargetAsmInfo *T)
       : PPCAsmPrinter(O, TM, T), DW(O, this, T) {
-      bool isPPC64 = Subtarget.isPPC64();
     }
 
     virtual const char *getPassName() const {
@@ -308,7 +307,6 @@ void PPCAsmPrinter::printOp(const MachineOperand &MO) {
     // Computing the address of a global symbol, not calling it.
     GlobalValue *GV = MO.getGlobal();
     std::string Name = Mang->getValueName(GV);
-    int offset = MO.getOffset();
 
     // External or weakly linked global variables need non-lazily-resolved stubs
     if (TM.getRelocationModel() != Reloc::Static) {

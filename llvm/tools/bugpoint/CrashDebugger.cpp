@@ -525,7 +525,6 @@ bool BugDriver::debugOptimizerCrash(const std::string &ID) {
   std::cout << "\n*** Debugging optimizer crash!\n";
 
   // Reduce the list of passes which causes the optimizer to crash...
-  unsigned OldSize = PassesToRun.size();
   if (!BugpointIsInterrupted)
     ReducePassList(*this).reduceList(PassesToRun);
 

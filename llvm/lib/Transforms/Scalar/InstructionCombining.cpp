@@ -2579,8 +2579,6 @@ Instruction *InstCombiner::visitSRem(BinaryOperator &I) {
 }
 
 Instruction *InstCombiner::visitFRem(BinaryOperator &I) {
-  Value *Op0 = I.getOperand(0), *Op1 = I.getOperand(1);
-
   return commonRemTransforms(I);
 }
 
@@ -3109,7 +3107,6 @@ Instruction *InstCombiner::visitAnd(BinaryOperator &I) {
   
   {
     Value *A = 0, *B = 0;
-    ConstantInt *C1 = 0, *C2 = 0;
     if (match(Op0, m_Or(m_Value(A), m_Value(B))))
       if (A == Op1 || B == Op1)    // (A | ?) & A  --> A
         return ReplaceInstUsesWith(I, Op1);
@@ -5510,7 +5507,7 @@ static bool CanEvaluateInDifferentType(Value *V, const Type *Ty,
       // If the first operand is itself a cast, and is eliminable, do not count
       // this as an eliminable cast.  We would prefer to eliminate those two
       // casts first.
-      if (CastInst *OpCast = dyn_cast<CastInst>(I->getOperand(0)))
+      if (isa<CastInst>(I->getOperand(0)))
         return true;
       
       ++NumCastsRemoved;
@@ -6192,7 +6189,6 @@ Instruction *InstCombiner::visitSelectInst(SelectInst &SI) {
   if (Instruction *TI = dyn_cast<Instruction>(TrueVal))
     if (Instruction *FI = dyn_cast<Instruction>(FalseVal))
       if (TI->hasOneUse() && FI->hasOneUse()) {
-        bool isInverse = false;
         Instruction *AddOp = 0, *SubOp = 0;
 
         // Turn (select C, (op X, Y), (op X, Z)) -> (op X, (select C, Y, Z))
@@ -6971,7 +6967,7 @@ Instruction *InstCombiner::FoldPHIArgOpIntoPHI(PHINode &PN) {
   // Insert and return the new operation.
   if (isa<CastInst>(FirstInst))
     return new CastInst(PhiVal, PN.getType());
-  else if (LoadInst *LI = dyn_cast<LoadInst>(FirstInst))
+  else if (isa<LoadInst>(FirstInst))
     return new LoadInst(PhiVal, "", isVolatile);
   else if (BinaryOperator *BinOp = dyn_cast<BinaryOperator>(FirstInst))
     return BinaryOperator::create(BinOp->getOpcode(), PhiVal, ConstantOp);
@@ -7327,7 +7323,7 @@ Instruction *InstCombiner::visitGetElementPtrInst(GetElementPtrInst &GEP) {
         // If the index will be to exactly the right offset with the scale taken
         // out, perform the transformation.
         if (Scale && Scale->getZExtValue() % ArrayEltSize == 0) {
-          if (ConstantInt *C = dyn_cast<ConstantInt>(Scale))
+          if (isa<ConstantInt>(Scale))
             Scale = ConstantInt::get(Scale->getType(),
                                       Scale->getZExtValue() / ArrayEltSize);
           if (Scale->getZExtValue() != 1) {
@@ -7501,7 +7497,7 @@ Instruction *InstCombiner::visitLoadInst(LoadInst &LI) {
   Value *Op = LI.getOperand(0);
 
   // load (cast X) --> cast (load X) iff safe
-  if (CastInst *CI = dyn_cast<CastInst>(Op))
+  if (isa<CastInst>(Op))
     if (Instruction *Res = InstCombineLoadCast(*this, LI))
       return Res;
 
@@ -7728,7 +7724,7 @@ Instruction *InstCombiner::visitStoreInst(StoreInst &SI) {
 
   // If the pointer destination is a cast, see if we can fold the cast into the
   // source instead.
-  if (CastInst *CI = dyn_cast<CastInst>(Ptr))
+  if (isa<CastInst>(Ptr))
     if (Instruction *Res = InstCombineStoreToCast(*this, SI))
       return Res;
   if (ConstantExpr *CE = dyn_cast<ConstantExpr>(Ptr))
@@ -8015,7 +8011,7 @@ Instruction *InstCombiner::visitExtractElementInst(ExtractElementInst &EI) {
           InsertNewInstBefore(newEI1, EI);
           return BinaryOperator::create(BO->getOpcode(), newEI0, newEI1);
         }
-      } else if (LoadInst *LI = dyn_cast<LoadInst>(I)) {
+      } else if (isa<LoadInst>(I)) {
         Value *Ptr = InsertCastBefore(I->getOperand(0),
                                       PointerType::get(EI.getType()), EI);
         GetElementPtrInst *GEP = 

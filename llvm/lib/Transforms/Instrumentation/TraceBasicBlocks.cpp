@@ -56,7 +56,7 @@ static void InsertInstrumentationCall (BasicBlock *BB,
   while (isa<AllocaInst>(InsertPos) || isa<PHINode>(InsertPos))
     ++InsertPos;
 
-  Instruction *InstrCall = new CallInst (InstrFn, Args, "", InsertPos);
+  new CallInst (InstrFn, Args, "", InsertPos);
 }
 
 bool TraceBasicBlocks::runOnModule(Module &M) {

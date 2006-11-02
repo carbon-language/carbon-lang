@@ -3690,7 +3690,6 @@ SDOperand SelectionDAGLegalize::ExpandBUILD_VECTOR(SDNode *Node) {
   SmallVector<SDOperand, 8> Stores;
   unsigned TypeByteSize = 
     MVT::getSizeInBits(Node->getOperand(0).getValueType())/8;
-  unsigned VectorSize = MVT::getSizeInBits(VT)/8;
   // Store (in the right endianness) the elements to memory.
   for (unsigned i = 0, e = Node->getNumOperands(); i != e; ++i) {
     // Ignore undef elements.
@@ -4802,7 +4801,6 @@ void SelectionDAGLegalize::ExpandOp(SDOperand Op, SDOperand &Lo, SDOperand &Hi){
     
     bool HasMULHS = TLI.isOperationLegal(ISD::MULHS, NVT);
     bool HasMULHU = TLI.isOperationLegal(ISD::MULHU, NVT);
-    bool UseLibCall = true;
     if (HasMULHS || HasMULHU) {
       SDOperand LL, LH, RL, RH;
       ExpandOp(Node->getOperand(0), LL, LH);

@@ -580,7 +580,6 @@ static void CollapsePhi(BasicBlock* btarget, BasicBlock* bsrc) {
   for(BasicBlock::iterator ib = btarget->begin(), ie = btarget->end();
       ib != ie; ++ib)
     if (PHINode* phi = dyn_cast<PHINode>(&*ib)) {
-      unsigned total = phi->getNumIncomingValues();
       std::map<BasicBlock*, Value*> counter;
       for(unsigned i = 0; i < phi->getNumIncomingValues(); ) {
         if (counter[phi->getIncomingBlock(i)]) {

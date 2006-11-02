@@ -496,7 +496,6 @@ void LowerSetJmp::visitInvokeInst(InvokeInst& II)
   // If not reachable from a setjmp call, don't transform.
   if (!DFSBlocks.count(BB)) return;
 
-  BasicBlock* NormalBB = II.getNormalDest();
   BasicBlock* ExceptBB = II.getUnwindDest();
 
   Function* Func = BB->getParent();

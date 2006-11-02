@@ -81,5 +81,3 @@ $(DestBytecodeLib): $(BytecodeDestDir) $(LibName.BCA)
 uninstall-local::
 	$(Echo) Uninstalling $(BuildMode) Bytecode Archive $(DestBytecodeLib)
 	-$(Verb) $(RM) -f $(DestBytecodeLib)
-
-

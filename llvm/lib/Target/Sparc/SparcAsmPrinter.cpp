@@ -185,8 +185,6 @@ void SparcAsmPrinter::printMemOperand(const MachineInstr *MI, int opNum,
     return;
   }
   
-  MachineOperand::MachineOperandType OpTy = MI->getOperand(opNum+1).getType();
-  
   if (MI->getOperand(opNum+1).isRegister() &&
       MI->getOperand(opNum+1).getReg() == SP::G0)
     return;   // don't print "+%g0"

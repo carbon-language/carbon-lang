@@ -307,7 +307,7 @@ static bool getSCEVStartAndStride(const SCEVHandle &SH, Loop *L,
         Start = SCEVAddExpr::get(Start, AE->getOperand(i));
       }
         
-  } else if (SCEVAddRecExpr *AddRec = dyn_cast<SCEVAddRecExpr>(SH)) {
+  } else if (isa<SCEVAddRecExpr>(SH)) {
     TheAddRec = SH;
   } else {
     return false;  // not analyzable.

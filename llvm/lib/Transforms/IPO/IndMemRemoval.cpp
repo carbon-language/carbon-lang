@@ -77,7 +77,7 @@ bool IndMemRemPass::runOnModule(Module &M) {
       BasicBlock* bb = new BasicBlock("entry",FN);
       Instruction* c = new CastInst(FN->arg_begin(), Type::UIntTy, "c", bb);
       Instruction* a = new MallocInst(Type::SByteTy, c, "m", bb);
-      Instruction* R = new ReturnInst(a, bb);
+      new ReturnInst(a, bb);
       ++NumBounce;
       NumBounceSites += F->getNumUses();
       F->replaceAllUsesWith(FN);

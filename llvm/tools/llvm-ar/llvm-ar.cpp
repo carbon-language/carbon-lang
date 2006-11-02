@@ -445,7 +445,6 @@ bool
 doExtract(std::string* ErrMsg) {
   if (buildPaths(false, ErrMsg))
     return true;
-  unsigned countDown = Count;
   for (Archive::iterator I = TheArchive->begin(), E = TheArchive->end();
        I != E; ++I ) {
     if (Paths.empty() ||
