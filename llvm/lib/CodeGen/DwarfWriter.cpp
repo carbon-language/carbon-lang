@@ -688,7 +688,7 @@ public:
 
   /// Profile - Used to gather unique data for the value folding set.
   ///
-  virtual void DIEBlock::Profile(FoldingSetNodeID &ID) {
+  virtual void Profile(FoldingSetNodeID &ID) {
     ID.AddInteger(isBlock);
     DIE::Profile(ID);
   }
