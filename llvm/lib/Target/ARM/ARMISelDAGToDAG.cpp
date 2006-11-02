@@ -310,8 +310,6 @@ static SDOperand LowerCALL(SDOperand Op, SelectionDAG &DAG) {
   assert((CallConv == CallingConv::C ||
           CallConv == CallingConv::Fast)
          && "unknown calling convention");
-  bool isVarArg      = cast<ConstantSDNode>(Op.getOperand(2))->getValue() != 0;
-  bool isTailCall    = cast<ConstantSDNode>(Op.getOperand(3))->getValue() != 0;
   SDOperand Callee   = Op.getOperand(4);
   unsigned NumOps    = (Op.getNumOperands() - 5) / 2;
   SDOperand StackPtr = DAG.getRegister(ARM::R13, MVT::i32);

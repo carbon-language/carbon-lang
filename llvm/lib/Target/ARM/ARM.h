@@ -51,27 +51,6 @@ namespace llvm {
     };
   }
 
-  static const char *ARMCondCodeToString(ARMCC::CondCodes CC) {
-    switch (CC) {
-    default: assert(0 && "Unknown condition code");
-    case ARMCC::EQ:  return "eq";
-    case ARMCC::NE:  return "ne";
-    case ARMCC::CS:  return "cs";
-    case ARMCC::CC:  return "cc";
-    case ARMCC::MI:  return "mi";
-    case ARMCC::PL:  return "pl";
-    case ARMCC::VS:  return "vs";
-    case ARMCC::VC:  return "vc";
-    case ARMCC::HI:  return "hi";
-    case ARMCC::LS:  return "ls";
-    case ARMCC::GE:  return "ge";
-    case ARMCC::LT:  return "lt";
-    case ARMCC::GT:  return "gt";
-    case ARMCC::LE:  return "le";
-    case ARMCC::AL:  return "al";
-    }
-  }
-
   class FunctionPass;
   class TargetMachine;
 
