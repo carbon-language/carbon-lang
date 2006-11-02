@@ -776,7 +776,9 @@ void CppWriter::printConstant(const Constant *CV) {
         case Instruction::UDiv:   Out << "getUDiv"; break;
         case Instruction::SDiv:   Out << "getSDiv"; break;
         case Instruction::FDiv:   Out << "getFDiv"; break;
-        case Instruction::Rem:    Out << "getRem"; break;
+        case Instruction::URem:   Out << "getURem"; break;
+        case Instruction::SRem:   Out << "getSRem"; break;
+        case Instruction::FRem:   Out << "getFRem"; break;
         case Instruction::And:    Out << "getAnd"; break;
         case Instruction::Or:     Out << "getOr"; break;
         case Instruction::Xor:    Out << "getXor"; break;
@@ -1026,7 +1028,9 @@ CppWriter::printInstruction(const Instruction *I, const std::string& bbname) {
     case Instruction::UDiv:
     case Instruction::SDiv:
     case Instruction::FDiv:
-    case Instruction::Rem:
+    case Instruction::URem:
+    case Instruction::SRem:
+    case Instruction::FRem:
     case Instruction::And:
     case Instruction::Or:
     case Instruction::Xor:
@@ -1040,7 +1044,9 @@ CppWriter::printInstruction(const Instruction *I, const std::string& bbname) {
         case Instruction::UDiv:Out << "Instruction::UDiv"; break;
         case Instruction::SDiv:Out << "Instruction::SDiv"; break;
         case Instruction::FDiv:Out << "Instruction::FDiv"; break;
-        case Instruction::Rem: Out << "Instruction::Rem"; break;
+        case Instruction::URem:Out << "Instruction::URem"; break;
+        case Instruction::SRem:Out << "Instruction::SRem"; break;
+        case Instruction::FRem:Out << "Instruction::FRem"; break;
         case Instruction::And: Out << "Instruction::And"; break;
         case Instruction::Or:  Out << "Instruction::Or";  break;
         case Instruction::Xor: Out << "Instruction::Xor"; break;

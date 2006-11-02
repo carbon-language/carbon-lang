@@ -131,12 +131,16 @@ namespace {
     Instruction *visitAdd(BinaryOperator &I);
     Instruction *visitSub(BinaryOperator &I);
     Instruction *visitMul(BinaryOperator &I);
+    Instruction *visitURem(BinaryOperator &I);
+    Instruction *visitSRem(BinaryOperator &I);
+    Instruction *visitFRem(BinaryOperator &I);
+    Instruction *commonRemTransforms(BinaryOperator &I);
+    Instruction *commonIRemTransforms(BinaryOperator &I);
     Instruction *commonDivTransforms(BinaryOperator &I);
     Instruction *commonIDivTransforms(BinaryOperator &I);
     Instruction *visitUDiv(BinaryOperator &I);
     Instruction *visitSDiv(BinaryOperator &I);
     Instruction *visitFDiv(BinaryOperator &I);
-    Instruction *visitRem(BinaryOperator &I);
     Instruction *visitAnd(BinaryOperator &I);
     Instruction *visitOr (BinaryOperator &I);
     Instruction *visitXor(BinaryOperator &I);
@@ -2412,9 +2416,13 @@ static Constant *GetFactor(Value *V) {
   return Result;
 }
 
-Instruction *InstCombiner::visitRem(BinaryOperator &I) {
+/// This function implements the transforms on rem instructions that work
+/// regardless of the kind of rem instruction it is (urem, srem, or frem). It 
+/// is used by the visitors to those instructions.
+/// @brief Transforms common to all three rem instructions
+Instruction *InstCombiner::commonRemTransforms(BinaryOperator &I) {
   Value *Op0 = I.getOperand(0), *Op1 = I.getOperand(1);
-  
+
   // 0 % X == 0, we don't need to preserve faults!
   if (Constant *LHS = dyn_cast<Constant>(Op0))
     if (LHS->isNullValue())
@@ -2424,33 +2432,51 @@ Instruction *InstCombiner::visitRem(BinaryOperator &I) {
     return ReplaceInstUsesWith(I, Constant::getNullValue(I.getType()));
   if (isa<UndefValue>(Op1))
     return ReplaceInstUsesWith(I, Op1);  // X % undef -> undef
-  
-  if (I.getType()->isSigned()) {
-    if (Value *RHSNeg = dyn_castNegVal(Op1))
-      if (!isa<ConstantInt>(RHSNeg) || !RHSNeg->getType()->isSigned() ||
-          cast<ConstantInt>(RHSNeg)->getSExtValue() > 0) {
-        // X % -Y -> X % Y
-        AddUsesToWorkList(I);
-        I.setOperand(1, RHSNeg);
+
+  // Handle cases involving: rem X, (select Cond, Y, Z)
+  if (SelectInst *SI = dyn_cast<SelectInst>(Op1)) {
+    // rem X, (Cond ? 0 : Y) -> rem X, Y.  If the rem and the select are in
+    // the same basic block, then we replace the select with Y, and the
+    // condition of the select with false (if the cond value is in the same
+    // BB).  If the select has uses other than the div, this allows them to be
+    // simplified also.
+    if (Constant *ST = dyn_cast<Constant>(SI->getOperand(1)))
+      if (ST->isNullValue()) {
+        Instruction *CondI = dyn_cast<Instruction>(SI->getOperand(0));
+        if (CondI && CondI->getParent() == I.getParent())
+          UpdateValueUsesWith(CondI, ConstantBool::getFalse());
+        else if (I.getParent() != SI->getParent() || SI->hasOneUse())
+          I.setOperand(1, SI->getOperand(2));
+        else
+          UpdateValueUsesWith(SI, SI->getOperand(2));
         return &I;
       }
-   
-    // If the top bits of both operands are zero (i.e. we can prove they are
-    // unsigned inputs), turn this into a urem.
-    uint64_t Mask = 1ULL << (I.getType()->getPrimitiveSizeInBits()-1);
-    if (MaskedValueIsZero(Op1, Mask) && MaskedValueIsZero(Op0, Mask)) {
-      const Type *NTy = Op0->getType()->getUnsignedVersion();
-      Value *LHS = InsertCastBefore(Op0, NTy, I);
-      Value *RHS;
-      if (Constant *R = dyn_cast<Constant>(Op1))
-        RHS = ConstantExpr::getCast(R, NTy);
-      else
-        RHS = InsertCastBefore(Op1, NTy, I);
-      Instruction *Rem = BinaryOperator::createRem(LHS, RHS, I.getName());
-      InsertNewInstBefore(Rem, I);
-      return new CastInst(Rem, I.getType());
-    }
+    // Likewise for: rem X, (Cond ? Y : 0) -> rem X, Y
+    if (Constant *ST = dyn_cast<Constant>(SI->getOperand(2)))
+      if (ST->isNullValue()) {
+        Instruction *CondI = dyn_cast<Instruction>(SI->getOperand(0));
+        if (CondI && CondI->getParent() == I.getParent())
+          UpdateValueUsesWith(CondI, ConstantBool::getTrue());
+        else if (I.getParent() != SI->getParent() || SI->hasOneUse())
+          I.setOperand(1, SI->getOperand(1));
+        else
+          UpdateValueUsesWith(SI, SI->getOperand(1));
+        return &I;
+      }
   }
+
+  return 0;
+}
+
+/// This function implements the transforms common to both integer remainder
+/// instructions (urem and srem). It is called by the visitors to those integer
+/// remainder instructions.
+/// @brief Common integer remainder transforms
+Instruction *InstCombiner::commonIRemTransforms(BinaryOperator &I) {
+  Value *Op0 = I.getOperand(0), *Op1 = I.getOperand(1);
+
+  if (Instruction *common = commonRemTransforms(I))
+    return common;
 
   if (ConstantInt *RHS = dyn_cast<ConstantInt>(Op1)) {
     // X % 0 == undef, we don't need to preserve faults!
@@ -2460,13 +2486,6 @@ Instruction *InstCombiner::visitRem(BinaryOperator &I) {
     if (RHS->equalsInt(1))  // X % 1 == 0
       return ReplaceInstUsesWith(I, Constant::getNullValue(I.getType()));
 
-    // Check to see if this is an unsigned remainder with an exact power of 2,
-    // if so, convert to a bitwise and.
-    if (ConstantInt *C = dyn_cast<ConstantInt>(RHS))
-      if (RHS->getType()->isUnsigned())
-        if (isPowerOf2_64(C->getZExtValue()))
-          return BinaryOperator::createAnd(Op0, SubOne(C));
-
     if (Instruction *Op0I = dyn_cast<Instruction>(Op0)) {
       if (SelectInst *SI = dyn_cast<SelectInst>(Op0I)) {
         if (Instruction *R = FoldOpIntoSelect(I, SI, this))
@@ -2475,19 +2494,34 @@ Instruction *InstCombiner::visitRem(BinaryOperator &I) {
         if (Instruction *NV = FoldOpIntoPhi(I))
           return NV;
       }
-      
-      // X*C1%C2 --> 0  iff  C1%C2 == 0
-      if (ConstantExpr::getRem(GetFactor(Op0I), RHS)->isNullValue())
+      // (X * C1) % C2 --> 0  iff  C1 % C2 == 0
+      if (ConstantExpr::getSRem(GetFactor(Op0I), RHS)->isNullValue())
         return ReplaceInstUsesWith(I, Constant::getNullValue(I.getType()));
     }
   }
 
+  return 0;
+}
+
+Instruction *InstCombiner::visitURem(BinaryOperator &I) {
+  Value *Op0 = I.getOperand(0), *Op1 = I.getOperand(1);
+
+  if (Instruction *common = commonIRemTransforms(I))
+    return common;
+  
+  if (ConstantInt *RHS = dyn_cast<ConstantInt>(Op1)) {
+    // X urem C^2 -> X and C
+    // Check to see if this is an unsigned remainder with an exact power of 2,
+    // if so, convert to a bitwise and.
+    if (ConstantInt *C = dyn_cast<ConstantInt>(RHS))
+      if (isPowerOf2_64(C->getZExtValue()))
+        return BinaryOperator::createAnd(Op0, SubOne(C));
+  }
+
   if (Instruction *RHSI = dyn_cast<Instruction>(I.getOperand(1))) {
-    // Turn A % (C << N), where C is 2^k, into A & ((C << N)-1) [urem only].
-    if (I.getType()->isUnsigned() && 
-        RHSI->getOpcode() == Instruction::Shl &&
-        isa<ConstantInt>(RHSI->getOperand(0)) && 
-        RHSI->getOperand(0)->getType()->isUnsigned()) {
+    // Turn A % (C << N), where C is 2^k, into A & ((C << N)-1)  
+    if (RHSI->getOpcode() == Instruction::Shl &&
+        isa<ConstantInt>(RHSI->getOperand(0))) {
       unsigned C1 = cast<ConstantInt>(RHSI->getOperand(0))->getZExtValue();
       if (isPowerOf2_64(C1)) {
         Constant *N1 = ConstantInt::getAllOnesValue(I.getType());
@@ -2496,59 +2530,58 @@ Instruction *InstCombiner::visitRem(BinaryOperator &I) {
         return BinaryOperator::createAnd(Op0, Add);
       }
     }
-    
-    // If this is 'urem X, (Cond ? C1, C2)' where C1&C2 are powers of two,
-    // transform this into: '(Cond ? (urem X, C1) : (urem X, C2))'.
-    if (SelectInst *SI = dyn_cast<SelectInst>(Op1)) {
-      // rem X, (Cond ? 0 : Y) -> rem X, Y.  If the rem and the select are in
-      // the same basic block, then we replace the select with Y, and the
-      // condition of the select with false (if the cond value is in the same
-      // BB).  If the select has uses other than the div, this allows them to be
-      // simplified also.
-      if (Constant *ST = dyn_cast<Constant>(SI->getOperand(1)))
-        if (ST->isNullValue()) {
-          Instruction *CondI = dyn_cast<Instruction>(SI->getOperand(0));
-          if (CondI && CondI->getParent() == I.getParent())
-            UpdateValueUsesWith(CondI, ConstantBool::getFalse());
-          else if (I.getParent() != SI->getParent() || SI->hasOneUse())
-            I.setOperand(1, SI->getOperand(2));
-          else
-            UpdateValueUsesWith(SI, SI->getOperand(2));
-          return &I;
-        }
-      // Likewise for: rem X, (Cond ? Y : 0) -> rem X, Y
-      if (Constant *ST = dyn_cast<Constant>(SI->getOperand(2)))
-        if (ST->isNullValue()) {
-          Instruction *CondI = dyn_cast<Instruction>(SI->getOperand(0));
-          if (CondI && CondI->getParent() == I.getParent())
-            UpdateValueUsesWith(CondI, ConstantBool::getTrue());
-          else if (I.getParent() != SI->getParent() || SI->hasOneUse())
-            I.setOperand(1, SI->getOperand(1));
-          else
-            UpdateValueUsesWith(SI, SI->getOperand(1));
-          return &I;
-        }
+  }
 
-      
-      if (ConstantInt *STO = dyn_cast<ConstantInt>(SI->getOperand(1)))
-        if (ConstantInt *SFO = dyn_cast<ConstantInt>(SI->getOperand(2))) 
-          if (STO->getType()->isUnsigned() && SFO->getType()->isUnsigned()) {
-            // STO == 0 and SFO == 0 handled above.
-            if (isPowerOf2_64(STO->getZExtValue()) && 
-                isPowerOf2_64(SFO->getZExtValue())) {
-              Value *TrueAnd = InsertNewInstBefore(
-                BinaryOperator::createAnd(Op0, SubOne(STO), SI->getName()+".t"),
-                  I);
-              Value *FalseAnd = InsertNewInstBefore(
-                BinaryOperator::createAnd(Op0, SubOne(SFO), SI->getName()+".f"),
-                  I);
-              return new SelectInst(SI->getOperand(0), TrueAnd, FalseAnd);
-            }
-          }
-    }
+  // urem X, (select Cond, 2^C1, 2^C2) --> select Cond, (and X, C1), (and X, C2)
+  // where C1&C2 are powers of two.
+  if (SelectInst *SI = dyn_cast<SelectInst>(Op1)) {
+    if (ConstantInt *STO = dyn_cast<ConstantInt>(SI->getOperand(1)))
+      if (ConstantInt *SFO = dyn_cast<ConstantInt>(SI->getOperand(2))) {
+        // STO == 0 and SFO == 0 handled above.
+        if (isPowerOf2_64(STO->getZExtValue()) && 
+            isPowerOf2_64(SFO->getZExtValue())) {
+          Value *TrueAnd = InsertNewInstBefore(
+            BinaryOperator::createAnd(Op0, SubOne(STO), SI->getName()+".t"), I);
+          Value *FalseAnd = InsertNewInstBefore(
+            BinaryOperator::createAnd(Op0, SubOne(SFO), SI->getName()+".f"), I);
+          return new SelectInst(SI->getOperand(0), TrueAnd, FalseAnd);
+        }
+      }
   }
   
   return 0;
+}
+
+Instruction *InstCombiner::visitSRem(BinaryOperator &I) {
+  Value *Op0 = I.getOperand(0), *Op1 = I.getOperand(1);
+
+  if (Instruction *common = commonIRemTransforms(I))
+    return common;
+  
+  if (Value *RHSNeg = dyn_castNegVal(Op1))
+    if (!isa<ConstantInt>(RHSNeg) || 
+        cast<ConstantInt>(RHSNeg)->getSExtValue() > 0) {
+      // X % -Y -> X % Y
+      AddUsesToWorkList(I);
+      I.setOperand(1, RHSNeg);
+      return &I;
+    }
+ 
+  // If the top bits of both operands are zero (i.e. we can prove they are
+  // unsigned inputs), turn this into a urem.
+  uint64_t Mask = 1ULL << (I.getType()->getPrimitiveSizeInBits()-1);
+  if (MaskedValueIsZero(Op1, Mask) && MaskedValueIsZero(Op0, Mask)) {
+    // X srem Y -> X urem Y, iff X and Y don't have sign bit set
+    return BinaryOperator::createURem(Op0, Op1, I.getName());
+  }
+
+  return 0;
+}
+
+Instruction *InstCombiner::visitFRem(BinaryOperator &I) {
+  Value *Op0 = I.getOperand(0), *Op1 = I.getOperand(1);
+
+  return commonRemTransforms(I);
 }
 
 // isMaxValueMinusOne - return true if this is Max-1
@@ -4568,40 +4601,16 @@ Instruction *InstCombiner::visitSetCondInst(SetCondInst &I) {
       // the second operand is a constant, simplify a bit.
       if (BinaryOperator *BO = dyn_cast<BinaryOperator>(Op0)) {
         switch (BO->getOpcode()) {
-#if 0
         case Instruction::SRem:
           // If we have a signed (X % (2^c)) == 0, turn it into an unsigned one.
           if (CI->isNullValue() && isa<ConstantInt>(BO->getOperand(1)) &&
               BO->hasOneUse()) {
             int64_t V = cast<ConstantInt>(BO->getOperand(1))->getSExtValue();
             if (V > 1 && isPowerOf2_64(V)) {
-              Value *NewRem = InsertNewInstBefore(
-                  BinaryOperator::createURem(BO->getOperand(0), 
-                                             BO->getOperand(1),
-                                             BO->getName()), I);
-              return BinaryOperator::create(
-                I.getOpcode(), NewRem, 
-                Constant::getNullValue(NewRem->getType()));
-            }
-          }
-          break;
-#endif
-
-        case Instruction::Rem:
-          // If we have a signed (X % (2^c)) == 0, turn it into an unsigned one.
-          if (CI->isNullValue() && isa<ConstantInt>(BO->getOperand(1)) &&
-              BO->hasOneUse() && BO->getOperand(1)->getType()->isSigned()) {
-            int64_t V = cast<ConstantInt>(BO->getOperand(1))->getSExtValue();
-            if (V > 1 && isPowerOf2_64(V)) {
-              unsigned L2 = Log2_64(V);
-              const Type *UTy = BO->getType()->getUnsignedVersion();
-              Value *NewX = InsertNewInstBefore(new CastInst(BO->getOperand(0),
-                                                             UTy, "tmp"), I);
-              Constant *RHSCst = ConstantInt::get(UTy, 1ULL << L2);
-              Value *NewRem =InsertNewInstBefore(BinaryOperator::createRem(NewX,
-                                                    RHSCst, BO->getName()), I);
+              Value *NewRem = InsertNewInstBefore(BinaryOperator::createURem(
+                  BO->getOperand(0), BO->getOperand(1), BO->getName()), I);
               return BinaryOperator::create(I.getOpcode(), NewRem,
-                                            Constant::getNullValue(UTy));
+                Constant::getNullValue(BO->getType()));
             }
           }
           break;
@@ -5766,6 +5775,8 @@ Instruction *InstCombiner::visitCastInst(CastInst &CI) {
         break;
       case Instruction::SDiv:
       case Instruction::UDiv:
+      case Instruction::SRem:
+      case Instruction::URem:
         // If we are just changing the sign, rewrite.
         if (DestBitSize == SrcBitSize) {
           // Don't insert two casts if they cannot be eliminated.  We allow two

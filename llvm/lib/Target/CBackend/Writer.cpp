@@ -593,7 +593,9 @@ void CWriter::printConstant(Constant *CPV) {
     case Instruction::SDiv:
     case Instruction::UDiv:
     case Instruction::FDiv:
-    case Instruction::Rem:
+    case Instruction::URem:
+    case Instruction::SRem:
+    case Instruction::FRem:
     case Instruction::And:
     case Instruction::Or:
     case Instruction::Xor:
@@ -613,10 +615,12 @@ void CWriter::printConstant(Constant *CPV) {
       case Instruction::Add: Out << " + "; break;
       case Instruction::Sub: Out << " - "; break;
       case Instruction::Mul: Out << " * "; break;
+      case Instruction::URem:
+      case Instruction::SRem: 
+      case Instruction::FRem: Out << " % "; break;
       case Instruction::UDiv: 
       case Instruction::SDiv: 
       case Instruction::FDiv: Out << " / "; break;
-      case Instruction::Rem: Out << " % "; break;
       case Instruction::And: Out << " & "; break;
       case Instruction::Or:  Out << " | "; break;
       case Instruction::Xor: Out << " ^ "; break;
@@ -825,8 +829,12 @@ bool CWriter::printConstExprCast(const ConstantExpr* CE) {
   bool Result = false;
   const Type* Ty = CE->getOperand(0)->getType();
   switch (CE->getOpcode()) {
-  case Instruction::UDiv: Result = Ty->isSigned(); break;
-  case Instruction::SDiv: Result = Ty->isUnsigned(); break;
+  case Instruction::UDiv: 
+  case Instruction::URem: 
+    Result = Ty->isSigned(); break;
+  case Instruction::SDiv: 
+  case Instruction::SRem: 
+    Result = Ty->isUnsigned(); break;
   default: break;
   }
   if (Result) {
@@ -856,13 +864,16 @@ void CWriter::printConstantWithCast(Constant* CPV, unsigned Opcode) {
       // for most instructions, it doesn't matter
       break; 
     case Instruction::UDiv:
-      // For UDiv to have unsigned operands
+    case Instruction::URem:
+      // For UDiv/URem get correct type
       if (OpTy->isSigned()) {
         OpTy = OpTy->getUnsignedVersion();
         shouldCast = true;
       }
       break;
     case Instruction::SDiv:
+    case Instruction::SRem:
+      // For SDiv/SRem get correct type
       if (OpTy->isUnsigned()) {
         OpTy = OpTy->getSignedVersion();
         shouldCast = true;
@@ -919,8 +930,12 @@ bool CWriter::writeInstructionCast(const Instruction &I) {
   bool Result = false;
   const Type* Ty = I.getOperand(0)->getType();
   switch (I.getOpcode()) {
-  case Instruction::UDiv: Result = Ty->isSigned(); break;
-  case Instruction::SDiv: Result = Ty->isUnsigned(); break;
+  case Instruction::UDiv: 
+  case Instruction::URem: 
+    Result = Ty->isSigned(); break;
+  case Instruction::SDiv: 
+  case Instruction::SRem: 
+    Result = Ty->isUnsigned(); break;
   default: break;
   }
   if (Result) {
@@ -950,6 +965,7 @@ void CWriter::writeOperandWithCast(Value* Operand, unsigned Opcode) {
       // for most instructions, it doesn't matter
       break; 
     case Instruction::UDiv:
+    case Instruction::URem:
       // For UDiv to have unsigned operands
       if (OpTy->isSigned()) {
         OpTy = OpTy->getUnsignedVersion();
@@ -957,6 +973,7 @@ void CWriter::writeOperandWithCast(Value* Operand, unsigned Opcode) {
       }
       break;
     case Instruction::SDiv:
+    case Instruction::SRem:
       if (OpTy->isUnsigned()) {
         OpTy = OpTy->getSignedVersion();
         shouldCast = true;
@@ -1774,8 +1791,7 @@ void CWriter::visitBinaryOperator(Instruction &I) {
     Out << "-(";
     writeOperand(BinaryOperator::getNegArgument(cast<BinaryOperator>(&I)));
     Out << ")";
-  } else if (I.getOpcode() == Instruction::Rem && 
-             I.getType()->isFloatingPoint()) {
+  } else if (I.getOpcode() == Instruction::FRem) {
     // Output a call to fmod/fmodf instead of emitting a%b
     if (I.getType() == Type::FloatTy)
       Out << "fmodf(";
@@ -1800,10 +1816,12 @@ void CWriter::visitBinaryOperator(Instruction &I) {
     case Instruction::Add: Out << " + "; break;
     case Instruction::Sub: Out << " - "; break;
     case Instruction::Mul: Out << '*'; break;
+    case Instruction::URem:
+    case Instruction::SRem:
+    case Instruction::FRem: Out << '%'; break;
     case Instruction::UDiv:
     case Instruction::SDiv: 
     case Instruction::FDiv: Out << '/'; break;
-    case Instruction::Rem: Out << '%'; break;
     case Instruction::And: Out << " & "; break;
     case Instruction::Or: Out << " | "; break;
     case Instruction::Xor: Out << " ^ "; break;

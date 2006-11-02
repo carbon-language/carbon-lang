@@ -528,16 +528,12 @@ public:
     else
       visitIntBinary(I, ISD::MUL, ISD::VMUL); 
   }
+  void visitURem(User &I) { visitIntBinary(I, ISD::UREM, 0); }
+  void visitSRem(User &I) { visitIntBinary(I, ISD::SREM, 0); }
+  void visitFRem(User &I) { visitFPBinary (I, ISD::FREM, 0); }
   void visitUDiv(User &I) { visitIntBinary(I, ISD::UDIV, ISD::VUDIV); }
   void visitSDiv(User &I) { visitIntBinary(I, ISD::SDIV, ISD::VSDIV); }
-  void visitFDiv(User &I) { visitFPBinary(I, ISD::FDIV,  ISD::VSDIV); }
-  void visitRem(User &I) {
-    const Type *Ty = I.getType();
-    if (Ty->isFloatingPoint())
-      visitFPBinary(I, ISD::FREM, 0);
-    else 
-      visitIntBinary(I, Ty->isSigned() ? ISD::SREM : ISD::UREM, 0);
-  }
+  void visitFDiv(User &I) { visitFPBinary (I, ISD::FDIV, ISD::VSDIV); }
   void visitAnd(User &I) { visitIntBinary(I, ISD::AND, ISD::VAND); }
   void visitOr (User &I) { visitIntBinary(I, ISD::OR,  ISD::VOR); }
   void visitXor(User &I) { visitIntBinary(I, ISD::XOR, ISD::VXOR); }

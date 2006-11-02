@@ -90,53 +90,55 @@ HANDLE_TERM_INST  ( 6, Unreachable, UnreachableInst)
 
 // Standard binary operators...
  FIRST_BINARY_INST( 7)
-HANDLE_BINARY_INST( 7, Add   , BinaryOperator)
-HANDLE_BINARY_INST( 8, Sub   , BinaryOperator)
-HANDLE_BINARY_INST( 9, Mul   , BinaryOperator)
-HANDLE_BINARY_INST(10, UDiv  , BinaryOperator)
-HANDLE_BINARY_INST(11, SDiv  , BinaryOperator)
-HANDLE_BINARY_INST(12, FDiv  , BinaryOperator)
-HANDLE_BINARY_INST(13, Rem   , BinaryOperator)
+HANDLE_BINARY_INST( 7, Add  , BinaryOperator)
+HANDLE_BINARY_INST( 8, Sub  , BinaryOperator)
+HANDLE_BINARY_INST( 9, Mul  , BinaryOperator)
+HANDLE_BINARY_INST(10, UDiv , BinaryOperator)
+HANDLE_BINARY_INST(11, SDiv , BinaryOperator)
+HANDLE_BINARY_INST(12, FDiv , BinaryOperator)
+HANDLE_BINARY_INST(13, URem , BinaryOperator)
+HANDLE_BINARY_INST(14, SRem , BinaryOperator)
+HANDLE_BINARY_INST(15, FRem , BinaryOperator)
 
 // Logical operators...
-HANDLE_BINARY_INST(14, And   , BinaryOperator)
-HANDLE_BINARY_INST(15, Or    , BinaryOperator)
-HANDLE_BINARY_INST(16, Xor   , BinaryOperator)
+HANDLE_BINARY_INST(16, And   , BinaryOperator)
+HANDLE_BINARY_INST(17, Or    , BinaryOperator)
+HANDLE_BINARY_INST(18, Xor   , BinaryOperator)
 
 // Binary comparison operators...
-HANDLE_BINARY_INST(17, SetEQ , SetCondInst)
-HANDLE_BINARY_INST(18, SetNE , SetCondInst)
-HANDLE_BINARY_INST(19, SetLE , SetCondInst)
-HANDLE_BINARY_INST(20, SetGE , SetCondInst)
-HANDLE_BINARY_INST(21, SetLT , SetCondInst)
-HANDLE_BINARY_INST(22, SetGT , SetCondInst)
-  LAST_BINARY_INST(22)
+HANDLE_BINARY_INST(19, SetEQ , SetCondInst)
+HANDLE_BINARY_INST(20, SetNE , SetCondInst)
+HANDLE_BINARY_INST(21, SetLE , SetCondInst)
+HANDLE_BINARY_INST(22, SetGE , SetCondInst)
+HANDLE_BINARY_INST(23, SetLT , SetCondInst)
+HANDLE_BINARY_INST(24, SetGT , SetCondInst)
+  LAST_BINARY_INST(24)
 
 // Memory operators...
- FIRST_MEMORY_INST(23)
-HANDLE_MEMORY_INST(23, Malloc, MallocInst)  // Heap management instructions
-HANDLE_MEMORY_INST(24, Free  , FreeInst  )
-HANDLE_MEMORY_INST(25, Alloca, AllocaInst)  // Stack management
-HANDLE_MEMORY_INST(26, Load  , LoadInst  )  // Memory manipulation instrs
-HANDLE_MEMORY_INST(27, Store , StoreInst )
-HANDLE_MEMORY_INST(28, GetElementPtr, GetElementPtrInst)
-  LAST_MEMORY_INST(28)
+ FIRST_MEMORY_INST(25)
+HANDLE_MEMORY_INST(25, Malloc, MallocInst)  // Heap management instructions
+HANDLE_MEMORY_INST(26, Free  , FreeInst  )
+HANDLE_MEMORY_INST(27, Alloca, AllocaInst)  // Stack management
+HANDLE_MEMORY_INST(28, Load  , LoadInst  )  // Memory manipulation instrs
+HANDLE_MEMORY_INST(29, Store , StoreInst )
+HANDLE_MEMORY_INST(30, GetElementPtr, GetElementPtrInst)
+  LAST_MEMORY_INST(30)
 
 // Other operators...
- FIRST_OTHER_INST(29)
-HANDLE_OTHER_INST(29, PHI    , PHINode    )  // PHI node instruction
-HANDLE_OTHER_INST(30, Cast   , CastInst   )  // Type cast
-HANDLE_OTHER_INST(31, Call   , CallInst   )  // Call a function
-HANDLE_OTHER_INST(32, Shl    , ShiftInst  )  // Shift operations
-HANDLE_OTHER_INST(33, Shr    , ShiftInst  )
-HANDLE_OTHER_INST(34, Select , SelectInst )  // select instruction
-HANDLE_OTHER_INST(35, UserOp1, Instruction)  // May be used internally in a pass
-HANDLE_OTHER_INST(36, UserOp2, Instruction)
-HANDLE_OTHER_INST(37, VAArg  , VAArgInst  )  // vaarg instruction
-HANDLE_OTHER_INST(38, ExtractElement, ExtractElementInst)// extract from vector.
-HANDLE_OTHER_INST(39, InsertElement, InsertElementInst)  // insert into vector
-HANDLE_OTHER_INST(40, ShuffleVector, ShuffleVectorInst)  // shuffle two vectors.
-  LAST_OTHER_INST(40)
+ FIRST_OTHER_INST(31)
+HANDLE_OTHER_INST(31, PHI    , PHINode    )  // PHI node instruction
+HANDLE_OTHER_INST(32, Cast   , CastInst   )  // Type cast
+HANDLE_OTHER_INST(33, Call   , CallInst   )  // Call a function
+HANDLE_OTHER_INST(34, Shl    , ShiftInst  )  // Shift operations
+HANDLE_OTHER_INST(35, Shr    , ShiftInst  )
+HANDLE_OTHER_INST(36, Select , SelectInst )  // select instruction
+HANDLE_OTHER_INST(37, UserOp1, Instruction)  // May be used internally in a pass
+HANDLE_OTHER_INST(38, UserOp2, Instruction)
+HANDLE_OTHER_INST(39, VAArg  , VAArgInst  )  // vaarg instruction
+HANDLE_OTHER_INST(40, ExtractElement, ExtractElementInst)// extract from vector.
+HANDLE_OTHER_INST(41, InsertElement, InsertElementInst)  // insert into vector
+HANDLE_OTHER_INST(42, ShuffleVector, ShuffleVectorInst)  // shuffle two vectors.
+  LAST_OTHER_INST(42)
 
 #undef  FIRST_TERM_INST
 #undef HANDLE_TERM_INST

@@ -116,7 +116,9 @@ static bool isUnmovableInstruction(Instruction *I) {
       I->getOpcode() == Instruction::UDiv || 
       I->getOpcode() == Instruction::SDiv ||
       I->getOpcode() == Instruction::FDiv ||
-      I->getOpcode() == Instruction::Rem)
+      I->getOpcode() == Instruction::URem ||
+      I->getOpcode() == Instruction::SRem ||
+      I->getOpcode() == Instruction::FRem)
     return true;
   return false;
 }

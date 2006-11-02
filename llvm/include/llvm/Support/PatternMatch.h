@@ -130,9 +130,21 @@ inline BinaryOp_match<LHS, RHS, Instruction::FDiv> m_FDiv(const LHS &L,
 }
 
 template<typename LHS, typename RHS>
-inline BinaryOp_match<LHS, RHS, Instruction::Rem> m_Rem(const LHS &L,
+inline BinaryOp_match<LHS, RHS, Instruction::URem> m_URem(const LHS &L,
+                                                          const RHS &R) {
+  return BinaryOp_match<LHS, RHS, Instruction::URem>(L, R);
+}
+
+template<typename LHS, typename RHS>
+inline BinaryOp_match<LHS, RHS, Instruction::SRem> m_SRem(const LHS &L,
+                                                          const RHS &R) {
+  return BinaryOp_match<LHS, RHS, Instruction::SRem>(L, R);
+}
+
+template<typename LHS, typename RHS>
+inline BinaryOp_match<LHS, RHS, Instruction::FRem> m_FRem(const LHS &L,
                                                         const RHS &R) {
-  return BinaryOp_match<LHS, RHS, Instruction::Rem>(L, R);
+  return BinaryOp_match<LHS, RHS, Instruction::FRem>(L, R);
 }
 
 template<typename LHS, typename RHS>

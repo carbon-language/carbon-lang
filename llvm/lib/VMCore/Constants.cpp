@@ -78,7 +78,9 @@ bool Constant::canTrap() const {
   case Instruction::UDiv:
   case Instruction::SDiv:
   case Instruction::FDiv:
-  case Instruction::Rem:
+  case Instruction::URem:
+  case Instruction::SRem:
+  case Instruction::FRem:
     // Div and rem can trap if the RHS is not known to be non-zero.
     if (!isa<ConstantInt>(getOperand(1)) || getOperand(1)->isNullValue())
       return true;
@@ -457,8 +459,14 @@ Constant *ConstantExpr::getSDiv(Constant *C1, Constant *C2) {
 Constant *ConstantExpr::getFDiv(Constant *C1, Constant *C2) {
   return get(Instruction::FDiv, C1, C2);
 }
-Constant *ConstantExpr::getRem(Constant *C1, Constant *C2) {
-  return get(Instruction::Rem, C1, C2);
+Constant *ConstantExpr::getURem(Constant *C1, Constant *C2) {
+  return get(Instruction::URem, C1, C2);
+}
+Constant *ConstantExpr::getSRem(Constant *C1, Constant *C2) {
+  return get(Instruction::SRem, C1, C2);
+}
+Constant *ConstantExpr::getFRem(Constant *C1, Constant *C2) {
+  return get(Instruction::FRem, C1, C2);
 }
 Constant *ConstantExpr::getAnd(Constant *C1, Constant *C2) {
   return get(Instruction::And, C1, C2);
@@ -1362,7 +1370,7 @@ namespace llvm {
         break;
       default:
         assert(OldC->getOpcode() >= Instruction::BinaryOpsBegin &&
-               OldC->getOpcode() < Instruction::BinaryOpsEnd);
+               OldC->getOpcode() <  Instruction::BinaryOpsEnd);
         New = ConstantExpr::getTy(NewTy, OldC->getOpcode(), OldC->getOperand(0),
                                   OldC->getOperand(1));
         break;
@@ -1448,8 +1456,8 @@ Constant *ConstantExpr::getTy(const Type *ReqTy, unsigned Opcode,
   if (Opcode == Instruction::Shl || Opcode == Instruction::Shr)
     return getShiftTy(ReqTy, Opcode, C1, C2);
   // Check the operands for consistency first
-  assert((Opcode >= Instruction::BinaryOpsBegin &&
-          Opcode < Instruction::BinaryOpsEnd) &&
+  assert(Opcode >= Instruction::BinaryOpsBegin &&
+         Opcode <  Instruction::BinaryOpsEnd   &&
          "Invalid opcode in binary constant expression");
   assert(C1->getType() == C2->getType() &&
          "Operand types in binary constant expression should match");
@@ -1467,15 +1475,14 @@ Constant *ConstantExpr::getTy(const Type *ReqTy, unsigned Opcode,
 Constant *ConstantExpr::get(unsigned Opcode, Constant *C1, Constant *C2) {
 #ifndef NDEBUG
   switch (Opcode) {
-  case Instruction::Add: case Instruction::Sub:
+  case Instruction::Add: 
+  case Instruction::Sub:
   case Instruction::Mul: 
-  case Instruction::Rem:
     assert(C1->getType() == C2->getType() && "Op types should be identical!");
     assert((C1->getType()->isInteger() || C1->getType()->isFloatingPoint() ||
             isa<PackedType>(C1->getType())) &&
            "Tried to create an arithmetic operation on a non-arithmetic type!");
     break;
-
   case Instruction::UDiv: 
   case Instruction::SDiv: 
     assert(C1->getType() == C2->getType() && "Op types should be identical!");
@@ -1484,6 +1491,19 @@ Constant *ConstantExpr::get(unsigned Opcode, Constant *C1, Constant *C2) {
            "Tried to create an arithmetic operation on a non-arithmetic type!");
     break;
   case Instruction::FDiv:
+    assert(C1->getType() == C2->getType() && "Op types should be identical!");
+    assert((C1->getType()->isFloatingPoint() || (isa<PackedType>(C1->getType())
+      && cast<PackedType>(C1->getType())->getElementType()->isFloatingPoint())) 
+      && "Tried to create an arithmetic operation on a non-arithmetic type!");
+    break;
+  case Instruction::URem: 
+  case Instruction::SRem: 
+    assert(C1->getType() == C2->getType() && "Op types should be identical!");
+    assert((C1->getType()->isInteger() || (isa<PackedType>(C1->getType()) &&
+      cast<PackedType>(C1->getType())->getElementType()->isInteger())) &&
+           "Tried to create an arithmetic operation on a non-arithmetic type!");
+    break;
+  case Instruction::FRem:
     assert(C1->getType() == C2->getType() && "Op types should be identical!");
     assert((C1->getType()->isFloatingPoint() || (isa<PackedType>(C1->getType())
       && cast<PackedType>(C1->getType())->getElementType()->isFloatingPoint())) 

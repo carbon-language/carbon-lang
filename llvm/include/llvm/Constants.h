@@ -551,7 +551,9 @@ public:
   static Constant *getUDiv(Constant *C1, Constant *C2);
   static Constant *getSDiv(Constant *C1, Constant *C2);
   static Constant *getFDiv(Constant *C1, Constant *C2);
-  static Constant *getRem(Constant *C1, Constant *C2);
+  static Constant *getURem(Constant *C1, Constant *C2); // unsigned rem
+  static Constant *getSRem(Constant *C1, Constant *C2); // signed rem
+  static Constant *getFRem(Constant *C1, Constant *C2);
   static Constant *getAnd(Constant *C1, Constant *C2);
   static Constant *getOr(Constant *C1, Constant *C2);
   static Constant *getXor(Constant *C1, Constant *C2);

@@ -261,7 +261,10 @@ div             { RET_TOK_OBSOLETE(BinaryOpVal, UDiv, UDIV); }
 udiv            { RET_TOK(BinaryOpVal, UDiv, UDIV); }
 sdiv            { RET_TOK(BinaryOpVal, SDiv, SDIV); }
 fdiv            { RET_TOK(BinaryOpVal, FDiv, FDIV); }
-rem             { RET_TOK(BinaryOpVal, Rem, REM); }
+rem             { RET_TOK_OBSOLETE(BinaryOpVal, URem, UREM); }
+urem            { RET_TOK(BinaryOpVal, URem, UREM); }
+srem            { RET_TOK(BinaryOpVal, SRem, SREM); }
+frem            { RET_TOK(BinaryOpVal, FRem, FREM); }
 and             { RET_TOK(BinaryOpVal, And, AND); }
 or              { RET_TOK(BinaryOpVal, Or , OR ); }
 xor             { RET_TOK(BinaryOpVal, Xor, XOR); }

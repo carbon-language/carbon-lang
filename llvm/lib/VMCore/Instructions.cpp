@@ -1023,7 +1023,6 @@ void BinaryOperator::init(BinaryOps iType)
   switch (iType) {
   case Add: case Sub:
   case Mul: 
-  case Rem:
     assert(getType() == LHS->getType() &&
            "Arithmetic operation should return same type as operands!");
     assert((getType()->isInteger() || getType()->isFloatingPoint() ||
@@ -1045,7 +1044,21 @@ void BinaryOperator::init(BinaryOps iType)
             cast<PackedType>(getType())->getElementType()->isFloatingPoint())) 
             && "Incorrect operand type (not floating point) for FDIV");
     break;
-
+  case URem: 
+  case SRem: 
+    assert(getType() == LHS->getType() &&
+           "Arithmetic operation should return same type as operands!");
+    assert((getType()->isInteger() || (isa<PackedType>(getType()) && 
+            cast<PackedType>(getType())->getElementType()->isInteger())) &&
+           "Incorrect operand type (not integer) for S/UREM");
+    break;
+  case FRem:
+    assert(getType() == LHS->getType() &&
+           "Arithmetic operation should return same type as operands!");
+    assert((getType()->isFloatingPoint() || (isa<PackedType>(getType()) &&
+            cast<PackedType>(getType())->getElementType()->isFloatingPoint())) 
+            && "Incorrect operand type (not floating point) for FREM");
+    break;
   case And: case Or:
   case Xor:
     assert(getType() == LHS->getType() &&

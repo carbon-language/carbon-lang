@@ -97,7 +97,9 @@ const char *Instruction::getOpcodeName(unsigned OpCode) {
   case UDiv: return "udiv";
   case SDiv: return "sdiv";
   case FDiv: return "fdiv";
-  case Rem: return "rem";
+  case URem: return "urem";
+  case SRem: return "srem";
+  case FRem: return "frem";
 
   // Logical operators...
   case And: return "and";
@@ -227,7 +229,9 @@ bool Instruction::isTrapping(unsigned op) {
   case UDiv:
   case SDiv:
   case FDiv:
-  case Rem:
+  case URem:
+  case SRem:
+  case FRem:
   case Load:
   case Store:
   case Call:

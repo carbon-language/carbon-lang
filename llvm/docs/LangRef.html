@@ -80,7 +80,9 @@
           <li><a href="#i_udiv">'<tt>udiv</tt>' Instruction</a></li>
           <li><a href="#i_sdiv">'<tt>sdiv</tt>' Instruction</a></li>
           <li><a href="#i_fdiv">'<tt>fdiv</tt>' Instruction</a></li>
-          <li><a href="#i_rem">'<tt>rem</tt>' Instruction</a></li>
+          <li><a href="#i_urem">'<tt>urem</tt>' Instruction</a></li>
+          <li><a href="#i_srem">'<tt>srem</tt>' Instruction</a></li>
+          <li><a href="#i_frem">'<tt>frem</tt>' Instruction</a></li>
           <li><a href="#i_setcc">'<tt>set<i>cc</i></tt>' Instructions</a></li>
         </ol>
       </li>
@@ -1699,30 +1701,72 @@ versions of the values in which case the elements must be floating point.</p>
 </pre>
 </div>
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection"> <a name="i_rem">'<tt>rem</tt>'
+<div class="doc_subsubsection"> <a name="i_urem">'<tt>urem</tt>' Instruction</a>
+</div>
+<div class="doc_text">
+<h5>Syntax:</h5>
+<pre>  &lt;result&gt; = urem &lt;ty&gt; &lt;var1&gt;, &lt;var2&gt;   <i>; yields {ty}:result</i>
+</pre>
+<h5>Overview:</h5>
+<p>The '<tt>urem</tt>' instruction returns the remainder from the
+unsigned division of its two arguments.</p>
+<h5>Arguments:</h5>
+<p>The two arguments to the '<tt>urem</tt>' instruction must be
+<a href="#t_integer">integer</a> values. Both arguments must have identical
+types.</p>
+<h5>Semantics:</h5>
+<p>This instruction returns the unsigned integer <i>remainder</i> of a division.
+This instruction always performs an unsigned division to get the remainder,
+regardless of whether the arguments are unsigned or not.</p>
+<h5>Example:</h5>
+<pre>  &lt;result&gt; = urem uint 4, %var          <i>; yields {uint}:result = 4 % %var</i>
+</pre>
+
+</div>
+<!-- _______________________________________________________________________ -->
+<div class="doc_subsubsection"> <a name="i_srem">'<tt>srem</tt>'
 Instruction</a> </div>
 <div class="doc_text">
 <h5>Syntax:</h5>
-<pre>  &lt;result&gt; = rem &lt;ty&gt; &lt;var1&gt;, &lt;var2&gt;   <i>; yields {ty}:result</i>
+<pre>  &lt;result&gt; = srem &lt;ty&gt; &lt;var1&gt;, &lt;var2&gt;   <i>; yields {ty}:result</i>
 </pre>
 <h5>Overview:</h5>
-<p>The '<tt>rem</tt>' instruction returns the remainder from the
-division of its two operands.</p>
+<p>The '<tt>srem</tt>' instruction returns the remainder from the
+signed division of its two operands.</p>
 <h5>Arguments:</h5>
-<p>The two arguments to the '<tt>rem</tt>' instruction must be either <a
- href="#t_integer">integer</a> or <a href="#t_floating">floating point</a>
-values. 
-This instruction can also take <a href="#t_packed">packed</a> versions of the values.
-Both arguments must have identical types.</p>
+<p>The two arguments to the '<tt>srem</tt>' instruction must be 
+<a href="#t_integer">integer</a> values.  Both arguments must have identical 
+types.</p>
 <h5>Semantics:</h5>
-<p>This returns the <i>remainder</i> of a division (where the result
+<p>This instruction returns the <i>remainder</i> of a division (where the result
 has the same sign as the divisor), not the <i>modulus</i> (where the
 result has the same sign as the dividend) of a value.  For more
 information about the difference, see <a
  href="http://mathforum.org/dr.math/problems/anne.4.28.99.html">The
 Math Forum</a>.</p>
 <h5>Example:</h5>
-<pre>  &lt;result&gt; = rem int 4, %var          <i>; yields {int}:result = 4 % %var</i>
+<pre>  &lt;result&gt; = srem int 4, %var          <i>; yields {int}:result = 4 % %var</i>
+</pre>
+
+</div>
+<!-- _______________________________________________________________________ -->
+<div class="doc_subsubsection"> <a name="i_frem">'<tt>frem</tt>'
+Instruction</a> </div>
+<div class="doc_text">
+<h5>Syntax:</h5>
+<pre>  &lt;result&gt; = frem &lt;ty&gt; &lt;var1&gt;, &lt;var2&gt;   <i>; yields {ty}:result</i>
+</pre>
+<h5>Overview:</h5>
+<p>The '<tt>frem</tt>' instruction returns the remainder from the
+division of its two operands.</p>
+<h5>Arguments:</h5>
+<p>The two arguments to the '<tt>frem</tt>' instruction must be
+<a href="#t_floating">floating point</a> values.  Both arguments must have 
+identical types.</p>
+<h5>Semantics:</h5>
+<p>This instruction returns the <i>remainder</i> of a division.</p>
+<h5>Example:</h5>
+<pre>  &lt;result&gt; = frem float 4.0, %var          <i>; yields {float}:result = 4.0 % %var</i>
 </pre>
 
 </div>

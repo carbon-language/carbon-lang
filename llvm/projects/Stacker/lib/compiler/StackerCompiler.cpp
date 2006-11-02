@@ -1052,7 +1052,7 @@ StackerCompiler::handle_word( int tkn )
         LoadInst* op1 = cast<LoadInst>(pop_integer(bb));
         LoadInst* op2 = cast<LoadInst>(pop_integer(bb));
         BinaryOperator* divop =
-            BinaryOperator::create( Instruction::Rem, op1, op2);
+            BinaryOperator::create( Instruction::SRem, op1, op2);
         bb->getInstList().push_back( divop );
         push_value( bb, divop );
         break;

@@ -40,10 +40,12 @@ namespace {
     virtual Constant *add(const Constant *V1, const Constant *V2) const = 0;
     virtual Constant *sub(const Constant *V1, const Constant *V2) const = 0;
     virtual Constant *mul(const Constant *V1, const Constant *V2) const = 0;
+    virtual Constant *urem(const Constant *V1, const Constant *V2) const = 0;
+    virtual Constant *srem(const Constant *V1, const Constant *V2) const = 0;
+    virtual Constant *frem(const Constant *V1, const Constant *V2) const = 0;
     virtual Constant *udiv(const Constant *V1, const Constant *V2) const = 0;
     virtual Constant *sdiv(const Constant *V1, const Constant *V2) const = 0;
     virtual Constant *fdiv(const Constant *V1, const Constant *V2) const = 0;
-    virtual Constant *rem(const Constant *V1, const Constant *V2) const = 0;
     virtual Constant *op_and(const Constant *V1, const Constant *V2) const = 0;
     virtual Constant *op_or (const Constant *V1, const Constant *V2) const = 0;
     virtual Constant *op_xor(const Constant *V1, const Constant *V2) const = 0;
@@ -117,8 +119,14 @@ class VISIBILITY_HIDDEN TemplateRules : public ConstRules {
   virtual Constant *fdiv(const Constant *V1, const Constant *V2) const {
     return SubClassName::FDiv((const ArgType *)V1, (const ArgType *)V2);
   }
-  virtual Constant *rem(const Constant *V1, const Constant *V2) const {
-    return SubClassName::Rem((const ArgType *)V1, (const ArgType *)V2);
+  virtual Constant *urem(const Constant *V1, const Constant *V2) const {
+    return SubClassName::URem((const ArgType *)V1, (const ArgType *)V2);
+  }
+  virtual Constant *srem(const Constant *V1, const Constant *V2) const {
+    return SubClassName::SRem((const ArgType *)V1, (const ArgType *)V2);
+  }
+  virtual Constant *frem(const Constant *V1, const Constant *V2) const {
+    return SubClassName::FRem((const ArgType *)V1, (const ArgType *)V2);
   }
   virtual Constant *op_and(const Constant *V1, const Constant *V2) const {
     return SubClassName::And((const ArgType *)V1, (const ArgType *)V2);
@@ -192,7 +200,9 @@ class VISIBILITY_HIDDEN TemplateRules : public ConstRules {
   static Constant *SDiv(const ArgType *V1, const ArgType *V2) { return 0; }
   static Constant *UDiv(const ArgType *V1, const ArgType *V2) { return 0; }
   static Constant *FDiv(const ArgType *V1, const ArgType *V2) { return 0; }
-  static Constant *Rem (const ArgType *V1, const ArgType *V2) { return 0; }
+  static Constant *URem(const ArgType *V1, const ArgType *V2) { return 0; }
+  static Constant *SRem(const ArgType *V1, const ArgType *V2) { return 0; }
+  static Constant *FRem(const ArgType *V1, const ArgType *V2) { return 0; }
   static Constant *And (const ArgType *V1, const ArgType *V2) { return 0; }
   static Constant *Or  (const ArgType *V1, const ArgType *V2) { return 0; }
   static Constant *Xor (const ArgType *V1, const ArgType *V2) { return 0; }
@@ -392,8 +402,14 @@ struct VISIBILITY_HIDDEN ConstantPackedRules
   static Constant *FDiv(const ConstantPacked *V1, const ConstantPacked *V2) {
     return EvalVectorOp(V1, V2, ConstantExpr::getFDiv);
   }
-  static Constant *Rem(const ConstantPacked *V1, const ConstantPacked *V2) {
-    return EvalVectorOp(V1, V2, ConstantExpr::getRem);
+  static Constant *URem(const ConstantPacked *V1, const ConstantPacked *V2) {
+    return EvalVectorOp(V1, V2, ConstantExpr::getURem);
+  }
+  static Constant *SRem(const ConstantPacked *V1, const ConstantPacked *V2) {
+    return EvalVectorOp(V1, V2, ConstantExpr::getSRem);
+  }
+  static Constant *FRem(const ConstantPacked *V1, const ConstantPacked *V2) {
+    return EvalVectorOp(V1, V2, ConstantExpr::getFRem);
   }
   static Constant *And(const ConstantPacked *V1, const ConstantPacked *V2) {
     return EvalVectorOp(V1, V2, ConstantExpr::getAnd);
@@ -510,30 +526,36 @@ struct VISIBILITY_HIDDEN DirectIntRules
 #undef DEF_CAST
 
   static Constant *UDiv(const ConstantInt *V1, const ConstantInt *V2) {
-    if (V2->isNullValue()) 
+    if (V2->isNullValue())                   // X / 0
       return 0;
     BuiltinType R = (BuiltinType)(V1->getZExtValue() / V2->getZExtValue());
     return ConstantInt::get(*Ty, R);
   }
 
   static Constant *SDiv(const ConstantInt *V1, const ConstantInt *V2) {
-    if (V2->isNullValue()) 
+    if (V2->isNullValue())                   // X / 0
       return 0;
     if (V2->isAllOnesValue() &&              // MIN_INT / -1
         (BuiltinType)V1->getSExtValue() == -(BuiltinType)V1->getSExtValue())
       return 0;
-    BuiltinType R = 
-      (BuiltinType)(V1->getSExtValue() / V2->getSExtValue());
+    BuiltinType R = (BuiltinType)(V1->getSExtValue() / V2->getSExtValue());
     return ConstantInt::get(*Ty, R);
   }
 
-  static Constant *Rem(const ConstantInt *V1, const ConstantInt *V2) {
+  static Constant *URem(const ConstantInt *V1,
+                        const ConstantInt *V2) {
     if (V2->isNullValue()) return 0;         // X / 0
-    if (V2->isAllOnesValue() &&              // MIN_INT / -1
-        (BuiltinType)V1->getZExtValue() == -(BuiltinType)V1->getZExtValue())
+    BuiltinType R = (BuiltinType)(V1->getZExtValue() % V2->getZExtValue());
+    return ConstantInt::get(*Ty, R);
+  }
+
+  static Constant *SRem(const ConstantInt *V1,
+                        const ConstantInt *V2) {
+    if (V2->isNullValue()) return 0;         // X % 0
+    if (V2->isAllOnesValue() &&              // MIN_INT % -1
+        (BuiltinType)V1->getSExtValue() == -(BuiltinType)V1->getSExtValue())
       return 0;
-    BuiltinType R = 
-      (BuiltinType)V1->getZExtValue() % (BuiltinType)V2->getZExtValue();
+    BuiltinType R = (BuiltinType)(V1->getSExtValue() % V2->getSExtValue());
     return ConstantInt::get(*Ty, R);
   }
 
@@ -632,7 +654,7 @@ struct VISIBILITY_HIDDEN DirectFPRules
   DEF_CAST(Double, ConstantFP , double)
 #undef DEF_CAST
 
-  static Constant *Rem(const ConstantFP *V1, const ConstantFP *V2) {
+  static Constant *FRem(const ConstantFP *V1, const ConstantFP *V2) {
     if (V2->isNullValue()) return 0;
     BuiltinType Result = std::fmod((BuiltinType)V1->getValue(),
                                    (BuiltinType)V2->getValue());
@@ -1250,7 +1272,9 @@ Constant *llvm::ConstantFoldBinaryInstruction(unsigned Opcode,
   case Instruction::UDiv:    C = ConstRules::get(V1, V2).udiv(V1, V2); break;
   case Instruction::SDiv:    C = ConstRules::get(V1, V2).sdiv(V1, V2); break;
   case Instruction::FDiv:    C = ConstRules::get(V1, V2).fdiv(V1, V2); break;
-  case Instruction::Rem:     C = ConstRules::get(V1, V2).rem(V1, V2); break;
+  case Instruction::URem:    C = ConstRules::get(V1, V2).urem(V1, V2); break;
+  case Instruction::SRem:    C = ConstRules::get(V1, V2).srem(V1, V2); break;
+  case Instruction::FRem:    C = ConstRules::get(V1, V2).frem(V1, V2); break;
   case Instruction::And:     C = ConstRules::get(V1, V2).op_and(V1, V2); break;
   case Instruction::Or:      C = ConstRules::get(V1, V2).op_or (V1, V2); break;
   case Instruction::Xor:     C = ConstRules::get(V1, V2).op_xor(V1, V2); break;
@@ -1335,25 +1359,26 @@ Constant *llvm::ConstantFoldBinaryInstruction(unsigned Opcode,
     case Instruction::UDiv:
     case Instruction::SDiv:
     case Instruction::FDiv:
-    case Instruction::Rem:
-      if (!isa<UndefValue>(V2))     // undef/X -> 0
+    case Instruction::URem:
+    case Instruction::SRem:
+    case Instruction::FRem:
+      if (!isa<UndefValue>(V2))                    // undef / X -> 0
         return Constant::getNullValue(V1->getType());
-      return const_cast<Constant*>(V2);                // X/undef -> undef
-    case Instruction::Or:           // X|undef -> -1
+      return const_cast<Constant*>(V2);            // X / undef -> undef
+    case Instruction::Or:                          // X | undef -> -1
       return ConstantInt::getAllOnesValue(V1->getType());
     case Instruction::Shr:
-      if (!isa<UndefValue>(V2)) {
+      if (!isa<UndefValue>(V2)) {      
         if (V1->getType()->isSigned())
-          return const_cast<Constant*>(V1);  // undef >>s X -> undef
+          return const_cast<Constant*>(V1);        // undef >>s X -> undef
         // undef >>u X -> 0
       } else if (isa<UndefValue>(V1)) {
-        return const_cast<Constant*>(V1);   //  undef >> undef -> undef
+        return const_cast<Constant*>(V1);          // undef >> undef -> undef
       } else {
         if (V1->getType()->isSigned())
-          return const_cast<Constant*>(V1);  // X >>s undef -> X
-        // X >>u undef -> 0
+          return const_cast<Constant*>(V1);        // X >>s undef -> X
       }
-      return Constant::getNullValue(V1->getType());
+      return Constant::getNullValue(V1->getType());// X >>u undef -> 0
 
     case Instruction::Shl:
       // undef << X -> 0   X << undef -> 0
@@ -1366,10 +1391,6 @@ Constant *llvm::ConstantFoldBinaryInstruction(unsigned Opcode,
       // There are many possible foldings we could do here.  We should probably
       // at least fold add of a pointer with an integer into the appropriate
       // getelementptr.  This will improve alias analysis a bit.
-
-
-
-
     } else {
       // Just implement a couple of simple identities.
       switch (Opcode) {
@@ -1391,10 +1412,11 @@ Constant *llvm::ConstantFoldBinaryInstruction(unsigned Opcode,
           if (CI->getZExtValue() == 1)
             return const_cast<Constant*>(V1);                     // X / 1 == X
         break;
-      case Instruction::Rem:
+      case Instruction::URem:
+      case Instruction::SRem:
         if (const ConstantInt *CI = dyn_cast<ConstantInt>(V2))
           if (CI->getZExtValue() == 1)
-            return Constant::getNullValue(CI->getType()); // X % 1 == 0
+            return Constant::getNullValue(CI->getType());         // X % 1 == 0
         break;
       case Instruction::And:
         if (cast<ConstantIntegral>(V2)->isAllOnesValue())
@@ -1450,7 +1472,9 @@ Constant *llvm::ConstantFoldBinaryInstruction(unsigned Opcode,
     case Instruction::SDiv:
     case Instruction::UDiv:
     case Instruction::FDiv:
-    case Instruction::Rem:
+    case Instruction::URem:
+    case Instruction::SRem:
+    case Instruction::FRem:
     default:  // These instructions cannot be flopped around.
       break;
     }

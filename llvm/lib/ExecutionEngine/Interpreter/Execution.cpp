@@ -48,6 +48,12 @@ static GenericValue executeSDivInst(GenericValue Src1, GenericValue Src2,
                                     const Type *Ty);
 static GenericValue executeFDivInst(GenericValue Src1, GenericValue Src2,
                                     const Type *Ty);
+static GenericValue executeURemInst(GenericValue Src1, GenericValue Src2,
+                                    const Type *Ty);
+static GenericValue executeSRemInst(GenericValue Src1, GenericValue Src2,
+                                    const Type *Ty);
+static GenericValue executeFRemInst(GenericValue Src1, GenericValue Src2,
+                                    const Type *Ty);
 static GenericValue executeAndInst(GenericValue Src1, GenericValue Src2,
                                    const Type *Ty);
 static GenericValue executeOrInst(GenericValue Src1, GenericValue Src2,
@@ -105,10 +111,18 @@ GenericValue Interpreter::getConstantExprValue (ConstantExpr *CE,
     return executeFDivInst(getOperandValue(CE->getOperand(0), SF),
                            getOperandValue(CE->getOperand(1), SF),
                            CE->getOperand(0)->getType());
-  case Instruction::Rem:
-    return executeRemInst(getOperandValue(CE->getOperand(0), SF),
+  case Instruction::URem:
+    return executeURemInst(getOperandValue(CE->getOperand(0), SF),
                           getOperandValue(CE->getOperand(1), SF),
                           CE->getOperand(0)->getType());
+  case Instruction::SRem:
+    return executeSRemInst(getOperandValue(CE->getOperand(0), SF),
+                          getOperandValue(CE->getOperand(1), SF),
+                          CE->getOperand(0)->getType());
+  case Instruction::FRem:
+    return executeFRemInst(getOperandValue(CE->getOperand(0), SF),
+                           getOperandValue(CE->getOperand(1), SF),
+                           CE->getOperand(0)->getType());
   case Instruction::And:
     return executeAndInst(getOperandValue(CE->getOperand(0), SF),
                           getOperandValue(CE->getOperand(1), SF),
@@ -300,18 +314,40 @@ static GenericValue executeFDivInst(GenericValue Src1, GenericValue Src2,
   return Dest;
 }
 
-static GenericValue executeRemInst(GenericValue Src1, GenericValue Src2,
+static GenericValue executeURemInst(GenericValue Src1, GenericValue Src2,
                                    const Type *Ty) {
   GenericValue Dest;
   switch (Ty->getTypeID()) {
-    IMPLEMENT_BINARY_OPERATOR(%, UByte);
-    IMPLEMENT_BINARY_OPERATOR(%, SByte);
-    IMPLEMENT_BINARY_OPERATOR(%, UShort);
-    IMPLEMENT_BINARY_OPERATOR(%, Short);
-    IMPLEMENT_BINARY_OPERATOR(%, UInt);
-    IMPLEMENT_BINARY_OPERATOR(%, Int);
-    IMPLEMENT_BINARY_OPERATOR(%, ULong);
-    IMPLEMENT_BINARY_OPERATOR(%, Long);
+    IMPLEMENT_SIGNLESS_BINOP(%, UByte,  SByte);
+    IMPLEMENT_SIGNLESS_BINOP(%, UShort, Short);
+    IMPLEMENT_SIGNLESS_BINOP(%, UInt,   Int);
+    IMPLEMENT_SIGNLESS_BINOP(%, ULong,  Long);
+  default:
+    std::cout << "Unhandled type for URem instruction: " << *Ty << "\n";
+    abort();
+  }
+  return Dest;
+}
+
+static GenericValue executeSRemInst(GenericValue Src1, GenericValue Src2,
+                                   const Type *Ty) {
+  GenericValue Dest;
+  switch (Ty->getTypeID()) {
+    IMPLEMENT_SIGNLESS_BINOP(%, SByte, UByte);
+    IMPLEMENT_SIGNLESS_BINOP(%, Short, UShort);
+    IMPLEMENT_SIGNLESS_BINOP(%, Int,   UInt);
+    IMPLEMENT_SIGNLESS_BINOP(%, Long,  ULong);
+  default:
+    std::cout << "Unhandled type for Rem instruction: " << *Ty << "\n";
+    abort();
+  }
+  return Dest;
+}
+
+static GenericValue executeFRemInst(GenericValue Src1, GenericValue Src2,
+                                   const Type *Ty) {
+  GenericValue Dest;
+  switch (Ty->getTypeID()) {
   case Type::FloatTyID:
     Dest.FloatVal = fmod(Src1.FloatVal, Src2.FloatVal);
     break;
@@ -544,7 +580,9 @@ void Interpreter::visitBinaryOperator(BinaryOperator &I) {
   case Instruction::UDiv:  R = executeUDivInst (Src1, Src2, Ty); break;
   case Instruction::SDiv:  R = executeSDivInst (Src1, Src2, Ty); break;
   case Instruction::FDiv:  R = executeFDivInst (Src1, Src2, Ty); break;
-  case Instruction::Rem:   R = executeRemInst  (Src1, Src2, Ty); break;
+  case Instruction::URem:  R = executeURemInst (Src1, Src2, Ty); break;
+  case Instruction::SRem:  R = executeSRemInst (Src1, Src2, Ty); break;
+  case Instruction::FRem:  R = executeFRemInst (Src1, Src2, Ty); break;
   case Instruction::And:   R = executeAndInst  (Src1, Src2, Ty); break;
   case Instruction::Or:    R = executeOrInst   (Src1, Src2, Ty); break;
   case Instruction::Xor:   R = executeXorInst  (Src1, Src2, Ty); break;

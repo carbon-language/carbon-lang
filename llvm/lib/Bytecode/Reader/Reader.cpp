@@ -652,7 +652,14 @@ BytecodeReader::handleObsoleteOpcodes(
       break;
 
     case 11: // Rem
-        Opcode = Instruction::Rem;
+      // As with "Div", make the signed/unsigned or floating point Rem 
+      // instruction choice based on the type of the operands.
+      if (iType == 10 || iType == 11)
+        Opcode = Instruction::FRem;
+      else if (iType >= 2 && iType <= 9 && iType % 2 != 0)
+        Opcode = Instruction::SRem;
+      else
+        Opcode = Instruction::URem;
       break;
     case 12: // And
       Opcode = Instruction::And;
@@ -1654,18 +1661,16 @@ inline unsigned fixCEOpcodes(
       else
         Opcode = Instruction::UDiv;
       break;
-
     case 11: // Rem
-      // As with "Div", make the signed/unsigned Rem instruction choice based
-      // on the type of the instruction.
+      // As with "Div", make the signed/unsigned or floating point Rem 
+      // instruction choice based on the type of the operands.
       if (ArgVec[0]->getType()->isFloatingPoint())
-        Opcode = Instruction::Rem;
+        Opcode = Instruction::FRem;
       else if (ArgVec[0]->getType()->isSigned())
-        Opcode = Instruction::Rem;
+        Opcode = Instruction::SRem;
       else
-        Opcode = Instruction::Rem;
+        Opcode = Instruction::URem;
       break;
-
     case 12: // And
       Opcode = Instruction::And;
       break;
