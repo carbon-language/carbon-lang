@@ -151,8 +151,10 @@ static void **GetBucketFor(const FoldingSetImpl::NodeID &ID,
 //===----------------------------------------------------------------------===//
 // FoldingSetImpl Implementation
 
-FoldingSetImpl::FoldingSetImpl() : NumNodes(0) {
-  NumBuckets = 64;
+FoldingSetImpl::FoldingSetImpl(unsigned Log2InitSize) : NumNodes(0) {
+  assert(5 < Log2InitSize && Log2InitSize < 32 &&
+         "Initial hash table size out of range");
+  NumBuckets = 1 << Log2InitSize;
   Buckets = new void*[NumBuckets];
   memset(Buckets, 0, NumBuckets*sizeof(void*));
 }

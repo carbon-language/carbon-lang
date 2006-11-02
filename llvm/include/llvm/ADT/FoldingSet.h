@@ -117,7 +117,7 @@ private:
   unsigned NumNodes;
   
 public:
-  FoldingSetImpl();
+  FoldingSetImpl(unsigned Log2InitSize = 6);
   virtual ~FoldingSetImpl();
   
   // Forward declaration.
@@ -229,6 +229,10 @@ private:
   }
   
 public:
+  FoldingSet(unsigned Log2InitSize = 6)
+  : FoldingSetImpl(Log2InitSize)
+  {}
+
   /// GetOrInsertNode - If there is an existing simple Node exactly
   /// equal to the specified node, return it.  Otherwise, insert 'N' and
   /// return it instead.
