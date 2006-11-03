@@ -100,10 +100,8 @@ void CodeEmitterGen::run(std::ostream &o) {
     
     BitsInit *BI = R->getValueAsBitsInit("Inst");
 
-    unsigned Value = 0;
-    const std::vector<RecordVal> &Vals = R->getValues();
-
     // Start by filling in fixed values...
+    unsigned Value = 0;
     for (unsigned i = 0, e = BI->getNumBits(); i != e; ++i) {
       if (BitInit *B = dynamic_cast<BitInit*>(BI->getBit(e-i-1))) {
         Value |= B->getValue() << (e-i-1);
