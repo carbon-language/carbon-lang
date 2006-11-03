@@ -8,8 +8,15 @@
 ##===----------------------------------------------------------------------===##
 
 LEVEL = ../..
+include $(LEVEL)/Makefile.config
 LIBRARYNAME = LLVMCodeGen
 PARALLEL_DIRS = SelectionDAG
 BUILD_ARCHIVE = 1
+
+# Xcode prior to 2.4 generates an error in -pedantic mode with use of HUGE_VAL
+# in this directory.  Disable -pedantic for this broken compiler.
+ifneq ($(HUGE_VAL_SANITY),yes)
+CompileCommonOpts := $(filter-out -pedantic, $(CompileCommonOpts))
+endif
 
 include $(LEVEL)/Makefile.common
