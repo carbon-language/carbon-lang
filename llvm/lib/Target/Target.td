@@ -222,6 +222,17 @@ def i16imm : Operand<i16>;
 def i32imm : Operand<i32>;
 def i64imm : Operand<i64>;
 
+
+/// PredicateOperand - This can be used to define a predicate operand for an
+/// instruction.  OpTypes specifies the MIOperandInfo for the operand, and
+/// AlwaysVal specifies the value of this predicate when set to "always
+/// execute".
+class PredicateOperand<dag OpTypes, dag AlwaysVal> : Operand<OtherVT> {
+  let MIOperandInfo = OpTypes;
+  dag ExecuteAlways = AlwaysVal;
+}
+
+
 // InstrInfo - This class should only be instantiated once to provide parameters
 // which are global to the the target machine.
 //
