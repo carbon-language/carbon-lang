@@ -155,41 +155,6 @@ void ScheduleDAGRRList::CommuteNodesToReducePressure() {
 //  Bottom-Up Scheduling
 //===----------------------------------------------------------------------===//
 
-static const TargetRegisterClass *getRegClass(SUnit *SU,
-                                              const TargetInstrInfo *TII,
-                                              const MRegisterInfo *MRI,
-                                              SSARegMap *RegMap) {
-  if (SU->Node->isTargetOpcode()) {
-    unsigned Opc = SU->Node->getTargetOpcode();
-    const TargetInstrDescriptor &II = TII->get(Opc);
-    return MRI->getRegClass(II.OpInfo->RegClass);
-  } else {
-    assert(SU->Node->getOpcode() == ISD::CopyFromReg);
-    unsigned SrcReg = cast<RegisterSDNode>(SU->Node->getOperand(1))->getReg();
-    if (MRegisterInfo::isVirtualRegister(SrcReg))
-      return RegMap->getRegClass(SrcReg);
-    else {
-      for (MRegisterInfo::regclass_iterator I = MRI->regclass_begin(),
-             E = MRI->regclass_end(); I != E; ++I)
-        if ((*I)->hasType(SU->Node->getValueType(0)) &&
-            (*I)->contains(SrcReg))
-          return *I;
-      assert(false && "Couldn't find register class for reg copy!");
-    }
-    return NULL;
-  }
-}
-
-static unsigned getNumResults(SUnit *SU) {
-  unsigned NumResults = 0;
-  for (unsigned i = 0, e = SU->Node->getNumValues(); i != e; ++i) {
-    MVT::ValueType VT = SU->Node->getValueType(i);
-    if (VT != MVT::Other && VT != MVT::Flag)
-      NumResults++;
-  }
-  return NumResults;
-}
-
 /// ReleasePred - Decrement the NumSuccsLeft count of a predecessor. Add it to
 /// the Available queue is the count reaches zero. Also update its cycle bound.
 void ScheduleDAGRRList::ReleasePred(SUnit *PredSU, bool isChain, 

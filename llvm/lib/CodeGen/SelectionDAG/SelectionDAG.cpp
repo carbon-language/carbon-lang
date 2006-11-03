@@ -39,15 +39,6 @@ static SDVTList makeVTList(const MVT::ValueType *VTs, unsigned NumVTs) {
   return Res;
 }
 
-// isInvertibleForFree - Return true if there is no cost to emitting the logical
-// inverse of this node.
-static bool isInvertibleForFree(SDOperand N) {
-  if (isa<ConstantSDNode>(N.Val)) return true;
-  if (N.Val->getOpcode() == ISD::SETCC && N.Val->hasOneUse())
-    return true;
-  return false;
-}
-
 //===----------------------------------------------------------------------===//
 //                              ConstantFPSDNode Class
 //===----------------------------------------------------------------------===//
@@ -254,12 +245,6 @@ const TargetMachine &SelectionDAG::getTarget() const {
 //===----------------------------------------------------------------------===//
 //                           SDNode Profile Support
 //===----------------------------------------------------------------------===//
-
-/// getNodeIDOpcode - Return the opcode that has been set for this NodeID.
-///
-static unsigned getNodeIDOpcode(FoldingSetNodeID &ID)  {
-  return ID.getRawData(0);
-}
 
 /// AddNodeIDOpcode - Add the node opcode to the NodeID data.
 ///
