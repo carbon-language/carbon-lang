@@ -374,9 +374,6 @@ void SubtargetEmitter::EmitProcessorData(std::ostream &OS,
     // End processor itinerary table
     OS << "};\n";
   }
-  
-    OS << "\n";
-    OS << "static llvm::InstrItinerary NoItineraries[] = { {0, 0} };\n";
 }
 
 //
