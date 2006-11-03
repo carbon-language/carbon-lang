@@ -94,7 +94,6 @@ def X86Wrapper : SDNode<"X86ISD::Wrapper",  SDTX86Wrapper>;
 //
 class X86MemOperand<string printMethod> : Operand<iPTR> {
   let PrintMethod = printMethod;
-  let NumMIOperands = 4;
   let MIOperandInfo = (ops ptr_rc, i8imm, ptr_rc, i32imm);
 }
 
@@ -109,7 +108,6 @@ def f128mem : X86MemOperand<"printf128mem">;
 
 def lea32mem : Operand<i32> {
   let PrintMethod = "printi32mem";
-  let NumMIOperands = 4;
   let MIOperandInfo = (ops GR32, i8imm, GR32, i32imm);
 }
 

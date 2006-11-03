@@ -15,19 +15,16 @@
 // Address operands
 def op_addr_mode1 : Operand<iPTR> {
   let PrintMethod = "printAddrMode1";
-  let NumMIOperands = 3;
   let MIOperandInfo = (ops ptr_rc, ptr_rc, i32imm);
 }
 
 def op_addr_mode5 : Operand<iPTR> {
   let PrintMethod = "printAddrMode5";
-  let NumMIOperands = 2;
   let MIOperandInfo = (ops ptr_rc, i32imm);
 }
 
 def memri : Operand<iPTR> {
   let PrintMethod = "printMemRegImm";
-  let NumMIOperands = 2;
   let MIOperandInfo = (ops i32imm, ptr_rc);
 }
 
