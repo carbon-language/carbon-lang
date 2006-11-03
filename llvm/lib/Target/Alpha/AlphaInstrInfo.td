@@ -96,6 +96,7 @@ def zappat : PatFrag<(ops node:$LHS), (and node:$LHS, imm:$L), [{
 }]>;
 
 def immFPZ  : PatLeaf<(fpimm), [{ //the only fpconstant nodes are +/- 0.0
+  (void)N; // silence warning.
   return true;
 }]>;
 

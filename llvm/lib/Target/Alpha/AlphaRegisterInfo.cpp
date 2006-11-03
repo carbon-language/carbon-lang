@@ -51,12 +51,6 @@ static long getLower16(long l)
   return l - h * IMM_MULT;
 }
 
-static int getUID()
-{
-  static int id = 0;
-  return ++id;
-}
-
 AlphaRegisterInfo::AlphaRegisterInfo()
   : AlphaGenRegisterInfo(Alpha::ADJUSTSTACKDOWN, Alpha::ADJUSTSTACKUP)
 {

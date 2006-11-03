@@ -383,12 +383,6 @@ AlphaTargetLowering::LowerCallTo(SDOperand Chain,
   return std::make_pair(RetVal, Chain);
 }
 
-static int getUID()
-{
-  static int id = 0;
-  return ++id;
-}
-
 /// LowerOperation - Provide custom lowering hooks for some operations.
 ///
 SDOperand AlphaTargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
