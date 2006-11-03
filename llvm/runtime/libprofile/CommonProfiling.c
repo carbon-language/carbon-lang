@@ -88,7 +88,6 @@ void write_profiling_data(enum ProfilingType PT, unsigned *Start,
    * appending, creating it if it does not already exist.
    */
   if (OutFile == -1) {
-    off_t Offset;
     OutFile = open(OutputFilename, O_CREAT | O_WRONLY | O_APPEND, 0666);
     if (OutFile == -1) {
       fprintf(stderr, "LLVM profiling runtime: while opening '%s': ",
