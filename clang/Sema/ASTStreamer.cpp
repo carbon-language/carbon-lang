@@ -12,16 +12,11 @@
 //===----------------------------------------------------------------------===//
 
 #include "clang/AST/ASTStreamer.h"
+#include "clang/AST/ASTBuilder.h"
 #include "clang/Parse/Action.h"
 #include "clang/Parse/Parser.h"
 using namespace llvm;
 using namespace clang;
-
-/// Interface to the Builder.cpp file.
-///
-Action *CreateASTBuilderActions(Preprocessor &PP, bool FullLocInfo,
-                                std::vector<Decl*> &LastInGroupList);
-
 
 namespace {
   class ASTStreamer {
@@ -29,7 +24,7 @@ namespace {
     std::vector<Decl*> LastInGroupList;
   public:
     ASTStreamer(Preprocessor &PP, unsigned MainFileID, bool FullLocInfo)
-      : P(PP, *CreateASTBuilderActions(PP, FullLocInfo, LastInGroupList)) {
+      : P(PP, *new ASTBuilder(PP, FullLocInfo, LastInGroupList)) {
       PP.EnterSourceFile(MainFileID, 0, true);
       
       // Initialize the parser.

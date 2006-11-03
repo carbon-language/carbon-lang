@@ -523,6 +523,7 @@ void MacroExpander::PasteTokens(LexerToken &Tok) {
 
     // Allocate space for the result token.  This is guaranteed to be enough for
     // the two tokens and a null terminator.
+    // FIXME: Use a smallvector here.
     char *Buffer = (char*)alloca(Tok.getLength() + RHS.getLength() + 1);
     
     // Get the spelling of the LHS token in Buffer.
