@@ -61,9 +61,11 @@ static bool isOnlyLHSMask(unsigned short Mask) {
 /// getLHSOnlyMask - Given a mask that refers to its LHS and RHS, modify it to
 /// refer to the LHS only (for when one argument value is passed into the same
 /// function twice).
+#if 0
 static unsigned short getLHSOnlyMask(unsigned short Mask) {
   return Mask & 0xBBBB;  // Keep only LHS and Undefs.
 }
+#endif
 
 /// getCompressedMask - Turn a 16-bit uncompressed mask (where each elt uses 4
 /// bits) into a compressed 13-bit mask, where each elt is multiplied by 9.

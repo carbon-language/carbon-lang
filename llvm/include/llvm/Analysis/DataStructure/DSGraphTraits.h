@@ -110,7 +110,6 @@ template <> struct GraphTraits<const DSNode*> {
 };
 
 static       DSNode &dereference (      DSNode *N) { return *N; }
-static const DSNode &dereferenceC(const DSNode *N) { return *N; }
 
 template <> struct GraphTraits<DSGraph*> {
   typedef DSNode NodeType;
