@@ -1,4 +1,4 @@
-//===-- stacker_rt.c - Runtime Support For Stacker Compiler -----*- C++ -*-===//
+/*===-- stacker_rt.c - Runtime Support For Stacker Compiler -----*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -15,7 +15,7 @@
 //  The real reason this is here is to test LLVM's ability to link with
 //  separately compiled software.
 //
-//===----------------------------------------------------------------------===//
+//===----------------------------------------------------------------------===*/
 
 #include <ctype.h>
 #include <stdio.h>
@@ -40,14 +40,15 @@ _stacker_dump_stack_()
 int
 main ( int argc, char** argv )
 {
-    // Avoid modifying argc
+    /* Avoid modifying argc */
     int a = argc;
 
-    // Make sure we're starting with the right index
+    /* Make sure we're starting with the right index */
     _index_ = 0;
 
-    // Copy the arguments to the stack in reverse order
-    // so that they get popped in the order presented
+    /* Copy the arguments to the stack in reverse order
+     * so that they get popped in the order presented
+     */
     while ( a > 0 )
     {
         if ( isdigit( (int) argv[--a][0] ) )
@@ -60,13 +61,13 @@ main ( int argc, char** argv )
         }
     }
 
-    // Put the argument count on the stack
+    /* Put the argument count on the stack */
     _stack_[_index_] = argc;
 
-    // Invoke the user's main program
+    /* Invoke the user's main program */
     _MAIN_();
 
-    // Return last item on the stack
+    /* Return last item on the stack */
     if ( _index_ >= 0 )
         return _stack_[_index_];
     return -1;

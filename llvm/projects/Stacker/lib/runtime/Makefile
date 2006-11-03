@@ -12,6 +12,3 @@ DONT_BUILD_RELINKED = 1
 MODULE_NAME = stkr_runtime
 
 include $(LEVEL)/Makefile.common
-
-CompileCommonOpts := $(filter-out -pedantic,$(CompileCommonOpts))
-CompileCommonOpts := $(filter-out -Wno-long-long,$(CompileCommonOpts))
