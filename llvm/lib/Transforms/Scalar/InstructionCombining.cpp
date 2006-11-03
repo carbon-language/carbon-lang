@@ -6405,7 +6405,7 @@ Instruction *InstCombiner::visitCallInst(CallInst &CI) {
         if (GVSrc->isConstant()) {
           Module *M = CI.getParent()->getParent()->getParent();
           const char *Name;
-          if (CI.getCalledFunction()->getFunctionType()->getParamType(3) == 
+          if (CI.getCalledFunction()->getFunctionType()->getParamType(2) == 
               Type::UIntTy)
             Name = "llvm.memcpy.i32";
           else
