@@ -365,8 +365,20 @@ CodeGenInstruction::CodeGenInstruction(Record *R, const std::string &AsmStr)
     DagInit *MIOpInfo = 0;
     if (Rec->isSubClassOf("Operand")) {
       PrintMethod = Rec->getValueAsString("PrintMethod");
-      NumOps = Rec->getValueAsInt("NumMIOperands");
       MIOpInfo = Rec->getValueAsDag("MIOperandInfo");
+      
+      // Verify that MIOpInfo has an 'ops' root value.
+      if (!dynamic_cast<DefInit*>(MIOpInfo->getOperator()) ||
+          dynamic_cast<DefInit*>(MIOpInfo->getOperator())
+               ->getDef()->getName() != "ops")
+        throw "Bad value for MIOperandInfo in operand '" + Rec->getName() +
+              "'\n";
+
+      // If we have MIOpInfo, then we have #operands equal to number of entries
+      // in MIOperandInfo.
+      if (unsigned NumArgs = MIOpInfo->getNumArgs())
+        NumOps = NumArgs;
+
     } else if (Rec->getName() == "variable_ops") {
       hasVariableNumberOfOperands = true;
       continue;
