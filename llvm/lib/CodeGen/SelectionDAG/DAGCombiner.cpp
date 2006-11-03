@@ -187,7 +187,7 @@ namespace {
         SDOperand BasePtr;
         SDOperand Offset;
         ISD::MemOpAddrMode AM = ISD::UNINDEXED;
-        if (TLI.getLegalPreIndexedAddressBase(N, BasePtr, Offset, AM, DAG)) {
+        if (TLI.getPreIndexedAddressParts(N, BasePtr, Offset, AM, DAG)) {
           // Try turning it into a pre-indexed load / store except when
           // 1) Another use of base ptr is a predecessor of N. If ptr is folded
           //    that would create a cycle.
