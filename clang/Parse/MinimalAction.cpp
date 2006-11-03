@@ -30,8 +30,9 @@ struct TypeNameInfo {
     
 };
 
-/// isTypedefName - This looks at the IdentifierInfo::FETokenInfo field to
-/// determine whether the name is a typedef or not in this scope.
+/// isTypeName - This looks at the IdentifierInfo::FETokenInfo field to
+/// determine whether the name is a type name (objc class name or typedef) or
+/// not in this scope.
 bool EmptyAction::isTypeName(const IdentifierInfo &II, Scope *S) const {
   TypeNameInfo *TI = II.getFETokenInfo<TypeNameInfo>();
   return TI != 0 && TI->isTypeName;
@@ -65,18 +66,20 @@ EmptyAction::ParseDeclarator(Scope *S, Declarator &D, ExprTy *Init,
   return 0;
 }
 
-// Scope will always be top level file scope. 
-
+/// ParsedClassDeclaration - 
+/// Scope will always be top level file scope. 
 Action::DeclTy *
 EmptyAction::ParsedClassDeclaration(Scope *S,
-									IdentifierInfo **identList, unsigned nElements) {
-  for (unsigned i = 0; i < nElements; i++) {
-    TypeNameInfo *TI = new TypeNameInfo(1, identList[i]->getFETokenInfo<TypeNameInfo>());
+                                    IdentifierInfo **IdentList,
+                                    unsigned NumElts) {
+  for (unsigned i = 0; i != NumElts; ++i) {
+    TypeNameInfo *TI =
+      new TypeNameInfo(1, IdentList[i]->getFETokenInfo<TypeNameInfo>());
 
-    identList[i]->setFETokenInfo(TI);
+    IdentList[i]->setFETokenInfo(TI);
   
     // Remember that this needs to be removed when the scope is popped.
-    S->AddDecl(identList[i]);
+    S->AddDecl(IdentList[i]);
   }
   return 0;
 }
