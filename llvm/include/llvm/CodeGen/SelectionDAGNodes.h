@@ -815,6 +815,9 @@ public:
   // isOperand - Return true if this node is an operand of N.
   bool isOperand(SDNode *N) const;
 
+  // isPredecessor - Return true if this node is a predecessor of N.
+  bool isPredecessor(SDNode *N) const;
+
   /// getNumOperands - Return the number of values used by this operation.
   ///
   unsigned getNumOperands() const { return NumOperands; }
