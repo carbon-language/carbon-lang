@@ -292,7 +292,7 @@ Parser::DeclTy *Parser::ParseExternalDeclaration() {
     return 0;
   case tok::minus:
     ObjCParseInstanceMethodDeclaration();
-	return 0;
+    return 0;
   case tok::plus:
     ObjCParseClassMethodDeclaration();
     return 0;
@@ -454,26 +454,25 @@ void Parser::ParseSimpleAsm() {
 }
 
 void Parser::ObjCParseAtDirectives() {
-  SourceLocation atLoc = ConsumeToken(); // the "@"
+  SourceLocation AtLoc = ConsumeToken(); // the "@"
 
   IdentifierInfo *II = Tok.getIdentifierInfo();
-  if (II == 0) return;  // Not an identifier.
-      
-  switch (II->getObjCKeywordID()) {
-    case tok::objc_class:
-	  ObjCParseClassDeclaration(atLoc);
-    case tok::objc_interface:
-	  ObjCParseInterfaceDeclaration();
-    case tok::objc_protocol:
-	  ObjCParseProtocolDeclaration();
-    case tok::objc_implementation:
-	  ObjCParseImplementationDeclaration();
-    case tok::objc_end:
-	  ObjCParseEndDeclaration();
-    case tok::objc_compatibility_alias:
-	  ObjCParseAliasDeclaration();
-	default:
-	  ; // TODO: need to issue a diagnostic...
+  switch (II ? II->getObjCKeywordID() : tok::objc_not_keyword) {
+  case tok::objc_class:
+    return ObjCParseAtClassDeclaration(AtLoc);
+  case tok::objc_interface:
+    return ObjCParseAtInterfaceDeclaration();
+  case tok::objc_protocol:
+    return ObjCParseAtProtocolDeclaration();
+  case tok::objc_implementation:
+    return ObjCParseAtImplementationDeclaration();
+  case tok::objc_end:
+    return ObjCParseAtEndDeclaration();
+  case tok::objc_compatibility_alias:
+    return ObjCParseAtAliasDeclaration();
+  default:
+    Diag(AtLoc, diag::err_unexpected_at);
+    SkipUntil(tok::semi);
   }
 }
 
@@ -481,7 +480,7 @@ void Parser::ObjCParseAtDirectives() {
 /// objc-class-declaration: 
 ///    @class identifier-list ;
 ///  
-void Parser::ObjCParseClassDeclaration(SourceLocation atLoc) {
+void Parser::ObjCParseAtClassDeclaration(SourceLocation atLoc) {
   ConsumeToken(); // the identifier "class"
   SmallVector<IdentifierInfo *, 8> classNames;
   
@@ -502,19 +501,26 @@ void Parser::ObjCParseClassDeclaration(SourceLocation atLoc) {
 	Actions.ParsedClassDeclaration(CurScope,&classNames[0],classNames.size());
   }
 }
-void Parser::ObjCParseInterfaceDeclaration() {
+void Parser::ObjCParseAtInterfaceDeclaration() {
+  assert(0 && "Unimp");
 }
-void Parser::ObjCParseProtocolDeclaration() {
+void Parser::ObjCParseAtProtocolDeclaration() {
+  assert(0 && "Unimp");
 }
-void Parser::ObjCParseImplementationDeclaration() {
+void Parser::ObjCParseAtImplementationDeclaration() {
+  assert(0 && "Unimp");
 }
-void Parser::ObjCParseEndDeclaration() {
+void Parser::ObjCParseAtEndDeclaration() {
+  assert(0 && "Unimp");
 }
-void Parser::ObjCParseAliasDeclaration() {
+void Parser::ObjCParseAtAliasDeclaration() {
+  assert(0 && "Unimp");
 }
 
 void Parser::ObjCParseInstanceMethodDeclaration() {
+  assert(0 && "Unimp");
 }
 
 void Parser::ObjCParseClassMethodDeclaration() {
+  assert(0 && "Unimp");
 }
