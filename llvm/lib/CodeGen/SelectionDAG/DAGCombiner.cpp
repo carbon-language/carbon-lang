@@ -176,7 +176,6 @@ namespace {
 
     bool CombineToIndexedLoadStore(SDNode *N) {
       SDOperand Ptr;
-      bool isLoad = true;
       if (LoadSDNode *LD  = dyn_cast<LoadSDNode>(N)) {
         Ptr = LD->getBasePtr();
       } else
@@ -200,7 +199,8 @@ namespace {
           //    themselves use of loads / stores.
 
           bool OffIsAMImm = Offset.getOpcode() == ISD::Constant &&
-            TLI.isLegalAddressImmediate(cast<ConstantSDNode>(Offset)->getValue());
+            TLI.isLegalAddressImmediate(
+              cast<ConstantSDNode>(Offset)->getValue());
 
           // Check for #3.
           if (OffIsAMImm && BasePtr.Val->use_size() > 1) {
@@ -209,7 +209,7 @@ namespace {
               SDNode *Use = *I;
               if (Use == Ptr.Val)
                 continue;
-              if (Use->getOpcode() == ISD::ADD || Use->getOpcode() == ISD::SUB) {
+              if (Use->getOpcode() == ISD::ADD || Use->getOpcode() == ISD::SUB){
                 for (SDNode::use_iterator II = Use->use_begin(),
                        EE = Use->use_end(); II != EE; ++II) {
                   SDNode *UseUse = *II;
