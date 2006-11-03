@@ -1146,19 +1146,6 @@ Relation::KnownResult CEE::getSetCCResult(SetCondInst *SCI,
 //  Relation Implementation
 //===----------------------------------------------------------------------===//
 
-// CheckCondition - Return true if the specified condition is false.  Bound may
-// be null.
-static bool CheckCondition(Constant *Bound, Constant *C,
-                           Instruction::BinaryOps BO) {
-  assert(C != 0 && "C is not specified!");
-  if (Bound == 0) return false;
-
-  Constant *Val = ConstantExpr::get(BO, Bound, C);
-  if (ConstantBool *CB = dyn_cast<ConstantBool>(Val))
-    return !CB->getValue();  // Return true if the condition is false...
-  return false;
-}
-
 // contradicts - Return true if the relationship specified by the operand
 // contradicts already known information.
 //
