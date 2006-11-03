@@ -240,3 +240,7 @@ ECHO := echo
 # available to those loadable modules.
 LINKALL := @LINKALL@
 NOLINKALL := @NOLINKALL@
+
+# Get the value of HUGE_VAL_SANITY which will be either "yes" or "no" depending
+# on the check.
+HUGE_VAL_SANITY = @HUGE_VAL_SANITY@

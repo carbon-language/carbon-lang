@@ -630,6 +630,7 @@ dnl=== SECTION 7: Check for types and structures
 dnl===
 dnl===-----------------------------------------------------------------------===
 
+AC_HUGE_VAL_CHECK
 AC_TYPE_PID_T
 AC_TYPE_SIZE_T
 AC_TYPE_SIGNAL
