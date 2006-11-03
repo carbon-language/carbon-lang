@@ -255,6 +255,10 @@ def memrix : Operand<iPTR> {   // memri where the imm is shifted 2 bits.
   let MIOperandInfo = (ops i32imm, ptr_rc);
 }
 
+// PowerPC Predicate operand.  20 = always, CR0 is a dummy reg that doesn't
+// matter.
+def pred : PredicateOperand<(ops imm, CRRC), (ops 20, CR0)>;
+
 // Define PowerPC specific addressing mode.
 def iaddr  : ComplexPattern<iPTR, 2, "SelectAddrImm",    [], []>;
 def xaddr  : ComplexPattern<iPTR, 2, "SelectAddrIdx",    [], []>;
