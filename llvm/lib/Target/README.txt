@@ -331,4 +331,10 @@ for Instruction::UDiv (around line 4447) for more details.
 
 The SingleSource/Benchmarks/Shootout-C++/hash and hash2 tests have examples of
 this construct. 
+
+//===---------------------------------------------------------------------===//
+
+Instcombine misses several of these cases (see the testcase in the patch):
+http://gcc.gnu.org/ml/gcc-patches/2006-10/msg01519.html
+
 //===---------------------------------------------------------------------===//
