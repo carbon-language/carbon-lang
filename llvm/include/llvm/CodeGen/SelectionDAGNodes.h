@@ -809,13 +809,18 @@ public:
   /// operation.
   bool hasNUsesOfValue(unsigned NUses, unsigned Value) const;
 
-  // isOnlyUse - Return true if this node is the only use of N.
+  /// isOnlyUse - Return true if this node is the only use of N.
+  ///
   bool isOnlyUse(SDNode *N) const;
 
-  // isOperand - Return true if this node is an operand of N.
+  /// isOperand - Return true if this node is an operand of N.
+  ///
   bool isOperand(SDNode *N) const;
 
-  // isPredecessor - Return true if this node is a predecessor of N.
+  /// isPredecessor - Return true if this node is a predecessor of N. This node
+  /// is either an operand of N or it can be reached by recursively traversing
+  /// up the operands.
+  /// NOTE: this is an expensive method. Use it carefully.
   bool isPredecessor(SDNode *N) const;
 
   /// getNumOperands - Return the number of values used by this operation.

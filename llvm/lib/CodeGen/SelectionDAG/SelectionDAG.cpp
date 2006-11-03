@@ -2534,7 +2534,8 @@ bool SDNode::hasNUsesOfValue(unsigned NUses, unsigned Value) const {
 }
 
 
-// isOnlyUse - Return true if this node is the only use of N.
+/// isOnlyUse - Return true if this node is the only use of N.
+///
 bool SDNode::isOnlyUse(SDNode *N) const {
   bool Seen = false;
   for (SDNode::use_iterator I = N->use_begin(), E = N->use_end(); I != E; ++I) {
@@ -2548,7 +2549,8 @@ bool SDNode::isOnlyUse(SDNode *N) const {
   return Seen;
 }
 
-// isOperand - Return true if this node is an operand of N.
+/// isOperand - Return true if this node is an operand of N.
+///
 bool SDOperand::isOperand(SDNode *N) const {
   for (unsigned i = 0, e = N->getNumOperands(); i != e; ++i)
     if (*this == N->getOperand(i))
@@ -2578,7 +2580,10 @@ static void findPredecessor(SDNode *N, const SDNode *P, bool &found,
   }
 }
 
-// isPredecessor - Return true if this node is a predecessor of N.
+/// isPredecessor - Return true if this node is a predecessor of N. This node
+/// is either an operand of N or it can be reached by recursively traversing
+/// up the operands.
+/// NOTE: this is an expensive method. Use it carefully.
 bool SDNode::isPredecessor(SDNode *N) const {
   std::set<SDNode *> Visited;
   bool found = false;
