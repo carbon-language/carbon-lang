@@ -704,8 +704,7 @@ void PrintBytecodeAnalysis(BytecodeAnalysis& bca, std::ostream& Out )
         print(Out, "# of VBR Compressed Bytes",  I->second.vbrCompBytes);
         print(Out, "# of VBR Expanded Bytes",    I->second.vbrExpdBytes);
         print(Out, "Bytes Saved With VBR",
-              double(I->second.vbrExpdBytes) - I->second.vbrCompBytes),
-              double(I->second.vbrExpdBytes);
+              double(I->second.vbrExpdBytes) - I->second.vbrCompBytes);
       }
       ++I;
     }
