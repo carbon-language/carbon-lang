@@ -234,12 +234,13 @@ private:
 
   // Objective-C External Declarations 
   void ObjCParseAtDirectives(); 
-  void   ObjCParseClassDeclaration(SourceLocation atLoc);
-  void   ObjCParseInterfaceDeclaration();
-  void   ObjCParseProtocolDeclaration();
-  void   ObjCParseImplementationDeclaration();
-  void   ObjCParseEndDeclaration();
-  void   ObjCParseAliasDeclaration();
+  void ObjCParseAtClassDeclaration(SourceLocation atLoc);
+  void ObjCParseAtInterfaceDeclaration();
+  void ObjCParseAtProtocolDeclaration();
+  void ObjCParseAtImplementationDeclaration();
+  void ObjCParseAtEndDeclaration();
+  void ObjCParseAtAliasDeclaration();
+  
   void ObjCParseInstanceMethodDeclaration();
   void ObjCParseClassMethodDeclaration();
 

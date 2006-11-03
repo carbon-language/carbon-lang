@@ -112,7 +112,8 @@ public:
   //===--------------------------------------------------------------------===//
   
   virtual DeclTy *ParsedClassDeclaration(Scope *S,
-                                         IdentifierInfo **identList, unsigned nElements) {
+                                         IdentifierInfo **IdentList,
+                                         unsigned NumElts) {
     return 0;
   }
 										 
@@ -291,7 +292,8 @@ public:
   virtual void PopScope(SourceLocation Loc, Scope *S);
   
   virtual DeclTy *ParsedClassDeclaration(Scope *S,
-									IdentifierInfo **identList, unsigned nElements);
+                                         IdentifierInfo **IdentList,
+                                         unsigned NumElts);
 
 };
   
