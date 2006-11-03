@@ -2563,6 +2563,29 @@ bool SDNode::isOperand(SDNode *N) const {
   return false;
 }
 
+static void findPredecessor(SDNode *N, const SDNode *P, bool &found,
+                            std::set<SDNode *> &Visited) {
+  if (found || !Visited.insert(N).second)
+    return;
+
+  for (unsigned i = 0, e = N->getNumOperands(); !found && i != e; ++i) {
+    SDNode *Op = N->getOperand(i).Val;
+    if (Op == P) {
+      found = true;
+      return;
+    }
+    findPredecessor(Op, P, found, Visited);
+  }
+}
+
+// isPredecessor - Return true if this node is a predecessor of N.
+bool SDNode::isPredecessor(SDNode *N) const {
+  std::set<SDNode *> Visited;
+  bool found = false;
+  findPredecessor(N, this, found, Visited);
+  return found;
+}
+
 uint64_t SDNode::getConstantOperandVal(unsigned Num) const {
   assert(Num < NumOperands && "Invalid child # of SDNode!");
   return cast<ConstantSDNode>(OperandList[Num])->getValue();
