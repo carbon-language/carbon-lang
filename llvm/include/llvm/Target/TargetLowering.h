@@ -371,6 +371,16 @@ public:
   unsigned getJumpBufAlignment() const {
     return JumpBufAlignment;
   }
+
+  /// getLegalPreIndexedAddressBase - returns true by value, base pointer and
+  /// offset pointer and addressing mode by reference if the node's address
+  /// can be legally represented as pre-indexed load / store address.
+  virtual bool getLegalPreIndexedAddressBase(SDNode *N, SDOperand &Base,
+                                             SDOperand &Offset,
+                                             ISD::MemOpAddrMode &AM,
+                                             SelectionDAG &DAG) {
+    return false;
+  }
   
   //===--------------------------------------------------------------------===//
   // TargetLowering Optimization Methods
