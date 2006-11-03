@@ -342,6 +342,9 @@ DIAG(err_expected_string_literal, ERROR,
 DIAG(err_expected_asm_operand, ERROR,
      "expected string literal or '[' for asm operand")
 
+DIAG(err_unexpected_at, ERROR,
+     "unexpected '@' in program")
+
 /// err_matching - this is used as a continuation of a previous error, e.g. to 
 /// specify the '(' when we expected a ')'.  This should probably be some
 /// special sort of diagnostic kind to indicate that it is the second half of
