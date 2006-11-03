@@ -931,12 +931,6 @@ bool X86DAGToDAGISel::TryFoldLoad(SDOperand P, SDOperand N,
   return false;
 }
 
-static bool isRegister0(SDOperand Op) {
-  if (RegisterSDNode *R = dyn_cast<RegisterSDNode>(Op))
-    return (R->getReg() == 0);
-  return false;
-}
-
 /// getGlobalBaseReg - Output the instructions required to put the
 /// base address to use for accessing globals into a register.
 ///
