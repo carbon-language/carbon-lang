@@ -73,12 +73,10 @@ def ADDRri : ComplexPattern<i32, 2, "SelectADDRri", [frameindex], []>;
 // Address operands
 def MEMrr : Operand<i32> {
   let PrintMethod = "printMemOperand";
-  let NumMIOperands = 2;
   let MIOperandInfo = (ops IntRegs, IntRegs);
 }
 def MEMri : Operand<i32> {
   let PrintMethod = "printMemOperand";
-  let NumMIOperands = 2;
   let MIOperandInfo = (ops IntRegs, i32imm);
 }
 
