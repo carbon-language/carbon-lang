@@ -17,7 +17,6 @@
 #include "clang/Basic/SourceManager.h"
 #include "clang/Basic/Diagnostic.h"
 #include "llvm/ADT/SmallVector.h"
-#include "llvm/Config/Alloca.h"
 using namespace llvm;
 using namespace clang;
 
@@ -510,6 +509,7 @@ void MacroExpander::Lex(LexerToken &Tok) {
 /// operator.  Read the ## and RHS, and paste the LHS/RHS together.  If there
 /// are is another ## after it, chomp it iteratively.  Return the result as Tok.
 void MacroExpander::PasteTokens(LexerToken &Tok) {
+  SmallVector<char, 128> Buffer;
   do {
     // Consume the ## operator.
     SourceLocation PasteOpLoc = MacroTokens[CurToken].getLocation();
@@ -523,26 +523,28 @@ void MacroExpander::PasteTokens(LexerToken &Tok) {
 
     // Allocate space for the result token.  This is guaranteed to be enough for
     // the two tokens and a null terminator.
-    // FIXME: Use a smallvector here.
-    char *Buffer = (char*)alloca(Tok.getLength() + RHS.getLength() + 1);
+    Buffer.resize(Tok.getLength() + RHS.getLength() + 1);
     
     // Get the spelling of the LHS token in Buffer.
-    const char *BufPtr = Buffer;
+    const char *BufPtr = &Buffer[0];
     unsigned LHSLen = PP.getSpelling(Tok, BufPtr);
-    if (BufPtr != Buffer)   // Really, we want the chars in Buffer!
-      memcpy(Buffer, BufPtr, LHSLen);
+    if (BufPtr != &Buffer[0])   // Really, we want the chars in Buffer!
+      memcpy(&Buffer[0], BufPtr, LHSLen);
     
-    BufPtr = Buffer+LHSLen;
+    BufPtr = &Buffer[LHSLen];
     unsigned RHSLen = PP.getSpelling(RHS, BufPtr);
-    if (BufPtr != Buffer+LHSLen)   // Really, we want the chars in Buffer!
-      memcpy(Buffer+LHSLen, BufPtr, RHSLen);
+    if (BufPtr != &Buffer[LHSLen])   // Really, we want the chars in Buffer!
+      memcpy(&Buffer[LHSLen], BufPtr, RHSLen);
     
     // Add null terminator.
     Buffer[LHSLen+RHSLen] = '\0';
     
+    // Trim excess space.
+    Buffer.resize(LHSLen+RHSLen+1);
+    
     // Plop the pasted result (including the trailing newline and null) into a
     // scratch buffer where we can lex it.
-    SourceLocation ResultTokLoc = PP.CreateString(Buffer, LHSLen+RHSLen+1);
+    SourceLocation ResultTokLoc = PP.CreateString(&Buffer[0], Buffer.size());
     
     // Lex the resultant pasted token into Result.
     LexerToken Result;
@@ -596,7 +598,7 @@ void MacroExpander::PasteTokens(LexerToken &Tok) {
     if (isInvalid) {
       // If not in assembler language mode.
       PP.Diag(PasteOpLoc, diag::err_pp_bad_paste, 
-              std::string(Buffer, Buffer+LHSLen+RHSLen));
+              std::string(Buffer.begin(), Buffer.end()-1));
       return;
     }
     
