@@ -555,20 +555,21 @@ BasicAliasAnalysis::CheckGEPInstructions(
           }
           
           if (G1OC != G2OC) {
-            // Handle the "be careful" case above: if this is an array
+            // Handle the "be careful" case above: if this is an array/packed
             // subscript, scan for a subsequent variable array index.
-            if (isa<ArrayType>(BasePtr1Ty))  {
-              const Type *NextTy =cast<ArrayType>(BasePtr1Ty)->getElementType();
+            if (isa<SequentialType>(BasePtr1Ty))  {
+              const Type *NextTy =
+                cast<SequentialType>(BasePtr1Ty)->getElementType();
               bool isBadCase = false;
               
               for (unsigned Idx = FirstConstantOper+1;
-                   Idx != MinOperands && isa<ArrayType>(NextTy); ++Idx) {
+                   Idx != MinOperands && isa<SequentialType>(NextTy); ++Idx) {
                 const Value *V1 = GEP1Ops[Idx], *V2 = GEP2Ops[Idx];
                 if (!isa<Constant>(V1) || !isa<Constant>(V2)) {
                   isBadCase = true;
                   break;
                 }
-                NextTy = cast<ArrayType>(NextTy)->getElementType();
+                NextTy = cast<SequentialType>(NextTy)->getElementType();
               }
               
               if (isBadCase) G1OC = 0;
@@ -668,10 +669,14 @@ BasicAliasAnalysis::CheckGEPInstructions(
       if (Op1) {
         if (const ConstantInt *Op1C = dyn_cast<ConstantInt>(Op1)) {
           // If this is an array index, make sure the array element is in range.
-          if (const ArrayType *AT = dyn_cast<ArrayType>(BasePtr1Ty))
+          if (const ArrayType *AT = dyn_cast<ArrayType>(BasePtr1Ty)) {
             if (Op1C->getZExtValue() >= AT->getNumElements())
               return MayAlias;  // Be conservative with out-of-range accesses
-
+          } else if (const PackedType *PT = dyn_cast<PackedType>(BasePtr1Ty)) {
+            if (Op1C->getZExtValue() >= PT->getNumElements())
+              return MayAlias;  // Be conservative with out-of-range accesses
+          }
+          
         } else {
           // GEP1 is known to produce a value less than GEP2.  To be
           // conservatively correct, we must assume the largest possible
@@ -685,15 +690,22 @@ BasicAliasAnalysis::CheckGEPInstructions(
           //
           if (const ArrayType *AT = dyn_cast<ArrayType>(BasePtr1Ty))
             GEP1Ops[i] = ConstantInt::get(Type::LongTy, AT->getNumElements()-1);
+          else if (const PackedType *PT = dyn_cast<PackedType>(BasePtr1Ty))
+            GEP1Ops[i] = ConstantInt::get(Type::LongTy, PT->getNumElements()-1);
+
         }
       }
 
       if (Op2) {
         if (const ConstantInt *Op2C = dyn_cast<ConstantInt>(Op2)) {
           // If this is an array index, make sure the array element is in range.
-          if (const ArrayType *AT = dyn_cast<ArrayType>(BasePtr1Ty))
+          if (const ArrayType *AT = dyn_cast<ArrayType>(BasePtr1Ty)) {
             if (Op2C->getZExtValue() >= AT->getNumElements())
               return MayAlias;  // Be conservative with out-of-range accesses
+          } else if (const PackedType *PT = dyn_cast<PackedType>(BasePtr1Ty)) {
+            if (Op2C->getZExtValue() >= PT->getNumElements())
+              return MayAlias;  // Be conservative with out-of-range accesses
+          }
         } else {  // Conservatively assume the minimum value for this index
           GEP2Ops[i] = Constant::getNullValue(Op2->getType());
         }
