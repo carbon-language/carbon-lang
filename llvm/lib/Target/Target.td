@@ -213,7 +213,6 @@ def ptr_rc;
 class Operand<ValueType ty> {
   ValueType Type = ty;
   string PrintMethod = "printOperand";
-  int NumMIOperands = 1;
   dag MIOperandInfo = (ops);
 }
 
