@@ -23,8 +23,8 @@
 #include "clang/Basic/Diagnostic.h"
 #include "clang/Basic/TargetInfo.h"
 #include "llvm/ADT/SmallVector.h"
+#include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/StringExtras.h"
-#include "llvm/Config/Alloca.h"
 using namespace llvm;
 using namespace clang;
 
@@ -946,27 +946,20 @@ Parser::ExprResult Parser::ParseStringLiteralExpression() {
   if (AnyWide)
     SizeBound *= wchar_tByteWidth;
   
-  // Create a temporary buffer to hold the result string data.  If it is "big",
-  // use malloc, otherwise use alloca.
-  char *ResultBuf;
-  if (SizeBound > 512)
-    ResultBuf = (char*)malloc(SizeBound);
-  else
-    ResultBuf = (char*)alloca(SizeBound);
+  // Create a temporary buffer to hold the result string data.
+  SmallString<512> ResultBuf;
+  ResultBuf.resize(SizeBound);
   
   // Likewise, but for each string piece.
-  char *TokenBuf;
-  if (MaxTokenLength > 512)
-    TokenBuf = (char*)malloc(MaxTokenLength);
-  else
-    TokenBuf = (char*)alloca(MaxTokenLength);
+  SmallString<512> TokenBuf;
+  TokenBuf.resize(MaxTokenLength);
   
   // Loop over all the strings, getting their spelling, and expanding them to
   // wide strings as appropriate.
-  char *ResultPtr = ResultBuf;   // Next byte to fill in.
+  char *ResultPtr = &ResultBuf[0];   // Next byte to fill in.
   
   for (unsigned i = 0, e = StringToks.size(); i != e; ++i) {
-    const char *ThisTokBuf = TokenBuf;
+    const char *ThisTokBuf = &TokenBuf[0];
     // Get the spelling of the token, which eliminates trigraphs, etc.  We know
     // that ThisTokBuf points to a buffer that is big enough for the whole token
     // and 'spelled' tokens can only shrink.
@@ -1103,14 +1096,8 @@ Parser::ExprResult Parser::ParseStringLiteralExpression() {
     StringTokLocs.push_back(StringToks[i].getLocation());
   
   // Hand this off to the Actions.
-  ExprResult Res = Actions.ParseStringExpr(ResultBuf, ResultPtr-ResultBuf,
-                                           AnyWide, &StringTokLocs[0],
-                                           StringTokLocs.size());
-  
-  // If either buffer was heap allocated, release it now.
-  if (MaxTokenLength > 512) free(TokenBuf);
-  if (SizeBound > 512) free(ResultBuf);
-  
-  return Res;
+  return Actions.ParseStringExpr(&ResultBuf[0], ResultPtr-&ResultBuf[0],
+                                 AnyWide, &StringTokLocs[0],
+                                 StringTokLocs.size());
 }
 
