@@ -1063,10 +1063,6 @@ void X86RegisterInfo::emitEpilogue(MachineFunction &MF,
   }
 
   if (hasFP(MF)) {
-    // Get the offset of the stack slot for the EBP register... which is
-    // guaranteed to be the last slot by processFunctionBeforeFrameFinalized.
-    int EBPOffset = MFI->getObjectOffset(MFI->getObjectIndexEnd()-1)+SlotSize;
-
     // mov ESP, EBP
     BuildMI(MBB, MBBI, Is64Bit ? X86::MOV64rr : X86::MOV32rr, 1, StackPtr).
       addReg(FramePtr);
