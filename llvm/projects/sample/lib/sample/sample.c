@@ -10,10 +10,11 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-// LLVM Header File
+/* LLVM Header File
 #include "llvm/Support/DataTypes.h"
+*/
 
-// Header file global to this project
+/* Header file global to this project */
 #include "sample.h"
 
 int
