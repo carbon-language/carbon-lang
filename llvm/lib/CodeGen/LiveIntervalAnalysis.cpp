@@ -364,6 +364,25 @@ void LiveIntervals::printRegName(unsigned reg) const {
     std::cerr << "%reg" << reg;
 }
 
+/// isReDefinedByTwoAddr - Returns true if the Reg re-definition is due to
+/// two addr elimination.
+static bool isReDefinedByTwoAddr(MachineInstr *MI, unsigned Reg,
+                                const TargetInstrInfo *TII) {
+  for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
+    MachineOperand &MO1 = MI->getOperand(i);
+    if (MO1.isRegister() && MO1.isDef() && MO1.getReg() == Reg) {
+      for (unsigned j = i+1; j < e; ++j) {
+        MachineOperand &MO2 = MI->getOperand(j);
+        if (MO2.isRegister() && MO2.isUse() && MO2.getReg() == Reg &&
+            TII->getOperandConstraint(MI->getOpcode(), j,
+                                      TargetInstrInfo::TIED_TO) == (int)i)
+          return true;
+      }
+    }
+  }
+  return false;
+}
+
 void LiveIntervals::handleVirtualRegisterDef(MachineBasicBlock *mbb,
                                              MachineBasicBlock::iterator mi,
                                              unsigned MIIdx,
@@ -453,13 +472,9 @@ void LiveIntervals::handleVirtualRegisterDef(MachineBasicBlock *mbb,
   } else {
     // If this is the second time we see a virtual register definition, it
     // must be due to phi elimination or two addr elimination.  If this is
-    // the result of two address elimination, then the vreg is the first
-    // operand, and is a def-and-use.
-    if (mi->getOperand(0).isRegister() &&
-        mi->getOperand(0).getReg() == interval.reg &&
-        mi->getNumOperands() > 1 && mi->getOperand(1).isRegister() && 
-        mi->getOperand(1).getReg() == interval.reg &&
-        mi->getOperand(0).isDef() && mi->getOperand(1).isUse()) {
+    // the result of two address elimination, then the vreg is one of the
+    // def-and-use register operand.
+    if (isReDefinedByTwoAddr(mi, interval.reg, tii_)) {
       // If this is a two-address definition, then we have already processed
       // the live range.  The only problem is that we didn't realize there
       // are actually two values in the live interval.  Because of this we
