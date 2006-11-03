@@ -130,19 +130,6 @@ const char *IA64TargetLowering::getTargetNodeName(unsigned Opcode) const {
 }
   
 
-/// isFloatingPointZero - Return true if this is 0.0 or -0.0.
-static bool isFloatingPointZero(SDOperand Op) {
-  if (ConstantFPSDNode *CFP = dyn_cast<ConstantFPSDNode>(Op))
-    return CFP->isExactlyValue(-0.0) || CFP->isExactlyValue(0.0);
-  else if (ISD::isEXTLoad(Op.Val) || ISD::isNON_EXTLoad(Op.Val)) {
-    // Maybe this has already been legalized into the constant pool?
-    if (ConstantPoolSDNode *CP = dyn_cast<ConstantPoolSDNode>(Op.getOperand(1)))
-      if (ConstantFP *CFP = dyn_cast<ConstantFP>(CP->getConstVal()))
-        return CFP->isExactlyValue(-0.0) || CFP->isExactlyValue(0.0);
-  }
-  return false;
-}
-
 std::vector<SDOperand>
 IA64TargetLowering::LowerArguments(Function &F, SelectionDAG &DAG) {
   std::vector<SDOperand> ArgValues;
