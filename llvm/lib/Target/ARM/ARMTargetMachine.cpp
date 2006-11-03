@@ -18,7 +18,6 @@
 #include "llvm/Module.h"
 #include "llvm/PassManager.h"
 #include "llvm/Target/TargetMachineRegistry.h"
-#include "llvm/Transforms/Scalar.h"
 using namespace llvm;
 
 namespace {
@@ -52,7 +51,6 @@ unsigned ARMTargetMachine::getModuleMatchQuality(const Module &M) {
 
 // Pass Pipeline Configuration
 bool ARMTargetMachine::addInstSelector(FunctionPassManager &PM, bool Fast) {
-  PM.add(createCFGSimplificationPass());
   PM.add(createARMISelDag(*this));
   return false;
 }
