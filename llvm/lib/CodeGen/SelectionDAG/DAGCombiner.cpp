@@ -174,6 +174,114 @@ namespace {
       return true;
     }
 
+    bool CombineToIndexedLoadStore(SDNode *N) {
+      SDOperand Ptr;
+      bool isLoad = true;
+      if (LoadSDNode *LD  = dyn_cast<LoadSDNode>(N)) {
+        Ptr = LD->getBasePtr();
+      } else
+        return false;
+
+      if (AfterLegalize &&
+          (Ptr.getOpcode() == ISD::ADD || Ptr.getOpcode() == ISD::SUB) &&
+          Ptr.Val->use_size() > 1) {
+        SDOperand BasePtr;
+        SDOperand Offset;
+        ISD::MemOpAddrMode AM = ISD::UNINDEXED;
+        if (TLI.getLegalPreIndexedAddressBase(N, BasePtr, Offset, AM, DAG)) {
+          // Try turning it into a pre-indexed load / store except when
+          // 1) Another use of base ptr is a predecessor of N. If ptr is folded
+          //    that would create a cycle.
+          // 2) All uses are load / store ops that use it as base ptr and offset
+          //    is just an addressing mode immediate.
+          // 3) If the would-be new base may not to be dead at N. FIXME: The
+          //    proper check is too expensive (in turns of compile time) to 
+          //    check. Just make sure other uses of the new base are not also
+          //    themselves use of loads / stores.
+
+          bool OffIsAMImm = Offset.getOpcode() == ISD::Constant &&
+            TLI.isLegalAddressImmediate(cast<ConstantSDNode>(Offset)->getValue());
+
+          // Check for #3.
+          if (OffIsAMImm && BasePtr.Val->use_size() > 1) {
+            for (SDNode::use_iterator I = BasePtr.Val->use_begin(),
+                   E = BasePtr.Val->use_end(); I != E; ++I) {
+              SDNode *Use = *I;
+              if (Use == Ptr.Val)
+                continue;
+              if (Use->getOpcode() == ISD::ADD || Use->getOpcode() == ISD::SUB) {
+                for (SDNode::use_iterator II = Use->use_begin(),
+                       EE = Use->use_end(); II != EE; ++II) {
+                  SDNode *UseUse = *II;
+                  if (UseUse->getOpcode() == ISD::LOAD &&
+                      cast<LoadSDNode>(UseUse)->getBasePtr().Val == Use)
+                    return false;
+                  else if (UseUse->getOpcode() == ISD::STORE &&
+                           cast<StoreSDNode>(UseUse)->getBasePtr().Val == Use)
+                    return false;
+                }
+              }
+            }
+          }
+
+          // Now check for #1 and #2.
+          unsigned NumRealUses = 0;
+          for (SDNode::use_iterator I = Ptr.Val->use_begin(),
+                 E = Ptr.Val->use_end(); I != E; ++I) {
+            SDNode *Use = *I;
+            if (Use == N)
+              continue;
+            if (Use->isPredecessor(N))
+              return false;
+
+            if (!OffIsAMImm)
+              NumRealUses++;
+            // FIXME: Do we need a target hook here
+            else if (Use->getOpcode() == ISD::LOAD) {
+              if (cast<LoadSDNode>(Use)->getBasePtr().Val != Ptr.Val)
+                NumRealUses++;
+            } else if (Use->getOpcode() == ISD::STORE) {
+              if (cast<StoreSDNode>(Use)->getBasePtr().Val != Ptr.Val)
+                NumRealUses++;
+            } else
+              NumRealUses++;
+          }
+          if (NumRealUses == 0)
+            return false;
+
+          SDOperand Result =
+            DAG.getIndexedLoad(SDOperand(N,0), BasePtr, Offset, AM);
+          ++NodesCombined;
+          DEBUG(std::cerr << "\nReplacing.4 "; N->dump();
+                std::cerr << "\nWith: "; Result.Val->dump(&DAG);
+                std::cerr << '\n');
+          std::vector<SDNode*> NowDead;
+          DAG.ReplaceAllUsesOfValueWith(SDOperand(N, 0), Result.getValue(0),
+                                        NowDead);
+          DAG.ReplaceAllUsesOfValueWith(SDOperand(N, 1), Result.getValue(2),
+                                        NowDead);
+
+          // Nodes can end up on the worklist more than once.  Make sure we do
+          // not process a node that has been replaced.
+          for (unsigned i = 0, e = NowDead.size(); i != e; ++i)
+            removeFromWorkList(NowDead[i]);
+          // Finally, since the node is now dead, remove it from the graph.
+          DAG.DeleteNode(N);
+
+          // Replace the uses of Ptr with uses of the updated base value.
+          DAG.ReplaceAllUsesOfValueWith(Ptr, Result.getValue(1), NowDead);
+          removeFromWorkList(Ptr.Val);
+          for (unsigned i = 0, e = NowDead.size(); i != e; ++i)
+            removeFromWorkList(NowDead[i]);
+          DAG.DeleteNode(Ptr.Val);
+
+          return true;
+        }
+      }
+
+      return false;
+    }
+
     /// visit - call the node-specific routine that knows how to fold each
     /// particular type of node.
     SDOperand visit(SDNode *N);
@@ -2751,6 +2859,10 @@ SDOperand DAGCombiner::visitLOAD(SDNode *N) {
       return CombineTo(N, ReplLoad.getValue(0), Token, false);
     }
   }
+
+  // Try transforming N to an indexed load.
+  if (CombineToIndexedLoadStore(N))
+    return SDOperand(N, 0);
 
   return SDOperand();
 }
