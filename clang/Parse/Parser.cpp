@@ -482,25 +482,31 @@ void Parser::ObjCParseAtDirectives() {
 ///  
 void Parser::ObjCParseAtClassDeclaration(SourceLocation atLoc) {
   ConsumeToken(); // the identifier "class"
-  SmallVector<IdentifierInfo *, 8> classNames;
+  SmallVector<IdentifierInfo *, 8> ClassNames;
   
   while (1) {
-    if (Tok.getKind() == tok::identifier) {
-	  classNames.push_back(Tok.getIdentifierInfo());
-	} else {
-	  Diag(diag::err_expected_ident);
-	}
-	ConsumeToken();
-	if (Tok.getKind() == tok::comma)
-	  ConsumeToken();
-	else
-	  break;
+    if (Tok.getKind() != tok::identifier) {
+      Diag(diag::err_expected_ident);
+      SkipUntil(tok::semi);
+      return;
+    }
+    
+    ClassNames.push_back(Tok.getIdentifierInfo());
+    ConsumeToken();
+    
+    if (Tok.getKind() != tok::comma)
+      break;
+    
+    ConsumeToken();
   }
-  if (Tok.getKind() == tok::semi) {
-    SourceLocation semiLoc = ConsumeToken();
-	Actions.ParsedClassDeclaration(CurScope,&classNames[0],classNames.size());
-  }
+  
+  // Consume the ';'.
+  if (ExpectAndConsume(tok::semi, diag::err_expected_semi_after, "@class"))
+    return;
+  
+  Actions.ParsedClassDeclaration(CurScope, &ClassNames[0], ClassNames.size());
 }
+
 void Parser::ObjCParseAtInterfaceDeclaration() {
   assert(0 && "Unimp");
 }
