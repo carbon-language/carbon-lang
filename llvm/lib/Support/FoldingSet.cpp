@@ -16,7 +16,7 @@
 
 #include "llvm/ADT/FoldingSet.h"
 #include "llvm/Support/MathExtras.h"
-#include <assert.h>
+#include <cassert>
 using namespace llvm;
 
 //===----------------------------------------------------------------------===//
