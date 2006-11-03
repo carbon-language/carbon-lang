@@ -79,7 +79,7 @@ namespace llvm {
     };
   }
   
-  static const char *SPARCCondCodeToString(SPCC::CondCodes CC) {
+  inline static const char *SPARCCondCodeToString(SPCC::CondCodes CC) {
     switch (CC) {
     default: assert(0 && "Unknown condition code");
     case SPCC::ICC_NE:  return "ne";
