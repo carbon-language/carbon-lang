@@ -13,4 +13,4 @@ REQUIRES_EH := 1
 
 include $(LEVEL)/Makefile.common
 
-CompileCommonOpts := $(filter-out -pedantic,$(CompileCommonOpts))
+CompileCommonOpts := $(CompileCommonOpts) -Wno-format 
