@@ -4,9 +4,12 @@
 #
 # Synopsis: Returns 0 if the input does not contain a cast operator
 #
-# Syntax:   notcast
+# Syntax:   notcast tailexpr
+#
+#    tailexpr - optionally allows a regular expression to go at the end
+#
 
-if grep '\([sz]ext\)\|\(trunc\)\|\(fp2[us]int\)\|\([us]int2fp\)\|\(bitconvert\)\|\(fpext\)\|\(fptrunc\)'
+if grep '\(\([sz]ext\)\|\(trunc\)\|\(fp2[us]int\)\|\([us]int2fp\)\|\(bitconvert\)\|\(fpext\)\|\(fptrunc\)\)'"$1"
 then exit 1
 else exit 0
 fi
