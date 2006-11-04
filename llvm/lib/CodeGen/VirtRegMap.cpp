@@ -394,8 +394,15 @@ namespace {
   class VISIBILITY_HIDDEN ReuseInfo {
     MachineInstr &MI;
     std::vector<ReusedOp> Reuses;
+    bool *PhysRegsClobbered;
   public:
-    ReuseInfo(MachineInstr &mi) : MI(mi) {}
+    ReuseInfo(MachineInstr &mi, const MRegisterInfo *mri) : MI(mi) {
+      PhysRegsClobbered = new bool[mri->getNumRegs()];
+      std::fill(PhysRegsClobbered, PhysRegsClobbered+mri->getNumRegs(), false);
+    }
+    ~ReuseInfo() {
+      delete[] PhysRegsClobbered;
+    }
     
     bool hasReuses() const {
       return !Reuses.empty();
@@ -414,6 +421,14 @@ namespace {
       Reuses.push_back(ReusedOp(OpNo, StackSlot, PhysRegReused, 
                                 AssignedPhysReg, VirtReg));
     }
+
+    void markClobbered(unsigned PhysReg) {
+      PhysRegsClobbered[PhysReg] = true;
+    }
+
+    bool isClobbered(unsigned PhysReg) const {
+      return PhysRegsClobbered[PhysReg];
+    }
     
     /// GetRegForReload - We are about to emit a reload into PhysReg.  If there
     /// is some other operand that is using the specified register, either pick
@@ -430,11 +445,7 @@ namespace {
         // register.
         if (Op.PhysRegReused == PhysReg) {
           // Yup, use the reload register that we didn't use before.
-          unsigned NewReg = Op.AssignedPhysReg;
-          
-          // Remove the record for the previous reuse.  We know it can never be
-          // invalidated now.
-          Reuses.erase(Reuses.begin()+ro);
+          unsigned NewReg = Op.AssignedPhysReg;          
           return GetRegForReload(NewReg, MI, Spills, MaybeDeadStores);
         } else {
           // Otherwise, we might also have a problem if a previously reused
@@ -518,8 +529,19 @@ void LocalSpiller::RewriteMBB(MachineBasicBlock &MBB, VirtRegMap &VRM) {
 
     /// ReusedOperands - Keep track of operand reuse in case we need to undo
     /// reuse.
-    ReuseInfo ReusedOperands(MI);
-    
+    ReuseInfo ReusedOperands(MI, MRI);
+
+    // Loop over all of the implicit defs, clearing them from our available
+    // sets.
+    const unsigned *ImpDef = TII->getImplicitDefs(MI.getOpcode());
+    if (ImpDef) {
+      for ( ; *ImpDef; ++ImpDef) {
+        PhysRegsUsed[*ImpDef] = true;
+        ReusedOperands.markClobbered(*ImpDef);
+        Spills.ClobberPhysReg(*ImpDef);
+      }
+    }
+
     // Process all of the spilled uses and all non spilled reg references.
     for (unsigned i = 0, e = MI.getNumOperands(); i != e; ++i) {
       MachineOperand &MO = MI.getOperand(i);
@@ -530,6 +552,7 @@ void LocalSpiller::RewriteMBB(MachineBasicBlock &MBB, VirtRegMap &VRM) {
         // Ignore physregs for spilling, but remember that it is used by this
         // function.
         PhysRegsUsed[MO.getReg()] = true;
+        ReusedOperands.markClobbered(MO.getReg());
         continue;
       }
       
@@ -541,6 +564,8 @@ void LocalSpiller::RewriteMBB(MachineBasicBlock &MBB, VirtRegMap &VRM) {
         // This virtual register was assigned a physreg!
         unsigned Phys = VRM.getPhys(VirtReg);
         PhysRegsUsed[Phys] = true;
+        if (MO.isDef())
+          ReusedOperands.markClobbered(Phys);
         MI.getOperand(i).setReg(Phys);
         continue;
       }
@@ -567,8 +592,10 @@ void LocalSpiller::RewriteMBB(MachineBasicBlock &MBB, VirtRegMap &VRM) {
             MI.getOperand(ti).isReg() && 
             MI.getOperand(ti).getReg() == VirtReg) {
           // Okay, we have a two address operand.  We can reuse this physreg as
-          // long as we are allowed to clobber the value.
-          CanReuse = Spills.canClobberPhysReg(StackSlot);
+          // long as we are allowed to clobber the value and there is an earlier
+          // def that has already clobbered the physreg.
+          CanReuse = Spills.canClobberPhysReg(StackSlot) &&
+            !ReusedOperands.isClobbered(PhysReg);
         }
         
         if (CanReuse) {
@@ -595,6 +622,9 @@ void LocalSpiller::RewriteMBB(MachineBasicBlock &MBB, VirtRegMap &VRM) {
           // we can get at R0 or its alias.
           ReusedOperands.addReuse(i, StackSlot, PhysReg,
                                   VRM.getPhys(VirtReg), VirtReg);
+          if (ti != -1)
+            // Only mark it clobbered if this is a use&def operand.
+            ReusedOperands.markClobbered(PhysReg);
           ++NumReused;
           continue;
         }
@@ -629,6 +659,7 @@ void LocalSpiller::RewriteMBB(MachineBasicBlock &MBB, VirtRegMap &VRM) {
                           << VirtReg
                           << " instead of reloading into same physreg.\n");
           MI.getOperand(i).setReg(PhysReg);
+          ReusedOperands.markClobbered(PhysReg);
           ++NumReused;
           continue;
         }
@@ -637,6 +668,7 @@ void LocalSpiller::RewriteMBB(MachineBasicBlock &MBB, VirtRegMap &VRM) {
           MBB.getParent()->getSSARegMap()->getRegClass(VirtReg);
 
         PhysRegsUsed[DesignatedReg] = true;
+        ReusedOperands.markClobbered(DesignatedReg);
         MRI->copyRegToReg(MBB, &MI, DesignatedReg, PhysReg, RC);
         
         // This invalidates DesignatedReg.
@@ -664,6 +696,7 @@ void LocalSpiller::RewriteMBB(MachineBasicBlock &MBB, VirtRegMap &VRM) {
                                                  Spills, MaybeDeadStores);
       
       PhysRegsUsed[PhysReg] = true;
+      ReusedOperands.markClobbered(PhysReg);
       MRI->loadRegFromStackSlot(MBB, &MI, PhysReg, StackSlot, RC);
       // This invalidates PhysReg.
       Spills.ClobberPhysReg(PhysReg);
@@ -674,16 +707,6 @@ void LocalSpiller::RewriteMBB(MachineBasicBlock &MBB, VirtRegMap &VRM) {
       ++NumLoads;
       MI.getOperand(i).setReg(PhysReg);
       DEBUG(std::cerr << '\t' << *prior(MII));
-    }
-
-    // Loop over all of the implicit defs, clearing them from our available
-    // sets.
-    const unsigned *ImpDef = TII->getImplicitDefs(MI.getOpcode());
-    if (ImpDef) {
-      for ( ; *ImpDef; ++ImpDef) {
-        PhysRegsUsed[*ImpDef] = true;
-        Spills.ClobberPhysReg(*ImpDef);
-      }
     }
 
     DEBUG(std::cerr << '\t' << MI);
@@ -798,6 +821,7 @@ void LocalSpiller::RewriteMBB(MachineBasicBlock &MBB, VirtRegMap &VRM) {
           
           // If it's not a no-op copy, it clobbers the value in the destreg.
           Spills.ClobberPhysReg(VirtReg);
+          ReusedOperands.markClobbered(VirtReg);
  
           // Check to see if this instruction is a load from a stack slot into
           // a register.  If so, this provides the stack slot value in the reg.
@@ -824,10 +848,18 @@ void LocalSpiller::RewriteMBB(MachineBasicBlock &MBB, VirtRegMap &VRM) {
         int TiedOp = TII->findTiedToSrcOperand(MI.getOpcode(), i);
         if (TiedOp != -1)
           PhysReg = MI.getOperand(TiedOp).getReg();
-        else
+        else {
           PhysReg = VRM.getPhys(VirtReg);
+          if (ReusedOperands.isClobbered(PhysReg)) {
+            // Another def has taken the assigned physreg. It must have been a
+            // use&def which got it due to reuse. Undo the reuse!
+            PhysReg = ReusedOperands.GetRegForReload(PhysReg, &MI, 
+                                                     Spills, MaybeDeadStores);
+          }
+        }
 
         PhysRegsUsed[PhysReg] = true;
+        ReusedOperands.markClobbered(PhysReg);
         MRI->storeRegToStackSlot(MBB, next(MII), PhysReg, StackSlot, RC);
         DEBUG(std::cerr << "Store:\t" << *next(MII));
         MI.getOperand(i).setReg(PhysReg);
