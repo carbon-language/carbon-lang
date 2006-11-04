@@ -236,6 +236,9 @@ namespace {
       printOperand(MI, OpNo+1);
     }
     
+    void printPredicateOperand(const MachineInstr *MI, unsigned OpNo, 
+                               const char *Modifier);
+    
     virtual bool runOnMachineFunction(MachineFunction &F) = 0;
     virtual bool doFinalization(Module &M) = 0;
   };
@@ -362,6 +365,33 @@ bool PPCAsmPrinter::PrintAsmMemoryOperand(const MachineInstr *MI, unsigned OpNo,
   printMemRegReg(MI, OpNo);
   return false;
 }
+
+void PPCAsmPrinter::printPredicateOperand(const MachineInstr *MI, unsigned OpNo, 
+                                          const char *Modifier) {
+  assert(Modifier && "Must specify 'cc' or 'reg' as predicate op modifier!");
+  unsigned Code = MI->getOperand(OpNo).getImm();
+  if (!strcmp(Modifier, "cc")) {
+    switch ((PPC::Predicate)Code) {
+    case PPC::PRED_ALWAYS: return; // Don't print anything for always.
+    case PPC::PRED_LT: O << "lt"; return;
+    case PPC::PRED_LE: O << "le"; return;
+    case PPC::PRED_EQ: O << "eq"; return;
+    case PPC::PRED_GE: O << "ge"; return;
+    case PPC::PRED_GT: O << "gt"; return;
+    case PPC::PRED_NE: O << "ne"; return;
+    case PPC::PRED_UN: O << "un"; return;
+    case PPC::PRED_NU: O << "nu"; return;
+    }
+      
+  } else {
+    assert(!strcmp(Modifier, "reg") &&
+           "Need to specify 'cc' or 'reg' as predicate op modifier!");
+    // Don't print the register for 'always'.
+    if (Code == PPC::PRED_ALWAYS) return;
+    printOperand(MI, OpNo+1);
+  }
+}
+
 
 /// printMachineInstruction -- Print out a single PowerPC MI in Darwin syntax to
 /// the current output stream.
