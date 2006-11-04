@@ -178,7 +178,22 @@ void StmtPrinter::VisitFloatingConstant(FloatingConstant *Node) {
 }
 void StmtPrinter::VisitStringExpr(StringExpr *Str) {
   if (Str->isWide()) OS << 'L';
-  OS << '"' << Str->getStrData() << '"';
+  OS << '"';
+  
+  // FIXME: this doesn't print wstrings right.
+  for (unsigned i = 0, e = Str->getByteLength(); i != e; ++i) {
+    switch (Str->getStrData()[i]) {
+    default: OS << Str->getStrData()[i]; break;
+    // Handle some common ones to make dumps prettier.
+    case '\\': OS << "\\\\"; break;
+    case '"': OS << "\\\""; break;
+    case '\n': OS << "\\n"; break;
+    case '\t': OS << "\\t"; break;
+    case '\a': OS << "\\a"; break;
+    case '\b': OS << "\\b"; break;
+    }
+  }
+  OS << '"';
 }
 void StmtPrinter::VisitParenExpr(ParenExpr *Node) {
   OS << "(";
