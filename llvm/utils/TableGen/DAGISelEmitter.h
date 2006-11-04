@@ -343,6 +343,11 @@ namespace llvm {
     TreePatternNode *ParseTreePattern(DagInit *DI);
   };
 
+  /// DAGPredicateOperand - One of these is created for each PredicateOperand
+  /// that has a set ExecuteAlways field.
+  struct DAGPredicateOperand {
+    std::vector<TreePatternNode*> AlwaysOps;
+  };
 
   class DAGInstruction {
     TreePattern *Pattern;
@@ -425,6 +430,7 @@ private:
   std::map<Record*, std::pair<Record*, std::string> > SDNodeXForms;
   std::map<Record*, ComplexPattern> ComplexPatterns;
   std::map<Record*, TreePattern*> PatternFragments;
+  std::map<Record*, DAGPredicateOperand> PredicateOperands;
   std::map<Record*, DAGInstruction> Instructions;
   
   // Specific SDNode definitions:
@@ -479,6 +485,11 @@ public:
     abort();
   }
   
+  const DAGPredicateOperand &getPredicateOperand(Record *R) {
+    assert(PredicateOperands.count(R) &&"Isn't an analyzed predicate operand!");
+    return PredicateOperands.find(R)->second;
+  }
+  
   TreePattern *getPatternFragment(Record *R) const {
     assert(PatternFragments.count(R) && "Invalid pattern fragment request!");
     return PatternFragments.find(R)->second;
@@ -505,6 +516,7 @@ private:
   void ParseNodeTransforms(std::ostream &OS);
   void ParseComplexPatterns();
   void ParsePatternFragments(std::ostream &OS);
+  void ParsePredicateOperands();
   void ParseInstructions();
   void ParsePatterns();
   void GenerateVariants();

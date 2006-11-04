@@ -1230,6 +1230,50 @@ void DAGISelEmitter::ParsePatternFragments(std::ostream &OS) {
   }
 }
 
+void DAGISelEmitter::ParsePredicateOperands() {
+  std::vector<Record*> PredOps =
+    Records.getAllDerivedDefinitions("PredicateOperand");
+
+  // Find some SDNode.
+  assert(!SDNodes.empty() && "No SDNodes parsed?");
+  Init *SomeSDNode = new DefInit(SDNodes.begin()->first);
+  
+  for (unsigned i = 0, e = PredOps.size(); i != e; ++i) {
+    DagInit *AlwaysInfo = PredOps[i]->getValueAsDag("ExecuteAlways");
+    
+    // Clone the AlwaysInfo dag node, changing the operator from 'ops' to
+    // SomeSDnode so that we can parse this.
+    std::vector<std::pair<Init*, std::string> > Ops;
+    for (unsigned op = 0, e = AlwaysInfo->getNumArgs(); op != e; ++op)
+      Ops.push_back(std::make_pair(AlwaysInfo->getArg(op),
+                                   AlwaysInfo->getArgName(op)));
+    DagInit *DI = new DagInit(SomeSDNode, Ops);
+    
+    // Create a TreePattern to parse this.
+    TreePattern P(PredOps[i], DI, false, *this);
+    assert(P.getNumTrees() == 1 && "This ctor can only produce one tree!");
+
+    // Copy the operands over into a DAGPredicateOperand.
+    DAGPredicateOperand PredOpInfo;
+    
+    TreePatternNode *T = P.getTree(0);
+    for (unsigned op = 0, e = T->getNumChildren(); op != e; ++op) {
+      TreePatternNode *TPN = T->getChild(op);
+      while (TPN->ApplyTypeConstraints(P, false))
+        /* Resolve all types */;
+      
+      if (TPN->ContainsUnresolvedType())
+        throw "Value #" + utostr(i) + " of PredicateOperand '" +
+              PredOps[i]->getName() + "' doesn't have a concrete type!";
+      
+      PredOpInfo.AlwaysOps.push_back(TPN);
+    }
+
+    // Insert it into the PredicateOperands map so we can find it later.
+    PredicateOperands[PredOps[i]] = PredOpInfo;
+  }
+}
+
 /// HandleUse - Given "Pat" a leaf in the pattern, check to see if it is an
 /// instruction input.  Return true if this is a real use.
 static bool HandleUse(TreePattern *I, TreePatternNode *Pat,
@@ -1496,7 +1540,7 @@ void DAGISelEmitter::ParseInstructions() {
         if (Op.Rec->isSubClassOf("PredicateOperand")) {
           // Does it have a non-empty ExecuteAlways field?  If so, ignore this
           // operand.
-          if (Op.Rec->getValueAsDag("ExecuteAlways")->getNumArgs())
+          if (!getPredicateOperand(Op.Rec).AlwaysOps.empty())
             continue;
         }
         I->error("Operand $" + OpName +
@@ -2690,6 +2734,7 @@ public:
         PatternHasProperty(InstPatNode, SDNPHasChain, ISE);
       bool InputHasChain = isRoot &&
         NodeHasProperty(Pattern, SDNPHasChain, ISE);
+      unsigned NumResults = Inst.getNumResults();    
 
       if (NodeHasOptInFlag) {
         emitCode("bool HasInFlag = "
@@ -2726,11 +2771,34 @@ public:
                  "&InChains[0], InChains.size());");
       }
 
+      // Loop over all of the operands of the instruction pattern, emitting code
+      // to fill them all in.  The node 'N' usually has number children equal to
+      // the number of input operands of the instruction.  However, in cases
+      // where there are predicate operands for an instruction, we need to fill
+      // in the 'execute always' values.  Match up the node operands to the
+      // instruction operands to do this.
       std::vector<std::string> AllOps;
-      for (unsigned i = 0, e = N->getNumChildren(); i != e; ++i) {
-        std::vector<std::string> Ops = EmitResultCode(N->getChild(i),
-                                      RetSelected, InFlagDecled, ResNodeDecled);
-        AllOps.insert(AllOps.end(), Ops.begin(), Ops.end());
+      for (unsigned ChildNo = 0, InstOpNo = NumResults;
+           InstOpNo != II.OperandList.size(); ++InstOpNo) {
+        std::vector<std::string> Ops;
+        
+        // If this is a normal operand, emit it.
+        if (!II.OperandList[InstOpNo].Rec->isSubClassOf("PredicateOperand")) {
+          Ops = EmitResultCode(N->getChild(ChildNo), RetSelected, 
+                               InFlagDecled, ResNodeDecled);
+          AllOps.insert(AllOps.end(), Ops.begin(), Ops.end());
+          ++ChildNo;
+        } else {
+          // Otherwise, this is a predicate operand, emit the 'execute always'
+          // operands.
+          const DAGPredicateOperand &Pred =
+            ISE.getPredicateOperand(II.OperandList[InstOpNo].Rec);
+          for (unsigned i = 0, e = Pred.AlwaysOps.size(); i != e; ++i) {
+            Ops = EmitResultCode(Pred.AlwaysOps[i], RetSelected, 
+                                 InFlagDecled, ResNodeDecled);
+            AllOps.insert(AllOps.end(), Ops.begin(), Ops.end());
+          }
+        }
       }
 
       // Emit all the chain and CopyToReg stuff.
@@ -2753,7 +2821,6 @@ public:
         }
       }
 
-      unsigned NumResults = Inst.getNumResults();    
       unsigned ResNo = TmpNo++;
       if (!isRoot || InputHasChain || NodeHasChain || NodeHasOutFlag ||
           NodeHasOptInFlag) {
@@ -3820,6 +3887,7 @@ OS << "  unsigned NumKilled = ISelKilled.size();\n";
   ParseNodeTransforms(OS);
   ParseComplexPatterns();
   ParsePatternFragments(OS);
+  ParsePredicateOperands();
   ParseInstructions();
   ParsePatterns();
   
