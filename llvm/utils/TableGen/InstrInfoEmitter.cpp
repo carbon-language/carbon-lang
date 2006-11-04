@@ -14,6 +14,7 @@
 
 #include "InstrInfoEmitter.h"
 #include "CodeGenTarget.h"
+#include "llvm/Target/TargetInstrInfo.h"
 #include "Record.h"
 #include <algorithm>
 using namespace llvm;
@@ -89,7 +90,7 @@ GetOperandInfo(const CodeGenInstruction &Inst) {
   // For backward compatibility: isTwoAddress means operand 1 is tied to
   // operand 0.
   if (Inst.isTwoAddress)
-    Result[1].second |= 1;
+    Result[1].second |= (0 << 16) | (1 << (unsigned)TargetInstrInfo::TIED_TO);
 
   return Result;
 }

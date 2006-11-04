@@ -19,6 +19,7 @@
 #include "Record.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/Support/CommandLine.h"
+#include "llvm/Target/TargetInstrInfo.h"
 #include <set>
 #include <algorithm>
 using namespace llvm;
@@ -294,7 +295,8 @@ static std::pair<unsigned, unsigned> parseConstraint(const std::string &CStr,
   unsigned TIdx = I->getOperandNamed(Name);
   if (TIdx >= FIdx)
     throw "Illegal tied-to operand constraint '" + CStr + "'";
-  return std::make_pair(FIdx, (TIdx << 16) | 1);
+  return std::make_pair(FIdx, (TIdx << 16) |
+                        (1 << (unsigned)TargetInstrInfo::TIED_TO));
 }
 
 static std::vector<unsigned> parseConstraints(const std::string &CStr,
