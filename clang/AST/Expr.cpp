@@ -52,7 +52,7 @@ StringExpr::StringExpr(const char *strData, unsigned byteLength, bool Wide) {
   memcpy(AStrData, strData, byteLength);
   StrData = AStrData;
   ByteLength = byteLength;
-  isWide = Wide;
+  IsWide = Wide;
 }
 
 StringExpr::~StringExpr() {

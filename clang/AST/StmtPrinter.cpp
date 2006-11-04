@@ -18,6 +18,24 @@
 using namespace llvm;
 using namespace clang;
 
+namespace {
+  struct VISIBILITY_HIDDEN IsExprStmtVisitor : public StmtVisitor {
+    bool &Result;
+    IsExprStmtVisitor(bool &R) : Result(R) { Result = false; }
+    
+    virtual void VisitExpr(Expr *Node) {
+      Result = true;
+    }
+  };
+}
+
+static bool isExpr(Stmt *S) {
+  bool Val = false;
+  IsExprStmtVisitor V(Val);
+  S->visit(V);
+  return Val;
+}
+
 //===----------------------------------------------------------------------===//
 // StmtPrinter Visitor
 //===----------------------------------------------------------------------===//
@@ -29,11 +47,26 @@ namespace  {
   public:
     StmtPrinter(std::ostream &os) : OS(os), IndentLevel(0) {}
     
-    void visit(Stmt *S) {
-      if (S)
+    void PrintStmt(Stmt *S) {
+      ++IndentLevel;
+      if (S && isExpr(S)) {
+        // If this is an expr used in a stmt context, indent and newline it.
+        Indent();
         S->visit(*this);
+        OS << "\n";
+      } else if (S) {
+        S->visit(*this);
+      } else {
+        Indent() << "<null stmt>\n";
+      }
+      --IndentLevel;
+    }
+
+    void PrintExpr(Expr *E) {
+      if (E)
+        E->visit(*this);
       else
-        VisitNull();
+        OS << "<null expr>";
     }
     
     std::ostream &Indent() const {
@@ -42,143 +75,143 @@ namespace  {
       return OS;
     }
     
-    void VisitNull();
-    void VisitCompoundStmt(CompoundStmt *Node);
-    void VisitIfStmt(IfStmt *Node);
-  };
+    virtual void VisitStmt(Stmt *Node);
+    virtual void VisitCompoundStmt(CompoundStmt *Node);
+    virtual void VisitIfStmt(IfStmt *Node);
+    virtual void VisitReturnStmt(ReturnStmt *Node);
+
+    virtual void VisitExpr(Expr *Node);
+    virtual void VisitDeclRefExpr(DeclRefExpr *Node);
+    virtual void VisitIntegerConstant(IntegerConstant *Node);
+    virtual void VisitFloatingConstant(FloatingConstant *Node);
+    virtual void VisitStringExpr(StringExpr *Node);
+    virtual void VisitParenExpr(ParenExpr *Node);
+    virtual void VisitUnaryOperator(UnaryOperator *Node);
+    virtual void VisitSizeOfAlignOfTypeExpr(SizeOfAlignOfTypeExpr *Node);
+    virtual void VisitArraySubscriptExpr(ArraySubscriptExpr *Node);
+    virtual void VisitCallExpr(CallExpr *Node);
+    virtual void VisitMemberExpr(MemberExpr *Node);
+    virtual void VisitCastExpr(CastExpr *Node);
+    virtual void VisitBinaryOperator(BinaryOperator *Node);
+    virtual void VisitConditionalOperator(ConditionalOperator *Node);
+};
 }
 
-void StmtPrinter::VisitNull() {
-  Indent() << "<nullptr>\n";
+void StmtPrinter::VisitStmt(Stmt *Node) {
+  Indent() << "<<unknown stmt type>>\n";
 }
-
-// FIXME: split out ExprPrinter from StmtPrinter.
-
 
 void StmtPrinter::VisitCompoundStmt(CompoundStmt *Node) {
   Indent() << "{\n";
-  ++IndentLevel;
   
   for (CompoundStmt::body_iterator I = Node->body_begin(), E = Node->body_end();
-       I != E; ++I) {
-    visit(*I);
-  }
+       I != E; ++I)
+    PrintStmt(*I);
   
-  --IndentLevel;
   Indent() << "}\n";
 }
 
 void StmtPrinter::VisitIfStmt(IfStmt *If) {
   Indent() << "if ";
-  visit(If->getCond());
+  PrintExpr(If->getCond());
 
   OS << " then\n";
-  ++IndentLevel;
-  visit(If->getThen());
-  --IndentLevel;
-  Indent() << "else\n";
-  ++IndentLevel;
-  visit(If->getElse());
-  --IndentLevel;
+  PrintStmt(If->getThen());
+  if (If->getElse()) {
+    Indent() << "else\n";
+    PrintStmt(If->getElse());
+  }
   Indent() << "endif\n";
 }
 
-
-#if 0
-
-void ReturnStmt::dump_impl() const {
-  std::cerr << "return ";
-  if (RetExpr)
-    RetExpr->dump();
-}
-
-void DeclRefExpr::dump_impl() const {
-  std::cerr << "x";
-}
-
-void IntegerConstant::dump_impl() const {
-  std::cerr << "1";
-}
-
-void FloatingConstant::dump_impl() const {
-  std::cerr << "1.0";
-}
-
-void StringExpr::dump_impl() const {
-  if (isWide) std::cerr << 'L';
-  std::cerr << '"' << StrData << '"';
-}
-
-
-
-void ParenExpr::dump_impl() const {
-  std::cerr << "'('";
-  Val->dump();
-  std::cerr << "')'";
-}
-
-void UnaryOperator::dump_impl() const {
-  std::cerr << getOpcodeStr(Opc);
-  Input->dump();
-}
-
-void SizeOfAlignOfTypeExpr::dump_impl() const {
-  std::cerr << (isSizeof ? "sizeof(" : "alignof(");
-  // FIXME: print type.
-  std::cerr << "ty)";
-}
-
-void ArraySubscriptExpr::dump_impl() const {
-  Base->dump();
-  std::cerr << "[";
-  Idx->dump();
-  std::cerr << "]";
-}
-
-void CallExpr::dump_impl() const {
-  Fn->dump();
-  std::cerr << "(";
-  for (unsigned i = 0, e = getNumArgs(); i != e; ++i) {
-    if (i) std::cerr << ", ";
-    getArg(i)->dump();
+void StmtPrinter::VisitReturnStmt(ReturnStmt *Node) {
+  Indent() << "return";
+  if (Node->getRetValue()) {
+    OS << " ";
+    PrintExpr(Node->getRetValue());
   }
-  std::cerr << ")";
+  OS << "\n";
 }
 
 
-void MemberExpr::dump_impl() const {
-  Base->dump();
-  std::cerr << (isArrow ? "->" : ".");
+void StmtPrinter::VisitExpr(Expr *Node) {
+  OS << "<<unknown expr type>>";
+}
+
+void StmtPrinter::VisitDeclRefExpr(DeclRefExpr *Node) {
+  // FIXME: print name.
+  OS << "x";
+}
+
+void StmtPrinter::VisitIntegerConstant(IntegerConstant *Node) {
+  // FIXME: print value.
+  OS << "1";
+}
+void StmtPrinter::VisitFloatingConstant(FloatingConstant *Node) {
+  // FIXME: print value.
+  OS << "1.0";
+}
+void StmtPrinter::VisitStringExpr(StringExpr *Str) {
+  if (Str->isWide()) OS << 'L';
+  OS << '"' << Str->getStrData() << '"';
+}
+void StmtPrinter::VisitParenExpr(ParenExpr *Node) {
+  OS << "(";
+  PrintExpr(Node->getSubExpr());
+  OS << ")'";
+}
+void StmtPrinter::VisitUnaryOperator(UnaryOperator *Node) {
+  OS << UnaryOperator::getOpcodeStr(Node->getOpcode());
+  PrintExpr(Node->getSubExpr());
+}
+void StmtPrinter::VisitSizeOfAlignOfTypeExpr(SizeOfAlignOfTypeExpr *Node) {
+  OS << (Node->isSizeOf() ? "sizeof(" : "alignof(");
+  // FIXME: print type.
+  OS << "ty)";
+}
+void StmtPrinter::VisitArraySubscriptExpr(ArraySubscriptExpr *Node) {
+  PrintExpr(Node->getBase());
+  OS << "[";
+  PrintExpr(Node->getIdx());
+  OS << "]";
+}
+
+void StmtPrinter::VisitCallExpr(CallExpr *Call) {
+  PrintExpr(Call->getCallee());
+  OS << "(";
+  for (unsigned i = 0, e = Call->getNumArgs(); i != e; ++i) {
+    if (i) OS << ", ";
+    PrintExpr(Call->getArg(i));
+  }
+  OS << ")";
+}
+void StmtPrinter::VisitMemberExpr(MemberExpr *Node) {
+  PrintExpr(Node->getBase());
+  OS << (Node->isArrow() ? "->" : ".");
   
-  if (MemberDecl)
-    /*TODO: Print MemberDecl*/;
-  std::cerr << "member";
+  if (Node->getMemberDecl())
+    assert(0 && "TODO: should print member decl!");
+  OS << "member";
 }
-
-
-void CastExpr::dump_impl() const {
-  std::cerr << "'('";
+void StmtPrinter::VisitCastExpr(CastExpr *Node) {
+  OS << "(";
   // TODO PRINT TYPE
-  std::cerr << "<type>";
-  std::cerr << "')'";
-  Op->dump();
+  OS << "<type>";
+  OS << ")";
+  PrintExpr(Node->getSubExpr());
 }
-
-
-void BinaryOperator::dump_impl() const {
-  LHS->dump();
-  std::cerr << " " << getOpcodeStr(Opc) << " ";
-  RHS->dump();
+void StmtPrinter::VisitBinaryOperator(BinaryOperator *Node) {
+  PrintExpr(Node->getLHS());
+  OS << " " << BinaryOperator::getOpcodeStr(Node->getOpcode()) << " ";
+  PrintExpr(Node->getRHS());
 }
-
-void ConditionalOperator::dump_impl() const {
-  Cond->dump();
-  std::cerr << " ? ";
-  LHS->dump();
+void StmtPrinter::VisitConditionalOperator(ConditionalOperator *Node) {
+  PrintExpr(Node->getCond());
+  OS << " ? ";
+  PrintExpr(Node->getLHS());
   std::cerr << " : ";
-  RHS->dump();
+  PrintExpr(Node->getRHS());
 }
-#endif
 
 //===----------------------------------------------------------------------===//
 // Stmt method implementations
@@ -189,6 +222,11 @@ void Stmt::dump() const {
 }
 
 void Stmt::print(std::ostream &OS) const {
+  if (this == 0) {
+    OS << "<NULL>";
+    return;
+  }
+
   StmtPrinter P(OS);
   const_cast<Stmt*>(this)->visit(P);
 }
