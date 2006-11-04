@@ -49,18 +49,21 @@ class DeclRefExpr : public Expr {
 public:
   DeclRefExpr(Decl &d) : D(d) {}
   virtual void dump_impl() const;
+  virtual void visit(StmtVisitor *Visitor);
 };
 
 class IntegerConstant : public Expr {
 public:
   IntegerConstant() {}
   virtual void dump_impl() const;
+  virtual void visit(StmtVisitor *Visitor);
 };
 
 class FloatingConstant : public Expr {
 public:
   FloatingConstant() {}
   virtual void dump_impl() const;
+  virtual void visit(StmtVisitor *Visitor);
 };
 
 class StringExpr : public Expr {
@@ -71,6 +74,7 @@ public:
   StringExpr(const char *strData, unsigned byteLength, bool Wide);
   virtual ~StringExpr();
   virtual void dump_impl() const;
+  virtual void visit(StmtVisitor *Visitor);
 };
 
 class StringExprLOC : public StringExpr {
@@ -92,6 +96,7 @@ public:
   ParenExpr(SourceLocation l, SourceLocation r, Expr *val)
     : L(l), R(r), Val(val) {}
   virtual void dump_impl() const;
+  virtual void visit(StmtVisitor *Visitor);
 };
 
 
@@ -120,7 +125,8 @@ public:
   static const char *getOpcodeStr(Opcode Op);
   
   virtual void dump_impl() const;
-  
+  virtual void visit(StmtVisitor *Visitor);
+
 private:
   Expr *Input;
   Opcode Opc;
@@ -143,6 +149,7 @@ public:
   }
 
   virtual void dump_impl() const;
+  virtual void visit(StmtVisitor *Visitor);
 };
 
 class SizeOfAlignOfTypeExprLOC : public SizeOfAlignOfTypeExpr {
@@ -167,6 +174,7 @@ public:
   ArraySubscriptExpr(Expr *base, Expr *idx) : Base(base), Idx(idx) {}
   
   virtual void dump_impl() const;
+  virtual void visit(StmtVisitor *Visitor);
 };
 
 
@@ -205,6 +213,7 @@ public:
   unsigned getNumCommas() const { return NumArgs ? NumArgs - 1 : 0; }
   
   virtual void dump_impl() const;
+  virtual void visit(StmtVisitor *Visitor);
 };
 
 class CallExprLOC : public CallExpr {
@@ -229,6 +238,7 @@ public:
     : Base(base), MemberDecl(memberdecl), isArrow(isarrow) {
   }
   virtual void dump_impl() const;
+  virtual void visit(StmtVisitor *Visitor);
 };
 
 class MemberExprLOC : public MemberExpr {
@@ -250,6 +260,7 @@ public:
   CastExpr(Type *ty, Expr *op) : Ty(ty), Op(op) {}
   
   virtual void dump_impl() const;
+  virtual void visit(StmtVisitor *Visitor);
 };
 
 class CastExprLOC : public CastExpr {
@@ -293,6 +304,7 @@ public:
   static const char *getOpcodeStr(Opcode Op);
   
   virtual void dump_impl() const;
+  virtual void visit(StmtVisitor *Visitor);
 
 private:
   Expr *LHS, *RHS;
@@ -316,6 +328,7 @@ public:
   ConditionalOperator(Expr *cond, Expr *lhs, Expr *rhs)
     : Cond(cond), LHS(lhs), RHS(rhs) {}
   virtual void dump_impl() const;
+  virtual void visit(StmtVisitor *Visitor);
 };
 
 /// ConditionalOperatorLOC - ConditionalOperator with full location info.

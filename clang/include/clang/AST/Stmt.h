@@ -20,6 +20,7 @@
 namespace llvm {
 namespace clang {
   class Expr;
+  class StmtVisitor;
   
 /// Stmt - This represents one statement.
 ///
@@ -34,6 +35,8 @@ public:
   // FIXME: move to isa/dyncast etc.
   virtual bool isExpr() const { return false; }
   
+  // Implement visitor support.
+  virtual void visit(StmtVisitor *Visitor) = 0;
 private:
   virtual void dump_impl() const = 0;
 };
@@ -47,6 +50,8 @@ public:
     : Body(StmtStart, StmtStart+NumStmts) {}
   
   virtual void dump_impl() const;
+  
+  virtual void visit(StmtVisitor *Visitor);
 };
 
 /// IfStmt - This represents an if/then/else.
@@ -59,6 +64,7 @@ public:
     : Cond(cond), Then(then), Else(elsev) {}
   
   virtual void dump_impl() const;
+  virtual void visit(StmtVisitor *Visitor);
 };
 
 
@@ -71,6 +77,7 @@ public:
   ReturnStmt(Expr *E = 0) : RetExpr(E) {}
   
   virtual void dump_impl() const;
+  virtual void visit(StmtVisitor *Visitor);
 };
 
 

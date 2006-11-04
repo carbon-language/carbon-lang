@@ -13,6 +13,7 @@
 
 #include "clang/AST/Stmt.h"
 #include "clang/AST/Expr.h"
+#include "clang/AST/StmtVisitor.h"
 #include <iostream>
 using namespace llvm;
 using namespace clang;
@@ -27,6 +28,10 @@ void Stmt::dump() const {
   if (isExpr()) std::cerr << ")";
 }
 
+
+void CompoundStmt::visit(StmtVisitor *V) { return V->VisitCompoundStmt(this); }
+void IfStmt      ::visit(StmtVisitor *V) { return V->VisitIfStmt(this); }
+void ReturnStmt  ::visit(StmtVisitor *V) { return V->VisitReturnStmt(this); }
 
 
 void CompoundStmt::dump_impl() const {

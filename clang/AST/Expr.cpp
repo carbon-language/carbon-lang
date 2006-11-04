@@ -12,10 +12,34 @@
 //===----------------------------------------------------------------------===//
 
 #include "clang/AST/Expr.h"
+#include "clang/AST/StmtVisitor.h"
 #include "clang/Lex/IdentifierTable.h"
 #include <iostream>
 using namespace llvm;
 using namespace clang;
+
+//===----------------------------------------------------------------------===//
+// Visitor Implementation.
+//===----------------------------------------------------------------------===//
+
+#define MAKE_VISITOR(CLASS) \
+  void CLASS::visit(StmtVisitor *V) { return V->Visit ## CLASS(this); }
+
+MAKE_VISITOR(DeclRefExpr)
+MAKE_VISITOR(IntegerConstant)
+MAKE_VISITOR(FloatingConstant)
+MAKE_VISITOR(StringExpr)
+MAKE_VISITOR(ParenExpr)
+MAKE_VISITOR(UnaryOperator)
+MAKE_VISITOR(SizeOfAlignOfTypeExpr)
+MAKE_VISITOR(ArraySubscriptExpr)
+MAKE_VISITOR(CallExpr)
+MAKE_VISITOR(MemberExpr)
+MAKE_VISITOR(CastExpr)
+MAKE_VISITOR(BinaryOperator)
+MAKE_VISITOR(ConditionalOperator)
+
+#undef MAKE_VISITOR
 
 //===----------------------------------------------------------------------===//
 // Primary Expressions.
