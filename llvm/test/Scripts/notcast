@@ -6,10 +6,11 @@
 #
 # Syntax:   notcast tailexpr
 #
-#    tailexpr - optionally allows a regular expression to go at the end
+#    postpat - optionally allows a regular expression to go at the end
+#    prepat  - optionally allow a regular expression to go at the start
 #
 
-if grep '\(\([sz]ext\)\|\(trunc\)\|\(fp2[us]int\)\|\([us]int2fp\)\|\(bitconvert\)\|\(fpext\)\|\(fptrunc\)\)'"$1"
+if grep "$2"'\(\([sz]ext\)\|\(trunc\)\|\(fp2[us]int\)\|\([us]int2fp\)\|\(bitconvert\)\|\(fpext\)\|\(fptrunc\)\)'"$1"
 then exit 1
 else exit 0
 fi
