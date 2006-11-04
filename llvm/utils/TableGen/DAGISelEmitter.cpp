@@ -759,27 +759,40 @@ bool TreePatternNode::ApplyTypeConstraints(TreePattern &TP, bool NotRegisters) {
       MadeChange = UpdateNodeType(ConvertVTs(RC.getValueTypes()), TP);
     }
 
-    if (getNumChildren() != Inst.getNumOperands())
-      TP.error("Instruction '" + getOperator()->getName() + " expects " +
-               utostr(Inst.getNumOperands()) + " operands, not " +
-               utostr(getNumChildren()) + " operands!");
-    for (unsigned i = 0, e = getNumChildren(); i != e; ++i) {
+    unsigned ChildNo = 0;
+    for (unsigned i = 0, e = Inst.getNumOperands(); i != e; ++i) {
       Record *OperandNode = Inst.getOperand(i);
+      
+      // If the instruction expects a predicate operand, we codegen this by
+      // setting the predicate to it's "execute always" value.
+      if (OperandNode->isSubClassOf("PredicateOperand"))
+        continue;
+       
+      // Verify that we didn't run out of provided operands.
+      if (ChildNo >= getNumChildren())
+        TP.error("Instruction '" + getOperator()->getName() +
+                 "' expects more operands than were provided.");
+      
       MVT::ValueType VT;
+      TreePatternNode *Child = getChild(ChildNo++);
       if (OperandNode->isSubClassOf("RegisterClass")) {
         const CodeGenRegisterClass &RC = 
           ISE.getTargetInfo().getRegisterClass(OperandNode);
-        MadeChange |=getChild(i)->UpdateNodeType(ConvertVTs(RC.getValueTypes()),
-                                                 TP);
+        MadeChange |= Child->UpdateNodeType(ConvertVTs(RC.getValueTypes()), TP);
       } else if (OperandNode->isSubClassOf("Operand")) {
         VT = getValueType(OperandNode->getValueAsDef("Type"));
-        MadeChange |= getChild(i)->UpdateNodeType(VT, TP);
+        MadeChange |= Child->UpdateNodeType(VT, TP);
       } else {
         assert(0 && "Unknown operand type!");
         abort();
       }
-      MadeChange |= getChild(i)->ApplyTypeConstraints(TP, NotRegisters);
+      MadeChange |= Child->ApplyTypeConstraints(TP, NotRegisters);
     }
+    
+    if (ChildNo != getNumChildren())
+      TP.error("Instruction '" + getOperator()->getName() +
+               "' was provided too many operands!");
+    
     return MadeChange;
   } else {
     assert(getOperator()->isSubClassOf("SDNodeXForm") && "Unknown node type!");
@@ -1471,25 +1484,35 @@ void DAGISelEmitter::ParseInstructions() {
     std::vector<TreePatternNode*> ResultNodeOperands;
     std::vector<Record*> Operands;
     for (unsigned i = NumResults, e = CGI.OperandList.size(); i != e; ++i) {
-      const std::string &OpName = CGI.OperandList[i].Name;
+      CodeGenInstruction::OperandInfo &Op = CGI.OperandList[i];
+      const std::string &OpName = Op.Name;
       if (OpName.empty())
         I->error("Operand #" + utostr(i) + " in operands list has no name!");
 
-      if (!InstInputsCheck.count(OpName))
+      if (!InstInputsCheck.count(OpName)) {
+        // If this is an predicate operand with an ExecuteAlways set filled in,
+        // we can ignore this.  When we codegen it, we will do so as always
+        // executed.
+        if (Op.Rec->isSubClassOf("PredicateOperand")) {
+          // Does it have a non-empty ExecuteAlways field?  If so, ignore this
+          // operand.
+          if (Op.Rec->getValueAsDag("ExecuteAlways")->getNumArgs())
+            continue;
+        }
         I->error("Operand $" + OpName +
                  " does not appear in the instruction pattern");
+      }
       TreePatternNode *InVal = InstInputsCheck[OpName];
       InstInputsCheck.erase(OpName);   // It occurred, remove from map.
       
       if (InVal->isLeaf() &&
           dynamic_cast<DefInit*>(InVal->getLeafValue())) {
         Record *InRec = static_cast<DefInit*>(InVal->getLeafValue())->getDef();
-        if (CGI.OperandList[i].Rec != InRec &&
-            !InRec->isSubClassOf("ComplexPattern"))
+        if (Op.Rec != InRec && !InRec->isSubClassOf("ComplexPattern"))
           I->error("Operand $" + OpName + "'s register class disagrees"
                    " between the operand and pattern");
       }
-      Operands.push_back(CGI.OperandList[i].Rec);
+      Operands.push_back(Op.Rec);
       
       // Construct the result for the dest-pattern operand list.
       TreePatternNode *OpNode = InVal->clone();
