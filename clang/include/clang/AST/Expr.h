@@ -78,16 +78,6 @@ public:
   virtual void visit(StmtVisitor *Visitor);
 };
 
-class StringExprLOC : public StringExpr {
-  // Locations for the string tokens before string concatenation.
-  SmallVector<SourceLocation, 4> Locs;
-public:
-  StringExprLOC(const char *StrData, unsigned ByteLength, bool isWide,
-                SourceLocation *L, unsigned NumLocs)
-    : StringExpr(StrData, ByteLength, isWide), Locs(L, L+NumLocs) {
-  }
-};
-
 /// ParenExpr - This represents a parethesized expression, e.g. "(1)".  This
 /// AST node is only formed if full location information is requested.
 class ParenExpr : public Expr {
@@ -133,13 +123,6 @@ private:
   Opcode Opc;
 };
 
-class UnaryOperatorLOC : public UnaryOperator {
-  SourceLocation Loc;
-public:
-  UnaryOperatorLOC(SourceLocation loc, Expr *Input, Opcode Opc)
-   : UnaryOperator(Input, Opc), Loc(loc) {}
-};
-
 /// SizeOfAlignOfTypeExpr - [C99 6.5.3.4] - This is only for sizeof/alignof of
 /// *types*.  sizeof(expr) is handled by UnaryOperator.
 class SizeOfAlignOfTypeExpr : public Expr {
@@ -151,17 +134,6 @@ public:
 
   virtual void dump_impl() const;
   virtual void visit(StmtVisitor *Visitor);
-};
-
-class SizeOfAlignOfTypeExprLOC : public SizeOfAlignOfTypeExpr {
-  SourceLocation OpLoc, LParenLoc, RParenLoc;
-public:
-  SizeOfAlignOfTypeExprLOC(SourceLocation oploc, bool isSizeof, 
-                           SourceLocation lparenloc, Type *Ty,
-                           SourceLocation rparenloc)
-    : SizeOfAlignOfTypeExpr(isSizeof, Ty), OpLoc(oploc), LParenLoc(lparenloc),
-      RParenLoc(rparenloc) {
-  }
 };
 
 //===----------------------------------------------------------------------===//
@@ -178,14 +150,6 @@ public:
   virtual void visit(StmtVisitor *Visitor);
 };
 
-
-class ArraySubscriptExprLOC : public ArraySubscriptExpr {
-  SourceLocation LLoc, RLoc;
-public:
-  ArraySubscriptExprLOC(Expr *Base, SourceLocation lloc, Expr *Idx, 
-                        SourceLocation rloc)
-    : ArraySubscriptExpr(Base, Idx), LLoc(lloc), RLoc(rloc) {}
-};
 
 /// CallExpr - [C99 6.5.2.2] Function Calls.
 ///
@@ -217,17 +181,6 @@ public:
   virtual void visit(StmtVisitor *Visitor);
 };
 
-class CallExprLOC : public CallExpr {
-  SourceLocation LParenLoc, RParenLoc;
-  SourceLocation *CommaLocs;
-public:
-  CallExprLOC(Expr *Fn, SourceLocation lparenloc, Expr **Args, unsigned NumArgs,
-              SourceLocation *commalocs, SourceLocation rparenloc);
-  ~CallExprLOC() {
-    delete [] CommaLocs;
-  }
-};
-
 /// MemberExpr - [C99 6.5.2.3] Structure and Union Members.
 ///
 class MemberExpr : public Expr {
@@ -242,16 +195,6 @@ public:
   virtual void visit(StmtVisitor *Visitor);
 };
 
-class MemberExprLOC : public MemberExpr {
-  SourceLocation OpLoc, MemberLoc;
-public:
-  MemberExprLOC(Expr *Base, SourceLocation oploc, bool isArrow,
-                SourceLocation memberLoc, Decl *MemberDecl) 
-    : MemberExpr(Base, isArrow, MemberDecl), OpLoc(oploc), MemberLoc(memberLoc){
-  }
-
-};
-
 /// CastExpr - [C99 6.5.4] Cast Operators.
 ///
 class CastExpr : public Expr {
@@ -262,15 +205,6 @@ public:
   
   virtual void dump_impl() const;
   virtual void visit(StmtVisitor *Visitor);
-};
-
-class CastExprLOC : public CastExpr {
-  SourceLocation LParenLoc, RParenLoc;
-public:
-  CastExprLOC(SourceLocation lparenloc, Type *Ty, SourceLocation rparenloc,
-              Expr *Op)
-  : CastExpr(Ty, Op), LParenLoc(lparenloc), RParenLoc(rparenloc) {
-  }
 };
 
 
@@ -312,14 +246,6 @@ private:
   Opcode Opc;
 };
 
-class BinaryOperatorLOC : public BinaryOperator {
-  SourceLocation OperatorLoc;
-public:
-  BinaryOperatorLOC(Expr *LHS, SourceLocation OpLoc, Expr *RHS, Opcode Opc)
-    : BinaryOperator(LHS, RHS, Opc), OperatorLoc(OpLoc) {
-  }
-};
-
 /// ConditionalOperator - The ?: operator.  Note that LHS may be null when the
 /// GNU "missing LHS" extension is in use.
 ///
@@ -330,16 +256,6 @@ public:
     : Cond(cond), LHS(lhs), RHS(rhs) {}
   virtual void dump_impl() const;
   virtual void visit(StmtVisitor *Visitor);
-};
-
-/// ConditionalOperatorLOC - ConditionalOperator with full location info.
-///
-class ConditionalOperatorLOC : public ConditionalOperator {
-  SourceLocation QuestionLoc, ColonLoc;
-public:
-  ConditionalOperatorLOC(Expr *Cond, SourceLocation QLoc, Expr *LHS,
-                         SourceLocation CLoc, Expr *RHS)
-    : ConditionalOperator(Cond, LHS, RHS), QuestionLoc(QLoc), ColonLoc(CLoc) {}
 };
 
   

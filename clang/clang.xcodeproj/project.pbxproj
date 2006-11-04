@@ -30,6 +30,7 @@
 		DE345B500AFB1CFE00DBC861 /* ASTBuilder.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DE345B4F0AFB1CFE00DBC861 /* ASTBuilder.cpp */; };
 		DE345C1A0AFC658B00DBC861 /* StmtVisitor.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = DE345C190AFC658B00DBC861 /* StmtVisitor.h */; };
 		DE345C570AFC69E800DBC861 /* StmtVisitor.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DE345C560AFC69E800DBC861 /* StmtVisitor.cpp */; };
+		DE345C780AFC6BE600DBC861 /* ASTBuilder.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = DE345C770AFC6BE600DBC861 /* ASTBuilder.h */; };
 		DE46BF280AE0A82D00CC047C /* TargetInfo.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = DE46BF270AE0A82D00CC047C /* TargetInfo.h */; };
 		DE5932D10AD60FF400BC794C /* clang.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DE5932CD0AD60FF400BC794C /* clang.cpp */; };
 		DE5932D20AD60FF400BC794C /* clang.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = DE5932CE0AD60FF400BC794C /* clang.h */; };
@@ -116,6 +117,7 @@
 				DE3450D70AEB543100DBC861 /* DirectoryLookup.h in CopyFiles */,
 				DE3452810AEF1B1800DBC861 /* Stmt.h in CopyFiles */,
 				DE345C1A0AFC658B00DBC861 /* StmtVisitor.h in CopyFiles */,
+				DE345C780AFC6BE600DBC861 /* ASTBuilder.h in CopyFiles */,
 			);
 			runOnlyForDeploymentPostprocessing = 1;
 		};
@@ -146,6 +148,7 @@
 		DE345B4F0AFB1CFE00DBC861 /* ASTBuilder.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; name = ASTBuilder.cpp; path = AST/ASTBuilder.cpp; sourceTree = "<group>"; };
 		DE345C190AFC658B00DBC861 /* StmtVisitor.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; name = StmtVisitor.h; path = clang/AST/StmtVisitor.h; sourceTree = "<group>"; };
 		DE345C560AFC69E800DBC861 /* StmtVisitor.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; name = StmtVisitor.cpp; path = AST/StmtVisitor.cpp; sourceTree = "<group>"; };
+		DE345C770AFC6BE600DBC861 /* ASTBuilder.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; name = ASTBuilder.h; path = clang/AST/ASTBuilder.h; sourceTree = "<group>"; };
 		DE46BF270AE0A82D00CC047C /* TargetInfo.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = TargetInfo.h; sourceTree = "<group>"; };
 		DE5932CD0AD60FF400BC794C /* clang.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; name = clang.cpp; path = Driver/clang.cpp; sourceTree = "<group>"; };
 		DE5932CE0AD60FF400BC794C /* clang.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; name = clang.h; path = Driver/clang.h; sourceTree = "<group>"; };
@@ -284,6 +287,7 @@
 			isa = PBXGroup;
 			children = (
 				DEC8D9A30A94346E00353FCA /* AST.h */,
+				DE345C770AFC6BE600DBC861 /* ASTBuilder.h */,
 				DEC8DABF0A94402500353FCA /* ASTStreamer.h */,
 				DEC8D9900A9433CD00353FCA /* Decl.h */,
 				DE0FCA620A95859D00248FD5 /* Expr.h */,

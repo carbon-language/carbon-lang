@@ -23,8 +23,8 @@ namespace {
     Parser P;
     std::vector<Decl*> LastInGroupList;
   public:
-    ASTStreamer(Preprocessor &PP, unsigned MainFileID, bool FullLocInfo)
-      : P(PP, *new ASTBuilder(PP, FullLocInfo, LastInGroupList)) {
+    ASTStreamer(Preprocessor &PP, unsigned MainFileID)
+      : P(PP, *new ASTBuilder(PP, LastInGroupList)) {
       PP.EnterSourceFile(MainFileID, 0, true);
       
       // Initialize the parser.
@@ -80,9 +80,8 @@ namespace {
 /// ASTStreamer_Init - Create an ASTStreamer with the specified preprocessor
 /// and FileID.
 ASTStreamerTy *llvm::clang::ASTStreamer_Init(Preprocessor &PP, 
-                                             unsigned MainFileID,
-                                             bool FullLocInfo) {
-  return new ASTStreamer(PP, MainFileID, FullLocInfo);
+                                             unsigned MainFileID) {
+  return new ASTStreamer(PP, MainFileID);
 }
 
 /// ASTStreamer_ReadTopLevelDecl - Parse and return one top-level declaration. This

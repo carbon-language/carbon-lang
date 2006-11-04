@@ -27,8 +27,7 @@ namespace clang {
   /// and FileID.  If FullLocInfo is true, full location information is captured
   /// in the AST nodes.  This takes more space, but allows for very accurate
   /// position reporting.
-  ASTStreamerTy *ASTStreamer_Init(Preprocessor &PP, unsigned MainFileID,
-                                  bool FullLocInfo = false);
+  ASTStreamerTy *ASTStreamer_Init(Preprocessor &PP, unsigned MainFileID);
   
   /// ASTStreamer_ReadTopLevelDecl - Parse and return one top-level declaration.
   /// This returns null at end of file.

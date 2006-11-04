@@ -148,20 +148,6 @@ void CallExpr::dump_impl() const {
   std::cerr << ")";
 }
 
-CallExprLOC::CallExprLOC(Expr *Fn, SourceLocation lparenloc, Expr **Args, 
-                         unsigned NumArgs, SourceLocation *commalocs,
-                         SourceLocation rparenloc)
-  : CallExpr(Fn, Args, NumArgs), LParenLoc(lparenloc), RParenLoc(rparenloc) {
-  unsigned NumCommas = getNumCommas();
-  if (NumCommas)
-    CommaLocs = new SourceLocation[NumCommas];
-  else
-    CommaLocs = 0;
-  
-  for (unsigned i = 0; i != NumCommas; ++i)
-    CommaLocs[i] = commalocs[i];
-}
-
 
 void MemberExpr::dump_impl() const {
   Base->dump();

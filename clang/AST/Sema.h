@@ -29,19 +29,14 @@ namespace clang {
 class ASTBuilder : public Action {
   Preprocessor &PP;
   
-  /// FullLocInfo - If this is true, the ASTBuilder constructs AST Nodes that
-  /// capture maximal location information for each source-language construct.
-  bool FullLocInfo;
-  
   /// LastInGroupList - This vector is populated when there are multiple
   /// declarators in a single decl group (e.g. "int A, B, C").  In this case,
   /// all but the last decl will be entered into this.  This is used by the
   /// ASTStreamer.
   std::vector<Decl*> &LastInGroupList;
 public:
-  ASTBuilder(Preprocessor &pp, bool fullLocInfo,
-             std::vector<Decl*> &prevInGroup)
-    : PP(pp), FullLocInfo(fullLocInfo), LastInGroupList(prevInGroup) {}
+  ASTBuilder(Preprocessor &pp, std::vector<Decl*> &prevInGroup)
+    : PP(pp), LastInGroupList(prevInGroup) {}
   
   //===--------------------------------------------------------------------===//
   // Symbol table tracking callbacks.
@@ -59,7 +54,6 @@ public:
   virtual StmtResult ParseCompoundStmt(SourceLocation L, SourceLocation R,
                                        StmtTy **Elts, unsigned NumElts);
   virtual StmtResult ParseExprStmt(ExprTy *Expr) {
-    // TODO: Full info should track this with a node.
     return Expr; // Exprs are Stmts.
   }
   

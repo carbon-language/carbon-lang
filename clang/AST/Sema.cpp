@@ -91,7 +91,7 @@ void ASTBuilder::PopScope(SourceLocation Loc, Scope *S) {
 Action::StmtResult 
 ASTBuilder::ParseCompoundStmt(SourceLocation L, SourceLocation R,
                               StmtTy **Elts, unsigned NumElts) {
-  if (FullLocInfo || NumElts > 1)
+  if (NumElts > 1)
     return new CompoundStmt((Stmt**)Elts, NumElts);
   else if (NumElts == 1)
     return Elts[0];        // {stmt} -> stmt
@@ -146,9 +146,7 @@ Action::ExprResult ASTBuilder::ParseFloatingConstant(SourceLocation Loc) {
 Action::ExprResult ASTBuilder::ParseParenExpr(SourceLocation L, 
                                               SourceLocation R,
                                               ExprTy *Val) {
-  if (!FullLocInfo) return Val;
-  
-  return new ParenExpr(L, R, (Expr*)Val);
+  return Val;
 }
 
 /// ParseStringExpr - This accepts a string after semantic analysis. This string
@@ -159,11 +157,7 @@ Action::ExprResult ASTBuilder::
 ParseStringExpr(const char *StrData, unsigned StrLen, bool isWide,
                 SourceLocation *TokLocs, unsigned NumToks) {
   assert(NumToks && "Must have at least one string!");
-  
-  if (!FullLocInfo)
-    return new StringExpr(StrData, StrLen, isWide);
-  else
-    return new StringExprLOC(StrData, StrLen, isWide, TokLocs, NumToks);
+  return new StringExpr(StrData, StrLen, isWide);
 }
 
 
@@ -188,26 +182,19 @@ Action::ExprResult ASTBuilder::ParseUnaryOp(SourceLocation OpLoc,
   case tok::kw___imag:    Opc = UnaryOperator::Imag; break;
   case tok::ampamp:       Opc = UnaryOperator::AddrLabel; break;
   case tok::kw___extension__: 
-    if (!FullLocInfo) return Input;
-    Opc = UnaryOperator::Extension;
-    break;
+    return Input;
+    //Opc = UnaryOperator::Extension;
+    //break;
   }
 
-  if (!FullLocInfo)
-    return new UnaryOperator((Expr*)Input, Opc);
-  else
-    return new UnaryOperatorLOC(OpLoc, (Expr*)Input, Opc);
+  return new UnaryOperator((Expr*)Input, Opc);
 }
 
 Action::ExprResult ASTBuilder::
 ParseSizeOfAlignOfTypeExpr(SourceLocation OpLoc, bool isSizeof, 
                            SourceLocation LParenLoc, TypeTy *Ty,
                            SourceLocation RParenLoc) {
-  if (!FullLocInfo)
-    return new SizeOfAlignOfTypeExpr(isSizeof, (Type*)Ty);
-  else
-    return new SizeOfAlignOfTypeExprLOC(OpLoc, isSizeof, LParenLoc, (Type*)Ty,
-                                        RParenLoc);
+  return new SizeOfAlignOfTypeExpr(isSizeof, (Type*)Ty);
 }
 
 
@@ -221,19 +208,13 @@ Action::ExprResult ASTBuilder::ParsePostfixUnaryOp(SourceLocation OpLoc,
   case tok::minusminus: Opc = UnaryOperator::PostDec; break;
   }
   
-  if (!FullLocInfo)
-    return new UnaryOperator((Expr*)Input, Opc);
-  else
-    return new UnaryOperatorLOC(OpLoc, (Expr*)Input, Opc);
+  return new UnaryOperator((Expr*)Input, Opc);
 }
 
 Action::ExprResult ASTBuilder::
 ParseArraySubscriptExpr(ExprTy *Base, SourceLocation LLoc,
                         ExprTy *Idx, SourceLocation RLoc) {
-  if (!FullLocInfo)
-    return new ArraySubscriptExpr((Expr*)Base, (Expr*)Idx);
-  else
-    return new ArraySubscriptExprLOC((Expr*)Base, LLoc, (Expr*)Idx, RLoc);
+  return new ArraySubscriptExpr((Expr*)Base, (Expr*)Idx);
 }
 
 Action::ExprResult ASTBuilder::
@@ -242,11 +223,7 @@ ParseMemberReferenceExpr(ExprTy *Base, SourceLocation OpLoc,
                          IdentifierInfo &Member) {
   Decl *MemberDecl = 0;
   // TODO: Look up MemberDecl.
-  if (!FullLocInfo)
-    return new MemberExpr((Expr*)Base, OpKind == tok::arrow, MemberDecl);
-  else
-    return new MemberExprLOC((Expr*)Base, OpLoc, OpKind == tok::arrow,
-                             MemberLoc, MemberDecl);
+  return new MemberExpr((Expr*)Base, OpKind == tok::arrow, MemberDecl);
 }
 
 /// ParseCallExpr - Handle a call to Fn with the specified array of arguments.
@@ -256,20 +233,13 @@ Action::ExprResult ASTBuilder::
 ParseCallExpr(ExprTy *Fn, SourceLocation LParenLoc,
               ExprTy **Args, unsigned NumArgs,
               SourceLocation *CommaLocs, SourceLocation RParenLoc) {
-  if (!FullLocInfo)
-    return new CallExpr((Expr*)Fn, (Expr**)Args, NumArgs);
-  else
-    return new CallExprLOC((Expr*)Fn, LParenLoc, (Expr**)Args, NumArgs,
-                           CommaLocs, RParenLoc);
+  return new CallExpr((Expr*)Fn, (Expr**)Args, NumArgs);
 }
 
 Action::ExprResult ASTBuilder::
 ParseCastExpr(SourceLocation LParenLoc, TypeTy *Ty,
               SourceLocation RParenLoc, ExprTy *Op) {
-  if (!FullLocInfo)
-    return new CastExpr((Type*)Ty, (Expr*)Op);
-  else
-    return new CastExprLOC(LParenLoc, (Type*)Ty, RParenLoc, (Expr*)Op);
+  return new CastExpr((Type*)Ty, (Expr*)Op);
 }
 
 
@@ -313,10 +283,7 @@ Action::ExprResult ASTBuilder::ParseBinOp(SourceLocation TokLoc,
   case tok::comma:                Opc = BinaryOperator::Comma; break;
   }
   
-  if (!FullLocInfo)
-    return new BinaryOperator((Expr*)LHS, (Expr*)RHS, Opc);
-  else
-    return new BinaryOperatorLOC((Expr*)LHS, TokLoc, (Expr*)RHS, Opc);
+  return new BinaryOperator((Expr*)LHS, (Expr*)RHS, Opc);
 }
 
 /// ParseConditionalOp - Parse a ?: operation.  Note that 'LHS' may be null
@@ -325,10 +292,6 @@ Action::ExprResult ASTBuilder::ParseConditionalOp(SourceLocation QuestionLoc,
                                                   SourceLocation ColonLoc,
                                                   ExprTy *Cond, ExprTy *LHS,
                                                   ExprTy *RHS) {
-  if (!FullLocInfo)
-    return new ConditionalOperator((Expr*)Cond, (Expr*)LHS, (Expr*)RHS);
-  else
-    return new ConditionalOperatorLOC((Expr*)Cond, QuestionLoc, (Expr*)LHS,
-                                      ColonLoc, (Expr*)RHS);
+  return new ConditionalOperator((Expr*)Cond, (Expr*)LHS, (Expr*)RHS);
 }
 
