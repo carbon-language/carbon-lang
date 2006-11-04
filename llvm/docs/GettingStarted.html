@@ -533,6 +533,11 @@ the "<tt>convert_from_eh_region_ranges_1</tt>" GCC function.</p>
 <p><b>GCC 4.1.1</b>: GCC fails to build LLVM with template concept check errors
       compiling some files.  At the time of this writing, GCC mainline (4.2)
       did not share the problem.</p>
+<p><b>GNU ld 2.16.X</b>. Some 2.16.X versions of the ld linker will produce very
+long warning messages complaining that some ".gnu.linkonce.t.*" symbol was
+defined in a discarded section. You can safely ignore these messages as they are
+erroneous and the linkage is correct.  These messages disappear using ld
+2.17.</p>
 </div>
 
 
