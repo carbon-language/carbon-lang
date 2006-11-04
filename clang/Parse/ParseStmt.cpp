@@ -525,8 +525,10 @@ Parser::StmtResult Parser::ParseForStatement() {
   }
 
   SourceLocation LParenLoc = ConsumeParen();
-  
   ExprResult Value;
+  
+  StmtTy *FirstPart = 0;
+  ExprTy *SecondPart = 0, *ThirdPart = 0;
   
   // Parse the first part of the for specifier.
   if (Tok.getKind() == tok::semi) {  // for (;
@@ -537,9 +539,18 @@ Parser::StmtResult Parser::ParseForStatement() {
     if (!getLang().C99)   // Use of C99-style for loops in C90 mode?
       Diag(Tok, diag::ext_c99_variable_decl_in_for_loop);
     ParseDeclaration(Declarator::ForContext);
+    // FIXME: Turn declaration into stmt.
+    FirstPart = 0;
   } else {
     Value = ParseExpression();
-  
+
+    // Turn the expression into a stmt.
+    if (!Value.isInvalid) {
+      StmtResult R = Actions.ParseExprStmt(Value.Val);
+      if (!R.isInvalid)
+        FirstPart = R.Val;
+    }
+
     if (Tok.getKind() == tok::semi) {
       ConsumeToken();
     } else {
@@ -554,6 +565,8 @@ Parser::StmtResult Parser::ParseForStatement() {
     Value = ExprResult();
   } else {
     Value = ParseExpression();
+    if (!Value.isInvalid)
+      SecondPart = Value.Val;
   }
   
   if (Tok.getKind() == tok::semi) {
@@ -569,16 +582,20 @@ Parser::StmtResult Parser::ParseForStatement() {
     Value = ExprResult();
   } else {
     Value = ParseExpression();
+    if (!Value.isInvalid)
+      ThirdPart = Value.Val;
   }
   
   // Match the ')'.
-  MatchRHSPunctuation(tok::r_paren, LParenLoc);
+  SourceLocation RParenLoc = MatchRHSPunctuation(tok::r_paren, LParenLoc);
   
   // Read the body statement.
-  ParseStatement();
+  StmtResult Body = ParseStatement();
+  if (Body.isInvalid)
+    return Body;
   
-  // FIXME: ACTION FOR FOR STMT.
-  return false;
+  return Actions.ParseForStmt(ForLoc, LParenLoc, FirstPart, SecondPart,
+                              ThirdPart, RParenLoc, Body.Val);
 }
 
 /// ParseGotoStatement

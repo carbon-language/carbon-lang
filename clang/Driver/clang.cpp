@@ -794,8 +794,10 @@ static void PrintASTs(Preprocessor &PP, unsigned MainFileID) {
     else
       std::cerr << "\n";
     if (FunctionDecl *FD = D->isFunctionDecl()) {
-      FD->getBody()->dump();
-      std::cerr << "\n";
+      if (FD->getBody()) {
+        FD->getBody()->dump();
+        std::cerr << "\n";
+      }
     }
   }
   

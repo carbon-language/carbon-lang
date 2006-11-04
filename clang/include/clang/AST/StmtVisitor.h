@@ -20,6 +20,7 @@ namespace clang {
   class Expr;
   class CompoundStmt;
   class IfStmt;
+  class ForStmt;
   class ReturnStmt;
 
   class DeclRefExpr;
@@ -48,6 +49,7 @@ public:
   // Visitation methods for various Stmt subclasses.
   virtual void VisitCompoundStmt(CompoundStmt *Node);
   virtual void VisitIfStmt(IfStmt *Node);
+  virtual void VisitForStmt(ForStmt *Node);
   virtual void VisitReturnStmt(ReturnStmt *Node);
   
   // Visitation methods for various Expr subclasses.

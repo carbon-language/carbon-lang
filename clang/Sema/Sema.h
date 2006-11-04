@@ -61,6 +61,11 @@ public:
                                  StmtTy *ThenVal, SourceLocation ElseLoc,
                                  StmtTy *ElseVal);
   
+  virtual StmtResult ParseForStmt(SourceLocation ForLoc, 
+                                  SourceLocation LParenLoc, 
+                                  StmtTy *First, ExprTy *Second, ExprTy *Third,
+                                  SourceLocation RParenLoc, StmtTy *Body);
+  
   virtual StmtResult ParseReturnStmt(SourceLocation ReturnLoc,
                                      ExprTy *RetValExp);
   

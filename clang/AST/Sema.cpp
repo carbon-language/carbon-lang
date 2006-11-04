@@ -106,6 +106,13 @@ ASTBuilder::ParseIfStmt(SourceLocation IfLoc, ExprTy *CondVal,
   return new IfStmt((Expr*)CondVal, (Stmt*)ThenVal, (Stmt*)ElseVal);
 }
 
+Action::StmtResult 
+ASTBuilder::ParseForStmt(SourceLocation ForLoc, SourceLocation LParenLoc, 
+                         StmtTy *First, ExprTy *Second, ExprTy *Third,
+                         SourceLocation RParenLoc, StmtTy *Body) {
+  return new ForStmt((Stmt*)First, (Expr*)Second, (Expr*)Third, (Stmt*)Body);
+}
+
 Action::StmtResult
 ASTBuilder::ParseReturnStmt(SourceLocation ReturnLoc,
                             ExprTy *RetValExp) {

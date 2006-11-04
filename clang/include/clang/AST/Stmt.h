@@ -72,6 +72,24 @@ public:
   virtual void visit(StmtVisitor &Visitor);
 };
 
+/// ForStmt - This represents a 'for' stmt.
+///
+class ForStmt : public Stmt {
+  Stmt *First;  // Expression or decl.
+  Expr *Second, *Third;
+  Stmt *Body;
+public:
+  ForStmt(Stmt *first, Expr *second, Expr *third, Stmt *body)
+    : First(first), Second(second), Third(third), Body(body) {}
+  
+  Stmt *getFirst() { return First; }
+  Expr *getSecond() { return Second; }
+  Expr *getThird() { return Third; }
+  Stmt *getBody() { return Body; }
+ 
+  virtual void visit(StmtVisitor &Visitor);
+};
+
 
 
 /// ReturnStmt - This represents a return, optionally of an expression.

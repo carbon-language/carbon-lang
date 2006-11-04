@@ -157,14 +157,19 @@ public:
     return 0;
   }
   virtual StmtResult ParseWhileStmt(SourceLocation WhileLoc, ExprTy *Cond,
-                                     StmtTy *Body) {
+                                    StmtTy *Body) {
     return 0;
   }
   virtual StmtResult ParseDoStmt(SourceLocation DoLoc, StmtTy *Body,
                                  SourceLocation WhileLoc, ExprTy *Cond) {
     return 0;
   }
-  // PARSE FOR STMT.
+  virtual StmtResult ParseForStmt(SourceLocation ForLoc, 
+                                  SourceLocation LParenLoc, 
+                                  StmtTy *First, ExprTy *Second, ExprTy *Third,
+                                  SourceLocation RParenLoc, StmtTy *Body) {
+    return 0;
+  }
   virtual StmtResult ParseGotoStmt(SourceLocation GotoLoc,
                                    SourceLocation LabelLoc,
                                    IdentifierInfo *LabelII) {

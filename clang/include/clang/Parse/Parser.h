@@ -111,15 +111,15 @@ private:
   /// ConsumeAnyToken - Dispatch to the right Consume* method based on the
   /// current token type.  This should only be used in cases where the type of
   /// the token really isn't known, e.g. in error recovery.
-  void ConsumeAnyToken() {
+  SourceLocation ConsumeAnyToken() {
     if (isTokenParen())
-      ConsumeParen();
+      return ConsumeParen();
     else if (isTokenBracket())
-      ConsumeBracket();
+      return ConsumeBracket();
     else if (isTokenBrace())
-      ConsumeBrace();
+      return ConsumeBrace();
     else
-      ConsumeToken();
+      return ConsumeToken();
   }
   
   /// ConsumeParen - This consume method keeps the paren count up-to-date.
@@ -180,8 +180,10 @@ private:
   /// this helper function matches and consumes the specified RHS token if
   /// present.  If not present, it emits the specified diagnostic indicating
   /// that the parser failed to match the RHS of the token at LHSLoc.  LHSName
-  /// should be the name of the unmatched LHS token.
-  void MatchRHSPunctuation(tok::TokenKind RHSTok, SourceLocation LHSLoc);
+  /// should be the name of the unmatched LHS token.  This returns the location
+  /// of the consumed token.
+  SourceLocation MatchRHSPunctuation(tok::TokenKind RHSTok,
+                                     SourceLocation LHSLoc);
   
   /// ExpectAndConsume - The parser expects that 'ExpectedTok' is next in the
   /// input.  If so, it is consumed and false is returned.

@@ -78,6 +78,7 @@ namespace  {
     virtual void VisitStmt(Stmt *Node);
     virtual void VisitCompoundStmt(CompoundStmt *Node);
     virtual void VisitIfStmt(IfStmt *Node);
+    virtual void VisitForStmt(ForStmt *Node);
     virtual void VisitReturnStmt(ReturnStmt *Node);
 
     virtual void VisitExpr(Expr *Node);
@@ -94,8 +95,12 @@ namespace  {
     virtual void VisitCastExpr(CastExpr *Node);
     virtual void VisitBinaryOperator(BinaryOperator *Node);
     virtual void VisitConditionalOperator(ConditionalOperator *Node);
-};
+  };
 }
+
+//===----------------------------------------------------------------------===//
+//  Stmt printing methods.
+//===----------------------------------------------------------------------===//
 
 void StmtPrinter::VisitStmt(Stmt *Node) {
   Indent() << "<<unknown stmt type>>\n";
@@ -124,6 +129,23 @@ void StmtPrinter::VisitIfStmt(IfStmt *If) {
   Indent() << "endif\n";
 }
 
+void StmtPrinter::VisitForStmt(ForStmt *Node) {
+  Indent() << "for (";
+  if (Node->getFirst())
+    PrintExpr((Expr*)Node->getFirst());
+  OS << "; ";
+  if (Node->getSecond())
+    PrintExpr(Node->getSecond());
+  OS << "; ";
+  if (Node->getThird())
+    PrintExpr(Node->getThird());
+  OS << ")\n";
+  if (Node->getBody())
+    PrintStmt(Node->getBody());
+  else
+    Indent() << "  ;";
+}
+
 void StmtPrinter::VisitReturnStmt(ReturnStmt *Node) {
   Indent() << "return";
   if (Node->getRetValue()) {
@@ -133,6 +155,9 @@ void StmtPrinter::VisitReturnStmt(ReturnStmt *Node) {
   OS << "\n";
 }
 
+//===----------------------------------------------------------------------===//
+//  Expr printing methods.
+//===----------------------------------------------------------------------===//
 
 void StmtPrinter::VisitExpr(Expr *Node) {
   OS << "<<unknown expr type>>";
