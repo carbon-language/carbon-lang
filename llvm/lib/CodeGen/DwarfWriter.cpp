@@ -1862,9 +1862,10 @@ private:
       unsigned StartID = Scope->getStartLabelID();
       unsigned EndID = Scope->getEndLabelID();
       
-      // Throw out scope if block is discarded.
-      if (StartID && !DebugInfo->isLabelValid(StartID)) continue;
-      if (EndID && !DebugInfo->isLabelValid(EndID)) continue;
+      // Widen scope if label is discarded.
+      // FIXME - really need to find a GOOD label if a block is dead.
+      if (StartID && !DebugInfo->isLabelValid(StartID)) StartID = 0;
+      if (EndID && !DebugInfo->isLabelValid(EndID)) EndID = 0;
       
       DIE *ScopeDie = new DIE(DW_TAG_lexical_block);
       
