@@ -72,6 +72,37 @@ public:
   virtual void visit(StmtVisitor &Visitor);
 };
 
+/// WhileStmt - This represents a 'while' stmt.
+///
+class WhileStmt : public Stmt {
+  Expr *Cond;
+  Stmt *Body;
+public:
+  WhileStmt(Expr *cond, Stmt *body)
+    : Cond(cond), Body(body) {}
+  
+  Expr *getCond() { return Cond; }
+  Stmt *getBody() { return Body; }
+  
+  virtual void visit(StmtVisitor &Visitor);
+};
+
+/// DoStmt - This represents a 'do/while' stmt.
+///
+class DoStmt : public Stmt {
+  Stmt *Body;
+  Expr *Cond;
+public:
+  DoStmt(Stmt *body, Expr *cond)
+    : Body(body), Cond(cond) {}
+  
+  Stmt *getBody() { return Body; }
+  Expr *getCond() { return Cond; }
+  
+  virtual void visit(StmtVisitor &Visitor);
+};
+
+
 /// ForStmt - This represents a 'for' stmt.
 ///
 class ForStmt : public Stmt {

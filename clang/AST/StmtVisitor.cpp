@@ -28,6 +28,8 @@ DELEGATE_VISITOR(Expr, Stmt)
 // Stmt subclasses to Stmt.
 DELEGATE_VISITOR(CompoundStmt, Stmt)
 DELEGATE_VISITOR(IfStmt      , Stmt)
+DELEGATE_VISITOR(WhileStmt   , Stmt)
+DELEGATE_VISITOR(DoStmt      , Stmt)
 DELEGATE_VISITOR(ForStmt     , Stmt)
 DELEGATE_VISITOR(ReturnStmt  , Stmt)
 

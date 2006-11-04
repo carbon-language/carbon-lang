@@ -114,6 +114,17 @@ ASTBuilder::ParseForStmt(SourceLocation ForLoc, SourceLocation LParenLoc,
 }
 
 Action::StmtResult
+ASTBuilder::ParseWhileStmt(SourceLocation WhileLoc, ExprTy *Cond, StmtTy *Body){
+  return new WhileStmt((Expr*)Cond, (Stmt*)Body);
+}
+
+Action::StmtResult
+ASTBuilder::ParseDoStmt(SourceLocation DoLoc, StmtTy *Body,
+                        SourceLocation WhileLoc, ExprTy *Cond) {
+  return new DoStmt((Stmt*)Body, (Expr*)Cond);
+}
+
+Action::StmtResult
 ASTBuilder::ParseReturnStmt(SourceLocation ReturnLoc,
                             ExprTy *RetValExp) {
   return new ReturnStmt((Expr*)RetValExp);

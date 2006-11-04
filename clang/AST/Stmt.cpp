@@ -23,6 +23,8 @@ void CLASS::visit(StmtVisitor &V) { return V.Visit##CLASS(this); }
 MAKE_VISITOR(Stmt)
 MAKE_VISITOR(CompoundStmt)
 MAKE_VISITOR(IfStmt)
+MAKE_VISITOR(WhileStmt)
+MAKE_VISITOR(DoStmt)
 MAKE_VISITOR(ForStmt)
 MAKE_VISITOR(ReturnStmt)
 

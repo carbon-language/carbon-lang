@@ -57,7 +57,7 @@ namespace  {
       } else if (S) {
         S->visit(*this);
       } else {
-        Indent() << "<null stmt>\n";
+        Indent() << ";\n";
       }
       --IndentLevel;
     }
@@ -78,6 +78,8 @@ namespace  {
     virtual void VisitStmt(Stmt *Node);
     virtual void VisitCompoundStmt(CompoundStmt *Node);
     virtual void VisitIfStmt(IfStmt *Node);
+    virtual void VisitWhileStmt(WhileStmt *Node);
+    virtual void VisitDoStmt(DoStmt *Node);
     virtual void VisitForStmt(ForStmt *Node);
     virtual void VisitReturnStmt(ReturnStmt *Node);
 
@@ -117,16 +119,30 @@ void StmtPrinter::VisitCompoundStmt(CompoundStmt *Node) {
 }
 
 void StmtPrinter::VisitIfStmt(IfStmt *If) {
-  Indent() << "if ";
+  Indent() << "if (";
   PrintExpr(If->getCond());
 
-  OS << " then\n";
+  OS << ")\n";
   PrintStmt(If->getThen());
   if (If->getElse()) {
     Indent() << "else\n";
     PrintStmt(If->getElse());
   }
-  Indent() << "endif\n";
+}
+
+void StmtPrinter::VisitWhileStmt(WhileStmt *Node) {
+  Indent() << "while (";
+  PrintExpr(Node->getCond());
+  OS << ")\n";
+  PrintStmt(Node->getBody());
+}
+
+void StmtPrinter::VisitDoStmt(DoStmt *Node) {
+  Indent() << "do\n";
+  PrintStmt(Node->getBody());
+  Indent() << "while (";
+  PrintExpr(Node->getCond());
+  OS << ")\n";
 }
 
 void StmtPrinter::VisitForStmt(ForStmt *Node) {
@@ -140,10 +156,7 @@ void StmtPrinter::VisitForStmt(ForStmt *Node) {
   if (Node->getThird())
     PrintExpr(Node->getThird());
   OS << ")\n";
-  if (Node->getBody())
-    PrintStmt(Node->getBody());
-  else
-    Indent() << "  ;";
+  PrintStmt(Node->getBody());
 }
 
 void StmtPrinter::VisitReturnStmt(ReturnStmt *Node) {

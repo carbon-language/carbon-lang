@@ -20,6 +20,8 @@ namespace clang {
   class Expr;
   class CompoundStmt;
   class IfStmt;
+  class DoStmt;
+  class WhileStmt;
   class ForStmt;
   class ReturnStmt;
 
@@ -49,6 +51,8 @@ public:
   // Visitation methods for various Stmt subclasses.
   virtual void VisitCompoundStmt(CompoundStmt *Node);
   virtual void VisitIfStmt(IfStmt *Node);
+  virtual void VisitWhileStmt(WhileStmt *Node);
+  virtual void VisitDoStmt(DoStmt *Node);
   virtual void VisitForStmt(ForStmt *Node);
   virtual void VisitReturnStmt(ReturnStmt *Node);
   

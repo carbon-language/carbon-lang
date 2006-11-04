@@ -61,6 +61,11 @@ public:
                                  StmtTy *ThenVal, SourceLocation ElseLoc,
                                  StmtTy *ElseVal);
   
+  virtual StmtResult ParseWhileStmt(SourceLocation WhileLoc, ExprTy *Cond,
+                                    StmtTy *Body);
+  virtual StmtResult ParseDoStmt(SourceLocation DoLoc, StmtTy *Body,
+                                 SourceLocation WhileLoc, ExprTy *Cond);
+  
   virtual StmtResult ParseForStmt(SourceLocation ForLoc, 
                                   SourceLocation LParenLoc, 
                                   StmtTy *First, ExprTy *Second, ExprTy *Third,
