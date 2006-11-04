@@ -17,27 +17,10 @@
 namespace llvm {
 namespace clang {
   class Stmt;
-  class Expr;
-  class CompoundStmt;
-  class IfStmt;
-  class DoStmt;
-  class WhileStmt;
-  class ForStmt;
-  class ReturnStmt;
-
-  class DeclRefExpr;
-  class IntegerConstant;
-  class FloatingConstant;
-  class StringExpr;
-  class ParenExpr;
-  class UnaryOperator;
-  class SizeOfAlignOfTypeExpr;
-  class ArraySubscriptExpr;
-  class CallExpr;
-  class MemberExpr;
-  class CastExpr;
-  class BinaryOperator;
-  class ConditionalOperator;
+  // Add prototypes for all AST node classes.
+#define STMT(CLASS, PARENT) \
+  class CLASS;
+#include "clang/AST/StmtNodes.def"
   
 /// StmtVisitor - This class implements a simple visitor for Stmt subclasses.
 /// Since Expr derives from Stmt, this also includes support for visiting Exprs.
@@ -46,30 +29,11 @@ public:
   virtual ~StmtVisitor();
   
   virtual void VisitStmt(Stmt *Node) {}
-  virtual void VisitExpr(Expr *Node);
   
-  // Visitation methods for various Stmt subclasses.
-  virtual void VisitCompoundStmt(CompoundStmt *Node);
-  virtual void VisitIfStmt(IfStmt *Node);
-  virtual void VisitWhileStmt(WhileStmt *Node);
-  virtual void VisitDoStmt(DoStmt *Node);
-  virtual void VisitForStmt(ForStmt *Node);
-  virtual void VisitReturnStmt(ReturnStmt *Node);
-  
-  // Visitation methods for various Expr subclasses.
-  virtual void VisitDeclRefExpr(DeclRefExpr *Node);
-  virtual void VisitIntegerConstant(IntegerConstant *Node);
-  virtual void VisitFloatingConstant(FloatingConstant *Node);
-  virtual void VisitStringExpr(StringExpr *Node);
-  virtual void VisitParenExpr(ParenExpr *Node);
-  virtual void VisitUnaryOperator(UnaryOperator *Node);
-  virtual void VisitSizeOfAlignOfTypeExpr(SizeOfAlignOfTypeExpr *Node);
-  virtual void VisitArraySubscriptExpr(ArraySubscriptExpr *Node);
-  virtual void VisitCallExpr(CallExpr *Node);
-  virtual void VisitMemberExpr(MemberExpr *Node);
-  virtual void VisitCastExpr(CastExpr *Node);
-  virtual void VisitBinaryOperator(BinaryOperator *Node);
-  virtual void VisitConditionalOperator(ConditionalOperator *Node);
+  // Implement all the methods with the StmtNodes.def file.
+#define STMT(CLASS, PARENT) \
+  virtual void Visit##CLASS(CLASS *Node);
+#include "clang/AST/StmtNodes.def"
 };
   
 }
