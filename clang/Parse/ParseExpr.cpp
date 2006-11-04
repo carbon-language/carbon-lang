@@ -202,8 +202,9 @@ ParseExpressionWithLeadingIdentifier(const LexerToken &Tok) {
   // We know that 'Tok' must correspond to this production:
   //   primary-expression: identifier
   
-  // TODO: Pass 'Tok' to the action.
-  ExprResult Res = ExprResult(false);
+  // Let the actions module handle the identifier.
+  ExprResult Res = Actions.ParseSimplePrimaryExpr(Tok.getLocation(),
+                                                  Tok.getKind());
   
   // Because we have to parse an entire cast-expression before starting the
   // ParseRHSOfBinaryExpression method (which parses any trailing binops), we
@@ -231,8 +232,9 @@ ParseAssignmentExprWithLeadingIdentifier(const LexerToken &Tok) {
   // We know that 'Tok' must correspond to this production:
   //   primary-expression: identifier
   
-  // TODO: Pass 'Tok' to the action.
-  ExprResult Res = ExprResult(false);
+  // Let the actions module handle the identifier.
+  ExprResult Res = Actions.ParseSimplePrimaryExpr(Tok.getLocation(),
+                                                  Tok.getKind());
   
   // Because we have to parse an entire cast-expression before starting the
   // ParseRHSOfBinaryExpression method (which parses any trailing binops), we
