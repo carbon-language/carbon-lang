@@ -399,6 +399,19 @@ class XLForm_2<bits<6> opcode, bits<10> xo, bit lk, dag OL, string asmstr,
   let Inst{31}    = lk;
 }
 
+class XLForm_2_br<bits<6> opcode, bits<10> xo, bit lk,
+                  dag OL, string asmstr, InstrItinClass itin, list<dag> pattern>
+  : XLForm_2<opcode, xo, lk, OL, asmstr, itin, pattern> {
+  bits<7> BIBO;  // 2 bits of BI and 5 bits of BO.
+  bits<3>  CR;
+  
+  let BO = BIBO{0-4};
+  let BI{0-1} = BIBO{5-6};
+  let BI{2-4} = CR;
+  let BH = 0;
+}
+
+
 class XLForm_2_ext<bits<6> opcode, bits<10> xo, bits<5> bo,  bits<5> bi, bit lk,
                   dag OL, string asmstr, InstrItinClass itin, list<dag> pattern>
   : XLForm_2<opcode, xo, lk, OL, asmstr, itin, pattern> {

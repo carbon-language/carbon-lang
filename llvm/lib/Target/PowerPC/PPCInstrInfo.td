@@ -255,9 +255,9 @@ def memrix : Operand<iPTR> {   // memri where the imm is shifted 2 bits.
   let MIOperandInfo = (ops i32imm, ptr_rc);
 }
 
-// PowerPC Predicate operand.  640 = ((20<<5)|0) = always, CR0 is a dummy reg
+// PowerPC Predicate operand.  20 = (0<<5)|20 = always, CR0 is a dummy reg
 // that doesn't matter.
-def pred : PredicateOperand<(ops imm, CRRC), (ops (i32 640), CR0)> {
+def pred : PredicateOperand<(ops imm, CRRC), (ops (i32 20), CR0)> {
   let PrintMethod = "printPredicateOperand";
 }
 
@@ -317,9 +317,10 @@ let usesCustomDAGSchedInserter = 1,    // Expanded by the scheduler.
 
 let isTerminator = 1, isBarrier = 1, noResults = 1, PPC970_Unit = 7 in {
   let isReturn = 1 in
-    def BLR : XLForm_2_ext<19, 16, 20, 0, 0,
-                           (ops pred:$p),
-                           "b${p:cc}lr ${p:reg}", BrB, [(retflag)]>;
+    def BLR : XLForm_2_br<19, 16, 0,
+                          (ops pred:$p),
+                          "b${p:cc}lr ${p:reg}", BrB, 
+                          [(retflag)]>;
   def BCTR : XLForm_2_ext<19, 528, 20, 0, 0, (ops), "bctr", BrB, []>;
 }
 

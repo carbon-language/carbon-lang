@@ -28,17 +28,17 @@ namespace llvm {
   class MachineCodeEmitter;
   
   namespace PPC {
-    /// Predicate - These are "(BO << 5) | BI"  for various predicates.
+    /// Predicate - These are "(BI << 5) | BO"  for various predicates.
     enum Predicate {
-      PRED_ALWAYS = (20 << 5) | 0,
-      PRED_LT     = (12 << 5) | 0,
-      PRED_LE     = ( 4 << 5) | 1,
-      PRED_EQ     = (12 << 5) | 2,
-      PRED_GE     = ( 4 << 5) | 0,
-      PRED_GT     = (12 << 5) | 1,
-      PRED_NE     = ( 4 << 5) | 2,
-      PRED_UN     = (12 << 5) | 3,
-      PRED_NU     = ( 4 << 5) | 3
+      PRED_ALWAYS = (0 << 5) | 20,
+      PRED_LT     = (0 << 5) | 12,
+      PRED_LE     = (1 << 5) |  4,
+      PRED_EQ     = (2 << 5) | 12,
+      PRED_GE     = (0 << 5) |  4,
+      PRED_GT     = (1 << 5) | 12,
+      PRED_NE     = (2 << 5) |  4,
+      PRED_UN     = (3 << 5) | 12,
+      PRED_NU     = (3 << 5) |  4
     };
   }
   
