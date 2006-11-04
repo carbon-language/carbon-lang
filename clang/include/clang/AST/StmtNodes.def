@@ -1,0 +1,38 @@
+//===-- StmtNodes.def - Metadata about Stmt AST nodes -----------*- C++ -*-===//
+//
+//                     The LLVM Compiler Infrastructure
+//
+// This file was developed by Chris Lattner and is distributed under
+// the University of Illinois Open Source License. See LICENSE.TXT for details.
+//
+//===----------------------------------------------------------------------===//
+//
+//  This file defines the AST Node info database.
+//
+//===----------------------------------------------------------------------===//
+
+// Normal Statements.
+STMT(CompoundStmt, Stmt)
+STMT(IfStmt      , Stmt)
+STMT(WhileStmt   , Stmt)
+STMT(DoStmt      , Stmt)
+STMT(ForStmt     , Stmt)
+STMT(ReturnStmt  , Stmt)
+
+// Expressions.
+STMT(Expr                 , Stmt)
+STMT(DeclRefExpr          , Expr)
+STMT(IntegerConstant      , Expr)
+STMT(FloatingConstant     , Expr)
+STMT(StringExpr           , Expr)
+STMT(ParenExpr            , Expr)
+STMT(UnaryOperator        , Expr)
+STMT(SizeOfAlignOfTypeExpr, Expr)
+STMT(ArraySubscriptExpr   , Expr)
+STMT(CallExpr             , Expr)
+STMT(MemberExpr           , Expr)
+STMT(CastExpr             , Expr)
+STMT(BinaryOperator       , Expr)
+STMT(ConditionalOperator  , Expr)
+
+#undef STMT
