@@ -16,6 +16,7 @@
 
 #include "clang/Basic/SourceLocation.h"
 #include "llvm/ADT/SmallVector.h"
+#include <iosfwd>
 
 namespace llvm {
 namespace clang {
@@ -29,16 +30,11 @@ public:
   Stmt() {}
   virtual ~Stmt() {}
   
-  // FIXME: Change to non-virtual method that uses visitor pattern to do this.
   void dump() const;
-  
-  // FIXME: move to isa/dyncast etc.
-  virtual bool isExpr() const { return false; }
+  void print(std::ostream &OS) const;
   
   // Implement visitor support.
-  virtual void visit(StmtVisitor *Visitor);
-private:
-  virtual void dump_impl() const = 0;
+  virtual void visit(StmtVisitor &Visitor);
 };
 
 /// CompoundStmt - This represents a group of statements like { stmt stmt }.
@@ -49,9 +45,11 @@ public:
   CompoundStmt(Stmt **StmtStart, unsigned NumStmts)
     : Body(StmtStart, StmtStart+NumStmts) {}
   
-  virtual void dump_impl() const;
+  typedef SmallVector<Stmt*, 16>::iterator body_iterator;
+  body_iterator body_begin() { return Body.begin(); }
+  body_iterator body_end() { return Body.end(); }
   
-  virtual void visit(StmtVisitor *Visitor);
+  virtual void visit(StmtVisitor &Visitor);
 };
 
 /// IfStmt - This represents an if/then/else.
@@ -63,8 +61,15 @@ public:
   IfStmt(Expr *cond, Stmt *then, Stmt *elsev = 0)
     : Cond(cond), Then(then), Else(elsev) {}
   
-  virtual void dump_impl() const;
-  virtual void visit(StmtVisitor *Visitor);
+  const Expr *getCond() const { return Cond; }
+  const Stmt *getThen() const { return Then; }
+  const Stmt *getElse() const { return Else; }
+
+  Expr *getCond() { return Cond; }
+  Stmt *getThen() { return Then; }
+  Stmt *getElse() { return Else; }
+  
+  virtual void visit(StmtVisitor &Visitor);
 };
 
 
@@ -76,8 +81,7 @@ class ReturnStmt : public Stmt {
 public:
   ReturnStmt(Expr *E = 0) : RetExpr(E) {}
   
-  virtual void dump_impl() const;
-  virtual void visit(StmtVisitor *Visitor);
+  virtual void visit(StmtVisitor &Visitor);
 };
 
 

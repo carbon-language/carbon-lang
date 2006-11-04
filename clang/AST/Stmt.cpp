@@ -14,46 +14,15 @@
 #include "clang/AST/Stmt.h"
 #include "clang/AST/Expr.h"
 #include "clang/AST/StmtVisitor.h"
-#include <iostream>
 using namespace llvm;
 using namespace clang;
 
-void Stmt::dump() const {
-  if (this == 0) {
-    std::cerr << "<null>";
-    return;
-  }
-  if (isExpr()) std::cerr << "(";
-  dump_impl();
-  if (isExpr()) std::cerr << ")";
-}
+#define MAKE_VISITOR(CLASS) \
+void CLASS::visit(StmtVisitor &V) { return V.Visit##CLASS(this); }
 
-void Stmt        ::visit(StmtVisitor *V) { return V->VisitStmt(this); }
-void CompoundStmt::visit(StmtVisitor *V) { return V->VisitCompoundStmt(this); }
-void IfStmt      ::visit(StmtVisitor *V) { return V->VisitIfStmt(this); }
-void ReturnStmt  ::visit(StmtVisitor *V) { return V->VisitReturnStmt(this); }
+MAKE_VISITOR(Stmt)
+MAKE_VISITOR(CompoundStmt)
+MAKE_VISITOR(IfStmt)
+MAKE_VISITOR(ReturnStmt)
 
-
-void CompoundStmt::dump_impl() const {
-  std::cerr << "{\n";
-  for (unsigned i = 0, e = Body.size(); i != e; ++i) {
-    Body[i]->dump();
-    std::cerr << "\n";
-  }
-  std::cerr << "}";
-}
-
-void IfStmt::dump_impl() const {
-  std::cerr << "if ";
-  Cond->dump();
-  std::cerr << " then\n";
-  Then->dump();
-  std::cerr << "\n else ";
-  Else->dump();
-}
-
-void ReturnStmt::dump_impl() const {
-  std::cerr << "return ";
-  if (RetExpr)
-    RetExpr->dump();
-}
+#undef MAKE_VISITOR

@@ -32,10 +32,7 @@ public:
   Expr() {}
   ~Expr() {}
   
-  
-  // FIXME: move to isa/dyncast etc.
-  virtual bool isExpr() const { return true; }
-  virtual void visit(StmtVisitor *Visitor);
+  virtual void visit(StmtVisitor &Visitor);
 };
 
 //===----------------------------------------------------------------------===//
@@ -49,22 +46,19 @@ class DeclRefExpr : public Expr {
   Decl &D;
 public:
   DeclRefExpr(Decl &d) : D(d) {}
-  virtual void dump_impl() const;
-  virtual void visit(StmtVisitor *Visitor);
+  virtual void visit(StmtVisitor &Visitor);
 };
 
 class IntegerConstant : public Expr {
 public:
   IntegerConstant() {}
-  virtual void dump_impl() const;
-  virtual void visit(StmtVisitor *Visitor);
+  virtual void visit(StmtVisitor &Visitor);
 };
 
 class FloatingConstant : public Expr {
 public:
   FloatingConstant() {}
-  virtual void dump_impl() const;
-  virtual void visit(StmtVisitor *Visitor);
+  virtual void visit(StmtVisitor &Visitor);
 };
 
 class StringExpr : public Expr {
@@ -74,8 +68,7 @@ class StringExpr : public Expr {
 public:
   StringExpr(const char *strData, unsigned byteLength, bool Wide);
   virtual ~StringExpr();
-  virtual void dump_impl() const;
-  virtual void visit(StmtVisitor *Visitor);
+  virtual void visit(StmtVisitor &Visitor);
 };
 
 /// ParenExpr - This represents a parethesized expression, e.g. "(1)".  This
@@ -86,8 +79,7 @@ class ParenExpr : public Expr {
 public:
   ParenExpr(SourceLocation l, SourceLocation r, Expr *val)
     : L(l), R(r), Val(val) {}
-  virtual void dump_impl() const;
-  virtual void visit(StmtVisitor *Visitor);
+  virtual void visit(StmtVisitor &Visitor);
 };
 
 
@@ -115,8 +107,7 @@ public:
   /// corresponds to, e.g. "sizeof" or "[pre]++"
   static const char *getOpcodeStr(Opcode Op);
   
-  virtual void dump_impl() const;
-  virtual void visit(StmtVisitor *Visitor);
+  virtual void visit(StmtVisitor &Visitor);
 
 private:
   Expr *Input;
@@ -132,8 +123,7 @@ public:
   SizeOfAlignOfTypeExpr(bool issizeof, Type *ty) : isSizeof(issizeof), Ty(ty) {
   }
 
-  virtual void dump_impl() const;
-  virtual void visit(StmtVisitor *Visitor);
+  virtual void visit(StmtVisitor &Visitor);
 };
 
 //===----------------------------------------------------------------------===//
@@ -146,8 +136,7 @@ class ArraySubscriptExpr : public Expr {
 public:
   ArraySubscriptExpr(Expr *base, Expr *idx) : Base(base), Idx(idx) {}
   
-  virtual void dump_impl() const;
-  virtual void visit(StmtVisitor *Visitor);
+  virtual void visit(StmtVisitor &Visitor);
 };
 
 
@@ -177,8 +166,7 @@ public:
   /// this function call.
   unsigned getNumCommas() const { return NumArgs ? NumArgs - 1 : 0; }
   
-  virtual void dump_impl() const;
-  virtual void visit(StmtVisitor *Visitor);
+  virtual void visit(StmtVisitor &Visitor);
 };
 
 /// MemberExpr - [C99 6.5.2.3] Structure and Union Members.
@@ -191,8 +179,7 @@ public:
   MemberExpr(Expr *base, bool isarrow, Decl *memberdecl) 
     : Base(base), MemberDecl(memberdecl), isArrow(isarrow) {
   }
-  virtual void dump_impl() const;
-  virtual void visit(StmtVisitor *Visitor);
+  virtual void visit(StmtVisitor &Visitor);
 };
 
 /// CastExpr - [C99 6.5.4] Cast Operators.
@@ -203,8 +190,7 @@ class CastExpr : public Expr {
 public:
   CastExpr(Type *ty, Expr *op) : Ty(ty), Op(op) {}
   
-  virtual void dump_impl() const;
-  virtual void visit(StmtVisitor *Visitor);
+  virtual void visit(StmtVisitor &Visitor);
 };
 
 
@@ -238,8 +224,7 @@ public:
   /// corresponds to, e.g. "<<=".
   static const char *getOpcodeStr(Opcode Op);
   
-  virtual void dump_impl() const;
-  virtual void visit(StmtVisitor *Visitor);
+  virtual void visit(StmtVisitor &Visitor);
 
 private:
   Expr *LHS, *RHS;
@@ -254,8 +239,7 @@ class ConditionalOperator : public Expr {
 public:
   ConditionalOperator(Expr *cond, Expr *lhs, Expr *rhs)
     : Cond(cond), LHS(lhs), RHS(rhs) {}
-  virtual void dump_impl() const;
-  virtual void visit(StmtVisitor *Visitor);
+  virtual void visit(StmtVisitor &Visitor);
 };
 
   

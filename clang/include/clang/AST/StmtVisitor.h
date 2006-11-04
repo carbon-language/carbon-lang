@@ -38,7 +38,8 @@ namespace clang {
   
 /// StmtVisitor - This class implements a simple visitor for Stmt subclasses.
 /// Since Expr derives from Stmt, this also includes support for visiting Exprs.
-struct StmtVisitor {
+class StmtVisitor {
+public:
   virtual ~StmtVisitor();
   
   /// VisitNull - Visit a null pointer.
@@ -50,8 +51,8 @@ struct StmtVisitor {
   
   // Visitation methods for various Stmt subclasses.
   virtual void VisitCompoundStmt(CompoundStmt *Node);
-  virtual void VisitIfStmt(IfStmt       *Node);
-  virtual void VisitReturnStmt(ReturnStmt   *Node);
+  virtual void VisitIfStmt(IfStmt *Node);
+  virtual void VisitReturnStmt(ReturnStmt *Node);
   
   // Visitation methods for various Expr subclasses.
   virtual void VisitDeclRefExpr(DeclRefExpr *Node);

@@ -14,7 +14,6 @@
 #include "clang/AST/Expr.h"
 #include "clang/AST/StmtVisitor.h"
 #include "clang/Lex/IdentifierTable.h"
-#include <iostream>
 using namespace llvm;
 using namespace clang;
 
@@ -23,7 +22,7 @@ using namespace clang;
 //===----------------------------------------------------------------------===//
 
 #define MAKE_VISITOR(CLASS) \
-  void CLASS::visit(StmtVisitor *V) { return V->Visit ## CLASS(this); }
+  void CLASS::visit(StmtVisitor &V) { return V.Visit##CLASS(this); }
 
 MAKE_VISITOR(Expr)
 MAKE_VISITOR(DeclRefExpr)
@@ -46,19 +45,6 @@ MAKE_VISITOR(ConditionalOperator)
 // Primary Expressions.
 //===----------------------------------------------------------------------===//
 
-void DeclRefExpr::dump_impl() const {
-  std::cerr << "x";
-}
-
-void IntegerConstant::dump_impl() const {
-  std::cerr << "1";
-}
-
-void FloatingConstant::dump_impl() const {
-  std::cerr << "1.0";
-}
-
-
 
 StringExpr::StringExpr(const char *strData, unsigned byteLength, bool Wide) {
   // OPTIMIZE: could allocate this appended to the StringExpr.
@@ -71,19 +57,6 @@ StringExpr::StringExpr(const char *strData, unsigned byteLength, bool Wide) {
 
 StringExpr::~StringExpr() {
   delete[] StrData;
-}
-
-void StringExpr::dump_impl() const {
-  if (isWide) std::cerr << 'L';
-  std::cerr << '"' << StrData << '"';
-}
-
-
-
-void ParenExpr::dump_impl() const {
-  std::cerr << "'('";
-  Val->dump();
-  std::cerr << "')'";
 }
 
 /// getOpcodeStr - Turn an Opcode enum value into the punctuation char it
@@ -109,62 +82,15 @@ const char *UnaryOperator::getOpcodeStr(Opcode Op) {
   }
 }
 
-void UnaryOperator::dump_impl() const {
-  std::cerr << getOpcodeStr(Opc);
-  Input->dump();
-}
-
-void SizeOfAlignOfTypeExpr::dump_impl() const {
-  std::cerr << (isSizeof ? "sizeof(" : "alignof(");
-  // FIXME: print type.
-  std::cerr << "ty)";
-}
-
 //===----------------------------------------------------------------------===//
 // Postfix Operators.
 //===----------------------------------------------------------------------===//
-
-void ArraySubscriptExpr::dump_impl() const {
-  Base->dump();
-  std::cerr << "[";
-  Idx->dump();
-  std::cerr << "]";
-}
 
 CallExpr::CallExpr(Expr *fn, Expr **args, unsigned numargs)
   : Fn(fn), NumArgs(numargs) {
   Args = new Expr*[numargs];
   for (unsigned i = 0; i != numargs; ++i)
     Args[i] = args[i];
-}
-
-void CallExpr::dump_impl() const {
-  Fn->dump();
-  std::cerr << "(";
-  for (unsigned i = 0, e = getNumArgs(); i != e; ++i) {
-    if (i) std::cerr << ", ";
-    getArg(i)->dump();
-  }
-  std::cerr << ")";
-}
-
-
-void MemberExpr::dump_impl() const {
-  Base->dump();
-  std::cerr << (isArrow ? "->" : ".");
-  
-  if (MemberDecl)
-    /*TODO: Print MemberDecl*/;
-  std::cerr << "member";
-}
-
-
-void CastExpr::dump_impl() const {
-  std::cerr << "'('";
-  // TODO PRINT TYPE
-  std::cerr << "<type>";
-  std::cerr << "')'";
-  Op->dump();
 }
 
 /// getOpcodeStr - Turn an Opcode enum value into the punctuation char it
@@ -203,18 +129,4 @@ const char *BinaryOperator::getOpcodeStr(Opcode Op) {
   case OrAssign:  return "|=";
   case Comma:     return ",";
   }
-}
-
-void BinaryOperator::dump_impl() const {
-  LHS->dump();
-  std::cerr << " " << getOpcodeStr(Opc) << " ";
-  RHS->dump();
-}
-
-void ConditionalOperator::dump_impl() const {
-  Cond->dump();
-  std::cerr << " ? ";
-  LHS->dump();
-  std::cerr << " : ";
-  RHS->dump();
 }
