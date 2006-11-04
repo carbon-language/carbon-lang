@@ -42,10 +42,6 @@ class StmtVisitor {
 public:
   virtual ~StmtVisitor();
   
-  /// VisitNull - Visit a null pointer.
-  ///
-  virtual void VisitNull() {}
-
   virtual void VisitStmt(Stmt *Node) {}
   virtual void VisitExpr(Expr *Node);
   

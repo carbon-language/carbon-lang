@@ -64,10 +64,15 @@ public:
 class StringExpr : public Expr {
   const char *StrData;
   unsigned ByteLength;
-  bool isWide;
+  bool IsWide;
 public:
   StringExpr(const char *strData, unsigned byteLength, bool Wide);
   virtual ~StringExpr();
+  
+  const char *getStrData() const { return StrData; }
+  unsigned getByteLength() const { return ByteLength; }
+  bool isWide() const { return IsWide; }
+  
   virtual void visit(StmtVisitor &Visitor);
 };
 
@@ -79,6 +84,9 @@ class ParenExpr : public Expr {
 public:
   ParenExpr(SourceLocation l, SourceLocation r, Expr *val)
     : L(l), R(r), Val(val) {}
+  
+  Expr *getSubExpr() { return Val; }
+  
   virtual void visit(StmtVisitor &Visitor);
 };
 
@@ -101,16 +109,19 @@ public:
   };
 
   UnaryOperator(Expr *input, Opcode opc)
-    : Input(input), Opc(opc) {}
+    : Val(input), Opc(opc) {}
   
   /// getOpcodeStr - Turn an Opcode enum value into the punctuation char it
   /// corresponds to, e.g. "sizeof" or "[pre]++"
   static const char *getOpcodeStr(Opcode Op);
-  
+
+  Opcode getOpcode() const { return Opc; }
+  Expr *getSubExpr() { return Val; }
+
   virtual void visit(StmtVisitor &Visitor);
 
 private:
-  Expr *Input;
+  Expr *Val;
   Opcode Opc;
 };
 
@@ -122,6 +133,8 @@ class SizeOfAlignOfTypeExpr : public Expr {
 public:
   SizeOfAlignOfTypeExpr(bool issizeof, Type *ty) : isSizeof(issizeof), Ty(ty) {
   }
+  
+  bool isSizeOf() const { return isSizeof; }
 
   virtual void visit(StmtVisitor &Visitor);
 };
@@ -135,6 +148,9 @@ class ArraySubscriptExpr : public Expr {
   Expr *Base, *Idx;
 public:
   ArraySubscriptExpr(Expr *base, Expr *idx) : Base(base), Idx(idx) {}
+  
+  Expr *getBase() { return Base; }
+  Expr *getIdx() { return Idx; }
   
   virtual void visit(StmtVisitor &Visitor);
 };
@@ -151,6 +167,8 @@ public:
   ~CallExpr() {
     delete [] Args;
   }
+  
+  Expr *getCallee() { return Fn; }
   
   /// getNumArgs - Return the number of actual arguments to this call.
   ///
@@ -174,11 +192,16 @@ public:
 class MemberExpr : public Expr {
   Expr *Base;
   Decl *MemberDecl;
-  bool isArrow;      // True if this is "X->F", false if this is "X.F".
+  bool IsArrow;      // True if this is "X->F", false if this is "X.F".
 public:
   MemberExpr(Expr *base, bool isarrow, Decl *memberdecl) 
-    : Base(base), MemberDecl(memberdecl), isArrow(isarrow) {
+    : Base(base), MemberDecl(memberdecl), IsArrow(isarrow) {
   }
+  
+  Expr *getBase() { return Base; }
+  Decl *getMemberDecl() { return MemberDecl; }
+  bool isArrow() const { return IsArrow; }
+  
   virtual void visit(StmtVisitor &Visitor);
 };
 
@@ -190,6 +213,7 @@ class CastExpr : public Expr {
 public:
   CastExpr(Type *ty, Expr *op) : Ty(ty), Op(op) {}
   
+  Expr *getSubExpr() { return Op; }
   virtual void visit(StmtVisitor &Visitor);
 };
 
@@ -224,6 +248,10 @@ public:
   /// corresponds to, e.g. "<<=".
   static const char *getOpcodeStr(Opcode Op);
   
+  Opcode getOpcode() const { return Opc; }
+  Expr *getLHS() { return LHS; }
+  Expr *getRHS() { return RHS; }
+  
   virtual void visit(StmtVisitor &Visitor);
 
 private:
@@ -239,6 +267,12 @@ class ConditionalOperator : public Expr {
 public:
   ConditionalOperator(Expr *cond, Expr *lhs, Expr *rhs)
     : Cond(cond), LHS(lhs), RHS(rhs) {}
+
+  Expr *getCond() { return Cond; }
+  Expr *getLHS() { return LHS; }
+  Expr *getRHS() { return RHS; }
+
+  
   virtual void visit(StmtVisitor &Visitor);
 };
 

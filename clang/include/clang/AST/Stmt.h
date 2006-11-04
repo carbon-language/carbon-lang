@@ -81,6 +81,8 @@ class ReturnStmt : public Stmt {
 public:
   ReturnStmt(Expr *E = 0) : RetExpr(E) {}
   
+  Expr *getRetValue() { return RetExpr; }
+  
   virtual void visit(StmtVisitor &Visitor);
 };
 
