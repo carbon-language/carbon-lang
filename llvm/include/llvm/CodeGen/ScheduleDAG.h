@@ -154,7 +154,8 @@ namespace llvm {
   public:
     virtual ~SchedulingPriorityQueue() {}
   
-    virtual void initNodes(std::vector<SUnit> &SUnits) = 0;
+    virtual void initNodes(std::map<SDNode*, SUnit*> &SUMap,
+                           std::vector<SUnit> &SUnits) = 0;
     virtual void releaseState() = 0;
   
     virtual bool empty() const = 0;
@@ -224,6 +225,16 @@ namespace llvm {
     ///
     void CalculateDepths();
     void CalculateHeights();
+
+    /// CountResults - The results of target nodes have register or immediate
+    /// operands first, then an optional chain, and optional flag operands
+    /// (which do not go into the machine instrs.)
+    static unsigned CountResults(SDNode *Node);
+
+    /// CountOperands  The inputs to target nodes have any actual inputs first,
+    /// followed by an optional chain operand, then flag operands.  Compute the
+    /// number of actual operands that  will go into the machine instr.
+    static unsigned CountOperands(SDNode *Node);
 
     /// EmitNode - Generate machine code for an node and needed dependencies.
     /// VRBaseMap contains, for each already emitted node, the first virtual
