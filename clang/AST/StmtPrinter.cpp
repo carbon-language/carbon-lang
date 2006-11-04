@@ -76,27 +76,9 @@ namespace  {
     }
     
     virtual void VisitStmt(Stmt *Node);
-    virtual void VisitCompoundStmt(CompoundStmt *Node);
-    virtual void VisitIfStmt(IfStmt *Node);
-    virtual void VisitWhileStmt(WhileStmt *Node);
-    virtual void VisitDoStmt(DoStmt *Node);
-    virtual void VisitForStmt(ForStmt *Node);
-    virtual void VisitReturnStmt(ReturnStmt *Node);
-
-    virtual void VisitExpr(Expr *Node);
-    virtual void VisitDeclRefExpr(DeclRefExpr *Node);
-    virtual void VisitIntegerConstant(IntegerConstant *Node);
-    virtual void VisitFloatingConstant(FloatingConstant *Node);
-    virtual void VisitStringExpr(StringExpr *Node);
-    virtual void VisitParenExpr(ParenExpr *Node);
-    virtual void VisitUnaryOperator(UnaryOperator *Node);
-    virtual void VisitSizeOfAlignOfTypeExpr(SizeOfAlignOfTypeExpr *Node);
-    virtual void VisitArraySubscriptExpr(ArraySubscriptExpr *Node);
-    virtual void VisitCallExpr(CallExpr *Node);
-    virtual void VisitMemberExpr(MemberExpr *Node);
-    virtual void VisitCastExpr(CastExpr *Node);
-    virtual void VisitBinaryOperator(BinaryOperator *Node);
-    virtual void VisitConditionalOperator(ConditionalOperator *Node);
+#define STMT(CLASS, PARENT) \
+    virtual void Visit##CLASS(CLASS *Node);
+#include "clang/AST/StmtNodes.def"
   };
 }
 
@@ -128,6 +110,13 @@ void StmtPrinter::VisitIfStmt(IfStmt *If) {
     Indent() << "else\n";
     PrintStmt(If->getElse());
   }
+}
+
+void StmtPrinter::VisitSwitchStmt(SwitchStmt *Node) {
+  Indent() << "switch (";
+  PrintExpr(Node->getCond());
+  OS << ")\n";
+  PrintStmt(Node->getBody());
 }
 
 void StmtPrinter::VisitWhileStmt(WhileStmt *Node) {

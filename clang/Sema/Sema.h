@@ -60,7 +60,8 @@ public:
   virtual StmtResult ParseIfStmt(SourceLocation IfLoc, ExprTy *CondVal,
                                  StmtTy *ThenVal, SourceLocation ElseLoc,
                                  StmtTy *ElseVal);
-  
+  virtual StmtResult ParseSwitchStmt(SourceLocation SwitchLoc, ExprTy *Cond,
+                                     StmtTy *Body);
   virtual StmtResult ParseWhileStmt(SourceLocation WhileLoc, ExprTy *Cond,
                                     StmtTy *Body);
   virtual StmtResult ParseDoStmt(SourceLocation DoLoc, StmtTy *Body,

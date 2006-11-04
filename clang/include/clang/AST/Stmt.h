@@ -72,6 +72,22 @@ public:
   virtual void visit(StmtVisitor &Visitor);
 };
 
+/// SwitchStmt - This represents a 'switch' stmt.
+///
+class SwitchStmt : public Stmt {
+  Expr *Cond;
+  Stmt *Body;
+public:
+  SwitchStmt(Expr *cond, Stmt *body)
+    : Cond(cond), Body(body) {}
+  
+  Expr *getCond() { return Cond; }
+  Stmt *getBody() { return Body; }
+  
+  virtual void visit(StmtVisitor &Visitor);
+};
+
+
 /// WhileStmt - This represents a 'while' stmt.
 ///
 class WhileStmt : public Stmt {

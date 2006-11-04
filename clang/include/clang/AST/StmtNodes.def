@@ -14,6 +14,7 @@
 // Normal Statements.
 STMT(CompoundStmt, Stmt)
 STMT(IfStmt      , Stmt)
+STMT(SwitchStmt  , Stmt)
 STMT(WhileStmt   , Stmt)
 STMT(DoStmt      , Stmt)
 STMT(ForStmt     , Stmt)
