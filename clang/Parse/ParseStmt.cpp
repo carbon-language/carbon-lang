@@ -181,6 +181,7 @@ Parser::StmtResult Parser::ParseStatementOrDeclaration(bool OnlyStatement) {
 Parser::StmtResult Parser::ParseIdentifierStatement(bool OnlyStatement) {
   IdentifierInfo *II = Tok.getIdentifierInfo();
   assert(Tok.getKind() == tok::identifier && II && "Not an identifier!");
+  II=II; // FIXME: SILENCE WARNING UNTIL THIS IS USED.
 
   LexerToken IdentTok = Tok;  // Save the whole token.
   ConsumeToken();  // eat the identifier.
