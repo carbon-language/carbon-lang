@@ -95,7 +95,7 @@ void ScheduleDAGRRList::Schedule() {
   CalculateDepths();
   CalculateHeights();
 
-  AvailableQueue->initNodes(SUnits);
+  AvailableQueue->initNodes(SUnitMap, SUnits);
 
   // Execute the actual scheduling loop Top-Down or Bottom-Up as appropriate.
   if (isBottomUp)
@@ -115,7 +115,7 @@ void ScheduleDAGRRList::Schedule() {
   EmitSchedule();
 }
 
-/// CommuteNodesToReducePressure - Is a node is two-address and commutable, and
+/// CommuteNodesToReducePressure - If a node is two-address and commutable, and
 /// it is not the last use of its first operand, add it to the CommuteSet if
 /// possible. It will be commuted when it is translated to a MI.
 void ScheduleDAGRRList::CommuteNodesToReducePressure() {
@@ -123,23 +123,38 @@ void ScheduleDAGRRList::CommuteNodesToReducePressure() {
   for (unsigned i = Sequence.size()-1; i != 0; --i) {  // Ignore first node.
     SUnit *SU = Sequence[i];
     if (!SU) continue;
-    if (SU->isTwoAddress && SU->isCommutable) {
-      SDNode *OpN = SU->Node->getOperand(0).Val;
-      SUnit *OpSU = SUnitMap[OpN];
-      if (OpSU && OperandSeen.count(OpSU) == 1) {
-        // Ok, so SU is not the last use of OpSU, but SU is two-address so
-        // it will clobber OpSU. Try to commute it if possible.
-        bool DoCommute = true;
-        for (unsigned j = 1, e = SU->Node->getNumOperands(); j != e; ++j) {
-          OpN = SU->Node->getOperand(j).Val;
-          OpSU = SUnitMap[OpN];
-          if (OpSU && OperandSeen.count(OpSU) == 1) {
-            DoCommute = false;
-            break;
+    if (SU->isCommutable) {
+      unsigned Opc = SU->Node->getTargetOpcode();
+      unsigned NumRes = CountResults(SU->Node);
+      unsigned NumOps = CountOperands(SU->Node);
+      for (unsigned j = 0; j != NumOps; ++j) {
+        if (TII->getOperandConstraint(Opc, j+NumRes,
+                                      TargetInstrInfo::TIED_TO) == -1)
+          continue;
+
+        SDNode *OpN = SU->Node->getOperand(j).Val;
+        SUnit *OpSU = SUnitMap[OpN];
+        if (OpSU && OperandSeen.count(OpSU) == 1) {
+          // Ok, so SU is not the last use of OpSU, but SU is two-address so
+          // it will clobber OpSU. Try to commute SU if no other source operands
+          // are live below.
+          bool DoCommute = true;
+          for (unsigned k = 0; k < NumOps; ++k) {
+            if (k != j) {
+              OpN = SU->Node->getOperand(k).Val;
+              OpSU = SUnitMap[OpN];
+              if (OpSU && OperandSeen.count(OpSU) == 1) {
+                DoCommute = false;
+                break;
+              }
+            }
           }
+          if (DoCommute)
+            CommuteSet.insert(SU->Node);
         }
-        if (DoCommute)
-          CommuteSet.insert(SU->Node);
+
+        // Only look at the first use&def node for now.
+        break;
       }
     }
 
@@ -411,7 +426,8 @@ namespace {
     RegReductionPriorityQueue() :
     Queue(SF(this)) {}
     
-    virtual void initNodes(std::vector<SUnit> &sunits) {}
+    virtual void initNodes(std::map<SDNode*, SUnit*> &sumap,
+                           std::vector<SUnit> &sunits) {}
     virtual void releaseState() {}
     
     virtual int getSethiUllmanNumber(unsigned NodeNum) const {
@@ -434,21 +450,32 @@ namespace {
       Queue.pop();
       return V;
     }
+
+    virtual bool isDUOperand(const SUnit *SU1, const SUnit *SU2) {
+      return false;
+    }
   };
 
   template<class SF>
   class VISIBILITY_HIDDEN BURegReductionPriorityQueue
    : public RegReductionPriorityQueue<SF> {
+    // SUnitMap SDNode to SUnit mapping (n -> 1).
+    std::map<SDNode*, SUnit*> *SUnitMap;
+
     // SUnits - The SUnits for the current graph.
     const std::vector<SUnit> *SUnits;
     
     // SethiUllmanNumbers - The SethiUllman number for each node.
     std::vector<int> SethiUllmanNumbers;
 
+    const TargetInstrInfo *TII;
   public:
-    BURegReductionPriorityQueue() {}
+    BURegReductionPriorityQueue(const TargetInstrInfo *tii)
+      : TII(tii) {}
 
-    void initNodes(std::vector<SUnit> &sunits) {
+    void initNodes(std::map<SDNode*, SUnit*> &sumap,
+                   std::vector<SUnit> &sunits) {
+      SUnitMap = &sumap;
       SUnits = &sunits;
       // Add pseudo dependency edges for two-address nodes.
       AddPseudoTwoAddrDeps();
@@ -466,7 +493,21 @@ namespace {
       return SethiUllmanNumbers[NodeNum];
     }
 
+    bool isDUOperand(const SUnit *SU1, const SUnit *SU2) {
+      unsigned Opc = SU1->Node->getTargetOpcode();
+      unsigned NumRes = ScheduleDAG::CountResults(SU1->Node);
+      unsigned NumOps = ScheduleDAG::CountOperands(SU1->Node);
+      for (unsigned i = 0; i != NumOps; ++i) {
+        if (TII->getOperandConstraint(Opc, i+NumRes,
+                                      TargetInstrInfo::TIED_TO) == -1)
+          continue;
+        if (SU1->Node->getOperand(i).isOperand(SU2->Node))
+          return true;
+      }
+      return false;
+    }
   private:
+    bool canClobber(SUnit *SU, SUnit *Op);
     void AddPseudoTwoAddrDeps();
     void CalculatePriorities();
     int CalcNodePriority(const SUnit *SU);
@@ -475,6 +516,9 @@ namespace {
 
   template<class SF>
   class TDRegReductionPriorityQueue : public RegReductionPriorityQueue<SF> {
+    // SUnitMap SDNode to SUnit mapping (n -> 1).
+    std::map<SDNode*, SUnit*> *SUnitMap;
+
     // SUnits - The SUnits for the current graph.
     const std::vector<SUnit> *SUnits;
     
@@ -484,7 +528,9 @@ namespace {
   public:
     TDRegReductionPriorityQueue() {}
 
-    void initNodes(std::vector<SUnit> &sunits) {
+    void initNodes(std::map<SDNode*, SUnit*> &sumap,
+                   std::vector<SUnit> &sunits) {
+      SUnitMap = &sumap;
       SUnits = &sunits;
       // Calculate node priorities.
       CalculatePriorities();
@@ -563,13 +609,11 @@ bool bu_ls_rr_sort::operator()(const SUnit *left, const SUnit *right) const {
   // as a def&use operand is preferred.
   if (LIsTarget && RIsTarget) {
     if (left->isTwoAddress && !right->isTwoAddress) {
-      SDNode *DUNode = left->Node->getOperand(0).Val;
-      if (DUNode->isOperand(right->Node))
+      if (SPQ->isDUOperand(left, right))
         LBonus += 2;
     }
     if (!left->isTwoAddress && right->isTwoAddress) {
-      SDNode *DUNode = right->Node->getOperand(0).Val;
-      if (DUNode->isOperand(left->Node))
+      if (SPQ->isDUOperand(right, left))
         RBonus += 2;
     }
   }
@@ -616,25 +660,24 @@ static bool isReachable(SUnit *SU, SUnit *TargetSU) {
   return Reached;
 }
 
-static SUnit *getDefUsePredecessor(SUnit *SU) {
-  SDNode *DU = SU->Node->getOperand(0).Val;
-  for (SUnit::pred_iterator I = SU->Preds.begin(), E = SU->Preds.end();
-       I != E; ++I) {
-    if (I->second) continue;  // ignore chain preds
-    SUnit *PredSU = I->first;
-    if (PredSU->Node == DU)
-      return PredSU;
+template<class SF>
+bool BURegReductionPriorityQueue<SF>::canClobber(SUnit *SU, SUnit *Op) {
+  if (SU->isTwoAddress) {
+    unsigned Opc = SU->Node->getTargetOpcode();
+    unsigned NumRes = ScheduleDAG::CountResults(SU->Node);
+    unsigned NumOps = ScheduleDAG::CountOperands(SU->Node);
+    for (unsigned i = 0; i != NumOps; ++i) {
+      if (TII->getOperandConstraint(Opc, i+NumRes,
+                                    TargetInstrInfo::TIED_TO) != -1) {
+        SDNode *DU = SU->Node->getOperand(i).Val;
+        if (Op == (*SUnitMap)[DU])
+          return true;
+      }
+    }
   }
-
-  // Must be flagged.
-  return NULL;
-}
-
-static bool canClobber(SUnit *SU, SUnit *Op) {
-  if (SU->isTwoAddress)
-    return Op == getDefUsePredecessor(SU);
   return false;
 }
+
 
 /// AddPseudoTwoAddrDeps - If two nodes share an operand and one of them uses
 /// it as a def&use operand. Add a pseudo control edge from it to the other
@@ -642,6 +685,45 @@ static bool canClobber(SUnit *SU, SUnit *Op) {
 /// first (lower in the schedule).
 template<class SF>
 void BURegReductionPriorityQueue<SF>::AddPseudoTwoAddrDeps() {
+#if 1
+  for (unsigned i = 0, e = SUnits->size(); i != e; ++i) {
+    SUnit *SU = (SUnit *)&((*SUnits)[i]);
+    if (!SU->isTwoAddress)
+      continue;
+
+    SDNode *Node = SU->Node;
+    if (!Node->isTargetOpcode())
+      continue;
+
+    unsigned Opc = Node->getTargetOpcode();
+    unsigned NumRes = ScheduleDAG::CountResults(Node);
+    unsigned NumOps = ScheduleDAG::CountOperands(Node);
+    for (unsigned j = 0; j != NumOps; ++j) {
+      if (TII->getOperandConstraint(Opc, j+NumRes,
+                                    TargetInstrInfo::TIED_TO) != -1) {
+        SDNode *DU = SU->Node->getOperand(j).Val;
+        SUnit *DUSU = (*SUnitMap)[DU];
+        for (SUnit::succ_iterator I = DUSU->Succs.begin(),E = DUSU->Succs.end();
+             I != E; ++I) {
+          if (I->second) continue;
+          SUnit *SuccSU = I->first;
+          if (SuccSU != SU &&
+              (!canClobber(SuccSU, DUSU) ||
+               (!SU->isCommutable && SuccSU->isCommutable))){
+            if (SuccSU->Depth == SU->Depth && !isReachable(SuccSU, SU)) {
+              DEBUG(std::cerr << "Adding an edge from SU # " << SU->NodeNum
+                    << " to SU #" << SuccSU->NodeNum << "\n");
+              if (SU->addPred(SuccSU, true))
+                SU->NumChainPredsLeft++;
+              if (SuccSU->addSucc(SU, true))
+                SuccSU->NumChainSuccsLeft++;
+            }
+          }
+        }
+      }
+    }
+  }
+#else
   for (unsigned i = 0, e = SUnits->size(); i != e; ++i) {
     SUnit *SU = (SUnit *)&((*SUnits)[i]);
     SDNode *Node = SU->Node;
@@ -649,7 +731,7 @@ void BURegReductionPriorityQueue<SF>::AddPseudoTwoAddrDeps() {
       continue;
 
     if (SU->isTwoAddress) {
-      SUnit *DUSU = getDefUsePredecessor(SU);
+      SUnit *DUSU = getDefUsePredecessor(SU, TII);
       if (!DUSU) continue;
 
       for (SUnit::succ_iterator I = DUSU->Succs.begin(), E = DUSU->Succs.end();
@@ -657,7 +739,7 @@ void BURegReductionPriorityQueue<SF>::AddPseudoTwoAddrDeps() {
         if (I->second) continue;
         SUnit *SuccSU = I->first;
         if (SuccSU != SU &&
-            (!canClobber(SuccSU, DUSU) ||
+            (!canClobber(SuccSU, DUSU, TII) ||
              (!SU->isCommutable && SuccSU->isCommutable))){
           if (SuccSU->Depth == SU->Depth && !isReachable(SuccSU, SU)) {
             DEBUG(std::cerr << "Adding an edge from SU # " << SU->NodeNum
@@ -671,6 +753,7 @@ void BURegReductionPriorityQueue<SF>::AddPseudoTwoAddrDeps() {
       }
     }
   }
+#endif
 }
 
 /// CalcNodePriority - Priority is the Sethi Ullman number. 
@@ -858,8 +941,9 @@ void TDRegReductionPriorityQueue<SF>::CalculatePriorities() {
 llvm::ScheduleDAG* llvm::createBURRListDAGScheduler(SelectionDAGISel *IS,
                                                     SelectionDAG *DAG,
                                                     MachineBasicBlock *BB) {
+  const TargetInstrInfo *TII = DAG->getTarget().getInstrInfo();
   return new ScheduleDAGRRList(*DAG, BB, DAG->getTarget(), true,
-                               new BURegReductionPriorityQueue<bu_ls_rr_sort>());
+                           new BURegReductionPriorityQueue<bu_ls_rr_sort>(TII));
 }
 
 llvm::ScheduleDAG* llvm::createTDRRListDAGScheduler(SelectionDAGISel *IS,

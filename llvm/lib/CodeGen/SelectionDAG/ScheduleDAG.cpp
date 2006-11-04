@@ -126,8 +126,13 @@ void ScheduleDAG::BuildSchedUnits() {
     
     if (MainNode->isTargetOpcode()) {
       unsigned Opc = MainNode->getTargetOpcode();
-      if (TII->isTwoAddrInstr(Opc))
-        SU->isTwoAddress = true;
+      for (unsigned i = 0, ee = TII->getNumOperands(Opc); i != ee; ++i) {
+        if (TII->getOperandConstraint(Opc, i,
+                                      TargetInstrInfo::TIED_TO) != -1) {
+          SU->isTwoAddress = true;
+          break;
+        }
+      }
       if (TII->isCommutableInstr(Opc))
         SU->isCommutable = true;
     }
@@ -210,7 +215,7 @@ void ScheduleDAG::CalculateHeights() {
 /// CountResults - The results of target nodes have register or immediate
 /// operands first, then an optional chain, and optional flag operands (which do
 /// not go into the machine instrs.)
-static unsigned CountResults(SDNode *Node) {
+unsigned ScheduleDAG::CountResults(SDNode *Node) {
   unsigned N = Node->getNumValues();
   while (N && Node->getValueType(N - 1) == MVT::Flag)
     --N;
@@ -222,7 +227,7 @@ static unsigned CountResults(SDNode *Node) {
 /// CountOperands  The inputs to target nodes have any actual inputs first,
 /// followed by an optional chain operand, then flag operands.  Compute the
 /// number of actual operands that  will go into the machine instr.
-static unsigned CountOperands(SDNode *Node) {
+unsigned ScheduleDAG::CountOperands(SDNode *Node) {
   unsigned N = Node->getNumOperands();
   while (N && Node->getOperand(N - 1).getValueType() == MVT::Flag)
     --N;
