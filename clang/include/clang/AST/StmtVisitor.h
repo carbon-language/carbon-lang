@@ -12,10 +12,12 @@
 //===----------------------------------------------------------------------===//
 
 #ifndef LLVM_CLANG_AST_STMTVISITOR_H
-#define LLVM_CLANG_AST_STMT_H
+#define LLVM_CLANG_AST_STMTVISITOR_H
 
 namespace llvm {
 namespace clang {
+  class Stmt;
+  class Expr;
   class CompoundStmt;
   class IfStmt;
   class ReturnStmt;
@@ -43,24 +45,28 @@ struct StmtVisitor {
   ///
   virtual void VisitNull() {}
 
-  // Visitation methods for various subclasses.
-  virtual void VisitCompoundStmt(CompoundStmt *Node) {}
-  virtual void VisitIfStmt      (IfStmt       *Node) {}
-  virtual void VisitReturnStmt  (ReturnStmt   *Node) {}
+  virtual void VisitStmt(Stmt *Node) {}
+  virtual void VisitExpr(Expr *Node);
   
-  virtual void VisitDeclRefExpr(DeclRefExpr *Node) {}
-  virtual void VisitIntegerConstant(IntegerConstant *Node) {}
-  virtual void VisitFloatingConstant(FloatingConstant *Node) {}
-  virtual void VisitStringExpr(StringExpr *Node) {}
-  virtual void VisitParenExpr(ParenExpr *Node) {}
-  virtual void VisitUnaryOperator(UnaryOperator *Node) {}
-  virtual void VisitSizeOfAlignOfTypeExpr(SizeOfAlignOfTypeExpr *Node) {}
-  virtual void VisitArraySubscriptExpr(ArraySubscriptExpr *Node) {}
-  virtual void VisitCallExpr(CallExpr *Node) {}
-  virtual void VisitMemberExpr(MemberExpr *Node) {}
-  virtual void VisitCastExpr(CastExpr *Node) {}
-  virtual void VisitBinaryOperator(BinaryOperator *Node) {}
-  virtual void VisitConditionalOperator(ConditionalOperator *Node) {}
+  // Visitation methods for various Stmt subclasses.
+  virtual void VisitCompoundStmt(CompoundStmt *Node);
+  virtual void VisitIfStmt(IfStmt       *Node);
+  virtual void VisitReturnStmt(ReturnStmt   *Node);
+  
+  // Visitation methods for various Expr subclasses.
+  virtual void VisitDeclRefExpr(DeclRefExpr *Node);
+  virtual void VisitIntegerConstant(IntegerConstant *Node);
+  virtual void VisitFloatingConstant(FloatingConstant *Node);
+  virtual void VisitStringExpr(StringExpr *Node);
+  virtual void VisitParenExpr(ParenExpr *Node);
+  virtual void VisitUnaryOperator(UnaryOperator *Node);
+  virtual void VisitSizeOfAlignOfTypeExpr(SizeOfAlignOfTypeExpr *Node);
+  virtual void VisitArraySubscriptExpr(ArraySubscriptExpr *Node);
+  virtual void VisitCallExpr(CallExpr *Node);
+  virtual void VisitMemberExpr(MemberExpr *Node);
+  virtual void VisitCastExpr(CastExpr *Node);
+  virtual void VisitBinaryOperator(BinaryOperator *Node);
+  virtual void VisitConditionalOperator(ConditionalOperator *Node);
 };
   
 }

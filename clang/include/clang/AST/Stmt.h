@@ -36,7 +36,7 @@ public:
   virtual bool isExpr() const { return false; }
   
   // Implement visitor support.
-  virtual void visit(StmtVisitor *Visitor) = 0;
+  virtual void visit(StmtVisitor *Visitor);
 private:
   virtual void dump_impl() const = 0;
 };

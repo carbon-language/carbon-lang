@@ -28,7 +28,7 @@ void Stmt::dump() const {
   if (isExpr()) std::cerr << ")";
 }
 
-
+void Stmt        ::visit(StmtVisitor *V) { return V->VisitStmt(this); }
 void CompoundStmt::visit(StmtVisitor *V) { return V->VisitCompoundStmt(this); }
 void IfStmt      ::visit(StmtVisitor *V) { return V->VisitIfStmt(this); }
 void ReturnStmt  ::visit(StmtVisitor *V) { return V->VisitReturnStmt(this); }

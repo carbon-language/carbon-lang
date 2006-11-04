@@ -35,6 +35,7 @@ public:
   
   // FIXME: move to isa/dyncast etc.
   virtual bool isExpr() const { return true; }
+  virtual void visit(StmtVisitor *Visitor);
 };
 
 //===----------------------------------------------------------------------===//

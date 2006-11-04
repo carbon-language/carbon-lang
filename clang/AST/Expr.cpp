@@ -25,6 +25,7 @@ using namespace clang;
 #define MAKE_VISITOR(CLASS) \
   void CLASS::visit(StmtVisitor *V) { return V->Visit ## CLASS(this); }
 
+MAKE_VISITOR(Expr)
 MAKE_VISITOR(DeclRefExpr)
 MAKE_VISITOR(IntegerConstant)
 MAKE_VISITOR(FloatingConstant)
