@@ -327,6 +327,8 @@ public:
   SDOperand getTruncStore(SDOperand Chain, SDOperand Value, SDOperand Ptr,
                           const Value *SV, int SVOffset, MVT::ValueType TVT,
                           bool isVolatile=false);
+  SDOperand getIndexedStore(SDOperand OrigStoe, SDOperand Base,
+                           SDOperand Offset, ISD::MemOpAddrMode AM);
 
   // getSrcValue - construct a node to track a Value* through the backend
   SDOperand getSrcValue(const Value* I, int offset = 0);

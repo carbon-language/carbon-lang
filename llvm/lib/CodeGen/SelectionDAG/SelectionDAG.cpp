@@ -1723,6 +1723,36 @@ SDOperand SelectionDAG::getTruncStore(SDOperand Chain, SDOperand Value,
   return SDOperand(N, 0);
 }
 
+SDOperand SelectionDAG::getIndexedStore(SDOperand OrigStore, SDOperand Base,
+                                       SDOperand Offset, ISD::MemOpAddrMode AM){
+  StoreSDNode *ST = cast<StoreSDNode>(OrigStore);
+  assert(ST->getOffset().getOpcode() == ISD::UNDEF &&
+         "Store is already a indexed store!");
+  SDVTList VTs = getVTList(Base.getValueType(), MVT::Other);
+  SDOperand Ops[] = { ST->getChain(), ST->getValue(), Base, Offset };
+  FoldingSetNodeID ID;
+  AddNodeIDNode(ID, ISD::STORE, VTs, Ops, 4);
+  ID.AddInteger(AM);
+  ID.AddInteger(ST->isTruncatingStore());
+  ID.AddInteger(ST->getStoredVT());
+  ID.AddPointer(ST->getSrcValue());
+  ID.AddInteger(ST->getSrcValueOffset());
+  ID.AddInteger(ST->getAlignment());
+  ID.AddInteger(ST->isVolatile());
+  void *IP = 0;
+  if (SDNode *E = CSEMap.FindNodeOrInsertPos(ID, IP))
+    return SDOperand(E, 0);
+  SDNode *N = new StoreSDNode(ST->getChain(), ST->getValue(),
+                              Base, Offset, AM,
+                              ST->isTruncatingStore(), ST->getStoredVT(),
+                              ST->getSrcValue(), ST->getSrcValueOffset(),
+                              ST->getAlignment(), ST->isVolatile());
+  N->setValueTypes(VTs);
+  CSEMap.InsertNode(N, IP);
+  AllNodes.push_back(N);
+  return SDOperand(N, 0);
+}
+
 SDOperand SelectionDAG::getVAArg(MVT::ValueType VT,
                                  SDOperand Chain, SDOperand Ptr,
                                  SDOperand SV) {
