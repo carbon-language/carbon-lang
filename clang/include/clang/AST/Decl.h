@@ -15,7 +15,7 @@
 #define LLVM_CLANG_AST_DECL_H
 
 #include "clang/Basic/SourceLocation.h"
-#include "clang/Parse/Declarations.h"
+#include "clang/Parse/SemaDecl.h"
 
 namespace llvm {
 namespace clang {

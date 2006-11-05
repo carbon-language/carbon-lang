@@ -1,4 +1,4 @@
-//===--- Declaration.cpp - Declaration Parsing ----------------------------===//
+//===--- ParseDecl.cpp - Declaration Parsing ------------------------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -12,7 +12,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "clang/Parse/Parser.h"
-#include "clang/Parse/Declarations.h"
+#include "clang/Parse/SemaDecl.h"
 using namespace llvm;
 using namespace clang;
 

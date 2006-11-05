@@ -1,4 +1,4 @@
-//===--- DeclarationSemantics.cpp - Declaration Representation ------------===//
+//===--- SemaDecl.cpp - Declaration Semantic Analysis ---------------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,11 +7,11 @@
 //
 //===----------------------------------------------------------------------===//
 //
-//  This file implements semantic checking for declarations.
+//  This file implements semantic analysis for declarations.
 //
 //===----------------------------------------------------------------------===//
 
-#include "clang/Parse/Declarations.h"
+#include "clang/Parse/SemaDecl.h"
 #include "clang/Basic/LangOptions.h"
 #include "clang/Basic/SourceLocation.h"
 using namespace llvm;

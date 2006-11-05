@@ -1,4 +1,4 @@
-//===--- Initializer.cpp - Initializer Parsing ----------------------------===//
+//===--- ParseInit.cpp - Initializer Parsing ------------------------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //

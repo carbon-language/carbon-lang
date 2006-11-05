@@ -1,4 +1,4 @@
-//===--- Declarations.h - Declaration Representation ------------*- C++ -*-===//
+//===--- SemaDecl.h - Declaration Semantic Analysis -------------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -11,8 +11,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_CLANG_PARSE_DECLARATIONS_H
-#define LLVM_CLANG_PARSE_DECLARATIONS_H
+#ifndef LLVM_CLANG_PARSE_SEMADECL_H
+#define LLVM_CLANG_PARSE_SEMADECL_H
 
 #include "clang/Basic/Diagnostic.h"
 #include "clang/Basic/SourceLocation.h"

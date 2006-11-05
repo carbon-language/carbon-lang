@@ -1,4 +1,4 @@
-//===--- Statement.cpp - Statement and Block Parser -----------------------===//
+//===--- ParseStmt.cpp - Statement and Block Parser -----------------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -14,7 +14,7 @@
 
 #include "clang/Parse/Parser.h"
 #include "clang/Basic/Diagnostic.h"
-#include "clang/Parse/Declarations.h"
+#include "clang/Parse/SemaDecl.h"
 using namespace llvm;
 using namespace clang;
 
