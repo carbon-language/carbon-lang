@@ -266,12 +266,12 @@ void Parser::ParseTranslationUnit() {
 /// [EXT]   ';'
 /// [GNU]   asm-definition
 /// [GNU]   __extension__ external-declaration     [TODO]
-/// [OBJC]  objc-class-definition      [TODO]
-/// [OBJC]  objc-class-declaration     [TODO]
-/// [OBJC]  objc-alias-declaration     [TODO]
-/// [OBJC]  objc-protocol-definition   [TODO]
-/// [OBJC]  objc-method-definition     [TODO]
-/// [OBJC]  @end                       [TODO]
+/// [OBJC]  objc-class-definition
+/// [OBJC]  objc-class-declaration
+/// [OBJC]  objc-alias-declaration
+/// [OBJC]  objc-protocol-definition
+/// [OBJC]  objc-method-definition
+/// [OBJC]  @end
 ///
 /// [GNU] asm-definition:
 ///         simple-asm-expr ';'
@@ -455,6 +455,14 @@ void Parser::ParseSimpleAsm() {
   MatchRHSPunctuation(tok::r_paren, Loc);
 }
 
+/// ParseExternalDeclaration:
+///       external-declaration: [C99 6.9]
+/// [OBJC]  objc-class-definition
+/// [OBJC]  objc-class-declaration     [TODO]
+/// [OBJC]  objc-alias-declaration     [TODO]
+/// [OBJC]  objc-protocol-definition   [TODO]
+/// [OBJC]  objc-method-definition     [TODO]
+/// [OBJC]  '@' 'end'                  [TODO]
 void Parser::ObjCParseAtDirectives() {
   SourceLocation AtLoc = ConsumeToken(); // the "@"
 
@@ -480,7 +488,7 @@ void Parser::ObjCParseAtDirectives() {
 
 ///
 /// objc-class-declaration: 
-///    @class identifier-list ;
+///    '@' 'class' identifier-list ';'
 ///  
 void Parser::ObjCParseAtClassDeclaration(SourceLocation atLoc) {
   ConsumeToken(); // the identifier "class"
