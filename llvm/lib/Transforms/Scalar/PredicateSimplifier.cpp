@@ -427,8 +427,6 @@ namespace {
           // "setlt/gt int %a, %b" EQ true  then %a NE %b
           // "setlt/gt int %a, %b" NE false then %a NE %b
 
-          // "setlt int %a, %b" NE true then %a EQ %b
-
           if (ConstantBool *CB = dyn_cast<ConstantBool>(V1)) {
             if (CB->getValue() ^ Opcode==NE)
               addNotEqual(BO->getOperand(0), BO->getOperand(1));
