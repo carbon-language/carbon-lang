@@ -60,7 +60,7 @@ I. Introduction:
  Finally, it should be pointed out that the goal here is to build something that
  is high-quality and industrial-strength: all the obnoxious features of the C
  family must be correctly supported (trigraphs, preprocessor arcana, K&R-style
- prototypes, GCC/MS extensions, etc).  It cannot be used if it's not 'real'.
+ prototypes, GCC/MS extensions, etc).  It cannot be used if it is not 'real'.
 
 
 II. Usage of clang driver:
@@ -68,7 +68,7 @@ II. Usage of clang driver:
  * Basic Command-Line Options:
    - Help: clang --help
    - Standard GCC options accepted: -E, -I*, -i*, -pedantic, -std=c90, etc.
-   - Make diagnostics more gcc-like: -fno-caret-diagnostics -fno-show-column
+   - To make diagnostics more gcc-like: -fno-caret-diagnostics -fno-show-column
    - Enable metric printing: -stats
 
  * -parse-noop is the default mode.
@@ -85,6 +85,7 @@ II. Usage of clang driver:
  
  * -parse-ast-print prints most expression and statements nodes, but some
    things are missing.
+
 
 III. Current advantages over GCC:
 
