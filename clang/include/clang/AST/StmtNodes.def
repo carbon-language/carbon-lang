@@ -13,6 +13,9 @@
 
 // Normal Statements.
 STMT(CompoundStmt, Stmt)
+STMT(CaseStmt    , Stmt)
+STMT(DefaultStmt , Stmt)
+STMT(LabelStmt   , Stmt)
 STMT(IfStmt      , Stmt)
 STMT(SwitchStmt  , Stmt)
 STMT(WhileStmt   , Stmt)

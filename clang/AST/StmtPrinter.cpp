@@ -13,6 +13,7 @@
 
 #include "clang/AST/StmtVisitor.h"
 #include "clang/AST/Expr.h"
+#include "clang/Lex/IdentifierTable.h"
 #include "llvm/Support/Compiler.h"
 #include <iostream>
 using namespace llvm;
@@ -98,6 +99,31 @@ void StmtPrinter::VisitCompoundStmt(CompoundStmt *Node) {
     PrintStmt(*I);
   
   Indent() << "}\n";
+}
+
+void StmtPrinter::VisitCaseStmt(CaseStmt *Node) {
+  Indent() << "case ";
+  PrintExpr(Node->getLHS());
+  if (Node->getRHS()) {
+    OS << " ... ";
+    PrintExpr(Node->getRHS());
+  }
+  OS << ":\n";
+  
+  // FIXME: This recursively indents consequtive cases.
+  PrintStmt(Node->getSubStmt());
+}
+
+void StmtPrinter::VisitDefaultStmt(DefaultStmt *Node) {
+  Indent() << "default:\n";
+  // FIXME: This recursively indents consequtive cases.
+  PrintStmt(Node->getSubStmt());
+}
+
+void StmtPrinter::VisitLabelStmt(LabelStmt *Node) {
+  Indent() << Node->getLabel()->getName() << ":\n";
+  // FIXME: This recursively indents consequtive cases.
+  PrintStmt(Node->getSubStmt());
 }
 
 void StmtPrinter::VisitIfStmt(IfStmt *If) {

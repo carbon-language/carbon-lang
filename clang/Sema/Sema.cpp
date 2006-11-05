@@ -99,6 +99,25 @@ ASTBuilder::ParseCompoundStmt(SourceLocation L, SourceLocation R,
     return 0;              // {}  -> ;
 }
 
+Action::StmtResult
+ASTBuilder::ParseCaseStmt(SourceLocation CaseLoc, ExprTy *LHSVal,
+                          SourceLocation DotDotDotLoc, ExprTy *RHSVal,
+                          SourceLocation ColonLoc, StmtTy *SubStmt) {
+  return new CaseStmt((Expr*)LHSVal, (Expr*)RHSVal, (Stmt*)SubStmt);
+}
+
+Action::StmtResult
+ASTBuilder::ParseDefaultStmt(SourceLocation DefaultLoc,
+                             SourceLocation ColonLoc, StmtTy *SubStmt) {
+  return new DefaultStmt((Stmt*)SubStmt);
+}
+
+Action::StmtResult
+ASTBuilder::ParseLabelStmt(SourceLocation IdentLoc, IdentifierInfo *II,
+                           SourceLocation ColonLoc, StmtTy *SubStmt) {
+  return new LabelStmt(II, (Stmt*)SubStmt);
+}
+
 Action::StmtResult 
 ASTBuilder::ParseIfStmt(SourceLocation IfLoc, ExprTy *CondVal,
                         StmtTy *ThenVal, SourceLocation ElseLoc,

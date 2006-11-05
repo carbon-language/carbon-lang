@@ -21,6 +21,7 @@
 namespace llvm {
 namespace clang {
   class Expr;
+  class IdentifierInfo;
   class StmtVisitor;
   
 /// Stmt - This represents one statement.
@@ -51,6 +52,45 @@ public:
   
   virtual void visit(StmtVisitor &Visitor);
 };
+
+class CaseStmt : public Stmt {
+  Expr *LHSVal;
+  Expr *RHSVal;  // Non-null for GNU "case 1 ... 4" extension
+  Stmt *SubStmt;
+public:
+  CaseStmt(Expr *lhs, Expr *rhs, Stmt *substmt) 
+    : LHSVal(lhs), RHSVal(rhs), SubStmt(substmt) {}
+  
+  Expr *getLHS() { return LHSVal; }
+  Expr *getRHS() { return RHSVal; }
+  Stmt *getSubStmt() { return SubStmt; }
+
+  virtual void visit(StmtVisitor &Visitor);
+};
+
+class DefaultStmt : public Stmt {
+  Stmt *SubStmt;
+public:
+  DefaultStmt(Stmt *substmt) : SubStmt(substmt) {}
+  
+  Stmt *getSubStmt() { return SubStmt; }
+
+  virtual void visit(StmtVisitor &Visitor);
+};
+
+class LabelStmt : public Stmt {
+  IdentifierInfo *Label;
+  Stmt *SubStmt;
+public:
+  LabelStmt(IdentifierInfo *label, Stmt *substmt)
+    : Label(label), SubStmt(substmt) {}
+  
+  IdentifierInfo *getLabel() { return Label; }
+  Stmt *getSubStmt() { return SubStmt; }
+
+  virtual void visit(StmtVisitor &Visitor);
+};
+
 
 /// IfStmt - This represents an if/then/else.
 ///

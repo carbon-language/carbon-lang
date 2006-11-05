@@ -56,7 +56,13 @@ public:
   virtual StmtResult ParseExprStmt(ExprTy *Expr) {
     return Expr; // Exprs are Stmts.
   }
-  
+  virtual StmtResult ParseCaseStmt(SourceLocation CaseLoc, ExprTy *LHSVal,
+                                   SourceLocation DotDotDotLoc, ExprTy *RHSVal,
+                                   SourceLocation ColonLoc, StmtTy *SubStmt);
+  virtual StmtResult ParseDefaultStmt(SourceLocation DefaultLoc,
+                                      SourceLocation ColonLoc, StmtTy *SubStmt);
+  virtual StmtResult ParseLabelStmt(SourceLocation IdentLoc, IdentifierInfo *II,
+                                    SourceLocation ColonLoc, StmtTy *SubStmt);
   virtual StmtResult ParseIfStmt(SourceLocation IfLoc, ExprTy *CondVal,
                                  StmtTy *ThenVal, SourceLocation ElseLoc,
                                  StmtTy *ElseVal);
