@@ -174,7 +174,11 @@ LIBS       := @LIBS@
 LLVMGCCDIR := @LLVMGCCDIR@
 
 # Determine the target for which LLVM should generate code.
+ifeq (@LLVMGCC_MAJVERS@,3)
 LLVMGCCARCH := @target@/3.4-llvm
+else
+LLVMGCCARCH := @target@/@LLVMGCC_VERSION@
+endif
 
 # Full pathnames of LLVM C/C++ front-end 'cc1' and 'cc1plus' binaries:
 LLVMGCC  := @LLVMGCC@
