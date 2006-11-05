@@ -534,7 +534,7 @@ void CWriter::printConstantPacked(ConstantPacked *CP) {
 // only deal in IEEE FP).
 //
 static bool isFPCSafeToPrint(const ConstantFP *CFP) {
-#if HAVE_PRINTF_A
+#if HAVE_PRINTF_A & ENABLED_CBE_PRINTF_A
   char Buffer[100];
   sprintf(Buffer, "%a", CFP->getValue());
 
@@ -726,7 +726,7 @@ void CWriter::printConstant(Constant *CPV) {
             << " /*inf*/ ";
       } else {
         std::string Num;
-#if HAVE_PRINTF_A
+#if HAVE_PRINTF_A & ENABLE_CBE_PRINTF_A
         // Print out the constant as a floating point number.
         char Buffer[100];
         sprintf(Buffer, "%a", FPC->getValue());
