@@ -116,15 +116,15 @@
 					<Tool
 						Name="VCCustomBuildTool"
 						Description="Performing TableGen Step"
-						CommandLine="..\$(IntDir)\TableGen.exe -gen-register-enums -I ..\..\lib\Target\X86 -I ..\..\include $(InputPath) -o X86GenRegisterNames.inc
-..\$(IntDir)\TableGen.exe -gen-register-desc-header -I ..\..\lib\Target\X86 -I ..\..\include $(InputPath) -o X86GenRegisterInfo.h.inc
-..\$(IntDir)\TableGen.exe -gen-register-desc -I ..\..\lib\Target\X86 -I ..\..\include $(InputPath) -o X86GenRegisterInfo.inc
-..\$(IntDir)\TableGen.exe -gen-instr-enums -I ..\..\lib\Target\X86 -I ..\..\include $(InputPath) -o X86GenInstrNames.inc
-..\$(IntDir)\TableGen.exe -gen-instr-desc -I ..\..\lib\Target\X86 -I ..\..\include $(InputPath) -o X86GenInstrInfo.inc
-..\$(IntDir)\TableGen.exe -gen-asm-writer -I ..\..\lib\Target\X86 -I ..\..\include $(InputPath) -o X86GenAsmWriter.inc
-..\$(IntDir)\TableGen.exe -gen-asm-writer -asmwriternum=1 -I ..\..\lib\Target\X86 -I ..\..\include $(InputPath) -o X86GenAsmWriter1.inc
-..\$(IntDir)\TableGen.exe -gen-dag-isel -I ..\..\lib\Target\X86 -I ..\..\include $(InputPath) -o X86GenDAGISel.inc
-..\$(IntDir)\TableGen.exe -gen-subtarget -I ..\..\lib\Target\X86 -I ..\..\include $(InputPath) -o X86GenSubtarget.inc
+						CommandLine="..\$(IntDir)\TableGen.exe -gen-register-enums -I ..\..\lib\Target -I ..\..\lib\Target\X86 -I ..\..\include $(InputPath) -o X86GenRegisterNames.inc
+..\$(IntDir)\TableGen.exe -gen-register-desc-header -I ..\..\lib\Target -I ..\..\lib\Target\X86 -I ..\..\include $(InputPath) -o X86GenRegisterInfo.h.inc
+..\$(IntDir)\TableGen.exe -gen-register-desc -I ..\..\lib\Target -I ..\..\lib\Target\X86 -I ..\..\include $(InputPath) -o X86GenRegisterInfo.inc
+..\$(IntDir)\TableGen.exe -gen-instr-enums -I ..\..\lib\Target -I ..\..\lib\Target\X86 -I ..\..\include $(InputPath) -o X86GenInstrNames.inc
+..\$(IntDir)\TableGen.exe -gen-instr-desc -I ..\..\lib\Target -I ..\..\lib\Target\X86 -I ..\..\include $(InputPath) -o X86GenInstrInfo.inc
+..\$(IntDir)\TableGen.exe -gen-asm-writer -I ..\..\lib\Target -I ..\..\lib\Target\X86 -I ..\..\include $(InputPath) -o X86GenAsmWriter.inc
+..\$(IntDir)\TableGen.exe -gen-asm-writer -asmwriternum=1 -I ..\..\lib\Target -I ..\..\lib\Target\X86 -I ..\..\include $(InputPath) -o X86GenAsmWriter1.inc
+..\$(IntDir)\TableGen.exe -gen-dag-isel -I ..\..\lib\Target -I ..\..\lib\Target\X86 -I ..\..\include $(InputPath) -o X86GenDAGISel.inc
+..\$(IntDir)\TableGen.exe -gen-subtarget -I ..\..\lib\Target -I ..\..\lib\Target\X86 -I ..\..\include $(InputPath) -o X86GenSubtarget.inc
 "
 						AdditionalDependencies="$(InputDir)X86InstrInfo.td;$(InputDir)X86RegisterInfo.td;$(InputDir)X86InstrFPStack.td;$(InputDir)X86InstrMMX.td;$(InputDir)X86InstrSSE.td;$(InputDir)..\Target.td;$(InputDir)..\TargetSchedule.td;$(InputDir)..\TargetScheduleDAG.td;$(ProjectDir)..\$(IntDir)\TableGen.exe"
 						Outputs="X86GenRegisterNames.inc;X86GenRegisterInfo.h.inc;X86GenRegisterInfo.inc;X86GenInstrNames.inc;X86GenInstrInfo.inc;X86GenAsmWriter.inc;X86GenAsmWriter1.inc;X86GenDAGISel.inc;X86GenSubtarget.inc"/>
@@ -134,15 +134,15 @@
 					<Tool
 						Name="VCCustomBuildTool"
 						Description="Performing TableGen Step"
-						CommandLine="..\$(IntDir)\TableGen.exe -gen-register-enums -I ..\..\lib\Target\X86 -I ..\..\include $(InputPath) -o X86GenRegisterNames.inc
-..\$(IntDir)\TableGen.exe -gen-register-desc-header -I ..\..\lib\Target\X86 -I ..\..\include $(InputPath) -o X86GenRegisterInfo.h.inc
-..\$(IntDir)\TableGen.exe -gen-register-desc -I ..\..\lib\Target\X86 -I ..\..\include $(InputPath) -o X86GenRegisterInfo.inc
-..\$(IntDir)\TableGen.exe -gen-instr-enums -I ..\..\lib\Target\X86 -I ..\..\include $(InputPath) -o X86GenInstrNames.inc
-..\$(IntDir)\TableGen.exe -gen-instr-desc -I ..\..\lib\Target\X86 -I ..\..\include $(InputPath) -o X86GenInstrInfo.inc
-..\$(IntDir)\TableGen.exe -gen-asm-writer -I ..\..\lib\Target\X86 -I ..\..\include $(InputPath) -o X86GenAsmWriter.inc
-..\$(IntDir)\TableGen.exe -gen-asm-writer -asmwriternum=1 -I ..\..\lib\Target\X86 -I ..\..\include $(InputPath) -o X86GenAsmWriter1.inc
-..\$(IntDir)\TableGen.exe -gen-dag-isel -I ..\..\lib\Target\X86 -I ..\..\include $(InputPath) -o X86GenDAGISel.inc
-..\$(IntDir)\TableGen.exe -gen-subtarget -I ..\..\lib\Target\X86 -I ..\..\include $(InputPath) -o X86GenSubtarget.inc
+						CommandLine="..\$(IntDir)\TableGen.exe -gen-register-enums -I ..\..\lib\Target -I ..\..\lib\Target\X86 -I ..\..\include $(InputPath) -o X86GenRegisterNames.inc
+..\$(IntDir)\TableGen.exe -gen-register-desc-header -I ..\..\lib\Target -I ..\..\lib\Target\X86 -I ..\..\include $(InputPath) -o X86GenRegisterInfo.h.inc
+..\$(IntDir)\TableGen.exe -gen-register-desc -I ..\..\lib\Target -I ..\..\lib\Target\X86 -I ..\..\include $(InputPath) -o X86GenRegisterInfo.inc
+..\$(IntDir)\TableGen.exe -gen-instr-enums -I ..\..\lib\Target -I ..\..\lib\Target\X86 -I ..\..\include $(InputPath) -o X86GenInstrNames.inc
+..\$(IntDir)\TableGen.exe -gen-instr-desc -I ..\..\lib\Target -I ..\..\lib\Target\X86 -I ..\..\include $(InputPath) -o X86GenInstrInfo.inc
+..\$(IntDir)\TableGen.exe -gen-asm-writer -I ..\..\lib\Target -I ..\..\lib\Target\X86 -I ..\..\include $(InputPath) -o X86GenAsmWriter.inc
+..\$(IntDir)\TableGen.exe -gen-asm-writer -asmwriternum=1 -I ..\..\lib\Target -I ..\..\lib\Target\X86 -I ..\..\include $(InputPath) -o X86GenAsmWriter1.inc
+..\$(IntDir)\TableGen.exe -gen-dag-isel -I ..\..\lib\Target -I ..\..\lib\Target\X86 -I ..\..\include $(InputPath) -o X86GenDAGISel.inc
+..\$(IntDir)\TableGen.exe -gen-subtarget -I ..\..\lib\Target -I ..\..\lib\Target\X86 -I ..\..\include $(InputPath) -o X86GenSubtarget.inc
 "
 						AdditionalDependencies="$(InputDir)X86InstrInfo.td;$(InputDir)X86RegisterInfo.td;$(InputDir)X86InstrFPStack.td;$(InputDir)X86InstrMMX.td;$(InputDir)X86InstrSSE.td;$(InputDir)..\Target.td;$(InputDir)..\TargetSchedule.td;$(InputDir)..\TargetScheduleDAG.td;$(ProjectDir)..\$(IntDir)\TableGen.exe"
 						Outputs="X86GenRegisterNames.inc;X86GenRegisterInfo.h.inc;X86GenRegisterInfo.inc;X86GenInstrNames.inc;X86GenInstrInfo.inc;X86GenAsmWriter.inc;X86GenAsmWriter1.inc;X86GenDAGISel.inc;X86GenSubtarget.inc"/>
@@ -167,6 +167,9 @@
 				RelativePath="..\..\lib\Target\X86\X86InstrInfo.cpp">
 			</File>
 			<File
+				RelativePath="..\..\lib\Target\X86\X86InstrX86-64.td">
+			</File>
+			<File
 				RelativePath="..\..\lib\Target\X86\X86IntelAsmPrinter.cpp">
 			</File>
 			<File
@@ -183,6 +186,9 @@
 			</File>
 			<File
 				RelativePath="..\..\lib\Target\X86\X86Subtarget.cpp">
+			</File>
+			<File
+				RelativePath="..\..\lib\Target\X86\X86TargetAsmInfo.cpp">
 			</File>
 			<File
 				RelativePath="..\..\lib\Target\X86\X86TargetMachine.cpp">
@@ -235,6 +241,9 @@
 				RelativePath="..\..\lib\Target\X86\X86JITInfo.h">
 			</File>
 			<File
+				RelativePath="..\..\lib\Target\X86\X86MachineFunctionInfo.h">
+			</File>
+			<File
 				RelativePath="..\..\lib\Target\X86\X86RegisterInfo.h">
 			</File>
 			<File
@@ -242,6 +251,9 @@
 			</File>
 			<File
 				RelativePath="..\..\lib\Target\X86\X86Subtarget.h">
+			</File>
+			<File
+				RelativePath="..\..\lib\Target\X86\X86TargetAsmInfo.h">
 			</File>
 			<File
 				RelativePath="..\..\lib\Target\X86\X86TargetMachine.h">

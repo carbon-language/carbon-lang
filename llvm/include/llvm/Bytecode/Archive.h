@@ -95,7 +95,7 @@ class ArchiveMember {
 
     /// @returns the size of the archive member in bytes.
     /// @brief Get the size of the archive member.
-    unsigned getSize() const             { return info.getSize(); }
+    uint64_t getSize() const             { return info.getSize(); }
 
     /// This method returns the total size of the archive member as it
     /// appears on disk. This includes the file content, the header, the

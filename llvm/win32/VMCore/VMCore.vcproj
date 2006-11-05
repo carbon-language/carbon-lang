@@ -199,6 +199,9 @@
 				RelativePath="..\..\lib\VMCore\ValueSymbolTable.cpp">
 			</File>
 			<File
+				RelativePath="..\..\lib\VMCore\ValueTypes.cpp">
+			</File>
+			<File
 				RelativePath="..\..\lib\VMCore\Verifier.cpp">
 			</File>
 		</Filter>

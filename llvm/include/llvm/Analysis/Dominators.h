@@ -304,9 +304,9 @@ protected:
   Node *RootNode;
 public:
   class Node {
-    friend struct DominatorTree;
+    friend class DominatorTree;
     friend struct PostDominatorTree;
-    friend struct DominatorTreeBase;
+    friend class DominatorTreeBase;
     BasicBlock *TheBB;
     Node *IDom;
     std::vector<Node*> Children;

@@ -20,8 +20,8 @@
 namespace llvm {
 
 class AllocaInst;
-struct DominatorTree;
-struct DominanceFrontier;
+class DominatorTree;
+class DominanceFrontier;
 class TargetData;
 class AliasSetTracker;
 

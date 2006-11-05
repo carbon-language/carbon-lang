@@ -383,7 +383,7 @@ namespace {
     bool isAlias(SDOperand Ptr1, int64_t Size1,
                  const Value *SrcValue1, int SrcValueOffset1,
                  SDOperand Ptr2, int64_t Size2,
-                 const Value *SrcValue2, int SrcValueOffset1);
+                 const Value *SrcValue2, int SrcValueOffset2);
                  
     /// FindAliasInfo - Extracts the relevant alias information from the memory
     /// node.  Returns true if the operand was a load.

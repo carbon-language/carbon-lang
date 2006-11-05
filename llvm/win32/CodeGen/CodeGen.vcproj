@@ -133,6 +133,9 @@
 				RelativePath="..\..\lib\CodeGen\LiveVariables.cpp">
 			</File>
 			<File
+				RelativePath="..\..\lib\CodeGen\LLVMTargetMachine.cpp">
+			</File>
+			<File
 				RelativePath="..\..\lib\CodeGen\MachineBasicBlock.cpp">
 			</File>
 			<File
@@ -143,6 +146,9 @@
 			</File>
 			<File
 				RelativePath="..\..\lib\CodeGen\MachineInstr.cpp">
+			</File>
+			<File
+				RelativePath="..\..\lib\CodeGen\MachinePassRegistry.cpp">
 			</File>
 			<File
 				RelativePath="..\..\lib\CodeGen\Passes.cpp">
@@ -169,9 +175,6 @@
 				RelativePath="..\..\lib\CodeGen\UnreachableBlockElim.cpp">
 			</File>
 			<File
-				RelativePath="..\..\lib\CodeGen\ValueTypes.cpp">
-			</File>
-			<File
 				RelativePath="..\..\lib\CodeGen\VirtRegMap.cpp">
 			</File>
 			<Filter
@@ -190,6 +193,9 @@
 					RelativePath="..\..\lib\CodeGen\SelectionDAG\ScheduleDAGList.cpp">
 				</File>
 				<File
+					RelativePath="..\..\lib\CodeGen\SelectionDAG\ScheduleDAGRRList.cpp">
+				</File>
+				<File
 					RelativePath="..\..\lib\CodeGen\SelectionDAG\ScheduleDAGSimple.cpp">
 				</File>
 				<File
@@ -200,6 +206,9 @@
 				</File>
 				<File
 					RelativePath="..\..\lib\CodeGen\SelectionDAG\SelectionDAGPrinter.cpp">
+				</File>
+				<File
+					RelativePath="..\..\lib\CodeGen\SelectionDAG\TargetLowering.cpp">
 				</File>
 			</Filter>
 		</Filter>
@@ -221,6 +230,9 @@
 			</File>
 			<File
 				RelativePath="..\..\include\llvm\CodeGen\IntrinsicLowering.h">
+			</File>
+			<File
+				RelativePath="..\..\include\llvm\CodeGen\LinkAllCodegenComponents.h">
 			</File>
 			<File
 				RelativePath="..\..\include\llvm\CodeGen\LiveInterval.h">
@@ -262,7 +274,13 @@
 				RelativePath="..\..\include\llvm\CodeGen\MachineLocation.h">
 			</File>
 			<File
+				RelativePath="..\..\include\llvm\CodeGen\MachinePassRegistry.h">
+			</File>
+			<File
 				RelativePath="..\..\include\llvm\CodeGen\MachineRelocation.h">
+			</File>
+			<File
+				RelativePath="..\..\include\llvm\CodeGen\MachOWriter.h">
 			</File>
 			<File
 				RelativePath="..\..\include\llvm\CodeGen\Passes.h">
@@ -271,10 +289,16 @@
 				RelativePath="..\..\lib\CodeGen\PhysRegTracker.h">
 			</File>
 			<File
+				RelativePath="..\..\include\llvm\CodeGen\RegAllocRegistry.h">
+			</File>
+			<File
 				RelativePath="..\..\include\llvm\CodeGen\SchedGraphCommon.h">
 			</File>
 			<File
 				RelativePath="..\..\include\llvm\CodeGen\ScheduleDAG.h">
+			</File>
+			<File
+				RelativePath="..\..\include\llvm\CodeGen\SchedulerRegistry.h">
 			</File>
 			<File
 				RelativePath="..\..\include\llvm\CodeGen\SelectionDAG.h">
@@ -287,9 +311,6 @@
 			</File>
 			<File
 				RelativePath="..\..\include\llvm\CodeGen\SSARegMap.h">
-			</File>
-			<File
-				RelativePath="..\..\include\llvm\CodeGen\ValueSet.h">
 			</File>
 			<File
 				RelativePath="..\..\include\llvm\CodeGen\ValueTypes.h">

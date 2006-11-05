@@ -20,3 +20,5 @@
 #define LTDL_SHLIB_EXT ".dll" 
 #define LTDL_SYSSEARCHPATH "" 
 #define LLVM_ON_WIN32 1 
+
+#define strtoll strtol

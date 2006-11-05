@@ -22,9 +22,11 @@ namespace llvm {
   class TargetInstrInfo;
   class X86TargetMachine;
 
-struct X86RegisterInfo : public X86GenRegisterInfo {
+class X86RegisterInfo : public X86GenRegisterInfo {
+public:
   X86TargetMachine &TM;
   const TargetInstrInfo &TII;
+
 private:
   /// Is64Bit - Is the target 64-bits.
   bool Is64Bit;

@@ -124,7 +124,12 @@ Path::GetTemporaryDirectory(std::string* ErrMsg) {
 
   // Append a subdirectory passed on our process id so multiple LLVMs don't
   // step on each other's toes.
+#ifdef __MINGW32__
+  // Mingw's Win32 header files are broken.
   sprintf(pathname, "LLVM_%u", unsigned(GetCurrentProcessId()));
+#else
+  sprintf(pathname, "LLVM_%u", GetCurrentProcessId());
+#endif
   result.appendComponent(pathname);
 
   // If there's a directory left over from a previous LLVM execution that

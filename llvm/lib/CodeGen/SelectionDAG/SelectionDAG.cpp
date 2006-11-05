@@ -1657,16 +1657,16 @@ SDOperand SelectionDAG::getVecLoad(unsigned Count, MVT::ValueType EVT,
   return getNode(ISD::VLOAD, getVTList(MVT::Vector, MVT::Other), Ops, 5);
 }
 
-SDOperand SelectionDAG::getStore(SDOperand Chain, SDOperand Value,
+SDOperand SelectionDAG::getStore(SDOperand Chain, SDOperand Val,
                                  SDOperand Ptr, const Value *SV, int SVOffset,
                                  bool isVolatile) {
-  MVT::ValueType VT = Value.getValueType();
+  MVT::ValueType VT = Val.getValueType();
 
   // FIXME: Alignment == 1 for now.
   unsigned Alignment = 1;
   SDVTList VTs = getVTList(MVT::Other);
   SDOperand Undef = getNode(ISD::UNDEF, Ptr.getValueType());
-  SDOperand Ops[] = { Chain, Value, Ptr, Undef };
+  SDOperand Ops[] = { Chain, Val, Ptr, Undef };
   FoldingSetNodeID ID;
   AddNodeIDNode(ID, ISD::STORE, VTs, Ops, 4);
   ID.AddInteger(ISD::UNINDEXED);
@@ -1679,7 +1679,7 @@ SDOperand SelectionDAG::getStore(SDOperand Chain, SDOperand Value,
   void *IP = 0;
   if (SDNode *E = CSEMap.FindNodeOrInsertPos(ID, IP))
     return SDOperand(E, 0);
-  SDNode *N = new StoreSDNode(Chain, Value, Ptr, Undef, ISD::UNINDEXED, false,
+  SDNode *N = new StoreSDNode(Chain, Val, Ptr, Undef, ISD::UNINDEXED, false,
                               VT, SV, SVOffset, Alignment, isVolatile);
   N->setValueTypes(VTs);
   CSEMap.InsertNode(N, IP);
@@ -1687,11 +1687,11 @@ SDOperand SelectionDAG::getStore(SDOperand Chain, SDOperand Value,
   return SDOperand(N, 0);
 }
 
-SDOperand SelectionDAG::getTruncStore(SDOperand Chain, SDOperand Value,
+SDOperand SelectionDAG::getTruncStore(SDOperand Chain, SDOperand Val,
                                       SDOperand Ptr, const Value *SV,
                                       int SVOffset, MVT::ValueType SVT,
                                       bool isVolatile) {
-  MVT::ValueType VT = Value.getValueType();
+  MVT::ValueType VT = Val.getValueType();
   bool isTrunc = VT != SVT;
 
   assert(VT > SVT && "Not a truncation?");
@@ -1702,7 +1702,7 @@ SDOperand SelectionDAG::getTruncStore(SDOperand Chain, SDOperand Value,
   unsigned Alignment = 1;
   SDVTList VTs = getVTList(MVT::Other);
   SDOperand Undef = getNode(ISD::UNDEF, Ptr.getValueType());
-  SDOperand Ops[] = { Chain, Value, Ptr, Undef };
+  SDOperand Ops[] = { Chain, Val, Ptr, Undef };
   FoldingSetNodeID ID;
   AddNodeIDNode(ID, ISD::STORE, VTs, Ops, 4);
   ID.AddInteger(ISD::UNINDEXED);
@@ -1715,7 +1715,7 @@ SDOperand SelectionDAG::getTruncStore(SDOperand Chain, SDOperand Value,
   void *IP = 0;
   if (SDNode *E = CSEMap.FindNodeOrInsertPos(ID, IP))
     return SDOperand(E, 0);
-  SDNode *N = new StoreSDNode(Chain, Value, Ptr, Undef, ISD::UNINDEXED, isTrunc,
+  SDNode *N = new StoreSDNode(Chain, Val, Ptr, Undef, ISD::UNINDEXED, isTrunc,
                               SVT, SV, SVOffset, Alignment, isVolatile);
   N->setValueTypes(VTs);
   CSEMap.InsertNode(N, IP);

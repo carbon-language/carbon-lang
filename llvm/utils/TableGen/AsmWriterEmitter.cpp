@@ -69,7 +69,8 @@ namespace {
 }
 
 namespace llvm {
-  struct AsmWriterInst {
+  class AsmWriterInst {
+  public:
     std::vector<AsmWriterOperand> Operands;
     const CodeGenInstruction *CGI;
 

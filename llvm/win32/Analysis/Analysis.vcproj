@@ -197,6 +197,9 @@
 					RelativePath="..\..\lib\Analysis\DataStructure\BottomUpClosure.cpp">
 				</File>
 				<File
+					RelativePath="..\..\lib\Analysis\DataStructure\CallTargets.cpp">
+				</File>
+				<File
 					RelativePath="..\..\lib\Analysis\DataStructure\CompleteBottomUp.cpp">
 				</File>
 				<File
@@ -316,6 +319,9 @@
 			<Filter
 				Name="DataStructure"
 				Filter="">
+				<File
+					RelativePath="..\..\include\llvm\Analysis\DataStructure\CallTargets.h">
+				</File>
 				<File
 					RelativePath="..\..\include\llvm\Analysis\DataStructure\DataStructure.h">
 				</File>

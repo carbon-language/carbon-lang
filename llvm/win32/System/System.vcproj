@@ -110,7 +110,13 @@
 			Filter="cpp;c;cxx;def;odl;idl;hpj;bat;asm;asmx"
 			UniqueIdentifier="{4FC737F1-C7A5-4376-A066-2A32D752A2FF}">
 			<File
+				RelativePath="..\..\lib\System\Alarm.cpp">
+			</File>
+			<File
 				RelativePath="..\..\lib\System\DynamicLibrary.cpp">
+			</File>
+			<File
+				RelativePath="..\..\lib\System\IncludeFile.cpp">
 			</File>
 			<File
 				RelativePath="..\..\lib\System\MappedFile.cpp">
@@ -142,7 +148,13 @@
 			Filter="h;hpp;hxx;hm;inl;inc;xsd"
 			UniqueIdentifier="{93995380-89BD-4b04-88EB-625FBE52EBFB}">
 			<File
+				RelativePath="..\..\include\llvm\System\Alarm.h">
+			</File>
+			<File
 				RelativePath="..\..\include\llvm\System\DynamicLibrary.h">
+			</File>
+			<File
+				RelativePath="..\..\include\llvm\System\IncludeFile.h">
 			</File>
 			<File
 				RelativePath="..\..\include\llvm\System\MappedFile.h">

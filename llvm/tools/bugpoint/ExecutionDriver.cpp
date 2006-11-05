@@ -320,7 +320,7 @@ std::string BugDriver::compileSharedObject(const std::string &BytecodeFile) {
 bool BugDriver::createReferenceFile(Module *M, const std::string &Filename) {
   try {
     compileProgram(Program);
-  } catch (ToolExecutionError &TEE) {
+  } catch (ToolExecutionError &) {
     return false;
   }
   try {

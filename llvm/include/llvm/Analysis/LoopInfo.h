@@ -35,7 +35,7 @@
 
 namespace llvm {
 
-struct ETForest;
+class ETForest;
 class LoopInfo;
 class PHINode;
 class Instruction;

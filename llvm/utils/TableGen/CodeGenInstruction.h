@@ -23,7 +23,8 @@ namespace llvm {
   class Record;
   class DagInit;
 
-  struct CodeGenInstruction {
+  class CodeGenInstruction {
+  public:
     Record *TheDef;            // The actual record defining this instruction.
     std::string Name;          // Contents of the 'Name' field.
     std::string Namespace;     // The namespace the instruction is in.

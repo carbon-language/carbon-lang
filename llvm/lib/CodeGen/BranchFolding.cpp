@@ -25,6 +25,7 @@
 #include "llvm/Support/CommandLine.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/ADT/STLExtras.h"
+#include <algorithm>
 using namespace llvm;
 
 static Statistic<> NumDeadBlocks("branchfold", "Number of dead blocks removed");

@@ -261,25 +261,13 @@
 					RelativePath="..\..\lib\Transforms\Scalar\LoopUnswitch.cpp">
 				</File>
 				<File
-					RelativePath="..\..\lib\Transforms\Scalar\LowerAllocations.cpp">
-				</File>
-				<File
 					RelativePath="..\..\lib\Transforms\Scalar\LowerGC.cpp">
-				</File>
-				<File
-					RelativePath="..\..\lib\Transforms\Scalar\LowerInvoke.cpp">
 				</File>
 				<File
 					RelativePath="..\..\lib\Transforms\Scalar\LowerPacked.cpp">
 				</File>
 				<File
-					RelativePath="..\..\lib\Transforms\Scalar\LowerSelect.cpp">
-				</File>
-				<File
-					RelativePath="..\..\lib\Transforms\Scalar\LowerSwitch.cpp">
-				</File>
-				<File
-					RelativePath="..\..\lib\Transforms\Scalar\Mem2Reg.cpp">
+					RelativePath="..\..\lib\Transforms\Scalar\PredicateSimplifier.cpp">
 				</File>
 				<File
 					RelativePath="..\..\lib\Transforms\Scalar\Reassociate.cpp">
@@ -335,10 +323,28 @@
 					RelativePath="..\..\lib\Transforms\Utils\InlineFunction.cpp">
 				</File>
 				<File
+					RelativePath="..\..\lib\Transforms\Utils\LCSSA.cpp">
+				</File>
+				<File
 					RelativePath="..\..\lib\Transforms\Utils\Local.cpp">
 				</File>
 				<File
 					RelativePath="..\..\lib\Transforms\Utils\LoopSimplify.cpp">
+				</File>
+				<File
+					RelativePath="..\..\lib\Transforms\Utils\LowerAllocations.cpp">
+				</File>
+				<File
+					RelativePath="..\..\lib\Transforms\Utils\LowerInvoke.cpp">
+				</File>
+				<File
+					RelativePath="..\..\lib\Transforms\Utils\LowerSelect.cpp">
+				</File>
+				<File
+					RelativePath="..\..\lib\Transforms\Utils\LowerSwitch.cpp">
+				</File>
+				<File
+					RelativePath="..\..\lib\Transforms\Utils\Mem2Reg.cpp">
 				</File>
 				<File
 					RelativePath="..\..\lib\Transforms\Utils\PromoteMemoryToRegister.cpp">
@@ -387,9 +393,6 @@
 			</File>
 			<File
 				RelativePath="..\..\include\llvm\Transforms\IPO.h">
-			</File>
-			<File
-				RelativePath="..\..\include\llvm\Transforms\LinkAllPasses.h">
 			</File>
 			<File
 				RelativePath="..\..\include\llvm\Transforms\Utils\Local.h">

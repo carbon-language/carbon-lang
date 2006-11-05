@@ -16,6 +16,7 @@
 
 #include "llvm/Support/DataTypes.h"
 #include <iosfwd>
+#include <string>
 
 namespace llvm {
 

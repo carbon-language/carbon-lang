@@ -27,6 +27,7 @@
 %x comment
 
 %{
+#include "llvm/Config/config.h"
 #include "Record.h"
 typedef std::pair<llvm::Record*, std::vector<llvm::Init*>*> SubClassRefTy;
 #include "FileParser.h"

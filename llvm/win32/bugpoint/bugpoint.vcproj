@@ -140,6 +140,9 @@
 				RelativePath="..\..\tools\bugpoint\ExtractFunction.cpp">
 			</File>
 			<File
+				RelativePath="..\..\tools\bugpoint\FindBugs.cpp">
+			</File>
+			<File
 				RelativePath="..\..\tools\bugpoint\Miscompilation.cpp">
 			</File>
 			<File
@@ -147,6 +150,9 @@
 			</File>
 			<File
 				RelativePath="..\..\tools\bugpoint\TestPasses.cpp">
+			</File>
+			<File
+				RelativePath="..\..\tools\bugpoint\ToolRunner.cpp">
 			</File>
 		</Filter>
 		<Filter
@@ -158,6 +164,9 @@
 			</File>
 			<File
 				RelativePath="..\..\tools\bugpoint\ListReducer.h">
+			</File>
+			<File
+				RelativePath="..\..\tools\bugpoint\ToolRunner.h">
 			</File>
 		</Filter>
 	</Files>

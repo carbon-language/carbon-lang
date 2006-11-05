@@ -115,6 +115,9 @@
 				RelativePath="..\..\lib\Target\SubtargetFeature.cpp">
 			</File>
 			<File
+				RelativePath="..\..\lib\Target\TargetAsmInfo.cpp">
+			</File>
+			<File
 				RelativePath="..\..\lib\Target\TargetData.cpp">
 			</File>
 			<File
@@ -122,9 +125,6 @@
 			</File>
 			<File
 				RelativePath="..\..\lib\Target\TargetInstrInfo.cpp">
-			</File>
-			<File
-				RelativePath="..\..\lib\Target\TargetLowering.cpp">
 			</File>
 			<File
 				RelativePath="..\..\lib\Target\TargetMachine.cpp">
@@ -145,6 +145,9 @@
 			</File>
 			<File
 				RelativePath="..\..\include\llvm\Target\SubtargetFeature.h">
+			</File>
+			<File
+				RelativePath="..\..\include\llvm\Target\TargetAsmInfo.h">
 			</File>
 			<File
 				RelativePath="..\..\include\llvm\Target\TargetData.h">

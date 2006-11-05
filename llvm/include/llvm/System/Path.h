@@ -47,7 +47,7 @@ namespace sys {
                    group(999), isDir(false) { }
     
     TimeValue getTimestamp() const { return modTime; }
-    size_t getSize() const { return fileSize; }
+    uint64_t getSize() const { return fileSize; }
     uint32_t getMode() const { return mode; }
     uint32_t getUser() const { return user; }
     uint32_t getGroup() const { return group; }

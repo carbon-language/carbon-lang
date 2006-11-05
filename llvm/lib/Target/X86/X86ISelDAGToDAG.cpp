@@ -663,7 +663,7 @@ bool X86DAGToDAGISel::MatchAddress(SDOperand N, X86ISelAddressMode &AM,
             AM.IndexReg = ShVal.Val->getOperand(0);
             ConstantSDNode *AddVal =
               cast<ConstantSDNode>(ShVal.Val->getOperand(1));
-            uint64_t Disp = AM.Disp + AddVal->getValue() << Val;
+            uint64_t Disp = AM.Disp + (AddVal->getValue() << Val);
             if (isInt32(Disp))
               AM.Disp = Disp;
             else

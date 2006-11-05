@@ -18,7 +18,7 @@
 
 namespace llvm {
   class BasicBlock;
-  struct DominatorSet;
+  class DominatorSet;
   class Function;
   class Loop;
 

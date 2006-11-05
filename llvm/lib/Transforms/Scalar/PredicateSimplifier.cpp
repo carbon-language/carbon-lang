@@ -428,7 +428,7 @@ namespace {
           // "setlt/gt int %a, %b" NE false then %a NE %b
 
           if (ConstantBool *CB = dyn_cast<ConstantBool>(V1)) {
-            if (CB->getValue() ^ Opcode==NE)
+            if (CB->getValue() ^ (Opcode==NE))
               addNotEqual(BO->getOperand(0), BO->getOperand(1));
 	  }
           break;
@@ -437,7 +437,7 @@ namespace {
           // "setle/ge int %a, %b" EQ false then %a NE %b
           // "setle/ge int %a, %b" NE true  then %a NE %b
           if (ConstantBool *CB = dyn_cast<ConstantBool>(V1)) {
-            if (CB->getValue() ^ Opcode==EQ)
+            if (CB->getValue() ^ (Opcode==EQ))
               addNotEqual(BO->getOperand(0), BO->getOperand(1));
 	  }
           break;
@@ -486,7 +486,7 @@ namespace {
           if (ConstantBool *CB = dyn_cast<ConstantBool>(V1)) {
             if (ConstantBool *A = dyn_cast<ConstantBool>(LHS)) {
               addEqual(RHS, ConstantBool::get(A->getValue() ^ CB->getValue()
-                                              ^ Opcode==NE));
+                                              ^ (Opcode==NE)));
             }
           }
           else if (ConstantIntegral *CI = dyn_cast<ConstantIntegral>(V1)) {

@@ -313,9 +313,9 @@ void llvm::CloneAndPruneFunctionInto(Function *NewFunc, const Function *OldFunc,
   assert(NameSuffix && "NameSuffix cannot be null!");
   
 #ifndef NDEBUG
-  for (Function::const_arg_iterator I = OldFunc->arg_begin(), 
-       E = OldFunc->arg_end(); I != E; ++I)
-    assert(ValueMap.count(I) && "No mapping from source argument specified!");
+  for (Function::const_arg_iterator II = OldFunc->arg_begin(), 
+       E = OldFunc->arg_end(); II != E; ++II)
+    assert(ValueMap.count(II) && "No mapping from source argument specified!");
 #endif
   
   PruningFunctionCloner PFC(NewFunc, OldFunc, ValueMap, Returns, 

@@ -499,7 +499,7 @@ int main(int argc, char **argv, char **envp) {
           // Get the program arguments
           sys::Path tmp_output("opt_result");
           std::string ErrMsg;
-          if (tmp_output.createTemporaryFileOnDisk(&ErrMsg)) {
+          if (tmp_output.createTemporaryFileOnDisk(true)) {
             return PrintAndReturn(ErrMsg);
           }
           const char* args[4];

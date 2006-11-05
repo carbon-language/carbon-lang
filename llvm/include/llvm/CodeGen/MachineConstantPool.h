@@ -61,7 +61,8 @@ inline std::ostream &operator<<(std::ostream &OS,
 /// It contains a pointer to the value and an offset from the start of
 /// the constant pool.
 /// @brief An entry in a MachineConstantPool
-struct MachineConstantPoolEntry {
+class MachineConstantPoolEntry {
+public:
   /// The constant itself.
   union {
     Constant *ConstVal;

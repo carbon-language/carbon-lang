@@ -110,6 +110,9 @@
 			Filter="cpp;c;cxx;def;odl;idl;hpj;bat;asm;asmx"
 			UniqueIdentifier="{4FC737F1-C7A5-4376-A066-2A32D752A2FF}">
 			<File
+				RelativePath="..\..\lib\Support\Allocator.cpp">
+			</File>
+			<File
 				RelativePath="..\..\lib\Support\Annotation.cpp">
 			</File>
 			<File
@@ -125,6 +128,9 @@
 				</FileConfiguration>
 			</File>
 			<File
+				RelativePath="..\..\lib\Support\CStringMap.cpp">
+			</File>
+			<File
 				RelativePath="..\..\lib\Support\Debug.cpp">
 			</File>
 			<File
@@ -134,10 +140,19 @@
 				RelativePath="..\..\lib\Support\FileUtilities.cpp">
 			</File>
 			<File
+				RelativePath="..\..\lib\Support\FoldingSet.cpp">
+			</File>
+			<File
+				RelativePath="..\..\lib\Support\GraphWriter.cpp">
+			</File>
+			<File
 				RelativePath="..\..\lib\Support\IsInf.cpp">
 			</File>
 			<File
 				RelativePath="..\..\lib\Support\IsNAN.cpp">
+			</File>
+			<File
+				RelativePath="..\..\lib\Support\ManagedStatic.cpp">
 			</File>
 			<File
 				RelativePath="..\..\lib\Support\PluginLoader.cpp">
@@ -168,9 +183,6 @@
 			</File>
 			<File
 				RelativePath="..\..\lib\Support\Timer.cpp">
-			</File>
-			<File
-				RelativePath="..\..\lib\Support\ToolRunner.cpp">
 			</File>
 			<Filter
 				Name="bzip2"
@@ -212,6 +224,9 @@
 				RelativePath="..\..\include\llvm\Support\AIXDataTypesFix.h">
 			</File>
 			<File
+				RelativePath="..\..\include\llvm\Support\Allocator.h">
+			</File>
+			<File
 				RelativePath="..\..\include\llvm\Support\Annotation.h">
 			</File>
 			<File
@@ -225,6 +240,9 @@
 			</File>
 			<File
 				RelativePath="..\..\include\llvm\Support\CommandLine.h">
+			</File>
+			<File
+				RelativePath="..\..\include\llvm\Support\Compiler.h">
 			</File>
 			<File
 				RelativePath="..\..\include\llvm\Support\Compressor.h">
@@ -272,6 +290,9 @@
 				RelativePath="..\..\include\llvm\Support\MallocAllocator.h">
 			</File>
 			<File
+				RelativePath="..\..\include\llvm\Support\ManagedStatic.h">
+			</File>
+			<File
 				RelativePath="..\..\include\llvm\Support\Mangler.h">
 			</File>
 			<File
@@ -305,9 +326,6 @@
 				RelativePath="..\..\include\llvm\Support\Timer.h">
 			</File>
 			<File
-				RelativePath="..\..\include\llvm\Support\ToolRunner.h">
-			</File>
-			<File
 				RelativePath="..\..\include\llvm\Support\type_traits.h">
 			</File>
 			<File
@@ -321,6 +339,9 @@
 				RelativePath="..\..\include\llvm\Adt\BitSetVector.h">
 			</File>
 			<File
+				RelativePath="..\..\include\llvm\ADT\CStringMap.h">
+			</File>
+			<File
 				RelativePath="..\..\include\llvm\Adt\DenseMap.h">
 			</File>
 			<File
@@ -328,6 +349,9 @@
 			</File>
 			<File
 				RelativePath="..\..\include\llvm\Adt\EquivalenceClasses.h">
+			</File>
+			<File
+				RelativePath="..\..\include\llvm\ADT\FoldingSet.h">
 			</File>
 			<File
 				RelativePath="..\..\include\llvm\Adt\GraphTraits.h">
@@ -358,6 +382,12 @@
 			</File>
 			<File
 				RelativePath="..\..\include\llvm\Adt\SetVector.h">
+			</File>
+			<File
+				RelativePath="..\..\include\llvm\ADT\SmallString.h">
+			</File>
+			<File
+				RelativePath="..\..\include\llvm\ADT\SmallVector.h">
 			</File>
 			<File
 				RelativePath="..\..\include\llvm\Adt\Statistic.h">
