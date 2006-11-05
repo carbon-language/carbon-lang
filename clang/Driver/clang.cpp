@@ -50,9 +50,10 @@ static cl::opt<bool>
 Stats("stats", cl::desc("Print performance metrics and statistics"));
 
 enum ProgActions {
-  ParseSyntaxOnly,              // Parse and perform semantic analysis.
-  ParsePrintASTs,               // Parse and print raw ASTs.
+  ParseASTPrint,                // Parse ASTs and print them.
+  ParseAST,                     // Parse ASTs.
   ParsePrintCallbacks,          // Parse and print each callback.
+  ParseSyntaxOnly,              // Parse and perform semantic analysis.
   ParseNoop,                    // Parse with noop callbacks.
   RunPreprocessorOnly,          // Just lex, no output.
   PrintPreprocessedInput,       // -E mode.
@@ -71,12 +72,14 @@ ProgAction(cl::desc("Choose output type:"), cl::ZeroOrMore,
                         "Run preprocessor, dump internal rep of tokens"),
              clEnumValN(ParseNoop, "parse-noop",
                         "Run parser with noop callbacks (for timings)"),
-             clEnumValN(ParsePrintCallbacks, "parse-print-callbacks",
-                        "Run parser and print each callback invoked"),
-             clEnumValN(ParsePrintASTs, "parse-print-ast",
-                        "Run parser and print raw ASTs"),
              clEnumValN(ParseSyntaxOnly, "fsyntax-only",
                         "Run parser and perform semantic analysis"),
+             clEnumValN(ParsePrintCallbacks, "parse-print-callbacks",
+                        "Run parser and print each callback invoked"),
+             clEnumValN(ParseAST, "parse-ast",
+                        "Run parser and build ASTs"),
+             clEnumValN(ParseASTPrint, "parse-ast-print",
+                        "Run parser, build ASTs, then print ASTs"),
              clEnumValEnd));
 
 //===----------------------------------------------------------------------===//
@@ -941,14 +944,18 @@ int main(int argc, char **argv) {
   case ParseNoop:                    // -parse-noop
     ParseFile(PP, new EmptyAction(), MainFileID);
     break;
+    
+  case ParseSyntaxOnly:              // -fsyntax-only
+    std::cerr << "-fsyntax-only not implemented yet.\n";
+    break;
   case ParsePrintCallbacks:
     ParseFile(PP, CreatePrintParserActionsAction(), MainFileID);
     break;
-  case ParsePrintASTs:
-    PrintASTs(PP, MainFileID);
-    break;
-  case ParseSyntaxOnly:              // -fsyntax-only
+  case ParseAST:
     BuildASTs(PP, MainFileID);
+    break;
+  case ParseASTPrint:
+    PrintASTs(PP, MainFileID);
     break;
   }
   

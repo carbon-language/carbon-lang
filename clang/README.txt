@@ -75,13 +75,16 @@ II. Usage of clang driver:
 
  * -E mode gives output nearly identical to GCC, though not all bugs in
    whitespace calculation have been emulated.
- 
- * -parse-print-callbacks doesn't print all callbacks yet.
- 
- * -parse-print-ast isn't complete.  It will improve as more AST nodes are
-   implemented.
 
- * -fsyntax-only is currently identical to -parse-noop.
+ * -fsyntax-only is currently unimplemented.
+ 
+ * -parse-print-callbacks prints almost no callbacks so far.
+ 
+ * -parse-ast builds ASTs, but doesn't print them.  This is most useful for
+   timing AST building vs -parse-noop.
+ 
+ * -parse-ast-print prints most expression and statements nodes, but some
+   things are missing.
 
 III. Current advantages over GCC:
 
