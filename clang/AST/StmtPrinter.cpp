@@ -248,8 +248,13 @@ void StmtPrinter::VisitParenExpr(ParenExpr *Node) {
   OS << ")'";
 }
 void StmtPrinter::VisitUnaryOperator(UnaryOperator *Node) {
-  OS << UnaryOperator::getOpcodeStr(Node->getOpcode());
+  if (!Node->isPostfix())
+    OS << UnaryOperator::getOpcodeStr(Node->getOpcode());
   PrintExpr(Node->getSubExpr());
+  
+  if (Node->isPostfix())
+    OS << UnaryOperator::getOpcodeStr(Node->getOpcode());
+
 }
 void StmtPrinter::VisitSizeOfAlignOfTypeExpr(SizeOfAlignOfTypeExpr *Node) {
   OS << (Node->isSizeOf() ? "sizeof(" : "alignof(");

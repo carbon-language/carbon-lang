@@ -115,9 +115,15 @@ public:
   /// corresponds to, e.g. "sizeof" or "[pre]++"
   static const char *getOpcodeStr(Opcode Op);
 
+  /// isPostfix - Return true if this is a postfix operation, like x++.
+  static bool isPostfix(Opcode Op);
+
+  
   Opcode getOpcode() const { return Opc; }
   Expr *getSubExpr() { return Val; }
-
+  
+  bool isPostfix() const { return isPostfix(Opc); }
+  
   virtual void visit(StmtVisitor &Visitor);
 
 private:

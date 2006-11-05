@@ -34,15 +34,25 @@ StringExpr::~StringExpr() {
   delete[] StrData;
 }
 
+bool UnaryOperator::isPostfix(Opcode Op) {
+  switch (Op) {
+  case PostInc:
+  case PostDec:
+    return true;
+  default:
+    return false;
+  }
+}
+
 /// getOpcodeStr - Turn an Opcode enum value into the punctuation char it
 /// corresponds to, e.g. "sizeof" or "[pre]++".
 const char *UnaryOperator::getOpcodeStr(Opcode Op) {
   switch (Op) {
   default: assert(0 && "Unknown unary operator");
-  case PostInc: return "[post]++";
-  case PostDec: return "[post]--";
-  case PreInc:  return "[pre]++";
-  case PreDec:  return "[pre]--";
+  case PostInc: return "++";
+  case PostDec: return "--";
+  case PreInc:  return "++";
+  case PreDec:  return "--";
   case AddrOf:  return "&";
   case Deref:   return "*";
   case Plus:    return "+";
