@@ -11,6 +11,9 @@
 /* Define to 1 if using `alloca.c'. */
 #undef C_ALLOCA
 
+/* Define if CBE is enabled for printf %a output */
+#undef ENABLE_CBE_PRINTF_A
+
 /* Define if threads enabled */
 #undef ENABLE_THREADS
 

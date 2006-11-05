@@ -313,10 +313,11 @@ dnl Allow disablement of threads
 AC_ARG_ENABLE(threads,
               AS_HELP_STRING([--enable-threads],
                              [Use threads if available (default is YES)]),,
-                             enableval=yes)
+                             enableval=default)
 case "$enableval" in
   yes) AC_SUBST(ENABLE_THREADS,[1]) ;;
   no)  AC_SUBST(ENABLE_THREADS,[0]) ;;
+  default) AC_SUBST(ENABLE_THREADS,[1]) ;;
   *) AC_MSG_ERROR([Invalid setting for --enable-threads. Use "yes" or "no"]) ;;
 esac
 AC_DEFINE_UNQUOTED([ENABLE_THREADS],$ENABLE_THREADS,[Define if threads enabled])
@@ -354,6 +355,21 @@ case "$enableval" in
 esac
 TARGETS_TO_BUILD="CBackend $TARGETS_TO_BUILD"
 AC_SUBST(TARGETS_TO_BUILD,$TARGETS_TO_BUILD)
+
+dnl Prevent the CBackend from using printf("%a") for floating point so older
+dnl C compilers that cannot deal with the 0x0p+0 hex floating point format
+dnl can still compile the CBE's output
+AC_ARG_ENABLE([cbe-printf-a],AS_HELP_STRING([--enable-cbe-printf-a],
+  [Enable C Backend output with hex floating point via %a  (default is YES)]),,
+  enableval=default)
+case "$enableval" in
+  yes) AC_SUBST(ENABLE_CBE_PRINTF_A,[1]) ;;
+  no)  AC_SUBST(ENABLE_CBE_PRINTF_A,[0]) ;;
+  default)  AC_SUBST(ENABLE_CBE_PRINTF_A,[1]) ;;
+  *) AC_MSG_ERROR([Invalid setting for --enable-cbe-printf-a. Use "yes" or "no"]) ;;
+esac
+AC_DEFINE_UNQUOTED([ENABLE_CBE_PRINTF_A],$ENABLE_CBE_PRINTF_A,
+                   [Define if CBE is enabled for printf %a output])
 
 dnl Allow a specific llvm-gcc/llvm-g++ pair to be used with this LLVM config.
 AC_ARG_WITH(llvmgccdir,
