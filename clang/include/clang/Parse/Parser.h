@@ -29,16 +29,29 @@ namespace clang {
 ///
 class Parser {
   Preprocessor &PP;
-  Action &Actions;
-  Diagnostic &Diags;
-  Scope *CurScope;
-  unsigned short ParenCount, BracketCount, BraceCount;
   
   /// Tok - The current token we are peeking head.  All parsing methods assume
   /// that this is valid.
   LexerToken Tok;
+  
+  unsigned short ParenCount, BracketCount, BraceCount;
+
+  /// Actions - These are the callbacks we invoke as we parse various constructs
+  /// in the file.  This refers to the common base class between MinimalActions
+  /// and SemaActions for those uses that don't matter.
+  Action &Actions;
+  
+  /// MinimalActions/SemaActions - Exactly one of these two pointers is non-null
+  /// depending on whether the client of the parser wants semantic analysis,
+  /// name binding, and Decl creation performed or not.
+  MinimalAction  *MinimalActions;
+  SemanticAction *SemaActions;
+  
+  Scope *CurScope;
+  Diagnostic &Diags;
 public:
-  Parser(Preprocessor &PP, Action &Actions);
+  Parser(Preprocessor &PP, MinimalAction &MinActions);
+  Parser(Preprocessor &PP, SemanticAction &SemaActions);
   ~Parser();
 
   const LangOptions &getLang() const { return PP.getLangOptions(); }

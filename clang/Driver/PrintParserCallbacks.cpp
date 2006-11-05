@@ -52,6 +52,6 @@ namespace {
   };
 }
 
-Action *llvm::clang::CreatePrintParserActionsAction() {
+MinimalAction *llvm::clang::CreatePrintParserActionsAction() {
   return new ParserPrintActions();
 }

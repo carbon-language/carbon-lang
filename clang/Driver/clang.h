@@ -18,7 +18,7 @@ namespace llvm {
 namespace clang {
 class Preprocessor;
 class LangOptions;
-class Action;
+class MinimalAction;
 class TargetInfo;
 class Diagnostic;
 
@@ -28,7 +28,7 @@ void DoPrintPreprocessedInput(unsigned MainFileID, Preprocessor &PP,
 
 /// CreatePrintParserActionsAction - Return the actions implementation that
 /// implements the -parse-print-callbacks option.
-Action *CreatePrintParserActionsAction();
+MinimalAction *CreatePrintParserActionsAction();
 
 /// CreateTargetInfo - Return the set of target info objects as specified by
 /// the -arch command line option.

@@ -774,7 +774,7 @@ static void ReadPrologFiles(Preprocessor &PP, std::vector<char> &Buf) {
 // Basic Parser driver
 //===----------------------------------------------------------------------===//
 
-static void ParseFile(Preprocessor &PP, Action *PA, unsigned MainFileID) {
+static void ParseFile(Preprocessor &PP, MinimalAction *PA, unsigned MainFileID){
   Parser P(PP, *PA);
   PP.EnterSourceFile(MainFileID, 0, true);
   

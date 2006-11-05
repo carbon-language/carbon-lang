@@ -179,9 +179,8 @@ Parser::StmtResult Parser::ParseStatementOrDeclaration(bool OnlyStatement) {
 ///         expression[opt] ';'
 ///
 Parser::StmtResult Parser::ParseIdentifierStatement(bool OnlyStatement) {
-  IdentifierInfo *II = Tok.getIdentifierInfo();
-  assert(Tok.getKind() == tok::identifier && II && "Not an identifier!");
-  II=II; // FIXME: SILENCE WARNING UNTIL THIS IS USED.
+  assert(Tok.getKind() == tok::identifier && Tok.getIdentifierInfo() &&
+         "Not an identifier!");
 
   LexerToken IdentTok = Tok;  // Save the whole token.
   ConsumeToken();  // eat the identifier.
@@ -211,6 +210,7 @@ Parser::StmtResult Parser::ParseIdentifierStatement(bool OnlyStatement) {
     DeclSpec DS;
     
     // FIXME: Add the typedef name to the start of the decl-specs.
+    
     // ParseDeclarationSpecifiers will continue from there.
     ParseDeclarationSpecifiers(DS);
 

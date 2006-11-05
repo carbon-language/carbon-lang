@@ -26,7 +26,7 @@ namespace clang {
 /// builds AST nodes for the code being parsed.  Clients can either use this
 /// unmodified or subclass it and overload methods to do more specialized
 /// things.
-class ASTBuilder : public Action {
+class ASTBuilder : public SemanticAction {
   Preprocessor &PP;
   
   /// LastInGroupList - This vector is populated when there are multiple
