@@ -1238,6 +1238,7 @@ void Preprocessor::SkipExcludedConditionalBlock(SourceLocation IfTokenLoc,
         PPConditionalInfo CondInfo;
         CondInfo.WasSkipping = true; // Silence bogus warning.
         bool InCond = CurLexer->popConditionalLevel(CondInfo);
+        InCond = InCond;  // Silence warning in no-asserts mode.
         assert(!InCond && "Can't be skipping if not in a conditional!");
         
         // If we popped the outermost skipping block, we're done skipping!

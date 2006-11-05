@@ -131,6 +131,7 @@ SourceBufferMMapFile::SourceBufferMMapFile(const sys::Path &Filename) {
   // FIXME: This does an extra stat syscall to figure out the size, but we
   // already know the size!
   bool Failure = File.open(Filename);
+  Failure = Failure;  // Silence warning in no-asserts mode.
   assert(!Failure && "Can't open file??");
   
   File.map();
