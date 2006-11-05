@@ -379,6 +379,11 @@ Parser::DeclTy *Parser::ParseFunctionDefinition(Declarator &D) {
   const DeclaratorTypeInfo &FnTypeInfo = D.getTypeObject(0);
   assert(FnTypeInfo.Kind == DeclaratorTypeInfo::Function &&
          "This isn't a function declarator!");
+
+  // FIXME: Enter a scope for the arguments.
+  //EnterScope();
+  
+  
   
   // If this declaration was formed with a K&R-style identifier list for the
   // arguments, parse declarations for all of the args next.
@@ -411,6 +416,9 @@ Parser::DeclTy *Parser::ParseFunctionDefinition(Declarator &D) {
   // Parse the function body as a compound stmt.
   StmtResult FnBody = ParseCompoundStatement();
   if (FnBody.isInvalid) return 0;
+
+  // FIXME: Leave the argument scope.
+  // ExitScope();
 
   // TODO: Pass argument information.
   return Actions.ParseFunctionDefinition(CurScope, D, FnBody.Val);
