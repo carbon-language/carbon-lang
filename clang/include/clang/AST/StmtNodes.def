@@ -12,16 +12,20 @@
 //===----------------------------------------------------------------------===//
 
 // Normal Statements.
-STMT(CompoundStmt, Stmt)
-STMT(CaseStmt    , Stmt)
-STMT(DefaultStmt , Stmt)
-STMT(LabelStmt   , Stmt)
-STMT(IfStmt      , Stmt)
-STMT(SwitchStmt  , Stmt)
-STMT(WhileStmt   , Stmt)
-STMT(DoStmt      , Stmt)
-STMT(ForStmt     , Stmt)
-STMT(ReturnStmt  , Stmt)
+STMT(CompoundStmt    , Stmt)
+STMT(CaseStmt        , Stmt)
+STMT(DefaultStmt     , Stmt)
+STMT(LabelStmt       , Stmt)
+STMT(IfStmt          , Stmt)
+STMT(SwitchStmt      , Stmt)
+STMT(WhileStmt       , Stmt)
+STMT(DoStmt          , Stmt)
+STMT(ForStmt         , Stmt)
+STMT(GotoStmt        , Stmt)
+STMT(IndirectGotoStmt, Stmt)
+STMT(ContinueStmt    , Stmt)
+STMT(BreakStmt       , Stmt)
+STMT(ReturnStmt      , Stmt)
 
 // Expressions.
 STMT(Expr                 , Stmt)

@@ -174,6 +174,25 @@ void StmtPrinter::VisitForStmt(ForStmt *Node) {
   PrintStmt(Node->getBody());
 }
 
+void StmtPrinter::VisitGotoStmt(GotoStmt *Node) {
+  Indent() << "goto " << Node->getLabel()->getName() << "\n";
+}
+
+void StmtPrinter::VisitIndirectGotoStmt(IndirectGotoStmt *Node) {
+  Indent() << "goto ";
+  PrintExpr(Node->getTarget());
+  OS << "\n";
+}
+
+void StmtPrinter::VisitContinueStmt(ContinueStmt *Node) {
+  Indent() << "continue\n";
+}
+
+void StmtPrinter::VisitBreakStmt(BreakStmt *Node) {
+  Indent() << "break\n";
+}
+
+
 void StmtPrinter::VisitReturnStmt(ReturnStmt *Node) {
   Indent() << "return";
   if (Node->getRetValue()) {

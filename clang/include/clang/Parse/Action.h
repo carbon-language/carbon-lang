@@ -175,15 +175,15 @@ public:
                                    IdentifierInfo *LabelII) {
     return 0;
   }
-  virtual StmtResult ParseContinueStmt(SourceLocation GotoLoc) {
-    return 0;
-  }
-  virtual StmtResult ParseBreakStmt(SourceLocation GotoLoc) {
-    return 0;
-  }
   virtual StmtResult ParseIndirectGotoStmt(SourceLocation GotoLoc,
                                            SourceLocation StarLoc,
                                            ExprTy *DestExp) {
+    return 0;
+  }
+  virtual StmtResult ParseContinueStmt(SourceLocation ContinueLoc) {
+    return 0;
+  }
+  virtual StmtResult ParseBreakStmt(SourceLocation GotoLoc) {
     return 0;
   }
   virtual StmtResult ParseReturnStmt(SourceLocation ReturnLoc,

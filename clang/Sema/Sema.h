@@ -77,6 +77,14 @@ public:
                                   SourceLocation LParenLoc, 
                                   StmtTy *First, ExprTy *Second, ExprTy *Third,
                                   SourceLocation RParenLoc, StmtTy *Body);
+  virtual StmtResult ParseGotoStmt(SourceLocation GotoLoc,
+                                   SourceLocation LabelLoc,
+                                   IdentifierInfo *LabelII);
+  virtual StmtResult ParseIndirectGotoStmt(SourceLocation GotoLoc,
+                                           SourceLocation StarLoc,
+                                           ExprTy *DestExp);
+  virtual StmtResult ParseContinueStmt(SourceLocation ContinueLoc);
+  virtual StmtResult ParseBreakStmt(SourceLocation GotoLoc);
   
   virtual StmtResult ParseReturnStmt(SourceLocation ReturnLoc,
                                      ExprTy *RetValExp);

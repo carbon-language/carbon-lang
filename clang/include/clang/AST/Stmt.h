@@ -177,6 +177,44 @@ public:
   virtual void visit(StmtVisitor &Visitor);
 };
 
+/// GotoStmt - This represents a direct goto.
+///
+class GotoStmt : public Stmt {
+  IdentifierInfo *Label;
+public:
+  GotoStmt(IdentifierInfo *label) : Label(label) {}
+  
+  IdentifierInfo *getLabel() { return Label; }
+  
+  virtual void visit(StmtVisitor &Visitor);
+};
+
+/// IndirectGotoStmt - This represents an indirect goto.
+///
+class IndirectGotoStmt : public Stmt {
+  Expr *Target;
+public:
+  IndirectGotoStmt(Expr *target) : Target(target) {}
+  
+  Expr *getTarget() { return Target; }
+  
+  virtual void visit(StmtVisitor &Visitor);
+};
+
+
+/// ContinueStmt - This represents a continue.
+///
+class ContinueStmt : public Stmt {
+public:
+  virtual void visit(StmtVisitor &Visitor);
+};
+
+/// BreakStmt - This represents a break.
+///
+class BreakStmt : public Stmt {
+public:
+  virtual void visit(StmtVisitor &Visitor);
+};
 
 
 /// ReturnStmt - This represents a return, optionally of an expression.

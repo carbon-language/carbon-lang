@@ -130,13 +130,6 @@ ASTBuilder::ParseSwitchStmt(SourceLocation SwitchLoc, ExprTy *Cond,
   return new SwitchStmt((Expr*)Cond, (Stmt*)Body);
 }
 
-Action::StmtResult 
-ASTBuilder::ParseForStmt(SourceLocation ForLoc, SourceLocation LParenLoc, 
-                         StmtTy *First, ExprTy *Second, ExprTy *Third,
-                         SourceLocation RParenLoc, StmtTy *Body) {
-  return new ForStmt((Stmt*)First, (Expr*)Second, (Expr*)Third, (Stmt*)Body);
-}
-
 Action::StmtResult
 ASTBuilder::ParseWhileStmt(SourceLocation WhileLoc, ExprTy *Cond, StmtTy *Body){
   return new WhileStmt((Expr*)Cond, (Stmt*)Body);
@@ -147,6 +140,36 @@ ASTBuilder::ParseDoStmt(SourceLocation DoLoc, StmtTy *Body,
                         SourceLocation WhileLoc, ExprTy *Cond) {
   return new DoStmt((Stmt*)Body, (Expr*)Cond);
 }
+
+Action::StmtResult 
+ASTBuilder::ParseForStmt(SourceLocation ForLoc, SourceLocation LParenLoc, 
+                         StmtTy *First, ExprTy *Second, ExprTy *Third,
+                         SourceLocation RParenLoc, StmtTy *Body) {
+  return new ForStmt((Stmt*)First, (Expr*)Second, (Expr*)Third, (Stmt*)Body);
+}
+
+
+Action::StmtResult 
+ASTBuilder::ParseGotoStmt(SourceLocation GotoLoc, SourceLocation LabelLoc,
+                          IdentifierInfo *LabelII) {
+  return new GotoStmt(LabelII);
+}
+Action::StmtResult 
+ASTBuilder::ParseIndirectGotoStmt(SourceLocation GotoLoc,SourceLocation StarLoc,
+                                  ExprTy *DestExp) {
+  return new IndirectGotoStmt((Expr*)DestExp);
+}
+
+Action::StmtResult 
+ASTBuilder::ParseContinueStmt(SourceLocation ContinueLoc) {
+  return new ContinueStmt();
+}
+
+Action::StmtResult 
+ASTBuilder::ParseBreakStmt(SourceLocation GotoLoc) {
+  return new BreakStmt();
+}
+
 
 Action::StmtResult
 ASTBuilder::ParseReturnStmt(SourceLocation ReturnLoc,
