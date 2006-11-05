@@ -784,6 +784,16 @@ static void ParseFile(Preprocessor &PP, Action *PA, unsigned MainFileID) {
 // ASTStreamer drivers
 //===----------------------------------------------------------------------===//
 
+static void BuildASTs(Preprocessor &PP, unsigned MainFileID) {
+  ASTStreamerTy *Streamer = ASTStreamer_Init(PP, MainFileID);
+  
+  while (ASTStreamer_ReadTopLevelDecl(Streamer))
+    /* keep reading */;
+  
+  ASTStreamer_Terminate(Streamer);
+}
+
+
 static void PrintASTs(Preprocessor &PP, unsigned MainFileID) {
   ASTStreamerTy *Streamer = ASTStreamer_Init(PP, MainFileID);
   
@@ -803,6 +813,7 @@ static void PrintASTs(Preprocessor &PP, unsigned MainFileID) {
   
   ASTStreamer_Terminate(Streamer);
 }
+
 
 //===----------------------------------------------------------------------===//
 // Main driver
@@ -937,7 +948,7 @@ int main(int argc, char **argv) {
     PrintASTs(PP, MainFileID);
     break;
   case ParseSyntaxOnly:              // -fsyntax-only
-    ParseFile(PP, new EmptyAction(), MainFileID);
+    BuildASTs(PP, MainFileID);
     break;
   }
   
