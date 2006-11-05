@@ -175,9 +175,13 @@ namespace {
     }
 
     bool CombineToIndexedLoadStore(SDNode *N) {
+      bool isLoad = true;
       SDOperand Ptr;
       if (LoadSDNode *LD  = dyn_cast<LoadSDNode>(N)) {
         Ptr = LD->getBasePtr();
+      } else if (StoreSDNode *ST  = dyn_cast<StoreSDNode>(N)) {
+        Ptr = ST->getBasePtr();
+        isLoad = false;
       } else
         return false;
 
@@ -234,10 +238,9 @@ namespace {
             if (Use->isPredecessor(N))
               return false;
 
-            if (!OffIsAMImm)
+            if (!OffIsAMImm) {
               NumRealUses++;
-            // FIXME: Do we need a target hook here
-            else if (Use->getOpcode() == ISD::LOAD) {
+            } else if (Use->getOpcode() == ISD::LOAD) {
               if (cast<LoadSDNode>(Use)->getBasePtr().Val != Ptr.Val)
                 NumRealUses++;
             } else if (Use->getOpcode() == ISD::STORE) {
@@ -249,17 +252,23 @@ namespace {
           if (NumRealUses == 0)
             return false;
 
-          SDOperand Result =
-            DAG.getIndexedLoad(SDOperand(N,0), BasePtr, Offset, AM);
+          SDOperand Result = isLoad
+            ? DAG.getIndexedLoad(SDOperand(N,0), BasePtr, Offset, AM)
+            : DAG.getIndexedStore(SDOperand(N,0), BasePtr, Offset, AM);
           ++NodesCombined;
           DEBUG(std::cerr << "\nReplacing.4 "; N->dump();
                 std::cerr << "\nWith: "; Result.Val->dump(&DAG);
                 std::cerr << '\n');
           std::vector<SDNode*> NowDead;
-          DAG.ReplaceAllUsesOfValueWith(SDOperand(N, 0), Result.getValue(0),
-                                        NowDead);
-          DAG.ReplaceAllUsesOfValueWith(SDOperand(N, 1), Result.getValue(2),
-                                        NowDead);
+          if (isLoad) {
+            DAG.ReplaceAllUsesOfValueWith(SDOperand(N, 0), Result.getValue(0),
+                                          NowDead);
+            DAG.ReplaceAllUsesOfValueWith(SDOperand(N, 1), Result.getValue(2),
+                                          NowDead);
+          } else {
+            DAG.ReplaceAllUsesOfValueWith(SDOperand(N, 0), Result.getValue(1),
+                                          NowDead);
+          }
 
           // Nodes can end up on the worklist more than once.  Make sure we do
           // not process a node that has been replaced.
@@ -269,7 +278,8 @@ namespace {
           DAG.DeleteNode(N);
 
           // Replace the uses of Ptr with uses of the updated base value.
-          DAG.ReplaceAllUsesOfValueWith(Ptr, Result.getValue(1), NowDead);
+          DAG.ReplaceAllUsesOfValueWith(Ptr, Result.getValue(isLoad ? 1 : 0),
+                                        NowDead);
           removeFromWorkList(Ptr.Val);
           for (unsigned i = 0, e = NowDead.size(); i != e; ++i)
             removeFromWorkList(NowDead[i]);
@@ -2906,6 +2916,10 @@ SDOperand DAGCombiner::visitSTORE(SDNode *N) {
     }
   }
   
+  // Try transforming N to an indexed store.
+  if (CombineToIndexedLoadStore(N))
+    return SDOperand(N, 0);
+
   return SDOperand();
 }
 
