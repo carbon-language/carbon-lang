@@ -179,7 +179,7 @@ void StmtPrinter::VisitGotoStmt(GotoStmt *Node) {
 }
 
 void StmtPrinter::VisitIndirectGotoStmt(IndirectGotoStmt *Node) {
-  Indent() << "goto ";
+  Indent() << "goto *";
   PrintExpr(Node->getTarget());
   OS << "\n";
 }
