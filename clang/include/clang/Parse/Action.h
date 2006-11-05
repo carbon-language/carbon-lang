@@ -283,24 +283,6 @@ public:
 /// quickly.
 class MinimalAction : public Action {
 public:
-};
-
-/// SemanticAction - Clients the implement this interface expect Decl nodes to 
-/// be created, name lookup to be performed, and full semantic analysis of the
-/// source program to be performed.
-class SemanticAction : public Action {
-public:
-  
-};
-
-
-
-/// EmptyAction - This is a simple (bare-minimum) implementation of the Action
-/// class, which only keeps track of which typedefs are in-scope.  This class is
-/// useful to subclass if clients want to implement some actions without having
-/// to reimplement all of the scoping rules.
-class EmptyAction : public MinimalAction {
-public:
   /// isTypeName - This looks at the IdentifierInfo::FETokenInfo field to
   /// determine whether the name is a typedef or not in this scope.
   virtual bool isTypeName(const IdentifierInfo &II, Scope *S) const;
@@ -318,10 +300,15 @@ public:
   virtual DeclTy *ParsedClassDeclaration(Scope *S,
                                          IdentifierInfo **IdentList,
                                          unsigned NumElts);
-  
 };
 
-
+/// SemanticAction - Clients the implement this interface expect Decl nodes to 
+/// be created, name lookup to be performed, and full semantic analysis of the
+/// source program to be performed.
+class SemanticAction : public Action {
+public:
+  
+};
 
 }  // end namespace clang
 }  // end namespace llvm

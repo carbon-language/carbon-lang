@@ -1,4 +1,4 @@
-//===--- EmptyAction.cpp - Minimalistic action implementation -------------===//
+//===--- MinimalAction.cpp - Implement the MinimalAction class ------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,7 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 //
-//  This file implements the EmptyAction interface.
+//  This file implements the MinimalAction interface.
 //
 //===----------------------------------------------------------------------===//
 
@@ -27,13 +27,12 @@ struct TypeNameInfo {
     isTypeName = istypename;
 	Prev = prev;
   }
-    
 };
 
 /// isTypeName - This looks at the IdentifierInfo::FETokenInfo field to
 /// determine whether the name is a type name (objc class name or typedef) or
 /// not in this scope.
-bool EmptyAction::isTypeName(const IdentifierInfo &II, Scope *S) const {
+bool MinimalAction::isTypeName(const IdentifierInfo &II, Scope *S) const {
   TypeNameInfo *TI = II.getFETokenInfo<TypeNameInfo>();
   return TI != 0 && TI->isTypeName;
 }
@@ -42,8 +41,8 @@ bool EmptyAction::isTypeName(const IdentifierInfo &II, Scope *S) const {
 /// IdentifierInfo::FETokenInfo field to keep track of this fact, until S is
 /// popped.
 Action::DeclTy *
-EmptyAction::ParseDeclarator(Scope *S, Declarator &D, ExprTy *Init,
-                             DeclTy *LastInGroup) {
+MinimalAction::ParseDeclarator(Scope *S, Declarator &D, ExprTy *Init,
+                               DeclTy *LastInGroup) {
   IdentifierInfo *II = D.getIdentifier();
   
   // If there is no identifier associated with this declarator, bail out.
@@ -69,9 +68,9 @@ EmptyAction::ParseDeclarator(Scope *S, Declarator &D, ExprTy *Init,
 /// ParsedClassDeclaration - 
 /// Scope will always be top level file scope. 
 Action::DeclTy *
-EmptyAction::ParsedClassDeclaration(Scope *S,
-                                    IdentifierInfo **IdentList,
-                                    unsigned NumElts) {
+MinimalAction::ParsedClassDeclaration(Scope *S,
+                                      IdentifierInfo **IdentList,
+                                      unsigned NumElts) {
   for (unsigned i = 0; i != NumElts; ++i) {
     TypeNameInfo *TI =
       new TypeNameInfo(1, IdentList[i]->getFETokenInfo<TypeNameInfo>());
@@ -86,18 +85,18 @@ EmptyAction::ParsedClassDeclaration(Scope *S,
 
 /// PopScope - When a scope is popped, if any typedefs are now out-of-scope,
 /// they are removed from the IdentifierInfo::FETokenInfo field.
-void EmptyAction::PopScope(SourceLocation Loc, Scope *S) {
+void MinimalAction::PopScope(SourceLocation Loc, Scope *S) {
   for (Scope::decl_iterator I = S->decl_begin(), E = S->decl_end();
        I != E; ++I) {
     IdentifierInfo &II = *static_cast<IdentifierInfo*>(*I);
     TypeNameInfo *TI = II.getFETokenInfo<TypeNameInfo>();
     assert(TI && "This decl didn't get pushed??");
     
-	if (TI) {
+    if (TI) {
       TypeNameInfo *Next = TI->Prev;
       delete TI;
-    
+      
       II.setFETokenInfo(Next);
-	}
+    }
   }
 }

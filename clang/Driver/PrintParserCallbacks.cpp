@@ -22,7 +22,7 @@ using namespace llvm;
 using namespace clang;
 
 namespace {
-  class ParserPrintActions : public EmptyAction {
+  class ParserPrintActions : public MinimalAction {
     
     /// ParseDeclarator - This callback is invoked when a declarator is parsed
     /// and 'Init' specifies the initializer if any.  This is for things like:
@@ -38,7 +38,7 @@ namespace {
       std::cout << "\n";
       
       // Pass up to EmptyActions so that the symbol table is maintained right.
-      return EmptyAction::ParseDeclarator(S, D, Init, LastInGroup);
+      return MinimalAction::ParseDeclarator(S, D, Init, LastInGroup);
     }
     
     /// PopScope - This callback is called immediately before the specified scope
@@ -47,7 +47,7 @@ namespace {
       std::cout << "PopScope\n";
       
       // Pass up to EmptyActions so that the symbol table is maintained right.
-      EmptyAction::PopScope(Loc, S);
+      MinimalAction::PopScope(Loc, S);
     }
   };
 }

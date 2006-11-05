@@ -942,7 +942,7 @@ int main(int argc, char **argv) {
     break;
 
   case ParseNoop:                    // -parse-noop
-    ParseFile(PP, new EmptyAction(), MainFileID);
+    ParseFile(PP, new MinimalAction(), MainFileID);
     break;
     
   case ParseSyntaxOnly:              // -fsyntax-only
