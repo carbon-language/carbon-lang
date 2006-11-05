@@ -322,8 +322,8 @@ static bool EvaluateDirectiveSubExpr(int &LHS, unsigned MinPrec,
       LHS /= RHS;
       break;
     case tok::star :           LHS *= RHS; break;
-    case tok::lessless:        LHS << RHS; break;  // FIXME: shift amt overflow?
-    case tok::greatergreater:  LHS >> RHS; break;  // FIXME: signed vs unsigned
+    case tok::lessless:        LHS <<= RHS; break; // FIXME: shift amt overflow?
+    case tok::greatergreater:  LHS >>= RHS; break; // FIXME: signed vs unsigned
     case tok::plus :           LHS += RHS; break;
     case tok::minus:           LHS -= RHS; break;
     case tok::lessequal:       LHS = LHS <= RHS; break;
