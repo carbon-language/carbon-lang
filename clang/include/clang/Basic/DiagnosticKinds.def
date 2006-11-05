@@ -389,4 +389,9 @@ DIAG(err_ellipsis_first_arg, ERROR,
 DIAG(err_unspecified_vla_size_with_static, ERROR,
      "'static' may not be used with an unspecified variable length array size")
 
+DIAG(err_continue_not_in_loop, ERROR,
+     "'continue' statement not in loop statement")
+DIAG(err_break_not_in_loop_or_switch, ERROR,
+     "'break' statement not in loop or switch statement")
+
 #undef DIAG

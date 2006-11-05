@@ -212,7 +212,7 @@ private:
   // Scope manipulation
   
   /// EnterScope - Start a new scope.
-  void EnterScope();
+  void EnterScope(unsigned ScopeFlags);
   
   /// ExitScope - Pop a scope off the scope stack.
   void ExitScope();
@@ -317,6 +317,8 @@ private:
   StmtResult ParseDoStatement();
   StmtResult ParseForStatement();
   StmtResult ParseGotoStatement();
+  StmtResult ParseContinueStatement();
+  StmtResult ParseBreakStatement();
   StmtResult ParseReturnStatement();
   StmtResult ParseAsmStatement();
   void ParseAsmOperandsOpt();

@@ -15,6 +15,7 @@
 #include "clang/Parse/Parser.h"
 #include "clang/Basic/Diagnostic.h"
 #include "clang/Parse/SemaDecl.h"
+#include "clang/Parse/Scope.h"
 using namespace llvm;
 using namespace clang;
 
@@ -136,13 +137,11 @@ Parser::StmtResult Parser::ParseStatementOrDeclaration(bool OnlyStatement) {
     SemiError = "goto statement";
     break;
   case tok::kw_continue:            // C99 6.8.6.2: continue-statement
-    Res = Actions.ParseContinueStmt(Tok.getLocation());
-    ConsumeToken();  // eat the 'continue'.
+    Res = ParseContinueStatement();
     SemiError = "continue statement";
     break;
   case tok::kw_break:               // C99 6.8.6.3: break-statement
-    Res = Actions.ParseBreakStmt(Tok.getLocation());
-    ConsumeToken();  // eat the 'break'.
+    Res = ParseBreakStatement();
     SemiError = "break statement";
     break;
   case tok::kw_return:              // C99 6.8.6.4: return-statement
@@ -368,7 +367,7 @@ Parser::StmtResult Parser::ParseCompoundStatement() {
   SourceLocation LBraceLoc = ConsumeBrace();  // eat the '{'.
   
   // Enter a scope to hold everything within the compound stmt.
-  EnterScope();
+  EnterScope(0);
   
   SmallVector<StmtTy*, 32> Stmts;
   while (Tok.getKind() != tok::r_brace && Tok.getKind() != tok::eof) {
@@ -443,11 +442,16 @@ Parser::StmtResult Parser::ParseSwitchStatement() {
     return true;
   }
   
+  // Start the switch scope.
+  EnterScope(Scope::BreakScope);
+
   // Parse the condition.
   ExprResult Cond = ParseSimpleParenExpression();
   
   // Read the body statement.
   StmtResult Body = ParseStatement();
+
+  ExitScope();
   
   if (Cond.isInvalid || Body.isInvalid) return true;
   
@@ -468,11 +472,16 @@ Parser::StmtResult Parser::ParseWhileStatement() {
     return true;
   }
   
+  // Start the loop scope.
+  EnterScope(Scope::BreakScope | Scope::ContinueScope);
+
   // Parse the condition.
   ExprResult Cond = ParseSimpleParenExpression();
   
   // Read the body statement.
   StmtResult Body = ParseStatement();
+
+  ExitScope();
   
   if (Cond.isInvalid || Body.isInvalid) return true;
   
@@ -487,10 +496,14 @@ Parser::StmtResult Parser::ParseDoStatement() {
   assert(Tok.getKind() == tok::kw_do && "Not a do stmt!");
   SourceLocation DoLoc = ConsumeToken();  // eat the 'do'.
   
+  // Start the loop scope.
+  EnterScope(Scope::BreakScope | Scope::ContinueScope);
+
   // Read the body statement.
   StmtResult Body = ParseStatement();
 
   if (Tok.getKind() != tok::kw_while) {
+    ExitScope();
     Diag(Tok, diag::err_expected_while);
     Diag(DoLoc, diag::err_matching, "do");
     SkipUntil(tok::semi);
@@ -499,6 +512,7 @@ Parser::StmtResult Parser::ParseDoStatement() {
   SourceLocation WhileLoc = ConsumeToken();
   
   if (Tok.getKind() != tok::l_paren) {
+    ExitScope();
     Diag(Tok, diag::err_expected_lparen_after, "do/while");
     SkipUntil(tok::semi);
     return true;
@@ -506,6 +520,9 @@ Parser::StmtResult Parser::ParseDoStatement() {
   
   // Parse the condition.
   ExprResult Cond = ParseSimpleParenExpression();
+  
+  ExitScope();
+  
   if (Cond.isInvalid || Body.isInvalid) return true;
   
   return Actions.ParseDoStmt(DoLoc, Body.Val, WhileLoc, Cond.Val);
@@ -524,6 +541,8 @@ Parser::StmtResult Parser::ParseForStatement() {
     SkipUntil(tok::semi);
     return true;
   }
+  
+  EnterScope(Scope::BreakScope | Scope::ContinueScope);
 
   SourceLocation LParenLoc = ConsumeParen();
   ExprResult Value;
@@ -540,7 +559,7 @@ Parser::StmtResult Parser::ParseForStatement() {
     if (!getLang().C99)   // Use of C99-style for loops in C90 mode?
       Diag(Tok, diag::ext_c99_variable_decl_in_for_loop);
     ParseDeclaration(Declarator::ForContext);
-    // FIXME: Turn declaration into stmt.
+    // FIXME: Turn declaration into a stmt ast node.
     FirstPart = 0;
   } else {
     Value = ParseExpression();
@@ -592,6 +611,10 @@ Parser::StmtResult Parser::ParseForStatement() {
   
   // Read the body statement.
   StmtResult Body = ParseStatement();
+  
+  // Leave the for-scope.
+  ExitScope();
+    
   if (Body.isInvalid)
     return Body;
   
@@ -627,6 +650,45 @@ Parser::StmtResult Parser::ParseGotoStatement() {
     Res = Actions.ParseIndirectGotoStmt(GotoLoc, StarLoc, R.Val);
   }
   return Res;
+}
+
+/// ParseContinueStatement
+///       jump-statement:
+///         'continue' ';'
+///
+/// Note: this lets the caller parse the end ';'.
+///
+Parser::StmtResult Parser::ParseContinueStatement() {
+  SourceLocation ContinueLoc = ConsumeToken();  // eat the 'continue'.
+  
+  Scope *S = CurScope->getContinueParent();
+  if (!S) {
+    Diag(ContinueLoc, diag::err_continue_not_in_loop);
+    return true;
+  }
+  
+  // FIXME: Remember that this continue goes with this loop.
+  
+  return Actions.ParseContinueStmt(ContinueLoc);
+}
+
+/// ParseBreakStatement
+///       jump-statement:
+///         'break' ';'
+///
+/// Note: this lets the caller parse the end ';'.
+///
+Parser::StmtResult Parser::ParseBreakStatement() {
+  SourceLocation BreakLoc = ConsumeToken();  // eat the 'break'.
+
+  Scope *S = CurScope->getBreakParent();
+  if (!S) {
+    Diag(BreakLoc, diag::err_break_not_in_loop_or_switch);
+    return true;
+  }
+  
+  // FIXME: Remember that this break goes with this loop/switch.
+  return Actions.ParseBreakStmt(BreakLoc);
 }
 
 /// ParseReturnStatement

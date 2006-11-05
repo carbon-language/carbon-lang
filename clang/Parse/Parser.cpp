@@ -187,8 +187,8 @@ bool Parser::SkipUntil(tok::TokenKind T, bool StopAtSemi, bool DontConsume) {
 //===----------------------------------------------------------------------===//
 
 /// EnterScope - Start a new scope.
-void Parser::EnterScope() {
-  CurScope = new Scope(CurScope);
+void Parser::EnterScope(unsigned ScopeFlags) {
+  CurScope = new Scope(CurScope, ScopeFlags);
 }
 
 /// ExitScope - Pop a scope off the scope stack.
@@ -218,7 +218,7 @@ void Parser::Initialize() {
   
   // Create the global scope, install it as the current scope.
   assert(CurScope == 0 && "A scope is already active?");
-  EnterScope();
+  EnterScope(0);
   
   
   // Install builtin types.
@@ -393,7 +393,7 @@ Parser::DeclTy *Parser::ParseFunctionDefinition(Declarator &D) {
          "This isn't a function declarator!");
 
   // FIXME: Enter a scope for the arguments.
-  //EnterScope();
+  //EnterScope(Scope::FnScope);
   
   
   
