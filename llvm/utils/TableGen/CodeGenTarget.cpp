@@ -19,7 +19,6 @@
 #include "Record.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/Support/CommandLine.h"
-#include "llvm/Target/TargetInstrInfo.h"
 #include <set>
 #include <algorithm>
 using namespace llvm;
@@ -274,8 +273,8 @@ bool CodeGenTarget::isLittleEndianEncoding() const {
   return getInstructionSet()->getValueAsBit("isLittleEndianEncoding");
 }
 
-static std::pair<unsigned, unsigned> parseConstraint(const std::string &CStr,
-                                                     CodeGenInstruction *I) {
+static std::string ParseConstraint(const std::string &CStr,
+                                   CodeGenInstruction *I, unsigned &DestOp) {
   const std::string ops("=");  // FIXME: Only supports TIED_TO for now.
   std::string::size_type pos = CStr.find_first_of(ops);
   assert(pos != std::string::npos && "Unrecognized constraint");
@@ -286,26 +285,24 @@ static std::pair<unsigned, unsigned> parseConstraint(const std::string &CStr,
   std::string::size_type wpos = Name.find_first_of(delims);
   if (wpos != std::string::npos)
     Name = Name.substr(0, wpos);
-  unsigned FIdx = I->getOperandNamed(Name);
+  DestOp = I->getOperandNamed(Name);
 
   Name = CStr.substr(pos+1);
   wpos = Name.find_first_not_of(delims);
   if (wpos != std::string::npos)
     Name = Name.substr(wpos+1);
+
   unsigned TIdx = I->getOperandNamed(Name);
-  if (TIdx >= FIdx)
+  if (TIdx >= DestOp)
     throw "Illegal tied-to operand constraint '" + CStr + "'";
-  return std::make_pair(FIdx, (TIdx << 16) |
-                        (1 << (unsigned)TargetInstrInfo::TIED_TO));
+  
+  // Build the string.
+  return "((" + utostr(TIdx) + " << 16) | TargetInstrInfo::TIED_TO)";
 }
 
-static std::vector<unsigned> parseConstraints(const std::string &CStr,
-                                              CodeGenInstruction *I) {
-  unsigned NumOps = I->OperandList.size();
-  std::vector<unsigned> Res(NumOps, 0);
-  if (CStr == "")
-    return Res;
-
+static void ParseConstraints(const std::string &CStr, CodeGenInstruction *I) {
+  if (CStr.empty()) return;
+  
   const std::string delims(",");
   std::string::size_type bidx, eidx;
 
@@ -314,13 +311,16 @@ static std::vector<unsigned> parseConstraints(const std::string &CStr,
     eidx = CStr.find_first_of(delims, bidx);
     if (eidx == std::string::npos)
       eidx = CStr.length();
-    std::pair<unsigned, unsigned> C =
-      parseConstraint(CStr.substr(bidx, eidx), I);
-    Res[C.first] = C.second;
+    
+    unsigned OpNo;
+    std::string Constr = ParseConstraint(CStr.substr(bidx, eidx), I, OpNo);
+    assert(OpNo < I->OperandList.size() && "Invalid operand no?");
+
+    if (!I->OperandList[OpNo].Constraint.empty())
+      throw "Operand #" + utostr(OpNo) + " cannot have multiple constraints!";
+    I->OperandList[OpNo].Constraint = Constr;
     bidx = CStr.find_first_not_of(delims, eidx);
   }
-
-  return Res;
 }
 
 CodeGenInstruction::CodeGenInstruction(Record *R, const std::string &AsmStr)
@@ -403,8 +403,17 @@ CodeGenInstruction::CodeGenInstruction(Record *R, const std::string &AsmStr)
     MIOperandNo += NumOps;
   }
 
-  ConstraintStr = R->getValueAsString("Constraints");
-  ConstraintsList = parseConstraints(ConstraintStr, this);
+  ParseConstraints(R->getValueAsString("Constraints"), this);
+  
+  // For backward compatibility: isTwoAddress means operand 1 is tied to
+  // operand 0.
+  if (isTwoAddress && OperandList[1].Constraint.empty())
+    OperandList[1].Constraint = "((0 << 16) | TargetInstrInfo::TIED_TO)";
+  
+  // Any operands with unset constraints get 0 as their constraint.
+  for (unsigned op = 0, e = OperandList.size(); op != e; ++op)
+    if (OperandList[op].Constraint.empty())
+      OperandList[op].Constraint = "0";
 }
 
 

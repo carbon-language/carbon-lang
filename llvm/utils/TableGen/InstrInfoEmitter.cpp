@@ -63,34 +63,51 @@ void InstrInfoEmitter::printDefList(const std::vector<Record*> &Uses,
   OS << "0 };\n";
 }
 
-static std::vector<std::pair<Record*, unsigned> >
-GetOperandInfo(const CodeGenInstruction &Inst) {
-  std::vector<std::pair<Record*, unsigned> > Result;
+std::vector<std::string>
+InstrInfoEmitter::GetOperandInfo(const CodeGenInstruction &Inst) {
+  std::vector<std::string> Result;
   for (unsigned i = 0, e = Inst.OperandList.size(); i != e; ++i) {
     if (Inst.OperandList[i].Rec->isSubClassOf("RegisterClass")) {
-      Result.push_back(std::make_pair(Inst.OperandList[i].Rec,
-                                      Inst.ConstraintsList[i]));
+      std::string OpStr = getQualifiedName(Inst.OperandList[i].Rec);
+      OpStr += "RegClassID, 0, ";
+      OpStr += Inst.OperandList[i].Constraint;
+
+      Result.push_back(OpStr);
     } else {
-      // This might be a multiple operand thing.
-      // Targets like X86 have registers in their multi-operand operands.
+      // This might be a multiple operand thing.  Targets like X86 have
+      // registers in their multi-operand operands.  It may also be an anonymous
+      // operand, which has a single operand, but no declared class for the
+      // operand.
       DagInit *MIOI = Inst.OperandList[i].MIOperandInfo;
-      unsigned NumDefs = MIOI->getNumArgs();
+      
       for (unsigned j = 0, e = Inst.OperandList[i].MINumOperands; j != e; ++j) {
-        if (NumDefs <= j) {
-          Result.push_back(std::make_pair((Record*)0, Inst.ConstraintsList[i]));
-        } else {
-          DefInit *Def = dynamic_cast<DefInit*>(MIOI->getArg(j));
-          Result.push_back(std::make_pair(Def ? Def->getDef() : 0,
-                                          Inst.ConstraintsList[i]));
-        }
+        Record *OpR = 0;
+        if (MIOI && j < MIOI->getNumArgs())
+          if (DefInit *Def = dynamic_cast<DefInit*>(MIOI->getArg(j)))
+            OpR = Def->getDef();
+
+        
+        std::string Res;
+
+        if (OpR && OpR->isSubClassOf("RegisterClass"))
+          Res += getQualifiedName(OpR) + "RegClassID, ";
+        else
+          Res += "0, ";
+
+        // Fill in applicable flags.
+        Res += "0";
+        
+        // Ptr value whose register class is resolved via callback.
+        if (OpR && OpR->getName() == "ptr_rc")
+          Res += "|M_LOOK_UP_PTR_REG_CLASS";
+        
+        // fill in constraint info.
+        Res += ", " + Inst.OperandList[i].Constraint;
+        
+        Result.push_back(Res);
       }
     }
   }
-
-  // For backward compatibility: isTwoAddress means operand 1 is tied to
-  // operand 0.
-  if (Inst.isTwoAddress)
-    Result[1].second |= (0 << 16) | (1 << (unsigned)TargetInstrInfo::TIED_TO);
 
   return Result;
 }
@@ -127,34 +144,21 @@ void InstrInfoEmitter::run(std::ostream &OS) {
     }
   }
 
-  std::map<std::vector<std::pair<Record*, unsigned> >, unsigned>
-    OperandInfosEmitted;
+  std::map<std::vector<std::string>, unsigned> OperandInfosEmitted;
   unsigned OperandListNum = 0;
-  OperandInfosEmitted[std::vector<std::pair<Record*, unsigned> >()] =
-    ++OperandListNum;
+  OperandInfosEmitted[std::vector<std::string>()] = ++OperandListNum;
   
   // Emit all of the operand info records.
   OS << "\n";
   for (CodeGenTarget::inst_iterator II = Target.inst_begin(),
        E = Target.inst_end(); II != E; ++II) {
-    std::vector<std::pair<Record*, unsigned> > OperandInfo = 
-      GetOperandInfo(II->second);
+    std::vector<std::string> OperandInfo = GetOperandInfo(II->second);
     unsigned &N = OperandInfosEmitted[OperandInfo];
     if (N == 0) {
       N = ++OperandListNum;
       OS << "static const TargetOperandInfo OperandInfo" << N << "[] = { ";
-      for (unsigned i = 0, e = OperandInfo.size(); i != e; ++i) {
-        Record *RC = OperandInfo[i].first;
-        // FIXME: We only care about register operands for now.
-        if (RC && RC->isSubClassOf("RegisterClass"))
-          OS << "{ " << getQualifiedName(RC) << "RegClassID, 0, ";
-        else if (RC && RC->getName() == "ptr_rc")
-          // Ptr value whose register class is resolved via callback.
-          OS << "{ 0, 1, ";
-        else
-          OS << "{ 0, 0, ";
-        OS << OperandInfo[i].second << " }, ";
-      }
+      for (unsigned i = 0, e = OperandInfo.size(); i != e; ++i)
+        OS << "{ " << OperandInfo[i] << " }, ";
       OS << "};\n";
     }
   }
@@ -176,7 +180,7 @@ void InstrInfoEmitter::run(std::ostream &OS) {
 void InstrInfoEmitter::emitRecord(const CodeGenInstruction &Inst, unsigned Num,
                                   Record *InstrInfo,
                          std::map<std::vector<Record*>, unsigned> &EmittedLists,
-          std::map<std::vector<std::pair<Record*,unsigned> >, unsigned> &OpInfo,
+                           std::map<std::vector<std::string>, unsigned> &OpInfo,
                                   std::ostream &OS) {
   int MinOperands;
   if (!Inst.OperandList.empty())
@@ -262,7 +266,7 @@ void InstrInfoEmitter::emitRecord(const CodeGenInstruction &Inst, unsigned Num,
     OS << "ImplicitList" << EmittedLists[DefList] << ", ";
 
   // Emit the operand info.
-  std::vector<std::pair<Record*,unsigned> > OperandInfo = GetOperandInfo(Inst);
+  std::vector<std::string> OperandInfo = GetOperandInfo(Inst);
   if (OperandInfo.empty())
     OS << "0";
   else

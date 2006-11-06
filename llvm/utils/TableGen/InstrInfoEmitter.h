@@ -45,12 +45,13 @@ private:
   void emitRecord(const CodeGenInstruction &Inst, unsigned Num,
                   Record *InstrInfo, 
                   std::map<std::vector<Record*>, unsigned> &EL,
-          std::map<std::vector<std::pair<Record*,unsigned> >, unsigned> &OpInfo,
+                  std::map<std::vector<std::string>, unsigned> &OpInfo,
                   std::ostream &OS);
   void GatherItinClasses();
   unsigned ItinClassNumber(std::string ItinName);
   void emitShiftedValue(Record *R, StringInit *Val, IntInit *Shift,
                         std::ostream &OS);
+  std::vector<std::string> GetOperandInfo(const CodeGenInstruction &Inst);
 };
 
 } // End llvm namespace

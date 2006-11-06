@@ -60,6 +60,9 @@ namespace llvm {
       /// MIOperandInfo - Default MI operand type. Note an operand may be made
       /// up of multiple MI operands.
       DagInit *MIOperandInfo;
+      
+      /// Constraint info for this operand.
+      std::string Constraint;
 
       OperandInfo(Record *R, const std::string &N, const std::string &PMN, 
                   unsigned MION, unsigned MINO, DagInit *MIOI)
@@ -70,14 +73,6 @@ namespace llvm {
     /// OperandList - The list of declared operands, along with their declared
     /// type (which is a record).
     std::vector<OperandInfo> OperandList;
-
-    /// ConstraintStr - The operand constraints string.
-    ///
-    std::string ConstraintStr;
-
-    /// ConstraintsList - List of constraints, encoded into one unsigned int per
-    /// operand.
-    std::vector<unsigned> ConstraintsList;
 
     // Various boolean values we track for the instruction.
     bool isReturn;
