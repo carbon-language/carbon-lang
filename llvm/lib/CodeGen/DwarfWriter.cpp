@@ -2678,7 +2678,7 @@ public:
       ConstructSubprogramDIEs();
       
       // Prime section data.
-      SectionMap.insert(std::string("\t") + TAI->getTextSection());
+      SectionMap.insert(TAI->getTextSection());
     }
   }
 
