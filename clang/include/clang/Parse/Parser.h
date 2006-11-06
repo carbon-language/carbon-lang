@@ -220,11 +220,13 @@ private:
   //===--------------------------------------------------------------------===//
   // Diagnostic Emission and Error recovery.
     
-  void Diag(SourceLocation Loc, unsigned DiagID, const std::string &Msg = "");
-  void Diag(const LexerToken &Tok, unsigned DiagID, const std::string &M = "") {
+  void Diag(SourceLocation Loc, unsigned DiagID,
+            const std::string &Msg = std::string());
+  void Diag(const LexerToken &Tok, unsigned DiagID,
+            const std::string &M = std::string()) {
     Diag(Tok.getLocation(), DiagID, M);
   }
-  void Diag(unsigned DiagID, const std::string &Msg = "") {
+  void Diag(unsigned DiagID, const std::string &Msg = std::string()) {
     Diag(Tok, DiagID, Msg);
   }
   

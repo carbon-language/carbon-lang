@@ -247,8 +247,10 @@ public:
   /// Diag - Forwarding function for diagnostics.  This emits a diagnostic at
   /// the specified LexerToken's location, translating the token's start
   /// position in the current buffer into a SourcePosition object for rendering.
-  void Diag(SourceLocation Loc, unsigned DiagID, const std::string &Msg="");  
-  void Diag(const LexerToken &Tok, unsigned DiagID, const std::string &Msg="") {
+  void Diag(SourceLocation Loc, unsigned DiagID,
+            const std::string &Msg = std::string());  
+  void Diag(const LexerToken &Tok, unsigned DiagID,
+            const std::string &Msg = std::string()) {
     Diag(Tok.getLocation(), DiagID, Msg);
   }
   
