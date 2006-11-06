@@ -90,6 +90,11 @@ const unsigned M_PREDICATED = 1 << 13;
 // requires a callback to look up its register class.
 const unsigned M_LOOK_UP_PTR_REG_CLASS = 1 << 0;
 
+/// M_PREDICATE_OPERAND - Set if this is the first operand of a predicate
+/// operand that controls an M_PREDICATED instruction.
+const unsigned M_PREDICATE_OPERAND = 1 << 1;
+
+
 /// TargetOperandInfo - This holds information about one operand of a machine
 /// instruction, indicating the register class for register operands, etc.
 ///
