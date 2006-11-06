@@ -174,7 +174,13 @@ namespace {
       return true;
     }
 
-    bool CombineToIndexedLoadStore(SDNode *N) {
+    /// CombineToPreIndexedLoadStore - Try turning a load / store into a
+    /// pre-indexed load store when the base pointer is a add or subtract
+    /// and it has other uses besides the load / store. When the
+    /// transformation is done, the new indexed load / store effectively
+    /// folded the add / subtract in and all of its other uses are redirected
+    /// to the new load / store.
+    bool CombineToPreIndexedLoadStore(SDNode *N) {
       bool isLoad = true;
       SDOperand Ptr;
       if (LoadSDNode *LD  = dyn_cast<LoadSDNode>(N)) {
@@ -811,7 +817,7 @@ SDOperand DAGCombiner::visitADD(SDNode *N) {
         return DAG.getNode(ISD::OR, VT, N0, N1);
     }
   }
-  
+
   return SDOperand();
 }
 
@@ -2871,7 +2877,7 @@ SDOperand DAGCombiner::visitLOAD(SDNode *N) {
   }
 
   // Try transforming N to an indexed load.
-  if (CombineToIndexedLoadStore(N))
+  if (CombineToPreIndexedLoadStore(N))
     return SDOperand(N, 0);
 
   return SDOperand();
@@ -2917,7 +2923,7 @@ SDOperand DAGCombiner::visitSTORE(SDNode *N) {
   }
   
   // Try transforming N to an indexed store.
-  if (CombineToIndexedLoadStore(N))
+  if (CombineToPreIndexedLoadStore(N))
     return SDOperand(N, 0);
 
   return SDOperand();
