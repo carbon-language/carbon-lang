@@ -1570,7 +1570,7 @@ void MachineDebugInfo::InvalidateLabel(unsigned LabelID) {
 bool MachineDebugInfo::isLabelValid(unsigned LabelID) {
   std::vector<unsigned>::iterator I =
     std::lower_bound(DeletedLabelIDs.begin(), DeletedLabelIDs.end(), LabelID);
-  return I != DeletedLabelIDs.end() && *I == LabelID;
+  return I == DeletedLabelIDs.end() || *I != LabelID;
 }
 
 /// RecordSource - Register a source file with debug info. Returns an source
