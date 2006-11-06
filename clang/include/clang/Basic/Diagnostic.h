@@ -56,7 +56,7 @@ class Diagnostic {
   /// packed into two bits per diagnostic.
   unsigned char DiagMappings[(diag::NUM_DIAGNOSTICS+3)/4];
 public:
-  Diagnostic(DiagnosticClient &client);
+  explicit Diagnostic(DiagnosticClient &client);
   
   //===--------------------------------------------------------------------===//
   //  Diagnostic characterization methods, used by a client to customize how
