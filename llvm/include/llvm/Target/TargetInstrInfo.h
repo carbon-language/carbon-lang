@@ -80,6 +80,11 @@ const unsigned M_USES_CUSTOM_DAG_SCHED_INSERTION = 1 << 11;
 // operands in addition to the minimum number operands specified.
 const unsigned M_VARIABLE_OPS = 1 << 12;
 
+// M_PREDICATED - Set if this instruction has a predicate that controls its
+// execution.
+const unsigned M_PREDICATED = 1 << 13;
+
+
 // Machine operand flags
 // M_LOOK_UP_PTR_REG_CLASS - Set if this operand is a pointer value and it
 // requires a callback to look up its register class.
@@ -176,6 +181,9 @@ public:
 
   bool isTwoAddrInstr(MachineOpCode Opcode) const {
     return get(Opcode).Flags & M_2_ADDR_FLAG;
+  }
+  bool isPredicated(MachineOpCode Opcode) const {
+    return get(Opcode).Flags & M_PREDICATED;
   }
   bool isCommutableInstr(MachineOpCode Opcode) const {
     return get(Opcode).Flags & M_COMMUTABLE;
