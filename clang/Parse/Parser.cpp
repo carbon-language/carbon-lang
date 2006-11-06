@@ -37,11 +37,6 @@ Parser::Parser(Preprocessor &pp, SemanticAction &SemanticActions)
   ParenCount = BracketCount = BraceCount = 0;
 }
 
-Parser::~Parser() {
-  // If we still have scopes active, delete the scope tree.
-  delete CurScope;
-}
-
 ///  Out-of-line virtual destructor to provide home for Action class.
 Action::~Action() {}
 
@@ -186,9 +181,19 @@ bool Parser::SkipUntil(tok::TokenKind T, bool StopAtSemi, bool DontConsume) {
 // Scope manipulation
 //===----------------------------------------------------------------------===//
 
+/// ScopeCache - Cache scopes to avoid malloc traffic.
+static SmallVector<Scope*, 16> ScopeCache;
+
 /// EnterScope - Start a new scope.
 void Parser::EnterScope(unsigned ScopeFlags) {
-  CurScope = new Scope(CurScope, ScopeFlags);
+  if (!ScopeCache.empty()) {
+    Scope *N = ScopeCache.back();
+    ScopeCache.pop_back();
+    N->Init(CurScope, ScopeFlags);
+    CurScope = N;
+  } else {
+    CurScope = new Scope(CurScope, ScopeFlags);
+  }
 }
 
 /// ExitScope - Pop a scope off the scope stack.
@@ -200,7 +205,11 @@ void Parser::ExitScope() {
   
   Scope *Old = CurScope;
   CurScope = Old->getParent();
-  delete Old;
+  
+  if (ScopeCache.size() == 16)
+    delete Old;
+  else
+    ScopeCache.push_back(Old);
 }
 
 
@@ -209,6 +218,17 @@ void Parser::ExitScope() {
 //===----------------------------------------------------------------------===//
 // C99 6.9: External Definitions.
 //===----------------------------------------------------------------------===//
+
+Parser::~Parser() {
+  // If we still have scopes active, delete the scope tree.
+  delete CurScope;
+  
+  // Free the scope cache.
+  while (!ScopeCache.empty()) {
+    delete ScopeCache.back();
+    ScopeCache.pop_back();
+  }
+}
 
 /// Initialize - Warm up the parser.
 ///

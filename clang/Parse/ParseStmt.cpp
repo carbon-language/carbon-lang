@@ -663,6 +663,7 @@ Parser::StmtResult Parser::ParseContinueStatement() {
   
   Scope *S = CurScope->getContinueParent();
   if (!S) {
+    // C99 6.8.6.2p1: A break shall appear only in or as a loop body.
     Diag(ContinueLoc, diag::err_continue_not_in_loop);
     return true;
   }
@@ -683,6 +684,7 @@ Parser::StmtResult Parser::ParseBreakStatement() {
 
   Scope *S = CurScope->getBreakParent();
   if (!S) {
+    // C99 6.8.6.3p1: A break shall appear only in or as a switch/loop body.
     Diag(BreakLoc, diag::err_break_not_in_loop_or_switch);
     return true;
   }

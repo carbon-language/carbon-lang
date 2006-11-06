@@ -20,7 +20,6 @@
 namespace llvm {
 namespace clang {
 
-  
 /// Scope - A scope is a transient data structure that is used while parsing the
 /// program.  It assists with resolving identifiers to the appropriate
 /// declaration.
@@ -80,24 +79,8 @@ private:
   /// implement these semantics.
   SmallVector<Action::DeclTy*, 32> DeclsInScope;
 public:
-  Scope(Scope *parent, unsigned ScopeFlags)
-    : AnyParent(parent), Depth(AnyParent ? AnyParent->Depth+1 : 0),
-      Flags(ScopeFlags){
-    assert((Flags & (HasBreak|HasContinue)) == 0 &&
-           "These flags can't be set in ctor!");
-    
-    if (AnyParent) {
-      FnParent       = AnyParent->FnParent;
-      BreakParent    = AnyParent->BreakParent;
-      ContinueParent = AnyParent->ContinueParent;
-    } else {
-      FnParent = BreakParent = ContinueParent = 0;
-    }
-
-    // If this scope is a function or contains breaks/continues, remember it.
-    if (Flags & FnScope)       FnParent = this;
-    if (Flags & BreakScope)    BreakParent = this;
-    if (Flags & ContinueScope) ContinueParent = this;
+  Scope(Scope *Parent, unsigned ScopeFlags) {
+    Init(Parent, ScopeFlags);
   }
   
   /// getParent - Return the scope that this is nested in.
@@ -130,6 +113,32 @@ public:
     DeclsInScope.push_back(D);
   }
   
+  
+  
+  /// Init - This is used by the parser to implement scope caching.
+  ///
+  void Init(Scope *Parent, unsigned ScopeFlags) {
+    assert((ScopeFlags & (HasBreak|HasContinue)) == 0 &&
+           "These flags can't be set in ctor!");
+    AnyParent = Parent;
+    Depth = AnyParent ? AnyParent->Depth+1 : 0;
+    Flags = ScopeFlags;
+    
+    if (AnyParent) {
+      FnParent       = AnyParent->FnParent;
+      BreakParent    = AnyParent->BreakParent;
+      ContinueParent = AnyParent->ContinueParent;
+    } else {
+      FnParent = BreakParent = ContinueParent = 0;
+    }
+    
+    // If this scope is a function or contains breaks/continues, remember it.
+    if (Flags & FnScope)       FnParent = this;
+    if (Flags & BreakScope)    BreakParent = this;
+    if (Flags & ContinueScope) ContinueParent = this;
+    
+    DeclsInScope.clear();
+  }      
 };
     
 }  // end namespace clang
