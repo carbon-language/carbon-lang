@@ -100,6 +100,10 @@ InstrInfoEmitter::GetOperandInfo(const CodeGenInstruction &Inst) {
         // Ptr value whose register class is resolved via callback.
         if (OpR && OpR->getName() == "ptr_rc")
           Res += "|M_LOOK_UP_PTR_REG_CLASS";
+
+        // Predicate operands.
+        if (j == 0 && Inst.OperandList[i].Rec->isSubClassOf("PredicateOperand"))
+          Res += "|M_PREDICATE_OPERAND";
         
         // fill in constraint info.
         Res += ", " + Inst.OperandList[i].Constraint;
