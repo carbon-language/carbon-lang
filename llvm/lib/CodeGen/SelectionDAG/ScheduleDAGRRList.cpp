@@ -685,7 +685,6 @@ bool BURegReductionPriorityQueue<SF>::canClobber(SUnit *SU, SUnit *Op) {
 /// first (lower in the schedule).
 template<class SF>
 void BURegReductionPriorityQueue<SF>::AddPseudoTwoAddrDeps() {
-#if 1
   for (unsigned i = 0, e = SUnits->size(); i != e; ++i) {
     SUnit *SU = (SUnit *)&((*SUnits)[i]);
     if (!SU->isTwoAddress)
@@ -703,6 +702,7 @@ void BURegReductionPriorityQueue<SF>::AddPseudoTwoAddrDeps() {
                                     TargetInstrInfo::TIED_TO) != -1) {
         SDNode *DU = SU->Node->getOperand(j).Val;
         SUnit *DUSU = (*SUnitMap)[DU];
+        if (!DUSU) continue;
         for (SUnit::succ_iterator I = DUSU->Succs.begin(),E = DUSU->Succs.end();
              I != E; ++I) {
           if (I->second) continue;
@@ -723,37 +723,6 @@ void BURegReductionPriorityQueue<SF>::AddPseudoTwoAddrDeps() {
       }
     }
   }
-#else
-  for (unsigned i = 0, e = SUnits->size(); i != e; ++i) {
-    SUnit *SU = (SUnit *)&((*SUnits)[i]);
-    SDNode *Node = SU->Node;
-    if (!Node->isTargetOpcode())
-      continue;
-
-    if (SU->isTwoAddress) {
-      SUnit *DUSU = getDefUsePredecessor(SU, TII);
-      if (!DUSU) continue;
-
-      for (SUnit::succ_iterator I = DUSU->Succs.begin(), E = DUSU->Succs.end();
-           I != E; ++I) {
-        if (I->second) continue;
-        SUnit *SuccSU = I->first;
-        if (SuccSU != SU &&
-            (!canClobber(SuccSU, DUSU, TII) ||
-             (!SU->isCommutable && SuccSU->isCommutable))){
-          if (SuccSU->Depth == SU->Depth && !isReachable(SuccSU, SU)) {
-            DEBUG(std::cerr << "Adding an edge from SU # " << SU->NodeNum
-                  << " to SU #" << SuccSU->NodeNum << "\n");
-            if (SU->addPred(SuccSU, true))
-              SU->NumChainPredsLeft++;
-            if (SuccSU->addSucc(SU, true))
-              SuccSU->NumChainSuccsLeft++;
-          }
-        }
-      }
-    }
-  }
-#endif
 }
 
 /// CalcNodePriority - Priority is the Sethi Ullman number. 
