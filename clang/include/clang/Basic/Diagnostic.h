@@ -119,7 +119,7 @@ public:
   /// Report - Issue the message to the client.  DiagID is a member of the
   /// diag::kind enum.  
   void Report(SourceLocation Pos, unsigned DiagID,
-              const std::string &Extra = "");
+              const std::string &Extra = std::string());
 };
 
 /// DiagnosticClient - This is an abstract interface implemented by clients of
