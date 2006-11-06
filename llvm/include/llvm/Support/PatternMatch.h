@@ -310,7 +310,7 @@ struct cast_match {
       return Op.match(I->getOperand(0));
     } else if (ConstantExpr *CE = dyn_cast<ConstantExpr>(V)) {
       if (CE->getOpcode() == Instruction::Cast) {
-        if (DestTy) *DestTy = I->getType();
+        if (DestTy) *DestTy = CE->getType();
         return Op.match(CE->getOperand(0));
       }
     }
