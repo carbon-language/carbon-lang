@@ -287,6 +287,22 @@ unsigned int swap_32(unsigned int v) {
   return v;
 }
 
+Nor is this:
+
+ushort %bad(ushort %a) {
+entry:
+        %tmp = cast ushort %a to uint           ; <uint> [#uses=1]
+        %tmp2 = shr uint %tmp, ubyte 8          ; <uint> [#uses=1]
+        %tmp2 = cast uint %tmp2 to ushort               ; <ushort> [#uses=1]
+        %tmp5 = shl ushort %a, ubyte 8          ; <ushort> [#uses=1]
+        %tmp6 = or ushort %tmp2, %tmp5          ; <ushort> [#uses=1]
+        ret ushort %tmp6
+}
+
+unsigned short bad(unsigned short a) {
+       return ((a & 0xff00) >> 8 | (a & 0x00ff) << 8);
+}
+
 //===---------------------------------------------------------------------===//
 
 These should turn into single 16-bit (unaligned?) loads on little/big endian
