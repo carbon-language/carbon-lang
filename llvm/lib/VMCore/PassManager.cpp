@@ -85,7 +85,7 @@ FunctionPassManager_New::addPass (Pass *P) {
     return false;
 
   // TODO: Check if it suitable to manage P using this FunctionPassManager
-  // or we need another instance of BasicBlockPassManager
+  // or we need another instance of FunctionPassManager
 
   PassVector.push_back(FP);
   activeBBPassManager = NULL;
@@ -109,4 +109,57 @@ FunctionPassManager_New::runOnModule(Module &M) {
   return Changed;
 }
 
+
+// ModulePassManager implementation
+
+/// Add P into pass vector if it is manageble. If P is a FunctionPass
+/// then use FunctionPassManager_New to manage it. Return FALSE if P
+/// is not manageable by this manager.
+bool
+ModulePassManager_New::addPass (Pass *P) {
+
+  // If P is FunctionPass then use function pass maanager.
+  if (FunctionPass *FP = dynamic_cast<FunctionPass*>(P)) {
+
+    activeFunctionPassManager = NULL;
+
+    if (!activeFunctionPassManager
+        || !activeFunctionPassManager->addPass(P)) {
+
+      activeFunctionPassManager = new FunctionPassManager_New();
+
+      PassVector.push_back(activeFunctionPassManager);
+      assert (!activeFunctionPassManager->addPass(FP) &&
+              "Unable to add Pass");
+    }
+    return true;
+  }
+
+  ModulePass *MP = dynamic_cast<ModulePass *>(P);
+  if (!MP)
+    return false;
+
+  // TODO: Check if it suitable to manage P using this ModulePassManager
+  // or we need another instance of ModulePassManager
+
+  PassVector.push_back(MP);
+  activeFunctionPassManager = NULL;
+  return true;
+}
+
+
+/// Execute all of the passes scheduled for execution by invoking 
+/// runOnModule method.  Keep track of whether any of the passes modifies 
+/// the module, and if so, return true.
+bool
+ModulePassManager_New::runOnModule(Module &M) {
+  bool Changed = false;
+  for (std::vector<Pass *>::iterator itr = PassVector.begin(),
+         e = PassVector.end(); itr != e; ++itr) {
+    Pass *P = *itr;
+    ModulePass *MP = dynamic_cast<ModulePass*>(P);
+    Changed |= MP->runOnModule(M);
+  }
+  return Changed;
+}
 

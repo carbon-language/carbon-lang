@@ -143,6 +143,29 @@ private:
   BasicBlockPassManager_New *activeBBPassManager;
 };
 
+/// FunctionPassManager_New manages FunctionPasses.
+/// It batches all Module passes  passes and function pass managers together and
+/// sequence them to process one module.
+class ModulePassManager_New: public Pass {
+ 
+public:
+  ModulePassManager_New() { activeFunctionPassManager = NULL; }
+  
+  /// Add a pass into a passmanager queue. 
+  bool addPass(Pass *p);
+  
+  /// run - Execute all of the passes scheduled for execution.  Keep track of
+  /// whether any of the passes modifies the module, and if so, return true.
+  bool runOnModule(Module &M);
+  
+private:
+  // Collection of pass that are not yet scheduled
+  std::vector<Pass *> PassVector;
+  
+  // Active Pass Manager
+  FunctionPassManager_New *activeFunctionPassManager;
+};
+
 } // End llvm namespace
 
 #endif
