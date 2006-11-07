@@ -1,19 +1,19 @@
 ;test all the shifted and signextending adds and subs with and without consts
 
-; RUN: llvm-as < %s | llc -march=alpha | grep '	addl' |wc -l |grep 2
-; RUN: llvm-as < %s | llc -march=alpha | grep '	addq' |wc -l |grep 2
-; RUN: llvm-as < %s | llc -march=alpha | grep '	subl' |wc -l |grep 2
-; RUN: llvm-as < %s | llc -march=alpha | grep '	subq' |wc -l |grep 1
-; RUN: llvm-as < %s | llc -march=alpha | grep 'lda $0,-100($16)' |wc -l |grep 1
+; RUN: llvm-as < %s | llc -march=alpha | grep '	addl' |wc -l |grep 2 &&
+; RUN: llvm-as < %s | llc -march=alpha | grep '	addq' |wc -l |grep 2 &&
+; RUN: llvm-as < %s | llc -march=alpha | grep '	subl' |wc -l |grep 2 &&
+; RUN: llvm-as < %s | llc -march=alpha | grep '	subq' |wc -l |grep 1 &&
+; RUN: llvm-as < %s | llc -march=alpha | grep 'lda $0,-100($16)' |wc -l |grep 1 &&
 
-; RUN: llvm-as < %s | llc -march=alpha | grep 's4addl' |wc -l |grep 2
-; RUN: llvm-as < %s | llc -march=alpha | grep 's8addl' |wc -l |grep 2
-; RUN: llvm-as < %s | llc -march=alpha | grep 's4addq' |wc -l |grep 2
-; RUN: llvm-as < %s | llc -march=alpha | grep 's8addq' |wc -l |grep 2
+; RUN: llvm-as < %s | llc -march=alpha | grep 's4addl' |wc -l |grep 2 &&
+; RUN: llvm-as < %s | llc -march=alpha | grep 's8addl' |wc -l |grep 2 &&
+; RUN: llvm-as < %s | llc -march=alpha | grep 's4addq' |wc -l |grep 2 &&
+; RUN: llvm-as < %s | llc -march=alpha | grep 's8addq' |wc -l |grep 2 &&
 
-; RUN: llvm-as < %s | llc -march=alpha | grep 's4subl' |wc -l |grep 2
-; RUN: llvm-as < %s | llc -march=alpha | grep 's8subl' |wc -l |grep 2
-; RUN: llvm-as < %s | llc -march=alpha | grep 's4subq' |wc -l |grep 2
+; RUN: llvm-as < %s | llc -march=alpha | grep 's4subl' |wc -l |grep 2 &&
+; RUN: llvm-as < %s | llc -march=alpha | grep 's8subl' |wc -l |grep 2 &&
+; RUN: llvm-as < %s | llc -march=alpha | grep 's4subq' |wc -l |grep 2 &&
 ; RUN: llvm-as < %s | llc -march=alpha | grep 's8subq' |wc -l |grep 2
 
 implementation   ; Functions:
