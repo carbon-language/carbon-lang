@@ -69,8 +69,13 @@ BasicBlockPassManager_New::addPass (Pass *P) {
   if (!BP)
     return false;
 
-  // TODO: Check if it suitable to manage P using this BasicBlockPassManager
-  // or we need another instance of BasicBlockPassManager
+  // If this pass does not preserve anlysis that is used by other passes
+  // managed by this manager than it is not a suiable pass for this manager.
+  if (!manageablePass (P))
+    return false;
+
+  // Take a note of analysis required by this pass.
+  noteDownRequiredAnalysis(P);
 
   // Add pass
   PassVector.push_back(BP);
@@ -124,8 +129,13 @@ FunctionPassManager_New::addPass (Pass *P) {
   if (!FP)
     return false;
 
-  // TODO: Check if it suitable to manage P using this FunctionPassManager
-  // or we need another instance of FunctionPassManager
+  // If this pass does not preserve anlysis that is used by other passes
+  // managed by this manager than it is not a suiable pass for this manager.
+  if (!manageablePass (P))
+    return false;
+
+  // Take a note of analysis required by this pass.
+  noteDownRequiredAnalysis(P);
 
   PassVector.push_back(FP);
   activeBBPassManager = NULL;
@@ -179,8 +189,13 @@ ModulePassManager_New::addPass (Pass *P) {
   if (!MP)
     return false;
 
-  // TODO: Check if it suitable to manage P using this ModulePassManager
-  // or we need another instance of ModulePassManager
+  // If this pass does not preserve anlysis that is used by other passes
+  // managed by this manager than it is not a suiable pass for this manager.
+  if (!manageablePass (P))
+    return false;
+
+  // Take a note of analysis required by this pass.
+  noteDownRequiredAnalysis(P);
 
   PassVector.push_back(MP);
   activeFunctionPassManager = NULL;
