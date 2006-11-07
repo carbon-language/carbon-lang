@@ -121,7 +121,8 @@ private:
 /// BasicBlockpassManager_New manages BasicBlockPass. It batches all the
 /// pass together and sequence them to process one basic block before
 /// processing next basic block.
-class BasicBlockPassManager_New: public Pass {
+class BasicBlockPassManager_New: public Pass,
+                                 public PassManagerAnalysisHelper {
 
 public:
   BasicBlockPassManager_New() { }
@@ -142,7 +143,8 @@ private:
 /// It batches all function passes and basic block pass managers together and
 /// sequence them to process one function at a time before processing next
 /// function.
-class FunctionPassManager_New:public Pass {
+class FunctionPassManager_New: public Pass,
+                               public PassManagerAnalysisHelper {
 public:
   FunctionPassManager_New(ModuleProvider *P) { /* TODO */ }
   FunctionPassManager_New() { 
@@ -176,7 +178,8 @@ private:
 /// ModulePassManager_New manages ModulePasses and function pass managers.
 /// It batches all Module passes  passes and function pass managers together and
 /// sequence them to process one module.
-class ModulePassManager_New: public Pass {
+class ModulePassManager_New: public Pass,
+                             public PassManagerAnalysisHelper {
  
 public:
   ModulePassManager_New() { activeFunctionPassManager = NULL; }
@@ -197,7 +200,8 @@ private:
 };
 
 /// PassManager_New manages ModulePassManagers
-class PassManager_New: public Pass {
+class PassManager_New: public Pass,
+                       public PassManagerAnalysisHelper {
 
 public:
 
