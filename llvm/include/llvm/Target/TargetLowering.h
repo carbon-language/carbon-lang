@@ -382,6 +382,16 @@ public:
     return false;
   }
   
+  /// getPostIndexedAddressParts - returns true by value, base pointer and
+  /// offset pointer and addressing mode by reference if this node can be
+  /// combined with a load / store to form a post-indexed load / store.
+  virtual bool getPostIndexedAddressParts(SDNode *N, MVT::ValueType VT,
+                                          SDOperand &Base, SDOperand &Offset,
+                                          ISD::MemOpAddrMode &AM,
+                                          SelectionDAG &DAG) {
+    return false;
+  }
+  
   //===--------------------------------------------------------------------===//
   // TargetLowering Optimization Methods
   //
