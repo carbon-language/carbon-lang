@@ -59,9 +59,6 @@ namespace {
   EnableJoining("join-liveintervals",
                 cl::desc("Coallesce copies (default=true)"),
                 cl::init(true));
-  static cl::opt<bool>
-  EnableReweight("enable-majik-f00");
-  
 }
 
 void LiveIntervals::getAnalysisUsage(AnalysisUsage &AU) const {
@@ -221,16 +218,14 @@ bool LiveIntervals::runOnMachineFunction(MachineFunction &fn) {
       if (isZeroLengthInterval(&LI))
         LI.weight = HUGE_VALF;
       
-      if (EnableReweight) {
-        // Divide the weight of the interval by its size.  This encourages 
-        // spilling of intervals that are large and have few uses, and
-        // discourages spilling of small intervals with many uses.
-        unsigned Size = 0;
-        for (LiveInterval::iterator II = LI.begin(), E = LI.end(); II != E;++II)
-          Size += II->end - II->start;
+      // Divide the weight of the interval by its size.  This encourages 
+      // spilling of intervals that are large and have few uses, and
+      // discourages spilling of small intervals with many uses.
+      unsigned Size = 0;
+      for (LiveInterval::iterator II = LI.begin(), E = LI.end(); II != E;++II)
+        Size += II->end - II->start;
       
-        LI.weight /= Size;
-      }
+      LI.weight /= Size;
     }
   }
 
