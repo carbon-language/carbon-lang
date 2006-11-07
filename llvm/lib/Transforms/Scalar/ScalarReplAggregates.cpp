@@ -316,9 +316,13 @@ int SROA::isSafeUseOfAllocation(Instruction *User) {
       //
       // Scalar replacing *just* the outer index of the array is probably not
       // going to be a win anyway, so just give up.
-      for (++I; I != E && isa<ArrayType>(*I); ++I) {
-        const ArrayType *SubArrayTy = cast<ArrayType>(*I);
-        uint64_t NumElements = SubArrayTy->getNumElements();
+      for (++I; I != E && (isa<ArrayType>(*I) || isa<PackedType>(*I)); ++I) {
+        uint64_t NumElements;
+        if (const ArrayType *SubArrayTy = dyn_cast<ArrayType>(*I))
+          NumElements = SubArrayTy->getNumElements();
+        else
+          NumElements = cast<PackedType>(*I)->getNumElements();
+        
         if (!isa<ConstantInt>(I.getOperand())) return 0;
         if (cast<ConstantInt>(I.getOperand())->getZExtValue() >= NumElements)
           return 0;
