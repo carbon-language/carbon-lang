@@ -1695,15 +1695,18 @@ private:
     return Unit;
   }
 
+  /// GetBaseCompileUnit - Get the main compile unit.
+  ///
+  CompileUnit *GetBaseCompileUnit() const {
+    CompileUnit *Unit = CompileUnits[0];
+    assert(Unit && "Missing compile unit.");
+    return Unit;
+  }
+
   /// FindCompileUnit - Get the compile unit for the given descriptor.
   ///
   CompileUnit *FindCompileUnit(CompileUnitDesc *UnitDesc) {
-#if 1
-    // FIXME - Using only one compile unit.  Needs to me fixed at the FE.
-    CompileUnit *Unit = CompileUnits[0];
-#else
     CompileUnit *Unit = DescToUnitMap[UnitDesc];
-#endif
     assert(Unit && "Missing compile unit.");
     return Unit;
   }
@@ -1859,13 +1862,12 @@ private:
       // FIXME - Ignore inlined functions for the time being.
       if (!Scope->getParent()) continue;
       
-      unsigned StartID = Scope->getStartLabelID();
-      unsigned EndID = Scope->getEndLabelID();
+      unsigned StartID = DebugInfo->MappedLabel(Scope->getStartLabelID());
+      unsigned EndID = DebugInfo->MappedLabel(Scope->getEndLabelID());
       
-      // Widen scope if label is discarded.
-      // FIXME - really need to find a GOOD label if a block is dead.
-      if (StartID && !DebugInfo->isLabelValid(StartID)) StartID = 0;
-      if (EndID && !DebugInfo->isLabelValid(EndID)) EndID = 0;
+      // Ignore empty scopes.
+      if (StartID == EndID && StartID != 0) continue;
+      if (Scope->getScopes().empty() && Scope->getVariables().empty()) continue;
       
       DIE *ScopeDie = new DIE(DW_TAG_lexical_block);
       
@@ -2084,10 +2086,10 @@ private:
                                    std::vector<MachineMove *> &Moves) {
     for (unsigned i = 0, N = Moves.size(); i < N; ++i) {
       MachineMove *Move = Moves[i];
-      unsigned LabelID = Move->getLabelID();
+      unsigned LabelID = DebugInfo->MappedLabel(Move->getLabelID());
       
       // Throw out move if the label is invalid.
-      if (LabelID && !DebugInfo->isLabelValid(LabelID)) continue;
+      if (!LabelID) continue;
       
       const MachineLocation &Dst = Move->getDestination();
       const MachineLocation &Src = Move->getSource();
@@ -2307,9 +2309,8 @@ private:
       // Construct rows of the address, source, line, column matrix.
       for (unsigned i = 0, N = LineInfos.size(); i < N; ++i) {
         const SourceLineInfo &LineInfo = LineInfos[i];
-        unsigned LabelID = LineInfo.getLabelID();
-        
-        // Source line labels are validated at the MachineDebugInfo level.
+        unsigned LabelID = DebugInfo->MappedLabel(LineInfo.getLabelID());
+        if (!LabelID) continue;
         
         if (DwarfVerbose) {
           unsigned SourceID = LineInfo.getSourceID();
@@ -2420,6 +2421,7 @@ private:
   void EmitFunctionDebugFrame() {
     if (!TAI->getDwarfRequiresFrameSection())
       return;
+       
     // Start the dwarf frame section.
     Asm->SwitchToDataSection(TAI->getDwarfFrameSection());
     
@@ -2588,7 +2590,8 @@ private:
     const UniqueVector<CompileUnitDesc *> CUW = DebugInfo->getCompileUnits();
     
     for (unsigned i = 1, N = CUW.size(); i <= N; ++i) {
-      CompileUnit *Unit = NewCompileUnit(CUW[i], i);
+      unsigned ID = DebugInfo->RecordSource(CUW[i]);
+      CompileUnit *Unit = NewCompileUnit(CUW[i], ID);
       CompileUnits.push_back(Unit);
     }
   }

@@ -81,6 +81,11 @@ namespace llvm {
   /// branches.
   FunctionPass *createBranchFoldingPass();
 
+  /// DebugLabelFoldingPass - This pass prunes out redundant debug labels.  This
+  /// allows a debug emitter to determine if the range of two labels is empty,
+  /// by seeing if the labels map to the same reduced label.
+  FunctionPass *createDebugLabelFoldingPass();
+
   /// MachineCodeDeletion Pass - This pass deletes all of the machine code for
   /// the current function, which should happen after the function has been
   /// emitted to a .s file or to memory.

@@ -10,7 +10,11 @@
 #include "llvm/CodeGen/MachineDebugInfo.h"
 
 #include "llvm/Constants.h"
+#include "llvm/CodeGen/MachineFunctionPass.h"
+#include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineLocation.h"
+#include "llvm/Target/TargetInstrInfo.h"
+#include "llvm/Target/TargetMachine.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/GlobalVariable.h"
 #include "llvm/Intrinsics.h"
@@ -1448,10 +1452,9 @@ MachineDebugInfo::MachineDebugInfo()
 , Directories()
 , SourceFiles()
 , Lines()
-, LabelID(0)
+, LabelIDList()
 , ScopeMap()
 , RootScope(NULL)
-, DeletedLabelIDs()
 , FrameMoves()
 {}
 MachineDebugInfo::~MachineDebugInfo() {
@@ -1544,35 +1547,6 @@ unsigned MachineDebugInfo::RecordLabel(unsigned Line, unsigned Column,
   return ID;
 }
 
-static bool LabelUIDComparison(const SourceLineInfo &LI, unsigned UID) {
-  return LI.getLabelID() < UID;
-}
- 
-/// InvalidateLabel - Inhibit use of the specified label # from
-/// MachineDebugInfo, for example because the code was deleted.
-void MachineDebugInfo::InvalidateLabel(unsigned LabelID) {
-  // Check source line list first.  SourceLineInfo is sorted by LabelID.
-  std::vector<SourceLineInfo>::iterator I =
-    std::lower_bound(Lines.begin(), Lines.end(), LabelID, LabelUIDComparison);
-  if (I != Lines.end() && I->getLabelID() == LabelID) {
-    Lines.erase(I);
-    return;
-  }
-  
-  // Otherwise add for use by isLabelValid.
-  std::vector<unsigned>::iterator J =
-    std::lower_bound(DeletedLabelIDs.begin(), DeletedLabelIDs.end(), LabelID);
-  DeletedLabelIDs.insert(J, LabelID);
-}
-
-/// isLabelValid - Check to make sure the label is still valid before
-/// attempting to use.
-bool MachineDebugInfo::isLabelValid(unsigned LabelID) {
-  std::vector<unsigned>::iterator I =
-    std::lower_bound(DeletedLabelIDs.begin(), DeletedLabelIDs.end(), LabelID);
-  return I == DeletedLabelIDs.end() || *I != LabelID;
-}
-
 /// RecordSource - Register a source file with debug info. Returns an source
 /// ID.
 unsigned MachineDebugInfo::RecordSource(const std::string &Directory,
@@ -1642,4 +1616,70 @@ DebugScope *MachineDebugInfo::getOrCreateScope(DebugInfoDesc *ScopeDesc) {
   return Slot;
 }
 
+//===----------------------------------------------------------------------===//
+/// DebugLabelFolding pass - This pass prunes out redundant debug labels.  This
+/// allows a debug emitter to determine if the range of two labels is empty,
+/// by seeing if the labels map to the same reduced label.
+
+namespace llvm {
+
+struct DebugLabelFolder : public MachineFunctionPass {
+  virtual bool runOnMachineFunction(MachineFunction &MF);
+  virtual const char *getPassName() const { return "Debug Label Folder"; }
+};
+
+bool DebugLabelFolder::runOnMachineFunction(MachineFunction &MF) {
+  // Get machine debug info.
+  MachineDebugInfo *MDI = getAnalysisToUpdate<MachineDebugInfo>();
+  if (!MDI) return false;
+  // Get target instruction info.
+  const TargetInstrInfo *TII = MF.getTarget().getInstrInfo();
+  if (!TII) return false;
+  // Get target version of the debug label opcode.
+  unsigned DWARF_LABELOpc = TII->getDWARF_LABELOpcode();
+  if (!DWARF_LABELOpc) return false;
+  
+  // Track if change is made.
+  bool MadeChange = false;
+  // No prior label to begin.
+  unsigned PriorLabel = 0;
+  
+  // Iterate through basic blocks.
+  for (MachineFunction::iterator BB = MF.begin(), E = MF.end();
+       BB != E; ++BB) {
+    // Iterate through instructions.
+    for (MachineBasicBlock::iterator I = BB->begin(), E = BB->end(); I != E; ) {
+      // Is it a debug label.
+      if ((unsigned)I->getOpcode() == DWARF_LABELOpc) {
+        // The label ID # is always operand #0, an immediate.
+        unsigned NextLabel = I->getOperand(0).getImm();
+        
+        // If there was an immediate prior label.
+        if (PriorLabel) {
+          // Remap the current label to prior label.
+          MDI->RemapLabel(NextLabel, PriorLabel);
+          // Delete the current label.
+          I = BB->erase(I);
+          // Indicate a change has been made.
+          MadeChange = true;
+          continue;
+        } else {
+          // Start a new round.
+          PriorLabel = NextLabel;
+        }
+       } else {
+        // No consecutive labels.
+        PriorLabel = 0;
+      }
+      
+      ++I;
+    }
+  }
+  
+  return MadeChange;
+}
+
+FunctionPass *createDebugLabelFoldingPass() { return new DebugLabelFolder(); }
+
+}
 
