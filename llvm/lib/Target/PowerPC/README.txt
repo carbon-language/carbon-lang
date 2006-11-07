@@ -11,6 +11,35 @@ still a codesize win.
 
 ===-------------------------------------------------------------------------===
 
+We compile the hottest inner loop of viterbi to:
+
+        li r6, 0
+        b LBB1_84       ;bb432.i
+LBB1_83:        ;bb420.i
+        lbzx r8, r5, r7
+        addi r6, r7, 1
+        stbx r8, r4, r7
+LBB1_84:        ;bb432.i
+        mr r7, r6
+        cmplwi cr0, r7, 143
+        bne cr0, LBB1_83        ;bb420.i
+
+The CBE manages to produce:
+
+	li r0, 143
+	mtctr r0
+loop:
+	lbzx r2, r2, r11
+	stbx r0, r2, r9
+	addi r2, r2, 1
+	bdz later
+	b loop
+
+This could be much better (bdnz instead of bdz) but it still beats us.  If we
+produced this with bdnz, the loop would be a single dispatch group.
+
+===-------------------------------------------------------------------------===
+
 Compile:
 
 void foo(int *P) {
