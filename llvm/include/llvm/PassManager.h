@@ -17,6 +17,9 @@
 #ifndef LLVM_PASSMANAGER_H
 #define LLVM_PASSMANAGER_H
 
+#include "llvm/Pass.h"
+#include <vector>
+
 namespace llvm {
 
 class Pass;
@@ -83,6 +86,26 @@ public:
   /// doFinalization - Run all of the initializers for the function passes.
   ///
   bool doFinalization();
+};
+
+/// BasicBlockpassManager_New manages BasicBlockPass. It batches all the
+/// pass together and sequence them to process one basic block before
+/// processing next basic block.
+class BasicBlockPassManager_New: public Pass {
+
+public:
+  BasicBlockPassManager_New() { }
+
+  /// Add a pass into a passmanager queue. 
+  bool addPass(Pass *p);
+  
+  /// Execute all of the passes scheduled for execution.  Keep track of
+  /// whether any of the passes modifies the function, and if so, return true.
+  bool runOnFunction(Function &F);
+
+private:
+  // Collection of pass that are not yet scheduled
+  std::vector<Pass *> PassVector;
 };
 
 } // End llvm namespace
