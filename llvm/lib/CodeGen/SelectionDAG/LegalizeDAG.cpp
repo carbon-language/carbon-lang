@@ -2039,7 +2039,7 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
     case Expand: {
       // Length is too big, just take the lo-part of the length.
       SDOperand HiPart;
-      ExpandOp(Node->getOperand(3), HiPart, Tmp4);
+      ExpandOp(Node->getOperand(3), Tmp4, HiPart);
       break;
     }
     case Legal:
