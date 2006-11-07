@@ -297,7 +297,7 @@ static std::string ParseConstraint(const std::string &CStr,
     throw "Illegal tied-to operand constraint '" + CStr + "'";
   
   // Build the string.
-  return "((" + utostr(TIdx) + " << 16) | TargetInstrInfo::TIED_TO)";
+  return "((" + utostr(TIdx) + " << 16) | (1 << TargetInstrInfo::TIED_TO))";
 }
 
 static void ParseConstraints(const std::string &CStr, CodeGenInstruction *I) {
@@ -408,7 +408,7 @@ CodeGenInstruction::CodeGenInstruction(Record *R, const std::string &AsmStr)
   // For backward compatibility: isTwoAddress means operand 1 is tied to
   // operand 0.
   if (isTwoAddress && OperandList[1].Constraint.empty())
-    OperandList[1].Constraint = "((0 << 16) | TargetInstrInfo::TIED_TO)";
+    OperandList[1].Constraint = "((0 << 16) | (1 << TargetInstrInfo::TIED_TO))";
   
   // Any operands with unset constraints get 0 as their constraint.
   for (unsigned op = 0, e = OperandList.size(); op != e; ++op)
