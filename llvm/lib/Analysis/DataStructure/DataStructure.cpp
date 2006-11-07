@@ -62,7 +62,17 @@ bool DSNodeHandle::isForwarding() const {
 
 DSNode *DSNodeHandle::HandleForwarding() const {
   assert(N->isForwarding() && "Can only be invoked if forwarding!");
-
+  DEBUG(
+        { //assert not looping
+          DSNode* NH = N;
+          std::set<DSNode*> seen;
+          while(NH && NH->isForwarding()) {
+            assert(seen.find(NH) == seen.end() && "Loop detected");
+            seen.insert(NH);
+            NH = NH->ForwardNH.N;
+          }
+        }
+        );
   // Handle node forwarding here!
   DSNode *Next = N->ForwardNH.getNode();  // Cause recursive shrinkage
   Offset += N->ForwardNH.getOffset();
@@ -421,6 +431,8 @@ static bool ElementTypesAreCompatible(const Type *T1, const Type *T2,
 ///
 bool DSNode::mergeTypeInfo(const Type *NewTy, unsigned Offset,
                            bool FoldIfIncompatible) {
+  DEBUG(std::cerr << "merging " << *NewTy << " at " << Offset 
+                  << " with " << *Ty << "\n");
   const TargetData &TD = getTargetData();
   // Check to make sure the Size member is up-to-date.  Size can be one of the
   // following:
@@ -1595,13 +1607,13 @@ void DSGraph::mergeInGraph(const DSCallSite &CS,
     for (afc_iterator I = Graph.afc_begin(), E = Graph.afc_end(); I!=E; ++I)
       if (SCCFinder.PathExistsToClonedNode(*I))
         AuxCallToCopy.push_back(&*I);
-      else if (I->isIndirectCall()){
- 	//If the call node doesn't have any callees, clone it
- 	std::vector< Function *> List;
- 	I->getCalleeNode()->addFullFunctionList(List);
- 	if (!List.size())
- 	  AuxCallToCopy.push_back(&*I);
-       }
+//       else if (I->isIndirectCall()){
+//  	//If the call node doesn't have any callees, clone it
+//  	std::vector< Function *> List;
+//  	I->getCalleeNode()->addFullFunctionList(List);
+//  	if (!List.size())
+//  	  AuxCallToCopy.push_back(&*I);
+//        }
 
   const DSScalarMap &GSM = Graph.getScalarMap();
   for (DSScalarMap::global_iterator GI = GSM.global_begin(),
