@@ -1,7 +1,7 @@
 ; RUN: llvm-as < %s | llc -march=x86 &&
 ; RUN: llvm-as < %s | llc -march=x86 | not grep adc
 
-; PR988
+; PR987
 
 declare void %llvm.memcpy.i64(sbyte*, sbyte*, ulong, uint)
 
