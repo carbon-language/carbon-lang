@@ -40,6 +40,10 @@ static cl::opt<bool>
 TrackIntegersAsPointers("dsa-track-integers", cl::Hidden,
          cl::desc("If this is set, track integers as potential pointers"));
 
+static cl::opt<bool>
+IgnoreSetCC("dsa-ignore-setcc", cl::Hidden,
+         cl::desc("If this is set, do nothing at pointer comparisons"));
+
 static cl::list<std::string>
 AllocList("dsa-alloc-list",
           cl::value_desc("list"),
@@ -336,7 +340,8 @@ void GraphBuilder::visitSelectInst(SelectInst &SI) {
 void GraphBuilder::visitSetCondInst(SetCondInst &SCI) {
   if (!isPointerType(SCI.getOperand(0)->getType()) ||
       isa<ConstantPointerNull>(SCI.getOperand(1))) return; // Only pointers
-  ScalarMap[SCI.getOperand(0)].mergeWith(getValueDest(*SCI.getOperand(1)));
+  if(!IgnoreSetCC)
+    ScalarMap[SCI.getOperand(0)].mergeWith(getValueDest(*SCI.getOperand(1)));
 }
 
 
