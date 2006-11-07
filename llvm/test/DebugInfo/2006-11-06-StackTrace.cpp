@@ -1,9 +1,11 @@
 // This is a regression test on debug info to make sure that we can get a
 // meaningful stack trace from a C++ program.
-// RUN: %llvmgcc -S -O0 -g %s -o Output/%s.ll
-// RUN: llvm-as < Output/%s.ll | llc -o Output/%s.s
-// RUN: gcc -g Output/%s.s -o Output/%s.exe
-// RUN: ( echo "break DeepStack::deepest"; echo "run 17" ; echo "where" ) | gdb Output/%s.exe | grep '#0  DeepStack::deepest (this=.*,x=33)'
+// RUN: %llvmgcc -S -O0 -g %s -o - | llvm-as | llc -o Output/StackTrace.s -f
+// RUN: gcc -g Output/StackTrace.s -o Output/StackTrace.exe -lstdc++
+// RUN: ( echo "break DeepStack::deepest"; echo "run 17" ; echo "where" ) > Output/StackTrace.gdbin 
+// RUN: gdb -q -batch -n -x Output/StackTrace.gdbin Output/StackTrace.exe | tee Output/StackTrace.out | grep '#0  DeepStack::deepest (this=.*,x=33)'
+// RUN: gdb -q -batch -n -x Output/StackTrace.gdbin Output/StackTrace.exe | grep '#7  0x.* in main(argc=1, argv=.*)'
+
 
 #include <stdlib.h>
 
