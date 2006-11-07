@@ -545,7 +545,7 @@ void RA::assignRegOrStackSlotAtInterval(LiveInterval* cur)
   DEBUG(std::cerr << "\tassigning stack slot at interval "<< *cur << ":\n");
 
   // Find a register to spill.
-  float minWeight = float(HUGE_VAL);
+  float minWeight = HUGE_VALF;
   unsigned minReg = 0;
   for (TargetRegisterClass::iterator i = RC->allocation_order_begin(*mf_),
        e = RC->allocation_order_end(*mf_); i != e; ++i) {
@@ -582,7 +582,7 @@ void RA::assignRegOrStackSlotAtInterval(LiveInterval* cur)
   // if the current has the minimum weight, we need to spill it and
   // add any added intervals back to unhandled, and restart
   // linearscan.
-  if (cur->weight != float(HUGE_VAL) && cur->weight <= minWeight) {
+  if (cur->weight != HUGE_VALF && cur->weight <= minWeight) {
     DEBUG(std::cerr << "\t\t\tspilling(c): " << *cur << '\n';);
     int slot = vrm_->assignVirt2StackSlot(cur->reg);
     std::vector<LiveInterval*> added =

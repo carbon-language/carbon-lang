@@ -219,7 +219,7 @@ bool LiveIntervals::runOnMachineFunction(MachineFunction &fn) {
       // range the use follows def immediately, it doesn't make sense to spill
       // it and hope it will be easier to allocate for this li.
       if (isZeroLengthInterval(&LI))
-        LI.weight = float(HUGE_VAL);
+        LI.weight = HUGE_VALF;
       
       if (EnableReweight) {
         // Divide the weight of the interval by its size.  This encourages 
@@ -265,7 +265,7 @@ addIntervalsForSpills(const LiveInterval &li, VirtRegMap &vrm, int slot) {
 
   std::vector<LiveInterval*> added;
 
-  assert(li.weight != HUGE_VAL &&
+  assert(li.weight != HUGE_VALF &&
          "attempt to spill already spilled interval!");
 
   DEBUG(std::cerr << "\t\t\t\tadding intervals for spills for interval: ";
@@ -340,7 +340,7 @@ addIntervalsForSpills(const LiveInterval &li, VirtRegMap &vrm, int slot) {
 
             // the spill weight is now infinity as it
             // cannot be spilled again
-            nI.weight = float(HUGE_VAL);
+            nI.weight = HUGE_VALF;
 
             if (HasUse) {
               LiveRange LR(getLoadIndex(index), getUseIndex(index),
@@ -1362,6 +1362,6 @@ bool LiveIntervals::differingRegisterClasses(unsigned RegA,
 
 LiveInterval LiveIntervals::createInterval(unsigned reg) {
   float Weight = MRegisterInfo::isPhysicalRegister(reg) ?
-                       (float)HUGE_VAL : 0.0F;
+                       HUGE_VALF : 0.0F;
   return LiveInterval(reg, Weight);
 }
