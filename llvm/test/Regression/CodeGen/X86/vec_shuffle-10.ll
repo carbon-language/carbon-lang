@@ -1,5 +1,7 @@
-; RUN: llvm-as < %s | llc -march=x86 -mcpu=yonah | grep unpcklps &&
-; RUN: llvm-as < %s | llc -march=x86 -mcpu=yonah | not grep 'sub.*esp'
+; RUN: llvm-as < %s | llc -march=x86 -mattr=+sse2 &&
+; RUN: llvm-as < %s | llc -march=x86 -mattr=+sse2 | grep unpcklps | wc -l | grep 1 &&
+; RUN: llvm-as < %s | llc -march=x86 -mattr=+sse2 | grep unpckhps | wc -l | grep 1 &&
+; RUN: llvm-as < %s | llc -march=x86 -mattr=+sse2 | not grep 'sub.*esp'
 
 void %test(<4 x float>* %res, <4 x float>* %A, <4 x float>* %B) {
         %tmp = load <4 x float>* %B             ; <<4 x float>> [#uses=2]
@@ -16,3 +18,8 @@ void %test(<4 x float>* %res, <4 x float>* %A, <4 x float>* %B) {
         ret void
 }
 
+void %test2(<4 x float> %X, <4 x float>* %res) {
+	%tmp5 = shufflevector <4 x float> %X, <4 x float> undef, <4 x uint> < uint 2, uint 6, uint 3, uint 7 >
+	store <4 x float> %tmp5, <4 x float>* %res
+	ret void
+}
