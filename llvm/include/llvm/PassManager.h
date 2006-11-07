@@ -166,6 +166,40 @@ private:
   FunctionPassManager_New *activeFunctionPassManager;
 };
 
+/// PassManager_New manages ModulePassManagers
+class PassManager_New: public Pass {
+
+public:
+
+  /// add - Add a pass to the queue of passes to run.  This passes ownership of
+  /// the Pass to the PassManager.  When the PassManager is destroyed, the pass
+  /// will be destroyed as well, so there is no need to delete the pass.  This
+  /// implies that all passes MUST be allocated with 'new'.
+  void add(Pass *P);
+ 
+  /// run - Execute all of the passes scheduled for execution.  Keep track of
+  /// whether any of the passes modifies the module, and if so, return true.
+  bool run(Module &M);
+
+private:
+ 
+  /// Add a pass into a passmanager queue. This is used by schedulePasses
+  bool addPass(Pass *p);
+
+  /// Schedule all passes collected in pass queue using add(). Add all the
+  /// schedule passes into various manager's queue using addPass().
+  void schedulePasses();
+
+  // Collection of pass managers
+  std::vector<ModulePassManager_New *> PassManagers;
+
+  // Collection of pass that are not yet scheduled
+  std::vector<Pass *> PassVector;
+  
+  // Active Pass Manager
+  ModulePassManager_New *activeManager;
+};
+
 } // End llvm namespace
 
 #endif

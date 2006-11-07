@@ -163,3 +163,44 @@ ModulePassManager_New::runOnModule(Module &M) {
   return Changed;
 }
 
+/// Schedule all passes from the queue by adding them in their
+/// respective manager's queue. 
+void
+PassManager_New::schedulePasses() {
+  /* TODO */
+}
+
+/// Add pass P to the queue of passes to run.
+void
+PassManager_New::add(Pass *P) {
+  /* TODO */
+}
+
+// PassManager_New implementation
+/// Add P into active pass manager or use new module pass manager to
+/// manage it.
+bool
+PassManager_New::addPass (Pass *P) {
+
+  if (!activeManager) {
+    activeManager = new ModulePassManager_New();
+    PassManagers.push_back(activeManager);
+  }
+
+  return activeManager->addPass(P);
+}
+
+/// run - Execute all of the passes scheduled for execution.  Keep track of
+/// whether any of the passes modifies the module, and if so, return true.
+bool
+PassManager_New::run(Module &M) {
+
+  schedulePasses();
+  bool Changed = false;
+  for (std::vector<ModulePassManager_New *>::iterator itr = PassManagers.begin(),
+         e = PassManagers.end(); itr != e; ++itr) {
+    ModulePassManager_New *pm = *itr;
+    Changed |= pm->runOnModule(M);
+  }
+  return Changed;
+}
