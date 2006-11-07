@@ -54,3 +54,59 @@ BasicBlockPassManager_New::runOnFunction(Function &F) {
   return Changed;
 }
 
+// FunctionPassManager_New implementation
+
+///////////////////////////////////////////////////////////////////////////////
+// FunctionPassManager
+
+/// Add pass P into the pass manager queue. If P is a BasicBlockPass then
+/// either use it into active basic block pass manager or create new basic
+/// block pass manager to handle pass P.
+bool
+FunctionPassManager_New::addPass (Pass *P) {
+
+  // If P is a BasicBlockPass then use BasicBlockPassManager_New.
+  if (BasicBlockPass *BP = dynamic_cast<BasicBlockPass*>(P)) {
+
+    if (!activeBBPassManager
+        || !activeBBPassManager->addPass(BP)) {
+
+      activeBBPassManager = new BasicBlockPassManager_New();
+
+      PassVector.push_back(activeBBPassManager);
+      assert (!activeBBPassManager->addPass(BP) &&
+              "Unable to add Pass");
+    }
+    return true;
+  }
+
+  FunctionPass *FP = dynamic_cast<FunctionPass *>(P);
+  if (!FP)
+    return false;
+
+  // TODO: Check if it suitable to manage P using this FunctionPassManager
+  // or we need another instance of BasicBlockPassManager
+
+  PassVector.push_back(FP);
+  activeBBPassManager = NULL;
+  return true;
+}
+
+/// Execute all of the passes scheduled for execution by invoking 
+/// runOnFunction method.  Keep track of whether any of the passes modifies 
+/// the function, and if so, return true.
+bool
+FunctionPassManager_New::runOnModule(Module &M) {
+
+  bool Changed = false;
+  for (Module::iterator I = M.begin(), E = M.end(); I != E; ++I)
+    for (std::vector<Pass *>::iterator itr = PassVector.begin(),
+           e = PassVector.end(); itr != e; ++itr) {
+      Pass *P = *itr;
+      FunctionPass *FP = dynamic_cast<FunctionPass*>(P);
+      Changed |= FP->runOnFunction(*I);
+    }
+  return Changed;
+}
+
+

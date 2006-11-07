@@ -108,6 +108,41 @@ private:
   std::vector<Pass *> PassVector;
 };
 
+/// FunctionPassManager_New manages FunctionPasses and BasicBlockPassManagers.
+/// It batches all function passes and basic block pass managers together and
+/// sequence them to process one function at a time before processing next
+/// function.
+class FunctionPassManager_New:public Pass {
+public:
+  FunctionPassManager_New(ModuleProvider *P) { /* TODO */ }
+  FunctionPassManager_New() { 
+    activeBBPassManager = NULL;
+  }
+  ~FunctionPassManager_New() { /* TODO */ };
+ 
+  /// add - Add a pass to the queue of passes to run.  This passes
+  /// ownership of the Pass to the PassManager.  When the
+  /// PassManager_X is destroyed, the pass will be destroyed as well, so
+  /// there is no need to delete the pass. (TODO delete passes.)
+  /// This implies that all passes MUST be allocated with 'new'.
+  void add(Pass *P) { /* TODO*/  }
+
+  /// Add pass into the pass manager queue.
+  bool addPass(Pass *P);
+
+  /// Execute all of the passes scheduled for execution.  Keep
+  /// track of whether any of the passes modifies the function, and if
+  /// so, return true.
+  bool runOnModule(Module &M);
+
+private:
+  // Collection of pass that are not yet scheduled
+  std::vector<Pass *> PassVector;
+ 
+  // Active Pass Managers
+  BasicBlockPassManager_New *activeBBPassManager;
+};
+
 } // End llvm namespace
 
 #endif
