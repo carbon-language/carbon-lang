@@ -110,6 +110,10 @@ def MOVHLPS_shuffle_mask : PatLeaf<(build_vector), [{
   return X86::isMOVHLPSMask(N);
 }]>;
 
+def MOVHLPS_v_undef_shuffle_mask : PatLeaf<(build_vector), [{
+  return X86::isMOVHLPS_v_undef_Mask(N);
+}]>;
+
 def MOVHP_shuffle_mask : PatLeaf<(build_vector), [{
   return X86::isMOVHPMask(N);
 }]>;
@@ -1987,16 +1991,16 @@ def : Pat<(v4i32 (vector_shuffle VR128:$src1, VR128:$src2,
                   MOVHLPS_shuffle_mask)),
           (MOVHLPSrr VR128:$src1, VR128:$src2)>;
 
-// vector_shuffle v1, undef <2, 3, ?, ?> using MOVHLPS
+// vector_shuffle v1, undef <2, ?, ?, ?> using MOVHLPS
 def : Pat<(v4f32 (vector_shuffle VR128:$src1, (undef),
-                  UNPCKH_shuffle_mask)),
+                  MOVHLPS_v_undef_shuffle_mask)),
           (MOVHLPSrr VR128:$src1, VR128:$src1)>;
 def : Pat<(v4i32 (vector_shuffle VR128:$src1, (undef),
-                  UNPCKH_shuffle_mask)),
+                  MOVHLPS_v_undef_shuffle_mask)),
           (MOVHLPSrr VR128:$src1, VR128:$src1)>;
 }
 
-  let AddedComplexity = 20 in {
+let AddedComplexity = 20 in {
 // vector_shuffle v1, (load v2) <4, 5, 2, 3> using MOVLPS
 // vector_shuffle v1, (load v2) <0, 1, 4, 5> using MOVHPS
 def : Pat<(v4f32 (vector_shuffle VR128:$src1, (loadv4f32 addr:$src2),
