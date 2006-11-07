@@ -143,7 +143,7 @@ private:
   BasicBlockPassManager_New *activeBBPassManager;
 };
 
-/// FunctionPassManager_New manages FunctionPasses.
+/// ModulePassManager_New manages ModulePasses and function pass managers.
 /// It batches all Module passes  passes and function pass managers together and
 /// sequence them to process one module.
 class ModulePassManager_New: public Pass {
