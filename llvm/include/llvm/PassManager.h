@@ -88,6 +88,36 @@ public:
   bool doFinalization();
 };
 
+/// PassManagerAnalysisHelper helpes pass manager analysis required by
+/// the managed passes.
+class PassManagerAnalysisHelper {
+
+public:
+
+  /// Return TRUE IFF pass P's required analysis set does not required new
+  /// manager.
+  bool manageablePass(Pass *P);
+
+  /// Return TRUE iff AnalysisID AID is currently available.
+  bool analysisCurrentlyAvailable(AnalysisID AID);
+
+  /// Augment RequiredSet by adding analysis required by pass P.
+  void noteDownRequiredAnalysis(Pass *P);
+
+  /// Remove AnalysisID from the RequiredSet
+  void removeAnalysis(AnalysisID AID);
+
+  /// Remove Analysis that is not preserved by the pass
+  void removeNotPreservedAnalysis(Pass *P);
+  
+  /// Remove dead passes
+  void removeDeadPasses() { /* TODO : Implement */ }
+
+private:
+   // Required set of analysis for the passes managed by this manager
+  std::vector<AnalysisID> RequiredSet;
+};
+
 /// BasicBlockpassManager_New manages BasicBlockPass. It batches all the
 /// pass together and sequence them to process one basic block before
 /// processing next basic block.

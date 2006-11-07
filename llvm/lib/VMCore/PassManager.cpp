@@ -18,6 +18,46 @@
 
 using namespace llvm;
 
+// PassManagerAnalysisHelper implementation
+
+/// Return TRUE IFF pass P's required analysis set does not required new
+/// manager.
+bool PassManagerAnalysisHelper::manageablePass(Pass *P) {
+
+  AnalysisUsage AnUsage;
+  P->getAnalysisUsage(AnUsage);
+
+  // If this pass is not preserving information that is required by the other passes
+  // managed by this manager then use new manager
+  // TODO
+  return true;
+}
+
+/// Return TRUE iff AnalysisID AID is currently available.
+bool PassManagerAnalysisHelper::analysisCurrentlyAvailable(AnalysisID AID) {
+
+  // TODO
+  return false;
+}
+
+/// Augment RequiredSet by adding analysis required by pass P.
+void PassManagerAnalysisHelper::noteDownRequiredAnalysis(Pass *P) {
+
+  // TODO
+}
+
+/// Remove AnalysisID from the RequiredSet
+void PassManagerAnalysisHelper::removeAnalysis(AnalysisID AID) {
+
+  // TODO
+}
+
+/// Remove Analyss not preserved by Pass P
+void PassManagerAnalysisHelper::removeNotPreservedAnalysis(Pass *P) {
+
+  // TODO
+}
+
 /// BasicBlockPassManager implementation
 
 /// Add pass P into PassVector and return TRUE. If this pass is not
