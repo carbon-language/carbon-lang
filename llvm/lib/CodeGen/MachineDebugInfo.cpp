@@ -1629,9 +1629,6 @@ struct DebugLabelFolder : public MachineFunctionPass {
 };
 
 bool DebugLabelFolder::runOnMachineFunction(MachineFunction &MF) {
-  // FIXME - Missing label mapping.
-  return false;
-  
   // Get machine debug info.
   MachineDebugInfo *MDI = getAnalysisToUpdate<MachineDebugInfo>();
   if (!MDI) return false;
