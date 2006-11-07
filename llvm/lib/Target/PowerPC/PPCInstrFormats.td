@@ -405,8 +405,8 @@ class XLForm_2_br<bits<6> opcode, bits<10> xo, bit lk,
   bits<7> BIBO;  // 2 bits of BI and 5 bits of BO.
   bits<3>  CR;
   
-  let BO = BIBO{0-4};
-  let BI{0-1} = BIBO{5-6};
+  let BO = BIBO{2-6};
+  let BI{0-1} = BIBO{0-1};
   let BI{2-4} = CR;
   let BH = 0;
 }
