@@ -13,7 +13,7 @@
 // like pointer analysis.
 //
 //===----------------------------------------------------------------------===//
-
+#define DEBUG_TYPE "td_dsa"
 #include "llvm/Analysis/DataStructure/DataStructure.h"
 #include "llvm/Module.h"
 #include "llvm/DerivedTypes.h"
