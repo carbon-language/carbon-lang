@@ -338,7 +338,7 @@ namespace {
           SDOperand Offset;
           ISD::MemOpAddrMode AM = ISD::UNINDEXED;
           if (TLI.getPostIndexedAddressParts(Op, VT, BasePtr, Offset, AM,DAG) &&
-              BasePtr.Val == Ptr.Val) {
+              BasePtr == Ptr) {
             // Try turning it into a post-indexed load / store except when
             // 1) Op must be independent of N, i.e. Op is neither a predecessor
             //    nor a successor of N. Otherwise, if Op is folded that would
