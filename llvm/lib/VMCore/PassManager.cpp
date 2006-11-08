@@ -40,18 +40,18 @@ private:
   std::vector<Pass *> PassVector;
 };
 
-/// FunctionPassManager_New manages FunctionPasses and BasicBlockPassManagers.
+/// FunctionPassManagerImpl_New manages FunctionPasses and BasicBlockPassManagers.
 /// It batches all function passes and basic block pass managers together and
 /// sequence them to process one function at a time before processing next
 /// function.
-class FunctionPassManager_New : public Pass,
+class FunctionPassManagerImpl_New : public Pass,
                                 public PassManagerAnalysisHelper {
 public:
-  FunctionPassManager_New(ModuleProvider *P) { /* TODO */ }
-  FunctionPassManager_New() { 
+  FunctionPassManagerImpl_New(ModuleProvider *P) { /* TODO */ }
+  FunctionPassManagerImpl_New() { 
     activeBBPassManager = NULL;
   }
-  ~FunctionPassManager_New() { /* TODO */ };
+  ~FunctionPassManagerImpl_New() { /* TODO */ };
  
   /// add - Add a pass to the queue of passes to run.  This passes
   /// ownership of the Pass to the PassManager.  When the
@@ -97,7 +97,7 @@ private:
   std::vector<Pass *> PassVector;
   
   // Active Pass Manager
-  FunctionPassManager_New *activeFunctionPassManager;
+  FunctionPassManagerImpl_New *activeFunctionPassManager;
 };
 
 /// PassManager_New manages ModulePassManagers
@@ -219,6 +219,30 @@ BasicBlockPassManager_New::runOnFunction(Function &F) {
 }
 
 // FunctionPassManager_New implementation
+/// Create new Function pass manager
+FunctionPassManager_New::FunctionPassManager_New() {
+  FPM = new FunctionPassManagerImpl_New();
+}
+
+/// add - Add a pass to the queue of passes to run.  This passes
+/// ownership of the Pass to the PassManager.  When the
+/// PassManager_X is destroyed, the pass will be destroyed as well, so
+/// there is no need to delete the pass. (TODO delete passes.)
+/// This implies that all passes MUST be allocated with 'new'.
+void 
+FunctionPassManager_New::add(Pass *P) { 
+  FPM->add(P);
+}
+
+/// Execute all of the passes scheduled for execution.  Keep
+/// track of whether any of the passes modifies the function, and if
+/// so, return true.
+bool 
+FunctionPassManager_New::runOnModule(Module &M) {
+  return FPM->runOnModule(M);
+}
+
+// FunctionPassManagerImpl_New implementation
 
 // FunctionPassManager
 
@@ -226,7 +250,7 @@ BasicBlockPassManager_New::runOnFunction(Function &F) {
 /// either use it into active basic block pass manager or create new basic
 /// block pass manager to handle pass P.
 bool
-FunctionPassManager_New::addPass(Pass *P) {
+FunctionPassManagerImpl_New::addPass(Pass *P) {
 
   // If P is a BasicBlockPass then use BasicBlockPassManager_New.
   if (BasicBlockPass *BP = dynamic_cast<BasicBlockPass*>(P)) {
@@ -264,7 +288,7 @@ FunctionPassManager_New::addPass(Pass *P) {
 /// runOnFunction method.  Keep track of whether any of the passes modifies 
 /// the function, and if so, return true.
 bool
-FunctionPassManager_New::runOnModule(Module &M) {
+FunctionPassManagerImpl_New::runOnModule(Module &M) {
 
   bool Changed = false;
   for (Module::iterator I = M.begin(), E = M.end(); I != E; ++I)
@@ -281,7 +305,7 @@ FunctionPassManager_New::runOnModule(Module &M) {
 // ModulePassManager implementation
 
 /// Add P into pass vector if it is manageble. If P is a FunctionPass
-/// then use FunctionPassManager_New to manage it. Return false if P
+/// then use FunctionPassManagerImpl_New to manage it. Return false if P
 /// is not manageable by this manager.
 bool
 ModulePassManager_New::addPass(Pass *P) {
@@ -294,7 +318,7 @@ ModulePassManager_New::addPass(Pass *P) {
     if (!activeFunctionPassManager
         || !activeFunctionPassManager->addPass(P)) {
 
-      activeFunctionPassManager = new FunctionPassManager_New();
+      activeFunctionPassManager = new FunctionPassManagerImpl_New();
 
       PassVector.push_back(activeFunctionPassManager);
       if (!activeFunctionPassManager->addPass(FP))
