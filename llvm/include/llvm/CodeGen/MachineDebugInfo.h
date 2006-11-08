@@ -1046,13 +1046,18 @@ public:
   /// RemapLabel - Indicate that a label has been merged into another.
   ///
   void RemapLabel(unsigned OldLabelID, unsigned NewLabelID) {
+    assert(0 < OldLabelID && OldLabelID <= LabelIDList.size() &&
+          "Old debug label ID out of range.");
+    assert(NewLabelID <= LabelIDList.size() &&
+          "New debug label ID out of range.");
     LabelIDList[OldLabelID - 1] = NewLabelID;
   }
   
   /// MappedLabel - Find out the label's final ID.  Zero indicates deletion.
   /// ID != Mapped ID indicates that the label was folded into another label.
   unsigned MappedLabel(unsigned LabelID) const {
-    return LabelIDList[LabelID - 1];
+    assert(LabelID <= LabelIDList.size() && "Debug label ID out of range.");
+    return LabelID ? LabelIDList[LabelID - 1] : 0;
   }
 
   /// RecordSource - Register a source file with debug info. Returns an source
