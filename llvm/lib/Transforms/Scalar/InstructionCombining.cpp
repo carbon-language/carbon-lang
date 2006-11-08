@@ -6766,8 +6766,11 @@ Instruction *InstCombiner::FoldPHIArgBinOpIntoPHI(PHINode &PN) {
   assert(isa<BinaryOperator>(FirstInst) || isa<ShiftInst>(FirstInst) ||
          isa<GetElementPtrInst>(FirstInst));
   unsigned Opc = FirstInst->getOpcode();
-  const Type *LHSType = FirstInst->getOperand(0)->getType();
-  const Type *RHSType = FirstInst->getOperand(1)->getType();
+  Value *LHSVal = FirstInst->getOperand(0);
+  Value *RHSVal = FirstInst->getOperand(1);
+    
+  const Type *LHSType = LHSVal->getType();
+  const Type *RHSType = RHSVal->getType();
   
   // Scan to see if all operands are the same opcode, all have one use, and all
   // kill their operands (i.e. the operands have one use).
@@ -6779,52 +6782,46 @@ Instruction *InstCombiner::FoldPHIArgBinOpIntoPHI(PHINode &PN) {
         I->getOperand(0)->getType() != LHSType ||
         I->getOperand(1)->getType() != RHSType)
       return 0;
+    
+    // Keep track of which operand needs a phi node.
+    if (I->getOperand(0) != LHSVal) LHSVal = 0;
+    if (I->getOperand(1) != RHSVal) RHSVal = 0;
   }
   
-  // Otherwise, this is safe and profitable to transform.  Create two phi nodes.
-  PHINode *NewLHS = new PHINode(FirstInst->getOperand(0)->getType(),
-                                FirstInst->getOperand(0)->getName()+".pn");
-  NewLHS->reserveOperandSpace(PN.getNumOperands()/2);
-  PHINode *NewRHS = new PHINode(FirstInst->getOperand(1)->getType(),
-                                FirstInst->getOperand(1)->getName()+".pn");
-  NewRHS->reserveOperandSpace(PN.getNumOperands()/2);
-  
+  // Otherwise, this is safe and profitable to transform.  Create up to two phi
+  // nodes.
+  PHINode *NewLHS = 0, *NewRHS = 0;
   Value *InLHS = FirstInst->getOperand(0);
-  NewLHS->addIncoming(InLHS, PN.getIncomingBlock(0));
   Value *InRHS = FirstInst->getOperand(1);
-  NewRHS->addIncoming(InRHS, PN.getIncomingBlock(0));
   
-  // Add all operands to the new PHsI.
-  for (unsigned i = 1, e = PN.getNumIncomingValues(); i != e; ++i) {
-    Value *NewInLHS = cast<Instruction>(PN.getIncomingValue(i))->getOperand(0);
-    Value *NewInRHS = cast<Instruction>(PN.getIncomingValue(i))->getOperand(1);
-    if (NewInLHS != InLHS) InLHS = 0;
-    if (NewInRHS != InRHS) InRHS = 0;
-    NewLHS->addIncoming(NewInLHS, PN.getIncomingBlock(i));
-    NewRHS->addIncoming(NewInRHS, PN.getIncomingBlock(i));
-  }
-  
-  Value *LHSVal;
-  if (InLHS) {
-    // The new PHI unions all of the same values together.  This is really
-    // common, so we handle it intelligently here for compile-time speed.
-    LHSVal = InLHS;
-    delete NewLHS;
-  } else {
+  if (LHSVal == 0) {
+    NewLHS = new PHINode(LHSType, FirstInst->getOperand(0)->getName()+".pn");
+    NewLHS->reserveOperandSpace(PN.getNumOperands()/2);
+    NewLHS->addIncoming(InLHS, PN.getIncomingBlock(0));
     InsertNewInstBefore(NewLHS, PN);
     LHSVal = NewLHS;
   }
-  Value *RHSVal;
-  if (InRHS) {
-    // The new PHI unions all of the same values together.  This is really
-    // common, so we handle it intelligently here for compile-time speed.
-    RHSVal = InRHS;
-    delete NewRHS;
-  } else {
+  
+  if (RHSVal == 0) {
+    NewRHS = new PHINode(RHSType, FirstInst->getOperand(1)->getName()+".pn");
+    NewRHS->reserveOperandSpace(PN.getNumOperands()/2);
+    NewRHS->addIncoming(InRHS, PN.getIncomingBlock(0));
     InsertNewInstBefore(NewRHS, PN);
     RHSVal = NewRHS;
   }
   
+  // Add all operands to the new PHIs.
+  for (unsigned i = 1, e = PN.getNumIncomingValues(); i != e; ++i) {
+    if (NewLHS) {
+      Value *NewInLHS =cast<Instruction>(PN.getIncomingValue(i))->getOperand(0);
+      NewLHS->addIncoming(NewInLHS, PN.getIncomingBlock(i));
+    }
+    if (NewRHS) {
+      Value *NewInRHS =cast<Instruction>(PN.getIncomingValue(i))->getOperand(1);
+      NewRHS->addIncoming(NewInRHS, PN.getIncomingBlock(i));
+    }
+  }
+    
   if (BinaryOperator *BinOp = dyn_cast<BinaryOperator>(FirstInst))
     return BinaryOperator::create(BinOp->getOpcode(), LHSVal, RHSVal);
   else if (ShiftInst *SI = dyn_cast<ShiftInst>(FirstInst))
