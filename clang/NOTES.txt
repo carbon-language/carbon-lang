@@ -29,6 +29,12 @@ To time GCC preprocessing speed without output, use:
    "time gcc -MM file"
 This is similar to -Eonly.
 
+
+//===---------------------------------------------------------------------===//
+
+  C++ Template Instantiation benchmark:
+     http://users.rcn.com/abrahams/instantiation_speed/index.html
+
 //===---------------------------------------------------------------------===//
 
 TODO: File Manager Speedup:
