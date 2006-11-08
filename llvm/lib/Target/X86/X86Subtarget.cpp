@@ -44,10 +44,9 @@ bool X86::GetCpuIDAndInfo(unsigned value, unsigned *rEAX, unsigned *rEBX,
   return false;
 #elif defined(i386) || defined(__i386__) || defined(__x86__) || defined(_M_IX86)
 #if defined(__GNUC__)
-  asm ("pushl\t%%ebx\n\t"
+  asm ("movl\t%%ebx, %%esi\n\t"
        "cpuid\n\t"
-       "movl\t%%ebx, %%esi\n\t"
-       "popl\t%%ebx"
+       "xchgl\t%%ebx, %%esi\n\t"
        : "=a" (*rEAX),
          "=S" (*rEBX),
          "=c" (*rECX),
