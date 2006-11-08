@@ -602,6 +602,285 @@ SDOperand PPC::get_VSPLTI_elt(SDNode *N, unsigned ByteSize, SelectionDAG &DAG) {
 }
 
 //===----------------------------------------------------------------------===//
+//  Addressing Mode Selection
+//===----------------------------------------------------------------------===//
+
+/// isIntS16Immediate - This method tests to see if the node is either a 32-bit
+/// or 64-bit immediate, and if the value can be accurately represented as a
+/// sign extension from a 16-bit value.  If so, this returns true and the
+/// immediate.
+static bool isIntS16Immediate(SDNode *N, short &Imm) {
+  if (N->getOpcode() != ISD::Constant)
+    return false;
+  
+  Imm = (short)cast<ConstantSDNode>(N)->getValue();
+  if (N->getValueType(0) == MVT::i32)
+    return Imm == (int32_t)cast<ConstantSDNode>(N)->getValue();
+  else
+    return Imm == (int64_t)cast<ConstantSDNode>(N)->getValue();
+}
+static bool isIntS16Immediate(SDOperand Op, short &Imm) {
+  return isIntS16Immediate(Op.Val, Imm);
+}
+
+
+/// SelectAddressRegReg - Given the specified addressed, check to see if it
+/// can be represented as an indexed [r+r] operation.  Returns false if it
+/// can be more efficiently represented with [r+imm].
+bool PPCTargetLowering::SelectAddressRegReg(SDOperand N, SDOperand &Base,
+                                            SDOperand &Index,
+                                            SelectionDAG &DAG) {
+  short imm = 0;
+  if (N.getOpcode() == ISD::ADD) {
+    if (isIntS16Immediate(N.getOperand(1), imm))
+      return false;    // r+i
+    if (N.getOperand(1).getOpcode() == PPCISD::Lo)
+      return false;    // r+i
+    
+    Base = N.getOperand(0);
+    Index = N.getOperand(1);
+    return true;
+  } else if (N.getOpcode() == ISD::OR) {
+    if (isIntS16Immediate(N.getOperand(1), imm))
+      return false;    // r+i can fold it if we can.
+    
+    // If this is an or of disjoint bitfields, we can codegen this as an add
+    // (for better address arithmetic) if the LHS and RHS of the OR are provably
+    // disjoint.
+    uint64_t LHSKnownZero, LHSKnownOne;
+    uint64_t RHSKnownZero, RHSKnownOne;
+    ComputeMaskedBits(N.getOperand(0), ~0U, LHSKnownZero, LHSKnownOne);
+    
+    if (LHSKnownZero) {
+      ComputeMaskedBits(N.getOperand(1), ~0U, RHSKnownZero, RHSKnownOne);
+      // If all of the bits are known zero on the LHS or RHS, the add won't
+      // carry.
+      if ((LHSKnownZero | RHSKnownZero) == ~0U) {
+        Base = N.getOperand(0);
+        Index = N.getOperand(1);
+        return true;
+      }
+    }
+  }
+  
+  return false;
+}
+
+/// Returns true if the address N can be represented by a base register plus
+/// a signed 16-bit displacement [r+imm], and if it is not better
+/// represented as reg+reg.
+bool PPCTargetLowering::SelectAddressRegImm(SDOperand N, SDOperand &Disp,
+                                            SDOperand &Base, SelectionDAG &DAG){
+  // If this can be more profitably realized as r+r, fail.
+  if (SelectAddressRegReg(N, Disp, Base, DAG))
+    return false;
+  
+  if (N.getOpcode() == ISD::ADD) {
+    short imm = 0;
+    if (isIntS16Immediate(N.getOperand(1), imm)) {
+      Disp = DAG.getTargetConstant((int)imm & 0xFFFF, MVT::i32);
+      if (FrameIndexSDNode *FI = dyn_cast<FrameIndexSDNode>(N.getOperand(0))) {
+        Base = DAG.getTargetFrameIndex(FI->getIndex(), N.getValueType());
+      } else {
+        Base = N.getOperand(0);
+      }
+      return true; // [r+i]
+    } else if (N.getOperand(1).getOpcode() == PPCISD::Lo) {
+      // Match LOAD (ADD (X, Lo(G))).
+      assert(!cast<ConstantSDNode>(N.getOperand(1).getOperand(1))->getValue()
+             && "Cannot handle constant offsets yet!");
+      Disp = N.getOperand(1).getOperand(0);  // The global address.
+      assert(Disp.getOpcode() == ISD::TargetGlobalAddress ||
+             Disp.getOpcode() == ISD::TargetConstantPool ||
+             Disp.getOpcode() == ISD::TargetJumpTable);
+      Base = N.getOperand(0);
+      return true;  // [&g+r]
+    }
+  } else if (N.getOpcode() == ISD::OR) {
+    short imm = 0;
+    if (isIntS16Immediate(N.getOperand(1), imm)) {
+      // If this is an or of disjoint bitfields, we can codegen this as an add
+      // (for better address arithmetic) if the LHS and RHS of the OR are
+      // provably disjoint.
+      uint64_t LHSKnownZero, LHSKnownOne;
+      ComputeMaskedBits(N.getOperand(0), ~0U, LHSKnownZero, LHSKnownOne);
+      if ((LHSKnownZero|~(unsigned)imm) == ~0U) {
+        // If all of the bits are known zero on the LHS or RHS, the add won't
+        // carry.
+        Base = N.getOperand(0);
+        Disp = DAG.getTargetConstant((int)imm & 0xFFFF, MVT::i32);
+        return true;
+      }
+    }
+  } else if (ConstantSDNode *CN = dyn_cast<ConstantSDNode>(N)) {
+    // Loading from a constant address.
+    
+    // If this address fits entirely in a 16-bit sext immediate field, codegen
+    // this as "d, 0"
+    short Imm;
+    if (isIntS16Immediate(CN, Imm)) {
+      Disp = DAG.getTargetConstant(Imm, CN->getValueType(0));
+      Base = DAG.getRegister(PPC::R0, CN->getValueType(0));
+      return true;
+    }
+    
+    // FIXME: Handle small sext constant offsets in PPC64 mode also!
+    if (CN->getValueType(0) == MVT::i32) {
+      int Addr = (int)CN->getValue();
+      
+      // Otherwise, break this down into an LIS + disp.
+      Disp =  DAG.getTargetConstant((short)Addr, MVT::i32);
+      Base = DAG.getConstant(Addr - (signed short)Addr, MVT::i32);
+      return true;
+    }
+  }
+  
+  Disp = DAG.getTargetConstant(0, getPointerTy());
+  if (FrameIndexSDNode *FI = dyn_cast<FrameIndexSDNode>(N))
+    Base = DAG.getTargetFrameIndex(FI->getIndex(), N.getValueType());
+  else
+    Base = N;
+  return true;      // [r+0]
+}
+
+/// SelectAddressRegRegOnly - Given the specified addressed, force it to be
+/// represented as an indexed [r+r] operation.
+bool PPCTargetLowering::SelectAddressRegRegOnly(SDOperand N, SDOperand &Base,
+                                                SDOperand &Index,
+                                                SelectionDAG &DAG) {
+  // Check to see if we can easily represent this as an [r+r] address.  This
+  // will fail if it thinks that the address is more profitably represented as
+  // reg+imm, e.g. where imm = 0.
+  if (SelectAddressRegReg(N, Base, Index, DAG))
+    return true;
+  
+  // If the operand is an addition, always emit this as [r+r], since this is
+  // better (for code size, and execution, as the memop does the add for free)
+  // than emitting an explicit add.
+  if (N.getOpcode() == ISD::ADD) {
+    Base = N.getOperand(0);
+    Index = N.getOperand(1);
+    return true;
+  }
+  
+  // Otherwise, do it the hard way, using R0 as the base register.
+  Base = DAG.getRegister(PPC::R0, N.getValueType());
+  Index = N;
+  return true;
+}
+
+/// SelectAddressRegImmShift - Returns true if the address N can be
+/// represented by a base register plus a signed 14-bit displacement
+/// [r+imm*4].  Suitable for use by STD and friends.
+bool PPCTargetLowering::SelectAddressRegImmShift(SDOperand N, SDOperand &Disp,
+                                                 SDOperand &Base,
+                                                 SelectionDAG &DAG) {
+  // If this can be more profitably realized as r+r, fail.
+  if (SelectAddressRegReg(N, Disp, Base, DAG))
+    return false;
+  
+  if (N.getOpcode() == ISD::ADD) {
+    short imm = 0;
+    if (isIntS16Immediate(N.getOperand(1), imm) && (imm & 3) == 0) {
+      Disp =  DAG.getTargetConstant(((int)imm & 0xFFFF) >> 2, MVT::i32);
+      if (FrameIndexSDNode *FI = dyn_cast<FrameIndexSDNode>(N.getOperand(0))) {
+        Base = DAG.getTargetFrameIndex(FI->getIndex(), N.getValueType());
+      } else {
+        Base = N.getOperand(0);
+      }
+      return true; // [r+i]
+    } else if (N.getOperand(1).getOpcode() == PPCISD::Lo) {
+      // Match LOAD (ADD (X, Lo(G))).
+      assert(!cast<ConstantSDNode>(N.getOperand(1).getOperand(1))->getValue()
+             && "Cannot handle constant offsets yet!");
+      Disp = N.getOperand(1).getOperand(0);  // The global address.
+      assert(Disp.getOpcode() == ISD::TargetGlobalAddress ||
+             Disp.getOpcode() == ISD::TargetConstantPool ||
+             Disp.getOpcode() == ISD::TargetJumpTable);
+      Base = N.getOperand(0);
+      return true;  // [&g+r]
+    }
+  } else if (N.getOpcode() == ISD::OR) {
+    short imm = 0;
+    if (isIntS16Immediate(N.getOperand(1), imm) && (imm & 3) == 0) {
+      // If this is an or of disjoint bitfields, we can codegen this as an add
+      // (for better address arithmetic) if the LHS and RHS of the OR are
+      // provably disjoint.
+      uint64_t LHSKnownZero, LHSKnownOne;
+      ComputeMaskedBits(N.getOperand(0), ~0U, LHSKnownZero, LHSKnownOne);
+      if ((LHSKnownZero|~(unsigned)imm) == ~0U) {
+        // If all of the bits are known zero on the LHS or RHS, the add won't
+        // carry.
+        Base = N.getOperand(0);
+        Disp = DAG.getTargetConstant(((int)imm & 0xFFFF) >> 2, MVT::i32);
+        return true;
+      }
+    }
+  } else if (ConstantSDNode *CN = dyn_cast<ConstantSDNode>(N)) {
+    // Loading from a constant address.
+    
+    // If this address fits entirely in a 14-bit sext immediate field, codegen
+    // this as "d, 0"
+    short Imm;
+    if (isIntS16Immediate(CN, Imm)) {
+      Disp = DAG.getTargetConstant((unsigned short)Imm >> 2, getPointerTy());
+      Base = DAG.getRegister(PPC::R0, CN->getValueType(0));
+      return true;
+    }
+    
+    // FIXME: Handle small sext constant offsets in PPC64 mode also!
+    if (CN->getValueType(0) == MVT::i32) {
+      int Addr = (int)CN->getValue();
+      
+      // Otherwise, break this down into an LIS + disp.
+      Disp = DAG.getTargetConstant((short)Addr >> 2, MVT::i32);
+      Base = DAG.getConstant(Addr - (signed short)Addr, MVT::i32);
+      return true;
+    }
+  }
+  
+  Disp = DAG.getTargetConstant(0, getPointerTy());
+  if (FrameIndexSDNode *FI = dyn_cast<FrameIndexSDNode>(N))
+    Base = DAG.getTargetFrameIndex(FI->getIndex(), N.getValueType());
+  else
+    Base = N;
+  return true;      // [r+0]
+}
+
+
+/// getPreIndexedAddressParts - returns true by value, base pointer and
+/// offset pointer and addressing mode by reference if the node's address
+/// can be legally represented as pre-indexed load / store address.
+bool PPCTargetLowering::getPreIndexedAddressParts(SDNode *N, SDOperand &Base,
+                                                  SDOperand &Offset,
+                                                  ISD::MemOpAddrMode &AM,
+                                                  SelectionDAG &DAG) {
+  return false;
+  
+#if 0
+  MVT::ValueType VT;
+  SDOperand Ptr;
+  if (LoadSDNode *LD = dyn_cast<LoadSDNode>(N)) {
+    Ptr = LD->getBasePtr();
+    VT  = LD->getLoadedVT();
+    
+    // TODO: handle other cases.
+    if (VT != MVT::i32) return false;
+  } else if (StoreSDNode *ST = dyn_cast<StoreSDNode>(N)) {
+    Ptr = ST->getBasePtr();
+    VT  = ST->getStoredVT();
+    // TODO: handle other cases.
+    return false;
+  } else
+    return false;
+
+  
+  
+  return false;
+#endif
+}
+
+//===----------------------------------------------------------------------===//
 //  LowerOperation implementation
 //===----------------------------------------------------------------------===//
 
