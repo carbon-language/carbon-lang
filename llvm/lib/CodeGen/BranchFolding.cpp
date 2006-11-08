@@ -687,6 +687,23 @@ void BranchFolder::OptimizeBlock(MachineBasicBlock *MBB) {
                                        !CurCond.empty(),
                                        ++MachineFunction::iterator(MBB));
 
+    // If this is a two-way branch, and the FBB branches to this block, reverse 
+    // the condition so the single-basic-block loop is faster.  Instead of:
+    //    Loop: xxx; jcc Out; jmp Loop
+    // we want:
+    //    Loop: xxx; jncc Loop; jmp Out
+    if (CurTBB && CurFBB && CurFBB == MBB && CurTBB != MBB) {
+      std::vector<MachineOperand> NewCond(CurCond);
+      if (!TII->ReverseBranchCondition(NewCond)) {
+        TII->RemoveBranch(*MBB);
+        TII->InsertBranch(*MBB, CurFBB, CurTBB, NewCond);
+        MadeChange = true;
+        ++NumBranchOpts;
+        return OptimizeBlock(MBB);
+      }
+    }
+    
+    
     // If this branch is the only thing in its block, see if we can forward
     // other blocks across it.
     if (CurTBB && CurCond.empty() && CurFBB == 0 && 
