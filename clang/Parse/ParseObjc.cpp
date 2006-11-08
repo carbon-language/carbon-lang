@@ -26,23 +26,23 @@ using namespace clang;
 /// [OBJC]  objc-protocol-definition   [TODO]
 /// [OBJC]  objc-method-definition     [TODO]
 /// [OBJC]  '@' 'end'                  [TODO]
-void Parser::ObjCParseAtDirectives() {
+void Parser::ParseObjCAtDirectives() {
   SourceLocation AtLoc = ConsumeToken(); // the "@"
   
   IdentifierInfo *II = Tok.getIdentifierInfo();
   switch (II ? II->getObjCKeywordID() : tok::objc_not_keyword) {
     case tok::objc_class:
-      return ObjCParseAtClassDeclaration(AtLoc);
+      return ParseObjCAtClassDeclaration(AtLoc);
     case tok::objc_interface:
-      return ObjCParseAtInterfaceDeclaration();
+      return ParseObjCAtInterfaceDeclaration();
     case tok::objc_protocol:
-      return ObjCParseAtProtocolDeclaration();
+      return ParseObjCAtProtocolDeclaration();
     case tok::objc_implementation:
-      return ObjCParseAtImplementationDeclaration();
+      return ParseObjCAtImplementationDeclaration();
     case tok::objc_end:
-      return ObjCParseAtEndDeclaration();
+      return ParseObjCAtEndDeclaration();
     case tok::objc_compatibility_alias:
-      return ObjCParseAtAliasDeclaration();
+      return ParseObjCAtAliasDeclaration();
     default:
       Diag(AtLoc, diag::err_unexpected_at);
       SkipUntil(tok::semi);
@@ -53,7 +53,7 @@ void Parser::ObjCParseAtDirectives() {
 /// objc-class-declaration: 
 ///    '@' 'class' identifier-list ';'
 ///  
-void Parser::ObjCParseAtClassDeclaration(SourceLocation atLoc) {
+void Parser::ParseObjCAtClassDeclaration(SourceLocation atLoc) {
   ConsumeToken(); // the identifier "class"
   SmallVector<IdentifierInfo *, 8> ClassNames;
   
@@ -80,26 +80,26 @@ void Parser::ObjCParseAtClassDeclaration(SourceLocation atLoc) {
   Actions.ParsedClassDeclaration(CurScope, &ClassNames[0], ClassNames.size());
 }
 
-void Parser::ObjCParseAtInterfaceDeclaration() {
+void Parser::ParseObjCAtInterfaceDeclaration() {
   assert(0 && "Unimp");
 }
-void Parser::ObjCParseAtProtocolDeclaration() {
+void Parser::ParseObjCAtProtocolDeclaration() {
   assert(0 && "Unimp");
 }
-void Parser::ObjCParseAtImplementationDeclaration() {
+void Parser::ParseObjCAtImplementationDeclaration() {
   assert(0 && "Unimp");
 }
-void Parser::ObjCParseAtEndDeclaration() {
+void Parser::ParseObjCAtEndDeclaration() {
   assert(0 && "Unimp");
 }
-void Parser::ObjCParseAtAliasDeclaration() {
-  assert(0 && "Unimp");
-}
-
-void Parser::ObjCParseInstanceMethodDeclaration() {
+void Parser::ParseObjCAtAliasDeclaration() {
   assert(0 && "Unimp");
 }
 
-void Parser::ObjCParseClassMethodDeclaration() {
+void Parser::ParseObjCInstanceMethodDeclaration() {
+  assert(0 && "Unimp");
+}
+
+void Parser::ParseObjCClassMethodDeclaration() {
   assert(0 && "Unimp");
 }

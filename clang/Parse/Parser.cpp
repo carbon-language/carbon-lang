@@ -322,13 +322,13 @@ Parser::DeclTy *Parser::ParseExternalDeclaration() {
     // TODO: Invoke action for top-level asm.
     return 0;
   case tok::at:
-    ObjCParseAtDirectives();
+    ParseObjCAtDirectives();
     return 0;
   case tok::minus:
-    ObjCParseInstanceMethodDeclaration();
+    ParseObjCInstanceMethodDeclaration();
     return 0;
   case tok::plus:
-    ObjCParseClassMethodDeclaration();
+    ParseObjCClassMethodDeclaration();
     return 0;
   default:
     // We can't tell whether this is a function-definition or declaration yet.

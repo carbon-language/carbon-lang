@@ -250,16 +250,16 @@ private:
   void ParseAsmStringLiteral();
 
   // Objective-C External Declarations 
-  void ObjCParseAtDirectives(); 
-  void ObjCParseAtClassDeclaration(SourceLocation atLoc);
-  void ObjCParseAtInterfaceDeclaration();
-  void ObjCParseAtProtocolDeclaration();
-  void ObjCParseAtImplementationDeclaration();
-  void ObjCParseAtEndDeclaration();
-  void ObjCParseAtAliasDeclaration();
+  void ParseObjCAtDirectives(); 
+  void ParseObjCAtClassDeclaration(SourceLocation atLoc);
+  void ParseObjCAtInterfaceDeclaration();
+  void ParseObjCAtProtocolDeclaration();
+  void ParseObjCAtImplementationDeclaration();
+  void ParseObjCAtEndDeclaration();
+  void ParseObjCAtAliasDeclaration();
   
-  void ObjCParseInstanceMethodDeclaration();
-  void ObjCParseClassMethodDeclaration();
+  void ParseObjCInstanceMethodDeclaration();
+  void ParseObjCClassMethodDeclaration();
 
   //===--------------------------------------------------------------------===//
   // C99 6.5: Expressions.
