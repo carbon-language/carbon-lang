@@ -6788,12 +6788,17 @@ Instruction *InstCombiner::FoldPHIArgBinOpIntoPHI(PHINode &PN) {
     if (I->getOperand(1) != RHSVal) RHSVal = 0;
   }
   
-  // Otherwise, this is safe and profitable to transform.  Create up to two phi
-  // nodes.
-  PHINode *NewLHS = 0, *NewRHS = 0;
+  // Otherwise, this is safe to transform, determine if it is profitable.
+
+  // If this is a GEP, and if the index (not the pointer) needs a PHI, bail out.
+  // Indexes are often folded into load/store instructions, so we don't want to
+  // hide them behind a phi.
+  if (isa<GetElementPtrInst>(FirstInst) && RHSVal == 0)
+    return 0;
+  
   Value *InLHS = FirstInst->getOperand(0);
   Value *InRHS = FirstInst->getOperand(1);
-  
+  PHINode *NewLHS = 0, *NewRHS = 0;
   if (LHSVal == 0) {
     NewLHS = new PHINode(LHSType, FirstInst->getOperand(0)->getName()+".pn");
     NewLHS->reserveOperandSpace(PN.getNumOperands()/2);
@@ -6875,7 +6880,7 @@ Instruction *InstCombiner::FoldPHIArgOpIntoPHI(PHINode &PN) {
         !isSafeToSinkLoad(LI))
       return 0;
   } else if (isa<GetElementPtrInst>(FirstInst)) {
-    if (0 && FirstInst->getNumOperands() == 2)
+    if (FirstInst->getNumOperands() == 2)
       return FoldPHIArgBinOpIntoPHI(PN);
     // Can't handle general GEPs yet.
     return 0;
