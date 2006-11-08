@@ -6878,7 +6878,7 @@ Instruction *InstCombiner::FoldPHIArgOpIntoPHI(PHINode &PN) {
         !isSafeToSinkLoad(LI))
       return 0;
   } else if (isa<GetElementPtrInst>(FirstInst)) {
-    if (FirstInst->getNumOperands() == 2)
+    if (0 && FirstInst->getNumOperands() == 2)
       return FoldPHIArgBinOpIntoPHI(PN);
     // Can't handle general GEPs yet.
     return 0;
