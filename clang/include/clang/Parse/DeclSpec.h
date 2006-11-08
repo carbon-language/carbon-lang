@@ -1,4 +1,4 @@
-//===--- SemaDecl.h - Declaration Semantic Analysis -------------*- C++ -*-===//
+//===--- SemaDeclSpec.h - Declaration Specifier Semantic Analys -*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,12 +7,12 @@
 //
 //===----------------------------------------------------------------------===//
 //
-//  This file defines interfaces used for Declarations.
+// This file defines interfaces used for Declaration Specifiers and Declarators.
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_CLANG_PARSE_SEMADECL_H
-#define LLVM_CLANG_PARSE_SEMADECL_H
+#ifndef LLVM_CLANG_PARSE_SEMADECLSPEC_H
+#define LLVM_CLANG_PARSE_SEMADECLSPEC_H
 
 #include "clang/Basic/Diagnostic.h"
 #include "clang/Basic/SourceLocation.h"

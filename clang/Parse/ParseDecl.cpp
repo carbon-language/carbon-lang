@@ -12,7 +12,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "clang/Parse/Parser.h"
-#include "clang/Parse/SemaDecl.h"
+#include "clang/Parse/SemaDeclSpec.h"
 using namespace llvm;
 using namespace clang;
 
@@ -83,6 +83,10 @@ void Parser::ParseDeclaration(unsigned Context) {
     // TODO: emit error on 'int;' or 'const enum foo;'.
     // if (!DS.isMissingDeclaratorOk()) Diag(...);
     
+    // TODO: Register 'struct foo;' with the type system as an opaque struct.
+    // TODO: Check that we don't already have 'union foo;' or something else
+    // that conflicts.
+    
     ConsumeToken();
     return;
   }
@@ -141,8 +145,9 @@ ParseInitDeclaratorListAfterFirstDeclarator(Declarator &D) {
       }
     }
     
-    // Inform the current actions module that we just parsed a declarator.
-    // TODO: pass asm & attributes.
+    // Inform the current actions module that we just parsed a declarator or
+    // invoke semantic analysis for this declarator.
+    // FIXME: pass asm & attributes.
     LastDeclInGroup = Actions.ParseDeclarator(CurScope, D, Init.Val,
                                               LastDeclInGroup);
     

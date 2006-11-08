@@ -349,6 +349,8 @@ private:
   void ParseDirectDeclarator(Declarator &D);
   void ParseParenDeclarator(Declarator &D);
   void ParseBracketDeclarator(Declarator &D);
+  
+  DeclTy *SemaInitDeclarator(Declarator &D, ExprTy *Init, DeclTy *LastInGroup);
 };
 
 }  // end namespace clang
