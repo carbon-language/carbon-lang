@@ -100,6 +100,41 @@ private:
   FunctionPassManager_New *activeFunctionPassManager;
 };
 
+/// PassManager_New manages ModulePassManagers
+class PassManagerImpl_New : public Pass,
+                            public PassManagerAnalysisHelper {
+
+public:
+
+  /// add - Add a pass to the queue of passes to run.  This passes ownership of
+  /// the Pass to the PassManager.  When the PassManager is destroyed, the pass
+  /// will be destroyed as well, so there is no need to delete the pass.  This
+  /// implies that all passes MUST be allocated with 'new'.
+  void add(Pass *P);
+ 
+  /// run - Execute all of the passes scheduled for execution.  Keep track of
+  /// whether any of the passes modifies the module, and if so, return true.
+  bool run(Module &M);
+
+private:
+
+  /// Add a pass into a passmanager queue. This is used by schedulePasses
+  bool addPass(Pass *p);
+
+  /// Schedule all passes collected in pass queue using add(). Add all the
+  /// schedule passes into various manager's queue using addPass().
+  void schedulePasses();
+
+  // Collection of pass managers
+  std::vector<ModulePassManager_New *> PassManagers;
+
+  // Collection of pass that are not yet scheduled
+  std::vector<Pass *> PassVector;
+  
+  // Active Pass Manager
+  ModulePassManager_New *activeManager;
+};
+
 } // End of llvm namespace
 
 // PassManagerAnalysisHelper implementation
@@ -304,13 +339,13 @@ ModulePassManager_New::runOnModule(Module &M) {
 /// Schedule all passes from the queue by adding them in their
 /// respective manager's queue. 
 void
-PassManager_New::schedulePasses() {
+PassManagerImpl_New::schedulePasses() {
   /* TODO */
 }
 
 /// Add pass P to the queue of passes to run.
 void
-PassManager_New::add(Pass *P) {
+PassManagerImpl_New::add(Pass *P) {
   /* TODO */
 }
 
@@ -318,7 +353,7 @@ PassManager_New::add(Pass *P) {
 /// Add P into active pass manager or use new module pass manager to
 /// manage it.
 bool
-PassManager_New::addPass(Pass *P) {
+PassManagerImpl_New::addPass(Pass *P) {
 
   if (!activeManager) {
     activeManager = new ModulePassManager_New();
@@ -331,7 +366,7 @@ PassManager_New::addPass(Pass *P) {
 /// run - Execute all of the passes scheduled for execution.  Keep track of
 /// whether any of the passes modifies the module, and if so, return true.
 bool
-PassManager_New::run(Module &M) {
+PassManagerImpl_New::run(Module &M) {
 
   schedulePasses();
   bool Changed = false;
@@ -342,3 +377,25 @@ PassManager_New::run(Module &M) {
   }
   return Changed;
 }
+
+/// Create new pass manager
+PassManager_New::PassManager_New() {
+  PM = new PassManagerImpl_New();
+}
+
+/// add - Add a pass to the queue of passes to run.  This passes ownership of
+/// the Pass to the PassManager.  When the PassManager is destroyed, the pass
+/// will be destroyed as well, so there is no need to delete the pass.  This
+/// implies that all passes MUST be allocated with 'new'.
+void 
+PassManager_New::add(Pass *P) {
+  PM->add(P);
+}
+
+/// run - Execute all of the passes scheduled for execution.  Keep track of
+/// whether any of the passes modifies the module, and if so, return true.
+bool
+PassManager_New::run(Module &M) {
+  return PM->run(M);
+}
+

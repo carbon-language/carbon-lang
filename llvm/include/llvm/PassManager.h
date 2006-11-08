@@ -89,6 +89,7 @@ public:
 };
 
 class ModulePassManager_New;
+class PassManagerImpl_New;
 
 /// PassManagerAnalysisHelper helps pass manager analysis required by
 /// the managed passes. It provides methods to add/remove analysis
@@ -127,6 +128,8 @@ class PassManager_New : public Pass,
 
 public:
 
+  PassManager_New();
+
   /// add - Add a pass to the queue of passes to run.  This passes ownership of
   /// the Pass to the PassManager.  When the PassManager is destroyed, the pass
   /// will be destroyed as well, so there is no need to delete the pass.  This
@@ -138,22 +141,11 @@ public:
   bool run(Module &M);
 
 private:
- 
-  /// Add a pass into a passmanager queue. This is used by schedulePasses
-  bool addPass(Pass *p);
 
-  /// Schedule all passes collected in pass queue using add(). Add all the
-  /// schedule passes into various manager's queue using addPass().
-  void schedulePasses();
+  /// PassManagerImpl_New is the actual class. PassManager_New is just the 
+  /// wraper to publish simple pass manager interface
+  PassManagerImpl_New *PM;
 
-  // Collection of pass managers
-  std::vector<ModulePassManager_New *> PassManagers;
-
-  // Collection of pass that are not yet scheduled
-  std::vector<Pass *> PassVector;
-  
-  // Active Pass Manager
-  ModulePassManager_New *activeManager;
 };
 
 } // End llvm namespace
