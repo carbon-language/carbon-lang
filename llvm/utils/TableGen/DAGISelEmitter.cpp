@@ -2464,7 +2464,7 @@ public:
         emitCode("SDOperand Chain" + ChainSuffix + ";");
       }
 
-      std::string Code = Fn + "(" + RootName;
+      std::string Code = Fn + "(" + RootName + ", " + RootName;
       for (unsigned i = 0; i < NumOps; i++)
         Code += ", CPTmp" + utostr(i);
       if (CP->hasProperty(SDNPHasChain)) {
@@ -2531,10 +2531,10 @@ public:
             emitCode("SDOperand " + ChainName + ";");
           }
           
-          std::string Code = Fn + "(";
+          std::string Code = Fn + "(N, ";
           if (CP->hasProperty(SDNPHasChain)) {
             std::string ParentName(RootName.begin(), RootName.end()-1);
-            Code += "N, " + ParentName + ", ";
+            Code += ParentName + ", ";
           }
           Code += RootName;
           for (unsigned i = 0; i < NumOps; i++)
@@ -2662,7 +2662,6 @@ public:
         // value if used multiple times by this pattern result.
         Val = "Tmp"+utostr(ResNo);
       } else if (N->isLeaf() && (CP = NodeGetComplexPattern(N, ISE))) {
-        std::string Fn = CP->getSelectFunc();
         for (unsigned i = 0; i < CP->getNumOperands(); ++i) {
           emitCode("AddToISelQueue(CPTmp" + utostr(i) + ");");
           NodeOps.push_back("CPTmp" + utostr(i));
