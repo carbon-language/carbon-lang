@@ -719,7 +719,15 @@ BytecodeReader::handleObsoleteOpcodes(
       Opcode = Instruction::Shl;
       break;
     case 31: // Shr
-      Opcode = Instruction::Shr;
+      // The type of the instruction is based on the operands. We need to 
+      // select ashr or lshr based on that type. The iType values are hardcoded
+      // to the values used in bytecode version 5 (and prior) because it is 
+      // likely these codes will change in future versions of LLVM. This if 
+      // statement says "if (integer type and signed)"
+      if (iType >= 2 && iType <= 9 && iType % 2 != 0)
+        Opcode = Instruction::AShr;
+      else
+        Opcode = Instruction::LShr;
       break;
     case 32: { //VANext_old ( <= llvm 1.5 )
       const Type* ArgTy = getValue(iType, Oprnds[0])->getType();
@@ -987,7 +995,8 @@ void BytecodeReader::ParseInstruction(std::vector<unsigned> &Oprnds,
     }
 
     case Instruction::Shl:
-    case Instruction::Shr:
+    case Instruction::LShr:
+    case Instruction::AShr:
       Result = new ShiftInst(Instruction::OtherOps(Opcode),
                              getValue(iType, Oprnds[0]),
                              getValue(Type::UByteTyID, Oprnds[1]));
@@ -1707,7 +1716,10 @@ inline unsigned fixCEOpcodes(
       Opcode = Instruction::Shl;
       break;
     case 31: // Shr
-      Opcode = Instruction::Shr;
+      if (ArgVec[0]->getType()->isSigned())
+        Opcode = Instruction::AShr;
+      else
+        Opcode = Instruction::LShr;
       break;
     case 34: // Select
       Opcode = Instruction::Select;

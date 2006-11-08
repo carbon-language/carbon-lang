@@ -92,7 +92,8 @@
           <li><a href="#i_or">'<tt>or</tt>'  Instruction</a></li>
           <li><a href="#i_xor">'<tt>xor</tt>' Instruction</a></li>
           <li><a href="#i_shl">'<tt>shl</tt>' Instruction</a></li>
-          <li><a href="#i_shr">'<tt>shr</tt>' Instruction</a></li>
+          <li><a href="#i_lshr">'<tt>lshr</tt>' Instruction</a></li>
+          <li><a href="#i_ashr">'<tt>ashr</tt>' Instruction</a></li>
         </ol>
       </li>
       <li><a href="#vectorops">Vector Operations</a>
@@ -2070,30 +2071,64 @@ type.</p>
 </pre>
 </div>
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection"> <a name="i_shr">'<tt>shr</tt>'
+<div class="doc_subsubsection"> <a name="i_lshr">'<tt>lshr</tt>'
 Instruction</a> </div>
 <div class="doc_text">
 <h5>Syntax:</h5>
-<pre>  &lt;result&gt; = shr &lt;ty&gt; &lt;var1&gt;, ubyte &lt;var2&gt;   <i>; yields {ty}:result</i>
+<pre>  &lt;result&gt; = lshr &lt;ty&gt; &lt;var1&gt;, ubyte &lt;var2&gt;   <i>; yields {ty}:result</i>
 </pre>
+
 <h5>Overview:</h5>
-<p>The '<tt>shr</tt>' instruction returns the first operand shifted to
-the right a specified number of bits.</p>
+<p>The '<tt>lshr</tt>' instruction (logical shift right) returns the first 
+operand shifted to the right a specified number of bits.</p>
+
 <h5>Arguments:</h5>
-<p>The first argument to the '<tt>shr</tt>' instruction must be an <a
- href="#t_integer">integer</a> type.  The second argument must be an '<tt>ubyte</tt>'
-type.</p>
+<p>The first argument to the '<tt>lshr</tt>' instruction must be an <a
+ href="#t_integer">integer</a> type.  The second argument must be an '<tt>ubyte</tt>' type.</p>
+
 <h5>Semantics:</h5>
-<p>If the first argument is a <a href="#t_signed">signed</a> type, the
-most significant bit is duplicated in the newly free'd bit positions. 
-If the first argument is unsigned, zero bits shall fill the empty
-positions.</p>
+<p>This instruction always performs a logical shift right operation, regardless
+of whether the arguments are unsigned or not. The <tt>var2</tt> most significant
+bits will be filled with zero bits after the shift.</p>
+
 <h5>Example:</h5>
-<pre>  &lt;result&gt; = shr int 4, ubyte %var   <i>; yields {int}:result = 4 &gt;&gt; %var</i>
-  &lt;result&gt; = shr uint 4, ubyte 1     <i>; yields {uint}:result = 2</i>
-  &lt;result&gt; = shr int 4, ubyte 2      <i>; yields {int}:result = 1</i>
-  &lt;result&gt; = shr sbyte 4, ubyte 3    <i>; yields {sbyte}:result = 0</i>
-  &lt;result&gt; = shr sbyte -2, ubyte 1   <i>; yields {sbyte}:result = -1</i>
+<pre>
+  &lt;result&gt; = lshr uint 4, ubyte 1   <i>; yields {uint}:result = 2</i>
+  &lt;result&gt; = lshr int 4, ubyte 2    <i>; yields {uint}:result = 1</i>
+  &lt;result&gt; = lshr sbyte 4, ubyte 3  <i>; yields {sbyte}:result = 0</i>
+  &lt;result&gt; = lshr sbyte -2, ubyte 1 <i>; yields {sbyte}:result = 0x7FFFFFFF </i>
+</pre>
+</div>
+
+<!-- ======================================================================= -->
+<div class="doc_subsubsection"> <a name="i_ashr">'<tt>ashr</tt>'
+Instruction</a> </div>
+<div class="doc_text">
+
+<h5>Syntax:</h5>
+<pre>  &lt;result&gt; = ashr &lt;ty&gt; &lt;var1&gt;, ubyte &lt;var2&gt;   <i>; yields {ty}:result</i>
+</pre>
+
+<h5>Overview:</h5>
+<p>The '<tt>ashr</tt>' instruction (arithmetic shift right) returns the first 
+operand shifted to the right a specified number of bits.</p>
+
+<h5>Arguments:</h5>
+<p>The first argument to the '<tt>ashr</tt>' instruction must be an 
+<a href="#t_integer">integer</a> type.  The second argument must be an
+'<tt>ubyte</tt>' type.</p>
+
+<h5>Semantics:</h5>
+<p>This instruction always performs an arithmetic shift right operation, 
+regardless of whether the arguments are signed or not. The <tt>var2</tt> most
+significant bits will be filled with the sign bit of <tt>var1</tt>.</p>
+
+<h5>Example:</h5>
+<pre>
+  &lt;result&gt; = ashr uint 4, ubyte 1    <i>; yields {uint}:result = 2</i>
+  &lt;result&gt; = ashr int 4, ubyte 2      <i>; yields {int}:result = 1</i>
+  &lt;result&gt; = ashr ubyte 4, ubyte 3    <i>; yields {ubyte}:result = 0</i>
+  &lt;result&gt; = ashr sbyte -2, ubyte 1   <i>; yields {sbyte}:result = -1</i>
 </pre>
 </div>
 

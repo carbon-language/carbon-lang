@@ -280,7 +280,9 @@ call            { RET_TOK(OtherOpVal, Call, CALL); }
 cast            { RET_TOK(OtherOpVal, Cast, CAST); }
 select          { RET_TOK(OtherOpVal, Select, SELECT); }
 shl             { RET_TOK(OtherOpVal, Shl, SHL); }
-shr             { RET_TOK(OtherOpVal, Shr, SHR); }
+shr             { RET_TOK_OBSOLETE(OtherOpVal, LShr, LSHR); }
+lshr            { RET_TOK(OtherOpVal, LShr, LSHR); }
+ashr            { RET_TOK(OtherOpVal, AShr, ASHR); }
 vanext          { return VANEXT_old; }
 vaarg           { return VAARG_old; }
 va_arg          { RET_TOK(OtherOpVal, VAArg , VAARG); }

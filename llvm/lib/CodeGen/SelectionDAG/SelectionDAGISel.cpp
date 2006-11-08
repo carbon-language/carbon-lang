@@ -538,10 +538,8 @@ public:
   void visitOr (User &I) { visitIntBinary(I, ISD::OR,  ISD::VOR); }
   void visitXor(User &I) { visitIntBinary(I, ISD::XOR, ISD::VXOR); }
   void visitShl(User &I) { visitShift(I, ISD::SHL); }
-  void visitShr(User &I) { 
-    visitShift(I, I.getType()->isUnsigned() ? ISD::SRL : ISD::SRA);
-  }
-
+  void visitLShr(User &I) { visitShift(I, ISD::SRL); }
+  void visitAShr(User &I) { visitShift(I, ISD::SRA); }
   void visitSetCC(User &I, ISD::CondCode SignedOpc, ISD::CondCode UnsignedOpc,
                   ISD::CondCode FPOpc);
   void visitSetEQ(User &I) { visitSetCC(I, ISD::SETEQ, ISD::SETEQ, 

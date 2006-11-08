@@ -784,7 +784,8 @@ void Andersens::visitInstruction(Instruction &I) {
   case Instruction::Unreachable:
   case Instruction::Free:
   case Instruction::Shl:
-  case Instruction::Shr:
+  case Instruction::LShr:
+  case Instruction::AShr:
     return;
   default:
     // Is this something we aren't handling yet?

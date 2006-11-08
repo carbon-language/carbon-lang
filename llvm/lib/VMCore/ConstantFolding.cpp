@@ -50,7 +50,8 @@ namespace {
     virtual Constant *op_or (const Constant *V1, const Constant *V2) const = 0;
     virtual Constant *op_xor(const Constant *V1, const Constant *V2) const = 0;
     virtual Constant *shl(const Constant *V1, const Constant *V2) const = 0;
-    virtual Constant *shr(const Constant *V1, const Constant *V2) const = 0;
+    virtual Constant *lshr(const Constant *V1, const Constant *V2) const = 0;
+    virtual Constant *ashr(const Constant *V1, const Constant *V2) const = 0;
     virtual Constant *lessthan(const Constant *V1, const Constant *V2) const =0;
     virtual Constant *equalto(const Constant *V1, const Constant *V2) const = 0;
 
@@ -140,8 +141,11 @@ class VISIBILITY_HIDDEN TemplateRules : public ConstRules {
   virtual Constant *shl(const Constant *V1, const Constant *V2) const {
     return SubClassName::Shl((const ArgType *)V1, (const ArgType *)V2);
   }
-  virtual Constant *shr(const Constant *V1, const Constant *V2) const {
-    return SubClassName::Shr((const ArgType *)V1, (const ArgType *)V2);
+  virtual Constant *lshr(const Constant *V1, const Constant *V2) const {
+    return SubClassName::LShr((const ArgType *)V1, (const ArgType *)V2);
+  }
+  virtual Constant *ashr(const Constant *V1, const Constant *V2) const {
+    return SubClassName::AShr((const ArgType *)V1, (const ArgType *)V2);
   }
 
   virtual Constant *lessthan(const Constant *V1, const Constant *V2) const {
@@ -207,7 +211,8 @@ class VISIBILITY_HIDDEN TemplateRules : public ConstRules {
   static Constant *Or  (const ArgType *V1, const ArgType *V2) { return 0; }
   static Constant *Xor (const ArgType *V1, const ArgType *V2) { return 0; }
   static Constant *Shl (const ArgType *V1, const ArgType *V2) { return 0; }
-  static Constant *Shr (const ArgType *V1, const ArgType *V2) { return 0; }
+  static Constant *LShr(const ArgType *V1, const ArgType *V2) { return 0; }
+  static Constant *AShr(const ArgType *V1, const ArgType *V2) { return 0; }
   static Constant *LessThan(const ArgType *V1, const ArgType *V2) {
     return 0;
   }
@@ -420,12 +425,6 @@ struct VISIBILITY_HIDDEN ConstantPackedRules
   static Constant *Xor(const ConstantPacked *V1, const ConstantPacked *V2) {
     return EvalVectorOp(V1, V2, ConstantExpr::getXor);
   }
-  static Constant *Shl(const ConstantPacked *V1, const ConstantPacked *V2) {
-    return EvalVectorOp(V1, V2, ConstantExpr::getShl);
-  }
-  static Constant *Shr(const ConstantPacked *V1, const ConstantPacked *V2) {
-    return EvalVectorOp(V1, V2, ConstantExpr::getShr);
-  }
   static Constant *LessThan(const ConstantPacked *V1, const ConstantPacked *V2){
     return 0;
   }
@@ -581,9 +580,13 @@ struct VISIBILITY_HIDDEN DirectIntRules
     return ConstantInt::get(*Ty, R);
   }
 
-  static Constant *Shr(const ConstantInt *V1, const ConstantInt *V2) {
-    BuiltinType R = 
-      (BuiltinType)V1->getZExtValue() >> (BuiltinType)V2->getZExtValue();
+  static Constant *LShr(const ConstantInt *V1, const ConstantInt *V2) {
+    BuiltinType R = BuiltinType(V1->getZExtValue() >> V2->getZExtValue());
+    return ConstantInt::get(*Ty, R);
+  }
+
+  static Constant *AShr(const ConstantInt *V1, const ConstantInt *V2) {
+    BuiltinType R = BuiltinType(V1->getSExtValue() >> V2->getZExtValue());
     return ConstantInt::get(*Ty, R);
   }
 };
@@ -1278,7 +1281,8 @@ Constant *llvm::ConstantFoldBinaryInstruction(unsigned Opcode,
   case Instruction::Or:      C = ConstRules::get(V1, V2).op_or (V1, V2); break;
   case Instruction::Xor:     C = ConstRules::get(V1, V2).op_xor(V1, V2); break;
   case Instruction::Shl:     C = ConstRules::get(V1, V2).shl(V1, V2); break;
-  case Instruction::Shr:     C = ConstRules::get(V1, V2).shr(V1, V2); break;
+  case Instruction::LShr:    C = ConstRules::get(V1, V2).lshr(V1, V2); break;
+  case Instruction::AShr:    C = ConstRules::get(V1, V2).ashr(V1, V2); break;
   case Instruction::SetEQ:   C = ConstRules::get(V1, V2).equalto(V1, V2); break;
   case Instruction::SetLT:   C = ConstRules::get(V1, V2).lessthan(V1, V2);break;
   case Instruction::SetGT:   C = ConstRules::get(V1, V2).lessthan(V2, V1);break;
@@ -1366,21 +1370,20 @@ Constant *llvm::ConstantFoldBinaryInstruction(unsigned Opcode,
       return const_cast<Constant*>(V2);            // X / undef -> undef
     case Instruction::Or:                          // X | undef -> -1
       return ConstantInt::getAllOnesValue(V1->getType());
-    case Instruction::Shr:
-      if (!isa<UndefValue>(V2)) {      
-        if (V1->getType()->isSigned())
-          return const_cast<Constant*>(V1);        // undef >>s X -> undef
-        // undef >>u X -> 0
-      } else if (isa<UndefValue>(V1)) {
-        return const_cast<Constant*>(V1);          // undef >> undef -> undef
-      } else {
-        if (V1->getType()->isSigned())
-          return const_cast<Constant*>(V1);        // X >>s undef -> X
-      }
-      return Constant::getNullValue(V1->getType());// X >>u undef -> 0
-
+    case Instruction::LShr:
+      if (isa<UndefValue>(V2) && isa<UndefValue>(V1))
+        return const_cast<Constant*>(V1);           // undef lshr undef -> undef
+      return Constant::getNullValue(V1->getType()); // X lshr undef -> 0
+                                                    // undef lshr X -> 0
+    case Instruction::AShr:
+      if (!isa<UndefValue>(V2))
+        return const_cast<Constant*>(V1);           // undef ashr X --> undef
+      else if (isa<UndefValue>(V1)) 
+        return const_cast<Constant*>(V1);           // undef ashr undef -> undef
+      else
+        return const_cast<Constant*>(V1);           // X ashr undef --> X
     case Instruction::Shl:
-      // undef << X -> 0   X << undef -> 0
+      // undef << X -> 0   or   X << undef -> 0
       return Constant::getNullValue(V1->getType());
     }
   }
@@ -1466,7 +1469,8 @@ Constant *llvm::ConstantFoldBinaryInstruction(unsigned Opcode,
       return ConstantFoldBinaryInstruction(Opcode, V2, V1);
 
     case Instruction::Shl:
-    case Instruction::Shr:
+    case Instruction::LShr:
+    case Instruction::AShr:
     case Instruction::Sub:
     case Instruction::SDiv:
     case Instruction::UDiv:

@@ -1257,7 +1257,7 @@ StackerCompiler::handle_word( int tkn )
         LoadInst* op2 = cast<LoadInst>(pop_integer(bb));
         CastInst* castop = new CastInst( op1, Type::UByteTy );
         bb->getInstList().push_back( castop );
-        ShiftInst* shrop = new ShiftInst( Instruction::Shr, op2, castop );
+        ShiftInst* shrop = new ShiftInst( Instruction::AShr, op2, castop );
         bb->getInstList().push_back( shrop );
         push_value( bb, shrop );
         break;

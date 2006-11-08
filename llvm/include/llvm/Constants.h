@@ -564,10 +564,8 @@ public:
   static Constant *getSetLE(Constant *C1, Constant *C2);
   static Constant *getSetGE(Constant *C1, Constant *C2);
   static Constant *getShl(Constant *C1, Constant *C2);
-  static Constant *getShr(Constant *C1, Constant *C2);
-
-  static Constant *getUShr(Constant *C1, Constant *C2); // unsigned shr
-  static Constant *getSShr(Constant *C1, Constant *C2); // signed shr
+  static Constant *getLShr(Constant *C1, Constant *C2);
+  static Constant *getAShr(Constant *C1, Constant *C2);
 
   /// Getelementptr form.  std::vector<Value*> is only accepted for convenience:
   /// all elements must be Constant's.

@@ -15,8 +15,8 @@
 
 // NOTE: NO INCLUDE GUARD DESIRED!
 
-// Provide definitions of macros so that users of this file do not have to define
-// everything to use it...
+// Provide definitions of macros so that users of this file do not have to 
+// define everything to use it...
 //
 #ifndef FIRST_TERM_INST
 #define FIRST_TERM_INST(num)
@@ -129,16 +129,17 @@ HANDLE_MEMORY_INST(30, GetElementPtr, GetElementPtrInst)
 HANDLE_OTHER_INST(31, PHI    , PHINode    )  // PHI node instruction
 HANDLE_OTHER_INST(32, Cast   , CastInst   )  // Type cast
 HANDLE_OTHER_INST(33, Call   , CallInst   )  // Call a function
-HANDLE_OTHER_INST(34, Shl    , ShiftInst  )  // Shift operations
-HANDLE_OTHER_INST(35, Shr    , ShiftInst  )
-HANDLE_OTHER_INST(36, Select , SelectInst )  // select instruction
-HANDLE_OTHER_INST(37, UserOp1, Instruction)  // May be used internally in a pass
-HANDLE_OTHER_INST(38, UserOp2, Instruction)
-HANDLE_OTHER_INST(39, VAArg  , VAArgInst  )  // vaarg instruction
-HANDLE_OTHER_INST(40, ExtractElement, ExtractElementInst)// extract from vector.
-HANDLE_OTHER_INST(41, InsertElement, InsertElementInst)  // insert into vector
-HANDLE_OTHER_INST(42, ShuffleVector, ShuffleVectorInst)  // shuffle two vectors.
-  LAST_OTHER_INST(42)
+HANDLE_OTHER_INST(34, Shl    , ShiftInst  )  // Shift Left operations (logical)
+HANDLE_OTHER_INST(35, LShr   , ShiftInst  )  // Logical Shift right (unsigned) 
+HANDLE_OTHER_INST(36, AShr   , ShiftInst  )  // Arithmetic shift right (signed)
+HANDLE_OTHER_INST(37, Select , SelectInst )  // select instruction
+HANDLE_OTHER_INST(38, UserOp1, Instruction)  // May be used internally in a pass
+HANDLE_OTHER_INST(39, UserOp2, Instruction)  // Internal to passes only
+HANDLE_OTHER_INST(40, VAArg  , VAArgInst  )  // vaarg instruction
+HANDLE_OTHER_INST(41, ExtractElement, ExtractElementInst)// extract from vector.
+HANDLE_OTHER_INST(42, InsertElement, InsertElementInst)  // insert into vector
+HANDLE_OTHER_INST(43, ShuffleVector, ShuffleVectorInst)  // shuffle two vectors.
+  LAST_OTHER_INST(43)
 
 #undef  FIRST_TERM_INST
 #undef HANDLE_TERM_INST

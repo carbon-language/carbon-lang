@@ -788,7 +788,8 @@ void CppWriter::printConstant(const Constant *CV) {
         case Instruction::SetLT:  Out << "getSetLT"; break;
         case Instruction::SetGT:  Out << "getSetGT"; break;
         case Instruction::Shl:    Out << "getShl"; break;
-        case Instruction::Shr:    Out << "getShr"; break;
+        case Instruction::LShr:    Out << "getLShr"; break;
+        case Instruction::AShr:    Out << "getAShr"; break;
         case Instruction::Select: Out << "getSelect"; break;
         case Instruction::ExtractElement: Out << "getExtractElement"; break;
         case Instruction::InsertElement:  Out << "getInsertElement"; break;
@@ -1034,7 +1035,8 @@ CppWriter::printInstruction(const Instruction *I, const std::string& bbname) {
     case Instruction::Or:
     case Instruction::Xor:
     case Instruction::Shl: 
-    case Instruction::Shr:{
+    case Instruction::LShr: 
+    case Instruction::AShr:{
       Out << "BinaryOperator* " << iName << " = BinaryOperator::create(";
       switch (I->getOpcode()) {
         case Instruction::Add: Out << "Instruction::Add"; break;
@@ -1050,7 +1052,8 @@ CppWriter::printInstruction(const Instruction *I, const std::string& bbname) {
         case Instruction::Or:  Out << "Instruction::Or";  break;
         case Instruction::Xor: Out << "Instruction::Xor"; break;
         case Instruction::Shl: Out << "Instruction::Shl"; break;
-        case Instruction::Shr: Out << "Instruction::Shr"; break;
+        case Instruction::LShr:Out << "Instruction::LShr"; break;
+        case Instruction::AShr:Out << "Instruction::AShr"; break;
         default: Out << "Instruction::BadOpCode"; break;
       }
       Out << ", " << opNames[0] << ", " << opNames[1] << ", \"";

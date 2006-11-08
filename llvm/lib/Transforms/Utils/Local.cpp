@@ -120,7 +120,8 @@ Constant *llvm::ConstantFoldInstOperands(unsigned Opc, const Type *DestTy,
     }
     return 0;
   case Instruction::Shl:
-  case Instruction::Shr:
+  case Instruction::LShr:
+  case Instruction::AShr:
     return ConstantExpr::get(Opc, Ops[0], Ops[1]);
   case Instruction::Cast:
     return ConstantExpr::getCast(Ops[0], DestTy);

@@ -368,7 +368,8 @@ static bool DominatesMergePoint(Value *V, BasicBlock *BB,
       case Instruction::Or:
       case Instruction::Xor:
       case Instruction::Shl:
-      case Instruction::Shr:
+      case Instruction::LShr:
+      case Instruction::AShr:
       case Instruction::SetEQ:
       case Instruction::SetNE:
       case Instruction::SetLT:

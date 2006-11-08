@@ -731,7 +731,7 @@ static void ComputeMaskedBits(Value *V, uint64_t Mask, uint64_t &KnownZero,
       return;
     }
     break;
-  case Instruction::Shr:
+  case Instruction::LShr:
     // (ushr X, C1) & C2 == 0   iff  (-1 >> C1) & C2 == 0
     if (ConstantInt *SA = dyn_cast<ConstantInt>(I->getOperand(1))) {
       // Compute the new bits that are at the top now.
@@ -739,29 +739,39 @@ static void ComputeMaskedBits(Value *V, uint64_t Mask, uint64_t &KnownZero,
       uint64_t HighBits = (1ULL << ShiftAmt)-1;
       HighBits <<= I->getType()->getPrimitiveSizeInBits()-ShiftAmt;
       
-      if (I->getType()->isUnsigned()) {   // Unsigned shift right.
-        Mask <<= ShiftAmt;
-        ComputeMaskedBits(I->getOperand(0), Mask, KnownZero,KnownOne,Depth+1);
-        assert((KnownZero & KnownOne) == 0&&"Bits known to be one AND zero?"); 
-        KnownZero >>= ShiftAmt;
-        KnownOne  >>= ShiftAmt;
-        KnownZero |= HighBits;  // high bits known zero.
-      } else {
-        Mask <<= ShiftAmt;
-        ComputeMaskedBits(I->getOperand(0), Mask, KnownZero,KnownOne,Depth+1);
-        assert((KnownZero & KnownOne) == 0&&"Bits known to be one AND zero?"); 
-        KnownZero >>= ShiftAmt;
-        KnownOne  >>= ShiftAmt;
+      // Unsigned shift right.
+      Mask <<= ShiftAmt;
+      ComputeMaskedBits(I->getOperand(0), Mask, KnownZero,KnownOne,Depth+1);
+      assert((KnownZero & KnownOne) == 0&&"Bits known to be one AND zero?"); 
+      KnownZero >>= ShiftAmt;
+      KnownOne  >>= ShiftAmt;
+      KnownZero |= HighBits;  // high bits known zero.
+      return;
+    }
+    break;
+  case Instruction::AShr:
+    // (ushr X, C1) & C2 == 0   iff  (-1 >> C1) & C2 == 0
+    if (ConstantInt *SA = dyn_cast<ConstantInt>(I->getOperand(1))) {
+      // Compute the new bits that are at the top now.
+      uint64_t ShiftAmt = SA->getZExtValue();
+      uint64_t HighBits = (1ULL << ShiftAmt)-1;
+      HighBits <<= I->getType()->getPrimitiveSizeInBits()-ShiftAmt;
+      
+      // Signed shift right.
+      Mask <<= ShiftAmt;
+      ComputeMaskedBits(I->getOperand(0), Mask, KnownZero,KnownOne,Depth+1);
+      assert((KnownZero & KnownOne) == 0&&"Bits known to be one AND zero?"); 
+      KnownZero >>= ShiftAmt;
+      KnownOne  >>= ShiftAmt;
         
-        // Handle the sign bits.
-        uint64_t SignBit = 1ULL << (I->getType()->getPrimitiveSizeInBits()-1);
-        SignBit >>= ShiftAmt;  // Adjust to where it is now in the mask.
+      // Handle the sign bits.
+      uint64_t SignBit = 1ULL << (I->getType()->getPrimitiveSizeInBits()-1);
+      SignBit >>= ShiftAmt;  // Adjust to where it is now in the mask.
         
-        if (KnownZero & SignBit) {       // New bits are known zero.
-          KnownZero |= HighBits;
-        } else if (KnownOne & SignBit) { // New bits are known one.
-          KnownOne |= HighBits;
-        }
+      if (KnownZero & SignBit) {       // New bits are known zero.
+        KnownZero |= HighBits;
+      } else if (KnownOne & SignBit) { // New bits are known one.
+        KnownOne |= HighBits;
       }
       return;
     }
@@ -1119,21 +1129,37 @@ bool InstCombiner::SimplifyDemandedBits(Value *V, uint64_t DemandedMask,
       KnownZero |= (1ULL << ShiftAmt) - 1;  // low bits known zero.
     }
     break;
-  case Instruction::Shr:
+  case Instruction::LShr:
+    // For a logical shift right
+    if (ConstantInt *SA = dyn_cast<ConstantInt>(I->getOperand(1))) {
+      unsigned ShiftAmt = SA->getZExtValue();
+      
+      // Compute the new bits that are at the top now.
+      uint64_t HighBits = (1ULL << ShiftAmt)-1;
+      HighBits <<= I->getType()->getPrimitiveSizeInBits() - ShiftAmt;
+      uint64_t TypeMask = I->getType()->getIntegralTypeMask();
+      // Unsigned shift right.
+      if (SimplifyDemandedBits(I->getOperand(0),
+                              (DemandedMask << ShiftAmt) & TypeMask,
+                               KnownZero, KnownOne, Depth+1))
+        return true;
+      assert((KnownZero & KnownOne) == 0 && "Bits known to be one AND zero?"); 
+      KnownZero &= TypeMask;
+      KnownOne  &= TypeMask;
+      KnownZero >>= ShiftAmt;
+      KnownOne  >>= ShiftAmt;
+      KnownZero |= HighBits;  // high bits known zero.
+    }
+    break;
+  case Instruction::AShr:
     // If this is an arithmetic shift right and only the low-bit is set, we can
     // always convert this into a logical shr, even if the shift amount is
     // variable.  The low bit of the shift cannot be an input sign bit unless
     // the shift amount is >= the size of the datatype, which is undefined.
-    if (DemandedMask == 1 && I->getType()->isSigned()) {
-      // Convert the input to unsigned.
-      Value *NewVal = InsertCastBefore(I->getOperand(0), 
-                                       I->getType()->getUnsignedVersion(), *I);
-      // Perform the unsigned shift right.
-      NewVal = new ShiftInst(Instruction::Shr, NewVal, I->getOperand(1),
-                             I->getName());
-      InsertNewInstBefore(cast<Instruction>(NewVal), *I);
-      // Then cast that to the destination type.
-      NewVal = new CastInst(NewVal, I->getType(), I->getName());
+    if (DemandedMask == 1) {
+      // Perform the logical shift right.
+      Value *NewVal = new ShiftInst(Instruction::LShr, I->getOperand(0), 
+                                    I->getOperand(1), I->getName());
       InsertNewInstBefore(cast<Instruction>(NewVal), *I);
       return UpdateValueUsesWith(I, NewVal);
     }    
@@ -1145,48 +1171,31 @@ bool InstCombiner::SimplifyDemandedBits(Value *V, uint64_t DemandedMask,
       uint64_t HighBits = (1ULL << ShiftAmt)-1;
       HighBits <<= I->getType()->getPrimitiveSizeInBits() - ShiftAmt;
       uint64_t TypeMask = I->getType()->getIntegralTypeMask();
-      if (I->getType()->isUnsigned()) {   // Unsigned shift right.
-        if (SimplifyDemandedBits(I->getOperand(0),
-                                 (DemandedMask << ShiftAmt) & TypeMask,
-                                 KnownZero, KnownOne, Depth+1))
-          return true;
-        assert((KnownZero & KnownOne) == 0 && "Bits known to be one AND zero?"); 
-        KnownZero &= TypeMask;
-        KnownOne  &= TypeMask;
-        KnownZero >>= ShiftAmt;
-        KnownOne  >>= ShiftAmt;
-        KnownZero |= HighBits;  // high bits known zero.
-      } else {                            // Signed shift right.
-        if (SimplifyDemandedBits(I->getOperand(0),
-                                 (DemandedMask << ShiftAmt) & TypeMask,
-                                 KnownZero, KnownOne, Depth+1))
-          return true;
-        assert((KnownZero & KnownOne) == 0 && "Bits known to be one AND zero?"); 
-        KnownZero &= TypeMask;
-        KnownOne  &= TypeMask;
-        KnownZero >>= ShiftAmt;
-        KnownOne  >>= ShiftAmt;
+      // Signed shift right.
+      if (SimplifyDemandedBits(I->getOperand(0),
+                               (DemandedMask << ShiftAmt) & TypeMask,
+                               KnownZero, KnownOne, Depth+1))
+        return true;
+      assert((KnownZero & KnownOne) == 0 && "Bits known to be one AND zero?"); 
+      KnownZero &= TypeMask;
+      KnownOne  &= TypeMask;
+      KnownZero >>= ShiftAmt;
+      KnownOne  >>= ShiftAmt;
         
-        // Handle the sign bits.
-        uint64_t SignBit = 1ULL << (I->getType()->getPrimitiveSizeInBits()-1);
-        SignBit >>= ShiftAmt;  // Adjust to where it is now in the mask.
+      // Handle the sign bits.
+      uint64_t SignBit = 1ULL << (I->getType()->getPrimitiveSizeInBits()-1);
+      SignBit >>= ShiftAmt;  // Adjust to where it is now in the mask.
         
-        // If the input sign bit is known to be zero, or if none of the top bits
-        // are demanded, turn this into an unsigned shift right.
-        if ((KnownZero & SignBit) || (HighBits & ~DemandedMask) == HighBits) {
-          // Convert the input to unsigned.
-          Value *NewVal = InsertCastBefore(I->getOperand(0), 
-                             I->getType()->getUnsignedVersion(), *I);
-          // Perform the unsigned shift right.
-          NewVal = new ShiftInst(Instruction::Shr, NewVal, SA, I->getName());
-          InsertNewInstBefore(cast<Instruction>(NewVal), *I);
-          // Then cast that to the destination type.
-          NewVal = new CastInst(NewVal, I->getType(), I->getName());
-          InsertNewInstBefore(cast<Instruction>(NewVal), *I);
-          return UpdateValueUsesWith(I, NewVal);
-        } else if (KnownOne & SignBit) { // New bits are known one.
-          KnownOne |= HighBits;
-        }
+      // If the input sign bit is known to be zero, or if none of the top bits
+      // are demanded, turn this into an unsigned shift right.
+      if ((KnownZero & SignBit) || (HighBits & ~DemandedMask) == HighBits) {
+        // Perform the logical shift right.
+        Value *NewVal = new ShiftInst(Instruction::LShr, I->getOperand(0), 
+                                      SA, I->getName());
+        InsertNewInstBefore(cast<Instruction>(NewVal), *I);
+        return UpdateValueUsesWith(I, NewVal);
+      } else if (KnownOne & SignBit) { // New bits are known one.
+        KnownOne |= HighBits;
       }
     }
     break;
@@ -1899,29 +1908,28 @@ Instruction *InstCombiner::visitSub(BinaryOperator &I) {
     if (C->isNullValue()) {
       Value *NoopCastedRHS = RemoveNoopCast(Op1);
       if (ShiftInst *SI = dyn_cast<ShiftInst>(NoopCastedRHS))
-        if (SI->getOpcode() == Instruction::Shr)
+        if (SI->getOpcode() == Instruction::LShr) {
           if (ConstantInt *CU = dyn_cast<ConstantInt>(SI->getOperand(1))) {
-            const Type *NewTy;
-            if (SI->getType()->isSigned())
-              NewTy = SI->getType()->getUnsignedVersion();
-            else
-              NewTy = SI->getType()->getSignedVersion();
             // Check to see if we are shifting out everything but the sign bit.
             if (CU->getZExtValue() == 
                 SI->getType()->getPrimitiveSizeInBits()-1) {
-              // Ok, the transformation is safe.  Insert a cast of the incoming
-              // value, then the new shift, then the new cast.
-              Value *InV = InsertCastBefore(SI->getOperand(0), NewTy, I);
-              Instruction *NewShift = new ShiftInst(Instruction::Shr, InV,
-                                                    CU, SI->getName());
-              if (NewShift->getType() == I.getType())
-                return NewShift;
-              else {
-                InsertNewInstBefore(NewShift, I);
-                return new CastInst(NewShift, I.getType());
-              }
+              // Ok, the transformation is safe.  Insert AShr.
+              return new ShiftInst(Instruction::AShr, SI->getOperand(0),
+                                    CU, SI->getName());
             }
           }
+        }
+        else if (SI->getOpcode() == Instruction::AShr) {
+          if (ConstantInt *CU = dyn_cast<ConstantInt>(SI->getOperand(1))) {
+            // Check to see if we are shifting out everything but the sign bit.
+            if (CU->getZExtValue() == 
+                SI->getType()->getPrimitiveSizeInBits()-1) {
+              // Ok, the transformation is safe.  Insert LShr.
+              return new ShiftInst(Instruction::LShr, SI->getOperand(0),
+                                    CU, SI->getName());
+            }
+          }
+        } 
     }
 
     // Try to fold constant sub into select arguments.
@@ -2138,7 +2146,7 @@ Instruction *InstCombiner::visitMul(BinaryOperator &I) {
         }
 
         Value *V =
-          InsertNewInstBefore(new ShiftInst(Instruction::Shr, SCIOp0, Amt,
+          InsertNewInstBefore(new ShiftInst(Instruction::AShr, SCIOp0, Amt,
                                             BoolCast->getOperand(0)->getName()+
                                             ".mask"), I);
 
@@ -2262,18 +2270,8 @@ Instruction *InstCombiner::visitUDiv(BinaryOperator &I) {
     if (uint64_t Val = C->getZExtValue())    // Don't break X / 0
       if (isPowerOf2_64(Val)) {
         uint64_t ShiftAmt = Log2_64(Val);
-        Value* X = Op0;
-        const Type* XTy = X->getType();
-        bool isSigned = XTy->isSigned();
-        if (isSigned)
-          X = InsertCastBefore(X, XTy->getUnsignedVersion(), I);
-        Instruction* Result = 
-          new ShiftInst(Instruction::Shr, X, 
-                        ConstantInt::get(Type::UByteTy, ShiftAmt));
-        if (!isSigned)
-          return Result;
-        InsertNewInstBefore(Result, I);
-        return new CastInst(Result, XTy->getSignedVersion(), I.getName());
+        return new ShiftInst(Instruction::LShr, Op0, 
+                              ConstantInt::get(Type::UByteTy, ShiftAmt));
       }
   }
 
@@ -2285,20 +2283,11 @@ Instruction *InstCombiner::visitUDiv(BinaryOperator &I) {
       if (isPowerOf2_64(C1)) {
         Value *N = RHSI->getOperand(1);
         const Type* NTy = N->getType();
-        bool isSigned = NTy->isSigned();
         if (uint64_t C2 = Log2_64(C1)) {
-          if (isSigned) {
-            NTy = NTy->getUnsignedVersion();
-            N = InsertCastBefore(N, NTy, I);
-          }
           Constant *C2V = ConstantInt::get(NTy, C2);
           N = InsertNewInstBefore(BinaryOperator::createAdd(N, C2V, "tmp"), I);
         }
-        Instruction* Result = new ShiftInst(Instruction::Shr, Op0, N);
-        if (!isSigned)
-          return Result;
-        InsertNewInstBefore(Result, I);
-        return new CastInst(Result, NTy->getSignedVersion(), I.getName());
+        return new ShiftInst(Instruction::LShr, Op0, N);
       }
     }
   }
@@ -2313,31 +2302,20 @@ Instruction *InstCombiner::visitUDiv(BinaryOperator &I) {
           if (isPowerOf2_64(TVA) && isPowerOf2_64(FVA)) {
             // Compute the shift amounts
             unsigned TSA = Log2_64(TVA), FSA = Log2_64(FVA);
-            // Make sure we get the unsigned version of X
-            Value* X = Op0;
-            const Type* origXTy = X->getType();
-            bool isSigned = origXTy->isSigned();
-            if (isSigned)
-              X = InsertCastBefore(X, X->getType()->getUnsignedVersion(), I);
             // Construct the "on true" case of the select
             Constant *TC = ConstantInt::get(Type::UByteTy, TSA);
             Instruction *TSI = 
-              new ShiftInst(Instruction::Shr, X, TC, SI->getName()+".t");
+              new ShiftInst(Instruction::LShr, Op0, TC, SI->getName()+".t");
             TSI = InsertNewInstBefore(TSI, I);
     
             // Construct the "on false" case of the select
             Constant *FC = ConstantInt::get(Type::UByteTy, FSA); 
             Instruction *FSI = 
-              new ShiftInst(Instruction::Shr, X, FC, SI->getName()+".f");
+              new ShiftInst(Instruction::LShr, Op0, FC, SI->getName()+".f");
             FSI = InsertNewInstBefore(FSI, I);
 
             // construct the select instruction and return it.
-            SelectInst* NewSI = 
-              new SelectInst(SI->getOperand(0), TSI, FSI, SI->getName());
-            if (!isSigned)
-              return NewSI;
-            InsertNewInstBefore(NewSI, I);
-            return new CastInst(NewSI, origXTy, NewSI->getName());
+            return new SelectInst(SI->getOperand(0), TSI, FSI, SI->getName());
           }
         }
   }
@@ -2807,44 +2785,40 @@ Instruction *InstCombiner::OptAndOp(Instruction *Op,
     }
     break;
   }
-  case Instruction::Shr:
+  case Instruction::LShr:
+  {
     // We know that the AND will not produce any of the bits shifted in, so if
     // the anded constant includes them, clear them now!  This only applies to
     // unsigned shifts, because a signed shr may bring in set bits!
     //
-    if (AndRHS->getType()->isUnsigned()) {
-      Constant *AllOne = ConstantIntegral::getAllOnesValue(AndRHS->getType());
-      Constant *ShrMask = ConstantExpr::getShr(AllOne, OpRHS);
-      Constant *CI = ConstantExpr::getAnd(AndRHS, ShrMask);
+    Constant *AllOne = ConstantIntegral::getAllOnesValue(AndRHS->getType());
+    Constant *ShrMask = ConstantExpr::getLShr(AllOne, OpRHS);
+    Constant *CI = ConstantExpr::getAnd(AndRHS, ShrMask);
 
-      if (CI == ShrMask) {   // Masking out bits that the shift already masks.
-        return ReplaceInstUsesWith(TheAnd, Op);
-      } else if (CI != AndRHS) {
-        TheAnd.setOperand(1, CI);  // Reduce bits set in and cst.
-        return &TheAnd;
-      }
-    } else {   // Signed shr.
-      // See if this is shifting in some sign extension, then masking it out
-      // with an and.
-      if (Op->hasOneUse()) {
-        Constant *AllOne = ConstantIntegral::getAllOnesValue(AndRHS->getType());
-        Constant *ShrMask = ConstantExpr::getUShr(AllOne, OpRHS);
-        Constant *CI = ConstantExpr::getAnd(AndRHS, ShrMask);
-        if (CI == AndRHS) {          // Masking out bits shifted in.
-          // Make the argument unsigned.
-          Value *ShVal = Op->getOperand(0);
-          ShVal = InsertCastBefore(ShVal,
-                                   ShVal->getType()->getUnsignedVersion(),
-                                   TheAnd);
-          ShVal = InsertNewInstBefore(new ShiftInst(Instruction::Shr, ShVal,
-                                                    OpRHS, Op->getName()),
-                                      TheAnd);
-          Value *AndRHS2 = ConstantExpr::getCast(AndRHS, ShVal->getType());
-          ShVal = InsertNewInstBefore(BinaryOperator::createAnd(ShVal, AndRHS2,
-                                                             TheAnd.getName()),
-                                      TheAnd);
-          return new CastInst(ShVal, Op->getType());
-        }
+    if (CI == ShrMask) {   // Masking out bits that the shift already masks.
+      return ReplaceInstUsesWith(TheAnd, Op);
+    } else if (CI != AndRHS) {
+      TheAnd.setOperand(1, CI);  // Reduce bits set in and cst.
+      return &TheAnd;
+    }
+    break;
+  }
+  case Instruction::AShr:
+    // Signed shr.
+    // See if this is shifting in some sign extension, then masking it out
+    // with an and.
+    if (Op->hasOneUse()) {
+      Constant *AllOne = ConstantIntegral::getAllOnesValue(AndRHS->getType());
+      Constant *ShrMask = ConstantExpr::getLShr(AllOne, OpRHS);
+      Constant *CI = ConstantExpr::getAnd(AndRHS, ShrMask);
+      if (CI == AndRHS) {          // Masking out bits shifted in.
+        // Make the argument unsigned.
+        Value *ShVal = Op->getOperand(0);
+        ShVal = InsertNewInstBefore(new ShiftInst(Instruction::LShr, ShVal,
+                                                  OpRHS, Op->getName()),
+                                    TheAnd);
+        Value *AndRHS2 = ConstantExpr::getCast(AndRHS, ShVal->getType());
+        return BinaryOperator::createAnd(ShVal, AndRHS2, TheAnd.getName());
       }
     }
     break;
@@ -4294,7 +4268,7 @@ Instruction *InstCombiner::visitSetCondInst(SetCondInst &I) {
             if (CanFold) {
               Constant *NewCst;
               if (Shift->getOpcode() == Instruction::Shl)
-                NewCst = ConstantExpr::getUShr(CI, ShAmt);
+                NewCst = ConstantExpr::getLShr(CI, ShAmt);
               else
                 NewCst = ConstantExpr::getShl(CI, ShAmt);
 
@@ -4312,7 +4286,7 @@ Instruction *InstCombiner::visitSetCondInst(SetCondInst &I) {
                 I.setOperand(1, NewCst);
                 Constant *NewAndCST;
                 if (Shift->getOpcode() == Instruction::Shl)
-                  NewAndCST = ConstantExpr::getUShr(AndCST, ShAmt);
+                  NewAndCST = ConstantExpr::getLShr(AndCST, ShAmt);
                 else
                   NewAndCST = ConstantExpr::getShl(AndCST, ShAmt);
                 LHSI->setOperand(1, NewAndCST);
@@ -4338,7 +4312,7 @@ Instruction *InstCombiner::visitSetCondInst(SetCondInst &I) {
               isa<Instruction>(Shift->getOperand(0))) {
             // Compute C << Y.
             Value *NS;
-            if (Shift->getOpcode() == Instruction::Shr) {
+            if (Shift->getOpcode() == Instruction::LShr) {
               NS = new ShiftInst(Instruction::Shl, AndCST, Shift->getOperand(1),
                                  "tmp");
             } else {
@@ -4347,7 +4321,7 @@ Instruction *InstCombiner::visitSetCondInst(SetCondInst &I) {
               if (AndCST->getType()->isSigned())
                 NewAndCST = ConstantExpr::getCast(AndCST,
                                       AndCST->getType()->getUnsignedVersion());
-              NS = new ShiftInst(Instruction::Shr, NewAndCST,
+              NS = new ShiftInst(Instruction::LShr, NewAndCST,
                                  Shift->getOperand(1), "tmp");
             }
             InsertNewInstBefore(cast<Instruction>(NS), I);
@@ -4385,7 +4359,7 @@ Instruction *InstCombiner::visitSetCondInst(SetCondInst &I) {
             // If we are comparing against bits always shifted out, the
             // comparison cannot succeed.
             Constant *Comp =
-              ConstantExpr::getShl(ConstantExpr::getShr(CI, ShAmt), ShAmt);
+              ConstantExpr::getShl(ConstantExpr::getLShr(CI, ShAmt), ShAmt);
             if (Comp != CI) {// Comparing against a bit that we know is zero.
               bool IsSetNE = I.getOpcode() == Instruction::SetNE;
               Constant *Cst = ConstantBool::get(IsSetNE);
@@ -4411,13 +4385,14 @@ Instruction *InstCombiner::visitSetCondInst(SetCondInst &I) {
                                           Mask, LHSI->getName()+".mask");
               Value *And = InsertNewInstBefore(AndI, I);
               return new SetCondInst(I.getOpcode(), And,
-                                     ConstantExpr::getUShr(CI, ShAmt));
+                                     ConstantExpr::getLShr(CI, ShAmt));
             }
           }
         }
         break;
 
-      case Instruction::Shr:         // (setcc (shr X, ShAmt), CI)
+      case Instruction::LShr:         // (setcc (shr X, ShAmt), CI)
+      case Instruction::AShr:
         if (ConstantInt *ShAmt = dyn_cast<ConstantInt>(LHSI->getOperand(1))) {
           if (I.isEquality()) {
             // Check that the shift amount is in range.  If not, don't perform
@@ -4429,8 +4404,13 @@ Instruction *InstCombiner::visitSetCondInst(SetCondInst &I) {
 
             // If we are comparing against bits always shifted out, the
             // comparison cannot succeed.
-            Constant *Comp =
-              ConstantExpr::getShr(ConstantExpr::getShl(CI, ShAmt), ShAmt);
+            Constant *Comp;
+            if (CI->getType()->isUnsigned())
+              Comp = ConstantExpr::getLShr(ConstantExpr::getShl(CI, ShAmt), 
+                                           ShAmt);
+            else
+              Comp = ConstantExpr::getAShr(ConstantExpr::getShl(CI, ShAmt), 
+                                           ShAmt);
 
             if (Comp != CI) {// Comparing against a bit that we know is zero.
               bool IsSetNE = I.getOpcode() == Instruction::SetNE;
@@ -5019,10 +4999,7 @@ Instruction *InstCombiner::visitShiftInst(ShiftInst &I) {
   if (I.isArithmeticShift()) {
     if (MaskedValueIsZero(Op0,
                           1ULL << (I.getType()->getPrimitiveSizeInBits()-1))) {
-      Value *V = InsertCastBefore(Op0, I.getType()->getUnsignedVersion(), I);
-      V = InsertNewInstBefore(new ShiftInst(Instruction::Shr, V, Op1,
-                                            I.getName()), I);
-      return new CastInst(V, I.getType());
+      return new ShiftInst(Instruction::LShr, Op0, Op1, I.getName());
     }
   }
 
@@ -5036,7 +5013,8 @@ Instruction *InstCombiner::visitShiftInst(ShiftInst &I) {
 Instruction *InstCombiner::FoldShiftByConstant(Value *Op0, ConstantInt *Op1,
                                                ShiftInst &I) {
   bool isLeftShift = I.getOpcode() == Instruction::Shl;
-  bool isSignedShift = Op0->getType()->isSigned();
+  bool isSignedShift = isLeftShift ? Op0->getType()->isSigned() : 
+                                     I.getOpcode() == Instruction::AShr;
   bool isUnsignedShift = !isSignedShift;
 
   // See if we can simplify any instructions used by the instruction whose sole 
@@ -5229,7 +5207,9 @@ Instruction *InstCombiner::FoldShiftByConstant(Value *Op0, ConstantInt *Op1,
     // signedness of the input shift may differ from the current shift if there
     // is a noop cast between the two.
     bool isShiftOfLeftShift = ShiftOp->getOpcode() == Instruction::Shl;
-    bool isShiftOfSignedShift = ShiftOp->getType()->isSigned();
+    bool isShiftOfSignedShift = isShiftOfLeftShift ? 
+           ShiftOp->getType()->isSigned() : 
+           ShiftOp->getOpcode() == Instruction::AShr;
     bool isShiftOfUnsignedShift = !isShiftOfSignedShift;
     
     ConstantInt *ShiftAmt1C = cast<ConstantInt>(ShiftOp->getOperand(1));
@@ -5252,8 +5232,12 @@ Instruction *InstCombiner::FoldShiftByConstant(Value *Op0, ConstantInt *Op1,
       Value *Op = ShiftOp->getOperand(0);
       if (isShiftOfSignedShift != isSignedShift)
         Op = InsertNewInstBefore(new CastInst(Op, I.getType(), "tmp"), I);
-      return new ShiftInst(I.getOpcode(), Op,
+      ShiftInst* ShiftResult = new ShiftInst(I.getOpcode(), Op,
                            ConstantInt::get(Type::UByteTy, Amt));
+      if (I.getType() == ShiftResult->getType())
+        return ShiftResult;
+      InsertNewInstBefore(ShiftResult, I);
+      return new CastInst(ShiftResult, I.getType());
     }
     
     // Check for (A << c1) >> c2 or (A >> c1) << c2.  If we are dealing with
@@ -5265,10 +5249,10 @@ Instruction *InstCombiner::FoldShiftByConstant(Value *Op0, ConstantInt *Op1,
       if (isLeftShift)
         C = ConstantExpr::getShl(C, ShiftAmt1C);
       else
-        C = ConstantExpr::getUShr(C, ShiftAmt1C);
+        C = ConstantExpr::getLShr(C, ShiftAmt1C);
       
       Value *Op = ShiftOp->getOperand(0);
-      if (isShiftOfSignedShift != isSignedShift)
+      if (Op->getType() != C->getType())
         Op = InsertCastBefore(Op, I.getType(), I);
       
       Instruction *Mask =
@@ -5283,14 +5267,8 @@ Instruction *InstCombiner::FoldShiftByConstant(Value *Op0, ConstantInt *Op1,
                          ConstantInt::get(Type::UByteTy, ShiftAmt2-ShiftAmt1));
       } else if (isShiftOfUnsignedShift || isShiftOfLeftShift) {
         if (isShiftOfUnsignedShift && !isShiftOfLeftShift && isSignedShift) {
-          // Make sure to emit an unsigned shift right, not a signed one.
-          Mask = InsertNewInstBefore(new CastInst(Mask, 
-                                        Mask->getType()->getUnsignedVersion(),
-                                                  Op->getName()), I);
-          Mask = new ShiftInst(Instruction::Shr, Mask,
-                         ConstantInt::get(Type::UByteTy, ShiftAmt1-ShiftAmt2));
-          InsertNewInstBefore(Mask, I);
-          return new CastInst(Mask, I.getType());
+          return new ShiftInst(Instruction::LShr, Mask, 
+            ConstantInt::get(Type::UByteTy, ShiftAmt1-ShiftAmt2));
         } else {
           return new ShiftInst(ShiftOp->getOpcode(), Mask,
                     ConstantInt::get(Type::UByteTy, ShiftAmt1-ShiftAmt2));
@@ -5792,7 +5770,7 @@ Instruction *InstCombiner::visitCastInst(CastInst &CI) {
       case Instruction::Shl:
         // Allow changing the sign of the source operand.  Do not allow changing
         // the size of the shift, UNLESS the shift amount is a constant.  We
-        // mush not change variable sized shifts to a smaller size, because it
+        // must not change variable sized shifts to a smaller size, because it
         // is undefined to shift more bits out than exist in the value.
         if (DestBitSize == SrcBitSize ||
             (DestBitSize < SrcBitSize && isa<Constant>(Op1))) {
@@ -5800,21 +5778,16 @@ Instruction *InstCombiner::visitCastInst(CastInst &CI) {
           return new ShiftInst(Instruction::Shl, Op0c, Op1);
         }
         break;
-      case Instruction::Shr:
+      case Instruction::AShr:
         // If this is a signed shr, and if all bits shifted in are about to be
         // truncated off, turn it into an unsigned shr to allow greater
         // simplifications.
-        if (DestBitSize < SrcBitSize && Src->getType()->isSigned() &&
+        if (DestBitSize < SrcBitSize &&
             isa<ConstantInt>(Op1)) {
           unsigned ShiftAmt = cast<ConstantInt>(Op1)->getZExtValue();
           if (SrcBitSize > ShiftAmt && SrcBitSize-ShiftAmt >= DestBitSize) {
-            // Convert to unsigned.
-            Value *N1 = InsertOperandCastBefore(Op0,
-                                     Op0->getType()->getUnsignedVersion(), &CI);
-            // Insert the new shift, which is now unsigned.
-            N1 = InsertNewInstBefore(new ShiftInst(Instruction::Shr, N1,
-                                                   Op1, Src->getName()), CI);
-            return new CastInst(N1, CI.getType());
+            // Insert the new logical shift right.
+            return new ShiftInst(Instruction::LShr, Op0, Op1);
           }
         }
         break;
@@ -5853,13 +5826,9 @@ Instruction *InstCombiner::visitCastInst(CastInst &CI) {
               unsigned ShiftAmt = Log2_64(KnownZero^TypeMask);
               Value *In = Op0;
               if (ShiftAmt) {
-                // Perform an unsigned shr by shiftamt.  Convert input to
-                // unsigned if it is signed.
-                if (In->getType()->isSigned())
-                  In = InsertCastBefore(
-                         In, In->getType()->getUnsignedVersion(), CI);
+                // Perform a logical shr by shiftamt.
                 // Insert the shift to put the result in the low bit.
-                In = InsertNewInstBefore(new ShiftInst(Instruction::Shr, In,
+                In = InsertNewInstBefore(new ShiftInst(Instruction::LShr, In,
                                      ConstantInt::get(Type::UByteTy, ShiftAmt),
                                      In->getName()+".lobit"), CI);
               }
@@ -5934,7 +5903,8 @@ static unsigned GetSelectFoldableOperands(Instruction *I) {
     return 3;              // Can fold through either operand.
   case Instruction::Sub:   // Can only fold on the amount subtracted.
   case Instruction::Shl:   // Can only fold on the shift amount.
-  case Instruction::Shr:
+  case Instruction::LShr:
+  case Instruction::AShr:
     return 1;
   default:
     return 0;              // Cannot fold
@@ -5952,7 +5922,8 @@ static Constant *GetSelectFoldableConstant(Instruction *I) {
   case Instruction::Xor:
     return Constant::getNullValue(I->getType());
   case Instruction::Shl:
-  case Instruction::Shr:
+  case Instruction::LShr:
+  case Instruction::AShr:
     return Constant::getNullValue(Type::UByteTy);
   case Instruction::And:
     return ConstantInt::getAllOnesValue(I->getType());
@@ -6125,7 +6096,7 @@ Instruction *InstCombiner::visitSelectInst(SelectInst &SI) {
               // this by inserting a new SRA.
               unsigned Bits = X->getType()->getPrimitiveSizeInBits();
               Constant *ShAmt = ConstantInt::get(Type::UByteTy, Bits-1);
-              Instruction *SRA = new ShiftInst(Instruction::Shr, X,
+              Instruction *SRA = new ShiftInst(Instruction::AShr, X,
                                                ShAmt, "ones");
               InsertNewInstBefore(SRA, SI);
               

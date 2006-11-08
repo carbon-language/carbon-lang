@@ -128,7 +128,8 @@ const char *Instruction::getOpcodeName(unsigned OpCode) {
   case Select:  return "select";
   case Call:    return "call";
   case Shl:     return "shl";
-  case Shr:     return "shr";
+  case LShr:     return "lshr";
+  case AShr:     return "ashr";
   case VAArg:   return "va_arg";
   case ExtractElement: return "extractelement";
   case InsertElement: return "insertelement";

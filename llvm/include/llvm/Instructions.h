@@ -604,7 +604,8 @@ class ShiftInst : public Instruction {
     Ops[1].init(SI.Ops[1], this);
   }
   void init(OtherOps Opcode, Value *S, Value *SA) {
-    assert((Opcode == Shl || Opcode == Shr) && "ShiftInst Opcode invalid!");
+    assert((Opcode == Shl || Opcode == LShr || Opcode == AShr) && 
+      "ShiftInst Opcode invalid!");
     Ops[0].init(S, this);
     Ops[1].init(SA, this);
   }
@@ -638,7 +639,11 @@ public:
 
   /// isLogicalShift - Return true if this is a logical shift left or a logical
   /// shift right.
-  bool isLogicalShift() const;
+  bool isLogicalShift() const {
+    unsigned opcode = getOpcode();
+    return opcode == Instruction::Shl || opcode == Instruction::LShr;
+  }
+
 
   /// isArithmeticShift - Return true if this is a sign-extending shift right
   /// operation.
@@ -652,7 +657,8 @@ public:
   // Methods for support type inquiry through isa, cast, and dyn_cast:
   static inline bool classof(const ShiftInst *) { return true; }
   static inline bool classof(const Instruction *I) {
-    return (I->getOpcode() == Instruction::Shr) |
+    return (I->getOpcode() == Instruction::LShr) |
+           (I->getOpcode() == Instruction::AShr) |
            (I->getOpcode() == Instruction::Shl);
   }
   static inline bool classof(const Value *V) {

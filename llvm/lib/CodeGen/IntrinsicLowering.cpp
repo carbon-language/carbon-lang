@@ -138,12 +138,6 @@ void DefaultIntrinsicLowering::AddPrototypes(Module &M) {
 static Value *LowerBSWAP(Value *V, Instruction *IP) {
   assert(V->getType()->isInteger() && "Can't bswap a non-integer type!");
 
-  const Type *DestTy = V->getType();
-  
-  // Force to unsigned so that the shift rights are logical.
-  if (DestTy->isSigned())
-    V = new CastInst(V, DestTy->getUnsignedVersion(), V->getName(), IP);
-
   unsigned BitSize = V->getType()->getPrimitiveSizeInBits();
   
   switch(BitSize) {
@@ -151,7 +145,7 @@ static Value *LowerBSWAP(Value *V, Instruction *IP) {
   case 16: {
     Value *Tmp1 = new ShiftInst(Instruction::Shl, V,
                                 ConstantInt::get(Type::UByteTy,8),"bswap.2",IP);
-    Value *Tmp2 = new ShiftInst(Instruction::Shr, V,
+    Value *Tmp2 = new ShiftInst(Instruction::LShr, V,
                                 ConstantInt::get(Type::UByteTy,8),"bswap.1",IP);
     V = BinaryOperator::createOr(Tmp1, Tmp2, "bswap.i16", IP);
     break;
@@ -160,10 +154,10 @@ static Value *LowerBSWAP(Value *V, Instruction *IP) {
     Value *Tmp4 = new ShiftInst(Instruction::Shl, V,
                               ConstantInt::get(Type::UByteTy,24),"bswap.4", IP);
     Value *Tmp3 = new ShiftInst(Instruction::Shl, V,
-                                ConstantInt::get(Type::UByteTy,8),"bswap.3",IP);
-    Value *Tmp2 = new ShiftInst(Instruction::Shr, V,
-                                ConstantInt::get(Type::UByteTy,8),"bswap.2",IP);
-    Value *Tmp1 = new ShiftInst(Instruction::Shr, V,
+                              ConstantInt::get(Type::UByteTy,8),"bswap.3",IP);
+    Value *Tmp2 = new ShiftInst(Instruction::LShr, V,
+                              ConstantInt::get(Type::UByteTy,8),"bswap.2",IP);
+    Value *Tmp1 = new ShiftInst(Instruction::LShr, V,
                               ConstantInt::get(Type::UByteTy,24),"bswap.1", IP);
     Tmp3 = BinaryOperator::createAnd(Tmp3, 
                                      ConstantInt::get(Type::UIntTy, 0xFF0000),
@@ -184,14 +178,14 @@ static Value *LowerBSWAP(Value *V, Instruction *IP) {
     Value *Tmp6 = new ShiftInst(Instruction::Shl, V,
                               ConstantInt::get(Type::UByteTy,24),"bswap.6", IP);
     Value *Tmp5 = new ShiftInst(Instruction::Shl, V,
-                                ConstantInt::get(Type::UByteTy,8),"bswap.5",IP);
-    Value *Tmp4 = new ShiftInst(Instruction::Shr, V,
-                                ConstantInt::get(Type::UByteTy,8),"bswap.4",IP);
-    Value *Tmp3 = new ShiftInst(Instruction::Shr, V,
+                              ConstantInt::get(Type::UByteTy,8),"bswap.5", IP);
+    Value* Tmp4 = new ShiftInst(Instruction::LShr, V,
+                              ConstantInt::get(Type::UByteTy,8),"bswap.4", IP);
+    Value* Tmp3 = new ShiftInst(Instruction::LShr, V,
                               ConstantInt::get(Type::UByteTy,24),"bswap.3", IP);
-    Value *Tmp2 = new ShiftInst(Instruction::Shr, V,
+    Value* Tmp2 = new ShiftInst(Instruction::LShr, V,
                               ConstantInt::get(Type::UByteTy,40),"bswap.2", IP);
-    Value *Tmp1 = new ShiftInst(Instruction::Shr, V,
+    Value* Tmp1 = new ShiftInst(Instruction::LShr, V,
                               ConstantInt::get(Type::UByteTy,56),"bswap.1", IP);
     Tmp7 = BinaryOperator::createAnd(Tmp7,
                              ConstantInt::get(Type::ULongTy, 
@@ -222,9 +216,6 @@ static Value *LowerBSWAP(Value *V, Instruction *IP) {
     break;
   }
   }
-  
-  if (V->getType() != DestTy)
-    V = new CastInst(V, DestTy, V->getName(), IP);
   return V;
 }
 
@@ -239,47 +230,32 @@ static Value *LowerCTPOP(Value *V, Instruction *IP) {
     0x0000FFFF0000FFFFULL, 0x00000000FFFFFFFFULL
   };
 
-  const Type *DestTy = V->getType();
-
-  // Force to unsigned so that the shift rights are logical.
-  if (DestTy->isSigned())
-    V = new CastInst(V, DestTy->getUnsignedVersion(), V->getName(), IP);
-
   unsigned BitSize = V->getType()->getPrimitiveSizeInBits();
+
   for (unsigned i = 1, ct = 0; i != BitSize; i <<= 1, ++ct) {
     Value *MaskCst =
       ConstantExpr::getCast(ConstantInt::get(Type::ULongTy, MaskValues[ct]),
                                              V->getType());
     Value *LHS = BinaryOperator::createAnd(V, MaskCst, "cppop.and1", IP);
-    Value *VShift = new ShiftInst(Instruction::Shr, V,
+    Value *VShift = new ShiftInst(Instruction::LShr, V,
                       ConstantInt::get(Type::UByteTy, i), "ctpop.sh", IP);
     Value *RHS = BinaryOperator::createAnd(VShift, MaskCst, "cppop.and2", IP);
     V = BinaryOperator::createAdd(LHS, RHS, "ctpop.step", IP);
   }
 
-  if (V->getType() != DestTy)
-    V = new CastInst(V, DestTy, V->getName(), IP);
   return V;
 }
 
 /// LowerCTLZ - Emit the code to lower ctlz of V before the specified
 /// instruction IP.
 static Value *LowerCTLZ(Value *V, Instruction *IP) {
-  const Type *DestTy = V->getType();
-
-  // Force to unsigned so that the shift rights are logical.
-  if (DestTy->isSigned())
-    V = new CastInst(V, DestTy->getUnsignedVersion(), V->getName(), IP);
 
   unsigned BitSize = V->getType()->getPrimitiveSizeInBits();
   for (unsigned i = 1; i != BitSize; i <<= 1) {
     Value *ShVal = ConstantInt::get(Type::UByteTy, i);
-    ShVal = new ShiftInst(Instruction::Shr, V, ShVal, "ctlz.sh", IP);
+    ShVal = new ShiftInst(Instruction::LShr, V, ShVal, "ctlz.sh", IP);
     V = BinaryOperator::createOr(V, ShVal, "ctlz.step", IP);
   }
-
-  if (V->getType() != DestTy)
-    V = new CastInst(V, DestTy, V->getName(), IP);
 
   V = BinaryOperator::createNot(V, "", IP);
   return LowerCTPOP(V, IP);

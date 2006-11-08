@@ -617,10 +617,11 @@ void SROA::ConvertUsesToScalar(Value *Ptr, AllocaInst *NewAI, unsigned Offset) {
         } else {
           if (Offset) {
             assert(NV->getType()->isInteger() && "Unknown promotion!");
-            if (Offset < TD.getTypeSize(NV->getType())*8)
-              NV = new ShiftInst(Instruction::Shr, NV,
-                                 ConstantInt::get(Type::UByteTy, Offset),
+            if (Offset < TD.getTypeSize(NV->getType())*8) {
+              NV = new ShiftInst(Instruction::LShr, NV, 
+                                 ConstantInt::get(Type::UByteTy, Offset), 
                                  LI->getName(), LI);
+            }
           } else {
             assert((NV->getType()->isInteger() ||
                     isa<PointerType>(NV->getType())) && "Unknown promotion!");

@@ -820,7 +820,7 @@ static PATypeHolder HandleUpRefs(const Type *ty) {
 /// an obsolete opcode. For example, "div" was replaced by [usf]div but we need
 /// to maintain backwards compatibility for asm files that still have the "div"
 /// instruction. This function handles converting div -> [usf]div appropriately.
-/// @brief Convert obsolete opcodes to new values
+/// @brief Convert obsolete BinaryOps opcodes to new values
 static void 
 sanitizeOpCode(OpcodeInfo<Instruction::BinaryOps> &OI, const PATypeHolder& PATy)
 {
@@ -855,7 +855,31 @@ sanitizeOpCode(OpcodeInfo<Instruction::BinaryOps> &OI, const PATypeHolder& PATy)
   // Its not obsolete any more, we fixed it.
   OI.obsolete = false;
 }
-  
+
+/// This function is similar to the previous overload of sanitizeOpCode but
+/// operates on Instruction::OtherOps instead of Instruction::BinaryOps.
+/// @brief Convert obsolete OtherOps opcodes to new values
+static void 
+sanitizeOpCode(OpcodeInfo<Instruction::OtherOps> &OI, const PATypeHolder& PATy)
+{
+  // If its not obsolete, don't do anything
+  if (!OI.obsolete) 
+    return;
+
+  const Type* Ty = PATy; // type conversion
+  switch (OI.opcode) {
+  default:
+    GenerateError("Invalid obsolete opcode (check Lexer.l)");
+    break;
+  case Instruction::LShr:
+    if (Ty->isSigned())
+      OI.opcode = Instruction::AShr;
+    break;
+  }
+  // Its not obsolete any more, we fixed it.
+  OI.obsolete = false;
+}
+
 // common code from the two 'RunVMAsmParser' functions
 static Module* RunParser(Module * M) {
 
@@ -1126,7 +1150,7 @@ Module *llvm::RunVMAsmParser(const char * AsmString, Module * M) {
 
 // Other Operators
 %type  <OtherOpVal> ShiftOps
-%token <OtherOpVal> PHI_TOK CAST SELECT SHL SHR VAARG
+%token <OtherOpVal> PHI_TOK CAST SELECT SHL LSHR ASHR VAARG
 %token <OtherOpVal> EXTRACTELEMENT INSERTELEMENT SHUFFLEVECTOR
 %token VAARG_old VANEXT_old //OBSOLETE
 
@@ -1160,7 +1184,7 @@ ArithmeticOps: ADD | SUB | MUL | UDIV | SDIV | FDIV | UREM | SREM | FREM;
 LogicalOps   : AND | OR | XOR;
 SetCondOps   : SETLE | SETGE | SETLT | SETGT | SETEQ | SETNE;
 
-ShiftOps  : SHL | SHR;
+ShiftOps  : SHL | LSHR | ASHR;
 
 // These are some types that allow classification if we only want a particular 
 // thing... for example, only a signed, unsigned, or integral type.
@@ -1730,6 +1754,9 @@ ConstExpr: CAST '(' ConstVal TO Types ')' {
       GEN_ERROR("Shift count for shift constant must be unsigned byte!");
     if (!$3->getType()->isInteger())
       GEN_ERROR("Shift constant expression requires integer operand!");
+    // Handle opcode upgrade situations
+    sanitizeOpCode($1, $3->getType());
+    CHECK_FOR_ERROR;
     $$ = ConstantExpr::get($1.opcode, $3, $5);
     CHECK_FOR_ERROR
   }
@@ -2534,6 +2561,9 @@ InstVal : ArithmeticOps Types ValueRef ',' ValueRef {
       GEN_ERROR("Shift amount must be ubyte!");
     if (!$2->getType()->isInteger())
       GEN_ERROR("Shift constant expression requires integer operand!");
+    // Handle opcode upgrade situations
+    sanitizeOpCode($1, $2->getType());
+    CHECK_FOR_ERROR;
     $$ = new ShiftInst($1.opcode, $2, $4);
     CHECK_FOR_ERROR
   }

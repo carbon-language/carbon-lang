@@ -1222,17 +1222,6 @@ bool BinaryOperator::swapOperands() {
   return false;
 }
 
-
-//===----------------------------------------------------------------------===//
-//                               ShiftInst Class
-//===----------------------------------------------------------------------===//
-
-/// isLogicalShift - Return true if this is a logical shift left or a logical
-/// shift right.
-bool ShiftInst::isLogicalShift() const {
-  return getOpcode() == Instruction::Shl || getType()->isUnsigned();
-}
-
 //===----------------------------------------------------------------------===//
 //                                CastInst Class
 //===----------------------------------------------------------------------===//

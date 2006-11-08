@@ -172,9 +172,49 @@ inline BinaryOp_match<LHS, RHS, Instruction::Shl,
 }
 
 template<typename LHS, typename RHS>
-inline BinaryOp_match<LHS, RHS, Instruction::Shr, 
-                      ShiftInst> m_Shr(const LHS &L, const RHS &R) {
-  return BinaryOp_match<LHS, RHS, Instruction::Shr, ShiftInst>(L, R);
+inline BinaryOp_match<LHS, RHS, Instruction::LShr, 
+                      ShiftInst> m_LShr(const LHS &L, const RHS &R) {
+  return BinaryOp_match<LHS, RHS, Instruction::LShr, ShiftInst>(L, R);
+}
+
+template<typename LHS, typename RHS>
+inline BinaryOp_match<LHS, RHS, Instruction::AShr, 
+                      ShiftInst> m_AShr(const LHS &L, const RHS &R) {
+  return BinaryOp_match<LHS, RHS, Instruction::AShr, ShiftInst>(L, R);
+}
+
+//===----------------------------------------------------------------------===//
+// Matchers for either AShr or LShr .. for convenience
+//
+template<typename LHS_t, typename RHS_t, typename ConcreteTy = ShiftInst>
+struct Shr_match {
+  LHS_t L;
+  RHS_t R;
+
+  Shr_match(const LHS_t &LHS, const RHS_t &RHS) : L(LHS), R(RHS) {}
+
+  template<typename OpTy>
+  bool match(OpTy *V) {
+    if (V->getValueType() == Value::InstructionVal + Instruction::LShr ||
+        V->getValueType() == Value::InstructionVal + Instruction::AShr) {
+      ConcreteTy *I = cast<ConcreteTy>(V);
+      return (I->getOpcode() == Instruction::AShr ||
+              I->getOpcode() == Instruction::LShr) &&
+             L.match(I->getOperand(0)) &&
+             R.match(I->getOperand(1));
+    }
+    if (ConstantExpr *CE = dyn_cast<ConstantExpr>(V))
+      return (CE->getOpcode() == Instruction::LShr ||
+              CE->getOpcode() == Instruction::AShr) &&
+             L.match(CE->getOperand(0)) &&
+             R.match(CE->getOperand(1));
+    return false;
+  }
+};
+
+template<typename LHS, typename RHS>
+inline Shr_match<LHS, RHS> m_Shr(const LHS &L, const RHS &R) {
+  return Shr_match<LHS, RHS>(L, R);
 }
 
 //===----------------------------------------------------------------------===//
