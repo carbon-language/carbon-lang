@@ -932,6 +932,12 @@ Parser::ExprResult Parser::ParseStringLiteralExpression() {
     ConsumeStringToken();
   } while (isTokenStringLiteral());
   
+  
+  // If using minimal actions, don't do any semantic analysis of the parsed
+  // string fragments.
+  if (MinimalActions)
+    return MinimalActions->ParseStringExpr(&StringToks[0], StringToks.size());
+  
   // Include space for the null terminator.
   ++SizeBound;
   
@@ -1098,8 +1104,8 @@ Parser::ExprResult Parser::ParseStringLiteralExpression() {
     StringTokLocs.push_back(StringToks[i].getLocation());
   
   // Hand this off to the Actions.
-  return Actions.ParseStringExpr(&ResultBuf[0], ResultPtr-&ResultBuf[0],
-                                 AnyWide, &StringTokLocs[0],
-                                 StringTokLocs.size());
+  return SemaActions->ParseStringExpr(&ResultBuf[0], ResultPtr-&ResultBuf[0],
+                                      AnyWide, &StringTokLocs[0],
+                                      StringTokLocs.size());
 }
 

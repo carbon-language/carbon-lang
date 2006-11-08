@@ -26,6 +26,7 @@ namespace clang {
   class Action;
   // Lex.
   class IdentifierInfo;
+  class LexerToken;
 
 /// Action - As the parser reads the input file and recognizes the productions
 /// of the grammar, it invokes methods on this class to turn the parsed input
@@ -208,15 +209,6 @@ public:
     return Val;  // Default impl returns operand.
   }
   
-  /// ParseStringExpr - The (null terminated) string data is specified with
-  /// StrData+StrLen.  isWide is true if this is a wide string. The Toks/NumToks
-  /// array exposes the input tokens to provide location information.
-  virtual ExprResult ParseStringExpr(const char *StrData, unsigned StrLen,
-                                     bool isWide,
-                                     SourceLocation *TokLocs, unsigned NumToks){
-    return 0;
-  }
-
   // Postfix Expressions.
   virtual ExprResult ParsePostfixUnaryOp(SourceLocation OpLoc, 
                                          tok::TokenKind Kind, ExprTy *Input) {
@@ -300,6 +292,17 @@ public:
   virtual DeclTy *ParsedClassDeclaration(Scope *S,
                                          IdentifierInfo **IdentList,
                                          unsigned NumElts);
+  
+  //===--------------------------------------------------------------------===//
+  // Expression Parsing Callbacks.
+  //===--------------------------------------------------------------------===//
+  
+  /// ParseStringExpr - The specified tokens were lexed as pasted string
+  /// fragments (e.g. "foo" "bar" L"baz").
+  virtual ExprResult ParseStringExpr(const LexerToken *Toks, unsigned NumToks){
+    return 0;
+  }
+  
 };
 
 /// SemanticAction - Clients the implement this interface expect Decl nodes to 
@@ -307,6 +310,15 @@ public:
 /// source program to be performed.
 class SemanticAction : public Action {
 public:
+  
+  /// ParseStringExpr - The (null terminated) string data is specified with
+  /// StrData+StrLen.  isWide is true if this is a wide string. The Toks/NumToks
+  /// array exposes the input tokens to provide location information.
+  virtual ExprResult ParseStringExpr(const char *StrData, unsigned StrLen,
+                                     bool isWide,
+                                     SourceLocation *TokLocs, unsigned NumToks){
+    return 0;
+  }
   
 };
 
