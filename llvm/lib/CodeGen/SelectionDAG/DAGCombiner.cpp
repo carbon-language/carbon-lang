@@ -208,61 +208,26 @@ namespace {
           // Try turning it into a pre-indexed load / store except when
           // 1) Another use of base ptr is a predecessor of N. If ptr is folded
           //    that would create a cycle.
-          // 2) All uses are load / store ops that use it as base ptr and offset
-          //    is just an addressing mode immediate.
-          // 3) If the would-be new base may not to be dead at N.
-
-          bool OffIsAMImm = Offset.getOpcode() == ISD::Constant && TLI.
-            isLegalAddressImmediate(cast<ConstantSDNode>(Offset)->getValue());
-
-          // Check for #3.
-          for (SDNode::use_iterator I = BasePtr.Val->use_begin(),
-                 E = BasePtr.Val->use_end(); I != E; ++I) {
-            SDNode *Use = *I;
-            if (Use == Ptr.Val)
-              continue;
-            if (Use->getOpcode() == ISD::CopyToReg)
-              return false;
-            if (OffIsAMImm && (Use->getOpcode() == ISD::ADD ||
-                               Use->getOpcode() == ISD::SUB)) {
-              for (SDNode::use_iterator II = Use->use_begin(),
-                     EE = Use->use_end(); II != EE; ++II) {
-                SDNode *UseUse = *II;
-                if (UseUse->getOpcode() == ISD::LOAD &&
-                    cast<LoadSDNode>(UseUse)->getBasePtr().Val == Use)
-                  return false;
-                else if (UseUse->getOpcode() == ISD::STORE &&
-                         cast<StoreSDNode>(UseUse)->getBasePtr().Val == Use)
-                  return false;
-              }
-            }
-          }
+          // 2) All uses are load / store ops that use it as base ptr.
 
           // Now check for #1 and #2.
-          if (OffIsAMImm) {
-            unsigned NumRealUses = 0;
-            for (SDNode::use_iterator I = Ptr.Val->use_begin(),
-                   E = Ptr.Val->use_end(); I != E; ++I) {
-              SDNode *Use = *I;
-              if (Use == N)
-                continue;
-              if (Use->isPredecessor(N))
-                return false;
-
-              if (!OffIsAMImm) {
-                NumRealUses++;
-              } else if (Use->getOpcode() == ISD::LOAD) {
-                if (cast<LoadSDNode>(Use)->getBasePtr().Val != Ptr.Val)
-                  NumRealUses++;
-              } else if (Use->getOpcode() == ISD::STORE) {
-                if (cast<StoreSDNode>(Use)->getBasePtr().Val != Ptr.Val)
-                  NumRealUses++;
-              } else
-                NumRealUses++;
-            }
-            if (NumRealUses == 0)
+          bool RealUse = false;
+          for (SDNode::use_iterator I = Ptr.Val->use_begin(),
+                 E = Ptr.Val->use_end(); I != E; ++I) {
+            SDNode *Use = *I;
+            if (Use == N)
+              continue;
+            if (Use->isPredecessor(N))
               return false;
+
+            if (!((Use->getOpcode() == ISD::LOAD &&
+                   cast<LoadSDNode>(Use)->getBasePtr() == Ptr) ||
+                  (Use->getOpcode() == ISD::STORE) &&
+                  cast<StoreSDNode>(Use)->getBasePtr() == Ptr))
+              RealUse = true;
           }
+          if (!RealUse)
+            return false;
 
           SDOperand Result = isLoad
             ? DAG.getIndexedLoad(SDOperand(N,0), BasePtr, Offset, AM)
@@ -343,12 +308,7 @@ namespace {
             // 1) Op must be independent of N, i.e. Op is neither a predecessor
             //    nor a successor of N. Otherwise, if Op is folded that would
             //    create a cycle.
-            // 2) All uses are load / store ops that use it as base ptr and offset
-            //    is just an addressing mode immediate.
-            // 3) If the would-be new base may not to be dead at N.
-
-            bool OffIsAMImm = Offset.getOpcode() == ISD::Constant && TLI.
-              isLegalAddressImmediate(cast<ConstantSDNode>(Offset)->getValue());
+            // 2) All uses are load / store ops that use it as base ptr.
 
             // Check for #3.
             bool TryNext = false;
@@ -357,50 +317,29 @@ namespace {
               SDNode *Use = *II;
               if (Use == Ptr.Val)
                 continue;
-              if (Use->getOpcode() == ISD::CopyToReg) {
-                TryNext = true;
-                break;
-              }
 
-              if (OffIsAMImm && (Use->getOpcode() == ISD::ADD ||
-                                 Use->getOpcode() == ISD::SUB)) {
+              // If all the uses are load / store addresses, then don't do the
+              // transformation.
+              if (Use->getOpcode() == ISD::ADD || Use->getOpcode() == ISD::SUB){
+                bool RealUse = false;
                 for (SDNode::use_iterator III = Use->use_begin(),
                        EEE = Use->use_end(); III != EEE; ++III) {
                   SDNode *UseUse = *III;
-                  if (UseUse->getOpcode() == ISD::LOAD &&
-                      cast<LoadSDNode>(UseUse)->getBasePtr().Val == Use) {
-                    TryNext = true;
-                    break;
-                  } else if (UseUse->getOpcode() == ISD::STORE &&
-                           cast<StoreSDNode>(UseUse)->getBasePtr().Val == Use) {
+                  if (!((UseUse->getOpcode() == ISD::LOAD &&
+                         cast<LoadSDNode>(UseUse)->getBasePtr().Val == Use) ||
+                        (UseUse->getOpcode() == ISD::STORE) &&
+                        cast<StoreSDNode>(UseUse)->getBasePtr().Val == Use))
+                    RealUse = true;
+                }
 
-                    TryNext = true;
-                    break;
-                  }
+                if (!RealUse) {
+                  TryNext = true;
+                  break;
                 }
               }
             }
             if (TryNext)
               continue;
-
-            if (OffIsAMImm) {
-              // Check for #2.
-              unsigned NumRealUses = 0;
-              for (SDNode::use_iterator II = Op->use_begin(), EE = Op->use_end();
-                   II != EE; ++II) {
-                SDNode *Use = *II;
-                if (Use->getOpcode() == ISD::LOAD) {
-                  if (cast<LoadSDNode>(Use)->getBasePtr().Val != Op)
-                    NumRealUses++;
-                } else if (Use->getOpcode() == ISD::STORE) {
-                  if (cast<StoreSDNode>(Use)->getBasePtr().Val != Op)
-                    NumRealUses++;
-                } else
-                  NumRealUses++;
-              }
-              if (NumRealUses == 0)
-                continue;
-            }
 
             // Check for #1
             if (!Op->isPredecessor(N) && !N->isPredecessor(Op)) {
