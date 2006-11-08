@@ -115,7 +115,13 @@ public:
 
 
 /// ...
-    
+
+// TODO: When we support C++, we should have types for uses of template with
+// default parameters.  We should be able to distinguish source use of
+// 'std::vector<int>' from 'std::vector<int, std::allocator<int> >'. Though they
+// specify the same type, we want to print the default argument only if
+// specified in the source code.
+
   
 }  // end namespace clang
 }  // end namespace llvm
