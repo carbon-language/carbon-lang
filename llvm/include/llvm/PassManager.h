@@ -88,17 +88,18 @@ public:
   bool doFinalization();
 };
 
-/// PassManagerAnalysisHelper helpes pass manager analysis required by
-/// the managed passes.
+/// PassManagerAnalysisHelper helps pass manager analysis required by
+/// the managed passes. It provides methods to add/remove analysis
+/// available and query if certain analysis is available or not.
 class PassManagerAnalysisHelper {
 
 public:
 
-  /// Return TRUE IFF pass P's required analysis set does not required new
+  /// Return true IFF pass P's required analysis set does not required new
   /// manager.
   bool manageablePass(Pass *P);
 
-  /// Return TRUE iff AnalysisID AID is currently available.
+  /// Return true IFF AnalysisID AID is currently available.
   bool analysisCurrentlyAvailable(AnalysisID AID);
 
   /// Augment RequiredSet by adding analysis required by pass P.
@@ -118,11 +119,11 @@ private:
   std::vector<AnalysisID> RequiredSet;
 };
 
-/// BasicBlockpassManager_New manages BasicBlockPass. It batches all the
+/// BasicBlockPassManager_New manages BasicBlockPass. It batches all the
 /// pass together and sequence them to process one basic block before
 /// processing next basic block.
-class BasicBlockPassManager_New: public Pass,
-                                 public PassManagerAnalysisHelper {
+class BasicBlockPassManager_New : public Pass,
+                                  public PassManagerAnalysisHelper {
 
 public:
   BasicBlockPassManager_New() { }
@@ -135,7 +136,7 @@ public:
   bool runOnFunction(Function &F);
 
 private:
-  // Collection of pass that are not yet scheduled
+  // Collection of pass that are managed by this manager
   std::vector<Pass *> PassVector;
 };
 
@@ -143,8 +144,8 @@ private:
 /// It batches all function passes and basic block pass managers together and
 /// sequence them to process one function at a time before processing next
 /// function.
-class FunctionPassManager_New: public Pass,
-                               public PassManagerAnalysisHelper {
+class FunctionPassManager_New : public Pass,
+                                public PassManagerAnalysisHelper {
 public:
   FunctionPassManager_New(ModuleProvider *P) { /* TODO */ }
   FunctionPassManager_New() { 
@@ -168,7 +169,7 @@ public:
   bool runOnModule(Module &M);
 
 private:
-  // Collection of pass that are not yet scheduled
+  // Collection of pass that are manged by this manager
   std::vector<Pass *> PassVector;
  
   // Active Pass Managers
@@ -178,8 +179,8 @@ private:
 /// ModulePassManager_New manages ModulePasses and function pass managers.
 /// It batches all Module passes  passes and function pass managers together and
 /// sequence them to process one module.
-class ModulePassManager_New: public Pass,
-                             public PassManagerAnalysisHelper {
+class ModulePassManager_New : public Pass,
+                              public PassManagerAnalysisHelper {
  
 public:
   ModulePassManager_New() { activeFunctionPassManager = NULL; }
@@ -192,7 +193,7 @@ public:
   bool runOnModule(Module &M);
   
 private:
-  // Collection of pass that are not yet scheduled
+  // Collection of pass that are managed by this manager
   std::vector<Pass *> PassVector;
   
   // Active Pass Manager
@@ -200,8 +201,8 @@ private:
 };
 
 /// PassManager_New manages ModulePassManagers
-class PassManager_New: public Pass,
-                       public PassManagerAnalysisHelper {
+class PassManager_New : public Pass,
+                        public PassManagerAnalysisHelper {
 
 public:
 
