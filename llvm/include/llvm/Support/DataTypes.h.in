@@ -50,6 +50,8 @@
 #include <stdint.h>
 #endif
 
+#include <cmath>
+
 #ifdef _AIX
 #include "llvm/Support/AIXDataTypesFix.h"
 #endif
