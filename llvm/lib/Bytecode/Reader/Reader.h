@@ -230,12 +230,19 @@ protected:
   /// the instruction. This function handles all *abnormal* cases for 
   /// instruction generation based on obsolete opcode values. The normal cases 
   /// are handled by the ParseInstruction function.
-  Instruction* handleObsoleteOpcodes(
+  Instruction* upgradeInstrOpcodes(
     unsigned &opcode,   ///< The old opcode, possibly updated by this function
     std::vector<unsigned> &Oprnds, ///< The operands to the instruction
     unsigned &iType,    ///< The type code from the bytecode file
     const Type* InstTy, ///< The type of the instruction
     BasicBlock* BB      ///< The basic block to insert into, if we need to
+  );
+
+  /// @brief Convert previous opcode values for ConstantExpr into the current 
+  /// value.
+  unsigned upgradeCEOpcodes(
+    unsigned Opcode,                      ///< Opcode read from bytecode
+    const std::vector<Constant*> &ArgVec  ///< Arguments of instruction
   );
 
   /// @brief Parse a single instruction.
@@ -348,12 +355,15 @@ private:
   // unreachable instruction.
   bool hasNoUnreachableInst;
 
-  // In version 5 and prior, instructions were signless. In version 6, 
-  // instructions became signed. For example in version 5 we have the DIV 
-  // instruction but in version 6 we have FDIV, SDIV and UDIV to replace it. 
-  // This causes a renumbering of the instruction codes in version 6 that must 
-  // be dealt with when reading old bytecode files.
-  bool hasSignlessInstructions;
+  // In version 6, the Div and Rem instructions were converted to be the 
+  // signed instructions UDiv, SDiv, URem and SRem. This flag will be true if
+  // the Div and Rem instructions are signless (ver 5 and prior).
+  bool hasSignlessDivRem;
+
+  // In version 7, the Shr, Cast and Setcc instructions changed to their 
+  // signed counterparts. This flag will be true if these instructions are
+  // signless (version 6 and prior).
+  bool hasSignlessShrCastSetcc;
 
   /// In release 1.7 we changed intrinsic functions to not be overloaded. There
   /// is no bytecode change for this, but to optimize the auto-upgrade of calls

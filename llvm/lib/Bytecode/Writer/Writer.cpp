@@ -40,7 +40,7 @@ using namespace llvm;
 /// so that the reader can distinguish which format of the bytecode file has
 /// been written.
 /// @brief The bytecode version number
-const unsigned BCVersionNum = 6;
+const unsigned BCVersionNum = 7;
 
 static RegisterPass<WriteBytecodePass> X("emitbytecode", "Bytecode Writer");
 

@@ -574,7 +574,7 @@ void BytecodeReader::insertArguments(Function* F) {
 // instruction generation should be used, but with the new Opcode value.
 // 
 Instruction*
-BytecodeReader::handleObsoleteOpcodes(
+BytecodeReader::upgradeInstrOpcodes(
   unsigned &Opcode,   ///< The old opcode, possibly updated by this function
   std::vector<unsigned> &Oprnds, ///< The operands to the instruction
   unsigned &iType,    ///< The type code from the bytecode file
@@ -583,23 +583,52 @@ BytecodeReader::handleObsoleteOpcodes(
 ) {
 
   // First, short circuit this if no conversion is required. When signless
-  // instructions were implemented the entire opcode sequence was revised so
-  // we key on this first which means that the opcode value read is the one
-  // we should use.
-  if (!hasSignlessInstructions)
+  // instructions were implemented the entire opcode sequence was revised in
+  // two stages: first Div/Rem became signed, then Shr/Cast/Setcc became 
+  // signed. If all of these instructions are signed then we don't have to
+  // upgrade the opcode.
+  if (!hasSignlessDivRem && !hasSignlessShrCastSetcc)
     return 0; // The opcode is fine the way it is.
+
+  // If this is a bytecode format that did not include the unreachable
+  // instruction, bump up the opcode number to adjust it.
+  if (hasNoUnreachableInst)
+    if (Opcode >= 6 && Opcode < 62)
+      ++Opcode;
+
+  // If this is bytecode version 6, that only had signed Rem and Div 
+  // instructions, then we must compensate for those two instructions only.
+  // So that the switch statement below works, we're trying to turn this into
+  // a version 5 opcode. To do that we must adjust the opcode to 10 (Div) if its
+  // any of the UDiv, SDiv or FDiv instructions; or, adjust the opcode to 
+  // 11 (Rem) if its any of the URem, SRem, or FRem instructions; or, simply
+  // decrement the instruction code if its beyond FRem.
+  if (!hasSignlessDivRem) {
+    // If its one of the signed Div/Rem opcodes, its fine the way it is
+    if (Opcode >= 10 && Opcode <= 12) // UDiv through FDiv
+      Opcode = 10; // Div
+    else if (Opcode >=13 && Opcode <= 15) // URem through FRem
+      Opcode = 11; // Rem
+    else if (Opcode >= 16 && Opcode <= 35)  // And through Shr
+      // Adjust for new instruction codes
+      Opcode -= 4;
+    else if (Opcode >= 36 && Opcode <= 42) // Everything after Select
+      // In vers 6 bytecode we eliminated the placeholders for the obsolete
+      // VAARG and VANEXT instructions. Consequently those two slots were
+      // filled starting with Select (36) which was 34. So now we only need
+      // to subtract two. This circumvents hitting opcodes 32 and 33
+      Opcode -= 2;
+    else {   // Opcode < 10 or > 42
+      // No upgrade necessary.
+      return 0;
+    }
+  }
 
   // Declare the resulting instruction we might build. In general we just 
   // change the Opcode argument but in a few cases we need to generate the 
   // Instruction here because the upgrade case is significantly different from 
   // the normal case.
   Instruction *Result = 0;
-
-  // If this is a bytecode format that did not include the unreachable
-  // instruction, bump up the opcode number to adjust it.
-  if (hasNoUnreachableInst)
-    if (Opcode >= Instruction::Unreachable && Opcode < 62)
-      ++Opcode;
 
   // We're dealing with an upgrade situation. For each of the opcode values,
   // perform the necessary conversion.
@@ -899,7 +928,7 @@ void BytecodeReader::ParseInstruction(std::vector<unsigned> &Oprnds,
   // Make the necessary adjustments for dealing with backwards compatibility
   // of opcodes.
   Instruction* Result = 
-    handleObsoleteOpcodes(Opcode, Oprnds, iType, InstTy, BB);
+    upgradeInstrOpcodes(Opcode, Oprnds, iType, InstTy, BB);
 
   // We have enough info to inform the handler now.
   if (Handler) 
@@ -1636,13 +1665,43 @@ void BytecodeReader::ParseTypes(TypeListTy &Tab, unsigned NumEntries){
 // values used after ver 6. bytecode format. The operands are provided to the
 // function so that decisions based on the operand type can be made when 
 // auto-upgrading obsolete opcodes to the new ones.
-// NOTE: This code needs to be kept synchronized with handleObsoleteOpcodes. 
+// NOTE: This code needs to be kept synchronized with upgradeInstrOpcodes. 
 // We can't use that function because of that functions argument requirements.
 // This function only deals with the subset of opcodes that are applicable to
-// constant expressions and is therefore simpler than handleObsoleteOpcodes.
-inline unsigned fixCEOpcodes(
+// constant expressions and is therefore simpler than upgradeInstrOpcodes.
+inline unsigned BytecodeReader::upgradeCEOpcodes(
   unsigned Opcode, const std::vector<Constant*> &ArgVec
 ) {
+  // Determine if no upgrade necessary
+  if (!hasSignlessDivRem && !hasSignlessShrCastSetcc)
+    return Opcode;
+
+#if 0
+  // If this is a bytecode format that did not include the unreachable
+  // instruction, bump up the opcode number to adjust it.
+  if (hasNoUnreachableInst)
+    if (Opcode >= 6 && Opcode < 62)
+      ++Opcode;
+#endif
+
+  // If this is bytecode version 6, that only had signed Rem and Div 
+  // instructions, then we must compensate for those two instructions only.
+  // So that the switch statement below works, we're trying to turn this into
+  // a version 5 opcode. To do that we must adjust the opcode to 10 (Div) if its
+  // any of the UDiv, SDiv or FDiv instructions; or, adjust the opcode to 
+  // 11 (Rem) if its any of the URem, SRem, or FRem instructions; or, simply
+  // decrement the instruction code if its beyond FRem.
+  if (!hasSignlessDivRem) {
+    // If its one of the signed Div/Rem opcodes, its fine the way it is
+    if (Opcode >= 10 && Opcode <= 12) // UDiv through FDiv
+      Opcode = 10; // Div
+    else if (Opcode >=13 && Opcode <= 15) // URem through FRem
+      Opcode = 11; // Rem
+    else if (Opcode > 15)  // Everything above FRem
+      // Adjust for new instruction codes
+      Opcode -= 4;
+  }
+
   switch (Opcode) {
     default: // Pass Through
       // If we don't match any of the cases here then the opcode is fine the
@@ -1792,8 +1851,7 @@ Value *BytecodeReader::ParseConstantPoolValue(unsigned TypeID) {
     }
 
     // Handle backwards compatibility for the opcode numbers
-    if (hasSignlessInstructions)
-      Opcode = fixCEOpcodes(Opcode, ArgVec);
+    Opcode = upgradeCEOpcodes(Opcode, ArgVec);
 
     // Construct a ConstantExpr of the appropriate kind
     if (isExprNumArgs == 1) {           // All one-operand expressions
@@ -2567,7 +2625,8 @@ void BytecodeReader::ParseVersionInfo() {
   hasNoUndefValue = false;
   hasNoFlagsForFunctions = false;
   hasNoUnreachableInst = false;
-  hasSignlessInstructions = false;
+  hasSignlessDivRem = false;
+  hasSignlessShrCastSetcc = false;
 
   // Determine which backwards compatibility flags to set based on the
   // bytecode file's version number
@@ -2645,17 +2704,26 @@ void BytecodeReader::ParseVersionInfo() {
     // FALL THROUGH
 
   case 5:               // 1.4 (Released)
+    // In version 6, the Div and Rem instructions were converted to their
+    // signed and floating point counterparts: UDiv, SDiv, FDiv, URem, SRem, 
+    // and FRem. Versions prior to 6 need to indicate that they have the 
+    // signless Div and Rem instructions.
+    hasSignlessDivRem = true;
+
+    // FALL THROUGH
+    
+  case 6:               // Signless Rem & Div Implementation (1.9 release)
     // In version 5 and prior, instructions were signless while integer types
     // were signed. In version 6, instructions became signed and types became
     // signless. For example in version 5 we have the DIV instruction but in
     // version 6 we have FDIV, SDIV and UDIV to replace it. This caused a 
     // renumbering of the instruction codes in version 6 that must be dealt with
     // when reading old bytecode files.
-    hasSignlessInstructions = true;
+    hasSignlessShrCastSetcc = true;
 
     // FALL THROUGH
-    
-  case 6:               // SignlessTypes Implementation (1.9 release)
+
+  case 7:
     break;
 
   default:
