@@ -117,4 +117,8 @@ typedef signed int ssize_t;
 #define END_WITH_NULL
 #endif
 
+#ifndef HUGE_VALF
+#define HUGE_VALF (float)HUGE_VAL
+#endif
+
 #endif  /* SUPPORT_DATATYPES_H */
