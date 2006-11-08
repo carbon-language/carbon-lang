@@ -3374,19 +3374,16 @@ void DAGISelEmitter::EmitPatterns(std::vector<std::pair<PatternToMatch*,
     OS << std::string(Indent-2, ' ') << "}\n";
 }
 
+static std::string getOpcodeName(Record *Op, DAGISelEmitter &ISE) {
+  const SDNodeInfo &OpcodeInfo = ISE.getSDNodeInfo(Op);
+  return OpcodeInfo.getEnumName();
+}
 
-
-namespace {
-  /// CompareByRecordName - An ordering predicate that implements less-than by
-  /// comparing the names records.
-  struct CompareByRecordName {
-    bool operator()(const Record *LHS, const Record *RHS) const {
-      // Sort by name first.
-      if (LHS->getName() < RHS->getName()) return true;
-      // If both names are equal, sort by pointer.
-      return LHS->getName() == RHS->getName() && LHS < RHS;
-    }
-  };
+static std::string getLegalCName(std::string OpName) {
+  std::string::size_type pos = OpName.find("::");
+  if (pos != std::string::npos)
+    OpName.replace(pos, 2, "_");
+  return OpName;
 }
 
 void DAGISelEmitter::EmitInstructionSelector(std::ostream &OS) {
@@ -3394,23 +3391,25 @@ void DAGISelEmitter::EmitInstructionSelector(std::ostream &OS) {
   if (!InstNS.empty()) InstNS += "::";
   
   // Group the patterns by their top-level opcodes.
-  std::map<Record*, std::vector<PatternToMatch*>,
-    CompareByRecordName> PatternsByOpcode;
+  std::map<std::string, std::vector<PatternToMatch*> > PatternsByOpcode;
   // All unique target node emission functions.
   std::map<std::string, unsigned> EmitFunctions;
   for (unsigned i = 0, e = PatternsToMatch.size(); i != e; ++i) {
     TreePatternNode *Node = PatternsToMatch[i].getSrcPattern();
     if (!Node->isLeaf()) {
-      PatternsByOpcode[Node->getOperator()].push_back(&PatternsToMatch[i]);
+      PatternsByOpcode[getOpcodeName(Node->getOperator(), *this)].
+        push_back(&PatternsToMatch[i]);
     } else {
       const ComplexPattern *CP;
       if (dynamic_cast<IntInit*>(Node->getLeafValue())) {
-        PatternsByOpcode[getSDNodeNamed("imm")].push_back(&PatternsToMatch[i]);
+        PatternsByOpcode[getOpcodeName(getSDNodeNamed("imm"), *this)].
+          push_back(&PatternsToMatch[i]);
       } else if ((CP = NodeGetComplexPattern(Node, *this))) {
         std::vector<Record*> OpNodes = CP->getRootNodes();
         for (unsigned j = 0, e = OpNodes.size(); j != e; j++) {
-          PatternsByOpcode[OpNodes[j]]
-            .insert(PatternsByOpcode[OpNodes[j]].begin(), &PatternsToMatch[i]);
+          PatternsByOpcode[getOpcodeName(OpNodes[j], *this)]
+            .insert(PatternsByOpcode[getOpcodeName(OpNodes[j], *this)].begin(),
+                    &PatternsToMatch[i]);
         }
       } else {
         std::cerr << "Unrecognized opcode '";
@@ -3432,11 +3431,10 @@ void DAGISelEmitter::EmitInstructionSelector(std::ostream &OS) {
   // Emit one Select_* method for each top-level opcode.  We do this instead of
   // emitting one giant switch statement to support compilers where this will
   // result in the recursive functions taking less stack space.
-  for (std::map<Record*, std::vector<PatternToMatch*>,
-       CompareByRecordName>::iterator PBOI = PatternsByOpcode.begin(),
-       E = PatternsByOpcode.end(); PBOI != E; ++PBOI) {
-    const std::string &OpName = PBOI->first->getName();
-    const SDNodeInfo &OpcodeInfo = getSDNodeInfo(PBOI->first);
+  for (std::map<std::string, std::vector<PatternToMatch*> >::iterator
+         PBOI = PatternsByOpcode.begin(), E = PatternsByOpcode.end();
+       PBOI != E; ++PBOI) {
+    const std::string &OpName = PBOI->first;
     std::vector<PatternToMatch*> &PatternsOfOp = PBOI->second;
     assert(!PatternsOfOp.empty() && "No patterns but map has entry?");
 
@@ -3451,8 +3449,6 @@ void DAGISelEmitter::EmitInstructionSelector(std::ostream &OS) {
     for (unsigned i = 0, e = PatternsOfOp.size(); i != e; ++i) {
       PatternToMatch *Pat = PatternsOfOp[i];
       TreePatternNode *SrcPat = Pat->getSrcPattern();
-      if (OpcodeInfo.getNumResults() == 0 && SrcPat->getNumChildren() > 0)
-        SrcPat = SrcPat->getChild(0);
       MVT::ValueType VT = SrcPat->getTypeNum(0);
       std::map<MVT::ValueType, std::vector<PatternToMatch*> >::iterator TI = 
         PatternsByType.find(VT);
@@ -3595,7 +3591,8 @@ void DAGISelEmitter::EmitInstructionSelector(std::ostream &OS) {
       } else
         OpVTI->second.push_back(OpVTStr);
 
-      OS << "SDNode *Select_" << OpName << (OpVTStr != "" ? "_" : "")
+      OS << "SDNode *Select_" << getLegalCName(OpName)
+         << (OpVTStr != "" ? "_" : "")
          << OpVTStr << "(const SDOperand &N) {\n";    
 
       // Loop through and reverse all of the CodeList vectors, as we will be
@@ -3616,9 +3613,9 @@ void DAGISelEmitter::EmitInstructionSelector(std::ostream &OS) {
       // catch the case where nothing handles a pattern.
       if (mightNotMatch) {
         OS << "  std::cerr << \"Cannot yet select: \";\n";
-        if (OpcodeInfo.getEnumName() != "ISD::INTRINSIC_W_CHAIN" &&
-            OpcodeInfo.getEnumName() != "ISD::INTRINSIC_WO_CHAIN" &&
-            OpcodeInfo.getEnumName() != "ISD::INTRINSIC_VOID") {
+        if (OpName != "ISD::INTRINSIC_W_CHAIN" &&
+            OpName != "ISD::INTRINSIC_WO_CHAIN" &&
+            OpName != "ISD::INTRINSIC_VOID") {
           OS << "  N.Val->dump(CurDAG);\n";
         } else {
           OS << "  unsigned iid = cast<ConstantSDNode>(N.getOperand("
@@ -3657,6 +3654,7 @@ void DAGISelEmitter::EmitInstructionSelector(std::ostream &OS) {
      << "INSTRUCTION_LIST_END)) {\n"
      << "    return NULL;   // Already selected.\n"
      << "  }\n\n"
+     << "  MVT::ValueType NVT = N.Val->getValueType(0);\n"
      << "  switch (N.getOpcode()) {\n"
      << "  default: break;\n"
      << "  case ISD::EntryToken:       // These leaves remain the same.\n"
@@ -3688,31 +3686,22 @@ void DAGISelEmitter::EmitInstructionSelector(std::ostream &OS) {
     
   // Loop over all of the case statements, emiting a call to each method we
   // emitted above.
-  for (std::map<Record*, std::vector<PatternToMatch*>,
-                CompareByRecordName>::iterator PBOI = PatternsByOpcode.begin(),
-       E = PatternsByOpcode.end(); PBOI != E; ++PBOI) {
-    const SDNodeInfo &OpcodeInfo = getSDNodeInfo(PBOI->first);
-    const std::string &OpName = PBOI->first->getName();
+  for (std::map<std::string, std::vector<PatternToMatch*> >::iterator
+         PBOI = PatternsByOpcode.begin(), E = PatternsByOpcode.end();
+       PBOI != E; ++PBOI) {
+    const std::string &OpName = PBOI->first;
     // Potentially multiple versions of select for this opcode. One for each
     // ValueType of the node (or its first true operand if it doesn't produce a
     // result.
     std::map<std::string, std::vector<std::string> >::iterator OpVTI =
       OpcodeVTMap.find(OpName);
     std::vector<std::string> &OpVTs = OpVTI->second;
-    OS << "  case " << OpcodeInfo.getEnumName() << ": {\n";
+    OS << "  case " << OpName << ": {\n";
     if (OpVTs.size() == 1) {
       std::string &VTStr = OpVTs[0];
-      OS << "    return Select_" << OpName
+      OS << "    return Select_" << getLegalCName(OpName)
          << (VTStr != "" ? "_" : "") << VTStr << "(N);\n";
     } else {
-      if (OpcodeInfo.getNumResults())
-        OS << "    MVT::ValueType NVT = N.Val->getValueType(0);\n";
-      else if (OpcodeInfo.hasProperty(SDNPHasChain))
-        OS << "    MVT::ValueType NVT = (N.getNumOperands() > 1) ?"
-           << " N.getOperand(1).Val->getValueType(0) : MVT::isVoid;\n";
-      else
-        OS << "    MVT::ValueType NVT = (N.getNumOperands() > 0) ?"
-           << " N.getOperand(0).Val->getValueType(0) : MVT::isVoid;\n";
       int Default = -1;
       OS << "    switch (NVT) {\n";
       for (unsigned i = 0, e = OpVTs.size(); i < e; ++i) {
@@ -3722,12 +3711,12 @@ void DAGISelEmitter::EmitInstructionSelector(std::ostream &OS) {
           continue;
         }
         OS << "    case MVT::" << VTStr << ":\n"
-           << "      return Select_" << OpName
+           << "      return Select_" << getLegalCName(OpName)
            << "_" << VTStr << "(N);\n";
       }
       OS << "    default:\n";
       if (Default != -1)
-        OS << "      return Select_" << OpName << "(N);\n";
+        OS << "      return Select_" << getLegalCName(OpName) << "(N);\n";
       else
 	OS << "      break;\n";
       OS << "    }\n";
