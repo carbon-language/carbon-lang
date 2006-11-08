@@ -239,8 +239,8 @@ namespace {
           }
 
           // Now check for #1 and #2.
-          unsigned NumRealUses = 0;
           if (OffIsAMImm) {
+            unsigned NumRealUses = 0;
             for (SDNode::use_iterator I = Ptr.Val->use_begin(),
                    E = Ptr.Val->use_end(); I != E; ++I) {
               SDNode *Use = *I;
@@ -260,9 +260,9 @@ namespace {
               } else
                 NumRealUses++;
             }
+            if (NumRealUses == 0)
+              return false;
           }
-          if (NumRealUses == 0)
-            return false;
 
           SDOperand Result = isLoad
             ? DAG.getIndexedLoad(SDOperand(N,0), BasePtr, Offset, AM)
