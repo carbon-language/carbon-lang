@@ -2,7 +2,7 @@
 //
 //                     The LLVM Compiler Infrastructure
 //
-// This file was developed by the LLVM research group and is distributed under
+// This file was developed by Devang Patel  and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
 //
 //===----------------------------------------------------------------------===//
@@ -13,14 +13,13 @@
 
 
 #include "llvm/PassManager.h"
-#include "llvm/Function.h"
 #include "llvm/Module.h"
 
 using namespace llvm;
 
 // PassManagerAnalysisHelper implementation
 
-/// Return TRUE IFF pass P's required analysis set does not required new
+/// Return true IFF pass P's required analysis set does not required new
 /// manager.
 bool PassManagerAnalysisHelper::manageablePass(Pass *P) {
 
@@ -33,7 +32,7 @@ bool PassManagerAnalysisHelper::manageablePass(Pass *P) {
   return true;
 }
 
-/// Return TRUE iff AnalysisID AID is currently available.
+/// Return true IFF AnalysisID AID is currently available.
 bool PassManagerAnalysisHelper::analysisCurrentlyAvailable(AnalysisID AID) {
 
   // TODO
@@ -60,10 +59,10 @@ void PassManagerAnalysisHelper::removeNotPreservedAnalysis(Pass *P) {
 
 /// BasicBlockPassManager implementation
 
-/// Add pass P into PassVector and return TRUE. If this pass is not
-/// manageable by this manager then return FALSE.
+/// Add pass P into PassVector and return true. If this pass is not
+/// manageable by this manager then return false.
 bool
-BasicBlockPassManager_New::addPass (Pass *P) {
+BasicBlockPassManager_New::addPass(Pass *P) {
 
   BasicBlockPass *BP = dynamic_cast<BasicBlockPass*>(P);
   if (!BP)
@@ -71,7 +70,7 @@ BasicBlockPassManager_New::addPass (Pass *P) {
 
   // If this pass does not preserve anlysis that is used by other passes
   // managed by this manager than it is not a suiable pass for this manager.
-  if (!manageablePass (P))
+  if (!manageablePass(P))
     return false;
 
   // Take a note of analysis required by this pass.
@@ -101,14 +100,13 @@ BasicBlockPassManager_New::runOnFunction(Function &F) {
 
 // FunctionPassManager_New implementation
 
-///////////////////////////////////////////////////////////////////////////////
 // FunctionPassManager
 
 /// Add pass P into the pass manager queue. If P is a BasicBlockPass then
 /// either use it into active basic block pass manager or create new basic
 /// block pass manager to handle pass P.
 bool
-FunctionPassManager_New::addPass (Pass *P) {
+FunctionPassManager_New::addPass(Pass *P) {
 
   // If P is a BasicBlockPass then use BasicBlockPassManager_New.
   if (BasicBlockPass *BP = dynamic_cast<BasicBlockPass*>(P)) {
@@ -119,8 +117,8 @@ FunctionPassManager_New::addPass (Pass *P) {
       activeBBPassManager = new BasicBlockPassManager_New();
 
       PassVector.push_back(activeBBPassManager);
-      assert (!activeBBPassManager->addPass(BP) &&
-              "Unable to add Pass");
+      if (!activeBBPassManager->addPass(BP))
+        assert(0 && "Unable to add Pass");
     }
     return true;
   }
@@ -131,7 +129,7 @@ FunctionPassManager_New::addPass (Pass *P) {
 
   // If this pass does not preserve anlysis that is used by other passes
   // managed by this manager than it is not a suiable pass for this manager.
-  if (!manageablePass (P))
+  if (!manageablePass(P))
     return false;
 
   // Take a note of analysis required by this pass.
@@ -163,10 +161,10 @@ FunctionPassManager_New::runOnModule(Module &M) {
 // ModulePassManager implementation
 
 /// Add P into pass vector if it is manageble. If P is a FunctionPass
-/// then use FunctionPassManager_New to manage it. Return FALSE if P
+/// then use FunctionPassManager_New to manage it. Return false if P
 /// is not manageable by this manager.
 bool
-ModulePassManager_New::addPass (Pass *P) {
+ModulePassManager_New::addPass(Pass *P) {
 
   // If P is FunctionPass then use function pass maanager.
   if (FunctionPass *FP = dynamic_cast<FunctionPass*>(P)) {
@@ -179,8 +177,8 @@ ModulePassManager_New::addPass (Pass *P) {
       activeFunctionPassManager = new FunctionPassManager_New();
 
       PassVector.push_back(activeFunctionPassManager);
-      assert (!activeFunctionPassManager->addPass(FP) &&
-              "Unable to add Pass");
+      if (!activeFunctionPassManager->addPass(FP))
+        assert(0 && "Unable to add pass");
     }
     return true;
   }
@@ -191,7 +189,7 @@ ModulePassManager_New::addPass (Pass *P) {
 
   // If this pass does not preserve anlysis that is used by other passes
   // managed by this manager than it is not a suiable pass for this manager.
-  if (!manageablePass (P))
+  if (!manageablePass(P))
     return false;
 
   // Take a note of analysis required by this pass.
@@ -235,7 +233,7 @@ PassManager_New::add(Pass *P) {
 /// Add P into active pass manager or use new module pass manager to
 /// manage it.
 bool
-PassManager_New::addPass (Pass *P) {
+PassManager_New::addPass(Pass *P) {
 
   if (!activeManager) {
     activeManager = new ModulePassManager_New();
