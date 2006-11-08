@@ -104,27 +104,31 @@ namespace {
 
     /// SelectAddrImm - Returns true if the address N can be represented by
     /// a base register plus a signed 16-bit displacement [r+imm].
-    bool SelectAddrImm(SDOperand N, SDOperand &Disp, SDOperand &Base) {
+    bool SelectAddrImm(SDOperand Op, SDOperand N, SDOperand &Disp,
+                       SDOperand &Base) {
       return PPCLowering.SelectAddressRegImm(N, Disp, Base, *CurDAG);
     }
       
     /// SelectAddrIdx - Given the specified addressed, check to see if it can be
     /// represented as an indexed [r+r] operation.  Returns false if it can
     /// be represented by [r+imm], which are preferred.
-    bool SelectAddrIdx(SDOperand N, SDOperand &Base, SDOperand &Index) {
+    bool SelectAddrIdx(SDOperand Op, SDOperand N, SDOperand &Base,
+                       SDOperand &Index) {
       return PPCLowering.SelectAddressRegReg(N, Base, Index, *CurDAG);
     }
     
     /// SelectAddrIdxOnly - Given the specified addressed, force it to be
     /// represented as an indexed [r+r] operation.
-    bool SelectAddrIdxOnly(SDOperand N, SDOperand &Base, SDOperand &Index) {
+    bool SelectAddrIdxOnly(SDOperand Op, SDOperand N, SDOperand &Base,
+                           SDOperand &Index) {
       return PPCLowering.SelectAddressRegRegOnly(N, Base, Index, *CurDAG);
     }
 
     /// SelectAddrImmShift - Returns true if the address N can be represented by
     /// a base register plus a signed 14-bit displacement [r+imm*4].  Suitable
     /// for use by STD and friends.
-    bool SelectAddrImmShift(SDOperand N, SDOperand &Disp, SDOperand &Base) {
+    bool SelectAddrImmShift(SDOperand Op, SDOperand N, SDOperand &Disp,
+                            SDOperand &Base) {
       return PPCLowering.SelectAddressRegImmShift(N, Disp, Base, *CurDAG);
     }
       
@@ -138,18 +142,18 @@ namespace {
       switch (ConstraintCode) {
       default: return true;
       case 'm':   // memory
-        if (!SelectAddrIdx(Op, Op0, Op1))
-          SelectAddrImm(Op, Op0, Op1);
+        if (!SelectAddrIdx(Op, Op, Op0, Op1))
+          SelectAddrImm(Op, Op, Op0, Op1);
         break;
       case 'o':   // offsetable
-        if (!SelectAddrImm(Op, Op0, Op1)) {
+        if (!SelectAddrImm(Op, Op, Op0, Op1)) {
           Op0 = Op;
           AddToISelQueue(Op0);     // r+0.
           Op1 = getSmallIPtrImm(0);
         }
         break;
       case 'v':   // not offsetable
-        SelectAddrIdxOnly(Op, Op0, Op1);
+        SelectAddrIdxOnly(Op, Op, Op0, Op1);
         break;
       }
       
@@ -479,7 +483,6 @@ SDNode *PPCDAGToDAGISel::SelectBitfieldInsert(SDNode *N) {
   }
   return 0;
 }
-
 
 /// SelectCC - Select a comparison of the specified values with the specified
 /// condition code, returning the CR# of the expression.

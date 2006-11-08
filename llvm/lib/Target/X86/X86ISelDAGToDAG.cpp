@@ -143,11 +143,11 @@ namespace {
     SDNode *Select(SDOperand N);
 
     bool MatchAddress(SDOperand N, X86ISelAddressMode &AM, bool isRoot = true);
-    bool SelectAddr(SDOperand N, SDOperand &Base, SDOperand &Scale,
-                    SDOperand &Index, SDOperand &Disp);
-    bool SelectLEAAddr(SDOperand N, SDOperand &Base, SDOperand &Scale,
-                       SDOperand &Index, SDOperand &Disp);
-    bool SelectScalarSSELoad(SDOperand Root, SDOperand Pred,
+    bool SelectAddr(SDOperand Op, SDOperand N, SDOperand &Base,
+                    SDOperand &Scale, SDOperand &Index, SDOperand &Disp);
+    bool SelectLEAAddr(SDOperand Op, SDOperand N, SDOperand &Base,
+                       SDOperand &Scale, SDOperand &Index, SDOperand &Disp);
+    bool SelectScalarSSELoad(SDOperand Op, SDOperand Pred,
                              SDOperand N, SDOperand &Base, SDOperand &Scale,
                              SDOperand &Index, SDOperand &Disp,
                              SDOperand &InChain, SDOperand &OutChain);
@@ -773,8 +773,9 @@ bool X86DAGToDAGISel::MatchAddress(SDOperand N, X86ISelAddressMode &AM,
 /// SelectAddr - returns true if it is able pattern match an addressing mode.
 /// It returns the operands which make up the maximal addressing mode it can
 /// match by reference.
-bool X86DAGToDAGISel::SelectAddr(SDOperand N, SDOperand &Base, SDOperand &Scale,
-                                 SDOperand &Index, SDOperand &Disp) {
+bool X86DAGToDAGISel::SelectAddr(SDOperand Op, SDOperand N, SDOperand &Base,
+                                 SDOperand &Scale, SDOperand &Index,
+                                 SDOperand &Disp) {
   X86ISelAddressMode AM;
   if (MatchAddress(N, AM))
     return false;
@@ -805,7 +806,7 @@ static inline bool isZeroNode(SDOperand Elt) {
 /// SelectScalarSSELoad - Match a scalar SSE load.  In particular, we want to
 /// match a load whose top elements are either undef or zeros.  The load flavor
 /// is derived from the type of N, which is either v4f32 or v2f64.
-bool X86DAGToDAGISel::SelectScalarSSELoad(SDOperand Root, SDOperand Pred,
+bool X86DAGToDAGISel::SelectScalarSSELoad(SDOperand Op, SDOperand Pred,
                                           SDOperand N, SDOperand &Base,
                                           SDOperand &Scale, SDOperand &Index,
                                           SDOperand &Disp, SDOperand &InChain,
@@ -814,9 +815,9 @@ bool X86DAGToDAGISel::SelectScalarSSELoad(SDOperand Root, SDOperand Pred,
     InChain = N.getOperand(0).getValue(1);
     if (ISD::isNON_EXTLoad(InChain.Val) &&
         InChain.getValue(0).hasOneUse() &&
-        CanBeFoldedBy(N.Val, Pred.Val, Root.Val)) {
+        CanBeFoldedBy(N.Val, Pred.Val, Op.Val)) {
       LoadSDNode *LD = cast<LoadSDNode>(InChain);
-      if (!SelectAddr(LD->getBasePtr(), Base, Scale, Index, Disp))
+      if (!SelectAddr(Op, LD->getBasePtr(), Base, Scale, Index, Disp))
         return false;
       OutChain = LD->getChain();
       return true;
@@ -856,7 +857,7 @@ bool X86DAGToDAGISel::SelectScalarSSELoad(SDOperand Root, SDOperand Pred,
       
       // Okay, this is a zero extending load.  Fold it.
       LoadSDNode *LD = cast<LoadSDNode>(N.getOperand(1).getOperand(0));
-      if (!SelectAddr(LD->getBasePtr(), Base, Scale, Index, Disp))
+      if (!SelectAddr(Op, LD->getBasePtr(), Base, Scale, Index, Disp))
         return false;
       OutChain = LD->getChain();
       InChain = SDOperand(LD, 1);
@@ -869,8 +870,8 @@ bool X86DAGToDAGISel::SelectScalarSSELoad(SDOperand Root, SDOperand Pred,
 
 /// SelectLEAAddr - it calls SelectAddr and determines if the maximal addressing
 /// mode it matches can be cost effectively emitted as an LEA instruction.
-bool X86DAGToDAGISel::SelectLEAAddr(SDOperand N, SDOperand &Base,
-                                    SDOperand &Scale,
+bool X86DAGToDAGISel::SelectLEAAddr(SDOperand Op, SDOperand N,
+                                    SDOperand &Base, SDOperand &Scale,
                                     SDOperand &Index, SDOperand &Disp) {
   X86ISelAddressMode AM;
   if (MatchAddress(N, AM))
@@ -927,7 +928,7 @@ bool X86DAGToDAGISel::TryFoldLoad(SDOperand P, SDOperand N,
   if (ISD::isNON_EXTLoad(N.Val) &&
       N.hasOneUse() &&
       CanBeFoldedBy(N.Val, P.Val, P.Val))
-    return SelectAddr(N.getOperand(1), Base, Scale, Index, Disp);
+    return SelectAddr(P, N.getOperand(1), Base, Scale, Index, Disp);
   return false;
 }
 
@@ -1288,7 +1289,7 @@ SelectInlineAsmMemoryOperand(const SDOperand &Op, char ConstraintCode,
   case 'v':   // not offsetable    ??
   default: return true;
   case 'm':   // memory
-    if (!SelectAddr(Op, Op0, Op1, Op2, Op3))
+    if (!SelectAddr(Op, Op, Op0, Op1, Op2, Op3))
       return true;
     break;
   }
