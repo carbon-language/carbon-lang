@@ -28,7 +28,6 @@
 #include "llvm/Support/ManagedStatic.h"
 #include "llvm/Support/MathExtras.h"
 #include <limits>
-#include <cmath>
 using namespace llvm;
 
 namespace {

@@ -38,7 +38,6 @@
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/CommandLine.h"
 #include <algorithm>
-#include <cmath>
 #include <iostream>
 #include <algorithm>
 using namespace llvm;

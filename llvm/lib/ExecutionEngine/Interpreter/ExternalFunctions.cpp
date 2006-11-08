@@ -24,7 +24,6 @@
 #include "llvm/Module.h"
 #include "llvm/System/DynamicLibrary.h"
 #include "llvm/Target/TargetData.h"
-#include <cmath>
 #include <csignal>
 #include <map>
 using std::vector;

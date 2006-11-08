@@ -20,7 +20,6 @@
 #include "llvm/Support/GetElementPtrTypeIterator.h"
 #include "llvm/Support/MathExtras.h"
 #include <cerrno>
-#include <cmath>
 using namespace llvm;
 
 //===----------------------------------------------------------------------===//

@@ -28,7 +28,6 @@
 #include "llvm/ADT/StringExtras.h"
 #include <iostream>
 #include <set>
-#include <cmath>
 #include <algorithm>
 using namespace llvm;
 

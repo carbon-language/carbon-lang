@@ -16,7 +16,6 @@
 #include "llvm/System/Path.h"
 #include "llvm/System/MappedFile.h"
 #include "llvm/ADT/StringExtras.h"
-#include <cmath>
 #include <cstring>
 #include <cctype>
 using namespace llvm;
