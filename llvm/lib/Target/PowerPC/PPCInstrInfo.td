@@ -197,6 +197,9 @@ class isDOT   {
   bit RC  = 1;
 }
 
+class RegConstraint<string C> {
+  string Constraints = C;
+}
 
 
 //===----------------------------------------------------------------------===//
@@ -418,10 +421,13 @@ def LHZ : DForm_1<40, (ops GPRC:$rD, memri:$src),
 def LWZ : DForm_1<32, (ops GPRC:$rD, memri:$src),
                   "lwz $rD, $src", LdStGeneral,
                   [(set GPRC:$rD, (load iaddr:$src))]>;
-def LWZU : DForm_1<35, (ops GPRC:$rD, s16imm:$disp, GPRC:$rA),
+
+def LWZU : DForm_1<33, (ops GPRC:$rD, GPRC:$rA_result, i32imm:$disp, GPRC:$rA),
                    "lwzu $rD, $disp($rA)", LdStGeneral,
-                   []>;
+                   []>, RegConstraint<"$rA = $rA_result">;
 }
+
+
 let PPC970_Unit = 1 in {  // FXU Operations.
 def ADDI   : DForm_2<14, (ops GPRC:$rD, GPRC:$rA, s16imm:$imm),
                      "addi $rD, $rA, $imm", IntGeneral,
