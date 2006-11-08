@@ -115,7 +115,7 @@
          <li><a href="#i_getelementptr">'<tt>getelementptr</tt>' Instruction</a></li>
         </ol>
       </li>
-      <li><a href="#otherops">Cast Operations</a>
+      <li><a href="#convertops">Conversion Operations</a>
         <ol>
           <li><a href="#i_trunc">'<tt>trunc .. to</tt>' Instruction</a></li>
           <li><a href="#i_zext">'<tt>zext .. to</tt>' Instruction</a></li>
@@ -2763,36 +2763,12 @@ FAQ</a>.</p>
 
 </div>
 <!-- ======================================================================= -->
-<div class="doc_subsection"> <a name="otherops">Other Operations</a> </div>
-<div class="doc_text">
-<p>The instructions in this category are the "miscellaneous"
-instructions, which defy better classification.</p>
+<div class="doc_subsection"> <a name="convertops">Conversion Operations</a>
 </div>
-<!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection"> <a name="i_phi">'<tt>phi</tt>'
-Instruction</a> </div>
 <div class="doc_text">
-<h5>Syntax:</h5>
-<pre>  &lt;result&gt; = phi &lt;ty&gt; [ &lt;val0&gt;, &lt;label0&gt;], ...<br></pre>
-<h5>Overview:</h5>
-<p>The '<tt>phi</tt>' instruction is used to implement the &#966; node in
-the SSA graph representing the function.</p>
-<h5>Arguments:</h5>
-<p>The type of the incoming values are specified with the first type
-field. After this, the '<tt>phi</tt>' instruction takes a list of pairs
-as arguments, with one pair for each predecessor basic block of the
-current block.  Only values of <a href="#t_firstclass">first class</a>
-type may be used as the value arguments to the PHI node.  Only labels
-may be used as the label arguments.</p>
-<p>There must be no non-phi instructions between the start of a basic
-block and the PHI instructions: i.e. PHI instructions must be first in
-a basic block.</p>
-<h5>Semantics:</h5>
-<p>At runtime, the '<tt>phi</tt>' instruction logically takes on the
-value specified by the parameter, depending on which basic block we
-came from in the last <a href="#terminators">terminator</a> instruction.</p>
-<h5>Example:</h5>
-<pre>Loop:       ; Infinite loop that counts from 0 on up...<br>  %indvar = phi uint [ 0, %LoopHeader ], [ %nextindvar, %Loop ]<br>  %nextindvar = add uint %indvar, 1<br>  br label %Loop<br></pre>
+<p>The instructions in this category are the conversion instructions (casting)
+which all take a single operand and a type. They perform various bit conversions
+on the operand.</p>
 </div>
 
 <!-- _______________________________________________________________________ -->
@@ -3167,6 +3143,39 @@ the <tt>zext, sext, and fpext</tt> instructions do not permit.</p>
   %X = bitconvert ubyte 255 to sbyte         <i>; yields sbyte:-1</i>
   %Y = bitconvert uint* %x to uint           <i>; yields uint:%x</i>
 </pre>
+</div>
+
+<!-- ======================================================================= -->
+<div class="doc_subsection"> <a name="otherops">Other Operations</a> </div>
+<div class="doc_text">
+<p>The instructions in this category are the "miscellaneous"
+instructions, which defy better classification.</p>
+</div>
+<!-- _______________________________________________________________________ -->
+<div class="doc_subsubsection"> <a name="i_phi">'<tt>phi</tt>'
+Instruction</a> </div>
+<div class="doc_text">
+<h5>Syntax:</h5>
+<pre>  &lt;result&gt; = phi &lt;ty&gt; [ &lt;val0&gt;, &lt;label0&gt;], ...<br></pre>
+<h5>Overview:</h5>
+<p>The '<tt>phi</tt>' instruction is used to implement the &#966; node in
+the SSA graph representing the function.</p>
+<h5>Arguments:</h5>
+<p>The type of the incoming values are specified with the first type
+field. After this, the '<tt>phi</tt>' instruction takes a list of pairs
+as arguments, with one pair for each predecessor basic block of the
+current block.  Only values of <a href="#t_firstclass">first class</a>
+type may be used as the value arguments to the PHI node.  Only labels
+may be used as the label arguments.</p>
+<p>There must be no non-phi instructions between the start of a basic
+block and the PHI instructions: i.e. PHI instructions must be first in
+a basic block.</p>
+<h5>Semantics:</h5>
+<p>At runtime, the '<tt>phi</tt>' instruction logically takes on the
+value specified by the parameter, depending on which basic block we
+came from in the last <a href="#terminators">terminator</a> instruction.</p>
+<h5>Example:</h5>
+<pre>Loop:       ; Infinite loop that counts from 0 on up...<br>  %indvar = phi uint [ 0, %LoopHeader ], [ %nextindvar, %Loop ]<br>  %nextindvar = add uint %indvar, 1<br>  br label %Loop<br></pre>
 </div>
 
 <!-- _______________________________________________________________________ -->
