@@ -76,6 +76,7 @@ namespace {
     }
 
     void printAddrMode1(const MachineInstr *MI, int opNum);
+    void printAddrMode2(const MachineInstr *MI, int opNum);
     void printAddrMode5(const MachineInstr *MI, int opNum);
 
     void printMemRegImm(const MachineInstr *MI, int opNum,
@@ -212,6 +213,24 @@ void ARMAsmPrinter::printAddrMode1(const MachineInstr *MI, int opNum) {
       O << s;
       printOperand(MI, opNum + 1);
     }
+  }
+}
+
+void ARMAsmPrinter::printAddrMode2(const MachineInstr *MI, int opNum) {
+  const MachineOperand &Arg    = MI->getOperand(opNum);
+  const MachineOperand &Offset = MI->getOperand(opNum + 1);
+  assert(Offset.isImmediate());
+
+  if (Arg.isConstantPoolIndex()) {
+    assert(Offset.getImmedValue() == 0);
+    printOperand(MI, opNum);
+  } else {
+    assert(Arg.isRegister());
+    O << '[';
+    printOperand(MI, opNum);
+    O << ", ";
+    printOperand(MI, opNum + 1);
+    O << ']';
   }
 }
 

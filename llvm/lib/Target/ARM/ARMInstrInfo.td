@@ -18,6 +18,11 @@ def op_addr_mode1 : Operand<iPTR> {
   let MIOperandInfo = (ops ptr_rc, ptr_rc, i32imm);
 }
 
+def op_addr_mode2 : Operand<iPTR> {
+  let PrintMethod = "printAddrMode2";
+  let MIOperandInfo = (ops ptr_rc, i32imm);
+}
+
 def op_addr_mode5 : Operand<iPTR> {
   let PrintMethod = "printAddrMode5";
   let MIOperandInfo = (ops ptr_rc, i32imm);
@@ -32,6 +37,9 @@ def memri : Operand<iPTR> {
 //Addressing Mode 1: data processing operands
 def addr_mode1 : ComplexPattern<iPTR, 3, "SelectAddrMode1", [imm, sra, shl, srl],
                                 []>;
+
+//Addressing Mode 2: Load and Store Word or Unsigned Byte
+def addr_mode2 : ComplexPattern<iPTR, 2, "SelectAddrMode2", [], []>;
 
 //Addressing Mode 5: VFP load/store
 def addr_mode5 : ComplexPattern<iPTR, 2, "SelectAddrMode5", [], []>;
@@ -157,9 +165,9 @@ let noResults = 1, Defs = [R0, R1, R2, R3, R14] in {
   def blx     : InstARM<(ops IntRegs:$func, variable_ops), "blx $func", [(ARMcall IntRegs:$func)]>;
 }
 
-def ldr   : InstARM<(ops IntRegs:$dst, memri:$addr),
+def LDR     : InstARM<(ops IntRegs:$dst, op_addr_mode2:$addr),
                      "ldr $dst, $addr",
-                     [(set IntRegs:$dst, (load iaddr:$addr))]>;
+                     [(set IntRegs:$dst, (load addr_mode2:$addr))]>;
 
 def LDRB    : InstARM<(ops IntRegs:$dst, IntRegs:$addr),
                        "ldrb $dst, [$addr]",
@@ -177,9 +185,9 @@ def LDRSH   : InstARM<(ops IntRegs:$dst, IntRegs:$addr),
                        "ldrsh $dst, [$addr]",
                        [(set IntRegs:$dst, (sextloadi16 IntRegs:$addr))]>;
 
-def str  : InstARM<(ops IntRegs:$src, memri:$addr),
-                    "str $src, $addr",
-                    [(store IntRegs:$src, iaddr:$addr)]>;
+def STR     : InstARM<(ops IntRegs:$src, op_addr_mode2:$addr),
+                     "str $src, $addr",
+                     [(store IntRegs:$src, addr_mode2:$addr)]>;
 
 def STRB    : InstARM<(ops IntRegs:$src, IntRegs:$addr),
                        "strb $src, [$addr]",
