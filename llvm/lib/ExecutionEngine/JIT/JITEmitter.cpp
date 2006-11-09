@@ -613,6 +613,13 @@ void *JITResolver::JITCompilerFn(void *Stub) {
          "This is not a known stub!");
   Function *F = (--I)->second;
 
+  // If disabled, emit a useful error message and abort.
+  if (TheJIT->isLazyCompilationDisabled()) {
+    std::cerr << "LLVM JIT requested to do lazy compilation of function '"
+              << F->getName() << "' when lazy compiles are disabled!\n";
+    abort();
+  }
+  
   // We might like to remove the stub from the StubToFunction map.
   // We can't do that! Multiple threads could be stuck, waiting to acquire the
   // lock above. As soon as the 1st function finishes compiling the function,
