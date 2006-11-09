@@ -2683,6 +2683,8 @@ at the location specified by the '<tt>&lt;pointer&gt;</tt>' operand.</p>
  href="#i_store">store</a> int 3, int* %ptr                          <i>; yields {void}</i>
   %val = load int* %ptr                           <i>; yields {int}:val = int 3</i>
 </pre>
+</div>
+
 <!-- _______________________________________________________________________ -->
 <div class="doc_subsubsection">
    <a name="i_getelementptr">'<tt>getelementptr</tt>' Instruction</a>
@@ -2795,8 +2797,8 @@ FAQ</a>.</p>
     <i>; yields [12 x ubyte]*:aptr</i>
     %aptr = getelementptr {int, [12 x ubyte]}* %sptr, long 0, uint 1
 </pre>
-
 </div>
+
 <!-- ======================================================================= -->
 <div class="doc_subsection"> <a name="convertops">Conversion Operations</a>
 </div>
