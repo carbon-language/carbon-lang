@@ -1117,6 +1117,97 @@ bool InstCombiner::SimplifyDemandedBits(Value *V, uint64_t DemandedMask,
     }
     break;
   }
+  case Instruction::Add:
+    // If there is a constant on the RHS, there are a variety of xformations
+    // we can do.
+    if (ConstantInt *RHS = dyn_cast<ConstantInt>(I->getOperand(1))) {
+      // If null, this should be simplified elsewhere.  Some of the xforms here
+      // won't work if the RHS is zero.
+      if (RHS->isNullValue())
+        break;
+      
+      // Figure out what the input bits are.  If the top bits of the and result
+      // are not demanded, then the add doesn't demand them from its input
+      // either.
+      
+      // Shift the demanded mask up so that it's at the top of the uint64_t.
+      unsigned BitWidth = I->getType()->getPrimitiveSizeInBits();
+      unsigned NLZ = CountLeadingZeros_64(DemandedMask << (64-BitWidth));
+      
+      // If the top bit of the output is demanded, demand everything from the
+      // input.  Otherwise, we demand all the input bits except NLZ top bits.
+      uint64_t InDemandedBits = ~0ULL >> 64-BitWidth+NLZ;
+
+      // Find information about known zero/one bits in the input.
+      if (SimplifyDemandedBits(I->getOperand(0), InDemandedBits, 
+                               KnownZero2, KnownOne2, Depth+1))
+        return true;
+
+      // If the RHS of the add has bits set that can't affect the input, reduce
+      // the constant.
+      if (ShrinkDemandedConstant(I, 1, InDemandedBits))
+        return UpdateValueUsesWith(I, I);
+      
+      // Avoid excess work.
+      if (KnownZero2 == 0 && KnownOne2 == 0)
+        break;
+      
+      // Turn it into OR if input bits are zero.
+      if ((KnownZero2 & RHS->getZExtValue()) == RHS->getZExtValue()) {
+        Instruction *Or =
+          BinaryOperator::createOr(I->getOperand(0), I->getOperand(1),
+                                   I->getName());
+        InsertNewInstBefore(Or, *I);
+        return UpdateValueUsesWith(I, Or);
+      }
+      
+      // We can say something about the output known-zero and known-one bits,
+      // depending on potential carries from the input constant and the
+      // unknowns.  For example if the LHS is known to have at most the 0x0F0F0
+      // bits set and the RHS constant is 0x01001, then we know we have a known
+      // one mask of 0x00001 and a known zero mask of 0xE0F0E.
+      
+      // To compute this, we first compute the potential carry bits.  These are
+      // the bits which may be modified.  I'm not aware of a better way to do
+      // this scan.
+      uint64_t RHSVal = RHS->getZExtValue();
+      
+      bool CarryIn = false;
+      uint64_t CarryBits = 0;
+      uint64_t CurBit = 1;
+      for (unsigned i = 0; i != BitWidth; ++i, CurBit <<= 1) {
+        // Record the current carry in.
+        if (CarryIn) CarryBits |= CurBit;
+        
+        bool CarryOut;
+        
+        // This bit has a carry out unless it is "zero + zero" or
+        // "zero + anything" with no carry in.
+        if ((KnownZero2 & CurBit) && ((RHSVal & CurBit) == 0)) {
+          CarryOut = false;  // 0 + 0 has no carry out, even with carry in.
+        } else if (!CarryIn &&
+                   ((KnownZero2 & CurBit) || ((RHSVal & CurBit) == 0))) {
+          CarryOut = false;  // 0 + anything has no carry out if no carry in.
+        } else {
+          // Otherwise, we have to assume we have a carry out.
+          CarryOut = true;
+        }
+        
+        // This stage's carry out becomes the next stage's carry-in.
+        CarryIn = CarryOut;
+      }
+      
+      // Now that we know which bits have carries, compute the known-1/0 sets.
+      
+      // Bits are known one if they are known zero in one operand and one in the
+      // other, and there is no input carry.
+      KnownOne = ((KnownZero2 & RHSVal) | (KnownOne2 & ~RHSVal)) & ~CarryBits;
+      
+      // Bits are known zero if they are known zero in both operands and there
+      // is no input carry.
+      KnownZero = KnownZero2 & ~RHSVal & ~CarryBits;
+    }
+    break;
   case Instruction::Shl:
     if (ConstantInt *SA = dyn_cast<ConstantInt>(I->getOperand(1))) {
       uint64_t ShiftAmt = SA->getZExtValue();
@@ -1685,11 +1776,19 @@ Instruction *InstCombiner::visitAdd(BinaryOperator &I) {
         return ReplaceInstUsesWith(I, LHS);
     }
 
-    // X + (signbit) --> X ^ signbit
     if (ConstantInt *CI = dyn_cast<ConstantInt>(RHSC)) {
+      // X + (signbit) --> X ^ signbit
       uint64_t Val = CI->getZExtValue();
       if (Val == (1ULL << (CI->getType()->getPrimitiveSizeInBits()-1)))
         return BinaryOperator::createXor(LHS, RHS);
+      
+      // See if SimplifyDemandedBits can simplify this.  This handles stuff like
+      // (X & 254)+1 -> (X&254)|1
+      uint64_t KnownZero, KnownOne;
+      if (!isa<PackedType>(I.getType()) &&
+          SimplifyDemandedBits(&I, I.getType()->getIntegralTypeMask(),
+                               KnownZero, KnownOne))
+        return &I;
     }
 
     if (isa<PHINode>(LHS))
