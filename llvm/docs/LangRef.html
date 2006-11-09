@@ -2744,6 +2744,44 @@ If the <tt>value</tt> was non-zero, the bool result will be <tt>true</tt>.</p>
 
 <!-- _______________________________________________________________________ -->
 <div class="doc_subsubsection">
+   <a name="i_fptrunc">'<tt>fptrunc .. to</tt>' Instruction</a>
+</div>
+
+<div class="doc_text">
+
+<h5>Syntax:</h5>
+
+<pre>
+  &lt;result&gt; = fptrunc &lt;ty&gt; &lt;value&gt; to &lt;ty2&gt;             <i>; yields ty2</i>
+</pre>
+
+<h5>Overview:</h5>
+<p>The '<tt>fptrunc</tt>' instruction truncates <tt>value</tt> to type
+<tt>ty2</tt>.</p>
+
+
+<h5>Arguments:</h5>
+<p>The '<tt>fptrunc</tt>' instruction takes a <a href="#t_floating">floating
+  point</a> value to cast and a <a href="#t_floating">floating point</a> type to
+cast it to. The size of <tt>value</tt> must be larger than the size of
+<tt>ty2</tt>. This implies that <tt>fptrunc</tt> cannot be used to make a 
+<i>no-op cast</i>.</p>
+
+<h5>Semantics:</h5>
+<p> The '<tt>fptrunc</tt>' instruction converts a 
+<a href="#t_floating">floating point</a> value from a larger type to a smaller 
+type. If the value cannot fit within the destination type, <tt>ty2</tt>, then 
+the results are undefined.</p>
+
+<h5>Example:</h5>
+<pre>
+  %X = fptrunc double 123.0 to float         <i>; yields float:123.0</i>
+  %Y = fptrunc double 1.0E+300 to float      <i>; yields undefined</i>
+</pre>
+</div>
+
+<!-- _______________________________________________________________________ -->
+<div class="doc_subsubsection">
    <a name="i_fpext">'<tt>fpext .. to</tt>' Instruction</a>
 </div>
 <div class="doc_text">
@@ -2772,44 +2810,6 @@ change.</p>
 <pre>
   %X = fpext float 3.1415 to double        <i>; yields double:3.1415</i>
   %Y = fpext float 1.0 to float            <i>; yields float:1.0 (no-op)</i>
-</pre>
-</div>
-
-<!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection">
-   <a name="i_fptrunc">'<tt>fptrunc .. to</tt>' Instruction</a>
-</div>
-
-<div class="doc_text">
-
-<h5>Syntax:</h5>
-
-<pre>
-  &lt;result&gt; = fptrunc &lt;ty&gt; &lt;value&gt; to &lt;ty2&gt;             <i>; yields ty2</i>
-</pre>
-
-<h5>Overview:</h5>
-<p>The '<tt>fptrunc</tt>' instruction truncates <tt>value</tt> to type
-<tt>ty2</tt>.</p>
-
-
-<h5>Arguments:</h5>
-<p>The '<tt>fptrunc</tt>' instruction takes a <a href="#t_floating">floating
-  point</a> value to cast and a <a href="#t_floating">floating point</a> type to
-cast it to. The size of <tt>value</tt> must be larger than the size of
-<tt>ty2</a>. This implies that <tt>fptrunc</tt> cannot be used to make a 
-<i>no-op cast</i>.</p>
-
-<h5>Semantics:</h5>
-<p> The '<tt>fptrunc</tt>' instruction converts a 
-<a href="#t_floating">floating point</a> value from a larger type to a smaller 
-type. If the value cannot fit within the destination type, <tt>ty2</tt>, then 
-the results are undefined.</p>
-
-<h5>Example:</h5>
-<pre>
-  %X = fptrunc double 123.0 to float         <i>; yields float:123.0</i>
-  %Y = fptrunc double 1.0E+300 to float      <i>; yields undefined</i>
 </pre>
 </div>
 
