@@ -282,10 +282,8 @@ namespace {
       MVT::ValueType VT;
       if (LoadSDNode *LD  = dyn_cast<LoadSDNode>(N)) {
         Ptr = LD->getBasePtr();
-        VT  = LD->getLoadedVT();
       } else if (StoreSDNode *ST  = dyn_cast<StoreSDNode>(N)) {
         Ptr = ST->getBasePtr();
-        VT  = ST->getStoredVT();
         isLoad = false;
       } else
         return false;
@@ -301,7 +299,7 @@ namespace {
           SDOperand BasePtr;
           SDOperand Offset;
           ISD::MemOpAddrMode AM = ISD::UNINDEXED;
-          if (TLI.getPostIndexedAddressParts(Op, VT, BasePtr, Offset, AM,DAG)) {
+          if (TLI.getPostIndexedAddressParts(N, Op, BasePtr, Offset, AM,DAG)) {
             if (Ptr == Offset)
               std::swap(BasePtr, Offset);
             if (Ptr != BasePtr)
