@@ -901,10 +901,8 @@ Parser::ExprResult Parser::ParseStringLiteralExpression() {
     StringToks.push_back(Tok);
     ConsumeStringToken();
   } while (isTokenStringLiteral());
-  
-  
-  // If using minimal actions, don't do any semantic analysis of the parsed
-  // string fragments.
+
+  // Pass the set of string tokens, ready for concatenation, to the actions.
   return Actions.ParseStringExpr(&StringToks[0], StringToks.size());
 }
 
