@@ -853,7 +853,7 @@ bool PPCTargetLowering::SelectAddressRegImmShift(SDOperand N, SDOperand &Disp,
 /// can be legally represented as pre-indexed load / store address.
 bool PPCTargetLowering::getPreIndexedAddressParts(SDNode *N, SDOperand &Base,
                                                   SDOperand &Offset,
-                                                  ISD::MemOpAddrMode &AM,
+                                                  ISD::MemIndexedMode &AM,
                                                   SelectionDAG &DAG) {
   return false;
   

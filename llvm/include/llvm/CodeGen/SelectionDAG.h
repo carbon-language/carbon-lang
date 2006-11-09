@@ -316,7 +316,7 @@ public:
                        SDOperand Chain, SDOperand Ptr, const Value *SV,
                        int SVOffset, MVT::ValueType EVT, bool isVolatile=false);
   SDOperand getIndexedLoad(SDOperand OrigLoad, SDOperand Base,
-                           SDOperand Offset, ISD::MemOpAddrMode AM);
+                           SDOperand Offset, ISD::MemIndexedMode AM);
   SDOperand getVecLoad(unsigned Count, MVT::ValueType VT, SDOperand Chain, 
                        SDOperand Ptr, SDOperand SV);
 
@@ -328,7 +328,7 @@ public:
                           const Value *SV, int SVOffset, MVT::ValueType TVT,
                           bool isVolatile=false);
   SDOperand getIndexedStore(SDOperand OrigStoe, SDOperand Base,
-                           SDOperand Offset, ISD::MemOpAddrMode AM);
+                           SDOperand Offset, ISD::MemIndexedMode AM);
 
   // getSrcValue - construct a node to track a Value* through the backend
   SDOperand getSrcValue(const Value* I, int offset = 0);

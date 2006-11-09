@@ -182,7 +182,7 @@ namespace llvm {
     /// can be legally represented as pre-indexed load / store address.
     virtual bool getPreIndexedAddressParts(SDNode *N, SDOperand &Base,
                                            SDOperand &Offset,
-                                           ISD::MemOpAddrMode &AM,
+                                           ISD::MemIndexedMode &AM,
                                            SelectionDAG &DAG);
     
     /// SelectAddressRegReg - Given the specified addressed, check to see if it

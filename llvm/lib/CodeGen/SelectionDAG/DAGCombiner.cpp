@@ -202,7 +202,7 @@ namespace {
           Ptr.Val->use_size() > 1) {
         SDOperand BasePtr;
         SDOperand Offset;
-        ISD::MemOpAddrMode AM = ISD::UNINDEXED;
+        ISD::MemIndexedMode AM = ISD::UNINDEXED;
         if (TLI.getPreIndexedAddressParts(N, BasePtr, Offset, AM, DAG)) {
           // Try turning it into a pre-indexed load / store except when
           // 1) Another use of base ptr is a predecessor of N. If ptr is folded
@@ -298,7 +298,7 @@ namespace {
 
           SDOperand BasePtr;
           SDOperand Offset;
-          ISD::MemOpAddrMode AM = ISD::UNINDEXED;
+          ISD::MemIndexedMode AM = ISD::UNINDEXED;
           if (TLI.getPostIndexedAddressParts(N, Op, BasePtr, Offset, AM,DAG)) {
             if (Ptr == Offset)
               std::swap(BasePtr, Offset);

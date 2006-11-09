@@ -1619,8 +1619,9 @@ SDOperand SelectionDAG::getExtLoad(ISD::LoadExtType ExtType, MVT::ValueType VT,
   return SDOperand(N, 0);
 }
 
-SDOperand SelectionDAG::getIndexedLoad(SDOperand OrigLoad, SDOperand Base,
-                                       SDOperand Offset, ISD::MemOpAddrMode AM){
+SDOperand
+SelectionDAG::getIndexedLoad(SDOperand OrigLoad, SDOperand Base,
+                             SDOperand Offset, ISD::MemIndexedMode AM) {
   LoadSDNode *LD = cast<LoadSDNode>(OrigLoad);
   assert(LD->getOffset().getOpcode() == ISD::UNDEF &&
          "Load is already a indexed load!");
@@ -1722,8 +1723,9 @@ SDOperand SelectionDAG::getTruncStore(SDOperand Chain, SDOperand Val,
   return SDOperand(N, 0);
 }
 
-SDOperand SelectionDAG::getIndexedStore(SDOperand OrigStore, SDOperand Base,
-                                       SDOperand Offset, ISD::MemOpAddrMode AM){
+SDOperand
+SelectionDAG::getIndexedStore(SDOperand OrigStore, SDOperand Base,
+                              SDOperand Offset, ISD::MemIndexedMode AM) {
   StoreSDNode *ST = cast<StoreSDNode>(OrigStore);
   assert(ST->getOffset().getOpcode() == ISD::UNDEF &&
          "Store is already a indexed store!");
@@ -2841,7 +2843,7 @@ const char *SDNode::getOperationName(const SelectionDAG *G) const {
   }
 }
 
-const char *SDNode::getAddressingModeName(ISD::MemOpAddrMode AM) {
+const char *SDNode::getIndexedModeName(ISD::MemIndexedMode AM) {
   switch (AM) {
   default:
     return "";
@@ -2943,7 +2945,7 @@ void SDNode::dump(const SelectionDAG *G) const {
     if (doExt)
       std::cerr << MVT::getValueTypeString(LD->getLoadedVT()) << ">";
 
-    const char *AM = getAddressingModeName(LD->getAddressingMode());
+    const char *AM = getIndexedModeName(LD->getAddressingMode());
     if (AM != "")
       std::cerr << " " << AM;
   } else if (const StoreSDNode *ST = dyn_cast<StoreSDNode>(this)) {
@@ -2951,7 +2953,7 @@ void SDNode::dump(const SelectionDAG *G) const {
       std::cerr << " <trunc "
                 << MVT::getValueTypeString(ST->getStoredVT()) << ">";
 
-    const char *AM = getAddressingModeName(ST->getAddressingMode());
+    const char *AM = getIndexedModeName(ST->getAddressingMode());
     if (AM != "")
       std::cerr << " " << AM;
   }

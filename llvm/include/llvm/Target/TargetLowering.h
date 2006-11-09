@@ -377,7 +377,7 @@ public:
   /// can be legally represented as pre-indexed load / store address.
   virtual bool getPreIndexedAddressParts(SDNode *N, SDOperand &Base,
                                          SDOperand &Offset,
-                                         ISD::MemOpAddrMode &AM,
+                                         ISD::MemIndexedMode &AM,
                                          SelectionDAG &DAG) {
     return false;
   }
@@ -387,7 +387,7 @@ public:
   /// combined with a load / store to form a post-indexed load / store.
   virtual bool getPostIndexedAddressParts(SDNode *N, SDNode *Op,
                                           SDOperand &Base, SDOperand &Offset,
-                                          ISD::MemOpAddrMode &AM,
+                                          ISD::MemIndexedMode &AM,
                                           SelectionDAG &DAG) {
     return false;
   }
@@ -869,7 +869,7 @@ private:
   /// LegalizeAction that indicates how instruction selection should deal with
   /// the store.
   uint64_t StoreXActions;
-  
+
   ValueTypeActionImpl ValueTypeActions;
 
   std::vector<double> LegalFPImmediates;
