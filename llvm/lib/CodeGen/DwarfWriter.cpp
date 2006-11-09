@@ -289,6 +289,7 @@ public:
   unsigned   getAbbrevNumber()               const {
     return Abbrev.getNumber();
   }
+  unsigned getTag()                          const { return Abbrev.getTag(); }
   unsigned getOffset()                       const { return Offset; }
   unsigned getSize()                         const { return Size; }
   const std::vector<DIE *> &getChildren()    const { return Children; }
@@ -1438,8 +1439,12 @@ private:
       Buffer.setTag(DW_TAG_base_type);
       AddUInt(&Buffer, DW_AT_encoding,  DW_FORM_data1, BasicTy->getEncoding());
     } else if (DerivedTypeDesc *DerivedTy = dyn_cast<DerivedTypeDesc>(TyDesc)) {
-      // Pointers, tyepdefs et al. 
-      Buffer.setTag(DerivedTy->getTag());
+      // Fetch tag.
+      unsigned Tag = DerivedTy->getTag();
+      // FIXME - Workaround for templates.
+      if (Tag == DW_TAG_inheritance) Tag = DW_TAG_reference_type;
+      // Pointers, typedefs et al. 
+      Buffer.setTag(Tag);
       // Map to main type, void will not have a type.
       if (TypeDesc *FromTy = DerivedTy->getFromType())
         AddType(&Buffer, FromTy, Unit);
