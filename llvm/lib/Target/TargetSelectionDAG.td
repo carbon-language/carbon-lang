@@ -551,7 +551,7 @@ def truncstoref32 : PatFrag<(ops node:$val, node:$ptr),
 def pre_store : PatFrag<(ops node:$val, node:$base, node:$offset),
                         (ist node:$val, node:$base, node:$offset), [{
   if (StoreSDNode *ST = dyn_cast<StoreSDNode>(N)) {
-    ISD::MemOpAddrMode AM = ST->getAddressingMode();
+    ISD::MemIndexedMode AM = ST->getAddressingMode();
     return (AM == ISD::PRE_INC || AM == ISD::PRE_DEC) &&
            !ST->isTruncatingStore();
   }
@@ -561,7 +561,7 @@ def pre_store : PatFrag<(ops node:$val, node:$base, node:$offset),
 def pre_truncsti1 : PatFrag<(ops node:$val, node:$base, node:$offset),
                             (ist node:$val, node:$base, node:$offset), [{
   if (StoreSDNode *ST = dyn_cast<StoreSDNode>(N)) {
-    ISD::MemOpAddrMode AM = ST->getAddressingMode();
+    ISD::MemIndexedMode AM = ST->getAddressingMode();
     return (AM == ISD::PRE_INC || AM == ISD::PRE_DEC) &&
            ST->isTruncatingStore() && ST->getStoredVT() == MVT::i1;
   }
@@ -570,7 +570,7 @@ def pre_truncsti1 : PatFrag<(ops node:$val, node:$base, node:$offset),
 def pre_truncsti8 : PatFrag<(ops node:$val, node:$base, node:$offset),
                             (ist node:$val, node:$base, node:$offset), [{
   if (StoreSDNode *ST = dyn_cast<StoreSDNode>(N)) {
-    ISD::MemOpAddrMode AM = ST->getAddressingMode();
+    ISD::MemIndexedMode AM = ST->getAddressingMode();
     return (AM == ISD::PRE_INC || AM == ISD::PRE_DEC) &&
            ST->isTruncatingStore() && ST->getStoredVT() == MVT::i8;
   }
@@ -579,7 +579,7 @@ def pre_truncsti8 : PatFrag<(ops node:$val, node:$base, node:$offset),
 def pre_truncsti16 : PatFrag<(ops node:$val, node:$base, node:$offset),
                              (ist node:$val, node:$base, node:$offset), [{
   if (StoreSDNode *ST = dyn_cast<StoreSDNode>(N)) {
-    ISD::MemOpAddrMode AM = ST->getAddressingMode();
+    ISD::MemIndexedMode AM = ST->getAddressingMode();
     return (AM == ISD::PRE_INC || AM == ISD::PRE_DEC) &&
            ST->isTruncatingStore() && ST->getStoredVT() == MVT::i16;
   }
@@ -588,7 +588,7 @@ def pre_truncsti16 : PatFrag<(ops node:$val, node:$base, node:$offset),
 def pre_truncsti32 : PatFrag<(ops node:$val, node:$base, node:$offset),
                              (ist node:$val, node:$base, node:$offset), [{
   if (StoreSDNode *ST = dyn_cast<StoreSDNode>(N)) {
-    ISD::MemOpAddrMode AM = ST->getAddressingMode();
+    ISD::MemIndexedMode AM = ST->getAddressingMode();
     return (AM == ISD::PRE_INC || AM == ISD::PRE_DEC) &&
            ST->isTruncatingStore() && ST->getStoredVT() == MVT::i32;
   }
@@ -597,7 +597,7 @@ def pre_truncsti32 : PatFrag<(ops node:$val, node:$base, node:$offset),
 def pre_truncstf32 : PatFrag<(ops node:$val, node:$base, node:$offset),
                              (ist node:$val, node:$base, node:$offset), [{
   if (StoreSDNode *ST = dyn_cast<StoreSDNode>(N)) {
-    ISD::MemOpAddrMode AM = ST->getAddressingMode();
+    ISD::MemIndexedMode AM = ST->getAddressingMode();
     return (AM == ISD::PRE_INC || AM == ISD::PRE_DEC) &&
            ST->isTruncatingStore() && ST->getStoredVT() == MVT::f32;
   }
@@ -607,7 +607,7 @@ def pre_truncstf32 : PatFrag<(ops node:$val, node:$base, node:$offset),
 def post_store : PatFrag<(ops node:$val, node:$ptr, node:$offset),
                          (ist node:$val, node:$ptr, node:$offset), [{
   if (StoreSDNode *ST = dyn_cast<StoreSDNode>(N)) {
-    ISD::MemOpAddrMode AM = ST->getAddressingMode();
+    ISD::MemIndexedMode AM = ST->getAddressingMode();
     return !ST->isTruncatingStore() &&
             (AM == ISD::POST_INC || AM == ISD::POST_DEC);
   }
@@ -617,7 +617,7 @@ def post_store : PatFrag<(ops node:$val, node:$ptr, node:$offset),
 def post_truncsti1 : PatFrag<(ops node:$val, node:$base, node:$offset),
                              (ist node:$val, node:$base, node:$offset), [{
   if (StoreSDNode *ST = dyn_cast<StoreSDNode>(N)) {
-    ISD::MemOpAddrMode AM = ST->getAddressingMode();
+    ISD::MemIndexedMode AM = ST->getAddressingMode();
     return (AM == ISD::POST_INC || AM == ISD::POST_DEC) &&
            ST->isTruncatingStore() && ST->getStoredVT() == MVT::i1;
   }
@@ -626,7 +626,7 @@ def post_truncsti1 : PatFrag<(ops node:$val, node:$base, node:$offset),
 def post_truncsti8 : PatFrag<(ops node:$val, node:$base, node:$offset),
                              (ist node:$val, node:$base, node:$offset), [{
   if (StoreSDNode *ST = dyn_cast<StoreSDNode>(N)) {
-    ISD::MemOpAddrMode AM = ST->getAddressingMode();
+    ISD::MemIndexedMode AM = ST->getAddressingMode();
     return (AM == ISD::POST_INC || AM == ISD::POST_DEC) &&
            ST->isTruncatingStore() && ST->getStoredVT() == MVT::i8;
   }
@@ -635,7 +635,7 @@ def post_truncsti8 : PatFrag<(ops node:$val, node:$base, node:$offset),
 def post_truncsti16 : PatFrag<(ops node:$val, node:$base, node:$offset),
                               (ist node:$val, node:$base, node:$offset), [{
   if (StoreSDNode *ST = dyn_cast<StoreSDNode>(N)) {
-    ISD::MemOpAddrMode AM = ST->getAddressingMode();
+    ISD::MemIndexedMode AM = ST->getAddressingMode();
     return (AM == ISD::POST_INC || AM == ISD::POST_DEC) &&
            ST->isTruncatingStore() && ST->getStoredVT() == MVT::i16;
   }
@@ -644,7 +644,7 @@ def post_truncsti16 : PatFrag<(ops node:$val, node:$base, node:$offset),
 def post_truncsti32 : PatFrag<(ops node:$val, node:$base, node:$offset),
                               (ist node:$val, node:$base, node:$offset), [{
   if (StoreSDNode *ST = dyn_cast<StoreSDNode>(N)) {
-    ISD::MemOpAddrMode AM = ST->getAddressingMode();
+    ISD::MemIndexedMode AM = ST->getAddressingMode();
     return (AM == ISD::POST_INC || AM == ISD::POST_DEC) &&
            ST->isTruncatingStore() && ST->getStoredVT() == MVT::i32;
   }
@@ -653,7 +653,7 @@ def post_truncsti32 : PatFrag<(ops node:$val, node:$base, node:$offset),
 def post_truncstf32 : PatFrag<(ops node:$val, node:$base, node:$offset),
                               (ist node:$val, node:$base, node:$offset), [{
   if (StoreSDNode *ST = dyn_cast<StoreSDNode>(N)) {
-    ISD::MemOpAddrMode AM = ST->getAddressingMode();
+    ISD::MemIndexedMode AM = ST->getAddressingMode();
     return (AM == ISD::POST_INC || AM == ISD::POST_DEC) &&
            ST->isTruncatingStore() && ST->getStoredVT() == MVT::f32;
   }
