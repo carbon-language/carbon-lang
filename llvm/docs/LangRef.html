@@ -120,10 +120,10 @@
           <li><a href="#i_sext">'<tt>sext .. to</tt>' Instruction</a></li>
           <li><a href="#i_fptrunc">'<tt>fptrunc .. to</tt>' Instruction</a></li>
           <li><a href="#i_fpext">'<tt>fpext .. to</tt>' Instruction</a></li>
-          <li><a href="#i_fp2uint">'<tt>fp2uint .. to</tt>' Instruction</a></li>
-          <li><a href="#i_fp2sint">'<tt>fp2sint .. to</tt>' Instruction</a></li>
-          <li><a href="#i_uint2fp">'<tt>uint2fp .. to</tt>' Instruction</a></li>
-          <li><a href="#i_sint2fp">'<tt>sint2fp .. to</tt>' Instruction</a></li>
+          <li><a href="#i_fptoui">'<tt>fptoui .. to</tt>' Instruction</a></li>
+          <li><a href="#i_fptosi">'<tt>fptosi .. to</tt>' Instruction</a></li>
+          <li><a href="#i_uitofp">'<tt>uitofp .. to</tt>' Instruction</a></li>
+          <li><a href="#i_sitofp">'<tt>sitofp .. to</tt>' Instruction</a></li>
           <li><a href="#i_bitconvert">'<tt>bitconvert .. to</tt>' Instruction</a></li>
         </ol>
       <li><a href="#otherops">Other Operations</a>
@@ -1206,17 +1206,17 @@ following is the syntax for constant expressions:</p>
   constant. TYPE must be an integer type. CST must be floating point. If the 
   value won't fit in the integer type, the results are undefined.</dd>
 
-  <dt><b><tt>fp2sint ( CST to TYPE )</tt></b></dt>
+  <dt><b><tt>fptosi ( CST to TYPE )</tt></b></dt>
   <dd>Convert a floating point constant to the corresponding signed integer
   constant. TYPE must be an integer type. CST must be floating point. If the 
   value won't fit in the integer type, the results are undefined.</dd>
 
-  <dt><b><tt>uint2fp ( CST to TYPE )</tt></b></dt>
+  <dt><b><tt>uitofp ( CST to TYPE )</tt></b></dt>
   <dd>Convert an unsigned integer constant to the corresponding floating point
   constant. TYPE must be floating point. CST must be of integer type. If the
   value won't fit in the floating point type, the results are undefined.</dd>
 
-  <dt><b><tt>sint2fp ( CST to TYPE )</tt></b></dt>
+  <dt><b><tt>sitofp ( CST to TYPE )</tt></b></dt>
   <dd>Convert a signed integer constant to the corresponding floating point
   constant. TYPE must be floating point. CST must be of integer type. If the
   value won't fit in the floating point type, the results are undefined.</dd>
@@ -2640,19 +2640,15 @@ The '<tt>trunc</tt>' instruction truncates its operand to the type <tt>ty2</tt>.
 The '<tt>trunc</tt>' instruction takes a <tt>value</tt> to trunc, which must 
 be an <a href="#t_integer">integer</a> type, and a type that specifies the size 
 and type of the result, which must be an <a href="#t_integral">integral</a> 
-type.</p>
+type. The bit size of <tt>value</tt> must be larger than the bit size of 
+<tt>ty2</tt>. Equal sized types are not allowed.</p>
 
 <h5>Semantics:</h5>
 <p>
 The '<tt>trunc</tt>' instruction truncates the high order bits in <tt>value</tt>
-and converts the reamining bits to <tt>ty2</tt>. The bit size of <tt>value</tt>
-must be larger than the bit size of <tt>ty2</tt>. Equal sized types are not 
-allowed.  This implies that a <tt>trunc</tt> cannot be a <i>no-op cast</i>. It 
-will always truncate bits.</p>
-
-<p>When truncating to bool, the truncation is done as a comparison against 
-zero. If the <tt>value</tt> was zero, the bool result will be <tt>false</tt>. 
-If the <tt>value</tt> was non-zero, the bool result will be <tt>true</tt>.</p>
+and converts the remaining bits to <tt>ty2</tt>. Since the source size must be
+larger than the destination size, <tt>trunc</tt> cannot be a <i>no-op cast</i>.
+It will always truncate bits.</p>
 
 <h5>Example:</h5>
 <pre>
@@ -2681,8 +2677,8 @@ If the <tt>value</tt> was non-zero, the bool result will be <tt>true</tt>.</p>
 <p>The '<tt>zext</tt>' instruction takes a value to cast, which must be of 
 <a href="#t_integral">integral</a> type, and a type to cast it to, which must
 also be of <a href="#t_integral">integral</a> type. The bit size of the
-<tt>value</tt> must be smaller than or equal to the bit size of the 
-destination type, <tt>ty2</tt>.</p>
+<tt>value</tt> must be smaller than the bit size of the destination type, 
+<tt>ty2</tt>.</p>
 
 <h5>Semantics:</h5>
 <p>The <tt>zext</tt> fills the high order bits of the <tt>value</tt> with zero
@@ -2691,9 +2687,7 @@ the operand and the type are the same size, no bit filling is done and the
 cast is considered a <i>no-op cast</i> because no bits change (only the type 
 changes).</p>
 
-<p>When zero extending to bool, the extension is done as a comparison against 
-zero. If the <tt>value</tt> was zero, the bool result will be <tt>false</tt>. 
-If the <tt>value</tt> was non-zero, the bool result will be <tt>true</tt>.</p>
+<p>When zero extending from bool, the result will alwasy be either 0 or 1.</p>
 
 <h5>Example:</h5>
 <pre>
@@ -2720,7 +2714,9 @@ If the <tt>value</tt> was non-zero, the bool result will be <tt>true</tt>.</p>
 <p>
 The '<tt>sext</tt>' instruction takes a value to cast, which must be of 
 <a href="#t_integral">integral</a> type, and a type to cast it to, which must
-also be of <a href="#t_integral">integral</a> type.</p>
+also be of <a href="#t_integral">integral</a> type.  The bit size of the
+<tt>value</tt> must be smaller than the bit size of the destination type, 
+<tt>ty2</tt>.</p>
 
 <h5>Semantics:</h5>
 <p>
@@ -2730,12 +2726,9 @@ the type <tt>ty2</tt>.  When the the operand and the type are the same size,
 no bit filling is done and the cast is considered a <i>no-op cast</i> because 
 no bits change (only the type changes).</p>
 
-<p>When sign extending to bool, the extension is done as a comparison against 
-zero. If the <tt>value</tt> was zero, the bool result will be <tt>false</tt>. 
-If the <tt>value</tt> was non-zero, the bool result will be <tt>true</tt>.</p>
+<p>When sign extending from bool, the extension always results in -1 or 0.</p>
 
 <h5>Example:</h5>
-
 <pre>
   %X = sext sbyte -1 to ushort           <i>; yields ushort:65535</i>
   %Y = sext bool true to int             <i>; yields int:-1</i>
@@ -2768,10 +2761,10 @@ cast it to. The size of <tt>value</tt> must be larger than the size of
 <i>no-op cast</i>.</p>
 
 <h5>Semantics:</h5>
-<p> The '<tt>fptrunc</tt>' instruction converts a 
-<a href="#t_floating">floating point</a> value from a larger type to a smaller 
-type. If the value cannot fit within the destination type, <tt>ty2</tt>, then 
-the results are undefined.</p>
+<p> The '<tt>fptrunc</tt>' instruction truncates a <tt>value</tt> from a larger
+<a href="#t_floating">floating point</a> type to a smaller 
+<a href="#t_floating">floating point</a> type.  If the value cannot fit within 
+the destination type, <tt>ty2</tt>, then the results are undefined.</p>
 
 <h5>Example:</h5>
 <pre>
@@ -2798,13 +2791,15 @@ floating point value.</p>
 <h5>Arguments:</h5>
 <p>The '<tt>fpext</tt>' instruction takes a 
 <a href="#t_floating">floating point</a> <tt>value</tt> to cast, 
-and a <a href="#t_floating">floating point</a> type to cast it to.</p>
+and a <a href="#t_floating">floating point</a> type to cast it to. The source
+type must be smaller than the destination type.</p>
 
 <h5>Semantics:</h5>
-<p>The '<tt>fpext</tt>' instruction extends the <tt>value</tt> from one floating
-point type to another. If the type of the <tt>value</tt> and <tt>ty2</tt> are
-the same, the instruction is considered a <i>no-op cast</i> because no bits
-change.</p>
+<p>The '<tt>fpext</tt>' instruction extends the <tt>value</tt> from a smaller
+<a href="t_floating">floating point</a> type to a larger 
+<a href="t_floating">floating point</a> type. The <tt>fpext</tt> cannot be 
+used to make a <i>no-op cast</i> because it always changes bits. Use 
+<tt>bitconvert</tt> to make a <i>no-op cast</i> for a floating point cast.</p>
 
 <h5>Example:</h5>
 <pre>
@@ -2815,7 +2810,7 @@ change.</p>
 
 <!-- _______________________________________________________________________ -->
 <div class="doc_subsubsection">
-   <a name="i_fp2uint">'<tt>fp2uint .. to</tt>' Instruction</a>
+   <a name="i_fp2uint">'<tt>fptoui .. to</tt>' Instruction</a>
 </div>
 <div class="doc_text">
 
@@ -2854,28 +2849,28 @@ If the <tt>value</tt> was non-zero, the bool result will be <tt>true</tt>.</p>
 
 <!-- _______________________________________________________________________ -->
 <div class="doc_subsubsection">
-   <a name="i_fp2sint">'<tt>fp2sint .. to</tt>' Instruction</a>
+   <a name="i_fptosi">'<tt>fptosi .. to</tt>' Instruction</a>
 </div>
 <div class="doc_text">
 
 <h5>Syntax:</h5>
 <pre>
-  &lt;result&gt; = fp2sint &lt;ty&gt; &lt;value&gt; to &lt;ty2&gt;             <i>; yields ty2</i>
+  &lt;result&gt; = fptosi &lt;ty&gt; &lt;value&gt; to &lt;ty2&gt;             <i>; yields ty2</i>
 </pre>
 
 <h5>Overview:</h5>
-<p>The '<tt>fp2sint</tt>' instruction converts 
+<p>The '<tt>fptosi</tt>' instruction converts 
 <a href="#t_floating">floating point</a> <tt>value</tt> to type <tt>ty2</tt>.
 </p>
 
 
 <h5>Arguments:</h5>
-<p> The '<tt>fp2sint</tt>' instruction takes a value to cast, which must be a 
+<p> The '<tt>fptosi</tt>' instruction takes a value to cast, which must be a 
 <a href="#t_floating">floating point</a> value, and a type to cast it to, which 
 must also be an <a href="#t_integral">integral</a> type.</p>
 
 <h5>Semantics:</h5>
-<p>The '<tt>fp2sint</tt>' instruction converts its 
+<p>The '<tt>fptosi</tt>' instruction converts its 
 <a href="#t_floating">floating point</a> operand into the nearest (rounding
 towards zero) signed integer value. If the value cannot fit in <tt>ty2</tt>,
 the results are undefined.</p>
@@ -2886,75 +2881,75 @@ If the <tt>value</tt> was non-zero, the bool result will be <tt>true</tt>.</p>
 
 <h5>Example:</h5>
 <pre>
-  %X = fp2sint double -123.0 to int        <i>; yields int:-123</i>
-  %Y = fp2sint float 1.0E-247 to bool      <i>; yields bool:true</i>
-  %X = fp2sint float 1.04E+17 to sbyte     <i>; yields undefined:1</i>
+  %X = fptosi double -123.0 to int        <i>; yields int:-123</i>
+  %Y = fptosi float 1.0E-247 to bool      <i>; yields bool:true</i>
+  %X = fptosi float 1.04E+17 to sbyte     <i>; yields undefined:1</i>
 </pre>
 </div>
 
 <!-- _______________________________________________________________________ -->
 <div class="doc_subsubsection">
-   <a name="i_uint2fp">'<tt>uint2fp .. to</tt>' Instruction</a>
+   <a name="i_uitofp">'<tt>uitofp .. to</tt>' Instruction</a>
 </div>
 <div class="doc_text">
 
 <h5>Syntax:</h5>
 <pre>
-  &lt;result&gt; = uint2fp &lt;ty&gt; &lt;value&gt; to &lt;ty2&gt;             <i>; yields ty2</i>
+  &lt;result&gt; = uitofp &lt;ty&gt; &lt;value&gt; to &lt;ty2&gt;             <i>; yields ty2</i>
 </pre>
 
 <h5>Overview:</h5>
-<p>The '<tt>uint2fp</tt>' instruction regards <tt>value</tt> as an unsigned
+<p>The '<tt>uitofp</tt>' instruction regards <tt>value</tt> as an unsigned
 integer and converts that value to the <tt>ty2</tt> type.</p>
 
 
 <h5>Arguments:</h5>
-<p>The '<tt>uint2fp</tt>' instruction takes a value to cast, which must be an
+<p>The '<tt>uitofp</tt>' instruction takes a value to cast, which must be an
 <a href="#t_integral">integral</a> value, and a type to cast it to, which must 
 be a <a href="#t_floating">floating point</a> type.</p>
 
 <h5>Semantics:</h5>
-<p>The '<tt>uint2fp</tt>' instruction interprets its operand as an unsigned
+<p>The '<tt>uitofp</tt>' instruction interprets its operand as an unsigned
 integer quantity and converts it to the corresponding floating point value. If
 the value cannot fit in the floating point value, the results are undefined.</p>
 
 
 <h5>Example:</h5>
 <pre>
-  %X = uint2fp int 257 to float         <i>; yields float:257.0</i>
-  %Y = uint2fp sbyte -1 to double       <i>; yields double:255.0</i>
+  %X = uitofp int 257 to float         <i>; yields float:257.0</i>
+  %Y = uitofp sbyte -1 to double       <i>; yields double:255.0</i>
 </pre>
 </div>
 
 <!-- _______________________________________________________________________ -->
 <div class="doc_subsubsection">
-   <a name="i_sint2fp">'<tt>sint2fp .. to</tt>' Instruction</a>
+   <a name="i_sitofp">'<tt>sitofp .. to</tt>' Instruction</a>
 </div>
 <div class="doc_text">
 
 <h5>Syntax:</h5>
 <pre>
-  &lt;result&gt; = sint2fp &lt;ty&gt; &lt;value&gt; to &lt;ty2&gt;             <i>; yields ty2</i>
+  &lt;result&gt; = sitofp &lt;ty&gt; &lt;value&gt; to &lt;ty2&gt;             <i>; yields ty2</i>
 </pre>
 
 <h5>Overview:</h5>
-<p>The '<tt>sint2fp</tt>' instruction regards <tt>value</tt> as a signed
+<p>The '<tt>sitofp</tt>' instruction regards <tt>value</tt> as a signed
 integer and converts that value to the <tt>ty2</tt> type.</p>
 
 <h5>Arguments:</h5>
-<p>The '<tt>sint2fp</tt>' instruction takes a value to cast, which must be an
+<p>The '<tt>sitofp</tt>' instruction takes a value to cast, which must be an
 <a href="#t_integral">integral</a> value, and a type to cast it to, which must be
 a <a href="#t_floating">floating point</a> type.</p>
 
 <h5>Semantics:</h5>
-<p>The '<tt>sint2fp</tt>' instruction interprets its operand as a signed
+<p>The '<tt>sitofp</tt>' instruction interprets its operand as a signed
 integer quantity and converts it to the corresponding floating point value. If
 the value cannot fit in the floating point value, the results are undefined.</p>
 
 <h5>Example:</h5>
 <pre>
-  %X = sint2fp int 257 to float         <i>; yields float:257.0</i>
-  %Y = sint2fp sbyte -1 to double       <i>; yields double:-1.0</i>
+  %X = sitofp int 257 to float         <i>; yields float:257.0</i>
+  %Y = sitofp sbyte -1 to double       <i>; yields double:-1.0</i>
 </pre>
 </div>
 
@@ -2983,8 +2978,8 @@ and the destination type, <tt>ty2</tt>, must be identical.</p>
 <p>The '<tt>bitconvert</tt>' instruction converts <tt>value</tt> to type
 <tt>ty2</tt> as if the value had been stored to memory and read back as type
 <tt>ty2</tt>. That is, no bits are changed during the conversion. The
-<tt>bitconvert</tt> instruction may be used to construct <i>no-op casts</i> that
-the <tt>zext, sext, and fpext</tt> instructions do not permit.</p>
+<tt>bitconvert</tt> instruction is the only conversion instruction that permits
+<i>no-op casts</i> to be constructed.</p>
 
 <h5>Example:</h5>
 <pre>
