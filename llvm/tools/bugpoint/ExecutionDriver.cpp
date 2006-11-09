@@ -28,7 +28,7 @@ namespace {
   // for miscompilation.
   //
   enum OutputType {
-    AutoPick, RunLLI, RunJIT, RunLLC, RunCBE, CBE_bug
+    AutoPick, RunLLI, RunJIT, RunLLC, RunCBE, CBE_bug, LLC_Safe
   };
 
   cl::opt<double>
@@ -47,6 +47,7 @@ namespace {
                             clEnumValN(RunLLC, "run-llc", "Compile with LLC"),
                             clEnumValN(RunCBE, "run-cbe", "Compile with CBE"),
                             clEnumValN(CBE_bug,"cbe-bug", "Find CBE bugs"),
+                            clEnumValN(LLC_Safe, "llc-safe", "Use LLC for all"),
                             clEnumValEnd),
                  cl::init(AutoPick));
 
@@ -133,6 +134,10 @@ bool BugDriver::initializeExecutionEnvironment() {
     Interpreter = AbstractInterpreter::createJIT(getToolName(), Message,
                                                  &ToolArgv);
     break;
+  case LLC_Safe:
+    Interpreter = AbstractInterpreter::createLLC(getToolName(), Message,
+                                                 &ToolArgv);
+    break;
   case RunCBE:
   case CBE_bug:
     Interpreter = AbstractInterpreter::createCBE(getToolName(), Message,
@@ -148,8 +153,9 @@ bool BugDriver::initializeExecutionEnvironment() {
   if (InterpreterSel == RunCBE) {
     // We already created a CBE, reuse it.
     cbe = Interpreter;
-  } else if (InterpreterSel == CBE_bug) {
-    // We want to debug the CBE itself.  Use LLC as the 'known-good' compiler.
+  } else if (InterpreterSel == CBE_bug || InterpreterSel == LLC_Safe) {
+    // We want to debug the CBE itself or LLC is known-good.  Use LLC as the
+    // 'known-good' compiler.
     std::vector<std::string> ToolArgs;
     ToolArgs.push_back("--relocation-model=pic");
     cbe = AbstractInterpreter::createLLC(getToolName(), Message, &ToolArgs);
