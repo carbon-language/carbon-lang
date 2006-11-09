@@ -441,8 +441,8 @@ static bool LinkGlobals(Module *Dest, Module *Src,
            SGV->hasExternalLinkage() || SGV->hasDLLImportLinkage() &&
            "Global must either be external or have an initializer!");
 
-    GlobalValue::LinkageTypes NewLinkage;
-    bool LinkFromSrc;
+    GlobalValue::LinkageTypes NewLinkage = GlobalValue::InternalLinkage;
+    bool LinkFromSrc = false;
     if (GetLinkageResult(DGV, SGV, NewLinkage, LinkFromSrc, Err))
       return true;
 
