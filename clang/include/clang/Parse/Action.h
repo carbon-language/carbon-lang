@@ -204,6 +204,13 @@ public:
   }
   virtual ExprResult ParseIntegerConstant(SourceLocation Loc) { return 0; }
   virtual ExprResult ParseFloatingConstant(SourceLocation Loc) { return 0; }
+  
+  /// ParseStringExpr - The specified tokens were lexed as pasted string
+  /// fragments (e.g. "foo" "bar" L"baz").
+  virtual ExprResult ParseStringExpr(const LexerToken *Toks, unsigned NumToks) {
+    return 0;
+  }
+  
   virtual ExprResult ParseParenExpr(SourceLocation L, SourceLocation R,
                                     ExprTy *Val) {
     return Val;  // Default impl returns operand.
@@ -292,33 +299,6 @@ public:
   virtual DeclTy *ParsedClassDeclaration(Scope *S,
                                          IdentifierInfo **IdentList,
                                          unsigned NumElts);
-  
-  //===--------------------------------------------------------------------===//
-  // Expression Parsing Callbacks.
-  //===--------------------------------------------------------------------===//
-  
-  /// ParseStringExpr - The specified tokens were lexed as pasted string
-  /// fragments (e.g. "foo" "bar" L"baz").
-  virtual ExprResult ParseStringExpr(const LexerToken *Toks, unsigned NumToks){
-    return 0;
-  }
-  
-};
-
-/// SemanticAction - Clients the implement this interface expect Decl nodes to 
-/// be created, name lookup to be performed, and full semantic analysis of the
-/// source program to be performed.
-class SemanticAction : public Action {
-public:
-  
-  /// ParseStringExpr - The (null terminated) string data is specified with
-  /// StrData+StrLen.  isWide is true if this is a wide string. The Toks/NumToks
-  /// array exposes the input tokens to provide location information.
-  virtual ExprResult ParseStringExpr(const char *StrData, unsigned StrLen,
-                                     bool isWide,
-                                     SourceLocation *TokLocs, unsigned NumToks){
-    return 0;
-  }
   
 };
 

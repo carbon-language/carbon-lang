@@ -41,17 +41,10 @@ class Parser {
   /// and SemaActions for those uses that don't matter.
   Action &Actions;
   
-  /// MinimalActions/SemaActions - Exactly one of these two pointers is non-null
-  /// depending on whether the client of the parser wants semantic analysis,
-  /// name binding, and Decl creation performed or not.
-  MinimalAction  *MinimalActions;
-  SemanticAction *SemaActions;
-  
   Scope *CurScope;
   Diagnostic &Diags;
 public:
-  Parser(Preprocessor &PP, MinimalAction &MinActions);
-  Parser(Preprocessor &PP, SemanticAction &SemaActions);
+  Parser(Preprocessor &PP, Action &Actions);
   ~Parser();
 
   const LangOptions &getLang() const { return PP.getLangOptions(); }
@@ -349,8 +342,6 @@ private:
   void ParseDirectDeclarator(Declarator &D);
   void ParseParenDeclarator(Declarator &D);
   void ParseBracketDeclarator(Declarator &D);
-  
-  DeclTy *SemaInitDeclarator(Declarator &D, ExprTy *Init, DeclTy *LastInGroup);
 };
 
 }  // end namespace clang

@@ -17,20 +17,8 @@
 using namespace llvm;
 using namespace clang;
 
-Parser::Parser(Preprocessor &pp, MinimalAction &MinActions)
-  : PP(pp), Actions(MinActions), Diags(PP.getDiagnostics()) {
-  MinimalActions = &MinActions;
-  SemaActions = 0;
-  Tok.setKind(tok::eof);
-  CurScope = 0;
-  
-  ParenCount = BracketCount = BraceCount = 0;
-}
-
-Parser::Parser(Preprocessor &pp, SemanticAction &SemanticActions)
-  : PP(pp), Actions(SemanticActions), Diags(PP.getDiagnostics()) {
-  MinimalActions = 0;
-  SemaActions = &SemanticActions;
+Parser::Parser(Preprocessor &pp, Action &actions)
+  : PP(pp), Actions(actions), Diags(PP.getDiagnostics()) {
   Tok.setKind(tok::eof);
   CurScope = 0;
   

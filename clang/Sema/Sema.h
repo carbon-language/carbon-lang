@@ -26,7 +26,7 @@ namespace clang {
 /// builds AST nodes for the code being parsed.  Clients can either use this
 /// unmodified or subclass it and overload methods to do more specialized
 /// things.
-class ASTBuilder : public SemanticAction {
+class ASTBuilder : public Action {
   Preprocessor &PP;
   
   /// LastInGroupList - This vector is populated when there are multiple
@@ -99,10 +99,11 @@ public:
   virtual ExprResult ParseFloatingConstant(SourceLocation Loc);
   virtual ExprResult ParseParenExpr(SourceLocation L, SourceLocation R,
                                     ExprTy *Val);
-  virtual ExprResult ParseStringExpr(const char *StrData, unsigned StrLen,
-                                     bool isWide,
-                                     SourceLocation *TokLocs, unsigned NumToks);
-  
+
+  /// ParseStringExpr - The specified tokens were lexed as pasted string
+  /// fragments (e.g. "foo" "bar" L"baz").
+  virtual ExprResult ParseStringExpr(const LexerToken *Toks, unsigned NumToks);
+    
   // Binary/Unary Operators.  'Tok' is the token for the operator.
   virtual ExprResult ParseUnaryOp(SourceLocation OpLoc, tok::TokenKind Op,
                                   ExprTy *Input);

@@ -145,8 +145,7 @@ ParseInitDeclaratorListAfterFirstDeclarator(Declarator &D) {
       }
     }
     
-    // Inform the current actions module that we just parsed a declarator or
-    // invoke semantic analysis for this declarator.
+    // Inform the current actions module that we just parsed this declarator.
     // FIXME: pass asm & attributes.
     LastDeclInGroup = Actions.ParseDeclarator(CurScope, D, Init.Val,
                                               LastDeclInGroup);
