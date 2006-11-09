@@ -36,11 +36,13 @@ ExecutionEngine::EECtorFn ExecutionEngine::JITCtor = 0;
 ExecutionEngine::EECtorFn ExecutionEngine::InterpCtor = 0;
 
 ExecutionEngine::ExecutionEngine(ModuleProvider *P) {
+  LazyCompilationDisabled = false;
   Modules.push_back(P);
   assert(P && "ModuleProvider is null?");
 }
 
 ExecutionEngine::ExecutionEngine(Module *M) {
+  LazyCompilationDisabled = false;
   assert(M && "Module is null?");
   Modules.push_back(new ExistingModuleProvider(M));
 }
