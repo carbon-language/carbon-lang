@@ -1,0 +1,125 @@
+#!/bin/bash
+#
+#  findmisopt
+#
+#      This is a quick and dirty hack to potentially find a misoptimization
+#      problem. Mostly its to work around problems in bugpoint that prevent
+#      it from finding a problem unless the set of failing optimizations are
+#      known and given to it on the command line.
+#
+#      Given a bytecode file that produces correct output (or return code), 
+#      this script will run through all the optimizations passes that gccas
+#      uses (in the same order) and will narrow down which optimizations
+#      cause the program either generate different output or return a 
+#      different result code. When the passes have been narrowed down, 
+#      bugpoint is invoked to further refine the problem to its origin.
+#
+#   Usage:
+#      findmisopt bcfile outdir progargs [match]
+#
+#   Where:
+#      bcfile 
+#          is the bytecode file input (the unoptimized working case)
+#      outdir
+#          is a directory into which intermediate results are placed
+#      progargs
+#          is a single argument containing all the arguments the program needs
+#       match
+#          if specified to any value causes the result code of the program to
+#          be used to determine success/fail. If not specified success/fail is
+#          determined by diffing the program's output with the non-optimized
+#          output.
+#       
+bcfile="$1"
+outdir="$2"
+args="$3"
+match="$4"
+name=`basename $bcfile .bc`
+ll="$outdir/${name}.ll"
+s="$outdir/${name}.s"
+prog="$outdir/${name}"
+out="$outdir/${name}.out"
+optbc="$outdir/${name}.opt.bc"
+optll="$outdir/${name}.opt.ll"
+opts="$outdir/${name}.opt.s"
+optprog="$outdir/${name}.opt"
+optout="$outdir/${name}.opt.out"
+
+echo "Test Name: $name"
+echo "Unoptimized program: $prog"
+echo "  Optimized program: $optprog"
+
+
+# Generate the disassembly
+llvm-dis "$bcfile" -o "$ll" -f || exit 1
+
+# Generate the non-optimized program
+llc "$bcfile" -o "$s" -f || exit 1
+gcc "$s" -o "$prog" || exit 1
+
+# Define the list of optimizations to run
+all_switches="-verify -lowersetjmp -funcresolve -raiseallocs -simplifycfg -mem2reg -globalopt -globaldce -ipconstprop -deadargelim -instcombine -simplifycfg -prune-eh -inline -simplify-libcalls -argpromotion -raise -tailduplicate -simplifycfg -scalarrepl -instcombine -predsimplify -condprop -tailcallelim -simplifycfg -reassociate -licm -loop-unswitch -instcombine -indvars -loop-unroll -instcombine -load-vn -gcse -sccp -instcombine -condprop -dse -dce -simplifycfg -deadtypeelim -constmerge"
+
+# Current set of switches is empty
+function tryit {
+  switches_to_use="$1"
+  opt $switches_to_use "$bcfile" -o "$optbc" -f || exit
+  llvm-dis "$optbc" -o "$optll" -f || exit
+  llc "$optbc" -o "$opts" -f || exit
+  gcc "$opts" -o "$optprog" || exit
+  "$prog" $args > "$out"
+  ex1=$?
+  "$optprog" $args > "$optout"
+  ex2=$?
+
+  if [ -n "$match" ] ; then
+    if [ "$ex1" -ne "$ex2" ] ; then
+      echo "Return code not the same with these switches:"
+      echo $switches
+      echo "Unoptimized returned: $ex1"
+      echo "Optimized   returned: $ex2"
+      return 0
+    fi
+  else
+    diff "$out" "$optout" > /dev/null
+    if [ $? -ne 0 ] ; then
+      echo "Diff fails with these switches:"
+      echo $switches
+      echo "Differences:"
+      diff "$out" "$optout" 
+      return 0;
+    fi
+  fi
+  return 1
+}
+
+for sw in $all_switches ; do
+  switches="$switches $sw"
+  if tryit "$switches" ; then
+    break;
+  fi
+done
+
+final=""
+while [ ! -z "$switches" ] ; do
+  trimmed=`echo "$switches" | sed -e 's/^ *\(-[^ ]*\).*/\1/'`
+  switches=`echo "$switches" | sed -e 's/^ *-[^ ]* *//'`
+  echo "Trimmed $trimmed from left"
+  tryit "$final $switches"
+  if [ "$?" -eq "0" ] ; then
+    echo "Still Failing .. continuing ..."
+    continue
+  else
+    echo "Found required early pass: $trimmed"
+    final="$final $trimmed"
+    continue
+  fi
+  echo "Next Loop"
+done
+
+echo "Smallest Optimization list= $final"
+bpcmd="bugpoint -run-llc --output "$out" --input /dev/null $bcfile $final --args $args"
+
+echo "Running: $bpcmd"
+$bpcmd
+echo "Finished."
