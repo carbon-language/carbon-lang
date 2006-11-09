@@ -227,3 +227,16 @@ int %test32(int %A) {
 	%D = sub int %C, 16
 	ret int %D
 }
+
+ubyte %test33(ubyte %A) {   ;; OR A, 1
+        %B = and ubyte %A, 254
+        %C = add ubyte %B, 1
+        ret ubyte %C
+}
+
+ubyte %test34(ubyte %A) {
+        %B = add ubyte %A, 64   ;; dead
+        %C = and ubyte %B, 12
+        ret ubyte %C
+}
+
