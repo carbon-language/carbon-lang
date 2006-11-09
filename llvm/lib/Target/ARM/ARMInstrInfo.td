@@ -28,11 +28,6 @@ def op_addr_mode5 : Operand<iPTR> {
   let MIOperandInfo = (ops ptr_rc, i32imm);
 }
 
-def memri : Operand<iPTR> {
-  let PrintMethod = "printMemRegImm";
-  let MIOperandInfo = (ops i32imm, ptr_rc);
-}
-
 // Define ARM specific addressing mode.
 //Addressing Mode 1: data processing operands
 def addr_mode1 : ComplexPattern<iPTR, 3, "SelectAddrMode1", [imm, sra, shl, srl],
@@ -43,11 +38,6 @@ def addr_mode2 : ComplexPattern<iPTR, 2, "SelectAddrMode2", [], []>;
 
 //Addressing Mode 5: VFP load/store
 def addr_mode5 : ComplexPattern<iPTR, 2, "SelectAddrMode5", [], []>;
-
-//register plus/minus 12 bit offset
-def iaddr  : ComplexPattern<iPTR, 2, "SelectAddrRegImm", [frameindex], []>;
-//register plus scaled register
-//def raddr  : ComplexPattern<iPTR, 2, "SelectAddrRegReg", [], []>;
 
 //===----------------------------------------------------------------------===//
 // Instruction Class Templates
@@ -203,13 +193,6 @@ def MOV   : InstARM<(ops IntRegs:$dst, op_addr_mode1:$src),
 def ADD     : Addr1BinOp<"add",  add>;
 def ADCS    : Addr1BinOp<"adcs", adde>;
 def ADDS    : Addr1BinOp<"adds", addc>;
-
-// "LEA" forms of add
-def lea_addri : InstARM<(ops IntRegs:$dst, memri:$addr),
-			 "add $dst, ${addr:arith}",
-                	 [(set IntRegs:$dst, iaddr:$addr)]>;
-
-
 def SUB     : Addr1BinOp<"sub",  sub>;
 def SBCS    : Addr1BinOp<"sbcs", sube>;
 def SUBS    : Addr1BinOp<"subs", subc>;

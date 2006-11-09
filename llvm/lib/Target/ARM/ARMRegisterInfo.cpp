@@ -129,11 +129,11 @@ ARMRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II) const {
   MachineFunction &MF = *MBB.getParent();
 
   assert (MI.getOpcode() == ARM::LDR ||
-	  MI.getOpcode() == ARM::STR ||
-	  MI.getOpcode() == ARM::lea_addri);
+          MI.getOpcode() == ARM::STR ||
+          MI.getOpcode() == ARM::ADD);
 
-  unsigned FrameIdx = MI.getOpcode() == ARM::lea_addri ? 2 : 1;
-  unsigned OffIdx = MI.getOpcode() == ARM::lea_addri ? 1 : 2;
+  unsigned FrameIdx = 1;
+  unsigned   OffIdx = 2;
 
   int FrameIndex = MI.getOperand(FrameIdx).getFrameIndex();
 

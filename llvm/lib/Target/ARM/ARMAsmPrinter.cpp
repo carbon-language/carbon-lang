@@ -78,33 +78,6 @@ namespace {
     void printAddrMode1(const MachineInstr *MI, int opNum);
     void printAddrMode2(const MachineInstr *MI, int opNum);
     void printAddrMode5(const MachineInstr *MI, int opNum);
-
-    void printMemRegImm(const MachineInstr *MI, int opNum,
-			const char *Modifier = NULL) {
-      const MachineOperand &MO1 = MI->getOperand(opNum);
-      const MachineOperand &MO2 = MI->getOperand(opNum + 1);
-      assert(MO1.isImmediate());
-      bool arith = false;
-      if (Modifier != NULL) {
-	assert(strcmp(Modifier, "arith") == 0);
-	arith = true;
-      }
-
-      if (MO2.isConstantPoolIndex()) {
-	printOperand(MI, opNum + 1);
-      } else if (MO2.isRegister()) {
-	if(!arith)
-	  O << '[';
-	printOperand(MI, opNum + 1);
-	O << ", ";
-	printOperand(MI, opNum);
-	if(!arith)
-	  O << ']';
-      } else {
-	assert(0 && "Invalid Operand Type");
-      }
-    }
-
     void printOperand(const MachineInstr *MI, int opNum);
     void printMemOperand(const MachineInstr *MI, int opNum,
                          const char *Modifier = 0);

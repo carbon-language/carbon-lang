@@ -751,8 +751,6 @@ public:
 
   SDNode *Select(SDOperand Op);
   virtual void InstructionSelectBasicBlock(SelectionDAG &DAG);
-  bool SelectAddrRegImm(SDOperand Op, SDOperand N, SDOperand &Offset,
-                        SDOperand &Base);
   bool SelectAddrMode1(SDOperand Op, SDOperand N, SDOperand &Arg,
                        SDOperand &Shift, SDOperand &ShiftType);
   bool SelectAddrMode2(SDOperand Op, SDOperand N, SDOperand &Arg,
@@ -895,37 +893,6 @@ bool ARMDAGToDAGISel::SelectAddrMode5(SDOperand Op,
   return true;
 }
 
-//register plus/minus 12 bit offset
-bool ARMDAGToDAGISel::SelectAddrRegImm(SDOperand Op,
-                                      SDOperand N, SDOperand &Offset,
-				    SDOperand &Base) {
-  if (FrameIndexSDNode *FIN = dyn_cast<FrameIndexSDNode>(N)) {
-    Base = CurDAG->getTargetFrameIndex(FIN->getIndex(), MVT::i32);
-    Offset = CurDAG->getTargetConstant(0, MVT::i32);
-    return true;
-  }
-  if (N.getOpcode() == ISD::ADD) {
-    short imm = 0;
-    if (isInt12Immediate(N.getOperand(1), imm)) {
-      Offset = CurDAG->getTargetConstant(imm, MVT::i32);
-      if (FrameIndexSDNode *FI = dyn_cast<FrameIndexSDNode>(N.getOperand(0))) {
-	Base = CurDAG->getTargetFrameIndex(FI->getIndex(), N.getValueType());
-      } else {
-	Base = N.getOperand(0);
-      }
-      return true; // [r+i]
-    }
-  }
-
-  Offset = CurDAG->getTargetConstant(0, MVT::i32);
-  if (FrameIndexSDNode *FI = dyn_cast<FrameIndexSDNode>(N)) {
-    Base = CurDAG->getTargetFrameIndex(FI->getIndex(), N.getValueType());
-  }
-  else
-    Base = N;
-  return true;      //any address fits in a register
-}
-
 SDNode *ARMDAGToDAGISel::Select(SDOperand Op) {
   SDNode *N = Op.Val;
 
@@ -933,8 +900,18 @@ SDNode *ARMDAGToDAGISel::Select(SDOperand Op) {
   default:
     return SelectCode(Op);
     break;
+  case ISD::FrameIndex: {
+    int FI = cast<FrameIndexSDNode>(N)->getIndex();
+    SDOperand Ops[] = {CurDAG->getTargetFrameIndex(FI, MVT::i32),
+                       CurDAG->getTargetConstant(0, MVT::i32),
+                       CurDAG->getTargetConstant(0, MVT::i32),
+                       CurDAG->getTargetConstant(ARMShift::LSL, MVT::i32)};
+
+    return CurDAG->SelectNodeTo(N, ARM::ADD, MVT::i32, Ops,
+                                sizeof(Ops)/sizeof(SDOperand));
+    break;
   }
-  return NULL;
+  }
 }
 
 }  // end anonymous namespace
