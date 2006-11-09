@@ -132,8 +132,7 @@ bool Inliner::runOnSCC(const std::vector<CallGraphNode*> &SCC) {
           // Attempt to inline the function...
           if (InlineCallIfPossible(CS, CG, SCCFunctions)) {
             // Remove this call site from the list.
-            std::swap(CallSites[CSi], CallSites.back());
-            CallSites.pop_back();
+            CallSites.erase(CallSites.begin()+CSi);
             --CSi;
 
             ++NumInlined;
