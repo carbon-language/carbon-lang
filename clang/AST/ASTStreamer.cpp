@@ -24,7 +24,7 @@ namespace {
     std::vector<Decl*> LastInGroupList;
   public:
     ASTStreamer(Preprocessor &PP, unsigned MainFileID)
-      : P(PP, *new ASTBuilder(PP, LastInGroupList)) {
+      : P(PP, *new Sema(PP, LastInGroupList)) {
       PP.EnterSourceFile(MainFileID, 0, true);
       
       // Initialize the parser.

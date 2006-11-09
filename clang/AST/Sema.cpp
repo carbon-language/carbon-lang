@@ -29,14 +29,14 @@ using namespace clang;
 // Symbol table tracking callbacks.
 //===----------------------------------------------------------------------===//
 
-bool ASTBuilder::isTypeName(const IdentifierInfo &II, Scope *S) const {
+bool Sema::isTypeName(const IdentifierInfo &II, Scope *S) const {
   Decl *D = II.getFETokenInfo<Decl>();
   return D != 0 && D->getDeclSpec().StorageClassSpec == DeclSpec::SCS_typedef;
 }
 
 Action::DeclTy *
-ASTBuilder::ParseDeclarator(Scope *S, Declarator &D, ExprTy *Init, 
-                            DeclTy *LastInGroup) {
+Sema::ParseDeclarator(Scope *S, Declarator &D, ExprTy *Init, 
+                      DeclTy *LastInGroup) {
   IdentifierInfo *II = D.getIdentifier();
   Decl *PrevDecl = II ? II->getFETokenInfo<Decl>() : 0;
 
@@ -62,7 +62,7 @@ ASTBuilder::ParseDeclarator(Scope *S, Declarator &D, ExprTy *Init,
 }
 
 Action::DeclTy *
-ASTBuilder::ParseFunctionDefinition(Scope *S, Declarator &D, StmtTy *Body) {
+Sema::ParseFunctionDefinition(Scope *S, Declarator &D, StmtTy *Body) {
   FunctionDecl *FD = (FunctionDecl *)ParseDeclarator(S, D, 0, 0);
   
   FD->setBody((Stmt*)Body);
@@ -70,7 +70,7 @@ ASTBuilder::ParseFunctionDefinition(Scope *S, Declarator &D, StmtTy *Body) {
   return FD;
 }
 
-void ASTBuilder::PopScope(SourceLocation Loc, Scope *S) {
+void Sema::PopScope(SourceLocation Loc, Scope *S) {
   for (Scope::decl_iterator I = S->decl_begin(), E = S->decl_end();
        I != E; ++I) {
     IdentifierInfo &II = *static_cast<IdentifierInfo*>(*I);
@@ -91,8 +91,8 @@ void ASTBuilder::PopScope(SourceLocation Loc, Scope *S) {
 //===--------------------------------------------------------------------===//
 
 Action::StmtResult 
-ASTBuilder::ParseCompoundStmt(SourceLocation L, SourceLocation R,
-                              StmtTy **Elts, unsigned NumElts) {
+Sema::ParseCompoundStmt(SourceLocation L, SourceLocation R,
+                        StmtTy **Elts, unsigned NumElts) {
   if (NumElts > 1)
     return new CompoundStmt((Stmt**)Elts, NumElts);
   else if (NumElts == 1)
@@ -102,80 +102,78 @@ ASTBuilder::ParseCompoundStmt(SourceLocation L, SourceLocation R,
 }
 
 Action::StmtResult
-ASTBuilder::ParseCaseStmt(SourceLocation CaseLoc, ExprTy *LHSVal,
-                          SourceLocation DotDotDotLoc, ExprTy *RHSVal,
-                          SourceLocation ColonLoc, StmtTy *SubStmt) {
+Sema::ParseCaseStmt(SourceLocation CaseLoc, ExprTy *LHSVal,
+                    SourceLocation DotDotDotLoc, ExprTy *RHSVal,
+                    SourceLocation ColonLoc, StmtTy *SubStmt) {
   return new CaseStmt((Expr*)LHSVal, (Expr*)RHSVal, (Stmt*)SubStmt);
 }
 
 Action::StmtResult
-ASTBuilder::ParseDefaultStmt(SourceLocation DefaultLoc,
-                             SourceLocation ColonLoc, StmtTy *SubStmt) {
+Sema::ParseDefaultStmt(SourceLocation DefaultLoc,
+                       SourceLocation ColonLoc, StmtTy *SubStmt) {
   return new DefaultStmt((Stmt*)SubStmt);
 }
 
 Action::StmtResult
-ASTBuilder::ParseLabelStmt(SourceLocation IdentLoc, IdentifierInfo *II,
-                           SourceLocation ColonLoc, StmtTy *SubStmt) {
+Sema::ParseLabelStmt(SourceLocation IdentLoc, IdentifierInfo *II,
+                     SourceLocation ColonLoc, StmtTy *SubStmt) {
   return new LabelStmt(II, (Stmt*)SubStmt);
 }
 
 Action::StmtResult 
-ASTBuilder::ParseIfStmt(SourceLocation IfLoc, ExprTy *CondVal,
-                        StmtTy *ThenVal, SourceLocation ElseLoc,
-                        StmtTy *ElseVal) {
+Sema::ParseIfStmt(SourceLocation IfLoc, ExprTy *CondVal,
+                  StmtTy *ThenVal, SourceLocation ElseLoc,
+                  StmtTy *ElseVal) {
   return new IfStmt((Expr*)CondVal, (Stmt*)ThenVal, (Stmt*)ElseVal);
 }
 Action::StmtResult
-ASTBuilder::ParseSwitchStmt(SourceLocation SwitchLoc, ExprTy *Cond,
-                            StmtTy *Body) {
+Sema::ParseSwitchStmt(SourceLocation SwitchLoc, ExprTy *Cond, StmtTy *Body) {
   return new SwitchStmt((Expr*)Cond, (Stmt*)Body);
 }
 
 Action::StmtResult
-ASTBuilder::ParseWhileStmt(SourceLocation WhileLoc, ExprTy *Cond, StmtTy *Body){
+Sema::ParseWhileStmt(SourceLocation WhileLoc, ExprTy *Cond, StmtTy *Body){
   return new WhileStmt((Expr*)Cond, (Stmt*)Body);
 }
 
 Action::StmtResult
-ASTBuilder::ParseDoStmt(SourceLocation DoLoc, StmtTy *Body,
-                        SourceLocation WhileLoc, ExprTy *Cond) {
+Sema::ParseDoStmt(SourceLocation DoLoc, StmtTy *Body,
+                  SourceLocation WhileLoc, ExprTy *Cond) {
   return new DoStmt((Stmt*)Body, (Expr*)Cond);
 }
 
 Action::StmtResult 
-ASTBuilder::ParseForStmt(SourceLocation ForLoc, SourceLocation LParenLoc, 
-                         StmtTy *First, ExprTy *Second, ExprTy *Third,
-                         SourceLocation RParenLoc, StmtTy *Body) {
+Sema::ParseForStmt(SourceLocation ForLoc, SourceLocation LParenLoc, 
+                   StmtTy *First, ExprTy *Second, ExprTy *Third,
+                   SourceLocation RParenLoc, StmtTy *Body) {
   return new ForStmt((Stmt*)First, (Expr*)Second, (Expr*)Third, (Stmt*)Body);
 }
 
 
 Action::StmtResult 
-ASTBuilder::ParseGotoStmt(SourceLocation GotoLoc, SourceLocation LabelLoc,
-                          IdentifierInfo *LabelII) {
+Sema::ParseGotoStmt(SourceLocation GotoLoc, SourceLocation LabelLoc,
+                    IdentifierInfo *LabelII) {
   return new GotoStmt(LabelII);
 }
 Action::StmtResult 
-ASTBuilder::ParseIndirectGotoStmt(SourceLocation GotoLoc,SourceLocation StarLoc,
-                                  ExprTy *DestExp) {
+Sema::ParseIndirectGotoStmt(SourceLocation GotoLoc,SourceLocation StarLoc,
+                            ExprTy *DestExp) {
   return new IndirectGotoStmt((Expr*)DestExp);
 }
 
 Action::StmtResult 
-ASTBuilder::ParseContinueStmt(SourceLocation ContinueLoc) {
+Sema::ParseContinueStmt(SourceLocation ContinueLoc) {
   return new ContinueStmt();
 }
 
 Action::StmtResult 
-ASTBuilder::ParseBreakStmt(SourceLocation GotoLoc) {
+Sema::ParseBreakStmt(SourceLocation GotoLoc) {
   return new BreakStmt();
 }
 
 
 Action::StmtResult
-ASTBuilder::ParseReturnStmt(SourceLocation ReturnLoc,
-                            ExprTy *RetValExp) {
+Sema::ParseReturnStmt(SourceLocation ReturnLoc, ExprTy *RetValExp) {
   return new ReturnStmt((Expr*)RetValExp);
 }
 
@@ -183,8 +181,8 @@ ASTBuilder::ParseReturnStmt(SourceLocation ReturnLoc,
 // Expression Parsing Callbacks.
 //===--------------------------------------------------------------------===//
 
-Action::ExprResult ASTBuilder::ParseSimplePrimaryExpr(SourceLocation Loc,
-                                                      tok::TokenKind Kind) {
+Action::ExprResult Sema::ParseSimplePrimaryExpr(SourceLocation Loc,
+                                                tok::TokenKind Kind) {
   switch (Kind) {
   default:
     assert(0 && "Unknown simple primary expr!");
@@ -203,16 +201,15 @@ Action::ExprResult ASTBuilder::ParseSimplePrimaryExpr(SourceLocation Loc,
   }
 }
 
-Action::ExprResult ASTBuilder::ParseIntegerConstant(SourceLocation Loc) {
+Action::ExprResult Sema::ParseIntegerConstant(SourceLocation Loc) {
   return new IntegerConstant();
 }
-Action::ExprResult ASTBuilder::ParseFloatingConstant(SourceLocation Loc) {
+Action::ExprResult Sema::ParseFloatingConstant(SourceLocation Loc) {
   return new FloatingConstant();
 }
 
-Action::ExprResult ASTBuilder::ParseParenExpr(SourceLocation L, 
-                                              SourceLocation R,
-                                              ExprTy *Val) {
+Action::ExprResult Sema::ParseParenExpr(SourceLocation L, SourceLocation R,
+                                        ExprTy *Val) {
   return Val;
 }
 
@@ -236,8 +233,7 @@ static int HexDigitValue(char C) {
 /// #6]), so it may come from multiple tokens.
 /// 
 Action::ExprResult
-ASTBuilder::ParseStringExpr(const LexerToken *StringToks,
-                            unsigned NumStringToks) {
+Sema::ParseStringExpr(const LexerToken *StringToks, unsigned NumStringToks) {
   assert(NumStringToks && "Must have at least one string!");
 
   // Scan all of the string portions, remember the max individual token length,
@@ -436,9 +432,8 @@ ASTBuilder::ParseStringExpr(const LexerToken *StringToks,
 }
 
 // Unary Operators.  'Tok' is the token for the operator.
-Action::ExprResult ASTBuilder::ParseUnaryOp(SourceLocation OpLoc,
-                                            tok::TokenKind Op,
-                                            ExprTy *Input) {
+Action::ExprResult Sema::ParseUnaryOp(SourceLocation OpLoc, tok::TokenKind Op,
+                                      ExprTy *Input) {
   UnaryOperator::Opcode Opc;
   switch (Op) {
   default: assert(0 && "Unknown unary op!");
@@ -464,7 +459,7 @@ Action::ExprResult ASTBuilder::ParseUnaryOp(SourceLocation OpLoc,
   return new UnaryOperator((Expr*)Input, Opc);
 }
 
-Action::ExprResult ASTBuilder::
+Action::ExprResult Sema::
 ParseSizeOfAlignOfTypeExpr(SourceLocation OpLoc, bool isSizeof, 
                            SourceLocation LParenLoc, TypeTy *Ty,
                            SourceLocation RParenLoc) {
@@ -472,9 +467,9 @@ ParseSizeOfAlignOfTypeExpr(SourceLocation OpLoc, bool isSizeof,
 }
 
 
-Action::ExprResult ASTBuilder::ParsePostfixUnaryOp(SourceLocation OpLoc, 
-                                                   tok::TokenKind Kind,
-                                                   ExprTy *Input) {
+Action::ExprResult Sema::ParsePostfixUnaryOp(SourceLocation OpLoc, 
+                                             tok::TokenKind Kind,
+                                             ExprTy *Input) {
   UnaryOperator::Opcode Opc;
   switch (Kind) {
   default: assert(0 && "Unknown unary op!");
@@ -485,13 +480,13 @@ Action::ExprResult ASTBuilder::ParsePostfixUnaryOp(SourceLocation OpLoc,
   return new UnaryOperator((Expr*)Input, Opc);
 }
 
-Action::ExprResult ASTBuilder::
+Action::ExprResult Sema::
 ParseArraySubscriptExpr(ExprTy *Base, SourceLocation LLoc,
                         ExprTy *Idx, SourceLocation RLoc) {
   return new ArraySubscriptExpr((Expr*)Base, (Expr*)Idx);
 }
 
-Action::ExprResult ASTBuilder::
+Action::ExprResult Sema::
 ParseMemberReferenceExpr(ExprTy *Base, SourceLocation OpLoc,
                          tok::TokenKind OpKind, SourceLocation MemberLoc,
                          IdentifierInfo &Member) {
@@ -503,14 +498,14 @@ ParseMemberReferenceExpr(ExprTy *Base, SourceLocation OpLoc,
 /// ParseCallExpr - Handle a call to Fn with the specified array of arguments.
 /// This provides the location of the left/right parens and a list of comma
 /// locations.
-Action::ExprResult ASTBuilder::
+Action::ExprResult Sema::
 ParseCallExpr(ExprTy *Fn, SourceLocation LParenLoc,
               ExprTy **Args, unsigned NumArgs,
               SourceLocation *CommaLocs, SourceLocation RParenLoc) {
   return new CallExpr((Expr*)Fn, (Expr**)Args, NumArgs);
 }
 
-Action::ExprResult ASTBuilder::
+Action::ExprResult Sema::
 ParseCastExpr(SourceLocation LParenLoc, TypeTy *Ty,
               SourceLocation RParenLoc, ExprTy *Op) {
   return new CastExpr((Type*)Ty, (Expr*)Op);
@@ -519,9 +514,8 @@ ParseCastExpr(SourceLocation LParenLoc, TypeTy *Ty,
 
 
 // Binary Operators.  'Tok' is the token for the operator.
-Action::ExprResult ASTBuilder::ParseBinOp(SourceLocation TokLoc, 
-                                          tok::TokenKind Kind, ExprTy *LHS,
-                                          ExprTy *RHS) {
+Action::ExprResult Sema::ParseBinOp(SourceLocation TokLoc, tok::TokenKind Kind,
+                                    ExprTy *LHS, ExprTy *RHS) {
   BinaryOperator::Opcode Opc;
   switch (Kind) {
   default: assert(0 && "Unknown binop!");
@@ -562,10 +556,10 @@ Action::ExprResult ASTBuilder::ParseBinOp(SourceLocation TokLoc,
 
 /// ParseConditionalOp - Parse a ?: operation.  Note that 'LHS' may be null
 /// in the case of a the GNU conditional expr extension.
-Action::ExprResult ASTBuilder::ParseConditionalOp(SourceLocation QuestionLoc, 
-                                                  SourceLocation ColonLoc,
-                                                  ExprTy *Cond, ExprTy *LHS,
-                                                  ExprTy *RHS) {
+Action::ExprResult Sema::ParseConditionalOp(SourceLocation QuestionLoc, 
+                                            SourceLocation ColonLoc,
+                                            ExprTy *Cond, ExprTy *LHS,
+                                            ExprTy *RHS) {
   return new ConditionalOperator((Expr*)Cond, (Expr*)LHS, (Expr*)RHS);
 }
 

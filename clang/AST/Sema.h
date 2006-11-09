@@ -1,4 +1,4 @@
-//===--- ASTBuilder.h - Stream ASTs for top-level decls --------*- C++ -*-===//
+//===--- Sema.h - Semantic Analysis & AST Building --------------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,12 +7,13 @@
 //
 //===----------------------------------------------------------------------===//
 //
-//  This file defines the ASTBuilder interface.
+// This file defines the Sema class, which performs semantic analysis and
+// builds ASTs.
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_CLANG_AST_ASTBUILDER_H
-#define LLVM_CLANG_AST_ASTBUILDER_H
+#ifndef LLVM_CLANG_AST_SEMA_H
+#define LLVM_CLANG_AST_SEMA_H
 
 #include "clang/Parse/Action.h"
 #include <vector>
@@ -22,11 +23,8 @@ namespace clang {
   class Preprocessor;
   class Decl;
   
-/// ASTBuilder - This is a simple implementation of the actions module which
-/// builds AST nodes for the code being parsed.  Clients can either use this
-/// unmodified or subclass it and overload methods to do more specialized
-/// things.
-class ASTBuilder : public Action {
+/// Sema - This implements semantic analysis and AST building for C.
+class Sema : public Action {
   Preprocessor &PP;
   
   /// LastInGroupList - This vector is populated when there are multiple
@@ -35,7 +33,7 @@ class ASTBuilder : public Action {
   /// ASTStreamer.
   std::vector<Decl*> &LastInGroupList;
 public:
-  ASTBuilder(Preprocessor &pp, std::vector<Decl*> &prevInGroup)
+  Sema(Preprocessor &pp, std::vector<Decl*> &prevInGroup)
     : PP(pp), LastInGroupList(prevInGroup) {}
   
   //===--------------------------------------------------------------------===//
