@@ -29,6 +29,14 @@ TargetLowering::TargetLowering(TargetMachine &tm)
   memset(OpActions, 0, sizeof(OpActions));
   memset(LoadXActions, 0, sizeof(LoadXActions));
   memset(&StoreXActions, 0, sizeof(StoreXActions));
+  // Initialize all indexed load / store to expand.
+  for (unsigned VT = 0; VT != (unsigned)MVT::LAST_VALUETYPE; ++VT) {
+    for (unsigned IM = (unsigned)ISD::PRE_INC;
+         IM != (unsigned)ISD::LAST_INDEXED_MODE; ++IM) {
+      setIndexedLoadAction(IM, (MVT::ValueType)VT, Expand);
+      setIndexedStoreAction(IM, (MVT::ValueType)VT, Expand);
+    }
+  }
 
   IsLittleEndian = TD->isLittleEndian();
   UsesGlobalOffsetTable = false;
