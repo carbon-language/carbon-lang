@@ -50,6 +50,12 @@ PPCTargetLowering::PPCTargetLowering(PPCTargetMachine &TM)
   // PowerPC does not have truncstore for i1.
   setStoreXAction(MVT::i1, Promote);
 
+  // PowerPC has i32 and i64 pre-inc load and store's.
+  setIndexedLoadAction(ISD::PRE_INC, MVT::i32, Legal);
+  setIndexedLoadAction(ISD::PRE_INC, MVT::i64, Legal);
+  setIndexedStoreAction(ISD::PRE_INC, MVT::i32, Legal);
+  setIndexedStoreAction(ISD::PRE_INC, MVT::i64, Legal);
+
   setOperationAction(ISD::ConstantFP, MVT::f64, Expand);
   setOperationAction(ISD::ConstantFP, MVT::f32, Expand);
 
