@@ -30,6 +30,11 @@
 #          determined by diffing the program's output with the non-optimized
 #          output.
 #       
+if [ "$#" -lt 3 ] ; then
+  echo "usage: findmisopt bcfile outdir progargs [match]"
+  exit 1
+fi
+
 bcfile="$1"
 outdir="$2"
 args="$3"
