@@ -190,9 +190,18 @@ namespace {
 
       bool isLoad = true;
       SDOperand Ptr;
+      MVT::ValueType VT;
       if (LoadSDNode *LD  = dyn_cast<LoadSDNode>(N)) {
+        VT = LD->getLoadedVT();
+        if (!TLI.isIndexedLoadLegal(ISD::PRE_INC, VT) &&
+            !TLI.isIndexedLoadLegal(ISD::PRE_DEC, VT))
+          return false;
         Ptr = LD->getBasePtr();
       } else if (StoreSDNode *ST  = dyn_cast<StoreSDNode>(N)) {
+        VT = ST->getStoredVT();
+        if (!TLI.isIndexedStoreLegal(ISD::PRE_INC, VT) &&
+            !TLI.isIndexedStoreLegal(ISD::PRE_DEC, VT))
+          return false;
         Ptr = ST->getBasePtr();
         isLoad = false;
       } else
@@ -281,8 +290,16 @@ namespace {
       SDOperand Ptr;
       MVT::ValueType VT;
       if (LoadSDNode *LD  = dyn_cast<LoadSDNode>(N)) {
+        VT = LD->getLoadedVT();
+        if (!TLI.isIndexedLoadLegal(ISD::POST_INC, VT) &&
+            !TLI.isIndexedLoadLegal(ISD::POST_DEC, VT))
+          return false;
         Ptr = LD->getBasePtr();
       } else if (StoreSDNode *ST  = dyn_cast<StoreSDNode>(N)) {
+        VT = ST->getStoredVT();
+        if (!TLI.isIndexedStoreLegal(ISD::POST_INC, VT) &&
+            !TLI.isIndexedStoreLegal(ISD::POST_DEC, VT))
+          return false;
         Ptr = ST->getBasePtr();
         isLoad = false;
       } else
@@ -299,7 +316,7 @@ namespace {
           SDOperand BasePtr;
           SDOperand Offset;
           ISD::MemIndexedMode AM = ISD::UNINDEXED;
-          if (TLI.getPostIndexedAddressParts(N, Op, BasePtr, Offset, AM,DAG)) {
+          if (TLI.getPostIndexedAddressParts(N, Op, BasePtr, Offset, AM, DAG)) {
             if (Ptr == Offset)
               std::swap(BasePtr, Offset);
             if (Ptr != BasePtr)
