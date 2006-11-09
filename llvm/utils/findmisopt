@@ -122,9 +122,13 @@ while [ ! -z "$switches" ] ; do
   echo "Next Loop"
 done
 
-echo "Smallest Optimization list= $final"
+if [ "$final" == " $all_switches" ] ; then
+  echo "findmisopt: Can't find a set of optimizations that make it fail"
+  exit 0
+fi
+echo "Smallest Optimization list=$final"
 bpcmd="bugpoint -run-llc --output "$out" --input /dev/null $bcfile $final --args $args"
 
 echo "Running: $bpcmd"
 $bpcmd
-echo "Finished."
+echo "findmisopt finished."
