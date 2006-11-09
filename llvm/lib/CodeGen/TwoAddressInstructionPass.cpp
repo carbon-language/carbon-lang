@@ -191,8 +191,6 @@ bool TwoAddressInstructionPass::runOnMachineFunction(MachineFunction &MF) {
                 mbbi->erase(mi);                 // Nuke the old inst.
                 mi = New;
                 ++NumConvertedTo3Addr;
-                assert(!TII.isTwoAddrInstr(New->getOpcode()) &&
-                       "convertToThreeAddress returned a 2-addr instruction??");
                 // Done with this instruction.
                 break;
               }

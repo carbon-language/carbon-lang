@@ -470,7 +470,8 @@ unsigned Emitter::determineREX(const MachineInstr &MI) {
     REX |= 1 << 3;
 
   if (MI.getNumOperands()) {
-    bool isTwoAddr = (Desc.Flags & M_2_ADDR_FLAG) != 0;
+    bool isTwoAddr = II->getNumOperands(Opcode) > 1 &&
+      II->getOperandConstraint(Opcode, 1, TargetInstrInfo::TIED_TO) != -1;
 
     // If it accesses SPL, BPL, SIL, or DIL, then it requires a 0x40 REX prefix.
     bool isTrunc8 = isX86_64TruncToByte(Opcode);
@@ -607,7 +608,9 @@ void Emitter::emitInstruction(const MachineInstr &MI) {
 
   // If this is a two-address instruction, skip one of the register operands.
   unsigned CurOp = 0;
-  CurOp += (Desc.Flags & M_2_ADDR_FLAG) != 0;
+  if (II->getNumOperands(Opcode) > 1 &&
+      II->getOperandConstraint(Opcode, 1, TargetInstrInfo::TIED_TO) != -1)
+    CurOp++;
   
   unsigned char BaseOpcode = II->getBaseOpcodeFor(Opcode);
   switch (Desc.TSFlags & X86II::FormMask) {

@@ -232,7 +232,6 @@ void InstrInfoEmitter::emitRecord(const CodeGenInstruction &Inst, unsigned Num,
   if (Inst.isCall)       OS << "|M_CALL_FLAG";
   if (Inst.isLoad)       OS << "|M_LOAD_FLAG";
   if (Inst.isStore || isStore) OS << "|M_STORE_FLAG";
-  if (Inst.isTwoAddress) OS << "|M_2_ADDR_FLAG";
   if (Inst.isPredicated) OS << "|M_PREDICATED";
   if (Inst.isConvertibleToThreeAddress) OS << "|M_CONVERTIBLE_TO_3_ADDR";
   if (Inst.isCommutable) OS << "|M_COMMUTABLE";

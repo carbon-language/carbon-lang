@@ -284,14 +284,15 @@ MachineInstr* X86RegisterInfo::foldMemoryOperand(MachineInstr *MI,
   const TableEntry *OpcodeTablePtr = NULL;
   unsigned OpcodeTableSize = 0;
   bool isTwoAddrFold = false;
+  bool isTwoAddr = TII.getNumOperands(MI->getOpcode()) > 1 &&
+    TII.getOperandConstraint(MI->getOpcode(), 1,TargetInstrInfo::TIED_TO) != -1;
 
   // Folding a memory location into the two-address part of a two-address
   // instruction is different than folding it other places.  It requires
   // replacing the *two* registers with the memory location.
-  if (MI->getNumOperands() >= 2 && MI->getOperand(0).isReg() && 
+  if (isTwoAddr && MI->getNumOperands() >= 2 && MI->getOperand(0).isReg() && 
       MI->getOperand(1).isReg() && i < 2 &&
-      MI->getOperand(0).getReg() == MI->getOperand(1).getReg() &&
-      TII.isTwoAddrInstr(MI->getOpcode())) {
+      MI->getOperand(0).getReg() == MI->getOperand(1).getReg()) {
     static const TableEntry OpcodeTable[] = {
       { X86::ADC32ri,     X86::ADC32mi },
       { X86::ADC32ri8,    X86::ADC32mi8 },
