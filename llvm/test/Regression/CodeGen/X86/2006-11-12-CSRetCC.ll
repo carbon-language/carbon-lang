@@ -1,5 +1,7 @@
 ; RUN: llvm-as < %s | llc -march=x86 | grep 'subl $4, %esp'
 
+target triple = "i686-pc-linux-gnu"
+
 %str = internal constant [9 x sbyte] c"%f+%f*i\0A\00"		; <[9 x sbyte]*> [#uses=1]
 
 implementation   ; Functions:
