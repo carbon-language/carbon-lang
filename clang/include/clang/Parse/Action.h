@@ -181,14 +181,15 @@ public:
                                            ExprTy *DestExp) {
     return 0;
   }
-  virtual StmtResult ParseContinueStmt(SourceLocation ContinueLoc) {
+  virtual StmtResult ParseContinueStmt(SourceLocation ContinueLoc,
+                                       Scope *CurScope) {
     return 0;
   }
-  virtual StmtResult ParseBreakStmt(SourceLocation GotoLoc) {
+  virtual StmtResult ParseBreakStmt(SourceLocation GotoLoc, Scope *CurScope) {
     return 0;
   }
   virtual StmtResult ParseReturnStmt(SourceLocation ReturnLoc,
-                                           ExprTy *RetValExp) {
+                                     ExprTy *RetValExp) {
     return 0;
   }
   

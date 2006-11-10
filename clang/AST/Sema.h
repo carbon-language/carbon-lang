@@ -17,6 +17,7 @@
 
 #include "clang/Parse/Action.h"
 #include <vector>
+#include <string>
 
 namespace llvm {
 namespace clang {
@@ -35,6 +36,9 @@ class Sema : public Action {
 public:
   Sema(Preprocessor &pp, std::vector<Decl*> &prevInGroup)
     : PP(pp), LastInGroupList(prevInGroup) {}
+  
+  void Diag(SourceLocation Loc, unsigned DiagID,
+            const std::string &Msg = std::string());
   
   //===--------------------------------------------------------------------===//
   // Symbol table tracking callbacks.
@@ -81,8 +85,9 @@ public:
   virtual StmtResult ParseIndirectGotoStmt(SourceLocation GotoLoc,
                                            SourceLocation StarLoc,
                                            ExprTy *DestExp);
-  virtual StmtResult ParseContinueStmt(SourceLocation ContinueLoc);
-  virtual StmtResult ParseBreakStmt(SourceLocation GotoLoc);
+  virtual StmtResult ParseContinueStmt(SourceLocation ContinueLoc,
+                                       Scope *CurScope);
+  virtual StmtResult ParseBreakStmt(SourceLocation GotoLoc, Scope *CurScope);
   
   virtual StmtResult ParseReturnStmt(SourceLocation ReturnLoc,
                                      ExprTy *RetValExp);

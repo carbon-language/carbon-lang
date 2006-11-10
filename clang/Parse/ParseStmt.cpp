@@ -660,17 +660,7 @@ Parser::StmtResult Parser::ParseGotoStatement() {
 ///
 Parser::StmtResult Parser::ParseContinueStatement() {
   SourceLocation ContinueLoc = ConsumeToken();  // eat the 'continue'.
-  
-  Scope *S = CurScope->getContinueParent();
-  if (!S) {
-    // C99 6.8.6.2p1: A break shall appear only in or as a loop body.
-    Diag(ContinueLoc, diag::err_continue_not_in_loop);
-    return true;
-  }
-  
-  // FIXME: Remember that this continue goes with this loop.
-  
-  return Actions.ParseContinueStmt(ContinueLoc);
+  return Actions.ParseContinueStmt(ContinueLoc, CurScope);
 }
 
 /// ParseBreakStatement
@@ -681,16 +671,7 @@ Parser::StmtResult Parser::ParseContinueStatement() {
 ///
 Parser::StmtResult Parser::ParseBreakStatement() {
   SourceLocation BreakLoc = ConsumeToken();  // eat the 'break'.
-
-  Scope *S = CurScope->getBreakParent();
-  if (!S) {
-    // C99 6.8.6.3p1: A break shall appear only in or as a switch/loop body.
-    Diag(BreakLoc, diag::err_break_not_in_loop_or_switch);
-    return true;
-  }
-  
-  // FIXME: Remember that this break goes with this loop/switch.
-  return Actions.ParseBreakStmt(BreakLoc);
+  return Actions.ParseBreakStmt(BreakLoc, CurScope);
 }
 
 /// ParseReturnStatement

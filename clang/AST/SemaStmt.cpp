@@ -13,6 +13,8 @@
 
 #include "Sema.h"
 #include "clang/AST/Stmt.h"
+#include "clang/Parse/Scope.h"
+#include "clang/Basic/Diagnostic.h"
 using namespace llvm;
 using namespace clang;
 
@@ -89,12 +91,28 @@ Sema::ParseIndirectGotoStmt(SourceLocation GotoLoc,SourceLocation StarLoc,
 }
 
 Action::StmtResult 
-Sema::ParseContinueStmt(SourceLocation ContinueLoc) {
+Sema::ParseContinueStmt(SourceLocation ContinueLoc, Scope *CurScope) {
+  Scope *S = CurScope->getContinueParent();
+  if (!S) {
+    // C99 6.8.6.2p1: A break shall appear only in or as a loop body.
+    Diag(ContinueLoc, diag::err_continue_not_in_loop);
+    return true;
+  }
+  
+  // FIXME: Remember that this continue goes with this loop.
   return new ContinueStmt();
 }
 
 Action::StmtResult 
-Sema::ParseBreakStmt(SourceLocation GotoLoc) {
+Sema::ParseBreakStmt(SourceLocation BreakLoc, Scope *CurScope) {
+  Scope *S = CurScope->getBreakParent();
+  if (!S) {
+    // C99 6.8.6.3p1: A break shall appear only in or as a switch/loop body.
+    Diag(BreakLoc, diag::err_break_not_in_loop_or_switch);
+    return true;
+  }
+  
+  // FIXME: Remember that this break goes with this loop/switch.
   return new BreakStmt();
 }
 
