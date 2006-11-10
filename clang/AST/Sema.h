@@ -41,7 +41,7 @@ public:
             const std::string &Msg = std::string());
   
   //===--------------------------------------------------------------------===//
-  // Symbol table tracking callbacks.
+  // Symbol table / Decl tracking callbacks: SemaDecl.cpp.
   //
   virtual bool isTypeName(const IdentifierInfo &II, Scope *S) const;
   virtual DeclTy *ParseDeclarator(Scope *S, Declarator &D, ExprTy *Init,
@@ -51,7 +51,7 @@ public:
   virtual void PopScope(SourceLocation Loc, Scope *S);
   
   //===--------------------------------------------------------------------===//
-  // Statement Parsing Callbacks.
+  // Statement Parsing Callbacks: SemaStmt.cpp.
 
   virtual StmtResult ParseCompoundStmt(SourceLocation L, SourceLocation R,
                                        StmtTy **Elts, unsigned NumElts);
@@ -93,7 +93,7 @@ public:
                                      ExprTy *RetValExp);
   
   //===--------------------------------------------------------------------===//
-  // Expression Parsing Callbacks.
+  // Expression Parsing Callbacks: SemaExpr.cpp.
 
   // Primary Expressions.
   virtual ExprResult ParseSimplePrimaryExpr(SourceLocation Loc,

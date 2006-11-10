@@ -237,3 +237,170 @@ Sema::ParseStringExpr(const LexerToken *StringToks, unsigned NumStringToks) {
   return new StringExpr(&ResultBuf[0], ResultPtr-&ResultBuf[0], AnyWide);
 }
 
+
+
+Action::ExprResult Sema::ParseSimplePrimaryExpr(SourceLocation Loc,
+                                                tok::TokenKind Kind) {
+  switch (Kind) {
+  default:
+    assert(0 && "Unknown simple primary expr!");
+  case tok::identifier: {
+    // Could be enum-constant or decl.
+    //Tok.getIdentifierInfo()
+    return new DeclRefExpr(*(Decl*)0);
+  }
+    
+  case tok::char_constant:     // constant: character-constant
+  case tok::kw___func__:       // primary-expression: __func__ [C99 6.4.2.2]
+  case tok::kw___FUNCTION__:   // primary-expression: __FUNCTION__ [GNU]
+  case tok::kw___PRETTY_FUNCTION__:  // primary-expression: __P..Y_F..N__ [GNU]
+    //assert(0 && "FIXME: Unimp so far!");
+    return new DeclRefExpr(*(Decl*)0);
+  }
+}
+
+Action::ExprResult Sema::ParseIntegerConstant(SourceLocation Loc) {
+  return new IntegerConstant();
+}
+Action::ExprResult Sema::ParseFloatingConstant(SourceLocation Loc) {
+  return new FloatingConstant();
+}
+
+Action::ExprResult Sema::ParseParenExpr(SourceLocation L, SourceLocation R,
+                                        ExprTy *Val) {
+  return Val;
+}
+
+
+// Unary Operators.  'Tok' is the token for the operator.
+Action::ExprResult Sema::ParseUnaryOp(SourceLocation OpLoc, tok::TokenKind Op,
+                                      ExprTy *Input) {
+  UnaryOperator::Opcode Opc;
+  switch (Op) {
+  default: assert(0 && "Unknown unary op!");
+  case tok::plusplus:     Opc = UnaryOperator::PreInc; break;
+  case tok::minusminus:   Opc = UnaryOperator::PreDec; break;
+  case tok::amp:          Opc = UnaryOperator::AddrOf; break;
+  case tok::star:         Opc = UnaryOperator::Deref; break;
+  case tok::plus:         Opc = UnaryOperator::Plus; break;
+  case tok::minus:        Opc = UnaryOperator::Minus; break;
+  case tok::tilde:        Opc = UnaryOperator::Not; break;
+  case tok::exclaim:      Opc = UnaryOperator::LNot; break;
+  case tok::kw_sizeof:    Opc = UnaryOperator::SizeOf; break;
+  case tok::kw___alignof: Opc = UnaryOperator::AlignOf; break;
+  case tok::kw___real:    Opc = UnaryOperator::Real; break;
+  case tok::kw___imag:    Opc = UnaryOperator::Imag; break;
+  case tok::ampamp:       Opc = UnaryOperator::AddrLabel; break;
+  case tok::kw___extension__: 
+    return Input;
+    //Opc = UnaryOperator::Extension;
+    //break;
+  }
+
+  return new UnaryOperator((Expr*)Input, Opc);
+}
+
+Action::ExprResult Sema::
+ParseSizeOfAlignOfTypeExpr(SourceLocation OpLoc, bool isSizeof, 
+                           SourceLocation LParenLoc, TypeTy *Ty,
+                           SourceLocation RParenLoc) {
+  return new SizeOfAlignOfTypeExpr(isSizeof, (Type*)Ty);
+}
+
+
+Action::ExprResult Sema::ParsePostfixUnaryOp(SourceLocation OpLoc, 
+                                             tok::TokenKind Kind,
+                                             ExprTy *Input) {
+  UnaryOperator::Opcode Opc;
+  switch (Kind) {
+  default: assert(0 && "Unknown unary op!");
+  case tok::plusplus:   Opc = UnaryOperator::PostInc; break;
+  case tok::minusminus: Opc = UnaryOperator::PostDec; break;
+  }
+  
+  return new UnaryOperator((Expr*)Input, Opc);
+}
+
+Action::ExprResult Sema::
+ParseArraySubscriptExpr(ExprTy *Base, SourceLocation LLoc,
+                        ExprTy *Idx, SourceLocation RLoc) {
+  return new ArraySubscriptExpr((Expr*)Base, (Expr*)Idx);
+}
+
+Action::ExprResult Sema::
+ParseMemberReferenceExpr(ExprTy *Base, SourceLocation OpLoc,
+                         tok::TokenKind OpKind, SourceLocation MemberLoc,
+                         IdentifierInfo &Member) {
+  Decl *MemberDecl = 0;
+  // TODO: Look up MemberDecl.
+  return new MemberExpr((Expr*)Base, OpKind == tok::arrow, MemberDecl);
+}
+
+/// ParseCallExpr - Handle a call to Fn with the specified array of arguments.
+/// This provides the location of the left/right parens and a list of comma
+/// locations.
+Action::ExprResult Sema::
+ParseCallExpr(ExprTy *Fn, SourceLocation LParenLoc,
+              ExprTy **Args, unsigned NumArgs,
+              SourceLocation *CommaLocs, SourceLocation RParenLoc) {
+  return new CallExpr((Expr*)Fn, (Expr**)Args, NumArgs);
+}
+
+Action::ExprResult Sema::
+ParseCastExpr(SourceLocation LParenLoc, TypeTy *Ty,
+              SourceLocation RParenLoc, ExprTy *Op) {
+  return new CastExpr((Type*)Ty, (Expr*)Op);
+}
+
+
+
+// Binary Operators.  'Tok' is the token for the operator.
+Action::ExprResult Sema::ParseBinOp(SourceLocation TokLoc, tok::TokenKind Kind,
+                                    ExprTy *LHS, ExprTy *RHS) {
+  BinaryOperator::Opcode Opc;
+  switch (Kind) {
+  default: assert(0 && "Unknown binop!");
+  case tok::star:                 Opc = BinaryOperator::Mul; break;
+  case tok::slash:                Opc = BinaryOperator::Div; break;
+  case tok::percent:              Opc = BinaryOperator::Rem; break;
+  case tok::plus:                 Opc = BinaryOperator::Add; break;
+  case tok::minus:                Opc = BinaryOperator::Sub; break;
+  case tok::lessless:             Opc = BinaryOperator::Shl; break;
+  case tok::greatergreater:       Opc = BinaryOperator::Shr; break;
+  case tok::lessequal:            Opc = BinaryOperator::LE; break;
+  case tok::less:                 Opc = BinaryOperator::LT; break;
+  case tok::greaterequal:         Opc = BinaryOperator::GE; break;
+  case tok::greater:              Opc = BinaryOperator::GT; break;
+  case tok::exclaimequal:         Opc = BinaryOperator::NE; break;
+  case tok::equalequal:           Opc = BinaryOperator::EQ; break;
+  case tok::amp:                  Opc = BinaryOperator::And; break;
+  case tok::caret:                Opc = BinaryOperator::Xor; break;
+  case tok::pipe:                 Opc = BinaryOperator::Or; break;
+  case tok::ampamp:               Opc = BinaryOperator::LAnd; break;
+  case tok::pipepipe:             Opc = BinaryOperator::LOr; break;
+  case tok::equal:                Opc = BinaryOperator::Assign; break;
+  case tok::starequal:            Opc = BinaryOperator::MulAssign; break;
+  case tok::slashequal:           Opc = BinaryOperator::DivAssign; break;
+  case tok::percentequal:         Opc = BinaryOperator::RemAssign; break;
+  case tok::plusequal:            Opc = BinaryOperator::AddAssign; break;
+  case tok::minusequal:           Opc = BinaryOperator::SubAssign; break;
+  case tok::lesslessequal:        Opc = BinaryOperator::ShlAssign; break;
+  case tok::greatergreaterequal:  Opc = BinaryOperator::ShrAssign; break;
+  case tok::ampequal:             Opc = BinaryOperator::AndAssign; break;
+  case tok::caretequal:           Opc = BinaryOperator::XorAssign; break;
+  case tok::pipeequal:            Opc = BinaryOperator::OrAssign; break;
+  case tok::comma:                Opc = BinaryOperator::Comma; break;
+  }
+  
+  return new BinaryOperator((Expr*)LHS, (Expr*)RHS, Opc);
+}
+
+/// ParseConditionalOp - Parse a ?: operation.  Note that 'LHS' may be null
+/// in the case of a the GNU conditional expr extension.
+Action::ExprResult Sema::ParseConditionalOp(SourceLocation QuestionLoc, 
+                                            SourceLocation ColonLoc,
+                                            ExprTy *Cond, ExprTy *LHS,
+                                            ExprTy *RHS) {
+  return new ConditionalOperator((Expr*)Cond, (Expr*)LHS, (Expr*)RHS);
+}
+
