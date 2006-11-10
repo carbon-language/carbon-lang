@@ -5082,10 +5082,10 @@ Instruction *InstCombiner::visitShiftInst(ShiftInst &I) {
       return ReplaceInstUsesWith(I, Op0);          // X >>s undef -> X
   }
 
-  // shr int -1, X = -1   (for any arithmetic shift rights of ~0)
-  if (!isLeftShift)
+  // ashr int -1, X = -1   (for any arithmetic shift rights of ~0)
+  if (I.getOpcode() == Instruction::AShr)
     if (ConstantInt *CSI = dyn_cast<ConstantInt>(Op0))
-      if (CSI->isAllOnesValue() && Op0->getType()->isSigned())
+      if (CSI->isAllOnesValue())
         return ReplaceInstUsesWith(I, CSI);
 
   // Try to fold constant and into select arguments.
