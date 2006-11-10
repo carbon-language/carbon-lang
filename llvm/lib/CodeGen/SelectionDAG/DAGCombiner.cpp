@@ -214,11 +214,20 @@ namespace {
         ISD::MemIndexedMode AM = ISD::UNINDEXED;
         if (TLI.getPreIndexedAddressParts(N, BasePtr, Offset, AM, DAG)) {
           // Try turning it into a pre-indexed load / store except when
-          // 1) Another use of base ptr is a predecessor of N. If ptr is folded
+          // 1) If N is a store and the ptr is either the same as or is a
+          //    predecessor of the value being stored.
+          // 2) Another use of base ptr is a predecessor of N. If ptr is folded
           //    that would create a cycle.
-          // 2) All uses are load / store ops that use it as base ptr.
+          // 3) All uses are load / store ops that use it as base ptr.
 
-          // Now check for #1 and #2.
+          // Checking #1.
+          if (!isLoad) {
+            SDOperand Val = cast<StoreSDNode>(N)->getValue();
+            if (Val == Ptr || Ptr.Val->isPredecessor(Val.Val))
+              return false;
+          }
+
+          // Now check for #2 and #3.
           bool RealUse = false;
           for (SDNode::use_iterator I = Ptr.Val->use_begin(),
                  E = Ptr.Val->use_end(); I != E; ++I) {
@@ -323,12 +332,12 @@ namespace {
               continue;
 
             // Try turning it into a post-indexed load / store except when
-            // 1) Op must be independent of N, i.e. Op is neither a predecessor
+            // 1) All uses are load / store ops that use it as base ptr.
+            // 2) Op must be independent of N, i.e. Op is neither a predecessor
             //    nor a successor of N. Otherwise, if Op is folded that would
             //    create a cycle.
-            // 2) All uses are load / store ops that use it as base ptr.
 
-            // Check for #3.
+            // Check for #1.
             bool TryNext = false;
             for (SDNode::use_iterator II = BasePtr.Val->use_begin(),
                    EE = BasePtr.Val->use_end(); II != EE; ++II) {
@@ -359,7 +368,7 @@ namespace {
             if (TryNext)
               continue;
 
-            // Check for #1
+            // Check for #2
             if (!Op->isPredecessor(N) && !N->isPredecessor(Op)) {
               SDOperand Result = isLoad
                 ? DAG.getIndexedLoad(SDOperand(N,0), BasePtr, Offset, AM)
