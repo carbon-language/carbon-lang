@@ -66,50 +66,53 @@ void InstrInfoEmitter::printDefList(const std::vector<Record*> &Uses,
 std::vector<std::string>
 InstrInfoEmitter::GetOperandInfo(const CodeGenInstruction &Inst) {
   std::vector<std::string> Result;
+  
   for (unsigned i = 0, e = Inst.OperandList.size(); i != e; ++i) {
-    if (Inst.OperandList[i].Rec->isSubClassOf("RegisterClass")) {
-      std::string OpStr = getQualifiedName(Inst.OperandList[i].Rec);
-      OpStr += "RegClassID, 0, ";
-      OpStr += Inst.OperandList[i].Constraint;
+    // Handle aggregate operands and normal operands the same way by expanding
+    // either case into a list of operands for this op.
+    std::vector<CodeGenInstruction::OperandInfo> OperandList;
 
-      Result.push_back(OpStr);
+    // This might be a multiple operand thing.  Targets like X86 have
+    // registers in their multi-operand operands.  It may also be an anonymous
+    // operand, which has a single operand, but no declared class for the
+    // operand.
+    DagInit *MIOI = Inst.OperandList[i].MIOperandInfo;
+    
+    if (!MIOI || MIOI->getNumArgs() == 0) {
+      // Single, anonymous, operand.
+      OperandList.push_back(Inst.OperandList[i]);
     } else {
-      // This might be a multiple operand thing.  Targets like X86 have
-      // registers in their multi-operand operands.  It may also be an anonymous
-      // operand, which has a single operand, but no declared class for the
-      // operand.
-      DagInit *MIOI = Inst.OperandList[i].MIOperandInfo;
-      
       for (unsigned j = 0, e = Inst.OperandList[i].MINumOperands; j != e; ++j) {
-        Record *OpR = 0;
-        if (MIOI && j < MIOI->getNumArgs())
-          if (DefInit *Def = dynamic_cast<DefInit*>(MIOI->getArg(j)))
-            OpR = Def->getDef();
+        OperandList.push_back(Inst.OperandList[i]);
 
-        
-        std::string Res;
-
-        if (OpR && OpR->isSubClassOf("RegisterClass"))
-          Res += getQualifiedName(OpR) + "RegClassID, ";
-        else
-          Res += "0, ";
-
-        // Fill in applicable flags.
-        Res += "0";
-        
-        // Ptr value whose register class is resolved via callback.
-        if (OpR && OpR->getName() == "ptr_rc")
-          Res += "|M_LOOK_UP_PTR_REG_CLASS";
-
-        // Predicate operands.
-        if (j == 0 && Inst.OperandList[i].Rec->isSubClassOf("PredicateOperand"))
-          Res += "|M_PREDICATE_OPERAND";
-        
-        // fill in constraint info.
-        Res += ", " + Inst.OperandList[i].Constraint;
-        
-        Result.push_back(Res);
+        Record *OpR = dynamic_cast<DefInit*>(MIOI->getArg(j))->getDef();
+        OperandList.back().Rec = OpR;
       }
+    }
+
+    for (unsigned j = 0, e = OperandList.size(); j != e; ++j) {
+      Record *OpR = OperandList[j].Rec;
+      std::string Res;
+      
+      if (OpR->isSubClassOf("RegisterClass"))
+        Res += getQualifiedName(OpR) + "RegClassID, ";
+      else
+        Res += "0, ";
+      // Fill in applicable flags.
+      Res += "0";
+        
+      // Ptr value whose register class is resolved via callback.
+      if (OpR->getName() == "ptr_rc")
+        Res += "|M_LOOK_UP_PTR_REG_CLASS";
+
+      // Predicate operands.  Check to see if the original unexpanded operand
+      // was of type PredicateOperand.
+      if (j == 0 && Inst.OperandList[i].Rec->isSubClassOf("PredicateOperand"))
+        Res += "|M_PREDICATE_OPERAND";
+        
+      // Fill in constraint info.
+      Res += ", " + Inst.OperandList[i].Constraint;
+      Result.push_back(Res);
     }
   }
 

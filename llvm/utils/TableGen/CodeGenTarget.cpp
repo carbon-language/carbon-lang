@@ -386,7 +386,8 @@ CodeGenInstruction::CodeGenInstruction(Record *R, const std::string &AsmStr)
     } else if (Rec->getName() == "variable_ops") {
       hasVariableNumberOfOperands = true;
       continue;
-    } else if (!Rec->isSubClassOf("RegisterClass"))
+    } else if (!Rec->isSubClassOf("RegisterClass") && 
+               Rec->getName() != "ptr_rc")
       throw "Unknown operand class '" + Rec->getName() +
             "' in instruction '" + R->getName() + "' instruction!";
 
