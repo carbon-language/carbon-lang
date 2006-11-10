@@ -232,17 +232,6 @@ which is probably slower, but it's interesting at least :)
 
 //===---------------------------------------------------------------------===//
 
-Should generate min/max for stuff like:
-
-void minf(float a, float b, float *X) {
-  *X = a <= b ? a : b;
-}
-
-Make use of floating point min / max instructions. Perhaps introduce ISD::FMIN
-and ISD::FMAX node types?
-
-//===---------------------------------------------------------------------===//
-
 The first BB of this code:
 
 declare bool %foo()
