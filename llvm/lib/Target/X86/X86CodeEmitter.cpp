@@ -469,14 +469,15 @@ unsigned Emitter::determineREX(const MachineInstr &MI) {
   if (Desc.TSFlags & X86II::REX_W)
     REX |= 1 << 3;
 
-  if (MI.getNumOperands()) {
-    bool isTwoAddr = II->getNumOperands(Opcode) > 1 &&
+  unsigned NumOps = II->getNumOperands(Opcode);
+  if (NumOps) {
+    bool isTwoAddr = NumOps > 1 &&
       II->getOperandConstraint(Opcode, 1, TargetInstrInfo::TIED_TO) != -1;
 
     // If it accesses SPL, BPL, SIL, or DIL, then it requires a 0x40 REX prefix.
     bool isTrunc8 = isX86_64TruncToByte(Opcode);
     unsigned i = isTwoAddr ? 1 : 0;
-    for (unsigned e = MI.getNumOperands(); i != e; ++i) {
+    for (unsigned e = NumOps; i != e; ++i) {
       const MachineOperand& MO = MI.getOperand(i);
       if (MO.isRegister()) {
 	unsigned Reg = MO.getReg();
@@ -498,7 +499,7 @@ unsigned Emitter::determineREX(const MachineInstr &MI) {
       if (isX86_64ExtendedReg(MI.getOperand(0)))
         REX |= 1 << 2;
       i = isTwoAddr ? 2 : 1;
-      for (unsigned e = MI.getNumOperands(); i != e; ++i) {
+      for (unsigned e = NumOps; i != e; ++i) {
         const MachineOperand& MO = MI.getOperand(i);
         if (isX86_64ExtendedReg(MO))
           REX |= 1 << 0;
@@ -510,7 +511,7 @@ unsigned Emitter::determineREX(const MachineInstr &MI) {
         REX |= 1 << 2;
       unsigned Bit = 0;
       i = isTwoAddr ? 2 : 1;
-      for (; i != MI.getNumOperands(); ++i) {
+      for (; i != NumOps; ++i) {
         const MachineOperand& MO = MI.getOperand(i);
         if (MO.isRegister()) {
           if (isX86_64ExtendedReg(MO))
@@ -527,7 +528,7 @@ unsigned Emitter::determineREX(const MachineInstr &MI) {
     case X86II::MRMDestMem: {
       unsigned e = isTwoAddr ? 5 : 4;
       i = isTwoAddr ? 1 : 0;
-      if (MI.getNumOperands() > e && isX86_64ExtendedReg(MI.getOperand(e)))
+      if (NumOps > e && isX86_64ExtendedReg(MI.getOperand(e)))
         REX |= 1 << 2;
       unsigned Bit = 0;
       for (; i != e; ++i) {
@@ -544,7 +545,7 @@ unsigned Emitter::determineREX(const MachineInstr &MI) {
       if (isX86_64ExtendedReg(MI.getOperand(0)))
         REX |= 1 << 0;
       i = isTwoAddr ? 2 : 1;
-      for (unsigned e = MI.getNumOperands(); i != e; ++i) {
+      for (unsigned e = NumOps; i != e; ++i) {
         const MachineOperand& MO = MI.getOperand(i);
         if (isX86_64ExtendedReg(MO))
           REX |= 1 << 2;
@@ -607,8 +608,9 @@ void Emitter::emitInstruction(const MachineInstr &MI) {
     MCE.emitByte(0x0F);
 
   // If this is a two-address instruction, skip one of the register operands.
+  unsigned NumOps = II->getNumOperands(Opcode);
   unsigned CurOp = 0;
-  if (II->getNumOperands(Opcode) > 1 &&
+  if (NumOps > 1 &&
       II->getOperandConstraint(Opcode, 1, TargetInstrInfo::TIED_TO) != -1)
     CurOp++;
   
@@ -637,12 +639,12 @@ void Emitter::emitInstruction(const MachineInstr &MI) {
       break;
     }
 #endif
-    CurOp = MI.getNumOperands();
+    CurOp = NumOps;
     break;
 
   case X86II::RawFrm:
     MCE.emitByte(BaseOpcode);
-    if (CurOp != MI.getNumOperands()) {
+    if (CurOp != NumOps) {
       const MachineOperand &MO = MI.getOperand(CurOp++);
       if (MO.isMachineBasicBlock()) {
         emitPCRelativeBlockAddress(MO.getMachineBasicBlock());
@@ -663,7 +665,7 @@ void Emitter::emitInstruction(const MachineInstr &MI) {
   case X86II::AddRegFrm:
     MCE.emitByte(BaseOpcode + getX86RegNum(MI.getOperand(CurOp++).getReg()));
     
-    if (CurOp != MI.getNumOperands()) {
+    if (CurOp != NumOps) {
       const MachineOperand &MO1 = MI.getOperand(CurOp++);
       if (MO1.isGlobalAddress()) {
         assert(sizeOfImm(Desc) == TD->getPointerSize() &&
@@ -688,7 +690,7 @@ void Emitter::emitInstruction(const MachineInstr &MI) {
     emitRegModRMByte(MI.getOperand(CurOp).getReg(),
                      getX86RegNum(MI.getOperand(CurOp+1).getReg()));
     CurOp += 2;
-    if (CurOp != MI.getNumOperands())
+    if (CurOp != NumOps)
       emitConstant(MI.getOperand(CurOp++).getImm(), sizeOfImm(Desc));
     break;
   }
@@ -696,7 +698,7 @@ void Emitter::emitInstruction(const MachineInstr &MI) {
     MCE.emitByte(BaseOpcode);
     emitMemModRMByte(MI, CurOp, getX86RegNum(MI.getOperand(CurOp+4).getReg()));
     CurOp += 5;
-    if (CurOp != MI.getNumOperands())
+    if (CurOp != NumOps)
       emitConstant(MI.getOperand(CurOp++).getImm(), sizeOfImm(Desc));
     break;
   }
@@ -706,18 +708,18 @@ void Emitter::emitInstruction(const MachineInstr &MI) {
     emitRegModRMByte(MI.getOperand(CurOp+1).getReg(),
                      getX86RegNum(MI.getOperand(CurOp).getReg()));
     CurOp += 2;
-    if (CurOp != MI.getNumOperands())
+    if (CurOp != NumOps)
       emitConstant(MI.getOperand(CurOp++).getImm(), sizeOfImm(Desc));
     break;
 
   case X86II::MRMSrcMem: {
-    unsigned PCAdj = (CurOp+5 != MI.getNumOperands()) ? sizeOfImm(Desc) : 0;
+    unsigned PCAdj = (CurOp+5 != NumOps) ? sizeOfImm(Desc) : 0;
 
     MCE.emitByte(BaseOpcode);
     emitMemModRMByte(MI, CurOp+1, getX86RegNum(MI.getOperand(CurOp).getReg()),
                      PCAdj);
     CurOp += 5;
-    if (CurOp != MI.getNumOperands())
+    if (CurOp != NumOps)
       emitConstant(MI.getOperand(CurOp++).getImm(), sizeOfImm(Desc));
     break;
   }
@@ -730,7 +732,7 @@ void Emitter::emitInstruction(const MachineInstr &MI) {
     emitRegModRMByte(MI.getOperand(CurOp++).getReg(),
                      (Desc.TSFlags & X86II::FormMask)-X86II::MRM0r);
 
-    if (CurOp != MI.getNumOperands() && MI.getOperand(CurOp).isImmediate())
+    if (CurOp != NumOps && MI.getOperand(CurOp).isImmediate())
       emitConstant(MI.getOperand(CurOp++).getImm(), sizeOfImm(Desc));
     break;
 
@@ -738,7 +740,7 @@ void Emitter::emitInstruction(const MachineInstr &MI) {
   case X86II::MRM2m: case X86II::MRM3m:
   case X86II::MRM4m: case X86II::MRM5m:
   case X86II::MRM6m: case X86II::MRM7m: {
-    unsigned PCAdj = (CurOp+4 != MI.getNumOperands()) ?
+    unsigned PCAdj = (CurOp+4 != NumOps) ?
       (MI.getOperand(CurOp+4).isImmediate() ? sizeOfImm(Desc) : 4) : 0;
 
     MCE.emitByte(BaseOpcode);
@@ -746,7 +748,7 @@ void Emitter::emitInstruction(const MachineInstr &MI) {
                      PCAdj);
     CurOp += 4;
 
-    if (CurOp != MI.getNumOperands()) {
+    if (CurOp != NumOps) {
       const MachineOperand &MO = MI.getOperand(CurOp++);
       if (MO.isImmediate())
         emitConstant(MO.getImm(), sizeOfImm(Desc));
@@ -770,5 +772,5 @@ void Emitter::emitInstruction(const MachineInstr &MI) {
   }
 
   assert((Desc.Flags & M_VARIABLE_OPS) != 0 ||
-         CurOp == MI.getNumOperands() && "Unknown encoding!");
+         CurOp == NumOps && "Unknown encoding!");
 }

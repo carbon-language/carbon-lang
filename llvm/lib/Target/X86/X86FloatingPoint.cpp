@@ -500,11 +500,14 @@ void FPS::handleZeroArgFP(MachineBasicBlock::iterator &I) {
 ///
 void FPS::handleOneArgFP(MachineBasicBlock::iterator &I) {
   MachineInstr *MI = I;
-  assert((MI->getNumOperands() == 5 || MI->getNumOperands() == 1) &&
+  MachineFunction *MF = MI->getParent()->getParent();
+  const TargetInstrInfo &TII = *MF->getTarget().getInstrInfo();
+  unsigned NumOps = TII.getNumOperands(MI->getOpcode());
+  assert((NumOps == 5 || NumOps == 1) &&
          "Can only handle fst* & ftst instructions!");
 
   // Is this the last use of the source register?
-  unsigned Reg = getFPReg(MI->getOperand(MI->getNumOperands()-1));
+  unsigned Reg = getFPReg(MI->getOperand(NumOps-1));
   bool KillsSrc = LV->KillsRegister(MI, X86::FP0+Reg);
 
   // FISTP64m is strange because there isn't a non-popping versions.
@@ -524,7 +527,7 @@ void FPS::handleOneArgFP(MachineBasicBlock::iterator &I) {
   }
   
   // Convert from the pseudo instruction to the concrete instruction.
-  MI->RemoveOperand(MI->getNumOperands()-1);    // Remove explicit ST(0) operand
+  MI->RemoveOperand(NumOps-1);    // Remove explicit ST(0) operand
   MI->setOpcode(getConcreteOpcode(MI->getOpcode()));
 
   if (MI->getOpcode() == X86::FISTP64m ||
@@ -549,7 +552,10 @@ void FPS::handleOneArgFP(MachineBasicBlock::iterator &I) {
 ///
 void FPS::handleOneArgFPRW(MachineBasicBlock::iterator &I) {
   MachineInstr *MI = I;
-  assert(MI->getNumOperands() >= 2 && "FPRW instructions must have 2 ops!!");
+  MachineFunction *MF = MI->getParent()->getParent();
+  const TargetInstrInfo &TII = *MF->getTarget().getInstrInfo();
+  unsigned NumOps = TII.getNumOperands(MI->getOpcode());
+  assert(NumOps >= 2 && "FPRW instructions must have 2 ops!!");
 
   // Is this the last use of the source register?
   unsigned Reg = getFPReg(MI->getOperand(1));
@@ -625,7 +631,9 @@ void FPS::handleTwoArgFP(MachineBasicBlock::iterator &I) {
   ASSERT_SORTED(ForwardSTiTable); ASSERT_SORTED(ReverseSTiTable);
   MachineInstr *MI = I;
 
-  unsigned NumOperands = MI->getNumOperands();
+  MachineFunction *MF = MI->getParent()->getParent();
+  const TargetInstrInfo &TII = *MF->getTarget().getInstrInfo();
+  unsigned NumOperands = TII.getNumOperands(MI->getOpcode());
   assert(NumOperands == 3 && "Illegal TwoArgFP instruction!");
   unsigned Dest = getFPReg(MI->getOperand(0));
   unsigned Op0 = getFPReg(MI->getOperand(NumOperands-2));
@@ -722,7 +730,9 @@ void FPS::handleCompareFP(MachineBasicBlock::iterator &I) {
   ASSERT_SORTED(ForwardSTiTable); ASSERT_SORTED(ReverseSTiTable);
   MachineInstr *MI = I;
 
-  unsigned NumOperands = MI->getNumOperands();
+  MachineFunction *MF = MI->getParent()->getParent();
+  const TargetInstrInfo &TII = *MF->getTarget().getInstrInfo();
+  unsigned NumOperands = TII.getNumOperands(MI->getOpcode());
   assert(NumOperands == 2 && "Illegal FUCOM* instruction!");
   unsigned Op0 = getFPReg(MI->getOperand(NumOperands-2));
   unsigned Op1 = getFPReg(MI->getOperand(NumOperands-1));

@@ -161,8 +161,9 @@ void X86RegisterInfo::copyRegToReg(MachineBasicBlock &MBB,
 }
 
 static MachineInstr *FuseTwoAddrInst(unsigned Opcode, unsigned FrameIndex,
-                                     MachineInstr *MI) {
-  unsigned NumOps = MI->getNumOperands()-2;
+                                     MachineInstr *MI,
+                                     const TargetInstrInfo &TII) {
+  unsigned NumOps = TII.getNumOperands(MI->getOpcode())-2;
   // Create the base instruction with the memory operand as the first part.
   MachineInstrBuilder MIB = addFrameReference(BuildMI(Opcode, 4+NumOps),
                                               FrameIndex);
@@ -185,7 +186,8 @@ static MachineInstr *FuseTwoAddrInst(unsigned Opcode, unsigned FrameIndex,
 }
 
 static MachineInstr *FuseInst(unsigned Opcode, unsigned OpNo,
-                              unsigned FrameIndex, MachineInstr *MI) {
+                              unsigned FrameIndex, MachineInstr *MI,
+                              const TargetInstrInfo &TII) {
   MachineInstrBuilder MIB = BuildMI(Opcode, MI->getNumOperands()+3);
   
   for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
@@ -284,14 +286,16 @@ MachineInstr* X86RegisterInfo::foldMemoryOperand(MachineInstr *MI,
   const TableEntry *OpcodeTablePtr = NULL;
   unsigned OpcodeTableSize = 0;
   bool isTwoAddrFold = false;
-  bool isTwoAddr = TII.getNumOperands(MI->getOpcode()) > 1 &&
+  unsigned NumOps = TII.getNumOperands(MI->getOpcode());
+  bool isTwoAddr = NumOps > 1 &&
     TII.getOperandConstraint(MI->getOpcode(), 1,TargetInstrInfo::TIED_TO) != -1;
 
   // Folding a memory location into the two-address part of a two-address
   // instruction is different than folding it other places.  It requires
   // replacing the *two* registers with the memory location.
-  if (isTwoAddr && MI->getNumOperands() >= 2 && MI->getOperand(0).isReg() && 
-      MI->getOperand(1).isReg() && i < 2 &&
+  if (isTwoAddr && NumOps >= 2 && i < 2 &&
+      MI->getOperand(0).isReg() && 
+      MI->getOperand(1).isReg() &&
       MI->getOperand(0).getReg() == MI->getOperand(1).getReg()) {
     static const TableEntry OpcodeTable[] = {
       { X86::ADC32ri,     X86::ADC32mi },
@@ -823,9 +827,9 @@ MachineInstr* X86RegisterInfo::foldMemoryOperand(MachineInstr *MI,
     if (const TableEntry *Entry = TableLookup(OpcodeTablePtr, OpcodeTableSize,
                                               fromOpcode)) {
       if (isTwoAddrFold)
-        return FuseTwoAddrInst(Entry->to, FrameIndex, MI);
+        return FuseTwoAddrInst(Entry->to, FrameIndex, MI, TII);
       
-      return FuseInst(Entry->to, i, FrameIndex, MI);
+      return FuseInst(Entry->to, i, FrameIndex, MI, TII);
     }
   }
   
