@@ -60,6 +60,7 @@ private:
 
   MachineOperandType opType:8; // Discriminate the union.
   bool IsDef : 1;              // True if this is a def, false if this is a use.
+  bool IsImp : 1;              // True if this is an implicit def or use.
   
   /// offset - Offset to address of global or external, only valid for
   /// MO_GlobalAddress, MO_ExternalSym and MO_ConstantPoolIndex
@@ -78,6 +79,7 @@ public:
     Op.opType = MachineOperand::MO_Immediate;
     Op.contents.immedVal = Val;
     Op.IsDef = false;
+    Op.IsImp = false;
     Op.offset = 0;
     return Op;
   }
@@ -85,6 +87,7 @@ public:
   const MachineOperand &operator=(const MachineOperand &MO) {
     contents = MO.contents;
     IsDef    = MO.IsDef;
+    IsImp    = MO.IsImp;
     opType   = MO.opType;
     offset   = MO.offset;
     return *this;
@@ -171,6 +174,15 @@ public:
   void setIsDef() {
     assert(isRegister() && "Wrong MachineOperand accessor");
     IsDef = true;
+  }
+
+  bool isImplicit() const { 
+    assert(isRegister() && "Wrong MachineOperand accessor");
+    return IsImp;
+  }
+  bool setImplicit() { 
+    assert(isRegister() && "Wrong MachineOperand accessor");
+    IsImp = true;
   }
 
   /// getReg - Returns the register number.
@@ -330,10 +342,11 @@ public:
 
   /// addRegOperand - Add a register operand.
   ///
-  void addRegOperand(unsigned Reg, bool IsDef) {
-    MachineOperand &Op = AddNewOperand();
+  void addRegOperand(unsigned Reg, bool IsDef, bool IsImp = false) {
+    MachineOperand &Op = AddNewOperand(IsImp);
     Op.opType = MachineOperand::MO_Register;
     Op.IsDef = IsDef;
+    Op.IsImp = IsImp;
     Op.contents.RegNo = Reg;
     Op.offset = 0;
   }
@@ -415,8 +428,8 @@ public:
     Operands.erase(Operands.begin()+i);
   }
 private:
-  MachineOperand &AddNewOperand() {
-    assert(!OperandsComplete() &&
+  MachineOperand &AddNewOperand(bool IsImp = false) {
+    assert((IsImp || !OperandsComplete()) &&
            "Trying to add an operand to a machine instr that is already done!");
     Operands.push_back(MachineOperand());
     return Operands.back();

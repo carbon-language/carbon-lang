@@ -33,8 +33,9 @@ public:
 
   /// addReg - Add a new virtual register operand...
   ///
-  const MachineInstrBuilder &addReg(int RegNo, bool isDef = false) const {
-    MI->addRegOperand(RegNo, isDef);
+  const MachineInstrBuilder &addReg(int RegNo, bool isDef = false,
+                                    bool isImp = false) const {
+    MI->addRegOperand(RegNo, isDef, isImp);
     return *this;
   }
 
