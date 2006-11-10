@@ -21,12 +21,13 @@
 
 namespace llvm {
 namespace clang {
+  class ASTContext;
   class Preprocessor;
   class Decl;
   
 /// Sema - This implements semantic analysis and AST building for C.
 class Sema : public Action {
-  Preprocessor &PP;
+  ASTContext &Context;
   
   /// LastInGroupList - This vector is populated when there are multiple
   /// declarators in a single decl group (e.g. "int A, B, C").  In this case,
@@ -34,8 +35,8 @@ class Sema : public Action {
   /// ASTStreamer.
   std::vector<Decl*> &LastInGroupList;
 public:
-  Sema(Preprocessor &pp, std::vector<Decl*> &prevInGroup)
-    : PP(pp), LastInGroupList(prevInGroup) {}
+  Sema(ASTContext &ctx, std::vector<Decl*> &prevInGroup)
+    : Context(ctx), LastInGroupList(prevInGroup) {}
   
   void Diag(SourceLocation Loc, unsigned DiagID,
             const std::string &Msg = std::string());

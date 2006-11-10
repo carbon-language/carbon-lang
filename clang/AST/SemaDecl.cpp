@@ -19,7 +19,6 @@ using namespace llvm;
 using namespace clang;
 
 
-
 bool Sema::isTypeName(const IdentifierInfo &II, Scope *S) const {
   Decl *D = II.getFETokenInfo<Decl>();
   return D != 0 && D->getDeclSpec().StorageClassSpec == DeclSpec::SCS_typedef;

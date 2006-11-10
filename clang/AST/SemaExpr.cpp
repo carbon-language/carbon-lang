@@ -12,6 +12,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "Sema.h"
+#include "clang/AST/ASTContext.h"
 #include "clang/AST/Expr.h"
 #include "clang/Lex/Preprocessor.h"
 #include "clang/Basic/Diagnostic.h"
@@ -75,7 +76,7 @@ Sema::ParseStringExpr(const LexerToken *StringToks, unsigned NumStringToks) {
   unsigned wchar_tByteWidth = ~0U;
   if (AnyWide)
     wchar_tByteWidth =
-      PP.getTargetInfo().getWCharWidth(StringToks[0].getLocation());
+      Context.PP.getTargetInfo().getWCharWidth(StringToks[0].getLocation());
   
   // The output buffer size needs to be large enough to hold wide characters.
   // This is a worst-case assumption which basically corresponds to L"" "long".
@@ -99,7 +100,7 @@ Sema::ParseStringExpr(const LexerToken *StringToks, unsigned NumStringToks) {
     // Get the spelling of the token, which eliminates trigraphs, etc.  We know
     // that ThisTokBuf points to a buffer that is big enough for the whole token
     // and 'spelled' tokens can only shrink.
-    unsigned ThisTokLen = PP.getSpelling(StringToks[i], ThisTokBuf);
+    unsigned ThisTokLen = Context.PP.getSpelling(StringToks[i], ThisTokBuf);
     const char *ThisTokEnd = ThisTokBuf+ThisTokLen-1;  // Skip end quote.
     
     // TODO: Input character set mapping support.
@@ -154,7 +155,7 @@ Sema::ParseStringExpr(const LexerToken *StringToks, unsigned NumStringToks) {
         ResultChar = 8;
         break;
       case 'e':
-        PP.Diag(StringToks[i], diag::ext_nonstandard_escape, "e");
+        Diag(StringToks[i].getLocation(), diag::ext_nonstandard_escape, "e");
         ResultChar = 27;
         break;
       case 'f':
@@ -177,7 +178,7 @@ Sema::ParseStringExpr(const LexerToken *StringToks, unsigned NumStringToks) {
       case 'x': // Hex escape.
         if (ThisTokBuf == ThisTokEnd ||
             (ResultChar = HexDigitValue(*ThisTokBuf)) == ~0U) {
-          PP.Diag(StringToks[i], diag::err_hex_escape_no_digits);
+          Diag(StringToks[i].getLocation(), diag::err_hex_escape_no_digits);
           ResultChar = 0;
           break;
         }
@@ -194,19 +195,19 @@ Sema::ParseStringExpr(const LexerToken *StringToks, unsigned NumStringToks) {
       // Otherwise, these are not valid escapes.
       case '(': case '{': case '[': case '%':
         // GCC accepts these as extensions.  We warn about them as such though.
-        if (!PP.getLangOptions().NoExtensions) {
-          PP.Diag(StringToks[i], diag::ext_nonstandard_escape,
-                  std::string()+(char)ResultChar);
+        if (!Context.PP.getLangOptions().NoExtensions) {
+          Diag(StringToks[i].getLocation(), diag::ext_nonstandard_escape,
+               std::string()+(char)ResultChar);
           break;
         }
         // FALL THROUGH.
       default:
         if (isgraph(ThisTokBuf[0])) {
-          PP.Diag(StringToks[i], diag::ext_unknown_escape,
-                  std::string()+(char)ResultChar);
+          Diag(StringToks[i].getLocation(), diag::ext_unknown_escape,
+               std::string()+(char)ResultChar);
         } else {
-          PP.Diag(StringToks[i], diag::ext_unknown_escape,
-                  "x"+utohexstr(ResultChar));
+          Diag(StringToks[i].getLocation(), diag::ext_unknown_escape,
+               "x"+utohexstr(ResultChar));
         }
       }
 

@@ -788,8 +788,9 @@ static void ParseFile(Preprocessor &PP, MinimalAction *PA, unsigned MainFileID){
 //===----------------------------------------------------------------------===//
 
 static void BuildASTs(Preprocessor &PP, unsigned MainFileID) {
-  ASTStreamerTy *Streamer = ASTStreamer_Init(PP, MainFileID);
+  ASTContext Context(PP);
   
+  ASTStreamerTy *Streamer = ASTStreamer_Init(Context, MainFileID);
   while (ASTStreamer_ReadTopLevelDecl(Streamer))
     /* keep reading */;
   
@@ -798,7 +799,8 @@ static void BuildASTs(Preprocessor &PP, unsigned MainFileID) {
 
 
 static void PrintASTs(Preprocessor &PP, unsigned MainFileID) {
-  ASTStreamerTy *Streamer = ASTStreamer_Init(PP, MainFileID);
+  ASTContext Context(PP);
+  ASTStreamerTy *Streamer = ASTStreamer_Init(Context, MainFileID);
   
   while (Decl *D = ASTStreamer_ReadTopLevelDecl(Streamer)) {
     std::cerr << "Read top-level decl: '";

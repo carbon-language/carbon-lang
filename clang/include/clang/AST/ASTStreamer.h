@@ -16,18 +16,16 @@
 
 namespace llvm {
 namespace clang {
-  class Preprocessor;
+  class ASTContext;
   class Decl;
   
   /// ASTStreamerTy - This is an opaque type used to reference ASTStreamer
   /// objects.
   typedef void ASTStreamerTy;
   
-  /// ASTStreamer_Init - Create an ASTStreamer with the specified preprocessor
-  /// and FileID.  If FullLocInfo is true, full location information is captured
-  /// in the AST nodes.  This takes more space, but allows for very accurate
-  /// position reporting.
-  ASTStreamerTy *ASTStreamer_Init(Preprocessor &PP, unsigned MainFileID);
+  /// ASTStreamer_Init - Create an ASTStreamer with the specified ASTContext
+  /// and FileID.
+  ASTStreamerTy *ASTStreamer_Init(ASTContext &Context, unsigned MainFileID);
   
   /// ASTStreamer_ReadTopLevelDecl - Parse and return one top-level declaration.
   /// This returns null at end of file.
