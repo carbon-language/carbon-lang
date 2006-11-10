@@ -59,7 +59,7 @@ void Parser::ParseObjCAtClassDeclaration(SourceLocation atLoc) {
   
   while (1) {
     if (Tok.getKind() != tok::identifier) {
-      Diag(diag::err_expected_ident);
+      Diag(Tok, diag::err_expected_ident);
       SkipUntil(tok::semi);
       return;
     }

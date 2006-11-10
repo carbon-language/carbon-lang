@@ -219,9 +219,6 @@ private:
             const std::string &M = std::string()) {
     Diag(Tok.getLocation(), DiagID, M);
   }
-  void Diag(unsigned DiagID, const std::string &Msg = std::string()) {
-    Diag(Tok, DiagID, Msg);
-  }
   
   /// SkipUntil - Read tokens until we get to the specified token, then consume
   /// it (unless DontConsume is false).  Because we cannot guarantee that the

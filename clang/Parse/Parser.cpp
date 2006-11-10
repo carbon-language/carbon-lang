@@ -245,7 +245,7 @@ void Parser::Initialize() {
   }
   
   if (Tok.getKind() == tok::eof)  // Empty source file is an extension.
-    Diag(diag::ext_empty_source_file);
+    Diag(Tok, diag::ext_empty_source_file);
 }
 
 /// ParseTopLevelDecl - Parse one top-level declaration, return whatever the
@@ -299,7 +299,7 @@ void Parser::ParseTranslationUnit() {
 Parser::DeclTy *Parser::ParseExternalDeclaration() {
   switch (Tok.getKind()) {
   case tok::semi:
-    Diag(diag::ext_top_level_semi);
+    Diag(Tok, diag::ext_top_level_semi);
     ConsumeToken();
     // TODO: Invoke action for top-level semicolon.
     return 0;
