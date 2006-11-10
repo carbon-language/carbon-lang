@@ -172,7 +172,7 @@ static MachineInstr *FuseTwoAddrInst(unsigned Opcode, unsigned FrameIndex,
   for (unsigned i = 0; i != NumOps; ++i) {
     MachineOperand &MO = MI->getOperand(i+2);
     if (MO.isReg())
-      MIB = MIB.addReg(MO.getReg());
+      MIB = MIB.addReg(MO.getReg(), false, MO.isImplicit());
     else if (MO.isImm())
       MIB = MIB.addImm(MO.getImm());
     else if (MO.isGlobalAddress())
