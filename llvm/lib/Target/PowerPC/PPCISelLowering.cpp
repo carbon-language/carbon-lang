@@ -26,7 +26,10 @@
 #include "llvm/Intrinsics.h"
 #include "llvm/Support/MathExtras.h"
 #include "llvm/Target/TargetOptions.h"
+#include "llvm/Support/CommandLine.h"
 using namespace llvm;
+
+static cl::opt<bool> EnablePPCPreinc("enable-ppc-preinc");
 
 PPCTargetLowering::PPCTargetLowering(PPCTargetMachine &TM)
   : TargetLowering(TM), PPCSubTarget(*TM.getSubtargetImpl()) {
@@ -861,29 +864,27 @@ bool PPCTargetLowering::getPreIndexedAddressParts(SDNode *N, SDOperand &Base,
                                                   SDOperand &Offset,
                                                   ISD::MemIndexedMode &AM,
                                                   SelectionDAG &DAG) {
-  return false;
+  // Disabled by default for now.
+  if (!EnablePPCPreinc) return false;
   
-#if 0
-  MVT::ValueType VT;
   SDOperand Ptr;
   if (LoadSDNode *LD = dyn_cast<LoadSDNode>(N)) {
     Ptr = LD->getBasePtr();
-    VT  = LD->getLoadedVT();
-    
-    // TODO: handle other cases.
-    if (VT != MVT::i32) return false;
   } else if (StoreSDNode *ST = dyn_cast<StoreSDNode>(N)) {
-    Ptr = ST->getBasePtr();
-    VT  = ST->getStoredVT();
-    // TODO: handle other cases.
+    ST = ST;
+    //Ptr = ST->getBasePtr();
+    //VT  = ST->getStoredVT();
+    // TODO: handle stores.
     return false;
   } else
     return false;
 
+  // TODO: Handle reg+reg.
+  if (!SelectAddressRegImm(Ptr, Offset, Base, DAG))
+    return false;
   
-  
-  return false;
-#endif
+  AM = ISD::PRE_INC;
+  return true;
 }
 
 //===----------------------------------------------------------------------===//

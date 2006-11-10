@@ -422,9 +422,44 @@ def LWZ : DForm_1<32, (ops GPRC:$rD, memri:$src),
                   "lwz $rD, $src", LdStGeneral,
                   [(set GPRC:$rD, (load iaddr:$src))]>;
 
-def LWZU : DForm_1<33, (ops GPRC:$rD, GPRC:$rA_result, i32imm:$disp, GPRC:$rA),
+def LFS : DForm_8<48, (ops F4RC:$rD, memri:$src),
+                  "lfs $rD, $src", LdStLFDU,
+                  [(set F4RC:$rD, (load iaddr:$src))]>;
+def LFD : DForm_8<50, (ops F8RC:$rD, memri:$src),
+                  "lfd $rD, $src", LdStLFD,
+                  [(set F8RC:$rD, (load iaddr:$src))]>;
+
+// FIXME: PTRRC for Pointer regs for ppc64.
+
+// 'Update' load forms.
+def LBZU : DForm_1<35, (ops GPRC:$rD, ptr_rc:$rA_result, i32imm:$disp,
+                            ptr_rc:$rA),
+                   "lbzu $rD, $disp($rA)", LdStGeneral,
+                   []>, RegConstraint<"$rA = $rA_result">;
+
+def LHAU : DForm_1<43, (ops GPRC:$rD, ptr_rc:$rA_result, i32imm:$disp,
+                            ptr_rc:$rA),
+                   "lhau $rD, $disp($rA)", LdStGeneral,
+                   []>, RegConstraint<"$rA = $rA_result">;
+
+def LHZU : DForm_1<41, (ops GPRC:$rD, ptr_rc:$rA_result, i32imm:$disp,
+                            ptr_rc:$rA),
+                   "lhzu $rD, $disp($rA)", LdStGeneral,
+                   []>, RegConstraint<"$rA = $rA_result">;
+
+def LWZU : DForm_1<33, (ops GPRC:$rD, ptr_rc:$rA_result, i32imm:$disp,
+                            ptr_rc:$rA),
                    "lwzu $rD, $disp($rA)", LdStGeneral,
                    []>, RegConstraint<"$rA = $rA_result">;
+
+def LFSU : DForm_8<49, (ops F4RC:$rD, ptr_rc:$rA_result, i32imm:$disp,
+                            ptr_rc:$rA),
+                  "lfs $rD, $disp($rA)", LdStLFDU,
+                  []>, RegConstraint<"$rA = $rA_result">;
+def LFDU : DForm_8<51, (ops F8RC:$rD, ptr_rc:$rA_result, i32imm:$disp,
+                            ptr_rc:$rA),
+                  "lfd $rD, $disp($rA)", LdStLFD,
+                  []>, RegConstraint<"$rA = $rA_result">;
 }
 
 
@@ -500,14 +535,6 @@ def CMPWI : DForm_5_ext<11, (ops CRRC:$crD, GPRC:$rA, s16imm:$imm),
                         "cmpwi $crD, $rA, $imm", IntCompare>;
 def CMPLWI : DForm_6_ext<10, (ops CRRC:$dst, GPRC:$src1, u16imm:$src2),
                          "cmplwi $dst, $src1, $src2", IntCompare>;
-}
-let isLoad = 1, PPC970_Unit = 2 in {
-def LFS : DForm_8<48, (ops F4RC:$rD, memri:$src),
-                  "lfs $rD, $src", LdStLFDU,
-                  [(set F4RC:$rD, (load iaddr:$src))]>;
-def LFD : DForm_8<50, (ops F8RC:$rD, memri:$src),
-                  "lfd $rD, $src", LdStLFD,
-                  [(set F8RC:$rD, (load iaddr:$src))]>;
 }
 let isStore = 1, noResults = 1, PPC970_Unit = 2 in {
 def STFS : DForm_9<52, (ops F4RC:$rS, memri:$dst),
