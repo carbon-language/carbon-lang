@@ -19,6 +19,7 @@
 #include "clang/AST/ASTStreamer.h"
 #include "clang/AST/Decl.h"
 #include "clang/AST/Expr.h"
+#include "clang/AST/Type.h"
 #include "clang/AST/StmtVisitor.h"
 
 #endif

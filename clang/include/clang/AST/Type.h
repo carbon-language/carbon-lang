@@ -14,6 +14,9 @@
 #ifndef LLVM_CLANG_PARSE_TYPE_H
 #define LLVM_CLANG_PARSE_TYPE_H
 
+#include "llvm/Support/DataTypes.h"
+#include <cassert>
+
 namespace llvm {
 namespace clang {
   class TypeDecl;
@@ -41,17 +44,17 @@ public:
   
   TypeRef(Type *Ptr, unsigned Quals) {
     assert((Quals & ~CVRFlags) == 0 && "Invalid type qualifiers!");
-    ThePtr = static_cast<uintptr_t>(Ptr);
+    ThePtr = reinterpret_cast<uintptr_t>(Ptr);
     assert((ThePtr & CVRFlags) == 0 && "Type pointer not 8-byte aligned?");
     ThePtr |= Quals;
   }
   
   Type &operator*() const {
-    return *static_cast<Type*>(ThePtr & ~CVRFlags);
+    return *reinterpret_cast<Type*>(ThePtr & ~CVRFlags);
   }
 
   Type *operator->() const {
-    return static_cast<Type*>(ThePtr & ~CVRFlags);
+    return reinterpret_cast<Type*>(ThePtr & ~CVRFlags);
   }
 
   bool isConstQualified() const {
@@ -101,13 +104,13 @@ public:
   Type *getCanonicalType() const { return CanonicalType; }
 };
 
-class PointerType : public CType {
+class PointerType : public Type {
   TypeRef PointeeType;
 public:
   
 };
 
-class TypedefType : public CType {
+class TypedefType : public Type {
   // Decl * here.
 public:
   
