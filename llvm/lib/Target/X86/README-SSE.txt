@@ -551,3 +551,9 @@ void test4(vectorfloat *F, float *f) {
 
 Apply the same transformation that merged four float into a single 128-bit load
 to loads from constant pool.
+
+//===---------------------------------------------------------------------===//
+
+Floating point max / min are commutable when -enable-unsafe-fp-path is
+specified. We should turn int_x86_sse_max_ss and X86ISD::FMIN etc. into other
+nodes which are selected to max / min instructions that are marked commutable.
