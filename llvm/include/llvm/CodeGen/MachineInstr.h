@@ -180,7 +180,7 @@ public:
     assert(isRegister() && "Wrong MachineOperand accessor");
     return IsImp;
   }
-  bool setImplicit() { 
+  void setImplicit() { 
     assert(isRegister() && "Wrong MachineOperand accessor");
     IsImp = true;
   }
