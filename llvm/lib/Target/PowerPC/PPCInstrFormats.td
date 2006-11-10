@@ -174,15 +174,6 @@ class DForm_6_ext<bits<6> opcode, dag OL, string asmstr, InstrItinClass itin>
   let L = PPC64;
 }
 
-class DForm_8<bits<6> opcode, dag OL, string asmstr, InstrItinClass itin,
-              list<dag> pattern>
-  : DForm_1<opcode, OL, asmstr, itin, pattern> {
-}
-
-class DForm_9<bits<6> opcode, dag OL, string asmstr, InstrItinClass itin,
-              list<dag> pattern>
-  : DForm_1<opcode, OL, asmstr, itin, pattern> {
-}
 
 // 1.7.5 DS-Form
 class DSForm_1<bits<6> opcode, bits<2> xo, dag OL, string asmstr,
