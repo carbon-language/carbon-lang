@@ -1,4 +1,4 @@
-//===--- ASTBuilder.cpp - AST Builder Implementation ----------------------===//
+//===--- Sema.cpp - AST Builder and Semantic Analysis Implementation ------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,12 +7,12 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This file implements the actions class which builds an AST out of a parse
-// stream.
+// This file implements the actions class which performs semantic analysis and
+// builds an AST out of a parse stream.
 //
 //===----------------------------------------------------------------------===//
 
-#include "clang/AST/ASTBuilder.h"
+#include "Sema.h"
 #include "clang/AST/Decl.h"
 #include "clang/AST/Expr.h"
 #include "clang/Parse/Action.h"

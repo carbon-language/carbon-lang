@@ -12,7 +12,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "clang/AST/ASTStreamer.h"
-#include "clang/AST/ASTBuilder.h"
+#include "Sema.h"
 #include "clang/Parse/Action.h"
 #include "clang/Parse/Parser.h"
 using namespace llvm;
