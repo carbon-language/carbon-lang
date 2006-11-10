@@ -53,9 +53,15 @@ PPCTargetLowering::PPCTargetLowering(PPCTargetMachine &TM)
   // PowerPC does not have truncstore for i1.
   setStoreXAction(MVT::i1, Promote);
 
-  // PowerPC has i32 and i64 pre-inc load and store's.
+  // PowerPC has pre-inc load and store's.
+  setIndexedLoadAction(ISD::PRE_INC, MVT::i1, Legal);
+  setIndexedLoadAction(ISD::PRE_INC, MVT::i8, Legal);
+  setIndexedLoadAction(ISD::PRE_INC, MVT::i16, Legal);
   setIndexedLoadAction(ISD::PRE_INC, MVT::i32, Legal);
   setIndexedLoadAction(ISD::PRE_INC, MVT::i64, Legal);
+  setIndexedStoreAction(ISD::PRE_INC, MVT::i1, Legal);
+  setIndexedStoreAction(ISD::PRE_INC, MVT::i8, Legal);
+  setIndexedStoreAction(ISD::PRE_INC, MVT::i16, Legal);
   setIndexedStoreAction(ISD::PRE_INC, MVT::i32, Legal);
   setIndexedStoreAction(ISD::PRE_INC, MVT::i64, Legal);
 
@@ -870,6 +876,9 @@ bool PPCTargetLowering::getPreIndexedAddressParts(SDNode *N, SDOperand &Base,
   SDOperand Ptr;
   if (LoadSDNode *LD = dyn_cast<LoadSDNode>(N)) {
     Ptr = LD->getBasePtr();
+    
+    // FIXME: PPC has no LWAU!
+    
   } else if (StoreSDNode *ST = dyn_cast<StoreSDNode>(N)) {
     ST = ST;
     //Ptr = ST->getBasePtr();

@@ -191,10 +191,6 @@ class DSForm_1<bits<6> opcode, bits<2> xo, dag OL, string asmstr,
   let Inst{30-31} = xo;
 }
 
-class DSForm_2<bits<6> opcode, bits<2> xo, dag OL, string asmstr,
-               InstrItinClass itin, list<dag> pattern>
-  : DSForm_1<opcode, xo, OL, asmstr, itin, pattern>;
-
 // 1.7.6 X-Form
 class XForm_base_r3xo<bits<6> opcode, bits<10> xo, dag OL, string asmstr, 
                       InstrItinClass itin, list<dag> pattern>

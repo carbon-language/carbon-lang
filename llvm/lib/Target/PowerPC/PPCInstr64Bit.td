@@ -229,8 +229,8 @@ def RLDICR : MDForm_1<30, 1,
 //
 
 
-let isLoad = 1, PPC970_Unit = 2 in {
 // Sign extending loads.
+let isLoad = 1, PPC970_Unit = 2 in {
 def LHA8: DForm_1<42, (ops G8RC:$rD, memri:$src),
                   "lha $rD, $src", LdStLHA,
                   [(set G8RC:$rD, (sextloadi16 iaddr:$src))]>,
@@ -248,7 +248,17 @@ def LWAX : XForm_1<31, 341, (ops G8RC:$rD, memrr:$src),
                    [(set G8RC:$rD, (sextloadi32 xaddr:$src))]>, isPPC64,
                    PPC970_DGroup_Cracked;
 
+// Update forms.
+def LHAU8 : DForm_1<43, (ops G8RC:$rD, ptr_rc:$rA_result, i32imm:$disp,
+                            ptr_rc:$rA),
+                    "lhau $rD, $disp($rA)", LdStGeneral,
+                    []>, RegConstraint<"$rA = $rA_result">;
+// NO LWAU!
+
+}
+
 // Zero extending loads.
+let isLoad = 1, PPC970_Unit = 2 in {
 def LBZ8 : DForm_1<34, (ops G8RC:$rD, memri:$src),
                   "lbz $rD, $src", LdStGeneral,
                   [(set G8RC:$rD, (zextloadi8 iaddr:$src))]>;
@@ -268,20 +278,44 @@ def LHZX8 : XForm_1<31, 279, (ops G8RC:$rD, memrr:$src),
 def LWZX8 : XForm_1<31,  23, (ops G8RC:$rD, memrr:$src),
                    "lwzx $rD, $src", LdStGeneral,
                    [(set G8RC:$rD, (zextloadi32 xaddr:$src))]>;
+                   
+                   
+// Update forms.
+def LBZU8 : DForm_1<35, (ops G8RC:$rD, ptr_rc:$rA_result, i32imm:$disp,
+                             ptr_rc:$rA),
+                    "lbzu $rD, $disp($rA)", LdStGeneral,
+                    []>, RegConstraint<"$rA = $rA_result">;
+def LHZU8 : DForm_1<41, (ops G8RC:$rD, ptr_rc:$rA_result, i32imm:$disp,
+                             ptr_rc:$rA),
+                    "lhzu $rD, $disp($rA)", LdStGeneral,
+                    []>, RegConstraint<"$rA = $rA_result">;
+def LWZU8 : DForm_1<33, (ops G8RC:$rD, ptr_rc:$rA_result, i32imm:$disp,
+                             ptr_rc:$rA),
+                    "lwzu $rD, $disp($rA)", LdStGeneral,
+                    []>, RegConstraint<"$rA = $rA_result">;
+
+}
 
 
 // Full 8-byte loads.
-def LD   : DSForm_2<58, 0, (ops G8RC:$rD, memrix:$src),
+let isLoad = 1, PPC970_Unit = 2 in {
+def LD   : DSForm_1<58, 0, (ops G8RC:$rD, memrix:$src),
                     "ld $rD, $src", LdStLD,
                     [(set G8RC:$rD, (load ixaddr:$src))]>, isPPC64;
 def LDX  : XForm_1<31,  21, (ops G8RC:$rD, memrr:$src),
                    "ldx $rD, $src", LdStLD,
                    [(set G8RC:$rD, (load xaddr:$src))]>, isPPC64;
+                   
+def LDU  : DSForm_1<58, 1, (ops G8RC:$rD, ptr_rc:$rA_result, i32imm:$disp,
+                                ptr_rc:$rA),
+                    "ldu $rD, $disp($rA)", LdStLD,
+                    []>, RegConstraint<"$rA = $rA_result">, isPPC64;
+
 }
 
 let isStore = 1, noResults = 1, PPC970_Unit = 2 in {
 // Normal stores.
-def STD  : DSForm_2<62, 0, (ops G8RC:$rS, memrix:$dst),
+def STD  : DSForm_1<62, 0, (ops G8RC:$rS, memrix:$dst),
                     "std $rS, $dst", LdStSTD,
                     [(store G8RC:$rS, ixaddr:$dst)]>, isPPC64;
 def STDX  : XForm_8<31, 149, (ops G8RC:$rS, memrr:$dst),
@@ -293,7 +327,7 @@ def STDUX : XForm_8<31, 181, (ops G8RC:$rS, memrr:$dst),
                    []>, isPPC64;
                    
 // STD_32/STDX_32 - Just like STD/STDX, but uses a '32-bit' input register.
-def STD_32  : DSForm_2<62, 0, (ops GPRC:$rT, memrix:$dst),
+def STD_32  : DSForm_1<62, 0, (ops GPRC:$rT, memrix:$dst),
                        "std $rT, $dst", LdStSTD,
                        [(PPCstd_32  GPRC:$rT, ixaddr:$dst)]>, isPPC64;
 def STDX_32  : XForm_8<31, 149, (ops GPRC:$rT, memrr:$dst),

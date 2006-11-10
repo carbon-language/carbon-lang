@@ -830,14 +830,29 @@ SDNode *PPCDAGToDAGISel::Select(SDOperand Op) {
     
     unsigned Opcode;
     bool isSExt = LD->getExtensionType() == ISD::SEXTLOAD;
-    assert(!isSExt || LoadedVT == MVT::i16 && "Invalid sext update load");
-    switch (LoadedVT) {
-    default: assert(0 && "Invalid PPC load type!");
-    case MVT::f64: Opcode = PPC::LFDU; break;
-    case MVT::f32: Opcode = PPC::LFSU; break;
-    case MVT::i32: Opcode = PPC::LWZU; break;
-    case MVT::i16: Opcode = isSExt ? PPC::LHAU : PPC::LHZU; break;
-    case MVT::i8:  Opcode = PPC::LBZU; break;
+    if (LD->getValueType(0) != MVT::i64) {
+      // Handle PPC32 integer and normal FP loads.
+      assert(!isSExt || LoadedVT == MVT::i16 && "Invalid sext update load");
+      switch (LoadedVT) {
+      default: assert(0 && "Invalid PPC load type!");
+      case MVT::f64: Opcode = PPC::LFDU; break;
+      case MVT::f32: Opcode = PPC::LFSU; break;
+      case MVT::i32: Opcode = PPC::LWZU; break;
+      case MVT::i16: Opcode = isSExt ? PPC::LHAU : PPC::LHZU; break;
+      case MVT::i1:
+      case MVT::i8:  Opcode = PPC::LBZU; break;
+      }
+    } else {
+      assert(LD->getValueType(0) == MVT::i64 && "Unknown load result type!");
+      assert(!isSExt || LoadedVT == MVT::i16 && "Invalid sext update load");
+      switch (LoadedVT) {
+      default: assert(0 && "Invalid PPC load type!");
+      case MVT::i64: Opcode = PPC::LDU; break;
+      case MVT::i32: Opcode = PPC::LWZU8; break;
+      case MVT::i16: Opcode = isSExt ? PPC::LHAU8 : PPC::LHZU8; break;
+      case MVT::i1:
+      case MVT::i8:  Opcode = PPC::LBZU8; break;
+      }
     }
     
     SDOperand Offset = LD->getOffset();
