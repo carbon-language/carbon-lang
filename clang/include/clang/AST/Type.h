@@ -42,7 +42,7 @@ public:
     CVRFlags = Const|Volatile|Restrict
   };
   
-  TypeRef(Type *Ptr, unsigned Quals) {
+  TypeRef(Type *Ptr = 0, unsigned Quals = 0) {
     assert((Quals & ~CVRFlags) == 0 && "Invalid type qualifiers!");
     ThePtr = reinterpret_cast<uintptr_t>(Ptr);
     assert((ThePtr & CVRFlags) == 0 && "Type pointer not 8-byte aligned?");

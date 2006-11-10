@@ -14,6 +14,8 @@
 #ifndef LLVM_CLANG_AST_ASTCONTEXT_H
 #define LLVM_CLANG_AST_ASTCONTEXT_H
 
+#include "clang/AST/Type.h"
+
 namespace llvm {
 namespace clang {
   class Preprocessor;
@@ -25,6 +27,17 @@ class ASTContext {
 public:
   Preprocessor &PP;
   TargetInfo &Target;
+
+  
+  // Builtin Types.
+  TypeRef VoidTy;
+  TypeRef BoolTy;
+  TypeRef CharTy;
+  TypeRef SignedCharTy, ShortTy, IntTy, LongTy, LongLongTy;
+  TypeRef UnsignedCharTy, UnsignedShortTy, UnsignedIntTy, UnsignedLongTy;
+  TypeRef UnsignedLongLongTy;
+  TypeRef FloatTy, DoubleTy, LongDoubleTy;
+  TypeRef FloatComplexTy, DoubleComplexTy, LongDoubleComplexTy;
   
   ASTContext(Preprocessor &pp);
   
