@@ -458,6 +458,8 @@ public:
   void visit(Instruction &I) { visit(I.getOpcode(), I); }
 
   void visit(unsigned Opcode, User &I) {
+    // Note: this doesn't use InstVisitor, because it has to work with
+    // ConstantExpr's in addition to instructions.
     switch (Opcode) {
     default: assert(0 && "Unknown instruction type encountered!");
              abort();
