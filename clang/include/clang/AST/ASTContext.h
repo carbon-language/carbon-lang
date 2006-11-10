@@ -17,14 +17,16 @@
 namespace llvm {
 namespace clang {
   class Preprocessor;
+  class TargetInfo;
   
 /// ASTContext - This class holds long-lived AST nodes (such as types and
 /// decls) that can be referred to throughout the semantic analysis of a file.
 class ASTContext {
 public:
   Preprocessor &PP;
+  TargetInfo &Target;
   
-  ASTContext(Preprocessor &pp) : PP(pp) {}
+  ASTContext(Preprocessor &pp);
   
   
   

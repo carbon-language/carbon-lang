@@ -75,8 +75,7 @@ Sema::ParseStringExpr(const LexerToken *StringToks, unsigned NumStringToks) {
   // query the target.  As such, wchar_tByteWidth is only valid if AnyWide=true.
   unsigned wchar_tByteWidth = ~0U;
   if (AnyWide)
-    wchar_tByteWidth =
-      Context.PP.getTargetInfo().getWCharWidth(StringToks[0].getLocation());
+    wchar_tByteWidth =Context.Target.getWCharWidth(StringToks[0].getLocation());
   
   // The output buffer size needs to be large enough to hold wide characters.
   // This is a worst-case assumption which basically corresponds to L"" "long".
