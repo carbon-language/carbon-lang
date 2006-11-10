@@ -228,7 +228,6 @@ bool LiveVariables::runOnMachineFunction(MachineFunction &MF) {
     for (MachineBasicBlock::iterator I = MBB->begin(), E = MBB->end();
          I != E; ++I) {
       MachineInstr *MI = I;
-      const TargetInstrDescriptor &MID = TII.get(MI->getOpcode());
 
       // Process all of the operands of the instruction...
       unsigned NumOperandsToProcess = MI->getNumOperands();
@@ -238,14 +237,7 @@ bool LiveVariables::runOnMachineFunction(MachineFunction &MF) {
       if (MI->getOpcode() == TargetInstrInfo::PHI)
         NumOperandsToProcess = 1;
 
-      // Loop over implicit uses, using them.
-      if (MID.ImplicitUses) {
-        for (const unsigned *ImplicitUses = MID.ImplicitUses;
-             *ImplicitUses; ++ImplicitUses)
-          HandlePhysRegUse(*ImplicitUses, MI);
-      }
-
-      // Process all explicit uses...
+      // Process all uses...
       for (unsigned i = 0; i != NumOperandsToProcess; ++i) {
         MachineOperand &MO = MI->getOperand(i);
         if (MO.isRegister() && MO.isUse() && MO.getReg()) {
@@ -258,14 +250,7 @@ bool LiveVariables::runOnMachineFunction(MachineFunction &MF) {
         }
       }
 
-      // Loop over implicit defs, defining them.
-      if (MID.ImplicitDefs) {
-        for (const unsigned *ImplicitDefs = MID.ImplicitDefs;
-             *ImplicitDefs; ++ImplicitDefs)
-          HandlePhysRegDef(*ImplicitDefs, MI);
-      }
-
-      // Process all explicit defs...
+      // Process all defs...
       for (unsigned i = 0; i != NumOperandsToProcess; ++i) {
         MachineOperand &MO = MI->getOperand(i);
         if (MO.isRegister() && MO.isDef() && MO.getReg()) {

@@ -561,7 +561,7 @@ void RA::AllocateBasicBlock(MachineBasicBlock &MBB) {
     for (unsigned i = 0; i != MI->getNumOperands(); ++i) {
       MachineOperand& MO = MI->getOperand(i);
       // here we are looking for only used operands (never def&use)
-      if (MO.isRegister() && !MO.isDef() && MO.getReg() &&
+      if (MO.isRegister() && !MO.isDef() && !MO.isImplicit() && MO.getReg() &&
           MRegisterInfo::isVirtualRegister(MO.getReg()))
         MI = reloadVirtReg(MBB, MI, i);
     }
@@ -596,7 +596,7 @@ void RA::AllocateBasicBlock(MachineBasicBlock &MBB) {
     // are defined, and marking explicit destinations in the PhysRegsUsed map.
     for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
       MachineOperand& MO = MI->getOperand(i);
-      if (MO.isRegister() && MO.isDef() && MO.getReg() &&
+      if (MO.isRegister() && MO.isDef() && !MO.isImplicit() && MO.getReg() &&
           MRegisterInfo::isPhysicalRegister(MO.getReg())) {
         unsigned Reg = MO.getReg();
         if (PhysRegsUsed[Reg] == -2) continue;  // Something like ESP.

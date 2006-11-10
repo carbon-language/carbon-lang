@@ -196,7 +196,7 @@ static MachineInstr *FuseInst(unsigned Opcode, unsigned OpNo,
       assert(MO.isReg() && "Expected to fold into reg operand!");
       MIB = addFrameReference(MIB, FrameIndex);
     } else if (MO.isReg())
-      MIB = MIB.addReg(MO.getReg(), MO.isDef());
+      MIB = MIB.addReg(MO.getReg(), MO.isDef(), MO.isImplicit());
     else if (MO.isImm())
       MIB = MIB.addImm(MO.getImm());
     else if (MO.isGlobalAddress())

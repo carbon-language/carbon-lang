@@ -658,16 +658,9 @@ void LiveIntervals::computeIntervals() {
     }
     
     for (; MI != miEnd; ++MI) {
-      const TargetInstrDescriptor &TID = tii_->get(MI->getOpcode());
       DEBUG(std::cerr << MIIndex << "\t" << *MI);
-      
-      // Handle implicit defs.
-      if (TID.ImplicitDefs) {
-        for (const unsigned *ImpDef = TID.ImplicitDefs; *ImpDef; ++ImpDef)
-          handleRegisterDef(MBB, MI, MIIndex, *ImpDef);
-      }
 
-      // Handle explicit defs.
+      // Handle defs.
       for (int i = MI->getNumOperands() - 1; i >= 0; --i) {
         MachineOperand &MO = MI->getOperand(i);
         // handle register defs - build intervals

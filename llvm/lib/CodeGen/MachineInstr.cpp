@@ -205,8 +205,12 @@ void MachineInstr::print(std::ostream &OS, const TargetMachine *TM) const {
     OS << " ";
     ::print(mop, OS, TM);
 
-    if (mop.isReg() && mop.isDef())
-      OS << "<def>";
+    if (mop.isReg()) {
+      if (mop.isImplicit())
+        OS << (mop.isDef() ? "<imp-def>" : "<imp-use>");
+      else if (mop.isDef())
+        OS << "<def>";
+    }
   }
 
   OS << "\n";
