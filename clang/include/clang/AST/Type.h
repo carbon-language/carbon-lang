@@ -42,7 +42,9 @@ public:
     CVRFlags = Const|Volatile|Restrict
   };
   
-  TypeRef(Type *Ptr = 0, unsigned Quals = 0) {
+  TypeRef() : ThePtr(0) {}
+  
+  TypeRef(Type *Ptr, unsigned Quals = 0) {
     assert((Quals & ~CVRFlags) == 0 && "Invalid type qualifiers!");
     ThePtr = reinterpret_cast<uintptr_t>(Ptr);
     assert((ThePtr & CVRFlags) == 0 && "Type pointer not 8-byte aligned?");
@@ -55,6 +57,11 @@ public:
 
   Type *operator->() const {
     return reinterpret_cast<Type*>(ThePtr & ~CVRFlags);
+  }
+  
+  /// isNull - Return true if this TypeRef doesn't point to a type yet.
+  bool isNull() const {
+    return ThePtr == 0;
   }
 
   bool isConstQualified() const {
