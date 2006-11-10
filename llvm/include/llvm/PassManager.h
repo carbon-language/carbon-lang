@@ -92,10 +92,10 @@ class ModulePassManager_New;
 class PassManagerImpl_New;
 class FunctionPassManagerImpl_New;
 
-/// PassManagerAnalysisHelper helps pass manager analysis required by
+/// CommonPassManagerImpl helps pass manager analysis required by
 /// the managed passes. It provides methods to add/remove analysis
 /// available and query if certain analysis is available or not.
-class PassManagerAnalysisHelper {
+class CommonPassManagerImpl : public Pass{
 
 public:
 
@@ -124,8 +124,7 @@ private:
 };
 
 /// PassManager_New manages ModulePassManagers
-class PassManager_New : public Pass,
-                        public PassManagerAnalysisHelper {
+class PassManager_New : public CommonPassManagerImpl {
 
 public:
 
@@ -150,8 +149,7 @@ private:
 };
 
 /// FunctionPassManager_New manages FunctionPasses and BasicBlockPassManagers.
-class FunctionPassManager_New : public Pass,
-                                public PassManagerAnalysisHelper {
+class FunctionPassManager_New : public CommonPassManagerImpl {
 public:
   FunctionPassManager_New(ModuleProvider *P) { /* TODO */ }
   FunctionPassManager_New();

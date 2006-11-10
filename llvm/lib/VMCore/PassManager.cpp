@@ -22,8 +22,7 @@ namespace llvm {
 /// BasicBlockPassManager_New manages BasicBlockPass. It batches all the
 /// pass together and sequence them to process one basic block before
 /// processing next basic block.
-class BasicBlockPassManager_New : public Pass,
-                                  public PassManagerAnalysisHelper {
+class BasicBlockPassManager_New : public CommonPassManagerImpl {
 
 public:
   BasicBlockPassManager_New() { }
@@ -44,8 +43,7 @@ private:
 /// It batches all function passes and basic block pass managers together and
 /// sequence them to process one function at a time before processing next
 /// function.
-class FunctionPassManagerImpl_New : public Pass,
-                                public PassManagerAnalysisHelper {
+class FunctionPassManagerImpl_New : public CommonPassManagerImpl {
 public:
   FunctionPassManagerImpl_New(ModuleProvider *P) { /* TODO */ }
   FunctionPassManagerImpl_New() { 
@@ -79,8 +77,7 @@ private:
 /// ModulePassManager_New manages ModulePasses and function pass managers.
 /// It batches all Module passes  passes and function pass managers together and
 /// sequence them to process one module.
-class ModulePassManager_New : public Pass,
-                              public PassManagerAnalysisHelper {
+class ModulePassManager_New : public CommonPassManagerImpl {
  
 public:
   ModulePassManager_New() { activeFunctionPassManager = NULL; }
@@ -101,8 +98,7 @@ private:
 };
 
 /// PassManager_New manages ModulePassManagers
-class PassManagerImpl_New : public Pass,
-                            public PassManagerAnalysisHelper {
+class PassManagerImpl_New : public CommonPassManagerImpl {
 
 public:
 
@@ -137,11 +133,11 @@ private:
 
 } // End of llvm namespace
 
-// PassManagerAnalysisHelper implementation
+// CommonPassManagerImpl implementation
 
 /// Return true IFF pass P's required analysis set does not required new
 /// manager.
-bool PassManagerAnalysisHelper::manageablePass(Pass *P) {
+bool CommonPassManagerImpl::manageablePass(Pass *P) {
 
   AnalysisUsage AnUsage;
   P->getAnalysisUsage(AnUsage);
@@ -153,26 +149,26 @@ bool PassManagerAnalysisHelper::manageablePass(Pass *P) {
 }
 
 /// Return true IFF AnalysisID AID is currently available.
-bool PassManagerAnalysisHelper::analysisCurrentlyAvailable(AnalysisID AID) {
+bool CommonPassManagerImpl::analysisCurrentlyAvailable(AnalysisID AID) {
 
   // TODO
   return false;
 }
 
 /// Augment RequiredSet by adding analysis required by pass P.
-void PassManagerAnalysisHelper::noteDownRequiredAnalysis(Pass *P) {
+void CommonPassManagerImpl::noteDownRequiredAnalysis(Pass *P) {
 
   // TODO
 }
 
 /// Remove AnalysisID from the RequiredSet
-void PassManagerAnalysisHelper::removeAnalysis(AnalysisID AID) {
+void CommonPassManagerImpl::removeAnalysis(AnalysisID AID) {
 
   // TODO
 }
 
 /// Remove Analyss not preserved by Pass P
-void PassManagerAnalysisHelper::removeNotPreservedAnalysis(Pass *P) {
+void CommonPassManagerImpl::removeNotPreservedAnalysis(Pass *P) {
 
   // TODO
 }
