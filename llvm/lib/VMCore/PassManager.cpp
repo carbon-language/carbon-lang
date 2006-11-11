@@ -160,6 +160,11 @@ private:
   /// Add a pass into a passmanager queue. This is used by schedulePasses
   bool addPass(Pass *p);
 
+  /// Schedule pass P for execution. Make sure that passes required by
+  /// P are run before P is run. Update analysis info maintained by
+  /// the manager. Remove dead passes. This is a recursive function.
+  void schedulePass(Pass *P);
+
   /// Schedule all passes collected in pass queue using add(). Add all the
   /// schedule passes into various manager's queue using addPass().
   void schedulePasses();
@@ -437,24 +442,51 @@ ModulePassManager_New::runOnModule(Module &M) {
   return Changed;
 }
 
+/// Schedule pass P for execution. Make sure that passes required by
+/// P are run before P is run. Update analysis info maintained by
+/// the manager. Remove dead passes. This is a recursive function.
+void PassManagerImpl_New::schedulePass(Pass *P) {
+
+  AnalysisUsage AnUsage;
+  P->getAnalysisUsage(AnUsage);
+  const std::vector<AnalysisID> &RequiredSet = AnUsage.getRequiredSet();
+  for (std::vector<AnalysisID>::const_iterator I = RequiredSet.begin(),
+         E = RequiredSet.end(); I != E; ++I) {
+
+    // TODO Check if Analysis is currently available or not.
+    bool available = false;
+    if (!available) {
+      // Schedule this analysis run first.
+      Pass *AP = (*I)->createPass();
+      schedulePass(AP);
+    }
+  }
+    
+  addPass(P);
+
+  // TODO : Walk through all managers and remove not preserved analysis
+  // TODO : remove dead passes
+}
+
 /// Schedule all passes from the queue by adding them in their
 /// respective manager's queue. 
-void
-PassManagerImpl_New::schedulePasses() {
-  /* TODO */
+void PassManagerImpl_New::schedulePasses() {
+  for (std::vector<Pass *>::iterator I = passVectorBegin(),
+         E = passVectorEnd(); I != E; ++I)
+    schedulePass (*I);
 }
 
 /// Add pass P to the queue of passes to run.
-void
-PassManagerImpl_New::add(Pass *P) {
+void PassManagerImpl_New::add(Pass *P) {
+  // Do not process Analysis now. Analysis is process while scheduling
+  // the pass vector.
   addPassToManager(P, false);
 }
 
 // PassManager_New implementation
 /// Add P into active pass manager or use new module pass manager to
 /// manage it.
-bool
-PassManagerImpl_New::addPass(Pass *P) {
+bool PassManagerImpl_New::addPass(Pass *P) {
 
   if (!activeManager || !activeManager->addPass(P)) {
     activeManager = new ModulePassManager_New();
@@ -466,8 +498,7 @@ PassManagerImpl_New::addPass(Pass *P) {
 
 /// run - Execute all of the passes scheduled for execution.  Keep track of
 /// whether any of the passes modifies the module, and if so, return true.
-bool
-PassManagerImpl_New::run(Module &M) {
+bool PassManagerImpl_New::run(Module &M) {
 
   schedulePasses();
   bool Changed = false;
