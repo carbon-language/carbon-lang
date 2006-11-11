@@ -525,7 +525,12 @@ void X86DAGToDAGISel::InstructionSelectBasicBlock(SelectionDAG &DAG) {
 
     // Finally, if we found any FP code, emit the FP_REG_KILL instruction.
     if (ContainsFPCode) {
-      BuildMI(*BB, BB->getFirstTerminator(), X86::FP_REG_KILL, 0);
+      const TargetInstrDescriptor &II= TM.getInstrInfo()->get(X86::FP_REG_KILL);
+      MachineInstrBuilder MIB =
+        BuildMI(*BB, BB->getFirstTerminator(), X86::FP_REG_KILL, 0);
+      for (const unsigned *ImplicitDefs = II.ImplicitDefs;
+           *ImplicitDefs; ++ImplicitDefs)
+        MIB = MIB.addReg(*ImplicitDefs, true, true);
       ++NumFPKill;
     }
   }
