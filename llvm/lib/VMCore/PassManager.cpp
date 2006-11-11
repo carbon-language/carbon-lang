@@ -48,8 +48,8 @@ public:
   void removeDeadPasses() { /* TODO : Implement */ }
 
   /// Add pass P into the PassVector. Update RequiredAnalysis and
-  /// AvailableAnalysis appropriately
-  void addPassToManager (Pass *P);
+  /// AvailableAnalysis appropriately if ProcessAnalysis is true.
+  void addPassToManager (Pass *P, bool ProcessAnalysis = true);
 
   inline std::vector<Pass *>::iterator passVectorBegin() { 
     return PassVector.begin(); 
@@ -248,18 +248,21 @@ void CommonPassManagerImpl::removeNotPreservedAnalysis(Pass *P) {
 }
 
 /// Add pass P into the PassVector. Update RequiredAnalysis and
-/// AvailableAnalysis appropriately
-void CommonPassManagerImpl::addPassToManager (Pass *P) {
+/// AvailableAnalysis appropriately if ProcessAnalysis is true.
+void CommonPassManagerImpl::addPassToManager (Pass *P, 
+                                              bool ProcessAnalysis) {
 
-  // Take a note of analysis required and made available by this pass
-  noteDownRequiredAnalysis(P);
-  noteDownAvailableAnalysis(P);
+  if (ProcessAnalysis) {
+    // Take a note of analysis required and made available by this pass
+    noteDownRequiredAnalysis(P);
+    noteDownAvailableAnalysis(P);
+
+    // Remove the analysis not preserved by this pass
+    removeNotPreservedAnalysis(P);
+  }
 
   // Add pass
   PassVector.push_back(P);
-
-  // Remove the analysis not preserved by this pass
-  removeNotPreservedAnalysis(P);
 }
 
 /// BasicBlockPassManager implementation
@@ -341,7 +344,7 @@ FunctionPassManagerImpl_New::addPass(Pass *P) {
         || !activeBBPassManager->addPass(BP)) {
 
       activeBBPassManager = new BasicBlockPassManager_New();
-      addPassToManager(activeBBPassManager);
+      addPassToManager(activeBBPassManager, false);
       if (!activeBBPassManager->addPass(BP))
         assert(0 && "Unable to add Pass");
     }
@@ -397,7 +400,7 @@ ModulePassManager_New::addPass(Pass *P) {
         || !activeFunctionPassManager->addPass(P)) {
 
       activeFunctionPassManager = new FunctionPassManagerImpl_New();
-      addPassToManager(activeFunctionPassManager);
+      addPassToManager(activeFunctionPassManager, false);
       if (!activeFunctionPassManager->addPass(FP))
         assert(0 && "Unable to add pass");
     }
