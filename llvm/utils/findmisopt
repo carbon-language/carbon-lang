@@ -60,7 +60,7 @@ llvm-dis "$bcfile" -o "$ll" -f || exit 1
 
 # Generate the non-optimized program
 llc "$bcfile" -o "$s" -f || exit 1
-gcc "$s" -o "$prog" || exit 1
+gcc "$s" -o "$prog" -lstdc++ -lc -lm || exit 1
 
 # Define the list of optimizations to run
 all_switches="-verify -lowersetjmp -funcresolve -raiseallocs -simplifycfg -mem2reg -globalopt -globaldce -ipconstprop -deadargelim -instcombine -simplifycfg -prune-eh -inline -simplify-libcalls -argpromotion -raise -tailduplicate -simplifycfg -scalarrepl -instcombine -predsimplify -condprop -tailcallelim -simplifycfg -reassociate -licm -loop-unswitch -instcombine -indvars -loop-unroll -instcombine -load-vn -gcse -sccp -instcombine -condprop -dse -dce -simplifycfg -deadtypeelim -constmerge"
@@ -71,7 +71,7 @@ function tryit {
   opt $switches_to_use "$bcfile" -o "$optbc" -f || exit
   llvm-dis "$optbc" -o "$optll" -f || exit
   llc "$optbc" -o "$opts" -f || exit
-  gcc "$opts" -o "$optprog" || exit
+  gcc "$opts" -o "$optprog" -lstdc++ -lc -lm || exit
   "$prog" $args > "$out"
   ex1=$?
   "$optprog" $args > "$optout"
