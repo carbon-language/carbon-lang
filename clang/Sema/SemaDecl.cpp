@@ -32,7 +32,7 @@ Sema::ParseDeclarator(Scope *S, Declarator &D, ExprTy *Init,
   
   // FIXME: Temporary.
   if (!DeclaratorType.isNull())
-    DeclaratorType->dump();
+    DeclaratorType.dump();
     
   
   IdentifierInfo *II = D.getIdentifier();
