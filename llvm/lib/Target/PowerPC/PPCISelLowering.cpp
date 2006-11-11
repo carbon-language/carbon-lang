@@ -876,9 +876,6 @@ bool PPCTargetLowering::getPreIndexedAddressParts(SDNode *N, SDOperand &Base,
   SDOperand Ptr;
   if (LoadSDNode *LD = dyn_cast<LoadSDNode>(N)) {
     Ptr = LD->getBasePtr();
-    
-    // FIXME: PPC has no LWAU!
-    
   } else if (StoreSDNode *ST = dyn_cast<StoreSDNode>(N)) {
     ST = ST;
     //Ptr = ST->getBasePtr();
@@ -891,6 +888,15 @@ bool PPCTargetLowering::getPreIndexedAddressParts(SDNode *N, SDOperand &Base,
   // TODO: Handle reg+reg.
   if (!SelectAddressRegImm(Ptr, Offset, Base, DAG))
     return false;
+
+  // PPC64 doesn't have lwau, but it does have lwaux.  Reject preinc load of
+  // sext i32 to i64 when addr mode is r+i.
+  if (LoadSDNode *LD = dyn_cast<LoadSDNode>(N)) {
+    if (LD->getValueType(0) == MVT::i64 && LD->getLoadedVT() == MVT::i32 &&
+        LD->getExtensionType() == ISD::SEXTLOAD &&
+        isa<ConstantSDNode>(Offset))
+      return false;
+  }
   
   AM = ISD::PRE_INC;
   return true;
