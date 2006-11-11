@@ -126,7 +126,7 @@
           <li><a href="#i_sitofp">'<tt>sitofp .. to</tt>' Instruction</a></li>
           <li><a href="#i_ptrtoint">'<tt>ptrtoint .. to</tt>' Instruction</a></li>
           <li><a href="#i_inttoptr">'<tt>inttoptr .. to</tt>' Instruction</a></li>
-          <li><a href="#i_bitconvert">'<tt>bitconvert .. to</tt>' Instruction</a></li>
+          <li><a href="#i_bitcast">'<tt>bitcast .. to</tt>' Instruction</a></li>
         </ol>
       <li><a href="#otherops">Other Operations</a>
         <ol>
@@ -290,9 +290,10 @@ unnamed identifiers allow a compiler to quickly come up with a temporary
 variable without having to avoid symbol table conflicts.</p>
 
 <p>Reserved words in LLVM are very similar to reserved words in other
-languages. There are keywords for different opcodes ('<tt><a
-href="#i_add">add</a></tt>', '<tt><a href="#i_cast">cast</a></tt>', '<tt><a
-href="#i_ret">ret</a></tt>', etc...), for primitive type names ('<tt><a
+languages. There are keywords for different opcodes 
+('<tt><a href="#i_add">add</a></tt>', 
+ '<tt><a href="#i_bitcast">bitcast</a></tt>', 
+ '<tt><a href="#i_ret">ret</a></tt>', etc...), for primitive type names ('<tt><a
 href="#t_void">void</a></tt>', '<tt><a href="#t_uint">uint</a></tt>', etc...),
 and others.  These reserved words cannot conflict with variable names, because
 none of them start with a '%' character.</p>
@@ -1223,12 +1224,24 @@ following is the syntax for constant expressions:</p>
   constant. TYPE must be floating point. CST must be of integer type. If the
   value won't fit in the floating point type, the results are undefined.</dd>
 
-  <dt><b><tt>bitconvert ( CST to TYPE )</tt></b></dt>
+  <dt><b><tt>ptrtoint ( CST to TYPE )</tt></b></dt>
+  <dd>Convert a pointer typed constant to the corresponding integer constant
+  TYPE must be an integer type. CST must be of pointer type. The CST value is
+  zero extended, truncated, or unchanged to make it fit in TYPE.</dd>
+
+  <dt><b><tt>inttoptr ( CST to TYPE )</tt></b></dt>
+  <dd>Convert a integer constant to a pointer constant.  TYPE must be a
+  pointer type.  CST must be of integer type. The CST value is zero extended, 
+  truncated, or unchanged to make it fit in a pointer size. This one is 
+  <i>really</i> dangerous!</dd>
+
+  <dt><b><tt>bitcast ( CST to TYPE )</tt></b></dt>
   <dd>Convert a constant, CST, to another TYPE. The size of CST and TYPE must be
   identical (same number of bits). The conversion is done as if the CST value
   was stored to memory and read back as TYPE. In other words, no bits change 
-  with this operator, just the type.  This can be used for conversion of pointer
-  and packed types to any other type, as long as they have the same bit width.
+  with this operator, just the type.  This can be used for conversion of
+  packed types to any other type, as long as they have the same bit width. For
+  pointers it is only valid to cast to another pointer type.
   </dd>
 
   <dt><b><tt>getelementptr ( CSTPTR, IDX0, IDX1, ... )</tt></b></dt>
@@ -2801,7 +2814,7 @@ type must be smaller than the destination type.</p>
 <a href="t_floating">floating point</a> type to a larger 
 <a href="t_floating">floating point</a> type. The <tt>fpext</tt> cannot be 
 used to make a <i>no-op cast</i> because it always changes bits. Use 
-<tt>bitconvert</tt> to make a <i>no-op cast</i> for a floating point cast.</p>
+<tt>bitcast</tt> to make a <i>no-op cast</i> for a floating point cast.</p>
 
 <h5>Example:</h5>
 <pre>
@@ -3028,27 +3041,27 @@ nothing is done (<i>no-op cast</i>).</p>
 
 <!-- _______________________________________________________________________ -->
 <div class="doc_subsubsection">
-   <a name="i_bitconvert">'<tt>bitconvert .. to</tt>' Instruction</a>
+   <a name="i_bitcast">'<tt>bitcast .. to</tt>' Instruction</a>
 </div>
 <div class="doc_text">
 
 <h5>Syntax:</h5>
 <pre>
-  &lt;result&gt; = bitconvert &lt;ty&gt; &lt;value&gt; to &lt;ty2&gt;             <i>; yields ty2</i>
+  &lt;result&gt; = bitcast &lt;ty&gt; &lt;value&gt; to &lt;ty2&gt;             <i>; yields ty2</i>
 </pre>
 
 <h5>Overview:</h5>
-<p>The '<tt>bitconvert</tt>' instruction converts <tt>value</tt> to type
+<p>The '<tt>bitcast</tt>' instruction converts <tt>value</tt> to type
 <tt>ty2</tt> without changing any bits.</p>
 
 <h5>Arguments:</h5>
-<p>The '<tt>bitconvert</tt>' instruction takes a value to cast, which must be 
+<p>The '<tt>bitcast</tt>' instruction takes a value to cast, which must be 
 a first class value, and a type to cast it to, which must also be a <a
   href="#t_firstclass">first class</a> type. The bit sizes of <tt>value</tt>
 and the destination type, <tt>ty2</tt>, must be identical.</p>
 
 <h5>Semantics:</h5>
-<p>The '<tt>bitconvert</tt>' instruction converts <tt>value</tt> to type
+<p>The '<tt>bitcast</tt>' instruction converts <tt>value</tt> to type
 <tt>ty2</tt>. It is always a <i>no-op cast</i> because no bits change with 
 this conversion.  The conversion is done as if the <tt>value</tt> had been 
 stored to memory and read back as type <tt>ty2</tt>. Pointer types may only be
@@ -3058,8 +3071,9 @@ other types, use the <a href="#i_inttoptr">inttoptr</a> or
 
 <h5>Example:</h5>
 <pre>
-  %X = bitconvert ubyte 255 to sbyte         <i>; yields sbyte:-1</i>
-  %Y = bitconvert uint* %x to uint           <i>; yields uint:%x</i>
+  %X = bitcast ubyte 255 to sbyte         <i>; yields sbyte:-1</i>
+  %Y = bitcast uint* %x to sint*          <i>; yields sint*:%x</i>
+  %Z = bitcast <2xint> %V to long;        <i>; yields long: %V</i>   
 </pre>
 </div>
 
