@@ -1,4 +1,4 @@
-//===--- ASTContext.cpp - Context to hold long-lived AST nodes ------------===//
+//===--- Type.cpp - Type representation and manipulation ------------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,17 +7,14 @@
 //
 //===----------------------------------------------------------------------===//
 //
-//  This file implements the ASTContext interface.
+//  This file implements type-related functionality.
 //
 //===----------------------------------------------------------------------===//
 
-#include "clang/AST/ASTContext.h"
-#include "clang/Lex/Preprocessor.h"
+#include "clang/AST/Type.h"
 using namespace llvm;
 using namespace clang;
 
-ASTContext::ASTContext(Preprocessor &pp)
-  : PP(pp), Target(pp.getTargetInfo()) {
-}
+Type::~Type() {}
 
 

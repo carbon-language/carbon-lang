@@ -24,6 +24,7 @@ namespace clang {
   class ASTContext;
   class Preprocessor;
   class Decl;
+  class TypeRef;
   
 /// Sema - This implements semantic analysis and AST building for C.
 class Sema : public Action {
@@ -36,10 +37,19 @@ class Sema : public Action {
   std::vector<Decl*> &LastInGroupList;
 public:
   Sema(ASTContext &ctx, std::vector<Decl*> &prevInGroup)
-    : Context(ctx), LastInGroupList(prevInGroup) {}
+    : Context(ctx), LastInGroupList(prevInGroup) {
+    InitializeBuiltinTypes();
+  }
   
   void Diag(SourceLocation Loc, unsigned DiagID,
             const std::string &Msg = std::string());
+  
+  //===--------------------------------------------------------------------===//
+  // Type Analysis / Processing: SemaType.cpp.
+  //
+  void InitializeBuiltinTypes();
+  TypeRef GetTypeForDeclarator(Declarator &D, Scope *S);
+  
   
   //===--------------------------------------------------------------------===//
   // Symbol table / Decl tracking callbacks: SemaDecl.cpp.

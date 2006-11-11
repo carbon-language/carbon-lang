@@ -11,8 +11,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_CLANG_PARSE_TYPE_H
-#define LLVM_CLANG_PARSE_TYPE_H
+#ifndef LLVM_CLANG_AST_TYPE_H
+#define LLVM_CLANG_AST_TYPE_H
 
 #include "llvm/Support/DataTypes.h"
 #include <cassert>
@@ -107,8 +107,12 @@ public:
 class Type {
   Type *CanonicalType;
 public:
+  virtual ~Type();
+  
   bool isCanonical() const { return CanonicalType == this; }
   Type *getCanonicalType() const { return CanonicalType; }
+  
+  virtual void dump() const = 0;
 };
 
 class PointerType : public Type {

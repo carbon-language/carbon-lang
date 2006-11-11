@@ -133,6 +133,7 @@ Preprocessor:
  * #assert/#unassert
  * #line / #file directives (currently accepted and ignored).
  * MSExtension: "L#param" stringizes to a wide string literal.
+ * Charize extension: "#define F(o) #@o  F(a)"  -> 'a'.
  * Consider merging the parser's expression parser into the preprocessor to
    eliminate duplicate code.
  * Add support for -M*

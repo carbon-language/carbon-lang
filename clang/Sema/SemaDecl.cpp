@@ -13,6 +13,7 @@
 
 #include "Sema.h"
 #include "clang/AST/Decl.h"
+#include "clang/AST/Type.h"
 #include "clang/Parse/Scope.h"
 #include "clang/Lex/IdentifierTable.h"
 using namespace llvm;
@@ -27,6 +28,13 @@ bool Sema::isTypeName(const IdentifierInfo &II, Scope *S) const {
 Action::DeclTy *
 Sema::ParseDeclarator(Scope *S, Declarator &D, ExprTy *Init, 
                       DeclTy *LastInGroup) {
+  TypeRef DeclaratorType = GetTypeForDeclarator(D, S);
+  
+  // FIXME: Temporary.
+  if (!DeclaratorType.isNull())
+    DeclaratorType->dump();
+    
+  
   IdentifierInfo *II = D.getIdentifier();
   Decl *PrevDecl = II ? II->getFETokenInfo<Decl>() : 0;
   
