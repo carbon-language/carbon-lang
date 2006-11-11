@@ -50,12 +50,27 @@ public:
   /// Remove dead passes
   void removeDeadPasses() { /* TODO : Implement */ }
 
+  /// Add pass P into the PassVector. Update RequiredAnalysis and
+  /// AvailableAnalysis appropriately
+  void addPassToManager (Pass *P);
+
+  inline std::vector<Pass *>::iterator passVectorBegin() { 
+    return PassVector.begin(); 
+  }
+
+  inline std::vector<Pass *>::iterator passVectorEnd() { 
+    return PassVector.end();
+  }
+
 private:
    // Analysis required by the passes managed by this manager
   std::vector<AnalysisID> RequiredAnalysis;
 
   // set of available Analysis
   std::set<AnalysisID> AvailableAnalysis;
+
+  // Collection of pass that are managed by this manager
+  std::vector<Pass *> PassVector;
 };
 
 /// BasicBlockPassManager_New manages BasicBlockPass. It batches all the
@@ -74,8 +89,6 @@ public:
   bool runOnFunction(Function &F);
 
 private:
-  // Collection of pass that are managed by this manager
-  std::vector<Pass *> PassVector;
 };
 
 /// FunctionPassManagerImpl_New manages FunctionPasses and BasicBlockPassManagers.
@@ -106,9 +119,6 @@ public:
   bool runOnModule(Module &M);
 
 private:
-  // Collection of pass that are manged by this manager
-  std::vector<Pass *> PassVector;
- 
   // Active Pass Managers
   BasicBlockPassManager_New *activeBBPassManager;
 };
@@ -129,9 +139,6 @@ public:
   bool runOnModule(Module &M);
   
 private:
-  // Collection of pass that are managed by this manager
-  std::vector<Pass *> PassVector;
-  
   // Active Pass Manager
   FunctionPassManagerImpl_New *activeFunctionPassManager;
 };
@@ -163,9 +170,6 @@ private:
   // Collection of pass managers
   std::vector<ModulePassManager_New *> PassManagers;
 
-  // Collection of pass that are not yet scheduled
-  std::vector<Pass *> PassVector;
-  
   // Active Pass Manager
   ModulePassManager_New *activeManager;
 };
@@ -243,7 +247,6 @@ void CommonPassManagerImpl::removeNotPreservedAnalysis(Pass *P) {
 
   for (std::set<AnalysisID>::iterator I = AvailableAnalysis.begin(),
          E = AvailableAnalysis.end(); I != E; ++I ) {
-    AnalysisID AID = *I;
     if (std::find(PreservedSet.begin(), PreservedSet.end(), *I) == 
         PreservedSet.end()) {
       // Remove this analysis
@@ -251,6 +254,21 @@ void CommonPassManagerImpl::removeNotPreservedAnalysis(Pass *P) {
       AvailableAnalysis.erase(J);
     }
   }
+}
+
+/// Add pass P into the PassVector. Update RequiredAnalysis and
+/// AvailableAnalysis appropriately
+void CommonPassManagerImpl::addPassToManager (Pass *P) {
+
+  // Take a note of analysis required and made available by this pass
+  noteDownRequiredAnalysis(P);
+  noteDownAvailableAnalysis(P);
+
+  // Add pass
+  PassVector.push_back(P);
+
+  // Remove the analysis not preserved by this pass
+  removeNotPreservedAnalysis(P);
 }
 
 /// BasicBlockPassManager implementation
@@ -269,15 +287,7 @@ BasicBlockPassManager_New::addPass(Pass *P) {
   if (!manageablePass(P))
     return false;
 
-  // Take a note of analysis required and made available by this pass
-  noteDownRequiredAnalysis(P);
-  noteDownAvailableAnalysis(P);
-
-  // Add pass
-  PassVector.push_back(BP);
-
-  // Remove the analysis not preserved by this pass
-  removeNotPreservedAnalysis(P);
+  addPassToManager (BP);
 
   return true;
 }
@@ -290,8 +300,8 @@ BasicBlockPassManager_New::runOnFunction(Function &F) {
 
   bool Changed = false;
   for (Function::iterator I = F.begin(), E = F.end(); I != E; ++I)
-    for (std::vector<Pass *>::iterator itr = PassVector.begin(),
-           e = PassVector.end(); itr != e; ++itr) {
+    for (std::vector<Pass *>::iterator itr = passVectorBegin(),
+           e = passVectorEnd(); itr != e; ++itr) {
       Pass *P = *itr;
       BasicBlockPass *BP = dynamic_cast<BasicBlockPass*>(P);
       Changed |= BP->runOnBasicBlock(*I);
@@ -340,8 +350,7 @@ FunctionPassManagerImpl_New::addPass(Pass *P) {
         || !activeBBPassManager->addPass(BP)) {
 
       activeBBPassManager = new BasicBlockPassManager_New();
-
-      PassVector.push_back(activeBBPassManager);
+      addPassToManager(activeBBPassManager);
       if (!activeBBPassManager->addPass(BP))
         assert(0 && "Unable to add Pass");
     }
@@ -357,15 +366,7 @@ FunctionPassManagerImpl_New::addPass(Pass *P) {
   if (!manageablePass(P))
     return false;
 
-  // Take a note of analysis required and made available by this pass
-  noteDownRequiredAnalysis(P);
-  noteDownAvailableAnalysis(P);
-
-  PassVector.push_back(FP);
-
-  // Remove the analysis not preserved by this pass
-  removeNotPreservedAnalysis(P);
-
+  addPassToManager (FP);
   activeBBPassManager = NULL;
   return true;
 }
@@ -378,8 +379,8 @@ FunctionPassManagerImpl_New::runOnModule(Module &M) {
 
   bool Changed = false;
   for (Module::iterator I = M.begin(), E = M.end(); I != E; ++I)
-    for (std::vector<Pass *>::iterator itr = PassVector.begin(),
-           e = PassVector.end(); itr != e; ++itr) {
+    for (std::vector<Pass *>::iterator itr = passVectorBegin(),
+           e = passVectorEnd(); itr != e; ++itr) {
       Pass *P = *itr;
       FunctionPass *FP = dynamic_cast<FunctionPass*>(P);
       Changed |= FP->runOnFunction(*I);
@@ -405,8 +406,7 @@ ModulePassManager_New::addPass(Pass *P) {
         || !activeFunctionPassManager->addPass(P)) {
 
       activeFunctionPassManager = new FunctionPassManagerImpl_New();
-
-      PassVector.push_back(activeFunctionPassManager);
+      addPassToManager(activeFunctionPassManager);
       if (!activeFunctionPassManager->addPass(FP))
         assert(0 && "Unable to add pass");
     }
@@ -422,15 +422,7 @@ ModulePassManager_New::addPass(Pass *P) {
   if (!manageablePass(P))
     return false;
 
-  // Take a note of analysis required and made available by this pass
-  noteDownRequiredAnalysis(P);
-  noteDownAvailableAnalysis(P);
-
-  PassVector.push_back(MP);
-
-  // Remove the analysis not preserved by this pass
-  removeNotPreservedAnalysis(P);
-
+  addPassToManager(MP);
   activeFunctionPassManager = NULL;
   return true;
 }
@@ -442,8 +434,8 @@ ModulePassManager_New::addPass(Pass *P) {
 bool
 ModulePassManager_New::runOnModule(Module &M) {
   bool Changed = false;
-  for (std::vector<Pass *>::iterator itr = PassVector.begin(),
-         e = PassVector.end(); itr != e; ++itr) {
+  for (std::vector<Pass *>::iterator itr = passVectorBegin(),
+         e = passVectorEnd(); itr != e; ++itr) {
     Pass *P = *itr;
     ModulePass *MP = dynamic_cast<ModulePass*>(P);
     Changed |= MP->runOnModule(M);
