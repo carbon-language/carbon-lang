@@ -326,10 +326,10 @@ static int GenerateNative(const std::string &OutputFilename,
   for (unsigned index = 0; index < LinkItems.size(); index++)
     if (LinkItems[index].first != "crtend") {
       if (LinkItems[index].second) {
-	std::string lib_name = "-l" + LinkItems[index].first;
-	args.push_back(lib_name.c_str());
+        std::string lib_name = "-l" + LinkItems[index].first;
+        args.push_back(lib_name.c_str());
       } else
-	args.push_back(LinkItems[index].first.c_str());
+        args.push_back(LinkItems[index].first.c_str());
     }
 
   args.push_back(0);

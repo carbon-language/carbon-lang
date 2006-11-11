@@ -518,9 +518,8 @@ DebugAMiscompilation(BugDriver &BD,
   // See if we can rip any loops out of the miscompiled functions and still
   // trigger the problem.
 
-  if (!DisableLoopExtraction)
-    if (!BugpointIsInterrupted && 
-        ExtractLoops(BD, TestFn, MiscompiledFunctions)) {
+  if (!BugpointIsInterrupted && !DisableLoopExtraction &&
+      ExtractLoops(BD, TestFn, MiscompiledFunctions)) {
     // Okay, we extracted some loops and the problem still appears.  See if we
     // can eliminate some of the created functions from being candidates.
 

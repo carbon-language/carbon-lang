@@ -241,7 +241,9 @@ class Linker {
     bool LinkInModule(
       Module* Src,              ///< Module linked into \p Dest
       std::string* ErrorMsg = 0 /// Error/diagnostic string
-    ) { return LinkModules(Composite, Src, ErrorMsg ); }
+    ) { 
+      return LinkModules(Composite, Src, ErrorMsg ); 
+    }
 
     /// This is the heart of the linker. This method will take unconditional
     /// control of the \p Src module and link it into the \p Dest module. The
