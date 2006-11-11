@@ -18,8 +18,6 @@
 #define LLVM_PASSMANAGER_H
 
 #include "llvm/Pass.h"
-#include <vector>
-#include <set>
 
 namespace llvm {
 
@@ -93,45 +91,8 @@ class ModulePassManager_New;
 class PassManagerImpl_New;
 class FunctionPassManagerImpl_New;
 
-/// CommonPassManagerImpl helps pass manager analysis required by
-/// the managed passes. It provides methods to add/remove analysis
-/// available and query if certain analysis is available or not.
-class CommonPassManagerImpl : public Pass{
-
-public:
-
-  /// Return true IFF pass P's required analysis set does not required new
-  /// manager.
-  bool manageablePass(Pass *P);
-
-  /// Return true IFF AnalysisID AID is currently available.
-  bool analysisCurrentlyAvailable(AnalysisID AID);
-
-  /// Augment RequiredAnalysis by adding analysis required by pass P.
-  void noteDownRequiredAnalysis(Pass *P);
-
-  /// Augment AvailableAnalysis by adding analysis made available by pass P.
-  void noteDownAvailableAnalysis(Pass *P);
-
-  /// Remove AnalysisID from the RequiredSet
-  void removeAnalysis(AnalysisID AID);
-
-  /// Remove Analysis that is not preserved by the pass
-  void removeNotPreservedAnalysis(Pass *P);
-  
-  /// Remove dead passes
-  void removeDeadPasses() { /* TODO : Implement */ }
-
-private:
-   // Analysis required by the passes managed by this manager
-  std::vector<AnalysisID> RequiredAnalysis;
-
-  // set of available Analysis
-  std::set<AnalysisID> AvailableAnalysis;
-};
-
 /// PassManager_New manages ModulePassManagers
-class PassManager_New : public CommonPassManagerImpl {
+class PassManager_New {
 
 public:
 
@@ -156,7 +117,7 @@ private:
 };
 
 /// FunctionPassManager_New manages FunctionPasses and BasicBlockPassManagers.
-class FunctionPassManager_New : public CommonPassManagerImpl {
+class FunctionPassManager_New {
 public:
   FunctionPassManager_New(ModuleProvider *P) { /* TODO */ }
   FunctionPassManager_New();

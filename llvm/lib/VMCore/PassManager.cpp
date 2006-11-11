@@ -14,10 +14,49 @@
 
 #include "llvm/PassManager.h"
 #include "llvm/Module.h"
+#include <vector>
+#include <set>
 
 using namespace llvm;
 
 namespace llvm {
+
+/// CommonPassManagerImpl helps pass manager analysis required by
+/// the managed passes. It provides methods to add/remove analysis
+/// available and query if certain analysis is available or not.
+class CommonPassManagerImpl : public Pass {
+
+public:
+
+  /// Return true IFF pass P's required analysis set does not required new
+  /// manager.
+  bool manageablePass(Pass *P);
+
+  /// Return true IFF AnalysisID AID is currently available.
+  bool analysisCurrentlyAvailable(AnalysisID AID);
+
+  /// Augment RequiredAnalysis by adding analysis required by pass P.
+  void noteDownRequiredAnalysis(Pass *P);
+
+  /// Augment AvailableAnalysis by adding analysis made available by pass P.
+  void noteDownAvailableAnalysis(Pass *P);
+
+  /// Remove AnalysisID from the RequiredSet
+  void removeAnalysis(AnalysisID AID);
+
+  /// Remove Analysis that is not preserved by the pass
+  void removeNotPreservedAnalysis(Pass *P);
+  
+  /// Remove dead passes
+  void removeDeadPasses() { /* TODO : Implement */ }
+
+private:
+   // Analysis required by the passes managed by this manager
+  std::vector<AnalysisID> RequiredAnalysis;
+
+  // set of available Analysis
+  std::set<AnalysisID> AvailableAnalysis;
+};
 
 /// BasicBlockPassManager_New manages BasicBlockPass. It batches all the
 /// pass together and sequence them to process one basic block before
