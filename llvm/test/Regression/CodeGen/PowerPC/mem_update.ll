@@ -1,7 +1,7 @@
-; RUN: llvm-as < %s | llc -march=ppc32 &&
-; RUN: llvm-as < %s | llc -march=ppc32 | not grep addi
-
-; XFAIL: *
+; RUN: llvm-as < %s | llc -march=ppc32 -enable-ppc-preinc &&
+; RUN: llvm-as < %s | llc -march=ppc32 -enable-ppc-preinc | not grep addi &&
+; RUN: llvm-as < %s | llc -march=ppc64 -enable-ppc-preinc &&
+; RUN: llvm-as < %s | llc -march=ppc64 -enable-ppc-preinc | not grep addi
 
 int *%test0(int *%X,  int *%dest) {
 	%Y = getelementptr int* %X, int 4
