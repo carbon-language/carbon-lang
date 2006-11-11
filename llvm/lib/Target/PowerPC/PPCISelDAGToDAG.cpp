@@ -856,7 +856,8 @@ SDNode *PPCDAGToDAGISel::Select(SDOperand Op) {
     }
     
     SDOperand Offset = LD->getOffset();
-    if (isa<ConstantSDNode>(Offset)) {
+    if (isa<ConstantSDNode>(Offset) ||
+        Offset.getOpcode() == ISD::TargetGlobalAddress) {
       SDOperand Chain = LD->getChain();
       SDOperand Base = LD->getBasePtr();
       AddToISelQueue(Chain);
