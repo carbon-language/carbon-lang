@@ -60,6 +60,20 @@
 #define LAST_MEMORY_INST(num)
 #endif
 
+#ifndef FIRST_CONVERT_INST
+#define FIRST_CONVERT_INST(num)
+#endif
+#ifndef HANDLE_CONVERT_INST
+#ifndef HANDLE_INST
+#define HANDLE_CONVERT_INST(num, opcode, Class)
+#else
+#define HANDLE_CONVERT_INST(num, opcode, Class) HANDLE_INST(num, opcode, Class)
+#endif
+#endif
+#ifndef LAST_CONVERT_INST
+#define LAST_CONVERT_INST(num)
+#endif
+
 #ifndef FIRST_OTHER_INST
 #define FIRST_OTHER_INST(num)
 #endif
@@ -124,22 +138,38 @@ HANDLE_MEMORY_INST(29, Store , StoreInst )
 HANDLE_MEMORY_INST(30, GetElementPtr, GetElementPtrInst)
   LAST_MEMORY_INST(30)
 
+// Conversion operators ...
+// NOTE: The order matters here, see InstCombine (isEliminableCastOfCast)
+ FIRST_CONVERT_INST(31)
+HANDLE_CONVERT_INST(31, Trunc   , ConvertInst )  // Truncate integers
+HANDLE_CONVERT_INST(32, ZExt    , ConvertInst )  // Zero extend integers
+HANDLE_CONVERT_INST(33, SExt    , ConvertInst )  // Sign extend integers
+HANDLE_CONVERT_INST(34, FPToUI  , ConvertInst )  // floating point -> UInt
+HANDLE_CONVERT_INST(35, FPToSI  , ConvertInst )  // floating point -> SInt
+HANDLE_CONVERT_INST(36, UIToFP  , ConvertInst )  // UInt -> floating point
+HANDLE_CONVERT_INST(37, SIToFP  , ConvertInst )  // SInt -> floating point
+HANDLE_CONVERT_INST(38, FPTrunc , ConvertInst )  // Truncate floating point
+HANDLE_CONVERT_INST(39, FPExt   , ConvertInst )  // Extend floating point
+HANDLE_CONVERT_INST(40, IntToPtr, ConvertInst )  // Integer -> Pointer
+HANDLE_CONVERT_INST(41, PtrToInt, ConvertInst )  // Pointer -> Integer
+HANDLE_CONVERT_INST(42, BitCast , ConvertInst )  // Type cast
+  LAST_CONVERT_INST(42)
+
 // Other operators...
- FIRST_OTHER_INST(31)
-HANDLE_OTHER_INST(31, PHI    , PHINode    )  // PHI node instruction
-HANDLE_OTHER_INST(32, Cast   , CastInst   )  // Type cast
-HANDLE_OTHER_INST(33, Call   , CallInst   )  // Call a function
-HANDLE_OTHER_INST(34, Shl    , ShiftInst  )  // Shift Left operations (logical)
-HANDLE_OTHER_INST(35, LShr   , ShiftInst  )  // Logical Shift right (unsigned) 
-HANDLE_OTHER_INST(36, AShr   , ShiftInst  )  // Arithmetic shift right (signed)
-HANDLE_OTHER_INST(37, Select , SelectInst )  // select instruction
-HANDLE_OTHER_INST(38, UserOp1, Instruction)  // May be used internally in a pass
-HANDLE_OTHER_INST(39, UserOp2, Instruction)  // Internal to passes only
-HANDLE_OTHER_INST(40, VAArg  , VAArgInst  )  // vaarg instruction
-HANDLE_OTHER_INST(41, ExtractElement, ExtractElementInst)// extract from vector.
-HANDLE_OTHER_INST(42, InsertElement, InsertElementInst)  // insert into vector
-HANDLE_OTHER_INST(43, ShuffleVector, ShuffleVectorInst)  // shuffle two vectors.
-  LAST_OTHER_INST(43)
+ FIRST_OTHER_INST(43)
+HANDLE_OTHER_INST(43, PHI    , PHINode    )  // PHI node instruction
+HANDLE_OTHER_INST(44, Call   , CallInst   )  // Call a function
+HANDLE_OTHER_INST(45, Shl    , ShiftInst  )  // Shift Left operations (logical)
+HANDLE_OTHER_INST(46, LShr   , ShiftInst  )  // Logical Shift right (unsigned) 
+HANDLE_OTHER_INST(47, AShr   , ShiftInst  )  // Arithmetic shift right (signed)
+HANDLE_OTHER_INST(48, Select , SelectInst )  // select instruction
+HANDLE_OTHER_INST(49, UserOp1, Instruction)  // May be used internally in a pass
+HANDLE_OTHER_INST(50, UserOp2, Instruction)  // Internal to passes only
+HANDLE_OTHER_INST(51, VAArg  , VAArgInst  )  // vaarg instruction
+HANDLE_OTHER_INST(52, ExtractElement, ExtractElementInst)// extract from vector.
+HANDLE_OTHER_INST(53, InsertElement, InsertElementInst)  // insert into vector
+HANDLE_OTHER_INST(54, ShuffleVector, ShuffleVectorInst)  // shuffle two vectors.
+  LAST_OTHER_INST(54)
 
 #undef  FIRST_TERM_INST
 #undef HANDLE_TERM_INST
@@ -152,6 +182,10 @@ HANDLE_OTHER_INST(43, ShuffleVector, ShuffleVectorInst)  // shuffle two vectors.
 #undef  FIRST_MEMORY_INST
 #undef HANDLE_MEMORY_INST
 #undef   LAST_MEMORY_INST
+
+#undef  FIRST_CONVERT_INST
+#undef HANDLE_CONVERT_INST
+#undef   LAST_CONVERT_INST
 
 #undef  FIRST_OTHER_INST
 #undef HANDLE_OTHER_INST
