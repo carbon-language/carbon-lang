@@ -33,6 +33,11 @@ namespace llvm {
 }
 
 namespace {
+  static llvm::cl::opt<bool> 
+    DisableLoopExtraction("disable-loop-extraction", 
+        cl::desc("Don't extract loops when searching for miscompilations"),
+        cl::init(false));
+
   class ReduceMiscompilingPasses : public ListReducer<const PassInfo*> {
     BugDriver &BD;
   public:
@@ -512,8 +517,10 @@ DebugAMiscompilation(BugDriver &BD,
 
   // See if we can rip any loops out of the miscompiled functions and still
   // trigger the problem.
-  if (!BugpointIsInterrupted && 
-      ExtractLoops(BD, TestFn, MiscompiledFunctions)) {
+
+  if (!DisableLoopExtraction)
+    if (!BugpointIsInterrupted && 
+        ExtractLoops(BD, TestFn, MiscompiledFunctions)) {
     // Okay, we extracted some loops and the problem still appears.  See if we
     // can eliminate some of the created functions from being candidates.
 
