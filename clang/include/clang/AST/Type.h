@@ -35,11 +35,11 @@ namespace clang {
 class TypeRef {
   uintptr_t ThePtr;
 public:
-  enum {
+  enum TQ {   // NOTE: These flags must be kept in sync with DeclSpec::TQ.
     Const    = 0x1,
-    Volatile = 0x2,
-    Restrict = 0x4,
-    CVRFlags = Const|Volatile|Restrict
+    Restrict = 0x2,
+    Volatile = 0x4,
+    CVRFlags = Const|Restrict|Volatile
   };
   
   TypeRef() : ThePtr(0) {}

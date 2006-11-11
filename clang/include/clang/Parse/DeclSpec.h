@@ -79,7 +79,7 @@ public:
   } TypeSpecType : 4;
   
   // type-qualifiers
-  enum TQ {
+  enum TQ {   // NOTE: These flags must be kept in sync with TypeRef::TQ.
     TQ_unspecified = 0,
     TQ_const       = 1,
     TQ_restrict    = 2,
