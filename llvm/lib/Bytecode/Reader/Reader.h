@@ -181,7 +181,7 @@ public:
   /// @brief Release our hold on the generated module
   Module* releaseModule(std::string *ErrInfo = 0) {
     // Since we're losing control of this Module, we must hand it back complete
-    Module *M = ModuleProvider::releaseModule();
+    Module *M = ModuleProvider::releaseModule(ErrInfo);
     freeState();
     return M;
   }

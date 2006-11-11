@@ -124,8 +124,12 @@ Linker::LinkInArchive(const sys::Path &Filename) {
   // variable is used to "set_subtract" from the set of undefined symbols.
   std::set<std::string> NotDefinedByArchive;
 
-  // While we are linking in object files, loop.
-  while (true) {
+  // Save the current set of undefined symbols, because we may have to make
+  // multiple passes over the archive:
+  std::set<std::string> CurrentlyUndefinedSymbols;
+
+  do {
+    CurrentlyUndefinedSymbols = UndefinedSymbols;
 
     // Find the modules we need to link into the target module
     std::set<ModuleProvider*> Modules;
@@ -149,17 +153,26 @@ Linker::LinkInArchive(const sys::Path &Filename) {
          I != E; ++I) {
 
       // Get the module we must link in.
-      std::auto_ptr<Module> AutoModule( (*I)->releaseModule() );
+      std::string moduleErrorMsg;
+      std::auto_ptr<Module> AutoModule((*I)->releaseModule( &moduleErrorMsg ));
       Module* aModule = AutoModule.get();
 
-      verbose("  Linking in module: " + aModule->getModuleIdentifier());
+      if (aModule != NULL) {
+        verbose("  Linking in module: " + aModule->getModuleIdentifier());
 
-      // Link it in
-      if (LinkInModule(aModule))
-        return error("Cannot link in module '" +
-                     aModule->getModuleIdentifier() + "': " + Error);
+        // Link it in
+        if (LinkInModule(aModule, &moduleErrorMsg)) {
+          return error("Cannot link in module '" +
+                       aModule->getModuleIdentifier() + "': " + moduleErrorMsg);
+        }
+      } else {
+	// (scottm) NOTE: For some reason, Modules.empty() isn't entirely 
+        // accurrate, least with gcc 4.1.2 on Debian and doesn't return true 
+        // when it ought.  Consequently, aModule can be NULL -- ignore it for 
+        // the time being, since it seems relatively benign.
+      }
     }
-
+    
     // Get the undefined symbols from the aggregate module. This recomputes the
     // symbols we still need after the new modules have been linked in.
     GetAllUndefinedSymbols(Composite, UndefinedSymbols);
@@ -175,7 +188,7 @@ Linker::LinkInArchive(const sys::Path &Filename) {
     // archive.
     if (UndefinedSymbols.empty())
       break;
-  }
+  } while (CurrentlyUndefinedSymbols != UndefinedSymbols);
 
   return false;
 }

@@ -264,7 +264,7 @@ static int GenerateCFile(const std::string &OutputFile,
 /// Inputs:
 ///  InputFilename  - The name of the input bytecode file.
 ///  OutputFilename - The name of the file to generate.
-///  Libraries      - The list of libraries with which to link.
+///  LinkItems      - The native libraries, files, code with which to link
 ///  LibPaths       - The list of directories in which to find libraries.
 ///  gcc            - The pathname to use for GGC.
 ///  envp           - A copy of the process's current environment.
@@ -276,7 +276,7 @@ static int GenerateCFile(const std::string &OutputFile,
 ///
 static int GenerateNative(const std::string &OutputFilename,
                           const std::string &InputFilename,
-                          const std::vector<std::string> &Libraries,
+                          const Linker::ItemList &LinkItems,
                           const sys::Path &gcc, char ** const envp,
                           std::string& ErrMsg) {
   // Remove these environment variables from the environment of the
@@ -323,10 +323,13 @@ static int GenerateNative(const std::string &OutputFilename,
   }
 
   // Add in the libraries to link.
-  for (unsigned index = 0; index < Libraries.size(); index++)
-    if (Libraries[index] != "crtend") {
-      args.push_back("-l");
-      args.push_back(Libraries[index].c_str());
+  for (unsigned index = 0; index < LinkItems.size(); index++)
+    if (LinkItems[index].first != "crtend") {
+      if (LinkItems[index].second) {
+	std::string lib_name = "-l" + LinkItems[index].first;
+	args.push_back(lib_name.c_str());
+      } else
+	args.push_back(LinkItems[index].first.c_str());
     }
 
   args.push_back(0);
@@ -433,13 +436,17 @@ int main(int argc, char **argv, char **envp) {
   try {
     // Initial global variable above for convenience printing of program name.
     progname = sys::Path(argv[0]).getBasename();
-    Linker TheLinker(progname, OutputFilename, Verbose);
 
     // Parse the command line options
     cl::ParseCommandLineOptions(argc, argv, " llvm linker\n");
     sys::PrintStackTraceOnErrorSignal();
 
-    // Set up the library paths for the Linker
+    // Construct a Linker (now that Verbose is set)
+    Linker TheLinker(progname, OutputFilename, Verbose);
+    // Keep track of the native link items (vice the bytecode items)
+    Linker::ItemList LinkItems;
+
+    // Add library paths to the linker
     TheLinker.addPaths(LibPaths);
     TheLinker.addSystemPaths();
 
@@ -463,11 +470,10 @@ int main(int argc, char **argv, char **envp) {
     } else {
       // Build a list of the items from our command line
       Linker::ItemList Items;
-      Linker::ItemList NativeItems;
       BuildLinkItems(Items, InputFilenames, Libraries);
 
       // Link all the items together
-      if (TheLinker.LinkInItems(Items,NativeItems) )
+      if (TheLinker.LinkInItems(Items,LinkItems) )
         return 1;
     }
 
@@ -558,7 +564,7 @@ int main(int argc, char **argv, char **envp) {
 
         if (Verbose) std::cout << "Generating Native Code\n";
         if (0 != GenerateNative(OutputFilename, AssemblyFile.toString(),
-            Libraries,gcc,envp,ErrMsg)) {
+            LinkItems,gcc,envp,ErrMsg)) {
           std::cerr << argv[0] << ": " << ErrMsg << "\n";
           return 1;
         }
@@ -592,7 +598,7 @@ int main(int argc, char **argv, char **envp) {
         }
 
         if (Verbose) std::cout << "Generating Native Code\n";
-        if (0 != GenerateNative(OutputFilename, CFile.toString(), Libraries, 
+        if (0 != GenerateNative(OutputFilename, CFile.toString(), LinkItems, 
             gcc, envp, ErrMsg)) {
           std::cerr << argv[0] << ": " << ErrMsg << "\n";
           return 1;
