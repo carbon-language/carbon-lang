@@ -77,6 +77,11 @@ public:
     MI->addExternalSymbolOperand(FnName);
     return *this;
   }
+
+  const MachineInstrBuilder &addImplicitDefsUses() const {
+    MI->addImplicitDefUseOperands();
+    return *this;
+  }
 };
 
 /// BuildMI - Builder interface.  Specify how to create the initial instruction

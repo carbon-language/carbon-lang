@@ -413,6 +413,10 @@ public:
     Op.offset = 0;
   }
 
+  /// addImplicitDefUseOperands - Add all implicit def and use operands to
+  /// this instruction.
+  void addImplicitDefUseOperands();
+
   //===--------------------------------------------------------------------===//
   // Accessors used to modify instructions in place.
   //

@@ -125,6 +125,18 @@ bool MachineOperand::isIdenticalTo(const MachineOperand &Other) const {
   }
 }
 
+/// addImplicitDefUseOperands - Add all implicit def and use operands to
+/// this instruction.
+void MachineInstr::addImplicitDefUseOperands() {
+  const TargetInstrDescriptor &TID = TargetInstrDescriptors[Opcode];
+  if (TID.ImplicitDefs)
+    for (const unsigned *ImpDefs = TID.ImplicitDefs; *ImpDefs; ++ImpDefs)
+      addRegOperand(*ImpDefs, true, true);
+  if (TID.ImplicitUses)
+    for (const unsigned *ImpUses = TID.ImplicitUses; *ImpUses; ++ImpUses)
+      addRegOperand(*ImpUses, false, true);
+}
+
 
 void MachineInstr::dump() const {
   std::cerr << "  " << *this;

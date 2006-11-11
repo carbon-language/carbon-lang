@@ -442,16 +442,7 @@ void ScheduleDAG::EmitNode(SDNode *Node,
     }
 
     // Emit implicit def / use operands.
-    if (II.ImplicitDefs) {
-      for (const unsigned *ImplicitDefs = II.ImplicitDefs;
-           *ImplicitDefs; ++ImplicitDefs)
-        MI->addRegOperand(*ImplicitDefs, true, true);
-    }
-    if (II.ImplicitUses) {
-      for (const unsigned *ImplicitUses = II.ImplicitUses;
-           *ImplicitUses; ++ImplicitUses)
-        MI->addRegOperand(*ImplicitUses, false, true);
-    }
+    MI->addImplicitDefUseOperands();
 
     // Now that we have emitted all operands, emit this instruction itself.
     if ((II.Flags & M_USES_CUSTOM_DAG_SCHED_INSERTION) == 0) {
