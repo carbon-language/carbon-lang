@@ -447,7 +447,7 @@ PassManagerImpl_New::schedulePasses() {
 /// Add pass P to the queue of passes to run.
 void
 PassManagerImpl_New::add(Pass *P) {
-  /* TODO */
+  addPassToManager(P, false);
 }
 
 // PassManager_New implementation
