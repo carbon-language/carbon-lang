@@ -5076,7 +5076,7 @@ X86TargetLowering::InsertAtEndOfBasicBlock(MachineInstr *MI,
     MachineBasicBlock *sinkMBB = new MachineBasicBlock(LLVM_BB);
     unsigned Opc = 
       X86::GetCondBranchFromCond((X86::CondCode)MI->getOperand(3).getImm());
-    BuildMI(BB, Opc, 1).addMBB(sinkMBB);
+    BuildMI(BB, Opc, 1).addMBB(sinkMBB).addImplicitDefsUses();
     MachineFunction *F = BB->getParent();
     F->getBasicBlockList().insert(It, copy0MBB);
     F->getBasicBlockList().insert(It, sinkMBB);
