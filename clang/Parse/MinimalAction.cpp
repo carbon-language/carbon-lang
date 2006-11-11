@@ -12,7 +12,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "clang/Parse/Parser.h"
-#include "clang/Parse/SemaDeclSpec.h"
+#include "clang/Parse/DeclSpec.h"
 #include "clang/Parse/Scope.h"
 using namespace llvm;
 using namespace clang;

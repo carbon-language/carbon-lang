@@ -15,7 +15,7 @@
 #include "clang.h"
 #include "clang/Lex/IdentifierTable.h"
 #include "clang/Parse/Action.h"
-#include "clang/Parse/SemaDeclSpec.h"
+#include "clang/Parse/DeclSpec.h"
 #include <iostream>
 
 using namespace llvm;

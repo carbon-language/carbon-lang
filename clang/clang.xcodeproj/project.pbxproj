@@ -14,6 +14,8 @@
 		DE0FCA630A95859D00248FD5 /* Expr.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = DE0FCA620A95859D00248FD5 /* Expr.h */; };
 		DE0FCB340A9C21F100248FD5 /* Expr.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DE0FCB330A9C21F100248FD5 /* Expr.cpp */; };
 		DE1733000B068B700080B521 /* ASTContext.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DE1732FF0B068B700080B521 /* ASTContext.cpp */; };
+		DE17336E0B068DC20080B521 /* DeclSpec.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DE17336D0B068DC20080B521 /* DeclSpec.cpp */; };
+		DE1733700B068DC60080B521 /* DeclSpec.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = DE17336F0B068DC60080B521 /* DeclSpec.h */; };
 		DE1F22030A7D852A00FBF588 /* Parser.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = DE1F22020A7D852A00FBF588 /* Parser.h */; };
 		DE2E60610B04461800F3FAFE /* SemaExpr.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DE2E60600B04461800F3FAFE /* SemaExpr.cpp */; };
 		DE344AB80AE5DF6D00DBC861 /* HeaderSearch.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = DE344AB70AE5DF6D00DBC861 /* HeaderSearch.h */; };
@@ -32,7 +34,6 @@
 		DE3460130AFDCCDA00DBC861 /* ParseExpr.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DE3460120AFDCCDA00DBC861 /* ParseExpr.cpp */; };
 		DE3461270AFE68BE00DBC861 /* MinimalAction.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DE3461260AFE68BE00DBC861 /* MinimalAction.cpp */; };
 		DE34621D0AFEB19B00DBC861 /* StmtPrinter.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DE34621C0AFEB19B00DBC861 /* StmtPrinter.cpp */; };
-		DE3462D90B01B52900DBC861 /* SemaDeclSpec.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DE3462D80B01B52900DBC861 /* SemaDeclSpec.cpp */; };
 		DE3463400B02F0F800DBC861 /* SemaDecl.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DE34633F0B02F0F800DBC861 /* SemaDecl.cpp */; };
 		DE3464220B03040900DBC861 /* Type.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = DE3464210B03040900DBC861 /* Type.h */; };
 		DE34644C0B043E0000DBC861 /* Sema.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DE34644B0B043E0000DBC861 /* Sema.cpp */; };
@@ -129,6 +130,7 @@
 				DE3464220B03040900DBC861 /* Type.h in CopyFiles */,
 				DE34646E0B043E5B00DBC861 /* Sema.h in CopyFiles */,
 				DE75ED290B044DC90020CF81 /* ASTContext.h in CopyFiles */,
+				DE1733700B068DC60080B521 /* DeclSpec.h in CopyFiles */,
 			);
 			runOnlyForDeploymentPostprocessing = 1;
 		};
@@ -143,6 +145,8 @@
 		DE0FCA620A95859D00248FD5 /* Expr.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; name = Expr.h; path = clang/AST/Expr.h; sourceTree = "<group>"; };
 		DE0FCB330A9C21F100248FD5 /* Expr.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; name = Expr.cpp; path = AST/Expr.cpp; sourceTree = "<group>"; };
 		DE1732FF0B068B700080B521 /* ASTContext.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; name = ASTContext.cpp; path = AST/ASTContext.cpp; sourceTree = "<group>"; };
+		DE17336D0B068DC20080B521 /* DeclSpec.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; name = DeclSpec.cpp; path = Parse/DeclSpec.cpp; sourceTree = "<group>"; };
+		DE17336F0B068DC60080B521 /* DeclSpec.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; name = DeclSpec.h; path = clang/Parse/DeclSpec.h; sourceTree = "<group>"; };
 		DE1F22020A7D852A00FBF588 /* Parser.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; name = Parser.h; path = clang/Parse/Parser.h; sourceTree = "<group>"; };
 		DE2E60600B04461800F3FAFE /* SemaExpr.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; name = SemaExpr.cpp; path = AST/SemaExpr.cpp; sourceTree = "<group>"; };
 		DE344AB70AE5DF6D00DBC861 /* HeaderSearch.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = HeaderSearch.h; sourceTree = "<group>"; };
@@ -161,7 +165,6 @@
 		DE3460120AFDCCDA00DBC861 /* ParseExpr.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; name = ParseExpr.cpp; path = Parse/ParseExpr.cpp; sourceTree = "<group>"; };
 		DE3461260AFE68BE00DBC861 /* MinimalAction.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; name = MinimalAction.cpp; path = Parse/MinimalAction.cpp; sourceTree = "<group>"; };
 		DE34621C0AFEB19B00DBC861 /* StmtPrinter.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; name = StmtPrinter.cpp; path = AST/StmtPrinter.cpp; sourceTree = "<group>"; };
-		DE3462D80B01B52900DBC861 /* SemaDeclSpec.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; name = SemaDeclSpec.cpp; path = Parse/SemaDeclSpec.cpp; sourceTree = "<group>"; };
 		DE34633F0B02F0F800DBC861 /* SemaDecl.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; name = SemaDecl.cpp; path = AST/SemaDecl.cpp; sourceTree = "<group>"; };
 		DE3464210B03040900DBC861 /* Type.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; name = Type.h; path = clang/AST/Type.h; sourceTree = "<group>"; };
 		DE34644B0B043E0000DBC861 /* Sema.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; name = Sema.cpp; path = AST/Sema.cpp; sourceTree = "<group>"; };
@@ -269,6 +272,7 @@
 			isa = PBXGroup;
 			children = (
 				DE06E8130A8FF9330050E87E /* Action.h */,
+				DE17336F0B068DC60080B521 /* DeclSpec.h */,
 				DE1F22020A7D852A00FBF588 /* Parser.h */,
 				DE06BECA0A854E4B0050E87E /* Scope.h */,
 			);
@@ -285,7 +289,7 @@
 				DE3460120AFDCCDA00DBC861 /* ParseExpr.cpp */,
 				DE34600A0AFDCCBF00DBC861 /* ParseStmt.cpp */,
 				DE345FFF0AFDCC1900DBC861 /* ParseObjc.cpp */,
-				DE3462D80B01B52900DBC861 /* SemaDeclSpec.cpp */,
+				DE17336D0B068DC20080B521 /* DeclSpec.cpp */,
 			);
 			name = Parse;
 			sourceTree = "<group>";
@@ -488,13 +492,13 @@
 				DE3460130AFDCCDA00DBC861 /* ParseExpr.cpp in Sources */,
 				DE3461270AFE68BE00DBC861 /* MinimalAction.cpp in Sources */,
 				DE34621D0AFEB19B00DBC861 /* StmtPrinter.cpp in Sources */,
-				DE3462D90B01B52900DBC861 /* SemaDeclSpec.cpp in Sources */,
 				DE3463400B02F0F800DBC861 /* SemaDecl.cpp in Sources */,
 				DE34644C0B043E0000DBC861 /* Sema.cpp in Sources */,
 				DE2E60610B04461800F3FAFE /* SemaExpr.cpp in Sources */,
 				DE75ED190B0446470020CF81 /* SemaStmt.cpp in Sources */,
 				DE75EDF10B06880E0020CF81 /* Type.cpp in Sources */,
 				DE1733000B068B700080B521 /* ASTContext.cpp in Sources */,
+				DE17336E0B068DC20080B521 /* DeclSpec.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

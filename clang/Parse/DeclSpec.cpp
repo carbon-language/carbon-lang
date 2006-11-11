@@ -11,7 +11,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "clang/Parse/SemaDeclSpec.h"
+#include "clang/Parse/DeclSpec.h"
 #include "clang/Basic/LangOptions.h"
 #include "clang/Basic/SourceLocation.h"
 using namespace llvm;
