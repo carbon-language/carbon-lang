@@ -119,8 +119,8 @@ public:
   void removeDeadPasses() { /* TODO : Implement */ }
 
 private:
-   // Required set of analysis for the passes managed by this manager
-  std::vector<AnalysisID> RequiredSet;
+   // Analysis required by the passes managed by this manager
+  std::vector<AnalysisID> RequiredAnalysis;
 };
 
 /// PassManager_New manages ModulePassManagers

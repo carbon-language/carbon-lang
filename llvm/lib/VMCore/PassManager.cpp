@@ -142,9 +142,18 @@ bool CommonPassManagerImpl::manageablePass(Pass *P) {
   AnalysisUsage AnUsage;
   P->getAnalysisUsage(AnUsage);
 
-  // If this pass is not preserving information that is required by the other passes
-  // managed by this manager then use new manager
-  // TODO
+  // If this pass is not preserving information that is required by the other
+  // passes managed by this manager then use new manager
+  if (!AnUsage.getPreservesAll()) {
+    const std::vector<AnalysisID> &PreservedSet = AnUsage.getPreservedSet();
+    for (std::vector<AnalysisID>::iterator I = RequiredAnalysis.begin(),
+           E = RequiredAnalysis.end(); I != E; ++I) {
+      if (std::find(PreservedSet.begin(), PreservedSet.end(), *I) == 
+          PreservedSet.end())
+        // This analysis is not preserved. Need new manager.
+        return false;
+    }
+  }
   return true;
 }
 
@@ -157,8 +166,12 @@ bool CommonPassManagerImpl::analysisCurrentlyAvailable(AnalysisID AID) {
 
 /// Augment RequiredSet by adding analysis required by pass P.
 void CommonPassManagerImpl::noteDownRequiredAnalysis(Pass *P) {
+  AnalysisUsage AnUsage;
+  P->getAnalysisUsage(AnUsage);
+  const std::vector<AnalysisID> &RequiredSet = AnUsage.getRequiredSet();
 
-  // TODO
+  // FIXME: What about duplicates ?
+  RequiredAnalysis.insert(RequiredAnalysis.end(), RequiredSet.begin(), RequiredSet.end());
 }
 
 /// Remove AnalysisID from the RequiredSet
@@ -375,7 +388,7 @@ PassManagerImpl_New::add(Pass *P) {
 bool
 PassManagerImpl_New::addPass(Pass *P) {
 
-  if (!activeManager) {
+  if (!activeManager || !activeManager->addPass(P)) {
     activeManager = new ModulePassManager_New();
     PassManagers.push_back(activeManager);
   }
