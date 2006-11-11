@@ -15,7 +15,7 @@
 #define LLVM_CLANG_AST_DECL_H
 
 #include "clang/Basic/SourceLocation.h"
-#include "clang/Parse/DeclSpec.h"
+#include "clang/Parse/DeclSpec.h"   // FIXME: Eliminate.
 
 namespace llvm {
 namespace clang {
@@ -32,7 +32,8 @@ class Decl {
   IdentifierInfo *Identifier;
   
   /// DeclarationSpecifier - Information about storage class, type specifiers,
-  /// etc.
+  /// etc.  FIXME: This should be eliminated once we have fully converted types
+  /// over.
   DeclSpec DeclarationSpecifier;
   
   /// Type.

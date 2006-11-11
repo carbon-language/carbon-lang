@@ -76,6 +76,8 @@ public:
   unsigned getQualifiers() const {
     return ThePtr & CVRFlags;
   }
+  
+  void dump() const;
 };
 
 
