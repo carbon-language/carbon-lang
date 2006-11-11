@@ -164,7 +164,7 @@ bool CommonPassManagerImpl::analysisCurrentlyAvailable(AnalysisID AID) {
   return false;
 }
 
-/// Augment RequiredSet by adding analysis required by pass P.
+/// Augment RequiredAnalysis by adding analysis required by pass P.
 void CommonPassManagerImpl::noteDownRequiredAnalysis(Pass *P) {
   AnalysisUsage AnUsage;
   P->getAnalysisUsage(AnUsage);
@@ -172,6 +172,21 @@ void CommonPassManagerImpl::noteDownRequiredAnalysis(Pass *P) {
 
   // FIXME: What about duplicates ?
   RequiredAnalysis.insert(RequiredAnalysis.end(), RequiredSet.begin(), RequiredSet.end());
+}
+
+/// Augement AvailableAnalysis by adding analysis made available by pass P.
+void CommonPassManagerImpl::noteDownAvailableAnalysis(Pass *P) {
+  
+  if (const PassInfo *PI = P->getPassInfo()) {
+    AvailableAnalysis.insert(PI);
+
+    //TODO This pass is the current implementation of all of the interfaces it
+    //TODO implements as well.
+    //TODO
+    //TODO const std::vector<const PassInfo*> &II = PI->getInterfacesImplemented();
+    //TODO for (unsigned i = 0, e = II.size(); i != e; ++i)
+    //TODO CurrentAnalyses[II[i]] = P;
+  }
 }
 
 /// Remove AnalysisID from the RequiredSet
@@ -202,8 +217,9 @@ BasicBlockPassManager_New::addPass(Pass *P) {
   if (!manageablePass(P))
     return false;
 
-  // Take a note of analysis required by this pass.
+  // Take a note of analysis required and made available by this pass
   noteDownRequiredAnalysis(P);
+  noteDownAvailableAnalysis(P);
 
   // Add pass
   PassVector.push_back(BP);
@@ -285,8 +301,9 @@ FunctionPassManagerImpl_New::addPass(Pass *P) {
   if (!manageablePass(P))
     return false;
 
-  // Take a note of analysis required by this pass.
+  // Take a note of analysis required and made available by this pass
   noteDownRequiredAnalysis(P);
+  noteDownAvailableAnalysis(P);
 
   PassVector.push_back(FP);
   activeBBPassManager = NULL;
@@ -345,8 +362,9 @@ ModulePassManager_New::addPass(Pass *P) {
   if (!manageablePass(P))
     return false;
 
-  // Take a note of analysis required by this pass.
+  // Take a note of analysis required and made available by this pass
   noteDownRequiredAnalysis(P);
+  noteDownAvailableAnalysis(P);
 
   PassVector.push_back(MP);
   activeFunctionPassManager = NULL;

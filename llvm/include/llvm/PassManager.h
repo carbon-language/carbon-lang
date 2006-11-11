@@ -19,6 +19,7 @@
 
 #include "llvm/Pass.h"
 #include <vector>
+#include <set>
 
 namespace llvm {
 
@@ -106,8 +107,11 @@ public:
   /// Return true IFF AnalysisID AID is currently available.
   bool analysisCurrentlyAvailable(AnalysisID AID);
 
-  /// Augment RequiredSet by adding analysis required by pass P.
+  /// Augment RequiredAnalysis by adding analysis required by pass P.
   void noteDownRequiredAnalysis(Pass *P);
+
+  /// Augment AvailableAnalysis by adding analysis made available by pass P.
+  void noteDownAvailableAnalysis(Pass *P);
 
   /// Remove AnalysisID from the RequiredSet
   void removeAnalysis(AnalysisID AID);
@@ -121,6 +125,9 @@ public:
 private:
    // Analysis required by the passes managed by this manager
   std::vector<AnalysisID> RequiredAnalysis;
+
+  // set of available Analysis
+  std::set<AnalysisID> AvailableAnalysis;
 };
 
 /// PassManager_New manages ModulePassManagers
