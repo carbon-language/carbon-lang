@@ -124,6 +124,8 @@
           <li><a href="#i_fptosi">'<tt>fptosi .. to</tt>' Instruction</a></li>
           <li><a href="#i_uitofp">'<tt>uitofp .. to</tt>' Instruction</a></li>
           <li><a href="#i_sitofp">'<tt>sitofp .. to</tt>' Instruction</a></li>
+          <li><a href="#i_ptrtoint">'<tt>ptrtoint .. to</tt>' Instruction</a></li>
+          <li><a href="#i_inttoptr">'<tt>inttoptr .. to</tt>' Instruction</a></li>
           <li><a href="#i_bitconvert">'<tt>bitconvert .. to</tt>' Instruction</a></li>
         </ol>
       <li><a href="#otherops">Other Operations</a>
@@ -2955,6 +2957,77 @@ the value cannot fit in the floating point value, the results are undefined.</p>
 
 <!-- _______________________________________________________________________ -->
 <div class="doc_subsubsection">
+   <a name="i_ptrtoint">'<tt>ptrtoint .. to</tt>' Instruction</a>
+</div>
+<div class="doc_text">
+
+<h5>Syntax:</h5>
+<pre>
+  &lt;result&gt; = ptrtoint &lt;ty&gt; &lt;value&gt; to &lt;ty2&gt;             <i>; yields ty2</i>
+</pre>
+
+<h5>Overview:</h5>
+<p>The '<tt>ptrtoint</tt>' instruction converts the pointer <tt>value</tt> to 
+the integer type <tt>ty2</tt>.</p>
+
+<h5>Arguments:</h5>
+<p>The '<tt>ptrtoint</tt>' instruction takes a <tt>value</tt> to cast, which 
+must be a <a href="t_pointer">pointer</a> value, and a type to cast it to
+<tt>ty2</tt>, which must be an <a href="#t_integer">integer</a> type. 
+
+<h5>Semantics:</h5>
+<p>The '<tt>ptrtoint</tt>' instruction converts <tt>value</tt> to integer type
+<tt>ty2</tt> by interpreting the pointer value as an integer and either 
+truncating or zero extending that value to the size of the integer type. If
+<tt>value</tt> is smaller than <tt>ty2</tt> then a zero extension is done. If
+<tt>value</tt> is larger than <tt>ty2</tt> then a truncation is done. If they
+are the same size, then nothing is done (<i>no-op cast</i>).</p>
+
+<h5>Example:</h5>
+<pre>
+  %X = ptrtoint int* %X to sbyte          <i>; yields truncation on 32-bit</i>
+  %Y = ptrtoint int* %x to ulong          <i>; yields zero extend on 32-bit</i>
+</pre>
+</div>
+
+<!-- _______________________________________________________________________ -->
+<div class="doc_subsubsection">
+   <a name="i_inttoptr">'<tt>inttoptr .. to</tt>' Instruction</a>
+</div>
+<div class="doc_text">
+
+<h5>Syntax:</h5>
+<pre>
+  &lt;result&gt; = inttoptr &lt;ty&gt; &lt;value&gt; to &lt;ty2&gt;             <i>; yields ty2</i>
+</pre>
+
+<h5>Overview:</h5>
+<p>The '<tt>inttoptr</tt>' instruction converts an integer <tt>value</tt> to 
+a pointer type, <tt>ty2</tt>.</p>
+
+<h5>Arguments:</h5>
+<p>The '<tt>inttoptr</tt>' instruction takes an <a href="i_integer">integer</a>
+value to cast, and a type to cast it to, which must be a 
+<a href="#t_pointer">pointer</a> type. </tt>
+
+<h5>Semantics:</h5>
+<p>The '<tt>inttoptr</tt>' instruction converts <tt>value</tt> to type
+<tt>ty2</tt> by applying either a zero extension or a truncation depending on
+the size of the integer <tt>value</tt>. If <tt>value</tt> is larger than the
+size of a pointer then a truncation is done. If <tt>value</tt> is smaller than
+the size of a pointer then a zero extension is done. If they are the same size,
+nothing is done (<i>no-op cast</i>).</p>
+
+<h5>Example:</h5>
+<pre>
+  %X = inttoptr int 255 to int*            <i>; yields zero extend on 64-bit</i>
+  %X = inttoptr int 255 to int*            <i>; yields no-op on 32-bit </i>
+  %Y = inttoptr short 0 to int*            <i>; yields zero extend on 32-bit</i>
+</pre>
+</div>
+
+<!-- _______________________________________________________________________ -->
+<div class="doc_subsubsection">
    <a name="i_bitconvert">'<tt>bitconvert .. to</tt>' Instruction</a>
 </div>
 <div class="doc_text">
@@ -2976,10 +3049,12 @@ and the destination type, <tt>ty2</tt>, must be identical.</p>
 
 <h5>Semantics:</h5>
 <p>The '<tt>bitconvert</tt>' instruction converts <tt>value</tt> to type
-<tt>ty2</tt> as if the value had been stored to memory and read back as type
-<tt>ty2</tt>. That is, no bits are changed during the conversion. The
-<tt>bitconvert</tt> instruction is the only conversion instruction that permits
-<i>no-op casts</i> to be constructed.</p>
+<tt>ty2</tt>. It is always a <i>no-op cast</i> because no bits change with 
+this conversion.  The conversion is done as if the <tt>value</tt> had been 
+stored to memory and read back as type <tt>ty2</tt>. Pointer types may only be
+converted to other pointer types with this instruction. To convert pointers to 
+other types, use the <a href="#i_inttoptr">inttoptr</a> or 
+<a href="#i_ptrtoint">ptrtoint</a> instructions first.</p>
 
 <h5>Example:</h5>
 <pre>
