@@ -1130,7 +1130,7 @@ SDOperand SelectionDAG::getNode(unsigned Opcode, MVT::ValueType VT,
   case ISD::BIT_CONVERT:
     // Basic sanity checking.
     assert(MVT::getSizeInBits(VT) == MVT::getSizeInBits(Operand.getValueType())
-           && "Cannot BIT_CONVERT between two different types!");
+           && "Cannot BIT_CONVERT between types of different sizes!");
     if (VT == Operand.getValueType()) return Operand;  // noop conversion.
     if (OpOpcode == ISD::BIT_CONVERT)  // bitconv(bitconv(x)) -> bitconv(x)
       return getNode(ISD::BIT_CONVERT, VT, Operand.getOperand(0));
