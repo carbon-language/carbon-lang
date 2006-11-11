@@ -636,7 +636,7 @@ void PPCRegisterInfo::emitPrologue(MachineFunction &MF) const {
   // Add the size of R1 to  NumBytes size for the store of R1 to the bottom
   // of the stack and round the size to a multiple of the alignment.
   unsigned Align = std::max(TargetAlign, MaxAlign);
-  unsigned GPRSize = 4;
+  unsigned GPRSize = Subtarget.isPPC64() ? 8 : 4;
   unsigned Size = HasFP ? GPRSize + GPRSize : GPRSize;
   NumBytes = (NumBytes+Size+Align-1)/Align*Align;
 
@@ -646,24 +646,47 @@ void PPCRegisterInfo::emitPrologue(MachineFunction &MF) const {
 
   // Adjust stack pointer: r1 -= numbytes.
   // If there is a preferred stack alignment, align R1 now
-  if (MaxAlign > TargetAlign) {
-    assert(isPowerOf2_32(MaxAlign) && MaxAlign < 32767 && "Invalid alignment!");
-    assert(isInt16(0-NumBytes) && "Unhandled stack size and alignment!");
-    BuildMI(MBB, MBBI, PPC::RLWINM, 4, PPC::R0)
-      .addReg(PPC::R1).addImm(0).addImm(32-Log2_32(MaxAlign)).addImm(31);
-    BuildMI(MBB, MBBI, PPC::SUBFIC,2,PPC::R0).addReg(PPC::R0)
-      .addImm(0-NumBytes);
-    BuildMI(MBB, MBBI, PPC::STWUX, 3)
-      .addReg(PPC::R1).addReg(PPC::R1).addReg(PPC::R0);
-  } else if (NumBytes <= 32768) {
-    BuildMI(MBB, MBBI, PPC::STWU, 3).addReg(PPC::R1).addImm(NegNumbytes)
-      .addReg(PPC::R1);
-  } else {
-    BuildMI(MBB, MBBI, PPC::LIS, 1, PPC::R0).addImm(NegNumbytes >> 16);
-    BuildMI(MBB, MBBI, PPC::ORI, 2, PPC::R0).addReg(PPC::R0)
-      .addImm(NegNumbytes & 0xFFFF);
-    BuildMI(MBB, MBBI, PPC::STWUX, 3).addReg(PPC::R1).addReg(PPC::R1)
-      .addReg(PPC::R0);
+  if (!Subtarget.isPPC64()) {
+    // PPC32.
+    if (MaxAlign > TargetAlign) {
+      assert(isPowerOf2_32(MaxAlign) && MaxAlign < 32767&&"Invalid alignment!");
+      assert(isInt16(0-NumBytes) && "Unhandled stack size and alignment!");
+      BuildMI(MBB, MBBI, PPC::RLWINM, 4, PPC::R0)
+        .addReg(PPC::R1).addImm(0).addImm(32-Log2_32(MaxAlign)).addImm(31);
+      BuildMI(MBB, MBBI, PPC::SUBFIC,2,PPC::R0).addReg(PPC::R0)
+        .addImm(0-NumBytes);
+      BuildMI(MBB, MBBI, PPC::STWUX, 3)
+        .addReg(PPC::R1).addReg(PPC::R1).addReg(PPC::R0);
+    } else if (NumBytes <= 32768) {
+      BuildMI(MBB, MBBI, PPC::STWU, 3).addReg(PPC::R1).addImm(NegNumbytes)
+        .addReg(PPC::R1);
+    } else {
+      BuildMI(MBB, MBBI, PPC::LIS, 1, PPC::R0).addImm(NegNumbytes >> 16);
+      BuildMI(MBB, MBBI, PPC::ORI, 2, PPC::R0).addReg(PPC::R0)
+        .addImm(NegNumbytes & 0xFFFF);
+      BuildMI(MBB, MBBI, PPC::STWUX, 3).addReg(PPC::R1).addReg(PPC::R1)
+        .addReg(PPC::R0);
+    }
+  } else {    // PPC64.
+    if (MaxAlign > TargetAlign) {
+      assert(isPowerOf2_32(MaxAlign) && MaxAlign < 32767&&"Invalid alignment!");
+      assert(isInt16(0-NumBytes) && "Unhandled stack size and alignment!");
+      BuildMI(MBB, MBBI, PPC::RLDICL, 3, PPC::X0)
+        .addReg(PPC::X1).addImm(0).addImm(64-Log2_32(MaxAlign));
+      BuildMI(MBB, MBBI, PPC::SUBFIC8, 2, PPC::X0).addReg(PPC::X0)
+        .addImm(0-NumBytes);
+      BuildMI(MBB, MBBI, PPC::STDUX, 3)
+        .addReg(PPC::X1).addReg(PPC::X1).addReg(PPC::X0);
+    } else if (NumBytes <= 32768*4) {
+      BuildMI(MBB, MBBI, PPC::STDU, 3).addReg(PPC::X1).addImm(NegNumbytes/4)
+             .addReg(PPC::X1);
+    } else {
+      BuildMI(MBB, MBBI, PPC::LIS8, 1, PPC::X0).addImm(NegNumbytes >> 16);
+      BuildMI(MBB, MBBI, PPC::ORI8, 2, PPC::X0).addReg(PPC::X0)
+        .addImm(NegNumbytes & 0xFFFF);
+      BuildMI(MBB, MBBI, PPC::STDUX, 3).addReg(PPC::X1).addReg(PPC::X1)
+        .addReg(PPC::X0);
+    }
   }
   
   if (DebugInfo && DebugInfo->hasInfo()) {
@@ -690,9 +713,15 @@ void PPCRegisterInfo::emitPrologue(MachineFunction &MF) const {
   
   // If there is a frame pointer, copy R1 (SP) into R31 (FP)
   if (HasFP) {
-    BuildMI(MBB, MBBI, PPC::STW, 3)
-      .addReg(PPC::R31).addImm(GPRSize).addReg(PPC::R1);
-    BuildMI(MBB, MBBI, PPC::OR, 2, PPC::R31).addReg(PPC::R1).addReg(PPC::R1);
+    if (!Subtarget.isPPC64()) {
+      BuildMI(MBB, MBBI, PPC::STW, 3)
+        .addReg(PPC::R31).addImm(GPRSize).addReg(PPC::R1);
+      BuildMI(MBB, MBBI, PPC::OR, 2, PPC::R31).addReg(PPC::R1).addReg(PPC::R1);
+    } else {
+      BuildMI(MBB, MBBI, PPC::STD, 3)
+         .addReg(PPC::X31).addImm(GPRSize/4).addReg(PPC::X1);
+      BuildMI(MBB, MBBI, PPC::OR8, 2, PPC::X31).addReg(PPC::X1).addReg(PPC::X1);
+    }
   }
 }
 
@@ -714,17 +743,31 @@ void PPCRegisterInfo::emitEpilogue(MachineFunction &MF,
     // If this function has a frame pointer, load the saved stack pointer from
     // its stack slot.
     if (hasFP(MF)) {
-      BuildMI(MBB, MBBI, PPC::LWZ, 2, PPC::R31)
-          .addImm(GPRSize).addReg(PPC::R31);
+      if (!Subtarget.isPPC64()) {
+        BuildMI(MBB, MBBI, PPC::LWZ, 2, PPC::R31)
+            .addImm(GPRSize).addReg(PPC::R31);
+      } else {
+        BuildMI(MBB, MBBI, PPC::LD, 2, PPC::X31)
+          .addImm(GPRSize/4).addReg(PPC::X31);
+      }
     }
     
-    // The loaded (or persistent) stack pointer value is offseted by the 'stwu'
+    // The loaded (or persistent) stack pointer value is offset by the 'stwu'
     // on entry to the function.  Add this offset back now.
-    if (NumBytes < 32768 && TargetAlign >= MFI->getMaxAlignment()) {
-      BuildMI(MBB, MBBI, PPC::ADDI, 2, PPC::R1)
-          .addReg(PPC::R1).addImm(NumBytes);
+    if (!Subtarget.isPPC64()) {
+      if (NumBytes < 32768 && TargetAlign >= MFI->getMaxAlignment()) {
+          BuildMI(MBB, MBBI, PPC::ADDI, 2, PPC::R1)
+              .addReg(PPC::R1).addImm(NumBytes);
+      } else {
+        BuildMI(MBB, MBBI, PPC::LWZ, 2, PPC::R1).addImm(0).addReg(PPC::R1);
+      }
     } else {
-      BuildMI(MBB, MBBI, PPC::LWZ, 2, PPC::R1).addImm(0).addReg(PPC::R1);
+      if (NumBytes < 32768 && TargetAlign >= MFI->getMaxAlignment()) {
+        BuildMI(MBB, MBBI, PPC::ADDI8, 2, PPC::X1)
+           .addReg(PPC::X1).addImm(NumBytes);
+      } else {
+        BuildMI(MBB, MBBI, PPC::LD, 2, PPC::X1).addImm(0).addReg(PPC::X1);
+      }
     }
   }
 }
@@ -734,7 +777,10 @@ unsigned PPCRegisterInfo::getRARegister() const {
 }
 
 unsigned PPCRegisterInfo::getFrameRegister(MachineFunction &MF) const {
-  return hasFP(MF) ? PPC::R31 : PPC::R1;
+  if (!Subtarget.isPPC64())
+    return hasFP(MF) ? PPC::R31 : PPC::R1;
+  else
+    return hasFP(MF) ? PPC::X31 : PPC::X1;
 }
 
 void PPCRegisterInfo::getInitialFrameState(std::vector<MachineMove *> &Moves)

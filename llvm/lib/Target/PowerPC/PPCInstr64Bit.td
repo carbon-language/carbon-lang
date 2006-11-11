@@ -322,6 +322,10 @@ def STDX  : XForm_8<31, 149, (ops G8RC:$rS, memrr:$dst),
                    "stdx $rS, $dst", LdStSTD,
                    [(store G8RC:$rS, xaddr:$dst)]>, isPPC64,
                    PPC970_DGroup_Cracked;
+
+def STDU : DSForm_1<62, 1, (ops G8RC:$rS, memrix:$dst),
+                    "stdu $rS, $dst", LdStSTD,
+                    []>, isPPC64;
 def STDUX : XForm_8<31, 181, (ops G8RC:$rS, memrr:$dst),
                    "stdux $rS, $dst", LdStSTD,
                    []>, isPPC64;
@@ -334,6 +338,7 @@ def STDX_32  : XForm_8<31, 149, (ops GPRC:$rT, memrr:$dst),
                        "stdx $rT, $dst", LdStSTD,
                        [(PPCstd_32  GPRC:$rT, xaddr:$dst)]>, isPPC64,
                        PPC970_DGroup_Cracked;
+
 
 // Truncating stores.                       
 def STB8 : DForm_3<38, (ops G8RC:$rS, memri:$src),
