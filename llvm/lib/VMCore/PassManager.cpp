@@ -171,7 +171,8 @@ void CommonPassManagerImpl::noteDownRequiredAnalysis(Pass *P) {
   const std::vector<AnalysisID> &RequiredSet = AnUsage.getRequiredSet();
 
   // FIXME: What about duplicates ?
-  RequiredAnalysis.insert(RequiredAnalysis.end(), RequiredSet.begin(), RequiredSet.end());
+  RequiredAnalysis.insert(RequiredAnalysis.end(), RequiredSet.begin(), 
+                          RequiredSet.end());
 }
 
 /// Augement AvailableAnalysis by adding analysis made available by pass P.
@@ -197,8 +198,20 @@ void CommonPassManagerImpl::removeAnalysis(AnalysisID AID) {
 
 /// Remove Analyss not preserved by Pass P
 void CommonPassManagerImpl::removeNotPreservedAnalysis(Pass *P) {
+  AnalysisUsage AnUsage;
+  P->getAnalysisUsage(AnUsage);
+  const std::vector<AnalysisID> &PreservedSet = AnUsage.getPreservedSet();
 
-  // TODO
+  for (std::set<AnalysisID>::iterator I = AvailableAnalysis.begin(),
+         E = AvailableAnalysis.end(); I != E; ++I ) {
+    AnalysisID AID = *I;
+    if (std::find(PreservedSet.begin(), PreservedSet.end(), *I) == 
+        PreservedSet.end()) {
+      // Remove this analysis
+      std::set<AnalysisID>::iterator J = I++;
+      AvailableAnalysis.erase(J);
+    }
+  }
 }
 
 /// BasicBlockPassManager implementation
@@ -223,6 +236,10 @@ BasicBlockPassManager_New::addPass(Pass *P) {
 
   // Add pass
   PassVector.push_back(BP);
+
+  // Remove the analysis not preserved by this pass
+  removeNotPreservedAnalysis(P);
+
   return true;
 }
 
@@ -306,6 +323,10 @@ FunctionPassManagerImpl_New::addPass(Pass *P) {
   noteDownAvailableAnalysis(P);
 
   PassVector.push_back(FP);
+
+  // Remove the analysis not preserved by this pass
+  removeNotPreservedAnalysis(P);
+
   activeBBPassManager = NULL;
   return true;
 }
@@ -367,6 +388,10 @@ ModulePassManager_New::addPass(Pass *P) {
   noteDownAvailableAnalysis(P);
 
   PassVector.push_back(MP);
+
+  // Remove the analysis not preserved by this pass
+  removeNotPreservedAnalysis(P);
+
   activeFunctionPassManager = NULL;
   return true;
 }
