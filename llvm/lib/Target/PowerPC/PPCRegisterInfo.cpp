@@ -396,9 +396,15 @@ eliminateCallFramePseudoInstr(MachineFunction &MF, MachineBasicBlock &MBB,
 
       // Replace the pseudo instruction with a new instruction...
       if (Old->getOpcode() == PPC::ADJCALLSTACKDOWN) {
-        BuildMI(MBB, I, PPC::LWZ, 2, PPC::R0).addImm(0).addReg(PPC::R31);
-        BuildMI(MBB, I, PPC::STWU, 3)
-                               .addReg(PPC::R0).addImm(-Amount).addReg(PPC::R1);
+        if (!Subtarget.isPPC64()) {
+          BuildMI(MBB, I, PPC::LWZ, 2, PPC::R0).addImm(0).addReg(PPC::R31);
+          BuildMI(MBB, I, PPC::STWU, 3)
+                          .addReg(PPC::R0).addImm(-Amount).addReg(PPC::R1);
+        } else {
+          BuildMI(MBB, I, PPC::LD, 2, PPC::X0).addImm(0).addReg(PPC::X31);
+          BuildMI(MBB, I, PPC::STDU, 3)
+                          .addReg(PPC::X0).addImm(-Amount/4).addReg(PPC::X1);
+        }
       } else {
         assert(Old->getOpcode() == PPC::ADJCALLSTACKUP);
         BuildMI(MBB, I, PPC::ADDI, 2, PPC::R1).addReg(PPC::R1).addImm(Amount);
