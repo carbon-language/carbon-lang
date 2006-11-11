@@ -165,12 +165,7 @@ Linker::LinkInArchive(const sys::Path &Filename) {
           return error("Cannot link in module '" +
                        aModule->getModuleIdentifier() + "': " + moduleErrorMsg);
         }
-      } else {
-	// (scottm) NOTE: For some reason, Modules.empty() isn't entirely 
-        // accurrate, least with gcc 4.1.2 on Debian and doesn't return true 
-        // when it ought.  Consequently, aModule can be NULL -- ignore it for 
-        // the time being, since it seems relatively benign.
-      }
+      } 
     }
     
     // Get the undefined symbols from the aggregate module. This recomputes the
