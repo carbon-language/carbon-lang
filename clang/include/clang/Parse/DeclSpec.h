@@ -227,7 +227,7 @@ struct DeclaratorTypeInfo {
 };
 
 
-/// DeclaratorInfo - Information about one declarator, including the parsed type
+/// Declarator - Information about one declarator, including the parsed type
 /// information and the identifier.  When the declarator is fully formed, this
 /// is turned into the appropriate Decl object.
 ///
