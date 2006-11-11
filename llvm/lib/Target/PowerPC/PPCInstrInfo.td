@@ -432,31 +432,31 @@ def LFD : DForm_1<50, (ops F8RC:$rD, memri:$src),
 // FIXME: PTRRC for Pointer regs for ppc64.
 
 // 'Update' load forms.
-def LBZU : DForm_1<35, (ops GPRC:$rD, ptr_rc:$rA_result, i32imm:$disp,
+def LBZU : DForm_1<35, (ops GPRC:$rD, ptr_rc:$rA_result, symbolLo:$disp,
                             ptr_rc:$rA),
                    "lbzu $rD, $disp($rA)", LdStGeneral,
                    []>, RegConstraint<"$rA = $rA_result">;
 
-def LHAU : DForm_1<43, (ops GPRC:$rD, ptr_rc:$rA_result, i32imm:$disp,
+def LHAU : DForm_1<43, (ops GPRC:$rD, ptr_rc:$rA_result, symbolLo:$disp,
                             ptr_rc:$rA),
                    "lhau $rD, $disp($rA)", LdStGeneral,
                    []>, RegConstraint<"$rA = $rA_result">;
 
-def LHZU : DForm_1<41, (ops GPRC:$rD, ptr_rc:$rA_result, i32imm:$disp,
+def LHZU : DForm_1<41, (ops GPRC:$rD, ptr_rc:$rA_result, symbolLo:$disp,
                             ptr_rc:$rA),
                    "lhzu $rD, $disp($rA)", LdStGeneral,
                    []>, RegConstraint<"$rA = $rA_result">;
 
-def LWZU : DForm_1<33, (ops GPRC:$rD, ptr_rc:$rA_result, i32imm:$disp,
+def LWZU : DForm_1<33, (ops GPRC:$rD, ptr_rc:$rA_result, symbolLo:$disp,
                             ptr_rc:$rA),
                    "lwzu $rD, $disp($rA)", LdStGeneral,
                    []>, RegConstraint<"$rA = $rA_result">;
 
-def LFSU : DForm_1<49, (ops F4RC:$rD, ptr_rc:$rA_result, i32imm:$disp,
+def LFSU : DForm_1<49, (ops F4RC:$rD, ptr_rc:$rA_result, symbolLo:$disp,
                             ptr_rc:$rA),
                   "lfs $rD, $disp($rA)", LdStLFDU,
                   []>, RegConstraint<"$rA = $rA_result">;
-def LFDU : DForm_1<51, (ops F8RC:$rD, ptr_rc:$rA_result, i32imm:$disp,
+def LFDU : DForm_1<51, (ops F8RC:$rD, ptr_rc:$rA_result, symbolLo:$disp,
                             ptr_rc:$rA),
                   "lfd $rD, $disp($rA)", LdStLFD,
                   []>, RegConstraint<"$rA = $rA_result">;
