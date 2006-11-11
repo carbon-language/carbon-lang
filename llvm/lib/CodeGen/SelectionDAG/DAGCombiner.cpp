@@ -2750,14 +2750,20 @@ bool DAGCombiner::CombineToPreIndexedLoadStore(SDNode *N) {
   if (!TLI.getPreIndexedAddressParts(N, BasePtr, Offset, AM, DAG))
     return false;
   
-  // Try turning it into a pre-indexed load / store except when
-  // 1) If N is a store and the ptr is either the same as or is a
+  // Try turning it into a pre-indexed load / store except when:
+  // 1) The base is a frame index.
+  // 2) If N is a store and the ptr is either the same as or is a
   //    predecessor of the value being stored.
-  // 2) Another use of base ptr is a predecessor of N. If ptr is folded
+  // 3) Another use of base ptr is a predecessor of N. If ptr is folded
   //    that would create a cycle.
-  // 3) All uses are load / store ops that use it as base ptr.
+  // 4) All uses are load / store ops that use it as base ptr.
 
-  // Checking #1.
+  // Check #1.  Preinc'ing a frame index would require copying the stack pointer
+  // (plus the implicit offset) to a register to preinc anyway.
+  if (isa<FrameIndexSDNode>(BasePtr))
+    return false;
+  
+  // Check #2.
   if (!isLoad) {
     SDOperand Val = cast<StoreSDNode>(N)->getValue();
     if (Val == Ptr || Ptr.Val->isPredecessor(Val.Val))
