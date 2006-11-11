@@ -41,9 +41,6 @@ public:
   /// Augment AvailableAnalysis by adding analysis made available by pass P.
   void noteDownAvailableAnalysis(Pass *P);
 
-  /// Remove AnalysisID from the RequiredSet
-  void removeAnalysis(AnalysisID AID);
-
   /// Remove Analysis that is not preserved by the pass
   void removeNotPreservedAnalysis(Pass *P);
   
@@ -231,12 +228,6 @@ void CommonPassManagerImpl::noteDownAvailableAnalysis(Pass *P) {
     //TODO for (unsigned i = 0, e = II.size(); i != e; ++i)
     //TODO CurrentAnalyses[II[i]] = P;
   }
-}
-
-/// Remove AnalysisID from the RequiredSet
-void CommonPassManagerImpl::removeAnalysis(AnalysisID AID) {
-
-  // TODO
 }
 
 /// Remove Analyss not preserved by Pass P
