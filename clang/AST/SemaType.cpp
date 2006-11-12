@@ -131,7 +131,6 @@ static TypeRef ConvertDeclSpecToType(const DeclSpec &DS, ASTContext &Ctx) {
     //DeclSpec::TST_union:
     //DeclSpec::TST_struct:
     //DeclSpec::TST_typedef:
-      
   }
 }
 
@@ -140,7 +139,8 @@ static TypeRef ConvertDeclSpecToType(const DeclSpec &DS, ASTContext &Ctx) {
 TypeRef Sema::GetTypeForDeclarator(Declarator &D, Scope *S) {
   TypeRef T = ConvertDeclSpecToType(D.getDeclSpec(), Context);
   
-  // FIXME: Apply const/volatile/restrict qualifiers to T.
+  // Apply const/volatile/restrict qualifiers to T.
+  T = T.getQualifiedType(D.getDeclSpec().TypeQualifiers);
   
   return T;
   return TypeRef();

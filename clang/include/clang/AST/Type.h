@@ -51,12 +51,16 @@ public:
     ThePtr |= Quals;
   }
   
+  Type *getTypePtr() const {
+    return reinterpret_cast<Type*>(ThePtr & ~CVRFlags);
+  }
+  
   Type &operator*() const {
-    return *reinterpret_cast<Type*>(ThePtr & ~CVRFlags);
+    return *getTypePtr();
   }
 
   Type *operator->() const {
-    return reinterpret_cast<Type*>(ThePtr & ~CVRFlags);
+    return getTypePtr();
   }
   
   /// isNull - Return true if this TypeRef doesn't point to a type yet.
@@ -76,6 +80,15 @@ public:
   unsigned getQualifiers() const {
     return ThePtr & CVRFlags;
   }
+  
+  TypeRef getQualifiedType(unsigned TQs) const {
+    return TypeRef(getTypePtr(), TQs);
+  }
+  
+  TypeRef getUnqualifiedType() const {
+    return TypeRef(getTypePtr());
+  }
+  
   
   void dump() const;
 };
