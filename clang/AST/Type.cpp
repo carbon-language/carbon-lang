@@ -12,28 +12,53 @@
 //===----------------------------------------------------------------------===//
 
 #include "clang/AST/Type.h"
+#include <iostream>
 using namespace llvm;
 using namespace clang;
 
 Type::~Type() {}
 
+//===----------------------------------------------------------------------===//
+// Type Construction
+//===----------------------------------------------------------------------===//
 
-#include <iostream>  // FIXME: REMOVE
+PointerType::PointerType(TypeRef Pointee, Type *Canonical)
+  : Type(Canonical), PointeeType(Pointee) {
+}
+
+
+
+//===----------------------------------------------------------------------===//
+// Type Printing
+//===----------------------------------------------------------------------===//
+
 void TypeRef::dump() const {
+  print(std::cerr);
+  std::cerr << "\n";
+}
+
+void TypeRef::print(std::ostream &OS) const {
   if (isNull()) {
-    std::cerr << "NULL TYPE\n";
+    OS << "NULL TYPE\n";
     return;
   }
   
-  (*this)->dump();
+  getTypePtr()->print(OS);
   
   // Print qualifiers as appropriate.
   if (isConstQualified())
-    std::cerr << " const";
+    OS << " const";
   if (isVolatileQualified())
-    std::cerr << " volatile";
+    OS << " volatile";
   if (isRestrictQualified())
-    std::cerr << " restrict";
-  
-  std::cerr << "\n";
+    OS << " restrict";
+}
+
+void BuiltinType::print(std::ostream &OS) const {
+  OS << Name;
+}
+
+void PointerType::print(std::ostream &OS) const {
+  PointeeType.print(OS);
+  OS << "*";
 }

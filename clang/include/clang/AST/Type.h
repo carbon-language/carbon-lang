@@ -16,9 +16,11 @@
 
 #include "llvm/Support/DataTypes.h"
 #include <cassert>
+#include <iosfwd>
 
 namespace llvm {
 namespace clang {
+  class ASTContext;
   class TypeDecl;
   class Type;
   
@@ -89,7 +91,11 @@ public:
     return TypeRef(getTypePtr());
   }
   
+  /// getCanonicalType - Return the canonical version of this type, with the
+  /// appropriate type qualifiers on it.
+  inline TypeRef getCanonicalType() const;
   
+  void print(std::ostream &OS) const;
   void dump() const;
 };
 
@@ -122,18 +128,32 @@ public:
 class Type {
   Type *CanonicalType;
 public:
+  Type(Type *Canonical) : CanonicalType(Canonical ? Canonical : this) {}
   virtual ~Type();
   
   bool isCanonical() const { return CanonicalType == this; }
   Type *getCanonicalType() const { return CanonicalType; }
   
-  virtual void dump() const = 0;
+  virtual void print(std::ostream &OS) const = 0;
+};
+
+/// BuiltinType - This class is used for builtin types like 'int'.  Builtin
+/// types are always canonical and have a literal name field.
+class BuiltinType : public Type {
+  const char *Name;
+public:
+  BuiltinType(const char *name) : Type(0), Name(name) {}
+  
+  virtual void print(std::ostream &OS) const;
 };
 
 class PointerType : public Type {
   TypeRef PointeeType;
+  PointerType(TypeRef Pointee, Type *CanonicalPtr = 0);
+  friend class ASTContext;  // ASTContext creates these.
 public:
   
+  virtual void print(std::ostream &OS) const;
 };
 
 class TypedefType : public Type {
@@ -150,6 +170,13 @@ public:
 // 'std::vector<int>' from 'std::vector<int, std::allocator<int> >'. Though they
 // specify the same type, we want to print the default argument only if
 // specified in the source code.
+
+
+/// getCanonicalType - Return the canonical version of this type, with the
+/// appropriate type qualifiers on it.
+inline TypeRef TypeRef::getCanonicalType() const {
+  return TypeRef(getTypePtr()->getCanonicalType(), getQualifiers());
+}
 
   
 }  // end namespace clang

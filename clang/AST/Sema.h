@@ -38,7 +38,6 @@ class Sema : public Action {
 public:
   Sema(ASTContext &ctx, std::vector<Decl*> &prevInGroup)
     : Context(ctx), LastInGroupList(prevInGroup) {
-    InitializeBuiltinTypes();
   }
   
   void Diag(SourceLocation Loc, unsigned DiagID,
@@ -47,7 +46,6 @@ public:
   //===--------------------------------------------------------------------===//
   // Type Analysis / Processing: SemaType.cpp.
   //
-  void InitializeBuiltinTypes();
   TypeRef GetTypeForDeclarator(Declarator &D, Scope *S);
   
   

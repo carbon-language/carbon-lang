@@ -15,6 +15,7 @@
 #define LLVM_CLANG_AST_ASTCONTEXT_H
 
 #include "clang/AST/Type.h"
+#include <vector>
 
 namespace llvm {
 namespace clang {
@@ -24,6 +25,8 @@ namespace clang {
 /// ASTContext - This class holds long-lived AST nodes (such as types and
 /// decls) that can be referred to throughout the semantic analysis of a file.
 class ASTContext {
+  // FIXME: This is a stupid data structure.
+  std::vector<TypeRef> Types;
 public:
   Preprocessor &PP;
   TargetInfo &Target;
@@ -42,7 +45,12 @@ public:
   ASTContext(Preprocessor &pp);
   
   
+  /// getPointerType - Return the uniqued reference to the type for a pointer to
+  /// the specified type.
+  TypeRef getPointerType(const TypeRef &T);
   
+private:
+  void InitBuiltinTypes();
 };
   
 }  // end namespace clang

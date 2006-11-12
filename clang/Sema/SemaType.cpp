@@ -17,61 +17,6 @@
 using namespace llvm;
 using namespace clang;
 
-namespace {
-  /// BuiltinType - This class is used for builtin types like 'int'.  Builtin
-  /// types are always canonical and have a literal name field.
-  class BuiltinType : public Type {
-    const char *Name;
-  public:
-    BuiltinType(const char *name) : Name(name) {}
-    
-    virtual void dump() const;
-  };
-}
-
-// FIXME: REMOVE
-#include <iostream>
-
-void BuiltinType::dump() const {
-  std::cerr << Name;
-}
-
-
-void Sema::InitializeBuiltinTypes() {
-  assert(Context.VoidTy.isNull() && "Context reinitialized?");
-  
-  // C99 6.2.5p19.
-  Context.VoidTy = new BuiltinType("void");
-  
-  // C99 6.2.5p2.
-  Context.BoolTy = new BuiltinType("_Bool");
-  // C99 6.2.5p3.
-  Context.CharTy = new BuiltinType("char");
-  // C99 6.2.5p4.
-  Context.SignedCharTy = new BuiltinType("signed char");
-  Context.ShortTy = new BuiltinType("short");
-  Context.IntTy = new BuiltinType("int");
-  Context.LongTy = new BuiltinType("long");
-  Context.LongLongTy = new BuiltinType("long long");
-  
-  // C99 6.2.5p6.
-  Context.UnsignedCharTy = new BuiltinType("unsigned char");
-  Context.UnsignedShortTy = new BuiltinType("unsigned short");
-  Context.UnsignedIntTy = new BuiltinType("unsigned int");
-  Context.UnsignedLongTy = new BuiltinType("unsigned long");
-  Context.UnsignedLongLongTy = new BuiltinType("unsigned long long");
-  
-  // C99 6.2.5p10.
-  Context.FloatTy = new BuiltinType("float");
-  Context.DoubleTy = new BuiltinType("double");
-  Context.LongDoubleTy = new BuiltinType("long double");
-  
-  // C99 6.2.5p11.
-  Context.FloatComplexTy = new BuiltinType("float _Complex");
-  Context.DoubleComplexTy = new BuiltinType("double _Complex");
-  Context.LongDoubleComplexTy = new BuiltinType("long double _Complex");
-}
-
 /// ConvertDeclSpecToType - Convert the specified declspec to the appropriate
 /// type object.  This returns null on error.
 static TypeRef ConvertDeclSpecToType(const DeclSpec &DS, ASTContext &Ctx) {
@@ -142,6 +87,22 @@ TypeRef Sema::GetTypeForDeclarator(Declarator &D, Scope *S) {
   // Apply const/volatile/restrict qualifiers to T.
   T = T.getQualifiedType(D.getDeclSpec().TypeQualifiers);
   
+  // Walk the DeclTypeInfo, building the recursive type as we go.
+  for (unsigned i = 0, e = D.getNumTypeObjects(); i != e; ++i) {
+    const DeclaratorTypeInfo &DeclType = D.getTypeObject(e-i-1);
+    switch (DeclType.Kind) {
+    default: assert(0 && "Unknown decltype!");
+    case DeclaratorTypeInfo::Pointer:
+      T = Context.getPointerType(T);
+      
+      // Apply the pointer typequals to the pointer object.
+      T = T.getQualifiedType(DeclType.Ptr.TypeQuals);
+      break;
+    case DeclaratorTypeInfo::Array:
+    case DeclaratorTypeInfo::Function:
+      return TypeRef();   // FIXME: implement these!
+    }
+  }
+  
   return T;
-  return TypeRef();
 }
