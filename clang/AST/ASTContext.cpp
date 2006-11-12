@@ -72,21 +72,49 @@ void ASTContext::InitBuiltinTypes() {
 
 /// getPointerType - Return the uniqued reference to the type for a pointer to
 /// the specified type.
-TypeRef ASTContext::getPointerType(const TypeRef &T) {
+TypeRef ASTContext::getPointerType(TypeRef T) {
   // FIXME: This is obviously braindead!
   // Unique pointers, to guarantee there is only one pointer of a particular
   // structure.
   for (unsigned i = 0, e = Types.size(); i != e; ++i)
     if (PointerType *PTy = dyn_cast<PointerType>(Types[i]))
-      if (PTy->getPointee() == T)
+      if (PTy->getPointeeType() == T)
         return Types[i];
   
-  
+  // If the pointee type isn't canonical, this won't be a canonical type either,
+  // so fill in the canonical type field.
   Type *Canonical = 0;
   if (!T->isCanonical())
     Canonical = getPointerType(T.getCanonicalType()).getTypePtr();
   
   Types.push_back(new PointerType(T, Canonical));
+  return Types.back();
+}
+
+/// getArrayType - Return the unique reference to the type for an array of the
+/// specified element type.
+TypeRef ASTContext::getArrayType(TypeRef EltTy,ArrayType::ArraySizeModifier ASM,
+                                 unsigned EltTypeQuals, void *NumElts) {
+#warning "IGNORING SIZE"
+  
+  // FIXME: This is obviously braindead!
+  // Unique array, to guarantee there is only one array of a particular
+  // structure.
+  for (unsigned i = 0, e = Types.size(); i != e; ++i)
+    if (ArrayType *ATy = dyn_cast<ArrayType>(Types[i]))
+      if (ATy->getElementType() == EltTy &&
+          ATy->getSizeModifier() == ASM &&
+          ATy->getIndexTypeQualifier() == EltTypeQuals)
+        return Types[i];
+  
+  // If the element type isn't canonical, this won't be a canonical type either,
+  // so fill in the canonical type field.
+  Type *Canonical = 0;
+  if (!EltTy->isCanonical())
+    Canonical = getArrayType(EltTy.getCanonicalType(), ASM, EltTypeQuals,
+                             NumElts).getTypePtr();
+  
+  Types.push_back(new ArrayType(EltTy, ASM, EltTypeQuals, Canonical));
   return Types.back();
 }
 

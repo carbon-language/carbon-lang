@@ -98,7 +98,19 @@ TypeRef Sema::GetTypeForDeclarator(Declarator &D, Scope *S) {
       // Apply the pointer typequals to the pointer object.
       T = T.getQualifiedType(DeclType.Ptr.TypeQuals);
       break;
-    case DeclaratorTypeInfo::Array:
+    case DeclaratorTypeInfo::Array: {
+      const DeclaratorTypeInfo::ArrayTypeInfo &ATI = DeclType.Arr;
+      ArrayType::ArraySizeModifier ASM;
+      if (ATI.isStar)
+        ASM = ArrayType::Star;
+      else if (ATI.hasStatic)
+        ASM = ArrayType::Static;
+      else
+        ASM = ArrayType::Normal;
+      
+      T = Context.getArrayType(T, ASM, ATI.TypeQuals, ATI.NumElts);
+      break;
+    }
     case DeclaratorTypeInfo::Function:
       return TypeRef();   // FIXME: implement these!
     }

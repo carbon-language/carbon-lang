@@ -47,7 +47,13 @@ public:
   
   /// getPointerType - Return the uniqued reference to the type for a pointer to
   /// the specified type.
-  TypeRef getPointerType(const TypeRef &T);
+  TypeRef getPointerType(TypeRef T);
+  
+  /// getArrayType - Return the unique reference to the type for an array of the
+  /// specified element type.
+  TypeRef getArrayType(TypeRef EltTy, ArrayType::ArraySizeModifier ASM,
+                       unsigned EltTypeQuals, void *NumElts);
+                       
   
 private:
   void InitBuiltinTypes();

@@ -18,15 +18,6 @@ using namespace clang;
 
 Type::~Type() {}
 
-//===----------------------------------------------------------------------===//
-// Type Construction
-//===----------------------------------------------------------------------===//
-
-PointerType::PointerType(TypeRef Pointee, Type *Canonical)
-  : Type(Pointer, Canonical), PointeeType(Pointee) {
-}
-
-
 
 //===----------------------------------------------------------------------===//
 // Type Printing
@@ -37,6 +28,17 @@ void TypeRef::dump() const {
   std::cerr << "\n";
 }
 
+static void PrintTypeQualList(std::ostream &OS, unsigned TypeQuals) {
+  // Note: funkiness to ensure we get a space only between quals.
+  bool NonePrinted = true;
+  if (TypeQuals & TypeRef::Const)
+    OS << "const", NonePrinted = false;
+  if (TypeQuals & TypeRef::Volatile)
+    OS << (NonePrinted+" volatile"), NonePrinted = false;
+  if (TypeQuals & TypeRef::Restrict)
+    OS << (NonePrinted+" restrict"), NonePrinted = false;
+  }
+
 void TypeRef::print(std::ostream &OS) const {
   if (isNull()) {
     OS << "NULL TYPE\n";
@@ -46,12 +48,10 @@ void TypeRef::print(std::ostream &OS) const {
   getTypePtr()->print(OS);
   
   // Print qualifiers as appropriate.
-  if (isConstQualified())
-    OS << " const";
-  if (isVolatileQualified())
-    OS << " volatile";
-  if (isRestrictQualified())
-    OS << " restrict";
+  if (unsigned TQ = getQualifiers()) {
+    OS << " ";
+    PrintTypeQualList(OS, TQ);
+  }
 }
 
 void BuiltinType::print(std::ostream &OS) const {
@@ -61,4 +61,21 @@ void BuiltinType::print(std::ostream &OS) const {
 void PointerType::print(std::ostream &OS) const {
   PointeeType.print(OS);
   OS << "*";
+}
+
+void ArrayType::print(std::ostream &OS) const {
+  ElementType.print(OS);
+  OS << "[";
+  
+  if (IndexTypeQuals) {
+    PrintTypeQualList(OS, IndexTypeQuals);
+    OS << " ";
+  }
+  
+  if (SizeModifier == Static)
+    OS << "static";
+  else if (SizeModifier == Star)
+    OS << "*";
+  
+  OS << "]";
 }

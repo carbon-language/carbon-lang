@@ -54,6 +54,9 @@ public:
     ThePtr |= Quals;
   }
   
+  unsigned getQualifiers() const {
+    return ThePtr & CVRFlags;
+  }
   Type *getTypePtr() const {
     return reinterpret_cast<Type*>(ThePtr & ~CVRFlags);
   }
@@ -79,9 +82,6 @@ public:
   }
   bool isRestrictQualified() const {
     return ThePtr & Restrict;
-  }
-  unsigned getQualifiers() const {
-    return ThePtr & CVRFlags;
   }
   
   TypeRef getQualifiedType(unsigned TQs) const {
@@ -138,18 +138,18 @@ public:
 class Type {
 public:
   enum TypeClass {
-    Builtin,
-    Pointer,
-    Typedef
-    // ...
+    Builtin, Pointer, Array, Typedef
   };
 private:
-  TypeClass TC : 4;
   Type *CanonicalType;
+
+  /// TypeClass bitfield - Enum that specifies what subclass this belongs to.
+  /// Note that this should stay at the end of the ivars for Type so that
+  /// subclasses can pack their bitfields into the same word.
+  TypeClass TC : 3;
 public:
-  
   Type(TypeClass tc, Type *Canonical)
-    : TC(tc), CanonicalType(Canonical ? Canonical : this) {}
+    : CanonicalType(Canonical ? Canonical : this), TC(tc) {}
   virtual ~Type();
   
   TypeClass getTypeClass() const { return TC; }
@@ -176,19 +176,62 @@ public:
   static bool classof(const BuiltinType *) { return true; }
 };
 
+/// PointerType - C99 6.7.4.1 - Pointer Declarators.
+///
 class PointerType : public Type {
   TypeRef PointeeType;
-  PointerType(TypeRef Pointee, Type *CanonicalPtr = 0);
+  PointerType(TypeRef Pointee, Type *CanonicalPtr) :
+    Type(Pointer, CanonicalPtr), PointeeType(Pointee) {
+  }
   friend class ASTContext;  // ASTContext creates these.
 public:
     
-  TypeRef getPointee() const { return PointeeType; }
+  TypeRef getPointeeType() const { return PointeeType; }
   
   virtual void print(std::ostream &OS) const;
   
   static bool classof(const Type *T) { return T->getTypeClass() == Pointer; }
   static bool classof(const PointerType *) { return true; }
 };
+
+/// PointerType - C99 6.7.4.2 - Array Declarators.
+///
+class ArrayType : public Type {
+public:
+  /// ArraySizeModifier - Capture whether this is a normal array (e.g. int X[4])
+  /// an array with a static size (e.g. int X[static 4]), or with a star size
+  /// (e.g. int X[*]).
+  enum ArraySizeModifier {
+    Normal, Static, Star
+  };
+private:
+  /// NOTE: These fields are packed into the bitfields space in the Type class.
+  ArraySizeModifier SizeModifier : 2;
+  
+  /// IndexTypeQuals - Capture qualifiers in declarations like:
+  /// 'int X[static restrict 4]'.
+  unsigned IndexTypeQuals : 3;
+  
+  /// ElementType - The element type of the array.
+  TypeRef ElementType;
+  
+  /// FIXME: Capture size for VLA or constant size.
+
+  ArrayType(TypeRef et, ArraySizeModifier sm, unsigned tq, Type *can)
+    : Type(Array, can), SizeModifier(sm), IndexTypeQuals(tq), ElementType(et) {}
+  friend class ASTContext;  // ASTContext creates these.
+public:
+    
+  TypeRef getElementType() const { return ElementType; }
+  ArraySizeModifier getSizeModifier() const { return SizeModifier; }
+  unsigned getIndexTypeQualifier() const { return IndexTypeQuals; }
+  
+  virtual void print(std::ostream &OS) const;
+  
+  static bool classof(const Type *T) { return T->getTypeClass() == Array; }
+  static bool classof(const ArrayType *) { return true; }
+};
+
 
 class TypedefType : public Type {
   // Decl * here.
