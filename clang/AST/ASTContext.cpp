@@ -77,8 +77,8 @@ TypeRef ASTContext::getPointerType(const TypeRef &T) {
   // Unique pointers, to guarantee there is only one pointer of a particular
   // structure.
   for (unsigned i = 0, e = Types.size(); i != e; ++i)
-    if (Types[i]->getTypeClass() == Type::Pointer)
-      if (((PointerType*)Types[i])->getPointee() == T)
+    if (PointerType *PTy = dyn_cast<PointerType>(Types[i]))
+      if (PTy->getPointee() == T)
         return Types[i];
   
   

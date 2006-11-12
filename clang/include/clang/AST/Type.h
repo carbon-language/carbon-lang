@@ -14,6 +14,7 @@
 #ifndef LLVM_CLANG_AST_TYPE_H
 #define LLVM_CLANG_AST_TYPE_H
 
+#include "llvm/Support/Casting.h"
 #include "llvm/Support/DataTypes.h"
 #include <cassert>
 #include <iosfwd>
@@ -157,6 +158,8 @@ public:
   Type *getCanonicalType() const { return CanonicalType; }
   
   virtual void print(std::ostream &OS) const = 0;
+  
+  static bool classof(const Type *) { return true; }
 };
 
 /// BuiltinType - This class is used for builtin types like 'int'.  Builtin
@@ -167,6 +170,10 @@ public:
   BuiltinType(const char *name) : Type(Builtin, 0), Name(name) {}
   
   virtual void print(std::ostream &OS) const;
+  
+  
+  static bool classof(const Type *T) { return T->getTypeClass() == Builtin; }
+  static bool classof(const BuiltinType *) { return true; }
 };
 
 class PointerType : public Type {
@@ -178,12 +185,18 @@ public:
   TypeRef getPointee() const { return PointeeType; }
   
   virtual void print(std::ostream &OS) const;
+  
+  static bool classof(const Type *T) { return T->getTypeClass() == Pointer; }
+  static bool classof(const PointerType *) { return true; }
 };
 
 class TypedefType : public Type {
   // Decl * here.
 public:
   
+  
+  static bool classof(const Type *T) { return T->getTypeClass() == Typedef; }
+  static bool classof(const TypedefType *) { return true; }
 };
 
 
