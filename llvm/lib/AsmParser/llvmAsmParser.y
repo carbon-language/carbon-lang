@@ -2666,8 +2666,8 @@ InstVal : ArithmeticOps Types ValueRef ',' ValueRef {
     CHECK_FOR_ERROR
   }
   | OptTailCall OptCallingConv TypesV ValueRef '(' ValueRefListE ')'  {
-    const PointerType *PFTy;
-    const FunctionType *Ty;
+    const PointerType *PFTy = 0;
+    const FunctionType *Ty = 0;
 
     if (!(PFTy = dyn_cast<PointerType>($3->get())) ||
         !(Ty = dyn_cast<FunctionType>(PFTy->getElementType()))) {
