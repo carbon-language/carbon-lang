@@ -91,6 +91,15 @@ public:
     return TypeRef(getTypePtr());
   }
   
+  /// operator==/!= - Indicate whether the specified types and qualifiers are
+  /// identical.
+  bool operator==(const TypeRef &RHS) const {
+    return ThePtr == RHS.ThePtr;
+  }
+  bool operator!=(const TypeRef &RHS) const {
+    return ThePtr != RHS.ThePtr;
+  }
+  
   /// getCanonicalType - Return the canonical version of this type, with the
   /// appropriate type qualifiers on it.
   inline TypeRef getCanonicalType() const;
@@ -126,10 +135,23 @@ public:
 /// Types, once created, are immutable.
 ///
 class Type {
+public:
+  enum TypeClass {
+    Builtin,
+    Pointer,
+    Typedef
+    // ...
+  };
+private:
+  TypeClass TC : 4;
   Type *CanonicalType;
 public:
-  Type(Type *Canonical) : CanonicalType(Canonical ? Canonical : this) {}
+  
+  Type(TypeClass tc, Type *Canonical)
+    : TC(tc), CanonicalType(Canonical ? Canonical : this) {}
   virtual ~Type();
+  
+  TypeClass getTypeClass() const { return TC; }
   
   bool isCanonical() const { return CanonicalType == this; }
   Type *getCanonicalType() const { return CanonicalType; }
@@ -142,7 +164,7 @@ public:
 class BuiltinType : public Type {
   const char *Name;
 public:
-  BuiltinType(const char *name) : Type(0), Name(name) {}
+  BuiltinType(const char *name) : Type(Builtin, 0), Name(name) {}
   
   virtual void print(std::ostream &OS) const;
 };
@@ -152,6 +174,8 @@ class PointerType : public Type {
   PointerType(TypeRef Pointee, Type *CanonicalPtr = 0);
   friend class ASTContext;  // ASTContext creates these.
 public:
+    
+  TypeRef getPointee() const { return PointeeType; }
   
   virtual void print(std::ostream &OS) const;
 };

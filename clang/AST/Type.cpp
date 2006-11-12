@@ -23,7 +23,7 @@ Type::~Type() {}
 //===----------------------------------------------------------------------===//
 
 PointerType::PointerType(TypeRef Pointee, Type *Canonical)
-  : Type(Canonical), PointeeType(Pointee) {
+  : Type(Pointer, Canonical), PointeeType(Pointee) {
 }
 
 

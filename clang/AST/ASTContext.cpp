@@ -22,52 +22,72 @@ ASTContext::ASTContext(Preprocessor &pp)
   InitBuiltinTypes();
 }
 
+ASTContext::~ASTContext() {
+  // Deallocate all the types.
+  while (!Types.empty()) {
+    delete Types.back();
+    Types.pop_back();
+  }
+}
+
+void ASTContext::InitBuiltinType(TypeRef &R, const char *Name) {
+  Types.push_back((R = new BuiltinType(Name)).getTypePtr());
+}
+
+
 void ASTContext::InitBuiltinTypes() {
   assert(VoidTy.isNull() && "Context reinitialized?");
   
   // C99 6.2.5p19.
-  Types.push_back(VoidTy = new BuiltinType("void"));
+  InitBuiltinType(VoidTy, "void");
   
   // C99 6.2.5p2.
-  Types.push_back(BoolTy = new BuiltinType("_Bool"));
+  InitBuiltinType(BoolTy, "_Bool");
   // C99 6.2.5p3.
-  Types.push_back(CharTy = new BuiltinType("char"));
+  InitBuiltinType(CharTy, "char");
   // C99 6.2.5p4.
-  Types.push_back(SignedCharTy = new BuiltinType("signed char"));
-  Types.push_back(ShortTy = new BuiltinType("short"));
-  Types.push_back(IntTy = new BuiltinType("int"));
-  Types.push_back(LongTy = new BuiltinType("long"));
-  Types.push_back(LongLongTy = new BuiltinType("long long"));
+  InitBuiltinType(SignedCharTy, "signed char");
+  InitBuiltinType(ShortTy, "short");
+  InitBuiltinType(IntTy, "int");
+  InitBuiltinType(LongTy, "long");
+  InitBuiltinType(LongLongTy, "long long");
   
   // C99 6.2.5p6.
-  Types.push_back(UnsignedCharTy = new BuiltinType("unsigned char"));
-  Types.push_back(UnsignedShortTy = new BuiltinType("unsigned short"));
-  Types.push_back(UnsignedIntTy = new BuiltinType("unsigned int"));
-  Types.push_back(UnsignedLongTy = new BuiltinType("unsigned long"));
-  Types.push_back(UnsignedLongLongTy = new BuiltinType("unsigned long long"));
+  InitBuiltinType(UnsignedCharTy, "unsigned char");
+  InitBuiltinType(UnsignedShortTy, "unsigned short");
+  InitBuiltinType(UnsignedIntTy, "unsigned int");
+  InitBuiltinType(UnsignedLongTy, "unsigned long");
+  InitBuiltinType(UnsignedLongLongTy, "unsigned long long");
   
   // C99 6.2.5p10.
-  Types.push_back(FloatTy = new BuiltinType("float"));
-  Types.push_back(DoubleTy = new BuiltinType("double"));
-  Types.push_back(LongDoubleTy = new BuiltinType("long double"));
+  InitBuiltinType(FloatTy, "float");
+  InitBuiltinType(DoubleTy, "double");
+  InitBuiltinType(LongDoubleTy, "long double");
   
   // C99 6.2.5p11.
-  Types.push_back(FloatComplexTy = new BuiltinType("float _Complex"));
-  Types.push_back(DoubleComplexTy = new BuiltinType("double _Complex"));
-  Types.push_back(LongDoubleComplexTy= new BuiltinType("long double _Complex"));
+  InitBuiltinType(FloatComplexTy, "float _Complex");
+  InitBuiltinType(DoubleComplexTy, "double _Complex");
+  InitBuiltinType(LongDoubleComplexTy, "long double _Complex");
 }
 
 /// getPointerType - Return the uniqued reference to the type for a pointer to
 /// the specified type.
 TypeRef ASTContext::getPointerType(const TypeRef &T) {
-  // FIXME: memoize these.
-  
+  // FIXME: This is obviously braindead!
+  // Unique pointers, to guarantee there is only one pointer of a particular
+  // structure.
+  for (unsigned i = 0, e = Types.size(); i != e; ++i)
+    if (Types[i]->getTypeClass() == Type::Pointer)
+      if (((PointerType*)Types[i])->getPointee() == T)
+        return Types[i];
   
   
   Type *Canonical = 0;
   if (!T->isCanonical())
     Canonical = getPointerType(T.getCanonicalType()).getTypePtr();
-  return new PointerType(T, Canonical);
+  
+  Types.push_back(new PointerType(T, Canonical));
+  return Types.back();
 }
 
 

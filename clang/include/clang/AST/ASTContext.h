@@ -26,12 +26,11 @@ namespace clang {
 /// decls) that can be referred to throughout the semantic analysis of a file.
 class ASTContext {
   // FIXME: This is a stupid data structure.
-  std::vector<TypeRef> Types;
+  std::vector<Type*> Types;
 public:
   Preprocessor &PP;
   TargetInfo &Target;
 
-  
   // Builtin Types.
   TypeRef VoidTy;
   TypeRef BoolTy;
@@ -43,6 +42,7 @@ public:
   TypeRef FloatComplexTy, DoubleComplexTy, LongDoubleComplexTy;
   
   ASTContext(Preprocessor &pp);
+  ~ASTContext();
   
   
   /// getPointerType - Return the uniqued reference to the type for a pointer to
@@ -51,6 +51,7 @@ public:
   
 private:
   void InitBuiltinTypes();
+  void InitBuiltinType(TypeRef &R, const char *Name);
 };
   
 }  // end namespace clang
