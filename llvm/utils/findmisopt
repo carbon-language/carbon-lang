@@ -54,6 +54,15 @@ echo "Test Name: $name"
 echo "Unoptimized program: $prog"
 echo "  Optimized program: $optprog"
 
+# Create output directory if it doesn't exist
+if [ -f "$outdir" ] ; then
+  echo "$outdir is not a directory"
+  exit 1
+fi
+
+if [ ! -d "$outdir" ] ; then
+  mkdir "$outdir" || exit 1
+fi
 
 # Generate the disassembly
 llvm-dis "$bcfile" -o "$ll" -f || exit 1
@@ -72,9 +81,9 @@ function tryit {
   llvm-dis "$optbc" -o "$optll" -f || exit
   llc "$optbc" -o "$opts" -f || exit
   gcc "$opts" -o "$optprog" -lstdc++ -lc -lm || exit
-  "$prog" $args > "$out"
+  "$prog" $args > "$out" 2>&1
   ex1=$?
-  "$optprog" $args > "$optout"
+  "$optprog" $args > "$optout" 2>&1
   ex2=$?
 
   if [ -n "$match" ] ; then
@@ -98,7 +107,9 @@ function tryit {
   return 1
 }
 
+echo "Trying to find optimization that breaks program:"
 for sw in $all_switches ; do
+  echo -n " $sw"
   switches="$switches $sw"
   if tryit "$switches" ; then
     break;
@@ -123,7 +134,7 @@ while [ ! -z "$switches" ] ; do
 done
 
 if [ "$final" == " $all_switches" ] ; then
-  echo "findmisopt: Can't find a set of optimizations that make it fail"
+  echo "findmisopt: All optimizations pass. Perhaps this isn't a misopt?"
   exit 0
 fi
 echo "Smallest Optimization list=$final"
