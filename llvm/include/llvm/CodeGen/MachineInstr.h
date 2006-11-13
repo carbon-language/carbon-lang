@@ -26,6 +26,8 @@ namespace llvm {
 class Value;
 class Function;
 class MachineBasicBlock;
+class TargetInstrInfo;
+class TargetInstrDescriptor;
 class TargetMachine;
 class GlobalValue;
 
@@ -61,6 +63,12 @@ private:
   MachineOperandType opType:8; // Discriminate the union.
   bool IsDef : 1;              // True if this is a def, false if this is a use.
   bool IsImp : 1;              // True if this is an implicit def or use.
+
+  bool IsKill : 1;             // True if this is a reg use and the reg is dead
+                               // immediately after the read.
+  bool IsDead : 1;             // True if this is a reg def and the reg is dead
+                               // immediately after the write. i.e. A register
+                               // that is defined but never used.
   
   /// offset - Offset to address of global or external, only valid for
   /// MO_GlobalAddress, MO_ExternalSym and MO_ConstantPoolIndex
@@ -80,6 +88,8 @@ public:
     Op.contents.immedVal = Val;
     Op.IsDef = false;
     Op.IsImp = false;
+    Op.IsKill = false;
+    Op.IsDead = false;
     Op.offset = 0;
     return Op;
   }
@@ -88,6 +98,8 @@ public:
     contents = MO.contents;
     IsDef    = MO.IsDef;
     IsImp    = MO.IsImp;
+    IsKill   = MO.IsKill;
+    IsDead   = MO.IsDead;
     opType   = MO.opType;
     offset   = MO.offset;
     return *this;
@@ -185,6 +197,31 @@ public:
     IsImp = true;
   }
 
+  bool isKill() const {
+    assert(isRegister() && "Wrong MachineOperand accessor");
+    return IsKill;
+  }
+  bool isDead() const {
+    assert(isRegister() && "Wrong MachineOperand accessor");
+    return IsDead;
+  }
+  void setIsKill() {
+    assert(isRegister() && "Wrong MachineOperand accessor");
+    IsKill = true;
+  }
+  void setIsDead() {
+    assert(isRegister() && "Wrong MachineOperand accessor");
+    IsDead = true;
+  }
+  void unsetIsKill() {
+    assert(isRegister() && "Wrong MachineOperand accessor");
+    IsKill = false;
+  }
+  void unsetIsDead() {
+    assert(isRegister() && "Wrong MachineOperand accessor");
+    IsDead = false;
+  }
+
   /// getReg - Returns the register number.
   ///
   unsigned getReg() const {
@@ -238,10 +275,13 @@ public:
   /// ChangeToRegister - Replace this operand with a new register operand of
   /// the specified value.  If an operand is known to be an register already,
   /// the setReg method should be used.
-  void ChangeToRegister(unsigned Reg, bool isDef) {
+  void ChangeToRegister(unsigned Reg, bool isDef,
+                        bool isKill = false, bool isDead = false) {
     opType = MO_Register;
     contents.RegNo = Reg;
     IsDef = isDef;
+    IsKill = isKill;
+    IsDead = isDead;
   }
 
   friend std::ostream& operator<<(std::ostream& os, const MachineOperand& mop);
@@ -259,6 +299,9 @@ class MachineInstr {
   MachineInstr* prev, *next;            // links for our intrusive list
   MachineBasicBlock* parent;            // pointer to the owning basic block
 
+  unsigned NumImplicitOps;              // Number of implicit operands (which
+                                        // are determined at construction time).
+
   // OperandComplete - Return true if it's illegal to add a new operand
   bool OperandsComplete() const;
 
@@ -270,9 +313,13 @@ class MachineInstr {
   friend struct ilist_traits<MachineInstr>;
 
 public:
-  /// MachineInstr ctor - This constructor reserve's space for numOperand
+  /// MachineInstr ctor - This constructor reserves space for numOperand
   /// operands.
   MachineInstr(short Opcode, unsigned numOperands);
+
+  /// MachineInstr ctor - This constructor create a MachineInstr and add the
+  /// implicit operands. It reserves space for numOperand operands.
+  MachineInstr(const TargetInstrInfo &TII, short Opcode, unsigned numOperands);
 
   /// MachineInstr ctor - Work exactly the same as the ctor above, except that
   /// the MachineInstr is created and added to the end of the specified basic
@@ -342,11 +389,14 @@ public:
 
   /// addRegOperand - Add a register operand.
   ///
-  void addRegOperand(unsigned Reg, bool IsDef, bool IsImp = false) {
+  void addRegOperand(unsigned Reg, bool IsDef, bool IsImp = false,
+                     bool IsKill = false, bool IsDead = false) {
     MachineOperand &Op = AddNewOperand(IsImp);
     Op.opType = MachineOperand::MO_Register;
     Op.IsDef = IsDef;
     Op.IsImp = IsImp;
+    Op.IsKill = IsKill;
+    Op.IsDead = IsDead;
     Op.contents.RegNo = Reg;
     Op.offset = 0;
   }
@@ -413,17 +463,13 @@ public:
     Op.offset = 0;
   }
 
-  /// addImplicitDefUseOperands - Add all implicit def and use operands to
-  /// this instruction.
-  void addImplicitDefUseOperands();
-
   //===--------------------------------------------------------------------===//
   // Accessors used to modify instructions in place.
   //
 
   /// setOpcode - Replace the opcode of the current instruction with a new one.
   ///
-  void setOpcode(unsigned Op) { Opcode = Op; }
+  void setOpcode(unsigned Op);
 
   /// RemoveOperand - Erase an operand  from an instruction, leaving it with one
   /// fewer operand than it started with.
@@ -435,9 +481,18 @@ private:
   MachineOperand &AddNewOperand(bool IsImp = false) {
     assert((IsImp || !OperandsComplete()) &&
            "Trying to add an operand to a machine instr that is already done!");
-    Operands.push_back(MachineOperand());
-    return Operands.back();
+    if (NumImplicitOps == 0) { // This is true most of the time.
+      Operands.push_back(MachineOperand());
+      return Operands.back();
+    } else {
+      return *Operands.insert(Operands.begin()+Operands.size()-NumImplicitOps,
+                              MachineOperand());
+    }
   }
+
+  /// addImplicitDefUseOperands - Add all implicit def and use operands to
+  /// this instruction.
+  void addImplicitDefUseOperands(const TargetInstrDescriptor &TID);
 };
 
 //===----------------------------------------------------------------------===//
