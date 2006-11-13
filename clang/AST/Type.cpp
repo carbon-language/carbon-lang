@@ -24,58 +24,59 @@ Type::~Type() {}
 //===----------------------------------------------------------------------===//
 
 void TypeRef::dump() const {
-  print(std::cerr);
-  std::cerr << "\n";
+  std::string R;
+  AppendToString(R);
+  std::cerr << R << "\n";
 }
 
-static void PrintTypeQualList(std::ostream &OS, unsigned TypeQuals) {
+static void AppendTypeQualList(std::string &S, unsigned TypeQuals) {
   // Note: funkiness to ensure we get a space only between quals.
   bool NonePrinted = true;
   if (TypeQuals & TypeRef::Const)
-    OS << "const", NonePrinted = false;
+    S += "const", NonePrinted = false;
   if (TypeQuals & TypeRef::Volatile)
-    OS << (NonePrinted+" volatile"), NonePrinted = false;
+    S += (NonePrinted+" volatile"), NonePrinted = false;
   if (TypeQuals & TypeRef::Restrict)
-    OS << (NonePrinted+" restrict"), NonePrinted = false;
-  }
+    S += (NonePrinted+" restrict"), NonePrinted = false;
+}
 
-void TypeRef::print(std::ostream &OS) const {
+void TypeRef::AppendToString(std::string &S) const {
   if (isNull()) {
-    OS << "NULL TYPE\n";
+    S += "NULL TYPE\n";
     return;
   }
   
-  getTypePtr()->print(OS);
+  getTypePtr()->AppendToString(S);
   
   // Print qualifiers as appropriate.
   if (unsigned TQ = getQualifiers()) {
-    OS << " ";
-    PrintTypeQualList(OS, TQ);
+    S += ' ';
+    AppendTypeQualList(S, TQ);
   }
 }
 
-void BuiltinType::print(std::ostream &OS) const {
-  OS << Name;
+void BuiltinType::AppendToString(std::string &S) const {
+  S += Name;
 }
 
-void PointerType::print(std::ostream &OS) const {
-  PointeeType.print(OS);
-  OS << "*";
+void PointerType::AppendToString(std::string &S) const {
+  PointeeType.AppendToString(S);
+  S += '*';
 }
 
-void ArrayType::print(std::ostream &OS) const {
-  ElementType.print(OS);
-  OS << "[";
+void ArrayType::AppendToString(std::string &S) const {
+  ElementType.AppendToString(S);
+  S += '[';
   
   if (IndexTypeQuals) {
-    PrintTypeQualList(OS, IndexTypeQuals);
-    OS << " ";
+    AppendTypeQualList(S, IndexTypeQuals);
+    S += ' ';
   }
   
   if (SizeModifier == Static)
-    OS << "static";
+    S += "static";
   else if (SizeModifier == Star)
-    OS << "*";
+    S += '*';
   
-  OS << "]";
+  S += ']';
 }

@@ -17,7 +17,7 @@
 #include "llvm/Support/Casting.h"
 #include "llvm/Support/DataTypes.h"
 #include <cassert>
-#include <iosfwd>
+#include <string>
 
 namespace llvm {
 namespace clang {
@@ -105,7 +105,7 @@ public:
   /// appropriate type qualifiers on it.
   inline TypeRef getCanonicalType() const;
   
-  void print(std::ostream &OS) const;
+  void AppendToString(std::string &S) const;
   void dump() const;
 };
 
@@ -157,7 +157,7 @@ public:
   bool isCanonical() const { return CanonicalType == this; }
   Type *getCanonicalType() const { return CanonicalType; }
   
-  virtual void print(std::ostream &OS) const = 0;
+  virtual void AppendToString(std::string &S) const = 0;
   
   static bool classof(const Type *) { return true; }
 };
@@ -169,7 +169,7 @@ class BuiltinType : public Type {
 public:
   BuiltinType(const char *name) : Type(Builtin, 0), Name(name) {}
   
-  virtual void print(std::ostream &OS) const;
+  virtual void AppendToString(std::string &S) const;
   
   
   static bool classof(const Type *T) { return T->getTypeClass() == Builtin; }
@@ -188,7 +188,7 @@ public:
     
   TypeRef getPointeeType() const { return PointeeType; }
   
-  virtual void print(std::ostream &OS) const;
+  virtual void AppendToString(std::string &S) const;
   
   static bool classof(const Type *T) { return T->getTypeClass() == Pointer; }
   static bool classof(const PointerType *) { return true; }
@@ -226,7 +226,7 @@ public:
   ArraySizeModifier getSizeModifier() const { return SizeModifier; }
   unsigned getIndexTypeQualifier() const { return IndexTypeQuals; }
   
-  virtual void print(std::ostream &OS) const;
+  virtual void AppendToString(std::string &S) const;
   
   static bool classof(const Type *T) { return T->getTypeClass() == Array; }
   static bool classof(const ArrayType *) { return true; }
