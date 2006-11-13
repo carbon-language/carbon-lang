@@ -165,7 +165,7 @@ static MachineInstr *FuseTwoAddrInst(unsigned Opcode, unsigned FrameIndex,
                                      const TargetInstrInfo &TII) {
   unsigned NumOps = TII.getNumOperands(MI->getOpcode())-2;
   // Create the base instruction with the memory operand as the first part.
-  MachineInstrBuilder MIB = addFrameReference(BuildMI(Opcode, 4+NumOps),
+  MachineInstrBuilder MIB = addFrameReference(BuildMI(TII, Opcode, 4+NumOps),
                                               FrameIndex);
   
   // Loop over the rest of the ri operands, converting them over.
@@ -188,7 +188,7 @@ static MachineInstr *FuseTwoAddrInst(unsigned Opcode, unsigned FrameIndex,
 static MachineInstr *FuseInst(unsigned Opcode, unsigned OpNo,
                               unsigned FrameIndex, MachineInstr *MI,
                               const TargetInstrInfo &TII) {
-  MachineInstrBuilder MIB = BuildMI(Opcode, MI->getNumOperands()+3);
+  MachineInstrBuilder MIB = BuildMI(TII, Opcode, MI->getNumOperands()+3);
   
   for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
     MachineOperand &MO = MI->getOperand(i);
@@ -209,9 +209,10 @@ static MachineInstr *FuseInst(unsigned Opcode, unsigned OpNo,
   return MIB;
 }
 
-static MachineInstr *MakeM0Inst(unsigned Opcode, unsigned FrameIndex,
+static MachineInstr *MakeM0Inst(const TargetInstrInfo &TII,
+                                unsigned Opcode, unsigned FrameIndex,
                                 MachineInstr *MI) {
-  return addFrameReference(BuildMI(Opcode, 5), FrameIndex).addImm(0);
+  return addFrameReference(BuildMI(TII, Opcode, 5), FrameIndex).addImm(0);
 }
 
 
@@ -464,13 +465,13 @@ MachineInstr* X86RegisterInfo::foldMemoryOperand(MachineInstr *MI,
     isTwoAddrFold = true;
   } else if (i == 0) { // If operand 0
     if (MI->getOpcode() == X86::MOV16r0)
-      return MakeM0Inst(X86::MOV16mi, FrameIndex, MI);
+      return MakeM0Inst(TII, X86::MOV16mi, FrameIndex, MI);
     else if (MI->getOpcode() == X86::MOV32r0)
-      return MakeM0Inst(X86::MOV32mi, FrameIndex, MI);
+      return MakeM0Inst(TII, X86::MOV32mi, FrameIndex, MI);
     else if (MI->getOpcode() == X86::MOV64r0)
-      return MakeM0Inst(X86::MOV64mi32, FrameIndex, MI);
+      return MakeM0Inst(TII, X86::MOV64mi32, FrameIndex, MI);
     else if (MI->getOpcode() == X86::MOV8r0)
-      return MakeM0Inst(X86::MOV8mi, FrameIndex, MI);
+      return MakeM0Inst(TII, X86::MOV8mi, FrameIndex, MI);
     
     static const TableEntry OpcodeTable[] = {
       { X86::CMP16ri,     X86::CMP16mi },
@@ -899,7 +900,7 @@ eliminateCallFramePseudoInstr(MachineFunction &MF, MachineBasicBlock &MBB,
 
       MachineInstr *New = 0;
       if (Old->getOpcode() == X86::ADJCALLSTACKDOWN) {
-        New=BuildMI(Is64Bit ? X86::SUB64ri32 : X86::SUB32ri, 1, StackPtr)
+        New=BuildMI(TII, Is64Bit ? X86::SUB64ri32 : X86::SUB32ri, 1, StackPtr)
           .addReg(StackPtr).addImm(Amount);
       } else {
         assert(Old->getOpcode() == X86::ADJCALLSTACKUP);
@@ -910,7 +911,7 @@ eliminateCallFramePseudoInstr(MachineFunction &MF, MachineBasicBlock &MBB,
           unsigned Opc = (Amount < 128) ?
             (Is64Bit ? X86::ADD64ri8 : X86::ADD32ri8) :
             (Is64Bit ? X86::ADD64ri32 : X86::ADD32ri);
-          New = BuildMI(Opc, 1,  StackPtr).addReg(StackPtr).addImm(Amount);
+          New = BuildMI(TII, Opc, 1,  StackPtr).addReg(StackPtr).addImm(Amount);
         }
       }
 
@@ -926,7 +927,7 @@ eliminateCallFramePseudoInstr(MachineFunction &MF, MachineBasicBlock &MBB,
         (Is64Bit ? X86::SUB64ri8 : X86::SUB32ri8) :
         (Is64Bit ? X86::SUB64ri32 : X86::SUB32ri);
       MachineInstr *New =
-        BuildMI(Opc, 1, StackPtr).addReg(StackPtr).addImm(CalleeAmt);
+        BuildMI(TII, Opc, 1, StackPtr).addReg(StackPtr).addImm(CalleeAmt);
       MBB.insert(I, New);
     }
   }
@@ -1003,15 +1004,15 @@ void X86RegisterInfo::emitPrologue(MachineFunction &MF) const {
       // more than 4k bytes in one go. Touching the stack at 4K increments is  
       // necessary to ensure that the guard pages used by the OS virtual memory
       // manager are allocated in correct sequence.
-      MI = BuildMI(X86::MOV32ri, 2, X86::EAX).addImm(NumBytes);
+      MI = BuildMI(TII, X86::MOV32ri, 2, X86::EAX).addImm(NumBytes);
       MBB.insert(MBBI, MI);
-      MI = BuildMI(X86::CALLpcrel32, 1).addExternalSymbol("_alloca");
+      MI = BuildMI(TII, X86::CALLpcrel32, 1).addExternalSymbol("_alloca");
       MBB.insert(MBBI, MI);
     } else {
       unsigned Opc = (NumBytes < 128) ?
         (Is64Bit ? X86::SUB64ri8 : X86::SUB32ri8) :
         (Is64Bit ? X86::SUB64ri32 : X86::SUB32ri);
-      MI= BuildMI(Opc, 1, StackPtr).addReg(StackPtr).addImm(NumBytes);
+      MI= BuildMI(TII, Opc, 1, StackPtr).addReg(StackPtr).addImm(NumBytes);
       MBB.insert(MBBI, MI);
     }
   }
@@ -1023,16 +1024,16 @@ void X86RegisterInfo::emitPrologue(MachineFunction &MF) const {
 
     // Save EBP into the appropriate stack slot...
     // mov [ESP-<offset>], EBP
-    MI = addRegOffset(BuildMI(Is64Bit ? X86::MOV64mr : X86::MOV32mr, 5),
+    MI = addRegOffset(BuildMI(TII, Is64Bit ? X86::MOV64mr : X86::MOV32mr, 5),
                       StackPtr, EBPOffset+NumBytes).addReg(FramePtr);
     MBB.insert(MBBI, MI);
 
     // Update EBP with the new base value...
     if (NumBytes == SlotSize)    // mov EBP, ESP
-      MI = BuildMI(Is64Bit ? X86::MOV64rr : X86::MOV32rr, 2, FramePtr).
+      MI = BuildMI(TII, Is64Bit ? X86::MOV64rr : X86::MOV32rr, 2, FramePtr).
         addReg(StackPtr);
     else                  // lea EBP, [ESP+StackSize]
-      MI = addRegOffset(BuildMI(Is64Bit ? X86::LEA64r : X86::LEA32r,
+      MI = addRegOffset(BuildMI(TII, Is64Bit ? X86::LEA64r : X86::LEA32r,
                                5, FramePtr), StackPtr, NumBytes-SlotSize);
 
     MBB.insert(MBBI, MI);
@@ -1041,13 +1042,13 @@ void X86RegisterInfo::emitPrologue(MachineFunction &MF) const {
   // If it's main() on Cygwin\Mingw32 we should align stack as well
   if (Fn->hasExternalLinkage() && Fn->getName() == "main" &&
       Subtarget->isTargetCygwin()) {
-    MI = BuildMI(X86::AND32ri, 2, X86::ESP).addReg(X86::ESP).addImm(-Align);
+    MI= BuildMI(TII, X86::AND32ri, 2, X86::ESP).addReg(X86::ESP).addImm(-Align);
     MBB.insert(MBBI, MI);
 
     // Probe the stack
-    MI = BuildMI(X86::MOV32ri, 2, X86::EAX).addImm(Align);
+    MI = BuildMI(TII, X86::MOV32ri, 2, X86::EAX).addImm(Align);
     MBB.insert(MBBI, MI);
-    MI = BuildMI(X86::CALLpcrel32, 1).addExternalSymbol("_alloca");
+    MI = BuildMI(TII, X86::CALLpcrel32, 1).addExternalSymbol("_alloca");
     MBB.insert(MBBI, MI);
   }
 }

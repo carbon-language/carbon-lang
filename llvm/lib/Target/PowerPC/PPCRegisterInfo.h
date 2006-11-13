@@ -25,8 +25,9 @@ class Type;
 class PPCRegisterInfo : public PPCGenRegisterInfo {
   std::map<unsigned, unsigned> ImmToIdxMap;
   const PPCSubtarget &Subtarget;
+  const TargetInstrInfo &TII;
 public:
-  PPCRegisterInfo(const PPCSubtarget &SubTarget);
+  PPCRegisterInfo(const PPCSubtarget &SubTarget, const TargetInstrInfo &tii);
   
   /// getRegisterNumbering - Given the enum value for some register, e.g.
   /// PPC::F14, return the number that it corresponds to (e.g. 14).

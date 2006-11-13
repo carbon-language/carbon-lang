@@ -23,9 +23,10 @@
 #include <iostream>
 using namespace llvm;
 
-SparcRegisterInfo::SparcRegisterInfo(SparcSubtarget &st)
+SparcRegisterInfo::SparcRegisterInfo(SparcSubtarget &st,
+                                     const TargetInstrInfo &tii)
   : SparcGenRegisterInfo(SP::ADJCALLSTACKDOWN, SP::ADJCALLSTACKUP),
-    Subtarget(st) {
+    Subtarget(st), TII(tii) {
 }
 
 void SparcRegisterInfo::
@@ -81,10 +82,10 @@ MachineInstr *SparcRegisterInfo::foldMemoryOperand(MachineInstr* MI,
     if (MI->getOperand(1).isRegister() && MI->getOperand(1).getReg() == SP::G0&&
         MI->getOperand(0).isRegister() && MI->getOperand(2).isRegister()) {
       if (OpNum == 0)    // COPY -> STORE
-        return BuildMI(SP::STri, 3).addFrameIndex(FI).addImm(0)
+        return BuildMI(TII, SP::STri, 3).addFrameIndex(FI).addImm(0)
                                    .addReg(MI->getOperand(2).getReg());
       else               // COPY -> LOAD
-        return BuildMI(SP::LDri, 2, MI->getOperand(0).getReg())
+        return BuildMI(TII, SP::LDri, 2, MI->getOperand(0).getReg())
                       .addFrameIndex(FI).addImm(0);
     }
     break;
@@ -93,10 +94,10 @@ MachineInstr *SparcRegisterInfo::foldMemoryOperand(MachineInstr* MI,
     // FALLTHROUGH
   case SP::FMOVD:
     if (OpNum == 0)  // COPY -> STORE
-      return BuildMI(isFloat ? SP::STFri : SP::STDFri, 3)
+      return BuildMI(TII, isFloat ? SP::STFri : SP::STDFri, 3)
                .addFrameIndex(FI).addImm(0).addReg(MI->getOperand(1).getReg());
     else             // COPY -> LOAD
-      return BuildMI(isFloat ? SP::LDFri : SP::LDDFri, 2, 
+      return BuildMI(TII, isFloat ? SP::LDFri : SP::LDDFri, 2, 
                      MI->getOperand(0).getReg()).addFrameIndex(FI).addImm(0);
     break;
   }

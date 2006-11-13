@@ -24,8 +24,9 @@ class Type;
 
 struct SparcRegisterInfo : public SparcGenRegisterInfo {
   SparcSubtarget &Subtarget;
+  const TargetInstrInfo &TII;
   
-  SparcRegisterInfo(SparcSubtarget &st);
+  SparcRegisterInfo(SparcSubtarget &st, const TargetInstrInfo &tii);
 
   /// Code Generation virtual methods...
   void storeRegToStackSlot(MachineBasicBlock &MBB,

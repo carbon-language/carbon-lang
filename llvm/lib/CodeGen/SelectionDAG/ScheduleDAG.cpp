@@ -395,7 +395,7 @@ void ScheduleDAG::EmitNode(SDNode *Node,
 #endif
 
     // Create the new machine instruction.
-    MachineInstr *MI = new MachineInstr(Opc, NumMIOperands);
+    MachineInstr *MI = new MachineInstr(*TII, Opc, NumMIOperands);
     
     // Add result register values for things that are defined by this
     // instruction.
@@ -440,9 +440,6 @@ void ScheduleDAG::EmitNode(SDNode *Node,
         }
       }
     }
-
-    // Emit implicit def / use operands.
-    MI->addImplicitDefUseOperands();
 
     // Now that we have emitted all operands, emit this instruction itself.
     if ((II.Flags & M_USES_CUSTOM_DAG_SCHED_INSERTION) == 0) {

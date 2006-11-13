@@ -140,7 +140,7 @@ MachineInstr *X86InstrInfo::convertToThreeAddress(MachineInstr *MI) const {
     unsigned C = MI->getOperand(2).getReg();
     unsigned M = MI->getOperand(3).getImmedValue();
     if (!Subtarget->hasSSE2() || B != C) return 0;
-    return BuildMI(X86::PSHUFDri, 2, A).addReg(B).addImm(M);
+    return BuildMI(*this, X86::PSHUFDri, 2, A).addReg(B).addImm(M);
   }
   }
 
@@ -157,35 +157,35 @@ MachineInstr *X86InstrInfo::convertToThreeAddress(MachineInstr *MI) const {
   case X86::INC32r:
   case X86::INC64_32r:
     assert(MI->getNumOperands() == 2 && "Unknown inc instruction!");
-    return addRegOffset(BuildMI(X86::LEA32r, 5, Dest), Src, 1);
+    return addRegOffset(BuildMI(*this, X86::LEA32r, 5, Dest), Src, 1);
   case X86::INC16r:
   case X86::INC64_16r:
     if (DisableLEA16) return 0;
     assert(MI->getNumOperands() == 2 && "Unknown inc instruction!");
-    return addRegOffset(BuildMI(X86::LEA16r, 5, Dest), Src, 1);
+    return addRegOffset(BuildMI(*this, X86::LEA16r, 5, Dest), Src, 1);
   case X86::DEC32r:
   case X86::DEC64_32r:
     assert(MI->getNumOperands() == 2 && "Unknown dec instruction!");
-    return addRegOffset(BuildMI(X86::LEA32r, 5, Dest), Src, -1);
+    return addRegOffset(BuildMI(*this, X86::LEA32r, 5, Dest), Src, -1);
   case X86::DEC16r:
   case X86::DEC64_16r:
     if (DisableLEA16) return 0;
     assert(MI->getNumOperands() == 2 && "Unknown dec instruction!");
-    return addRegOffset(BuildMI(X86::LEA16r, 5, Dest), Src, -1);
+    return addRegOffset(BuildMI(*this, X86::LEA16r, 5, Dest), Src, -1);
   case X86::ADD32rr:
     assert(MI->getNumOperands() == 3 && "Unknown add instruction!");
-    return addRegReg(BuildMI(X86::LEA32r, 5, Dest), Src,
+    return addRegReg(BuildMI(*this, X86::LEA32r, 5, Dest), Src,
                      MI->getOperand(2).getReg());
   case X86::ADD16rr:
     if (DisableLEA16) return 0;
     assert(MI->getNumOperands() == 3 && "Unknown add instruction!");
-    return addRegReg(BuildMI(X86::LEA16r, 5, Dest), Src,
+    return addRegReg(BuildMI(*this, X86::LEA16r, 5, Dest), Src,
                      MI->getOperand(2).getReg());
   case X86::ADD32ri:
   case X86::ADD32ri8:
     assert(MI->getNumOperands() == 3 && "Unknown add instruction!");
     if (MI->getOperand(2).isImmediate())
-      return addRegOffset(BuildMI(X86::LEA32r, 5, Dest), Src,
+      return addRegOffset(BuildMI(*this, X86::LEA32r, 5, Dest), Src,
                           MI->getOperand(2).getImmedValue());
     return 0;
   case X86::ADD16ri:
@@ -193,7 +193,7 @@ MachineInstr *X86InstrInfo::convertToThreeAddress(MachineInstr *MI) const {
     if (DisableLEA16) return 0;
     assert(MI->getNumOperands() == 3 && "Unknown add instruction!");
     if (MI->getOperand(2).isImmediate())
-      return addRegOffset(BuildMI(X86::LEA16r, 5, Dest), Src,
+      return addRegOffset(BuildMI(*this, X86::LEA16r, 5, Dest), Src,
                           MI->getOperand(2).getImmedValue());
     break;
 
@@ -208,7 +208,7 @@ MachineInstr *X86InstrInfo::convertToThreeAddress(MachineInstr *MI) const {
       AM.Scale = 1 << ShAmt;
       AM.IndexReg = Src;
       unsigned Opc = MI->getOpcode() == X86::SHL32ri ? X86::LEA32r :X86::LEA16r;
-      return addFullAddress(BuildMI(Opc, 5, Dest), AM);
+      return addFullAddress(BuildMI(*this, Opc, 5, Dest), AM);
     }
     break;
   }
@@ -239,7 +239,7 @@ MachineInstr *X86InstrInfo::commuteInstruction(MachineInstr *MI) const {
     unsigned A = MI->getOperand(0).getReg();
     unsigned B = MI->getOperand(1).getReg();
     unsigned C = MI->getOperand(2).getReg();
-    return BuildMI(Opc, 3, A).addReg(C).addReg(B).addImm(Size-Amt);
+    return BuildMI(*this, Opc, 3, A).addReg(C).addReg(B).addImm(Size-Amt);
   }
   default:
     return TargetInstrInfo::commuteInstruction(MI);

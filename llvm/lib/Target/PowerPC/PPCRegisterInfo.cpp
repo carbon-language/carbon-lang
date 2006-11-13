@@ -80,9 +80,10 @@ unsigned PPCRegisterInfo::getRegisterNumbering(unsigned RegEnum) {
   }
 }
 
-PPCRegisterInfo::PPCRegisterInfo(const PPCSubtarget &ST)
+PPCRegisterInfo::PPCRegisterInfo(const PPCSubtarget &ST,
+                                 const TargetInstrInfo &tii)
   : PPCGenRegisterInfo(PPC::ADJCALLSTACKDOWN, PPC::ADJCALLSTACKUP),
-    Subtarget(ST) {
+    Subtarget(ST), TII(tii) {
   ImmToIdxMap[PPC::LD]   = PPC::LDX;    ImmToIdxMap[PPC::STD]  = PPC::STDX;
   ImmToIdxMap[PPC::LBZ]  = PPC::LBZX;   ImmToIdxMap[PPC::STB]  = PPC::STBX;
   ImmToIdxMap[PPC::LHZ]  = PPC::LHZX;   ImmToIdxMap[PPC::LHA]  = PPC::LHAX;
@@ -322,39 +323,39 @@ MachineInstr *PPCRegisterInfo::foldMemoryOperand(MachineInstr *MI,
        MI->getOperand(1).getReg() == MI->getOperand(2).getReg())) {
     if (OpNum == 0) {  // move -> store
       unsigned InReg = MI->getOperand(1).getReg();
-      return addFrameReference(BuildMI(PPC::STW,
+      return addFrameReference(BuildMI(TII, PPC::STW,
                                        3).addReg(InReg), FrameIndex);
     } else {           // move -> load
       unsigned OutReg = MI->getOperand(0).getReg();
-      return addFrameReference(BuildMI(PPC::LWZ, 2, OutReg), FrameIndex);
+      return addFrameReference(BuildMI(TII, PPC::LWZ, 2, OutReg), FrameIndex);
     }
   } else if ((Opc == PPC::OR8 &&
               MI->getOperand(1).getReg() == MI->getOperand(2).getReg())) {
     if (OpNum == 0) {  // move -> store
       unsigned InReg = MI->getOperand(1).getReg();
-      return addFrameReference(BuildMI(PPC::STD,
+      return addFrameReference(BuildMI(TII, PPC::STD,
                                        3).addReg(InReg), FrameIndex);
     } else {           // move -> load
       unsigned OutReg = MI->getOperand(0).getReg();
-      return addFrameReference(BuildMI(PPC::LD, 2, OutReg), FrameIndex);
+      return addFrameReference(BuildMI(TII, PPC::LD, 2, OutReg), FrameIndex);
     }
   } else if (Opc == PPC::FMRD) {
     if (OpNum == 0) {  // move -> store
       unsigned InReg = MI->getOperand(1).getReg();
-      return addFrameReference(BuildMI(PPC::STFD,
+      return addFrameReference(BuildMI(TII, PPC::STFD,
                                        3).addReg(InReg), FrameIndex);
     } else {           // move -> load
       unsigned OutReg = MI->getOperand(0).getReg();
-      return addFrameReference(BuildMI(PPC::LFD, 2, OutReg), FrameIndex);
+      return addFrameReference(BuildMI(TII, PPC::LFD, 2, OutReg), FrameIndex);
     }
   } else if (Opc == PPC::FMRS) {
     if (OpNum == 0) {  // move -> store
       unsigned InReg = MI->getOperand(1).getReg();
-      return addFrameReference(BuildMI(PPC::STFS,
+      return addFrameReference(BuildMI(TII, PPC::STFS,
                                        3).addReg(InReg), FrameIndex);
     } else {           // move -> load
       unsigned OutReg = MI->getOperand(0).getReg();
-      return addFrameReference(BuildMI(PPC::LFS, 2, OutReg), FrameIndex);
+      return addFrameReference(BuildMI(TII, PPC::LFS, 2, OutReg), FrameIndex);
     }
   }
   return 0;

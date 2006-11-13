@@ -19,7 +19,8 @@
 using namespace llvm;
 
 AlphaInstrInfo::AlphaInstrInfo()
-  : TargetInstrInfo(AlphaInsts, sizeof(AlphaInsts)/sizeof(AlphaInsts[0])) { }
+  : TargetInstrInfo(AlphaInsts, sizeof(AlphaInsts)/sizeof(AlphaInsts[0])),
+    RI(*this) { }
 
 
 bool AlphaInstrInfo::isMoveInstr(const MachineInstr& MI,

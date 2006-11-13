@@ -19,7 +19,7 @@ using namespace llvm;
 
 SparcInstrInfo::SparcInstrInfo(SparcSubtarget &ST)
   : TargetInstrInfo(SparcInsts, sizeof(SparcInsts)/sizeof(SparcInsts[0])),
-    RI(ST) {
+    RI(ST, *this) {
 }
 
 static bool isZeroImm(const MachineOperand &op) {

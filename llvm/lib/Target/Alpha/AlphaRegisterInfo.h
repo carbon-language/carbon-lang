@@ -22,7 +22,9 @@ namespace llvm {
 class Type;
 
 struct AlphaRegisterInfo : public AlphaGenRegisterInfo {
-  AlphaRegisterInfo();
+  const TargetInstrInfo &TII;
+
+  AlphaRegisterInfo(const TargetInstrInfo &tii);
 
   /// Code Generation virtual methods...
   void storeRegToStackSlot(MachineBasicBlock &MBB,

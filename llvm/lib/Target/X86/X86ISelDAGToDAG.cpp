@@ -525,8 +525,7 @@ void X86DAGToDAGISel::InstructionSelectBasicBlock(SelectionDAG &DAG) {
 
     // Finally, if we found any FP code, emit the FP_REG_KILL instruction.
     if (ContainsFPCode) {
-      BuildMI(*BB, BB->getFirstTerminator(), X86::FP_REG_KILL, 0).
-        addImplicitDefsUses();
+      BuildMI(*BB, BB->getFirstTerminator(), X86::FP_REG_KILL, 0);
       ++NumFPKill;
     }
   }
@@ -537,8 +536,7 @@ void X86DAGToDAGISel::InstructionSelectBasicBlock(SelectionDAG &DAG) {
 void X86DAGToDAGISel::EmitSpecialCodeForMain(MachineBasicBlock *BB,
                                              MachineFrameInfo *MFI) {
   if (Subtarget->isTargetCygwin())
-    BuildMI(BB, X86::CALLpcrel32, 1).addExternalSymbol("__main").
-      addImplicitDefsUses();
+    BuildMI(BB, X86::CALLpcrel32, 1).addExternalSymbol("__main");
 
   // Switch the FPU to 64-bit precision mode for better compatibility and speed.
   int CWFrameIdx = MFI->CreateStackObject(2, 2);
@@ -949,8 +947,7 @@ SDNode *X86DAGToDAGISel::getGlobalBaseReg() {
     // type of register here.
     GlobalBaseReg = RegMap->createVirtualRegister(X86::GR32RegisterClass);
     BuildMI(FirstMBB, MBBI, X86::MovePCtoStack, 0);
-    BuildMI(FirstMBB, MBBI, X86::POP32r, 1, GlobalBaseReg).
-      addImplicitDefsUses();
+    BuildMI(FirstMBB, MBBI, X86::POP32r, 1, GlobalBaseReg);
   }
   return CurDAG->getRegister(GlobalBaseReg, TLI.getPointerTy()).Val;
 }
