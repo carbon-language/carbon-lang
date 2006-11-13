@@ -33,7 +33,9 @@ public:
   bool manageablePass(Pass *P);
 
   /// Return true IFF AnalysisID AID is currently available.
-  bool analysisCurrentlyAvailable(AnalysisID AID);
+  bool isAnalysisAvailable(AnalysisID AID) {
+    return (AvailableAnalysis.count(AID) != 0);
+  }
 
   /// Augment RequiredAnalysis by adding analysis required by pass P.
   void noteDownRequiredAnalysis(Pass *P);
@@ -85,6 +87,9 @@ public:
   /// whether any of the passes modifies the function, and if so, return true.
   bool runOnFunction(Function &F);
 
+  /// Return true IFF AnalysisID AID is currently available.
+  bool analysisCurrentlyAvailable(AnalysisID AID);
+
 private:
 };
 
@@ -115,6 +120,9 @@ public:
   /// so, return true.
   bool runOnModule(Module &M);
 
+  /// Return true IFF AnalysisID AID is currently available.
+  bool analysisCurrentlyAvailable(AnalysisID AID);
+
 private:
   // Active Pass Managers
   BasicBlockPassManager_New *activeBBPassManager;
@@ -134,6 +142,9 @@ public:
   /// run - Execute all of the passes scheduled for execution.  Keep track of
   /// whether any of the passes modifies the module, and if so, return true.
   bool runOnModule(Module &M);
+
+  /// Return true IFF AnalysisID AID is currently available.
+  bool analysisCurrentlyAvailable(AnalysisID AID);
   
 private:
   // Active Pass Manager
@@ -154,6 +165,9 @@ public:
   /// run - Execute all of the passes scheduled for execution.  Keep track of
   /// whether any of the passes modifies the module, and if so, return true.
   bool run(Module &M);
+
+  /// Return true IFF AnalysisID AID is currently available.
+  bool analysisCurrentlyAvailable(AnalysisID AID);
 
 private:
 
@@ -200,13 +214,6 @@ bool CommonPassManagerImpl::manageablePass(Pass *P) {
     }
   }
   return true;
-}
-
-/// Return true IFF AnalysisID AID is currently available.
-bool CommonPassManagerImpl::analysisCurrentlyAvailable(AnalysisID AID) {
-
-  // TODO
-  return false;
 }
 
 /// Augment RequiredAnalysis by adding analysis required by pass P.
@@ -308,6 +315,11 @@ BasicBlockPassManager_New::runOnFunction(Function &F) {
   return Changed;
 }
 
+/// Return true IFF AnalysisID AID is currently available.
+bool BasicBlockPassManager_New::analysisCurrentlyAvailable(AnalysisID AID) {
+  return isAnalysisAvailable(AID);
+}
+
 // FunctionPassManager_New implementation
 /// Create new Function pass manager
 FunctionPassManager_New::FunctionPassManager_New() {
@@ -387,6 +399,19 @@ FunctionPassManagerImpl_New::runOnModule(Module &M) {
   return Changed;
 }
 
+/// Return true IFF AnalysisID AID is currently available.
+bool FunctionPassManagerImpl_New::analysisCurrentlyAvailable(AnalysisID AID) {
+
+  if (isAnalysisAvailable(AID))
+    return true;
+
+  if (activeBBPassManager && 
+      activeBBPassManager->isAnalysisAvailable(AID))
+    return true;
+
+  // TODO : Check inactive managers
+  return false;
+}
 
 // ModulePassManager implementation
 
@@ -442,6 +467,27 @@ ModulePassManager_New::runOnModule(Module &M) {
   return Changed;
 }
 
+/// Return true IFF AnalysisID AID is currently available.
+bool ModulePassManager_New::analysisCurrentlyAvailable(AnalysisID AID) {
+
+  if (isAnalysisAvailable(AID))
+    return true;
+
+  if (activeFunctionPassManager && 
+      activeFunctionPassManager->isAnalysisAvailable(AID))
+    return true;
+
+  // TODO : Check inactive managers
+  return false;
+}
+
+/// Return true IFF AnalysisID AID is currently available.
+bool PassManagerImpl_New::analysisCurrentlyAvailable(AnalysisID AID) {
+
+  // TODO : Check inactive managers
+  return activeManager->analysisCurrentlyAvailable(AID);
+}
+
 /// Schedule pass P for execution. Make sure that passes required by
 /// P are run before P is run. Update analysis info maintained by
 /// the manager. Remove dead passes. This is a recursive function.
@@ -453,9 +499,7 @@ void PassManagerImpl_New::schedulePass(Pass *P) {
   for (std::vector<AnalysisID>::const_iterator I = RequiredSet.begin(),
          E = RequiredSet.end(); I != E; ++I) {
 
-    // TODO Check if Analysis is currently available or not.
-    bool available = false;
-    if (!available) {
+    if (!analysisCurrentlyAvailable(*I)) {
       // Schedule this analysis run first.
       Pass *AP = (*I)->createPass();
       schedulePass(AP);
