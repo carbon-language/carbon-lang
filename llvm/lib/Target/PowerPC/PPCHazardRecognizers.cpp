@@ -168,30 +168,29 @@ getHazardType(SDNode *Node) {
     unsigned LoadSize;
     switch (Opcode) {
     default: assert(0 && "Unknown load!");
-    case PPC::LBZ:
+    case PPC::LBZ:   case PPC::LBZU:
     case PPC::LBZX:
-    case PPC::LBZ8:
+    case PPC::LBZ8:  case PPC::LBZU8:
     case PPC::LBZX8:
     case PPC::LVEBX:
       LoadSize = 1;
       break;
-    case PPC::LHA:
+    case PPC::LHA:   case PPC::LHAU:
     case PPC::LHAX:
-    case PPC::LHZ:
+    case PPC::LHZ:   case PPC::LHZU:
     case PPC::LHZX:
     case PPC::LVEHX:
     case PPC::LHBRX:
-    case PPC::LHA8:
+    case PPC::LHA8:   case PPC::LHAU8:
     case PPC::LHAX8:
-    case PPC::LHZ8:
+    case PPC::LHZ8:   case PPC::LHZU8:
     case PPC::LHZX8:
       LoadSize = 2;
       break;
-    case PPC::LFS:
+    case PPC::LFS:    case PPC::LFSU:
     case PPC::LFSX:
-    case PPC::LWZ:
+    case PPC::LWZ:    case PPC::LWZU:
     case PPC::LWZX:
-    case PPC::LWZU:
     case PPC::LWA:
     case PPC::LWAX:
     case PPC::LVEWX:
@@ -200,9 +199,9 @@ getHazardType(SDNode *Node) {
     case PPC::LWZX8:
       LoadSize = 4;
       break;
-    case PPC::LFD:
+    case PPC::LFD:    case PPC::LFDU:
     case PPC::LFDX:
-    case PPC::LD:
+    case PPC::LD:     case PPC::LDU:
     case PPC::LDX:
       LoadSize = 8;
       break;
