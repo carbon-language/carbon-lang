@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -raise | llvm-dis | not grep cast
+; RUN: llvm-as < %s | opt -raise | llvm-dis | notcast
 
 void %test(...) { ret void }
 
