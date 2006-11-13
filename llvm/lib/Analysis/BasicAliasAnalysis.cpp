@@ -152,8 +152,6 @@ static const Value *getUnderlyingObject(const Value *V) {
     if (CE->getOpcode() == Instruction::Cast ||
         CE->getOpcode() == Instruction::GetElementPtr)
       return getUnderlyingObject(CE->getOperand(0));
-  } else if (const GlobalValue *GV = dyn_cast<GlobalValue>(V)) {
-    return GV;
   }
   return 0;
 }
