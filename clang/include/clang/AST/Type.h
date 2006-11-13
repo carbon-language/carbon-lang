@@ -105,7 +105,7 @@ public:
   /// appropriate type qualifiers on it.
   inline TypeRef getCanonicalType() const;
   
-  void AppendToString(std::string &S) const;
+  void getAsString(std::string &S) const;
   void dump() const;
 };
 
@@ -157,7 +157,7 @@ public:
   bool isCanonical() const { return CanonicalType == this; }
   Type *getCanonicalType() const { return CanonicalType; }
   
-  virtual void AppendToString(std::string &S) const = 0;
+  virtual void getAsString(std::string &InnerString) const = 0;
   
   static bool classof(const Type *) { return true; }
 };
@@ -169,8 +169,7 @@ class BuiltinType : public Type {
 public:
   BuiltinType(const char *name) : Type(Builtin, 0), Name(name) {}
   
-  virtual void AppendToString(std::string &S) const;
-  
+  virtual void getAsString(std::string &InnerString) const;
   
   static bool classof(const Type *T) { return T->getTypeClass() == Builtin; }
   static bool classof(const BuiltinType *) { return true; }
@@ -188,7 +187,7 @@ public:
     
   TypeRef getPointeeType() const { return PointeeType; }
   
-  virtual void AppendToString(std::string &S) const;
+  virtual void getAsString(std::string &InnerString) const;
   
   static bool classof(const Type *T) { return T->getTypeClass() == Pointer; }
   static bool classof(const PointerType *) { return true; }
@@ -226,7 +225,7 @@ public:
   ArraySizeModifier getSizeModifier() const { return SizeModifier; }
   unsigned getIndexTypeQualifier() const { return IndexTypeQuals; }
   
-  virtual void AppendToString(std::string &S) const;
+  virtual void getAsString(std::string &InnerString) const;
   
   static bool classof(const Type *T) { return T->getTypeClass() == Array; }
   static bool classof(const ArrayType *) { return true; }

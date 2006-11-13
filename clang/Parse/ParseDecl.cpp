@@ -785,7 +785,7 @@ void Parser::ParseDeclaratorInternal(Declarator &D) {
   
   // Recursively parse the declarator.
   ParseDeclaratorInternal(D);
-  
+
   // Remember that we parsed a pointer type, and remember the type-quals.
   D.AddTypeInfo(DeclaratorTypeInfo::getPointer(DS.TypeQualifiers, Loc));
 }

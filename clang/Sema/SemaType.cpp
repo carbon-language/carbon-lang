@@ -87,14 +87,15 @@ TypeRef Sema::GetTypeForDeclarator(Declarator &D, Scope *S) {
   // Apply const/volatile/restrict qualifiers to T.
   T = T.getQualifiedType(D.getDeclSpec().TypeQualifiers);
   
-  // Walk the DeclTypeInfo, building the recursive type as we go.
+  // Walk the DeclTypeInfo, building the recursive type as we go.  DeclTypeInfos
+  // are ordered from the identifier out, which is opposite of what we want :).
   for (unsigned i = 0, e = D.getNumTypeObjects(); i != e; ++i) {
     const DeclaratorTypeInfo &DeclType = D.getTypeObject(e-i-1);
     switch (DeclType.Kind) {
     default: assert(0 && "Unknown decltype!");
     case DeclaratorTypeInfo::Pointer:
       T = Context.getPointerType(T);
-      
+
       // Apply the pointer typequals to the pointer object.
       T = T.getQualifiedType(DeclType.Ptr.TypeQuals);
       break;

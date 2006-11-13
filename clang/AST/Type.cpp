@@ -24,8 +24,8 @@ Type::~Type() {}
 //===----------------------------------------------------------------------===//
 
 void TypeRef::dump() const {
-  std::string R;
-  AppendToString(R);
+  std::string R = "foo";
+  getAsString(R);
   std::cerr << R << "\n";
 }
 
@@ -40,32 +40,45 @@ static void AppendTypeQualList(std::string &S, unsigned TypeQuals) {
     S += (NonePrinted+" restrict"), NonePrinted = false;
 }
 
-void TypeRef::AppendToString(std::string &S) const {
+void TypeRef::getAsString(std::string &S) const {
   if (isNull()) {
     S += "NULL TYPE\n";
     return;
   }
   
-  getTypePtr()->AppendToString(S);
-  
   // Print qualifiers as appropriate.
   if (unsigned TQ = getQualifiers()) {
-    S += ' ';
-    AppendTypeQualList(S, TQ);
+    std::string TQS;
+    AppendTypeQualList(TQS, TQ);
+    S = TQS + ' ' + S;
+  }
+
+  getTypePtr()->getAsString(S);
+}
+
+void BuiltinType::getAsString(std::string &S) const {
+  if (S.empty()) {
+    S = Name;
+  } else {
+    // Prefix the basic type, e.g. 'int X'.
+    S = ' ' + S;
+    S = Name + S;
   }
 }
 
-void BuiltinType::AppendToString(std::string &S) const {
-  S += Name;
+void PointerType::getAsString(std::string &S) const {
+  S = '*' + S;
+  
+  // Handle things like 'int (*A)[4];' correctly.
+  // FIXME: this should include vectors.
+  if (isa<ArrayType>(PointeeType.getTypePtr()))
+    S = '(' + S + ')';
+  
+  
+  PointeeType.getAsString(S);
 }
 
-void PointerType::AppendToString(std::string &S) const {
-  PointeeType.AppendToString(S);
-  S += '*';
-}
-
-void ArrayType::AppendToString(std::string &S) const {
-  ElementType.AppendToString(S);
+void ArrayType::getAsString(std::string &S) const {
   S += '[';
   
   if (IndexTypeQuals) {
@@ -79,4 +92,6 @@ void ArrayType::AppendToString(std::string &S) const {
     S += '*';
   
   S += ']';
+  
+  ElementType.getAsString(S);
 }
