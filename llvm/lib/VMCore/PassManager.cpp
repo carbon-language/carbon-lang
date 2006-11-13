@@ -484,8 +484,11 @@ bool ModulePassManager_New::analysisCurrentlyAvailable(AnalysisID AID) {
 /// Return true IFF AnalysisID AID is currently available.
 bool PassManagerImpl_New::analysisCurrentlyAvailable(AnalysisID AID) {
 
-  // TODO : Check inactive managers
-  return activeManager->analysisCurrentlyAvailable(AID);
+  bool available = false;
+  for (std::vector<ModulePassManager_New *>::iterator itr = PassManagers.begin(),
+         e = PassManagers.end(); !available && itr != e; ++itr)
+    available  = (*itr)->analysisCurrentlyAvailable(AID);
+  return available;
 }
 
 /// Schedule pass P for execution. Make sure that passes required by
