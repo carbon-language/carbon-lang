@@ -3310,9 +3310,9 @@ Instruction *InstCombiner::visitAnd(BinaryOperator &I) {
   }
 
   // fold (and (cast A), (cast B)) -> (cast (and A, B))
-  if (CastInst *Op0C = dyn_cast<CastInst>(Op0)) {
-    const Type *SrcTy = Op0C->getOperand(0)->getType();
-    if (CastInst *Op1C = dyn_cast<CastInst>(Op1))
+  if (CastInst *Op1C = dyn_cast<CastInst>(Op1)) {
+    if (CastInst *Op0C = dyn_cast<CastInst>(Op0)) {
+      const Type *SrcTy = Op0C->getOperand(0)->getType();
       if (SrcTy == Op1C->getOperand(0)->getType() && SrcTy->isIntegral() &&
           // Only do this if the casts both really cause code to be generated.
           ValueRequiresCast(Op0C->getOperand(0), I.getType(), TD) &&
@@ -3322,6 +3322,21 @@ Instruction *InstCombiner::visitAnd(BinaryOperator &I) {
                                                        I.getName());
         InsertNewInstBefore(NewOp, I);
         return new CastInst(NewOp, I.getType());
+      }
+    }
+  }
+    
+  // (X >> Z) & (Y >> Z)  -> (X&Y) >> Z  for all shifts.
+  if (ShiftInst *SI1 = dyn_cast<ShiftInst>(Op1)) {
+    if (ShiftInst *SI0 = dyn_cast<ShiftInst>(Op0))
+      if (SI0->getOpcode() == SI1->getOpcode() && 
+          SI0->getOperand(1) == SI1->getOperand(1) &&
+          (SI0->hasOneUse() || SI1->hasOneUse())) {
+        Instruction *NewOp =
+          InsertNewInstBefore(BinaryOperator::createAnd(SI0->getOperand(0),
+                                                        SI1->getOperand(0),
+                                                        SI0->getName()), I);
+        return new ShiftInst(SI1->getOpcode(), NewOp, SI1->getOperand(1));
       }
   }
 
@@ -3566,6 +3581,20 @@ Instruction *InstCombiner::visitOr(BinaryOperator &I) {
           return ReplaceInstUsesWith(I, B);
       }
     }
+  }
+  
+  // (X >> Z) | (Y >> Z)  -> (X|Y) >> Z  for all shifts.
+  if (ShiftInst *SI1 = dyn_cast<ShiftInst>(Op1)) {
+    if (ShiftInst *SI0 = dyn_cast<ShiftInst>(Op0))
+      if (SI0->getOpcode() == SI1->getOpcode() && 
+          SI0->getOperand(1) == SI1->getOperand(1) &&
+          (SI0->hasOneUse() || SI1->hasOneUse())) {
+        Instruction *NewOp =
+        InsertNewInstBefore(BinaryOperator::createOr(SI0->getOperand(0),
+                                                     SI1->getOperand(0),
+                                                     SI0->getName()), I);
+        return new ShiftInst(SI1->getOpcode(), NewOp, SI1->getOperand(1));
+      }
   }
 
   if (match(Op0, m_Not(m_Value(A)))) {   // ~A | Op1
@@ -3877,6 +3906,20 @@ Instruction *InstCombiner::visitXor(BinaryOperator &I) {
                                                        I.getName());
         InsertNewInstBefore(NewOp, I);
         return new CastInst(NewOp, I.getType());
+      }
+  }
+
+  // (X >> Z) ^ (Y >> Z)  -> (X^Y) >> Z  for all shifts.
+  if (ShiftInst *SI1 = dyn_cast<ShiftInst>(Op1)) {
+    if (ShiftInst *SI0 = dyn_cast<ShiftInst>(Op0))
+      if (SI0->getOpcode() == SI1->getOpcode() && 
+          SI0->getOperand(1) == SI1->getOperand(1) &&
+          (SI0->hasOneUse() || SI1->hasOneUse())) {
+        Instruction *NewOp =
+        InsertNewInstBefore(BinaryOperator::createXor(SI0->getOperand(0),
+                                                      SI1->getOperand(0),
+                                                      SI0->getName()), I);
+        return new ShiftInst(SI1->getOpcode(), NewOp, SI1->getOperand(1));
       }
   }
     
