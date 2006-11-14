@@ -618,6 +618,9 @@ static std::vector<unsigned char> getImplicitType(Record *R, bool NotRegisters,
     std::vector<unsigned char>
     ComplexPat(1, TP.getDAGISelEmitter().getComplexPattern(R).getValueType());
     return ComplexPat;
+  } else if (R->getName() == "ptr_rc") {
+    Other[0] = MVT::iPTR;
+    return Other;
   } else if (R->getName() == "node" || R->getName() == "srcvalue") {
     // Placeholder.
     return Unknown;
@@ -747,16 +750,23 @@ bool TreePatternNode::ApplyTypeConstraints(TreePattern &TP, bool NotRegisters) {
     CodeGenInstruction &InstInfo =
       ISE.getTargetInfo().getInstruction(getOperator()->getName());
     // Apply the result type to the node
-    if (NumResults == 0 || InstInfo.noResults) { // FIXME: temporary hack...
+    if (NumResults == 0 || InstInfo.noResults) { // FIXME: temporary hack.
       MadeChange = UpdateNodeType(MVT::isVoid, TP);
     } else {
       Record *ResultNode = Inst.getResult(0);
-      assert(ResultNode->isSubClassOf("RegisterClass") &&
-             "Operands should be register classes!");
+      
+      if (ResultNode->getName() == "ptr_rc") {
+        std::vector<unsigned char> VT;
+        VT.push_back(MVT::iPTR);
+        MadeChange = UpdateNodeType(VT, TP);
+      } else {
+        assert(ResultNode->isSubClassOf("RegisterClass") &&
+               "Operands should be register classes!");
 
-      const CodeGenRegisterClass &RC = 
-        ISE.getTargetInfo().getRegisterClass(ResultNode);
-      MadeChange = UpdateNodeType(ConvertVTs(RC.getValueTypes()), TP);
+        const CodeGenRegisterClass &RC = 
+          ISE.getTargetInfo().getRegisterClass(ResultNode);
+        MadeChange = UpdateNodeType(ConvertVTs(RC.getValueTypes()), TP);
+      }
     }
 
     unsigned ChildNo = 0;
@@ -782,6 +792,8 @@ bool TreePatternNode::ApplyTypeConstraints(TreePattern &TP, bool NotRegisters) {
       } else if (OperandNode->isSubClassOf("Operand")) {
         VT = getValueType(OperandNode->getValueAsDef("Type"));
         MadeChange |= Child->UpdateNodeType(VT, TP);
+      } else if (OperandNode->getName() == "ptr_rc") {
+        MadeChange |= Child->UpdateNodeType(MVT::iPTR, TP);
       } else {
         assert(0 && "Unknown operand type!");
         abort();
@@ -1381,7 +1393,8 @@ FindPatternInputsAndOutputs(TreePattern *I, TreePatternNode *Pat,
     if (!Val)
       I->error("set destination should be a register!");
 
-    if (Val->getDef()->isSubClassOf("RegisterClass")) {
+    if (Val->getDef()->isSubClassOf("RegisterClass") ||
+        Val->getDef()->getName() == "ptr_rc") {
       if (Dest->getName().empty())
         I->error("set destination must have a name!");
       if (InstResults.count(Dest->getName()))
@@ -2507,7 +2520,8 @@ public:
       // Handle leaves of various types.
       if (DefInit *DI = dynamic_cast<DefInit*>(Child->getLeafValue())) {
         Record *LeafRec = DI->getDef();
-        if (LeafRec->isSubClassOf("RegisterClass")) {
+        if (LeafRec->isSubClassOf("RegisterClass") || 
+            LeafRec->getName() == "ptr_rc") {
           // Handle register references.  Nothing to do here.
         } else if (LeafRec->isSubClassOf("Register")) {
           // Handle register references.
