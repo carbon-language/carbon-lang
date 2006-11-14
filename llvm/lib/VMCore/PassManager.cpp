@@ -62,10 +62,16 @@ public:
   }
 
 private:
-   // Analysis required by the passes managed by this manager
+  // Analysis required by the passes managed by this manager. This information
+  // used while selecting pass manager during addPass. If a pass does not
+  // preserve any analysis required by other passes managed by current
+  // pass manager then new pass manager is used.
   std::vector<AnalysisID> RequiredAnalysis;
 
-  // set of available Analysis
+  // Set of available Analysis. This information is used while scheduling 
+  // pass. If a pass requires an analysis which is not not available then 
+  // equired analysis pass is scheduled to run before the pass itself is 
+  // scheduled to run.
   std::set<AnalysisID> AvailableAnalysis;
 
   // Collection of pass that are managed by this manager
@@ -510,9 +516,6 @@ void PassManagerImpl_New::schedulePass(Pass *P) {
   }
     
   addPass(P);
-
-  // TODO : Walk through all managers and remove not preserved analysis
-  // TODO : remove dead passes
 }
 
 /// Schedule all passes from the queue by adding them in their
