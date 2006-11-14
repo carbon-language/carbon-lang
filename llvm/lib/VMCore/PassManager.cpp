@@ -64,6 +64,7 @@ public:
   void clearAnalysis() { 
     RequiredAnalysis.clear();
     AvailableAnalysis.clear();
+    LastUser.clear();
   }
 
   // All Required analyses should be available to the pass as it runs!  Here
@@ -81,6 +82,8 @@ public:
     return PassVector.end();
   }
 
+  inline void setLastUser(Pass *P, Pass *LU) { LastUser[P] = LU; }
+
 private:
   // Analysis required by the passes managed by this manager. This information
   // used while selecting pass manager during addPass. If a pass does not
@@ -93,6 +96,10 @@ private:
   // equired analysis pass is scheduled to run before the pass itself is 
   // scheduled to run.
   std::map<AnalysisID, Pass*> AvailableAnalysis;
+
+  // Map to keep track of last user of the analysis pass.
+  // LastUser->second is the last user of Lastuser->first.
+  std::map<Pass *, Pass *> LastUser;
 
   // Collection of pass that are managed by this manager
   std::vector<Pass *> PassVector;
@@ -114,7 +121,7 @@ public:
   bool runOnFunction(Function &F);
 
   /// Return true IFF AnalysisID AID is currently available.
-  bool analysisCurrentlyAvailable(AnalysisID AID);
+  Pass *getAnalysisPassFromManager(AnalysisID AID);
 
 private:
 };
@@ -147,7 +154,7 @@ public:
   bool runOnModule(Module &M);
 
   /// Return true IFF AnalysisID AID is currently available.
-  bool analysisCurrentlyAvailable(AnalysisID AID);
+  Pass *getAnalysisPassFromManager(AnalysisID AID);
 
 private:
   // Active Pass Managers
@@ -170,7 +177,7 @@ public:
   bool runOnModule(Module &M);
 
   /// Return true IFF AnalysisID AID is currently available.
-  bool analysisCurrentlyAvailable(AnalysisID AID);
+  Pass *getAnalysisPassFromManager(AnalysisID AID);
   
 private:
   // Active Pass Manager
@@ -193,7 +200,7 @@ public:
   bool run(Module &M);
 
   /// Return true IFF AnalysisID AID is currently available.
-  bool analysisCurrentlyAvailable(AnalysisID AID);
+  Pass *getAnalysisPassFromManager(AnalysisID AID);
 
 private:
 
@@ -348,8 +355,8 @@ BasicBlockPassManager_New::runOnFunction(Function &F) {
 }
 
 /// Return true IFF AnalysisID AID is currently available.
-bool BasicBlockPassManager_New::analysisCurrentlyAvailable(AnalysisID AID) {
-  return (getAnalysisPass(AID) != 0);
+Pass * BasicBlockPassManager_New::getAnalysisPassFromManager(AnalysisID AID) {
+  return getAnalysisPass(AID);
 }
 
 // FunctionPassManager_New implementation
@@ -438,17 +445,18 @@ FunctionPassManagerImpl_New::runOnModule(Module &M) {
 }
 
 /// Return true IFF AnalysisID AID is currently available.
-bool FunctionPassManagerImpl_New::analysisCurrentlyAvailable(AnalysisID AID) {
+Pass *FunctionPassManagerImpl_New::getAnalysisPassFromManager(AnalysisID AID) {
 
-  if (getAnalysisPass(AID) != 0)
-    return true;
+  Pass *P = getAnalysisPass(AID);
+  if (P)
+    return P;
 
   if (activeBBPassManager && 
       activeBBPassManager->getAnalysisPass(AID) != 0)
-    return true;
+    return activeBBPassManager->getAnalysisPass(AID);
 
   // TODO : Check inactive managers
-  return false;
+  return NULL;
 }
 
 // ModulePassManager implementation
@@ -512,27 +520,29 @@ ModulePassManager_New::runOnModule(Module &M) {
 }
 
 /// Return true IFF AnalysisID AID is currently available.
-bool ModulePassManager_New::analysisCurrentlyAvailable(AnalysisID AID) {
+Pass *ModulePassManager_New::getAnalysisPassFromManager(AnalysisID AID) {
 
-  if (getAnalysisPass(AID) != 0)
-    return true;
+  
+  Pass *P = getAnalysisPass(AID);
+  if (P)
+    return P;
 
   if (activeFunctionPassManager && 
       activeFunctionPassManager->getAnalysisPass(AID) != 0)
-    return true;
+    return activeFunctionPassManager->getAnalysisPass(AID);
 
   // TODO : Check inactive managers
-  return false;
+  return NULL;
 }
 
 /// Return true IFF AnalysisID AID is currently available.
-bool PassManagerImpl_New::analysisCurrentlyAvailable(AnalysisID AID) {
+Pass *PassManagerImpl_New::getAnalysisPassFromManager(AnalysisID AID) {
 
-  bool available = false;
+  Pass *P = NULL;
   for (std::vector<ModulePassManager_New *>::iterator itr = PassManagers.begin(),
-         e = PassManagers.end(); !available && itr != e; ++itr)
-    available  = (*itr)->analysisCurrentlyAvailable(AID);
-  return available;
+         e = PassManagers.end(); !P && itr != e; ++itr)
+    P  = (*itr)->getAnalysisPassFromManager(AID);
+  return P;
 }
 
 /// Schedule pass P for execution. Make sure that passes required by
@@ -546,11 +556,13 @@ void PassManagerImpl_New::schedulePass(Pass *P) {
   for (std::vector<AnalysisID>::const_iterator I = RequiredSet.begin(),
          E = RequiredSet.end(); I != E; ++I) {
 
-    if (!analysisCurrentlyAvailable(*I)) {
+    Pass *AnalysisPass = getAnalysisPassFromManager(*I);
+    if (!AnalysisPass) {
       // Schedule this analysis run first.
-      Pass *AP = (*I)->createPass();
-      schedulePass(AP);
+      AnalysisPass = (*I)->createPass();
+      schedulePass(AnalysisPass);
     }
+    setLastUser (AnalysisPass, P);
   }
     
   addPass(P);
