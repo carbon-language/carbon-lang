@@ -292,69 +292,6 @@ private:
 
   /// Flags to distinguish LLVM 1.0 & 1.1 bytecode formats (revision #0)
 
-  /// Revision #0 had an explicit alignment of data only for the
-  /// ModuleGlobalInfo block.  This was fixed to be like all other blocks in 1.2
-  bool hasInconsistentModuleGlobalInfo;
-
-  /// Revision #0 also explicitly encoded zero values for primitive types like
-  /// int/sbyte/etc.
-  bool hasExplicitPrimitiveZeros;
-
-  // Flags to control features specific the LLVM 1.2 and before (revision #1)
-
-  /// LLVM 1.2 and earlier required that getelementptr structure indices were
-  /// ubyte constants and that sequential type indices were longs.
-  bool hasRestrictedGEPTypes;
-
-  /// LLVM 1.2 and earlier had class Type deriving from Value and the Type
-  /// objects were located in the "Type Type" plane of various lists in read
-  /// by the bytecode reader. In LLVM 1.3 this is no longer the case. Types are
-  /// completely distinct from Values. Consequently, Types are written in fixed
-  /// locations in LLVM 1.3. This flag indicates that the older Type derived
-  /// from Value style of bytecode file is being read.
-  bool hasTypeDerivedFromValue;
-
-  /// LLVM 1.2 and earlier encoded block headers as two uint (8 bytes), one for
-  /// the size and one for the type. This is a bit wasteful, especially for
-  /// small files where the 8 bytes per block is a large fraction of the total
-  /// block size. In LLVM 1.3, the block type and length are encoded into a
-  /// single uint32 by restricting the number of block types (limit 31) and the
-  /// maximum size of a block (limit 2^27-1=134,217,727). Note that the module
-  /// block still uses the 8-byte format so the maximum size of a file can be
-  /// 2^32-1 bytes long.
-  bool hasLongBlockHeaders;
-
-  /// LLVM 1.2 and earlier wrote type slot numbers as vbr_uint32. In LLVM 1.3
-  /// this has been reduced to vbr_uint24. It shouldn't make much difference
-  /// since we haven't run into a module with > 24 million types, but for safety
-  /// the 24-bit restriction has been enforced in 1.3 to free some bits in
-  /// various places and to ensure consistency. In particular, global vars are
-  /// restricted to 24-bits.
-  bool has32BitTypes;
-
-  /// LLVM 1.2 and earlier did not provide a target triple nor a list of
-  /// libraries on which the bytecode is dependent. LLVM 1.3 provides these
-  /// features, for use in future versions of LLVM.
-  bool hasNoDependentLibraries;
-
-  /// LLVM 1.3 and earlier caused blocks and other fields to start on 32-bit
-  /// aligned boundaries. This can lead to as much as 30% bytecode size overhead
-  /// in various corner cases (lots of long instructions). In LLVM 1.4,
-  /// alignment of bytecode fields was done away with completely.
-  bool hasAlignment;
-
-  // In version 4 and earlier, the bytecode format did not support the 'undef'
-  // constant.
-  bool hasNoUndefValue;
-
-  // In version 4 and earlier, the bytecode format did not save space for flags
-  // in the global info block for functions.
-  bool hasNoFlagsForFunctions;
-
-  // In version 4 and earlier, there was no opcode space reserved for the
-  // unreachable instruction.
-  bool hasNoUnreachableInst;
-
   // In version 6, the Div and Rem instructions were converted to be the 
   // signed instructions UDiv, SDiv, URem and SRem. This flag will be true if
   // the Div and Rem instructions are signless (ver 5 and prior).
@@ -453,12 +390,8 @@ private:
   /// @brief Converts a type slot number to its Type*
   const Type *getType(unsigned ID);
 
-  /// @brief Converts a pre-sanitized type slot number to its Type* and
-  /// sanitizes the type id.
-  inline const Type* getSanitizedType(unsigned& ID );
-
-  /// @brief Read in and get a sanitized type id
-  inline const Type* readSanitizedType();
+  /// @brief Read in a type id and turn it into a Type* 
+  inline const Type* readType();
 
   /// @brief Converts a Type* to its type slot number
   unsigned getTypeSlot(const Type *Ty);
@@ -559,12 +492,6 @@ private:
 
   /// @brief Read a bytecode block header
   inline void read_block(unsigned &Type, unsigned &Size);
-
-  /// @brief Read a type identifier and sanitize it.
-  inline bool read_typeid(unsigned &TypeId);
-
-  /// @brief Recalculate type ID for pre 1.3 bytecode files.
-  inline bool sanitizeTypeId(unsigned &TypeId );
 /// @}
 };
 

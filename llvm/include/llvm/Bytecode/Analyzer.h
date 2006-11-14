@@ -68,7 +68,7 @@ struct BytecodeAnalysis {
   unsigned vbrCompBytes;    ///< Number of vbr bytes (compressed)
   unsigned vbrExpdBytes;    ///< Number of vbr bytes (expanded)
 
-  typedef std::map<BytecodeFormat::CompressedBytecodeBlockIdentifiers,unsigned>
+  typedef std::map<BytecodeFormat::BytecodeBlockIdentifiers,unsigned>
       BlockSizeMap;
   BlockSizeMap BlockSizes;
 

@@ -532,7 +532,7 @@ public:
     assert(BType >= BytecodeFormat::ModuleBlockID);
     assert(BType < BytecodeFormat::NumberOfBlockIDs);
     bca.BlockSizes[
-      llvm::BytecodeFormat::CompressedBytecodeBlockIdentifiers(BType)] += Size;
+      llvm::BytecodeFormat::BytecodeBlockIdentifiers(BType)] += Size;
 
     if (bca.version < 3) // Check for long block headers versions
       bca.BlockSizes[llvm::BytecodeFormat::Reserved_DoNotUse] += 8;
