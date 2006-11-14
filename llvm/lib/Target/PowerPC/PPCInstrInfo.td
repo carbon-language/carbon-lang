@@ -405,10 +405,12 @@ def DCBZ   : DCB_Form<1014, 0, (ops memrr:$dst),
 def DCBZL  : DCB_Form<1014, 1, (ops memrr:$dst),
                       "dcbzl $dst", LdStDCBF, [(int_ppc_dcbzl xoaddr:$dst)]>,
                       PPC970_DGroup_Single;
-                       
-// D-Form instructions.  Most instructions that perform an operation on a
-// register and an immediate are of this type.
+
+//===----------------------------------------------------------------------===//
+// PPC32 Load Instructions.
 //
+
+// Unindexed (r+i) Loads.                       
 let isLoad = 1, PPC970_Unit = 2 in {
 def LBZ : DForm_1<34, (ops GPRC:$rD, memri:$src),
                   "lbz $rD, $src", LdStGeneral,
@@ -431,7 +433,6 @@ def LFD : DForm_1<50, (ops F8RC:$rD, memri:$src),
                   "lfd $rD, $src", LdStLFD,
                   [(set F8RC:$rD, (load iaddr:$src))]>;
 
-// FIXME: PTRRC for Pointer regs for ppc64.
 
 // 'Update' load forms.
 def LBZU : DForm_1<35, (ops GPRC:$rD, ptr_rc:$rA_result, symbolLo:$disp,
@@ -464,6 +465,108 @@ def LFDU : DForm_1<51, (ops F8RC:$rD, ptr_rc:$rA_result, symbolLo:$disp,
                   []>, RegConstraint<"$rA = $rA_result">;
 }
 
+// Indexed (r+r) loads.
+//
+let isLoad = 1, PPC970_Unit = 2 in {
+def LBZX : XForm_1<31,  87, (ops GPRC:$rD, memrr:$src),
+                   "lbzx $rD, $src", LdStGeneral,
+                   [(set GPRC:$rD, (zextloadi8 xaddr:$src))]>;
+def LHAX : XForm_1<31, 343, (ops GPRC:$rD, memrr:$src),
+                   "lhax $rD, $src", LdStLHA,
+                   [(set GPRC:$rD, (sextloadi16 xaddr:$src))]>,
+                   PPC970_DGroup_Cracked;
+def LHZX : XForm_1<31, 279, (ops GPRC:$rD, memrr:$src),
+                   "lhzx $rD, $src", LdStGeneral,
+                   [(set GPRC:$rD, (zextloadi16 xaddr:$src))]>;
+def LWZX : XForm_1<31,  23, (ops GPRC:$rD, memrr:$src),
+                   "lwzx $rD, $src", LdStGeneral,
+                   [(set GPRC:$rD, (load xaddr:$src))]>;
+                   
+                   
+def LHBRX : XForm_1<31, 790, (ops GPRC:$rD, memrr:$src),
+                   "lhbrx $rD, $src", LdStGeneral,
+                   [(set GPRC:$rD, (PPClbrx xoaddr:$src, srcvalue:$sv, i16))]>;
+def LWBRX : XForm_1<31,  534, (ops GPRC:$rD, memrr:$src),
+                   "lwbrx $rD, $src", LdStGeneral,
+                   [(set GPRC:$rD, (PPClbrx xoaddr:$src, srcvalue:$sv, i32))]>;
+
+def LFSX   : XForm_25<31, 535, (ops F4RC:$frD, memrr:$src),
+                      "lfsx $frD, $src", LdStLFDU,
+                      [(set F4RC:$frD, (load xaddr:$src))]>;
+def LFDX   : XForm_25<31, 599, (ops F8RC:$frD, memrr:$src),
+                      "lfdx $frD, $src", LdStLFDU,
+                      [(set F8RC:$frD, (load xaddr:$src))]>;
+}
+
+//===----------------------------------------------------------------------===//
+// PPC32 Store Instructions.
+//
+
+// Unindexed (r+i) Stores.                       
+let isStore = 1, noResults = 1, PPC970_Unit = 2 in {
+def STB  : DForm_3<38, (ops GPRC:$rS, memri:$src),
+                   "stb $rS, $src", LdStGeneral,
+                   [(truncstorei8 GPRC:$rS, iaddr:$src)]>;
+def STH  : DForm_3<44, (ops GPRC:$rS, memri:$src),
+                   "sth $rS, $src", LdStGeneral,
+                   [(truncstorei16 GPRC:$rS, iaddr:$src)]>;
+def STW  : DForm_3<36, (ops GPRC:$rS, memri:$src),
+                   "stw $rS, $src", LdStGeneral,
+                   [(store GPRC:$rS, iaddr:$src)]>;
+def STWU : DForm_3<37, (ops GPRC:$rS, s16imm:$disp, GPRC:$rA),
+                   "stwu $rS, $disp($rA)", LdStGeneral,
+                   []>;
+                   
+def STFS : DForm_1<52, (ops F4RC:$rS, memri:$dst),
+                   "stfs $rS, $dst", LdStUX,
+                   [(store F4RC:$rS, iaddr:$dst)]>;
+def STFD : DForm_1<54, (ops F8RC:$rS, memri:$dst),
+                   "stfd $rS, $dst", LdStUX,
+                   [(store F8RC:$rS, iaddr:$dst)]>;
+}
+
+// Indexed (r+r) Stores.
+//
+let isStore = 1, noResults = 1, PPC970_Unit = 2 in {
+def STBX  : XForm_8<31, 215, (ops GPRC:$rS, memrr:$dst),
+                   "stbx $rS, $dst", LdStGeneral,
+                   [(truncstorei8 GPRC:$rS, xaddr:$dst)]>, 
+                   PPC970_DGroup_Cracked;
+def STHX  : XForm_8<31, 407, (ops GPRC:$rS, memrr:$dst),
+                   "sthx $rS, $dst", LdStGeneral,
+                   [(truncstorei16 GPRC:$rS, xaddr:$dst)]>, 
+                   PPC970_DGroup_Cracked;
+def STWX  : XForm_8<31, 151, (ops GPRC:$rS, memrr:$dst),
+                   "stwx $rS, $dst", LdStGeneral,
+                   [(store GPRC:$rS, xaddr:$dst)]>,
+                   PPC970_DGroup_Cracked;
+def STWUX : XForm_8<31, 183, (ops GPRC:$rS, GPRC:$rA, GPRC:$rB),
+                   "stwux $rS, $rA, $rB", LdStGeneral,
+                   []>;
+def STHBRX: XForm_8<31, 918, (ops GPRC:$rS, memrr:$dst),
+                   "sthbrx $rS, $dst", LdStGeneral,
+                   [(PPCstbrx GPRC:$rS, xoaddr:$dst, srcvalue:$dummy, i16)]>, 
+                   PPC970_DGroup_Cracked;
+def STWBRX: XForm_8<31, 662, (ops GPRC:$rS, memrr:$dst),
+                   "stwbrx $rS, $dst", LdStGeneral,
+                   [(PPCstbrx GPRC:$rS, xoaddr:$dst, srcvalue:$dummy, i32)]>,
+                   PPC970_DGroup_Cracked;
+
+def STFIWX: XForm_28<31, 983, (ops F8RC:$frS, memrr:$dst),
+                     "stfiwx $frS, $dst", LdStUX,
+                     [(PPCstfiwx F8RC:$frS, xoaddr:$dst)]>;
+def STFSX : XForm_28<31, 663, (ops F4RC:$frS, memrr:$dst),
+                     "stfsx $frS, $dst", LdStUX,
+                     [(store F4RC:$frS, xaddr:$dst)]>;
+def STFDX : XForm_28<31, 727, (ops F8RC:$frS, memrr:$dst),
+                     "stfdx $frS, $dst", LdStUX,
+                     [(store F8RC:$frS, xaddr:$dst)]>;
+}
+
+
+//===----------------------------------------------------------------------===//
+// PPC32 Arithmetic Instructions.
+//
 
 let PPC970_Unit = 1 in {  // FXU Operations.
 def ADDI   : DForm_2<14, (ops GPRC:$rD, GPRC:$rA, s16imm:$imm),
@@ -496,20 +599,7 @@ def LIS : DForm_2_r0<15, (ops GPRC:$rD, symbolHi:$imm),
                      "lis $rD, $imm", IntGeneral,
                      [(set GPRC:$rD, imm16ShiftedSExt:$imm)]>;
 }
-let isStore = 1, noResults = 1, PPC970_Unit = 2 in {
-def STB  : DForm_3<38, (ops GPRC:$rS, memri:$src),
-                   "stb $rS, $src", LdStGeneral,
-                   [(truncstorei8 GPRC:$rS, iaddr:$src)]>;
-def STH  : DForm_3<44, (ops GPRC:$rS, memri:$src),
-                   "sth $rS, $src", LdStGeneral,
-                   [(truncstorei16 GPRC:$rS, iaddr:$src)]>;
-def STW  : DForm_3<36, (ops GPRC:$rS, memri:$src),
-                   "stw $rS, $src", LdStGeneral,
-                   [(store GPRC:$rS, iaddr:$src)]>;
-def STWU : DForm_3<37, (ops GPRC:$rS, s16imm:$disp, GPRC:$rA),
-                   "stwu $rS, $disp($rA)", LdStGeneral,
-                   []>;
-}
+
 let PPC970_Unit = 1 in {  // FXU Operations.
 def ANDIo : DForm_4<28, (ops GPRC:$dst, GPRC:$src1, u16imm:$src2),
                     "andi. $dst, $src1, $src2", IntGeneral,
@@ -538,42 +628,7 @@ def CMPWI : DForm_5_ext<11, (ops CRRC:$crD, GPRC:$rA, s16imm:$imm),
 def CMPLWI : DForm_6_ext<10, (ops CRRC:$dst, GPRC:$src1, u16imm:$src2),
                          "cmplwi $dst, $src1, $src2", IntCompare>;
 }
-let isStore = 1, noResults = 1, PPC970_Unit = 2 in {
-def STFS : DForm_1<52, (ops F4RC:$rS, memri:$dst),
-                   "stfs $rS, $dst", LdStUX,
-                   [(store F4RC:$rS, iaddr:$dst)]>;
-def STFD : DForm_1<54, (ops F8RC:$rS, memri:$dst),
-                   "stfd $rS, $dst", LdStUX,
-                   [(store F8RC:$rS, iaddr:$dst)]>;
-}
 
-// X-Form instructions.  Most instructions that perform an operation on a
-// register and another register are of this type.
-//
-let isLoad = 1, PPC970_Unit = 2 in {
-def LBZX : XForm_1<31,  87, (ops GPRC:$rD, memrr:$src),
-                   "lbzx $rD, $src", LdStGeneral,
-                   [(set GPRC:$rD, (zextloadi8 xaddr:$src))]>;
-def LHAX : XForm_1<31, 343, (ops GPRC:$rD, memrr:$src),
-                   "lhax $rD, $src", LdStLHA,
-                   [(set GPRC:$rD, (sextloadi16 xaddr:$src))]>,
-                   PPC970_DGroup_Cracked;
-def LHZX : XForm_1<31, 279, (ops GPRC:$rD, memrr:$src),
-                   "lhzx $rD, $src", LdStGeneral,
-                   [(set GPRC:$rD, (zextloadi16 xaddr:$src))]>;
-def LWZX : XForm_1<31,  23, (ops GPRC:$rD, memrr:$src),
-                   "lwzx $rD, $src", LdStGeneral,
-                   [(set GPRC:$rD, (load xaddr:$src))]>;
-                   
-                   
-def LHBRX : XForm_1<31, 790, (ops GPRC:$rD, memrr:$src),
-                   "lhbrx $rD, $src", LdStGeneral,
-                   [(set GPRC:$rD, (PPClbrx xoaddr:$src, srcvalue:$sv, i16))]>;
-def LWBRX : XForm_1<31,  534, (ops GPRC:$rD, memrr:$src),
-                   "lwbrx $rD, $src", LdStGeneral,
-                   [(set GPRC:$rD, (PPClbrx xoaddr:$src, srcvalue:$sv, i32))]>;
-
-}
 
 let PPC970_Unit = 1 in {  // FXU Operations.
 def NAND : XForm_6<31, 476, (ops GPRC:$rA, GPRC:$rS, GPRC:$rB),
@@ -610,31 +665,7 @@ def SRAW : XForm_6<31, 792, (ops GPRC:$rA, GPRC:$rS, GPRC:$rB),
                    "sraw $rA, $rS, $rB", IntShift,
                    [(set GPRC:$rA, (PPCsra GPRC:$rS, GPRC:$rB))]>;
 }
-let isStore = 1, noResults = 1, PPC970_Unit = 2 in {
-def STBX  : XForm_8<31, 215, (ops GPRC:$rS, memrr:$dst),
-                   "stbx $rS, $dst", LdStGeneral,
-                   [(truncstorei8 GPRC:$rS, xaddr:$dst)]>, 
-                   PPC970_DGroup_Cracked;
-def STHX  : XForm_8<31, 407, (ops GPRC:$rS, memrr:$dst),
-                   "sthx $rS, $dst", LdStGeneral,
-                   [(truncstorei16 GPRC:$rS, xaddr:$dst)]>, 
-                   PPC970_DGroup_Cracked;
-def STWX  : XForm_8<31, 151, (ops GPRC:$rS, memrr:$dst),
-                   "stwx $rS, $dst", LdStGeneral,
-                   [(store GPRC:$rS, xaddr:$dst)]>,
-                   PPC970_DGroup_Cracked;
-def STWUX : XForm_8<31, 183, (ops GPRC:$rS, GPRC:$rA, GPRC:$rB),
-                   "stwux $rS, $rA, $rB", LdStGeneral,
-                   []>;
-def STHBRX: XForm_8<31, 918, (ops GPRC:$rS, memrr:$dst),
-                   "sthbrx $rS, $dst", LdStGeneral,
-                   [(PPCstbrx GPRC:$rS, xoaddr:$dst, srcvalue:$dummy, i16)]>, 
-                   PPC970_DGroup_Cracked;
-def STWBRX: XForm_8<31, 662, (ops GPRC:$rS, memrr:$dst),
-                   "stwbrx $rS, $dst", LdStGeneral,
-                   [(PPCstbrx GPRC:$rS, xoaddr:$dst, srcvalue:$dummy, i32)]>,
-                   PPC970_DGroup_Cracked;
-}
+
 let PPC970_Unit = 1 in {  // FXU Operations.
 def SRAWI : XForm_10<31, 824, (ops GPRC:$rA, GPRC:$rS, u5imm:$SH), 
                      "srawi $rA, $rS, $SH", IntShift,
@@ -661,16 +692,7 @@ def FCMPUS : XForm_17<63, 0, (ops CRRC:$crD, F4RC:$fA, F4RC:$fB),
                       "fcmpu $crD, $fA, $fB", FPCompare>;
 def FCMPUD : XForm_17<63, 0, (ops CRRC:$crD, F8RC:$fA, F8RC:$fB),
                       "fcmpu $crD, $fA, $fB", FPCompare>;
-}
-let isLoad = 1, PPC970_Unit = 2 in {
-def LFSX   : XForm_25<31, 535, (ops F4RC:$frD, memrr:$src),
-                      "lfsx $frD, $src", LdStLFDU,
-                      [(set F4RC:$frD, (load xaddr:$src))]>;
-def LFDX   : XForm_25<31, 599, (ops F8RC:$frD, memrr:$src),
-                      "lfdx $frD, $src", LdStLFDU,
-                      [(set F8RC:$frD, (load xaddr:$src))]>;
-}
-let PPC970_Unit = 3 in {  // FPU Operations.
+
 def FCTIWZ : XForm_26<63, 15, (ops F8RC:$frD, F8RC:$frB),
                       "fctiwz $frD, $frB", FPGeneral,
                       [(set F8RC:$frD, (PPCfctiwz F8RC:$frB))]>;
@@ -726,17 +748,6 @@ def FNEGD  : XForm_26<63, 40, (ops F8RC:$frD, F8RC:$frB),
                       [(set F8RC:$frD, (fneg F8RC:$frB))]>;
 }
                       
-let isStore = 1, noResults = 1, PPC970_Unit = 2 in {
-def STFIWX: XForm_28<31, 983, (ops F8RC:$frS, memrr:$dst),
-                     "stfiwx $frS, $dst", LdStUX,
-                     [(PPCstfiwx F8RC:$frS, xoaddr:$dst)]>;
-def STFSX : XForm_28<31, 663, (ops F4RC:$frS, memrr:$dst),
-                     "stfsx $frS, $dst", LdStUX,
-                     [(store F4RC:$frS, xaddr:$dst)]>;
-def STFDX : XForm_28<31, 727, (ops F8RC:$frS, memrr:$dst),
-                     "stfdx $frS, $dst", LdStUX,
-                     [(store F8RC:$frS, xaddr:$dst)]>;
-}
 
 // XL-Form instructions.  condition register logical ops.
 //
