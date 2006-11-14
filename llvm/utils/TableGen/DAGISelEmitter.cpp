@@ -2852,6 +2852,11 @@ public:
         if (NodeHasOutFlag)
           Code += ", MVT::Flag";
 
+        // Figure out how many fixed inputs the node has.  This is important to
+        // know which inputs are the variable ones if present.
+        unsigned NumInputs = AllOps.size();
+        NumInputs += NodeHasChain;
+        
         // Inputs.
         if (HasVarOps) {
           for (unsigned i = 0, e = AllOps.size(); i != e; ++i)
@@ -2860,15 +2865,17 @@ public:
         }
 
         if (HasVarOps) {
+          // Figure out whether any operands at the end of the op list are not
+          // part of the variable section.
+          std::string EndAdjust;
           if (NodeHasInFlag || HasImpInputs)
-            emitCode("for (unsigned i = 2, e = N.getNumOperands()-1; "
-                     "i != e; ++i) {");
-          else if (NodeHasOptInFlag) 
-            emitCode("for (unsigned i = 2, e = N.getNumOperands()-"
-                     "(HasInFlag?1:0); i != e; ++i) {");
-          else
-            emitCode("for (unsigned i = 2, e = N.getNumOperands(); "
-                     "i != e; ++i) {");
+            EndAdjust = "-1";  // Always has one flag.
+          else if (NodeHasOptInFlag)
+            EndAdjust = "-(HasInFlag?1:0)"; // May have a flag.
+
+          emitCode("for (unsigned i = " + utostr(NumInputs) +
+                   ", e = N.getNumOperands()" + EndAdjust + "; i != e; ++i) {");
+
           emitCode("  AddToISelQueue(N.getOperand(i));");
           emitCode("  Ops" + utostr(OpsNo) + ".push_back(N.getOperand(i));");
           emitCode("}");
