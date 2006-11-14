@@ -15,7 +15,7 @@
 #include "llvm/PassManager.h"
 #include "llvm/Module.h"
 #include <vector>
-#include <set>
+#include <map>
 
 using namespace llvm;
 
@@ -32,9 +32,15 @@ public:
   /// manager.
   bool manageablePass(Pass *P);
 
-  /// Return true IFF AnalysisID AID is currently available.
-  bool isAnalysisAvailable(AnalysisID AID) {
-    return (AvailableAnalysis.count(AID) != 0);
+  Pass *getAnalysisPass(AnalysisID AID) const {
+
+    std::map<AnalysisID, Pass*>::const_iterator I = 
+      AvailableAnalysis.find(AID);
+
+    if (I != AvailableAnalysis.end())
+      return NULL;
+    else
+      return I->second;
   }
 
   /// Augment RequiredAnalysis by adding analysis required by pass P.
@@ -60,6 +66,13 @@ public:
     AvailableAnalysis.clear();
   }
 
+  // All Required analyses should be available to the pass as it runs!  Here
+  // we fill in the AnalysisImpls member of the pass so that it can
+  // successfully use the getAnalysis() method to retrieve the
+  // implementations it needs.
+  //
+  inline void initializeAnalysisImpl(Pass *P) { /* TODO : Implement */ }
+
   inline std::vector<Pass *>::iterator passVectorBegin() { 
     return PassVector.begin(); 
   }
@@ -79,7 +92,7 @@ private:
   // pass. If a pass requires an analysis which is not not available then 
   // equired analysis pass is scheduled to run before the pass itself is 
   // scheduled to run.
-  std::set<AnalysisID> AvailableAnalysis;
+  std::map<AnalysisID, Pass*> AvailableAnalysis;
 
   // Collection of pass that are managed by this manager
   std::vector<Pass *> PassVector;
@@ -242,9 +255,9 @@ void CommonPassManagerImpl::noteDownRequiredAnalysis(Pass *P) {
 
 /// Augement AvailableAnalysis by adding analysis made available by pass P.
 void CommonPassManagerImpl::noteDownAvailableAnalysis(Pass *P) {
-  
+                                                
   if (const PassInfo *PI = P->getPassInfo()) {
-    AvailableAnalysis.insert(PI);
+    AvailableAnalysis[PI] = P;
 
     //TODO This pass is the current implementation of all of the interfaces it
     //TODO implements as well.
@@ -261,12 +274,12 @@ void CommonPassManagerImpl::removeNotPreservedAnalysis(Pass *P) {
   P->getAnalysisUsage(AnUsage);
   const std::vector<AnalysisID> &PreservedSet = AnUsage.getPreservedSet();
 
-  for (std::set<AnalysisID>::iterator I = AvailableAnalysis.begin(),
+  for (std::map<AnalysisID, Pass*>::iterator I = AvailableAnalysis.begin(),
          E = AvailableAnalysis.end(); I != E; ++I ) {
-    if (std::find(PreservedSet.begin(), PreservedSet.end(), *I) == 
+    if (std::find(PreservedSet.begin(), PreservedSet.end(), I->first) == 
         PreservedSet.end()) {
       // Remove this analysis
-      std::set<AnalysisID>::iterator J = I++;
+      std::map<AnalysisID, Pass*>::iterator J = I++;
       AvailableAnalysis.erase(J);
     }
   }
@@ -336,7 +349,7 @@ BasicBlockPassManager_New::runOnFunction(Function &F) {
 
 /// Return true IFF AnalysisID AID is currently available.
 bool BasicBlockPassManager_New::analysisCurrentlyAvailable(AnalysisID AID) {
-  return isAnalysisAvailable(AID);
+  return (getAnalysisPass(AID) != 0);
 }
 
 // FunctionPassManager_New implementation
@@ -427,11 +440,11 @@ FunctionPassManagerImpl_New::runOnModule(Module &M) {
 /// Return true IFF AnalysisID AID is currently available.
 bool FunctionPassManagerImpl_New::analysisCurrentlyAvailable(AnalysisID AID) {
 
-  if (isAnalysisAvailable(AID))
+  if (getAnalysisPass(AID) != 0)
     return true;
 
   if (activeBBPassManager && 
-      activeBBPassManager->isAnalysisAvailable(AID))
+      activeBBPassManager->getAnalysisPass(AID) != 0)
     return true;
 
   // TODO : Check inactive managers
@@ -501,11 +514,11 @@ ModulePassManager_New::runOnModule(Module &M) {
 /// Return true IFF AnalysisID AID is currently available.
 bool ModulePassManager_New::analysisCurrentlyAvailable(AnalysisID AID) {
 
-  if (isAnalysisAvailable(AID))
+  if (getAnalysisPass(AID) != 0)
     return true;
 
   if (activeFunctionPassManager && 
-      activeFunctionPassManager->isAnalysisAvailable(AID))
+      activeFunctionPassManager->getAnalysisPass(AID) != 0)
     return true;
 
   // TODO : Check inactive managers
