@@ -274,6 +274,7 @@ def ixaddr : ComplexPattern<iPTR, 2, "SelectAddrImmShift", [], []>; // "std"
 // PowerPC Instruction Predicate Definitions.
 def FPContractions : Predicate<"!NoExcessFPPrecision">;
 
+
 //===----------------------------------------------------------------------===//
 // PowerPC Instruction Definitions.
 
@@ -326,6 +327,7 @@ let isTerminator = 1, isBarrier = 1, noResults = 1, PPC970_Unit = 7 in {
                           [(retflag)]>;
   def BCTR : XLForm_2_ext<19, 528, 20, 0, 0, (ops), "bctr", BrB, []>;
 }
+
 
 
 let Defs = [LR] in
@@ -1014,9 +1016,9 @@ def : Pat<(and (rotl GPRC:$in, GPRC:$sh), maskimm32:$imm),
           (RLWNM GPRC:$in, GPRC:$sh, (MB maskimm32:$imm), (ME maskimm32:$imm))>;
 
 // Calls
-def : Pat<(PPCcall tglobaladdr:$dst),
+def : Pat<(PPCcall (i32 tglobaladdr:$dst)),
           (BL tglobaladdr:$dst)>;
-def : Pat<(PPCcall texternalsym:$dst),
+def : Pat<(PPCcall (i32 texternalsym:$dst)),
           (BL texternalsym:$dst)>;
 
 // Hi and Lo for Darwin Global Addresses.

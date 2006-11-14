@@ -99,12 +99,32 @@ PPCRegisterInfo::storeRegToStackSlot(MachineBasicBlock &MBB,
                                      MachineBasicBlock::iterator MI,
                                      unsigned SrcReg, int FrameIdx,
                                      const TargetRegisterClass *RC) const {
-  if (SrcReg == PPC::LR) {
-    // FIXME: this spills LR immediately to memory in one step.  To do this, we
-    // use R11, which we know cannot be used in the prolog/epilog.  This is a
-    // hack.
-    BuildMI(MBB, MI, PPC::MFLR, 1, PPC::R11);
-    addFrameReference(BuildMI(MBB, MI, PPC::STW, 3).addReg(PPC::R11), FrameIdx);
+  if (RC == PPC::GPRCRegisterClass) {
+    if (SrcReg != PPC::LR) {
+      addFrameReference(BuildMI(MBB, MI, PPC::STW, 3).addReg(SrcReg),FrameIdx);
+    } else {
+      // FIXME: this spills LR immediately to memory in one step.  To do this,
+      // we use R11, which we know cannot be used in the prolog/epilog.  This is
+      // a hack.
+      BuildMI(MBB, MI, PPC::MFLR, 1, PPC::R11);
+      addFrameReference(BuildMI(MBB, MI, PPC::STW, 3).addReg(PPC::R11),
+                        FrameIdx);
+    }
+  } else if (RC == PPC::G8RCRegisterClass) {
+    if (SrcReg != PPC::LR8) {
+      addFrameReference(BuildMI(MBB, MI, PPC::STD, 3).addReg(SrcReg), FrameIdx);
+    } else {
+      // FIXME: this spills LR immediately to memory in one step.  To do this,
+      // we use R11, which we know cannot be used in the prolog/epilog.  This is
+      // a hack.
+      BuildMI(MBB, MI, PPC::MFLR8, 1, PPC::X11);
+      addFrameReference(BuildMI(MBB, MI, PPC::STD, 3).addReg(PPC::X11),
+                        FrameIdx);
+    }
+  } else if (RC == PPC::F8RCRegisterClass) {
+    addFrameReference(BuildMI(MBB, MI, PPC::STFD, 3).addReg(SrcReg),FrameIdx);
+  } else if (RC == PPC::F4RCRegisterClass) {
+    addFrameReference(BuildMI(MBB, MI, PPC::STFS, 3).addReg(SrcReg),FrameIdx);
   } else if (RC == PPC::CRRCRegisterClass) {
     // FIXME: We use R0 here, because it isn't available for RA.
     // We need to store the CR in the low 4-bits of the saved value.  First,
@@ -121,14 +141,6 @@ PPCRegisterInfo::storeRegToStackSlot(MachineBasicBlock &MBB,
     }
     
     addFrameReference(BuildMI(MBB, MI, PPC::STW, 3).addReg(PPC::R0), FrameIdx);
-  } else if (RC == PPC::GPRCRegisterClass) {
-    addFrameReference(BuildMI(MBB, MI, PPC::STW, 3).addReg(SrcReg),FrameIdx);
-  } else if (RC == PPC::G8RCRegisterClass) {
-    addFrameReference(BuildMI(MBB, MI, PPC::STD, 3).addReg(SrcReg),FrameIdx);
-  } else if (RC == PPC::F8RCRegisterClass) {
-    addFrameReference(BuildMI(MBB, MI, PPC::STFD, 3).addReg(SrcReg),FrameIdx);
-  } else if (RC == PPC::F4RCRegisterClass) {
-    addFrameReference(BuildMI(MBB, MI, PPC::STFS, 3).addReg(SrcReg),FrameIdx);
   } else if (RC == PPC::VRRCRegisterClass) {
     // We don't have indexed addressing for vector loads.  Emit:
     // R11 = ADDI FI#
@@ -146,12 +158,27 @@ PPCRegisterInfo::storeRegToStackSlot(MachineBasicBlock &MBB,
 
 void
 PPCRegisterInfo::loadRegFromStackSlot(MachineBasicBlock &MBB,
-                                        MachineBasicBlock::iterator MI,
-                                        unsigned DestReg, int FrameIdx,
-                                        const TargetRegisterClass *RC) const {
-  if (DestReg == PPC::LR) {
-    addFrameReference(BuildMI(MBB, MI, PPC::LWZ, 2, PPC::R11), FrameIdx);
-    BuildMI(MBB, MI, PPC::MTLR, 1).addReg(PPC::R11);
+                                      MachineBasicBlock::iterator MI,
+                                      unsigned DestReg, int FrameIdx,
+                                      const TargetRegisterClass *RC) const {
+  if (RC == PPC::GPRCRegisterClass) {
+    if (DestReg != PPC::LR) {
+      addFrameReference(BuildMI(MBB, MI, PPC::LWZ, 2, DestReg), FrameIdx);
+    } else {
+      addFrameReference(BuildMI(MBB, MI, PPC::LWZ, 2, PPC::R11), FrameIdx);
+      BuildMI(MBB, MI, PPC::MTLR, 1).addReg(PPC::R11);
+    }
+  } else if (RC == PPC::G8RCRegisterClass) {
+    if (DestReg != PPC::LR8) {
+      addFrameReference(BuildMI(MBB, MI, PPC::LD, 2, DestReg), FrameIdx);
+    } else {
+      addFrameReference(BuildMI(MBB, MI, PPC::LD, 2, PPC::R11), FrameIdx);
+      BuildMI(MBB, MI, PPC::MTLR8, 1).addReg(PPC::R11);
+    }
+  } else if (RC == PPC::F8RCRegisterClass) {
+    addFrameReference(BuildMI(MBB, MI, PPC::LFD, 2, DestReg), FrameIdx);
+  } else if (RC == PPC::F4RCRegisterClass) {
+    addFrameReference(BuildMI(MBB, MI, PPC::LFS, 2, DestReg), FrameIdx);
   } else if (RC == PPC::CRRCRegisterClass) {
     // FIXME: We use R0 here, because it isn't available for RA.
     addFrameReference(BuildMI(MBB, MI, PPC::LWZ, 2, PPC::R0), FrameIdx);
@@ -166,14 +193,6 @@ PPCRegisterInfo::loadRegFromStackSlot(MachineBasicBlock &MBB,
     }
     
     BuildMI(MBB, MI, PPC::MTCRF, 1, DestReg).addReg(PPC::R0);
-  } else if (RC == PPC::GPRCRegisterClass) {
-    addFrameReference(BuildMI(MBB, MI, PPC::LWZ, 2, DestReg), FrameIdx);
-  } else if (RC == PPC::G8RCRegisterClass) {
-    addFrameReference(BuildMI(MBB, MI, PPC::LD, 2, DestReg), FrameIdx);
-  } else if (RC == PPC::F8RCRegisterClass) {
-    addFrameReference(BuildMI(MBB, MI, PPC::LFD, 2, DestReg), FrameIdx);
-  } else if (RC == PPC::F4RCRegisterClass) {
-    addFrameReference(BuildMI(MBB, MI, PPC::LFS, 2, DestReg), FrameIdx);
   } else if (RC == PPC::VRRCRegisterClass) {
     // We don't have indexed addressing for vector loads.  Emit:
     // R11 = ADDI FI#
@@ -251,7 +270,7 @@ const unsigned* PPCRegisterInfo::getCalleeSaveRegs() const {
     PPC::V24, PPC::V25, PPC::V26, PPC::V27,
     PPC::V28, PPC::V29, PPC::V30, PPC::V31,
     
-    PPC::LR,  0
+    PPC::LR8,  0
   };
   
   return Subtarget.isPPC64() ? Darwin64_CalleeSaveRegs :
@@ -303,7 +322,7 @@ PPCRegisterInfo::getCalleeSaveRegClasses() const {
     &PPC::VRRCRegClass,&PPC::VRRCRegClass,&PPC::VRRCRegClass,&PPC::VRRCRegClass,
     &PPC::VRRCRegClass,&PPC::VRRCRegClass,&PPC::VRRCRegClass,&PPC::VRRCRegClass,
     
-    &PPC::GPRCRegClass, 0
+    &PPC::G8RCRegClass, 0
   };
  
   return Subtarget.isPPC64() ? Darwin64_CalleeSaveRegClasses :
@@ -780,7 +799,8 @@ void PPCRegisterInfo::emitEpilogue(MachineFunction &MF,
 }
 
 unsigned PPCRegisterInfo::getRARegister() const {
-  return PPC::LR;
+  return !Subtarget.isPPC64() ? PPC::LR : PPC::LR8;
+  
 }
 
 unsigned PPCRegisterInfo::getFrameRegister(MachineFunction &MF) const {
