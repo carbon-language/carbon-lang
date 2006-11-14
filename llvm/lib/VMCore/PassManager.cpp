@@ -53,6 +53,13 @@ public:
   /// AvailableAnalysis appropriately if ProcessAnalysis is true.
   void addPassToManager (Pass *P, bool ProcessAnalysis = true);
 
+  /// Clear analysis vectors RequiredAnalysis and AvailableAnalysis.
+  /// This is used before running passes managed by the manager.
+  void clearAnalysis() { 
+    RequiredAnalysis.clear();
+    AvailableAnalysis.clear();
+  }
+
   inline std::vector<Pass *>::iterator passVectorBegin() { 
     return PassVector.begin(); 
   }
@@ -311,12 +318,18 @@ bool
 BasicBlockPassManager_New::runOnFunction(Function &F) {
 
   bool Changed = false;
+  clearAnalysis();
+
   for (Function::iterator I = F.begin(), E = F.end(); I != E; ++I)
     for (std::vector<Pass *>::iterator itr = passVectorBegin(),
            e = passVectorEnd(); itr != e; ++itr) {
       Pass *P = *itr;
+      
+      noteDownAvailableAnalysis(P);
       BasicBlockPass *BP = dynamic_cast<BasicBlockPass*>(P);
       Changed |= BP->runOnBasicBlock(*I);
+      removeNotPreservedAnalysis(P);
+      removeDeadPasses();
     }
   return Changed;
 }
@@ -395,12 +408,18 @@ bool
 FunctionPassManagerImpl_New::runOnModule(Module &M) {
 
   bool Changed = false;
+  clearAnalysis();
+
   for (Module::iterator I = M.begin(), E = M.end(); I != E; ++I)
     for (std::vector<Pass *>::iterator itr = passVectorBegin(),
            e = passVectorEnd(); itr != e; ++itr) {
       Pass *P = *itr;
+      
+      noteDownAvailableAnalysis(P);
       FunctionPass *FP = dynamic_cast<FunctionPass*>(P);
       Changed |= FP->runOnFunction(*I);
+      removeNotPreservedAnalysis(P);
+      removeDeadPasses();
     }
   return Changed;
 }
@@ -464,11 +483,17 @@ ModulePassManager_New::addPass(Pass *P) {
 bool
 ModulePassManager_New::runOnModule(Module &M) {
   bool Changed = false;
+  clearAnalysis();
+
   for (std::vector<Pass *>::iterator itr = passVectorBegin(),
          e = passVectorEnd(); itr != e; ++itr) {
     Pass *P = *itr;
+
+    noteDownAvailableAnalysis(P);
     ModulePass *MP = dynamic_cast<ModulePass*>(P);
     Changed |= MP->runOnModule(M);
+    removeNotPreservedAnalysis(P);
+    removeDeadPasses();
   }
   return Changed;
 }
