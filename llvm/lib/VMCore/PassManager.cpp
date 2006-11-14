@@ -53,7 +53,7 @@ public:
   void removeNotPreservedAnalysis(Pass *P);
   
   /// Remove dead passes
-  void removeDeadPasses() { /* TODO : Implement */ }
+  void removeDeadPasses(Pass *P);
 
   /// Add pass P into the PassVector. Update RequiredAnalysis and
   /// AvailableAnalysis appropriately if ProcessAnalysis is true.
@@ -292,6 +292,25 @@ void CommonPassManagerImpl::removeNotPreservedAnalysis(Pass *P) {
   }
 }
 
+/// Remove analysis passes that are not used any longer
+void CommonPassManagerImpl::removeDeadPasses(Pass *P) {
+
+  for (std::map<Pass *, Pass *>::iterator I = LastUser.begin(),
+         E = LastUser.end(); I !=E; ++I) {
+    if (I->second == P) {
+      Pass *deadPass = I->first;
+      deadPass->releaseMemory();
+
+      std::map<AnalysisID, Pass*>::iterator Pos = 
+        AvailableAnalysis.find(deadPass->getPassInfo());
+      
+      assert (Pos != AvailableAnalysis.end() &&
+              "Pass is not available");
+      AvailableAnalysis.erase(Pos);
+    }
+  }
+}
+
 /// Add pass P into the PassVector. Update RequiredAnalysis and
 /// AvailableAnalysis appropriately if ProcessAnalysis is true.
 void CommonPassManagerImpl::addPassToManager (Pass *P, 
@@ -349,7 +368,7 @@ BasicBlockPassManager_New::runOnFunction(Function &F) {
       BasicBlockPass *BP = dynamic_cast<BasicBlockPass*>(P);
       Changed |= BP->runOnBasicBlock(*I);
       removeNotPreservedAnalysis(P);
-      removeDeadPasses();
+      removeDeadPasses(P);
     }
   return Changed;
 }
@@ -439,7 +458,7 @@ FunctionPassManagerImpl_New::runOnModule(Module &M) {
       FunctionPass *FP = dynamic_cast<FunctionPass*>(P);
       Changed |= FP->runOnFunction(*I);
       removeNotPreservedAnalysis(P);
-      removeDeadPasses();
+      removeDeadPasses(P);
     }
   return Changed;
 }
@@ -514,7 +533,7 @@ ModulePassManager_New::runOnModule(Module &M) {
     ModulePass *MP = dynamic_cast<ModulePass*>(P);
     Changed |= MP->runOnModule(M);
     removeNotPreservedAnalysis(P);
-    removeDeadPasses();
+    removeDeadPasses(P);
   }
   return Changed;
 }
