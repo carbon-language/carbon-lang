@@ -72,7 +72,7 @@ public:
   // successfully use the getAnalysis() method to retrieve the
   // implementations it needs.
   //
-  inline void initializeAnalysisImpl(Pass *P) { /* TODO : Implement */ }
+ void initializeAnalysisImpl(Pass *P);
 
   inline std::vector<Pass *>::iterator passVectorBegin() { 
     return PassVector.begin(); 
@@ -82,7 +82,23 @@ public:
     return PassVector.end();
   }
 
-  inline void setLastUser(Pass *P, Pass *LU) { LastUser[P] = LU; }
+  inline void setLastUser(Pass *P, Pass *LU) { 
+    LastUser[P] = LU; 
+    // TODO : Check if pass P is available.
+
+    // Prolong live range of analyses that are needed after an analysis pass
+    // is destroyed, for querying by subsequent passes
+    AnalysisUsage AnUsage;
+    P->getAnalysisUsage(AnUsage);
+    const std::vector<AnalysisID> &IDs = AnUsage.getRequiredTransitiveSet();
+    for (std::vector<AnalysisID>::const_iterator I = IDs.begin(),
+           E = IDs.end(); I != E; ++I) {
+      Pass *AnalysisPass = getAnalysisPass(*I); // getAnalysisPassFromManager(*I);
+      assert (AnalysisPass && "Analysis pass is not available");
+      setLastUser(AnalysisPass, LU);
+    }
+
+  }
 
 private:
   // Analysis required by the passes managed by this manager. This information
@@ -258,6 +274,8 @@ void CommonPassManagerImpl::noteDownRequiredAnalysis(Pass *P) {
   // FIXME: What about duplicates ?
   RequiredAnalysis.insert(RequiredAnalysis.end(), RequiredSet.begin(), 
                           RequiredSet.end());
+
+  initializeAnalysisImpl(P);
 }
 
 /// Augement AvailableAnalysis by adding analysis made available by pass P.
@@ -327,6 +345,25 @@ void CommonPassManagerImpl::addPassToManager (Pass *P,
 
   // Add pass
   PassVector.push_back(P);
+}
+
+// All Required analyses should be available to the pass as it runs!  Here
+// we fill in the AnalysisImpls member of the pass so that it can
+// successfully use the getAnalysis() method to retrieve the
+// implementations it needs.
+//
+void CommonPassManagerImpl::initializeAnalysisImpl(Pass *P) {
+  AnalysisUsage AnUsage;
+  P->getAnalysisUsage(AnUsage);
+ 
+  for (std::vector<const PassInfo *>::const_iterator
+         I = AnUsage.getRequiredSet().begin(),
+         E = AnUsage.getRequiredSet().end(); I != E; ++I) {
+    Pass *Impl = getAnalysisPass(*I);
+    if (Impl == 0)
+      assert(0 && "Analysis used but not available!");
+    // TODO:  P->AnalysisImpls.push_back(std::make_pair(*I, Impl));
+  }
 }
 
 /// BasicBlockPassManager implementation
