@@ -3602,10 +3602,15 @@ void DAGISelEmitter::EmitInstructionSelector(std::ostream &OS) {
 
       // Print function.
       std::string OpVTStr;
-      if (OpVT == MVT::iPTR)
-        OpVTStr = "iPTR";
-      else
-        OpVTStr = getEnumName(OpVT).substr(5);  // Skip 'MVT::'
+      if (OpVT == MVT::iPTR) {
+        OpVTStr = "_iPTR";
+      } else if (OpVT == MVT::isVoid) {
+        // Nodes with a void result actually have a first result type of either
+        // Other (a chain) or Flag.  Since there is no one-to-one mapping from
+        // void to this case, we handle it specially here.
+      } else {
+        OpVTStr = "_" + getEnumName(OpVT).substr(5);  // Skip 'MVT::'
+      }
       std::map<std::string, std::vector<std::string> >::iterator OpVTI =
         OpcodeVTMap.find(OpName);
       if (OpVTI == OpcodeVTMap.end()) {
@@ -3616,7 +3621,7 @@ void DAGISelEmitter::EmitInstructionSelector(std::ostream &OS) {
         OpVTI->second.push_back(OpVTStr);
 
       OS << "SDNode *Select_" << getLegalCName(OpName)
-         << "_" << OpVTStr << "(const SDOperand &N) {\n";    
+         << OpVTStr << "(const SDOperand &N) {\n";    
 
       // Loop through and reverse all of the CodeList vectors, as we will be
       // accessing them from their logical front, but accessing the end of a
@@ -3723,25 +3728,29 @@ void DAGISelEmitter::EmitInstructionSelector(std::ostream &OS) {
     if (OpVTs.size() == 1) {
       std::string &VTStr = OpVTs[0];
       OS << "    return Select_" << getLegalCName(OpName)
-         << (VTStr != "" ? "_" : "") << VTStr << "(N);\n";
+         << VTStr << "(N);\n";
     } else {
       // Keep track of whether we see a pattern that has an iPtr result.
       bool HasPtrPattern = false;
+      bool HasDefaultPattern = false;
       
       OS << "    switch (NVT) {\n";
       for (unsigned i = 0, e = OpVTs.size(); i < e; ++i) {
         std::string &VTStr = OpVTs[i];
-        assert(!VTStr.empty() && "Unset vtstr?");
+        if (VTStr.empty()) {
+          HasDefaultPattern = true;
+          continue;
+        }
 
         // If this is a match on iPTR: don't emit it directly, we need special
         // code.
-        if (VTStr == "iPTR") {
+        if (VTStr == "_iPTR") {
           HasPtrPattern = true;
           continue;
         }
-        OS << "    case MVT::" << VTStr << ":\n"
+        OS << "    case MVT::" << VTStr.substr(1) << ":\n"
            << "      return Select_" << getLegalCName(OpName)
-           << "_" << VTStr << "(N);\n";
+           << VTStr << "(N);\n";
       }
       OS << "    default:\n";
       
@@ -3749,6 +3758,9 @@ void DAGISelEmitter::EmitInstructionSelector(std::ostream &OS) {
       if (HasPtrPattern) {
         OS << "      if (NVT == TLI.getPointerTy())\n";
         OS << "        return Select_" << getLegalCName(OpName) <<"_iPTR(N);\n";
+      }
+      if (HasDefaultPattern) {
+        OS << "      return Select_" << getLegalCName(OpName) << "(N);\n";
       }
       OS << "      break;\n";
       OS << "    }\n";
