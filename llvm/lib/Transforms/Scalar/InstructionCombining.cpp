@@ -4950,6 +4950,32 @@ Instruction *InstCombiner::visitSetCondInst(SetCondInst &I) {
       return BinaryOperator::create(I.getOpcode(), B,
                                     Constant::getNullValue(B->getType()));
     }
+    
+    Value *C, *D;
+    // (X&Z) == (Y&Z) -> (X^Y) & Z == 0
+    if (Op0->hasOneUse() && Op1->hasOneUse() &&
+        match(Op0, m_And(m_Value(A), m_Value(B))) && 
+        match(Op1, m_And(m_Value(C), m_Value(D)))) {
+      Value *X = 0, *Y = 0, *Z = 0;
+      
+      if (A == C) {
+        X = B; Y = D; Z = A;
+      } else if (A == D) {
+        X = B; Y = C; Z = A;
+      } else if (B == C) {
+        X = A; Y = D; Z = B;
+      } else if (B == D) {
+        X = A; Y = C; Z = B;
+      }
+      
+      if (X) {   // Build (X^Y) & Z
+        Op1 = InsertNewInstBefore(BinaryOperator::createXor(X, Y, "tmp"), I);
+        Op1 = InsertNewInstBefore(BinaryOperator::createAnd(Op1, Z, "tmp"), I);
+        I.setOperand(0, Op1);
+        I.setOperand(1, Constant::getNullValue(Op1->getType()));
+        return &I;
+      }
+    }
   }
   return Changed ? &I : 0;
 }
