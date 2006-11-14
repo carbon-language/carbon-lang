@@ -3601,8 +3601,11 @@ void DAGISelEmitter::EmitInstructionSelector(std::ostream &OS) {
       }
 
       // Print function.
-      std::string OpVTStr = (OpVT != MVT::isVoid && OpVT != MVT::iPTR)
-        ? getEnumName(OpVT).substr(5) : "" ;
+      std::string OpVTStr;
+      if (OpVT == MVT::iPTR)
+        OpVTStr = "iPTR";
+      else
+        OpVTStr = getEnumName(OpVT).substr(5);  // Skip 'MVT::'
       std::map<std::string, std::vector<std::string> >::iterator OpVTI =
         OpcodeVTMap.find(OpName);
       if (OpVTI == OpcodeVTMap.end()) {
@@ -3613,8 +3616,7 @@ void DAGISelEmitter::EmitInstructionSelector(std::ostream &OS) {
         OpVTI->second.push_back(OpVTStr);
 
       OS << "SDNode *Select_" << getLegalCName(OpName)
-         << (OpVTStr != "" ? "_" : "")
-         << OpVTStr << "(const SDOperand &N) {\n";    
+         << "_" << OpVTStr << "(const SDOperand &N) {\n";    
 
       // Loop through and reverse all of the CodeList vectors, as we will be
       // accessing them from their logical front, but accessing the end of a
