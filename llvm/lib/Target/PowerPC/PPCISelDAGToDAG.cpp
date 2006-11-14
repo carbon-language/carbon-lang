@@ -190,8 +190,6 @@ namespace {
     
 private:
     SDNode *SelectSETCC(SDOperand Op);
-    SDNode *MySelect_PPCbctrl(SDOperand N);
-    SDNode *MySelect_PPCcall(SDOperand N);
   };
 }
 
@@ -282,13 +280,15 @@ SDNode *PPCDAGToDAGISel::getGlobalBaseReg() {
     MachineBasicBlock::iterator MBBI = FirstMBB.begin();
     SSARegMap *RegMap = BB->getParent()->getSSARegMap();
 
-    if (PPCLowering.getPointerTy() == MVT::i32)
+    if (PPCLowering.getPointerTy() == MVT::i32) {
       GlobalBaseReg = RegMap->createVirtualRegister(PPC::GPRCRegisterClass);
-    else
+      BuildMI(FirstMBB, MBBI, PPC::MovePCtoLR, 0, PPC::LR);
+      BuildMI(FirstMBB, MBBI, PPC::MFLR, 1, GlobalBaseReg);
+    } else {
       GlobalBaseReg = RegMap->createVirtualRegister(PPC::G8RCRegisterClass);
-    
-    BuildMI(FirstMBB, MBBI, PPC::MovePCtoLR, 0, PPC::LR);
-    BuildMI(FirstMBB, MBBI, PPC::MFLR, 1, GlobalBaseReg);
+      BuildMI(FirstMBB, MBBI, PPC::MovePCtoLR8, 0, PPC::LR8);
+      BuildMI(FirstMBB, MBBI, PPC::MFLR8, 1, GlobalBaseReg);
+    }
   }
   return CurDAG->getRegister(GlobalBaseReg, PPCLowering.getPointerTy()).Val;
 }
@@ -1013,149 +1013,11 @@ SDNode *PPCDAGToDAGISel::Select(SDOperand Op) {
                                             Chain), 0);
     return CurDAG->SelectNodeTo(N, PPC::BCTR, MVT::Other, Chain);
   }
-  // FIXME: These are manually selected because tblgen isn't handling varargs
-  // nodes correctly.
-  case PPCISD::BCTRL:            return MySelect_PPCbctrl(Op);
-  case PPCISD::CALL:             return MySelect_PPCcall(Op);
   }
   
   return SelectCode(Op);
 }
 
-
-// FIXME: This is manually selected because tblgen isn't handling varargs nodes
-// correctly.
-SDNode *PPCDAGToDAGISel::MySelect_PPCbctrl(SDOperand N) {
-  SDOperand Chain(0, 0);
-  
-  bool hasFlag =
-    N.getOperand(N.getNumOperands()-1).getValueType() == MVT::Flag;
-
-  SmallVector<SDOperand, 8> Ops;
-  // Push varargs arguments, including optional flag.
-  for (unsigned i = 1, e = N.getNumOperands()-hasFlag; i != e; ++i) {
-    Chain = N.getOperand(i);
-    AddToISelQueue(Chain);
-    Ops.push_back(Chain);
-  }
-
-  Chain = N.getOperand(0);
-  AddToISelQueue(Chain);
-  Ops.push_back(Chain);
-
-  if (hasFlag) {
-    Chain = N.getOperand(N.getNumOperands()-1);
-    AddToISelQueue(Chain);
-    Ops.push_back(Chain);
-  }
-  
-  return CurDAG->getTargetNode(PPC::BCTRL, MVT::Other, MVT::Flag,
-                               &Ops[0], Ops.size());
-}
-
-// FIXME: This is manually selected because tblgen isn't handling varargs nodes
-// correctly.
-SDNode *PPCDAGToDAGISel::MySelect_PPCcall(SDOperand N) {
-  SDOperand Chain(0, 0);
-  SDOperand N1(0, 0);
-  SDOperand Tmp0(0, 0);
-  Chain = N.getOperand(0);
-  N1 = N.getOperand(1);
-  
-  // Pattern: (PPCcall:void (imm:i32):$func)
-  // Emits: (BLA:void (imm:i32):$func)
-  // Pattern complexity = 4  cost = 1
-  if (N1.getOpcode() == ISD::Constant) {
-    unsigned Tmp0C = (unsigned)cast<ConstantSDNode>(N1)->getValue();
-    
-    SmallVector<SDOperand, 8> Ops;
-    Ops.push_back(CurDAG->getTargetConstant(Tmp0C, MVT::i32));
-
-    bool hasFlag =
-      N.getOperand(N.getNumOperands()-1).getValueType() == MVT::Flag;
-    
-    // Push varargs arguments, not including optional flag.
-    for (unsigned i = 2, e = N.getNumOperands()-hasFlag; i != e; ++i) {
-      Chain = N.getOperand(i);
-      AddToISelQueue(Chain);
-      Ops.push_back(Chain);
-    }
-    Chain = N.getOperand(0);
-    AddToISelQueue(Chain);
-    Ops.push_back(Chain);
-    if (hasFlag) {
-      Chain = N.getOperand(N.getNumOperands()-1);
-      AddToISelQueue(Chain);
-      Ops.push_back(Chain);
-    }
-    return CurDAG->getTargetNode(PPC::BLA, MVT::Other, MVT::Flag,
-                                 &Ops[0], Ops.size());
-  }
-  
-  // Pattern: (PPCcall:void (tglobaladdr:i32):$dst)
-  // Emits: (BL:void (tglobaladdr:i32):$dst)
-  // Pattern complexity = 4  cost = 1
-  if (N1.getOpcode() == ISD::TargetGlobalAddress) {
-    SmallVector<SDOperand, 8> Ops;
-    Ops.push_back(N1);
-    
-    bool hasFlag =
-      N.getOperand(N.getNumOperands()-1).getValueType() == MVT::Flag;
-
-    // Push varargs arguments, not including optional flag.
-    for (unsigned i = 2, e = N.getNumOperands()-hasFlag; i != e; ++i) {
-      Chain = N.getOperand(i);
-      AddToISelQueue(Chain);
-      Ops.push_back(Chain);
-    }
-    Chain = N.getOperand(0);
-    AddToISelQueue(Chain);
-    Ops.push_back(Chain);
-    if (hasFlag) {
-      Chain = N.getOperand(N.getNumOperands()-1);
-      AddToISelQueue(Chain);
-      Ops.push_back(Chain);
-    }
-    
-    return CurDAG->getTargetNode(PPC::BL, MVT::Other, MVT::Flag,
-                                 &Ops[0], Ops.size());
-  }
-  
-  // Pattern: (PPCcall:void (texternalsym:i32):$dst)
-  // Emits: (BL:void (texternalsym:i32):$dst)
-  // Pattern complexity = 4  cost = 1
-  if (N1.getOpcode() == ISD::TargetExternalSymbol) {
-    std::vector<SDOperand> Ops;
-    Ops.push_back(N1);
-    
-    bool hasFlag =
-      N.getOperand(N.getNumOperands()-1).getValueType() == MVT::Flag;
-
-    // Push varargs arguments, not including optional flag.
-    for (unsigned i = 2, e = N.getNumOperands()-hasFlag; i != e; ++i) {
-      Chain = N.getOperand(i);
-      AddToISelQueue(Chain);
-      Ops.push_back(Chain);
-    }
-    Chain = N.getOperand(0);
-    AddToISelQueue(Chain);
-    Ops.push_back(Chain);
-    if (hasFlag) {
-      Chain = N.getOperand(N.getNumOperands()-1);
-      AddToISelQueue(Chain);
-      Ops.push_back(Chain);
-    }
-    
-    return CurDAG->getTargetNode(PPC::BL, MVT::Other, MVT::Flag,
-                                 &Ops[0], Ops.size());
-  }
-  std::cerr << "Cannot yet select: ";
-  N.Val->dump(CurDAG);
-  std::cerr << '\n';
-  abort();
-
-  return NULL;
-}
 
 
 /// createPPCISelDag - This pass converts a legalized DAG into a 
