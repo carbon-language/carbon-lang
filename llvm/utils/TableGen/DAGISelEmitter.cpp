@@ -3725,23 +3725,16 @@ void DAGISelEmitter::EmitInstructionSelector(std::ostream &OS) {
       OS << "    return Select_" << getLegalCName(OpName)
          << (VTStr != "" ? "_" : "") << VTStr << "(N);\n";
     } else {
-      int Default = -1;
       OS << "    switch (NVT) {\n";
       for (unsigned i = 0, e = OpVTs.size(); i < e; ++i) {
         std::string &VTStr = OpVTs[i];
-        if (VTStr == "") {
-          Default = i;
-          continue;
-        }
+        assert(!VTStr.empty() && "Unset vtstr?");
         OS << "    case MVT::" << VTStr << ":\n"
            << "      return Select_" << getLegalCName(OpName)
            << "_" << VTStr << "(N);\n";
       }
       OS << "    default:\n";
-      if (Default != -1)
-        OS << "      return Select_" << getLegalCName(OpName) << "(N);\n";
-      else
-	OS << "      break;\n";
+      OS << "      break;\n";
       OS << "    }\n";
       OS << "    break;\n";
     }
