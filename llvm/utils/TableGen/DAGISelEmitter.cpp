@@ -3725,15 +3725,31 @@ void DAGISelEmitter::EmitInstructionSelector(std::ostream &OS) {
       OS << "    return Select_" << getLegalCName(OpName)
          << (VTStr != "" ? "_" : "") << VTStr << "(N);\n";
     } else {
+      // Keep track of whether we see a pattern that has an iPtr result.
+      bool HasPtrPattern = false;
+      
       OS << "    switch (NVT) {\n";
       for (unsigned i = 0, e = OpVTs.size(); i < e; ++i) {
         std::string &VTStr = OpVTs[i];
         assert(!VTStr.empty() && "Unset vtstr?");
+
+        // If this is a match on iPTR: don't emit it directly, we need special
+        // code.
+        if (VTStr == "iPTR") {
+          HasPtrPattern = true;
+          continue;
+        }
         OS << "    case MVT::" << VTStr << ":\n"
            << "      return Select_" << getLegalCName(OpName)
            << "_" << VTStr << "(N);\n";
       }
       OS << "    default:\n";
+      
+      // If there is an iPTR result version of this pattern, emit it here.
+      if (HasPtrPattern) {
+        OS << "      if (NVT == TLI.getPointerTy())\n";
+        OS << "        return Select_" << getLegalCName(OpName) <<"_iPTR(N);\n";
+      }
       OS << "      break;\n";
       OS << "    }\n";
       OS << "    break;\n";
