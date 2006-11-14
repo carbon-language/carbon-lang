@@ -114,6 +114,15 @@ ctz:
 however, check that these are defined for 0 and 32.  Our intrinsics are, GCC's
 aren't.
 
+Another example (use predsimplify to eliminate a select):
+
+int foo (unsigned long j) {
+  if (j)
+    return __builtin_ffs (j) - 1;
+  else
+    return 0;
+}
+
 //===---------------------------------------------------------------------===//
 
 Use push/pop instructions in prolog/epilog sequences instead of stores off 
