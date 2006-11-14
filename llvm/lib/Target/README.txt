@@ -16,6 +16,22 @@ We should make the following changes to clean up MachineInstr:
 
 //===---------------------------------------------------------------------===//
 
+With the recent changes to make the implicit def/use set explicit in
+machineinstrs, we should change the target descriptions for 'call' instructions
+so that the .td files don't list all the call-clobbered registers as implicit
+defs.  Instead, these should be added by the code generator (e.g. on the dag).
+
+This has a number of uses:
+
+1. PPC32/64 and X86 32/64 can avoid having multiple copies of call instructions
+   for their different impdef sets.
+2. Targets with multiple calling convs (e.g. x86) which have different clobber
+   sets don't need copies of call instructions.
+3. 'Interprocedural register allocation' can be done to reduce the clobber sets
+   of calls.
+
+//===---------------------------------------------------------------------===//
+
 FreeBench/mason contains code like this:
 
 static p_type m0u(p_type p) {
