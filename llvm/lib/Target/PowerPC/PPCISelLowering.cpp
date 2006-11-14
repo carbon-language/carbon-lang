@@ -874,17 +874,22 @@ bool PPCTargetLowering::getPreIndexedAddressParts(SDNode *N, SDOperand &Base,
   if (!EnablePPCPreinc) return false;
   
   SDOperand Ptr;
+  MVT::ValueType VT;
   if (LoadSDNode *LD = dyn_cast<LoadSDNode>(N)) {
     Ptr = LD->getBasePtr();
+    VT = LD->getValueType(0);
   } else if (StoreSDNode *ST = dyn_cast<StoreSDNode>(N)) {
     ST = ST;
-    //Ptr = ST->getBasePtr();
-    //VT  = ST->getStoredVT();
-    // TODO: handle stores.
-    return false;
+    Ptr = ST->getBasePtr();
+    VT  = ST->getStoredVT();
+    return false;  // TODO: Stores.
   } else
     return false;
 
+  // PowerPC doesn't have preinc load/store instructions for vectors.
+  if (MVT::isVector(VT))
+    return false;
+  
   // TODO: Handle reg+reg.
   if (!SelectAddressRegImm(Ptr, Offset, Base, DAG))
     return false;
