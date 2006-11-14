@@ -45,6 +45,7 @@ namespace {
       (void) llvm::createAAEvalPass();
       (void) llvm::createAggressiveDCEPass();
       (void) llvm::createAliasAnalysisCounterPass();
+      (void) llvm::createAliasDebugger();
       (void) llvm::createAndersensPass();
       (void) llvm::createArgumentPromotionPass();
       (void) llvm::createBasicAliasAnalysisPass();
