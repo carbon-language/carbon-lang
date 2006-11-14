@@ -1038,12 +1038,14 @@ static SDOperand LowerSETCC(SDOperand Op, SelectionDAG &DAG) {
   }
   
   // If we have an integer seteq/setne, turn it into a compare against zero
-  // by subtracting the rhs from the lhs, which is faster than setting a
-  // condition register, reading it back out, and masking the correct bit.
+  // by xor'ing the rhs with the lhs, which is faster than setting a
+  // condition register, reading it back out, and masking the correct bit.  The
+  // normal approach here uses sub to do this instead of xor.  Using xor exposes
+  // the result to other bit-twiddling opportunities.
   MVT::ValueType LHSVT = Op.getOperand(0).getValueType();
   if (MVT::isInteger(LHSVT) && (CC == ISD::SETEQ || CC == ISD::SETNE)) {
     MVT::ValueType VT = Op.getValueType();
-    SDOperand Sub = DAG.getNode(ISD::SUB, LHSVT, Op.getOperand(0), 
+    SDOperand Sub = DAG.getNode(ISD::XOR, LHSVT, Op.getOperand(0), 
                                 Op.getOperand(1));
     return DAG.getSetCC(VT, Sub, DAG.getConstant(0, LHSVT), CC);
   }
