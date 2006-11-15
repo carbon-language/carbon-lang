@@ -575,7 +575,6 @@ void LiveIntervals::handlePhysicalRegisterDef(MachineBasicBlock *MBB,
   // A physical register cannot be live across basic block, so its
   // lifetime must end somewhere in its defining basic block.
   DEBUG(std::cerr << "\t\tregister: "; printRegName(interval.reg));
-  typedef LiveVariables::killed_iterator KillIter;
 
   unsigned baseIndex = MIIdx;
   unsigned start = getDefIndex(baseIndex);
@@ -598,6 +597,14 @@ void LiveIntervals::handlePhysicalRegisterDef(MachineBasicBlock *MBB,
     if (lv_->KillsRegister(mi, interval.reg)) {
       DEBUG(std::cerr << " killed");
       end = getUseIndex(baseIndex) + 1;
+      goto exit;
+    } else if (lv_->ModifiesRegister(mi, interval.reg)) {
+      // Another instruction redefines the register before it is ever read.
+      // Then the register is essentially dead at the instruction that defines
+      // it. Hence its interval is:
+      // [defSlot(def), defSlot(def)+1)
+      DEBUG(std::cerr << " dead");
+      end = getDefIndex(start) + 1;
       goto exit;
     }
   }
