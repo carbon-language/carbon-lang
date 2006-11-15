@@ -206,19 +206,19 @@ public:
     return IsDead;
   }
   void setIsKill() {
-    assert(isRegister() && "Wrong MachineOperand accessor");
+    assert(isRegister() && !IsDef && "Wrong MachineOperand accessor");
     IsKill = true;
   }
   void setIsDead() {
-    assert(isRegister() && "Wrong MachineOperand accessor");
+    assert(isRegister() && IsDef && "Wrong MachineOperand accessor");
     IsDead = true;
   }
   void unsetIsKill() {
-    assert(isRegister() && "Wrong MachineOperand accessor");
+    assert(isRegister() && !IsDef && "Wrong MachineOperand accessor");
     IsKill = false;
   }
   void unsetIsDead() {
-    assert(isRegister() && "Wrong MachineOperand accessor");
+    assert(isRegister() && IsDef && "Wrong MachineOperand accessor");
     IsDead = false;
   }
 
@@ -261,7 +261,7 @@ public:
   }
   
   /// isIdenticalTo - Return true if this operand is identical to the specified
-  /// operand.
+  /// operand. Note: This method ignores isKill and isDead properties.
   bool isIdenticalTo(const MachineOperand &Other) const;
   
   /// ChangeToImmediate - Replace this operand with a new immediate operand of
@@ -295,12 +295,12 @@ public:
 ///
 class MachineInstr {
   short Opcode;                         // the opcode
+  short NumImplicitOps;                 // Number of implicit operands (which
+                                        // are determined at construction time).
+
   std::vector<MachineOperand> Operands; // the operands
   MachineInstr* prev, *next;            // links for our intrusive list
   MachineBasicBlock* parent;            // pointer to the owning basic block
-
-  unsigned NumImplicitOps;              // Number of implicit operands (which
-                                        // are determined at construction time).
 
   // OperandComplete - Return true if it's illegal to add a new operand
   bool OperandsComplete() const;
@@ -374,6 +374,26 @@ public:
   /// block and deletes it.
   void eraseFromParent() {
     delete removeFromParent();
+  }
+
+  /// copyKillDeadInfo - Copies kill / dead operand properties from MI.
+  ///
+  void copyKillDeadInfo(const MachineInstr *MI) {
+    for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
+      const MachineOperand &MO = MI->getOperand(i);
+      if (MO.isReg() && (MO.isKill() || MO.isDead())) {
+        for (unsigned j = 0, ee = getNumOperands(); j != ee; ++j) {
+          MachineOperand &MOp = getOperand(j);
+          if (MOp.isIdenticalTo(MO)) {
+            if (MO.isKill())
+              MOp.setIsKill();
+            else
+              MOp.setIsDead();
+            break;
+          }
+        }
+      }
+    }
   }
 
   //
