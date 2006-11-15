@@ -173,6 +173,10 @@ class Instruction {
   InstrItinClass Itinerary = NoItinerary;// Execution steps used for scheduling.
 
   string Constraints = "";
+  
+  /// DisableEncoding - List of operand names (e.g. "$op1,$op2") that should not
+  /// be encoded into the output machineinstr.
+  string DisableEncoding = "";
 }
 
 /// Imp - Helper class for specifying the implicit uses/defs set for an
