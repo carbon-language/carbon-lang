@@ -343,7 +343,7 @@ CodeGenInstruction::CodeGenInstruction(Record *R, const std::string &AsmStr)
   isCall       = R->getValueAsBit("isCall");
   isLoad       = R->getValueAsBit("isLoad");
   isStore      = R->getValueAsBit("isStore");
-  isTwoAddress = R->getValueAsBit("isTwoAddress");
+  bool isTwoAddress = R->getValueAsBit("isTwoAddress");
   isPredicated = false;   // set below.
   isConvertibleToThreeAddress = R->getValueAsBit("isConvertibleToThreeAddress");
   isCommutable = R->getValueAsBit("isCommutable");
@@ -413,6 +413,7 @@ CodeGenInstruction::CodeGenInstruction(Record *R, const std::string &AsmStr)
     MIOperandNo += NumOps;
   }
 
+  // Parse Constraints.
   ParseConstraints(R->getValueAsString("Constraints"), this);
   
   // For backward compatibility: isTwoAddress means operand 1 is tied to
@@ -430,6 +431,21 @@ CodeGenInstruction::CodeGenInstruction(Record *R, const std::string &AsmStr)
     for (unsigned j = 0, e = OperandList[op].MINumOperands; j != e; ++j)
       if (OperandList[op].Constraints[j].empty())
         OperandList[op].Constraints[j] = "0";
+  
+  // Parse the DisableEncoding field.
+  std::string DisableEncoding = R->getValueAsString("DisableEncoding");
+  while (1) {
+    std::string OpName = getToken(DisableEncoding, " ,\t");
+    if (OpName.empty()) break;
+
+    // Figure out which operand this is.
+    std::pair<unsigned,unsigned> Op = ParseOperandName(OpName, false);
+
+    // Mark the operand as not-to-be encoded.
+    if (Op.second >= OperandList[Op.first].DoNotEncode.size())
+      OperandList[Op.first].DoNotEncode.resize(Op.second+1);
+    OperandList[Op.first].DoNotEncode[Op.second] = true;
+  }
 }
 
 

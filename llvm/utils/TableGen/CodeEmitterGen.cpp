@@ -125,7 +125,8 @@ void CodeEmitterGen::run(std::ostream &o) {
     
     BitsInit *BI = R->getValueAsBitsInit("Inst");
     const std::vector<RecordVal> &Vals = R->getValues();
-
+    CodeGenInstruction &CGI = Target.getInstruction(InstName);
+    
     // Loop over all of the fields in the instruction, determining which are the
     // operands to the instruction.
     unsigned op = 0;
@@ -154,16 +155,15 @@ void CodeEmitterGen::run(std::ostream &o) {
             }
 
             if (!gotOp) {
+              /// If this operand is not supposed to be emitted by the generated
+              /// emitter, skip it.
+              while (CGI.isFlatOperandNotEmitted(op))
+                ++op;
+              
               Case += "      // op: " + VarName + "\n"
                    +  "      op = getMachineOpValue(MI, MI.getOperand("
-                   +  utostr(op++)
-                   +  "));\n";
+                   +  utostr(op++) + "));\n";
               gotOp = true;
-              
-              // If this is a two-address instruction and we just got the dest
-              // op, skip the src op.
-              if (op == 1 && Target.getInstruction(InstName).isTwoAddress)
-                ++op;
             }
             
             unsigned opMask = (1 << N) - 1;
@@ -185,7 +185,7 @@ void CodeEmitterGen::run(std::ostream &o) {
       }
     }
 
-    std::vector<std::string> &InstList =  CaseMap[Case];
+    std::vector<std::string> &InstList = CaseMap[Case];
     InstList.push_back(InstName);
   }
 

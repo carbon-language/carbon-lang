@@ -220,16 +220,11 @@ AsmWriterInst::AsmWriterInst(const CodeGenInstruction &CGI, unsigned Variant) {
         unsigned OpNo = CGI.getOperandNamed(VarName);
         CodeGenInstruction::OperandInfo OpInfo = CGI.OperandList[OpNo];
 
-        // If this is a two-address instruction, verify the second operand isn't
-        // used.
-        unsigned MIOp = OpInfo.MIOperandNo;
-        if (CGI.isTwoAddress && MIOp == 1)
-          throw "Should refer to operand #0 instead of #1 for two-address"
-                " instruction '" + CGI.TheDef->getName() + "'!";
-        
-        if (CurVariant == Variant || CurVariant == ~0U) 
+        if (CurVariant == Variant || CurVariant == ~0U) {
+          unsigned MIOp = OpInfo.MIOperandNo;
           Operands.push_back(AsmWriterOperand(OpInfo.PrinterMethodName, MIOp,
                                               Modifier));
+        }
       }
       LastEmitted = VarEnd;
     }
