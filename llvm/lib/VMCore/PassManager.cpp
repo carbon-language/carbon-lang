@@ -83,22 +83,9 @@ public:
     return PassVector.end();
   }
 
-  inline void setLastUser(Pass *P, Pass *LU) { 
+  inline void setLastUser(Pass *P, Pass *LU) {
     LastUser[P] = LU; 
     // TODO : Check if pass P is available.
-
-    // Prolong live range of analyses that are needed after an analysis pass
-    // is destroyed, for querying by subsequent passes
-    AnalysisUsage AnUsage;
-    P->getAnalysisUsage(AnUsage);
-    const std::vector<AnalysisID> &IDs = AnUsage.getRequiredTransitiveSet();
-    for (std::vector<AnalysisID>::const_iterator I = IDs.begin(),
-           E = IDs.end(); I != E; ++I) {
-      Pass *AnalysisPass = getAnalysisPass(*I); // getAnalysisPassFromManager(*I);
-      assert (AnalysisPass && "Analysis pass is not available");
-      setLastUser(AnalysisPass, LU);
-    }
-
   }
 
 private:
@@ -671,8 +658,17 @@ void PassManagerImpl_New::schedulePass(Pass *P) {
       schedulePass(AnalysisPass);
     }
     setLastUser (AnalysisPass, P);
+
+    // Prolong live range of analyses that are needed after an analysis pass
+    // is destroyed, for querying by subsequent passes
+    const std::vector<AnalysisID> &IDs = AnUsage.getRequiredTransitiveSet();
+    for (std::vector<AnalysisID>::const_iterator I = IDs.begin(),
+           E = IDs.end(); I != E; ++I) {
+      Pass *AP = getAnalysisPassFromManager(*I);
+      assert (AP && "Analysis pass is not available");
+      setLastUser(AP, P);
+    }
   }
-    
   addPass(P);
 }
 
