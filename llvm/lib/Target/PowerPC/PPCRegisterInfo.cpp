@@ -418,11 +418,11 @@ eliminateCallFramePseudoInstr(MachineFunction &MF, MachineBasicBlock &MBB,
       if (Old->getOpcode() == PPC::ADJCALLSTACKDOWN) {
         if (!Subtarget.isPPC64()) {
           BuildMI(MBB, I, PPC::LWZ, 2, PPC::R0).addImm(0).addReg(PPC::R31);
-          BuildMI(MBB, I, PPC::STWU, 3)
+          BuildMI(MBB, I, PPC::STWU, 3, PPC::R1)
                           .addReg(PPC::R0).addImm(-Amount).addReg(PPC::R1);
         } else {
           BuildMI(MBB, I, PPC::LD, 2, PPC::X0).addImm(0).addReg(PPC::X31);
-          BuildMI(MBB, I, PPC::STDU, 3)
+          BuildMI(MBB, I, PPC::STDU, 3, PPC::X1)
                           .addReg(PPC::X0).addImm(-Amount/4).addReg(PPC::X1);
         }
       } else {
@@ -684,8 +684,8 @@ void PPCRegisterInfo::emitPrologue(MachineFunction &MF) const {
       BuildMI(MBB, MBBI, PPC::STWUX, 3)
         .addReg(PPC::R1).addReg(PPC::R1).addReg(PPC::R0);
     } else if (NumBytes <= 32768) {
-      BuildMI(MBB, MBBI, PPC::STWU, 3).addReg(PPC::R1).addImm(NegNumbytes)
-        .addReg(PPC::R1);
+      BuildMI(MBB, MBBI, PPC::STWU, 3,
+              PPC::R1).addReg(PPC::R1).addImm(NegNumbytes).addReg(PPC::R1);
     } else {
       BuildMI(MBB, MBBI, PPC::LIS, 1, PPC::R0).addImm(NegNumbytes >> 16);
       BuildMI(MBB, MBBI, PPC::ORI, 2, PPC::R0).addReg(PPC::R0)
@@ -704,8 +704,8 @@ void PPCRegisterInfo::emitPrologue(MachineFunction &MF) const {
       BuildMI(MBB, MBBI, PPC::STDUX, 3)
         .addReg(PPC::X1).addReg(PPC::X1).addReg(PPC::X0);
     } else if (NumBytes <= 32768*4) {
-      BuildMI(MBB, MBBI, PPC::STDU, 3).addReg(PPC::X1).addImm(NegNumbytes/4)
-             .addReg(PPC::X1);
+      BuildMI(MBB, MBBI, PPC::STDU, 3, PPC::X1)
+             .addReg(PPC::X1).addImm(NegNumbytes/4).addReg(PPC::X1);
     } else {
       BuildMI(MBB, MBBI, PPC::LIS8, 1, PPC::X0).addImm(NegNumbytes >> 16);
       BuildMI(MBB, MBBI, PPC::ORI8, 2, PPC::X0).addReg(PPC::X0)
