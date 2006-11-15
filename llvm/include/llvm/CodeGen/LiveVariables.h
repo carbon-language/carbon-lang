@@ -107,23 +107,6 @@ private:
   ///
   std::vector<VarInfo> VirtRegInfo;
 
-  /// RegistersKilled - This map keeps track of all of the registers that
-  /// are dead immediately after an instruction reads its operands.  If an
-  /// instruction does not have an entry in this map, it kills no registers.
-  ///
-  std::map<MachineInstr*, std::vector<unsigned> > RegistersKilled;
-
-  /// RegistersDead - This map keeps track of all of the registers that are
-  /// dead immediately after an instruction executes, which are not dead after
-  /// the operands are evaluated.  In practice, this only contains registers
-  /// which are defined by an instruction, but never used.
-  ///
-  std::map<MachineInstr*, std::vector<unsigned> > RegistersDead;
-  
-  /// Dummy - An always empty vector used for instructions without dead or
-  /// killed operands.
-  std::vector<unsigned> Dummy;
-
   /// AllocatablePhysicalRegisters - This vector keeps track of which registers
   /// are actually register allocatable by the target machine.  We can not track
   /// liveness for values that are not in this set.
@@ -141,6 +124,15 @@ private:   // Intermediate data structures
 
   PHIVarInfoMap PHIVarInfo;
 
+
+  /// addRegisterKilled - We have determined MI kills a register. Look for the
+  /// operand that uses it and mark it as IsKill.
+  void addRegisterKilled(unsigned IncomingReg, MachineInstr *MI);
+
+  /// addRegisterDead - We have determined MI defined a register without a use.
+  /// Look for the operand that defines it and mark it as IsDead. 
+  void addRegisterDead(unsigned IncomingReg, MachineInstr *MI);
+
   void HandlePhysRegUse(unsigned Reg, MachineInstr *MI);
   void HandlePhysRegDef(unsigned Reg, MachineInstr *MI);
 
@@ -153,55 +145,17 @@ public:
 
   virtual bool runOnMachineFunction(MachineFunction &MF);
 
-  /// killed_iterator - Iterate over registers killed by a machine instruction
-  ///
-  typedef std::vector<unsigned>::iterator killed_iterator;
-
-  std::vector<unsigned> &getKillsVector(MachineInstr *MI) {
-    std::map<MachineInstr*, std::vector<unsigned> >::iterator I = 
-      RegistersKilled.find(MI);
-    return I != RegistersKilled.end() ? I->second : Dummy;
-  }
-  std::vector<unsigned> &getDeadDefsVector(MachineInstr *MI) {
-    std::map<MachineInstr*, std::vector<unsigned> >::iterator I = 
-      RegistersDead.find(MI);
-    return I != RegistersDead.end() ? I->second : Dummy;
-  }
-  
-    
-  /// killed_begin/end - Get access to the range of registers killed by a
-  /// machine instruction.
-  killed_iterator killed_begin(MachineInstr *MI) {
-    return getKillsVector(MI).begin();
-  }
-  killed_iterator killed_end(MachineInstr *MI) {
-    return getKillsVector(MI).end();
-  }
-  std::pair<killed_iterator, killed_iterator>
-  killed_range(MachineInstr *MI) {
-    std::vector<unsigned> &V = getKillsVector(MI);
-    return std::make_pair(V.begin(), V.end());
-  }
-
   /// KillsRegister - Return true if the specified instruction kills the
   /// specified register.
   bool KillsRegister(MachineInstr *MI, unsigned Reg) const;
   
-  killed_iterator dead_begin(MachineInstr *MI) {
-    return getDeadDefsVector(MI).begin();
-  }
-  killed_iterator dead_end(MachineInstr *MI) {
-    return getDeadDefsVector(MI).end();
-  }
-  std::pair<killed_iterator, killed_iterator>
-  dead_range(MachineInstr *MI) {
-    std::vector<unsigned> &V = getDeadDefsVector(MI);
-    return std::make_pair(V.begin(), V.end());
-  }
-  
   /// RegisterDefIsDead - Return true if the specified instruction defines the
   /// specified register, but that definition is dead.
   bool RegisterDefIsDead(MachineInstr *MI, unsigned Reg) const;
+
+  /// ModifiesRegister - Return true if the specified instruction modifies the
+  /// specified register.
+  bool ModifiesRegister(MachineInstr *MI, unsigned Reg) const;
   
   //===--------------------------------------------------------------------===//
   //  API to update live variable information
@@ -217,19 +171,9 @@ public:
   /// instruction.
   ///
   void addVirtualRegisterKilled(unsigned IncomingReg, MachineInstr *MI) {
-    std::vector<unsigned> &V = RegistersKilled[MI];
-    // Insert in a sorted order.
-    if (V.empty() || IncomingReg > V.back()) {
-      V.push_back(IncomingReg);
-    } else {
-      std::vector<unsigned>::iterator I = V.begin();
-      for (; *I < IncomingReg; ++I)
-        /*empty*/;
-      if (*I != IncomingReg)   // Don't insert duplicates.
-        V.insert(I, IncomingReg);
-    }
-    getVarInfo(IncomingReg).Kills.push_back(MI);
-  }
+    addRegisterKilled(IncomingReg, MI);
+    getVarInfo(IncomingReg).Kills.push_back(MI); 
+ }
 
   /// removeVirtualRegisterKilled - Remove the specified virtual
   /// register from the live variable information. Returns true if the
@@ -241,12 +185,17 @@ public:
     if (!getVarInfo(reg).removeKill(MI))
       return false;
 
-    std::vector<unsigned> &V = getKillsVector(MI);
-    for (unsigned i = 0, e = V.size(); i != e; ++i)
-      if (V[i] == reg) {
-        V.erase(V.begin()+i);
-        return true;
+    bool Removed = false;
+    for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
+      MachineOperand &MO = MI->getOperand(i);
+      if (MO.isReg() && MO.isUse() && MO.getReg() == reg) {
+        MO.unsetIsKill();
+        Removed = true;
+        break;
       }
+    }
+
+    assert(Removed && "Register is not used by this instruction!");
     return true;
   }
 
@@ -258,17 +207,7 @@ public:
   /// register is dead after being used by the specified instruction.
   ///
   void addVirtualRegisterDead(unsigned IncomingReg, MachineInstr *MI) {
-    std::vector<unsigned> &V = RegistersDead[MI];
-    // Insert in a sorted order.
-    if (V.empty() || IncomingReg > V.back()) {
-      V.push_back(IncomingReg);
-    } else {
-      std::vector<unsigned>::iterator I = V.begin();
-      for (; *I < IncomingReg; ++I)
-        /*empty*/;
-      if (*I != IncomingReg)   // Don't insert duplicates.
-        V.insert(I, IncomingReg);
-    }
+    addRegisterDead(IncomingReg, MI);
     getVarInfo(IncomingReg).Kills.push_back(MI);
   }
 
@@ -282,12 +221,16 @@ public:
     if (!getVarInfo(reg).removeKill(MI))
       return false;
 
-    std::vector<unsigned> &V = getDeadDefsVector(MI);
-    for (unsigned i = 0, e = V.size(); i != e; ++i)
-      if (V[i] == reg) {
-        V.erase(V.begin()+i);
-        return true;
+    bool Removed = false;
+    for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
+      MachineOperand &MO = MI->getOperand(i);
+      if (MO.isReg() && MO.isDef() && MO.getReg() == reg) {
+        MO.unsetIsDead();
+        Removed = true;
+        break;
       }
+    }
+    assert(Removed && "Register is not defined by this instruction!");
     return true;
   }
 
@@ -301,8 +244,6 @@ public:
 
   virtual void releaseMemory() {
     VirtRegInfo.clear();
-    RegistersKilled.clear();
-    RegistersDead.clear();
   }
 
   /// getVarInfo - Return the VarInfo structure for the specified VIRTUAL

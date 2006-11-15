@@ -72,24 +72,56 @@ LiveVariables::VarInfo &LiveVariables::getVarInfo(unsigned RegIdx) {
   return VirtRegInfo[RegIdx];
 }
 
+/// registerOverlap - Returns true if register 1 is equal to register 2
+/// or if register 1 is equal to any of alias of register 2.
+static bool registerOverlap(unsigned Reg1, unsigned Reg2,
+                             const MRegisterInfo *RegInfo) {
+  bool isVirt1 = MRegisterInfo::isVirtualRegister(Reg1);
+  bool isVirt2 = MRegisterInfo::isVirtualRegister(Reg2);
+  if (isVirt1 != isVirt2)
+    return false;
+  if (Reg1 == Reg2)
+    return true;
+  else if (isVirt1)
+    return false;
+  for (const unsigned *AliasSet = RegInfo->getAliasSet(Reg2);
+       unsigned Alias = *AliasSet; ++AliasSet) {
+    if (Reg1 == Alias)
+      return true;
+  }
+  return false;
+}
+
 bool LiveVariables::KillsRegister(MachineInstr *MI, unsigned Reg) const {
-  std::map<MachineInstr*, std::vector<unsigned> >::const_iterator I = 
-  RegistersKilled.find(MI);
-  if (I == RegistersKilled.end()) return false;
-  
-  // Do a binary search, as these lists can grow pretty big, particularly for
-  // call instructions on targets with lots of call-clobbered registers.
-  return std::binary_search(I->second.begin(), I->second.end(), Reg);
+  for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
+    MachineOperand &MO = MI->getOperand(i);
+    if (MO.isReg() && MO.isKill()) {
+      if (registerOverlap(Reg, MO.getReg(), RegInfo))
+        return true;
+    }
+  }
+  return false;
 }
 
 bool LiveVariables::RegisterDefIsDead(MachineInstr *MI, unsigned Reg) const {
-  std::map<MachineInstr*, std::vector<unsigned> >::const_iterator I = 
-  RegistersDead.find(MI);
-  if (I == RegistersDead.end()) return false;
-  
-  // Do a binary search, as these lists can grow pretty big, particularly for
-  // call instructions on targets with lots of call-clobbered registers.
-  return std::binary_search(I->second.begin(), I->second.end(), Reg);
+  for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
+    MachineOperand &MO = MI->getOperand(i);
+    if (MO.isReg() && MO.isDead())
+      if (registerOverlap(Reg, MO.getReg(), RegInfo))
+        return true;
+  }
+  return false;
+}
+
+bool LiveVariables::ModifiesRegister(MachineInstr *MI, unsigned Reg) const {
+  for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
+    MachineOperand &MO = MI->getOperand(i);
+    if (MO.isReg() && MO.isDef()) {
+      if (registerOverlap(Reg, MO.getReg(), RegInfo))
+        return true;
+    }
+  }
+  return false;
 }
 
 void LiveVariables::MarkVirtRegAliveInBlock(VarInfo &VRInfo,
@@ -149,6 +181,26 @@ void LiveVariables::HandleVirtRegUse(VarInfo &VRInfo, MachineBasicBlock *MBB,
     MarkVirtRegAliveInBlock(VRInfo, *PI);
 }
 
+void LiveVariables::addRegisterKilled(unsigned IncomingReg, MachineInstr *MI) {
+  for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
+    MachineOperand &MO = MI->getOperand(i);
+    if (MO.isReg() && MO.isUse() && MO.getReg() == IncomingReg) {
+      MO.setIsKill();
+      break;
+    }
+  }
+}
+
+void LiveVariables::addRegisterDead(unsigned IncomingReg, MachineInstr *MI) {
+  for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
+    MachineOperand &MO = MI->getOperand(i);
+    if (MO.isReg() && MO.isDef() && MO.getReg() == IncomingReg) {
+      MO.setIsDead();
+      break;
+    }
+  }
+}
+
 void LiveVariables::HandlePhysRegUse(unsigned Reg, MachineInstr *MI) {
   PhysRegInfo[Reg] = MI;
   PhysRegUsed[Reg] = true;
@@ -164,9 +216,9 @@ void LiveVariables::HandlePhysRegDef(unsigned Reg, MachineInstr *MI) {
   // Does this kill a previous version of this register?
   if (MachineInstr *LastUse = PhysRegInfo[Reg]) {
     if (PhysRegUsed[Reg])
-      RegistersKilled[LastUse].push_back(Reg);
+      addRegisterKilled(Reg, LastUse);
     else
-      RegistersDead[LastUse].push_back(Reg);
+      addRegisterDead(Reg, LastUse);
   }
   PhysRegInfo[Reg] = MI;
   PhysRegUsed[Reg] = false;
@@ -175,9 +227,9 @@ void LiveVariables::HandlePhysRegDef(unsigned Reg, MachineInstr *MI) {
        unsigned Alias = *AliasSet; ++AliasSet) {
     if (MachineInstr *LastUse = PhysRegInfo[Alias]) {
       if (PhysRegUsed[Alias])
-        RegistersKilled[LastUse].push_back(Alias);
+        addRegisterKilled(Alias, LastUse);
       else
-        RegistersDead[LastUse].push_back(Alias);
+        addRegisterDead(Alias, LastUse);
     }
     PhysRegInfo[Alias] = MI;
     PhysRegUsed[Alias] = false;
@@ -286,7 +338,7 @@ bool LiveVariables::runOnMachineFunction(MachineFunction &MF) {
       }
     }
 
-    // Finally, if the last block in the function is a return, make sure to mark
+    // Finally, if the last instruction in the block is a return, make sure to mark
     // it as using all of the live-out values in the function.
     if (!MBB->empty() && TII.isReturn(MBB->back().getOpcode())) {
       MachineInstr *Ret = &MBB->back();
@@ -295,6 +347,8 @@ bool LiveVariables::runOnMachineFunction(MachineFunction &MF) {
         assert(MRegisterInfo::isPhysicalRegister(*I) &&
                "Cannot have a live-in virtual register!");
         HandlePhysRegUse(*I, Ret);
+        // Add live-out registers as implicit uses.
+        Ret->addRegOperand(*I, false, true);
       }
     }
 
@@ -305,30 +359,19 @@ bool LiveVariables::runOnMachineFunction(MachineFunction &MF) {
         HandlePhysRegDef(i, 0);
   }
 
-  // Convert the information we have gathered into VirtRegInfo and transform it
-  // into a form usable by RegistersKilled.
+  // Convert and transfer the dead / killed information we have gathered into
+  // VirtRegInfo onto MI's.
   //
   for (unsigned i = 0, e = VirtRegInfo.size(); i != e; ++i)
     for (unsigned j = 0, e = VirtRegInfo[i].Kills.size(); j != e; ++j) {
       if (VirtRegInfo[i].Kills[j] == VirtRegInfo[i].DefInst)
-        RegistersDead[VirtRegInfo[i].Kills[j]].push_back(
-                                    i + MRegisterInfo::FirstVirtualRegister);
-
+        addRegisterDead(i + MRegisterInfo::FirstVirtualRegister,
+                        VirtRegInfo[i].Kills[j]);
       else
-        RegistersKilled[VirtRegInfo[i].Kills[j]].push_back(
-                                    i + MRegisterInfo::FirstVirtualRegister);
+        addRegisterKilled(i + MRegisterInfo::FirstVirtualRegister,
+                          VirtRegInfo[i].Kills[j]);
     }
 
-  // Walk through the RegistersKilled/Dead sets, and sort the registers killed
-  // or dead.  This allows us to use efficient binary search for membership
-  // testing.
-  for (std::map<MachineInstr*, std::vector<unsigned> >::iterator
-       I = RegistersKilled.begin(), E = RegistersKilled.end(); I != E; ++I)
-    std::sort(I->second.begin(), I->second.end());
-  for (std::map<MachineInstr*, std::vector<unsigned> >::iterator
-       I = RegistersDead.begin(), E = RegistersDead.end(); I != E; ++I)
-    std::sort(I->second.begin(), I->second.end());
-  
   // Check to make sure there are no unreachable blocks in the MC CFG for the
   // function.  If so, it is due to a bug in the instruction selector or some
   // other part of the code generator if this happens.
@@ -347,8 +390,8 @@ bool LiveVariables::runOnMachineFunction(MachineFunction &MF) {
 /// the records for NewMI.
 void LiveVariables::instructionChanged(MachineInstr *OldMI,
                                        MachineInstr *NewMI) {
-  // If the instruction defines any virtual registers, update the VarInfo for
-  // the instruction.
+  // If the instruction defines any virtual registers, update the VarInfo,
+  // kill and dead information for the instruction.
   for (unsigned i = 0, e = OldMI->getNumOperands(); i != e; ++i) {
     MachineOperand &MO = OldMI->getOperand(i);
     if (MO.isRegister() && MO.getReg() &&
@@ -356,74 +399,57 @@ void LiveVariables::instructionChanged(MachineInstr *OldMI,
       unsigned Reg = MO.getReg();
       VarInfo &VI = getVarInfo(Reg);
       if (MO.isDef()) {
+        if (MO.isDead()) {
+          MO.unsetIsDead();
+          addVirtualRegisterDead(Reg, NewMI);
+        }
         // Update the defining instruction.
         if (VI.DefInst == OldMI)
           VI.DefInst = NewMI;
       }
       if (MO.isUse()) {
+        if (MO.isKill()) {
+          MO.unsetIsKill();
+          addVirtualRegisterKilled(Reg, NewMI);
+        }
         // If this is a kill of the value, update the VI kills list.
         if (VI.removeKill(OldMI))
           VI.Kills.push_back(NewMI);   // Yes, there was a kill of it
       }
     }
   }
-
-  // Move the killed information over...
-  killed_iterator I, E;
-  tie(I, E) = killed_range(OldMI);
-  if (I != E) {
-    std::vector<unsigned> &V = RegistersKilled[NewMI];
-    bool WasEmpty = V.empty();
-    V.insert(V.end(), I, E);
-    if (!WasEmpty)
-      std::sort(V.begin(), V.end());   // Keep the reg list sorted.
-    RegistersKilled.erase(OldMI);
-  }
-
-  // Move the dead information over...
-  tie(I, E) = dead_range(OldMI);
-  if (I != E) {
-    std::vector<unsigned> &V = RegistersDead[NewMI];
-    bool WasEmpty = V.empty();
-    V.insert(V.end(), I, E);
-    if (!WasEmpty)
-      std::sort(V.begin(), V.end());   // Keep the reg list sorted.
-    RegistersDead.erase(OldMI);
-  }
 }
 
 /// removeVirtualRegistersKilled - Remove all killed info for the specified
 /// instruction.
 void LiveVariables::removeVirtualRegistersKilled(MachineInstr *MI) {
-  std::map<MachineInstr*, std::vector<unsigned> >::iterator I = 
-    RegistersKilled.find(MI);
-  if (I == RegistersKilled.end()) return;
-
-  std::vector<unsigned> &Regs = I->second;
-  for (unsigned i = 0, e = Regs.size(); i != e; ++i) {
-    if (MRegisterInfo::isVirtualRegister(Regs[i])) {
-      bool removed = getVarInfo(Regs[i]).removeKill(MI);
-      assert(removed && "kill not in register's VarInfo?");
+  for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
+    MachineOperand &MO = MI->getOperand(i);
+    if (MO.isReg() && MO.isKill()) {
+      MO.unsetIsKill();
+      unsigned Reg = MO.getReg();
+      if (MRegisterInfo::isVirtualRegister(Reg)) {
+        bool removed = getVarInfo(Reg).removeKill(MI);
+        assert(removed && "kill not in register's VarInfo?");
+      }
     }
   }
-  RegistersKilled.erase(I);
 }
 
 /// removeVirtualRegistersDead - Remove all of the dead registers for the
 /// specified instruction from the live variable information.
 void LiveVariables::removeVirtualRegistersDead(MachineInstr *MI) {
-  std::map<MachineInstr*, std::vector<unsigned> >::iterator I = 
-    RegistersDead.find(MI);
-  if (I == RegistersDead.end()) return;
-  
-  std::vector<unsigned> &Regs = I->second;
-  for (unsigned i = 0, e = Regs.size(); i != e; ++i) {
-    if (MRegisterInfo::isVirtualRegister(Regs[i])) {
-      bool removed = getVarInfo(Regs[i]).removeKill(MI);
-      assert(removed && "kill not in register's VarInfo?");
+  for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
+    MachineOperand &MO = MI->getOperand(i);
+    if (MO.isReg() && MO.isDead()) {
+      MO.unsetIsDead();
+      unsigned Reg = MO.getReg();
+      if (MRegisterInfo::isVirtualRegister(Reg)) {
+        bool removed = getVarInfo(Reg).removeKill(MI);
+        assert(removed && "kill not in register's VarInfo?");
+      }
     }
   }
-  RegistersDead.erase(I);
 }
 
 /// analyzePHINodes - Gather information about the PHI nodes in here. In
