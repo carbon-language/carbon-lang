@@ -275,13 +275,13 @@ public:
   /// ChangeToRegister - Replace this operand with a new register operand of
   /// the specified value.  If an operand is known to be an register already,
   /// the setReg method should be used.
-  void ChangeToRegister(unsigned Reg, bool isDef,
-                        bool isKill = false, bool isDead = false) {
+  void ChangeToRegister(unsigned Reg, bool isDef) {
     opType = MO_Register;
     contents.RegNo = Reg;
     IsDef = isDef;
-    IsKill = isKill;
-    IsDead = isDead;
+    IsImp = false;
+    IsKill = false;
+    IsDead = false;
   }
 
   friend std::ostream& operator<<(std::ostream& os, const MachineOperand& mop);
