@@ -24,7 +24,7 @@ namespace llvm {
 /// CommonPassManagerImpl helps pass manager analysis required by
 /// the managed passes. It provides methods to add/remove analysis
 /// available and query if certain analysis is available or not.
-class CommonPassManagerImpl : public Pass {
+class CommonPassManagerImpl {
 
 public:
 
@@ -124,7 +124,8 @@ private:
 /// BasicBlockPassManager_New manages BasicBlockPass. It batches all the
 /// pass together and sequence them to process one basic block before
 /// processing next basic block.
-class BasicBlockPassManager_New : public CommonPassManagerImpl {
+class BasicBlockPassManager_New : public CommonPassManagerImpl, 
+                                  public FunctionPass {
 
 public:
   BasicBlockPassManager_New() { }
@@ -146,7 +147,8 @@ private:
 /// It batches all function passes and basic block pass managers together and
 /// sequence them to process one function at a time before processing next
 /// function.
-class FunctionPassManagerImpl_New : public CommonPassManagerImpl {
+class FunctionPassManagerImpl_New : public CommonPassManagerImpl,
+                                    public ModulePass {
 public:
   FunctionPassManagerImpl_New(ModuleProvider *P) { /* TODO */ }
   FunctionPassManagerImpl_New() { 
@@ -353,8 +355,8 @@ void CommonPassManagerImpl::addPassToManager (Pass *P,
 // implementations it needs.
 //
 void CommonPassManagerImpl::initializeAnalysisImpl(Pass *P) {
-  AnalysisUsage AnUsage;
-  P->getAnalysisUsage(AnUsage);
+    AnalysisUsage AnUsage;
+    P->getAnalysisUsage(AnUsage);
  
   for (std::vector<const PassInfo *>::const_iterator
          I = AnUsage.getRequiredSet().begin(),
