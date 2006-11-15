@@ -18,7 +18,6 @@
 
 namespace llvm {
   class X86TargetMachine;
-  class IntrinsicLowering;
 
   class X86JITInfo : public TargetJITInfo {
     X86TargetMachine &TM;
