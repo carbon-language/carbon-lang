@@ -14,6 +14,7 @@
 
 #include "llvm/PassManager.h"
 #include "llvm/Module.h"
+#include "llvm/ModuleProvider.h"
 #include <vector>
 #include <map>
 
@@ -174,6 +175,13 @@ public:
   /// Return true IFF AnalysisID AID is currently available.
   Pass *getAnalysisPassFromManager(AnalysisID AID);
 
+  /// doInitialization - Run all of the initializers for the function passes.
+  ///
+  bool doInitialization(Module &M);
+  
+  /// doFinalization - Run all of the initializers for the function passes.
+  ///
+  bool doFinalization(Module &M);
 private:
   // Active Pass Managers
   BasicBlockPassManager_New *activeBBPassManager;
@@ -355,8 +363,8 @@ void CommonPassManagerImpl::addPassToManager (Pass *P,
 // implementations it needs.
 //
 void CommonPassManagerImpl::initializeAnalysisImpl(Pass *P) {
-    AnalysisUsage AnUsage;
-    P->getAnalysisUsage(AnUsage);
+  AnalysisUsage AnUsage;
+  P->getAnalysisUsage(AnUsage);
  
   for (std::vector<const PassInfo *>::const_iterator
          I = AnUsage.getRequiredSet().begin(),
@@ -441,6 +449,18 @@ FunctionPassManager_New::runOnModule(Module &M) {
   return FPM->runOnModule(M);
 }
 
+/// doInitialization - Run all of the initializers for the function passes.
+///
+bool FunctionPassManager_New::doInitialization() {
+  return FPM->doInitialization(*MP->getModule());
+}
+
+/// doFinalization - Run all of the initializers for the function passes.
+///
+bool FunctionPassManager_New::doFinalization() {
+  return FPM->doFinalization(*MP->getModule());
+}
+
 // FunctionPassManagerImpl_New implementation
 
 // FunctionPassManager
@@ -516,6 +536,36 @@ Pass *FunctionPassManagerImpl_New::getAnalysisPassFromManager(AnalysisID AID) {
   // TODO : Check inactive managers
   return NULL;
 }
+
+inline bool FunctionPassManagerImpl_New::doInitialization(Module &M) {
+  bool Changed = false;
+
+  for (std::vector<Pass *>::iterator itr = passVectorBegin(),
+         e = passVectorEnd(); itr != e; ++itr) {
+    Pass *P = *itr;
+    
+    FunctionPass *FP = dynamic_cast<FunctionPass*>(P);
+    Changed |= FP->doInitialization(M);
+  }
+
+  return Changed;
+}
+
+inline bool FunctionPassManagerImpl_New::doFinalization(Module &M) {
+  bool Changed = false;
+
+  for (std::vector<Pass *>::iterator itr = passVectorBegin(),
+         e = passVectorEnd(); itr != e; ++itr) {
+    Pass *P = *itr;
+    
+    FunctionPass *FP = dynamic_cast<FunctionPass*>(P);
+    Changed |= FP->doFinalization(M);
+  }
+
+
+  return Changed;
+}
+
 
 // ModulePassManager implementation
 
