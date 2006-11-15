@@ -299,7 +299,13 @@ public:
   ///
   static PackedType *get(const Type *ElementType, unsigned NumElements);
 
+  /// @brief Return the number of elements in the Packed type.
   inline unsigned getNumElements() const { return NumElements; }
+
+  /// @brief Return the number of bits in the Packed type.
+  inline unsigned getBitWidth() const { 
+    return NumElements *getElementType()->getPrimitiveSizeInBits();
+  }
 
   // Implement the AbstractTypeUser interface.
   virtual void refineAbstractType(const DerivedType *OldTy, const Type *NewTy);
