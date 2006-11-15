@@ -747,7 +747,7 @@ all-local:: $(LibName.LA)
 
 ifdef LINK_LIBS_IN_SHARED
 ifdef LOADABLE_MODULE
-SharedLibKindMessage := "Lodable Module"
+SharedLibKindMessage := "Loadable Module"
 else
 SharedLibKindMessage := "Shared Library"
 endif
