@@ -69,7 +69,7 @@ namespace {
   /// module to a C translation unit.
   class CWriter : public FunctionPass, public InstVisitor<CWriter> {
     std::ostream &Out;
-    DefaultIntrinsicLowering IL;
+    IntrinsicLowering IL;
     Mangler *Mang;
     LoopInfo *LI;
     const Module *TheModule;

@@ -7,7 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This file implements the default intrinsic lowering implementation.
+// This file implements the IntrinsicLowering class.
 //
 //===----------------------------------------------------------------------===//
 
@@ -82,7 +82,7 @@ static CallInst *ReplaceCallWith(const char *NewFn, CallInst *CI,
   return NewCI;
 }
 
-void DefaultIntrinsicLowering::AddPrototypes(Module &M) {
+void IntrinsicLowering::AddPrototypes(Module &M) {
   for (Module::iterator I = M.begin(), E = M.end(); I != E; ++I)
     if (I->isExternal() && !I->use_empty())
       switch (I->getIntrinsicID()) {
@@ -263,7 +263,7 @@ static Value *LowerCTLZ(Value *V, Instruction *IP) {
 
 
 
-void DefaultIntrinsicLowering::LowerIntrinsicCall(CallInst *CI) {
+void IntrinsicLowering::LowerIntrinsicCall(CallInst *CI) {
   Function *Callee = CI->getCalledFunction();
   assert(Callee && "Cannot lower an indirect call!");
 
