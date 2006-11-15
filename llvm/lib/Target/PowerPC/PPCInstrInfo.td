@@ -255,7 +255,7 @@ def memrr : Operand<iPTR> {
 }
 def memrix : Operand<iPTR> {   // memri where the imm is shifted 2 bits.
   let PrintMethod = "printMemRegImmShifted";
-  let MIOperandInfo = (ops i32imm, ptr_rc);
+  let MIOperandInfo = (ops i32imm:$imm, ptr_rc:$reg);
 }
 
 // PowerPC Predicate operand.  20 = (0<<5)|20 = always, CR0 is a dummy reg

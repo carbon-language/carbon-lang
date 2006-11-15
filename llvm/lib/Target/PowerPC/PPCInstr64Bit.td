@@ -322,18 +322,15 @@ def LWZX8 : XForm_1<31,  23, (ops G8RC:$rD, memrr:$src),
                    
                    
 // Update forms.
-def LBZU8 : DForm_1<35, (ops G8RC:$rD, ptr_rc:$rA_result, symbolLo:$disp,
-                             ptr_rc:$rA),
-                    "lbzu $rD, $disp($rA)", LdStGeneral,
-                    []>, RegConstraint<"$rA = $rA_result">;
-def LHZU8 : DForm_1<41, (ops G8RC:$rD, ptr_rc:$rA_result, symbolLo:$disp,
-                             ptr_rc:$rA),
-                    "lhzu $rD, $disp($rA)", LdStGeneral,
-                    []>, RegConstraint<"$rA = $rA_result">;
-def LWZU8 : DForm_1<33, (ops G8RC:$rD, ptr_rc:$rA_result, symbolLo:$disp,
-                             ptr_rc:$rA),
-                    "lwzu $rD, $disp($rA)", LdStGeneral,
-                    []>, RegConstraint<"$rA = $rA_result">;
+def LBZU8 : DForm_1<35, (ops G8RC:$rD, ptr_rc:$ea_result, memri:$addr),
+                    "lbzu $rD, $addr", LdStGeneral,
+                    []>, RegConstraint<"$addr.reg = $ea_result">;
+def LHZU8 : DForm_1<41, (ops G8RC:$rD, ptr_rc:$ea_result, memri:$addr),
+                    "lhzu $rD, $addr", LdStGeneral,
+                    []>, RegConstraint<"$addr.reg = $ea_result">;
+def LWZU8 : DForm_1<33, (ops G8RC:$rD, ptr_rc:$ea_result, memri:$addr),
+                    "lwzu $rD, $addr", LdStGeneral,
+                    []>, RegConstraint<"$addr.reg = $ea_result">;
 
 }
 
@@ -347,10 +344,9 @@ def LDX  : XForm_1<31,  21, (ops G8RC:$rD, memrr:$src),
                    "ldx $rD, $src", LdStLD,
                    [(set G8RC:$rD, (load xaddr:$src))]>, isPPC64;
                    
-def LDU  : DSForm_1<58, 1, (ops G8RC:$rD, ptr_rc:$rA_result, symbolLo:$disp,
-                                ptr_rc:$rA),
-                    "ldu $rD, $disp($rA)", LdStLD,
-                    []>, RegConstraint<"$rA = $rA_result">, isPPC64;
+def LDU  : DSForm_1<58, 1, (ops G8RC:$rD, ptr_rc:$ea_result, memrix:$addr),
+                    "ldu $rD, $addr", LdStLD,
+                    []>, RegConstraint<"$addr.reg = $ea_result">, isPPC64;
 
 }
 
