@@ -77,15 +77,16 @@ MachineInstr *SparcRegisterInfo::foldMemoryOperand(MachineInstr* MI,
                                                    unsigned OpNum,
                                                    int FI) const {
   bool isFloat = false;
+  MachineInstr *NewMI = NULL;
   switch (MI->getOpcode()) {
   case SP::ORrr:
     if (MI->getOperand(1).isRegister() && MI->getOperand(1).getReg() == SP::G0&&
         MI->getOperand(0).isRegister() && MI->getOperand(2).isRegister()) {
       if (OpNum == 0)    // COPY -> STORE
-        return BuildMI(TII, SP::STri, 3).addFrameIndex(FI).addImm(0)
+        NewMI = BuildMI(TII, SP::STri, 3).addFrameIndex(FI).addImm(0)
                                    .addReg(MI->getOperand(2).getReg());
       else               // COPY -> LOAD
-        return BuildMI(TII, SP::LDri, 2, MI->getOperand(0).getReg())
+        NewMI = BuildMI(TII, SP::LDri, 2, MI->getOperand(0).getReg())
                       .addFrameIndex(FI).addImm(0);
     }
     break;
@@ -94,14 +95,17 @@ MachineInstr *SparcRegisterInfo::foldMemoryOperand(MachineInstr* MI,
     // FALLTHROUGH
   case SP::FMOVD:
     if (OpNum == 0)  // COPY -> STORE
-      return BuildMI(TII, isFloat ? SP::STFri : SP::STDFri, 3)
+      NewMI = BuildMI(TII, isFloat ? SP::STFri : SP::STDFri, 3)
                .addFrameIndex(FI).addImm(0).addReg(MI->getOperand(1).getReg());
     else             // COPY -> LOAD
-      return BuildMI(TII, isFloat ? SP::LDFri : SP::LDDFri, 2, 
+      NewMI = BuildMI(TII, isFloat ? SP::LDFri : SP::LDDFri, 2, 
                      MI->getOperand(0).getReg()).addFrameIndex(FI).addImm(0);
     break;
   }
-  return 0;
+
+  if (NewMI)
+    NewMI->copyKillDeadInfo(MI);
+  return NewMI;
 }
 
 const unsigned* SparcRegisterInfo::getCalleeSaveRegs() const {

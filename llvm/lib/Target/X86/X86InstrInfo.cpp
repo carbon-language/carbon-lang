@@ -130,6 +130,7 @@ MachineInstr *X86InstrInfo::convertToThreeAddress(MachineInstr *MI) const {
   unsigned Dest = MI->getOperand(0).getReg();
   unsigned Src = MI->getOperand(1).getReg();
 
+  MachineInstr *NewMI = NULL;
   switch (MI->getOpcode()) {
   default: break;
   case X86::SHUFPSrri: {
@@ -140,7 +141,9 @@ MachineInstr *X86InstrInfo::convertToThreeAddress(MachineInstr *MI) const {
     unsigned C = MI->getOperand(2).getReg();
     unsigned M = MI->getOperand(3).getImmedValue();
     if (!Subtarget->hasSSE2() || B != C) return 0;
-    return BuildMI(*this, X86::PSHUFDri, 2, A).addReg(B).addImm(M);
+    NewMI = BuildMI(*this, X86::PSHUFDri, 2, A).addReg(B).addImm(M);
+    NewMI->copyKillDeadInfo(MI);
+    return NewMI;
   }
   }
 
@@ -157,46 +160,51 @@ MachineInstr *X86InstrInfo::convertToThreeAddress(MachineInstr *MI) const {
   case X86::INC32r:
   case X86::INC64_32r:
     assert(MI->getNumOperands() == 2 && "Unknown inc instruction!");
-    return addRegOffset(BuildMI(*this, X86::LEA32r, 5, Dest), Src, 1);
+    NewMI = addRegOffset(BuildMI(*this, X86::LEA32r, 5, Dest), Src, 1);
+    break;
   case X86::INC16r:
   case X86::INC64_16r:
     if (DisableLEA16) return 0;
     assert(MI->getNumOperands() == 2 && "Unknown inc instruction!");
-    return addRegOffset(BuildMI(*this, X86::LEA16r, 5, Dest), Src, 1);
+    NewMI = addRegOffset(BuildMI(*this, X86::LEA16r, 5, Dest), Src, 1);
+    break;
   case X86::DEC32r:
   case X86::DEC64_32r:
     assert(MI->getNumOperands() == 2 && "Unknown dec instruction!");
-    return addRegOffset(BuildMI(*this, X86::LEA32r, 5, Dest), Src, -1);
+    NewMI = addRegOffset(BuildMI(*this, X86::LEA32r, 5, Dest), Src, -1);
+    break;
   case X86::DEC16r:
   case X86::DEC64_16r:
     if (DisableLEA16) return 0;
     assert(MI->getNumOperands() == 2 && "Unknown dec instruction!");
-    return addRegOffset(BuildMI(*this, X86::LEA16r, 5, Dest), Src, -1);
+    NewMI = addRegOffset(BuildMI(*this, X86::LEA16r, 5, Dest), Src, -1);
+    break;
   case X86::ADD32rr:
     assert(MI->getNumOperands() == 3 && "Unknown add instruction!");
-    return addRegReg(BuildMI(*this, X86::LEA32r, 5, Dest), Src,
+    NewMI = addRegReg(BuildMI(*this, X86::LEA32r, 5, Dest), Src,
                      MI->getOperand(2).getReg());
+    break;
   case X86::ADD16rr:
     if (DisableLEA16) return 0;
     assert(MI->getNumOperands() == 3 && "Unknown add instruction!");
-    return addRegReg(BuildMI(*this, X86::LEA16r, 5, Dest), Src,
+    NewMI = addRegReg(BuildMI(*this, X86::LEA16r, 5, Dest), Src,
                      MI->getOperand(2).getReg());
+    break;
   case X86::ADD32ri:
   case X86::ADD32ri8:
     assert(MI->getNumOperands() == 3 && "Unknown add instruction!");
     if (MI->getOperand(2).isImmediate())
-      return addRegOffset(BuildMI(*this, X86::LEA32r, 5, Dest), Src,
+      NewMI = addRegOffset(BuildMI(*this, X86::LEA32r, 5, Dest), Src,
                           MI->getOperand(2).getImmedValue());
-    return 0;
+    break;
   case X86::ADD16ri:
   case X86::ADD16ri8:
     if (DisableLEA16) return 0;
     assert(MI->getNumOperands() == 3 && "Unknown add instruction!");
     if (MI->getOperand(2).isImmediate())
-      return addRegOffset(BuildMI(*this, X86::LEA16r, 5, Dest), Src,
+      NewMI = addRegOffset(BuildMI(*this, X86::LEA16r, 5, Dest), Src,
                           MI->getOperand(2).getImmedValue());
     break;
-
   case X86::SHL16ri:
     if (DisableLEA16) return 0;
   case X86::SHL32ri:
@@ -208,12 +216,14 @@ MachineInstr *X86InstrInfo::convertToThreeAddress(MachineInstr *MI) const {
       AM.Scale = 1 << ShAmt;
       AM.IndexReg = Src;
       unsigned Opc = MI->getOpcode() == X86::SHL32ri ? X86::LEA32r :X86::LEA16r;
-      return addFullAddress(BuildMI(*this, Opc, 5, Dest), AM);
+      NewMI = addFullAddress(BuildMI(*this, Opc, 5, Dest), AM);
     }
     break;
   }
 
-  return 0;
+  if (NewMI)
+    NewMI->copyKillDeadInfo(MI);
+  return NewMI;
 }
 
 /// commuteInstruction - We have a few instructions that must be hacked on to
@@ -239,7 +249,10 @@ MachineInstr *X86InstrInfo::commuteInstruction(MachineInstr *MI) const {
     unsigned A = MI->getOperand(0).getReg();
     unsigned B = MI->getOperand(1).getReg();
     unsigned C = MI->getOperand(2).getReg();
-    return BuildMI(*this, Opc, 3, A).addReg(C).addReg(B).addImm(Size-Amt);
+    bool BisKill = MI->getOperand(1).isKill();
+    bool CisKill = MI->getOperand(2).isKill();
+    return BuildMI(*this, Opc, 3, A).addReg(C, false, false, CisKill)
+      .addReg(B, false, false, BisKill).addImm(Size-Amt);
   }
   default:
     return TargetInstrInfo::commuteInstruction(MI);

@@ -337,47 +337,51 @@ MachineInstr *PPCRegisterInfo::foldMemoryOperand(MachineInstr *MI,
   // Make sure this is a reg-reg copy.  Note that we can't handle MCRF, because
   // it takes more than one instruction to store it.
   unsigned Opc = MI->getOpcode();
-  
+
+  MachineInstr *NewMI = NULL;
   if ((Opc == PPC::OR &&
        MI->getOperand(1).getReg() == MI->getOperand(2).getReg())) {
     if (OpNum == 0) {  // move -> store
       unsigned InReg = MI->getOperand(1).getReg();
-      return addFrameReference(BuildMI(TII, PPC::STW,
-                                       3).addReg(InReg), FrameIndex);
+      NewMI = addFrameReference(BuildMI(TII, PPC::STW,
+                                        3).addReg(InReg), FrameIndex);
     } else {           // move -> load
       unsigned OutReg = MI->getOperand(0).getReg();
-      return addFrameReference(BuildMI(TII, PPC::LWZ, 2, OutReg), FrameIndex);
+      NewMI = addFrameReference(BuildMI(TII, PPC::LWZ, 2, OutReg), FrameIndex);
     }
   } else if ((Opc == PPC::OR8 &&
               MI->getOperand(1).getReg() == MI->getOperand(2).getReg())) {
     if (OpNum == 0) {  // move -> store
       unsigned InReg = MI->getOperand(1).getReg();
-      return addFrameReference(BuildMI(TII, PPC::STD,
-                                       3).addReg(InReg), FrameIndex);
+      NewMI = addFrameReference(BuildMI(TII, PPC::STD,
+                                        3).addReg(InReg), FrameIndex);
     } else {           // move -> load
       unsigned OutReg = MI->getOperand(0).getReg();
-      return addFrameReference(BuildMI(TII, PPC::LD, 2, OutReg), FrameIndex);
+      NewMI = addFrameReference(BuildMI(TII, PPC::LD, 2, OutReg), FrameIndex);
     }
   } else if (Opc == PPC::FMRD) {
     if (OpNum == 0) {  // move -> store
       unsigned InReg = MI->getOperand(1).getReg();
-      return addFrameReference(BuildMI(TII, PPC::STFD,
-                                       3).addReg(InReg), FrameIndex);
+      NewMI = addFrameReference(BuildMI(TII, PPC::STFD,
+                                        3).addReg(InReg), FrameIndex);
     } else {           // move -> load
       unsigned OutReg = MI->getOperand(0).getReg();
-      return addFrameReference(BuildMI(TII, PPC::LFD, 2, OutReg), FrameIndex);
+      NewMI = addFrameReference(BuildMI(TII, PPC::LFD, 2, OutReg), FrameIndex);
     }
   } else if (Opc == PPC::FMRS) {
     if (OpNum == 0) {  // move -> store
       unsigned InReg = MI->getOperand(1).getReg();
-      return addFrameReference(BuildMI(TII, PPC::STFS,
+      NewMI = addFrameReference(BuildMI(TII, PPC::STFS,
                                        3).addReg(InReg), FrameIndex);
     } else {           // move -> load
       unsigned OutReg = MI->getOperand(0).getReg();
-      return addFrameReference(BuildMI(TII, PPC::LFS, 2, OutReg), FrameIndex);
+      NewMI = addFrameReference(BuildMI(TII, PPC::LFS, 2, OutReg), FrameIndex);
     }
   }
-  return 0;
+
+  if (NewMI)
+    NewMI->copyKillDeadInfo(MI);
+  return NewMI;
 }
 
 //===----------------------------------------------------------------------===//

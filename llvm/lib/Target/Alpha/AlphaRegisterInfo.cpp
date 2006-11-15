@@ -104,6 +104,7 @@ MachineInstr *AlphaRegisterInfo::foldMemoryOperand(MachineInstr *MI,
    // Make sure this is a reg-reg copy.
    unsigned Opc = MI->getOpcode();
 
+   MachineInstr *NewMI = NULL;
    switch(Opc) {
    default:
      break;
@@ -115,18 +116,20 @@ MachineInstr *AlphaRegisterInfo::foldMemoryOperand(MachineInstr *MI,
 	 unsigned InReg = MI->getOperand(1).getReg();
 	 Opc = (Opc == Alpha::BISr) ? Alpha::STQ : 
 	   ((Opc == Alpha::CPYSS) ? Alpha::STS : Alpha::STT);
-	 return BuildMI(TII, Opc, 3).addReg(InReg).addFrameIndex(FrameIndex)
+	 NewMI = BuildMI(TII, Opc, 3).addReg(InReg).addFrameIndex(FrameIndex)
 	   .addReg(Alpha::F31);
        } else {           // load -> move
 	 unsigned OutReg = MI->getOperand(0).getReg();
 	 Opc = (Opc == Alpha::BISr) ? Alpha::LDQ : 
 	   ((Opc == Alpha::CPYSS) ? Alpha::LDS : Alpha::LDT);
-	 return BuildMI(TII, Opc, 2, OutReg).addFrameIndex(FrameIndex)
+	 NewMI = BuildMI(TII, Opc, 2, OutReg).addFrameIndex(FrameIndex)
 	   .addReg(Alpha::F31);
        }
      }
      break;
    }
+  if (NewMI)
+    NewMI->copyKillDeadInfo(MI);
   return 0;
 }
 

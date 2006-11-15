@@ -291,6 +291,7 @@ MachineInstr* X86RegisterInfo::foldMemoryOperand(MachineInstr *MI,
   bool isTwoAddr = NumOps > 1 &&
     TII.getOperandConstraint(MI->getOpcode(), 1,TargetInstrInfo::TIED_TO) != -1;
 
+  MachineInstr *NewMI = NULL;
   // Folding a memory location into the two-address part of a two-address
   // instruction is different than folding it other places.  It requires
   // replacing the *two* registers with the memory location.
@@ -465,13 +466,17 @@ MachineInstr* X86RegisterInfo::foldMemoryOperand(MachineInstr *MI,
     isTwoAddrFold = true;
   } else if (i == 0) { // If operand 0
     if (MI->getOpcode() == X86::MOV16r0)
-      return MakeM0Inst(TII, X86::MOV16mi, FrameIndex, MI);
+      NewMI = MakeM0Inst(TII, X86::MOV16mi, FrameIndex, MI);
     else if (MI->getOpcode() == X86::MOV32r0)
-      return MakeM0Inst(TII, X86::MOV32mi, FrameIndex, MI);
+      NewMI = MakeM0Inst(TII, X86::MOV32mi, FrameIndex, MI);
     else if (MI->getOpcode() == X86::MOV64r0)
-      return MakeM0Inst(TII, X86::MOV64mi32, FrameIndex, MI);
+      NewMI = MakeM0Inst(TII, X86::MOV64mi32, FrameIndex, MI);
     else if (MI->getOpcode() == X86::MOV8r0)
-      return MakeM0Inst(TII, X86::MOV8mi, FrameIndex, MI);
+      NewMI = MakeM0Inst(TII, X86::MOV8mi, FrameIndex, MI);
+    if (NewMI) {
+      NewMI->copyKillDeadInfo(MI);
+      return NewMI;
+    }
     
     static const TableEntry OpcodeTable[] = {
       { X86::CMP16ri,     X86::CMP16mi },
@@ -828,9 +833,11 @@ MachineInstr* X86RegisterInfo::foldMemoryOperand(MachineInstr *MI,
     if (const TableEntry *Entry = TableLookup(OpcodeTablePtr, OpcodeTableSize,
                                               fromOpcode)) {
       if (isTwoAddrFold)
-        return FuseTwoAddrInst(Entry->to, FrameIndex, MI, TII);
-      
-      return FuseInst(Entry->to, i, FrameIndex, MI, TII);
+        NewMI = FuseTwoAddrInst(Entry->to, FrameIndex, MI, TII);
+      else
+        NewMI = FuseInst(Entry->to, i, FrameIndex, MI, TII);
+      NewMI->copyKillDeadInfo(MI);
+      return NewMI;
     }
   }
   
