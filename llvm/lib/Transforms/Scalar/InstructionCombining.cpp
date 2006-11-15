@@ -2760,6 +2760,7 @@ static Value *getSetCCValue(unsigned Opcode, Value *LHS, Value *RHS) {
 }
 
 // FoldSetCCLogical - Implements (setcc1 A, B) & (setcc2 A, B) --> (setcc3 A, B)
+namespace {
 struct FoldSetCCLogical {
   InstCombiner &IC;
   Value *LHS, *RHS;
@@ -2795,6 +2796,7 @@ struct FoldSetCCLogical {
     return IC.ReplaceInstUsesWith(Log, RV);
   }
 };
+} // end anonymous namespace
 
 // OptAndOp - This handles expressions of the form ((val OP C1) & C2).  Where
 // the Op parameter is 'OP', OpRHS is 'C1', and AndRHS is 'C2'.  Op is
