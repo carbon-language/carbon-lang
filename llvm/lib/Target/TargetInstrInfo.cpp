@@ -60,7 +60,17 @@ MachineInstr *TargetInstrInfo::commuteInstruction(MachineInstr *MI) const {
          "This only knows how to commute register operands so far");
   unsigned Reg1 = MI->getOperand(1).getReg();
   unsigned Reg2 = MI->getOperand(2).getReg();
+  bool Reg1IsKill = MI->getOperand(1).isKill();
+  bool Reg2IsKill = MI->getOperand(2).isKill();
   MI->getOperand(2).setReg(Reg1);
   MI->getOperand(1).setReg(Reg2);
+  if (Reg1IsKill)
+    MI->getOperand(2).setIsKill();
+  else
+    MI->getOperand(2).unsetIsKill();
+  if (Reg2IsKill)
+    MI->getOperand(1).setIsKill();
+  else
+    MI->getOperand(1).unsetIsKill();
   return MI;
 }
