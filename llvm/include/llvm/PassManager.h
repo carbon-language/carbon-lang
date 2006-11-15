@@ -135,6 +135,12 @@ public:
   /// so, return true.
   bool runOnModule(Module &M);
 
+  /// run - Execute all of the passes scheduled for execution.  Keep
+  /// track of whether any of the passes modifies the function, and if
+  /// so, return true.
+  ///
+  bool run(Function &F);
+  
   /// doInitialization - Run all of the initializers for the function passes.
   ///
   bool doInitialization();

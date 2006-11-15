@@ -17,6 +17,7 @@
 #include "llvm/ModuleProvider.h"
 #include <vector>
 #include <map>
+#include <iostream>
 
 using namespace llvm;
 
@@ -158,6 +159,7 @@ public:
   /// track of whether any of the passes modifies the function, and if
   /// so, return true.
   bool runOnModule(Module &M);
+  bool runOnFunction(Function &F);
 
   /// Return true IFF AnalysisID AID is currently available.
   Pass *getAnalysisPassFromManager(AnalysisID AID);
@@ -423,18 +425,30 @@ FunctionPassManager_New::FunctionPassManager_New() {
 /// PassManager_X is destroyed, the pass will be destroyed as well, so
 /// there is no need to delete the pass. (TODO delete passes.)
 /// This implies that all passes MUST be allocated with 'new'.
-void 
-FunctionPassManager_New::add(Pass *P) { 
+void FunctionPassManager_New::add(Pass *P) { 
   FPM->add(P);
 }
 
 /// Execute all of the passes scheduled for execution.  Keep
 /// track of whether any of the passes modifies the function, and if
 /// so, return true.
-bool 
-FunctionPassManager_New::runOnModule(Module &M) {
+bool FunctionPassManager_New::runOnModule(Module &M) {
   return FPM->runOnModule(M);
 }
+
+/// run - Execute all of the passes scheduled for execution.  Keep
+/// track of whether any of the passes modifies the function, and if
+/// so, return true.
+///
+bool FunctionPassManager_New::run(Function &F) {
+  std::string errstr;
+  if (MP->materializeFunction(&F, &errstr)) {
+    std::cerr << "Error reading bytecode file: " << errstr << "\n";
+    abort();
+  }
+  return FPM->runOnFunction(F);
+}
+
 
 /// doInitialization - Run all of the initializers for the function passes.
 ///
@@ -489,8 +503,7 @@ FunctionPassManagerImpl_New::addPass(Pass *P) {
 /// Execute all of the passes scheduled for execution by invoking 
 /// runOnFunction method.  Keep track of whether any of the passes modifies 
 /// the function, and if so, return true.
-bool
-FunctionPassManagerImpl_New::runOnModule(Module &M) {
+bool FunctionPassManagerImpl_New::runOnModule(Module &M) {
 
   bool Changed = false;
   clearAnalysis();
@@ -508,6 +521,28 @@ FunctionPassManagerImpl_New::runOnModule(Module &M) {
     }
   return Changed;
 }
+
+/// Execute all of the passes scheduled for execution by invoking 
+/// runOnFunction method.  Keep track of whether any of the passes modifies 
+/// the function, and if so, return true.
+bool FunctionPassManagerImpl_New::runOnFunction(Function &F) {
+
+  bool Changed = false;
+  clearAnalysis();
+
+  for (std::vector<Pass *>::iterator itr = passVectorBegin(),
+         e = passVectorEnd(); itr != e; ++itr) {
+    Pass *P = *itr;
+    
+    noteDownAvailableAnalysis(P);
+    FunctionPass *FP = dynamic_cast<FunctionPass*>(P);
+    Changed |= FP->runOnFunction(F);
+    removeNotPreservedAnalysis(P);
+    removeDeadPasses(P);
+  }
+  return Changed;
+}
+
 
 /// Return true IFF AnalysisID AID is currently available.
 Pass *FunctionPassManagerImpl_New::getAnalysisPassFromManager(AnalysisID AID) {
