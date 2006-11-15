@@ -111,7 +111,7 @@ InstrInfoEmitter::GetOperandInfo(const CodeGenInstruction &Inst) {
         Res += "|M_PREDICATE_OPERAND";
         
       // Fill in constraint info.
-      Res += ", " + Inst.OperandList[i].Constraint;
+      Res += ", " + Inst.OperandList[i].Constraints[j];
       Result.push_back(Res);
     }
   }

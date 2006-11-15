@@ -61,8 +61,9 @@ namespace llvm {
       /// up of multiple MI operands.
       DagInit *MIOperandInfo;
       
-      /// Constraint info for this operand.
-      std::string Constraint;
+      /// Constraint info for this operand.  This operand can have pieces, so we
+      /// track constraint info for each.
+      std::vector<std::string> Constraints;
 
       OperandInfo(Record *R, const std::string &N, const std::string &PMN, 
                   unsigned MION, unsigned MINO, DagInit *MIOI)
@@ -91,6 +92,21 @@ namespace llvm {
     bool hasVariableNumberOfOperands;
     bool hasCtrlDep;
     bool noResults;
+    
+    /// ParseOperandName - Parse an operand name like "$foo" or "$foo.bar",
+    /// where $foo is a whole operand and $foo.bar refers to a suboperand.
+    /// This throws an exception if the name is invalid.  If AllowWholeOp is
+    /// true, references to operands with suboperands are allowed, otherwise
+    /// not.
+    std::pair<unsigned,unsigned> ParseOperandName(const std::string &Op,
+                                                  bool AllowWholeOp = true);
+    
+    /// getFlattenedOperandNumber - Flatten a operand/suboperand pair into a
+    /// flat machineinstr operand #.
+    unsigned getFlattenedOperandNumber(std::pair<unsigned,unsigned> Op) const {
+      return OperandList[Op.first].MIOperandNo + Op.second;
+    }
+    
 
     CodeGenInstruction(Record *R, const std::string &AsmStr);
 

@@ -273,34 +273,49 @@ bool CodeGenTarget::isLittleEndianEncoding() const {
   return getInstructionSet()->getValueAsBit("isLittleEndianEncoding");
 }
 
-static std::string ParseConstraint(const std::string &CStr,
-                                   CodeGenInstruction *I, unsigned &DestOp) {
-  const std::string ops("=");  // FIXME: Only supports TIED_TO for now.
-  std::string::size_type pos = CStr.find_first_of(ops);
+
+
+static void ParseConstraint(const std::string &CStr, CodeGenInstruction *I) {
+  // FIXME: Only supports TIED_TO for now.
+  std::string::size_type pos = CStr.find_first_of('=');
   assert(pos != std::string::npos && "Unrecognized constraint");
-  std::string Name = CStr.substr(1, pos); // Skip '$'
+  std::string Name = CStr.substr(0, pos);
 
   // TIED_TO: $src1 = $dst
-  const std::string delims(" \t");
-  std::string::size_type wpos = Name.find_first_of(delims);
-  if (wpos != std::string::npos)
-    Name = Name.substr(0, wpos);
-  DestOp = I->getOperandNamed(Name);
+  std::string::size_type wpos = Name.find_first_of(" \t");
+  if (wpos == std::string::npos)
+    throw "Illegal format for tied-to constraint: '" + CStr + "'";
+  std::string DestOpName = Name.substr(0, wpos);
+  std::pair<unsigned,unsigned> DestOp = I->ParseOperandName(DestOpName, false);
 
   Name = CStr.substr(pos+1);
-  wpos = Name.find_first_not_of(delims);
-  if (wpos != std::string::npos)
-    Name = Name.substr(wpos+1);
-
-  unsigned TIdx = I->getOperandNamed(Name);
-  if (TIdx >= DestOp)
+  wpos = Name.find_first_not_of(" \t");
+  if (wpos == std::string::npos)
+    throw "Illegal format for tied-to constraint: '" + CStr + "'";
+    
+  std::pair<unsigned,unsigned> SrcOp =
+    I->ParseOperandName(Name.substr(wpos), false);
+  if (SrcOp > DestOp)
     throw "Illegal tied-to operand constraint '" + CStr + "'";
   
-  // Build the string.
-  return "((" + utostr(TIdx) + " << 16) | (1 << TargetInstrInfo::TIED_TO))";
+  
+  unsigned FlatOpNo = I->getFlattenedOperandNumber(SrcOp);
+  // Build the string for the operand.
+  std::string OpConstraint =
+    "((" + utostr(FlatOpNo) + " << 16) | (1 << TargetInstrInfo::TIED_TO))";
+
+  
+  if (!I->OperandList[DestOp.first].Constraints[DestOp.second].empty())
+    throw "Operand '" + DestOpName + "' cannot have multiple constraints!";
+  I->OperandList[DestOp.first].Constraints[DestOp.second] = OpConstraint;
 }
 
 static void ParseConstraints(const std::string &CStr, CodeGenInstruction *I) {
+  // Make sure the constraints list for each operand is large enough to hold
+  // constraint info, even if none is present.
+  for (unsigned i = 0, e = I->OperandList.size(); i != e; ++i) 
+    I->OperandList[i].Constraints.resize(I->OperandList[i].MINumOperands);
+  
   if (CStr.empty()) return;
   
   const std::string delims(",");
@@ -312,13 +327,7 @@ static void ParseConstraints(const std::string &CStr, CodeGenInstruction *I) {
     if (eidx == std::string::npos)
       eidx = CStr.length();
     
-    unsigned OpNo;
-    std::string Constr = ParseConstraint(CStr.substr(bidx, eidx), I, OpNo);
-    assert(OpNo < I->OperandList.size() && "Invalid operand no?");
-
-    if (!I->OperandList[OpNo].Constraint.empty())
-      throw "Operand #" + utostr(OpNo) + " cannot have multiple constraints!";
-    I->OperandList[OpNo].Constraint = Constr;
+    ParseConstraint(CStr.substr(bidx, eidx), I);
     bidx = CStr.find_first_not_of(delims, eidx);
   }
 }
@@ -408,13 +417,19 @@ CodeGenInstruction::CodeGenInstruction(Record *R, const std::string &AsmStr)
   
   // For backward compatibility: isTwoAddress means operand 1 is tied to
   // operand 0.
-  if (isTwoAddress && OperandList[1].Constraint.empty())
-    OperandList[1].Constraint = "((0 << 16) | (1 << TargetInstrInfo::TIED_TO))";
+  if (isTwoAddress) {
+    if (!OperandList[1].Constraints[0].empty())
+      throw R->getName() + ": cannot use isTwoAddress property: instruction "
+            "already has constraint set!";
+    OperandList[1].Constraints[0] =
+      "((0 << 16) | (1 << TargetInstrInfo::TIED_TO))";
+  }
   
   // Any operands with unset constraints get 0 as their constraint.
   for (unsigned op = 0, e = OperandList.size(); op != e; ++op)
-    if (OperandList[op].Constraint.empty())
-      OperandList[op].Constraint = "0";
+    for (unsigned j = 0, e = OperandList[op].MINumOperands; j != e; ++j)
+      if (OperandList[op].Constraints[j].empty())
+        OperandList[op].Constraints[j] = "0";
 }
 
 
@@ -430,6 +445,54 @@ unsigned CodeGenInstruction::getOperandNamed(const std::string &Name) const {
   throw "Instruction '" + TheDef->getName() +
         "' does not have an operand named '$" + Name + "'!";
 }
+
+std::pair<unsigned,unsigned> 
+CodeGenInstruction::ParseOperandName(const std::string &Op,
+                                     bool AllowWholeOp) {
+  if (Op.empty() || Op[0] != '$')
+    throw TheDef->getName() + ": Illegal operand name: '" + Op + "'";
+  
+  std::string OpName = Op.substr(1);
+  std::string SubOpName;
+  
+  // Check to see if this is $foo.bar.
+  std::string::size_type DotIdx = OpName.find_first_of(".");
+  if (DotIdx != std::string::npos) {
+    SubOpName = OpName.substr(DotIdx+1);
+    if (SubOpName.empty())
+      throw TheDef->getName() + ": illegal empty suboperand name in '" +Op +"'";
+    OpName = OpName.substr(0, DotIdx);
+  }
+  
+  unsigned OpIdx = getOperandNamed(OpName);
+
+  if (SubOpName.empty()) {  // If no suboperand name was specified:
+    // If one was needed, throw.
+    if (OperandList[OpIdx].MINumOperands > 1 && !AllowWholeOp &&
+        SubOpName.empty())
+      throw TheDef->getName() + ": Illegal to refer to"
+            " whole operand part of complex operand '" + Op + "'";
+  
+    // Otherwise, return the operand.
+    return std::make_pair(OpIdx, 0U);
+  }
+  
+  // Find the suboperand number involved.
+  DagInit *MIOpInfo = OperandList[OpIdx].MIOperandInfo;
+  if (MIOpInfo == 0)
+    throw TheDef->getName() + ": unknown suboperand name in '" + Op + "'";
+  
+  // Find the operand with the right name.
+  for (unsigned i = 0, e = MIOpInfo->getNumArgs(); i != e; ++i)
+    if (MIOpInfo->getArgName(i) == SubOpName)
+      return std::make_pair(OpIdx, i);
+
+  // Otherwise, didn't find it!
+  throw TheDef->getName() + ": unknown suboperand name in '" + Op + "'";
+}
+
+
+
 
 //===----------------------------------------------------------------------===//
 // ComplexPattern implementation
