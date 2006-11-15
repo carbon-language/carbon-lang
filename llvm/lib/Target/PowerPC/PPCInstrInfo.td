@@ -200,6 +200,9 @@ class isDOT   {
 class RegConstraint<string C> {
   string Constraints = C;
 }
+class NoEncode<string E> {
+  string DisableEncoding = E;
+}
 
 
 //===----------------------------------------------------------------------===//
@@ -438,26 +441,33 @@ def LFD : DForm_1<50, (ops F8RC:$rD, memri:$src),
 // Unindexed (r+i) Loads with Update (preinc).
 def LBZU : DForm_1<35, (ops GPRC:$rD, ptr_rc:$ea_result, memri:$addr),
                    "lbzu $rD, $addr", LdStGeneral,
-                   []>, RegConstraint<"$addr.reg = $ea_result">;
+                   []>, RegConstraint<"$addr.reg = $ea_result">,
+                   NoEncode<"$ea_result">;
 
 def LHAU : DForm_1<43, (ops GPRC:$rD, ptr_rc:$ea_result, memri:$addr),
                    "lhau $rD, $addr", LdStGeneral,
-                   []>, RegConstraint<"$addr.reg = $ea_result">;
+                   []>, RegConstraint<"$addr.reg = $ea_result">,
+                   NoEncode<"$ea_result">;
 
 def LHZU : DForm_1<41, (ops GPRC:$rD, ptr_rc:$ea_result, memri:$addr),
                    "lhzu $rD, $addr", LdStGeneral,
-                   []>, RegConstraint<"$addr.reg = $ea_result">;
+                   []>, RegConstraint<"$addr.reg = $ea_result">,
+                   NoEncode<"$ea_result">;
 
 def LWZU : DForm_1<33, (ops GPRC:$rD, ptr_rc:$ea_result, memri:$addr),
                    "lwzu $rD, $addr", LdStGeneral,
-                   []>, RegConstraint<"$addr.reg = $ea_result">;
+                   []>, RegConstraint<"$addr.reg = $ea_result">,
+                   NoEncode<"$ea_result">;
 
 def LFSU : DForm_1<49, (ops F4RC:$rD, ptr_rc:$ea_result, memri:$addr),
                   "lfs $rD, $addr", LdStLFDU,
-                  []>, RegConstraint<"$addr.reg = $ea_result">;
+                  []>, RegConstraint<"$addr.reg = $ea_result">,
+                   NoEncode<"$ea_result">;
+
 def LFDU : DForm_1<51, (ops F8RC:$rD, ptr_rc:$ea_result, memri:$addr),
                   "lfd $rD, $addr", LdStLFD,
-                  []>, RegConstraint<"$addr.reg = $ea_result">;
+                  []>, RegConstraint<"$addr.reg = $ea_result">,
+                   NoEncode<"$ea_result">;
 }
 
 // Indexed (r+r) Loads.
@@ -499,13 +509,13 @@ def LFDX   : XForm_25<31, 599, (ops F8RC:$frD, memrr:$src),
 
 // Unindexed (r+i) Stores.
 let isStore = 1, noResults = 1, PPC970_Unit = 2 in {
-def STB  : DForm_3<38, (ops GPRC:$rS, memri:$src),
+def STB  : DForm_1<38, (ops GPRC:$rS, memri:$src),
                    "stb $rS, $src", LdStGeneral,
                    [(truncstorei8 GPRC:$rS, iaddr:$src)]>;
-def STH  : DForm_3<44, (ops GPRC:$rS, memri:$src),
+def STH  : DForm_1<44, (ops GPRC:$rS, memri:$src),
                    "sth $rS, $src", LdStGeneral,
                    [(truncstorei16 GPRC:$rS, iaddr:$src)]>;
-def STW  : DForm_3<36, (ops GPRC:$rS, memri:$src),
+def STW  : DForm_1<36, (ops GPRC:$rS, memri:$src),
                    "stw $rS, $src", LdStGeneral,
                    [(store GPRC:$rS, iaddr:$src)]>;
 def STFS : DForm_1<52, (ops F4RC:$rS, memri:$dst),
@@ -518,28 +528,33 @@ def STFD : DForm_1<54, (ops F8RC:$rS, memri:$dst),
 
 // Unindexed (r+i) Stores with Update (preinc).
 let isStore = 1, PPC970_Unit = 2 in {
-def STBU  : DForm_3<39, (ops ptr_rc:$ea_res, GPRC:$rS, memri:$addr),
+def STBU  : DForm_1<39, (ops ptr_rc:$ea_res, GPRC:$rS, memri:$addr),
                     "stbu $rS, $addr", LdStGeneral,
                     [/*(set ptr_rc:$ea_res,
                           (pre_truncsti8 GPRC:$rS, iaddr:$addr))*/]>,
-                    RegConstraint<"$addr.reg = $ea_res">;
-def STHU  : DForm_3<37, (ops ptr_rc:$ea_res, GPRC:$rS, memri:$addr),
+                    RegConstraint<"$addr.reg = $ea_res">,
+                    NoEncode<"$ea_res">;
+def STHU  : DForm_1<37, (ops ptr_rc:$ea_res, GPRC:$rS, memri:$addr),
                     "sthu $rS, $addr", LdStGeneral,
                     [/*(set ptr_rc:$ea_res,
                           (pre_truncsti16 GPRC:$rS, iaddr:$addr))*/]>,
-                    RegConstraint<"$addr.reg = $ea_res">;
-def STWU  : DForm_3<37, (ops ptr_rc:$ea_res, GPRC:$rS, memri:$addr),
+                    RegConstraint<"$addr.reg = $ea_res">,
+                    NoEncode<"$ea_res">;
+def STWU  : DForm_1<37, (ops ptr_rc:$ea_res, GPRC:$rS, memri:$addr),
                     "stwu $rS, $addr", LdStGeneral,
                     [/*(set ptr_rc:$ea_res, (pre_store GPRC:$rS, iaddr:$addr))*/]>,
-                    RegConstraint<"$addr.reg = $ea_res">;
-def STFSU : DForm_3<37, (ops ptr_rc:$ea_res, F4RC:$rS, memri:$addr),
+                    RegConstraint<"$addr.reg = $ea_res">,
+                    NoEncode<"$ea_res">;
+def STFSU : DForm_1<37, (ops ptr_rc:$ea_res, F4RC:$rS, memri:$addr),
                     "stfsu $rS, $addr", LdStGeneral,
                     [/*(set ptr_rc:$ea_res, (pre_store F4RC:$rS, iaddr:$addr))*/]>,
-                    RegConstraint<"$addr.reg = $ea_res">;
-def STFDU : DForm_3<37, (ops ptr_rc:$ea_res, F8RC:$rS, memri:$addr),
+                    RegConstraint<"$addr.reg = $ea_res">,
+                    NoEncode<"$ea_res">;
+def STFDU : DForm_1<37, (ops ptr_rc:$ea_res, F8RC:$rS, memri:$addr),
                     "stfdu $rS, $addr", LdStGeneral,
                     [/*(set ptr_rc:$ea_res, (pre_store F8RC:$rS, iaddr:$addr))*/]>,
-                    RegConstraint<"$addr.reg = $ea_res">;
+                    RegConstraint<"$addr.reg = $ea_res">,
+                    NoEncode<"$ea_res">;
 }
 
 
@@ -965,12 +980,13 @@ def FSUBS : AForm_2<59, 20,
 let PPC970_Unit = 1 in {  // FXU Operations.
 // M-Form instructions.  rotate and mask instructions.
 //
-let isTwoAddress = 1, isCommutable = 1 in {
+let isCommutable = 1 in {
 // RLWIMI can be commuted if the rotate amount is zero.
 def RLWIMI : MForm_2<20,
                      (ops GPRC:$rA, GPRC:$rSi, GPRC:$rS, u5imm:$SH, u5imm:$MB, 
                       u5imm:$ME), "rlwimi $rA, $rS, $SH, $MB, $ME", IntRotate,
-                      []>, PPC970_DGroup_Cracked;
+                      []>, PPC970_DGroup_Cracked, RegConstraint<"$rSi = $rA">,
+                      NoEncode<"$rSi">;
 }
 def RLWINM : MForm_2<21,
                      (ops GPRC:$rA, GPRC:$rS, u5imm:$SH, u5imm:$MB, u5imm:$ME),

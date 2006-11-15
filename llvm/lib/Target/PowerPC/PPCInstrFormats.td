@@ -120,11 +120,6 @@ class DForm_2_r0<bits<6> opcode, dag OL, string asmstr, InstrItinClass itin,
   let Inst{16-31} = B;
 }
 
-// Currently we make the use/def reg distinction in ISel, not tablegen
-class DForm_3<bits<6> opcode, dag OL, string asmstr, InstrItinClass itin,
-              list<dag> pattern>
-  : DForm_1<opcode, OL, asmstr, itin, pattern>;
-
 class DForm_4<bits<6> opcode, dag OL, string asmstr, InstrItinClass itin,
               list<dag> pattern>
   : I<opcode, OL, asmstr, itin> {

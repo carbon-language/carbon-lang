@@ -246,11 +246,12 @@ def MULLD : XOForm_1<31, 233, 0, (ops G8RC:$rT, G8RC:$rA, G8RC:$rB),
                      [(set G8RC:$rT, (mul G8RC:$rA, G8RC:$rB))]>, isPPC64;
 
 
-let isTwoAddress = 1, isCommutable = 1 in {
+let isCommutable = 1 in {
 def RLDIMI : MDForm_1<30, 3,
                       (ops G8RC:$rA, G8RC:$rSi, G8RC:$rS, u6imm:$SH, u6imm:$MB),
                       "rldimi $rA, $rS, $SH, $MB", IntRotateD,
-                      []>, isPPC64;
+                      []>, isPPC64, RegConstraint<"$rSi = $rA">,
+                      NoEncode<"$rSi">;
 }
 
 // Rotate instructions.
@@ -290,10 +291,11 @@ def LWAX : XForm_1<31, 341, (ops G8RC:$rD, memrr:$src),
                    PPC970_DGroup_Cracked;
 
 // Update forms.
-def LHAU8 : DForm_1<43, (ops G8RC:$rD, ptr_rc:$rA_result, symbolLo:$disp,
+def LHAU8 : DForm_1<43, (ops G8RC:$rD, ptr_rc:$ea_result, symbolLo:$disp,
                             ptr_rc:$rA),
                     "lhau $rD, $disp($rA)", LdStGeneral,
-                    []>, RegConstraint<"$rA = $rA_result">;
+                    []>, RegConstraint<"$rA = $ea_result">,
+                    NoEncode<"$ea_result">;
 // NO LWAU!
 
 }
@@ -324,14 +326,16 @@ def LWZX8 : XForm_1<31,  23, (ops G8RC:$rD, memrr:$src),
 // Update forms.
 def LBZU8 : DForm_1<35, (ops G8RC:$rD, ptr_rc:$ea_result, memri:$addr),
                     "lbzu $rD, $addr", LdStGeneral,
-                    []>, RegConstraint<"$addr.reg = $ea_result">;
+                    []>, RegConstraint<"$addr.reg = $ea_result">,
+                    NoEncode<"$ea_result">;
 def LHZU8 : DForm_1<41, (ops G8RC:$rD, ptr_rc:$ea_result, memri:$addr),
                     "lhzu $rD, $addr", LdStGeneral,
-                    []>, RegConstraint<"$addr.reg = $ea_result">;
+                    []>, RegConstraint<"$addr.reg = $ea_result">,
+                    NoEncode<"$ea_result">;
 def LWZU8 : DForm_1<33, (ops G8RC:$rD, ptr_rc:$ea_result, memri:$addr),
                     "lwzu $rD, $addr", LdStGeneral,
-                    []>, RegConstraint<"$addr.reg = $ea_result">;
-
+                    []>, RegConstraint<"$addr.reg = $ea_result">,
+                    NoEncode<"$ea_result">;
 }
 
 
@@ -346,7 +350,8 @@ def LDX  : XForm_1<31,  21, (ops G8RC:$rD, memrr:$src),
                    
 def LDU  : DSForm_1<58, 1, (ops G8RC:$rD, ptr_rc:$ea_result, memrix:$addr),
                     "ldu $rD, $addr", LdStLD,
-                    []>, RegConstraint<"$addr.reg = $ea_result">, isPPC64;
+                    []>, RegConstraint<"$addr.reg = $ea_result">, isPPC64,
+                    NoEncode<"$ea_result">;
 
 }
 
@@ -378,13 +383,13 @@ def STDX_32  : XForm_8<31, 149, (ops GPRC:$rT, memrr:$dst),
 
 
 // Truncating stores.                       
-def STB8 : DForm_3<38, (ops G8RC:$rS, memri:$src),
+def STB8 : DForm_1<38, (ops G8RC:$rS, memri:$src),
                    "stb $rS, $src", LdStGeneral,
                    [(truncstorei8 G8RC:$rS, iaddr:$src)]>;
-def STH8 : DForm_3<44, (ops G8RC:$rS, memri:$src),
+def STH8 : DForm_1<44, (ops G8RC:$rS, memri:$src),
                    "sth $rS, $src", LdStGeneral,
                    [(truncstorei16 G8RC:$rS, iaddr:$src)]>;
-def STW8 : DForm_3<36, (ops G8RC:$rS, memri:$src),
+def STW8 : DForm_1<36, (ops G8RC:$rS, memri:$src),
                    "stw $rS, $src", LdStGeneral,
                    [(truncstorei32 G8RC:$rS, iaddr:$src)]>;
 def STBX8 : XForm_8<31, 215, (ops G8RC:$rS, memrr:$dst),
