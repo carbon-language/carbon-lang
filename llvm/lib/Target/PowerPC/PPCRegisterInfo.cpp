@@ -767,7 +767,7 @@ void PPCRegisterInfo::emitEpilogue(MachineFunction &MF,
 
   // Get the number of bytes allocated from the FrameInfo.
   unsigned NumBytes = MFI->getStackSize();
-  unsigned GPRSize = 4; 
+  unsigned GPRSize = Subtarget.isPPC64() ? 8 : 4;
 
   if (NumBytes != 0) {
     // If this function has a frame pointer, load the saved stack pointer from
