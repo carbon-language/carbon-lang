@@ -135,10 +135,17 @@ public:
   /// so, return true.
   bool runOnModule(Module &M);
 
+  /// doInitialization - Run all of the initializers for the function passes.
+  ///
+  bool doInitialization();
+  
+  /// doFinalization - Run all of the initializers for the function passes.
+  ///
+  bool doFinalization();
 private:
   
   FunctionPassManagerImpl_New *FPM;
-
+  ModuleProvider *MP;
 };
 
 
