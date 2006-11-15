@@ -38,7 +38,7 @@ namespace llvm {
 /// Eventually, the "resizing" ctors will be phased out.
 ///
 MachineInstr::MachineInstr(short opcode, unsigned numOperands)
-  : Opcode(opcode), parent(0), NumImplicitOps(0) {
+  : Opcode(opcode), NumImplicitOps(0), parent(0) {
   Operands.reserve(numOperands);
   // Make sure that we get added to a machine basicblock
   LeakDetector::addGarbageObject(this);
@@ -75,7 +75,7 @@ void MachineInstr::addImplicitDefUseOperands(const TargetInstrDescriptor &TID) {
 /// implicit operands. It reserves space for numOperand operands.
 MachineInstr::MachineInstr(const TargetInstrInfo &TII, short opcode,
                            unsigned numOperands)
-  : Opcode(opcode), parent(0), NumImplicitOps(0) {
+  : Opcode(opcode), NumImplicitOps(0), parent(0) {
   const TargetInstrDescriptor &TID = TII.get(opcode);
   if (TID.ImplicitDefs)
     for (const unsigned *ImpDefs = TID.ImplicitDefs; *ImpDefs; ++ImpDefs)
@@ -94,7 +94,7 @@ MachineInstr::MachineInstr(const TargetInstrInfo &TII, short opcode,
 ///
 MachineInstr::MachineInstr(MachineBasicBlock *MBB, short opcode,
                            unsigned numOperands)
-  : Opcode(opcode), parent(0), NumImplicitOps(0) {
+  : Opcode(opcode), NumImplicitOps(0), parent(0) {
   assert(MBB && "Cannot use inserting ctor with null basic block!");
   const TargetInstrDescriptor &TID = MBB->getParent()->getTarget().
     getInstrInfo()->get(opcode);
@@ -115,9 +115,9 @@ MachineInstr::MachineInstr(MachineBasicBlock *MBB, short opcode,
 ///
 MachineInstr::MachineInstr(const MachineInstr &MI) {
   Opcode = MI.getOpcode();
+  NumImplicitOps = MI.NumImplicitOps;
   Operands.reserve(MI.getNumOperands());
 
-  NumImplicitOps = MI.NumImplicitOps;
   // Add operands
   for (unsigned i = 0; i != MI.getNumOperands(); ++i)
     Operands.push_back(MI.getOperand(i));
