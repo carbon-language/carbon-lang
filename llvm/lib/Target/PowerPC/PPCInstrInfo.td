@@ -247,7 +247,7 @@ def crbitm: Operand<i8> {
 // Address operands
 def memri : Operand<iPTR> {
   let PrintMethod = "printMemRegImm";
-  let MIOperandInfo = (ops i32imm, ptr_rc);
+  let MIOperandInfo = (ops i32imm:$imm, ptr_rc:$reg);
 }
 def memrr : Operand<iPTR> {
   let PrintMethod = "printMemRegReg";
@@ -269,6 +269,7 @@ def iaddr  : ComplexPattern<iPTR, 2, "SelectAddrImm",    [], []>;
 def xaddr  : ComplexPattern<iPTR, 2, "SelectAddrIdx",    [], []>;
 def xoaddr : ComplexPattern<iPTR, 2, "SelectAddrIdxOnly",[], []>;
 def ixaddr : ComplexPattern<iPTR, 2, "SelectAddrImmShift", [], []>; // "std"
+
 
 //===----------------------------------------------------------------------===//
 // PowerPC Instruction Predicate Definitions.
@@ -410,7 +411,7 @@ def DCBZL  : DCB_Form<1014, 1, (ops memrr:$dst),
 // PPC32 Load Instructions.
 //
 
-// Unindexed (r+i) Loads.                       
+// Unindexed (r+i) Loads. 
 let isLoad = 1, PPC970_Unit = 2 in {
 def LBZ : DForm_1<34, (ops GPRC:$rD, memri:$src),
                   "lbz $rD, $src", LdStGeneral,
@@ -434,38 +435,32 @@ def LFD : DForm_1<50, (ops F8RC:$rD, memri:$src),
                   [(set F8RC:$rD, (load iaddr:$src))]>;
 
 
-// 'Update' load forms.
-def LBZU : DForm_1<35, (ops GPRC:$rD, ptr_rc:$rA_result, symbolLo:$disp,
-                            ptr_rc:$rA),
-                   "lbzu $rD, $disp($rA)", LdStGeneral,
-                   []>, RegConstraint<"$rA = $rA_result">;
+// Unindexed (r+i) Loads with Update (preinc).
+def LBZU : DForm_1<35, (ops GPRC:$rD, ptr_rc:$ea_result, memri:$addr),
+                   "lbzu $rD, $addr", LdStGeneral,
+                   []>, RegConstraint<"$addr.reg = $ea_result">;
 
-def LHAU : DForm_1<43, (ops GPRC:$rD, ptr_rc:$rA_result, symbolLo:$disp,
-                            ptr_rc:$rA),
-                   "lhau $rD, $disp($rA)", LdStGeneral,
-                   []>, RegConstraint<"$rA = $rA_result">;
+def LHAU : DForm_1<43, (ops GPRC:$rD, ptr_rc:$ea_result, memri:$addr),
+                   "lhau $rD, $addr", LdStGeneral,
+                   []>, RegConstraint<"$addr.reg = $ea_result">;
 
-def LHZU : DForm_1<41, (ops GPRC:$rD, ptr_rc:$rA_result, symbolLo:$disp,
-                            ptr_rc:$rA),
-                   "lhzu $rD, $disp($rA)", LdStGeneral,
-                   []>, RegConstraint<"$rA = $rA_result">;
+def LHZU : DForm_1<41, (ops GPRC:$rD, ptr_rc:$ea_result, memri:$addr),
+                   "lhzu $rD, $addr", LdStGeneral,
+                   []>, RegConstraint<"$addr.reg = $ea_result">;
 
-def LWZU : DForm_1<33, (ops GPRC:$rD, ptr_rc:$rA_result, symbolLo:$disp,
-                            ptr_rc:$rA),
-                   "lwzu $rD, $disp($rA)", LdStGeneral,
-                   []>, RegConstraint<"$rA = $rA_result">;
+def LWZU : DForm_1<33, (ops GPRC:$rD, ptr_rc:$ea_result, memri:$addr),
+                   "lwzu $rD, $addr", LdStGeneral,
+                   []>, RegConstraint<"$addr.reg = $ea_result">;
 
-def LFSU : DForm_1<49, (ops F4RC:$rD, ptr_rc:$rA_result, symbolLo:$disp,
-                            ptr_rc:$rA),
-                  "lfs $rD, $disp($rA)", LdStLFDU,
-                  []>, RegConstraint<"$rA = $rA_result">;
-def LFDU : DForm_1<51, (ops F8RC:$rD, ptr_rc:$rA_result, symbolLo:$disp,
-                            ptr_rc:$rA),
-                  "lfd $rD, $disp($rA)", LdStLFD,
-                  []>, RegConstraint<"$rA = $rA_result">;
+def LFSU : DForm_1<49, (ops F4RC:$rD, ptr_rc:$ea_result, memri:$addr),
+                  "lfs $rD, $addr", LdStLFDU,
+                  []>, RegConstraint<"$addr.reg = $ea_result">;
+def LFDU : DForm_1<51, (ops F8RC:$rD, ptr_rc:$ea_result, memri:$addr),
+                  "lfd $rD, $addr", LdStLFD,
+                  []>, RegConstraint<"$addr.reg = $ea_result">;
 }
 
-// Indexed (r+r) loads.
+// Indexed (r+r) Loads.
 //
 let isLoad = 1, PPC970_Unit = 2 in {
 def LBZX : XForm_1<31,  87, (ops GPRC:$rD, memrr:$src),
@@ -502,7 +497,7 @@ def LFDX   : XForm_25<31, 599, (ops F8RC:$frD, memrr:$src),
 // PPC32 Store Instructions.
 //
 
-// Unindexed (r+i) Stores.                       
+// Unindexed (r+i) Stores.
 let isStore = 1, noResults = 1, PPC970_Unit = 2 in {
 def STB  : DForm_3<38, (ops GPRC:$rS, memri:$src),
                    "stb $rS, $src", LdStGeneral,
@@ -513,10 +508,6 @@ def STH  : DForm_3<44, (ops GPRC:$rS, memri:$src),
 def STW  : DForm_3<36, (ops GPRC:$rS, memri:$src),
                    "stw $rS, $src", LdStGeneral,
                    [(store GPRC:$rS, iaddr:$src)]>;
-def STWU : DForm_3<37, (ops GPRC:$rS, s16imm:$disp, GPRC:$rA),
-                   "stwu $rS, $disp($rA)", LdStGeneral,
-                   []>;
-                   
 def STFS : DForm_1<52, (ops F4RC:$rS, memri:$dst),
                    "stfs $rS, $dst", LdStUX,
                    [(store F4RC:$rS, iaddr:$dst)]>;
@@ -524,6 +515,33 @@ def STFD : DForm_1<54, (ops F8RC:$rS, memri:$dst),
                    "stfd $rS, $dst", LdStUX,
                    [(store F8RC:$rS, iaddr:$dst)]>;
 }
+
+// Unindexed (r+i) Stores with Update (preinc).
+let isStore = 1, PPC970_Unit = 2 in {
+def STBU  : DForm_3<39, (ops ptr_rc:$ea_res, GPRC:$rS, memri:$addr),
+                    "stbu $rS, $addr", LdStGeneral,
+                    [/*(set ptr_rc:$ea_res,
+                          (pre_truncsti8 GPRC:$rS, iaddr:$addr))*/]>,
+                    RegConstraint<"$addr.reg = $ea_res">;
+def STHU  : DForm_3<37, (ops ptr_rc:$ea_res, GPRC:$rS, memri:$addr),
+                    "sthu $rS, $addr", LdStGeneral,
+                    [/*(set ptr_rc:$ea_res,
+                          (pre_truncsti16 GPRC:$rS, iaddr:$addr))*/]>,
+                    RegConstraint<"$addr.reg = $ea_res">;
+def STWU  : DForm_3<37, (ops ptr_rc:$ea_res, GPRC:$rS, memri:$addr),
+                    "stwu $rS, $addr", LdStGeneral,
+                    [/*(set ptr_rc:$ea_res, (pre_store GPRC:$rS, iaddr:$addr))*/]>,
+                    RegConstraint<"$addr.reg = $ea_res">;
+def STFSU : DForm_3<37, (ops ptr_rc:$ea_res, F4RC:$rS, memri:$addr),
+                    "stfsu $rS, $addr", LdStGeneral,
+                    [/*(set ptr_rc:$ea_res, (pre_store F4RC:$rS, iaddr:$addr))*/]>,
+                    RegConstraint<"$addr.reg = $ea_res">;
+def STFDU : DForm_3<37, (ops ptr_rc:$ea_res, F8RC:$rS, memri:$addr),
+                    "stfdu $rS, $addr", LdStGeneral,
+                    [/*(set ptr_rc:$ea_res, (pre_store F8RC:$rS, iaddr:$addr))*/]>,
+                    RegConstraint<"$addr.reg = $ea_res">;
+}
+
 
 // Indexed (r+r) Stores.
 //
