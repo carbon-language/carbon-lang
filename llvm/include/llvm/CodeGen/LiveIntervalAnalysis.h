@@ -148,6 +148,11 @@ namespace llvm {
                                                      VirtRegMap& vrm,
                                                      int slot);
 
+    /// CreateNewLiveInterval - Create a new live interval with the given live
+    /// ranges. The new live interval will have an infinite spill weight.
+    LiveInterval &CreateNewLiveInterval(const LiveInterval *LI,
+                                        const std::vector<LiveRange> &LRs);
+
     virtual void getAnalysisUsage(AnalysisUsage &AU) const;
     virtual void releaseMemory();
 

@@ -251,6 +251,55 @@ void LiveIntervals::print(std::ostream &O, const Module* ) const {
   }
 }
 
+/// CreateNewLiveInterval - Create a new live interval with the given live
+/// ranges. The new live interval will have an infinite spill weight.
+LiveInterval&
+LiveIntervals::CreateNewLiveInterval(const LiveInterval *LI,
+                                     const std::vector<LiveRange> &LRs) {
+  const TargetRegisterClass *RC = mf_->getSSARegMap()->getRegClass(LI->reg);
+
+  // Create a new virtual register for the spill interval.
+  unsigned NewVReg = mf_->getSSARegMap()->createVirtualRegister(RC);
+
+  // Replace the old virtual registers in the machine operands with the shiny
+  // new one.
+  for (std::vector<LiveRange>::const_iterator
+         I = LRs.begin(), E = LRs.end(); I != E; ++I) {
+    unsigned Index = getBaseIndex(I->start);
+    unsigned End = getBaseIndex(I->end - 1) + InstrSlots::NUM;
+
+    for (; Index != End; Index += InstrSlots::NUM) {
+      // Skip deleted instructions
+      while (Index != End && !getInstructionFromIndex(Index))
+        Index += InstrSlots::NUM;
+
+      if (Index == End) break;
+
+      MachineInstr *MI = getInstructionFromIndex(Index);
+
+      for (unsigned J = 0; J != MI->getNumOperands(); ++J) {
+        MachineOperand &MOp = MI->getOperand(J);
+        if (MOp.isRegister() && rep(MOp.getReg()) == LI->reg)
+          MOp.setReg(NewVReg);
+      }
+    }
+  }
+
+  LiveInterval &NewLI = getOrCreateInterval(NewVReg);
+
+  // The spill weight is now infinity as it cannot be spilled again
+  NewLI.weight = float(HUGE_VAL);
+
+  for (std::vector<LiveRange>::const_iterator
+         I = LRs.begin(), E = LRs.end(); I != E; ++I) {
+    DEBUG(std::cerr << "  Adding live range " << *I << " to new interval\n");
+    NewLI.addRange(*I);
+  }
+            
+  DEBUG(std::cerr << "Created new live interval " << NewLI << "\n");
+  return NewLI;
+}
+
 std::vector<LiveInterval*> LiveIntervals::
 addIntervalsForSpills(const LiveInterval &li, VirtRegMap &vrm, int slot) {
   // since this is called after the analysis is done we don't know if
