@@ -2856,7 +2856,7 @@ bool DAGCombiner::CombineToPostIndexedLoadStore(SDNode *N) {
   } else
     return false;
 
-  if (!Ptr.Val->hasOneUse())
+  if (Ptr.Val->hasOneUse())
     return false;
   
   for (SDNode::use_iterator I = Ptr.Val->use_begin(),

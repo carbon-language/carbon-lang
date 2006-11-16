@@ -1481,7 +1481,6 @@ SDOperand SelectionDAG::getNode(unsigned Opcode, MVT::ValueType VT,
   // Perform various simplifications.
   ConstantSDNode *N1C = dyn_cast<ConstantSDNode>(N1.Val);
   ConstantSDNode *N2C = dyn_cast<ConstantSDNode>(N2.Val);
-  //ConstantSDNode *N3C = dyn_cast<ConstantSDNode>(N3.Val);
   switch (Opcode) {
   case ISD::SETCC: {
     // Use FoldSetCC to simplify SETCC's.
