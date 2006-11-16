@@ -19,11 +19,15 @@
 #include "PPCInstrBuilder.h"
 #include "PPCInstrInfo.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
-#include "llvm/Support/Compiler.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetAsmInfo.h"
+#include "llvm/ADT/Statistic.h"
+#include "llvm/Support/Compiler.h"
 #include <map>
 using namespace llvm;
+
+static Statistic<> NumExpanded("ppc-branch-select",
+                               "Num branches expanded to long format");
 
 namespace {
   struct VISIBILITY_HIDDEN PPCBSel : public MachineFunctionPass {
@@ -131,6 +135,7 @@ bool PPCBSel::runOnMachineFunction(MachineFunction &Fn) {
           BuildMI(*MBB, MBBJ, Opcode, 2).addReg(CRReg).addMBB(trueMBB);
         } else {
           // Long branch, skip next branch instruction (i.e. $PC+8).
+          ++NumExpanded;
           BuildMI(*MBB, MBBJ, Inverted, 2).addReg(CRReg).addImm(2);
           BuildMI(*MBB, MBBJ, PPC::B, 1).addMBB(trueMBB);
         }
