@@ -413,7 +413,7 @@ def STWU8 : DForm_1<37, (ops ptr_rc:$ea_res, G8RC:$rS,
 
 
 def STDU : DSForm_1<62, 1, (ops ptr_rc:$ea_res, G8RC:$rS,
-                                symbolLo:$ptroff, ptr_rc:$ptrreg),
+                                s16immX4:$ptroff, ptr_rc:$ptrreg),
                     "stdu $rS, $ptroff($ptrreg)", LdStSTD,
                     [(set ptr_rc:$ea_res, (pre_store G8RC:$rS, ptr_rc:$ptrreg, 
                                                      iaddroff:$ptroff))]>,
