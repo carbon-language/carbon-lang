@@ -288,13 +288,13 @@ void *X86JITInfo::emitFunctionStub(void *Fn, MachineCodeEmitter &MCE) {
   bool NotCC = Fn != (void*)(intptr_t)X86CompilationCallback;
 #endif
   if (NotCC) {
-    MCE.startFunctionStub(5);
+    MCE.startFunctionStub(5, 4);
     MCE.emitByte(0xE9);
     MCE.emitWordLE((intptr_t)Fn-MCE.getCurrentPCValue()-4);
     return MCE.finishFunctionStub(0);
   }
 
-  MCE.startFunctionStub(6);
+  MCE.startFunctionStub(6, 4);
   MCE.emitByte(0xE8);   // Call with 32 bit pc-rel destination...
 
   MCE.emitWordLE((intptr_t)Fn-MCE.getCurrentPCValue()-4);
