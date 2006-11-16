@@ -12,7 +12,9 @@
 #      uses (in the same order) and will narrow down which optimizations
 #      cause the program either generate different output or return a 
 #      different result code. When the passes have been narrowed down, 
-#      bugpoint is invoked to further refine the problem to its origin.
+#      bugpoint is invoked to further refine the problem to its origin. If a
+#      release version of bugpoint is available it will be used, otherwise 
+#      debug.
 #
 #   Usage:
 #      findmisopt bcfile outdir progargs [match]
@@ -24,7 +26,7 @@
 #          is a directory into which intermediate results are placed
 #      progargs
 #          is a single argument containing all the arguments the program needs
-#       match
+#      match
 #          if specified to any value causes the result code of the program to
 #          be used to determine success/fail. If not specified success/fail is
 #          determined by diffing the program's output with the non-optimized
@@ -32,6 +34,16 @@
 #       
 if [ "$#" -lt 3 ] ; then
   echo "usage: findmisopt bcfile outdir progargs [match]"
+  exit 1
+fi
+
+dir="${0%%/utils/findmisopt}"
+if [ -x "$dir/Release/bin/bugpoint" ] ; then
+  bugpoint="$dir/Release/bin/bugpoint"
+elif [ -x "$dir/Debug/bin/bugpoint" ] ; then
+  bugpoint="$dir/Debug/bin/bugpoint"
+else
+  echo "findmisopt: bugpoint not found"
   exit 1
 fi
 
@@ -71,8 +83,9 @@ llvm-dis "$bcfile" -o "$ll" -f || exit 1
 llc "$bcfile" -o "$s" -f || exit 1
 gcc "$s" -o "$prog" -lstdc++ -lc -lm || exit 1
 
-# Define the list of optimizations to run
-all_switches="-verify -lowersetjmp -funcresolve -raiseallocs -simplifycfg -mem2reg -globalopt -globaldce -ipconstprop -deadargelim -instcombine -simplifycfg -prune-eh -inline -simplify-libcalls -argpromotion -raise -tailduplicate -simplifycfg -scalarrepl -instcombine -predsimplify -condprop -tailcallelim -simplifycfg -reassociate -licm -loop-unswitch -instcombine -indvars -loop-unroll -instcombine -load-vn -gcse -sccp -instcombine -condprop -dse -dce -simplifycfg -deadtypeelim -constmerge"
+# Define the list of optimizations to run. This comprises the same set of 
+# optimizations that gccas and gccld run, in the same order.
+all_switches="-verify -lowersetjmp -funcresolve -raiseallocs -simplifycfg -mem2reg -globalopt -globaldce -ipconstprop -deadargelim -instcombine -simplifycfg -prune-eh -inline -simplify-libcalls -argpromotion -raise -tailduplicate -simplifycfg -scalarrepl -instcombine -predsimplify -condprop -tailcallelim -simplifycfg -reassociate -licm -loop-unswitch -instcombine -indvars -loop-unroll -instcombine -load-vn -gcse -sccp -instcombine -condprop -dse -dce -simplifycfg -deadtypeelim -constmerge -funcresolve -internalize -ipsccp -globalopt -constmerge -deadargelim -inline -prune-eh -globalopt -globaldce -argpromotion -instcombine -predsimplify -scalarrepl -globalsmodref-aa -licm -load-vn -gcse -dse -instcombine -simplify-cfg -verify"
 
 # Current set of switches is empty
 function tryit {
@@ -138,7 +151,8 @@ if [ "$final" == " $all_switches" ] ; then
   exit 0
 fi
 echo "Smallest Optimization list=$final"
-bpcmd="bugpoint -run-llc --output "$out" --input /dev/null $bcfile $final --args $args"
+
+bpcmd="$bugpoint -run-llc -disable-loop-extraction --output "$out" --input /dev/null $bcfile $final --args $args"
 
 echo "Running: $bpcmd"
 $bpcmd
