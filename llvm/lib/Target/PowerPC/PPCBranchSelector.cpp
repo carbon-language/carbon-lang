@@ -64,6 +64,7 @@ static unsigned getNumBytesForInstruction(MachineInstr *MI) {
   case PPC::IMPLICIT_DEF_G8RC: // no asm emitted
   case PPC::IMPLICIT_DEF_F4:   // no asm emitted
   case PPC::IMPLICIT_DEF_F8:   // no asm emitted
+  case PPC::IMPLICIT_DEF_VRRC: // no asm emitted
     return 0;
   case PPC::INLINEASM: {       // Inline Asm: Variable size.
     MachineFunction *MF = MI->getParent()->getParent();
@@ -114,38 +115,37 @@ bool PPCBSel::runOnMachineFunction(MachineFunction &Fn) {
       // We may end up deleting the MachineInstr that MBBI points to, so
       // remember its opcode now so we can refer to it after calling erase()
       unsigned ByteSize = getNumBytesForInstruction(MBBI);
-      if (MBBI->getOpcode() == PPC::COND_BRANCH) {
-        MachineBasicBlock::iterator MBBJ = MBBI;
-        ++MBBJ;
-        
-        // condbranch operands:
-        // 0. CR0 register
-        // 1. bc opcode
-        // 2. target MBB
-        // 3. fallthrough MBB
-        MachineBasicBlock *trueMBB =
-          MBBI->getOperand(2).getMachineBasicBlock();
-        
-        int Displacement = OffsetMap[trueMBB] - ByteCount;
-        unsigned Opcode = MBBI->getOperand(1).getImmedValue();
-        unsigned CRReg = MBBI->getOperand(0).getReg();
-        unsigned Inverted = PPCInstrInfo::invertPPCBranchOpcode(Opcode);
-        
-        if (Displacement >= -32768 && Displacement <= 32767) {
-          BuildMI(*MBB, MBBJ, Opcode, 2).addReg(CRReg).addMBB(trueMBB);
-        } else {
-          // Long branch, skip next branch instruction (i.e. $PC+8).
-          ++NumExpanded;
-          BuildMI(*MBB, MBBJ, Inverted, 2).addReg(CRReg).addImm(2);
-          BuildMI(*MBB, MBBJ, PPC::B, 1).addMBB(trueMBB);
-        }
-        
-        // Erase the psuedo COND_BRANCH instruction, and then back up the
-        // iterator so that when the for loop increments it, we end up in
-        // the correct place rather than iterating off the end.
-        MBB->erase(MBBI);
-        MBBI = --MBBJ;
+      if (MBBI->getOpcode() != PPC::COND_BRANCH) {
+        ByteCount += ByteSize;
+        continue;
       }
+      
+      // condbranch operands:
+      // 0. CR register
+      // 1. PPC branch opcode
+      // 2. Target MBB
+      MachineBasicBlock *DestMBB = MBBI->getOperand(2).getMachineBasicBlock();
+      unsigned Opcode = MBBI->getOperand(1).getImmedValue();
+      unsigned CRReg = MBBI->getOperand(0).getReg();
+      
+      int Displacement = OffsetMap[DestMBB] - ByteCount;
+      unsigned Inverted = PPCInstrInfo::invertPPCBranchOpcode(Opcode);
+      
+      MachineBasicBlock::iterator MBBJ;
+      if (Displacement >= -32768 && Displacement <= 32767) {
+        MBBJ = BuildMI(*MBB, MBBJ, Opcode, 2).addReg(CRReg).addMBB(DestMBB);
+      } else {
+        // Long branch, skip next branch instruction (i.e. $PC+8).
+        ++NumExpanded;
+        BuildMI(*MBB, MBBJ, Inverted, 2).addReg(CRReg).addImm(2);
+        MBBJ = BuildMI(*MBB, MBBJ, PPC::B, 1).addMBB(DestMBB);
+      }
+      
+      // Erase the psuedo COND_BRANCH instruction, and then back up the
+      // iterator so that when the for loop increments it, we end up in
+      // the correct place rather than iterating off the end.
+      MBB->erase(MBBI);
+      MBBI = MBBJ;
       ByteCount += ByteSize;
     }
   }
