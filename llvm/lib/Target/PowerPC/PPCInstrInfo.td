@@ -537,7 +537,7 @@ def STBU  : DForm_1<39, (ops ptr_rc:$ea_res, GPRC:$rS,
                           (pre_truncsti8 GPRC:$rS, ptr_rc:$ptrreg, 
                                          iaddroff:$ptroff))]>,
                     RegConstraint<"$ptrreg = $ea_res">, NoEncode<"$ea_res">;
-def STHU  : DForm_1<37, (ops ptr_rc:$ea_res, GPRC:$rS,
+def STHU  : DForm_1<45, (ops ptr_rc:$ea_res, GPRC:$rS,
                              symbolLo:$ptroff, ptr_rc:$ptrreg),
                     "sthu $rS, $ptroff($ptrreg)", LdStGeneral,
                     [(set ptr_rc:$ea_res,
