@@ -80,7 +80,7 @@ public:
   /// have constant pools, the can only use the other emitByte*/emitWord*
   /// methods.
   ///
-  virtual void startFunctionStub(unsigned StubSize) = 0;
+  virtual void startFunctionStub(unsigned StubSize, unsigned Alignment = 1) = 0;
 
   /// finishFunctionStub - This callback is invoked to terminate a function
   /// stub.

@@ -275,7 +275,7 @@ namespace {
     JITMemoryManager(bool useGOT);
     ~JITMemoryManager();
 
-    inline unsigned char *allocateStub(unsigned StubSize);
+    inline unsigned char *allocateStub(unsigned StubSize, unsigned Alignment);
     
     /// startFunctionBody - When a function starts, allocate a block of free
     /// executable memory, returning a pointer to it and its actual size.
@@ -403,8 +403,11 @@ JITMemoryManager::~JITMemoryManager() {
   Blocks.clear();
 }
 
-unsigned char *JITMemoryManager::allocateStub(unsigned StubSize) {
+unsigned char *JITMemoryManager::allocateStub(unsigned StubSize,
+                                              unsigned Alignment) {
   CurStubPtr -= StubSize;
+  CurStubPtr = (unsigned char*)(((intptr_t)CurStubPtr) &
+                                ~(intptr_t)(Alignment-1));
   if (CurStubPtr < StubBase) {
     // FIXME: allocate a new block
     std::cerr << "JIT ran out of memory for function stubs!\n";
@@ -700,7 +703,7 @@ public:
     void initJumpTableInfo(MachineJumpTableInfo *MJTI);
     void emitJumpTableInfo(MachineJumpTableInfo *MJTI);
     
-    virtual void startFunctionStub(unsigned StubSize);
+    virtual void startFunctionStub(unsigned StubSize, unsigned Alignment = 1);
     virtual void* finishFunctionStub(const Function *F);
 
     virtual void addRelocation(const MachineRelocation &MR) {
@@ -769,6 +772,9 @@ void JITEmitter::startFunction(MachineFunction &F) {
   BufferBegin = CurBufferPtr = MemMgr.startFunctionBody(ActualSize);
   BufferEnd = BufferBegin+ActualSize;
   
+  // Ensure the constant pool/jump table info is at least 4-byte aligned.
+  emitAlignment(16);
+
   emitConstantPool(F.getConstantPool());
   initJumpTableInfo(F.getJumpTableInfo());
 
@@ -928,12 +934,12 @@ void JITEmitter::emitJumpTableInfo(MachineJumpTableInfo *MJTI) {
   }
 }
 
-void JITEmitter::startFunctionStub(unsigned StubSize) {
+void JITEmitter::startFunctionStub(unsigned StubSize, unsigned Alignment) {
   SavedBufferBegin = BufferBegin;
   SavedBufferEnd = BufferEnd;
   SavedCurBufferPtr = CurBufferPtr;
   
-  BufferBegin = CurBufferPtr = MemMgr.allocateStub(StubSize);
+  BufferBegin = CurBufferPtr = MemMgr.allocateStub(StubSize, Alignment);
   BufferEnd = BufferBegin+StubSize+1;
 }
 
