@@ -224,7 +224,7 @@ def GPRC : RegisterClass<"PPC", [i32], 32,
     }
     GPRCClass::iterator
     GPRCClass::allocation_order_end(const MachineFunction &MF) const {
-      if (hasFP(MF))
+      if (needsFP(MF))
         return end()-4;  // don't allocate R31, R0, R1, LR
       else
         return end()-3;  // don't allocate R0, R1, LR
@@ -247,7 +247,7 @@ def G8RC : RegisterClass<"PPC", [i64], 64,
     }
     G8RCClass::iterator
     G8RCClass::allocation_order_end(const MachineFunction &MF) const {
-      if (hasFP(MF))
+      if (needsFP(MF))
         return end()-4;
       else
         return end()-3;

@@ -14,7 +14,9 @@
 #define DEBUG_TYPE "reginfo"
 #include "PPC.h"
 #include "PPCInstrBuilder.h"
+#include "PPCMachineFunctionInfo.h"
 #include "PPCRegisterInfo.h"
+#include "PPCFrameInfo.h"
 #include "PPCSubtarget.h"
 #include "llvm/Constants.h"
 #include "llvm/Type.h"
@@ -232,7 +234,7 @@ void PPCRegisterInfo::copyRegToReg(MachineBasicBlock &MBB,
 const unsigned* PPCRegisterInfo::getCalleeSaveRegs() const {
   // 32-bit Darwin calling convention. 
   static const unsigned Darwin32_CalleeSaveRegs[] = {
-    PPC::R1 , PPC::R13, PPC::R14, PPC::R15,
+              PPC::R13, PPC::R14, PPC::R15,
     PPC::R16, PPC::R17, PPC::R18, PPC::R19,
     PPC::R20, PPC::R21, PPC::R22, PPC::R23,
     PPC::R24, PPC::R25, PPC::R26, PPC::R27,
@@ -253,7 +255,7 @@ const unsigned* PPCRegisterInfo::getCalleeSaveRegs() const {
   };
   // 64-bit Darwin calling convention. 
   static const unsigned Darwin64_CalleeSaveRegs[] = {
-    PPC::X1 , PPC::X13, PPC::X14, PPC::X15,
+              PPC::X13, PPC::X14, PPC::X15,
     PPC::X16, PPC::X17, PPC::X18, PPC::X19,
     PPC::X20, PPC::X21, PPC::X22, PPC::X23,
     PPC::X24, PPC::X25, PPC::X26, PPC::X27,
@@ -281,7 +283,7 @@ const TargetRegisterClass* const*
 PPCRegisterInfo::getCalleeSaveRegClasses() const {
   // 32-bit Darwin calling convention. 
   static const TargetRegisterClass * const Darwin32_CalleeSaveRegClasses[] = {
-    &PPC::GPRCRegClass,&PPC::GPRCRegClass,&PPC::GPRCRegClass,&PPC::GPRCRegClass,
+                       &PPC::GPRCRegClass,&PPC::GPRCRegClass,&PPC::GPRCRegClass,
     &PPC::GPRCRegClass,&PPC::GPRCRegClass,&PPC::GPRCRegClass,&PPC::GPRCRegClass,
     &PPC::GPRCRegClass,&PPC::GPRCRegClass,&PPC::GPRCRegClass,&PPC::GPRCRegClass,
     &PPC::GPRCRegClass,&PPC::GPRCRegClass,&PPC::GPRCRegClass,&PPC::GPRCRegClass,
@@ -304,7 +306,7 @@ PPCRegisterInfo::getCalleeSaveRegClasses() const {
   
   // 64-bit Darwin calling convention. 
   static const TargetRegisterClass * const Darwin64_CalleeSaveRegClasses[] = {
-    &PPC::G8RCRegClass,&PPC::G8RCRegClass,&PPC::G8RCRegClass,&PPC::G8RCRegClass,
+                       &PPC::G8RCRegClass,&PPC::G8RCRegClass,&PPC::G8RCRegClass,
     &PPC::G8RCRegClass,&PPC::G8RCRegClass,&PPC::G8RCRegClass,&PPC::G8RCRegClass,
     &PPC::G8RCRegClass,&PPC::G8RCRegClass,&PPC::G8RCRegClass,&PPC::G8RCRegClass,
     &PPC::G8RCRegClass,&PPC::G8RCRegClass,&PPC::G8RCRegClass,&PPC::G8RCRegClass,
@@ -388,81 +390,150 @@ MachineInstr *PPCRegisterInfo::foldMemoryOperand(MachineInstr *MI,
 // Stack Frame Processing methods
 //===----------------------------------------------------------------------===//
 
-// hasFP - Return true if the specified function should have a dedicated frame
+// needsFP - Return true if the specified function should have a dedicated frame
 // pointer register.  This is true if the function has variable sized allocas or
 // if frame pointer elimination is disabled.
 //
+static bool needsFP(const MachineFunction &MF) {
+  const MachineFrameInfo *MFI = MF.getFrameInfo();
+  return NoFramePointerElim || MFI->hasVarSizedObjects();
+}
+
+// hasFP - Return true if the specified function actually has a dedicated frame
+// pointer register.  This is true if the function needs a frame pointer and has
+// a non-zero stack size.
 static bool hasFP(const MachineFunction &MF) {
   const MachineFrameInfo *MFI = MF.getFrameInfo();
-
-  // If frame pointers are forced, or if there are variable sized stack objects,
-  // use a frame pointer.
-  // 
-  return NoFramePointerElim || MFI->hasVarSizedObjects();
+  return MFI->getStackSize() && needsFP(MF);
 }
 
 void PPCRegisterInfo::
 eliminateCallFramePseudoInstr(MachineFunction &MF, MachineBasicBlock &MBB,
                               MachineBasicBlock::iterator I) const {
-  if (hasFP(MF)) {
-    // If we have a frame pointer, convert as follows:
-    // ADJCALLSTACKDOWN -> lwz r0, 0(r31)
-    //                     stwu, r0, -amount(r1)
-    // ADJCALLSTACKUP   -> addi, r1, r1, amount
-    MachineInstr *Old = I;
-    unsigned Amount = Old->getOperand(0).getImmedValue();
-    if (Amount != 0) {
-      // We need to keep the stack aligned properly.  To do this, we round the
-      // amount of space needed for the outgoing arguments up to the next
-      // alignment boundary.
-      unsigned Align = MF.getTarget().getFrameInfo()->getStackAlignment();
-      Amount = (Amount+Align-1)/Align*Align;
-
-      // Replace the pseudo instruction with a new instruction...
-      if (Old->getOpcode() == PPC::ADJCALLSTACKDOWN) {
-        if (!Subtarget.isPPC64()) {
-          BuildMI(MBB, I, PPC::LWZ, 2, PPC::R0).addImm(0).addReg(PPC::R31);
-          BuildMI(MBB, I, PPC::STWU, 3, PPC::R1)
-                          .addReg(PPC::R0).addImm(-Amount).addReg(PPC::R1);
-        } else {
-          BuildMI(MBB, I, PPC::LD, 2, PPC::X0).addImm(0).addReg(PPC::X31);
-          BuildMI(MBB, I, PPC::STDU, 3, PPC::X1)
-                          .addReg(PPC::X0).addImm(-Amount/4).addReg(PPC::X1);
-        }
-      } else {
-        assert(Old->getOpcode() == PPC::ADJCALLSTACKUP);
-        BuildMI(MBB, I, PPC::ADDI, 2, PPC::R1).addReg(PPC::R1).addImm(Amount);
-      }
-    }
-  }
+  // Simply discard ADJCALLSTACKDOWN, ADJCALLSTACKUP instructions.
   MBB.erase(I);
+}
+
+/// LowerDynamicAlloc - Generate the code for allocating an object in the
+/// current frame.  The sequence of code with be in the general form
+///
+///   addi   R0, SP, #frameSize ; get the address of the previous frame
+///   stwxu  R0, SP, Rnegsize   ; add and update the SP with the negated size
+///   addi   Rnew, SP, #maxCalFrameSize ; get the top of the allocation
+///
+void PPCRegisterInfo::lowerDynamicAlloc(MachineBasicBlock::iterator II) const {
+  // Get the instruction.
+  MachineInstr &MI = *II;
+  // Get the instruction's basic block.
+  MachineBasicBlock &MBB = *MI.getParent();
+  // Get the basic block's function.
+  MachineFunction &MF = *MBB.getParent();
+  // Get the frame info.
+  MachineFrameInfo *MFI = MF.getFrameInfo();
+  // Determine whether 64-bit pointers are used.
+  bool LP64 = Subtarget.isPPC64();
+
+  // Determine the maximum call stack size.  maxCallFrameSize may be
+  // less than the minimum.
+  unsigned maxCallFrameSize = MFI->getMaxCallFrameSize();
+  unsigned getMinCallFrameSize =
+    PPCFrameInfo::getMinCallFrameSize(LP64); 
+  maxCallFrameSize = std::max(maxCallFrameSize, getMinCallFrameSize);
+  // Get the total frame size.
+  unsigned FrameSize = MFI->getStackSize();
+  
+  // Get stack alignments.
+  unsigned TargetAlign = MF.getTarget().getFrameInfo()->getStackAlignment();
+  unsigned MaxAlign = MFI->getMaxAlignment();
+
+  // Determine the previous frame's address.  If FrameSize can't be
+  // represented as 16 bits or we need special alignment, then we load the
+  // previous frame's address from 0(SP).  Why not do an addis of the hi? 
+  // Because R0 is our only safe tmp register and addi/addis treat R0 as zero. 
+  // Constructing the constant and adding would take 3 instructions. 
+  // Fortunately, a frame greater than 32K is rare.
+  if (MaxAlign < TargetAlign && isInt16(FrameSize)) {
+    BuildMI(MBB, II, PPC::ADDI, 2, PPC::R0)
+      .addReg(PPC::R31)
+      .addImm(FrameSize);
+  } else if (LP64) {
+    BuildMI(MBB, II, PPC::LD, 2, PPC::X0)
+      .addImm(0)
+      .addReg(PPC::X1);
+  } else {
+    BuildMI(MBB, II, PPC::LWZ, 2, PPC::R0)
+      .addImm(0)
+      .addReg(PPC::R1);
+  }
+  
+  // Grow the stack and update the stack pointer link, then
+  // determine the address of new allocated space.
+  if (LP64) {
+    BuildMI(MBB, II, PPC::STDUX, 3)
+      .addReg(PPC::X0)
+      .addReg(PPC::X1)
+      .addReg(MI.getOperand(1).getReg());
+    BuildMI(MBB, II, PPC::ADDI8, 2, MI.getOperand(0).getReg())
+      .addReg(PPC::X1)
+      .addImm(maxCallFrameSize);
+  } else {
+    BuildMI(MBB, II, PPC::STWUX, 3)
+      .addReg(PPC::R0)
+      .addReg(PPC::R1)
+      .addReg(MI.getOperand(1).getReg());
+    BuildMI(MBB, II, PPC::ADDI, 2, MI.getOperand(0).getReg())
+      .addReg(PPC::R1)
+      .addImm(maxCallFrameSize);
+  }
+  
+  // Discard the DYNALLOC instruction.
+  MBB.erase(II);
 }
 
 void
 PPCRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II) const {
-  unsigned i = 0;
+  // Get the instruction.
   MachineInstr &MI = *II;
+  // Get the instruction's basic block.
   MachineBasicBlock &MBB = *MI.getParent();
+  // Get the basic block's function.
   MachineFunction &MF = *MBB.getParent();
+  // Get the frame info.
+  MachineFrameInfo *MFI = MF.getFrameInfo();
 
+  // Find out which operand is the frame index.
+  unsigned i = 0;
   while (!MI.getOperand(i).isFrameIndex()) {
     ++i;
     assert(i < MI.getNumOperands() && "Instr doesn't have FrameIndex operand!");
   }
-
+  // Take into account whether it's an add or mem instruction
+  unsigned OffIdx = (i == 2) ? 1 : 2;
+  // Get the frame index.
   int FrameIndex = MI.getOperand(i).getFrameIndex();
+  
+  // Get the frame pointer save index.  Users of this index are primarily
+  // DYNALLOC instructions.
+  PPCFunctionInfo *FI = MF.getInfo<PPCFunctionInfo>();
+  int FPSI = FI->getFramePointerSaveIndex();
+  // Get the instruction opcode.
+  unsigned OpC = MI.getOpcode();
+  
+  // Special case for dynamic alloca.
+  if (FPSI && FrameIndex == FPSI &&
+      (OpC == PPC::DYNALLOC || OpC == PPC::DYNALLOC8)) {
+    lowerDynamicAlloc(II);
+    return;
+  }
 
   // Replace the FrameIndex with base register with GPR1 (SP) or GPR31 (FP).
   MI.getOperand(i).ChangeToRegister(hasFP(MF) ? PPC::R31 : PPC::R1, false);
-
-  // Take into account whether it's an add or mem instruction
-  unsigned OffIdx = (i == 2) ? 1 : 2;
 
   // Figure out if the offset in the instruction is shifted right two bits. This
   // is true for instructions like "STD", which the machine implicitly adds two
   // low zeros to.
   bool isIXAddr = false;
-  switch (MI.getOpcode()) {
+  switch (OpC) {
   case PPC::LWA:
   case PPC::LD:
   case PPC::STD:
@@ -471,9 +542,8 @@ PPCRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II) const {
     break;
   }
   
-  
   // Now add the frame object offset to the offset from r1.
-  int Offset = MF.getFrameInfo()->getObjectOffset(FrameIndex);
+  int Offset = MFI->getObjectOffset(FrameIndex);
   
   if (!isIXAddr)
     Offset += MI.getOperand(OffIdx).getImmedValue();
@@ -483,20 +553,19 @@ PPCRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II) const {
   // If we're not using a Frame Pointer that has been set to the value of the
   // SP before having the stack size subtracted from it, then add the stack size
   // to Offset to get the correct offset.
-  Offset += MF.getFrameInfo()->getStackSize();
+  Offset += MFI->getStackSize();
 
-  if (Offset > 32767 || Offset < -32768) {
+  if (!isInt16(Offset)) {
     // Insert a set of r0 with the full offset value before the ld, st, or add
-    MachineBasicBlock *MBB = MI.getParent();
-    BuildMI(*MBB, II, PPC::LIS, 1, PPC::R0).addImm(Offset >> 16);
-    BuildMI(*MBB, II, PPC::ORI, 2, PPC::R0).addReg(PPC::R0).addImm(Offset);
+    BuildMI(MBB, II, PPC::LIS, 1, PPC::R0).addImm(Offset >> 16);
+    BuildMI(MBB, II, PPC::ORI, 2, PPC::R0).addReg(PPC::R0).addImm(Offset);
     
     // convert into indexed form of the instruction
     // sth 0:rA, 1:imm 2:(rB) ==> sthx 0:rA, 2:rB, 1:r0
     // addi 0:rA 1:rB, 2, imm ==> add 0:rA, 1:rB, 2:r0
-    assert(ImmToIdxMap.count(MI.getOpcode()) &&
+    assert(ImmToIdxMap.count(OpC) &&
            "No indexed form of load or store available!");
-    unsigned NewOpcode = ImmToIdxMap.find(MI.getOpcode())->second;
+    unsigned NewOpcode = ImmToIdxMap.find(OpC)->second;
     MI.setOpcode(NewOpcode);
     MI.getOperand(1).ChangeToRegister(MI.getOperand(i).getReg(), false);
     MI.getOperand(2).ChangeToRegister(PPC::R0, false);
@@ -615,6 +684,59 @@ static void HandleVRSaveUpdate(MachineInstr *MI, const bool *UsedRegs) {
   MI->eraseFromParent();
 }
 
+/// determineFrameLayout - Determine the size of the frame and maximum call
+/// frame size.
+void PPCRegisterInfo::determineFrameLayout(MachineFunction &MF) const {
+  MachineFrameInfo *MFI = MF.getFrameInfo();
+
+  // Get the number of bytes to allocate from the FrameInfo
+  unsigned FrameSize = MFI->getStackSize();
+  
+  // Get the alignments provided by the target, and the maximum alignment
+  // (if any) of the fixed frame objects.
+  unsigned TargetAlign = MF.getTarget().getFrameInfo()->getStackAlignment();
+  unsigned MaxAlign = MFI->getMaxAlignment();
+  unsigned Align = std::max(TargetAlign, MaxAlign);
+  assert(isPowerOf2_32(Align) && "Alignment is not power of 2");
+  unsigned AlignMask = Align - 1;  //
+
+  // If we are a leaf function, and use up to 224 bytes of stack space,
+  // don't have a frame pointer, calls, or dynamic alloca then we do not need
+  // to adjust the stack pointer (we fit in the Red Zone).
+  if (FrameSize <= 224 &&             // Fits in red zone.
+      !needsFP(MF) &&                 // Frame pointer can be eliminated.
+      !MFI->hasCalls() &&             // No calls.
+      MaxAlign <= TargetAlign) {      // No special alignment.
+    // No need for frame
+    MFI->setStackSize(0);
+    return;
+  }
+  
+  // Get the maximum call frame size of all the calls.
+  unsigned maxCallFrameSize = MFI->getMaxCallFrameSize();
+  
+  // Maximum call frame needs to be at least big enough for linkage and 8 args.
+  unsigned minCallFrameSize =
+    PPCFrameInfo::getMinCallFrameSize(Subtarget.isPPC64());
+  maxCallFrameSize = std::max(maxCallFrameSize, minCallFrameSize);
+
+  // If we have dynamic alloca then maxCallFrameSize needs to be aligned so
+  // that allocations will be aligned.
+  if (MFI->hasVarSizedObjects())
+    maxCallFrameSize = (maxCallFrameSize + AlignMask) & ~AlignMask;
+  
+  // Update maximum call frame size.
+  MFI->setMaxCallFrameSize(maxCallFrameSize);
+  
+  // Include call frame size in total.
+  FrameSize += maxCallFrameSize;
+
+  // Make sure the frame is aligned.
+  FrameSize = (FrameSize + AlignMask) & ~AlignMask;
+
+  // Update frame info.
+  MFI->setStackSize(FrameSize);
+}
 
 void PPCRegisterInfo::emitPrologue(MachineFunction &MF) const {
   MachineBasicBlock &MBB = MF.front();   // Prolog goes in entry BB
@@ -622,9 +744,6 @@ void PPCRegisterInfo::emitPrologue(MachineFunction &MF) const {
   MachineFrameInfo *MFI = MF.getFrameInfo();
   MachineDebugInfo *DebugInfo = MFI->getMachineDebugInfo();
   
-  // Do we have a frame pointer for this function?
-  bool HasFP = hasFP(MF);
-
   // Scan the prolog, looking for an UPDATE_VRSAVE instruction.  If we find it,
   // process it.
   for (unsigned i = 0; MBBI != MBB.end(); ++i, ++MBBI) {
@@ -637,83 +756,75 @@ void PPCRegisterInfo::emitPrologue(MachineFunction &MF) const {
   // Move MBBI back to the beginning of the function.
   MBBI = MBB.begin();
   
-  // Get the number of bytes to allocate from the FrameInfo
-  unsigned NumBytes = MFI->getStackSize();
+  // Work out frame sizes.
+  determineFrameLayout(MF);
+  unsigned FrameSize = MFI->getStackSize();
   
-  // Get the alignments provided by the target, and the maximum alignment
-  // (if any) of the fixed frame objects.
+  // Skip if a leaf routine.
+  if (!FrameSize) return;
+  
+  int NegFrameSize = -FrameSize;
+
+  // Do we have a frame pointer for this function?
+  bool HasFP = hasFP(MF);
+
+  // If there is a frame pointer, copy R31 into TOC(SP)
+  if (HasFP) {
+    int Offset = PPCFrameInfo::getFramePointerSaveOffset(Subtarget.isPPC64());
+     
+    if (!Subtarget.isPPC64()) {
+      BuildMI(MBB, MBBI, PPC::STW, 3)
+        .addReg(PPC::R31).addImm(Offset).addReg(PPC::R1);
+    } else {
+      BuildMI(MBB, MBBI, PPC::STD, 3)
+         .addReg(PPC::X31).addImm(Offset/4).addReg(PPC::X1);
+    }
+  }
+  
+  // Get stack alignments.
   unsigned TargetAlign = MF.getTarget().getFrameInfo()->getStackAlignment();
   unsigned MaxAlign = MFI->getMaxAlignment();
 
-  // If we have calls, we cannot use the red zone to store callee save registers
-  // and we must set up a stack frame, so calculate the necessary size here.
-  if (MFI->hasCalls()) {
-    // We reserve argument space for call sites in the function immediately on
-    // entry to the current function.  This eliminates the need for add/sub
-    // brackets around call sites.
-    NumBytes += MFI->getMaxCallFrameSize();
-  }
-
-  // If we are a leaf function, and use up to 224 bytes of stack space,
-  // and don't have a frame pointer, then we do not need to adjust the stack
-  // pointer (we fit in the Red Zone).
-  if ((NumBytes == 0) || (NumBytes <= 224 && !HasFP && !MFI->hasCalls() &&
-                          MaxAlign <= TargetAlign)) {
-    MFI->setStackSize(0);
-    return;
-  }
-
-  // Add the size of R1 to  NumBytes size for the store of R1 to the bottom
-  // of the stack and round the size to a multiple of the alignment.
-  unsigned Align = std::max(TargetAlign, MaxAlign);
-  unsigned GPRSize = Subtarget.isPPC64() ? 8 : 4;
-  unsigned Size = HasFP ? GPRSize + GPRSize : GPRSize;
-  NumBytes = (NumBytes+Size+Align-1)/Align*Align;
-
-  // Update frame info to pretend that this is part of the stack...
-  MFI->setStackSize(NumBytes);
-  int NegNumbytes = -NumBytes;
-
-  // Adjust stack pointer: r1 -= numbytes.
+  // Adjust stack pointer: r1 += NegFrameSize.
   // If there is a preferred stack alignment, align R1 now
   if (!Subtarget.isPPC64()) {
     // PPC32.
     if (MaxAlign > TargetAlign) {
-      assert(isPowerOf2_32(MaxAlign) && MaxAlign < 32767&&"Invalid alignment!");
-      assert(isInt16(0-NumBytes) && "Unhandled stack size and alignment!");
+      assert(isPowerOf2_32(MaxAlign)&&isInt16(MaxAlign)&&"Invalid alignment!");
+      assert(isInt16(NegFrameSize) && "Unhandled stack size and alignment!");
       BuildMI(MBB, MBBI, PPC::RLWINM, 4, PPC::R0)
         .addReg(PPC::R1).addImm(0).addImm(32-Log2_32(MaxAlign)).addImm(31);
       BuildMI(MBB, MBBI, PPC::SUBFIC,2,PPC::R0).addReg(PPC::R0)
-        .addImm(0-NumBytes);
+        .addImm(NegFrameSize);
       BuildMI(MBB, MBBI, PPC::STWUX, 3)
         .addReg(PPC::R1).addReg(PPC::R1).addReg(PPC::R0);
-    } else if (NumBytes <= 32768) {
+    } else if (isInt16(NegFrameSize)) {
       BuildMI(MBB, MBBI, PPC::STWU, 3,
-              PPC::R1).addReg(PPC::R1).addImm(NegNumbytes).addReg(PPC::R1);
+              PPC::R1).addReg(PPC::R1).addImm(NegFrameSize).addReg(PPC::R1);
     } else {
-      BuildMI(MBB, MBBI, PPC::LIS, 1, PPC::R0).addImm(NegNumbytes >> 16);
+      BuildMI(MBB, MBBI, PPC::LIS, 1, PPC::R0).addImm(NegFrameSize >> 16);
       BuildMI(MBB, MBBI, PPC::ORI, 2, PPC::R0).addReg(PPC::R0)
-        .addImm(NegNumbytes & 0xFFFF);
+        .addImm(NegFrameSize & 0xFFFF);
       BuildMI(MBB, MBBI, PPC::STWUX, 3).addReg(PPC::R1).addReg(PPC::R1)
         .addReg(PPC::R0);
     }
   } else {    // PPC64.
     if (MaxAlign > TargetAlign) {
-      assert(isPowerOf2_32(MaxAlign) && MaxAlign < 32767&&"Invalid alignment!");
-      assert(isInt16(0-NumBytes) && "Unhandled stack size and alignment!");
+      assert(isPowerOf2_32(MaxAlign)&&isInt16(MaxAlign)&&"Invalid alignment!");
+      assert(isInt16(NegFrameSize) && "Unhandled stack size and alignment!");
       BuildMI(MBB, MBBI, PPC::RLDICL, 3, PPC::X0)
         .addReg(PPC::X1).addImm(0).addImm(64-Log2_32(MaxAlign));
       BuildMI(MBB, MBBI, PPC::SUBFIC8, 2, PPC::X0).addReg(PPC::X0)
-        .addImm(0-NumBytes);
+        .addImm(NegFrameSize);
       BuildMI(MBB, MBBI, PPC::STDUX, 3)
         .addReg(PPC::X1).addReg(PPC::X1).addReg(PPC::X0);
-    } else if (NumBytes <= 32768*4) {
+    } else if (isInt16(NegFrameSize/4)) {
       BuildMI(MBB, MBBI, PPC::STDU, 3, PPC::X1)
-             .addReg(PPC::X1).addImm(NegNumbytes/4).addReg(PPC::X1);
+             .addReg(PPC::X1).addImm(NegFrameSize/4).addReg(PPC::X1);
     } else {
-      BuildMI(MBB, MBBI, PPC::LIS8, 1, PPC::X0).addImm(NegNumbytes >> 16);
+      BuildMI(MBB, MBBI, PPC::LIS8, 1, PPC::X0).addImm(NegFrameSize >> 16);
       BuildMI(MBB, MBBI, PPC::ORI8, 2, PPC::X0).addReg(PPC::X0)
-        .addImm(NegNumbytes & 0xFFFF);
+        .addImm(NegFrameSize & 0xFFFF);
       BuildMI(MBB, MBBI, PPC::STDUX, 3).addReg(PPC::X1).addReg(PPC::X1)
         .addReg(PPC::X0);
     }
@@ -728,7 +839,7 @@ void PPCRegisterInfo::emitPrologue(MachineFunction &MF) const {
     
     // Show update of SP.
     MachineLocation SPDst(MachineLocation::VirtualFP);
-    MachineLocation SPSrc(MachineLocation::VirtualFP, NegNumbytes);
+    MachineLocation SPSrc(MachineLocation::VirtualFP, NegFrameSize);
     Moves.push_back(new MachineMove(LabelID, SPDst, SPSrc));
 
     // Add callee saved registers to move list.
@@ -740,16 +851,12 @@ void PPCRegisterInfo::emitPrologue(MachineFunction &MF) const {
       Moves.push_back(new MachineMove(LabelID, CSDst, CSSrc));
     }
   }
-  
-  // If there is a frame pointer, copy R1 (SP) into R31 (FP)
+
+  // If there is a frame pointer, copy R1 into R31
   if (HasFP) {
     if (!Subtarget.isPPC64()) {
-      BuildMI(MBB, MBBI, PPC::STW, 3)
-        .addReg(PPC::R31).addImm(GPRSize).addReg(PPC::R1);
       BuildMI(MBB, MBBI, PPC::OR, 2, PPC::R31).addReg(PPC::R1).addReg(PPC::R1);
     } else {
-      BuildMI(MBB, MBBI, PPC::STD, 3)
-         .addReg(PPC::X31).addImm(GPRSize/4).addReg(PPC::X1);
       BuildMI(MBB, MBBI, PPC::OR8, 2, PPC::X31).addReg(PPC::X1).addReg(PPC::X1);
     }
   }
@@ -764,41 +871,46 @@ void PPCRegisterInfo::emitEpilogue(MachineFunction &MF,
   // Get alignment info so we know how to restore r1
   const MachineFrameInfo *MFI = MF.getFrameInfo();
   unsigned TargetAlign = MF.getTarget().getFrameInfo()->getStackAlignment();
+  unsigned MaxAlign = MFI->getMaxAlignment();
 
   // Get the number of bytes allocated from the FrameInfo.
-  unsigned NumBytes = MFI->getStackSize();
-  unsigned GPRSize = Subtarget.isPPC64() ? 8 : 4;
+  unsigned FrameSize = MFI->getStackSize();
 
-  if (NumBytes != 0) {
-    // If this function has a frame pointer, load the saved stack pointer from
-    // its stack slot.
-    if (hasFP(MF)) {
-      if (!Subtarget.isPPC64()) {
-        BuildMI(MBB, MBBI, PPC::LWZ, 2, PPC::R31)
-            .addImm(GPRSize).addReg(PPC::R31);
-      } else {
-        BuildMI(MBB, MBBI, PPC::LD, 2, PPC::X31)
-          .addImm(GPRSize/4).addReg(PPC::X31);
-      }
-    }
-    
+  if (FrameSize != 0) {
     // The loaded (or persistent) stack pointer value is offset by the 'stwu'
     // on entry to the function.  Add this offset back now.
     if (!Subtarget.isPPC64()) {
-      if (NumBytes < 32768 && TargetAlign >= MFI->getMaxAlignment()) {
+      if (isInt16(FrameSize) && TargetAlign >= MaxAlign &&
+            !MFI->hasVarSizedObjects()) {
           BuildMI(MBB, MBBI, PPC::ADDI, 2, PPC::R1)
-              .addReg(PPC::R1).addImm(NumBytes);
+              .addReg(PPC::R1).addImm(FrameSize);
       } else {
         BuildMI(MBB, MBBI, PPC::LWZ, 2, PPC::R1).addImm(0).addReg(PPC::R1);
       }
     } else {
-      if (NumBytes < 32768 && TargetAlign >= MFI->getMaxAlignment()) {
+      if (isInt16(FrameSize) && TargetAlign >= MaxAlign &&
+            !MFI->hasVarSizedObjects()) {
         BuildMI(MBB, MBBI, PPC::ADDI8, 2, PPC::X1)
-           .addReg(PPC::X1).addImm(NumBytes);
+           .addReg(PPC::X1).addImm(FrameSize);
       } else {
         BuildMI(MBB, MBBI, PPC::LD, 2, PPC::X1).addImm(0).addReg(PPC::X1);
       }
     }
+    
+    // If this function has a frame pointer, load the saved frame pointer from
+    // its stack slot.
+    if (hasFP(MF)) {
+      int Offset = PPCFrameInfo::getFramePointerSaveOffset(Subtarget.isPPC64());
+      
+      if (!Subtarget.isPPC64()) {
+        BuildMI(MBB, MBBI, PPC::LWZ, 2, PPC::R31)
+            .addImm(Offset).addReg(PPC::R1);
+      } else {
+        BuildMI(MBB, MBBI, PPC::LD, 2, PPC::X31)
+          .addImm(Offset/4).addReg(PPC::X1);
+      }
+    }
+    
   }
 }
 

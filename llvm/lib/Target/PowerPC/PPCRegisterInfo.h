@@ -61,7 +61,12 @@ public:
                                      MachineBasicBlock &MBB,
                                      MachineBasicBlock::iterator I) const;
 
+  void lowerDynamicAlloc(MachineBasicBlock::iterator II) const;
   void eliminateFrameIndex(MachineBasicBlock::iterator II) const;
+
+  /// determineFrameLayout - Determine the size of the frame and maximum call
+  /// frame size.
+  void determineFrameLayout(MachineFunction &MF) const;
 
   void emitPrologue(MachineFunction &MF) const;
   void emitEpilogue(MachineFunction &MF, MachineBasicBlock &MBB) const;

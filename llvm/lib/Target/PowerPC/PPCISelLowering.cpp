@@ -12,6 +12,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "PPCISelLowering.h"
+#include "PPCMachineFunctionInfo.h"
 #include "PPCTargetMachine.h"
 #include "PPCPerfectShuffle.h"
 #include "llvm/ADT/VectorExtras.h"
@@ -169,8 +170,8 @@ PPCTargetLowering::PPCTargetLowering(PPCTargetMachine &TM)
   setOperationAction(ISD::VAEND             , MVT::Other, Expand);
   setOperationAction(ISD::STACKSAVE         , MVT::Other, Expand); 
   setOperationAction(ISD::STACKRESTORE      , MVT::Other, Expand);
-  setOperationAction(ISD::DYNAMIC_STACKALLOC, MVT::i32  , Expand);
-  setOperationAction(ISD::DYNAMIC_STACKALLOC, MVT::i64  , Expand);
+  setOperationAction(ISD::DYNAMIC_STACKALLOC, MVT::i32  , Custom);
+  setOperationAction(ISD::DYNAMIC_STACKALLOC, MVT::i64  , Custom);
 
   // We want to custom lower some of our intrinsics.
   setOperationAction(ISD::INTRINSIC_WO_CHAIN, MVT::Other, Custom);
@@ -1082,11 +1083,10 @@ static SDOperand LowerFORMAL_ARGUMENTS(SDOperand Op, SelectionDAG &DAG,
   SmallVector<SDOperand, 8> ArgValues;
   SDOperand Root = Op.getOperand(0);
   
-  unsigned ArgOffset = 24;
-  const unsigned Num_GPR_Regs = 8;
-  const unsigned Num_FPR_Regs = 13;
-  const unsigned Num_VR_Regs  = 12;
-  unsigned GPR_idx = 0, FPR_idx = 0, VR_idx = 0;
+  MVT::ValueType PtrVT = DAG.getTargetLoweringInfo().getPointerTy();
+  bool isPPC64 = PtrVT == MVT::i64;
+
+  unsigned ArgOffset = PPCFrameInfo::getLinkageSize(isPPC64);
   
   static const unsigned GPR_32[] = {           // 32-bit registers.
     PPC::R3, PPC::R4, PPC::R5, PPC::R6,
@@ -1105,13 +1105,17 @@ static SDOperand LowerFORMAL_ARGUMENTS(SDOperand Op, SelectionDAG &DAG,
     PPC::V9, PPC::V10, PPC::V11, PPC::V12, PPC::V13
   };
 
-  MVT::ValueType PtrVT = DAG.getTargetLoweringInfo().getPointerTy();
-  bool isPPC64 = PtrVT == MVT::i64;
+  const unsigned Num_GPR_Regs = sizeof(GPR_32)/sizeof(GPR_32[0]);
+  const unsigned Num_FPR_Regs = sizeof(FPR)/sizeof(FPR[0]);
+  const unsigned Num_VR_Regs  = sizeof( VR)/sizeof( VR[0]);
+
+  unsigned GPR_idx = 0, FPR_idx = 0, VR_idx = 0;
+  
   const unsigned *GPR = isPPC64 ? GPR_64 : GPR_32;
   
   // Add DAG nodes to load the arguments or copy them out of registers.  On
-  // entry to a function on PPC, the arguments start at offset 24, although the
-  // first ones are often in registers.
+  // entry to a function on PPC, the arguments start after the linkage area,
+  // although the first ones are often in registers.
   for (unsigned ArgNo = 0, e = Op.Val->getNumValues()-1; ArgNo != e; ++ArgNo) {
     SDOperand ArgVal;
     bool needsLoad = false;
@@ -1266,7 +1270,6 @@ static SDOperand LowerCALL(SDOperand Op, SelectionDAG &DAG) {
   MVT::ValueType PtrVT = DAG.getTargetLoweringInfo().getPointerTy();
   bool isPPC64 = PtrVT == MVT::i64;
   unsigned PtrByteSize = isPPC64 ? 8 : 4;
-
   
   // args_to_use will accumulate outgoing args for the PPCISD::CALL case in
   // SelectExpr to use to put the arguments in the appropriate registers.
@@ -1275,7 +1278,7 @@ static SDOperand LowerCALL(SDOperand Op, SelectionDAG &DAG) {
   // Count how many bytes are to be pushed on the stack, including the linkage
   // area, and parameter passing area.  We start with 24/48 bytes, which is
   // prereserved space for [SP][CR][LR][3 x unused].
-  unsigned NumBytes = 6*PtrByteSize;
+  unsigned NumBytes = PPCFrameInfo::getLinkageSize(isPPC64);
   
   // Add up all the space actually used.
   for (unsigned i = 0; i != NumOps; ++i)
@@ -1286,8 +1289,7 @@ static SDOperand LowerCALL(SDOperand Op, SelectionDAG &DAG) {
   // Because we cannot tell if this is needed on the caller side, we have to
   // conservatively assume that it is needed.  As such, make sure we have at
   // least enough stack space for the caller to store the 8 GPRs.
-  if (NumBytes < 6*PtrByteSize+8*PtrByteSize)
-    NumBytes = 6*PtrByteSize+8*PtrByteSize;
+  NumBytes = std::max(NumBytes, PPCFrameInfo::getMinCallFrameSize(isPPC64));
   
   // Adjust the stack pointer for the new arguments...
   // These operations are automatically eliminated by the prolog/epilog pass
@@ -1307,8 +1309,9 @@ static SDOperand LowerCALL(SDOperand Op, SelectionDAG &DAG) {
   // memory.  Also, if this is a vararg function, floating point operations
   // must be stored to our stack, and loaded into integer regs as well, if
   // any integer regs are available for argument passing.
-  unsigned ArgOffset = 6*PtrByteSize;
+  unsigned ArgOffset = PPCFrameInfo::getLinkageSize(isPPC64);
   unsigned GPR_idx = 0, FPR_idx = 0, VR_idx = 0;
+  
   static const unsigned GPR_32[] = {           // 32-bit registers.
     PPC::R3, PPC::R4, PPC::R5, PPC::R6,
     PPC::R7, PPC::R8, PPC::R9, PPC::R10,
@@ -1584,6 +1587,44 @@ static SDOperand LowerRET(SDOperand Op, SelectionDAG &DAG) {
   }
   return DAG.getNode(PPCISD::RET_FLAG, MVT::Other, Copy, Copy.getValue(1));
 }
+
+static SDOperand LowerDYNAMIC_STACKALLOC(SDOperand Op, SelectionDAG &DAG,
+                                         const PPCSubtarget &Subtarget) {
+  MachineFunction &MF = DAG.getMachineFunction();
+  bool IsPPC64 = Subtarget.isPPC64();
+
+  // Get current frame pointer save index.  The users of this index will be
+  // primarily DYNALLOC instructions.
+  PPCFunctionInfo *FI = MF.getInfo<PPCFunctionInfo>();
+  int FPSI = FI->getFramePointerSaveIndex();
+  
+  // If the frame pointer save index hasn't been defined yet.
+  if (!FPSI) {
+    // Find out what the fix offset of the frame pointer save area.
+    int Offset = PPCFrameInfo::getFramePointerSaveOffset(IsPPC64);
+    // Allocate the frame index for frame pointer save area.
+    FPSI = MF.getFrameInfo()->CreateFixedObject(IsPPC64? 8 : 4, Offset); 
+    // Save the result.
+    FI->setFramePointerSaveIndex(FPSI);                      
+  }
+
+  // Get the inputs.
+  SDOperand Chain = Op.getOperand(0);
+  SDOperand Size  = Op.getOperand(1);
+  
+  // Get the corect type for pointers.
+  MVT::ValueType PtrVT = DAG.getTargetLoweringInfo().getPointerTy();
+  // Negate the size.
+  SDOperand NegSize = DAG.getNode(ISD::SUB, PtrVT,
+                                  DAG.getConstant(0, PtrVT), Size);
+  // Construct a node for the frame pointer save index.
+  SDOperand FPSIdx = DAG.getFrameIndex(FPSI, PtrVT);
+  // Build a DYNALLOC node.
+  SDOperand Ops[3] = { Chain, NegSize, FPSIdx };
+  SDVTList VTs = DAG.getVTList(PtrVT, MVT::Other);
+  return DAG.getNode(PPCISD::DYNALLOC, VTs, Ops, 3);
+}
+
 
 /// LowerSELECT_CC - Lower floating point select_cc's into fsel instruction when
 /// possible.
@@ -2517,6 +2558,8 @@ SDOperand PPCTargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
       return LowerFORMAL_ARGUMENTS(Op, DAG, VarArgsFrameIndex);
   case ISD::CALL:               return LowerCALL(Op, DAG);
   case ISD::RET:                return LowerRET(Op, DAG);
+  case ISD::DYNAMIC_STACKALLOC: return LowerDYNAMIC_STACKALLOC(Op, DAG,
+                                                               PPCSubTarget);
     
   case ISD::SELECT_CC:          return LowerSELECT_CC(Op, DAG);
   case ISD::FP_TO_SINT:         return LowerFP_TO_SINT(Op, DAG);

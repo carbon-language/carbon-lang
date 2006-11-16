@@ -100,6 +100,10 @@ def PPCcondbranch : SDNode<"PPCISD::COND_BRANCH", SDT_PPCcondbr,
 def PPClbrx       : SDNode<"PPCISD::LBRX", SDT_PPClbrx, [SDNPHasChain]>;
 def PPCstbrx      : SDNode<"PPCISD::STBRX", SDT_PPCstbrx, [SDNPHasChain]>;
 
+// Instructions to support dynamic alloca.
+def SDTDynOp  : SDTypeProfile<1, 2, []>;
+def PPCdynalloc   : SDNode<"PPCISD::DYNALLOC", SDTDynOp, [SDNPHasChain]>;
+
 //===----------------------------------------------------------------------===//
 // PowerPC specific transformation functions and pattern fragments.
 //
@@ -297,6 +301,13 @@ def ADJCALLSTACKUP   : Pseudo<(ops u16imm:$amt),
 def UPDATE_VRSAVE    : Pseudo<(ops GPRC:$rD, GPRC:$rS),
                               "UPDATE_VRSAVE $rD, $rS", []>;
 }
+
+def DYNALLOC : Pseudo<(ops GPRC:$result, GPRC:$negsize, memri:$fpsi),
+                       "${:comment} DYNALLOC $result, $negsize, $fpsi",
+                       [(set GPRC:$result,
+                             (PPCdynalloc GPRC:$negsize, iaddr:$fpsi))]>,
+                        Imp<[R1],[R1]>;
+                         
 def IMPLICIT_DEF_GPRC: Pseudo<(ops GPRC:$rD),"${:comment}IMPLICIT_DEF_GPRC $rD",
                               [(set GPRC:$rD, (undef))]>;
 def IMPLICIT_DEF_F8  : Pseudo<(ops F8RC:$rD), "${:comment} IMPLICIT_DEF_F8 $rD",

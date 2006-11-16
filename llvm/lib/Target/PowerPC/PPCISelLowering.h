@@ -60,6 +60,11 @@ namespace llvm {
       /// though these are usually folded into other nodes.
       Hi, Lo,
       
+      /// OPRC, CHAIN = DYNALLOC(CHAIN, NEGSIZE, FRAME_INDEX)
+      /// This instruction is lowered in PPCRegisterInfo::eliminateFrameIndex to
+      /// compute an allocation on the stack.
+      DYNALLOC,
+      
       /// GlobalBaseReg - On Darwin, this node represents the result of the mflr
       /// at function entry, used for PIC code.
       GlobalBaseReg,

@@ -100,6 +100,12 @@ def MTCTR8 : XFXForm_7_ext<31, 467, 9, (ops G8RC:$rS), "mtctr $rS", SprMTSPR>,
              PPC970_DGroup_First, PPC970_Unit_FXU;
 }
 
+def DYNALLOC8 : Pseudo<(ops G8RC:$result, G8RC:$negsize, memri:$fpsi),
+                       "${:comment} DYNALLOC8 $result, $negsize, $fpsi",
+                       [(set G8RC:$result,
+                             (PPCdynalloc G8RC:$negsize, iaddr:$fpsi))]>,
+                        Imp<[X1],[X1]>;
+
 def MTLR8  : XFXForm_7_ext<31, 467, 8, (ops G8RC:$rS), "mtlr $rS", SprMTSPR>,
              PPC970_DGroup_First, PPC970_Unit_FXU;
 def MFLR8  : XFXForm_1_ext<31, 339, 8, (ops G8RC:$rT), "mflr $rT", SprMFSPR>,
