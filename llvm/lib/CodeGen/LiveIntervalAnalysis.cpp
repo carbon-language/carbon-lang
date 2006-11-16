@@ -277,7 +277,7 @@ LiveIntervals::CreateNewLiveInterval(const LiveInterval *LI,
 
       MachineInstr *MI = getInstructionFromIndex(Index);
 
-      for (unsigned J = 0; J != MI->getNumOperands(); ++J) {
+      for (unsigned J = 0, e = MI->getNumOperands(); J != e; ++J) {
         MachineOperand &MOp = MI->getOperand(J);
         if (MOp.isRegister() && rep(MOp.getReg()) == LI->reg)
           MOp.setReg(NewVReg);
