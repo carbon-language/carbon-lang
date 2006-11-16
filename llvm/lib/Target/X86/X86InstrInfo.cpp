@@ -44,9 +44,7 @@ bool X86InstrInfo::isMoveInstr(const MachineInstr& MI,
       oc == X86::FsMOVAPSrr || oc == X86::FsMOVAPDrr ||
       oc == X86::MOVAPSrr || oc == X86::MOVAPDrr ||
       oc == X86::MOVSS2PSrr || oc == X86::MOVSD2PDrr ||
-      oc == X86::MOVPS2SSrr || oc == X86::MOVPD2SDrr ||
-      oc == X86::MOVDI2PDIrr || oc == X86::MOVQI2PQIrr ||
-      oc == X86::MOVPDI2DIrr) {
+      oc == X86::MOVPS2SSrr || oc == X86::MOVPD2SDrr) {
       assert(MI.getNumOperands() == 2 &&
              MI.getOperand(0).isRegister() &&
              MI.getOperand(1).isRegister() &&
