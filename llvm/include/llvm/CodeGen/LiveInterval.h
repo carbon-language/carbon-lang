@@ -244,6 +244,10 @@ namespace llvm {
     /// the range must already be in this interval in its entirety.
     void removeRange(unsigned Start, unsigned End);
 
+    void removeRange(LiveRange LR) {
+      removeRange(LR.start, LR.end);
+    }
+
     bool operator<(const LiveInterval& other) const {
       return beginNumber() < other.beginNumber();
     }
