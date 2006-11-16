@@ -234,28 +234,26 @@ void PPCHazardRecognizer970::EmitInstruction(SDNode *Node) {
     unsigned ThisStoreSize;
     switch (Opcode) {
     default: assert(0 && "Unknown store instruction!");
-    case PPC::STB:     case PPC::STBU:
-    case PPC::STBX:
-    case PPC::STB8:
-    case PPC::STBX8:
+    case PPC::STB:    case PPC::STB8:
+    case PPC::STBU:   case PPC::STBU8:
+    case PPC::STBX:   case PPC::STBX8:
     case PPC::STVEBX:
       ThisStoreSize = 1;
       break;
-    case PPC::STH:     case PPC::STHU:
-    case PPC::STHX:
-    case PPC::STH8:
-    case PPC::STHX8:
+    case PPC::STH:    case PPC::STH8:
+    case PPC::STHU:   case PPC::STHU8:
+    case PPC::STHX:   case PPC::STHX8:
     case PPC::STVEHX:
     case PPC::STHBRX:
       ThisStoreSize = 2;
       break;
-    case PPC::STFS:   case PPC::STFSU:
+    case PPC::STFS:
+    case PPC::STFSU:
     case PPC::STFSX:
-    case PPC::STWX:
+    case PPC::STWX:   case PPC::STWX8:
     case PPC::STWUX:
-    case PPC::STW:    case PPC::STWU:
-    case PPC::STW8:
-    case PPC::STWX8:
+    case PPC::STW:    case PPC::STW8:
+    case PPC::STWU:   case PPC::STWU8:
     case PPC::STVEWX:
     case PPC::STFIWX:
     case PPC::STWBRX:
@@ -263,7 +261,8 @@ void PPCHazardRecognizer970::EmitInstruction(SDNode *Node) {
       break;
     case PPC::STD_32:
     case PPC::STDX_32:
-    case PPC::STD:   case PPC::STDU:
+    case PPC::STD:
+    case PPC::STDU:
     case PPC::STFD:
     case PPC::STFDX:
     case PPC::STDX:

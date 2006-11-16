@@ -356,32 +356,6 @@ def LDU  : DSForm_1<58, 1, (ops G8RC:$rD, ptr_rc:$ea_result, memrix:$addr),
 }
 
 let isStore = 1, noResults = 1, PPC970_Unit = 2 in {
-// Normal stores.
-def STD  : DSForm_1<62, 0, (ops G8RC:$rS, memrix:$dst),
-                    "std $rS, $dst", LdStSTD,
-                    [(store G8RC:$rS, ixaddr:$dst)]>, isPPC64;
-def STDX  : XForm_8<31, 149, (ops G8RC:$rS, memrr:$dst),
-                   "stdx $rS, $dst", LdStSTD,
-                   [(store G8RC:$rS, xaddr:$dst)]>, isPPC64,
-                   PPC970_DGroup_Cracked;
-
-def STDU : DSForm_1<62, 1, (ops G8RC:$ea_res, G8RC:$rS, memrix:$dst),
-                    "stdu $rS, $dst", LdStSTD,
-                    []>, isPPC64;
-def STDUX : XForm_8<31, 181, (ops G8RC:$rS, memrr:$dst),
-                   "stdux $rS, $dst", LdStSTD,
-                   []>, isPPC64;
-                   
-// STD_32/STDX_32 - Just like STD/STDX, but uses a '32-bit' input register.
-def STD_32  : DSForm_1<62, 0, (ops GPRC:$rT, memrix:$dst),
-                       "std $rT, $dst", LdStSTD,
-                       [(PPCstd_32  GPRC:$rT, ixaddr:$dst)]>, isPPC64;
-def STDX_32  : XForm_8<31, 149, (ops GPRC:$rT, memrr:$dst),
-                       "stdx $rT, $dst", LdStSTD,
-                       [(PPCstd_32  GPRC:$rT, xaddr:$dst)]>, isPPC64,
-                       PPC970_DGroup_Cracked;
-
-
 // Truncating stores.                       
 def STB8 : DForm_1<38, (ops G8RC:$rS, memri:$src),
                    "stb $rS, $src", LdStGeneral,
@@ -404,6 +378,65 @@ def STWX8 : XForm_8<31, 151, (ops G8RC:$rS, memrr:$dst),
                    "stwx $rS, $dst", LdStGeneral,
                    [(truncstorei32 G8RC:$rS, xaddr:$dst)]>,
                    PPC970_DGroup_Cracked;
+// Normal 8-byte stores.
+def STD  : DSForm_1<62, 0, (ops G8RC:$rS, memrix:$dst),
+                    "std $rS, $dst", LdStSTD,
+                    [(store G8RC:$rS, ixaddr:$dst)]>, isPPC64;
+def STDX  : XForm_8<31, 149, (ops G8RC:$rS, memrr:$dst),
+                   "stdx $rS, $dst", LdStSTD,
+                   [(store G8RC:$rS, xaddr:$dst)]>, isPPC64,
+                   PPC970_DGroup_Cracked;
+}
+
+let isStore = 1, PPC970_Unit = 2 in {
+
+def STBU8 : DForm_1<38, (ops ptr_rc:$ea_res, G8RC:$rS,
+                             symbolLo:$ptroff, ptr_rc:$ptrreg),
+                    "stbu $rS, $ptroff($ptrreg)", LdStGeneral,
+                    [(set ptr_rc:$ea_res,
+                          (pre_truncsti8 G8RC:$rS, ptr_rc:$ptrreg, 
+                                         iaddroff:$ptroff))]>,
+                    RegConstraint<"$ptrreg = $ea_res">, NoEncode<"$ea_res">;
+def STHU8 : DForm_1<45, (ops ptr_rc:$ea_res, G8RC:$rS,
+                             symbolLo:$ptroff, ptr_rc:$ptrreg),
+                    "sthu $rS, $ptroff($ptrreg)", LdStGeneral,
+                    [(set ptr_rc:$ea_res,
+                        (pre_truncsti16 G8RC:$rS, ptr_rc:$ptrreg, 
+                                        iaddroff:$ptroff))]>,
+                    RegConstraint<"$ptrreg = $ea_res">, NoEncode<"$ea_res">;
+def STWU8 : DForm_1<37, (ops ptr_rc:$ea_res, G8RC:$rS,
+                             symbolLo:$ptroff, ptr_rc:$ptrreg),
+                    "stwu $rS, $ptroff($ptrreg)", LdStGeneral,
+                    [(set ptr_rc:$ea_res, (pre_store G8RC:$rS, ptr_rc:$ptrreg, 
+                                                     iaddroff:$ptroff))]>,
+                    RegConstraint<"$ptrreg = $ea_res">, NoEncode<"$ea_res">;
+
+
+def STDU : DSForm_1<62, 1, (ops ptr_rc:$ea_res, G8RC:$rS,
+                                symbolLo:$ptroff, ptr_rc:$ptrreg),
+                    "stdu $rS, $ptroff($ptrreg)", LdStSTD,
+                    [(set ptr_rc:$ea_res, (pre_store G8RC:$rS, ptr_rc:$ptrreg, 
+                                                     iaddroff:$ptroff))]>,
+                    RegConstraint<"$ptrreg = $ea_res">, NoEncode<"$ea_res">,
+                    isPPC64;
+
+}
+
+let isStore = 1, noResults = 1, PPC970_Unit = 2 in {
+
+def STDUX : XForm_8<31, 181, (ops G8RC:$rS, memrr:$dst),
+                   "stdux $rS, $dst", LdStSTD,
+                   []>, isPPC64;
+                   
+
+// STD_32/STDX_32 - Just like STD/STDX, but uses a '32-bit' input register.
+def STD_32  : DSForm_1<62, 0, (ops GPRC:$rT, memrix:$dst),
+                       "std $rT, $dst", LdStSTD,
+                       [(PPCstd_32  GPRC:$rT, ixaddr:$dst)]>, isPPC64;
+def STDX_32  : XForm_8<31, 149, (ops GPRC:$rT, memrr:$dst),
+                       "stdx $rT, $dst", LdStSTD,
+                       [(PPCstd_32  GPRC:$rT, xaddr:$dst)]>, isPPC64,
+                       PPC970_DGroup_Cracked;
 }
 
 
