@@ -15,28 +15,23 @@ LEVEL := .
 #   3. Build VMCore, which builds the Intrinsics.inc file used by libs.
 #   4. Build libs, which are needed by llvm-config.
 #   5. Build llvm-config, which determines inter-lib dependencies for tools.
-#   6. Build tools, runtime, docs.
+#   6. Build tools, docs.
 #
 DIRS := lib/System lib/Support utils lib/VMCore lib tools/llvm-config \
-        tools runtime docs
+        tools docs
         
 OPTIONAL_DIRS := examples projects
 EXTRA_DIST := test llvm.spec include win32 Xcode
 
 include $(LEVEL)/Makefile.config 
 
-# llvm-gcc4 doesn't need runtime libs.
-ifeq ($(LLVMGCC_MAJVERS),4)
-  DIRS := $(filter-out runtime, $(DIRS))
-endif
-
 ifeq ($(MAKECMDGOALS),libs-only)
-  DIRS := $(filter-out tools runtime docs, $(DIRS))
+  DIRS := $(filter-out tools docs, $(DIRS))
   OPTIONAL_DIRS :=
 endif
 
 ifeq ($(MAKECMDGOALS),tools-only)
-  DIRS := $(filter-out runtime docs, $(DIRS))
+  DIRS := $(filter-out docs, $(DIRS))
   OPTIONAL_DIRS :=
 endif
 

@@ -268,15 +268,6 @@ else
   AC_SUBST(DISABLE_ASSERTIONS,[[DISABLE_ASSERTIONS=1]])
 fi
 
-dnl --enable-debug-runtime : should runtime libraries have debug symbols?
-AC_ARG_ENABLE(debug-runtime,
-   AS_HELP_STRING([--enable-debug-runtime,Build runtime libs with debug symbols (default is NO)]),,enableval=no)
-if test ${enableval} = "no" ; then
-  AC_SUBST(DEBUG_RUNTIME,[[]])
-else
-  AC_SUBST(DEBUG_RUNTIME,[[DEBUG_RUNTIME=1]])
-fi
-
 dnl --enable-jit: check whether they want to enable the jit
 AC_ARG_ENABLE(jit,
   AS_HELP_STRING(--enable-jit,
@@ -820,7 +811,6 @@ AC_CONFIG_MAKEFILE(Makefile)
 AC_CONFIG_MAKEFILE(Makefile.common)
 AC_CONFIG_MAKEFILE(examples/Makefile)
 AC_CONFIG_MAKEFILE(lib/Makefile)
-AC_CONFIG_MAKEFILE(runtime/Makefile)
 AC_CONFIG_MAKEFILE(test/Makefile)
 AC_CONFIG_MAKEFILE(test/Makefile.tests)
 AC_CONFIG_MAKEFILE(tools/Makefile)
@@ -833,8 +823,6 @@ AC_OUTPUT
 dnl Warn loudly if llvm-gcc was not obviously working
 if test "$llvm_cv_llvmgcc_sanity" = "no" ; then
  AC_MSG_WARN([***** llvm-gcc/llvm-g++ was not found, or does not appear to be ])
- AC_MSG_WARN([***** working. Please make sure you have llvm-gcc and llvm-g++ in])
- AC_MSG_WARN([***** your path before configuring LLVM. The runtime libraries])
- AC_MSG_WARN([***** (llvm/runtime) will not be built but you should be able to])
- AC_MSG_WARN([***** build the llvm tools.])
+ AC_MSG_WARN([***** working. Please make sure you have llvm-gcc and llvm-g++ ])
+ AC_MSG_WARN([***** in your path before configuring LLVM.])
 fi
