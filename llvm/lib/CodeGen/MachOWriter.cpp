@@ -100,7 +100,7 @@ namespace llvm {
     }
 
     /// JIT SPECIFIC FUNCTIONS - DO NOT IMPLEMENT THESE HERE!
-    void startFunctionStub(unsigned StubSize) {
+    void startFunctionStub(unsigned StubSize, unsigned Alignment = 1) {
       assert(0 && "JIT specific function called!");
       abort();
     }
