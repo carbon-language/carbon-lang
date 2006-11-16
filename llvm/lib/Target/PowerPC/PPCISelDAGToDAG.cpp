@@ -108,6 +108,14 @@ namespace {
                        SDOperand &Base) {
       return PPCLowering.SelectAddressRegImm(N, Disp, Base, *CurDAG);
     }
+    
+    /// SelectAddrImmOffs - Return true if the operand is valid for a preinc
+    /// immediate field.  Because preinc imms have already been validated, just
+    /// accept it.
+    bool SelectAddrImmOffs(SDOperand Op, SDOperand N, SDOperand &Out) const {
+      Out = N;
+      return true;
+    }
       
     /// SelectAddrIdx - Given the specified addressed, check to see if it can be
     /// represented as an indexed [r+r] operation.  Returns false if it can
