@@ -7,12 +7,12 @@ target pointersize = 32
 
 declare float %fabsf(float)
 
-float %fabsftest(float %X) {
+float %test1(float %X) {
         %Y = call float %fabsf(float %X)
         ret float %Y
 }
 
-double %fabstest2(double %X) {
+double %test2(double %X) {
         %Y = setge double %X, -0.0
         %Z = sub double -0.0, %X
         %Q = select bool %Y, double %X, double %Z
