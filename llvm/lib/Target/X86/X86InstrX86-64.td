@@ -59,6 +59,8 @@ class RSSI<bits<8> o, Format F, dag ops, string asm, list<dag> pattern>
       : SSI<o, F, ops, asm, pattern>, REX_W;
 class RSDI<bits<8> o, Format F, dag ops, string asm, list<dag> pattern>
       : SDI<o, F, ops, asm, pattern>, REX_W;
+class RPDI<bits<8> o, Format F, dag ops, string asm, list<dag> pattern>
+      : PDI<o, F, ops, asm, pattern>, REX_W;
 
 //===----------------------------------------------------------------------===//
 // Pattern fragments...
@@ -1076,3 +1078,27 @@ def : Pat<(or (shl GR64:$src1, CL:$amt),
 def : Pat<(store (or (shl (loadi64 addr:$dst), CL:$amt),
                      (srl GR64:$src2, (sub 64, CL:$amt))), addr:$dst),
           (SHLD64mrCL addr:$dst, GR64:$src2)>;
+
+//===----------------------------------------------------------------------===//
+// X86-64 SSE Instructions
+//===----------------------------------------------------------------------===//
+
+// Move instructions...
+
+def MOV64toPQIrr : RPDI<0x6E, MRMSrcReg, (ops VR128:$dst, GR64:$src),
+                        "movq {$src, $dst|$dst, $src}",
+                        [(set VR128:$dst,
+                          (v2i64 (scalar_to_vector GR64:$src)))]>;
+def MOV64toPQIrm : RPDI<0x6E, MRMSrcMem, (ops VR128:$dst, i64mem:$src),
+                        "movq {$src, $dst|$dst, $src}",
+                        [(set VR128:$dst,
+                          (v2i64 (scalar_to_vector (loadi64 addr:$src))))]>;
+
+def MOVPQIto64rr  : RPDI<0x7E, MRMDestReg, (ops GR64:$dst, VR128:$src),
+                         "movd {$src, $dst|$dst, $src}",
+                         [(set GR64:$dst, (vector_extract (v2i64 VR128:$src),
+                                           (iPTR 0)))]>;
+def MOVPQIto64mr  : RPDI<0x7E, MRMDestMem, (ops i64mem:$dst, VR128:$src),
+                         "movd {$src, $dst|$dst, $src}",
+                         [(store (i64 (vector_extract (v2i64 VR128:$src),
+                                       (iPTR 0))), addr:$dst)]>;

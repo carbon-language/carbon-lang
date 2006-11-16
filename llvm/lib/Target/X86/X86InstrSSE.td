@@ -1682,17 +1682,18 @@ def MOVDI2PDIrm : PDI<0x6E, MRMSrcMem, (ops VR128:$dst, i32mem:$src),
                       "movd {$src, $dst|$dst, $src}",
                       [(set VR128:$dst,
                         (v4i32 (scalar_to_vector (loadi32 addr:$src))))]>;
+
 // SSE2 instructions with XS prefix
-def MOVQI2PQIrr : I<0x7E, MRMSrcReg, (ops VR128:$dst, VR64:$src),
-                    "movq {$src, $dst|$dst, $src}",
-                    [(set VR128:$dst,
-                      (v2i64 (scalar_to_vector VR64:$src)))]>, XS,
-                  Requires<[HasSSE2]>;
 def MOVQI2PQIrm : I<0x7E, MRMSrcMem, (ops VR128:$dst, i64mem:$src),
                     "movq {$src, $dst|$dst, $src}",
                     [(set VR128:$dst,
                       (v2i64 (scalar_to_vector (loadi64 addr:$src))))]>, XS,
                   Requires<[HasSSE2]>;
+def MOVPQI2QImr : PDI<0xD6, MRMDestMem, (ops i64mem:$dst, VR128:$src),
+                      "movq {$src, $dst|$dst, $src}",
+                      [(store (i64 (vector_extract (v2i64 VR128:$src),
+                                    (iPTR 0))), addr:$dst)]>;
+
 // FIXME: may not be able to eliminate this movss with coalescing the src and
 // dest register classes are different. We really want to write this pattern
 // like this:
