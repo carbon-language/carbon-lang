@@ -1217,10 +1217,6 @@ void LoopStrengthReduce::OptimizeIndvars(Loop *L) {
   }
   if (!CondUse) return;  // setcc doesn't use the IV.
 
-  // setcc stride is complex, don't mess with users.
-  // FIXME: Evaluate whether this is a good idea or not.
-  if (!isa<SCEVConstant>(*CondStride)) return;
-
   // It's possible for the setcc instruction to be anywhere in the loop, and
   // possible for it to have multiple users.  If it is not immediately before
   // the latch block branch, move it.
