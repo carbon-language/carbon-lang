@@ -57,7 +57,8 @@ void MRegisterInfo::getLocation(MachineFunction &MF, unsigned Index,
   ML.set(getFrameRegister(MF),
          MFI->getObjectOffset(Index) +
          MFI->getStackSize() -
-         TFI.getOffsetOfLocalArea());
+         TFI.getOffsetOfLocalArea() +
+         MFI->getOffsetAdjustment());
 }
 
 /// getInitialFrameState - Returns a list of machine moves that are assumed

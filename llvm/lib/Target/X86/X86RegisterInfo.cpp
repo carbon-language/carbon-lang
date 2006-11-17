@@ -1029,7 +1029,9 @@ void X86RegisterInfo::emitPrologue(MachineFunction &MF) const {
     // Get the offset of the stack slot for the EBP register... which is
     // guaranteed to be the last slot by processFunctionBeforeFrameFinalized.
     int EBPOffset = MFI->getObjectOffset(MFI->getObjectIndexBegin())+SlotSize;
-
+    // Update the frame offset adjustment.
+    MFI->setOffsetAdjustment(SlotSize-NumBytes);
+    
     // Save EBP into the appropriate stack slot...
     // mov [ESP-<offset>], EBP
     MI = addRegOffset(BuildMI(TII, Is64Bit ? X86::MOV64mr : X86::MOV32mr, 5),

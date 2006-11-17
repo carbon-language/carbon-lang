@@ -112,6 +112,14 @@ class MachineFrameInfo {
   ///
   unsigned StackSize;
   
+  /// OffsetAdjustment - The amount that a frame offset needs to be adjusted to
+  /// have the actual offset from the stack/frame pointer.  The calculation is 
+  /// MFI->getObjectOffset(Index) + StackSize - TFI.getOffsetOfLocalArea() +
+  /// OffsetAdjustment.  If OffsetAdjustment is zero (default) then offsets are
+  /// away from TOS. If OffsetAdjustment == StackSize then offsets are toward
+  /// TOS.
+  int OffsetAdjustment;
+  
   /// MaxAlignment - The prolog/epilog code inserter may process objects 
   /// that require greater alignment than the default alignment the target
   /// provides. To handle this, MaxAlignment is set to the maximum alignment 
@@ -148,7 +156,7 @@ class MachineFrameInfo {
   
 public:
   MachineFrameInfo() {
-    NumFixedObjects = StackSize = MaxAlignment = 0;
+    NumFixedObjects = StackSize = OffsetAdjustment = MaxAlignment = 0;
     HasVarSizedObjects = false;
     HasCalls = false;
     MaxCallFrameSize = 0;
@@ -212,6 +220,14 @@ public:
   /// setStackSize - Set the size of the stack...
   ///
   void setStackSize(unsigned Size) { StackSize = Size; }
+  
+  /// getOffsetAdjustment - Return the correction for frame offsets.
+  ///
+  int getOffsetAdjustment() const { return OffsetAdjustment; }
+  
+  /// setOffsetAdjustment - Set the correction for frame offsets.
+  ///
+  void setOffsetAdjustment(int Adj) { OffsetAdjustment = Adj; }
 
   /// getMaxAlignment - Return the alignment in bytes that this function must be 
   /// aligned to, which is greater than the default stack alignment provided by 
