@@ -1,0 +1,9 @@
+__main
+llvm.global_ctors
+llvm.global_dtors
+
+__llvm_eh_has_uncaught_exception
+__llvm_eh_current_uncaught_exception_type
+__llvm_eh_add_uncaught_exception
+__llvm_eh_get_uncaught_exception
+__llvm_eh_pop_from_uncaught_stack

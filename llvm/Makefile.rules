@@ -1099,10 +1099,18 @@ $(ObjDir)/%.s: %.c $(ObjDir)/.dir $(BUILT_SOURCES)
 	$(Echo) "Compiling $*.c to asm for $(BuildMode) build" $(PIC_FLAG)
 	$(MAYBE_PIC_Compile.C) $< -o $@ -S
 
+
 # make the C and C++ compilers strip debug info out of bytecode libraries.
+ifdef DEBUG_RUNTIME
+$(ObjectsBC): $(ObjDir)/%.bc: $(ObjDir)/%.ll $(GCCAS)
+	$(Echo) "Compiling $*.ll to $*.bc for $(BuildMode) build (bytecode)"
+	$(Verb) $(GCCAS) $< -o $@
+else
 $(ObjectsBC): $(ObjDir)/%.bc: $(ObjDir)/%.ll $(GCCAS)
 	$(Echo) "Compiling $*.ll to $*.bc for $(BuildMode) build (bytecode)"
 	$(Verb) $(GCCAS) -strip-debug $< -o $@
+endif
+
 
 #---------------------------------------------------------
 # Provide rule to build .bc files from .ll sources,
