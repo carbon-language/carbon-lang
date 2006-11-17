@@ -18,6 +18,7 @@
 #include "llvm/Pass.h"
 #include "llvm/Value.h"
 #include "llvm/Analysis/CallGraph.h"
+#include <iostream>
 #include <fstream>
 using namespace llvm;
 
