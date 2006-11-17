@@ -188,7 +188,7 @@ DSGraph::DSGraph(EquivalenceClasses<GlobalValue*> &ECs, const TargetData &td,
   : GlobalsGraph(GG), ScalarMap(ECs), TD(td) {
   PrintAuxCalls = false;
 
-  DEBUG(std::cerr << "  [Loc] Calculating graph for: " << F.getName() << "\n");
+  DOUT << "  [Loc] Calculating graph for: " << F.getName() << "\n";
 
   // Use the graph builder to construct the local version of the graph
   GraphBuilder B(F, *this, ReturnNodes[&F], FunctionCalls);
@@ -573,7 +573,7 @@ bool GraphBuilder::visitIntrinsic(CallSite CS, Function *F) {
       N->setModifiedMarker();
     return true;
   default:
-    DEBUG(std::cerr << "[dsa:local] Unhandled intrinsic: " << F->getName() << "\n");
+    DOUT << "[dsa:local] Unhandled intrinsic: " << F->getName() << "\n";
     return false;
   }
 }
@@ -1047,8 +1047,8 @@ void GraphBuilder::visitCallSite(CallSite CS) {
               break;
             }
         if (Warn) {
-          DEBUG(std::cerr << "WARNING: Call to unknown external function '"
-                << F->getName() << "' will cause pessimistic results!\n");
+          DOUT << "WARNING: Call to unknown external function '"
+               << F->getName() << "' will cause pessimistic results!\n";
         }
       }
 
@@ -1158,7 +1158,7 @@ void GraphBuilder::MergeConstantInitIntoNode(DSNodeHandle &NH, Constant *C) {
         DSNodeHandle NewNH(NHN, NH.getOffset()+(unsigned)SL->MemberOffsets[i]);
         MergeConstantInitIntoNode(NewNH, cast<Constant>(CS->getOperand(i)));
       } else if (SL->MemberOffsets[i] == SL->StructSize) {
-        DEBUG(std::cerr << "Zero size element at end of struct\n");
+        DOUT << "Zero size element at end of struct\n";
         NHN->foldNodeCompletely();
       } else {
         assert(0 && "type was smaller than offsets of of struct layout indicate");
@@ -1280,7 +1280,7 @@ bool LocalDataStructures::runOnModule(Module &M) {
   // together the globals into equivalence classes.
   std::set<GlobalValue*> ECGlobals;
   BuildGlobalECs(*GlobalsGraph, ECGlobals);
-  DEBUG(std::cerr << "Eliminating " << ECGlobals.size() << " EC Globals!\n");
+  DOUT << "Eliminating " << ECGlobals.size() << " EC Globals!\n";
   ECGlobals.clear();
 
   // Calculate all of the graphs...
@@ -1298,7 +1298,7 @@ bool LocalDataStructures::runOnModule(Module &M) {
   // program.
   BuildGlobalECs(*GlobalsGraph, ECGlobals);
   if (!ECGlobals.empty()) {
-    DEBUG(std::cerr << "Eliminating " << ECGlobals.size() << " EC Globals!\n");
+    DOUT << "Eliminating " << ECGlobals.size() << " EC Globals!\n";
     for (hash_map<Function*, DSGraph*>::iterator I = DSInfo.begin(),
            E = DSInfo.end(); I != E; ++I)
       EliminateUsesOfECGlobals(*I->second, ECGlobals);

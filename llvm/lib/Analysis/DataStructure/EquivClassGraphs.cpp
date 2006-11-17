@@ -213,7 +213,7 @@ void EquivClassGraphs::buildIndirectFunctionSets(Module &M) {
   // Now that all of the equivalences have been built, merge the graphs for
   // each equivalence class.
   //
-  DEBUG(std::cerr << "\nIndirect Function Equivalence Sets:\n");
+  DOUT << "\nIndirect Function Equivalence Sets:\n";
   for (EquivalenceClasses<Function*>::iterator EQSI = FuncECs.begin(), E =
          FuncECs.end(); EQSI != E; ++EQSI) {
     if (!EQSI->isLeader()) continue;
@@ -229,10 +229,10 @@ void EquivClassGraphs::buildIndirectFunctionSets(Module &M) {
     Function* LF = *SI;
 
 #ifndef NDEBUG
-    DEBUG(std::cerr <<"  Equivalence set for leader " << LF->getName() <<" = ");
+    DOUT <<"  Equivalence set for leader " << LF->getName() <<" = ";
     for (SN = SI; SN != FuncECs.member_end(); ++SN)
-      DEBUG(std::cerr << " " << (*SN)->getName() << "," );
-    DEBUG(std::cerr << "\n");
+      DOUT << " " << (*SN)->getName() << "," ;
+    DOUT << "\n";
 #endif
 
     // This equiv class has multiple functions: merge their graphs.  First,
@@ -286,7 +286,7 @@ void EquivClassGraphs::buildIndirectFunctionSets(Module &M) {
       DEBUG(MergedG.AssertGraphOK());
     }
   }
-  DEBUG(std::cerr << "\n");
+  DOUT << "\n";
 }
 
 
@@ -322,8 +322,7 @@ processSCC(DSGraph &FG, std::vector<DSGraph*> &Stack, unsigned &NextID,
   if (It != ValMap.end() && It->first == &FG)
     return It->second;
 
-  DEBUG(std::cerr << "    ProcessSCC for function " << FG.getFunctionNames()
-                  << "\n");
+  DOUT << "    ProcessSCC for function " << FG.getFunctionNames() << "\n";
 
   unsigned Min = NextID++, MyID = Min;
   ValMap[&FG] = Min;
@@ -386,8 +385,7 @@ processSCC(DSGraph &FG, std::vector<DSGraph*> &Stack, unsigned &NextID,
 /// processGraph - Process the CBU graphs for the program in bottom-up order on
 /// the SCC of the __ACTUAL__ call graph.  This builds final folded CBU graphs.
 void EquivClassGraphs::processGraph(DSGraph &G) {
-  DEBUG(std::cerr << "    ProcessGraph for function "
-                  << G.getFunctionNames() << "\n");
+  DOUT << "    ProcessGraph for function " << G.getFunctionNames() << "\n";
 
   hash_set<Instruction*> calls;
 
@@ -434,15 +432,15 @@ void EquivClassGraphs::processGraph(DSGraph &G) {
                        DSGraph::StripAllocaBit |
                        DSGraph::DontCloneCallNodes |
                        DSGraph::DontCloneAuxCallNodes);
-        DEBUG(std::cerr << "    Inlining graph [" << i << "/"
-              << G.getFunctionCalls().size()-1
-              << ":" << TNum << "/" << Num-1 << "] for "
-              << CalleeFunc->getName() << "["
-              << CalleeGraph->getGraphSize() << "+"
-              << CalleeGraph->getAuxFunctionCalls().size()
-              << "] into '" /*<< G.getFunctionNames()*/ << "' ["
-              << G.getGraphSize() << "+" << G.getAuxFunctionCalls().size()
-              << "]\n");
+        DOUT << "    Inlining graph [" << i << "/"
+             << G.getFunctionCalls().size()-1
+             << ":" << TNum << "/" << Num-1 << "] for "
+             << CalleeFunc->getName() << "["
+             << CalleeGraph->getGraphSize() << "+"
+             << CalleeGraph->getAuxFunctionCalls().size()
+             << "] into '" /*<< G.getFunctionNames()*/ << "' ["
+             << G.getGraphSize() << "+" << G.getAuxFunctionCalls().size()
+             << "]\n";
       }
     }
 
@@ -476,6 +474,5 @@ void EquivClassGraphs::processGraph(DSGraph &G) {
          E = MainSM.global_end(); I != E; ++I)
     RC.getClonedNH(MainSM[*I]);
 
-  DEBUG(std::cerr << "  -- DONE ProcessGraph for function "
-                  << G.getFunctionNames() << "\n");
+  DOUT << "  -- DONE ProcessGraph for function " << G.getFunctionNames() <<"\n";
 }

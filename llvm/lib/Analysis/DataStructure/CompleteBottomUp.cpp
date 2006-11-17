@@ -21,7 +21,6 @@
 #include "llvm/ADT/SCCIterator.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/ADT/STLExtras.h"
-#include <iostream>
 using namespace llvm;
 
 namespace {
@@ -52,14 +51,14 @@ bool CompleteBUDataStructures::runOnModule(Module &M) {
     if (!MainFunc->isExternal())
       calculateSCCGraphs(getOrCreateGraph(*MainFunc), Stack, NextID, ValMap);
   } else {
-    DEBUG(std::cerr << "CBU-DSA: No 'main' function found!\n");
+    DOUT << "CBU-DSA: No 'main' function found!\n";
   }
 
   for (Module::iterator I = M.begin(), E = M.end(); I != E; ++I)
     if (!I->isExternal() && !DSInfo.count(I)) {
       if (MainFunc) {
-        DEBUG(std::cerr << "*** CBU: Function unreachable from main: "
-              << I->getName() << "\n");
+        DOUT << "*** CBU: Function unreachable from main: "
+             << I->getName() << "\n";
       }
       calculateSCCGraphs(getOrCreateGraph(*I), Stack, NextID, ValMap);
     }
@@ -218,14 +217,14 @@ void CompleteBUDataStructures::processGraph(DSGraph &G) {
         G.mergeInGraph(CS, *CalleeFunc, GI,
                        DSGraph::StripAllocaBit | DSGraph::DontCloneCallNodes |
                        DSGraph::DontCloneAuxCallNodes);
-        DEBUG(std::cerr << "    Inlining graph [" << i << "/"
-              << G.getFunctionCalls().size()-1
-              << ":" << TNum << "/" << Num-1 << "] for "
-              << CalleeFunc->getName() << "["
-              << GI.getGraphSize() << "+" << GI.getAuxFunctionCalls().size()
-              << "] into '" /*<< G.getFunctionNames()*/ << "' ["
-              << G.getGraphSize() << "+" << G.getAuxFunctionCalls().size()
-              << "]\n");
+        DOUT << "    Inlining graph [" << i << "/"
+             << G.getFunctionCalls().size()-1
+             << ":" << TNum << "/" << Num-1 << "] for "
+             << CalleeFunc->getName() << "["
+             << GI.getGraphSize() << "+" << GI.getAuxFunctionCalls().size()
+             << "] into '" /*<< G.getFunctionNames()*/ << "' ["
+             << G.getGraphSize() << "+" << G.getAuxFunctionCalls().size()
+             << "]\n";
       }
     }
   }
