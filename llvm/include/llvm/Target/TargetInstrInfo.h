@@ -110,8 +110,9 @@ public:
 
 class TargetInstrDescriptor {
 public:
+  MachineOpCode   Opcode;        // The opcode.
+  unsigned short  numOperands;   // Num of args (may be more if variable_ops).
   const char *    Name;          // Assembly language mnemonic for the opcode.
-  unsigned        numOperands;   // Num of args (may be more if variable_ops).
   InstrSchedClass schedClass;    // enum  identifying instr sched class
   unsigned        Flags;         // flags identifying machine instr class
   unsigned        TSFlags;       // Target Specific Flag values
