@@ -54,7 +54,7 @@ FunctionPass *llvm::createPPCBranchSelectionPass() {
 ///
 static unsigned getNumBytesForInstruction(MachineInstr *MI) {
   switch (MI->getOpcode()) {
-  case PPC::COND_BRANCH:
+  case PPC::BCC:
     // while this will be 4 most of the time, if we emit 8 it is just a
     // minor pessimization that saves us from having to worry about
     // keeping the offsets up to date later when we emit long branch glue.
@@ -116,7 +116,7 @@ bool PPCBSel::runOnMachineFunction(MachineFunction &Fn) {
       // We may end up deleting the MachineInstr that MBBI points to, so
       // remember its opcode now so we can refer to it after calling erase()
       unsigned ByteSize = getNumBytesForInstruction(MBBI);
-      if (MBBI->getOpcode() != PPC::COND_BRANCH) {
+      if (MBBI->getOpcode() != PPC::BCC) {
         ByteCount += ByteSize;
         continue;
       }
@@ -159,7 +159,7 @@ bool PPCBSel::runOnMachineFunction(MachineFunction &Fn) {
         MBBJ = BuildMI(*MBB, MBBI, PPC::B, 1).addMBB(DestMBB);
       }
       
-      // Erase the psuedo COND_BRANCH instruction, and then back up the
+      // Erase the psuedo BCC instruction, and then back up the
       // iterator so that when the for loop increments it, we end up in
       // the correct place rather than iterating off the end.
       MBB->erase(MBBI);

@@ -1007,7 +1007,7 @@ SDNode *PPCDAGToDAGISel::Select(SDOperand Op) {
     SDOperand CondCode = SelectCC(N->getOperand(2), N->getOperand(3), CC);
     SDOperand Ops[] = { CondCode, getI32Imm(getPredicateForSetCC(CC)), 
                         N->getOperand(4), N->getOperand(0) };
-    return CurDAG->SelectNodeTo(N, PPC::COND_BRANCH, MVT::Other, Ops, 4);
+    return CurDAG->SelectNodeTo(N, PPC::BCC, MVT::Other, Ops, 4);
   }
   case ISD::BRIND: {
     // FIXME: Should custom lower this.

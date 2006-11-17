@@ -2613,7 +2613,7 @@ PPCTargetLowering::InsertAtEndOfBasicBlock(MachineInstr *MI,
   MachineBasicBlock *copy0MBB = new MachineBasicBlock(LLVM_BB);
   MachineBasicBlock *sinkMBB = new MachineBasicBlock(LLVM_BB);
   unsigned SelectPred = MI->getOperand(4).getImm();
-  BuildMI(BB, PPC::COND_BRANCH, 3)
+  BuildMI(BB, PPC::BCC, 3)
     .addReg(MI->getOperand(1).getReg()).addImm(SelectPred).addMBB(sinkMBB);
   MachineFunction *F = BB->getParent();
   F->getBasicBlockList().insert(It, copy0MBB);

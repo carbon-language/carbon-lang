@@ -352,16 +352,17 @@ let Defs = [LR] in
 
 let isBranch = 1, isTerminator = 1, hasCtrlDep = 1, 
     noResults = 1, PPC970_Unit = 7 in {
-  // COND_BRANCH is formed before branch selection, it is turned into Bcc below.
-  // 'opc' is a 'PPC::Predicate' value.
-  def COND_BRANCH : Pseudo<(ops CRRC:$crS, u16imm:$opc, target:$dst),
-                           "${:comment} COND_BRANCH $crS, $opc, $dst",
-                           [(PPCcondbranch CRRC:$crS, imm:$opc, bb:$dst)]>;
   let isBarrier = 1 in {
   def B   : IForm<18, 0, 0, (ops target:$dst),
                   "b $dst", BrB,
                   [(br bb:$dst)]>;
   }
+
+  // BCC is formed before branch selection, it is turned into Bxx below.
+  // 'opc' is a 'PPC::Predicate' value.
+  def BCC : Pseudo<(ops CRRC:$crS, u16imm:$opc, target:$dst),
+                   "${:comment} BCC $crS, $opc, $dst",
+                   [(PPCcondbranch CRRC:$crS, imm:$opc, bb:$dst)]>;
 
   def BLT : BForm<16, 0, 0, 12, 0, (ops CRRC:$crS, target:$block),
                   "blt $crS, $block", BrB>;

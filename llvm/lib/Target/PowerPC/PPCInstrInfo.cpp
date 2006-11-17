@@ -192,7 +192,7 @@ bool PPCInstrInfo::AnalyzeBranch(MachineBasicBlock &MBB,MachineBasicBlock *&TBB,
     if (LastInst->getOpcode() == PPC::B) {
       TBB = LastInst->getOperand(0).getMachineBasicBlock();
       return false;
-    } else if (LastInst->getOpcode() == PPC::COND_BRANCH) {
+    } else if (LastInst->getOpcode() == PPC::BCC) {
       // Block ends with fall-through condbranch.
       TBB = LastInst->getOperand(2).getMachineBasicBlock();
       Cond.push_back(LastInst->getOperand(0));
@@ -211,8 +211,8 @@ bool PPCInstrInfo::AnalyzeBranch(MachineBasicBlock &MBB,MachineBasicBlock *&TBB,
       isTerminatorInstr((--I)->getOpcode()))
     return true;
   
-  // If the block ends with PPC::B and PPC:COND_BRANCH, handle it.
-  if (SecondLastInst->getOpcode() == PPC::COND_BRANCH && 
+  // If the block ends with PPC::B and PPC:BCC, handle it.
+  if (SecondLastInst->getOpcode() == PPC::BCC && 
       LastInst->getOpcode() == PPC::B) {
     TBB =  SecondLastInst->getOperand(2).getMachineBasicBlock();
     Cond.push_back(SecondLastInst->getOperand(0));
@@ -229,7 +229,7 @@ void PPCInstrInfo::RemoveBranch(MachineBasicBlock &MBB) const {
   MachineBasicBlock::iterator I = MBB.end();
   if (I == MBB.begin()) return;
   --I;
-  if (I->getOpcode() != PPC::B && I->getOpcode() != PPC::COND_BRANCH)
+  if (I->getOpcode() != PPC::B && I->getOpcode() != PPC::BCC)
     return;
   
   // Remove the branch.
@@ -239,7 +239,7 @@ void PPCInstrInfo::RemoveBranch(MachineBasicBlock &MBB) const {
 
   if (I == MBB.begin()) return;
   --I;
-  if (I->getOpcode() != PPC::COND_BRANCH)
+  if (I->getOpcode() != PPC::BCC)
     return;
   
   // Remove the branch.
@@ -259,13 +259,13 @@ void PPCInstrInfo::InsertBranch(MachineBasicBlock &MBB, MachineBasicBlock *TBB,
     if (Cond.empty())   // Unconditional branch
       BuildMI(&MBB, PPC::B, 1).addMBB(TBB);
     else                // Conditional branch
-      BuildMI(&MBB, PPC::COND_BRANCH, 3)
+      BuildMI(&MBB, PPC::BCC, 3)
         .addReg(Cond[0].getReg()).addImm(Cond[1].getImm()).addMBB(TBB);
     return;
   }
   
   // Two-way Conditional Branch.
-  BuildMI(&MBB, PPC::COND_BRANCH, 3)
+  BuildMI(&MBB, PPC::BCC, 3)
     .addReg(Cond[0].getReg()).addImm(Cond[1].getImm()).addMBB(TBB);
   BuildMI(&MBB, PPC::B, 1).addMBB(FBB);
 }
