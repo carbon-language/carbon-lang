@@ -61,9 +61,9 @@ bool isCurrentDebugType(const char *Type);
   do { if (DebugFlag && isCurrentDebugType(DEBUG_TYPE)) { X; } } while (0)
 #endif
 
-// llvm_ostream - Acts like an ostream. However, it doesn't print things out if
-// an ostream isn't specified.
-// 
+/// llvm_ostream - Acts like an ostream. However, it doesn't print things out if
+/// an ostream isn't specified.
+/// 
 class llvm_ostream {
   std::ostream* Stream;
 public:
@@ -77,10 +77,10 @@ public:
   }
 };
 
-// getErrorOutputStream - Returns the error output stream (std::cerr). This
-// places the std::c* I/O streams into one .cpp file and relieves the whole
-// program from having to have hundreds of static c'tor/d'tors for them.
-// 
+/// getErrorOutputStream - Returns the error output stream (std::cerr). This
+/// places the std::c* I/O streams into one .cpp file and relieves the whole
+/// program from having to have hundreds of static c'tor/d'tors for them.
+/// 
 llvm_ostream getErrorOutputStream(const char *DebugType);
 
 #ifdef NDEBUG
