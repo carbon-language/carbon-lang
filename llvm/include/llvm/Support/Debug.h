@@ -72,7 +72,9 @@ public:
 
   template <typename Ty>
   llvm_ostream& operator << (const Ty& Thing) {
+#ifndef NDEBUG
     if (Stream) *Stream << Thing;
+#endif
     return *this;
   }
 };
