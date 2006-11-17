@@ -19,11 +19,11 @@
 #include "llvm/SymbolTable.h"
 #include "llvm/Module.h"
 #include "llvm/ADT/StringExtras.h"
-#include "llvm/Support/MathExtras.h"
 #include "llvm/Support/Compiler.h"
+#include "llvm/Support/Debug.h"
 #include "llvm/Support/ManagedStatic.h"
+#include "llvm/Support/MathExtras.h"
 #include <algorithm>
-#include <iostream>
 using namespace llvm;
 
 //===----------------------------------------------------------------------===//
@@ -42,9 +42,9 @@ void Constant::destroyConstantImpl() {
     Value *V = use_back();
 #ifndef NDEBUG      // Only in -g mode...
     if (!isa<Constant>(V))
-      std::cerr << "While deleting: " << *this
-                << "\n\nUse still stuck around after Def is destroyed: "
-                << *V << "\n\n";
+      DOUT << "While deleting: " << *this
+           << "\n\nUse still stuck around after Def is destroyed: "
+           << *V << "\n\n";
 #endif
     assert(isa<Constant>(V) && "References remain to Constant being destroyed");
     Constant *CV = cast<Constant>(V);
@@ -870,7 +870,7 @@ public:
     }
 
     void dump() const {
-      std::cerr << "Constant.cpp: ValueMap\n";
+      DOUT << "Constant.cpp: ValueMap\n";
     }
   };
 }

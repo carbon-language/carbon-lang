@@ -16,9 +16,8 @@
 #include "llvm/DerivedTypes.h"
 #include "llvm/Module.h"
 #include "llvm/ADT/StringExtras.h"
+#include "llvm/Support/Debug.h"
 #include <algorithm>
-#include <iostream>
-
 using namespace llvm;
 
 #define DEBUG_SYMBOL_TABLE 0
@@ -39,9 +38,9 @@ SymbolTable::~SymbolTable() {
   for (plane_iterator PI = pmap.begin(); PI != pmap.end(); ++PI) {
     for (value_iterator VI = PI->second.begin(); VI != PI->second.end(); ++VI)
       if (!isa<Constant>(VI->second) ) {
-        std::cerr << "Value still in symbol table! Type = '"
-                  << PI->first->getDescription() << "' Name = '"
-                  << VI->first << "'\n";
+        DOUT << "Value still in symbol table! Type = '"
+             << PI->first->getDescription() << "' Name = '"
+             << VI->first << "'\n";
         LeftoverValues = false;
       }
   }
@@ -136,7 +135,7 @@ void SymbolTable::remove(Value *N) {
 
 #if DEBUG_SYMBOL_TABLE
   dump();
-  std::cerr << " Removing Value: " << Entry->second->getName() << "\n";
+  DOUT << " Removing Value: " << Entry->second->getName() << "\n";
 #endif
 
   // Remove the value from the plane...
@@ -149,8 +148,8 @@ void SymbolTable::remove(Value *N) {
     //
     if (N->getType()->isAbstract()) {
 #if DEBUG_ABSTYPE
-      std::cerr << "Plane Empty: Removing type: "
-                << N->getType()->getDescription() << "\n";
+      DOUT << "Plane Empty: Removing type: "
+           << N->getType()->getDescription() << "\n";
 #endif
       cast<DerivedType>(N->getType())->removeAbstractTypeUser(this);
     }
@@ -167,7 +166,7 @@ Type* SymbolTable::remove(type_iterator Entry) {
 
 #if DEBUG_SYMBOL_TABLE
   dump();
-  std::cerr << " Removing type: " << Entry->first << "\n";
+  DOUT << " Removing type: " << Entry->first << "\n";
 #endif
 
   tmap.erase(Entry);
@@ -176,7 +175,8 @@ Type* SymbolTable::remove(type_iterator Entry) {
   // list...
   if (Result->isAbstract()) {
 #if DEBUG_ABSTYPE
-    std::cerr << "Removing abstract type from symtab" << Result->getDescription()<<"\n";
+    DOUT  << "Removing abstract type from symtab"
+          << Result->getDescription() << "\n";
 #endif
     cast<DerivedType>(Result)->removeAbstractTypeUser(this);
   }
@@ -194,8 +194,8 @@ void SymbolTable::insertEntry(const std::string &Name, const Type *VTy,
 
 #if DEBUG_SYMBOL_TABLE
   dump();
-  std::cerr << " Inserting definition: " << Name << ": "
-            << VTy->getDescription() << "\n";
+  DOUT << " Inserting definition: " << Name << ": "
+       << VTy->getDescription() << "\n";
 #endif
 
   if (PI == pmap.end()) {      // Not in collection yet... insert dummy entry
@@ -210,8 +210,8 @@ void SymbolTable::insertEntry(const std::string &Name, const Type *VTy,
     if (VTy->isAbstract()) {
       cast<DerivedType>(VTy)->addAbstractTypeUser(this);
 #if DEBUG_ABSTYPE
-      std::cerr << "Added abstract type value: " << VTy->getDescription()
-                << "\n";
+      DOUT << "Added abstract type value: " << VTy->getDescription()
+           << "\n";
 #endif
     }
 
@@ -243,8 +243,8 @@ void SymbolTable::insert(const std::string& Name, const Type* T) {
 
 #if DEBUG_SYMBOL_TABLE
   dump();
-  std::cerr << " Inserting type: " << UniqueName << ": "
-            << T->getDescription() << "\n";
+  DOUT << " Inserting type: " << UniqueName << ": "
+       << T->getDescription() << "\n";
 #endif
 
   // Insert the tmap entry
@@ -254,7 +254,7 @@ void SymbolTable::insert(const std::string& Name, const Type* T) {
   if (T->isAbstract()) {
     cast<DerivedType>(T)->addAbstractTypeUser(this);
 #if DEBUG_ABSTYPE
-    std::cerr << "Added abstract type to ST: " << T->getDescription() << "\n";
+    DOUT << "Added abstract type to ST: " << T->getDescription() << "\n";
 #endif
   }
 }
@@ -303,8 +303,8 @@ void SymbolTable::refineAbstractType(const DerivedType *OldType,
       if (NewType->isAbstract()) {
         cast<DerivedType>(NewType)->addAbstractTypeUser(this);
 #if DEBUG_ABSTYPE
-        std::cerr << "[Added] refined to abstype: " << NewType->getDescription()
-                  << "\n";
+        DOUT << "[Added] refined to abstype: " << NewType->getDescription()
+             << "\n";
 #endif
       }
     }
@@ -368,7 +368,7 @@ void SymbolTable::refineAbstractType(const DerivedType *OldType,
     // Ok, now we are not referencing the type anymore... take me off your user
     // list please!
 #if DEBUG_ABSTYPE
-    std::cerr << "Removing type " << OldType->getDescription() << "\n";
+    DOUT << "Removing type " << OldType->getDescription() << "\n";
 #endif
     OldType->removeAbstractTypeUser(this);
 
@@ -384,14 +384,14 @@ void SymbolTable::refineAbstractType(const DerivedType *OldType,
   for (type_iterator I = type_begin(), E = type_end(); I != E; ++I) {
     if (I->second == (Type*)OldType) {  // FIXME when Types aren't const.
 #if DEBUG_ABSTYPE
-      std::cerr << "Removing type " << OldType->getDescription() << "\n";
+      DOUT << "Removing type " << OldType->getDescription() << "\n";
 #endif
       OldType->removeAbstractTypeUser(this);
 
       I->second = (Type*)NewType;  // TODO FIXME when types aren't const
       if (NewType->isAbstract()) {
 #if DEBUG_ABSTYPE
-        std::cerr << "Added type " << NewType->getDescription() << "\n";
+        DOUT << "Added type " << NewType->getDescription() << "\n";
 #endif
         cast<DerivedType>(NewType)->addAbstractTypeUser(this);
       }
@@ -418,28 +418,28 @@ void SymbolTable::typeBecameConcrete(const DerivedType *AbsTy) {
 }
 
 static void DumpVal(const std::pair<const std::string, Value *> &V) {
-  std::cerr << "  '" << V.first << "' = ";
+  DOUT << "  '" << V.first << "' = ";
   V.second->dump();
-  std::cerr << "\n";
+  DOUT << "\n";
 }
 
 static void DumpPlane(const std::pair<const Type *,
                                       std::map<const std::string, Value *> >&P){
   P.first->dump();
-  std::cerr << "\n";
+  DOUT << "\n";
   for_each(P.second.begin(), P.second.end(), DumpVal);
 }
 
 static void DumpTypes(const std::pair<const std::string, const Type*>& T ) {
-  std::cerr << "  '" << T.first << "' = ";
+  DOUT << "  '" << T.first << "' = ";
   T.second->dump();
-  std::cerr << "\n";
+  DOUT << "\n";
 }
 
 void SymbolTable::dump() const {
-  std::cerr << "Symbol table dump:\n  Plane:";
+  DOUT << "Symbol table dump:\n  Plane:";
   for_each(pmap.begin(), pmap.end(), DumpPlane);
-  std::cerr << "  Types: ";
+  DOUT << "  Types: ";
   for_each(tmap.begin(), tmap.end(), DumpTypes);
 }
 

@@ -16,9 +16,9 @@
 #include "llvm/InstrTypes.h"
 #include "llvm/Module.h"
 #include "llvm/SymbolTable.h"
+#include "llvm/Support/Debug.h"
 #include "llvm/Support/LeakDetector.h"
 #include <algorithm>
-#include <iostream>
 using namespace llvm;
 
 //===----------------------------------------------------------------------===//
@@ -50,10 +50,10 @@ Value::~Value() {
   // a <badref>
   //
   if (use_begin() != use_end()) {
-    std::cerr << "While deleting: " << *Ty << " %" << Name << "\n";
+    DOUT << "While deleting: " << *Ty << " %" << Name << "\n";
     for (use_iterator I = use_begin(), E = use_end(); I != E; ++I)
-      std::cerr << "Use still stuck around after Def is destroyed:"
-                << **I << "\n";
+      DOUT << "Use still stuck around after Def is destroyed:"
+           << **I << "\n";
   }
 #endif
   assert(use_begin() == use_end() && "Uses remain when a value is destroyed!");
