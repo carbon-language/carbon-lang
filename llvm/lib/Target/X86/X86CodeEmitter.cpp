@@ -26,7 +26,6 @@
 #include "llvm/ADT/Statistic.h"
 #include "llvm/Support/Compiler.h"
 #include "llvm/Target/TargetOptions.h"
-#include <iostream>
 using namespace llvm;
 
 namespace {
@@ -623,8 +622,7 @@ void Emitter::emitInstruction(const MachineInstr &MI) {
     default: 
       assert(0 && "psuedo instructions should be removed before code emission");
     case TargetInstrInfo::INLINEASM:
-      std::cerr << "JIT does not support inline asm!\n";
-      abort();
+      assert(0 && "JIT does not support inline asm!\n");
     case X86::IMPLICIT_USE:
     case X86::IMPLICIT_DEF:
     case X86::IMPLICIT_DEF_GR8:

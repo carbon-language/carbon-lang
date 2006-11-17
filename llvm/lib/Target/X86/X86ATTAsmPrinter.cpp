@@ -23,7 +23,6 @@
 #include "llvm/Support/Mangler.h"
 #include "llvm/Target/TargetAsmInfo.h"
 #include "llvm/Target/TargetOptions.h"
-#include <iostream>
 using namespace llvm;
 
 /// getSectionForFunction - Return the section that we should emit the

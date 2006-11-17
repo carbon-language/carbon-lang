@@ -21,7 +21,6 @@
 #include "llvm/Target/TargetOptions.h"
 #include "llvm/Target/TargetMachineRegistry.h"
 #include "llvm/Transforms/Scalar.h"
-#include <iostream>
 using namespace llvm;
 
 /// X86TargetMachineModule - Note that this is used on hosts that cannot link
