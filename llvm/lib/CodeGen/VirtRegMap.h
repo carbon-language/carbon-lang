@@ -24,6 +24,7 @@
 namespace llvm {
   class MachineInstr;
   class TargetInstrInfo;
+  class llvm_ostream;
 
   class VirtRegMap {
   public:
@@ -144,6 +145,7 @@ namespace llvm {
     }
 
     void print(std::ostream &OS) const;
+    void print(llvm_ostream &OS) const;
     void dump() const;
   };
 
