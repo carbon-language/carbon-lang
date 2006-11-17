@@ -74,6 +74,24 @@ class BForm<bits<6> opcode, bit aa, bit lk, bits<5> bo, bits<2> bicode, dag OL,
   let Inst{31}    = lk;
 }
 
+class CBForm<bits<6> opcode, bit aa, bit lk, dag OL, 
+             string asmstr> : I<opcode, OL, asmstr, BrB> {
+  bits<7> BIBO;  // 2 bits of BI and 5 bits of BO.
+  bits<3>  CR;
+  bits<14> BD;
+
+  bits<5> BI;
+  let BI{0-1} = BIBO{5-6};
+  let BI{2-4} = CR{0-2};
+
+  let Inst{6-10}  = BIBO{4-0};
+  let Inst{11-15} = BI;
+  let Inst{16-29} = BD;
+  let Inst{30}    = aa;
+  let Inst{31}    = lk;
+}
+
+
 // 1.7.4 D-Form
 class DForm_base<bits<6> opcode, dag OL, string asmstr, InstrItinClass itin,
                  list<dag> pattern> 
