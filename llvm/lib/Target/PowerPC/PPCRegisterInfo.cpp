@@ -704,7 +704,7 @@ void PPCRegisterInfo::determineFrameLayout(MachineFunction &MF) const {
   // don't have a frame pointer, calls, or dynamic alloca then we do not need
   // to adjust the stack pointer (we fit in the Red Zone).
   if (FrameSize <= 224 &&             // Fits in red zone.
-      !needsFP(MF) &&                 // Frame pointer can be eliminated.
+      !MFI->hasVarSizedObjects() &&   // No dynamic alloca.
       !MFI->hasCalls() &&             // No calls.
       MaxAlign <= TargetAlign) {      // No special alignment.
     // No need for frame
@@ -818,7 +818,7 @@ void PPCRegisterInfo::emitPrologue(MachineFunction &MF) const {
         .addImm(NegFrameSize);
       BuildMI(MBB, MBBI, PPC::STDUX, 3)
         .addReg(PPC::X1).addReg(PPC::X1).addReg(PPC::X0);
-    } else if (isInt16(NegFrameSize/4)) {
+    } else if (isInt16(NegFrameSize)) {
       BuildMI(MBB, MBBI, PPC::STDU, 3, PPC::X1)
              .addReg(PPC::X1).addImm(NegFrameSize/4).addReg(PPC::X1);
     } else {
