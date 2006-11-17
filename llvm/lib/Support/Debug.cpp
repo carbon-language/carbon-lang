@@ -23,9 +23,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "llvm/Support/Debug.h"
 #include "llvm/Support/CommandLine.h"
-#include <iostream>
+#include "llvm/Support/Debug.h"
 using namespace llvm;
 
 bool llvm::DebugFlag;  // DebugFlag - Exported boolean set by the -debug option
@@ -71,7 +70,7 @@ bool llvm::isCurrentDebugType(const char *DebugType) {
 // 
 llvm_ostream llvm::getErrorOutputStream(const char *DebugType) {
   if (DebugFlag && isCurrentDebugType(DebugType))
-    return llvm_ostream(std::cerr);
+    return llvm_cerr;
   else
-    return llvm_ostream();
+    return llvm_null;
 }
