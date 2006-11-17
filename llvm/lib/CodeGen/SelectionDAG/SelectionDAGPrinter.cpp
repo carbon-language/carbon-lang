@@ -24,6 +24,7 @@
 #include "llvm/Config/config.h"
 #include <fstream>
 #include <sstream>
+#include <iostream>
 using namespace llvm;
 
 namespace llvm {
