@@ -137,7 +137,7 @@ bool PPCBSel::runOnMachineFunction(MachineFunction &Fn) {
       } else {
         // Long branch, skip next branch instruction (i.e. $PC+8).
         ++NumExpanded;
-        BuildMI(*MBB, MBBJ, Inverted, 2).addReg(CRReg).addImm(2);
+        BuildMI(*MBB, MBBI, Inverted, 2).addReg(CRReg).addImm(2);
         MBBJ = BuildMI(*MBB, MBBI, PPC::B, 1).addMBB(DestMBB);
       }
       
