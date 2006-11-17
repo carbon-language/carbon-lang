@@ -21,6 +21,7 @@
 #include "llvm/Support/GraphWriter.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/Config/config.h"
+#include <iostream>
 #include <fstream>
 #include <sstream>
 using namespace llvm;
