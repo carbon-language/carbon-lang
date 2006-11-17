@@ -30,7 +30,6 @@
 #include "llvm/Instructions.h"
 #include "llvm/Type.h"
 #include "llvm/Target/TargetData.h"
-#include <iostream>
 using namespace llvm;
 
 // Register the AliasAnalysis interface, providing a nice name to refer to.

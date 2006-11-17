@@ -16,7 +16,6 @@
 #include "llvm/Support/CFG.h"
 #include "llvm/ADT/DepthFirstIterator.h"
 #include "llvm/ADT/SetOperations.h"
-#include <iostream>
 using namespace llvm;
 
 //===----------------------------------------------------------------------===//
