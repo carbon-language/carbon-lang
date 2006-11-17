@@ -26,7 +26,7 @@
 #ifndef LLVM_SUPPORT_DEBUG_H
 #define LLVM_SUPPORT_DEBUG_H
 
-#include <ostream>              // Doesn't have static d'tors!!
+#include "llvm/Support/Streams.h"
 
 namespace llvm {
 
@@ -60,24 +60,6 @@ bool isCurrentDebugType(const char *Type);
 #define DEBUG(X) \
   do { if (DebugFlag && isCurrentDebugType(DEBUG_TYPE)) { X; } } while (0)
 #endif
-
-/// llvm_ostream - Acts like an ostream. However, it doesn't print things out if
-/// an ostream isn't specified.
-/// 
-class llvm_ostream {
-  std::ostream* Stream;
-public:
-  llvm_ostream() : Stream(0) {}
-  llvm_ostream(std::ostream& OStream) : Stream(&OStream) {}
-
-  template <typename Ty>
-  llvm_ostream& operator << (const Ty& Thing) {
-#ifndef NDEBUG
-    if (Stream) *Stream << Thing;
-#endif
-    return *this;
-  }
-};
 
 /// getErrorOutputStream - Returns the error output stream (std::cerr). This
 /// places the std::c* I/O streams into one .cpp file and relieves the whole

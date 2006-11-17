@@ -24,9 +24,9 @@
 #define LLVM_SUPPORT_PASS_NAME_PARSER_H
 
 #include "llvm/Support/CommandLine.h"
+#include "llvm/Support/Debug.h"
 #include "llvm/Pass.h"
 #include <algorithm>
-#include <iostream>
 
 namespace llvm {
 
@@ -66,7 +66,7 @@ public:
   virtual void passRegistered(const PassInfo *P) {
     if (ignorablePass(P) || !Opt) return;
     if (findOption(P->getPassArgument()) != getNumOptions()) {
-      std::cerr << "Two passes with the same argument (-"
+      llvm_cerr << "Two passes with the same argument (-"
                 << P->getPassArgument() << ") attempted to be registered!\n";
       abort();
     }
