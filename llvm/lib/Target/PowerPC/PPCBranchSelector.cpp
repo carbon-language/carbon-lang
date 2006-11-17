@@ -133,12 +133,12 @@ bool PPCBSel::runOnMachineFunction(MachineFunction &Fn) {
       
       MachineBasicBlock::iterator MBBJ;
       if (Displacement >= -32768 && Displacement <= 32767) {
-        MBBJ = BuildMI(*MBB, MBBJ, Opcode, 2).addReg(CRReg).addMBB(DestMBB);
+        MBBJ = BuildMI(*MBB, MBBI, Opcode, 2).addReg(CRReg).addMBB(DestMBB);
       } else {
         // Long branch, skip next branch instruction (i.e. $PC+8).
         ++NumExpanded;
         BuildMI(*MBB, MBBJ, Inverted, 2).addReg(CRReg).addImm(2);
-        MBBJ = BuildMI(*MBB, MBBJ, PPC::B, 1).addMBB(DestMBB);
+        MBBJ = BuildMI(*MBB, MBBI, PPC::B, 1).addMBB(DestMBB);
       }
       
       // Erase the psuedo COND_BRANCH instruction, and then back up the
