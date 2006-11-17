@@ -23,7 +23,6 @@
 #include "llvm/Target/TargetAsmInfo.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/Support/Compiler.h"
-#include <map>
 using namespace llvm;
 
 static Statistic<> NumExpanded("ppc-branch-select",
@@ -31,9 +30,8 @@ static Statistic<> NumExpanded("ppc-branch-select",
 
 namespace {
   struct VISIBILITY_HIDDEN PPCBSel : public MachineFunctionPass {
-    /// OffsetMap - Mapping between BB and byte offset from start of function.
-    /// TODO: replace this with a vector, using the MBB idx as the key.
-    std::map<MachineBasicBlock*, unsigned> OffsetMap;
+    /// OffsetMap - Mapping between BB # and byte offset from start of function.
+    std::vector<unsigned> OffsetMap;
 
     virtual bool runOnMachineFunction(MachineFunction &Fn);
 
@@ -81,12 +79,14 @@ bool PPCBSel::runOnMachineFunction(MachineFunction &Fn) {
   // Running total of instructions encountered since beginning of function
   unsigned ByteCount = 0;
   
+  OffsetMap.resize(Fn.getNumBlockIDs());
+  
   // For each MBB, add its offset to the offset map, and count up its
   // instructions
   for (MachineFunction::iterator MFI = Fn.begin(), E = Fn.end(); MFI != E;
        ++MFI) {
     MachineBasicBlock *MBB = MFI;
-    OffsetMap[MBB] = ByteCount;
+    OffsetMap[MBB->getNumber()] = ByteCount;
     
     for (MachineBasicBlock::iterator MBBI = MBB->begin(), EE = MBB->end();
          MBBI != EE; ++MBBI)
@@ -128,7 +128,7 @@ bool PPCBSel::runOnMachineFunction(MachineFunction &Fn) {
       unsigned Opcode = MBBI->getOperand(1).getImmedValue();
       unsigned CRReg = MBBI->getOperand(0).getReg();
       
-      int Displacement = OffsetMap[DestMBB] - ByteCount;
+      int Displacement = OffsetMap[DestMBB->getNumber()] - ByteCount;
       unsigned Inverted = PPCInstrInfo::invertPPCBranchOpcode(Opcode);
       
       MachineBasicBlock::iterator MBBJ;
