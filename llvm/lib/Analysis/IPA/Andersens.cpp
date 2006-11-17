@@ -1036,7 +1036,7 @@ void Andersens::SolveConstraints() {
   while (Changed) {
     Changed = false;
     ++NumIters;
-    DEBUG(std::cerr << "Starting iteration #" << Iteration++ << "!\n");
+    DOUT << "Starting iteration #" << Iteration++ << "!\n";
 
     // Loop over all of the constraints, applying them in turn.
     for (unsigned i = 0, e = Constraints.size(); i != e; ++i) {
@@ -1069,8 +1069,7 @@ void Andersens::SolveConstraints() {
             // We found a function that is just now escaping.  Mark it as if it
             // didn't have internal linkage.
             AddConstraintsForNonInternalLinkage(F);
-            DEBUG(std::cerr << "Found escaping internal function: "
-                            << F->getName() << "\n");
+            DOUT << "Found escaping internal function: " << F->getName() <<"\n";
             ++NumEscapingFunctions;
           }
 
@@ -1088,9 +1087,9 @@ void Andersens::SolveConstraints() {
             if (IP == KnownCallees.end() || *IP != F) {
               // Add the constraints for the call now.
               AddConstraintsForCall(CS, F);
-              DEBUG(std::cerr << "Found actual callee '"
-                              << F->getName() << "' for call: "
-                              << *CS.getInstruction() << "\n");
+              DOUT << "Found actual callee '"
+                   << F->getName() << "' for call: "
+                   << *CS.getInstruction() << "\n";
               ++NumIndirectCallees;
               KnownCallees.insert(IP, F);
             }
