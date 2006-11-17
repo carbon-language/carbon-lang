@@ -1141,7 +1141,7 @@ SDNode *X86DAGToDAGISel::Select(SDOperand N) {
       default: assert(0 && "Unsupported VT!");
       case MVT::i8:
         LoReg = X86::AL;  HiReg = X86::AH;
-        ClrOpcode  = X86::MOV8r0;
+        ClrOpcode  = 0;
         SExtOpcode = X86::CBW;
         break;
       case MVT::i16:
@@ -1163,53 +1163,70 @@ SDNode *X86DAGToDAGISel::Select(SDOperand N) {
 
       SDOperand N0 = Node->getOperand(0);
       SDOperand N1 = Node->getOperand(1);
-
-      bool foldedLoad = false;
-      SDOperand Tmp0, Tmp1, Tmp2, Tmp3;
-      foldedLoad = TryFoldLoad(N, N1, Tmp0, Tmp1, Tmp2, Tmp3);
-      SDOperand Chain;
-      if (foldedLoad) {
-        Chain = N1.getOperand(0);
-        AddToISelQueue(Chain);
-      } else
-        Chain = CurDAG->getEntryNode();
-
       SDOperand InFlag(0, 0);
-      AddToISelQueue(N0);
-      Chain  = CurDAG->getCopyToReg(Chain, CurDAG->getRegister(LoReg, NVT),
-                                    N0, InFlag);
-      InFlag = Chain.getValue(1);
-
-      if (isSigned) {
-        // Sign extend the low part into the high part.
-        InFlag =
-          SDOperand(CurDAG->getTargetNode(SExtOpcode, MVT::Flag, InFlag), 0);
-      } else {
-        // Zero out the high part, effectively zero extending the input.
-        SDOperand ClrNode = SDOperand(CurDAG->getTargetNode(ClrOpcode, NVT), 0);
-        Chain  = CurDAG->getCopyToReg(Chain, CurDAG->getRegister(HiReg, NVT),
-                                      ClrNode, InFlag);
+      if (NVT == MVT::i8 && !isSigned) {
+        // Special case for div8, just use a move with zero extension to AX to
+        // clear the upper 8 bits (AH).
+        SDOperand Tmp0, Tmp1, Tmp2, Tmp3, Move, Chain;
+        if (TryFoldLoad(N, N0, Tmp0, Tmp1, Tmp2, Tmp3)) {
+          SDOperand Ops[] = { Tmp0, Tmp1, Tmp2, Tmp3, N0.getOperand(0) };
+          AddToISelQueue(N0.getOperand(0));
+          AddToISelQueue(Tmp0);
+          AddToISelQueue(Tmp1);
+          AddToISelQueue(Tmp2);
+          AddToISelQueue(Tmp3);
+          Move =
+            SDOperand(CurDAG->getTargetNode(X86::MOVZX16rm8, MVT::i16, MVT::Other,
+                                            Ops, 5), 0);
+          Chain = Move.getValue(1);
+          ReplaceUses(N0.getValue(1), Chain);
+        } else {
+          AddToISelQueue(N0);
+          Move =
+            SDOperand(CurDAG->getTargetNode(X86::MOVZX16rr8, MVT::i16, N0), 0);
+          Chain = CurDAG->getEntryNode();
+        }
+        Chain  = CurDAG->getCopyToReg(Chain, X86::AX, Move, InFlag);
         InFlag = Chain.getValue(1);
+      } else {
+        AddToISelQueue(N0);
+        InFlag =
+          CurDAG->getCopyToReg(CurDAG->getEntryNode(), LoReg, N0,
+                               InFlag).getValue(1);
+        if (isSigned) {
+          // Sign extend the low part into the high part.
+          InFlag =
+            SDOperand(CurDAG->getTargetNode(SExtOpcode, MVT::Flag, InFlag), 0);
+        } else {
+          // Zero out the high part, effectively zero extending the input.
+          SDOperand ClrNode = SDOperand(CurDAG->getTargetNode(ClrOpcode, NVT), 0);
+          InFlag = CurDAG->getCopyToReg(CurDAG->getEntryNode(), HiReg, ClrNode,
+                                        InFlag).getValue(1);
+        }
       }
 
+      SDOperand Tmp0, Tmp1, Tmp2, Tmp3, Chain;
+      bool foldedLoad = TryFoldLoad(N, N1, Tmp0, Tmp1, Tmp2, Tmp3);
       if (foldedLoad) {
+        AddToISelQueue(N1.getOperand(0));
         AddToISelQueue(Tmp0);
         AddToISelQueue(Tmp1);
         AddToISelQueue(Tmp2);
         AddToISelQueue(Tmp3);
-        SDOperand Ops[] = { Tmp0, Tmp1, Tmp2, Tmp3, Chain, InFlag };
+        SDOperand Ops[] = { Tmp0, Tmp1, Tmp2, Tmp3, N1.getOperand(0), InFlag };
         SDNode *CNode =
           CurDAG->getTargetNode(MOpc, MVT::Other, MVT::Flag, Ops, 6);
         Chain  = SDOperand(CNode, 0);
         InFlag = SDOperand(CNode, 1);
       } else {
         AddToISelQueue(N1);
+        Chain = CurDAG->getEntryNode();
         InFlag =
           SDOperand(CurDAG->getTargetNode(Opc, MVT::Flag, N1, InFlag), 0);
       }
 
-      SDOperand Result = CurDAG->getCopyFromReg(Chain, isDiv ? LoReg : HiReg,
-                                                NVT, InFlag);
+      SDOperand Result =
+        CurDAG->getCopyFromReg(Chain, isDiv ? LoReg : HiReg, NVT, InFlag);
       ReplaceUses(N.getValue(0), Result);
       if (foldedLoad)
         ReplaceUses(N1.getValue(1), Result.getValue(1));
