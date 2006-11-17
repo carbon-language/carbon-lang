@@ -126,8 +126,8 @@ bool PPCBSel::runOnMachineFunction(MachineFunction &Fn) {
       // 1. PPC branch opcode
       // 2. Target MBB
       MachineBasicBlock *DestMBB = MBBI->getOperand(2).getMachineBasicBlock();
-      PPC::Predicate Pred = (PPC::Predicate)MBBI->getOperand(1).getImm();
-      unsigned CRReg = MBBI->getOperand(0).getReg();
+      PPC::Predicate Pred = (PPC::Predicate)MBBI->getOperand(0).getImm();
+      unsigned CRReg = MBBI->getOperand(1).getReg();
       int Displacement = OffsetMap[DestMBB->getNumber()] - ByteCount;
 
       bool ShortBranchOk = Displacement >= -32768 && Displacement <= 32767;

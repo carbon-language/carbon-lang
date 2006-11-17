@@ -260,13 +260,13 @@ void PPCInstrInfo::InsertBranch(MachineBasicBlock &MBB, MachineBasicBlock *TBB,
       BuildMI(&MBB, PPC::B, 1).addMBB(TBB);
     else                // Conditional branch
       BuildMI(&MBB, PPC::BCC, 3)
-        .addReg(Cond[0].getReg()).addImm(Cond[1].getImm()).addMBB(TBB);
+        .addImm(Cond[0].getImm()).addReg(Cond[1].getReg()).addMBB(TBB);
     return;
   }
   
   // Two-way Conditional Branch.
   BuildMI(&MBB, PPC::BCC, 3)
-    .addReg(Cond[0].getReg()).addImm(Cond[1].getImm()).addMBB(TBB);
+    .addImm(Cond[0].getImm()).addReg(Cond[1].getReg()).addMBB(TBB);
   BuildMI(&MBB, PPC::B, 1).addMBB(FBB);
 }
 
@@ -285,6 +285,6 @@ bool PPCInstrInfo::
 ReverseBranchCondition(std::vector<MachineOperand> &Cond) const {
   assert(Cond.size() == 2 && "Invalid PPC branch opcode!");
   // Leave the CR# the same, but invert the condition.
-  Cond[1].setImm(PPC::InvertPredicate((PPC::Predicate)Cond[1].getImm()));
+  Cond[0].setImm(PPC::InvertPredicate((PPC::Predicate)Cond[0].getImm()));
   return false;
 }

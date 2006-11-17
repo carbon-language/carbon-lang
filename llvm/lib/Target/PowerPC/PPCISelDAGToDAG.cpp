@@ -1001,11 +1001,21 @@ SDNode *PPCDAGToDAGISel::Select(SDOperand Op) {
                         getI32Imm(BROpc) };
     return CurDAG->SelectNodeTo(N, SelectCCOp, N->getValueType(0), Ops, 4);
   }
+  case PPCISD::COND_BRANCH: {
+    AddToISelQueue(N->getOperand(0));  // Op #0 is the Chain.
+    // Op #1 is the PPC::PRED_* number.
+    // Op #2 is the CR#
+    // Op #3 is the Dest MBB
+    AddToISelQueue(N->getOperand(4));  // Op #4 is the Flag.
+    SDOperand Ops[] = { N->getOperand(1), N->getOperand(2), N->getOperand(3),
+      N->getOperand(0), N->getOperand(4) };
+    return CurDAG->SelectNodeTo(N, PPC::BCC, MVT::Other, Ops, 5);
+  }
   case ISD::BR_CC: {
     AddToISelQueue(N->getOperand(0));
     ISD::CondCode CC = cast<CondCodeSDNode>(N->getOperand(1))->get();
     SDOperand CondCode = SelectCC(N->getOperand(2), N->getOperand(3), CC);
-    SDOperand Ops[] = { CondCode, getI32Imm(getPredicateForSetCC(CC)), 
+    SDOperand Ops[] = { getI32Imm(getPredicateForSetCC(CC)), CondCode, 
                         N->getOperand(4), N->getOperand(0) };
     return CurDAG->SelectNodeTo(N, PPC::BCC, MVT::Other, Ops, 4);
   }

@@ -2614,7 +2614,7 @@ PPCTargetLowering::InsertAtEndOfBasicBlock(MachineInstr *MI,
   MachineBasicBlock *sinkMBB = new MachineBasicBlock(LLVM_BB);
   unsigned SelectPred = MI->getOperand(4).getImm();
   BuildMI(BB, PPC::BCC, 3)
-    .addReg(MI->getOperand(1).getReg()).addImm(SelectPred).addMBB(sinkMBB);
+    .addImm(SelectPred).addReg(MI->getOperand(1).getReg()).addMBB(sinkMBB);
   MachineFunction *F = BB->getParent();
   F->getBasicBlockList().insert(It, copy0MBB);
   F->getBasicBlockList().insert(It, sinkMBB);
@@ -2890,8 +2890,8 @@ SDOperand PPCTargetLowering::PerformDAGCombine(SDNode *N,
       }
 
       return DAG.getNode(PPCISD::COND_BRANCH, MVT::Other, N->getOperand(0),
-                         DAG.getRegister(PPC::CR6, MVT::i32),
                          DAG.getConstant(CompOpc, MVT::i32),
+                         DAG.getRegister(PPC::CR6, MVT::i32),
                          N->getOperand(4), CompNode.getValue(1));
     }
     break;

@@ -34,7 +34,7 @@ def SDT_PPCvcmp : SDTypeProfile<1, 3, [
 ]>;
 
 def SDT_PPCcondbr : SDTypeProfile<0, 3, [
-  SDTCisVT<1, i32>, SDTCisVT<2, OtherVT>
+  SDTCisVT<0, i32>, SDTCisVT<2, OtherVT>
 ]>;
 
 def SDT_PPClbrx : SDTypeProfile<1, 3, [
@@ -358,11 +358,12 @@ let isBranch = 1, isTerminator = 1, hasCtrlDep = 1,
                   [(br bb:$dst)]>;
   }
 
-  // BCC is formed before branch selection, it is turned into Bxx below.
-  // 'opc' is a 'PPC::Predicate' value.
-  def BCC : Pseudo<(ops CRRC:$crS, u16imm:$opc, target:$dst),
-                   "${:comment} BCC $crS, $opc, $dst",
-                   [(PPCcondbranch CRRC:$crS, imm:$opc, bb:$dst)]>;
+  // BCC represents an arbitrary conditional branch on a predicate.
+  // FIXME: should be able to write a pattern for PPCcondbranch, but can't use
+  // a two-value operand where a dag node expects two operands. :( 
+  def BCC : Pseudo<(ops pred:$cond, target:$dst),
+                   "b${cond:cc} ${cond:reg}, $dst",
+                   [/*(PPCcondbranch CRRC:$crS, imm:$opc, bb:$dst)*/]>;
 
   def BLT : BForm<16, 0, 0, 12, 0, (ops CRRC:$crS, target:$block),
                   "blt $crS, $block", BrB>;
