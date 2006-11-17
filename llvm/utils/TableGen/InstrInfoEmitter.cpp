@@ -197,7 +197,9 @@ void InstrInfoEmitter::emitRecord(const CodeGenInstruction &Inst, unsigned Num,
   else
     MinOperands = 0;
   
-  OS << "  { \"";
+  OS << "  { ";
+  OS << Num << ",\t" << MinOperands << ",\t\"";
+
   if (Inst.Name.empty())
     OS << Inst.TheDef->getName();
   else
@@ -206,8 +208,7 @@ void InstrInfoEmitter::emitRecord(const CodeGenInstruction &Inst, unsigned Num,
   unsigned ItinClass = !IsItineraries ? 0 :
             ItinClassNumber(Inst.TheDef->getValueAsDef("Itinerary")->getName());
   
-  OS << "\",\t" << MinOperands << ", " << ItinClass
-     << ", 0";
+  OS << "\",\t" << ItinClass << ", 0";
 
   // Try to determine (from the pattern), if the instruction is a store.
   bool isStore = false;
