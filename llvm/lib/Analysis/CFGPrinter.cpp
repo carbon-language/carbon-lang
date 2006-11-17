@@ -25,6 +25,7 @@
 #include "llvm/Support/CFG.h"
 #include "llvm/Support/GraphWriter.h"
 #include "llvm/Config/config.h"
+#include <iostream>
 #include <sstream>
 #include <fstream>
 using namespace llvm;
