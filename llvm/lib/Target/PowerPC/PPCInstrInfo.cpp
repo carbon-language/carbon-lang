@@ -12,6 +12,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "PPCInstrInfo.h"
+#include "PPCPredicates.h"
 #include "PPCGenInstrInfo.inc"
 #include "PPCTargetMachine.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
@@ -284,6 +285,6 @@ bool PPCInstrInfo::
 ReverseBranchCondition(std::vector<MachineOperand> &Cond) const {
   assert(Cond.size() == 2 && "Invalid PPC branch opcode!");
   // Leave the CR# the same, but invert the condition.
-  Cond[1].setImm(invertPPCBranchOpcode(Cond[1].getImm()));
+  Cond[1].setImm(PPC::InvertPredicate((PPC::Predicate)Cond[1].getImm()));
   return false;
 }

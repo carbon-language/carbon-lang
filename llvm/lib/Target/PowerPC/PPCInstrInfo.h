@@ -112,22 +112,6 @@ public:
                             const std::vector<MachineOperand> &Cond) const;
   virtual bool BlockHasNoFallThrough(MachineBasicBlock &MBB) const;
   virtual bool ReverseBranchCondition(std::vector<MachineOperand> &Cond) const;
-  
-  
-  
-  static unsigned invertPPCBranchOpcode(unsigned Opcode) {
-    switch (Opcode) {
-    default: assert(0 && "Unknown PPC branch opcode!");
-    case PPC::BEQ: return PPC::BNE;
-    case PPC::BNE: return PPC::BEQ;
-    case PPC::BLT: return PPC::BGE;
-    case PPC::BGE: return PPC::BLT;
-    case PPC::BGT: return PPC::BLE;
-    case PPC::BLE: return PPC::BGT;
-    case PPC::BNU: return PPC::BUN;
-    case PPC::BUN: return PPC::BNU;
-    }
-  }
 };
 
 }

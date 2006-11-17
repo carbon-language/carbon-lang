@@ -18,6 +18,7 @@
 #include "PPC.h"
 #include "PPCInstrBuilder.h"
 #include "PPCInstrInfo.h"
+#include "PPCPredicates.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetAsmInfo.h"
@@ -125,19 +126,36 @@ bool PPCBSel::runOnMachineFunction(MachineFunction &Fn) {
       // 1. PPC branch opcode
       // 2. Target MBB
       MachineBasicBlock *DestMBB = MBBI->getOperand(2).getMachineBasicBlock();
-      unsigned Opcode = MBBI->getOperand(1).getImmedValue();
+      PPC::Predicate Pred = (PPC::Predicate)MBBI->getOperand(1).getImm();
       unsigned CRReg = MBBI->getOperand(0).getReg();
-      
       int Displacement = OffsetMap[DestMBB->getNumber()] - ByteCount;
-      unsigned Inverted = PPCInstrInfo::invertPPCBranchOpcode(Opcode);
+
+      bool ShortBranchOk = Displacement >= -32768 && Displacement <= 32767;
+      
+      // Branch on opposite condition if a short branch isn't ok.
+      if (!ShortBranchOk)
+        Pred = PPC::InvertPredicate(Pred);
+        
+      unsigned Opcode;
+      switch (Pred) {
+      default: assert(0 && "Unknown cond branch predicate!");
+      case PPC::PRED_LT: Opcode = PPC::BLT; break;
+      case PPC::PRED_LE: Opcode = PPC::BLE; break;
+      case PPC::PRED_EQ: Opcode = PPC::BEQ; break;
+      case PPC::PRED_GE: Opcode = PPC::BGE; break;
+      case PPC::PRED_GT: Opcode = PPC::BGT; break;
+      case PPC::PRED_NE: Opcode = PPC::BNE; break;
+      case PPC::PRED_UN: Opcode = PPC::BUN; break;
+      case PPC::PRED_NU: Opcode = PPC::BNU; break;
+      }
       
       MachineBasicBlock::iterator MBBJ;
-      if (Displacement >= -32768 && Displacement <= 32767) {
+      if (ShortBranchOk) {
         MBBJ = BuildMI(*MBB, MBBI, Opcode, 2).addReg(CRReg).addMBB(DestMBB);
       } else {
         // Long branch, skip next branch instruction (i.e. $PC+8).
         ++NumExpanded;
-        BuildMI(*MBB, MBBI, Inverted, 2).addReg(CRReg).addImm(2);
+        BuildMI(*MBB, MBBI, Opcode, 2).addReg(CRReg).addImm(2);
         MBBJ = BuildMI(*MBB, MBBI, PPC::B, 1).addMBB(DestMBB);
       }
       

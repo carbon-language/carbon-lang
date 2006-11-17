@@ -338,8 +338,7 @@ let usesCustomDAGSchedInserter = 1,    // Expanded by the scheduler.
 
 let isTerminator = 1, isBarrier = 1, noResults = 1, PPC970_Unit = 7 in {
   let isReturn = 1 in
-    def BLR : XLForm_2_br<19, 16, 0,
-                          (ops pred:$p),
+    def BLR : XLForm_2_br<19, 16, 0, (ops pred:$p),
                           "b${p:cc}lr ${p:reg}", BrB, 
                           [(retflag)]>;
   def BCTR : XLForm_2_ext<19, 528, 20, 0, 0, (ops), "bctr", BrB, []>;
@@ -354,6 +353,7 @@ let Defs = [LR] in
 let isBranch = 1, isTerminator = 1, hasCtrlDep = 1, 
     noResults = 1, PPC970_Unit = 7 in {
   // COND_BRANCH is formed before branch selection, it is turned into Bcc below.
+  // 'opc' is a 'PPC::Predicate' value.
   def COND_BRANCH : Pseudo<(ops CRRC:$crS, u16imm:$opc, target:$dst),
                            "${:comment} COND_BRANCH $crS, $opc, $dst",
                            [(PPCcondbranch CRRC:$crS, imm:$opc, bb:$dst)]>;

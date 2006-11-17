@@ -13,6 +13,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "PPC.h"
+#include "PPCPredicates.h"
 #include "PPCTargetMachine.h"
 #include "PPCISelLowering.h"
 #include "PPCHazardRecognizers.h"
@@ -594,34 +595,31 @@ SDOperand PPCDAGToDAGISel::SelectCC(SDOperand LHS, SDOperand RHS,
   return SDOperand(CurDAG->getTargetNode(Opc, MVT::i32, LHS, RHS), 0);
 }
 
-/// getBCCForSetCC - Returns the PowerPC condition branch mnemonic corresponding
-/// to Condition.
-static unsigned getBCCForSetCC(ISD::CondCode CC) {
+static PPC::Predicate getPredicateForSetCC(ISD::CondCode CC) {
   switch (CC) {
   default: assert(0 && "Unknown condition!"); abort();
   case ISD::SETOEQ:    // FIXME: This is incorrect see PR642.
   case ISD::SETUEQ:
-  case ISD::SETEQ:  return PPC::BEQ;
+  case ISD::SETEQ:  return PPC::PRED_EQ;
   case ISD::SETONE:    // FIXME: This is incorrect see PR642.
   case ISD::SETUNE:
-  case ISD::SETNE:  return PPC::BNE;
+  case ISD::SETNE:  return PPC::PRED_NE;
   case ISD::SETOLT:    // FIXME: This is incorrect see PR642.
   case ISD::SETULT:
-  case ISD::SETLT:  return PPC::BLT;
+  case ISD::SETLT:  return PPC::PRED_LT;
   case ISD::SETOLE:    // FIXME: This is incorrect see PR642.
   case ISD::SETULE:
-  case ISD::SETLE:  return PPC::BLE;
+  case ISD::SETLE:  return PPC::PRED_LE;
   case ISD::SETOGT:    // FIXME: This is incorrect see PR642.
   case ISD::SETUGT:
-  case ISD::SETGT:  return PPC::BGT;
+  case ISD::SETGT:  return PPC::PRED_GT;
   case ISD::SETOGE:    // FIXME: This is incorrect see PR642.
   case ISD::SETUGE:
-  case ISD::SETGE:  return PPC::BGE;
+  case ISD::SETGE:  return PPC::PRED_GE;
     
-  case ISD::SETO:   return PPC::BNU;
-  case ISD::SETUO:  return PPC::BUN;
+  case ISD::SETO:   return PPC::PRED_NU;
+  case ISD::SETUO:  return PPC::PRED_UN;
   }
-  return 0;
 }
 
 /// getCRIdxForSetCC - Return the index of the condition register field
@@ -983,7 +981,7 @@ SDNode *PPCDAGToDAGISel::Select(SDOperand Op) {
           }
 
     SDOperand CCReg = SelectCC(N->getOperand(0), N->getOperand(1), CC);
-    unsigned BROpc = getBCCForSetCC(CC);
+    unsigned BROpc = getPredicateForSetCC(CC);
 
     unsigned SelectCCOp;
     if (N->getValueType(0) == MVT::i32)
@@ -1007,7 +1005,7 @@ SDNode *PPCDAGToDAGISel::Select(SDOperand Op) {
     AddToISelQueue(N->getOperand(0));
     ISD::CondCode CC = cast<CondCodeSDNode>(N->getOperand(1))->get();
     SDOperand CondCode = SelectCC(N->getOperand(2), N->getOperand(3), CC);
-    SDOperand Ops[] = { CondCode, getI32Imm(getBCCForSetCC(CC)), 
+    SDOperand Ops[] = { CondCode, getI32Imm(getPredicateForSetCC(CC)), 
                         N->getOperand(4), N->getOperand(0) };
     return CurDAG->SelectNodeTo(N, PPC::COND_BRANCH, MVT::Other, Ops, 4);
   }

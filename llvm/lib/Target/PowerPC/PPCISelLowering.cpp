@@ -13,6 +13,7 @@
 
 #include "PPCISelLowering.h"
 #include "PPCMachineFunctionInfo.h"
+#include "PPCPredicates.h"
 #include "PPCTargetMachine.h"
 #include "PPCPerfectShuffle.h"
 #include "llvm/ADT/VectorExtras.h"
@@ -2611,8 +2612,9 @@ PPCTargetLowering::InsertAtEndOfBasicBlock(MachineInstr *MI,
   MachineBasicBlock *thisMBB = BB;
   MachineBasicBlock *copy0MBB = new MachineBasicBlock(LLVM_BB);
   MachineBasicBlock *sinkMBB = new MachineBasicBlock(LLVM_BB);
-  BuildMI(BB, MI->getOperand(4).getImmedValue(), 2)
-    .addReg(MI->getOperand(1).getReg()).addMBB(sinkMBB);
+  unsigned SelectPred = MI->getOperand(4).getImm();
+  BuildMI(BB, PPC::COND_BRANCH, 3)
+    .addReg(MI->getOperand(1).getReg()).addImm(SelectPred).addMBB(sinkMBB);
   MachineFunction *F = BB->getParent();
   F->getBasicBlockList().insert(It, copy0MBB);
   F->getBasicBlockList().insert(It, sinkMBB);
@@ -2870,20 +2872,20 @@ SDOperand PPCTargetLowering::PerformDAGCombine(SDNode *N,
       SDOperand CompNode = DAG.getNode(PPCISD::VCMPo, VTs, Ops, 3);
       
       // Unpack the result based on how the target uses it.
-      unsigned CompOpc;
+      PPC::Predicate CompOpc;
       switch (cast<ConstantSDNode>(LHS.getOperand(1))->getValue()) {
       default:  // Can't happen, don't crash on invalid number though.
       case 0:   // Branch on the value of the EQ bit of CR6.
-        CompOpc = BranchOnWhenPredTrue ? PPC::BEQ : PPC::BNE;
+        CompOpc = BranchOnWhenPredTrue ? PPC::PRED_EQ : PPC::PRED_NE;
         break;
       case 1:   // Branch on the inverted value of the EQ bit of CR6.
-        CompOpc = BranchOnWhenPredTrue ? PPC::BNE : PPC::BEQ;
+        CompOpc = BranchOnWhenPredTrue ? PPC::PRED_NE : PPC::PRED_EQ;
         break;
       case 2:   // Branch on the value of the LT bit of CR6.
-        CompOpc = BranchOnWhenPredTrue ? PPC::BLT : PPC::BGE;
+        CompOpc = BranchOnWhenPredTrue ? PPC::PRED_LT : PPC::PRED_GE;
         break;
       case 3:   // Branch on the inverted value of the LT bit of CR6.
-        CompOpc = BranchOnWhenPredTrue ? PPC::BGE : PPC::BLT;
+        CompOpc = BranchOnWhenPredTrue ? PPC::PRED_GE : PPC::PRED_LT;
         break;
       }
 
