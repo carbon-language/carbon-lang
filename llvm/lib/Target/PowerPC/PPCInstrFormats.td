@@ -60,22 +60,8 @@ class IForm<bits<6> opcode, bit aa, bit lk, dag OL, string asmstr,
 }
 
 // 1.7.2 B-Form
-class BForm<bits<6> opcode, bit aa, bit lk, bits<5> bo, bits<2> bicode, dag OL, 
-            string asmstr, InstrItinClass itin>
-  : I<opcode, OL, asmstr, itin> {
-  bits<3>  CR;
-  bits<14> BD;
-
-  let Inst{6-10}  = bo;
-  let Inst{11-13} = CR;
-  let Inst{14-15} = bicode;
-  let Inst{16-29} = BD;
-  let Inst{30}    = aa;
-  let Inst{31}    = lk;
-}
-
-class CBForm<bits<6> opcode, bit aa, bit lk, dag OL, 
-             string asmstr> : I<opcode, OL, asmstr, BrB> {
+class BForm<bits<6> opcode, bit aa, bit lk, dag OL, string asmstr>
+  : I<opcode, OL, asmstr, BrB> {
   bits<7> BIBO;  // 2 bits of BI and 5 bits of BO.
   bits<3>  CR;
   bits<14> BD;

@@ -361,27 +361,9 @@ let isBranch = 1, isTerminator = 1, hasCtrlDep = 1,
   // BCC represents an arbitrary conditional branch on a predicate.
   // FIXME: should be able to write a pattern for PPCcondbranch, but can't use
   // a two-value operand where a dag node expects two operands. :( 
-  def BCC : CBForm<16, 0, 0, (ops pred:$cond, target:$dst),
-                   "b${cond:cc} ${cond:reg}, $dst"
-                   /*[(PPCcondbranch CRRC:$crS, imm:$opc, bb:$dst)]*/>;
-
-// REMOVE BForm when these go away.
-  def BLT : BForm<16, 0, 0, 12, 0, (ops CRRC:$crS, target:$block),
-                  "blt $crS, $block", BrB>;
-  def BLE : BForm<16, 0, 0, 4,  1, (ops CRRC:$crS, target:$block),
-                  "ble $crS, $block", BrB>;
-  def BEQ : BForm<16, 0, 0, 12, 2, (ops CRRC:$crS, target:$block),
-                  "beq $crS, $block", BrB>;
-  def BGE : BForm<16, 0, 0, 4,  0, (ops CRRC:$crS, target:$block),
-                  "bge $crS, $block", BrB>;
-  def BGT : BForm<16, 0, 0, 12, 1, (ops CRRC:$crS, target:$block),
-                  "bgt $crS, $block", BrB>;
-  def BNE : BForm<16, 0, 0, 4,  2, (ops CRRC:$crS, target:$block),
-                  "bne $crS, $block", BrB>;
-  def BUN : BForm<16, 0, 0, 12, 3, (ops CRRC:$crS, target:$block),
-                  "bun $crS, $block", BrB>;
-  def BNU : BForm<16, 0, 0, 4,  3, (ops CRRC:$crS, target:$block),
-                  "bnu $crS, $block", BrB>;
+  def BCC : BForm<16, 0, 0, (ops pred:$cond, target:$dst),
+                  "b${cond:cc} ${cond:reg}, $dst"
+                  /*[(PPCcondbranch CRRC:$crS, imm:$opc, bb:$dst)]*/>;
 }
 
 let isCall = 1, noResults = 1, PPC970_Unit = 7, 

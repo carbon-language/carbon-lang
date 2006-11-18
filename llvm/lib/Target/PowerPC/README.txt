@@ -88,11 +88,6 @@ This is effectively a simple form of predication.
 
 ===-------------------------------------------------------------------------===
 
-Teach the .td file to pattern match PPC::BR_COND to appropriate bc variant, so
-we don't have to always run the branch selector for small functions.
-
-===-------------------------------------------------------------------------===
-
 Lump the constant pool for each function into ONE pic object, and reference
 pieces of it as offsets from the start.  For functions like this (contrived
 to have lots of constants obviously):
