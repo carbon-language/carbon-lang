@@ -1064,6 +1064,16 @@ static bool FoldTwoEntryPHINode(PHINode *PN) {
   Value *IfCond = GetIfCondition(BB, IfTrue, IfFalse);
   if (!IfCond) return false;
   
+  // Okay, we found that we can merge this two-entry phi node into a select.
+  // Doing so would require us to fold *all* two entry phi nodes in this block.
+  // At some point this becomes non-profitable (particularly if the target
+  // doesn't support cmov's).  Only do this transformation if there are two or
+  // fewer PHI nodes in this block.
+  unsigned NumPhis = 0;
+  for (BasicBlock::iterator I = BB->begin(); isa<PHINode>(I); ++NumPhis, ++I)
+    if (NumPhis > 2)
+      return false;
+  
   DEBUG(std::cerr << "FOUND IF CONDITION!  " << *IfCond << "  T: "
         << IfTrue->getName() << "  F: " << IfFalse->getName() << "\n");
   
@@ -1552,6 +1562,23 @@ bool llvm::SimplifyCFG(BasicBlock *BB) {
               // keep getting unwound.
               if (PBIOp != -1 && PBI->getSuccessor(PBIOp) == BB)
                 PBIOp = BIOp = -1;
+              
+              // Do not perform this transformation if it would require 
+              // insertion of a large number of select instructions. For targets
+              // without predication/cmovs, this is a big pessimization.
+              if (PBIOp != -1) {
+                BasicBlock *CommonDest = PBI->getSuccessor(PBIOp);
+           
+                unsigned NumPhis = 0;
+                for (BasicBlock::iterator II = CommonDest->begin();
+                     isa<PHINode>(II); ++II, ++NumPhis) {
+                  if (NumPhis > 2) {
+                    // Disable this xform.
+                    PBIOp = -1;
+                    break;
+                  }
+                }
+              }
 
               // Finally, if everything is ok, fold the branches to logical ops.
               if (PBIOp != -1) {
