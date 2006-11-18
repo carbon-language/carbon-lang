@@ -1506,9 +1506,19 @@ inline unsigned BytecodeReader::upgradeCEOpcodes(
       Opcode = 10; // Div
     else if (Opcode >=13 && Opcode <= 15) // URem through FRem
       Opcode = 11; // Rem
-    else if (Opcode > 15)  // Everything above FRem
+    else if (Opcode >= 16 && Opcode <= 35)  // And through Shr
       // Adjust for new instruction codes
       Opcode -= 4;
+    else if (Opcode >= 36 && Opcode <= 42) // Everything after Select
+      // In vers 6 bytecode we eliminated the placeholders for the obsolete
+      // VAARG and VANEXT instructions. Consequently those two slots were
+      // filled starting with Select (36) which was 34. So now we only need
+      // to subtract two. This circumvents hitting opcodes 32 and 33
+      Opcode -= 2;
+    else {   // Opcode < 10 or > 42
+      // No upgrade necessary.
+      return 0;
+    }
   }
 
   switch (Opcode) {
