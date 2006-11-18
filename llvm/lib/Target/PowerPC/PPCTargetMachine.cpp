@@ -83,7 +83,7 @@ PPCTargetMachine::PPCTargetMachine(const Module &M, const std::string &FS,
                                    bool is64Bit)
   : Subtarget(M, FS, is64Bit),
     DataLayout(Subtarget.getTargetDataString()), InstrInfo(*this),
-    FrameInfo(*this, false), JITInfo(*this, is64Bit), TLInfo(*this),
+    FrameInfo(*this, is64Bit), JITInfo(*this, is64Bit), TLInfo(*this),
     InstrItins(Subtarget.getInstrItineraryData()) {
 
   if (getRelocationModel() == Reloc::Default)

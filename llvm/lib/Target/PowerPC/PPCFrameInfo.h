@@ -26,8 +26,13 @@ class PPCFrameInfo: public TargetFrameInfo {
 public:
   PPCFrameInfo(const TargetMachine &tm, bool LP64)
     : TargetFrameInfo(TargetFrameInfo::StackGrowsDown, 16, 0), TM(tm) {
-    LR[0].first = PPC::LR;
-    LR[0].second = LP64 ? 16 : 8;
+    if (LP64) {
+      LR[0].first = PPC::LR8;
+      LR[0].second = 16;
+    } else {
+      LR[0].first = PPC::LR;
+      LR[0].second = 8;
+    }
   }
 
   const std::pair<unsigned, int> *
