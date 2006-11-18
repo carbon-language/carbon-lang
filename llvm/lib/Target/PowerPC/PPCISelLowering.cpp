@@ -1155,13 +1155,13 @@ static SDOperand LowerFORMAL_ARGUMENTS(SDOperand Op, SelectionDAG &DAG,
     case MVT::f32:
     case MVT::f64:
       // All FP arguments reserve stack space.
-      ArgOffset += ObjSize;
+      ArgOffset += isPPC64 ? 8 : ObjSize;
 
       // Every 4 bytes of argument space consumes one of the GPRs available for
       // argument passing.
       if (GPR_idx != Num_GPR_Regs) {
         ++GPR_idx;
-        if (ObjSize == 8 && GPR_idx != Num_GPR_Regs)
+        if (ObjSize == 8 && GPR_idx != Num_GPR_Regs && !isPPC64)
           ++GPR_idx;
       }
       if (FPR_idx != Num_FPR_Regs) {
@@ -1226,7 +1226,12 @@ static SDOperand LowerFORMAL_ARGUMENTS(SDOperand Op, SelectionDAG &DAG,
     // result of va_next.
     SmallVector<SDOperand, 8> MemOps;
     for (; GPR_idx != Num_GPR_Regs; ++GPR_idx) {
-      unsigned VReg = RegMap->createVirtualRegister(&PPC::GPRCRegClass);
+      unsigned VReg;
+      if (isPPC64)
+        VReg = RegMap->createVirtualRegister(&PPC::G8RCRegClass);
+      else
+        VReg = RegMap->createVirtualRegister(&PPC::GPRCRegClass);
+
       MF.addLiveIn(GPR[GPR_idx], VReg);
       SDOperand Val = DAG.getCopyFromReg(Root, VReg, PtrVT);
       SDOperand Store = DAG.getStore(Val.getValue(1), Val, FIN, NULL, 0);
