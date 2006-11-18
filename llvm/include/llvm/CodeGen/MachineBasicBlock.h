@@ -17,7 +17,6 @@
 #include "llvm/CodeGen/MachineInstr.h"
 #include "llvm/ADT/GraphTraits.h"
 #include "llvm/ADT/ilist"
-#include <iosfwd>
 
 namespace llvm {
   class MachineFunction;
