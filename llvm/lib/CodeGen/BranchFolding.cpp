@@ -729,7 +729,8 @@ void BranchFolder::OptimizeBlock(MachineBasicBlock *MBB) {
       //
       // In this case, we could actually be moving the return block *into* a
       // loop!
-      if (DoTransform && !MBB->succ_empty() && !CanFallThrough(PriorTBB))
+      if (DoTransform && !MBB->succ_empty() &&
+          (!CanFallThrough(PriorTBB) || PriorTBB->empty()))
         DoTransform = false;
       
       
