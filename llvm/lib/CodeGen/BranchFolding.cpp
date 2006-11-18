@@ -586,6 +586,24 @@ bool BranchFolder::CanFallThrough(MachineBasicBlock *CurBB) {
   return CanFallThrough(CurBB, CurUnAnalyzable, TBB, FBB, Cond);
 }
 
+/// IsBetterFallthrough - Return true if it would be clearly better to
+/// fall-through to MBB1 than to fall through into MBB2.  This has to return
+/// a strict ordering, returning true for both (MBB1,MBB2) and (MBB2,MBB1) will
+/// result in infinite loops.
+static bool IsBetterFallthrough(MachineBasicBlock *MBB1, 
+                                MachineBasicBlock *MBB2,
+                                const TargetInstrInfo &TII) {
+  // Right now, we use a simple heuristic.  If MBB ends with a return, and
+  // MBB2 doesn't, we prefer to fall through into MBB1.  This allows us to
+  // optimize branches that branch to either a return block or an assert block
+  // into a fallthrough to the return.
+  if (MBB1->empty() || MBB2->empty()) return false;
+
+  MachineInstr *MBB1I = --MBB1->end();
+  MachineInstr *MBB2I = --MBB2->end();
+  return TII.isReturn(MBB1I->getOpcode()) && !TII.isReturn(MBB2I->getOpcode());
+}
+
 /// OptimizeBlock - Analyze and optimize control flow related to the specified
 /// block.  This is never called on the entry block.
 void BranchFolder::OptimizeBlock(MachineBasicBlock *MBB) {
@@ -673,6 +691,38 @@ void BranchFolder::OptimizeBlock(MachineBasicBlock *MBB) {
         MadeChange = true;
         ++NumBranchOpts;
         return OptimizeBlock(MBB);
+      }
+    }
+    
+    // If this block has no successors (e.g. it is a return block or ends with
+    // a call to a no-return function like abort or __cxa_throw) and if the pred
+    // falls through into this block, and if it would otherwise fall through
+    // into the block after this, move this block to the end of the function.
+    // We consider it more likely that execution will stay in the function (e.g.
+    // due to loops) than it is to exit it.  This asserts in loops etc, moving
+    // the assert condition out of the loop body.
+    if (MBB->succ_empty() && !PriorCond.empty() && PriorFBB == 0 &&
+        MachineFunction::iterator(PriorTBB) == FallThrough) {
+      // We have to be careful that the succs of PredBB aren't both no-successor
+      // blocks.  If neither have successors and if PredBB is the second from
+      // last block in the function, we'd just keep swapping the two blocks for
+      // last.  Only do the swap if one is clearly better to fall through than
+      // the other.
+      if (FallThrough != --MBB->getParent()->end() ||
+          IsBetterFallthrough(PriorTBB, MBB, *TII)) {
+      
+        // Reverse the branch so we will fall through on the previous true cond.
+        std::vector<MachineOperand> NewPriorCond(PriorCond);
+        if (!TII->ReverseBranchCondition(NewPriorCond)) {
+          TII->RemoveBranch(PrevBB);
+          TII->InsertBranch(PrevBB, MBB, 0, NewPriorCond);
+
+          // Move this block to the end of the function.
+          MBB->moveAfter(--MBB->getParent()->end());
+          MadeChange = true;
+          ++NumBranchOpts;
+          return;
+        }
       }
     }
   }
