@@ -29,7 +29,8 @@ cvs diff -Ntdup -5 >> "$NAME".patch.raw 2>&1 \
 echo "mkpatch: Removing cruft from the patch file"
 sed "$NAME".patch.raw -e '/^[?] .*/d' -e '/^cvs diff: Diffing/d' | awk '\
 BEGIN { deleting = 0; } \
-/^Index: .*[.]cvs$/ { deleting = 1; } \
+/^Index: .*[.]cvs$/ { deleting = 1; fname=substr($0,7);
+  print "Skipping: ", fname > "/dev/stderr"; } \
 /^Index:.*/ && !/^Index: .*[.]cvs$/ { deleting = 0; } \
 { if (! deleting) { print; } } \
 '  > "$NAME".patch  || error "sed/awk cleanup failed"
