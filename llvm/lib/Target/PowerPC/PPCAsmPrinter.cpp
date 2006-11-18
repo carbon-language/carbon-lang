@@ -438,6 +438,18 @@ void PPCAsmPrinter::printMachineInstruction(const MachineInstr *MI) {
       O << "\n";
       return;
     }
+  } else if (MI->getOpcode() == PPC::RLDICR) {
+    unsigned char SH = MI->getOperand(2).getImmedValue();
+    unsigned char ME = MI->getOperand(3).getImmedValue();
+    // rldicr RA, RS, SH, 63-SH == sldi RA, RS, SH
+    if (63-SH == ME) {
+      O << "sldi ";
+      printOperand(MI, 0);
+      O << ", ";
+      printOperand(MI, 1);
+      O << ", " << (unsigned int)SH << "\n";
+      return;
+    }
   }
 
   if (printInstruction(MI))
