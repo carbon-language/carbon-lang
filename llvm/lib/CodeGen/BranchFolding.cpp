@@ -593,15 +593,15 @@ bool BranchFolder::CanFallThrough(MachineBasicBlock *CurBB) {
 static bool IsBetterFallthrough(MachineBasicBlock *MBB1, 
                                 MachineBasicBlock *MBB2,
                                 const TargetInstrInfo &TII) {
-  // Right now, we use a simple heuristic.  If MBB ends with a return, and
-  // MBB2 doesn't, we prefer to fall through into MBB1.  This allows us to
+  // Right now, we use a simple heuristic.  If MBB2 ends with a call, and
+  // MBB1 doesn't, we prefer to fall through into MBB1.  This allows us to
   // optimize branches that branch to either a return block or an assert block
   // into a fallthrough to the return.
   if (MBB1->empty() || MBB2->empty()) return false;
 
   MachineInstr *MBB1I = --MBB1->end();
   MachineInstr *MBB2I = --MBB2->end();
-  return TII.isReturn(MBB1I->getOpcode()) && !TII.isReturn(MBB2I->getOpcode());
+  return TII.isCall(MBB2I->getOpcode()) && !TII.isCall(MBB1I->getOpcode());
 }
 
 /// OptimizeBlock - Analyze and optimize control flow related to the specified
@@ -694,15 +694,17 @@ void BranchFolder::OptimizeBlock(MachineBasicBlock *MBB) {
       }
     }
     
-    // If this block has no successors (e.g. it is a return block or ends with
-    // a call to a no-return function like abort or __cxa_throw) and if the pred
-    // falls through into this block, and if it would otherwise fall through
-    // into the block after this, move this block to the end of the function.
+    // If this block doesn't fall through (e.g. it ends with an uncond branch or
+    // has no successors) and if the pred falls through into this block, and if
+    // it would otherwise fall through into the block after this, move this
+    // block to the end of the function.
+    //
     // We consider it more likely that execution will stay in the function (e.g.
     // due to loops) than it is to exit it.  This asserts in loops etc, moving
     // the assert condition out of the loop body.
-    if (MBB->succ_empty() && !PriorCond.empty() && PriorFBB == 0 &&
-        MachineFunction::iterator(PriorTBB) == FallThrough) {
+    if (!PriorCond.empty() && PriorFBB == 0 &&
+        MachineFunction::iterator(PriorTBB) == FallThrough &&
+        !CanFallThrough(MBB)) {
       // We have to be careful that the succs of PredBB aren't both no-successor
       // blocks.  If neither have successors and if PredBB is the second from
       // last block in the function, we'd just keep swapping the two blocks for
