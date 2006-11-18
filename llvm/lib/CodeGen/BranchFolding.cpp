@@ -16,6 +16,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#define DEBUG_TYPE "branchfolding"
 #include "llvm/CodeGen/Passes.h"
 #include "llvm/CodeGen/MachineDebugInfo.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
@@ -23,6 +24,7 @@
 #include "llvm/Target/TargetInstrInfo.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Support/CommandLine.h"
+#include "llvm/Support/Debug.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/ADT/STLExtras.h"
 #include <algorithm>
@@ -705,17 +707,39 @@ void BranchFolder::OptimizeBlock(MachineBasicBlock *MBB) {
     if (!PriorCond.empty() && PriorFBB == 0 &&
         MachineFunction::iterator(PriorTBB) == FallThrough &&
         !CanFallThrough(MBB)) {
+      bool DoTransform = true;
+      
       // We have to be careful that the succs of PredBB aren't both no-successor
       // blocks.  If neither have successors and if PredBB is the second from
       // last block in the function, we'd just keep swapping the two blocks for
       // last.  Only do the swap if one is clearly better to fall through than
       // the other.
-      if (FallThrough != --MBB->getParent()->end() ||
-          IsBetterFallthrough(PriorTBB, MBB, *TII)) {
+      if (FallThrough == --MBB->getParent()->end() &&
+          !IsBetterFallthrough(PriorTBB, MBB, *TII))
+        DoTransform = false;
+
+      // We don't want to do this transformation if we have control flow like:
+      //   br cond BB2
+      // BB1:
+      //   ..
+      //   jmp BBX
+      // BB2:
+      //   ..
+      //   ret
+      //
+      // In this case, we could actually be moving the return block *into* a
+      // loop!
+      if (DoTransform && !MBB->succ_empty() && !CanFallThrough(PriorTBB))
+        DoTransform = false;
       
+      
+      if (DoTransform) {
         // Reverse the branch so we will fall through on the previous true cond.
         std::vector<MachineOperand> NewPriorCond(PriorCond);
         if (!TII->ReverseBranchCondition(NewPriorCond)) {
+          DOUT << "\nMoving MBB: " << *MBB;
+          DOUT << "To make fallthrough to: " << *PriorTBB << "\n";
+          
           TII->RemoveBranch(PrevBB);
           TII->InsertBranch(PrevBB, MBB, 0, NewPriorCond);
 
