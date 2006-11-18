@@ -83,7 +83,6 @@
           <li><a href="#i_urem">'<tt>urem</tt>' Instruction</a></li>
           <li><a href="#i_srem">'<tt>srem</tt>' Instruction</a></li>
           <li><a href="#i_frem">'<tt>frem</tt>' Instruction</a></li>
-          <li><a href="#i_setcc">'<tt>set<i>cc</i></tt>' Instructions</a></li>
         </ol>
       </li>
       <li><a href="#bitwiseops">Bitwise Binary Operations</a>
@@ -96,6 +95,7 @@
           <li><a href="#i_ashr">'<tt>ashr</tt>' Instruction</a></li>
         </ol>
       </li>
+      <li>
       <li><a href="#vectorops">Vector Operations</a>
         <ol>
           <li><a href="#i_extractelement">'<tt>extractelement</tt>' Instruction</a></li>
@@ -130,6 +130,8 @@
         </ol>
       <li><a href="#otherops">Other Operations</a>
         <ol>
+          <li><a href="#i_icmp">'<tt>icmp</tt>' Instruction</a></li>
+          <li><a href="#i_fcmp">'<tt>fcmp</tt>' Instruction</a></li>
           <li><a href="#i_phi">'<tt>phi</tt>'   Instruction</a></li>
           <li><a href="#i_select">'<tt>select</tt>' Instruction</a></li>
           <li><a href="#i_call">'<tt>call</tt>'  Instruction</a></li>
@@ -1838,51 +1840,6 @@ identical types.</p>
 <h5>Example:</h5>
 <pre>  &lt;result&gt; = frem float 4.0, %var          <i>; yields {float}:result = 4.0 % %var</i>
 </pre>
-
-</div>
-<!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection"> <a name="i_setcc">'<tt>set<i>cc</i></tt>'
-Instructions</a> </div>
-<div class="doc_text">
-<h5>Syntax:</h5>
-<pre>  &lt;result&gt; = seteq &lt;ty&gt; &lt;var1&gt;, &lt;var2&gt;   <i>; yields {bool}:result</i>
-  &lt;result&gt; = setne &lt;ty&gt; &lt;var1&gt;, &lt;var2&gt;   <i>; yields {bool}:result</i>
-  &lt;result&gt; = setlt &lt;ty&gt; &lt;var1&gt;, &lt;var2&gt;   <i>; yields {bool}:result</i>
-  &lt;result&gt; = setgt &lt;ty&gt; &lt;var1&gt;, &lt;var2&gt;   <i>; yields {bool}:result</i>
-  &lt;result&gt; = setle &lt;ty&gt; &lt;var1&gt;, &lt;var2&gt;   <i>; yields {bool}:result</i>
-  &lt;result&gt; = setge &lt;ty&gt; &lt;var1&gt;, &lt;var2&gt;   <i>; yields {bool}:result</i>
-</pre>
-<h5>Overview:</h5>
-<p>The '<tt>set<i>cc</i></tt>' family of instructions returns a boolean
-value based on a comparison of their two operands.</p>
-<h5>Arguments:</h5>
-<p>The two arguments to the '<tt>set<i>cc</i></tt>' instructions must
-be of <a href="#t_firstclass">first class</a> type (it is not possible
-to compare '<tt>label</tt>'s, '<tt>array</tt>'s, '<tt>structure</tt>'
-or '<tt>void</tt>' values, etc...).  Both arguments must have identical
-types.</p>
-<h5>Semantics:</h5>
-<p>The '<tt>seteq</tt>' instruction yields a <tt>true</tt> '<tt>bool</tt>'
-value if both operands are equal.<br>
-The '<tt>setne</tt>' instruction yields a <tt>true</tt> '<tt>bool</tt>'
-value if both operands are unequal.<br>
-The '<tt>setlt</tt>' instruction yields a <tt>true</tt> '<tt>bool</tt>'
-value if the first operand is less than the second operand.<br>
-The '<tt>setgt</tt>' instruction yields a <tt>true</tt> '<tt>bool</tt>'
-value if the first operand is greater than the second operand.<br>
-The '<tt>setle</tt>' instruction yields a <tt>true</tt> '<tt>bool</tt>'
-value if the first operand is less than or equal to the second operand.<br>
-The '<tt>setge</tt>' instruction yields a <tt>true</tt> '<tt>bool</tt>'
-value if the first operand is greater than or equal to the second
-operand.</p>
-<h5>Example:</h5>
-<pre>  &lt;result&gt; = seteq int   4, 5        <i>; yields {bool}:result = false</i>
-  &lt;result&gt; = setne float 4, 5        <i>; yields {bool}:result = true</i>
-  &lt;result&gt; = setlt uint  4, 5        <i>; yields {bool}:result = true</i>
-  &lt;result&gt; = setgt sbyte 4, 5        <i>; yields {bool}:result = false</i>
-  &lt;result&gt; = setle sbyte 4, 5        <i>; yields {bool}:result = true</i>
-  &lt;result&gt; = setge sbyte 4, 5        <i>; yields {bool}:result = false</i>
-</pre>
 </div>
 
 <!-- ======================================================================= -->
@@ -2537,7 +2494,7 @@ provided depend on the type of the first pointer argument.  The
 levels of a structure or to a specific index in an array.  When indexing into a
 structure, only <tt>uint</tt>
 integer constants are allowed.  When indexing into an array or pointer,
-<tt>int</tt> and <tt>long</tt> indexes are allowed of any sign.</p>
+<tt>int</tt> and <tt>long</tt> and <tt>ulong</tt> indexes are allowed.</p>
 
 <p>For example, let's consider a C code fragment and how it gets
 compiled to LLVM:</p>
@@ -2578,7 +2535,7 @@ compiled to LLVM:</p>
 
 <p>The index types specified for the '<tt>getelementptr</tt>' instruction depend
 on the pointer type that is being indexed into. <a href="#t_pointer">Pointer</a>
-and <a href="#t_array">array</a> types require <tt>uint</tt>, <tt>int</tt>,
+and <a href="#t_array">array</a> types require <tt>int</tt>,
 <tt>ulong</tt>, or <tt>long</tt> values, and <a href="#t_struct">structure</a>
 types require <tt>uint</tt> <b>constants</b>.</p>
 
@@ -3083,6 +3040,163 @@ other types, use the <a href="#i_inttoptr">inttoptr</a> or
 <p>The instructions in this category are the "miscellaneous"
 instructions, which defy better classification.</p>
 </div>
+
+<!-- _______________________________________________________________________ -->
+<div class="doc_subsubsection"><a name="i_icmp">'<tt>icmp</tt>' Instruction</a>
+</div>
+<div class="doc_text">
+<h5>Syntax:</h5>
+<pre>  &lt;result&gt; = icmp &lt;cond&gt; &lt;ty&gt; &lt;var1&gt;, &lt;var2&gt;   <i>; yields {bool}:result</i>
+</pre>
+<h5>Overview:</h5>
+<p>The '<tt>icmp</tt>' instruction returns a boolean value based on comparison
+of its two integer operands.</p>
+<h5>Arguments:</h5>
+<p>The '<tt>icmp</tt>' instruction takes three operands. The first operand is
+the condition code which indicates the kind of comparison to perform. It is not
+a value, just a keyword. The possibilities for the condition code are:
+<ol>
+  <li><tt>eq</tt>: equal</li>
+  <li><tt>ne</tt>: not equal </li>
+  <li><tt>ugt</tt>: unsigned greater than</li>
+  <li><tt>uge</tt>: unsigned greater or equal</li>
+  <li><tt>ult</tt>: unsigned less than</li>
+  <li><tt>ule</tt>: unsigned less or equal</li>
+  <li><tt>sgt</tt>: signed greater than</li>
+  <li><tt>sge</tt>: signed greater or equal</li>
+  <li><tt>slt</tt>: signed less than</li>
+  <li><tt>sle</tt>: signed less or equal</li>
+</ol>
+<p>The remaining two arguments must be of <a href="#t_integral">integral</a>, 
+<a href="#t_pointer">pointer</a> or a <a href="#t_packed">packed</a> integral 
+type. They must have identical types.</p>
+<h5>Semantics:</h5>
+<p>The '<tt>icmp</tt>' compares <tt>var1</tt> and <tt>var2</tt> according to 
+the condition code given as <tt>cond</tt>. The comparison performed always
+yields a <a href="#t_bool">bool</a> result, as follows: 
+<ol>
+  <li><tt>eq</tt>: yields <tt>true</tt> if the operands are equal, 
+  <tt>false</tt> otherwise. No sign interpretation is necessary or performed.
+  </li>
+  <li><tt>ne</tt>: yields <tt>true</tt> if the operands are unequal, 
+  <tt>false</tt> otherwise. No sign interpretation is necessary or performed.
+  <li><tt>ugt</tt>: interprets the operands as unsigned values and yields
+  <tt>true</tt> if <tt>var1</tt> is greater than <tt>var2</tt>.</li>
+  <li><tt>uge</tt>: interprets the operands as unsigned values and yields
+  <tt>true</tt> if <tt>var1</tt> is greater than or equal to <tt>var2</tt>.</li>
+  <li><tt>ult</tt>: interprets the operands as unsigned values and yields
+  <tt>true</tt> if <tt>var1</tt> is less than <tt>var2</tt>.</li>
+  <li><tt>ule</tt>: interprets the operands as unsigned values and yields
+  <tt>true</tt> if <tt>var1</tt> is less than or equal to <tt>var2</tt>.</li>
+  <li><tt>sgt</tt>: interprets the operands as signed values and yields
+  <tt>true</tt> if <tt>var1</tt> is greater than <tt>var2</tt>.</li>
+  <li><tt>sge</tt>: interprets the operands as signed values and yields
+  <tt>true</tt> if <tt>var1</tt> is greater than or equal to <tt>var2</tt>.</li>
+  <li><tt>slt</tt>: interprets the operands as signed values and yields
+  <tt>true</tt> if <tt>var1</tt> is less than <tt>var2</tt>.</li>
+  <li><tt>sle</tt>: interprets the operands as signed values and yields
+  <tt>true</tt> if <tt>var1</tt> is less than or equal to <tt>var2</tt>.</li>
+  </li>
+</ol>
+<p>If the operands are <a href="#t_pointer">pointer</a> typed, the pointer
+values are treated as integers and then compared.</p>
+<p>If the operands are <a href="#t_packed">packed</a> typed, the elements of 
+the vector are compared in turn and the predicate must hold for all elements.
+While this is of dubious use for predicates other than <tt>eq</tt> and 
+<tt>ne</tt>, the other predicates can be used with packed types.</p>
+
+<h5>Example:</h5>
+<pre>  &lt;result&gt; = icmp eq int 4, 5           <i>; yields: result=false</i>
+  &lt;result&gt; = icmp ne float* %X, %X      <i>; yields: result=false</i>
+  &lt;result&gt; = icmp ult short 4, 5        <i>; yields: result=true</i>
+  &lt;result&gt; = icmp sgt sbyte 4, 5        <i>; yields: result=false</i>
+  &lt;result&gt; = icmp ule sbyte -4, 5       <i>; yields: result=false</i>
+  &lt;result&gt; = icmp sge sbyte 4, 5        <i>; yields: result=false</i>
+</pre>
+</div>
+
+<!-- _______________________________________________________________________ -->
+<div class="doc_subsubsection"><a name="i_fcmp">'<tt>fcmp</tt>' Instruction</a>
+</div>
+<div class="doc_text">
+<h5>Syntax:</h5>
+<pre>  &lt;result&gt; = fcmp &lt;cond&gt; &lt;ty&gt; &lt;var1&gt;, &lt;var2&gt;   <i>; yields {bool}:result</i>
+</pre>
+<h5>Overview:</h5>
+<p>The '<tt>fcmp</tt>' instruction returns a boolean value based on comparison
+of its floating point operands.</p>
+<h5>Arguments:</h5>
+<p>The '<tt>fcmp</tt>' instruction takes three operands. The first operand is
+the condition code which indicates the kind of comparison to perform. It is not
+a value, just a keyword. The possibilities for the condition code are:
+<ol>
+  <li><tt>false</tt>: no comparison, always false (always folded)</li>
+  <li><tt>oeq</tt>: ordered and equal</li>
+  <li><tt>ogt</tt>: ordered and greater than </li>
+  <li><tt>oge</tt>: ordered and greater than or equal</li>
+  <li><tt>olt</tt>: ordered and less than </li>
+  <li><tt>ole</tt>: ordered and less than or equal</li>
+  <li><tt>one</tt>: ordered and not equal</li>
+  <li><tt>ord</tt>: ordered (no nans)</li>
+  <li><tt>ueq</tt>: unordered or equal</li>
+  <li><tt>ugt</tt>: unordered or greater than </li>
+  <li><tt>uge</tt>: unordered or greater than or equal</li>
+  <li><tt>ult</tt>: unordered or less than </li>
+  <li><tt>ule</tt>: unordered or less than or equal</li>
+  <li><tt>une</tt>: unordered or not equal</li>
+  <li><tt>uno</tt>: unordered (either nans)</li>
+  <li><tt>true</tt>: no comparison, always true (always folded)</li>
+</ol>
+<p>The <tt>val1</tt> and <tt>val2</tt> arguments must be of 
+<a href="#t_floating">floating point</a>, or a <a href="#t_packed">packed</a> 
+floating point type. They must have identical types.</p>
+<h5>Semantics:</h5>
+<p>The '<tt>fcmp</tt>' compares <tt>var1</tt> and <tt>var2</tt> according to 
+the condition code given as <tt>cond</tt>. The comparison performed always
+yields a <a href="#t_bool">bool</a> result, as follows: 
+<ol>
+  <li><tt>false</tt>: always yields <tt>false</tt>, regardless of operands.</li>
+  <li><tt>oeq</tt>: yields <tt>true</tt> if both operands are ordered and 
+  <tt>var1</tt> is equal to <tt>var2</tt>.</li>
+  <li><tt>ogt</tt>: yields <tt>true</tt> if both operands are ordered and
+  <tt>var1</tt> is greather than <tt>var2</tt>.</li>
+  <li><tt>oge</tt>: yields <tt>true</tt> if both operands are ordered and 
+  <tt>var1</tt> is greater than or equal to <tt>var2</tt>.</li>
+  <li><tt>olt</tt>: yields <tt>true</tt> if both operands are ordered and 
+  <tt>var1</tt> is less than <tt>var2</tt>.</li>
+  <li><tt>ole</tt>: yields <tt>true</tt> if both operands are ordered and 
+  <tt>var1</tt> is less than or equal to <tt>var2</tt>.</li>
+  <li><tt>one</tt>: yields <tt>true</tt> if both operands are ordered and 
+  <tt>var1</tt> is not equal to <tt>var2</tt>.</li>
+  <li><tt>ord</tt>: yields <tt>true</tt> if both operands are ordered.</li>
+  <li><tt>ueq</tt>: yields <tt>true</tt> if either operand is unordered or 
+  <tt>var1</tt> is equal to <tt>var2</tt>.</li>
+  <li><tt>ugt</tt>: yields <tt>true</tt> if either operand is unordered or 
+  <tt>var1</tt> is greater than <tt>var2</tt>.</li>
+  <li><tt>uge</tt>: yields <tt>true</tt> if either operand is unordered or 
+  <tt>var1</tt> is greater than or equal to <tt>var2</tt>.</li>
+  <li><tt>ult</tt>: yields <tt>true</tt> if either operand is unordered or 
+  <tt>var1</tt> is less than <tt>var2</tt>.</li>
+  <li><tt>ule</tt>: yields <tt>true</tt> if either operand is unordered or 
+  <tt>var1</tt> is less than or equal to <tt>var2</tt>.</li>
+  <li><tt>une</tt>: yields <tt>true</tt> if either operand is unordered or 
+  <tt>var1</tt> is not equal to <tt>var2</tt>.</li>
+  <li><tt>uno</tt>: yields <tt>true</tt> if either operand is unordered.</li>
+  <li><tt>true</tt>: always yields <tt>true</tt>, regardless of operands.</li>
+</ol>
+<p>If the operands are <a href="#t_packed">packed</a> typed, the elements of 
+the vector are compared in turn and the predicate must hold for all elements.
+While this is of dubious use for predicates other than <tt>eq</tt> and 
+<tt>ne</tt>, the other predicates can be used with packed types.</p>
+
+<h5>Example:</h5>
+<pre>  &lt;result&gt; = fcmp oeq float 4.0, 5.0    <i>; yields: result=false</i>
+  &lt;result&gt; = icmp one float 4.0, 5.0    <i>; yields: result=true</i>
+  &lt;result&gt; = icmp olt float 4.0, 5.0    <i>; yields: result=true</i>
+  &lt;result&gt; = icmp ueq double 1.0, 2.0   <i>; yields: result=false</i>
+</pre>
+</div>
+
 <!-- _______________________________________________________________________ -->
 <div class="doc_subsubsection"> <a name="i_phi">'<tt>phi</tt>'
 Instruction</a> </div>
