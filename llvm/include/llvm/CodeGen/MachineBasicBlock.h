@@ -222,6 +222,7 @@ private:   // Methods used to maintain doubly linked list of blocks...
   void removePredecessor(MachineBasicBlock *pred);
 };
 
+std::ostream& operator<<(std::ostream &OS, const MachineBasicBlock &MBB);
 
 
 //===--------------------------------------------------------------------===//

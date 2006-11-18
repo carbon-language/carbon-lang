@@ -27,6 +27,10 @@ MachineBasicBlock::~MachineBasicBlock() {
   LeakDetector::removeGarbageObject(this);
 }
 
+std::ostream& llvm::operator<<(std::ostream &OS, const MachineBasicBlock &MBB) {
+  MBB.print(OS);
+  return OS;
+}
 
 // MBBs start out as #-1. When a MBB is added to a MachineFunction, it
 // gets the next available unique MBB number. If it is removed from a
