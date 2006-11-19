@@ -62,6 +62,10 @@ public:
   
   Decl *ParseTypedefDecl(Scope *S, Declarator &D, Decl *PrevDecl);
   
+  /// ParsedFreeStandingDeclSpec - This method is invoked when a declspec with
+  /// no declarator (e.g. "struct foo;") is parsed.
+  virtual DeclTy *ParsedFreeStandingDeclSpec(Scope *S, DeclSpec &DS);  
+  
   
   //===--------------------------------------------------------------------===//
   // Statement Parsing Callbacks: SemaStmt.cpp.

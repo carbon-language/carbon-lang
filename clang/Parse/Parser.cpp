@@ -347,13 +347,8 @@ Parser::DeclTy *Parser::ParseDeclarationOrFunctionDefinition() {
   // C99 6.7.2.3p6: Handle "struct-or-union identifier;", "enum { X };"
   // declaration-specifiers init-declarator-list[opt] ';'
   if (Tok.getKind() == tok::semi) {
-    // TODO: emit error on 'int;' or 'const enum foo;'.
-    // TODO: emit error on 'typedef int;'
-    // if (!DS.isMissingDeclaratorOk()) Diag(...);
-    
     ConsumeToken();
-    // TODO: Pass to actions.
-    return 0;
+    return Actions.ParsedFreeStandingDeclSpec(CurScope, DS);
   }
   
   // Parse the first declarator.

@@ -20,6 +20,7 @@
 namespace llvm {
 namespace clang {
   // Semantic.
+  class DeclSpec;
   class Declarator;
   // Parse.
   class Scope;
@@ -109,8 +110,11 @@ public:
   /// is popped and deleted.
   virtual void PopScope(SourceLocation Loc, Scope *S) {}
   
-  
-  
+  /// ParsedFreeStandingDeclSpec - This method is invoked when a declspec with
+  /// no declarator (e.g. "struct foo;") is parsed.
+  virtual DeclTy *ParsedFreeStandingDeclSpec(Scope *S, DeclSpec &DS) {
+    return 0;
+  }
   
   virtual DeclTy *ParsedObjcClassDeclaration(Scope *S,
                                              IdentifierInfo **IdentList,

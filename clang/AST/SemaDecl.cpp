@@ -42,6 +42,20 @@ void Sema::PopScope(SourceLocation Loc, Scope *S) {
   }
 }
 
+/// ParsedFreeStandingDeclSpec - This method is invoked when a declspec with
+/// no declarator (e.g. "struct foo;") is parsed.
+Sema::DeclTy *Sema::ParsedFreeStandingDeclSpec(Scope *S, DeclSpec &DS) {
+  // TODO: emit error on 'int;' or 'const enum foo;'.
+  // TODO: emit error on 'typedef int;'
+  // if (!DS.isMissingDeclaratorOk()) Diag(...);
+  
+  // TODO: Register 'struct foo;' with the type system as an opaque struct.
+  
+  // TODO: Check that we don't already have 'union foo;' or something else
+  // that conflicts.
+  return 0;
+}
+
 Action::DeclTy *
 Sema::ParseDeclarator(Scope *S, Declarator &D, ExprTy *Init, 
                       DeclTy *LastInGroup) {
@@ -82,7 +96,8 @@ Sema::ParseDeclarator(Scope *S, Declarator &D, ExprTy *Init,
   return New;
 }
 
-Action::DeclTy *
+
+Sema::DeclTy *
 Sema::ParseFunctionDefinition(Scope *S, Declarator &D, StmtTy *Body) {
   FunctionDecl *FD = (FunctionDecl *)ParseDeclarator(S, D, 0, 0);
   

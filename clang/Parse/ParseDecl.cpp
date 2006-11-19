@@ -79,18 +79,8 @@ Parser::DeclTy *Parser::ParseDeclaration(unsigned Context) {
   // C99 6.7.2.3p6: Handle "struct-or-union identifier;", "enum { X };"
   // declaration-specifiers init-declarator-list[opt] ';'
   if (Tok.getKind() == tok::semi) {
-    // TODO: emit error on 'int;' or 'const enum foo;'.
-    // TODO: emit error on 'typedef int;'
-    // if (!DS.isMissingDeclaratorOk()) Diag(...);
-    
-    // TODO: Register 'struct foo;' with the type system as an opaque struct.
-    // TODO: Check that we don't already have 'union foo;' or something else
-    // that conflicts.
-    
     ConsumeToken();
-    
-    // TODO: Return type definition.
-    return 0;
+    return Actions.ParsedFreeStandingDeclSpec(CurScope, DS);
   }
   
   Declarator DeclaratorInfo(DS, (Declarator::TheContext)Context);
