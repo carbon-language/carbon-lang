@@ -3101,9 +3101,8 @@ yields a <a href="#t_bool">bool</a> result, as follows:
 <p>If the operands are <a href="#t_pointer">pointer</a> typed, the pointer
 values are treated as integers and then compared.</p>
 <p>If the operands are <a href="#t_packed">packed</a> typed, the elements of 
-the vector are compared in turn and the predicate must hold for all elements.
-While this is of dubious use for predicates other than <tt>eq</tt> and 
-<tt>ne</tt>, the other predicates can be used with packed types.</p>
+the vector are compared in turn and the predicate must hold for all
+elements.</p>
 
 <h5>Example:</h5>
 <pre>  &lt;result&gt; = icmp eq int 4, 5           <i>; yields: result=false</i>
@@ -3130,7 +3129,7 @@ of its floating point operands.</p>
 the condition code which indicates the kind of comparison to perform. It is not
 a value, just a keyword. The possibilities for the condition code are:
 <ol>
-  <li><tt>false</tt>: no comparison, always false (always folded)</li>
+  <li><tt>false</tt>: no comparison, always returns false</li>
   <li><tt>oeq</tt>: ordered and equal</li>
   <li><tt>ogt</tt>: ordered and greater than </li>
   <li><tt>oge</tt>: ordered and greater than or equal</li>
@@ -3145,49 +3144,50 @@ a value, just a keyword. The possibilities for the condition code are:
   <li><tt>ule</tt>: unordered or less than or equal</li>
   <li><tt>une</tt>: unordered or not equal</li>
   <li><tt>uno</tt>: unordered (either nans)</li>
-  <li><tt>true</tt>: no comparison, always true (always folded)</li>
+  <li><tt>true</tt>: no comparison, always returns true</li>
 </ol>
 <p>The <tt>val1</tt> and <tt>val2</tt> arguments must be of 
 <a href="#t_floating">floating point</a>, or a <a href="#t_packed">packed</a> 
 floating point type. They must have identical types.</p>
+<p>In the foregoing, <i>ordered</i> means that neither operand is a QNAN and 
+<i>unordered</i> means that either operand is a QNAN.</p>
 <h5>Semantics:</h5>
 <p>The '<tt>fcmp</tt>' compares <tt>var1</tt> and <tt>var2</tt> according to 
 the condition code given as <tt>cond</tt>. The comparison performed always
 yields a <a href="#t_bool">bool</a> result, as follows: 
 <ol>
   <li><tt>false</tt>: always yields <tt>false</tt>, regardless of operands.</li>
-  <li><tt>oeq</tt>: yields <tt>true</tt> if both operands are ordered and 
+  <li><tt>oeq</tt>: yields <tt>true</tt> if both operands are not a QNAN and 
   <tt>var1</tt> is equal to <tt>var2</tt>.</li>
-  <li><tt>ogt</tt>: yields <tt>true</tt> if both operands are ordered and
+  <li><tt>ogt</tt>: yields <tt>true</tt> if both operands are not a QNAN and
   <tt>var1</tt> is greather than <tt>var2</tt>.</li>
-  <li><tt>oge</tt>: yields <tt>true</tt> if both operands are ordered and 
+  <li><tt>oge</tt>: yields <tt>true</tt> if both operands are not a QNAN and 
   <tt>var1</tt> is greater than or equal to <tt>var2</tt>.</li>
-  <li><tt>olt</tt>: yields <tt>true</tt> if both operands are ordered and 
+  <li><tt>olt</tt>: yields <tt>true</tt> if both operands are not a QNAN and 
   <tt>var1</tt> is less than <tt>var2</tt>.</li>
-  <li><tt>ole</tt>: yields <tt>true</tt> if both operands are ordered and 
+  <li><tt>ole</tt>: yields <tt>true</tt> if both operands are not a QNAN and 
   <tt>var1</tt> is less than or equal to <tt>var2</tt>.</li>
-  <li><tt>one</tt>: yields <tt>true</tt> if both operands are ordered and 
+  <li><tt>one</tt>: yields <tt>true</tt> if both operands are not a QNAN and 
   <tt>var1</tt> is not equal to <tt>var2</tt>.</li>
-  <li><tt>ord</tt>: yields <tt>true</tt> if both operands are ordered.</li>
-  <li><tt>ueq</tt>: yields <tt>true</tt> if either operand is unordered or 
+  <li><tt>ord</tt>: yields <tt>true</tt> if both operands are not a QNAN.</li>
+  <li><tt>ueq</tt>: yields <tt>true</tt> if either operand is a QNAN or 
   <tt>var1</tt> is equal to <tt>var2</tt>.</li>
-  <li><tt>ugt</tt>: yields <tt>true</tt> if either operand is unordered or 
+  <li><tt>ugt</tt>: yields <tt>true</tt> if either operand is a QNAN or 
   <tt>var1</tt> is greater than <tt>var2</tt>.</li>
-  <li><tt>uge</tt>: yields <tt>true</tt> if either operand is unordered or 
+  <li><tt>uge</tt>: yields <tt>true</tt> if either operand is a QNAN or 
   <tt>var1</tt> is greater than or equal to <tt>var2</tt>.</li>
-  <li><tt>ult</tt>: yields <tt>true</tt> if either operand is unordered or 
+  <li><tt>ult</tt>: yields <tt>true</tt> if either operand is a QNAN or 
   <tt>var1</tt> is less than <tt>var2</tt>.</li>
-  <li><tt>ule</tt>: yields <tt>true</tt> if either operand is unordered or 
+  <li><tt>ule</tt>: yields <tt>true</tt> if either operand is a QNAN or 
   <tt>var1</tt> is less than or equal to <tt>var2</tt>.</li>
-  <li><tt>une</tt>: yields <tt>true</tt> if either operand is unordered or 
+  <li><tt>une</tt>: yields <tt>true</tt> if either operand is a QNAN or 
   <tt>var1</tt> is not equal to <tt>var2</tt>.</li>
-  <li><tt>uno</tt>: yields <tt>true</tt> if either operand is unordered.</li>
+  <li><tt>uno</tt>: yields <tt>true</tt> if either operand is a QNAN.</li>
   <li><tt>true</tt>: always yields <tt>true</tt>, regardless of operands.</li>
 </ol>
 <p>If the operands are <a href="#t_packed">packed</a> typed, the elements of 
 the vector are compared in turn and the predicate must hold for all elements.
-While this is of dubious use for predicates other than <tt>eq</tt> and 
-<tt>ne</tt>, the other predicates can be used with packed types.</p>
+</p>
 
 <h5>Example:</h5>
 <pre>  &lt;result&gt; = fcmp oeq float 4.0, 5.0    <i>; yields: result=false</i>
