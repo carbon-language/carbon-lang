@@ -70,10 +70,11 @@ public:
     }
   };
 
-  /// Expr/StmtResult - Provide a unique type to wrap ExprTy/StmtTy, etc,
+  /// Expr/Stmt/TypeResult - Provide a unique type to wrap ExprTy/StmtTy/TypeTy,
   /// providing strong typing and allowing for failure.
   typedef ActionResult<0> ExprResult;
   typedef ActionResult<1> StmtResult;
+  typedef ActionResult<2> TypeResult;
   
   //===--------------------------------------------------------------------===//
   // Symbol Table Tracking Callbacks.
@@ -117,7 +118,15 @@ public:
                                          unsigned NumElts) {
     return 0;
   }
-										 
+
+  //===--------------------------------------------------------------------===//
+  // Type Parsing Callbacks.
+  //===--------------------------------------------------------------------===//
+  
+  virtual TypeResult ParseTypeName(Scope *S, Declarator &D) {
+    return 0;
+  }
+  
   //===--------------------------------------------------------------------===//
   // Statement Parsing Callbacks.
   //===--------------------------------------------------------------------===//

@@ -70,10 +70,9 @@ void PointerType::getAsString(std::string &S) const {
   S = '*' + S;
   
   // Handle things like 'int (*A)[4];' correctly.
-  // FIXME: this should include vectors.
+  // FIXME: this should include vectors, but vectors use attributes I guess.
   if (isa<ArrayType>(PointeeType.getTypePtr()))
     S = '(' + S + ')';
-  
   
   PointeeType.getAsString(S);
 }

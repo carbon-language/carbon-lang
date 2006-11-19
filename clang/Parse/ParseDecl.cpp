@@ -32,8 +32,7 @@ Parser::TypeTy *Parser::ParseTypeName() {
   Declarator DeclaratorInfo(DS, Declarator::TypeNameContext);
   ParseDeclarator(DeclaratorInfo);
   
-  // TODO: Return something useful as the type, obtained from actions.
-  return 0;
+  return Actions.ParseTypeName(CurScope, DeclaratorInfo).Val;
 }
 
 /// ParseAttributes - Parse a non-empty attributes list.
