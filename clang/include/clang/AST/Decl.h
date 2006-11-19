@@ -15,6 +15,7 @@
 #define LLVM_CLANG_AST_DECL_H
 
 #include "clang/Basic/SourceLocation.h"
+#include "clang/AST/Type.h"
 
 namespace llvm {
 namespace clang {
@@ -31,28 +32,29 @@ public:
     Typedef, Function, Variable
   };
 private:
+  /// DeclKind - This indicates which class this is.
+  Kind DeclKind;
+  
   /// Identifier - The identifier for this declaration (e.g. the name for the
   /// variable, the tag for a struct).
   IdentifierInfo *Identifier;
   
   /// Type.
-  
-  /// DeclKind - This indicates which class this is.
-  Kind DeclKind;
+  TypeRef DeclType;
   
   /// Scope stack info when parsing, otherwise decl list when scope is popped.
   ///
   Decl *Next;
   
 public:
-  Decl(IdentifierInfo *Id, Kind DK, Decl *next)
-    : Identifier(Id), DeclKind(DK), Next(next) {}
+  Decl(Kind DK, IdentifierInfo *Id, TypeRef T, Decl *next)
+    : DeclKind(DK), Identifier(Id), DeclType(T), Next(next) {}
   virtual ~Decl();
   
   const IdentifierInfo *getIdentifier() const { return Identifier; }
 
+  TypeRef getType() const { return DeclType; }
   Kind getKind() const { return DeclKind; }
-  
   Decl *getNext() const { return Next; }
   
   // Implement isa/cast/dyncast/etc.
@@ -63,8 +65,8 @@ public:
 /// Objective-C classes.
 class TypeDecl : public Decl {
 public:
-  TypeDecl(IdentifierInfo *Id, Kind DK, Decl *Next)
-    : Decl(Id, DK, Next) {}
+  TypeDecl(Kind DK, IdentifierInfo *Id, TypeRef T, Decl *Next)
+    : Decl(DK, Id, T, Next) {}
 
   // Implement isa/cast/dyncast/etc.
   static bool classof(const Decl *D) { return D->getKind() == Typedef; }
@@ -74,8 +76,8 @@ public:
 class TypedefDecl : public TypeDecl {
 public:
   // FIXME: Remove Declarator argument.
-  TypedefDecl(IdentifierInfo *Id, Decl *Next)
-    : TypeDecl(Id, Typedef, Next) {}
+  TypedefDecl(IdentifierInfo *Id, TypeRef T, Decl *Next)
+    : TypeDecl(Typedef, Id, T, Next) {}
 
   // Implement isa/cast/dyncast/etc.
   static bool classof(const Decl *D) { return D->getKind() == Typedef; }
@@ -88,8 +90,8 @@ class FunctionDecl : public Decl {
   // Args etc.
   Stmt *Body;  // Null if a prototype.
 public:
-  FunctionDecl(IdentifierInfo *Id, Decl *Next)
-    : Decl(Id, Function, Next), Body(0) {}
+  FunctionDecl(IdentifierInfo *Id, TypeRef T, Decl *Next)
+    : Decl(Function, Id, T, Next), Body(0) {}
   
   Stmt *getBody() const { return Body; }
   void setBody(Stmt *B) { Body = B; }
@@ -105,8 +107,8 @@ public:
 class VarDecl : public Decl {
   // Initializer.
 public:
-  VarDecl(IdentifierInfo *Id, Decl *Next)
-    : Decl(Id, Variable, Next) {}
+  VarDecl(IdentifierInfo *Id, TypeRef T, Decl *Next)
+    : Decl(Variable, Id, T, Next) {}
   
   
   // Implement isa/cast/dyncast/etc.

@@ -60,8 +60,6 @@ Sema::DeclTy *Sema::ParsedFreeStandingDeclSpec(Scope *S, DeclSpec &DS) {
 Action::DeclTy *
 Sema::ParseDeclarator(Scope *S, Declarator &D, ExprTy *Init, 
                       DeclTy *LastInGroup) {
-  TypeRef DeclaratorType = GetTypeForDeclarator(D, S);
-  
   IdentifierInfo *II = D.getIdentifier();
   Decl *PrevDecl = 0;
   
@@ -75,9 +73,9 @@ Sema::ParseDeclarator(Scope *S, Declarator &D, ExprTy *Init,
   if (D.getDeclSpec().StorageClassSpec == DeclSpec::SCS_typedef) {
     New = ParseTypedefDecl(S, D, PrevDecl);
   } else if (D.isFunctionDeclarator())
-    New = new FunctionDecl(II, PrevDecl);
+    New = new FunctionDecl(II, GetTypeForDeclarator(D, S), PrevDecl);
   else
-    New = new VarDecl(II, PrevDecl);
+    New = new VarDecl(II, GetTypeForDeclarator(D, S), PrevDecl);
   
   if (!New) return 0;
   
@@ -111,6 +109,7 @@ Sema::ParseFunctionDefinition(Scope *S, Declarator &D, StmtTy *Body) {
 Decl *Sema::ParseTypedefDecl(Scope *S, Declarator &D, Decl *PrevDecl) {
   assert(D.getIdentifier() && "Wrong callback for declspec withotu declarator");
   
-  return new TypedefDecl(D.getIdentifier(), PrevDecl);
+  TypeRef T = GetTypeForDeclarator(D, S);
+  return new TypedefDecl(D.getIdentifier(), T, PrevDecl);
 }
 
