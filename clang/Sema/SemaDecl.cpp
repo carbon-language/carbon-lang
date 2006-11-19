@@ -14,6 +14,7 @@
 #include "Sema.h"
 #include "clang/AST/Decl.h"
 #include "clang/AST/Type.h"
+#include "clang/Parse/DeclSpec.h"
 #include "clang/Parse/Scope.h"
 #include "clang/Lex/IdentifierTable.h"
 using namespace llvm;
@@ -22,8 +23,6 @@ using namespace clang;
 
 bool Sema::isTypeName(const IdentifierInfo &II, Scope *S) const {
   Decl *D = II.getFETokenInfo<Decl>();
-  
-  
   return D != 0 && isa<TypeDecl>(D);
 }
 
@@ -76,9 +75,9 @@ Sema::ParseDeclarator(Scope *S, Declarator &D, ExprTy *Init,
   if (D.getDeclSpec().StorageClassSpec == DeclSpec::SCS_typedef) {
     New = ParseTypedefDecl(S, D, PrevDecl);
   } else if (D.isFunctionDeclarator())
-    New = new FunctionDecl(II, D.getDeclSpec(), PrevDecl);
+    New = new FunctionDecl(II, PrevDecl);
   else
-    New = new VarDecl(II, D.getDeclSpec(), PrevDecl);
+    New = new VarDecl(II, PrevDecl);
   
   if (!New) return 0;
   
@@ -112,6 +111,6 @@ Sema::ParseFunctionDefinition(Scope *S, Declarator &D, StmtTy *Body) {
 Decl *Sema::ParseTypedefDecl(Scope *S, Declarator &D, Decl *PrevDecl) {
   assert(D.getIdentifier() && "Wrong callback for declspec withotu declarator");
   
-  return new TypedefDecl(D.getIdentifier(), D.getDeclSpec(), PrevDecl);
+  return new TypedefDecl(D.getIdentifier(), PrevDecl);
 }
 

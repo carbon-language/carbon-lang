@@ -14,6 +14,7 @@
 #include "Sema.h"
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/Decl.h"
+#include "clang/Parse/DeclSpec.h"
 using namespace llvm;
 using namespace clang;
 
