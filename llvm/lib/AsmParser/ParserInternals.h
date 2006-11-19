@@ -217,4 +217,30 @@ typedef OpcodeInfo<llvm::Instruction::TermOps>    TermOpInfo;
 typedef OpcodeInfo<llvm::Instruction::MemoryOps>  MemOpInfo;
 typedef OpcodeInfo<llvm::Instruction::OtherOps>   OtherOpInfo;
 
+/// This enumeration is used to indicate if a type is signed, signless or
+/// unsigned. It is used for backwards compatibility with assembly code that
+/// pre-dates the signless types conversion.
+enum Signedness {
+  isSigned,
+  isUnsigned,
+  isSignless
+};
+
+/// This structure is used to keep track of the signedness of the obsolete
+/// integer types. Instead of creating an llvm::Type directly, the Lexer will
+/// create instances of TypeInfo which retains the signedness indication so
+/// it can be used by the parser for upgrade decisions.
+/// For example if "uint" is encountered then the type will be set "int32" 
+/// and the "signedness" will be "isUnsigned".  If the type is not obsolete 
+/// then "signedness" will be "isSignless".
+struct TypeInfo {
+  llvm::PATypeHolder *type;
+  Signedness signedness;
+};
+
+struct ValueInfo {
+  std::vector<llvm::Value*> valuelist;
+  std::vector<Signedness>   signlist;
+};
+
 #endif
