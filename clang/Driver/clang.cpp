@@ -808,7 +808,7 @@ static void PrintASTs(Preprocessor &PP, unsigned MainFileID) {
       std::cerr << II->getName() << "'\n";
     else
       std::cerr << "\n";
-    if (FunctionDecl *FD = D->isFunctionDecl()) {
+    if (FunctionDecl *FD = dyn_cast<FunctionDecl>(D)) {
       if (FD->getBody()) {
         FD->getBody()->dump();
         std::cerr << "\n";

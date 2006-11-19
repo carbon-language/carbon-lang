@@ -27,6 +27,11 @@ class FunctionDecl;
 /// typedef, function, struct, etc.  
 ///
 class Decl {
+public:
+  enum Kind {
+    Typedef, Function, Variable
+  };
+private:
   /// Identifier - The identifier for this declaration (e.g. the name for the
   /// variable, the tag for a struct).
   IdentifierInfo *Identifier;
@@ -37,33 +42,50 @@ class Decl {
   DeclSpec DeclarationSpecifier;
   
   /// Type.
-  /// Kind.
+  
+  /// DeclKind - This indicates which class this is.
+  Kind DeclKind;
   
   /// Scope stack info when parsing, otherwise decl list when scope is popped.
   ///
   Decl *Next;
+  
 public:
-  Decl(IdentifierInfo *Id, const Declarator &D, Decl *next)
-    : Identifier(Id), DeclarationSpecifier(D.getDeclSpec()), Next(next) {}
+  Decl(IdentifierInfo *Id, const DeclSpec &DS, Kind DK, Decl *next)
+    : Identifier(Id), DeclarationSpecifier(DS), DeclKind(DK), Next(next) {}
   virtual ~Decl();
   
   const IdentifierInfo *getIdentifier() const { return Identifier; }
-  
-  const DeclSpec &getDeclSpec() const { return DeclarationSpecifier; }
+
+  Kind getKind() const { return DeclKind; }
   
   Decl *getNext() const { return Next; }
   
-  // FIXME: Implement cast/dyn_cast/etc
-  virtual FunctionDecl *isFunctionDecl() { return 0; }
-  virtual const FunctionDecl *isFunctionDecl() const { return 0; }
+  // Implement isa/cast/dyncast/etc.
+  static bool classof(const Decl *) { return true; }
 };
 
-class TypedefDecl : public Decl {
+/// TypeDecl - Common base-class for all type name decls, which as Typedefs and
+/// Objective-C classes.
+class TypeDecl : public Decl {
+public:
+  TypeDecl(IdentifierInfo *Id, const DeclSpec &DS, Kind DK, Decl *Next)
+    : Decl(Id, DS, DK, Next) {}
+
+  // Implement isa/cast/dyncast/etc.
+  static bool classof(const Decl *D) { return D->getKind() == Typedef; }
+  static bool classof(const TypeDecl *D) { return true; }
+};
+
+class TypedefDecl : public TypeDecl {
 public:
   // FIXME: Remove Declarator argument.
-  TypedefDecl(IdentifierInfo *Id, const Declarator &D, Decl *Next)
-    : Decl(Id, D, Next) {}
+  TypedefDecl(IdentifierInfo *Id, const DeclSpec &DS, Decl *Next)
+    : TypeDecl(Id, DS, Typedef, Next) {}
 
+  // Implement isa/cast/dyncast/etc.
+  static bool classof(const Decl *D) { return D->getKind() == Typedef; }
+  static bool classof(const TypedefDecl *D) { return true; }
 };
 
 /// FunctionDecl - An instance of this class is created to represent a function
@@ -72,16 +94,16 @@ class FunctionDecl : public Decl {
   // Args etc.
   Stmt *Body;  // Null if a prototype.
 public:
-  FunctionDecl(IdentifierInfo *Id, const Declarator &D, Decl *Next)
-    : Decl(Id, D, Next), Body(0) {}
+  FunctionDecl(IdentifierInfo *Id, const DeclSpec &DS, Decl *Next)
+    : Decl(Id, DS, Function, Next), Body(0) {}
   
   Stmt *getBody() const { return Body; }
   void setBody(Stmt *B) { Body = B; }
   
   
-  // FIXME: Implement cast/dyn_cast/etc
-  virtual FunctionDecl *isFunctionDecl() { return this; }
-  virtual const FunctionDecl *isFunctionDecl() const { return this; }
+  // Implement isa/cast/dyncast/etc.
+  static bool classof(const Decl *D) { return D->getKind() == Function; }
+  static bool classof(const FunctionDecl *D) { return true; }
 };
 
 /// VarDecl - An instance of this class is created to represent a variable
@@ -89,9 +111,13 @@ public:
 class VarDecl : public Decl {
   // Initializer.
 public:
-  VarDecl(IdentifierInfo *Id, const Declarator &D, Decl *Next)
-    : Decl(Id, D, Next) {}
+  VarDecl(IdentifierInfo *Id, const DeclSpec &DS, Decl *Next)
+    : Decl(Id, DS, Variable, Next) {}
   
+  
+  // Implement isa/cast/dyncast/etc.
+  static bool classof(const Decl *D) { return D->getKind() == Variable; }
+  static bool classof(const VarDecl *D) { return true; }
 };
   
 }  // end namespace clang

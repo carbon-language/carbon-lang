@@ -22,7 +22,9 @@ using namespace clang;
 
 bool Sema::isTypeName(const IdentifierInfo &II, Scope *S) const {
   Decl *D = II.getFETokenInfo<Decl>();
-  return D != 0 && D->getDeclSpec().StorageClassSpec == DeclSpec::SCS_typedef;
+  
+  
+  return D != 0 && isa<TypeDecl>(D);
 }
 
 void Sema::PopScope(SourceLocation Loc, Scope *S) {
@@ -74,9 +76,9 @@ Sema::ParseDeclarator(Scope *S, Declarator &D, ExprTy *Init,
   if (D.getDeclSpec().StorageClassSpec == DeclSpec::SCS_typedef) {
     New = ParseTypedefDecl(S, D, PrevDecl);
   } else if (D.isFunctionDeclarator())
-    New = new FunctionDecl(II, D, PrevDecl);
+    New = new FunctionDecl(II, D.getDeclSpec(), PrevDecl);
   else
-    New = new VarDecl(II, D, PrevDecl);
+    New = new VarDecl(II, D.getDeclSpec(), PrevDecl);
   
   if (!New) return 0;
   
@@ -108,8 +110,8 @@ Sema::ParseFunctionDefinition(Scope *S, Declarator &D, StmtTy *Body) {
 
 
 Decl *Sema::ParseTypedefDecl(Scope *S, Declarator &D, Decl *PrevDecl) {
-  assert(D.getIdentifier());
+  assert(D.getIdentifier() && "Wrong callback for declspec withotu declarator");
   
-  return new TypedefDecl(D.getIdentifier(), D, PrevDecl);
+  return new TypedefDecl(D.getIdentifier(), D.getDeclSpec(), PrevDecl);
 }
 
