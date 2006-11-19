@@ -318,6 +318,9 @@ Parser::DeclTy *Parser::ParseExternalDeclaration() {
   case tok::plus:
     ParseObjCClassMethodDeclaration();
     return 0;
+  case tok::kw_typedef:
+    // A function definition cannot start with a 'typedef' keyword.
+    return ParseDeclaration(Declarator::FileContext);
   default:
     // We can't tell whether this is a function-definition or declaration yet.
     return ParseDeclarationOrFunctionDefinition();
@@ -345,10 +348,11 @@ Parser::DeclTy *Parser::ParseDeclarationOrFunctionDefinition() {
   // declaration-specifiers init-declarator-list[opt] ';'
   if (Tok.getKind() == tok::semi) {
     // TODO: emit error on 'int;' or 'const enum foo;'.
+    // TODO: emit error on 'typedef int;'
     // if (!DS.isMissingDeclaratorOk()) Diag(...);
     
     ConsumeToken();
-    // TODO: Return type definition.
+    // TODO: Pass to actions.
     return 0;
   }
   

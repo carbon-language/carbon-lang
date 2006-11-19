@@ -121,9 +121,15 @@ TypeRef Sema::GetTypeForDeclarator(Declarator &D, Scope *S) {
 }
 
 Sema::TypeResult Sema::ParseTypeName(Scope *S, Declarator &D) {
-  // FIXME: Validate Declarator.
+  // C99 6.7.6: Type names have no identifier.  This is already validated by
+  // the parser.
+  assert(D.getIdentifier() == 0 && "Type name should have no identifier!");
   
   TypeRef T = GetTypeForDeclarator(D, S);
+  
+  // If the type of the declarator was invalid, this is an invalid typename.
+  if (T.isNull())
+    return true;
   
   return T.getAsOpaquePtr();
 }

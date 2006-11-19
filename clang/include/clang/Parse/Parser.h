@@ -318,7 +318,7 @@ private:
   //===--------------------------------------------------------------------===//
   // C99 6.7: Declarations.
   
-  void ParseDeclaration(unsigned Context);
+  DeclTy *ParseDeclaration(unsigned Context);
   DeclTy *ParseInitDeclaratorListAfterFirstDeclarator(Declarator &D);
   void ParseDeclarationSpecifiers(DeclSpec &DS);
   void ParseSpecifierQualifierList(DeclSpec &DS);

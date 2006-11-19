@@ -58,6 +58,14 @@ public:
   virtual const FunctionDecl *isFunctionDecl() const { return 0; }
 };
 
+class TypedefDecl : public Decl {
+public:
+  // FIXME: Remove Declarator argument.
+  TypedefDecl(IdentifierInfo *Id, const Declarator &D, Decl *Next)
+    : Decl(Id, D, Next) {}
+
+};
+
 /// FunctionDecl - An instance of this class is created to represent a function
 /// declaration or definition.
 class FunctionDecl : public Decl {

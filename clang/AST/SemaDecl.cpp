@@ -25,24 +25,47 @@ bool Sema::isTypeName(const IdentifierInfo &II, Scope *S) const {
   return D != 0 && D->getDeclSpec().StorageClassSpec == DeclSpec::SCS_typedef;
 }
 
+void Sema::PopScope(SourceLocation Loc, Scope *S) {
+  for (Scope::decl_iterator I = S->decl_begin(), E = S->decl_end();
+       I != E; ++I) {
+    IdentifierInfo &II = *static_cast<IdentifierInfo*>(*I);
+    Decl *D = II.getFETokenInfo<Decl>();
+    assert(D && "This decl didn't get pushed??");
+    
+    Decl *Next = D->getNext();
+    
+    // FIXME: Push the decl on the parent function list if in a function.
+    // FIXME: Don't delete the decl when it gets popped!
+    delete D;
+    
+    II.setFETokenInfo(Next);
+  }
+}
+
 Action::DeclTy *
 Sema::ParseDeclarator(Scope *S, Declarator &D, ExprTy *Init, 
                       DeclTy *LastInGroup) {
   TypeRef DeclaratorType = GetTypeForDeclarator(D, S);
   
-  // FIXME: Temporary.
-  if (!DeclaratorType.isNull())
-    DeclaratorType.dump();
-    
-  
   IdentifierInfo *II = D.getIdentifier();
-  Decl *PrevDecl = II ? II->getFETokenInfo<Decl>() : 0;
+  Decl *PrevDecl = 0;
+  
+  if (II) {
+    PrevDecl = II->getFETokenInfo<Decl>();
+    
+    // TODO: CHECK FOR CONFLICTS, multiple decls with same name in one scope.
+  }
   
   Decl *New;
-  if (D.isFunctionDeclarator())
+  if (D.getDeclSpec().StorageClassSpec == DeclSpec::SCS_typedef) {
+    New = ParseTypedefDecl(S, D, PrevDecl);
+  } else if (D.isFunctionDeclarator())
     New = new FunctionDecl(II, D, PrevDecl);
   else
     New = new VarDecl(II, D, PrevDecl);
+  
+  if (!New) return 0;
+  
   
   // If this has an identifier, add it to the scope stack.
   if (II) {
@@ -68,19 +91,10 @@ Sema::ParseFunctionDefinition(Scope *S, Declarator &D, StmtTy *Body) {
   return FD;
 }
 
-void Sema::PopScope(SourceLocation Loc, Scope *S) {
-  for (Scope::decl_iterator I = S->decl_begin(), E = S->decl_end();
-       I != E; ++I) {
-    IdentifierInfo &II = *static_cast<IdentifierInfo*>(*I);
-    Decl *D = II.getFETokenInfo<Decl>();
-    assert(D && "This decl didn't get pushed??");
-    
-    Decl *Next = D->getNext();
-    
-    // FIXME: Push the decl on the parent function list if in a function.
-    delete D;
-    
-    II.setFETokenInfo(Next);
-  }
+
+Decl *Sema::ParseTypedefDecl(Scope *S, Declarator &D, Decl *PrevDecl) {
+  assert(D.getIdentifier());
+  
+  return new TypedefDecl(D.getIdentifier(), D, PrevDecl);
 }
 

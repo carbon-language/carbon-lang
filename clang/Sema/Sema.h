@@ -60,6 +60,9 @@ public:
                                           StmtTy *Body);
   virtual void PopScope(SourceLocation Loc, Scope *S);
   
+  Decl *ParseTypedefDecl(Scope *S, Declarator &D, Decl *PrevDecl);
+  
+  
   //===--------------------------------------------------------------------===//
   // Statement Parsing Callbacks: SemaStmt.cpp.
 

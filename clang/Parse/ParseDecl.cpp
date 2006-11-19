@@ -71,7 +71,7 @@ void Parser::ParseAttributes() {
 /// ParseDeclaration - Parse a full 'declaration', which consists of
 /// declaration-specifiers, some number of declarators, and a semicolon.
 /// 'Context' should be a Declarator::TheContext value.
-void Parser::ParseDeclaration(unsigned Context) {
+Parser::DeclTy *Parser::ParseDeclaration(unsigned Context) {
   // Parse the common declaration-specifiers piece.
   DeclSpec DS;
   ParseDeclarationSpecifiers(DS);
@@ -80,6 +80,7 @@ void Parser::ParseDeclaration(unsigned Context) {
   // declaration-specifiers init-declarator-list[opt] ';'
   if (Tok.getKind() == tok::semi) {
     // TODO: emit error on 'int;' or 'const enum foo;'.
+    // TODO: emit error on 'typedef int;'
     // if (!DS.isMissingDeclaratorOk()) Diag(...);
     
     // TODO: Register 'struct foo;' with the type system as an opaque struct.
@@ -87,13 +88,15 @@ void Parser::ParseDeclaration(unsigned Context) {
     // that conflicts.
     
     ConsumeToken();
-    return;
+    
+    // TODO: Return type definition.
+    return 0;
   }
   
   Declarator DeclaratorInfo(DS, (Declarator::TheContext)Context);
   ParseDeclarator(DeclaratorInfo);
   
-  ParseInitDeclaratorListAfterFirstDeclarator(DeclaratorInfo);
+  return ParseInitDeclaratorListAfterFirstDeclarator(DeclaratorInfo);
 }
 
 /// ParseInitDeclaratorListAfterFirstDeclarator - Parse 'declaration' after
