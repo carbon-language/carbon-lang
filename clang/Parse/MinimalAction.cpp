@@ -65,12 +65,12 @@ MinimalAction::ParseDeclarator(Scope *S, Declarator &D, ExprTy *Init,
   return 0;
 }
 
-/// ParsedClassDeclaration - 
+/// ParsedObjcClassDeclaration - 
 /// Scope will always be top level file scope. 
 Action::DeclTy *
-MinimalAction::ParsedClassDeclaration(Scope *S,
-                                      IdentifierInfo **IdentList,
-                                      unsigned NumElts) {
+MinimalAction::ParsedObjcClassDeclaration(Scope *S,
+                                          IdentifierInfo **IdentList,
+                                          unsigned NumElts) {
   for (unsigned i = 0; i != NumElts; ++i) {
     TypeNameInfo *TI =
       new TypeNameInfo(1, IdentList[i]->getFETokenInfo<TypeNameInfo>());

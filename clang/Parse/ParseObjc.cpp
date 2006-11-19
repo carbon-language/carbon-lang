@@ -77,7 +77,8 @@ void Parser::ParseObjCAtClassDeclaration(SourceLocation atLoc) {
   if (ExpectAndConsume(tok::semi, diag::err_expected_semi_after, "@class"))
     return;
   
-  Actions.ParsedClassDeclaration(CurScope, &ClassNames[0], ClassNames.size());
+  Actions.ParsedObjcClassDeclaration(CurScope,
+                                     &ClassNames[0], ClassNames.size());
 }
 
 void Parser::ParseObjCAtInterfaceDeclaration() {

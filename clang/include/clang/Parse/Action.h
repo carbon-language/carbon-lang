@@ -77,7 +77,7 @@ public:
   typedef ActionResult<2> TypeResult;
   
   //===--------------------------------------------------------------------===//
-  // Symbol Table Tracking Callbacks.
+  // Declaration Tracking Callbacks.
   //===--------------------------------------------------------------------===//
   
   /// isTypeName - Return true if the specified identifier is a typedef name
@@ -109,13 +109,12 @@ public:
   /// is popped and deleted.
   virtual void PopScope(SourceLocation Loc, Scope *S) {}
   
-  //===--------------------------------------------------------------------===//
-  // 'External Declaration' (Top Level) Parsing Callbacks.
-  //===--------------------------------------------------------------------===//
   
-  virtual DeclTy *ParsedClassDeclaration(Scope *S,
-                                         IdentifierInfo **IdentList,
-                                         unsigned NumElts) {
+  
+  
+  virtual DeclTy *ParsedObjcClassDeclaration(Scope *S,
+                                             IdentifierInfo **IdentList,
+                                             unsigned NumElts) {
     return 0;
   }
 
@@ -306,9 +305,9 @@ public:
   /// they are removed from the IdentifierInfo::FETokenInfo field.
   virtual void PopScope(SourceLocation Loc, Scope *S);
   
-  virtual DeclTy *ParsedClassDeclaration(Scope *S,
-                                         IdentifierInfo **IdentList,
-                                         unsigned NumElts);
+  virtual DeclTy *ParsedObjcClassDeclaration(Scope *S,
+                                             IdentifierInfo **IdentList,
+                                             unsigned NumElts);
   
 };
 
