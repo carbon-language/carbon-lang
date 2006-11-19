@@ -101,6 +101,9 @@ III. Current advantages over GCC:
  * Faster than GCC at parsing, lexing, and preprocessing.
  * Defers exposing platform-specific stuff to as late as possible, tracks use of
    platform-specific features (e.g. #ifdef PPC) to allow 'portable bytecodes'.
+ * The lexer doesn't rely on the "lexer hack": it has no notion of scope and
+   does not catagorize identifiers as types or variables, this is up to the
+   parser to decide.
 
 Future Features:
 
