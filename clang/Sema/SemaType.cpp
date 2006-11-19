@@ -119,3 +119,11 @@ TypeRef Sema::GetTypeForDeclarator(Declarator &D, Scope *S) {
   
   return T;
 }
+
+Sema::TypeResult Sema::ParseTypeName(Scope *S, Declarator &D) {
+  // FIXME: Validate Declarator.
+  
+  TypeRef T = GetTypeForDeclarator(D, S);
+  
+  return T.getAsOpaquePtr();
+}

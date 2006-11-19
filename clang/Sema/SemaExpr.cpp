@@ -304,7 +304,9 @@ Action::ExprResult Sema::
 ParseSizeOfAlignOfTypeExpr(SourceLocation OpLoc, bool isSizeof, 
                            SourceLocation LParenLoc, TypeTy *Ty,
                            SourceLocation RParenLoc) {
-  return new SizeOfAlignOfTypeExpr(isSizeof, (Type*)Ty);
+  // Error parsing type, ignore.
+  if (Ty == 0) return 0;
+  return new SizeOfAlignOfTypeExpr(isSizeof, TypeRef::getFromOpaquePtr(Ty));
 }
 
 

@@ -257,9 +257,11 @@ void StmtPrinter::VisitUnaryOperator(UnaryOperator *Node) {
 
 }
 void StmtPrinter::VisitSizeOfAlignOfTypeExpr(SizeOfAlignOfTypeExpr *Node) {
-  OS << (Node->isSizeOf() ? "sizeof(" : "alignof(");
-  // FIXME: print type.
-  OS << "ty)";
+  OS << (Node->isSizeOf() ? "sizeof(" : "__alignof(");
+  
+  std::string TypeStr;
+  Node->getArgumentType()->getAsString(TypeStr);
+  OS << TypeStr << ")";
 }
 void StmtPrinter::VisitArraySubscriptExpr(ArraySubscriptExpr *Node) {
   PrintExpr(Node->getBase());

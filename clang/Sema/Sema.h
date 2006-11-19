@@ -48,6 +48,7 @@ public:
   //
   TypeRef GetTypeForDeclarator(Declarator &D, Scope *S);
   
+  virtual TypeResult ParseTypeName(Scope *S, Declarator &D);
   
   //===--------------------------------------------------------------------===//
   // Symbol table / Decl tracking callbacks: SemaDecl.cpp.

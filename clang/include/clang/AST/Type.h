@@ -53,12 +53,22 @@ public:
     assert((ThePtr & CVRFlags) == 0 && "Type pointer not 8-byte aligned?");
     ThePtr |= Quals;
   }
+
+  static TypeRef getFromOpaquePtr(void *Ptr) {
+    TypeRef T;
+    T.ThePtr = reinterpret_cast<uintptr_t>(Ptr);
+    return T;
+  }
   
   unsigned getQualifiers() const {
     return ThePtr & CVRFlags;
   }
   Type *getTypePtr() const {
     return reinterpret_cast<Type*>(ThePtr & ~CVRFlags);
+  }
+  
+  void *getAsOpaquePtr() const {
+    return reinterpret_cast<void*>(ThePtr);
   }
   
   Type &operator*() const {

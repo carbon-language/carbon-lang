@@ -15,12 +15,12 @@
 #define LLVM_CLANG_AST_EXPR_H
 
 #include "clang/AST/Stmt.h"
+#include "clang/AST/Type.h"
 
 namespace llvm {
 namespace clang {
   class IdentifierInfo;
   class Decl;
-  class Type;
   
 /// Expr - This represents one expression.  Note that Expr's are subclasses of
 /// Stmt.  This allows an expression to be transparently used any place a Stmt
@@ -135,12 +135,13 @@ private:
 /// *types*.  sizeof(expr) is handled by UnaryOperator.
 class SizeOfAlignOfTypeExpr : public Expr {
   bool isSizeof;  // true if sizeof, false if alignof.
-  Type *Ty;
+  TypeRef Ty;
 public:
-  SizeOfAlignOfTypeExpr(bool issizeof, Type *ty) : isSizeof(issizeof), Ty(ty) {
+  SizeOfAlignOfTypeExpr(bool issizeof, TypeRef ty) : isSizeof(issizeof), Ty(ty){
   }
   
   bool isSizeOf() const { return isSizeof; }
+  TypeRef getArgumentType() const { return Ty; }
 
   virtual void visit(StmtVisitor &Visitor);
 };
