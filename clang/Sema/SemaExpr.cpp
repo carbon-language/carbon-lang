@@ -304,8 +304,8 @@ Action::ExprResult Sema::
 ParseSizeOfAlignOfTypeExpr(SourceLocation OpLoc, bool isSizeof, 
                            SourceLocation LParenLoc, TypeTy *Ty,
                            SourceLocation RParenLoc) {
-  // Error parsing type, ignore.
-  if (Ty == 0) return 0;
+  // If error parsing type, ignore.
+  if (Ty == 0) return true;
   return new SizeOfAlignOfTypeExpr(isSizeof, TypeRef::getFromOpaquePtr(Ty));
 }
 
@@ -351,7 +351,9 @@ ParseCallExpr(ExprTy *Fn, SourceLocation LParenLoc,
 Action::ExprResult Sema::
 ParseCastExpr(SourceLocation LParenLoc, TypeTy *Ty,
               SourceLocation RParenLoc, ExprTy *Op) {
-  return new CastExpr((Type*)Ty, (Expr*)Op);
+  // If error parsing type, ignore.
+  if (Ty == 0) return true;
+  return new CastExpr(TypeRef::getFromOpaquePtr(Ty), (Expr*)Op);
 }
 
 

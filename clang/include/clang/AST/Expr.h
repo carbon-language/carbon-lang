@@ -215,10 +215,12 @@ public:
 /// CastExpr - [C99 6.5.4] Cast Operators.
 ///
 class CastExpr : public Expr {
-  Type *Ty;
+  TypeRef Ty;
   Expr *Op;
 public:
-  CastExpr(Type *ty, Expr *op) : Ty(ty), Op(op) {}
+  CastExpr(TypeRef ty, Expr *op) : Ty(ty), Op(op) {}
+  
+  TypeRef getDestType() const { return Ty; }
   
   Expr *getSubExpr() { return Op; }
   virtual void visit(StmtVisitor &Visitor);

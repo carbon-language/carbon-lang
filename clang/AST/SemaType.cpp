@@ -92,6 +92,9 @@ static TypeRef ConvertDeclSpecToType(const DeclSpec &DS, ASTContext &Ctx) {
 /// instances.
 TypeRef Sema::GetTypeForDeclarator(Declarator &D, Scope *S) {
   TypeRef T = ConvertDeclSpecToType(D.getDeclSpec(), Context);
+
+  // If there was an error parsing declspecs, return a null type pointer.
+  if (T.isNull()) return T;
   
   // Apply const/volatile/restrict qualifiers to T.
   T = T.getQualifiedType(D.getDeclSpec().TypeQualifiers);

@@ -109,6 +109,8 @@ Decl *Sema::ParseTypedefDecl(Scope *S, Declarator &D, Decl *PrevDecl) {
   assert(D.getIdentifier() && "Wrong callback for declspec withotu declarator");
   
   TypeRef T = GetTypeForDeclarator(D, S);
+  if (T.isNull()) return 0;
+  
   return new TypedefDecl(D.getIdentifier(), T, PrevDecl);
 }
 

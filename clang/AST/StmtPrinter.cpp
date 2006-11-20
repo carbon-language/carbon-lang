@@ -289,9 +289,9 @@ void StmtPrinter::VisitMemberExpr(MemberExpr *Node) {
 }
 void StmtPrinter::VisitCastExpr(CastExpr *Node) {
   OS << "(";
-  // TODO PRINT TYPE
-  OS << "<type>";
-  OS << ")";
+  std::string TypeStr;
+  Node->getDestType().getAsString(TypeStr);
+  OS << TypeStr << ")";
   PrintExpr(Node->getSubExpr());
 }
 void StmtPrinter::VisitBinaryOperator(BinaryOperator *Node) {
