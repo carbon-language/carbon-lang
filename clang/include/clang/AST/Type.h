@@ -131,10 +131,10 @@ public:
 ///
 /// There will be a Type object created for 'int'.  Since int is canonical, its
 /// canonicaltype pointer points to itself.  There is also a Type for 'foo' (a
-/// TypedefType).  Its CanonicalType pointer points to the 'int' Type.  Next
+/// TypeNameType).  Its CanonicalType pointer points to the 'int' Type.  Next
 /// there is a PointerType that represents 'int*', which, like 'int', is
 /// canonical.  Finally, there is a PointerType type for 'foo*' whose canonical
-/// type is 'int*', and there is a TypedefType for 'bar', whose canonical type
+/// type is 'int*', and there is a TypeNameType for 'bar', whose canonical type
 /// is also 'int*'.
 ///
 /// Non-canonical types are useful for emitting diagnostics, without losing
@@ -148,7 +148,7 @@ public:
 class Type {
 public:
   enum TypeClass {
-    Builtin, Pointer, Array, Typedef
+    Builtin, Pointer, Array, TypeName
   };
 private:
   Type *CanonicalType;
@@ -242,13 +242,18 @@ public:
 };
 
 
-class TypedefType : public Type {
-  // Decl * here.
+class TypeNameType : public Type {
+  TypeDecl *Decl;
+  TypeNameType(TypeDecl *D, Type *can) : Type(TypeName, can), Decl(D) {}
+  friend class ASTContext;  // ASTContext creates these.
 public:
   
-  
-  static bool classof(const Type *T) { return T->getTypeClass() == Typedef; }
-  static bool classof(const TypedefType *) { return true; }
+  TypeDecl *getDecl() const { return Decl; }
+    
+  virtual void getAsString(std::string &InnerString) const;
+
+  static bool classof(const Type *T) { return T->getTypeClass() == TypeName; }
+  static bool classof(const TypeNameType *) { return true; }
 };
 
 

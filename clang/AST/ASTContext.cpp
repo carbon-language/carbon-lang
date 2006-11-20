@@ -12,7 +12,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "clang/AST/ASTContext.h"
-#include "clang/AST/Type.h"
+#include "clang/AST/Decl.h"
 #include "clang/Lex/Preprocessor.h"
 using namespace llvm;
 using namespace clang;
@@ -118,4 +118,21 @@ TypeRef ASTContext::getArrayType(TypeRef EltTy,ArrayType::ArraySizeModifier ASM,
   return Types.back();
 }
 
+
+/// getTypeDeclType - Return the unique reference to the type for the
+/// specified typename decl.
+TypeRef ASTContext::getTypeDeclType(TypeDecl *Decl) {
+  // FIXME: This is obviously braindead!
+  // Unique TypeDecl, to guarantee there is only one TypeDeclType.
+  for (unsigned i = 0, e = Types.size(); i != e; ++i)
+    if (TypeNameType *Ty = dyn_cast<TypeNameType>(Types[i]))
+      if (Ty->getDecl() == Decl)
+        return Types[i];
+
+  // FIXME: does this lose qualifiers from the typedef??
+  
+  Type *Canonical = Decl->getType().getTypePtr();
+  Types.push_back(new TypeNameType(Decl, Canonical));
+  return Types.back();
+}
 

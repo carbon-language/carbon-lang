@@ -73,10 +73,18 @@ static TypeRef ConvertDeclSpecToType(const DeclSpec &DS, ASTContext &Ctx) {
   case DeclSpec::TST_decimal64:    // _Decimal64
   case DeclSpec::TST_decimal128:   // _Decimal128
     assert(0 && "FIXME: GNU decimal extensions not supported yet!"); 
-    //DeclSpec::TST_enum:
-    //DeclSpec::TST_union:
-    //DeclSpec::TST_struct:
-    //DeclSpec::TST_typedef:
+//case DeclSpec::TST_enum:
+//case DeclSpec::TST_union:
+//case DeclSpec::TST_struct:
+  case DeclSpec::TST_typedef: {
+    Decl *D = (Decl *)DS.TypenameRep;
+    assert(D && "Didn't get a decl for a typedef?");
+    // FIXME: apply type quals!
+    assert(DS.TypeSpecWidth == 0 && DS.TypeSpecComplex == 0 &&
+           DS.TypeSpecSign == 0 && DS.TypeQualifiers == 0 &&
+           "Can't handle qualifiers on typedef names yet!");
+    return Ctx.getTypeDeclType(cast<TypedefDecl>(D));
+  }
   }
 }
 

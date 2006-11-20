@@ -53,7 +53,10 @@ public:
   /// specified element type.
   TypeRef getArrayType(TypeRef EltTy, ArrayType::ArraySizeModifier ASM,
                        unsigned EltTypeQuals, void *NumElts);
-                       
+
+  /// getTypeDeclType - Return the unique reference to the type for the
+  /// specified typename decl.
+  TypeRef getTypeDeclType(TypeDecl *Decl);
   
 private:
   void InitBuiltinTypes();

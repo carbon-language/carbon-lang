@@ -11,7 +11,9 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "clang/Lex/IdentifierTable.h"
 #include "clang/AST/Type.h"
+#include "clang/AST/Decl.h"
 #include <iostream>
 using namespace llvm;
 using namespace clang;
@@ -93,4 +95,8 @@ void ArrayType::getAsString(std::string &S) const {
   S += ']';
   
   ElementType.getAsString(S);
+}
+
+void TypeNameType::getAsString(std::string &InnerString) const {
+  InnerString += getDecl()->getIdentifier()->getName();
 }

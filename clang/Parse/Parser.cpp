@@ -237,7 +237,7 @@ void Parser::Initialize() {
     DS.StorageClassSpec = DeclSpec::SCS_typedef;
     
     // TODO: add a 'TST_builtin' type?
-    DS.TypeSpecType = DeclSpec::TST_typedef;
+    DS.TypeSpecType = DeclSpec::TST_int;
     
     Declarator D(DS, Declarator::FileContext);
     D.SetIdentifier(PP.getIdentifierInfo("__builtin_va_list"),SourceLocation());
