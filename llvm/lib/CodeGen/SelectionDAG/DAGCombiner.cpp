@@ -2180,10 +2180,10 @@ SDOperand DAGCombiner::visitTRUNCATE(SDNode *N) {
   // fold (truncate (ext x)) -> (ext x) or (truncate x) or x
   if (N0.getOpcode() == ISD::ZERO_EXTEND || N0.getOpcode() == ISD::SIGN_EXTEND||
       N0.getOpcode() == ISD::ANY_EXTEND) {
-    if (N0.getValueType() < VT)
+    if (N0.getOperand(0).getValueType() < VT)
       // if the source is smaller than the dest, we still need an extend
       return DAG.getNode(N0.getOpcode(), VT, N0.getOperand(0));
-    else if (N0.getValueType() > VT)
+    else if (N0.getOperand(0).getValueType() > VT)
       // if the source is larger than the dest, than we just need the truncate
       return DAG.getNode(ISD::TRUNCATE, VT, N0.getOperand(0));
     else
