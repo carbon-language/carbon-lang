@@ -224,6 +224,12 @@ def GPRC : RegisterClass<"PPC", [i32], 32,
     }
     GPRCClass::iterator
     GPRCClass::allocation_order_end(const MachineFunction &MF) const {
+      // On PPC64, r13 is the thread pointer.  Never allocate this register.
+      // Note that this is overconservative, as it also prevents allocation of
+      // R31 when the FP is not needed.
+      if (MF.getTarget().getSubtarget<PPCSubtarget>().isPPC64())
+        return end()-5;  // don't allocate R13, R31, R0, R1, LR
+        
       if (needsFP(MF))
         return end()-4;  // don't allocate R31, R0, R1, LR
       else
