@@ -211,8 +211,8 @@ sh:
 </div>
   </li>
 
-  <li><p>Unpack the C/C++ front-end source into cfrontend/src, either by
-      untar'ing a cfrontend.source.tar.gz file or checking out CVS into this
+  <li><p>Unpack the C/C++ front-end source, either by
+      untar'ing/unzipping a tar.gz file or checking out CVS into this
       directory.</p></li>
   <li><p>Make "build" and "install" directories as siblings of the "src"
       tree:</p>
@@ -221,7 +221,7 @@ sh:
 csh:
 <pre>
   % pwd
-  /usr/local/example/cfrontend/src
+  /usr/local/example/llvm-gcc3.4/src
   % cd ..
   % mkdir build install
   % set CFEINSTALL = `pwd`/install
@@ -229,7 +229,7 @@ csh:
 sh:
 <pre>
   % pwd
-  /usr/local/example/cfrontend/src
+  /usr/local/example/llvm-gcc3.4/src
   % cd ..
   % mkdir build install
   % export CFEINSTALL=`pwd`/install
