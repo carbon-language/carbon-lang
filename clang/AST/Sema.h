@@ -53,7 +53,7 @@ public:
   //===--------------------------------------------------------------------===//
   // Symbol table / Decl tracking callbacks: SemaDecl.cpp.
   //
-  virtual bool isTypeName(const IdentifierInfo &II, Scope *S) const;
+  virtual DeclTy *isTypeName(const IdentifierInfo &II, Scope *S) const;
   virtual DeclTy *ParseDeclarator(Scope *S, Declarator &D, ExprTy *Init,
                                   DeclTy *LastInGroup);
   virtual DeclTy *ParseFunctionDefinition(Scope *S, Declarator &D,

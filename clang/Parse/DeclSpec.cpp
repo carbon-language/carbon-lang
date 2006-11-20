@@ -152,10 +152,11 @@ bool DeclSpec::SetTypeSpecSign(TSS S, const char *&PrevSpec) {
   return false;
 }
 
-bool DeclSpec::SetTypeSpecType(TST T, const char *&PrevSpec) {
+bool DeclSpec::SetTypeSpecType(TST T, const char *&PrevSpec, void *TypeRep) {
   if (TypeSpecType != TST_unspecified)
     return BadSpecifier(TypeSpecType, PrevSpec);
   TypeSpecType = T;
+  TypenameRep = TypeRep;
   return false;
 }
 

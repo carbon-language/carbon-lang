@@ -256,10 +256,13 @@ void Parser::ParseDeclarationSpecifiers(DeclSpec &DS) {
       if (DS.TypeSpecType  == DeclSpec::TST_unspecified &&
           DS.TypeSpecWidth == DeclSpec::TSW_unspecified &&
           DS.TypeSpecComplex == DeclSpec::TSC_unspecified &&
-          DS.TypeSpecSign == DeclSpec::TSS_unspecified &&
-          // It has to be available as a typedef too!
-          Actions.isTypeName(*Tok.getIdentifierInfo(), CurScope)) {
-        isInvalid = DS.SetTypeSpecType(DeclSpec::TST_typedef, PrevSpec);
+          DS.TypeSpecSign == DeclSpec::TSS_unspecified) {
+        // It has to be available as a typedef too!
+        if (void *TypeRep = Actions.isTypeName(*Tok.getIdentifierInfo(),
+                                               CurScope)) {
+          isInvalid = DS.SetTypeSpecType(DeclSpec::TST_typedef, PrevSpec,
+                                         TypeRep);
+        }
         break;
       }
       // FALL THROUGH.
@@ -641,7 +644,7 @@ bool Parser::isTypeSpecifierQualifier() const {
     
     // typedef-name
   case tok::identifier:
-    return Actions.isTypeName(*Tok.getIdentifierInfo(), CurScope);
+    return Actions.isTypeName(*Tok.getIdentifierInfo(), CurScope) != 0;
     
     // TODO: Attributes.
   }
@@ -694,7 +697,7 @@ bool Parser::isDeclarationSpecifier() const {
     
     // typedef-name
   case tok::identifier:
-    return Actions.isTypeName(*Tok.getIdentifierInfo(), CurScope);
+    return Actions.isTypeName(*Tok.getIdentifierInfo(), CurScope) != 0;
     // TODO: Attributes.
   }
 }

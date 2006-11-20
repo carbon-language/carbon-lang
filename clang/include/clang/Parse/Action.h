@@ -81,9 +81,9 @@ public:
   // Declaration Tracking Callbacks.
   //===--------------------------------------------------------------------===//
   
-  /// isTypeName - Return true if the specified identifier is a typedef name
+  /// isTypeName - Return non-null if the specified identifier is a typedef name
   /// in the current scope.
-  virtual bool isTypeName(const IdentifierInfo &II, Scope *S) const = 0;
+  virtual DeclTy *isTypeName(const IdentifierInfo &II, Scope *S) const = 0;
   
   /// ParseDeclarator - This callback is invoked when a declarator is parsed and
   /// 'Init' specifies the initializer if any.  This is for things like:
@@ -297,7 +297,7 @@ class MinimalAction : public Action {
 public:
   /// isTypeName - This looks at the IdentifierInfo::FETokenInfo field to
   /// determine whether the name is a typedef or not in this scope.
-  virtual bool isTypeName(const IdentifierInfo &II, Scope *S) const;
+  virtual DeclTy *isTypeName(const IdentifierInfo &II, Scope *S) const;
   
   /// ParseDeclarator - If this is a typedef declarator, we modify the
   /// IdentifierInfo::FETokenInfo field to keep track of this fact, until S is

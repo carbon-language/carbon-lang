@@ -21,9 +21,8 @@ using namespace llvm;
 using namespace clang;
 
 
-bool Sema::isTypeName(const IdentifierInfo &II, Scope *S) const {
-  Decl *D = II.getFETokenInfo<Decl>();
-  return D != 0 && isa<TypeDecl>(D);
+Sema::DeclTy *Sema::isTypeName(const IdentifierInfo &II, Scope *S) const {
+  return dyn_cast_or_null<TypeDecl>(II.getFETokenInfo<Decl>());
 }
 
 void Sema::PopScope(SourceLocation Loc, Scope *S) {

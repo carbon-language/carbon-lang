@@ -32,9 +32,12 @@ struct TypeNameInfo {
 /// isTypeName - This looks at the IdentifierInfo::FETokenInfo field to
 /// determine whether the name is a type name (objc class name or typedef) or
 /// not in this scope.
-bool MinimalAction::isTypeName(const IdentifierInfo &II, Scope *S) const {
-  TypeNameInfo *TI = II.getFETokenInfo<TypeNameInfo>();
-  return TI != 0 && TI->isTypeName;
+Action::DeclTy *
+MinimalAction::isTypeName(const IdentifierInfo &II, Scope *S) const {
+  if (TypeNameInfo *TI = II.getFETokenInfo<TypeNameInfo>())
+    if (TI->isTypeName)
+      return TI;
+  return 0;
 }
 
 /// ParseDeclarator - If this is a typedef declarator, we modify the

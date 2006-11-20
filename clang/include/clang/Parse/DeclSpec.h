@@ -90,6 +90,11 @@ public:
   // function-specifier
   bool FS_inline_specified : 1;
   
+  
+  // TypenameRep - If TypeSpecType == TST_typedef, this contains the
+  // representation for the typedef.
+  void *TypenameRep;  
+  
   // attributes.
   // FIXME: implement declspec attributes.
   
@@ -110,7 +115,8 @@ public:
       TypeSpecSign(TSS_unspecified),
       TypeSpecType(TST_unspecified),
       TypeQualifiers(TSS_unspecified),
-      FS_inline_specified(false) {
+      FS_inline_specified(false),
+      TypenameRep(0) {
   }
   
   /// getParsedSpecifiers - Return a bitmask of which flavors of specifiers this
@@ -125,7 +131,7 @@ public:
   bool SetTypeSpecWidth(TSW W, const char *&PrevSpec);
   bool SetTypeSpecComplex(TSC C, const char *&PrevSpec);
   bool SetTypeSpecSign(TSS S, const char *&PrevSpec);
-  bool SetTypeSpecType(TST T, const char *&PrevSpec);
+  bool SetTypeSpecType(TST T, const char *&PrevSpec, void *TypenameRep = 0);
   
   bool SetTypeQual(TQ T, const char *&PrevSpec, const LangOptions &Lang);
   
