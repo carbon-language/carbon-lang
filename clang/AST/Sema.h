@@ -113,6 +113,8 @@ public:
   // Expression Parsing Callbacks: SemaExpr.cpp.
 
   // Primary Expressions.
+  virtual ExprResult ParseIdentifierExpr(SourceLocation Loc,
+                                         IdentifierInfo &II);
   virtual ExprResult ParseSimplePrimaryExpr(SourceLocation Loc,
                                             tok::TokenKind Kind);
   virtual ExprResult ParseIntegerConstant(SourceLocation Loc);

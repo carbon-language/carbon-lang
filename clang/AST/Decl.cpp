@@ -12,9 +12,14 @@
 //===----------------------------------------------------------------------===//
 
 #include "clang/AST/Decl.h"
+#include "clang/Lex/IdentifierTable.h"
 using namespace llvm;
 using namespace clang;
 
 // Out-of-line virtual method providing a home for Decl.
 Decl::~Decl() {
+}
+
+const char *Decl::getName() const {
+  return getIdentifier()->getName();
 }

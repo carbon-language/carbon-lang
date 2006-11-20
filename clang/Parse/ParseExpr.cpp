@@ -201,8 +201,8 @@ ParseExpressionWithLeadingIdentifier(const LexerToken &Tok) {
   //   primary-expression: identifier
   
   // Let the actions module handle the identifier.
-  ExprResult Res = Actions.ParseSimplePrimaryExpr(Tok.getLocation(),
-                                                  Tok.getKind());
+  ExprResult Res = Actions.ParseIdentifierExpr(Tok.getLocation(),
+                                               *Tok.getIdentifierInfo());
   
   // Because we have to parse an entire cast-expression before starting the
   // ParseRHSOfBinaryExpression method (which parses any trailing binops), we
@@ -231,8 +231,8 @@ ParseAssignmentExprWithLeadingIdentifier(const LexerToken &Tok) {
   //   primary-expression: identifier
   
   // Let the actions module handle the identifier.
-  ExprResult Res = Actions.ParseSimplePrimaryExpr(Tok.getLocation(),
-                                                  Tok.getKind());
+  ExprResult Res = Actions.ParseIdentifierExpr(Tok.getLocation(),
+                                               *Tok.getIdentifierInfo());
   
   // Because we have to parse an entire cast-expression before starting the
   // ParseRHSOfBinaryExpression method (which parses any trailing binops), we
@@ -481,6 +481,11 @@ Parser::ExprResult Parser::ParseCastExpression(bool isUnaryExpression) {
 
   case tok::identifier:        // primary-expression: identifier
                                // constant: enumeration-constant
+    Res = Actions.ParseIdentifierExpr(Tok.getLocation(),
+                                      *Tok.getIdentifierInfo());
+    ConsumeToken();
+    // These can be followed by postfix-expr pieces.
+    return ParsePostfixExpressionSuffix(Res);
   case tok::char_constant:     // constant: character-constant
   case tok::kw___func__:       // primary-expression: __func__ [C99 6.4.2.2]
   case tok::kw___FUNCTION__:   // primary-expression: __FUNCTION__ [GNU]

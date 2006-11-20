@@ -211,6 +211,11 @@ public:
   //===--------------------------------------------------------------------===//
   
   // Primary Expressions.
+  virtual ExprResult ParseIdentifierExpr(SourceLocation Loc,
+                                         IdentifierInfo &II) {
+    return 0;
+  }
+  
   virtual ExprResult ParseSimplePrimaryExpr(SourceLocation Loc,
                                             tok::TokenKind Kind) {
     return 0;

@@ -13,6 +13,7 @@
 
 #include "Sema.h"
 #include "clang/AST/ASTContext.h"
+#include "clang/AST/Decl.h"
 #include "clang/AST/Expr.h"
 #include "clang/Lex/Preprocessor.h"
 #include "clang/Basic/Diagnostic.h"
@@ -238,31 +239,42 @@ Sema::ParseStringExpr(const LexerToken *StringToks, unsigned NumStringToks) {
 }
 
 
+Sema::ExprResult Sema::ParseIdentifierExpr(SourceLocation Loc,
+                                           IdentifierInfo &II) {
+  // Could be enum-constant or decl.
+  Decl *D = II.getFETokenInfo<Decl>();
+  if (D == 0) {
+    Diag(Loc, diag::err_undeclared_var_use, II.getName());
+    return true;
+  }
+  
+  if (isa<TypeDecl>(D)) {
+    Diag(Loc, diag::err_unexpected_typedef, II.getName());
+    return true;
+  }
+    
+    
+  return new DeclRefExpr(*(Decl*)0);
+}
 
-Action::ExprResult Sema::ParseSimplePrimaryExpr(SourceLocation Loc,
-                                                tok::TokenKind Kind) {
+Sema::ExprResult Sema::ParseSimplePrimaryExpr(SourceLocation Loc,
+                                              tok::TokenKind Kind) {
   switch (Kind) {
   default:
     assert(0 && "Unknown simple primary expr!");
-  case tok::identifier: {
-    // Could be enum-constant or decl.
-    //Tok.getIdentifierInfo()
-    return new DeclRefExpr(*(Decl*)0);
-  }
-    
   case tok::char_constant:     // constant: character-constant
+    // TODO: MOVE this to be some other callback.
   case tok::kw___func__:       // primary-expression: __func__ [C99 6.4.2.2]
   case tok::kw___FUNCTION__:   // primary-expression: __FUNCTION__ [GNU]
   case tok::kw___PRETTY_FUNCTION__:  // primary-expression: __P..Y_F..N__ [GNU]
-    //assert(0 && "FIXME: Unimp so far!");
-    return new DeclRefExpr(*(Decl*)0);
+    return 0;
   }
 }
 
-Action::ExprResult Sema::ParseIntegerConstant(SourceLocation Loc) {
+Sema::ExprResult Sema::ParseIntegerConstant(SourceLocation Loc) {
   return new IntegerConstant();
 }
-Action::ExprResult Sema::ParseFloatingConstant(SourceLocation Loc) {
+Sema::ExprResult Sema::ParseFloatingConstant(SourceLocation Loc) {
   return new FloatingConstant();
 }
 

@@ -52,7 +52,8 @@ public:
   virtual ~Decl();
   
   const IdentifierInfo *getIdentifier() const { return Identifier; }
-
+  const char *getName() const;
+  
   TypeRef getType() const { return DeclType; }
   Kind getKind() const { return DeclKind; }
   Decl *getNext() const { return Next; }
@@ -84,14 +85,41 @@ public:
   static bool classof(const TypedefDecl *D) { return true; }
 };
 
+/// ObjectDecl - ObjectDecl - Represents a declaration of a value.
+class ObjectDecl : public Decl {
+protected:
+  ObjectDecl(Kind DK, IdentifierInfo *Id, TypeRef T, Decl *Next)
+    : Decl(DK, Id, T, Next) {}
+public:
+  
+  // Implement isa/cast/dyncast/etc.
+  static bool classof(const Decl *D) {
+    return D->getKind() == Variable || D->getKind() == Function;
+  }
+  static bool classof(const ObjectDecl *D) { return true; }
+};
+
+/// VarDecl - An instance of this class is created to represent a variable
+/// declaration or definition.
+class VarDecl : public ObjectDecl {
+  // TODO: Initializer.
+public:
+  VarDecl(IdentifierInfo *Id, TypeRef T, Decl *Next)
+    : ObjectDecl(Variable, Id, T, Next) {}
+  
+  // Implement isa/cast/dyncast/etc.
+  static bool classof(const Decl *D) { return D->getKind() == Variable; }
+  static bool classof(const VarDecl *D) { return true; }
+};
+
 /// FunctionDecl - An instance of this class is created to represent a function
 /// declaration or definition.
-class FunctionDecl : public Decl {
+class FunctionDecl : public ObjectDecl {
   // Args etc.
   Stmt *Body;  // Null if a prototype.
 public:
   FunctionDecl(IdentifierInfo *Id, TypeRef T, Decl *Next)
-    : Decl(Function, Id, T, Next), Body(0) {}
+  : ObjectDecl(Function, Id, T, Next), Body(0) {}
   
   Stmt *getBody() const { return Body; }
   void setBody(Stmt *B) { Body = B; }
@@ -102,19 +130,6 @@ public:
   static bool classof(const FunctionDecl *D) { return true; }
 };
 
-/// VarDecl - An instance of this class is created to represent a variable
-/// declaration or definition.
-class VarDecl : public Decl {
-  // Initializer.
-public:
-  VarDecl(IdentifierInfo *Id, TypeRef T, Decl *Next)
-    : Decl(Variable, Id, T, Next) {}
-  
-  
-  // Implement isa/cast/dyncast/etc.
-  static bool classof(const Decl *D) { return D->getKind() == Variable; }
-  static bool classof(const VarDecl *D) { return true; }
-};
   
 }  // end namespace clang
 }  // end namespace llvm
