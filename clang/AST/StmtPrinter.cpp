@@ -12,6 +12,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "clang/AST/StmtVisitor.h"
+#include "clang/AST/Decl.h"
 #include "clang/AST/Expr.h"
 #include "clang/Lex/IdentifierTable.h"
 #include "llvm/Support/Compiler.h"
@@ -211,8 +212,7 @@ void StmtPrinter::VisitExpr(Expr *Node) {
 }
 
 void StmtPrinter::VisitDeclRefExpr(DeclRefExpr *Node) {
-  // FIXME: print name.
-  OS << "x";
+  OS << Node->getDecl()->getName();
 }
 
 void StmtPrinter::VisitIntegerConstant(IntegerConstant *Node) {

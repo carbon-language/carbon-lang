@@ -253,8 +253,7 @@ Sema::ExprResult Sema::ParseIdentifierExpr(SourceLocation Loc,
     return true;
   }
     
-    
-  return new DeclRefExpr(*(Decl*)0);
+  return new DeclRefExpr(D);
 }
 
 Sema::ExprResult Sema::ParseSimplePrimaryExpr(SourceLocation Loc,

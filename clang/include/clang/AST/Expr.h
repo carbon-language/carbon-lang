@@ -42,10 +42,12 @@ public:
 /// DeclRefExpr - [C99 6.5.1p2] - A reference to a declared variable, function,
 /// enum, etc.
 class DeclRefExpr : public Expr {
-  // TODO: Union with the decl when resolved.
-  Decl &D;
+  Decl *D;
 public:
-  DeclRefExpr(Decl &d) : D(d) {}
+  DeclRefExpr(Decl *d) : D(d) {}
+  
+  Decl *getDecl() const { return D; }
+  
   virtual void visit(StmtVisitor &Visitor);
 };
 
