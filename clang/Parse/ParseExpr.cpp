@@ -201,8 +201,9 @@ ParseExpressionWithLeadingIdentifier(const LexerToken &Tok) {
   //   primary-expression: identifier
   
   // Let the actions module handle the identifier.
-  ExprResult Res = Actions.ParseIdentifierExpr(Tok.getLocation(),
-                                               *Tok.getIdentifierInfo());
+  ExprResult Res = Actions.ParseIdentifierExpr(CurScope, Tok.getLocation(),
+                                               *Tok.getIdentifierInfo(),
+                                               Tok.getKind() == tok::l_paren);
   
   // Because we have to parse an entire cast-expression before starting the
   // ParseRHSOfBinaryExpression method (which parses any trailing binops), we
@@ -231,8 +232,9 @@ ParseAssignmentExprWithLeadingIdentifier(const LexerToken &Tok) {
   //   primary-expression: identifier
   
   // Let the actions module handle the identifier.
-  ExprResult Res = Actions.ParseIdentifierExpr(Tok.getLocation(),
-                                               *Tok.getIdentifierInfo());
+  ExprResult Res = Actions.ParseIdentifierExpr(CurScope, Tok.getLocation(),
+                                               *Tok.getIdentifierInfo(),
+                                               Tok.getKind() == tok::l_paren);
   
   // Because we have to parse an entire cast-expression before starting the
   // ParseRHSOfBinaryExpression method (which parses any trailing binops), we
@@ -479,13 +481,19 @@ Parser::ExprResult Parser::ParseCastExpression(bool isUnaryExpression) {
     // These can be followed by postfix-expr pieces.
     return ParsePostfixExpressionSuffix(Res);
 
-  case tok::identifier:        // primary-expression: identifier
+  case tok::identifier: {      // primary-expression: identifier
                                // constant: enumeration-constant
-    Res = Actions.ParseIdentifierExpr(Tok.getLocation(),
-                                      *Tok.getIdentifierInfo());
-    ConsumeToken();
+    // Consume the identifier so that we can see if it is followed by a '('.
+    // Function designators are allowed to be undeclared (C99 6.5.1p2), so we
+    // need to know whether or not this identifier is a function designator or
+    // not.
+    IdentifierInfo &II = *Tok.getIdentifierInfo();
+    SourceLocation L = ConsumeToken();
+    Res = Actions.ParseIdentifierExpr(CurScope, L, II,
+                                      Tok.getKind() == tok::l_paren);
     // These can be followed by postfix-expr pieces.
     return ParsePostfixExpressionSuffix(Res);
+  }
   case tok::char_constant:     // constant: character-constant
   case tok::kw___func__:       // primary-expression: __func__ [C99 6.4.2.2]
   case tok::kw___FUNCTION__:   // primary-expression: __FUNCTION__ [GNU]

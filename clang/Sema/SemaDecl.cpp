@@ -17,6 +17,7 @@
 #include "clang/Parse/DeclSpec.h"
 #include "clang/Parse/Scope.h"
 #include "clang/Lex/IdentifierTable.h"
+#include "clang/Basic/LangOptions.h"
 using namespace llvm;
 using namespace clang;
 
@@ -102,6 +103,33 @@ Sema::ParseFunctionDefinition(Scope *S, Declarator &D, StmtTy *Body) {
   FD->setBody((Stmt*)Body);
   
   return FD;
+}
+
+/// ImplicitlyDefineFunction - An undeclared identifier was used in a function
+/// call, forming a call to an implicitly defined function (per C99 6.5.1p2).
+Decl *Sema::ImplicitlyDefineFunction(SourceLocation Loc, IdentifierInfo &II,
+                                     Scope *S) {
+  if (getLangOptions().C99)  // Extension in C99.
+    Diag(Loc, diag::ext_implicit_function_decl, II.getName());
+  else  // Legal in C90, but warn about it.
+    Diag(Loc, diag::warn_implicit_function_decl, II.getName());
+  
+  // FIXME: handle stuff like:
+  // void foo() { extern float X(); }
+  // void bar() { X(); }  <-- implicit decl for X in another scope.
+
+  // Set a Declarator for the implicit definition: int foo();
+  DeclSpec DS;
+  DS.TypeSpecType = DeclSpec::TST_int;
+  Declarator D(DS, Declarator::BlockContext);
+  D.AddTypeInfo(DeclaratorTypeInfo::getFunction(false, false, true, Loc));
+  D.SetIdentifier(&II, Loc);
+  
+  Decl *Result = static_cast<Decl*>(ParseDeclarator(S, D, 0, 0));
+  
+  // Visit this implicit declaration like any other top-level form.
+  LastInGroupList.push_back(Result);
+  return Result;
 }
 
 

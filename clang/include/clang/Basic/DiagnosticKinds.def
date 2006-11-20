@@ -392,7 +392,12 @@ DIAG(err_unspecified_vla_size_with_static, ERROR,
 DIAG(err_unexpected_typedef, ERROR,
      "unexpected type name '%s': expected expression")
 DIAG(err_undeclared_var_use, ERROR,
-     "use of undeclared '%s' value")
+     "use of undeclared identifier '%s'")
+
+DIAG(warn_implicit_function_decl, WARNING,
+     "implicit declaration of function '%s'")
+DIAG(ext_implicit_function_decl, EXTENSION,
+     "implicit declaration of function '%s' is invalid in C99")
 
 DIAG(err_continue_not_in_loop, ERROR,
      "'continue' statement not in loop statement")

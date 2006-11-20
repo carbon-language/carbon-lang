@@ -211,8 +211,13 @@ public:
   //===--------------------------------------------------------------------===//
   
   // Primary Expressions.
-  virtual ExprResult ParseIdentifierExpr(SourceLocation Loc,
-                                         IdentifierInfo &II) {
+  
+  /// ParseIdentifierExpr - Parse an identifier in expression context.
+  /// 'HasTrailingLParen' indicates whether or not the identifier has a '('
+  /// token immediately after it.
+  virtual ExprResult ParseIdentifierExpr(Scope *S, SourceLocation Loc,
+                                         IdentifierInfo &II,
+                                         bool HasTrailingLParen) {
     return 0;
   }
   

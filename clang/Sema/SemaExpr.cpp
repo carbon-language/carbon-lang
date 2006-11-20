@@ -17,6 +17,7 @@
 #include "clang/AST/Expr.h"
 #include "clang/Lex/Preprocessor.h"
 #include "clang/Basic/Diagnostic.h"
+#include "clang/Basic/LangOptions.h"
 #include "clang/Basic/TargetInfo.h"
 #include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/StringExtras.h"
@@ -239,13 +240,31 @@ Sema::ParseStringExpr(const LexerToken *StringToks, unsigned NumStringToks) {
 }
 
 
-Sema::ExprResult Sema::ParseIdentifierExpr(SourceLocation Loc,
-                                           IdentifierInfo &II) {
+/// ParseIdentifierExpr - The parser read an identifier in expression context,
+/// validate it per-C99 6.5.1.  HasTrailingLParen indicates whether this
+/// identifier is used in an function call context.
+Sema::ExprResult Sema::ParseIdentifierExpr(Scope *S, SourceLocation Loc,
+                                           IdentifierInfo &II,
+                                           bool HasTrailingLParen) {
   // Could be enum-constant or decl.
   Decl *D = II.getFETokenInfo<Decl>();
   if (D == 0) {
-    Diag(Loc, diag::err_undeclared_var_use, II.getName());
-    return true;
+    // FIXME: check to see if this is a use of a builtin.  By handling builtins
+    // here, we can avoid having to preload tons of decls for functions.
+
+    
+    // Otherwise, this is an imlicitly declared function reference (legal in
+    // C90, extension in C99).
+    if (HasTrailingLParen &&
+        // Not in C++.
+        !getLangOptions().CPlusPlus) {
+      D = ImplicitlyDefineFunction(Loc, II, S);
+    } else {
+      // If this name wasn't predeclared and if this is not a function call,
+      // diagnose the problem.
+      Diag(Loc, diag::err_undeclared_var_use, II.getName());
+      return true;
+    }
   }
   
   if (isa<TypeDecl>(D)) {

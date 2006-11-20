@@ -27,4 +27,6 @@ void Sema::Diag(SourceLocation Loc, unsigned DiagID, const std::string &Msg) {
   Context.PP.Diag(Loc, DiagID, Msg);
 }
 
-
+const LangOptions &Sema::getLangOptions() const {
+  return Context.PP.getLangOptions();
+}

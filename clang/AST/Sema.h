@@ -25,6 +25,7 @@ namespace clang {
   class Preprocessor;
   class Decl;
   class TypeRef;
+  class LangOptions;
   
 /// Sema - This implements semantic analysis and AST building for C.
 class Sema : public Action {
@@ -39,6 +40,8 @@ public:
   Sema(ASTContext &ctx, std::vector<Decl*> &prevInGroup)
     : Context(ctx), LastInGroupList(prevInGroup) {
   }
+  
+  const LangOptions &getLangOptions() const;
   
   void Diag(SourceLocation Loc, unsigned DiagID,
             const std::string &Msg = std::string());
@@ -66,6 +69,8 @@ public:
   /// no declarator (e.g. "struct foo;") is parsed.
   virtual DeclTy *ParsedFreeStandingDeclSpec(Scope *S, DeclSpec &DS);  
   
+  Decl *ImplicitlyDefineFunction(SourceLocation Loc, IdentifierInfo &II,
+                                 Scope *S);
   
   //===--------------------------------------------------------------------===//
   // Statement Parsing Callbacks: SemaStmt.cpp.
@@ -113,8 +118,9 @@ public:
   // Expression Parsing Callbacks: SemaExpr.cpp.
 
   // Primary Expressions.
-  virtual ExprResult ParseIdentifierExpr(SourceLocation Loc,
-                                         IdentifierInfo &II);
+  virtual ExprResult ParseIdentifierExpr(Scope *S, SourceLocation Loc,
+                                         IdentifierInfo &II,
+                                         bool HasTrailingLParen);
   virtual ExprResult ParseSimplePrimaryExpr(SourceLocation Loc,
                                             tok::TokenKind Kind);
   virtual ExprResult ParseIntegerConstant(SourceLocation Loc);
