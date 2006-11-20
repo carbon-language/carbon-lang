@@ -334,9 +334,17 @@ void AsmPrinter::EmitXXStructorList(Constant *List) {
 /// generate the appropriate value.
 const std::string AsmPrinter::getGlobalLinkName(const GlobalVariable *GV) const{
   std::string LinkName;
-  // Default action is to use a global symbol.                              
-  LinkName = TAI->getGlobalPrefix();
-  LinkName += GV->getName();
+  
+  if (isa<Function>(GV)) {
+    LinkName += TAI->getFunctionAddrPrefix();
+    LinkName += Mang->getValueName(GV);
+    LinkName += TAI->getFunctionAddrSuffix();
+  } else {
+    LinkName += TAI->getGlobalVarAddrPrefix();
+    LinkName += Mang->getValueName(GV);
+    LinkName += TAI->getGlobalVarAddrSuffix();
+  }  
+  
   return LinkName;
 }
 
