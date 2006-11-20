@@ -3408,7 +3408,17 @@ static std::string getLegalCName(std::string OpName) {
 }
 
 void DAGISelEmitter::EmitInstructionSelector(std::ostream &OS) {
-  std::string InstNS = Target.inst_begin()->second.Namespace;
+  // Get the namespace to insert instructions into.  Make sure not to pick up
+  // "TargetInstrInfo" by accidentally getting the namespace off the PHI
+  // instruction or something.
+  std::string InstNS;
+  for (CodeGenTarget::inst_iterator i = Target.inst_begin(),
+       e = Target.inst_end(); i != e; ++i) {
+    InstNS = i->second.Namespace;
+    if (InstNS != "TargetInstrInfo")
+      break;
+  }
+  
   if (!InstNS.empty()) InstNS += "::";
   
   // Group the patterns by their top-level opcodes.
