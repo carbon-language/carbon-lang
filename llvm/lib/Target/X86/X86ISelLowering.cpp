@@ -35,6 +35,8 @@
 #include "llvm/ADT/StringExtras.h"
 using namespace llvm;
 
+static bool WindowsGVRequiresExtraLoad(GlobalValue *GV);
+
 // FIXME: temporary.
 static cl::opt<bool> EnableFastCC("enable-x86-fastcc", cl::Hidden,
                                   cl::desc("Enable fastcc on X86"));
@@ -651,9 +653,12 @@ SDOperand X86TargetLowering::LowerCCCCallTo(SDOperand Op, SelectionDAG &DAG) {
 
   // If the callee is a GlobalAddress node (quite common, every direct call is)
   // turn it into a TargetGlobalAddress node so that legalize doesn't hack it.
-  if (GlobalAddressSDNode *G = dyn_cast<GlobalAddressSDNode>(Callee))
-    Callee = DAG.getTargetGlobalAddress(G->getGlobal(), getPointerTy());
-  else if (ExternalSymbolSDNode *S = dyn_cast<ExternalSymbolSDNode>(Callee))
+  if (GlobalAddressSDNode *G = dyn_cast<GlobalAddressSDNode>(Callee)) {
+    // We should use extra load for direct calls to dllimported functions
+    if (!((Subtarget->isTargetCygwin() || Subtarget->isTargetWindows()) &&
+          WindowsGVRequiresExtraLoad(G->getGlobal())))
+      Callee = DAG.getTargetGlobalAddress(G->getGlobal(), getPointerTy());
+  } else if (ExternalSymbolSDNode *S = dyn_cast<ExternalSymbolSDNode>(Callee))
     Callee = DAG.getTargetExternalSymbol(S->getSymbol(), getPointerTy());
 
   std::vector<MVT::ValueType> NodeTys;
@@ -1186,9 +1191,12 @@ X86TargetLowering::LowerX86_64CCCCallTo(SDOperand Op, SelectionDAG &DAG) {
 
   // If the callee is a GlobalAddress node (quite common, every direct call is)
   // turn it into a TargetGlobalAddress node so that legalize doesn't hack it.
-  if (GlobalAddressSDNode *G = dyn_cast<GlobalAddressSDNode>(Callee))
-    Callee = DAG.getTargetGlobalAddress(G->getGlobal(), getPointerTy());
-  else if (ExternalSymbolSDNode *S = dyn_cast<ExternalSymbolSDNode>(Callee))
+  if (GlobalAddressSDNode *G = dyn_cast<GlobalAddressSDNode>(Callee)) {
+    // We should use extra load for direct calls to dllimported functions
+    if (!((Subtarget->isTargetCygwin() || Subtarget->isTargetWindows()) &&
+          WindowsGVRequiresExtraLoad(G->getGlobal())))
+      Callee = DAG.getTargetGlobalAddress(G->getGlobal(), getPointerTy());
+  } else if (ExternalSymbolSDNode *S = dyn_cast<ExternalSymbolSDNode>(Callee))
     Callee = DAG.getTargetExternalSymbol(S->getSymbol(), getPointerTy());
 
   std::vector<MVT::ValueType> NodeTys;
@@ -1681,9 +1689,12 @@ SDOperand X86TargetLowering::LowerFastCCCallTo(SDOperand Op, SelectionDAG &DAG,
 
   // If the callee is a GlobalAddress node (quite common, every direct call is)
   // turn it into a TargetGlobalAddress node so that legalize doesn't hack it.
-  if (GlobalAddressSDNode *G = dyn_cast<GlobalAddressSDNode>(Callee))
-    Callee = DAG.getTargetGlobalAddress(G->getGlobal(), getPointerTy());
-  else if (ExternalSymbolSDNode *S = dyn_cast<ExternalSymbolSDNode>(Callee))
+  if (GlobalAddressSDNode *G = dyn_cast<GlobalAddressSDNode>(Callee)) {
+    // We should use extra load for direct calls to dllimported functions
+    if (!((Subtarget->isTargetCygwin() || Subtarget->isTargetWindows()) &&
+          WindowsGVRequiresExtraLoad(G->getGlobal())))
+      Callee = DAG.getTargetGlobalAddress(G->getGlobal(), getPointerTy());
+  } else if (ExternalSymbolSDNode *S = dyn_cast<ExternalSymbolSDNode>(Callee))
     Callee = DAG.getTargetExternalSymbol(S->getSymbol(), getPointerTy());
 
   std::vector<MVT::ValueType> NodeTys;
@@ -1977,9 +1988,12 @@ SDOperand X86TargetLowering::LowerStdCallCCCallTo(SDOperand Op,
 
   // If the callee is a GlobalAddress node (quite common, every direct call is)
   // turn it into a TargetGlobalAddress node so that legalize doesn't hack it.
-  if (GlobalAddressSDNode *G = dyn_cast<GlobalAddressSDNode>(Callee))
-    Callee = DAG.getTargetGlobalAddress(G->getGlobal(), getPointerTy());
-  else if (ExternalSymbolSDNode *S = dyn_cast<ExternalSymbolSDNode>(Callee))
+  if (GlobalAddressSDNode *G = dyn_cast<GlobalAddressSDNode>(Callee)) {
+    // We should use extra load for direct calls to dllimported functions
+    if (!((Subtarget->isTargetCygwin() || Subtarget->isTargetWindows()) &&
+          WindowsGVRequiresExtraLoad(G->getGlobal())))
+      Callee = DAG.getTargetGlobalAddress(G->getGlobal(), getPointerTy());
+  } else if (ExternalSymbolSDNode *S = dyn_cast<ExternalSymbolSDNode>(Callee))
     Callee = DAG.getTargetExternalSymbol(S->getSymbol(), getPointerTy());
 
   std::vector<MVT::ValueType> NodeTys;
