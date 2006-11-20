@@ -255,7 +255,7 @@ const unsigned* PPCRegisterInfo::getCalleeSaveRegs() const {
   };
   // 64-bit Darwin calling convention. 
   static const unsigned Darwin64_CalleeSaveRegs[] = {
-              PPC::X13, PPC::X14, PPC::X15,
+    PPC::X14, PPC::X15,
     PPC::X16, PPC::X17, PPC::X18, PPC::X19,
     PPC::X20, PPC::X21, PPC::X22, PPC::X23,
     PPC::X24, PPC::X25, PPC::X26, PPC::X27,
@@ -306,7 +306,7 @@ PPCRegisterInfo::getCalleeSaveRegClasses() const {
   
   // 64-bit Darwin calling convention. 
   static const TargetRegisterClass * const Darwin64_CalleeSaveRegClasses[] = {
-                       &PPC::G8RCRegClass,&PPC::G8RCRegClass,&PPC::G8RCRegClass,
+    &PPC::G8RCRegClass,&PPC::G8RCRegClass,
     &PPC::G8RCRegClass,&PPC::G8RCRegClass,&PPC::G8RCRegClass,&PPC::G8RCRegClass,
     &PPC::G8RCRegClass,&PPC::G8RCRegClass,&PPC::G8RCRegClass,&PPC::G8RCRegClass,
     &PPC::G8RCRegClass,&PPC::G8RCRegClass,&PPC::G8RCRegClass,&PPC::G8RCRegClass,
