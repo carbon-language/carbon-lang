@@ -180,45 +180,6 @@ bool MachineOperand::isIdenticalTo(const MachineOperand &Other) const {
   }
 }
 
-/// setOpcode - Replace the opcode of the current instruction with a new one.
-///
-void MachineInstr::setOpcode(unsigned Op) {
-  Operands.erase(Operands.begin(), Operands.begin()+NumImplicitOps);
-  NumImplicitOps = 0;
-  Opcode = Op;
-  if (!getParent())
-    return;
-  const TargetInstrDescriptor &TID = getParent()->getParent()->
-    getTarget().getInstrInfo()->get(Op);
-  if (TID.ImplicitDefs)
-    for (const unsigned *ImpDefs = TID.ImplicitDefs; *ImpDefs; ++ImpDefs) {
-      MachineOperand Op;
-      Op.opType = MachineOperand::MO_Register;
-      Op.IsDef = true;
-      Op.IsImp = true;
-      Op.IsKill = false;
-      Op.IsDead = false;
-      Op.contents.RegNo = *ImpDefs;
-      Op.offset = 0;
-      Operands.insert(Operands.begin()+NumImplicitOps, Op);
-      NumImplicitOps++;
-    }
-  if (TID.ImplicitUses)
-    for (const unsigned *ImpUses = TID.ImplicitUses; *ImpUses; ++ImpUses) {
-      MachineOperand Op;
-      Op.opType = MachineOperand::MO_Register;
-      Op.IsDef = false;
-      Op.IsImp = true;
-      Op.IsKill = false;
-      Op.IsDead = false;
-      Op.contents.RegNo = *ImpUses;
-      Op.offset = 0;
-      Operands.insert(Operands.begin()+NumImplicitOps, Op);
-      NumImplicitOps++;
-    }
-}
-
-
 void MachineInstr::dump() const {
   std::cerr << "  " << *this;
 }

@@ -490,7 +490,7 @@ public:
 
   /// setOpcode - Replace the opcode of the current instruction with a new one.
   ///
-  void setOpcode(unsigned Op);
+  void setOpcode(unsigned Op) { Opcode = Op; }
 
   /// RemoveOperand - Erase an operand  from an instruction, leaving it with one
   /// fewer operand than it started with.
