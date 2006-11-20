@@ -98,5 +98,11 @@ void ArrayType::getAsString(std::string &S) const {
 }
 
 void TypeNameType::getAsString(std::string &InnerString) const {
-  InnerString += getDecl()->getIdentifier()->getName();
+  if (InnerString.empty()) {
+    InnerString = getDecl()->getIdentifier()->getName();
+  } else {
+    // Prefix the basic type, e.g. 'typedefname X'.
+    InnerString = ' ' + InnerString;
+    InnerString = getDecl()->getIdentifier()->getName() + InnerString;
+  }
 }

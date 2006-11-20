@@ -260,7 +260,7 @@ void StmtPrinter::VisitSizeOfAlignOfTypeExpr(SizeOfAlignOfTypeExpr *Node) {
   OS << (Node->isSizeOf() ? "sizeof(" : "__alignof(");
   
   std::string TypeStr;
-  Node->getArgumentType()->getAsString(TypeStr);
+  Node->getArgumentType().getAsString(TypeStr);
   OS << TypeStr << ")";
 }
 void StmtPrinter::VisitArraySubscriptExpr(ArraySubscriptExpr *Node) {
