@@ -78,10 +78,10 @@ void X86Subtarget::AutoDetectSubtargetFeatures() {
     unsigned u[3];
     char     c[12];
   } text;
-
+  
   if (X86::GetCpuIDAndInfo(0, &EAX, text.u+0, text.u+2, text.u+1))
     return;
-
+  
   // FIXME: support for AMD family of processors.
   if (memcmp(text.c, "GenuineIntel", 12) == 0) {
     X86::GetCpuIDAndInfo(0x1, &EAX, &EBX, &ECX, &EDX);
@@ -205,14 +205,23 @@ X86Subtarget::X86Subtarget(const Module &M, const std::string &FS, bool is64Bit)
     // If feature string is not empty, parse features string.
     std::string CPU = GetCurrentX86CPU();
     ParseSubtargetFeatures(FS, CPU);
-  } else
-    // Otherwise, use CPUID to auto-detect feature set.
-    AutoDetectSubtargetFeatures();
-
-  if (Is64Bit && !HasX86_64) {
+    
+    if (Is64Bit && !HasX86_64)
       std::cerr << "Warning: Generation of 64-bit code for a 32-bit processor "
                    "requested.\n";
-      HasX86_64 = true;
+    if (Is64Bit && X86SSELevel < SSE2)
+      std::cerr << "Warning: 64-bit processors all have at least SSE2.\n";
+  } else {
+    // Otherwise, use CPUID to auto-detect feature set.
+    AutoDetectSubtargetFeatures();
+  }
+    
+  // If requesting codegen for X86-64, make sure that 64-bit and SSE2 features
+  // are enabled.  These are available on all x86-64 CPUs.
+  if (Is64Bit) {
+    HasX86_64 = true;
+    if (X86SSELevel < SSE2)
+      X86SSELevel = SSE2;
   }
 
   // Set the boolean corresponding to the current target triple, or the default
