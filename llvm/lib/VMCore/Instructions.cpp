@@ -1290,6 +1290,197 @@ Instruction::BinaryOps SetCondInst::getSwappedCondition(BinaryOps Opcode) {
   }
 }
 
+
+//===----------------------------------------------------------------------===//
+//                               CmpInst Classes
+//===----------------------------------------------------------------------===//
+
+CmpInst::CmpInst(OtherOps op, unsigned short predicate, Value *LHS, Value *RHS,
+                 const std::string &Name, Instruction *InsertBefore)
+  : Instruction(Type::BoolTy, op, Ops, 2, Name, InsertBefore) {
+    Ops[0].init(LHS, this);
+    Ops[1].init(RHS, this);
+  SubclassData = predicate;
+  if (op == Instruction::ICmp) {
+    assert(predicate >= ICmpInst::FIRST_ICMP_PREDICATE &&
+           predicate <= ICmpInst::LAST_ICMP_PREDICATE &&
+           "Invalid ICmp predicate value");
+    const Type* Op0Ty = getOperand(0)->getType();
+    const Type* Op1Ty = getOperand(1)->getType();
+    assert(Op0Ty == Op1Ty &&
+           "Both operands to ICmp instruction are not of the same type!");
+    // Check that the operands are the right type
+    assert(Op0Ty->isIntegral() || Op0Ty->getTypeID() == Type::PointerTyID ||
+           (isa<PackedType>(Op0Ty) && 
+            cast<PackedType>(Op0Ty)->getElementType()->isIntegral()) &&
+           "Invalid operand types for ICmp instruction");
+    return;
+  }
+  assert(op == Instruction::FCmp && "Invalid CmpInst opcode");
+  assert(predicate <= FCmpInst::LAST_FCMP_PREDICATE &&
+         "Invalid FCmp predicate value");
+  const Type* Op0Ty = getOperand(0)->getType();
+  const Type* Op1Ty = getOperand(1)->getType();
+  assert(Op0Ty == Op1Ty &&
+         "Both operands to FCmp instruction are not of the same type!");
+  // Check that the operands are the right type
+  assert(Op0Ty->isFloatingPoint() || (isa<PackedType>(Op0Ty) &&
+         cast<PackedType>(Op0Ty)->getElementType()->isFloatingPoint()) &&
+         "Invalid operand types for FCmp instruction");
+}
+  
+CmpInst::CmpInst(OtherOps op, unsigned short predicate, Value *LHS, Value *RHS,
+                 const std::string &Name, BasicBlock *InsertAtEnd)
+  : Instruction(Type::BoolTy, op, Ops, 2, Name, InsertAtEnd) {
+  Ops[0].init(LHS, this);
+  Ops[1].init(RHS, this);
+  SubclassData = predicate;
+  if (op == Instruction::ICmp) {
+    assert(predicate >= ICmpInst::FIRST_ICMP_PREDICATE &&
+           predicate <= ICmpInst::LAST_ICMP_PREDICATE &&
+           "Invalid ICmp predicate value");
+
+    const Type* Op0Ty = getOperand(0)->getType();
+    const Type* Op1Ty = getOperand(1)->getType();
+    assert(Op0Ty == Op1Ty &&
+          "Both operands to ICmp instruction are not of the same type!");
+    // Check that the operands are the right type
+    assert(Op0Ty->isIntegral() || Op0Ty->getTypeID() == Type::PointerTyID ||
+           (isa<PackedType>(Op0Ty) && 
+            cast<PackedType>(Op0Ty)->getElementType()->isIntegral()) &&
+           "Invalid operand types for ICmp instruction");
+    return;
+  }
+  assert(op == Instruction::FCmp && "Invalid CmpInst opcode");
+  assert(predicate <= FCmpInst::LAST_FCMP_PREDICATE &&
+         "Invalid FCmp predicate value");
+  const Type* Op0Ty = getOperand(0)->getType();
+  const Type* Op1Ty = getOperand(1)->getType();
+  assert(Op0Ty == Op1Ty &&
+          "Both operands to FCmp instruction are not of the same type!");
+  // Check that the operands are the right type
+  assert(Op0Ty->isFloatingPoint() || (isa<PackedType>(Op0Ty) &&
+         cast<PackedType>(Op0Ty)->getElementType()->isFloatingPoint()) &&
+        "Invalid operand types for FCmp instruction");
+}
+
+CmpInst *
+CmpInst::create(OtherOps Op, unsigned short predicate, Value *S1, Value *S2, 
+                const std::string &Name, Instruction *InsertBefore) {
+  if (Op == Instruction::ICmp) {
+    return new ICmpInst(ICmpInst::Predicate(predicate), S1, S2, Name, 
+                        InsertBefore);
+  }
+  return new FCmpInst(FCmpInst::Predicate(predicate), S1, S2, Name, 
+                      InsertBefore);
+}
+
+CmpInst *
+CmpInst::create(OtherOps Op, unsigned short predicate, Value *S1, Value *S2, 
+                const std::string &Name, BasicBlock *InsertAtEnd) {
+  if (Op == Instruction::ICmp) {
+    return new ICmpInst(ICmpInst::Predicate(predicate), S1, S2, Name, 
+                        InsertAtEnd);
+  }
+  return new FCmpInst(FCmpInst::Predicate(predicate), S1, S2, Name, 
+                      InsertAtEnd);
+}
+
+void CmpInst::swapOperands() {
+  if (ICmpInst *IC = dyn_cast<ICmpInst>(this))
+    IC->swapOperands();
+  else
+    cast<FCmpInst>(this)->swapOperands();
+}
+
+bool CmpInst::isCommutative() {
+  if (ICmpInst *IC = dyn_cast<ICmpInst>(this))
+    return IC->isCommutative();
+  return cast<FCmpInst>(this)->isCommutative();
+}
+
+bool CmpInst::isEquality() {
+  if (ICmpInst *IC = dyn_cast<ICmpInst>(this))
+    return IC->isEquality();
+  return cast<FCmpInst>(this)->isEquality();
+}
+
+
+ICmpInst::Predicate ICmpInst::getInversePredicate(Predicate pred) {
+  switch (pred) {
+    default:
+      assert(!"Unknown icmp predicate!");
+    case ICMP_EQ: return ICMP_NE;
+    case ICMP_NE: return ICMP_EQ;
+    case ICMP_UGT: return ICMP_ULE;
+    case ICMP_ULT: return ICMP_UGE;
+    case ICMP_UGE: return ICMP_ULT;
+    case ICMP_ULE: return ICMP_UGT;
+    case ICMP_SGT: return ICMP_SLE;
+    case ICMP_SLT: return ICMP_SGE;
+    case ICMP_SGE: return ICMP_SLT;
+    case ICMP_SLE: return ICMP_SGT;
+  }
+}
+
+ICmpInst::Predicate ICmpInst::getSwappedPredicate(Predicate pred) {
+  switch (pred) {
+    default: assert(! "Unknown setcc instruction!");
+    case ICMP_EQ: case ICMP_NE:
+      return pred;
+    case ICMP_SGT: return ICMP_SLT;
+    case ICMP_SLT: return ICMP_SGT;
+    case ICMP_SGE: return ICMP_SLE;
+    case ICMP_SLE: return ICMP_SGE;
+    case ICMP_UGT: return ICMP_ULT;
+    case ICMP_ULT: return ICMP_UGT;
+    case ICMP_UGE: return ICMP_ULE;
+    case ICMP_ULE: return ICMP_UGE;
+  }
+}
+
+FCmpInst::Predicate FCmpInst::getInversePredicate(Predicate pred) {
+  switch (pred) {
+    default:
+      assert(!"Unknown icmp predicate!");
+    case FCMP_OEQ: return FCMP_UNE;
+    case FCMP_ONE: return FCMP_UEQ;
+    case FCMP_OGT: return FCMP_ULE;
+    case FCMP_OLT: return FCMP_UGE;
+    case FCMP_OGE: return FCMP_ULT;
+    case FCMP_OLE: return FCMP_UGT;
+    case FCMP_UEQ: return FCMP_ONE;
+    case FCMP_UNE: return FCMP_OEQ;
+    case FCMP_UGT: return FCMP_OLE;
+    case FCMP_ULT: return FCMP_OGE;
+    case FCMP_UGE: return FCMP_OLT;
+    case FCMP_ULE: return FCMP_OGT;
+    case FCMP_ORD: return FCMP_UNO;
+    case FCMP_UNO: return FCMP_ORD;
+    case FCMP_TRUE: return FCMP_FALSE;
+    case FCMP_FALSE: return FCMP_TRUE;
+  }
+}
+
+FCmpInst::Predicate FCmpInst::getSwappedPredicate(Predicate pred) {
+  switch (pred) {
+    default: assert(!"Unknown setcc instruction!");
+    case FCMP_FALSE: case FCMP_TRUE:
+    case FCMP_OEQ: case FCMP_ONE:
+    case FCMP_UEQ: case FCMP_UNE:
+    case FCMP_ORD: case FCMP_UNO:
+      return pred;
+    case FCMP_OGT: return FCMP_OLT;
+    case FCMP_OLT: return FCMP_OGT;
+    case FCMP_OGE: return FCMP_OLE;
+    case FCMP_OLE: return FCMP_OGE;
+    case FCMP_UGT: return FCMP_ULT;
+    case FCMP_ULT: return FCMP_UGT;
+    case FCMP_UGE: return FCMP_ULE;
+    case FCMP_ULE: return FCMP_UGE;
+  }
+}
+
 //===----------------------------------------------------------------------===//
 //                        SwitchInst Implementation
 //===----------------------------------------------------------------------===//
@@ -1410,6 +1601,11 @@ GetElementPtrInst *GetElementPtrInst::clone() const {
 
 BinaryOperator *BinaryOperator::clone() const {
   return create(getOpcode(), Ops[0], Ops[1]);
+}
+
+CmpInst* CmpInst::clone() const {
+  return create(Instruction::OtherOps(getOpcode()), getPredicate(), 
+                Ops[0], Ops[1]);
 }
 
 MallocInst *MallocInst::clone() const { return new MallocInst(*this); }

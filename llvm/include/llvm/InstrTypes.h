@@ -243,6 +243,91 @@ public:
   }
 };
 
+//===----------------------------------------------------------------------===//
+//                               CmpInst Class
+//===----------------------------------------------------------------------===//
+
+/// This class is the base class for the comparison instructions. 
+/// @brief Abstract base class of comparison instructions.
+class CmpInst: public Instruction {
+  CmpInst(); // do not implement
+protected:
+  CmpInst(Instruction::OtherOps op, unsigned short pred, Value *LHS, Value *RHS,
+          const std::string &Name = "", Instruction *InsertBefore = 0);
+  
+  CmpInst(Instruction::OtherOps op, unsigned short pred, Value *LHS, Value *RHS,
+          const std::string &Name, BasicBlock *InsertAtEnd);
+
+  Use Ops[2]; // CmpInst instructions always have 2 operands, optimize
+
+public:
+  /// Construct a compare instruction, given the opcode, the predicate and 
+  /// the two operands.  Optionally (if InstBefore is specified) insert the 
+  /// instruction into a BasicBlock right before the specified instruction.  
+  /// The specified Instruction is allowed to be a dereferenced end iterator.
+  /// @brief Create a CmpInst
+  static CmpInst *create(OtherOps Op, unsigned short predicate, Value *S1, 
+                         Value *S2, const std::string &Name = "",
+                         Instruction *InsertBefore = 0);
+
+  /// Construct a compare instruction, given the opcode, the predicate and the 
+  /// two operands.  Also automatically insert this instruction to the end of 
+  /// the BasicBlock specified.
+  /// @brief Create a CmpInst
+  static CmpInst *create(OtherOps Op, unsigned short predicate, Value *S1, 
+                         Value *S2, const std::string &Name, 
+                         BasicBlock *InsertAtEnd);
+
+  /// @brief Implement superclass method.
+  virtual CmpInst *clone() const;
+
+  /// The predicate for CmpInst is defined by the subclasses but stored in 
+  /// the SubclassData field (see Value.h).  We allow it to be fetched here
+  /// as the predicate but there is no enum type for it, just the raw unsigned 
+  /// short. This facilitates comparison of CmpInst instances without delving
+  /// into the subclasses since predicate values are distinct between the
+  /// CmpInst subclasses.
+  /// @brief Return the predicate for this instruction.
+  unsigned short getPredicate() const {
+    return SubclassData;
+  }
+
+  /// @brief Provide more efficient getOperand methods.
+  Value *getOperand(unsigned i) const {
+    assert(i < 2 && "getOperand() out of range!");
+    return Ops[i];
+  }
+  void setOperand(unsigned i, Value *Val) {
+    assert(i < 2 && "setOperand() out of range!");
+    Ops[i] = Val;
+  }
+
+  /// @brief CmpInst instructions always have 2 operands.
+  unsigned getNumOperands() const { return 2; }
+
+  /// This is just a convenience that dispatches to the subclasses.
+  /// @brief Swap the operands.
+  void swapOperands();
+
+  /// This is just a convenience that dispatches to the subclasses.
+  /// @brief Determine if this CmpInst is commutative.
+  bool isCommutative();
+
+  /// This is just a convenience that dispatches to the subclasses.
+  /// @brief Determine if this is an equals/not equals predicate.
+  bool isEquality();
+
+  /// @brief Methods for support type inquiry through isa, cast, and dyn_cast:
+  static inline bool classof(const CmpInst *) { return true; }
+  static inline bool classof(const Instruction *I) {
+    return I->getOpcode() == Instruction::ICmp || 
+           I->getOpcode() == Instruction::FCmp;
+  }
+  static inline bool classof(const Value *V) {
+    return isa<Instruction>(V) && classof(cast<Instruction>(V));
+  }
+};
+
 } // End llvm namespace
 
 #endif

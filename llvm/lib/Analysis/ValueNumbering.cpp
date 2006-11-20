@@ -75,6 +75,7 @@ namespace {
 
     void visitCastInst(CastInst &I);
     void visitGetElementPtrInst(GetElementPtrInst &I);
+    void visitCmpInst(CmpInst &I);
 
     void handleBinaryInst(Instruction &I);
     void visitBinaryOperator(Instruction &I)     { handleBinaryInst(I); }
@@ -123,6 +124,28 @@ void BVNImpl::visitCastInst(CastInst &CI) {
         RetVals.push_back(Other);
       }
 }
+
+void  BVNImpl::visitCmpInst(CmpInst &CI1) {
+  Value *LHS = CI1.getOperand(0);
+  for (Value::use_iterator UI = LHS->use_begin(), UE = LHS->use_end();
+       UI != UE; ++UI)
+    if (CmpInst *CI2 = dyn_cast<CmpInst>(*UI))
+      // Check to see if this compare instruction is not CI, but same opcode,
+      // same predicate, and in the same function.
+      if (CI2 != &CI1 && CI2->getOpcode() == CI1.getOpcode() &&
+          CI2->getPredicate() == CI1.getPredicate() &&
+          CI2->getParent()->getParent() == CI1.getParent()->getParent())
+        // If the operands are the same
+        if ((CI2->getOperand(0) == CI1.getOperand(0) &&
+            CI2->getOperand(1) == CI1.getOperand(1)) ||
+            // Or the compare is commutative and the operands are reversed 
+            (CI1.isCommutative() && 
+             CI2->getOperand(0) == CI1.getOperand(1) &&
+             CI2->getOperand(1) == CI1.getOperand(0)))
+          // Then the instructiosn are identical, add to list.
+          RetVals.push_back(CI2);
+}
+
 
 
 // isIdenticalBinaryInst - Return true if the two binary instructions are

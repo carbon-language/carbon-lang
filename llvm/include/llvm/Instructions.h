@@ -415,6 +415,239 @@ public:
 };
 
 //===----------------------------------------------------------------------===//
+//                               ICmpInst Class
+//===----------------------------------------------------------------------===//
+
+/// This instruction compares its operands according to the predicate given
+/// to the constructor. It only operates on integers, pointers, or packed 
+/// vectors of integrals. The two operands must be the same type.
+/// @brief Represent an integer comparison operator.
+class ICmpInst: public CmpInst {
+public:
+  /// This enumeration lists the possible predicates for the ICmpInst. The
+  /// values in the range 0-31 are reserved for FCmpInst while values in the
+  /// range 32-64 are reserved for ICmpInst. This is necessary to ensure the
+  /// predicate values are not overlapping between the classes.
+  enum Predicate {
+    ICMP_EQ  = 32,    ///< equal
+    ICMP_NE  = 33,    ///< not equal
+    ICMP_UGT = 34,    ///< unsigned greater than
+    ICMP_UGE = 35,    ///< unsigned greater or equal
+    ICMP_ULT = 36,    ///< unsigned less than
+    ICMP_ULE = 37,    ///< unsigned less or equal
+    ICMP_SGT = 38,    ///< signed greater than
+    ICMP_SGE = 39,    ///< signed greater or equal
+    ICMP_SLT = 40,    ///< signed less than
+    ICMP_SLE = 41,    ///< signed less or equal
+    FIRST_ICMP_PREDICATE = ICMP_EQ,
+    LAST_ICMP_PREDICATE = ICMP_SLE
+  };
+
+  /// @brief Constructor with insert-before-instruction semantics.
+  ICmpInst(
+    Predicate pred,  ///< The predicate to use for the comparison
+    Value *LHS,      ///< The left-hand-side of the expression
+    Value *RHS,      ///< The right-hand-side of the expression
+    const std::string &Name = "",  ///< Name of the instruction
+    Instruction *InsertBefore = 0  ///< Where to insert
+  ) : CmpInst(Instruction::ICmp, pred, LHS, RHS, Name, InsertBefore) {
+  }
+
+  /// @brief Constructor with insert-at-block-end semantics.
+  ICmpInst(
+    Predicate pred, ///< The predicate to use for the comparison
+    Value *LHS,     ///< The left-hand-side of the expression
+    Value *RHS,     ///< The right-hand-side of the expression
+    const std::string &Name,  ///< Name of the instruction
+    BasicBlock *InsertAtEnd   ///< Block to insert into.
+  ) : CmpInst(Instruction::ICmp, pred, LHS, RHS, Name, InsertAtEnd) {
+  }
+
+  /// @brief Return the predicate for this instruction.
+  Predicate getPredicate() const { return Predicate(SubclassData); }
+
+  /// For example, EQ -> NE, UGT -> ULE, SLT -> SGE, etc.
+  /// @returns the inverse predicate for the instruction's current predicate. 
+  /// @brief Return the inverse of the instruction's predicate.
+  Predicate getInversePredicate() const {
+    return getInversePredicate(getPredicate());
+  }
+
+  /// For example, EQ -> NE, UGT -> ULE, SLT -> SGE, etc.
+  /// @returns the inverse predicate for predicate provided in \p pred. 
+  /// @brief Return the inverse of a given predicate
+  static Predicate getInversePredicate(Predicate pred);
+
+  /// For example, EQ->EQ, SLE->SGE, ULT->UGT, etc.
+  /// @returns the predicate that would be the result of exchanging the two 
+  /// operands of the ICmpInst instruction without changing the result 
+  /// produced.  
+  /// @brief Return the predicate as if the operands were swapped
+  Predicate getSwappedPredicate() const {
+    return getSwappedPredicate(getPredicate());
+  }
+
+  /// This is a static version that you can use without an instruction 
+  /// available.
+  /// @brief Return the predicate as if the operands were swapped.
+  static Predicate getSwappedPredicate(Predicate Opcode);
+
+  /// This also tests for commutativity. If isEquality() returns true then
+  /// the predicate is also commutative. Only the equality predicates are
+  /// commutative.
+  /// @returns true if the predicate of this instruction is EQ or NE.
+  /// @brief Determine if this is an equality predicate.
+  bool isEquality() const {
+    return SubclassData == ICMP_EQ || SubclassData == ICMP_NE;
+  }
+  bool isCommutative() const { return isEquality(); }
+
+  /// @returns true if the predicate is relational (not EQ or NE). 
+  /// @brief Determine if this a relational predicate.
+  bool isRelational() const {
+    return !isEquality();
+  }
+
+  /// Exchange the two operands to this instruction in such a way that it does
+  /// not modify the semantics of the instruction. The predicate value may be
+  /// changed to retain the same result if the predicate is order dependent
+  /// (e.g. ult). 
+  /// @brief Swap operands and adjust predicate.
+  void swapOperands() {
+    SubclassData = getSwappedPredicate();
+    std::swap(Ops[0], Ops[1]);
+  }
+
+  // Methods for support type inquiry through isa, cast, and dyn_cast:
+  static inline bool classof(const ICmpInst *) { return true; }
+  static inline bool classof(const Instruction *I) {
+    return I->getOpcode() == Instruction::ICmp;
+  }
+  static inline bool classof(const Value *V) {
+    return isa<Instruction>(V) && classof(cast<Instruction>(V));
+  }
+};
+
+//===----------------------------------------------------------------------===//
+//                               FCmpInst Class
+//===----------------------------------------------------------------------===//
+
+/// This instruction compares its operands according to the predicate given
+/// to the constructor. It only operates on floating point values or packed     
+/// vectors of floating point values. The operands must be identical types.
+/// @brief Represents a floating point comparison operator.
+class FCmpInst: public CmpInst {
+public:
+  /// This enumeration lists the possible predicates for the FCmpInst. Values
+  /// in the range 0-31 are reserved for FCmpInst.
+  enum Predicate {
+    // Opcode        U L G E    Intuitive operation
+    FCMP_FALSE = 0, ///<  0 0 0 0    Always false (always folded)
+    FCMP_OEQ   = 1, ///<  0 0 0 1    True if ordered and equal
+    FCMP_OGT   = 2, ///<  0 0 1 0    True if ordered and greater than
+    FCMP_OGE   = 3, ///<  0 0 1 1    True if ordered and greater than or equal
+    FCMP_OLT   = 4, ///<  0 1 0 0    True if ordered and less than
+    FCMP_OLE   = 5, ///<  0 1 0 1    True if ordered and less than or equal
+    FCMP_ONE   = 6, ///<  0 1 1 0    True if ordered and operands are unequal
+    FCMP_ORD   = 7, ///<  0 1 1 1    True if ordered (no nans)
+    FCMP_UNO   = 8, ///<  1 0 0 0    True if unordered: isnan(X) | isnan(Y)
+    FCMP_UEQ   = 9, ///<  1 0 0 1    True if unordered or equal
+    FCMP_UGT   =10, ///<  1 0 1 0    True if unordered or greater than
+    FCMP_UGE   =11, ///<  1 0 1 1    True if unordered, greater than, or equal
+    FCMP_ULT   =12, ///<  1 1 0 0    True if unordered or less than
+    FCMP_ULE   =13, ///<  1 1 0 1    True if unordered, less than, or equal
+    FCMP_UNE   =14, ///<  1 1 1 0    True if unordered or not equal
+    FCMP_TRUE  =15, ///<  1 1 1 1    Always true (always folded)
+    FIRST_FCMP_PREDICATE = FCMP_FALSE,
+    LAST_FCMP_PREDICATE = FCMP_TRUE
+  };
+
+  /// @brief Constructor with insert-before-instruction semantics.
+  FCmpInst(
+    Predicate pred,  ///< The predicate to use for the comparison
+    Value *LHS,      ///< The left-hand-side of the expression
+    Value *RHS,      ///< The right-hand-side of the expression
+    const std::string &Name = "",  ///< Name of the instruction
+    Instruction *InsertBefore = 0  ///< Where to insert
+  ) : CmpInst(Instruction::FCmp, pred, LHS, RHS, Name, InsertBefore) {
+  }
+
+  /// @brief Constructor with insert-at-block-end semantics.
+  FCmpInst(
+    Predicate pred, ///< The predicate to use for the comparison
+    Value *LHS,     ///< The left-hand-side of the expression
+    Value *RHS,     ///< The right-hand-side of the expression
+    const std::string &Name,  ///< Name of the instruction
+    BasicBlock *InsertAtEnd   ///< Block to insert into.
+  ) : CmpInst(Instruction::FCmp, pred, LHS, RHS, Name, InsertAtEnd) {
+  }
+
+  /// @brief Return the predicate for this instruction.
+  Predicate getPredicate() const { return Predicate(SubclassData); }
+
+  /// For example, OEQ -> UNE, UGT -> OLE, OLT -> UGE, etc.
+  /// @returns the inverse predicate for the instructions current predicate. 
+  /// @brief Return the inverse of the predicate
+  Predicate getInversePredicate() const {
+    return getInversePredicate(getPredicate());
+  }
+
+  /// For example, OEQ -> UNE, UGT -> OLE, OLT -> UGE, etc.
+  /// @returns the inverse predicate for \p pred.
+  /// @brief Return the inverse of a given predicate
+  static Predicate getInversePredicate(Predicate pred);
+
+  /// For example, OEQ->OEQ, ULE->UGE, OLT->OGT, etc.
+  /// @returns the predicate that would be the result of exchanging the two 
+  /// operands of the ICmpInst instruction without changing the result 
+  /// produced.  
+  /// @brief Return the predicate as if the operands were swapped
+  Predicate getSwappedPredicate() const {
+    return getSwappedPredicate(getPredicate());
+  }
+
+  /// This is a static version that you can use without an instruction 
+  /// available.
+  /// @brief Return the predicate as if the operands were swapped.
+  static Predicate getSwappedPredicate(Predicate Opcode);
+
+  /// This also tests for commutativity. If isEquality() returns true then
+  /// the predicate is also commutative. Only the equality predicates are
+  /// commutative.
+  /// @returns true if the predicate of this instruction is EQ or NE.
+  /// @brief Determine if this is an equality predicate.
+  bool isEquality() const {
+    return SubclassData == FCMP_OEQ || SubclassData == FCMP_ONE ||
+           SubclassData == FCMP_UEQ || SubclassData == FCMP_UNE;
+  }
+  bool isCommutative() const { return isEquality(); }
+
+  /// @returns true if the predicate is relational (not EQ or NE). 
+  /// @brief Determine if this a relational predicate.
+  bool isRelational() const { return !isEquality(); }
+
+  /// Exchange the two operands to this instruction in such a way that it does
+  /// not modify the semantics of the instruction. The predicate value may be
+  /// changed to retain the same result if the predicate is order dependent
+  /// (e.g. ult). 
+  /// @brief Swap operands and adjust predicate.
+  void swapOperands() {
+    SubclassData = getSwappedPredicate();
+    std::swap(Ops[0], Ops[1]);
+  }
+
+  /// @brief Methods for support type inquiry through isa, cast, and dyn_cast:
+  static inline bool classof(const FCmpInst *) { return true; }
+  static inline bool classof(const Instruction *I) {
+    return I->getOpcode() == Instruction::FCmp;
+  }
+  static inline bool classof(const Value *V) {
+    return isa<Instruction>(V) && classof(cast<Instruction>(V));
+  }
+};
+
+
+//===----------------------------------------------------------------------===//
 //                            SetCondInst Class
 //===----------------------------------------------------------------------===//
 

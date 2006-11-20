@@ -169,6 +169,8 @@ public:
   RetTy visitUnwindInst(UnwindInst &I)              { DELEGATE(TerminatorInst);}
   RetTy visitUnreachableInst(UnreachableInst &I)    { DELEGATE(TerminatorInst);}
   RetTy visitSetCondInst(SetCondInst &I)            { DELEGATE(BinaryOperator);}
+  RetTy visitICmpInst(ICmpInst &I)                  { DELEGATE(CmpInst);}
+  RetTy visitFCmpInst(FCmpInst &I)                  { DELEGATE(CmpInst);}
   RetTy visitMallocInst(MallocInst &I)              { DELEGATE(AllocationInst);}
   RetTy visitAllocaInst(AllocaInst &I)              { DELEGATE(AllocationInst);}
   RetTy visitFreeInst(FreeInst     &I)              { DELEGATE(Instruction); }
@@ -192,6 +194,7 @@ public:
   RetTy visitTerminatorInst(TerminatorInst &I) { DELEGATE(Instruction); }
   RetTy visitBinaryOperator(BinaryOperator &I) { DELEGATE(Instruction); }
   RetTy visitAllocationInst(AllocationInst &I) { DELEGATE(Instruction); }
+  RetTy visitCmpInst(CmpInst &I)               { DELEGATE(Instruction); }
 
   // If the user wants a 'default' case, they can choose to override this
   // function.  If this function is not overloaded in the users subclass, then

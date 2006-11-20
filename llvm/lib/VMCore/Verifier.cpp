@@ -179,6 +179,8 @@ namespace {  // Anonymous namespace for class
     void visitBasicBlock(BasicBlock &BB);
     void visitPHINode(PHINode &PN);
     void visitBinaryOperator(BinaryOperator &B);
+    void visitICmpInst(ICmpInst &IC);
+    void visitFCmpInst(FCmpInst &FC);
     void visitShiftInst(ShiftInst &SI);
     void visitExtractElementInst(ExtractElementInst &EI);
     void visitInsertElementInst(InsertElementInst &EI);
@@ -549,6 +551,33 @@ void Verifier::visitBinaryOperator(BinaryOperator &B) {
   }
 
   visitInstruction(B);
+}
+
+void Verifier::visitICmpInst(ICmpInst& IC) {
+  // Check that the operands are the same type
+  const Type* Op0Ty = IC.getOperand(0)->getType();
+  const Type* Op1Ty = IC.getOperand(1)->getType();
+  Assert1(Op0Ty == Op1Ty,
+          "Both operands to ICmp instruction are not of the same type!", &IC);
+  // Check that the operands are the right type
+  Assert1(Op0Ty->isIntegral() || Op0Ty->getTypeID() == Type::PointerTyID ||
+          (isa<PackedType>(Op0Ty) && 
+           cast<PackedType>(Op0Ty)->getElementType()->isIntegral()),
+          "Invalid operand types for ICmp instruction", &IC);
+  visitInstruction(IC);
+}
+
+void Verifier::visitFCmpInst(FCmpInst& FC) {
+  // Check that the operands are the same type
+  const Type* Op0Ty = FC.getOperand(0)->getType();
+  const Type* Op1Ty = FC.getOperand(1)->getType();
+  Assert1(Op0Ty == Op1Ty,
+          "Both operands to FCmp instruction are not of the same type!", &FC);
+  // Check that the operands are the right type
+  Assert1(Op0Ty->isFloatingPoint() || (isa<PackedType>(Op0Ty) &&
+           cast<PackedType>(Op0Ty)->getElementType()->isFloatingPoint()),
+          "Invalid operand types for FCmp instruction", &FC);
+  visitInstruction(FC);
 }
 
 void Verifier::visitShiftInst(ShiftInst &SI) {
