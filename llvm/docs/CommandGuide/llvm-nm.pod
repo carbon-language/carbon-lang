@@ -113,7 +113,7 @@ B<llvm-nm> exits with an exit code of zero.
 
 =head1 SEE ALSO
 
-L<llvm-dis|llvm-dis>, L<ar(1)>, L<nm(1)>
+L<llvm-dis|llvm-dis>, ar(1), nm(1)
 
 =head1 AUTHOR
 

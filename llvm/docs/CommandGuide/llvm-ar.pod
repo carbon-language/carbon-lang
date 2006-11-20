@@ -397,7 +397,7 @@ exit code of 3.
 
 =head1 SEE ALSO
 
-L<llvm-ranlib|llvm-ranlib>, L<ar(1)>
+L<llvm-ranlib|llvm-ranlib>, ar(1)
 
 =head1 AUTHORS
 
