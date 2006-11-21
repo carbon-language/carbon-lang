@@ -878,10 +878,11 @@ void Parser::ParseParenDeclarator(Declarator &D) {
       isGrouping = true;
     } else if (Tok.getKind() == tok::r_paren ||  // 'int()' is a function.
                isDeclarationSpecifier()) {       // 'int(int)' is a function.
-      
+      // This handles C99 6.7.5.3p11: in "typedef int X; void foo(X)", X is
+      // considered to be a type, not a K&R identifier-list.
       isGrouping = false;
     } else {
-      // Otherwise, this is a grouping paren, e.g. 'int (*X)'.
+      // Otherwise, this is a grouping paren, e.g. 'int (*X)' or 'int(X)'.
       isGrouping = true;
     }
     
@@ -908,6 +909,8 @@ void Parser::ParseParenDeclarator(Declarator &D) {
   // Okay, this is the parameter list of a function definition, or it is an
   // identifier list of a K&R-style function.
 
+  
+  
   // TODO: enter function-declaration scope, limiting any declarators for
   // arguments to the function scope.
   // NOTE: better to only create a scope if not '()'
@@ -922,6 +925,8 @@ void Parser::ParseParenDeclarator(Declarator &D) {
     HasPrototype = false;
     IsEmpty      = true;
   } else if (Tok.getKind() == tok::identifier &&
+             // K&R identifier lists can't have typedefs as identifiers, per
+             // C99 6.7.5.3p11.
              !Actions.isTypeName(*Tok.getIdentifierInfo(), CurScope)) {
     // Identifier list.  Note that '(' identifier-list ')' is only allowed for
     // normal declarators, not for abstract-declarators.
