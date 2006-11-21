@@ -1087,8 +1087,7 @@ void Preprocessor::ReadMacroName(LexerToken &MacroNameTok, char isDefineUndef) {
   } else if (0) {
     // FIXME: C++.  Error if defining a C++ named operator.
     
-  } else if (isDefineUndef && II->getName()[0] == 'd' &&      // defined
-             !strcmp(II->getName()+1, "efined")) {
+  } else if (isDefineUndef && II->getPPKeywordID() == tok::pp_defined) {
     // Error if defining "defined": C99 6.10.8.4.
     Diag(MacroNameTok, diag::err_defined_macro_name);
   } else if (isDefineUndef && II->getMacroInfo() &&

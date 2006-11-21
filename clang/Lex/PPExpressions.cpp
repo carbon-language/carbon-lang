@@ -67,7 +67,7 @@ static bool EvaluateValue(int &Result, LexerToken &PeekTok, DefinedTracker &DT,
   if (IdentifierInfo *II = PeekTok.getIdentifierInfo()) {
     // If this identifier isn't 'defined' and it wasn't macro expanded, it turns
     // into a simple 0.
-    if (strcmp(II->getName(), "defined")) {
+    if (II->getPPKeywordID() != tok::pp_defined) {
       Result = 0;
       PP.LexNonComment(PeekTok);
       return false;

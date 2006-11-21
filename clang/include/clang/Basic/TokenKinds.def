@@ -51,6 +51,7 @@ PPKEYWORD(ifndef)
 PPKEYWORD(elif)
 PPKEYWORD(else)
 PPKEYWORD(endif)
+PPKEYWORD(defined)
 
 // C99 6.10.2 - Source File Inclusion.
 PPKEYWORD(include)
