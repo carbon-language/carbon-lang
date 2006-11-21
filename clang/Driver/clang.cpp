@@ -955,12 +955,10 @@ int main(int argc, char **argv) {
     ParseFile(PP, new MinimalAction(), MainFileID);
     break;
     
-  case ParseSyntaxOnly:              // -fsyntax-only
-    std::cerr << "-fsyntax-only not implemented yet.\n";
-    break;
   case ParsePrintCallbacks:
     ParseFile(PP, CreatePrintParserActionsAction(), MainFileID);
     break;
+  case ParseSyntaxOnly:              // -fsyntax-only
   case ParseAST:
     BuildASTs(PP, MainFileID);
     break;
