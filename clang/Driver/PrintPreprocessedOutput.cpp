@@ -387,11 +387,9 @@ bool PrintPPOutputPPCallbacks::AvoidConcat(const LexerToken &PrevTok,
 ///
 void clang::DoPrintPreprocessedInput(unsigned MainFileID, Preprocessor &PP,
                                      LangOptions &Options) {
-  // FIXME: should not mutate LangOptions!!
-  if (EnableCommentOutput)          // -C specified?
-    Options.KeepComments = 1;
-  if (EnableMacroCommentOutput)     // -CC specified?
-    Options.KeepComments = Options.KeepMacroComments = 1;
+  // Inform the preprocessor whether we want it to retain comments or not, due
+  // to -C or -CC.
+  PP.SetCommentRetentionState(EnableCommentOutput, EnableMacroCommentOutput);
   
   InitOutputBuffer();
   

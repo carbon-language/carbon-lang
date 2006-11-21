@@ -62,6 +62,10 @@ class Preprocessor {
     MaxAllowedIncludeStackDepth = 200
   };
 
+  // State that is set before the preprocessor begins.
+  bool KeepComments : 1;
+  bool KeepMacroComments : 1;
+  
   // State that changes while the preprocessor runs:
   bool DisableMacroExpansion : 1;  // True if macro expansion is disabled.
   bool InMacroArgs : 1;            // True if parsing fn macro invocation args.
@@ -125,6 +129,15 @@ public:
 
   IdentifierTable &getIdentifierTable() { return Identifiers; }
 
+  /// SetCommentRetentionState - Control whether or not the preprocessor retains
+  /// comments in output.
+  void SetCommentRetentionState(bool KeepComments, bool KeepMacroComments) {
+    this->KeepComments = KeepComments | KeepMacroComments;
+    this->KeepMacroComments = KeepMacroComments;
+  }
+  
+  bool getCommentRetentionState() const { return KeepComments; }
+  
   /// isCurrentLexer - Return true if we are lexing directly from the specified
   /// lexer.
   bool isCurrentLexer(const Lexer *L) const {

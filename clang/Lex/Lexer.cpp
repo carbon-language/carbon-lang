@@ -67,7 +67,7 @@ Lexer::Lexer(const SourceBuffer *File, unsigned fileid, Preprocessor &pp,
   LexingRawMode = false;
   
   // Default to keeping comments if requested.
-  KeepCommentMode = Features.KeepComments;
+  KeepCommentMode = PP.getCommentRetentionState();
 }
 
 /// Stringify - Convert the specified string into a C string, with surrounding
@@ -970,7 +970,7 @@ bool Lexer::LexEndOfFile(LexerToken &Result, const char *CurPtr) {
     FormTokenWithChars(Result, CurPtr);
     
     // Restore comment saving mode, in case it was disabled for directive.
-    KeepCommentMode = Features.KeepComments;
+    KeepCommentMode = PP.getCommentRetentionState();
     return true;  // Have a token.
   }        
 
@@ -1087,7 +1087,7 @@ LexNextToken:
       ParsingPreprocessorDirective = false;
       
       // Restore comment saving mode, in case it was disabled for directive.
-      KeepCommentMode = Features.KeepComments;
+      KeepCommentMode = PP.getCommentRetentionState();
       
       // Since we consumed a newline, we are back at the start of a line.
       IsAtStartOfLine = true;

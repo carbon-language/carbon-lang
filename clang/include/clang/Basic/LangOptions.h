@@ -33,13 +33,9 @@ struct LangOptions {
   unsigned ObjC1             : 1;  // Objective C 1 support enabled.
   unsigned ObjC2             : 1;  // Objective C 2 support enabled.
   
-  unsigned KeepComments      : 1;  // Keep comments ("-C") mode.
-  unsigned KeepMacroComments : 1;  // Keep macro-exp comments ("-CC") mode.
-  
   LangOptions() {
     Trigraphs = BCPLComment = DollarIdents = Digraphs = ObjC1 = ObjC2 = 0;
     C99 = Microsoft = CPlusPlus = NoExtensions = 0;
-    KeepComments = KeepMacroComments = 0;
   }
 };
 

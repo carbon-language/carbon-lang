@@ -58,7 +58,11 @@ Preprocessor::Preprocessor(Diagnostic &diags, const LangOptions &opts,
   NumFastMacroExpanded = NumTokenPaste = NumFastTokenPaste = 0;
   MaxIncludeStackDepth = 0; 
   NumSkipped = 0;
-    
+
+  // Default to discarding comments.
+  KeepComments = false;
+  KeepMacroComments = false;
+  
   // Macro expansion is enabled.
   DisableMacroExpansion = false;
   InMacroArgs = false;
@@ -686,7 +690,7 @@ MacroArgs *Preprocessor::ReadFunctionLikeMacroArgs(LexerToken &MacroName,
           return 0;
         }
         // Otherwise, continue to add the tokens to this variable argument.
-      } else if (Tok.getKind() == tok::comment && !Features.KeepMacroComments) {
+      } else if (Tok.getKind() == tok::comment && !KeepMacroComments) {
         // If this is a comment token in the argument list and we're just in
         // -C mode (not -CC mode), discard the comment.
         continue;
@@ -1175,7 +1179,7 @@ void Preprocessor::SkipExcludedConditionalBlock(SourceLocation IfTokenLoc,
     if (Tok.getKind() != tok::identifier) {
       CurLexer->ParsingPreprocessorDirective = false;
       // Restore comment saving mode.
-      CurLexer->KeepCommentMode = Features.KeepComments;
+      CurLexer->KeepCommentMode = KeepComments;
       continue;
     }
 
@@ -1190,7 +1194,7 @@ void Preprocessor::SkipExcludedConditionalBlock(SourceLocation IfTokenLoc,
         FirstChar != 'i' && FirstChar != 'e') {
       CurLexer->ParsingPreprocessorDirective = false;
       // Restore comment saving mode.
-      CurLexer->KeepCommentMode = Features.KeepComments;
+      CurLexer->KeepCommentMode = KeepComments;
       continue;
     }
     
@@ -1211,7 +1215,7 @@ void Preprocessor::SkipExcludedConditionalBlock(SourceLocation IfTokenLoc,
       if (IdLen >= 20) {
         CurLexer->ParsingPreprocessorDirective = false;
         // Restore comment saving mode.
-        CurLexer->KeepCommentMode = Features.KeepComments;
+        CurLexer->KeepCommentMode = KeepComments;
         continue;
       }
       memcpy(Directive, &DirectiveStr[0], IdLen);
@@ -1292,7 +1296,7 @@ void Preprocessor::SkipExcludedConditionalBlock(SourceLocation IfTokenLoc,
     
     CurLexer->ParsingPreprocessorDirective = false;
     // Restore comment saving mode.
-    CurLexer->KeepCommentMode = Features.KeepComments;
+    CurLexer->KeepCommentMode = KeepComments;
   }
 
   // Finally, if we are out of the conditional (saw an #endif or ran off the end
@@ -1710,7 +1714,7 @@ void Preprocessor::HandleDefineDirective(LexerToken &DefineTok,
   
   // If we are supposed to keep comments in #defines, reenable comment saving
   // mode.
-  CurLexer->KeepCommentMode = Features.KeepMacroComments;
+  CurLexer->KeepCommentMode = KeepMacroComments;
   
   // Create the new macro.
   MacroInfo *MI = new MacroInfo(MacroNameTok.getLocation());
