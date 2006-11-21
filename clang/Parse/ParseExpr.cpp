@@ -269,7 +269,10 @@ ParseAssignmentExpressionWithLeadingStar(const LexerToken &StarTok) {
   ExprResult Res = ParseCastExpression(false);
   if (Res.isInvalid) return Res;
 
-  // TODO: Combine StarTok + Res to get the new AST.
+  // Combine StarTok + Res to get the new AST for the combined expression..
+  Res = Actions.ParseUnaryOp(StarTok.getLocation(), tok::star, Res.Val);
+  if (Res.isInvalid) return Res;
+  
   
   // We have to parse an entire cast-expression before starting the
   // ParseRHSOfBinaryExpression method (which parses any trailing binops). Since
