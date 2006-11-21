@@ -937,6 +937,7 @@ static void ProcessInputFile(const std::string &InFile,
   }
   
   if (Stats) {
+    std::cerr << "\nSTATISTICS FOR '" << InFile << "':\n";
     PP.PrintStats();
     PP.getIdentifierTable().PrintStats();
     HeaderInfo.PrintStats();
