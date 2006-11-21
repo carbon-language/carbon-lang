@@ -113,7 +113,7 @@ class Preprocessor {
   unsigned NumSkipped;
 public:
   Preprocessor(Diagnostic &diags, const LangOptions &opts, TargetInfo &target,
-               FileManager &FM, SourceManager &SM, HeaderSearch &Headers);
+               SourceManager &SM, HeaderSearch &Headers);
   ~Preprocessor();
 
   Diagnostic &getDiagnostics() const { return Diags; }

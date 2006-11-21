@@ -839,7 +839,7 @@ static void ProcessInputFile(const std::string &InFile,
   FileManager &FileMgr = HeaderInfo.getFileMgr();
   
   // Set up the preprocessor with these options.
-  Preprocessor PP(Diags, LangInfo, Target, FileMgr, SourceMgr, HeaderInfo);
+  Preprocessor PP(Diags, LangInfo, Target, SourceMgr, HeaderInfo);
   
   // Install things like __POWERPC__, __GNUC__, etc into the macro table.
   std::vector<char> PrologMacros;
@@ -935,8 +935,8 @@ static void ProcessInputFile(const std::string &InFile,
   }
   
   if (Stats) {
-    PP.getIdentifierTable().PrintStats();
     PP.PrintStats();
+    PP.getIdentifierTable().PrintStats();
     std::cerr << "\n";
   }
 }
@@ -995,10 +995,10 @@ int main(int argc, char **argv) {
     std::cerr << NumDiagnostics << " diagnostics generated.\n";
   
   if (Stats) {
-    // Printed from low-to-high level.
-    FileMgr.PrintStats();
-    SourceMgr.PrintStats();
+    // Printed from high-to-low level.
     HeaderInfo.PrintStats();
+    SourceMgr.PrintStats();
+    FileMgr.PrintStats();
     std::cerr << "\n";
   }
   

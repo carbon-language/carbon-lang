@@ -43,11 +43,10 @@ using namespace clang;
 //===----------------------------------------------------------------------===//
 
 Preprocessor::Preprocessor(Diagnostic &diags, const LangOptions &opts,
-                           TargetInfo &target,
-                           FileManager &FM, SourceManager &SM, 
+                           TargetInfo &target, SourceManager &SM, 
                            HeaderSearch &Headers) 
-  : Diags(diags), Features(opts), Target(target), FileMgr(FM), SourceMgr(SM),
-    HeaderInfo(Headers), Identifiers(opts),
+  : Diags(diags), Features(opts), Target(target), FileMgr(Headers.getFileMgr()),
+    SourceMgr(SM), HeaderInfo(Headers), Identifiers(opts),
     CurLexer(0), CurDirLookup(0), CurMacroExpander(0), Callbacks(0) {
   ScratchBuf = new ScratchBuffer(SourceMgr);
       
