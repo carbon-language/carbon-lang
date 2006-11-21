@@ -31,6 +31,7 @@ IdentifierInfo::IdentifierInfo() {
   IsExtension = false;
   IsPoisoned = false;
   IsOtherTargetMacro = false;
+  IsCPPOperatorKeyword = false;
   FETokenInfo = 0;
 }
 
@@ -85,6 +86,16 @@ static void AddPPKeyword(tok::PPKeywordKind PPID,
   Table.get(Name, Name+NameLen).setPPKeywordID(PPID);
 }
 
+/// AddCXXOperatorKeyword - Register a C++ operator keyword alternative
+/// representations.
+static void AddCXXOperatorKeyword(const char *Keyword, unsigned KWLen,
+                                  tok::TokenKind TokenCode,
+                                  IdentifierTable &Table) {
+  IdentifierInfo &Info = Table.get(Keyword, Keyword + KWLen);
+  Info.setTokenID(TokenCode);
+  Info.setIsCPlusplusOperatorKeyword();
+}
+
 /// AddObjCKeyword - Register an Objective-C @keyword like "class" "selector" or 
 /// "property".
 static void AddObjCKeyword(tok::ObjCKeywordKind ObjCID, 
@@ -119,6 +130,9 @@ void IdentifierTable::AddKeywords(const LangOptions &LangOpts) {
   AddKeyword(NAME, strlen(NAME), tok::kw_ ## TOK, 0, 0, 0, LangOpts, *this);
 #define PPKEYWORD(NAME) \
   AddPPKeyword(tok::pp_##NAME, #NAME, strlen(#NAME), *this);
+#define CXX_KEYWORD_OPERATOR(NAME, ALIAS) \
+  if (LangOpts.CPlusPlus)                 \
+    AddCXXOperatorKeyword(#NAME, strlen(#NAME), tok::ALIAS, *this);
 #define OBJC1_AT_KEYWORD(NAME) \
   if (LangOpts.ObjC1)          \
     AddObjCKeyword(tok::objc_##NAME, #NAME, strlen(#NAME), *this);
@@ -173,5 +187,3 @@ void IdentifierTable::PrintStats() const {
   // Compute statistics about the memory allocated for identifiers.
   HashTable.getAllocator().PrintStats();
 }
-
-

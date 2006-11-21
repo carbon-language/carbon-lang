@@ -36,6 +36,7 @@ class IdentifierInfo {
   bool IsExtension            : 1; // True if identifier is a lang extension.
   bool IsPoisoned             : 1; // True if identifier is poisoned.
   bool IsOtherTargetMacro     : 1; // True if ident is macro on another target.
+  bool IsCPPOperatorKeyword   : 1; // True if ident is a C++ operator keyword.
   void *FETokenInfo;               // Managed by the language front-end.
   IdentifierInfo(const IdentifierInfo&);  // NONCOPYABLE.
 public:
@@ -90,7 +91,13 @@ public:
   /// is seen as being a macro on some other target.
   void setIsOtherTargetMacro(bool Val = true) { IsOtherTargetMacro = Val; }
   bool isOtherTargetMacro() const { return IsOtherTargetMacro; }
-  
+
+  /// isCPlusPlusOperatorKeyword/setIsCPlusPlusOperatorKeyword controls whether
+  /// this identifier is a C++ alternate representation of an operator.
+  void setIsCPlusplusOperatorKeyword(bool Val = true)
+    { IsCPPOperatorKeyword = Val; }
+  bool isCPlusPlusOperatorKeyword() const { return IsCPPOperatorKeyword; }
+
   /// getFETokenInfo/setFETokenInfo - The language front-end is allowed to
   /// associate arbitrary metadata with this token.
   template<typename T>

@@ -26,6 +26,9 @@
 #ifndef PPKEYWORD
 #define PPKEYWORD(X)
 #endif
+#ifndef CXX_KEYWORD_OPERATOR
+#define CXX_KEYWORD_OPERATOR(X,Y)
+#endif
 #ifndef OBJC1_AT_KEYWORD
 #define OBJC1_AT_KEYWORD(X)
 #endif
@@ -222,7 +225,7 @@ KEYWORD(__func__                    , EXTC90|EXTCPP) // Only in C99.
 KEYWORD(__FUNCTION__                , EXTC90|EXTC99|EXTCPP) // GCC Extension.
 KEYWORD(__PRETTY_FUNCTION__         , EXTC90|EXTC99|EXTCPP) // GCC Extension.
 
-// C++
+// C++ 2.11p1: Keywords.
 KEYWORD(asm                         , EXTC90|EXTC99) // Exts in C90/C99
 KEYWORD(catch                       , NOTC90|NOTC99)
 KEYWORD(class                       , NOTC90|NOTC99)
@@ -252,6 +255,19 @@ KEYWORD(typeid                      , NOTC90|NOTC99)
 KEYWORD(using                       , NOTC90|NOTC99)
 KEYWORD(virtual                     , NOTC90|NOTC99)
 KEYWORD(wchar_t                     , NOTC90|NOTC99)
+
+// C++ 2.5p2: Alternative Representations.
+CXX_KEYWORD_OPERATOR(and     , ampamp)
+CXX_KEYWORD_OPERATOR(and_eq  , ampequal)
+CXX_KEYWORD_OPERATOR(bitand  , amp)
+CXX_KEYWORD_OPERATOR(bitor   , pipe)
+CXX_KEYWORD_OPERATOR(compl   , tilde)
+CXX_KEYWORD_OPERATOR(not     , exclaim)
+CXX_KEYWORD_OPERATOR(not_eq  , exclaimequal)
+CXX_KEYWORD_OPERATOR(or      , pipepipe)
+CXX_KEYWORD_OPERATOR(or_eq   , pipeequal)
+CXX_KEYWORD_OPERATOR(xor     , caret)
+CXX_KEYWORD_OPERATOR(xor_eq  , caretequal)
 
 // GNU Extensions.
 KEYWORD(_Decimal32                  , EXTC90|EXTC99|EXTCPP)
@@ -329,6 +345,7 @@ OBJC2_AT_KEYWORD(property)
 
 #undef OBJC2_AT_KEYWORD
 #undef OBJC1_AT_KEYWORD
+#undef CXX_KEYWORD_OPERATOR
 #undef PPKEYWORD
 #undef ALIAS
 #undef KEYWORD

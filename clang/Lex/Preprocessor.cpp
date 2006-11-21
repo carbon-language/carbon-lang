@@ -967,6 +967,12 @@ void Preprocessor::HandleIdentifier(LexerToken &Identifier) {
     
   }
 
+  // C++ 2.11p2: If this is an alternative representation of a C++ operator,
+  // then we act as if it is the actual operator and not the textual
+  // representation of it.
+  if (II.isCPlusPlusOperatorKeyword())
+    Identifier.setIdentifierInfo(0);
+
   // Change the kind of this identifier to the appropriate token kind, e.g.
   // turning "for" into a keyword.
   Identifier.setKind(II.getTokenID());
