@@ -192,17 +192,17 @@ Parser::ExprResult Parser::ParseConstantExpression() {
 
 /// ParseExpressionWithLeadingIdentifier - This special purpose method is used
 /// in contexts where we have already consumed an identifier (which we saved in
-/// 'Tok'), then discovered that the identifier was really the leading token of
-/// part of an expression.  For example, in "A[1]+B", we consumed "A" (which is
-/// now in 'Tok') and the current token is "[".
+/// 'IdTok'), then discovered that the identifier was really the leading token
+/// of part of an expression.  For example, in "A[1]+B", we consumed "A" (which
+/// is now in 'IdTok') and the current token is "[".
 Parser::ExprResult Parser::
-ParseExpressionWithLeadingIdentifier(const LexerToken &Tok) {
-  // We know that 'Tok' must correspond to this production:
+ParseExpressionWithLeadingIdentifier(const LexerToken &IdTok) {
+  // We know that 'IdTok' must correspond to this production:
   //   primary-expression: identifier
   
   // Let the actions module handle the identifier.
-  ExprResult Res = Actions.ParseIdentifierExpr(CurScope, Tok.getLocation(),
-                                               *Tok.getIdentifierInfo(),
+  ExprResult Res = Actions.ParseIdentifierExpr(CurScope, IdTok.getLocation(),
+                                               *IdTok.getIdentifierInfo(),
                                                Tok.getKind() == tok::l_paren);
   
   // Because we have to parse an entire cast-expression before starting the
@@ -223,17 +223,17 @@ ParseExpressionWithLeadingIdentifier(const LexerToken &Tok) {
 
 /// ParseExpressionWithLeadingIdentifier - This special purpose method is used
 /// in contexts where we have already consumed an identifier (which we saved in
-/// 'Tok'), then discovered that the identifier was really the leading token of
-/// part of an assignment-expression.  For example, in "A[1]+B", we consumed "A"
-/// (which is now in 'Tok') and the current token is "[".
+/// 'IdTok'), then discovered that the identifier was really the leading token
+/// of part of an assignment-expression.  For example, in "A[1]+B", we consumed
+/// "A" (which is now in 'IdTok') and the current token is "[".
 Parser::ExprResult Parser::
-ParseAssignmentExprWithLeadingIdentifier(const LexerToken &Tok) {
-  // We know that 'Tok' must correspond to this production:
+ParseAssignmentExprWithLeadingIdentifier(const LexerToken &IdTok) {
+  // We know that 'IdTok' must correspond to this production:
   //   primary-expression: identifier
   
   // Let the actions module handle the identifier.
-  ExprResult Res = Actions.ParseIdentifierExpr(CurScope, Tok.getLocation(),
-                                               *Tok.getIdentifierInfo(),
+  ExprResult Res = Actions.ParseIdentifierExpr(CurScope, IdTok.getLocation(),
+                                               *IdTok.getIdentifierInfo(),
                                                Tok.getKind() == tok::l_paren);
   
   // Because we have to parse an entire cast-expression before starting the
@@ -255,12 +255,12 @@ ParseAssignmentExprWithLeadingIdentifier(const LexerToken &Tok) {
 
 /// ParseAssignmentExpressionWithLeadingStar - This special purpose method is
 /// used in contexts where we have already consumed a '*' (which we saved in
-/// 'Tok'), then discovered that the '*' was really the leading token of an
+/// 'StarTok'), then discovered that the '*' was really the leading token of an
 /// expression.  For example, in "*(int*)P+B", we consumed "*" (which is
-/// now in 'Tok') and the current token is "(".
+/// now in 'StarTok') and the current token is "(".
 Parser::ExprResult Parser::
-ParseAssignmentExpressionWithLeadingStar(const LexerToken &Tok) {
-  // We know that 'Tok' must correspond to this production:
+ParseAssignmentExpressionWithLeadingStar(const LexerToken &StarTok) {
+  // We know that 'StarTok' must correspond to this production:
   //  unary-expression: unary-operator cast-expression
   // where 'unary-operator' is '*'.
   
@@ -269,7 +269,7 @@ ParseAssignmentExpressionWithLeadingStar(const LexerToken &Tok) {
   ExprResult Res = ParseCastExpression(false);
   if (Res.isInvalid) return Res;
 
-  // TODO: Combine Tok + Res to get the new AST.
+  // TODO: Combine StarTok + Res to get the new AST.
   
   // We have to parse an entire cast-expression before starting the
   // ParseRHSOfBinaryExpression method (which parses any trailing binops). Since
