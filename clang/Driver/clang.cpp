@@ -8,9 +8,10 @@
 //===----------------------------------------------------------------------===//
 //
 //  This utility may be invoked in the following manner:
-//   clang --help         - Output information about command line switches
-//   clang [options]      - Read from stdin.
-//   clang [options] file - Read from "file".
+//   clang --help                - Output help info.
+//   clang [options]             - Read from stdin.
+//   clang [options] file        - Read from "file".
+//   clang [options] file1 file2 - Read these files.
 //
 //===----------------------------------------------------------------------===//
 //
@@ -827,54 +828,18 @@ static void PrintASTs(Preprocessor &PP, unsigned MainFileID) {
   ASTStreamer_Terminate(Streamer);
 }
 
-
 //===----------------------------------------------------------------------===//
 // Main driver
 //===----------------------------------------------------------------------===//
 
-static cl::opt<std::string>
-InputFilename(cl::Positional, cl::desc("<input file>"), cl::init("-"));
-
-int main(int argc, char **argv) {
-  cl::ParseCommandLineOptions(argc, argv, " llvm cfe\n");
-  sys::PrintStackTraceOnErrorSignal();
-  
-  /// Create a SourceManager object.  This tracks and owns all the file buffers
-  /// allocated to the program.
-  SourceManager SourceMgr;
-  
-  // Print diagnostics to stderr.
-  DiagnosticPrinterSTDERR OurDiagnosticClient(SourceMgr);
-  
-  // Configure our handling of diagnostics.
-  Diagnostic OurDiagnostics(OurDiagnosticClient);
-  InitializeDiagnostics(OurDiagnostics);
-  
-  // Turn all options on.
-  LangOptions Options;
-  InitializeBaseLanguage(Options, InputFilename);
-  InitializeLanguageStandard(Options);
-
-  // Get information about the targets being compiled for.  Note that this
-  // pointer and the TargetInfoImpl objects are never deleted by this toy
-  // driver.
-  TargetInfo *Target = CreateTargetInfo(OurDiagnostics);
-  if (Target == 0) {
-    std::cerr << "Sorry, don't know what target this is, please use -arch.\n";
-    return 1;
-  }
-  
-  // Create a file manager object to provide access to and cache the filesystem.
-  FileManager FileMgr;
-  
-  // Process the -I options and set them in the HeaderInfo.
-  HeaderSearch HeaderInfo(FileMgr);
-  InitializeIncludePaths(HeaderInfo, FileMgr, OurDiagnostics, Options);
-  
+static void ProcessInputFile(const std::string &InFile, 
+                             SourceManager &SourceMgr, Diagnostic &Diags,
+                             HeaderSearch &HeaderInfo, TargetInfo &Target,
+                             LangOptions &LangInfo) {
+  FileManager &FileMgr = HeaderInfo.getFileMgr();
   
   // Set up the preprocessor with these options.
-  Preprocessor PP(OurDiagnostics, Options, *Target, FileMgr, SourceMgr,
-                  HeaderInfo);
+  Preprocessor PP(Diags, LangInfo, Target, FileMgr, SourceMgr, HeaderInfo);
   
   // Install things like __POWERPC__, __GNUC__, etc into the macro table.
   std::vector<char> PrologMacros;
@@ -885,19 +850,21 @@ int main(int argc, char **argv) {
   
   // Figure out where to get and map in the main file.
   unsigned MainFileID = 0;
-  if (InputFilename != "-") {
-    const FileEntry *File = FileMgr.getFile(InputFilename);
+  if (InFile != "-") {
+    const FileEntry *File = FileMgr.getFile(InFile);
     if (File) MainFileID = SourceMgr.createFileID(File, SourceLocation());
     if (MainFileID == 0) {
-      std::cerr << "Error reading '" << InputFilename << "'!\n";
-      return 1;
+      std::cerr << "Error reading '" << InFile << "'!\n";
+      ++NumErrors;
+      return;
     }
   } else {
     SourceBuffer *SB = SourceBuffer::getSTDIN();
     if (SB) MainFileID = SourceMgr.createFileIDForMemBuffer(SB);
     if (MainFileID == 0) {
       std::cerr << "Error reading standard input!  Empty?\n";
-      return 1;
+      ++NumErrors;
+      return;
     }
   }
   
@@ -906,7 +873,7 @@ int main(int argc, char **argv) {
   {
     // Memory buffer must end with a null byte!
     PrologMacros.push_back(0);
-
+    
     SourceBuffer *SB = SourceBuffer::getMemBuffer(&PrologMacros.front(),
                                                   &PrologMacros.back(),
                                                   "<predefines>");
@@ -916,7 +883,7 @@ int main(int argc, char **argv) {
     
     // Start parsing the predefines.
     PP.EnterSourceFile(FileID, 0);
-
+    
     // Lex the file, which will read all the macros.
     LexerToken Tok;
     PP.Lex(Tok);
@@ -948,9 +915,9 @@ int main(int argc, char **argv) {
   }
     
   case PrintPreprocessedInput:       // -E mode.
-    DoPrintPreprocessedInput(MainFileID, PP, Options);
+    DoPrintPreprocessedInput(MainFileID, PP, LangInfo);
     break;
-
+    
   case ParseNoop:                    // -parse-noop
     ParseFile(PP, new MinimalAction(), MainFileID);
     break;
@@ -967,16 +934,71 @@ int main(int argc, char **argv) {
     break;
   }
   
+  if (Stats) {
+    PP.getIdentifierTable().PrintStats();
+    PP.PrintStats();
+    std::cerr << "\n";
+  }
+}
+
+static cl::list<std::string>
+InputFilenames(cl::Positional, cl::desc("<input files>"));
+
+int main(int argc, char **argv) {
+  cl::ParseCommandLineOptions(argc, argv, " llvm cfe\n");
+  sys::PrintStackTraceOnErrorSignal();
+  
+  // If no input was specified, read from stdin.
+  if (InputFilenames.empty())
+    InputFilenames.push_back("-");
+  
+  /// Create a SourceManager object.  This tracks and owns all the file buffers
+  /// allocated to the program.
+  SourceManager SourceMgr;
+  
+  // Print diagnostics to stderr.
+  DiagnosticPrinterSTDERR OurDiagnosticClient(SourceMgr);
+  
+  // Configure our handling of diagnostics.
+  Diagnostic Diags(OurDiagnosticClient);
+  InitializeDiagnostics(Diags);
+  
+  // Get information about the targets being compiled for.  Note that this
+  // pointer and the TargetInfoImpl objects are never deleted by this toy
+  // driver.
+  TargetInfo *Target = CreateTargetInfo(Diags);
+  if (Target == 0) {
+    std::cerr << "Sorry, don't know what target this is, please use -arch.\n";
+    return 1;
+  }
+  
+  // Create a file manager object to provide access to and cache the filesystem.
+  FileManager FileMgr;
+  
+  // Initialize language options, inferring file types from input filenames.
+  // FIXME: This infers info from the first file, we should clump by language
+  // to handle 'x.c y.c a.cpp b.cpp'.
+  LangOptions LangInfo;
+  InitializeBaseLanguage(LangInfo, InputFilenames[0]);
+  InitializeLanguageStandard(LangInfo);
+  
+  // Process the -I options and set them in the HeaderInfo.
+  HeaderSearch HeaderInfo(FileMgr);
+  InitializeIncludePaths(HeaderInfo, FileMgr, Diags, LangInfo);
+  
+  
+  for (unsigned i = 0, e = InputFilenames.size(); i != e; ++i)
+    ProcessInputFile(InputFilenames[i], SourceMgr, Diags,
+                     HeaderInfo, *Target, LangInfo);
+  
   if (NumDiagnostics)
     std::cerr << NumDiagnostics << " diagnostics generated.\n";
   
   if (Stats) {
     // Printed from low-to-high level.
-    PP.getFileManager().PrintStats();
-    PP.getHeaderSearchInfo().PrintStats();
-    PP.getSourceManager().PrintStats();
-    PP.getIdentifierTable().PrintStats();
-    PP.PrintStats();
+    FileMgr.PrintStats();
+    SourceMgr.PrintStats();
+    HeaderInfo.PrintStats();
     std::cerr << "\n";
   }
   
