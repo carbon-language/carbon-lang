@@ -79,7 +79,9 @@ class HeaderSearch {
   unsigned NumFrameworkLookups, NumSubFrameworkLookups;
 public:
   HeaderSearch(FileManager &FM);
-    
+
+  FileManager &getFileMgr() const { return FileMgr; }
+
   /// SetSearchPaths - Interface for setting the file search paths.
   ///
   void SetSearchPaths(const std::vector<DirectoryLookup> &dirs,
