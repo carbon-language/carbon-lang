@@ -232,6 +232,8 @@ DIAG(err_too_few_args_in_macro_invoc, ERROR,
      "too few arguments provided to function-like macro invocation")
 DIAG(err_pp_bad_paste, ERROR,
      "pasting formed \"%s\", an invalid preprocessing token")
+DIAG(err_pp_operator_used_as_macro_name, ERROR,
+     "C++ operator \"%s\" cannot be used as a macro name")
 
 // Should be a sorry?
 DIAG(err_pp_I_dash_not_supported, ERROR,
