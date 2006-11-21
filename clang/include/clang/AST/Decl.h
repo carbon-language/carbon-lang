@@ -42,7 +42,9 @@ private:
   /// Type.
   TypeRef DeclType;
   
-  /// Scope stack info when parsing, otherwise decl list when scope is popped.
+  /// When this decl is in scope while parsing, the Next field contains a
+  /// pointer to the shadowed decl of the same name.  When the scope is popped,
+  /// Decls are relinked onto a containing decl object.
   ///
   Decl *Next;
   
@@ -57,6 +59,7 @@ public:
   TypeRef getType() const { return DeclType; }
   Kind getKind() const { return DeclKind; }
   Decl *getNext() const { return Next; }
+  void setNext(Decl *N) { Next = N; }
   
   // Implement isa/cast/dyncast/etc.
   static bool classof(const Decl *) { return true; }
@@ -117,13 +120,19 @@ public:
 class FunctionDecl : public ObjectDecl {
   // Args etc.
   Stmt *Body;  // Null if a prototype.
+  
+  /// DeclChain - Linked list of declarations that are defined inside this
+  /// function.
+  Decl *DeclChain;
 public:
   FunctionDecl(IdentifierInfo *Id, TypeRef T, Decl *Next)
-  : ObjectDecl(Function, Id, T, Next), Body(0) {}
+    : ObjectDecl(Function, Id, T, Next), Body(0), DeclChain(0) {}
   
   Stmt *getBody() const { return Body; }
   void setBody(Stmt *B) { Body = B; }
   
+  Decl *getDeclChain() const { return DeclChain; }
+  void setDeclChain(Decl *D) { DeclChain = D; }
   
   // Implement isa/cast/dyncast/etc.
   static bool classof(const Decl *D) { return D->getKind() == Function; }

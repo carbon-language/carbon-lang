@@ -35,11 +35,16 @@ void Sema::PopScope(SourceLocation Loc, Scope *S) {
     
     II.setFETokenInfo(D->getNext());
     
-    // FIXME: Push the decl on the parent function list if in a function.
-    // FIXME: Don't delete the decl when it gets popped!
-    // delete D;
-    
-    
+    // This will have to be revisited for C++: there we want to nest stuff in
+    // namespace decls etc.  Even for C, we might want a top-level translation
+    // unit decl or something.
+    if (!CurFunctionDecl)
+      continue;
+
+    // Chain this decl to the containing function, it now owns the memory for
+    // the decl.
+    D->setNext(CurFunctionDecl->getDeclChain());
+    CurFunctionDecl->setDeclChain(D);
   }
 }
 
