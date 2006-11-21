@@ -939,8 +939,11 @@ static void ProcessInputFile(const std::string &InFile,
   if (Stats) {
     PP.PrintStats();
     PP.getIdentifierTable().PrintStats();
+    HeaderInfo.PrintStats();
     std::cerr << "\n";
   }
+  
+  HeaderInfo.ClearFileInfo();
 }
 
 static cl::list<std::string>
@@ -988,7 +991,6 @@ int main(int argc, char **argv) {
   HeaderSearch HeaderInfo(FileMgr);
   InitializeIncludePaths(HeaderInfo, FileMgr, Diags, LangInfo);
   
-  
   for (unsigned i = 0, e = InputFilenames.size(); i != e; ++i)
     ProcessInputFile(InputFilenames[i], SourceMgr, Diags,
                      HeaderInfo, *Target, LangInfo);
@@ -998,7 +1000,6 @@ int main(int argc, char **argv) {
   
   if (Stats) {
     // Printed from high-to-low level.
-    HeaderInfo.PrintStats();
     SourceMgr.PrintStats();
     FileMgr.PrintStats();
     std::cerr << "\n";

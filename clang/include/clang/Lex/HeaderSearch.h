@@ -91,6 +91,11 @@ public:
     NoCurDirSearch = noCurDirSearch;
   }
   
+  /// ClearFileInfo - Forget everything we know about headers so far.
+  void ClearFileInfo() {
+    FileInfo.clear();
+  }
+  
   /// LookupFile - Given a "foo" or <foo> reference, look up the indicated file,
   /// return null on failure.  isAngled indicates whether the file reference is
   /// a <> reference.  If successful, this returns 'UsedDir', the
