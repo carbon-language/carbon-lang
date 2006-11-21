@@ -832,10 +832,12 @@ static void PrintASTs(Preprocessor &PP, unsigned MainFileID) {
 // Main driver
 //===----------------------------------------------------------------------===//
 
+/// ProcessInputFile - Process a single input file with the specified state.
+///
 static void ProcessInputFile(const std::string &InFile, 
                              SourceManager &SourceMgr, Diagnostic &Diags,
                              HeaderSearch &HeaderInfo, TargetInfo &Target,
-                             LangOptions &LangInfo) {
+                             const LangOptions &LangInfo) {
   FileManager &FileMgr = HeaderInfo.getFileMgr();
   
   // Set up the preprocessor with these options.

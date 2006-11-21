@@ -24,7 +24,7 @@ class Diagnostic;
 
 /// DoPrintPreprocessedInput - Implement -E mode.
 void DoPrintPreprocessedInput(unsigned MainFileID, Preprocessor &PP,
-                              LangOptions &Options);
+                              const LangOptions &Options);
 
 /// CreatePrintParserActionsAction - Return the actions implementation that
 /// implements the -parse-print-callbacks option.

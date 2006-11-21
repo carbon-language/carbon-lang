@@ -386,7 +386,7 @@ bool PrintPPOutputPPCallbacks::AvoidConcat(const LexerToken &PrevTok,
 /// DoPrintPreprocessedInput - This implements -E mode.
 ///
 void clang::DoPrintPreprocessedInput(unsigned MainFileID, Preprocessor &PP,
-                                     LangOptions &Options) {
+                                     const LangOptions &Options) {
   // Inform the preprocessor whether we want it to retain comments or not, due
   // to -C or -CC.
   PP.SetCommentRetentionState(EnableCommentOutput, EnableMacroCommentOutput);
