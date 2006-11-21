@@ -97,15 +97,21 @@ public:
     return 0;
   }
 
-  /// ParseFunctionDefinition - This is called when a function definition is
-  /// parsed.  The declarator that is part of this is not passed to
-  /// ParseDeclarator.
-  virtual DeclTy *ParseFunctionDefinition(Scope *S, Declarator &D,
-                                          // TODO: FORMAL ARG INFO.
-                                          StmtTy *Body) {
-    return 0;
+  /// ParseStartOfFunctionDef - This is called at the start of a function
+  /// definition, instead of calling ParseDeclarator.
+  virtual DeclTy *ParseStartOfFunctionDef(Scope *S, Declarator &D
+                                          /* TODO: FORMAL ARG INFO.*/) {
+    // Default to ParseDeclarator.
+    return ParseDeclarator(S, D, 0, 0);
   }
 
+  /// ParseFunctionDefBody - This is called when a function body has completed
+  /// parsing.  Decl is the DeclTy returned by ParseStartOfFunctionDef.
+  virtual DeclTy *ParseFunctionDefBody(DeclTy *Decl, StmtTy *Body) {
+    return Decl;
+  }
+
+  
   /// PopScope - This callback is called immediately before the specified scope
   /// is popped and deleted.
   virtual void PopScope(SourceLocation Loc, Scope *S) {}

@@ -211,6 +211,7 @@ static cl::opt<LangStds>
 LangStd("std", cl::desc("Language standard to compile for"),
         cl::init(lang_unspecified),
         cl::values(clEnumValN(lang_c89,      "c89",            "ISO C 1990"),
+                   clEnumValN(lang_c89,      "c90",            "ISO C 1990"),
                    clEnumValN(lang_c89,      "iso9899:1990",   "ISO C 1990"),
                    clEnumValN(lang_c94,      "iso9899:199409",
                               "ISO C 1990 with amendment 1"),

@@ -399,6 +399,8 @@ Parser::DeclTy *Parser::ParseFunctionDefinition(Declarator &D) {
   assert(FnTypeInfo.Kind == DeclaratorTypeInfo::Function &&
          "This isn't a function declarator!");
 
+  DeclTy *Res = Actions.ParseStartOfFunctionDef(CurScope, D);
+  
   // FIXME: Enter a scope for the arguments.
   //EnterScope(Scope::FnScope);
   
@@ -440,7 +442,7 @@ Parser::DeclTy *Parser::ParseFunctionDefinition(Declarator &D) {
   // ExitScope();
 
   // TODO: Pass argument information.
-  return Actions.ParseFunctionDefinition(CurScope, D, FnBody.Val);
+  return Actions.ParseFunctionDefBody(Res, FnBody.Val);
 }
 
 /// ParseAsmStringLiteral - This is just a normal string-literal, but is not

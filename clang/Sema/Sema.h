@@ -26,10 +26,15 @@ namespace clang {
   class Decl;
   class TypeRef;
   class LangOptions;
+  class FunctionDecl;
   
 /// Sema - This implements semantic analysis and AST building for C.
 class Sema : public Action {
   ASTContext &Context;
+  
+  /// CurFunctionDecl - If inside of a function body, this contains a pointer to
+  /// the function decl for the function being parsed.
+  FunctionDecl *CurFunctionDecl;
   
   /// LastInGroupList - This vector is populated when there are multiple
   /// declarators in a single decl group (e.g. "int A, B, C").  In this case,
@@ -38,7 +43,7 @@ class Sema : public Action {
   std::vector<Decl*> &LastInGroupList;
 public:
   Sema(ASTContext &ctx, std::vector<Decl*> &prevInGroup)
-    : Context(ctx), LastInGroupList(prevInGroup) {
+    : Context(ctx), CurFunctionDecl(0), LastInGroupList(prevInGroup) {
   }
   
   const LangOptions &getLangOptions() const;
@@ -59,8 +64,9 @@ public:
   virtual DeclTy *isTypeName(const IdentifierInfo &II, Scope *S) const;
   virtual DeclTy *ParseDeclarator(Scope *S, Declarator &D, ExprTy *Init,
                                   DeclTy *LastInGroup);
-  virtual DeclTy *ParseFunctionDefinition(Scope *S, Declarator &D,
-                                          StmtTy *Body);
+  virtual DeclTy *ParseStartOfFunctionDef(Scope *S, Declarator &D
+                                          /* TODO: FORMAL ARG INFO.*/);
+  virtual DeclTy *ParseFunctionDefBody(DeclTy *Decl, StmtTy *Body);
   virtual void PopScope(SourceLocation Loc, Scope *S);
   
   Decl *ParseTypedefDecl(Scope *S, Declarator &D, Decl *PrevDecl);

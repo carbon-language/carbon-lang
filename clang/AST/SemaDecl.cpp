@@ -33,13 +33,13 @@ void Sema::PopScope(SourceLocation Loc, Scope *S) {
     Decl *D = II.getFETokenInfo<Decl>();
     assert(D && "This decl didn't get pushed??");
     
-    Decl *Next = D->getNext();
+    II.setFETokenInfo(D->getNext());
     
     // FIXME: Push the decl on the parent function list if in a function.
     // FIXME: Don't delete the decl when it gets popped!
-    delete D;
+    // delete D;
     
-    II.setFETokenInfo(Next);
+    
   }
 }
 
@@ -96,14 +96,25 @@ Sema::ParseDeclarator(Scope *S, Declarator &D, ExprTy *Init,
 }
 
 
-Sema::DeclTy *
-Sema::ParseFunctionDefinition(Scope *S, Declarator &D, StmtTy *Body) {
-  FunctionDecl *FD = (FunctionDecl *)ParseDeclarator(S, D, 0, 0);
+
+Sema::DeclTy *Sema::ParseStartOfFunctionDef(Scope *S, Declarator &D
+                                            /* TODO: FORMAL ARG INFO.*/) {
+  assert(CurFunctionDecl == 0 && "Function parsing confused");
   
-  FD->setBody((Stmt*)Body);
-  
+  FunctionDecl *FD = static_cast<FunctionDecl*>(ParseDeclarator(S, D, 0, 0));
+  CurFunctionDecl = FD;
   return FD;
 }
+
+Sema::DeclTy *Sema::ParseFunctionDefBody(DeclTy *D, StmtTy *Body) {
+  FunctionDecl *FD = static_cast<FunctionDecl*>(D);
+  FD->setBody((Stmt*)Body);
+  
+  assert(FD == CurFunctionDecl && "Function parsing confused");
+  CurFunctionDecl = 0;
+  return FD;
+}
+
 
 /// ImplicitlyDefineFunction - An undeclared identifier was used in a function
 /// call, forming a call to an implicitly defined function (per C99 6.5.1p2).
