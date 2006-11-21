@@ -645,7 +645,7 @@ static void RemoveDuplicates(std::vector<DirectoryLookup> &SearchList) {
 /// InitializeIncludePaths - Process the -I options and set them in the
 /// HeaderSearch object.
 static void InitializeIncludePaths(HeaderSearch &Headers, FileManager &FM,
-                                   Diagnostic &Diags) {
+                                   Diagnostic &Diags, const LangOptions &Lang) {
   // Handle -F... options.
   for (unsigned i = 0, e = F_dirs.size(); i != e; ++i)
     AddPath(F_dirs[i], Angled, false, true, true, FM);
@@ -718,6 +718,13 @@ static void InitializeIncludePaths(HeaderSearch &Headers, FileManager &FM,
   // FIXME: temporary hack: hard-coded paths.
   // FIXME: get these from the target?
   if (!nostdinc) {
+    if (Lang.CPlusPlus) {
+      AddPath("/usr/include/c++/4.0.0", System, true, false, false, FM);
+      AddPath("/usr/include/c++/4.0.0/i686-apple-darwin8", System, true, false,
+              false, FM);
+      AddPath("/usr/include/c++/4.0.0/backward", System, true, false, false,FM);
+    }
+    
     AddPath("/usr/local/include", System, false, false, false, FM);
     AddPath("/usr/lib/gcc/i686-apple-darwin8/4.0.1/include", System, 
             false, false, false, FM);
@@ -862,7 +869,7 @@ int main(int argc, char **argv) {
   
   // Process the -I options and set them in the HeaderInfo.
   HeaderSearch HeaderInfo(FileMgr);
-  InitializeIncludePaths(HeaderInfo, FileMgr, OurDiagnostics);
+  InitializeIncludePaths(HeaderInfo, FileMgr, OurDiagnostics, Options);
   
   
   // Set up the preprocessor with these options.
