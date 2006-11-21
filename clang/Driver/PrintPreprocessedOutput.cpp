@@ -106,69 +106,82 @@ static cl::opt<bool>
 EnableMacroCommentOutput("CC", cl::desc("Enable comment output in -E mode, "
                                         "even from macro expansions"));
 
-static unsigned EModeCurLine;
-static std::string EModeCurFilename;
-static Preprocessor *EModePP;
-static bool EmodeEmittedTokensOnThisLine;
-static DirectoryLookup::DirType EmodeFileType =DirectoryLookup::NormalHeaderDir;
+namespace {
+class PrintPPOutputPPCallbacks : public PPCallbacks {
+  Preprocessor &PP;
+  unsigned CurLine;
+  std::string CurFilename;
+  bool EmittedTokensOnThisLine;
+  DirectoryLookup::DirType FileType;
+public:
+  PrintPPOutputPPCallbacks(Preprocessor &pp) : PP(pp) {
+    CurLine = 0;
+    CurFilename = "\"<uninit>\"";
+    EmittedTokensOnThisLine = false;
+    FileType = DirectoryLookup::NormalHeaderDir;
+  }
+  
+  void SetEmittedTokensOnThisLine() { EmittedTokensOnThisLine = true; }
+  
+  virtual void FileChanged(SourceLocation Loc, FileChangeReason Reason,
+                           DirectoryLookup::DirType FileType);
+  virtual void Ident(SourceLocation Loc, const std::string &str);
+  
+
+  void HandleFirstTokOnLine(LexerToken &Tok);
+  void MoveToLine(SourceLocation Loc);
+  bool AvoidConcat(const LexerToken &PrevTok, const LexerToken &Tok);
+};
+}
 
 /// MoveToLine - Move the output to the source line specified by the location
 /// object.  We can do this by emitting some number of \n's, or be emitting a
 /// #line directive.
-static void MoveToLine(SourceLocation Loc) {
+void PrintPPOutputPPCallbacks::MoveToLine(SourceLocation Loc) {
   if (DisableLineMarkers) {
-    if (EmodeEmittedTokensOnThisLine) {
+    if (EmittedTokensOnThisLine) {
       OutputChar('\n');
-      EmodeEmittedTokensOnThisLine = false;
+      EmittedTokensOnThisLine = false;
     }
     return;
   }
-
-  unsigned LineNo = EModePP->getSourceManager().getLineNumber(Loc);
+  
+  unsigned LineNo = PP.getSourceManager().getLineNumber(Loc);
   
   // If this line is "close enough" to the original line, just print newlines,
   // otherwise print a #line directive.
-  if (LineNo-EModeCurLine < 8) {
-    unsigned CurLine = EModeCurLine;
-    for (; CurLine != LineNo; ++CurLine)
+  if (LineNo-CurLine < 8) {
+    unsigned Line = CurLine;
+    for (; Line != LineNo; ++Line)
       OutputChar('\n');
-    EModeCurLine = CurLine;
+    CurLine = Line;
   } else {
-    if (EmodeEmittedTokensOnThisLine) {
+    if (EmittedTokensOnThisLine) {
       OutputChar('\n');
-      EmodeEmittedTokensOnThisLine = false;
+      EmittedTokensOnThisLine = false;
     }
     
-    EModeCurLine = LineNo;
+    CurLine = LineNo;
     
     OutputChar('#');
     OutputChar(' ');
     std::string Num = utostr_32(LineNo);
     OutputString(&Num[0], Num.size());
     OutputChar(' ');
-    OutputString(&EModeCurFilename[0], EModeCurFilename.size());
+    OutputString(&CurFilename[0], CurFilename.size());
     
-    if (EmodeFileType == DirectoryLookup::SystemHeaderDir)
+    if (FileType == DirectoryLookup::SystemHeaderDir)
       OutputString(" 3", 2);
-    else if (EmodeFileType == DirectoryLookup::ExternCSystemHeaderDir)
+    else if (FileType == DirectoryLookup::ExternCSystemHeaderDir)
       OutputString(" 3 4", 4);
     OutputChar('\n');
   } 
 }
 
-namespace {
-class PrintPPOutputPPCallbacks : public PPCallbacks {
-public:
-  virtual void FileChanged(SourceLocation Loc, FileChangeReason Reason,
-                           DirectoryLookup::DirType FileType);
-  virtual void Ident(SourceLocation Loc, const std::string &str);
-};
-}
 
 /// FileChanged - Whenever the preprocessor enters or exits a #include file
 /// it invokes this handler.  Update our conception of the current source
 /// position.
-
 void PrintPPOutputPPCallbacks::FileChanged(SourceLocation Loc,
                                            FileChangeReason Reason,
                                            DirectoryLookup::DirType FileType) {
@@ -176,7 +189,7 @@ void PrintPPOutputPPCallbacks::FileChanged(SourceLocation Loc,
 
   // Unless we are exiting a #include, make sure to skip ahead to the line the
   // #include directive was at.
-  SourceManager &SourceMgr = EModePP->getSourceManager();
+  SourceManager &SourceMgr = PP.getSourceManager();
   if (Reason == PPCallbacks::EnterFile) {
     MoveToLine(SourceMgr.getIncludeLoc(Loc.getFileID()));
   } else if (Reason == PPCallbacks::SystemHeaderPragma) {
@@ -187,23 +200,23 @@ void PrintPPOutputPPCallbacks::FileChanged(SourceLocation Loc,
     // strange behavior.
   }
   
-  EModeCurLine = SourceMgr.getLineNumber(Loc);
-  EModeCurFilename = '"' + Lexer::Stringify(SourceMgr.getSourceName(Loc)) + '"';
-  EmodeFileType = FileType;
+  CurLine = SourceMgr.getLineNumber(Loc);
+  CurFilename = '"' + Lexer::Stringify(SourceMgr.getSourceName(Loc)) + '"';
+  FileType = FileType;
   
-  if (EmodeEmittedTokensOnThisLine) {
+  if (EmittedTokensOnThisLine) {
     OutputChar('\n');
-    EmodeEmittedTokensOnThisLine = false;
+    EmittedTokensOnThisLine = false;
   }
   
   if (DisableLineMarkers) return;
   
   OutputChar('#');
   OutputChar(' ');
-  std::string Num = utostr_32(EModeCurLine);
+  std::string Num = utostr_32(CurLine);
   OutputString(&Num[0], Num.size());
   OutputChar(' ');
-  OutputString(&EModeCurFilename[0], EModeCurFilename.size());
+  OutputString(&CurFilename[0], CurFilename.size());
   
   switch (Reason) {
   case PPCallbacks::EnterFile:
@@ -231,12 +244,12 @@ void PrintPPOutputPPCallbacks::Ident(SourceLocation Loc, const std::string &S) {
   
   OutputString("#ident ", strlen("#ident "));
   OutputString(&S[0], S.size());
-  EmodeEmittedTokensOnThisLine = true;
+  EmittedTokensOnThisLine = true;
 }
 
 /// HandleFirstTokOnLine - When emitting a preprocessed file in -E mode, this
 /// is called for the first token on each new line.
-static void HandleFirstTokOnLine(LexerToken &Tok, Preprocessor &PP) {
+void PrintPPOutputPPCallbacks::HandleFirstTokOnLine(LexerToken &Tok) {
   // Figure out what line we went to and insert the appropriate number of
   // newline characters.
   MoveToLine(Tok.getLocation());
@@ -263,11 +276,14 @@ static void HandleFirstTokOnLine(LexerToken &Tok, Preprocessor &PP) {
 namespace {
 struct UnknownPragmaHandler : public PragmaHandler {
   const char *Prefix;
-  UnknownPragmaHandler(const char *prefix) : PragmaHandler(0), Prefix(prefix) {}
+  PrintPPOutputPPCallbacks *Callbacks;
+  
+  UnknownPragmaHandler(const char *prefix, PrintPPOutputPPCallbacks *callbacks)
+    : PragmaHandler(0), Prefix(prefix), Callbacks(callbacks) {}
   virtual void HandlePragma(Preprocessor &PP, LexerToken &PragmaTok) {
     // Figure out what line we went to and insert the appropriate number of
     // newline characters.
-    MoveToLine(PragmaTok.getLocation());
+    Callbacks->MoveToLine(PragmaTok.getLocation());
     OutputString(Prefix, strlen(Prefix));
     
     // Read and print all of the pragma tokens.
@@ -294,13 +310,13 @@ struct UnknownPragmaHandler : public PragmaHandler {
 /// the resulting output won't have incorrect concatenations going on.  Examples
 /// include "..", which we print with a space between, because we don't want to
 /// track enough to tell "x.." from "...".
-static bool AvoidConcat(const LexerToken &PrevTok, const LexerToken &Tok,
-                        Preprocessor &PP) {
+bool PrintPPOutputPPCallbacks::AvoidConcat(const LexerToken &PrevTok,
+                                           const LexerToken &Tok) {
   char Buffer[256];
   
   // If we haven't emitted a token on this line yet, PrevTok isn't useful to
   // look at and no concatenation could happen anyway.
-  if (!EmodeEmittedTokensOnThisLine)
+  if (!EmittedTokensOnThisLine)
     return false;
 
   // Basic algorithm: we look at the first character of the second token, and
@@ -380,14 +396,11 @@ void clang::DoPrintPreprocessedInput(unsigned MainFileID, Preprocessor &PP,
   
   LexerToken Tok, PrevTok;
   char Buffer[256];
-  EModeCurLine = 0;
-  EModeCurFilename = "\"<uninit>\"";
-  PP.setPPCallbacks(new PrintPPOutputPPCallbacks());
-  EModePP = &PP;
-  EmodeEmittedTokensOnThisLine = false;
+  PrintPPOutputPPCallbacks *Callbacks = new PrintPPOutputPPCallbacks(PP);
+  PP.setPPCallbacks(Callbacks);
   
-  PP.AddPragmaHandler(0, new UnknownPragmaHandler("#pragma"));
-  PP.AddPragmaHandler("GCC", new UnknownPragmaHandler("#pragma GCC"));
+  PP.AddPragmaHandler(0, new UnknownPragmaHandler("#pragma", Callbacks));
+  PP.AddPragmaHandler("GCC", new UnknownPragmaHandler("#pragma GCC",Callbacks));
 
   // After we have configured the preprocessor, enter the main file.
   
@@ -400,10 +413,10 @@ void clang::DoPrintPreprocessedInput(unsigned MainFileID, Preprocessor &PP,
     
     // If this token is at the start of a line, emit newlines if needed.
     if (Tok.isAtStartOfLine()) {
-      HandleFirstTokOnLine(Tok, PP);
+      Callbacks->HandleFirstTokOnLine(Tok);
     } else if (Tok.hasLeadingSpace() || 
                // Don't print "-" next to "-", it would form "--".
-               AvoidConcat(PrevTok, Tok, PP)) {
+               Callbacks->AvoidConcat(PrevTok, Tok)) {
       OutputChar(' ');
     }
     
@@ -415,7 +428,7 @@ void clang::DoPrintPreprocessedInput(unsigned MainFileID, Preprocessor &PP,
       std::string S = PP.getSpelling(Tok);
       OutputString(&S[0], S.size());
     }
-    EmodeEmittedTokensOnThisLine = true;
+    Callbacks->SetEmittedTokensOnThisLine();
   } while (Tok.getKind() != tok::eof);
   OutputChar('\n');
   
