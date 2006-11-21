@@ -28,6 +28,7 @@
 #include "clang/Lex/Preprocessor.h"
 #include "clang/Lex/HeaderSearch.h"
 #include "clang/Lex/MacroInfo.h"
+#include "clang/Lex/PPCallbacks.h"
 #include "clang/Lex/Pragma.h"
 #include "clang/Lex/ScratchBuffer.h"
 #include "clang/Basic/Diagnostic.h"
@@ -47,7 +48,7 @@ Preprocessor::Preprocessor(Diagnostic &diags, const LangOptions &opts,
                            HeaderSearch &Headers) 
   : Diags(diags), Features(opts), Target(target), FileMgr(FM), SourceMgr(SM),
     HeaderInfo(Headers), Identifiers(opts),
-    CurLexer(0), CurDirLookup(0), CurMacroExpander(0) {
+    CurLexer(0), CurDirLookup(0), CurMacroExpander(0), Callbacks(0) {
   ScratchBuf = new ScratchBuffer(SourceMgr);
       
   // Clear stats.
@@ -63,10 +64,6 @@ Preprocessor::Preprocessor(Diagnostic &diags, const LangOptions &opts,
   DisableMacroExpansion = false;
   InMacroArgs = false;
 
-  // There is no file-change handler yet.
-  FileChangeHandler = 0;
-  IdentHandler = 0;
-  
   // "Poison" __VA_ARGS__, which can only appear in the expansion of a macro.
   // This gets unpoisoned where it is allowed.
   (Ident__VA_ARGS__ = getIdentifierInfo("__VA_ARGS__"))->setIsPoisoned();
@@ -96,7 +93,8 @@ Preprocessor::~Preprocessor() {
   delete ScratchBuf;
 }
 
-
+PPCallbacks::~PPCallbacks() {
+}
 
 /// Diag - Forwarding function for diagnostics.  This emits a diagnostic at
 /// the specified LexerToken's location, translating the token's start
@@ -359,7 +357,7 @@ void Preprocessor::EnterSourceFileWithLexer(Lexer *TheLexer,
   CurMacroExpander = 0;
   
   // Notify the client, if desired, that we are in a new source file.
-  if (FileChangeHandler && !CurLexer->Is_PragmaLexer) {
+  if (Callbacks && !CurLexer->Is_PragmaLexer) {
     DirectoryLookup::DirType FileType = DirectoryLookup::NormalHeaderDir;
     
     // Get the file entry for the current file.
@@ -367,8 +365,8 @@ void Preprocessor::EnterSourceFileWithLexer(Lexer *TheLexer,
           SourceMgr.getFileEntryForFileID(CurLexer->getCurFileID()))
       FileType = HeaderInfo.getFileDirFlavor(FE);
     
-    FileChangeHandler(SourceLocation(CurLexer->getCurFileID(), 0),
-                      EnterFile, FileType);
+    Callbacks->FileChanged(SourceLocation(CurLexer->getCurFileID(), 0),
+                           PPCallbacks::EnterFile, FileType);
   }
 }
 
@@ -999,7 +997,7 @@ bool Preprocessor::HandleEndOfFile(LexerToken &Result, bool isEndOfMacro) {
     RemoveTopOfLexerStack();
 
     // Notify the client, if desired, that we are in a new source file.
-    if (FileChangeHandler && !isEndOfMacro && CurLexer) {
+    if (Callbacks && !isEndOfMacro && CurLexer) {
       DirectoryLookup::DirType FileType = DirectoryLookup::NormalHeaderDir;
       
       // Get the file entry for the current file.
@@ -1007,8 +1005,8 @@ bool Preprocessor::HandleEndOfFile(LexerToken &Result, bool isEndOfMacro) {
             SourceMgr.getFileEntryForFileID(CurLexer->getCurFileID()))
         FileType = HeaderInfo.getFileDirFlavor(FE);
 
-      FileChangeHandler(CurLexer->getSourceLocation(CurLexer->BufferPtr),
-                        ExitFile, FileType);
+      Callbacks->FileChanged(CurLexer->getSourceLocation(CurLexer->BufferPtr),
+                             PPCallbacks::ExitFile, FileType);
     }
 
     // Client should lex another token.
@@ -1467,8 +1465,8 @@ void Preprocessor::HandleIdentSCCSDirective(LexerToken &Tok) {
   // Verify that there is nothing after the string, other than EOM.
   CheckEndOfDirective("#ident");
 
-  if (IdentHandler)
-    IdentHandler(Tok.getLocation(), getSpelling(StrTok));
+  if (Callbacks)
+    Callbacks->Ident(Tok.getLocation(), getSpelling(StrTok));
 }
 
 //===----------------------------------------------------------------------===//

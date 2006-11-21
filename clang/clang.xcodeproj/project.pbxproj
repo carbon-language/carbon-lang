@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		DE01DA490B12ADA300AC22CE /* PPCallbacks.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = DE01DA480B12ADA300AC22CE /* PPCallbacks.h */; };
 		DE06B73E0A8307640050E87E /* LangOptions.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = DE06B73D0A8307640050E87E /* LangOptions.h */; };
 		DE06BECB0A854E4B0050E87E /* Scope.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = DE06BECA0A854E4B0050E87E /* Scope.h */; };
 		DE06D4310A8BB52D0050E87E /* Parser.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DE06D42F0A8BB52D0050E87E /* Parser.cpp */; };
@@ -132,6 +133,7 @@
 				DE34646E0B043E5B00DBC861 /* Sema.h in CopyFiles */,
 				DE75ED290B044DC90020CF81 /* ASTContext.h in CopyFiles */,
 				DE1733700B068DC60080B521 /* DeclSpec.h in CopyFiles */,
+				DE01DA490B12ADA300AC22CE /* PPCallbacks.h in CopyFiles */,
 			);
 			runOnlyForDeploymentPostprocessing = 1;
 		};
@@ -139,6 +141,7 @@
 
 /* Begin PBXFileReference section */
 		8DD76F6C0486A84900D96B5E /* clang */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = clang; sourceTree = BUILT_PRODUCTS_DIR; };
+		DE01DA480B12ADA300AC22CE /* PPCallbacks.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = PPCallbacks.h; sourceTree = "<group>"; };
 		DE06B73D0A8307640050E87E /* LangOptions.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = LangOptions.h; sourceTree = "<group>"; };
 		DE06BECA0A854E4B0050E87E /* Scope.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; name = Scope.h; path = clang/Parse/Scope.h; sourceTree = "<group>"; };
 		DE06D42F0A8BB52D0050E87E /* Parser.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; name = Parser.cpp; path = Parse/Parser.cpp; sourceTree = "<group>"; };
@@ -385,6 +388,7 @@
 				DED7D73D0A524295003AD0FB /* MacroExpander.h */,
 				DED7D73E0A524295003AD0FB /* MacroInfo.h */,
 				DEAEE98A0A5A2B970045101B /* MultipleIncludeOpt.h */,
+				DE01DA480B12ADA300AC22CE /* PPCallbacks.h */,
 				DED7D73F0A524295003AD0FB /* Pragma.h */,
 				DED7D7400A524295003AD0FB /* Preprocessor.h */,
 				DED7D9170A52518C003AD0FB /* ScratchBuffer.h */,

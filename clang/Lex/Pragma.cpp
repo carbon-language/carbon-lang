@@ -13,6 +13,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "clang/Lex/Pragma.h"
+#include "clang/Lex/PPCallbacks.h"
 #include "clang/Lex/HeaderSearch.h"
 #include "clang/Lex/Preprocessor.h"
 #include "clang/Basic/Diagnostic.h"
@@ -238,9 +239,10 @@ void Preprocessor::HandlePragmaSystemHeader(LexerToken &SysHeaderTok) {
   HeaderInfo.MarkFileSystemHeader(File);
   
   // Notify the client, if desired, that we are in a new source file.
-  if (FileChangeHandler)
-    FileChangeHandler(TheLexer->getSourceLocation(TheLexer->BufferPtr),
-                      SystemHeaderPragma, DirectoryLookup::SystemHeaderDir);
+  if (Callbacks)
+    Callbacks->FileChanged(TheLexer->getSourceLocation(TheLexer->BufferPtr),
+                           PPCallbacks::SystemHeaderPragma,
+                           DirectoryLookup::SystemHeaderDir);
 }
 
 /// HandlePragmaDependency - Handle #pragma GCC dependency "foo" blah.

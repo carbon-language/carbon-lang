@@ -13,6 +13,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "clang.h"
+#include "clang/Lex/PPCallbacks.h"
 #include "clang/Lex/Preprocessor.h"
 #include "clang/Lex/Pragma.h"
 #include "clang/Basic/SourceManager.h"
@@ -155,19 +156,30 @@ static void MoveToLine(SourceLocation Loc) {
   } 
 }
 
-/// HandleFileChange - Whenever the preprocessor enters or exits a #include file
-/// it invokes this handler.  Update our conception of the current 
-static void HandleFileChange(SourceLocation Loc,
-                             Preprocessor::FileChangeReason Reason,
-                             DirectoryLookup::DirType FileType) {
+namespace {
+class PrintPPOutputPPCallbacks : public PPCallbacks {
+public:
+  virtual void FileChanged(SourceLocation Loc, FileChangeReason Reason,
+                           DirectoryLookup::DirType FileType);
+  virtual void Ident(SourceLocation Loc, const std::string &str);
+};
+}
+
+/// FileChanged - Whenever the preprocessor enters or exits a #include file
+/// it invokes this handler.  Update our conception of the current source
+/// position.
+
+void PrintPPOutputPPCallbacks::FileChanged(SourceLocation Loc,
+                                           FileChangeReason Reason,
+                                           DirectoryLookup::DirType FileType) {
   if (DisableLineMarkers) return;
 
   // Unless we are exiting a #include, make sure to skip ahead to the line the
   // #include directive was at.
   SourceManager &SourceMgr = EModePP->getSourceManager();
-  if (Reason == Preprocessor::EnterFile) {
+  if (Reason == PPCallbacks::EnterFile) {
     MoveToLine(SourceMgr.getIncludeLoc(Loc.getFileID()));
-  } else if (Reason == Preprocessor::SystemHeaderPragma) {
+  } else if (Reason == PPCallbacks::SystemHeaderPragma) {
     MoveToLine(Loc);
     
     // TODO GCC emits the # directive for this directive on the line AFTER the
@@ -194,14 +206,14 @@ static void HandleFileChange(SourceLocation Loc,
   OutputString(&EModeCurFilename[0], EModeCurFilename.size());
   
   switch (Reason) {
-  case Preprocessor::EnterFile:
+  case PPCallbacks::EnterFile:
     OutputString(" 1", 2);
     break;
-  case Preprocessor::ExitFile:
+  case PPCallbacks::ExitFile:
     OutputString(" 2", 2);
     break;
-  case Preprocessor::SystemHeaderPragma: break;
-  case Preprocessor::RenameFile: break;
+  case PPCallbacks::SystemHeaderPragma: break;
+  case PPCallbacks::RenameFile: break;
   }
   
   if (FileType == DirectoryLookup::SystemHeaderDir)
@@ -214,11 +226,11 @@ static void HandleFileChange(SourceLocation Loc,
 
 /// HandleIdent - Handle #ident directives when read by the preprocessor.
 ///
-static void HandleIdent(SourceLocation Loc, const std::string &Val) {
+void PrintPPOutputPPCallbacks::Ident(SourceLocation Loc, const std::string &S) {
   MoveToLine(Loc);
   
   OutputString("#ident ", strlen("#ident "));
-  OutputString(&Val[0], Val.size());
+  OutputString(&S[0], S.size());
   EmodeEmittedTokensOnThisLine = true;
 }
 
@@ -370,8 +382,7 @@ void clang::DoPrintPreprocessedInput(unsigned MainFileID, Preprocessor &PP,
   char Buffer[256];
   EModeCurLine = 0;
   EModeCurFilename = "\"<uninit>\"";
-  PP.setFileChangeHandler(HandleFileChange);
-  PP.setIdentHandler(HandleIdent);
+  PP.setPPCallbacks(new PrintPPOutputPPCallbacks());
   EModePP = &PP;
   EmodeEmittedTokensOnThisLine = false;
   

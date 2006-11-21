@@ -14,7 +14,6 @@
 #ifndef LLVM_CLANG_LEX_PREPROCESSOR_H
 #define LLVM_CLANG_LEX_PREPROCESSOR_H
 
-#include "clang/Lex/DirectoryLookup.h"
 #include "clang/Lex/IdentifierTable.h"
 #include "clang/Lex/Lexer.h"
 #include "clang/Lex/MacroExpander.h"
@@ -31,6 +30,8 @@ class PragmaNamespace;
 class PragmaHandler;
 class ScratchBuffer;
 class TargetInfo;
+class PPCallbacks;
+class DirectoryLookup;
 
 /// Preprocessor - This object forms engages in a tight little dance to
 /// efficiently preprocess tokens.  Lexers know only about tokens within a
@@ -55,35 +56,15 @@ class Preprocessor {
   IdentifierInfo *Ident_Pragma, *Ident__VA_ARGS__; // _Pragma, __VA_ARGS__
   
   SourceLocation DATELoc, TIMELoc;
-public:
-  enum FileChangeReason {
-    EnterFile, ExitFile, SystemHeaderPragma, RenameFile
-  };
-  typedef void (*FileChangeHandler_t)(SourceLocation Loc, 
-                                      FileChangeReason Reason,
-                                      DirectoryLookup::DirType FileType);
-  typedef void (*IdentHandler_t)(SourceLocation Loc, const std::string &str);
-  
-private:
-  /// FileChangeHandler - This callback is invoked whenever a source file is
-  /// entered or exited.  The SourceLocation indicates the new location, and
-  /// EnteringFile indicates whether this is because we are entering a new
-  /// #include'd file (when true) or whether we're exiting one because we ran
-  /// off the end (when false).
-  FileChangeHandler_t FileChangeHandler;
-  
-  /// IdentHandler - This is called whenever a #ident or #sccs directive is
-  /// found.
-  IdentHandler_t IdentHandler;
-  
+
   enum {
     /// MaxIncludeStackDepth - Maximum depth of #includes.
     MaxAllowedIncludeStackDepth = 200
   };
 
   // State that changes while the preprocessor runs:
-  bool DisableMacroExpansion;    // True if macro expansion is disabled.
-  bool InMacroArgs;              // True if parsing fn macro invocation args.
+  bool DisableMacroExpansion : 1;  // True if macro expansion is disabled.
+  bool InMacroArgs : 1;            // True if parsing fn macro invocation args.
 
   /// Identifiers - This is mapping/lookup information for all identifiers in
   /// the program, including program keywords.
@@ -119,6 +100,9 @@ private:
   };
   std::vector<IncludeStackInfo> IncludeMacroStack;
   
+  /// Callbacks - These are actions invoked when some preprocessor activity is
+  /// encountered (e.g. a file is #included, etc).
+  PPCallbacks *Callbacks;
   
   // Various statistics we track for performance analysis.
   unsigned NumDirectives, NumIncluded, NumDefined, NumUndefined, NumPragma;
@@ -156,20 +140,11 @@ public:
   /// expansions going on at the time.
   Lexer *getCurrentFileLexer() const;
   
-  
-  /// setFileChangeHandler - Set the callback invoked whenever a source file is
-  /// entered or exited.  The SourceLocation indicates the new location, and
-  /// EnteringFile indicates whether this is because we are entering a new
-  /// #include'd file (when true) or whether we're exiting one because we ran
-  /// off the end (when false).
-  void setFileChangeHandler(FileChangeHandler_t Handler) {
-    FileChangeHandler = Handler;
-  }
-
-  /// setIdentHandler - Set the callback invoked whenever a #ident/#sccs
-  /// directive is found.
-  void setIdentHandler(IdentHandler_t Handler) {
-    IdentHandler = Handler;
+  /// getPPCallbacks/SetPPCallbacks - Accessors for preprocessor callbacks.
+  ///
+  PPCallbacks *getPPCallbacks() const { return Callbacks; }
+  void setPPCallbacks(PPCallbacks *C) {
+    Callbacks = C;
   }
   
   /// getIdentifierInfo - Return information about the specified preprocessor
