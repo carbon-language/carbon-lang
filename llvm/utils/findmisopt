@@ -132,6 +132,15 @@ for sw in $all_switches ; do
   fi
 done
 
+# Terminate the previous output with a newline
+echo ""
+
+# Determine if we're done because none of the optimizations broke the program
+if [ "$switches" == " $all_switches" ] ; then
+  echo "The program did not miscompile"
+  exit 0
+fi
+
 final=""
 while [ ! -z "$switches" ] ; do
   trimmed=`echo "$switches" | sed -e 's/^ *\(-[^ ]*\).*/\1/'`
