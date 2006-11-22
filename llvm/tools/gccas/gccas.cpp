@@ -103,7 +103,6 @@ void AddConfiguredTransformationPasses(PassManager &PM) {
   addPass(PM, createCFGSimplificationPass());    // Merge & remove BBs
   addPass(PM, createScalarReplAggregatesPass()); // Break up aggregate allocas
   addPass(PM, createInstructionCombiningPass()); // Combine silly seq's
-  addPass(PM, createPredicateSimplifierPass());  // Canonicalize registers
   addPass(PM, createCondPropagationPass());      // Propagate conditionals
 
   addPass(PM, createTailCallEliminationPass());  // Eliminate tail calls
