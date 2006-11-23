@@ -9,6 +9,6 @@
 implementation
 
 int* %test() {
-  %P = getelementptr {int}* %X, long 0, ubyte 0
+  %P = getelementptr {int}* %X, long 0, uint 0
   ret int* %P
 }

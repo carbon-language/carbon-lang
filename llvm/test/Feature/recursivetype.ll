@@ -93,7 +93,7 @@ bb3:
         ret %list* null
 
 bb4:
-	%idx = getelementptr %list* %reg115, long 0, ubyte 1                  ;;<int>
+	%idx = getelementptr %list* %reg115, long 0, uint 1                  ;;<int>
         %reg111 = load int* %idx
         %cond1013 = setne int %reg111, %Data                    ;;<bool>
         br bool %cond1013, label %bb6, label %bb5
@@ -102,7 +102,7 @@ bb5:
         ret %list* %reg115
 
 bb6:
-	%idx2 = getelementptr %list* %reg115, long 0, ubyte 0                  ;;<%list*>
+	%idx2 = getelementptr %list* %reg115, long 0, uint 0                  ;;<%list*>
         %reg116 = load %list** %idx2
         br label %bb2
 end

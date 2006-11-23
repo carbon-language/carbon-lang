@@ -11,7 +11,7 @@ int *%foo(ulong %A, double %B, long %C) {
 	store int* %E, int** %X
 
 	%F = malloc {int}
-	%G = getelementptr {int}* %F, long 0, ubyte 0
+	%G = getelementptr {int}* %F, long 0, uint 0
 	store int* %G, int** %X
 
 	%K = malloc int **

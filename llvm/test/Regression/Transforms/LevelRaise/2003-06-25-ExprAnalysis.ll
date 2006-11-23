@@ -9,7 +9,7 @@ target pointersize = 64
 
 implementation   ; Functions:
 bool %Intersection(%struct..istack_struct* %tmp.0, uint %tmp.12) {              ; No predecessors!
-        %tmp.8 = getelementptr %struct..istack_struct* %tmp.0, long 0, ubyte 1          ; <%struct..istk_entry**> [#uses=1]
+        %tmp.8 = getelementptr %struct..istack_struct* %tmp.0, long 0, uint 1          ; <%struct..istk_entry**> [#uses=1]
         %tmp.9 = load %struct..istk_entry** %tmp.8              ; <%struct..istk_entry*> [#uses=1]
         %dec = sub uint %tmp.12, 1              ; <uint> [#uses=1]
         %tmp.13 = cast uint %dec to ulong               ; <ulong> [#uses=1]

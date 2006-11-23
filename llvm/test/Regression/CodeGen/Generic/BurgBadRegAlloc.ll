@@ -175,8 +175,8 @@ bb14:		; preds = %bb13, %bb12
 	%reg164 = load %YYSTYPE** %yyvsp		; <%YYSTYPE*> [#uses=2]
 	%reg661 = getelementptr %YYSTYPE* %reg164, long 1		; <%YYSTYPE*> [#uses=1]
 	store %YYSTYPE* %reg661, %YYSTYPE** %yyvsp
-	%reg167 = load %IntList* getelementptr (%YYSTYPE* %yylval, long 0, ubyte 0)		; <%IntList> [#uses=1]
-	%reg661.idx1 = getelementptr %YYSTYPE* %reg164, long 1, ubyte 0		; <%IntList*> [#uses=1]
+	%reg167 = load %IntList* getelementptr (%YYSTYPE* %yylval, long 0, uint 0)		; <%IntList> [#uses=1]
+	%reg661.idx1 = getelementptr %YYSTYPE* %reg164, long 1, uint 0		; <%IntList*> [#uses=1]
 	store %IntList %reg167, %IntList* %reg661.idx1
 	store int -1, int* %yychar
 	%reg169 = load int* %yyerrflag		; <int> [#uses=2]
@@ -292,8 +292,8 @@ bb31:		; preds = %bb30, %bb29
 	%reg236 = load %YYSTYPE** %yyvsp		; <%YYSTYPE*> [#uses=2]
 	%reg771 = getelementptr %YYSTYPE* %reg236, long 1		; <%YYSTYPE*> [#uses=1]
 	store %YYSTYPE* %reg771, %YYSTYPE** %yyvsp
-	%reg239 = load %IntList* getelementptr (%YYSTYPE* %yylval, long 0, ubyte 0)		; <%IntList> [#uses=1]
-	%reg771.idx1 = getelementptr %YYSTYPE* %reg236, long 1, ubyte 0		; <%IntList*> [#uses=1]
+	%reg239 = load %IntList* getelementptr (%YYSTYPE* %yylval, long 0, uint 0)		; <%IntList> [#uses=1]
+	%reg771.idx1 = getelementptr %YYSTYPE* %reg236, long 1, uint 0		; <%IntList*> [#uses=1]
 	store %IntList %reg239, %IntList* %reg771.idx1
 	br label %bb4
 
@@ -328,9 +328,9 @@ bb36:		; preds = %bb20, %bb4
 	%reg254-idxcast = cast short %reg254 to long		; <long> [#uses=1]
 	%reg254-idxcast-scale = mul long %reg254-idxcast, -1		; <long> [#uses=1]
 	%reg254-idxcast-scale-offset = add long %reg254-idxcast-scale, 1		; <long> [#uses=1]
-	%reg261.idx1 = getelementptr %YYSTYPE* %reg259, long %reg254-idxcast-scale-offset, ubyte 0		; <%IntList*> [#uses=1]
+	%reg261.idx1 = getelementptr %YYSTYPE* %reg259, long %reg254-idxcast-scale-offset, uint 0		; <%IntList*> [#uses=1]
 	%reg261 = load %IntList* %reg261.idx1		; <%IntList> [#uses=1]
-	store %IntList %reg261, %IntList* getelementptr (%YYSTYPE* %yyval, long 0, ubyte 0)
+	store %IntList %reg261, %IntList* getelementptr (%YYSTYPE* %yyval, long 0, uint 0)
 	%cond812 = seteq int %reg468, 13		; <bool> [#uses=1]
 	br bool %cond812, label %bb85, label %bb37
 
@@ -456,9 +456,9 @@ bb74:		; preds = %bb42
 
 bb75:		; preds = %bb43
 	%reg262 = load %YYSTYPE** %yyvsp		; <%YYSTYPE*> [#uses=2]
-	%reg264.idx1 = getelementptr %YYSTYPE* %reg262, long -2, ubyte 0		; <%IntList*> [#uses=1]
+	%reg264.idx1 = getelementptr %YYSTYPE* %reg262, long -2, uint 0		; <%IntList*> [#uses=1]
 	%reg264 = load %IntList* %reg264.idx1		; <%IntList> [#uses=1]
-	%reg265.idx = getelementptr %YYSTYPE* %reg262, long 0, ubyte 0		; <%IntList*> [#uses=1]
+	%reg265.idx = getelementptr %YYSTYPE* %reg262, long 0, uint 0		; <%IntList*> [#uses=1]
 	%reg265 = load %IntList* %reg265.idx		; <%IntList> [#uses=1]
 	%cast889 = cast %IntList %reg265 to %List		; <%List> [#uses=1]
 	%cast890 = cast %IntList %reg264 to %List		; <%List> [#uses=1]
@@ -466,175 +466,175 @@ bb75:		; preds = %bb43
 	br label %bb97
 
 bb76:		; preds = %bb40
-	store %IntList null, %IntList* getelementptr (%YYSTYPE* %yyval, long 0, ubyte 0)
+	store %IntList null, %IntList* getelementptr (%YYSTYPE* %yyval, long 0, uint 0)
 	br label %bb97
 
 bb77:		; preds = %bb45
 	%reg269 = load %YYSTYPE** %yyvsp		; <%YYSTYPE*> [#uses=2]
-	%cast894 = getelementptr %YYSTYPE* %reg269, long 0, ubyte 0		; <%IntList*> [#uses=1]
+	%cast894 = getelementptr %YYSTYPE* %reg269, long 0, uint 0		; <%IntList*> [#uses=1]
 	%reg271 = load %IntList* %cast894		; <%IntList> [#uses=1]
 	%reg271 = cast %IntList %reg271 to sbyte*		; <sbyte*> [#uses=1]
-	%reg272.idx1 = getelementptr %YYSTYPE* %reg269, long -1, ubyte 0		; <%IntList*> [#uses=1]
+	%reg272.idx1 = getelementptr %YYSTYPE* %reg269, long -1, uint 0		; <%IntList*> [#uses=1]
 	%reg272 = load %IntList* %reg272.idx1		; <%IntList> [#uses=1]
 	%cast901 = cast %IntList %reg272 to %List		; <%List> [#uses=1]
 	%reg901 = call %List %newList( sbyte* %reg271, %List %cast901 )		; <%List> [#uses=1]
 	cast %List %reg901 to %IntList		; <%IntList>:0 [#uses=1]
-	store %IntList %0, %IntList* getelementptr (%YYSTYPE* %yyval, long 0, ubyte 0)
+	store %IntList %0, %IntList* getelementptr (%YYSTYPE* %yyval, long 0, uint 0)
 	br label %bb97
 
 bb78:		; preds = %bb46
 	%reg275 = load %YYSTYPE** %yyvsp		; <%YYSTYPE*> [#uses=1]
-	%reg277.idx = getelementptr %YYSTYPE* %reg275, long 0, ubyte 0		; <%IntList*> [#uses=1]
+	%reg277.idx = getelementptr %YYSTYPE* %reg275, long 0, uint 0		; <%IntList*> [#uses=1]
 	%reg277 = load %IntList* %reg277.idx		; <%IntList> [#uses=1]
 	%cast907 = cast %IntList %reg277 to %List		; <%List> [#uses=1]
 	%reg907 = call %Arity %newArity( int -1, %List %cast907 )		; <%Arity> [#uses=1]
 	cast %Arity %reg907 to %IntList		; <%IntList>:1 [#uses=1]
-	store %IntList %1, %IntList* getelementptr (%YYSTYPE* %yyval, long 0, ubyte 0)
+	store %IntList %1, %IntList* getelementptr (%YYSTYPE* %yyval, long 0, uint 0)
 	br label %bb97
 
 bb79:		; preds = %bb38
-	store %IntList null, %IntList* getelementptr (%YYSTYPE* %yyval, long 0, ubyte 0)
+	store %IntList null, %IntList* getelementptr (%YYSTYPE* %yyval, long 0, uint 0)
 	%reg281 = load %YYSTYPE** %yyvsp		; <%YYSTYPE*> [#uses=1]
-	%cast912 = getelementptr %YYSTYPE* %reg281, long 0, ubyte 0		; <%IntList*> [#uses=1]
+	%cast912 = getelementptr %YYSTYPE* %reg281, long 0, uint 0		; <%IntList*> [#uses=1]
 	%reg282 = load %IntList* %cast912		; <%IntList> [#uses=1]
 	%reg282 = cast %IntList %reg282 to %List		; <%List> [#uses=1]
 	call void %doGram( %List %reg282 )
 	br label %bb97
 
 bb80:		; preds = %bb50
-	store %IntList null, %IntList* getelementptr (%YYSTYPE* %yyval, long 0, ubyte 0)
+	store %IntList null, %IntList* getelementptr (%YYSTYPE* %yyval, long 0, uint 0)
 	%reg285 = load %YYSTYPE** %yyvsp		; <%YYSTYPE*> [#uses=1]
-	%cast917 = getelementptr %YYSTYPE* %reg285, long 0, ubyte 0		; <%IntList*> [#uses=1]
+	%cast917 = getelementptr %YYSTYPE* %reg285, long 0, uint 0		; <%IntList*> [#uses=1]
 	%reg286 = load %IntList* %cast917		; <%IntList> [#uses=1]
 	%reg286 = cast %IntList %reg286 to sbyte*		; <sbyte*> [#uses=1]
 	call void %doStart( sbyte* %reg286 )
 	br label %bb97
 
 bb81:		; preds = %bb51
-	store %IntList null, %IntList* getelementptr (%YYSTYPE* %yyval, long 0, ubyte 0)
+	store %IntList null, %IntList* getelementptr (%YYSTYPE* %yyval, long 0, uint 0)
 	br label %bb97
 
 bb82:		; preds = %bb48
 	%reg290 = load %YYSTYPE** %yyvsp		; <%YYSTYPE*> [#uses=2]
-	%cast923 = getelementptr %YYSTYPE* %reg290, long 0, ubyte 0		; <%IntList*> [#uses=1]
+	%cast923 = getelementptr %YYSTYPE* %reg290, long 0, uint 0		; <%IntList*> [#uses=1]
 	%reg292 = load %IntList* %cast923		; <%IntList> [#uses=1]
 	%reg292 = cast %IntList %reg292 to sbyte*		; <sbyte*> [#uses=1]
-	%reg293.idx1 = getelementptr %YYSTYPE* %reg290, long -1, ubyte 0		; <%IntList*> [#uses=1]
+	%reg293.idx1 = getelementptr %YYSTYPE* %reg290, long -1, uint 0		; <%IntList*> [#uses=1]
 	%reg293 = load %IntList* %reg293.idx1		; <%IntList> [#uses=1]
 	%cast930 = cast %IntList %reg293 to %List		; <%List> [#uses=1]
 	%reg930 = call %List %newList( sbyte* %reg292, %List %cast930 )		; <%List> [#uses=1]
 	cast %List %reg930 to %IntList		; <%IntList>:2 [#uses=1]
-	store %IntList %2, %IntList* getelementptr (%YYSTYPE* %yyval, long 0, ubyte 0)
+	store %IntList %2, %IntList* getelementptr (%YYSTYPE* %yyval, long 0, uint 0)
 	br label %bb97
 
 bb83:		; preds = %bb53
-	store %IntList null, %IntList* getelementptr (%YYSTYPE* %yyval, long 0, ubyte 0)
+	store %IntList null, %IntList* getelementptr (%YYSTYPE* %yyval, long 0, uint 0)
 	br label %bb97
 
 bb84:		; preds = %bb54
 	%reg298 = load %YYSTYPE** %yyvsp		; <%YYSTYPE*> [#uses=2]
-	%cast936 = getelementptr %YYSTYPE* %reg298, long 0, ubyte 0		; <%IntList*> [#uses=1]
+	%cast936 = getelementptr %YYSTYPE* %reg298, long 0, uint 0		; <%IntList*> [#uses=1]
 	%reg300 = load %IntList* %cast936		; <%IntList> [#uses=1]
 	%reg300 = cast %IntList %reg300 to sbyte*		; <sbyte*> [#uses=1]
-	%reg301.idx1 = getelementptr %YYSTYPE* %reg298, long -1, ubyte 0		; <%IntList*> [#uses=1]
+	%reg301.idx1 = getelementptr %YYSTYPE* %reg298, long -1, uint 0		; <%IntList*> [#uses=1]
 	%reg301 = load %IntList* %reg301.idx1		; <%IntList> [#uses=1]
 	%cast943 = cast %IntList %reg301 to %List		; <%List> [#uses=1]
 	%reg943 = call %List %newList( sbyte* %reg300, %List %cast943 )		; <%List> [#uses=1]
 	cast %List %reg943 to %IntList		; <%IntList>:3 [#uses=1]
-	store %IntList %3, %IntList* getelementptr (%YYSTYPE* %yyval, long 0, ubyte 0)
+	store %IntList %3, %IntList* getelementptr (%YYSTYPE* %yyval, long 0, uint 0)
 	br label %bb97
 
 bb85:		; preds = %bb36
 	%reg304 = load %YYSTYPE** %yyvsp		; <%YYSTYPE*> [#uses=2]
-	%cast9521 = getelementptr %YYSTYPE* %reg304, long -2, ubyte 0		; <%IntList*> [#uses=1]
+	%cast9521 = getelementptr %YYSTYPE* %reg304, long -2, uint 0		; <%IntList*> [#uses=1]
 	%reg306 = load %IntList* %cast9521		; <%IntList> [#uses=1]
 	%reg306 = cast %IntList %reg306 to sbyte*		; <sbyte*> [#uses=1]
 	%cast953 = cast %YYSTYPE* %reg304 to int*		; <int*> [#uses=1]
 	%reg307 = load int* %cast953		; <int> [#uses=1]
 	%reg955 = call %Binding %newBinding( sbyte* %reg306, int %reg307 )		; <%Binding> [#uses=1]
 	cast %Binding %reg955 to %IntList		; <%IntList>:4 [#uses=1]
-	store %IntList %4, %IntList* getelementptr (%YYSTYPE* %yyval, long 0, ubyte 0)
+	store %IntList %4, %IntList* getelementptr (%YYSTYPE* %yyval, long 0, uint 0)
 	br label %bb97
 
 bb86:		; preds = %bb60
-	store %IntList null, %IntList* getelementptr (%YYSTYPE* %yyval, long 0, ubyte 0)
+	store %IntList null, %IntList* getelementptr (%YYSTYPE* %yyval, long 0, uint 0)
 	br label %bb97
 
 bb87:		; preds = %bb61
 	%reg312 = load %YYSTYPE** %yyvsp		; <%YYSTYPE*> [#uses=2]
-	%cast961 = getelementptr %YYSTYPE* %reg312, long 0, ubyte 0		; <%IntList*> [#uses=1]
+	%cast961 = getelementptr %YYSTYPE* %reg312, long 0, uint 0		; <%IntList*> [#uses=1]
 	%reg314 = load %IntList* %cast961		; <%IntList> [#uses=1]
 	%reg314 = cast %IntList %reg314 to sbyte*		; <sbyte*> [#uses=1]
-	%reg315.idx1 = getelementptr %YYSTYPE* %reg312, long -1, ubyte 0		; <%IntList*> [#uses=1]
+	%reg315.idx1 = getelementptr %YYSTYPE* %reg312, long -1, uint 0		; <%IntList*> [#uses=1]
 	%reg315 = load %IntList* %reg315.idx1		; <%IntList> [#uses=1]
 	%cast968 = cast %IntList %reg315 to %List		; <%List> [#uses=1]
 	%reg968 = call %List %newList( sbyte* %reg314, %List %cast968 )		; <%List> [#uses=1]
 	cast %List %reg968 to %IntList		; <%IntList>:5 [#uses=1]
-	store %IntList %5, %IntList* getelementptr (%YYSTYPE* %yyval, long 0, ubyte 0)
+	store %IntList %5, %IntList* getelementptr (%YYSTYPE* %yyval, long 0, uint 0)
 	br label %bb97
 
 bb88:		; preds = %bb58
 	%reg318 = load %YYSTYPE** %yyvsp		; <%YYSTYPE*> [#uses=4]
-	%cast9791 = getelementptr %YYSTYPE* %reg318, long -6, ubyte 0		; <%IntList*> [#uses=1]
+	%cast9791 = getelementptr %YYSTYPE* %reg318, long -6, uint 0		; <%IntList*> [#uses=1]
 	%reg322 = load %IntList* %cast9791		; <%IntList> [#uses=1]
 	%reg322 = cast %IntList %reg322 to sbyte*		; <sbyte*> [#uses=1]
-	%reg323.idx1 = getelementptr %YYSTYPE* %reg318, long -4, ubyte 0		; <%IntList*> [#uses=1]
+	%reg323.idx1 = getelementptr %YYSTYPE* %reg318, long -4, uint 0		; <%IntList*> [#uses=1]
 	%reg323 = load %IntList* %reg323.idx1		; <%IntList> [#uses=1]
 	%reg987 = getelementptr %YYSTYPE* %reg318, long -2		; <%YYSTYPE*> [#uses=1]
 	%cast989 = cast %YYSTYPE* %reg987 to int*		; <int*> [#uses=1]
 	%reg324 = load int* %cast989		; <int> [#uses=1]
-	%reg325.idx1 = getelementptr %YYSTYPE* %reg318, long -1, ubyte 0		; <%IntList*> [#uses=1]
+	%reg325.idx1 = getelementptr %YYSTYPE* %reg318, long -1, uint 0		; <%IntList*> [#uses=1]
 	%reg325 = load %IntList* %reg325.idx1		; <%IntList> [#uses=1]
 	%cast998 = cast %IntList %reg323 to %PatternAST		; <%PatternAST> [#uses=1]
 	%reg996 = call %RuleAST %newRuleAST( sbyte* %reg322, %PatternAST %cast998, int %reg324, %IntList %reg325 )		; <%RuleAST> [#uses=1]
 	cast %RuleAST %reg996 to %IntList		; <%IntList>:6 [#uses=1]
-	store %IntList %6, %IntList* getelementptr (%YYSTYPE* %yyval, long 0, ubyte 0)
+	store %IntList %6, %IntList* getelementptr (%YYSTYPE* %yyval, long 0, uint 0)
 	br label %bb97
 
 bb89:		; preds = %bb63
 	%reg328 = load %YYSTYPE** %yyvsp		; <%YYSTYPE*> [#uses=1]
-	%cast1002 = getelementptr %YYSTYPE* %reg328, long 0, ubyte 0		; <%IntList*> [#uses=1]
+	%cast1002 = getelementptr %YYSTYPE* %reg328, long 0, uint 0		; <%IntList*> [#uses=1]
 	%reg329 = load %IntList* %cast1002		; <%IntList> [#uses=1]
 	%reg329 = cast %IntList %reg329 to sbyte*		; <sbyte*> [#uses=1]
 	%reg1004 = call %PatternAST %newPatternAST( sbyte* %reg329, %List null )		; <%PatternAST> [#uses=1]
 	cast %PatternAST %reg1004 to %IntList		; <%IntList>:7 [#uses=1]
-	store %IntList %7, %IntList* getelementptr (%YYSTYPE* %yyval, long 0, ubyte 0)
+	store %IntList %7, %IntList* getelementptr (%YYSTYPE* %yyval, long 0, uint 0)
 	br label %bb97
 
 bb90:		; preds = %bb64
 	%reg333 = load %YYSTYPE** %yyvsp		; <%YYSTYPE*> [#uses=2]
-	%cast10131 = getelementptr %YYSTYPE* %reg333, long -1, ubyte 0		; <%IntList*> [#uses=1]
+	%cast10131 = getelementptr %YYSTYPE* %reg333, long -1, uint 0		; <%IntList*> [#uses=1]
 	%reg335 = load %IntList* %cast10131		; <%IntList> [#uses=1]
 	%reg335 = cast %IntList %reg335 to sbyte*		; <sbyte*> [#uses=1]
 	%reg1015 = call %List %newList( sbyte* %reg335, %List null )		; <%List> [#uses=1]
-	%cast10211 = getelementptr %YYSTYPE* %reg333, long -3, ubyte 0		; <%IntList*> [#uses=1]
+	%cast10211 = getelementptr %YYSTYPE* %reg333, long -3, uint 0		; <%IntList*> [#uses=1]
 	%reg338 = load %IntList* %cast10211		; <%IntList> [#uses=1]
 	%reg338 = cast %IntList %reg338 to sbyte*		; <sbyte*> [#uses=1]
 	%reg1023 = call %PatternAST %newPatternAST( sbyte* %reg338, %List %reg1015 )		; <%PatternAST> [#uses=1]
 	cast %PatternAST %reg1023 to %IntList		; <%IntList>:8 [#uses=1]
-	store %IntList %8, %IntList* getelementptr (%YYSTYPE* %yyval, long 0, ubyte 0)
+	store %IntList %8, %IntList* getelementptr (%YYSTYPE* %yyval, long 0, uint 0)
 	br label %bb97
 
 bb91:		; preds = %bb56
 	%reg341 = load %YYSTYPE** %yyvsp		; <%YYSTYPE*> [#uses=3]
-	%cast10331 = getelementptr %YYSTYPE* %reg341, long -1, ubyte 0		; <%IntList*> [#uses=1]
+	%cast10331 = getelementptr %YYSTYPE* %reg341, long -1, uint 0		; <%IntList*> [#uses=1]
 	%reg344 = load %IntList* %cast10331		; <%IntList> [#uses=1]
 	%reg344 = cast %IntList %reg344 to sbyte*		; <sbyte*> [#uses=1]
 	%reg1035 = call %List %newList( sbyte* %reg344, %List null )		; <%List> [#uses=1]
-	%cast10411 = getelementptr %YYSTYPE* %reg341, long -3, ubyte 0		; <%IntList*> [#uses=1]
+	%cast10411 = getelementptr %YYSTYPE* %reg341, long -3, uint 0		; <%IntList*> [#uses=1]
 	%reg347 = load %IntList* %cast10411		; <%IntList> [#uses=1]
 	%reg347 = cast %IntList %reg347 to sbyte*		; <sbyte*> [#uses=1]
 	%reg1043 = call %List %newList( sbyte* %reg347, %List %reg1035 )		; <%List> [#uses=1]
-	%cast10491 = getelementptr %YYSTYPE* %reg341, long -5, ubyte 0		; <%IntList*> [#uses=1]
+	%cast10491 = getelementptr %YYSTYPE* %reg341, long -5, uint 0		; <%IntList*> [#uses=1]
 	%reg349 = load %IntList* %cast10491		; <%IntList> [#uses=1]
 	%reg349 = cast %IntList %reg349 to sbyte*		; <sbyte*> [#uses=1]
 	%reg1051 = call %PatternAST %newPatternAST( sbyte* %reg349, %List %reg1043 )		; <%PatternAST> [#uses=1]
 	cast %PatternAST %reg1051 to %IntList		; <%IntList>:9 [#uses=1]
-	store %IntList %9, %IntList* getelementptr (%YYSTYPE* %yyval, long 0, ubyte 0)
+	store %IntList %9, %IntList* getelementptr (%YYSTYPE* %yyval, long 0, uint 0)
 	br label %bb97
 
 bb92:		; preds = %bb68
-	store %IntList null, %IntList* getelementptr (%YYSTYPE* %yyval, long 0, ubyte 0)
+	store %IntList null, %IntList* getelementptr (%YYSTYPE* %yyval, long 0, uint 0)
 	br label %bb97
 
 bb93:		; preds = %bb69
@@ -642,14 +642,14 @@ bb93:		; preds = %bb69
 	%reg1059 = getelementptr %YYSTYPE* %reg354, long -2		; <%YYSTYPE*> [#uses=1]
 	%cast1061 = cast %YYSTYPE* %reg1059 to int*		; <int*> [#uses=1]
 	%reg356 = load int* %cast1061		; <int> [#uses=1]
-	%reg357.idx1 = getelementptr %YYSTYPE* %reg354, long -1, ubyte 0		; <%IntList*> [#uses=1]
+	%reg357.idx1 = getelementptr %YYSTYPE* %reg354, long -1, uint 0		; <%IntList*> [#uses=1]
 	%reg357 = load %IntList* %reg357.idx1		; <%IntList> [#uses=1]
 	%reg1068 = call %IntList %newIntList( int %reg356, %IntList %reg357 )		; <%IntList> [#uses=1]
-	store %IntList %reg1068, %IntList* getelementptr (%YYSTYPE* %yyval, long 0, ubyte 0)
+	store %IntList %reg1068, %IntList* getelementptr (%YYSTYPE* %yyval, long 0, uint 0)
 	br label %bb97
 
 bb94:		; preds = %bb66
-	store %IntList null, %IntList* getelementptr (%YYSTYPE* %yyval, long 0, ubyte 0)
+	store %IntList null, %IntList* getelementptr (%YYSTYPE* %yyval, long 0, uint 0)
 	br label %bb97
 
 bb95:		; preds = %bb71
@@ -657,10 +657,10 @@ bb95:		; preds = %bb71
 	%reg1076 = getelementptr %YYSTYPE* %reg362, long -1		; <%YYSTYPE*> [#uses=1]
 	%cast1078 = cast %YYSTYPE* %reg1076 to int*		; <int*> [#uses=1]
 	%reg364 = load int* %cast1078		; <int> [#uses=1]
-	%reg365.idx = getelementptr %YYSTYPE* %reg362, long 0, ubyte 0		; <%IntList*> [#uses=1]
+	%reg365.idx = getelementptr %YYSTYPE* %reg362, long 0, uint 0		; <%IntList*> [#uses=1]
 	%reg365 = load %IntList* %reg365.idx		; <%IntList> [#uses=1]
 	%reg1081 = call %IntList %newIntList( int %reg364, %IntList %reg365 )		; <%IntList> [#uses=1]
-	store %IntList %reg1081, %IntList* getelementptr (%YYSTYPE* %yyval, long 0, ubyte 0)
+	store %IntList %reg1081, %IntList* getelementptr (%YYSTYPE* %yyval, long 0, uint 0)
 	br label %bb97
 
 bb96:		; preds = %bb72
@@ -668,10 +668,10 @@ bb96:		; preds = %bb72
 	%reg1088 = getelementptr %YYSTYPE* %reg368, long -1		; <%YYSTYPE*> [#uses=1]
 	%cast1090 = cast %YYSTYPE* %reg1088 to int*		; <int*> [#uses=1]
 	%reg370 = load int* %cast1090		; <int> [#uses=1]
-	%reg371.idx = getelementptr %YYSTYPE* %reg368, long 0, ubyte 0		; <%IntList*> [#uses=1]
+	%reg371.idx = getelementptr %YYSTYPE* %reg368, long 0, uint 0		; <%IntList*> [#uses=1]
 	%reg371 = load %IntList* %reg371.idx		; <%IntList> [#uses=1]
 	%reg1093 = call %IntList %newIntList( int %reg370, %IntList %reg371 )		; <%IntList> [#uses=1]
-	store %IntList %reg1093, %IntList* getelementptr (%YYSTYPE* %yyval, long 0, ubyte 0)
+	store %IntList %reg1093, %IntList* getelementptr (%YYSTYPE* %yyval, long 0, uint 0)
 	br label %bb97
 
 bb97:		; preds = %bb96, %bb95, %bb94, %bb93, %bb92, %bb91, %bb90, %bb89, %bb88, %bb87, %bb86, %bb85, %bb84, %bb83, %bb82, %bb81, %bb80, %bb79, %bb78, %bb77, %bb76, %bb75, %bb74, %bb72, %bb69, %bb64, %bb61, %bb54, %bb51, %bb46, %bb43
@@ -708,8 +708,8 @@ bb99:		; preds = %bb98
 	%reg403 = load %YYSTYPE** %yyvsp		; <%YYSTYPE*> [#uses=2]
 	%reg1128 = getelementptr %YYSTYPE* %reg403, long 1		; <%YYSTYPE*> [#uses=1]
 	store %YYSTYPE* %reg1128, %YYSTYPE** %yyvsp
-	%reg406 = load %IntList* getelementptr (%YYSTYPE* %yyval, long 0, ubyte 0)		; <%IntList> [#uses=1]
-	%reg1128.idx1 = getelementptr %YYSTYPE* %reg403, long 1, ubyte 0		; <%IntList*> [#uses=1]
+	%reg406 = load %IntList* getelementptr (%YYSTYPE* %yyval, long 0, uint 0)		; <%IntList> [#uses=1]
+	%reg1128.idx1 = getelementptr %YYSTYPE* %reg403, long 1, uint 0		; <%IntList*> [#uses=1]
 	store %IntList %reg406, %IntList* %reg1128.idx1
 	%reg407 = load int* %yychar		; <int> [#uses=1]
 	%cond1135 = setge int %reg407, 0		; <bool> [#uses=1]
@@ -790,8 +790,8 @@ bb112:		; preds = %bb111, %bb110
 	%reg449 = load %YYSTYPE** %yyvsp		; <%YYSTYPE*> [#uses=2]
 	%reg1202 = getelementptr %YYSTYPE* %reg449, long 1		; <%YYSTYPE*> [#uses=1]
 	store %YYSTYPE* %reg1202, %YYSTYPE** %yyvsp
-	%reg452 = load %IntList* getelementptr (%YYSTYPE* %yyval, long 0, ubyte 0)		; <%IntList> [#uses=1]
-	%reg1202.idx1 = getelementptr %YYSTYPE* %reg449, long 1, ubyte 0		; <%IntList*> [#uses=1]
+	%reg452 = load %IntList* getelementptr (%YYSTYPE* %yyval, long 0, uint 0)		; <%IntList> [#uses=1]
+	%reg1202.idx1 = getelementptr %YYSTYPE* %reg449, long 1, uint 0		; <%IntList*> [#uses=1]
 	store %IntList %reg452, %IntList* %reg1202.idx1
 	br label %bb4
 

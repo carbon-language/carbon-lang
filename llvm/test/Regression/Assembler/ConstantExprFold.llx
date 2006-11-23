@@ -20,8 +20,8 @@ global long* cast (long xor (long cast (long* %A to long), long 0) to long*) ; X
 
 global bool setlt (long* %A, long* getelementptr (long* %A, long 1))        ; true
 global bool setlt (long* %A, long* getelementptr (long* %A, long 0))        ; false
-global bool setlt (int* getelementptr (%Ty* %B, long 0, ubyte 0), 
-                   int* getelementptr (%Ty* %B, long 0, ubyte 1))            ; true
+global bool setlt (int* getelementptr (%Ty* %B, long 0, uint 0), 
+                   int* getelementptr (%Ty* %B, long 0, uint 1))            ; true
 ;global bool setne (long* %A, long* cast (%Ty* %B to long*))                 ; true
 
 global bool seteq ({ short }* cast (int 1 to { short }*), { short }* null)

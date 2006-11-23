@@ -18,12 +18,12 @@ bb2:		; preds = %bb3, %bb0
 	br bool %cond217, label %bb4, label %bb3
 
 bb3:		; preds = %bb2
-	%reg221 = getelementptr %HANDLE* %reg113, long 0, ubyte 1		; <%HANDLE**> [#uses=1]
+	%reg221 = getelementptr %HANDLE* %reg113, long 0, uint 1		; <%HANDLE**> [#uses=1]
 	%reg108 = load %HANDLE** %reg221		; <%HANDLE*> [#uses=1]
-	%reg226 = getelementptr %HANDLE* %reg113, long 0, ubyte 2		; <%HANDLE**> [#uses=1]
+	%reg226 = getelementptr %HANDLE* %reg113, long 0, uint 2		; <%HANDLE**> [#uses=1]
 	%reg109 = load %HANDLE** %reg226		; <%HANDLE*> [#uses=1]
 	call void %InOrder( %HANDLE* %reg108 )
-	%cast231 = getelementptr %HANDLE* %reg113, long 0, ubyte 0		; <int*> [#uses=1]
+	%cast231 = getelementptr %HANDLE* %reg113, long 0, uint 0		; <int*> [#uses=1]
 	%reg111 = load int* %cast231		; <int> [#uses=1]
 	%reg233 = call int (sbyte*, ...)* %printf( sbyte* getelementptr ([11 x sbyte]* %.LC0, long 0, long 0), int %reg111, uint 0 )		; <int> [#uses=0]
 	br label %bb2

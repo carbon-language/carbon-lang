@@ -25,7 +25,7 @@ begin
 	%v1 = load int* %MyVar
 	call void %print(int %v1)    ;; Should start out 4
 
-	%idx = getelementptr { \2 *, int }* %MyIntList, long 0, ubyte 1
+	%idx = getelementptr { \2 *, int }* %MyIntList, long 0, uint 1
 	%v2 = load int* %idx
 	call void %print(int %v2)    ;; Should start out 17
 

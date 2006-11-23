@@ -11,8 +11,8 @@ void %test() {
 	%A = alloca double*
 	%B = alloca %S
 	%C = alloca %T
-	%b = getelementptr %S* %B, long 0, ubyte 0
-	%c = getelementptr %T* %C, long 0, ubyte 0
+	%b = getelementptr %S* %B, long 0, uint 0
+	%c = getelementptr %T* %C, long 0, uint 0
 
 	store double* %b, double** %A
 	store double* %c, double** %A

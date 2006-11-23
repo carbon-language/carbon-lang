@@ -2,7 +2,7 @@
 
 bool %_ZN4llvm11SetCondInst7classofEPKNS_11InstructionE({uint, uint}* %I) {
 entry:
-	%tmp.1.i = getelementptr {uint, uint}* %I, long 0, ubyte 1
+	%tmp.1.i = getelementptr {uint, uint}* %I, long 0, uint 1
 	%tmp.2.i = load uint* %tmp.1.i
 	%tmp.2 = seteq uint %tmp.2.i, 14
 	br bool %tmp.2, label %shortcirc_done.4, label %shortcirc_next.0

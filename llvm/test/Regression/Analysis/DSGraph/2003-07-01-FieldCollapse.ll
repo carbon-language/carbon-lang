@@ -6,6 +6,6 @@ implementation
 
 
 void %test() {
-	store short 5, short* getelementptr ({ int, short, short }* %X, long 0, ubyte 1)
+	store short 5, short* getelementptr ({ int, short, short }* %X, long 0, uint 1)
 	ret void
 }

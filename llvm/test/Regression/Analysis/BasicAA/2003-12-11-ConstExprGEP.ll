@@ -8,10 +8,10 @@
 %G = external global %T
 
 void %test() {
-  %D = getelementptr %T* %G, long 0, ubyte 0
-  %E = getelementptr %T* %G, long 0, ubyte 1, long 5
-  %F = getelementptr uint* getelementptr (%T* %G, long 0, ubyte 0), long 0
-  %X = getelementptr [10 x ubyte]* getelementptr (%T* %G, long 0, ubyte 1), long 0, long 5
+  %D = getelementptr %T* %G, long 0, uint 0
+  %E = getelementptr %T* %G, long 0, uint 1, long 5
+  %F = getelementptr uint* getelementptr (%T* %G, long 0, uint 0), long 0
+  %X = getelementptr [10 x ubyte]* getelementptr (%T* %G, long 0, uint 1), long 0, long 5
 
   ret void
 }

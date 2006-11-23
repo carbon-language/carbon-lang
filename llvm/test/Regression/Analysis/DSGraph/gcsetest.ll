@@ -10,21 +10,21 @@ implementation
 	%Ap = malloc int
 	%Bp = malloc int
  	%C  = malloc {int*, int*}
-	%C1p = getelementptr {int*, int*}* %C, long 0, ubyte 0
+	%C1p = getelementptr {int*, int*}* %C, long 0, uint 0
 	store int* %Ap, int** %C1p
-	%C2p = getelementptr {int*, int*}* %C, long 0, ubyte 1
+	%C2p = getelementptr {int*, int*}* %C, long 0, uint 1
 	store int* %Bp, int** %C2p
 	ret %intpair* %C
 }
 
 int* %getp(%intpair* %P) {
-	%pp = getelementptr %intpair* %P, long 0, ubyte 0
+	%pp = getelementptr %intpair* %P, long 0, uint 0
 	%V = load int** %pp
 	ret int *%V
 }
 
 int* %getq(%intpair* %P) {
-	%pp = getelementptr %intpair* %P, long 0, ubyte 1
+	%pp = getelementptr %intpair* %P, long 0, uint 1
 	%V = load int** %pp
 	ret int *%V
 }

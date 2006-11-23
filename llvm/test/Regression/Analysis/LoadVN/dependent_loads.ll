@@ -15,11 +15,11 @@ sbyte %test(sbyte** %P) {
 
 sbyte %test(%S ** %P) {
 	%A = load %S** %P
-	%B = getelementptr %S* %A, int 0, ubyte 1
+	%B = getelementptr %S* %A, int 0, uint 1
 	%C = load sbyte* %B
 
 	%X = load %S** %P
-	%Y = getelementptr %S* %X, int 0, ubyte 1
+	%Y = getelementptr %S* %X, int 0, uint 1
 	%Z = load sbyte* %Y
 
 	%R = sub sbyte %C, %Z

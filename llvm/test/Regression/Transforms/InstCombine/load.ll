@@ -15,20 +15,20 @@ int %test1() {
 }
 
 float %test2() {
-	%A = getelementptr [2 x { int, float}]* %Y, long 0, long 1, ubyte 1
+	%A = getelementptr [2 x { int, float}]* %Y, long 0, long 1, uint 1
 	%B = load float* %A
 	ret float %B
 }
 
 
 int %test3() {
-	%A = getelementptr [2 x { int, float}]* %Y, long 0, long 0, ubyte 0
+	%A = getelementptr [2 x { int, float}]* %Y, long 0, long 0, uint 0
 	%B = load int* %A
 	ret int %B
 }
 
 int %test4() {
-	%A = getelementptr [2 x { int, float}]* %Z, long 0, long 1, ubyte 0
+	%A = getelementptr [2 x { int, float}]* %Z, long 0, long 1, uint 0
 	%B = load int* %A
 	ret int %B
 }

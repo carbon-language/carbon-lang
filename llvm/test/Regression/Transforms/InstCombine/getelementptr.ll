@@ -23,7 +23,7 @@ int* %foo3(int * %I) { ; Test that two array indexing geps fold
 
 int* %foo4({int} *%I) { ; Test that two getelementptr insts fold
 	%A = getelementptr {int}* %I, long 1
-	%B = getelementptr {int}* %A, long 0, ubyte 0
+	%B = getelementptr {int}* %A, long 0, uint 0
 	ret int* %B
 }
 

@@ -11,7 +11,7 @@
 int %test() {
         br label %Loop
 Loop:
-        %dead = getelementptr %Ty* %X, long 0, ubyte 0
+        %dead = getelementptr %Ty* %X, long 0, uint 0
         %sunk2 = load int* %dead
         br bool false, label %Loop, label %Out
 Out:

@@ -28,7 +28,7 @@ begin
 
 
     %aa = alloca %complexty, uint 5
-    %idx2 = getelementptr %complexty* %aa, long %i0, ubyte 1, ubyte 0, long %j0
+    %idx2 = getelementptr %complexty* %aa, long %i0, uint 1, uint 0, long %j0
     store sbyte *null, sbyte** %idx2
     
     %ptr = alloca int                       ; yields {int*}:ptr
@@ -36,8 +36,8 @@ begin
     %val = load int* %ptr                   ; yields {int}:val = int %3
 
     %sptr = alloca %struct                  ; yields {%struct*}:sptr
-    %ubsptr = getelementptr %struct * %sptr, long 0, ubyte 1, ubyte 1  ; yields {{ubyte}*}:ubsptr
-    %idx3 = getelementptr {ubyte} * %ubsptr, long 0, ubyte 0
+    %ubsptr = getelementptr %struct * %sptr, long 0, uint 1, uint 1  ; yields {{ubyte}*}:ubsptr
+    %idx3 = getelementptr {ubyte} * %ubsptr, long 0, uint 0
     store ubyte 4, ubyte* %idx3
 
     ret int 3

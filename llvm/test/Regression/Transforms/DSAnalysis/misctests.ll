@@ -50,9 +50,9 @@ L3:
 }
 
 int %test6({int, int}* %A) {
-	%B = getelementptr {int, int}* %A, long 0, ubyte 0
+	%B = getelementptr {int, int}* %A, long 0, uint 0
 	%b = load int* %B
-	%C = getelementptr {int, int}* %A, long 0, ubyte 1
+	%C = getelementptr {int, int}* %A, long 0, uint 1
 	%c = load int* %C
 	%d = add int %b, %c
 	ret int %d

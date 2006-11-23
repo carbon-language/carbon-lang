@@ -22,7 +22,7 @@ int %main(int %argc, sbyte** %argv) {
 bb0:					;[#uses=0]
 	call void %opaque([497 x %Domain]* %domain_array)
 	%cann-indvar-idxcast = cast int %argc to long
-        %reg841 = getelementptr [497 x %Domain]* %domain_array, long 0, long %cann-indvar-idxcast, ubyte 3
+        %reg841 = getelementptr [497 x %Domain]* %domain_array, long 0, long %cann-indvar-idxcast, uint 3
         %reg846 = getelementptr int* %reg841, long 1
         %reg820 = load int* %reg846
 	ret int %reg820

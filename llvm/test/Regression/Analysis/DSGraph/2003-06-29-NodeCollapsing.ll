@@ -5,12 +5,12 @@ int %main() {
 	%A = alloca %T
 	%B = alloca { %T }
 	%C = alloca %T*
-	%Bp = getelementptr { %T }* %B, long 0, ubyte 0
+	%Bp = getelementptr { %T }* %B, long 0, uint 0
 
 	%i0 = alloca int
 	%i1 = alloca int
-	%Ap0 = getelementptr %T* %A, long 0, ubyte 0
-	%Ap1 = getelementptr %T* %A, long 0, ubyte 1
+	%Ap0 = getelementptr %T* %A, long 0, uint 0
+	%Ap1 = getelementptr %T* %A, long 0, uint 1
 	store int* %i0, int** %Ap0
 	store int* %i1, int** %Ap1
 

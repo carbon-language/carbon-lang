@@ -5,10 +5,10 @@
 implementation
 
 void %bar(%str* %S, %str* %T) {
-	%A1 = getelementptr %str* %S, long 0, ubyte 0
-	%B1 = getelementptr %str* %S, long 0, ubyte 1
-	%A2 = getelementptr %str* %S, long 0, ubyte 0
-	%B2 = getelementptr %str* %S, long 0, ubyte 1
+	%A1 = getelementptr %str* %S, long 0, uint 0
+	%B1 = getelementptr %str* %S, long 0, uint 1
+	%A2 = getelementptr %str* %S, long 0, uint 0
+	%B2 = getelementptr %str* %S, long 0, uint 1
 	%a1 = cast int* %A1 to long*
 	%a2 = cast int* %A2 to long*
 	%V = load long* %a1

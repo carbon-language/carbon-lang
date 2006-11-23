@@ -9,8 +9,8 @@ int %main() {
 	%A = alloca %T
 	%B = alloca { %T }
 	%C = alloca %T*
-	%Bp = getelementptr { %T }* %B, long 0, ubyte 0
-	%Ap = getelementptr %T* %A, long 0, ubyte 0
+	%Bp = getelementptr { %T }* %B, long 0, uint 0
+	%Ap = getelementptr %T* %A, long 0, uint 0
 
 	store %T* %A, %T** %C
 	store %T* %Bp, %T** %C    ; This store was causing merging to happen!

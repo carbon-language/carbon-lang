@@ -4,6 +4,6 @@
 ; contained WITHIN a structure.
 
 void %test({int, int*} * %X) {
-	getelementptr {int, int*} * %X, long 0, ubyte 1, long 0
+	getelementptr {int, int*} * %X, long 0, uint 1, long 0
 	ret void
 }

@@ -7,9 +7,9 @@
 
 int %main() {
 	%A = alloca %S
-	%Ap = getelementptr %S* %A, long 0, ubyte 0
+	%Ap = getelementptr %S* %A, long 0, uint 0
 	%B = alloca %T
-	%Bp = getelementptr %T* %B, long 0, ubyte 0
+	%Bp = getelementptr %T* %B, long 0, uint 0
 	%C = alloca int*
 	
 	store int* %Ap, int** %C
