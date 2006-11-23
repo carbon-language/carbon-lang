@@ -68,11 +68,10 @@ global float 0.0
 %S1fld1bptr = global float** %S1fld1b	    ;; Ref. to previous pointer
 
 					    ;; Pointer to ubyte (**%S2).1.1.0
-%S2fld3 = global ubyte* getelementptr (%SType* %S2c, long 0, uint 1, uint 1, %uint 0) 
+%S2fld3 = global ubyte* getelementptr (%SType* %S2c, long 0, uint 1, uint 1, uint 0) 
 
 					    ;; Pointer to float (**%S2).1.0[0]
-;%S3fld3 = global float* getelementptr (%SAType** %S3, long 0, long 0, uint 1,
-uint 0, long 0) 
+;%S3fld3 = global float* getelementptr (%SAType** %S3, long 0, long 0, uint 1, uint 0, long 0) 
 
 ;;---------------------------------------------------------
 ;; TODO: Test constant expressions for unary and binary operators
