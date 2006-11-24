@@ -31,6 +31,7 @@ use Socket;
 #  -release         Build an LLVM Release version
 #  -release-asserts Build an LLVM ReleaseAsserts version
 #  -enable-llcbeta  Enable testing of beta features in llc.
+#  -enable-lli      Enable testing of lli (interpreter) features, default is off
 #  -disable-llc     Disable LLC tests in the nightly tester.
 #  -disable-jit     Disable JIT tests in the nightly tester.
 #  -disable-cbe     Disable C backend tests in the nightly tester.
@@ -139,6 +140,8 @@ while (scalar(@ARGV) and ($_ = $ARGV[0], /^[-+]/)) {
                              "OPTIMIZE_OPTION=-O2"; 
                              $BUILDTYPE="release-asserts"; next;}
   if (/^-enable-llcbeta$/) { $PROGTESTOPTS .= " ENABLE_LLCBETA=1"; next; }
+  if (/^-enable-lli$/)     { $PROGTESTOPTS .= " ENABLE_LLI=1";
+                             $CONFIGUREARGS .= " --enable-lli"; next; } 
   if (/^-disable-llc$/)    { $PROGTESTOPTS .= " DISABLE_LLC=1";
                              $CONFIGUREARGS .= " --disable-llc_diffs"; next; } 
   if (/^-disable-jit$/)    { $PROGTESTOPTS .= " DISABLE_JIT=1";
