@@ -106,8 +106,9 @@ static bool CompareNumbers(char *&F1P, char *&F2P, char *F1End, char *F2End,
       Diff = 0;  // Both zero.
     if (Diff > RelTolerance) {
       if (ErrorMsg) {
-        *ErrorMsg = "Compared: " + ftostr(V1) + " and " + ftostr(V2) +
-                    ": diff = " + ftostr(Diff) + "\n";
+        *ErrorMsg = "Compared: " + ftostr(V1) + " and " + ftostr(V2) + "\n";
+        *ErrorMsg += "abs. diff = " + ftostr(std::abs(V1-V2)) + 
+                     " rel.diff = " + ftostr(Diff) + "\n";
         *ErrorMsg += "Out of tolerance: rel/abs: " + ftostr(RelTolerance) +
                      "/" + ftostr(AbsTolerance);
       }
