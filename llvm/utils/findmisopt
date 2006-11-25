@@ -116,7 +116,7 @@ function tryit {
       echo "Diff fails with these switches:"
       echo $switches
       echo "Differences:"
-      diff "$out" "$optout" 
+      diff "$out" "$optout" | head
       return 0;
     fi
   fi
