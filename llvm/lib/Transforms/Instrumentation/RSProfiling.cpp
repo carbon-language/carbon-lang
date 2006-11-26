@@ -45,13 +45,10 @@
 #include "llvm/Transforms/Instrumentation.h"
 //#include "ProfilingUtils.h"
 #include "RSProfiling.h"
-
 #include <set>
 #include <map>
 #include <queue>
 #include <list>
-#include <iostream>
-
 using namespace llvm;
 
 namespace {
@@ -628,7 +625,7 @@ static void getBackEdges(Function& F, T& BackEdges) {
   std::map<BasicBlock*, int> finish;
   int time = 0;
   recBackEdge(&F.getEntryBlock(), BackEdges, color, depth, finish, time);
-  DEBUG(std::cerr << F.getName() << " " << BackEdges.size() << "\n");
+  DOUT << F.getName() << " " << BackEdges.size() << "\n";
 }
 
 

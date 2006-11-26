@@ -23,7 +23,6 @@
 #include "ProfilingUtils.h"
 #include "llvm/Support/Debug.h"
 #include <set>
-#include <iostream>
 using namespace llvm;
 
 namespace {
@@ -43,8 +42,8 @@ ModulePass *llvm::createTraceBasicBlockPass()
 static void InsertInstrumentationCall (BasicBlock *BB,
                                        const std::string FnName,
                                        unsigned BBNumber) {
-  DEBUG (std::cerr << "InsertInstrumentationCall (\"" << BB->getName ()
-                   << "\", \"" << FnName << "\", " << BBNumber << ")\n");
+  DOUT << "InsertInstrumentationCall (\"" << BB->getName ()
+       << "\", \"" << FnName << "\", " << BBNumber << ")\n";
   Module &M = *BB->getParent ()->getParent ();
   Function *InstrFn = M.getOrInsertFunction (FnName, Type::VoidTy,
                                              Type::UIntTy, (Type *)0);
@@ -62,7 +61,7 @@ static void InsertInstrumentationCall (BasicBlock *BB,
 bool TraceBasicBlocks::runOnModule(Module &M) {
   Function *Main = M.getMainFunction();
   if (Main == 0) {
-    std::cerr << "WARNING: cannot insert basic-block trace instrumentation"
+    llvm_cerr << "WARNING: cannot insert basic-block trace instrumentation"
               << " into a module with no main function!\n";
     return false;  // No main, no instrumentation!
   }

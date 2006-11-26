@@ -23,11 +23,10 @@
 #include "llvm/DerivedTypes.h"
 #include "llvm/Module.h"
 #include "llvm/Pass.h"
+#include "llvm/Support/Streams.h"
 #include "llvm/Transforms/Instrumentation.h"
 #include "RSProfiling.h"
 #include "ProfilingUtils.h"
-#include <iostream>
-
 using namespace llvm;
 
 namespace {
@@ -48,7 +47,7 @@ ModulePass *llvm::createFunctionProfilerPass() {
 bool FunctionProfiler::runOnModule(Module &M) {
   Function *Main = M.getMainFunction();
   if (Main == 0) {
-    std::cerr << "WARNING: cannot insert function profiling into a module"
+    llvm_cerr << "WARNING: cannot insert function profiling into a module"
               << " with no main function!\n";
     return false;  // No main, no instrumentation!
   }
@@ -91,7 +90,7 @@ ModulePass *llvm::createBlockProfilerPass() { return new BlockProfiler(); }
 bool BlockProfiler::runOnModule(Module &M) {
   Function *Main = M.getMainFunction();
   if (Main == 0) {
-    std::cerr << "WARNING: cannot insert block profiling into a module"
+    llvm_cerr << "WARNING: cannot insert block profiling into a module"
               << " with no main function!\n";
     return false;  // No main, no instrumentation!
   }

@@ -24,7 +24,6 @@
 #include "llvm/ADT/Statistic.h"
 #include "llvm/ADT/STLExtras.h"
 #include <algorithm>
-#include <iostream>
 using namespace llvm;
 
 // StartInst - This enables the -raise-start-inst=foo option to cause the level
@@ -54,7 +53,7 @@ static Statistic<>
 NumVarargCallChanges("raise", "Number of vararg call peepholes");
 
 #define PRINT_PEEPHOLE(ID, NUM, I)            \
-  DEBUG(std::cerr << "Inst P/H " << ID << "[" << NUM << "] " << I)
+  DOUT << "Inst P/H " << ID << "[" << NUM << "] " << I
 
 #define PRINT_PEEPHOLE1(ID, I1) do { PRINT_PEEPHOLE(ID, 0, I1); } while (0)
 #define PRINT_PEEPHOLE2(ID, I1, I2) \
@@ -140,7 +139,7 @@ bool RPR::PeepholeOptimize(BasicBlock *BB, BasicBlock::iterator &BI) {
       if (ExpressionConvertibleToType(Src, DestTy, ConvertedTypes, TD)) {
         PRINT_PEEPHOLE3("CAST-SRC-EXPR-CONV:in ", *Src, *CI, *BB->getParent());
 
-        DEBUG(std::cerr << "\nCONVERTING SRC EXPR TYPE:\n");
+        DOUT << "\nCONVERTING SRC EXPR TYPE:\n";
         { // ValueMap must be destroyed before function verified!
           ValueMapCache ValueMap;
           Value *E = ConvertExpressionToType(Src, DestTy, ValueMap, TD);
@@ -149,8 +148,8 @@ bool RPR::PeepholeOptimize(BasicBlock *BB, BasicBlock::iterator &BI) {
             CI->replaceAllUsesWith(CPV);
 
           PRINT_PEEPHOLE1("CAST-SRC-EXPR-CONV:out", *E);
-          DEBUG(std::cerr << "DONE CONVERTING SRC EXPR TYPE: \n"
-                          << *BB->getParent());
+          DOUT << "DONE CONVERTING SRC EXPR TYPE: \n"
+               << *BB->getParent();
         }
 
         BI = BB->begin();  // Rescan basic block.  BI might be invalidated.
@@ -168,15 +167,14 @@ bool RPR::PeepholeOptimize(BasicBlock *BB, BasicBlock::iterator &BI) {
         //PRINT_PEEPHOLE3("CAST-DEST-EXPR-CONV:in ", *Src, *CI,
         //                *BB->getParent());
 
-        DEBUG(std::cerr << "\nCONVERTING EXPR TYPE:\n");
+        DOUT << "\nCONVERTING EXPR TYPE:\n";
         { // ValueMap must be destroyed before function verified!
           ValueMapCache ValueMap;
           ConvertValueToNewType(CI, Src, ValueMap, TD);  // This will delete CI!
         }
 
         PRINT_PEEPHOLE1("CAST-DEST-EXPR-CONV:out", *Src);
-        DEBUG(std::cerr << "DONE CONVERTING EXPR TYPE: \n\n" <<
-              *BB->getParent());
+        DOUT << "DONE CONVERTING EXPR TYPE: \n\n" << *BB->getParent();
 
         BI = BB->begin();  // Rescan basic block.  BI might be invalidated.
         ++NumExprTreesConv;
@@ -402,11 +400,11 @@ bool RPR::DoRaisePass(Function &F) {
   bool Changed = false;
   for (Function::iterator BB = F.begin(), BBE = F.end(); BB != BBE; ++BB)
     for (BasicBlock::iterator BI = BB->begin(); BI != BB->end();) {
-      DEBUG(std::cerr << "LevelRaising: " << *BI);
+      DOUT << "LevelRaising: " << *BI;
       if (dceInstruction(BI) || doConstantPropagation(BI)) {
         Changed = true;
         ++NumDCEorCP;
-        DEBUG(std::cerr << "***\t\t^^-- Dead code eliminated!\n");
+        DOUT << "***\t\t^^-- Dead code eliminated!\n";
       } else if (PeepholeOptimize(BB, BI)) {
         Changed = true;
       } else {
@@ -420,8 +418,7 @@ bool RPR::DoRaisePass(Function &F) {
 
 // runOnFunction - Raise a function representation to a higher level.
 bool RPR::runOnFunction(Function &F) {
-  DEBUG(std::cerr << "\n\n\nStarting to work on Function '" << F.getName()
-                  << "'\n");
+  DOUT << "\n\n\nStarting to work on Function '" << F.getName() << "'\n";
 
   // Insert casts for all incoming pointer pointer values that are treated as
   // arrays...
@@ -443,7 +440,7 @@ bool RPR::runOnFunction(Function &F) {
   }
 
   do {
-    DEBUG(std::cerr << "Looping: \n" << F);
+    DOUT << "Looping: \n" << F;
 
     // Iterate over the function, refining it, until it converges on a stable
     // state
