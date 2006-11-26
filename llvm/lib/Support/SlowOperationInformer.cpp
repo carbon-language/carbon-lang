@@ -12,8 +12,8 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Support/SlowOperationInformer.h"
+#include "llvm/Support/Streams.h"
 #include "llvm/System/Alarm.h"
-#include <iostream>
 #include <sstream>
 #include <cassert>
 using namespace llvm;
@@ -28,7 +28,7 @@ SlowOperationInformer::~SlowOperationInformer() {
   if (LastPrintAmount) {
     // If we have printed something, make _sure_ we print the 100% amount, and
     // also print a newline.
-    std::cout << std::string(LastPrintAmount, '\b') << "Progress "
+    llvm_cout << std::string(LastPrintAmount, '\b') << "Progress "
               << OperationName << ": 100%  \n";
   }
 }
@@ -40,7 +40,7 @@ SlowOperationInformer::~SlowOperationInformer() {
 bool SlowOperationInformer::progress(unsigned Amount) {
   int status = sys::AlarmStatus();
   if (status == -1) {
-    std::cout << "\n";
+    llvm_cout << "\n";
     LastPrintAmount = 0;
     return true;
   }
@@ -61,6 +61,6 @@ bool SlowOperationInformer::progress(unsigned Amount) {
     OS << "%  ";
 
   LastPrintAmount = OS.str().size();
-  std::cout << ToPrint+OS.str() << std::flush;
+  llvm_cout << ToPrint+OS.str() << std::flush;
   return false;
 }
