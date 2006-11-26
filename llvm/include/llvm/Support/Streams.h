@@ -29,6 +29,13 @@ namespace llvm {
     llvm_ostream() : Stream(0) {}
     llvm_ostream(std::ostream &OStream) : Stream(&OStream) {}
 
+    std::ostream* stream() const { return Stream; }
+
+    inline llvm_ostream &operator << (std::ostream& (*Func)(std::ostream&)) {
+      *Stream << Func;
+      return *this;
+    }
+      
     template <typename Ty>
     llvm_ostream &operator << (const Ty &Thing) {
       if (Stream) *Stream << Thing;
