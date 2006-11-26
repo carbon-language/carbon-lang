@@ -22,7 +22,6 @@
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/ADT/Statistic.h"
-#include <iostream>
 #include <set>
 using namespace llvm;
 
@@ -48,8 +47,7 @@ static bool InlineCallIfPossible(CallSite CS, CallGraph &CG,
   // function body now.
   if (Callee->use_empty() && Callee->hasInternalLinkage() &&
       !SCCFunctions.count(Callee)) {
-    DEBUG(std::cerr << "    -> Deleting dead function: "
-                    << Callee->getName() << "\n");
+    DOUT << "    -> Deleting dead function: " << Callee->getName() << "\n";
 
     // Remove any call graph edges from the callee to its callees.
     CallGraphNode *CalleeNode = CG[Callee];
@@ -67,11 +65,11 @@ bool Inliner::runOnSCC(const std::vector<CallGraphNode*> &SCC) {
   CallGraph &CG = getAnalysis<CallGraph>();
 
   std::set<Function*> SCCFunctions;
-  DEBUG(std::cerr << "Inliner visiting SCC:");
+  DOUT << "Inliner visiting SCC:";
   for (unsigned i = 0, e = SCC.size(); i != e; ++i) {
     Function *F = SCC[i]->getFunction();
     if (F) SCCFunctions.insert(F);
-    DEBUG(std::cerr << " " << (F ? F->getName() : "INDIRECTNODE"));
+    DOUT << " " << (F ? F->getName() : "INDIRECTNODE");
   }
 
   // Scan through and identify all call sites ahead of time so that we only
@@ -89,7 +87,7 @@ bool Inliner::runOnSCC(const std::vector<CallGraphNode*> &SCC) {
             CallSites.push_back(CS);
         }
 
-  DEBUG(std::cerr << ": " << CallSites.size() << " call sites.\n");
+  DOUT << ": " << CallSites.size() << " call sites.\n";
 
   // Now that we have all of the call sites, move the ones to functions in the
   // current SCC to the end of the list.
@@ -128,11 +126,11 @@ bool Inliner::runOnSCC(const std::vector<CallGraphNode*> &SCC) {
         CallSite CS = CallSites[CSi];
         int InlineCost = getInlineCost(CS);
         if (InlineCost >= (int)InlineThreshold) {
-          DEBUG(std::cerr << "    NOT Inlining: cost=" << InlineCost
-                << ", Call: " << *CS.getInstruction());
+          DOUT << "    NOT Inlining: cost=" << InlineCost
+               << ", Call: " << *CS.getInstruction();
         } else {
-          DEBUG(std::cerr << "    Inlining: cost=" << InlineCost
-                << ", Call: " << *CS.getInstruction());
+          DOUT << "    Inlining: cost=" << InlineCost
+               << ", Call: " << *CS.getInstruction();
 
           // Attempt to inline the function...
           if (InlineCallIfPossible(CS, CG, SCCFunctions)) {

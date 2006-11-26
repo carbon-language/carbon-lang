@@ -29,7 +29,6 @@
 #include "llvm/Support/CallSite.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/ADT/Statistic.h"
-#include <iostream>
 #include <set>
 using namespace llvm;
 
@@ -322,7 +321,7 @@ void DAE::SurveyFunction(Function &F) {
     }
 
   if (FunctionIntrinsicallyLive) {
-    DEBUG(std::cerr << "  Intrinsically live fn: " << F.getName() << "\n");
+    DOUT << "  Intrinsically live fn: " << F.getName() << "\n";
     for (Function::arg_iterator AI = F.arg_begin(), E = F.arg_end();
          AI != E; ++AI)
       LiveArguments.insert(AI);
@@ -336,7 +335,7 @@ void DAE::SurveyFunction(Function &F) {
   case Dead:      DeadRetVal.insert(&F); break;
   }
 
-  DEBUG(std::cerr << "  Inspecting args for fn: " << F.getName() << "\n");
+  DOUT << "  Inspecting args for fn: " << F.getName() << "\n";
 
   // If it is not intrinsically alive, we know that all users of the
   // function are call sites.  Mark all of the arguments live which are
@@ -348,16 +347,15 @@ void DAE::SurveyFunction(Function &F) {
        AI != E; ++AI)
     switch (getArgumentLiveness(*AI)) {
     case Live:
-      DEBUG(std::cerr << "    Arg live by use: " << AI->getName() << "\n");
+      DOUT << "    Arg live by use: " << AI->getName() << "\n";
       LiveArguments.insert(AI);
       break;
     case Dead:
-      DEBUG(std::cerr << "    Arg definitely dead: " <<AI->getName()<<"\n");
+      DOUT << "    Arg definitely dead: " << AI->getName() <<"\n";
       DeadArguments.insert(AI);
       break;
     case MaybeLive:
-      DEBUG(std::cerr << "    Arg only passed to calls: "
-            << AI->getName() << "\n");
+      DOUT << "    Arg only passed to calls: " << AI->getName() << "\n";
       AnyMaybeLiveArgs = true;
       MaybeLiveArguments.insert(AI);
       break;
@@ -416,7 +414,7 @@ void DAE::MarkArgumentLive(Argument *Arg) {
   std::set<Argument*>::iterator It = MaybeLiveArguments.lower_bound(Arg);
   if (It == MaybeLiveArguments.end() || *It != Arg) return;
 
-  DEBUG(std::cerr << "  MaybeLive argument now live: " << Arg->getName()<<"\n");
+  DOUT << "  MaybeLive argument now live: " << Arg->getName() <<"\n";
   MaybeLiveArguments.erase(It);
   LiveArguments.insert(Arg);
 
@@ -454,7 +452,7 @@ void DAE::MarkRetValLive(Function *F) {
   std::set<Function*>::iterator I = MaybeLiveRetVal.lower_bound(F);
   if (I == MaybeLiveRetVal.end() || *I != F) return;  // It's already alive!
 
-  DEBUG(std::cerr << "  MaybeLive retval now live: " << F->getName() << "\n");
+  DOUT << "  MaybeLive retval now live: " << F->getName() << "\n";
 
   MaybeLiveRetVal.erase(I);
   LiveRetVal.insert(F);        // It is now known to be live!
@@ -611,7 +609,7 @@ bool DAE::runOnModule(Module &M) {
   // We assume all arguments are dead unless proven otherwise (allowing us to
   // determine that dead arguments passed into recursive functions are dead).
   //
-  DEBUG(std::cerr << "DAE - Determining liveness\n");
+  DOUT << "DAE - Determining liveness\n";
   for (Module::iterator I = M.begin(), E = M.end(); I != E; ) {
     Function &F = *I++;
     if (F.getFunctionType()->isVarArg())

@@ -20,7 +20,6 @@
 #include "llvm/Support/Debug.h"
 #include "llvm/ADT/Statistic.h"
 #include <fstream>
-#include <iostream>
 #include <set>
 using namespace llvm;
 
@@ -75,8 +74,8 @@ void InternalizePass::LoadFile(const char *Filename) {
   // Load the APIFile...
   std::ifstream In(Filename);
   if (!In.good()) {
-    std::cerr << "WARNING: Internalize couldn't load file '" << Filename
-    << "'!\n";
+    llvm_cerr << "WARNING: Internalize couldn't load file '" << Filename
+              << "'!\n";
     return;   // Do not internalize anything...
   }
   while (In) {
@@ -113,7 +112,7 @@ bool InternalizePass::runOnModule(Module &M) {
       I->setLinkage(GlobalValue::InternalLinkage);
       Changed = true;
       ++NumFunctions;
-      DEBUG(std::cerr << "Internalizing func " << I->getName() << "\n");
+      DOUT << "Internalizing func " << I->getName() << "\n";
     }
   
   // Never internalize the llvm.used symbol.  It is used to implement
@@ -151,7 +150,7 @@ bool InternalizePass::runOnModule(Module &M) {
       I->setLinkage(GlobalValue::InternalLinkage);
       Changed = true;
       ++NumGlobals;
-      DEBUG(std::cerr << "Internalized gvar " << I->getName() << "\n");
+      DOUT << "Internalized gvar " << I->getName() << "\n";
     }
       
   return Changed;

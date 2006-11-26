@@ -44,7 +44,6 @@
 #include "llvm/ADT/DepthFirstIterator.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/ADT/StringExtras.h"
-#include <iostream>
 #include <set>
 using namespace llvm;
 
@@ -231,9 +230,9 @@ bool ArgPromotion::isSafeToPromoteArgument(Argument *Arg) const {
       if (std::find(GEPIndices.begin(), GEPIndices.end(), Operands) ==
           GEPIndices.end()) {
         if (GEPIndices.size() == 3) {
-          DEBUG(std::cerr << "argpromotion disable promoting argument '"
-                << Arg->getName() << "' because it would require adding more "
-                << "than 3 arguments to the function.\n");
+          DOUT << "argpromotion disable promoting argument '"
+               << Arg->getName() << "' because it would require adding more "
+               << "than 3 arguments to the function.\n";
           // We limit aggregate promotion to only promoting up to three elements
           // of the aggregate.
           return false;
@@ -501,8 +500,8 @@ Function *ArgPromotion::DoPromotion(Function *F,
           LI->replaceAllUsesWith(I2);
           AA.replaceWithNewValue(LI, I2);
           LI->getParent()->getInstList().erase(LI);
-          DEBUG(std::cerr << "*** Promoted load of argument '" << I->getName()
-                          << "' in function '" << F->getName() << "'\n");
+          DOUT << "*** Promoted load of argument '" << I->getName()
+               << "' in function '" << F->getName() << "'\n";
         } else {
           GetElementPtrInst *GEP = cast<GetElementPtrInst>(I->use_back());
           std::vector<Value*> Operands(GEP->op_begin()+1, GEP->op_end());
@@ -521,8 +520,8 @@ Function *ArgPromotion::DoPromotion(Function *F,
               NewName += ".x";
           TheArg->setName(NewName+".val");
 
-          DEBUG(std::cerr << "*** Promoted agg argument '" << TheArg->getName()
-                          << "' of function '" << F->getName() << "'\n");
+          DOUT << "*** Promoted agg argument '" << TheArg->getName()
+               << "' of function '" << F->getName() << "'\n";
 
           // All of the uses must be load instructions.  Replace them all with
           // the argument specified by ArgNo.

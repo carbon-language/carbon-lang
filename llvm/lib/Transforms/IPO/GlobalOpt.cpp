@@ -28,7 +28,6 @@
 #include "llvm/ADT/Statistic.h"
 #include "llvm/ADT/StringExtras.h"
 #include <algorithm>
-#include <iostream>
 #include <set>
 using namespace llvm;
 
@@ -425,7 +424,7 @@ static GlobalVariable *SRAGlobal(GlobalVariable *GV) {
   if (NewGlobals.empty())
     return 0;
 
-  DEBUG(std::cerr << "PERFORMING GLOBAL SRA ON: " << *GV);
+  DOUT << "PERFORMING GLOBAL SRA ON: " << *GV;
 
   Constant *NullInt = Constant::getNullValue(Type::IntTy);
 
@@ -495,17 +494,17 @@ static bool AllUsesOfValueWillTrapIfNull(Value *V) {
       // Will trap.
     } else if (StoreInst *SI = dyn_cast<StoreInst>(*UI)) {
       if (SI->getOperand(0) == V) {
-        //std::cerr << "NONTRAPPING USE: " << **UI;
+        //llvm_cerr << "NONTRAPPING USE: " << **UI;
         return false;  // Storing the value.
       }
     } else if (CallInst *CI = dyn_cast<CallInst>(*UI)) {
       if (CI->getOperand(0) != V) {
-        //std::cerr << "NONTRAPPING USE: " << **UI;
+        //llvm_cerr << "NONTRAPPING USE: " << **UI;
         return false;  // Not calling the ptr
       }
     } else if (InvokeInst *II = dyn_cast<InvokeInst>(*UI)) {
       if (II->getOperand(0) != V) {
-        //std::cerr << "NONTRAPPING USE: " << **UI;
+        //llvm_cerr << "NONTRAPPING USE: " << **UI;
         return false;  // Not calling the ptr
       }
     } else if (CastInst *CI = dyn_cast<CastInst>(*UI)) {
@@ -516,7 +515,7 @@ static bool AllUsesOfValueWillTrapIfNull(Value *V) {
                isa<ConstantPointerNull>(UI->getOperand(1))) {
       // Ignore setcc X, null
     } else {
-      //std::cerr << "NONTRAPPING USE: " << **UI;
+      //llvm_cerr << "NONTRAPPING USE: " << **UI;
       return false;
     }
   return true;
@@ -534,7 +533,7 @@ static bool AllUsesOfLoadedValueWillTrapIfNull(GlobalVariable *GV) {
       // Ignore stores to the global.
     } else {
       // We don't know or understand this user, bail out.
-      //std::cerr << "UNKNOWN USER OF GLOBAL!: " << **UI;
+      //llvm_cerr << "UNKNOWN USER OF GLOBAL!: " << **UI;
       return false;
     }
 
@@ -620,7 +619,7 @@ static bool OptimizeAwayTrappingUsesOfLoads(GlobalVariable *GV, Constant *LV) {
     }
 
   if (Changed) {
-    DEBUG(std::cerr << "OPTIMIZED LOADS FROM STORED ONCE POINTER: " << *GV);
+    DOUT << "OPTIMIZED LOADS FROM STORED ONCE POINTER: " << *GV;
     ++NumGlobUses;
   }
 
@@ -640,7 +639,7 @@ static bool OptimizeAwayTrappingUsesOfLoads(GlobalVariable *GV, Constant *LV) {
   // If we nuked all of the loads, then none of the stores are needed either,
   // nor is the global.
   if (AllLoadsGone) {
-    DEBUG(std::cerr << "  *** GLOBAL NOW DEAD!\n");
+    DOUT << "  *** GLOBAL NOW DEAD!\n";
     CleanupConstantGlobalUsers(GV, 0);
     if (GV->use_empty()) {
       GV->eraseFromParent();
@@ -674,7 +673,7 @@ static void ConstantPropUsersOf(Value *V) {
 /// malloc into a global, and any laods of GV as uses of the new global.
 static GlobalVariable *OptimizeGlobalAddressOfMalloc(GlobalVariable *GV,
                                                      MallocInst *MI) {
-  DEBUG(std::cerr << "PROMOTING MALLOC GLOBAL: " << *GV << "  MALLOC = " <<*MI);
+  DOUT << "PROMOTING MALLOC GLOBAL: " << *GV << "  MALLOC = " << *MI;
   ConstantInt *NElements = cast<ConstantInt>(MI->getArraySize());
 
   if (NElements->getZExtValue() != 1) {
@@ -918,7 +917,7 @@ static void RewriteUsesOfLoadForHeapSRoA(LoadInst *Ptr,
 /// PerformHeapAllocSRoA - MI is an allocation of an array of structures.  Break
 /// it up into multiple allocations of arrays of the fields.
 static GlobalVariable *PerformHeapAllocSRoA(GlobalVariable *GV, MallocInst *MI){
-  DEBUG(std::cerr << "SROA HEAP ALLOC: " << *GV << "  MALLOC = " << *MI);
+  DOUT << "SROA HEAP ALLOC: " << *GV << "  MALLOC = " << *MI;
   const StructType *STy = cast<StructType>(MI->getAllocatedType());
 
   // There is guaranteed to be at least one use of the malloc (storing
@@ -1196,7 +1195,7 @@ bool GlobalOpt::ProcessInternalGlobal(GlobalVariable *GV,
   GV->removeDeadConstantUsers();
 
   if (GV->use_empty()) {
-    DEBUG(std::cerr << "GLOBAL DEAD: " << *GV);
+    DOUT << "GLOBAL DEAD: " << *GV;
     GV->eraseFromParent();
     ++NumDeleted;
     return true;
@@ -1204,25 +1203,25 @@ bool GlobalOpt::ProcessInternalGlobal(GlobalVariable *GV,
 
   if (!AnalyzeGlobal(GV, GS, PHIUsers)) {
 #if 0
-    std::cerr << "Global: " << *GV;
-    std::cerr << "  isLoaded = " << GS.isLoaded << "\n";
-    std::cerr << "  StoredType = ";
+    llvm_cerr << "Global: " << *GV;
+    llvm_cerr << "  isLoaded = " << GS.isLoaded << "\n";
+    llvm_cerr << "  StoredType = ";
     switch (GS.StoredType) {
-    case GlobalStatus::NotStored: std::cerr << "NEVER STORED\n"; break;
-    case GlobalStatus::isInitializerStored: std::cerr << "INIT STORED\n"; break;
-    case GlobalStatus::isStoredOnce: std::cerr << "STORED ONCE\n"; break;
-    case GlobalStatus::isStored: std::cerr << "stored\n"; break;
+    case GlobalStatus::NotStored: llvm_cerr << "NEVER STORED\n"; break;
+    case GlobalStatus::isInitializerStored: llvm_cerr << "INIT STORED\n"; break;
+    case GlobalStatus::isStoredOnce: llvm_cerr << "STORED ONCE\n"; break;
+    case GlobalStatus::isStored: llvm_cerr << "stored\n"; break;
     }
     if (GS.StoredType == GlobalStatus::isStoredOnce && GS.StoredOnceValue)
-      std::cerr << "  StoredOnceValue = " << *GS.StoredOnceValue << "\n";
+      llvm_cerr << "  StoredOnceValue = " << *GS.StoredOnceValue << "\n";
     if (GS.AccessingFunction && !GS.HasMultipleAccessingFunctions)
-      std::cerr << "  AccessingFunction = " << GS.AccessingFunction->getName()
+      llvm_cerr << "  AccessingFunction = " << GS.AccessingFunction->getName()
                 << "\n";
-    std::cerr << "  HasMultipleAccessingFunctions =  "
+    llvm_cerr << "  HasMultipleAccessingFunctions =  "
               << GS.HasMultipleAccessingFunctions << "\n";
-    std::cerr << "  HasNonInstructionUser = " << GS.HasNonInstructionUser<<"\n";
-    std::cerr << "  isNotSuitableForSRA = " << GS.isNotSuitableForSRA << "\n";
-    std::cerr << "\n";
+    llvm_cerr << "  HasNonInstructionUser = " << GS.HasNonInstructionUser<<"\n";
+    llvm_cerr << "  isNotSuitableForSRA = " << GS.isNotSuitableForSRA << "\n";
+    llvm_cerr << "\n";
 #endif
     
     // If this is a first class global and has only one accessing function
@@ -1237,7 +1236,7 @@ bool GlobalOpt::ProcessInternalGlobal(GlobalVariable *GV,
         GV->getType()->getElementType()->isFirstClassType() &&
         GS.AccessingFunction->getName() == "main" &&
         GS.AccessingFunction->hasExternalLinkage()) {
-      DEBUG(std::cerr << "LOCALIZING GLOBAL: " << *GV);
+      DOUT << "LOCALIZING GLOBAL: " << *GV;
       Instruction* FirstI = GS.AccessingFunction->getEntryBlock().begin();
       const Type* ElemTy = GV->getType()->getElementType();
       // FIXME: Pass Global's alignment when globals have alignment
@@ -1254,7 +1253,7 @@ bool GlobalOpt::ProcessInternalGlobal(GlobalVariable *GV,
     // If the global is never loaded (but may be stored to), it is dead.
     // Delete it now.
     if (!GS.isLoaded) {
-      DEBUG(std::cerr << "GLOBAL NEVER LOADED: " << *GV);
+      DOUT << "GLOBAL NEVER LOADED: " << *GV;
 
       // Delete any stores we can find to the global.  We may not be able to
       // make it completely dead though.
@@ -1269,7 +1268,7 @@ bool GlobalOpt::ProcessInternalGlobal(GlobalVariable *GV,
       return Changed;
 
     } else if (GS.StoredType <= GlobalStatus::isInitializerStored) {
-      DEBUG(std::cerr << "MARKING CONSTANT: " << *GV);
+      DOUT << "MARKING CONSTANT: " << *GV;
       GV->setConstant(true);
 
       // Clean up any obviously simplifiable users now.
@@ -1277,8 +1276,8 @@ bool GlobalOpt::ProcessInternalGlobal(GlobalVariable *GV,
 
       // If the global is dead now, just nuke it.
       if (GV->use_empty()) {
-        DEBUG(std::cerr << "   *** Marking constant allowed us to simplify "
-              "all users and delete global!\n");
+        DOUT << "   *** Marking constant allowed us to simplify "
+             << "all users and delete global!\n";
         GV->eraseFromParent();
         ++NumDeleted;
       }
@@ -1305,8 +1304,8 @@ bool GlobalOpt::ProcessInternalGlobal(GlobalVariable *GV,
           CleanupConstantGlobalUsers(GV, GV->getInitializer());
 
           if (GV->use_empty()) {
-            DEBUG(std::cerr << "   *** Substituting initializer allowed us to "
-                  "simplify all users and delete global!\n");
+            DOUT << "   *** Substituting initializer allowed us to "
+                 << "simplify all users and delete global!\n";
             GV->eraseFromParent();
             ++NumDeleted;
           } else {
@@ -1328,7 +1327,7 @@ bool GlobalOpt::ProcessInternalGlobal(GlobalVariable *GV,
         if (GV->getType()->getElementType() != Type::BoolTy &&
             !GV->getType()->getElementType()->isFloatingPoint() &&
             !GS.HasPHIUser) {
-          DEBUG(std::cerr << "   *** SHRINKING TO BOOL: " << *GV);
+          DOUT << "   *** SHRINKING TO BOOL: " << *GV;
           ShrinkGlobalToBoolean(GV, SOVConstant);
           ++NumShrunkToBool;
           return true;
@@ -1851,8 +1850,9 @@ static bool EvaluateStaticConstructor(Function *F) {
                                        CallStack, MutatedMemory, AllocaTmps);
   if (EvalSuccess) {
     // We succeeded at evaluation: commit the result.
-    DEBUG(std::cerr << "FULLY EVALUATED GLOBAL CTOR FUNCTION '" <<
-          F->getName() << "' to " << MutatedMemory.size() << " stores.\n");
+    DOUT << "FULLY EVALUATED GLOBAL CTOR FUNCTION '"
+         << F->getName() << "' to " << MutatedMemory.size()
+         << " stores.\n";
     for (std::map<Constant*, Constant*>::iterator I = MutatedMemory.begin(),
          E = MutatedMemory.end(); I != E; ++I)
       CommitValueTo(I->second, I->first);
