@@ -29,7 +29,6 @@
 #include "llvm/ADT/StringExtras.h"
 #include <algorithm>
 #include <set>
-#include <iostream>
 using namespace llvm;
 
 // Provide a command-line option to aggregate function arguments into a struct
@@ -245,8 +244,8 @@ Function *CodeExtractor::constructFunction(const Values &inputs,
                                            BasicBlock *newHeader,
                                            Function *oldFunction,
                                            Module *M) {
-  DEBUG(std::cerr << "inputs: " << inputs.size() << "\n");
-  DEBUG(std::cerr << "outputs: " << outputs.size() << "\n");
+  DOUT << "inputs: " << inputs.size() << "\n";
+  DOUT << "outputs: " << outputs.size() << "\n";
 
   // This function returns unsigned, outputs will go back by reference.
   switch (NumExitBlocks) {
@@ -262,24 +261,25 @@ Function *CodeExtractor::constructFunction(const Values &inputs,
   for (Values::const_iterator i = inputs.begin(),
          e = inputs.end(); i != e; ++i) {
     const Value *value = *i;
-    DEBUG(std::cerr << "value used in func: " << *value << "\n");
+    DOUT << "value used in func: " << *value << "\n";
     paramTy.push_back(value->getType());
   }
 
   // Add the types of the output values to the function's argument list.
   for (Values::const_iterator I = outputs.begin(), E = outputs.end();
        I != E; ++I) {
-    DEBUG(std::cerr << "instr used in func: " << **I << "\n");
+    DOUT << "instr used in func: " << **I << "\n";
     if (AggregateArgs)
       paramTy.push_back((*I)->getType());
     else
       paramTy.push_back(PointerType::get((*I)->getType()));
   }
 
-  DEBUG(std::cerr << "Function type: " << *RetTy << " f(");
-  DEBUG(for (std::vector<const Type*>::iterator i = paramTy.begin(),
-               e = paramTy.end(); i != e; ++i) std::cerr << **i << ", ");
-  DEBUG(std::cerr << ")\n");
+  DOUT << "Function type: " << *RetTy << " f(";
+  for (std::vector<const Type*>::iterator i = paramTy.begin(),
+         e = paramTy.end(); i != e; ++i)
+    DOUT << **i << ", ";
+  DOUT << ")\n";
 
   if (AggregateArgs && (inputs.size() + outputs.size() > 0)) {
     PointerType *StructPtr = PointerType::get(StructType::get(paramTy));
@@ -699,10 +699,10 @@ ExtractCodeRegion(const std::vector<BasicBlock*> &code) {
           }
     }
 
-  //std::cerr << "NEW FUNCTION: " << *newFunction;
+  //llvm_cerr << "NEW FUNCTION: " << *newFunction;
   //  verifyFunction(*newFunction);
 
-  //  std::cerr << "OLD FUNCTION: " << *oldFunction;
+  //  llvm_cerr << "OLD FUNCTION: " << *oldFunction;
   //  verifyFunction(*oldFunction);
 
   DEBUG(if (verifyFunction(*newFunction)) abort());

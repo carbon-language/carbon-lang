@@ -23,7 +23,6 @@
 #include "llvm/Support/Compiler.h"
 #include "llvm/ADT/Statistic.h"
 #include <algorithm>
-#include <iostream>
 using namespace llvm;
 
 namespace {
@@ -97,7 +96,7 @@ bool LowerSwitch::runOnFunction(Function &F) {
 
 // operator<< - Used for debugging purposes.
 //
-std::ostream& operator<<(std::ostream &O,
+llvm_ostream& operator<<(llvm_ostream &O,
                          const std::vector<LowerSwitch::Case> &C) {
   O << "[";
 
@@ -124,14 +123,13 @@ BasicBlock* LowerSwitch::switchConvert(CaseItr Begin, CaseItr End,
 
   unsigned Mid = Size / 2;
   std::vector<Case> LHS(Begin, Begin + Mid);
-  DEBUG(std::cerr << "LHS: " << LHS << "\n");
+  DOUT << "LHS: " << LHS << "\n";
   std::vector<Case> RHS(Begin + Mid, End);
-  DEBUG(std::cerr << "RHS: " << RHS << "\n");
+  DOUT << "RHS: " << RHS << "\n";
 
   Case& Pivot = *(Begin + Mid);
-  DEBUG(std::cerr << "Pivot ==> "
-                  << cast<ConstantInt>(Pivot.first)->getSExtValue()
-                  << "\n");
+  DOUT << "Pivot ==> "
+       << cast<ConstantInt>(Pivot.first)->getSExtValue() << "\n";
 
   BasicBlock* LBranch = switchConvert(LHS.begin(), LHS.end(), Val,
                                       OrigBlock, Default);
@@ -226,7 +224,7 @@ void LowerSwitch::processSwitchInst(SwitchInst *SI) {
     Cases.push_back(Case(SI->getSuccessorValue(i), SI->getSuccessor(i)));
 
   std::sort(Cases.begin(), Cases.end(), CaseCmp());
-  DEBUG(std::cerr << "Cases: " << Cases << "\n");
+  DOUT << "Cases: " << Cases << "\n";
   BasicBlock* SwitchBlock = switchConvert(Cases.begin(), Cases.end(), Val,
                                           OrigBlock, NewDefault);
 

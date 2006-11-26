@@ -23,7 +23,6 @@
 #include <functional>
 #include <set>
 #include <map>
-#include <iostream>
 using namespace llvm;
 
 /// SafeToMergeTerminators - Return true if it is safe to merge these two
@@ -149,7 +148,7 @@ static bool TryToSimplifyUncondBranchFromEmptyBlock(BasicBlock *BB,
   //
   if (!CanPropagatePredecessorsForPHIs(BB, Succ)) return false;
   
-  DEBUG(std::cerr << "Killing Trivial BB: \n" << *BB);
+  DOUT << "Killing Trivial BB: \n" << *BB;
   
   if (isa<PHINode>(Succ->begin())) {
     // If there is more than one pred of succ, and there are PHI nodes in
@@ -629,8 +628,8 @@ static bool SimplifyEqualityComparisonWithOnlyPredecessor(TerminatorInst *TI,
         // Remove PHI node entries for the dead edge.
         ThisCases[0].second->removePredecessor(TI->getParent());
 
-        DEBUG(std::cerr << "Threading pred instr: " << *Pred->getTerminator()
-              << "Through successor TI: " << *TI << "Leaving: " << *NI << "\n");
+        DOUT << "Threading pred instr: " << *Pred->getTerminator()
+             << "Through successor TI: " << *TI << "Leaving: " << *NI << "\n";
 
         TI->eraseFromParent();   // Nuke the old one.
         // If condition is now dead, nuke it.
@@ -645,8 +644,8 @@ static bool SimplifyEqualityComparisonWithOnlyPredecessor(TerminatorInst *TI,
         for (unsigned i = 0, e = PredCases.size(); i != e; ++i)
           DeadCases.insert(PredCases[i].first);
 
-        DEBUG(std::cerr << "Threading pred instr: " << *Pred->getTerminator()
-                  << "Through successor TI: " << *TI);
+        DOUT << "Threading pred instr: " << *Pred->getTerminator()
+             << "Through successor TI: " << *TI;
 
         for (unsigned i = SI->getNumCases()-1; i != 0; --i)
           if (DeadCases.count(SI->getCaseValue(i))) {
@@ -654,7 +653,7 @@ static bool SimplifyEqualityComparisonWithOnlyPredecessor(TerminatorInst *TI,
             SI->removeCase(i);
           }
 
-        DEBUG(std::cerr << "Leaving: " << *TI << "\n");
+        DOUT << "Leaving: " << *TI << "\n";
         return true;
       }
     }
@@ -695,8 +694,8 @@ static bool SimplifyEqualityComparisonWithOnlyPredecessor(TerminatorInst *TI,
     // Insert the new branch.
     Instruction *NI = new BranchInst(TheRealDest, TI);
 
-    DEBUG(std::cerr << "Threading pred instr: " << *Pred->getTerminator()
-          << "Through successor TI: " << *TI << "Leaving: " << *NI << "\n");
+    DOUT << "Threading pred instr: " << *Pred->getTerminator()
+         << "Through successor TI: " << *TI << "Leaving: " << *NI << "\n";
     Instruction *Cond = 0;
     if (BranchInst *BI = dyn_cast<BranchInst>(TI))
       Cond = dyn_cast<Instruction>(BI->getCondition());
@@ -1074,8 +1073,8 @@ static bool FoldTwoEntryPHINode(PHINode *PN) {
     if (NumPhis > 2)
       return false;
   
-  DEBUG(std::cerr << "FOUND IF CONDITION!  " << *IfCond << "  T: "
-        << IfTrue->getName() << "  F: " << IfFalse->getName() << "\n");
+  DOUT << "FOUND IF CONDITION!  " << *IfCond << "  T: "
+       << IfTrue->getName() << "  F: " << IfFalse->getName() << "\n";
   
   // Loop over the PHI's seeing if we can promote them all to select
   // instructions.  While we are at it, keep track of the instructions
@@ -1194,7 +1193,7 @@ bool llvm::SimplifyCFG(BasicBlock *BB) {
   // Remove basic blocks that have no predecessors... which are unreachable.
   if (pred_begin(BB) == pred_end(BB) ||
       *pred_begin(BB) == BB && ++pred_begin(BB) == pred_end(BB)) {
-    DEBUG(std::cerr << "Removing BB: \n" << *BB);
+    DOUT << "Removing BB: \n" << *BB;
 
     // Loop through all of our successors and make sure they know that one
     // of their predecessors is going away.
@@ -1248,8 +1247,8 @@ bool llvm::SimplifyCFG(BasicBlock *BB) {
       if (!UncondBranchPreds.empty()) {
         while (!UncondBranchPreds.empty()) {
           BasicBlock *Pred = UncondBranchPreds.back();
-          DEBUG(std::cerr << "FOLDING: " << *BB
-                          << "INTO UNCOND BRANCH PRED: " << *Pred);
+          DOUT << "FOLDING: " << *BB
+               << "INTO UNCOND BRANCH PRED: " << *Pred;
           UncondBranchPreds.pop_back();
           Instruction *UncondBranch = Pred->getTerminator();
           // Clone the return and add it to the end of the predecessor.
@@ -1336,9 +1335,9 @@ bool llvm::SimplifyCFG(BasicBlock *BB) {
               else
                 NewRetVal = TrueValue;
               
-              DEBUG(std::cerr << "\nCHANGING BRANCH TO TWO RETURNS INTO SELECT:"
-                    << "\n  " << *BI << "Select = " << *NewRetVal
-                    << "TRUEBLOCK: " << *TrueSucc << "FALSEBLOCK: "<< *FalseSucc);
+              DOUT << "\nCHANGING BRANCH TO TWO RETURNS INTO SELECT:"
+                   << "\n  " << *BI << "Select = " << *NewRetVal
+                   << "TRUEBLOCK: " << *TrueSucc << "FALSEBLOCK: "<< *FalseSucc;
 
               new ReturnInst(NewRetVal, BI);
               BI->eraseFromParent();
@@ -1594,8 +1593,8 @@ bool llvm::SimplifyCFG(BasicBlock *BB) {
                 if (OtherDest == BB)
                   OtherDest = CommonDest;
                 
-                DEBUG(std::cerr << "FOLDING BRs:" << *PBI->getParent()
-                                << "AND: " << *BI->getParent());
+                DOUT << "FOLDING BRs:" << *PBI->getParent()
+                     << "AND: " << *BI->getParent();
                                 
                 // BI may have other predecessors.  Because of this, we leave
                 // it alone, but modify PBI.
@@ -1646,7 +1645,7 @@ bool llvm::SimplifyCFG(BasicBlock *BB) {
                   }
                 }
 
-                DEBUG(std::cerr << "INTO: " << *PBI->getParent());
+                DOUT << "INTO: " << *PBI->getParent();
 
                 // This basic block is probably dead.  We know it has at least
                 // one fewer predecessor.
@@ -1791,7 +1790,7 @@ bool llvm::SimplifyCFG(BasicBlock *BB) {
   }
 
   if (OnlySucc) {
-    DEBUG(std::cerr << "Merging: " << *BB << "into: " << *OnlyPred);
+    DOUT << "Merging: " << *BB << "into: " << *OnlyPred;
 
     // Resolve any PHI nodes at the start of the block.  They are all
     // guaranteed to have exactly one entry if they exist, unless there are
