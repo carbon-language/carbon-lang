@@ -307,16 +307,16 @@ def FCMPNE : AForm_DAG<0x03, 0x0b, (ops PR:$dst, FP:$src1, FP:$src2),
           "fcmp.neq $dst, p0 = $src1, $src2",
 	  [(set PR:$dst, (setne FP:$src1, FP:$src2))]>, isF;
 def FCMPLTU: AForm_DAG<0x03, 0x0b, (ops PR:$dst, FP:$src1, FP:$src2),
-          "fcmp.ltu $dst, p0 = $src1, $src2",
+          "fcmp.lt $dst, p0 = $src1, $src2",
 	  [(set PR:$dst, (setult FP:$src1, FP:$src2))]>, isF;
 def FCMPGTU: AForm_DAG<0x03, 0x0b, (ops PR:$dst, FP:$src1, FP:$src2),
-          "fcmp.gtu $dst, p0 = $src1, $src2",
+          "fcmp.gt $dst, p0 = $src1, $src2",
 	  [(set PR:$dst, (setugt FP:$src1, FP:$src2))]>, isF;
 def FCMPLEU: AForm_DAG<0x03, 0x0b, (ops PR:$dst, FP:$src1, FP:$src2),
-          "fcmp.leu $dst, p0 = $src1, $src2",
+          "fcmp.le $dst, p0 = $src1, $src2",
 	  [(set PR:$dst, (setule FP:$src1, FP:$src2))]>, isF;
 def FCMPGEU: AForm_DAG<0x03, 0x0b, (ops PR:$dst, FP:$src1, FP:$src2),
-          "fcmp.geu $dst, p0 = $src1, $src2",
+          "fcmp.ge $dst, p0 = $src1, $src2",
 	  [(set PR:$dst, (setuge FP:$src1, FP:$src2))]>, isF;
 
 def PCMPEQUNCR0R0 : AForm<0x03, 0x0b, (ops PR:$dst, PR:$qp),

@@ -515,7 +515,7 @@ SDNode *IA64DAGToDAGISel::Select(SDOperand Op) {
         SDOperand Tmp = ST->getValue();
         AddToISelQueue(Tmp);
         Tmp = SDOperand(CurDAG->getTargetNode(IA64::TPCADDS, MVT::i64, Initial,
-                                              CurDAG->getConstant(1, MVT::i64),
+                                              CurDAG->getTargetConstant(1, MVT::i64),
                                               Tmp), 0);
         return CurDAG->SelectNodeTo(N, Opc, MVT::Other, Address, Tmp, Chain);
       }
