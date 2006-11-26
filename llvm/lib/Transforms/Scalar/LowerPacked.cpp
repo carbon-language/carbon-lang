@@ -20,12 +20,11 @@
 #include "llvm/Instructions.h"
 #include "llvm/Pass.h"
 #include "llvm/Support/InstVisitor.h"
+#include "llvm/Support/Streams.h"
 #include "llvm/ADT/StringExtras.h"
 #include <algorithm>
 #include <map>
-#include <iostream>
 #include <functional>
-
 using namespace llvm;
 
 namespace {
@@ -72,12 +71,10 @@ public:
    ///
    /// @brief Asserts if PackedType instruction is not handled elsewhere.
    /// @param I the unhandled instruction
-   void visitInstruction(Instruction &I)
-   {
-      if(isa<PackedType>(I.getType())) {
-         std::cerr << "Unhandled Instruction with Packed ReturnType: " <<
-                      I << '\n';
-      }
+   void visitInstruction(Instruction &I) {
+     if (isa<PackedType>(I.getType()))
+       llvm_cerr << "Unhandled Instruction with Packed ReturnType: "
+                 << I << '\n';
    }
 private:
    /// @brief Retrieves lowered values for a packed value.

@@ -34,7 +34,6 @@
 #include "llvm/Support/Compiler.h"
 #include "llvm/Target/TargetLowering.h"
 #include <algorithm>
-#include <iostream>
 #include <set>
 using namespace llvm;
 
@@ -322,8 +321,8 @@ static bool getSCEVStartAndStride(const SCEVHandle &SH, Loop *L,
   Start = SCEVAddExpr::get(Start, AddRec->getOperand(0));
   
   if (!isa<SCEVConstant>(AddRec->getOperand(1)))
-    DEBUG(std::cerr << "[" << L->getHeader()->getName()
-                    << "] Variable stride: " << *AddRec << "\n");
+    DOUT << "[" << L->getHeader()->getName()
+         << "] Variable stride: " << *AddRec << "\n";
 
   Stride = AddRec->getOperand(1);
   // Check that all constant strides are the unsigned type, we don't want to
@@ -422,12 +421,12 @@ bool LoopStrengthReduce::AddUsersIfInteresting(Instruction *I, Loop *L,
     // don't recurse into it.
     bool AddUserToIVUsers = false;
     if (LI->getLoopFor(User->getParent()) != L) {
-      DEBUG(std::cerr << "FOUND USER in other loop: " << *User
-            << "   OF SCEV: " << *ISE << "\n");
+      DOUT << "FOUND USER in other loop: " << *User
+           << "   OF SCEV: " << *ISE << "\n";
       AddUserToIVUsers = true;
     } else if (!AddUsersIfInteresting(User, L, Processed)) {
-      DEBUG(std::cerr << "FOUND USER: " << *User
-            << "   OF SCEV: " << *ISE << "\n");
+      DOUT << "FOUND USER: " << *User
+           << "   OF SCEV: " << *ISE << "\n";
       AddUserToIVUsers = true;
     }
 
@@ -445,7 +444,7 @@ bool LoopStrengthReduce::AddUsersIfInteresting(Instruction *I, Loop *L,
         SCEVHandle NewStart = SCEV::getMinusSCEV(Start, Stride);
         StrideUses.addUser(NewStart, User, I);
         StrideUses.Users.back().isUseOfPostIncrementedValue = true;
-        DEBUG(std::cerr << "   USING POSTINC SCEV, START=" << *NewStart<< "\n");
+        DOUT << "   USING POSTINC SCEV, START=" << *NewStart<< "\n";
       } else {        
         StrideUses.addUser(Start, User, I);
       }
@@ -508,12 +507,12 @@ namespace {
 }
 
 void BasedUser::dump() const {
-  std::cerr << " Base=" << *Base;
-  std::cerr << " Imm=" << *Imm;
+  llvm_cerr << " Base=" << *Base;
+  llvm_cerr << " Imm=" << *Imm;
   if (EmittedBase)
-    std::cerr << "  EB=" << *EmittedBase;
+    llvm_cerr << "  EB=" << *EmittedBase;
 
-  std::cerr << "   Inst: " << *Inst;
+  llvm_cerr << "   Inst: " << *Inst;
 }
 
 Value *BasedUser::InsertCodeForBaseAtPosition(const SCEVHandle &NewBase, 
@@ -561,7 +560,7 @@ void BasedUser::RewriteInstructionToUseNewBase(const SCEVHandle &NewBase,
     Value *NewVal = InsertCodeForBaseAtPosition(NewBase, Rewriter, Inst, L);
     // Replace the use of the operand Value with the new Phi we just created.
     Inst->replaceUsesOfWith(OperandValToReplace, NewVal);
-    DEBUG(std::cerr << "    CHANGED: IMM =" << *Imm << "  Inst = " << *Inst);
+    DOUT << "    CHANGED: IMM =" << *Imm << "  Inst = " << *Inst;
     return;
   }
   
@@ -610,7 +609,7 @@ void BasedUser::RewriteInstructionToUseNewBase(const SCEVHandle &NewBase,
       Rewriter.clear();
     }
   }
-  DEBUG(std::cerr << "    CHANGED: IMM =" << *Imm << "  Inst = " << *Inst);
+  DOUT << "    CHANGED: IMM =" << *Imm << "  Inst = " << *Inst;
 }
 
 
@@ -961,8 +960,8 @@ void LoopStrengthReduce::StrengthReduceStridedIVUsers(const SCEVHandle &Stride,
   unsigned RewriteFactor = CheckForIVReuse(Stride, ReuseIV,
                                            CommonExprs->getType());
   if (RewriteFactor != 0) {
-    DEBUG(std::cerr << "BASED ON IV of STRIDE " << *ReuseIV.Stride
-          << " and BASE " << *ReuseIV.Base << " :\n");
+    DOUT << "BASED ON IV of STRIDE " << *ReuseIV.Stride
+         << " and BASE " << *ReuseIV.Base << " :\n";
     NewPHI = ReuseIV.PHI;
     IncV   = ReuseIV.IncV;
   }
@@ -996,8 +995,8 @@ void LoopStrengthReduce::StrengthReduceStridedIVUsers(const SCEVHandle &Stride,
 
   // Now that we know what we need to do, insert the PHI node itself.
   //
-  DEBUG(std::cerr << "INSERTING IV of STRIDE " << *Stride << " and BASE "
-        << *CommonExprs << " :\n");
+  DOUT << "INSERTING IV of STRIDE " << *Stride << " and BASE "
+       << *CommonExprs << " :\n";
 
   SCEVExpander Rewriter(*SE, *LI);
   SCEVExpander PreheaderRewriter(*SE, *LI);
@@ -1085,7 +1084,7 @@ void LoopStrengthReduce::StrengthReduceStridedIVUsers(const SCEVHandle &Stride,
   while (!UsersToProcess.empty()) {
     SCEVHandle Base = UsersToProcess.back().Base;
 
-    DEBUG(std::cerr << "  INSERTING code for BASE = " << *Base << ":\n");
+    DOUT << "  INSERTING code for BASE = " << *Base << ":\n";
    
     // Emit the code for Base into the preheader.
     Value *BaseV = PreheaderRewriter.expandCodeFor(Base, PreInsertPt,
@@ -1302,7 +1301,7 @@ void LoopStrengthReduce::runOnLoop(Loop *L) {
   bool HasOneStride = IVUsesByStride.size() == 1;
 
 #ifndef NDEBUG
-  DEBUG(std::cerr << "\nLSR on ");
+  DOUT << "\nLSR on ";
   DEBUG(L->dump());
 #endif
 

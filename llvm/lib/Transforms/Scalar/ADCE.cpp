@@ -27,7 +27,6 @@
 #include "llvm/ADT/Statistic.h"
 #include "llvm/ADT/STLExtras.h"
 #include <algorithm>
-#include <iostream>
 using namespace llvm;
 
 namespace {
@@ -92,12 +91,12 @@ private:
 
   inline void markInstructionLive(Instruction *I) {
     if (!LiveSet.insert(I).second) return;
-    DEBUG(std::cerr << "Insn Live: " << *I);
+    DOUT << "Insn Live: " << *I;
     WorkList.push_back(I);
   }
 
   inline void markTerminatorLive(const BasicBlock *BB) {
-    DEBUG(std::cerr << "Terminator Live: " << *BB->getTerminator());
+    DOUT << "Terminator Live: " << *BB->getTerminator();
     markInstructionLive(const_cast<TerminatorInst*>(BB->getTerminator()));
   }
 };
@@ -260,7 +259,7 @@ bool ADCE::doADCE() {
       for (pred_iterator PI = pred_begin(I), E = pred_end(I); PI != E; ++PI)
         markInstructionLive((*PI)->getTerminator());
 
-  DEBUG(std::cerr << "Processing work list\n");
+  DOUT << "Processing work list\n";
 
   // AliveBlocks - Set of basic blocks that we know have instructions that are
   // alive in them...
@@ -309,13 +308,13 @@ bool ADCE::doADCE() {
   }
 
   DEBUG(
-    std::cerr << "Current Function: X = Live\n";
+    DOUT << "Current Function: X = Live\n";
     for (Function::iterator I = Func->begin(), E = Func->end(); I != E; ++I){
-      std::cerr << I->getName() << ":\t"
-                << (AliveBlocks.count(I) ? "LIVE\n" : "DEAD\n");
+      DOUT << I->getName() << ":\t"
+           << (AliveBlocks.count(I) ? "LIVE\n" : "DEAD\n");
       for (BasicBlock::iterator BI = I->begin(), BE = I->end(); BI != BE; ++BI){
-        if (LiveSet.count(BI)) std::cerr << "X ";
-        std::cerr << *BI;
+        if (LiveSet.count(BI)) DOUT << "X ";
+        DOUT << *BI;
       }
     });
 

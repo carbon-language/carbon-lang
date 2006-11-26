@@ -40,7 +40,6 @@
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/CommandLine.h"
 #include <algorithm>
-#include <iostream>
 #include <set>
 using namespace llvm;
 
@@ -369,9 +368,9 @@ bool LoopUnswitch::UnswitchIfProfitable(Value *LoopCond, Constant *Val,Loop *L){
     // FIXME: this should estimate growth by the amount of code shared by the
     // resultant unswitched loops.
     //
-    DEBUG(std::cerr << "NOT unswitching loop %"
-                    << L->getHeader()->getName() << ", cost too high: "
-                    << L->getBlocks().size() << "\n");
+    DOUT << "NOT unswitching loop %"
+         << L->getHeader()->getName() << ", cost too high: "
+         << L->getBlocks().size() << "\n";
     return false;
   }
   
@@ -508,10 +507,10 @@ static void EmitPreheaderBranchOnCondition(Value *LIC, Constant *Val,
 void LoopUnswitch::UnswitchTrivialCondition(Loop *L, Value *Cond, 
                                             Constant *Val, 
                                             BasicBlock *ExitBlock) {
-  DEBUG(std::cerr << "loop-unswitch: Trivial-Unswitch loop %"
-        << L->getHeader()->getName() << " [" << L->getBlocks().size()
-        << " blocks] in Function " << L->getHeader()->getParent()->getName()
-        << " on cond: " << *Val << " == " << *Cond << "\n");
+  DOUT << "loop-unswitch: Trivial-Unswitch loop %"
+       << L->getHeader()->getName() << " [" << L->getBlocks().size()
+       << " blocks] in Function " << L->getHeader()->getParent()->getName()
+       << " on cond: " << *Val << " == " << *Cond << "\n";
   
   // First step, split the preheader, so that we know that there is a safe place
   // to insert the conditional branch.  We will change 'OrigPH' to have a
@@ -553,10 +552,10 @@ void LoopUnswitch::UnswitchTrivialCondition(Loop *L, Value *Cond,
 void LoopUnswitch::UnswitchNontrivialCondition(Value *LIC, Constant *Val, 
                                                Loop *L) {
   Function *F = L->getHeader()->getParent();
-  DEBUG(std::cerr << "loop-unswitch: Unswitching loop %"
-                  << L->getHeader()->getName() << " [" << L->getBlocks().size()
-                  << " blocks] in Function " << F->getName()
-                  << " when '" << *Val << "' == " << *LIC << "\n");
+  DOUT << "loop-unswitch: Unswitching loop %"
+       << L->getHeader()->getName() << " [" << L->getBlocks().size()
+       << " blocks] in Function " << F->getName()
+       << " when '" << *Val << "' == " << *LIC << "\n";
 
   // LoopBlocks contains all of the basic blocks of the loop, including the
   // preheader of the loop, the body of the loop, and the exit blocks of the 
@@ -721,7 +720,7 @@ static void RemoveFromWorklist(Instruction *I,
 /// program, replacing all uses with V and update the worklist.
 static void ReplaceUsesOfWith(Instruction *I, Value *V, 
                               std::vector<Instruction*> &Worklist) {
-  DEBUG(std::cerr << "Replace with '" << *V << "': " << *I);
+  DOUT << "Replace with '" << *V << "': " << *I;
 
   // Add uses to the worklist, which may be dead now.
   for (unsigned i = 0, e = I->getNumOperands(); i != e; ++i)
@@ -780,7 +779,7 @@ void LoopUnswitch::RemoveBlockIfDead(BasicBlock *BB,
     return;
   }
 
-  DEBUG(std::cerr << "Nuking dead block: " << *BB);
+  DOUT << "Nuking dead block: " << *BB;
   
   // Remove the instructions in the basic block from the worklist.
   for (BasicBlock::iterator I = BB->begin(), E = BB->end(); I != E; ++I) {
@@ -1013,7 +1012,7 @@ void LoopUnswitch::SimplifyCode(std::vector<Instruction*> &Worklist) {
     
     // Simple DCE.
     if (isInstructionTriviallyDead(I)) {
-      DEBUG(std::cerr << "Remove dead instruction '" << *I);
+      DOUT << "Remove dead instruction '" << *I;
       
       // Add uses to the worklist, which may be dead now.
       for (unsigned i = 0, e = I->getNumOperands(); i != e; ++i)
@@ -1066,8 +1065,8 @@ void LoopUnswitch::SimplifyCode(std::vector<Instruction*> &Worklist) {
         if (!SinglePred) continue;  // Nothing to do.
         assert(SinglePred == Pred && "CFG broken");
 
-        DEBUG(std::cerr << "Merging blocks: " << Pred->getName() << " <- " 
-                        << Succ->getName() << "\n");
+        DOUT << "Merging blocks: " << Pred->getName() << " <- " 
+             << Succ->getName() << "\n";
         
         // Resolve any single entry PHI nodes in Succ.
         while (PHINode *PN = dyn_cast<PHINode>(Succ->begin()))
@@ -1092,7 +1091,7 @@ void LoopUnswitch::SimplifyCode(std::vector<Instruction*> &Worklist) {
         // remove dead blocks.
         break;  // FIXME: Enable.
 
-        DEBUG(std::cerr << "Folded branch: " << *BI);
+        DOUT << "Folded branch: " << *BI;
         BasicBlock *DeadSucc = BI->getSuccessor(CB->getValue());
         BasicBlock *LiveSucc = BI->getSuccessor(!CB->getValue());
         DeadSucc->removePredecessor(BI->getParent(), true);

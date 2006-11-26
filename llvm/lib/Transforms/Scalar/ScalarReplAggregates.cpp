@@ -34,7 +34,6 @@
 #include "llvm/Support/Compiler.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/ADT/StringExtras.h"
-#include <iostream>
 using namespace llvm;
 
 namespace {
@@ -170,7 +169,7 @@ bool SROA::performScalarRepl(Function &F) {
       break;
     }
 
-    DEBUG(std::cerr << "Found inst to xform: " << *AI);
+    DOUT << "Found inst to xform: " << *AI;
     Changed = true;
 
     std::vector<AllocaInst*> ElementAllocas;
@@ -265,7 +264,7 @@ int SROA::isSafeElementUse(Value *Ptr) {
       break;
     }
     default:
-      DEBUG(std::cerr << "  Transformation preventing inst: " << *User);
+      DOUT << "  Transformation preventing inst: " << *User;
       return 0;
     }
   }
@@ -358,8 +357,7 @@ int SROA::isSafeAllocaToScalarRepl(AllocationInst *AI) {
        I != E; ++I) {
     isSafe &= isSafeUseOfAllocation(cast<Instruction>(*I));
     if (isSafe == 0) {
-      DEBUG(std::cerr << "Cannot transform: " << *AI << "  due to user: "
-            << **I);
+      DOUT << "Cannot transform: " << *AI << "  due to user: " << **I;
       return 0;
     }
   }
@@ -572,8 +570,8 @@ const Type *SROA::CanConvertToScalar(Value *V, bool &IsNotTrivial) {
 /// predicate and is non-trivial.  Convert it to something that can be trivially
 /// promoted into a register by mem2reg.
 void SROA::ConvertToScalar(AllocationInst *AI, const Type *ActualTy) {
-  DEBUG(std::cerr << "CONVERT TO SCALAR: " << *AI << "  TYPE = "
-                  << *ActualTy << "\n");
+  DOUT << "CONVERT TO SCALAR: " << *AI << "  TYPE = "
+       << *ActualTy << "\n";
   ++NumConverted;
   
   BasicBlock *EntryBlock = AI->getParent();

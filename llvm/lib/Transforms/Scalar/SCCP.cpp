@@ -36,7 +36,6 @@
 #include "llvm/ADT/Statistic.h"
 #include "llvm/ADT/STLExtras.h"
 #include <algorithm>
-#include <iostream>
 #include <set>
 using namespace llvm;
 
@@ -134,7 +133,7 @@ public:
   /// MarkBlockExecutable - This method can be used by clients to mark all of
   /// the blocks that are known to be intrinsically live in the processed unit.
   void MarkBlockExecutable(BasicBlock *BB) {
-    DEBUG(std::cerr << "Marking Block Executable: " << BB->getName() << "\n");
+    DOUT << "Marking Block Executable: " << BB->getName() << "\n";
     BBExecutable.insert(BB);   // Basic block is executable!
     BBWorkList.push_back(BB);  // Add the block to the work list!
   }
@@ -204,7 +203,7 @@ private:
   //
   inline void markConstant(LatticeVal &IV, Value *V, Constant *C) {
     if (IV.markConstant(C)) {
-      DEBUG(std::cerr << "markConstant: " << *C << ": " << *V);
+      DOUT << "markConstant: " << *C << ": " << *V;
       InstWorkList.push_back(V);
     }
   }
@@ -218,11 +217,11 @@ private:
 
   inline void markOverdefined(LatticeVal &IV, Value *V) {
     if (IV.markOverdefined()) {
-      DEBUG(std::cerr << "markOverdefined: ";
+      DEBUG(DOUT << "markOverdefined: ";
             if (Function *F = dyn_cast<Function>(V))
-              std::cerr << "Function '" << F->getName() << "'\n";
+              DOUT << "Function '" << F->getName() << "'\n";
             else
-              std::cerr << *V);
+              DOUT << *V);
       // Only instructions go on the work list
       OverdefinedInstWorkList.push_back(V);
     }
@@ -276,8 +275,8 @@ private:
       return;  // This edge is already known to be executable!
 
     if (BBExecutable.count(Dest)) {
-      DEBUG(std::cerr << "Marking Edge Executable: " << Source->getName()
-                      << " -> " << Dest->getName() << "\n");
+      DOUT << "Marking Edge Executable: " << Source->getName()
+           << " -> " << Dest->getName() << "\n";
 
       // The destination is already executable, but we just made an edge
       // feasible that wasn't before.  Revisit the PHI nodes in the block
@@ -351,7 +350,7 @@ private:
 
   void visitInstruction(Instruction &I) {
     // If a new instruction is added to LLVM that we don't handle...
-    std::cerr << "SCCP: Don't know how to handle: " << I;
+    llvm_cerr << "SCCP: Don't know how to handle: " << I;
     markOverdefined(&I);   // Just in case
   }
 };
@@ -401,7 +400,7 @@ void SCCPSolver::getFeasibleSuccessors(TerminatorInst &TI,
       Succs[0] = true;
     }
   } else {
-    std::cerr << "SCCP: Don't know how to handle: " << TI;
+    llvm_cerr << "SCCP: Don't know how to handle: " << TI;
     Succs.assign(TI.getNumSuccessors(), true);
   }
 }
@@ -460,7 +459,7 @@ bool SCCPSolver::isEdgeFeasible(BasicBlock *From, BasicBlock *To) {
     }
     return false;
   } else {
-    std::cerr << "Unknown terminator instruction: " << *TI;
+    llvm_cerr << "Unknown terminator instruction: " << *TI;
     abort();
   }
 }
@@ -971,7 +970,7 @@ void SCCPSolver::Solve() {
       Value *I = OverdefinedInstWorkList.back();
       OverdefinedInstWorkList.pop_back();
 
-      DEBUG(std::cerr << "\nPopped off OI-WL: " << *I);
+      DOUT << "\nPopped off OI-WL: " << *I;
 
       // "I" got into the work list because it either made the transition from
       // bottom to constant
@@ -989,7 +988,7 @@ void SCCPSolver::Solve() {
       Value *I = InstWorkList.back();
       InstWorkList.pop_back();
 
-      DEBUG(std::cerr << "\nPopped off I-WL: " << *I);
+      DOUT << "\nPopped off I-WL: " << *I;
 
       // "I" got into the work list because it either made the transition from
       // bottom to constant
@@ -1009,7 +1008,7 @@ void SCCPSolver::Solve() {
       BasicBlock *BB = BBWorkList.back();
       BBWorkList.pop_back();
 
-      DEBUG(std::cerr << "\nPopped off BBWL: " << *BB);
+      DOUT << "\nPopped off BBWL: " << *BB;
 
       // Notify all instructions in this basic block that they are newly
       // executable.
@@ -1098,7 +1097,7 @@ FunctionPass *llvm::createSCCPPass() {
 // and return true if the function was modified.
 //
 bool SCCP::runOnFunction(Function &F) {
-  DEBUG(std::cerr << "SCCP on function '" << F.getName() << "'\n");
+  DOUT << "SCCP on function '" << F.getName() << "'\n";
   SCCPSolver Solver;
 
   // Mark the first block of the function as being executable.
@@ -1113,7 +1112,7 @@ bool SCCP::runOnFunction(Function &F) {
   bool ResolvedBranches = true;
   while (ResolvedBranches) {
     Solver.Solve();
-    DEBUG(std::cerr << "RESOLVING UNDEF BRANCHES\n");
+    DOUT << "RESOLVING UNDEF BRANCHES\n";
     ResolvedBranches = Solver.ResolveBranchesIn(F);
   }
 
@@ -1126,7 +1125,7 @@ bool SCCP::runOnFunction(Function &F) {
   std::set<BasicBlock*> &ExecutableBBs = Solver.getExecutableBlocks();
   for (Function::iterator BB = F.begin(), E = F.end(); BB != E; ++BB)
     if (!ExecutableBBs.count(BB)) {
-      DEBUG(std::cerr << "  BasicBlock Dead:" << *BB);
+      DOUT << "  BasicBlock Dead:" << *BB;
       ++NumDeadBlocks;
 
       // Delete the instructions backwards, as it has a reduced likelihood of
@@ -1156,7 +1155,7 @@ bool SCCP::runOnFunction(Function &F) {
               !isa<TerminatorInst>(Inst)) {
             Constant *Const = IV.isConstant()
               ? IV.getConstant() : UndefValue::get(Inst->getType());
-            DEBUG(std::cerr << "  Constant: " << *Const << " = " << *Inst);
+            DOUT << "  Constant: " << *Const << " = " << *Inst;
 
             // Replaces all of the uses of a variable with uses of the constant.
             Inst->replaceAllUsesWith(Const);
@@ -1258,7 +1257,7 @@ bool IPSCCP::runOnModule(Module &M) {
   while (ResolvedBranches) {
     Solver.Solve();
 
-    DEBUG(std::cerr << "RESOLVING UNDEF BRANCHES\n");
+    DOUT << "RESOLVING UNDEF BRANCHES\n";
     ResolvedBranches = false;
     for (Module::iterator F = M.begin(), E = M.end(); F != E; ++F)
       ResolvedBranches |= Solver.ResolveBranchesIn(*F);
@@ -1278,7 +1277,7 @@ bool IPSCCP::runOnModule(Module &M) {
         if (IV.isConstant() || IV.isUndefined()) {
           Constant *CST = IV.isConstant() ?
             IV.getConstant() : UndefValue::get(AI->getType());
-          DEBUG(std::cerr << "***  Arg " << *AI << " = " << *CST <<"\n");
+          DOUT << "***  Arg " << *AI << " = " << *CST <<"\n";
 
           // Replaces all of the uses of a variable with uses of the
           // constant.
@@ -1290,7 +1289,7 @@ bool IPSCCP::runOnModule(Module &M) {
     std::vector<BasicBlock*> BlocksToErase;
     for (Function::iterator BB = F->begin(), E = F->end(); BB != E; ++BB)
       if (!ExecutableBBs.count(BB)) {
-        DEBUG(std::cerr << "  BasicBlock Dead:" << *BB);
+        DOUT << "  BasicBlock Dead:" << *BB;
         ++IPNumDeadBlocks;
 
         // Delete the instructions backwards, as it has a reduced likelihood of
@@ -1333,7 +1332,7 @@ bool IPSCCP::runOnModule(Module &M) {
                 !isa<TerminatorInst>(Inst)) {
               Constant *Const = IV.isConstant()
                 ? IV.getConstant() : UndefValue::get(Inst->getType());
-              DEBUG(std::cerr << "  Constant: " << *Const << " = " << *Inst);
+              DOUT << "  Constant: " << *Const << " = " << *Inst;
 
               // Replaces all of the uses of a variable with uses of the
               // constant.
@@ -1415,7 +1414,7 @@ bool IPSCCP::runOnModule(Module &M) {
     GlobalVariable *GV = I->first;
     assert(!I->second.isOverdefined() &&
            "Overdefined values should have been taken out of the map!");
-    DEBUG(std::cerr << "Found that GV '" << GV->getName()<< "' is constant!\n");
+    DOUT << "Found that GV '" << GV->getName()<< "' is constant!\n";
     while (!GV->use_empty()) {
       StoreInst *SI = cast<StoreInst>(GV->use_back());
       SI->eraseFromParent();

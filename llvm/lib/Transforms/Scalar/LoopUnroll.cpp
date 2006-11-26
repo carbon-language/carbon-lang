@@ -34,7 +34,6 @@
 #include <cstdio>
 #include <set>
 #include <algorithm>
-#include <iostream>
 using namespace llvm;
 
 namespace {
@@ -134,7 +133,7 @@ BasicBlock* LoopUnroll::FoldBlockIntoPredecessor(BasicBlock* BB) {
   if (OnlyPred->getTerminator()->getNumSuccessors() != 1)
     return 0;
 
-  DEBUG(std::cerr << "Merging: " << *BB << "into: " << *OnlyPred);
+  DOUT << "Merging: " << *BB << "into: " << *OnlyPred;
 
   // Resolve any PHI nodes at the start of the block.  They are all
   // guaranteed to have exactly one entry if they exist, unless there are
@@ -194,15 +193,15 @@ bool LoopUnroll::visitLoop(Loop *L) {
     return Changed; // More than 2^32 iterations???
 
   unsigned LoopSize = ApproximateLoopSize(L);
-  DEBUG(std::cerr << "Loop Unroll: F[" << Header->getParent()->getName()
-        << "] Loop %" << Header->getName() << " Loop Size = "
-        << LoopSize << " Trip Count = " << TripCountFull << " - ");
+  DOUT << "Loop Unroll: F[" << Header->getParent()->getName()
+       << "] Loop %" << Header->getName() << " Loop Size = "
+       << LoopSize << " Trip Count = " << TripCountFull << " - ";
   uint64_t Size = (uint64_t)LoopSize*TripCountFull;
   if (Size > UnrollThreshold) {
-    DEBUG(std::cerr << "TOO LARGE: " << Size << ">" << UnrollThreshold << "\n");
+    DOUT << "TOO LARGE: " << Size << ">" << UnrollThreshold << "\n";
     return Changed;
   }
-  DEBUG(std::cerr << "UNROLLING!\n");
+  DOUT << "UNROLLING!\n";
 
   std::vector<BasicBlock*> LoopBlocks = L->getBlocks();
 

@@ -52,7 +52,6 @@
 #include "llvm/ADT/Statistic.h"
 #include "llvm/ADT/STLExtras.h"
 #include <algorithm>
-#include <iostream>
 using namespace llvm;
 using namespace llvm::PatternMatch;
 
@@ -5551,7 +5550,7 @@ Instruction *InstCombiner::PromoteCastOfAllocation(CastInst &CI,
       // Add operands to the worklist.
       AddUsesToWorkList(*User);
       ++NumDeadInst;
-      DEBUG(std::cerr << "IC: DCE: " << *User);
+      DOUT << "IC: DCE: " << *User;
       
       User->eraseFromParent();
       removeFromWorkList(User);
@@ -6867,7 +6866,7 @@ bool InstCombiner::transformConstExprCastCall(CallSite CS) {
   // If we are removing arguments to the function, emit an obnoxious warning...
   if (FT->getNumParams() < NumActualArgs)
     if (!FT->isVarArg()) {
-      std::cerr << "WARNING: While resolving call to function '"
+      llvm_cerr << "WARNING: While resolving call to function '"
                 << Callee->getName() << "' arguments were dropped!\n";
     } else {
       // Add all of the arguments in their promoted form to the arg list...
@@ -8556,7 +8555,7 @@ static void AddReachableCodeToWorklist(BasicBlock *BB,
     // DCE instruction if trivially dead.
     if (isInstructionTriviallyDead(Inst)) {
       ++NumDeadInst;
-      DEBUG(std::cerr << "IC: DCE: " << *Inst);
+      DOUT << "IC: DCE: " << *Inst;
       Inst->eraseFromParent();
       continue;
     }
@@ -8565,7 +8564,7 @@ static void AddReachableCodeToWorklist(BasicBlock *BB,
     if (Constant *C = ConstantFoldInstruction(Inst)) {
       if (ConstantExpr *CE = dyn_cast<ConstantExpr>(C))
         C = OptimizeConstantExpr(CE, TD);
-      DEBUG(std::cerr << "IC: ConstFold to: " << *C << " from: " << *Inst);
+      DOUT << "IC: ConstFold to: " << *C << " from: " << *Inst;
       Inst->replaceAllUsesWith(C);
       ++NumConstProp;
       Inst->eraseFromParent();
@@ -8624,7 +8623,7 @@ bool InstCombiner::runOnFunction(Function &F) {
         while (Term != BB->begin()) {   // Remove instrs bottom-up
           BasicBlock::iterator I = Term; --I;
 
-          DEBUG(std::cerr << "IC: DCE: " << *I);
+          DOUT << "IC: DCE: " << *I;
           ++NumDeadInst;
 
           if (!I->use_empty())
@@ -8645,7 +8644,7 @@ bool InstCombiner::runOnFunction(Function &F) {
         AddUsesToWorkList(*I);
       ++NumDeadInst;
 
-      DEBUG(std::cerr << "IC: DCE: " << *I);
+      DOUT << "IC: DCE: " << *I;
 
       I->eraseFromParent();
       removeFromWorkList(I);
@@ -8656,7 +8655,7 @@ bool InstCombiner::runOnFunction(Function &F) {
     if (Constant *C = ConstantFoldInstruction(I)) {
       if (ConstantExpr *CE = dyn_cast<ConstantExpr>(C))
         C = OptimizeConstantExpr(CE, TD);
-      DEBUG(std::cerr << "IC: ConstFold to: " << *C << " from: " << *I);
+      DOUT << "IC: ConstFold to: " << *C << " from: " << *I;
 
       // Add operands to the worklist.
       AddUsesToWorkList(*I);
@@ -8696,8 +8695,8 @@ bool InstCombiner::runOnFunction(Function &F) {
       ++NumCombined;
       // Should we replace the old instruction with a new one?
       if (Result != I) {
-        DEBUG(std::cerr << "IC: Old = " << *I
-                        << "    New = " << *Result);
+        DOUT << "IC: Old = " << *I
+             << "    New = " << *Result;
 
         // Everything uses the new instruction now.
         I->replaceAllUsesWith(Result);
@@ -8733,7 +8732,7 @@ bool InstCombiner::runOnFunction(Function &F) {
         // Erase the old instruction.
         InstParent->getInstList().erase(I);
       } else {
-        DEBUG(std::cerr << "IC: MOD = " << *I);
+        DOUT << "IC: MOD = " << *I;
 
         // If the instruction was modified, it's possible that it is now dead.
         // if so, remove it.

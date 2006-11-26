@@ -47,7 +47,6 @@
 #include "llvm/Support/Debug.h"
 #include "llvm/ADT/Statistic.h"
 #include <algorithm>
-#include <iostream>
 using namespace llvm;
 
 namespace {
@@ -430,7 +429,7 @@ bool LICM::isLoopInvariantInst(Instruction &I) {
 /// position, and may either delete it or move it to outside of the loop.
 ///
 void LICM::sink(Instruction &I) {
-  DEBUG(std::cerr << "LICM sinking instruction: " << I);
+  DOUT << "LICM sinking instruction: " << I;
 
   std::vector<BasicBlock*> ExitBlocks;
   CurLoop->getExitBlocks(ExitBlocks);
@@ -565,8 +564,7 @@ void LICM::sink(Instruction &I) {
 /// that is safe to hoist, this instruction is called to do the dirty work.
 ///
 void LICM::hoist(Instruction &I) {
-  DEBUG(std::cerr << "LICM hoisting to " << Preheader->getName()
-                  << ": " << I);
+  DOUT << "LICM hoisting to " << Preheader->getName() << ": " << I;
 
   // Remove the instruction from its current basic block... but don't delete the
   // instruction.
@@ -785,7 +783,7 @@ void LICM::FindPromotableValuesInLoop(
         for (AliasSet::iterator I = AS.begin(), E = AS.end(); I != E; ++I)
           ValueToAllocaMap.insert(std::make_pair(I->first, AI));
 
-        DEBUG(std::cerr << "LICM: Promoting value: " << *V << "\n");
+        DOUT << "LICM: Promoting value: " << *V << "\n";
       }
     }
   }

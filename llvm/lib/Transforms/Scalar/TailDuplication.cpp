@@ -31,7 +31,6 @@
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/ADT/Statistic.h"
-#include <iostream>
 using namespace llvm;
 
 namespace {
@@ -215,14 +214,13 @@ void TailDup::eliminateUnconditionalBranch(BranchInst *Branch) {
   BasicBlock *DestBlock = Branch->getSuccessor(0);
   assert(SourceBlock != DestBlock && "Our predicate is broken!");
 
-  DEBUG(std::cerr << "TailDuplication[" << SourceBlock->getParent()->getName()
-                  << "]: Eliminating branch: " << *Branch);
+  DOUT << "TailDuplication[" << SourceBlock->getParent()->getName()
+       << "]: Eliminating branch: " << *Branch;
 
   // See if we can avoid duplicating code by moving it up to a dominator of both
   // blocks.
   if (BasicBlock *DomBlock = FindObviousSharedDomOf(SourceBlock, DestBlock)) {
-    DEBUG(std::cerr << "Found shared dominator: " << DomBlock->getName()
-                    << "\n");
+    DOUT << "Found shared dominator: " << DomBlock->getName() << "\n";
 
     // If there are non-phi instructions in DestBlock that have no operands
     // defined in DestBlock, and if the instruction has no side effects, we can
@@ -245,7 +243,7 @@ void TailDup::eliminateUnconditionalBranch(BranchInst *Branch) {
           // Remove from DestBlock, move right before the term in DomBlock.
           DestBlock->getInstList().remove(I);
           DomBlock->getInstList().insert(DomBlock->getTerminator(), I);
-          DEBUG(std::cerr << "Hoisted: " << *I);
+          DOUT << "Hoisted: " << *I;
         }
       }
     }

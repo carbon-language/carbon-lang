@@ -22,7 +22,7 @@
 #include "llvm/Type.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/Statistic.h"
-#include <iostream>
+#include "llvm/Support/Streams.h"
 using namespace llvm;
 
 namespace {
