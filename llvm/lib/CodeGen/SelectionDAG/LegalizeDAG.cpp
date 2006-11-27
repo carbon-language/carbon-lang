@@ -1302,6 +1302,12 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
       break;
     case Promote:
       Tmp2 = PromoteOp(Node->getOperand(1));  // Promote the condition.
+      
+      // The top bits of the promoted condition are not necessarily zero, ensure
+      // that the value is properly zero extended.
+      if (!TLI.MaskedValueIsZero(Tmp2, 
+                                 MVT::getIntVTBitMask(Tmp2.getValueType())^1))
+        Tmp2 = DAG.getZeroExtendInReg(Tmp2, MVT::i1);
       break;
     }
 
@@ -1323,12 +1329,6 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
                              Tmp2.getOperand(0), Tmp2.getOperand(1),
                              Node->getOperand(2));
       } else {
-        // Make sure the condition is either zero or one.  It may have been
-        // promoted from something else.
-        unsigned NumBits = MVT::getSizeInBits(Tmp2.getValueType());
-        if (!TLI.MaskedValueIsZero(Tmp2, (~0ULL >> (64-NumBits))^1))
-          Tmp2 = DAG.getZeroExtendInReg(Tmp2, MVT::i1);
-        
         Result = DAG.getNode(ISD::BR_CC, MVT::Other, Tmp1, 
                              DAG.getCondCode(ISD::SETNE), Tmp2,
                              DAG.getConstant(0, Tmp2.getValueType()),
