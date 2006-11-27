@@ -15,8 +15,7 @@
 #include "llvm/Module.h"
 #include "llvm/Bytecode/Reader.h"
 #include "llvm/Config/config.h"
-#include <iostream>
-
+#include "llvm/Support/Streams.h"
 using namespace llvm;
 
 Linker::Linker(const std::string& progname, const std::string& modname, unsigned flags)
@@ -45,26 +44,23 @@ Linker::~Linker() {
 bool
 Linker::error(const std::string& message) {
   Error = message;
-  if (!(Flags&QuietErrors)) {
-    std::cerr << ProgramName << ": error: " << message << "\n";
-  }
+  if (!(Flags&QuietErrors))
+    llvm_cerr << ProgramName << ": error: " << message << "\n";
   return true;
 }
 
 bool
 Linker::warning(const std::string& message) {
   Error = message;
-  if (!(Flags&QuietErrors)) {
-    std::cerr << ProgramName << ": warning: " << message << "\n";
-  }
+  if (!(Flags&QuietErrors))
+    llvm_cerr << ProgramName << ": warning: " << message << "\n";
   return false;
 }
 
 void
 Linker::verbose(const std::string& message) {
-  if (Flags&Verbose) {
-    std::cerr << "  " << message << "\n";
-  }
+  if (Flags&Verbose)
+    llvm_cerr << "  " << message << "\n";
 }
 
 void

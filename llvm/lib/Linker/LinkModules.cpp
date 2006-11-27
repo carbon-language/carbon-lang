@@ -23,8 +23,8 @@
 #include "llvm/SymbolTable.h"
 #include "llvm/Instructions.h"
 #include "llvm/Assembly/Writer.h"
+#include "llvm/Support/Streams.h"
 #include "llvm/System/Path.h"
-#include <iostream>
 #include <sstream>
 using namespace llvm;
 
@@ -251,11 +251,11 @@ static bool LinkTypes(Module *Dest, const Module *Src, std::string *Err) {
 static void PrintMap(const std::map<const Value*, Value*> &M) {
   for (std::map<const Value*, Value*>::const_iterator I = M.begin(), E =M.end();
        I != E; ++I) {
-    std::cerr << " Fr: " << (void*)I->first << " ";
+    llvm_cerr << " Fr: " << (void*)I->first << " ";
     I->first->dump();
-    std::cerr << " To: " << (void*)I->second << " ";
+    llvm_cerr << " To: " << (void*)I->second << " ";
     I->second->dump();
-    std::cerr << "\n";
+    llvm_cerr << "\n";
   }
 }
 
@@ -313,10 +313,10 @@ static Value *RemapOperand(const Value *In,
   }
   
 
-  std::cerr << "LinkModules ValueMap: \n";
+  llvm_cerr << "LinkModules ValueMap: \n";
   PrintMap(ValueMap);
 
-  std::cerr << "Couldn't remap value: " << (void*)In << " " << *In << "\n";
+  llvm_cerr << "Couldn't remap value: " << (void*)In << " " << *In << "\n";
   assert(0 && "Couldn't remap value!");
   return 0;
 }
@@ -832,13 +832,13 @@ Linker::LinkModules(Module *Dest, Module *Src, std::string *ErrorMsg) {
 
   if (Src->getEndianness() != Module::AnyEndianness &&
       Dest->getEndianness() != Src->getEndianness())
-    std::cerr << "WARNING: Linking two modules of different endianness!\n";
+    llvm_cerr << "WARNING: Linking two modules of different endianness!\n";
   if (Src->getPointerSize() != Module::AnyPointerSize &&
       Dest->getPointerSize() != Src->getPointerSize())
-    std::cerr << "WARNING: Linking two modules of different pointer size!\n";
+    llvm_cerr << "WARNING: Linking two modules of different pointer size!\n";
   if (!Src->getTargetTriple().empty() &&
       Dest->getTargetTriple() != Src->getTargetTriple())
-    std::cerr << "WARNING: Linking two modules of different target triples!\n";
+    llvm_cerr << "WARNING: Linking two modules of different target triples!\n";
 
   if (!Src->getModuleInlineAsm().empty()) {
     if (Dest->getModuleInlineAsm().empty())
