@@ -18,6 +18,7 @@
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/CodeGen/MachineLocation.h"
+#include "llvm/Target/TargetInstrInfo.h"
 #include "llvm/Type.h"
 #include "llvm/ADT/STLExtras.h"
 #include <iostream>
@@ -35,11 +36,14 @@ storeRegToStackSlot(MachineBasicBlock &MBB, MachineBasicBlock::iterator I,
                     const TargetRegisterClass *RC) const {
   // On the order of operands here: think "[FrameIdx + 0] = SrcReg".
   if (RC == SP::IntRegsRegisterClass)
-    BuildMI(MBB, I, SP::STri, 3).addFrameIndex(FI).addImm(0).addReg(SrcReg);
+    BuildMI(MBB, I, TII.get(SP::STri)).addFrameIndex(FI).addImm(0)
+      .addReg(SrcReg);
   else if (RC == SP::FPRegsRegisterClass)
-    BuildMI(MBB, I, SP::STFri, 3).addFrameIndex(FI).addImm(0).addReg(SrcReg);
+    BuildMI(MBB, I, TII.get(SP::STFri)).addFrameIndex(FI).addImm(0)
+      .addReg(SrcReg);
   else if (RC == SP::DFPRegsRegisterClass)
-    BuildMI(MBB, I, SP::STDFri, 3).addFrameIndex(FI).addImm(0).addReg(SrcReg);
+    BuildMI(MBB, I, TII.get(SP::STDFri)).addFrameIndex(FI).addImm(0)
+      .addReg(SrcReg);
   else
     assert(0 && "Can't store this register to stack slot");
 }
@@ -49,11 +53,11 @@ loadRegFromStackSlot(MachineBasicBlock &MBB, MachineBasicBlock::iterator I,
                      unsigned DestReg, int FI,
                      const TargetRegisterClass *RC) const {
   if (RC == SP::IntRegsRegisterClass)
-    BuildMI(MBB, I, SP::LDri, 2, DestReg).addFrameIndex(FI).addImm(0);
+    BuildMI(MBB, I, TII.get(SP::LDri), DestReg).addFrameIndex(FI).addImm(0);
   else if (RC == SP::FPRegsRegisterClass)
-    BuildMI(MBB, I, SP::LDFri, 2, DestReg).addFrameIndex(FI).addImm (0);
+    BuildMI(MBB, I, TII.get(SP::LDFri), DestReg).addFrameIndex(FI).addImm(0);
   else if (RC == SP::DFPRegsRegisterClass)
-    BuildMI(MBB, I, SP::LDDFri, 2, DestReg).addFrameIndex(FI).addImm(0);
+    BuildMI(MBB, I, TII.get(SP::LDDFri), DestReg).addFrameIndex(FI).addImm(0);
   else
     assert(0 && "Can't load this register from stack slot");
 }
@@ -63,12 +67,12 @@ void SparcRegisterInfo::copyRegToReg(MachineBasicBlock &MBB,
                                      unsigned DestReg, unsigned SrcReg,
                                      const TargetRegisterClass *RC) const {
   if (RC == SP::IntRegsRegisterClass)
-    BuildMI(MBB, I, SP::ORrr, 2, DestReg).addReg(SP::G0).addReg(SrcReg);
+    BuildMI(MBB, I, TII.get(SP::ORrr), DestReg).addReg(SP::G0).addReg(SrcReg);
   else if (RC == SP::FPRegsRegisterClass)
-    BuildMI(MBB, I, SP::FMOVS, 1, DestReg).addReg(SrcReg);
+    BuildMI(MBB, I, TII.get(SP::FMOVS), DestReg).addReg(SrcReg);
   else if (RC == SP::DFPRegsRegisterClass)
-    BuildMI(MBB, I, Subtarget.isV9() ? SP::FMOVD : SP::FpMOVD,
-            1, DestReg).addReg(SrcReg);
+    BuildMI(MBB, I, TII.get(Subtarget.isV9() ? SP::FMOVD : SP::FpMOVD),DestReg)
+      .addReg(SrcReg);
   else
     assert (0 && "Can't copy this register");
 }
@@ -83,10 +87,10 @@ MachineInstr *SparcRegisterInfo::foldMemoryOperand(MachineInstr* MI,
     if (MI->getOperand(1).isRegister() && MI->getOperand(1).getReg() == SP::G0&&
         MI->getOperand(0).isRegister() && MI->getOperand(2).isRegister()) {
       if (OpNum == 0)    // COPY -> STORE
-        NewMI = BuildMI(TII, SP::STri, 3).addFrameIndex(FI).addImm(0)
+        NewMI = BuildMI(TII.get(SP::STri)).addFrameIndex(FI).addImm(0)
                                    .addReg(MI->getOperand(2).getReg());
       else               // COPY -> LOAD
-        NewMI = BuildMI(TII, SP::LDri, 2, MI->getOperand(0).getReg())
+        NewMI = BuildMI(TII.get(SP::LDri), MI->getOperand(0).getReg())
                       .addFrameIndex(FI).addImm(0);
     }
     break;
@@ -95,10 +99,10 @@ MachineInstr *SparcRegisterInfo::foldMemoryOperand(MachineInstr* MI,
     // FALLTHROUGH
   case SP::FMOVD:
     if (OpNum == 0)  // COPY -> STORE
-      NewMI = BuildMI(TII, isFloat ? SP::STFri : SP::STDFri, 3)
+      NewMI = BuildMI(TII.get(isFloat ? SP::STFri : SP::STDFri))
                .addFrameIndex(FI).addImm(0).addReg(MI->getOperand(1).getReg());
     else             // COPY -> LOAD
-      NewMI = BuildMI(TII, isFloat ? SP::LDFri : SP::LDDFri, 2, 
+      NewMI = BuildMI(TII.get(isFloat ? SP::LDFri : SP::LDDFri),
                      MI->getOperand(0).getReg()).addFrameIndex(FI).addImm(0);
     break;
   }
@@ -128,7 +132,7 @@ eliminateCallFramePseudoInstr(MachineFunction &MF, MachineBasicBlock &MBB,
   if (MI.getOpcode() == SP::ADJCALLSTACKDOWN)
     Size = -Size;
   if (Size)
-    BuildMI(MBB, I, SP::ADDri, 2, SP::O6).addReg(SP::O6).addImm(Size);
+    BuildMI(MBB, I, TII.get(SP::ADDri), SP::O6).addReg(SP::O6).addImm(Size);
   MBB.erase(I);
 }
 
@@ -158,10 +162,10 @@ SparcRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II) const {
     // Otherwise, emit a G1 = SETHI %hi(offset).  FIXME: it would be better to 
     // scavenge a register here instead of reserving G1 all of the time.
     unsigned OffHi = (unsigned)Offset >> 10U;
-    BuildMI(*MI.getParent(), II, SP::SETHIi, 1, SP::G1).addImm(OffHi);
+    BuildMI(*MI.getParent(), II, TII.get(SP::SETHIi), SP::G1).addImm(OffHi);
     // Emit G1 = G1 + I6
-    BuildMI(*MI.getParent(), II, SP::ADDrr, 2, 
-            SP::G1).addReg(SP::G1).addReg(SP::I6);
+    BuildMI(*MI.getParent(), II, TII.get(SP::ADDrr), SP::G1).addReg(SP::G1)
+      .addReg(SP::I6);
     // Insert: G1+%lo(offset) into the user.
     MI.getOperand(i).ChangeToRegister(SP::G1, false);
     MI.getOperand(i+1).ChangeToImmediate(Offset & ((1 << 10)-1));
@@ -192,19 +196,19 @@ void SparcRegisterInfo::emitPrologue(MachineFunction &MF) const {
   NumBytes = -NumBytes;
   
   if (NumBytes >= -4096) {
-    BuildMI(MBB, MBB.begin(), SP::SAVEri, 2,
+    BuildMI(MBB, MBB.begin(), TII.get(SP::SAVEri),
             SP::O6).addImm(NumBytes).addReg(SP::O6);
   } else {
     MachineBasicBlock::iterator InsertPt = MBB.begin();
     // Emit this the hard way.  This clobbers G1 which we always know is 
     // available here.
     unsigned OffHi = (unsigned)NumBytes >> 10U;
-    BuildMI(MBB, InsertPt, SP::SETHIi, 1, SP::G1).addImm(OffHi);
+    BuildMI(MBB, InsertPt, TII.get(SP::SETHIi), SP::G1).addImm(OffHi);
     // Emit G1 = G1 + I6
-    BuildMI(MBB, InsertPt, SP::ORri, 2, SP::G1)
+    BuildMI(MBB, InsertPt, TII.get(SP::ORri), SP::G1)
       .addReg(SP::G1).addImm(NumBytes & ((1 << 10)-1));
-    BuildMI(MBB, InsertPt, SP::SAVErr, 2,
-            SP::O6).addReg(SP::O6).addReg(SP::G1);
+    BuildMI(MBB, InsertPt, TII.get(SP::SAVErr), SP::O6)
+      .addReg(SP::O6).addReg(SP::G1);
   }
 }
 
@@ -213,7 +217,8 @@ void SparcRegisterInfo::emitEpilogue(MachineFunction &MF,
   MachineBasicBlock::iterator MBBI = prior(MBB.end());
   assert(MBBI->getOpcode() == SP::RETL &&
          "Can only put epilog before 'retl' instruction!");
-  BuildMI(MBB, MBBI, SP::RESTORErr, 2, SP::G0).addReg(SP::G0).addReg(SP::G0);
+  BuildMI(MBB, MBBI, TII.get(SP::RESTORErr), SP::G0).addReg(SP::G0)
+    .addReg(SP::G0);
 }
 
 unsigned SparcRegisterInfo::getRARegister() const {

@@ -19,6 +19,7 @@
 
 namespace llvm {
 
+class TargetInstrInfo;
 class Type;
 
 struct AlphaRegisterInfo : public AlphaGenRegisterInfo {

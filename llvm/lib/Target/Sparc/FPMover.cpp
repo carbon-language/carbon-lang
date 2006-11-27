@@ -16,6 +16,7 @@
 #include "llvm/CodeGen/MachineFunctionPass.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "llvm/Target/TargetMachine.h"
+#include "llvm/Target/TargetInstrInfo.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/Support/Debug.h"
 #include <iostream>
@@ -109,7 +110,8 @@ bool FPMover::runOnMachineBasicBlock(MachineBasicBlock &MBB) {
       DEBUG(std::cerr << "FPMover: the modified instr is: " << *MI);
       // Insert copy for the other half of the double.
       if (DestDReg != SrcDReg) {
-        MI = BuildMI(MBB, I, SP::FMOVS, 1, OddDestReg).addReg(OddSrcReg);
+        MI = BuildMI(MBB, I, TM.getInstrInfo()->get(SP::FMOVS), OddDestReg)
+          .addReg(OddSrcReg);
         DEBUG(std::cerr << "FPMover: the inserted instr is: " << *MI);
       }
       ++NumFpDs;

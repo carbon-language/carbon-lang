@@ -64,7 +64,7 @@ bool Filler::runOnMachineBasicBlock(MachineBasicBlock &MBB) {
     if (TII->hasDelaySlot(I->getOpcode())) {
       MachineBasicBlock::iterator J = I;
       ++J;
-      BuildMI(MBB, J, SP::NOP, 0);
+      BuildMI(MBB, J, TII->get(SP::NOP));
       ++FilledSlots;
       Changed = true;
     }

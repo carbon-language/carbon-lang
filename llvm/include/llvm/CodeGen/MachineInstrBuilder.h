@@ -19,9 +19,10 @@
 
 #include "llvm/CodeGen/MachineBasicBlock.h"
 #include "llvm/CodeGen/MachineFunction.h"
-#include "llvm/Target/TargetMachine.h"
 
 namespace llvm {
+
+class TargetInstrDescriptor;
 
 class MachineInstrBuilder {
   MachineInstr *MI;
@@ -83,36 +84,29 @@ public:
 };
 
 /// BuildMI - Builder interface.  Specify how to create the initial instruction
-/// itself.  NumOperands is the number of operands to the machine instruction to
-/// allow for memory efficient representation of machine instructions.
+/// itself.
 ///
-inline MachineInstrBuilder BuildMI(const TargetInstrInfo &TII, int Opcode,
-                                   unsigned NumOperands) {
-  return MachineInstrBuilder(new MachineInstr(TII, Opcode, NumOperands));
+inline MachineInstrBuilder BuildMI(const TargetInstrDescriptor &TID) {
+  return MachineInstrBuilder(new MachineInstr(TID));
 }
 
 /// BuildMI - This version of the builder sets up the first operand as a
-/// destination virtual register.  NumOperands is the number of additional add*
-/// calls that are expected, not including the destination register.
+/// destination virtual register.
 ///
-inline MachineInstrBuilder  BuildMI(const TargetInstrInfo &TII, int Opcode,
-                                    unsigned NumOperands, unsigned DestReg) {
-  return MachineInstrBuilder(new MachineInstr(TII, Opcode, NumOperands+1))
-               .addReg(DestReg, true);
+  inline MachineInstrBuilder  BuildMI(const TargetInstrDescriptor &TID,
+                                      unsigned DestReg) {
+  return MachineInstrBuilder(new MachineInstr(TID)).addReg(DestReg, true);
 }
 
 /// BuildMI - This version of the builder inserts the newly-built
 /// instruction before the given position in the given MachineBasicBlock, and
 /// sets up the first operand as a destination virtual register.
-/// NumOperands is the number of additional add* calls that are expected,
-/// not including the destination register.
 ///
 inline MachineInstrBuilder BuildMI(MachineBasicBlock &BB,
                                    MachineBasicBlock::iterator I,
-                                   int Opcode, unsigned NumOperands,
+                                   const TargetInstrDescriptor &TID,
                                    unsigned DestReg) {
-  MachineInstr *MI = new MachineInstr(*BB.getParent()->getTarget().
-                                      getInstrInfo(), Opcode, NumOperands+1);
+  MachineInstr *MI = new MachineInstr(TID);
   BB.insert(I, MI);
   return MachineInstrBuilder(MI).addReg(DestReg, true);
 }
@@ -123,9 +117,8 @@ inline MachineInstrBuilder BuildMI(MachineBasicBlock &BB,
 ///
 inline MachineInstrBuilder BuildMI(MachineBasicBlock &BB,
                                    MachineBasicBlock::iterator I,
-                                   int Opcode, unsigned NumOperands) {
-  MachineInstr *MI = new MachineInstr(*BB.getParent()->getTarget().
-                                      getInstrInfo(), Opcode, NumOperands);
+                                   const TargetInstrDescriptor &TID) {
+  MachineInstr *MI = new MachineInstr(TID);
   BB.insert(I, MI);
   return MachineInstrBuilder(MI);
 }
@@ -134,20 +127,19 @@ inline MachineInstrBuilder BuildMI(MachineBasicBlock &BB,
 /// instruction at the end of the given MachineBasicBlock, and does NOT take a
 /// destination register.
 ///
-inline MachineInstrBuilder BuildMI(MachineBasicBlock *BB, int Opcode,
-                                   unsigned NumOperands) {
-  return BuildMI(*BB, BB->end(), Opcode, NumOperands);
+inline MachineInstrBuilder BuildMI(MachineBasicBlock *BB,
+                                   const TargetInstrDescriptor &TID) {
+  return BuildMI(*BB, BB->end(), TID);
 }
 
 /// BuildMI - This version of the builder inserts the newly-built
 /// instruction at the end of the given MachineBasicBlock, and sets up the first
-/// operand as a destination virtual register. NumOperands is the number of
-/// additional add* calls that are expected, not including the destination
-/// register.
+/// operand as a destination virtual register. 
 ///
-inline MachineInstrBuilder BuildMI(MachineBasicBlock *BB, int Opcode,
-                                   unsigned NumOperands, unsigned DestReg) {
-  return BuildMI(*BB, BB->end(), Opcode, NumOperands, DestReg);
+inline MachineInstrBuilder BuildMI(MachineBasicBlock *BB,
+                                   const TargetInstrDescriptor &TID,
+                                   unsigned DestReg) {
+  return BuildMI(*BB, BB->end(), TID, DestReg);
 }
 
 } // End llvm namespace

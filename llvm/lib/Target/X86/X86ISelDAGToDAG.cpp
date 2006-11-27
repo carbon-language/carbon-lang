@@ -525,7 +525,8 @@ void X86DAGToDAGISel::InstructionSelectBasicBlock(SelectionDAG &DAG) {
 
     // Finally, if we found any FP code, emit the FP_REG_KILL instruction.
     if (ContainsFPCode) {
-      BuildMI(*BB, BB->getFirstTerminator(), X86::FP_REG_KILL, 0);
+      BuildMI(*BB, BB->getFirstTerminator(),
+              TM.getInstrInfo()->get(X86::FP_REG_KILL));
       ++NumFPKill;
     }
   }
@@ -535,19 +536,20 @@ void X86DAGToDAGISel::InstructionSelectBasicBlock(SelectionDAG &DAG) {
 /// the main function.
 void X86DAGToDAGISel::EmitSpecialCodeForMain(MachineBasicBlock *BB,
                                              MachineFrameInfo *MFI) {
+  const TargetInstrInfo *TII = TM.getInstrInfo();
   if (Subtarget->isTargetCygwin())
-    BuildMI(BB, X86::CALLpcrel32, 1).addExternalSymbol("__main");
+    BuildMI(BB, TII->get(X86::CALLpcrel32)).addExternalSymbol("__main");
 
   // Switch the FPU to 64-bit precision mode for better compatibility and speed.
   int CWFrameIdx = MFI->CreateStackObject(2, 2);
-  addFrameReference(BuildMI(BB, X86::FNSTCW16m, 4), CWFrameIdx);
+  addFrameReference(BuildMI(BB, TII->get(X86::FNSTCW16m)), CWFrameIdx);
 
   // Set the high part to be 64-bit precision.
-  addFrameReference(BuildMI(BB, X86::MOV8mi, 5),
+  addFrameReference(BuildMI(BB, TII->get(X86::MOV8mi)),
                     CWFrameIdx, 1).addImm(2);
 
   // Reload the modified control word now.
-  addFrameReference(BuildMI(BB, X86::FLDCW16m, 4), CWFrameIdx);
+  addFrameReference(BuildMI(BB, TII->get(X86::FLDCW16m)), CWFrameIdx);
 }
 
 void X86DAGToDAGISel::EmitFunctionEntryCode(Function &Fn, MachineFunction &MF) {
@@ -943,11 +945,10 @@ SDNode *X86DAGToDAGISel::getGlobalBaseReg() {
     MachineBasicBlock &FirstMBB = BB->getParent()->front();
     MachineBasicBlock::iterator MBBI = FirstMBB.begin();
     SSARegMap *RegMap = BB->getParent()->getSSARegMap();
-    // FIXME: when we get to LP64, we will need to create the appropriate
-    // type of register here.
     GlobalBaseReg = RegMap->createVirtualRegister(X86::GR32RegisterClass);
-    BuildMI(FirstMBB, MBBI, X86::MovePCtoStack, 0);
-    BuildMI(FirstMBB, MBBI, X86::POP32r, 1, GlobalBaseReg);
+    const TargetInstrInfo *TII = TM.getInstrInfo();
+    BuildMI(FirstMBB, MBBI, TII->get(X86::MovePCtoStack));
+    BuildMI(FirstMBB, MBBI, TII->get(X86::POP32r), GlobalBaseReg);
   }
   return CurDAG->getRegister(GlobalBaseReg, TLI.getPointerTy()).Val;
 }

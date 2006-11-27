@@ -27,7 +27,6 @@ namespace llvm {
 class Value;
 class Function;
 class MachineBasicBlock;
-class TargetInstrInfo;
 class TargetInstrDescriptor;
 class TargetMachine;
 class GlobalValue;
@@ -296,7 +295,7 @@ public:
 ///
 class MachineInstr {
   short Opcode;                         // the opcode
-  short NumImplicitOps;                 // Number of implicit operands (which
+  unsigned short NumImplicitOps;        // Number of implicit operands (which
                                         // are determined at construction time).
 
   std::vector<MachineOperand> Operands; // the operands
@@ -314,19 +313,20 @@ class MachineInstr {
   friend struct ilist_traits<MachineInstr>;
 
 public:
-  /// MachineInstr ctor - This constructor reserves space for numOperand
-  /// operands.
-  MachineInstr(short Opcode, unsigned numOperands);
+  /// MachineInstr ctor - This constructor creates a dummy MachineInstr with
+  /// opcode 0 and no operands.
+  MachineInstr();
 
   /// MachineInstr ctor - This constructor create a MachineInstr and add the
-  /// implicit operands. It reserves space for numOperand operands.
-  MachineInstr(const TargetInstrInfo &TII, short Opcode, unsigned numOperands);
+  /// implicit operands. It reserves space for number of operands specified by
+  /// TargetInstrDescriptor.
+  MachineInstr(const TargetInstrDescriptor &TID);
 
   /// MachineInstr ctor - Work exactly the same as the ctor above, except that
   /// the MachineInstr is created and added to the end of the specified basic
   /// block.
   ///
-  MachineInstr(MachineBasicBlock *MBB, short Opcode, unsigned numOps);
+  MachineInstr(MachineBasicBlock *MBB, const TargetInstrDescriptor &TID);
 
   ~MachineInstr();
 

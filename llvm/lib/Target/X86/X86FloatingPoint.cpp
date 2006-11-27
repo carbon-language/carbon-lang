@@ -107,6 +107,9 @@ namespace {
     bool isAtTop(unsigned RegNo) const { return getSlot(RegNo) == StackTop-1; }
     void moveToTop(unsigned RegNo, MachineBasicBlock::iterator &I) {
       if (!isAtTop(RegNo)) {
+        MachineFunction *MF = I->getParent()->getParent();
+        const TargetInstrInfo &TII = *MF->getTarget().getInstrInfo();
+
         unsigned STReg = getSTReg(RegNo);
         unsigned RegOnTop = getStackEntry(0);
 
@@ -118,16 +121,18 @@ namespace {
         std::swap(Stack[RegMap[RegOnTop]], Stack[StackTop-1]);
 
         // Emit an fxch to update the runtime processors version of the state
-        BuildMI(*MBB, I, X86::FXCH, 1).addReg(STReg);
+        BuildMI(*MBB, I, TII.get(X86::FXCH)).addReg(STReg);
         NumFXCH++;
       }
     }
 
     void duplicateToTop(unsigned RegNo, unsigned AsReg, MachineInstr *I) {
+      MachineFunction *MF = I->getParent()->getParent();
+      const TargetInstrInfo &TII = *MF->getTarget().getInstrInfo();
       unsigned STReg = getSTReg(RegNo);
       pushReg(AsReg);   // New register on top of stack
 
-      BuildMI(*MBB, I, X86::FLDrr, 1).addReg(STReg);
+      BuildMI(*MBB, I, TII.get(X86::FLDrr)).addReg(STReg);
     }
 
     // popStackAfter - Pop the current value off of the top of the FP stack
@@ -435,7 +440,9 @@ void FPS::popStackAfter(MachineBasicBlock::iterator &I) {
       I->RemoveOperand(0);
 
   } else {    // Insert an explicit pop
-    I = BuildMI(*MBB, ++I, X86::FSTPrr, 1).addReg(X86::ST0);
+    MachineFunction *MF = I->getParent()->getParent();
+    const TargetInstrInfo &TII = *MF->getTarget().getInstrInfo();
+    I = BuildMI(*MBB, ++I, TII.get(X86::FSTPrr)).addReg(X86::ST0);
   }
 }
 
@@ -459,7 +466,9 @@ void FPS::freeStackSlotAfter(MachineBasicBlock::iterator &I, unsigned FPRegNo) {
   RegMap[TopReg]    = OldSlot;
   RegMap[FPRegNo]   = ~0;
   Stack[--StackTop] = ~0;
-  I = BuildMI(*MBB, ++I, X86::FSTPrr, 1).addReg(STReg);
+  MachineFunction *MF = I->getParent()->getParent();
+  const TargetInstrInfo &TII = *MF->getTarget().getInstrInfo();
+  I = BuildMI(*MBB, ++I, TII.get(X86::FSTPrr)).addReg(STReg);
 }
 
 
@@ -697,7 +706,7 @@ void FPS::handleTwoArgFP(MachineBasicBlock::iterator &I) {
 
   // Replace the old instruction with a new instruction
   MBB->remove(I++);
-  I = BuildMI(*MBB, I, Opcode, 1).addReg(getSTReg(NotTOS));
+  I = BuildMI(*MBB, I, TII.get(Opcode)).addReg(getSTReg(NotTOS));
 
   // If both operands are killed, pop one off of the stack in addition to
   // overwriting the other one.

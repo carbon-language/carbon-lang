@@ -25,6 +25,7 @@
 #include "llvm/Target/TargetFrameInfo.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetOptions.h"
+#include "llvm/Target/TargetInstrInfo.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/ADT/STLExtras.h"
@@ -66,13 +67,13 @@ AlphaRegisterInfo::storeRegToStackSlot(MachineBasicBlock &MBB,
   //<< FrameIdx << "\n";
   //BuildMI(MBB, MI, Alpha::WTF, 0).addReg(SrcReg);
   if (RC == Alpha::F4RCRegisterClass)
-    BuildMI(MBB, MI, Alpha::STS, 3)
+    BuildMI(MBB, MI, TII.get(Alpha::STS))
       .addReg(SrcReg).addFrameIndex(FrameIdx).addReg(Alpha::F31);
   else if (RC == Alpha::F8RCRegisterClass)
-    BuildMI(MBB, MI, Alpha::STT, 3)
+    BuildMI(MBB, MI, TII.get(Alpha::STT))
       .addReg(SrcReg).addFrameIndex(FrameIdx).addReg(Alpha::F31);
   else if (RC == Alpha::GPRCRegisterClass)
-    BuildMI(MBB, MI, Alpha::STQ, 3)
+    BuildMI(MBB, MI, TII.get(Alpha::STQ))
       .addReg(SrcReg).addFrameIndex(FrameIdx).addReg(Alpha::F31);
   else
     abort();
@@ -86,13 +87,13 @@ AlphaRegisterInfo::loadRegFromStackSlot(MachineBasicBlock &MBB,
   //std::cerr << "Trying to load " << getPrettyName(DestReg) << " to "
   //<< FrameIdx << "\n";
   if (RC == Alpha::F4RCRegisterClass)
-    BuildMI(MBB, MI, Alpha::LDS, 2, DestReg)
+    BuildMI(MBB, MI, TII.get(Alpha::LDS), DestReg)
       .addFrameIndex(FrameIdx).addReg(Alpha::F31);
   else if (RC == Alpha::F8RCRegisterClass)
-    BuildMI(MBB, MI, Alpha::LDT, 2, DestReg)
+    BuildMI(MBB, MI, TII.get(Alpha::LDT), DestReg)
       .addFrameIndex(FrameIdx).addReg(Alpha::F31);
   else if (RC == Alpha::GPRCRegisterClass)
-    BuildMI(MBB, MI, Alpha::LDQ, 2, DestReg)
+    BuildMI(MBB, MI, TII.get(Alpha::LDQ), DestReg)
       .addFrameIndex(FrameIdx).addReg(Alpha::F31);
   else
     abort();
@@ -116,13 +117,13 @@ MachineInstr *AlphaRegisterInfo::foldMemoryOperand(MachineInstr *MI,
 	 unsigned InReg = MI->getOperand(1).getReg();
 	 Opc = (Opc == Alpha::BISr) ? Alpha::STQ : 
 	   ((Opc == Alpha::CPYSS) ? Alpha::STS : Alpha::STT);
-	 NewMI = BuildMI(TII, Opc, 3).addReg(InReg).addFrameIndex(FrameIndex)
+	 NewMI = BuildMI(TII.get(Opc)).addReg(InReg).addFrameIndex(FrameIndex)
 	   .addReg(Alpha::F31);
        } else {           // load -> move
 	 unsigned OutReg = MI->getOperand(0).getReg();
 	 Opc = (Opc == Alpha::BISr) ? Alpha::LDQ : 
 	   ((Opc == Alpha::CPYSS) ? Alpha::LDS : Alpha::LDT);
-	 NewMI = BuildMI(TII, Opc, 2, OutReg).addFrameIndex(FrameIndex)
+	 NewMI = BuildMI(TII.get(Opc), OutReg).addFrameIndex(FrameIndex)
 	   .addReg(Alpha::F31);
        }
      }
@@ -140,11 +141,11 @@ void AlphaRegisterInfo::copyRegToReg(MachineBasicBlock &MBB,
                                      const TargetRegisterClass *RC) const {
   //  std::cerr << "copyRegToReg " << DestReg << " <- " << SrcReg << "\n";
   if (RC == Alpha::GPRCRegisterClass) {
-    BuildMI(MBB, MI, Alpha::BISr, 2, DestReg).addReg(SrcReg).addReg(SrcReg);
+    BuildMI(MBB, MI, TII.get(Alpha::BISr), DestReg).addReg(SrcReg).addReg(SrcReg);
   } else if (RC == Alpha::F4RCRegisterClass) {
-    BuildMI(MBB, MI, Alpha::CPYSS, 2, DestReg).addReg(SrcReg).addReg(SrcReg);
+    BuildMI(MBB, MI, TII.get(Alpha::CPYSS), DestReg).addReg(SrcReg).addReg(SrcReg);
   } else if (RC == Alpha::F8RCRegisterClass) {
-    BuildMI(MBB, MI, Alpha::CPYST, 2, DestReg).addReg(SrcReg).addReg(SrcReg);
+    BuildMI(MBB, MI, TII.get(Alpha::CPYST), DestReg).addReg(SrcReg).addReg(SrcReg);
   } else {
     std::cerr << "Attempt to copy register that is not GPR or FPR";
      abort();
@@ -209,11 +210,11 @@ eliminateCallFramePseudoInstr(MachineFunction &MF, MachineBasicBlock &MBB,
 
       MachineInstr *New;
       if (Old->getOpcode() == Alpha::ADJUSTSTACKDOWN) {
-        New=BuildMI(TII, Alpha::LDA, 2, Alpha::R30)
+        New=BuildMI(TII.get(Alpha::LDA), Alpha::R30)
           .addImm(-Amount).addReg(Alpha::R30);
       } else {
          assert(Old->getOpcode() == Alpha::ADJUSTSTACKUP);
-         New=BuildMI(TII, Alpha::LDA, 2, Alpha::R30)
+         New=BuildMI(TII.get(Alpha::LDA), Alpha::R30)
           .addImm(Amount).addReg(Alpha::R30);
       }
 
@@ -270,7 +271,7 @@ AlphaRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II) const {
     MI.getOperand(i + 1).ChangeToRegister(Alpha::R28, false);
     MI.getOperand(i).ChangeToImmediate(getLower16(Offset));
     //insert the new
-    MachineInstr* nMI=BuildMI(TII, Alpha::LDAH, 2, Alpha::R28)
+    MachineInstr* nMI=BuildMI(TII.get(Alpha::LDAH), Alpha::R28)
       .addImm(getUpper16(Offset)).addReg(FP ? Alpha::R15 : Alpha::R30);
     MBB.insert(II, nMI);
   } else {
@@ -288,15 +289,15 @@ void AlphaRegisterInfo::emitPrologue(MachineFunction &MF) const {
   static int curgpdist = 0;
 
   //handle GOP offset
-  BuildMI(MBB, MBBI, Alpha::LDAHg, 3, Alpha::R29)
+  BuildMI(MBB, MBBI, TII.get(Alpha::LDAHg), Alpha::R29)
     .addGlobalAddress(const_cast<Function*>(MF.getFunction()))
     .addReg(Alpha::R27).addImm(++curgpdist);
-  BuildMI(MBB, MBBI, Alpha::LDAg, 3, Alpha::R29)
+  BuildMI(MBB, MBBI, TII.get(Alpha::LDAg), Alpha::R29)
     .addGlobalAddress(const_cast<Function*>(MF.getFunction()))
     .addReg(Alpha::R29).addImm(curgpdist);
 
   //evil const_cast until MO stuff setup to handle const
-  BuildMI(MBB, MBBI, Alpha::ALTENT, 1)
+  BuildMI(MBB, MBBI, TII.get(Alpha::ALTENT))
     .addGlobalAddress(const_cast<Function*>(MF.getFunction()));
 
   // Get the number of bytes to allocate from the FrameInfo
@@ -327,12 +328,12 @@ void AlphaRegisterInfo::emitPrologue(MachineFunction &MF) const {
   // adjust stack pointer: r30 -= numbytes
   NumBytes = -NumBytes;
   if (NumBytes >= IMM_LOW) {
-    BuildMI(MBB, MBBI, Alpha::LDA, 2, Alpha::R30).addImm(NumBytes)
+    BuildMI(MBB, MBBI, TII.get(Alpha::LDA), Alpha::R30).addImm(NumBytes)
       .addReg(Alpha::R30);
   } else if (getUpper16(NumBytes) >= IMM_LOW) {
-    BuildMI(MBB, MBBI, Alpha::LDAH, 2, Alpha::R30).addImm(getUpper16(NumBytes))
+    BuildMI(MBB, MBBI, TII.get(Alpha::LDAH), Alpha::R30).addImm(getUpper16(NumBytes))
       .addReg(Alpha::R30);
-    BuildMI(MBB, MBBI, Alpha::LDA, 2, Alpha::R30).addImm(getLower16(NumBytes))
+    BuildMI(MBB, MBBI, TII.get(Alpha::LDA), Alpha::R30).addImm(getLower16(NumBytes))
       .addReg(Alpha::R30);
   } else {
     std::cerr << "Too big a stack frame at " << NumBytes << "\n";
@@ -342,10 +343,10 @@ void AlphaRegisterInfo::emitPrologue(MachineFunction &MF) const {
   //now if we need to, save the old FP and set the new
   if (FP)
   {
-    BuildMI(MBB, MBBI, Alpha::STQ, 3)
+    BuildMI(MBB, MBBI, TII.get(Alpha::STQ))
       .addReg(Alpha::R15).addImm(0).addReg(Alpha::R30);
     //this must be the last instr in the prolog
-    BuildMI(MBB, MBBI, Alpha::BISr, 2, Alpha::R15)
+    BuildMI(MBB, MBBI, TII.get(Alpha::BISr), Alpha::R15)
       .addReg(Alpha::R30).addReg(Alpha::R30);
   }
 
@@ -368,21 +369,21 @@ void AlphaRegisterInfo::emitEpilogue(MachineFunction &MF,
   if (FP)
   {
     //copy the FP into the SP (discards allocas)
-    BuildMI(MBB, MBBI, Alpha::BISr, 2, Alpha::R30).addReg(Alpha::R15)
+    BuildMI(MBB, MBBI, TII.get(Alpha::BISr), Alpha::R30).addReg(Alpha::R15)
       .addReg(Alpha::R15);
     //restore the FP
-    BuildMI(MBB, MBBI, Alpha::LDQ, 2, Alpha::R15).addImm(0).addReg(Alpha::R15);
+    BuildMI(MBB, MBBI, TII.get(Alpha::LDQ), Alpha::R15).addImm(0).addReg(Alpha::R15);
   }
 
    if (NumBytes != 0)
      {
        if (NumBytes <= IMM_HIGH) {
-         BuildMI(MBB, MBBI, Alpha::LDA, 2, Alpha::R30).addImm(NumBytes)
+         BuildMI(MBB, MBBI, TII.get(Alpha::LDA), Alpha::R30).addImm(NumBytes)
            .addReg(Alpha::R30);
        } else if (getUpper16(NumBytes) <= IMM_HIGH) {
-         BuildMI(MBB, MBBI, Alpha::LDAH, 2, Alpha::R30)
+         BuildMI(MBB, MBBI, TII.get(Alpha::LDAH), Alpha::R30)
            .addImm(getUpper16(NumBytes)).addReg(Alpha::R30);
-         BuildMI(MBB, MBBI, Alpha::LDA, 2, Alpha::R30)
+         BuildMI(MBB, MBBI, TII.get(Alpha::LDA), Alpha::R30)
            .addImm(getLower16(NumBytes)).addReg(Alpha::R30);
        } else {
          std::cerr << "Too big a stack frame at " << NumBytes << "\n";

@@ -32,14 +32,10 @@ namespace llvm {
   extern const TargetInstrDescriptor *TargetInstrDescriptors;
 }
 
-/// MachineInstr ctor - This constructor only does a _reserve_ of the operands,
-/// not a resize for them.  It is expected that if you use this that you call
-/// add* methods below to fill up the operands, instead of the Set methods.
-/// Eventually, the "resizing" ctors will be phased out.
-///
-MachineInstr::MachineInstr(short opcode, unsigned numOperands)
-  : Opcode(opcode), NumImplicitOps(0), parent(0) {
-  Operands.reserve(numOperands);
+/// MachineInstr ctor - This constructor creates a dummy MachineInstr with
+/// opcode 0 and no operands.
+MachineInstr::MachineInstr()
+  : Opcode(0), NumImplicitOps(0), parent(0) {
   // Make sure that we get added to a machine basicblock
   LeakDetector::addGarbageObject(this);
 }
@@ -72,18 +68,18 @@ void MachineInstr::addImplicitDefUseOperands(const TargetInstrDescriptor &TID) {
 }
 
 /// MachineInstr ctor - This constructor create a MachineInstr and add the
-/// implicit operands. It reserves space for numOperand operands.
-MachineInstr::MachineInstr(const TargetInstrInfo &TII, short opcode,
-                           unsigned numOperands)
-  : Opcode(opcode), NumImplicitOps(0), parent(0) {
-  const TargetInstrDescriptor &TID = TII.get(opcode);
+/// implicit operands. It reserves space for number of operands specified by
+/// TargetInstrDescriptor or the numOperands if it is not zero. (for
+/// instructions with variable number of operands).
+MachineInstr::MachineInstr(const TargetInstrDescriptor &TID)
+  : Opcode(TID.Opcode), NumImplicitOps(0), parent(0) {
   if (TID.ImplicitDefs)
     for (const unsigned *ImpDefs = TID.ImplicitDefs; *ImpDefs; ++ImpDefs)
       NumImplicitOps++;
   if (TID.ImplicitUses)
     for (const unsigned *ImpUses = TID.ImplicitUses; *ImpUses; ++ImpUses)
       NumImplicitOps++;
-  Operands.reserve(NumImplicitOps + numOperands);
+  Operands.reserve(NumImplicitOps + TID.numOperands);
   addImplicitDefUseOperands(TID);
   // Make sure that we get added to a machine basicblock
   LeakDetector::addGarbageObject(this);
@@ -92,19 +88,17 @@ MachineInstr::MachineInstr(const TargetInstrInfo &TII, short opcode,
 /// MachineInstr ctor - Work exactly the same as the ctor above, except that the
 /// MachineInstr is created and added to the end of the specified basic block.
 ///
-MachineInstr::MachineInstr(MachineBasicBlock *MBB, short opcode,
-                           unsigned numOperands)
-  : Opcode(opcode), NumImplicitOps(0), parent(0) {
+MachineInstr::MachineInstr(MachineBasicBlock *MBB,
+                           const TargetInstrDescriptor &TID)
+  : Opcode(TID.Opcode), NumImplicitOps(0), parent(0) {
   assert(MBB && "Cannot use inserting ctor with null basic block!");
-  const TargetInstrDescriptor &TID = MBB->getParent()->getTarget().
-    getInstrInfo()->get(opcode);
   if (TID.ImplicitDefs)
     for (const unsigned *ImpDefs = TID.ImplicitDefs; *ImpDefs; ++ImpDefs)
       NumImplicitOps++;
   if (TID.ImplicitUses)
     for (const unsigned *ImpUses = TID.ImplicitUses; *ImpUses; ++ImpUses)
       NumImplicitOps++;
-  Operands.reserve(NumImplicitOps + numOperands);
+  Operands.reserve(NumImplicitOps + TID.numOperands);
   addImplicitDefUseOperands(TID);
   // Make sure that we get added to a machine basicblock
   LeakDetector::addGarbageObject(this);

@@ -21,10 +21,12 @@
 namespace llvm {
 
 class Type;
+class TargetInstrInfo;
 
 struct ARMRegisterInfo : public ARMGenRegisterInfo {
+  const TargetInstrInfo &TII;
 
-  ARMRegisterInfo();
+  ARMRegisterInfo(const TargetInstrInfo &tii);
 
   /// Code Generation virtual methods...
   void storeRegToStackSlot(MachineBasicBlock &MBB,

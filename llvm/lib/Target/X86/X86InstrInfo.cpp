@@ -139,7 +139,7 @@ MachineInstr *X86InstrInfo::convertToThreeAddress(MachineInstr *MI) const {
     unsigned C = MI->getOperand(2).getReg();
     unsigned M = MI->getOperand(3).getImmedValue();
     if (!Subtarget->hasSSE2() || B != C) return 0;
-    NewMI = BuildMI(*this, X86::PSHUFDri, 2, A).addReg(B).addImm(M);
+    NewMI = BuildMI(get(X86::PSHUFDri), A).addReg(B).addImm(M);
     NewMI->copyKillDeadInfo(MI);
     return NewMI;
   }
@@ -158,41 +158,41 @@ MachineInstr *X86InstrInfo::convertToThreeAddress(MachineInstr *MI) const {
   case X86::INC32r:
   case X86::INC64_32r:
     assert(MI->getNumOperands() == 2 && "Unknown inc instruction!");
-    NewMI = addRegOffset(BuildMI(*this, X86::LEA32r, 5, Dest), Src, 1);
+    NewMI = addRegOffset(BuildMI(get(X86::LEA32r), Dest), Src, 1);
     break;
   case X86::INC16r:
   case X86::INC64_16r:
     if (DisableLEA16) return 0;
     assert(MI->getNumOperands() == 2 && "Unknown inc instruction!");
-    NewMI = addRegOffset(BuildMI(*this, X86::LEA16r, 5, Dest), Src, 1);
+    NewMI = addRegOffset(BuildMI(get(X86::LEA16r), Dest), Src, 1);
     break;
   case X86::DEC32r:
   case X86::DEC64_32r:
     assert(MI->getNumOperands() == 2 && "Unknown dec instruction!");
-    NewMI = addRegOffset(BuildMI(*this, X86::LEA32r, 5, Dest), Src, -1);
+    NewMI = addRegOffset(BuildMI(get(X86::LEA32r), Dest), Src, -1);
     break;
   case X86::DEC16r:
   case X86::DEC64_16r:
     if (DisableLEA16) return 0;
     assert(MI->getNumOperands() == 2 && "Unknown dec instruction!");
-    NewMI = addRegOffset(BuildMI(*this, X86::LEA16r, 5, Dest), Src, -1);
+    NewMI = addRegOffset(BuildMI(get(X86::LEA16r), Dest), Src, -1);
     break;
   case X86::ADD32rr:
     assert(MI->getNumOperands() == 3 && "Unknown add instruction!");
-    NewMI = addRegReg(BuildMI(*this, X86::LEA32r, 5, Dest), Src,
+    NewMI = addRegReg(BuildMI(get(X86::LEA32r), Dest), Src,
                      MI->getOperand(2).getReg());
     break;
   case X86::ADD16rr:
     if (DisableLEA16) return 0;
     assert(MI->getNumOperands() == 3 && "Unknown add instruction!");
-    NewMI = addRegReg(BuildMI(*this, X86::LEA16r, 5, Dest), Src,
+    NewMI = addRegReg(BuildMI(get(X86::LEA16r), Dest), Src,
                      MI->getOperand(2).getReg());
     break;
   case X86::ADD32ri:
   case X86::ADD32ri8:
     assert(MI->getNumOperands() == 3 && "Unknown add instruction!");
     if (MI->getOperand(2).isImmediate())
-      NewMI = addRegOffset(BuildMI(*this, X86::LEA32r, 5, Dest), Src,
+      NewMI = addRegOffset(BuildMI(get(X86::LEA32r), Dest), Src,
                           MI->getOperand(2).getImmedValue());
     break;
   case X86::ADD16ri:
@@ -200,7 +200,7 @@ MachineInstr *X86InstrInfo::convertToThreeAddress(MachineInstr *MI) const {
     if (DisableLEA16) return 0;
     assert(MI->getNumOperands() == 3 && "Unknown add instruction!");
     if (MI->getOperand(2).isImmediate())
-      NewMI = addRegOffset(BuildMI(*this, X86::LEA16r, 5, Dest), Src,
+      NewMI = addRegOffset(BuildMI(get(X86::LEA16r), Dest), Src,
                           MI->getOperand(2).getImmedValue());
     break;
   case X86::SHL16ri:
@@ -214,7 +214,7 @@ MachineInstr *X86InstrInfo::convertToThreeAddress(MachineInstr *MI) const {
       AM.Scale = 1 << ShAmt;
       AM.IndexReg = Src;
       unsigned Opc = MI->getOpcode() == X86::SHL32ri ? X86::LEA32r :X86::LEA16r;
-      NewMI = addFullAddress(BuildMI(*this, Opc, 5, Dest), AM);
+      NewMI = addFullAddress(BuildMI(get(Opc), Dest), AM);
     }
     break;
   }
@@ -249,7 +249,7 @@ MachineInstr *X86InstrInfo::commuteInstruction(MachineInstr *MI) const {
     unsigned C = MI->getOperand(2).getReg();
     bool BisKill = MI->getOperand(1).isKill();
     bool CisKill = MI->getOperand(2).isKill();
-    return BuildMI(*this, Opc, 3, A).addReg(C, false, false, CisKill)
+    return BuildMI(get(Opc), A).addReg(C, false, false, CisKill)
       .addReg(B, false, false, BisKill).addImm(Size-Amt);
   }
   default:
@@ -416,19 +416,19 @@ void X86InstrInfo::InsertBranch(MachineBasicBlock &MBB, MachineBasicBlock *TBB,
   if (FBB == 0) { // One way branch.
     if (Cond.empty()) {
       // Unconditional branch?
-      BuildMI(&MBB, X86::JMP, 1).addMBB(TBB);
+      BuildMI(&MBB, get(X86::JMP)).addMBB(TBB);
     } else {
       // Conditional branch.
       unsigned Opc = GetCondBranchFromCond((X86::CondCode)Cond[0].getImm());
-      BuildMI(&MBB, Opc, 1).addMBB(TBB);
+      BuildMI(&MBB, get(Opc)).addMBB(TBB);
     }
     return;
   }
   
   // Two-way Conditional branch.
   unsigned Opc = GetCondBranchFromCond((X86::CondCode)Cond[0].getImm());
-  BuildMI(&MBB, Opc, 1).addMBB(TBB);
-  BuildMI(&MBB, X86::JMP, 1).addMBB(FBB);
+  BuildMI(&MBB, get(Opc)).addMBB(TBB);
+  BuildMI(&MBB, get(X86::JMP)).addMBB(FBB);
 }
 
 bool X86InstrInfo::BlockHasNoFallThrough(MachineBasicBlock &MBB) const {

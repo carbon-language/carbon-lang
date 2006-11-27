@@ -20,6 +20,7 @@
 
 namespace llvm {
 class PPCSubtarget;
+class TargetInstrInfo;
 class Type;
 
 class PPCRegisterInfo : public PPCGenRegisterInfo {

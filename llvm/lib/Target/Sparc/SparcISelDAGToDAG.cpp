@@ -873,6 +873,7 @@ LowerOperation(SDOperand Op, SelectionDAG &DAG) {
 MachineBasicBlock *
 SparcTargetLowering::InsertAtEndOfBasicBlock(MachineInstr *MI,
                                              MachineBasicBlock *BB) {
+  const TargetInstrInfo &TII = *getTargetMachine().getInstrInfo();
   unsigned BROpcode;
   unsigned CC;
   // Figure out the conditional branch opcode to use for this select_cc.
@@ -908,7 +909,7 @@ SparcTargetLowering::InsertAtEndOfBasicBlock(MachineInstr *MI,
   MachineBasicBlock *thisMBB = BB;
   MachineBasicBlock *copy0MBB = new MachineBasicBlock(LLVM_BB);
   MachineBasicBlock *sinkMBB = new MachineBasicBlock(LLVM_BB);
-  BuildMI(BB, BROpcode, 2).addMBB(sinkMBB).addImm(CC);
+  BuildMI(BB, TII.get(BROpcode)).addMBB(sinkMBB).addImm(CC);
   MachineFunction *F = BB->getParent();
   F->getBasicBlockList().insert(It, copy0MBB);
   F->getBasicBlockList().insert(It, sinkMBB);
@@ -936,7 +937,7 @@ SparcTargetLowering::InsertAtEndOfBasicBlock(MachineInstr *MI,
   //   %Result = phi [ %FalseValue, copy0MBB ], [ %TrueValue, thisMBB ]
   //  ...
   BB = sinkMBB;
-  BuildMI(BB, SP::PHI, 4, MI->getOperand(0).getReg())
+  BuildMI(BB, TII.get(SP::PHI), MI->getOperand(0).getReg())
     .addReg(MI->getOperand(2).getReg()).addMBB(copy0MBB)
     .addReg(MI->getOperand(1).getReg()).addMBB(thisMBB);
   

@@ -16,6 +16,8 @@
 #include "ARM.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
+#include "llvm/Target/TargetMachine.h"
+#include "llvm/Target/TargetInstrInfo.h"
 #include "llvm/Support/Compiler.h"
 
 using namespace llvm;
@@ -60,8 +62,8 @@ bool FixMul::runOnMachineFunction(MachineFunction &MF) {
             RsOp.setReg(Rm);
           } else {
             unsigned scratch = Op == ARM::MUL ? ARM::R12 : ARM::R0;
-            BuildMI(MBB, I, ARM::MOV, 3, scratch).addReg(Rm).addImm(0)
-              .addImm(ARMShift::LSL);
+            BuildMI(MBB, I, MF.getTarget().getInstrInfo()->get(ARM::MOV),
+                    scratch).addReg(Rm).addImm(0).addImm(ARMShift::LSL);
             RmOp.setReg(scratch);
           }
         }

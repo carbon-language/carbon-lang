@@ -110,25 +110,25 @@ void AlphaInstrInfo::InsertBranch(MachineBasicBlock &MBB,MachineBasicBlock *TBB,
   // One-way branch.
   if (FBB == 0) {
     if (Cond.empty())   // Unconditional branch
-      BuildMI(&MBB, Alpha::BR, 1).addMBB(TBB);
+      BuildMI(&MBB, get(Alpha::BR)).addMBB(TBB);
     else                // Conditional branch
       if (isAlphaIntCondCode(Cond[0].getImm()))
-        BuildMI(&MBB, Alpha::COND_BRANCH_I, 3)
+        BuildMI(&MBB, get(Alpha::COND_BRANCH_I))
           .addImm(Cond[0].getImm()).addReg(Cond[1].getReg()).addMBB(TBB);
       else
-        BuildMI(&MBB, Alpha::COND_BRANCH_F, 3)
+        BuildMI(&MBB, get(Alpha::COND_BRANCH_F))
           .addImm(Cond[0].getImm()).addReg(Cond[1].getReg()).addMBB(TBB);
     return;
   }
   
   // Two-way Conditional Branch.
   if (isAlphaIntCondCode(Cond[0].getImm()))
-    BuildMI(&MBB, Alpha::COND_BRANCH_I, 3)
+    BuildMI(&MBB, get(Alpha::COND_BRANCH_I))
       .addImm(Cond[0].getImm()).addReg(Cond[1].getReg()).addMBB(TBB);
   else
-    BuildMI(&MBB, Alpha::COND_BRANCH_F, 3)
+    BuildMI(&MBB, get(Alpha::COND_BRANCH_F))
       .addImm(Cond[0].getImm()).addReg(Cond[1].getReg()).addMBB(TBB);
-  BuildMI(&MBB, Alpha::BR, 1).addMBB(FBB);
+  BuildMI(&MBB, get(Alpha::BR)).addMBB(FBB);
 }
 
 static unsigned AlphaRevCondCode(unsigned Opcode) {
@@ -230,7 +230,7 @@ void AlphaInstrInfo::RemoveBranch(MachineBasicBlock &MBB) const {
 
 void AlphaInstrInfo::insertNoop(MachineBasicBlock &MBB, 
                                 MachineBasicBlock::iterator MI) const {
-  BuildMI(MBB, MI, Alpha::BISr, 2, Alpha::R31).addReg(Alpha::R31)
+  BuildMI(MBB, MI, get(Alpha::BISr), Alpha::R31).addReg(Alpha::R31)
     .addReg(Alpha::R31);
 }
 

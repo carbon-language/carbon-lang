@@ -250,18 +250,18 @@ void PPCDAGToDAGISel::InsertVRSaveCode(Function &F) {
   unsigned InVRSAVE = RegMap->createVirtualRegister(&PPC::GPRCRegClass);
   unsigned UpdatedVRSAVE = RegMap->createVirtualRegister(&PPC::GPRCRegClass);
   
+  const TargetInstrInfo &TII = *TM.getInstrInfo();
   MachineBasicBlock &EntryBB = *Fn.begin();
   // Emit the following code into the entry block:
   // InVRSAVE = MFVRSAVE
   // UpdatedVRSAVE = UPDATE_VRSAVE InVRSAVE
   // MTVRSAVE UpdatedVRSAVE
   MachineBasicBlock::iterator IP = EntryBB.begin();  // Insert Point
-  BuildMI(EntryBB, IP, PPC::MFVRSAVE, 0, InVRSAVE);
-  BuildMI(EntryBB, IP, PPC::UPDATE_VRSAVE, 1, UpdatedVRSAVE).addReg(InVRSAVE);
-  BuildMI(EntryBB, IP, PPC::MTVRSAVE, 1).addReg(UpdatedVRSAVE);
+  BuildMI(EntryBB, IP, TII.get(PPC::MFVRSAVE), InVRSAVE);
+  BuildMI(EntryBB, IP, TII.get(PPC::UPDATE_VRSAVE), UpdatedVRSAVE).addReg(InVRSAVE);
+  BuildMI(EntryBB, IP, TII.get(PPC::MTVRSAVE)).addReg(UpdatedVRSAVE);
   
   // Find all return blocks, outputting a restore in each epilog.
-  const TargetInstrInfo &TII = *TM.getInstrInfo();
   for (MachineFunction::iterator BB = Fn.begin(), E = Fn.end(); BB != E; ++BB) {
     if (!BB->empty() && TII.isReturn(BB->back().getOpcode())) {
       IP = BB->end(); --IP;
@@ -273,7 +273,7 @@ void PPCDAGToDAGISel::InsertVRSaveCode(Function &F) {
         IP = I2;
       
       // Emit: MTVRSAVE InVRSave
-      BuildMI(*BB, IP, PPC::MTVRSAVE, 1).addReg(InVRSAVE);
+      BuildMI(*BB, IP, TII.get(PPC::MTVRSAVE)).addReg(InVRSAVE);
     }        
   }
 }
@@ -284,6 +284,7 @@ void PPCDAGToDAGISel::InsertVRSaveCode(Function &F) {
 ///
 SDNode *PPCDAGToDAGISel::getGlobalBaseReg() {
   if (!GlobalBaseReg) {
+    const TargetInstrInfo &TII = *TM.getInstrInfo();
     // Insert the set of GlobalBaseReg into the first MBB of the function
     MachineBasicBlock &FirstMBB = BB->getParent()->front();
     MachineBasicBlock::iterator MBBI = FirstMBB.begin();
@@ -291,12 +292,12 @@ SDNode *PPCDAGToDAGISel::getGlobalBaseReg() {
 
     if (PPCLowering.getPointerTy() == MVT::i32) {
       GlobalBaseReg = RegMap->createVirtualRegister(PPC::GPRCRegisterClass);
-      BuildMI(FirstMBB, MBBI, PPC::MovePCtoLR, 0, PPC::LR);
-      BuildMI(FirstMBB, MBBI, PPC::MFLR, 1, GlobalBaseReg);
+      BuildMI(FirstMBB, MBBI, TII.get(PPC::MovePCtoLR), PPC::LR);
+      BuildMI(FirstMBB, MBBI, TII.get(PPC::MFLR), GlobalBaseReg);
     } else {
       GlobalBaseReg = RegMap->createVirtualRegister(PPC::G8RCRegisterClass);
-      BuildMI(FirstMBB, MBBI, PPC::MovePCtoLR8, 0, PPC::LR8);
-      BuildMI(FirstMBB, MBBI, PPC::MFLR8, 1, GlobalBaseReg);
+      BuildMI(FirstMBB, MBBI, TII.get(PPC::MovePCtoLR8), PPC::LR8);
+      BuildMI(FirstMBB, MBBI, TII.get(PPC::MFLR8), GlobalBaseReg);
     }
   }
   return CurDAG->getRegister(GlobalBaseReg, PPCLowering.getPointerTy()).Val;

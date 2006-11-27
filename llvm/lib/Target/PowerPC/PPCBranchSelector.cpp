@@ -73,6 +73,7 @@ static unsigned getNumBytesForInstruction(MachineInstr *MI) {
 
 
 bool PPCBSel::runOnMachineFunction(MachineFunction &Fn) {
+  const TargetInstrInfo *TII = Fn.getTarget().getInstrInfo();
   // Give the blocks of the function a dense, in-order, numbering.
   Fn.RenumberBlocks();
   BlockSizes.resize(Fn.getNumBlockIDs());
@@ -165,11 +166,11 @@ bool PPCBSel::runOnMachineFunction(MachineFunction &Fn) {
         MachineInstr *OldBranch = I;
         
         // Jump over the uncond branch inst (i.e. $PC+8) on opposite condition.
-        BuildMI(MBB, I, PPC::BCC, 3)
+        BuildMI(MBB, I, TII->get(PPC::BCC))
           .addImm(PPC::InvertPredicate(Pred)).addReg(CRReg).addImm(2);
         
         // Uncond branch to the real destination.
-        I = BuildMI(MBB, I, PPC::B, 1).addMBB(Dest);
+        I = BuildMI(MBB, I, TII->get(PPC::B)).addMBB(Dest);
 
         // Remove the old branch from the function.
         OldBranch->eraseFromParent();

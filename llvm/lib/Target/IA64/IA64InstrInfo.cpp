@@ -19,7 +19,8 @@
 using namespace llvm;
 
 IA64InstrInfo::IA64InstrInfo()
-  : TargetInstrInfo(IA64Insts, sizeof(IA64Insts)/sizeof(IA64Insts[0])) {
+  : TargetInstrInfo(IA64Insts, sizeof(IA64Insts)/sizeof(IA64Insts[0])),
+    RI(*this) {
 }
 
 
@@ -51,5 +52,5 @@ void IA64InstrInfo::InsertBranch(MachineBasicBlock &MBB,MachineBasicBlock *TBB,
                                  const std::vector<MachineOperand> &Cond)const {
   // Can only insert uncond branches so far.
   assert(Cond.empty() && !FBB && TBB && "Can only handle uncond branches!");
-  BuildMI(&MBB, IA64::BRL_NOTCALL, 1).addMBB(TBB);
+  BuildMI(&MBB, get(IA64::BRL_NOTCALL)).addMBB(TBB);
 }

@@ -171,7 +171,7 @@ MachineInstr *PPCInstrInfo::commuteInstruction(MachineInstr *MI) const {
 
 void PPCInstrInfo::insertNoop(MachineBasicBlock &MBB, 
                               MachineBasicBlock::iterator MI) const {
-  BuildMI(MBB, MI, PPC::NOP, 0);
+  BuildMI(MBB, MI, get(PPC::NOP));
 }
 
 
@@ -257,17 +257,17 @@ void PPCInstrInfo::InsertBranch(MachineBasicBlock &MBB, MachineBasicBlock *TBB,
   // One-way branch.
   if (FBB == 0) {
     if (Cond.empty())   // Unconditional branch
-      BuildMI(&MBB, PPC::B, 1).addMBB(TBB);
+      BuildMI(&MBB, get(PPC::B)).addMBB(TBB);
     else                // Conditional branch
-      BuildMI(&MBB, PPC::BCC, 3)
+      BuildMI(&MBB, get(PPC::BCC))
         .addImm(Cond[0].getImm()).addReg(Cond[1].getReg()).addMBB(TBB);
     return;
   }
   
   // Two-way Conditional Branch.
-  BuildMI(&MBB, PPC::BCC, 3)
+  BuildMI(&MBB, get(PPC::BCC))
     .addImm(Cond[0].getImm()).addReg(Cond[1].getReg()).addMBB(TBB);
-  BuildMI(&MBB, PPC::B, 1).addMBB(FBB);
+  BuildMI(&MBB, get(PPC::B)).addMBB(FBB);
 }
 
 bool PPCInstrInfo::BlockHasNoFallThrough(MachineBasicBlock &MBB) const {

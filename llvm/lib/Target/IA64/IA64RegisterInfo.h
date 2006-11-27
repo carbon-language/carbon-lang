@@ -21,8 +21,12 @@ namespace llvm { class llvm::Type; }
 
 namespace llvm {
 
+class TargetInstrInfo;
+
 struct IA64RegisterInfo : public IA64GenRegisterInfo {
-  IA64RegisterInfo();
+  const TargetInstrInfo &TII;
+
+  IA64RegisterInfo(const TargetInstrInfo &tii);
 
   /// Code Generation virtual methods...
   void storeRegToStackSlot(MachineBasicBlock &MBB,

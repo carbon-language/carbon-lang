@@ -5036,6 +5036,7 @@ bool X86TargetLowering::isVectorClearMaskLegal(std::vector<SDOperand> &BVOps,
 MachineBasicBlock *
 X86TargetLowering::InsertAtEndOfBasicBlock(MachineInstr *MI,
                                            MachineBasicBlock *BB) {
+  const TargetInstrInfo *TII = getTargetMachine().getInstrInfo();
   switch (MI->getOpcode()) {
   default: assert(false && "Unexpected instr type to insert");
   case X86::CMOV_FR32:
@@ -5062,7 +5063,7 @@ X86TargetLowering::InsertAtEndOfBasicBlock(MachineInstr *MI,
     MachineBasicBlock *sinkMBB = new MachineBasicBlock(LLVM_BB);
     unsigned Opc =
       X86::GetCondBranchFromCond((X86::CondCode)MI->getOperand(3).getImm());
-    BuildMI(BB, Opc, 1).addMBB(sinkMBB);
+    BuildMI(BB, TII->get(Opc)).addMBB(sinkMBB);
     MachineFunction *F = BB->getParent();
     F->getBasicBlockList().insert(It, copy0MBB);
     F->getBasicBlockList().insert(It, sinkMBB);
@@ -5090,7 +5091,7 @@ X86TargetLowering::InsertAtEndOfBasicBlock(MachineInstr *MI,
     //   %Result = phi [ %FalseValue, copy0MBB ], [ %TrueValue, thisMBB ]
     //  ...
     BB = sinkMBB;
-    BuildMI(BB, X86::PHI, 4, MI->getOperand(0).getReg())
+    BuildMI(BB, TII->get(X86::PHI), MI->getOperand(0).getReg())
       .addReg(MI->getOperand(1).getReg()).addMBB(copy0MBB)
       .addReg(MI->getOperand(2).getReg()).addMBB(thisMBB);
 
@@ -5105,21 +5106,23 @@ X86TargetLowering::InsertAtEndOfBasicBlock(MachineInstr *MI,
     // mode when truncating to an integer value.
     MachineFunction *F = BB->getParent();
     int CWFrameIdx = F->getFrameInfo()->CreateStackObject(2, 2);
-    addFrameReference(BuildMI(BB, X86::FNSTCW16m, 4), CWFrameIdx);
+    addFrameReference(BuildMI(BB, TII->get(X86::FNSTCW16m)), CWFrameIdx);
 
     // Load the old value of the high byte of the control word...
     unsigned OldCW =
       F->getSSARegMap()->createVirtualRegister(X86::GR16RegisterClass);
-    addFrameReference(BuildMI(BB, X86::MOV16rm, 4, OldCW), CWFrameIdx);
+    addFrameReference(BuildMI(BB, TII->get(X86::MOV16rm), OldCW), CWFrameIdx);
 
     // Set the high part to be round to zero...
-    addFrameReference(BuildMI(BB, X86::MOV16mi, 5), CWFrameIdx).addImm(0xC7F);
+    addFrameReference(BuildMI(BB, TII->get(X86::MOV16mi)), CWFrameIdx)
+      .addImm(0xC7F);
 
     // Reload the modified control word now...
-    addFrameReference(BuildMI(BB, X86::FLDCW16m, 4), CWFrameIdx);
+    addFrameReference(BuildMI(BB, TII->get(X86::FLDCW16m)), CWFrameIdx);
 
     // Restore the memory image of control word to original value
-    addFrameReference(BuildMI(BB, X86::MOV16mr, 5), CWFrameIdx).addReg(OldCW);
+    addFrameReference(BuildMI(BB, TII->get(X86::MOV16mr)), CWFrameIdx)
+      .addReg(OldCW);
 
     // Get the X86 opcode to use.
     unsigned Opc;
@@ -5151,10 +5154,11 @@ X86TargetLowering::InsertAtEndOfBasicBlock(MachineInstr *MI,
     } else {
       AM.Disp = Op.getImm();
     }
-    addFullAddress(BuildMI(BB, Opc, 5), AM).addReg(MI->getOperand(4).getReg());
+    addFullAddress(BuildMI(BB, TII->get(Opc)), AM)
+                      .addReg(MI->getOperand(4).getReg());
 
     // Reload the original control word now.
-    addFrameReference(BuildMI(BB, X86::FLDCW16m, 4), CWFrameIdx);
+    addFrameReference(BuildMI(BB, TII->get(X86::FLDCW16m)), CWFrameIdx);
 
     delete MI;   // The pseudo instruction is gone now.
     return BB;

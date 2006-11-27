@@ -294,8 +294,9 @@ FunctionLoweringInfo::FunctionLoweringInfo(TargetLowering &tli,
       }
       unsigned PHIReg = ValueMap[PN];
       assert(PHIReg && "PHI node does not have an assigned virtual register!");
+      const TargetInstrInfo *TII = TLI.getTargetMachine().getInstrInfo();
       for (unsigned i = 0; i != NumElements; ++i)
-        BuildMI(MBB, TargetInstrInfo::PHI, PN->getNumOperands(), PHIReg+i);
+        BuildMI(MBB, TII->get(TargetInstrInfo::PHI), PHIReg+i);
     }
   }
 }

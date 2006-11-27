@@ -395,7 +395,7 @@ void ScheduleDAG::EmitNode(SDNode *Node,
 #endif
 
     // Create the new machine instruction.
-    MachineInstr *MI = new MachineInstr(*TII, Opc, NumMIOperands);
+    MachineInstr *MI = new MachineInstr(II);
     
     // Add result register values for things that are defined by this
     // instruction.
@@ -518,7 +518,7 @@ void ScheduleDAG::EmitNode(SDNode *Node,
       
       // Create the inline asm machine instruction.
       MachineInstr *MI =
-        new MachineInstr(BB, TargetInstrInfo::INLINEASM, (NumOps-2)/2+1);
+        new MachineInstr(BB, TII->get(TargetInstrInfo::INLINEASM));
 
       // Add the asm string as an external symbol operand.
       const char *AsmStr =

@@ -19,7 +19,8 @@
 using namespace llvm;
 
 ARMInstrInfo::ARMInstrInfo()
-  : TargetInstrInfo(ARMInsts, sizeof(ARMInsts)/sizeof(ARMInsts[0])) {
+  : TargetInstrInfo(ARMInsts, sizeof(ARMInsts)/sizeof(ARMInsts[0])),
+    RI(*this) {
 }
 
 const TargetRegisterClass *ARMInstrInfo::getPointerRegClass() const {
@@ -54,5 +55,5 @@ void ARMInstrInfo::InsertBranch(MachineBasicBlock &MBB,MachineBasicBlock *TBB,
                                   const std::vector<MachineOperand> &Cond)const{
   // Can only insert uncond branches so far.
   assert(Cond.empty() && !FBB && TBB && "Can only handle uncond branches!");
-  BuildMI(&MBB, ARM::b, 1).addMBB(TBB);
+  BuildMI(&MBB, get(ARM::b)).addMBB(TBB);
 }

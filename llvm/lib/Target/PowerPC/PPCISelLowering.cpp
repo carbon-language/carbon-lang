@@ -2593,6 +2593,7 @@ SDOperand PPCTargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
 MachineBasicBlock *
 PPCTargetLowering::InsertAtEndOfBasicBlock(MachineInstr *MI,
                                            MachineBasicBlock *BB) {
+  const TargetInstrInfo *TII = getTargetMachine().getInstrInfo();
   assert((MI->getOpcode() == PPC::SELECT_CC_I4 ||
           MI->getOpcode() == PPC::SELECT_CC_I8 ||
           MI->getOpcode() == PPC::SELECT_CC_F4 ||
@@ -2618,7 +2619,7 @@ PPCTargetLowering::InsertAtEndOfBasicBlock(MachineInstr *MI,
   MachineBasicBlock *copy0MBB = new MachineBasicBlock(LLVM_BB);
   MachineBasicBlock *sinkMBB = new MachineBasicBlock(LLVM_BB);
   unsigned SelectPred = MI->getOperand(4).getImm();
-  BuildMI(BB, PPC::BCC, 3)
+  BuildMI(BB, TII->get(PPC::BCC))
     .addImm(SelectPred).addReg(MI->getOperand(1).getReg()).addMBB(sinkMBB);
   MachineFunction *F = BB->getParent();
   F->getBasicBlockList().insert(It, copy0MBB);
@@ -2647,7 +2648,7 @@ PPCTargetLowering::InsertAtEndOfBasicBlock(MachineInstr *MI,
   //   %Result = phi [ %FalseValue, copy0MBB ], [ %TrueValue, thisMBB ]
   //  ...
   BB = sinkMBB;
-  BuildMI(BB, PPC::PHI, 4, MI->getOperand(0).getReg())
+  BuildMI(BB, TII->get(PPC::PHI), MI->getOperand(0).getReg())
     .addReg(MI->getOperand(3).getReg()).addMBB(copy0MBB)
     .addReg(MI->getOperand(2).getReg()).addMBB(thisMBB);
 

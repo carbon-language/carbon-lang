@@ -93,7 +93,7 @@ void X86RegisterInfo::storeRegToStackSlot(MachineBasicBlock &MBB,
     assert(0 && "Unknown regclass");
     abort();
   }
-  addFrameReference(BuildMI(MBB, MI, Opc, 5), FrameIdx).addReg(SrcReg);
+  addFrameReference(BuildMI(MBB, MI, TII.get(Opc)), FrameIdx).addReg(SrcReg);
 }
 
 void X86RegisterInfo::loadRegFromStackSlot(MachineBasicBlock &MBB,
@@ -125,7 +125,7 @@ void X86RegisterInfo::loadRegFromStackSlot(MachineBasicBlock &MBB,
     assert(0 && "Unknown regclass");
     abort();
   }
-  addFrameReference(BuildMI(MBB, MI, Opc, 4, DestReg), FrameIdx);
+  addFrameReference(BuildMI(MBB, MI, TII.get(Opc), DestReg), FrameIdx);
 }
 
 void X86RegisterInfo::copyRegToReg(MachineBasicBlock &MBB,
@@ -157,7 +157,7 @@ void X86RegisterInfo::copyRegToReg(MachineBasicBlock &MBB,
     assert(0 && "Unknown regclass");
     abort();
   }
-  BuildMI(MBB, MI, Opc, 1, DestReg).addReg(SrcReg);
+  BuildMI(MBB, MI, TII.get(Opc), DestReg).addReg(SrcReg);
 }
 
 static MachineInstr *FuseTwoAddrInst(unsigned Opcode, unsigned FrameIndex,
@@ -165,7 +165,7 @@ static MachineInstr *FuseTwoAddrInst(unsigned Opcode, unsigned FrameIndex,
                                      const TargetInstrInfo &TII) {
   unsigned NumOps = TII.getNumOperands(MI->getOpcode())-2;
   // Create the base instruction with the memory operand as the first part.
-  MachineInstrBuilder MIB = addFrameReference(BuildMI(TII, Opcode, 4+NumOps),
+  MachineInstrBuilder MIB = addFrameReference(BuildMI(TII.get(Opcode)),
                                               FrameIndex);
   
   // Loop over the rest of the ri operands, converting them over.
@@ -188,7 +188,7 @@ static MachineInstr *FuseTwoAddrInst(unsigned Opcode, unsigned FrameIndex,
 static MachineInstr *FuseInst(unsigned Opcode, unsigned OpNo,
                               unsigned FrameIndex, MachineInstr *MI,
                               const TargetInstrInfo &TII) {
-  MachineInstrBuilder MIB = BuildMI(TII, Opcode, MI->getNumOperands()+3);
+  MachineInstrBuilder MIB = BuildMI(TII.get(Opcode));
   
   for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
     MachineOperand &MO = MI->getOperand(i);
@@ -212,7 +212,7 @@ static MachineInstr *FuseInst(unsigned Opcode, unsigned OpNo,
 static MachineInstr *MakeM0Inst(const TargetInstrInfo &TII,
                                 unsigned Opcode, unsigned FrameIndex,
                                 MachineInstr *MI) {
-  return addFrameReference(BuildMI(TII, Opcode, 5), FrameIndex).addImm(0);
+  return addFrameReference(BuildMI(TII.get(Opcode)), FrameIndex).addImm(0);
 }
 
 
@@ -908,7 +908,7 @@ eliminateCallFramePseudoInstr(MachineFunction &MF, MachineBasicBlock &MBB,
 
       MachineInstr *New = 0;
       if (Old->getOpcode() == X86::ADJCALLSTACKDOWN) {
-        New=BuildMI(TII, Is64Bit ? X86::SUB64ri32 : X86::SUB32ri, 1, StackPtr)
+        New=BuildMI(TII.get(Is64Bit ? X86::SUB64ri32 : X86::SUB32ri), StackPtr)
           .addReg(StackPtr).addImm(Amount);
       } else {
         assert(Old->getOpcode() == X86::ADJCALLSTACKUP);
@@ -919,7 +919,7 @@ eliminateCallFramePseudoInstr(MachineFunction &MF, MachineBasicBlock &MBB,
           unsigned Opc = (Amount < 128) ?
             (Is64Bit ? X86::ADD64ri8 : X86::ADD32ri8) :
             (Is64Bit ? X86::ADD64ri32 : X86::ADD32ri);
-          New = BuildMI(TII, Opc, 1,  StackPtr).addReg(StackPtr).addImm(Amount);
+          New = BuildMI(TII.get(Opc),  StackPtr).addReg(StackPtr).addImm(Amount);
         }
       }
 
@@ -935,7 +935,7 @@ eliminateCallFramePseudoInstr(MachineFunction &MF, MachineBasicBlock &MBB,
         (Is64Bit ? X86::SUB64ri8 : X86::SUB32ri8) :
         (Is64Bit ? X86::SUB64ri32 : X86::SUB32ri);
       MachineInstr *New =
-        BuildMI(TII, Opc, 1, StackPtr).addReg(StackPtr).addImm(CalleeAmt);
+        BuildMI(TII.get(Opc), StackPtr).addReg(StackPtr).addImm(CalleeAmt);
       MBB.insert(I, New);
     }
   }
@@ -1012,15 +1012,15 @@ void X86RegisterInfo::emitPrologue(MachineFunction &MF) const {
       // more than 4k bytes in one go. Touching the stack at 4K increments is  
       // necessary to ensure that the guard pages used by the OS virtual memory
       // manager are allocated in correct sequence.
-      MI = BuildMI(TII, X86::MOV32ri, 2, X86::EAX).addImm(NumBytes);
+      MI = BuildMI(TII.get(X86::MOV32ri), X86::EAX).addImm(NumBytes);
       MBB.insert(MBBI, MI);
-      MI = BuildMI(TII, X86::CALLpcrel32, 1).addExternalSymbol("_alloca");
+      MI = BuildMI(TII.get(X86::CALLpcrel32)).addExternalSymbol("_alloca");
       MBB.insert(MBBI, MI);
     } else {
       unsigned Opc = (NumBytes < 128) ?
         (Is64Bit ? X86::SUB64ri8 : X86::SUB32ri8) :
         (Is64Bit ? X86::SUB64ri32 : X86::SUB32ri);
-      MI= BuildMI(TII, Opc, 1, StackPtr).addReg(StackPtr).addImm(NumBytes);
+      MI= BuildMI(TII.get(Opc), StackPtr).addReg(StackPtr).addImm(NumBytes);
       MBB.insert(MBBI, MI);
     }
   }
@@ -1034,17 +1034,17 @@ void X86RegisterInfo::emitPrologue(MachineFunction &MF) const {
     
     // Save EBP into the appropriate stack slot...
     // mov [ESP-<offset>], EBP
-    MI = addRegOffset(BuildMI(TII, Is64Bit ? X86::MOV64mr : X86::MOV32mr, 5),
+    MI = addRegOffset(BuildMI(TII.get(Is64Bit ? X86::MOV64mr : X86::MOV32mr)),
                       StackPtr, EBPOffset+NumBytes).addReg(FramePtr);
     MBB.insert(MBBI, MI);
 
     // Update EBP with the new base value...
     if (NumBytes == SlotSize)    // mov EBP, ESP
-      MI = BuildMI(TII, Is64Bit ? X86::MOV64rr : X86::MOV32rr, 2, FramePtr).
+      MI = BuildMI(TII.get(Is64Bit ? X86::MOV64rr : X86::MOV32rr), FramePtr).
         addReg(StackPtr);
     else                  // lea EBP, [ESP+StackSize]
-      MI = addRegOffset(BuildMI(TII, Is64Bit ? X86::LEA64r : X86::LEA32r,
-                               5, FramePtr), StackPtr, NumBytes-SlotSize);
+      MI = addRegOffset(BuildMI(TII.get(Is64Bit ? X86::LEA64r : X86::LEA32r),
+                                FramePtr), StackPtr, NumBytes-SlotSize);
 
     MBB.insert(MBBI, MI);
   }
@@ -1052,13 +1052,13 @@ void X86RegisterInfo::emitPrologue(MachineFunction &MF) const {
   // If it's main() on Cygwin\Mingw32 we should align stack as well
   if (Fn->hasExternalLinkage() && Fn->getName() == "main" &&
       Subtarget->isTargetCygwin()) {
-    MI= BuildMI(TII, X86::AND32ri, 2, X86::ESP).addReg(X86::ESP).addImm(-Align);
+    MI= BuildMI(TII.get(X86::AND32ri), X86::ESP).addReg(X86::ESP).addImm(-Align);
     MBB.insert(MBBI, MI);
 
     // Probe the stack
-    MI = BuildMI(TII, X86::MOV32ri, 2, X86::EAX).addImm(Align);
+    MI = BuildMI(TII.get(X86::MOV32ri), X86::EAX).addImm(Align);
     MBB.insert(MBBI, MI);
-    MI = BuildMI(TII, X86::CALLpcrel32, 1).addExternalSymbol("_alloca");
+    MI = BuildMI(TII.get(X86::CALLpcrel32)).addExternalSymbol("_alloca");
     MBB.insert(MBBI, MI);
   }
 }
@@ -1080,11 +1080,11 @@ void X86RegisterInfo::emitEpilogue(MachineFunction &MF,
 
   if (hasFP(MF)) {
     // mov ESP, EBP
-    BuildMI(MBB, MBBI, Is64Bit ? X86::MOV64rr : X86::MOV32rr, 1, StackPtr).
+    BuildMI(MBB, MBBI, TII.get(Is64Bit ? X86::MOV64rr : X86::MOV32rr),StackPtr).
       addReg(FramePtr);
 
     // pop EBP
-    BuildMI(MBB, MBBI, Is64Bit ? X86::POP64r : X86::POP32r, 0, FramePtr);
+    BuildMI(MBB, MBBI, TII.get(Is64Bit ? X86::POP64r : X86::POP32r), FramePtr);
   } else {
     // Get the number of bytes allocated from the FrameInfo...
     unsigned NumBytes = MFI->getStackSize();
@@ -1112,12 +1112,12 @@ void X86RegisterInfo::emitEpilogue(MachineFunction &MF,
         unsigned Opc = (NumBytes < 128) ?
           (Is64Bit ? X86::ADD64ri8 : X86::ADD32ri8) :
           (Is64Bit ? X86::ADD64ri32 : X86::ADD32ri);
-        BuildMI(MBB, MBBI, Opc, 2, StackPtr).addReg(StackPtr).addImm(NumBytes);
+        BuildMI(MBB, MBBI, TII.get(Opc), StackPtr).addReg(StackPtr).addImm(NumBytes);
       } else if ((int)NumBytes < 0) {
         unsigned Opc = (-NumBytes < 128) ?
           (Is64Bit ? X86::SUB64ri8 : X86::SUB32ri8) :
           (Is64Bit ? X86::SUB64ri32 : X86::SUB32ri);
-        BuildMI(MBB, MBBI, Opc, 2, StackPtr).addReg(StackPtr).addImm(-NumBytes);
+        BuildMI(MBB, MBBI, TII.get(Opc), StackPtr).addReg(StackPtr).addImm(-NumBytes);
       }
     }
   }

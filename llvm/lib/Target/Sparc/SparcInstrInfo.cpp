@@ -102,5 +102,5 @@ void SparcInstrInfo::InsertBranch(MachineBasicBlock &MBB,MachineBasicBlock *TBB,
                                   const std::vector<MachineOperand> &Cond)const{
   // Can only insert uncond branches so far.
   assert(Cond.empty() && !FBB && TBB && "Can only handle uncond branches!");
-  BuildMI(&MBB, SP::BA, 1).addMBB(TBB);
+  BuildMI(&MBB, get(SP::BA)).addMBB(TBB);
 }

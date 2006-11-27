@@ -22,6 +22,7 @@
 #include "llvm/Target/TargetFrameInfo.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetOptions.h"
+#include "llvm/Target/TargetInstrInfo.h"
 #include "llvm/ADT/STLExtras.h"
 #include <iostream>
 using namespace llvm;
@@ -35,8 +36,9 @@ static bool hasFP(const MachineFunction &MF) {
   return NoFramePointerElim || MFI->hasVarSizedObjects();
 }
 
-ARMRegisterInfo::ARMRegisterInfo()
-  : ARMGenRegisterInfo(ARM::ADJCALLSTACKDOWN, ARM::ADJCALLSTACKUP) {
+ARMRegisterInfo::ARMRegisterInfo(const TargetInstrInfo &tii)
+  : ARMGenRegisterInfo(ARM::ADJCALLSTACKDOWN, ARM::ADJCALLSTACKUP),
+    TII(tii) {
 }
 
 void ARMRegisterInfo::
@@ -44,7 +46,7 @@ storeRegToStackSlot(MachineBasicBlock &MBB, MachineBasicBlock::iterator I,
                     unsigned SrcReg, int FI,
                     const TargetRegisterClass *RC) const {
   assert (RC == ARM::IntRegsRegisterClass);
-  BuildMI(MBB, I, ARM::STR, 3).addReg(SrcReg).addFrameIndex(FI).addImm(0);
+  BuildMI(MBB, I, TII.get(ARM::STR)).addReg(SrcReg).addFrameIndex(FI).addImm(0);
 }
 
 void ARMRegisterInfo::
@@ -52,7 +54,7 @@ loadRegFromStackSlot(MachineBasicBlock &MBB, MachineBasicBlock::iterator I,
                      unsigned DestReg, int FI,
                      const TargetRegisterClass *RC) const {
   assert (RC == ARM::IntRegsRegisterClass);
-  BuildMI(MBB, I, ARM::LDR, 2, DestReg).addFrameIndex(FI).addImm(0);
+  BuildMI(MBB, I, TII.get(ARM::LDR), DestReg).addFrameIndex(FI).addImm(0);
 }
 
 void ARMRegisterInfo::copyRegToReg(MachineBasicBlock &MBB,
@@ -64,12 +66,12 @@ void ARMRegisterInfo::copyRegToReg(MachineBasicBlock &MBB,
          RC == ARM::DFPRegsRegisterClass);
 
   if (RC == ARM::IntRegsRegisterClass)
-    BuildMI(MBB, I, ARM::MOV, 3, DestReg).addReg(SrcReg).addImm(0)
+    BuildMI(MBB, I, TII.get(ARM::MOV), DestReg).addReg(SrcReg).addImm(0)
       .addImm(ARMShift::LSL);
   else if (RC == ARM::FPRegsRegisterClass)
-    BuildMI(MBB, I, ARM::FCPYS, 1, DestReg).addReg(SrcReg);
+    BuildMI(MBB, I, TII.get(ARM::FCPYS), DestReg).addReg(SrcReg);
   else
-    BuildMI(MBB, I, ARM::FCPYD, 1, DestReg).addReg(SrcReg);
+    BuildMI(MBB, I, TII.get(ARM::FCPYD), DestReg).addReg(SrcReg);
 }
 
 MachineInstr *ARMRegisterInfo::foldMemoryOperand(MachineInstr* MI,
@@ -109,12 +111,12 @@ eliminateCallFramePseudoInstr(MachineFunction &MF, MachineBasicBlock &MBB,
 
       if (Old->getOpcode() == ARM::ADJCALLSTACKDOWN) {
         // sub sp, sp, amount
-        BuildMI(MBB, I, ARM::SUB, 2, ARM::R13).addReg(ARM::R13).addImm(Amount)
+        BuildMI(MBB, I, TII.get(ARM::SUB), ARM::R13).addReg(ARM::R13).addImm(Amount)
           .addImm(0).addImm(ARMShift::LSL);
       } else {
         // add sp, sp, amount
         assert(Old->getOpcode() == ARM::ADJCALLSTACKUP);
-        BuildMI(MBB, I, ARM::ADD, 2, ARM::R13).addReg(ARM::R13).addImm(Amount)
+        BuildMI(MBB, I, TII.get(ARM::ADD), ARM::R13).addReg(ARM::R13).addImm(Amount)
           .addImm(0).addImm(ARMShift::LSL);
       }
     }
@@ -155,7 +157,7 @@ ARMRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II) const {
     // Insert a set of r12 with the full address
     // r12 = r13 + offset
     MachineBasicBlock *MBB2 = MI.getParent();
-    BuildMI(*MBB2, II, ARM::ADD, 4, ARM::R12).addReg(BaseRegister)
+    BuildMI(*MBB2, II, TII.get(ARM::ADD), ARM::R12).addReg(BaseRegister)
       .addImm(Offset).addImm(0).addImm(ARMShift::LSL);
 
     // Replace the FrameIndex with r12
@@ -191,13 +193,13 @@ void ARMRegisterInfo::emitPrologue(MachineFunction &MF) const {
   MFI->setStackSize(NumBytes);
 
   //sub sp, sp, #NumBytes
-  BuildMI(MBB, MBBI, ARM::SUB, 4, ARM::R13).addReg(ARM::R13).addImm(NumBytes)
+  BuildMI(MBB, MBBI, TII.get(ARM::SUB), ARM::R13).addReg(ARM::R13).addImm(NumBytes)
 	  .addImm(0).addImm(ARMShift::LSL);
 
   if (HasFP) {
-    BuildMI(MBB, MBBI, ARM::STR, 3)
+    BuildMI(MBB, MBBI, TII.get(ARM::STR))
       .addReg(ARM::R11).addReg(ARM::R13).addImm(0);
-    BuildMI(MBB, MBBI, ARM::MOV, 3, ARM::R11).addReg(ARM::R13).addImm(0).
+    BuildMI(MBB, MBBI, TII.get(ARM::MOV), ARM::R11).addReg(ARM::R13).addImm(0).
       addImm(ARMShift::LSL);
   }
 }
@@ -212,13 +214,13 @@ void ARMRegisterInfo::emitEpilogue(MachineFunction &MF,
   int          NumBytes = (int) MFI->getStackSize();
 
   if (hasFP(MF)) {
-    BuildMI(MBB, MBBI, ARM::MOV, 3, ARM::R13).addReg(ARM::R11).addImm(0).
+    BuildMI(MBB, MBBI, TII.get(ARM::MOV), ARM::R13).addReg(ARM::R11).addImm(0).
       addImm(ARMShift::LSL);
-    BuildMI(MBB, MBBI, ARM::LDR, 2, ARM::R11).addReg(ARM::R13).addImm(0);
+    BuildMI(MBB, MBBI, TII.get(ARM::LDR), ARM::R11).addReg(ARM::R13).addImm(0);
   }
 
   //add sp, sp, #NumBytes
-  BuildMI(MBB, MBBI, ARM::ADD, 4, ARM::R13).addReg(ARM::R13).addImm(NumBytes)
+  BuildMI(MBB, MBBI, TII.get(ARM::ADD), ARM::R13).addReg(ARM::R13).addImm(NumBytes)
 	  .addImm(0).addImm(ARMShift::LSL);
 }
 

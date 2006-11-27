@@ -103,54 +103,60 @@ PPCRegisterInfo::storeRegToStackSlot(MachineBasicBlock &MBB,
                                      const TargetRegisterClass *RC) const {
   if (RC == PPC::GPRCRegisterClass) {
     if (SrcReg != PPC::LR) {
-      addFrameReference(BuildMI(MBB, MI, PPC::STW, 3).addReg(SrcReg),FrameIdx);
+      addFrameReference(BuildMI(MBB, MI, TII.get(PPC::STW)).addReg(SrcReg),
+                        FrameIdx);
     } else {
       // FIXME: this spills LR immediately to memory in one step.  To do this,
       // we use R11, which we know cannot be used in the prolog/epilog.  This is
       // a hack.
-      BuildMI(MBB, MI, PPC::MFLR, 1, PPC::R11);
-      addFrameReference(BuildMI(MBB, MI, PPC::STW, 3).addReg(PPC::R11),
+      BuildMI(MBB, MI, TII.get(PPC::MFLR), PPC::R11);
+      addFrameReference(BuildMI(MBB, MI, TII.get(PPC::STW)).addReg(PPC::R11),
                         FrameIdx);
     }
   } else if (RC == PPC::G8RCRegisterClass) {
     if (SrcReg != PPC::LR8) {
-      addFrameReference(BuildMI(MBB, MI, PPC::STD, 3).addReg(SrcReg), FrameIdx);
+      addFrameReference(BuildMI(MBB, MI, TII.get(PPC::STD)).addReg(SrcReg),
+                        FrameIdx);
     } else {
       // FIXME: this spills LR immediately to memory in one step.  To do this,
       // we use R11, which we know cannot be used in the prolog/epilog.  This is
       // a hack.
-      BuildMI(MBB, MI, PPC::MFLR8, 1, PPC::X11);
-      addFrameReference(BuildMI(MBB, MI, PPC::STD, 3).addReg(PPC::X11),
+      BuildMI(MBB, MI, TII.get(PPC::MFLR8), PPC::X11);
+      addFrameReference(BuildMI(MBB, MI, TII.get(PPC::STD)).addReg(PPC::X11),
                         FrameIdx);
     }
   } else if (RC == PPC::F8RCRegisterClass) {
-    addFrameReference(BuildMI(MBB, MI, PPC::STFD, 3).addReg(SrcReg),FrameIdx);
+    addFrameReference(BuildMI(MBB, MI, TII.get(PPC::STFD)).addReg(SrcReg),
+                      FrameIdx);
   } else if (RC == PPC::F4RCRegisterClass) {
-    addFrameReference(BuildMI(MBB, MI, PPC::STFS, 3).addReg(SrcReg),FrameIdx);
+    addFrameReference(BuildMI(MBB, MI, TII.get(PPC::STFS)).addReg(SrcReg),
+                      FrameIdx);
   } else if (RC == PPC::CRRCRegisterClass) {
     // FIXME: We use R0 here, because it isn't available for RA.
     // We need to store the CR in the low 4-bits of the saved value.  First,
     // issue a MFCR to save all of the CRBits.
-    BuildMI(MBB, MI, PPC::MFCR, 0, PPC::R0);
+    BuildMI(MBB, MI, TII.get(PPC::MFCR), PPC::R0);
     
     // If the saved register wasn't CR0, shift the bits left so that they are in
     // CR0's slot.
     if (SrcReg != PPC::CR0) {
       unsigned ShiftBits = PPCRegisterInfo::getRegisterNumbering(SrcReg)*4;
       // rlwinm r0, r0, ShiftBits, 0, 31.
-      BuildMI(MBB, MI, PPC::RLWINM, 4, PPC::R0)
+      BuildMI(MBB, MI, TII.get(PPC::RLWINM), PPC::R0)
         .addReg(PPC::R0).addImm(ShiftBits).addImm(0).addImm(31);
     }
     
-    addFrameReference(BuildMI(MBB, MI, PPC::STW, 3).addReg(PPC::R0), FrameIdx);
+    addFrameReference(BuildMI(MBB, MI, TII.get(PPC::STW)).addReg(PPC::R0),
+                      FrameIdx);
   } else if (RC == PPC::VRRCRegisterClass) {
     // We don't have indexed addressing for vector loads.  Emit:
     // R11 = ADDI FI#
     // Dest = LVX R0, R11
     // 
     // FIXME: We use R0 here, because it isn't available for RA.
-    addFrameReference(BuildMI(MBB, MI, PPC::ADDI, 1, PPC::R0), FrameIdx, 0, 0);
-    BuildMI(MBB, MI, PPC::STVX, 3)
+    addFrameReference(BuildMI(MBB, MI, TII.get(PPC::ADDI), PPC::R0),
+                      FrameIdx, 0, 0);
+    BuildMI(MBB, MI, TII.get(PPC::STVX))
       .addReg(SrcReg).addReg(PPC::R0).addReg(PPC::R0);
   } else {
     assert(0 && "Unknown regclass!");
@@ -165,44 +171,45 @@ PPCRegisterInfo::loadRegFromStackSlot(MachineBasicBlock &MBB,
                                       const TargetRegisterClass *RC) const {
   if (RC == PPC::GPRCRegisterClass) {
     if (DestReg != PPC::LR) {
-      addFrameReference(BuildMI(MBB, MI, PPC::LWZ, 2, DestReg), FrameIdx);
+      addFrameReference(BuildMI(MBB, MI, TII.get(PPC::LWZ), DestReg), FrameIdx);
     } else {
-      addFrameReference(BuildMI(MBB, MI, PPC::LWZ, 2, PPC::R11), FrameIdx);
-      BuildMI(MBB, MI, PPC::MTLR, 1).addReg(PPC::R11);
+      addFrameReference(BuildMI(MBB, MI, TII.get(PPC::LWZ), PPC::R11),FrameIdx);
+      BuildMI(MBB, MI, TII.get(PPC::MTLR)).addReg(PPC::R11);
     }
   } else if (RC == PPC::G8RCRegisterClass) {
     if (DestReg != PPC::LR8) {
-      addFrameReference(BuildMI(MBB, MI, PPC::LD, 2, DestReg), FrameIdx);
+      addFrameReference(BuildMI(MBB, MI, TII.get(PPC::LD), DestReg), FrameIdx);
     } else {
-      addFrameReference(BuildMI(MBB, MI, PPC::LD, 2, PPC::R11), FrameIdx);
-      BuildMI(MBB, MI, PPC::MTLR8, 1).addReg(PPC::R11);
+      addFrameReference(BuildMI(MBB, MI, TII.get(PPC::LD), PPC::R11), FrameIdx);
+      BuildMI(MBB, MI, TII.get(PPC::MTLR8)).addReg(PPC::R11);
     }
   } else if (RC == PPC::F8RCRegisterClass) {
-    addFrameReference(BuildMI(MBB, MI, PPC::LFD, 2, DestReg), FrameIdx);
+    addFrameReference(BuildMI(MBB, MI, TII.get(PPC::LFD), DestReg), FrameIdx);
   } else if (RC == PPC::F4RCRegisterClass) {
-    addFrameReference(BuildMI(MBB, MI, PPC::LFS, 2, DestReg), FrameIdx);
+    addFrameReference(BuildMI(MBB, MI, TII.get(PPC::LFS), DestReg), FrameIdx);
   } else if (RC == PPC::CRRCRegisterClass) {
     // FIXME: We use R0 here, because it isn't available for RA.
-    addFrameReference(BuildMI(MBB, MI, PPC::LWZ, 2, PPC::R0), FrameIdx);
+    addFrameReference(BuildMI(MBB, MI, TII.get(PPC::LWZ), PPC::R0), FrameIdx);
     
     // If the reloaded register isn't CR0, shift the bits right so that they are
     // in the right CR's slot.
     if (DestReg != PPC::CR0) {
       unsigned ShiftBits = PPCRegisterInfo::getRegisterNumbering(DestReg)*4;
       // rlwinm r11, r11, 32-ShiftBits, 0, 31.
-      BuildMI(MBB, MI, PPC::RLWINM, 4, PPC::R0)
+      BuildMI(MBB, MI, TII.get(PPC::RLWINM), PPC::R0)
         .addReg(PPC::R0).addImm(32-ShiftBits).addImm(0).addImm(31);
     }
     
-    BuildMI(MBB, MI, PPC::MTCRF, 1, DestReg).addReg(PPC::R0);
+    BuildMI(MBB, MI, TII.get(PPC::MTCRF), DestReg).addReg(PPC::R0);
   } else if (RC == PPC::VRRCRegisterClass) {
     // We don't have indexed addressing for vector loads.  Emit:
     // R11 = ADDI FI#
     // Dest = LVX R0, R11
     // 
     // FIXME: We use R0 here, because it isn't available for RA.
-    addFrameReference(BuildMI(MBB, MI, PPC::ADDI, 1, PPC::R0), FrameIdx, 0, 0);
-    BuildMI(MBB, MI, PPC::LVX, 2, DestReg).addReg(PPC::R0).addReg(PPC::R0);
+    addFrameReference(BuildMI(MBB, MI, TII.get(PPC::ADDI), PPC::R0),
+                      FrameIdx, 0, 0);
+    BuildMI(MBB, MI, TII.get(PPC::LVX),DestReg).addReg(PPC::R0).addReg(PPC::R0);
   } else {
     assert(0 && "Unknown regclass!");
     abort();
@@ -214,17 +221,17 @@ void PPCRegisterInfo::copyRegToReg(MachineBasicBlock &MBB,
                                    unsigned DestReg, unsigned SrcReg,
                                    const TargetRegisterClass *RC) const {
   if (RC == PPC::GPRCRegisterClass) {
-    BuildMI(MBB, MI, PPC::OR, 2, DestReg).addReg(SrcReg).addReg(SrcReg);
+    BuildMI(MBB, MI, TII.get(PPC::OR), DestReg).addReg(SrcReg).addReg(SrcReg);
   } else if (RC == PPC::G8RCRegisterClass) {
-    BuildMI(MBB, MI, PPC::OR8, 2, DestReg).addReg(SrcReg).addReg(SrcReg);
+    BuildMI(MBB, MI, TII.get(PPC::OR8), DestReg).addReg(SrcReg).addReg(SrcReg);
   } else if (RC == PPC::F4RCRegisterClass) {
-    BuildMI(MBB, MI, PPC::FMRS, 1, DestReg).addReg(SrcReg);
+    BuildMI(MBB, MI, TII.get(PPC::FMRS), DestReg).addReg(SrcReg);
   } else if (RC == PPC::F8RCRegisterClass) {
-    BuildMI(MBB, MI, PPC::FMRD, 1, DestReg).addReg(SrcReg);
+    BuildMI(MBB, MI, TII.get(PPC::FMRD), DestReg).addReg(SrcReg);
   } else if (RC == PPC::CRRCRegisterClass) {
-    BuildMI(MBB, MI, PPC::MCRF, 1, DestReg).addReg(SrcReg);
+    BuildMI(MBB, MI, TII.get(PPC::MCRF), DestReg).addReg(SrcReg);
   } else if (RC == PPC::VRRCRegisterClass) {
-    BuildMI(MBB, MI, PPC::VOR, 2, DestReg).addReg(SrcReg).addReg(SrcReg);
+    BuildMI(MBB, MI, TII.get(PPC::VOR), DestReg).addReg(SrcReg).addReg(SrcReg);
   } else {
     std::cerr << "Attempt to copy register that is not GPR or FPR";
     abort();
@@ -345,39 +352,40 @@ MachineInstr *PPCRegisterInfo::foldMemoryOperand(MachineInstr *MI,
        MI->getOperand(1).getReg() == MI->getOperand(2).getReg())) {
     if (OpNum == 0) {  // move -> store
       unsigned InReg = MI->getOperand(1).getReg();
-      NewMI = addFrameReference(BuildMI(TII, PPC::STW,
-                                        3).addReg(InReg), FrameIndex);
+      NewMI = addFrameReference(BuildMI(TII.get(PPC::STW)).addReg(InReg),
+                                FrameIndex);
     } else {           // move -> load
       unsigned OutReg = MI->getOperand(0).getReg();
-      NewMI = addFrameReference(BuildMI(TII, PPC::LWZ, 2, OutReg), FrameIndex);
+      NewMI = addFrameReference(BuildMI(TII.get(PPC::LWZ), OutReg),
+                                FrameIndex);
     }
   } else if ((Opc == PPC::OR8 &&
               MI->getOperand(1).getReg() == MI->getOperand(2).getReg())) {
     if (OpNum == 0) {  // move -> store
       unsigned InReg = MI->getOperand(1).getReg();
-      NewMI = addFrameReference(BuildMI(TII, PPC::STD,
-                                        3).addReg(InReg), FrameIndex);
+      NewMI = addFrameReference(BuildMI(TII.get(PPC::STD)).addReg(InReg),
+                                FrameIndex);
     } else {           // move -> load
       unsigned OutReg = MI->getOperand(0).getReg();
-      NewMI = addFrameReference(BuildMI(TII, PPC::LD, 2, OutReg), FrameIndex);
+      NewMI = addFrameReference(BuildMI(TII.get(PPC::LD), OutReg), FrameIndex);
     }
   } else if (Opc == PPC::FMRD) {
     if (OpNum == 0) {  // move -> store
       unsigned InReg = MI->getOperand(1).getReg();
-      NewMI = addFrameReference(BuildMI(TII, PPC::STFD,
-                                        3).addReg(InReg), FrameIndex);
+      NewMI = addFrameReference(BuildMI(TII.get(PPC::STFD)).addReg(InReg),
+                                FrameIndex);
     } else {           // move -> load
       unsigned OutReg = MI->getOperand(0).getReg();
-      NewMI = addFrameReference(BuildMI(TII, PPC::LFD, 2, OutReg), FrameIndex);
+      NewMI = addFrameReference(BuildMI(TII.get(PPC::LFD), OutReg), FrameIndex);
     }
   } else if (Opc == PPC::FMRS) {
     if (OpNum == 0) {  // move -> store
       unsigned InReg = MI->getOperand(1).getReg();
-      NewMI = addFrameReference(BuildMI(TII, PPC::STFS,
-                                       3).addReg(InReg), FrameIndex);
+      NewMI = addFrameReference(BuildMI(TII.get(PPC::STFS)).addReg(InReg),
+                                FrameIndex);
     } else {           // move -> load
       unsigned OutReg = MI->getOperand(0).getReg();
-      NewMI = addFrameReference(BuildMI(TII, PPC::LFS, 2, OutReg), FrameIndex);
+      NewMI = addFrameReference(BuildMI(TII.get(PPC::LFS), OutReg), FrameIndex);
     }
   }
 
@@ -455,15 +463,15 @@ void PPCRegisterInfo::lowerDynamicAlloc(MachineBasicBlock::iterator II) const {
   // Constructing the constant and adding would take 3 instructions. 
   // Fortunately, a frame greater than 32K is rare.
   if (MaxAlign < TargetAlign && isInt16(FrameSize)) {
-    BuildMI(MBB, II, PPC::ADDI, 2, PPC::R0)
+    BuildMI(MBB, II, TII.get(PPC::ADDI), PPC::R0)
       .addReg(PPC::R31)
       .addImm(FrameSize);
   } else if (LP64) {
-    BuildMI(MBB, II, PPC::LD, 2, PPC::X0)
+    BuildMI(MBB, II, TII.get(PPC::LD), PPC::X0)
       .addImm(0)
       .addReg(PPC::X1);
   } else {
-    BuildMI(MBB, II, PPC::LWZ, 2, PPC::R0)
+    BuildMI(MBB, II, TII.get(PPC::LWZ), PPC::R0)
       .addImm(0)
       .addReg(PPC::R1);
   }
@@ -471,19 +479,19 @@ void PPCRegisterInfo::lowerDynamicAlloc(MachineBasicBlock::iterator II) const {
   // Grow the stack and update the stack pointer link, then
   // determine the address of new allocated space.
   if (LP64) {
-    BuildMI(MBB, II, PPC::STDUX, 3)
+    BuildMI(MBB, II, TII.get(PPC::STDUX))
       .addReg(PPC::X0)
       .addReg(PPC::X1)
       .addReg(MI.getOperand(1).getReg());
-    BuildMI(MBB, II, PPC::ADDI8, 2, MI.getOperand(0).getReg())
+    BuildMI(MBB, II, TII.get(PPC::ADDI8), MI.getOperand(0).getReg())
       .addReg(PPC::X1)
       .addImm(maxCallFrameSize);
   } else {
-    BuildMI(MBB, II, PPC::STWUX, 3)
+    BuildMI(MBB, II, TII.get(PPC::STWUX))
       .addReg(PPC::R0)
       .addReg(PPC::R1)
       .addReg(MI.getOperand(1).getReg());
-    BuildMI(MBB, II, PPC::ADDI, 2, MI.getOperand(0).getReg())
+    BuildMI(MBB, II, TII.get(PPC::ADDI), MI.getOperand(0).getReg())
       .addReg(PPC::R1)
       .addImm(maxCallFrameSize);
   }
@@ -559,8 +567,8 @@ PPCRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II) const {
 
   if (!isInt16(Offset)) {
     // Insert a set of r0 with the full offset value before the ld, st, or add
-    BuildMI(MBB, II, PPC::LIS, 1, PPC::R0).addImm(Offset >> 16);
-    BuildMI(MBB, II, PPC::ORI, 2, PPC::R0).addReg(PPC::R0).addImm(Offset);
+    BuildMI(MBB, II, TII.get(PPC::LIS), PPC::R0).addImm(Offset >> 16);
+    BuildMI(MBB, II, TII.get(PPC::ORI), PPC::R0).addReg(PPC::R0).addImm(Offset);
     
     // convert into indexed form of the instruction
     // sth 0:rA, 1:imm 2:(rB) ==> sthx 0:rA, 2:rB, 1:r0
@@ -640,7 +648,8 @@ static void RemoveVRSaveCode(MachineInstr *MI) {
 // HandleVRSaveUpdate - MI is the UPDATE_VRSAVE instruction introduced by the
 // instruction selector.  Based on the vector registers that have been used,
 // transform this into the appropriate ORI instruction.
-static void HandleVRSaveUpdate(MachineInstr *MI, const bool *UsedRegs) {
+static void HandleVRSaveUpdate(MachineInstr *MI, const bool *UsedRegs,
+                               const TargetInstrInfo &TII) {
   unsigned UsedRegMask = 0;
   for (unsigned i = 0; i != 32; ++i)
     if (UsedRegs[VRRegNo[i]])
@@ -670,15 +679,15 @@ static void HandleVRSaveUpdate(MachineInstr *MI, const bool *UsedRegs) {
     RemoveVRSaveCode(MI);
     return;
   } else if ((UsedRegMask & 0xFFFF) == UsedRegMask) {
-    BuildMI(*MI->getParent(), MI, PPC::ORI, 2, DstReg)
+    BuildMI(*MI->getParent(), MI, TII.get(PPC::ORI), DstReg)
         .addReg(SrcReg).addImm(UsedRegMask);
   } else if ((UsedRegMask & 0xFFFF0000) == UsedRegMask) {
-    BuildMI(*MI->getParent(), MI, PPC::ORIS, 2, DstReg)
+    BuildMI(*MI->getParent(), MI, TII.get(PPC::ORIS), DstReg)
         .addReg(SrcReg).addImm(UsedRegMask >> 16);
   } else {
-    BuildMI(*MI->getParent(), MI, PPC::ORIS, 2, DstReg)
+    BuildMI(*MI->getParent(), MI, TII.get(PPC::ORIS), DstReg)
        .addReg(SrcReg).addImm(UsedRegMask >> 16);
-    BuildMI(*MI->getParent(), MI, PPC::ORI, 2, DstReg)
+    BuildMI(*MI->getParent(), MI, TII.get(PPC::ORI), DstReg)
       .addReg(DstReg).addImm(UsedRegMask & 0xFFFF);
   }
   
@@ -750,7 +759,7 @@ void PPCRegisterInfo::emitPrologue(MachineFunction &MF) const {
   // process it.
   for (unsigned i = 0; MBBI != MBB.end(); ++i, ++MBBI) {
     if (MBBI->getOpcode() == PPC::UPDATE_VRSAVE) {
-      HandleVRSaveUpdate(MBBI, MF.getUsedPhysregs());
+      HandleVRSaveUpdate(MBBI, MF.getUsedPhysregs(), TII);
       break;
     }
   }
@@ -775,10 +784,10 @@ void PPCRegisterInfo::emitPrologue(MachineFunction &MF) const {
     int Offset = PPCFrameInfo::getFramePointerSaveOffset(Subtarget.isPPC64());
      
     if (!Subtarget.isPPC64()) {
-      BuildMI(MBB, MBBI, PPC::STW, 3)
+      BuildMI(MBB, MBBI, TII.get(PPC::STW))
         .addReg(PPC::R31).addImm(Offset).addReg(PPC::R1);
     } else {
-      BuildMI(MBB, MBBI, PPC::STD, 3)
+      BuildMI(MBB, MBBI, TII.get(PPC::STD))
          .addReg(PPC::X31).addImm(Offset/4).addReg(PPC::X1);
     }
   }
@@ -794,40 +803,40 @@ void PPCRegisterInfo::emitPrologue(MachineFunction &MF) const {
     if (MaxAlign > TargetAlign) {
       assert(isPowerOf2_32(MaxAlign)&&isInt16(MaxAlign)&&"Invalid alignment!");
       assert(isInt16(NegFrameSize) && "Unhandled stack size and alignment!");
-      BuildMI(MBB, MBBI, PPC::RLWINM, 4, PPC::R0)
+      BuildMI(MBB, MBBI, TII.get(PPC::RLWINM), PPC::R0)
         .addReg(PPC::R1).addImm(0).addImm(32-Log2_32(MaxAlign)).addImm(31);
-      BuildMI(MBB, MBBI, PPC::SUBFIC,2,PPC::R0).addReg(PPC::R0)
+      BuildMI(MBB, MBBI, TII.get(PPC::SUBFIC) ,PPC::R0).addReg(PPC::R0)
         .addImm(NegFrameSize);
-      BuildMI(MBB, MBBI, PPC::STWUX, 3)
+      BuildMI(MBB, MBBI, TII.get(PPC::STWUX))
         .addReg(PPC::R1).addReg(PPC::R1).addReg(PPC::R0);
     } else if (isInt16(NegFrameSize)) {
-      BuildMI(MBB, MBBI, PPC::STWU, 3,
+      BuildMI(MBB, MBBI, TII.get(PPC::STWU),
               PPC::R1).addReg(PPC::R1).addImm(NegFrameSize).addReg(PPC::R1);
     } else {
-      BuildMI(MBB, MBBI, PPC::LIS, 1, PPC::R0).addImm(NegFrameSize >> 16);
-      BuildMI(MBB, MBBI, PPC::ORI, 2, PPC::R0).addReg(PPC::R0)
+      BuildMI(MBB, MBBI, TII.get(PPC::LIS), PPC::R0).addImm(NegFrameSize >> 16);
+      BuildMI(MBB, MBBI, TII.get(PPC::ORI), PPC::R0).addReg(PPC::R0)
         .addImm(NegFrameSize & 0xFFFF);
-      BuildMI(MBB, MBBI, PPC::STWUX, 3).addReg(PPC::R1).addReg(PPC::R1)
+      BuildMI(MBB, MBBI, TII.get(PPC::STWUX)).addReg(PPC::R1).addReg(PPC::R1)
         .addReg(PPC::R0);
     }
   } else {    // PPC64.
     if (MaxAlign > TargetAlign) {
       assert(isPowerOf2_32(MaxAlign)&&isInt16(MaxAlign)&&"Invalid alignment!");
       assert(isInt16(NegFrameSize) && "Unhandled stack size and alignment!");
-      BuildMI(MBB, MBBI, PPC::RLDICL, 3, PPC::X0)
+      BuildMI(MBB, MBBI, TII.get(PPC::RLDICL), PPC::X0)
         .addReg(PPC::X1).addImm(0).addImm(64-Log2_32(MaxAlign));
-      BuildMI(MBB, MBBI, PPC::SUBFIC8, 2, PPC::X0).addReg(PPC::X0)
+      BuildMI(MBB, MBBI, TII.get(PPC::SUBFIC8), PPC::X0).addReg(PPC::X0)
         .addImm(NegFrameSize);
-      BuildMI(MBB, MBBI, PPC::STDUX, 3)
+      BuildMI(MBB, MBBI, TII.get(PPC::STDUX))
         .addReg(PPC::X1).addReg(PPC::X1).addReg(PPC::X0);
     } else if (isInt16(NegFrameSize)) {
-      BuildMI(MBB, MBBI, PPC::STDU, 3, PPC::X1)
+      BuildMI(MBB, MBBI, TII.get(PPC::STDU), PPC::X1)
              .addReg(PPC::X1).addImm(NegFrameSize/4).addReg(PPC::X1);
     } else {
-      BuildMI(MBB, MBBI, PPC::LIS8, 1, PPC::X0).addImm(NegFrameSize >> 16);
-      BuildMI(MBB, MBBI, PPC::ORI8, 2, PPC::X0).addReg(PPC::X0)
+      BuildMI(MBB, MBBI, TII.get(PPC::LIS8), PPC::X0).addImm(NegFrameSize >>16);
+      BuildMI(MBB, MBBI, TII.get(PPC::ORI8), PPC::X0).addReg(PPC::X0)
         .addImm(NegFrameSize & 0xFFFF);
-      BuildMI(MBB, MBBI, PPC::STDUX, 3).addReg(PPC::X1).addReg(PPC::X1)
+      BuildMI(MBB, MBBI, TII.get(PPC::STDUX)).addReg(PPC::X1).addReg(PPC::X1)
         .addReg(PPC::X0);
     }
   }
@@ -837,7 +846,7 @@ void PPCRegisterInfo::emitPrologue(MachineFunction &MF) const {
     unsigned LabelID = DebugInfo->NextLabelID();
     
     // Mark effective beginning of when frame pointer becomes valid.
-    BuildMI(MBB, MBBI, PPC::DWARF_LABEL, 1).addImm(LabelID);
+    BuildMI(MBB, MBBI, TII.get(PPC::DWARF_LABEL)).addImm(LabelID);
     
     // Show update of SP.
     MachineLocation SPDst(MachineLocation::VirtualFP);
@@ -857,9 +866,11 @@ void PPCRegisterInfo::emitPrologue(MachineFunction &MF) const {
   // If there is a frame pointer, copy R1 into R31
   if (HasFP) {
     if (!Subtarget.isPPC64()) {
-      BuildMI(MBB, MBBI, PPC::OR, 2, PPC::R31).addReg(PPC::R1).addReg(PPC::R1);
+      BuildMI(MBB, MBBI, TII.get(PPC::OR), PPC::R31).addReg(PPC::R1)
+        .addReg(PPC::R1);
     } else {
-      BuildMI(MBB, MBBI, PPC::OR8, 2, PPC::X31).addReg(PPC::X1).addReg(PPC::X1);
+      BuildMI(MBB, MBBI, TII.get(PPC::OR8), PPC::X31).addReg(PPC::X1)
+        .addReg(PPC::X1);
     }
   }
 }
@@ -884,18 +895,18 @@ void PPCRegisterInfo::emitEpilogue(MachineFunction &MF,
     if (!Subtarget.isPPC64()) {
       if (isInt16(FrameSize) && TargetAlign >= MaxAlign &&
             !MFI->hasVarSizedObjects()) {
-          BuildMI(MBB, MBBI, PPC::ADDI, 2, PPC::R1)
+          BuildMI(MBB, MBBI, TII.get(PPC::ADDI), PPC::R1)
               .addReg(PPC::R1).addImm(FrameSize);
       } else {
-        BuildMI(MBB, MBBI, PPC::LWZ, 2, PPC::R1).addImm(0).addReg(PPC::R1);
+        BuildMI(MBB, MBBI, TII.get(PPC::LWZ),PPC::R1).addImm(0).addReg(PPC::R1);
       }
     } else {
       if (isInt16(FrameSize) && TargetAlign >= MaxAlign &&
             !MFI->hasVarSizedObjects()) {
-        BuildMI(MBB, MBBI, PPC::ADDI8, 2, PPC::X1)
+        BuildMI(MBB, MBBI, TII.get(PPC::ADDI8), PPC::X1)
            .addReg(PPC::X1).addImm(FrameSize);
       } else {
-        BuildMI(MBB, MBBI, PPC::LD, 2, PPC::X1).addImm(0).addReg(PPC::X1);
+        BuildMI(MBB, MBBI, TII.get(PPC::LD), PPC::X1).addImm(0).addReg(PPC::X1);
       }
     }
     
@@ -905,10 +916,10 @@ void PPCRegisterInfo::emitEpilogue(MachineFunction &MF,
       int Offset = PPCFrameInfo::getFramePointerSaveOffset(Subtarget.isPPC64());
       
       if (!Subtarget.isPPC64()) {
-        BuildMI(MBB, MBBI, PPC::LWZ, 2, PPC::R31)
+        BuildMI(MBB, MBBI, TII.get(PPC::LWZ), PPC::R31)
             .addImm(Offset).addReg(PPC::R1);
       } else {
-        BuildMI(MBB, MBBI, PPC::LD, 2, PPC::X31)
+        BuildMI(MBB, MBBI, TII.get(PPC::LD), PPC::X31)
           .addImm(Offset/4).addReg(PPC::X1);
       }
     }

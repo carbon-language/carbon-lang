@@ -21,6 +21,8 @@
 //===----------------------------------------------------------------------===//
 
 #include "IA64.h"
+#include "IA64InstrInfo.h"
+#include "IA64TargetMachine.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "llvm/ADT/SetOperations.h"
@@ -99,7 +101,8 @@ bool IA64BundlingPass::runOnMachineBasicBlock(MachineBasicBlock &MBB) {
     
     if(! (CurrentReads.empty() && CurrentWrites.empty()) ) {
       // there is a conflict, insert a stop and reset PendingRegWrites
-      CurrentInsn = BuildMI(MBB, CurrentInsn, IA64::STOP, 0);
+      CurrentInsn = BuildMI(MBB, CurrentInsn,
+                            TM.getInstrInfo()->get(IA64::STOP), 0);
       PendingRegWrites=OrigWrites; // carry over current writes to next insn
       Changed=true; StopBitsAdded++; // update stats      
     } else { // otherwise, track additional pending writes

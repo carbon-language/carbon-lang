@@ -20,6 +20,7 @@
 namespace llvm {
 
 class SparcSubtarget;
+class TargetInstrInfo;
 class Type;
 
 struct SparcRegisterInfo : public SparcGenRegisterInfo {
