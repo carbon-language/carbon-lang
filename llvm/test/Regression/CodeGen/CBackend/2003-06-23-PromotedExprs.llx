@@ -5,7 +5,7 @@
 
 bool %doTest(ubyte %x) {
 	%dec.0 = add ubyte %x, 255
-    %tmp.1001 = cast ubyte %dec.0 to bool
+    %tmp.1001 = trunc ubyte %dec.0 to bool
     ret bool %tmp.1001
 }
 

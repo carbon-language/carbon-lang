@@ -410,7 +410,7 @@ static bool ElementTypesAreCompatible(const Type *T1, const Type *T2,
 
     const Type *T1 = T1W.getCurrentType();
     const Type *T2 = T2W.getCurrentType();
-    if (T1 != T2 && !T1->isLosslesslyConvertibleTo(T2))
+    if (T1 != T2 && !T1->canLosslesslyBitCastTo(T2))
       return false;
 
     T1W.StepToNextType();
@@ -701,7 +701,7 @@ bool DSNode::mergeTypeInfo(const Type *NewTy, unsigned Offset,
   // Check to see if we have a compatible, but different type...
   if (NewTySize == SubTypeSize) {
     // Check to see if this type is obviously convertible... int -> uint f.e.
-    if (NewTy->isLosslesslyConvertibleTo(SubType))
+    if (NewTy->canLosslesslyBitCastTo(SubType))
       return false;
 
     // Check to see if we have a pointer & integer mismatch going on here,

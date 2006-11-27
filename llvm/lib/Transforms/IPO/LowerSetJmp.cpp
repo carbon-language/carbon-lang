@@ -259,7 +259,8 @@ void LowerSetJmp::TransformLongJmpCall(CallInst* Inst)
   // same parameters as "longjmp", except that the buffer is cast to a
   // char*. It returns "void", so it doesn't need to replace any of
   // Inst's uses and doesn't get a name.
-  CastInst* CI = new CastInst(Inst->getOperand(1), SBPTy, "LJBuf", Inst);
+  CastInst* CI = 
+    new BitCastInst(Inst->getOperand(1), SBPTy, "LJBuf", Inst);
   new CallInst(ThrowLongJmp, make_vector<Value*>(CI, Inst->getOperand(2), 0),
                "", Inst);
 
@@ -375,7 +376,8 @@ void LowerSetJmp::TransformSetJmpCall(CallInst* Inst)
 
   // Add this setjmp to the setjmp map.
   const Type* SBPTy = PointerType::get(Type::SByteTy);
-  CastInst* BufPtr = new CastInst(Inst->getOperand(1), SBPTy, "SBJmpBuf", Inst);
+  CastInst* BufPtr = 
+    new BitCastInst(Inst->getOperand(1), SBPTy, "SBJmpBuf", Inst);
   new CallInst(AddSJToMap,
                make_vector<Value*>(GetSetJmpMap(Func), BufPtr,
                                    ConstantInt::get(Type::UIntTy,

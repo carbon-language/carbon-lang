@@ -139,13 +139,15 @@ bool LowerGC::doInitialization(Module &M) {
 }
 
 /// Coerce - If the specified operand number of the specified instruction does
-/// not have the specified type, insert a cast.
+/// not have the specified type, insert a cast. Note that this only uses BitCast
+/// because the types involved are all pointers.
 static void Coerce(Instruction *I, unsigned OpNum, Type *Ty) {
   if (I->getOperand(OpNum)->getType() != Ty) {
     if (Constant *C = dyn_cast<Constant>(I->getOperand(OpNum)))
-      I->setOperand(OpNum, ConstantExpr::getCast(C, Ty));
+      I->setOperand(OpNum, ConstantExpr::getBitCast(C, Ty));
     else {
-      CastInst *CI = new CastInst(I->getOperand(OpNum), Ty, "", I);
+      CastInst *CI = 
+        CastInst::createInferredCast(I->getOperand(OpNum), Ty, "", I);
       I->setOperand(OpNum, CI);
     }
   }
@@ -196,7 +198,9 @@ bool LowerGC::runOnFunction(Function &F) {
                 CallInst *NC = new CallInst(GCRead, CI->getOperand(1),
                                             CI->getOperand(2),
                                             CI->getName(), CI);
-                Value *NV = new CastInst(NC, CI->getType(), "", CI);
+                // These functions only deal with ptr type results so BitCast
+                // is the correct kind of cast (no-op cast).
+                Value *NV = new BitCastInst(NC, CI->getType(), "", CI);
                 CI->replaceAllUsesWith(NV);
                 BB->getInstList().erase(CI);
                 CI = NC;
@@ -273,7 +277,7 @@ bool LowerGC::runOnFunction(Function &F) {
 
   // Now that the record is all initialized, store the pointer into the global
   // pointer.
-  Value *C = new CastInst(AI, PointerType::get(MainRootRecordType), "", IP);
+  Value *C = new BitCastInst(AI, PointerType::get(MainRootRecordType), "", IP);
   new StoreInst(C, RootChain, IP);
 
   // On exit from the function we have to remove the entry from the GC root

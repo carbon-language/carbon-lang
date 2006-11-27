@@ -710,44 +710,6 @@ public:
   }
 };
 
-//===----------------------------------------------------------------------===//
-//                                 CastInst Class
-//===----------------------------------------------------------------------===//
-
-/// CastInst - This class represents a cast from Operand[0] to the type of
-/// the instruction (i->getType()).
-///
-class CastInst : public UnaryInstruction {
-  CastInst(const CastInst &CI)
-    : UnaryInstruction(CI.getType(), Cast, CI.getOperand(0)) {
-  }
-public:
-  CastInst(Value *S, const Type *Ty, const std::string &Name = "",
-           Instruction *InsertBefore = 0)
-    : UnaryInstruction(Ty, Cast, S, Name, InsertBefore) {
-  }
-  CastInst(Value *S, const Type *Ty, const std::string &Name,
-           BasicBlock *InsertAtEnd)
-    : UnaryInstruction(Ty, Cast, S, Name, InsertAtEnd) {
-  }
-
-  /// isTruncIntCast - Return true if this is a truncating integer cast
-  /// instruction, e.g. a cast from long to uint.
-  bool isTruncIntCast() const;
-
-
-  virtual CastInst *clone() const;
-
-  // Methods for support type inquiry through isa, cast, and dyn_cast:
-  static inline bool classof(const CastInst *) { return true; }
-  static inline bool classof(const Instruction *I) {
-    return I->getOpcode() == Cast;
-  }
-  static inline bool classof(const Value *V) {
-    return isa<Instruction>(V) && classof(cast<Instruction>(V));
-  }
-};
-
 
 //===----------------------------------------------------------------------===//
 //                                 CallInst Class
@@ -1768,6 +1730,477 @@ private:
   virtual BasicBlock *getSuccessorV(unsigned idx) const;
   virtual unsigned getNumSuccessorsV() const;
   virtual void setSuccessorV(unsigned idx, BasicBlock *B);
+};
+
+//===----------------------------------------------------------------------===//
+//                                 TruncInst Class
+//===----------------------------------------------------------------------===//
+
+/// @brief This class represents a truncation of integer types.
+class TruncInst : public CastInst {
+  /// Private copy constructor
+  TruncInst(const TruncInst &CI)
+    : CastInst(CI.getType(), Trunc, CI.getOperand(0)) {
+  }
+public:
+  /// @brief Constructor with insert-before-instruction semantics
+  TruncInst(
+    Value *S,                     ///< The value to be truncated
+    const Type *Ty,               ///< The (smaller) type to truncate to
+    const std::string &Name = "", ///< A name for the new instruction
+    Instruction *InsertBefore = 0 ///< Where to insert the new instruction
+  );
+
+  /// @brief Constructor with insert-at-end-of-block semantics
+  TruncInst(
+    Value *S,                     ///< The value to be truncated
+    const Type *Ty,               ///< The (smaller) type to truncate to
+    const std::string &Name,      ///< A name for the new instruction
+    BasicBlock *InsertAtEnd       ///< The block to insert the instruction into
+  );
+
+  /// @brief Clone an identical TruncInst
+  virtual CastInst *clone() const;
+
+  /// @brief Methods for support type inquiry through isa, cast, and dyn_cast:
+  static inline bool classof(const TruncInst *) { return true; }
+  static inline bool classof(const Instruction *I) {
+    return I->getOpcode() == Trunc;
+  }
+  static inline bool classof(const Value *V) {
+    return isa<Instruction>(V) && classof(cast<Instruction>(V));
+  }
+};
+
+//===----------------------------------------------------------------------===//
+//                                 ZExtInst Class
+//===----------------------------------------------------------------------===//
+
+/// @brief This class represents zero extension of integer types.
+class ZExtInst : public CastInst {
+  /// @brief Private copy constructor
+  ZExtInst(const ZExtInst &CI)
+    : CastInst(CI.getType(), ZExt, CI.getOperand(0)) {
+  }
+public:
+  /// @brief Constructor with insert-before-instruction semantics
+  ZExtInst(
+    Value *S,                     ///< The value to be zero extended
+    const Type *Ty,               ///< The type to zero extend to
+    const std::string &Name = "", ///< A name for the new instruction
+    Instruction *InsertBefore = 0 ///< Where to insert the new instruction
+  );
+
+  /// @brief Constructor with insert-at-end semantics.
+  ZExtInst(
+    Value *S,                     ///< The value to be zero extended
+    const Type *Ty,               ///< The type to zero extend to
+    const std::string &Name,      ///< A name for the new instruction
+    BasicBlock *InsertAtEnd       ///< The block to insert the instruction into
+  );
+
+  /// @brief Clone an identical ZExtInst
+  virtual CastInst *clone() const;
+
+  /// @brief Methods for support type inquiry through isa, cast, and dyn_cast:
+  static inline bool classof(const ZExtInst *) { return true; }
+  static inline bool classof(const Instruction *I) {
+    return I->getOpcode() == ZExt;
+  }
+  static inline bool classof(const Value *V) {
+    return isa<Instruction>(V) && classof(cast<Instruction>(V));
+  }
+};
+
+//===----------------------------------------------------------------------===//
+//                                 SExtInst Class
+//===----------------------------------------------------------------------===//
+
+/// @brief This class represents a sign extension of integer types.
+class SExtInst : public CastInst {
+  /// @brief Private copy constructor
+  SExtInst(const SExtInst &CI)
+    : CastInst(CI.getType(), SExt, CI.getOperand(0)) {
+  }
+public:
+  /// @brief Constructor with insert-before-instruction semantics
+  SExtInst(
+    Value *S,                     ///< The value to be sign extended
+    const Type *Ty,               ///< The type to sign extend to
+    const std::string &Name = "", ///< A name for the new instruction
+    Instruction *InsertBefore = 0 ///< Where to insert the new instruction
+  );
+
+  /// @brief Constructor with insert-at-end-of-block semantics
+  SExtInst(
+    Value *S,                     ///< The value to be sign extended
+    const Type *Ty,               ///< The type to sign extend to
+    const std::string &Name,      ///< A name for the new instruction
+    BasicBlock *InsertAtEnd       ///< The block to insert the instruction into
+  );
+
+  /// @brief Clone an identical SExtInst
+  virtual CastInst *clone() const;
+
+  /// @brief Methods for support type inquiry through isa, cast, and dyn_cast:
+  static inline bool classof(const SExtInst *) { return true; }
+  static inline bool classof(const Instruction *I) {
+    return I->getOpcode() == SExt;
+  }
+  static inline bool classof(const Value *V) {
+    return isa<Instruction>(V) && classof(cast<Instruction>(V));
+  }
+};
+
+//===----------------------------------------------------------------------===//
+//                                 FPTruncInst Class
+//===----------------------------------------------------------------------===//
+
+/// @brief This class represents a truncation of floating point types.
+class FPTruncInst : public CastInst {
+  FPTruncInst(const FPTruncInst &CI)
+    : CastInst(CI.getType(), FPTrunc, CI.getOperand(0)) {
+  }
+public:
+  /// @brief Constructor with insert-before-instruction semantics
+  FPTruncInst(
+    Value *S,                     ///< The value to be truncated
+    const Type *Ty,               ///< The type to truncate to
+    const std::string &Name = "", ///< A name for the new instruction
+    Instruction *InsertBefore = 0 ///< Where to insert the new instruction
+  );
+
+  /// @brief Constructor with insert-before-instruction semantics
+  FPTruncInst(
+    Value *S,                     ///< The value to be truncated
+    const Type *Ty,               ///< The type to truncate to
+    const std::string &Name,      ///< A name for the new instruction
+    BasicBlock *InsertAtEnd       ///< The block to insert the instruction into
+  );
+
+  /// @brief Clone an identical FPTruncInst
+  virtual CastInst *clone() const;
+
+  /// @brief Methods for support type inquiry through isa, cast, and dyn_cast:
+  static inline bool classof(const FPTruncInst *) { return true; }
+  static inline bool classof(const Instruction *I) {
+    return I->getOpcode() == FPTrunc;
+  }
+  static inline bool classof(const Value *V) {
+    return isa<Instruction>(V) && classof(cast<Instruction>(V));
+  }
+};
+
+//===----------------------------------------------------------------------===//
+//                                 FPExtInst Class
+//===----------------------------------------------------------------------===//
+
+/// @brief This class represents an extension of floating point types.
+class FPExtInst : public CastInst {
+  FPExtInst(const FPExtInst &CI)
+    : CastInst(CI.getType(), FPExt, CI.getOperand(0)) {
+  }
+public:
+  /// @brief Constructor with insert-before-instruction semantics
+  FPExtInst(
+    Value *S,                     ///< The value to be extended
+    const Type *Ty,               ///< The type to extend to
+    const std::string &Name = "", ///< A name for the new instruction
+    Instruction *InsertBefore = 0 ///< Where to insert the new instruction
+  );
+
+  /// @brief Constructor with insert-at-end-of-block semantics
+  FPExtInst(
+    Value *S,                     ///< The value to be extended
+    const Type *Ty,               ///< The type to extend to
+    const std::string &Name,      ///< A name for the new instruction
+    BasicBlock *InsertAtEnd       ///< The block to insert the instruction into
+  );
+
+  /// @brief Clone an identical FPExtInst
+  virtual CastInst *clone() const;
+
+  /// @brief Methods for support type inquiry through isa, cast, and dyn_cast:
+  static inline bool classof(const FPExtInst *) { return true; }
+  static inline bool classof(const Instruction *I) {
+    return I->getOpcode() == FPExt;
+  }
+  static inline bool classof(const Value *V) {
+    return isa<Instruction>(V) && classof(cast<Instruction>(V));
+  }
+};
+
+//===----------------------------------------------------------------------===//
+//                                 UIToFPInst Class
+//===----------------------------------------------------------------------===//
+
+/// @brief This class represents a cast unsigned integer to floating point.
+class UIToFPInst : public CastInst {
+  UIToFPInst(const UIToFPInst &CI)
+    : CastInst(CI.getType(), UIToFP, CI.getOperand(0)) {
+  }
+public:
+  /// @brief Constructor with insert-before-instruction semantics
+  UIToFPInst(
+    Value *S,                     ///< The value to be converted
+    const Type *Ty,               ///< The type to convert to
+    const std::string &Name = "", ///< A name for the new instruction
+    Instruction *InsertBefore = 0 ///< Where to insert the new instruction
+  );
+
+  /// @brief Constructor with insert-at-end-of-block semantics
+  UIToFPInst(
+    Value *S,                     ///< The value to be converted
+    const Type *Ty,               ///< The type to convert to
+    const std::string &Name,      ///< A name for the new instruction
+    BasicBlock *InsertAtEnd       ///< The block to insert the instruction into
+  );
+
+  /// @brief Clone an identical UIToFPInst
+  virtual CastInst *clone() const;
+
+  /// @brief Methods for support type inquiry through isa, cast, and dyn_cast:
+  static inline bool classof(const UIToFPInst *) { return true; }
+  static inline bool classof(const Instruction *I) {
+    return I->getOpcode() == UIToFP;
+  }
+  static inline bool classof(const Value *V) {
+    return isa<Instruction>(V) && classof(cast<Instruction>(V));
+  }
+};
+
+//===----------------------------------------------------------------------===//
+//                                 SIToFPInst Class
+//===----------------------------------------------------------------------===//
+
+/// @brief This class represents a cast from signed integer to floating point.
+class SIToFPInst : public CastInst {
+  SIToFPInst(const SIToFPInst &CI)
+    : CastInst(CI.getType(), SIToFP, CI.getOperand(0)) {
+  }
+public:
+  /// @brief Constructor with insert-before-instruction semantics
+  SIToFPInst(
+    Value *S,                     ///< The value to be converted
+    const Type *Ty,               ///< The type to convert to
+    const std::string &Name = "", ///< A name for the new instruction
+    Instruction *InsertBefore = 0 ///< Where to insert the new instruction
+  );
+
+  /// @brief Constructor with insert-at-end-of-block semantics
+  SIToFPInst(
+    Value *S,                     ///< The value to be converted
+    const Type *Ty,               ///< The type to convert to
+    const std::string &Name,      ///< A name for the new instruction
+    BasicBlock *InsertAtEnd       ///< The block to insert the instruction into
+  );
+
+  /// @brief Clone an identical SIToFPInst
+  virtual CastInst *clone() const;
+
+  /// @brief Methods for support type inquiry through isa, cast, and dyn_cast:
+  static inline bool classof(const SIToFPInst *) { return true; }
+  static inline bool classof(const Instruction *I) {
+    return I->getOpcode() == SIToFP;
+  }
+  static inline bool classof(const Value *V) {
+    return isa<Instruction>(V) && classof(cast<Instruction>(V));
+  }
+};
+
+//===----------------------------------------------------------------------===//
+//                                 FPToUIInst Class
+//===----------------------------------------------------------------------===//
+
+/// @brief This class represents a cast from floating point to unsigned integer
+class FPToUIInst  : public CastInst {
+  FPToUIInst(const FPToUIInst &CI)
+    : CastInst(CI.getType(), FPToUI, CI.getOperand(0)) {
+  }
+public:
+  /// @brief Constructor with insert-before-instruction semantics
+  FPToUIInst(
+    Value *S,                     ///< The value to be converted
+    const Type *Ty,               ///< The type to convert to
+    const std::string &Name = "", ///< A name for the new instruction
+    Instruction *InsertBefore = 0 ///< Where to insert the new instruction
+  );
+
+  /// @brief Constructor with insert-at-end-of-block semantics
+  FPToUIInst(
+    Value *S,                     ///< The value to be converted
+    const Type *Ty,               ///< The type to convert to
+    const std::string &Name,      ///< A name for the new instruction
+    BasicBlock *InsertAtEnd       ///< Where to insert the new instruction
+  );
+
+  /// @brief Clone an identical FPToUIInst
+  virtual CastInst *clone() const;
+
+  /// @brief Methods for support type inquiry through isa, cast, and dyn_cast:
+  static inline bool classof(const FPToUIInst *) { return true; }
+  static inline bool classof(const Instruction *I) {
+    return I->getOpcode() == FPToUI;
+  }
+  static inline bool classof(const Value *V) {
+    return isa<Instruction>(V) && classof(cast<Instruction>(V));
+  }
+};
+
+//===----------------------------------------------------------------------===//
+//                                 FPToSIInst Class
+//===----------------------------------------------------------------------===//
+
+/// @brief This class represents a cast from floating point to signed integer.
+class FPToSIInst  : public CastInst {
+  FPToSIInst(const FPToSIInst &CI)
+    : CastInst(CI.getType(), FPToSI, CI.getOperand(0)) {
+  }
+public:
+  /// @brief Constructor with insert-before-instruction semantics
+  FPToSIInst(
+    Value *S,                     ///< The value to be converted
+    const Type *Ty,               ///< The type to convert to
+    const std::string &Name = "", ///< A name for the new instruction
+    Instruction *InsertBefore = 0 ///< Where to insert the new instruction
+  );
+
+  /// @brief Constructor with insert-at-end-of-block semantics
+  FPToSIInst(
+    Value *S,                     ///< The value to be converted
+    const Type *Ty,               ///< The type to convert to
+    const std::string &Name,      ///< A name for the new instruction
+    BasicBlock *InsertAtEnd       ///< The block to insert the instruction into
+  );
+
+  /// @brief Clone an identical FPToSIInst
+  virtual CastInst *clone() const;
+
+  /// @brief Methods for support type inquiry through isa, cast, and dyn_cast:
+  static inline bool classof(const FPToSIInst *) { return true; }
+  static inline bool classof(const Instruction *I) {
+    return I->getOpcode() == FPToSI;
+  }
+  static inline bool classof(const Value *V) {
+    return isa<Instruction>(V) && classof(cast<Instruction>(V));
+  }
+};
+
+//===----------------------------------------------------------------------===//
+//                                 IntToPtrInst Class
+//===----------------------------------------------------------------------===//
+
+/// @brief This class represents a cast from an integer to a pointer.
+class IntToPtrInst : public CastInst {
+  IntToPtrInst(const IntToPtrInst &CI)
+    : CastInst(CI.getType(), IntToPtr, CI.getOperand(0)) {
+  }
+public:
+  /// @brief Constructor with insert-before-instruction semantics
+  IntToPtrInst(
+    Value *S,                     ///< The value to be converted
+    const Type *Ty,               ///< The type to convert to
+    const std::string &Name = "", ///< A name for the new instruction
+    Instruction *InsertBefore = 0 ///< Where to insert the new instruction
+  );
+
+  /// @brief Constructor with insert-at-end-of-block semantics
+  IntToPtrInst(
+    Value *S,                     ///< The value to be converted
+    const Type *Ty,               ///< The type to convert to
+    const std::string &Name,      ///< A name for the new instruction
+    BasicBlock *InsertAtEnd       ///< The block to insert the instruction into
+  );
+
+  /// @brief Clone an identical IntToPtrInst
+  virtual CastInst *clone() const;
+
+  // Methods for support type inquiry through isa, cast, and dyn_cast:
+  static inline bool classof(const IntToPtrInst *) { return true; }
+  static inline bool classof(const Instruction *I) {
+    return I->getOpcode() == IntToPtr;
+  }
+  static inline bool classof(const Value *V) {
+    return isa<Instruction>(V) && classof(cast<Instruction>(V));
+  }
+};
+
+//===----------------------------------------------------------------------===//
+//                                 PtrToIntInst Class
+//===----------------------------------------------------------------------===//
+
+/// @brief This class represents a cast from a pointer to an integer
+class PtrToIntInst : public CastInst {
+  PtrToIntInst(const PtrToIntInst &CI)
+    : CastInst(CI.getType(), PtrToInt, CI.getOperand(0)) {
+  }
+public:
+  /// @brief Constructor with insert-before-instruction semantics
+  PtrToIntInst(
+    Value *S,                     ///< The value to be converted
+    const Type *Ty,               ///< The type to convert to
+    const std::string &Name = "", ///< A name for the new instruction
+    Instruction *InsertBefore = 0 ///< Where to insert the new instruction
+  );
+
+  /// @brief Constructor with insert-at-end-of-block semantics
+  PtrToIntInst(
+    Value *S,                     ///< The value to be converted
+    const Type *Ty,               ///< The type to convert to
+    const std::string &Name,      ///< A name for the new instruction
+    BasicBlock *InsertAtEnd       ///< The block to insert the instruction into
+  );
+
+  /// @brief Clone an identical PtrToIntInst
+  virtual CastInst *clone() const;
+
+  // Methods for support type inquiry through isa, cast, and dyn_cast:
+  static inline bool classof(const PtrToIntInst *) { return true; }
+  static inline bool classof(const Instruction *I) {
+    return I->getOpcode() == PtrToInt;
+  }
+  static inline bool classof(const Value *V) {
+    return isa<Instruction>(V) && classof(cast<Instruction>(V));
+  }
+};
+
+//===----------------------------------------------------------------------===//
+//                             BitCastInst Class
+//===----------------------------------------------------------------------===//
+
+/// @brief This class represents a no-op cast from one type to another.
+class BitCastInst : public CastInst {
+  BitCastInst(const BitCastInst &CI)
+    : CastInst(CI.getType(), BitCast, CI.getOperand(0)) {
+  }
+public:
+  /// @brief Constructor with insert-before-instruction semantics
+  BitCastInst(
+    Value *S,                     ///< The value to be casted
+    const Type *Ty,               ///< The type to casted to
+    const std::string &Name = "", ///< A name for the new instruction
+    Instruction *InsertBefore = 0 ///< Where to insert the new instruction
+  );
+
+  /// @brief Constructor with insert-at-end-of-block semantics
+  BitCastInst(
+    Value *S,                     ///< The value to be casted
+    const Type *Ty,               ///< The type to casted to
+    const std::string &Name,      ///< A name for the new instruction
+    BasicBlock *InsertAtEnd       ///< The block to insert the instruction into
+  );
+
+  /// @brief Clone an identical BitCastInst
+  virtual CastInst *clone() const;
+
+  // Methods for support type inquiry through isa, cast, and dyn_cast:
+  static inline bool classof(const BitCastInst *) { return true; }
+  static inline bool classof(const Instruction *I) {
+    return I->getOpcode() == BitCast;
+  }
+  static inline bool classof(const Value *V) {
+    return isa<Instruction>(V) && classof(cast<Instruction>(V));
+  }
 };
 
 } // End llvm namespace

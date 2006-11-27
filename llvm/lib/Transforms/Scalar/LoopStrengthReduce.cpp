@@ -627,10 +627,9 @@ static bool isTargetConstant(const SCEVHandle &V, const TargetLowering *TLI) {
 
   if (SCEVUnknown *SU = dyn_cast<SCEVUnknown>(V))
     if (ConstantExpr *CE = dyn_cast<ConstantExpr>(SU->getValue()))
-      if (CE->getOpcode() == Instruction::Cast) {
+      if (CE->getOpcode() == Instruction::PtrToInt) {
         Constant *Op0 = CE->getOperand(0);
-        if (isa<GlobalValue>(Op0) &&
-            TLI &&
+        if (isa<GlobalValue>(Op0) && TLI &&
             TLI->isLegalAddressImmediate(cast<GlobalValue>(Op0)))
           return true;
       }
@@ -899,7 +898,7 @@ unsigned LoopStrengthReduce::CheckForIVReuse(const SCEVHandle &Stride,
         // FIXME: Only handle base == 0 for now.
         // Only reuse previous IV if it would not require a type conversion.
         if (isZero(II->Base) &&
-            II->Base->getType()->isLosslesslyConvertibleTo(Ty)) {
+            II->Base->getType()->canLosslesslyBitCastTo(Ty)) {
           IV = *II;
           return Scale;
         }
@@ -1044,9 +1043,10 @@ void LoopStrengthReduce::StrengthReduceStridedIVUsers(const SCEVHandle &Stride,
     if (!C ||
         (!C->isNullValue() &&
          !isTargetConstant(SCEVUnknown::get(CommonBaseV), TLI)))
-      // We want the common base emitted into the preheader!
-      CommonBaseV = new CastInst(CommonBaseV, CommonBaseV->getType(),
-                                 "commonbase", PreInsertPt);
+      // We want the common base emitted into the preheader! This is just
+      // using cast as a copy so BitCast (no-op cast) is appropriate
+      CommonBaseV = new BitCastInst(CommonBaseV, CommonBaseV->getType(), 
+                                    "commonbase", PreInsertPt);
   }
 
   // We want to emit code for users inside the loop first.  To do this, we
@@ -1092,12 +1092,13 @@ void LoopStrengthReduce::StrengthReduceStridedIVUsers(const SCEVHandle &Stride,
     
     // If BaseV is a constant other than 0, make sure that it gets inserted into
     // the preheader, instead of being forward substituted into the uses.  We do
-    // this by forcing a noop cast to be inserted into the preheader in this
-    // case.
+    // this by forcing a BitCast (noop cast) to be inserted into the preheader 
+    // in this case.
     if (Constant *C = dyn_cast<Constant>(BaseV)) {
       if (!C->isNullValue() && !isTargetConstant(Base, TLI)) {
-        // We want this constant emitted into the preheader!
-        BaseV = new CastInst(BaseV, BaseV->getType(), "preheaderinsert",
+        // We want this constant emitted into the preheader! This is just
+        // using cast as a copy so BitCast (no-op cast) is appropriate
+        BaseV = new BitCastInst(BaseV, BaseV->getType(), "preheaderinsert",
                              PreInsertPt);       
       }
     }

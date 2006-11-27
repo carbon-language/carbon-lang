@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llvm-dis | grep ' cast ('
+; RUN: llvm-as < %s | llvm-dis | grep ' bitcast ('
 
 %.Base64_1 = external constant [4 x sbyte] 
 

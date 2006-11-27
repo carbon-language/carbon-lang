@@ -1,8 +1,8 @@
-; This example should be raised to return a Hash directly without casting.  To
-; successful, all cast instructions should be eliminated from this testcase.
+; This example should be raised to return a Hash directly without casting. 
+; LevelRaise should eliminate all cast instructions from this testcase.
 ;
 ; XFAIL: *
-; RUN: llvm-as < %s | opt -raise | llvm-dis | not grep cast 
+; RUN: llvm-as < %s | opt -raise | llvm-dis | notcast
 
 	%Hash = type { { uint, sbyte *, \2 } * *, int (uint) *, int } *
 	%hash = type { { uint, sbyte *, \2 } * *, int (uint) *, int }

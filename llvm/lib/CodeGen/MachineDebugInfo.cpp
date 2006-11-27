@@ -102,7 +102,7 @@ static GlobalVariable *getGlobalVariable(Value *V) {
   if (GlobalVariable *GV = dyn_cast<GlobalVariable>(V)) {
     return GV;
   } else if (ConstantExpr *CE = dyn_cast<ConstantExpr>(V)) {
-    if (CE->getOpcode() == Instruction::Cast) {
+    if (CE->getOpcode() == Instruction::BitCast) {
       return dyn_cast<GlobalVariable>(CE->getOperand(0));
     }
   }
@@ -115,7 +115,7 @@ static bool isGlobalVariable(Value *V) {
   if (isa<GlobalVariable>(V) || isa<ConstantPointerNull>(V)) {
     return true;
   } else if (ConstantExpr *CE = dyn_cast<ConstantExpr>(V)) {
-    if (CE->getOpcode() == Instruction::Cast) {
+    if (CE->getOpcode() == Instruction::BitCast) {
       return isa<GlobalVariable>(CE->getOperand(0));
     }
   }

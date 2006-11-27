@@ -824,14 +824,14 @@ static PATypeHolder HandleUpRefs(const Type *ty) {
 /// instruction. This function handles converting div -> [usf]div appropriately.
 /// @brief Convert obsolete BinaryOps opcodes to new values
 static void 
-sanitizeOpCode(OpcodeInfo<Instruction::BinaryOps> &OI, const Type *Ty)
+sanitizeOpcode(OpcodeInfo<Instruction::BinaryOps> &OI, const Type *Ty)
 {
   // If its not obsolete, don't do anything
   if (!OI.obsolete) 
     return;
 
   // If its a packed type we want to use the element type
-  if (const PackedType* PTy = dyn_cast<PackedType>(Ty))
+  if (const PackedType *PTy = dyn_cast<PackedType>(Ty))
     Ty = PTy->getElementType();
 
   // Depending on the opcode ..
@@ -857,11 +857,11 @@ sanitizeOpCode(OpcodeInfo<Instruction::BinaryOps> &OI, const Type *Ty)
   OI.obsolete = false;
 }
 
-/// This function is similar to the previous overload of sanitizeOpCode but
+/// This function is similar to the previous overload of sanitizeOpcode but
 /// operates on Instruction::OtherOps instead of Instruction::BinaryOps.
 /// @brief Convert obsolete OtherOps opcodes to new values
 static void 
-sanitizeOpCode(OpcodeInfo<Instruction::OtherOps> &OI, const Type *Ty)
+sanitizeOpcode(OpcodeInfo<Instruction::OtherOps> &OI, const Type *Ty)
 {
   // If its not obsolete, don't do anything
   if (!OI.obsolete) 
@@ -1072,6 +1072,7 @@ Module *llvm::RunVMAsmParser(const char * AsmString, Module * M) {
   BinaryOpInfo                      BinaryOpVal;
   TermOpInfo                        TermOpVal;
   MemOpInfo                         MemOpVal;
+  CastOpInfo                        CastOpVal;
   OtherOpInfo                       OtherOpVal;
   llvm::Module::Endianness          Endianness;
 }
@@ -1147,9 +1148,14 @@ Module *llvm::RunVMAsmParser(const char * AsmString, Module * M) {
 // Memory Instructions
 %token <MemOpVal> MALLOC ALLOCA FREE LOAD STORE GETELEMENTPTR
 
+// Cast Operators
+%type <CastOpVal> CastOps
+%token <CastOpVal> TRUNC ZEXT SEXT FPTRUNC FPEXT BITCAST
+%token <CastOpVal> UITOFP SITOFP FPTOUI FPTOSI INTTOPTR PTRTOINT
+
 // Other Operators
 %type  <OtherOpVal> ShiftOps
-%token <OtherOpVal> PHI_TOK CAST SELECT SHL LSHR ASHR VAARG
+%token <OtherOpVal> PHI_TOK SELECT SHL LSHR ASHR VAARG
 %token <OtherOpVal> EXTRACTELEMENT INSERTELEMENT SHUFFLEVECTOR
 %token VAARG_old VANEXT_old //OBSOLETE
 
@@ -1182,8 +1188,9 @@ EINT64VAL : EUINT64VAL {
 ArithmeticOps: ADD | SUB | MUL | UDIV | SDIV | FDIV | UREM | SREM | FREM;
 LogicalOps   : AND | OR | XOR;
 SetCondOps   : SETLE | SETGE | SETLT | SETGT | SETEQ | SETNE;
-
-ShiftOps  : SHL | LSHR | ASHR;
+CastOps      : TRUNC | ZEXT | SEXT | FPTRUNC | FPEXT | BITCAST | 
+               UITOFP | SITOFP | FPTOUI | FPTOSI | INTTOPTR | PTRTOINT;
+ShiftOps     : SHL | LSHR | ASHR;
 
 // These are some types that allow classification if we only want a particular 
 // thing... for example, only a signed, unsigned, or integral type.
@@ -1676,16 +1683,31 @@ ConstVal : SIntType EINT64VAL {      // integral constants
   };
 
 
-ConstExpr: CAST '(' ConstVal TO Types ')' {
-    if (!$3->getType()->isFirstClassType())
+ConstExpr: CastOps '(' ConstVal TO Types ')' {
+    Constant *Val = $3;
+    const Type *Ty = $5.type->get();
+    if (!Val->getType()->isFirstClassType())
       GEN_ERROR("cast constant expression from a non-primitive type: '" +
-                     $3->getType()->getDescription() + "'!");
-    if (!$5.type->get()->isFirstClassType())
+                     Val->getType()->getDescription() + "'!");
+    if (!Ty->isFirstClassType())
       GEN_ERROR("cast constant expression to a non-primitive type: '" +
-                     $5.type->get()->getDescription() + "'!");
-    $$ = ConstantExpr::getCast($3, $5.type->get());
+                Ty->getDescription() + "'!");
+    if ($1.obsolete) {
+      if (Ty == Type::BoolTy) {
+        // The previous definition of cast to bool was a compare against zero. 
+        // We have to retain that semantic so we do it here.
+        $$ = ConstantExpr::get(Instruction::SetNE, Val, 
+                               Constant::getNullValue(Val->getType()));
+      } else if (Val->getType()->isFloatingPoint() && isa<PointerType>(Ty)) {
+        Constant *CE = ConstantExpr::getFPToUI(Val, Type::ULongTy);
+        $$ = ConstantExpr::getIntToPtr(CE, Ty);
+      } else {
+        $$ = ConstantExpr::getCast(Val, Ty);
+      }
+    } else {
+      $$ = ConstantExpr::getCast($1.opcode, $3, $5.type->get());
+    }
     delete $5.type;
-    CHECK_FOR_ERROR
   }
   | GETELEMENTPTR '(' ConstVal IndexList ')' {
     if (!isa<PointerType>($3->getType()))
@@ -1732,7 +1754,7 @@ ConstExpr: CAST '(' ConstVal TO Types ')' {
       GEN_ERROR("Binary operator types must match!");
     // First, make sure we're dealing with the right opcode by upgrading from
     // obsolete versions.
-    sanitizeOpCode($1,$3->getType());
+    sanitizeOpcode($1, $3->getType());
     CHECK_FOR_ERROR;
 
     // HACK: llvm 1.3 and earlier used to emit invalid pointer constant exprs.
@@ -1777,7 +1799,7 @@ ConstExpr: CAST '(' ConstVal TO Types ')' {
     if (!$3->getType()->isInteger())
       GEN_ERROR("Shift constant expression requires integer operand!");
     // Handle opcode upgrade situations
-    sanitizeOpCode($1, $3->getType());
+    sanitizeOpcode($1, $3->getType());
     CHECK_FOR_ERROR;
     $$ = ConstantExpr::get($1.opcode, $3, $5);
     CHECK_FOR_ERROR
@@ -2296,6 +2318,10 @@ BasicBlock : InstructionList OptAssign BBTerminatorInst  {
   };
 
 InstructionList : InstructionList Inst {
+    if (CastInst *CI1 = dyn_cast<CastInst>($2))
+      if (CastInst *CI2 = dyn_cast<CastInst>(CI1->getOperand(0)))
+        if (CI2->getParent() == 0)
+          $1->getInstList().push_back(CI2);
     $1->getInstList().push_back($2);
     $$ = $1;
     CHECK_FOR_ERROR
@@ -2527,7 +2553,7 @@ InstVal : ArithmeticOps Types ValueRef ',' ValueRef {
          $1.opcode == Instruction::FRem))
       GEN_ERROR("U/S/FRem not supported on packed types!");
     // Upgrade the opcode from obsolete versions before we do anything with it.
-    sanitizeOpCode($1,$2.type->get());
+    sanitizeOpcode($1,$2.type->get());
     CHECK_FOR_ERROR;
     Value* val1 = getVal($2.type->get(), $3); 
     CHECK_FOR_ERROR
@@ -2586,18 +2612,36 @@ InstVal : ArithmeticOps Types ValueRef ',' ValueRef {
     if (!$2->getType()->isInteger())
       GEN_ERROR("Shift constant expression requires integer operand!");
     // Handle opcode upgrade situations
-    sanitizeOpCode($1, $2->getType());
+    sanitizeOpcode($1, $2->getType());
     CHECK_FOR_ERROR;
     $$ = new ShiftInst($1.opcode, $2, $4);
     CHECK_FOR_ERROR
   }
-  | CAST ResolvedVal TO Types {
-    if (!$4.type->get()->isFirstClassType())
-      GEN_ERROR("cast instruction to a non-primitive type: '" +
-                     $4.type->get()->getDescription() + "'!");
-    $$ = new CastInst($2, $4.type->get());
+  | CastOps ResolvedVal TO Types {
+    Value* Val = $2;
+    const Type* Ty = $4.type->get();
+    if (!Val->getType()->isFirstClassType())
+      GEN_ERROR("cast from a non-primitive type: '" +
+                Val->getType()->getDescription() + "'!");
+    if (!Ty->isFirstClassType())
+      GEN_ERROR("cast to a non-primitive type: '" + Ty->getDescription() +"'!");
+
+    if ($1.obsolete) {
+      if (Ty == Type::BoolTy) {
+        // The previous definition of cast to bool was a compare against zero. 
+        // We have to retain that semantic so we do it here.
+        $$ = new SetCondInst(Instruction::SetNE, $2, 
+                               Constant::getNullValue($2->getType()));
+      } else if (Val->getType()->isFloatingPoint() && isa<PointerType>(Ty)) {
+        CastInst *CI = new FPToUIInst(Val, Type::ULongTy);
+        $$ = new IntToPtrInst(CI, Ty);
+      } else {
+        $$ = CastInst::createInferredCast(Val, Ty);
+      }
+    } else {
+      $$ = CastInst::create($1.opcode, $2, $4.type->get());
+    }
     delete $4.type;
-    CHECK_FOR_ERROR
   }
   | SELECT ResolvedVal ',' ResolvedVal ',' ResolvedVal {
     if ($2->getType() != Type::BoolTy)

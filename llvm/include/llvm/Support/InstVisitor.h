@@ -143,7 +143,6 @@ public:
   void visitFunction  (Function &F) {}
   void visitBasicBlock(BasicBlock &BB) {}
 
-
   // Define instruction specific visitor functions that can be overridden to
   // handle SPECIFIC instructions.  These functions automatically define
   // visitMul to proxy to visitBinaryOperator for instance in case the user does
@@ -183,7 +182,7 @@ public:
   RetTy visitCallInst(CallInst     &I)              { DELEGATE(Instruction); }
   RetTy visitShiftInst(ShiftInst   &I)              { DELEGATE(Instruction); }
   RetTy visitVAArgInst(VAArgInst   &I)              { DELEGATE(Instruction); }
-  RetTy visitExtractElementInst(ExtractElementInst &I) { DELEGATE(Instruction); }
+  RetTy visitExtractElementInst(ExtractElementInst &I) { DELEGATE(Instruction);}
   RetTy visitInsertElementInst(InsertElementInst &I) { DELEGATE(Instruction); }
   RetTy visitShuffleVectorInst(ShuffleVectorInst &I) { DELEGATE(Instruction); }
 

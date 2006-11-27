@@ -203,7 +203,6 @@ static ManagedStatic<std::map<std::pair<SCEV*, const Type*>,
 SCEVTruncateExpr::SCEVTruncateExpr(const SCEVHandle &op, const Type *ty)
   : SCEV(scTruncate), Op(op), Ty(ty) {
   assert(Op->getType()->isInteger() && Ty->isInteger() &&
-         Ty->isUnsigned() &&
          "Cannot truncate non-integer value!");
   assert(Op->getType()->getPrimitiveSize() > Ty->getPrimitiveSize() &&
          "This is not a truncating conversion!");
@@ -230,7 +229,6 @@ static ManagedStatic<std::map<std::pair<SCEV*, const Type*>,
 SCEVZeroExtendExpr::SCEVZeroExtendExpr(const SCEVHandle &op, const Type *ty)
   : SCEV(scZeroExtend), Op(op), Ty(ty) {
   assert(Op->getType()->isInteger() && Ty->isInteger() &&
-         Ty->isUnsigned() &&
          "Cannot zero extend non-integer value!");
   assert(Op->getType()->getPrimitiveSize() < Ty->getPrimitiveSize() &&
          "This is not an extending conversion!");
@@ -1139,7 +1137,6 @@ namespace {
     /// createSCEV - We know that there is no SCEV for the specified value.
     /// Analyze the expression.
     SCEVHandle createSCEV(Value *V);
-    SCEVHandle createNodeForCast(CastInst *CI);
 
     /// createNodeForPHI - Provide the special handling we need to analyze PHI
     /// SCEVs.
@@ -1341,35 +1338,6 @@ SCEVHandle ScalarEvolutionsImpl::createNodeForPHI(PHINode *PN) {
   return SCEVUnknown::get(PN);
 }
 
-/// createNodeForCast - Handle the various forms of casts that we support.
-///
-SCEVHandle ScalarEvolutionsImpl::createNodeForCast(CastInst *CI) {
-  const Type *SrcTy = CI->getOperand(0)->getType();
-  const Type *DestTy = CI->getType();
-
-  // If this is a noop cast (ie, conversion from int to uint), ignore it.
-  if (SrcTy->isLosslesslyConvertibleTo(DestTy))
-    return getSCEV(CI->getOperand(0));
-
-  if (SrcTy->isInteger() && DestTy->isInteger()) {
-    // Otherwise, if this is a truncating integer cast, we can represent this
-    // cast.
-    if (SrcTy->getPrimitiveSize() > DestTy->getPrimitiveSize())
-      return SCEVTruncateExpr::get(getSCEV(CI->getOperand(0)),
-                                   CI->getType()->getUnsignedVersion());
-    if (SrcTy->isUnsigned() &&
-        SrcTy->getPrimitiveSize() <= DestTy->getPrimitiveSize())
-      return SCEVZeroExtendExpr::get(getSCEV(CI->getOperand(0)),
-                                     CI->getType()->getUnsignedVersion());
-  }
-
-  // If this is an sign or zero extending cast and we can prove that the value
-  // will never overflow, we could do similar transformations.
-
-  // Otherwise, we can't handle this cast!
-  return SCEVUnknown::get(CI);
-}
-
 
 /// createSCEV - We know that there is no SCEV for the specified value.
 /// Analyze the expression.
@@ -1401,8 +1369,21 @@ SCEVHandle ScalarEvolutionsImpl::createSCEV(Value *V) {
       }
       break;
 
-    case Instruction::Cast:
-      return createNodeForCast(cast<CastInst>(I));
+    case Instruction::Trunc:
+      if (I->getType()->isInteger() && I->getOperand(0)->getType()->isInteger())
+        return SCEVTruncateExpr::get(getSCEV(I->getOperand(0)), 
+                                     I->getType()->getUnsignedVersion());
+      break;
+
+    case Instruction::ZExt:
+      if (I->getType()->isInteger() && I->getOperand(0)->getType()->isInteger())
+        return SCEVZeroExtendExpr::get(getSCEV(I->getOperand(0)), 
+                                       I->getType()->getUnsignedVersion());
+      break;
+
+    case Instruction::BitCast:
+      // BitCasts are no-op casts so we just eliminate the cast.
+      return getSCEV(I->getOperand(0));
 
     case Instruction::PHI:
       return createNodeForPHI(cast<PHINode>(I));
@@ -1724,9 +1705,10 @@ static Constant *ConstantFold(const Instruction *I,
   if (isa<BinaryOperator>(I) || isa<ShiftInst>(I))
     return ConstantExpr::get(I->getOpcode(), Operands[0], Operands[1]);
 
+  if (isa<CastInst>(I))
+    return ConstantExpr::getCast(I->getOpcode(), Operands[0], I->getType());
+
   switch (I->getOpcode()) {
-  case Instruction::Cast:
-    return ConstantExpr::getCast(Operands[0], I->getType());
   case Instruction::Select:
     return ConstantExpr::getSelect(Operands[0], Operands[1], Operands[2]);
   case Instruction::Call:
@@ -1734,7 +1716,6 @@ static Constant *ConstantFold(const Instruction *I,
       Operands.erase(Operands.begin());
       return ConstantFoldCall(cast<Function>(GV), Operands);
     }
-
     return 0;
   case Instruction::GetElementPtr:
     Constant *Base = Operands[0];

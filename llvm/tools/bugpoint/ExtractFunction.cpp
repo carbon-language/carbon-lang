@@ -214,7 +214,7 @@ static void SplitStaticCtorDtor(const char *GlobalName, Module *M1, Module *M2){
       
       Constant *FP = CS->getOperand(1);
       if (ConstantExpr *CE = dyn_cast<ConstantExpr>(FP))
-        if (CE->getOpcode() == Instruction::Cast)
+        if (CE->isCast())
           FP = CE->getOperand(0);
       if (Function *F = dyn_cast<Function>(FP)) {
         if (!F->isExternal())

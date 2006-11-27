@@ -122,8 +122,19 @@ Constant *llvm::ConstantFoldInstOperands(unsigned Opc, const Type *DestTy,
   case Instruction::LShr:
   case Instruction::AShr:
     return ConstantExpr::get(Opc, Ops[0], Ops[1]);
-  case Instruction::Cast:
-    return ConstantExpr::getCast(Ops[0], DestTy);
+  case Instruction::Trunc:
+  case Instruction::ZExt:
+  case Instruction::SExt:
+  case Instruction::FPTrunc:
+  case Instruction::FPExt:
+  case Instruction::UIToFP:
+  case Instruction::SIToFP:
+  case Instruction::FPToUI:
+  case Instruction::FPToSI:
+  case Instruction::PtrToInt:
+  case Instruction::IntToPtr:
+  case Instruction::BitCast:
+    return ConstantExpr::getCast(Opc, Ops[0], DestTy);
   case Instruction::Select:
     return ConstantExpr::getSelect(Ops[0], Ops[1], Ops[2]);
   case Instruction::ExtractElement:

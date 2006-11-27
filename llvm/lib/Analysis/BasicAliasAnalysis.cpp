@@ -129,27 +129,23 @@ ImmutablePass *llvm::createBasicAliasAnalysisPass() {
   return new BasicAliasAnalysis();
 }
 
-// hasUniqueAddress - Return true if the specified value points to something
-// with a unique, discernable, address.
-static inline bool hasUniqueAddress(const Value *V) {
-  return isa<GlobalValue>(V) || isa<AllocationInst>(V);
-}
-
 // getUnderlyingObject - This traverses the use chain to figure out what object
 // the specified value points to.  If the value points to, or is derived from, a
 // unique object or an argument, return it.
 static const Value *getUnderlyingObject(const Value *V) {
   if (!isa<PointerType>(V->getType())) return 0;
 
-  // If we are at some type of object... return it.
-  if (hasUniqueAddress(V) || isa<Argument>(V)) return V;
+  // If we are at some type of object, return it. GlobalValues and Allocations
+  // have unique addresses. 
+  if (isa<GlobalValue>(V) || isa<AllocationInst>(V) || isa<Argument>(V))
+    return V;
 
   // Traverse through different addressing mechanisms...
   if (const Instruction *I = dyn_cast<Instruction>(V)) {
-    if (isa<CastInst>(I) || isa<GetElementPtrInst>(I))
+    if (isa<BitCastInst>(I) || isa<GetElementPtrInst>(I))
       return getUnderlyingObject(I->getOperand(0));
   } else if (const ConstantExpr *CE = dyn_cast<ConstantExpr>(V)) {
-    if (CE->getOpcode() == Instruction::Cast ||
+    if (CE->getOpcode() == Instruction::BitCast || 
         CE->getOpcode() == Instruction::GetElementPtr)
       return getUnderlyingObject(CE->getOperand(0));
   }
@@ -192,28 +188,34 @@ bool BasicAliasAnalysis::pointsToConstantMemory(const Value *P) {
   return false;
 }
 
+// Determine if an AllocationInst instruction escapes from the function it is
+// contained in. If it does not escape, there is no way for another function to
+// mod/ref it.  We do this by looking at its uses and determining if the uses
+// can escape (recursively).
 static bool AddressMightEscape(const Value *V) {
   for (Value::use_const_iterator UI = V->use_begin(), E = V->use_end();
        UI != E; ++UI) {
     const Instruction *I = cast<Instruction>(*UI);
     switch (I->getOpcode()) {
-    case Instruction::Load: break;
+    case Instruction::Load: 
+      break; //next use.
     case Instruction::Store:
       if (I->getOperand(0) == V)
         return true; // Escapes if the pointer is stored.
-      break;
+      break; // next use.
     case Instruction::GetElementPtr:
-      if (AddressMightEscape(I)) return true;
-      break;
-    case Instruction::Cast:
+      if (AddressMightEscape(I))
+        return true;
+    case Instruction::BitCast:
       if (!isa<PointerType>(I->getType()))
         return true;
-      if (AddressMightEscape(I)) return true;
-      break;
+      if (AddressMightEscape(I))
+        return true;
+      break; // next use
     case Instruction::Ret:
       // If returned, the address will escape to calling functions, but no
       // callees could modify it.
-      break;
+      break; // next use
     default:
       return true;
     }
@@ -257,12 +259,10 @@ BasicAliasAnalysis::alias(const Value *V1, unsigned V1Size,
                           const Value *V2, unsigned V2Size) {
   // Strip off any constant expression casts if they exist
   if (const ConstantExpr *CE = dyn_cast<ConstantExpr>(V1))
-    if (CE->getOpcode() == Instruction::Cast &&
-        isa<PointerType>(CE->getOperand(0)->getType()))
+    if (CE->isCast() && isa<PointerType>(CE->getOperand(0)->getType()))
       V1 = CE->getOperand(0);
   if (const ConstantExpr *CE = dyn_cast<ConstantExpr>(V2))
-    if (CE->getOpcode() == Instruction::Cast &&
-        isa<PointerType>(CE->getOperand(0)->getType()))
+    if (CE->isCast() && isa<PointerType>(CE->getOperand(0)->getType()))
       V2 = CE->getOperand(0);
 
   // Are we checking for alias of the same value?
@@ -273,10 +273,10 @@ BasicAliasAnalysis::alias(const Value *V1, unsigned V1Size,
     return NoAlias;  // Scalars cannot alias each other
 
   // Strip off cast instructions...
-  if (const Instruction *I = dyn_cast<CastInst>(V1))
+  if (const BitCastInst *I = dyn_cast<BitCastInst>(V1))
     if (isa<PointerType>(I->getOperand(0)->getType()))
       return alias(I->getOperand(0), V1Size, V2, V2Size);
-  if (const Instruction *I = dyn_cast<CastInst>(V2))
+  if (const BitCastInst *I = dyn_cast<BitCastInst>(V2))
     if (isa<PointerType>(I->getOperand(0)->getType()))
       return alias(V1, V1Size, I->getOperand(0), V2Size);
 
@@ -450,14 +450,22 @@ BasicAliasAnalysis::alias(const Value *V1, unsigned V1Size,
   return MayAlias;
 }
 
-static bool ValuesEqual(Value *V1, Value *V2) {
+// This function is used to determin if the indices of two GEP instructions are
+// equal. V1 and V2 are the indices.
+static bool IndexOperandsEqual(Value *V1, Value *V2) {
   if (V1->getType() == V2->getType())
     return V1 == V2;
   if (Constant *C1 = dyn_cast<Constant>(V1))
     if (Constant *C2 = dyn_cast<Constant>(V2)) {
-      // Sign extend the constants to long types.
-      C1 = ConstantExpr::getSignExtend(C1, Type::LongTy);
-      C2 = ConstantExpr::getSignExtend(C2, Type::LongTy);
+      // Sign extend the constants to long types, if necessary
+      if (C1->getType()->getPrimitiveSizeInBits() < 64)
+        C1 = ConstantExpr::getSignExtend(C1, Type::LongTy);
+      else if (C1->getType() == Type::ULongTy)
+        C1 = ConstantExpr::getBitCast(C1, Type::LongTy);
+      if (C2->getType()->getPrimitiveSizeInBits() < 64)
+        C2 = ConstantExpr::getSignExtend(C2, Type::LongTy);
+      else if (C2->getType() == Type::ULongTy)
+        C2 = ConstantExpr::getBitCast(C2, Type::LongTy);
       return C1 == C2;
     }
   return false;
@@ -485,7 +493,7 @@ BasicAliasAnalysis::CheckGEPInstructions(
   unsigned MaxOperands = std::max(NumGEP1Operands, NumGEP2Operands);
   unsigned UnequalOper = 0;
   while (UnequalOper != MinOperands &&
-         ValuesEqual(GEP1Ops[UnequalOper], GEP2Ops[UnequalOper])) {
+         IndexOperandsEqual(GEP1Ops[UnequalOper], GEP2Ops[UnequalOper])) {
     // Advance through the type as we go...
     ++UnequalOper;
     if (const CompositeType *CT = dyn_cast<CompositeType>(BasePtr1Ty))
@@ -546,8 +554,14 @@ BasicAliasAnalysis::CheckGEPInstructions(
         if (Constant *G2OC = dyn_cast<ConstantInt>(const_cast<Value*>(G2Oper))){
           if (G1OC->getType() != G2OC->getType()) {
             // Sign extend both operands to long.
-            G1OC = ConstantExpr::getSignExtend(G1OC, Type::LongTy);
-            G2OC = ConstantExpr::getSignExtend(G2OC, Type::LongTy);
+            if (G1OC->getType()->getPrimitiveSizeInBits() < 64)
+              G1OC = ConstantExpr::getSignExtend(G1OC, Type::LongTy);
+            else if (G1OC->getType() == Type::ULongTy)
+              G1OC = ConstantExpr::getBitCast(G1OC, Type::LongTy);
+            if (G2OC->getType()->getPrimitiveSizeInBits() < 64)
+              G2OC = ConstantExpr::getSignExtend(G2OC, Type::LongTy);
+            else if (G2OC->getType() == Type::ULongTy)
+              G2OC = ConstantExpr::getBitCast(G2OC, Type::LongTy);
             GEP1Ops[FirstConstantOper] = G1OC;
             GEP2Ops[FirstConstantOper] = G2OC;
           }

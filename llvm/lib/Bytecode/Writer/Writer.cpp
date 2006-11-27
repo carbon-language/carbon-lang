@@ -291,7 +291,7 @@ void BytecodeWriter::outputConstant(const Constant *CPV) {
   if (const ConstantExpr *CE = dyn_cast<ConstantExpr>(CPV)) {
     // FIXME: Encoding of constant exprs could be much more compact!
     assert(CE->getNumOperands() > 0 && "ConstantExpr with 0 operands");
-    assert(CE->getNumOperands() != 1 || CE->getOpcode() == Instruction::Cast);
+    assert(CE->getNumOperands() != 1 || CE->isCast());
     output_vbr(1+CE->getNumOperands());   // flags as an expr
     output_vbr(CE->getOpcode());          // Put out the CE op code
 
@@ -446,8 +446,8 @@ void BytecodeWriter::outputInstructionFormat0(const Instruction *I,
   output_typeid(Type);                      // Result type
 
   unsigned NumArgs = I->getNumOperands();
-  output_vbr(NumArgs + (isa<CastInst>(I)  ||
-                        isa<VAArgInst>(I) || Opcode == 56 || Opcode == 58));
+  output_vbr(NumArgs + (isa<CastInst>(I)  || isa<InvokeInst>(I) ||
+                        isa<VAArgInst>(I) || Opcode == 58));
 
   if (!isa<GetElementPtrInst>(&I)) {
     for (unsigned i = 0; i < NumArgs; ++i) {
@@ -460,7 +460,7 @@ void BytecodeWriter::outputInstructionFormat0(const Instruction *I,
       int Slot = Table.getSlot(I->getType());
       assert(Slot != -1 && "Cast return type unknown?");
       output_typeid((unsigned)Slot);
-    } else if (Opcode == 56) {  // Invoke escape sequence
+    } else if (isa<InvokeInst>(I)) {  
       output_vbr(cast<InvokeInst>(I)->getCallingConv());
     } else if (Opcode == 58) {  // Call escape sequence
       output_vbr((cast<CallInst>(I)->getCallingConv() << 1) |
@@ -528,8 +528,8 @@ void BytecodeWriter::outputInstrVarArgsCall(const Instruction *I,
     // variable argument.
     NumFixedOperands = 3+NumParams;
   }
-  output_vbr(2 * I->getNumOperands()-NumFixedOperands +
-             unsigned(Opcode == 56 || Opcode == 58));
+  output_vbr(2 * I->getNumOperands()-NumFixedOperands + 
+      unsigned(Opcode == 58 || isa<InvokeInst>(I)));
 
   // The type for the function has already been emitted in the type field of the
   // instruction.  Just emit the slot # now.
@@ -551,12 +551,12 @@ void BytecodeWriter::outputInstrVarArgsCall(const Instruction *I,
     output_vbr((unsigned)Slot);
   }
   
-  // If this is the escape sequence for call, emit the tailcall/cc info.
-  if (Opcode == 58) {
+  if (isa<InvokeInst>(I)) {
+    // Emit the tail call/calling conv for invoke instructions
+    output_vbr(cast<InvokeInst>(I)->getCallingConv());
+  } else if (Opcode == 58) {
     const CallInst *CI = cast<CallInst>(I);
     output_vbr((CI->getCallingConv() << 1) | unsigned(CI->isTailCall()));
-  } else if (Opcode == 56) {    // Invoke escape sequence.
-    output_vbr(cast<InvokeInst>(I)->getCallingConv());
   }
 }
 
@@ -619,7 +619,7 @@ inline void BytecodeWriter::outputInstructionFormat3(const Instruction *I,
 }
 
 void BytecodeWriter::outputInstruction(const Instruction &I) {
-  assert(I.getOpcode() < 56 && "Opcode too big???");
+  assert(I.getOpcode() < 57 && "Opcode too big???");
   unsigned Opcode = I.getOpcode();
   unsigned NumOperands = I.getNumOperands();
 
@@ -639,12 +639,6 @@ void BytecodeWriter::outputInstruction(const Instruction &I) {
     } else {
       Opcode = 58;      // Call escape sequence.
     }
-  } else if (const InvokeInst *II = dyn_cast<InvokeInst>(&I)) {
-    if (II->getCallingConv() == CallingConv::Fast)
-      Opcode = 57;      // FastCC invoke.
-    else if (II->getCallingConv() != CallingConv::C)
-      Opcode = 56;      // Invoke escape sequence.
-
   } else if (isa<LoadInst>(I) && cast<LoadInst>(I).isVolatile()) {
     Opcode = 62;
   } else if (isa<StoreInst>(I) && cast<StoreInst>(I).isVolatile()) {
@@ -750,7 +744,7 @@ void BytecodeWriter::outputInstruction(const Instruction &I) {
         if (Slots[NumOperands-1] > MaxOpSlot)
           MaxOpSlot = Slots[NumOperands-1];
       }
-    } else if (Opcode == 56) {
+    } else if (isa<InvokeInst>(I)) {
       // Invoke escape seq has at least 4 operands to encode.
       ++NumOperands;
     }

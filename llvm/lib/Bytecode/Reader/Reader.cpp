@@ -461,24 +461,23 @@ void BytecodeReader::insertArguments(Function* F) {
     insertValue(AI, getTypeSlot(AI->getType()), FunctionValues);
 }
 
-// Convert previous opcode values into the current value and/or construct
-// the instruction. This function handles all *abnormal* cases for instruction
-// generation based on obsolete opcode values. The normal cases are handled
-// in ParseInstruction below.  Generally this function just produces a new
-// Opcode value (first argument). In a few cases (VAArg, VANext) the upgrade
-// path requies that the instruction (sequence) be generated differently from
-// the normal case in order to preserve the original semantics. In these 
-// cases the result of the function will be a non-zero Instruction pointer. In
-// all other cases, zero will be returned indicating that the *normal*
-// instruction generation should be used, but with the new Opcode value.
-// 
+/// Convert previous opcode values into the current value and/or construct
+/// the instruction. This function handles all *abnormal* cases for instruction
+/// generation based on obsolete opcode values. The normal cases are handled
+/// in ParseInstruction below.  Generally this function just produces a new
+/// Opcode value (first argument). In a few cases (VAArg, VANext) the upgrade
+/// path requies that the instruction (sequence) be generated differently from
+/// the normal case in order to preserve the original semantics. In these 
+/// cases the result of the function will be a non-zero Instruction pointer. In
+/// all other cases, zero will be returned indicating that the *normal*
+/// instruction generation should be used, but with the new Opcode value.
 Instruction*
 BytecodeReader::upgradeInstrOpcodes(
   unsigned &Opcode,   ///< The old opcode, possibly updated by this function
   std::vector<unsigned> &Oprnds, ///< The operands to the instruction
   unsigned &iType,    ///< The type code from the bytecode file
-  const Type* InstTy, ///< The type of the instruction
-  BasicBlock* BB      ///< The basic block to insert into, if we need to
+  const Type *InstTy, ///< The type of the instruction
+  BasicBlock *BB      ///< The basic block to insert into, if we need to
 ) {
 
   // First, short circuit this if no conversion is required. When signless
@@ -632,8 +631,27 @@ BytecodeReader::upgradeInstrOpcodes(
       Opcode = Instruction::PHI;
       break;
     case 28: // Cast
-      Opcode = Instruction::Cast;
+    {
+      Value *Source = getValue(iType, Oprnds[0]);
+      const Type *DestTy = getType(Oprnds[1]);
+      // The previous definition of cast to bool was a compare against zero. 
+      // We have to retain that semantic so we do it here.
+      if (DestTy == Type::BoolTy) { // if its a cast to bool
+        Opcode = Instruction::SetNE;
+        Result = new SetCondInst(Instruction::SetNE, Source, 
+                                Constant::getNullValue(Source->getType()));
+      } else if (Source->getType()->isFloatingPoint() && 
+                 isa<PointerType>(DestTy)) {
+        // Upgrade what is now an illegal cast (fp -> ptr) into two casts,
+        // fp -> ui, and ui -> ptr 
+        CastInst *CI = new FPToUIInst(Source, Type::ULongTy);
+        BB->getInstList().push_back(CI);
+        Result = new IntToPtrInst(CI, DestTy);
+      } else {
+        Result = CastInst::createInferredCast(Source, DestTy);
+      }
       break;
+    }
     case 29: // Call
       Opcode = Instruction::Call;
       break;
@@ -720,8 +738,66 @@ BytecodeReader::upgradeInstrOpcodes(
     case 40: // ShuffleVector
       Opcode = Instruction::ShuffleVector;
       break;
-    case 56: // Invoke with encoded CC
-    case 57: // Invoke Fast CC
+    case 56:   // Invoke with encoded CC
+    case 57: { // Invoke Fast CC
+      if (Oprnds.size() < 3)
+        error("Invalid invoke instruction!");
+      Value *F = getValue(iType, Oprnds[0]);
+
+      // Check to make sure we have a pointer to function type
+      const PointerType *PTy = dyn_cast<PointerType>(F->getType());
+      if (PTy == 0)
+        error("Invoke to non function pointer value!");
+      const FunctionType *FTy = dyn_cast<FunctionType>(PTy->getElementType());
+      if (FTy == 0)
+        error("Invoke to non function pointer value!");
+
+      std::vector<Value *> Params;
+      BasicBlock *Normal, *Except;
+      unsigned CallingConv = CallingConv::C;
+      if (Opcode == 57)
+        CallingConv = CallingConv::Fast;
+      else if (Opcode == 56) {
+        CallingConv = Oprnds.back();
+        Oprnds.pop_back();
+      }
+      Opcode = Instruction::Invoke;
+
+      if (!FTy->isVarArg()) {
+        Normal = getBasicBlock(Oprnds[1]);
+        Except = getBasicBlock(Oprnds[2]);
+
+        FunctionType::param_iterator It = FTy->param_begin();
+        for (unsigned i = 3, e = Oprnds.size(); i != e; ++i) {
+          if (It == FTy->param_end())
+            error("Invalid invoke instruction!");
+          Params.push_back(getValue(getTypeSlot(*It++), Oprnds[i]));
+        }
+        if (It != FTy->param_end())
+          error("Invalid invoke instruction!");
+      } else {
+        Oprnds.erase(Oprnds.begin(), Oprnds.begin()+1);
+
+        Normal = getBasicBlock(Oprnds[0]);
+        Except = getBasicBlock(Oprnds[1]);
+
+        unsigned FirstVariableArgument = FTy->getNumParams()+2;
+        for (unsigned i = 2; i != FirstVariableArgument; ++i)
+          Params.push_back(getValue(getTypeSlot(FTy->getParamType(i-2)),
+                                    Oprnds[i]));
+
+        // Must be type/value pairs. If not, error out.
+        if (Oprnds.size()-FirstVariableArgument & 1) 
+          error("Invalid invoke instruction!");
+
+        for (unsigned i = FirstVariableArgument; i < Oprnds.size(); i += 2)
+          Params.push_back(getValue(Oprnds[i], Oprnds[i+1]));
+      }
+
+      Result = new InvokeInst(F, Normal, Except, Params);
+      if (CallingConv) cast<InvokeInst>(Result)->setCallingConv(CallingConv);
+      break;
+    }
     case 58: // Call with extra operand for calling conv
     case 59: // tail call, Fast CC
     case 60: // normal call, Fast CC
@@ -889,11 +965,77 @@ void BytecodeReader::ParseInstruction(std::vector<unsigned> &Oprnds,
       Result = new ShuffleVectorInst(V1, V2, V3);
       break;
     }
-    case Instruction::Cast:
+    case Instruction::Trunc:
+      if (Oprnds.size() != 2)
+        error("Invalid cast instruction!");
+      Result = new TruncInst(getValue(iType, Oprnds[0]), 
+                             getType(Oprnds[1]));
+      break;
+    case Instruction::ZExt:
+      if (Oprnds.size() != 2)
+        error("Invalid cast instruction!");
+      Result = new ZExtInst(getValue(iType, Oprnds[0]), 
+                            getType(Oprnds[1]));
+      break;
+    case Instruction::SExt:
       if (Oprnds.size() != 2)
         error("Invalid Cast instruction!");
-      Result = new CastInst(getValue(iType, Oprnds[0]),
+      Result = new SExtInst(getValue(iType, Oprnds[0]),
                             getType(Oprnds[1]));
+      break;
+    case Instruction::FPTrunc:
+      if (Oprnds.size() != 2)
+        error("Invalid cast instruction!");
+      Result = new FPTruncInst(getValue(iType, Oprnds[0]), 
+                               getType(Oprnds[1]));
+      break;
+    case Instruction::FPExt:
+      if (Oprnds.size() != 2)
+        error("Invalid cast instruction!");
+      Result = new FPExtInst(getValue(iType, Oprnds[0]), 
+                             getType(Oprnds[1]));
+      break;
+    case Instruction::UIToFP:
+      if (Oprnds.size() != 2)
+        error("Invalid cast instruction!");
+      Result = new UIToFPInst(getValue(iType, Oprnds[0]), 
+                              getType(Oprnds[1]));
+      break;
+    case Instruction::SIToFP:
+      if (Oprnds.size() != 2)
+        error("Invalid cast instruction!");
+      Result = new SIToFPInst(getValue(iType, Oprnds[0]), 
+                              getType(Oprnds[1]));
+      break;
+    case Instruction::FPToUI:
+      if (Oprnds.size() != 2)
+        error("Invalid cast instruction!");
+      Result = new FPToUIInst(getValue(iType, Oprnds[0]), 
+                              getType(Oprnds[1]));
+      break;
+    case Instruction::FPToSI:
+      if (Oprnds.size() != 2)
+        error("Invalid cast instruction!");
+      Result = new FPToSIInst(getValue(iType, Oprnds[0]), 
+                              getType(Oprnds[1]));
+      break;
+    case Instruction::IntToPtr:
+      if (Oprnds.size() != 2)
+        error("Invalid cast instruction!");
+      Result = new IntToPtrInst(getValue(iType, Oprnds[0]), 
+                                getType(Oprnds[1]));
+      break;
+    case Instruction::PtrToInt:
+      if (Oprnds.size() != 2)
+        error("Invalid cast instruction!");
+      Result = new PtrToIntInst(getValue(iType, Oprnds[0]), 
+                                getType(Oprnds[1]));
+      break;
+    case Instruction::BitCast:
+      if (Oprnds.size() != 2)
+        error("Invalid cast instruction!");
+      Result = new BitCastInst(getValue(iType, Oprnds[0]),
+                               getType(Oprnds[1]));
       break;
     case Instruction::Select:
       if (Oprnds.size() != 3)
@@ -914,7 +1056,6 @@ void BytecodeReader::ParseInstruction(std::vector<unsigned> &Oprnds,
       Result = PN;
       break;
     }
-
     case Instruction::Shl:
     case Instruction::LShr:
     case Instruction::AShr:
@@ -960,7 +1101,6 @@ void BytecodeReader::ParseInstruction(std::vector<unsigned> &Oprnds,
     case Instruction::Call: {  // Normal Call, C Calling Convention
       if (Oprnds.size() == 0)
         error("Invalid call instruction encountered!");
-
       Value *F = getValue(iType, Oprnds[0]);
 
       unsigned CallingConv = CallingConv::C;
@@ -1021,8 +1161,6 @@ void BytecodeReader::ParseInstruction(std::vector<unsigned> &Oprnds,
       if (CallingConv) cast<CallInst>(Result)->setCallingConv(CallingConv);
       break;
     }
-    case 56:                     // Invoke with encoded CC
-    case 57:                     // Invoke Fast CC
     case Instruction::Invoke: {  // Invoke C CC
       if (Oprnds.size() < 3)
         error("Invalid invoke instruction!");
@@ -1038,14 +1176,8 @@ void BytecodeReader::ParseInstruction(std::vector<unsigned> &Oprnds,
 
       std::vector<Value *> Params;
       BasicBlock *Normal, *Except;
-      unsigned CallingConv = CallingConv::C;
-
-      if (Opcode == 57)
-        CallingConv = CallingConv::Fast;
-      else if (Opcode == 56) {
-        CallingConv = Oprnds.back();
-        Oprnds.pop_back();
-      }
+      unsigned CallingConv = Oprnds.back();
+      Oprnds.pop_back();
 
       if (!FTy->isVarArg()) {
         Normal = getBasicBlock(Oprnds[1]);
@@ -1486,12 +1618,12 @@ void BytecodeReader::ParseTypes(TypeListTy &Tab, unsigned NumEntries){
 // We can't use that function because of that functions argument requirements.
 // This function only deals with the subset of opcodes that are applicable to
 // constant expressions and is therefore simpler than upgradeInstrOpcodes.
-inline unsigned BytecodeReader::upgradeCEOpcodes(
-  unsigned Opcode, const std::vector<Constant*> &ArgVec
+inline Constant *BytecodeReader::upgradeCEOpcodes(
+  unsigned &Opcode, const std::vector<Constant*> &ArgVec, unsigned TypeID
 ) {
   // Determine if no upgrade necessary
   if (!hasSignlessDivRem && !hasSignlessShrCastSetcc)
-    return Opcode;
+    return 0;
 
   // If this is bytecode version 6, that only had signed Rem and Div 
   // instructions, then we must compensate for those two instructions only.
@@ -1587,9 +1719,25 @@ inline unsigned BytecodeReader::upgradeCEOpcodes(
     case 26: // GetElementPtr
       Opcode = Instruction::GetElementPtr;
       break;
-    case 28: // Cast
-      Opcode = Instruction::Cast;
+    case 28: { // Cast
+      const Type *Ty = getType(TypeID);
+      if (Ty == Type::BoolTy) {
+        // The previous definition of cast to bool was a compare against zero. 
+        // We have to retain that semantic so we do it here.
+        Opcode = Instruction::SetEQ;
+        return ConstantExpr::get(Instruction::SetEQ, ArgVec[0], 
+                             Constant::getNullValue(ArgVec[0]->getType()));
+      } else if (ArgVec[0]->getType()->isFloatingPoint() && 
+                 isa<PointerType>(Ty)) {
+        // Upgrade what is now an illegal cast (fp -> ptr) into two casts,
+        // fp -> ui, and ui -> ptr 
+        Constant *CE = ConstantExpr::getFPToUI(ArgVec[0], Type::ULongTy);
+        return ConstantExpr::getIntToPtr(CE, Ty);
+      } else {
+        Opcode = CastInst::getCastOpcode(ArgVec[0], Ty);
+      }
       break;
+    }
     case 30: // Shl
       Opcode = Instruction::Shl;
       break;
@@ -1612,7 +1760,7 @@ inline unsigned BytecodeReader::upgradeCEOpcodes(
       Opcode = Instruction::ShuffleVector;
       break;
   }
-  return Opcode;
+  return 0;
 }
 
 /// Parse a single constant value
@@ -1663,19 +1811,22 @@ Value *BytecodeReader::ParseConstantPoolValue(unsigned TypeID) {
     }
 
     // Handle backwards compatibility for the opcode numbers
-    Opcode = upgradeCEOpcodes(Opcode, ArgVec);
+    if (Constant *C = upgradeCEOpcodes(Opcode, ArgVec, TypeID)) {
+      if (Handler) Handler->handleConstantExpression(Opcode, ArgVec, C);
+      return C;
+    }
 
     // Construct a ConstantExpr of the appropriate kind
     if (isExprNumArgs == 1) {           // All one-operand expressions
-      if (Opcode != Instruction::Cast)
+      if (!Instruction::isCast(Opcode))
         error("Only cast instruction has one argument for ConstantExpr");
 
-      Constant* Result = ConstantExpr::getCast(ArgVec[0], getType(TypeID));
+      Constant *Result = ConstantExpr::getCast(ArgVec[0], getType(TypeID));
       if (Handler) Handler->handleConstantExpression(Opcode, ArgVec, Result);
       return Result;
     } else if (Opcode == Instruction::GetElementPtr) { // GetElementPtr
       std::vector<Constant*> IdxList(ArgVec.begin()+1, ArgVec.end());
-      Constant* Result = ConstantExpr::getGetElementPtr(ArgVec[0], IdxList);
+      Constant *Result = ConstantExpr::getGetElementPtr(ArgVec[0], IdxList);
       if (Handler) Handler->handleConstantExpression(Opcode, ArgVec, Result);
       return Result;
     } else if (Opcode == Instruction::Select) {

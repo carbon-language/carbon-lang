@@ -98,24 +98,27 @@ bool Type::isFPOrFPVector() const {
   return cast<PackedType>(this)->getElementType()->isFloatingPoint();
 }
 
-
-// isLosslesslyConvertibleTo - Return true if this type can be converted to
+// canLosslesllyBitCastTo - Return true if this type can be converted to
 // 'Ty' without any reinterpretation of bits.  For example, uint to int.
 //
-bool Type::isLosslesslyConvertibleTo(const Type *Ty) const {
-  if (this == Ty) return true;
-  
-  // Packed type conversions are always bitwise.
-  if (isa<PackedType>(this) && isa<PackedType>(Ty))
+bool Type::canLosslesslyBitCastTo(const Type *Ty) const {
+  // Identity cast means no change so return true
+  if (this == Ty) 
     return true;
   
-  if ((!isPrimitiveType()    && !isa<PointerType>(this)) ||
-      (!isa<PointerType>(Ty) && !Ty->isPrimitiveType())) return false;
+  // They are not convertible unless they are at least first class types
+  if (!this->isFirstClassType() || !Ty->isFirstClassType())
+    return false;
 
-  if (getTypeID() == Ty->getTypeID())
-    return true;  // Handles identity cast, and cast of differing pointer types
+  // Packed -> Packed conversions are always lossless if the two packed types
+  // have the same size, otherwise not.
+  if (const PackedType *thisPTy = dyn_cast<PackedType>(this))
+    if (const PackedType *thatPTy = dyn_cast<PackedType>(Ty))
+      return thisPTy->getBitWidth() == thatPTy->getBitWidth();
 
-  // Now we know that they are two differing primitive or pointer types
+  // At this point we have only various mismatches of the first class types
+  // remaining and ptr->ptr. Just select the lossless conversions. Everything
+  // else is not lossless.
   switch (getTypeID()) {
   case Type::UByteTyID:   return Ty == Type::SByteTy;
   case Type::SByteTyID:   return Ty == Type::UByteTy;
@@ -127,8 +130,9 @@ bool Type::isLosslesslyConvertibleTo(const Type *Ty) const {
   case Type::LongTyID:    return Ty == Type::ULongTy;
   case Type::PointerTyID: return isa<PointerType>(Ty);
   default:
-    return false;  // Other types have no identity values
+    break;
   }
+  return false;  // Other types have no identity values
 }
 
 /// getUnsignedVersion - If this is an integer type, return the unsigned
@@ -200,6 +204,10 @@ unsigned Type::getPrimitiveSizeInBits() const {
   case Type::LongTyID:
   case Type::ULongTyID:
   case Type::DoubleTyID: return 64;
+  case Type::PackedTyID: {
+    const PackedType *PTy = cast<PackedType>(this);
+    return PTy->getBitWidth();
+  }
   default: return 0;
   }
 }

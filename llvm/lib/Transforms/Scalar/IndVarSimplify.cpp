@@ -523,9 +523,8 @@ void IndVarSimplify::runOnLoop(Loop *L) {
       if (!InsertedSizes[IndVars[i].first->getType()->getPrimitiveSize()]) {
         PHINode *PN = IndVars[i].first;
         InsertedSizes[PN->getType()->getPrimitiveSize()] = true;
-        Instruction *New = new CastInst(IndVar,
-                                        PN->getType()->getUnsignedVersion(),
-                                        "indvar", InsertPt);
+        Instruction *New = CastInst::create(Instruction::Trunc, IndVar, 
+            PN->getType()->getUnsignedVersion(), "indvar", InsertPt);
         Rewriter.addInsertedValue(New, SE->getSCEV(New));
       }
   }

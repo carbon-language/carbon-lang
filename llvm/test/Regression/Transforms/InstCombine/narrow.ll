@@ -8,10 +8,10 @@
 ;
 bool %test1(int %A, int %B) {
         %C1 = setlt int %A, %B
-        %ELIM1 = cast bool %C1 to uint
+        %ELIM1 = zext bool %C1 to uint
         %C2 = setgt int %A, %B
-        %ELIM2 = cast bool %C2 to uint
+        %ELIM2 = zext bool %C2 to uint
         %C3 = and uint %ELIM1, %ELIM2
-        %ELIM3 = cast uint %C3 to bool
+        %ELIM3 = trunc uint %C3 to bool
         ret bool %ELIM3
 }

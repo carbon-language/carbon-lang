@@ -190,8 +190,7 @@ static inline bool TraceThisOpCode(unsigned opCode) {
   //
   return (opCode  < Instruction::OtherOpsBegin &&
           opCode != Instruction::Alloca &&
-          opCode != Instruction::PHI &&
-          opCode != Instruction::Cast);
+          opCode != Instruction::PHI && ! Instruction::isCast(opCode));
 }
 
 
@@ -251,7 +250,7 @@ static void InsertPrintInst(Value *V, BasicBlock *BB, Instruction *InsertBefore,
   if (V && isa<PointerType>(V->getType()) && !DisablePtrHashing) {
     const Type *SBP = PointerType::get(Type::SByteTy);
     if (V->getType() != SBP)     // Cast pointer to be sbyte*
-      V = new CastInst(V, SBP, "Hash_cast", InsertBefore);
+      V = new BitCastInst(V, SBP, "Hash_cast", InsertBefore);
 
     std::vector<Value*> HashArgs(1, V);
     V = new CallInst(HashPtrToSeqNum, HashArgs, "ptrSeqNum", InsertBefore);
@@ -282,7 +281,7 @@ InsertReleaseInst(Value *V, BasicBlock *BB,
 
   const Type *SBP = PointerType::get(Type::SByteTy);
   if (V->getType() != SBP)    // Cast pointer to be sbyte*
-    V = new CastInst(V, SBP, "RPSN_cast", InsertBefore);
+    V = CastInst::createInferredCast(V, SBP, "RPSN_cast", InsertBefore);
 
   std::vector<Value*> releaseArgs(1, V);
   new CallInst(ReleasePtrFunc, releaseArgs, "", InsertBefore);
@@ -294,7 +293,7 @@ InsertRecordInst(Value *V, BasicBlock *BB,
                  Function* RecordPtrFunc) {
     const Type *SBP = PointerType::get(Type::SByteTy);
   if (V->getType() != SBP)     // Cast pointer to be sbyte*
-    V = new CastInst(V, SBP, "RP_cast", InsertBefore);
+    V = CastInst::createInferredCast(V, SBP, "RP_cast", InsertBefore);
 
   std::vector<Value*> releaseArgs(1, V);
   new CallInst(RecordPtrFunc, releaseArgs, "", InsertBefore);

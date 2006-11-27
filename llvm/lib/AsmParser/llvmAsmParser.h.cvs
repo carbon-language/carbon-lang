@@ -128,18 +128,29 @@
      LOAD = 354,
      STORE = 355,
      GETELEMENTPTR = 356,
-     PHI_TOK = 357,
-     CAST = 358,
-     SELECT = 359,
-     SHL = 360,
-     LSHR = 361,
-     ASHR = 362,
-     VAARG = 363,
-     EXTRACTELEMENT = 364,
-     INSERTELEMENT = 365,
-     SHUFFLEVECTOR = 366,
-     VAARG_old = 367,
-     VANEXT_old = 368
+     TRUNC = 357,
+     ZEXT = 358,
+     SEXT = 359,
+     FPTRUNC = 360,
+     FPEXT = 361,
+     BITCAST = 362,
+     UITOFP = 363,
+     SITOFP = 364,
+     FPTOUI = 365,
+     FPTOSI = 366,
+     INTTOPTR = 367,
+     PTRTOINT = 368,
+     PHI_TOK = 369,
+     SELECT = 370,
+     SHL = 371,
+     LSHR = 372,
+     ASHR = 373,
+     VAARG = 374,
+     EXTRACTELEMENT = 375,
+     INSERTELEMENT = 376,
+     SHUFFLEVECTOR = 377,
+     VAARG_old = 378,
+     VANEXT_old = 379
    };
 #endif
 /* Tokens.  */
@@ -242,40 +253,50 @@
 #define LOAD 354
 #define STORE 355
 #define GETELEMENTPTR 356
-#define PHI_TOK 357
-#define CAST 358
-#define SELECT 359
-#define SHL 360
-#define LSHR 361
-#define ASHR 362
-#define VAARG 363
-#define EXTRACTELEMENT 364
-#define INSERTELEMENT 365
-#define SHUFFLEVECTOR 366
-#define VAARG_old 367
-#define VANEXT_old 368
+#define TRUNC 357
+#define ZEXT 358
+#define SEXT 359
+#define FPTRUNC 360
+#define FPEXT 361
+#define BITCAST 362
+#define UITOFP 363
+#define SITOFP 364
+#define FPTOUI 365
+#define FPTOSI 366
+#define INTTOPTR 367
+#define PTRTOINT 368
+#define PHI_TOK 369
+#define SELECT 370
+#define SHL 371
+#define LSHR 372
+#define ASHR 373
+#define VAARG 374
+#define EXTRACTELEMENT 375
+#define INSERTELEMENT 376
+#define SHUFFLEVECTOR 377
+#define VAARG_old 378
+#define VANEXT_old 379
 
 
 
 
 #if ! defined (YYSTYPE) && ! defined (YYSTYPE_IS_DECLARED)
-#line 1040 "/proj/llvm/llvm-3/lib/AsmParser/llvmAsmParser.y"
+#line 1040 "/proj/llvm/llvm-1/lib/AsmParser/llvmAsmParser.y"
 typedef union YYSTYPE {
   llvm::Module                           *ModuleVal;
   llvm::Function                         *FunctionVal;
-  std::pair<llvm::PATypeHolder*, char*>  *ArgVal;
+  std::pair<TypeInfo, char*>             *ArgVal;
   llvm::BasicBlock                       *BasicBlockVal;
   llvm::TerminatorInst                   *TermInstVal;
   llvm::Instruction                      *InstVal;
   llvm::Constant                         *ConstVal;
 
-  const llvm::Type                       *PrimType;
-  llvm::PATypeHolder                     *TypeVal;
+  TypeInfo                                TypeVal;
   llvm::Value                            *ValueVal;
 
-  std::vector<std::pair<llvm::PATypeHolder*,char*> > *ArgList;
+  std::vector<std::pair<TypeInfo,char*> >*ArgList;
   std::vector<llvm::Value*>              *ValueList;
-  std::list<llvm::PATypeHolder>          *TypeList;
+  std::list<TypeInfo>                    *TypeList;
   // Represent the RHS of PHI node
   std::list<std::pair<llvm::Value*,
                       llvm::BasicBlock*> > *PHIList;
@@ -296,11 +317,12 @@ typedef union YYSTYPE {
   BinaryOpInfo                      BinaryOpVal;
   TermOpInfo                        TermOpVal;
   MemOpInfo                         MemOpVal;
+  CastOpInfo                        CastOpVal;
   OtherOpInfo                       OtherOpVal;
   llvm::Module::Endianness          Endianness;
 } YYSTYPE;
 /* Line 1447 of yacc.c.  */
-#line 304 "llvmAsmParser.tab.h"
+#line 326 "llvmAsmParser.tab.h"
 # define yystype YYSTYPE /* obsolescent; will be withdrawn */
 # define YYSTYPE_IS_DECLARED 1
 # define YYSTYPE_IS_TRIVIAL 1

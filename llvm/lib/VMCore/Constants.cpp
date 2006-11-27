@@ -427,6 +427,14 @@ struct VISIBILITY_HIDDEN GetElementPtrConstantExpr : public ConstantExpr {
 };
 }
 
+
+// Utility function for determining if a ConstantExpr is a CastOp or not. This
+// can't be inline because we don't want to #include Instruction.h into
+// Constant.h
+bool ConstantExpr::isCast() const {
+  return Instruction::isCast(getOpcode());
+}
+
 /// ConstantExpr::get* - Return some common constants without having to
 /// specify the full Instruction::OPCODE identifier.
 ///
@@ -507,8 +515,8 @@ Constant *ConstantExpr::getAShr(Constant *C1, Constant *C2) {
 
 /// getWithOperandReplaced - Return a constant expression identical to this
 /// one, but with the specified operand set to the specified value.
-Constant *ConstantExpr::getWithOperandReplaced(unsigned OpNo,
-                                               Constant *Op) const {
+Constant *
+ConstantExpr::getWithOperandReplaced(unsigned OpNo, Constant *Op) const {
   assert(OpNo < getNumOperands() && "Operand num is out of range!");
   assert(Op->getType() == getOperand(OpNo)->getType() &&
          "Replacing operand with value of different type!");
@@ -517,8 +525,19 @@ Constant *ConstantExpr::getWithOperandReplaced(unsigned OpNo,
   
   Constant *Op0, *Op1, *Op2;
   switch (getOpcode()) {
-  case Instruction::Cast:
-    return ConstantExpr::getCast(Op, getType());
+  case Instruction::Trunc:
+  case Instruction::ZExt:
+  case Instruction::SExt:
+  case Instruction::FPTrunc:
+  case Instruction::FPExt:
+  case Instruction::UIToFP:
+  case Instruction::SIToFP:
+  case Instruction::FPToUI:
+  case Instruction::FPToSI:
+  case Instruction::PtrToInt:
+  case Instruction::IntToPtr:
+  case Instruction::BitCast:
+    return ConstantExpr::getCast(getOpcode(), Op, getType());
   case Instruction::Select:
     Op0 = (OpNo == 0) ? Op : getOperand(0);
     Op1 = (OpNo == 1) ? Op : getOperand(1);
@@ -571,8 +590,19 @@ getWithOperands(const std::vector<Constant*> &Ops) const {
     return const_cast<ConstantExpr*>(this);
 
   switch (getOpcode()) {
-  case Instruction::Cast:
-    return ConstantExpr::getCast(Ops[0], getType());
+  case Instruction::Trunc:
+  case Instruction::ZExt:
+  case Instruction::SExt:
+  case Instruction::FPTrunc:
+  case Instruction::FPExt:
+  case Instruction::UIToFP:
+  case Instruction::SIToFP:
+  case Instruction::FPToUI:
+  case Instruction::FPToSI:
+  case Instruction::PtrToInt:
+  case Instruction::IntToPtr:
+  case Instruction::BitCast:
+    return ConstantExpr::getCast(getOpcode(), Ops[0], getType());
   case Instruction::Select:
     return ConstantExpr::getSelect(Ops[0], Ops[1], Ops[2]);
   case Instruction::InsertElement:
@@ -1317,8 +1347,8 @@ namespace llvm {
   template<>
   struct ConstantCreator<ConstantExpr, Type, ExprMapKeyType> {
     static ConstantExpr *create(const Type *Ty, const ExprMapKeyType &V) {
-      if (V.first == Instruction::Cast)
-        return new UnaryConstantExpr(Instruction::Cast, V.second[0], Ty);
+      if (Instruction::isCast(V.first))
+        return new UnaryConstantExpr(V.first, V.second[0], Ty);
       if ((V.first >= Instruction::BinaryOpsBegin &&
            V.first < Instruction::BinaryOpsEnd) ||
           V.first == Instruction::Shl           || 
@@ -1348,8 +1378,20 @@ namespace llvm {
     static void convert(ConstantExpr *OldC, const Type *NewTy) {
       Constant *New;
       switch (OldC->getOpcode()) {
-      case Instruction::Cast:
-        New = ConstantExpr::getCast(OldC->getOperand(0), NewTy);
+      case Instruction::Trunc:
+      case Instruction::ZExt:
+      case Instruction::SExt:
+      case Instruction::FPTrunc:
+      case Instruction::FPExt:
+      case Instruction::UIToFP:
+      case Instruction::SIToFP:
+      case Instruction::FPToUI:
+      case Instruction::FPToSI:
+      case Instruction::PtrToInt:
+      case Instruction::IntToPtr:
+      case Instruction::BitCast:
+        New = ConstantExpr::getCast(
+            OldC->getOpcode(), OldC->getOperand(0), NewTy);
         break;
       case Instruction::Select:
         New = ConstantExpr::getSelectTy(NewTy, OldC->getOperand(0),
@@ -1394,40 +1436,143 @@ static ExprMapKeyType getValType(ConstantExpr *CE) {
 static ManagedStatic<ValueMap<ExprMapKeyType, Type,
                               ConstantExpr> > ExprConstants;
 
-Constant *ConstantExpr::getCast(Constant *C, const Type *Ty) {
+/// This is a utility function to handle folding of casts and lookup of the
+/// cast in the ExprConstants map. It is usedby the various get* methods below.
+static inline Constant *getFoldedCast(
+  Instruction::CastOps opc, Constant *C, const Type *Ty) {
   assert(Ty->isFirstClassType() && "Cannot cast to an aggregate type!");
-
-  if (Constant *FC = ConstantFoldCastInstruction(C, Ty))
-    return FC;          // Fold a few common cases...
+  // Fold a few common cases
+  if (Constant *FC = ConstantFoldCastInstruction(opc, C, Ty))
+    return FC;
 
   // Look up the constant in the table first to ensure uniqueness
   std::vector<Constant*> argVec(1, C);
-  ExprMapKeyType Key = std::make_pair(Instruction::Cast, argVec);
+  ExprMapKeyType Key = std::make_pair(opc, argVec);
   return ExprConstants->getOrCreate(Ty, Key);
 }
 
-Constant *ConstantExpr::getSignExtend(Constant *C, const Type *Ty) {
-  assert(C->getType()->isIntegral() && Ty->isIntegral() &&
-         C->getType()->getPrimitiveSize() <= Ty->getPrimitiveSize() &&
-         "This is an illegal sign extension!");
-  if (C->getType() != Type::BoolTy) {
-    C = ConstantExpr::getCast(C, C->getType()->getSignedVersion());
-    return ConstantExpr::getCast(C, Ty);
-  } else {
-    if (C == ConstantBool::getTrue())
-      return ConstantIntegral::getAllOnesValue(Ty);
-    else
-      return ConstantIntegral::getNullValue(Ty);
+Constant *ConstantExpr::getCast( Constant *C, const Type *Ty ) {
+  // Note: we can't inline this because it requires the Instructions.h header
+  return getCast(CastInst::getCastOpcode(C, Ty), C, Ty);
+}
+
+Constant *ConstantExpr::getCast(unsigned oc, Constant *C, const Type *Ty) {
+  Instruction::CastOps opc = Instruction::CastOps(oc);
+  assert(Instruction::isCast(opc) && "opcode out of range");
+  assert(C && Ty && "Null arguments to getCast");
+  assert(Ty->isFirstClassType() && "Cannot cast to an aggregate type!");
+
+  switch (opc) {
+    default:
+      assert(0 && "Invalid cast opcode");
+      break;
+    case Instruction::Trunc:    return getTrunc(C, Ty);
+    case Instruction::ZExt:     return getZeroExtend(C, Ty);
+    case Instruction::SExt:     return getSignExtend(C, Ty);
+    case Instruction::FPTrunc:  return getFPTrunc(C, Ty);
+    case Instruction::FPExt:    return getFPExtend(C, Ty);
+    case Instruction::UIToFP:   return getUIToFP(C, Ty);
+    case Instruction::SIToFP:   return getSIToFP(C, Ty);
+    case Instruction::FPToUI:   return getFPToUI(C, Ty);
+    case Instruction::FPToSI:   return getFPToSI(C, Ty);
+    case Instruction::PtrToInt: return getPtrToInt(C, Ty);
+    case Instruction::IntToPtr: return getIntToPtr(C, Ty);
+    case Instruction::BitCast:  return getBitCast(C, Ty);
   }
+  return 0;
+}
+
+Constant *ConstantExpr::getTrunc(Constant *C, const Type *Ty) {
+  assert(C->getType()->isInteger() && "Trunc operand must be integer");
+  assert(Ty->isIntegral() && "Trunc produces only integral");
+  assert(C->getType()->getPrimitiveSizeInBits() > Ty->getPrimitiveSizeInBits()&&
+         "SrcTy must be larger than DestTy for Trunc!");
+
+  return getFoldedCast(Instruction::Trunc, C, Ty);
+}
+
+Constant *ConstantExpr::getSignExtend(Constant *C, const Type *Ty) {
+  assert(C->getType()->isIntegral() && "SEXt operand must be integral");
+  assert(Ty->isInteger() && "SExt produces only integer");
+  assert(C->getType()->getPrimitiveSizeInBits() < Ty->getPrimitiveSizeInBits()&&
+         "SrcTy must be smaller than DestTy for SExt!");
+
+  return getFoldedCast(Instruction::SExt, C, Ty);
 }
 
 Constant *ConstantExpr::getZeroExtend(Constant *C, const Type *Ty) {
-  assert(C->getType()->isIntegral() && Ty->isIntegral() &&
-         C->getType()->getPrimitiveSize() <= Ty->getPrimitiveSize() &&
-         "This is an illegal zero extension!");
-  if (C->getType() != Type::BoolTy)
-    C = ConstantExpr::getCast(C, C->getType()->getUnsignedVersion());
-  return ConstantExpr::getCast(C, Ty);
+  assert(C->getType()->isIntegral() && "ZEXt operand must be integral");
+  assert(Ty->isInteger() && "ZExt produces only integer");
+  assert(C->getType()->getPrimitiveSizeInBits() < Ty->getPrimitiveSizeInBits()&&
+         "SrcTy must be smaller than DestTy for ZExt!");
+
+  return getFoldedCast(Instruction::ZExt, C, Ty);
+}
+
+Constant *ConstantExpr::getFPTrunc(Constant *C, const Type *Ty) {
+  assert(C->getType()->isFloatingPoint() && Ty->isFloatingPoint() &&
+         C->getType()->getPrimitiveSizeInBits() > Ty->getPrimitiveSizeInBits()&&
+         "This is an illegal floating point truncation!");
+  return getFoldedCast(Instruction::FPTrunc, C, Ty);
+}
+
+Constant *ConstantExpr::getFPExtend(Constant *C, const Type *Ty) {
+  assert(C->getType()->isFloatingPoint() && Ty->isFloatingPoint() &&
+         C->getType()->getPrimitiveSizeInBits() < Ty->getPrimitiveSizeInBits()&&
+         "This is an illegal floating point extension!");
+  return getFoldedCast(Instruction::FPExt, C, Ty);
+}
+
+Constant *ConstantExpr::getUIToFP(Constant *C, const Type *Ty) {
+  assert(C->getType()->isIntegral() && Ty->isFloatingPoint() &&
+         "This is an illegal uint to floating point cast!");
+  return getFoldedCast(Instruction::UIToFP, C, Ty);
+}
+
+Constant *ConstantExpr::getSIToFP(Constant *C, const Type *Ty) {
+  assert(C->getType()->isIntegral() && Ty->isFloatingPoint() &&
+         "This is an illegal sint to floating point cast!");
+  return getFoldedCast(Instruction::SIToFP, C, Ty);
+}
+
+Constant *ConstantExpr::getFPToUI(Constant *C, const Type *Ty) {
+  assert(C->getType()->isFloatingPoint() && Ty->isIntegral() &&
+         "This is an illegal floating point to uint cast!");
+  return getFoldedCast(Instruction::FPToUI, C, Ty);
+}
+
+Constant *ConstantExpr::getFPToSI(Constant *C, const Type *Ty) {
+  assert(C->getType()->isFloatingPoint() && Ty->isIntegral() &&
+         "This is an illegal floating point to sint cast!");
+  return getFoldedCast(Instruction::FPToSI, C, Ty);
+}
+
+Constant *ConstantExpr::getPtrToInt(Constant *C, const Type *DstTy) {
+  assert(isa<PointerType>(C->getType()) && "PtrToInt source must be pointer");
+  assert(DstTy->isIntegral() && "PtrToInt destination must be integral");
+  return getFoldedCast(Instruction::PtrToInt, C, DstTy);
+}
+
+Constant *ConstantExpr::getIntToPtr(Constant *C, const Type *DstTy) {
+  assert(C->getType()->isIntegral() && "IntToPtr source must be integral");
+  assert(isa<PointerType>(DstTy) && "IntToPtr destination must be a pointer");
+  return getFoldedCast(Instruction::IntToPtr, C, DstTy);
+}
+
+Constant *ConstantExpr::getBitCast(Constant *C, const Type *DstTy) {
+  // BitCast implies a no-op cast of type only. No bits change.  However, you 
+  // can't cast pointers to anything but pointers.
+  const Type *SrcTy = C->getType();
+  assert((isa<PointerType>(SrcTy) == isa<PointerType>(DstTy)) &&
+         "Bitcast cannot cast pointer to non-pointer and vice versa");
+
+  // Now we know we're not dealing with mismatched pointer casts (ptr->nonptr
+  // or nonptr->ptr). For all the other types, the cast is okay if source and 
+  // destination bit widths are identical.
+  unsigned SrcBitSize = SrcTy->getPrimitiveSizeInBits();
+  unsigned DstBitSize = DstTy->getPrimitiveSizeInBits();
+  assert(SrcBitSize == DstBitSize && "Bitcast requies types of same width");
+  return getFoldedCast(Instruction::BitCast, C, DstTy);
 }
 
 Constant *ConstantExpr::getSizeOf(const Type *Ty) {
@@ -1858,9 +2003,9 @@ void ConstantExpr::replaceUsesOfWithOnConstant(Value *From, Value *ToV,
       Indices.push_back(Val);
     }
     Replacement = ConstantExpr::getGetElementPtr(Pointer, Indices);
-  } else if (getOpcode() == Instruction::Cast) {
+  } else if (isCast()) {
     assert(getOperand(0) == From && "Cast only has one use!");
-    Replacement = ConstantExpr::getCast(To, getType());
+    Replacement = ConstantExpr::getCast(getOpcode(), To, getType());
   } else if (getOpcode() == Instruction::Select) {
     Constant *C1 = getOperand(0);
     Constant *C2 = getOperand(1);

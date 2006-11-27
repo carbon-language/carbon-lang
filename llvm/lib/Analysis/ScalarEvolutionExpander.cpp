@@ -30,8 +30,7 @@ Value *SCEVExpander::InsertCastOfTo(Value *V, const Type *Ty) {
          UI != E; ++UI) {
       if ((*UI)->getType() == Ty)
         if (CastInst *CI = dyn_cast<CastInst>(cast<Instruction>(*UI))) {
-          // If the cast isn't in the first instruction of the function,
-          // move it.
+          // If the cast isn't the first instruction of the function, move it.
           if (BasicBlock::iterator(CI) != 
               A->getParent()->getEntryBlock().begin()) {
             CI->moveBefore(A->getParent()->getEntryBlock().begin());
@@ -39,8 +38,8 @@ Value *SCEVExpander::InsertCastOfTo(Value *V, const Type *Ty) {
           return CI;
         }
     }
-    return new CastInst(V, Ty, V->getName(),
-                        A->getParent()->getEntryBlock().begin());
+    return CastInst::createInferredCast(V, Ty, V->getName(),
+                                       A->getParent()->getEntryBlock().begin());
   }
     
   Instruction *I = cast<Instruction>(V);
@@ -65,7 +64,7 @@ Value *SCEVExpander::InsertCastOfTo(Value *V, const Type *Ty) {
   if (InvokeInst *II = dyn_cast<InvokeInst>(I))
     IP = II->getNormalDest()->begin();
   while (isa<PHINode>(IP)) ++IP;
-  return new CastInst(V, Ty, V->getName(), IP);
+  return CastInst::createInferredCast(V, Ty, V->getName(), IP);
 }
 
 Value *SCEVExpander::visitMulExpr(SCEVMulExpr *S) {

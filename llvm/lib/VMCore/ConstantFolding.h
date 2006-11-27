@@ -27,7 +27,11 @@ namespace llvm {
   class Type;
 
   // Constant fold various types of instruction...
-  Constant *ConstantFoldCastInstruction(const Constant *V, const Type *DestTy);
+  Constant *ConstantFoldCastInstruction(
+    unsigned opcode,     ///< The opcode of the cast
+    const Constant *V,   ///< The source constant
+    const Type *DestTy   ///< The destination type
+  );
   Constant *ConstantFoldSelectInstruction(const Constant *Cond,
                                           const Constant *V1,
                                           const Constant *V2);

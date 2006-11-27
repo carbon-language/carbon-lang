@@ -1,5 +1,5 @@
 ; XFAIL: *
-; RUN: llvm-as < %s | opt -raise | llvm-dis | grep '= cast' | not grep \*
+; RUN: llvm-as < %s | opt -raise | llvm-dis | not grep bitcast
 
 %FILE = type { int, ubyte*, ubyte*, ubyte, ubyte, uint, uint, uint }
 

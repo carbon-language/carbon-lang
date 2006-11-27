@@ -212,11 +212,9 @@ void LowerPacked::visitLoadInst(LoadInst& LI)
                                       PKT->getNumElements());
        PointerType* APT = PointerType::get(AT);
 
-       // Cast the packed type to an array
-       Value* array = new CastInst(LI.getPointerOperand(),
-                                   APT,
-                                   LI.getName() + ".a",
-                                   &LI);
+       // Cast the pointer to packed type to an equivalent array
+       Value* array = new BitCastInst(LI.getPointerOperand(), APT, 
+                                      LI.getName() + ".a", &LI);
 
        // Convert this load into num elements number of loads
        std::vector<Value*> values;
@@ -234,10 +232,8 @@ void LowerPacked::visitLoadInst(LoadInst& LI)
                                                &LI);
 
             // generate the new load and save the result in packedToScalar map
-            values.push_back(new LoadInst(val,
-                             LI.getName()+"."+utostr(i),
-                             LI.isVolatile(),
-                             &LI));
+            values.push_back(new LoadInst(val, LI.getName()+"."+utostr(i),
+                             LI.isVolatile(), &LI));
        }
 
        setValues(&LI,values);
@@ -286,11 +282,10 @@ void LowerPacked::visitStoreInst(StoreInst& SI)
                                       PKT->getNumElements());
        PointerType* APT = PointerType::get(AT);
 
-       // cast the packed to an array type
-       Value* array = new CastInst(SI.getPointerOperand(),
-                                   APT,
-                                   "store.ge.a.",
-                                   &SI);
+       // Cast the pointer to packed to an array of equivalent type
+       Value* array = new BitCastInst(SI.getPointerOperand(), APT, 
+                                      "store.ge.a.", &SI);
+
        std::vector<Value*>& values = getValues(SI.getOperand(0));
 
        assert((values.size() == PKT->getNumElements()) &&

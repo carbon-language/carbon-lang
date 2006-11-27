@@ -27,7 +27,7 @@ namespace llvm {
   /// rewrite expressions in canonical form.
   ///
   /// Clients should create an instance of this class when rewriting is needed,
-  /// and destroying it when finished to allow the release of the associated
+  /// and destroy it when finished to allow the release of the associated 
   /// memory.
   struct SCEVExpander : public SCEVVisitor<SCEVExpander, Value*> {
     ScalarEvolution &SE;
@@ -115,12 +115,12 @@ namespace llvm {
 
     Value *visitTruncateExpr(SCEVTruncateExpr *S) {
       Value *V = expand(S->getOperand());
-      return new CastInst(V, S->getType(), "tmp.", InsertPt);
+      return CastInst::createInferredCast(V, S->getType(), "tmp.", InsertPt);
     }
 
     Value *visitZeroExtendExpr(SCEVZeroExtendExpr *S) {
       Value *V = expandInTy(S->getOperand(),S->getType()->getUnsignedVersion());
-      return new CastInst(V, S->getType(), "tmp.", InsertPt);
+      return CastInst::createInferredCast(V, S->getType(), "tmp.", InsertPt);
     }
 
     Value *visitAddExpr(SCEVAddExpr *S) {

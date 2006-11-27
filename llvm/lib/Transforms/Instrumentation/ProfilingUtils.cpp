@@ -62,7 +62,8 @@ void llvm::InsertProfilingInitCall(Function *MainFn, const char *FnName,
   case 2:
     AI = MainFn->arg_begin(); ++AI;
     if (AI->getType() != ArgVTy) {
-      InitCall->setOperand(2, new CastInst(AI, ArgVTy, "argv.cast", InitCall));
+      InitCall->setOperand(2, 
+          CastInst::createInferredCast(AI, ArgVTy, "argv.cast", InitCall));
     } else {
       InitCall->setOperand(2, AI);
     }
@@ -73,10 +74,10 @@ void llvm::InsertProfilingInitCall(Function *MainFn, const char *FnName,
     // init call instead.
     if (AI->getType() != Type::IntTy) {
       if (!AI->use_empty())
-        AI->replaceAllUsesWith(new CastInst(InitCall, AI->getType(), "",
-                                            InsertPos));
-      InitCall->setOperand(1, new CastInst(AI, Type::IntTy, "argc.cast",
-                                           InitCall));
+        AI->replaceAllUsesWith(
+          CastInst::createInferredCast(InitCall, AI->getType(), "", InsertPos));
+      InitCall->setOperand(1, 
+          CastInst::createInferredCast(AI, Type::IntTy, "argc.cast", InitCall));
     } else {
       AI->replaceAllUsesWith(InitCall);
       InitCall->setOperand(1, AI);

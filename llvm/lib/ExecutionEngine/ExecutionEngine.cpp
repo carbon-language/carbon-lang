@@ -213,7 +213,7 @@ void ExecutionEngine::runStaticConstructorsDestructors(bool isDtors) {
           break;  // Found a null terminator, exit.
       
         if (ConstantExpr *CE = dyn_cast<ConstantExpr>(FP))
-          if (CE->getOpcode() == Instruction::Cast)
+          if (CE->isCast())
             FP = CE->getOperand(0);
         if (Function *F = dyn_cast<Function>(FP)) {
           // Execute the ctor/dtor function!
@@ -299,15 +299,21 @@ void *ExecutionEngine::getPointerToGlobal(const GlobalValue *GV) {
   return state.getGlobalAddressMap(locked)[GV];
 }
 
-/// FIXME: document
-///
+/// This function converts a Constant* into a GenericValue. The interesting 
+/// part is if C is a ConstantExpr.
+/// @brief Get a GenericValue for a Constnat*
 GenericValue ExecutionEngine::getConstantValue(const Constant *C) {
+  // Declare the result as garbage.
   GenericValue Result;
+
+  // If its undefined, return the garbage.
   if (isa<UndefValue>(C)) return Result;
 
-  if (ConstantExpr *CE = const_cast<ConstantExpr*>(dyn_cast<ConstantExpr>(C))) {
+  // If the value is a ConstantExpr
+  if (const ConstantExpr *CE = dyn_cast<ConstantExpr>(C)) {
     switch (CE->getOpcode()) {
     case Instruction::GetElementPtr: {
+      // Compute the index 
       Result = getConstantValue(CE->getOperand(0));
       std::vector<Value*> Indexes(CE->op_begin()+1, CE->op_end());
       uint64_t Offset =
@@ -319,24 +325,35 @@ GenericValue ExecutionEngine::getConstantValue(const Constant *C) {
         Result.LongVal += Offset;
       return Result;
     }
-    case Instruction::Cast: {
-      // We only need to handle a few cases here.  Almost all casts will
-      // automatically fold, just the ones involving pointers won't.
-      //
+    case Instruction::Trunc:
+    case Instruction::ZExt:
+    case Instruction::SExt:
+    case Instruction::FPTrunc:
+    case Instruction::FPExt:
+    case Instruction::UIToFP:
+    case Instruction::SIToFP:
+    case Instruction::FPToUI:
+    case Instruction::FPToSI:
+      break;
+    case Instruction::PtrToInt: {
       Constant *Op = CE->getOperand(0);
       GenericValue GV = getConstantValue(Op);
-
-      // Handle cast of pointer to pointer...
+      return GV;
+    }
+    case Instruction::BitCast: {
+      // Bit casts are no-ops but we can only return the GV of the operand if
+      // they are the same basic type (pointer->pointer, packed->packed, etc.)
+      Constant *Op = CE->getOperand(0);
+      GenericValue GV = getConstantValue(Op);
       if (Op->getType()->getTypeID() == C->getType()->getTypeID())
         return GV;
-
-      // Handle a cast of pointer to any integral type...
-      if (isa<PointerType>(Op->getType()) && C->getType()->isIntegral())
-        return GV;
-
-      // Handle cast of integer to a pointer...
-      if (isa<PointerType>(C->getType()) && Op->getType()->isIntegral())
-        switch (Op->getType()->getTypeID()) {
+      break;
+    }
+    case Instruction::IntToPtr: {
+      // IntToPtr casts are just so special. Cast to intptr_t first.
+      Constant *Op = CE->getOperand(0);
+      GenericValue GV = getConstantValue(Op);
+      switch (Op->getType()->getTypeID()) {
         case Type::BoolTyID:    return PTOGV((void*)(uintptr_t)GV.BoolVal);
         case Type::SByteTyID:   return PTOGV((void*)( intptr_t)GV.SByteVal);
         case Type::UByteTyID:   return PTOGV((void*)(uintptr_t)GV.UByteVal);
@@ -347,10 +364,9 @@ GenericValue ExecutionEngine::getConstantValue(const Constant *C) {
         case Type::LongTyID:    return PTOGV((void*)( intptr_t)GV.LongVal);
         case Type::ULongTyID:   return PTOGV((void*)(uintptr_t)GV.ULongVal);
         default: assert(0 && "Unknown integral type!");
-        }
+      }
       break;
     }
-
     case Instruction::Add:
       switch (CE->getOperand(0)->getType()->getTypeID()) {
       default: assert(0 && "Bad add type!"); abort();

@@ -557,13 +557,25 @@ public:
                                         ISD::SETOLT); }
   void visitSetGT(User &I) { visitSetCC(I, ISD::SETGT, ISD::SETUGT,
                                         ISD::SETOGT); }
+  // Visit the conversion instructions
+  void visitTrunc(User &I);
+  void visitZExt(User &I);
+  void visitSExt(User &I);
+  void visitFPTrunc(User &I);
+  void visitFPExt(User &I);
+  void visitFPToUI(User &I);
+  void visitFPToSI(User &I);
+  void visitUIToFP(User &I);
+  void visitSIToFP(User &I);
+  void visitPtrToInt(User &I);
+  void visitIntToPtr(User &I);
+  void visitBitCast(User &I);
 
   void visitExtractElement(User &I);
   void visitInsertElement(User &I);
   void visitShuffleVector(User &I);
 
   void visitGetElementPtr(User &I);
-  void visitCast(User &I);
   void visitSelect(User &I);
 
   void visitMalloc(MallocInst &I);
@@ -1525,63 +1537,127 @@ void SelectionDAGLowering::visitSelect(User &I) {
   }
 }
 
-void SelectionDAGLowering::visitCast(User &I) {
+
+void SelectionDAGLowering::visitTrunc(User &I) {
+  // TruncInst cannot be a no-op cast because sizeof(src) > sizeof(dest).
+  SDOperand N = getValue(I.getOperand(0));
+  MVT::ValueType DestVT = TLI.getValueType(I.getType());
+  setValue(&I, DAG.getNode(ISD::TRUNCATE, DestVT, N));
+}
+
+void SelectionDAGLowering::visitZExt(User &I) {
+  // ZExt cannot be a no-op cast because sizeof(src) < sizeof(dest).
+  // ZExt also can't be a cast to bool for same reason. So, nothing much to do
+  SDOperand N = getValue(I.getOperand(0));
+  MVT::ValueType DestVT = TLI.getValueType(I.getType());
+  setValue(&I, DAG.getNode(ISD::ZERO_EXTEND, DestVT, N));
+}
+
+void SelectionDAGLowering::visitSExt(User &I) {
+  // SExt cannot be a no-op cast because sizeof(src) < sizeof(dest).
+  // SExt also can't be a cast to bool for same reason. So, nothing much to do
+  SDOperand N = getValue(I.getOperand(0));
+  MVT::ValueType DestVT = TLI.getValueType(I.getType());
+  setValue(&I, DAG.getNode(ISD::SIGN_EXTEND, DestVT, N));
+}
+
+void SelectionDAGLowering::visitFPTrunc(User &I) {
+  // FPTrunc is never a no-op cast, no need to check
+  SDOperand N = getValue(I.getOperand(0));
+  MVT::ValueType DestVT = TLI.getValueType(I.getType());
+  setValue(&I, DAG.getNode(ISD::FP_ROUND, DestVT, N));
+}
+
+void SelectionDAGLowering::visitFPExt(User &I){ 
+  // FPTrunc is never a no-op cast, no need to check
+  SDOperand N = getValue(I.getOperand(0));
+  MVT::ValueType DestVT = TLI.getValueType(I.getType());
+  setValue(&I, DAG.getNode(ISD::FP_EXTEND, DestVT, N));
+}
+
+void SelectionDAGLowering::visitFPToUI(User &I) { 
+  // FPToUI is never a no-op cast, no need to check
+  SDOperand N = getValue(I.getOperand(0));
+  MVT::ValueType DestVT = TLI.getValueType(I.getType());
+  setValue(&I, DAG.getNode(ISD::FP_TO_UINT, DestVT, N));
+}
+
+void SelectionDAGLowering::visitFPToSI(User &I) {
+  // FPToSI is never a no-op cast, no need to check
+  SDOperand N = getValue(I.getOperand(0));
+  MVT::ValueType DestVT = TLI.getValueType(I.getType());
+  setValue(&I, DAG.getNode(ISD::FP_TO_SINT, DestVT, N));
+}
+
+void SelectionDAGLowering::visitUIToFP(User &I) { 
+  // UIToFP is never a no-op cast, no need to check
+  SDOperand N = getValue(I.getOperand(0));
+  MVT::ValueType DestVT = TLI.getValueType(I.getType());
+  setValue(&I, DAG.getNode(ISD::UINT_TO_FP, DestVT, N));
+}
+
+void SelectionDAGLowering::visitSIToFP(User &I){ 
+  // UIToFP is never a no-op cast, no need to check
+  SDOperand N = getValue(I.getOperand(0));
+  MVT::ValueType DestVT = TLI.getValueType(I.getType());
+  setValue(&I, DAG.getNode(ISD::SINT_TO_FP, DestVT, N));
+}
+
+void SelectionDAGLowering::visitPtrToInt(User &I) {
+  // What to do depends on the size of the integer and the size of the pointer.
+  // We can either truncate, zero extend, or no-op, accordingly.
   SDOperand N = getValue(I.getOperand(0));
   MVT::ValueType SrcVT = N.getValueType();
   MVT::ValueType DestVT = TLI.getValueType(I.getType());
+  SDOperand Result;
+  if (MVT::getSizeInBits(DestVT) < MVT::getSizeInBits(SrcVT))
+    Result = DAG.getNode(ISD::TRUNCATE, DestVT, N);
+  else 
+    // Note: ZERO_EXTEND can handle cases where the sizes are equal too
+    Result = DAG.getNode(ISD::ZERO_EXTEND, DestVT, N);
+  setValue(&I, Result);
+}
 
+void SelectionDAGLowering::visitIntToPtr(User &I) {
+  // What to do depends on the size of the integer and the size of the pointer.
+  // We can either truncate, zero extend, or no-op, accordingly.
+  SDOperand N = getValue(I.getOperand(0));
+  MVT::ValueType SrcVT = N.getValueType();
+  MVT::ValueType DestVT = TLI.getValueType(I.getType());
+  if (MVT::getSizeInBits(DestVT) < MVT::getSizeInBits(SrcVT))
+    setValue(&I, DAG.getNode(ISD::TRUNCATE, DestVT, N));
+  else 
+    // Note: ZERO_EXTEND can handle cases where the sizes are equal too
+    setValue(&I, DAG.getNode(ISD::ZERO_EXTEND, DestVT, N));
+}
+
+void SelectionDAGLowering::visitBitCast(User &I) { 
+  SDOperand N = getValue(I.getOperand(0));
+  MVT::ValueType DestVT = TLI.getValueType(I.getType());
   if (DestVT == MVT::Vector) {
-    // This is a cast to a vector from something else.  This is always a bit
-    // convert.  Get information about the input vector.
+    // This is a cast to a vector from something else.  
+    // Get information about the output vector.
     const PackedType *DestTy = cast<PackedType>(I.getType());
     MVT::ValueType EltVT = TLI.getValueType(DestTy->getElementType());
     setValue(&I, DAG.getNode(ISD::VBIT_CONVERT, DestVT, N, 
                              DAG.getConstant(DestTy->getNumElements(),MVT::i32),
                              DAG.getValueType(EltVT)));
-  } else if (SrcVT == DestVT) {
-    setValue(&I, N);  // noop cast.
-  } else if (DestVT == MVT::i1) {
-    // Cast to bool is a comparison against zero, not truncation to zero.
-    SDOperand Zero = isInteger(SrcVT) ? DAG.getConstant(0, N.getValueType()) :
-                                       DAG.getConstantFP(0.0, N.getValueType());
-    setValue(&I, DAG.getSetCC(MVT::i1, N, Zero, ISD::SETNE));
-  } else if (isInteger(SrcVT)) {
-    if (isInteger(DestVT)) {        // Int -> Int cast
-      if (DestVT < SrcVT)   // Truncating cast?
-        setValue(&I, DAG.getNode(ISD::TRUNCATE, DestVT, N));
-      else if (I.getOperand(0)->getType()->isSigned())
-        setValue(&I, DAG.getNode(ISD::SIGN_EXTEND, DestVT, N));
-      else
-        setValue(&I, DAG.getNode(ISD::ZERO_EXTEND, DestVT, N));
-    } else if (isFloatingPoint(DestVT)) {           // Int -> FP cast
-      if (I.getOperand(0)->getType()->isSigned())
-        setValue(&I, DAG.getNode(ISD::SINT_TO_FP, DestVT, N));
-      else
-        setValue(&I, DAG.getNode(ISD::UINT_TO_FP, DestVT, N));
-    } else {
-      assert(0 && "Unknown cast!");
-    }
-  } else if (isFloatingPoint(SrcVT)) {
-    if (isFloatingPoint(DestVT)) {  // FP -> FP cast
-      if (DestVT < SrcVT)   // Rounding cast?
-        setValue(&I, DAG.getNode(ISD::FP_ROUND, DestVT, N));
-      else
-        setValue(&I, DAG.getNode(ISD::FP_EXTEND, DestVT, N));
-    } else if (isInteger(DestVT)) {        // FP -> Int cast.
-      if (I.getType()->isSigned())
-        setValue(&I, DAG.getNode(ISD::FP_TO_SINT, DestVT, N));
-      else
-        setValue(&I, DAG.getNode(ISD::FP_TO_UINT, DestVT, N));
-    } else {
-      assert(0 && "Unknown cast!");
-    }
-  } else {
-    assert(SrcVT == MVT::Vector && "Unknown cast!");
-    assert(DestVT != MVT::Vector && "Casts to vector already handled!");
-    // This is a cast from a vector to something else.  This is always a bit
-    // convert.  Get information about the input vector.
+    return;
+  } 
+  MVT::ValueType SrcVT = N.getValueType();
+  if (SrcVT == MVT::Vector) {
+    // This is a cast from a vctor to something else. 
+    // Get information about the input vector.
     setValue(&I, DAG.getNode(ISD::VBIT_CONVERT, DestVT, N));
+    return;
   }
+
+  // BitCast assures us that source and destination are the same size so this 
+  // is either a BIT_CONVERT or a no-op.
+  if (DestVT != N.getValueType())
+    setValue(&I, DAG.getNode(ISD::BIT_CONVERT, DestVT, N)); // convert types
+  else
+    setValue(&I, N); // noop cast.
 }
 
 void SelectionDAGLowering::visitInsertElement(User &I) {
@@ -3402,7 +3478,8 @@ static bool OptimizeNoopCopyExpression(CastInst *CI) {
       while (isa<PHINode>(InsertPt)) ++InsertPt;
       
       InsertedCast = 
-        new CastInst(CI->getOperand(0), CI->getType(), "", InsertPt);
+        CastInst::createInferredCast(CI->getOperand(0), CI->getType(), "", 
+                                     InsertPt);
       MadeChange = true;
     }
     
@@ -3424,9 +3501,10 @@ static Instruction *InsertGEPComputeCode(Instruction *&V, BasicBlock *BB,
                                          Value *PtrOffset) {
   if (V) return V;   // Already computed.
   
+  // Figure out the insertion point
   BasicBlock::iterator InsertPt;
   if (BB == GEPI->getParent()) {
-    // If insert into the GEP's block, insert right after the GEP.
+    // If GEP is already inserted into BB, insert right after the GEP.
     InsertPt = GEPI;
     ++InsertPt;
   } else {
@@ -3440,11 +3518,14 @@ static Instruction *InsertGEPComputeCode(Instruction *&V, BasicBlock *BB,
   // operand).
   if (CastInst *CI = dyn_cast<CastInst>(Ptr))
     if (CI->getParent() != BB && isa<PointerType>(CI->getOperand(0)->getType()))
-      Ptr = new CastInst(CI->getOperand(0), CI->getType(), "", InsertPt);
+      Ptr = CastInst::createInferredCast(CI->getOperand(0), CI->getType(), "",
+                                         InsertPt);
   
   // Add the offset, cast it to the right type.
   Ptr = BinaryOperator::createAdd(Ptr, PtrOffset, "", InsertPt);
-  return V = new CastInst(Ptr, GEPI->getType(), "", InsertPt);
+  // Ptr is an integer type, GEPI is pointer type ==> IntToPtr
+  return V = CastInst::create(Instruction::IntToPtr, Ptr, GEPI->getType(), 
+                              "", InsertPt);
 }
 
 /// ReplaceUsesOfGEPInst - Replace all uses of RepPtr with inserted code to
@@ -3461,8 +3542,9 @@ static void ReplaceUsesOfGEPInst(Instruction *RepPtr, Value *Ptr,
   while (!RepPtr->use_empty()) {
     Instruction *User = cast<Instruction>(RepPtr->use_back());
     
-    // If the user is a Pointer-Pointer cast, recurse.
-    if (isa<CastInst>(User) && isa<PointerType>(User->getType())) {
+    // If the user is a Pointer-Pointer cast, recurse. Only BitCast can be
+    // used for a Pointer-Pointer cast.
+    if (isa<BitCastInst>(User)) {
       ReplaceUsesOfGEPInst(User, Ptr, PtrOffset, DefBB, GEPI, InsertedExprs);
       
       // Drop the use of RepPtr. The cast is dead.  Don't delete it now, else we
@@ -3489,7 +3571,8 @@ static void ReplaceUsesOfGEPInst(Instruction *RepPtr, Value *Ptr,
     if (GEPI->getType() != RepPtr->getType()) {
       BasicBlock::iterator IP = NewVal;
       ++IP;
-      NewVal = new CastInst(NewVal, RepPtr->getType(), "", IP);
+      // NewVal must be a GEP which must be pointer type, so BitCast
+      NewVal = new BitCastInst(NewVal, RepPtr->getType(), "", IP);
     }
     User->replaceUsesOfWith(RepPtr, NewVal);
   }
@@ -3535,7 +3618,8 @@ static bool OptimizeGEPExpression(GetElementPtrInst *GEPI,
   
   // If this is a "GEP X, 0, 0, 0", turn this into a cast.
   if (!hasConstantIndex && !hasVariableIndex) {
-    Value *NC = new CastInst(GEPI->getOperand(0), GEPI->getType(), 
+    /// The GEP operand must be a pointer, so must its result -> BitCast
+    Value *NC = new BitCastInst(GEPI->getOperand(0), GEPI->getType(), 
                              GEPI->getName(), GEPI);
     GEPI->replaceAllUsesWith(NC);
     GEPI->eraseFromParent();
@@ -3550,7 +3634,7 @@ static bool OptimizeGEPExpression(GetElementPtrInst *GEPI,
   // constant offset (which we now know is non-zero) and deal with it later.
   uint64_t ConstantOffset = 0;
   const Type *UIntPtrTy = TD->getIntPtrType();
-  Value *Ptr = new CastInst(GEPI->getOperand(0), UIntPtrTy, "", GEPI);
+  Value *Ptr = new PtrToIntInst(GEPI->getOperand(0), UIntPtrTy, "", GEPI);
   const Type *Ty = GEPI->getOperand(0)->getType();
 
   for (GetElementPtrInst::op_iterator OI = GEPI->op_begin()+1,
@@ -3577,7 +3661,7 @@ static bool OptimizeGEPExpression(GetElementPtrInst *GEPI,
       // Ptr = Ptr + Idx * ElementSize;
       
       // Cast Idx to UIntPtrTy if needed.
-      Idx = new CastInst(Idx, UIntPtrTy, "", GEPI);
+      Idx = CastInst::createInferredCast(Idx, UIntPtrTy, "", GEPI);
       
       uint64_t ElementSize = TD->getTypeSize(Ty);
       // Mask off bits that should not be set.

@@ -206,8 +206,8 @@ static Value *CastArg(Value *Arg, const Type *Ty, Instruction *InsertBefore) {
   if (Constant *C = dyn_cast<Constant>(Arg)) {
     return ConstantExpr::getCast(C, Ty);
   } else {
-    Value *Cast = new CastInst(Arg, Ty, "autoupgrade_cast", InsertBefore);
-    return Cast;
+    return CastInst::createInferredCast(Arg, Ty, "autoupgrade_cast", 
+                                        InsertBefore);
   }
 }
 
@@ -261,8 +261,8 @@ void llvm::UpgradeIntrinsicCall(CallInst *CI, Function *NewFn) {
       Instruction *RetVal = NewCI;
       
       if (F->getReturnType() != NewFn->getReturnType()) {
-        RetVal = new CastInst(NewCI, F->getReturnType(), 
-                              NewCI->getName(), CI);
+        RetVal = 
+          new BitCastInst(NewCI, F->getReturnType(), NewCI->getName(), CI);
         NewCI->moveBefore(RetVal);
       }
       

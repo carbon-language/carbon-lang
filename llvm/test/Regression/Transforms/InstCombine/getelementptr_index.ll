@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -instcombine | llvm-dis | grep cast
+; RUN: llvm-as < %s | opt -instcombine | llvm-dis | grep trunc
 
 target endian = little
 target pointersize = 32

@@ -52,12 +52,10 @@ bool llvm::ExpressionConvertibleToType(Value *V, const Type *Ty,
   if (I == 0) return false;              // Otherwise, we can't convert!
 
   switch (I->getOpcode()) {
-  case Instruction::Cast:
-    // We can convert the expr if the cast destination type is losslessly
-    // convertible to the requested type.
-    if (!Ty->isLosslesslyConvertibleTo(I->getType())) return false;
-
-    // We also do not allow conversion of a cast that casts from a ptr to array
+  case Instruction::BitCast:
+    if (!cast<BitCastInst>(I)->isLosslessCast())
+      return false;
+    // We do not allow conversion of a cast that casts from a ptr to array
     // of X to a *X.  For example: cast [4 x %List *] * %val to %List * *
     //
     if (const PointerType *SPT =
@@ -66,6 +64,7 @@ bool llvm::ExpressionConvertibleToType(Value *V, const Type *Ty,
         if (const ArrayType *AT = dyn_cast<ArrayType>(SPT->getElementType()))
           if (AT->getElementType() == DPT->getElementType())
             return false;
+    // Otherwise it is a lossless cast and we can allow it
     break;
 
   case Instruction::Add:
@@ -227,9 +226,9 @@ Value *llvm::ConvertExpressionToType(Value *V, const Type *Ty,
   Constant *Dummy = Constant::getNullValue(Ty);
 
   switch (I->getOpcode()) {
-  case Instruction::Cast:
+  case Instruction::BitCast:
     assert(VMC.NewCasts.count(ValueHandle(VMC, I)) == 0);
-    Res = new CastInst(I->getOperand(0), Ty, Name);
+    Res = CastInst::createInferredCast(I->getOperand(0), Ty, Name);
     VMC.NewCasts.insert(ValueHandle(VMC, Res));
     break;
 
@@ -307,7 +306,8 @@ Value *llvm::ConvertExpressionToType(Value *V, const Type *Ty,
       Indices.pop_back();
       if (GetElementPtrInst::getIndexedType(BaseType, Indices, true) == PVTy) {
         if (Indices.size() == 0)
-          Res = new CastInst(GEP->getPointerOperand(), BaseType); // NOOP CAST
+          // We want to no-op cast this so use BitCast
+          Res = new BitCastInst(GEP->getPointerOperand(), BaseType);
         else
           Res = new GetElementPtrInst(GEP->getPointerOperand(), Indices, Name);
         break;
@@ -411,10 +411,6 @@ bool llvm::ValueConvertibleToType(Value *V, const Type *Ty,
   return true;
 }
 
-
-
-
-
 // OperandConvertibleToType - Return true if it is possible to convert operand
 // V of User (instruction) U to the specified type.  This is true iff it is
 // possible to change the specified instruction to accept this.  CTMap is a map
@@ -431,27 +427,16 @@ static bool OperandConvertibleToType(User *U, Value *V, const Type *Ty,
     return false;
 
   Instruction *I = dyn_cast<Instruction>(U);
-  if (I == 0) return false;              // We can't convert!
+  if (I == 0) return false;              // We can't convert non-instructions!
 
   switch (I->getOpcode()) {
-  case Instruction::Cast:
+  case Instruction::BitCast:
     assert(I->getOperand(0) == V);
     // We can convert the expr if the cast destination type is losslessly
-    // convertible to the requested type.
-    // Also, do not change a cast that is a noop cast.  For all intents and
-    // purposes it should be eliminated.
-    if (!Ty->isLosslesslyConvertibleTo(I->getOperand(0)->getType()) ||
+    // convertible to the requested type.  Also, do not change a cast that 
+    // is a noop cast.  For all intents and purposes it should be eliminated.
+    if (!cast<BitCastInst>(I)->isLosslessCast() || 
         I->getType() == I->getOperand(0)->getType())
-      return false;
-
-    // Do not allow a 'cast ushort %V to uint' to have it's first operand be
-    // converted to a 'short' type.  Doing so changes the way sign promotion
-    // happens, and breaks things.  Only allow the cast to take place if the
-    // signedness doesn't change... or if the current cast is not a lossy
-    // conversion.
-    //
-    if (!I->getType()->isLosslesslyConvertibleTo(I->getOperand(0)->getType()) &&
-        I->getOperand(0)->getType()->isSigned() != Ty->isSigned())
       return false;
 
     // We also do not allow conversion of a cast that casts from a ptr to array
@@ -642,7 +627,8 @@ static bool OperandConvertibleToType(User *U, Value *V, const Type *Ty,
       // arguments if possible.
       //
       for (unsigned i = 0, NA = FTy->getNumParams(); i < NA; ++i)
-        if (!FTy->getParamType(i)->isLosslesslyConvertibleTo(I->getOperand(i+1)->getType()))
+        if (!FTy->getParamType(i)->canLosslesslyBitCastTo(
+              I->getOperand(i+1)->getType()))
           return false;   // Operands must have compatible types!
 
       // Okay, at this point, we know that all of the arguments can be
@@ -662,7 +648,7 @@ static bool OperandConvertibleToType(User *U, Value *V, const Type *Ty,
     // If we get this far, we know the value is in the varargs section of the
     // function!  We can convert if we don't reinterpret the value...
     //
-    return Ty->isLosslesslyConvertibleTo(V->getType());
+    return Ty->canLosslesslyBitCastTo(V->getType());
   }
   }
   return false;
@@ -718,19 +704,8 @@ static void ConvertOperandToType(User *U, Value *OldVal, Value *NewVal,
                   Constant::getNullValue(NewTy) : 0;
 
   switch (I->getOpcode()) {
-  case Instruction::Cast:
-    if (VMC.NewCasts.count(ValueHandle(VMC, I))) {
-      // This cast has already had it's value converted, causing a new cast to
-      // be created.  We don't want to create YET ANOTHER cast instruction
-      // representing the original one, so just modify the operand of this cast
-      // instruction, which we know is newly created.
-      I->setOperand(0, NewVal);
-      I->setName(Name);  // give I its name back
-      return;
-
-    } else {
-      Res = new CastInst(NewVal, I->getType(), Name);
-    }
+  case Instruction::BitCast:
+    Res = CastInst::createInferredCast(NewVal, I->getType(), Name);
     break;
 
   case Instruction::Add:
@@ -895,9 +870,9 @@ static void ConvertOperandToType(User *U, Value *OldVal, Value *NewVal,
       for (unsigned i = 0; i != NewTy->getNumParams(); ++i)
         if (Params[i]->getType() != NewTy->getParamType(i)) {
           // Create a cast to convert it to the right type, we know that this
-          // is a lossless cast...
+          // is a no-op cast...
           //
-          Params[i] = new CastInst(Params[i], NewTy->getParamType(i),
+          Params[i] = new BitCastInst(Params[i], NewTy->getParamType(i),
                                    "callarg.cast." +
                                    Params[i]->getName(), It);
         }

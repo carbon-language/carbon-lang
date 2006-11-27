@@ -624,7 +624,8 @@ void SROA::ConvertUsesToScalar(Value *Ptr, AllocaInst *NewAI, unsigned Offset) {
             assert((NV->getType()->isInteger() ||
                     isa<PointerType>(NV->getType())) && "Unknown promotion!");
           }
-          NV = new CastInst(NV, LI->getType(), LI->getName(), LI);
+          NV = CastInst::createInferredCast(NV, LI->getType(), LI->getName(), 
+                                            LI);
         }
       }
       LI->replaceAllUsesWith(NV);
@@ -646,12 +647,12 @@ void SROA::ConvertUsesToScalar(Value *Ptr, AllocaInst *NewAI, unsigned Offset) {
                                      ConstantInt::get(Type::UIntTy, Elt),
                                      "tmp", SI);
         } else {
-          // If SV is signed, convert it to unsigned, so that the next cast zero
-          // extends the value.
+          // Always zero extend the value.
           if (SV->getType()->isSigned())
-            SV = new CastInst(SV, SV->getType()->getUnsignedVersion(),
-                              SV->getName(), SI);
-          SV = new CastInst(SV, Old->getType(), SV->getName(), SI);
+            SV = CastInst::createInferredCast(SV, 
+                SV->getType()->getUnsignedVersion(), SV->getName(), SI);
+          SV = CastInst::createInferredCast(SV, Old->getType(), SV->getName(), 
+                                            SI);
           if (Offset && Offset < TD.getTypeSize(SV->getType())*8)
             SV = new ShiftInst(Instruction::Shl, SV,
                                ConstantInt::get(Type::UByteTy, Offset),

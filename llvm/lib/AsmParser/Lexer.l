@@ -288,7 +288,19 @@ setge           { RET_TOK(BinaryOpVal, SetGE, SETGE); }
 
 phi             { RET_TOK(OtherOpVal, PHI, PHI_TOK); }
 call            { RET_TOK(OtherOpVal, Call, CALL); }
-cast            { RET_TOK(OtherOpVal, Cast, CAST); }
+cast            { RET_TOK_OBSOLETE(CastOpVal, Trunc, TRUNC); }
+trunc           { RET_TOK(CastOpVal, Trunc, TRUNC); }
+zext            { RET_TOK(CastOpVal, ZExt, ZEXT); }
+sext            { RET_TOK(CastOpVal, SExt, SEXT); }
+fptrunc         { RET_TOK(CastOpVal, FPTrunc, FPTRUNC); }
+fpext           { RET_TOK(CastOpVal, FPExt, FPEXT); }
+uitofp          { RET_TOK(CastOpVal, UIToFP, UITOFP); }
+sitofp          { RET_TOK(CastOpVal, SIToFP, SITOFP); }
+fptoui          { RET_TOK(CastOpVal, FPToUI, FPTOUI); }
+fptosi          { RET_TOK(CastOpVal, FPToSI, FPTOSI); }
+inttoptr        { RET_TOK(CastOpVal, IntToPtr, INTTOPTR); }
+ptrtoint        { RET_TOK(CastOpVal, PtrToInt, PTRTOINT); }
+bitcast         { RET_TOK(CastOpVal, BitCast, BITCAST); }
 select          { RET_TOK(OtherOpVal, Select, SELECT); }
 shl             { RET_TOK(OtherOpVal, Shl, SHL); }
 shr             { RET_TOK_OBSOLETE(OtherOpVal, LShr, LSHR); }

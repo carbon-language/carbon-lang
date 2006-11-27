@@ -134,7 +134,7 @@ bool LowerAllocations::runOnBasicBlock(BasicBlock &BB) {
         } else {
           Value *Scale = MI->getOperand(0);
           if (Scale->getType() != IntPtrTy)
-            Scale = new CastInst(Scale, IntPtrTy, "", I);
+            Scale = CastInst::createInferredCast(Scale, IntPtrTy, "", I);
 
           // Multiply it by the array size if necessary...
           MallocArg = BinaryOperator::create(Instruction::Mul, Scale,
@@ -148,10 +148,13 @@ bool LowerAllocations::runOnBasicBlock(BasicBlock &BB) {
       if (MallocFTy->getNumParams() > 0 || MallocFTy->isVarArg()) {
         if (MallocFTy->isVarArg()) {
           if (MallocArg->getType() != IntPtrTy)
-            MallocArg = new CastInst(MallocArg, IntPtrTy, "", I);
+            MallocArg = CastInst::createInferredCast(MallocArg, IntPtrTy, "", 
+                                                     I);
         } else if (MallocFTy->getNumParams() > 0 &&
                    MallocFTy->getParamType(0) != Type::UIntTy)
-          MallocArg = new CastInst(MallocArg, MallocFTy->getParamType(0), "",I);
+          MallocArg = 
+            CastInst::createInferredCast(MallocArg, MallocFTy->getParamType(0),
+                                         "",I);
         MallocArgs.push_back(MallocArg);
       }
 
@@ -166,7 +169,7 @@ bool LowerAllocations::runOnBasicBlock(BasicBlock &BB) {
       // Create a cast instruction to convert to the right type...
       Value *MCast;
       if (MCall->getType() != Type::VoidTy)
-        MCast = new CastInst(MCall, MI->getType(), "", I);
+        MCast = CastInst::createInferredCast(MCall, MI->getType(), "", I);
       else
         MCast = Constant::getNullValue(MI->getType());
 
@@ -183,7 +186,8 @@ bool LowerAllocations::runOnBasicBlock(BasicBlock &BB) {
         Value *MCast = FI->getOperand(0);
         if (FreeFTy->getNumParams() > 0 &&
             FreeFTy->getParamType(0) != MCast->getType())
-          MCast = new CastInst(MCast, FreeFTy->getParamType(0), "", I);
+          MCast = CastInst::createInferredCast(MCast, FreeFTy->getParamType(0), 
+                                               "", I);
         FreeArgs.push_back(MCast);
       }
 

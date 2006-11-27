@@ -137,6 +137,7 @@ namespace {
     void printBasicBlock(BasicBlock *BB);
     void printLoop(Loop *L);
 
+    void printCast(unsigned opcode, const Type *SrcTy, const Type *DstTy);
     void printConstant(Constant *CPV);
     void printConstantWithCast(Constant *CPV, unsigned Opcode);
     bool printConstExprCast(const ConstantExpr *CE);
@@ -560,15 +561,76 @@ static bool isFPCSafeToPrint(const ConstantFP *CFP) {
 #endif
 }
 
+/// Print out the casting for a cast operation. This does the double casting
+/// necessary for conversion to the destination type, if necessary. 
+/// @returns true if a closing paren is necessary
+/// @brief Print a cast
+void CWriter::printCast(unsigned opc, const Type *SrcTy, const Type *DstTy) {
+  Out << '(';
+  printType(Out, DstTy);
+  Out << ')';
+  switch (opc) {
+    case Instruction::UIToFP:
+    case Instruction::ZExt:
+      if (SrcTy->isSigned()) {
+        Out << '(';
+        printType(Out, SrcTy->getUnsignedVersion());
+        Out << ')';
+      }
+      break;
+    case Instruction::SIToFP:
+    case Instruction::SExt:
+      if (SrcTy->isUnsigned()) {
+        Out << '(';
+        printType(Out, SrcTy->getSignedVersion());
+        Out << ')';
+      }
+      break;
+    case Instruction::IntToPtr:
+    case Instruction::PtrToInt:
+        // Avoid "cast to pointer from integer of different size" warnings
+        Out << "(unsigned long)";
+        break;
+    case Instruction::Trunc:
+    case Instruction::BitCast:
+    case Instruction::FPExt:
+    case Instruction::FPTrunc:
+    case Instruction::FPToSI:
+    case Instruction::FPToUI:
+    default:
+      break;
+  }
+}
+
 // printConstant - The LLVM Constant to C Constant converter.
 void CWriter::printConstant(Constant *CPV) {
   if (const ConstantExpr *CE = dyn_cast<ConstantExpr>(CPV)) {
     switch (CE->getOpcode()) {
-    case Instruction::Cast:
-      Out << "((";
-      printType(Out, CPV->getType());
-      Out << ')';
+    case Instruction::Trunc:
+    case Instruction::ZExt:
+    case Instruction::SExt:
+    case Instruction::FPTrunc:
+    case Instruction::FPExt:
+    case Instruction::UIToFP:
+    case Instruction::SIToFP:
+    case Instruction::FPToUI:
+    case Instruction::FPToSI:
+    case Instruction::PtrToInt:
+    case Instruction::IntToPtr:
+    case Instruction::BitCast:
+      Out << "(";
+      printCast(CE->getOpcode(), CE->getOperand(0)->getType(), CE->getType());
+      if (CE->getOpcode() == Instruction::SExt &&
+          CE->getOperand(0)->getType() == Type::BoolTy) {
+        // Make sure we really sext from bool here by subtracting from 0
+        Out << "0-";
+      }
       printConstant(CE->getOperand(0));
+      if (CE->getOpcode() == Instruction::Trunc && 
+          CE->getType() == Type::BoolTy) {
+        // Make sure we really truncate to bool here by anding with 1
+        Out << "&1u";
+      }
       Out << ')';
       return;
 
@@ -829,14 +891,31 @@ void CWriter::printConstant(Constant *CPV) {
 // care of detecting that case and printing the cast for the ConstantExpr.
 bool CWriter::printConstExprCast(const ConstantExpr* CE) {
   bool NeedsExplicitCast = false;
-  const Type* Ty = CE->getOperand(0)->getType();
+  const Type *Ty = CE->getOperand(0)->getType();
   switch (CE->getOpcode()) {
   case Instruction::LShr:
   case Instruction::URem: 
-  case Instruction::UDiv: NeedsExplicitCast = Ty->isSigned(); break;
+  case Instruction::UDiv: 
+    NeedsExplicitCast = Ty->isSigned(); break;
   case Instruction::AShr:
   case Instruction::SRem: 
-  case Instruction::SDiv: NeedsExplicitCast = Ty->isUnsigned(); break;
+  case Instruction::SDiv: 
+    NeedsExplicitCast = Ty->isUnsigned(); break;
+  case Instruction::ZExt:
+  case Instruction::SExt:
+  case Instruction::Trunc:
+  case Instruction::FPTrunc:
+  case Instruction::FPExt:
+  case Instruction::UIToFP:
+  case Instruction::SIToFP:
+  case Instruction::FPToUI:
+  case Instruction::FPToSI:
+  case Instruction::PtrToInt:
+  case Instruction::IntToPtr:
+  case Instruction::BitCast:
+    Ty = CE->getType();
+    NeedsExplicitCast = true;
+    break;
   default: break;
   }
   if (NeedsExplicitCast) {
@@ -860,7 +939,8 @@ void CWriter::printConstantWithCast(Constant* CPV, unsigned Opcode) {
 
   // Based on the Opcode for which this Constant is being written, determine
   // the new type to which the operand should be casted by setting the value
-  // of OpTy. If we change OpTy, also set shouldCast to true.
+  // of OpTy. If we change OpTy, also set shouldCast to true so it gets
+  // casted below.
   switch (Opcode) {
     default:
       // for most instructions, it doesn't matter
@@ -885,7 +965,7 @@ void CWriter::printConstantWithCast(Constant* CPV, unsigned Opcode) {
       break;
   }
 
-  // Write out the casted constnat if we should, otherwise just write the
+  // Write out the casted constant if we should, otherwise just write the
   // operand.
   if (shouldCast) {
     Out << "((";
@@ -918,7 +998,7 @@ void CWriter::writeOperandInternal(Value *Operand) {
 
 void CWriter::writeOperand(Value *Operand) {
   if (isa<GlobalVariable>(Operand) || isDirectAlloca(Operand))
-    Out << "(&";  // Global variables are references as their addresses by llvm
+    Out << "(&";  // Global variables are referenced as their addresses by llvm
 
   writeOperandInternal(Operand);
 
@@ -932,14 +1012,31 @@ void CWriter::writeOperand(Value *Operand) {
 // for the Instruction.
 bool CWriter::writeInstructionCast(const Instruction &I) {
   bool NeedsExplicitCast = false;
-  const Type* Ty = I.getOperand(0)->getType();
+  const Type *Ty = I.getOperand(0)->getType();
   switch (I.getOpcode()) {
   case Instruction::LShr:
   case Instruction::URem: 
-  case Instruction::UDiv: NeedsExplicitCast = Ty->isSigned(); break;
+  case Instruction::UDiv: 
+    NeedsExplicitCast = Ty->isSigned(); break;
   case Instruction::AShr:
   case Instruction::SRem: 
-  case Instruction::SDiv: NeedsExplicitCast = Ty->isUnsigned(); break;
+  case Instruction::SDiv: 
+    NeedsExplicitCast = Ty->isUnsigned(); break;
+  case Instruction::ZExt:
+  case Instruction::SExt:
+  case Instruction::Trunc:
+  case Instruction::FPTrunc:
+  case Instruction::FPExt:
+  case Instruction::UIToFP:
+  case Instruction::SIToFP:
+  case Instruction::FPToUI:
+  case Instruction::FPToSI:
+  case Instruction::PtrToInt:
+  case Instruction::IntToPtr:
+  case Instruction::BitCast:
+    Ty = I.getType();
+    NeedsExplicitCast = true;
+    break;
   default: break;
   }
   if (NeedsExplicitCast) {
@@ -1136,7 +1233,7 @@ static void FindStaticTors(GlobalVariable *GV, std::set<Function*> &StaticTors){
         return;  // Found a null terminator, exit printing.
       Constant *FP = CS->getOperand(1);
       if (ConstantExpr *CE = dyn_cast<ConstantExpr>(FP))
-        if (CE->getOpcode() == Instruction::Cast)
+        if (CE->isCast())
           FP = CE->getOperand(0);
       if (Function *F = dyn_cast<Function>(FP))
         StaticTors.insert(F);
@@ -1854,22 +1951,20 @@ void CWriter::visitBinaryOperator(Instruction &I) {
 }
 
 void CWriter::visitCastInst(CastInst &I) {
-  if (I.getType() == Type::BoolTy) {
-    Out << '(';
-    writeOperand(I.getOperand(0));
-    Out << " != 0)";
-    return;
-  }
+  const Type *DstTy = I.getType();
+  const Type *SrcTy = I.getOperand(0)->getType();
   Out << '(';
-  printType(Out, I.getType());
-  Out << ')';
-  if (isa<PointerType>(I.getType())&&I.getOperand(0)->getType()->isIntegral() ||
-      isa<PointerType>(I.getOperand(0)->getType())&&I.getType()->isIntegral()) {
-    // Avoid "cast to pointer from integer of different size" warnings
-    Out << "(long)";
+  printCast(I.getOpcode(), SrcTy, DstTy);
+  if (I.getOpcode() == Instruction::SExt && SrcTy == Type::BoolTy) {
+    // Make sure we really get a sext from bool by subtracing the bool from 0
+    Out << "0-";
   }
-
   writeOperand(I.getOperand(0));
+  if (I.getOpcode() == Instruction::Trunc && DstTy == Type::BoolTy) {
+    // Make sure we really get a trunc to bool by anding the operand with 1 
+    Out << "&1u";
+  }
+  Out << ')';
 }
 
 void CWriter::visitSelectInst(SelectInst &I) {
@@ -2076,7 +2171,7 @@ void CWriter::visitCallInst(CallInst &I) {
     // match exactly.
     //
     if (ConstantExpr *CE = dyn_cast<ConstantExpr>(Callee))
-      if (CE->getOpcode() == Instruction::Cast)
+      if (CE->isCast())
         if (Function *RF = dyn_cast<Function>(CE->getOperand(0))) {
           NeedsCast = true;
           Callee = RF;

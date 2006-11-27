@@ -244,6 +244,161 @@ public:
 };
 
 //===----------------------------------------------------------------------===//
+//                               CastInst Class
+//===----------------------------------------------------------------------===//
+
+/// CastInst - This is the base class for all instructions that perform data
+/// casts. It is simply provided so that instruction category testing
+/// can be performed with code like:
+///
+/// if (isa<CastInst>(Instr)) { ... }
+/// @brief Base class of casting instructions.
+class CastInst : public UnaryInstruction {
+  /// @brief Copy constructor
+  CastInst(const CastInst &CI)
+    : UnaryInstruction(CI.getType(), CI.getOpcode(), CI.getOperand(0)) {
+  }
+  /// @brief Do not allow default construction
+  CastInst(); 
+protected:
+  /// @brief Constructor with insert-before-instruction semantics for subclasses
+  CastInst(const Type *Ty, unsigned iType, Value *S, 
+      const std::string &Name = "", Instruction *InsertBefore = 0)
+    : UnaryInstruction(Ty, iType, S, Name, InsertBefore) {
+  }
+  /// @brief Constructor with insert-at-end-of-block semantics for subclasses
+  CastInst(const Type *Ty, unsigned iType, Value *S, 
+      const std::string &Name, BasicBlock *InsertAtEnd)
+    : UnaryInstruction(Ty, iType, S, Name, InsertAtEnd) {
+  }
+public:
+  /// Provides a way to construct any of the CastInst subclasses using an 
+  /// opcode instead of the subclass's constructor. The opcode must be in the
+  /// CastOps category (Instruction::isCast(opcode) returns true). This
+  /// constructor has insert-before-instruction semantics to automatically
+  /// insert the new CastInst before InsertBefore (if it is non-null).
+  /// @brief Construct any of the CastInst subclasses
+  static CastInst *create(
+    Instruction::CastOps,    ///< The opcode of the cast instruction
+    Value *S,                ///< The value to be casted (operand 0)
+    const Type *Ty,          ///< The type to which cast should be made
+    const std::string &Name = "", ///< Name for the instruction
+    Instruction *InsertBefore = 0 ///< Place to insert the instruction
+  );
+  /// Provides a way to construct any of the CastInst subclasses using an
+  /// opcode instead of the subclass's constructor. The opcode must be in the
+  /// CastOps category. This constructor has insert-at-end-of-block semantics
+  /// to automatically insert the new CastInst at the end of InsertAtEnd (if
+  /// its non-null).
+  /// @brief Construct any of the CastInst subclasses
+  static CastInst *create(
+    Instruction::CastOps,    ///< The opcode for the cast instruction
+    Value *S,                ///< The value to be casted (operand 0)
+    const Type *Ty,          ///< The type to which operand is casted
+    const std::string &Name, ///< The name for the instruction
+    BasicBlock *InsertAtEnd  ///< The block to insert the instruction into
+  );
+
+  /// Returns the opcode necessary to cast Val into Ty using usual casting
+  /// rules.
+  static Instruction::CastOps getCastOpcode(
+    const Value *Val, ///< The value to cast
+    const Type *Ty    ///< The Type to which the value should be casted
+  );
+
+  /// Joins the create method (with insert-before-instruction semantics) above 
+  /// with the getCastOpcode method. getOpcode(S,Ty) is called first to
+  /// obtain the opcode for casting S to type Ty. Then the get(...) method is 
+  /// called to create the CastInst and insert it. The instruction is
+  /// inserted before InsertBefore (if it is non-null). The cast created is
+  /// inferred, because only the types involved are used in determining which
+  /// cast opcode to use. For specific casts, use one of the create methods.
+  /// @brief Inline helper method to join create with getCastOpcode.
+  inline static CastInst *createInferredCast(
+    Value *S,                     ///< The value to be casted (operand 0)
+    const Type *Ty,               ///< Type to which operand should be casted
+    const std::string &Name = "", ///< Name for the instruction
+    Instruction *InsertBefore = 0 ///< Place to insert the CastInst
+  ) {
+    return create(getCastOpcode(S, Ty), S, Ty, Name, InsertBefore);
+  }
+
+  /// Joins the get method (with insert-at-end-of-block semantics) method 
+  /// above with the getCastOpcode method. getOpcode(S,Ty) is called first to
+  /// obtain the usual casting opcode for casting S to type Ty. Then the 
+  /// get(...) method is called to create the CastInst and insert it. The 
+  /// instruction is inserted at the end of InsertAtEnd (if it is non-null).
+  /// The created cast is inferred, because only the types involved are used 
+  /// in determining which cast opcode to use. For specific casts, use one of 
+  /// the create methods.
+  /// @brief Inline helper method to join create with getCastOpcode.
+  inline static CastInst *createInferredCast(
+    Value *S,                     ///< The value to be casted (operand 0)
+    const Type *Ty,               ///< Type to which operand should be casted
+    const std::string &Name,      ///< Name for the instruction
+    BasicBlock *InsertAtEnd       ///< The block to insert the instruction into
+  ) {
+    return create(getCastOpcode(S, Ty), S, Ty, Name, InsertAtEnd);
+  }
+
+  /// There are several places where we need to know if a cast instruction 
+  /// only deals with integer source and destination types. To simplify that
+  /// logic, this method is provided.
+  /// @returns true iff the cast has only integral typed operand and dest type.
+  /// @brief Determine if this is an integer-only cast.
+  bool isIntegerCast() const;
+
+  /// A lossless cast is one that does not alter the basic value. It implies
+  /// a no-op cast but is more stringent, preventing things like int->float,
+  /// long->double, int->ptr, or packed->anything. 
+  /// @returns true iff the cast is lossless.
+  /// @brief Determine if this is a lossless cast.
+  bool isLosslessCast() const;
+
+  /// A no-op cast is one that can be effected without changing any bits. 
+  /// It implies that the source and destination types are the same size. The
+  /// IntPtrTy argument is used to make accurate determinations for casts 
+  /// involving Integer and Pointer types. They are no-op casts if the integer
+  /// is the same size as the pointer. However, pointer size varies with 
+  /// platform. Generally, the result of TargetData::getIntPtrType() should be
+  /// passed in. If that's not available, use Type::ULongTy, which will make
+  /// the isNoopCast call conservative.
+  /// @brief Determine if this cast is a no-op cast. 
+  bool isNoopCast(
+    const Type *IntPtrTy ///< Integer type corresponding to pointer
+  ) const;
+
+  /// Determine how a pair of casts can be eliminated, if they can be at all.
+  /// This is a helper function for both CastInst and ConstantExpr.
+  /// @returns 0 if the CastInst pair can't be eliminated
+  /// @returns Instruction::CastOps value for a cast that can replace 
+  /// the pair, casting SrcTy to DstTy.
+  /// @brief Determine if a cast pair is eliminable
+  static unsigned isEliminableCastPair(
+    Instruction::CastOps firstOpcode,  ///< Opcode of first cast
+    Instruction::CastOps secondOpcode, ///< Opcode of second cast
+    const Type *SrcTy, ///< SrcTy of 1st cast
+    const Type *MidTy, ///< DstTy of 1st cast & SrcTy of 2nd cast
+    const Type *DstTy, ///< DstTy of 2nd cast
+    const Type *IntPtrTy ///< Integer type corresponding to Ptr types
+  );
+
+  /// @brief Return the opcode of this CastInst
+  Instruction::CastOps getOpcode() const { 
+    return Instruction::CastOps(Instruction::getOpcode()); 
+  }
+
+  /// @brief Methods for support type inquiry through isa, cast, and dyn_cast:
+  static inline bool classof(const CastInst *) { return true; }
+  static inline bool classof(const Instruction *I) {
+    return I->getOpcode() >= CastOpsBegin && I->getOpcode() < CastOpsEnd;
+  }
+  static inline bool classof(const Value *V) {
+    return isa<Instruction>(V) && classof(cast<Instruction>(V));
+  }
+};
+
+//===----------------------------------------------------------------------===//
 //                               CmpInst Class
 //===----------------------------------------------------------------------===//
 

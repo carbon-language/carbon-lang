@@ -529,11 +529,10 @@ Andersens::Node *Andersens::getNodeForConstantPointer(Constant *C) {
     switch (CE->getOpcode()) {
     case Instruction::GetElementPtr:
       return getNodeForConstantPointer(CE->getOperand(0));
-    case Instruction::Cast:
-      if (isa<PointerType>(CE->getOperand(0)->getType()))
-        return getNodeForConstantPointer(CE->getOperand(0));
-      else
-        return &GraphNodes[UniversalSet];
+    case Instruction::IntToPtr:
+      return &GraphNodes[UniversalSet];
+    case Instruction::BitCast:
+      return getNodeForConstantPointer(CE->getOperand(0));
     default:
       std::cerr << "Constant Expr not yet handled: " << *CE << "\n";
       assert(0);
@@ -557,11 +556,10 @@ Andersens::Node *Andersens::getNodeForConstantPointerTarget(Constant *C) {
     switch (CE->getOpcode()) {
     case Instruction::GetElementPtr:
       return getNodeForConstantPointerTarget(CE->getOperand(0));
-    case Instruction::Cast:
-      if (isa<PointerType>(CE->getOperand(0)->getType()))
-        return getNodeForConstantPointerTarget(CE->getOperand(0));
-      else
-        return &GraphNodes[UniversalSet];
+    case Instruction::IntToPtr:
+      return &GraphNodes[UniversalSet];
+    case Instruction::BitCast:
+      return getNodeForConstantPointerTarget(CE->getOperand(0));
     default:
       std::cerr << "Constant Expr not yet handled: " << *CE << "\n";
       assert(0);

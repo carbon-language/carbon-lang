@@ -87,15 +87,6 @@ FunctionPass *llvm::createRaisePointerReferencesPass() {
   return new RPR();
 }
 
-
-// isReinterpretingCast - Return true if the cast instruction specified will
-// cause the operand to be "reinterpreted".  A value is reinterpreted if the
-// cast instruction would cause the underlying bits to change.
-//
-static inline bool isReinterpretingCast(const CastInst *CI) {
-  return!CI->getOperand(0)->getType()->isLosslesslyConvertibleTo(CI->getType());
-}
-
 bool RPR::PeepholeOptimize(BasicBlock *BB, BasicBlock::iterator &BI) {
   Instruction *I = BI;
   const TargetData &TD = getAnalysis<TargetData>();
@@ -129,7 +120,7 @@ bool RPR::PeepholeOptimize(BasicBlock *BB, BasicBlock::iterator &BI) {
 
     // Check to see if it's a cast of an instruction that does not depend on the
     // specific type of the operands to do it's job.
-    if (!isReinterpretingCast(CI)) {
+    if (CI->isLosslessCast()) {
       ValueTypeCache ConvertedTypes;
 
       // Check to see if we can convert the source of the cast to match the
@@ -238,7 +229,7 @@ bool RPR::PeepholeOptimize(BasicBlock *BB, BasicBlock::iterator &BI) {
             Indices.push_back(Constant::getNullValue(Type::UIntTy));
 
             // Did we find what we're looking for?
-            if (ElTy->isLosslesslyConvertibleTo(DestPointedTy)) break;
+            if (ElTy->canLosslesslyBitCastTo(DestPointedTy)) break;
 
             // Nope, go a level deeper.
             ++Depth;
@@ -257,9 +248,23 @@ bool RPR::PeepholeOptimize(BasicBlock *BB, BasicBlock::iterator &BI) {
                                                            Name, BI);
 
             // Make the old cast instruction reference the new GEP instead of
-            // the old src value.
-            //
-            CI->setOperand(0, GEP);
+            // the old src value. 
+            if (CI->getOperand(0)->getType() == GEP->getType()) {
+              // If the source types are the same we can safely replace the
+              // first operand of the CastInst because the opcode won't 
+              // change as a result.
+              CI->setOperand(0, GEP);
+            } else {
+              // The existing and new operand 0 types are different so we must
+              // replace CI with a new CastInst so that we are assured to 
+              // get the correct cast opcode.
+              CastInst *NewCI = CastInst::createInferredCast(
+                GEP, CI->getType(), CI->getName(), CI);
+              CI->replaceAllUsesWith(NewCI);
+              CI->eraseFromParent();
+              CI = NewCI;
+              BI = NewCI; // Don't let the iterator invalidate
+            }
 
             PRINT_PEEPHOLE2("cast-for-first:out", *GEP, *CI);
             ++NumGEPInstFormed;
@@ -273,7 +278,7 @@ bool RPR::PeepholeOptimize(BasicBlock *BB, BasicBlock::iterator &BI) {
     Value *Pointer = SI->getPointerOperand();
 
     // Peephole optimize the following instructions:
-    // %t = cast <T1>* %P to <T2> * ;; If T1 is losslessly convertible to T2
+    // %t = cast <T1>* %P to <T2> * ;; If T1 is losslessly castable to T2
     // store <T2> %V, <T2>* %t
     //
     // Into:
@@ -289,13 +294,14 @@ bool RPR::PeepholeOptimize(BasicBlock *BB, BasicBlock::iterator &BI) {
       if (Value *CastSrc = CI->getOperand(0)) // CSPT = CastSrcPointerType
         if (const PointerType *CSPT = dyn_cast<PointerType>(CastSrc->getType()))
           // convertible types?
-          if (Val->getType()->isLosslesslyConvertibleTo(CSPT->getElementType())) {
+          if (Val->getType()->canLosslesslyBitCastTo(CSPT->getElementType()))
+          {
             PRINT_PEEPHOLE3("st-src-cast:in ", *Pointer, *Val, *SI);
 
             // Insert the new T cast instruction... stealing old T's name
             std::string Name(CI->getName()); CI->setName("");
-            CastInst *NCI = new CastInst(Val, CSPT->getElementType(),
-                                         Name, BI);
+            CastInst *NCI = CastInst::create(Instruction::BitCast, Val, 
+                CSPT->getElementType(), Name, BI);
 
             // Replace the old store with a new one!
             ReplaceInstWithInst(BB->getInstList(), BI,
@@ -327,14 +333,16 @@ bool RPR::PeepholeOptimize(BasicBlock *BB, BasicBlock::iterator &BI) {
       if (Value *CastSrc = CI->getOperand(0)) // CSPT = CastSrcPointerType
         if (const PointerType *CSPT = dyn_cast<PointerType>(CastSrc->getType()))
           // convertible types?
-          if (PtrElType->isLosslesslyConvertibleTo(CSPT->getElementType())) {
+          if (PtrElType->canLosslesslyBitCastTo(CSPT->getElementType())) {
             PRINT_PEEPHOLE2("load-src-cast:in ", *Pointer, *LI);
 
             // Create the new load instruction... loading the pre-casted value
             LoadInst *NewLI = new LoadInst(CastSrc, LI->getName(), BI);
 
             // Insert the new T cast instruction... stealing old T's name
-            CastInst *NCI = new CastInst(NewLI, LI->getType(), CI->getName());
+            CastInst *NCI = 
+              CastInst::create(Instruction::BitCast, NewLI, LI->getType(), 
+                               CI->getName());
 
             // Replace the old store with a new one!
             ReplaceInstWithInst(BB->getInstList(), BI, NCI);
@@ -366,15 +374,12 @@ bool RPR::PeepholeOptimize(BasicBlock *BB, BasicBlock::iterator &BI) {
 
       // Create a new cast, inserting it right before the function call...
       Value *NewCast;
-      Constant *ConstantCallSrc = 0;
       if (Constant *CS = dyn_cast<Constant>(CI->getCalledValue()))
-        ConstantCallSrc = CS;
-
-      if (ConstantCallSrc)
-        NewCast = ConstantExpr::getCast(ConstantCallSrc, NewPFunTy);
+        NewCast = ConstantExpr::getBitCast(CS, NewPFunTy);
       else
-        NewCast = new CastInst(CI->getCalledValue(), NewPFunTy,
-                               CI->getCalledValue()->getName()+"_c",CI);
+        NewCast = CastInst::create(Instruction::BitCast, CI->getCalledValue(), 
+                                   NewPFunTy, 
+                                   CI->getCalledValue()->getName()+"_c", CI);
 
       // Create a new call instruction...
       CallInst *NewCall = new CallInst(NewCast,

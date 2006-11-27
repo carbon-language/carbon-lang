@@ -757,7 +757,7 @@ void CppWriter::printConstant(const Constant *CV) {
           << " = ConstantExpr::getGetElementPtr(" 
           << getCppName(CE->getOperand(0)) << ", " 
           << constName << "_indices);";
-    } else if (CE->getOpcode() == Instruction::Cast) {
+    } else if (CE->isCast()) {
       printConstant(CE->getOperand(0));
       Out << "Constant* " << constName << " = ConstantExpr::getCast(";
       Out << getCppName(CE->getOperand(0)) << ", " << getCppName(CE->getType())
@@ -1174,10 +1174,36 @@ CppWriter::printInstruction(const Instruction *I, const std::string& bbname) {
       }
       break;
     }
-    case Instruction::Cast: {
+    case Instruction::Trunc: 
+    case Instruction::ZExt:
+    case Instruction::SExt:
+    case Instruction::FPTrunc:
+    case Instruction::FPExt:
+    case Instruction::FPToUI:
+    case Instruction::FPToSI:
+    case Instruction::UIToFP:
+    case Instruction::SIToFP:
+    case Instruction::PtrToInt:
+    case Instruction::IntToPtr:
+    case Instruction::BitCast: {
       const CastInst* cst = cast<CastInst>(I);
-      Out << "CastInst* " << iName << " = new CastInst("
-          << opNames[0] << ", "
+      Out << "CastInst* " << iName << " = new ";
+      switch (I->getOpcode()) {
+        case Instruction::Trunc:    Out << "TruncInst";
+        case Instruction::ZExt:     Out << "ZExtInst";
+        case Instruction::SExt:     Out << "SExtInst";
+        case Instruction::FPTrunc:  Out << "FPTruncInst";
+        case Instruction::FPExt:    Out << "FPExtInst";
+        case Instruction::FPToUI:   Out << "FPToUIInst";
+        case Instruction::FPToSI:   Out << "FPToSIInst";
+        case Instruction::UIToFP:   Out << "UIToFPInst";
+        case Instruction::SIToFP:   Out << "SIToFPInst";
+        case Instruction::PtrToInt: Out << "PtrToInst";
+        case Instruction::IntToPtr: Out << "IntToPtrInst";
+        case Instruction::BitCast:  Out << "BitCastInst";
+        default: assert(!"Unreachable"); break;
+      }
+      Out << "(" << opNames[0] << ", "
           << getCppName(cst->getType()) << ", \"";
       printEscapedString(cst->getName());
       Out << "\", " << bbname << ");";

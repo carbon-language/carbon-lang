@@ -113,8 +113,10 @@ void BVNImpl::visitCastInst(CastInst &CI) {
   for (Value::use_iterator UI = Op->use_begin(), UE = Op->use_end();
        UI != UE; ++UI)
     if (CastInst *Other = dyn_cast<CastInst>(*UI))
-      // Check that the types are the same, since this code handles casts...
-      if (Other->getType() == I.getType() &&
+      // Check that the opcode is the same
+      if (Other->getOpcode() == Instruction::CastOps(I.getOpcode()) &&
+          // Check that the destination types are the same
+          Other->getType() == I.getType() &&
           // Is it embedded in the same function?  (This could be false if LHS
           // is a constant or global!)
           Other->getParent()->getParent() == F &&

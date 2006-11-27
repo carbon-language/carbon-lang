@@ -81,8 +81,20 @@ static GenericValue executeSelectInst(GenericValue Src1, GenericValue Src2,
 GenericValue Interpreter::getConstantExprValue (ConstantExpr *CE,
                                                 ExecutionContext &SF) {
   switch (CE->getOpcode()) {
-  case Instruction::Cast:
-    return executeCastOperation(CE->getOperand(0), CE->getType(), SF);
+  case Instruction::Trunc:
+  case Instruction::ZExt:
+  case Instruction::SExt:
+  case Instruction::FPTrunc:
+  case Instruction::FPExt:
+  case Instruction::UIToFP:
+  case Instruction::SIToFP:
+  case Instruction::FPToUI:
+  case Instruction::FPToSI:
+  case Instruction::PtrToInt:
+  case Instruction::IntToPtr:
+  case Instruction::BitCast:
+    return executeCastOperation(Instruction::CastOps(CE->getOpcode()), 
+                                CE->getOperand(0), CE->getType(), SF);
   case Instruction::GetElementPtr:
     return executeGEPOperation(CE->getOperand(0), gep_type_begin(CE),
                                gep_type_end(CE), SF);
@@ -1030,12 +1042,15 @@ void Interpreter::visitAShr(ShiftInst &I) {
   SetValue(&I, Dest, SF);
 }
 
-#define IMPLEMENT_CAST(DTY, DCTY, STY) \
-   case Type::STY##TyID: Dest.DTY##Val = DCTY Src.STY##Val; break;
+#define IMPLEMENT_CAST_START \
+  switch (DstTy->getTypeID()) {
 
-#define IMPLEMENT_CAST_CASE_START(DESTTY, DESTCTY)    \
+#define IMPLEMENT_CAST(DTY, DCTY, STY) \
+     case Type::STY##TyID: Dest.DTY##Val = DCTY Src.STY##Val; break;
+
+#define IMPLEMENT_CAST_CASE(DESTTY, DESTCTY)    \
   case Type::DESTTY##TyID:                      \
-    switch (SrcTy->getTypeID()) {          \
+    switch (SrcTy->getTypeID()) {               \
       IMPLEMENT_CAST(DESTTY, DESTCTY, Bool);    \
       IMPLEMENT_CAST(DESTTY, DESTCTY, UByte);   \
       IMPLEMENT_CAST(DESTTY, DESTCTY, SByte);   \
@@ -1045,52 +1060,182 @@ void Interpreter::visitAShr(ShiftInst &I) {
       IMPLEMENT_CAST(DESTTY, DESTCTY, Int);     \
       IMPLEMENT_CAST(DESTTY, DESTCTY, ULong);   \
       IMPLEMENT_CAST(DESTTY, DESTCTY, Long);    \
-      IMPLEMENT_CAST(DESTTY, DESTCTY, Pointer);
-
-#define IMPLEMENT_CAST_CASE_FP_IMP(DESTTY, DESTCTY) \
+      IMPLEMENT_CAST(DESTTY, DESTCTY, Pointer); \
       IMPLEMENT_CAST(DESTTY, DESTCTY, Float);   \
-      IMPLEMENT_CAST(DESTTY, DESTCTY, Double)
-
-#define IMPLEMENT_CAST_CASE_END()    \
-    default: std::cout << "Unhandled cast: " << *SrcTy << " to " << *Ty << "\n"; \
+      IMPLEMENT_CAST(DESTTY, DESTCTY, Double)   \
+    default:                                    \
+      std::cout << "Unhandled cast: "           \
+        << *SrcTy << " to " << *DstTy << "\n";  \
       abort();                                  \
     }                                           \
     break
 
-#define IMPLEMENT_CAST_CASE(DESTTY, DESTCTY) \
-   IMPLEMENT_CAST_CASE_START(DESTTY, DESTCTY);   \
-   IMPLEMENT_CAST_CASE_FP_IMP(DESTTY, DESTCTY); \
-   IMPLEMENT_CAST_CASE_END()
+#define IMPLEMENT_CAST_END                      \
+  default: std::cout                            \
+      << "Unhandled dest type for cast instruction: "  \
+      << *DstTy << "\n";                        \
+    abort();                                    \
+  }
 
-GenericValue Interpreter::executeCastOperation(Value *SrcVal, const Type *Ty,
+GenericValue Interpreter::executeCastOperation(Instruction::CastOps opcode,
+                                               Value *SrcVal, const Type *DstTy,
                                                ExecutionContext &SF) {
   const Type *SrcTy = SrcVal->getType();
   GenericValue Dest, Src = getOperandValue(SrcVal, SF);
 
-  switch (Ty->getTypeID()) {
-    IMPLEMENT_CAST_CASE(UByte  , (unsigned char));
-    IMPLEMENT_CAST_CASE(SByte  , (  signed char));
-    IMPLEMENT_CAST_CASE(UShort , (unsigned short));
-    IMPLEMENT_CAST_CASE(Short  , (  signed short));
-    IMPLEMENT_CAST_CASE(UInt   , (unsigned int ));
-    IMPLEMENT_CAST_CASE(Int    , (  signed int ));
-    IMPLEMENT_CAST_CASE(ULong  , (uint64_t));
-    IMPLEMENT_CAST_CASE(Long   , ( int64_t));
-    IMPLEMENT_CAST_CASE(Pointer, (PointerTy));
-    IMPLEMENT_CAST_CASE(Float  , (float));
-    IMPLEMENT_CAST_CASE(Double , (double));
-    IMPLEMENT_CAST_CASE(Bool   , (bool));
-  default:
-    std::cout << "Unhandled dest type for cast instruction: " << *Ty << "\n";
-    abort();
+  if (opcode == Instruction::Trunc && DstTy->getTypeID() == Type::BoolTyID) {
+    // For truncations to bool, we must clear the high order bits of the source
+    switch (SrcTy->getTypeID()) {
+      case Type::BoolTyID:   Src.BoolVal   &= 1; break;
+      case Type::SByteTyID:  Src.SByteVal  &= 1; break;
+      case Type::UByteTyID:  Src.UByteVal  &= 1; break;
+      case Type::ShortTyID:  Src.ShortVal  &= 1; break;
+      case Type::UShortTyID: Src.UShortVal &= 1; break;
+      case Type::IntTyID:    Src.IntVal    &= 1; break;
+      case Type::UIntTyID:   Src.UIntVal   &= 1; break;
+      case Type::LongTyID:   Src.LongVal   &= 1; break;
+      case Type::ULongTyID:  Src.ULongVal  &= 1; break;
+      default:
+        assert(0 && "Can't trunc a non-integer!");
+        break;
+    }
+  } else if (opcode == Instruction::SExt && 
+             SrcTy->getTypeID() == Type::BoolTyID) {
+    // For sign extension from bool, we must extend the source bits.
+    SrcTy = Type::LongTy;
+    Src.LongVal = 0 - Src.BoolVal;
   }
 
+  switch (opcode) {
+    case Instruction::Trunc:     // src integer, dest integral (can't be long)
+      IMPLEMENT_CAST_START
+      IMPLEMENT_CAST_CASE(Bool   , (bool));
+      IMPLEMENT_CAST_CASE(UByte  , (unsigned char));
+      IMPLEMENT_CAST_CASE(SByte  , (  signed char));
+      IMPLEMENT_CAST_CASE(UShort , (unsigned short));
+      IMPLEMENT_CAST_CASE(Short  , (  signed short));
+      IMPLEMENT_CAST_CASE(UInt   , (unsigned int ));
+      IMPLEMENT_CAST_CASE(Int    , (  signed int ));
+      IMPLEMENT_CAST_END
+      break;
+    case Instruction::ZExt:      // src integral (can't be long), dest integer
+      IMPLEMENT_CAST_START
+      IMPLEMENT_CAST_CASE(UByte  , (unsigned char));
+      IMPLEMENT_CAST_CASE(SByte  , (signed char)(unsigned char));
+      IMPLEMENT_CAST_CASE(UShort , (unsigned short));
+      IMPLEMENT_CAST_CASE(Short  , (signed short)(unsigned short));
+      IMPLEMENT_CAST_CASE(UInt   , (unsigned int ));
+      IMPLEMENT_CAST_CASE(Int    , (signed int)(unsigned int ));
+      IMPLEMENT_CAST_CASE(ULong  , (uint64_t));
+      IMPLEMENT_CAST_CASE(Long   , (int64_t)(uint64_t));
+      IMPLEMENT_CAST_END
+      break;
+    case Instruction::SExt:      // src integral (can't be long), dest integer
+      IMPLEMENT_CAST_START
+      IMPLEMENT_CAST_CASE(UByte  , (unsigned char)(signed char));
+      IMPLEMENT_CAST_CASE(SByte  , (signed char));
+      IMPLEMENT_CAST_CASE(UShort , (unsigned short)(signed short));
+      IMPLEMENT_CAST_CASE(Short  , (signed short));
+      IMPLEMENT_CAST_CASE(UInt   , (unsigned int )(signed int));
+      IMPLEMENT_CAST_CASE(Int    , (signed int));
+      IMPLEMENT_CAST_CASE(ULong  , (uint64_t)(int64_t));
+      IMPLEMENT_CAST_CASE(Long   , (int64_t));
+      IMPLEMENT_CAST_END
+      break;
+    case Instruction::FPTrunc:   // src double, dest float
+      IMPLEMENT_CAST_START
+      IMPLEMENT_CAST_CASE(Float  , (float));
+      IMPLEMENT_CAST_END
+      break;
+    case Instruction::FPExt:     // src float, dest double
+      IMPLEMENT_CAST_START
+      IMPLEMENT_CAST_CASE(Double , (double));
+      IMPLEMENT_CAST_END
+      break;
+    case Instruction::UIToFP:    // src integral, dest floating
+      IMPLEMENT_CAST_START
+      IMPLEMENT_CAST_CASE(Float  , (float)(uint64_t));
+      IMPLEMENT_CAST_CASE(Double , (double)(uint64_t));
+      IMPLEMENT_CAST_END
+      break;
+    case Instruction::SIToFP:    // src integeral, dest floating
+      IMPLEMENT_CAST_START
+      IMPLEMENT_CAST_CASE(Float  , (float)(int64_t));
+      IMPLEMENT_CAST_CASE(Double , (double)(int64_t));
+      IMPLEMENT_CAST_END
+      break;
+    case Instruction::FPToUI:    // src floating, dest integral
+      IMPLEMENT_CAST_START
+      IMPLEMENT_CAST_CASE(Bool   , (bool));
+      IMPLEMENT_CAST_CASE(UByte  , (unsigned char));
+      IMPLEMENT_CAST_CASE(SByte  , (signed char)(unsigned char));
+      IMPLEMENT_CAST_CASE(UShort , (unsigned short));
+      IMPLEMENT_CAST_CASE(Short  , (signed short)(unsigned short));
+      IMPLEMENT_CAST_CASE(UInt   , (unsigned int ));
+      IMPLEMENT_CAST_CASE(Int    , (signed int)(unsigned int ));
+      IMPLEMENT_CAST_CASE(ULong  , (uint64_t));
+      IMPLEMENT_CAST_CASE(Long   , (int64_t)(uint64_t));
+      IMPLEMENT_CAST_END
+      break;
+    case Instruction::FPToSI:    // src floating, dest integral
+      IMPLEMENT_CAST_START
+      IMPLEMENT_CAST_CASE(Bool   , (bool));
+      IMPLEMENT_CAST_CASE(UByte  , (unsigned char)(signed char));
+      IMPLEMENT_CAST_CASE(SByte  , (signed char));
+      IMPLEMENT_CAST_CASE(UShort , (unsigned short)(signed short));
+      IMPLEMENT_CAST_CASE(Short  , (signed short));
+      IMPLEMENT_CAST_CASE(UInt   , (unsigned int )(signed int));
+      IMPLEMENT_CAST_CASE(Int    , (signed int));
+      IMPLEMENT_CAST_CASE(ULong  , (uint64_t)(int64_t));
+      IMPLEMENT_CAST_CASE(Long   , (int64_t));
+      IMPLEMENT_CAST_END
+      break;
+    case Instruction::PtrToInt:  // src pointer,  dest integral
+      IMPLEMENT_CAST_START
+      IMPLEMENT_CAST_CASE(Bool   , (bool));
+      IMPLEMENT_CAST_CASE(UByte  , (unsigned char));
+      IMPLEMENT_CAST_CASE(SByte  , (signed char)(unsigned char));
+      IMPLEMENT_CAST_CASE(UShort , (unsigned short));
+      IMPLEMENT_CAST_CASE(Short  , (signed short)(unsigned short));
+      IMPLEMENT_CAST_CASE(UInt   , (unsigned int));
+      IMPLEMENT_CAST_CASE(Int    , (signed int)(unsigned int));
+      IMPLEMENT_CAST_CASE(ULong  , (uint64_t));
+      IMPLEMENT_CAST_CASE(Long   , (int64_t)(uint64_t));
+      IMPLEMENT_CAST_END
+      break;
+    case Instruction::IntToPtr:  // src integral, dest pointer
+      IMPLEMENT_CAST_START
+      IMPLEMENT_CAST_CASE(Pointer, (PointerTy));
+      IMPLEMENT_CAST_END
+      break;
+    case Instruction::BitCast:   // src any, dest any (same size)
+      IMPLEMENT_CAST_START
+      IMPLEMENT_CAST_CASE(Bool   , (bool));
+      IMPLEMENT_CAST_CASE(UByte  , (unsigned char));
+      IMPLEMENT_CAST_CASE(SByte  , (  signed char));
+      IMPLEMENT_CAST_CASE(UShort , (unsigned short));
+      IMPLEMENT_CAST_CASE(Short  , (  signed short));
+      IMPLEMENT_CAST_CASE(UInt   , (unsigned int));
+      IMPLEMENT_CAST_CASE(Int    , (  signed int));
+      IMPLEMENT_CAST_CASE(ULong  , (uint64_t));
+      IMPLEMENT_CAST_CASE(Long   , ( int64_t));
+      IMPLEMENT_CAST_CASE(Pointer, (PointerTy));
+      IMPLEMENT_CAST_CASE(Float  , (float));
+      IMPLEMENT_CAST_CASE(Double , (double));
+      IMPLEMENT_CAST_END
+      break;
+    default:
+      std::cout 
+        << "Invalid cast opcode for cast instruction: " << opcode << "\n";
+      abort();
+  }
   return Dest;
 }
 
 void Interpreter::visitCastInst(CastInst &I) {
   ExecutionContext &SF = ECStack.back();
-  SetValue(&I, executeCastOperation(I.getOperand(0), I.getType(), SF), SF);
+  SetValue(&I, executeCastOperation(I.getOpcode(), I.getOperand(0), 
+                                    I.getType(), SF), SF);
 }
 
 #define IMPLEMENT_VAARG(TY) \

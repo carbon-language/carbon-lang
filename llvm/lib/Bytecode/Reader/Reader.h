@@ -230,19 +230,20 @@ protected:
   /// the instruction. This function handles all *abnormal* cases for 
   /// instruction generation based on obsolete opcode values. The normal cases 
   /// are handled by the ParseInstruction function.
-  Instruction* upgradeInstrOpcodes(
+  Instruction *upgradeInstrOpcodes(
     unsigned &opcode,   ///< The old opcode, possibly updated by this function
     std::vector<unsigned> &Oprnds, ///< The operands to the instruction
     unsigned &iType,    ///< The type code from the bytecode file
-    const Type* InstTy, ///< The type of the instruction
-    BasicBlock* BB      ///< The basic block to insert into, if we need to
+    const Type *InstTy, ///< The type of the instruction
+    BasicBlock *BB      ///< The basic block to insert into, if we need to
   );
 
   /// @brief Convert previous opcode values for ConstantExpr into the current 
   /// value.
-  unsigned upgradeCEOpcodes(
-    unsigned Opcode,                      ///< Opcode read from bytecode
-    const std::vector<Constant*> &ArgVec  ///< Arguments of instruction
+  Constant *upgradeCEOpcodes(
+    unsigned &Opcode,                     ///< Opcode read from bytecode
+    const std::vector<Constant*> &ArgVec, ///< Arguments of instruction
+    unsigned TypeID                       ///< TypeID of the instruction type
   );
 
   /// @brief Parse a single instruction.

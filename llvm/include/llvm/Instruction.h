@@ -125,6 +125,16 @@ public:
     return getOpcode() >= BinaryOpsBegin && getOpcode() < BinaryOpsEnd;
   }
 
+  /// @brief Determine if the OpCode is one of the CastInst instructions.
+  static inline bool isCast(unsigned OpCode) {
+    return OpCode >= CastOpsBegin && OpCode < CastOpsEnd;
+  }
+
+  /// @brief Determine if this is one of the CastInst instructions.
+  inline bool isCast() const {
+    return isCast(getOpcode());
+  }
+
   /// isAssociative - Return true if the instruction is associative:
   ///
   ///   Associative operators satisfy:  x op (y op z) === (x op y) op z
@@ -188,6 +198,13 @@ public:
 #define  FIRST_MEMORY_INST(N)             MemoryOpsBegin = N,
 #define HANDLE_MEMORY_INST(N, OPC, CLASS) OPC = N,
 #define   LAST_MEMORY_INST(N)             MemoryOpsEnd = N+1
+#include "llvm/Instruction.def"
+  };
+
+  enum CastOps {
+#define  FIRST_CAST_INST(N)             CastOpsBegin = N,
+#define HANDLE_CAST_INST(N, OPC, CLASS) OPC = N,
+#define   LAST_CAST_INST(N)             CastOpsEnd = N+1
 #include "llvm/Instruction.def"
   };
 

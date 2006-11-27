@@ -192,8 +192,8 @@ private:  // Helper functions
   void initializeExternalFunctions();
   GenericValue getConstantExprValue(ConstantExpr *CE, ExecutionContext &SF);
   GenericValue getOperandValue(Value *V, ExecutionContext &SF);
-  GenericValue executeCastOperation(Value *SrcVal, const Type *Ty,
-                                    ExecutionContext &SF);
+  GenericValue executeCastOperation(Instruction::CastOps opcode, Value *SrcVal, 
+                                    const Type *Ty, ExecutionContext &SF);
   void popStackAndReturnValueToCaller(const Type *RetTy, GenericValue Result);
 };
 

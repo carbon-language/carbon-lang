@@ -226,7 +226,7 @@ const char *Intrinsic::getName(ID id) {
 
 Value *IntrinsicInst::StripPointerCasts(Value *Ptr) {
   if (ConstantExpr *CE = dyn_cast<ConstantExpr>(Ptr)) {
-    if (CE->getOpcode() == Instruction::Cast) {
+    if (CE->getOpcode() == Instruction::BitCast) {
       if (isa<PointerType>(CE->getOperand(0)->getType()))
         return StripPointerCasts(CE->getOperand(0));
     } else if (CE->getOpcode() == Instruction::GetElementPtr) {
@@ -238,7 +238,7 @@ Value *IntrinsicInst::StripPointerCasts(Value *Ptr) {
     return Ptr;
   }
 
-  if (CastInst *CI = dyn_cast<CastInst>(Ptr)) {
+  if (BitCastInst *CI = dyn_cast<BitCastInst>(Ptr)) {
     if (isa<PointerType>(CI->getOperand(0)->getType()))
       return StripPointerCasts(CI->getOperand(0));
   } else if (GetElementPtrInst *GEP = dyn_cast<GetElementPtrInst>(Ptr)) {

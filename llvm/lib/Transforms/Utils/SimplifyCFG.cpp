@@ -425,11 +425,6 @@ static Value *GatherConstantSetNEs(Value *V, std::vector<ConstantInt*> &Values){
         Values.push_back(C);
         return Inst->getOperand(1);
       }
-    } else if (Inst->getOpcode() == Instruction::Cast) {
-      // Cast of X to bool is really a comparison against zero.
-      assert(Inst->getType() == Type::BoolTy && "Can only handle bool values!");
-      Values.push_back(ConstantInt::get(Inst->getOperand(0)->getType(), 0));
-      return Inst->getOperand(0);
     } else if (Inst->getOpcode() == Instruction::And) {
       if (Value *LHS = GatherConstantSetNEs(Inst->getOperand(0), Values))
         if (Value *RHS = GatherConstantSetNEs(Inst->getOperand(1), Values))

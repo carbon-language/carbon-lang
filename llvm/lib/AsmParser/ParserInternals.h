@@ -212,10 +212,11 @@ struct OpcodeInfo {
   Enum opcode;
   bool obsolete;
 };
-typedef OpcodeInfo<llvm::Instruction::BinaryOps>  BinaryOpInfo;
-typedef OpcodeInfo<llvm::Instruction::TermOps>    TermOpInfo;
-typedef OpcodeInfo<llvm::Instruction::MemoryOps>  MemOpInfo;
-typedef OpcodeInfo<llvm::Instruction::OtherOps>   OtherOpInfo;
+typedef OpcodeInfo<llvm::Instruction::BinaryOps> BinaryOpInfo;
+typedef OpcodeInfo<llvm::Instruction::TermOps>   TermOpInfo;
+typedef OpcodeInfo<llvm::Instruction::MemoryOps> MemOpInfo;
+typedef OpcodeInfo<llvm::Instruction::CastOps>   CastOpInfo;
+typedef OpcodeInfo<llvm::Instruction::OtherOps>  OtherOpInfo;
 
 /// This enumeration is used to indicate if a type is signed, signless or
 /// unsigned. It is used for backwards compatibility with assembly code that

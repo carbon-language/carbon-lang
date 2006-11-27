@@ -329,7 +329,7 @@ static bool CleanupConstantGlobalUsers(Value *V, Constant *Init) {
         if (Init)
           SubInit = ConstantFoldLoadThroughGEPConstantExpr(Init, CE);
         Changed |= CleanupConstantGlobalUsers(CE, SubInit);
-      } else if (CE->getOpcode() == Instruction::Cast &&
+      } else if (CE->getOpcode() == Instruction::BitCast && 
                  isa<PointerType>(CE->getType())) {
         // Pointer cast, delete any stores and memsets to the global.
         Changed |= CleanupConstantGlobalUsers(CE, 0);
@@ -1174,7 +1174,7 @@ static void ShrinkGlobalToBoolean(GlobalVariable *GV, Constant *OtherVal) {
       LoadInst *NLI = new LoadInst(NewGV, Name+".b", LI);
       Value *NSI;
       if (IsOneZero)
-        NSI = new CastInst(NLI, LI->getType(), Name, LI);
+        NSI = CastInst::createInferredCast(NLI, LI->getType(), Name, LI);
       else
         NSI = new SelectInst(NLI, OtherVal, InitVal, Name, LI);
       LI->replaceAllUsesWith(NSI);

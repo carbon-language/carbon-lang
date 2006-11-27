@@ -423,7 +423,20 @@ void AsmPrinter::EmitConstantValueOnly(const Constant *CV) {
       }
       break;
     }
-    case Instruction::Cast: {
+    case Instruction::Trunc:
+    case Instruction::ZExt:
+    case Instruction::SExt:
+    case Instruction::FPTrunc:
+    case Instruction::FPExt:
+    case Instruction::UIToFP:
+    case Instruction::SIToFP:
+    case Instruction::FPToUI:
+    case Instruction::FPToSI:
+      assert(0 && "FIXME: Don't yet support this kind of constant cast expr");
+      break;
+    case Instruction::IntToPtr:
+    case Instruction::PtrToInt:
+    case Instruction::BitCast: {
       // Support only foldable casts to/from pointers that can be eliminated by
       // changing the pointer to the appropriately sized integer type.
       Constant *Op = CE->getOperand(0);

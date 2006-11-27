@@ -141,14 +141,11 @@ void FunctionInfo::analyzeFunction(Function *F) {
          II != E; ++II) {
       if (isa<DbgInfoIntrinsic>(II)) continue;  // Debug intrinsics don't count.
       
-      // Noop casts don't count.
+      // Noop casts, including ptr <-> int,  don't count.
       if (const CastInst *CI = dyn_cast<CastInst>(II)) {
-        const Type *OpTy = CI->getOperand(0)->getType();
-        if (CI->getType()->isLosslesslyConvertibleTo(OpTy))
+        if (CI->isLosslessCast() || isa<IntToPtrInst>(CI) || 
+            isa<PtrToIntInst>(CI))
           continue;
-        if ((isa<PointerType>(CI->getType()) && OpTy->isInteger()) ||
-            (isa<PointerType>(OpTy) && CI->getType()->isInteger()))
-          continue;  // ptr <-> int is *probably* noop cast.
       } else if (const GetElementPtrInst *GEPI =
                          dyn_cast<GetElementPtrInst>(II)) {
         // If a GEP has all constant indices, it will probably be folded with

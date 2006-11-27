@@ -140,7 +140,9 @@ bool RaiseAllocations::runOnModule(Module &M) {
           // If no prototype was provided for malloc, we may need to cast the
           // source size.
           if (Source->getType() != Type::UIntTy)
-            Source = new CastInst(Source, Type::UIntTy, "MallocAmtCast", I);
+            Source = 
+              CastInst::createInferredCast(Source, Type::UIntTy,
+                                           "MallocAmtCast", I);
 
           std::string Name(I->getName()); I->setName("");
           MallocInst *MI = new MallocInst(Type::SByteTy, Source, Name, I);
@@ -160,7 +162,7 @@ bool RaiseAllocations::runOnModule(Module &M) {
         Users.insert(Users.end(), GV->use_begin(), GV->use_end());
         EqPointers.push_back(GV);
       } else if (ConstantExpr *CE = dyn_cast<ConstantExpr>(U)) {
-        if (CE->getOpcode() == Instruction::Cast) {
+        if (CE->isCast()) {
           Users.insert(Users.end(), CE->use_begin(), CE->use_end());
           EqPointers.push_back(CE);
         }
@@ -191,8 +193,8 @@ bool RaiseAllocations::runOnModule(Module &M) {
           //
           Value *Source = *CS.arg_begin();
           if (!isa<PointerType>(Source->getType()))
-            Source = new CastInst(Source, PointerType::get(Type::SByteTy),
-                                  "FreePtrCast", I);
+            Source = CastInst::createInferredCast(
+                Source, PointerType::get(Type::SByteTy), "FreePtrCast", I);
           new FreeInst(Source, I);
 
           // If the old instruction was an invoke, add an unconditional branch
@@ -211,7 +213,7 @@ bool RaiseAllocations::runOnModule(Module &M) {
         Users.insert(Users.end(), GV->use_begin(), GV->use_end());
         EqPointers.push_back(GV);
       } else if (ConstantExpr *CE = dyn_cast<ConstantExpr>(U)) {
-        if (CE->getOpcode() == Instruction::Cast) {
+        if (CE->isCast()) {
           Users.insert(Users.end(), CE->use_begin(), CE->use_end());
           EqPointers.push_back(CE);
         }

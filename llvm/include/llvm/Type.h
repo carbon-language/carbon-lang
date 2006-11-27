@@ -194,10 +194,12 @@ public:
   ///
   inline bool isAbstract() const { return Abstract; }
 
-  /// isLosslesslyConvertibleTo - Return true if this type can be converted to
-  /// 'Ty' without any reinterpretation of bits.  For example, uint to int.
-  ///
-  bool isLosslesslyConvertibleTo(const Type *Ty) const;
+  /// canLosslesslyBitCastTo - Return true if this type could be converted 
+  /// with a lossless BitCast to type 'Ty'. For example, uint to int. BitCasts 
+  /// are valid for types of the same size only where no re-interpretation of 
+  /// the bits is done.
+  /// @brief Determine if this type could be losslessly bitcast to Ty
+  bool canLosslesslyBitCastTo(const Type *Ty) const;
 
 
   /// Here are some useful little methods to query what type derived types are

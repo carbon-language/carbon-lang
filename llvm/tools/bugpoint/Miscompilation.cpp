@@ -734,9 +734,9 @@ static void CleanupAndPrepareModules(BugDriver &BD, Module *&Test,
           CallInst *Resolver = new CallInst(resolverFunc, ResolverArgs,
                                             "resolver", LookupBB);
           // cast the result from the resolver to correctly-typed function
-          CastInst *CastedResolver =
-            new CastInst(Resolver, PointerType::get(F->getFunctionType()),
-                         "resolverCast", LookupBB);
+          CastInst *CastedResolver = new BitCastInst(Resolver, 
+            PointerType::get(F->getFunctionType()), "resolverCast", LookupBB);
+
           // Save the value in our cache.
           new StoreInst(CastedResolver, Cache, LookupBB);
           new BranchInst(DoCallBB, LookupBB);

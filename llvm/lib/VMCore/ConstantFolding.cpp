@@ -507,7 +507,7 @@ struct VISIBILITY_HIDDEN DirectIntRules
   // Casting operators.  ick
 #define DEF_CAST(TYPE, CLASS, CTYPE) \
   static Constant *CastTo##TYPE  (const ConstantInt *V) {    \
-    return CLASS::get(Type::TYPE##Ty, (CTYPE)(BuiltinType)V->getZExtValue()); \
+    return CLASS::get(Type::TYPE##Ty, (CTYPE)((BuiltinType)V->getZExtValue()));\
   }
 
   DEF_CAST(Bool  , ConstantBool, bool)
@@ -721,15 +721,6 @@ ConstRules &ConstRules::get(const Constant *V1, const Constant *V2) {
 //===----------------------------------------------------------------------===//
 //                ConstantFold*Instruction Implementations
 //===----------------------------------------------------------------------===//
-//
-// These methods contain the special case hackery required to symbolically
-// evaluate some constant expression cases, and use the ConstantRules class to
-// evaluate normal constants.
-//
-static unsigned getSize(const Type *Ty) {
-  unsigned S = Ty->getPrimitiveSize();
-  return S ? S : 8;  // Treat pointers at 8 bytes
-}
 
 /// CastConstantPacked - Convert the specified ConstantPacked node to the
 /// specified packed type.  At this point, we know that the elements of the
@@ -746,17 +737,20 @@ static Constant *CastConstantPacked(ConstantPacked *CP,
   if (SrcNumElts == DstNumElts) {
     std::vector<Constant*> Result;
     
-    // If the src and dest elements are both integers, just cast each one
-    // which will do the appropriate bit-convert.
-    if (SrcEltTy->isIntegral() && DstEltTy->isIntegral()) {
+    // If the src and dest elements are both integers, or both floats, we can 
+    // just BitCast each element because the elements are the same size.
+    if ((SrcEltTy->isIntegral() && DstEltTy->isIntegral()) ||
+        (SrcEltTy->isFloatingPoint() && DstEltTy->isFloatingPoint())) {
       for (unsigned i = 0; i != SrcNumElts; ++i)
-        Result.push_back(ConstantExpr::getCast(CP->getOperand(i),
-                                               DstEltTy));
+        Result.push_back(
+          ConstantExpr::getCast(Instruction::BitCast, CP->getOperand(1), 
+                                DstEltTy));
       return ConstantPacked::get(Result);
     }
     
+    // If this is an int-to-fp cast ..
     if (SrcEltTy->isIntegral()) {
-      // Otherwise, this is an int-to-fp cast.
+      // Ensure that it is int-to-fp cast
       assert(DstEltTy->isFloatingPoint());
       if (DstEltTy->getTypeID() == Type::DoubleTyID) {
         for (unsigned i = 0; i != SrcNumElts; ++i) {
@@ -805,34 +799,50 @@ static Constant *CastConstantPacked(ConstantPacked *CP,
   return 0;
 }
 
+/// This function determines which opcode to use to fold two constant cast 
+/// expressions together. It uses CastInst::isEliminableCastPair to determine
+/// the opcode. Consequently its just a wrapper around that function.
+/// @Determine if it is valid to fold a cast of a cast
+static unsigned
+foldConstantCastPair(
+  unsigned opc,          ///< opcode of the second cast constant expression
+  const ConstantExpr*Op, ///< the first cast constant expression
+  const Type *DstTy      ///< desintation type of the first cast
+) {
+  assert(Op && Op->isCast() && "Can't fold cast of cast without a cast!");
+  assert(DstTy && DstTy->isFirstClassType() && "Invalid cast destination type");
+  assert(CastInst::isCast(opc) && "Invalid cast opcode");
+  
+  // The the types and opcodes for the two Cast constant expressions
+  const Type *SrcTy = Op->getOperand(0)->getType();
+  const Type *MidTy = Op->getType();
+  Instruction::CastOps firstOp = Instruction::CastOps(Op->getOpcode());
+  Instruction::CastOps secondOp = Instruction::CastOps(opc);
 
-Constant *llvm::ConstantFoldCastInstruction(const Constant *V,
+  // Let CastInst::isEliminableCastPair do the heavy lifting.
+  return CastInst::isEliminableCastPair(firstOp, secondOp, SrcTy, MidTy, DstTy,
+                                        Type::ULongTy);
+}
+
+Constant *llvm::ConstantFoldCastInstruction(unsigned opc, const Constant *V,
                                             const Type *DestTy) {
-  if (V->getType() == DestTy) return (Constant*)V;
+  const Type *SrcTy = V->getType();
 
-  // Cast of a global address to boolean is always true.
-  if (isa<GlobalValue>(V)) {
-    if (DestTy == Type::BoolTy)
-      // FIXME: When we support 'external weak' references, we have to prevent
-      // this transformation from happening.  This code will need to be updated
-      // to ignore external weak symbols when we support it.
-      return ConstantBool::getTrue();
-  } else if (const ConstantExpr *CE = dyn_cast<ConstantExpr>(V)) {
-    if (CE->getOpcode() == Instruction::Cast) {
-      Constant *Op = const_cast<Constant*>(CE->getOperand(0));
-      // Try to not produce a cast of a cast, which is almost always redundant.
-      if (!Op->getType()->isFloatingPoint() &&
-          !CE->getType()->isFloatingPoint() &&
-          !DestTy->isFloatingPoint()) {
-        unsigned S1 = getSize(Op->getType()), S2 = getSize(CE->getType());
-        unsigned S3 = getSize(DestTy);
-        if (Op->getType() == DestTy && S3 >= S2)
-          return Op;
-        if (S1 >= S2 && S2 >= S3)
-          return ConstantExpr::getCast(Op, DestTy);
-        if (S1 <= S2 && S2 >= S3 && S1 <= S3)
-          return ConstantExpr::getCast(Op, DestTy);
-      }
+  // Handle some simple cases
+  if (SrcTy == DestTy) 
+    return (Constant*)V; // no-op cast
+
+  if (isa<UndefValue>(V))
+    return UndefValue::get(DestTy);
+
+  // If the cast operand is a constant expression, there's a few things we can
+  // do to try to simplify it.
+  if (const ConstantExpr *CE = dyn_cast<ConstantExpr>(V)) {
+    if (CE->isCast()) {
+      // Try hard to fold cast of cast because they are almost always
+      // eliminable.
+      if (unsigned newOpc = foldConstantCastPair(opc, CE, DestTy))
+        return ConstantExpr::getCast(newOpc, CE->getOperand(0), DestTy);
     } else if (CE->getOpcode() == Instruction::GetElementPtr) {
       // If all of the indexes in the GEP are null values, there is no pointer
       // adjustment going on.  We might as well cast the source pointer.
@@ -845,69 +855,132 @@ Constant *llvm::ConstantFoldCastInstruction(const Constant *V,
       if (isAllNull)
         return ConstantExpr::getCast(CE->getOperand(0), DestTy);
     }
-  } else if (isa<UndefValue>(V)) {
-    return UndefValue::get(DestTy);
   }
 
-  // Check to see if we are casting an pointer to an aggregate to a pointer to
-  // the first element.  If so, return the appropriate GEP instruction.
-  if (const PointerType *PTy = dyn_cast<PointerType>(V->getType()))
-    if (const PointerType *DPTy = dyn_cast<PointerType>(DestTy)) {
-      std::vector<Value*> IdxList;
-      IdxList.push_back(Constant::getNullValue(Type::IntTy));
-      const Type *ElTy = PTy->getElementType();
-      while (ElTy != DPTy->getElementType()) {
-        if (const StructType *STy = dyn_cast<StructType>(ElTy)) {
-          if (STy->getNumElements() == 0) break;
-          ElTy = STy->getElementType(0);
-          IdxList.push_back(Constant::getNullValue(Type::UIntTy));
-        } else if (const SequentialType *STy = dyn_cast<SequentialType>(ElTy)) {
-          if (isa<PointerType>(ElTy)) break;  // Can't index into pointers!
-          ElTy = STy->getElementType();
-          IdxList.push_back(IdxList[0]);
-        } else {
-          break;
-        }
-      }
+  // We actually have to do a cast now, but first, we might need to fix up
+  // the value of the operand.
+  switch (opc) {
+  case Instruction::FPTrunc:
+  case Instruction::Trunc:
+  case Instruction::FPExt:
+    break; // floating point input & output, no fixup needed
+  case Instruction::FPToUI: {
+    ConstRules &Rules = ConstRules::get(V, V);
+    V = Rules.castToULong(V); // make sure we get an unsigned value first 
+    break;
+  }
+  case Instruction::FPToSI: {
+    ConstRules &Rules = ConstRules::get(V, V);
+    V = Rules.castToLong(V); // make sure we get a signed value first 
+    break;
+  }
+  case Instruction::IntToPtr: //always treated as unsigned
+  case Instruction::UIToFP:
+  case Instruction::ZExt:
+    // A ZExt always produces an unsigned value so we need to cast the value
+    // now before we try to cast it to the destination type
+    if (isa<ConstantInt>(V))
+      V = ConstantInt::get(SrcTy->getUnsignedVersion(), 
+                           cast<ConstantIntegral>(V)->getZExtValue());
+    break;
+  case Instruction::SIToFP:
+  case Instruction::SExt:
+    // A SExt always produces a signed value so we need to cast the value
+    // now before we try to cast it to the destiniation type.
+    if (isa<ConstantInt>(V))
+      V = ConstantInt::get(SrcTy->getSignedVersion(), 
+                           cast<ConstantIntegral>(V)->getSExtValue());
+    break;
 
-      if (ElTy == DPTy->getElementType())
-        return ConstantExpr::getGetElementPtr(const_cast<Constant*>(V),IdxList);
+  case Instruction::PtrToInt:
+    // Cast of a global address to boolean is always true.
+    if (isa<GlobalValue>(V)) {
+      if (DestTy == Type::BoolTy)
+        // FIXME: When we support 'external weak' references, we have to 
+        // prevent this transformation from happening.  This code will need 
+        // to be updated to ignore external weak symbols when we support it.
+        return ConstantBool::getTrue();
     }
-      
-  // Handle casts from one packed constant to another.  We know that the src and
-  // dest type have the same size.
-  if (const PackedType *DestPTy = dyn_cast<PackedType>(DestTy)) {
-    if (const PackedType *SrcTy = dyn_cast<PackedType>(V->getType())) {
-      assert(DestPTy->getElementType()->getPrimitiveSizeInBits() * 
-                 DestPTy->getNumElements()  ==
-             SrcTy->getElementType()->getPrimitiveSizeInBits() * 
-             SrcTy->getNumElements() && "Not cast between same sized vectors!");
-      if (isa<ConstantAggregateZero>(V))
-        return Constant::getNullValue(DestTy);
-      if (isa<UndefValue>(V))
-        return UndefValue::get(DestTy);
-      if (const ConstantPacked *CP = dyn_cast<ConstantPacked>(V)) {
-        // This is a cast from a ConstantPacked of one type to a ConstantPacked
-        // of another type.  Check to see if all elements of the input are
-        // simple.
-        bool AllSimpleConstants = true;
-        for (unsigned i = 0, e = CP->getNumOperands(); i != e; ++i) {
-          if (!isa<ConstantInt>(CP->getOperand(i)) &&
-              !isa<ConstantFP>(CP->getOperand(i))) {
-            AllSimpleConstants = false;
+    break;
+  case Instruction::BitCast:
+    // Check to see if we are casting a pointer to an aggregate to a pointer to
+    // the first element.  If so, return the appropriate GEP instruction.
+    if (const PointerType *PTy = dyn_cast<PointerType>(V->getType()))
+      if (const PointerType *DPTy = dyn_cast<PointerType>(DestTy)) {
+        std::vector<Value*> IdxList;
+        IdxList.push_back(Constant::getNullValue(Type::IntTy));
+        const Type *ElTy = PTy->getElementType();
+        while (ElTy != DPTy->getElementType()) {
+          if (const StructType *STy = dyn_cast<StructType>(ElTy)) {
+            if (STy->getNumElements() == 0) break;
+            ElTy = STy->getElementType(0);
+            IdxList.push_back(Constant::getNullValue(Type::UIntTy));
+          } else if (const SequentialType *STy = 
+                     dyn_cast<SequentialType>(ElTy)) {
+            if (isa<PointerType>(ElTy)) break;  // Can't index into pointers!
+            ElTy = STy->getElementType();
+            IdxList.push_back(IdxList[0]);
+          } else {
             break;
           }
         }
-            
-        // If all of the elements are simple constants, we can fold this.
-        if (AllSimpleConstants)
-          return CastConstantPacked(const_cast<ConstantPacked*>(CP), DestPTy);
+
+        if (ElTy == DPTy->getElementType())
+          return ConstantExpr::getGetElementPtr(
+              const_cast<Constant*>(V),IdxList);
+      }
+        
+    // Handle casts from one packed constant to another.  We know that the src 
+    // and dest type have the same size (otherwise its an illegal cast).
+    if (const PackedType *DestPTy = dyn_cast<PackedType>(DestTy)) {
+      if (const PackedType *SrcTy = dyn_cast<PackedType>(V->getType())) {
+        assert(DestPTy->getBitWidth() == SrcTy->getBitWidth() &&
+               "Not cast between same sized vectors!");
+        // First, check for null and undef
+        if (isa<ConstantAggregateZero>(V))
+          return Constant::getNullValue(DestTy);
+        if (isa<UndefValue>(V))
+          return UndefValue::get(DestTy);
+
+        if (const ConstantPacked *CP = dyn_cast<ConstantPacked>(V)) {
+          // This is a cast from a ConstantPacked of one type to a 
+          // ConstantPacked of another type.  Check to see if all elements of 
+          // the input are simple.
+          bool AllSimpleConstants = true;
+          for (unsigned i = 0, e = CP->getNumOperands(); i != e; ++i) {
+            if (!isa<ConstantInt>(CP->getOperand(i)) &&
+                !isa<ConstantFP>(CP->getOperand(i))) {
+              AllSimpleConstants = false;
+              break;
+            }
+          }
+              
+          // If all of the elements are simple constants, we can fold this.
+          if (AllSimpleConstants)
+            return CastConstantPacked(const_cast<ConstantPacked*>(CP), DestPTy);
+        }
       }
     }
+
+    // Handle sign conversion for integer no-op casts. We need to cast the
+    // value to the correct signedness before we try to cast it to the
+    // destination type. Be careful to do this only for integer types.
+    if (isa<ConstantIntegral>(V) && SrcTy->isInteger()) {
+      if (SrcTy->isSigned())
+        V = ConstantInt::get(SrcTy->getUnsignedVersion(), 
+                             cast<ConstantIntegral>(V)->getZExtValue());
+       else 
+        V = ConstantInt::get(SrcTy->getSignedVersion(), 
+                             cast<ConstantIntegral>(V)->getSExtValue());
+    }
+    break;
+  default:
+    assert(!"Invalid CE CastInst opcode");
+    break;
   }
 
+  // Okay, no more folding possible, time to cast
   ConstRules &Rules = ConstRules::get(V, V);
-
   switch (DestTy->getTypeID()) {
   case Type::BoolTyID:    return Rules.castToBool(V);
   case Type::UByteTyID:   return Rules.castToUByte(V);
@@ -922,6 +995,7 @@ Constant *llvm::ConstantFoldCastInstruction(const Constant *V,
   case Type::DoubleTyID:  return Rules.castToDouble(V);
   case Type::PointerTyID:
     return Rules.castToPointer(V, cast<PointerType>(DestTy));
+  // what about packed ?
   default: return 0;
   }
 }
@@ -1049,15 +1123,22 @@ static bool isMaybeZeroSizedType(const Type *Ty) {
 static int IdxCompare(Constant *C1, Constant *C2, const Type *ElTy) {
   if (C1 == C2) return 0;
 
-  // Ok, we found a different index.  Are either of the operands
-  // ConstantExprs?  If so, we can't do anything with them.
+  // Ok, we found a different index.  Are either of the operands ConstantExprs?
+  // If so, we can't do anything with them.
   if (!isa<ConstantInt>(C1) || !isa<ConstantInt>(C2))
     return -2; // don't know!
 
   // Ok, we have two differing integer indices.  Sign extend them to be the same
   // type.  Long is always big enough, so we use it.
-  C1 = ConstantExpr::getSignExtend(C1, Type::LongTy);
-  C2 = ConstantExpr::getSignExtend(C2, Type::LongTy);
+  if (C1->getType() != Type::LongTy && C1->getType() != Type::ULongTy)
+    C1 = ConstantExpr::getSignExtend(C1, Type::LongTy);
+  else
+    C1 = ConstantExpr::getBitCast(C1, Type::LongTy);
+  if (C2->getType() != Type::LongTy && C1->getType() != Type::ULongTy)
+    C2 = ConstantExpr::getSignExtend(C2, Type::LongTy);
+  else
+    C2 = ConstantExpr::getBitCast(C2, Type::LongTy);
+
   if (C1 == C2) return 0;  // Are they just differing types?
 
   // If the type being indexed over is really just a zero sized type, there is
@@ -1141,7 +1222,19 @@ static Instruction::BinaryOps evaluateRelation(Constant *V1, Constant *V2) {
     Constant *CE1Op0 = CE1->getOperand(0);
 
     switch (CE1->getOpcode()) {
-    case Instruction::Cast:
+    case Instruction::Trunc:
+    case Instruction::FPTrunc:
+    case Instruction::FPExt:
+    case Instruction::FPToUI:
+    case Instruction::FPToSI:
+      break; // We don't do anything with floating point.
+    case Instruction::ZExt:
+    case Instruction::SExt:
+    case Instruction::UIToFP:
+    case Instruction::SIToFP:
+    case Instruction::PtrToInt:
+    case Instruction::IntToPtr:
+    case Instruction::BitCast:
       // If the cast is not actually changing bits, and the second operand is a
       // null pointer, do the comparison with the pre-casted value.
       if (V2->isNullValue() &&
@@ -1154,8 +1247,7 @@ static Instruction::BinaryOps evaluateRelation(Constant *V1, Constant *V2) {
       // important for things like "seteq (cast 4 to int*), (cast 5 to int*)",
       // which happens a lot in compilers with tagged integers.
       if (ConstantExpr *CE2 = dyn_cast<ConstantExpr>(V2))
-        if (isa<PointerType>(CE1->getType()) && 
-            CE2->getOpcode() == Instruction::Cast &&
+        if (isa<PointerType>(CE1->getType()) && CE2->isCast() &&
             CE1->getOperand(0)->getType() == CE2->getOperand(0)->getType() &&
             CE1->getOperand(0)->getType()->isIntegral()) {
           return evaluateRelation(CE1->getOperand(0), CE2->getOperand(0));
@@ -1423,8 +1515,7 @@ Constant *llvm::ConstantFoldBinaryInstruction(unsigned Opcode,
         if (cast<ConstantIntegral>(V2)->isAllOnesValue())
           return const_cast<Constant*>(V1);                       // X & -1 == X
         if (V2->isNullValue()) return const_cast<Constant*>(V2);  // X & 0 == 0
-        if (CE1->getOpcode() == Instruction::Cast &&
-            isa<GlobalValue>(CE1->getOperand(0))) {
+        if (CE1->isCast() && isa<GlobalValue>(CE1->getOperand(0))) {
           GlobalValue *CPR = cast<GlobalValue>(CE1->getOperand(0));
 
           // Functions are at least 4-byte aligned.  If and'ing the address of a
@@ -1566,8 +1657,7 @@ Constant *llvm::ConstantFoldGetElementPtr(const Constant *C,
     //                        long 0, long 0)
     // To: int* getelementptr ([3 x int]* %X, long 0, long 0)
     //
-    if (CE->getOpcode() == Instruction::Cast && IdxList.size() > 1 &&
-        Idx0->isNullValue())
+    if (CE->isCast() && IdxList.size() > 1 && Idx0->isNullValue())
       if (const PointerType *SPT =
           dyn_cast<PointerType>(CE->getOperand(0)->getType()))
         if (const ArrayType *SAT = dyn_cast<ArrayType>(SPT->getElementType()))

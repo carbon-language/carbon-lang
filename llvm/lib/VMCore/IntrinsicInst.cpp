@@ -37,7 +37,7 @@ using namespace llvm;
 
 static Value *CastOperand(Value *C) {
   if (ConstantExpr *CE = dyn_cast<ConstantExpr>(C))
-    if (CE->getOpcode() == Instruction::Cast)
+    if (CE->isCast())
       return CE->getOperand(0);
   return NULL;
 }

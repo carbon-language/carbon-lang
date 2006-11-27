@@ -516,9 +516,33 @@ public:
 
   /// Cast constant expr
   ///
+  static Constant *getTrunc      (Constant *C, const Type *Ty);
+  static Constant *getSignExtend (Constant *C, const Type *Ty);
+  static Constant *getZeroExtend (Constant *C, const Type *Ty);
+  static Constant *getFPTrunc    (Constant *C, const Type *Ty);
+  static Constant *getFPExtend   (Constant *C, const Type *Ty);
+  static Constant *getUIToFP     (Constant *C, const Type *Ty);
+  static Constant *getSIToFP     (Constant *C, const Type *Ty);
+  static Constant *getFPToUI     (Constant *C, const Type *Ty);
+  static Constant *getFPToSI     (Constant *C, const Type *Ty);
+  static Constant *getPtrToInt   (Constant *C, const Type *Ty);
+  static Constant *getIntToPtr   (Constant *C, const Type *Ty);
+  static Constant *getBitCast    (Constant *C, const Type *Ty);
+
+  // @brief Convenience function for getting one of the casting operations
+  // using a CastOps opcode.
+  static Constant *getCast(
+    unsigned ops,  ///< The opcode for the conversion
+    Constant *C,   ///< The constant to be converted
+    const Type *Ty ///< The type to which the constant is converted
+  );
+
+  // @brief Get a ConstantExpr Conversion operator that casts C to Ty
   static Constant *getCast(Constant *C, const Type *Ty);
-  static Constant *getSignExtend(Constant *C, const Type *Ty);
-  static Constant *getZeroExtend(Constant *C, const Type *Ty);
+
+  /// @brief Return true if this is a convert constant expression
+  bool isCast() const;
+
 
   /// Select constant expr
   ///

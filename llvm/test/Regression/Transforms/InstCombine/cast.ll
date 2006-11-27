@@ -1,6 +1,6 @@
 ; Tests to make sure elimination of casts is working correctly
 ; RUN: llvm-as < %s | opt -instcombine -disable-output &&
-; RUN: llvm-as < %s | opt -instcombine | llvm-dis | grep '%c' | not grep cast
+; RUN: llvm-as < %s | opt -instcombine | llvm-dis | grep '%c' | notcast
 
 %inbuf = external global [32832 x ubyte]
 
@@ -104,7 +104,6 @@ bool %test16(int* %P) {
 	ret bool %c
 }
 
-
 short %test17(bool %tmp3) {
 	%c = cast bool %tmp3 to int
 	%t86 = cast int %c to short
@@ -207,3 +206,8 @@ void %test32(double** %tmp) {
         ret void
 }
 
+uint %test33(uint %c1) {
+        %x = bitcast uint %c1 to float 
+        %y = bitcast float %x to uint
+        ret uint %y
+}

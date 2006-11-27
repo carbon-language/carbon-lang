@@ -167,10 +167,10 @@ static Value *getUnderlyingObject(Value *V) {
   
   // Traverse through different addressing mechanisms.
   if (Instruction *I = dyn_cast<Instruction>(V)) {
-    if (isa<CastInst>(I) || isa<GetElementPtrInst>(I))
+    if (isa<BitCastInst>(I) || isa<GetElementPtrInst>(I))
       return getUnderlyingObject(I->getOperand(0));
   } else if (ConstantExpr *CE = dyn_cast<ConstantExpr>(V)) {
-    if (CE->getOpcode() == Instruction::Cast ||
+    if (CE->getOpcode() == Instruction::BitCast || 
         CE->getOpcode() == Instruction::GetElementPtr)
       return getUnderlyingObject(CE->getOperand(0));
   }
@@ -252,8 +252,8 @@ bool GlobalsModRef::AnalyzeUsesOfPointer(Value *V,
       for (unsigned i = 3, e = II->getNumOperands(); i != e; ++i)
         if (II->getOperand(i) == V) return true;
     } else if (ConstantExpr *CE = dyn_cast<ConstantExpr>(*UI)) {
-      if (CE->getOpcode() == Instruction::GetElementPtr ||
-          CE->getOpcode() == Instruction::Cast) {
+      if (CE->getOpcode() == Instruction::GetElementPtr || 
+          CE->getOpcode() == Instruction::BitCast) {
         if (AnalyzeUsesOfPointer(CE, Readers, Writers))
           return true;
       } else {

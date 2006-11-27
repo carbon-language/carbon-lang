@@ -163,18 +163,29 @@
      LOAD = 354,
      STORE = 355,
      GETELEMENTPTR = 356,
-     PHI_TOK = 357,
-     CAST = 358,
-     SELECT = 359,
-     SHL = 360,
-     LSHR = 361,
-     ASHR = 362,
-     VAARG = 363,
-     EXTRACTELEMENT = 364,
-     INSERTELEMENT = 365,
-     SHUFFLEVECTOR = 366,
-     VAARG_old = 367,
-     VANEXT_old = 368
+     TRUNC = 357,
+     ZEXT = 358,
+     SEXT = 359,
+     FPTRUNC = 360,
+     FPEXT = 361,
+     BITCAST = 362,
+     UITOFP = 363,
+     SITOFP = 364,
+     FPTOUI = 365,
+     FPTOSI = 366,
+     INTTOPTR = 367,
+     PTRTOINT = 368,
+     PHI_TOK = 369,
+     SELECT = 370,
+     SHL = 371,
+     LSHR = 372,
+     ASHR = 373,
+     VAARG = 374,
+     EXTRACTELEMENT = 375,
+     INSERTELEMENT = 376,
+     SHUFFLEVECTOR = 377,
+     VAARG_old = 378,
+     VANEXT_old = 379
    };
 #endif
 /* Tokens.  */
@@ -277,24 +288,35 @@
 #define LOAD 354
 #define STORE 355
 #define GETELEMENTPTR 356
-#define PHI_TOK 357
-#define CAST 358
-#define SELECT 359
-#define SHL 360
-#define LSHR 361
-#define ASHR 362
-#define VAARG 363
-#define EXTRACTELEMENT 364
-#define INSERTELEMENT 365
-#define SHUFFLEVECTOR 366
-#define VAARG_old 367
-#define VANEXT_old 368
+#define TRUNC 357
+#define ZEXT 358
+#define SEXT 359
+#define FPTRUNC 360
+#define FPEXT 361
+#define BITCAST 362
+#define UITOFP 363
+#define SITOFP 364
+#define FPTOUI 365
+#define FPTOSI 366
+#define INTTOPTR 367
+#define PTRTOINT 368
+#define PHI_TOK 369
+#define SELECT 370
+#define SHL 371
+#define LSHR 372
+#define ASHR 373
+#define VAARG 374
+#define EXTRACTELEMENT 375
+#define INSERTELEMENT 376
+#define SHUFFLEVECTOR 377
+#define VAARG_old 378
+#define VANEXT_old 379
 
 
 
 
 /* Copy the first part of user declarations.  */
-#line 14 "/proj/llvm/llvm-3/lib/AsmParser/llvmAsmParser.y"
+#line 14 "/proj/llvm/llvm-1/lib/AsmParser/llvmAsmParser.y"
 
 #include "ParserInternals.h"
 #include "llvm/CallingConv.h"
@@ -367,8 +389,8 @@ static struct PerModuleInfo {
   Module *CurrentModule;
   std::map<const Type *, ValueList> Values; // Module level numbered definitions
   std::map<const Type *,ValueList> LateResolveValues;
-  std::vector<PATypeHolder>    Types;
-  std::map<ValID, PATypeHolder> LateResolveTypes;
+  std::vector<TypeInfo>    Types;
+  std::map<ValID, TypeInfo> LateResolveTypes;
 
   /// PlaceHolderInfo - When temporary placeholder objects are created, remember
   /// how they were referenced and on which line of the input they came from so
@@ -501,7 +523,7 @@ static const Type *getTypeVal(const ValID &D, bool DoNotImprovise = false) {
   case ValID::NumberVal:               // Is it a numbered definition?
     // Module constants occupy the lowest numbered slots...
     if ((unsigned)D.Num < CurModule.Types.size())
-      return CurModule.Types[(unsigned)D.Num];
+      return CurModule.Types[(unsigned)D.Num].type->get();
     break;
   case ValID::NameVal:                 // Is it a named definition?
     if (const Type *N = CurModule.CurrentModule->getTypeByName(D.Name)) {
@@ -531,13 +553,15 @@ static const Type *getTypeVal(const ValID &D, bool DoNotImprovise = false) {
     }
   }
 
-  std::map<ValID, PATypeHolder>::iterator I =CurModule.LateResolveTypes.find(D);
+  std::map<ValID, TypeInfo>::iterator I =CurModule.LateResolveTypes.find(D);
   if (I != CurModule.LateResolveTypes.end())
-    return I->second;
+    return I->second.type->get();
 
-  Type *Typ = OpaqueType::get();
-  CurModule.LateResolveTypes.insert(std::make_pair(D, Typ));
-  return Typ;
+  TypeInfo TI;
+  TI.type = new PATypeHolder(OpaqueType::get());
+  TI.signedness = isSignless;
+  CurModule.LateResolveTypes.insert(std::make_pair(D, TI));
+  return TI.type->get();
  }
 
 static Value *lookupInSymbolTable(const Type *Ty, const std::string &Name) {
@@ -841,10 +865,10 @@ static void ResolveTypeTo(char *Name, const Type *ToTy) {
   if (Name) D = ValID::create(Name);
   else      D = ValID::create((int)CurModule.Types.size());
 
-  std::map<ValID, PATypeHolder>::iterator I =
+  std::map<ValID, TypeInfo>::iterator I =
     CurModule.LateResolveTypes.find(D);
   if (I != CurModule.LateResolveTypes.end()) {
-    ((DerivedType*)I->second.get())->refineAbstractTypeTo(ToTy);
+    ((DerivedType*)I->second.type->get())->refineAbstractTypeTo(ToTy);
     CurModule.LateResolveTypes.erase(I);
   }
 }
@@ -1106,15 +1130,14 @@ static PATypeHolder HandleUpRefs(const Type *ty) {
 /// instruction. This function handles converting div -> [usf]div appropriately.
 /// @brief Convert obsolete BinaryOps opcodes to new values
 static void 
-sanitizeOpCode(OpcodeInfo<Instruction::BinaryOps> &OI, const PATypeHolder& PATy)
+sanitizeOpcode(OpcodeInfo<Instruction::BinaryOps> &OI, const Type *Ty)
 {
   // If its not obsolete, don't do anything
   if (!OI.obsolete) 
     return;
 
   // If its a packed type we want to use the element type
-  const Type* Ty = PATy;
-  if (const PackedType* PTy = dyn_cast<PackedType>(Ty))
+  if (const PackedType *PTy = dyn_cast<PackedType>(Ty))
     Ty = PTy->getElementType();
 
   // Depending on the opcode ..
@@ -1140,17 +1163,16 @@ sanitizeOpCode(OpcodeInfo<Instruction::BinaryOps> &OI, const PATypeHolder& PATy)
   OI.obsolete = false;
 }
 
-/// This function is similar to the previous overload of sanitizeOpCode but
+/// This function is similar to the previous overload of sanitizeOpcode but
 /// operates on Instruction::OtherOps instead of Instruction::BinaryOps.
 /// @brief Convert obsolete OtherOps opcodes to new values
 static void 
-sanitizeOpCode(OpcodeInfo<Instruction::OtherOps> &OI, const PATypeHolder& PATy)
+sanitizeOpcode(OpcodeInfo<Instruction::OtherOps> &OI, const Type *Ty)
 {
   // If its not obsolete, don't do anything
   if (!OI.obsolete) 
     return;
 
-  const Type* Ty = PATy; // type conversion
   switch (OI.opcode) {
   default:
     GenerateError("Invalid obsolete opcode (check Lexer.l)");
@@ -1340,23 +1362,22 @@ Module *llvm::RunVMAsmParser(const char * AsmString, Module * M) {
 #endif
 
 #if ! defined (YYSTYPE) && ! defined (YYSTYPE_IS_DECLARED)
-#line 1040 "/proj/llvm/llvm-3/lib/AsmParser/llvmAsmParser.y"
+#line 1040 "/proj/llvm/llvm-1/lib/AsmParser/llvmAsmParser.y"
 typedef union YYSTYPE {
   llvm::Module                           *ModuleVal;
   llvm::Function                         *FunctionVal;
-  std::pair<llvm::PATypeHolder*, char*>  *ArgVal;
+  std::pair<TypeInfo, char*>             *ArgVal;
   llvm::BasicBlock                       *BasicBlockVal;
   llvm::TerminatorInst                   *TermInstVal;
   llvm::Instruction                      *InstVal;
   llvm::Constant                         *ConstVal;
 
-  const llvm::Type                       *PrimType;
-  llvm::PATypeHolder                     *TypeVal;
+  TypeInfo                                TypeVal;
   llvm::Value                            *ValueVal;
 
-  std::vector<std::pair<llvm::PATypeHolder*,char*> > *ArgList;
+  std::vector<std::pair<TypeInfo,char*> >*ArgList;
   std::vector<llvm::Value*>              *ValueList;
-  std::list<llvm::PATypeHolder>          *TypeList;
+  std::list<TypeInfo>                    *TypeList;
   // Represent the RHS of PHI node
   std::list<std::pair<llvm::Value*,
                       llvm::BasicBlock*> > *PHIList;
@@ -1377,11 +1398,12 @@ typedef union YYSTYPE {
   BinaryOpInfo                      BinaryOpVal;
   TermOpInfo                        TermOpVal;
   MemOpInfo                         MemOpVal;
+  CastOpInfo                        CastOpVal;
   OtherOpInfo                       OtherOpVal;
   llvm::Module::Endianness          Endianness;
 } YYSTYPE;
 /* Line 196 of yacc.c.  */
-#line 1385 "llvmAsmParser.tab.c"
+#line 1407 "llvmAsmParser.tab.c"
 # define yystype YYSTYPE /* obsolescent; will be withdrawn */
 # define YYSTYPE_IS_DECLARED 1
 # define YYSTYPE_IS_TRIVIAL 1
@@ -1393,7 +1415,7 @@ typedef union YYSTYPE {
 
 
 /* Line 219 of yacc.c.  */
-#line 1397 "llvmAsmParser.tab.c"
+#line 1419 "llvmAsmParser.tab.c"
 
 #if ! defined (YYSIZE_T) && defined (__SIZE_TYPE__)
 # define YYSIZE_T __SIZE_TYPE__
@@ -1544,20 +1566,20 @@ union yyalloc
 /* YYFINAL -- State number of the termination state. */
 #define YYFINAL  4
 /* YYLAST -- Last index in YYTABLE.  */
-#define YYLAST   1310
+#define YYLAST   1410
 
 /* YYNTOKENS -- Number of terminals. */
-#define YYNTOKENS  128
+#define YYNTOKENS  139
 /* YYNNTS -- Number of nonterminals. */
-#define YYNNTS  75
+#define YYNNTS  76
 /* YYNRULES -- Number of rules. */
-#define YYNRULES  257
+#define YYNRULES  269
 /* YYNRULES -- Number of states. */
-#define YYNSTATES  522
+#define YYNSTATES  534
 
 /* YYTRANSLATE(YYLEX) -- Bison symbol number corresponding to YYLEX.  */
 #define YYUNDEFTOK  2
-#define YYMAXUTOK   368
+#define YYMAXUTOK   379
 
 #define YYTRANSLATE(YYX)						\
   ((unsigned int) (YYX) <= YYMAXUTOK ? yytranslate[YYX] : YYUNDEFTOK)
@@ -1569,15 +1591,15 @@ static const unsigned char yytranslate[] =
        2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
        2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
        2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
-     117,   118,   126,     2,   115,     2,     2,     2,     2,     2,
+     128,   129,   137,     2,   126,     2,     2,     2,     2,     2,
        2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
-     122,   114,   123,     2,     2,     2,     2,     2,     2,     2,
-       2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
-       2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
-       2,   119,   116,   121,     2,     2,     2,     2,     2,   127,
+     133,   125,   134,     2,     2,     2,     2,     2,     2,     2,
        2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
        2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
-     120,     2,     2,   124,     2,   125,     2,     2,     2,     2,
+       2,   130,   127,   132,     2,     2,     2,     2,     2,   138,
+       2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
+       2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
+     131,     2,     2,   135,     2,   136,     2,     2,     2,     2,
        2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
        2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
        2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
@@ -1601,7 +1623,8 @@ static const unsigned char yytranslate[] =
       75,    76,    77,    78,    79,    80,    81,    82,    83,    84,
       85,    86,    87,    88,    89,    90,    91,    92,    93,    94,
       95,    96,    97,    98,    99,   100,   101,   102,   103,   104,
-     105,   106,   107,   108,   109,   110,   111,   112,   113
+     105,   106,   107,   108,   109,   110,   111,   112,   113,   114,
+     115,   116,   117,   118,   119,   120,   121,   122,   123,   124
 };
 
 #if YYDEBUG
@@ -1613,147 +1636,152 @@ static const unsigned short int yyprhs[] =
       19,    21,    23,    25,    27,    29,    31,    33,    35,    37,
       39,    41,    43,    45,    47,    49,    51,    53,    55,    57,
       59,    61,    63,    65,    67,    69,    71,    73,    75,    77,
-      80,    81,    83,    85,    87,    89,    91,    93,    95,    96,
-      97,    99,   101,   103,   105,   107,   109,   112,   113,   116,
-     117,   121,   124,   125,   127,   128,   132,   134,   137,   139,
-     141,   143,   145,   147,   149,   151,   153,   155,   157,   159,
+      79,    81,    83,    85,    87,    89,    91,    93,    95,    97,
+      99,   101,   104,   105,   107,   109,   111,   113,   115,   117,
+     119,   120,   121,   123,   125,   127,   129,   131,   133,   136,
+     137,   140,   141,   145,   148,   149,   151,   152,   156,   158,
      161,   163,   165,   167,   169,   171,   173,   175,   177,   179,
-     182,   187,   193,   199,   203,   206,   209,   211,   215,   217,
-     221,   223,   224,   229,   233,   237,   242,   247,   251,   254,
-     257,   260,   263,   266,   269,   272,   275,   278,   281,   288,
-     294,   303,   310,   317,   324,   331,   338,   347,   356,   360,
-     362,   364,   366,   368,   371,   374,   379,   382,   384,   389,
-     392,   397,   398,   406,   407,   415,   416,   424,   425,   433,
-     437,   442,   443,   445,   447,   449,   453,   457,   461,   465,
-     469,   473,   475,   476,   478,   480,   482,   483,   486,   490,
-     492,   494,   498,   500,   501,   510,   512,   514,   518,   520,
-     522,   525,   526,   528,   530,   531,   536,   537,   539,   541,
-     543,   545,   547,   549,   551,   553,   555,   559,   561,   567,
-     569,   571,   573,   575,   578,   581,   584,   588,   591,   592,
-     594,   597,   600,   604,   614,   624,   633,   647,   649,   651,
-     658,   664,   667,   674,   682,   684,   688,   690,   691,   694,
-     696,   702,   708,   714,   717,   722,   727,   734,   739,   744,
-     749,   754,   761,   768,   771,   779,   781,   784,   785,   787,
-     788,   792,   799,   803,   810,   813,   818,   825
+     181,   183,   185,   187,   189,   191,   193,   195,   197,   199,
+     201,   203,   206,   211,   217,   223,   227,   230,   233,   235,
+     239,   241,   245,   247,   248,   253,   257,   261,   266,   271,
+     275,   278,   281,   284,   287,   290,   293,   296,   299,   302,
+     305,   312,   318,   327,   334,   341,   348,   355,   362,   371,
+     380,   384,   386,   388,   390,   392,   395,   398,   403,   406,
+     408,   413,   416,   421,   422,   430,   431,   439,   440,   448,
+     449,   457,   461,   466,   467,   469,   471,   473,   477,   481,
+     485,   489,   493,   497,   499,   500,   502,   504,   506,   507,
+     510,   514,   516,   518,   522,   524,   525,   534,   536,   538,
+     542,   544,   546,   549,   550,   552,   554,   555,   560,   561,
+     563,   565,   567,   569,   571,   573,   575,   577,   579,   583,
+     585,   591,   593,   595,   597,   599,   602,   605,   608,   612,
+     615,   616,   618,   621,   624,   628,   638,   648,   657,   671,
+     673,   675,   682,   688,   691,   698,   706,   708,   712,   714,
+     715,   718,   720,   726,   732,   738,   741,   746,   751,   758,
+     763,   768,   773,   778,   785,   792,   795,   803,   805,   808,
+     809,   811,   812,   816,   823,   827,   834,   837,   842,   849
 };
 
 /* YYRHS -- A `-1'-separated list of the rules' RHS. */
 static const short int yyrhs[] =
 {
-     159,     0,    -1,     5,    -1,     6,    -1,     3,    -1,     4,
+     171,     0,    -1,     5,    -1,     6,    -1,     3,    -1,     4,
       -1,    78,    -1,    79,    -1,    80,    -1,    81,    -1,    82,
       -1,    83,    -1,    84,    -1,    85,    -1,    86,    -1,    87,
       -1,    88,    -1,    89,    -1,    90,    -1,    91,    -1,    92,
-      -1,    93,    -1,    94,    -1,    95,    -1,   105,    -1,   106,
-      -1,   107,    -1,    16,    -1,    14,    -1,    12,    -1,    10,
-      -1,    17,    -1,    15,    -1,    13,    -1,    11,    -1,   135,
-      -1,   136,    -1,    18,    -1,    19,    -1,   171,   114,    -1,
-      -1,    41,    -1,    42,    -1,    43,    -1,    44,    -1,    45,
-      -1,    46,    -1,    47,    -1,    -1,    -1,    65,    -1,    66,
-      -1,    67,    -1,    68,    -1,    69,    -1,    70,    -1,    64,
-       4,    -1,    -1,    57,     4,    -1,    -1,   115,    57,     4,
-      -1,    34,    24,    -1,    -1,   144,    -1,    -1,   115,   147,
-     146,    -1,   144,    -1,    57,     4,    -1,   150,    -1,     8,
-      -1,   152,    -1,     8,    -1,   152,    -1,     9,    -1,    10,
-      -1,    11,    -1,    12,    -1,    13,    -1,    14,    -1,    15,
-      -1,    16,    -1,    17,    -1,    18,    -1,    19,    -1,    20,
-      -1,    21,    -1,    48,    -1,   151,    -1,   186,    -1,   116,
-       4,    -1,   149,   117,   154,   118,    -1,   119,     4,   120,
-     152,   121,    -1,   122,     4,   120,   152,   123,    -1,   124,
-     153,   125,    -1,   124,   125,    -1,   152,   126,    -1,   152,
-      -1,   153,   115,   152,    -1,   153,    -1,   153,   115,    37,
-      -1,    37,    -1,    -1,   150,   119,   157,   121,    -1,   150,
-     119,   121,    -1,   150,   127,    24,    -1,   150,   122,   157,
-     123,    -1,   150,   124,   157,   125,    -1,   150,   124,   125,
-      -1,   150,    38,    -1,   150,    39,    -1,   150,   186,    -1,
-     150,   156,    -1,   150,    26,    -1,   135,   130,    -1,   136,
-       4,    -1,     9,    27,    -1,     9,    28,    -1,   138,     7,
-      -1,   103,   117,   155,    36,   150,   118,    -1,   101,   117,
-     155,   200,   118,    -1,   104,   117,   155,   115,   155,   115,
-     155,   118,    -1,   131,   117,   155,   115,   155,   118,    -1,
-     132,   117,   155,   115,   155,   118,    -1,   133,   117,   155,
-     115,   155,   118,    -1,   134,   117,   155,   115,   155,   118,
-      -1,   109,   117,   155,   115,   155,   118,    -1,   110,   117,
-     155,   115,   155,   115,   155,   118,    -1,   111,   117,   155,
-     115,   155,   115,   155,   118,    -1,   157,   115,   155,    -1,
-     155,    -1,    32,    -1,    33,    -1,   160,    -1,   160,   180,
-      -1,   160,   182,    -1,   160,    62,    61,   166,    -1,   160,
-      25,    -1,   161,    -1,   161,   139,    20,   148,    -1,   161,
-     182,    -1,   161,    62,    61,   166,    -1,    -1,   161,   139,
-     140,   158,   155,   162,   146,    -1,    -1,   161,   139,    50,
-     158,   150,   163,   146,    -1,    -1,   161,   139,    45,   158,
-     150,   164,   146,    -1,    -1,   161,   139,    47,   158,   150,
-     165,   146,    -1,   161,    51,   168,    -1,   161,    58,   114,
-     169,    -1,    -1,    24,    -1,    56,    -1,    55,    -1,    53,
-     114,   167,    -1,    54,   114,     4,    -1,    52,   114,    24,
-      -1,    71,   114,    24,    -1,   119,   170,   121,    -1,   170,
-     115,    24,    -1,    24,    -1,    -1,    22,    -1,    24,    -1,
-     171,    -1,    -1,   150,   172,    -1,   174,   115,   173,    -1,
-     173,    -1,   174,    -1,   174,   115,    37,    -1,    37,    -1,
-      -1,   141,   148,   171,   117,   175,   118,   145,   142,    -1,
-      29,    -1,   124,    -1,   140,   176,   177,    -1,    30,    -1,
-     125,    -1,   189,   179,    -1,    -1,    45,    -1,    47,    -1,
-      -1,    31,   183,   181,   176,    -1,    -1,    63,    -1,     3,
-      -1,     4,    -1,     7,    -1,    27,    -1,    28,    -1,    38,
-      -1,    39,    -1,    26,    -1,   122,   157,   123,    -1,   156,
-      -1,    61,   184,    24,   115,    24,    -1,   129,    -1,   171,
-      -1,   186,    -1,   185,    -1,   150,   187,    -1,   189,   190,
-      -1,   178,   190,    -1,   191,   139,   192,    -1,   191,   194,
-      -1,    -1,    23,    -1,    72,   188,    -1,    72,     8,    -1,
-      73,    21,   187,    -1,    73,     9,   187,   115,    21,   187,
-     115,    21,   187,    -1,    74,   137,   187,   115,    21,   187,
-     119,   193,   121,    -1,    74,   137,   187,   115,    21,   187,
-     119,   121,    -1,    75,   141,   148,   187,   117,   197,   118,
-      36,    21,   187,    76,    21,   187,    -1,    76,    -1,    77,
-      -1,   193,   137,   185,   115,    21,   187,    -1,   137,   185,
-     115,    21,   187,    -1,   139,   199,    -1,   150,   119,   187,
-     115,   187,   121,    -1,   195,   115,   119,   187,   115,   187,
-     121,    -1,   188,    -1,   196,   115,   188,    -1,   196,    -1,
-      -1,    60,    59,    -1,    59,    -1,   131,   150,   187,   115,
-     187,    -1,   132,   150,   187,   115,   187,    -1,   133,   150,
-     187,   115,   187,    -1,    49,   188,    -1,   134,   188,   115,
-     188,    -1,   103,   188,    36,   150,    -1,   104,   188,   115,
-     188,   115,   188,    -1,   108,   188,   115,   150,    -1,   112,
-     188,   115,   150,    -1,   113,   188,   115,   150,    -1,   109,
-     188,   115,   188,    -1,   110,   188,   115,   188,   115,   188,
-      -1,   111,   188,   115,   188,   115,   188,    -1,   102,   195,
-      -1,   198,   141,   148,   187,   117,   197,   118,    -1,   202,
-      -1,   115,   196,    -1,    -1,    35,    -1,    -1,    96,   150,
-     143,    -1,    96,   150,   115,    15,   187,   143,    -1,    97,
-     150,   143,    -1,    97,   150,   115,    15,   187,   143,    -1,
-      98,   188,    -1,   201,    99,   150,   187,    -1,   201,   100,
-     188,   115,   150,   187,    -1,   101,   150,   187,   200,    -1
+      -1,    93,    -1,    94,    -1,    95,    -1,   102,    -1,   103,
+      -1,   104,    -1,   105,    -1,   106,    -1,   107,    -1,   108,
+      -1,   109,    -1,   110,    -1,   111,    -1,   112,    -1,   113,
+      -1,   116,    -1,   117,    -1,   118,    -1,    16,    -1,    14,
+      -1,    12,    -1,    10,    -1,    17,    -1,    15,    -1,    13,
+      -1,    11,    -1,   147,    -1,   148,    -1,    18,    -1,    19,
+      -1,   183,   125,    -1,    -1,    41,    -1,    42,    -1,    43,
+      -1,    44,    -1,    45,    -1,    46,    -1,    47,    -1,    -1,
+      -1,    65,    -1,    66,    -1,    67,    -1,    68,    -1,    69,
+      -1,    70,    -1,    64,     4,    -1,    -1,    57,     4,    -1,
+      -1,   126,    57,     4,    -1,    34,    24,    -1,    -1,   156,
+      -1,    -1,   126,   159,   158,    -1,   156,    -1,    57,     4,
+      -1,   162,    -1,     8,    -1,   164,    -1,     8,    -1,   164,
+      -1,     9,    -1,    10,    -1,    11,    -1,    12,    -1,    13,
+      -1,    14,    -1,    15,    -1,    16,    -1,    17,    -1,    18,
+      -1,    19,    -1,    20,    -1,    21,    -1,    48,    -1,   163,
+      -1,   198,    -1,   127,     4,    -1,   161,   128,   166,   129,
+      -1,   130,     4,   131,   164,   132,    -1,   133,     4,   131,
+     164,   134,    -1,   135,   165,   136,    -1,   135,   136,    -1,
+     164,   137,    -1,   164,    -1,   165,   126,   164,    -1,   165,
+      -1,   165,   126,    37,    -1,    37,    -1,    -1,   162,   130,
+     169,   132,    -1,   162,   130,   132,    -1,   162,   138,    24,
+      -1,   162,   133,   169,   134,    -1,   162,   135,   169,   136,
+      -1,   162,   135,   136,    -1,   162,    38,    -1,   162,    39,
+      -1,   162,   198,    -1,   162,   168,    -1,   162,    26,    -1,
+     147,   141,    -1,   148,     4,    -1,     9,    27,    -1,     9,
+      28,    -1,   150,     7,    -1,   145,   128,   167,    36,   162,
+     129,    -1,   101,   128,   167,   212,   129,    -1,   115,   128,
+     167,   126,   167,   126,   167,   129,    -1,   142,   128,   167,
+     126,   167,   129,    -1,   143,   128,   167,   126,   167,   129,
+      -1,   144,   128,   167,   126,   167,   129,    -1,   146,   128,
+     167,   126,   167,   129,    -1,   120,   128,   167,   126,   167,
+     129,    -1,   121,   128,   167,   126,   167,   126,   167,   129,
+      -1,   122,   128,   167,   126,   167,   126,   167,   129,    -1,
+     169,   126,   167,    -1,   167,    -1,    32,    -1,    33,    -1,
+     172,    -1,   172,   192,    -1,   172,   194,    -1,   172,    62,
+      61,   178,    -1,   172,    25,    -1,   173,    -1,   173,   151,
+      20,   160,    -1,   173,   194,    -1,   173,    62,    61,   178,
+      -1,    -1,   173,   151,   152,   170,   167,   174,   158,    -1,
+      -1,   173,   151,    50,   170,   162,   175,   158,    -1,    -1,
+     173,   151,    45,   170,   162,   176,   158,    -1,    -1,   173,
+     151,    47,   170,   162,   177,   158,    -1,   173,    51,   180,
+      -1,   173,    58,   125,   181,    -1,    -1,    24,    -1,    56,
+      -1,    55,    -1,    53,   125,   179,    -1,    54,   125,     4,
+      -1,    52,   125,    24,    -1,    71,   125,    24,    -1,   130,
+     182,   132,    -1,   182,   126,    24,    -1,    24,    -1,    -1,
+      22,    -1,    24,    -1,   183,    -1,    -1,   162,   184,    -1,
+     186,   126,   185,    -1,   185,    -1,   186,    -1,   186,   126,
+      37,    -1,    37,    -1,    -1,   153,   160,   183,   128,   187,
+     129,   157,   154,    -1,    29,    -1,   135,    -1,   152,   188,
+     189,    -1,    30,    -1,   136,    -1,   201,   191,    -1,    -1,
+      45,    -1,    47,    -1,    -1,    31,   195,   193,   188,    -1,
+      -1,    63,    -1,     3,    -1,     4,    -1,     7,    -1,    27,
+      -1,    28,    -1,    38,    -1,    39,    -1,    26,    -1,   133,
+     169,   134,    -1,   168,    -1,    61,   196,    24,   126,    24,
+      -1,   140,    -1,   183,    -1,   198,    -1,   197,    -1,   162,
+     199,    -1,   201,   202,    -1,   190,   202,    -1,   203,   151,
+     204,    -1,   203,   206,    -1,    -1,    23,    -1,    72,   200,
+      -1,    72,     8,    -1,    73,    21,   199,    -1,    73,     9,
+     199,   126,    21,   199,   126,    21,   199,    -1,    74,   149,
+     199,   126,    21,   199,   130,   205,   132,    -1,    74,   149,
+     199,   126,    21,   199,   130,   132,    -1,    75,   153,   160,
+     199,   128,   209,   129,    36,    21,   199,    76,    21,   199,
+      -1,    76,    -1,    77,    -1,   205,   149,   197,   126,    21,
+     199,    -1,   149,   197,   126,    21,   199,    -1,   151,   211,
+      -1,   162,   130,   199,   126,   199,   132,    -1,   207,   126,
+     130,   199,   126,   199,   132,    -1,   200,    -1,   208,   126,
+     200,    -1,   208,    -1,    -1,    60,    59,    -1,    59,    -1,
+     142,   162,   199,   126,   199,    -1,   143,   162,   199,   126,
+     199,    -1,   144,   162,   199,   126,   199,    -1,    49,   200,
+      -1,   146,   200,   126,   200,    -1,   145,   200,    36,   162,
+      -1,   115,   200,   126,   200,   126,   200,    -1,   119,   200,
+     126,   162,    -1,   123,   200,   126,   162,    -1,   124,   200,
+     126,   162,    -1,   120,   200,   126,   200,    -1,   121,   200,
+     126,   200,   126,   200,    -1,   122,   200,   126,   200,   126,
+     200,    -1,   114,   207,    -1,   210,   153,   160,   199,   128,
+     209,   129,    -1,   214,    -1,   126,   208,    -1,    -1,    35,
+      -1,    -1,    96,   162,   155,    -1,    96,   162,   126,    15,
+     199,   155,    -1,    97,   162,   155,    -1,    97,   162,   126,
+      15,   199,   155,    -1,    98,   200,    -1,   213,    99,   162,
+     199,    -1,   213,   100,   200,   126,   162,   199,    -1,   101,
+     162,   199,   212,    -1
 };
 
 /* YYRLINE[YYN] -- source line where rule number YYN was defined.  */
 static const unsigned short int yyrline[] =
 {
-       0,  1163,  1163,  1164,  1172,  1173,  1183,  1183,  1183,  1183,
-    1183,  1183,  1183,  1183,  1183,  1184,  1184,  1184,  1185,  1185,
-    1185,  1185,  1185,  1185,  1187,  1187,  1187,  1191,  1191,  1191,
-    1191,  1192,  1192,  1192,  1192,  1193,  1193,  1194,  1194,  1197,
-    1201,  1206,  1207,  1208,  1209,  1210,  1211,  1212,  1213,  1215,
-    1216,  1217,  1218,  1219,  1220,  1221,  1222,  1231,  1232,  1238,
-    1239,  1247,  1255,  1256,  1261,  1262,  1263,  1268,  1282,  1282,
-    1283,  1283,  1285,  1295,  1295,  1295,  1295,  1295,  1295,  1295,
-    1296,  1296,  1296,  1296,  1296,  1296,  1297,  1301,  1305,  1313,
-    1321,  1334,  1339,  1351,  1361,  1365,  1376,  1381,  1387,  1388,
-    1392,  1396,  1407,  1433,  1447,  1477,  1503,  1524,  1537,  1547,
-    1552,  1613,  1620,  1629,  1635,  1641,  1645,  1649,  1657,  1668,
-    1700,  1708,  1735,  1746,  1752,  1763,  1769,  1775,  1784,  1788,
-    1796,  1796,  1806,  1814,  1819,  1823,  1827,  1831,  1846,  1868,
-    1871,  1874,  1874,  1882,  1882,  1890,  1890,  1898,  1898,  1907,
-    1910,  1913,  1917,  1930,  1931,  1933,  1937,  1946,  1950,  1955,
-    1957,  1962,  1967,  1976,  1976,  1977,  1977,  1979,  1986,  1992,
-    1999,  2003,  2009,  2014,  2019,  2114,  2114,  2116,  2124,  2124,
-    2126,  2131,  2132,  2133,  2135,  2135,  2145,  2149,  2154,  2158,
-    2162,  2166,  2170,  2174,  2178,  2182,  2186,  2211,  2215,  2229,
-    2233,  2239,  2239,  2245,  2250,  2254,  2263,  2274,  2279,  2291,
-    2304,  2308,  2312,  2317,  2326,  2345,  2354,  2410,  2414,  2421,
-    2432,  2445,  2454,  2463,  2473,  2477,  2484,  2484,  2486,  2490,
-    2495,  2517,  2532,  2546,  2559,  2570,  2578,  2586,  2592,  2612,
-    2635,  2641,  2647,  2653,  2668,  2727,  2734,  2737,  2742,  2746,
-    2753,  2758,  2764,  2769,  2775,  2783,  2795,  2810
+       0,  1168,  1168,  1169,  1177,  1178,  1188,  1188,  1188,  1188,
+    1188,  1188,  1188,  1188,  1188,  1189,  1189,  1189,  1190,  1190,
+    1190,  1190,  1190,  1190,  1191,  1191,  1191,  1191,  1191,  1191,
+    1192,  1192,  1192,  1192,  1192,  1192,  1193,  1193,  1193,  1197,
+    1197,  1197,  1197,  1198,  1198,  1198,  1198,  1199,  1199,  1200,
+    1200,  1203,  1207,  1212,  1213,  1214,  1215,  1216,  1217,  1218,
+    1219,  1221,  1222,  1223,  1224,  1225,  1226,  1227,  1228,  1237,
+    1238,  1244,  1245,  1253,  1261,  1262,  1267,  1268,  1269,  1274,
+    1288,  1288,  1292,  1292,  1297,  1308,  1308,  1308,  1308,  1308,
+    1308,  1308,  1309,  1309,  1309,  1309,  1309,  1309,  1310,  1315,
+    1319,  1328,  1337,  1352,  1359,  1373,  1384,  1389,  1401,  1406,
+    1412,  1413,  1419,  1425,  1436,  1462,  1476,  1506,  1532,  1553,
+    1566,  1576,  1581,  1642,  1649,  1658,  1664,  1670,  1674,  1678,
+    1686,  1712,  1744,  1752,  1779,  1790,  1796,  1807,  1813,  1819,
+    1828,  1832,  1840,  1840,  1850,  1858,  1863,  1867,  1871,  1875,
+    1890,  1912,  1915,  1918,  1918,  1926,  1926,  1935,  1935,  1944,
+    1944,  1954,  1957,  1960,  1964,  1977,  1978,  1980,  1984,  1993,
+    1997,  2002,  2004,  2009,  2014,  2023,  2023,  2024,  2024,  2026,
+    2033,  2039,  2046,  2050,  2058,  2066,  2071,  2165,  2165,  2167,
+    2175,  2175,  2177,  2182,  2183,  2184,  2186,  2186,  2196,  2200,
+    2205,  2209,  2213,  2217,  2221,  2225,  2229,  2233,  2237,  2257,
+    2261,  2275,  2279,  2285,  2285,  2291,  2296,  2300,  2309,  2320,
+    2329,  2341,  2354,  2358,  2362,  2367,  2376,  2395,  2404,  2460,
+    2464,  2471,  2482,  2495,  2504,  2513,  2523,  2527,  2534,  2534,
+    2536,  2540,  2545,  2567,  2582,  2596,  2609,  2620,  2646,  2654,
+    2660,  2680,  2703,  2709,  2715,  2721,  2736,  2796,  2803,  2806,
+    2811,  2815,  2822,  2827,  2833,  2838,  2844,  2852,  2864,  2879
 };
 #endif
 
@@ -1777,22 +1805,24 @@ static const char *const yytname[] =
   "RET", "BR", "SWITCH", "INVOKE", "UNWIND", "UNREACHABLE", "ADD", "SUB",
   "MUL", "UDIV", "SDIV", "FDIV", "UREM", "SREM", "FREM", "AND", "OR",
   "XOR", "SETLE", "SETGE", "SETLT", "SETGT", "SETEQ", "SETNE", "MALLOC",
-  "ALLOCA", "FREE", "LOAD", "STORE", "GETELEMENTPTR", "PHI_TOK", "CAST",
-  "SELECT", "SHL", "LSHR", "ASHR", "VAARG", "EXTRACTELEMENT",
-  "INSERTELEMENT", "SHUFFLEVECTOR", "VAARG_old", "VANEXT_old", "'='",
-  "','", "'\\\\'", "'('", "')'", "'['", "'x'", "']'", "'<'", "'>'", "'{'",
-  "'}'", "'*'", "'c'", "$accept", "INTVAL", "EINT64VAL", "ArithmeticOps",
-  "LogicalOps", "SetCondOps", "ShiftOps", "SIntType", "UIntType",
-  "IntType", "FPType", "OptAssign", "OptLinkage", "OptCallingConv",
-  "OptAlign", "OptCAlign", "SectionString", "OptSection",
-  "GlobalVarAttributes", "GlobalVarAttribute", "TypesV", "UpRTypesV",
-  "Types", "PrimType", "UpRTypes", "TypeListI", "ArgTypeListI", "ConstVal",
-  "ConstExpr", "ConstVector", "GlobalType", "Module", "FunctionList",
-  "ConstPool", "@1", "@2", "@3", "@4", "AsmBlock", "BigOrLittle",
-  "TargetDefinition", "LibrariesDefinition", "LibList", "Name", "OptName",
-  "ArgVal", "ArgListH", "ArgList", "FunctionHeaderH", "BEGIN",
-  "FunctionHeader", "END", "Function", "FnDeclareLinkage", "FunctionProto",
-  "@5", "OptSideEffect", "ConstValueRef", "SymbolicValueRef", "ValueRef",
+  "ALLOCA", "FREE", "LOAD", "STORE", "GETELEMENTPTR", "TRUNC", "ZEXT",
+  "SEXT", "FPTRUNC", "FPEXT", "BITCAST", "UITOFP", "SITOFP", "FPTOUI",
+  "FPTOSI", "INTTOPTR", "PTRTOINT", "PHI_TOK", "SELECT", "SHL", "LSHR",
+  "ASHR", "VAARG", "EXTRACTELEMENT", "INSERTELEMENT", "SHUFFLEVECTOR",
+  "VAARG_old", "VANEXT_old", "'='", "','", "'\\\\'", "'('", "')'", "'['",
+  "'x'", "']'", "'<'", "'>'", "'{'", "'}'", "'*'", "'c'", "$accept",
+  "INTVAL", "EINT64VAL", "ArithmeticOps", "LogicalOps", "SetCondOps",
+  "CastOps", "ShiftOps", "SIntType", "UIntType", "IntType", "FPType",
+  "OptAssign", "OptLinkage", "OptCallingConv", "OptAlign", "OptCAlign",
+  "SectionString", "OptSection", "GlobalVarAttributes",
+  "GlobalVarAttribute", "TypesV", "UpRTypesV", "Types", "PrimType",
+  "UpRTypes", "TypeListI", "ArgTypeListI", "ConstVal", "ConstExpr",
+  "ConstVector", "GlobalType", "Module", "FunctionList", "ConstPool", "@1",
+  "@2", "@3", "@4", "AsmBlock", "BigOrLittle", "TargetDefinition",
+  "LibrariesDefinition", "LibList", "Name", "OptName", "ArgVal",
+  "ArgListH", "ArgList", "FunctionHeaderH", "BEGIN", "FunctionHeader",
+  "END", "Function", "FnDeclareLinkage", "FunctionProto", "@5",
+  "OptSideEffect", "ConstValueRef", "SymbolicValueRef", "ValueRef",
   "ResolvedVal", "BasicBlockList", "BasicBlock", "InstructionList",
   "BBTerminatorInst", "JumpTable", "Inst", "PHIList", "ValueRefList",
   "ValueRefListE", "OptTailCall", "InstVal", "IndexList", "OptVolatile",
@@ -1816,40 +1846,42 @@ static const unsigned short int yytoknum[] =
      335,   336,   337,   338,   339,   340,   341,   342,   343,   344,
      345,   346,   347,   348,   349,   350,   351,   352,   353,   354,
      355,   356,   357,   358,   359,   360,   361,   362,   363,   364,
-     365,   366,   367,   368,    61,    44,    92,    40,    41,    91,
-     120,    93,    60,    62,   123,   125,    42,    99
+     365,   366,   367,   368,   369,   370,   371,   372,   373,   374,
+     375,   376,   377,   378,   379,    61,    44,    92,    40,    41,
+      91,   120,    93,    60,    62,   123,   125,    42,    99
 };
 # endif
 
 /* YYR1[YYN] -- Symbol number of symbol that rule YYN derives.  */
 static const unsigned char yyr1[] =
 {
-       0,   128,   129,   129,   130,   130,   131,   131,   131,   131,
-     131,   131,   131,   131,   131,   132,   132,   132,   133,   133,
-     133,   133,   133,   133,   134,   134,   134,   135,   135,   135,
-     135,   136,   136,   136,   136,   137,   137,   138,   138,   139,
-     139,   140,   140,   140,   140,   140,   140,   140,   140,   141,
-     141,   141,   141,   141,   141,   141,   141,   142,   142,   143,
-     143,   144,   145,   145,   146,   146,   147,   147,   148,   148,
-     149,   149,   150,   151,   151,   151,   151,   151,   151,   151,
-     151,   151,   151,   151,   151,   151,   152,   152,   152,   152,
-     152,   152,   152,   152,   152,   152,   153,   153,   154,   154,
-     154,   154,   155,   155,   155,   155,   155,   155,   155,   155,
-     155,   155,   155,   155,   155,   155,   155,   155,   156,   156,
-     156,   156,   156,   156,   156,   156,   156,   156,   157,   157,
-     158,   158,   159,   160,   160,   160,   160,   160,   161,   161,
-     161,   162,   161,   163,   161,   164,   161,   165,   161,   161,
-     161,   161,   166,   167,   167,   168,   168,   168,   168,   169,
-     170,   170,   170,   171,   171,   172,   172,   173,   174,   174,
-     175,   175,   175,   175,   176,   177,   177,   178,   179,   179,
-     180,   181,   181,   181,   183,   182,   184,   184,   185,   185,
-     185,   185,   185,   185,   185,   185,   185,   185,   185,   186,
-     186,   187,   187,   188,   189,   189,   190,   191,   191,   191,
-     192,   192,   192,   192,   192,   192,   192,   192,   192,   193,
-     193,   194,   195,   195,   196,   196,   197,   197,   198,   198,
-     199,   199,   199,   199,   199,   199,   199,   199,   199,   199,
-     199,   199,   199,   199,   199,   199,   200,   200,   201,   201,
-     202,   202,   202,   202,   202,   202,   202,   202
+       0,   139,   140,   140,   141,   141,   142,   142,   142,   142,
+     142,   142,   142,   142,   142,   143,   143,   143,   144,   144,
+     144,   144,   144,   144,   145,   145,   145,   145,   145,   145,
+     145,   145,   145,   145,   145,   145,   146,   146,   146,   147,
+     147,   147,   147,   148,   148,   148,   148,   149,   149,   150,
+     150,   151,   151,   152,   152,   152,   152,   152,   152,   152,
+     152,   153,   153,   153,   153,   153,   153,   153,   153,   154,
+     154,   155,   155,   156,   157,   157,   158,   158,   159,   159,
+     160,   160,   161,   161,   162,   163,   163,   163,   163,   163,
+     163,   163,   163,   163,   163,   163,   163,   163,   164,   164,
+     164,   164,   164,   164,   164,   164,   164,   164,   165,   165,
+     166,   166,   166,   166,   167,   167,   167,   167,   167,   167,
+     167,   167,   167,   167,   167,   167,   167,   167,   167,   167,
+     168,   168,   168,   168,   168,   168,   168,   168,   168,   168,
+     169,   169,   170,   170,   171,   172,   172,   172,   172,   172,
+     173,   173,   173,   174,   173,   175,   173,   176,   173,   177,
+     173,   173,   173,   173,   178,   179,   179,   180,   180,   180,
+     180,   181,   182,   182,   182,   183,   183,   184,   184,   185,
+     186,   186,   187,   187,   187,   187,   188,   189,   189,   190,
+     191,   191,   192,   193,   193,   193,   195,   194,   196,   196,
+     197,   197,   197,   197,   197,   197,   197,   197,   197,   197,
+     197,   198,   198,   199,   199,   200,   201,   201,   202,   203,
+     203,   203,   204,   204,   204,   204,   204,   204,   204,   204,
+     204,   205,   205,   206,   207,   207,   208,   208,   209,   209,
+     210,   210,   211,   211,   211,   211,   211,   211,   211,   211,
+     211,   211,   211,   211,   211,   211,   211,   211,   212,   212,
+     213,   213,   214,   214,   214,   214,   214,   214,   214,   214
 };
 
 /* YYR2[YYN] -- Number of symbols composing right hand side of rule YYN.  */
@@ -1858,29 +1890,30 @@ static const unsigned char yyr2[] =
        0,     2,     1,     1,     1,     1,     1,     1,     1,     1,
        1,     1,     1,     1,     1,     1,     1,     1,     1,     1,
        1,     1,     1,     1,     1,     1,     1,     1,     1,     1,
-       1,     1,     1,     1,     1,     1,     1,     1,     1,     2,
-       0,     1,     1,     1,     1,     1,     1,     1,     0,     0,
-       1,     1,     1,     1,     1,     1,     2,     0,     2,     0,
-       3,     2,     0,     1,     0,     3,     1,     2,     1,     1,
        1,     1,     1,     1,     1,     1,     1,     1,     1,     1,
-       1,     1,     1,     1,     1,     1,     1,     1,     1,     2,
-       4,     5,     5,     3,     2,     2,     1,     3,     1,     3,
-       1,     0,     4,     3,     3,     4,     4,     3,     2,     2,
-       2,     2,     2,     2,     2,     2,     2,     2,     6,     5,
-       8,     6,     6,     6,     6,     6,     8,     8,     3,     1,
-       1,     1,     1,     2,     2,     4,     2,     1,     4,     2,
-       4,     0,     7,     0,     7,     0,     7,     0,     7,     3,
-       4,     0,     1,     1,     1,     3,     3,     3,     3,     3,
-       3,     1,     0,     1,     1,     1,     0,     2,     3,     1,
-       1,     3,     1,     0,     8,     1,     1,     3,     1,     1,
-       2,     0,     1,     1,     0,     4,     0,     1,     1,     1,
-       1,     1,     1,     1,     1,     1,     3,     1,     5,     1,
-       1,     1,     1,     2,     2,     2,     3,     2,     0,     1,
-       2,     2,     3,     9,     9,     8,    13,     1,     1,     6,
-       5,     2,     6,     7,     1,     3,     1,     0,     2,     1,
-       5,     5,     5,     2,     4,     4,     6,     4,     4,     4,
-       4,     6,     6,     2,     7,     1,     2,     0,     1,     0,
-       3,     6,     3,     6,     2,     4,     6,     4
+       1,     1,     1,     1,     1,     1,     1,     1,     1,     1,
+       1,     2,     0,     1,     1,     1,     1,     1,     1,     1,
+       0,     0,     1,     1,     1,     1,     1,     1,     2,     0,
+       2,     0,     3,     2,     0,     1,     0,     3,     1,     2,
+       1,     1,     1,     1,     1,     1,     1,     1,     1,     1,
+       1,     1,     1,     1,     1,     1,     1,     1,     1,     1,
+       1,     2,     4,     5,     5,     3,     2,     2,     1,     3,
+       1,     3,     1,     0,     4,     3,     3,     4,     4,     3,
+       2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
+       6,     5,     8,     6,     6,     6,     6,     6,     8,     8,
+       3,     1,     1,     1,     1,     2,     2,     4,     2,     1,
+       4,     2,     4,     0,     7,     0,     7,     0,     7,     0,
+       7,     3,     4,     0,     1,     1,     1,     3,     3,     3,
+       3,     3,     3,     1,     0,     1,     1,     1,     0,     2,
+       3,     1,     1,     3,     1,     0,     8,     1,     1,     3,
+       1,     1,     2,     0,     1,     1,     0,     4,     0,     1,
+       1,     1,     1,     1,     1,     1,     1,     1,     3,     1,
+       5,     1,     1,     1,     1,     2,     2,     2,     3,     2,
+       0,     1,     2,     2,     3,     9,     9,     8,    13,     1,
+       1,     6,     5,     2,     6,     7,     1,     3,     1,     0,
+       2,     1,     5,     5,     5,     2,     4,     4,     6,     4,
+       4,     4,     4,     6,     6,     2,     7,     1,     2,     0,
+       1,     0,     3,     6,     3,     6,     2,     4,     6,     4
 };
 
 /* YYDEFACT[STATE-NAME] -- Default rule to reduce with in state
@@ -1888,481 +1921,504 @@ static const unsigned char yyr2[] =
    means the default is an error.  */
 static const unsigned short int yydefact[] =
 {
-     151,     0,    48,   137,     1,   136,   184,    41,    42,    43,
-      44,    45,    46,    47,     0,    49,   208,   133,   134,   208,
-     163,   164,     0,     0,     0,    48,     0,   139,   181,     0,
-       0,    50,    51,    52,    53,    54,    55,     0,     0,   209,
-     205,    40,   178,   179,   180,   204,     0,     0,     0,     0,
-     149,     0,     0,     0,     0,     0,     0,     0,    39,   182,
-     183,    49,   152,   135,    56,     2,     3,    69,    73,    74,
-      75,    76,    77,    78,    79,    80,    81,    82,    83,    84,
-      85,    86,     0,     0,     0,     0,   199,     0,     0,    68,
-      87,    72,   200,    88,   175,   176,   177,   249,   207,     0,
-       0,     0,     0,   162,   150,   140,   138,   130,   131,     0,
-       0,     0,     0,   185,    89,     0,     0,    71,    94,    96,
-       0,     0,   101,    95,   248,     0,   229,     0,     0,     0,
-       0,    49,   217,   218,     6,     7,     8,     9,    10,    11,
+     163,     0,    60,   149,     1,   148,   196,    53,    54,    55,
+      56,    57,    58,    59,     0,    61,   220,   145,   146,   220,
+     175,   176,     0,     0,     0,    60,     0,   151,   193,     0,
+       0,    62,    63,    64,    65,    66,    67,     0,     0,   221,
+     217,    52,   190,   191,   192,   216,     0,     0,     0,     0,
+     161,     0,     0,     0,     0,     0,     0,     0,    51,   194,
+     195,    61,   164,   147,    68,     2,     3,    81,    85,    86,
+      87,    88,    89,    90,    91,    92,    93,    94,    95,    96,
+      97,    98,     0,     0,     0,     0,   211,     0,     0,    80,
+      99,    84,   212,   100,   187,   188,   189,   261,   219,     0,
+       0,     0,     0,   174,   162,   152,   150,   142,   143,     0,
+       0,     0,     0,   197,   101,     0,     0,    83,   106,   108,
+       0,     0,   113,   107,   260,     0,   241,     0,     0,     0,
+       0,    61,   229,   230,     6,     7,     8,     9,    10,    11,
       12,    13,    14,    15,    16,    17,    18,    19,    20,    21,
-      22,    23,     0,     0,     0,     0,     0,     0,     0,    24,
-      25,    26,     0,     0,     0,     0,     0,     0,     0,     0,
-       0,     0,   206,    49,   221,     0,   245,   157,   154,   153,
-     155,   156,   158,   161,     0,   145,   147,   143,    73,    74,
-      75,    76,    77,    78,    79,    80,    81,    82,    83,     0,
-       0,     0,     0,   141,     0,     0,     0,    93,   173,   100,
-      98,     0,     0,   233,   228,   211,   210,     0,     0,    30,
-      34,    29,    33,    28,    32,    27,    31,    35,    36,     0,
-       0,    59,    59,   254,     0,     0,   243,     0,     0,     0,
+      22,    23,     0,     0,     0,     0,    24,    25,    26,    27,
+      28,    29,    30,    31,    32,    33,    34,    35,     0,     0,
+      36,    37,    38,     0,     0,     0,     0,     0,     0,     0,
+       0,     0,     0,     0,   218,    61,   233,     0,   257,   169,
+     166,   165,   167,   168,   170,   173,     0,   157,   159,   155,
+      85,    86,    87,    88,    89,    90,    91,    92,    93,    94,
+      95,     0,     0,     0,     0,   153,     0,     0,     0,   105,
+     185,   112,   110,     0,     0,   245,   240,   223,   222,     0,
+       0,    42,    46,    41,    45,    40,    44,    39,    43,    47,
+      48,     0,     0,    71,    71,   266,     0,     0,   255,     0,
        0,     0,     0,     0,     0,     0,     0,     0,     0,     0,
-       0,     0,     0,   159,    64,    64,    64,   115,   116,     4,
-       5,   113,   114,   117,   112,   108,   109,     0,     0,     0,
+       0,     0,     0,     0,     0,   171,    76,    76,    76,   127,
+     128,     4,     5,   125,   126,   129,   124,   120,   121,     0,
        0,     0,     0,     0,     0,     0,     0,     0,     0,     0,
-       0,   111,   110,    64,    70,    70,    97,   172,   166,   169,
-     170,     0,     0,    90,   188,   189,   190,   195,   191,   192,
-     193,   194,   186,     0,   197,   202,   201,   203,     0,   212,
-       0,     0,     0,   250,     0,   252,   247,     0,     0,     0,
+       0,     0,     0,   123,   122,    76,    82,    82,   109,   184,
+     178,   181,   182,     0,     0,   102,   200,   201,   202,   207,
+     203,   204,   205,   206,   198,     0,   209,   214,   213,   215,
+       0,   224,     0,     0,     0,   262,     0,   264,   259,     0,
        0,     0,     0,     0,     0,     0,     0,     0,     0,     0,
-       0,     0,     0,     0,   160,     0,   146,   148,   144,     0,
-       0,     0,     0,     0,     0,   103,   129,     0,     0,   107,
-       0,   104,     0,     0,     0,     0,   142,    91,    92,   165,
-     167,     0,    62,    99,   187,     0,     0,     0,     0,     0,
-       0,     0,     0,     0,   257,     0,     0,   235,     0,   237,
-     240,     0,     0,   238,   239,     0,     0,     0,   234,     0,
-     255,     0,     0,     0,    66,    64,   247,     0,     0,     0,
-       0,     0,     0,   102,   105,   106,     0,     0,     0,     0,
-     171,   168,    63,    57,     0,   196,     0,     0,   227,    59,
-      60,    59,   224,   246,     0,     0,     0,     0,     0,   230,
-     231,   232,   227,     0,    61,    67,    65,     0,     0,     0,
-       0,     0,     0,   128,     0,     0,     0,     0,     0,   174,
-       0,     0,     0,   226,     0,     0,   251,   253,     0,     0,
-       0,   236,   241,   242,     0,   256,   119,     0,     0,     0,
-       0,     0,     0,     0,     0,     0,    58,   198,     0,     0,
-       0,   225,   222,     0,   244,   118,     0,   125,     0,     0,
-     121,   122,   123,   124,     0,   215,     0,     0,     0,   223,
-       0,     0,     0,   213,     0,   214,     0,     0,   120,   126,
-     127,     0,     0,     0,     0,     0,     0,   220,     0,     0,
-     219,   216
+       0,     0,     0,     0,     0,     0,   172,     0,   158,   160,
+     156,     0,     0,     0,     0,     0,   115,   141,     0,     0,
+     119,     0,   116,     0,     0,     0,     0,     0,   154,   103,
+     104,   177,   179,     0,    74,   111,   199,     0,     0,     0,
+       0,     0,     0,     0,     0,     0,   269,     0,     0,     0,
+     249,   252,     0,     0,   250,   251,     0,     0,     0,   247,
+     246,     0,   267,     0,     0,     0,    78,    76,   259,     0,
+       0,     0,     0,     0,   114,   117,   118,     0,     0,     0,
+       0,     0,   183,   180,    75,    69,     0,   208,     0,     0,
+     239,    71,    72,    71,   236,   258,     0,     0,     0,     0,
+       0,   242,   243,   244,   239,     0,    73,    79,    77,     0,
+       0,     0,     0,     0,   140,     0,     0,     0,     0,     0,
+       0,   186,     0,     0,     0,   238,     0,     0,   263,   265,
+       0,     0,     0,   248,   253,   254,     0,   268,   131,     0,
+       0,     0,     0,     0,     0,     0,     0,     0,    70,   210,
+       0,     0,     0,   237,   234,     0,   256,     0,   137,     0,
+       0,   133,   134,   135,   130,   136,     0,   227,     0,     0,
+       0,   235,     0,     0,     0,   225,     0,   226,     0,     0,
+     132,   138,   139,     0,     0,     0,     0,     0,     0,   232,
+       0,     0,   231,   228
 };
 
 /* YYDEFGOTO[NTERM-NUM]. */
 static const short int yydefgoto[] =
 {
-      -1,    86,   261,   277,   278,   279,   280,   199,   200,   229,
-     201,    25,    15,    37,   449,   313,   394,   413,   336,   395,
-      87,    88,   202,    90,    91,   120,   211,   346,   304,   347,
-     109,     1,     2,     3,   283,   256,   254,   255,    63,   180,
-      50,   104,   184,    92,   360,   289,   290,   291,    38,    96,
-      16,    44,    17,    61,    18,    28,   365,   305,    93,   307,
-     422,    19,    40,    41,   172,   497,    98,   236,   453,   454,
-     173,   174,   374,   175,   176
+      -1,    86,   273,   288,   289,   290,   291,   292,   211,   212,
+     241,   213,    25,    15,    37,   461,   325,   406,   425,   348,
+     407,    87,    88,   214,    90,    91,   120,   223,   357,   316,
+     358,   109,     1,     2,     3,   295,   268,   266,   267,    63,
+     192,    50,   104,   196,    92,   372,   301,   302,   303,    38,
+      96,    16,    44,    17,    61,    18,    28,   377,   317,    93,
+     319,   434,    19,    40,    41,   184,   509,    98,   248,   465,
+     466,   185,   186,   386,   187,   188
 };
 
 /* YYPACT[STATE-NUM] -- Index in YYTABLE of the portion describing
    STATE-NUM.  */
-#define YYPACT_NINF -463
+#define YYPACT_NINF -472
 static const short int yypact[] =
 {
-    -463,    19,   202,   739,  -463,  -463,  -463,  -463,  -463,  -463,
-    -463,  -463,  -463,  -463,   -23,   340,    60,  -463,  -463,   -12,
-    -463,  -463,    -8,    40,   115,   123,    66,  -463,    67,   158,
-     179,  -463,  -463,  -463,  -463,  -463,  -463,  1021,   -14,  -463,
-    -463,   120,  -463,  -463,  -463,  -463,    70,    71,    73,    77,
-    -463,    76,   158,  1021,    36,    36,    36,    36,  -463,  -463,
-    -463,   340,  -463,  -463,  -463,  -463,  -463,    75,  -463,  -463,
-    -463,  -463,  -463,  -463,  -463,  -463,  -463,  -463,  -463,  -463,
-    -463,  -463,   193,   194,   195,   577,  -463,   120,    84,  -463,
-    -463,   -84,  -463,  -463,  -463,  -463,  -463,  1197,  -463,   180,
-      31,   201,   183,   192,  -463,  -463,  -463,  -463,  -463,  1062,
-    1062,  1062,  1103,  -463,  -463,   100,   101,  -463,  -463,   -84,
-     -91,   105,   853,  -463,  -463,  1062,  -463,   164,  1144,    30,
-     255,   340,  -463,  -463,  -463,  -463,  -463,  -463,  -463,  -463,
-    -463,  -463,  -463,  -463,  -463,  -463,  -463,  -463,  -463,  -463,
-    -463,  -463,  1062,  1062,  1062,  1062,  1062,  1062,  1062,  -463,
-    -463,  -463,  1062,  1062,  1062,  1062,  1062,  1062,  1062,  1062,
-    1062,  1062,  -463,   340,  -463,    51,  -463,  -463,  -463,  -463,
-    -463,  -463,  -463,  -463,   -74,  -463,  -463,  -463,   125,   153,
-     220,   155,   222,   159,   224,   171,   225,   223,   227,   175,
-     228,   229,   420,  -463,  1062,  1062,  1062,  -463,   894,  -463,
-     116,   117,   645,  -463,  -463,    75,  -463,   645,   645,  -463,
-    -463,  -463,  -463,  -463,  -463,  -463,  -463,  -463,  -463,   645,
-    1021,   140,   141,  -463,   645,   138,   143,   226,   144,   146,
-     148,   161,   162,   163,   166,   645,   645,   645,   177,  1021,
-    1062,  1062,   249,  -463,   182,   182,   182,  -463,  -463,  -463,
-    -463,  -463,  -463,  -463,  -463,  -463,  -463,   178,   181,   184,
-     185,   186,   187,    87,  1103,   597,   270,   188,   189,   197,
-     199,  -463,  -463,   182,   -36,   -56,   -84,  -463,   120,  -463,
-     196,   200,   939,  -463,  -463,  -463,  -463,  -463,  -463,  -463,
-    -463,  -463,   236,  1103,  -463,  -463,  -463,  -463,   205,  -463,
-     210,   645,    -9,  -463,    -3,  -463,   211,   645,   191,  1062,
-    1062,  1062,  1062,  1062,  1062,  1062,  1062,   212,   216,   217,
-    1062,   645,   645,   218,  -463,   -20,  -463,  -463,  -463,  1103,
-    1103,  1103,  1103,  1103,  1103,  -463,  -463,   -50,   -59,  -463,
-     -31,  -463,  1103,  1103,  1103,  1103,  -463,  -463,  -463,  -463,
-    -463,   980,   278,  -463,  -463,   293,    26,   313,   314,   230,
-     645,   337,   645,  1062,  -463,   231,   645,  -463,   233,  -463,
-    -463,   234,   237,  -463,  -463,   645,   645,   645,  -463,   238,
-    -463,  1062,   332,   353,  -463,   182,   211,   322,   246,   247,
-     248,   250,  1103,  -463,  -463,  -463,   251,   256,   257,   259,
-    -463,  -463,  -463,   307,   260,  -463,   645,   645,  1062,   262,
-    -463,   262,  -463,   263,   645,   265,  1062,  1062,  1062,  -463,
-    -463,  -463,  1062,   645,  -463,  -463,  -463,   252,  1062,  1103,
-    1103,  1103,  1103,  -463,  1103,  1103,  1103,  1103,   378,  -463,
-     359,   273,   266,   263,   274,   339,  -463,  -463,  1062,   276,
-     645,  -463,  -463,  -463,   280,  -463,  -463,   281,   285,   284,
-     296,   297,   295,   298,   299,   300,  -463,  -463,   393,    15,
-     379,  -463,  -463,   301,  -463,  -463,  1103,  -463,  1103,  1103,
-    -463,  -463,  -463,  -463,   645,  -463,   738,    65,   398,  -463,
-     302,   305,   306,  -463,   312,  -463,   738,   645,  -463,  -463,
-    -463,   407,   315,   355,   645,   408,   412,  -463,   645,   645,
-    -463,  -463
+    -472,    24,   395,   501,  -472,  -472,  -472,  -472,  -472,  -472,
+    -472,  -472,  -472,  -472,   -13,   112,    46,  -472,  -472,   -11,
+    -472,  -472,   -18,   -41,    45,    51,    -1,  -472,    40,   106,
+     131,  -472,  -472,  -472,  -472,  -472,  -472,  1136,   -23,  -472,
+    -472,    81,  -472,  -472,  -472,  -472,    30,    33,    49,    61,
+    -472,    57,   106,  1136,    78,    78,    78,    78,  -472,  -472,
+    -472,   112,  -472,  -472,  -472,  -472,  -472,    62,  -472,  -472,
+    -472,  -472,  -472,  -472,  -472,  -472,  -472,  -472,  -472,  -472,
+    -472,  -472,   185,   187,   188,   619,  -472,    81,    67,  -472,
+    -472,   -71,  -472,  -472,  -472,  -472,  -472,  1286,  -472,   174,
+      58,   196,   177,   178,  -472,  -472,  -472,  -472,  -472,  1177,
+    1177,  1177,  1197,  -472,  -472,    72,    73,  -472,  -472,   -71,
+     -89,    79,   151,  -472,  -472,  1177,  -472,   147,  1222,    12,
+     218,   112,  -472,  -472,  -472,  -472,  -472,  -472,  -472,  -472,
+    -472,  -472,  -472,  -472,  -472,  -472,  -472,  -472,  -472,  -472,
+    -472,  -472,  1177,  1177,  1177,  1177,  -472,  -472,  -472,  -472,
+    -472,  -472,  -472,  -472,  -472,  -472,  -472,  -472,  1177,  1177,
+    -472,  -472,  -472,  1177,  1177,  1177,  1177,  1177,  1177,  1177,
+    1177,  1177,  1177,  1177,  -472,   112,  -472,   -55,  -472,  -472,
+    -472,  -472,  -472,  -472,  -472,  -472,   -62,  -472,  -472,  -472,
+      95,   123,   204,   125,   205,   130,   206,   149,   207,   208,
+     210,   181,   209,   214,   488,  -472,  1177,  1177,  1177,  -472,
+     944,  -472,    88,    93,   698,  -472,  -472,    62,  -472,   698,
+     698,  -472,  -472,  -472,  -472,  -472,  -472,  -472,  -472,  -472,
+    -472,   698,  1136,    97,   110,  -472,   698,   108,   113,   114,
+     120,   121,   124,   126,   133,   136,   698,   698,   698,   213,
+     139,  1136,  1177,  1177,   227,  -472,   140,   140,   140,  -472,
+    -472,  -472,  -472,  -472,  -472,  -472,  -472,  -472,  -472,   141,
+     142,   143,   145,   146,   985,  1197,   639,   243,   148,   154,
+     155,   157,   165,  -472,  -472,   140,   -28,   -51,   -71,  -472,
+      81,  -472,   153,   172,  1005,  -472,  -472,  -472,  -472,  -472,
+    -472,  -472,  -472,  -472,   244,  1197,  -472,  -472,  -472,  -472,
+     180,  -472,   182,   698,    -7,  -472,    -6,  -472,   183,   698,
+     138,  1177,  1177,  1177,  1177,  1177,  1177,  1177,   184,   186,
+     189,  1177,  1177,   698,   698,   190,  -472,   -17,  -472,  -472,
+    -472,  1197,  1197,  1197,  1197,  1197,  -472,  -472,   -24,   -85,
+    -472,   -80,  -472,  1197,  1197,  1197,  1197,  1197,  -472,  -472,
+    -472,  -472,  -472,  1046,   277,  -472,  -472,   289,   -27,   293,
+     296,   191,   698,   314,   698,  1177,  -472,   194,   698,   195,
+    -472,  -472,   200,   201,  -472,  -472,   698,   698,   698,  -472,
+    -472,   202,  -472,  1177,   298,   324,  -472,   140,   183,   203,
+     211,   212,   224,  1197,  -472,  -472,  -472,   225,   226,   230,
+     295,   232,  -472,  -472,  -472,   275,   233,  -472,   698,   698,
+    1177,   235,  -472,   235,  -472,   239,   698,   241,  1177,  1177,
+    1177,  -472,  -472,  -472,  1177,   698,  -472,  -472,  -472,   215,
+    1197,  1197,  1197,  1197,  -472,  1197,  1197,  1197,  1177,  1197,
+     329,  -472,   310,   242,   223,   239,   240,   278,  -472,  -472,
+    1177,   238,   698,  -472,  -472,  -472,   247,  -472,  -472,   245,
+     250,   246,   255,   254,   256,   257,   259,   262,  -472,  -472,
+     318,    15,   337,  -472,  -472,   252,  -472,  1197,  -472,  1197,
+    1197,  -472,  -472,  -472,  -472,  -472,   698,  -472,   818,    65,
+     371,  -472,   265,   267,   268,  -472,   272,  -472,   818,   698,
+    -472,  -472,  -472,   378,   274,   328,   698,   384,   385,  -472,
+     698,   698,  -472,  -472
 };
 
 /* YYPGOTO[NTERM-NUM].  */
 static const short int yypgoto[] =
 {
-    -463,  -463,  -463,   338,   342,   343,   344,  -129,  -128,  -462,
-    -463,   395,   418,  -118,  -463,  -225,    89,  -463,  -247,  -463,
-     -49,  -463,   -37,  -463,   -82,   323,  -463,  -102,   253,  -253,
-      83,  -463,  -463,  -463,  -463,  -463,  -463,  -463,   400,  -463,
-    -463,  -463,  -463,     2,  -463,    92,  -463,  -463,   399,  -463,
-    -463,  -463,  -463,  -463,   451,  -463,  -463,  -359,   -57,    62,
-    -105,  -463,   437,  -463,  -463,  -463,  -463,  -463,    90,    32,
-    -463,  -463,    69,  -463,  -463
+    -472,  -472,  -472,   311,   312,   313,   315,   317,  -129,  -127,
+    -471,  -472,   370,   392,  -120,  -472,  -237,    50,  -472,  -253,
+    -472,   -49,  -472,   -37,  -472,   -67,   301,  -472,  -110,   220,
+    -263,    64,  -472,  -472,  -472,  -472,  -472,  -472,  -472,   373,
+    -472,  -472,  -472,  -472,     2,  -472,    70,  -472,  -472,   374,
+    -472,  -472,  -472,  -472,  -472,   441,  -472,  -472,  -418,    34,
+      31,  -115,  -472,   426,  -472,  -472,  -472,  -472,  -472,    63,
+       3,  -472,  -472,    38,  -472,  -472
 };
 
 /* YYTABLE[YYPACT[STATE-NUM]].  What to do in state STATE-NUM.  If
    positive, shift that token.  If negative, reduce the rule which
    number is the opposite.  If zero, do what YYDEFACT says.
    If YYTABLE_NINF, syntax error.  */
-#define YYTABLE_NINF -133
+#define YYTABLE_NINF -145
 static const short int yytable[] =
 {
-      89,   227,   228,   119,   106,    26,   370,   315,   337,   338,
-     203,    39,   372,   230,   392,    94,    89,   496,    42,     4,
-     213,   348,   350,   216,   206,   219,   220,   221,   222,   223,
-     224,   225,   226,   -70,   207,   506,   356,   393,    29,   217,
-     119,   252,   123,    26,    46,    47,    48,   253,   371,   233,
-     366,   218,   237,   238,   371,   249,   402,   239,   240,   241,
-     242,   243,   244,    49,   404,   402,   248,   358,   107,   108,
-     123,   403,   185,   186,   187,   219,   220,   221,   222,   223,
-     224,   225,   226,    39,   402,   357,   178,   179,   212,   121,
-     123,   212,    65,    66,   405,   117,   188,   189,   190,   191,
-     192,   193,   194,   195,   196,   197,   198,    79,    80,    20,
-      95,    21,    59,    43,    60,   231,   232,   212,   234,   235,
-     212,   212,   284,   285,   286,   212,   212,   212,   212,   212,
-     212,   245,   246,   247,   212,    81,   495,   504,   110,   111,
-     112,   402,    20,    53,    21,   282,   333,   512,   436,   415,
-     250,   251,   257,   258,    51,   306,   -30,   -30,   -29,   -29,
-     306,   306,   -28,   -28,     7,     8,     9,    10,    54,    12,
-      55,   288,   306,    56,   -27,   -27,    52,   306,   259,   260,
-      58,   311,    62,    64,    99,   100,   505,   101,   306,   306,
-     306,   102,   -71,    89,   456,   103,   457,   114,   115,   116,
-     331,   122,  -132,    82,   177,   181,    83,   182,   345,    84,
-     286,    85,    89,   332,   212,   378,   183,   380,   381,   382,
-     204,   205,   208,   214,   -34,   388,   -33,     5,   -32,   -31,
-     -37,   292,   262,     6,   -38,   293,   263,   396,   397,   398,
-     399,   400,   401,     7,     8,     9,    10,    11,    12,    13,
-     406,   407,   408,   409,   306,   312,   314,   317,   318,   320,
-     306,   321,   319,   322,    14,   219,   220,   221,   222,   223,
-     224,   225,   226,   334,   306,   306,   323,   324,   325,   308,
-     309,   326,   377,   212,   379,   212,   212,   212,   383,   384,
-     359,   310,   330,   212,   351,   339,   316,   335,   340,   364,
-     443,   341,   342,   343,   344,   352,   353,   327,   328,   329,
-     376,   361,   392,   306,   354,   306,   355,   414,   362,   306,
-     367,   461,   462,   463,   288,   368,   373,   385,   306,   306,
-     306,   386,   387,   391,   416,   417,   212,   468,   469,   470,
-     471,   420,   472,   473,   474,   475,   424,   418,   426,   427,
-     227,   228,   428,   481,   433,   432,   434,   435,   438,   306,
-     306,   439,   440,   441,   448,   442,   444,   306,   227,   228,
-     466,   445,   446,   369,   447,   450,   306,   455,   458,   375,
-     460,   212,   476,   477,   500,   479,   501,   502,   478,   212,
-     212,   212,   480,   389,   390,   212,   371,   482,   484,   485,
-     486,   467,   487,   306,    30,    31,    32,    33,    34,    35,
-      36,   488,   489,   490,   494,   498,   491,   492,   493,   507,
-     508,   212,   499,   509,   510,    65,    66,   511,   514,   518,
-     515,   516,   419,   519,   421,   168,    97,   306,   425,   169,
-     170,   171,    20,    57,    21,   210,   264,   429,   430,   431,
-     306,   412,   105,   411,    27,   281,    45,   306,   265,   266,
-     113,   306,   306,   423,   464,   437,     0,     0,     0,     0,
-       0,     0,     0,     0,     0,     0,     0,     0,   451,   452,
-       0,     0,     0,     0,     0,     0,   459,     0,     0,     0,
-       0,     0,     0,     0,     0,   465,     0,     0,   134,   135,
-     136,   137,   138,   139,   140,   141,   142,   143,   144,   145,
-     146,   147,   148,   149,   150,   151,     0,     0,     0,     0,
-       0,   267,   483,   268,   269,   159,   160,   161,     0,   270,
-     271,   272,     0,     0,     0,     0,     0,     0,     0,   273,
-       0,     0,   274,     0,   275,     0,     0,   276,     0,     0,
-       0,     0,     0,     0,     0,     0,   503,     0,     0,     0,
-       0,     0,     0,     0,     0,     0,     0,     0,     0,   513,
-       0,     0,     0,     0,     0,     0,   517,     0,     0,     0,
-     520,   521,    65,    66,     0,   117,    68,    69,    70,    71,
-      72,    73,    74,    75,    76,    77,    78,    79,    80,    20,
-       0,    21,    65,    66,     0,   117,   188,   189,   190,   191,
-     192,   193,   194,   195,   196,   197,   198,    79,    80,    20,
-       0,    21,     0,     0,     0,    81,     0,     0,     0,     0,
+      89,   239,   215,   240,   106,    26,    94,   327,   382,   384,
+     225,   242,    39,   228,   349,   350,    89,   404,   119,    42,
+     508,   229,   359,   361,     4,   231,   232,   233,   234,   235,
+     236,   237,   238,   230,    46,    47,    48,   218,   518,   245,
+     405,   413,   368,    26,   262,   263,   413,   219,    29,   415,
+     383,   383,   378,    49,   249,   119,   416,   -82,   250,   251,
+     252,   253,   254,   255,   264,   261,   123,   259,   260,    39,
+     265,    53,   197,   198,   199,   231,   232,   233,   234,   235,
+     236,   237,   238,   370,    51,    59,   123,    60,   224,   121,
+     516,   224,     7,     8,     9,    10,    54,    12,    55,   413,
+     524,    56,   413,    20,   369,    21,    52,   427,   414,   123,
+     107,   108,    95,   190,   191,   243,   244,   224,   246,   110,
+     111,   112,   269,   270,    58,    43,   -42,   -42,   -41,   -41,
+      62,   247,   224,   -40,   -40,    64,   224,   224,   224,   224,
+     224,   224,   256,   257,   258,   224,   224,   507,   345,   296,
+     297,   298,   -39,   -39,   448,    99,    65,    66,   100,   117,
+      68,    69,    70,    71,    72,    73,    74,    75,    76,    77,
+      78,    79,    80,    20,   101,    21,    30,    31,    32,    33,
+      34,    35,    36,   300,   271,   272,   102,   103,   221,   114,
+     -83,   115,   116,   323,   468,   122,   469,   517,   189,    81,
+     193,   194,   195,   216,   217,    89,   226,   220,   -46,   -45,
+     -44,   -43,   343,   274,   304,   -49,   389,   -50,   391,   392,
+     393,   275,   305,   324,    89,   344,   224,   400,   231,   232,
+     233,   234,   235,   236,   237,   238,   326,   298,   329,   330,
+     331,   408,   409,   410,   411,   412,   332,   333,   294,   341,
+     334,   346,   335,   417,   418,   419,   420,   421,   318,   336,
+     320,   321,   337,   318,   318,   342,   347,   362,   388,   351,
+     352,   353,   322,   354,   355,   318,   363,   328,    82,   373,
+     318,    83,   364,   365,    84,   366,    85,   338,   339,   340,
+     318,   318,   318,   367,   224,   390,   224,   224,   224,   394,
+     395,   374,   371,   454,   399,   224,   379,   376,   380,   385,
+     396,   404,   397,   426,   428,   398,   403,   429,   432,   430,
+     436,   438,   446,   473,   474,   475,   439,   440,   447,   450,
+     444,   458,   460,   488,   489,   383,   300,   451,   452,   506,
+     479,   480,   481,   482,   478,   483,   484,   485,   224,   487,
+     453,   455,   456,   491,   381,   493,   457,   318,   459,   462,
+     387,   467,   239,   318,   240,   470,   445,   472,   490,   492,
+     494,   497,   499,   510,   401,   402,   496,   318,   318,   498,
+     239,   500,   240,   501,   511,   502,   503,   512,   504,   513,
+     514,   505,   519,   224,   520,  -144,   521,   522,   523,   526,
+     527,   224,   224,   224,   528,   530,   531,   224,   179,   180,
+     181,    97,   182,   431,   183,   433,   318,    57,   318,   437,
+       5,   486,   318,   222,   424,   105,     6,   441,   442,   443,
+     318,   318,   318,   224,   293,   113,     7,     8,     9,    10,
+      11,    12,    13,   423,    27,    45,   449,   476,   435,     0,
+       0,     0,     0,     0,     0,     0,     0,    14,     0,   463,
+     464,     0,   318,   318,     0,     0,     0,   471,     0,     0,
+     318,     0,     0,     0,     0,     0,   477,     0,     0,   318,
        0,     0,     0,     0,     0,     0,     0,     0,     0,     0,
-       0,     0,     0,     0,     0,    81,     0,     0,   294,   295,
-      65,    66,   296,     0,     0,     0,     0,     0,     0,     0,
-       0,     0,     0,     0,     0,     0,     0,    20,     0,    21,
-       0,   297,   298,   299,     0,     0,     0,     0,     0,     0,
-       0,     0,     0,   300,   301,     0,     0,     0,     0,     0,
-       0,     0,     0,    82,     0,     0,    83,     0,     0,    84,
-       0,    85,   118,     0,     0,     0,   302,     0,     0,     0,
-       0,     0,     0,    82,     0,     0,    83,     0,     0,    84,
-       0,    85,   349,   134,   135,   136,   137,   138,   139,   140,
-     141,   142,   143,   144,   145,   146,   147,   148,   149,   150,
-     151,   294,   295,     0,     0,   296,   267,     0,   268,   269,
-     159,   160,   161,     0,   270,   271,   272,     0,     0,   -40,
-       0,    20,     0,    21,   297,   298,   299,   303,     0,     0,
-       6,   -40,   -40,     0,     0,     0,   300,   301,     0,     0,
-     -40,   -40,   -40,   -40,   -40,   -40,   -40,     0,     0,   -40,
-      22,     0,     0,     0,     0,     0,     0,    23,     0,   302,
-       0,    24,     0,     0,     0,     0,     0,     0,     0,     0,
+       0,     0,     0,    65,    66,     0,     0,     0,     0,     0,
+       0,     0,     0,   495,     0,     0,   318,     0,     0,     0,
+      20,     0,    21,     0,   276,     0,     0,     0,     0,     0,
+       0,   -52,     0,    20,     0,    21,   277,   278,     0,     0,
+       0,     0,     6,   -52,   -52,     0,     0,   515,     0,     0,
+     318,     0,   -52,   -52,   -52,   -52,   -52,   -52,   -52,     0,
+     525,   -52,    22,   318,     0,     0,     0,   529,     0,    23,
+     318,   532,   533,    24,   318,   318,   134,   135,   136,   137,
+     138,   139,   140,   141,   142,   143,   144,   145,   146,   147,
+     148,   149,   150,   151,     0,     0,     0,     0,     0,   279,
+     156,   157,   158,   159,   160,   161,   162,   163,   164,   165,
+     166,   167,     0,   280,   170,   171,   172,     0,   281,   282,
+     283,     0,     0,     0,     0,     0,     0,     0,   284,     0,
+       0,   285,     0,   286,    65,    66,   287,   117,    68,    69,
+      70,    71,    72,    73,    74,    75,    76,    77,    78,    79,
+      80,    20,     0,    21,    65,    66,     0,   117,   200,   201,
+     202,   203,   204,   205,   206,   207,   208,   209,   210,    79,
+      80,    20,     0,    21,     0,     0,     0,    81,     0,     0,
+       0,     0,     0,     0,     0,     0,     0,     0,     0,     0,
+       0,     0,     0,     0,     0,     0,     0,    81,     0,     0,
+       0,     0,     0,     0,     0,     0,     0,     0,     0,     0,
+       0,   306,   307,    65,    66,   308,     0,     0,     0,     0,
+       0,     0,     0,     0,     0,     0,     0,     0,     0,     0,
+      20,     0,    21,     0,   309,   310,   311,     0,     0,     0,
+       0,     0,     0,     0,     0,     0,   312,   313,     0,     0,
+       0,     0,     0,     0,     0,     0,    82,     0,     0,    83,
+       0,     0,    84,     0,    85,   118,     0,     0,     0,   314,
+       0,     0,     0,     0,     0,     0,    82,     0,     0,    83,
+       0,     0,    84,     0,    85,   360,   134,   135,   136,   137,
+     138,   139,   140,   141,   142,   143,   144,   145,   146,   147,
+     148,   149,   150,   151,     0,     0,     0,     0,     0,   279,
+     156,   157,   158,   159,   160,   161,   162,   163,   164,   165,
+     166,   167,     0,   280,   170,   171,   172,     0,   281,   282,
+     283,   306,   307,     0,     0,   308,     0,     0,     0,     0,
+       0,   315,     0,     0,     0,     0,     0,     0,     0,     0,
+       0,     0,     0,     0,   309,   310,   311,     0,     0,     0,
+       0,     0,     0,     0,     0,     0,   312,   313,     0,     0,
+       0,     0,     0,     0,     0,     0,     0,     0,     0,     0,
+       0,     0,     0,     0,     0,     0,     0,     0,     0,   314,
+       0,     0,     0,     0,     0,     0,     0,     0,     0,     0,
        0,     0,     0,     0,     0,     0,   134,   135,   136,   137,
      138,   139,   140,   141,   142,   143,   144,   145,   146,   147,
-     148,   149,   150,   151,     0,     0,     0,     0,     0,   267,
-       0,   268,   269,   159,   160,   161,     0,   270,   271,   272,
-       0,     0,     0,     0,     0,     0,     0,     0,    65,    66,
-     303,   117,    68,    69,    70,    71,    72,    73,    74,    75,
-      76,    77,    78,    79,    80,    20,     0,    21,     0,     0,
-       0,     0,     0,     0,     0,     0,     0,     0,     0,     0,
-     209,     0,     0,     0,     0,     0,     0,     0,     0,    65,
-      66,    81,   117,    68,    69,    70,    71,    72,    73,    74,
+     148,   149,   150,   151,     0,     0,     0,     0,     0,   279,
+     156,   157,   158,   159,   160,   161,   162,   163,   164,   165,
+     166,   167,     0,   280,   170,   171,   172,     0,   281,   282,
+     283,     0,     0,     0,     0,     0,     0,     0,     0,    65,
+      66,   315,   117,    68,    69,    70,    71,    72,    73,    74,
       75,    76,    77,    78,    79,    80,    20,     0,    21,     0,
        0,     0,     0,     0,     0,     0,     0,     0,     0,     0,
-       0,   287,     0,     0,     0,     0,     0,     0,     0,     0,
-       0,     0,    81,     0,    65,    66,     0,   117,    68,    69,
-      70,    71,    72,    73,    74,    75,    76,    77,    78,    79,
-      80,    20,     0,    21,     0,     0,     0,     0,     0,    82,
-       0,     0,    83,     0,     0,    84,   363,    85,     0,     0,
-       0,     0,     0,     0,     0,    65,    66,    81,   117,    68,
-      69,    70,    71,    72,    73,    74,    75,    76,    77,    78,
-      79,    80,    20,     0,    21,     0,     0,     0,     0,     0,
-      82,     0,     0,    83,     0,     0,    84,   410,    85,     0,
-       0,     0,     0,     0,     0,     0,    65,    66,    81,    67,
-      68,    69,    70,    71,    72,    73,    74,    75,    76,    77,
-      78,    79,    80,    20,     0,    21,     0,     0,     0,     0,
-       0,     0,     0,     0,     0,    82,     0,     0,    83,     0,
-       0,    84,     0,    85,     0,     0,     0,    65,    66,    81,
-     117,    68,    69,    70,    71,    72,    73,    74,    75,    76,
-      77,    78,    79,    80,    20,     0,    21,     0,     0,     0,
-       0,     0,     0,     0,     0,     0,    82,     0,     0,    83,
-       0,     0,    84,     0,    85,     0,     0,     0,    65,    66,
-      81,   117,   188,   189,   190,   191,   192,   193,   194,   195,
-     196,   197,   198,    79,    80,    20,     0,    21,     0,     0,
-       0,     0,     0,     0,     0,     0,     0,    82,     0,     0,
-      83,     0,     0,    84,     0,    85,     0,     0,     0,    65,
-      66,    81,   215,    68,    69,    70,    71,    72,    73,    74,
-      75,    76,    77,    78,    79,    80,    20,     0,    21,     0,
-       0,     0,     0,     0,     0,     0,     0,     0,    82,     0,
-       0,    83,     0,     0,    84,     0,    85,     0,     0,     0,
-       0,     0,    81,     0,     0,     0,     0,     0,     0,     0,
+       0,   299,     0,     0,     0,     0,     0,     0,     0,     0,
+      65,    66,    81,   117,   200,   201,   202,   203,   204,   205,
+     206,   207,   208,   209,   210,    79,    80,    20,     0,    21,
+      65,    66,     0,   117,    68,    69,    70,    71,    72,    73,
+      74,    75,    76,    77,    78,    79,    80,    20,     0,    21,
+       0,     0,     0,    81,     0,     0,     0,     0,     0,     0,
+       0,     0,   375,     0,     0,     0,     0,     0,     0,     0,
+       0,    65,    66,    81,   117,    68,    69,    70,    71,    72,
+      73,    74,    75,    76,    77,    78,    79,    80,    20,     0,
+      21,    82,     0,     0,    83,     0,     0,    84,     0,    85,
+       0,     0,     0,   422,     0,     0,     0,     0,     0,     0,
+       0,     0,     0,     0,    81,     0,     0,     0,     0,     0,
        0,     0,     0,     0,     0,     0,     0,     0,     0,     0,
-       0,     0,     0,     0,     0,     0,     0,     0,     0,    82,
-       0,     0,    83,     0,     0,    84,     0,    85,     0,     0,
-       0,     0,   124,     0,     0,     0,     0,     0,     0,     0,
-       0,     0,     0,     0,     0,     0,   125,     0,     0,     0,
-       0,     0,     0,     0,     0,     0,   126,   127,     0,     0,
-      82,     0,     0,    83,     0,     0,    84,     0,    85,   128,
-     129,   130,   131,   132,   133,   134,   135,   136,   137,   138,
-     139,   140,   141,   142,   143,   144,   145,   146,   147,   148,
-     149,   150,   151,   152,   153,   154,     0,     0,   155,   156,
-     157,   158,   159,   160,   161,   162,   163,   164,   165,   166,
-     167
+       0,     0,    82,     0,     0,    83,     0,   356,    84,     0,
+      85,     0,     0,     0,     0,     0,     0,     0,     0,     0,
+       0,     0,    82,     0,     0,    83,     0,     0,    84,     0,
+      85,    65,    66,     0,    67,    68,    69,    70,    71,    72,
+      73,    74,    75,    76,    77,    78,    79,    80,    20,     0,
+      21,     0,     0,     0,     0,     0,     0,     0,     0,     0,
+       0,     0,     0,    82,     0,     0,    83,     0,     0,    84,
+       0,    85,    65,    66,    81,   117,    68,    69,    70,    71,
+      72,    73,    74,    75,    76,    77,    78,    79,    80,    20,
+       0,    21,    65,    66,     0,   117,   200,   201,   202,   203,
+     204,   205,   206,   207,   208,   209,   210,    79,    80,    20,
+       0,    21,     0,     0,     0,    81,     0,    65,    66,     0,
+     227,    68,    69,    70,    71,    72,    73,    74,    75,    76,
+      77,    78,    79,    80,    20,    81,    21,     0,     0,     0,
+       0,     0,     0,     0,     0,     0,     0,     0,     0,     0,
+       0,     0,     0,    82,     0,     0,    83,     0,     0,    84,
+      81,    85,     0,     0,     0,     0,     0,     0,     0,     0,
+       0,     0,     0,     0,     0,     0,     0,     0,     0,     0,
+       0,     0,     0,     0,     0,     0,     0,     0,     0,     0,
+       0,     0,     0,     0,    82,     0,     0,    83,     0,     0,
+      84,     0,    85,     0,     0,     0,     0,     0,     0,     0,
+       0,   124,     0,     0,    82,     0,     0,    83,     0,     0,
+      84,     0,    85,     0,     0,   125,     0,     0,     0,     0,
+       0,     0,     0,     0,     0,   126,   127,     0,     0,    82,
+       0,     0,    83,     0,     0,    84,     0,    85,   128,   129,
+     130,   131,   132,   133,   134,   135,   136,   137,   138,   139,
+     140,   141,   142,   143,   144,   145,   146,   147,   148,   149,
+     150,   151,   152,   153,   154,     0,     0,   155,   156,   157,
+     158,   159,   160,   161,   162,   163,   164,   165,   166,   167,
+     168,   169,   170,   171,   172,   173,   174,   175,   176,   177,
+     178
 };
 
 static const short int yycheck[] =
 {
-      37,   130,   130,    85,    53,     3,    15,   232,   255,   256,
-     112,    23,    15,   131,    34,    29,    53,   479,    30,     0,
-     125,   274,   275,   128,   115,    10,    11,    12,    13,    14,
-      15,    16,    17,   117,   125,   497,   283,    57,    61,     9,
-     122,   115,   126,    41,    52,    53,    54,   121,    57,   154,
-     303,    21,   157,   158,    57,   173,   115,   162,   163,   164,
-     165,   166,   167,    71,   123,   115,   171,   123,    32,    33,
-     126,   121,   109,   110,   111,    10,    11,    12,    13,    14,
-      15,    16,    17,    23,   115,   121,    55,    56,   125,    87,
-     126,   128,     5,     6,   125,     8,     9,    10,    11,    12,
-      13,    14,    15,    16,    17,    18,    19,    20,    21,    22,
-     124,    24,    45,   125,    47,   152,   153,   154,   155,   156,
-     157,   158,   204,   205,   206,   162,   163,   164,   165,   166,
-     167,   168,   169,   170,   171,    48,   121,   496,    55,    56,
-      57,   115,    22,    20,    24,   202,   251,   506,   395,   123,
-      99,   100,    27,    28,   114,   212,     3,     4,     3,     4,
-     217,   218,     3,     4,    41,    42,    43,    44,    45,    46,
-      47,   208,   229,    50,     3,     4,    61,   234,     3,     4,
-     114,   230,    24,     4,   114,   114,   121,   114,   245,   246,
-     247,   114,   117,   230,   419,   119,   421,     4,     4,     4,
-     249,   117,     0,   116,    24,     4,   119,    24,   121,   122,
-     292,   124,   249,   250,   251,   320,    24,   322,   323,   324,
-     120,   120,   117,    59,     4,   330,     4,    25,     4,     4,
-       7,   115,     4,    31,     7,   118,     7,   339,   340,   341,
-     342,   343,   344,    41,    42,    43,    44,    45,    46,    47,
-     352,   353,   354,   355,   311,   115,   115,   119,   115,   115,
-     317,   115,    36,   115,    62,    10,    11,    12,    13,    14,
-      15,    16,    17,    24,   331,   332,   115,   115,   115,   217,
-     218,   115,   319,   320,   321,   322,   323,   324,   325,   326,
-     288,   229,   115,   330,    24,   117,   234,   115,   117,    63,
-     402,   117,   117,   117,   117,   117,   117,   245,   246,   247,
-     119,   115,    34,   370,   117,   372,   117,    24,   118,   376,
-     115,   426,   427,   428,   361,   115,   115,   115,   385,   386,
-     387,   115,   115,   115,    21,    21,   373,   439,   440,   441,
-     442,     4,   444,   445,   446,   447,   115,   117,   115,   115,
-     479,   479,   115,   458,   391,   117,    24,     4,    36,   416,
-     417,   115,   115,   115,    57,   115,   115,   424,   497,   497,
-     118,   115,   115,   311,   115,   115,   433,   115,   115,   317,
-     115,   418,     4,    24,   486,   119,   488,   489,   115,   426,
-     427,   428,   118,   331,   332,   432,    57,   121,   118,   118,
-     115,   438,   118,   460,    64,    65,    66,    67,    68,    69,
-      70,   115,   115,   118,    21,    36,   118,   118,   118,    21,
-     118,   458,   121,   118,   118,     5,     6,   115,    21,    21,
-     115,    76,   370,    21,   372,    97,    41,   494,   376,    97,
-      97,    97,    22,    25,    24,   122,    26,   385,   386,   387,
-     507,   362,    52,   361,     3,   202,    19,   514,    38,    39,
-      61,   518,   519,   373,   432,   396,    -1,    -1,    -1,    -1,
-      -1,    -1,    -1,    -1,    -1,    -1,    -1,    -1,   416,   417,
-      -1,    -1,    -1,    -1,    -1,    -1,   424,    -1,    -1,    -1,
-      -1,    -1,    -1,    -1,    -1,   433,    -1,    -1,    78,    79,
-      80,    81,    82,    83,    84,    85,    86,    87,    88,    89,
-      90,    91,    92,    93,    94,    95,    -1,    -1,    -1,    -1,
-      -1,   101,   460,   103,   104,   105,   106,   107,    -1,   109,
-     110,   111,    -1,    -1,    -1,    -1,    -1,    -1,    -1,   119,
-      -1,    -1,   122,    -1,   124,    -1,    -1,   127,    -1,    -1,
-      -1,    -1,    -1,    -1,    -1,    -1,   494,    -1,    -1,    -1,
-      -1,    -1,    -1,    -1,    -1,    -1,    -1,    -1,    -1,   507,
-      -1,    -1,    -1,    -1,    -1,    -1,   514,    -1,    -1,    -1,
-     518,   519,     5,     6,    -1,     8,     9,    10,    11,    12,
-      13,    14,    15,    16,    17,    18,    19,    20,    21,    22,
-      -1,    24,     5,     6,    -1,     8,     9,    10,    11,    12,
-      13,    14,    15,    16,    17,    18,    19,    20,    21,    22,
-      -1,    24,    -1,    -1,    -1,    48,    -1,    -1,    -1,    -1,
+      37,   130,   112,   130,    53,     3,    29,   244,    15,    15,
+     125,   131,    23,   128,   267,   268,    53,    34,    85,    30,
+     491,     9,   285,   286,     0,    10,    11,    12,    13,    14,
+      15,    16,    17,    21,    52,    53,    54,   126,   509,   154,
+      57,   126,   295,    41,    99,   100,   126,   136,    61,   134,
+      57,    57,   315,    71,   169,   122,   136,   128,   173,   174,
+     175,   176,   177,   178,   126,   185,   137,   182,   183,    23,
+     132,    20,   109,   110,   111,    10,    11,    12,    13,    14,
+      15,    16,    17,   134,   125,    45,   137,    47,   125,    87,
+     508,   128,    41,    42,    43,    44,    45,    46,    47,   126,
+     518,    50,   126,    22,   132,    24,    61,   134,   132,   137,
+      32,    33,   135,    55,    56,   152,   153,   154,   155,    55,
+      56,    57,    27,    28,   125,   136,     3,     4,     3,     4,
+      24,   168,   169,     3,     4,     4,   173,   174,   175,   176,
+     177,   178,   179,   180,   181,   182,   183,   132,   263,   216,
+     217,   218,     3,     4,   407,   125,     5,     6,   125,     8,
+       9,    10,    11,    12,    13,    14,    15,    16,    17,    18,
+      19,    20,    21,    22,   125,    24,    64,    65,    66,    67,
+      68,    69,    70,   220,     3,     4,   125,   130,    37,     4,
+     128,     4,     4,   242,   431,   128,   433,   132,    24,    48,
+       4,    24,    24,   131,   131,   242,    59,   128,     4,     4,
+       4,     4,   261,     4,   126,     7,   331,     7,   333,   334,
+     335,     7,   129,   126,   261,   262,   263,   342,    10,    11,
+      12,    13,    14,    15,    16,    17,   126,   304,   130,   126,
+     126,   351,   352,   353,   354,   355,   126,   126,   214,    36,
+     126,    24,   126,   363,   364,   365,   366,   367,   224,   126,
+     229,   230,   126,   229,   230,   126,   126,    24,   130,   128,
+     128,   128,   241,   128,   128,   241,   128,   246,   127,   126,
+     246,   130,   128,   128,   133,   128,   135,   256,   257,   258,
+     256,   257,   258,   128,   331,   332,   333,   334,   335,   336,
+     337,   129,   300,   413,   341,   342,   126,    63,   126,   126,
+     126,    34,   126,    24,    21,   126,   126,    21,     4,   128,
+     126,   126,    24,   438,   439,   440,   126,   126,     4,   126,
+     128,    36,    57,     4,    24,    57,   373,   126,   126,    21,
+     450,   451,   452,   453,   129,   455,   456,   457,   385,   459,
+     126,   126,   126,   130,   323,   470,   126,   323,   126,   126,
+     329,   126,   491,   329,   491,   126,   403,   126,   126,   129,
+     132,   126,   126,    36,   343,   344,   129,   343,   344,   129,
+     509,   126,   509,   129,   132,   129,   129,   497,   129,   499,
+     500,   129,    21,   430,   129,     0,   129,   129,   126,    21,
+     126,   438,   439,   440,    76,    21,    21,   444,    97,    97,
+      97,    41,    97,   382,    97,   384,   382,    25,   384,   388,
+      25,   458,   388,   122,   374,    52,    31,   396,   397,   398,
+     396,   397,   398,   470,   214,    61,    41,    42,    43,    44,
+      45,    46,    47,   373,     3,    19,   408,   444,   385,    -1,
+      -1,    -1,    -1,    -1,    -1,    -1,    -1,    62,    -1,   428,
+     429,    -1,   428,   429,    -1,    -1,    -1,   436,    -1,    -1,
+     436,    -1,    -1,    -1,    -1,    -1,   445,    -1,    -1,   445,
       -1,    -1,    -1,    -1,    -1,    -1,    -1,    -1,    -1,    -1,
-      -1,    -1,    -1,    -1,    -1,    48,    -1,    -1,     3,     4,
-       5,     6,     7,    -1,    -1,    -1,    -1,    -1,    -1,    -1,
-      -1,    -1,    -1,    -1,    -1,    -1,    -1,    22,    -1,    24,
-      -1,    26,    27,    28,    -1,    -1,    -1,    -1,    -1,    -1,
-      -1,    -1,    -1,    38,    39,    -1,    -1,    -1,    -1,    -1,
-      -1,    -1,    -1,   116,    -1,    -1,   119,    -1,    -1,   122,
-      -1,   124,   125,    -1,    -1,    -1,    61,    -1,    -1,    -1,
-      -1,    -1,    -1,   116,    -1,    -1,   119,    -1,    -1,   122,
-      -1,   124,   125,    78,    79,    80,    81,    82,    83,    84,
-      85,    86,    87,    88,    89,    90,    91,    92,    93,    94,
-      95,     3,     4,    -1,    -1,     7,   101,    -1,   103,   104,
-     105,   106,   107,    -1,   109,   110,   111,    -1,    -1,    20,
-      -1,    22,    -1,    24,    26,    27,    28,   122,    -1,    -1,
-      31,    32,    33,    -1,    -1,    -1,    38,    39,    -1,    -1,
-      41,    42,    43,    44,    45,    46,    47,    -1,    -1,    50,
-      51,    -1,    -1,    -1,    -1,    -1,    -1,    58,    -1,    61,
-      -1,    62,    -1,    -1,    -1,    -1,    -1,    -1,    -1,    -1,
+      -1,    -1,    -1,     5,     6,    -1,    -1,    -1,    -1,    -1,
+      -1,    -1,    -1,   472,    -1,    -1,   472,    -1,    -1,    -1,
+      22,    -1,    24,    -1,    26,    -1,    -1,    -1,    -1,    -1,
+      -1,    20,    -1,    22,    -1,    24,    38,    39,    -1,    -1,
+      -1,    -1,    31,    32,    33,    -1,    -1,   506,    -1,    -1,
+     506,    -1,    41,    42,    43,    44,    45,    46,    47,    -1,
+     519,    50,    51,   519,    -1,    -1,    -1,   526,    -1,    58,
+     526,   530,   531,    62,   530,   531,    78,    79,    80,    81,
+      82,    83,    84,    85,    86,    87,    88,    89,    90,    91,
+      92,    93,    94,    95,    -1,    -1,    -1,    -1,    -1,   101,
+     102,   103,   104,   105,   106,   107,   108,   109,   110,   111,
+     112,   113,    -1,   115,   116,   117,   118,    -1,   120,   121,
+     122,    -1,    -1,    -1,    -1,    -1,    -1,    -1,   130,    -1,
+      -1,   133,    -1,   135,     5,     6,   138,     8,     9,    10,
+      11,    12,    13,    14,    15,    16,    17,    18,    19,    20,
+      21,    22,    -1,    24,     5,     6,    -1,     8,     9,    10,
+      11,    12,    13,    14,    15,    16,    17,    18,    19,    20,
+      21,    22,    -1,    24,    -1,    -1,    -1,    48,    -1,    -1,
+      -1,    -1,    -1,    -1,    -1,    -1,    -1,    -1,    -1,    -1,
+      -1,    -1,    -1,    -1,    -1,    -1,    -1,    48,    -1,    -1,
+      -1,    -1,    -1,    -1,    -1,    -1,    -1,    -1,    -1,    -1,
+      -1,     3,     4,     5,     6,     7,    -1,    -1,    -1,    -1,
+      -1,    -1,    -1,    -1,    -1,    -1,    -1,    -1,    -1,    -1,
+      22,    -1,    24,    -1,    26,    27,    28,    -1,    -1,    -1,
+      -1,    -1,    -1,    -1,    -1,    -1,    38,    39,    -1,    -1,
+      -1,    -1,    -1,    -1,    -1,    -1,   127,    -1,    -1,   130,
+      -1,    -1,   133,    -1,   135,   136,    -1,    -1,    -1,    61,
+      -1,    -1,    -1,    -1,    -1,    -1,   127,    -1,    -1,   130,
+      -1,    -1,   133,    -1,   135,   136,    78,    79,    80,    81,
+      82,    83,    84,    85,    86,    87,    88,    89,    90,    91,
+      92,    93,    94,    95,    -1,    -1,    -1,    -1,    -1,   101,
+     102,   103,   104,   105,   106,   107,   108,   109,   110,   111,
+     112,   113,    -1,   115,   116,   117,   118,    -1,   120,   121,
+     122,     3,     4,    -1,    -1,     7,    -1,    -1,    -1,    -1,
+      -1,   133,    -1,    -1,    -1,    -1,    -1,    -1,    -1,    -1,
+      -1,    -1,    -1,    -1,    26,    27,    28,    -1,    -1,    -1,
+      -1,    -1,    -1,    -1,    -1,    -1,    38,    39,    -1,    -1,
+      -1,    -1,    -1,    -1,    -1,    -1,    -1,    -1,    -1,    -1,
+      -1,    -1,    -1,    -1,    -1,    -1,    -1,    -1,    -1,    61,
+      -1,    -1,    -1,    -1,    -1,    -1,    -1,    -1,    -1,    -1,
       -1,    -1,    -1,    -1,    -1,    -1,    78,    79,    80,    81,
       82,    83,    84,    85,    86,    87,    88,    89,    90,    91,
       92,    93,    94,    95,    -1,    -1,    -1,    -1,    -1,   101,
-      -1,   103,   104,   105,   106,   107,    -1,   109,   110,   111,
-      -1,    -1,    -1,    -1,    -1,    -1,    -1,    -1,     5,     6,
-     122,     8,     9,    10,    11,    12,    13,    14,    15,    16,
-      17,    18,    19,    20,    21,    22,    -1,    24,    -1,    -1,
-      -1,    -1,    -1,    -1,    -1,    -1,    -1,    -1,    -1,    -1,
-      37,    -1,    -1,    -1,    -1,    -1,    -1,    -1,    -1,     5,
-       6,    48,     8,     9,    10,    11,    12,    13,    14,    15,
+     102,   103,   104,   105,   106,   107,   108,   109,   110,   111,
+     112,   113,    -1,   115,   116,   117,   118,    -1,   120,   121,
+     122,    -1,    -1,    -1,    -1,    -1,    -1,    -1,    -1,     5,
+       6,   133,     8,     9,    10,    11,    12,    13,    14,    15,
       16,    17,    18,    19,    20,    21,    22,    -1,    24,    -1,
       -1,    -1,    -1,    -1,    -1,    -1,    -1,    -1,    -1,    -1,
       -1,    37,    -1,    -1,    -1,    -1,    -1,    -1,    -1,    -1,
-      -1,    -1,    48,    -1,     5,     6,    -1,     8,     9,    10,
-      11,    12,    13,    14,    15,    16,    17,    18,    19,    20,
-      21,    22,    -1,    24,    -1,    -1,    -1,    -1,    -1,   116,
-      -1,    -1,   119,    -1,    -1,   122,    37,   124,    -1,    -1,
-      -1,    -1,    -1,    -1,    -1,     5,     6,    48,     8,     9,
-      10,    11,    12,    13,    14,    15,    16,    17,    18,    19,
-      20,    21,    22,    -1,    24,    -1,    -1,    -1,    -1,    -1,
-     116,    -1,    -1,   119,    -1,    -1,   122,    37,   124,    -1,
-      -1,    -1,    -1,    -1,    -1,    -1,     5,     6,    48,     8,
-       9,    10,    11,    12,    13,    14,    15,    16,    17,    18,
-      19,    20,    21,    22,    -1,    24,    -1,    -1,    -1,    -1,
-      -1,    -1,    -1,    -1,    -1,   116,    -1,    -1,   119,    -1,
-      -1,   122,    -1,   124,    -1,    -1,    -1,     5,     6,    48,
-       8,     9,    10,    11,    12,    13,    14,    15,    16,    17,
-      18,    19,    20,    21,    22,    -1,    24,    -1,    -1,    -1,
-      -1,    -1,    -1,    -1,    -1,    -1,   116,    -1,    -1,   119,
-      -1,    -1,   122,    -1,   124,    -1,    -1,    -1,     5,     6,
-      48,     8,     9,    10,    11,    12,    13,    14,    15,    16,
-      17,    18,    19,    20,    21,    22,    -1,    24,    -1,    -1,
-      -1,    -1,    -1,    -1,    -1,    -1,    -1,   116,    -1,    -1,
-     119,    -1,    -1,   122,    -1,   124,    -1,    -1,    -1,     5,
-       6,    48,     8,     9,    10,    11,    12,    13,    14,    15,
-      16,    17,    18,    19,    20,    21,    22,    -1,    24,    -1,
-      -1,    -1,    -1,    -1,    -1,    -1,    -1,    -1,   116,    -1,
-      -1,   119,    -1,    -1,   122,    -1,   124,    -1,    -1,    -1,
-      -1,    -1,    48,    -1,    -1,    -1,    -1,    -1,    -1,    -1,
+       5,     6,    48,     8,     9,    10,    11,    12,    13,    14,
+      15,    16,    17,    18,    19,    20,    21,    22,    -1,    24,
+       5,     6,    -1,     8,     9,    10,    11,    12,    13,    14,
+      15,    16,    17,    18,    19,    20,    21,    22,    -1,    24,
+      -1,    -1,    -1,    48,    -1,    -1,    -1,    -1,    -1,    -1,
+      -1,    -1,    37,    -1,    -1,    -1,    -1,    -1,    -1,    -1,
+      -1,     5,     6,    48,     8,     9,    10,    11,    12,    13,
+      14,    15,    16,    17,    18,    19,    20,    21,    22,    -1,
+      24,   127,    -1,    -1,   130,    -1,    -1,   133,    -1,   135,
+      -1,    -1,    -1,    37,    -1,    -1,    -1,    -1,    -1,    -1,
+      -1,    -1,    -1,    -1,    48,    -1,    -1,    -1,    -1,    -1,
       -1,    -1,    -1,    -1,    -1,    -1,    -1,    -1,    -1,    -1,
-      -1,    -1,    -1,    -1,    -1,    -1,    -1,    -1,    -1,   116,
-      -1,    -1,   119,    -1,    -1,   122,    -1,   124,    -1,    -1,
-      -1,    -1,    35,    -1,    -1,    -1,    -1,    -1,    -1,    -1,
-      -1,    -1,    -1,    -1,    -1,    -1,    49,    -1,    -1,    -1,
-      -1,    -1,    -1,    -1,    -1,    -1,    59,    60,    -1,    -1,
-     116,    -1,    -1,   119,    -1,    -1,   122,    -1,   124,    72,
-      73,    74,    75,    76,    77,    78,    79,    80,    81,    82,
-      83,    84,    85,    86,    87,    88,    89,    90,    91,    92,
-      93,    94,    95,    96,    97,    98,    -1,    -1,   101,   102,
-     103,   104,   105,   106,   107,   108,   109,   110,   111,   112,
-     113
+      -1,    -1,   127,    -1,    -1,   130,    -1,   132,   133,    -1,
+     135,    -1,    -1,    -1,    -1,    -1,    -1,    -1,    -1,    -1,
+      -1,    -1,   127,    -1,    -1,   130,    -1,    -1,   133,    -1,
+     135,     5,     6,    -1,     8,     9,    10,    11,    12,    13,
+      14,    15,    16,    17,    18,    19,    20,    21,    22,    -1,
+      24,    -1,    -1,    -1,    -1,    -1,    -1,    -1,    -1,    -1,
+      -1,    -1,    -1,   127,    -1,    -1,   130,    -1,    -1,   133,
+      -1,   135,     5,     6,    48,     8,     9,    10,    11,    12,
+      13,    14,    15,    16,    17,    18,    19,    20,    21,    22,
+      -1,    24,     5,     6,    -1,     8,     9,    10,    11,    12,
+      13,    14,    15,    16,    17,    18,    19,    20,    21,    22,
+      -1,    24,    -1,    -1,    -1,    48,    -1,     5,     6,    -1,
+       8,     9,    10,    11,    12,    13,    14,    15,    16,    17,
+      18,    19,    20,    21,    22,    48,    24,    -1,    -1,    -1,
+      -1,    -1,    -1,    -1,    -1,    -1,    -1,    -1,    -1,    -1,
+      -1,    -1,    -1,   127,    -1,    -1,   130,    -1,    -1,   133,
+      48,   135,    -1,    -1,    -1,    -1,    -1,    -1,    -1,    -1,
+      -1,    -1,    -1,    -1,    -1,    -1,    -1,    -1,    -1,    -1,
+      -1,    -1,    -1,    -1,    -1,    -1,    -1,    -1,    -1,    -1,
+      -1,    -1,    -1,    -1,   127,    -1,    -1,   130,    -1,    -1,
+     133,    -1,   135,    -1,    -1,    -1,    -1,    -1,    -1,    -1,
+      -1,    35,    -1,    -1,   127,    -1,    -1,   130,    -1,    -1,
+     133,    -1,   135,    -1,    -1,    49,    -1,    -1,    -1,    -1,
+      -1,    -1,    -1,    -1,    -1,    59,    60,    -1,    -1,   127,
+      -1,    -1,   130,    -1,    -1,   133,    -1,   135,    72,    73,
+      74,    75,    76,    77,    78,    79,    80,    81,    82,    83,
+      84,    85,    86,    87,    88,    89,    90,    91,    92,    93,
+      94,    95,    96,    97,    98,    -1,    -1,   101,   102,   103,
+     104,   105,   106,   107,   108,   109,   110,   111,   112,   113,
+     114,   115,   116,   117,   118,   119,   120,   121,   122,   123,
+     124
 };
 
 /* YYSTOS[STATE-NUM] -- The (internal number of the) accessing
    symbol of state STATE-NUM.  */
 static const unsigned char yystos[] =
 {
-       0,   159,   160,   161,     0,    25,    31,    41,    42,    43,
-      44,    45,    46,    47,    62,   140,   178,   180,   182,   189,
-      22,    24,    51,    58,    62,   139,   171,   182,   183,    61,
-      64,    65,    66,    67,    68,    69,    70,   141,   176,    23,
-     190,   191,    30,   125,   179,   190,    52,    53,    54,    71,
-     168,   114,    61,    20,    45,    47,    50,   140,   114,    45,
-      47,   181,    24,   166,     4,     5,     6,     8,     9,    10,
+       0,   171,   172,   173,     0,    25,    31,    41,    42,    43,
+      44,    45,    46,    47,    62,   152,   190,   192,   194,   201,
+      22,    24,    51,    58,    62,   151,   183,   194,   195,    61,
+      64,    65,    66,    67,    68,    69,    70,   153,   188,    23,
+     202,   203,    30,   136,   191,   202,    52,    53,    54,    71,
+     180,   125,    61,    20,    45,    47,    50,   152,   125,    45,
+      47,   193,    24,   178,     4,     5,     6,     8,     9,    10,
       11,    12,    13,    14,    15,    16,    17,    18,    19,    20,
-      21,    48,   116,   119,   122,   124,   129,   148,   149,   150,
-     151,   152,   171,   186,    29,   124,   177,   139,   194,   114,
-     114,   114,   114,   119,   169,   166,   148,    32,    33,   158,
-     158,   158,   158,   176,     4,     4,     4,     8,   125,   152,
-     153,   171,   117,   126,    35,    49,    59,    60,    72,    73,
+      21,    48,   127,   130,   133,   135,   140,   160,   161,   162,
+     163,   164,   183,   198,    29,   135,   189,   151,   206,   125,
+     125,   125,   125,   130,   181,   178,   160,    32,    33,   170,
+     170,   170,   170,   188,     4,     4,     4,     8,   136,   164,
+     165,   183,   128,   137,    35,    49,    59,    60,    72,    73,
       74,    75,    76,    77,    78,    79,    80,    81,    82,    83,
       84,    85,    86,    87,    88,    89,    90,    91,    92,    93,
       94,    95,    96,    97,    98,   101,   102,   103,   104,   105,
-     106,   107,   108,   109,   110,   111,   112,   113,   131,   132,
-     133,   134,   192,   198,   199,   201,   202,    24,    55,    56,
-     167,     4,    24,    24,   170,   150,   150,   150,     9,    10,
-      11,    12,    13,    14,    15,    16,    17,    18,    19,   135,
-     136,   138,   150,   155,   120,   120,   115,   125,   117,    37,
-     153,   154,   150,   188,    59,     8,   188,     9,    21,    10,
-      11,    12,    13,    14,    15,    16,    17,   135,   136,   137,
-     141,   150,   150,   188,   150,   150,   195,   188,   188,   188,
-     188,   188,   188,   188,   188,   150,   150,   150,   188,   141,
-      99,   100,   115,   121,   164,   165,   163,    27,    28,     3,
-       4,   130,     4,     7,    26,    38,    39,   101,   103,   104,
-     109,   110,   111,   119,   122,   124,   127,   131,   132,   133,
-     134,   156,   186,   162,   152,   152,   152,    37,   150,   173,
-     174,   175,   115,   118,     3,     4,     7,    26,    27,    28,
-      38,    39,    61,   122,   156,   185,   186,   187,   187,   187,
-     187,   148,   115,   143,   115,   143,   187,   119,   115,    36,
-     115,   115,   115,   115,   115,   115,   115,   187,   187,   187,
-     115,   148,   150,   188,    24,   115,   146,   146,   146,   117,
-     117,   117,   117,   117,   117,   121,   155,   157,   157,   125,
-     157,    24,   117,   117,   117,   117,   146,   121,   123,   171,
-     172,   115,   118,    37,    63,   184,   157,   115,   115,   187,
-      15,    57,    15,   115,   200,   187,   119,   150,   188,   150,
-     188,   188,   188,   150,   150,   115,   115,   115,   188,   187,
-     187,   115,    34,    57,   144,   147,   155,   155,   155,   155,
-     155,   155,   115,   121,   123,   125,   155,   155,   155,   155,
-      37,   173,   144,   145,    24,   123,    21,    21,   117,   187,
-       4,   187,   188,   196,   115,   187,   115,   115,   115,   187,
-     187,   187,   117,   150,    24,     4,   146,   200,    36,   115,
-     115,   115,   115,   155,   115,   115,   115,   115,    57,   142,
-     115,   187,   187,   196,   197,   115,   143,   143,   115,   187,
-     115,   188,   188,   188,   197,   187,   118,   150,   155,   155,
-     155,   155,   155,   155,   155,   155,     4,    24,   115,   119,
-     118,   188,   121,   187,   118,   118,   115,   118,   115,   115,
-     118,   118,   118,   118,    21,   121,   137,   193,    36,   121,
-     155,   155,   155,   187,   185,   121,   137,    21,   118,   118,
-     118,   115,   185,   187,    21,   115,    76,   187,    21,    21,
-     187,   187
+     106,   107,   108,   109,   110,   111,   112,   113,   114,   115,
+     116,   117,   118,   119,   120,   121,   122,   123,   124,   142,
+     143,   144,   145,   146,   204,   210,   211,   213,   214,    24,
+      55,    56,   179,     4,    24,    24,   182,   162,   162,   162,
+       9,    10,    11,    12,    13,    14,    15,    16,    17,    18,
+      19,   147,   148,   150,   162,   167,   131,   131,   126,   136,
+     128,    37,   165,   166,   162,   200,    59,     8,   200,     9,
+      21,    10,    11,    12,    13,    14,    15,    16,    17,   147,
+     148,   149,   153,   162,   162,   200,   162,   162,   207,   200,
+     200,   200,   200,   200,   200,   200,   162,   162,   162,   200,
+     200,   153,    99,   100,   126,   132,   176,   177,   175,    27,
+      28,     3,     4,   141,     4,     7,    26,    38,    39,   101,
+     115,   120,   121,   122,   130,   133,   135,   138,   142,   143,
+     144,   145,   146,   168,   198,   174,   164,   164,   164,    37,
+     162,   185,   186,   187,   126,   129,     3,     4,     7,    26,
+      27,    28,    38,    39,    61,   133,   168,   197,   198,   199,
+     199,   199,   199,   160,   126,   155,   126,   155,   199,   130,
+     126,   126,   126,   126,   126,   126,   126,   126,   199,   199,
+     199,    36,   126,   160,   162,   200,    24,   126,   158,   158,
+     158,   128,   128,   128,   128,   128,   132,   167,   169,   169,
+     136,   169,    24,   128,   128,   128,   128,   128,   158,   132,
+     134,   183,   184,   126,   129,    37,    63,   196,   169,   126,
+     126,   199,    15,    57,    15,   126,   212,   199,   130,   200,
+     162,   200,   200,   200,   162,   162,   126,   126,   126,   162,
+     200,   199,   199,   126,    34,    57,   156,   159,   167,   167,
+     167,   167,   167,   126,   132,   134,   136,   167,   167,   167,
+     167,   167,    37,   185,   156,   157,    24,   134,    21,    21,
+     128,   199,     4,   199,   200,   208,   126,   199,   126,   126,
+     126,   199,   199,   199,   128,   162,    24,     4,   158,   212,
+     126,   126,   126,   126,   167,   126,   126,   126,    36,   126,
+      57,   154,   126,   199,   199,   208,   209,   126,   155,   155,
+     126,   199,   126,   200,   200,   200,   209,   199,   129,   167,
+     167,   167,   167,   167,   167,   167,   162,   167,     4,    24,
+     126,   130,   129,   200,   132,   199,   129,   126,   129,   126,
+     126,   129,   129,   129,   129,   129,    21,   132,   149,   205,
+      36,   132,   167,   167,   167,   199,   197,   132,   149,    21,
+     129,   129,   129,   126,   197,   199,    21,   126,    76,   199,
+      21,    21,   199,   199
 };
 
 #define yyerrok		(yyerrstatus = 0)
@@ -3032,7 +3088,7 @@ yyreduce:
   switch (yyn)
     {
         case 3:
-#line 1164 "/proj/llvm/llvm-3/lib/AsmParser/llvmAsmParser.y"
+#line 1169 "/proj/llvm/llvm-1/lib/AsmParser/llvmAsmParser.y"
     {
   if ((yyvsp[0].UIntVal) > (uint32_t)INT32_MAX)     // Outside of my range!
     GEN_ERROR("Value too large for type!");
@@ -3042,7 +3098,7 @@ yyreduce:
     break;
 
   case 5:
-#line 1173 "/proj/llvm/llvm-3/lib/AsmParser/llvmAsmParser.y"
+#line 1178 "/proj/llvm/llvm-1/lib/AsmParser/llvmAsmParser.y"
     {
   if ((yyvsp[0].UInt64Val) > (uint64_t)INT64_MAX)     // Outside of my range!
     GEN_ERROR("Value too large for type!");
@@ -3051,99 +3107,99 @@ yyreduce:
 ;}
     break;
 
-  case 39:
-#line 1197 "/proj/llvm/llvm-3/lib/AsmParser/llvmAsmParser.y"
+  case 51:
+#line 1203 "/proj/llvm/llvm-1/lib/AsmParser/llvmAsmParser.y"
     {
     (yyval.StrVal) = (yyvsp[-1].StrVal);
     CHECK_FOR_ERROR
   ;}
     break;
 
-  case 40:
-#line 1201 "/proj/llvm/llvm-3/lib/AsmParser/llvmAsmParser.y"
+  case 52:
+#line 1207 "/proj/llvm/llvm-1/lib/AsmParser/llvmAsmParser.y"
     {
     (yyval.StrVal) = 0;
     CHECK_FOR_ERROR
   ;}
     break;
 
-  case 41:
-#line 1206 "/proj/llvm/llvm-3/lib/AsmParser/llvmAsmParser.y"
+  case 53:
+#line 1212 "/proj/llvm/llvm-1/lib/AsmParser/llvmAsmParser.y"
     { (yyval.Linkage) = GlobalValue::InternalLinkage; ;}
     break;
 
-  case 42:
-#line 1207 "/proj/llvm/llvm-3/lib/AsmParser/llvmAsmParser.y"
+  case 54:
+#line 1213 "/proj/llvm/llvm-1/lib/AsmParser/llvmAsmParser.y"
     { (yyval.Linkage) = GlobalValue::LinkOnceLinkage; ;}
     break;
 
-  case 43:
-#line 1208 "/proj/llvm/llvm-3/lib/AsmParser/llvmAsmParser.y"
+  case 55:
+#line 1214 "/proj/llvm/llvm-1/lib/AsmParser/llvmAsmParser.y"
     { (yyval.Linkage) = GlobalValue::WeakLinkage; ;}
     break;
 
-  case 44:
-#line 1209 "/proj/llvm/llvm-3/lib/AsmParser/llvmAsmParser.y"
+  case 56:
+#line 1215 "/proj/llvm/llvm-1/lib/AsmParser/llvmAsmParser.y"
     { (yyval.Linkage) = GlobalValue::AppendingLinkage; ;}
     break;
 
-  case 45:
-#line 1210 "/proj/llvm/llvm-3/lib/AsmParser/llvmAsmParser.y"
+  case 57:
+#line 1216 "/proj/llvm/llvm-1/lib/AsmParser/llvmAsmParser.y"
     { (yyval.Linkage) = GlobalValue::DLLImportLinkage; ;}
     break;
 
-  case 46:
-#line 1211 "/proj/llvm/llvm-3/lib/AsmParser/llvmAsmParser.y"
+  case 58:
+#line 1217 "/proj/llvm/llvm-1/lib/AsmParser/llvmAsmParser.y"
     { (yyval.Linkage) = GlobalValue::DLLExportLinkage; ;}
     break;
 
-  case 47:
-#line 1212 "/proj/llvm/llvm-3/lib/AsmParser/llvmAsmParser.y"
+  case 59:
+#line 1218 "/proj/llvm/llvm-1/lib/AsmParser/llvmAsmParser.y"
     { (yyval.Linkage) = GlobalValue::ExternalWeakLinkage; ;}
     break;
 
-  case 48:
-#line 1213 "/proj/llvm/llvm-3/lib/AsmParser/llvmAsmParser.y"
+  case 60:
+#line 1219 "/proj/llvm/llvm-1/lib/AsmParser/llvmAsmParser.y"
     { (yyval.Linkage) = GlobalValue::ExternalLinkage; ;}
     break;
 
-  case 49:
-#line 1215 "/proj/llvm/llvm-3/lib/AsmParser/llvmAsmParser.y"
+  case 61:
+#line 1221 "/proj/llvm/llvm-1/lib/AsmParser/llvmAsmParser.y"
     { (yyval.UIntVal) = CallingConv::C; ;}
     break;
 
-  case 50:
-#line 1216 "/proj/llvm/llvm-3/lib/AsmParser/llvmAsmParser.y"
+  case 62:
+#line 1222 "/proj/llvm/llvm-1/lib/AsmParser/llvmAsmParser.y"
     { (yyval.UIntVal) = CallingConv::C; ;}
     break;
 
-  case 51:
-#line 1217 "/proj/llvm/llvm-3/lib/AsmParser/llvmAsmParser.y"
+  case 63:
+#line 1223 "/proj/llvm/llvm-1/lib/AsmParser/llvmAsmParser.y"
     { (yyval.UIntVal) = CallingConv::CSRet; ;}
     break;
 
-  case 52:
-#line 1218 "/proj/llvm/llvm-3/lib/AsmParser/llvmAsmParser.y"
+  case 64:
+#line 1224 "/proj/llvm/llvm-1/lib/AsmParser/llvmAsmParser.y"
     { (yyval.UIntVal) = CallingConv::Fast; ;}
     break;
 
-  case 53:
-#line 1219 "/proj/llvm/llvm-3/lib/AsmParser/llvmAsmParser.y"
+  case 65:
+#line 1225 "/proj/llvm/llvm-1/lib/AsmParser/llvmAsmParser.y"
     { (yyval.UIntVal) = CallingConv::Cold; ;}
     break;
 
-  case 54:
-#line 1220 "/proj/llvm/llvm-3/lib/AsmParser/llvmAsmParser.y"
+  case 66:
+#line 1226 "/proj/llvm/llvm-1/lib/AsmParser/llvmAsmParser.y"
     { (yyval.UIntVal) = CallingConv::X86_StdCall; ;}
     break;
 
-  case 55:
-#line 1221 "/proj/llvm/llvm-3/lib/AsmParser/llvmAsmParser.y"
+  case 67:
+#line 1227 "/proj/llvm/llvm-1/lib/AsmParser/llvmAsmParser.y"
     { (yyval.UIntVal) = CallingConv::X86_FastCall; ;}
     break;
 
-  case 56:
-#line 1222 "/proj/llvm/llvm-3/lib/AsmParser/llvmAsmParser.y"
+  case 68:
+#line 1228 "/proj/llvm/llvm-1/lib/AsmParser/llvmAsmParser.y"
     {
                    if ((unsigned)(yyvsp[0].UInt64Val) != (yyvsp[0].UInt64Val))
                      GEN_ERROR("Calling conv too large!");
@@ -3152,13 +3208,13 @@ yyreduce:
                  ;}
     break;
 
-  case 57:
-#line 1231 "/proj/llvm/llvm-3/lib/AsmParser/llvmAsmParser.y"
+  case 69:
+#line 1237 "/proj/llvm/llvm-1/lib/AsmParser/llvmAsmParser.y"
     { (yyval.UIntVal) = 0; ;}
     break;
 
-  case 58:
-#line 1232 "/proj/llvm/llvm-3/lib/AsmParser/llvmAsmParser.y"
+  case 70:
+#line 1238 "/proj/llvm/llvm-1/lib/AsmParser/llvmAsmParser.y"
     {
   (yyval.UIntVal) = (yyvsp[0].UInt64Val);
   if ((yyval.UIntVal) != 0 && !isPowerOf2_32((yyval.UIntVal)))
@@ -3167,13 +3223,13 @@ yyreduce:
 ;}
     break;
 
-  case 59:
-#line 1238 "/proj/llvm/llvm-3/lib/AsmParser/llvmAsmParser.y"
+  case 71:
+#line 1244 "/proj/llvm/llvm-1/lib/AsmParser/llvmAsmParser.y"
     { (yyval.UIntVal) = 0; ;}
     break;
 
-  case 60:
-#line 1239 "/proj/llvm/llvm-3/lib/AsmParser/llvmAsmParser.y"
+  case 72:
+#line 1245 "/proj/llvm/llvm-1/lib/AsmParser/llvmAsmParser.y"
     {
   (yyval.UIntVal) = (yyvsp[0].UInt64Val);
   if ((yyval.UIntVal) != 0 && !isPowerOf2_32((yyval.UIntVal)))
@@ -3182,8 +3238,8 @@ yyreduce:
 ;}
     break;
 
-  case 61:
-#line 1247 "/proj/llvm/llvm-3/lib/AsmParser/llvmAsmParser.y"
+  case 73:
+#line 1253 "/proj/llvm/llvm-1/lib/AsmParser/llvmAsmParser.y"
     {
   for (unsigned i = 0, e = strlen((yyvsp[0].StrVal)); i != e; ++i)
     if ((yyvsp[0].StrVal)[i] == '"' || (yyvsp[0].StrVal)[i] == '\\')
@@ -3193,28 +3249,28 @@ yyreduce:
 ;}
     break;
 
-  case 62:
-#line 1255 "/proj/llvm/llvm-3/lib/AsmParser/llvmAsmParser.y"
+  case 74:
+#line 1261 "/proj/llvm/llvm-1/lib/AsmParser/llvmAsmParser.y"
     { (yyval.StrVal) = 0; ;}
     break;
 
-  case 63:
-#line 1256 "/proj/llvm/llvm-3/lib/AsmParser/llvmAsmParser.y"
+  case 75:
+#line 1262 "/proj/llvm/llvm-1/lib/AsmParser/llvmAsmParser.y"
     { (yyval.StrVal) = (yyvsp[0].StrVal); ;}
     break;
 
-  case 64:
-#line 1261 "/proj/llvm/llvm-3/lib/AsmParser/llvmAsmParser.y"
+  case 76:
+#line 1267 "/proj/llvm/llvm-1/lib/AsmParser/llvmAsmParser.y"
     {;}
     break;
 
-  case 65:
-#line 1262 "/proj/llvm/llvm-3/lib/AsmParser/llvmAsmParser.y"
+  case 77:
+#line 1268 "/proj/llvm/llvm-1/lib/AsmParser/llvmAsmParser.y"
     {;}
     break;
 
-  case 66:
-#line 1263 "/proj/llvm/llvm-3/lib/AsmParser/llvmAsmParser.y"
+  case 78:
+#line 1269 "/proj/llvm/llvm-1/lib/AsmParser/llvmAsmParser.y"
     {
     CurGV->setSection((yyvsp[0].StrVal));
     free((yyvsp[0].StrVal));
@@ -3222,8 +3278,8 @@ yyreduce:
   ;}
     break;
 
-  case 67:
-#line 1268 "/proj/llvm/llvm-3/lib/AsmParser/llvmAsmParser.y"
+  case 79:
+#line 1274 "/proj/llvm/llvm-1/lib/AsmParser/llvmAsmParser.y"
     {
     if ((yyvsp[0].UInt64Val) != 0 && !isPowerOf2_32((yyvsp[0].UInt64Val)))
       GEN_ERROR("Alignment must be a power of two!");
@@ -3232,186 +3288,209 @@ yyreduce:
   ;}
     break;
 
-  case 69:
-#line 1282 "/proj/llvm/llvm-3/lib/AsmParser/llvmAsmParser.y"
-    { (yyval.TypeVal) = new PATypeHolder((yyvsp[0].PrimType)); ;}
-    break;
-
-  case 71:
-#line 1283 "/proj/llvm/llvm-3/lib/AsmParser/llvmAsmParser.y"
-    { (yyval.TypeVal) = new PATypeHolder((yyvsp[0].PrimType)); ;}
-    break;
-
-  case 72:
-#line 1285 "/proj/llvm/llvm-3/lib/AsmParser/llvmAsmParser.y"
-    {
-    if (!UpRefs.empty())
-      GEN_ERROR("Invalid upreference in type: " + (*(yyvsp[0].TypeVal))->getDescription());
-    (yyval.TypeVal) = (yyvsp[0].TypeVal);
-    CHECK_FOR_ERROR
-  ;}
-    break;
-
-  case 86:
-#line 1297 "/proj/llvm/llvm-3/lib/AsmParser/llvmAsmParser.y"
-    {
-    (yyval.TypeVal) = new PATypeHolder(OpaqueType::get());
-    CHECK_FOR_ERROR
-  ;}
-    break;
-
-  case 87:
-#line 1301 "/proj/llvm/llvm-3/lib/AsmParser/llvmAsmParser.y"
-    {
-    (yyval.TypeVal) = new PATypeHolder((yyvsp[0].PrimType));
-    CHECK_FOR_ERROR
-  ;}
-    break;
-
-  case 88:
-#line 1305 "/proj/llvm/llvm-3/lib/AsmParser/llvmAsmParser.y"
-    {            // Named types are also simple types...
-  const Type* tmp = getTypeVal((yyvsp[0].ValIDVal));
-  CHECK_FOR_ERROR
-  (yyval.TypeVal) = new PATypeHolder(tmp);
+  case 81:
+#line 1288 "/proj/llvm/llvm-1/lib/AsmParser/llvmAsmParser.y"
+    { 
+    (yyval.TypeVal).type = new PATypeHolder((yyvsp[0].TypeVal).type->get());
+    (yyval.TypeVal).signedness = (yyvsp[0].TypeVal).signedness;
 ;}
     break;
 
-  case 89:
-#line 1313 "/proj/llvm/llvm-3/lib/AsmParser/llvmAsmParser.y"
-    {                   // Type UpReference
-    if ((yyvsp[0].UInt64Val) > (uint64_t)~0U) GEN_ERROR("Value out of range!");
-    OpaqueType *OT = OpaqueType::get();        // Use temporary placeholder
-    UpRefs.push_back(UpRefRecord((unsigned)(yyvsp[0].UInt64Val), OT));  // Add to vector...
-    (yyval.TypeVal) = new PATypeHolder(OT);
-    UR_OUT("New Upreference!\n");
-    CHECK_FOR_ERROR
-  ;}
+  case 83:
+#line 1292 "/proj/llvm/llvm-1/lib/AsmParser/llvmAsmParser.y"
+    { 
+    (yyval.TypeVal).type = new PATypeHolder((yyvsp[0].TypeVal).type->get()); 
+    (yyval.TypeVal).signedness = (yyvsp[0].TypeVal).signedness;
+;}
     break;
 
-  case 90:
-#line 1321 "/proj/llvm/llvm-3/lib/AsmParser/llvmAsmParser.y"
-    {           // Function derived type?
-    std::vector<const Type*> Params;
-    for (std::list<llvm::PATypeHolder>::iterator I = (yyvsp[-1].TypeList)->begin(),
-           E = (yyvsp[-1].TypeList)->end(); I != E; ++I)
-      Params.push_back(*I);
-    bool isVarArg = Params.size() && Params.back() == Type::VoidTy;
-    if (isVarArg) Params.pop_back();
-
-    (yyval.TypeVal) = new PATypeHolder(HandleUpRefs(FunctionType::get(*(yyvsp[-3].TypeVal),Params,isVarArg)));
-    delete (yyvsp[-1].TypeList);      // Delete the argument list
-    delete (yyvsp[-3].TypeVal);      // Delete the return type handle
-    CHECK_FOR_ERROR
-  ;}
-    break;
-
-  case 91:
-#line 1334 "/proj/llvm/llvm-3/lib/AsmParser/llvmAsmParser.y"
-    {          // Sized array type?
-    (yyval.TypeVal) = new PATypeHolder(HandleUpRefs(ArrayType::get(*(yyvsp[-1].TypeVal), (unsigned)(yyvsp[-3].UInt64Val))));
-    delete (yyvsp[-1].TypeVal);
-    CHECK_FOR_ERROR
-  ;}
-    break;
-
-  case 92:
-#line 1339 "/proj/llvm/llvm-3/lib/AsmParser/llvmAsmParser.y"
-    {          // Packed array type?
-     const llvm::Type* ElemTy = (yyvsp[-1].TypeVal)->get();
-     if ((unsigned)(yyvsp[-3].UInt64Val) != (yyvsp[-3].UInt64Val))
-        GEN_ERROR("Unsigned result not equal to signed result");
-     if (!ElemTy->isPrimitiveType())
-        GEN_ERROR("Elemental type of a PackedType must be primitive");
-     if (!isPowerOf2_32((yyvsp[-3].UInt64Val)))
-       GEN_ERROR("Vector length should be a power of 2!");
-     (yyval.TypeVal) = new PATypeHolder(HandleUpRefs(PackedType::get(*(yyvsp[-1].TypeVal), (unsigned)(yyvsp[-3].UInt64Val))));
-     delete (yyvsp[-1].TypeVal);
-     CHECK_FOR_ERROR
-  ;}
-    break;
-
-  case 93:
-#line 1351 "/proj/llvm/llvm-3/lib/AsmParser/llvmAsmParser.y"
-    {                        // Structure type?
-    std::vector<const Type*> Elements;
-    for (std::list<llvm::PATypeHolder>::iterator I = (yyvsp[-1].TypeList)->begin(),
-           E = (yyvsp[-1].TypeList)->end(); I != E; ++I)
-      Elements.push_back(*I);
-
-    (yyval.TypeVal) = new PATypeHolder(HandleUpRefs(StructType::get(Elements)));
-    delete (yyvsp[-1].TypeList);
-    CHECK_FOR_ERROR
-  ;}
-    break;
-
-  case 94:
-#line 1361 "/proj/llvm/llvm-3/lib/AsmParser/llvmAsmParser.y"
-    {                                  // Empty structure type?
-    (yyval.TypeVal) = new PATypeHolder(StructType::get(std::vector<const Type*>()));
-    CHECK_FOR_ERROR
-  ;}
-    break;
-
-  case 95:
-#line 1365 "/proj/llvm/llvm-3/lib/AsmParser/llvmAsmParser.y"
-    {                             // Pointer type?
-    if (*(yyvsp[-1].TypeVal) == Type::LabelTy)
-      GEN_ERROR("Cannot form a pointer to a basic block");
-    (yyval.TypeVal) = new PATypeHolder(HandleUpRefs(PointerType::get(*(yyvsp[-1].TypeVal))));
-    delete (yyvsp[-1].TypeVal);
-    CHECK_FOR_ERROR
-  ;}
-    break;
-
-  case 96:
-#line 1376 "/proj/llvm/llvm-3/lib/AsmParser/llvmAsmParser.y"
+  case 84:
+#line 1297 "/proj/llvm/llvm-1/lib/AsmParser/llvmAsmParser.y"
     {
-    (yyval.TypeList) = new std::list<PATypeHolder>();
-    (yyval.TypeList)->push_back(*(yyvsp[0].TypeVal)); delete (yyvsp[0].TypeVal);
+    if (!UpRefs.empty())
+      GEN_ERROR("Invalid upreference in type: " + 
+        ((yyvsp[0].TypeVal).type->get())->getDescription());
+    (yyval.TypeVal) = (yyvsp[0].TypeVal);
     CHECK_FOR_ERROR
-  ;}
+;}
     break;
 
-  case 97:
-#line 1381 "/proj/llvm/llvm-3/lib/AsmParser/llvmAsmParser.y"
+  case 98:
+#line 1310 "/proj/llvm/llvm-1/lib/AsmParser/llvmAsmParser.y"
     {
-    ((yyval.TypeList)=(yyvsp[-2].TypeList))->push_back(*(yyvsp[0].TypeVal)); delete (yyvsp[0].TypeVal);
+    (yyval.TypeVal).type = new PATypeHolder(OpaqueType::get());
+    (yyval.TypeVal).signedness = isSignless;
     CHECK_FOR_ERROR
   ;}
     break;
 
   case 99:
-#line 1388 "/proj/llvm/llvm-3/lib/AsmParser/llvmAsmParser.y"
+#line 1315 "/proj/llvm/llvm-1/lib/AsmParser/llvmAsmParser.y"
     {
-    ((yyval.TypeList)=(yyvsp[-2].TypeList))->push_back(Type::VoidTy);
+    (yyval.TypeVal) = (yyvsp[0].TypeVal);
     CHECK_FOR_ERROR
   ;}
     break;
 
   case 100:
-#line 1392 "/proj/llvm/llvm-3/lib/AsmParser/llvmAsmParser.y"
-    {
-    ((yyval.TypeList) = new std::list<PATypeHolder>())->push_back(Type::VoidTy);
-    CHECK_FOR_ERROR
-  ;}
+#line 1319 "/proj/llvm/llvm-1/lib/AsmParser/llvmAsmParser.y"
+    {            // Named types are also simple types...
+  const Type* tmp = getTypeVal((yyvsp[0].ValIDVal));
+  CHECK_FOR_ERROR
+  (yyval.TypeVal).type = new PATypeHolder(tmp);
+  (yyval.TypeVal).signedness = isSignless;
+;}
     break;
 
   case 101:
-#line 1396 "/proj/llvm/llvm-3/lib/AsmParser/llvmAsmParser.y"
-    {
-    (yyval.TypeList) = new std::list<PATypeHolder>();
+#line 1328 "/proj/llvm/llvm-1/lib/AsmParser/llvmAsmParser.y"
+    {                   // Type UpReference
+    if ((yyvsp[0].UInt64Val) > (uint64_t)~0U) GEN_ERROR("Value out of range!");
+    OpaqueType *OT = OpaqueType::get();        // Use temporary placeholder
+    UpRefs.push_back(UpRefRecord((unsigned)(yyvsp[0].UInt64Val), OT));  // Add to vector...
+    (yyval.TypeVal).type = new PATypeHolder(OT);
+    (yyval.TypeVal).signedness = isSignless;
+    UR_OUT("New Upreference!\n");
     CHECK_FOR_ERROR
   ;}
     break;
 
   case 102:
-#line 1407 "/proj/llvm/llvm-3/lib/AsmParser/llvmAsmParser.y"
+#line 1337 "/proj/llvm/llvm-1/lib/AsmParser/llvmAsmParser.y"
+    {           // Function derived type?
+    std::vector<const Type*> Params;
+    for (std::list<TypeInfo>::iterator I = (yyvsp[-1].TypeList)->begin(),
+           E = (yyvsp[-1].TypeList)->end(); I != E; ++I)
+      Params.push_back(I->type->get());
+    bool isVarArg = Params.size() && Params.back() == Type::VoidTy;
+    if (isVarArg) Params.pop_back();
+
+    (yyval.TypeVal).type = new PATypeHolder(HandleUpRefs(
+               FunctionType::get((yyvsp[-3].TypeVal).type->get(),Params,isVarArg)));
+    (yyval.TypeVal).signedness = isSignless;
+    delete (yyvsp[-1].TypeList);      // Delete the argument list
+    delete (yyvsp[-3].TypeVal).type;
+    CHECK_FOR_ERROR
+  ;}
+    break;
+
+  case 103:
+#line 1352 "/proj/llvm/llvm-1/lib/AsmParser/llvmAsmParser.y"
+    {          // Sized array type?
+    (yyval.TypeVal).type = new PATypeHolder(HandleUpRefs(
+      ArrayType::get((yyvsp[-1].TypeVal).type->get(), (unsigned)(yyvsp[-3].UInt64Val))));
+    (yyval.TypeVal).signedness = isSignless;
+    delete (yyvsp[-1].TypeVal).type;
+    CHECK_FOR_ERROR
+  ;}
+    break;
+
+  case 104:
+#line 1359 "/proj/llvm/llvm-1/lib/AsmParser/llvmAsmParser.y"
+    {          // Packed array type?
+    const llvm::Type* ElemTy = (yyvsp[-1].TypeVal).type->get();
+    if ((unsigned)(yyvsp[-3].UInt64Val) != (yyvsp[-3].UInt64Val))
+      GEN_ERROR("Unsigned result not equal to signed result");
+    if (!ElemTy->isPrimitiveType())
+      GEN_ERROR("Elemental type of a PackedType must be primitive");
+    if (!isPowerOf2_32((yyvsp[-3].UInt64Val)))
+      GEN_ERROR("Vector length should be a power of 2!");
+    (yyval.TypeVal).type = new PATypeHolder(HandleUpRefs(
+                PackedType::get((yyvsp[-1].TypeVal).type->get(), (unsigned)(yyvsp[-3].UInt64Val))));
+    (yyval.TypeVal).signedness = isSignless;
+    delete (yyvsp[-1].TypeVal).type;
+    CHECK_FOR_ERROR
+  ;}
+    break;
+
+  case 105:
+#line 1373 "/proj/llvm/llvm-1/lib/AsmParser/llvmAsmParser.y"
+    {                        // Structure type?
+    std::vector<const Type*> Elements;
+    for (std::list<TypeInfo>::iterator I = (yyvsp[-1].TypeList)->begin(),
+           E = (yyvsp[-1].TypeList)->end(); I != E; ++I)
+      Elements.push_back(I->type->get());
+
+    (yyval.TypeVal).type = new PATypeHolder(HandleUpRefs(StructType::get(Elements)));
+    (yyval.TypeVal).signedness = isSignless;
+    delete (yyvsp[-1].TypeList);
+    CHECK_FOR_ERROR
+  ;}
+    break;
+
+  case 106:
+#line 1384 "/proj/llvm/llvm-1/lib/AsmParser/llvmAsmParser.y"
+    {                                  // Empty structure type?
+    (yyval.TypeVal).type = new PATypeHolder(StructType::get(std::vector<const Type*>()));
+    (yyval.TypeVal).signedness = isSignless;
+    CHECK_FOR_ERROR
+  ;}
+    break;
+
+  case 107:
+#line 1389 "/proj/llvm/llvm-1/lib/AsmParser/llvmAsmParser.y"
+    {                             // Pointer type?
+    if ((yyvsp[-1].TypeVal).type->get() == Type::LabelTy)
+      GEN_ERROR("Cannot form a pointer to a basic block");
+    (yyval.TypeVal).type = new PATypeHolder(HandleUpRefs(PointerType::get((yyvsp[-1].TypeVal).type->get())));
+    (yyval.TypeVal).signedness = (yyvsp[-1].TypeVal).signedness;
+    delete (yyvsp[-1].TypeVal).type;
+    CHECK_FOR_ERROR
+  ;}
+    break;
+
+  case 108:
+#line 1401 "/proj/llvm/llvm-1/lib/AsmParser/llvmAsmParser.y"
+    {
+    (yyval.TypeList) = new std::list<TypeInfo>();
+    (yyval.TypeList)->push_back((yyvsp[0].TypeVal));
+    CHECK_FOR_ERROR
+  ;}
+    break;
+
+  case 109:
+#line 1406 "/proj/llvm/llvm-1/lib/AsmParser/llvmAsmParser.y"
+    {
+    ((yyval.TypeList)=(yyvsp[-2].TypeList))->push_back((yyvsp[0].TypeVal));
+    CHECK_FOR_ERROR
+  ;}
+    break;
+
+  case 111:
+#line 1413 "/proj/llvm/llvm-1/lib/AsmParser/llvmAsmParser.y"
+    {
+    TypeInfo TI; 
+    TI.type = new PATypeHolder(Type::VoidTy); TI.signedness = isSignless;
+    ((yyval.TypeList)=(yyvsp[-2].TypeList))->push_back(TI);
+    CHECK_FOR_ERROR
+  ;}
+    break;
+
+  case 112:
+#line 1419 "/proj/llvm/llvm-1/lib/AsmParser/llvmAsmParser.y"
+    {
+    TypeInfo TI; 
+    TI.type = new PATypeHolder(Type::VoidTy); TI.signedness = isSignless;
+    ((yyval.TypeList) = new std::list<TypeInfo>())->push_back(TI);
+    CHECK_FOR_ERROR
+  ;}
+    break;
+
+  case 113:
+#line 1425 "/proj/llvm/llvm-1/lib/AsmParser/llvmAsmParser.y"
+    {
+    (yyval.TypeList) = new std::list<TypeInfo>();
+    CHECK_FOR_ERROR
+  ;}
+    break;
+
+  case 114:
+#line 1436 "/proj/llvm/llvm-1/lib/AsmParser/llvmAsmParser.y"
     { // Nonempty unsized arr
-    const ArrayType *ATy = dyn_cast<ArrayType>((yyvsp[-3].TypeVal)->get());
+    const ArrayType *ATy = dyn_cast<ArrayType>((yyvsp[-3].TypeVal).type->get());
     if (ATy == 0)
       GEN_ERROR("Cannot make array constant with type: '" + 
-                     (*(yyvsp[-3].TypeVal))->getDescription() + "'!");
+                     ((yyvsp[-3].TypeVal).type->get())->getDescription() + "'!");
     const Type *ETy = ATy->getElementType();
     int NumElements = ATy->getNumElements();
 
@@ -3430,36 +3509,36 @@ yyreduce:
     }
 
     (yyval.ConstVal) = ConstantArray::get(ATy, *(yyvsp[-1].ConstVector));
-    delete (yyvsp[-3].TypeVal); delete (yyvsp[-1].ConstVector);
+    delete (yyvsp[-3].TypeVal).type; delete (yyvsp[-1].ConstVector);
     CHECK_FOR_ERROR
   ;}
     break;
 
-  case 103:
-#line 1433 "/proj/llvm/llvm-3/lib/AsmParser/llvmAsmParser.y"
+  case 115:
+#line 1462 "/proj/llvm/llvm-1/lib/AsmParser/llvmAsmParser.y"
     {
-    const ArrayType *ATy = dyn_cast<ArrayType>((yyvsp[-2].TypeVal)->get());
+    const ArrayType *ATy = dyn_cast<ArrayType>((yyvsp[-2].TypeVal).type->get());
     if (ATy == 0)
       GEN_ERROR("Cannot make array constant with type: '" + 
-                     (*(yyvsp[-2].TypeVal))->getDescription() + "'!");
+                     ((yyvsp[-2].TypeVal).type->get())->getDescription() + "'!");
 
     int NumElements = ATy->getNumElements();
     if (NumElements != -1 && NumElements != 0) 
       GEN_ERROR("Type mismatch: constant sized array initialized with 0"
                      " arguments, but has size of " + itostr(NumElements) +"!");
     (yyval.ConstVal) = ConstantArray::get(ATy, std::vector<Constant*>());
-    delete (yyvsp[-2].TypeVal);
+    delete (yyvsp[-2].TypeVal).type;
     CHECK_FOR_ERROR
   ;}
     break;
 
-  case 104:
-#line 1447 "/proj/llvm/llvm-3/lib/AsmParser/llvmAsmParser.y"
+  case 116:
+#line 1476 "/proj/llvm/llvm-1/lib/AsmParser/llvmAsmParser.y"
     {
-    const ArrayType *ATy = dyn_cast<ArrayType>((yyvsp[-2].TypeVal)->get());
+    const ArrayType *ATy = dyn_cast<ArrayType>((yyvsp[-2].TypeVal).type->get());
     if (ATy == 0)
       GEN_ERROR("Cannot make array constant with type: '" + 
-                     (*(yyvsp[-2].TypeVal))->getDescription() + "'!");
+                     ((yyvsp[-2].TypeVal).type->get())->getDescription() + "'!");
 
     int NumElements = ATy->getNumElements();
     const Type *ETy = ATy->getElementType();
@@ -3482,18 +3561,18 @@ yyreduce:
     }
     free((yyvsp[0].StrVal));
     (yyval.ConstVal) = ConstantArray::get(ATy, Vals);
-    delete (yyvsp[-2].TypeVal);
+    delete (yyvsp[-2].TypeVal).type;
     CHECK_FOR_ERROR
   ;}
     break;
 
-  case 105:
-#line 1477 "/proj/llvm/llvm-3/lib/AsmParser/llvmAsmParser.y"
+  case 117:
+#line 1506 "/proj/llvm/llvm-1/lib/AsmParser/llvmAsmParser.y"
     { // Nonempty unsized arr
-    const PackedType *PTy = dyn_cast<PackedType>((yyvsp[-3].TypeVal)->get());
+    const PackedType *PTy = dyn_cast<PackedType>((yyvsp[-3].TypeVal).type->get());
     if (PTy == 0)
       GEN_ERROR("Cannot make packed constant with type: '" + 
-                     (*(yyvsp[-3].TypeVal))->getDescription() + "'!");
+                     (yyvsp[-3].TypeVal).type->get()->getDescription() + "'!");
     const Type *ETy = PTy->getElementType();
     int NumElements = PTy->getNumElements();
 
@@ -3512,18 +3591,18 @@ yyreduce:
     }
 
     (yyval.ConstVal) = ConstantPacked::get(PTy, *(yyvsp[-1].ConstVector));
-    delete (yyvsp[-3].TypeVal); delete (yyvsp[-1].ConstVector);
+    delete (yyvsp[-3].TypeVal).type; delete (yyvsp[-1].ConstVector);
     CHECK_FOR_ERROR
   ;}
     break;
 
-  case 106:
-#line 1503 "/proj/llvm/llvm-3/lib/AsmParser/llvmAsmParser.y"
+  case 118:
+#line 1532 "/proj/llvm/llvm-1/lib/AsmParser/llvmAsmParser.y"
     {
-    const StructType *STy = dyn_cast<StructType>((yyvsp[-3].TypeVal)->get());
+    const StructType *STy = dyn_cast<StructType>((yyvsp[-3].TypeVal).type->get());
     if (STy == 0)
       GEN_ERROR("Cannot make struct constant with type: '" + 
-                     (*(yyvsp[-3].TypeVal))->getDescription() + "'!");
+                     (yyvsp[-3].TypeVal).type->get()->getDescription() + "'!");
 
     if ((yyvsp[-1].ConstVector)->size() != STy->getNumContainedTypes())
       GEN_ERROR("Illegal number of initializers for structure type!");
@@ -3537,55 +3616,55 @@ yyreduce:
                        " of structure initializer!");
 
     (yyval.ConstVal) = ConstantStruct::get(STy, *(yyvsp[-1].ConstVector));
-    delete (yyvsp[-3].TypeVal); delete (yyvsp[-1].ConstVector);
+    delete (yyvsp[-3].TypeVal).type; delete (yyvsp[-1].ConstVector);
     CHECK_FOR_ERROR
   ;}
     break;
 
-  case 107:
-#line 1524 "/proj/llvm/llvm-3/lib/AsmParser/llvmAsmParser.y"
+  case 119:
+#line 1553 "/proj/llvm/llvm-1/lib/AsmParser/llvmAsmParser.y"
     {
-    const StructType *STy = dyn_cast<StructType>((yyvsp[-2].TypeVal)->get());
+    const StructType *STy = dyn_cast<StructType>((yyvsp[-2].TypeVal).type->get());
     if (STy == 0)
       GEN_ERROR("Cannot make struct constant with type: '" + 
-                     (*(yyvsp[-2].TypeVal))->getDescription() + "'!");
+                     (yyvsp[-2].TypeVal).type->get()->getDescription() + "'!");
 
     if (STy->getNumContainedTypes() != 0)
       GEN_ERROR("Illegal number of initializers for structure type!");
 
     (yyval.ConstVal) = ConstantStruct::get(STy, std::vector<Constant*>());
-    delete (yyvsp[-2].TypeVal);
+    delete (yyvsp[-2].TypeVal).type;
     CHECK_FOR_ERROR
   ;}
     break;
 
-  case 108:
-#line 1537 "/proj/llvm/llvm-3/lib/AsmParser/llvmAsmParser.y"
+  case 120:
+#line 1566 "/proj/llvm/llvm-1/lib/AsmParser/llvmAsmParser.y"
     {
-    const PointerType *PTy = dyn_cast<PointerType>((yyvsp[-1].TypeVal)->get());
+    const PointerType *PTy = dyn_cast<PointerType>((yyvsp[-1].TypeVal).type->get());
     if (PTy == 0)
       GEN_ERROR("Cannot make null pointer constant with type: '" + 
-                     (*(yyvsp[-1].TypeVal))->getDescription() + "'!");
+                     (yyvsp[-1].TypeVal).type->get()->getDescription() + "'!");
 
     (yyval.ConstVal) = ConstantPointerNull::get(PTy);
-    delete (yyvsp[-1].TypeVal);
+    delete (yyvsp[-1].TypeVal).type;
     CHECK_FOR_ERROR
   ;}
     break;
 
-  case 109:
-#line 1547 "/proj/llvm/llvm-3/lib/AsmParser/llvmAsmParser.y"
+  case 121:
+#line 1576 "/proj/llvm/llvm-1/lib/AsmParser/llvmAsmParser.y"
     {
-    (yyval.ConstVal) = UndefValue::get((yyvsp[-1].TypeVal)->get());
-    delete (yyvsp[-1].TypeVal);
+    (yyval.ConstVal) = UndefValue::get((yyvsp[-1].TypeVal).type->get());
+    delete (yyvsp[-1].TypeVal).type;
     CHECK_FOR_ERROR
   ;}
     break;
 
-  case 110:
-#line 1552 "/proj/llvm/llvm-3/lib/AsmParser/llvmAsmParser.y"
+  case 122:
+#line 1581 "/proj/llvm/llvm-1/lib/AsmParser/llvmAsmParser.y"
     {
-    const PointerType *Ty = dyn_cast<PointerType>((yyvsp[-1].TypeVal)->get());
+    const PointerType *Ty = dyn_cast<PointerType>((yyvsp[-1].TypeVal).type->get());
     if (Ty == 0)
       GEN_ERROR("Global const reference must be a pointer type!");
 
@@ -3642,97 +3721,112 @@ yyreduce:
     }
 
     (yyval.ConstVal) = cast<GlobalValue>(V);
-    delete (yyvsp[-1].TypeVal);            // Free the type handle
+    delete (yyvsp[-1].TypeVal).type;            // Free the type handle
     CHECK_FOR_ERROR
   ;}
     break;
 
-  case 111:
-#line 1613 "/proj/llvm/llvm-3/lib/AsmParser/llvmAsmParser.y"
+  case 123:
+#line 1642 "/proj/llvm/llvm-1/lib/AsmParser/llvmAsmParser.y"
     {
-    if ((yyvsp[-1].TypeVal)->get() != (yyvsp[0].ConstVal)->getType())
+    if ((yyvsp[-1].TypeVal).type->get() != (yyvsp[0].ConstVal)->getType())
       GEN_ERROR("Mismatched types for constant expression!");
     (yyval.ConstVal) = (yyvsp[0].ConstVal);
-    delete (yyvsp[-1].TypeVal);
+    delete (yyvsp[-1].TypeVal).type;
     CHECK_FOR_ERROR
   ;}
     break;
 
-  case 112:
-#line 1620 "/proj/llvm/llvm-3/lib/AsmParser/llvmAsmParser.y"
+  case 124:
+#line 1649 "/proj/llvm/llvm-1/lib/AsmParser/llvmAsmParser.y"
     {
-    const Type *Ty = (yyvsp[-1].TypeVal)->get();
+    const Type *Ty = (yyvsp[-1].TypeVal).type->get();
     if (isa<FunctionType>(Ty) || Ty == Type::LabelTy || isa<OpaqueType>(Ty))
       GEN_ERROR("Cannot create a null initialized value of this type!");
     (yyval.ConstVal) = Constant::getNullValue(Ty);
-    delete (yyvsp[-1].TypeVal);
+    delete (yyvsp[-1].TypeVal).type;
     CHECK_FOR_ERROR
   ;}
     break;
 
-  case 113:
-#line 1629 "/proj/llvm/llvm-3/lib/AsmParser/llvmAsmParser.y"
+  case 125:
+#line 1658 "/proj/llvm/llvm-1/lib/AsmParser/llvmAsmParser.y"
     {      // integral constants
-    if (!ConstantInt::isValueValidForType((yyvsp[-1].PrimType), (yyvsp[0].SInt64Val)))
+    if (!ConstantInt::isValueValidForType((yyvsp[-1].TypeVal).type->get(), (yyvsp[0].SInt64Val)))
       GEN_ERROR("Constant value doesn't fit in type!");
-    (yyval.ConstVal) = ConstantInt::get((yyvsp[-1].PrimType), (yyvsp[0].SInt64Val));
+    (yyval.ConstVal) = ConstantInt::get((yyvsp[-1].TypeVal).type->get(), (yyvsp[0].SInt64Val));
     CHECK_FOR_ERROR
   ;}
     break;
 
-  case 114:
-#line 1635 "/proj/llvm/llvm-3/lib/AsmParser/llvmAsmParser.y"
+  case 126:
+#line 1664 "/proj/llvm/llvm-1/lib/AsmParser/llvmAsmParser.y"
     {            // integral constants
-    if (!ConstantInt::isValueValidForType((yyvsp[-1].PrimType), (yyvsp[0].UInt64Val)))
+    if (!ConstantInt::isValueValidForType((yyvsp[-1].TypeVal).type->get(), (yyvsp[0].UInt64Val)))
       GEN_ERROR("Constant value doesn't fit in type!");
-    (yyval.ConstVal) = ConstantInt::get((yyvsp[-1].PrimType), (yyvsp[0].UInt64Val));
+    (yyval.ConstVal) = ConstantInt::get((yyvsp[-1].TypeVal).type->get(), (yyvsp[0].UInt64Val));
     CHECK_FOR_ERROR
   ;}
     break;
 
-  case 115:
-#line 1641 "/proj/llvm/llvm-3/lib/AsmParser/llvmAsmParser.y"
+  case 127:
+#line 1670 "/proj/llvm/llvm-1/lib/AsmParser/llvmAsmParser.y"
     {                      // Boolean constants
     (yyval.ConstVal) = ConstantBool::getTrue();
     CHECK_FOR_ERROR
   ;}
     break;
 
-  case 116:
-#line 1645 "/proj/llvm/llvm-3/lib/AsmParser/llvmAsmParser.y"
+  case 128:
+#line 1674 "/proj/llvm/llvm-1/lib/AsmParser/llvmAsmParser.y"
     {                     // Boolean constants
     (yyval.ConstVal) = ConstantBool::getFalse();
     CHECK_FOR_ERROR
   ;}
     break;
 
-  case 117:
-#line 1649 "/proj/llvm/llvm-3/lib/AsmParser/llvmAsmParser.y"
+  case 129:
+#line 1678 "/proj/llvm/llvm-1/lib/AsmParser/llvmAsmParser.y"
     {                   // Float & Double constants
-    if (!ConstantFP::isValueValidForType((yyvsp[-1].PrimType), (yyvsp[0].FPVal)))
+    if (!ConstantFP::isValueValidForType((yyvsp[-1].TypeVal).type->get(), (yyvsp[0].FPVal)))
       GEN_ERROR("Floating point constant invalid for type!!");
-    (yyval.ConstVal) = ConstantFP::get((yyvsp[-1].PrimType), (yyvsp[0].FPVal));
+    (yyval.ConstVal) = ConstantFP::get((yyvsp[-1].TypeVal).type->get(), (yyvsp[0].FPVal));
     CHECK_FOR_ERROR
   ;}
     break;
 
-  case 118:
-#line 1657 "/proj/llvm/llvm-3/lib/AsmParser/llvmAsmParser.y"
+  case 130:
+#line 1686 "/proj/llvm/llvm-1/lib/AsmParser/llvmAsmParser.y"
     {
-    if (!(yyvsp[-3].ConstVal)->getType()->isFirstClassType())
+    Constant *Val = (yyvsp[-3].ConstVal);
+    const Type *Ty = (yyvsp[-1].TypeVal).type->get();
+    if (!Val->getType()->isFirstClassType())
       GEN_ERROR("cast constant expression from a non-primitive type: '" +
-                     (yyvsp[-3].ConstVal)->getType()->getDescription() + "'!");
-    if (!(yyvsp[-1].TypeVal)->get()->isFirstClassType())
+                     Val->getType()->getDescription() + "'!");
+    if (!Ty->isFirstClassType())
       GEN_ERROR("cast constant expression to a non-primitive type: '" +
-                     (yyvsp[-1].TypeVal)->get()->getDescription() + "'!");
-    (yyval.ConstVal) = ConstantExpr::getCast((yyvsp[-3].ConstVal), (yyvsp[-1].TypeVal)->get());
-    delete (yyvsp[-1].TypeVal);
-    CHECK_FOR_ERROR
+                Ty->getDescription() + "'!");
+    if ((yyvsp[-5].CastOpVal).obsolete) {
+      if (Ty == Type::BoolTy) {
+        // The previous definition of cast to bool was a compare against zero. 
+        // We have to retain that semantic so we do it here.
+        (yyval.ConstVal) = ConstantExpr::get(Instruction::SetNE, Val, 
+                               Constant::getNullValue(Val->getType()));
+      } else if (Val->getType()->isFloatingPoint() && isa<PointerType>(Ty)) {
+        Constant *CE = ConstantExpr::getFPToUI(Val, Type::ULongTy);
+        (yyval.ConstVal) = ConstantExpr::getIntToPtr(CE, Ty);
+      } else {
+        (yyval.ConstVal) = ConstantExpr::getCast(Val, Ty);
+      }
+    } else {
+      (yyval.ConstVal) = ConstantExpr::getCast((yyvsp[-5].CastOpVal).opcode, (yyvsp[-3].ConstVal), (yyvsp[-1].TypeVal).type->get());
+    }
+    delete (yyvsp[-1].TypeVal).type;
   ;}
     break;
 
-  case 119:
-#line 1668 "/proj/llvm/llvm-3/lib/AsmParser/llvmAsmParser.y"
+  case 131:
+#line 1712 "/proj/llvm/llvm-1/lib/AsmParser/llvmAsmParser.y"
     {
     if (!isa<PointerType>((yyvsp[-2].ConstVal)->getType()))
       GEN_ERROR("GetElementPtr requires a pointer operand!");
@@ -3767,8 +3861,8 @@ yyreduce:
   ;}
     break;
 
-  case 120:
-#line 1700 "/proj/llvm/llvm-3/lib/AsmParser/llvmAsmParser.y"
+  case 132:
+#line 1744 "/proj/llvm/llvm-1/lib/AsmParser/llvmAsmParser.y"
     {
     if ((yyvsp[-5].ConstVal)->getType() != Type::BoolTy)
       GEN_ERROR("Select condition must be of boolean type!");
@@ -3779,14 +3873,14 @@ yyreduce:
   ;}
     break;
 
-  case 121:
-#line 1708 "/proj/llvm/llvm-3/lib/AsmParser/llvmAsmParser.y"
+  case 133:
+#line 1752 "/proj/llvm/llvm-1/lib/AsmParser/llvmAsmParser.y"
     {
     if ((yyvsp[-3].ConstVal)->getType() != (yyvsp[-1].ConstVal)->getType())
       GEN_ERROR("Binary operator types must match!");
     // First, make sure we're dealing with the right opcode by upgrading from
     // obsolete versions.
-    sanitizeOpCode((yyvsp[-5].BinaryOpVal),(yyvsp[-3].ConstVal)->getType());
+    sanitizeOpcode((yyvsp[-5].BinaryOpVal), (yyvsp[-3].ConstVal)->getType());
     CHECK_FOR_ERROR;
 
     // HACK: llvm 1.3 and earlier used to emit invalid pointer constant exprs.
@@ -3810,8 +3904,8 @@ yyreduce:
   ;}
     break;
 
-  case 122:
-#line 1735 "/proj/llvm/llvm-3/lib/AsmParser/llvmAsmParser.y"
+  case 134:
+#line 1779 "/proj/llvm/llvm-1/lib/AsmParser/llvmAsmParser.y"
     {
     if ((yyvsp[-3].ConstVal)->getType() != (yyvsp[-1].ConstVal)->getType())
       GEN_ERROR("Logical operator types must match!");
@@ -3825,8 +3919,8 @@ yyreduce:
   ;}
     break;
 
-  case 123:
-#line 1746 "/proj/llvm/llvm-3/lib/AsmParser/llvmAsmParser.y"
+  case 135:
+#line 1790 "/proj/llvm/llvm-1/lib/AsmParser/llvmAsmParser.y"
     {
     if ((yyvsp[-3].ConstVal)->getType() != (yyvsp[-1].ConstVal)->getType())
       GEN_ERROR("setcc operand types must match!");
@@ -3835,23 +3929,23 @@ yyreduce:
   ;}
     break;
 
-  case 124:
-#line 1752 "/proj/llvm/llvm-3/lib/AsmParser/llvmAsmParser.y"
+  case 136:
+#line 1796 "/proj/llvm/llvm-1/lib/AsmParser/llvmAsmParser.y"
     {
     if ((yyvsp[-1].ConstVal)->getType() != Type::UByteTy)
       GEN_ERROR("Shift count for shift constant must be unsigned byte!");
     if (!(yyvsp[-3].ConstVal)->getType()->isInteger())
       GEN_ERROR("Shift constant expression requires integer operand!");
     // Handle opcode upgrade situations
-    sanitizeOpCode((yyvsp[-5].OtherOpVal), (yyvsp[-3].ConstVal)->getType());
+    sanitizeOpcode((yyvsp[-5].OtherOpVal), (yyvsp[-3].ConstVal)->getType());
     CHECK_FOR_ERROR;
     (yyval.ConstVal) = ConstantExpr::get((yyvsp[-5].OtherOpVal).opcode, (yyvsp[-3].ConstVal), (yyvsp[-1].ConstVal));
     CHECK_FOR_ERROR
   ;}
     break;
 
-  case 125:
-#line 1763 "/proj/llvm/llvm-3/lib/AsmParser/llvmAsmParser.y"
+  case 137:
+#line 1807 "/proj/llvm/llvm-1/lib/AsmParser/llvmAsmParser.y"
     {
     if (!ExtractElementInst::isValidOperands((yyvsp[-3].ConstVal), (yyvsp[-1].ConstVal)))
       GEN_ERROR("Invalid extractelement operands!");
@@ -3860,8 +3954,8 @@ yyreduce:
   ;}
     break;
 
-  case 126:
-#line 1769 "/proj/llvm/llvm-3/lib/AsmParser/llvmAsmParser.y"
+  case 138:
+#line 1813 "/proj/llvm/llvm-1/lib/AsmParser/llvmAsmParser.y"
     {
     if (!InsertElementInst::isValidOperands((yyvsp[-5].ConstVal), (yyvsp[-3].ConstVal), (yyvsp[-1].ConstVal)))
       GEN_ERROR("Invalid insertelement operands!");
@@ -3870,8 +3964,8 @@ yyreduce:
   ;}
     break;
 
-  case 127:
-#line 1775 "/proj/llvm/llvm-3/lib/AsmParser/llvmAsmParser.y"
+  case 139:
+#line 1819 "/proj/llvm/llvm-1/lib/AsmParser/llvmAsmParser.y"
     {
     if (!ShuffleVectorInst::isValidOperands((yyvsp[-5].ConstVal), (yyvsp[-3].ConstVal), (yyvsp[-1].ConstVal)))
       GEN_ERROR("Invalid shufflevector operands!");
@@ -3880,16 +3974,16 @@ yyreduce:
   ;}
     break;
 
-  case 128:
-#line 1784 "/proj/llvm/llvm-3/lib/AsmParser/llvmAsmParser.y"
+  case 140:
+#line 1828 "/proj/llvm/llvm-1/lib/AsmParser/llvmAsmParser.y"
     {
     ((yyval.ConstVector) = (yyvsp[-2].ConstVector))->push_back((yyvsp[0].ConstVal));
     CHECK_FOR_ERROR
   ;}
     break;
 
-  case 129:
-#line 1788 "/proj/llvm/llvm-3/lib/AsmParser/llvmAsmParser.y"
+  case 141:
+#line 1832 "/proj/llvm/llvm-1/lib/AsmParser/llvmAsmParser.y"
     {
     (yyval.ConstVector) = new std::vector<Constant*>();
     (yyval.ConstVector)->push_back((yyvsp[0].ConstVal));
@@ -3897,18 +3991,18 @@ yyreduce:
   ;}
     break;
 
-  case 130:
-#line 1796 "/proj/llvm/llvm-3/lib/AsmParser/llvmAsmParser.y"
+  case 142:
+#line 1840 "/proj/llvm/llvm-1/lib/AsmParser/llvmAsmParser.y"
     { (yyval.BoolVal) = false; ;}
     break;
 
-  case 131:
-#line 1796 "/proj/llvm/llvm-3/lib/AsmParser/llvmAsmParser.y"
+  case 143:
+#line 1840 "/proj/llvm/llvm-1/lib/AsmParser/llvmAsmParser.y"
     { (yyval.BoolVal) = true; ;}
     break;
 
-  case 132:
-#line 1806 "/proj/llvm/llvm-3/lib/AsmParser/llvmAsmParser.y"
+  case 144:
+#line 1850 "/proj/llvm/llvm-1/lib/AsmParser/llvmAsmParser.y"
     {
   (yyval.ModuleVal) = ParserResult = (yyvsp[0].ModuleVal);
   CurModule.ModuleDone();
@@ -3916,8 +4010,8 @@ yyreduce:
 ;}
     break;
 
-  case 133:
-#line 1814 "/proj/llvm/llvm-3/lib/AsmParser/llvmAsmParser.y"
+  case 145:
+#line 1858 "/proj/llvm/llvm-1/lib/AsmParser/llvmAsmParser.y"
     {
     (yyval.ModuleVal) = (yyvsp[-1].ModuleVal);
     CurFun.FunctionDone();
@@ -3925,32 +4019,32 @@ yyreduce:
   ;}
     break;
 
-  case 134:
-#line 1819 "/proj/llvm/llvm-3/lib/AsmParser/llvmAsmParser.y"
+  case 146:
+#line 1863 "/proj/llvm/llvm-1/lib/AsmParser/llvmAsmParser.y"
     {
     (yyval.ModuleVal) = (yyvsp[-1].ModuleVal);
     CHECK_FOR_ERROR
   ;}
     break;
 
-  case 135:
-#line 1823 "/proj/llvm/llvm-3/lib/AsmParser/llvmAsmParser.y"
+  case 147:
+#line 1867 "/proj/llvm/llvm-1/lib/AsmParser/llvmAsmParser.y"
     {
     (yyval.ModuleVal) = (yyvsp[-3].ModuleVal);
     CHECK_FOR_ERROR
   ;}
     break;
 
-  case 136:
-#line 1827 "/proj/llvm/llvm-3/lib/AsmParser/llvmAsmParser.y"
+  case 148:
+#line 1871 "/proj/llvm/llvm-1/lib/AsmParser/llvmAsmParser.y"
     {
     (yyval.ModuleVal) = (yyvsp[-1].ModuleVal);
     CHECK_FOR_ERROR
   ;}
     break;
 
-  case 137:
-#line 1831 "/proj/llvm/llvm-3/lib/AsmParser/llvmAsmParser.y"
+  case 149:
+#line 1875 "/proj/llvm/llvm-1/lib/AsmParser/llvmAsmParser.y"
     {
     (yyval.ModuleVal) = CurModule.CurrentModule;
     // Emit an error if there are any unresolved types left.
@@ -3966,8 +4060,8 @@ yyreduce:
   ;}
     break;
 
-  case 138:
-#line 1846 "/proj/llvm/llvm-3/lib/AsmParser/llvmAsmParser.y"
+  case 150:
+#line 1890 "/proj/llvm/llvm-1/lib/AsmParser/llvmAsmParser.y"
     {
     // Eagerly resolve types.  This is not an optimization, this is a
     // requirement that is due to the fact that we could have this:
@@ -3978,36 +4072,36 @@ yyreduce:
     // If types are not resolved eagerly, then the two types will not be
     // determined to be the same type!
     //
-    ResolveTypeTo((yyvsp[-2].StrVal), *(yyvsp[0].TypeVal));
+    ResolveTypeTo((yyvsp[-2].StrVal), (yyvsp[0].TypeVal).type->get());
 
-    if (!setTypeName(*(yyvsp[0].TypeVal), (yyvsp[-2].StrVal)) && !(yyvsp[-2].StrVal)) {
+    if (!setTypeName((yyvsp[0].TypeVal).type->get(), (yyvsp[-2].StrVal)) && !(yyvsp[-2].StrVal)) {
       CHECK_FOR_ERROR
       // If this is a named type that is not a redefinition, add it to the slot
       // table.
-      CurModule.Types.push_back(*(yyvsp[0].TypeVal));
+      CurModule.Types.push_back((yyvsp[0].TypeVal));
+    } else {
+      delete (yyvsp[0].TypeVal).type;
     }
-
-    delete (yyvsp[0].TypeVal);
     CHECK_FOR_ERROR
   ;}
     break;
 
-  case 139:
-#line 1868 "/proj/llvm/llvm-3/lib/AsmParser/llvmAsmParser.y"
+  case 151:
+#line 1912 "/proj/llvm/llvm-1/lib/AsmParser/llvmAsmParser.y"
     {       // Function prototypes can be in const pool
     CHECK_FOR_ERROR
   ;}
     break;
 
-  case 140:
-#line 1871 "/proj/llvm/llvm-3/lib/AsmParser/llvmAsmParser.y"
+  case 152:
+#line 1915 "/proj/llvm/llvm-1/lib/AsmParser/llvmAsmParser.y"
     {  // Asm blocks can be in the const pool
     CHECK_FOR_ERROR
   ;}
     break;
 
-  case 141:
-#line 1874 "/proj/llvm/llvm-3/lib/AsmParser/llvmAsmParser.y"
+  case 153:
+#line 1918 "/proj/llvm/llvm-1/lib/AsmParser/llvmAsmParser.y"
     {
     if ((yyvsp[0].ConstVal) == 0) 
       GEN_ERROR("Global value initializer is not a constant!");
@@ -4016,87 +4110,90 @@ yyreduce:
   ;}
     break;
 
-  case 142:
-#line 1879 "/proj/llvm/llvm-3/lib/AsmParser/llvmAsmParser.y"
+  case 154:
+#line 1923 "/proj/llvm/llvm-1/lib/AsmParser/llvmAsmParser.y"
     {
     CurGV = 0;
   ;}
     break;
 
-  case 143:
-#line 1882 "/proj/llvm/llvm-3/lib/AsmParser/llvmAsmParser.y"
+  case 155:
+#line 1926 "/proj/llvm/llvm-1/lib/AsmParser/llvmAsmParser.y"
     {
-    CurGV = ParseGlobalVariable((yyvsp[-3].StrVal), GlobalValue::ExternalLinkage, (yyvsp[-1].BoolVal), *(yyvsp[0].TypeVal), 0);
+    CurGV = ParseGlobalVariable((yyvsp[-3].StrVal), GlobalValue::ExternalLinkage, (yyvsp[-1].BoolVal),
+      (yyvsp[0].TypeVal).type->get(), 0);
     CHECK_FOR_ERROR
-    delete (yyvsp[0].TypeVal);
+    delete (yyvsp[0].TypeVal).type;
   ;}
     break;
 
-  case 144:
-#line 1886 "/proj/llvm/llvm-3/lib/AsmParser/llvmAsmParser.y"
-    {
-    CurGV = 0;
-    CHECK_FOR_ERROR
-  ;}
-    break;
-
-  case 145:
-#line 1890 "/proj/llvm/llvm-3/lib/AsmParser/llvmAsmParser.y"
-    {
-    CurGV = ParseGlobalVariable((yyvsp[-3].StrVal), GlobalValue::DLLImportLinkage, (yyvsp[-1].BoolVal), *(yyvsp[0].TypeVal), 0);
-    CHECK_FOR_ERROR
-    delete (yyvsp[0].TypeVal);
-  ;}
-    break;
-
-  case 146:
-#line 1894 "/proj/llvm/llvm-3/lib/AsmParser/llvmAsmParser.y"
+  case 156:
+#line 1931 "/proj/llvm/llvm-1/lib/AsmParser/llvmAsmParser.y"
     {
     CurGV = 0;
     CHECK_FOR_ERROR
   ;}
     break;
 
-  case 147:
-#line 1898 "/proj/llvm/llvm-3/lib/AsmParser/llvmAsmParser.y"
+  case 157:
+#line 1935 "/proj/llvm/llvm-1/lib/AsmParser/llvmAsmParser.y"
+    {
+    CurGV = ParseGlobalVariable((yyvsp[-3].StrVal), GlobalValue::DLLImportLinkage, (yyvsp[-1].BoolVal),
+      (yyvsp[0].TypeVal).type->get(), 0);
+    CHECK_FOR_ERROR
+    delete (yyvsp[0].TypeVal).type;
+  ;}
+    break;
+
+  case 158:
+#line 1940 "/proj/llvm/llvm-1/lib/AsmParser/llvmAsmParser.y"
+    {
+    CurGV = 0;
+    CHECK_FOR_ERROR
+  ;}
+    break;
+
+  case 159:
+#line 1944 "/proj/llvm/llvm-1/lib/AsmParser/llvmAsmParser.y"
     {
     CurGV = 
-      ParseGlobalVariable((yyvsp[-3].StrVal), GlobalValue::ExternalWeakLinkage, (yyvsp[-1].BoolVal), *(yyvsp[0].TypeVal), 0);
+      ParseGlobalVariable((yyvsp[-3].StrVal), GlobalValue::ExternalWeakLinkage, (yyvsp[-1].BoolVal),
+        (yyvsp[0].TypeVal).type->get(), 0);
     CHECK_FOR_ERROR
-    delete (yyvsp[0].TypeVal);
+    delete (yyvsp[0].TypeVal).type;
   ;}
     break;
 
-  case 148:
-#line 1903 "/proj/llvm/llvm-3/lib/AsmParser/llvmAsmParser.y"
+  case 160:
+#line 1950 "/proj/llvm/llvm-1/lib/AsmParser/llvmAsmParser.y"
     {
     CurGV = 0;
     CHECK_FOR_ERROR
   ;}
     break;
 
-  case 149:
-#line 1907 "/proj/llvm/llvm-3/lib/AsmParser/llvmAsmParser.y"
+  case 161:
+#line 1954 "/proj/llvm/llvm-1/lib/AsmParser/llvmAsmParser.y"
     { 
     CHECK_FOR_ERROR
   ;}
     break;
 
-  case 150:
-#line 1910 "/proj/llvm/llvm-3/lib/AsmParser/llvmAsmParser.y"
+  case 162:
+#line 1957 "/proj/llvm/llvm-1/lib/AsmParser/llvmAsmParser.y"
     {
     CHECK_FOR_ERROR
   ;}
     break;
 
-  case 151:
-#line 1913 "/proj/llvm/llvm-3/lib/AsmParser/llvmAsmParser.y"
+  case 163:
+#line 1960 "/proj/llvm/llvm-1/lib/AsmParser/llvmAsmParser.y"
     { 
   ;}
     break;
 
-  case 152:
-#line 1917 "/proj/llvm/llvm-3/lib/AsmParser/llvmAsmParser.y"
+  case 164:
+#line 1964 "/proj/llvm/llvm-1/lib/AsmParser/llvmAsmParser.y"
     {
   const std::string &AsmSoFar = CurModule.CurrentModule->getModuleInlineAsm();
   char *EndStr = UnEscapeLexed((yyvsp[0].StrVal), true);
@@ -4111,26 +4208,26 @@ yyreduce:
 ;}
     break;
 
-  case 153:
-#line 1930 "/proj/llvm/llvm-3/lib/AsmParser/llvmAsmParser.y"
+  case 165:
+#line 1977 "/proj/llvm/llvm-1/lib/AsmParser/llvmAsmParser.y"
     { (yyval.Endianness) = Module::BigEndian; ;}
     break;
 
-  case 154:
-#line 1931 "/proj/llvm/llvm-3/lib/AsmParser/llvmAsmParser.y"
+  case 166:
+#line 1978 "/proj/llvm/llvm-1/lib/AsmParser/llvmAsmParser.y"
     { (yyval.Endianness) = Module::LittleEndian; ;}
     break;
 
-  case 155:
-#line 1933 "/proj/llvm/llvm-3/lib/AsmParser/llvmAsmParser.y"
+  case 167:
+#line 1980 "/proj/llvm/llvm-1/lib/AsmParser/llvmAsmParser.y"
     {
     CurModule.CurrentModule->setEndianness((yyvsp[0].Endianness));
     CHECK_FOR_ERROR
   ;}
     break;
 
-  case 156:
-#line 1937 "/proj/llvm/llvm-3/lib/AsmParser/llvmAsmParser.y"
+  case 168:
+#line 1984 "/proj/llvm/llvm-1/lib/AsmParser/llvmAsmParser.y"
     {
     if ((yyvsp[0].UInt64Val) == 32)
       CurModule.CurrentModule->setPointerSize(Module::Pointer32);
@@ -4142,24 +4239,24 @@ yyreduce:
   ;}
     break;
 
-  case 157:
-#line 1946 "/proj/llvm/llvm-3/lib/AsmParser/llvmAsmParser.y"
+  case 169:
+#line 1993 "/proj/llvm/llvm-1/lib/AsmParser/llvmAsmParser.y"
     {
     CurModule.CurrentModule->setTargetTriple((yyvsp[0].StrVal));
     free((yyvsp[0].StrVal));
   ;}
     break;
 
-  case 158:
-#line 1950 "/proj/llvm/llvm-3/lib/AsmParser/llvmAsmParser.y"
+  case 170:
+#line 1997 "/proj/llvm/llvm-1/lib/AsmParser/llvmAsmParser.y"
     {
     CurModule.CurrentModule->setDataLayout((yyvsp[0].StrVal));
     free((yyvsp[0].StrVal));
   ;}
     break;
 
-  case 160:
-#line 1957 "/proj/llvm/llvm-3/lib/AsmParser/llvmAsmParser.y"
+  case 172:
+#line 2004 "/proj/llvm/llvm-1/lib/AsmParser/llvmAsmParser.y"
     {
           CurModule.CurrentModule->addLibrary((yyvsp[0].StrVal));
           free((yyvsp[0].StrVal));
@@ -4167,8 +4264,8 @@ yyreduce:
         ;}
     break;
 
-  case 161:
-#line 1962 "/proj/llvm/llvm-3/lib/AsmParser/llvmAsmParser.y"
+  case 173:
+#line 2009 "/proj/llvm/llvm-1/lib/AsmParser/llvmAsmParser.y"
     {
           CurModule.CurrentModule->addLibrary((yyvsp[0].StrVal));
           free((yyvsp[0].StrVal));
@@ -4176,30 +4273,30 @@ yyreduce:
         ;}
     break;
 
-  case 162:
-#line 1967 "/proj/llvm/llvm-3/lib/AsmParser/llvmAsmParser.y"
+  case 174:
+#line 2014 "/proj/llvm/llvm-1/lib/AsmParser/llvmAsmParser.y"
     {
           CHECK_FOR_ERROR
         ;}
     break;
 
-  case 166:
-#line 1977 "/proj/llvm/llvm-3/lib/AsmParser/llvmAsmParser.y"
+  case 178:
+#line 2024 "/proj/llvm/llvm-1/lib/AsmParser/llvmAsmParser.y"
     { (yyval.StrVal) = 0; ;}
     break;
 
-  case 167:
-#line 1979 "/proj/llvm/llvm-3/lib/AsmParser/llvmAsmParser.y"
+  case 179:
+#line 2026 "/proj/llvm/llvm-1/lib/AsmParser/llvmAsmParser.y"
     {
-  if (*(yyvsp[-1].TypeVal) == Type::VoidTy)
+  if ((yyvsp[-1].TypeVal).type->get() == Type::VoidTy)
     GEN_ERROR("void typed arguments are invalid!");
-  (yyval.ArgVal) = new std::pair<PATypeHolder*, char*>((yyvsp[-1].TypeVal), (yyvsp[0].StrVal));
+  (yyval.ArgVal) = new std::pair<TypeInfo, char*>((yyvsp[-1].TypeVal), (yyvsp[0].StrVal));
   CHECK_FOR_ERROR
 ;}
     break;
 
-  case 168:
-#line 1986 "/proj/llvm/llvm-3/lib/AsmParser/llvmAsmParser.y"
+  case 180:
+#line 2033 "/proj/llvm/llvm-1/lib/AsmParser/llvmAsmParser.y"
     {
     (yyval.ArgList) = (yyvsp[-2].ArgList);
     (yyvsp[-2].ArgList)->push_back(*(yyvsp[0].ArgVal));
@@ -4208,74 +4305,80 @@ yyreduce:
   ;}
     break;
 
-  case 169:
-#line 1992 "/proj/llvm/llvm-3/lib/AsmParser/llvmAsmParser.y"
+  case 181:
+#line 2039 "/proj/llvm/llvm-1/lib/AsmParser/llvmAsmParser.y"
     {
-    (yyval.ArgList) = new std::vector<std::pair<PATypeHolder*,char*> >();
+    (yyval.ArgList) = new std::vector<std::pair<TypeInfo,char*> >();
     (yyval.ArgList)->push_back(*(yyvsp[0].ArgVal));
     delete (yyvsp[0].ArgVal);
     CHECK_FOR_ERROR
   ;}
     break;
 
-  case 170:
-#line 1999 "/proj/llvm/llvm-3/lib/AsmParser/llvmAsmParser.y"
+  case 182:
+#line 2046 "/proj/llvm/llvm-1/lib/AsmParser/llvmAsmParser.y"
     {
     (yyval.ArgList) = (yyvsp[0].ArgList);
     CHECK_FOR_ERROR
   ;}
     break;
 
-  case 171:
-#line 2003 "/proj/llvm/llvm-3/lib/AsmParser/llvmAsmParser.y"
+  case 183:
+#line 2050 "/proj/llvm/llvm-1/lib/AsmParser/llvmAsmParser.y"
     {
     (yyval.ArgList) = (yyvsp[-2].ArgList);
-    (yyval.ArgList)->push_back(std::pair<PATypeHolder*,
-                            char*>(new PATypeHolder(Type::VoidTy), 0));
+    TypeInfo TI;
+    TI.type = new PATypeHolder(Type::VoidTy);
+    TI.signedness = isSignless;
+    (yyval.ArgList)->push_back(std::pair<TypeInfo,char*>(TI,(char*)0));
     CHECK_FOR_ERROR
   ;}
     break;
 
-  case 172:
-#line 2009 "/proj/llvm/llvm-3/lib/AsmParser/llvmAsmParser.y"
+  case 184:
+#line 2058 "/proj/llvm/llvm-1/lib/AsmParser/llvmAsmParser.y"
     {
-    (yyval.ArgList) = new std::vector<std::pair<PATypeHolder*,char*> >();
-    (yyval.ArgList)->push_back(std::make_pair(new PATypeHolder(Type::VoidTy), (char*)0));
+    (yyval.ArgList) = new std::vector<std::pair<TypeInfo,char*> >();
+    TypeInfo TI;
+    TI.type = new PATypeHolder(Type::VoidTy);
+    TI.signedness = isSignless;
+    (yyval.ArgList)->push_back(std::make_pair(TI, (char*)0));
     CHECK_FOR_ERROR
   ;}
     break;
 
-  case 173:
-#line 2014 "/proj/llvm/llvm-3/lib/AsmParser/llvmAsmParser.y"
+  case 185:
+#line 2066 "/proj/llvm/llvm-1/lib/AsmParser/llvmAsmParser.y"
     {
     (yyval.ArgList) = 0;
     CHECK_FOR_ERROR
   ;}
     break;
 
-  case 174:
-#line 2020 "/proj/llvm/llvm-3/lib/AsmParser/llvmAsmParser.y"
+  case 186:
+#line 2072 "/proj/llvm/llvm-1/lib/AsmParser/llvmAsmParser.y"
     {
   UnEscapeLexed((yyvsp[-5].StrVal));
   std::string FunctionName((yyvsp[-5].StrVal));
   free((yyvsp[-5].StrVal));  // Free strdup'd memory!
   
-  if (!(*(yyvsp[-6].TypeVal))->isFirstClassType() && *(yyvsp[-6].TypeVal) != Type::VoidTy)
+  if (!((yyvsp[-6].TypeVal).type->get())->isFirstClassType() && (yyvsp[-6].TypeVal).type->get() != Type::VoidTy)
     GEN_ERROR("LLVM functions cannot return aggregate types!");
 
   std::vector<const Type*> ParamTypeList;
   if ((yyvsp[-3].ArgList)) {   // If there are arguments...
-    for (std::vector<std::pair<PATypeHolder*,char*> >::iterator I = (yyvsp[-3].ArgList)->begin();
+    for (std::vector<std::pair<TypeInfo,char*> >::iterator I = (yyvsp[-3].ArgList)->begin();
          I != (yyvsp[-3].ArgList)->end(); ++I)
-      ParamTypeList.push_back(I->first->get());
+      ParamTypeList.push_back(I->first.type->get());
   }
 
   bool isVarArg = ParamTypeList.size() && ParamTypeList.back() == Type::VoidTy;
   if (isVarArg) ParamTypeList.pop_back();
 
-  const FunctionType *FT = FunctionType::get(*(yyvsp[-6].TypeVal), ParamTypeList, isVarArg);
+  const FunctionType *FT = FunctionType::get((yyvsp[-6].TypeVal).type->get(), ParamTypeList, 
+    isVarArg);
   const PointerType *PFT = PointerType::get(FT);
-  delete (yyvsp[-6].TypeVal);
+  delete (yyvsp[-6].TypeVal).type;
 
   ValID ID;
   if (!FunctionName.empty()) {
@@ -4329,29 +4432,27 @@ yyreduce:
   // Add all of the arguments we parsed to the function...
   if ((yyvsp[-3].ArgList)) {                     // Is null if empty...
     if (isVarArg) {  // Nuke the last entry
-      assert((yyvsp[-3].ArgList)->back().first->get() == Type::VoidTy && (yyvsp[-3].ArgList)->back().second == 0&&
-             "Not a varargs marker!");
-      delete (yyvsp[-3].ArgList)->back().first;
+      assert((yyvsp[-3].ArgList)->back().first.type->get() == Type::VoidTy && 
+             (yyvsp[-3].ArgList)->back().second == 0 && "Not a varargs marker!");
+      delete (yyvsp[-3].ArgList)->back().first.type;
       (yyvsp[-3].ArgList)->pop_back();  // Delete the last entry
     }
     Function::arg_iterator ArgIt = Fn->arg_begin();
-    for (std::vector<std::pair<PATypeHolder*,char*> >::iterator I = (yyvsp[-3].ArgList)->begin();
+    for (std::vector<std::pair<TypeInfo,char*> >::iterator I = (yyvsp[-3].ArgList)->begin();
          I != (yyvsp[-3].ArgList)->end(); ++I, ++ArgIt) {
-      delete I->first;                          // Delete the typeholder...
-
+      delete I->first.type;                     // Delete the typeholder...
       setValueName(ArgIt, I->second);           // Insert arg into symtab...
       CHECK_FOR_ERROR
       InsertValue(ArgIt);
     }
-
     delete (yyvsp[-3].ArgList);                     // We're now done with the argument list
   }
   CHECK_FOR_ERROR
 ;}
     break;
 
-  case 177:
-#line 2116 "/proj/llvm/llvm-3/lib/AsmParser/llvmAsmParser.y"
+  case 189:
+#line 2167 "/proj/llvm/llvm-1/lib/AsmParser/llvmAsmParser.y"
     {
   (yyval.FunctionVal) = CurFun.CurrentFunction;
 
@@ -4361,31 +4462,31 @@ yyreduce:
 ;}
     break;
 
-  case 180:
-#line 2126 "/proj/llvm/llvm-3/lib/AsmParser/llvmAsmParser.y"
+  case 192:
+#line 2177 "/proj/llvm/llvm-1/lib/AsmParser/llvmAsmParser.y"
     {
   (yyval.FunctionVal) = (yyvsp[-1].FunctionVal);
   CHECK_FOR_ERROR
 ;}
     break;
 
-  case 182:
-#line 2132 "/proj/llvm/llvm-3/lib/AsmParser/llvmAsmParser.y"
+  case 194:
+#line 2183 "/proj/llvm/llvm-1/lib/AsmParser/llvmAsmParser.y"
     { CurFun.Linkage = GlobalValue::DLLImportLinkage; ;}
     break;
 
-  case 183:
-#line 2133 "/proj/llvm/llvm-3/lib/AsmParser/llvmAsmParser.y"
+  case 195:
+#line 2184 "/proj/llvm/llvm-1/lib/AsmParser/llvmAsmParser.y"
     { CurFun.Linkage = GlobalValue::DLLImportLinkage; ;}
     break;
 
-  case 184:
-#line 2135 "/proj/llvm/llvm-3/lib/AsmParser/llvmAsmParser.y"
+  case 196:
+#line 2186 "/proj/llvm/llvm-1/lib/AsmParser/llvmAsmParser.y"
     { CurFun.isDeclare = true; ;}
     break;
 
-  case 185:
-#line 2135 "/proj/llvm/llvm-3/lib/AsmParser/llvmAsmParser.y"
+  case 197:
+#line 2186 "/proj/llvm/llvm-1/lib/AsmParser/llvmAsmParser.y"
     {
     (yyval.FunctionVal) = CurFun.CurrentFunction;
     CurFun.FunctionDone();
@@ -4393,100 +4494,95 @@ yyreduce:
   ;}
     break;
 
-  case 186:
-#line 2145 "/proj/llvm/llvm-3/lib/AsmParser/llvmAsmParser.y"
+  case 198:
+#line 2196 "/proj/llvm/llvm-1/lib/AsmParser/llvmAsmParser.y"
     {
     (yyval.BoolVal) = false;
     CHECK_FOR_ERROR
   ;}
     break;
 
-  case 187:
-#line 2149 "/proj/llvm/llvm-3/lib/AsmParser/llvmAsmParser.y"
+  case 199:
+#line 2200 "/proj/llvm/llvm-1/lib/AsmParser/llvmAsmParser.y"
     {
     (yyval.BoolVal) = true;
     CHECK_FOR_ERROR
   ;}
     break;
 
-  case 188:
-#line 2154 "/proj/llvm/llvm-3/lib/AsmParser/llvmAsmParser.y"
+  case 200:
+#line 2205 "/proj/llvm/llvm-1/lib/AsmParser/llvmAsmParser.y"
     {    // A reference to a direct constant
     (yyval.ValIDVal) = ValID::create((yyvsp[0].SInt64Val));
     CHECK_FOR_ERROR
   ;}
     break;
 
-  case 189:
-#line 2158 "/proj/llvm/llvm-3/lib/AsmParser/llvmAsmParser.y"
+  case 201:
+#line 2209 "/proj/llvm/llvm-1/lib/AsmParser/llvmAsmParser.y"
     {
     (yyval.ValIDVal) = ValID::create((yyvsp[0].UInt64Val));
     CHECK_FOR_ERROR
   ;}
     break;
 
-  case 190:
-#line 2162 "/proj/llvm/llvm-3/lib/AsmParser/llvmAsmParser.y"
+  case 202:
+#line 2213 "/proj/llvm/llvm-1/lib/AsmParser/llvmAsmParser.y"
     {                     // Perhaps it's an FP constant?
     (yyval.ValIDVal) = ValID::create((yyvsp[0].FPVal));
     CHECK_FOR_ERROR
   ;}
     break;
 
-  case 191:
-#line 2166 "/proj/llvm/llvm-3/lib/AsmParser/llvmAsmParser.y"
+  case 203:
+#line 2217 "/proj/llvm/llvm-1/lib/AsmParser/llvmAsmParser.y"
     {
     (yyval.ValIDVal) = ValID::create(ConstantBool::getTrue());
     CHECK_FOR_ERROR
   ;}
     break;
 
-  case 192:
-#line 2170 "/proj/llvm/llvm-3/lib/AsmParser/llvmAsmParser.y"
+  case 204:
+#line 2221 "/proj/llvm/llvm-1/lib/AsmParser/llvmAsmParser.y"
     {
     (yyval.ValIDVal) = ValID::create(ConstantBool::getFalse());
     CHECK_FOR_ERROR
   ;}
     break;
 
-  case 193:
-#line 2174 "/proj/llvm/llvm-3/lib/AsmParser/llvmAsmParser.y"
+  case 205:
+#line 2225 "/proj/llvm/llvm-1/lib/AsmParser/llvmAsmParser.y"
     {
     (yyval.ValIDVal) = ValID::createNull();
     CHECK_FOR_ERROR
   ;}
     break;
 
-  case 194:
-#line 2178 "/proj/llvm/llvm-3/lib/AsmParser/llvmAsmParser.y"
+  case 206:
+#line 2229 "/proj/llvm/llvm-1/lib/AsmParser/llvmAsmParser.y"
     {
     (yyval.ValIDVal) = ValID::createUndef();
     CHECK_FOR_ERROR
   ;}
     break;
 
-  case 195:
-#line 2182 "/proj/llvm/llvm-3/lib/AsmParser/llvmAsmParser.y"
+  case 207:
+#line 2233 "/proj/llvm/llvm-1/lib/AsmParser/llvmAsmParser.y"
     {     // A vector zero constant.
     (yyval.ValIDVal) = ValID::createZeroInit();
     CHECK_FOR_ERROR
   ;}
     break;
 
-  case 196:
-#line 2186 "/proj/llvm/llvm-3/lib/AsmParser/llvmAsmParser.y"
+  case 208:
+#line 2237 "/proj/llvm/llvm-1/lib/AsmParser/llvmAsmParser.y"
     { // Nonempty unsized packed vector
     const Type *ETy = (*(yyvsp[-1].ConstVector))[0]->getType();
     int NumElements = (yyvsp[-1].ConstVector)->size(); 
     
     PackedType* pt = PackedType::get(ETy, NumElements);
     PATypeHolder* PTy = new PATypeHolder(
-                                         HandleUpRefs(
-                                            PackedType::get(
-                                                ETy, 
-                                                NumElements)
-                                            )
-                                         );
+       HandleUpRefs(PackedType::get( ETy, NumElements)));
     
     // Verify all elements are correct type!
     for (unsigned i = 0; i < (yyvsp[-1].ConstVector)->size(); i++) {
@@ -4502,16 +4598,16 @@ yyreduce:
   ;}
     break;
 
-  case 197:
-#line 2211 "/proj/llvm/llvm-3/lib/AsmParser/llvmAsmParser.y"
+  case 209:
+#line 2257 "/proj/llvm/llvm-1/lib/AsmParser/llvmAsmParser.y"
     {
     (yyval.ValIDVal) = ValID::create((yyvsp[0].ConstVal));
     CHECK_FOR_ERROR
   ;}
     break;
 
-  case 198:
-#line 2215 "/proj/llvm/llvm-3/lib/AsmParser/llvmAsmParser.y"
+  case 210:
+#line 2261 "/proj/llvm/llvm-1/lib/AsmParser/llvmAsmParser.y"
     {
     char *End = UnEscapeLexed((yyvsp[-2].StrVal), true);
     std::string AsmStr = std::string((yyvsp[-2].StrVal), End);
@@ -4524,48 +4620,48 @@ yyreduce:
   ;}
     break;
 
-  case 199:
-#line 2229 "/proj/llvm/llvm-3/lib/AsmParser/llvmAsmParser.y"
+  case 211:
+#line 2275 "/proj/llvm/llvm-1/lib/AsmParser/llvmAsmParser.y"
     {  // Is it an integer reference...?
     (yyval.ValIDVal) = ValID::create((yyvsp[0].SIntVal));
     CHECK_FOR_ERROR
   ;}
     break;
 
-  case 200:
-#line 2233 "/proj/llvm/llvm-3/lib/AsmParser/llvmAsmParser.y"
+  case 212:
+#line 2279 "/proj/llvm/llvm-1/lib/AsmParser/llvmAsmParser.y"
     {                   // Is it a named reference...?
     (yyval.ValIDVal) = ValID::create((yyvsp[0].StrVal));
     CHECK_FOR_ERROR
   ;}
     break;
 
-  case 203:
-#line 2245 "/proj/llvm/llvm-3/lib/AsmParser/llvmAsmParser.y"
+  case 215:
+#line 2291 "/proj/llvm/llvm-1/lib/AsmParser/llvmAsmParser.y"
     {
-    (yyval.ValueVal) = getVal(*(yyvsp[-1].TypeVal), (yyvsp[0].ValIDVal)); delete (yyvsp[-1].TypeVal);
+    (yyval.ValueVal) = getVal((yyvsp[-1].TypeVal).type->get(), (yyvsp[0].ValIDVal)); delete (yyvsp[-1].TypeVal).type;
     CHECK_FOR_ERROR
   ;}
     break;
 
-  case 204:
-#line 2250 "/proj/llvm/llvm-3/lib/AsmParser/llvmAsmParser.y"
+  case 216:
+#line 2296 "/proj/llvm/llvm-1/lib/AsmParser/llvmAsmParser.y"
     {
     (yyval.FunctionVal) = (yyvsp[-1].FunctionVal);
     CHECK_FOR_ERROR
   ;}
     break;
 
-  case 205:
-#line 2254 "/proj/llvm/llvm-3/lib/AsmParser/llvmAsmParser.y"
+  case 217:
+#line 2300 "/proj/llvm/llvm-1/lib/AsmParser/llvmAsmParser.y"
     { // Do not allow functions with 0 basic blocks   
     (yyval.FunctionVal) = (yyvsp[-1].FunctionVal);
     CHECK_FOR_ERROR
   ;}
     break;
 
-  case 206:
-#line 2263 "/proj/llvm/llvm-3/lib/AsmParser/llvmAsmParser.y"
+  case 218:
+#line 2309 "/proj/llvm/llvm-1/lib/AsmParser/llvmAsmParser.y"
     {
     setValueName((yyvsp[0].TermInstVal), (yyvsp[-1].StrVal));
     CHECK_FOR_ERROR
@@ -4578,17 +4674,21 @@ yyreduce:
   ;}
     break;
 
-  case 207:
-#line 2274 "/proj/llvm/llvm-3/lib/AsmParser/llvmAsmParser.y"
+  case 219:
+#line 2320 "/proj/llvm/llvm-1/lib/AsmParser/llvmAsmParser.y"
     {
+    if (CastInst *CI1 = dyn_cast<CastInst>((yyvsp[0].InstVal)))
+      if (CastInst *CI2 = dyn_cast<CastInst>(CI1->getOperand(0)))
+        if (CI2->getParent() == 0)
+          (yyvsp[-1].BasicBlockVal)->getInstList().push_back(CI2);
     (yyvsp[-1].BasicBlockVal)->getInstList().push_back((yyvsp[0].InstVal));
     (yyval.BasicBlockVal) = (yyvsp[-1].BasicBlockVal);
     CHECK_FOR_ERROR
   ;}
     break;
 
-  case 208:
-#line 2279 "/proj/llvm/llvm-3/lib/AsmParser/llvmAsmParser.y"
+  case 220:
+#line 2329 "/proj/llvm/llvm-1/lib/AsmParser/llvmAsmParser.y"
     {
     (yyval.BasicBlockVal) = CurBB = getBBVal(ValID::create((int)CurFun.NextBBNum++), true);
     CHECK_FOR_ERROR
@@ -4603,8 +4703,8 @@ yyreduce:
   ;}
     break;
 
-  case 209:
-#line 2291 "/proj/llvm/llvm-3/lib/AsmParser/llvmAsmParser.y"
+  case 221:
+#line 2341 "/proj/llvm/llvm-1/lib/AsmParser/llvmAsmParser.y"
     {
     (yyval.BasicBlockVal) = CurBB = getBBVal(ValID::create((yyvsp[0].StrVal)), true);
     CHECK_FOR_ERROR
@@ -4619,24 +4719,24 @@ yyreduce:
   ;}
     break;
 
-  case 210:
-#line 2304 "/proj/llvm/llvm-3/lib/AsmParser/llvmAsmParser.y"
+  case 222:
+#line 2354 "/proj/llvm/llvm-1/lib/AsmParser/llvmAsmParser.y"
     {              // Return with a result...
     (yyval.TermInstVal) = new ReturnInst((yyvsp[0].ValueVal));
     CHECK_FOR_ERROR
   ;}
     break;
 
-  case 211:
-#line 2308 "/proj/llvm/llvm-3/lib/AsmParser/llvmAsmParser.y"
+  case 223:
+#line 2358 "/proj/llvm/llvm-1/lib/AsmParser/llvmAsmParser.y"
     {                                       // Return with no result...
     (yyval.TermInstVal) = new ReturnInst();
     CHECK_FOR_ERROR
   ;}
     break;
 
-  case 212:
-#line 2312 "/proj/llvm/llvm-3/lib/AsmParser/llvmAsmParser.y"
+  case 224:
+#line 2362 "/proj/llvm/llvm-1/lib/AsmParser/llvmAsmParser.y"
     {                         // Unconditional Branch...
     BasicBlock* tmpBB = getBBVal((yyvsp[0].ValIDVal));
     CHECK_FOR_ERROR
@@ -4644,8 +4744,8 @@ yyreduce:
   ;}
     break;
 
-  case 213:
-#line 2317 "/proj/llvm/llvm-3/lib/AsmParser/llvmAsmParser.y"
+  case 225:
+#line 2367 "/proj/llvm/llvm-1/lib/AsmParser/llvmAsmParser.y"
     {  
     BasicBlock* tmpBBA = getBBVal((yyvsp[-3].ValIDVal));
     CHECK_FOR_ERROR
@@ -4657,10 +4757,10 @@ yyreduce:
   ;}
     break;
 
-  case 214:
-#line 2326 "/proj/llvm/llvm-3/lib/AsmParser/llvmAsmParser.y"
+  case 226:
+#line 2376 "/proj/llvm/llvm-1/lib/AsmParser/llvmAsmParser.y"
     {
-    Value* tmpVal = getVal((yyvsp[-7].PrimType), (yyvsp[-6].ValIDVal));
+    Value* tmpVal = getVal((yyvsp[-7].TypeVal).type->get(), (yyvsp[-6].ValIDVal));
     CHECK_FOR_ERROR
     BasicBlock* tmpBB = getBBVal((yyvsp[-3].ValIDVal));
     CHECK_FOR_ERROR
@@ -4680,10 +4780,10 @@ yyreduce:
   ;}
     break;
 
-  case 215:
-#line 2345 "/proj/llvm/llvm-3/lib/AsmParser/llvmAsmParser.y"
+  case 227:
+#line 2395 "/proj/llvm/llvm-1/lib/AsmParser/llvmAsmParser.y"
     {
-    Value* tmpVal = getVal((yyvsp[-6].PrimType), (yyvsp[-5].ValIDVal));
+    Value* tmpVal = getVal((yyvsp[-6].TypeVal).type->get(), (yyvsp[-5].ValIDVal));
     CHECK_FOR_ERROR
     BasicBlock* tmpBB = getBBVal((yyvsp[-2].ValIDVal));
     CHECK_FOR_ERROR
@@ -4693,13 +4793,13 @@ yyreduce:
   ;}
     break;
 
-  case 216:
-#line 2355 "/proj/llvm/llvm-3/lib/AsmParser/llvmAsmParser.y"
+  case 228:
+#line 2405 "/proj/llvm/llvm-1/lib/AsmParser/llvmAsmParser.y"
     {
     const PointerType *PFTy;
     const FunctionType *Ty;
 
-    if (!(PFTy = dyn_cast<PointerType>((yyvsp[-10].TypeVal)->get())) ||
+    if (!(PFTy = dyn_cast<PointerType>((yyvsp[-10].TypeVal).type->get())) ||
         !(Ty = dyn_cast<FunctionType>(PFTy->getElementType()))) {
       // Pull out the types of all of the arguments...
       std::vector<const Type*> ParamTypes;
@@ -4712,7 +4812,7 @@ yyreduce:
       bool isVarArg = ParamTypes.size() && ParamTypes.back() == Type::VoidTy;
       if (isVarArg) ParamTypes.pop_back();
 
-      Ty = FunctionType::get((yyvsp[-10].TypeVal)->get(), ParamTypes, isVarArg);
+      Ty = FunctionType::get((yyvsp[-10].TypeVal).type->get(), ParamTypes, isVarArg);
       PFTy = PointerType::get(Ty);
     }
 
@@ -4746,33 +4846,33 @@ yyreduce:
     }
     cast<InvokeInst>((yyval.TermInstVal))->setCallingConv((yyvsp[-11].UIntVal));
   
-    delete (yyvsp[-10].TypeVal);
+    delete (yyvsp[-10].TypeVal).type;
     delete (yyvsp[-7].ValueList);
     CHECK_FOR_ERROR
   ;}
     break;
 
-  case 217:
-#line 2410 "/proj/llvm/llvm-3/lib/AsmParser/llvmAsmParser.y"
+  case 229:
+#line 2460 "/proj/llvm/llvm-1/lib/AsmParser/llvmAsmParser.y"
     {
     (yyval.TermInstVal) = new UnwindInst();
     CHECK_FOR_ERROR
   ;}
     break;
 
-  case 218:
-#line 2414 "/proj/llvm/llvm-3/lib/AsmParser/llvmAsmParser.y"
+  case 230:
+#line 2464 "/proj/llvm/llvm-1/lib/AsmParser/llvmAsmParser.y"
     {
     (yyval.TermInstVal) = new UnreachableInst();
     CHECK_FOR_ERROR
   ;}
     break;
 
-  case 219:
-#line 2421 "/proj/llvm/llvm-3/lib/AsmParser/llvmAsmParser.y"
+  case 231:
+#line 2471 "/proj/llvm/llvm-1/lib/AsmParser/llvmAsmParser.y"
     {
     (yyval.JumpTable) = (yyvsp[-5].JumpTable);
-    Constant *V = cast<Constant>(getValNonImprovising((yyvsp[-4].PrimType), (yyvsp[-3].ValIDVal)));
+    Constant *V = cast<Constant>(getValNonImprovising((yyvsp[-4].TypeVal).type->get(), (yyvsp[-3].ValIDVal)));
     CHECK_FOR_ERROR
     if (V == 0)
       GEN_ERROR("May only switch on a constant pool value!");
@@ -4783,11 +4883,11 @@ yyreduce:
   ;}
     break;
 
-  case 220:
-#line 2432 "/proj/llvm/llvm-3/lib/AsmParser/llvmAsmParser.y"
+  case 232:
+#line 2482 "/proj/llvm/llvm-1/lib/AsmParser/llvmAsmParser.y"
     {
     (yyval.JumpTable) = new std::vector<std::pair<Constant*, BasicBlock*> >();
-    Constant *V = cast<Constant>(getValNonImprovising((yyvsp[-4].PrimType), (yyvsp[-3].ValIDVal)));
+    Constant *V = cast<Constant>(getValNonImprovising((yyvsp[-4].TypeVal).type->get(), (yyvsp[-3].ValIDVal)));
     CHECK_FOR_ERROR
 
     if (V == 0)
@@ -4799,8 +4899,8 @@ yyreduce:
   ;}
     break;
 
-  case 221:
-#line 2445 "/proj/llvm/llvm-3/lib/AsmParser/llvmAsmParser.y"
+  case 233:
+#line 2495 "/proj/llvm/llvm-1/lib/AsmParser/llvmAsmParser.y"
     {
   // Is this definition named?? if so, assign the name...
   setValueName((yyvsp[0].InstVal), (yyvsp[-1].StrVal));
@@ -4811,21 +4911,21 @@ yyreduce:
 ;}
     break;
 
-  case 222:
-#line 2454 "/proj/llvm/llvm-3/lib/AsmParser/llvmAsmParser.y"
+  case 234:
+#line 2504 "/proj/llvm/llvm-1/lib/AsmParser/llvmAsmParser.y"
     {    // Used for PHI nodes
     (yyval.PHIList) = new std::list<std::pair<Value*, BasicBlock*> >();
-    Value* tmpVal = getVal(*(yyvsp[-5].TypeVal), (yyvsp[-3].ValIDVal));
+    Value* tmpVal = getVal((yyvsp[-5].TypeVal).type->get(), (yyvsp[-3].ValIDVal));
     CHECK_FOR_ERROR
     BasicBlock* tmpBB = getBBVal((yyvsp[-1].ValIDVal));
     CHECK_FOR_ERROR
     (yyval.PHIList)->push_back(std::make_pair(tmpVal, tmpBB));
-    delete (yyvsp[-5].TypeVal);
+    delete (yyvsp[-5].TypeVal).type;
   ;}
     break;
 
-  case 223:
-#line 2463 "/proj/llvm/llvm-3/lib/AsmParser/llvmAsmParser.y"
+  case 235:
+#line 2513 "/proj/llvm/llvm-1/lib/AsmParser/llvmAsmParser.y"
     {
     (yyval.PHIList) = (yyvsp[-6].PHIList);
     Value* tmpVal = getVal((yyvsp[-6].PHIList)->front().first->getType(), (yyvsp[-3].ValIDVal));
@@ -4836,16 +4936,16 @@ yyreduce:
   ;}
     break;
 
-  case 224:
-#line 2473 "/proj/llvm/llvm-3/lib/AsmParser/llvmAsmParser.y"
+  case 236:
+#line 2523 "/proj/llvm/llvm-1/lib/AsmParser/llvmAsmParser.y"
     {    // Used for call statements, and memory insts...
     (yyval.ValueList) = new std::vector<Value*>();
     (yyval.ValueList)->push_back((yyvsp[0].ValueVal));
   ;}
     break;
 
-  case 225:
-#line 2477 "/proj/llvm/llvm-3/lib/AsmParser/llvmAsmParser.y"
+  case 237:
+#line 2527 "/proj/llvm/llvm-1/lib/AsmParser/llvmAsmParser.y"
     {
     (yyval.ValueList) = (yyvsp[-2].ValueList);
     (yyvsp[-2].ValueList)->push_back((yyvsp[0].ValueVal));
@@ -4853,92 +4953,92 @@ yyreduce:
   ;}
     break;
 
-  case 227:
-#line 2484 "/proj/llvm/llvm-3/lib/AsmParser/llvmAsmParser.y"
+  case 239:
+#line 2534 "/proj/llvm/llvm-1/lib/AsmParser/llvmAsmParser.y"
     { (yyval.ValueList) = 0; ;}
     break;
 
-  case 228:
-#line 2486 "/proj/llvm/llvm-3/lib/AsmParser/llvmAsmParser.y"
+  case 240:
+#line 2536 "/proj/llvm/llvm-1/lib/AsmParser/llvmAsmParser.y"
     {
     (yyval.BoolVal) = true;
     CHECK_FOR_ERROR
   ;}
     break;
 
-  case 229:
-#line 2490 "/proj/llvm/llvm-3/lib/AsmParser/llvmAsmParser.y"
+  case 241:
+#line 2540 "/proj/llvm/llvm-1/lib/AsmParser/llvmAsmParser.y"
     {
     (yyval.BoolVal) = false;
     CHECK_FOR_ERROR
   ;}
     break;
 
-  case 230:
-#line 2495 "/proj/llvm/llvm-3/lib/AsmParser/llvmAsmParser.y"
+  case 242:
+#line 2545 "/proj/llvm/llvm-1/lib/AsmParser/llvmAsmParser.y"
     {
-    if (!(*(yyvsp[-3].TypeVal))->isInteger() && !(*(yyvsp[-3].TypeVal))->isFloatingPoint() && 
-        !isa<PackedType>((*(yyvsp[-3].TypeVal)).get()))
+    if (!(yyvsp[-3].TypeVal).type->get()->isInteger() && !(yyvsp[-3].TypeVal).type->get()->isFloatingPoint() && 
+        !isa<PackedType>((yyvsp[-3].TypeVal).type->get()))
       GEN_ERROR(
         "Arithmetic operator requires integer, FP, or packed operands!");
-    if (isa<PackedType>((*(yyvsp[-3].TypeVal)).get()) && 
+    if (isa<PackedType>((yyvsp[-3].TypeVal).type->get()) && 
         ((yyvsp[-4].BinaryOpVal).opcode == Instruction::URem || 
          (yyvsp[-4].BinaryOpVal).opcode == Instruction::SRem ||
          (yyvsp[-4].BinaryOpVal).opcode == Instruction::FRem))
       GEN_ERROR("U/S/FRem not supported on packed types!");
     // Upgrade the opcode from obsolete versions before we do anything with it.
-    sanitizeOpCode((yyvsp[-4].BinaryOpVal),*(yyvsp[-3].TypeVal));
+    sanitizeOpcode((yyvsp[-4].BinaryOpVal),(yyvsp[-3].TypeVal).type->get());
     CHECK_FOR_ERROR;
-    Value* val1 = getVal(*(yyvsp[-3].TypeVal), (yyvsp[-2].ValIDVal)); 
+    Value* val1 = getVal((yyvsp[-3].TypeVal).type->get(), (yyvsp[-2].ValIDVal)); 
     CHECK_FOR_ERROR
-    Value* val2 = getVal(*(yyvsp[-3].TypeVal), (yyvsp[0].ValIDVal));
+    Value* val2 = getVal((yyvsp[-3].TypeVal).type->get(), (yyvsp[0].ValIDVal));
     CHECK_FOR_ERROR
     (yyval.InstVal) = BinaryOperator::create((yyvsp[-4].BinaryOpVal).opcode, val1, val2);
     if ((yyval.InstVal) == 0)
       GEN_ERROR("binary operator returned null!");
-    delete (yyvsp[-3].TypeVal);
+    delete (yyvsp[-3].TypeVal).type;
   ;}
     break;
 
-  case 231:
-#line 2517 "/proj/llvm/llvm-3/lib/AsmParser/llvmAsmParser.y"
+  case 243:
+#line 2567 "/proj/llvm/llvm-1/lib/AsmParser/llvmAsmParser.y"
     {
-    if (!(*(yyvsp[-3].TypeVal))->isIntegral()) {
-      if (!isa<PackedType>((yyvsp[-3].TypeVal)->get()) ||
-          !cast<PackedType>((yyvsp[-3].TypeVal)->get())->getElementType()->isIntegral())
+    if (!(yyvsp[-3].TypeVal).type->get()->isIntegral()) {
+      if (!isa<PackedType>((yyvsp[-3].TypeVal).type->get()) ||
+          !cast<PackedType>((yyvsp[-3].TypeVal).type->get())->getElementType()->isIntegral())
         GEN_ERROR("Logical operator requires integral operands!");
     }
-    Value* tmpVal1 = getVal(*(yyvsp[-3].TypeVal), (yyvsp[-2].ValIDVal));
+    Value* tmpVal1 = getVal((yyvsp[-3].TypeVal).type->get(), (yyvsp[-2].ValIDVal));
     CHECK_FOR_ERROR
-    Value* tmpVal2 = getVal(*(yyvsp[-3].TypeVal), (yyvsp[0].ValIDVal));
+    Value* tmpVal2 = getVal((yyvsp[-3].TypeVal).type->get(), (yyvsp[0].ValIDVal));
     CHECK_FOR_ERROR
     (yyval.InstVal) = BinaryOperator::create((yyvsp[-4].BinaryOpVal).opcode, tmpVal1, tmpVal2);
     if ((yyval.InstVal) == 0)
       GEN_ERROR("binary operator returned null!");
-    delete (yyvsp[-3].TypeVal);
+    delete (yyvsp[-3].TypeVal).type;
   ;}
     break;
 
-  case 232:
-#line 2532 "/proj/llvm/llvm-3/lib/AsmParser/llvmAsmParser.y"
+  case 244:
+#line 2582 "/proj/llvm/llvm-1/lib/AsmParser/llvmAsmParser.y"
     {
-    if(isa<PackedType>((*(yyvsp[-3].TypeVal)).get())) {
+    if(isa<PackedType>((yyvsp[-3].TypeVal).type->get())) {
       GEN_ERROR(
         "PackedTypes currently not supported in setcc instructions!");
     }
-    Value* tmpVal1 = getVal(*(yyvsp[-3].TypeVal), (yyvsp[-2].ValIDVal));
+    Value* tmpVal1 = getVal((yyvsp[-3].TypeVal).type->get(), (yyvsp[-2].ValIDVal));
     CHECK_FOR_ERROR
-    Value* tmpVal2 = getVal(*(yyvsp[-3].TypeVal), (yyvsp[0].ValIDVal));
+    Value* tmpVal2 = getVal((yyvsp[-3].TypeVal).type->get(), (yyvsp[0].ValIDVal));
     CHECK_FOR_ERROR
     (yyval.InstVal) = new SetCondInst((yyvsp[-4].BinaryOpVal).opcode, tmpVal1, tmpVal2);
     if ((yyval.InstVal) == 0)
       GEN_ERROR("binary operator returned null!");
-    delete (yyvsp[-3].TypeVal);
+    delete (yyvsp[-3].TypeVal).type;
   ;}
     break;
 
-  case 233:
-#line 2546 "/proj/llvm/llvm-3/lib/AsmParser/llvmAsmParser.y"
+  case 245:
+#line 2596 "/proj/llvm/llvm-1/lib/AsmParser/llvmAsmParser.y"
     {
     std::cerr << "WARNING: Use of eliminated 'not' instruction:"
               << " Replacing with 'xor'.\n";
@@ -4954,35 +5054,53 @@ yyreduce:
   ;}
     break;
 
-  case 234:
-#line 2559 "/proj/llvm/llvm-3/lib/AsmParser/llvmAsmParser.y"
+  case 246:
+#line 2609 "/proj/llvm/llvm-1/lib/AsmParser/llvmAsmParser.y"
     {
     if ((yyvsp[0].ValueVal)->getType() != Type::UByteTy)
       GEN_ERROR("Shift amount must be ubyte!");
     if (!(yyvsp[-2].ValueVal)->getType()->isInteger())
       GEN_ERROR("Shift constant expression requires integer operand!");
     // Handle opcode upgrade situations
-    sanitizeOpCode((yyvsp[-3].OtherOpVal), (yyvsp[-2].ValueVal)->getType());
+    sanitizeOpcode((yyvsp[-3].OtherOpVal), (yyvsp[-2].ValueVal)->getType());
     CHECK_FOR_ERROR;
     (yyval.InstVal) = new ShiftInst((yyvsp[-3].OtherOpVal).opcode, (yyvsp[-2].ValueVal), (yyvsp[0].ValueVal));
     CHECK_FOR_ERROR
   ;}
     break;
 
-  case 235:
-#line 2570 "/proj/llvm/llvm-3/lib/AsmParser/llvmAsmParser.y"
+  case 247:
+#line 2620 "/proj/llvm/llvm-1/lib/AsmParser/llvmAsmParser.y"
     {
-    if (!(yyvsp[0].TypeVal)->get()->isFirstClassType())
-      GEN_ERROR("cast instruction to a non-primitive type: '" +
-                     (yyvsp[0].TypeVal)->get()->getDescription() + "'!");
-    (yyval.InstVal) = new CastInst((yyvsp[-2].ValueVal), *(yyvsp[0].TypeVal));
-    delete (yyvsp[0].TypeVal);
-    CHECK_FOR_ERROR
+    Value* Val = (yyvsp[-2].ValueVal);
+    const Type* Ty = (yyvsp[0].TypeVal).type->get();
+    if (!Val->getType()->isFirstClassType())
+      GEN_ERROR("cast from a non-primitive type: '" +
+                Val->getType()->getDescription() + "'!");
+    if (!Ty->isFirstClassType())
+      GEN_ERROR("cast to a non-primitive type: '" + Ty->getDescription() +"'!");
+
+    if ((yyvsp[-3].CastOpVal).obsolete) {
+      if (Ty == Type::BoolTy) {
+        // The previous definition of cast to bool was a compare against zero. 
+        // We have to retain that semantic so we do it here.
+        (yyval.InstVal) = new SetCondInst(Instruction::SetNE, (yyvsp[-2].ValueVal), 
+                               Constant::getNullValue((yyvsp[-2].ValueVal)->getType()));
+      } else if (Val->getType()->isFloatingPoint() && isa<PointerType>(Ty)) {
+        CastInst *CI = new FPToUIInst(Val, Type::ULongTy);
+        (yyval.InstVal) = new IntToPtrInst(CI, Ty);
+      } else {
+        (yyval.InstVal) = CastInst::createInferredCast(Val, Ty);
+      }
+    } else {
+      (yyval.InstVal) = CastInst::create((yyvsp[-3].CastOpVal).opcode, (yyvsp[-2].ValueVal), (yyvsp[0].TypeVal).type->get());
+    }
+    delete (yyvsp[0].TypeVal).type;
   ;}
     break;
 
-  case 236:
-#line 2578 "/proj/llvm/llvm-3/lib/AsmParser/llvmAsmParser.y"
+  case 248:
+#line 2646 "/proj/llvm/llvm-1/lib/AsmParser/llvmAsmParser.y"
     {
     if ((yyvsp[-4].ValueVal)->getType() != Type::BoolTy)
       GEN_ERROR("select condition must be boolean!");
@@ -4993,18 +5111,18 @@ yyreduce:
   ;}
     break;
 
-  case 237:
-#line 2586 "/proj/llvm/llvm-3/lib/AsmParser/llvmAsmParser.y"
+  case 249:
+#line 2654 "/proj/llvm/llvm-1/lib/AsmParser/llvmAsmParser.y"
     {
     NewVarArgs = true;
-    (yyval.InstVal) = new VAArgInst((yyvsp[-2].ValueVal), *(yyvsp[0].TypeVal));
-    delete (yyvsp[0].TypeVal);
+    (yyval.InstVal) = new VAArgInst((yyvsp[-2].ValueVal), (yyvsp[0].TypeVal).type->get());
+    delete (yyvsp[0].TypeVal).type;
     CHECK_FOR_ERROR
   ;}
     break;
 
-  case 238:
-#line 2592 "/proj/llvm/llvm-3/lib/AsmParser/llvmAsmParser.y"
+  case 250:
+#line 2660 "/proj/llvm/llvm-1/lib/AsmParser/llvmAsmParser.y"
     {
     ObsoleteVarArgs = true;
     const Type* ArgTy = (yyvsp[-2].ValueVal)->getType();
@@ -5021,14 +5139,14 @@ yyreduce:
     CallInst* bar = new CallInst(NF, (yyvsp[-2].ValueVal));
     CurBB->getInstList().push_back(bar);
     CurBB->getInstList().push_back(new StoreInst(bar, foo));
-    (yyval.InstVal) = new VAArgInst(foo, *(yyvsp[0].TypeVal));
-    delete (yyvsp[0].TypeVal);
+    (yyval.InstVal) = new VAArgInst(foo, (yyvsp[0].TypeVal).type->get());
+    delete (yyvsp[0].TypeVal).type;
     CHECK_FOR_ERROR
   ;}
     break;
 
-  case 239:
-#line 2612 "/proj/llvm/llvm-3/lib/AsmParser/llvmAsmParser.y"
+  case 251:
+#line 2680 "/proj/llvm/llvm-1/lib/AsmParser/llvmAsmParser.y"
     {
     ObsoleteVarArgs = true;
     const Type* ArgTy = (yyvsp[-2].ValueVal)->getType();
@@ -5046,16 +5164,16 @@ yyreduce:
     CallInst* bar = new CallInst(NF, (yyvsp[-2].ValueVal));
     CurBB->getInstList().push_back(bar);
     CurBB->getInstList().push_back(new StoreInst(bar, foo));
-    Instruction* tmp = new VAArgInst(foo, *(yyvsp[0].TypeVal));
+    Instruction* tmp = new VAArgInst(foo, (yyvsp[0].TypeVal).type->get());
     CurBB->getInstList().push_back(tmp);
     (yyval.InstVal) = new LoadInst(foo);
-    delete (yyvsp[0].TypeVal);
+    delete (yyvsp[0].TypeVal).type;
     CHECK_FOR_ERROR
   ;}
     break;
 
-  case 240:
-#line 2635 "/proj/llvm/llvm-3/lib/AsmParser/llvmAsmParser.y"
+  case 252:
+#line 2703 "/proj/llvm/llvm-1/lib/AsmParser/llvmAsmParser.y"
     {
     if (!ExtractElementInst::isValidOperands((yyvsp[-2].ValueVal), (yyvsp[0].ValueVal)))
       GEN_ERROR("Invalid extractelement operands!");
@@ -5064,8 +5182,8 @@ yyreduce:
   ;}
     break;
 
-  case 241:
-#line 2641 "/proj/llvm/llvm-3/lib/AsmParser/llvmAsmParser.y"
+  case 253:
+#line 2709 "/proj/llvm/llvm-1/lib/AsmParser/llvmAsmParser.y"
     {
     if (!InsertElementInst::isValidOperands((yyvsp[-4].ValueVal), (yyvsp[-2].ValueVal), (yyvsp[0].ValueVal)))
       GEN_ERROR("Invalid insertelement operands!");
@@ -5074,8 +5192,8 @@ yyreduce:
   ;}
     break;
 
-  case 242:
-#line 2647 "/proj/llvm/llvm-3/lib/AsmParser/llvmAsmParser.y"
+  case 254:
+#line 2715 "/proj/llvm/llvm-1/lib/AsmParser/llvmAsmParser.y"
     {
     if (!ShuffleVectorInst::isValidOperands((yyvsp[-4].ValueVal), (yyvsp[-2].ValueVal), (yyvsp[0].ValueVal)))
       GEN_ERROR("Invalid shufflevector operands!");
@@ -5084,8 +5202,8 @@ yyreduce:
   ;}
     break;
 
-  case 243:
-#line 2653 "/proj/llvm/llvm-3/lib/AsmParser/llvmAsmParser.y"
+  case 255:
+#line 2721 "/proj/llvm/llvm-1/lib/AsmParser/llvmAsmParser.y"
     {
     const Type *Ty = (yyvsp[0].PHIList)->front().first->getType();
     if (!Ty->isFirstClassType())
@@ -5103,13 +5221,13 @@ yyreduce:
   ;}
     break;
 
-  case 244:
-#line 2668 "/proj/llvm/llvm-3/lib/AsmParser/llvmAsmParser.y"
+  case 256:
+#line 2736 "/proj/llvm/llvm-1/lib/AsmParser/llvmAsmParser.y"
     {
-    const PointerType *PFTy;
-    const FunctionType *Ty;
+    const PointerType *PFTy = 0;
+    const FunctionType *Ty = 0;
 
-    if (!(PFTy = dyn_cast<PointerType>((yyvsp[-4].TypeVal)->get())) ||
+    if (!(PFTy = dyn_cast<PointerType>((yyvsp[-4].TypeVal).type->get())) ||
         !(Ty = dyn_cast<FunctionType>(PFTy->getElementType()))) {
       // Pull out the types of all of the arguments...
       std::vector<const Type*> ParamTypes;
@@ -5122,10 +5240,11 @@ yyreduce:
       bool isVarArg = ParamTypes.size() && ParamTypes.back() == Type::VoidTy;
       if (isVarArg) ParamTypes.pop_back();
 
-      if (!(*(yyvsp[-4].TypeVal))->isFirstClassType() && *(yyvsp[-4].TypeVal) != Type::VoidTy)
+      if (!(yyvsp[-4].TypeVal).type->get()->isFirstClassType() && 
+           (yyvsp[-4].TypeVal).type->get() != Type::VoidTy)
         GEN_ERROR("LLVM functions cannot return aggregate types!");
 
-      Ty = FunctionType::get((yyvsp[-4].TypeVal)->get(), ParamTypes, isVarArg);
+      Ty = FunctionType::get((yyvsp[-4].TypeVal).type->get(), ParamTypes, isVarArg);
       PFTy = PointerType::get(Ty);
     }
 
@@ -5160,92 +5279,92 @@ yyreduce:
     }
     cast<CallInst>((yyval.InstVal))->setTailCall((yyvsp[-6].BoolVal));
     cast<CallInst>((yyval.InstVal))->setCallingConv((yyvsp[-5].UIntVal));
-    delete (yyvsp[-4].TypeVal);
+    delete (yyvsp[-4].TypeVal).type;
     delete (yyvsp[-1].ValueList);
     CHECK_FOR_ERROR
   ;}
     break;
 
-  case 245:
-#line 2727 "/proj/llvm/llvm-3/lib/AsmParser/llvmAsmParser.y"
+  case 257:
+#line 2796 "/proj/llvm/llvm-1/lib/AsmParser/llvmAsmParser.y"
     {
     (yyval.InstVal) = (yyvsp[0].InstVal);
     CHECK_FOR_ERROR
   ;}
     break;
 
-  case 246:
-#line 2734 "/proj/llvm/llvm-3/lib/AsmParser/llvmAsmParser.y"
+  case 258:
+#line 2803 "/proj/llvm/llvm-1/lib/AsmParser/llvmAsmParser.y"
     { 
     (yyval.ValueList) = (yyvsp[0].ValueList); 
     CHECK_FOR_ERROR
   ;}
     break;
 
-  case 247:
-#line 2737 "/proj/llvm/llvm-3/lib/AsmParser/llvmAsmParser.y"
+  case 259:
+#line 2806 "/proj/llvm/llvm-1/lib/AsmParser/llvmAsmParser.y"
     { 
     (yyval.ValueList) = new std::vector<Value*>(); 
     CHECK_FOR_ERROR
   ;}
     break;
 
-  case 248:
-#line 2742 "/proj/llvm/llvm-3/lib/AsmParser/llvmAsmParser.y"
+  case 260:
+#line 2811 "/proj/llvm/llvm-1/lib/AsmParser/llvmAsmParser.y"
     {
     (yyval.BoolVal) = true;
     CHECK_FOR_ERROR
   ;}
     break;
 
-  case 249:
-#line 2746 "/proj/llvm/llvm-3/lib/AsmParser/llvmAsmParser.y"
+  case 261:
+#line 2815 "/proj/llvm/llvm-1/lib/AsmParser/llvmAsmParser.y"
     {
     (yyval.BoolVal) = false;
     CHECK_FOR_ERROR
   ;}
     break;
 
-  case 250:
-#line 2753 "/proj/llvm/llvm-3/lib/AsmParser/llvmAsmParser.y"
+  case 262:
+#line 2822 "/proj/llvm/llvm-1/lib/AsmParser/llvmAsmParser.y"
     {
-    (yyval.InstVal) = new MallocInst(*(yyvsp[-1].TypeVal), 0, (yyvsp[0].UIntVal));
-    delete (yyvsp[-1].TypeVal);
+    (yyval.InstVal) = new MallocInst((yyvsp[-1].TypeVal).type->get(), 0, (yyvsp[0].UIntVal));
+    delete (yyvsp[-1].TypeVal).type;
     CHECK_FOR_ERROR
   ;}
     break;
 
-  case 251:
-#line 2758 "/proj/llvm/llvm-3/lib/AsmParser/llvmAsmParser.y"
+  case 263:
+#line 2827 "/proj/llvm/llvm-1/lib/AsmParser/llvmAsmParser.y"
     {
-    Value* tmpVal = getVal((yyvsp[-2].PrimType), (yyvsp[-1].ValIDVal));
+    Value* tmpVal = getVal((yyvsp[-2].TypeVal).type->get(), (yyvsp[-1].ValIDVal));
     CHECK_FOR_ERROR
-    (yyval.InstVal) = new MallocInst(*(yyvsp[-4].TypeVal), tmpVal, (yyvsp[0].UIntVal));
-    delete (yyvsp[-4].TypeVal);
+    (yyval.InstVal) = new MallocInst((yyvsp[-4].TypeVal).type->get(), tmpVal, (yyvsp[0].UIntVal));
+    delete (yyvsp[-4].TypeVal).type;
   ;}
     break;
 
-  case 252:
-#line 2764 "/proj/llvm/llvm-3/lib/AsmParser/llvmAsmParser.y"
+  case 264:
+#line 2833 "/proj/llvm/llvm-1/lib/AsmParser/llvmAsmParser.y"
     {
-    (yyval.InstVal) = new AllocaInst(*(yyvsp[-1].TypeVal), 0, (yyvsp[0].UIntVal));
-    delete (yyvsp[-1].TypeVal);
+    (yyval.InstVal) = new AllocaInst((yyvsp[-1].TypeVal).type->get(), 0, (yyvsp[0].UIntVal));
+    delete (yyvsp[-1].TypeVal).type;
     CHECK_FOR_ERROR
   ;}
     break;
 
-  case 253:
-#line 2769 "/proj/llvm/llvm-3/lib/AsmParser/llvmAsmParser.y"
+  case 265:
+#line 2838 "/proj/llvm/llvm-1/lib/AsmParser/llvmAsmParser.y"
     {
-    Value* tmpVal = getVal((yyvsp[-2].PrimType), (yyvsp[-1].ValIDVal));
+    Value* tmpVal = getVal((yyvsp[-2].TypeVal).type->get(), (yyvsp[-1].ValIDVal));
     CHECK_FOR_ERROR
-    (yyval.InstVal) = new AllocaInst(*(yyvsp[-4].TypeVal), tmpVal, (yyvsp[0].UIntVal));
-    delete (yyvsp[-4].TypeVal);
+    (yyval.InstVal) = new AllocaInst((yyvsp[-4].TypeVal).type->get(), tmpVal, (yyvsp[0].UIntVal));
+    delete (yyvsp[-4].TypeVal).type;
   ;}
     break;
 
-  case 254:
-#line 2775 "/proj/llvm/llvm-3/lib/AsmParser/llvmAsmParser.y"
+  case 266:
+#line 2844 "/proj/llvm/llvm-1/lib/AsmParser/llvmAsmParser.y"
     {
     if (!isa<PointerType>((yyvsp[0].ValueVal)->getType()))
       GEN_ERROR("Trying to free nonpointer type " + 
@@ -5255,65 +5374,65 @@ yyreduce:
   ;}
     break;
 
-  case 255:
-#line 2783 "/proj/llvm/llvm-3/lib/AsmParser/llvmAsmParser.y"
+  case 267:
+#line 2852 "/proj/llvm/llvm-1/lib/AsmParser/llvmAsmParser.y"
     {
-    if (!isa<PointerType>((yyvsp[-1].TypeVal)->get()))
+    if (!isa<PointerType>((yyvsp[-1].TypeVal).type->get()))
       GEN_ERROR("Can't load from nonpointer type: " +
-                     (*(yyvsp[-1].TypeVal))->getDescription());
-    if (!cast<PointerType>((yyvsp[-1].TypeVal)->get())->getElementType()->isFirstClassType())
+                     (yyvsp[-1].TypeVal).type->get()->getDescription());
+    if (!cast<PointerType>((yyvsp[-1].TypeVal).type->get())->getElementType()->isFirstClassType())
       GEN_ERROR("Can't load from pointer of non-first-class type: " +
-                     (*(yyvsp[-1].TypeVal))->getDescription());
-    Value* tmpVal = getVal(*(yyvsp[-1].TypeVal), (yyvsp[0].ValIDVal));
+                     (yyvsp[-1].TypeVal).type->get()->getDescription());
+    Value* tmpVal = getVal((yyvsp[-1].TypeVal).type->get(), (yyvsp[0].ValIDVal));
     CHECK_FOR_ERROR
     (yyval.InstVal) = new LoadInst(tmpVal, "", (yyvsp[-3].BoolVal));
-    delete (yyvsp[-1].TypeVal);
+    delete (yyvsp[-1].TypeVal).type;
   ;}
     break;
 
-  case 256:
-#line 2795 "/proj/llvm/llvm-3/lib/AsmParser/llvmAsmParser.y"
+  case 268:
+#line 2864 "/proj/llvm/llvm-1/lib/AsmParser/llvmAsmParser.y"
     {
-    const PointerType *PT = dyn_cast<PointerType>((yyvsp[-1].TypeVal)->get());
+    const PointerType *PT = dyn_cast<PointerType>((yyvsp[-1].TypeVal).type->get());
     if (!PT)
       GEN_ERROR("Can't store to a nonpointer type: " +
-                     (*(yyvsp[-1].TypeVal))->getDescription());
+                     ((yyvsp[-1].TypeVal).type->get())->getDescription());
     const Type *ElTy = PT->getElementType();
     if (ElTy != (yyvsp[-3].ValueVal)->getType())
       GEN_ERROR("Can't store '" + (yyvsp[-3].ValueVal)->getType()->getDescription() +
                      "' into space of type '" + ElTy->getDescription() + "'!");
 
-    Value* tmpVal = getVal(*(yyvsp[-1].TypeVal), (yyvsp[0].ValIDVal));
+    Value* tmpVal = getVal((yyvsp[-1].TypeVal).type->get(), (yyvsp[0].ValIDVal));
     CHECK_FOR_ERROR
     (yyval.InstVal) = new StoreInst((yyvsp[-3].ValueVal), tmpVal, (yyvsp[-5].BoolVal));
-    delete (yyvsp[-1].TypeVal);
+    delete (yyvsp[-1].TypeVal).type;
   ;}
     break;
 
-  case 257:
-#line 2810 "/proj/llvm/llvm-3/lib/AsmParser/llvmAsmParser.y"
+  case 269:
+#line 2879 "/proj/llvm/llvm-1/lib/AsmParser/llvmAsmParser.y"
     {
-    if (!isa<PointerType>((yyvsp[-2].TypeVal)->get()))
+    if (!isa<PointerType>((yyvsp[-2].TypeVal).type->get()))
       GEN_ERROR("getelementptr insn requires pointer operand!");
 
     // LLVM 1.2 and earlier used ubyte struct indices.  Convert any ubyte struct
     // indices to uint struct indices for compatibility.
     generic_gep_type_iterator<std::vector<Value*>::iterator>
-      GTI = gep_type_begin((yyvsp[-2].TypeVal)->get(), (yyvsp[0].ValueList)->begin(), (yyvsp[0].ValueList)->end()),
-      GTE = gep_type_end((yyvsp[-2].TypeVal)->get(), (yyvsp[0].ValueList)->begin(), (yyvsp[0].ValueList)->end());
+      GTI = gep_type_begin((yyvsp[-2].TypeVal).type->get(), (yyvsp[0].ValueList)->begin(), (yyvsp[0].ValueList)->end()),
+      GTE = gep_type_end((yyvsp[-2].TypeVal).type->get(), (yyvsp[0].ValueList)->begin(), (yyvsp[0].ValueList)->end());
     for (unsigned i = 0, e = (yyvsp[0].ValueList)->size(); i != e && GTI != GTE; ++i, ++GTI)
       if (isa<StructType>(*GTI))        // Only change struct indices
         if (ConstantInt *CUI = dyn_cast<ConstantInt>((*(yyvsp[0].ValueList))[i]))
           if (CUI->getType() == Type::UByteTy)
             (*(yyvsp[0].ValueList))[i] = ConstantExpr::getCast(CUI, Type::UIntTy);
 
-    if (!GetElementPtrInst::getIndexedType(*(yyvsp[-2].TypeVal), *(yyvsp[0].ValueList), true))
+    if (!GetElementPtrInst::getIndexedType((yyvsp[-2].TypeVal).type->get(), *(yyvsp[0].ValueList), true))
       GEN_ERROR("Invalid getelementptr indices for type '" +
-                     (*(yyvsp[-2].TypeVal))->getDescription()+ "'!");
-    Value* tmpVal = getVal(*(yyvsp[-2].TypeVal), (yyvsp[-1].ValIDVal));
+                     (yyvsp[-2].TypeVal).type->get()->getDescription()+ "'!");
+    Value* tmpVal = getVal((yyvsp[-2].TypeVal).type->get(), (yyvsp[-1].ValIDVal));
     CHECK_FOR_ERROR
     (yyval.InstVal) = new GetElementPtrInst(tmpVal, *(yyvsp[0].ValueList));
-    delete (yyvsp[-2].TypeVal); 
+    delete (yyvsp[-2].TypeVal).type; 
     delete (yyvsp[0].ValueList);
   ;}
     break;
@@ -5323,7 +5442,7 @@ yyreduce:
     }
 
 /* Line 1126 of yacc.c.  */
-#line 5327 "llvmAsmParser.tab.c"
+#line 5446 "llvmAsmParser.tab.c"
 
   yyvsp -= yylen;
   yyssp -= yylen;
@@ -5591,7 +5710,7 @@ yyreturn:
 }
 
 
-#line 2836 "/proj/llvm/llvm-3/lib/AsmParser/llvmAsmParser.y"
+#line 2905 "/proj/llvm/llvm-1/lib/AsmParser/llvmAsmParser.y"
 
 
 void llvm::GenerateError(const std::string &message, int LineNo) {

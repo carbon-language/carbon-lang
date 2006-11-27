@@ -240,7 +240,7 @@ DSNodeHandle GraphBuilder::getValueDest(Value &Val) {
     N->addGlobal(GV);
   } else if (Constant *C = dyn_cast<Constant>(V)) {
     if (ConstantExpr *CE = dyn_cast<ConstantExpr>(C)) {
-      if (CE->getOpcode() == Instruction::Cast) {
+      if (CE->isCast()) {
         if (isa<PointerType>(CE->getOperand(0)->getType()))
           NH = getValueDest(*CE->getOperand(0));
         else
@@ -1091,20 +1091,27 @@ void GraphBuilder::visitFreeInst(FreeInst &FI) {
 
 /// Handle casts...
 void GraphBuilder::visitCastInst(CastInst &CI) {
-  if (isPointerType(CI.getType()))
-    if (isPointerType(CI.getOperand(0)->getType())) {
-      DSNodeHandle Ptr = getValueDest(*CI.getOperand(0));
-      if (Ptr.getNode() == 0) return;
-
-      // Cast one pointer to the other, just act like a copy instruction
-      setDestTo(CI, Ptr);
-    } else {
-      // Cast something (floating point, small integer) to a pointer.  We need
-      // to track the fact that the node points to SOMETHING, just something we
-      // don't know about.  Make an "Unknown" node.
-      //
-      setDestTo(CI, createNode()->setUnknownNodeMarker());
-    }
+  // Pointers can only be cast with BitCast so check that the instruction
+  // is a BitConvert. If not, its guaranteed not to involve any pointers so
+  // we don't do anything.
+  switch (CI.getOpcode()) {
+  default: break;
+  case Instruction::BitCast:
+  case Instruction::IntToPtr:
+    if (isPointerType(CI.getType()))
+      if (isPointerType(CI.getOperand(0)->getType())) {
+        DSNodeHandle Ptr = getValueDest(*CI.getOperand(0));
+        if (Ptr.getNode() == 0) return;
+        // Cast one pointer to the other, just act like a copy instruction
+        setDestTo(CI, Ptr);
+      } else {
+        // Cast something (floating point, small integer) to a pointer.  We 
+        // need to track the fact that the node points to SOMETHING, just 
+        // something we don't know about.  Make an "Unknown" node.
+        setDestTo(CI, createNode()->setUnknownNodeMarker());
+      }
+    break;
+  }
 }
 
 

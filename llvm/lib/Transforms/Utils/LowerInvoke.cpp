@@ -326,7 +326,7 @@ splitLiveRangesLiveAcrossInvokes(std::vector<InvokeInst*> &Invokes) {
   Function *F = Invokes.back()->getParent()->getParent();
   
   // To avoid having to handle incoming arguments specially, we lower each arg
-  // to a copy instruction in the entry block.  This ensure that the argument
+  // to a copy instruction in the entry block.  This ensures that the argument
   // value itself cannot be live across the entry block.
   BasicBlock::iterator AfterAllocaInsertPt = F->begin()->begin();
   while (isa<AllocaInst>(AfterAllocaInsertPt) &&
@@ -334,10 +334,16 @@ splitLiveRangesLiveAcrossInvokes(std::vector<InvokeInst*> &Invokes) {
     ++AfterAllocaInsertPt;
   for (Function::arg_iterator AI = F->arg_begin(), E = F->arg_end();
        AI != E; ++AI) {
-    CastInst *NC = new CastInst(AI, AI->getType(), AI->getName()+".tmp",
-                                AfterAllocaInsertPt);
+    // This is always a no-op cast because we're casting AI to AI->getType() so
+    // src and destination types are identical. BitCast is the only possibility.
+    CastInst *NC = new BitCastInst(
+      AI, AI->getType(), AI->getName()+".tmp", AfterAllocaInsertPt);
     AI->replaceAllUsesWith(NC);
-    NC->setOperand(0, AI);
+    // Normally its is forbidden to replace a CastInst's operand because it
+    // could cause the opcode to reflect an illegal conversion. However, we're
+    // replacing it here with the same value it was constructed with to simply
+    // make NC its user.
+    NC->setOperand(0, AI); 
   }
   
   // Finally, scan the code looking for instructions with bad live ranges.

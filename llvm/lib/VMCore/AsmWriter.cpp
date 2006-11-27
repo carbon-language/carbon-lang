@@ -541,10 +541,11 @@ static void WriteConstantInt(std::ostream &Out, const Constant *CV,
         Out << ", ";
     }
 
-    if (CE->getOpcode() == Instruction::Cast) {
+    if (CE->isCast()) {
       Out << " to ";
       printTypeInt(Out, CE->getType(), TypeTable);
     }
+
     Out << ')';
 
   } else {

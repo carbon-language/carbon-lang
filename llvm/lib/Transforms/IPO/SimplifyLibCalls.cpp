@@ -650,7 +650,8 @@ public:
         LoadInst* load =
           new LoadInst(CastToCStr(s2,*ci), ci->getName()+".load",ci);
         CastInst* cast =
-          new CastInst(load,Type::IntTy,ci->getName()+".int",ci);
+          CastInst::create(Instruction::SExt, load, Type::IntTy, 
+                           ci->getName()+".int", ci);
         ci->replaceAllUsesWith(cast);
         ci->eraseFromParent();
         return true;
@@ -667,7 +668,8 @@ public:
         LoadInst* load =
           new LoadInst(CastToCStr(s1,*ci),ci->getName()+".val",ci);
         CastInst* cast =
-          new CastInst(load,Type::IntTy,ci->getName()+".int",ci);
+          CastInst::create(Instruction::SExt, load, Type::IntTy, 
+                           ci->getName()+".int", ci);
         ci->replaceAllUsesWith(cast);
         ci->eraseFromParent();
         return true;
@@ -741,7 +743,8 @@ public:
         // strncmp("",x) -> *x
         LoadInst* load = new LoadInst(s1,ci->getName()+".load",ci);
         CastInst* cast =
-          new CastInst(load,Type::IntTy,ci->getName()+".int",ci);
+          CastInst::create(Instruction::SExt, load, Type::IntTy, 
+                           ci->getName()+".int", ci);
         ci->replaceAllUsesWith(cast);
         ci->eraseFromParent();
         return true;
@@ -757,7 +760,8 @@ public:
         // strncmp(x,"") -> *x
         LoadInst* load = new LoadInst(s2,ci->getName()+".val",ci);
         CastInst* cast =
-          new CastInst(load,Type::IntTy,ci->getName()+".int",ci);
+          CastInst::create(Instruction::SExt, load, Type::IntTy, 
+                           ci->getName()+".int", ci);
         ci->replaceAllUsesWith(cast);
         ci->eraseFromParent();
         return true;
@@ -997,13 +1001,15 @@ struct memcmpOptimization : public LibCallOptimization {
     case 1: {
       // memcmp(S1,S2,1) -> *(ubyte*)S1 - *(ubyte*)S2
       const Type *UCharPtr = PointerType::get(Type::UByteTy);
-      CastInst *Op1Cast = new CastInst(LHS, UCharPtr, LHS->getName(), CI);
-      CastInst *Op2Cast = new CastInst(RHS, UCharPtr, RHS->getName(), CI);
+      CastInst *Op1Cast = CastInst::create(
+          Instruction::BitCast, LHS, UCharPtr, LHS->getName(), CI);
+      CastInst *Op2Cast = CastInst::create(
+          Instruction::BitCast, RHS, UCharPtr, RHS->getName(), CI);
       Value *S1V = new LoadInst(Op1Cast, LHS->getName()+".val", CI);
       Value *S2V = new LoadInst(Op2Cast, RHS->getName()+".val", CI);
       Value *RV = BinaryOperator::createSub(S1V, S2V, CI->getName()+".diff",CI);
       if (RV->getType() != CI->getType())
-        RV = new CastInst(RV, CI->getType(), RV->getName(), CI);
+        RV = CastInst::createInferredCast(RV, CI->getType(), RV->getName(), CI);
       CI->replaceAllUsesWith(RV);
       CI->eraseFromParent();
       return true;
@@ -1014,8 +1020,10 @@ struct memcmpOptimization : public LibCallOptimization {
       
         // memcmp(S1,S2,2) -> S1[0]-S2[0] | S1[1]-S2[1] iff only ==/!= 0 matters
         const Type *UCharPtr = PointerType::get(Type::UByteTy);
-        CastInst *Op1Cast = new CastInst(LHS, UCharPtr, LHS->getName(), CI);
-        CastInst *Op2Cast = new CastInst(RHS, UCharPtr, RHS->getName(), CI);
+        CastInst *Op1Cast = CastInst::create(
+            Instruction::BitCast, LHS, UCharPtr, LHS->getName(), CI);
+        CastInst *Op2Cast = CastInst::create(
+            Instruction::BitCast, RHS, UCharPtr, RHS->getName(), CI);
         Value *S1V1 = new LoadInst(Op1Cast, LHS->getName()+".val1", CI);
         Value *S2V1 = new LoadInst(Op2Cast, RHS->getName()+".val1", CI);
         Value *D1 = BinaryOperator::createSub(S1V1, S2V1,
@@ -1029,7 +1037,8 @@ struct memcmpOptimization : public LibCallOptimization {
                                               CI->getName()+".d1", CI);
         Value *Or = BinaryOperator::createOr(D1, D2, CI->getName()+".res", CI);
         if (Or->getType() != CI->getType())
-          Or = new CastInst(Or, CI->getType(), Or->getName(), CI);
+          Or = CastInst::createInferredCast(Or, CI->getType(), Or->getName(), 
+                                            CI);
         CI->replaceAllUsesWith(Or);
         CI->eraseFromParent();
         return true;
@@ -1101,10 +1110,10 @@ struct LLVMMemCpyMoveOptzn : public LibCallOptimization {
     }
 
     // Cast source and dest to the right sized primitive and then load/store
-    CastInst* SrcCast =
-      new CastInst(src,PointerType::get(castType),src->getName()+".cast",ci);
-    CastInst* DestCast =
-      new CastInst(dest,PointerType::get(castType),dest->getName()+".cast",ci);
+    CastInst* SrcCast = CastInst::create(Instruction::BitCast,
+        src, PointerType::get(castType), src->getName()+".cast", ci);
+    CastInst* DestCast = CastInst::create(Instruction::BitCast,
+        dest, PointerType::get(castType),dest->getName()+".cast", ci);
     LoadInst* LI = new LoadInst(SrcCast,SrcCast->getName()+".val",ci);
     new StoreInst(LI, DestCast, ci);
     ci->eraseFromParent();
@@ -1213,8 +1222,8 @@ struct LLVMMemSetOptimization : public LibCallOptimization {
     }
 
     // Cast dest to the right sized primitive and then load/store
-    CastInst* DestCast =
-      new CastInst(dest,PointerType::get(castType),dest->getName()+".cast",ci);
+    CastInst* DestCast = CastInst::createInferredCast(
+        dest, PointerType::get(castType), dest->getName()+".cast", ci);
     new StoreInst(ConstantInt::get(castType,fill_value),DestCast, ci);
     ci->eraseFromParent();
     return true;
@@ -1356,8 +1365,8 @@ public:
         Function* putchar_func = SLC.get_putchar();
         if (!putchar_func)
           return false;
-        CastInst* cast = new CastInst(ci->getOperand(2), Type::IntTy,
-                                      CI->getName()+".int", ci);
+        CastInst* cast = CastInst::createInferredCast(
+            ci->getOperand(2), Type::IntTy, CI->getName()+".int", ci);
         new CallInst(putchar_func, cast, "", ci);
         ci->replaceAllUsesWith(ConstantInt::get(Type::IntTy, 1));
         break;
@@ -1490,8 +1499,8 @@ public:
         Function* fputc_func = SLC.get_fputc(FILEptr_type);
         if (!fputc_func)
           return false;
-        CastInst* cast = new CastInst(ci->getOperand(3), Type::IntTy,
-                                      CI->getName()+".int", ci);
+        CastInst* cast = CastInst::createInferredCast(
+            ci->getOperand(3), Type::IntTy, CI->getName()+".int", ci);
         new CallInst(fputc_func,cast,ci->getOperand(1),"",ci);
         ci->replaceAllUsesWith(ConstantInt::get(Type::IntTy,1));
         break;
@@ -1597,7 +1606,8 @@ public:
                                             ConstantInt::get(Len->getType(), 1),
                                               Len->getName()+"1", ci);
       if (Len1->getType() != SLC.getIntPtrType())
-        Len1 = new CastInst(Len1, SLC.getIntPtrType(), Len1->getName(), ci);
+        Len1 = CastInst::createInferredCast(
+            Len1, SLC.getIntPtrType(), Len1->getName(), ci);
       std::vector<Value*> args;
       args.push_back(CastToCStr(ci->getOperand(1), *ci));
       args.push_back(CastToCStr(ci->getOperand(3), *ci));
@@ -1608,7 +1618,8 @@ public:
       // The strlen result is the unincremented number of bytes in the string.
       if (!ci->use_empty()) {
         if (Len->getType() != ci->getType())
-          Len = new CastInst(Len, ci->getType(), Len->getName(), ci);
+          Len = CastInst::createInferredCast(
+              Len, ci->getType(), Len->getName(), ci);
         ci->replaceAllUsesWith(Len);
       }
       ci->eraseFromParent();
@@ -1616,7 +1627,8 @@ public:
     }
     case 'c': {
       // sprintf(dest,"%c",chr) -> store chr, dest
-      CastInst* cast = new CastInst(ci->getOperand(3),Type::SByteTy,"char",ci);
+      CastInst* cast = CastInst::createInferredCast(
+          ci->getOperand(3), Type::SByteTy, "char", ci);
       new StoreInst(cast, ci->getOperand(1), ci);
       GetElementPtrInst* gep = new GetElementPtrInst(ci->getOperand(1),
         ConstantInt::get(Type::UIntTy,1),ci->getOperand(1)->getName()+".end",
@@ -1672,8 +1684,8 @@ public:
           return false;
         LoadInst* loadi = new LoadInst(ci->getOperand(1),
           ci->getOperand(1)->getName()+".byte",ci);
-        CastInst* casti = new CastInst(loadi,Type::IntTy,
-          loadi->getName()+".int",ci);
+        CastInst* casti = CastInst::createInferredCast(
+            loadi, Type::IntTy, loadi->getName()+".int", ci);
         new CallInst(fputc_func,casti,ci->getOperand(2),"",ci);
         break;
       }
@@ -1726,18 +1738,16 @@ public:
     }
 
     // isdigit(c)   -> (unsigned)c - '0' <= 9
-    CastInst* cast =
-      new CastInst(ci->getOperand(1),Type::UIntTy,
-        ci->getOperand(1)->getName()+".uint",ci);
+    CastInst* cast = CastInst::createInferredCast(ci->getOperand(1),
+        Type::UIntTy, ci->getOperand(1)->getName()+".uint", ci);
     BinaryOperator* sub_inst = BinaryOperator::createSub(cast,
         ConstantInt::get(Type::UIntTy,0x30),
         ci->getOperand(1)->getName()+".sub",ci);
     SetCondInst* setcond_inst = new SetCondInst(Instruction::SetLE,sub_inst,
         ConstantInt::get(Type::UIntTy,9),
         ci->getOperand(1)->getName()+".cmp",ci);
-    CastInst* c2 =
-      new CastInst(setcond_inst,Type::IntTy,
-        ci->getOperand(1)->getName()+".isdigit",ci);
+    CastInst* c2 = CastInst::createInferredCast(
+        setcond_inst, Type::IntTy, ci->getOperand(1)->getName()+".isdigit", ci);
     ci->replaceAllUsesWith(c2);
     ci->eraseFromParent();
     return true;
@@ -1759,12 +1769,14 @@ public:
     // isascii(c)   -> (unsigned)c < 128
     Value *V = CI->getOperand(1);
     if (V->getType()->isSigned())
-      V = new CastInst(V, V->getType()->getUnsignedVersion(), V->getName(), CI);
+      V = CastInst::createInferredCast(V, V->getType()->getUnsignedVersion(), 
+                                       V->getName(), CI);
     Value *Cmp = BinaryOperator::createSetLT(V, ConstantInt::get(V->getType(),
                                                                   128),
                                              V->getName()+".isascii", CI);
     if (Cmp->getType() != CI->getType())
-      Cmp = new CastInst(Cmp, CI->getType(), Cmp->getName(), CI);
+      Cmp = CastInst::createInferredCast(
+          Cmp, CI->getType(), Cmp->getName(), CI);
     CI->replaceAllUsesWith(Cmp);
     CI->eraseFromParent();
     return true;
@@ -1858,9 +1870,10 @@ public:
     
     Function *F = SLC.getModule()->getOrInsertFunction(CTTZName, ArgType,
                                                        ArgType, NULL);
-    Value *V = new CastInst(TheCall->getOperand(1), ArgType, "tmp", TheCall);
+    Value *V = CastInst::createInferredCast(
+        TheCall->getOperand(1), ArgType, "tmp", TheCall);
     Value *V2 = new CallInst(F, V, "tmp", TheCall);
-    V2 = new CastInst(V2, Type::IntTy, "tmp", TheCall);
+    V2 = CastInst::createInferredCast(V2, Type::IntTy, "tmp", TheCall);
     V2 = BinaryOperator::createAdd(V2, ConstantInt::get(Type::IntTy, 1),
                                    "tmp", TheCall);
     Value *Cond = 
@@ -1920,7 +1933,7 @@ struct UnaryDoubleFPOptimizer : public LibCallOptimization {
       if (Cast->getOperand(0)->getType() == Type::FloatTy) {
         Value *New = new CallInst((SLC.*FP)(), Cast->getOperand(0),
                                   CI->getName(), CI);
-        New = new CastInst(New, Type::DoubleTy, CI->getName(), CI);
+        New = new FPExtInst(New, Type::DoubleTy, CI->getName(), CI);
         CI->replaceAllUsesWith(New);
         CI->eraseFromParent();
         if (Cast->use_empty())
@@ -2105,7 +2118,7 @@ bool getConstantStringLength(Value *V, uint64_t &len, ConstantArray **CA) {
 Value *CastToCStr(Value *V, Instruction &IP) {
   const Type *SBPTy = PointerType::get(Type::SByteTy);
   if (V->getType() != SBPTy)
-    return new CastInst(V, SBPTy, V->getName(), &IP);
+    return CastInst::createInferredCast(V, SBPTy, V->getName(), &IP);
   return V;
 }
 

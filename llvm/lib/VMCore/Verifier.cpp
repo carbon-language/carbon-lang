@@ -177,6 +177,18 @@ namespace {  // Anonymous namespace for class
     void visitGlobalVariable(GlobalVariable &GV);
     void visitFunction(Function &F);
     void visitBasicBlock(BasicBlock &BB);
+    void visitTruncInst(TruncInst &I);
+    void visitZExtInst(ZExtInst &I);
+    void visitSExtInst(SExtInst &I);
+    void visitFPTruncInst(FPTruncInst &I);
+    void visitFPExtInst(FPExtInst &I);
+    void visitFPToUIInst(FPToUIInst &I);
+    void visitFPToSIInst(FPToSIInst &I);
+    void visitUIToFPInst(UIToFPInst &I);
+    void visitSIToFPInst(SIToFPInst &I);
+    void visitIntToPtrInst(IntToPtrInst &I);
+    void visitPtrToIntInst(PtrToIntInst &I);
+    void visitBitCastInst(BitCastInst &I);
     void visitPHINode(PHINode &PN);
     void visitBinaryOperator(BinaryOperator &B);
     void visitICmpInst(ICmpInst &IC);
@@ -465,6 +477,169 @@ void Verifier::visitSelectInst(SelectInst &SI) {
 ///
 void Verifier::visitUserOp1(Instruction &I) {
   Assert1(0, "User-defined operators should not live outside of a pass!", &I);
+}
+
+void Verifier::visitTruncInst(TruncInst &I) {
+  // Get the source and destination types
+  const Type *SrcTy = I.getOperand(0)->getType();
+  const Type *DestTy = I.getType();
+
+  // Get the size of the types in bits, we'll need this later
+  unsigned SrcBitSize = SrcTy->getPrimitiveSizeInBits();
+  unsigned DestBitSize = DestTy->getPrimitiveSizeInBits();
+
+  Assert1(SrcTy->isIntegral(), "Trunc only operates on integer", &I);
+  Assert1(DestTy->isIntegral(),"Trunc only produces integral", &I);
+  Assert1(SrcBitSize > DestBitSize,"DestTy too big for Trunc", &I);
+
+  visitInstruction(I);
+}
+
+void Verifier::visitZExtInst(ZExtInst &I) {
+  // Get the source and destination types
+  const Type *SrcTy = I.getOperand(0)->getType();
+  const Type *DestTy = I.getType();
+
+  // Get the size of the types in bits, we'll need this later
+  unsigned SrcBitSize = SrcTy->getPrimitiveSizeInBits();
+  unsigned DestBitSize = DestTy->getPrimitiveSizeInBits();
+
+  Assert1(SrcTy->isIntegral(),"ZExt only operates on integral", &I);
+  Assert1(DestTy->isInteger(),"ZExt only produces an integer", &I);
+  Assert1(SrcBitSize < DestBitSize,"Type too small for ZExt", &I);
+
+  visitInstruction(I);
+}
+
+void Verifier::visitSExtInst(SExtInst &I) {
+  // Get the source and destination types
+  const Type *SrcTy = I.getOperand(0)->getType();
+  const Type *DestTy = I.getType();
+
+  // Get the size of the types in bits, we'll need this later
+  unsigned SrcBitSize = SrcTy->getPrimitiveSizeInBits();
+  unsigned DestBitSize = DestTy->getPrimitiveSizeInBits();
+
+  Assert1(SrcTy->isIntegral(),"SExt only operates on integral", &I);
+  Assert1(DestTy->isInteger(),"SExt only produces an integer", &I);
+  Assert1(SrcBitSize < DestBitSize,"Type too small for SExt", &I);
+
+  visitInstruction(I);
+}
+
+void Verifier::visitFPTruncInst(FPTruncInst &I) {
+  // Get the source and destination types
+  const Type *SrcTy = I.getOperand(0)->getType();
+  const Type *DestTy = I.getType();
+  // Get the size of the types in bits, we'll need this later
+  unsigned SrcBitSize = SrcTy->getPrimitiveSizeInBits();
+  unsigned DestBitSize = DestTy->getPrimitiveSizeInBits();
+
+  Assert1(SrcTy->isFloatingPoint(),"FPTrunc only operates on FP", &I);
+  Assert1(DestTy->isFloatingPoint(),"FPTrunc only produces an FP", &I);
+  Assert1(SrcBitSize > DestBitSize,"DestTy too big for FPTrunc", &I);
+
+  visitInstruction(I);
+}
+
+void Verifier::visitFPExtInst(FPExtInst &I) {
+  // Get the source and destination types
+  const Type *SrcTy = I.getOperand(0)->getType();
+  const Type *DestTy = I.getType();
+
+  // Get the size of the types in bits, we'll need this later
+  unsigned SrcBitSize = SrcTy->getPrimitiveSizeInBits();
+  unsigned DestBitSize = DestTy->getPrimitiveSizeInBits();
+
+  Assert1(SrcTy->isFloatingPoint(),"FPExt only operates on FP", &I);
+  Assert1(DestTy->isFloatingPoint(),"FPExt only produces an FP", &I);
+  Assert1(SrcBitSize < DestBitSize,"DestTy too small for FPExt", &I);
+
+  visitInstruction(I);
+}
+
+void Verifier::visitUIToFPInst(UIToFPInst &I) {
+  // Get the source and destination types
+  const Type *SrcTy = I.getOperand(0)->getType();
+  const Type *DestTy = I.getType();
+
+  Assert1(SrcTy->isIntegral(),"UInt2FP source must be integral", &I);
+  Assert1(DestTy->isFloatingPoint(),"UInt2FP result must be FP", &I);
+
+  visitInstruction(I);
+}
+
+void Verifier::visitSIToFPInst(SIToFPInst &I) {
+  // Get the source and destination types
+  const Type *SrcTy = I.getOperand(0)->getType();
+  const Type *DestTy = I.getType();
+
+  Assert1(SrcTy->isIntegral(),"SInt2FP source must be integral", &I);
+  Assert1(DestTy->isFloatingPoint(),"SInt2FP result must be FP", &I);
+
+  visitInstruction(I);
+}
+
+void Verifier::visitFPToUIInst(FPToUIInst &I) {
+  // Get the source and destination types
+  const Type *SrcTy = I.getOperand(0)->getType();
+  const Type *DestTy = I.getType();
+
+  Assert1(SrcTy->isFloatingPoint(),"FP2UInt source must be FP", &I);
+  Assert1(DestTy->isIntegral(),"FP2UInt result must be integral", &I);
+
+  visitInstruction(I);
+}
+
+void Verifier::visitFPToSIInst(FPToSIInst &I) {
+  // Get the source and destination types
+  const Type *SrcTy = I.getOperand(0)->getType();
+  const Type *DestTy = I.getType();
+
+  Assert1(SrcTy->isFloatingPoint(),"FPToSI source must be FP", &I);
+  Assert1(DestTy->isIntegral(),"FP2ToI result must be integral", &I);
+
+  visitInstruction(I);
+}
+
+void Verifier::visitPtrToIntInst(PtrToIntInst &I) {
+  // Get the source and destination types
+  const Type *SrcTy = I.getOperand(0)->getType();
+  const Type *DestTy = I.getType();
+
+  Assert1(isa<PointerType>(SrcTy), "PtrToInt source must be pointer", &I);
+  Assert1(DestTy->isIntegral(), "PtrToInt result must be integral", &I);
+
+  visitInstruction(I);
+}
+
+void Verifier::visitIntToPtrInst(IntToPtrInst &I) {
+  // Get the source and destination types
+  const Type *SrcTy = I.getOperand(0)->getType();
+  const Type *DestTy = I.getType();
+
+  Assert1(SrcTy->isIntegral(), "IntToPtr source must be an integral", &I);
+  Assert1(isa<PointerType>(DestTy), "IntToPtr result must be a pointer",&I);
+
+  visitInstruction(I);
+}
+
+void Verifier::visitBitCastInst(BitCastInst &I) {
+  // Get the source and destination types
+  const Type *SrcTy = I.getOperand(0)->getType();
+  const Type *DestTy = I.getType();
+
+  // Get the size of the types in bits, we'll need this later
+  unsigned SrcBitSize = SrcTy->getPrimitiveSizeInBits();
+  unsigned DestBitSize = DestTy->getPrimitiveSizeInBits();
+
+  // BitCast implies a no-op cast of type only. No bits change.
+  // However, you can't cast pointers to anything but pointers.
+  Assert1(isa<PointerType>(DestTy) == isa<PointerType>(DestTy),
+          "Bitcast requires both operands to be pointer or neither", &I);
+  Assert1(SrcBitSize == DestBitSize, "Bitcast requies types of same width", &I);
+
+  visitInstruction(I);
 }
 
 /// visitPHINode - Ensure that a PHI node is well formed.

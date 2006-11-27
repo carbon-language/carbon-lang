@@ -10,7 +10,7 @@
 // This file provides a simple and efficient mechanism for performing general
 // tree-based pattern matches on the LLVM IR.  The power of these routines is
 // that it allows you to write concise patterns that are expressive and easy to
-// understand.  The other major advantage of this is that is allows to you
+// understand.  The other major advantage of this is that it allows you to
 // trivially capture/bind elements in the pattern to variables.  For example,
 // you can do something like this:
 //
@@ -334,38 +334,6 @@ private:
 
 template<typename LHS>
 inline not_match<LHS> m_Not(const LHS &L) { return L; }
-
-
-template<typename Op_t>
-struct cast_match {
-  Op_t Op;
-  const Type **DestTy;
-  
-  cast_match(const Op_t &op, const Type **destTy) : Op(op), DestTy(destTy) {}
-  
-  template<typename OpTy>
-  bool match(OpTy *V) {
-    if (CastInst *I = dyn_cast<CastInst>(V)) {
-      if (DestTy) *DestTy = I->getType();
-      return Op.match(I->getOperand(0));
-    } else if (ConstantExpr *CE = dyn_cast<ConstantExpr>(V)) {
-      if (CE->getOpcode() == Instruction::Cast) {
-        if (DestTy) *DestTy = CE->getType();
-        return Op.match(CE->getOperand(0));
-      }
-    }
-    return false;
-  }
-};
-
-template<typename Op_t>
-inline cast_match<Op_t> m_Cast(const Op_t &Op, const Type *&Ty) {
-  return cast_match<Op_t>(Op, &Ty);
-}
-template<typename Op_t>
-inline cast_match<Op_t> m_Cast(const Op_t &Op) {
-  return cast_match<Op_t>(Op, 0);
-}
 
 
 //===----------------------------------------------------------------------===//

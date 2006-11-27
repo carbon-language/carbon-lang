@@ -40,6 +40,7 @@ static Function *EnsureFunctionExists(Module &M, const char *Name,
 template <class ArgIt>
 static CallInst *ReplaceCallWith(const char *NewFn, CallInst *CI,
                                  ArgIt ArgBegin, ArgIt ArgEnd,
+                                 const unsigned *castOpcodes,
                                  const Type *RetTy, Function *&FCache) {
   if (!FCache) {
     // If we haven't already looked up this function, check to see if the
@@ -63,7 +64,12 @@ static CallInst *ReplaceCallWith(const char *NewFn, CallInst *CI,
        ++I, ++ArgNo) {
     Value *Arg = *I;
     if (Arg->getType() != FT->getParamType(ArgNo))
-      Arg = new CastInst(Arg, FT->getParamType(ArgNo), Arg->getName(), CI);
+      if (castOpcodes[ArgNo])
+        Arg = CastInst::create(Instruction::CastOps(castOpcodes[ArgNo]),
+          Arg, FT->getParamType(ArgNo), Arg->getName(), CI);
+      else
+        Arg = CastInst::createInferredCast(Arg, FT->getParamType(ArgNo), 
+                                           Arg->getName(), CI);
     Operands.push_back(Arg);
   }
   // Pass nulls into any additional arguments...
@@ -76,7 +82,7 @@ static CallInst *ReplaceCallWith(const char *NewFn, CallInst *CI,
   if (!CI->use_empty()) {
     Value *V = NewCI;
     if (CI->getType() != NewCI->getType())
-      V = new CastInst(NewCI, CI->getType(), Name, CI);
+      V = CastInst::createInferredCast(NewCI, CI->getType(), Name, CI);
     CI->replaceAllUsesWith(V);
   }
   return NewCI;
@@ -283,8 +289,9 @@ void IntrinsicLowering::LowerIntrinsicCall(CallInst *CI) {
     // convert the call to an explicit setjmp or longjmp call.
   case Intrinsic::setjmp: {
     static Function *SetjmpFCache = 0;
+    static const unsigned castOpcodes[] = { Instruction::BitCast };
     Value *V = ReplaceCallWith("setjmp", CI, CI->op_begin()+1, CI->op_end(),
-                               Type::IntTy, SetjmpFCache);
+                               castOpcodes, Type::IntTy, SetjmpFCache);
     if (CI->getType() != Type::VoidTy)
       CI->replaceAllUsesWith(V);
     break;
@@ -296,16 +303,20 @@ void IntrinsicLowering::LowerIntrinsicCall(CallInst *CI) {
 
   case Intrinsic::longjmp: {
     static Function *LongjmpFCache = 0;
+    static const unsigned castOpcodes[] = 
+      { Instruction::BitCast, 0 };
     ReplaceCallWith("longjmp", CI, CI->op_begin()+1, CI->op_end(),
-                    Type::VoidTy, LongjmpFCache);
+                    castOpcodes, Type::VoidTy, LongjmpFCache);
     break;
   }
 
   case Intrinsic::siglongjmp: {
     // Insert the call to abort
     static Function *AbortFCache = 0;
-    ReplaceCallWith("abort", CI, CI->op_end(), CI->op_end(), Type::VoidTy,
-                    AbortFCache);
+    static const unsigned castOpcodes[] =
+      { Instruction::BitCast, 0 };
+    ReplaceCallWith("abort", CI, CI->op_end(), CI->op_end(), 
+                    castOpcodes, Type::VoidTy, AbortFCache);
     break;
   }
   case Intrinsic::ctpop_i8:
@@ -383,31 +394,76 @@ void IntrinsicLowering::LowerIntrinsicCall(CallInst *CI) {
   case Intrinsic::dbg_declare:
     break;    // Simply strip out debugging intrinsics
 
-  case Intrinsic::memcpy_i32:
-  case Intrinsic::memcpy_i64: {
+  case Intrinsic::memcpy_i32: {
     // The memcpy intrinsic take an extra alignment argument that the memcpy
     // libc function does not.
+    static unsigned opcodes[] = 
+      { Instruction::BitCast, Instruction::BitCast, Instruction::BitCast };
+    // FIXME:
+    // if (target_is_64_bit) opcodes[2] = Instruction::ZExt;
+    // else opcodes[2] = Instruction::BitCast;
     static Function *MemcpyFCache = 0;
     ReplaceCallWith("memcpy", CI, CI->op_begin()+1, CI->op_end()-1,
-                    (*(CI->op_begin()+1))->getType(), MemcpyFCache);
+                    opcodes, (*(CI->op_begin()+1))->getType(), MemcpyFCache);
     break;
   }
-  case Intrinsic::memmove_i32: 
+  case Intrinsic::memcpy_i64: {
+    static unsigned opcodes[] = 
+      { Instruction::BitCast, Instruction::BitCast, Instruction::Trunc };
+    // FIXME:
+    // if (target_is_64_bit) opcodes[2] = Instruction::BitCast;
+    // else opcodes[2] = Instruction::Trunc;
+    static Function *MemcpyFCache = 0;
+    ReplaceCallWith("memcpy", CI, CI->op_begin()+1, CI->op_end()-1,
+                     opcodes, (*(CI->op_begin()+1))->getType(), MemcpyFCache);
+    break;
+  }
+  case Intrinsic::memmove_i32: {
+    // The memmove intrinsic take an extra alignment argument that the memmove
+    // libc function does not.
+    static unsigned opcodes[] = 
+      { Instruction::BitCast, Instruction::BitCast, Instruction::BitCast };
+    // FIXME:
+    // if (target_is_64_bit) opcodes[2] = Instruction::ZExt;
+    // else opcodes[2] = Instruction::BitCast;
+    static Function *MemmoveFCache = 0;
+    ReplaceCallWith("memmove", CI, CI->op_begin()+1, CI->op_end()-1,
+                    opcodes, (*(CI->op_begin()+1))->getType(), MemmoveFCache);
+    break;
+  }
   case Intrinsic::memmove_i64: {
     // The memmove intrinsic take an extra alignment argument that the memmove
     // libc function does not.
+    static const unsigned opcodes[] = 
+      { Instruction::BitCast, Instruction::BitCast, Instruction::Trunc };
+    // if (target_is_64_bit) opcodes[2] = Instruction::BitCast;
+    // else opcodes[2] = Instruction::Trunc;
     static Function *MemmoveFCache = 0;
     ReplaceCallWith("memmove", CI, CI->op_begin()+1, CI->op_end()-1,
-                    (*(CI->op_begin()+1))->getType(), MemmoveFCache);
+                    opcodes, (*(CI->op_begin()+1))->getType(), MemmoveFCache);
     break;
   }
-  case Intrinsic::memset_i32:
+  case Intrinsic::memset_i32: {
+    // The memset intrinsic take an extra alignment argument that the memset
+    // libc function does not.
+    static const unsigned opcodes[] = 
+      { Instruction::BitCast, Instruction::ZExt, Instruction::ZExt, 0 };
+    // if (target_is_64_bit) opcodes[2] = Instruction::BitCast;
+    // else opcodes[2] = Instruction::ZExt;
+    static Function *MemsetFCache = 0;
+    ReplaceCallWith("memset", CI, CI->op_begin()+1, CI->op_end()-1,
+                    opcodes, (*(CI->op_begin()+1))->getType(), MemsetFCache);
+  }
   case Intrinsic::memset_i64: {
     // The memset intrinsic take an extra alignment argument that the memset
     // libc function does not.
+    static const unsigned opcodes[] = 
+      { Instruction::BitCast, Instruction::ZExt, Instruction::Trunc, 0 };
+    // if (target_is_64_bit) opcodes[2] = Instruction::BitCast;
+    // else opcodes[2] = Instruction::Trunc;
     static Function *MemsetFCache = 0;
     ReplaceCallWith("memset", CI, CI->op_begin()+1, CI->op_end()-1,
-                    (*(CI->op_begin()+1))->getType(), MemsetFCache);
+                    opcodes, (*(CI->op_begin()+1))->getType(), MemsetFCache);
     break;
   }
   case Intrinsic::isunordered_f32:
@@ -422,16 +478,18 @@ void IntrinsicLowering::LowerIntrinsicCall(CallInst *CI) {
                              "isunordered", CI));
     break;
   }
-  case Intrinsic::sqrt_f32:
-  case Intrinsic::sqrt_f64: {
-    static Function *sqrtFCache = 0;
+  case Intrinsic::sqrt_f32: {
+    static const unsigned opcodes[] = { 0 };
     static Function *sqrtfFCache = 0;
-    if(CI->getType() == Type::FloatTy)
-      ReplaceCallWith("sqrtf", CI, CI->op_begin()+1, CI->op_end(),
-                      Type::FloatTy, sqrtfFCache);
-    else
-      ReplaceCallWith("sqrt", CI, CI->op_begin()+1, CI->op_end(),
-                      Type::DoubleTy, sqrtFCache);
+    ReplaceCallWith("sqrtf", CI, CI->op_begin()+1, CI->op_end(),
+                    opcodes, Type::FloatTy, sqrtfFCache);
+    break;
+  }
+  case Intrinsic::sqrt_f64: {
+    static const unsigned opcodes[] =  { 0 };
+    static Function *sqrtFCache = 0;
+    ReplaceCallWith("sqrt", CI, CI->op_begin()+1, CI->op_end(),
+                    opcodes, Type::DoubleTy, sqrtFCache);
     break;
   }
   }

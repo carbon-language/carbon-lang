@@ -122,18 +122,31 @@ const char *Instruction::getOpcodeName(unsigned OpCode) {
   case Store:         return "store";
   case GetElementPtr: return "getelementptr";
 
+  // Convert instructions...
+  case Trunc:     return "trunc";
+  case ZExt:      return "zext";
+  case SExt:      return "sext";
+  case FPTrunc:   return "fptrunc";
+  case FPExt:     return "fpext";
+  case FPToUI:    return "fptoui";
+  case FPToSI:    return "fptosi";
+  case UIToFP:    return "uitofp";
+  case SIToFP:    return "sitofp";
+  case IntToPtr:  return "inttoptr";
+  case PtrToInt:  return "ptrtoint";
+  case BitCast:   return "bitcast";
+
   // Other instructions...
-  case PHI:     return "phi";
-  case Cast:    return "cast";
-  case Select:  return "select";
-  case Call:    return "call";
-  case Shl:     return "shl";
-  case LShr:     return "lshr";
-  case AShr:     return "ashr";
-  case VAArg:   return "va_arg";
+  case PHI:            return "phi";
+  case Select:         return "select";
+  case Call:           return "call";
+  case Shl:            return "shl";
+  case LShr:           return "lshr";
+  case AShr:           return "ashr";
+  case VAArg:          return "va_arg";
   case ExtractElement: return "extractelement";
-  case InsertElement: return "insertelement";
-  case ShuffleVector: return "shufflevector";
+  case InsertElement:  return "insertelement";
+  case ShuffleVector:  return "shufflevector";
 
   default: return "<Invalid operator> ";
   }

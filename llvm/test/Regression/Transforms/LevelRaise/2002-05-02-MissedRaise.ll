@@ -1,6 +1,6 @@
 ; This testcase is not level raised properly...
 ; XFAIL: *
-; RUN: llvm-as < %s | opt -raise | llvm-dis | grep ' cast ' | not grep '*'
+; RUN: llvm-as < %s | opt -raise | llvm-dis | not grep bitcast
 
 	%List = type { int, %List* }
 
