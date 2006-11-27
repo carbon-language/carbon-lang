@@ -939,17 +939,15 @@ bool InstCombiner::SimplifyDemandedBits(Value *V, uint64_t DemandedMask,
     // Output known-1 are known to be set if set in only one of the LHS, RHS.
     uint64_t KnownOneOut = (KnownZero & KnownOne2) | (KnownOne & KnownZero2);
     
-    // If all of the unknown bits are known to be zero on one side or the other
-    // (but not both) turn this into an *inclusive* or.
+    // If all of the demanded bits are known to be zero on one side or the
+    // other, turn this into an *inclusive* or.
     //    e.g. (A & C1)^(B & C2) -> (A & C1)|(B & C2) iff C1&C2 == 0
-    if (uint64_t UnknownBits = DemandedMask & ~(KnownZeroOut|KnownOneOut)) {
-      if ((UnknownBits & (KnownZero|KnownZero2)) == UnknownBits) {
-        Instruction *Or =
-          BinaryOperator::createOr(I->getOperand(0), I->getOperand(1),
-                                   I->getName());
-        InsertNewInstBefore(Or, *I);
-        return UpdateValueUsesWith(I, Or);
-      }
+    if ((DemandedMask & ~KnownZero & ~KnownZero2) == 0) {
+      Instruction *Or =
+        BinaryOperator::createOr(I->getOperand(0), I->getOperand(1),
+                                 I->getName());
+      InsertNewInstBefore(Or, *I);
+      return UpdateValueUsesWith(I, Or);
     }
     
     // If all of the demanded bits on one side are known, and all of the set
