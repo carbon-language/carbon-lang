@@ -1,5 +1,5 @@
 // RUN: %llvmgcc -S %s -o - | grep 'trunc.*to bool'
-// RUN: %llvmgcc -S %s -o - | llvm-as | llc -march=x86 | grep and
+// RUN: %llvmgcc -S %s -o - | llvm-as | llc -march=x86 | grep 'test.*1'
 int
 main ( int argc, char** argv)
 {

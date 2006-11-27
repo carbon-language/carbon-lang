@@ -2,7 +2,7 @@
 ; sure only the LSBit survives. Test that this is the case both for a returned
 ; value and as the operand of a branch.
 ; RUN: llvm-as < %s | llc -march=x86 &&
-; RUN: llvm-as < %s | llc -march=x86 | grep '\(and\)\|\(test.*1\)' | wc -l | grep 3
+; RUN: llvm-as < %s | llc -march=x86 | grep '\(and\)\|\(test.*\$1\)' | wc -l | grep 3
 bool %test1(int %X) {
     %Y = trunc int %X to bool
     ret bool %Y
