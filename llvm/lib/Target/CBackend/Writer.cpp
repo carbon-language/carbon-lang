@@ -23,6 +23,7 @@
 #include "llvm/SymbolTable.h"
 #include "llvm/Intrinsics.h"
 #include "llvm/IntrinsicInst.h"
+#include "llvm/InlineAsm.h"
 #include "llvm/Analysis/ConstantsScanner.h"
 #include "llvm/Analysis/FindUsedTypes.h"
 #include "llvm/Analysis/LoopInfo.h"
@@ -120,6 +121,7 @@ namespace {
                                               const PointerType *Ty);
     
     void writeOperand(Value *Operand);
+    void writeOperandRaw(Value *Operand);
     void writeOperandInternal(Value *Operand);
     void writeOperandWithCast(Value* Operand, unsigned Opcode);
     bool writeInstructionCast(const Instruction &I);
@@ -162,6 +164,9 @@ namespace {
         // Don't inline a load across a store or other bad things!
         return false;
 
+      // Must not be used in inline asm
+      if (I.hasOneUse() && isInlineAsm(*I.use_back())) return false;
+
       // Only inline instruction it it's use is in the same BB as the inst.
       return I.getParent() == cast<Instruction>(I.use_back())->getParent();
     }
@@ -179,7 +184,14 @@ namespace {
         return 0;
       return AI;
     }
-
+    
+    // isInlineAsm - Check if the instruction is a call to an inline asm chunk
+    static bool isInlineAsm(const Instruction& I) {
+      if (isa<CallInst>(&I) && isa<InlineAsm>(I.getOperand(0)))
+        return true;
+      return false;
+    }
+    
     // Instruction visitation functions
     friend class InstVisitor<CWriter>;
 
@@ -201,6 +213,7 @@ namespace {
     void visitCastInst (CastInst &I);
     void visitSelectInst(SelectInst &I);
     void visitCallInst (CallInst &I);
+    void visitInlineAsm(CallInst &I);
     void visitShiftInst(ShiftInst &I) { visitBinaryOperator(I); }
 
     void visitMallocInst(MallocInst &I);
@@ -999,6 +1012,15 @@ void CWriter::writeOperandInternal(Value *Operand) {
   }
 }
 
+void CWriter::writeOperandRaw(Value *Operand) {
+  Constant* CPV = dyn_cast<Constant>(Operand);
+  if (CPV && !isa<GlobalValue>(CPV)) {
+    printConstant(CPV);
+  } else {
+    Out << Mang->getValueName(Operand);
+  }
+}
+
 void CWriter::writeOperand(Value *Operand) {
   if (isa<GlobalVariable>(Operand) || isDirectAlloca(Operand))
     Out << "(&";  // Global variables are referenced as their addresses by llvm
@@ -1727,7 +1749,7 @@ void CWriter::printBasicBlock(BasicBlock *BB) {
   for (BasicBlock::iterator II = BB->begin(), E = --BB->end(); II != E;
        ++II) {
     if (!isInlinableInst(*II) && !isDirectAlloca(II)) {
-      if (II->getType() != Type::VoidTy)
+      if (II->getType() != Type::VoidTy && !isInlineAsm(*II))
         outputLValue(II);
       else
         Out << "  ";
@@ -2033,6 +2055,12 @@ void CWriter::lowerIntrinsics(Function &F) {
 
 
 void CWriter::visitCallInst(CallInst &I) {
+  //check if we have inline asm
+  if (isInlineAsm(I)) {
+    visitInlineAsm(I);
+    return;
+  }
+
   bool WroteCallee = false;
 
   // Handle intrinsic function calls first...
@@ -2222,6 +2250,140 @@ void CWriter::visitCallInst(CallInst &I) {
     PrintedArg = true;
   }
   Out << ')';
+}
+
+
+//This converts the llvm constraint string to something gcc is expecting.
+//This could be broken into a bunch of peices and spread accross the 
+//targets, but this information is only useful here.
+//TODO: work out platform independent constraints and factor those out
+static std::string InterpretConstraint(const std::string& target, 
+                                       InlineAsm::ConstraintInfo& c) {
+
+  assert(c.Codes.size() == 1 && "Too many asm constraint codes to handle");
+
+  //catch numeric constraints
+  if (c.Codes[0].find_first_not_of("0123456789") >= c.Codes[0].size())
+    return c.Codes[0];
+  
+  static const char* x86_table[] = {"{si}", "S",
+                                    "{di}", "D",
+                                    "{ax}", "a",
+                                    "{cx}", "c",
+                                    "q",    "q",
+                                    "r",    "r",
+                                    "m",    "m",
+                                    "{memory}", "memory",
+                                    "{flags}", "",
+                                    "{dirflag}", "",
+                                    "{fpsr}", "",
+                                    "{cc}", "cc"
+  };
+
+  const char** table = 0;
+  int tbl_len = 0;
+  if (target == "i686-pc-linux-gnu") {
+    table = x86_table;
+    tbl_len = sizeof(x86_table) / sizeof(char*);
+  }
+  for (int i = 0; i < tbl_len && table; i += 2)
+    if (c.Codes[0] == table[i])
+      return table[i+1];
+
+  std::cerr << target << "\n";
+  std::cerr << c.Codes[0] << "\n";
+  assert(0 && "Unknown Asm Constraint");
+  return "";
+}
+
+//TODO: import logic from AsmPrinter.cpp
+static std::string gccifyAsm(const std::string& target, std::string asmstr) {
+  for (std::string::size_type i = 0; i != asmstr.size(); ++i)
+    if (asmstr[i] == '\n')
+      asmstr.replace(i, 1, "\\n");
+    else if (asmstr[i] == '\t')
+      asmstr.replace(i, 1, "\\t");
+    else if (asmstr[i] == '$') {
+      if (asmstr[i + 1] == '{') {
+        std::string::size_type a = asmstr.find_first_of(':', i + 1);
+        std::string::size_type b = asmstr.find_first_of('}', i + 1);
+        std::string n = "%" + 
+          asmstr.substr(a + 1, b - a - 1) +
+          asmstr.substr(i + 2, a - i - 2);
+        asmstr.replace(i, b - i + 1, n);
+        i += n.size() - 1;
+      } else
+        asmstr.replace(i, 1, "%");
+    }
+    else if (asmstr[i] == '%')//grr
+      { asmstr.replace(i, 1, "%%"); ++i;}
+  
+  return asmstr;
+}
+
+void CWriter::visitInlineAsm(CallInst &CI) {
+  InlineAsm* as = cast<InlineAsm>(CI.getOperand(0));
+  const std::string& target = TheModule->getTargetTriple();
+  std::vector<InlineAsm::ConstraintInfo> Constraints = as->ParseConstraints();
+  std::vector<std::pair<std::string, Value*> > Input;
+  std::vector<std::pair<std::string, Value*> > Output;
+  std::string Clobber;
+  int count = CI.getType() == Type::VoidTy ? 1 : 0;
+  for (std::vector<InlineAsm::ConstraintInfo>::iterator I = Constraints.begin(),
+         E = Constraints.end(); I != E; ++I) {
+    assert(I->Codes.size() == 1 && "Too many asm constraint codes to handle");
+    std::string c = 
+      InterpretConstraint(target, *I);
+    switch(I->Type) {
+    default:
+      assert(0 && "Unknown asm constraint");
+      break;
+    case InlineAsm::isInput: {
+      if (c.size()) {
+        Input.push_back(std::make_pair(c, count ? CI.getOperand(count) : &CI));
+        ++count; //consume arg
+      }
+      break;
+    }
+    case InlineAsm::isOutput: {
+      if (c.size()) {
+        Output.push_back(std::make_pair("="+((I->isEarlyClobber ? "&" : "")+c),
+                                        count ? CI.getOperand(count) : &CI));
+        ++count; //consume arg
+      }
+      break;
+    }
+    case InlineAsm::isClobber: {
+      if (c.size()) 
+        Clobber += ",\"" + c + "\"";
+      break;
+    }
+    }
+  }
+  
+  //fix up the asm string for gcc
+  std::string asmstr = gccifyAsm(target, as->getAsmString());
+  
+  Out << "__asm__ volatile (\"" << asmstr << "\"\n";
+  Out << "        :";
+  for (std::vector<std::pair<std::string, Value*> >::iterator I = Output.begin(),
+         E = Output.end(); I != E; ++I) {
+    Out << "\"" << I->first << "\"(";
+    writeOperandRaw(I->second);
+    Out << ")";
+    if (I + 1 != E)
+      Out << ",";
+  }
+  Out << "\n        :";
+  for (std::vector<std::pair<std::string, Value*> >::iterator I = Input.begin(),
+         E = Input.end(); I != E; ++I) {
+    Out << "\"" << I->first << "\"(";
+    writeOperandRaw(I->second);
+    Out << ")";
+    if (I + 1 != E)
+      Out << ",";
+  }
+  Out << "\n        :" << Clobber.substr(1) << ")\n";
 }
 
 void CWriter::visitMallocInst(MallocInst &I) {
