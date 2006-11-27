@@ -32,7 +32,7 @@ namespace llvm {
     std::ostream* stream() const { return Stream; }
 
     inline llvm_ostream &operator << (std::ostream& (*Func)(std::ostream&)) {
-      *Stream << Func;
+      if (Stream) *Stream << Func;
       return *this;
     }
       
