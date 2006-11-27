@@ -626,8 +626,11 @@ void CWriter::printConstant(Constant *CPV) {
         Out << "0-";
       }
       printConstant(CE->getOperand(0));
-      if (CE->getOpcode() == Instruction::Trunc && 
-          CE->getType() == Type::BoolTy) {
+      if (CE->getType() == Type::BoolTy &&
+          (CE->getOpcode() == Instruction::Trunc ||
+           CE->getOpcode() == Instruction::FPToUI ||
+           CE->getOpcode() == Instruction::FPToSI ||
+           CE->getOpcode() == Instruction::PtrToInt)) {
         // Make sure we really truncate to bool here by anding with 1
         Out << "&1u";
       }
@@ -1960,7 +1963,11 @@ void CWriter::visitCastInst(CastInst &I) {
     Out << "0-";
   }
   writeOperand(I.getOperand(0));
-  if (I.getOpcode() == Instruction::Trunc && DstTy == Type::BoolTy) {
+  if (DstTy == Type::BoolTy && 
+      (I.getOpcode() == Instruction::Trunc ||
+       I.getOpcode() == Instruction::FPToUI ||
+       I.getOpcode() == Instruction::FPToSI ||
+       I.getOpcode() == Instruction::PtrToInt)) {
     // Make sure we really get a trunc to bool by anding the operand with 1 
     Out << "&1u";
   }
