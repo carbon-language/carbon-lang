@@ -2,7 +2,7 @@
 ; sure only the LSBit survives. Test that this is the case both for a returned
 ; value and as the operand of a branch.
 ; RUN: llvm-as < %s | llc -march=x86 &&
-; RUN: llvm-as < %s | llc -march=x86 | grep '\(and\)\|\(test.*\$1\)' | wc -l | grep 3
+; RUN: llvm-as < %s | llc -march=x86 | grep '\(and\)\|\(test.*\$1\)' | wc -l | grep 6
 bool %test1(int %X) {
     %Y = trunc int %X to bool
     ret bool %Y
@@ -24,6 +24,33 @@ ret_false:
 int %test3(sbyte* %ptr) {
     %val = load sbyte* %ptr
     %tmp = trunc sbyte %val to bool             ; %<bool> [#uses=1]
+    br bool %tmp, label %cond_true, label %cond_false
+cond_true:
+    ret int 21
+cond_false:
+    ret int 42
+}
+
+int %test4(sbyte* %ptr) {
+    %tmp = ptrtoint sbyte* %ptr to bool
+    br bool %tmp, label %cond_true, label %cond_false
+cond_true:
+    ret int 21
+cond_false:
+    ret int 42
+}
+
+int %test5(float %f) {
+    %tmp = fptoui float %f to bool
+    br bool %tmp, label %cond_true, label %cond_false
+cond_true:
+    ret int 21
+cond_false:
+    ret int 42
+}
+
+int %test6(double %d) {
+    %tmp = fptosi double %d to bool
     br bool %tmp, label %cond_true, label %cond_false
 cond_true:
     ret int 21
