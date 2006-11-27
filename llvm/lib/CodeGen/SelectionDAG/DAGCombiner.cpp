@@ -2192,7 +2192,12 @@ SDOperand DAGCombiner::visitTRUNCATE(SDNode *N) {
       return N0.getOperand(0);
   }
   // fold (truncate (load x)) -> (smaller load x)
-  if (ISD::isNON_EXTLoad(N0.Val) && N0.hasOneUse()) {
+  if (ISD::isNON_EXTLoad(N0.Val) && N0.hasOneUse() &&
+      // Do not allow folding to i1 here.  i1 is implicitly stored in memory in
+      // zero extended form: by shrinking the load, we lose track of the fact
+      // that it is already zero extended.
+      // FIXME: This should be reevaluated.
+      VT != MVT::i1) {
     assert(MVT::getSizeInBits(N0.getValueType()) > MVT::getSizeInBits(VT) &&
            "Cannot truncate to larger type!");
     LoadSDNode *LN0 = cast<LoadSDNode>(N0);
