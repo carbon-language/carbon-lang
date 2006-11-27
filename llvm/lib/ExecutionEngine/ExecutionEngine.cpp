@@ -24,7 +24,6 @@
 #include "llvm/Support/MutexGuard.h"
 #include "llvm/System/DynamicLibrary.h"
 #include "llvm/Target/TargetData.h"
-#include <iostream>
 using namespace llvm;
 
 namespace {
@@ -159,13 +158,13 @@ static void *CreateArgv(ExecutionEngine *EE,
   unsigned PtrSize = EE->getTargetData()->getPointerSize();
   char *Result = new char[(InputArgv.size()+1)*PtrSize];
 
-  DEBUG(std::cerr << "ARGV = " << (void*)Result << "\n");
+  DOUT << "ARGV = " << (void*)Result << "\n";
   const Type *SBytePtr = PointerType::get(Type::SByteTy);
 
   for (unsigned i = 0; i != InputArgv.size(); ++i) {
     unsigned Size = InputArgv[i].size()+1;
     char *Dest = new char[Size];
-    DEBUG(std::cerr << "ARGV[" << i << "] = " << (void*)Dest << "\n");
+    DOUT << "ARGV[" << i << "] = " << (void*)Dest << "\n";
 
     std::copy(InputArgv[i].begin(), InputArgv[i].end(), Dest);
     Dest[Size-1] = 0;
@@ -403,7 +402,7 @@ GenericValue ExecutionEngine::getConstantValue(const Constant *C) {
     default:
       break;
     }
-    std::cerr << "ConstantExpr not handled as global var init: " << *CE << "\n";
+    llvm_cerr << "ConstantExpr not handled as global var init: " << *CE << "\n";
     abort();
   }
 
@@ -433,7 +432,7 @@ GenericValue ExecutionEngine::getConstantValue(const Constant *C) {
       assert(0 && "Unknown constant pointer type!");
     break;
   default:
-    std::cout << "ERROR: Constant unimp for type: " << *C->getType() << "\n";
+    llvm_cerr << "ERROR: Constant unimp for type: " << *C->getType() << "\n";
     abort();
   }
   return Result;
@@ -478,7 +477,7 @@ void ExecutionEngine::StoreValueToMemory(GenericValue Val, GenericValue *Ptr,
       Ptr->Untyped[7] = (unsigned char)(Val.ULongVal >> 56);
       break;
     default:
-      std::cout << "Cannot store value of type " << *Ty << "!\n";
+      llvm_cerr << "Cannot store value of type " << *Ty << "!\n";
     }
   } else {
     switch (Ty->getTypeID()) {
@@ -512,7 +511,7 @@ void ExecutionEngine::StoreValueToMemory(GenericValue Val, GenericValue *Ptr,
       Ptr->Untyped[0] = (unsigned char)(Val.ULongVal >> 56);
       break;
     default:
-      std::cout << "Cannot store value of type " << *Ty << "!\n";
+      llvm_cerr << "Cannot store value of type " << *Ty << "!\n";
     }
   }
 }
@@ -553,7 +552,7 @@ GenericValue ExecutionEngine::LoadValueFromMemory(GenericValue *Ptr,
                                              ((uint64_t)Ptr->Untyped[7] << 56);
                             break;
     default:
-      std::cout << "Cannot load value of type " << *Ty << "!\n";
+      llvm_cerr << "Cannot load value of type " << *Ty << "!\n";
       abort();
     }
   } else {
@@ -587,7 +586,7 @@ GenericValue ExecutionEngine::LoadValueFromMemory(GenericValue *Ptr,
                                              ((uint64_t)Ptr->Untyped[0] << 56);
                             break;
     default:
-      std::cout << "Cannot load value of type " << *Ty << "!\n";
+      llvm_cerr << "Cannot load value of type " << *Ty << "!\n";
       abort();
     }
   }
@@ -635,7 +634,7 @@ void ExecutionEngine::InitializeMemory(const Constant *Init, void *Addr) {
   }
 
   default:
-    std::cerr << "Bad Type: " << *Init->getType() << "\n";
+    llvm_cerr << "Bad Type: " << *Init->getType() << "\n";
     assert(0 && "Unknown constant type to initialize memory with!");
   }
 }
@@ -719,7 +718,7 @@ void ExecutionEngine::emitGlobals() {
             sys::DynamicLibrary::SearchForAddressOfSymbol(I->getName().c_str()))
           addGlobalMapping(I, SymAddr);
         else {
-          std::cerr << "Could not resolve external global address: "
+          llvm_cerr << "Could not resolve external global address: "
                     << I->getName() << "\n";
           abort();
         }
@@ -761,7 +760,7 @@ void ExecutionEngine::emitGlobals() {
 // already in the map.
 void ExecutionEngine::EmitGlobalVariable(const GlobalVariable *GV) {
   void *GA = getPointerToGlobalIfAvailable(GV);
-  DEBUG(std::cerr << "Global '" << GV->getName() << "' -> " << GA << "\n");
+  DOUT << "Global '" << GV->getName() << "' -> " << GA << "\n";
 
   const Type *ElTy = GV->getType()->getElementType();
   size_t GVSize = (size_t)getTargetData()->getTypeSize(ElTy);

@@ -187,7 +187,7 @@ GenericValue Interpreter::getConstantExprValue (ConstantExpr *CE,
                              getOperandValue(CE->getOperand(1), SF),
                              getOperandValue(CE->getOperand(2), SF));
   default:
-    std::cerr << "Unhandled ConstantExpr: " << *CE << "\n";
+    llvm_cerr << "Unhandled ConstantExpr: " << *CE << "\n";
     abort();
     return GenericValue();
   }
@@ -235,7 +235,7 @@ static GenericValue executeAddInst(GenericValue Src1, GenericValue Src2,
     IMPLEMENT_BINARY_OPERATOR(+, Float);
     IMPLEMENT_BINARY_OPERATOR(+, Double);
   default:
-    std::cout << "Unhandled type for Add instruction: " << *Ty << "\n";
+    llvm_cerr << "Unhandled type for Add instruction: " << *Ty << "\n";
     abort();
   }
   return Dest;
@@ -256,7 +256,7 @@ static GenericValue executeSubInst(GenericValue Src1, GenericValue Src2,
     IMPLEMENT_BINARY_OPERATOR(-, Float);
     IMPLEMENT_BINARY_OPERATOR(-, Double);
   default:
-    std::cout << "Unhandled type for Sub instruction: " << *Ty << "\n";
+    llvm_cerr << "Unhandled type for Sub instruction: " << *Ty << "\n";
     abort();
   }
   return Dest;
@@ -277,7 +277,7 @@ static GenericValue executeMulInst(GenericValue Src1, GenericValue Src2,
     IMPLEMENT_BINARY_OPERATOR(*, Float);
     IMPLEMENT_BINARY_OPERATOR(*, Double);
   default:
-    std::cout << "Unhandled type for Mul instruction: " << *Ty << "\n";
+    llvm_cerr << "Unhandled type for Mul instruction: " << *Ty << "\n";
     abort();
   }
   return Dest;
@@ -295,7 +295,7 @@ static GenericValue executeUDivInst(GenericValue Src1, GenericValue Src2,
     IMPLEMENT_SIGNLESS_BINOP(/, UInt,   Int);
     IMPLEMENT_SIGNLESS_BINOP(/, ULong,  Long);
   default:
-    std::cout << "Unhandled type for UDiv instruction: " << *Ty << "\n";
+    llvm_cerr << "Unhandled type for UDiv instruction: " << *Ty << "\n";
     abort();
   }
   return Dest;
@@ -310,7 +310,7 @@ static GenericValue executeSDivInst(GenericValue Src1, GenericValue Src2,
     IMPLEMENT_SIGNLESS_BINOP(/, Int,   UInt);
     IMPLEMENT_SIGNLESS_BINOP(/, Long,  ULong);
   default:
-    std::cout << "Unhandled type for SDiv instruction: " << *Ty << "\n";
+    llvm_cerr << "Unhandled type for SDiv instruction: " << *Ty << "\n";
     abort();
   }
   return Dest;
@@ -323,7 +323,7 @@ static GenericValue executeFDivInst(GenericValue Src1, GenericValue Src2,
     IMPLEMENT_BINARY_OPERATOR(/, Float);
     IMPLEMENT_BINARY_OPERATOR(/, Double);
   default:
-    std::cout << "Unhandled type for Div instruction: " << *Ty << "\n";
+    llvm_cerr << "Unhandled type for Div instruction: " << *Ty << "\n";
     abort();
   }
   return Dest;
@@ -338,7 +338,7 @@ static GenericValue executeURemInst(GenericValue Src1, GenericValue Src2,
     IMPLEMENT_SIGNLESS_BINOP(%, UInt,   Int);
     IMPLEMENT_SIGNLESS_BINOP(%, ULong,  Long);
   default:
-    std::cout << "Unhandled type for URem instruction: " << *Ty << "\n";
+    llvm_cerr << "Unhandled type for URem instruction: " << *Ty << "\n";
     abort();
   }
   return Dest;
@@ -353,7 +353,7 @@ static GenericValue executeSRemInst(GenericValue Src1, GenericValue Src2,
     IMPLEMENT_SIGNLESS_BINOP(%, Int,   UInt);
     IMPLEMENT_SIGNLESS_BINOP(%, Long,  ULong);
   default:
-    std::cout << "Unhandled type for Rem instruction: " << *Ty << "\n";
+    llvm_cerr << "Unhandled type for Rem instruction: " << *Ty << "\n";
     abort();
   }
   return Dest;
@@ -370,7 +370,7 @@ static GenericValue executeFRemInst(GenericValue Src1, GenericValue Src2,
     Dest.DoubleVal = fmod(Src1.DoubleVal, Src2.DoubleVal);
     break;
   default:
-    std::cout << "Unhandled type for Rem instruction: " << *Ty << "\n";
+    llvm_cerr << "Unhandled type for Rem instruction: " << *Ty << "\n";
     abort();
   }
   return Dest;
@@ -390,7 +390,7 @@ static GenericValue executeAndInst(GenericValue Src1, GenericValue Src2,
     IMPLEMENT_BINARY_OPERATOR(&, ULong);
     IMPLEMENT_BINARY_OPERATOR(&, Long);
   default:
-    std::cout << "Unhandled type for And instruction: " << *Ty << "\n";
+    llvm_cerr << "Unhandled type for And instruction: " << *Ty << "\n";
     abort();
   }
   return Dest;
@@ -410,7 +410,7 @@ static GenericValue executeOrInst(GenericValue Src1, GenericValue Src2,
     IMPLEMENT_BINARY_OPERATOR(|, ULong);
     IMPLEMENT_BINARY_OPERATOR(|, Long);
   default:
-    std::cout << "Unhandled type for Or instruction: " << *Ty << "\n";
+    llvm_cerr << "Unhandled type for Or instruction: " << *Ty << "\n";
     abort();
   }
   return Dest;
@@ -430,7 +430,7 @@ static GenericValue executeXorInst(GenericValue Src1, GenericValue Src2,
     IMPLEMENT_BINARY_OPERATOR(^, ULong);
     IMPLEMENT_BINARY_OPERATOR(^, Long);
   default:
-    std::cout << "Unhandled type for Xor instruction: " << *Ty << "\n";
+    llvm_cerr << "Unhandled type for Xor instruction: " << *Ty << "\n";
     abort();
   }
   return Dest;
@@ -464,7 +464,7 @@ static GenericValue executeSetEQInst(GenericValue Src1, GenericValue Src2,
     IMPLEMENT_SETCC(==, Double);
     IMPLEMENT_POINTERSETCC(==);
   default:
-    std::cout << "Unhandled type for SetEQ instruction: " << *Ty << "\n";
+    llvm_cerr << "Unhandled type for SetEQ instruction: " << *Ty << "\n";
     abort();
   }
   return Dest;
@@ -487,7 +487,7 @@ static GenericValue executeSetNEInst(GenericValue Src1, GenericValue Src2,
     IMPLEMENT_POINTERSETCC(!=);
 
   default:
-    std::cout << "Unhandled type for SetNE instruction: " << *Ty << "\n";
+    llvm_cerr << "Unhandled type for SetNE instruction: " << *Ty << "\n";
     abort();
   }
   return Dest;
@@ -509,7 +509,7 @@ static GenericValue executeSetLEInst(GenericValue Src1, GenericValue Src2,
     IMPLEMENT_SETCC(<=, Double);
     IMPLEMENT_POINTERSETCC(<=);
   default:
-    std::cout << "Unhandled type for SetLE instruction: " << *Ty << "\n";
+    llvm_cerr << "Unhandled type for SetLE instruction: " << *Ty << "\n";
     abort();
   }
   return Dest;
@@ -531,7 +531,7 @@ static GenericValue executeSetGEInst(GenericValue Src1, GenericValue Src2,
     IMPLEMENT_SETCC(>=, Double);
     IMPLEMENT_POINTERSETCC(>=);
   default:
-    std::cout << "Unhandled type for SetGE instruction: " << *Ty << "\n";
+    llvm_cerr << "Unhandled type for SetGE instruction: " << *Ty << "\n";
     abort();
   }
   return Dest;
@@ -553,7 +553,7 @@ static GenericValue executeSetLTInst(GenericValue Src1, GenericValue Src2,
     IMPLEMENT_SETCC(<, Double);
     IMPLEMENT_POINTERSETCC(<);
   default:
-    std::cout << "Unhandled type for SetLT instruction: " << *Ty << "\n";
+    llvm_cerr << "Unhandled type for SetLT instruction: " << *Ty << "\n";
     abort();
   }
   return Dest;
@@ -575,7 +575,7 @@ static GenericValue executeSetGTInst(GenericValue Src1, GenericValue Src2,
     IMPLEMENT_SETCC(>, Double);
     IMPLEMENT_POINTERSETCC(>);
   default:
-    std::cout << "Unhandled type for SetGT instruction: " << *Ty << "\n";
+    llvm_cerr << "Unhandled type for SetGT instruction: " << *Ty << "\n";
     abort();
   }
   return Dest;
@@ -608,7 +608,7 @@ void Interpreter::visitBinaryOperator(BinaryOperator &I) {
   case Instruction::SetLT: R = executeSetLTInst(Src1, Src2, Ty); break;
   case Instruction::SetGT: R = executeSetGTInst(Src1, Src2, Ty); break;
   default:
-    std::cout << "Don't know how to handle this binary operator!\n-->" << I;
+    llvm_cerr << "Don't know how to handle this binary operator!\n-->" << I;
     abort();
   }
 
@@ -709,7 +709,7 @@ void Interpreter::visitUnwindInst(UnwindInst &I) {
 }
 
 void Interpreter::visitUnreachableInst(UnreachableInst &I) {
-  std::cerr << "ERROR: Program executed an 'unreachable' instruction!\n";
+  llvm_cerr << "ERROR: Program executed an 'unreachable' instruction!\n";
   abort();
 }
 
@@ -977,7 +977,7 @@ static GenericValue executeShlInst(GenericValue Src1, GenericValue Src2,
     IMPLEMENT_SHIFT(<<, ULong);
     IMPLEMENT_SHIFT(<<, Long);
   default:
-    std::cout << "Unhandled type for Shl instruction: " << *Ty << "\n";
+    llvm_cerr << "Unhandled type for Shl instruction: " << *Ty << "\n";
   }
   return Dest;
 }
@@ -991,7 +991,7 @@ static GenericValue executeLShrInst(GenericValue Src1, GenericValue Src2,
     IMPLEMENT_SIGNLESS_SHIFT(>>, UInt,   Int);
     IMPLEMENT_SIGNLESS_SHIFT(>>, ULong,  Long);
   default:
-    std::cout << "Unhandled type for LShr instruction: " << *Ty << "\n";
+    llvm_cerr << "Unhandled type for LShr instruction: " << *Ty << "\n";
     abort();
   }
   return Dest;
@@ -1006,7 +1006,7 @@ static GenericValue executeAShrInst(GenericValue Src1, GenericValue Src2,
     IMPLEMENT_SIGNLESS_SHIFT(>>, Int,   UInt);
     IMPLEMENT_SIGNLESS_SHIFT(>>, Long,  ULong);
   default:
-    std::cout << "Unhandled type for AShr instruction: " << *Ty << "\n";
+    llvm_cerr << "Unhandled type for AShr instruction: " << *Ty << "\n";
     abort();
   }
   return Dest;
@@ -1064,14 +1064,14 @@ void Interpreter::visitAShr(ShiftInst &I) {
       IMPLEMENT_CAST(DESTTY, DESTCTY, Float);   \
       IMPLEMENT_CAST(DESTTY, DESTCTY, Double)   \
     default:                                    \
-      std::cout << "Unhandled cast: "           \
+      llvm_cerr << "Unhandled cast: "           \
         << *SrcTy << " to " << *DstTy << "\n";  \
       abort();                                  \
     }                                           \
     break
 
 #define IMPLEMENT_CAST_END                      \
-  default: std::cout                            \
+  default: llvm_cerr                            \
       << "Unhandled dest type for cast instruction: "  \
       << *DstTy << "\n";                        \
     abort();                                    \
@@ -1225,7 +1225,7 @@ GenericValue Interpreter::executeCastOperation(Instruction::CastOps opcode,
       IMPLEMENT_CAST_END
       break;
     default:
-      std::cout 
+      llvm_cerr 
         << "Invalid cast opcode for cast instruction: " << opcode << "\n";
       abort();
   }
@@ -1265,7 +1265,7 @@ void Interpreter::visitVAArgInst(VAArgInst &I) {
     IMPLEMENT_VAARG(Double);
     IMPLEMENT_VAARG(Bool);
   default:
-    std::cout << "Unhandled dest type for vaarg instruction: " << *Ty << "\n";
+    llvm_cerr << "Unhandled dest type for vaarg instruction: " << *Ty << "\n";
     abort();
   }
 
@@ -1328,7 +1328,7 @@ void Interpreter::run() {
     // Track the number of dynamic instructions executed.
     ++NumDynamicInsts;
 
-    DEBUG(std::cerr << "About to interpret: " << I);
+    DOUT << "About to interpret: " << I;
     visit(I);   // Dispatch to one of the visit* methods...
   }
 }

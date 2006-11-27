@@ -22,6 +22,7 @@
 #include "Interpreter.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/Module.h"
+#include "llvm/Support/Streams.h"
 #include "llvm/System/DynamicLibrary.h"
 #include "llvm/Target/TargetData.h"
 #include <csignal>
@@ -91,7 +92,7 @@ GenericValue Interpreter::callExternalFunction(Function *F,
   std::map<const Function *, ExFunc>::iterator FI = Functions.find(F);
   ExFunc Fn = (FI == Functions.end()) ? lookupFunction(F) : FI->second;
   if (Fn == 0) {
-    std::cout << "Tried to execute an unknown external function: "
+    llvm_cerr << "Tried to execute an unknown external function: "
               << F->getType()->getDescription() << " " << F->getName() << "\n";
     if (F->getName() == "__main")
       return GenericValue();
@@ -112,19 +113,19 @@ extern "C" {  // Don't add C++ manglings to llvm mangling :)
 
 // void putchar(sbyte)
 GenericValue lle_Vb_putchar(FunctionType *M, const vector<GenericValue> &Args) {
-  std::cout << Args[0].SByteVal;
+  llvm_cout << Args[0].SByteVal;
   return GenericValue();
 }
 
 // int putchar(int)
 GenericValue lle_ii_putchar(FunctionType *M, const vector<GenericValue> &Args) {
-  std::cout << ((char)Args[0].IntVal) << std::flush;
+  llvm_cout << ((char)Args[0].IntVal) << std::flush;
   return Args[0];
 }
 
 // void putchar(ubyte)
 GenericValue lle_VB_putchar(FunctionType *M, const vector<GenericValue> &Args) {
-  std::cout << Args[0].SByteVal << std::flush;
+  llvm_cout << Args[0].SByteVal << std::flush;
   return Args[0];
 }
 
@@ -330,7 +331,7 @@ GenericValue lle_X_sprintf(FunctionType *M, const vector<GenericValue> &Args) {
         sprintf(Buffer, FmtBuf, (void*)GVTOP(Args[ArgNo++])); break;
       case 's':
         sprintf(Buffer, FmtBuf, (char*)GVTOP(Args[ArgNo++])); break;
-      default:  std::cout << "<unknown printf code '" << *FmtStr << "'!>";
+      default:  llvm_cerr << "<unknown printf code '" << *FmtStr << "'!>";
         ArgNo++; break;
       }
       strcpy(OutputBuffer, Buffer);
@@ -348,7 +349,7 @@ GenericValue lle_X_printf(FunctionType *M, const vector<GenericValue> &Args) {
   NewArgs.push_back(PTOGV(Buffer));
   NewArgs.insert(NewArgs.end(), Args.begin(), Args.end());
   GenericValue GV = lle_X_sprintf(M, NewArgs);
-  std::cout << Buffer;
+  llvm_cout << Buffer;
   return GV;
 }
 
