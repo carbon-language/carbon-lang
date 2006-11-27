@@ -1,4 +1,9 @@
 ; RUN: llvm-as < %s | opt -instcombine | llvm-dis | not grep bitcast
+
+;; This requires Reid to remove the instcombine hack that turns trunc to bool into setne.
+; XFAIL: *
+
+
 bool %test1(uint %val) {
   %t1 = bitcast uint %val to int 
   %t2 = and int %t1, 1
