@@ -363,20 +363,20 @@ bool TargetLowering::SimplifyDemandedBits(SDOperand Op, uint64_t DemandedMask,
       return TLO.CombineTo(Op, Op.getOperand(0));
     if ((DemandedMask & KnownZero2) == DemandedMask)
       return TLO.CombineTo(Op, Op.getOperand(1));
+      
+    // If all of the unknown bits are known to be zero on one side or the other
+    // (but not both) turn this into an *inclusive* or.
+    //    e.g. (A & C1)^(B & C2) -> (A & C1)|(B & C2) iff C1&C2 == 0
+    if ((DemandedMask & ~KnownZero & ~KnownZero2) == 0)
+      return TLO.CombineTo(Op, TLO.DAG.getNode(ISD::OR, Op.getValueType(),
+                                               Op.getOperand(0),
+                                               Op.getOperand(1)));
     
     // Output known-0 bits are known if clear or set in both the LHS & RHS.
     KnownZeroOut = (KnownZero & KnownZero2) | (KnownOne & KnownOne2);
     // Output known-1 are known to be set if set in only one of the LHS, RHS.
     KnownOneOut = (KnownZero & KnownOne2) | (KnownOne & KnownZero2);
     
-    // If all of the unknown bits are known to be zero on one side or the other
-    // (but not both) turn this into an *inclusive* or.
-    //    e.g. (A & C1)^(B & C2) -> (A & C1)|(B & C2) iff C1&C2 == 0
-    if (uint64_t UnknownBits = DemandedMask & ~(KnownZeroOut|KnownOneOut))
-      if ((UnknownBits & (KnownZero|KnownZero2)) == UnknownBits)
-        return TLO.CombineTo(Op, TLO.DAG.getNode(ISD::OR, Op.getValueType(),
-                                                 Op.getOperand(0),
-                                                 Op.getOperand(1)));
     // If all of the demanded bits on one side are known, and all of the set
     // bits on that side are also known to be set on the other side, turn this
     // into an AND, as we know the bits will be cleared.
