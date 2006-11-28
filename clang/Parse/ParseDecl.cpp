@@ -382,7 +382,6 @@ void Parser::ParseDeclarationSpecifiers(DeclSpec &DS) {
     }
     // If the specifier combination wasn't legal, issue a diagnostic.
     if (isInvalid) {
-      // FIXME: emit a matching caret at the previous illegal spec combination.
       assert(PrevSpec && "Method did not return previous specifier!");
       if (isInvalid == 1)  // Error.
         Diag(Tok, diag::err_invalid_decl_spec_combination, PrevSpec);
@@ -742,7 +741,6 @@ void Parser::ParseTypeQualifierListOpt(DeclSpec &DS) {
     
     // If the specifier combination wasn't legal, issue a diagnostic.
     if (isInvalid) {
-      // FIXME: emit a matching caret at the previous illegal spec combination.
       assert(PrevSpec && "Method did not return previous specifier!");
       if (isInvalid == 1)  // Error.
         Diag(Tok, diag::err_invalid_decl_spec_combination, PrevSpec);
