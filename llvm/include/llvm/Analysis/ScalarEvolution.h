@@ -22,6 +22,7 @@
 #define LLVM_ANALYSIS_SCALAREVOLUTION_H
 
 #include "llvm/Pass.h"
+#include "llvm/Support/Streams.h"
 #include <set>
 
 namespace llvm {
@@ -96,6 +97,9 @@ namespace llvm {
     /// print - Print out the internal representation of this scalar to the
     /// specified stream.  This should really only be used for debugging
     /// purposes.
+    void print(llvm_ostream &OS) const {
+      if (OS.stream()) print(*OS.stream());
+    }
     virtual void print(std::ostream &OS) const = 0;
 
     /// dump - This method is used for debugging.
@@ -103,6 +107,10 @@ namespace llvm {
     void dump() const;
   };
 
+  inline llvm_ostream &operator<<(llvm_ostream &OS, const SCEV &S) {
+    S.print(OS);
+    return OS;
+  }
   inline std::ostream &operator<<(std::ostream &OS, const SCEV &S) {
     S.print(OS);
     return OS;
@@ -120,6 +128,9 @@ namespace llvm {
     virtual bool isLoopInvariant(const Loop *L) const;
     virtual const Type *getType() const;
     virtual bool hasComputableLoopEvolution(const Loop *L) const;
+    void print(llvm_ostream &OS) const {
+      if (OS.stream()) print(*OS.stream());
+    }
     virtual void print(std::ostream &OS) const;
     virtual SCEVHandle
     replaceSymbolicValuesWithConcrete(const SCEVHandle &Sym,
@@ -231,6 +242,9 @@ namespace llvm {
     virtual bool runOnFunction(Function &F);
     virtual void releaseMemory();
     virtual void getAnalysisUsage(AnalysisUsage &AU) const;
+    void print(llvm_ostream &OS, const Module* = 0) const {
+      if (OS.stream()) print(*OS.stream());
+    }
     virtual void print(std::ostream &OS, const Module* = 0) const;
   };
 }

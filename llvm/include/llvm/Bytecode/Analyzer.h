@@ -22,7 +22,7 @@
 #include "llvm/Bytecode/Format.h"
 #include <string>
 #include <map>
-#include <iostream>
+#include <ostream>
 
 namespace llvm {
 

@@ -18,6 +18,7 @@
 #define LLVM_ANALYSIS_ALIASSETTRACKER_H
 
 #include "llvm/Support/CallSite.h"
+#include "llvm/Support/Streams.h"
 #include "llvm/ADT/iterator"
 #include "llvm/ADT/hash_map"
 #include "llvm/ADT/ilist"
@@ -155,6 +156,9 @@ public:
   iterator end()   const { return iterator(); }
   bool empty() const { return PtrList == 0; }
 
+  void print(llvm_ostream &OS) const {
+    if (OS.stream()) print(*OS.stream());
+  }
   void print(std::ostream &OS) const;
   void dump() const;
 
@@ -244,6 +248,10 @@ private:
   bool aliasesCallSite(CallSite CS, AliasAnalysis &AA) const;
 };
 
+inline llvm_ostream& operator<<(llvm_ostream &OS, const AliasSet &AS) {
+  AS.print(OS);
+  return OS;
+}
 inline std::ostream& operator<<(std::ostream &OS, const AliasSet &AS) {
   AS.print(OS);
   return OS;
@@ -353,6 +361,9 @@ public:
   iterator begin() { return AliasSets.begin(); }
   iterator end()   { return AliasSets.end(); }
 
+  void print(llvm_ostream &OS) const {
+    if (OS.stream()) print(*OS.stream());
+  }
   void print(std::ostream &OS) const;
   void dump() const;
 
@@ -379,6 +390,10 @@ private:
   AliasSet *findAliasSetForCallSite(CallSite CS);
 };
 
+inline llvm_ostream& operator<<(llvm_ostream &OS, const AliasSetTracker &AST) {
+  AST.print(OS);
+  return OS;
+}
 inline std::ostream& operator<<(std::ostream &OS, const AliasSetTracker &AST) {
   AST.print(OS);
   return OS;

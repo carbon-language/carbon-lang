@@ -29,6 +29,7 @@
 #ifndef LLVM_PASS_H
 #define LLVM_PASS_H
 
+#include "llvm/Support/Streams.h"
 #include <vector>
 #include <map>
 #include <iosfwd>
@@ -100,6 +101,9 @@ public:
   /// provide the Module* in case the analysis doesn't need it it can just be
   /// ignored.
   ///
+  void print(llvm_ostream &O, const Module *M) const {
+    if (O.stream()) print(*O.stream(), M);
+  }
   virtual void print(std::ostream &O, const Module *M) const;
   void dump() const; // dump - call print(std::cerr, 0);
 

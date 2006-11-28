@@ -17,6 +17,7 @@
 
 #include "llvm/ADT/FoldingSet.h"
 #include "llvm/CodeGen/SelectionDAGNodes.h"
+#include "llvm/Support/Streams.h"
 #include <vector>
 #include <iosfwd>
 
@@ -48,9 +49,17 @@ public:
 
   /// print - Implement operator<<...
   ///
+  void print(llvm_ostream &O) const {
+    if (O.stream()) print(*O.stream());
+  }
   virtual void print(std::ostream &O) const = 0;
 };
 
+inline llvm_ostream &operator<<(llvm_ostream &OS,
+                                const MachineConstantPoolValue &V) {
+  V.print(OS);
+  return OS;
+}
 inline std::ostream &operator<<(std::ostream &OS,
                                 const MachineConstantPoolValue &V) {
   V.print(OS);
@@ -134,6 +143,9 @@ public:
   /// print - Used by the MachineFunction printer to print information about
   /// constant pool objects.  Implemented in MachineFunction.cpp
   ///
+  void print(llvm_ostream &OS) const {
+    if (OS.stream()) print(*OS.stream());
+  }
   void print(std::ostream &OS) const;
 
   /// dump - Call print(std::cerr) to be called from the debugger.

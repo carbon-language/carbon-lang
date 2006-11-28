@@ -25,6 +25,7 @@
 #ifndef LLVM_ADT_BITSETVECTOR_H
 #define LLVM_ADT_BITSETVECTOR_H
 
+#include "llvm/Support/Streams.h"
 #include <bitset>
 #include <vector>
 #include <functional>
@@ -173,6 +174,9 @@ public:
   ///
   ///  Printing and debugging support
   ///
+  void print(llvm_ostream &O) const {
+    if (O.stream()) print(*O.stream());
+  }
   void print(std::ostream &O) const;
   void dump() const { print(std::cerr); }
 
@@ -248,6 +252,10 @@ inline void BitSetVector::print(std::ostream& O) const
     O << "<" << (*I) << ">" << (I+1 == E? "\n" : ", ");
 }
 
+inline llvm_ostream& operator<< (llvm_ostream& O, const BitSetVector& bset) {
+  bset.print(O);
+  return O;
+}
 inline std::ostream& operator<< (std::ostream& O, const BitSetVector& bset)
 {
   bset.print(O);

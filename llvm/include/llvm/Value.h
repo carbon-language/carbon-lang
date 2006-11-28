@@ -18,6 +18,7 @@
 #include "llvm/AbstractTypeUser.h"
 #include "llvm/Use.h"
 #include "llvm/Support/Casting.h"
+#include "llvm/Support/Streams.h"
 #include <string>
 
 namespace llvm {
@@ -74,6 +75,9 @@ public:
 
   /// print - Implement operator<< on Value...
   ///
+  void print(llvm_ostream &O) const {
+    if (O.stream()) print(*O.stream());
+  }
   virtual void print(std::ostream &O) const = 0;
 
   /// All values are typed, get the type of this value.

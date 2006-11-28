@@ -295,8 +295,14 @@ public:
 /// @{
 public:
   /// Print the module to an output stream
+  void print(llvm_ostream &OS) const {
+    if (OS.stream()) print(*OS.stream(), 0);
+  }
   void print(std::ostream &OS) const { print(OS, 0); }
   /// Print the module to an output stream with AssemblyAnnotationWriter.
+  void print(llvm_ostream &OS, AssemblyAnnotationWriter *AAW) const {
+    if (OS.stream()) print(*OS.stream(), AAW);
+  }
   void print(std::ostream &OS, AssemblyAnnotationWriter *AAW) const;
   /// Dump the module to std::cerr (for debugging).
   void dump() const;

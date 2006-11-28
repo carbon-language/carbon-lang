@@ -25,6 +25,7 @@
 #define LLVM_SUPPORT_CONSTANT_RANGE_H
 
 #include "llvm/Support/DataTypes.h"
+#include "llvm/Support/Streams.h"
 #include <iosfwd>
 
 namespace llvm {
@@ -140,6 +141,9 @@ class ConstantRange {
 
   /// print - Print out the bounds to a stream...
   ///
+  void print(llvm_ostream &OS) const {
+    if (OS.stream()) print(*OS.stream());
+  }
   void print(std::ostream &OS) const;
 
   /// dump - Allow printing from a debugger easily...

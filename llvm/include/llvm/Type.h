@@ -14,6 +14,7 @@
 #include "llvm/AbstractTypeUser.h"
 #include "llvm/Support/Casting.h"
 #include "llvm/Support/DataTypes.h"
+#include "llvm/Support/Streams.h"
 #include "llvm/ADT/GraphTraits.h"
 #include "llvm/ADT/iterator"
 #include <string>
@@ -135,6 +136,9 @@ protected:
   ///
   mutable std::vector<AbstractTypeUser *> AbstractTypeUsers;
 public:
+  void print(llvm_ostream &O) const {
+    if (O.stream()) print(*O.stream());
+  }
   void print(std::ostream &O) const;
 
   /// @brief Debugging support: print to stderr

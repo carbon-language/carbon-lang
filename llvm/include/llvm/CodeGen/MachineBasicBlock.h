@@ -17,6 +17,7 @@
 #include "llvm/CodeGen/MachineInstr.h"
 #include "llvm/ADT/GraphTraits.h"
 #include "llvm/ADT/ilist"
+#include "llvm/Support/Streams.h"
 
 namespace llvm {
   class MachineFunction;
@@ -188,6 +189,9 @@ public:
 
   // Debugging methods.
   void dump() const;
+  void print(llvm_ostream &OS) const {
+    if (OS.stream()) print(*OS.stream());
+  }
   void print(std::ostream &OS) const;
 
   /// getNumber - MachineBasicBlocks are uniquely numbered at the function
@@ -222,7 +226,10 @@ private:   // Methods used to maintain doubly linked list of blocks...
 };
 
 std::ostream& operator<<(std::ostream &OS, const MachineBasicBlock &MBB);
-
+inline llvm_ostream& operator<<(llvm_ostream &OS, const MachineBasicBlock &MBB){
+  if (OS.stream()) *OS.stream() << MBB;
+  return OS;
+}
 
 //===--------------------------------------------------------------------===//
 // GraphTraits specializations for machine basic block graphs (machine-CFGs)

@@ -60,7 +60,12 @@ namespace llvm {
   private:
     LiveRange(); // DO NOT IMPLEMENT
   };
+
   std::ostream& operator<<(std::ostream& os, const LiveRange &LR);
+  inline llvm_ostream& operator<<(llvm_ostream& os, const LiveRange &LR) {
+    if (os.stream()) *os.stream() << LR;
+    return os;
+  }
 
   inline bool operator<(unsigned V, const LiveRange &LR) {
     return V < LR.start;
@@ -273,8 +278,7 @@ namespace llvm {
   }
 
   inline std::ostream &operator<<(std::ostream &OS, const LiveInterval &LI) {
-    llvm_ostream L(OS);
-    L << LI;
+    LI.print(OS);
     return OS;
   }
 }

@@ -18,6 +18,7 @@
 
 #include "llvm/ADT/iterator"
 #include "llvm/Support/DataTypes.h"
+#include "llvm/Support/Streams.h"
 #include <vector>
 #include <cassert>
 #include <iosfwd>
@@ -284,6 +285,10 @@ public:
     IsDead = false;
   }
 
+  friend llvm_ostream& operator<<(llvm_ostream& os, const MachineOperand& mop) {
+    if (os.stream()) *os.stream() << mop;
+    return os;
+  }
   friend std::ostream& operator<<(std::ostream& os, const MachineOperand& mop);
 
   friend class MachineInstr;
@@ -400,8 +405,15 @@ public:
   //
   // Debugging support
   //
+  void print(llvm_ostream &OS, const TargetMachine *TM) const {
+    if (OS.stream()) print(*OS.stream(), TM);
+  }
   void print(std::ostream &OS, const TargetMachine *TM) const;
   void dump() const;
+  friend llvm_ostream& operator<<(llvm_ostream& os, const MachineInstr& minstr){
+    if (os.stream()) *os.stream() << minstr;
+    return os;
+  }
   friend std::ostream& operator<<(std::ostream& os, const MachineInstr& minstr);
 
   //===--------------------------------------------------------------------===//
