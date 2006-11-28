@@ -5739,6 +5739,13 @@ Instruction *InstCombiner::commonIntCastTransforms(CastInst &CI) {
   unsigned SrcBitSize = SrcTy->getPrimitiveSizeInBits();
   unsigned DestBitSize = DestTy->getPrimitiveSizeInBits();
 
+  // FIXME. We currently implement cast-to-bool as a setne %X, 0. This is 
+  // because codegen cannot accurately perform a truncate to bool operation.
+  // Something goes wrong in promotion to a larger type. When CodeGen can
+  // handle a proper truncation to bool, this should be removed.
+  if (DestTy == Type::BoolTy)
+    return BinaryOperator::createSetNE(Src, Constant::getNullValue(SrcTy)); 
+
   // See if we can simplify any instructions used by the LHS whose sole 
   // purpose is to compute bits we don't care about.
   uint64_t KnownZero = 0, KnownOne = 0;
@@ -6014,11 +6021,35 @@ Instruction *InstCombiner::visitFPExt(CastInst &CI) {
 }
 
 Instruction *InstCombiner::visitFPToUI(CastInst &CI) {
-  return commonCastTransforms(CI);
+  if (Instruction *I = commonCastTransforms(CI))
+    return I;
+
+  // FIXME. We currently implement cast-to-bool as a setne %X, 0. This is 
+  // because codegen cannot accurately perform a truncate to bool operation.
+  // Something goes wrong in promotion to a larger type. When CodeGen can
+  // handle a proper truncation to bool, this should be removed.
+  Value *Src = CI.getOperand(0);
+  const Type *SrcTy = Src->getType();
+  const Type *DestTy = CI.getType();
+  if (DestTy == Type::BoolTy)
+    return BinaryOperator::createSetNE(Src, Constant::getNullValue(SrcTy)); 
+  return 0;
 }
 
 Instruction *InstCombiner::visitFPToSI(CastInst &CI) {
-  return commonCastTransforms(CI);
+  if (Instruction *I = commonCastTransforms(CI))
+    return I;
+
+  // FIXME. We currently implement cast-to-bool as a setne %X, 0. This is 
+  // because codegen cannot accurately perform a truncate to bool operation.
+  // Something goes wrong in promotion to a larger type. When CodeGen can
+  // handle a proper truncation to bool, this should be removed.
+  Value *Src = CI.getOperand(0);
+  const Type *SrcTy = Src->getType();
+  const Type *DestTy = CI.getType();
+  if (DestTy == Type::BoolTy)
+    return BinaryOperator::createSetNE(Src, Constant::getNullValue(SrcTy)); 
+  return 0;
 }
 
 Instruction *InstCombiner::visitUIToFP(CastInst &CI) {
@@ -6030,7 +6061,19 @@ Instruction *InstCombiner::visitSIToFP(CastInst &CI) {
 }
 
 Instruction *InstCombiner::visitPtrToInt(CastInst &CI) {
-  return commonCastTransforms(CI);
+  if (Instruction *I = commonCastTransforms(CI))
+    return I;
+
+  // FIXME. We currently implement cast-to-bool as a setne %X, 0. This is 
+  // because codegen cannot accurately perform a truncate to bool operation.
+  // Something goes wrong in promotion to a larger type. When CodeGen can
+  // handle a proper truncation to bool, this should be removed.
+  Value *Src = CI.getOperand(0);
+  const Type *SrcTy = Src->getType();
+  const Type *DestTy = CI.getType();
+  if (DestTy == Type::BoolTy)
+    return BinaryOperator::createSetNE(Src, Constant::getNullValue(SrcTy)); 
+  return 0;
 }
 
 Instruction *InstCombiner::visitIntToPtr(CastInst &CI) {
