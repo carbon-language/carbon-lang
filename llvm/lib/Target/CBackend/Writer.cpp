@@ -30,6 +30,7 @@
 #include "llvm/CodeGen/IntrinsicLowering.h"
 #include "llvm/Transforms/Scalar.h"
 #include "llvm/Target/TargetMachineRegistry.h"
+#include "llvm/Target/TargetAsmInfo.h"
 #include "llvm/Support/CallSite.h"
 #include "llvm/Support/CFG.h"
 #include "llvm/Support/GetElementPtrTypeIterator.h"
@@ -74,11 +75,12 @@ namespace {
     Mangler *Mang;
     LoopInfo *LI;
     const Module *TheModule;
+    const TargetAsmInfo* TAsm;
     std::map<const Type *, std::string> TypeNames;
 
     std::map<const ConstantFP *, unsigned> FPConstantMap;
   public:
-    CWriter(std::ostream &o) : Out(o) {}
+    CWriter(std::ostream &o) : Out(o), TAsm(0) {}
 
     virtual const char *getPassName() const { return "C backend"; }
 
@@ -127,6 +129,8 @@ namespace {
     bool writeInstructionCast(const Instruction &I);
 
   private :
+    std::string InterpretASMConstraint(InlineAsm::ConstraintInfo& c);
+
     void lowerIntrinsics(Function &F);
 
     void printModule(Module *M);
@@ -2257,47 +2261,42 @@ void CWriter::visitCallInst(CallInst &I) {
 //This could be broken into a bunch of peices and spread accross the 
 //targets, but this information is only useful here.
 //TODO: work out platform independent constraints and factor those out
-static std::string InterpretConstraint(const std::string& target, 
-                                       InlineAsm::ConstraintInfo& c) {
+std::string CWriter::InterpretASMConstraint(InlineAsm::ConstraintInfo& c) {
 
   assert(c.Codes.size() == 1 && "Too many asm constraint codes to handle");
 
   //catch numeric constraints
   if (c.Codes[0].find_first_not_of("0123456789") >= c.Codes[0].size())
     return c.Codes[0];
-  
-  static const char* x86_table[] = {"{si}", "S",
-                                    "{di}", "D",
-                                    "{ax}", "a",
-                                    "{cx}", "c",
-                                    "q",    "q",
-                                    "r",    "r",
-                                    "m",    "m",
-                                    "{memory}", "memory",
-                                    "{flags}", "",
-                                    "{dirflag}", "",
-                                    "{fpsr}", "",
-                                    "{cc}", "cc"
-  };
 
   const char** table = 0;
-  int tbl_len = 0;
-  if (target == "i686-pc-linux-gnu") {
-    table = x86_table;
-    tbl_len = sizeof(x86_table) / sizeof(char*);
+  
+  //Grab the translation table from TargetAsmInfo if it exists
+  if (!TAsm) {
+    std::string E;
+    const TargetMachineRegistry::Entry* Match = 
+      TargetMachineRegistry::getClosestStaticTargetForModule(*TheModule, E);
+    if (Match) {
+      //Per platform Target Machines don't exist, so create it
+      // this must be done only once
+      const TargetMachine* TM = Match->CtorFn(*TheModule, "");
+      TAsm = TM->getTargetAsmInfo();
+    }
   }
-  for (int i = 0; i < tbl_len && table; i += 2)
+  if (TAsm)
+    table = TAsm->getAsmCBE();
+
+  //Search the translation table if it exists
+  for (int i = 0; table && table[i]; i += 2)
     if (c.Codes[0] == table[i])
       return table[i+1];
 
-  std::cerr << target << "\n";
-  std::cerr << c.Codes[0] << "\n";
   assert(0 && "Unknown Asm Constraint");
   return "";
 }
 
 //TODO: import logic from AsmPrinter.cpp
-static std::string gccifyAsm(const std::string& target, std::string asmstr) {
+static std::string gccifyAsm(std::string asmstr) {
   for (std::string::size_type i = 0; i != asmstr.size(); ++i)
     if (asmstr[i] == '\n')
       asmstr.replace(i, 1, "\\n");
@@ -2323,7 +2322,6 @@ static std::string gccifyAsm(const std::string& target, std::string asmstr) {
 
 void CWriter::visitInlineAsm(CallInst &CI) {
   InlineAsm* as = cast<InlineAsm>(CI.getOperand(0));
-  const std::string& target = TheModule->getTargetTriple();
   std::vector<InlineAsm::ConstraintInfo> Constraints = as->ParseConstraints();
   std::vector<std::pair<std::string, Value*> > Input;
   std::vector<std::pair<std::string, Value*> > Output;
@@ -2333,7 +2331,7 @@ void CWriter::visitInlineAsm(CallInst &CI) {
          E = Constraints.end(); I != E; ++I) {
     assert(I->Codes.size() == 1 && "Too many asm constraint codes to handle");
     std::string c = 
-      InterpretConstraint(target, *I);
+      InterpretASMConstraint(*I);
     switch(I->Type) {
     default:
       assert(0 && "Unknown asm constraint");
@@ -2362,7 +2360,7 @@ void CWriter::visitInlineAsm(CallInst &CI) {
   }
   
   //fix up the asm string for gcc
-  std::string asmstr = gccifyAsm(target, as->getAsmString());
+  std::string asmstr = gccifyAsm(as->getAsmString());
   
   Out << "__asm__ volatile (\"" << asmstr << "\"\n";
   Out << "        :";
