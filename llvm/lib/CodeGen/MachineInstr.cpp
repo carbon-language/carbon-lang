@@ -17,8 +17,8 @@
 #include "llvm/Target/TargetInstrInfo.h"
 #include "llvm/Target/MRegisterInfo.h"
 #include "llvm/Support/LeakDetector.h"
+#include "llvm/Support/Streams.h"
 #include <iostream>
-
 using namespace llvm;
 
 // Global variable holding an array of descriptors for machine instructions.
@@ -175,7 +175,7 @@ bool MachineOperand::isIdenticalTo(const MachineOperand &Other) const {
 }
 
 void MachineInstr::dump() const {
-  std::cerr << "  " << *this;
+  llvm_cerr << "  " << *this;
 }
 
 static inline void OutputReg(std::ostream &os, unsigned RegNo,

@@ -77,7 +77,7 @@ void TwoAddressInstructionPass::getAnalysisUsage(AnalysisUsage &AU) const {
 /// operands.
 ///
 bool TwoAddressInstructionPass::runOnMachineFunction(MachineFunction &MF) {
-  DEBUG(std::cerr << "Machine Function\n");
+  DOUT << "Machine Function\n";
   const TargetMachine &TM = MF.getTarget();
   const MRegisterInfo &MRI = *TM.getRegisterInfo();
   const TargetInstrInfo &TII = *TM.getInstrInfo();
@@ -85,9 +85,8 @@ bool TwoAddressInstructionPass::runOnMachineFunction(MachineFunction &MF) {
 
   bool MadeChange = false;
 
-  DEBUG(std::cerr << "********** REWRITING TWO-ADDR INSTRS **********\n");
-  DEBUG(std::cerr << "********** Function: "
-                  << MF.getFunction()->getName() << '\n');
+  DOUT << "********** REWRITING TWO-ADDR INSTRS **********\n";
+  DOUT << "********** Function: " << MF.getFunction()->getName() << '\n';
 
   for (MachineFunction::iterator mbbi = MF.begin(), mbbe = MF.end();
        mbbi != mbbe; ++mbbi) {
@@ -103,7 +102,7 @@ bool TwoAddressInstructionPass::runOnMachineFunction(MachineFunction &MF) {
 
         if (FirstTied) {
           ++NumTwoAddressInstrs;
-          DEBUG(std::cerr << '\t'; mi->print(std::cerr, &TM));
+          DOUT << '\t'; DEBUG(mi->print(std::cerr, &TM));
         }
         FirstTied = false;
 
@@ -151,12 +150,12 @@ bool TwoAddressInstructionPass::runOnMachineFunction(MachineFunction &MF) {
                      "Not a proper commutative instruction!");
               unsigned regC = mi->getOperand(3-si).getReg();
               if (LV.KillsRegister(mi, regC)) {
-                DEBUG(std::cerr << "2addr: COMMUTING  : " << *mi);
+                DOUT << "2addr: COMMUTING  : " << *mi;
                 MachineInstr *NewMI = TII.commuteInstruction(mi);
                 if (NewMI == 0) {
-                  DEBUG(std::cerr << "2addr: COMMUTING FAILED!\n");
+                  DOUT << "2addr: COMMUTING FAILED!\n";
                 } else {
-                  DEBUG(std::cerr << "2addr: COMMUTED TO: " << *NewMI);
+                  DOUT << "2addr: COMMUTED TO: " << *NewMI;
                   // If the instruction changed to commute it, update livevar.
                   if (NewMI != mi) {
                     LV.instructionChanged(mi, NewMI);  // Update live variables
@@ -184,8 +183,8 @@ bool TwoAddressInstructionPass::runOnMachineFunction(MachineFunction &MF) {
 #endif
 
               if (MachineInstr *New = TII.convertToThreeAddress(mi)) {
-                DEBUG(std::cerr << "2addr: CONVERTING 2-ADDR: " << *mi);
-                DEBUG(std::cerr << "2addr:         TO 3-ADDR: " << *New);
+                DOUT << "2addr: CONVERTING 2-ADDR: " << *mi;
+                DOUT << "2addr:         TO 3-ADDR: " << *New;
                 LV.instructionChanged(mi, New);  // Update live variables
                 mbbi->insert(mi, New);           // Insert the new inst
                 mbbi->erase(mi);                 // Nuke the old inst.
@@ -201,7 +200,7 @@ bool TwoAddressInstructionPass::runOnMachineFunction(MachineFunction &MF) {
           MRI.copyRegToReg(*mbbi, mi, regA, regB, rc);
 
           MachineBasicBlock::iterator prevMi = prior(mi);
-          DEBUG(std::cerr << "\t\tprepend:\t"; prevMi->print(std::cerr, &TM));
+          DOUT << "\t\tprepend:\t"; DEBUG(prevMi->print(std::cerr, &TM));
 
           // Update live variables for regA
           LiveVariables::VarInfo& varInfo = LV.getVarInfo(regA);
@@ -226,7 +225,7 @@ bool TwoAddressInstructionPass::runOnMachineFunction(MachineFunction &MF) {
         mi->getOperand(ti).setReg(mi->getOperand(si).getReg());
         MadeChange = true;
 
-        DEBUG(std::cerr << "\t\trewrite to:\t"; mi->print(std::cerr, &TM));
+        DOUT << "\t\trewrite to:\t"; DEBUG(mi->print(std::cerr, &TM));
       }
     }
   }

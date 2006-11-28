@@ -190,9 +190,9 @@ void RegAllocSimple::AllocateBasicBlock(MachineBasicBlock &MBB) {
       if (op.isRegister() && op.getReg() &&
           MRegisterInfo::isVirtualRegister(op.getReg())) {
         unsigned virtualReg = (unsigned) op.getReg();
-        DEBUG(std::cerr << "op: " << op << "\n");
-        DEBUG(std::cerr << "\t inst[" << i << "]: ";
-              MI->print(std::cerr, TM));
+        DOUT << "op: " << op << "\n";
+        DOUT << "\t inst[" << i << "]: ";
+        DEBUG(MI->print(std::cerr, TM));
 
         // make sure the same virtual register maps to the same physical
         // register in any given instruction
@@ -221,8 +221,7 @@ void RegAllocSimple::AllocateBasicBlock(MachineBasicBlock &MBB) {
           }
         }
         MI->getOperand(i).setReg(physReg);
-        DEBUG(std::cerr << "virt: " << virtualReg <<
-              ", phys: " << op.getReg() << "\n");
+        DOUT << "virt: " << virtualReg << ", phys: " << op.getReg() << "\n";
       }
     }
     RegClassIdx.clear();
@@ -234,7 +233,7 @@ void RegAllocSimple::AllocateBasicBlock(MachineBasicBlock &MBB) {
 /// runOnMachineFunction - Register allocate the whole function
 ///
 bool RegAllocSimple::runOnMachineFunction(MachineFunction &Fn) {
-  DEBUG(std::cerr << "Machine Function " << "\n");
+  DOUT << "Machine Function\n";
   MF = &Fn;
   TM = &MF->getTarget();
   RegInfo = TM->getRegisterInfo();
