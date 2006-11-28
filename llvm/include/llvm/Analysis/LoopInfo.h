@@ -217,6 +217,9 @@ public:
   /// the mapping in the LoopInfo class.
   void removeBlockFromLoop(BasicBlock *BB);
 
+  void print(llvm_ostream &O, unsigned Depth = 0) const {
+    if (O.stream()) print(*O.stream(), Depth);
+  }
   void print(std::ostream &O, unsigned Depth = 0) const;
   void dump() const;
 private:
@@ -280,6 +283,9 @@ public:
   virtual bool runOnFunction(Function &F);
 
   virtual void releaseMemory();
+  void print(llvm_ostream &O, const Module* = 0) const {
+    if (O.stream()) print(*O.stream());
+  }
   void print(std::ostream &O, const Module* = 0) const;
 
   virtual void getAnalysisUsage(AnalysisUsage &AU) const;

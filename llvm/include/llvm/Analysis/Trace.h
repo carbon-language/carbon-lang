@@ -18,11 +18,11 @@
 #ifndef LLVM_ANALYSIS_TRACE_H
 #define LLVM_ANALYSIS_TRACE_H
 
-#include <iosfwd>
 #include <vector>
 #include <cassert>
 
 namespace llvm {
+  class llvm_ostream;
   class BasicBlock;
   class Function;
   class Module;
@@ -106,7 +106,7 @@ public:
 
   /// print - Write trace to output stream.
   ///
-  void print (std::ostream &O) const;
+  void print (llvm_ostream &O) const;
 
   /// dump - Debugger convenience method; writes trace to standard error
   /// output stream.
