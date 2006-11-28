@@ -14,7 +14,6 @@
 #include "X86TargetAsmInfo.h"
 #include "X86TargetMachine.h"
 #include "X86Subtarget.h"
-#include <iostream>
 
 using namespace llvm;
 
@@ -22,9 +21,6 @@ static const char* x86_asm_table[] = {"{si}", "S",
                                       "{di}", "D",
                                       "{ax}", "a",
                                       "{cx}", "c",
-                                      "q",    "q",
-                                      "r",    "r",
-                                      "m",    "m",
                                       "{memory}", "memory",
                                       "{flags}", "",
                                       "{dirflag}", "",
