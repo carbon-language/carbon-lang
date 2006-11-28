@@ -172,12 +172,19 @@ bool DeclSpec::SetTypeSpecType(TST T, const char *&PrevSpec, void *TypeRep) {
   return false;
 }
 
-bool DeclSpec::SetTypeQual(TQ T, const char *&PrevSpec,
+bool DeclSpec::SetTypeQual(TQ T, SourceLocation Loc, const char *&PrevSpec,
                            const LangOptions &Lang) {
   // Duplicates turn into warnings pre-C99.
   if ((TypeQualifiers & T) && !Lang.C99)
     return BadSpecifier(T, PrevSpec);
   TypeQualifiers |= T;
+  
+  switch (T) {
+  default: assert(0 && "Unknown type qualifier!");
+  case TQ_const:    TQ_constLoc = Loc; break;
+  case TQ_restrict: TQ_restrictLoc = Loc; break;
+  case TQ_volatile: TQ_volatileLoc = Loc; break;
+  }
   return false;
 }
 

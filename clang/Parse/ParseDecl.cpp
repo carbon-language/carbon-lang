@@ -366,13 +366,16 @@ void Parser::ParseDeclarationSpecifiers(DeclSpec &DS) {
     
     // type-qualifier
     case tok::kw_const:
-      isInvalid = DS.SetTypeQual(DeclSpec::TQ_const   , PrevSpec, getLang())*2;
+      isInvalid = DS.SetTypeQual(DeclSpec::TQ_const   , Loc, PrevSpec,
+                                 getLang())*2;
       break;
     case tok::kw_volatile:
-      isInvalid = DS.SetTypeQual(DeclSpec::TQ_volatile, PrevSpec, getLang())*2;
+      isInvalid = DS.SetTypeQual(DeclSpec::TQ_volatile, Loc, PrevSpec,
+                                 getLang())*2;
       break;
     case tok::kw_restrict:
-      isInvalid = DS.SetTypeQual(DeclSpec::TQ_restrict, PrevSpec, getLang())*2;
+      isInvalid = DS.SetTypeQual(DeclSpec::TQ_restrict, Loc, PrevSpec,
+                                 getLang())*2;
       break;
       
     // function-specifier
@@ -715,6 +718,7 @@ void Parser::ParseTypeQualifierListOpt(DeclSpec &DS) {
   while (1) {
     int isInvalid = false;
     const char *PrevSpec = 0;
+    SourceLocation Loc = Tok.getLocation();
 
     switch (Tok.getKind()) {
     default:
@@ -723,13 +727,16 @@ void Parser::ParseTypeQualifierListOpt(DeclSpec &DS) {
       DS.Finish(StartLoc, Diags, getLang());
       return;
     case tok::kw_const:
-      isInvalid = DS.SetTypeQual(DeclSpec::TQ_const   , PrevSpec, getLang())*2;
+      isInvalid = DS.SetTypeQual(DeclSpec::TQ_const   , Loc, PrevSpec,
+                                 getLang())*2;
       break;
     case tok::kw_volatile:
-      isInvalid = DS.SetTypeQual(DeclSpec::TQ_volatile, PrevSpec, getLang())*2;
+      isInvalid = DS.SetTypeQual(DeclSpec::TQ_volatile, Loc, PrevSpec,
+                                 getLang())*2;
       break;
     case tok::kw_restrict:
-      isInvalid = DS.SetTypeQual(DeclSpec::TQ_restrict, PrevSpec, getLang())*2;
+      isInvalid = DS.SetTypeQual(DeclSpec::TQ_restrict, Loc, PrevSpec,
+                                 getLang())*2;
       break;
       
     case tok::kw___attribute:

@@ -121,6 +121,7 @@ private:
   // SourceLocation info.  These are null if the item wasn't specified or if
   // the setting was synthesized.
   SourceLocation StorageClassSpecLoc, SCS_threadLoc;
+  SourceLocation TQ_constLoc, TQ_restrictLoc, TQ_volatileLoc;
   SourceLocation FS_inlineLoc;
 public:  
   
@@ -162,6 +163,10 @@ public:
 
   /// getTypeQualifiers - Return a set of TQs.
   unsigned getTypeQualifiers() const { return TypeQualifiers; }
+  SourceLocation getConstSpecLoc() const { return TQ_constLoc; }
+  SourceLocation getRestrictSpecLoc() const { return TQ_restrictLoc; }
+  SourceLocation getVolatileSpecLoc() const { return TQ_volatileLoc; }
+
   
   // function-specifier
   bool isInlineSpecified() const { return FS_inline_specified; }
@@ -195,7 +200,8 @@ public:
   bool SetTypeSpecSign(TSS S, const char *&PrevSpec);
   bool SetTypeSpecType(TST T, const char *&PrevSpec, void *TypenameRep = 0);
   
-  bool SetTypeQual(TQ T, const char *&PrevSpec, const LangOptions &Lang);
+  bool SetTypeQual(TQ T, SourceLocation Loc, const char *&PrevSpec,
+                   const LangOptions &Lang);
   
   bool SetFunctionSpecInline(SourceLocation Loc, const char *&PrevSpec);
   
