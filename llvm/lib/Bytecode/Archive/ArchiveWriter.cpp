@@ -17,9 +17,8 @@
 #include "llvm/System/Signals.h"
 #include "llvm/System/Process.h"
 #include <fstream>
-#include <iostream>
+#include <ostream>
 #include <iomanip>
-
 using namespace llvm;
 
 // Write an integer using variable bit rate encoding. This saves a few bytes
