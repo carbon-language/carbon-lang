@@ -21,10 +21,11 @@
 #include "llvm/Bytecode/Reader.h"
 #include "llvm/Assembly/PrintModulePass.h"
 #include "llvm/Support/CommandLine.h"
+#include "llvm/Support/Streams.h"
 #include "llvm/System/Signals.h"
+#include <iostream>
 #include <fstream>
 #include <memory>
-
 using namespace llvm;
 
 static cl::opt<std::string>
@@ -47,11 +48,11 @@ int main(int argc, char **argv) {
 
     std::auto_ptr<Module> M(ParseBytecodeFile(InputFilename, &ErrorMessage));
     if (M.get() == 0) {
-      std::cerr << argv[0] << ": ";
+      llvm_cerr << argv[0] << ": ";
       if (ErrorMessage.size())
-        std::cerr << ErrorMessage << "\n";
+        llvm_cerr << ErrorMessage << "\n";
       else
-        std::cerr << "bytecode didn't read correctly.\n";
+        llvm_cerr << "bytecode didn't read correctly.\n";
       return 1;
     }
 
@@ -59,7 +60,7 @@ int main(int argc, char **argv) {
       if (OutputFilename != "-") { // Not stdout?
         if (!Force && std::ifstream(OutputFilename.c_str())) {
           // If force is not specified, make sure not to overwrite a file!
-          std::cerr << argv[0] << ": error opening '" << OutputFilename
+          llvm_cerr << argv[0] << ": error opening '" << OutputFilename
                     << "': file exists! Sending to standard output.\n";
         } else {
           Out = new std::ofstream(OutputFilename.c_str());
@@ -80,7 +81,7 @@ int main(int argc, char **argv) {
 
         if (!Force && std::ifstream(OutputFilename.c_str())) {
           // If force is not specified, make sure not to overwrite a file!
-          std::cerr << argv[0] << ": error opening '" << OutputFilename
+          llvm_cerr << argv[0] << ": error opening '" << OutputFilename
                     << "': file exists! Sending to standard output.\n";
         } else {
           Out = new std::ofstream(OutputFilename.c_str());
@@ -93,14 +94,15 @@ int main(int argc, char **argv) {
     }
 
     if (!Out->good()) {
-      std::cerr << argv[0] << ": error opening " << OutputFilename
+      llvm_cerr << argv[0] << ": error opening " << OutputFilename
                 << ": sending to stdout instead!\n";
       Out = &std::cout;
     }
 
     // All that llvm-dis does is write the assembly to a file.
     PassManager Passes;
-    Passes.add(new PrintModulePass(Out));
+    llvm_ostream L(*Out);
+    Passes.add(new PrintModulePass(&L));
     Passes.run(*M.get());
 
     if (Out != &std::cout) {
@@ -109,9 +111,9 @@ int main(int argc, char **argv) {
     }
     return 0;
   } catch (const std::string& msg) {
-    std::cerr << argv[0] << ": " << msg << "\n";
+    llvm_cerr << argv[0] << ": " << msg << "\n";
   } catch (...) {
-    std::cerr << argv[0] << ": Unexpected unknown exception occurred.\n";
+    llvm_cerr << argv[0] << ": Unexpected unknown exception occurred.\n";
   }
   return 1;
 }

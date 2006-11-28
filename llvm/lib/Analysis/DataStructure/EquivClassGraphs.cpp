@@ -26,7 +26,6 @@
 #include "llvm/ADT/Statistic.h"
 #include "llvm/ADT/EquivalenceClasses.h"
 #include "llvm/ADT/STLExtras.h"
-#include <iostream>
 using namespace llvm;
 
 namespace {
@@ -91,7 +90,7 @@ bool EquivClassGraphs::runOnModule(Module &M) {
   if (MainFunc && !MainFunc->isExternal()) {
     processSCC(getOrCreateGraph(*MainFunc), Stack, NextID, ValMap);
   } else {
-    std::cerr << "Fold Graphs: No 'main' function found!\n";
+    llvm_cerr << "Fold Graphs: No 'main' function found!\n";
   }
 
   for (Module::iterator I = M.begin(), E = M.end(); I != E; ++I)
@@ -173,8 +172,8 @@ void EquivClassGraphs::buildIndirectFunctionSets(Module &M) {
       FuncECs.insert(I->second);        // -- Make sure function has equiv class
       FirstFunc = I->second;            // -- First callee at this site
     } else {                            // Else indirect call
-      // DEBUG(std::cerr << "CALLEE: " << I->second->getName()
-      //       << " from : " << I->first);
+      // DOUT << "CALLEE: " << I->second->getName()
+      //      << " from : " << I->first;
       if (I->first != LastInst) {
         // This is the first callee from this call site.
         LastInst = I->first;

@@ -23,6 +23,7 @@
 #include "llvm/Support/PassNameParser.h"
 #include "llvm/System/Signals.h"
 #include "llvm/Support/PluginLoader.h"
+#include "llvm/Support/Streams.h"
 #include "llvm/Support/SystemUtils.h"
 #include "llvm/Support/Timer.h"
 #include "llvm/LinkAllPasses.h"
@@ -84,9 +85,9 @@ struct ModulePassPrinter : public ModulePass {
 
   virtual bool runOnModule(Module &M) {
     if (!Quiet) {
-      std::cout << "Printing analysis '" << PassToPrint->getPassName() 
+      llvm_cout << "Printing analysis '" << PassToPrint->getPassName() 
                 << "':\n";
-      getAnalysisID<Pass>(PassToPrint).print(std::cout, &M);
+      getAnalysisID<Pass>(PassToPrint).print(llvm_cout, &M);
     }
 
     // Get and print pass...
@@ -107,11 +108,11 @@ struct FunctionPassPrinter : public FunctionPass {
 
   virtual bool runOnFunction(Function &F) {
     if (!Quiet) {
-      std::cout << "Printing analysis '" << PassToPrint->getPassName()
+      llvm_cout << "Printing analysis '" << PassToPrint->getPassName()
 		<< "' for function '" << F.getName() << "':\n";
     }
     // Get and print pass...
-    getAnalysisID<Pass>(PassToPrint).print(std::cout, F.getParent());
+    getAnalysisID<Pass>(PassToPrint).print(llvm_cout, F.getParent());
     return false;
   }
 
@@ -129,13 +130,13 @@ struct BasicBlockPassPrinter : public BasicBlockPass {
 
   virtual bool runOnBasicBlock(BasicBlock &BB) {
     if (!Quiet) {
-      std::cout << "Printing Analysis info for BasicBlock '" << BB.getName()
+      llvm_cout << "Printing Analysis info for BasicBlock '" << BB.getName()
 		<< "': Pass " << PassToPrint->getPassName() << ":\n";
     }
 
     // Get and print pass...
     getAnalysisID<Pass>(PassToPrint).print(
-      std::cout, BB.getParent()->getParent());
+      llvm_cout, BB.getParent()->getParent());
     return false;
   }
 
@@ -168,11 +169,11 @@ int main(int argc, char **argv) {
     // Load the input module...
     std::auto_ptr<Module> M(ParseBytecodeFile(InputFilename, &ErrorMessage));
     if (M.get() == 0) {
-      std::cerr << argv[0] << ": ";
+      llvm_cerr << argv[0] << ": ";
       if (ErrorMessage.size())
-        std::cerr << ErrorMessage << "\n";
+        llvm_cerr << ErrorMessage << "\n";
       else
-        std::cerr << "bytecode didn't read correctly.\n";
+        llvm_cerr << "bytecode didn't read correctly.\n";
       return 1;
     }
 
@@ -182,7 +183,7 @@ int main(int argc, char **argv) {
     if (OutputFilename != "-") {
       if (!Force && std::ifstream(OutputFilename.c_str())) {
         // If force is not specified, make sure not to overwrite a file!
-        std::cerr << argv[0] << ": error opening '" << OutputFilename
+        llvm_cerr << argv[0] << ": error opening '" << OutputFilename
                   << "': file exists!\n"
                   << "Use -f command line argument to force output\n";
         return 1;
@@ -192,7 +193,7 @@ int main(int argc, char **argv) {
       Out = new std::ofstream(OutputFilename.c_str(), io_mode);
 
       if (!Out->good()) {
-        std::cerr << argv[0] << ": error opening " << OutputFilename << "!\n";
+        llvm_cerr << argv[0] << ": error opening " << OutputFilename << "!\n";
         return 1;
       }
 
@@ -226,7 +227,7 @@ int main(int argc, char **argv) {
         assert(target.get() && "Could not allocate target machine!");
         P = PassInf->getTargetCtor()(*target.get());
       } else
-        std::cerr << argv[0] << ": cannot create pass: "
+        llvm_cerr << argv[0] << ": cannot create pass: "
                   << PassInf->getPassName() << "\n";
       if (P) {
         Passes.add(P);
@@ -242,7 +243,7 @@ int main(int argc, char **argv) {
       }
       
       if (PrintEachXForm)
-        Passes.add(new PrintModulePass(&std::cerr));
+        Passes.add(new PrintModulePass(&llvm_cerr));
     }
 
     // Check that the module is well formed on completion of optimization
@@ -259,9 +260,9 @@ int main(int argc, char **argv) {
     return 0;
 
   } catch (const std::string& msg) {
-    std::cerr << argv[0] << ": " << msg << "\n";
+    llvm_cerr << argv[0] << ": " << msg << "\n";
   } catch (...) {
-    std::cerr << argv[0] << ": Unexpected unknown exception occurred.\n";
+    llvm_cerr << argv[0] << ": Unexpected unknown exception occurred.\n";
   }
   return 1;
 }

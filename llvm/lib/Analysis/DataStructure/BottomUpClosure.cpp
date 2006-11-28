@@ -13,6 +13,7 @@
 // applications like alias analysis.
 //
 //===----------------------------------------------------------------------===//
+
 #define DEBUG_TYPE "bu_dsa"
 #include "llvm/Analysis/DataStructure/DataStructure.h"
 #include "llvm/Analysis/DataStructure/DSGraph.h"
@@ -22,7 +23,6 @@
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/Timer.h"
-#include <iostream>
 using namespace llvm;
 
 namespace {
@@ -501,7 +501,7 @@ DSGraph &BUDataStructures::CreateGraphForExternalFunction(const Function &Fn) {
     DSG->getNodeForValue(F->arg_begin()).mergeWith(N);
 
   } else {
-    std::cerr << "Unrecognized external function: " << F->getName() << "\n";
+    llvm_cerr << "Unrecognized external function: " << F->getName() << "\n";
     abort();
   }
 
@@ -588,21 +588,21 @@ void BUDataStructures::calculateGraph(DSGraph &Graph) {
         ++NumBUInlines;
       } else {
         if (!Printed)
-          std::cerr << "In Fns: " << Graph.getFunctionNames() << "\n";
-        std::cerr << "  calls " << CalledFuncs.size()
+          llvm_cerr << "In Fns: " << Graph.getFunctionNames() << "\n";
+        llvm_cerr << "  calls " << CalledFuncs.size()
                   << " fns from site: " << CS.getCallSite().getInstruction()
                   << "  " << *CS.getCallSite().getInstruction();
-        std::cerr << "   Fns =";
+        llvm_cerr << "   Fns =";
         unsigned NumPrinted = 0;
 
         for (std::vector<Function*>::iterator I = CalledFuncs.begin(),
                E = CalledFuncs.end(); I != E; ++I) {
-          if (NumPrinted++ < 8) std::cerr << " " << (*I)->getName();
+          if (NumPrinted++ < 8) llvm_cerr << " " << (*I)->getName();
 
           // Add the call edges to the call graph.
           ActualCallees.insert(std::make_pair(TheCall, *I));
         }
-        std::cerr << "\n";
+        llvm_cerr << "\n";
 
         // See if we already computed a graph for this set of callees.
         std::sort(CalledFuncs.begin(), CalledFuncs.end());
@@ -645,7 +645,7 @@ void BUDataStructures::calculateGraph(DSGraph &Graph) {
           // Clean up the final graph!
           GI->removeDeadNodes(DSGraph::KeepUnreachableGlobals);
         } else {
-          std::cerr << "***\n*** RECYCLED GRAPH ***\n***\n";
+          llvm_cerr << "***\n*** RECYCLED GRAPH ***\n***\n";
         }
 
         GI = IndCallGraph.first;
@@ -685,7 +685,7 @@ void BUDataStructures::calculateGraph(DSGraph &Graph) {
          E = MainSM.global_end(); I != E; ++I)
     RC.getClonedNH(MainSM[*I]);
 
-  //Graph.writeGraphToFile(std::cerr, "bu_" + F.getName());
+  //Graph.writeGraphToFile(llvm_cerr, "bu_" + F.getName());
 }
 
 static const Function *getFnForValue(const Value *V) {
@@ -746,8 +746,8 @@ void BUDataStructures::copyValue(Value *From, Value *To) {
     return;
   }
 
-  std::cerr << *From;
-  std::cerr << *To;
+  llvm_cerr << *From;
+  llvm_cerr << *To;
   assert(0 && "Do not know how to copy this yet!");
   abort();
 }

@@ -17,8 +17,9 @@
 #include "llvm/Instructions.h"
 #include "llvm/Pass.h"
 #include "llvm/Support/InstVisitor.h"
+#include "llvm/Support/Streams.h"
 #include "llvm/ADT/Statistic.h"
-#include <iostream>
+#include <ostream>
 using namespace llvm;
 
 namespace {
@@ -91,7 +92,7 @@ void DSGraphStats::countCallees(const Function& F) {
         totalNumCallees  += Callees.size();
         ++numIndirectCalls;
       } else
-        std::cerr << "WARNING: No callee in Function '" << F.getName()
+        llvm_cerr << "WARNING: No callee in Function '" << F.getName()
                   << "' at call: \n"
                   << *I->getCallSite().getInstruction();
     }
@@ -100,7 +101,7 @@ void DSGraphStats::countCallees(const Function& F) {
   NumIndirectCalls += numIndirectCalls;
 
   if (numIndirectCalls)
-    std::cout << "  In function " << F.getName() << ":  "
+    llvm_cout << "  In function " << F.getName() << ":  "
               << (totalNumCallees / (double) numIndirectCalls)
               << " average callees per indirect call\n";
 }

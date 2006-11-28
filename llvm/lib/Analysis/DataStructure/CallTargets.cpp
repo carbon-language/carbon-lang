@@ -23,9 +23,9 @@
 #include "llvm/Analysis/DataStructure/DSGraph.h"
 #include "llvm/Analysis/DataStructure/CallTargets.h"
 #include "llvm/ADT/Statistic.h"
-#include <iostream>
+#include "llvm/Support/Streams.h"
+#include <ostream>
 #include "llvm/Constants.h"
-
 using namespace llvm;
 
 namespace {
@@ -58,7 +58,7 @@ void CallTargetFinder::findIndTargets(Module &M)
               } 
               if (N->isComplete() && !IndMap[cs].size()) {
                 ++CompleteEmpty;
-                std::cerr << "Call site empty: '"
+                llvm_cerr << "Call site empty: '"
                 << cs.getInstruction()->getName() 
                           << "' In '"
                 << cs.getInstruction()->getParent()->getParent()->getName()
