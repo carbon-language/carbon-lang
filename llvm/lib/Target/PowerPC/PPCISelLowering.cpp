@@ -1086,6 +1086,7 @@ static SDOperand LowerFORMAL_ARGUMENTS(SDOperand Op, SelectionDAG &DAG,
   
   MVT::ValueType PtrVT = DAG.getTargetLoweringInfo().getPointerTy();
   bool isPPC64 = PtrVT == MVT::i64;
+  unsigned PtrByteSize = isPPC64 ? 8 : 4;
 
   unsigned ArgOffset = PPCFrameInfo::getLinkageSize(isPPC64);
   
@@ -1128,7 +1129,7 @@ static SDOperand LowerFORMAL_ARGUMENTS(SDOperand Op, SelectionDAG &DAG,
     default: assert(0 && "Unhandled argument type!");
     case MVT::i32:
       // All int arguments reserve stack space.
-      ArgOffset += isPPC64 ? 8 : 4;
+      ArgOffset += PtrByteSize;
 
       if (GPR_idx != Num_GPR_Regs) {
         unsigned VReg = RegMap->createVirtualRegister(&PPC::GPRCRegClass);
@@ -1266,6 +1267,7 @@ static SDNode *isBLACompatibleAddress(SDOperand Op, SelectionDAG &DAG) {
   return DAG.getConstant((int)C->getValue() >> 2, MVT::i32).Val;
 }
 
+#include <iostream>
 
 static SDOperand LowerCALL(SDOperand Op, SelectionDAG &DAG) {
   SDOperand Chain = Op.getOperand(0);
@@ -1287,8 +1289,11 @@ static SDOperand LowerCALL(SDOperand Op, SelectionDAG &DAG) {
   unsigned NumBytes = PPCFrameInfo::getLinkageSize(isPPC64);
   
   // Add up all the space actually used.
-  for (unsigned i = 0; i != NumOps; ++i)
-    NumBytes += MVT::getSizeInBits(Op.getOperand(5+2*i).getValueType())/8;
+  for (unsigned i = 0; i != NumOps; ++i) {
+    unsigned ArgSize =MVT::getSizeInBits(Op.getOperand(5+2*i).getValueType())/8;
+    ArgSize = std::max(ArgSize, PtrByteSize);
+    NumBytes += ArgSize;
+  }
 
   // The prolog code of the callee may store up to 8 GPR argument registers to
   // the stack, allowing va_start to index over them in memory if its varargs.
