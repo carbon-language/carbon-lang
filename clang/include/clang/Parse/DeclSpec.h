@@ -36,10 +36,7 @@ public:
     SCS_static,
     SCS_auto,
     SCS_register
-  } StorageClassSpec : 3;
-  
-  // storage-class-specifier
-  bool SCS_thread_specified : 1;
+  };
   
   // type-specifier
   enum TSW {
@@ -47,19 +44,19 @@ public:
     TSW_short,
     TSW_long,
     TSW_longlong
-  } TypeSpecWidth : 2;
+  };
   
   enum TSC {
     TSC_unspecified,
     TSC_imaginary,
     TSC_complex
-  } TypeSpecComplex : 2;
+  };
   
   enum TSS {
     TSS_unspecified,
     TSS_signed,
     TSS_unsigned
-  } TypeSpecSign : 2;
+  };
   
   enum TST {
     TST_unspecified,
@@ -76,7 +73,7 @@ public:
     TST_union,
     TST_struct,
     TST_typedef
-  } TypeSpecType : 4;
+  };
   
   // type-qualifiers
   enum TQ {   // NOTE: These flags must be kept in sync with TypeRef::TQ.
@@ -85,7 +82,31 @@ public:
     TQ_restrict    = 2,
     TQ_volatile    = 4
   };
-  unsigned TypeQualifiers : 3;  // Bitwise OR of typequals.
+
+  /// ParsedSpecifiers - Flags to query which specifiers were applied.  This is
+  /// returned by getParsedSpecifiers.
+  enum ParsedSpecifiers {
+    PQ_None                  = 0,
+    PQ_StorageClassSpecifier = 1,
+    PQ_TypeSpecifier         = 2,
+    PQ_TypeQualifier         = 4,
+    PQ_FunctionSpecifier     = 8
+  };
+  
+  
+
+  // storage-class-specifier
+  SCS StorageClassSpec : 3;
+  bool SCS_thread_specified : 1;
+
+  // type-specifier
+  TSW TypeSpecWidth : 2;
+  TSC TypeSpecComplex : 2;
+  TSS TypeSpecSign : 2;
+  TST TypeSpecType : 4;
+  
+  // type-qualifiers
+  unsigned TypeQualifiers : 3;  // Bitwise OR of TQ.
   
   // function-specifier
   bool FS_inline_specified : 1;
@@ -97,15 +118,6 @@ public:
   
   // attributes.
   // FIXME: implement declspec attributes.
-  
-  // Flags to query which specifiers were applied.
-  enum ParsedSpecifiers {
-    PQ_None                  = 0,
-    PQ_StorageClassSpecifier = 1,
-    PQ_TypeSpecifier         = 2,
-    PQ_TypeQualifier         = 4,
-    PQ_FunctionSpecifier     = 8
-  };
   
   DeclSpec()
     : StorageClassSpec(SCS_unspecified),
