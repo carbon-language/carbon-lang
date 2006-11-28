@@ -18,8 +18,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "llvm/ADT/STLExtras.h"
 #include "llvm/CodeGen/LiveInterval.h"
+#include "llvm/ADT/STLExtras.h"
 #include "llvm/Support/Streams.h"
 #include "llvm/Target/MRegisterInfo.h"
 #include <algorithm>
