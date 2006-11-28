@@ -75,7 +75,8 @@ TargetAsmInfo::TargetAsmInfo() :
   DwarfLocSection(".debug_loc"),
   DwarfARangesSection(".debug_aranges"),
   DwarfRangesSection(".debug_ranges"),
-  DwarfMacInfoSection(".debug_macinfo") {
+  DwarfMacInfoSection(".debug_macinfo"),
+  AsmTransCBE(0) {
 }
 
 TargetAsmInfo::~TargetAsmInfo() {

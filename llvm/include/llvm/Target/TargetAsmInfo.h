@@ -275,6 +275,10 @@ namespace llvm {
     ///
     const char *DwarfMacInfoSection; // Defaults to ".debug_macinfo".
 
+    //===--- CBE Asm Translation Table -----------------------------------===//
+
+    const char** AsmTransCBE; // Defaults to empty
+
   public:
     TargetAsmInfo();
     virtual ~TargetAsmInfo();
@@ -456,6 +460,9 @@ namespace llvm {
     }
     const char *getDwarfMacInfoSection() const {
       return DwarfMacInfoSection;
+    }
+    const char** getAsmCBE() const {
+      return AsmTransCBE;
     }
   };
 }
