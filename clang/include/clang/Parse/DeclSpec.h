@@ -103,13 +103,13 @@ public:
   TSS TypeSpecSign : 2;
   TST TypeSpecType : 4;
   
+private:
+    
   // type-qualifiers
   unsigned TypeQualifiers : 3;  // Bitwise OR of TQ.
   
   // function-specifier
   bool FS_inline_specified : 1;
-  
-private:  
   
   // TypenameRep - If TypeSpecType == TST_typedef, this contains the
   // representation for the typedef.
@@ -135,6 +135,11 @@ public:
   SCS getStorageClassSpec() const { return StorageClassSpec; }
   bool isThreadSpecified() const { return SCS_thread_specified; }
   
+  void ClearStorageClassSpecs() {
+    StorageClassSpec     = DeclSpec::SCS_unspecified;
+    SCS_thread_specified = false;
+  }
+  
   // type-specifier
   TSW getTypeSpecWidth() const { return TypeSpecWidth; }
   TSC getTypeSpecComplex() const { return TypeSpecComplex; }
@@ -149,6 +154,9 @@ public:
   
   // function-specifier
   bool isInlineSpecified() const { return FS_inline_specified; }
+  void ClearFunctionSpecs() {
+    FS_inline_specified = false;
+  }
   
   /// hasTypeSpecifier - Return true if any type-specifier has been found.
   bool hasTypeSpecifier() const {
@@ -174,6 +182,8 @@ public:
   bool SetTypeSpecType(TST T, const char *&PrevSpec, void *TypenameRep = 0);
   
   bool SetTypeQual(TQ T, const char *&PrevSpec, const LangOptions &Lang);
+  
+  bool SetFunctionSpecInline(const char *&PrevSpec);
   
   /// Finish - This does final analysis of the declspec, issuing diagnostics for
   /// things like "_Imaginary" (lacking an FP type).  After calling this method,

@@ -97,7 +97,7 @@ TypeRef Sema::GetTypeForDeclarator(Declarator &D, Scope *S) {
   if (T.isNull()) return T;
   
   // Apply const/volatile/restrict qualifiers to T.
-  T = T.getQualifiedType(D.getDeclSpec().TypeQualifiers);
+  T = T.getQualifiedType(D.getDeclSpec().getTypeQualifiers());
   
   // Walk the DeclTypeInfo, building the recursive type as we go.  DeclTypeInfos
   // are ordered from the identifier out, which is opposite of what we want :).

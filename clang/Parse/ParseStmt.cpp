@@ -716,9 +716,9 @@ Parser::StmtResult Parser::ParseAsmStatement() {
   ParseTypeQualifierListOpt(DS);
   
   // GNU asms accept, but warn, about type-qualifiers other than volatile.
-  if (DS.TypeQualifiers & DeclSpec::TQ_const)
+  if (DS.getTypeQualifiers() & DeclSpec::TQ_const)
     Diag(Loc, diag::w_asm_qualifier_ignored, "const");
-  if (DS.TypeQualifiers & DeclSpec::TQ_restrict)
+  if (DS.getTypeQualifiers() & DeclSpec::TQ_restrict)
     Diag(Loc, diag::w_asm_qualifier_ignored, "restrict");
   
   // Remember if this was a volatile asm.

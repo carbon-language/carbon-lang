@@ -166,6 +166,13 @@ bool DeclSpec::SetTypeQual(TQ T, const char *&PrevSpec,
   return false;
 }
 
+bool DeclSpec::SetFunctionSpecInline(const char *&PrevSpec) {
+  // 'inline inline' is ok.
+  FS_inline_specified = true;
+  return false;
+}
+
+
 /// Finish - This does final analysis of the declspec, rejecting things like
 /// "_Imaginary" (lacking an FP type).  This returns a diagnostic to issue or
 /// diag::NUM_DIAGNOSTICS if there is no error.  After calling this method,

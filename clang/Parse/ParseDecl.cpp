@@ -187,13 +187,14 @@ void Parser::ParseSpecifierQualifierList(DeclSpec &DS) {
   
   if (Specs & DeclSpec::PQ_StorageClassSpecifier) {
     Diag(Loc, diag::err_typename_invalid_storageclass);
+    // FIXME: better loc info for this!
     // Remove storage class.
-    DS.StorageClassSpec     = DeclSpec::SCS_unspecified;
-    DS.SCS_thread_specified = false;
+    DS.ClearStorageClassSpecs();
   }
   if (Specs & DeclSpec::PQ_FunctionSpecifier) {
+    // FIXME: better loc info for this!
     Diag(Loc, diag::err_typename_invalid_functionspec);
-    DS.FS_inline_specified = false;
+    DS.ClearFunctionSpecs();
   }
 }
 
@@ -374,8 +375,7 @@ void Parser::ParseDeclarationSpecifiers(DeclSpec &DS) {
       
     // function-specifier
     case tok::kw_inline:
-      // 'inline inline' is ok.
-      DS.FS_inline_specified = true;
+      isInvalid = DS.SetFunctionSpecInline(PrevSpec);
       break;
     }
     // If the specifier combination wasn't legal, issue a diagnostic.
@@ -779,7 +779,7 @@ void Parser::ParseDeclaratorInternal(Declarator &D) {
   ParseDeclaratorInternal(D);
 
   // Remember that we parsed a pointer type, and remember the type-quals.
-  D.AddTypeInfo(DeclaratorTypeInfo::getPointer(DS.TypeQualifiers, Loc));
+  D.AddTypeInfo(DeclaratorTypeInfo::getPointer(DS.getTypeQualifiers(), Loc));
 }
 
 
@@ -1105,7 +1105,7 @@ void Parser::ParseBracketDeclarator(Declarator &D) {
   }
   
   // Remember that we parsed a pointer type, and remember the type-quals.
-  D.AddTypeInfo(DeclaratorTypeInfo::getArray(DS.TypeQualifiers,
+  D.AddTypeInfo(DeclaratorTypeInfo::getArray(DS.getTypeQualifiers(),
                                              StaticLoc.isValid(), isStar,
                                              NumElements.Val, StartLoc));
 }
