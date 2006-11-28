@@ -730,3 +730,23 @@ to avoid the copy.  In fact, the existing two-address stuff would do this
 except that mul isn't a commutative 2-addr instruction.  I guess this has
 to be done at isel time based on the #uses to mul?
 
+//===---------------------------------------------------------------------===//
+
+Make sure the instruction which starts a loop does not cross a cacheline
+boundary. This requires knowning the exact length of each machine instruction.
+That is somewhat complicated, but doable. Example 256.bzip2:
+
+In the new trace, the hot loop has an instruction which crosses a cacheline
+boundary.  In addition to potential cache misses, this can't help decoding as I
+imagine there has to be some kind of complicated decoder reset and realignment
+to grab the bytes from the next cacheline.
+
+532  532 0x3cfc movb     (1809(%esp, %esi), %bl   <<<--- spans 2 64 byte lines
+942  942 0x3d03 movl     %dh, (1809(%esp, %esi)                                                                          
+937  937 0x3d0a incl     %esi                           
+3    3   0x3d0b cmpb     %bl, %dl                                               
+27   27  0x3d0d jnz      0x000062db <main+11707>
+
+//===---------------------------------------------------------------------===//
+
+In c99 mode, the preprocessor doesn't like assembly comments like #TRUNCATE.
