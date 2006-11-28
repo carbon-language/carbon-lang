@@ -253,10 +253,7 @@ void Parser::ParseDeclarationSpecifiers(DeclSpec &DS) {
       // This identifier can only be a typedef name if we haven't already seen
       // a type-specifier.  Without this check we misparse:
       //  typedef int X; struct Y { short X; };  as 'short int'.
-      if (DS.TypeSpecType  == DeclSpec::TST_unspecified &&
-          DS.TypeSpecWidth == DeclSpec::TSW_unspecified &&
-          DS.TypeSpecComplex == DeclSpec::TSC_unspecified &&
-          DS.TypeSpecSign == DeclSpec::TSS_unspecified) {
+      if (!DS.hasTypeSpecifier()) {
         // It has to be available as a typedef too!
         if (void *TypeRep = Actions.isTypeName(*Tok.getIdentifierInfo(),
                                                CurScope)) {
@@ -990,7 +987,7 @@ void Parser::ParseParenDeclarator(Declarator &D) {
         ParseAttributes();
       
       // Verify C99 6.7.5.3p2: The only SCS allowed is 'register'.
-      switch (DS.StorageClassSpec) {
+      switch (DS.getStorageClassSpec()) {
       case DeclSpec::SCS_unspecified:
       case DeclSpec::SCS_register:
         break;

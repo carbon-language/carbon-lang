@@ -28,10 +28,7 @@ unsigned DeclSpec::getParsedSpecifiers() const {
   if (TypeQualifiers   != TQ_unspecified)
     Res |= PQ_TypeQualifier;
   
-  if (TypeSpecWidth    != TSW_unspecified ||
-      TypeSpecComplex  != TSC_unspecified ||
-      TypeSpecSign     != TSS_unspecified ||
-      TypeSpecType     != TST_unspecified)
+  if (hasTypeSpecifier())
     Res |= PQ_TypeSpecifier;
   
   if (FS_inline_specified)

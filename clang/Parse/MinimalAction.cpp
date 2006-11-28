@@ -25,7 +25,7 @@ struct TypeNameInfo {
   
   TypeNameInfo(bool istypename, TypeNameInfo *prev) {
     isTypeName = istypename;
-	Prev = prev;
+    Prev = prev;
   }
 };
 
@@ -52,7 +52,8 @@ MinimalAction::ParseDeclarator(Scope *S, Declarator &D, ExprTy *Init,
   if (II == 0) return 0;
   
   TypeNameInfo *weCurrentlyHaveTypeInfo = II->getFETokenInfo<TypeNameInfo>();
-  bool isTypeName = D.getDeclSpec().StorageClassSpec == DeclSpec::SCS_typedef;
+  bool isTypeName =
+    D.getDeclSpec().getStorageClassSpec() == DeclSpec::SCS_typedef;
 
   // this check avoids creating TypeNameInfo objects for the common case.
   // It does need to handle the uncommon case of shadowing a typedef name with a 

@@ -77,10 +77,10 @@ static TypeRef ConvertDeclSpecToType(const DeclSpec &DS, ASTContext &Ctx) {
 //case DeclSpec::TST_union:
 //case DeclSpec::TST_struct:
   case DeclSpec::TST_typedef: {
-    Decl *D = (Decl *)DS.TypenameRep;
+    Decl *D = (Decl *)DS.getTypenameRep();
     assert(D && "Didn't get a decl for a typedef?");
-    assert(DS.TypeSpecWidth == 0 && DS.TypeSpecComplex == 0 &&
-           DS.TypeSpecSign == 0 &&
+    assert(DS.getTypeSpecWidth() == 0 && DS.getTypeSpecComplex() == 0 &&
+           DS.getTypeSpecSign() == 0 &&
            "Can't handle qualifiers on typedef names yet!");
     // TypeQuals handled by caller.
     return Ctx.getTypeDeclType(cast<TypedefDecl>(D));

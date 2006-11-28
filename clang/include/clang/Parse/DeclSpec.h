@@ -93,8 +93,6 @@ public:
     PQ_FunctionSpecifier     = 8
   };
   
-  
-
   // storage-class-specifier
   SCS StorageClassSpec : 3;
   bool SCS_thread_specified : 1;
@@ -111,6 +109,7 @@ public:
   // function-specifier
   bool FS_inline_specified : 1;
   
+private:  
   
   // TypenameRep - If TypeSpecType == TST_typedef, this contains the
   // representation for the typedef.
@@ -118,6 +117,7 @@ public:
   
   // attributes.
   // FIXME: implement declspec attributes.
+public:  
   
   DeclSpec()
     : StorageClassSpec(SCS_unspecified),
@@ -130,6 +130,34 @@ public:
       FS_inline_specified(false),
       TypenameRep(0) {
   }
+  
+  // storage-class-specifier
+  SCS getStorageClassSpec() const { return StorageClassSpec; }
+  bool isThreadSpecified() const { return SCS_thread_specified; }
+  
+  // type-specifier
+  TSW getTypeSpecWidth() const { return TypeSpecWidth; }
+  TSC getTypeSpecComplex() const { return TypeSpecComplex; }
+  TSS getTypeSpecSign() const { return TypeSpecSign; }
+  TST getTypeSpecType() const { return TypeSpecType; }
+  void *getTypenameRep() const { return TypenameRep; }
+  
+  // type-qualifiers
+
+  /// getTypeQualifiers - Return a set of TQs.
+  unsigned getTypeQualifiers() const { return TypeQualifiers; }
+  
+  // function-specifier
+  bool isInlineSpecified() const { return FS_inline_specified; }
+  
+  /// hasTypeSpecifier - Return true if any type-specifier has been found.
+  bool hasTypeSpecifier() const {
+    return getTypeSpecType() != DeclSpec::TST_unspecified ||
+           getTypeSpecWidth() != DeclSpec::TSW_unspecified ||
+           getTypeSpecComplex() != DeclSpec::TSC_unspecified ||
+           getTypeSpecSign() != DeclSpec::TSS_unspecified;
+  }
+  
   
   /// getParsedSpecifiers - Return a bitmask of which flavors of specifiers this
   /// DeclSpec includes.
