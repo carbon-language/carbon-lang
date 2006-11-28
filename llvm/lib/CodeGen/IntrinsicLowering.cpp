@@ -11,14 +11,13 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "llvm/CodeGen/IntrinsicLowering.h"
 #include "llvm/Constants.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/Module.h"
 #include "llvm/Instructions.h"
 #include "llvm/Type.h"
-#include <iostream>
-
+#include "llvm/CodeGen/IntrinsicLowering.h"
+#include "llvm/Support/Streams.h"
 using namespace llvm;
 
 template <class ArgIt>
@@ -275,11 +274,11 @@ void IntrinsicLowering::LowerIntrinsicCall(CallInst *CI) {
 
   switch (Callee->getIntrinsicID()) {
   case Intrinsic::not_intrinsic:
-    std::cerr << "Cannot lower a call to a non-intrinsic function '"
+    llvm_cerr << "Cannot lower a call to a non-intrinsic function '"
               << Callee->getName() << "'!\n";
     abort();
   default:
-    std::cerr << "Error: Code generator does not support intrinsic function '"
+    llvm_cerr << "Error: Code generator does not support intrinsic function '"
               << Callee->getName() << "'!\n";
     abort();
 
@@ -357,9 +356,9 @@ void IntrinsicLowering::LowerIntrinsicCall(CallInst *CI) {
   case Intrinsic::stackrestore: {
     static bool Warned = false;
     if (!Warned)
-      std::cerr << "WARNING: this target does not support the llvm.stack"
-       << (Callee->getIntrinsicID() == Intrinsic::stacksave ?
-           "save" : "restore") << " intrinsic.\n";
+      llvm_cerr << "WARNING: this target does not support the llvm.stack"
+                << (Callee->getIntrinsicID() == Intrinsic::stacksave ?
+                    "save" : "restore") << " intrinsic.\n";
     Warned = true;
     if (Callee->getIntrinsicID() == Intrinsic::stacksave)
       CI->replaceAllUsesWith(Constant::getNullValue(CI->getType()));
@@ -368,7 +367,7 @@ void IntrinsicLowering::LowerIntrinsicCall(CallInst *CI) {
     
   case Intrinsic::returnaddress:
   case Intrinsic::frameaddress:
-    std::cerr << "WARNING: this target does not support the llvm."
+    llvm_cerr << "WARNING: this target does not support the llvm."
               << (Callee->getIntrinsicID() == Intrinsic::returnaddress ?
                   "return" : "frame") << "address intrinsic.\n";
     CI->replaceAllUsesWith(ConstantPointerNull::get(
@@ -381,7 +380,7 @@ void IntrinsicLowering::LowerIntrinsicCall(CallInst *CI) {
   case Intrinsic::pcmarker:
     break;    // Simply strip out pcmarker on unsupported architectures
   case Intrinsic::readcyclecounter: {
-    std::cerr << "WARNING: this target does not support the llvm.readcyclecoun"
+    llvm_cerr << "WARNING: this target does not support the llvm.readcyclecoun"
               << "ter intrinsic.  It is being lowered to a constant 0\n";
     CI->replaceAllUsesWith(ConstantInt::get(Type::ULongTy, 0));
     break;

@@ -18,8 +18,9 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "llvm/CodeGen/LiveInterval.h"
 #include "llvm/ADT/STLExtras.h"
+#include "llvm/CodeGen/LiveInterval.h"
+#include "llvm/Support/Streams.h"
 #include "llvm/Target/MRegisterInfo.h"
 #include <algorithm>
 #include <iostream>
@@ -466,16 +467,15 @@ void LiveInterval::MergeValueNumberInto(unsigned V1, unsigned V2) {
   }
 }
 
-
 std::ostream& llvm::operator<<(std::ostream& os, const LiveRange &LR) {
   return os << '[' << LR.start << ',' << LR.end << ':' << LR.ValId << ")";
 }
 
 void LiveRange::dump() const {
-  std::cerr << *this << "\n";
+  llvm_cerr << *this << "\n";
 }
 
-void LiveInterval::print(std::ostream &OS, const MRegisterInfo *MRI) const {
+void LiveInterval::print(llvm_ostream &OS, const MRegisterInfo *MRI) const {
   if (MRI && MRegisterInfo::isPhysicalRegister(reg))
     OS << MRI->getName(reg);
   else
@@ -508,5 +508,5 @@ void LiveInterval::print(std::ostream &OS, const MRegisterInfo *MRI) const {
 }
 
 void LiveInterval::dump() const {
-  std::cerr << *this << "\n";
+  llvm_cerr << *this << "\n";
 }
