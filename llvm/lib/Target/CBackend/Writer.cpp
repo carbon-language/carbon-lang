@@ -2258,9 +2258,9 @@ void CWriter::visitCallInst(CallInst &I) {
 
 
 //This converts the llvm constraint string to something gcc is expecting.
-//This could be broken into a bunch of peices and spread accross the 
-//targets, but this information is only useful here.
 //TODO: work out platform independent constraints and factor those out
+//      of the per target tables
+//      handle multiple constraint codes
 std::string CWriter::InterpretASMConstraint(InlineAsm::ConstraintInfo& c) {
 
   assert(c.Codes.size() == 1 && "Too many asm constraint codes to handle");
@@ -2320,6 +2320,8 @@ static std::string gccifyAsm(std::string asmstr) {
   return asmstr;
 }
 
+//TODO: assumptions about what consume arguments from the call are likely wrong
+//      handle communitivity
 void CWriter::visitInlineAsm(CallInst &CI) {
   InlineAsm* as = cast<InlineAsm>(CI.getOperand(0));
   std::vector<InlineAsm::ConstraintInfo> Constraints = as->ParseConstraints();
