@@ -1267,8 +1267,6 @@ static SDNode *isBLACompatibleAddress(SDOperand Op, SelectionDAG &DAG) {
   return DAG.getConstant((int)C->getValue() >> 2, MVT::i32).Val;
 }
 
-#include <iostream>
-
 static SDOperand LowerCALL(SDOperand Op, SelectionDAG &DAG) {
   SDOperand Chain = Op.getOperand(0);
   bool isVarArg       = cast<ConstantSDNode>(Op.getOperand(2))->getValue() != 0;
