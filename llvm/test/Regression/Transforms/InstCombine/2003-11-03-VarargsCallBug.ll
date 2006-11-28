@@ -1,4 +1,4 @@
-; The cast in this testcase is not eliminatable on a 32-bit target!
+; The cast in this testcase is not eliminable on a 32-bit target!
 ; RUN: llvm-as < %s | opt -instcombine | llvm-dis | grep inttoptr
 
 target endian = little
