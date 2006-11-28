@@ -22,6 +22,7 @@
 #define LLVM_CODEGEN_LIVEINTERVAL_H
 
 #include "llvm/ADT/SmallVector.h"
+#include "llvm/Support/Streams.h"
 #include <iosfwd>
 #include <vector>
 #include <cassert>
@@ -252,7 +253,11 @@ namespace llvm {
       return beginNumber() < other.beginNumber();
     }
 
-    void print(std::ostream &OS, const MRegisterInfo *MRI = 0) const;
+    void print(llvm_ostream &OS, const MRegisterInfo *MRI = 0) const;
+    void print(std::ostream &OS, const MRegisterInfo *MRI = 0) const {
+      llvm_ostream L(OS);
+      L << MRI;
+    }
     void dump() const;
 
   private:
@@ -262,8 +267,14 @@ namespace llvm {
     LiveInterval& operator=(const LiveInterval& rhs); // DO NOT IMPLEMENT
   };
 
-  inline std::ostream &operator<<(std::ostream &OS, const LiveInterval &LI) {
+  inline llvm_ostream &operator<<(llvm_ostream &OS, const LiveInterval &LI) {
     LI.print(OS);
+    return OS;
+  }
+
+  inline std::ostream &operator<<(std::ostream &OS, const LiveInterval &LI) {
+    llvm_ostream L(OS);
+    L << LI;
     return OS;
   }
 }
