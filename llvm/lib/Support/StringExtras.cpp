@@ -42,6 +42,21 @@ std::string llvm::getToken(std::string &Source, const char *Delimiters) {
   return Result;
 }
 
+/// SplitString - Split up the specified string according to the specified
+/// delimiters, appending the result fragments to the output list.
+void llvm::SplitString(const std::string &Source, 
+                       std::vector<std::string> &OutFragments,
+                       const char *Delimiters) {
+  std::string S = Source;
+  
+  std::string S2 = getToken(S, Delimiters);
+  while (!S2.empty()) {
+    OutFragments.push_back(S2);
+    S2 = getToken(S, Delimiters);
+  }
+}
+
+
 
 /// UnescapeString - Modify the argument string, turning two character sequences
 /// like '\\' 'n' into '\n'.  This handles: \e \a \b \f \n \r \t \v \' \\ and
