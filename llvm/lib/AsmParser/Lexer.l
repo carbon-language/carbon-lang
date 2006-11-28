@@ -51,17 +51,11 @@ void set_scan_string (const char * str) {
   llvmAsmlval.type.obsolete = true; \
   return sym
 
-// Construct a token value for a non-obsolete type
-#define RET_TY(CType, sym) \
-  llvmAsmlval.TypeVal.type = new PATypeHolder(CType); \
-  llvmAsmlval.TypeVal.signedness = isSignless; \
-  return sym
-
 // Construct a token value for an obsolete token
-#define RET_TY_OBSOLETE(CType, sign, sym) \
-  llvmAsmlval.TypeVal.type = new PATypeHolder(CType); \
-  llvmAsmlval.TypeVal.signedness = sign; \
-  return sym
+#define RET_TY(CTYPE, SIGN, SYM) \
+  llvmAsmlval.TypeVal.type = new PATypeHolder(CTYPE); \
+  llvmAsmlval.TypeVal.signedness = SIGN; \
+  return SYM
 
 namespace llvm {
 
@@ -249,19 +243,19 @@ coldcc          { return COLDCC_TOK; }
 x86_stdcallcc   { return X86_STDCALLCC_TOK; }
 x86_fastcallcc  { return X86_FASTCALLCC_TOK; }
 
-void            { RET_TY(Type::VoidTy, VOID);  }
-bool            { RET_TY(Type::BoolTy, BOOL);  }
-sbyte           { RET_TY_OBSOLETE(Type::SByteTy, isSigned,   SBYTE); }
-ubyte           { RET_TY_OBSOLETE(Type::UByteTy, isUnsigned, UBYTE); }
-short           { RET_TY_OBSOLETE(Type::ShortTy, isSigned,   SHORT); }
-ushort          { RET_TY_OBSOLETE(Type::UShortTy,isUnsigned, USHORT); }
-int             { RET_TY_OBSOLETE(Type::IntTy,   isSigned,   INT);    }
-uint            { RET_TY_OBSOLETE(Type::UIntTy,  isUnsigned, UINT);   }
-long            { RET_TY_OBSOLETE(Type::LongTy,  isSigned,   LONG);   }
-ulong           { RET_TY_OBSOLETE(Type::ULongTy, isUnsigned, ULONG);  }
-float           { RET_TY(Type::FloatTy, FLOAT);  }
-double          { RET_TY(Type::DoubleTy, DOUBLE); }
-label           { RET_TY(Type::LabelTy,  LABEL);  }
+void            { RET_TY(Type::VoidTy,  isSignless, VOID);  }
+bool            { RET_TY(Type::BoolTy,  isSignless, BOOL);  }
+sbyte           { RET_TY(Type::SByteTy, isSigned,   SBYTE); }
+ubyte           { RET_TY(Type::UByteTy, isUnsigned, UBYTE); }
+short           { RET_TY(Type::ShortTy, isSigned,   SHORT); }
+ushort          { RET_TY(Type::UShortTy,isUnsigned, USHORT);}
+int             { RET_TY(Type::IntTy,   isSigned,   INT);   }
+uint            { RET_TY(Type::UIntTy,  isUnsigned, UINT);  }
+long            { RET_TY(Type::LongTy,  isSigned,   LONG);  }
+ulong           { RET_TY(Type::ULongTy, isUnsigned, ULONG); }
+float           { RET_TY(Type::FloatTy, isSignless, FLOAT); }
+double          { RET_TY(Type::DoubleTy,isSignless, DOUBLE);}
+label           { RET_TY(Type::LabelTy, isSignless, LABEL); }
 type            { return TYPE;   }
 opaque          { return OPAQUE; }
 

@@ -227,21 +227,30 @@ enum Signedness {
   isSignless
 };
 
-/// This structure is used to keep track of the signedness of the obsolete
+/// This type is used to keep track of the signedness of the obsolete
 /// integer types. Instead of creating an llvm::Type directly, the Lexer will
 /// create instances of TypeInfo which retains the signedness indication so
 /// it can be used by the parser for upgrade decisions.
-/// For example if "uint" is encountered then the type will be set "int32" 
-/// and the "signedness" will be "isUnsigned".  If the type is not obsolete 
-/// then "signedness" will be "isSignless".
+/// For example if "uint" is encountered then the "first" field will be set 
+/// to "int32" and the "second" field will be set to "isUnsigned".  If the 
+/// type is not obsolete then "second" will be set to "isSignless".
 struct TypeInfo {
-  llvm::PATypeHolder *type;
+  llvm::PATypeHolder* type;
   Signedness signedness;
 };
 
+/// This type is used to keep track of the signedness of values. Instead
+/// of creating llvm::Value directly, the parser will create ValueInfo which
+/// associates a Value* with a Signedness indication.
 struct ValueInfo {
-  std::vector<llvm::Value*> valuelist;
-  std::vector<Signedness>   signlist;
+  llvm::Value* val;
+  Signedness signedness;
+};
+
+/// This type is used to keep track of the signedness of constants.
+struct ConstInfo {
+  llvm::Constant *cnst;
+  Signedness signedness;
 };
 
 #endif
