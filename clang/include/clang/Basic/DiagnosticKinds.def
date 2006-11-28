@@ -390,6 +390,8 @@ DIAG(err_ellipsis_first_arg, ERROR,
      "ISO C requires a named argument before '...'")
 DIAG(err_unspecified_vla_size_with_static, ERROR,
      "'static' may not be used with an unspecified variable length array size")
+DIAG(err_invalid_storage_class_in_func_decl, ERROR,
+     "invalid storage class specifier in function declarator")
 
 DIAG(err_unexpected_typedef, ERROR,
      "unexpected type name '%s': expected expression")

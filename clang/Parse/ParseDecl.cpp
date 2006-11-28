@@ -908,12 +908,6 @@ void Parser::ParseParenDeclarator(Declarator &D) {
   
   // Okay, this is the parameter list of a function definition, or it is an
   // identifier list of a K&R-style function.
-
-  
-  
-  // TODO: enter function-declaration scope, limiting any declarators for
-  // arguments to the function scope.
-  // NOTE: better to only create a scope if not '()'
   bool IsVariadic;
   bool HasPrototype;
   bool IsEmpty = false;
@@ -955,9 +949,14 @@ void Parser::ParseParenDeclarator(Declarator &D) {
     IsVariadic = false;
     HasPrototype = false;
   } else {
+    // Finally, a normal, non-empty parameter type list.
+    
+    // Enter function-declaration scope, limiting any declarators for arguments
+    // to the function scope.
+    EnterScope(0);
+    
     IsVariadic = false;
     bool ReadArg = false;
-    // Finally, a normal, non-empty parameter type list.
     while (1) {
       if (Tok.getKind() == tok::ellipsis) {
         IsVariadic = true;
@@ -990,7 +989,24 @@ void Parser::ParseParenDeclarator(Declarator &D) {
       if (Tok.getKind() == tok::kw___attribute)
         ParseAttributes();
       
-      // TODO: do something with the declarator, if it is valid.
+      // Verify C99 6.7.5.3p2: The only SCS allowed is 'register'.
+      switch (DS.StorageClassSpec) {
+      case DeclSpec::SCS_unspecified:
+      case DeclSpec::SCS_register:
+        break;
+      case DeclSpec::SCS_auto:
+        // NOTE: we could trivially allow 'int foo(auto int X)' if we wanted.
+      default:
+        // FIXME: Get better loc info from declspecs!
+        Diag(DeclaratorInfo.getIdentifierLoc(),
+             diag::err_invalid_storage_class_in_func_decl);
+        DS.StorageClassSpec = DeclSpec::SCS_unspecified;
+        break;
+      }
+      
+      // Inform the actions module about the parameter declarator, so it gets
+      // added to the current scope.
+      Actions.ParseDeclarator(CurScope, DeclaratorInfo, 0, 0);
       
       // If the next token is a comma, consume it and keep reading arguments.
       if (Tok.getKind() != tok::comma) break;
@@ -1000,10 +1016,11 @@ void Parser::ParseParenDeclarator(Declarator &D) {
     }
     
     HasPrototype = true;
+    
+    // Leave prototype scope.
+    ExitScope();
   }
   
-  // TODO: pop the scope.  
-
   // TODO: capture argument info.
   
   // Remember that we parsed a function type, and remember the attributes.
