@@ -2379,7 +2379,9 @@ void CWriter::visitInlineAsm(CallInst &CI) {
     if (I + 1 != E)
       Out << ",";
   }
-  Out << "\n        :" << (Clobber.size() ? Clobber.substr(1) : "") << ")\n";
+  if (Clobber.size())
+    Out << "\n        :" << Clobber.substr(1);
+  Out << ")";
 }
 
 void CWriter::visitMallocInst(MallocInst &I) {
