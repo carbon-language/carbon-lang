@@ -141,34 +141,42 @@ bool DeclSpec::SetStorageClassSpecThread(SourceLocation Loc,
 /// These methods set the specified attribute of the DeclSpec, but return true
 /// and ignore the request if invalid (e.g. "extern" then "auto" is
 /// specified).
-bool DeclSpec::SetTypeSpecWidth(TSW W, const char *&PrevSpec) {
+bool DeclSpec::SetTypeSpecWidth(TSW W, SourceLocation Loc,
+                                const char *&PrevSpec) {
   if (TypeSpecWidth != TSW_unspecified &&
       // Allow turning long -> long long.
       (W != TSW_longlong || TypeSpecWidth != TSW_long))
     return BadSpecifier(TypeSpecWidth, PrevSpec);
   TypeSpecWidth = W;
+  TSWLoc = Loc;
   return false;
 }
 
-bool DeclSpec::SetTypeSpecComplex(TSC C, const char *&PrevSpec) {
+bool DeclSpec::SetTypeSpecComplex(TSC C, SourceLocation Loc, 
+                                  const char *&PrevSpec) {
   if (TypeSpecComplex != TSC_unspecified)
     return BadSpecifier(TypeSpecComplex, PrevSpec);
   TypeSpecComplex = C;
+  TSCLoc = Loc;
   return false;
 }
 
-bool DeclSpec::SetTypeSpecSign(TSS S, const char *&PrevSpec) {
+bool DeclSpec::SetTypeSpecSign(TSS S, SourceLocation Loc, 
+                               const char *&PrevSpec) {
   if (TypeSpecSign != TSS_unspecified)
     return BadSpecifier(TypeSpecSign, PrevSpec);
   TypeSpecSign = S;
+  TSSLoc = Loc;
   return false;
 }
 
-bool DeclSpec::SetTypeSpecType(TST T, const char *&PrevSpec, void *TypeRep) {
+bool DeclSpec::SetTypeSpecType(TST T, SourceLocation Loc,
+                               const char *&PrevSpec, void *TypeRep) {
   if (TypeSpecType != TST_unspecified)
     return BadSpecifier(TypeSpecType, PrevSpec);
   TypeSpecType = T;
   TypenameRep = TypeRep;
+  TSTLoc = Loc;
   return false;
 }
 
@@ -200,8 +208,7 @@ bool DeclSpec::SetFunctionSpecInline(SourceLocation Loc, const char *&PrevSpec){
 /// "_Imaginary" (lacking an FP type).  This returns a diagnostic to issue or
 /// diag::NUM_DIAGNOSTICS if there is no error.  After calling this method,
 /// DeclSpec is guaranteed self-consistent, even if an error occurred.
-void DeclSpec::Finish(SourceLocation Loc, Diagnostic &D,
-                      const LangOptions &Lang) {
+void DeclSpec::Finish(Diagnostic &D, const LangOptions &Lang) {
   // Check the type specifier components first.
 
   // signed/unsigned are only valid with int/char.
@@ -209,7 +216,8 @@ void DeclSpec::Finish(SourceLocation Loc, Diagnostic &D,
     if (TypeSpecType == TST_unspecified)
       TypeSpecType = TST_int; // unsigned -> unsigned int, signed -> signed int.
     else if (TypeSpecType != TST_int && TypeSpecType != TST_char) {
-      D.Report(Loc, diag::err_invalid_sign_spec,getSpecifierName(TypeSpecType));
+      D.Report(TSSLoc, diag::err_invalid_sign_spec,
+               getSpecifierName(TypeSpecType));
       // signed double -> double.
       TypeSpecSign = TSS_unspecified;
     }
@@ -223,8 +231,9 @@ void DeclSpec::Finish(SourceLocation Loc, Diagnostic &D,
     if (TypeSpecType == TST_unspecified)
       TypeSpecType = TST_int; // short -> short int, long long -> long long int.
     else if (TypeSpecType != TST_int) {
-      D.Report(Loc, TypeSpecWidth == TSW_short ? diag::err_invalid_short_spec :
-               diag::err_invalid_longlong_spec,
+      D.Report(TSWLoc,
+               TypeSpecWidth == TSW_short ? diag::err_invalid_short_spec
+                                          : diag::err_invalid_longlong_spec,
                getSpecifierName(TypeSpecType));
       TypeSpecType = TST_int;
     }
@@ -233,7 +242,7 @@ void DeclSpec::Finish(SourceLocation Loc, Diagnostic &D,
     if (TypeSpecType == TST_unspecified)
       TypeSpecType = TST_int;  // long -> long int.
     else if (TypeSpecType != TST_int && TypeSpecType != TST_double) {
-      D.Report(Loc, diag::err_invalid_long_spec,
+      D.Report(TSWLoc, diag::err_invalid_long_spec,
                getSpecifierName(TypeSpecType));
       TypeSpecType = TST_int;
     }
@@ -244,13 +253,13 @@ void DeclSpec::Finish(SourceLocation Loc, Diagnostic &D,
   // disallow their use.  Need information about the backend.
   if (TypeSpecComplex != TSC_unspecified) {
     if (TypeSpecType == TST_unspecified) {
-      D.Report(Loc, diag::ext_plain_complex);
+      D.Report(TSCLoc, diag::ext_plain_complex);
       TypeSpecType = TST_double;   // _Complex -> _Complex double.
     } else if (TypeSpecType == TST_int || TypeSpecType == TST_char) {
       // Note that this intentionally doesn't include _Complex _Bool.
-      D.Report(Loc, diag::ext_integer_complex);
+      D.Report(TSTLoc, diag::ext_integer_complex);
     } else if (TypeSpecType != TST_float && TypeSpecType != TST_double) {
-      D.Report(Loc, diag::err_invalid_complex_spec, 
+      D.Report(TSCLoc, diag::err_invalid_complex_spec, 
                getSpecifierName(TypeSpecType));
       TypeSpecComplex = TSC_unspecified;
     }

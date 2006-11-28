@@ -240,7 +240,7 @@ void Parser::Initialize() {
                                         Dummy);
     
     // TODO: add a 'TST_builtin' type?
-    Error |= DS.SetTypeSpecType(DeclSpec::TST_int, Dummy);
+    Error |= DS.SetTypeSpecType(DeclSpec::TST_int, SourceLocation(), Dummy);
     assert(!Error && "Error setting up __builtin_va_list!");
     
     Declarator D(DS, Declarator::FileContext);

@@ -121,6 +121,7 @@ private:
   // SourceLocation info.  These are null if the item wasn't specified or if
   // the setting was synthesized.
   SourceLocation StorageClassSpecLoc, SCS_threadLoc;
+  SourceLocation TSWLoc, TSCLoc, TSSLoc, TSTLoc;
   SourceLocation TQ_constLoc, TQ_restrictLoc, TQ_volatileLoc;
   SourceLocation FS_inlineLoc;
 public:  
@@ -159,6 +160,11 @@ public:
   TST getTypeSpecType() const { return TypeSpecType; }
   void *getTypenameRep() const { return TypenameRep; }
   
+  SourceLocation getTypeSpecWidthLoc() const { return TSWLoc; }
+  SourceLocation getTypeSpecComplexLoc() const { return TSCLoc; }
+  SourceLocation getTypeSpecSignLoc() const { return TSSLoc; }
+  SourceLocation getTypeSpecTypeLoc() const { return TSTLoc; }
+  
   // type-qualifiers
 
   /// getTypeQualifiers - Return a set of TQs.
@@ -195,10 +201,11 @@ public:
   /// specified).  The name of the previous specifier is returned in prevspec.
   bool SetStorageClassSpec(SCS S, SourceLocation Loc, const char *&PrevSpec);
   bool SetStorageClassSpecThread(SourceLocation Loc, const char *&PrevSpec);
-  bool SetTypeSpecWidth(TSW W, const char *&PrevSpec);
-  bool SetTypeSpecComplex(TSC C, const char *&PrevSpec);
-  bool SetTypeSpecSign(TSS S, const char *&PrevSpec);
-  bool SetTypeSpecType(TST T, const char *&PrevSpec, void *TypenameRep = 0);
+  bool SetTypeSpecWidth(TSW W, SourceLocation Loc, const char *&PrevSpec);
+  bool SetTypeSpecComplex(TSC C, SourceLocation Loc, const char *&PrevSpec);
+  bool SetTypeSpecSign(TSS S, SourceLocation Loc, const char *&PrevSpec);
+  bool SetTypeSpecType(TST T, SourceLocation Loc, const char *&PrevSpec,
+                       void *TypenameRep = 0);
   
   bool SetTypeQual(TQ T, SourceLocation Loc, const char *&PrevSpec,
                    const LangOptions &Lang);
@@ -208,7 +215,7 @@ public:
   /// Finish - This does final analysis of the declspec, issuing diagnostics for
   /// things like "_Imaginary" (lacking an FP type).  After calling this method,
   /// DeclSpec is guaranteed self-consistent, even if an error occurred.
-  void Finish(SourceLocation Loc, Diagnostic &D,const LangOptions &Lang);
+  void Finish(Diagnostic &D,const LangOptions &Lang);
 };
 
 

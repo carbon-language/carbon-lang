@@ -247,8 +247,6 @@ void Parser::ParseSpecifierQualifierList(DeclSpec &DS) {
 /// [C99]   'inline'
 ///
 void Parser::ParseDeclarationSpecifiers(DeclSpec &DS) {
-  // FIXME: Remove this.
-  SourceLocation StartLoc = Tok.getLocation();
   while (1) {
     int isInvalid = false;
     const char *PrevSpec = 0;
@@ -264,7 +262,7 @@ void Parser::ParseDeclarationSpecifiers(DeclSpec &DS) {
         // It has to be available as a typedef too!
         if (void *TypeRep = Actions.isTypeName(*Tok.getIdentifierInfo(),
                                                CurScope)) {
-          isInvalid = DS.SetTypeSpecType(DeclSpec::TST_typedef, PrevSpec,
+          isInvalid = DS.SetTypeSpecType(DeclSpec::TST_typedef, Loc, PrevSpec,
                                          TypeRep);
         }
         break;
@@ -273,8 +271,7 @@ void Parser::ParseDeclarationSpecifiers(DeclSpec &DS) {
     default:
       // If this is not a declaration specifier token, we're done reading decl
       // specifiers.  First verify that DeclSpec's are consistent.
-      // FIXME: Remove StartLoc.
-      DS.Finish(StartLoc, Diags, getLang());
+      DS.Finish(Diags, getLang());
       return;
     
     // GNU attributes support.
@@ -308,52 +305,52 @@ void Parser::ParseDeclarationSpecifiers(DeclSpec &DS) {
       
     // type-specifiers
     case tok::kw_short:
-      isInvalid = DS.SetTypeSpecWidth(DeclSpec::TSW_short, PrevSpec);
+      isInvalid = DS.SetTypeSpecWidth(DeclSpec::TSW_short, Loc, PrevSpec);
       break;
     case tok::kw_long:
       if (DS.getTypeSpecWidth() != DeclSpec::TSW_long)
-        isInvalid = DS.SetTypeSpecWidth(DeclSpec::TSW_long, PrevSpec);
+        isInvalid = DS.SetTypeSpecWidth(DeclSpec::TSW_long, Loc, PrevSpec);
       else
-        isInvalid = DS.SetTypeSpecWidth(DeclSpec::TSW_longlong, PrevSpec);
+        isInvalid = DS.SetTypeSpecWidth(DeclSpec::TSW_longlong, Loc, PrevSpec);
       break;
     case tok::kw_signed:
-      isInvalid = DS.SetTypeSpecSign(DeclSpec::TSS_signed, PrevSpec);
+      isInvalid = DS.SetTypeSpecSign(DeclSpec::TSS_signed, Loc, PrevSpec);
       break;
     case tok::kw_unsigned:
-      isInvalid = DS.SetTypeSpecSign(DeclSpec::TSS_unsigned, PrevSpec);
+      isInvalid = DS.SetTypeSpecSign(DeclSpec::TSS_unsigned, Loc, PrevSpec);
       break;
     case tok::kw__Complex:
-      isInvalid = DS.SetTypeSpecComplex(DeclSpec::TSC_complex, PrevSpec);
+      isInvalid = DS.SetTypeSpecComplex(DeclSpec::TSC_complex, Loc, PrevSpec);
       break;
     case tok::kw__Imaginary:
-      isInvalid = DS.SetTypeSpecComplex(DeclSpec::TSC_imaginary, PrevSpec);
+      isInvalid = DS.SetTypeSpecComplex(DeclSpec::TSC_imaginary, Loc, PrevSpec);
       break;
     case tok::kw_void:
-      isInvalid = DS.SetTypeSpecType(DeclSpec::TST_void, PrevSpec);
+      isInvalid = DS.SetTypeSpecType(DeclSpec::TST_void, Loc, PrevSpec);
       break;
     case tok::kw_char:
-      isInvalid = DS.SetTypeSpecType(DeclSpec::TST_char, PrevSpec);
+      isInvalid = DS.SetTypeSpecType(DeclSpec::TST_char, Loc, PrevSpec);
       break;
     case tok::kw_int:
-      isInvalid = DS.SetTypeSpecType(DeclSpec::TST_int, PrevSpec);
+      isInvalid = DS.SetTypeSpecType(DeclSpec::TST_int, Loc, PrevSpec);
       break;
     case tok::kw_float:
-      isInvalid = DS.SetTypeSpecType(DeclSpec::TST_float, PrevSpec);
+      isInvalid = DS.SetTypeSpecType(DeclSpec::TST_float, Loc, PrevSpec);
       break;
     case tok::kw_double:
-      isInvalid = DS.SetTypeSpecType(DeclSpec::TST_double, PrevSpec);
+      isInvalid = DS.SetTypeSpecType(DeclSpec::TST_double, Loc, PrevSpec);
       break;
     case tok::kw__Bool:
-      isInvalid = DS.SetTypeSpecType(DeclSpec::TST_bool, PrevSpec);
+      isInvalid = DS.SetTypeSpecType(DeclSpec::TST_bool, Loc, PrevSpec);
       break;
     case tok::kw__Decimal32:
-      isInvalid = DS.SetTypeSpecType(DeclSpec::TST_decimal32, PrevSpec);
+      isInvalid = DS.SetTypeSpecType(DeclSpec::TST_decimal32, Loc, PrevSpec);
       break;
     case tok::kw__Decimal64:
-      isInvalid = DS.SetTypeSpecType(DeclSpec::TST_decimal64, PrevSpec);
+      isInvalid = DS.SetTypeSpecType(DeclSpec::TST_decimal64, Loc, PrevSpec);
       break;
     case tok::kw__Decimal128:
-      isInvalid = DS.SetTypeSpecType(DeclSpec::TST_decimal128, PrevSpec);
+      isInvalid = DS.SetTypeSpecType(DeclSpec::TST_decimal128, Loc, PrevSpec);
       break;
       
     case tok::kw_struct:
@@ -433,7 +430,7 @@ void Parser::ParseStructUnionSpecifier(DeclSpec &DS) {
   assert((Tok.getKind() == tok::kw_struct ||
           Tok.getKind() == tok::kw_union) && "Not a struct/union specifier");
   bool isUnion = Tok.getKind() == tok::kw_union;
-  SourceLocation Start = ConsumeToken();
+  SourceLocation StartLoc = ConsumeToken();
 
   // If attributes exist after tag, parse them.
   if (Tok.getKind() == tok::kw___attribute)
@@ -530,8 +527,8 @@ void Parser::ParseStructUnionSpecifier(DeclSpec &DS) {
 
   const char *PrevSpec = 0;
   if (DS.SetTypeSpecType(isUnion ? DeclSpec::TST_union : DeclSpec::TST_struct,
-                         PrevSpec))
-    Diag(Start, diag::err_invalid_decl_spec_combination, PrevSpec);
+                         StartLoc, PrevSpec))
+    Diag(StartLoc, diag::err_invalid_decl_spec_combination, PrevSpec);
 }
 
 
@@ -554,7 +551,7 @@ void Parser::ParseStructUnionSpecifier(DeclSpec &DS) {
 ///
 void Parser::ParseEnumSpecifier(DeclSpec &DS) {
   assert(Tok.getKind() == tok::kw_enum && "Not an enum specifier");
-  SourceLocation Start = ConsumeToken();
+  SourceLocation StartLoc = ConsumeToken();
   
   if (Tok.getKind() == tok::kw___attribute)
     ParseAttributes();
@@ -604,8 +601,8 @@ void Parser::ParseEnumSpecifier(DeclSpec &DS) {
   
   
   const char *PrevSpec = 0;
-  if (DS.SetTypeSpecType(DeclSpec::TST_enum, PrevSpec))
-    Diag(Start, diag::err_invalid_decl_spec_combination, PrevSpec);
+  if (DS.SetTypeSpecType(DeclSpec::TST_enum, StartLoc, PrevSpec))
+    Diag(StartLoc, diag::err_invalid_decl_spec_combination, PrevSpec);
 }
 
 
@@ -714,7 +711,6 @@ bool Parser::isDeclarationSpecifier() const {
 /// [GNU]   type-qualifier-list attributes
 ///
 void Parser::ParseTypeQualifierListOpt(DeclSpec &DS) {
-  SourceLocation StartLoc = Tok.getLocation();
   while (1) {
     int isInvalid = false;
     const char *PrevSpec = 0;
@@ -724,7 +720,7 @@ void Parser::ParseTypeQualifierListOpt(DeclSpec &DS) {
     default:
       // If this is not a type-qualifier token, we're done reading type
       // qualifiers.  First verify that DeclSpec's are consistent.
-      DS.Finish(StartLoc, Diags, getLang());
+      DS.Finish(Diags, getLang());
       return;
     case tok::kw_const:
       isInvalid = DS.SetTypeQual(DeclSpec::TQ_const   , Loc, PrevSpec,
@@ -746,6 +742,7 @@ void Parser::ParseTypeQualifierListOpt(DeclSpec &DS) {
     
     // If the specifier combination wasn't legal, issue a diagnostic.
     if (isInvalid) {
+      // FIXME: emit a matching caret at the previous illegal spec combination.
       assert(PrevSpec && "Method did not return previous specifier!");
       if (isInvalid == 1)  // Error.
         Diag(Tok, diag::err_invalid_decl_spec_combination, PrevSpec);
