@@ -244,10 +244,13 @@ void Parser::ParseSpecifierQualifierList(DeclSpec &DS) {
 /// [C99]   'inline'
 ///
 void Parser::ParseDeclarationSpecifiers(DeclSpec &DS) {
+  // FIXME: Remove this.
   SourceLocation StartLoc = Tok.getLocation();
   while (1) {
     int isInvalid = false;
     const char *PrevSpec = 0;
+    SourceLocation Loc = Tok.getLocation();
+    
     switch (Tok.getKind()) {
       // typedef-name
     case tok::identifier:
@@ -267,6 +270,7 @@ void Parser::ParseDeclarationSpecifiers(DeclSpec &DS) {
     default:
       // If this is not a declaration specifier token, we're done reading decl
       // specifiers.  First verify that DeclSpec's are consistent.
+      // FIXME: Remove StartLoc.
       DS.Finish(StartLoc, Diags, getLang());
       return;
     
@@ -277,26 +281,26 @@ void Parser::ParseDeclarationSpecifiers(DeclSpec &DS) {
       
     // storage-class-specifier
     case tok::kw_typedef:
-      isInvalid = DS.SetStorageClassSpec(DeclSpec::SCS_typedef, PrevSpec);
+      isInvalid = DS.SetStorageClassSpec(DeclSpec::SCS_typedef, Loc, PrevSpec);
       break;
     case tok::kw_extern:
       if (DS.isThreadSpecified())
         Diag(Tok, diag::ext_thread_before, "extern");
-      isInvalid = DS.SetStorageClassSpec(DeclSpec::SCS_extern, PrevSpec);
+      isInvalid = DS.SetStorageClassSpec(DeclSpec::SCS_extern, Loc, PrevSpec);
       break;
     case tok::kw_static:
       if (DS.isThreadSpecified())
         Diag(Tok, diag::ext_thread_before, "static");
-      isInvalid = DS.SetStorageClassSpec(DeclSpec::SCS_static, PrevSpec);
+      isInvalid = DS.SetStorageClassSpec(DeclSpec::SCS_static, Loc, PrevSpec);
       break;
     case tok::kw_auto:
-      isInvalid = DS.SetStorageClassSpec(DeclSpec::SCS_auto, PrevSpec);
+      isInvalid = DS.SetStorageClassSpec(DeclSpec::SCS_auto, Loc, PrevSpec);
       break;
     case tok::kw_register:
-      isInvalid = DS.SetStorageClassSpec(DeclSpec::SCS_register, PrevSpec);
+      isInvalid = DS.SetStorageClassSpec(DeclSpec::SCS_register, Loc, PrevSpec);
       break;
     case tok::kw___thread:
-      isInvalid = DS.SetStorageClassSpecThread(PrevSpec)*2;
+      isInvalid = DS.SetStorageClassSpecThread(Loc, PrevSpec)*2;
       break;
       
     // type-specifiers
@@ -989,11 +993,15 @@ void Parser::ParseParenDeclarator(Declarator &D) {
       case DeclSpec::SCS_auto:
         // NOTE: we could trivially allow 'int foo(auto int X)' if we wanted.
       default:
-        // FIXME: Get better loc info from declspecs!
-        Diag(DeclaratorInfo.getIdentifierLoc(),
+        Diag(DS.getStorageClassSpecLoc(),
              diag::err_invalid_storage_class_in_func_decl);
         DS.ClearStorageClassSpecs();
         break;
+      }
+      if (DS.isThreadSpecified()) {
+        Diag(DS.getThreadSpecLoc(),
+             diag::err_invalid_storage_class_in_func_decl);
+        DS.ClearStorageClassSpecs();
       }
       
       // Inform the actions module about the parameter declarator, so it gets

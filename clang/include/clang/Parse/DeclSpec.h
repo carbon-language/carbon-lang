@@ -117,6 +117,11 @@ private:
   
   // attributes.
   // FIXME: implement declspec attributes.
+  
+  // SourceLocation info.  These are null if the item wasn't specified or if
+  // the setting was synthesized.
+  SourceLocation StorageClassSpecLoc, SCS_threadLoc;
+  
 public:  
   
   DeclSpec()
@@ -135,9 +140,15 @@ public:
   SCS getStorageClassSpec() const { return StorageClassSpec; }
   bool isThreadSpecified() const { return SCS_thread_specified; }
   
+  SourceLocation getStorageClassSpecLoc() const { return StorageClassSpecLoc; }
+  SourceLocation getThreadSpecLoc() const { return SCS_threadLoc; }
+  
+  
   void ClearStorageClassSpecs() {
     StorageClassSpec     = DeclSpec::SCS_unspecified;
     SCS_thread_specified = false;
+    StorageClassSpecLoc  = SourceLocation();
+    SCS_threadLoc        = SourceLocation();
   }
   
   // type-specifier
@@ -175,8 +186,8 @@ public:
   /// These methods set the specified attribute of the DeclSpec, but return true
   /// and ignore the request if invalid (e.g. "extern" then "auto" is
   /// specified).  The name of the previous specifier is returned in prevspec.
-  bool SetStorageClassSpec(SCS S, const char *&PrevSpec);
-  bool SetStorageClassSpecThread(const char *&PrevSpec);
+  bool SetStorageClassSpec(SCS S, SourceLocation Loc, const char *&PrevSpec);
+  bool SetStorageClassSpecThread(SourceLocation Loc, const char *&PrevSpec);
   bool SetTypeSpecWidth(TSW W, const char *&PrevSpec);
   bool SetTypeSpecComplex(TSC C, const char *&PrevSpec);
   bool SetTypeSpecSign(TSS S, const char *&PrevSpec);

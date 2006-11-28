@@ -236,7 +236,8 @@ void Parser::Initialize() {
     
     //__builtin_va_list
     DeclSpec DS;
-    bool Error = DS.SetStorageClassSpec(DeclSpec::SCS_typedef, Dummy);
+    bool Error = DS.SetStorageClassSpec(DeclSpec::SCS_typedef, SourceLocation(),
+                                        Dummy);
     
     // TODO: add a 'TST_builtin' type?
     Error |= DS.SetTypeSpecType(DeclSpec::TST_int, Dummy);

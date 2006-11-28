@@ -25,7 +25,7 @@ unsigned DeclSpec::getParsedSpecifiers() const {
       SCS_thread_specified)
     Res |= PQ_StorageClassSpecifier;
   
-  if (TypeQualifiers   != TQ_unspecified)
+  if (TypeQualifiers != TQ_unspecified)
     Res |= PQ_TypeQualifier;
   
   if (hasTypeSpecifier())
@@ -117,19 +117,23 @@ static bool BadSpecifier(DeclSpec::TQ T, const char *&PrevSpec) {
   return true;
 }
 
-bool DeclSpec::SetStorageClassSpec(SCS S, const char *&PrevSpec) {
+bool DeclSpec::SetStorageClassSpec(SCS S, SourceLocation Loc,
+                                   const char *&PrevSpec) {
   if (StorageClassSpec != SCS_unspecified)
     return BadSpecifier(StorageClassSpec, PrevSpec);
   StorageClassSpec = S;
+  StorageClassSpecLoc = Loc;
   return false;
 }
 
-bool DeclSpec::SetStorageClassSpecThread(const char *&PrevSpec) {
+bool DeclSpec::SetStorageClassSpecThread(SourceLocation Loc, 
+                                         const char *&PrevSpec) {
   if (SCS_thread_specified) {
     PrevSpec = "__thread";
     return true;
   }
   SCS_thread_specified = true;
+  SCS_threadLoc = Loc;
   return false;
 }
 
@@ -250,7 +254,7 @@ void DeclSpec::Finish(SourceLocation Loc, Diagnostic &D,
       StorageClassSpec = SCS_extern; // '__thread int' -> 'extern __thread int'
     } else if (StorageClassSpec != SCS_extern &&
                StorageClassSpec != SCS_static) {
-      D.Report(Loc, diag::err_invalid_thread_spec,
+      D.Report(getStorageClassSpecLoc(), diag::err_invalid_thread_spec,
                getSpecifierName(StorageClassSpec));
       SCS_thread_specified = false;
     }
