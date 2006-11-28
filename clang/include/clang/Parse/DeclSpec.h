@@ -93,6 +93,8 @@ public:
     PQ_FunctionSpecifier     = 8
   };
   
+private:
+    
   // storage-class-specifier
   SCS StorageClassSpec : 3;
   bool SCS_thread_specified : 1;
@@ -103,8 +105,6 @@ public:
   TSS TypeSpecSign : 2;
   TST TypeSpecType : 4;
   
-private:
-    
   // type-qualifiers
   unsigned TypeQualifiers : 3;  // Bitwise OR of TQ.
   
@@ -176,6 +176,7 @@ public:
   /// and ignore the request if invalid (e.g. "extern" then "auto" is
   /// specified).  The name of the previous specifier is returned in prevspec.
   bool SetStorageClassSpec(SCS S, const char *&PrevSpec);
+  bool SetStorageClassSpecThread(const char *&PrevSpec);
   bool SetTypeSpecWidth(TSW W, const char *&PrevSpec);
   bool SetTypeSpecComplex(TSC C, const char *&PrevSpec);
   bool SetTypeSpecSign(TSS S, const char *&PrevSpec);

@@ -280,12 +280,12 @@ void Parser::ParseDeclarationSpecifiers(DeclSpec &DS) {
       isInvalid = DS.SetStorageClassSpec(DeclSpec::SCS_typedef, PrevSpec);
       break;
     case tok::kw_extern:
-      if (DS.SCS_thread_specified)
+      if (DS.isThreadSpecified())
         Diag(Tok, diag::ext_thread_before, "extern");
       isInvalid = DS.SetStorageClassSpec(DeclSpec::SCS_extern, PrevSpec);
       break;
     case tok::kw_static:
-      if (DS.SCS_thread_specified)
+      if (DS.isThreadSpecified())
         Diag(Tok, diag::ext_thread_before, "static");
       isInvalid = DS.SetStorageClassSpec(DeclSpec::SCS_static, PrevSpec);
       break;
@@ -296,10 +296,7 @@ void Parser::ParseDeclarationSpecifiers(DeclSpec &DS) {
       isInvalid = DS.SetStorageClassSpec(DeclSpec::SCS_register, PrevSpec);
       break;
     case tok::kw___thread:
-      if (DS.SCS_thread_specified)
-        isInvalid = 2, PrevSpec = "__thread";
-      else
-        DS.SCS_thread_specified = true;
+      isInvalid = DS.SetStorageClassSpecThread(PrevSpec)*2;
       break;
       
     // type-specifiers
@@ -307,12 +304,10 @@ void Parser::ParseDeclarationSpecifiers(DeclSpec &DS) {
       isInvalid = DS.SetTypeSpecWidth(DeclSpec::TSW_short, PrevSpec);
       break;
     case tok::kw_long:
-      if (DS.TypeSpecWidth != DeclSpec::TSW_long) {
+      if (DS.getTypeSpecWidth() != DeclSpec::TSW_long)
         isInvalid = DS.SetTypeSpecWidth(DeclSpec::TSW_long, PrevSpec);
-      } else {
-        DS.TypeSpecWidth = DeclSpec::TSW_unspecified;
+      else
         isInvalid = DS.SetTypeSpecWidth(DeclSpec::TSW_longlong, PrevSpec);
-      }
       break;
     case tok::kw_signed:
       isInvalid = DS.SetTypeSpecSign(DeclSpec::TSS_signed, PrevSpec);
@@ -997,7 +992,7 @@ void Parser::ParseParenDeclarator(Declarator &D) {
         // FIXME: Get better loc info from declspecs!
         Diag(DeclaratorInfo.getIdentifierLoc(),
              diag::err_invalid_storage_class_in_func_decl);
-        DS.StorageClassSpec = DeclSpec::SCS_unspecified;
+        DS.ClearStorageClassSpecs();
         break;
       }
       

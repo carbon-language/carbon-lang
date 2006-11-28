@@ -232,12 +232,15 @@ void Parser::Initialize() {
   // Install builtin types.
   // TODO: Move this someplace more useful.
   {
+    const char *Dummy;
+    
     //__builtin_va_list
     DeclSpec DS;
-    DS.StorageClassSpec = DeclSpec::SCS_typedef;
+    bool Error = DS.SetStorageClassSpec(DeclSpec::SCS_typedef, Dummy);
     
     // TODO: add a 'TST_builtin' type?
-    DS.TypeSpecType = DeclSpec::TST_int;
+    Error |= DS.SetTypeSpecType(DeclSpec::TST_int, Dummy);
+    assert(!Error && "Error setting up __builtin_va_list!");
     
     Declarator D(DS, Declarator::FileContext);
     D.SetIdentifier(PP.getIdentifierInfo("__builtin_va_list"),SourceLocation());

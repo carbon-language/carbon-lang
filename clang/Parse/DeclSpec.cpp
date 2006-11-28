@@ -124,12 +124,23 @@ bool DeclSpec::SetStorageClassSpec(SCS S, const char *&PrevSpec) {
   return false;
 }
 
+bool DeclSpec::SetStorageClassSpecThread(const char *&PrevSpec) {
+  if (SCS_thread_specified) {
+    PrevSpec = "__thread";
+    return true;
+  }
+  SCS_thread_specified = true;
+  return false;
+}
+
 
 /// These methods set the specified attribute of the DeclSpec, but return true
 /// and ignore the request if invalid (e.g. "extern" then "auto" is
 /// specified).
 bool DeclSpec::SetTypeSpecWidth(TSW W, const char *&PrevSpec) {
-  if (TypeSpecWidth != TSW_unspecified)
+  if (TypeSpecWidth != TSW_unspecified &&
+      // Allow turning long -> long long.
+      (W != TSW_longlong || TypeSpecWidth != TSW_long))
     return BadSpecifier(TypeSpecWidth, PrevSpec);
   TypeSpecWidth = W;
   return false;

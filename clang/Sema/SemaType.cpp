@@ -24,28 +24,29 @@ static TypeRef ConvertDeclSpecToType(const DeclSpec &DS, ASTContext &Ctx) {
   // FIXME: Should move the logic from DeclSpec::Finish to here for validity
   // checking.
   
-  switch (DS.TypeSpecType) {
+  switch (DS.getTypeSpecType()) {
   default: return TypeRef(); // FIXME: Handle unimp cases!
   case DeclSpec::TST_void: return Ctx.VoidTy;
   case DeclSpec::TST_char:
-    if (DS.TypeSpecSign == DeclSpec::TSS_unspecified)
+    if (DS.getTypeSpecSign() == DeclSpec::TSS_unspecified)
       return Ctx.CharTy;
-    else if (DS.TypeSpecSign == DeclSpec::TSS_signed)
+    else if (DS.getTypeSpecSign() == DeclSpec::TSS_signed)
       return Ctx.SignedCharTy;
     else {
-      assert(DS.TypeSpecSign == DeclSpec::TSS_unsigned && "Unknown TSS value");
+      assert(DS.getTypeSpecSign() == DeclSpec::TSS_unsigned &&
+             "Unknown TSS value");
       return Ctx.UnsignedCharTy;
     }
   case DeclSpec::TST_int:
-    if (DS.TypeSpecSign != DeclSpec::TSS_unsigned) {
-      switch (DS.TypeSpecWidth) {
+    if (DS.getTypeSpecSign() != DeclSpec::TSS_unsigned) {
+      switch (DS.getTypeSpecWidth()) {
       case DeclSpec::TSW_unspecified: return Ctx.IntTy;
       case DeclSpec::TSW_short:       return Ctx.ShortTy;
       case DeclSpec::TSW_long:        return Ctx.LongTy;
       case DeclSpec::TSW_longlong:    return Ctx.LongLongTy;
       }
     } else {
-      switch (DS.TypeSpecWidth) {
+      switch (DS.getTypeSpecWidth()) {
       case DeclSpec::TSW_unspecified: return Ctx.UnsignedIntTy;
       case DeclSpec::TSW_short:       return Ctx.UnsignedShortTy;
       case DeclSpec::TSW_long:        return Ctx.UnsignedLongTy;
@@ -53,17 +54,17 @@ static TypeRef ConvertDeclSpecToType(const DeclSpec &DS, ASTContext &Ctx) {
       }
     }
   case DeclSpec::TST_float:
-    if (DS.TypeSpecComplex == DeclSpec::TSC_unspecified)
+    if (DS.getTypeSpecComplex() == DeclSpec::TSC_unspecified)
       return Ctx.FloatTy;
-    assert(DS.TypeSpecComplex == DeclSpec::TSC_complex &&
+    assert(DS.getTypeSpecComplex() == DeclSpec::TSC_complex &&
            "FIXME: imaginary types not supported yet!");
     return Ctx.FloatComplexTy;
     
   case DeclSpec::TST_double: {
-    bool isLong = DS.TypeSpecWidth == DeclSpec::TSW_long;
-    if (DS.TypeSpecComplex == DeclSpec::TSC_unspecified)
+    bool isLong = DS.getTypeSpecWidth() == DeclSpec::TSW_long;
+    if (DS.getTypeSpecComplex() == DeclSpec::TSC_unspecified)
       return isLong ? Ctx.LongDoubleTy : Ctx.DoubleTy;
-    assert(DS.TypeSpecComplex == DeclSpec::TSC_complex &&
+    assert(DS.getTypeSpecComplex() == DeclSpec::TSC_complex &&
            "FIXME: imaginary types not supported yet!");
     return isLong ? Ctx.LongDoubleComplexTy : Ctx.DoubleComplexTy;
   }

@@ -75,7 +75,7 @@ Sema::ParseDeclarator(Scope *S, Declarator &D, ExprTy *Init,
   }
   
   Decl *New;
-  if (D.getDeclSpec().StorageClassSpec == DeclSpec::SCS_typedef) {
+  if (D.getDeclSpec().getStorageClassSpec() == DeclSpec::SCS_typedef) {
     New = ParseTypedefDecl(S, D, PrevDecl);
   } else if (D.isFunctionDeclarator())
     New = new FunctionDecl(II, GetTypeForDeclarator(D, S), PrevDecl);
@@ -135,8 +135,10 @@ Decl *Sema::ImplicitlyDefineFunction(SourceLocation Loc, IdentifierInfo &II,
   // void bar() { X(); }  <-- implicit decl for X in another scope.
 
   // Set a Declarator for the implicit definition: int foo();
+  const char *Dummy;
   DeclSpec DS;
-  DS.TypeSpecType = DeclSpec::TST_int;
+  bool Error = DS.SetTypeSpecType(DeclSpec::TST_int, Dummy);
+  assert(!Error && "Error setting up implicit decl!");
   Declarator D(DS, Declarator::BlockContext);
   D.AddTypeInfo(DeclaratorTypeInfo::getFunction(false, false, true, Loc));
   D.SetIdentifier(&II, Loc);
