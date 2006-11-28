@@ -11,22 +11,22 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "llvm/Support/LeakDetector.h"
 #include "llvm/Support/Compiler.h"
+#include "llvm/Support/LeakDetector.h"
+#include "llvm/Support/Streams.h"
 #include "llvm/Value.h"
-#include <iostream>
 #include <set>
 using namespace llvm;
 
 namespace {
   template <class T>
   struct VISIBILITY_HIDDEN PrinterTrait {
-    static void print(const T* P) { std::cerr << P; }
+    static void print(const T* P) { llvm_cerr << P; }
   };
 
   template<>
   struct VISIBILITY_HIDDEN PrinterTrait<Value> {
-    static void print(const Value* P) { std::cerr << *P; }
+    static void print(const Value* P) { llvm_cerr << *P; }
   };
 
   template <typename T>
@@ -59,15 +59,15 @@ namespace {
       assert(Cache == 0 && "No value should be cached anymore!");
 
       if (!Ts.empty()) {
-        std::cerr
+        llvm_cerr
             << "Leaked " << Name << " objects found: " << Message << ":\n";
         for (typename std::set<const T*>::iterator I = Ts.begin(),
                E = Ts.end(); I != E; ++I) {
-          std::cerr << "\t";
+          llvm_cerr << "\t";
           PrinterTrait<T>::print(*I);
-          std::cerr << "\n";
+          llvm_cerr << "\n";
         }
-        std::cerr << '\n';
+        llvm_cerr << '\n';
 
         return true;
       }
@@ -123,8 +123,8 @@ void LeakDetector::checkForGarbageImpl(const std::string &Message) {
   // use non-short-circuit version so that both checks are performed
   if (getObjects().hasGarbage(Message) |
       getLLVMObjects().hasGarbage(Message))
-    std::cerr << "\nThis is probably because you removed an object, but didn't "
-                 "delete it.  Please check your code for memory leaks.\n";
+    llvm_cerr << "\nThis is probably because you removed an object, but didn't "
+              << "delete it.  Please check your code for memory leaks.\n";
 
   // Clear out results so we don't get duplicate warnings on
   // next call...

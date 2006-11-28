@@ -15,10 +15,9 @@
 #include "llvm/PassManager.h"
 #include "llvm/Module.h"
 #include "llvm/ModuleProvider.h"
+#include "llvm/Support/Streams.h"
 #include <vector>
 #include <map>
-#include <iostream>
-
 using namespace llvm;
 
 namespace llvm {
@@ -443,7 +442,7 @@ bool FunctionPassManager_New::runOnModule(Module &M) {
 bool FunctionPassManager_New::run(Function &F) {
   std::string errstr;
   if (MP->materializeFunction(&F, &errstr)) {
-    std::cerr << "Error reading bytecode file: " << errstr << "\n";
+    llvm_cerr << "Error reading bytecode file: " << errstr << "\n";
     abort();
   }
   return FPM->runOnFunction(F);

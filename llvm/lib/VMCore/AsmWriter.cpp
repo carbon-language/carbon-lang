@@ -26,10 +26,11 @@
 #include "llvm/Instructions.h"
 #include "llvm/Module.h"
 #include "llvm/SymbolTable.h"
-#include "llvm/Support/CFG.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/ADT/STLExtras.h"
+#include "llvm/Support/CFG.h"
 #include "llvm/Support/MathExtras.h"
+#include "llvm/Support/Streams.h"
 #include <algorithm>
 using namespace llvm;
 
@@ -866,7 +867,7 @@ void AssemblyWriter::printGlobal(const GlobalVariable *GV) {
     case GlobalValue::ExternalWeakLinkage: Out << "extern_weak "; break;
     case GlobalValue::ExternalLinkage:     break;
     case GlobalValue::GhostLinkage:
-      std::cerr << "GhostLinkage not allowed in AsmWriter!\n";
+      llvm_cerr << "GhostLinkage not allowed in AsmWriter!\n";
       abort();
     }
 
@@ -965,7 +966,7 @@ void AssemblyWriter::printFunction(const Function *F) {
     case GlobalValue::ExternalWeakLinkage: Out << "extern_weak "; break;      
     case GlobalValue::ExternalLinkage: break;
     case GlobalValue::GhostLinkage:
-      std::cerr << "GhostLinkage not allowed in AsmWriter!\n";
+      llvm_cerr << "GhostLinkage not allowed in AsmWriter!\n";
       abort();
     }
 
@@ -1358,11 +1359,11 @@ void Argument::print(std::ostream &o) const {
 
 // Value::dump - allow easy printing of  Values from the debugger.
 // Located here because so much of the needed functionality is here.
-void Value::dump() const { print(std::cerr); std::cerr << '\n'; }
+void Value::dump() const { print(std::cerr); llvm_cerr << '\n'; }
 
 // Type::dump - allow easy printing of  Values from the debugger.
 // Located here because so much of the needed functionality is here.
-void Type::dump() const { print(std::cerr); std::cerr << '\n'; }
+void Type::dump() const { print(std::cerr); llvm_cerr << '\n'; }
 
 //===----------------------------------------------------------------------===//
 //  CachedWriter Class Implementation
@@ -1413,7 +1414,7 @@ CachedWriter& CachedWriter::operator<<(const Type &Ty) {
 //===----------------------------------------------------------------------===//
 
 #if 0
-#define SC_DEBUG(X) std::cerr << X
+#define SC_DEBUG(X) llvm_cerr << X
 #else
 #define SC_DEBUG(X)
 #endif

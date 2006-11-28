@@ -12,6 +12,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Assembly/AutoUpgrade.h"
+#include "llvm/Support/Streams.h"
 #include "llvm/Constants.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/Function.h"
@@ -19,7 +20,6 @@
 #include "llvm/Instructions.h"
 #include "llvm/Intrinsics.h"
 #include "llvm/SymbolTable.h"
-#include <iostream>
 using namespace llvm;
 
 static Function *getUpgradedUnaryFn(Function *F) {
@@ -193,7 +193,7 @@ Function *llvm::UpgradeIntrinsicFunction(Function* F) {
   // See if its one of the name's we're interested in.
   if (Function *R = getUpgradedIntrinsic(F)) {
     if (R->getName() != F->getName())
-      std::cerr << "WARNING: change " << F->getName() << " to "
+      llvm_cerr << "WARNING: change " << F->getName() << " to "
                 << R->getName() << "\n";
     return R;
   }

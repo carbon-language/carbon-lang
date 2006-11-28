@@ -55,11 +55,11 @@
 #include "llvm/Analysis/Dominators.h"
 #include "llvm/Support/CFG.h"
 #include "llvm/Support/InstVisitor.h"
+#include "llvm/Support/Streams.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/Support/Compiler.h"
 #include <algorithm>
-#include <iostream>
 #include <sstream>
 #include <cstdarg>
 using namespace llvm;
@@ -156,11 +156,11 @@ namespace {  // Anonymous namespace for class
         switch (action) {
           case AbortProcessAction:
             msgs << "compilation aborted!\n";
-            std::cerr << msgs.str();
+            llvm_cerr << msgs.str();
             abort();
           case PrintMessageAction:
             msgs << "verification continues.\n";
-            std::cerr << msgs.str();
+            llvm_cerr << msgs.str();
             return false;
           case ReturnStatusAction:
             msgs << "compilation terminated.\n";
