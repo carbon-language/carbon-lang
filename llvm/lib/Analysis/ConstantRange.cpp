@@ -25,8 +25,8 @@
 #include "llvm/Constants.h"
 #include "llvm/Instruction.h"
 #include "llvm/Type.h"
-#include <iostream>
-
+#include "llvm/Support/Streams.h"
+#include <ostream>
 using namespace llvm;
 
 static ConstantIntegral *Next(ConstantIntegral *CI) {
@@ -49,6 +49,32 @@ static bool LTE(ConstantIntegral *A, ConstantIntegral *B) {
   assert(isa<ConstantBool>(C) && "Constant folding of integrals not impl??");
   return cast<ConstantBool>(C)->getValue();
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 static bool GT(ConstantIntegral *A, ConstantIntegral *B) { return LT(B, A); }
 
@@ -328,5 +354,5 @@ void ConstantRange::print(std::ostream &OS) const {
 /// dump - Allow printing from a debugger easily...
 ///
 void ConstantRange::dump() const {
-  print(std::cerr);
+  print(llvm_cerr);
 }

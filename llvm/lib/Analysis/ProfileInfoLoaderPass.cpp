@@ -19,8 +19,7 @@
 #include "llvm/Analysis/ProfileInfo.h"
 #include "llvm/Analysis/ProfileInfoLoader.h"
 #include "llvm/Support/CommandLine.h"
-#include <iostream>
-
+#include "llvm/Support/Streams.h"
 using namespace llvm;
 
 namespace {
@@ -77,7 +76,7 @@ bool LoaderPass::runOnModule(Module &M) {
     TerminatorInst *TI = BB->getTerminator();
     if (SuccNum >= TI->getNumSuccessors()) {
       if (!PrintedWarning) {
-        std::cerr << "WARNING: profile information is inconsistent with "
+        llvm_cerr << "WARNING: profile information is inconsistent with "
                   << "the current program!\n";
         PrintedWarning = true;
       }

@@ -20,9 +20,10 @@
 #include "llvm/Analysis/Dominators.h"
 #include "llvm/Assembly/Writer.h"
 #include "llvm/Support/CFG.h"
+#include "llvm/Support/Streams.h"
 #include "llvm/ADT/DepthFirstIterator.h"
 #include <algorithm>
-#include <iostream>
+#include <ostream>
 using namespace llvm;
 
 static RegisterPass<LoopInfo>
@@ -79,7 +80,7 @@ void Loop::print(std::ostream &OS, unsigned Depth) const {
 }
 
 void Loop::dump() const {
-  print(std::cerr);
+  print(llvm_cerr);
 }
 
 

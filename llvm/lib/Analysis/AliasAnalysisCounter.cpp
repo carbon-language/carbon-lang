@@ -17,6 +17,7 @@
 #include "llvm/Analysis/AliasAnalysis.h"
 #include "llvm/Assembly/Writer.h"
 #include "llvm/Support/CommandLine.h"
+#include "llvm/Support/Streams.h"
 #include <iostream>
 using namespace llvm;
 
@@ -38,14 +39,14 @@ namespace {
     }
 
     void printLine(const char *Desc, unsigned Val, unsigned Sum) {
-      std::cerr <<  "  " << Val << " " << Desc << " responses ("
+      llvm_cerr <<  "  " << Val << " " << Desc << " responses ("
                 << Val*100/Sum << "%)\n";
     }
     ~AliasAnalysisCounter() {
       unsigned AASum = No+May+Must;
       unsigned MRSum = NoMR+JustRef+JustMod+MR;
       if (AASum + MRSum) { // Print a report if any counted queries occurred...
-        std::cerr
+        llvm_cerr
           << "\n===== Alias Analysis Counter Report =====\n"
           << "  Analysis counted: " << Name << "\n"
           << "  " << AASum << " Total Alias Queries Performed\n";
@@ -53,19 +54,19 @@ namespace {
           printLine("no alias",     No, AASum);
           printLine("may alias",   May, AASum);
           printLine("must alias", Must, AASum);
-          std::cerr
+          llvm_cerr
             << "  Alias Analysis Counter Summary: " << No*100/AASum << "%/"
             << May*100/AASum << "%/" << Must*100/AASum<<"%\n\n";
         }
 
-        std::cerr
+        llvm_cerr
           << "  " << MRSum    << " Total Mod/Ref Queries Performed\n";
         if (MRSum) {
           printLine("no mod/ref",    NoMR, MRSum);
           printLine("ref",        JustRef, MRSum);
           printLine("mod",        JustMod, MRSum);
           printLine("mod/ref",         MR, MRSum);
-          std::cerr
+          llvm_cerr
             << "  Mod/Ref Analysis Counter Summary: " << NoMR*100/MRSum<< "%/"
             << JustRef*100/MRSum << "%/" << JustMod*100/MRSum << "%/"
             << MR*100/MRSum <<"%\n\n";
@@ -132,10 +133,10 @@ AliasAnalysisCounter::alias(const Value *V1, unsigned V1Size,
   }
 
   if (PrintAll || (PrintAllFailures && R == MayAlias)) {
-    std::cerr << AliasString << ":\t";
-    std::cerr << "[" << V1Size << "B] ";
+    llvm_cerr << AliasString << ":\t";
+    llvm_cerr << "[" << V1Size << "B] ";
     WriteAsOperand(std::cerr, V1, true, true, M) << ", ";
-    std::cerr << "[" << V2Size << "B] ";
+    llvm_cerr << "[" << V2Size << "B] ";
     WriteAsOperand(std::cerr, V2, true, true, M) << "\n";
   }
 
@@ -156,10 +157,10 @@ AliasAnalysisCounter::getModRefInfo(CallSite CS, Value *P, unsigned Size) {
   }
 
   if (PrintAll || (PrintAllFailures && R == ModRef)) {
-    std::cerr << MRString << ":  Ptr: ";
-    std::cerr << "[" << Size << "B] ";
+    llvm_cerr << MRString << ":  Ptr: ";
+    llvm_cerr << "[" << Size << "B] ";
     WriteAsOperand(std::cerr, P, true, true, M);
-    std::cerr << "\t<->" << *CS.getInstruction();
+    llvm_cerr << "\t<->" << *CS.getInstruction();
   }
   return R;
 }

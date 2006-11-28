@@ -74,8 +74,9 @@
 #include "llvm/Support/ConstantRange.h"
 #include "llvm/Support/InstIterator.h"
 #include "llvm/Support/ManagedStatic.h"
+#include "llvm/Support/Streams.h"
 #include "llvm/ADT/Statistic.h"
-#include <iostream>
+#include <ostream>
 #include <algorithm>
 using namespace llvm;
 
@@ -116,7 +117,7 @@ namespace {
 //
 SCEV::~SCEV() {}
 void SCEV::dump() const {
-  print(std::cerr);
+  print(llvm_cerr);
 }
 
 /// getValueRange - Return the tightest constant bounds that this value is
@@ -1553,10 +1554,10 @@ SCEVHandle ScalarEvolutionsImpl::ComputeIterationCount(const Loop *L) {
     break;
   default:
 #if 0
-    std::cerr << "ComputeIterationCount ";
+    llvm_cerr << "ComputeIterationCount ";
     if (ExitCond->getOperand(0)->getType()->isUnsigned())
-      std::cerr << "[unsigned] ";
-    std::cerr << *LHS << "   "
+      llvm_cerr << "[unsigned] ";
+    llvm_cerr << *LHS << "   "
               << Instruction::getOpcodeName(Cond) << "   " << *RHS << "\n";
 #endif
     break;
@@ -1673,7 +1674,7 @@ ComputeLoadConstantCompareIterationCount(LoadInst *LI, Constant *RHS,
     if (!isa<ConstantBool>(Result)) break;  // Couldn't decide for sure
     if (cast<ConstantBool>(Result)->getValue() == false) {
 #if 0
-      std::cerr << "\n***\n*** Computed loop count " << *ItCst
+      llvm_cerr << "\n***\n*** Computed loop count " << *ItCst
                 << "\n*** From global " << *GV << "*** BB: " << *L->getHeader()
                 << "***\n";
 #endif
@@ -2142,7 +2143,7 @@ SCEVHandle ScalarEvolutionsImpl::HowFarToZero(SCEV *V, const Loop *L) {
     SCEVConstant *R2 = dyn_cast<SCEVConstant>(Roots.second);
     if (R1) {
 #if 0
-      std::cerr << "HFTZ: " << *V << " - sol#1: " << *R1
+      llvm_cerr << "HFTZ: " << *V << " - sol#1: " << *R1
                 << "  sol#2: " << *R2 << "\n";
 #endif
       // Pick the smallest positive root value.
@@ -2271,7 +2272,7 @@ HowManyLessThans(SCEV *LHS, SCEV *RHS, const Loop *L) {
     default: break;
     }
 
-    //std::cerr << "Computed Loop Trip Count as: " <<
+    //llvm_cerr << "Computed Loop Trip Count as: " <<
     //  *SCEV::getMinusSCEV(RHS, AddRec->getOperand(0)) << "\n";
     return SCEV::getMinusSCEV(RHS, AddRec->getOperand(0));
   }
@@ -2487,20 +2488,20 @@ static void PrintLoopInfo(std::ostream &OS, const ScalarEvolution *SE,
   for (Loop::iterator I = L->begin(), E = L->end(); I != E; ++I)
     PrintLoopInfo(OS, SE, *I);
 
-  std::cerr << "Loop " << L->getHeader()->getName() << ": ";
+  llvm_cerr << "Loop " << L->getHeader()->getName() << ": ";
 
   std::vector<BasicBlock*> ExitBlocks;
   L->getExitBlocks(ExitBlocks);
   if (ExitBlocks.size() != 1)
-    std::cerr << "<multiple exits> ";
+    llvm_cerr << "<multiple exits> ";
 
   if (SE->hasLoopInvariantIterationCount(L)) {
-    std::cerr << *SE->getIterationCount(L) << " iterations! ";
+    llvm_cerr << *SE->getIterationCount(L) << " iterations! ";
   } else {
-    std::cerr << "Unpredictable iteration count. ";
+    llvm_cerr << "Unpredictable iteration count. ";
   }
 
-  std::cerr << "\n";
+  llvm_cerr << "\n";
 }
 
 void ScalarEvolution::print(std::ostream &OS, const Module* ) const {

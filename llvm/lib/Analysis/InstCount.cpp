@@ -15,8 +15,9 @@
 #include "llvm/Pass.h"
 #include "llvm/Function.h"
 #include "llvm/Support/InstVisitor.h"
+#include "llvm/Support/Streams.h"
 #include "llvm/ADT/Statistic.h"
-#include <iostream>
+#include <ostream>
 using namespace llvm;
 
 namespace {
@@ -42,7 +43,7 @@ namespace {
 #include "llvm/Instruction.def"
 
     void visitInstruction(Instruction &I) {
-      std::cerr << "Instruction Count does not know about " << I;
+      llvm_cerr << "Instruction Count does not know about " << I;
       abort();
     }
   public:

@@ -25,7 +25,7 @@
 #include "llvm/Support/CFG.h"
 #include "llvm/Support/GraphWriter.h"
 #include "llvm/Config/config.h"
-#include <iostream>
+#include <iosfwd>
 #include <sstream>
 #include <fstream>
 using namespace llvm;
@@ -92,14 +92,14 @@ namespace {
   struct CFGPrinter : public FunctionPass {
     virtual bool runOnFunction(Function &F) {
       std::string Filename = "cfg." + F.getName() + ".dot";
-      std::cerr << "Writing '" << Filename << "'...";
+      llvm_cerr << "Writing '" << Filename << "'...";
       std::ofstream File(Filename.c_str());
 
       if (File.good())
         WriteGraph(File, (const Function*)&F);
       else
-        std::cerr << "  error opening file for writing!";
-      std::cerr << "\n";
+        llvm_cerr << "  error opening file for writing!";
+      llvm_cerr << "\n";
       return false;
     }
 

@@ -16,10 +16,9 @@
 #include "llvm/Analysis/ProfileInfoTypes.h"
 #include "llvm/Module.h"
 #include "llvm/InstrTypes.h"
+#include "llvm/Support/Streams.h"
 #include <cstdio>
-#include <iostream>
 #include <map>
-
 using namespace llvm;
 
 // ByteSwap - Byteswap 'Var' if 'Really' is true.
@@ -38,7 +37,7 @@ static void ReadProfilingBlock(const char *ToolName, FILE *F,
   // Read the number of entries...
   unsigned NumEntries;
   if (fread(&NumEntries, sizeof(unsigned), 1, F) != 1) {
-    std::cerr << ToolName << ": data packet truncated!\n";
+    llvm_cerr << ToolName << ": data packet truncated!\n";
     perror(0);
     exit(1);
   }
@@ -49,7 +48,7 @@ static void ReadProfilingBlock(const char *ToolName, FILE *F,
 
   // Read in the block of data...
   if (fread(&TempSpace[0], sizeof(unsigned)*NumEntries, 1, F) != 1) {
-    std::cerr << ToolName << ": data packet truncated!\n";
+    llvm_cerr << ToolName << ": data packet truncated!\n";
     perror(0);
     exit(1);
   }
@@ -76,7 +75,7 @@ ProfileInfoLoader::ProfileInfoLoader(const char *ToolName,
                                      Module &TheModule) : M(TheModule) {
   FILE *F = fopen(Filename.c_str(), "r");
   if (F == 0) {
-    std::cerr << ToolName << ": Error opening '" << Filename << "': ";
+    llvm_cerr << ToolName << ": Error opening '" << Filename << "': ";
     perror(0);
     exit(1);
   }
@@ -94,7 +93,7 @@ ProfileInfoLoader::ProfileInfoLoader(const char *ToolName,
     case ArgumentInfo: {
       unsigned ArgLength;
       if (fread(&ArgLength, sizeof(unsigned), 1, F) != 1) {
-        std::cerr << ToolName << ": arguments packet truncated!\n";
+        llvm_cerr << ToolName << ": arguments packet truncated!\n";
         perror(0);
         exit(1);
       }
@@ -105,7 +104,7 @@ ProfileInfoLoader::ProfileInfoLoader(const char *ToolName,
 
       if (ArgLength)
         if (fread(&Chars[0], (ArgLength+3) & ~3, 1, F) != 1) {
-          std::cerr << ToolName << ": arguments packet truncated!\n";
+          llvm_cerr << ToolName << ": arguments packet truncated!\n";
           perror(0);
           exit(1);
         }
@@ -130,7 +129,7 @@ ProfileInfoLoader::ProfileInfoLoader(const char *ToolName,
       break;
 
     default:
-      std::cerr << ToolName << ": Unknown packet type #" << PacketType << "!\n";
+      llvm_cerr << ToolName << ": Unknown packet type #" << PacketType << "!\n";
       exit(1);
     }
   }
@@ -157,7 +156,7 @@ void ProfileInfoLoader::getFunctionCounts(std::vector<std::pair<Function*,
           Counts.push_back(std::make_pair(BlockCounts[i].first->getParent(),
                                           BlockCounts[i].second));
     } else {
-      std::cerr << "Function counts are not available!\n";
+      llvm_cerr << "Function counts are not available!\n";
     }
     return;
   }
@@ -201,7 +200,7 @@ void ProfileInfoLoader::getBlockCounts(std::vector<std::pair<BasicBlock*,
         if (SuccNum >= TI->getNumSuccessors()) {
           static bool Warned = false;
           if (!Warned) {
-            std::cerr << "WARNING: profile info doesn't seem to match"
+            llvm_cerr << "WARNING: profile info doesn't seem to match"
                       << " the program!\n";
             Warned = true;
           }
@@ -227,7 +226,7 @@ void ProfileInfoLoader::getBlockCounts(std::vector<std::pair<BasicBlock*,
       }
 
     } else {
-      std::cerr << "Block counts are not available!\n";
+      llvm_cerr << "Block counts are not available!\n";
     }
     return;
   }
@@ -248,7 +247,7 @@ void ProfileInfoLoader::getBlockCounts(std::vector<std::pair<BasicBlock*,
 void ProfileInfoLoader::getEdgeCounts(std::vector<std::pair<Edge,
                                                   unsigned> > &Counts) {
   if (EdgeCounts.empty()) {
-    std::cerr << "Edge counts not available, and no synthesis "
+    llvm_cerr << "Edge counts not available, and no synthesis "
               << "is implemented yet!\n";
     return;
   }
@@ -269,9 +268,9 @@ void ProfileInfoLoader::getEdgeCounts(std::vector<std::pair<Edge,
 //
 void ProfileInfoLoader::getBBTrace(std::vector<BasicBlock *> &Trace) {
   if (BBTrace.empty ()) {
-    std::cerr << "Basic block trace is not available!\n";
+    llvm_cerr << "Basic block trace is not available!\n";
     return;
   }
-  std::cerr << "Basic block trace loading is not implemented yet!\n";
+  llvm_cerr << "Basic block trace loading is not implemented yet!\n";
 }
 

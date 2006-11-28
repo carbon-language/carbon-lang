@@ -19,7 +19,7 @@
 #include "llvm/Target/TargetData.h"
 #include "llvm/Assembly/Writer.h"
 #include "llvm/Support/InstIterator.h"
-#include <iostream>
+#include "llvm/Support/Streams.h"
 using namespace llvm;
 
 /// mergeSetIn - Merge the specified alias set into this alias set.
@@ -543,8 +543,8 @@ void AliasSetTracker::print(std::ostream &OS) const {
   OS << "\n";
 }
 
-void AliasSet::dump() const { print (std::cerr); }
-void AliasSetTracker::dump() const { print(std::cerr); }
+void AliasSet::dump() const { print (llvm_cerr); }
+void AliasSetTracker::dump() const { print(llvm_cerr); }
 
 //===----------------------------------------------------------------------===//
 //                            AliasSetPrinter Pass
@@ -564,7 +564,7 @@ namespace {
 
       for (inst_iterator I = inst_begin(F), E = inst_end(F); I != E; ++I)
         Tracker->add(&*I);
-      Tracker->print(std::cerr);
+      Tracker->print(llvm_cerr);
       delete Tracker;
       return false;
     }
