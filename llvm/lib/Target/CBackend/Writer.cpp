@@ -2265,10 +2265,6 @@ std::string CWriter::InterpretASMConstraint(InlineAsm::ConstraintInfo& c) {
 
   assert(c.Codes.size() == 1 && "Too many asm constraint codes to handle");
 
-  //catch numeric constraints
-  if (c.Codes[0].find_first_not_of("0123456789") >= c.Codes[0].size())
-    return c.Codes[0];
-
   const char** table = 0;
   
   //Grab the translation table from TargetAsmInfo if it exists
@@ -2291,8 +2287,8 @@ std::string CWriter::InterpretASMConstraint(InlineAsm::ConstraintInfo& c) {
     if (c.Codes[0] == table[i])
       return table[i+1];
 
-  assert(0 && "Unknown Asm Constraint");
-  return "";
+  //default is identity
+  return c.Codes[0];
 }
 
 //TODO: import logic from AsmPrinter.cpp
@@ -2383,7 +2379,7 @@ void CWriter::visitInlineAsm(CallInst &CI) {
     if (I + 1 != E)
       Out << ",";
   }
-  Out << "\n        :" << Clobber.substr(1) << ")\n";
+  Out << "\n        :" << (Clobber.size() ? Clobber.substr(1) : "") << ")\n";
 }
 
 void CWriter::visitMallocInst(MallocInst &I) {
