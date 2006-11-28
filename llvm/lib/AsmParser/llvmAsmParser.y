@@ -22,8 +22,8 @@
 #include "llvm/Support/GetElementPtrTypeIterator.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/Support/MathExtras.h"
+#include "llvm/Support/Streams.h"
 #include <algorithm>
-#include <iostream>
 #include <list>
 #include <utility>
 
@@ -58,7 +58,7 @@ static Module *ParserResult;
 //
 //#define DEBUG_UPREFS 1
 #ifdef DEBUG_UPREFS
-#define UR_OUT(X) std::cerr << X
+#define UR_OUT(X) llvm_cerr << X
 #else
 #define UR_OUT(X)
 #endif
@@ -2633,7 +2633,7 @@ InstVal : ArithmeticOps Types ValueRef ',' ValueRef {
     delete $2.type;
   }
   | NOT ResolvedVal {
-    std::cerr << "WARNING: Use of eliminated 'not' instruction:"
+    llvm_cerr << "WARNING: Use of eliminated 'not' instruction:"
               << " Replacing with 'xor'.\n";
 
     Value *Ones = ConstantIntegral::getAllOnesValue($2.val->getType());
