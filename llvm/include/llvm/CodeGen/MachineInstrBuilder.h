@@ -93,8 +93,8 @@ inline MachineInstrBuilder BuildMI(const TargetInstrDescriptor &TID) {
 /// BuildMI - This version of the builder sets up the first operand as a
 /// destination virtual register.
 ///
-  inline MachineInstrBuilder  BuildMI(const TargetInstrDescriptor &TID,
-                                      unsigned DestReg) {
+inline MachineInstrBuilder  BuildMI(const TargetInstrDescriptor &TID,
+                                    unsigned DestReg) {
   return MachineInstrBuilder(new MachineInstr(TID)).addReg(DestReg, true);
 }
 
