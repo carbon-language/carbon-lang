@@ -543,6 +543,19 @@ bool DarwinAsmPrinter::doInitialization(Module &M) {
   // Darwin wants symbols to be quoted if they have complex names.
   Mang->setUseQuotes(true);
   
+  // Prime text sections so they are adjacent.  This reduces the likelihood a
+  // large data or debug section causes a branch to exceed 16M limit.
+  SwitchToTextSection(".section __TEXT,__textcoal_nt,coalesced,"
+                      "pure_instructions");
+  if (TM.getRelocationModel() == Reloc::PIC_) {
+    SwitchToTextSection(".section __TEXT,__picsymbolstub1,symbol_stubs,"
+                          "pure_instructions,32");
+  } else if (TM.getRelocationModel() == Reloc::DynamicNoPIC) {
+    SwitchToTextSection(".section __TEXT,__symbol_stub1,symbol_stubs,"
+                        "pure_instructions,16");
+  }
+  SwitchToTextSection(TAI->getTextSection());
+  
   // Emit initial debug information.
   DW.BeginModule(&M);
   return false;
