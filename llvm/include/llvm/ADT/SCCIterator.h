@@ -71,8 +71,8 @@ class scc_iterator
     SCCNodeStack.push_back(N);
     MinVisitNumStack.push_back(visitNum);
     VisitStack.push_back(std::make_pair(N, GT::child_begin(N)));
-    //DEBUG(std::cerr << "TarjanSCC: Node " << N <<
-    //      " : visitNum = " << visitNum << "\n");
+    //DOUT << "TarjanSCC: Node " << N <<
+    //      " : visitNum = " << visitNum << "\n";
   }
 
   // The stack-based DFS traversal; defined below.
@@ -106,9 +106,9 @@ class scc_iterator
       if (!MinVisitNumStack.empty() && MinVisitNumStack.back() > minVisitNum)
         MinVisitNumStack.back() = minVisitNum;
 
-      //DEBUG(std::cerr << "TarjanSCC: Popped node " << visitingN <<
+      //DOUT << "TarjanSCC: Popped node " << visitingN <<
       //      " : minVisitNum = " << minVisitNum << "; Node visit num = " <<
-      //      nodeVisitNumbers[visitingN] << "\n");
+      //      nodeVisitNumbers[visitingN] << "\n";
 
       if (minVisitNum == nodeVisitNumbers[visitingN]) {
         // A full SCC is on the SCCNodeStack!  It includes all nodes below

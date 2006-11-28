@@ -378,9 +378,12 @@ public:
 
   /// print - Print a dot graph to the specified ostream...
   ///
+  void print(llvm_ostream &O) const {
+    if (O.stream()) print(*O.stream());
+  }
   void print(std::ostream &O) const;
 
-  /// dump - call print(std::cerr), for use from the debugger...
+  /// dump - call print(llvm_cerr), for use from the debugger...
   ///
   void dump() const;
 

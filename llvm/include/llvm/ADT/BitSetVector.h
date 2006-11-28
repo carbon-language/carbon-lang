@@ -29,7 +29,7 @@
 #include <bitset>
 #include <vector>
 #include <functional>
-#include <iostream>
+#include <ostream>
 
 namespace llvm {
 
@@ -178,7 +178,7 @@ public:
     if (O.stream()) print(*O.stream());
   }
   void print(std::ostream &O) const;
-  void dump() const { print(std::cerr); }
+  void dump() const { print(llvm_cerr); }
 
 public:
   //
