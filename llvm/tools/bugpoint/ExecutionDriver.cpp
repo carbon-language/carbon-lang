@@ -56,6 +56,11 @@ namespace {
                    cl::desc("Assume nonzero exit code is failure (default on)"),
                        cl::init(true));
 
+  cl::opt<bool>
+  AppendProgramExitCode("append-exit-code",
+      cl::desc("Append the exit code to the output so it gets diff'd too"),
+      cl::init(false));
+
   cl::opt<std::string>
   InputFile("input", cl::init("/dev/null"),
             cl::desc("Filename to pipe in as stdin (default: /dev/null)"));
@@ -275,6 +280,12 @@ std::string BugDriver::executeProgram(std::string OutputFile,
  "    (with -timeout=0).  This message is only displayed once.\n";
       FirstTimeout = false;
     }
+  }
+
+  if (AppendProgramExitCode) {
+    std::ofstream outFile(OutputFile.c_str(), std::ios_base::app);
+    outFile << "exit " << RetVal << '\n';
+    outFile.close();
   }
 
   if (ProgramExitedNonzero != 0)
