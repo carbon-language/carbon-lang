@@ -139,9 +139,9 @@ MachineInstr *MachineInstr::removeFromParent() {
 /// OperandComplete - Return true if it's illegal to add a new operand
 ///
 bool MachineInstr::OperandsComplete() const {
-  int NumOperands = TargetInstrDescriptors[Opcode].numOperands;
+  unsigned short NumOperands = TargetInstrDescriptors[Opcode].numOperands;
   if ((TargetInstrDescriptors[Opcode].Flags & M_VARIABLE_OPS) == 0 &&
-      getNumOperands()-NumImplicitOps >= (unsigned)NumOperands)
+      getNumOperands()-NumImplicitOps >= NumOperands)
     return true;  // Broken: we have all the operands of this instruction!
   return false;
 }
