@@ -121,7 +121,7 @@ private:
   // SourceLocation info.  These are null if the item wasn't specified or if
   // the setting was synthesized.
   SourceLocation StorageClassSpecLoc, SCS_threadLoc;
-  
+  SourceLocation FS_inlineLoc;
 public:  
   
   DeclSpec()
@@ -165,8 +165,10 @@ public:
   
   // function-specifier
   bool isInlineSpecified() const { return FS_inline_specified; }
+  SourceLocation getInlineSpecLoc() const { return FS_inlineLoc; }
   void ClearFunctionSpecs() {
     FS_inline_specified = false;
+    FS_inlineLoc = SourceLocation();
   }
   
   /// hasTypeSpecifier - Return true if any type-specifier has been found.
@@ -195,7 +197,7 @@ public:
   
   bool SetTypeQual(TQ T, const char *&PrevSpec, const LangOptions &Lang);
   
-  bool SetFunctionSpecInline(const char *&PrevSpec);
+  bool SetFunctionSpecInline(SourceLocation Loc, const char *&PrevSpec);
   
   /// Finish - This does final analysis of the declspec, issuing diagnostics for
   /// things like "_Imaginary" (lacking an FP type).  After calling this method,

@@ -181,9 +181,10 @@ bool DeclSpec::SetTypeQual(TQ T, const char *&PrevSpec,
   return false;
 }
 
-bool DeclSpec::SetFunctionSpecInline(const char *&PrevSpec) {
+bool DeclSpec::SetFunctionSpecInline(SourceLocation Loc, const char *&PrevSpec){
   // 'inline inline' is ok.
   FS_inline_specified = true;
+  FS_inlineLoc = Loc;
   return false;
 }
 

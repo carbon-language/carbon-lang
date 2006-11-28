@@ -185,15 +185,18 @@ void Parser::ParseSpecifierQualifierList(DeclSpec &DS) {
   if (Specs == DeclSpec::PQ_None)
     Diag(Tok, diag::err_typename_requires_specqual);
   
+  // Issue diagnostic and remove storage class if present.
   if (Specs & DeclSpec::PQ_StorageClassSpecifier) {
-    Diag(Loc, diag::err_typename_invalid_storageclass);
-    // FIXME: better loc info for this!
-    // Remove storage class.
+    if (DS.getStorageClassSpecLoc().isValid())
+      Diag(DS.getStorageClassSpecLoc(),diag::err_typename_invalid_storageclass);
+    else
+      Diag(DS.getThreadSpecLoc(), diag::err_typename_invalid_storageclass);
     DS.ClearStorageClassSpecs();
   }
+  
+  // Issue diagnostic and remove function specfier if present.
   if (Specs & DeclSpec::PQ_FunctionSpecifier) {
-    // FIXME: better loc info for this!
-    Diag(Loc, diag::err_typename_invalid_functionspec);
+    Diag(DS.getInlineSpecLoc(), diag::err_typename_invalid_functionspec);
     DS.ClearFunctionSpecs();
   }
 }
@@ -374,11 +377,12 @@ void Parser::ParseDeclarationSpecifiers(DeclSpec &DS) {
       
     // function-specifier
     case tok::kw_inline:
-      isInvalid = DS.SetFunctionSpecInline(PrevSpec);
+      isInvalid = DS.SetFunctionSpecInline(Loc, PrevSpec);
       break;
     }
     // If the specifier combination wasn't legal, issue a diagnostic.
     if (isInvalid) {
+      // FIXME: emit a matching caret at the previous illegal spec combination.
       assert(PrevSpec && "Method did not return previous specifier!");
       if (isInvalid == 1)  // Error.
         Diag(Tok, diag::err_invalid_decl_spec_combination, PrevSpec);
