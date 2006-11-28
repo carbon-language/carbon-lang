@@ -466,7 +466,7 @@ def SHL64mCL : RI<0xD3, MRM4m, (ops i64mem:$dst),
 def SHL64mi : RIi8<0xC1, MRM4m, (ops i64mem:$dst, i8imm:$src),
                   "shl{q} {$src, $dst|$dst, $src}",
                  [(store (shl (loadi64 addr:$dst), (i8 imm:$src)), addr:$dst)]>;
-def SHL64m1 : RI<0xC1, MRM4m, (ops i64mem:$dst),
+def SHL64m1 : RI<0xD1, MRM4m, (ops i64mem:$dst),
                   "shl{q} $dst",
                  [(store (shl (loadi64 addr:$dst), (i8 1)), addr:$dst)]>;
 
@@ -490,7 +490,7 @@ def SHR64mCL : RI<0xD3, MRM5m, (ops i64mem:$dst),
 def SHR64mi : RIi8<0xC1, MRM5m, (ops i64mem:$dst, i8imm:$src),
                   "shr{q} {$src, $dst|$dst, $src}",
                  [(store (srl (loadi64 addr:$dst), (i8 imm:$src)), addr:$dst)]>;
-def SHR64m1 : RI<0xC1, MRM5m, (ops i64mem:$dst),
+def SHR64m1 : RI<0xD1, MRM5m, (ops i64mem:$dst),
                   "shr{q} $dst",
                  [(store (srl (loadi64 addr:$dst), (i8 1)), addr:$dst)]>;
 
@@ -513,7 +513,7 @@ def SAR64mCL : RI<0xD3, MRM7m, (ops i64mem:$dst),
 def SAR64mi  : RIi8<0xC1, MRM7m, (ops i64mem:$dst, i8imm:$src),
                     "sar{q} {$src, $dst|$dst, $src}",
                  [(store (sra (loadi64 addr:$dst), (i8 imm:$src)), addr:$dst)]>;
-def SAR64m1 : RI<0xC1, MRM7m, (ops i64mem:$dst),
+def SAR64m1 : RI<0xD1, MRM7m, (ops i64mem:$dst),
                   "sar{q} $dst",
                  [(store (sra (loadi64 addr:$dst), (i8 1)), addr:$dst)]>;
 
@@ -525,7 +525,7 @@ def ROL64rCL : RI<0xD3, MRM0r, (ops GR64:$dst, GR64:$src),
 def ROL64ri  : RIi8<0xC1, MRM0r, (ops GR64:$dst, GR64:$src1, i8imm:$src2),
                     "rol{q} {$src2, $dst|$dst, $src2}",
                     [(set GR64:$dst, (rotl GR64:$src1, (i8 imm:$src2)))]>;
-def ROL64r1  : RI<0xC1, MRM0r, (ops GR64:$dst, GR64:$src1),
+def ROL64r1  : RI<0xD1, MRM0r, (ops GR64:$dst, GR64:$src1),
                   "rol{q} $dst",
                   [(set GR64:$dst, (rotl GR64:$src1, (i8 1)))]>;
 } // isTwoAddress
@@ -548,7 +548,7 @@ def ROR64rCL : RI<0xD3, MRM1r, (ops GR64:$dst, GR64:$src),
 def ROR64ri  : RIi8<0xC1, MRM1r, (ops GR64:$dst, GR64:$src1, i8imm:$src2),
                     "ror{q} {$src2, $dst|$dst, $src2}",
                     [(set GR64:$dst, (rotr GR64:$src1, (i8 imm:$src2)))]>;
-def ROR64r1  : RI<0xC1, MRM1r, (ops GR64:$dst, GR64:$src1),
+def ROR64r1  : RI<0xD1, MRM1r, (ops GR64:$dst, GR64:$src1),
                   "ror{q} $dst",
                   [(set GR64:$dst, (rotr GR64:$src1, (i8 1)))]>;
 } // isTwoAddress
