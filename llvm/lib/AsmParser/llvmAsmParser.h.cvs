@@ -281,7 +281,7 @@
 
 
 #if ! defined (YYSTYPE) && ! defined (YYSTYPE_IS_DECLARED)
-#line 1040 "/proj/llvm/llvm-1/lib/AsmParser/llvmAsmParser.y"
+#line 1038 "/proj/llvm/llvm-4/lib/AsmParser/llvmAsmParser.y"
 typedef union YYSTYPE {
   llvm::Module                           *ModuleVal;
   llvm::Function                         *FunctionVal;
@@ -289,19 +289,17 @@ typedef union YYSTYPE {
   llvm::BasicBlock                       *BasicBlockVal;
   llvm::TerminatorInst                   *TermInstVal;
   llvm::Instruction                      *InstVal;
-  llvm::Constant                         *ConstVal;
-
-  TypeInfo                                TypeVal;
-  llvm::Value                            *ValueVal;
+  ConstInfo                              ConstVal;
+  TypeInfo                               TypeVal;
+  ValueInfo                              ValueVal;
 
   std::vector<std::pair<TypeInfo,char*> >*ArgList;
-  std::vector<llvm::Value*>              *ValueList;
+  std::vector<ValueInfo>                 *ValueList;
   std::list<TypeInfo>                    *TypeList;
   // Represent the RHS of PHI node
-  std::list<std::pair<llvm::Value*,
-                      llvm::BasicBlock*> > *PHIList;
+  std::list<std::pair<llvm::Value*, llvm::BasicBlock*> > *PHIList;
   std::vector<std::pair<llvm::Constant*, llvm::BasicBlock*> > *JumpTable;
-  std::vector<llvm::Constant*>           *ConstVector;
+  std::vector<ConstInfo>                 *ConstVector;
 
   llvm::GlobalValue::LinkageTypes         Linkage;
   int64_t                           SInt64Val;
@@ -322,7 +320,7 @@ typedef union YYSTYPE {
   llvm::Module::Endianness          Endianness;
 } YYSTYPE;
 /* Line 1447 of yacc.c.  */
-#line 326 "llvmAsmParser.tab.h"
+#line 324 "llvmAsmParser.tab.h"
 # define yystype YYSTYPE /* obsolescent; will be withdrawn */
 # define YYSTYPE_IS_DECLARED 1
 # define YYSTYPE_IS_TRIVIAL 1
