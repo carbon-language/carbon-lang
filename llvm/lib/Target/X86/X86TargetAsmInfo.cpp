@@ -14,7 +14,10 @@
 #include "X86TargetAsmInfo.h"
 #include "X86TargetMachine.h"
 #include "X86Subtarget.h"
-
+#include "llvm/InlineAsm.h"
+#include "llvm/Instructions.h"
+#include "llvm/Module.h"
+#include "llvm/ADT/StringExtras.h"
 using namespace llvm;
 
 static const char* x86_asm_table[] = {"{si}", "S",
@@ -154,3 +157,70 @@ X86TargetAsmInfo::X86TargetAsmInfo(const X86TargetMachine &TM) {
   }
 }
 
+bool X86TargetAsmInfo::LowerToBSwap(CallInst *CI) const {
+  // FIXME: this should verify that we are targetting a 486 or better.  If not,
+  // we will turn this bswap into something that will be lowered to logical ops
+  // instead of emitting the bswap asm.  For now, we don't support 486 or lower
+  // so don't worry about this.
+  
+  // Verify this is a simple bswap.
+  if (CI->getNumOperands() != 2 ||
+      CI->getType() != CI->getOperand(1)->getType() ||
+      !CI->getType()->isInteger())
+    return false;
+  
+  const Type *Ty = CI->getType()->getUnsignedVersion();
+  const char *IntName;
+  switch (Ty->getTypeID()) {
+  default: return false;
+  case Type::UShortTyID: IntName = "llvm.bswap.i16"; break;
+  case Type::UIntTyID:   IntName = "llvm.bswap.i32"; break;
+  case Type::ULongTyID:  IntName = "llvm.bswap.i64"; break;
+  }
+
+  // Okay, we can do this xform, do so now.
+  Module *M = CI->getParent()->getParent()->getParent();
+  Function *Int = M->getOrInsertFunction(IntName, Ty, Ty, (Type*)0);
+  
+  Value *Op = CI->getOperand(1);
+  if (CI->getOperand(1)->getType() != Ty)
+    Op = new BitCastInst(Op, Ty, Op->getName(), CI);
+  
+  Op = new CallInst(Int, Op, CI->getName(), CI);
+  
+  if (Op->getType() != CI->getType())
+    Op = new BitCastInst(Op, CI->getType(), Op->getName(), CI);
+  
+  CI->replaceAllUsesWith(Op);
+  CI->eraseFromParent();
+  return true;
+}
+
+
+bool X86TargetAsmInfo::ExpandInlineAsm(CallInst *CI) const {
+  InlineAsm *IA = cast<InlineAsm>(CI->getCalledValue());
+  //std::vector<InlineAsm::ConstraintInfo> Constraints = IA->ParseConstraints();
+  
+  std::string AsmStr = IA->getAsmString();
+  
+  // TODO: should remove alternatives from the asmstring: "foo {a|b}" -> "foo a"
+  std::vector<std::string> AsmPieces;
+  SplitString(AsmStr, AsmPieces, "\n");  // ; as separator?
+  
+  switch (AsmPieces.size()) {
+  default: return false;    
+  case 1:
+    AsmStr = AsmPieces[0];
+    AsmPieces.clear();
+    SplitString(AsmStr, AsmPieces, " \t");  // Split with whitespace.
+    
+    if (AsmPieces.size() == 2 && 
+        AsmPieces[0] == "bswap" && AsmPieces[1] == "$0") {
+      // No need to check constraints, nothing other than the equivalent of
+      // "=r,0" would be valid here.
+      return LowerToBSwap(CI);
+    }
+    break;
+  }
+  return false;
+}

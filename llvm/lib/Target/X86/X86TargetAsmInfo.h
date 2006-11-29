@@ -23,6 +23,10 @@ namespace llvm {
 
   struct X86TargetAsmInfo : public TargetAsmInfo {
     X86TargetAsmInfo(const X86TargetMachine &TM);
+    
+    virtual bool ExpandInlineAsm(CallInst *CI) const;
+  private:
+    bool LowerToBSwap(CallInst *CI) const;
   };
 } // namespace llvm
 
