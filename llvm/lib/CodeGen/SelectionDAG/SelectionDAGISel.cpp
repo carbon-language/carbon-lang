@@ -3257,7 +3257,7 @@ static SDOperand getMemsetStringVal(MVT::ValueType VT,
   if (TLI.isLittleEndian())
     Offset = Offset + MSB - 1;
   for (unsigned i = 0; i != MSB; ++i) {
-    Val = (Val << 8) | Str[Offset];
+    Val = (Val << 8) | (unsigned char)Str[Offset];
     Offset += TLI.isLittleEndian() ? -1 : 1;
   }
   return DAG.getConstant(Val, VT);
