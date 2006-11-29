@@ -199,7 +199,7 @@ bool X86TargetAsmInfo::LowerToBSwap(CallInst *CI) const {
 
 bool X86TargetAsmInfo::ExpandInlineAsm(CallInst *CI) const {
   InlineAsm *IA = cast<InlineAsm>(CI->getCalledValue());
-  //std::vector<InlineAsm::ConstraintInfo> Constraints = IA->ParseConstraints();
+  std::vector<InlineAsm::ConstraintInfo> Constraints = IA->ParseConstraints();
   
   std::string AsmStr = IA->getAsmString();
   
@@ -214,11 +214,33 @@ bool X86TargetAsmInfo::ExpandInlineAsm(CallInst *CI) const {
     AsmPieces.clear();
     SplitString(AsmStr, AsmPieces, " \t");  // Split with whitespace.
     
+    // bswap $0
     if (AsmPieces.size() == 2 && 
         AsmPieces[0] == "bswap" && AsmPieces[1] == "$0") {
       // No need to check constraints, nothing other than the equivalent of
       // "=r,0" would be valid here.
       return LowerToBSwap(CI);
+    }
+    break;
+  case 3:
+    if (CI->getType() == Type::ULongTy && Constraints.size() >= 2 &&
+        Constraints[0].Codes.size() == 1 && Constraints[0].Codes[0] == "A" &&
+        Constraints[1].Codes.size() == 1 && Constraints[1].Codes[0] == "0") {
+      // bswap %eax / bswap %edx / xchgl %eax, %edx  -> llvm.bswap.i64
+      std::vector<std::string> Words;
+      SplitString(AsmPieces[0], Words, " \t");
+      if (Words.size() == 2 && Words[0] == "bswap" && Words[1] == "%eax") {
+        Words.clear();
+        SplitString(AsmPieces[1], Words, " \t");
+        if (Words.size() == 2 && Words[0] == "bswap" && Words[1] == "%edx") {
+          Words.clear();
+          SplitString(AsmPieces[2], Words, " \t,");
+          if (Words.size() == 3 && Words[0] == "xchgl" && Words[1] == "%eax" &&
+              Words[2] == "%edx") {
+            return LowerToBSwap(CI);
+          }
+        }
+      }
     }
     break;
   }
