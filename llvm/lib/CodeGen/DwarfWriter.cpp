@@ -1872,7 +1872,8 @@ private:
   /// ConstructScope - Construct the components of a scope.
   ///
   void ConstructScope(DebugScope *ParentScope,
-                                   DIE *ParentDie, CompileUnit *Unit) {
+                      unsigned ParentStartID, unsigned ParentEndID,
+                      DIE *ParentDie, CompileUnit *Unit) {
     // Add variables to scope.
     std::vector<DebugVariable *> &Variables = ParentScope->getVariables();
     for (unsigned i = 0, N = Variables.size(); i < N; ++i) {
@@ -1895,27 +1896,32 @@ private:
       if (StartID == EndID && StartID != 0) continue;
       if (Scope->getScopes().empty() && Scope->getVariables().empty()) continue;
       
-      DIE *ScopeDie = new DIE(DW_TAG_lexical_block);
-      
-      // Add the scope bounds.
-      if (StartID) {
-        AddLabel(ScopeDie, DW_AT_low_pc, DW_FORM_addr,
-                           DWLabel("loc", StartID));
+      if (StartID == ParentStartID && EndID == ParentEndID) {
+        // Just add stuff to the parent scope.
+        ConstructScope(Scope, ParentStartID, ParentEndID, ParentDie, Unit);
       } else {
-        AddLabel(ScopeDie, DW_AT_low_pc, DW_FORM_addr,
-                           DWLabel("func_begin", SubprogramCount));
+        DIE *ScopeDie = new DIE(DW_TAG_lexical_block);
+        
+        // Add the scope bounds.
+        if (StartID) {
+          AddLabel(ScopeDie, DW_AT_low_pc, DW_FORM_addr,
+                             DWLabel("loc", StartID));
+        } else {
+          AddLabel(ScopeDie, DW_AT_low_pc, DW_FORM_addr,
+                             DWLabel("func_begin", SubprogramCount));
+        }
+        if (EndID) {
+          AddLabel(ScopeDie, DW_AT_high_pc, DW_FORM_addr,
+                             DWLabel("loc", EndID));
+        } else {
+          AddLabel(ScopeDie, DW_AT_high_pc, DW_FORM_addr,
+                             DWLabel("func_end", SubprogramCount));
+        }
+                           
+        // Add the scope contents.
+        ConstructScope(Scope, StartID, EndID, ScopeDie, Unit);
+        ParentDie->AddChild(ScopeDie);
       }
-      if (EndID) {
-        AddLabel(ScopeDie, DW_AT_high_pc, DW_FORM_addr,
-                           DWLabel("loc", EndID));
-      } else {
-        AddLabel(ScopeDie, DW_AT_high_pc, DW_FORM_addr,
-                           DWLabel("func_end", SubprogramCount));
-      }
-                         
-      // Add the scope contents.
-      ConstructScope(Scope, ScopeDie, Unit);
-      ParentDie->AddChild(ScopeDie);
     }
   }
 
@@ -1943,7 +1949,7 @@ private:
     MachineLocation Location(RI->getFrameRegister(*MF));
     AddAddress(SPDie, DW_AT_frame_base, Location);
 
-    ConstructScope(RootScope, SPDie, Unit);
+    ConstructScope(RootScope, 0, 0, SPDie, Unit);
   }
 
   /// EmitInitial - Emit initial Dwarf declarations.  This is necessary for cc
