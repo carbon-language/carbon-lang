@@ -211,3 +211,11 @@ uint %test33(uint %c1) {
         %y = bitcast float %x to uint
         ret uint %y
 }
+
+ushort %test34(ushort %a) {
+        %c1 = zext ushort %a to int
+        %tmp21 = lshr int %c1, ubyte 8
+        %c2 = trunc int %tmp21 to ushort
+        ret ushort %c2
+}
+
