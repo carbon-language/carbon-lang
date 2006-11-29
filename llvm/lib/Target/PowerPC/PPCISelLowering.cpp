@@ -1123,6 +1123,7 @@ static SDOperand LowerFORMAL_ARGUMENTS(SDOperand Op, SelectionDAG &DAG,
     bool needsLoad = false;
     MVT::ValueType ObjectVT = Op.getValue(ArgNo).getValueType();
     unsigned ObjSize = MVT::getSizeInBits(ObjectVT)/8;
+    unsigned ArgSize = ObjSize;
 
     unsigned CurArgOffset = ArgOffset;
     switch (ObjectVT) {
@@ -1138,6 +1139,7 @@ static SDOperand LowerFORMAL_ARGUMENTS(SDOperand Op, SelectionDAG &DAG,
         ++GPR_idx;
       } else {
         needsLoad = true;
+        ArgSize = PtrByteSize;
       }
       break;
     case MVT::i64:  // PPC64
@@ -1203,7 +1205,8 @@ static SDOperand LowerFORMAL_ARGUMENTS(SDOperand Op, SelectionDAG &DAG,
       // If the argument is actually used, emit a load from the right stack
       // slot.
       if (!Op.Val->hasNUsesOfValue(0, ArgNo)) {
-        int FI = MFI->CreateFixedObject(ObjSize, CurArgOffset);
+        int FI = MFI->CreateFixedObject(ObjSize,
+                                        CurArgOffset + (ArgSize - ObjSize));
         SDOperand FIN = DAG.getFrameIndex(FI, PtrVT);
         ArgVal = DAG.getLoad(ObjectVT, Root, FIN, NULL, 0);
       } else {
