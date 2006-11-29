@@ -219,3 +219,10 @@ ushort %test34(ushort %a) {
         ret ushort %c2
 }
 
+ushort %test35(ushort %a) {
+        %c1 = bitcast ushort %a to short
+        %tmp2 = lshr short %c1, ubyte 8
+        %c2 = bitcast short %tmp2 to ushort
+	ret ushort %c2
+}
+
