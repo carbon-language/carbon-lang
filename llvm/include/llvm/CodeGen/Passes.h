@@ -70,11 +70,6 @@ namespace llvm {
   ///
   FunctionPass *createLinearScanRegisterAllocator();
 
-  /// PriorityBasedGraphColoringRegisterAllocator Pass - This pass implements
-  /// the priority-based graph coloring register allocator by Chow & Hennessey,
-  /// a global register allocator.
-  FunctionPass *createGraphColoringRegisterAllocator();
-
   /// PrologEpilogCodeInserter Pass - This pass inserts prolog and epilog code,
   /// and eliminates abstract frame references.
   ///
