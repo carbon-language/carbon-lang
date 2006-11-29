@@ -5986,7 +5986,39 @@ Instruction *InstCombiner::commonIntCastTransforms(CastInst &CI) {
 }
 
 Instruction *InstCombiner::visitTrunc(CastInst &CI) {
-  return commonIntCastTransforms(CI);
+  if (Instruction *Result = commonIntCastTransforms(CI))
+    return Result;
+  
+  Value *Src = CI.getOperand(0);
+  const Type *Ty = CI.getType();
+  unsigned DestBitWidth = Ty->getPrimitiveSizeInBits();
+  
+  if (Instruction *SrcI = dyn_cast<Instruction>(Src)) {
+    switch (SrcI->getOpcode()) {
+    default: break;
+    case Instruction::LShr:
+      // We can shrink lshr to something smaller if we know the bits shifted in
+      // are already zeros.
+      if (ConstantInt *ShAmtV = dyn_cast<ConstantInt>(SrcI->getOperand(1))) {
+        unsigned ShAmt = ShAmtV->getZExtValue();
+        
+        // Get a mask for the bits shifting in.
+        uint64_t Mask = (~0ULL >> (64-ShAmt)) << DestBitWidth;
+        if (SrcI->hasOneUse() && MaskedValueIsZero(SrcI->getOperand(0), Mask)) {
+          if (ShAmt >= DestBitWidth)        // All zeros.
+            return ReplaceInstUsesWith(CI, Constant::getNullValue(Ty));
+
+          // Okay, we can shrink this.  Truncate the input, then return a new
+          // shift.
+          Value *V = InsertCastBefore(SrcI->getOperand(0), Ty, CI);
+          return new ShiftInst(Instruction::LShr, V, SrcI->getOperand(1));
+        }
+      }
+      break;
+    }
+  }
+  
+  return 0;
 }
 
 Instruction *InstCombiner::visitZExt(CastInst &CI) {
