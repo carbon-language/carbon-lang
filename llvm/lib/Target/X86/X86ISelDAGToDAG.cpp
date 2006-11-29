@@ -590,6 +590,49 @@ bool X86DAGToDAGISel::MatchAddress(SDOperand N, X86ISelAddressMode &AM,
     break;
   }
 
+  case ISD::TargetConstantPool:
+    if (AM.BaseType == X86ISelAddressMode::RegBase &&
+        AM.Base.Reg.Val == 0 &&
+        AM.CP == 0) {
+      ConstantPoolSDNode *CP = cast<ConstantPoolSDNode>(N);
+      AM.CP = CP->getConstVal();
+      AM.Align = CP->getAlignment();
+      AM.Disp += CP->getOffset();
+      return false;
+    }
+    break;
+
+  case ISD::TargetGlobalAddress:
+    if (AM.BaseType == X86ISelAddressMode::RegBase &&
+        AM.Base.Reg.Val == 0 &&
+        AM.GV == 0) {
+      GlobalAddressSDNode *G = cast<GlobalAddressSDNode>(N);
+      AM.GV = G->getGlobal();
+      AM.Disp += G->getOffset();
+      return false;
+    }
+    break;
+
+  case ISD::TargetExternalSymbol:
+    if (isRoot &&
+        AM.BaseType == X86ISelAddressMode::RegBase &&
+        AM.Base.Reg.Val == 0) {
+      ExternalSymbolSDNode *S = cast<ExternalSymbolSDNode>(N.getOperand(0));
+      AM.ES = S->getSymbol();
+      return false;
+    }
+    break;
+
+  case ISD::TargetJumpTable:
+    if (isRoot &&
+        AM.BaseType == X86ISelAddressMode::RegBase &&
+        AM.Base.Reg.Val == 0) {
+      JumpTableSDNode *J = cast<JumpTableSDNode>(N.getOperand(0));
+      AM.JT = J->getIndex();
+      return false;
+    }
+    break;
+
   case X86ISD::Wrapper:
     // If value is available in a register both base and index components have
     // been picked, we can't fit the result available in the register in the

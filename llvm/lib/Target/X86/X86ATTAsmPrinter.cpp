@@ -262,7 +262,7 @@ void X86ATTAsmPrinter::printOperand(const MachineInstr *MI, unsigned OpNo,
     else if (Offset < 0)
       O << Offset;
 
-    if (!isCallOp &&
+    if (isMemOp &&
         Subtarget->is64Bit()) {
       if (isExt && TM.getRelocationModel() != Reloc::Static)
         O << "@GOTPCREL";
