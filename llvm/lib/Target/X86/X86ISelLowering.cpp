@@ -4728,12 +4728,26 @@ X86TargetLowering::LowerREADCYCLCECOUNTER(SDOperand Op, SelectionDAG &DAG) {
   Ops.push_back(Op.getOperand(0));
   SDOperand rd = DAG.getNode(X86ISD::RDTSC_DAG, Tys, &Ops[0], Ops.size());
   Ops.clear();
-  Ops.push_back(DAG.getCopyFromReg(rd, X86::EAX, MVT::i32, rd.getValue(1)));
-  Ops.push_back(DAG.getCopyFromReg(Ops[0].getValue(1), X86::EDX,
-                                   MVT::i32, Ops[0].getValue(2)));
-  Ops.push_back(Ops[1].getValue(1));
-  Tys[0] = Tys[1] = MVT::i32;
-  Tys.push_back(MVT::Other);
+  if (Subtarget->is64Bit()) {
+    SDOperand Copy1 = DAG.getCopyFromReg(rd, X86::RAX, MVT::i64, rd.getValue(1));
+    SDOperand Copy2 = DAG.getCopyFromReg(Copy1.getValue(1), X86::RDX,
+                                         MVT::i64, Copy1.getValue(2));
+    SDOperand Tmp = DAG.getNode(ISD::SHL, MVT::i64, Copy2,
+                                DAG.getConstant(32, MVT::i8));
+    Ops.push_back(DAG.getNode(ISD::OR, MVT::i64, Copy1, Tmp));
+    Ops.push_back(Copy2.getValue(1));
+    Tys[0] = MVT::i64;
+    Tys[1] = MVT::Other;
+  } else {
+    SDOperand Copy1 = DAG.getCopyFromReg(rd, X86::EAX, MVT::i32, rd.getValue(1));
+    SDOperand Copy2 = DAG.getCopyFromReg(Copy1.getValue(1), X86::EDX,
+                                         MVT::i32, Copy1.getValue(2));
+    Ops.push_back(Copy1);
+    Ops.push_back(Copy2);
+    Ops.push_back(Copy2.getValue(1));
+    Tys[0] = Tys[1] = MVT::i32;
+    Tys.push_back(MVT::Other);
+  }
   return DAG.getNode(ISD::MERGE_VALUES, Tys, &Ops[0], Ops.size());
 }
 

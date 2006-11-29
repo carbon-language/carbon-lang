@@ -536,6 +536,8 @@ def REP_STOSD : I<0xAB, RawFrm, (ops), "{rep;stosl|rep stosd}",
                   [(X86rep_stos i32)]>,
                 Imp<[EAX,ECX,EDI], [ECX,EDI]>, REP;
 
+def RDTSC : I<0x31, RawFrm, (ops), "rdtsc", [(X86rdtsc)]>,
+            TB, Imp<[],[RAX,RDX]>;
 
 //===----------------------------------------------------------------------===//
 //  Input/Output Instructions...
@@ -2397,12 +2399,6 @@ def CWD : I<0x99, RawFrm, (ops),
 def CDQ : I<0x99, RawFrm, (ops),
             "{cltd|cdq}", []>, Imp<[EAX],[EAX,EDX]>; // EDX:EAX = signext(EAX)
           
-//===----------------------------------------------------------------------===//
-// Miscellaneous Instructions
-//===----------------------------------------------------------------------===//
-
-def RDTSC : I<0x31, RawFrm, (ops), "rdtsc", [(X86rdtsc)]>,
-            TB, Imp<[],[EAX,EDX]>;
 
 //===----------------------------------------------------------------------===//
 // Alias Instructions
