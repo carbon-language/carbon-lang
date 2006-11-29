@@ -4994,21 +4994,14 @@ bool X86TargetLowering::isLegalAddressImmediate(int64_t V) const {
 }
 
 bool X86TargetLowering::isLegalAddressImmediate(GlobalValue *GV) const {
-  // GV is 64-bit but displacement field is 32-bit unless we are in small code
-  // model. Mac OS X happens to support only small PIC code model.
-  // FIXME: better support for other OS's.
-  if (Subtarget->is64Bit() && !Subtarget->isTargetDarwin())
+  // In 64-bit mode, GV is 64-bit so it won't fit in the 32-bit displacement 
+  // field unless we are in small code model.
+  if (Subtarget->is64Bit() &&
+      getTargetMachine().getCodeModel() != CodeModel::Small)
     return false;
-  if (Subtarget->isTargetDarwin()) {
-    Reloc::Model RModel = getTargetMachine().getRelocationModel();
-    if (RModel == Reloc::Static)
-      return true;
-    else if (RModel == Reloc::DynamicNoPIC)
-      return !(Subtarget->GVRequiresExtraLoad(GV, false));
-    else
-      return false;
-  } else
-    return true;
+  Reloc::Model RModel = getTargetMachine().getRelocationModel();
+  return (RModel == Reloc::Static) ||
+    !Subtarget->GVRequiresExtraLoad(GV, false);
 }
 
 /// isShuffleMaskLegal - Targets can use this to indicate that they only
