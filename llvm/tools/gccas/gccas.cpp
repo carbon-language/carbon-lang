@@ -23,10 +23,11 @@
 #include "llvm/Transforms/IPO.h"
 #include "llvm/Transforms/Scalar.h"
 #include "llvm/Support/CommandLine.h"
+#include "llvm/Support/Streams.h"
 #include "llvm/System/Signals.h"
+#include <iostream>
 #include <memory>
 #include <fstream>
-
 using namespace llvm;
 
 namespace {
@@ -140,7 +141,7 @@ int main(int argc, char **argv) {
     ParseError Err;
     std::auto_ptr<Module> M(ParseAssemblyFile(InputFilename,&Err));
     if (M.get() == 0) {
-      std::cerr << argv[0] << ": " << Err.getMessage() << "\n"; 
+      llvm_cerr << argv[0] << ": " << Err.getMessage() << "\n"; 
       return 1;
     }
 
@@ -175,7 +176,7 @@ int main(int argc, char **argv) {
 
 
     if (!Out->good()) {
-      std::cerr << argv[0] << ": error opening " << OutputFilename << "!\n";
+      llvm_cerr << argv[0] << ": error opening " << OutputFilename << "!\n";
       return 1;
     }
 
@@ -194,7 +195,8 @@ int main(int argc, char **argv) {
     Passes.add(createVerifierPass());
 
     // Write bytecode to file...
-    Passes.add(new WriteBytecodePass(Out,false,!NoCompress));
+    llvm_ostream L(*Out);
+    Passes.add(new WriteBytecodePass(&L,false,!NoCompress));
 
     // Run our queue of passes all at once now, efficiently.
     Passes.run(*M.get());
@@ -202,9 +204,9 @@ int main(int argc, char **argv) {
     if (Out != &std::cout) delete Out;
     return 0;
   } catch (const std::string& msg) {
-    std::cerr << argv[0] << ": " << msg << "\n";
+    llvm_cerr << argv[0] << ": " << msg << "\n";
   } catch (...) {
-    std::cerr << argv[0] << ": Unexpected unknown exception occurred.\n";
+    llvm_cerr << argv[0] << ": Unexpected unknown exception occurred.\n";
   }
   return 1;
 }

@@ -18,12 +18,12 @@
 #include "llvm/Bytecode/Reader.h"
 #include "llvm/Bytecode/Writer.h"
 #include "llvm/Support/CommandLine.h"
+#include "llvm/Support/Streams.h"
 #include "llvm/System/Signals.h"
 #include "llvm/System/Path.h"
 #include <fstream>
 #include <iostream>
 #include <memory>
-
 using namespace llvm;
 
 static cl::list<std::string>
@@ -51,23 +51,23 @@ static cl::opt<bool> NoCompress("disable-compression", cl::init(false),
 static inline std::auto_ptr<Module> LoadFile(const std::string &FN) {
   sys::Path Filename;
   if (!Filename.set(FN)) {
-    std::cerr << "Invalid file name: '" << FN << "'\n";
+    llvm_cerr << "Invalid file name: '" << FN << "'\n";
     return std::auto_ptr<Module>();
   }
 
   std::string ErrorMessage;
   if (Filename.exists()) {
-    if (Verbose) std::cerr << "Loading '" << Filename.c_str() << "'\n";
+    if (Verbose) llvm_cerr << "Loading '" << Filename.c_str() << "'\n";
     Module* Result = ParseBytecodeFile(Filename.toString(), &ErrorMessage);
     if (Result) return std::auto_ptr<Module>(Result);   // Load successful!
 
     if (Verbose) {
-      std::cerr << "Error opening bytecode file: '" << Filename.c_str() << "'";
-      if (ErrorMessage.size()) std::cerr << ": " << ErrorMessage;
-      std::cerr << "\n";
+      llvm_cerr << "Error opening bytecode file: '" << Filename.c_str() << "'";
+      if (ErrorMessage.size()) llvm_cerr << ": " << ErrorMessage;
+      llvm_cerr << "\n";
     }
   } else {
-    std::cerr << "Bytecode file: '" << Filename.c_str()
+    llvm_cerr << "Bytecode file: '" << Filename.c_str()
               << "' does not exist.\n";
   }
 
@@ -85,7 +85,7 @@ int main(int argc, char **argv) {
 
     std::auto_ptr<Module> Composite(LoadFile(InputFilenames[BaseArg]));
     if (Composite.get() == 0) {
-      std::cerr << argv[0] << ": error loading file '"
+      llvm_cerr << argv[0] << ": error loading file '"
                 << InputFilenames[BaseArg] << "'\n";
       return 1;
     }
@@ -93,15 +93,15 @@ int main(int argc, char **argv) {
     for (unsigned i = BaseArg+1; i < InputFilenames.size(); ++i) {
       std::auto_ptr<Module> M(LoadFile(InputFilenames[i]));
       if (M.get() == 0) {
-        std::cerr << argv[0] << ": error loading file '"
+        llvm_cerr << argv[0] << ": error loading file '"
                   << InputFilenames[i] << "'\n";
         return 1;
       }
 
-      if (Verbose) std::cerr << "Linking in '" << InputFilenames[i] << "'\n";
+      if (Verbose) llvm_cerr << "Linking in '" << InputFilenames[i] << "'\n";
 
       if (Linker::LinkModules(Composite.get(), M.get(), &ErrorMessage)) {
-        std::cerr << argv[0] << ": link error in '" << InputFilenames[i]
+        llvm_cerr << argv[0] << ": link error in '" << InputFilenames[i]
                   << "': " << ErrorMessage << "\n";
         return 1;
       }
@@ -110,14 +110,14 @@ int main(int argc, char **argv) {
     // TODO: Iterate over the -l list and link in any modules containing
     // global symbols that have not been resolved so far.
 
-    if (DumpAsm) std::cerr << "Here's the assembly:\n" << *Composite.get();
+    if (DumpAsm) llvm_cerr << "Here's the assembly:\n" << *Composite.get();
 
     // FIXME: cout is not binary!
     std::ostream *Out = &std::cout;  // Default to printing to stdout...
     if (OutputFilename != "-") {
       if (!Force && std::ifstream(OutputFilename.c_str())) {
         // If force is not specified, make sure not to overwrite a file!
-        std::cerr << argv[0] << ": error opening '" << OutputFilename
+        llvm_cerr << argv[0] << ": error opening '" << OutputFilename
                   << "': file exists!\n"
                   << "Use -f command line argument to force output\n";
         return 1;
@@ -126,7 +126,7 @@ int main(int argc, char **argv) {
                                    std::ios::binary;
       Out = new std::ofstream(OutputFilename.c_str(), io_mode);
       if (!Out->good()) {
-        std::cerr << argv[0] << ": error opening '" << OutputFilename << "'!\n";
+        llvm_cerr << argv[0] << ": error opening '" << OutputFilename << "'!\n";
         return 1;
       }
 
@@ -136,19 +136,20 @@ int main(int argc, char **argv) {
     }
 
     if (verifyModule(*Composite.get())) {
-      std::cerr << argv[0] << ": linked module is broken!\n";
+      llvm_cerr << argv[0] << ": linked module is broken!\n";
       return 1;
     }
 
-    if (Verbose) std::cerr << "Writing bytecode...\n";
-    WriteBytecodeToFile(Composite.get(), *Out, !NoCompress);
+    if (Verbose) llvm_cerr << "Writing bytecode...\n";
+    llvm_ostream L(*Out);
+    WriteBytecodeToFile(Composite.get(), L, !NoCompress);
 
     if (Out != &std::cout) delete Out;
     return 0;
   } catch (const std::string& msg) {
-    std::cerr << argv[0] << ": " << msg << "\n";
+    llvm_cerr << argv[0] << ": " << msg << "\n";
   } catch (...) {
-    std::cerr << argv[0] << ": Unexpected unknown exception occurred.\n";
+    llvm_cerr << argv[0] << ": Unexpected unknown exception occurred.\n";
   }
   return 1;
 }

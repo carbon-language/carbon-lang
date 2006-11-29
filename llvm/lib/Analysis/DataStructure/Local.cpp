@@ -24,7 +24,6 @@
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/Timer.h"
-#include <iostream>
 
 // FIXME: This should eventually be a FunctionPass that is automatically
 // aggregated into a Pass.
@@ -435,7 +434,7 @@ void GraphBuilder::visitGetElementPtrInst(User &GEP) {
         // Variable index into a node.  We must merge all of the elements of the
         // sequential type here.
         if (isa<PointerType>(STy))
-          std::cerr << "Pointer indexing not handled yet!\n";
+          llvm_cerr << "Pointer indexing not handled yet!\n";
         else {
           const ArrayType *ATy = cast<ArrayType>(STy);
           unsigned ElSize = TD.getTypeSize(CurTy);
@@ -1062,7 +1061,7 @@ void GraphBuilder::visitCallSite(CallSite CS) {
   if (DisableDirectCallOpt || !isa<Function>(Callee)) {
     CalleeNode = getValueDest(*Callee).getNode();
     if (CalleeNode == 0) {
-      std::cerr << "WARNING: Program is calling through a null pointer?\n"<< *I;
+      llvm_cerr << "WARNING: Program is calling through a null pointer?\n"<< *I;
       return;  // Calling a null pointer?
     }
   }

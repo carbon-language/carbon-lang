@@ -27,7 +27,7 @@
 #include "llvm/Transforms/Scalar.h"
 #include "llvm/Support/SystemUtils.h"
 #include "llvm/Support/CommandLine.h"
-
+#include "llvm/Support/Streams.h"
 using namespace llvm;
 
 namespace {
@@ -123,10 +123,10 @@ static void RemoveEnv(const char * name, char ** const envp) {
 }
 
 static void dumpArgs(const char **args) {
-  std::cerr << *args++;
+  llvm_cerr << *args++;
   while (*args)
-    std::cerr << ' ' << *args++;
-  std::cerr << '\n' << std::flush;
+    llvm_cerr << ' ' << *args++;
+  llvm_cerr << '\n' << std::flush;
 }
 
 static inline void addPass(PassManager &PM, Pass *P) {
@@ -283,7 +283,8 @@ int llvm::GenerateBytecode(Module *M, int StripLevel, bool Internalize,
   Passes.add(createVerifierPass());
 
   // Add the pass that writes bytecode to the output file...
-  addPass(Passes, new WriteBytecodePass(Out, false, !NoCompress));
+  llvm_ostream L(*Out);
+  addPass(Passes, new WriteBytecodePass(&L, false, !NoCompress));
 
   // Run our queue of passes all at once now, efficiently.
   Passes.run(*M);

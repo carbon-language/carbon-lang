@@ -174,7 +174,7 @@ Value *SCEVExpander::visitAddRecExpr(SCEVAddRecExpr *S) {
   SCEVHandle IH = SCEVUnknown::get(I);   // Get I as a "symbolic" SCEV.
 
   SCEVHandle V = S->evaluateAtIteration(IH);
-  //std::cerr << "Evaluated: " << *this << "\n     to: " << *V << "\n";
+  //llvm_cerr << "Evaluated: " << *this << "\n     to: " << *V << "\n";
 
   return expandInTy(V, Ty);
 }

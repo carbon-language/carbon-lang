@@ -15,14 +15,13 @@
 #ifndef LLVM_BYTECODE_WRITER_H
 #define LLVM_BYTECODE_WRITER_H
 
-#include <iosfwd>
-
 namespace llvm {
+  class llvm_ostream;
   class Module;
   /// WriteBytecodeToFile - Write the specified module to the specified output
   /// stream.  If compress is set to true, try to use compression when writing
   /// out the file.  This can never fail if M is a well-formed module.
-  void WriteBytecodeToFile(const Module *M, std::ostream &Out,
+  void WriteBytecodeToFile(const Module *M, llvm_ostream &Out,
                            bool compress = true);
 } // End llvm namespace
 

@@ -19,9 +19,10 @@
 #include "llvm/Assembly/Writer.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/GraphWriter.h"
+#include "llvm/Support/Streams.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/Config/config.h"
-#include <iostream>
+#include <ostream>
 #include <fstream>
 #include <sstream>
 using namespace llvm;
@@ -36,7 +37,7 @@ namespace {
   Statistic<> NumFoldedNodes ("dsa", "Number of folded nodes (in final graph)");
 }
 
-void DSNode::dump() const { print(std::cerr, 0); }
+void DSNode::dump() const { print(llvm_cerr, 0); }
 
 static std::string getCaption(const DSNode *N, const DSGraph *G) {
   std::stringstream OS;

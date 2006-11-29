@@ -31,6 +31,7 @@
 #include "llvm/Transforms/Scalar.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/FileUtilities.h"
+#include "llvm/Support/Streams.h"
 #include "llvm/System/Signals.h"
 #include "llvm/Support/SystemUtils.h"
 #include <fstream>
@@ -126,7 +127,7 @@ namespace {
 ///  Message  - The message to print to standard error.
 ///
 static int PrintAndReturn(const char *progname, const std::string &Message) {
-  std::cerr << progname << ": " << Message << "\n";
+  llvm_cerr << progname << ": " << Message << "\n";
   return 1;
 }
 
@@ -140,11 +141,11 @@ static void EmitShellScript(char **argv) {
   std::string ErrMsg;  
   sys::Path llvmstub = FindExecutable("llvm-stub.exe", argv[0]);
   if (llvmstub.isEmpty()) {
-    std::cerr << "Could not find llvm-stub.exe executable!\n";
+    llvm_cerr << "Could not find llvm-stub.exe executable!\n";
     exit(1);
   }
   if (0 != sys::CopyFile(sys::Path(OutputFilename), llvmstub, &ErrMsg)) {
-    std::cerr << argv[0] << ": " << ErrMsg << "\n";
+    llvm_cerr << argv[0] << ": " << ErrMsg << "\n";
     exit(1);    
   }
 
@@ -324,18 +325,18 @@ int main(int argc, char **argv, char **envp ) {
         return PrintAndReturn(argv[0], "Failed to find gcc");
 
       // Generate an assembly language file for the bytecode.
-      if (Verbose) std::cout << "Generating Assembly Code\n";
+      if (Verbose) llvm_cout << "Generating Assembly Code\n";
       std::string ErrMsg;
       if (0 != GenerateAssembly(
           AssemblyFile.toString(), RealBytecodeOutput, llc, ErrMsg, Verbose)) {
-        std::cerr << argv[0] << ": " << ErrMsg << "\n";
+        llvm_cerr << argv[0] << ": " << ErrMsg << "\n";
         return 2;
       }
-      if (Verbose) std::cout << "Generating Native Code\n";
+      if (Verbose) llvm_cout << "Generating Native Code\n";
       if (0 != GenerateNative(OutputFilename, AssemblyFile.toString(),
                      LibPaths, Libraries, gcc, envp, LinkAsLibrary,
                      NoInternalize, RPath, SOName, ErrMsg, Verbose) ) {
-        std::cerr << argv[0] << ": " << ErrMsg << "\n";
+        llvm_cerr << argv[0] << ": " << ErrMsg << "\n";
         return 2;
       }
 
@@ -364,18 +365,18 @@ int main(int argc, char **argv, char **envp ) {
         return PrintAndReturn(argv[0], "Failed to find gcc");
 
       // Generate an assembly language file for the bytecode.
-      if (Verbose) std::cout << "Generating C Source Code\n";
+      if (Verbose) llvm_cout << "Generating C Source Code\n";
       std::string ErrMsg;
       if (0 != GenerateCFile(
           CFile.toString(), RealBytecodeOutput, llc, ErrMsg, Verbose)) {
-        std::cerr << argv[0] << ": " << ErrMsg << "\n";
+        llvm_cerr << argv[0] << ": " << ErrMsg << "\n";
         return 2;
       }
-      if (Verbose) std::cout << "Generating Native Code\n";
+      if (Verbose) llvm_cout << "Generating Native Code\n";
       if (0 != GenerateNative(OutputFilename, CFile.toString(),
                      LibPaths, Libraries, gcc, envp, LinkAsLibrary,
                      NoInternalize, RPath, SOName, ErrMsg, Verbose)) {
-        std::cerr << argv[0] << ": " << ErrMsg << "\n";
+        llvm_cerr << argv[0] << ": " << ErrMsg << "\n";
         return 2;
       }
 
@@ -392,11 +393,11 @@ int main(int argc, char **argv, char **envp ) {
       // Make the bytecode file readable and directly executable in LLEE
       std::string ErrMsg;
       if (sys::Path(RealBytecodeOutput).makeExecutableOnDisk(&ErrMsg)) {
-        std::cerr << argv[0] << ": " << ErrMsg << "\n";
+        llvm_cerr << argv[0] << ": " << ErrMsg << "\n";
         return 1;
       }
       if (sys::Path(RealBytecodeOutput).makeReadableOnDisk(&ErrMsg)) {
-        std::cerr << argv[0] << ": " << ErrMsg << "\n";
+        llvm_cerr << argv[0] << ": " << ErrMsg << "\n";
         return 1;
       }
     }
@@ -404,18 +405,18 @@ int main(int argc, char **argv, char **envp ) {
     // Make the output, whether native or script, executable as well...
     std::string ErrMsg;
     if (sys::Path(OutputFilename).makeExecutableOnDisk(&ErrMsg)) {
-      std::cerr << argv[0] << ": " << ErrMsg << "\n";
+      llvm_cerr << argv[0] << ": " << ErrMsg << "\n";
       return 1;
     }
   } catch (const char*msg) {
-    std::cerr << argv[0] << ": " << msg << "\n";
+    llvm_cerr << argv[0] << ": " << msg << "\n";
     exitCode = 1;
   } catch (const std::string& msg) {
-    std::cerr << argv[0] << ": " << msg << "\n";
+    llvm_cerr << argv[0] << ": " << msg << "\n";
     exitCode = 2;
   } catch (...) {
     // This really shouldn't happen, but just in case ....
-    std::cerr << argv[0] << ": An unexpected unknown exception occurred.\n";
+    llvm_cerr << argv[0] << ": An unexpected unknown exception occurred.\n";
     exitCode = 3;
   }
 

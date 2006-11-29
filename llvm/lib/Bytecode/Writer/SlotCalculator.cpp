@@ -31,8 +31,8 @@
 using namespace llvm;
 
 #if 0
-#include <iostream>
-#define SC_DEBUG(X) std::cerr << X
+#include "llvm/Support/Streams.h"
+#define SC_DEBUG(X) llvm_cerr << X
 #else
 #define SC_DEBUG(X)
 #endif
@@ -800,7 +800,7 @@ int SlotCalculator::doInsertValue(const Value *D) {
 
   // Used for debugging DefSlot=-1 assertion...
   //if (Typ == Type::TypeTy)
-  //  cerr << "Inserting type '" << cast<Type>(D)->getDescription() << "'!\n";
+  //  llvm_cerr << "Inserting type '"<<cast<Type>(D)->getDescription() <<"'!\n";
 
   if (Typ->isDerivedType()) {
     int ValSlot;

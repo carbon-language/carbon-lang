@@ -43,6 +43,7 @@ namespace llvm {
     }
 
     bool operator == (const std::ostream &OS) { return &OS == Stream; }
+    bool operator == (const llvm_ostream &OS) { return OS.Stream == Stream; }
   };
 
   extern llvm_ostream llvm_null;

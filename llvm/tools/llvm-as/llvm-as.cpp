@@ -20,12 +20,12 @@
 #include "llvm/Bytecode/Writer.h"
 #include "llvm/Analysis/Verifier.h"
 #include "llvm/Support/CommandLine.h"
+#include "llvm/Support/Streams.h"
 #include "llvm/Support/SystemUtils.h"
 #include "llvm/System/Signals.h"
 #include <fstream>
 #include <iostream>
 #include <memory>
-
 using namespace llvm;
 
 static cl::opt<std::string>
@@ -60,27 +60,27 @@ int main(int argc, char **argv) {
     ParseError Err;
     std::auto_ptr<Module> M(ParseAssemblyFile(InputFilename,&Err));
     if (M.get() == 0) {
-      std::cerr << argv[0] << ": " << Err.getMessage() << "\n"; 
+      llvm_cerr << argv[0] << ": " << Err.getMessage() << "\n"; 
       return 1;
     }
 
     if (!DisableVerify) {
       std::string Err;
       if (verifyModule(*M.get(), ReturnStatusAction, &Err)) {
-        std::cerr << argv[0]
+        llvm_cerr << argv[0]
                   << ": assembly parsed, but does not verify as correct!\n";
-        std::cerr << Err;
+        llvm_cerr << Err;
         return 1;
       } 
     }
 
-    if (DumpAsm) std::cerr << "Here's the assembly:\n" << *M.get();
+    if (DumpAsm) llvm_cerr << "Here's the assembly:\n" << *M.get();
 
     if (OutputFilename != "") {   // Specified an output filename?
       if (OutputFilename != "-") {  // Not stdout?
         if (!Force && std::ifstream(OutputFilename.c_str())) {
           // If force is not specified, make sure not to overwrite a file!
-          std::cerr << argv[0] << ": error opening '" << OutputFilename
+          llvm_cerr << argv[0] << ": error opening '" << OutputFilename
                     << "': file exists!\n"
                     << "Use -f command line argument to force output\n";
           return 1;
@@ -108,7 +108,7 @@ int main(int argc, char **argv) {
 
         if (!Force && std::ifstream(OutputFilename.c_str())) {
           // If force is not specified, make sure not to overwrite a file!
-          std::cerr << argv[0] << ": error opening '" << OutputFilename
+          llvm_cerr << argv[0] << ": error opening '" << OutputFilename
                     << "': file exists!\n"
                     << "Use -f command line argument to force output\n";
           return 1;
@@ -123,18 +123,19 @@ int main(int argc, char **argv) {
     }
 
     if (!Out->good()) {
-      std::cerr << argv[0] << ": error opening " << OutputFilename << "!\n";
+      llvm_cerr << argv[0] << ": error opening " << OutputFilename << "!\n";
       return 1;
     }
 
     if (Force || !CheckBytecodeOutputToConsole(Out,true)) {
-      WriteBytecodeToFile(M.get(), *Out, !NoCompress);
+      llvm_ostream L(*Out);
+      WriteBytecodeToFile(M.get(), L, !NoCompress);
     }
   } catch (const std::string& msg) {
-    std::cerr << argv[0] << ": " << msg << "\n";
+    llvm_cerr << argv[0] << ": " << msg << "\n";
     exitCode = 1;
   } catch (...) {
-    std::cerr << argv[0] << ": Unexpected unknown exception occurred.\n";
+    llvm_cerr << argv[0] << ": Unexpected unknown exception occurred.\n";
     exitCode = 1;
   }
 

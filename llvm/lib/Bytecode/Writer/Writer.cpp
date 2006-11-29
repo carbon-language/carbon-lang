@@ -29,6 +29,7 @@
 #include "llvm/Support/GetElementPtrTypeIterator.h"
 #include "llvm/Support/Compressor.h"
 #include "llvm/Support/MathExtras.h"
+#include "llvm/Support/Streams.h"
 #include "llvm/System/Program.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/Statistic.h"
@@ -275,7 +276,7 @@ void BytecodeWriter::outputType(const Type *T) {
     break;
 
   default:
-    std::cerr << __FILE__ << ":" << __LINE__ << ": Don't know how to serialize"
+    llvm_cerr << __FILE__ << ":" << __LINE__ << ": Don't know how to serialize"
               << " Type '" << T->getDescription() << "'\n";
     break;
   }
@@ -384,7 +385,7 @@ void BytecodeWriter::outputConstant(const Constant *CPV) {
   case Type::VoidTyID:
   case Type::LabelTyID:
   default:
-    std::cerr << __FILE__ << ":" << __LINE__ << ": Don't know how to serialize"
+    llvm_cerr << __FILE__ << ":" << __LINE__ << ": Don't know how to serialize"
               << " type '" << *CPV->getType() << "'\n";
     break;
   }
@@ -1225,13 +1226,13 @@ void BytecodeWriter::outputSymbolTable(const SymbolTable &MST) {
   }
 }
 
-void llvm::WriteBytecodeToFile(const Module *M, std::ostream &Out,
+void llvm::WriteBytecodeToFile(const Module *M, llvm_ostream &Out,
                                bool compress) {
   assert(M && "You can't write a null module!!");
 
   // Make sure that std::cout is put into binary mode for systems
   // that care.
-  if (&Out == std::cout)
+  if (Out == llvm_cout)
     sys::Program::ChangeStdoutToBinary();
 
   // Create a vector of unsigned char for the bytecode output. We
@@ -1264,21 +1265,21 @@ void llvm::WriteBytecodeToFile(const Module *M, std::ostream &Out,
     compressed_magic[2] = 'v';
     compressed_magic[3] = 'c';
 
-    Out.write(compressed_magic,4);
+    Out.stream()->write(compressed_magic,4);
 
     // Compress everything after the magic number (which we altered)
     Compressor::compressToStream(
       (char*)(FirstByte+4),        // Skip the magic number
       Buffer.size()-4,             // Skip the magic number
-      Out                          // Where to write compressed data
+      *Out.stream()                // Where to write compressed data
     );
 
   } else {
 
     // We're not compressing, so just write the entire block.
-    Out.write((char*)FirstByte, Buffer.size());
+    Out.stream()->write((char*)FirstByte, Buffer.size());
   }
 
   // make sure it hits disk now
-  Out.flush();
+  Out.stream()->flush();
 }

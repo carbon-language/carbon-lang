@@ -20,7 +20,7 @@
 #include "llvm/Analysis/Passes.h"
 #include "llvm/Module.h"
 #include "llvm/Support/Debug.h"
-#include <iostream>
+#include <ostream>
 using namespace llvm;
 
 namespace {
@@ -53,6 +53,9 @@ namespace {
     }
 
     // print - Implement the Pass::print method...
+    void print(llvm_ostream O, const Module *M) const {
+      if (O.stream()) print(*O.stream(), M);
+    }
     void print(std::ostream &O, const Module *M) const {
       assert(ResultGraph && "Result graph has not yet been computed!");
       ResultGraph->writeGraphToFile(O, "steensgaards");
@@ -188,7 +191,7 @@ bool Steens::runOnModule(Module &M) {
   // FIXME: We should be able to disable the globals graph for steens!
   //ResultGraph->removeDeadNodes(DSGraph::KeepUnreachableGlobals);
 
-  DEBUG(print(std::cerr, &M));
+  print(DOUT, &M);
   return false;
 }
 

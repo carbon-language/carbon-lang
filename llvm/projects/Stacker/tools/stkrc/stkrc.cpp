@@ -22,11 +22,11 @@
 #include "llvm/Bytecode/Writer.h"
 #include "llvm/Analysis/Verifier.h"
 #include "llvm/Support/CommandLine.h"
+#include "llvm/Support/Streams.h"
 #include "llvm/System/Signals.h"
 #include <fstream>
 #include <iostream>
 #include <memory>
-
 using namespace llvm;
 
 static cl::opt<std::string>
@@ -115,7 +115,7 @@ int main(int argc, char **argv)
       }
 
       if (DumpAsm)
-        std::cerr << "Here's the assembly:" << M.get();
+        llvm_cerr << "Here's the assembly:" << M.get();
 
       if (OutputFilename != "") {   // Specified an output filename?
         if (OutputFilename != "-") {  // Not stdout?
@@ -163,14 +163,15 @@ int main(int argc, char **argv)
         throw std::string("error opening ") + OutputFilename + "!";
       }
 
-      WriteBytecodeToFile(M.get(), *Out);
+      llvm_ostream L(*Out);
+      WriteBytecodeToFile(M.get(), L);
     } catch (const ParseError &E) {
-      std::cerr << argv[0] << ": " << E.getMessage() << "\n";
+      llvm_cerr << argv[0] << ": " << E.getMessage() << "\n";
       return 1;
     }
   }
   catch (const std::string& msg ) {
-    std::cerr << argv[0] << ": " << msg << "\n";
+    llvm_cerr << argv[0] << ": " << msg << "\n";
     return 1;
   }
 

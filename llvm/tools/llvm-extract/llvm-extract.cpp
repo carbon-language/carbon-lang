@@ -19,7 +19,9 @@
 #include "llvm/Transforms/IPO.h"
 #include "llvm/Target/TargetData.h"
 #include "llvm/Support/CommandLine.h"
+#include "llvm/Support/Streams.h"
 #include "llvm/System/Signals.h"
+#include <iostream>
 #include <memory>
 #include <fstream>
 using namespace llvm;
@@ -51,14 +53,14 @@ int main(int argc, char **argv) {
 
     std::auto_ptr<Module> M(ParseBytecodeFile(InputFilename));
     if (M.get() == 0) {
-      std::cerr << argv[0] << ": bytecode didn't read correctly.\n";
+      llvm_cerr << argv[0] << ": bytecode didn't read correctly.\n";
       return 1;
     }
 
     // Figure out which function we should extract
     Function *F = M.get()->getNamedFunction(ExtractFunc);
     if (F == 0) {
-      std::cerr << argv[0] << ": program doesn't contain function named '"
+      llvm_cerr << argv[0] << ": program doesn't contain function named '"
                 << ExtractFunc << "'!\n";
       return 1;
     }
@@ -78,7 +80,7 @@ int main(int argc, char **argv) {
     if (OutputFilename != "-") {  // Not stdout?
       if (!Force && std::ifstream(OutputFilename.c_str())) {
         // If force is not specified, make sure not to overwrite a file!
-        std::cerr << argv[0] << ": error opening '" << OutputFilename
+        llvm_cerr << argv[0] << ": error opening '" << OutputFilename
                   << "': file exists!\n"
                   << "Use -f command line argument to force output\n";
         return 1;
@@ -91,16 +93,17 @@ int main(int argc, char **argv) {
       Out = &std::cout;
     }
 
-    Passes.add(new WriteBytecodePass(Out));  // Write bytecode to file...
+    llvm_ostream L(*Out);
+    Passes.add(new WriteBytecodePass(&L));  // Write bytecode to file...
     Passes.run(*M.get());
 
     if (Out != &std::cout)
       delete Out;
     return 0;
   } catch (const std::string& msg) {
-    std::cerr << argv[0] << ": " << msg << "\n";
+    llvm_cerr << argv[0] << ": " << msg << "\n";
   } catch (...) {
-    std::cerr << argv[0] << ": Unexpected unknown exception occurred.\n";
+    llvm_cerr << argv[0] << ": Unexpected unknown exception occurred.\n";
   }
   return 1;
 }

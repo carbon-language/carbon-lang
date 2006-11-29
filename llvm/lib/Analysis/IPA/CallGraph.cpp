@@ -16,7 +16,8 @@
 #include "llvm/Module.h"
 #include "llvm/Instructions.h"
 #include "llvm/Support/CallSite.h"
-#include <iostream>
+#include "llvm/Support/Streams.h"
+#include <ostream>
 using namespace llvm;
 
 static bool isOnlyADirectCall(Function *F, CallSite CS) {
@@ -72,6 +73,10 @@ public:
     AU.setPreservesAll();
   }
 
+  void print(llvm_ostream &o, const Module *M) const {
+    if (o.stream()) print(*o.stream(), M);
+  }
+
   virtual void print(std::ostream &o, const Module *M) const {
     o << "CallGraph Root is: ";
     if (Function *F = getRoot()->getFunction())
@@ -89,7 +94,7 @@ public:
   /// dump - Print out this call graph.
   ///
   inline void dump() const {
-    print(std::cerr, Mod);
+    print(llvm_cerr, Mod);
   }
 
   CallGraphNode* getExternalCallingNode() const { return ExternalCallingNode; }
@@ -207,7 +212,7 @@ void CallGraph::print(std::ostream &OS, const Module *M) const {
 }
 
 void CallGraph::dump() const {
-  print(std::cerr, 0);
+  print(llvm_cerr, 0);
 }
 
 //===----------------------------------------------------------------------===//
@@ -270,7 +275,7 @@ void CallGraphNode::print(std::ostream &OS) const {
   OS << "\n";
 }
 
-void CallGraphNode::dump() const { print(std::cerr); }
+void CallGraphNode::dump() const { print(llvm_cerr); }
 
 void CallGraphNode::removeCallEdgeTo(CallGraphNode *Callee) {
   for (unsigned i = CalledFunctions.size(); ; --i) {

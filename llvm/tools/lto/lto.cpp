@@ -37,10 +37,10 @@
 #include "llvm/Transforms/Scalar.h"
 #include "llvm/Analysis/LoadValueNumbering.h"
 #include "llvm/Support/MathExtras.h"
+#include "llvm/Support/Streams.h"
 #include "llvm/LinkTimeOptimizer.h"
 #include <fstream>
-#include <iostream>
-
+#include <ostream>
 using namespace llvm;
 
 extern "C"
@@ -361,7 +361,8 @@ LTO::optimizeModules(const std::string &OutputFilename,
     std::string tempFileName(FinalOutputPath.c_str());
     tempFileName += "0.bc";
     std::ofstream Out(tempFileName.c_str(), io_mode);
-    WriteBytecodeToFile(bigOne, Out, true);
+    llvm_ostream L(Out);
+    WriteBytecodeToFile(bigOne, L, true);
   }
 
   // Strip leading underscore because it was added to match names
@@ -377,17 +378,17 @@ LTO::optimizeModules(const std::string &OutputFilename,
   std::string ErrMsg;
   sys::Path TempDir = sys::Path::GetTemporaryDirectory(&ErrMsg);
   if (TempDir.isEmpty()) {
-    std::cerr << "lto: " << ErrMsg << "\n";
+    llvm_cerr << "lto: " << ErrMsg << "\n";
     return LTO_WRITE_FAILURE;
   }
   sys::Path tmpAsmFilePath(TempDir);
   if (!tmpAsmFilePath.appendComponent("lto")) {
-    std::cerr << "lto: " << ErrMsg << "\n";
+    llvm_cerr << "lto: " << ErrMsg << "\n";
     TempDir.eraseFromDisk(true);
     return LTO_WRITE_FAILURE;
   }
   if (tmpAsmFilePath.createTemporaryFileOnDisk(&ErrMsg)) {
-    std::cerr << "lto: " << ErrMsg << "\n";
+    llvm_cerr << "lto: " << ErrMsg << "\n";
     TempDir.eraseFromDisk(true);
     return LTO_WRITE_FAILURE;
   }
@@ -414,7 +415,8 @@ LTO::optimizeModules(const std::string &OutputFilename,
     std::string tempFileName(FinalOutputPath.c_str());
     tempFileName += "1.bc";
     std::ofstream Out(tempFileName.c_str(), io_mode);
-    WriteBytecodeToFile(bigOne, Out, true);
+    llvm_ostream L(Out);
+    WriteBytecodeToFile(bigOne, L, true);
   }
 
   targetTriple = bigOne->getTargetTriple();
@@ -443,7 +445,7 @@ LTO::optimizeModules(const std::string &OutputFilename,
   args.push_back(0);
 
   if (sys::Program::ExecuteAndWait(gcc, &args[0], 0, 0, 1, &ErrMsg)) {
-    std::cerr << "lto: " << ErrMsg << "\n";
+    llvm_cerr << "lto: " << ErrMsg << "\n";
     return LTO_ASM_FAILURE;
   }
 

@@ -28,6 +28,7 @@
 #include "llvm/Support/Timer.h"
 #include "llvm/LinkAllPasses.h"
 #include "llvm/LinkAllVMCore.h"
+#include <iostream>
 #include <fstream>
 #include <memory>
 #include <algorithm>
@@ -251,8 +252,10 @@ int main(int argc, char **argv) {
       Passes.add(createVerifierPass());
 
     // Write bytecode out to disk or cout as the last step...
-    if (!NoOutput && !AnalyzeOnly)
-      Passes.add(new WriteBytecodePass(Out, Out != &std::cout, !NoCompress));
+    if (!NoOutput && !AnalyzeOnly) {
+      llvm_ostream L(*Out);
+      Passes.add(new WriteBytecodePass(&L, Out != &std::cout, !NoCompress));
+    }
 
     // Now that we have all of the passes ready, run them.
     Passes.run(*M.get());
