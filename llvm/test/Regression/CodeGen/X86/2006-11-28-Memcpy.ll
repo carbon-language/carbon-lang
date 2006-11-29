@@ -3,6 +3,8 @@
 ; RUN: llvm-as < %s | llc -march=x86 | grep 'movl _bytes2' | wc -l | grep 1
 ; PR1022, 1023
 
+; XFAIL: *
+
 %fmt = constant [4 x sbyte] c"%x\0A\00"
 %bytes = constant [4 x sbyte] c"\AA\BB\CC\DD"
 %bytes2 = global [4 x sbyte] c"\AA\BB\CC\DD"
