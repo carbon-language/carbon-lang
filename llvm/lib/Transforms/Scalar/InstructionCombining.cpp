@@ -4664,7 +4664,7 @@ Instruction *InstCombiner::visitSetCondInst(SetCondInst &I) {
         break;
       }
 
-    // Simplify seteq and setne instructions...
+    // Simplify seteq and setne instructions with integer constant RHS.
     if (I.isEquality()) {
       bool isSetNE = I.getOpcode() == Instruction::SetNE;
 
@@ -4779,6 +4779,29 @@ Instruction *InstCombiner::visitSetCondInst(SetCondInst &I) {
 
           }
         default: break;
+        }
+      } else if (IntrinsicInst *II = dyn_cast<IntrinsicInst>(Op0)) {
+        // Handle set{eq|ne} <intrinsic>, intcst.
+        switch (II->getIntrinsicID()) {
+        default: break;
+        case Intrinsic::bswap_i16:   // seteq (bswap(x)), c -> seteq(x,bswap(c))
+          WorkList.push_back(II);  // Dead?
+          I.setOperand(0, II->getOperand(1));
+          I.setOperand(1, ConstantInt::get(Type::UShortTy,
+                                           ByteSwap_16(CI->getZExtValue())));
+          return &I;
+        case Intrinsic::bswap_i32:   // seteq (bswap(x)), c -> seteq(x,bswap(c))
+          WorkList.push_back(II);  // Dead?
+          I.setOperand(0, II->getOperand(1));
+          I.setOperand(1, ConstantInt::get(Type::UIntTy,
+                                           ByteSwap_32(CI->getZExtValue())));
+          return &I;
+        case Intrinsic::bswap_i64:   // seteq (bswap(x)), c -> seteq(x,bswap(c))
+          WorkList.push_back(II);  // Dead?
+          I.setOperand(0, II->getOperand(1));
+          I.setOperand(1, ConstantInt::get(Type::ULongTy,
+                                           ByteSwap_64(CI->getZExtValue())));
+          return &I;
         }
       }
     } else {  // Not a SetEQ/SetNE
