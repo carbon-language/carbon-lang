@@ -142,18 +142,18 @@ HANDLE_MEMORY_INST(30, GetElementPtr, GetElementPtrInst)
 // NOTE: The order matters here because CastInst::isEliminableCastPair 
 // NOTE: (see Instructions.cpp) encodes a table based on this ordering.
  FIRST_CAST_INST(31)
-HANDLE_CAST_INST(31, Trunc   , CastInst )  // Truncate integers
-HANDLE_CAST_INST(32, ZExt    , CastInst )  // Zero extend integers
-HANDLE_CAST_INST(33, SExt    , CastInst )  // Sign extend integers
-HANDLE_CAST_INST(34, FPToUI  , CastInst )  // floating point -> UInt
-HANDLE_CAST_INST(35, FPToSI  , CastInst )  // floating point -> SInt
-HANDLE_CAST_INST(36, UIToFP  , CastInst )  // UInt -> floating point
-HANDLE_CAST_INST(37, SIToFP  , CastInst )  // SInt -> floating point
-HANDLE_CAST_INST(38, FPTrunc , CastInst )  // Truncate floating point
-HANDLE_CAST_INST(39, FPExt   , CastInst )  // Extend floating point
-HANDLE_CAST_INST(40, PtrToInt, CastInst )  // Pointer -> Integer
-HANDLE_CAST_INST(41, IntToPtr, CastInst )  // Integer -> Pointer
-HANDLE_CAST_INST(42, BitCast , CastInst )  // Type cast
+HANDLE_CAST_INST(31, Trunc   , TruncInst   )  // Truncate integers
+HANDLE_CAST_INST(32, ZExt    , ZExtInst    )  // Zero extend integers
+HANDLE_CAST_INST(33, SExt    , SExtInst    )  // Sign extend integers
+HANDLE_CAST_INST(34, FPToUI  , FPToUIInst  )  // floating point -> UInt
+HANDLE_CAST_INST(35, FPToSI  , FPToSIInst  )  // floating point -> SInt
+HANDLE_CAST_INST(36, UIToFP  , UIToFPInst  )  // UInt -> floating point
+HANDLE_CAST_INST(37, SIToFP  , SIToFPInst  )  // SInt -> floating point
+HANDLE_CAST_INST(38, FPTrunc , FPTruncInst )  // Truncate floating point
+HANDLE_CAST_INST(39, FPExt   , FPExtInst   )  // Extend floating point
+HANDLE_CAST_INST(40, PtrToInt, PtrToIntInst)  // Pointer -> Integer
+HANDLE_CAST_INST(41, IntToPtr, IntToPtrInst)  // Integer -> Pointer
+HANDLE_CAST_INST(42, BitCast , BitCastInst )  // Type cast
   LAST_CAST_INST(42)
 
 // Other operators...
