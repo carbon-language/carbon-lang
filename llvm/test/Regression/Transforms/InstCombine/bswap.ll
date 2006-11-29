@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -instcombine | llvm-dis | grep 'call.*llvm.bswap' | wc -l | grep 4
+; RUN: llvm-as < %s | opt -instcombine | llvm-dis | grep 'call.*llvm.bswap' | wc -l | grep 5
 
 uint %test1(uint %i) {
         %tmp1 = shr uint %i, ubyte 24           ; <uint> [#uses=1]
@@ -38,5 +38,24 @@ ushort %test4(ushort %s) {
         %tmp4 = shl ushort %s, ubyte 8
         %tmp5 = or ushort %tmp4, %tmp2
 	ret ushort %tmp5
+}
+
+; unsigned short test5(unsigned short a) {
+;       return ((a & 0xff00) >> 8 | (a & 0x00ff) << 8);
+;}
+ushort %test5(ushort %a) {
+        %tmp = zext ushort %a to int
+        %tmp1 = and int %tmp, 65280
+        %tmp2 = ashr int %tmp1, ubyte 8
+        %tmp2 = trunc int %tmp2 to short
+        %tmp3 = zext ushort %a to int
+        %tmp4 = and int %tmp3, 255
+        %tmp5 = shl int %tmp4, ubyte 8
+        %tmp5 = trunc int %tmp5 to short
+        %tmp = or short %tmp2, %tmp5
+        %tmp6 = bitcast short %tmp to ushort
+        %tmp6 = zext ushort %tmp6 to int
+        %retval = trunc int %tmp6 to ushort
+        ret ushort %retval
 }
 
