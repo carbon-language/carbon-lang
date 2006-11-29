@@ -8236,8 +8236,7 @@ Instruction *InstCombiner::visitExtractElementInst(ExtractElementInst &EI) {
         Value *Ptr = InsertCastBefore(I->getOperand(0),
                                       PointerType::get(EI.getType()), EI);
         GetElementPtrInst *GEP = 
-          new GetElementPtrInst(Ptr, EI.getOperand(1),
-                                I->getName() + ".gep");
+          new GetElementPtrInst(Ptr, EI.getOperand(1), I->getName() + ".gep");
         InsertNewInstBefore(GEP, EI);
         return new LoadInst(GEP);
       }
