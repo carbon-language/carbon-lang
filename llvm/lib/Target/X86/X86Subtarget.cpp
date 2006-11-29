@@ -255,6 +255,8 @@ X86Subtarget::X86Subtarget(const Module &M, const std::string &FS, bool is64Bit)
     }
   }
 
-  if (TargetType == isDarwin || TargetType == isCygwin)
+  if (TargetType == isDarwin ||
+      TargetType == isCygwin ||
+      (TargetType == isELF && Is64Bit))
     stackAlignment = 16;
 }
