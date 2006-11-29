@@ -1850,16 +1850,21 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
     switch (TLI.getOperationAction(ISD::READCYCLECOUNTER,
                                    Node->getValueType(0))) {
     default: assert(0 && "This action is not supported yet!");
-    case TargetLowering::Legal: break;
+    case TargetLowering::Legal:
+      Tmp1 = Result.getValue(0);
+      Tmp2 = Result.getValue(1);
+      break;
     case TargetLowering::Custom:
       Result = TLI.LowerOperation(Result, DAG);
+      Tmp1 = LegalizeOp(Result.getValue(0));
+      Tmp2 = LegalizeOp(Result.getValue(1));
       break;
     }
 
     // Since rdcc produce two values, make sure to remember that we legalized
     // both of them.
-    AddLegalizedOperand(SDOperand(Node, 0), LegalizeOp(Result.getValue(0)));
-    AddLegalizedOperand(SDOperand(Node, 1), LegalizeOp(Result.getValue(1)));
+    AddLegalizedOperand(SDOperand(Node, 0), Tmp1);
+    AddLegalizedOperand(SDOperand(Node, 1), Tmp2);
     return Result;
 
   case ISD::SELECT:
