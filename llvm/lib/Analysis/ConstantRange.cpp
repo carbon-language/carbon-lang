@@ -50,32 +50,6 @@ static bool LTE(ConstantIntegral *A, ConstantIntegral *B) {
   return cast<ConstantBool>(C)->getValue();
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 static bool GT(ConstantIntegral *A, ConstantIntegral *B) { return LT(B, A); }
 
 static ConstantIntegral *Min(ConstantIntegral *A, ConstantIntegral *B) {
