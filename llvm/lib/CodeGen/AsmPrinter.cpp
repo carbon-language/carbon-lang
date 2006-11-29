@@ -20,11 +20,12 @@
 #include "llvm/CodeGen/MachineJumpTableInfo.h"
 #include "llvm/Support/Mangler.h"
 #include "llvm/Support/MathExtras.h"
+#include "llvm/Support/Streams.h"
 #include "llvm/Target/TargetAsmInfo.h"
 #include "llvm/Target/TargetData.h"
 #include "llvm/Target/TargetLowering.h"
 #include "llvm/Target/TargetMachine.h"
-#include <iostream>
+#include <ostream>
 #include <cerrno>
 using namespace llvm;
 
@@ -667,7 +668,7 @@ void AsmPrinter::PrintSpecial(const MachineInstr *MI, const char *Code) {
     if (LastMI != MI) { ++Counter; LastMI = MI; }
     O << Counter;
   } else {
-    std::cerr << "Unknown special formatter '" << Code
+    llvm_cerr << "Unknown special formatter '" << Code
               << "' for machine instr: " << *MI;
     exit(1);
   }    
@@ -736,8 +737,8 @@ void AsmPrinter::printInlineAsm(const MachineInstr *MI) const {
       case '(':             // $( -> same as GCC's { character.
         ++LastEmitted;      // Consume '(' character.
         if (CurVariant != -1) {
-          std::cerr << "Nested variants found in inline asm string: '"
-          << AsmStr << "'\n";
+          llvm_cerr << "Nested variants found in inline asm string: '"
+                    << AsmStr << "'\n";
           exit(1);
         }
         CurVariant = 0;     // We're in the first variant now.
@@ -745,8 +746,8 @@ void AsmPrinter::printInlineAsm(const MachineInstr *MI) const {
       case '|':
         ++LastEmitted;  // consume '|' character.
         if (CurVariant == -1) {
-          std::cerr << "Found '|' character outside of variant in inline asm "
-          << "string: '" << AsmStr << "'\n";
+          llvm_cerr << "Found '|' character outside of variant in inline asm "
+                    << "string: '" << AsmStr << "'\n";
           exit(1);
         }
         ++CurVariant;   // We're in the next variant.
@@ -754,7 +755,7 @@ void AsmPrinter::printInlineAsm(const MachineInstr *MI) const {
       case ')':         // $) -> same as GCC's } char.
         ++LastEmitted;  // consume ')' character.
         if (CurVariant == -1) {
-          std::cerr << "Found '}' character outside of variant in inline asm "
+          llvm_cerr << "Found '}' character outside of variant in inline asm "
                     << "string: '" << AsmStr << "'\n";
           exit(1);
         }
@@ -773,7 +774,7 @@ void AsmPrinter::printInlineAsm(const MachineInstr *MI) const {
       char *IDEnd;
       long Val = strtol(IDStart, &IDEnd, 10); // We only accept numbers for IDs.
       if (!isdigit(*IDStart) || (Val == 0 && errno == EINVAL)) {
-        std::cerr << "Bad $ operand number in inline asm string: '" 
+        llvm_cerr << "Bad $ operand number in inline asm string: '" 
                   << AsmStr << "'\n";
         exit(1);
       }
@@ -787,7 +788,7 @@ void AsmPrinter::printInlineAsm(const MachineInstr *MI) const {
         if (*LastEmitted == ':') {
           ++LastEmitted;    // Consume ':' character.
           if (*LastEmitted == 0) {
-            std::cerr << "Bad ${:} expression in inline asm string: '" 
+            llvm_cerr << "Bad ${:} expression in inline asm string: '" 
                       << AsmStr << "'\n";
             exit(1);
           }
@@ -797,7 +798,7 @@ void AsmPrinter::printInlineAsm(const MachineInstr *MI) const {
         }
         
         if (*LastEmitted != '}') {
-          std::cerr << "Bad ${} expression in inline asm string: '" 
+          llvm_cerr << "Bad ${} expression in inline asm string: '" 
                     << AsmStr << "'\n";
           exit(1);
         }
@@ -805,7 +806,7 @@ void AsmPrinter::printInlineAsm(const MachineInstr *MI) const {
       }
       
       if ((unsigned)Val >= NumOperands-1) {
-        std::cerr << "Invalid $ operand number in inline asm string: '" 
+        llvm_cerr << "Invalid $ operand number in inline asm string: '" 
                   << AsmStr << "'\n";
         exit(1);
       }
@@ -840,7 +841,7 @@ void AsmPrinter::printInlineAsm(const MachineInstr *MI) const {
           }
         }
         if (Error) {
-          std::cerr << "Invalid operand found in inline asm: '"
+          llvm_cerr << "Invalid operand found in inline asm: '"
                     << AsmStr << "'\n";
           MI->dump();
           exit(1);

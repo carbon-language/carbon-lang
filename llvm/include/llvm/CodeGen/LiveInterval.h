@@ -258,10 +258,9 @@ namespace llvm {
       return beginNumber() < other.beginNumber();
     }
 
-    void print(llvm_ostream &OS, const MRegisterInfo *MRI = 0) const;
+    void print(llvm_ostream OS, const MRegisterInfo *MRI = 0) const;
     void print(std::ostream &OS, const MRegisterInfo *MRI = 0) const {
-      llvm_ostream L(OS);
-      L << MRI;
+      print(llvm_ostream(OS), MRI);
     }
     void dump() const;
 

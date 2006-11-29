@@ -475,7 +475,7 @@ void LiveRange::dump() const {
   llvm_cerr << *this << "\n";
 }
 
-void LiveInterval::print(llvm_ostream &OS, const MRegisterInfo *MRI) const {
+void LiveInterval::print(llvm_ostream OS, const MRegisterInfo *MRI) const {
   if (MRI && MRegisterInfo::isPhysicalRegister(reg))
     OS << MRI->getName(reg);
   else

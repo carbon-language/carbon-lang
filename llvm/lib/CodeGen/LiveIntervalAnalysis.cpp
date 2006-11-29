@@ -33,7 +33,6 @@
 #include "llvm/ADT/Statistic.h"
 #include "llvm/ADT/STLExtras.h"
 #include <algorithm>
-#include <iostream>
 using namespace llvm;
 
 namespace {
@@ -155,11 +154,11 @@ bool LiveIntervals::runOnMachineFunction(MachineFunction &fn) {
 
   numIntervals += getNumIntervals();
 
-  DEBUG(std::cerr << "********** INTERVALS **********\n";
-        for (iterator I = begin(), E = end(); I != E; ++I) {
-          I->second.print(std::cerr, mri_);
-          std::cerr << "\n";
-        });
+  DOUT << "********** INTERVALS **********\n";
+  for (iterator I = begin(), E = end(); I != E; ++I) {
+    I->second.print(DOUT, mri_);
+    DOUT << "\n";
+  }
 
   // Join (coallesce) intervals if requested.
   if (EnableJoining) joinIntervals();
@@ -236,8 +235,8 @@ bool LiveIntervals::runOnMachineFunction(MachineFunction &fn) {
 void LiveIntervals::print(std::ostream &O, const Module* ) const {
   O << "********** INTERVALS **********\n";
   for (const_iterator I = begin(), E = end(); I != E; ++I) {
-    I->second.print(std::cerr, mri_);
-    std::cerr << "\n";
+    I->second.print(DOUT, mri_);
+    DOUT << "\n";
   }
 
   O << "********** MACHINEINSTRS **********\n";
@@ -292,11 +291,11 @@ LiveIntervals::CreateNewLiveInterval(const LiveInterval *LI,
 
   for (std::vector<LiveRange>::const_iterator
          I = LRs.begin(), E = LRs.end(); I != E; ++I) {
-    DEBUG(std::cerr << "  Adding live range " << *I << " to new interval\n");
+    DOUT << "  Adding live range " << *I << " to new interval\n";
     NewLI.addRange(*I);
   }
             
-  DEBUG(std::cerr << "Created new live interval " << NewLI << "\n");
+  DOUT << "Created new live interval " << NewLI << "\n";
   return NewLI;
 }
 
@@ -311,8 +310,9 @@ addIntervalsForSpills(const LiveInterval &li, VirtRegMap &vrm, int slot) {
   assert(li.weight != HUGE_VALF &&
          "attempt to spill already spilled interval!");
 
-  DEBUG(std::cerr << "\t\t\t\tadding intervals for spills for interval: ";
-        li.print(std::cerr, mri_); std::cerr << '\n');
+  DOUT << "\t\t\t\tadding intervals for spills for interval: ";
+  li.print(DOUT, mri_);
+  DOUT << '\n';
 
   const TargetRegisterClass* rc = mf_->getSSARegMap()->getRegClass(li.reg);
 
@@ -388,13 +388,13 @@ addIntervalsForSpills(const LiveInterval &li, VirtRegMap &vrm, int slot) {
             if (HasUse) {
               LiveRange LR(getLoadIndex(index), getUseIndex(index),
                            nI.getNextValue(~0U, 0));
-              DEBUG(std::cerr << " +" << LR);
+              DOUT << " +" << LR;
               nI.addRange(LR);
             }
             if (HasDef) {
               LiveRange LR(getDefIndex(index), getStoreIndex(index),
                            nI.getNextValue(~0U, 0));
-              DEBUG(std::cerr << " +" << LR);
+              DOUT << " +" << LR;
               nI.addRange(LR);
             }
             
@@ -404,8 +404,9 @@ addIntervalsForSpills(const LiveInterval &li, VirtRegMap &vrm, int slot) {
             if (lv_)
               lv_->addVirtualRegisterKilled(NewVReg, MI);
             
-            DEBUG(std::cerr << "\t\t\t\tadded new interval: ";
-                  nI.print(std::cerr, mri_); std::cerr << '\n');
+            DOUT << "\t\t\t\tadded new interval: ";
+            nI.print(DOUT, mri_);
+            DOUT << '\n';
           }
         }
       }
@@ -417,9 +418,9 @@ addIntervalsForSpills(const LiveInterval &li, VirtRegMap &vrm, int slot) {
 
 void LiveIntervals::printRegName(unsigned reg) const {
   if (MRegisterInfo::isPhysicalRegister(reg))
-    std::cerr << mri_->getName(reg);
+    llvm_cerr << mri_->getName(reg);
   else
-    std::cerr << "%reg" << reg;
+    llvm_cerr << "%reg" << reg;
 }
 
 /// isReDefinedByTwoAddr - Returns true if the Reg re-definition is due to
@@ -445,7 +446,7 @@ void LiveIntervals::handleVirtualRegisterDef(MachineBasicBlock *mbb,
                                              MachineBasicBlock::iterator mi,
                                              unsigned MIIdx,
                                              LiveInterval &interval) {
-  DEBUG(std::cerr << "\t\tregister: "; printRegName(interval.reg));
+  DOUT << "\t\tregister: "; DEBUG(printRegName(interval.reg));
   LiveVariables::VarInfo& vi = lv_->getVarInfo(interval.reg);
 
   // Virtual registers may be defined multiple times (due to phi
@@ -485,7 +486,7 @@ void LiveIntervals::handleVirtualRegisterDef(MachineBasicBlock *mbb,
                "Shouldn't be alive across any blocks!");
         LiveRange LR(defIndex, killIdx, ValNum);
         interval.addRange(LR);
-        DEBUG(std::cerr << " +" << LR << "\n");
+        DOUT << " +" << LR << "\n";
         return;
       }
     }
@@ -497,7 +498,7 @@ void LiveIntervals::handleVirtualRegisterDef(MachineBasicBlock *mbb,
     LiveRange NewLR(defIndex,
                     getInstructionIndex(&mbb->back()) + InstrSlots::NUM,
                     ValNum);
-    DEBUG(std::cerr << " +" << NewLR);
+    DOUT << " +" << NewLR;
     interval.addRange(NewLR);
 
     // Iterate over all of the blocks that the variable is completely
@@ -511,7 +512,7 @@ void LiveIntervals::handleVirtualRegisterDef(MachineBasicBlock *mbb,
                        getInstructionIndex(&MBB->back()) + InstrSlots::NUM,
                        ValNum);
           interval.addRange(LR);
-          DEBUG(std::cerr << " +" << LR);
+          DOUT << " +" << LR;
         }
       }
     }
@@ -524,7 +525,7 @@ void LiveIntervals::handleVirtualRegisterDef(MachineBasicBlock *mbb,
                    getUseIndex(getInstructionIndex(Kill))+1,
                    ValNum);
       interval.addRange(LR);
-      DEBUG(std::cerr << " +" << LR);
+      DOUT << " +" << LR;
     }
 
   } else {
@@ -559,7 +560,7 @@ void LiveIntervals::handleVirtualRegisterDef(MachineBasicBlock *mbb,
       
       // Add the new live interval which replaces the range for the input copy.
       LiveRange LR(DefIndex, RedefIndex, ValNo);
-      DEBUG(std::cerr << " replace range with " << LR);
+      DOUT << " replace range with " << LR;
       interval.addRange(LR);
 
       // If this redefinition is dead, we need to add a dummy unit live
@@ -567,7 +568,8 @@ void LiveIntervals::handleVirtualRegisterDef(MachineBasicBlock *mbb,
       if (lv_->RegisterDefIsDead(mi, interval.reg))
         interval.addRange(LiveRange(RedefIndex, RedefIndex+1, 0));
 
-      DEBUG(std::cerr << "RESULT: "; interval.print(std::cerr, mri_));
+      DOUT << "RESULT: ";
+      interval.print(DOUT, mri_);
 
     } else {
       // Otherwise, this must be because of phi elimination.  If this is the
@@ -581,17 +583,17 @@ void LiveIntervals::handleVirtualRegisterDef(MachineBasicBlock *mbb,
         MachineInstr *Killer = vi.Kills[0];
         unsigned Start = getMBBStartIdx(Killer->getParent());
         unsigned End = getUseIndex(getInstructionIndex(Killer))+1;
-        DEBUG(std::cerr << "Removing [" << Start << "," << End << "] from: ";
-              interval.print(std::cerr, mri_); std::cerr << "\n");
+        DOUT << "Removing [" << Start << "," << End << "] from: ";
+        interval.print(DOUT, mri_); DOUT << "\n";
         interval.removeRange(Start, End);
-        DEBUG(std::cerr << "RESULT: "; interval.print(std::cerr, mri_));
+        DOUT << "RESULT: "; interval.print(DOUT, mri_);
 
         // Replace the interval with one of a NEW value number.  Note that this
         // value number isn't actually defined by an instruction, weird huh? :)
         LiveRange LR(Start, End, interval.getNextValue(~0U, 0));
-        DEBUG(std::cerr << " replace range with " << LR);
+        DOUT << " replace range with " << LR;
         interval.addRange(LR);
-        DEBUG(std::cerr << "RESULT: "; interval.print(std::cerr, mri_));
+        DOUT << "RESULT: "; interval.print(DOUT, mri_);
       }
 
       // In the case of PHI elimination, each variable definition is only
@@ -609,11 +611,11 @@ void LiveIntervals::handleVirtualRegisterDef(MachineBasicBlock *mbb,
       LiveRange LR(defIndex,
                    getInstructionIndex(&mbb->back()) + InstrSlots::NUM, ValNum);
       interval.addRange(LR);
-      DEBUG(std::cerr << " +" << LR);
+      DOUT << " +" << LR;
     }
   }
 
-  DEBUG(std::cerr << '\n');
+  DOUT << '\n';
 }
 
 void LiveIntervals::handlePhysicalRegisterDef(MachineBasicBlock *MBB,
@@ -623,7 +625,7 @@ void LiveIntervals::handlePhysicalRegisterDef(MachineBasicBlock *MBB,
                                               unsigned SrcReg) {
   // A physical register cannot be live across basic block, so its
   // lifetime must end somewhere in its defining basic block.
-  DEBUG(std::cerr << "\t\tregister: "; printRegName(interval.reg));
+  DOUT << "\t\tregister: "; DEBUG(printRegName(interval.reg));
 
   unsigned baseIndex = MIIdx;
   unsigned start = getDefIndex(baseIndex);
@@ -633,7 +635,7 @@ void LiveIntervals::handlePhysicalRegisterDef(MachineBasicBlock *MBB,
   // the instruction defining it. Hence its interval is:
   // [defSlot(def), defSlot(def)+1)
   if (lv_->RegisterDefIsDead(mi, interval.reg)) {
-    DEBUG(std::cerr << " dead");
+    DOUT << " dead";
     end = getDefIndex(start) + 1;
     goto exit;
   }
@@ -644,7 +646,7 @@ void LiveIntervals::handlePhysicalRegisterDef(MachineBasicBlock *MBB,
   while (++mi != MBB->end()) {
     baseIndex += InstrSlots::NUM;
     if (lv_->KillsRegister(mi, interval.reg)) {
-      DEBUG(std::cerr << " killed");
+      DOUT << " killed";
       end = getUseIndex(baseIndex) + 1;
       goto exit;
     } else if (lv_->ModifiesRegister(mi, interval.reg)) {
@@ -652,7 +654,7 @@ void LiveIntervals::handlePhysicalRegisterDef(MachineBasicBlock *MBB,
       // Then the register is essentially dead at the instruction that defines
       // it. Hence its interval is:
       // [defSlot(def), defSlot(def)+1)
-      DEBUG(std::cerr << " dead");
+      DOUT << " dead";
       end = getDefIndex(start) + 1;
       goto exit;
     }
@@ -670,7 +672,7 @@ exit:
   LiveRange LR(start, end, interval.getNextValue(SrcReg != 0 ? start : ~0U,
                                                  SrcReg));
   interval.addRange(LR);
-  DEBUG(std::cerr << " +" << LR << '\n');
+  DOUT << " +" << LR << '\n';
 }
 
 void LiveIntervals::handleRegisterDef(MachineBasicBlock *MBB,
@@ -694,9 +696,9 @@ void LiveIntervals::handleRegisterDef(MachineBasicBlock *MBB,
 /// live interval is an interval [i, j) where 1 <= i <= j < N for
 /// which a variable is live
 void LiveIntervals::computeIntervals() {
-  DEBUG(std::cerr << "********** COMPUTING LIVE INTERVALS **********\n");
-  DEBUG(std::cerr << "********** Function: "
-        << ((Value*)mf_->getFunction())->getName() << '\n');
+  DOUT << "********** COMPUTING LIVE INTERVALS **********\n"
+       << "********** Function: "
+       << ((Value*)mf_->getFunction())->getName() << '\n';
   bool IgnoreFirstInstr = mf_->livein_begin() != mf_->livein_end();
 
   // Track the index of the current machine instr.
@@ -704,7 +706,7 @@ void LiveIntervals::computeIntervals() {
   for (MachineFunction::iterator MBBI = mf_->begin(), E = mf_->end();
        MBBI != E; ++MBBI) {
     MachineBasicBlock *MBB = MBBI;
-    DEBUG(std::cerr << ((Value*)MBB->getBasicBlock())->getName() << ":\n");
+    DOUT << ((Value*)MBB->getBasicBlock())->getName() << ":\n";
 
     MachineBasicBlock::iterator MI = MBB->begin(), miEnd = MBB->end();
     if (IgnoreFirstInstr) {
@@ -714,7 +716,7 @@ void LiveIntervals::computeIntervals() {
     }
     
     for (; MI != miEnd; ++MI) {
-      DEBUG(std::cerr << MIIndex << "\t" << *MI);
+      DOUT << MIIndex << "\t" << *MI;
 
       // Handle defs.
       for (int i = MI->getNumOperands() - 1; i >= 0; --i) {
@@ -792,7 +794,7 @@ bool LiveIntervals::AdjustCopiesBackFrom(LiveInterval &IntA, LiveInterval &IntB,
   // IntB, we can merge them.
   if (ValLR+1 != BLR) return false;
   
-  DEBUG(std::cerr << "\nExtending: "; IntB.print(std::cerr, mri_));
+  DOUT << "\nExtending: "; IntB.print(DOUT, mri_);
   
   // We are about to delete CopyMI, so need to remove it as the 'instruction
   // that defines this value #'.
@@ -817,8 +819,8 @@ bool LiveIntervals::AdjustCopiesBackFrom(LiveInterval &IntA, LiveInterval &IntB,
   // Okay, merge "B1" into the same value number as "B0".
   if (BValNo != ValLR->ValId)
     IntB.MergeValueNumberInto(BValNo, ValLR->ValId);
-  DEBUG(std::cerr << "   result = "; IntB.print(std::cerr, mri_);
-        std::cerr << "\n");
+  DOUT << "   result = "; IntB.print(DOUT, mri_);
+  DOUT << "\n";
   
   // Finally, delete the copy instruction.
   RemoveMachineInstrFromMaps(CopyMI);
@@ -836,9 +838,7 @@ bool LiveIntervals::AdjustCopiesBackFrom(LiveInterval &IntA, LiveInterval &IntB,
 /// it may be possible if other things get coallesced.
 bool LiveIntervals::JoinCopy(MachineInstr *CopyMI,
                              unsigned SrcReg, unsigned DstReg) {
-  
-  
-  DEBUG(std::cerr << getInstructionIndex(CopyMI) << '\t' << *CopyMI);
+  DOUT << getInstructionIndex(CopyMI) << '\t' << *CopyMI;
   
   // Get representative registers.
   SrcReg = rep(SrcReg);
@@ -846,30 +846,30 @@ bool LiveIntervals::JoinCopy(MachineInstr *CopyMI,
   
   // If they are already joined we continue.
   if (SrcReg == DstReg) {
-    DEBUG(std::cerr << "\tCopy already coallesced.\n");
+    DOUT << "\tCopy already coallesced.\n";
     return true;  // Not coallescable.
   }
   
   // If they are both physical registers, we cannot join them.
   if (MRegisterInfo::isPhysicalRegister(SrcReg) &&
       MRegisterInfo::isPhysicalRegister(DstReg)) {
-    DEBUG(std::cerr << "\tCan not coallesce physregs.\n");
+    DOUT << "\tCan not coallesce physregs.\n";
     return true;  // Not coallescable.
   }
   
   // We only join virtual registers with allocatable physical registers.
   if (MRegisterInfo::isPhysicalRegister(SrcReg) && !allocatableRegs_[SrcReg]){
-    DEBUG(std::cerr << "\tSrc reg is unallocatable physreg.\n");
+    DOUT << "\tSrc reg is unallocatable physreg.\n";
     return true;  // Not coallescable.
   }
   if (MRegisterInfo::isPhysicalRegister(DstReg) && !allocatableRegs_[DstReg]){
-    DEBUG(std::cerr << "\tDst reg is unallocatable physreg.\n");
+    DOUT << "\tDst reg is unallocatable physreg.\n";
     return true;  // Not coallescable.
   }
   
   // If they are not of the same register class, we cannot join them.
   if (differingRegisterClasses(SrcReg, DstReg)) {
-    DEBUG(std::cerr << "\tSrc/Dest are different register classes.\n");
+    DOUT << "\tSrc/Dest are different register classes.\n";
     return true;  // Not coallescable.
   }
   
@@ -878,9 +878,9 @@ bool LiveIntervals::JoinCopy(MachineInstr *CopyMI,
   assert(SrcInt.reg == SrcReg && DestInt.reg == DstReg &&
          "Register mapping is horribly broken!");
   
-  DEBUG(std::cerr << "\t\tInspecting "; SrcInt.print(std::cerr, mri_);
-        std::cerr << " and "; DestInt.print(std::cerr, mri_);
-        std::cerr << ": ");
+  DOUT << "\t\tInspecting "; SrcInt.print(DOUT, mri_);
+  DOUT << " and "; DestInt.print(DOUT, mri_);
+  DOUT << ": ";
     
   // Okay, attempt to join these two intervals.  On failure, this returns false.
   // Otherwise, if one of the intervals being joined is a physreg, this method
@@ -894,7 +894,7 @@ bool LiveIntervals::JoinCopy(MachineInstr *CopyMI,
       return true;
 
     // Otherwise, we are unable to join the intervals.
-    DEBUG(std::cerr << "Interference!\n");
+    DOUT << "Interference!\n";
     return false;
   }
 
@@ -912,8 +912,8 @@ bool LiveIntervals::JoinCopy(MachineInstr *CopyMI,
       getInterval(*AS).MergeInClobberRanges(SrcInt);
   }
 
-  DEBUG(std::cerr << "\n\t\tJoined.  Result = "; DestInt.print(std::cerr, mri_);
-        std::cerr << "\n");
+  DOUT << "\n\t\tJoined.  Result = "; DestInt.print(DOUT, mri_);
+  DOUT << "\n";
   
   // If the intervals were swapped by Join, swap them back so that the register
   // mapping (in the r2i map) is correct.
@@ -1314,7 +1314,7 @@ namespace {
 
 void LiveIntervals::CopyCoallesceInMBB(MachineBasicBlock *MBB,
                                        std::vector<CopyRec> &TryAgain) {
-  DEBUG(std::cerr << ((Value*)MBB->getBasicBlock())->getName() << ":\n");
+  DOUT << ((Value*)MBB->getBasicBlock())->getName() << ":\n";
   
   for (MachineBasicBlock::iterator MII = MBB->begin(), E = MBB->end();
        MII != E;) {
@@ -1331,7 +1331,7 @@ void LiveIntervals::CopyCoallesceInMBB(MachineBasicBlock *MBB,
 
 
 void LiveIntervals::joinIntervals() {
-  DEBUG(std::cerr << "********** JOINING INTERVALS ***********\n");
+  DOUT << "********** JOINING INTERVALS ***********\n";
 
   std::vector<CopyRec> TryAgainList;
   
@@ -1374,13 +1374,13 @@ void LiveIntervals::joinIntervals() {
     }
   }
   
-  DEBUG(std::cerr << "*** Register mapping ***\n");
-  DEBUG(for (int i = 0, e = r2rMap_.size(); i != e; ++i)
-          if (r2rMap_[i]) {
-            std::cerr << "  reg " << i << " -> ";
-            printRegName(r2rMap_[i]);
-            std::cerr << "\n";
-          });
+  DOUT << "*** Register mapping ***\n";
+  for (int i = 0, e = r2rMap_.size(); i != e; ++i)
+    if (r2rMap_[i]) {
+      DOUT << "  reg " << i << " -> ";
+      DEBUG(printRegName(r2rMap_[i]));
+      DOUT << "\n";
+    }
 }
 
 /// Return true if the two specified registers belong to different register

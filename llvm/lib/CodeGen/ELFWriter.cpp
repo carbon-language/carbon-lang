@@ -38,7 +38,8 @@
 #include "llvm/Target/TargetData.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Support/Mangler.h"
-#include <iostream>
+#include "llvm/Support/Streams.h"
+#include <ostream>
 using namespace llvm;
 
 //===----------------------------------------------------------------------===//
@@ -103,7 +104,7 @@ void ELFCodeEmitter::startFunction(MachineFunction &F) {
                       ELFWriter::ELFSection::SHF_EXECINSTR |
                       ELFWriter::ELFSection::SHF_ALLOC);
   OutBuffer = &ES->SectionData;
-  std::cerr << "FIXME: This code needs to be updated for changes in the"
+  llvm_cerr << "FIXME: This code needs to be updated for changes in the"
             << " CodeEmitter interfaces.  In particular, this should set "
             << "BufferBegin/BufferEnd/CurBufferPtr, not deal with OutBuffer!";
   abort();
