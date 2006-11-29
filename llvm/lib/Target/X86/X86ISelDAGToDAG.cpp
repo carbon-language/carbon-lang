@@ -643,11 +643,13 @@ bool X86DAGToDAGISel::MatchAddress(SDOperand N, X86ISelAddressMode &AM,
 
     // For X86-64 PIC code, only allow GV / CP + displacement so we can use RIP
     // relative addressing mode.
-    if ((!Subtarget->is64Bit() || TM.getCodeModel() == CodeModel::Small) &&
-        (!Available || (AM.Base.Reg.Val && AM.IndexReg.Val))) {
+    if (Subtarget->is64Bit() && TM.getCodeModel() != CodeModel::Small)
+      break;
+    if (!Available || (AM.Base.Reg.Val && AM.IndexReg.Val)) {
       bool isRIP = Subtarget->is64Bit();
-      if (isRIP && (AM.Base.Reg.Val || AM.Scale > 1 || AM.IndexReg.Val ||
-                    AM.BaseType == X86ISelAddressMode::FrameIndexBase))
+      if (isRIP &&
+          (AM.Base.Reg.Val || AM.Scale > 1 || AM.IndexReg.Val ||
+           AM.BaseType == X86ISelAddressMode::FrameIndexBase))
         break;
       if (ConstantPoolSDNode *CP =
           dyn_cast<ConstantPoolSDNode>(N.getOperand(0))) {
@@ -655,8 +657,7 @@ bool X86DAGToDAGISel::MatchAddress(SDOperand N, X86ISelAddressMode &AM,
           AM.CP = CP->getConstVal();
           AM.Align = CP->getAlignment();
           AM.Disp += CP->getOffset();
-          if (isRIP)
-            AM.isRIPRel = true;
+          AM.isRIPRel = isRIP;
           return false;
         }
       } else if (GlobalAddressSDNode *G =
@@ -664,8 +665,7 @@ bool X86DAGToDAGISel::MatchAddress(SDOperand N, X86ISelAddressMode &AM,
         if (AM.GV == 0) {
           AM.GV = G->getGlobal();
           AM.Disp += G->getOffset();
-          if (isRIP)
-            AM.isRIPRel = true;
+          AM.isRIPRel = isRIP;
           return false;
         }
       } else if (isRoot && isRIP) {
