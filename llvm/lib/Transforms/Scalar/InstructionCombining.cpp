@@ -5624,6 +5624,14 @@ static bool CanEvaluateInDifferentType(Value *V, const Type *Ty,
     // These operators can all arbitrarily be extended or truncated.
     return CanEvaluateInDifferentType(I->getOperand(0), Ty, NumCastsRemoved) &&
            CanEvaluateInDifferentType(I->getOperand(1), Ty, NumCastsRemoved);
+  case Instruction::AShr:
+  case Instruction::LShr:
+  case Instruction::Shl:
+    // If this is just a bitcast changing the sign of the operation, we can
+    // convert if the operand can be converted.
+    if (V->getType()->getPrimitiveSizeInBits() == Ty->getPrimitiveSizeInBits())
+      return CanEvaluateInDifferentType(I->getOperand(0), Ty, NumCastsRemoved);
+    break;
   case Instruction::Trunc:
   case Instruction::ZExt:
   case Instruction::SExt:
@@ -5669,6 +5677,14 @@ Value *InstCombiner::EvaluateInDifferentType(Value *V, const Type *Ty) {
                                  LHS, RHS, I->getName());
     break;
   }
+  case Instruction::AShr:
+  case Instruction::LShr:
+  case Instruction::Shl: {
+    Value *LHS = EvaluateInDifferentType(I->getOperand(0), Ty);
+    Res = new ShiftInst((Instruction::OtherOps)I->getOpcode(), LHS,
+                        I->getOperand(1), I->getName());
+    break;
+  }    
   case Instruction::Trunc:
   case Instruction::ZExt:
   case Instruction::SExt:
