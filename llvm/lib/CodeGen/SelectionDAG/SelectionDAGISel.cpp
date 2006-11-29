@@ -33,6 +33,7 @@
 #include "llvm/CodeGen/SelectionDAG.h"
 #include "llvm/CodeGen/SSARegMap.h"
 #include "llvm/Target/MRegisterInfo.h"
+#include "llvm/Target/TargetAsmInfo.h"
 #include "llvm/Target/TargetData.h"
 #include "llvm/Target/TargetFrameInfo.h"
 #include "llvm/Target/TargetInstrInfo.h"
@@ -3780,7 +3781,17 @@ bool SelectionDAGISel::runOnFunction(Function &Fn) {
     
     for (BasicBlock::iterator BBI = BB->begin(), E = BB->end(); BBI != E; ) {
       Instruction *I = BBI++;
-      if (GetElementPtrInst *GEPI = dyn_cast<GetElementPtrInst>(I)) {
+      
+      if (CallInst *CI = dyn_cast<CallInst>(I)) {
+        // If we found an inline asm expession, and if the target knows how to
+        // lower it to normal LLVM code, do so now.
+        if (isa<InlineAsm>(CI->getCalledValue()))
+          if (const TargetAsmInfo *TAI = 
+                TLI.getTargetMachine().getTargetAsmInfo()) {
+            if (TAI->ExpandInlineAsm(CI))
+              BBI = BB->begin();
+          }
+      } else if (GetElementPtrInst *GEPI = dyn_cast<GetElementPtrInst>(I)) {
         MadeChange |= OptimizeGEPExpression(GEPI, TLI.getTargetData());
       } else if (CastInst *CI = dyn_cast<CastInst>(I)) {
         // If the source of the cast is a constant, then this should have
@@ -4004,6 +4015,7 @@ void SelectionDAGISel::BuildSelectionDAG(SelectionDAG &DAG, BasicBlock *LLVMBB,
       
       unsigned Reg;
       Value *PHIOp = PN->getIncomingValueForBlock(LLVMBB);
+      
       if (Constant *C = dyn_cast<Constant>(PHIOp)) {
         unsigned &RegOut = ConstantsOut[C];
         if (RegOut == 0) {

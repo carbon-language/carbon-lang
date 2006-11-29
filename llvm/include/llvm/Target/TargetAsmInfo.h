@@ -20,9 +20,8 @@
 #include "llvm/Support/DataTypes.h"
 
 namespace llvm {
-
-  // Forward declaration.
   class TargetMachine;
+  class CallInst;
 
   /// TargetAsmInfo - This class is intended to be used as a base class for asm
   /// properties and features specific to the target.
@@ -286,8 +285,15 @@ namespace llvm {
     /// Measure the specified inline asm to determine an approximation of its
     /// length.
     unsigned getInlineAsmLength(const char *Str) const;
+
+    /// ExpandInlineAsm - This hook allows the target to expand an inline asm
+    /// call to be explicit llvm code if it wants to.  This is useful for
+    /// turning simple inline asms into LLVM intrinsics, which gives the
+    /// compiler more information about the behavior of the code.
+    virtual bool ExpandInlineAsm(CallInst *CI) const {
+      return false;
+    }
     
-    //
     // Accessors.
     //
     const char *getTextSection() const {
