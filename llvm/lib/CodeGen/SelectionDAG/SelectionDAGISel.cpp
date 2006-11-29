@@ -3376,7 +3376,7 @@ void SelectionDAGLowering::visitMemIntrinsic(CallInst &I, unsigned Op) {
         }
         if (G) {
           GlobalVariable *GV = dyn_cast<GlobalVariable>(G->getGlobal());
-          if (GV) {
+          if (GV && GV->isConstant()) {
             Str = GV->getStringValue(false);
             if (!Str.empty()) {
               CopyFromStr = true;
