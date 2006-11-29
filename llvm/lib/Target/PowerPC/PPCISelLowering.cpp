@@ -1973,6 +1973,7 @@ static SDOperand BuildSplatI(int Val, unsigned SplatSize, MVT::ValueType VT,
   Ops.assign(MVT::getVectorNumElements(CanonicalVT), Elt);
   SDOperand Res = DAG.getNode(ISD::BUILD_VECTOR, CanonicalVT,
                               &Ops[0], Ops.size());
+  if (VT == MVT::Other) return Res;
   return DAG.getNode(ISD::BIT_CONVERT, VT, Res);
 }
 
@@ -2086,6 +2087,7 @@ static SDOperand LowerBUILD_VECTOR(SDOperand Op, SelectionDAG &DAG) {
       -1, 1, -2, 2, -3, 3, -4, 4, -5, 5, -6, 6, -7, 7,
       -8, 8, -9, 9, -10, 10, -11, 11, -12, 12, -13, 13, 14, -14, 15, -15, -16
     };
+    
     for (unsigned idx = 0; idx < sizeof(SplatCsts)/sizeof(SplatCsts[0]); ++idx){
       // Indirect through the SplatCsts array so that we favor 'vsplti -1' for
       // cases which are ambiguous (e.g. formation of 0x8000_0000).  'vsplti -1'
@@ -2097,43 +2099,47 @@ static SDOperand LowerBUILD_VECTOR(SDOperand Op, SelectionDAG &DAG) {
       
       // vsplti + shl self.
       if (SextVal == (i << (int)TypeShiftAmt)) {
-        Op = BuildSplatI(i, SplatSize, Op.getValueType(), DAG);
+        SDOperand Res = BuildSplatI(i, SplatSize, MVT::Other, DAG);
         static const unsigned IIDs[] = { // Intrinsic to use for each size.
           Intrinsic::ppc_altivec_vslb, Intrinsic::ppc_altivec_vslh, 0,
           Intrinsic::ppc_altivec_vslw
         };
-        return BuildIntrinsicOp(IIDs[SplatSize-1], Op, Op, DAG);
+        Res = BuildIntrinsicOp(IIDs[SplatSize-1], Res, Res, DAG);
+        return DAG.getNode(ISD::BIT_CONVERT, Op.getValueType(), Res);
       }
       
       // vsplti + srl self.
       if (SextVal == (int)((unsigned)i >> TypeShiftAmt)) {
-        Op = BuildSplatI(i, SplatSize, Op.getValueType(), DAG);
+        SDOperand Res = BuildSplatI(i, SplatSize, MVT::Other, DAG);
         static const unsigned IIDs[] = { // Intrinsic to use for each size.
           Intrinsic::ppc_altivec_vsrb, Intrinsic::ppc_altivec_vsrh, 0,
           Intrinsic::ppc_altivec_vsrw
         };
-        return BuildIntrinsicOp(IIDs[SplatSize-1], Op, Op, DAG);
+        Res = BuildIntrinsicOp(IIDs[SplatSize-1], Res, Res, DAG);
+        return DAG.getNode(ISD::BIT_CONVERT, Op.getValueType(), Res);
       }
       
       // vsplti + sra self.
       if (SextVal == (int)((unsigned)i >> TypeShiftAmt)) {
-        Op = BuildSplatI(i, SplatSize, Op.getValueType(), DAG);
+        SDOperand Res = BuildSplatI(i, SplatSize, MVT::Other, DAG);
         static const unsigned IIDs[] = { // Intrinsic to use for each size.
           Intrinsic::ppc_altivec_vsrab, Intrinsic::ppc_altivec_vsrah, 0,
           Intrinsic::ppc_altivec_vsraw
         };
-        return BuildIntrinsicOp(IIDs[SplatSize-1], Op, Op, DAG);
+        Res = BuildIntrinsicOp(IIDs[SplatSize-1], Res, Res, DAG);
+        return DAG.getNode(ISD::BIT_CONVERT, Op.getValueType(), Res);
       }
       
       // vsplti + rol self.
       if (SextVal == (int)(((unsigned)i << TypeShiftAmt) |
                            ((unsigned)i >> (SplatBitSize-TypeShiftAmt)))) {
-        Op = BuildSplatI(i, SplatSize, Op.getValueType(), DAG);
+        SDOperand Res = BuildSplatI(i, SplatSize, MVT::Other, DAG);
         static const unsigned IIDs[] = { // Intrinsic to use for each size.
           Intrinsic::ppc_altivec_vrlb, Intrinsic::ppc_altivec_vrlh, 0,
           Intrinsic::ppc_altivec_vrlw
         };
-        return BuildIntrinsicOp(IIDs[SplatSize-1], Op, Op, DAG);
+        Res = BuildIntrinsicOp(IIDs[SplatSize-1], Res, Res, DAG);
+        return DAG.getNode(ISD::BIT_CONVERT, Op.getValueType(), Res);
       }
 
       // t = vsplti c, result = vsldoi t, t, 1
@@ -2157,15 +2163,17 @@ static SDOperand LowerBUILD_VECTOR(SDOperand Op, SelectionDAG &DAG) {
     
     // Odd, in range [17,31]:  (vsplti C)-(vsplti -16).
     if (SextVal >= 0 && SextVal <= 31) {
-      SDOperand LHS = BuildSplatI(SextVal-16, SplatSize, Op.getValueType(),DAG);
-      SDOperand RHS = BuildSplatI(-16, SplatSize, Op.getValueType(), DAG);
-      return DAG.getNode(ISD::SUB, Op.getValueType(), LHS, RHS);
+      SDOperand LHS = BuildSplatI(SextVal-16, SplatSize, MVT::Other, DAG);
+      SDOperand RHS = BuildSplatI(-16, SplatSize, MVT::Other, DAG);
+      LHS = DAG.getNode(ISD::SUB, Op.getValueType(), LHS, RHS);
+      return DAG.getNode(ISD::BIT_CONVERT, Op.getValueType(), LHS);
     }
     // Odd, in range [-31,-17]:  (vsplti C)+(vsplti -16).
     if (SextVal >= -31 && SextVal <= 0) {
-      SDOperand LHS = BuildSplatI(SextVal+16, SplatSize, Op.getValueType(),DAG);
-      SDOperand RHS = BuildSplatI(-16, SplatSize, Op.getValueType(), DAG);
-      return DAG.getNode(ISD::ADD, Op.getValueType(), LHS, RHS);
+      SDOperand LHS = BuildSplatI(SextVal+16, SplatSize, MVT::Other, DAG);
+      SDOperand RHS = BuildSplatI(-16, SplatSize, MVT::Other, DAG);
+      LHS = DAG.getNode(ISD::ADD, Op.getValueType(), LHS, RHS);
+      return DAG.getNode(ISD::BIT_CONVERT, Op.getValueType(), LHS);
     }
   }
     
