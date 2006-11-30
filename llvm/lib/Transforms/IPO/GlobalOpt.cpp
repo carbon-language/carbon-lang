@@ -1713,7 +1713,8 @@ static bool EvaluateFunction(Function *F, Constant *&RetVal,
                                      getVal(Values, SI->getOperand(0)),
                                      getVal(Values, SI->getOperand(1)));
     } else if (CastInst *CI = dyn_cast<CastInst>(CurInst)) {
-      InstResult = ConstantExpr::getCast(getVal(Values, CI->getOperand(0)),
+      InstResult = ConstantExpr::getCast(CI->getOpcode(),
+                                         getVal(Values, CI->getOperand(0)),
                                          CI->getType());
     } else if (SelectInst *SI = dyn_cast<SelectInst>(CurInst)) {
       InstResult = ConstantExpr::getSelect(getVal(Values, SI->getOperand(0)),
