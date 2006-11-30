@@ -14,13 +14,13 @@
 #ifndef X86SUBTARGET_H
 #define X86SUBTARGET_H
 
-#include "llvm/GlobalValue.h"
 #include "llvm/Target/TargetSubtarget.h"
 
 #include <string>
 
 namespace llvm {
 class Module;
+class GlobalValue;
 
 class X86Subtarget : public TargetSubtarget {
 public:
@@ -111,18 +111,7 @@ public:
   /// symbols are indirect, loading the value at address GV rather then the
   /// value of GV itself. This means that the GlobalAddress must be in the base
   /// or index register of the address, not the GV offset field.
-  bool GVRequiresExtraLoad(const GlobalValue* GV, bool isDirectCall) const
-  {
-    if (isTargetDarwin()) {
-      return (!isDirectCall &&
-              (GV->hasWeakLinkage() || GV->hasLinkOnceLinkage() ||
-               (GV->isExternal() && !GV->hasNotBeenReadFromBytecode())));
-    } else if (isTargetCygwin() || isTargetWindows()) {
-      return (GV->hasDLLImportLinkage());
-    }
-
-    return false;
-  }
+  bool GVRequiresExtraLoad(const GlobalValue* GV, bool isDirectCall) const;
 };
 
 namespace X86 {

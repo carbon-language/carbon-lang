@@ -27,6 +27,23 @@ AsmWriterFlavor("x86-asm-syntax", cl::init(X86Subtarget::unset),
     clEnumValEnd));
 
 
+/// True if accessing the GV requires an extra load. For Windows, dllimported
+/// symbols are indirect, loading the value at address GV rather then the
+/// value of GV itself. This means that the GlobalAddress must be in the base
+/// or index register of the address, not the GV offset field.
+bool X86Subtarget::GVRequiresExtraLoad(const GlobalValue* GV, bool isDirectCall) const
+{
+  if (isTargetDarwin()) {
+    return (!isDirectCall &&
+            (GV->hasWeakLinkage() || GV->hasLinkOnceLinkage() ||
+             (GV->isExternal() && !GV->hasNotBeenReadFromBytecode())));
+  } else if (isTargetCygwin() || isTargetWindows()) {
+    return (GV->hasDLLImportLinkage());
+  }
+  
+  return false;
+}
+
 /// GetCpuIDAndInfo - Execute the specified cpuid and return the 4 values in the
 /// specified arguments.  If we can't run cpuid on the host, return true.
 bool X86::GetCpuIDAndInfo(unsigned value, unsigned *rEAX, unsigned *rEBX,
