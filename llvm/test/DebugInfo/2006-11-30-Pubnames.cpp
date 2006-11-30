@@ -1,5 +1,5 @@
-// This is a regression test on debug info to make sure that we can get a
-// meaningful stack trace from a C++ program.
+// This is a regression test on debug info to make sure that we can access 
+// qualified global names.
 // RUN: %llvmgcc -S -O0 -g %s -o - | llvm-as | llc --disable-fp-elim -o Output/Pubnames.s -f
 // RUN: as Output/Pubnames.s -o Output/Pubnames.o
 // RUN: g++ Output/Pubnames.o -o Output/Pubnames.exe
