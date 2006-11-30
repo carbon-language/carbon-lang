@@ -1390,11 +1390,23 @@ bool DIVerifier::Verify(GlobalVariable *GV) {
     return false;
   }
 
-  // Get the Tag
+  // Get the Tag.
   unsigned Tag = DebugInfoDesc::TagFromGlobal(GV);
   
   // Check for user defined descriptors.
-  if (Tag == DW_TAG_invalid) return true;
+  if (Tag == DW_TAG_invalid) {
+    ValiditySlot = Valid;
+    return true;
+  }
+  
+  // Get the Version.
+  unsigned Version = DebugInfoDesc::VersionFromGlobal(GV);
+  
+  // Check for version mismatch.
+  if (Version != LLVMDebugVersion) {
+    ValiditySlot = Invalid;
+    return false;
+  }
 
   // Construct an empty DebugInfoDesc.
   DebugInfoDesc *DD = DebugInfoDesc::DescFactory(Tag);
