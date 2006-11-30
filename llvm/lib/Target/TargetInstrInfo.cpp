@@ -17,25 +17,12 @@
 #include "llvm/DerivedTypes.h"
 using namespace llvm;
 
-namespace llvm {
-  // External object describing the machine instructions Initialized only when
-  // the TargetMachine class is created and reset when that class is destroyed.
-  //
-  // FIXME: UGLY SPARCV9 HACK!
-  const TargetInstrDescriptor* TargetInstrDescriptors = 0;
-}
-
 TargetInstrInfo::TargetInstrInfo(const TargetInstrDescriptor* Desc,
                                  unsigned numOpcodes)
   : desc(Desc), NumOpcodes(numOpcodes) {
-  // FIXME: TargetInstrDescriptors should not be global
-  assert(TargetInstrDescriptors == NULL && desc != NULL
-         && "TargetMachine data structure corrupt; maybe you tried to create another TargetMachine? (only one may exist in a program)");
-  TargetInstrDescriptors = desc; // initialize global variable
 }
 
 TargetInstrInfo::~TargetInstrInfo() {
-  TargetInstrDescriptors = NULL; // reset global variable
 }
 
 /// findTiedToSrcOperand - Returns the operand that is tied to the specified
