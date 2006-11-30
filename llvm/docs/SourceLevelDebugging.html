@@ -389,7 +389,8 @@ line correspondence.</p>
     {  }*,  ;; Global variable anchor = cast (%<a href="#format_anchors">llvm.dbg.anchor.type</a>* %<a href="#format_global_variables">llvm.dbg.global_variables</a> to {  }*),  
     {  }*,  ;; Reference to context descriptor
     sbyte*, ;; Name
-    sbyte*, ;; Display name (unmangled name if Name is the C++ mangled name)
+    sbyte*, ;; Display name (fully qualified C++ name)
+    sbyte*, ;; MIPS linkage name (for C++)
     {  }*,  ;; Reference to compile unit where defined
     uint,   ;; Line number where defined
     {  }*,  ;; Reference to type descriptor
@@ -417,7 +418,8 @@ provide details such as name, type and where the variable is defined.</p>
     {  }*,  ;; Subprogram anchor = cast (%<a href="#format_anchors">llvm.dbg.anchor.type</a>* %<a href="#format_subprograms">llvm.dbg.subprograms</a> to {  }*),  
     {  }*,  ;; Reference to context descriptor
     sbyte*, ;; Name
-    sbyte*, ;; Display name (unmangled name if Name is the C++ mangled name)
+    sbyte*, ;; Display name (fully qualified C++ name)
+    sbyte*, ;; MIPS linkage name (for C++)
     {  }*,  ;; Reference to compile unit where defined
     uint,   ;; Line number where defined
     {  }*,  ;; Reference to type descriptor
