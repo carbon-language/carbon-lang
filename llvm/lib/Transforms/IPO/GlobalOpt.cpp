@@ -572,7 +572,8 @@ static bool OptimizeAwayTrappingUsesOfValue(Value *V, Constant *NewV) {
       }
     } else if (CastInst *CI = dyn_cast<CastInst>(I)) {
       Changed |= OptimizeAwayTrappingUsesOfValue(CI,
-                                    ConstantExpr::getCast(NewV, CI->getType()));
+                                ConstantExpr::getCast(CI->getOpcode(),
+                                                      NewV, CI->getType()));
       if (CI->use_empty()) {
         Changed = true;
         CI->eraseFromParent();
@@ -670,7 +671,7 @@ static void ConstantPropUsersOf(Value *V) {
 /// variable, and transforms the program as if it always contained the result of
 /// the specified malloc.  Because it is always the result of the specified
 /// malloc, there is no reason to actually DO the malloc.  Instead, turn the
-/// malloc into a global, and any laods of GV as uses of the new global.
+/// malloc into a global, and any loads of GV as uses of the new global.
 static GlobalVariable *OptimizeGlobalAddressOfMalloc(GlobalVariable *GV,
                                                      MallocInst *MI) {
   DOUT << "PROMOTING MALLOC GLOBAL: " << *GV << "  MALLOC = " << *MI;
@@ -707,7 +708,8 @@ static GlobalVariable *OptimizeGlobalAddressOfMalloc(GlobalVariable *GV,
 
   Constant *RepValue = NewGV;
   if (NewGV->getType() != GV->getType()->getElementType())
-    RepValue = ConstantExpr::getCast(RepValue, GV->getType()->getElementType());
+    RepValue = ConstantExpr::getCast(Instruction::BitCast,
+                                     RepValue, GV->getType()->getElementType());
 
   // If there is a comparison against null, we will insert a global bool to
   // keep track of whether the global was initialized yet or not.
@@ -1056,7 +1058,8 @@ static bool OptimizeOnceStoredGlobal(GlobalVariable *GV, Value *StoredOnceVal,
       GV->getInitializer()->isNullValue()) {
     if (Constant *SOVC = dyn_cast<Constant>(StoredOnceVal)) {
       if (GV->getInitializer()->getType() != SOVC->getType())
-        SOVC = ConstantExpr::getCast(SOVC, GV->getInitializer()->getType());
+        SOVC = ConstantExpr::getCast(Instruction::BitCast,
+                                     SOVC, GV->getInitializer()->getType());
 
       // Optimize away any trapping uses of the loaded value.
       if (OptimizeAwayTrappingUsesOfLoads(GV, SOVC))
@@ -1507,7 +1510,7 @@ static GlobalVariable *InstallGlobalCtors(GlobalVariable *GCL,
   if (!GCL->use_empty()) {
     Constant *V = NGV;
     if (V->getType() != GCL->getType())
-      V = ConstantExpr::getCast(V, GCL->getType());
+      V = ConstantExpr::getCast(Instruction::BitCast, V, GCL->getType());
     GCL->replaceAllUsesWith(V);
   }
   GCL->eraseFromParent();
