@@ -84,7 +84,8 @@ def X86rep_movs: SDNode<"X86ISD::REP_MOVS", SDTX86RepStr,
 def X86rdtsc   : SDNode<"X86ISD::RDTSC_DAG",SDTX86RdTsc,
                         [SDNPHasChain, SDNPOutFlag]>;
 
-def X86Wrapper : SDNode<"X86ISD::Wrapper",  SDTX86Wrapper>;
+def X86Wrapper    : SDNode<"X86ISD::Wrapper",     SDTX86Wrapper>;
+def X86WrapperRIP : SDNode<"X86ISD::WrapperRIP",  SDTX86Wrapper>;
 
 //===----------------------------------------------------------------------===//
 // X86 Operand Definitions.
@@ -169,6 +170,8 @@ def HasSSE3  : Predicate<"Subtarget->hasSSE3()">;
 def FPStack  : Predicate<"!Subtarget->hasSSE2()">;
 def In32BitMode : Predicate<"!Subtarget->is64Bit()">;
 def In64BitMode : Predicate<"Subtarget->is64Bit()">;
+def SmallCode : Predicate<"TM.getCodeModel() == CodeModel::Small">;
+def NotSmallCode :Predicate<"TM.getCodeModel() != CodeModel::Small">;
 
 //===----------------------------------------------------------------------===//
 // X86 specific pattern fragments.

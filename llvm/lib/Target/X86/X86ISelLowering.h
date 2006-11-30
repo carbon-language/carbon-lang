@@ -150,6 +150,10 @@ namespace llvm {
       /// TargetExternalSymbol, and TargetGlobalAddress.
       Wrapper,
 
+      /// WrapperRIP - Special wrapper used under X86-64 PIC mode for RIP
+      /// relative displacements.
+      WrapperRIP,
+
       /// S2VEC - X86 version of SCALAR_TO_VECTOR. The destination base does not
       /// have to match the operand type.
       S2VEC,

@@ -590,63 +590,19 @@ bool X86DAGToDAGISel::MatchAddress(SDOperand N, X86ISelAddressMode &AM,
     break;
   }
 
-  case ISD::TargetConstantPool:
-    if (AM.BaseType == X86ISelAddressMode::RegBase &&
-        AM.Base.Reg.Val == 0 &&
-        AM.CP == 0) {
-      ConstantPoolSDNode *CP = cast<ConstantPoolSDNode>(N);
-      AM.CP = CP->getConstVal();
-      AM.Align = CP->getAlignment();
-      AM.Disp += CP->getOffset();
-      return false;
-    }
-    break;
-
-  case ISD::TargetGlobalAddress:
-    if (AM.BaseType == X86ISelAddressMode::RegBase &&
-        AM.Base.Reg.Val == 0 &&
-        AM.GV == 0) {
-      GlobalAddressSDNode *G = cast<GlobalAddressSDNode>(N);
-      AM.GV = G->getGlobal();
-      AM.Disp += G->getOffset();
-      return false;
-    }
-    break;
-
-  case ISD::TargetExternalSymbol:
-    if (isRoot &&
-        AM.BaseType == X86ISelAddressMode::RegBase &&
-        AM.Base.Reg.Val == 0) {
-      ExternalSymbolSDNode *S = cast<ExternalSymbolSDNode>(N.getOperand(0));
-      AM.ES = S->getSymbol();
-      return false;
-    }
-    break;
-
-  case ISD::TargetJumpTable:
-    if (isRoot &&
-        AM.BaseType == X86ISelAddressMode::RegBase &&
-        AM.Base.Reg.Val == 0) {
-      JumpTableSDNode *J = cast<JumpTableSDNode>(N.getOperand(0));
-      AM.JT = J->getIndex();
-      return false;
-    }
-    break;
-
   case X86ISD::Wrapper:
+  case X86ISD::WrapperRIP: {
+    bool isRIP = N.getOpcode() == X86ISD::WrapperRIP;
+    // Under X86-64 non-small code model, GV (and friends) are 64-bits.
+    if (!isRIP && Subtarget->is64Bit() && TM.getCodeModel() != CodeModel::Small)
+      break;
+
     // If value is available in a register both base and index components have
     // been picked, we can't fit the result available in the register in the
     // addressing mode. Duplicate GlobalAddress or ConstantPool as displacement.
-
-    // Can't fit GV or CP in addressing mode for X86-64 medium or large code
-    // model since the displacement field is 32-bit. Ok for small code model.
-
-    // For X86-64 PIC code, only allow GV / CP + displacement so we can use RIP
-    // relative addressing mode.
-    if (Subtarget->is64Bit() && TM.getCodeModel() != CodeModel::Small)
-      break;
     if (!Available || (AM.Base.Reg.Val && AM.IndexReg.Val)) {
-      bool isRIP = Subtarget->is64Bit();
+      // For X86-64 PIC code, only allow GV / CP + displacement so we can use
+      // RIP relative addressing mode.
       if (isRIP &&
           (AM.Base.Reg.Val || AM.Scale > 1 || AM.IndexReg.Val ||
            AM.BaseType == X86ISelAddressMode::FrameIndexBase))
@@ -683,6 +639,7 @@ bool X86DAGToDAGISel::MatchAddress(SDOperand N, X86ISelAddressMode &AM,
       }
     }
     break;
+  }
 
   case ISD::FrameIndex:
     if (AM.BaseType == X86ISelAddressMode::RegBase && AM.Base.Reg.Val == 0) {
@@ -1040,7 +997,8 @@ SDNode *X86DAGToDAGISel::Select(SDOperand N) {
       SDOperand N0 = N.getOperand(0);
       SDOperand N1 = N.getOperand(1);
       if (N.Val->getValueType(0) == PtrVT &&
-          N0.getOpcode() == X86ISD::Wrapper &&
+          (N0.getOpcode() == X86ISD::Wrapper
+           || N0.getOpcode() == X86ISD::WrapperRIP) &&
           N1.getOpcode() == ISD::Constant) {
         unsigned Offset = (unsigned)cast<ConstantSDNode>(N1)->getValue();
         SDOperand C(0, 0);
