@@ -2198,7 +2198,8 @@ private:
     unsigned ContentSize = Die->getSize() +
                            sizeof(int16_t) + // DWARF version number
                            sizeof(int32_t) + // Offset Into Abbrev. Section
-                           sizeof(int8_t);   // Pointer Size (in bytes)
+                           sizeof(int8_t) +  // Pointer Size (in bytes)
+                           sizeof(int32_t);  // FIXME - extra pad for gdb bug.
                            
     EmitInt32(ContentSize);  EOL("Length of Compilation Unit Info");
     EmitInt16(DWARF_VERSION); EOL("DWARF version number");
@@ -2207,6 +2208,10 @@ private:
     EmitInt8(TAI->getAddressSize()); EOL("Address Size (in bytes)");
   
     EmitDIE(Die);
+    EmitInt8(0); EOL("Extra Pad For GDB"); // FIXME - extra pad for gdb bug.
+    EmitInt8(0); EOL("Extra Pad For GDB"); // FIXME - extra pad for gdb bug.
+    EmitInt8(0); EOL("Extra Pad For GDB"); // FIXME - extra pad for gdb bug.
+    EmitInt8(0); EOL("Extra Pad For GDB"); // FIXME - extra pad for gdb bug.
     EmitLabel("info_end", Unit->getID());
     
     O << "\n";
