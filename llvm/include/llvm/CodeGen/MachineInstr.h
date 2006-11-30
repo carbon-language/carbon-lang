@@ -299,7 +299,7 @@ public:
 /// MachineInstr - Representation of each machine instruction.
 ///
 class MachineInstr {
-  short Opcode;                         // the opcode
+  const TargetInstrDescriptor *TID;     // Instruction descriptor.
   unsigned short NumImplicitOps;        // Number of implicit operands (which
                                         // are determined at construction time).
 
@@ -319,7 +319,7 @@ class MachineInstr {
 
 public:
   /// MachineInstr ctor - This constructor creates a dummy MachineInstr with
-  /// opcode 0 and no operands.
+  /// TID NULL and no operands.
   MachineInstr();
 
   /// MachineInstr ctor - This constructor create a MachineInstr and add the
@@ -337,10 +337,14 @@ public:
 
   const MachineBasicBlock* getParent() const { return parent; }
   MachineBasicBlock* getParent() { return parent; }
+  
+  /// getInstrDescriptor - Returns the target instruction descriptor of this
+  /// MachineInstr.
+  const TargetInstrDescriptor *getInstrDescriptor() const { return TID; }
 
   /// getOpcode - Returns the opcode of this MachineInstr.
   ///
-  const int getOpcode() const { return Opcode; }
+  const int getOpcode() const;
 
   /// Access to explicit operands of the instruction.
   ///
@@ -500,9 +504,10 @@ public:
   // Accessors used to modify instructions in place.
   //
 
-  /// setOpcode - Replace the opcode of the current instruction with a new one.
+  /// setInstrDescriptor - Replace the instruction descriptor (thus opcode) of
+  /// the current instruction with a new one.
   ///
-  void setOpcode(unsigned Op) { Opcode = Op; }
+  void setInstrDescriptor(const TargetInstrDescriptor &tid) { TID = &tid; }
 
   /// RemoveOperand - Erase an operand  from an instruction, leaving it with one
   /// fewer operand than it started with.
@@ -525,7 +530,7 @@ private:
 
   /// addImplicitDefUseOperands - Add all implicit def and use operands to
   /// this instruction.
-  void addImplicitDefUseOperands(const TargetInstrDescriptor &TID);
+  void addImplicitDefUseOperands();
 };
 
 //===----------------------------------------------------------------------===//

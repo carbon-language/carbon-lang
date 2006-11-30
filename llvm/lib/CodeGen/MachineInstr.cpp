@@ -21,28 +21,17 @@
 #include <iostream>
 using namespace llvm;
 
-// Global variable holding an array of descriptors for machine instructions.
-// The actual object needs to be created separately for each target machine.
-// This variable is initialized and reset by class TargetInstrInfo.
-//
-// FIXME: This should be a property of the target so that more than one target
-// at a time can be active...
-//
-namespace llvm {
-  extern const TargetInstrDescriptor *TargetInstrDescriptors;
-}
-
 /// MachineInstr ctor - This constructor creates a dummy MachineInstr with
-/// opcode 0 and no operands.
+/// TID NULL and no operands.
 MachineInstr::MachineInstr()
-  : Opcode(0), NumImplicitOps(0), parent(0) {
+  : TID(0), NumImplicitOps(0), parent(0) {
   // Make sure that we get added to a machine basicblock
   LeakDetector::addGarbageObject(this);
 }
 
-void MachineInstr::addImplicitDefUseOperands(const TargetInstrDescriptor &TID) {
-  if (TID.ImplicitDefs)
-    for (const unsigned *ImpDefs = TID.ImplicitDefs; *ImpDefs; ++ImpDefs) {
+void MachineInstr::addImplicitDefUseOperands() {
+  if (TID->ImplicitDefs)
+    for (const unsigned *ImpDefs = TID->ImplicitDefs; *ImpDefs; ++ImpDefs) {
       MachineOperand Op;
       Op.opType = MachineOperand::MO_Register;
       Op.IsDef = true;
@@ -53,8 +42,8 @@ void MachineInstr::addImplicitDefUseOperands(const TargetInstrDescriptor &TID) {
       Op.offset = 0;
       Operands.push_back(Op);
     }
-  if (TID.ImplicitUses)
-    for (const unsigned *ImpUses = TID.ImplicitUses; *ImpUses; ++ImpUses) {
+  if (TID->ImplicitUses)
+    for (const unsigned *ImpUses = TID->ImplicitUses; *ImpUses; ++ImpUses) {
       MachineOperand Op;
       Op.opType = MachineOperand::MO_Register;
       Op.IsDef = false;
@@ -71,16 +60,16 @@ void MachineInstr::addImplicitDefUseOperands(const TargetInstrDescriptor &TID) {
 /// implicit operands. It reserves space for number of operands specified by
 /// TargetInstrDescriptor or the numOperands if it is not zero. (for
 /// instructions with variable number of operands).
-MachineInstr::MachineInstr(const TargetInstrDescriptor &TID)
-  : Opcode(TID.Opcode), NumImplicitOps(0), parent(0) {
-  if (TID.ImplicitDefs)
-    for (const unsigned *ImpDefs = TID.ImplicitDefs; *ImpDefs; ++ImpDefs)
+MachineInstr::MachineInstr(const TargetInstrDescriptor &tid)
+  : TID(&tid), NumImplicitOps(0), parent(0) {
+  if (TID->ImplicitDefs)
+    for (const unsigned *ImpDefs = TID->ImplicitDefs; *ImpDefs; ++ImpDefs)
       NumImplicitOps++;
-  if (TID.ImplicitUses)
-    for (const unsigned *ImpUses = TID.ImplicitUses; *ImpUses; ++ImpUses)
+  if (TID->ImplicitUses)
+    for (const unsigned *ImpUses = TID->ImplicitUses; *ImpUses; ++ImpUses)
       NumImplicitOps++;
-  Operands.reserve(NumImplicitOps + TID.numOperands);
-  addImplicitDefUseOperands(TID);
+  Operands.reserve(NumImplicitOps + TID->numOperands);
+  addImplicitDefUseOperands();
   // Make sure that we get added to a machine basicblock
   LeakDetector::addGarbageObject(this);
 }
@@ -89,17 +78,17 @@ MachineInstr::MachineInstr(const TargetInstrDescriptor &TID)
 /// MachineInstr is created and added to the end of the specified basic block.
 ///
 MachineInstr::MachineInstr(MachineBasicBlock *MBB,
-                           const TargetInstrDescriptor &TID)
-  : Opcode(TID.Opcode), NumImplicitOps(0), parent(0) {
+                           const TargetInstrDescriptor &tid)
+  : TID(&tid), NumImplicitOps(0), parent(0) {
   assert(MBB && "Cannot use inserting ctor with null basic block!");
-  if (TID.ImplicitDefs)
-    for (const unsigned *ImpDefs = TID.ImplicitDefs; *ImpDefs; ++ImpDefs)
+  if (TID->ImplicitDefs)
+    for (const unsigned *ImpDefs = TID->ImplicitDefs; *ImpDefs; ++ImpDefs)
       NumImplicitOps++;
-  if (TID.ImplicitUses)
-    for (const unsigned *ImpUses = TID.ImplicitUses; *ImpUses; ++ImpUses)
+  if (TID->ImplicitUses)
+    for (const unsigned *ImpUses = TID->ImplicitUses; *ImpUses; ++ImpUses)
       NumImplicitOps++;
-  Operands.reserve(NumImplicitOps + TID.numOperands);
-  addImplicitDefUseOperands(TID);
+  Operands.reserve(NumImplicitOps + TID->numOperands);
+  addImplicitDefUseOperands();
   // Make sure that we get added to a machine basicblock
   LeakDetector::addGarbageObject(this);
   MBB->push_back(this);  // Add instruction to end of basic block!
@@ -108,7 +97,7 @@ MachineInstr::MachineInstr(MachineBasicBlock *MBB,
 /// MachineInstr ctor - Copies MachineInstr arg exactly
 ///
 MachineInstr::MachineInstr(const MachineInstr &MI) {
-  Opcode = MI.getOpcode();
+  TID = MI.getInstrDescriptor();
   NumImplicitOps = MI.NumImplicitOps;
   Operands.reserve(MI.getNumOperands());
 
@@ -127,6 +116,12 @@ MachineInstr::~MachineInstr() {
   LeakDetector::removeGarbageObject(this);
 }
 
+/// getOpcode - Returns the opcode of this MachineInstr.
+///
+const int MachineInstr::getOpcode() const {
+  return TID->Opcode;
+}
+
 /// removeFromParent - This method unlinks 'this' from the containing basic
 /// block, and returns it, but does not delete it.
 MachineInstr *MachineInstr::removeFromParent() {
@@ -139,8 +134,8 @@ MachineInstr *MachineInstr::removeFromParent() {
 /// OperandComplete - Return true if it's illegal to add a new operand
 ///
 bool MachineInstr::OperandsComplete() const {
-  unsigned short NumOperands = TargetInstrDescriptors[Opcode].numOperands;
-  if ((TargetInstrDescriptors[Opcode].Flags & M_VARIABLE_OPS) == 0 &&
+  unsigned short NumOperands = TID->numOperands;
+  if ((TID->Flags & M_VARIABLE_OPS) == 0 &&
       getNumOperands()-NumImplicitOps >= NumOperands)
     return true;  // Broken: we have all the operands of this instruction!
   return false;
@@ -241,10 +236,8 @@ void MachineInstr::print(std::ostream &OS, const TargetMachine *TM) const {
     ++StartOp;   // Don't print this operand again!
   }
 
-  // Must check if Target machine is not null because machine BB could not
-  // be attached to a Machine function yet
-  if (TM)
-    OS << TM->getInstrInfo()->getName(getOpcode());
+  if (TID)
+    OS << TID->Name;
 
   for (unsigned i = StartOp, e = getNumOperands(); i != e; ++i) {
     const MachineOperand& mop = getOperand(i);
@@ -294,7 +287,7 @@ std::ostream &llvm::operator<<(std::ostream &os, const MachineInstr &MI) {
 
   // Otherwise, print it out in the "raw" format without symbolic register names
   // and such.
-  os << TargetInstrDescriptors[MI.getOpcode()].Name;
+  os << MI.getInstrDescriptor()->Name;
 
   for (unsigned i = 0, N = MI.getNumOperands(); i < N; i++) {
     os << "\t" << MI.getOperand(i);
