@@ -576,7 +576,7 @@ PPCRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II) const {
     assert(ImmToIdxMap.count(OpC) &&
            "No indexed form of load or store available!");
     unsigned NewOpcode = ImmToIdxMap.find(OpC)->second;
-    MI.setOpcode(NewOpcode);
+    MI.setInstrDescriptor(TII.get(NewOpcode));
     MI.getOperand(1).ChangeToRegister(MI.getOperand(i).getReg(), false);
     MI.getOperand(2).ChangeToRegister(PPC::R0, false);
   } else {

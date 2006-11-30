@@ -53,7 +53,8 @@ bool AlphaBSel::runOnMachineFunction(MachineFunction &Fn) {
         // 0. bc opcode
         // 1. reg
         // 2. target MBB
-        MBBI->setOpcode(MBBI->getOperand(0).getImm());
+        const TargetInstrInfo *TII = Fn.getTarget().getInstrInfo();
+        MBBI->setInstrDescriptor(TII->get(MBBI->getOperand(0).getImm()));
       }
     }
   }
