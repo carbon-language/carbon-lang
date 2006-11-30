@@ -1048,7 +1048,8 @@ GlobalDesc::GlobalDesc(unsigned T)
 : AnchoredDesc(T)
 , Context(0)
 , Name("")
-, DisplayName("")
+, FullName("")
+, LinkageName("")
 , File(NULL)
 , Line(0)
 , TyDesc(NULL)
@@ -1063,7 +1064,8 @@ void GlobalDesc::ApplyToFields(DIVisitor *Visitor) {
 
   Visitor->Apply(Context);
   Visitor->Apply(Name);
-  if (getVersion() > LLVMDebugVersion4) Visitor->Apply(DisplayName);
+  Visitor->Apply(FullName);
+  Visitor->Apply(LinkageName);
   Visitor->Apply(File);
   Visitor->Apply(Line);
   Visitor->Apply(TyDesc);
@@ -1117,7 +1119,8 @@ void GlobalVariableDesc::dump() {
             << "Tag(" << getTag() << "), "
             << "Anchor(" << getAnchor() << "), "
             << "Name(\"" << getName() << "\"), "
-            << "DisplayName(\"" << getDisplayName() << "\"), "
+            << "FullName(\"" << getFullName() << "\"), "
+            << "LinkageName(\"" << getLinkageName() << "\"), "
             << "File(" << getFile() << "),"
             << "Line(" << getLine() << "),"
             << "Type(" << getType() << "), "
@@ -1170,7 +1173,8 @@ void SubprogramDesc::dump() {
             << "Tag(" << getTag() << "), "
             << "Anchor(" << getAnchor() << "), "
             << "Name(\"" << getName() << "\"), "
-            << "DisplayName(\"" << getDisplayName() << "\"), "
+            << "FullName(\"" << getFullName() << "\"), "
+            << "LinkageName(\"" << getLinkageName() << "\"), "
             << "File(" << getFile() << "),"
             << "Line(" << getLine() << "),"
             << "Type(" << getType() << "), "

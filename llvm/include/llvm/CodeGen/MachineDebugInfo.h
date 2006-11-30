@@ -53,7 +53,8 @@ class StructType;
 // Debug info constants.
 
 enum {
-  LLVMDebugVersion = (5 << 16),         // Current version of debug information.
+  LLVMDebugVersion = (6 << 16),         // Current version of debug information.
+  LLVMDebugVersion5 = (5 << 16),        // Constant for version 5.
   LLVMDebugVersion4 = (4 << 16),        // Constant for version 4.
   LLVMDebugVersionMask = 0xffff0000     // Mask for version number.
 };
@@ -582,7 +583,8 @@ class GlobalDesc : public AnchoredDesc {
 private:
   DebugInfoDesc *Context;               // Context debug descriptor.
   std::string Name;                     // Global name.
-  std::string DisplayName;              // C++ unmangled name.
+  std::string FullName;                 // Fully qualified name.
+  std::string LinkageName;              // Name for binding to MIPS linkage.
   DebugInfoDesc *File;                  // Defined compile unit (may be NULL.)
   unsigned Line;                        // Defined line# (may be zero.)
   DebugInfoDesc *TyDesc;                // Type debug descriptor.
@@ -596,7 +598,8 @@ public:
   // Accessors
   DebugInfoDesc *getContext()                const { return Context; }
   const std::string &getName()               const { return Name; }
-  const std::string &getDisplayName()        const { return DisplayName; }
+  const std::string &getFullName()           const { return FullName; }
+  const std::string &getLinkageName()        const { return LinkageName; }
   CompileUnitDesc *getFile() const {
     return static_cast<CompileUnitDesc *>(File);
   }
@@ -608,7 +611,8 @@ public:
   bool isDefinition()                        const { return IsDefinition; }
   void setContext(DebugInfoDesc *C)                { Context = C; }
   void setName(const std::string &N)               { Name = N; }
-  void setDisplayName(const std::string &N)        { DisplayName = N; }
+  void setFullName(const std::string &N)           { FullName = N; }
+  void setLinkageName(const std::string &N)        { LinkageName = N; }
   void setFile(CompileUnitDesc *U) {
     File = static_cast<DebugInfoDesc *>(U);
   }
@@ -618,9 +622,6 @@ public:
   }
   void setIsStatic(bool IS)                        { IsStatic = IS; }
   void setIsDefinition(bool ID)                    { IsDefinition = ID; }
-  bool hasMangledName()                      const {
-    return !DisplayName.empty();
-  }
 
   /// ApplyToFields - Target the visitor to the fields of the GlobalDesc.
   ///

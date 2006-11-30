@@ -1587,11 +1587,13 @@ private:
             DIE *Static = new DIE(DW_TAG_variable);
             
             // Add name and mangled name.
-            const std::string &Name = StaticDesc->getDisplayName();
-            const std::string &MangledName = StaticDesc->getName();
+            const std::string &Name = StaticDesc->getName();
+            const std::string &LinkageName = StaticDesc->getLinkageName();
             AddString(Static, DW_AT_name, DW_FORM_string, Name);
-            AddString(Static, DW_AT_MIPS_linkage_name, DW_FORM_string,
-                              MangledName);
+            if (!LinkageName.empty()) {
+              AddString(Static, DW_AT_MIPS_linkage_name, DW_FORM_string,
+                                LinkageName);
+            }
             
             // Add location.
             AddSourceLine(Static, StaticDesc->getFile(), StaticDesc->getLine());
@@ -1613,17 +1615,15 @@ private:
             DIE *Method = new DIE(DW_TAG_subprogram);
            
             // Add name and mangled name.
-            const std::string &Name = MethodDesc->getDisplayName();
-            const std::string &MangledName = MethodDesc->getName();
-            bool IsCTor = false;
+            const std::string &Name = MethodDesc->getName();
+            const std::string &LinkageName = MethodDesc->getLinkageName();
             
-            if (Name.empty()) {
-              AddString(Method, DW_AT_name, DW_FORM_string, MangledName);            
-              IsCTor = TyDesc->getName() == MangledName;
-            } else {
-              AddString(Method, DW_AT_name, DW_FORM_string, Name);            
+            AddString(Method, DW_AT_name, DW_FORM_string, Name);            
+            bool IsCTor = TyDesc->getName() == Name;
+            
+            if (!LinkageName.empty()) {
               AddString(Method, DW_AT_MIPS_linkage_name, DW_FORM_string,
-                                MangledName);
+                                LinkageName);
             }
             
             // Add location.
@@ -1752,16 +1752,15 @@ private:
     // Get the global variable itself.
     GlobalVariable *GV = GVD->getGlobalVariable();
 
-    const std::string &Name = GVD->hasMangledName() ? GVD->getDisplayName()
-                                                    : GVD->getName();
-    const std::string &MangledName = GVD->hasMangledName() ? GVD->getName()
-                                                           : "";
+    const std::string &Name = GVD->getName();
+    const std::string &FullName = GVD->getFullName();
+    const std::string &LinkageName = GVD->getLinkageName();
     // Create the global's variable DIE.
     DIE *VariableDie = new DIE(DW_TAG_variable);
     AddString(VariableDie, DW_AT_name, DW_FORM_string, Name);
-    if (!MangledName.empty()) {
+    if (!LinkageName.empty()) {
       AddString(VariableDie, DW_AT_MIPS_linkage_name, DW_FORM_string,
-                             MangledName);
+                             LinkageName);
     }
     AddType(VariableDie, GVD->getType(), Unit); 
     AddUInt(VariableDie, DW_AT_external, DW_FORM_flag, 1);
@@ -1769,14 +1768,11 @@ private:
     // Add source line info if available.
     AddSourceLine(VariableDie, UnitDesc, GVD->getLine());
     
-    // Work up linkage name.
-    const std::string LinkageName = Asm->getGlobalLinkName(GV);
-
     // Add address.
     DIEBlock *Block = new DIEBlock();
     AddUInt(Block, 0, DW_FORM_data1, DW_OP_addr);
-    AddObjectLabel(Block, 0, DW_FORM_udata, LinkageName);
-    AddBlock(VariableDie, DW_AT_location,  0, Block);
+    AddObjectLabel(Block, 0, DW_FORM_udata, Asm->getGlobalLinkName(GV));
+    AddBlock(VariableDie, DW_AT_location, 0, Block);
     
     // Add to map.
     Slot = VariableDie;
@@ -1786,7 +1782,7 @@ private:
     
     // Expose as global.
     // FIXME - need to check external flag.
-    Unit->AddGlobal(Name, VariableDie);
+    Unit->AddGlobal(FullName, VariableDie);
     
     return VariableDie;
   }
@@ -1804,17 +1800,16 @@ private:
     if (Slot) return Slot;
     
     // Gather the details (simplify add attribute code.)
-    const std::string &Name = SPD->hasMangledName() ? SPD->getDisplayName()
-                                                    : SPD->getName();
-    const std::string &MangledName = SPD->hasMangledName() ? SPD->getName()
-                                                           : "";
+    const std::string &Name = SPD->getName();
+    const std::string &FullName = SPD->getFullName();
+    const std::string &LinkageName = SPD->getLinkageName();
     unsigned IsExternal = SPD->isStatic() ? 0 : 1;
                                       
     DIE *SubprogramDie = new DIE(DW_TAG_subprogram);
     AddString(SubprogramDie, DW_AT_name, DW_FORM_string, Name);
-    if (!MangledName.empty()) {
+    if (!LinkageName.empty()) {
       AddString(SubprogramDie, DW_AT_MIPS_linkage_name, DW_FORM_string,
-                               MangledName);
+                               LinkageName);
     }
     if (SPD->getType()) AddType(SubprogramDie, SPD->getType(), Unit);
     AddUInt(SubprogramDie, DW_AT_external, DW_FORM_flag, IsExternal);
@@ -1830,7 +1825,7 @@ private:
     Unit->getDie()->AddChild(SubprogramDie);
     
     // Expose as global.
-    Unit->AddGlobal(Name, SubprogramDie);
+    Unit->AddGlobal(FullName, SubprogramDie);
     
     return SubprogramDie;
   }
