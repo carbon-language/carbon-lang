@@ -34,7 +34,7 @@ InputFilename(cl::Positional, cl::desc("<input .llvm file>"), cl::init("-"));
 
 static cl::opt<std::string>
 OutputFilename("o", cl::desc("Override output filename"),
-               cl::value_desc("filename"));
+               cl::value_desc("filename"), cl::init("-"));
 
 static cl::opt<bool>
 Force("f", cl::desc("Overwrite output files"));
@@ -45,6 +45,7 @@ int main(int argc, char **argv) {
 
   int exitCode = 0;
   std::ostream *Out = 0;
+  std::istream *In = 0;
   try {
     if (OutputFilename != "") {   // Specified an output filename?
       if (OutputFilename != "-") {  // Not stdout?
@@ -84,11 +85,18 @@ int main(int argc, char **argv) {
         }
 
         Out = new std::ofstream(OutputFilename.c_str(), std::ios::out |
-                                std::ios::trunc | std::ios::binary);
+                                std::ios::trunc);
         // Make sure that the Out file gets unlinked from the disk if we get a
         // SIGINT
         sys::RemoveFileOnSignal(sys::Path(OutputFilename));
       }
+    }
+
+    if (InputFilename == "-") {
+      In = &std::cin;
+      InputFilename = "<stdin>";
+    } else {
+      In = new std::ifstream(InputFilename.c_str());
     }
 
     if (!Out->good()) {
@@ -96,13 +104,16 @@ int main(int argc, char **argv) {
       return 1;
     }
 
-    UpgradeAssembly(InputFilename, *Out);
+    if (!In->good()) {
+      llvm_cerr << argv[0] << ": error opening " << InputFilename << "!\n";
+      return 1;
+    }
 
-    /*
+    UpgradeAssembly(InputFilename, *In, *Out);
+
   } catch (const std::string& caught_message) {
     llvm_cerr << argv[0] << ": " << caught_message << "\n";
     exitCode = 1;
-    */
   } catch (...) {
     llvm_cerr << argv[0] << ": Unexpected unknown exception occurred.\n";
     exitCode = 1;

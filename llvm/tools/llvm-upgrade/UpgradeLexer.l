@@ -32,15 +32,22 @@
 #include <cctype>
 #include <cstdlib>
 
-void set_scan_bytes (const char * str, size_t len) {
-  Upgrade_scan_bytes (str, len);
-}
-
 static void trim(std::string& str) {
   size_t startpos = str.find_first_not_of(" \t\n\r",0);
   if (startpos != std::string::npos)
     str.erase(0,startpos);
 }
+
+#define YY_INPUT(buf,result,max_size) \
+{ \
+  if (LexInput->good() && !LexInput->eof()) { \
+    LexInput->read(buf,max_size); \
+    result = LexInput->gcount(); \
+  } else {\
+    result = YY_NULL; \
+  } \
+}
+
 
 // Construct a token value for a non-obsolete token
 #define RET_TOK(sym) \

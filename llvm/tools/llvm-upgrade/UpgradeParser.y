@@ -17,12 +17,12 @@
 
 #include "ParserInternals.h"
 #include <llvm/ADT/StringExtras.h>
-#include <llvm/System/MappedFile.h>
 #include <algorithm>
 #include <list>
 #include <utility>
 #include <iostream>
 
+#define YYINCLUDED_STDLIB_H
 
 int yylex();                       // declaration" of xxx warnings.
 int yyparse();
@@ -31,19 +31,14 @@ static std::string CurFilename;
 
 static std::ostream *O = 0;
 
-void UpgradeAssembly(const std::string &infile, std::ostream &out)
+std::istream* LexInput = 0;
+
+void UpgradeAssembly(const std::string &infile, std::istream& in, 
+                     std::ostream &out)
 {
   Upgradelineno = 1; 
   CurFilename = infile;
-  llvm::sys::Path p(infile);
-  llvm::sys::MappedFile mf;
-  mf.open(p);
-  mf.map();
-  const char* base = mf.charBase();
-  size_t sz = mf.size();
-
-  set_scan_bytes(base, sz);
-
+  LexInput = &in;
   O = &out;
 
   if (yyparse()) {

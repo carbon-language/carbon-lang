@@ -10,6 +10,7 @@
 LEVEL = ../..
 TOOLNAME = llvm-upgrade
 LINK_COMPONENTS := support system
+REQUIRES_EH := 1
 
 include $(LEVEL)/Makefile.common
 

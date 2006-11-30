@@ -16,17 +16,17 @@
 #define PARSER_INTERNALS_H
 
 #include <string>
+#include <istream>
 
 // Global variables exported from the lexer...
 
 extern std::string CurFileName;
 extern std::string Textin;
 extern int Upgradelineno;
+extern std::istream* LexInput;
 
-// functions exported from the lexer
-void set_scan_bytes (const char * str, size_t len);
 
-void UpgradeAssembly(const std::string & infile, std::ostream &out);
+void UpgradeAssembly(const std::string & infile, std::istream& in, std::ostream &out);
 
 // Globals exported by the parser...
 extern char* Upgradetext;
