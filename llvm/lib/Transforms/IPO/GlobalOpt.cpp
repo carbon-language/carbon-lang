@@ -1177,7 +1177,7 @@ static void ShrinkGlobalToBoolean(GlobalVariable *GV, Constant *OtherVal) {
       LoadInst *NLI = new LoadInst(NewGV, Name+".b", LI);
       Value *NSI;
       if (IsOneZero)
-        NSI = CastInst::createInferredCast(NLI, LI->getType(), Name, LI);
+        NSI = new ZExtInst(NLI, LI->getType(), Name, LI);
       else
         NSI = new SelectInst(NLI, OtherVal, InitVal, Name, LI);
       LI->replaceAllUsesWith(NSI);
