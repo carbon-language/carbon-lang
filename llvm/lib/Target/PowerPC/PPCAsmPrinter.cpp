@@ -604,9 +604,6 @@ bool DarwinAsmPrinter::doFinalization(Module &M) {
       O << "\t\t; '" << I->getName() << "'\n";
     } else {
       switch (I->getLinkage()) {
-      case GlobalValue::ExternalWeakLinkage:
-        O << "\t.weak_reference " << name << "\n";
-        break;
       case GlobalValue::LinkOnceLinkage:
       case GlobalValue::WeakLinkage:
         O << "\t.globl " << name << '\n'
