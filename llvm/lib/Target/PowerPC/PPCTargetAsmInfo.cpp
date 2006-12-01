@@ -33,6 +33,7 @@ DarwinTargetAsmInfo::DarwinTargetAsmInfo(const PPCTargetMachine &TM) {
   StaticCtorsSection = ".mod_init_func";
   StaticDtorsSection = ".mod_term_func";
   UsedDirective = "\t.no_dead_strip\t";
+  WeakRefDirective = "\t.weak_reference\t";
   InlineAsmStart = "# InlineAsm Start";
   InlineAsmEnd = "# InlineAsm End";
   

@@ -647,11 +647,13 @@ bool DarwinAsmPrinter::doFinalization(Module &M) {
     }
   }
 
-  if (ExtWeakSymbols.begin() != ExtWeakSymbols.end())
-    SwitchToDataSection("");
-  for (std::set<std::string>::iterator i = ExtWeakSymbols.begin(),
-       e = ExtWeakSymbols.end(); i != e; ++i) {
-    O << "\t.weak_reference " << *i << "\n";
+  if (TAI->getWeakRefDirective()) {
+    if (ExtWeakSymbols.begin() != ExtWeakSymbols.end())
+      SwitchToDataSection("");
+    for (std::set<std::string>::iterator i = ExtWeakSymbols.begin(),
+         e = ExtWeakSymbols.end(); i != e; ++i) {
+      O << TAI->getWeakRefDirective() << *i << "\n";
+    }
   }
 
   bool isPPC64 = TD->getPointerSizeInBits() == 64;

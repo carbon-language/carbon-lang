@@ -62,6 +62,7 @@ X86TargetAsmInfo::X86TargetAsmInfo(const X86TargetMachine &TM) {
     InlineAsmEnd = "# InlineAsm End";
     SetDirective = "\t.set";
     UsedDirective = "\t.no_dead_strip\t";
+    WeakRefDirective = "\t.weak_reference\t";
     
     NeedsSet = true;
     DwarfAbbrevSection = ".section __DWARF,__debug_abbrev,regular,debug";
@@ -86,6 +87,7 @@ X86TargetAsmInfo::X86TargetAsmInfo(const X86TargetMachine &TM) {
     // HasDotFile - True if target asm supports .file directives.
     // bool HasDotFile; // Defaults to false.
     PrivateGlobalPrefix = ".";  // Prefix for private global symbols
+    WeakRefDirective = "\t.weak\t";
     DwarfRequiresFrameSection = false;
     DwarfAbbrevSection =  "\t.section\t.debug_abbrev,\"\",@progbits";
     DwarfInfoSection =    "\t.section\t.debug_info,\"\",@progbits";

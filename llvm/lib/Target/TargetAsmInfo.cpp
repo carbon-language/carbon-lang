@@ -61,6 +61,7 @@ TargetAsmInfo::TargetAsmInfo() :
   COMMDirectiveTakesAlignment(true),
   HasDotTypeDotSizeDirective(true),
   UsedDirective(0),
+  WeakRefDirective(0),
   HasLEB128(false),
   HasDotLoc(false),
   HasDotFile(false),

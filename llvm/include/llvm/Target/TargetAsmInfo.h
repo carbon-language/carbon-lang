@@ -211,6 +211,10 @@ namespace llvm {
     /// as being used somehow that the assembler can't see.  This prevents dead
     /// code elimination on some targets.
     const char *UsedDirective;            // Defaults to null.
+
+    /// WeakRefDirective - This directive, if non-null, is used to decalre a
+    /// global as being a weak undefined symbol.
+    const char *WeakRefDirective;         // Defaults to null.
     
     //===--- Dwarf Emission Directives -----------------------------------===//
 
@@ -421,6 +425,9 @@ namespace llvm {
     }
     const char *getUsedDirective() const {
       return UsedDirective;
+    }
+    const char *getWeakRefDirective() const {
+      return WeakRefDirective;
     }
     bool hasLEB128() const {
       return HasLEB128;

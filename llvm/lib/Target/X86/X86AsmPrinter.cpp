@@ -278,16 +278,12 @@ bool X86SharedAsmPrinter::doFinalization(Module &M) {
     O << "\t.ascii \" -export:" << *i << "\"\n";
   }    
 
-  if (!Subtarget->isTargetCygwin()) {
-    // There is no external weak linkage on Mingw32 platform.
-    // Defaulting to external
+  if (TAI->getWeakRefDirective()) {
     if (ExtWeakSymbols.begin() != ExtWeakSymbols.end())
       SwitchToDataSection("");
-
     for (std::set<std::string>::iterator i = ExtWeakSymbols.begin(),
          e = ExtWeakSymbols.end(); i != e; ++i) {
-      O << (Subtarget->isTargetDarwin() ? "\t.weak_reference" : "\t.weak")
-        << " " << *i << "\n";
+      O << TAI->getWeakRefDirective() << *i << "\n";
     }
   }
   
