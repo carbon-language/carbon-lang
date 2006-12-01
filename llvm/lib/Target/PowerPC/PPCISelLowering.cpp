@@ -1377,6 +1377,12 @@ static SDOperand LowerCALL(SDOperand Op, SelectionDAG &DAG) {
       break;
     case MVT::f32:
     case MVT::f64:
+      if (isVarArg && isPPC64) {
+        // Float varargs need to be promoted to double.
+        if (Arg.getValueType() == MVT::f32)
+          Arg = DAG.getNode(ISD::FP_EXTEND, MVT::f64, Arg);
+      }
+    
       if (FPR_idx != NumFPRs) {
         RegsToPass.push_back(std::make_pair(FPR[FPR_idx++], Arg));
 
@@ -1390,7 +1396,7 @@ static SDOperand LowerCALL(SDOperand Op, SelectionDAG &DAG) {
             MemOpChains.push_back(Load.getValue(1));
             RegsToPass.push_back(std::make_pair(GPR[GPR_idx++], Load));
           }
-          if (GPR_idx != NumGPRs && Arg.getValueType() == MVT::f64) {
+          if (GPR_idx != NumGPRs && Arg.getValueType() == MVT::f64 && !isPPC64){
             SDOperand ConstFour = DAG.getConstant(4, PtrOff.getValueType());
             PtrOff = DAG.getNode(ISD::ADD, PtrVT, PtrOff, ConstFour);
             SDOperand Load = DAG.getLoad(PtrVT, Store, PtrOff, NULL, 0);
