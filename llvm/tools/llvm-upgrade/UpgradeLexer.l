@@ -194,6 +194,7 @@ br              { RET_TOK( BR); }
 switch          { RET_TOK( SWITCH); }
 invoke          { RET_TOK( INVOKE); }
 unwind          { RET_TOK( UNWIND); }
+except          { RET_TOK( UNWIND); }
 unreachable     { RET_TOK( UNREACHABLE); }
 
 malloc          { RET_TOK( MALLOC); }

@@ -219,7 +219,12 @@ OptLinkage
 
 OptCallingConv 
   : CCC_TOK | CSRETCC_TOK | FASTCC_TOK | COLDCC_TOK | X86_STDCALLCC_TOK 
-  | X86_FASTCALLCC_TOK | CC_TOK EUINT64VAL
+  | X86_FASTCALLCC_TOK 
+  | CC_TOK EUINT64VAL { 
+    *$1 += *$2.cnst; 
+    $2.destroy();
+    $$ = $1; 
+    }
   | /*empty*/ { $$ = new std::string(""); } ;
 
 // OptAlign/OptCAlign - An optional alignment, and an optional alignment with
@@ -813,7 +818,7 @@ BasicBlockList : BasicBlockList BasicBlock {
 // Basic blocks are terminated by branching instructions: 
 // br, br/cc, switch, ret
 //
-BasicBlock : InstructionList OptAssign BBTerminatorInst  {
+BasicBlock : InstructionList BBTerminatorInst  {
     *O << *$2 ;
   };
 
@@ -865,13 +870,17 @@ BBTerminatorInst : RET ResolvedVal {              // Return with a result...
     delete $1; $2.destroy(); delete $3; $5.destroy(); delete $6;
     $$ = 0;
   }
-  | INVOKE OptCallingConv TypesV ValueRef '(' ValueRefListE ')'
+  | OptAssign INVOKE OptCallingConv TypesV ValueRef '(' ValueRefListE ')'
     TO LABEL ValueRef UNWIND LABEL ValueRef {
-    *O << "    " << *$1 << " " << *$2 << " " << *$3.newTy << " " << *$4 << " ("
-       << *$6 << ") " << *$8 << " " << *$9.newTy << " " << *$10 << " " 
-       << *$11 << " " << *$12.newTy << " " << *$13 << "\n";
-    delete $1; delete $2; $3.destroy(); delete $4; delete $6; delete $8; 
-    $9.destroy(); delete $10; delete $11; $12.destroy(); delete $13; 
+    *O << "    ";
+    if (!$1->empty())
+      *O << *$1;
+    *O << *$2 << " " << *$3 << " " << *$4.newTy << " " << *$5 << " ("
+       << *$7 << ") " << *$9 << " " << *$10.newTy << " " << *$11 << " " 
+       << *$12 << " " << *$13.newTy << " " << *$14 << "\n";
+    delete $1; delete $2; delete $3; $4.destroy(); delete $5; delete $7; 
+    delete $9; $10.destroy(); delete $11; delete $12; $13.destroy(); 
+    delete $14; 
     $$ = 0;
   }
   | UNWIND {
@@ -886,7 +895,7 @@ BBTerminatorInst : RET ResolvedVal {              // Return with a result...
   };
 
 JumpTable : JumpTable IntType ConstValueRef ',' LABEL ValueRef {
-    *$1 += *$2.newTy + " " + *$3 + ", " + *$5.newTy + " " + *$6;
+    *$1 += " " + *$2.newTy + " " + *$3 + ", " + *$5.newTy + " " + *$6;
     $2.destroy(); delete $3; $5.destroy(); delete $6;
     $$ = $1;
   }
