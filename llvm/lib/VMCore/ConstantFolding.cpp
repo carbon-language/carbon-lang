@@ -893,11 +893,6 @@ Constant *llvm::ConstantFoldCastInstruction(unsigned opc, const Constant *V,
     break;
 
   case Instruction::PtrToInt:
-    // Cast of a global address to boolean is always true.
-    if (const GlobalValue *GV = dyn_cast<GlobalValue>(V)) {
-      if (DestTy == Type::BoolTy && !GV->hasExternalWeakLinkage())
-        return ConstantBool::getTrue();
-    }
     break;
   case Instruction::BitCast:
     // Check to see if we are casting a pointer to an aggregate to a pointer to
@@ -1371,10 +1366,35 @@ Constant *llvm::ConstantFoldBinaryInstruction(unsigned Opcode,
   case Instruction::Shl:     C = ConstRules::get(V1, V2).shl(V1, V2); break;
   case Instruction::LShr:    C = ConstRules::get(V1, V2).lshr(V1, V2); break;
   case Instruction::AShr:    C = ConstRules::get(V1, V2).ashr(V1, V2); break;
-  case Instruction::SetEQ:   C = ConstRules::get(V1, V2).equalto(V1, V2); break;
+  case Instruction::SetEQ:   
+    // SetEQ(null,GV) -> false
+    if (V1->isNullValue()) {
+      if (const GlobalValue *GV = dyn_cast<GlobalValue>(V2))
+        if (!GV->hasExternalWeakLinkage())
+          return ConstantBool::getFalse();
+    // SetEQ(GV,null) -> false
+    } else if (V2->isNullValue()) {
+      if (const GlobalValue *GV = dyn_cast<GlobalValue>(V1))
+        if (!GV->hasExternalWeakLinkage())
+          return ConstantBool::getFalse();
+    }
+    C = ConstRules::get(V1, V2).equalto(V1, V2); 
+    break;
   case Instruction::SetLT:   C = ConstRules::get(V1, V2).lessthan(V1, V2);break;
   case Instruction::SetGT:   C = ConstRules::get(V1, V2).lessthan(V2, V1);break;
-  case Instruction::SetNE:   // V1 != V2  ===  !(V1 == V2)
+  case Instruction::SetNE:   
+    // SetNE(null,GV) -> true
+    if (V1->isNullValue()) {
+      if (const GlobalValue *GV = dyn_cast<GlobalValue>(V2))
+        if (!GV->hasExternalWeakLinkage())
+          return ConstantBool::getTrue();
+    // SetNE(GV,null) -> true
+    } else if (V2->isNullValue()) {
+      if (const GlobalValue *GV = dyn_cast<GlobalValue>(V1))
+        if (!GV->hasExternalWeakLinkage())
+          return ConstantBool::getTrue();
+    }
+    // V1 != V2  ===  !(V1 == V2)
     C = ConstRules::get(V1, V2).equalto(V1, V2);
     if (C) return ConstantExpr::getNot(C);
     break;
