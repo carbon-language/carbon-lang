@@ -280,8 +280,10 @@ Types     : UpRTypes ;
 //
 PrimType : BOOL | SBYTE | UBYTE | SHORT  | USHORT | INT   | UINT ;
 PrimType : LONG | ULONG | FLOAT | DOUBLE | LABEL;
-UpRTypes : OPAQUE | PrimType | SymbolicValueRef   { 
-    $$.newTy = $1; };
+UpRTypes : OPAQUE | PrimType 
+         | SymbolicValueRef { 
+           $$.newTy = $1; $$.oldTy = OpaqueTy;
+         };
 
 // Include derived types in the Types production.
 //
@@ -549,12 +551,13 @@ DefinitionList : DefinitionList Function {
   }
   | DefinitionList MODULE ASM_TOK AsmBlock {
     *O << "module asm " << " " << *$4 << "\n";
+    $$ = 0;
   }  
   | DefinitionList IMPLEMENTATION {
     *O << "implementation\n";
+    $$ = 0;
   }
-  | ConstPool {
-  };
+  | ConstPool;
 
 // ConstPool - Constants with optional names assigned to them.
 ConstPool : ConstPool OptAssign TYPE TypesV {
@@ -690,9 +693,7 @@ ArgList : ArgListH {
   | DOTDOTDOT {
     $$ = $1;
   }
-  | /* empty */ {
-    $$ = new std::string();
-  };
+  | /* empty */ { $$ = new std::string(); };
 
 FunctionHeaderH : OptCallingConv TypesV Name '(' ArgList ')' 
                   OptSection OptAlign {
@@ -760,10 +761,8 @@ FunctionProto
 //                        Rules to match Basic Blocks
 //===----------------------------------------------------------------------===//
 
-OptSideEffect : /* empty */ {
-  }
-  | SIDEEFFECT {
-  };
+OptSideEffect : /* empty */ { $$ = new std::string(); }
+  | SIDEEFFECT;
 
 ConstValueRef 
   : ESINT64VAL       { $$ = $1.cnst; }

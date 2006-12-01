@@ -26,5 +26,8 @@ test:
 	  llvm-dis > upgrade.ll -f
 	diff source.ll upgrade.ll > diff.out
 
+valgrind:
+	valgrind ../../Debug/bin/llvm-upgrade -o /dev/null -f $(TESTCASE)
+
 $(PROJ_SRC_DIR)/UpgradeParser.h: $(PROJ_SRC_DIR)/UpgradeParser.y
 $(PROJ_SRC_DIR)/UpgradeParser.cpp: $(PROJ_SRC_DIR)/UpgradeParser.y
