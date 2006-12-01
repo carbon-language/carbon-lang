@@ -1958,13 +1958,17 @@ static bool isConstantSplat(const uint64_t Bits128[2],
 static SDOperand BuildSplatI(int Val, unsigned SplatSize, MVT::ValueType VT,
                              SelectionDAG &DAG) {
   assert(Val >= -16 && Val <= 15 && "vsplti is out of range!");
-  
-  // Force vspltis[hw] -1 to vspltisb -1.
-  if (Val == -1) SplatSize = 1;
-  
+
   static const MVT::ValueType VTys[] = { // canonical VT to use for each size.
     MVT::v16i8, MVT::v8i16, MVT::Other, MVT::v4i32
   };
+
+  MVT::ValueType ReqVT = VT != MVT::Other ? VT : VTys[SplatSize-1];
+  
+  // Force vspltis[hw] -1 to vspltisb -1 to canonicalize.
+  if (Val == -1)
+    SplatSize = 1;
+  
   MVT::ValueType CanonicalVT = VTys[SplatSize-1];
   
   // Build a canonical splat for this value.
@@ -1973,8 +1977,7 @@ static SDOperand BuildSplatI(int Val, unsigned SplatSize, MVT::ValueType VT,
   Ops.assign(MVT::getVectorNumElements(CanonicalVT), Elt);
   SDOperand Res = DAG.getNode(ISD::BUILD_VECTOR, CanonicalVT,
                               &Ops[0], Ops.size());
-  if (VT == MVT::Other) return Res;
-  return DAG.getNode(ISD::BIT_CONVERT, VT, Res);
+  return DAG.getNode(ISD::BIT_CONVERT, ReqVT, Res);
 }
 
 /// BuildIntrinsicOp - Return a binary operator intrinsic node with the
