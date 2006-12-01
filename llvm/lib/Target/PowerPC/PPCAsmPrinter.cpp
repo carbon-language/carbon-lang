@@ -52,6 +52,9 @@ namespace {
     std::set<std::string> FnStubs, GVStubs;
     const PPCSubtarget &Subtarget;
     
+    // Necessary for external weak linkage support
+    std::set<std::string> ExtWeakSymbols;
+
     PPCAsmPrinter(std::ostream &O, TargetMachine &TM, const TargetAsmInfo *T)
       : AsmPrinter(O, TM, T), Subtarget(TM.getSubtarget<PPCSubtarget>()) {
     }
@@ -159,6 +162,8 @@ namespace {
             std::string Name = Mang->getValueName(GV);
             FnStubs.insert(Name);
             O << "L" << Name << "$stub";
+            if (GV->hasExternalWeakLinkage())
+              ExtWeakSymbols.insert(Name);
             return;
           }
         }
@@ -330,8 +335,10 @@ void PPCAsmPrinter::printOp(const MachineOperand &MO) {
         return;
       }
     }
-
     O << Name;
+    
+    if (GV->hasExternalWeakLinkage())
+      ExtWeakSymbols.insert(Name);
     return;
   }
 
@@ -631,6 +638,13 @@ bool DarwinAsmPrinter::doFinalization(Module &M) {
       EmitGlobalConstant(C);
       O << '\n';
     }
+  }
+
+  if (ExtWeakSymbols.begin() != ExtWeakSymbols.end())
+    SwitchToDataSection("");
+  for (std::set<std::string>::iterator i = ExtWeakSymbols.begin(),
+       e = ExtWeakSymbols.end(); i != e; ++i) {
+    O << "\t.weak_reference " << *i << "\n";
   }
 
   bool isPPC64 = TD->getPointerSizeInBits() == 64;
