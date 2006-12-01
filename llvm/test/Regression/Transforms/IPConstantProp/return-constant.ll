@@ -11,6 +11,6 @@ F:
 
 bool %caller(bool %C) {
 	%X = call int %foo(bool %C)
-	%Y = trunc int %X to bool
+	%Y = setne int %X, 0
 	ret bool %Y
 }
