@@ -18,6 +18,7 @@
 #include "X86Subtarget.h"
 #include "X86TargetMachine.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
+#include "llvm/CodeGen/LiveVariables.h"
 using namespace llvm;
 
 X86InstrInfo::X86InstrInfo(X86TargetMachine &tm)
@@ -123,12 +124,20 @@ unsigned X86InstrInfo::isStoreToStackSlot(MachineInstr *MI,
 /// This method returns a null pointer if the transformation cannot be
 /// performed, otherwise it returns the new instruction.
 ///
-MachineInstr *X86InstrInfo::convertToThreeAddress(MachineInstr *MI) const {
+MachineInstr *
+X86InstrInfo::convertToThreeAddress(MachineFunction::iterator &MFI,
+                                    MachineBasicBlock::iterator &MBBI,
+                                    LiveVariables &LV) const {
+  MachineInstr *MI = MBBI;
   // All instructions input are two-addr instructions.  Get the known operands.
   unsigned Dest = MI->getOperand(0).getReg();
   unsigned Src = MI->getOperand(1).getReg();
 
   MachineInstr *NewMI = NULL;
+  // FIXME: 16-bit LEA's are really slow on Athlons, but not bad on P4's.  When
+  // we have subtarget support, enable the 16-bit LEA generation here.
+  bool DisableLEA16 = true;
+
   switch (MI->getOpcode()) {
   default: break;
   case X86::SHUFPSrri: {
@@ -140,8 +149,7 @@ MachineInstr *X86InstrInfo::convertToThreeAddress(MachineInstr *MI) const {
     unsigned M = MI->getOperand(3).getImmedValue();
     if (!Subtarget->hasSSE2() || B != C) return 0;
     NewMI = BuildMI(get(X86::PSHUFDri), A).addReg(B).addImm(M);
-    NewMI->copyKillDeadInfo(MI);
-    return NewMI;
+    goto Done;
   }
   }
 
@@ -149,10 +157,6 @@ MachineInstr *X86InstrInfo::convertToThreeAddress(MachineInstr *MI) const {
   // additional information.  In particular, LEA doesn't set the flags that
   // add and inc do.  :(
   return 0;
-
-  // FIXME: 16-bit LEA's are really slow on Athlons, but not bad on P4's.  When
-  // we have subtarget support, enable the 16-bit LEA generation here.
-  bool DisableLEA16 = true;
 
   switch (MI->getOpcode()) {
   case X86::INC32r:
@@ -219,8 +223,12 @@ MachineInstr *X86InstrInfo::convertToThreeAddress(MachineInstr *MI) const {
     break;
   }
 
-  if (NewMI)
+Done:
+  if (NewMI) {
     NewMI->copyKillDeadInfo(MI);
+    LV.instructionChanged(MI, NewMI);  // Update live variables
+    MFI->insert(MBBI, NewMI);          // Insert the new inst    
+  }
   return NewMI;
 }
 
