@@ -286,8 +286,22 @@ void BasicBlockPass::addToPassManager(BasicBlockPassManager *PM,
 //===----------------------------------------------------------------------===//
 // Pass Registration mechanism
 //
+namespace {
 class PassRegistrar {
+  /// PassInfoMap - Keep track of the passinfo object for each registered llvm
+  /// pass.
   std::map<TypeInfo, PassInfo*> PassInfoMap;
+  
+  /// AnalysisGroupInfo - Keep track of information for each analysis group.
+  struct AnalysisGroupInfo {
+    const PassInfo *DefaultImpl;
+    std::set<const PassInfo *> Implementations;
+    AnalysisGroupInfo() : DefaultImpl(0) {}
+  };
+  
+  /// AnalysisGroupInfoMap - Information for each analysis group.
+  std::map<const PassInfo *, AnalysisGroupInfo> AnalysisGroupInfoMap;
+
 public:
   
   const PassInfo *GetPassInfo(const std::type_info &TI) const {
@@ -315,8 +329,27 @@ public:
          E = PassInfoMap.end(); I != E; ++I)
       L->passEnumerate(I->second);
   }
+  
+  
+  /// Analysis Group Mechanisms.
+  void RegisterAnalysisGroup(PassInfo *InterfaceInfo,
+                             const PassInfo *ImplementationInfo,
+                             bool isDefault) {
+    AnalysisGroupInfo &AGI = AnalysisGroupInfoMap[InterfaceInfo];
+    assert(AGI.Implementations.count(ImplementationInfo) == 0 &&
+           "Cannot add a pass to the same analysis group more than once!");
+    AGI.Implementations.insert(ImplementationInfo);
+    if (isDefault) {
+      assert(AGI.DefaultImpl == 0 && InterfaceInfo->getNormalCtor() == 0 &&
+             "Default implementation for analysis group already specified!");
+      assert(ImplementationInfo->getNormalCtor() &&
+           "Cannot specify pass as default if it does not have a default ctor");
+      AGI.DefaultImpl = ImplementationInfo;
+      InterfaceInfo->setNormalCtor(ImplementationInfo->getNormalCtor());
+    }
+  }
 };
-
+}
 
 static ManagedStatic<PassRegistrar> PassRegistrarObj;
 static std::vector<PassRegistrationListener*> *Listeners = 0;
@@ -350,14 +383,6 @@ void RegisterPassBase::unregisterPass() {
 //                  Analysis Group Implementation Code
 //===----------------------------------------------------------------------===//
 
-struct AnalysisGroupInfo {
-  const PassInfo *DefaultImpl;
-  std::set<const PassInfo *> Implementations;
-  AnalysisGroupInfo() : DefaultImpl(0) {}
-};
-
-static std::map<const PassInfo *, AnalysisGroupInfo> *AnalysisGroupInfoMap = 0;
-
 // RegisterAGBase implementation
 //
 RegisterAGBase::RegisterAGBase(const std::type_info &Interface,
@@ -383,58 +408,14 @@ RegisterAGBase::RegisterAGBase(const std::type_info &Interface,
     // the interface.
     PassInfo *IIPI = const_cast<PassInfo*>(ImplementationInfo);
     IIPI->addInterfaceImplemented(InterfaceInfo);
-
-    // Lazily allocate to avoid nasty initialization order dependencies
-    if (AnalysisGroupInfoMap == 0)
-      AnalysisGroupInfoMap = new std::map<const PassInfo *,AnalysisGroupInfo>();
-
-    AnalysisGroupInfo &AGI = (*AnalysisGroupInfoMap)[InterfaceInfo];
-    assert(AGI.Implementations.count(ImplementationInfo) == 0 &&
-           "Cannot add a pass to the same analysis group more than once!");
-    AGI.Implementations.insert(ImplementationInfo);
-    if (isDefault) {
-      assert(AGI.DefaultImpl == 0 && InterfaceInfo->getNormalCtor() == 0 &&
-             "Default implementation for analysis group already specified!");
-      assert(ImplementationInfo->getNormalCtor() &&
-           "Cannot specify pass as default if it does not have a default ctor");
-      AGI.DefaultImpl = ImplementationInfo;
-      InterfaceInfo->setNormalCtor(ImplementationInfo->getNormalCtor());
-    }
+    
+    PassRegistrarObj->RegisterAnalysisGroup(InterfaceInfo, IIPI, isDefault);
   }
 }
 
 void RegisterAGBase::setGroupName(const char *Name) {
   assert(InterfaceInfo->getPassName()[0] == 0 && "Interface Name already set!");
   InterfaceInfo->setPassName(Name);
-}
-
-RegisterAGBase::~RegisterAGBase() {
-  if (ImplementationInfo) {
-    assert(AnalysisGroupInfoMap && "Inserted into map, but map doesn't exist?");
-    AnalysisGroupInfo &AGI = (*AnalysisGroupInfoMap)[InterfaceInfo];
-
-    assert(AGI.Implementations.count(ImplementationInfo) &&
-           "Pass not a member of analysis group?");
-
-    if (AGI.DefaultImpl == ImplementationInfo)
-      AGI.DefaultImpl = 0;
-
-    AGI.Implementations.erase(ImplementationInfo);
-
-    // Last member of this analysis group? Unregister PassInfo, delete map entry
-    if (AGI.Implementations.empty()) {
-      assert(AGI.DefaultImpl == 0 &&
-             "Default implementation didn't unregister?");
-      AnalysisGroupInfoMap->erase(InterfaceInfo);
-      if (AnalysisGroupInfoMap->empty()) {  // Delete map if empty
-        delete AnalysisGroupInfoMap;
-        AnalysisGroupInfoMap = 0;
-      }
-    }
-  }
-  
-  if (InterfaceInfo == &PIObj)
-    unregisterPass();
 }
 
 

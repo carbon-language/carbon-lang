@@ -197,8 +197,6 @@ protected:
                  const std::type_info *Pass = 0,
                  bool isDefault = false);
   void setGroupName(const char *Name);
-public:
-  ~RegisterAGBase();
 };
 
 template<typename Interface, bool Default = false>
