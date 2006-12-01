@@ -860,10 +860,10 @@ Constant *llvm::ConstantFoldCastInstruction(unsigned opc, const Constant *V,
   // We actually have to do a cast now, but first, we might need to fix up
   // the value of the operand.
   switch (opc) {
+  case Instruction::PtrToInt:
   case Instruction::FPTrunc:
-  case Instruction::Trunc:
   case Instruction::FPExt:
-    break; // floating point input & output, no fixup needed
+    break;
   case Instruction::FPToUI: {
     ConstRules &Rules = ConstRules::get(V, V);
     V = Rules.castToULong(V); // make sure we get an unsigned value first 
@@ -891,9 +891,12 @@ Constant *llvm::ConstantFoldCastInstruction(unsigned opc, const Constant *V,
       V = ConstantInt::get(SrcTy->getSignedVersion(), 
                            cast<ConstantIntegral>(V)->getSExtValue());
     break;
-
-  case Instruction::PtrToInt:
-    break;
+  case Instruction::Trunc:
+    // We just handle trunc directly here.  The code below doesn't work for
+    // trunc to bool.
+    if (const ConstantInt *CI = dyn_cast<ConstantInt>(V))
+      return ConstantIntegral::get(DestTy, CI->getZExtValue());
+    return 0;
   case Instruction::BitCast:
     // Check to see if we are casting a pointer to an aggregate to a pointer to
     // the first element.  If so, return the appropriate GEP instruction.
