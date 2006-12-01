@@ -186,8 +186,9 @@ call            { RET_TOK( CALL); }
 cast            { RET_TOK( CAST); }
 select          { RET_TOK( SELECT); }
 shl             { RET_TOK( SHL); }
-lshr            { RET_TOK( LSHR); }
+shr             { RET_TOK( SHR); }
 ashr            { RET_TOK( ASHR); }
+lshr            { RET_TOK( LSHR); }
 va_arg          { RET_TOK( VAARG); }
 ret             { RET_TOK( RET); }
 br              { RET_TOK( BR); }

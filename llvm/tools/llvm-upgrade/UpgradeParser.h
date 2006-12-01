@@ -131,13 +131,14 @@
      PHI_TOK = 357,
      SELECT = 358,
      SHL = 359,
-     LSHR = 360,
+     SHR = 360,
      ASHR = 361,
-     VAARG = 362,
-     EXTRACTELEMENT = 363,
-     INSERTELEMENT = 364,
-     SHUFFLEVECTOR = 365,
-     CAST = 366
+     LSHR = 362,
+     VAARG = 363,
+     EXTRACTELEMENT = 364,
+     INSERTELEMENT = 365,
+     SHUFFLEVECTOR = 366,
+     CAST = 367
    };
 #endif
 /* Tokens.  */
@@ -243,13 +244,14 @@
 #define PHI_TOK 357
 #define SELECT 358
 #define SHL 359
-#define LSHR 360
+#define SHR 360
 #define ASHR 361
-#define VAARG 362
-#define EXTRACTELEMENT 363
-#define INSERTELEMENT 364
-#define SHUFFLEVECTOR 365
-#define CAST 366
+#define LSHR 362
+#define VAARG 363
+#define EXTRACTELEMENT 364
+#define INSERTELEMENT 365
+#define SHUFFLEVECTOR 366
+#define CAST 367
 
 
 
@@ -263,7 +265,7 @@ typedef union YYSTYPE {
   ConstInfo       Const;
 } YYSTYPE;
 /* Line 1447 of yacc.c.  */
-#line 267 "UpgradeParser.tab.h"
+#line 269 "UpgradeParser.tab.h"
 # define yystype YYSTYPE /* obsolescent; will be withdrawn */
 # define YYSTYPE_IS_DECLARED 1
 # define YYSTYPE_IS_TRIVIAL 1

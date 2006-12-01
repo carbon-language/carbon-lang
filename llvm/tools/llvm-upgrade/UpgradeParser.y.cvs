@@ -153,7 +153,7 @@ const char* getCastOpcode(TypeInfo& SrcTy, TypeInfo&DstTy) {
 %token <String> ADD SUB MUL UDIV SDIV FDIV UREM SREM FREM AND OR XOR
 %token <String> SETLE SETGE SETLT SETGT SETEQ SETNE  // Binary Comparators
 %token <String> MALLOC ALLOCA FREE LOAD STORE GETELEMENTPTR
-%token <String> PHI_TOK SELECT SHL LSHR ASHR VAARG
+%token <String> PHI_TOK SELECT SHL SHR ASHR LSHR VAARG
 %token <String> EXTRACTELEMENT INSERTELEMENT SHUFFLEVECTOR
 %token <String> CAST
 
@@ -193,7 +193,7 @@ EInt64Val : ESINT64VAL | EUINT64VAL;
 ArithmeticOps: ADD | SUB | MUL | UDIV | SDIV | FDIV | UREM | SREM | FREM;
 LogicalOps   : AND | OR | XOR;
 SetCondOps   : SETLE | SETGE | SETLT | SETGT | SETEQ | SETNE;
-ShiftOps     : SHL | LSHR | ASHR;
+ShiftOps     : SHL | SHR | ASHR | LSHR;
 
 // These are some types that allow classification if we only want a particular 
 // thing... for example, only a signed, unsigned, or integral type.
@@ -496,9 +496,12 @@ ConstExpr: CAST '(' ConstVal TO Types ')' {
     $$ = $1;
   }
   | ShiftOps '(' ConstVal ',' ConstVal ')' {
-    *$1 += "(" + *$3.cnst + "," + *$5.cnst + ")";
-    $3.destroy(); $5.destroy();
-    $$ = $1;
+    const char* shiftop = $1->c_str();
+    if (*$1 == "shr")
+      shiftop = ($3.type.isUnsigned()) ? "lshr" : "ashr";
+    $$ = new std::string(shiftop);
+    *$$ += "(" + *$3.cnst + "," + *$5.cnst + ")";
+    delete $1; $3.destroy(); $5.destroy();
   }
   | EXTRACTELEMENT '(' ConstVal ',' ConstVal ')' {
     *$1 += "(" + *$3.cnst + "," + *$5.cnst + ")";
@@ -966,9 +969,12 @@ InstVal : ArithmeticOps Types ValueRef ',' ValueRef {
     $$ = $1;
   }
   | ShiftOps ResolvedVal ',' ResolvedVal {
-    *$1 += " " + *$2.val + ", " + *$4.val;
-    $2.destroy(); $4.destroy();
-    $$ = $1;
+    const char* shiftop = $1->c_str();
+    if (*$1 == "shr")
+      shiftop = ($2.type.isUnsigned()) ? "lshr" : "ashr";
+    $$ = new std::string(shiftop);
+    *$$ += " " + *$2.val + ", " + *$4.val;
+    delete $1; $2.destroy(); $4.destroy();
   }
   | CAST ResolvedVal TO Types {
     const char *opcode = getCastOpcode($2.type, $4);
