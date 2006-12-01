@@ -42,15 +42,14 @@ class PassInfo {
   std::vector<const PassInfo*> ItfImpl;// Interfaces implemented by this pass
 
   Pass *(*NormalCtor)();               // No argument ctor
-  Pass *(*TargetCtor)(TargetMachine&);   // Ctor taking TargetMachine object...
 
 public:
   /// PassInfo ctor - Do not call this directly, this should only be invoked
   /// through RegisterPass.
   PassInfo(const char *name, const char *arg, const std::type_info &ti,
-           Pass *(*normal)() = 0, Pass *(*targetctor)(TargetMachine &) = 0)
+           Pass *(*normal)() = 0)
     : PassName(name), PassArgument(arg), TypeInfo(ti), IsAnalysisGroup(false),
-      NormalCtor(normal), TargetCtor(targetctor)  {
+      NormalCtor(normal) {
   }
 
   /// getPassName - Return the friendly name for the pass, never returns null
@@ -94,14 +93,6 @@ public:
     return NormalCtor();
   }
 
-  /// getTargetCtor - Return a pointer to a function that creates an instance of
-  /// the pass and returns it.  This returns a constructor for a version of the
-  /// pass that takes a TargetMachine object as a parameter.
-  ///
-  Pass *(*getTargetCtor() const)(TargetMachine &) {
-    return TargetCtor;
-  }
-
   /// addInterfaceImplemented - This method is called when this pass is
   /// registered as a member of an analysis group with the RegisterAnalysisGroup
   /// template.
@@ -143,13 +134,12 @@ struct RegisterPassBase {
   const PassInfo *getPassInfo() const { return &PIObj; }
 
   RegisterPassBase(const char *Name, const char *Arg, const std::type_info &TI,
-                   Pass *(*Normal)() = 0,
-                   Pass *(*TargetCtor)(TargetMachine &) = 0)
-    : PIObj(Name, Arg, TI, Normal, TargetCtor) {
+                   Pass *(*NormalCtor)() = 0)
+    : PIObj(Name, Arg, TI, NormalCtor) {
     registerPass();
   }
   RegisterPassBase(const std::type_info &TI)
-    : PIObj("", "", TI, 0, 0) {
+    : PIObj("", "", TI) {
     // This ctor may only be used for analysis groups: it does not auto-register
     // the pass.
     PIObj.SetIsAnalysisGroup();
