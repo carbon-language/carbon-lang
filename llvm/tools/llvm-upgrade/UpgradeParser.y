@@ -134,12 +134,10 @@ const char* getCastOpcode(TypeInfo& SrcTy, TypeInfo&DstTy) {
   ConstInfo       Const;
 }
 
-%token <Const> ESINT64VAL EUINT64VAL SINTVAL UINTVAL FPVAL TRUETOK FALSETOK 
-%token <Const> NULL_TOK UNDEF ZEROINITIALIZER 
-
-%token <Type>  VOID BOOL SBYTE UBYTE SHORT USHORT INT UINT LONG ULONG
-%token <Type> FLOAT DOUBLE LABEL OPAQUE
-
+%token <Type>   VOID BOOL SBYTE UBYTE SHORT USHORT INT UINT LONG ULONG
+%token <Type>   FLOAT DOUBLE LABEL OPAQUE
+%token <String> ESINT64VAL EUINT64VAL SINTVAL UINTVAL FPVAL
+%token <String> NULL_TOK UNDEF ZEROINITIALIZER TRUETOK FALSETOK
 %token <String> TYPE VAR_ID LABELSTR STRINGCONSTANT
 %token <String> IMPLEMENTATION BEGINTOK ENDTOK
 %token <String> DECLARE GLOBAL CONSTANT SECTION VOLATILE
@@ -177,7 +175,8 @@ const char* getCastOpcode(TypeInfo& SrcTy, TypeInfo&DstTy) {
 %type <Type> IntType SIntType UIntType FPType TypesV Types 
 %type <Type> PrimType UpRTypesV UpRTypes
 
-%type <Const> IntVal EInt64Val ConstVal
+%type <String> IntVal EInt64Val 
+%type <Const>  ConstVal
 
 %type <Value> ResolvedVal
 
@@ -186,7 +185,7 @@ const char* getCastOpcode(TypeInfo& SrcTy, TypeInfo&DstTy) {
 %%
 
 // Handle constant integer size restriction and conversion...
-IntVal : SINTVAL | UINTVAL 
+IntVal : SINTVAL | UINTVAL ;
 EInt64Val : ESINT64VAL | EUINT64VAL;
 
 // Operations that are notably excluded from this list include:
@@ -221,8 +220,8 @@ OptCallingConv
   : CCC_TOK | CSRETCC_TOK | FASTCC_TOK | COLDCC_TOK | X86_STDCALLCC_TOK 
   | X86_FASTCALLCC_TOK 
   | CC_TOK EUINT64VAL { 
-    *$1 += *$2.cnst; 
-    $2.destroy();
+    *$1 += *$2; 
+    delete $2;
     $$ = $1; 
     }
   | /*empty*/ { $$ = new std::string(""); } ;
@@ -231,14 +230,14 @@ OptCallingConv
 // a comma before it.
 OptAlign 
   : /*empty*/        { $$ = new std::string(); }
-  | ALIGN EUINT64VAL { *$1 += " " + *$2.cnst; delete $2.cnst; $$ = $1; };
+  | ALIGN EUINT64VAL { *$1 += " " + *$2; delete $2; $$ = $1; };
          ;
 OptCAlign 
   : /*empty*/            { $$ = new std::string(); } 
   | ',' ALIGN EUINT64VAL { 
     $2->insert(0, ", "); 
-    *$2 += " " + *$3.cnst;
-    delete $3.cnst;
+    *$2 += " " + *$3;
+    delete $3;
     $$ = $2;
   };
 
@@ -265,8 +264,8 @@ GlobalVarAttributes
 GlobalVarAttribute 
     : SectionString 
     | ALIGN EUINT64VAL {
-      *$1 += " " + *$2.cnst;
-      delete $2.cnst;
+      *$1 += " " + *$2;
+      delete $2;
       $$ = $1;
     };
 
@@ -293,8 +292,8 @@ UpRTypes : OPAQUE | PrimType
 // Include derived types in the Types production.
 //
 UpRTypes : '\\' EUINT64VAL {                   // Type UpReference
-    $2.cnst->insert(0, "\\");
-    $$.newTy = $2.cnst;
+    $2->insert(0, "\\");
+    $$.newTy = $2;
     $$.oldTy = OpaqueTy;
   }
   | UpRTypesV '(' ArgTypeListI ')' {           // Function derived type?
@@ -304,17 +303,17 @@ UpRTypes : '\\' EUINT64VAL {                   // Type UpReference
     $$.oldTy = FunctionTy;
   }
   | '[' EUINT64VAL 'x' UpRTypes ']' {          // Sized array type?
-    $2.cnst->insert(0,"[ ");
-    *$2.cnst += " x " + *$4.newTy + " ]";
+    $2->insert(0,"[ ");
+    *$2 += " x " + *$4.newTy + " ]";
     delete $4.newTy;
-    $$.newTy = $2.cnst;
+    $$.newTy = $2;
     $$.oldTy = ArrayTy;
   }
   | '<' EUINT64VAL 'x' UpRTypes '>' {          // Packed array type?
-    $2.cnst->insert(0,"< ");
-    *$2.cnst += " x " + *$4.newTy + " >";
+    $2->insert(0,"< ");
+    *$2 += " x " + *$4.newTy + " >";
     delete $4.newTy;
-    $$.newTy = $2.cnst;
+    $$.newTy = $2;
     $$.oldTy = PackedTy;
   }
   | '{' TypeListI '}' {                        // Structure type?
@@ -404,14 +403,14 @@ ConstVal: Types '[' ConstVector ']' { // Nonempty unsized arr
   | Types NULL_TOK {
     $$.type = $1;
     $$.cnst = new std::string(*$1.newTy);
-    *$$.cnst +=  " " + *$2.cnst;
-    $2.destroy();
+    *$$.cnst +=  " " + *$2;
+    delete $2;
   }
   | Types UNDEF {
     $$.type = $1;
     $$.cnst = new std::string(*$1.newTy);
-    *$$.cnst += " " + *$2.cnst;
-    $2.destroy();
+    *$$.cnst += " " + *$2;
+    delete $2;
   }
   | Types SymbolicValueRef {
     $$.type = $1;
@@ -428,38 +427,38 @@ ConstVal: Types '[' ConstVector ']' { // Nonempty unsized arr
   | Types ZEROINITIALIZER {
     $$.type = $1;
     $$.cnst = new std::string(*$1.newTy);
-    *$$.cnst += " " + *$2.cnst;
-    $2.destroy();
+    *$$.cnst += " " + *$2;
+    delete $2;
   }
   | SIntType EInt64Val {      // integral constants
     $$.type = $1;
     $$.cnst = new std::string(*$1.newTy);
-    *$$.cnst += " " + *$2.cnst;
-    $2.destroy();
+    *$$.cnst += " " + *$2;
+    delete $2;
   }
   | UIntType EUINT64VAL {            // integral constants
     $$.type = $1;
     $$.cnst = new std::string(*$1.newTy);
-    *$$.cnst += " " + *$2.cnst;
-    $2.destroy();
+    *$$.cnst += " " + *$2;
+    delete $2;
   }
   | BOOL TRUETOK {                      // Boolean constants
     $$.type = $1;
     $$.cnst = new std::string(*$1.newTy);
-    *$$.cnst += " " + *$2.cnst;
-    $2.destroy();
+    *$$.cnst += " " + *$2;
+    delete $2;
   }
   | BOOL FALSETOK {                     // Boolean constants
     $$.type = $1;
     $$.cnst = new std::string(*$1.newTy);
-    *$$.cnst += " " + *$2.cnst;
-    $2.destroy();
+    *$$.cnst += " " + *$2;
+    delete $2;
   }
   | FPType FPVAL {                   // Float & Double constants
     $$.type = $1;
     $$.cnst = new std::string(*$1.newTy);
-    *$$.cnst += " " + *$2.cnst;
-    $2.destroy();
+    *$$.cnst += " " + *$2;
+    delete $2;
   };
 
 
@@ -630,10 +629,10 @@ TargetDefinition
     $$ = $1;
   }
   | POINTERSIZE '=' EUINT64VAL {
-    *$1 += " = " + *$3.cnst;
-    if (*$3.cnst == "64")
+    *$1 += " = " + *$3;
+    if (*$3 == "64")
       SizeOfPointer = 64;
-    $3.destroy();
+    delete $3;
     $$ = $1;
   }
   | TRIPLE '=' STRINGCONSTANT {
@@ -770,14 +769,8 @@ OptSideEffect : /* empty */ { $$ = new std::string(); }
   | SIDEEFFECT;
 
 ConstValueRef 
-  : ESINT64VAL       { $$ = $1.cnst; }
-  | EUINT64VAL       { $$ = $1.cnst; }
-  | FPVAL            { $$ = $1.cnst; }
-  | TRUETOK          { $$ = $1.cnst; }
-  | FALSETOK         { $$ = $1.cnst; }
-  | NULL_TOK         { $$ = $1.cnst; }
-  | UNDEF            { $$ = $1.cnst; }
-  | ZEROINITIALIZER  { $$ = $1.cnst; }
+  : ESINT64VAL | EUINT64VAL | FPVAL | TRUETOK | FALSETOK | NULL_TOK | UNDEF
+  | ZEROINITIALIZER 
   | '<' ConstVector '>' { 
     $2->insert(0, "<");
     *$2 += ">";
@@ -793,7 +786,7 @@ ConstValueRef
     $$ = $1;
   };
 
-SymbolicValueRef : IntVal { $$ = $1.cnst; } | Name ;
+SymbolicValueRef : IntVal | Name ;
 
 // ValueRef - A reference to a definition... either constant or symbolic
 ValueRef : SymbolicValueRef | ConstValueRef;
@@ -810,8 +803,10 @@ ResolvedVal : Types ValueRef {
   };
 
 BasicBlockList : BasicBlockList BasicBlock {
+    $$ = 0;
   }
   | BasicBlock { // Do not allow functions with 0 basic blocks   
+    $$ = 0;
   };
 
 
@@ -819,7 +814,7 @@ BasicBlockList : BasicBlockList BasicBlock {
 // br, br/cc, switch, ret
 //
 BasicBlock : InstructionList BBTerminatorInst  {
-    *O << *$2 ;
+    $$ = 0;
   };
 
 InstructionList : InstructionList Inst {

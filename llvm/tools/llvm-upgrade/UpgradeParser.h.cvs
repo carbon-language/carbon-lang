@@ -29,30 +29,30 @@
    /* Put the tokens into the symbol table, so that GDB and other debuggers
       know about them.  */
    enum yytokentype {
-     ESINT64VAL = 258,
-     EUINT64VAL = 259,
-     SINTVAL = 260,
-     UINTVAL = 261,
-     FPVAL = 262,
-     TRUETOK = 263,
-     FALSETOK = 264,
-     NULL_TOK = 265,
-     UNDEF = 266,
-     ZEROINITIALIZER = 267,
-     VOID = 268,
-     BOOL = 269,
-     SBYTE = 270,
-     UBYTE = 271,
-     SHORT = 272,
-     USHORT = 273,
-     INT = 274,
-     UINT = 275,
-     LONG = 276,
-     ULONG = 277,
-     FLOAT = 278,
-     DOUBLE = 279,
-     LABEL = 280,
-     OPAQUE = 281,
+     VOID = 258,
+     BOOL = 259,
+     SBYTE = 260,
+     UBYTE = 261,
+     SHORT = 262,
+     USHORT = 263,
+     INT = 264,
+     UINT = 265,
+     LONG = 266,
+     ULONG = 267,
+     FLOAT = 268,
+     DOUBLE = 269,
+     LABEL = 270,
+     OPAQUE = 271,
+     ESINT64VAL = 272,
+     EUINT64VAL = 273,
+     SINTVAL = 274,
+     UINTVAL = 275,
+     FPVAL = 276,
+     NULL_TOK = 277,
+     UNDEF = 278,
+     ZEROINITIALIZER = 279,
+     TRUETOK = 280,
+     FALSETOK = 281,
      TYPE = 282,
      VAR_ID = 283,
      LABELSTR = 284,
@@ -141,30 +141,30 @@
    };
 #endif
 /* Tokens.  */
-#define ESINT64VAL 258
-#define EUINT64VAL 259
-#define SINTVAL 260
-#define UINTVAL 261
-#define FPVAL 262
-#define TRUETOK 263
-#define FALSETOK 264
-#define NULL_TOK 265
-#define UNDEF 266
-#define ZEROINITIALIZER 267
-#define VOID 268
-#define BOOL 269
-#define SBYTE 270
-#define UBYTE 271
-#define SHORT 272
-#define USHORT 273
-#define INT 274
-#define UINT 275
-#define LONG 276
-#define ULONG 277
-#define FLOAT 278
-#define DOUBLE 279
-#define LABEL 280
-#define OPAQUE 281
+#define VOID 258
+#define BOOL 259
+#define SBYTE 260
+#define UBYTE 261
+#define SHORT 262
+#define USHORT 263
+#define INT 264
+#define UINT 265
+#define LONG 266
+#define ULONG 267
+#define FLOAT 268
+#define DOUBLE 269
+#define LABEL 270
+#define OPAQUE 271
+#define ESINT64VAL 272
+#define EUINT64VAL 273
+#define SINTVAL 274
+#define UINTVAL 275
+#define FPVAL 276
+#define NULL_TOK 277
+#define UNDEF 278
+#define ZEROINITIALIZER 279
+#define TRUETOK 280
+#define FALSETOK 281
 #define TYPE 282
 #define VAR_ID 283
 #define LABELSTR 284
