@@ -47,7 +47,26 @@ void UpgradeAssembly(const std::string &infile, std::istream& in,
   }
 }
 
-const char* getCastOpcode(TypeInfo& SrcTy, TypeInfo&DstTy) {
+std::string getCastUpgrade(std::string& Source, TypeInfo& SrcTy, 
+                           TypeInfo&DstTy, bool isConst = false)
+{
+  std::string Result;
+  if (SrcTy.isFloatingPoint() && DstTy.isPointer()) {
+    if (isConst)
+      Source = "ulong fptoui(" + Source + " to ulong)";
+    else {
+      Result = "%cast_upgrade = fptoui " + Source + " to ulong";
+      Source = "ulong %cast_upgrade";
+    }
+    SrcTy.destroy();
+    SrcTy.newTy = new std::string("ulong");
+    SrcTy.oldTy = ULongTy;
+  }
+  return Result;
+}
+
+const char* getCastOpcode(std::string& Source, TypeInfo& SrcTy, 
+                          TypeInfo&DstTy) {
   unsigned SrcBits = SrcTy.getBitWidth();
   unsigned DstBits = DstTy.getBitWidth();
   const char* opcode = "bitcast";
@@ -114,6 +133,11 @@ const char* getCastOpcode(TypeInfo& SrcTy, TypeInfo&DstTy) {
       opcode = "bitcast";                          // ptr -> ptr
     } else if (SrcTy.isIntegral()) {
       opcode = "inttoptr";                         // int -> ptr
+    } else if (SrcTy.isFloatingPoint()) {          // float/double -> ptr
+      // Cast to int first
+      *O << "    %upgrade_cast = fptoui " << Source << " to ulong\n";
+      opcode = "inttoptr";
+      Source = "ulong %upgrade_cast";
     } else {
       assert(!"Casting pointer to other than pointer or int");
     }
@@ -469,10 +493,15 @@ ConstVal: Types '[' ConstVector ']' { // Nonempty unsized arr
 ConstExpr: CastOps '(' ConstVal TO Types ')' {
     // We must infer the cast opcode from the types of the operands. 
     const char *opcode = $1->c_str();
-    if (*$1 == "cast")
-      opcode = getCastOpcode($3.type, $5);
+    std::string source = *$3.cnst;
+    if (*$1 == "cast") {
+      std::string upgrade = getCastUpgrade(source, $3.type, $5, true);
+      opcode = getCastOpcode(source, $3.type, $5);
+      if (!upgrade.empty())
+        source = upgrade;
+    }
     $$ = new std::string(opcode);
-    *$$ += "(" + *$3.cnst + " " + *$4 + " " + *$5.newTy + ")";
+    *$$ += "( " + source + " " + *$4 + " " + *$5.newTy + ")";
     delete $1; $3.destroy(); delete $4; $5.destroy();
   }
   | GETELEMENTPTR '(' ConstVal IndexList ')' {
@@ -984,10 +1013,15 @@ InstVal : ArithmeticOps Types ValueRef ',' ValueRef {
   }
   | CastOps ResolvedVal TO Types {
     const char *opcode = $1->c_str();
-    if (*$1 == "cast")
-      opcode = getCastOpcode($2.type, $4);
+    std::string source = *$2.val;
+    if (*$1 == "cast") {
+      std::string upgrade = getCastUpgrade(source, $2.type, $4, false);
+      if (!upgrade.empty())
+        *O << "    " << upgrade << "\n";
+      opcode = getCastOpcode(source, $2.type, $4);
+    }
     $$ = new std::string(opcode);
-    *$$ += *$2.val + " " + *$3 + " " + *$4.newTy; 
+    *$$ += " " + source + " " + *$3 + " " + *$4.newTy; 
     delete $1; $2.destroy();
     delete $3; $4.destroy();
   }
