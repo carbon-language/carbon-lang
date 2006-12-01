@@ -84,6 +84,9 @@ struct VISIBILITY_HIDDEN X86SharedAsmPrinter : public AsmPrinter {
 
   // Necessary for dllexport support
   std::set<std::string> DLLExportedFns, DLLExportedGVs;
+
+  // Necessary for external weak linkage support
+  std::set<std::string> ExtWeakSymbols;
   
   inline static bool isScale(const MachineOperand &MO) {
     return MO.isImmediate() &&

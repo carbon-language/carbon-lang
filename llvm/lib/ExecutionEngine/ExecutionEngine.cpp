@@ -681,7 +681,7 @@ void ExecutionEngine::emitGlobals() {
         
         // Otherwise, we know it's linkonce/weak, replace it if this is a strong
         // symbol.
-        if (GV->hasExternalLinkage())
+        if (GV->hasExternalLinkage() || GVEntry->hasExternalWeakLinkage())
           GVEntry = GV;
       }
     }

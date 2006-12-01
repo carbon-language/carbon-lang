@@ -1157,8 +1157,6 @@ static void generateCompilerSpecificCode(std::ostream& Out) {
       << "#define __attribute__(X)\n"
       << "#endif\n\n";
 
-#if 0
-  // At some point, we should support "external weak" vs. "weak" linkages.
   // On Mac OS X, "external weak" is spelled "__attribute__((weak_import))".
   Out << "#if defined(__GNUC__) && defined(__APPLE_CC__)\n"
       << "#define __EXTERNAL_WEAK__ __attribute__((weak_import))\n"
@@ -1167,7 +1165,6 @@ static void generateCompilerSpecificCode(std::ostream& Out) {
       << "#else\n"
       << "#define __EXTERNAL_WEAK__\n"
       << "#endif\n\n";
-#endif
 
   // For now, turn off the weak linkage attribute on Mac OS X. (See above.)
   Out << "#if defined(__GNUC__) && defined(__APPLE_CC__)\n"
@@ -1357,7 +1354,11 @@ bool CWriter::doInitialization(Module &M) {
         Out << "__declspec(dllimport) ";
         printType(Out, I->getType()->getElementType(), Mang->getValueName(I));
         Out << ";\n";        
-      }      
+      } else if (I->hasExternalWeakLinkage()) {
+        Out << "extern ";
+        printType(Out, I->getType()->getElementType(), Mang->getValueName(I));
+        Out << " __EXTERNAL_WEAK__ ;\n";
+      }
     }
   }
 
@@ -1370,9 +1371,13 @@ bool CWriter::doInitialization(Module &M) {
     // Don't print declarations for intrinsic functions.
     if (!I->getIntrinsicID() && I->getName() != "setjmp" && 
         I->getName() != "longjmp" && I->getName() != "_setjmp") {
+      if (I->hasExternalWeakLinkage())
+        Out << "extern ";
       printFunctionSignature(I, true);
       if (I->hasWeakLinkage() || I->hasLinkOnceLinkage()) 
         Out << " __ATTRIBUTE_WEAK__";
+      if (I->hasExternalWeakLinkage())
+        Out << " __EXTERNAL_WEAK__";
       if (StaticCtors.count(I))
         Out << " __ATTRIBUTE_CTOR__";
       if (StaticDtors.count(I))
@@ -1405,6 +1410,8 @@ bool CWriter::doInitialization(Module &M) {
           Out << " __attribute__((common))";
         else if (I->hasWeakLinkage())
           Out << " __ATTRIBUTE_WEAK__";
+        else if (I->hasExternalWeakLinkage())
+          Out << " __EXTERNAL_WEAK__";
         Out << ";\n";
       }
   }

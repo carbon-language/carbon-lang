@@ -360,6 +360,7 @@ static bool GetLinkageResult(GlobalValue *Dest, GlobalValue *Src,
     // If Src is external or if both Src & Drc are external..  Just link the
     // external globals, we aren't adding anything.
     if (Src->hasDLLImportLinkage()) {
+      // If one of GVs has DLLImport linkage, result should be dllimport'ed.
       if (Dest->isExternal()) {
         LinkFromSrc = true;
         LT = Src->getLinkage();
@@ -379,8 +380,9 @@ static bool GetLinkageResult(GlobalValue *Dest, GlobalValue *Src,
     LinkFromSrc = true; // Special cased.
     LT = Src->getLinkage();
   } else if (Src->hasWeakLinkage() || Src->hasLinkOnceLinkage()) {
-    // At this point we know that Dest has LinkOnce, External, Weak, DLL* linkage.
-    if (Dest->hasLinkOnceLinkage() && Src->hasWeakLinkage()) {
+    // At this point we know that Dest has LinkOnce, External*, Weak, DLL* linkage.
+    if ((Dest->hasLinkOnceLinkage() && Src->hasWeakLinkage()) ||
+        Dest->hasExternalWeakLinkage()) {
       LinkFromSrc = true;
       LT = Src->getLinkage();
     } else {
@@ -388,16 +390,23 @@ static bool GetLinkageResult(GlobalValue *Dest, GlobalValue *Src,
       LT = Dest->getLinkage();
     }
   } else if (Dest->hasWeakLinkage() || Dest->hasLinkOnceLinkage()) {
-    // At this point we know that Src has External or DLL* linkage.
-    LinkFromSrc = true;
-    LT = GlobalValue::ExternalLinkage;
+    // At this point we know that Src has External* or DLL* linkage.
+    if (Src->hasExternalWeakLinkage()) {
+      LinkFromSrc = false;
+      LT = Dest->getLinkage();
+    } else {
+      LinkFromSrc = true;
+      LT = GlobalValue::ExternalLinkage;
+    }
   } else {
     assert((Dest->hasExternalLinkage() ||
             Dest->hasDLLImportLinkage() ||
-            Dest->hasDLLExportLinkage()) &&
+            Dest->hasDLLExportLinkage() ||
+            Dest->hasExternalWeakLinkage()) &&
            (Src->hasExternalLinkage() ||
             Src->hasDLLImportLinkage() ||
-            Src->hasDLLExportLinkage()) &&
+            Src->hasDLLExportLinkage() ||
+            Src->hasExternalWeakLinkage()) &&
            "Unexpected linkage type!");
     return Error(Err, "Linking globals named '" + Src->getName() +
                  "': symbol multiply defined!");
@@ -631,19 +640,22 @@ static bool LinkFunctionProtos(Module *Dest, const Module *Src,
       ValueMap.insert(std::make_pair(SF, DF));
       DF->setLinkage(SF->getLinkage());
     } else if (SF->hasWeakLinkage() || SF->hasLinkOnceLinkage()) {
-      // At this point we know that DF has LinkOnce, Weak, or External linkage.
+      // At this point we know that DF has LinkOnce, Weak, or External* linkage.
       ValueMap.insert(std::make_pair(SF, DF));
 
       // Linkonce+Weak = Weak
-      if (DF->hasLinkOnceLinkage() && SF->hasWeakLinkage())
+      // *+External Weak = *
+      if ((DF->hasLinkOnceLinkage() && SF->hasWeakLinkage()) ||
+          DF->hasExternalWeakLinkage())
         DF->setLinkage(SF->getLinkage());
+
 
     } else if (DF->hasWeakLinkage() || DF->hasLinkOnceLinkage()) {
-      // At this point we know that SF has LinkOnce or External linkage.
+      // At this point we know that SF has LinkOnce or External* linkage.
       ValueMap.insert(std::make_pair(SF, DF));
-      if (!SF->hasLinkOnceLinkage())   // Don't inherit linkonce linkage
+      if (!SF->hasLinkOnceLinkage() && !SF->hasExternalWeakLinkage())
+        // Don't inherit linkonce & external weak linkage
         DF->setLinkage(SF->getLinkage());
-
     } else if (SF->getLinkage() != DF->getLinkage()) {
       return Error(Err, "Functions named '" + SF->getName() +
                    "' have different linkage specifiers!");

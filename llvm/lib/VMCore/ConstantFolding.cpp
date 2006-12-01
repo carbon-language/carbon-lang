@@ -894,11 +894,8 @@ Constant *llvm::ConstantFoldCastInstruction(unsigned opc, const Constant *V,
 
   case Instruction::PtrToInt:
     // Cast of a global address to boolean is always true.
-    if (isa<GlobalValue>(V)) {
-      if (DestTy == Type::BoolTy)
-        // FIXME: When we support 'external weak' references, we have to 
-        // prevent this transformation from happening.  This code will need 
-        // to be updated to ignore external weak symbols when we support it.
+    if (const GlobalValue *GV = dyn_cast<GlobalValue>(V)) {
+      if (DestTy == Type::BoolTy && !GV->hasExternalWeakLinkage())
         return ConstantBool::getTrue();
     }
     break;

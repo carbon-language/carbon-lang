@@ -128,11 +128,12 @@ bool X86SharedAsmPrinter::doFinalization(Module &M) {
   // from how MASM does things.  When making changes here don't forget to look
   // at X86IntelAsmPrinter::doFinalization().
   const TargetData *TD = TM.getTargetData();
-
+  
   // Print out module-level global variables here.
   for (Module::const_global_iterator I = M.global_begin(), E = M.global_end();
        I != E; ++I) {
-    if (!I->hasInitializer()) continue;   // External global require no code
+    if (!I->hasInitializer() && !I->hasExternalWeakLinkage())
+      continue;   // External global require no code
     
     // Check to see if this is a special global used by LLVM, if so, emit it.
     if (EmitSpecialLLVMGlobal(I))
@@ -176,6 +177,17 @@ bool X86SharedAsmPrinter::doFinalization(Module &M) {
       O << "\t\t" << TAI->getCommentString() << " " << I->getName() << "\n";
     } else {
       switch (I->getLinkage()) {
+      case GlobalValue::ExternalWeakLinkage:
+       if (Subtarget->isTargetDarwin()) {
+         assert(0 && "External weak linkage for Darwin not implemented yet");
+       } else if (Subtarget->isTargetCygwin()) {
+         // There is no external weak linkage on Mingw32 platform.
+         // Defaulting just to external
+         O << "\t.globl " << name << "\n";
+       } else {
+         O << "\t.weak " << name << "\n";
+         break;
+       }
       case GlobalValue::LinkOnceLinkage:
       case GlobalValue::WeakLinkage:
         if (Subtarget->isTargetDarwin()) {
@@ -270,7 +282,24 @@ bool X86SharedAsmPrinter::doFinalization(Module &M) {
          i != e; ++i) {
     O << "\t.ascii \" -export:" << *i << "\"\n";
   }    
- 
+
+  if (Subtarget->isTargetDarwin()) {
+    if (ExtWeakSymbols.begin() != ExtWeakSymbols.end())
+      assert(0 && "External weak linkage for Darwin not implemented yet");
+  } else if (Subtarget->isTargetCygwin()) {
+    // There is no external weak linkage on Mingw32 platform.
+    // Defaulting to external
+  } else {
+    if (ExtWeakSymbols.begin() != ExtWeakSymbols.end())
+      SwitchToDataSection("");
+
+    for (std::set<std::string>::iterator i = ExtWeakSymbols.begin(),
+         e = ExtWeakSymbols.end();
+         i != e; ++i) {
+      O << "\t.weak " << *i << "\n";
+    }
+  }
+  
   if (Subtarget->isTargetDarwin()) {
     SwitchToDataSection("");
 
