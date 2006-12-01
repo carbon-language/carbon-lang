@@ -177,10 +177,7 @@ void Optimize(Module* M) {
     const PassInfo *Opt = OptimizationList[i];
     if (Opt->getNormalCtor())
       addPass(Passes, Opt->getNormalCtor()());
-    else if (Opt->getTargetCtor()) {
-      assert(target.get() && "Could not allocate target machine!");
-      addPass(Passes, Opt->getTargetCtor()(*target.get()));
-    } else
+    else
       std::cerr << "llvm-ld: cannot create pass: " << Opt->getPassName() 
                 << "\n";
   }

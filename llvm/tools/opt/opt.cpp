@@ -224,10 +224,7 @@ int main(int argc, char **argv) {
       Pass *P = 0;
       if (PassInf->getNormalCtor())
         P = PassInf->getNormalCtor()();
-      else if (PassInf->getTargetCtor()) {
-        assert(target.get() && "Could not allocate target machine!");
-        P = PassInf->getTargetCtor()(*target.get());
-      } else
+      else
         llvm_cerr << argv[0] << ": cannot create pass: "
                   << PassInf->getPassName() << "\n";
       if (P) {
