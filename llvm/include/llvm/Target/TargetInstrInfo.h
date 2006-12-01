@@ -15,6 +15,7 @@
 #define LLVM_TARGET_TARGETINSTRINFO_H
 
 #include "llvm/CodeGen/MachineBasicBlock.h"
+#include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/Support/DataTypes.h"
 #include <vector>
 #include <cassert>
@@ -30,6 +31,7 @@ class Constant;
 class Function;
 class MachineCodeForInstruction;
 class TargetRegisterClass;
+class LiveVariables;
 
 //---------------------------------------------------------------------------
 // Data types used to define information about a single machine instruction
@@ -91,6 +93,12 @@ const unsigned M_LOOK_UP_PTR_REG_CLASS = 1 << 0;
 /// operand that controls an M_PREDICATED instruction.
 const unsigned M_PREDICATE_OPERAND = 1 << 1;
 
+namespace TOI {
+  // Operand constraints: only "tied_to" for now.
+  enum OperandConstraint {
+    TIED_TO = 0  // Must be allocated the same register as.
+  };
+}
 
 /// TargetOperandInfo - This holds information about one operand of a machine
 /// instruction, indicating the register class for register operands, etc.
@@ -119,6 +127,18 @@ public:
   const unsigned *ImplicitUses;  // Registers implicitly read by this instr
   const unsigned *ImplicitDefs;  // Registers implicitly defined by this instr
   const TargetOperandInfo *OpInfo; // 'numOperands' entries about operands.
+
+  /// getOperandConstraint - Returns the value of the specific constraint if
+  /// it is set. Returns -1 if it is not set.
+  int getOperandConstraint(unsigned OpNum,
+                           TOI::OperandConstraint Constraint) const {
+    assert(OpNum < numOperands && "Invalid operand # of TargetInstrInfo");
+    if (OpInfo[OpNum].Constraints & (1 << Constraint)) {
+      unsigned Pos = 16 + Constraint * 4;
+      return (int)(OpInfo[OpNum].Constraints >> Pos) & 0xf;
+    }
+    return -1;
+  }
 };
 
 
@@ -230,22 +250,11 @@ public:
     return get(Opcode).Flags & M_VARIABLE_OPS;
   }
 
-  // Operand constraints: only "tied_to" for now.
-  enum OperandConstraint {
-    TIED_TO = 0  // Must be allocated the same register as.
-  };
-
   /// getOperandConstraint - Returns the value of the specific constraint if
   /// it is set. Returns -1 if it is not set.
   int getOperandConstraint(MachineOpCode Opcode, unsigned OpNum,
-                           OperandConstraint Constraint) const {
-    assert(OpNum < get(Opcode).numOperands &&
-           "Invalid operand # of TargetInstrInfo");
-    if (get(Opcode).OpInfo[OpNum].Constraints & (1 << Constraint)) {
-      unsigned Pos = 16 + Constraint * 4;
-      return (int)(get(Opcode).OpInfo[OpNum].Constraints >> Pos) & 0xf;
-    }
-    return -1;
+                           TOI::OperandConstraint Constraint) const {
+    return get(Opcode).getOperandConstraint(OpNum, Constraint);
   }
 
   /// findTiedToSrcOperand - Returns the operand that is tied to the specified
@@ -287,15 +296,17 @@ public:
 
   /// convertToThreeAddress - This method must be implemented by targets that
   /// set the M_CONVERTIBLE_TO_3_ADDR flag.  When this flag is set, the target
-  /// may be able to convert a two-address instruction into a true
-  /// three-address instruction on demand.  This allows the X86 target (for
+  /// may be able to convert a two-address instruction into one or moretrue
+  /// three-address instructions on demand.  This allows the X86 target (for
   /// example) to convert ADD and SHL instructions into LEA instructions if they
   /// would require register copies due to two-addressness.
   ///
   /// This method returns a null pointer if the transformation cannot be
-  /// performed, otherwise it returns the new instruction.
+  /// performed, otherwise it returns the last new instruction.
   ///
-  virtual MachineInstr *convertToThreeAddress(MachineInstr *TA) const {
+  virtual MachineInstr *
+  convertToThreeAddress(MachineFunction::iterator &MFI,
+                   MachineBasicBlock::iterator &MBBI, LiveVariables &LV) const {
     return 0;
   }
 
