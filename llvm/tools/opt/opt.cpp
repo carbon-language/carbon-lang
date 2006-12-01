@@ -252,10 +252,9 @@ int main(int argc, char **argv) {
       Passes.add(createVerifierPass());
 
     // Write bytecode out to disk or cout as the last step...
-    if (!NoOutput && !AnalyzeOnly) {
-      llvm_ostream L(*Out);
-      Passes.add(new WriteBytecodePass(&L, Out != &std::cout, !NoCompress));
-    }
+    llvm_ostream L(*Out);
+    if (!NoOutput && !AnalyzeOnly)
+      Passes.add(new WriteBytecodePass(&L, false, !NoCompress));
 
     // Now that we have all of the passes ready, run them.
     Passes.run(*M.get());
