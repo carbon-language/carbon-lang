@@ -256,9 +256,8 @@ void X86ATTAsmPrinter::printOperand(const MachineInstr *MI, unsigned OpNo,
       O << Name;
     }
 
-    if (GV->hasExternalWeakLinkage()) {
+    if (GV->hasExternalWeakLinkage())
       ExtWeakSymbols.insert(Name);
-    }
     
     int Offset = MO.getOffset();
     if (Offset > 0)

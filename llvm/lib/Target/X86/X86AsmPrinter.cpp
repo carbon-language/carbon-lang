@@ -283,10 +283,9 @@ bool X86SharedAsmPrinter::doFinalization(Module &M) {
     O << "\t.ascii \" -export:" << *i << "\"\n";
   }    
 
-  if (Subtarget->isTargetCygwin()) {
+  if (!Subtarget->isTargetCygwin()) {
     // There is no external weak linkage on Mingw32 platform.
     // Defaulting to external
-  } else {
     if (ExtWeakSymbols.begin() != ExtWeakSymbols.end())
       SwitchToDataSection("");
 
