@@ -291,8 +291,7 @@ bool X86SharedAsmPrinter::doFinalization(Module &M) {
       SwitchToDataSection("");
 
     for (std::set<std::string>::iterator i = ExtWeakSymbols.begin(),
-         e = ExtWeakSymbols.end();
-         i != e; ++i) {
+         e = ExtWeakSymbols.end(); i != e; ++i) {
       O << (Subtarget->isTargetDarwin() ? "\t.weak_reference" : "\t.weak")
         << " " << *i << "\n";
     }
