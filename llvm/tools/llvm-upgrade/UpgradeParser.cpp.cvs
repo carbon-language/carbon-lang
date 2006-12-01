@@ -2279,7 +2279,7 @@ yyreduce:
   case 107:
 #line 329 "/proj/llvm/llvm-4/tools/llvm-upgrade/UpgradeParser.y"
     {                                  // Empty structure type?
-    (yyval.Type).newTy = new std::string("{ }");
+    (yyval.Type).newTy = new std::string("{}");
     (yyval.Type).oldTy = StructTy;
   ;}
     break;
@@ -2386,7 +2386,7 @@ yyreduce:
     {
     (yyval.Const).type = (yyvsp[-2].Type);
     (yyval.Const).cnst = new std::string(*(yyvsp[-2].Type).newTy);
-    *(yyval.Const).cnst += " [ ]";
+    *(yyval.Const).cnst += " {}";
   ;}
     break;
 

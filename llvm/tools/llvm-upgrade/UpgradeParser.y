@@ -327,7 +327,7 @@ UpRTypes : '\\' EUINT64VAL {                   // Type UpReference
     $$.oldTy = StructTy;
   }
   | '{' '}' {                                  // Empty structure type?
-    $$.newTy = new std::string("{ }");
+    $$.newTy = new std::string("{}");
     $$.oldTy = StructTy;
   }
   | UpRTypes '*' {                             // Pointer type?
@@ -402,7 +402,7 @@ ConstVal: Types '[' ConstVector ']' { // Nonempty unsized arr
   | Types '{' '}' {
     $$.type = $1;
     $$.cnst = new std::string(*$1.newTy);
-    *$$.cnst += " [ ]";
+    *$$.cnst += " {}";
   }
   | Types NULL_TOK {
     $$.type = $1;
