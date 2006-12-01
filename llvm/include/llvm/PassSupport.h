@@ -48,9 +48,9 @@ public:
   /// PassInfo ctor - Do not call this directly, this should only be invoked
   /// through RegisterPass.
   PassInfo(const char *name, const char *arg, const std::type_info &ti,
-           Pass *(*normal)() = 0)
+           Pass *(*normal)() = 0, bool isCFGOnly = false)
     : PassName(name), PassArgument(arg), TypeInfo(ti), 
-      IsCFGOnlyPass(false), IsAnalysisGroup(false), NormalCtor(normal) {
+      IsCFGOnlyPass(isCFGOnly), IsAnalysisGroup(false), NormalCtor(normal) {
   }
 
   /// getPassName - Return the friendly name for the pass, never returns null
@@ -77,7 +77,6 @@ public:
   /// isCFGOnlyPass - return true if this pass only looks at the CFG for the
   /// function.
   bool isCFGOnlyPass() const { return IsCFGOnlyPass; }
-  void SetIsCFGOnlyPass() { IsCFGOnlyPass = true; }
   
   /// getNormalCtor - Return a pointer to a function, that when called, creates
   /// an instance of the pass and returns it.  This pointer may be null if there
@@ -131,8 +130,7 @@ public:
 /// must be called, create a global constructor function (which takes the
 /// arguments you need and returns a Pass*) and register your pass like this:
 ///
-/// Pass *createMyPass(foo &opt) { return new MyPass(opt); }
-/// static RegisterPass<PassClassName> tmp("passopt", "My Name", createMyPass);
+/// static RegisterPass<PassClassName> tmp("passopt", "My Name");
 ///
 struct RegisterPassBase {
   /// getPassInfo - Get the pass info for the registered class...
@@ -140,8 +138,8 @@ struct RegisterPassBase {
   const PassInfo *getPassInfo() const { return &PIObj; }
 
   RegisterPassBase(const char *Name, const char *Arg, const std::type_info &TI,
-                   Pass *(*NormalCtor)() = 0)
-    : PIObj(Name, Arg, TI, NormalCtor) {
+                   Pass *(*NormalCtor)() = 0, bool CFGOnly = false)
+    : PIObj(Name, Arg, TI, NormalCtor, CFGOnly) {
     registerPass();
   }
   RegisterPassBase(const std::type_info &TI)
@@ -150,24 +148,11 @@ struct RegisterPassBase {
     // the pass.
     PIObj.SetIsAnalysisGroup();
   }
-  
-  ~RegisterPassBase() {   // Intentionally non-virtual.
-    // Analysis groups are registered/unregistered by their dtor.
-    if (!PIObj.isAnalysisGroup())
-      unregisterPass();
-  }
 
 protected:
   PassInfo PIObj;       // The PassInfo object for this pass
   void registerPass();
   void unregisterPass();
-
-  /// setOnlyUsesCFG - Notice that this pass only depends on the CFG, so
-  /// transformations that do not modify the CFG do not invalidate this pass.
-  ///
-  void setOnlyUsesCFG() {
-    PIObj.SetIsCFGOnlyPass();
-  }
 };
 
 template<typename PassName>
@@ -179,8 +164,7 @@ struct RegisterPass : public RegisterPassBase {
   // Register Pass using default constructor...
   RegisterPass(const char *PassArg, const char *Name, bool CFGOnly = false)
   : RegisterPassBase(Name, PassArg, typeid(PassName),
-                     callDefaultCtor<PassName>) {
-    if (CFGOnly) setOnlyUsesCFG();
+                     callDefaultCtor<PassName>, CFGOnly) {
   }
 };
 
