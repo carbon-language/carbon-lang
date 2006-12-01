@@ -24,21 +24,6 @@
 using namespace llvm;
 
 //===----------------------------------------------------------------------===//
-//   AnalysisID Class Implementation
-//
-
-// getCFGOnlyAnalyses - A wrapper around the CFGOnlyAnalyses which make it
-// initializer order independent.
-static std::vector<const PassInfo*> &getCFGOnlyAnalyses() {
-  static std::vector<const PassInfo*> CFGOnlyAnalyses;
-  return CFGOnlyAnalyses;
-}
-
-void RegisterPassBase::setOnlyUsesCFG() {
-  getCFGOnlyAnalyses().push_back(&PIObj);
-}
-
-//===----------------------------------------------------------------------===//
 //   AnalysisResolver Class Implementation
 //
 
@@ -48,28 +33,6 @@ void AnalysisResolver::setAnalysisResolver(Pass *P, AnalysisResolver *AR) {
   assert(P->Resolver == 0 && "Pass already in a PassManager!");
   P->Resolver = AR;
 }
-
-//===----------------------------------------------------------------------===//
-//   AnalysisUsage Class Implementation
-//
-
-// setPreservesCFG - This function should be called to by the pass, iff they do
-// not:
-//
-//  1. Add or remove basic blocks from the function
-//  2. Modify terminator instructions in any way.
-//
-// This function annotates the AnalysisUsage info object to say that analyses
-// that only depend on the CFG are preserved by this pass.
-//
-void AnalysisUsage::setPreservesCFG() {
-  // Since this transformation doesn't modify the CFG, it preserves all analyses
-  // that only depend on the CFG (like dominators, loop info, etc...)
-  //
-  Preserved.insert(Preserved.end(),
-                   getCFGOnlyAnalyses().begin(), getCFGOnlyAnalyses().end());
-}
-
 
 //===----------------------------------------------------------------------===//
 // PassManager implementation - The PassManager class is a simple Pimpl class
@@ -499,4 +462,30 @@ void PassRegistrationListener::enumeratePasses() {
            E = PassInfoMap->end(); I != E; ++I)
       passEnumerate(I->second);
 }
+
+//===----------------------------------------------------------------------===//
+//   AnalysisUsage Class Implementation
+//
+
+// setPreservesCFG - This function should be called to by the pass, iff they do
+// not:
+//
+//  1. Add or remove basic blocks from the function
+//  2. Modify terminator instructions in any way.
+//
+// This function annotates the AnalysisUsage info object to say that analyses
+// that only depend on the CFG are preserved by this pass.
+//
+void AnalysisUsage::setPreservesCFG() {
+  // Since this transformation doesn't modify the CFG, it preserves all analyses
+  // that only depend on the CFG (like dominators, loop info, etc...)
+  //
+  if (PassInfoMap) {
+    for (std::map<TypeInfo, PassInfo*>::iterator I = PassInfoMap->begin(),
+             E = PassInfoMap->end(); I != E; ++I)
+      if (I->second->isCFGOnlyPass())
+        Preserved.push_back(I->second);
+  }
+}
+
 

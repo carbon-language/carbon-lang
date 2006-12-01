@@ -38,6 +38,7 @@ class PassInfo {
   const char           *PassName;      // Nice name for Pass
   const char           *PassArgument;  // Command Line argument to run this pass
   const std::type_info &TypeInfo;      // type_info object for this Pass class
+  bool IsCFGOnlyPass;                  // Pass only looks at the CFG.
   bool IsAnalysisGroup;                // True if an analysis group.
   std::vector<const PassInfo*> ItfImpl;// Interfaces implemented by this pass
 
@@ -48,8 +49,8 @@ public:
   /// through RegisterPass.
   PassInfo(const char *name, const char *arg, const std::type_info &ti,
            Pass *(*normal)() = 0)
-    : PassName(name), PassArgument(arg), TypeInfo(ti), IsAnalysisGroup(false),
-      NormalCtor(normal) {
+    : PassName(name), PassArgument(arg), TypeInfo(ti), 
+      IsCFGOnlyPass(false), IsAnalysisGroup(false), NormalCtor(normal) {
   }
 
   /// getPassName - Return the friendly name for the pass, never returns null
@@ -73,6 +74,11 @@ public:
   bool isAnalysisGroup() const { return IsAnalysisGroup; }
   void SetIsAnalysisGroup() { IsAnalysisGroup = true; }
 
+  /// isCFGOnlyPass - return true if this pass only looks at the CFG for the
+  /// function.
+  bool isCFGOnlyPass() const { return IsCFGOnlyPass; }
+  void SetIsCFGOnlyPass() { IsCFGOnlyPass = true; }
+  
   /// getNormalCtor - Return a pointer to a function, that when called, creates
   /// an instance of the pass and returns it.  This pointer may be null if there
   /// is no default constructor for the pass.
@@ -159,7 +165,9 @@ protected:
   /// setOnlyUsesCFG - Notice that this pass only depends on the CFG, so
   /// transformations that do not modify the CFG do not invalidate this pass.
   ///
-  void setOnlyUsesCFG();
+  void setOnlyUsesCFG() {
+    PIObj.SetIsCFGOnlyPass();
+  }
 };
 
 template<typename PassName>
