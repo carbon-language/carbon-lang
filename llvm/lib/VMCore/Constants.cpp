@@ -929,9 +929,12 @@ static ManagedStatic<ValueMap<uint64_t, Type, ConstantInt> > IntConstants;
 // just return the stored value while getSExtValue has to convert back to sign
 // extended. getZExtValue is more common in LLVM than getSExtValue().
 ConstantInt *ConstantInt::get(const Type *Ty, int64_t V) {
-  unsigned Size = Ty->getPrimitiveSizeInBits();
-  uint64_t ZeroExtendedCanonicalization = V & (~uint64_t(0UL) >> (64-Size));
-  return IntConstants->getOrCreate(Ty, ZeroExtendedCanonicalization );
+  return IntConstants->getOrCreate(Ty, V & Ty->getIntegralTypeMask());
+}
+
+ConstantIntegral *ConstantIntegral::get(const Type *Ty, int64_t V) {
+  if (Ty == Type::BoolTy) return ConstantBool::get(V&1);
+  return IntConstants->getOrCreate(Ty, V & Ty->getIntegralTypeMask());
 }
 
 //---- ConstantFP::get() implementation...

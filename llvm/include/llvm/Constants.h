@@ -44,6 +44,10 @@ protected:
   uint64_t Val;
   ConstantIntegral(const Type *Ty, ValueTy VT, uint64_t V);
 public:
+    
+  /// ConstantIntegral::get - Return a bool or integer constant.
+  static ConstantIntegral *get(const Type *Ty, int64_t V);
+    
   /// Return the constant as a 64-bit unsigned integer value after it
   /// has been zero extended as appropriate for the type of this constant.
   /// @brief Return the zero extended value.
