@@ -283,10 +283,7 @@ bool X86SharedAsmPrinter::doFinalization(Module &M) {
     O << "\t.ascii \" -export:" << *i << "\"\n";
   }    
 
-  if (Subtarget->isTargetDarwin()) {
-    if (ExtWeakSymbols.begin() != ExtWeakSymbols.end())
-      assert(0 && "External weak linkage for Darwin not implemented yet");
-  } else if (Subtarget->isTargetCygwin()) {
+  if (Subtarget->isTargetCygwin()) {
     // There is no external weak linkage on Mingw32 platform.
     // Defaulting to external
   } else {
@@ -296,7 +293,8 @@ bool X86SharedAsmPrinter::doFinalization(Module &M) {
     for (std::set<std::string>::iterator i = ExtWeakSymbols.begin(),
          e = ExtWeakSymbols.end();
          i != e; ++i) {
-      O << "\t.weak " << *i << "\n";
+      O << (Subtarget->isTargetDarwin() ? "\t.weak_reference" : "\t.weak")
+        << " " << *i << "\n";
     }
   }
   
