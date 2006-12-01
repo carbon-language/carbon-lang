@@ -239,7 +239,6 @@ struct PassRegistrationListener {
   /// or removed from the current executable.
   ///
   virtual void passRegistered(const PassInfo *P) {}
-  virtual void passUnregistered(const PassInfo *P) {}
 
   /// enumeratePasses - Iterate over the registered passes, calling the
   /// passEnumerate callback on each PassInfo object.

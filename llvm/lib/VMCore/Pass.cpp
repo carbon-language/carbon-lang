@@ -18,6 +18,7 @@
 #include "llvm/Module.h"
 #include "llvm/ModuleProvider.h"
 #include "llvm/ADT/STLExtras.h"
+#include "llvm/Support/ManagedStatic.h"
 #include "llvm/Support/TypeInfo.h"
 #include <iostream>
 #include <set>
@@ -285,7 +286,39 @@ void BasicBlockPass::addToPassManager(BasicBlockPassManager *PM,
 //===----------------------------------------------------------------------===//
 // Pass Registration mechanism
 //
-static std::map<TypeInfo, PassInfo*> *PassInfoMap = 0;
+class PassRegistrar {
+  std::map<TypeInfo, PassInfo*> PassInfoMap;
+public:
+  
+  const PassInfo *GetPassInfo(const std::type_info &TI) const {
+    std::map<TypeInfo, PassInfo*>::const_iterator I = PassInfoMap.find(TI);
+    return I != PassInfoMap.end() ? I->second : 0;
+  }
+  
+  void RegisterPass(PassInfo &PI) {
+    bool Inserted =
+      PassInfoMap.insert(std::make_pair(TypeInfo(PI.getTypeInfo()),&PI)).second;
+    assert(Inserted && "Pass registered multiple times!");
+  }
+  
+  void UnregisterPass(PassInfo &PI) {
+    std::map<TypeInfo, PassInfo*>::iterator I =
+      PassInfoMap.find(PI.getTypeInfo());
+    assert(I != PassInfoMap.end() && "Pass registered but not in map!");
+    
+    // Remove pass from the map.
+    PassInfoMap.erase(I);
+  }
+  
+  void EnumerateWith(PassRegistrationListener *L) {
+    for (std::map<TypeInfo, PassInfo*>::const_iterator I = PassInfoMap.begin(),
+         E = PassInfoMap.end(); I != E; ++I)
+      L->passEnumerate(I->second);
+  }
+};
+
+
+static ManagedStatic<PassRegistrar> PassRegistrarObj;
 static std::vector<PassRegistrationListener*> *Listeners = 0;
 
 // getPassInfo - Return the PassInfo data structure that corresponds to this
@@ -296,20 +329,13 @@ const PassInfo *Pass::getPassInfo() const {
 }
 
 const PassInfo *Pass::lookupPassInfo(const std::type_info &TI) {
-  if (PassInfoMap == 0) return 0;
-  std::map<TypeInfo, PassInfo*>::iterator I = PassInfoMap->find(TI);
-  return (I != PassInfoMap->end()) ? I->second : 0;
+  return PassRegistrarObj->GetPassInfo(TI);
 }
 
 void RegisterPassBase::registerPass() {
-  if (PassInfoMap == 0)
-    PassInfoMap = new std::map<TypeInfo, PassInfo*>();
+  PassRegistrarObj->RegisterPass(PIObj);
 
-  assert(PassInfoMap->find(PIObj.getTypeInfo()) == PassInfoMap->end() &&
-         "Pass already registered!");
-  PassInfoMap->insert(std::make_pair(TypeInfo(PIObj.getTypeInfo()), &PIObj));
-
-  // Notify any listeners...
+  // Notify any listeners.
   if (Listeners)
     for (std::vector<PassRegistrationListener*>::iterator
            I = Listeners->begin(), E = Listeners->end(); I != E; ++I)
@@ -317,23 +343,7 @@ void RegisterPassBase::registerPass() {
 }
 
 void RegisterPassBase::unregisterPass() {
-  assert(PassInfoMap && "Pass registered but not in map!");
-  std::map<TypeInfo, PassInfo*>::iterator I =
-    PassInfoMap->find(PIObj.getTypeInfo());
-  assert(I != PassInfoMap->end() && "Pass registered but not in map!");
-
-  // Remove pass from the map...
-  PassInfoMap->erase(I);
-  if (PassInfoMap->empty()) {
-    delete PassInfoMap;
-    PassInfoMap = 0;
-  }
-
-  // Notify any listeners...
-  if (Listeners)
-    for (std::vector<PassRegistrationListener*>::iterator
-           I = Listeners->begin(), E = Listeners->end(); I != E; ++I)
-      (*I)->passUnregistered(&PIObj);
+  PassRegistrarObj->UnregisterPass(PIObj);
 }
 
 //===----------------------------------------------------------------------===//
@@ -457,15 +467,24 @@ PassRegistrationListener::~PassRegistrationListener() {
 // passEnumerate callback on each PassInfo object.
 //
 void PassRegistrationListener::enumeratePasses() {
-  if (PassInfoMap)
-    for (std::map<TypeInfo, PassInfo*>::iterator I = PassInfoMap->begin(),
-           E = PassInfoMap->end(); I != E; ++I)
-      passEnumerate(I->second);
+  PassRegistrarObj->EnumerateWith(this);
 }
 
 //===----------------------------------------------------------------------===//
 //   AnalysisUsage Class Implementation
 //
+
+namespace {
+  struct GetCFGOnlyPasses : public PassRegistrationListener {
+    std::vector<AnalysisID> &CFGOnlyList;
+    GetCFGOnlyPasses(std::vector<AnalysisID> &L) : CFGOnlyList(L) {}
+    
+    void passEnumerate(const PassInfo *P) {
+      if (P->isCFGOnlyPass())
+        CFGOnlyList.push_back(P);
+    }
+  };
+}
 
 // setPreservesCFG - This function should be called to by the pass, iff they do
 // not:
@@ -479,13 +498,7 @@ void PassRegistrationListener::enumeratePasses() {
 void AnalysisUsage::setPreservesCFG() {
   // Since this transformation doesn't modify the CFG, it preserves all analyses
   // that only depend on the CFG (like dominators, loop info, etc...)
-  //
-  if (PassInfoMap) {
-    for (std::map<TypeInfo, PassInfo*>::iterator I = PassInfoMap->begin(),
-             E = PassInfoMap->end(); I != E; ++I)
-      if (I->second->isCFGOnlyPass())
-        Preserved.push_back(I->second);
-  }
+  GetCFGOnlyPasses(Preserved).enumeratePasses();
 }
 
 

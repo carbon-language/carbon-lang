@@ -74,14 +74,6 @@ public:
   }
   virtual void passEnumerate(const PassInfo *P) { passRegistered(P); }
 
-  virtual void passUnregistered(const PassInfo *P) {
-    if (ignorablePass(P) || !Opt) return;
-    assert(findOption(P->getPassArgument()) != getNumOptions() &&
-           "Registered Pass not in the pass map!");
-    removeLiteralOption(P->getPassArgument());
-    Opt->removeArgument(P->getPassArgument());
-  }
-
   // ValLessThan - Provide a sorting comparator for Values elements...
   typedef std::pair<const char*,
                     std::pair<const PassInfo*, const char*> > ValType;
