@@ -138,7 +138,19 @@
      EXTRACTELEMENT = 364,
      INSERTELEMENT = 365,
      SHUFFLEVECTOR = 366,
-     CAST = 367
+     CAST = 367,
+     TRUNC = 368,
+     ZEXT = 369,
+     SEXT = 370,
+     FPTRUNC = 371,
+     FPEXT = 372,
+     FPTOUI = 373,
+     FPTOSI = 374,
+     UITOFP = 375,
+     SITOFP = 376,
+     PTRTOINT = 377,
+     INTTOPTR = 378,
+     BITCAST = 379
    };
 #endif
 /* Tokens.  */
@@ -252,6 +264,18 @@
 #define INSERTELEMENT 365
 #define SHUFFLEVECTOR 366
 #define CAST 367
+#define TRUNC 368
+#define ZEXT 369
+#define SEXT 370
+#define FPTRUNC 371
+#define FPEXT 372
+#define FPTOUI 373
+#define FPTOSI 374
+#define UITOFP 375
+#define SITOFP 376
+#define PTRTOINT 377
+#define INTTOPTR 378
+#define BITCAST 379
 
 
 
@@ -265,7 +289,7 @@ typedef union YYSTYPE {
   ConstInfo       Const;
 } YYSTYPE;
 /* Line 1447 of yacc.c.  */
-#line 269 "UpgradeParser.tab.h"
+#line 293 "UpgradeParser.tab.h"
 # define yystype YYSTYPE /* obsolescent; will be withdrawn */
 # define YYSTYPE_IS_DECLARED 1
 # define YYSTYPE_IS_TRIVIAL 1

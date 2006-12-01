@@ -155,7 +155,8 @@ const char* getCastOpcode(TypeInfo& SrcTy, TypeInfo&DstTy) {
 %token <String> MALLOC ALLOCA FREE LOAD STORE GETELEMENTPTR
 %token <String> PHI_TOK SELECT SHL SHR ASHR LSHR VAARG
 %token <String> EXTRACTELEMENT INSERTELEMENT SHUFFLEVECTOR
-%token <String> CAST
+%token <String> CAST TRUNC ZEXT SEXT FPTRUNC FPEXT FPTOUI FPTOSI UITOFP SITOFP 
+%token <String> PTRTOINT INTTOPTR BITCAST
 
 %type <String> OptAssign OptLinkage OptCallingConv OptAlign OptCAlign 
 %type <String> SectionString OptSection GlobalVarAttributes GlobalVarAttribute
@@ -167,8 +168,8 @@ const char* getCastOpcode(TypeInfo& SrcTy, TypeInfo&DstTy) {
 %type <String> ValueRefList OptTailCall InstVal IndexList OptVolatile
 %type <String> MemoryInst SymbolicValueRef OptSideEffect GlobalType
 %type <String> FnDeclareLinkage BasicBlockList BigOrLittle AsmBlock
-%type <String> Name ValueRef ValueRefListE
-%type <String> ShiftOps SetCondOps LogicalOps ArithmeticOps ConstValueRef 
+%type <String> Name ValueRef ValueRefListE ConstValueRef 
+%type <String> ShiftOps SetCondOps LogicalOps ArithmeticOps CastOps 
 
 %type <String> ConstVector
 
@@ -194,6 +195,9 @@ ArithmeticOps: ADD | SUB | MUL | UDIV | SDIV | FDIV | UREM | SREM | FREM;
 LogicalOps   : AND | OR | XOR;
 SetCondOps   : SETLE | SETGE | SETLT | SETGT | SETEQ | SETNE;
 ShiftOps     : SHL | SHR | ASHR | LSHR;
+CastOps      : TRUNC | ZEXT | SEXT | FPTRUNC | FPEXT | FPTOUI | FPTOSI | 
+               UITOFP | SITOFP | PTRTOINT | INTTOPTR | BITCAST | CAST
+             ;
 
 // These are some types that allow classification if we only want a particular 
 // thing... for example, only a signed, unsigned, or integral type.
@@ -462,9 +466,11 @@ ConstVal: Types '[' ConstVector ']' { // Nonempty unsized arr
   };
 
 
-ConstExpr: CAST '(' ConstVal TO Types ')' {
+ConstExpr: CastOps '(' ConstVal TO Types ')' {
     // We must infer the cast opcode from the types of the operands. 
-    const char *opcode = getCastOpcode($3.type, $5);
+    const char *opcode = $1->c_str();
+    if (*$1 == "cast")
+      opcode = getCastOpcode($3.type, $5);
     $$ = new std::string(opcode);
     *$$ += "(" + *$3.cnst + " " + *$4 + " " + *$5.newTy + ")";
     delete $1; $3.destroy(); delete $4; $5.destroy();
@@ -976,8 +982,10 @@ InstVal : ArithmeticOps Types ValueRef ',' ValueRef {
     *$$ += " " + *$2.val + ", " + *$4.val;
     delete $1; $2.destroy(); $4.destroy();
   }
-  | CAST ResolvedVal TO Types {
-    const char *opcode = getCastOpcode($2.type, $4);
+  | CastOps ResolvedVal TO Types {
+    const char *opcode = $1->c_str();
+    if (*$1 == "cast")
+      opcode = getCastOpcode($2.type, $4);
     $$ = new std::string(opcode);
     *$$ += *$2.val + " " + *$3 + " " + *$4.newTy; 
     delete $1; $2.destroy();
