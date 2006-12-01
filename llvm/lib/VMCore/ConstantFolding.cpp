@@ -890,6 +890,9 @@ Constant *llvm::ConstantFoldCastInstruction(unsigned opc, const Constant *V,
     if (isa<ConstantInt>(V))
       V = ConstantInt::get(SrcTy->getSignedVersion(), 
                            cast<ConstantIntegral>(V)->getSExtValue());
+    else if (const ConstantBool *CB = dyn_cast<ConstantBool>(V))
+      V = ConstantInt::get(Type::SByteTy, CB->getValue() ? -1 : 0);
+      
     break;
   case Instruction::Trunc:
     // We just handle trunc directly here.  The code below doesn't work for
