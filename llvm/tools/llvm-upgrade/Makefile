@@ -19,5 +19,12 @@ include $(LEVEL)/Makefile.common
 # header file it needs is built.
 $(ObjDir)/upgradeLexer.o: $(PROJ_SRC_DIR)/UpgradeParser.h
 
+TESTCASE=../../test/Regression/Assembler/2004-09-29-VerifierIsReallySlow.llx
 test:
-	../../Debug/bin/llvm-upgrade -o - ../../test/Feature/basictest.ll
+	llvm-as $(TESTCASE) -o - | llvm-dis -o source.ll -f
+	../../Debug/bin/llvm-upgrade -o - $(TESTCASE) 2>err.out | llvm-as | \
+	  llvm-dis > upgrade.ll -f
+	diff source.ll upgrade.ll > diff.out
+
+$(PROJ_SRC_DIR)/UpgradeParser.h: $(PROJ_SRC_DIR)/UpgradeParser.y
+$(PROJ_SRC_DIR)/UpgradeParser.cpp: $(PROJ_SRC_DIR)/UpgradeParser.y

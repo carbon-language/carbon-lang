@@ -39,6 +39,10 @@ OutputFilename("o", cl::desc("Override output filename"),
 static cl::opt<bool>
 Force("f", cl::desc("Overwrite output files"));
 
+static cl::opt<bool>
+Debug("debug", cl::desc("Print debug output from yacc parser"),cl::Hidden,
+    cl::init(false));
+
 int main(int argc, char **argv) {
   cl::ParseCommandLineOptions(argc, argv, " llvm .ll -> .bc assembler\n");
   sys::PrintStackTraceOnErrorSignal();
@@ -109,7 +113,7 @@ int main(int argc, char **argv) {
       return 1;
     }
 
-    UpgradeAssembly(InputFilename, *In, *Out);
+    UpgradeAssembly(InputFilename, *In, *Out, Debug);
 
   } catch (const std::string& caught_message) {
     llvm_cerr << argv[0] << ": " << caught_message << "\n";

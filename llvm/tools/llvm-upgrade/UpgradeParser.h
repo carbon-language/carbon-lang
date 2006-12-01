@@ -34,47 +34,47 @@
      SINTVAL = 260,
      UINTVAL = 261,
      FPVAL = 262,
-     VOID = 263,
-     BOOL = 264,
-     SBYTE = 265,
-     UBYTE = 266,
-     SHORT = 267,
-     USHORT = 268,
-     INT = 269,
-     UINT = 270,
-     LONG = 271,
-     ULONG = 272,
-     FLOAT = 273,
-     DOUBLE = 274,
-     TYPE = 275,
-     LABEL = 276,
-     VAR_ID = 277,
-     LABELSTR = 278,
-     STRINGCONSTANT = 279,
-     IMPLEMENTATION = 280,
-     ZEROINITIALIZER = 281,
-     TRUETOK = 282,
-     FALSETOK = 283,
-     BEGINTOK = 284,
-     ENDTOK = 285,
-     DECLARE = 286,
-     GLOBAL = 287,
-     CONSTANT = 288,
-     SECTION = 289,
-     VOLATILE = 290,
-     TO = 291,
-     DOTDOTDOT = 292,
-     NULL_TOK = 293,
-     UNDEF = 294,
-     CONST = 295,
-     INTERNAL = 296,
-     LINKONCE = 297,
-     WEAK = 298,
-     APPENDING = 299,
+     TRUETOK = 263,
+     FALSETOK = 264,
+     NULL_TOK = 265,
+     UNDEF = 266,
+     ZEROINITIALIZER = 267,
+     VOID = 268,
+     BOOL = 269,
+     SBYTE = 270,
+     UBYTE = 271,
+     SHORT = 272,
+     USHORT = 273,
+     INT = 274,
+     UINT = 275,
+     LONG = 276,
+     ULONG = 277,
+     FLOAT = 278,
+     DOUBLE = 279,
+     LABEL = 280,
+     OPAQUE = 281,
+     TYPE = 282,
+     VAR_ID = 283,
+     LABELSTR = 284,
+     STRINGCONSTANT = 285,
+     IMPLEMENTATION = 286,
+     BEGINTOK = 287,
+     ENDTOK = 288,
+     DECLARE = 289,
+     GLOBAL = 290,
+     CONSTANT = 291,
+     SECTION = 292,
+     VOLATILE = 293,
+     TO = 294,
+     DOTDOTDOT = 295,
+     CONST = 296,
+     INTERNAL = 297,
+     LINKONCE = 298,
+     WEAK = 299,
      DLLIMPORT = 300,
      DLLEXPORT = 301,
      EXTERN_WEAK = 302,
-     OPAQUE = 303,
+     APPENDING = 303,
      NOT = 304,
      EXTERNAL = 305,
      TARGET = 306,
@@ -128,28 +128,16 @@
      LOAD = 354,
      STORE = 355,
      GETELEMENTPTR = 356,
-     TRUNC = 357,
-     ZEXT = 358,
-     SEXT = 359,
-     FPTRUNC = 360,
-     FPEXT = 361,
-     BITCAST = 362,
-     UITOFP = 363,
-     SITOFP = 364,
-     FPTOUI = 365,
-     FPTOSI = 366,
-     INTTOPTR = 367,
-     PTRTOINT = 368,
-     PHI_TOK = 369,
-     SELECT = 370,
-     SHL = 371,
-     LSHR = 372,
-     ASHR = 373,
-     VAARG = 374,
-     EXTRACTELEMENT = 375,
-     INSERTELEMENT = 376,
-     SHUFFLEVECTOR = 377,
-     CAST = 378
+     PHI_TOK = 357,
+     SELECT = 358,
+     SHL = 359,
+     LSHR = 360,
+     ASHR = 361,
+     VAARG = 362,
+     EXTRACTELEMENT = 363,
+     INSERTELEMENT = 364,
+     SHUFFLEVECTOR = 365,
+     CAST = 366
    };
 #endif
 /* Tokens.  */
@@ -158,47 +146,47 @@
 #define SINTVAL 260
 #define UINTVAL 261
 #define FPVAL 262
-#define VOID 263
-#define BOOL 264
-#define SBYTE 265
-#define UBYTE 266
-#define SHORT 267
-#define USHORT 268
-#define INT 269
-#define UINT 270
-#define LONG 271
-#define ULONG 272
-#define FLOAT 273
-#define DOUBLE 274
-#define TYPE 275
-#define LABEL 276
-#define VAR_ID 277
-#define LABELSTR 278
-#define STRINGCONSTANT 279
-#define IMPLEMENTATION 280
-#define ZEROINITIALIZER 281
-#define TRUETOK 282
-#define FALSETOK 283
-#define BEGINTOK 284
-#define ENDTOK 285
-#define DECLARE 286
-#define GLOBAL 287
-#define CONSTANT 288
-#define SECTION 289
-#define VOLATILE 290
-#define TO 291
-#define DOTDOTDOT 292
-#define NULL_TOK 293
-#define UNDEF 294
-#define CONST 295
-#define INTERNAL 296
-#define LINKONCE 297
-#define WEAK 298
-#define APPENDING 299
+#define TRUETOK 263
+#define FALSETOK 264
+#define NULL_TOK 265
+#define UNDEF 266
+#define ZEROINITIALIZER 267
+#define VOID 268
+#define BOOL 269
+#define SBYTE 270
+#define UBYTE 271
+#define SHORT 272
+#define USHORT 273
+#define INT 274
+#define UINT 275
+#define LONG 276
+#define ULONG 277
+#define FLOAT 278
+#define DOUBLE 279
+#define LABEL 280
+#define OPAQUE 281
+#define TYPE 282
+#define VAR_ID 283
+#define LABELSTR 284
+#define STRINGCONSTANT 285
+#define IMPLEMENTATION 286
+#define BEGINTOK 287
+#define ENDTOK 288
+#define DECLARE 289
+#define GLOBAL 290
+#define CONSTANT 291
+#define SECTION 292
+#define VOLATILE 293
+#define TO 294
+#define DOTDOTDOT 295
+#define CONST 296
+#define INTERNAL 297
+#define LINKONCE 298
+#define WEAK 299
 #define DLLIMPORT 300
 #define DLLEXPORT 301
 #define EXTERN_WEAK 302
-#define OPAQUE 303
+#define APPENDING 303
 #define NOT 304
 #define EXTERNAL 305
 #define TARGET 306
@@ -252,34 +240,30 @@
 #define LOAD 354
 #define STORE 355
 #define GETELEMENTPTR 356
-#define TRUNC 357
-#define ZEXT 358
-#define SEXT 359
-#define FPTRUNC 360
-#define FPEXT 361
-#define BITCAST 362
-#define UITOFP 363
-#define SITOFP 364
-#define FPTOUI 365
-#define FPTOSI 366
-#define INTTOPTR 367
-#define PTRTOINT 368
-#define PHI_TOK 369
-#define SELECT 370
-#define SHL 371
-#define LSHR 372
-#define ASHR 373
-#define VAARG 374
-#define EXTRACTELEMENT 375
-#define INSERTELEMENT 376
-#define SHUFFLEVECTOR 377
-#define CAST 378
+#define PHI_TOK 357
+#define SELECT 358
+#define SHL 359
+#define LSHR 360
+#define ASHR 361
+#define VAARG 362
+#define EXTRACTELEMENT 363
+#define INSERTELEMENT 364
+#define SHUFFLEVECTOR 365
+#define CAST 366
 
 
 
 
 #if ! defined (YYSTYPE) && ! defined (YYSTYPE_IS_DECLARED)
-typedef int YYSTYPE;
+#line 130 "/proj/llvm/llvm-4/tools/llvm-upgrade/UpgradeParser.y"
+typedef union YYSTYPE {
+  std::string*    String;
+  TypeInfo        Type;
+  ValueInfo       Value;
+  ConstInfo       Const;
+} YYSTYPE;
+/* Line 1447 of yacc.c.  */
+#line 267 "UpgradeParser.tab.h"
 # define yystype YYSTYPE /* obsolescent; will be withdrawn */
 # define YYSTYPE_IS_DECLARED 1
 # define YYSTYPE_IS_TRIVIAL 1

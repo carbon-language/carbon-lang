@@ -27,16 +27,9 @@
 %{
 
 #include "ParserInternals.h"
-#define YYSTYPE std::string*
 #include "UpgradeParser.h"
 #include <cctype>
 #include <cstdlib>
-
-static void trim(std::string& str) {
-  size_t startpos = str.find_first_not_of(" \t\n\r",0);
-  if (startpos != std::string::npos)
-    str.erase(0,startpos);
-}
 
 #define YY_INPUT(buf,result,max_size) \
 { \
@@ -51,8 +44,12 @@ static void trim(std::string& str) {
 
 // Construct a token value for a non-obsolete token
 #define RET_TOK(sym) \
-  Upgradelval = new std::string(yytext); \
-  trim(*Upgradelval); \
+  Upgradelval.String = new std::string(yytext); \
+  return sym
+
+#define RET_TY(sym,OldTY,NewTY,sign) \
+  Upgradelval.Type.newTy = new std::string(NewTY); \
+  Upgradelval.Type.oldTy = OldTY; \
   return sym
 
 #define YY_NEVER_INTERACTIVE 1
@@ -147,21 +144,21 @@ coldcc          { RET_TOK( COLDCC_TOK); }
 x86_stdcallcc   { RET_TOK( X86_STDCALLCC_TOK); }
 x86_fastcallcc  { RET_TOK( X86_FASTCALLCC_TOK); }
 
-void            { RET_TOK( VOID); }
-bool            { RET_TOK( BOOL); }
-sbyte           { RET_TOK( SBYTE); }
-ubyte           { RET_TOK( UBYTE); }
-short           { RET_TOK( SHORT); }
-ushort          { RET_TOK( USHORT); }
-int             { RET_TOK( INT);   }
-uint            { RET_TOK( UINT);  }
-long            { RET_TOK( LONG);  }
-ulong           { RET_TOK( ULONG); }
-float           { RET_TOK( FLOAT); }
-double          { RET_TOK( DOUBLE); }
-label           { RET_TOK( LABEL); }
-type            { RET_TOK( TYPE);   }
-opaque          { RET_TOK( OPAQUE); }
+void            { RET_TY(VOID,VoidTy,"void",false); }
+bool            { RET_TY(BOOL,BoolTy,"bool",false); }
+sbyte           { RET_TY(SBYTE,SByteTy,"sbyte",true); }
+ubyte           { RET_TY(UBYTE,UByteTy,"ubyte",false); }
+short           { RET_TY(SHORT,ShortTy,"short",true); }
+ushort          { RET_TY(USHORT,UShortTy,"ushort",false); }
+int             { RET_TY(INT,IntTy,"int",true);   }
+uint            { RET_TY(UINT,UIntTy,"uint",false);  }
+long            { RET_TY(LONG,LongTy,"long",true);  }
+ulong           { RET_TY(ULONG,ULongTy,"ulong",false); }
+float           { RET_TY(FLOAT,FloatTy,"float",false); }
+double          { RET_TY(DOUBLE,DoubleTy,"double",false); }
+label           { RET_TY(LABEL,LabelTy,"label",false); }
+opaque          { RET_TY(OPAQUE,OpaqueTy,"opaque",false); }
+type            { RET_TOK(TYPE);   }
 
 add             { RET_TOK( ADD); }
 sub             { RET_TOK( SUB); }
@@ -186,7 +183,7 @@ setge           { RET_TOK( SETGE); }
 
 phi             { RET_TOK( PHI_TOK); }
 call            { RET_TOK( CALL); }
-cast            { RET_TOK( TRUNC); }
+cast            { RET_TOK( CAST); }
 select          { RET_TOK( SELECT); }
 shl             { RET_TOK( SHL); }
 lshr            { RET_TOK( LSHR); }
