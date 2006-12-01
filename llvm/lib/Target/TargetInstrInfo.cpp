@@ -32,7 +32,7 @@ TargetInstrInfo::findTiedToSrcOperand(MachineOpCode Opc, unsigned OpNum) const {
   for (unsigned i = 0, e = getNumOperands(Opc); i != e; ++i) {
     if (i == OpNum)
       continue;
-    int ti = getOperandConstraint(Opc, i, TIED_TO);
+    int ti = getOperandConstraint(Opc, i, TOI::TIED_TO);
     if (ti == (int)OpNum)
       return i;
   }

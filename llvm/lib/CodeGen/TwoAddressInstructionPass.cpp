@@ -79,8 +79,8 @@ void TwoAddressInstructionPass::getAnalysisUsage(AnalysisUsage &AU) const {
 bool TwoAddressInstructionPass::runOnMachineFunction(MachineFunction &MF) {
   DOUT << "Machine Function\n";
   const TargetMachine &TM = MF.getTarget();
-  const MRegisterInfo &MRI = *TM.getRegisterInfo();
   const TargetInstrInfo &TII = *TM.getInstrInfo();
+  const MRegisterInfo &MRI = *TM.getRegisterInfo();
   LiveVariables &LV = getAnalysis<LiveVariables>();
 
   bool MadeChange = false;
@@ -92,11 +92,11 @@ bool TwoAddressInstructionPass::runOnMachineFunction(MachineFunction &MF) {
        mbbi != mbbe; ++mbbi) {
     for (MachineBasicBlock::iterator mi = mbbi->begin(), me = mbbi->end();
          mi != me; ++mi) {
-      unsigned opcode = mi->getOpcode();
+      const TargetInstrDescriptor *TID = mi->getInstrDescriptor();
 
       bool FirstTied = true;
-      for (unsigned si = 1, e = TII.getNumOperands(opcode); si < e; ++si) {
-        int ti = TII.getOperandConstraint(opcode, si, TargetInstrInfo::TIED_TO);
+      for (unsigned si = 1, e = TID->numOperands; si < e; ++si) {
+        int ti = TID->getOperandConstraint(si, TOI::TIED_TO);
         if (ti == -1)
           continue;
 
@@ -139,13 +139,11 @@ bool TwoAddressInstructionPass::runOnMachineFunction(MachineFunction &MF) {
           // allow us to coalesce A and B together, eliminating the copy we are
           // about to insert.
           if (!LV.KillsRegister(mi, regB)) {
-            const TargetInstrDescriptor &TID = TII.get(opcode);
-
             // If this instruction is commutative, check to see if C dies.  If
             // so, swap the B and C operands.  This makes the live ranges of A
             // and C joinable.
             // FIXME: This code also works for A := B op C instructions.
-            if ((TID.Flags & M_COMMUTABLE) && mi->getNumOperands() == 3) {
+            if ((TID->Flags & M_COMMUTABLE) && mi->getNumOperands() == 3) {
               assert(mi->getOperand(3-si).isRegister() &&
                      "Not a proper commutative instruction!");
               unsigned regC = mi->getOperand(3-si).getReg();
@@ -173,20 +171,17 @@ bool TwoAddressInstructionPass::runOnMachineFunction(MachineFunction &MF) {
 
             // If this instruction is potentially convertible to a true
             // three-address instruction,
-            if (TID.Flags & M_CONVERTIBLE_TO_3_ADDR)
+            if (TID->Flags & M_CONVERTIBLE_TO_3_ADDR)
               // FIXME: This assumes there are no more operands which are tied
               // to another register.
 #ifndef NDEBUG
-              for (unsigned i = si+1, e = TII.getNumOperands(opcode); i < e; ++i)
-                assert(TII.getOperandConstraint(opcode, i,
-                                                TargetInstrInfo::TIED_TO) == -1);
+              for (unsigned i = si+1, e = TID->numOperands; i < e; ++i)
+                assert(TID->getOperandConstraint(i, TOI::TIED_TO) == -1);
 #endif
 
-              if (MachineInstr *New = TII.convertToThreeAddress(mi)) {
+              if (MachineInstr *New = TII.convertToThreeAddress(mbbi, mi, LV)) {
                 DOUT << "2addr: CONVERTING 2-ADDR: " << *mi;
                 DOUT << "2addr:         TO 3-ADDR: " << *New;
-                LV.instructionChanged(mi, New);  // Update live variables
-                mbbi->insert(mi, New);           // Insert the new inst
                 mbbi->erase(mi);                 // Nuke the old inst.
                 mi = New;
                 ++NumConvertedTo3Addr;

@@ -289,7 +289,7 @@ MachineInstr* X86RegisterInfo::foldMemoryOperand(MachineInstr *MI,
   bool isTwoAddrFold = false;
   unsigned NumOps = TII.getNumOperands(MI->getOpcode());
   bool isTwoAddr = NumOps > 1 &&
-    TII.getOperandConstraint(MI->getOpcode(), 1,TargetInstrInfo::TIED_TO) != -1;
+    TII.getOperandConstraint(MI->getOpcode(), 1, TOI::TIED_TO) != -1;
 
   MachineInstr *NewMI = NULL;
   // Folding a memory location into the two-address part of a two-address

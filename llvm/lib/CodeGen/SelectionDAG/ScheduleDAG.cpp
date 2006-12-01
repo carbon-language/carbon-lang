@@ -127,8 +127,7 @@ void ScheduleDAG::BuildSchedUnits() {
     if (MainNode->isTargetOpcode()) {
       unsigned Opc = MainNode->getTargetOpcode();
       for (unsigned i = 0, ee = TII->getNumOperands(Opc); i != ee; ++i) {
-        if (TII->getOperandConstraint(Opc, i,
-                                      TargetInstrInfo::TIED_TO) != -1) {
+        if (TII->getOperandConstraint(Opc, i, TOI::TIED_TO) != -1) {
           SU->isTwoAddress = true;
           break;
         }

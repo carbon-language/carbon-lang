@@ -128,8 +128,7 @@ void ScheduleDAGRRList::CommuteNodesToReducePressure() {
       unsigned NumRes = CountResults(SU->Node);
       unsigned NumOps = CountOperands(SU->Node);
       for (unsigned j = 0; j != NumOps; ++j) {
-        if (TII->getOperandConstraint(Opc, j+NumRes,
-                                      TargetInstrInfo::TIED_TO) == -1)
+        if (TII->getOperandConstraint(Opc, j+NumRes, TOI::TIED_TO) == -1)
           continue;
 
         SDNode *OpN = SU->Node->getOperand(j).Val;
@@ -498,8 +497,7 @@ namespace {
       unsigned NumRes = ScheduleDAG::CountResults(SU1->Node);
       unsigned NumOps = ScheduleDAG::CountOperands(SU1->Node);
       for (unsigned i = 0; i != NumOps; ++i) {
-        if (TII->getOperandConstraint(Opc, i+NumRes,
-                                      TargetInstrInfo::TIED_TO) == -1)
+        if (TII->getOperandConstraint(Opc, i+NumRes, TOI::TIED_TO) == -1)
           continue;
         if (SU1->Node->getOperand(i).isOperand(SU2->Node))
           return true;
@@ -667,8 +665,7 @@ bool BURegReductionPriorityQueue<SF>::canClobber(SUnit *SU, SUnit *Op) {
     unsigned NumRes = ScheduleDAG::CountResults(SU->Node);
     unsigned NumOps = ScheduleDAG::CountOperands(SU->Node);
     for (unsigned i = 0; i != NumOps; ++i) {
-      if (TII->getOperandConstraint(Opc, i+NumRes,
-                                    TargetInstrInfo::TIED_TO) != -1) {
+      if (TII->getOperandConstraint(Opc, i+NumRes, TOI::TIED_TO) != -1) {
         SDNode *DU = SU->Node->getOperand(i).Val;
         if (Op == (*SUnitMap)[DU])
           return true;
@@ -698,8 +695,7 @@ void BURegReductionPriorityQueue<SF>::AddPseudoTwoAddrDeps() {
     unsigned NumRes = ScheduleDAG::CountResults(Node);
     unsigned NumOps = ScheduleDAG::CountOperands(Node);
     for (unsigned j = 0; j != NumOps; ++j) {
-      if (TII->getOperandConstraint(Opc, j+NumRes,
-                                    TargetInstrInfo::TIED_TO) != -1) {
+      if (TII->getOperandConstraint(Opc, j+NumRes, TOI::TIED_TO) != -1) {
         SDNode *DU = SU->Node->getOperand(j).Val;
         SUnit *DUSU = (*SUnitMap)[DU];
         if (!DUSU) continue;

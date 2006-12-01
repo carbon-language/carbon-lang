@@ -252,7 +252,9 @@ public:
   /// This method returns a null pointer if the transformation cannot be
   /// performed, otherwise it returns the new instruction.
   ///
-  virtual MachineInstr *convertToThreeAddress(MachineInstr *TA) const;
+  virtual MachineInstr *convertToThreeAddress(MachineFunction::iterator &MFI,
+                                              MachineBasicBlock::iterator &MBBI,
+                                              LiveVariables &LV) const;
 
   /// commuteInstruction - We have a few instructions that must be hacked on to
   /// commute them.

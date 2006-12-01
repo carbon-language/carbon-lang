@@ -97,8 +97,7 @@ void VirtRegMap::virtFolded(unsigned VirtReg, MachineInstr *OldMI,
   }
 
   ModRef MRInfo;
-  if (TII.getOperandConstraint(OldMI->getOpcode(), OpNo,
-                               TargetInstrInfo::TIED_TO)) {
+  if (TII.getOperandConstraint(OldMI->getOpcode(), OpNo, TOI::TIED_TO)) {
     // Folded a two-address operand.
     MRInfo = isModRef;
   } else if (OldMI->getOperand(OpNo).isDef()) {
@@ -592,8 +591,7 @@ void LocalSpiller::RewriteMBB(MachineBasicBlock &MBB, VirtRegMap &VRM) {
         // aren't allowed to modify the reused register.  If none of these cases
         // apply, reuse it.
         bool CanReuse = true;
-        int ti = TII->getOperandConstraint(MI.getOpcode(), i,
-                                           TargetInstrInfo::TIED_TO);
+        int ti = TII->getOperandConstraint(MI.getOpcode(), i, TOI::TIED_TO);
         if (ti != -1 &&
             MI.getOperand(ti).isReg() && 
             MI.getOperand(ti).getReg() == VirtReg) {

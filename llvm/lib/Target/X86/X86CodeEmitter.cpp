@@ -471,7 +471,7 @@ unsigned Emitter::determineREX(const MachineInstr &MI) {
   unsigned NumOps = II->getNumOperands(Opcode);
   if (NumOps) {
     bool isTwoAddr = NumOps > 1 &&
-      II->getOperandConstraint(Opcode, 1, TargetInstrInfo::TIED_TO) != -1;
+      II->getOperandConstraint(Opcode, 1, TOI::TIED_TO) != -1;
 
     // If it accesses SPL, BPL, SIL, or DIL, then it requires a 0x40 REX prefix.
     bool isTrunc8 = isX86_64TruncToByte(Opcode);
@@ -610,7 +610,7 @@ void Emitter::emitInstruction(const MachineInstr &MI) {
   unsigned NumOps = II->getNumOperands(Opcode);
   unsigned CurOp = 0;
   if (NumOps > 1 &&
-      II->getOperandConstraint(Opcode, 1, TargetInstrInfo::TIED_TO) != -1)
+      II->getOperandConstraint(Opcode, 1, TOI::TIED_TO) != -1)
     CurOp++;
   
   unsigned char BaseOpcode = II->getBaseOpcodeFor(Opcode);
