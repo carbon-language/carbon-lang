@@ -212,7 +212,7 @@ namespace llvm {
     /// code elimination on some targets.
     const char *UsedDirective;            // Defaults to null.
 
-    /// WeakRefDirective - This directive, if non-null, is used to decalre a
+    /// WeakRefDirective - This directive, if non-null, is used to declare a
     /// global as being a weak undefined symbol.
     const char *WeakRefDirective;         // Defaults to null.
     
