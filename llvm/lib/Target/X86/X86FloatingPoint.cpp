@@ -62,11 +62,12 @@ namespace {
       MachineFunctionPass::getAnalysisUsage(AU);
     }
   private:
-    LiveVariables     *LV;    // Live variable info for current function...
-    MachineBasicBlock *MBB;   // Current basic block
-    unsigned Stack[8];        // FP<n> Registers in each stack slot...
-    unsigned RegMap[8];       // Track which stack slot contains each register
-    unsigned StackTop;        // The current top of the FP stack.
+    const TargetInstrInfo *TII; // Machine instruction info.
+    LiveVariables     *LV;      // Live variable info for current function...
+    MachineBasicBlock *MBB;     // Current basic block
+    unsigned Stack[8];          // FP<n> Registers in each stack slot...
+    unsigned RegMap[8];         // Track which stack slot contains each register
+    unsigned StackTop;          // The current top of the FP stack.
 
     void dumpStack() const {
       std::cerr << "Stack contents:";
@@ -107,9 +108,6 @@ namespace {
     bool isAtTop(unsigned RegNo) const { return getSlot(RegNo) == StackTop-1; }
     void moveToTop(unsigned RegNo, MachineBasicBlock::iterator &I) {
       if (!isAtTop(RegNo)) {
-        MachineFunction *MF = I->getParent()->getParent();
-        const TargetInstrInfo *TII = MF->getTarget().getInstrInfo();
-
         unsigned STReg = getSTReg(RegNo);
         unsigned RegOnTop = getStackEntry(0);
 
@@ -127,8 +125,6 @@ namespace {
     }
 
     void duplicateToTop(unsigned RegNo, unsigned AsReg, MachineInstr *I) {
-      MachineFunction *MF = I->getParent()->getParent();
-      const TargetInstrInfo *TII = MF->getTarget().getInstrInfo();
       unsigned STReg = getSTReg(RegNo);
       pushReg(AsReg);   // New register on top of stack
 
@@ -179,6 +175,7 @@ bool FPS::runOnMachineFunction(MachineFunction &MF) {
   // Early exit.
   if (!FPIsUsed) return false;
 
+  TII = MF.getTarget().getInstrInfo();
   LV = &getAnalysis<LiveVariables>();
   StackTop = 0;
 
@@ -431,8 +428,6 @@ void FPS::popStackAfter(MachineBasicBlock::iterator &I) {
   assert(StackTop > 0 && "Cannot pop empty stack!");
   RegMap[Stack[--StackTop]] = ~0;     // Update state
 
-  MachineFunction *MF = I->getParent()->getParent();
-  const TargetInstrInfo *TII = MF->getTarget().getInstrInfo();  
   // Check to see if there is a popping version of this instruction...
   int Opcode = Lookup(PopTable, ARRAY_SIZE(PopTable), I->getOpcode());
   if (Opcode != -1) {
@@ -464,8 +459,6 @@ void FPS::freeStackSlotAfter(MachineBasicBlock::iterator &I, unsigned FPRegNo) {
   RegMap[TopReg]    = OldSlot;
   RegMap[FPRegNo]   = ~0;
   Stack[--StackTop] = ~0;
-  MachineFunction *MF = I->getParent()->getParent();
-  const TargetInstrInfo *TII = MF->getTarget().getInstrInfo();
   I = BuildMI(*MBB, ++I, TII->get(X86::FSTPrr)).addReg(STReg);
 }
 
@@ -486,8 +479,6 @@ static unsigned getFPReg(const MachineOperand &MO) {
 ///
 void FPS::handleZeroArgFP(MachineBasicBlock::iterator &I) {
   MachineInstr *MI = I;
-  MachineFunction *MF = MI->getParent()->getParent();
-  const TargetInstrInfo *TII = MF->getTarget().getInstrInfo();
   unsigned DestReg = getFPReg(MI->getOperand(0));
 
   // Change from the pseudo instruction to the concrete instruction.
@@ -528,8 +519,6 @@ void FPS::handleOneArgFP(MachineBasicBlock::iterator &I) {
   
   // Convert from the pseudo instruction to the concrete instruction.
   MI->RemoveOperand(NumOps-1);    // Remove explicit ST(0) operand
-  MachineFunction *MF = MI->getParent()->getParent();
-  const TargetInstrInfo *TII = MF->getTarget().getInstrInfo();
   MI->setInstrDescriptor(TII->get(getConcreteOpcode(MI->getOpcode())));
 
   if (MI->getOpcode() == X86::FISTP64m ||
@@ -575,8 +564,6 @@ void FPS::handleOneArgFPRW(MachineBasicBlock::iterator &I) {
   }
 
   // Change from the pseudo instruction to the concrete instruction.
-  MachineFunction *MF = I->getParent()->getParent();
-  const TargetInstrInfo *TII = MF->getTarget().getInstrInfo();  
   MI->RemoveOperand(1);   // Drop the source operand.
   MI->RemoveOperand(0);   // Drop the destination operand.
   MI->setInstrDescriptor(TII->get(getConcreteOpcode(MI->getOpcode())));
@@ -704,8 +691,6 @@ void FPS::handleTwoArgFP(MachineBasicBlock::iterator &I) {
 
   // Replace the old instruction with a new instruction
   MBB->remove(I++);
-  MachineFunction *MF = MI->getParent()->getParent();
-  const TargetInstrInfo *TII = MF->getTarget().getInstrInfo();
   I = BuildMI(*MBB, I, TII->get(Opcode)).addReg(getSTReg(NotTOS));
 
   // If both operands are killed, pop one off of the stack in addition to
@@ -743,8 +728,6 @@ void FPS::handleCompareFP(MachineBasicBlock::iterator &I) {
   // anywhere.
   moveToTop(Op0, I);
 
-  MachineFunction *MF = I->getParent()->getParent();
-  const TargetInstrInfo *TII = MF->getTarget().getInstrInfo();  
   // Change from the pseudo instruction to the concrete instruction.
   MI->getOperand(0).setReg(getSTReg(Op1));
   MI->RemoveOperand(1);
@@ -769,8 +752,6 @@ void FPS::handleCondMovFP(MachineBasicBlock::iterator &I) {
   // The first operand *must* be on the top of the stack.
   moveToTop(Op0, I);
 
-  MachineFunction *MF = I->getParent()->getParent();
-  const TargetInstrInfo *TII = MF->getTarget().getInstrInfo();  
   // Change the second operand to the stack register that the operand is in.
   // Change from the pseudo instruction to the concrete instruction.
   MI->RemoveOperand(0);
