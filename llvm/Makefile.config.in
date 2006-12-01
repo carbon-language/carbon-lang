@@ -165,7 +165,8 @@ RUNTEST    := @RUNTEST@
 TCLSH      := @TCLSH@
 ZIP        := @ZIP@
 
-HAVE_PERL  := @HAVE_PERL@
+HAVE_PERL    := @HAVE_PERL@
+HAVE_PTHREAD := @HAVE_PTHREAD@
 
 LIBS       := @LIBS@
 
