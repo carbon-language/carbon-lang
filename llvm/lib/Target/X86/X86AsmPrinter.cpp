@@ -177,17 +177,6 @@ bool X86SharedAsmPrinter::doFinalization(Module &M) {
       O << "\t\t" << TAI->getCommentString() << " " << I->getName() << "\n";
     } else {
       switch (I->getLinkage()) {
-      case GlobalValue::ExternalWeakLinkage:
-       if (Subtarget->isTargetDarwin()) {
-         assert(0 && "External weak linkage for Darwin not implemented yet");
-       } else if (Subtarget->isTargetCygwin()) {
-         // There is no external weak linkage on Mingw32 platform.
-         // Defaulting just to external
-         O << "\t.globl " << name << "\n";
-       } else {
-         O << "\t.weak " << name << "\n";
-         break;
-       }
       case GlobalValue::LinkOnceLinkage:
       case GlobalValue::WeakLinkage:
         if (Subtarget->isTargetDarwin()) {
@@ -256,6 +245,12 @@ bool X86SharedAsmPrinter::doFinalization(Module &M) {
         << "\n";
       if (TAI->hasDotTypeDotSizeDirective())
         O << "\t.size " << name << ", " << Size << "\n";
+
+      // If the initializer is a extern weak symbol, remember to emit the weak
+      // reference!
+      if (const GlobalValue *GV = dyn_cast<GlobalValue>(C))
+        if (GV->hasExternalWeakLinkage())
+          ExtWeakSymbols.insert(Mang->getValueName(GV));
 
       EmitGlobalConstant(C);
       O << '\n';

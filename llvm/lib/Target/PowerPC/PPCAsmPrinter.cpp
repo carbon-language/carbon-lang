@@ -605,6 +605,9 @@ bool DarwinAsmPrinter::doFinalization(Module &M) {
     } else {
       switch (I->getLinkage()) {
       case GlobalValue::LinkOnceLinkage:
+      case GlobalValue::ExternalWeakLinkage:
+        O << "\t.weak_reference " << name << "\n";
+        break;
       case GlobalValue::WeakLinkage:
         O << "\t.globl " << name << '\n'
           << "\t.weak_definition " << name << '\n';
@@ -635,6 +638,13 @@ bool DarwinAsmPrinter::doFinalization(Module &M) {
 
       EmitAlignment(Align, I);
       O << name << ":\t\t\t\t; '" << I->getName() << "'\n";
+
+      // If the initializer is a extern weak symbol, remember to emit the weak
+      // reference!
+      if (const GlobalValue *GV = dyn_cast<GlobalValue>(C))
+        if (GV->hasExternalWeakLinkage())
+          ExtWeakSymbols.insert(Mang->getValueName(GV));
+
       EmitGlobalConstant(C);
       O << '\n';
     }
