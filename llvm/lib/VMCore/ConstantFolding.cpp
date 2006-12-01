@@ -743,7 +743,7 @@ static Constant *CastConstantPacked(ConstantPacked *CP,
         (SrcEltTy->isFloatingPoint() && DstEltTy->isFloatingPoint())) {
       for (unsigned i = 0; i != SrcNumElts; ++i)
         Result.push_back(
-          ConstantExpr::getCast(Instruction::BitCast, CP->getOperand(1), 
+          ConstantExpr::getCast(Instruction::BitCast, CP->getOperand(i), 
                                 DstEltTy));
       return ConstantPacked::get(Result);
     }
