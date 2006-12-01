@@ -302,7 +302,7 @@ static void ParseConstraint(const std::string &CStr, CodeGenInstruction *I) {
   unsigned FlatOpNo = I->getFlattenedOperandNumber(SrcOp);
   // Build the string for the operand.
   std::string OpConstraint =
-    "((" + utostr(FlatOpNo) + " << 16) | (1 << TargetInstrInfo::TIED_TO))";
+    "((" + utostr(FlatOpNo) + " << 16) | (1 << TOI::TIED_TO))";
 
   
   if (!I->OperandList[DestOp.first].Constraints[DestOp.second].empty())
@@ -422,8 +422,7 @@ CodeGenInstruction::CodeGenInstruction(Record *R, const std::string &AsmStr)
     if (!OperandList[1].Constraints[0].empty())
       throw R->getName() + ": cannot use isTwoAddress property: instruction "
             "already has constraint set!";
-    OperandList[1].Constraints[0] =
-      "((0 << 16) | (1 << TargetInstrInfo::TIED_TO))";
+    OperandList[1].Constraints[0] = "((0 << 16) | (1 << TOI::TIED_TO))";
   }
   
   // Any operands with unset constraints get 0 as their constraint.
