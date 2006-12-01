@@ -184,28 +184,6 @@ struct RegisterPass : public RegisterPassBase {
                      callDefaultCtor<PassName>) {
     if (CFGOnly) setOnlyUsesCFG();
   }
-
-  // Register Pass using default constructor explicitly...
-  RegisterPass(const char *PassArg, const char *Name,
-               Pass *(*ctor)(), bool CFGOnly = false) 
-  : RegisterPassBase(Name, PassArg, typeid(PassName), ctor) {
-    if (CFGOnly) setOnlyUsesCFG();
-  }
-
-  // Register Pass using TargetMachine constructor...
-  RegisterPass(const char *PassArg, const char *Name, 
-               Pass *(*targetctor)(TargetMachine &), bool CFGOnly = false)
-  : RegisterPassBase(Name, PassArg, typeid(PassName), 0, targetctor) {
-    if (CFGOnly) setOnlyUsesCFG();
-  }
-
-  // Generic constructor version that has an unknown ctor type...
-  template<typename CtorType>
-  RegisterPass(const char *PassArg, const char *Name, CtorType *Fn,
-               bool CFGOnly = false)
-  : RegisterPassBase(Name, PassArg, typeid(PassName), 0) {
-    if (CFGOnly) setOnlyUsesCFG();
-  }
 };
 
 
