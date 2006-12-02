@@ -126,35 +126,57 @@
      SETGT = 352,
      SETEQ = 353,
      SETNE = 354,
-     MALLOC = 355,
-     ALLOCA = 356,
-     FREE = 357,
-     LOAD = 358,
-     STORE = 359,
-     GETELEMENTPTR = 360,
-     PHI_TOK = 361,
-     SELECT = 362,
-     SHL = 363,
-     SHR = 364,
-     ASHR = 365,
-     LSHR = 366,
-     VAARG = 367,
-     EXTRACTELEMENT = 368,
-     INSERTELEMENT = 369,
-     SHUFFLEVECTOR = 370,
-     CAST = 371,
-     TRUNC = 372,
-     ZEXT = 373,
-     SEXT = 374,
-     FPTRUNC = 375,
-     FPEXT = 376,
-     FPTOUI = 377,
-     FPTOSI = 378,
-     UITOFP = 379,
-     SITOFP = 380,
-     PTRTOINT = 381,
-     INTTOPTR = 382,
-     BITCAST = 383
+     ICMP = 355,
+     FCMP = 356,
+     EQ = 357,
+     NE = 358,
+     SLT = 359,
+     SGT = 360,
+     SLE = 361,
+     SGE = 362,
+     OEQ = 363,
+     ONE = 364,
+     OLT = 365,
+     OGT = 366,
+     OLE = 367,
+     OGE = 368,
+     ORD = 369,
+     UNO = 370,
+     UEQ = 371,
+     UNE = 372,
+     ULT = 373,
+     UGT = 374,
+     ULE = 375,
+     UGE = 376,
+     MALLOC = 377,
+     ALLOCA = 378,
+     FREE = 379,
+     LOAD = 380,
+     STORE = 381,
+     GETELEMENTPTR = 382,
+     PHI_TOK = 383,
+     SELECT = 384,
+     SHL = 385,
+     SHR = 386,
+     ASHR = 387,
+     LSHR = 388,
+     VAARG = 389,
+     EXTRACTELEMENT = 390,
+     INSERTELEMENT = 391,
+     SHUFFLEVECTOR = 392,
+     CAST = 393,
+     TRUNC = 394,
+     ZEXT = 395,
+     SEXT = 396,
+     FPTRUNC = 397,
+     FPEXT = 398,
+     FPTOUI = 399,
+     FPTOSI = 400,
+     UITOFP = 401,
+     SITOFP = 402,
+     PTRTOINT = 403,
+     INTTOPTR = 404,
+     BITCAST = 405
    };
 #endif
 /* Tokens.  */
@@ -255,41 +277,63 @@
 #define SETGT 352
 #define SETEQ 353
 #define SETNE 354
-#define MALLOC 355
-#define ALLOCA 356
-#define FREE 357
-#define LOAD 358
-#define STORE 359
-#define GETELEMENTPTR 360
-#define PHI_TOK 361
-#define SELECT 362
-#define SHL 363
-#define SHR 364
-#define ASHR 365
-#define LSHR 366
-#define VAARG 367
-#define EXTRACTELEMENT 368
-#define INSERTELEMENT 369
-#define SHUFFLEVECTOR 370
-#define CAST 371
-#define TRUNC 372
-#define ZEXT 373
-#define SEXT 374
-#define FPTRUNC 375
-#define FPEXT 376
-#define FPTOUI 377
-#define FPTOSI 378
-#define UITOFP 379
-#define SITOFP 380
-#define PTRTOINT 381
-#define INTTOPTR 382
-#define BITCAST 383
+#define ICMP 355
+#define FCMP 356
+#define EQ 357
+#define NE 358
+#define SLT 359
+#define SGT 360
+#define SLE 361
+#define SGE 362
+#define OEQ 363
+#define ONE 364
+#define OLT 365
+#define OGT 366
+#define OLE 367
+#define OGE 368
+#define ORD 369
+#define UNO 370
+#define UEQ 371
+#define UNE 372
+#define ULT 373
+#define UGT 374
+#define ULE 375
+#define UGE 376
+#define MALLOC 377
+#define ALLOCA 378
+#define FREE 379
+#define LOAD 380
+#define STORE 381
+#define GETELEMENTPTR 382
+#define PHI_TOK 383
+#define SELECT 384
+#define SHL 385
+#define SHR 386
+#define ASHR 387
+#define LSHR 388
+#define VAARG 389
+#define EXTRACTELEMENT 390
+#define INSERTELEMENT 391
+#define SHUFFLEVECTOR 392
+#define CAST 393
+#define TRUNC 394
+#define ZEXT 395
+#define SEXT 396
+#define FPTRUNC 397
+#define FPEXT 398
+#define FPTOUI 399
+#define FPTOSI 400
+#define UITOFP 401
+#define SITOFP 402
+#define PTRTOINT 403
+#define INTTOPTR 404
+#define BITCAST 405
 
 
 
 
 #if ! defined (YYSTYPE) && ! defined (YYSTYPE_IS_DECLARED)
-#line 239 "/proj/llvm/llvm-4/tools/llvm-upgrade/UpgradeParser.y"
+#line 268 "/proj/llvm/llvm-4/tools/llvm-upgrade/UpgradeParser.y"
 typedef union YYSTYPE {
   std::string*    String;
   TypeInfo        Type;
@@ -298,7 +342,7 @@ typedef union YYSTYPE {
   ValueList*      ValList;
 } YYSTYPE;
 /* Line 1447 of yacc.c.  */
-#line 302 "UpgradeParser.tab.h"
+#line 346 "UpgradeParser.tab.h"
 # define yystype YYSTYPE /* obsolescent; will be withdrawn */
 # define YYSTYPE_IS_DECLARED 1
 # define YYSTYPE_IS_TRIVIAL 1
