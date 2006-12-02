@@ -1,0 +1,66 @@
+=pod
+
+=head1 NAME
+
+llvm-upgrade - LLVM assembly upgrader
+
+=head1 SYNOPSIS
+
+B<llvm-upgrade> [I<options>] [I<filename>]
+
+=head1 DESCRIPTION
+
+B<llvm-upgrade> is the LLVM assembly upgrader.  It reads a file containing 
+human-readable LLVM assembly language, and upgrades that assembly to the current
+version of LLVM. If the input is in the form currently accepted by LLVM, then
+no upgrades are performed. 
+
+The expected usage of this tool is as a filter, like this:
+
+=over
+
+B<llvm-1.9/bin/llvm-dis < 1.9.bc | llvm-upgrade | llvm-2.0/bin/llvm-as -o 2.0.bc>
+
+=back
+
+If F<filename> is omitted or is C<->, then B<llvm-upgrade> reads its input from
+standard input.
+
+If an output file is not specified with the B<-o> option, then
+B<llvm-upgrade> sends its output to standard output.
+
+=head1 OPTIONS
+
+=over
+
+=item B<-f>
+
+Force overwrite.  Normally, B<llvm-upgrade> will refuse to overwrite an
+output file that already exists.  With this option, B<llvm-upgrade>
+will overwrite the output file.
+
+=item B<--help>
+
+Print a summary of command line options.
+
+=item B<-o> F<filename>
+
+Specify the output file name.  If F<filename> is C<->, then B<llvm-upgrade>
+sends its output to standard output.
+
+=back
+
+=head1 EXIT STATUS
+
+If B<llvm-upgrade> succeeds, it will exit with 0.  Otherwise, if an error
+occurs, it will exit with a non-zero value.
+
+=head1 SEE ALSO
+
+L<llvm-as|llvm-as>, L<llvm-dis|llvm-dis>
+
+=head1 AUTHORS
+
+Maintained by the LLVM Team (L<http://llvm.org>).
+
+=cut
