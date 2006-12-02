@@ -6,8 +6,8 @@
 ; RUN: llvm-upgrade < %s | llvm-as | llc -march=ppc32 -mattr=-fsqrt | not grep 'fsqrt f1, f1' &&
 ; RUN: llvm-upgrade < %s | llvm-as | llc -march=ppc32 -mcpu=g4 | not grep 'fsqrt f1, f1'
 
-declare double %llvm.sqrt(double)
+declare double %llvm.sqrt.f64(double)
 double %X(double %Y) {
-	%Z = call double %llvm.sqrt(double %Y)
+	%Z = call double %llvm.sqrt.f64(double %Y)
 	ret double %Z
 }
