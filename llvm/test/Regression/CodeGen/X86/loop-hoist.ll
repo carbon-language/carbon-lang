@@ -13,7 +13,7 @@ entry:
 cond_true:              ; preds = %cond_true, %entry
         %indvar = phi uint [ 0, %entry ], [ %indvar.next, %cond_true ]          ; <uint> [#uses=3]
         %i.0.0 = cast uint %indvar to int               ; <int> [#uses=1]
-        %tmp = getelementptr [0 x int]* %Arr, int 0, uint %indvar               ; <int*> [#uses=1]
+        %tmp = getelementptr [0 x int]* %Arr, int 0, int %i.0.0
         store int %i.0.0, int* %tmp
         %indvar.next = add uint %indvar, 1              ; <uint> [#uses=2]
         %exitcond = seteq uint %indvar.next, %N         ; <bool> [#uses=1]
