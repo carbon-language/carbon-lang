@@ -15,7 +15,8 @@
 #include "ParserInternals.h"
 #include <llvm/ADT/StringExtras.h>
 #include <algorithm>
-#include <list>
+#include <vector>
+#include <map>
 #include <utility>
 #include <iostream>
 
@@ -32,6 +33,11 @@ static std::ostream *O = 0;
 std::istream* LexInput = 0;
 unsigned SizeOfPointer = 32;
 
+typedef std::vector<TypeInfo> TypeVector;
+static TypeVector EnumeratedTypes;
+typedef std::map<std::string,TypeInfo> TypeMap;
+static TypeMap NamedTypes;
+
 void UpgradeAssembly(const std::string &infile, std::istream& in, 
                      std::ostream &out, bool debug)
 {
@@ -47,26 +53,32 @@ void UpgradeAssembly(const std::string &infile, std::istream& in,
   }
 }
 
-std::string getCastUpgrade(std::string& Source, TypeInfo& SrcTy, 
-                           TypeInfo&DstTy, bool isConst = false)
-{
-  std::string Result;
-  if (SrcTy.isFloatingPoint() && DstTy.isPointer()) {
-    if (isConst)
-      Source = "ulong fptoui(" + Source + " to ulong)";
+static void ResolveType(TypeInfo& Ty) {
+  if (Ty.oldTy == UnresolvedTy) {
+    TypeMap::iterator I = NamedTypes.find(*Ty.newTy);
+    if (I != NamedTypes.end())
+      Ty.oldTy = I->second.oldTy;
     else {
-      Result = "%cast_upgrade = fptoui " + Source + " to ulong";
-      Source = "ulong %cast_upgrade";
+      std::string msg("Can't resolve type: ");
+      msg += *Ty.newTy;
+      yyerror(msg.c_str());
     }
-    SrcTy.destroy();
-    SrcTy.newTy = new std::string("ulong");
-    SrcTy.oldTy = ULongTy;
+  } else if (Ty.oldTy == NumericTy) {
+    unsigned ref = atoi(&((Ty.newTy->c_str())[1])); // Skip the '\\'
+    if (ref < EnumeratedTypes.size()) {
+      Ty.oldTy = EnumeratedTypes[ref].oldTy;
+    } else {
+      std::string msg("Can't resolve type: ");
+      msg += *Ty.newTy;
+      yyerror(msg.c_str());
+    }
   }
-  return Result;
+  // otherwise its already resolved.
 }
 
-const char* getCastOpcode(std::string& Source, TypeInfo& SrcTy, 
-                          TypeInfo&DstTy) {
+static const char* getCastOpcode(
+  std::string& Source, const TypeInfo& SrcTy, const TypeInfo& DstTy) 
+{
   unsigned SrcBits = SrcTy.getBitWidth();
   unsigned DstBits = DstTy.getBitWidth();
   const char* opcode = "bitcast";
@@ -133,18 +145,53 @@ const char* getCastOpcode(std::string& Source, TypeInfo& SrcTy,
       opcode = "bitcast";                          // ptr -> ptr
     } else if (SrcTy.isIntegral()) {
       opcode = "inttoptr";                         // int -> ptr
-    } else if (SrcTy.isFloatingPoint()) {          // float/double -> ptr
-      // Cast to int first
-      *O << "    %upgrade_cast = fptoui " << Source << " to ulong\n";
-      opcode = "inttoptr";
-      Source = "ulong %upgrade_cast";
     } else {
-      assert(!"Casting pointer to other than pointer or int");
+      assert(!"Casting invalid type to pointer");
     }
   } else {
     assert(!"Casting to type that is not first-class");
   }
   return opcode;
+}
+
+static std::string getCastUpgrade(
+  const std::string& Src, TypeInfo& SrcTy, TypeInfo& DstTy, bool isConst)
+{
+  std::string Result;
+  std::string Source = Src;
+  if (SrcTy.isFloatingPoint() && DstTy.isPointer()) {
+    // fp -> ptr cast is no longer supported but we must upgrade this
+    // by doing a double cast: fp -> int -> ptr
+    if (isConst)
+      Source = "ulong fptoui(" + Source + " to ulong)";
+    else {
+      *O << "    %cast_upgrade = fptoui " + Source + " to ulong\n";
+      Source = "ulong %cast_upgrade";
+    }
+    // Update the SrcTy for the getCastOpcode call below
+    SrcTy.destroy();
+    SrcTy.newTy = new std::string("ulong");
+    SrcTy.oldTy = ULongTy;
+  } else if (DstTy.oldTy == BoolTy) {
+    // cast ptr %x to  bool was previously defined as setne ptr %x, null
+    // The ptrtoint semantic is to truncate, not compare so we must retain
+    // the original intent by replace the cast with a setne
+    const char* comparator = SrcTy.isPointer() ? ", null" : 
+      (SrcTy.isFloatingPoint() ? ", 0.0" : ", 0");
+    if (isConst) 
+      Result = "setne (" + Source + comparator + ")";
+    else
+      Result = "setne " + Source + comparator;
+    return Result; // skip cast processing below
+  }
+  ResolveType(SrcTy);
+  ResolveType(DstTy);
+  std::string Opcode(getCastOpcode(Source, SrcTy, DstTy));
+  if (isConst)
+    Result += Opcode + "( " + Source + " to " + *DstTy.newTy + ")";
+  else
+    Result += Opcode + " " + Source + " to " + *DstTy.newTy;
+  return Result;
 }
 
 %}
@@ -159,8 +206,8 @@ const char* getCastOpcode(std::string& Source, TypeInfo& SrcTy,
 }
 
 %token <Type>   VOID BOOL SBYTE UBYTE SHORT USHORT INT UINT LONG ULONG
-%token <Type>   FLOAT DOUBLE LABEL OPAQUE
-%token <String> ESINT64VAL EUINT64VAL SINTVAL UINTVAL FPVAL
+%token <Type>   FLOAT DOUBLE LABEL 
+%token <String> OPAQUE ESINT64VAL EUINT64VAL SINTVAL UINTVAL FPVAL
 %token <String> NULL_TOK UNDEF ZEROINITIALIZER TRUETOK FALSETOK
 %token <String> TYPE VAR_ID LABELSTR STRINGCONSTANT
 %token <String> IMPLEMENTATION BEGINTOK ENDTOK
@@ -232,7 +279,6 @@ FPType   : FLOAT | DOUBLE;
 
 // OptAssign - Value producing statements have an optional assignment component
 OptAssign : Name '=' {
-    *$1 += " = ";
     $$ = $1;
   }
   | /*empty*/ {
@@ -312,17 +358,24 @@ Types     : UpRTypes ;
 //
 PrimType : BOOL | SBYTE | UBYTE | SHORT  | USHORT | INT   | UINT ;
 PrimType : LONG | ULONG | FLOAT | DOUBLE | LABEL;
-UpRTypes : OPAQUE | PrimType 
-         | SymbolicValueRef { 
-           $$.newTy = $1; $$.oldTy = OpaqueTy;
-         };
+UpRTypes 
+  : OPAQUE { 
+    $$.newTy = $1; 
+    $$.oldTy = OpaqueTy; 
+  } 
+  | SymbolicValueRef { 
+    $$.newTy = $1;
+    $$.oldTy = UnresolvedTy;
+  }
+  | PrimType 
+  ;
 
 // Include derived types in the Types production.
 //
 UpRTypes : '\\' EUINT64VAL {                   // Type UpReference
     $2->insert(0, "\\");
     $$.newTy = $2;
-    $$.oldTy = OpaqueTy;
+    $$.oldTy = NumericTy;
   }
   | UpRTypesV '(' ArgTypeListI ')' {           // Function derived type?
     *$1.newTy += "( " + *$3 + " )";
@@ -491,17 +544,17 @@ ConstVal: Types '[' ConstVector ']' { // Nonempty unsized arr
 
 
 ConstExpr: CastOps '(' ConstVal TO Types ')' {
-    // We must infer the cast opcode from the types of the operands. 
-    const char *opcode = $1->c_str();
     std::string source = *$3.cnst;
+    TypeInfo DstTy = $5;
+    ResolveType(DstTy);
     if (*$1 == "cast") {
-      std::string upgrade = getCastUpgrade(source, $3.type, $5, true);
-      opcode = getCastOpcode(source, $3.type, $5);
-      if (!upgrade.empty())
-        source = upgrade;
+      // Call getCastUpgrade to upgrade the old cast
+      $$ = new std::string(getCastUpgrade(source, $3.type, $5, true));
+    } else {
+      // Nothing to upgrade, just create the cast constant expr
+      $$ = new std::string(*$1);
+      *$$ += "( " + source + " to " + *$5.newTy + ")";
     }
-    $$ = new std::string(opcode);
-    *$$ += "( " + source + " " + *$4 + " " + *$5.newTy + ")";
     delete $1; $3.destroy(); delete $4; $5.destroy();
   }
   | GETELEMENTPTR '(' ConstVal IndexList ')' {
@@ -599,12 +652,18 @@ DefinitionList : DefinitionList Function {
     *O << "implementation\n";
     $$ = 0;
   }
-  | ConstPool;
+  | ConstPool { $$ = 0; }
 
 // ConstPool - Constants with optional names assigned to them.
 ConstPool : ConstPool OptAssign TYPE TypesV {
-    *O << *$2 << " " << *$3 << " " << *$4.newTy << "\n";
-    // delete $2; delete $3; $4.destroy();
+    EnumeratedTypes.push_back($4);
+    if (!$2->empty()) {
+      NamedTypes[*$2].newTy = new std::string(*$4.newTy);
+      NamedTypes[*$2].oldTy = $4.oldTy;
+      *O << *$2 << " = ";
+    }
+    *O << "type " << *$4.newTy << "\n";
+    delete $2; delete $3; $4.destroy();
     $$ = 0;
   }
   | ConstPool FunctionProto {       // Function prototypes can be in const pool
@@ -618,26 +677,30 @@ ConstPool : ConstPool OptAssign TYPE TypesV {
     $$ = 0;
   }
   | ConstPool OptAssign OptLinkage GlobalType ConstVal  GlobalVarAttributes {
-    *O << *$2 << " " << *$3 << " " << *$4 << " " << *$5.cnst << " " 
-       << *$6 << "\n";
+    if (!$2->empty())
+      *O << *$2 << " = ";
+    *O << *$3 << " " << *$4 << " " << *$5.cnst << " " << *$6 << "\n";
     delete $2; delete $3; delete $4; $5.destroy(); delete $6; 
     $$ = 0;
   }
   | ConstPool OptAssign EXTERNAL GlobalType Types  GlobalVarAttributes {
-    *O << *$2 << " " << *$3 << " " << *$4 << " " << *$5.newTy 
-       << " " << *$6 << "\n";
+    if (!$2->empty())
+      *O << *$2 << " = ";
+    *O <<  *$3 << " " << *$4 << " " << *$5.newTy << " " << *$6 << "\n";
     delete $2; delete $3; delete $4; $5.destroy(); delete $6;
     $$ = 0;
   }
   | ConstPool OptAssign DLLIMPORT GlobalType Types  GlobalVarAttributes {
-    *O << *$2 << " " << *$3 << " " << *$4 << " " << *$5.newTy 
-       << " " << *$6 << "\n";
+    if (!$2->empty())
+      *O << *$2 << " = ";
+    *O << *$3 << " " << *$4 << " " << *$5.newTy << " " << *$6 << "\n";
     delete $2; delete $3; delete $4; $5.destroy(); delete $6;
     $$ = 0;
   }
   | ConstPool OptAssign EXTERN_WEAK GlobalType Types  GlobalVarAttributes {
-    *O << *$2 << " " << *$3 << " " << *$4 << " " << *$5.newTy 
-       << " " << *$6 << "\n";
+    if (!$2->empty())
+      *O << *$2 << " = ";
+    *O << *$3 << " " << *$4 << " " << *$5.newTy << " " << *$6 << "\n";
     delete $2; delete $3; delete $4; $5.destroy(); delete $6;
     $$ = 0;
   }
@@ -907,7 +970,7 @@ BBTerminatorInst : RET ResolvedVal {              // Return with a result...
     TO LABEL ValueRef UNWIND LABEL ValueRef {
     *O << "    ";
     if (!$1->empty())
-      *O << *$1;
+      *O << *$1 << " = ";
     *O << *$2 << " " << *$3 << " " << *$4.newTy << " " << *$5 << " ("
        << *$7 << ") " << *$9 << " " << *$10.newTy << " " << *$11 << " " 
        << *$12 << " " << *$13.newTy << " " << *$14 << "\n";
@@ -941,6 +1004,8 @@ JumpTable : JumpTable IntType ConstValueRef ',' LABEL ValueRef {
 
 Inst 
   : OptAssign InstVal {
+    if (!$1->empty())
+      *$1 += " = ";
     *$1 += *$2;
     delete $2;
     $$ = $1; 
@@ -1012,16 +1077,16 @@ InstVal : ArithmeticOps Types ValueRef ',' ValueRef {
     delete $1; $2.destroy(); $4.destroy();
   }
   | CastOps ResolvedVal TO Types {
-    const char *opcode = $1->c_str();
     std::string source = *$2.val;
+    TypeInfo SrcTy = $2.type;
+    TypeInfo DstTy = $4;
+    ResolveType(DstTy);
+    $$ = new std::string();
     if (*$1 == "cast") {
-      std::string upgrade = getCastUpgrade(source, $2.type, $4, false);
-      if (!upgrade.empty())
-        *O << "    " << upgrade << "\n";
-      opcode = getCastOpcode(source, $2.type, $4);
+      *$$ +=  getCastUpgrade(source, SrcTy, DstTy, false);
+    } else {
+      *$$ += *$1 + " " + source + " to " + *DstTy.newTy;
     }
-    $$ = new std::string(opcode);
-    *$$ += " " + source + " " + *$3 + " " + *$4.newTy; 
     delete $1; $2.destroy();
     delete $3; $4.destroy();
   }
@@ -1129,7 +1194,7 @@ MemoryInst : MALLOC Types OptCAlign {
     $$ = $1;
   }
   | GETELEMENTPTR Types ValueRef IndexList {
-    *$1 += *$2.newTy + " " + *$3 + " " + *$4;
+    *$1 += " " + *$2.newTy + " " + *$3 + " " + *$4;
     $2.destroy(); delete $3; delete $4;
     $$ = $1;
   };

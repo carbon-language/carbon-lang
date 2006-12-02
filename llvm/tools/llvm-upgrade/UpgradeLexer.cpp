@@ -1471,7 +1471,7 @@ YY_RULE_SETUP
 case 58:
 YY_RULE_SETUP
 #line 160 "/proj/llvm/llvm-4/tools/llvm-upgrade/UpgradeLexer.l"
-{ RET_TY(OPAQUE,OpaqueTy,"opaque",false); }
+{ RET_TOK(OPAQUE); }
 	YY_BREAK
 case 59:
 YY_RULE_SETUP

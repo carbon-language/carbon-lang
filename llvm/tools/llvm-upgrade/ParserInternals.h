@@ -42,7 +42,7 @@ int yyerror(const char *ErrorMsg) ;
 enum Types {
   BoolTy, SByteTy, UByteTy, ShortTy, UShortTy, IntTy, UIntTy, LongTy, ULongTy,
   FloatTy, DoubleTy, PointerTy, PackedTy, ArrayTy, StructTy, OpaqueTy, VoidTy,
-  LabelTy, FunctionTy
+  LabelTy, FunctionTy, UnresolvedTy, NumericTy
 };
 
 /// This type is used to keep track of the signedness of the obsolete
@@ -56,28 +56,28 @@ struct TypeInfo {
   std::string* newTy;
   Types oldTy;
 
-  void destroy() { delete newTy; }
+  void destroy() const { delete newTy; }
 
-  bool isSigned() {
+  bool isSigned() const {
     return oldTy == SByteTy || oldTy == ShortTy || 
            oldTy == IntTy || oldTy == LongTy;
   }
 
-  bool isUnsigned() {
+  bool isUnsigned() const {
     return oldTy == UByteTy || oldTy == UShortTy || 
            oldTy == UIntTy || oldTy == ULongTy;
   }
 
-  bool isSignless() { return !isSigned() && !isUnsigned(); }
-  bool isInteger() { return isSigned() || isUnsigned(); }
-  bool isIntegral() { return oldTy == BoolTy || isInteger(); }
-  bool isFloatingPoint() { return oldTy == DoubleTy || oldTy == FloatTy; }
-  bool isPacked() { return oldTy == PackedTy; }
-  bool isPointer() { return oldTy == PointerTy; }
-  bool isOther() { return !isPacked() && !isPointer() && !isFloatingPoint() 
-                          && !isIntegral(); }
+  bool isSignless() const { return !isSigned() && !isUnsigned(); }
+  bool isInteger() const { return isSigned() || isUnsigned(); }
+  bool isIntegral() const { return oldTy == BoolTy || isInteger(); }
+  bool isFloatingPoint() const { return oldTy == DoubleTy || oldTy == FloatTy; }
+  bool isPacked() const { return oldTy == PackedTy; }
+  bool isPointer() const { return oldTy == PointerTy; }
+  bool isOther() const { 
+    return !isPacked() && !isPointer() && !isFloatingPoint() && !isIntegral(); }
 
-  unsigned getBitWidth() {
+  unsigned getBitWidth() const {
     switch (oldTy) {
       case LabelTy:
       case VoidTy : return 0;

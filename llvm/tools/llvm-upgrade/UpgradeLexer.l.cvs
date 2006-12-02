@@ -157,7 +157,7 @@ ulong           { RET_TY(ULONG,ULongTy,"ulong",false); }
 float           { RET_TY(FLOAT,FloatTy,"float",false); }
 double          { RET_TY(DOUBLE,DoubleTy,"double",false); }
 label           { RET_TY(LABEL,LabelTy,"label",false); }
-opaque          { RET_TY(OPAQUE,OpaqueTy,"opaque",false); }
+opaque          { RET_TOK(OPAQUE); }
 type            { RET_TOK(TYPE);   }
 
 add             { RET_TOK( ADD); }
