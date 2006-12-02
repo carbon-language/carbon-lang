@@ -15,7 +15,7 @@ entry:
 no_exit:		; preds = %no_exit, %entry
 	%indvar = phi uint [ 0, %entry ], [ %indvar.next, %no_exit ]		; <uint> [#uses=3]
 	%D_addr.0.0.rec = cast uint %indvar to int		; <int> [#uses=1]
-	%D_addr.0.0 = getelementptr double* %D, uint %indvar		; <double*> [#uses=1]
+	%D_addr.0.0 = getelementptr double* %D, int %D_addr.0.0.rec		; <double*> [#uses=1]
 	%inc.rec = add int %D_addr.0.0.rec, 1		; <int> [#uses=1]
 	%inc = getelementptr double* %D, int %inc.rec		; <double*> [#uses=1]
 	store double %F, double* %D_addr.0.0
