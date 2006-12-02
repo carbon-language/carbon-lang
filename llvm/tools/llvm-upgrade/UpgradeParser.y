@@ -15,7 +15,6 @@
 #include "ParserInternals.h"
 #include <llvm/ADT/StringExtras.h>
 #include <algorithm>
-#include <vector>
 #include <map>
 #include <utility>
 #include <iostream>
@@ -37,6 +36,15 @@ typedef std::vector<TypeInfo> TypeVector;
 static TypeVector EnumeratedTypes;
 typedef std::map<std::string,TypeInfo> TypeMap;
 static TypeMap NamedTypes;
+
+void destroy(ValueList* VL) {
+  while (!VL->empty()) {
+    ValueInfo& VI = VL->back();
+    VI.destroy();
+    VL->pop_back();
+  }
+  delete VL;
+}
 
 void UpgradeAssembly(const std::string &infile, std::istream& in, 
                      std::ostream &out, bool debug)
@@ -203,6 +211,7 @@ static std::string getCastUpgrade(
   TypeInfo        Type;
   ValueInfo       Value;
   ConstInfo       Const;
+  ValueList*      ValList;
 }
 
 %token <Type>   VOID BOOL SBYTE UBYTE SHORT USHORT INT UINT LONG ULONG
@@ -236,13 +245,13 @@ static std::string getCastUpgrade(
 %type <String> ArgVal ArgListH ArgList FunctionHeaderH BEGIN FunctionHeader END
 %type <String> Function FunctionProto BasicBlock TypeListI
 %type <String> InstructionList BBTerminatorInst JumpTable Inst PHIList
-%type <String> ValueRefList OptTailCall InstVal IndexList OptVolatile
+%type <String> OptTailCall InstVal OptVolatile
 %type <String> MemoryInst SymbolicValueRef OptSideEffect GlobalType
 %type <String> FnDeclareLinkage BasicBlockList BigOrLittle AsmBlock
-%type <String> Name ValueRef ValueRefListE ConstValueRef 
+%type <String> Name ValueRef ConstValueRef ConstVector
 %type <String> ShiftOps SetCondOps LogicalOps ArithmeticOps CastOps 
 
-%type <String> ConstVector
+%type <ValList> ValueRefList ValueRefListE IndexList
 
 %type <Type> IntType SIntType UIntType FPType TypesV Types 
 %type <Type> PrimType UpRTypesV UpRTypes
@@ -558,7 +567,13 @@ ConstExpr: CastOps '(' ConstVal TO Types ')' {
     delete $1; $3.destroy(); delete $4; $5.destroy();
   }
   | GETELEMENTPTR '(' ConstVal IndexList ')' {
-    *$1 += "(" + *$3.cnst + " " + *$4 + ")";
+    *$1 += "(" + *$3.cnst;
+    for (unsigned i = 0; i < $4->size(); ++i) {
+      ValueInfo& VI = (*$4)[i];
+      *$1 += ", " + *VI.val;
+      VI.destroy();
+    }
+    *$1 += ")";
     $$ = $1;
     $3.destroy();
     delete $4;
@@ -971,8 +986,15 @@ BBTerminatorInst : RET ResolvedVal {              // Return with a result...
     *O << "    ";
     if (!$1->empty())
       *O << *$1 << " = ";
-    *O << *$2 << " " << *$3 << " " << *$4.newTy << " " << *$5 << " ("
-       << *$7 << ") " << *$9 << " " << *$10.newTy << " " << *$11 << " " 
+    *O << *$2 << " " << *$3 << " " << *$4.newTy << " " << *$5 << " (";
+    for (unsigned i = 0; i < $7->size(); ++i) {
+      ValueInfo& VI = (*$7)[i];
+      *O << *VI.val;
+      if (i+1 < $7->size())
+        *O << ", ";
+      VI.destroy();
+    }
+    *O << ") " << *$9 << " " << *$10.newTy << " " << *$11 << " " 
        << *$12 << " " << *$13.newTy << " " << *$14 << "\n";
     delete $1; delete $2; delete $3; $4.destroy(); delete $5; delete $7; 
     delete $9; $10.destroy(); delete $11; delete $12; $13.destroy(); 
@@ -1026,17 +1048,19 @@ PHIList
 
 
 ValueRefList 
-  : ResolvedVal { $$ = new std::string(*$1.val); $1.destroy(); }
+  : ResolvedVal { 
+    $$ = new ValueList();
+    $$->push_back($1);
+  }
   | ValueRefList ',' ResolvedVal {
-    *$1 += ", " + *$3.val;
-    $3.destroy();
+    $1->push_back($3);
     $$ = $1;
   };
 
 // ValueRefListE - Just like ValueRefList, except that it may also be empty!
 ValueRefListE 
-  : ValueRefList 
-  | /*empty*/ { $$ = new std::string(); }
+  : ValueRefList  { $$ = $1; }
+  | /*empty*/ { $$ = new ValueList(); }
   ;
 
 OptTailCall 
@@ -1125,7 +1149,15 @@ InstVal : ArithmeticOps Types ValueRef ',' ValueRef {
       *$1 += " " + *$2;
     if (!$1->empty())
       *$1 += " ";
-    *$1 += *$3.newTy + " " + *$4 + "(" + *$6 + ")";
+    *$1 += *$3.newTy + " " + *$4 + "(";
+    for (unsigned i = 0; i < $6->size(); ++i) {
+      ValueInfo& VI = (*$6)[i];
+      *$1 += *VI.val;
+      if (i+1 < $6->size())
+        *$1 += ", ";
+      VI.destroy();
+    }
+    *$1 += ")";
     delete $2; $3.destroy(); delete $4; delete $6;
     $$ = $1;
   }
@@ -1134,11 +1166,8 @@ InstVal : ArithmeticOps Types ValueRef ',' ValueRef {
 
 // IndexList - List of indices for GEP based instructions...
 IndexList 
-  : ',' ValueRefList { 
-    $2->insert(0, ", ");
-    $$ = $2;
-  } 
-  | /* empty */ {  $$ = new std::string(); }
+  : ',' ValueRefList { $$ = $2; }
+  | /* empty */ {  $$ = new ValueList(); }
   ;
 
 OptVolatile 
@@ -1194,7 +1223,12 @@ MemoryInst : MALLOC Types OptCAlign {
     $$ = $1;
   }
   | GETELEMENTPTR Types ValueRef IndexList {
-    *$1 += " " + *$2.newTy + " " + *$3 + " " + *$4;
+    *$1 += " " + *$2.newTy + " " + *$3;
+    for (unsigned i = 0; i < $4->size(); ++i) {
+      ValueInfo& VI = (*$4)[i];
+      *$1 += ", " + *VI.val;
+      VI.destroy();
+    }
     $2.destroy(); delete $3; delete $4;
     $$ = $1;
   };

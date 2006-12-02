@@ -17,6 +17,7 @@
 
 #include <string>
 #include <istream>
+#include <vector>
 
 // Global variables exported from the lexer...
 
@@ -109,5 +110,8 @@ struct ConstInfo {
   TypeInfo type;
   void destroy() { delete cnst; type.destroy(); }
 };
+
+typedef std::vector<ValueInfo> ValueList;
+
 
 #endif
