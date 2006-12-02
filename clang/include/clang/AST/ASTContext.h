@@ -54,6 +54,15 @@ public:
   TypeRef getArrayType(TypeRef EltTy, ArrayType::ArraySizeModifier ASM,
                        unsigned EltTypeQuals, void *NumElts);
 
+  /// getFunctionTypeNoProto - Return a K&R style C function type like 'int()'.
+  ///
+  TypeRef getFunctionTypeNoProto(TypeRef ResultTy);
+  
+  /// getFunctionType - Return a normal function type with a typed argument
+  /// list.  isVariadic indicates whether the argument list includes '...'.
+  TypeRef getFunctionType(TypeRef ResultTy, TypeRef *ArgArray,
+                          unsigned NumArgs, bool isVariadic);
+  
   /// getTypeDeclType - Return the unique reference to the type for the
   /// specified typename decl.
   TypeRef getTypeDeclType(TypeDecl *Decl);

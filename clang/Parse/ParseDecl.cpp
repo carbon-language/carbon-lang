@@ -1020,6 +1020,11 @@ void Parser::ParseParenDeclarator(Declarator &D) {
         DS.ClearStorageClassSpecs();
       }
       
+      
+      // FIXME: If this is 'void', validate it's ok, then break out of the loop
+      // it must be 'int foo(void)'.  Break from loop to prevent trouble with
+      // things like 'int foo(void, ...)' or 'int foo(void, int)'.
+      
       // Inform the actions module about the parameter declarator, so it gets
       // added to the current scope.
       Action::TypeResult ParamTy =

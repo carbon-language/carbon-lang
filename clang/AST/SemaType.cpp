@@ -126,7 +126,25 @@ TypeRef Sema::GetTypeForDeclarator(Declarator &D, Scope *S) {
       break;
     }
     case DeclaratorChunk::Function:
-      return TypeRef();   // FIXME: implement these!
+      // If the function declarator has a prototype (i.e. it is not () and
+      // does not have a K&R-style identifier list), then the arguments are part
+      // of the type, otherwise the argument list is ().
+      const DeclaratorChunk::FunctionTypeInfo &FTI = DeclType.Fun;
+      if (!FTI.hasPrototype) {
+        // Simple void foo(), where the incoming T is the result type.
+        T = Context.getFunctionTypeNoProto(T);
+      } else {
+        // Otherwise, we have a function with an argument list that is
+        // potentially variadic.
+        SmallVector<TypeRef, 16> ArgTys;
+        for (unsigned i = 0, e = FTI.NumArgs; i != e; ++i) {
+          if (FTI.ArgInfo[i].TypeInfo == 0)
+            return TypeRef();  // Error occurred parsing argument type.
+          ArgTys.push_back(TypeRef::getFromOpaquePtr(FTI.ArgInfo[i].TypeInfo));
+        }
+        T = Context.getFunctionType(T, &ArgTys[0], FTI.NumArgs, FTI.isVariadic);
+      }
+      break;
     }
   }
   

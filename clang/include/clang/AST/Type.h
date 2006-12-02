@@ -148,7 +148,7 @@ public:
 class Type {
 public:
   enum TypeClass {
-    Builtin, Pointer, Array, TypeName
+    Builtin, Pointer, Array, FunctionNoProto, FunctionProto, TypeName
   };
 private:
   Type *CanonicalType;
@@ -185,7 +185,7 @@ public:
   static bool classof(const BuiltinType *) { return true; }
 };
 
-/// PointerType - C99 6.7.4.1 - Pointer Declarators.
+/// PointerType - C99 6.7.5.1 - Pointer Declarators.
 ///
 class PointerType : public Type {
   TypeRef PointeeType;
@@ -203,7 +203,7 @@ public:
   static bool classof(const PointerType *) { return true; }
 };
 
-/// PointerType - C99 6.7.4.2 - Array Declarators.
+/// PointerType - C99 6.7.5.2 - Array Declarators.
 ///
 class ArrayType : public Type {
 public:
@@ -239,6 +239,86 @@ public:
   
   static bool classof(const Type *T) { return T->getTypeClass() == Array; }
   static bool classof(const ArrayType *) { return true; }
+};
+
+/// FunctionType - C99 6.7.5.3 - Array Declarators.  This is the common base
+/// class of FunctionTypeNoProto and FunctionTypeProto.
+///
+class FunctionType : public Type {
+  /// SubClassData - This field is owned by the subclass, put here to pack
+  /// tightly with the ivars in Type.
+  bool SubClassData : 1;
+  
+  // The type returned by the function.
+  TypeRef ResultType;
+protected:
+  FunctionType(TypeClass tc, TypeRef res, bool SubclassInfo, Type *Canonical)
+    : Type(tc, Canonical), SubClassData(SubclassInfo), ResultType(res) {}
+  bool getSubClassData() const { return SubClassData; }
+public:
+  
+  TypeRef getResultType() const { return ResultType; }
+
+  
+  static bool classof(const Type *T) {
+    return T->getTypeClass() == FunctionNoProto ||
+           T->getTypeClass() == FunctionProto;
+  }
+  static bool classof(const FunctionType *) { return true; }
+};
+
+/// FunctionTypeNoProto - Represents a K&R-style 'int foo()' function, which has
+/// no information available about its arguments.
+class FunctionTypeNoProto : public FunctionType {
+  FunctionTypeNoProto(TypeRef Result, Type *Canonical)
+    : FunctionType(FunctionNoProto, Result, false, Canonical) {}
+  friend class ASTContext;  // ASTContext creates these.
+public:
+  // No additional state past what FunctionType provides.
+  
+  virtual void getAsString(std::string &InnerString) const;
+
+  static bool classof(const Type *T) {
+    return T->getTypeClass() == FunctionNoProto;
+  }
+  static bool classof(const FunctionTypeNoProto *) { return true; }
+};
+
+/// FunctionTypeProto - Represents a prototype with argument type info, e.g.
+/// 'int foo(int)' or 'int foo(void)'.  'void' is represented as having no
+/// arguments, not as having a single void argument.
+class FunctionTypeProto : public FunctionType {
+  FunctionTypeProto(TypeRef Result, TypeRef *ArgArray, unsigned numArgs,
+                    bool isVariadic, Type *Canonical)
+    : FunctionType(FunctionProto, Result, isVariadic, Canonical),
+      NumArgs(numArgs) {
+    for (unsigned i = 0; i != numArgs; ++i)
+      ArgInfo[i] = ArgArray[i];
+  }
+  
+  /// NumArgs - The number of arguments this function has, not counting '...'.
+  unsigned NumArgs;
+  
+  /// ArgInfo - This array holds the argument types.  Note that this is actually
+  /// a variable-sized array, so it must be the last instance variable in the
+  /// class.
+  TypeRef ArgInfo[1];
+  friend class ASTContext;  // ASTContext creates these.
+public:
+  unsigned getNumArgs() const { return NumArgs; }
+  TypeRef getArgType(unsigned i) const {
+    assert(i < NumArgs && "Invalid argument number!");
+    return ArgInfo[i];
+  }
+    
+  bool isVariadic() const { return getSubClassData(); }
+  
+  virtual void getAsString(std::string &InnerString) const;
+
+  static bool classof(const Type *T) {
+    return T->getTypeClass() == FunctionProto;
+  }
+  static bool classof(const FunctionTypeProto *) { return true; }
 };
 
 

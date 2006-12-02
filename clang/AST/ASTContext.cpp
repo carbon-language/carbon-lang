@@ -14,6 +14,7 @@
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/Decl.h"
 #include "clang/Lex/Preprocessor.h"
+#include "llvm/ADT/SmallVector.h"
 using namespace llvm;
 using namespace clang;
 
@@ -25,7 +26,13 @@ ASTContext::ASTContext(Preprocessor &pp)
 ASTContext::~ASTContext() {
   // Deallocate all the types.
   while (!Types.empty()) {
-    delete Types.back();
+    if (FunctionTypeProto *FT = dyn_cast<FunctionTypeProto>(Types.back())) {
+      // Destroy the object, but don't call delete.  These are malloc'd.
+      FT->~FunctionTypeProto();
+      free(FT);
+    } else {
+      delete Types.back();
+    }
     Types.pop_back();
   }
 }
@@ -118,6 +125,79 @@ TypeRef ASTContext::getArrayType(TypeRef EltTy,ArrayType::ArraySizeModifier ASM,
   return Types.back();
 }
 
+/// getFunctionTypeNoProto - Return a K&R style C function type like 'int()'.
+///
+TypeRef ASTContext::getFunctionTypeNoProto(TypeRef ResultTy) {
+  // FIXME: This is obviously braindead!
+  // Unique functions, to guarantee there is only one function of a particular
+  // structure.
+  for (unsigned i = 0, e = Types.size(); i != e; ++i)
+    if (FunctionTypeNoProto *FTy = dyn_cast<FunctionTypeNoProto>(Types[i]))
+      if (FTy->getResultType() == ResultTy)
+        return Types[i];
+
+  Type *Canonical = 0;
+  if (!ResultTy->isCanonical())
+    Canonical =getFunctionTypeNoProto(ResultTy.getCanonicalType()).getTypePtr();
+  
+  Types.push_back(new FunctionTypeNoProto(ResultTy, Canonical));
+  return Types.back();
+}
+
+/// getFunctionType - Return a normal function type with a typed argument
+/// list.  isVariadic indicates whether the argument list includes '...'.
+TypeRef ASTContext::getFunctionType(TypeRef ResultTy, TypeRef *ArgArray,
+                                    unsigned NumArgs, bool isVariadic) {
+  // FIXME: This is obviously braindead!
+  // Unique functions, to guarantee there is only one function of a particular
+  // structure.
+  for (unsigned i = 0, e = Types.size(); i != e; ++i) {
+    if (FunctionTypeProto *FTy = dyn_cast<FunctionTypeProto>(Types[i]))
+      if (FTy->getResultType() == ResultTy &&
+          FTy->getNumArgs() == NumArgs &&
+          FTy->isVariadic() == isVariadic) {
+        bool Match = true;
+        for (unsigned arg = 0; arg != NumArgs; ++arg) {
+          if (FTy->getArgType(arg) != ArgArray[arg]) {
+            Match = false;
+            break;
+          }
+        } 
+        if (Match)
+          return Types[i];
+      }
+  }
+  
+  // Determine whether the type being created is already canonical or not.  
+  bool isCanonical = ResultTy->isCanonical();
+  for (unsigned i = 0; i != NumArgs && isCanonical; ++i)
+    if (!ArgArray[i]->isCanonical())
+      isCanonical = false;
+
+  // If this type isn't canonical, get the canonical version of it.
+  Type *Canonical = 0;
+  if (!isCanonical) {
+    SmallVector<TypeRef, 16> CanonicalArgs;
+    CanonicalArgs.reserve(NumArgs);
+    for (unsigned i = 0; i != NumArgs; ++i)
+      CanonicalArgs.push_back(ArgArray[i].getCanonicalType());
+    
+    Canonical = getFunctionType(ResultTy.getCanonicalType(),
+                                &CanonicalArgs[0], NumArgs,
+                                isVariadic).getTypePtr();
+  }
+  
+  // FunctionTypeProto objects are not allocated with new because they have a
+  // variable size array (for parameter types) at the end of them.
+  FunctionTypeProto *FTP = 
+    (FunctionTypeProto*)malloc(sizeof(FunctionTypeProto) + 
+                               (NumArgs-1)*sizeof(TypeRef));
+  new (FTP) FunctionTypeProto(ResultTy, ArgArray, NumArgs, isVariadic,
+                              Canonical);
+  
+  Types.push_back(FTP);
+  return FTP;
+}
 
 /// getTypeDeclType - Return the unique reference to the type for the
 /// specified typename decl.

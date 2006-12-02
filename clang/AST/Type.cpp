@@ -97,6 +97,41 @@ void ArrayType::getAsString(std::string &S) const {
   ElementType.getAsString(S);
 }
 
+
+void FunctionTypeNoProto::getAsString(std::string &S) const {
+  // If needed for precedence reasons, wrap the inner part in grouping parens.
+  if (!S.empty())
+    S = "(" + S + ")";
+  
+  S += "()";
+  getResultType().getAsString(S);
+}
+
+void FunctionTypeProto::getAsString(std::string &S) const {
+  // If needed for precedence reasons, wrap the inner part in grouping parens.
+  if (!S.empty())
+    S = "(" + S + ")";
+  
+  S += "(";
+  std::string Tmp;
+  for (unsigned i = 0, e = getNumArgs(); i != e; ++i) {
+    if (i) S += ", ";
+    getArgType(i).getAsString(Tmp);
+    S += Tmp;
+    Tmp.clear();
+  }
+  
+  if (isVariadic()) {
+    if (getNumArgs())
+      S += ", ";
+    S += "...";
+  }
+  
+  S += ")";
+  getResultType().getAsString(S);
+}
+
+
 void TypeNameType::getAsString(std::string &InnerString) const {
   if (InnerString.empty()) {
     InnerString = getDecl()->getIdentifier()->getName();
