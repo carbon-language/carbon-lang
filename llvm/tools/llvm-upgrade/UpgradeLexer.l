@@ -182,6 +182,28 @@ setlt           { RET_TOK( SETLT); }
 setgt           { RET_TOK( SETGT); }
 setle           { RET_TOK( SETLE); }
 setge           { RET_TOK( SETGE); }
+icmp            { RET_TOK(ICMP); }
+fcmp            { RET_TOK(FCMP); }
+eq              { RET_TOK(EQ); }
+ne              { RET_TOK(NE); }
+slt             { RET_TOK(SLT); }
+sgt             { RET_TOK(SGT); }
+sle             { RET_TOK(SLE); }
+sge             { RET_TOK(SGE); }
+oeq             { RET_TOK(OEQ); }
+one             { RET_TOK(ONE); }
+olt             { RET_TOK(OLT); }
+ogt             { RET_TOK(OGT); }
+ole             { RET_TOK(OLE); }
+oge             { RET_TOK(OGE); }
+ord             { RET_TOK(ORD); }
+uno             { RET_TOK(UNO); }
+ueq             { RET_TOK(UEQ); }
+une             { RET_TOK(UNE); }
+ult             { RET_TOK(ULT); }
+ugt             { RET_TOK(UGT); }
+ule             { RET_TOK(ULE); }
+uge             { RET_TOK(UGE); }
 
 phi             { RET_TOK( PHI_TOK); }
 call            { RET_TOK( CALL); }
