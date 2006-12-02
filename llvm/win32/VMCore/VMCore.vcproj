@@ -184,6 +184,9 @@
 				RelativePath="..\..\lib\VMCore\Pass.cpp">
 			</File>
 			<File
+				RelativePath="..\..\lib\VMCore\PassManager.cpp">
+			</File>
+			<File
 				RelativePath="..\..\lib\VMCore\SymbolTable.cpp">
 			</File>
 			<File

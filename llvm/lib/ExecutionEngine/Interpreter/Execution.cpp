@@ -20,6 +20,7 @@
 #include "llvm/Support/GetElementPtrTypeIterator.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/Support/Debug.h"
+#include <cmath>
 using namespace llvm;
 
 namespace {

@@ -29,6 +29,7 @@
 #include <iostream>
 #include <set>
 #include <algorithm>
+#include <cmath>
 using namespace llvm;
 
 /// makeVTList - Return an instance of the SDVTList struct initialized with the

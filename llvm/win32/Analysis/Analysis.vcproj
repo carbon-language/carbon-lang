@@ -118,6 +118,9 @@
 				RelativePath="..\..\lib\Analysis\AliasAnalysisEvaluator.cpp">
 			</File>
 			<File
+				RelativePath="..\..\lib\Analysis\AliasDebugger.cpp">
+			</File>
+			<File
 				RelativePath="..\..\lib\Analysis\AliasSetTracker.cpp">
 			</File>
 			<File

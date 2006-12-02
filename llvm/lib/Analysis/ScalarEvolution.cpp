@@ -78,6 +78,7 @@
 #include "llvm/ADT/Statistic.h"
 #include <ostream>
 #include <algorithm>
+#include <cmath>
 using namespace llvm;
 
 namespace {

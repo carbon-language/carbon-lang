@@ -176,6 +176,9 @@
 				RelativePath="..\..\lib\Support\Statistic.cpp">
 			</File>
 			<File
+				RelativePath="..\..\lib\Support\Streams.cpp">
+			</File>
+			<File
 				RelativePath="..\..\lib\Support\StringExtras.cpp">
 			</File>
 			<File
@@ -312,6 +315,9 @@
 			</File>
 			<File
 				RelativePath="..\..\include\llvm\Support\StableBasicBlockNumbering.h">
+			</File>
+			<File
+				RelativePath="..\..\include\llvm\Support\Streams.h">
 			</File>
 			<File
 				RelativePath="..\..\include\llvm\Support\SystemUtils.h">

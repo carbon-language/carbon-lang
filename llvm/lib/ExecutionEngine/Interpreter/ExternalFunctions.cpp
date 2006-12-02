@@ -27,6 +27,7 @@
 #include "llvm/Target/TargetData.h"
 #include <csignal>
 #include <map>
+#include <cmath>
 using std::vector;
 
 using namespace llvm;

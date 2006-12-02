@@ -32,6 +32,7 @@
 #include <set>
 #include <queue>
 #include <memory>
+#include <cmath>
 using namespace llvm;
 
 namespace {

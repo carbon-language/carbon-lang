@@ -33,6 +33,7 @@
 #include "llvm/ADT/Statistic.h"
 #include "llvm/ADT/STLExtras.h"
 #include <algorithm>
+#include <cmath>
 using namespace llvm;
 
 namespace {

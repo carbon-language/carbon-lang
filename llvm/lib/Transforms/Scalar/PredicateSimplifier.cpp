@@ -436,8 +436,8 @@ namespace {
     for (typename C::iterator KI = Kill.begin(), KE = Kill.end();
          KI != KE; ++KI) {
 
-     for (Node::iterator I = (*KI)->begin(), E = (*KI)->end(); I != E; ++I) {
-       if (I->first == N) continue;
+      for (Node::iterator I = (*KI)->begin(), E = (*KI)->end(); I != E; ++I) {
+        if (I->first == N) continue;
 
         Node::iterator NI = N->find(I->first);
         if (NI == N->end()) {
@@ -446,8 +446,8 @@ namespace {
           unsigned char LV = NI->second & I->second;
           if (LV == EQ_BIT) {
 
-           assert(std::find(Kill.begin(), Kill.end(), I->first) != Kill.end()
-                   && "Lost EQ property.");
+            assert(std::find(Kill.begin(), Kill.end(), I->first) != Kill.end()
+                    && "Lost EQ property.");
             N->erase(NI);
           } else {
             NI->second = static_cast<LatticeVal>(LV);
@@ -465,9 +465,9 @@ namespace {
       }
 
       // Removing references from N to Kill.
-      Node::iterator I = N->find(*KI);
-      if (I != N->end()) {
-        N->erase(I); // breaks reciprocity until Kill is deleted.
+      Node::iterator NI = N->find(*KI);
+      if (NI != N->end()) {
+        N->erase(NI); // breaks reciprocity until Kill is deleted.
       }
     }
 

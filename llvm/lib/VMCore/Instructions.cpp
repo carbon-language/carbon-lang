@@ -1678,7 +1678,7 @@ SExtInst::SExtInst(
   assert(checkCast(getOpcode(), S, Ty) && "Illegal SExt");
 }
 
-SExtInst::SExtInst::SExtInst(
+SExtInst::SExtInst(
   Value *S, const Type *Ty, const std::string &Name, BasicBlock *InsertAtEnd
 )  : CastInst(Ty, SExt, S, Name, InsertAtEnd) { 
   assert(checkCast(getOpcode(), S, Ty) && "Illegal SExt");
