@@ -1,10 +1,10 @@
-; RUN: llvm-as -f %s -o - | llc -sched=none &&
-; RUN: llvm-as -f %s -o - | llc -sched=default &&
-; RUN: llvm-as -f %s -o - | llc -sched=simple &&
-; RUN: llvm-as -f %s -o - | llc -sched=simple-noitin &&
-; RUN: llvm-as -f %s -o - | llc -sched=list-td &&
-; RUN: llvm-as -f %s -o - | llc -sched=list-tdrr &&
-; RUN: llvm-as -f %s -o - | llc -sched=list-burr
+; RUN: llvm-upgrade %s | llvm-as | llc -sched=none &&
+; RUN: llvm-upgrade %s | llvm-as | llc -sched=default &&
+; RUN: llvm-upgrade %s | llvm-as | llc -sched=simple &&
+; RUN: llvm-upgrade %s | llvm-as | llc -sched=simple-noitin &&
+; RUN: llvm-upgrade %s | llvm-as | llc -sched=list-td &&
+; RUN: llvm-upgrade %s | llvm-as | llc -sched=list-tdrr &&
+; RUN: llvm-upgrade %s | llvm-as | llc -sched=list-burr
 ; PR859
 
 implementation

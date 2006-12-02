@@ -1,59 +1,59 @@
 ; Make sure this testcase is supported by all code generators
 ; RUN: llvm-upgrade < %s | llvm-as | llc
 
-declare long %llvm.ctpop(long)
-declare int %llvm.ctpop(int)
-declare short %llvm.ctpop(short)
-declare sbyte %llvm.ctpop(sbyte)
+declare ulong %llvm.ctpop.i64(ulong)
+declare uint %llvm.ctpop.i32(uint)
+declare ushort %llvm.ctpop.i16(ushort)
+declare ubyte %llvm.ctpop.i8(ubyte)
 
-void %ctpoptest(sbyte %A, short %B, int %C, long %D, 
-                sbyte *%AP, short* %BP, int* %CP, long* %DP) {
-	%a = call sbyte %llvm.ctpop(sbyte %A)
-	%b = call short %llvm.ctpop(short %B)
-	%c = call int %llvm.ctpop(int %C)
-	%d = call long %llvm.ctpop(long %D)
+void %ctpoptest(ubyte %A, ushort %B, uint %C, ulong %D, 
+                ubyte *%AP, ushort* %BP, uint* %CP, ulong* %DP) {
+	%a = call ubyte %llvm.ctpop.i8(ubyte %A)
+	%b = call ushort %llvm.ctpop.i16(ushort %B)
+	%c = call uint %llvm.ctpop.i32(uint %C)
+	%d = call ulong %llvm.ctpop.i64(ulong %D)
 
-	store sbyte %a, sbyte* %AP
-	store short %b, short* %BP
-	store int   %c, int* %CP
-	store long  %d, long* %DP
+	store ubyte %a, ubyte* %AP
+	store ushort %b, ushort* %BP
+	store uint   %c, uint* %CP
+	store ulong  %d, ulong* %DP
 	ret void
 }
 
-declare long %llvm.ctlz(long)
-declare int %llvm.ctlz(int)
-declare short %llvm.ctlz(short)
-declare sbyte %llvm.ctlz(sbyte)
+declare ulong %llvm.ctlz.i64(ulong)
+declare uint %llvm.ctlz.i32(uint)
+declare ushort %llvm.ctlz.i16(ushort)
+declare ubyte %llvm.ctlz.i8(ubyte)
 
-void %ctlztest(sbyte %A, short %B, int %C, long %D, 
-               sbyte *%AP, short* %BP, int* %CP, long* %DP) {
-	%a = call sbyte %llvm.ctlz(sbyte %A)
-	%b = call short %llvm.ctlz(short %B)
-	%c = call int %llvm.ctlz(int %C)
-	%d = call long %llvm.ctlz(long %D)
+void %ctlztest(ubyte %A, ushort %B, uint %C, ulong %D, 
+               ubyte *%AP, ushort* %BP, uint* %CP, ulong* %DP) {
+	%a = call ubyte %llvm.ctlz.i8(ubyte %A)
+	%b = call ushort %llvm.ctlz.i16(ushort %B)
+	%c = call uint %llvm.ctlz.i32(uint %C)
+	%d = call ulong %llvm.ctlz.i64(ulong %D)
 
-	store sbyte %a, sbyte* %AP
-	store short %b, short* %BP
-	store int   %c, int* %CP
-	store long  %d, long* %DP
+	store ubyte %a, ubyte* %AP
+	store ushort %b, ushort* %BP
+	store uint   %c, uint* %CP
+	store ulong  %d, ulong* %DP
 	ret void
 }
 
-declare long %llvm.cttz(long)
-declare int %llvm.cttz(int)
-declare short %llvm.cttz(short)
-declare sbyte %llvm.cttz(sbyte)
+declare ulong %llvm.cttz.i64(ulong)
+declare uint %llvm.cttz.i32(uint)
+declare ushort %llvm.cttz.i16(ushort)
+declare ubyte %llvm.cttz.i8(ubyte)
 
-void %cttztest(sbyte %A, short %B, int %C, long %D, 
-               sbyte *%AP, short* %BP, int* %CP, long* %DP) {
-	%a = call sbyte %llvm.cttz(sbyte %A)
-	%b = call short %llvm.cttz(short %B)
-	%c = call int %llvm.cttz(int %C)
-	%d = call long %llvm.cttz(long %D)
+void %cttztest(ubyte %A, ushort %B, uint %C, ulong %D, 
+               ubyte *%AP, ushort* %BP, uint* %CP, ulong* %DP) {
+	%a = call ubyte %llvm.cttz.i8(ubyte %A)
+	%b = call ushort %llvm.cttz.i16(ushort %B)
+	%c = call uint %llvm.cttz.i32(uint %C)
+	%d = call ulong %llvm.cttz.i64(ulong %D)
 
-	store sbyte %a, sbyte* %AP
-	store short %b, short* %BP
-	store int   %c, int* %CP
-	store long  %d, long* %DP
+	store ubyte %a, ubyte* %AP
+	store ushort %b, ushort* %BP
+	store uint   %c, uint* %CP
+	store ulong  %d, ulong* %DP
 	ret void
 }

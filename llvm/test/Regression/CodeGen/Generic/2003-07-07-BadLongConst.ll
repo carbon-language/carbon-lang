@@ -1,4 +1,4 @@
-; RUN: llvm-as -f %s -o - | llc
+; RUN: llvm-upgrade %s | llvm-as | llc
 
 
 %.str_1 = internal constant [42 x sbyte] c"   ui = %u (0x%x)\09\09UL-ui = %lld (0x%llx)\0A\00"

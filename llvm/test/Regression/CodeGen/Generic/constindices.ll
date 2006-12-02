@@ -1,4 +1,4 @@
-; RUN: llvm-as -f %s -o - | llc
+; RUN: llvm-upgrade %s | llvm-as | llc
 
 ; Test that a sequence of constant indices are folded correctly
 ; into the equivalent offset at compile-time.

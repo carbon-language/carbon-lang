@@ -1,12 +1,12 @@
 ; RUN: llvm-upgrade < %s | llvm-as | llc
 
 ;; SQRT
-declare float %llvm.sqrt(float)
-declare double %llvm.sqrt(double)
+declare float %llvm.sqrt.f32(float)
+declare double %llvm.sqrt.f64(double)
 double %test_sqrt(float %F) {
-	%G = call float %llvm.sqrt(float %F)
+	%G = call float %llvm.sqrt.f32(float %F)
 	%H = cast float %G to double
-	%I = call double %llvm.sqrt(double %H)
+	%I = call double %llvm.sqrt.f64(double %H)
 	ret double %I
 }
 

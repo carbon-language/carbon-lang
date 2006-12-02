@@ -1,4 +1,4 @@
-; RUN: llvm-as -f %s -o - | llc
+; RUN: llvm-upgrade %s | llvm-as | llc
 
 ;; Register allocation is doing a very poor job on this routine from yyparse
 ;; in Burg:
