@@ -2,8 +2,6 @@
 ; RUN: llvm-as %t1.ll -o - | llvm-dis > %t2.ll
 ; RUN: diff %t1.ll %t2.ll
 
-; RUN: llvm-as < %s | llvm-dis
-
 %foo1 = uninitialized global <4 x float>;
 %foo2 = uninitialized global <2 x int>;
 
