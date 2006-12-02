@@ -1,7 +1,7 @@
 ; Check that this test makes INDVAR and related stuff dead, because P[indvar]
 ; gets reduced, making INDVAR dead.
 
-; RUN: llvm-as < %s | opt -loop-reduce | llvm-dis | not grep INDVAR
+; RUN: llvm-upgrade < %s | llvm-as | opt -loop-reduce | llvm-dis | not grep INDVAR
 
 declare bool %pred()
 declare int %getidx()

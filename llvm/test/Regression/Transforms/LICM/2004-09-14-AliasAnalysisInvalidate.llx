@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -globalsmodref-aa -licm -disable-output
+; RUN: llvm-upgrade < %s | llvm-as | opt -globalsmodref-aa -licm -disable-output
 
 %PL_regcomp_parse = internal global sbyte* null
 

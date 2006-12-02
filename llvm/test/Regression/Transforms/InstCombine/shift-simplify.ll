@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -instcombine | llvm-dis | egrep 'shl|lshr|ashr' | wc -l | grep 3
+; RUN: llvm-upgrade < %s | llvm-as | opt -instcombine | llvm-dis | egrep 'shl|lshr|ashr' | wc -l | grep 3
 
 int %test0(int %A, int %B, ubyte %C) {
 	%X = shl int %A, ubyte %C

@@ -1,5 +1,5 @@
 ; This shouldn't crash
-; RUN: llvm-as < %s | llc -march=alpha 
+; RUN: llvm-upgrade < %s | llvm-as | llc -march=alpha 
 
 ; ModuleID = 'simp.bc'
 target endian = little

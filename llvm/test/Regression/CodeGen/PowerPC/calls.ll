@@ -1,8 +1,8 @@
 ; Test various forms of calls.
 
-; RUN: llvm-as < %s | llc -march=ppc32 | grep 'bl ' | wc -l | grep 2 &&
-; RUN: llvm-as < %s | llc -march=ppc32 | grep 'bctrl' | wc -l | grep 1 &&
-; RUN: llvm-as < %s | llc -march=ppc32 | grep 'bla ' | wc -l | grep 1
+; RUN: llvm-upgrade < %s | llvm-as | llc -march=ppc32 | grep 'bl ' | wc -l | grep 2 &&
+; RUN: llvm-upgrade < %s | llvm-as | llc -march=ppc32 | grep 'bctrl' | wc -l | grep 1 &&
+; RUN: llvm-upgrade < %s | llvm-as | llc -march=ppc32 | grep 'bla ' | wc -l | grep 1
 
 declare void %foo()
 

@@ -1,7 +1,7 @@
 ; This testcase fails because preheader insertion is not updating exit node 
 ; information for loops.
 
-; RUN: llvm-as < %s | opt -licm
+; RUN: llvm-upgrade < %s | llvm-as | opt -licm
 
 int %main(int %argc, sbyte** %argv) {
 bb0:            ; No predecessors!

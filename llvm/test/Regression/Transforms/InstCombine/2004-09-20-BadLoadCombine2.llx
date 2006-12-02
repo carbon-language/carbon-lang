@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -instcombine -mem2reg -simplifycfg | llvm-dis | \
+; RUN: llvm-upgrade < %s | llvm-as | opt -instcombine -mem2reg -simplifycfg | llvm-dis | \
 ; RUN:   grep -v store | not grep 'int 1'
 
 ; Test to make sure that instcombine does not accidentally propagate the load

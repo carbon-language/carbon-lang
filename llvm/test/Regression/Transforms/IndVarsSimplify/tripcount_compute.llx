@@ -3,7 +3,7 @@
 ; the exit value of the loop will be for some value, allowing us to substitute
 ; it directly into users outside of the loop, making the loop dead.
 ;
-; RUN: llvm-as < %s | opt -indvars -adce -simplifycfg | llvm-dis | not grep br
+; RUN: llvm-upgrade < %s | llvm-as | opt -indvars -adce -simplifycfg | llvm-dis | not grep br
 
 int %linear_setne() {   ;; for (i = 0; i != 100; ++i)
 entry:

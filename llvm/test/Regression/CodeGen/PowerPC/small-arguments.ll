@@ -1,6 +1,6 @@
 
-; RUN: llvm-as < %s | llc -march=ppc32 &&
-; RUN: llvm-as < %s | llc -march=ppc32 | not grep 'extsh\|rlwinm'
+; RUN: llvm-upgrade < %s | llvm-as | llc -march=ppc32 &&
+; RUN: llvm-upgrade < %s | llvm-as | llc -march=ppc32 | not grep 'extsh\|rlwinm'
 
 declare short %foo()
 

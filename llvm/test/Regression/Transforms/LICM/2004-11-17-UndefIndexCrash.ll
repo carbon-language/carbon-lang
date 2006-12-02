@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -licm -disable-output
+; RUN: llvm-upgrade < %s | llvm-as | opt -licm -disable-output
 
 	%struct.roadlet = type { sbyte*, %struct.vehicle*, [8 x %struct.roadlet*], [8 x %struct.roadlet* (%struct.roadlet*, %struct.vehicle*, int)*] }
 	%struct.vehicle = type { %struct.roadlet*, sbyte*, int, int, %union.._631., int }

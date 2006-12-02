@@ -2,7 +2,7 @@
 ; blocks.  These blocks should at least dominate themselves.  This is 
 ; fouling up the verify pass.
 ;
-; RUN: llvm-as < %s | opt -analyze -domset | grep BB
+; RUN: llvm-upgrade < %s | llvm-as | opt -analyze -domset | grep BB
 
 void %test() {
 	ret void

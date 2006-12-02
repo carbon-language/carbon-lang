@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -argpromotion | llvm-dis | grep x.val
+; RUN: llvm-upgrade < %s | llvm-as | opt -argpromotion | llvm-dis | grep x.val
 ; XFAIL: *
 
 implementation   ; Functions:

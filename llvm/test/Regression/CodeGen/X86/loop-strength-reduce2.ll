@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -mtriple=i686-apple-darwin -relocation-model=pic | not grep lea
+; RUN: llvm-upgrade < %s | llvm-as | llc -mtriple=i686-apple-darwin -relocation-model=pic | not grep lea
 ;
 ; Make sure the PIC label flags2-"L1$pb" is not moved up to the preheader.
 

@@ -1,8 +1,8 @@
-; RUN: llvm-as < %s | llc -march=arm &&
-; RUN: llvm-as < %s | llc -march=arm | grep __divsi3  &&
-; RUN: llvm-as < %s | llc -march=arm | grep __udivsi3 &&
-; RUN: llvm-as < %s | llc -march=arm | grep __modsi3  &&
-; RUN: llvm-as < %s | llc -march=arm | grep __umodsi3
+; RUN: llvm-upgrade < %s | llvm-as | llc -march=arm &&
+; RUN: llvm-upgrade < %s | llvm-as | llc -march=arm | grep __divsi3  &&
+; RUN: llvm-upgrade < %s | llvm-as | llc -march=arm | grep __udivsi3 &&
+; RUN: llvm-upgrade < %s | llvm-as | llc -march=arm | grep __modsi3  &&
+; RUN: llvm-upgrade < %s | llvm-as | llc -march=arm | grep __umodsi3
 
 int %f1(int %a, int %b) {
 entry:

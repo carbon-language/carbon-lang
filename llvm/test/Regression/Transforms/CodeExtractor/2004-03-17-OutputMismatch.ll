@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -loop-extract -disable-output
+; RUN: llvm-upgrade < %s | llvm-as | opt -loop-extract -disable-output
 
 	%struct.node_t = type { double*, %struct.node_t*, %struct.node_t**, double**, double*, int, int }
 	%struct.table_t = type { [1 x %struct.node_t**], [1 x %struct.node_t**] }

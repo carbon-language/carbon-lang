@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -adce -disable-output
+; RUN: llvm-upgrade < %s | llvm-as | opt -adce -disable-output
 
 target endian = little
 target pointersize = 32

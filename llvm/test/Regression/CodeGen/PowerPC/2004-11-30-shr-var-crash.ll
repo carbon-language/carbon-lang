@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=ppc32
+; RUN: llvm-upgrade < %s | llvm-as | llc -march=ppc32
 
 void %main() {
 	%shamt = add ubyte 0, 1		; <ubyte> [#uses=1]

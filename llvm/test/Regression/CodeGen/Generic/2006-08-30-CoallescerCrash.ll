@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc 
+; RUN: llvm-upgrade < %s | llvm-as | llc 
 
 	%struct.CUMULATIVE_ARGS = type { int, int, int, int, int, int, int, int, int, int, int, int, int, int }
 	%struct.VEC_edge = type { uint, uint, [1 x %struct.edge_def*] }

@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -indvars -instcombine | llvm-dis | grep 'store int 0'
+; RUN: llvm-upgrade < %s | llvm-as | opt -indvars -instcombine | llvm-dis | grep 'store int 0'
 ; Test that -indvars can reduce variable stride IVs.  If it can reduce variable
 ; stride iv's, it will make %iv. and %m.0.0 isomorphic to each other without 
 ; cycles, allowing the tmp.21 subtraction to be eliminated.

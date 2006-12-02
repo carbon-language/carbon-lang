@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -loop-unswitch -disable-output
+; RUN: llvm-upgrade < %s | llvm-as | opt -loop-unswitch -disable-output
 implementation   ; Functions:
 
 int %test(int* %A, bool %C) {

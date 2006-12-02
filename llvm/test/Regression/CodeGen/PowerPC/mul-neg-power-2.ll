@@ -1,5 +1,5 @@
-; RUN: llvm-as < %s | llc -march=ppc32 &&
-; RUN: llvm-as < %s | llc -march=ppc32 | not grep mul
+; RUN: llvm-upgrade < %s | llvm-as | llc -march=ppc32 &&
+; RUN: llvm-upgrade < %s | llvm-as | llc -march=ppc32 | not grep mul
 
 int %test1(int %a) {
         %tmp.1 = mul int %a, -2         ; <int> [#uses=1]

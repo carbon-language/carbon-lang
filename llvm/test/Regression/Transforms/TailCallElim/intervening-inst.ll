@@ -1,5 +1,5 @@
 ; This function contains intervening instructions which should be moved out of the way
-; RUN: llvm-as < %s | opt -tailcallelim | llvm-dis | not grep call
+; RUN: llvm-upgrade < %s | llvm-as | opt -tailcallelim | llvm-dis | not grep call
 
 int %Test(int %X) {
 entry:

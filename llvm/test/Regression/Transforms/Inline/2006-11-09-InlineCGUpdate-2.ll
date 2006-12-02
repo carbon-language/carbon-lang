@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -inline -prune-eh -disable-output
+; RUN: llvm-upgrade < %s | llvm-as | opt -inline -prune-eh -disable-output
 ; PR993
 target endian = little
 target pointersize = 32

@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc
+; RUN: llvm-upgrade < %s | llvm-as | llc
 
 void %iterative_hash_host_wide_int() {
 	%zero = alloca int		; <int*> [#uses=2]

@@ -1,6 +1,6 @@
 ; SetCC on boolean values was not implemented!
 
-; RUN: llvm-as < %s | opt -constprop -die | llvm-dis | not grep 'set'
+; RUN: llvm-upgrade < %s | llvm-as | opt -constprop -die | llvm-dis | not grep 'set'
 
 bool "test1"() {
 	%A = setle bool true, false

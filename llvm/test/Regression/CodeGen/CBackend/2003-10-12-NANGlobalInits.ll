@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=c
+; RUN: llvm-upgrade < %s | llvm-as | llc -march=c
 
 ; This is a non-normal FP value: it's a nan.
 %NAN = global { float } { float 0x7FF8000000000000 } 

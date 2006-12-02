@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -extract-blocks -disable-output
+; RUN: llvm-upgrade < %s | llvm-as | opt -extract-blocks -disable-output
 int %foo() {
 	br label %EB
 EB:

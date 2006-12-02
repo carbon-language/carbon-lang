@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -globalopt | llvm-dis | not grep malloc
+; RUN: llvm-upgrade < %s | llvm-as | opt -globalopt | llvm-dis | not grep malloc
 
 %G = internal global int* null
 

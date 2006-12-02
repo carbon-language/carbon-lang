@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=x86 -mattr=+sse
+; RUN: llvm-upgrade < %s | llvm-as | llc -march=x86 -mattr=+sse
 
 void %test(int %C, <4 x float>* %A, <4 x float>* %B) {
 	%tmp = load <4 x float>* %A

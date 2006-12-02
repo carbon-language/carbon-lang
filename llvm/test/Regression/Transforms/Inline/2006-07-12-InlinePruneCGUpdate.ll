@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -inline -prune-eh -disable-output
+; RUN: llvm-upgrade < %s | llvm-as | opt -inline -prune-eh -disable-output
 ; PR827
 
 %_ZTV8CRjii = internal global [1 x int (...)*] [ int (...)* %_ZN8CRjii12NlFeeEPN5Jr7sE ]		; <[1 x int (...)*]*> [#uses=0]

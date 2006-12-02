@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -tailduplicate -disable-output
+; RUN: llvm-upgrade < %s | llvm-as | opt -tailduplicate -disable-output
 
 void %interpret() {
 entry:

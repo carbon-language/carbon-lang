@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc
+; RUN: llvm-upgrade < %s | llvm-as | llc
 ; Test that llvm.memcpy works with a i64 length operand on all targets.
 
 

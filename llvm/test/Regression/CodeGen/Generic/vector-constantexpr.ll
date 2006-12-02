@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc
+; RUN: llvm-upgrade < %s | llvm-as | llc
 	
 void ""(float* %inregs, float* %outregs) {
         %a_addr.i = alloca <4 x float>          ; <<4 x float>*> [#uses=1]

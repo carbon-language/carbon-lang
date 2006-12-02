@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -simplifycfg | llvm-dis | not grep br
+; RUN: llvm-upgrade < %s | llvm-as | opt -simplifycfg | llvm-dis | not grep br
 
 declare void %foo1()
 declare void %foo2()

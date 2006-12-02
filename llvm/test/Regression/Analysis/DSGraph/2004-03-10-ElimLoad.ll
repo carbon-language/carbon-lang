@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -ds-aa -load-vn -gcse -instcombine | llvm-dis | not grep sub
+; RUN: llvm-upgrade < %s | llvm-as | opt -ds-aa -load-vn -gcse -instcombine | llvm-dis | not grep sub
 
 void %bar(int* %p) {
   ret void

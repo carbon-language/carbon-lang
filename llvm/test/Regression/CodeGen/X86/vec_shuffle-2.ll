@@ -1,6 +1,6 @@
-; RUN: llvm-as < %s | llc -march=x86 -mattr=+sse2 | grep pshufhw | wc -l | grep 1 &&
-; RUN: llvm-as < %s | llc -march=x86 -mattr=+sse2 | grep pshuflw | wc -l | grep 1 &&
-; RUN: llvm-as < %s | llc -march=x86 -mattr=+sse2 | grep movhps | wc -l | grep 1
+; RUN: llvm-upgrade < %s | llvm-as | llc -march=x86 -mattr=+sse2 | grep pshufhw | wc -l | grep 1 &&
+; RUN: llvm-upgrade < %s | llvm-as | llc -march=x86 -mattr=+sse2 | grep pshuflw | wc -l | grep 1 &&
+; RUN: llvm-upgrade < %s | llvm-as | llc -march=x86 -mattr=+sse2 | grep movhps | wc -l | grep 1
 
 void %test1(<2 x long>* %res, <2 x long>* %A) {
 	%tmp = load <2 x long>* %A

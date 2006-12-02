@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -raise -disable-output
+; RUN: llvm-upgrade < %s | llvm-as | opt -raise -disable-output
 
 %T = type { [0 x ubyte] }
 

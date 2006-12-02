@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=x86 -x86-asm-syntax=att
+; RUN: llvm-upgrade < %s | llvm-as | llc -march=x86 -x86-asm-syntax=att
 ; PR834
 
 target endian = little

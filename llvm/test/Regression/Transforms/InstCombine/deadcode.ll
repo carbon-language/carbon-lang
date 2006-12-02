@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -instcombine | llvm-dis | grep 'ret int %A'
+; RUN: llvm-upgrade < %s | llvm-as | opt -instcombine | llvm-dis | grep 'ret int %A'
 
 int %test(int %A) {
   %X = or bool false, false

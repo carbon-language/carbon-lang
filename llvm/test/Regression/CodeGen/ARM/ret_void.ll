@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=arm
+; RUN: llvm-upgrade < %s | llvm-as | llc -march=arm
 void %test() {
   ret void
 }

@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -loop-reduce -disable-output
+; RUN: llvm-upgrade < %s | llvm-as | opt -loop-reduce -disable-output
 
 void %try_swap() {
 entry:

@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -tailduplicate  | llvm-dis | grep add | not grep uses=1
+; RUN: llvm-upgrade < %s | llvm-as | opt -tailduplicate  | llvm-dis | grep add | not grep uses=1
 
 int %test1(bool %C, int %A, int* %P) {
 entry:

@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llvm-dis | not grep 'getelementptr.*getelementptr'
+; RUN: llvm-upgrade < %s | llvm-as | llvm-dis | not grep 'getelementptr.*getelementptr'
 
         %struct.TUVVertex = type { short, short, short, short }
         %struct.TTriangleItem = type { sbyte*, sbyte*, [3 x %struct.TUVVertex] }

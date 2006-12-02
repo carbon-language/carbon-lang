@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -loopsimplify -verify -licm -disable-output
+; RUN: llvm-upgrade < %s | llvm-as | opt -loopsimplify -verify -licm -disable-output
 implementation   ; Functions:
 
 void %.subst_48() {

@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -inline | llvm-dis | not grep tail
+; RUN: llvm-upgrade < %s | llvm-as | opt -inline | llvm-dis | not grep tail
 
 implementation
 

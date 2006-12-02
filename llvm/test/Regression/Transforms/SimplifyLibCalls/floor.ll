@@ -1,9 +1,9 @@
-; RUN: llvm-as < %s | opt -simplify-libcalls | llvm-dis | not grep 'call.*floor(' &&
-; RUN: llvm-as < %s | opt -simplify-libcalls | llvm-dis | grep 'call.*floorf('
-; RUN: llvm-as < %s | opt -simplify-libcalls | llvm-dis | not grep 'call.*ceil(' &&
-; RUN: llvm-as < %s | opt -simplify-libcalls | llvm-dis | grep 'call.*ceilf('
-; RUN: llvm-as < %s | opt -simplify-libcalls | llvm-dis | not grep 'call.*nearbyint(' &&
-; RUN: llvm-as < %s | opt -simplify-libcalls | llvm-dis | grep 'call.*nearbyintf('
+; RUN: llvm-upgrade < %s | llvm-as | opt -simplify-libcalls | llvm-dis | not grep 'call.*floor(' &&
+; RUN: llvm-upgrade < %s | llvm-as | opt -simplify-libcalls | llvm-dis | grep 'call.*floorf('
+; RUN: llvm-upgrade < %s | llvm-as | opt -simplify-libcalls | llvm-dis | not grep 'call.*ceil(' &&
+; RUN: llvm-upgrade < %s | llvm-as | opt -simplify-libcalls | llvm-dis | grep 'call.*ceilf('
+; RUN: llvm-upgrade < %s | llvm-as | opt -simplify-libcalls | llvm-dis | not grep 'call.*nearbyint(' &&
+; RUN: llvm-upgrade < %s | llvm-as | opt -simplify-libcalls | llvm-dis | grep 'call.*nearbyintf('
 ; XFAIL: sparc
 
 declare double %floor(double)

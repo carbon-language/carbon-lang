@@ -1,5 +1,5 @@
 ; Test that the ExitInMainOptimization pass works correctly
-; RUN: llvm-as < %s | opt -simplify-libcalls | llvm-dis | grep -c 'ret int 3' | grep 1
+; RUN: llvm-upgrade < %s | llvm-as | opt -simplify-libcalls | llvm-dis | grep -c 'ret int 3' | grep 1
 
 declare void %exit(int)
 declare void %exitonly(int)

@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -funcresolve
+; RUN: llvm-upgrade < %s | llvm-as | opt -funcresolve
 
 declare int %read(...)
 

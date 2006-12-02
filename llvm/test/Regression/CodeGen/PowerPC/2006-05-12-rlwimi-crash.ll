@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=ppc32
+; RUN: llvm-upgrade < %s | llvm-as | llc -march=ppc32
 
 	%struct.attr_desc = type { sbyte*, %struct.attr_desc*, %struct.attr_value*, %struct.attr_value*, uint }
 	%struct.attr_value = type { %struct.rtx_def*, %struct.attr_value*, %struct.insn_ent*, int, int }

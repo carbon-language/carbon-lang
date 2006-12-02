@@ -1,6 +1,6 @@
-; RUN: llvm-as < %s | llc -march=arm &&
-; RUN: llvm-as < %s | llc -march=arm | grep "ldr r0.*#0" | wc -l | grep 2 &&
-; RUN: llvm-as < %s | llc -march=arm | grep "ldr r0.*#4092" | wc -l | grep 1
+; RUN: llvm-upgrade < %s | llvm-as | llc -march=arm &&
+; RUN: llvm-upgrade < %s | llvm-as | llc -march=arm | grep "ldr r0.*#0" | wc -l | grep 2 &&
+; RUN: llvm-upgrade < %s | llvm-as | llc -march=arm | grep "ldr r0.*#4092" | wc -l | grep 1
 
 int %f1(int* %v) {
 entry:

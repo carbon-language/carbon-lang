@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=x86-64
+; RUN: llvm-upgrade < %s | llvm-as | llc -march=x86-64
 
 <4 x int> %test() {
 	%tmp1039 = call <4 x int> %llvm.x86.sse2.psll.d( <4 x int> zeroinitializer, <4 x int> zeroinitializer )		; <<4 x int>> [#uses=1]

@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -adce -simplifycfg | llvm-dis | grep call
+; RUN: llvm-upgrade < %s | llvm-as | opt -adce -simplifycfg | llvm-dis | grep call
 declare void %exit(int)
 
 int %main(int %argc) {

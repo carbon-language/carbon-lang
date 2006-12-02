@@ -3,7 +3,7 @@
 ; has no defined way to check for this, so DSA can know that strcpy doesn't
 ; require merging the input arguments.
 
-; RUN: llvm-as < %s | opt -analyze -datastructure-gc --dsgc-abort-if-merged=A,B --dsgc-check-flags=A:ASM,B:ASR --dsgc-dspass=bu
+; RUN: llvm-upgrade < %s | llvm-as | opt -analyze -datastructure-gc --dsgc-abort-if-merged=A,B --dsgc-check-flags=A:ASM,B:ASR --dsgc-dspass=bu
 
 implementation
 

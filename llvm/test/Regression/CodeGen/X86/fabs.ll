@@ -1,6 +1,6 @@
 ; Make sure this testcase codegens to the fabs instruction, not a call to fabsf
-; RUN: llvm-as < %s | llc -march=x86 -mattr=-sse2,-sse3 | grep 'fabs$' | wc -l | grep 1 && 
-; RUN: llvm-as < %s | llc -march=x86 -mattr=-sse2,-sse3 -enable-unsafe-fp-math  | grep 'fabs$' | wc -l | grep 2
+; RUN: llvm-upgrade < %s | llvm-as | llc -march=x86 -mattr=-sse2,-sse3 | grep 'fabs$' | wc -l | grep 1 && 
+; RUN: llvm-upgrade < %s | llvm-as | llc -march=x86 -mattr=-sse2,-sse3 -enable-unsafe-fp-math  | grep 'fabs$' | wc -l | grep 2
 
 target endian = little
 target pointersize = 32

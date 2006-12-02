@@ -1,6 +1,6 @@
 ; This testcase was extracted from the gzip SPEC benchmark
 ;
-; RUN: llvm-as < %s | opt -adce
+; RUN: llvm-upgrade < %s | llvm-as | opt -adce
 
 %bk = external global uint		; <uint*> [#uses=2]
 %hufts = external global uint		; <uint*> [#uses=1]

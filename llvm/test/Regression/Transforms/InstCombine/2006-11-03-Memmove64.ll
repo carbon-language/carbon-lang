@@ -1,4 +1,4 @@
-;RUN: llvm-as < %s | opt -instcombine | llvm-dis |not grep memmove.i32
+;RUN: llvm-upgrade < %s | llvm-as | opt -instcombine | llvm-dis |not grep memmove.i32
 ; Instcombine was trying to turn this into a memmove.i32
 
 target datalayout = "e-p:64:64"

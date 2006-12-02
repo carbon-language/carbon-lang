@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=x86 | not grep 18446744073709551612
+; RUN: llvm-upgrade < %s | llvm-as | llc -march=x86 | not grep 18446744073709551612
 
 %A = external global int
 

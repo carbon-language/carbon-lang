@@ -9,7 +9,7 @@
 ;
 ; Which corresponds to test1.
 
-; RUN: llvm-as < %s | opt -instcombine | llvm-dis | not grep 'or '
+; RUN: llvm-upgrade < %s | llvm-as | opt -instcombine | llvm-dis | not grep 'or '
 
 int %test1(int %X, int %Y) {
 	%A = and int %X, 7

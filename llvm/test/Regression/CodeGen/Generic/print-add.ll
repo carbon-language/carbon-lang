@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc
+; RUN: llvm-upgrade < %s | llvm-as | llc
 
 %.str_1 = internal constant [4 x sbyte] c"%d\0A\00"
 

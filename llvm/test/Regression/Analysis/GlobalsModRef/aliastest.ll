@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -globalsmodref-aa -load-vn -gcse | llvm-dis | not grep load
+; RUN: llvm-upgrade < %s | llvm-as | opt -globalsmodref-aa -load-vn -gcse | llvm-dis | not grep load
 %X = internal global int 4
 
 int %test(int *%P) {

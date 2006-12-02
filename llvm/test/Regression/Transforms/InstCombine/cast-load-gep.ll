@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -instcombine -globaldce | llvm-dis | not grep Array
+; RUN: llvm-upgrade < %s | llvm-as | opt -instcombine -globaldce | llvm-dis | not grep Array
 
 ; Pulling the cast out of the load allows us to eliminate the load, and then 
 ; the whole array.

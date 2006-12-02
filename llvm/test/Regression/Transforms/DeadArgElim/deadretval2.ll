@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -deadargelim -die | llvm-dis | not grep DEAD
+; RUN: llvm-upgrade < %s | llvm-as | opt -deadargelim -die | llvm-dis | not grep DEAD
 
 %P = external global int 
 

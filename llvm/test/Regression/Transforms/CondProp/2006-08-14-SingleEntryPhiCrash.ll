@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -condprop -disable-output
+; RUN: llvm-upgrade < %s | llvm-as | opt -condprop -disable-output
 ; PR877
 
 target endian = big

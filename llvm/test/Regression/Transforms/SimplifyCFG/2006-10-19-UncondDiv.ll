@@ -1,5 +1,5 @@
-; RUN: llvm-as < %s | opt -simplifycfg -disable-output &&
-; RUN: llvm-as < %s | opt -simplifycfg | llvm-dis | not grep select
+; RUN: llvm-upgrade < %s | llvm-as | opt -simplifycfg -disable-output &&
+; RUN: llvm-upgrade < %s | llvm-as | opt -simplifycfg | llvm-dis | not grep select
 
 ; PR957
 

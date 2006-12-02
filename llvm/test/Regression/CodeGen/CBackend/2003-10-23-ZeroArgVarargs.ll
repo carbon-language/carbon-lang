@@ -1,5 +1,5 @@
 ; XFAIL: *
-; RUN: llvm-as < %s | llc -march=c
+; RUN: llvm-upgrade < %s | llvm-as | llc -march=c
 
 
 declare sbyte* %llvm.va_start()

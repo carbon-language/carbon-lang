@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -analyze -datastructure-gc -dsgc-dspass=td -dsgc-check-flags=Ptr:HR
+; RUN: llvm-upgrade < %s | llvm-as | opt -analyze -datastructure-gc -dsgc-dspass=td -dsgc-check-flags=Ptr:HR
 
 
 

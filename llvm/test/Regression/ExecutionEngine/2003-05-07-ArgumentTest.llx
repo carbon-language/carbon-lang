@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | lli - test
+; RUN: llvm-upgrade < %s | llvm-as | lli - test
 
 implementation  
 

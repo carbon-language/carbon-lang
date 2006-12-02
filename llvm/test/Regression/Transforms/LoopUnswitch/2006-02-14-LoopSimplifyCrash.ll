@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -loop-unswitch -disable-output
+; RUN: llvm-upgrade < %s | llvm-as | opt -loop-unswitch -disable-output
 
 target endian = big
 target pointersize = 32

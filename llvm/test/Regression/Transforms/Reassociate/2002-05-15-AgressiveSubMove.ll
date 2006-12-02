@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -reassociate -instcombine -constprop -dce | llvm-dis | not grep add
+; RUN: llvm-upgrade < %s | llvm-as | opt -reassociate -instcombine -constprop -dce | llvm-dis | not grep add
 
 int %test(int %A) {
 	%X = add int %A, 1

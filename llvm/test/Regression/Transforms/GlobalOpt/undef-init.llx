@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -globalopt | llvm-dis | not grep store
+; RUN: llvm-upgrade < %s | llvm-as | opt -globalopt | llvm-dis | not grep store
 
 %llvm.global_ctors = appending global [1 x { int, void ()* }] [ { int, void ()* } { int 65535, void ()* %_GLOBAL__I__Z3foov } ]		; <[1 x { int, void ()* }]*> [#uses=0]
 %X.0 = internal global int undef		; <int*> [#uses=2]

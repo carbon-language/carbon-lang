@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc
+; RUN: llvm-upgrade < %s | llvm-as | llc
 %lldb.compile_unit = type { uint, ushort, ushort, sbyte*, sbyte*, sbyte*, {  }* }
 %d.compile_unit7 = external global %lldb.compile_unit		; <%lldb.compile_unit*> [#uses=1]
 

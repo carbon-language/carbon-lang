@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=x86 -mattr=+sse2
+; RUN: llvm-upgrade < %s | llvm-as | llc -march=x86 -mattr=+sse2
 
 <4 x float> %opRSQ(<4 x float> %a) {
 entry:

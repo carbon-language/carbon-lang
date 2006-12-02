@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=x86
+; RUN: llvm-upgrade < %s | llvm-as | llc -march=x86
 
 	%struct.expr = type { %struct.rtx_def*, int, %struct.expr*, %struct.occr*, %struct.occr*, %struct.rtx_def* }
 	%struct.hash_table = type { %struct.expr**, uint, uint, int }

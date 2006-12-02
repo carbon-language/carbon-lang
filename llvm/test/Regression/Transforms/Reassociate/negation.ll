@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -reassociate -instcombine | llvm-dis | not grep sub
+; RUN: llvm-upgrade < %s | llvm-as | opt -reassociate -instcombine | llvm-dis | not grep sub
 
 ; Test that we can turn things like X*-(Y*Z) -> X*-1*Y*Z.
 

@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -dse -scalarrepl -instcombine | llvm-dis | not grep 'ret int undef'
+; RUN: llvm-upgrade < %s | llvm-as | opt -dse -scalarrepl -instcombine | llvm-dis | not grep 'ret int undef'
 
 int %test(double %__x) {
 	%__u = alloca { [3 x int] }

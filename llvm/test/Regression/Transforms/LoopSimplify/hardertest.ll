@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -loopsimplify
+; RUN: llvm-upgrade < %s | llvm-as | opt -loopsimplify
 
 void %foo(bool %C) {
 	br bool %C, label %T, label %F

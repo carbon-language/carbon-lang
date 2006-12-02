@@ -1,5 +1,5 @@
-; RUN: llvm-as < %s | llc -relocation-model=dynamic-no-pic -mtriple=i686-apple-darwin8.7.2 | grep L_Arr.non_lazy_ptr &&
-; RUN: llvm-as < %s | llc -relocation-model=dynamic-no-pic -mtriple=i686-apple-darwin8.7.2 | %prcontext L_Arr.non_lazy_ptr 1 | grep '4(%esp)'
+; RUN: llvm-upgrade < %s | llvm-as | llc -relocation-model=dynamic-no-pic -mtriple=i686-apple-darwin8.7.2 | grep L_Arr.non_lazy_ptr &&
+; RUN: llvm-upgrade < %s | llvm-as | llc -relocation-model=dynamic-no-pic -mtriple=i686-apple-darwin8.7.2 | %prcontext L_Arr.non_lazy_ptr 1 | grep '4(%esp)'
 
 %Arr = external global [0 x int]                ; <[0 x int]*> [#uses=2]
 

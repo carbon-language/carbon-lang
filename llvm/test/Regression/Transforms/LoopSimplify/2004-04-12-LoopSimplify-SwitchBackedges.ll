@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -loopsimplify -disable-output
+; RUN: llvm-upgrade < %s | llvm-as | opt -loopsimplify -disable-output
 
 implementation   
 

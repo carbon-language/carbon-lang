@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -anders-aa -load-vn -gcse -deadargelim | llvm-dis | not grep ARG
+; RUN: llvm-upgrade < %s | llvm-as | opt -anders-aa -load-vn -gcse -deadargelim | llvm-dis | not grep ARG
 
 %G = internal constant int* null
 

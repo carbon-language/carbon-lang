@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -basicaa -licm -disable-output
+; RUN: llvm-upgrade < %s | llvm-as | opt -basicaa -licm -disable-output
 
 ;%MoveArray = external global [64 x ulong]
 

@@ -1,7 +1,7 @@
 ; This test case was reduced from MultiSource/Applications/hbd. It makes sure
 ; that folding doesn't happen in case a zext is applied where a sext should have
 ; been when a setcc is used with two casts.
-; RUN: llvm-as < %s | llc -instcombine | llvm-dis | not grep 'br bool false'
+; RUN: llvm-upgrade < %s | llvm-as | llc -instcombine | llvm-dis | not grep 'br bool false'
 int %bug(ubyte %inbuff) {
 entry:
 	%tmp = bitcast ubyte %inbuff to sbyte   ; <sbyte> [#uses=1]

@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -argpromotion | llvm-dis | not grep 'load int\* null'
+; RUN: llvm-upgrade < %s | llvm-as | opt -argpromotion | llvm-dis | not grep 'load int\* null'
 
 implementation
 

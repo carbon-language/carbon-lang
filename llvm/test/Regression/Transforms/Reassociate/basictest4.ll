@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -reassociate -gcse -instcombine | llvm-dis | not grep add
+; RUN: llvm-upgrade < %s | llvm-as | opt -reassociate -gcse -instcombine | llvm-dis | not grep add
 
 %a = weak global int 0
 %b = weak global int 0

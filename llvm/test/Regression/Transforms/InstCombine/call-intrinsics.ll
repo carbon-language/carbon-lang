@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -instcombine | llvm-dis
+; RUN: llvm-upgrade < %s | llvm-as | opt -instcombine | llvm-dis
 
 declare void %llvm.memmove(sbyte*, sbyte*, uint, uint)
 declare void %llvm.memcpy(sbyte*, sbyte*, uint, uint)

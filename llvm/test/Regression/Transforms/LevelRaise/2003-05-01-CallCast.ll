@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -raise | llvm-dis | notcast
+; RUN: llvm-upgrade < %s | llvm-as | opt -raise | llvm-dis | notcast
 
 void %test(...) { ret void }
 

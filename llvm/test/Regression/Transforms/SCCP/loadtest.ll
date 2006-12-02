@@ -1,7 +1,7 @@
 ; This test makes sure that these instructions are properly constant propagated.
 ;
 
-; RUN: llvm-as < %s | opt -sccp | llvm-dis | not grep load
+; RUN: llvm-upgrade < %s | llvm-as | opt -sccp | llvm-dis | not grep load
 
 %X = constant int 42
 %Y = constant [2 x { int, float }] [ { int, float } { int 12, float 1.0 }, 

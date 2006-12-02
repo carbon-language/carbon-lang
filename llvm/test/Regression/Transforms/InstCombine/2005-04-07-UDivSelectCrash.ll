@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -instcombine -disable-output
+; RUN: llvm-upgrade < %s | llvm-as | opt -instcombine -disable-output
 
 uint %test(bool %C, uint %tmp.15) {
 	%tmp.16 = select bool %C, uint 8, uint 1

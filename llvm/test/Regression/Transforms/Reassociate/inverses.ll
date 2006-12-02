@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -reassociate -dce | llvm-dis | not grep '\(and\|sub\)'
+; RUN: llvm-upgrade < %s | llvm-as | opt -reassociate -dce | llvm-dis | not grep '\(and\|sub\)'
 
 int %test1(int %a, int %b) {
         %tmp.2 = and int %b, %a

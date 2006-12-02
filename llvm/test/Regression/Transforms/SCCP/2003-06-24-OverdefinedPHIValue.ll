@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -sccp -simplifycfg | llvm-dis | not grep then:
+; RUN: llvm-upgrade < %s | llvm-as | opt -sccp -simplifycfg | llvm-dis | not grep then:
 
 void %cprop_test11(int* %data.1) {
 entry:		; No predecessors!

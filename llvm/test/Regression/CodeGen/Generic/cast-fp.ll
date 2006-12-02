@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc
+; RUN: llvm-upgrade < %s | llvm-as | llc
 
 %a_fstr = internal constant [8 x sbyte] c"a = %f\0A\00"
 %a_lstr = internal constant [10 x sbyte] c"a = %lld\0A\00"

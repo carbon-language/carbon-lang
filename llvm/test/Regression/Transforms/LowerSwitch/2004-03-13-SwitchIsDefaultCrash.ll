@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -lowerswitch -disable-output
+; RUN: llvm-upgrade < %s | llvm-as | opt -lowerswitch -disable-output
 
 void %solve() {
 entry:

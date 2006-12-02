@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -predsimplify -disable-output
+; RUN: llvm-upgrade < %s | llvm-as | opt -predsimplify -disable-output
 
 void %safe_strcpy(uint %size1) {
 entry:

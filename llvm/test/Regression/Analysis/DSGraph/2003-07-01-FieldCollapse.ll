@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -analyze -datastructure-gc -dsgc-abort-if-any-collapsed
+; RUN: llvm-upgrade < %s | llvm-as | opt -analyze -datastructure-gc -dsgc-abort-if-any-collapsed
 
 %X = internal global { int, short, short } { int 1, short 2, short 3 }
 

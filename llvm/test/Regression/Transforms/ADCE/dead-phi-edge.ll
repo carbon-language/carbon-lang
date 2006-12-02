@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -adce | llvm-dis | not grep call
+; RUN: llvm-upgrade < %s | llvm-as | opt -adce | llvm-dis | not grep call
 
 ; The call is not live just because the PHI uses the call retval!
 

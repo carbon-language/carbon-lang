@@ -1,5 +1,5 @@
-; RUN: llvm-as < %s | llc -march=ppc32 &&
-; RUN: llvm-as < %s | llc -march=ppc32 | not grep mr
+; RUN: llvm-upgrade < %s | llvm-as | llc -march=ppc32 &&
+; RUN: llvm-upgrade < %s | llvm-as | llc -march=ppc32 | not grep mr
 
 int %test(int %Y, int %X) {
 entry:

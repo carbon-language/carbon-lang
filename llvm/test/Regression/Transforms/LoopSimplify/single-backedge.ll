@@ -2,7 +2,7 @@
 ; for all loops.  This allows the -indvars pass to recognize the %IV 
 ; induction variable in this testcase.
 
-; RUN: llvm-as < %s | opt -indvars | llvm-dis | grep indvar
+; RUN: llvm-upgrade < %s | llvm-as | opt -indvars | llvm-dis | grep indvar
 
 int %test(bool %C) {
 	br label %Loop

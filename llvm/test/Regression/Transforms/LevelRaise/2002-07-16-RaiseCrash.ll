@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -raise
+; RUN: llvm-upgrade < %s | llvm-as | opt -raise
 	
 	%Tree = type %struct.tree*
 	%struct.tree = type { int, double, double, %Tree, %Tree, %Tree, %Tree }

@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -indvars -disable-output
+; RUN: llvm-upgrade < %s | llvm-as | opt -indvars -disable-output
 
 	%struct.p7prior_s = type { int, int, [200 x float], [200 x [7 x float]], int, [200 x float], [200 x [20 x float]], int, [200 x float], [200 x [20 x float]] }
 

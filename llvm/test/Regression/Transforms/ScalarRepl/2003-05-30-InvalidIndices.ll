@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -scalarrepl
+; RUN: llvm-upgrade < %s | llvm-as | opt -scalarrepl
 
 void %main() {
 	%E = alloca { { int, float, double, long }, { int, float, double, long } }		; <{ { int, float, double, long }, { int, float, double, long } }*> [#uses=1]

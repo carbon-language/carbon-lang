@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=c
+; RUN: llvm-upgrade < %s | llvm-as | llc -march=c
 
 
 %X = type { int, float }

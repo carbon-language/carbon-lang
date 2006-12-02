@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -simplifycfg | llvm-dis | not grep 'br'
+; RUN: llvm-upgrade < %s | llvm-as | opt -simplifycfg | llvm-dis | not grep 'br'
 
 bool %_ZN4llvm11SetCondInst7classofEPKNS_11InstructionE({uint, uint}* %I) {
 entry:

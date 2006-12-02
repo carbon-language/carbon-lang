@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -tailduplicate -instcombine -simplifycfg -licm -disable-output
+; RUN: llvm-upgrade < %s | llvm-as | opt -tailduplicate -instcombine -simplifycfg -licm -disable-output
 
 target endian = little
 target pointersize = 32

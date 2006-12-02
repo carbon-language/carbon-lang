@@ -1,9 +1,9 @@
-; RUN: llvm-as < %s | llc -march=ppc32 | grep 'stwbrx\|lwbrx\|sthbrx\|lhbrx' | wc -l | grep 4 &&
-; RUN: llvm-as < %s | llc -march=ppc32 | not grep rlwinm &&
-; RUN: llvm-as < %s | llc -march=ppc32 | not grep rlwimi &&
-; RUN: llvm-as < %s | llc -march=ppc64 | grep 'stwbrx\|lwbrx\|sthbrx\|lhbrx' | wc -l | grep 4 &&
-; RUN: llvm-as < %s | llc -march=ppc64 | not grep rlwinm &&
-; RUN: llvm-as < %s | llc -march=ppc64 | not grep rlwimi
+; RUN: llvm-upgrade < %s | llvm-as | llc -march=ppc32 | grep 'stwbrx\|lwbrx\|sthbrx\|lhbrx' | wc -l | grep 4 &&
+; RUN: llvm-upgrade < %s | llvm-as | llc -march=ppc32 | not grep rlwinm &&
+; RUN: llvm-upgrade < %s | llvm-as | llc -march=ppc32 | not grep rlwimi &&
+; RUN: llvm-upgrade < %s | llvm-as | llc -march=ppc64 | grep 'stwbrx\|lwbrx\|sthbrx\|lhbrx' | wc -l | grep 4 &&
+; RUN: llvm-upgrade < %s | llvm-as | llc -march=ppc64 | not grep rlwinm &&
+; RUN: llvm-upgrade < %s | llvm-as | llc -march=ppc64 | not grep rlwimi
 
 void %STWBRX(uint %i, sbyte* %ptr, int %off) {
 	%tmp1 = getelementptr sbyte* %ptr, int %off

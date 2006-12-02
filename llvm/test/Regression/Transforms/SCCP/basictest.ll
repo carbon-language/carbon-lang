@@ -1,7 +1,7 @@
 ; This is a basic sanity check for constant propogation.  The add instruction 
 ; should be eliminated.
 
-; RUN: llvm-as < %s | opt -sccp | llvm-dis | not grep add
+; RUN: llvm-upgrade < %s | llvm-as | opt -sccp | llvm-dis | not grep add
 
 int %test(bool %B) {
 	br bool %B, label %BB1, label %BB2

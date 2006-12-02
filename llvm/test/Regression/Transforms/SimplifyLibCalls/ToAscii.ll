@@ -1,5 +1,5 @@
 ; Test that the ToAsciiOptimizer works correctly
-; RUN: llvm-as < %s | opt -simplify-libcalls | llvm-dis | not grep 'call.*toascii'
+; RUN: llvm-upgrade < %s | llvm-as | opt -simplify-libcalls | llvm-dis | not grep 'call.*toascii'
 
 declare int %toascii(int)
 

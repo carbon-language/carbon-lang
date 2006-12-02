@@ -1,7 +1,7 @@
 ; This tests for various complex cast elimination cases instcombine should
 ; handle.
 
-; RUN: llvm-as < %s | opt -instcombine | llvm-dis | notcast
+; RUN: llvm-upgrade < %s | llvm-as | opt -instcombine | llvm-dis | notcast
 
 bool %test1(int %X) {
 	%A = cast int %X to uint

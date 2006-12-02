@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=ppc32 -mcpu=g5
+; RUN: llvm-upgrade < %s | llvm-as | llc -march=ppc32 -mcpu=g5
 
 void %glgRunProcessor15() {
 	%tmp26355.i = shufflevector <4 x float> zeroinitializer, <4 x float> < float 0x379FFFE000000000, float 0x379FFFE000000000, float 0x379FFFE000000000, float 0x379FFFE000000000 >, <4 x uint> < uint 0, uint 1, uint 2, uint 7 >		; <<4 x float>> [#uses=1]

@@ -1,9 +1,9 @@
 ; All of these should be codegen'd without loading immediates
-; RUN: llvm-as < %s | llc -march=ppc32 | grep addc | wc -l | grep 1 &&
-; RUN: llvm-as < %s | llc -march=ppc32 | grep adde | wc -l | grep 1 &&
-; RUN: llvm-as < %s | llc -march=ppc32 | grep addze | wc -l | grep 1 &&
-; RUN: llvm-as < %s | llc -march=ppc32 | grep addme | wc -l | grep 1 &&
-; RUN: llvm-as < %s | llc -march=ppc32 | grep addic | wc -l | grep 2
+; RUN: llvm-upgrade < %s | llvm-as | llc -march=ppc32 | grep addc | wc -l | grep 1 &&
+; RUN: llvm-upgrade < %s | llvm-as | llc -march=ppc32 | grep adde | wc -l | grep 1 &&
+; RUN: llvm-upgrade < %s | llvm-as | llc -march=ppc32 | grep addze | wc -l | grep 1 &&
+; RUN: llvm-upgrade < %s | llvm-as | llc -march=ppc32 | grep addme | wc -l | grep 1 &&
+; RUN: llvm-upgrade < %s | llvm-as | llc -march=ppc32 | grep addic | wc -l | grep 2
 
 implementation   ; Functions:
 

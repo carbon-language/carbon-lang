@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=x86 -stats 2>&1 | grep 'asm-printer' | grep 7
+; RUN: llvm-upgrade < %s | llvm-as | llc -march=x86 -stats 2>&1 | grep 'asm-printer' | grep 7
 
 int %g(int %a, int %b) {
 	%tmp.1 = shl int %b, ubyte 1

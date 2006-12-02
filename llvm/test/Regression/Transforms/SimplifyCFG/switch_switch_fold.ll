@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -simplifycfg | llvm-dis | grep switch | wc -l | grep 1
+; RUN: llvm-upgrade < %s | llvm-as | opt -simplifycfg | llvm-dis | grep switch | wc -l | grep 1
 
 ; Test that a switch going to a switch on the same value can be merged.   All 
 ; three switches in this example can be merged into one big one.

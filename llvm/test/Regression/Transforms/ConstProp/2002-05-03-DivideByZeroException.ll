@@ -1,6 +1,6 @@
 ; Make sure that the constant propogator doesn't divide by zero!
 ;
-; RUN: llvm-as < %s | opt -constprop
+; RUN: llvm-upgrade < %s | llvm-as | opt -constprop
 ;
 
 int "test"() {

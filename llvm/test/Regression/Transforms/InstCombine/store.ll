@@ -1,5 +1,5 @@
-; RUN: llvm-as < %s | opt -instcombine -disable-output &&
-; RUN: llvm-as < %s | opt -instcombine | llvm-dis | grep -v 'store.*,.*null' | not grep store
+; RUN: llvm-upgrade < %s | llvm-as | opt -instcombine -disable-output &&
+; RUN: llvm-upgrade < %s | llvm-as | opt -instcombine | llvm-dis | grep -v 'store.*,.*null' | not grep store
 
 void %test1(int* %P) {
 	store int undef, int* %P

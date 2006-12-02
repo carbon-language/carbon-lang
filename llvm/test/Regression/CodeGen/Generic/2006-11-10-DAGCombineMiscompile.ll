@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=ppc32 | grep rlwimi
+; RUN: llvm-upgrade < %s | llvm-as | llc -march=ppc32 | grep rlwimi
 
 void %test(short %div.0.i.i.i.i, int %L_num.0.i.i.i.i, int %tmp1.i.i206.i.i, short* %P) {
         %X = shl short %div.0.i.i.i.i, ubyte 1          ; <short> [#uses=1]

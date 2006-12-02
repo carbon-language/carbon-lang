@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -instcombine | llvm-dis | notcast
+; RUN: llvm-upgrade < %s | llvm-as | opt -instcombine | llvm-dis | notcast
 target pointersize = 32
 
 int *%test(int *%P) {

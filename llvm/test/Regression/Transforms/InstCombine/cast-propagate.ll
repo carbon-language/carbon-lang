@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -instcombine -mem2reg | llvm-dis | not grep load
+; RUN: llvm-upgrade < %s | llvm-as | opt -instcombine -mem2reg | llvm-dis | not grep load
 
 int %test1(uint* %P) {
 	%A = alloca uint 

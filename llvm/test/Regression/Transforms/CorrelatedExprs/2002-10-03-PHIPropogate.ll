@@ -12,7 +12,7 @@
 ;   }
 ; }
 ;
-; RUN: llvm-as < %s | opt -cee -simplifycfg | llvm-dis | not grep bb3
+; RUN: llvm-upgrade < %s | llvm-as | opt -cee -simplifycfg | llvm-dis | not grep bb3
 
 implementation
 declare void %bar()

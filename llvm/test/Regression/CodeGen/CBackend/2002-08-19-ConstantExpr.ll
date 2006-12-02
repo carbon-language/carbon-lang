@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=c
+; RUN: llvm-upgrade < %s | llvm-as | llc -march=c
 
 global int* cast (float* %0 to int*)   ;; Forward numeric reference
 global float* %0                       ;; Duplicate forward numeric reference

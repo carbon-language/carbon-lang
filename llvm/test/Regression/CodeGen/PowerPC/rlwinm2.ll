@@ -1,10 +1,10 @@
 ; All of these ands and shifts should be folded into rlw[i]nm instructions
-; RUN: llvm-as < %s | llc -march=ppc32 | not grep and && 
-; RUN: llvm-as < %s | llc -march=ppc32 | not grep srawi && 
-; RUN: llvm-as < %s | llc -march=ppc32 | not grep srwi && 
-; RUN: llvm-as < %s | llc -march=ppc32 | not grep slwi && 
-; RUN: llvm-as < %s | llc -march=ppc32 | grep rlwnm | wc -l | grep 1 &&
-; RUN: llvm-as < %s | llc -march=ppc32 | grep rlwinm | wc -l | grep 1
+; RUN: llvm-upgrade < %s | llvm-as | llc -march=ppc32 | not grep and && 
+; RUN: llvm-upgrade < %s | llvm-as | llc -march=ppc32 | not grep srawi && 
+; RUN: llvm-upgrade < %s | llvm-as | llc -march=ppc32 | not grep srwi && 
+; RUN: llvm-upgrade < %s | llvm-as | llc -march=ppc32 | not grep slwi && 
+; RUN: llvm-upgrade < %s | llvm-as | llc -march=ppc32 | grep rlwnm | wc -l | grep 1 &&
+; RUN: llvm-upgrade < %s | llvm-as | llc -march=ppc32 | grep rlwinm | wc -l | grep 1
 
 
 implementation   ; Functions:

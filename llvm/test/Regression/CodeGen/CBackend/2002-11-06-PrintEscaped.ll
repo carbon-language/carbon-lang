@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=c
+; RUN: llvm-upgrade < %s | llvm-as | llc -march=c
 
 %testString = internal constant [18 x sbyte] c "Escaped newline\n\00"
 

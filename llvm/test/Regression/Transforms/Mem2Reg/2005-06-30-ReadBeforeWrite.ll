@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -mem2reg -instcombine | llvm-dis | grep store
+; RUN: llvm-upgrade < %s | llvm-as | opt -mem2reg -instcombine | llvm-dis | grep store
 ; PR590
 
 void %zero(sbyte* %p, int %n) {

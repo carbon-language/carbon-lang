@@ -1,5 +1,5 @@
-; RUN: llvm-as < %s | opt -tailduplicate | llc -march=x86 | grep 'je ' &&
-; RUN: llvm-as < %s | opt -tailduplicate | llc -march=x86 | not grep jmp
+; RUN: llvm-upgrade < %s | llvm-as | opt -tailduplicate | llc -march=x86 | grep 'je ' &&
+; RUN: llvm-upgrade < %s | llvm-as | opt -tailduplicate | llc -march=x86 | not grep jmp
 ; This should have no unconditional jumps in it.  The C source is:
 
 ;void foo(int c, int* P) {
@@ -9,6 +9,7 @@
 ;  if (c & 8)  P[3] = 1;
 ;}
 
+implementation
 
 void %foo(int %c, int* %P) {
 entry:

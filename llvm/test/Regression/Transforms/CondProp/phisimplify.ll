@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -condprop | llvm-dis | not grep phi
+; RUN: llvm-upgrade < %s | llvm-as | opt -condprop | llvm-dis | not grep phi
 
 int %test(uint %C, bool %Val) {
         switch uint %C, label %T1 [

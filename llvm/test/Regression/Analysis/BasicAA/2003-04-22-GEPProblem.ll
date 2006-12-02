@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -load-vn -gcse -instcombine | llvm-dis | grep sub
+; RUN: llvm-upgrade < %s | llvm-as | opt -load-vn -gcse -instcombine | llvm-dis | grep sub
 
 ; BasicAA was incorrectly concluding that P1 and P2 didn't conflict!
 

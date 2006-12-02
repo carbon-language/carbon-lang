@@ -1,5 +1,5 @@
-; RUN: llvm-as < %s | llc -march=alpha | not grep cmovlt
-; RUN: llvm-as < %s | llc -march=alpha | grep cmoveq
+; RUN: llvm-upgrade < %s | llvm-as | llc -march=alpha | not grep cmovlt
+; RUN: llvm-upgrade < %s | llvm-as | llc -march=alpha | grep cmoveq
 
 long %cmov_lt(long %a, long %c) {
 entry:

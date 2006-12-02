@@ -1,7 +1,7 @@
 ; Inlining used to break PHI nodes.  This tests that they are correctly updated 
 ; when a node is split around the call instruction.  The verifier caught the error.
 ;
-; RUN: llvm-as < %s | opt -inline
+; RUN: llvm-upgrade < %s | llvm-as | opt -inline
 ;
 implementation
 

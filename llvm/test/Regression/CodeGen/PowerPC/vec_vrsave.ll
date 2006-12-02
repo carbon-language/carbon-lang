@@ -1,6 +1,6 @@
-; RUN: llvm-as < %s | llc -march=ppc32 -mcpu=g5 | grep vrlw &&
-; RUN: llvm-as < %s | llc -march=ppc32 -mcpu=g5 | not grep spr &&
-; RUN: llvm-as < %s | llc -march=ppc32 -mcpu=g5 | not grep vrsave
+; RUN: llvm-upgrade < %s | llvm-as | llc -march=ppc32 -mcpu=g5 | grep vrlw &&
+; RUN: llvm-upgrade < %s | llvm-as | llc -march=ppc32 -mcpu=g5 | not grep spr &&
+; RUN: llvm-upgrade < %s | llvm-as | llc -march=ppc32 -mcpu=g5 | not grep vrsave
 
 <4 x int> %test_rol() {
         ret <4 x int> < int -11534337, int -11534337, int -11534337, int -11534337 >

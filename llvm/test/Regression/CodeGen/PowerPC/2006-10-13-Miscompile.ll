@@ -1,5 +1,5 @@
-; RUN: llvm-as < %s | llc -march=ppc32 &&
-; RUN: llvm-as < %s | llc -march=ppc32 | not grep IMPLICIT_DEF
+; RUN: llvm-upgrade < %s | llvm-as | llc -march=ppc32 &&
+; RUN: llvm-upgrade < %s | llvm-as | llc -march=ppc32 | not grep IMPLICIT_DEF
 
 void %foo(long %X) {
 entry:

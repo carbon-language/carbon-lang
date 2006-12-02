@@ -1,5 +1,5 @@
 ; Test that ds-aa can be used for queries that require field sensitive AA.
-; RUN: llvm-as < %s | opt -no-aa -ds-aa -load-vn -gcse | llvm-dis | not grep load
+; RUN: llvm-upgrade < %s | llvm-as | opt -no-aa -ds-aa -load-vn -gcse | llvm-dis | not grep load
 
 %Pair = type { int, int }
 

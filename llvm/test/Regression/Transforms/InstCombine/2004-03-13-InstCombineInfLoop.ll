@@ -1,7 +1,7 @@
 ; This testcase caused the combiner to go into an infinite loop, moving the 
 ; cast back and forth, changing the seteq to operate on int vs uint and back.
 
-; RUN: llvm-as < %s | opt -instcombine -disable-output
+; RUN: llvm-upgrade < %s | llvm-as | opt -instcombine -disable-output
 
 bool %test(uint %A, int %B) {
         %C = sub uint 0, %A

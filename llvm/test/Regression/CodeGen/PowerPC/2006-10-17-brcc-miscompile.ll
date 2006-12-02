@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=ppc32 | grep xor 
+; RUN: llvm-upgrade < %s | llvm-as | llc -march=ppc32 | grep xor 
 
 target endian = big
 target pointersize = 32

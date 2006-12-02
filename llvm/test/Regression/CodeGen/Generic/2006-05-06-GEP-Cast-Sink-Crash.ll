@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc
+; RUN: llvm-upgrade < %s | llvm-as | llc
 
        %struct.FILE = type { ubyte*, int, int, short, short, %struct.__sbuf, int, sbyte*, int (sbyte*)*, int (sbyte*, sbyte*, int)*, long (sbyte*, long, int)*, int (sbyte*, sbyte*, int)*, %struct.__sbuf, %struct.__sFILEX*, int, [3 x ubyte], [1 x ubyte], %struct.__sbuf, int, long }
         %struct.SYMBOL_TABLE_ENTRY = type { [9 x sbyte], [9 x sbyte], int, int, uint, %struct.SYMBOL_TABLE_ENTRY* }

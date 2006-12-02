@@ -5,7 +5,7 @@
 ; real benchmark (mst from Olden benchmark, MakeGraph function).  When SCCP is
 ; fixed, this should be eliminated by a single SCCP application.
 ;
-; RUN: llvm-as < %s | opt -sccp | llvm-dis | not grep loop
+; RUN: llvm-upgrade < %s | llvm-as | opt -sccp | llvm-dis | not grep loop
 
 int* %test() {
 bb1:

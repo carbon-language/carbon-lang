@@ -1,7 +1,7 @@
 ; Make sure that functions are removed successfully if they are referred to by
 ; a global that is dead.  Make sure any globals they refer to die as well.
 
-; RUN: llvm-as < %s | opt -globaldce | llvm-dis | not grep foo
+; RUN: llvm-upgrade < %s | llvm-as | opt -globaldce | llvm-dis | not grep foo
 
 %b = internal global int ()* %foo   ;; Unused, kills %foo
 

@@ -5,7 +5,7 @@
 ;
 ; Fixed by adding new arguments to ConstantFoldTerminator
 ;
-; RUN: llvm-as < %s | opt -constprop
+; RUN: llvm-upgrade < %s | llvm-as | opt -constprop
 
 implementation
 

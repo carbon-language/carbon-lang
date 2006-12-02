@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -argpromotion | llvm-dis | grep 'load int\* %A'
+; RUN: llvm-upgrade < %s | llvm-as | opt -argpromotion | llvm-dis | grep 'load int\* %A'
 
 implementation
 

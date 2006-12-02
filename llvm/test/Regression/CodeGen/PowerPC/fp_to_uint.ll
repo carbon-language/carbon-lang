@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=ppc32 | grep fctiwz | wc -l | grep 1
+; RUN: llvm-upgrade < %s | llvm-as | llc -march=ppc32 | grep fctiwz | wc -l | grep 1
 
 implementation
 

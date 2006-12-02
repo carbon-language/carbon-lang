@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -instcombine | llvm-dis | grep false
+; RUN: llvm-upgrade < %s | llvm-as | opt -instcombine | llvm-dis | grep false
 ;
 ; This actually looks like a constant propagation bug
 

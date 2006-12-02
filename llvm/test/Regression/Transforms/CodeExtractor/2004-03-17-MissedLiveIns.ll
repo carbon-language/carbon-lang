@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -loop-extract -disable-output
+; RUN: llvm-upgrade < %s | llvm-as | opt -loop-extract -disable-output
 
 void %sendMTFValues() {
 entry:

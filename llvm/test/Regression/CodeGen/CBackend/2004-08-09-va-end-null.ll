@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=c
+; RUN: llvm-upgrade < %s | llvm-as | llc -march=c
 
 declare void %llvm.va_end(sbyte*)
 

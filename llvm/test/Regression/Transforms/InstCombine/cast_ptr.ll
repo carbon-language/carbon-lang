@@ -1,6 +1,6 @@
 ; Tests to make sure elimination of casts is working correctly
-; RUN: llvm-as < %s | opt -instcombine -disable-output &&
-; RUN: llvm-as < %s | opt -instcombine | llvm-dis | not grep '\([sz]ext\)\|\(trunc\)'
+; RUN: llvm-upgrade < %s | llvm-as | opt -instcombine -disable-output &&
+; RUN: llvm-upgrade < %s | llvm-as | opt -instcombine | llvm-dis | not grep '\([sz]ext\)\|\(trunc\)'
 
 target pointersize = 32
 

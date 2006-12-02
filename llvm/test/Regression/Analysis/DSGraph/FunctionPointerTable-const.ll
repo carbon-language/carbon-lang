@@ -1,5 +1,5 @@
-; RUN: llvm-as < %s | opt -analyze -datastructure-gc -dsgc-dspass=bu -dsgc-check-flags=Y:SHM && \
-; RUN: llvm-as < %s | opt -analyze -datastructure-gc -dsgc-dspass=td -dsgc-check-flags=P1:SHM,P2:SHM
+; RUN: llvm-upgrade < %s | llvm-as | opt -analyze -datastructure-gc -dsgc-dspass=bu -dsgc-check-flags=Y:SHM && \
+; RUN: llvm-upgrade < %s | llvm-as | opt -analyze -datastructure-gc -dsgc-dspass=td -dsgc-check-flags=P1:SHM,P2:SHM
 
 %G = internal constant [2 x int*(int*)*] [ 
   int*(int*)* %callee1, int*(int*)* %callee2

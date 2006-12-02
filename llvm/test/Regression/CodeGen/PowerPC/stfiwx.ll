@@ -1,7 +1,7 @@
-; RUN: llvm-as < %s | llc -march=ppc32 -mattr=stfiwx | grep stfiwx &&
-; RUN: llvm-as < %s | llc -march=ppc32 -mattr=stfiwx | not grep r1 &&
-; RUN: llvm-as < %s | llc -march=ppc32 -mattr=-stfiwx | not grep stfiwx &&
-; RUN: llvm-as < %s | llc -march=ppc32 -mattr=-stfiwx | grep r1
+; RUN: llvm-upgrade < %s | llvm-as | llc -march=ppc32 -mattr=stfiwx | grep stfiwx &&
+; RUN: llvm-upgrade < %s | llvm-as | llc -march=ppc32 -mattr=stfiwx | not grep r1 &&
+; RUN: llvm-upgrade < %s | llvm-as | llc -march=ppc32 -mattr=-stfiwx | not grep stfiwx &&
+; RUN: llvm-upgrade < %s | llvm-as | llc -march=ppc32 -mattr=-stfiwx | grep r1
 
 void %test(float %a, int* %b) {
         %tmp.2 = cast float %a to int

@@ -1,4 +1,4 @@
-; RUN: llvm-as %s -o - | llvm-dis > %t1.ll
+; RUN: llvm-upgrade < %s | llvm-as | llvm-dis > %t1.ll
 ; RUN: llvm-as %t1.ll -o - | llvm-dis > %t2.ll
 ; RUN: diff %t1.ll %t2.ll
 
@@ -6,18 +6,19 @@
 ; the va_arg instruction.
 
 implementation
-declare sbyte* %llvm.va_start()
-declare sbyte* %llvm.va_copy(sbyte*)
-declare void %llvm.va_end(sbyte*)
+declare void %llvm.va_start(sbyte** %ap)
+declare void %llvm.va_copy(sbyte** %aq, sbyte** %ap)
+declare void %llvm.va_end(sbyte** %ap)
 
 int %test(int %X, ...) {
-	%ap = call sbyte* %llvm.va_start()
-	%aq = call sbyte* %llvm.va_copy(sbyte* %ap)
-	call void %llvm.va_end(sbyte* %aq)
-	
-	%tmp = vaarg sbyte* %ap, int 
-	%ap2 = vanext sbyte* %ap, int
+        %ap = alloca sbyte*
+	call void %llvm.va_start(sbyte** %ap)
+	%tmp = va_arg sbyte** %ap, int 
 
-	call void %llvm.va_end(sbyte* %ap2)
+        %aq = alloca sbyte*
+	call void %llvm.va_copy(sbyte** %aq, sbyte** %ap)
+	call void %llvm.va_end(sbyte** %aq)
+	
+	call void %llvm.va_end(sbyte** %ap)
 	ret int %tmp
 }

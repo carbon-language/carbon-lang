@@ -1,6 +1,6 @@
-; RUN: llvm-as < %s | opt -inline -disable-output &&
-; RUN: llvm-as < %s | opt -inline | llvm-dis | not grep 'callee[12](' &&
-; RUN: llvm-as < %s | opt -inline | llvm-dis | not grep mul
+; RUN: llvm-upgrade < %s | llvm-as | opt -inline -disable-output &&
+; RUN: llvm-upgrade < %s | llvm-as | opt -inline | llvm-dis | not grep 'callee[12](' &&
+; RUN: llvm-upgrade < %s | llvm-as | opt -inline | llvm-dis | not grep mul
 
 implementation
 

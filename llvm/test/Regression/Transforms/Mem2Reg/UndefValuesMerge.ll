@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -mem2reg | llvm-dis | not grep phi
+; RUN: llvm-upgrade < %s | llvm-as | opt -mem2reg | llvm-dis | not grep phi
 
 implementation
 

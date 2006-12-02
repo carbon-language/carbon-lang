@@ -1,7 +1,7 @@
 ; This checks to ensure that the inline pass deletes functions if they get 
 ; inlined into all of their callers.
 
-; RUN: llvm-as < %s | opt -inline | llvm-dis | not grep %reallysmall
+; RUN: llvm-upgrade < %s | llvm-as | opt -inline | llvm-dis | not grep %reallysmall
 
 implementation
 

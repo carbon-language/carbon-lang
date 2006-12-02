@@ -1,5 +1,5 @@
-; RUN: llvm-as < %s | llc -march=ppc32 -mcpu=g5 &&
-; RUN: llvm-as < %s | llc -march=ppc32 -mcpu=g5 | not grep CPI
+; RUN: llvm-upgrade < %s | llvm-as | llc -march=ppc32 -mcpu=g5 &&
+; RUN: llvm-upgrade < %s | llvm-as | llc -march=ppc32 -mcpu=g5 | not grep CPI
 
 
 ; Tests spltw(0x80000000) and spltw(0x7FFFFFFF).

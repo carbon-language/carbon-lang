@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=c
+; RUN: llvm-upgrade < %s | llvm-as | llc -march=c
 
 ; This testcase breaks the C backend, because gcc doesn't like (...) functions
 ; with no arguments at all.

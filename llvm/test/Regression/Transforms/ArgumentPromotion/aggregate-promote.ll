@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -argpromotion -instcombine | not grep load
+; RUN: llvm-upgrade < %s | llvm-as | opt -argpromotion -instcombine | not grep load
 
 %QuadTy = type {int, int, int, int}
 

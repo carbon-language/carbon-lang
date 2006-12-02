@@ -1,8 +1,8 @@
 ; An integer truncation to bool should be done with an and instruction to make
 ; sure only the LSBit survives. Test that this is the case both for a returned
 ; value and as the operand of a branch.
-; RUN: llvm-as < %s | llc -march=x86 &&
-; RUN: llvm-as < %s | llc -march=x86 | grep '\(and\)\|\(test.*\$1\)' | wc -l | grep 6
+; RUN: llvm-upgrade < %s | llvm-as | llc -march=x86 &&
+; RUN: llvm-upgrade < %s | llvm-as | llc -march=x86 | grep '\(and\)\|\(test.*\$1\)' | wc -l | grep 6
 bool %test1(int %X) {
     %Y = trunc int %X to bool
     ret bool %Y

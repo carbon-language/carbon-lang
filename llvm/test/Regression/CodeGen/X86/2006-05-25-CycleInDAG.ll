@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=x86
+; RUN: llvm-upgrade < %s | llvm-as | llc -march=x86
 
 int %test() {
 	br bool false, label %cond_next33, label %cond_true12

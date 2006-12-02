@@ -1,5 +1,5 @@
-; RUN: llvm-as < %s | opt -scalarrepl | llvm-dis &&
-; RUN: llvm-as < %s | opt -scalarrepl | llvm-dis | grep -F 'alloca [2 x <4 x int>]'
+; RUN: llvm-upgrade < %s | llvm-as | opt -scalarrepl | llvm-dis &&
+; RUN: llvm-upgrade < %s | llvm-as | opt -scalarrepl | llvm-dis | grep -F 'alloca [2 x <4 x int>]'
 
 int %func(<4 x float> %v0, <4 x float> %v1) {
 	%vsiidx = alloca [2 x <4 x int>], align 16		; <[2 x <4 x int>]*> [#uses=3]

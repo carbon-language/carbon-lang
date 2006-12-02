@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=ppc32 
+; RUN: llvm-upgrade < %s | llvm-as | llc -march=ppc32 
 
 int %main() {
         %setle = setle long 1, 0

@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=ppc32 | grep lha
+; RUN: llvm-upgrade < %s | llvm-as | llc -march=ppc32 | grep lha
 
 uint %test(short* %a) {
     %tmp.1 = load short* %a

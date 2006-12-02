@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=x86 -regalloc=simple
+; RUN: llvm-upgrade < %s | llvm-as | llc -march=x86 -regalloc=simple
 
 int %main() {
 	%A = add int 0, 0   ; %A = 0

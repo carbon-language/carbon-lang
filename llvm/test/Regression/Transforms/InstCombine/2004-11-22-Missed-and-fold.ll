@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -instcombine | llvm-dis | not grep and
+; RUN: llvm-upgrade < %s | llvm-as | opt -instcombine | llvm-dis | not grep and
 
 sbyte %test21(sbyte %A) {
         %C = shr sbyte %A, ubyte 7   ;; sign extend

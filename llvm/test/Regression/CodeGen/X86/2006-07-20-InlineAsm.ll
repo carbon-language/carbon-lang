@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=x86
+; RUN: llvm-upgrade < %s | llvm-as | llc -march=x86
 ; PR833
 
 %G = weak global int 0		; <int*> [#uses=3]

@@ -1,5 +1,5 @@
-; RUN: llvm-as < %s | llc -march=x86 &&
-; RUN: llvm-as < %s | llc -march=x86 | not grep adc
+; RUN: llvm-upgrade < %s | llvm-as | llc -march=x86 &&
+; RUN: llvm-upgrade < %s | llvm-as | llc -march=x86 | not grep adc
 
 ; PR987
 

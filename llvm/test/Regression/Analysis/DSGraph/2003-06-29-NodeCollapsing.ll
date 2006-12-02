@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -no-aa -ds-aa -load-vn -gcse | llvm-dis | not grep load
+; RUN: llvm-upgrade < %s | llvm-as | opt -no-aa -ds-aa -load-vn -gcse | llvm-dis | not grep load
 %T = type { int*, int* }
 
 int %main() {

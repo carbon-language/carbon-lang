@@ -1,4 +1,4 @@
-; RUN: llvm-as %s -o - | opt -instcombine
+; RUN: llvm-upgrade %s -o - | llvm-as | opt -instcombine
 
 	%struct.llvm_java_object_base = type opaque
 	"java/lang/Object" = type { %struct.llvm_java_object_base }

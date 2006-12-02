@@ -1,5 +1,5 @@
 ; Test that the ToAsciiOptimizer works correctly
-; RUN: llvm-as < %s | opt -simplify-libcalls | llvm-dis | not grep 'call.*%ffs'
+; RUN: llvm-upgrade < %s | llvm-as | opt -simplify-libcalls | llvm-dis | not grep 'call.*%ffs'
 
 declare int %ffs(int)
 declare int %ffsl(int)

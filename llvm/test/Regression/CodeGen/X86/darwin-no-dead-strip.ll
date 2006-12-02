@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc | grep no_dead_strip
+; RUN: llvm-upgrade < %s | llvm-as | llc | grep no_dead_strip
 
 target endian = little
 target pointersize = 32

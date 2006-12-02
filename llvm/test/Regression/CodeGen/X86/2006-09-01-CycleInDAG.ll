@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=x86
+; RUN: llvm-upgrade < %s | llvm-as | llc -march=x86
 
 target endian = little
 target pointersize = 32

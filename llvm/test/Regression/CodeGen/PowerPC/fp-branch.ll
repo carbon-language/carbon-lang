@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=ppc32 | grep fcmp | wc -l | grep 1
+; RUN: llvm-upgrade < %s | llvm-as | llc -march=ppc32 | grep fcmp | wc -l | grep 1
 
 declare bool %llvm.isunordered.f64(double, double)
 

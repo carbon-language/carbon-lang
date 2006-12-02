@@ -4,7 +4,7 @@
 ;
 ; Which is not valid SSA
 ;
-; RUN: llvm-as < %s | opt -simplifycfg | llvm-dis
+; RUN: llvm-upgrade < %s | llvm-as | opt -simplifycfg | llvm-dis
 
 void "test"() {
 	br bool true, label %end, label %Loop

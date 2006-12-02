@@ -1,7 +1,7 @@
 ; Instcombine was missing a test that caused it to make illegal transformations
 ; sometimes.  In this case, it transforms the sub into an add:
 ; RUN: echo foo
-; RUN: llvm-as < %s | opt -instcombine | llvm-dis | not grep add
+; RUN: llvm-upgrade < %s | llvm-as | opt -instcombine | llvm-dis | not grep add
 ;
 
 

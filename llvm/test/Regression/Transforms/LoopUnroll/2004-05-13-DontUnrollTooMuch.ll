@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -loop-unroll -disable-output
+; RUN: llvm-upgrade < %s | llvm-as | opt -loop-unroll -disable-output
 
 int %main() {
 entry:

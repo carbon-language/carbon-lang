@@ -1,7 +1,7 @@
 ; These tests should not contain a sign extend.
-; RUN: llvm-as < %s | llc -march=ppc32 &&
-; RUN: llvm-as < %s | llc -march=ppc32 | not grep extsh  &&
-; RUN: llvm-as < %s | llc -march=ppc32 | not grep extsb
+; RUN: llvm-upgrade < %s | llvm-as | llc -march=ppc32 &&
+; RUN: llvm-upgrade < %s | llvm-as | llc -march=ppc32 | not grep extsh  &&
+; RUN: llvm-upgrade < %s | llvm-as | llc -march=ppc32 | not grep extsb
 
 int %test1(uint %mode.0.i.0) {
         %tmp.79 = cast uint %mode.0.i.0 to short

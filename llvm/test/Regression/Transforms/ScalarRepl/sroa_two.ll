@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -scalarrepl | llvm-dis
+; RUN: llvm-upgrade < %s | llvm-as | opt -scalarrepl | llvm-dis
 
 implementation
 

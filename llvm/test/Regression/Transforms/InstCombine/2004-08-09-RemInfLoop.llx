@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -instcombine
+; RUN: llvm-upgrade < %s | llvm-as | opt -instcombine
 
 ; This testcase should not send the instcombiner into an infinite loop!
 

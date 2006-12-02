@@ -1,5 +1,5 @@
-; RUN: llvm-as < %s | opt -scalarrepl | llvm-dis | not grep alloca &&
-; RUN: llvm-as < %s | opt -scalarrepl | llvm-dis | grep 'ret sbyte'
+; RUN: llvm-upgrade < %s | llvm-as | opt -scalarrepl | llvm-dis | not grep alloca &&
+; RUN: llvm-upgrade < %s | llvm-as | opt -scalarrepl | llvm-dis | grep 'ret sbyte'
 
 ; PR892
 

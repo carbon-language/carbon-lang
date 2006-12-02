@@ -2,7 +2,7 @@
 ; entries for it's postdominator.  But I think this can only happen when the 
 ; PHI node is dead, so we just avoid patching up dead PHI nodes.
 
-; RUN: llvm-as < %s | opt -adce
+; RUN: llvm-upgrade < %s | llvm-as | opt -adce
 
 target endian = little
 target pointersize = 32

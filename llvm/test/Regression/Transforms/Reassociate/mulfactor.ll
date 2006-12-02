@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -reassociate -instcombine | llvm-dis | grep mul | wc -l | grep 2
+; RUN: llvm-upgrade < %s | llvm-as | opt -reassociate -instcombine | llvm-dis | grep mul | wc -l | grep 2
 
 ; This should have exactly 2 multiplies when we're done.
 

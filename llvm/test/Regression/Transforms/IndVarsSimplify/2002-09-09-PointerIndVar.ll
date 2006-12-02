@@ -1,7 +1,7 @@
 ; Induction variable pass is doing bad things with pointer induction vars, 
 ; trying to do arithmetic on them directly.
 ;
-; RUN: llvm-as < %s | opt -indvars
+; RUN: llvm-upgrade < %s | llvm-as | opt -indvars
 ;
 void %test(int %A, uint %S, sbyte* %S) {
 

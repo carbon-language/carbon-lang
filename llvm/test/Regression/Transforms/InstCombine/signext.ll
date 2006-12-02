@@ -1,5 +1,5 @@
-; RUN: llvm-as < %s | opt -instcombine -disable-output &&
-; RUN: llvm-as < %s | opt -instcombine | llvm-dis | not grep '(and\|xor\|add\|shl\|shr)'
+; RUN: llvm-upgrade < %s | llvm-as | opt -instcombine -disable-output &&
+; RUN: llvm-upgrade < %s | llvm-as | opt -instcombine | llvm-dis | not grep '(and\|xor\|add\|shl\|shr)'
 
 int %test1(int %x) {
         %tmp.1 = and int %x, 65535              ; <int> [#uses=1]

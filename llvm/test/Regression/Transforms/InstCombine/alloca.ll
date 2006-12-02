@@ -1,6 +1,6 @@
 ; Zero byte allocas should be deleted.
 
-; RUN: llvm-as < %s | opt -instcombine | llvm-dis | not grep alloca
+; RUN: llvm-upgrade < %s | llvm-as | opt -instcombine | llvm-dis | not grep alloca
 
 declare void %use(...)
 void %test() {

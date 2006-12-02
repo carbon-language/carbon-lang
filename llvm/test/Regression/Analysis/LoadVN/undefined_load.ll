@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -load-vn -gcse | llvm-dis | not grep load
+; RUN: llvm-upgrade < %s | llvm-as | opt -load-vn -gcse | llvm-dis | not grep load
 ; Test that loads of undefined memory are eliminated.
 
 int %test1() {

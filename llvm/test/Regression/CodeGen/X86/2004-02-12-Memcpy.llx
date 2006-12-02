@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=x86 | grep movs
+; RUN: llvm-upgrade < %s | llvm-as | llc -march=x86 | grep movs
 declare sbyte* %llvm.memcpy(sbyte* %A, sbyte* %B, uint %amt, uint %align)
 
 %A = global [1000 x int] zeroinitializer

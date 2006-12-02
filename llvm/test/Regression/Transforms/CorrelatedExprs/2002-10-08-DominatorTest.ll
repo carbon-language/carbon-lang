@@ -1,5 +1,5 @@
 ; Test to make sure that SSA is correctly updated
-; RUN: llvm-as < %s | opt -cee
+; RUN: llvm-upgrade < %s | llvm-as | opt -cee
 ;
 implementation   ; Functions:
 

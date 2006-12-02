@@ -2,7 +2,7 @@
 ; instruction into the terminating blocks because there was other code
 ; optimized out of the function after the taildup happened.
 ; XFAIL: *
-; RUN: llvm-as < %s | opt -tailcallelim | llvm-dis | not grep call
+; RUN: llvm-upgrade < %s | llvm-as | opt -tailcallelim | llvm-dis | not grep call
 
 int %t4(int %a) {
 entry:

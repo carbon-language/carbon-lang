@@ -1,6 +1,6 @@
-; RUN: llvm-as < %s | llc &&
-; RUN: llvm-as < %s | llc | not grep ori && 
-; RUN: llvm-as < %s | llc | not grep rlwimi
+; RUN: llvm-upgrade < %s | llvm-as | llc &&
+; RUN: llvm-upgrade < %s | llvm-as | llc | not grep ori && 
+; RUN: llvm-upgrade < %s | llvm-as | llc | not grep rlwimi
 
 int %test1(sbyte* %P) {  ;; or -> lwzx
         %tmp.2.i = cast sbyte* %P to uint

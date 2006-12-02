@@ -6,7 +6,7 @@
 ;   return (int*)malloc(i+j);
 ; }
 
-; RUN: llvm-as < %s | opt -raise | llvm-dis | not grep bitcast
+; RUN: llvm-upgrade < %s | llvm-as | opt -raise | llvm-dis | not grep bitcast
 
 implementation
 

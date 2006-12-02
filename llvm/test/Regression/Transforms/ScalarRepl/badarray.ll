@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -scalarrepl -mem2reg | llvm-dis | grep alloca
+; RUN: llvm-upgrade < %s | llvm-as | opt -scalarrepl -mem2reg | llvm-dis | grep alloca
 
 int %test() {
   %X = alloca [ 4 x int ]

@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -analyze -datastructure
+; RUN: llvm-upgrade < %s | llvm-as | opt -analyze -datastructure
 
 target endian = little
 target pointersize = 32

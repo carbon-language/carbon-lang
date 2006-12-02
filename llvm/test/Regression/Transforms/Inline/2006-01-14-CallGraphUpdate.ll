@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -inline -prune-eh -disable-output
+; RUN: llvm-upgrade < %s | llvm-as | opt -inline -prune-eh -disable-output
 
  	"struct.std::__codecvt_abstract_base<char,char,__mbstate_t>" = type { "struct.std::locale::facet" }
 	"struct.std::basic_streambuf<wchar_t,std::char_traits<wchar_t> >" = type { int (...)**, int*, int*, int*, int*, int*, int*, "struct.std::locale" }

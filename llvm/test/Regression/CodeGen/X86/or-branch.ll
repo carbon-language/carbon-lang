@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=x86 | not grep set
+; RUN: llvm-upgrade < %s | llvm-as | llc -march=x86 | not grep set
 
 void %foo(int %X, int %Y, int %Z) {
 entry:

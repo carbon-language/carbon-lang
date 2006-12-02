@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc
+; RUN: llvm-upgrade < %s | llvm-as | llc
 
 double %fneg(double %X) {
 	%Y = sub double -0.0, %X

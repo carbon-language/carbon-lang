@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -instcombine | llvm-dis | grep call | not grep bitcast
+; RUN: llvm-upgrade < %s | llvm-as | opt -instcombine | llvm-dis | grep call | not grep bitcast
 
 target endian = little
 target pointersize = 32

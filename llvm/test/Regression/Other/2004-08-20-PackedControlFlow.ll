@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llvm-dis | llvm-as > /dev/null
+; RUN: llvm-upgrade < %s | llvm-as | llvm-dis | llvm-as > /dev/null
 
 %v4f = type <4 x float>
 

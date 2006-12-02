@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -instcombine | llvm-dis | grep and
+; RUN: llvm-upgrade < %s | llvm-as | opt -instcombine | llvm-dis | grep and
 ; PR913
 
 int %test(int* %tmp1) {

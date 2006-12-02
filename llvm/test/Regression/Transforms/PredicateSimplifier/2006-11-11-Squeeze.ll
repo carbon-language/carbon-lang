@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -predsimplify -disable-output
+; RUN: llvm-upgrade < %s | llvm-as | opt -predsimplify -disable-output
 
 	%struct.cube_struct = type { int, int, int, int*, int*, int*, int*, int*, uint*, uint*, uint**, uint**, uint*, uint*, uint, int, int*, int, int }
 %cube = external global %struct.cube_struct		; <%struct.cube_struct*> [#uses=2]

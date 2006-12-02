@@ -1,7 +1,7 @@
 ; Level raise is making an incorrect transformation, which causes incorrect 
 ; bytecode to be generated.
 ;
-; RUN: llvm-as < %s | opt -raise | llvm-dis
+; RUN: llvm-upgrade < %s | llvm-as | opt -raise | llvm-dis
 ;
 
 	%Village = type { [4 x \3 *], \2 *, { \2 *, { int, int, int, \5 * } *, \2 * }, { int, int, int, { \2 *, { int, int, int, \6 * } *, \2 * }, { \2 *, { int, int, int, \6 * } *, \2 * }, { \2 *, { int, int, int, \6 * } *, \2 * }, { \2 *, { int, int, int, \6 * } *, \2 * } }, int, int }

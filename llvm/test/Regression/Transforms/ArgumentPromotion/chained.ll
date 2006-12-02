@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -argpromotion -instcombine | llvm-dis | not grep load
+; RUN: llvm-upgrade < %s | llvm-as | opt -argpromotion -instcombine | llvm-dis | not grep load
 
 %G1 = constant int 0
 %G2 = constant int* %G1

@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -regalloc=local
+; RUN: llvm-upgrade < %s | llvm-as | llc -regalloc=local
 
 	%struct.CHESS_POSITION = type { ulong, ulong, ulong, ulong, ulong, ulong, ulong, ulong, ulong, ulong, ulong, ulong, ulong, ulong, ulong, ulong, ulong, ulong, uint, int, sbyte, sbyte, [64 x sbyte], sbyte, sbyte, sbyte, sbyte, sbyte }
 %search = external global %struct.CHESS_POSITION		; <%struct.CHESS_POSITION*> [#uses=2]

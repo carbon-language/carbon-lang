@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -ds-aa -load-vn -gcse -instcombine | llvm-dis | grep sub
+; RUN: llvm-upgrade < %s | llvm-as | opt -ds-aa -load-vn -gcse -instcombine | llvm-dis | grep sub
 
 void %bar(int* %p) {
   store int 15, int* %p

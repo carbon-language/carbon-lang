@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -lowersetjmp
+; RUN: llvm-upgrade < %s | llvm-as | opt -lowersetjmp
 	%lldb.compile_unit = type { uint, ushort, ushort, sbyte*, sbyte*, sbyte*, {  }* }
 %d.compile_unit = external global %lldb.compile_unit		; <%lldb.compile_unit*> [#uses=1]
 

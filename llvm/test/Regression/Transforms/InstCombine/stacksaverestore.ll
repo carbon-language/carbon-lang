@@ -1,5 +1,5 @@
-; RUN: llvm-as < %s | opt -instcombine -disable-output &&
-; RUN: llvm-as < %s | opt -instcombine | llvm-dis | not grep call
+; RUN: llvm-upgrade < %s | llvm-as | opt -instcombine -disable-output &&
+; RUN: llvm-upgrade < %s | llvm-as | opt -instcombine | llvm-dis | not grep call
 
 ;; Test that llvm.stackrestore is removed when possible.
 

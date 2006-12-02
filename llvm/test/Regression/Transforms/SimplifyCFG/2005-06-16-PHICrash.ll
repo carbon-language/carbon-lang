@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -simplifycfg -disable-output
+; RUN: llvm-upgrade < %s | llvm-as | opt -simplifycfg -disable-output
 ; PR584
 
 %g_38098584 = external global uint		; <uint*> [#uses=1]

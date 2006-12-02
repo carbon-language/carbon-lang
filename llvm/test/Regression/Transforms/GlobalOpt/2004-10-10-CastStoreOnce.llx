@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -globalopt
+; RUN: llvm-upgrade < %s | llvm-as | opt -globalopt
 
 %V = global float 12.0
 %G = internal global int* null

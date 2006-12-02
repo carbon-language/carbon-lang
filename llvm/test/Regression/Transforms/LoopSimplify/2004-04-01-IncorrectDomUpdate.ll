@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -loopsimplify -licm -disable-output
+; RUN: llvm-upgrade < %s | llvm-as | opt -loopsimplify -licm -disable-output
 
 ; This is PR306
 

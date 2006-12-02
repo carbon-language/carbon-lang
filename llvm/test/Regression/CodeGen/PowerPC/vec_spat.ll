@@ -1,8 +1,8 @@
 ; Test that vectors are scalarized/lowered correctly.
-; RUN: llvm-as < %s | llc -march=ppc32 -mcpu=g5 | grep vspltw | wc -l | grep 2 &&
-; RUN: llvm-as < %s | llc -march=ppc32 -mcpu=g3 | grep stfs | wc -l | grep 4 &&
-; RUN: llvm-as < %s | llc -march=ppc32 -mcpu=g5 | grep vsplti | wc -l | grep 3 &&
-; RUN: llvm-as < %s | llc -march=ppc32 -mcpu=g5 | grep vsplth | wc -l | grep 1
+; RUN: llvm-upgrade < %s | llvm-as | llc -march=ppc32 -mcpu=g5 | grep vspltw | wc -l | grep 2 &&
+; RUN: llvm-upgrade < %s | llvm-as | llc -march=ppc32 -mcpu=g3 | grep stfs | wc -l | grep 4 &&
+; RUN: llvm-upgrade < %s | llvm-as | llc -march=ppc32 -mcpu=g5 | grep vsplti | wc -l | grep 3 &&
+; RUN: llvm-upgrade < %s | llvm-as | llc -march=ppc32 -mcpu=g5 | grep vsplth | wc -l | grep 1
 
 %f4 = type <4 x float>
 %i4 = type <4 x int>

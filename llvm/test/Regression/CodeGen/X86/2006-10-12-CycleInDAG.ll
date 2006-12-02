@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=x86
+; RUN: llvm-upgrade < %s | llvm-as | llc -march=x86
 	%struct.function = type opaque
 	%struct.lang_decl = type opaque
 	%struct.location_t = type { sbyte*, int }

@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -prune-eh | llvm-dis | not grep 'ret int'
+; RUN: llvm-upgrade < %s | llvm-as | opt -prune-eh | llvm-dis | not grep 'ret int'
 
 void %noreturn() {
 	unwind

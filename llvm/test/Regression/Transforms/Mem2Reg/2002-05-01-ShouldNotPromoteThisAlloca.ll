@@ -1,7 +1,7 @@
 ; This input caused the mem2reg pass to die because it was trying to promote
 ; the %r alloca, even though it is invalid to do so in this case!
 ;
-; RUN: llvm-as < %s | opt -mem2reg
+; RUN: llvm-upgrade < %s | llvm-as | opt -mem2reg
 
 
 implementation

@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc
+; RUN: llvm-upgrade < %s | llvm-as | llc
 
 declare sbyte* %llvm.stacksave()
 declare void %llvm.stackrestore(sbyte*)

@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -instcombine | llvm-dis | grep 4294967295
+; RUN: llvm-upgrade < %s | llvm-as | opt -instcombine | llvm-dis | grep 4294967295
 
 ulong %test(ulong %Val) {
         %tmp.3 = cast ulong %Val to uint              ; <uint> [#uses=1]

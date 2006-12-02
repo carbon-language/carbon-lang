@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -licm -disable-output
+; RUN: llvm-upgrade < %s | llvm-as | opt -licm -disable-output
 
 void %test({int}* %P) {
 	br label %Loop

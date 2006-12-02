@@ -3,7 +3,7 @@
 ; prevented reg115 from being able to change.
 ;
 ; XFAIL: *
-; RUN: llvm-as < %s | opt -raise | llvm-dis | not grep bitcast
+; RUN: llvm-upgrade < %s | llvm-as | opt -raise | llvm-dis | not grep bitcast
 	
 	%Hash = type { { uint, sbyte *, \2 } * *, int (uint) *, int } *
 	%HashEntry = type { uint, sbyte *, \2 } *

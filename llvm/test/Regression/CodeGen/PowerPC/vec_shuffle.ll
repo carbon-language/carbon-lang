@@ -1,9 +1,9 @@
-; RUN: llvm-as < %s | opt -instcombine | llc -march=ppc32 -mcpu=g5 | not grep vperm &&
-; RUN: llvm-as < %s | llc -march=ppc32 -mcpu=g5 | grep vsldoi | wc -l | grep 2 &&
-; RUN: llvm-as < %s | llc -march=ppc32 -mcpu=g5 | grep vmrgh | wc -l | grep 7 &&
-; RUN: llvm-as < %s | llc -march=ppc32 -mcpu=g5 | grep vmrgl | wc -l | grep 6 &&
-; RUN: llvm-as < %s | llc -march=ppc32 -mcpu=g5 | grep vpkuhum | wc -l | grep 1 &&
-; RUN: llvm-as < %s | llc -march=ppc32 -mcpu=g5 | grep vpkuwum | wc -l | grep 1
+; RUN: llvm-upgrade < %s | llvm-as | opt -instcombine | llc -march=ppc32 -mcpu=g5 | not grep vperm &&
+; RUN: llvm-upgrade < %s | llvm-as | llc -march=ppc32 -mcpu=g5 | grep vsldoi | wc -l | grep 2 &&
+; RUN: llvm-upgrade < %s | llvm-as | llc -march=ppc32 -mcpu=g5 | grep vmrgh | wc -l | grep 7 &&
+; RUN: llvm-upgrade < %s | llvm-as | llc -march=ppc32 -mcpu=g5 | grep vmrgl | wc -l | grep 6 &&
+; RUN: llvm-upgrade < %s | llvm-as | llc -march=ppc32 -mcpu=g5 | grep vpkuhum | wc -l | grep 1 &&
+; RUN: llvm-upgrade < %s | llvm-as | llc -march=ppc32 -mcpu=g5 | grep vpkuwum | wc -l | grep 1
 
 void %VSLDOI_xy(<8 x short>* %A, <8 x short>* %B) {
 entry:

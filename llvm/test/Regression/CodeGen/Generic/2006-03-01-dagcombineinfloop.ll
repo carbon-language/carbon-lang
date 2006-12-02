@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc
+; RUN: llvm-upgrade < %s | llvm-as | llc
 ; Infinite loop in the dag combiner, reduced from 176.gcc.
 
 	%struct._obstack_chunk = type { sbyte*, %struct._obstack_chunk*, [4 x sbyte] }

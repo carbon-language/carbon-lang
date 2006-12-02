@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=x86 | grep shrl
+; RUN: llvm-upgrade < %s | llvm-as | llc -march=x86 | grep shrl
 ; Bug in FindModifiedNodeSlot cause tmp14 load to become a zextload and shr 31
 ; is then optimized away.
 

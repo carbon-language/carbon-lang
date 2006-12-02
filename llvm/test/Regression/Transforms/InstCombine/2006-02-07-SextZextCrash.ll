@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -instcombine -disable-output	
+; RUN: llvm-upgrade < %s | llvm-as | opt -instcombine -disable-output	
 
 	%struct.rtx_const = type { uint, { %union.real_extract } }
 	%struct.rtx_def = type { int, [1 x %union.rtunion_def] }

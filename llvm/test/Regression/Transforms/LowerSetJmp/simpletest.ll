@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -lowersetjmp | llvm-dis | grep invoke
+; RUN: llvm-upgrade < %s | llvm-as | opt -lowersetjmp | llvm-dis | grep invoke
 
 %JmpBuf = type int
 %.str_1 = internal constant [13 x sbyte] c"returned %d\0A\00"

@@ -1,12 +1,12 @@
-; RUN: llvm-as < %s | llc -march=arm &&
-; RUN: llvm-as < %s | llc -march=arm  | grep movmi &&
-; RUN: llvm-as < %s | llc -march=arm  | grep moveq &&
-; RUN: llvm-as < %s | llc -march=arm  | grep movgt &&
-; RUN: llvm-as < %s | llc -march=arm  | grep movge &&
-; RUN: llvm-as < %s | llc -march=arm  | grep movls &&
-; RUN: llvm-as < %s | llc -march=arm  | grep movne &&
-; RUN: llvm-as < %s | llc -march=arm  | grep fcmps &&
-; RUN: llvm-as < %s | llc -march=arm  | grep fcmpd
+; RUN: llvm-upgrade < %s | llvm-as | llc -march=arm &&
+; RUN: llvm-upgrade < %s | llvm-as | llc -march=arm  | grep movmi &&
+; RUN: llvm-upgrade < %s | llvm-as | llc -march=arm  | grep moveq &&
+; RUN: llvm-upgrade < %s | llvm-as | llc -march=arm  | grep movgt &&
+; RUN: llvm-upgrade < %s | llvm-as | llc -march=arm  | grep movge &&
+; RUN: llvm-upgrade < %s | llvm-as | llc -march=arm  | grep movls &&
+; RUN: llvm-upgrade < %s | llvm-as | llc -march=arm  | grep movne &&
+; RUN: llvm-upgrade < %s | llvm-as | llc -march=arm  | grep fcmps &&
+; RUN: llvm-upgrade < %s | llvm-as | llc -march=arm  | grep fcmpd
 
 int %f1(float %a) {
 entry:

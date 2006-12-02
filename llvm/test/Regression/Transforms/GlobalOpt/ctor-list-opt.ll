@@ -1,5 +1,5 @@
-; RUN: llvm-as < %s | opt -globalopt -disable-output &&
-; RUN: llvm-as < %s | opt -globalopt | llvm-dis | not grep CTOR
+; RUN: llvm-upgrade < %s | llvm-as | opt -globalopt -disable-output &&
+; RUN: llvm-upgrade < %s | llvm-as | opt -globalopt | llvm-dis | not grep CTOR
 
 %llvm.global_ctors = appending global [10 x { int, void ()* }] [ 
   { int, void ()* } { int 65535, void ()* %CTOR1 },

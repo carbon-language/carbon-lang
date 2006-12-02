@@ -1,6 +1,6 @@
 ; The output formater prints out 1.0e100 as Inf!
 ;
-; RUN: llvm-as < %s | llvm-dis | llvm-as | llvm-dis
+; RUN: llvm-upgrade < %s | llvm-as | llvm-dis | llvm-as | llvm-dis
 
 implementation
 

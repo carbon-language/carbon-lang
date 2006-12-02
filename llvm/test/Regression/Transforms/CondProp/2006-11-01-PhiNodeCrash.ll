@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -condprop -disable-output
+; RUN: llvm-upgrade < %s | llvm-as | opt -condprop -disable-output
 ; PR979
 target datalayout = "e-p:32:32"
 target endian = little

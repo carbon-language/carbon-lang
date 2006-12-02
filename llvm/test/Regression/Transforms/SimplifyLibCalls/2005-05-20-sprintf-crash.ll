@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -simplify-libcalls -disable-output
+; RUN: llvm-upgrade < %s | llvm-as | opt -simplify-libcalls -disable-output
 
 %G = constant [3 x sbyte] c"%s\00"
 

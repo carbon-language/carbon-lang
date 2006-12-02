@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -indvars -disable-output
+; RUN: llvm-upgrade < %s | llvm-as | opt -indvars -disable-output
 
 void %main() {
 entry:

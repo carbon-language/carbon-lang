@@ -1,6 +1,6 @@
-; RUN: llvm-as < %s | llc -march=x86-64 &&
-; RUN: llvm-as < %s | llc -march=x86-64 | not grep 'movb %sil, %ah' &&
-; RUN: llvm-as < %s | llc -march=x86-64 | grep 'movzbw %al, %ax'
+; RUN: llvm-upgrade < %s | llvm-as | llc -march=x86-64 &&
+; RUN: llvm-upgrade < %s | llvm-as | llc -march=x86-64 | not grep 'movb %sil, %ah' &&
+; RUN: llvm-upgrade < %s | llvm-as | llc -march=x86-64 | grep 'movzbw %al, %ax'
 
 void %handle_vector_size_attribute() {
 entry:

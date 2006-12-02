@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -instcombine -disable-output
+; RUN: llvm-upgrade < %s | llvm-as | opt -instcombine -disable-output
 
 int %_Z13func_31585107li(int %l_39521025, int %l_59244666) {
 	%shortcirc_val = select bool false, uint 1, uint 0		; <uint> [#uses=1]

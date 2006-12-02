@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=x86 | grep fild | not grep ESP
+; RUN: llvm-upgrade < %s | llvm-as | llc -march=x86 | grep fild | not grep ESP
 double %short(short* %P) {
 	%V = load short* %P
 	%V2 = cast short %V to double

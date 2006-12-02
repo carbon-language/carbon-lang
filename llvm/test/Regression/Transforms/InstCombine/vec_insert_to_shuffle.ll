@@ -1,6 +1,6 @@
-; RUN: llvm-as < %s | opt -instcombine | llvm-dis | grep shufflevec | wc -l | grep 1 &&
-; RUN: llvm-as < %s | opt -instcombine | llvm-dis | not grep insertelement &&
-; RUN: llvm-as < %s | opt -instcombine | llvm-dis | not grep extractelement
+; RUN: llvm-upgrade < %s | llvm-as | opt -instcombine | llvm-dis | grep shufflevec | wc -l | grep 1 &&
+; RUN: llvm-upgrade < %s | llvm-as | opt -instcombine | llvm-dis | not grep insertelement &&
+; RUN: llvm-upgrade < %s | llvm-as | opt -instcombine | llvm-dis | not grep extractelement
 
 <4 x float> %test(<4 x float> %tmp, <4 x float> %tmp1) {
 	%tmp4 = extractelement <4 x float> %tmp, uint 1		; <float> [#uses=1]

@@ -1,6 +1,6 @@
 ; With sub reassociation, constant folding can eliminate all of the constants.
 ;
-; RUN: llvm-as < %s | opt -reassociate -constprop -instcombine -dce | llvm-dis | not grep add
+; RUN: llvm-upgrade < %s | llvm-as | opt -reassociate -constprop -instcombine -dce | llvm-dis | not grep add
 
 int %test(int %A, int %B) {
 	%W = add int 5, %B

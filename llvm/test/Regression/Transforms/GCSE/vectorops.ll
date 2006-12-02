@@ -1,5 +1,5 @@
-; RUN: llvm-as < %s | opt -gcse -instcombine -disable-output &&
-; RUN: llvm-as < %s | opt -gcse -instcombine | llvm-dis | not grep sub
+; RUN: llvm-upgrade < %s | llvm-as | opt -gcse -instcombine -disable-output &&
+; RUN: llvm-upgrade < %s | llvm-as | opt -gcse -instcombine | llvm-dis | not grep sub
 
 uint %test_extractelement(<4 x uint> %V) {
         %R = extractelement <4 x uint> %V, uint 1

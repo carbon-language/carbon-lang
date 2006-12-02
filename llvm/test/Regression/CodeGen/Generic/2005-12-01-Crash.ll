@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc
+; RUN: llvm-upgrade < %s | llvm-as | llc
 
 %str = external global [36 x sbyte]		; <[36 x sbyte]*> [#uses=0]
 %str = external global [29 x sbyte]		; <[29 x sbyte]*> [#uses=0]

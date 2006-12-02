@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -loop-extract-single -disable-output
+; RUN: llvm-upgrade < %s | llvm-as | opt -loop-extract-single -disable-output
 
 void %ab() {
 entry:

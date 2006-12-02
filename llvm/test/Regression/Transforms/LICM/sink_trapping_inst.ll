@@ -1,7 +1,7 @@
 ; Potentially trapping instructions may be sunk as long as they are guaranteed
 ; to be executed.
 ;
-; RUN: llvm-as < %s | opt -licm | llvm-dis | %prcontext div 1 | grep Out: 
+; RUN: llvm-upgrade < %s | llvm-as | opt -licm | llvm-dis | %prcontext div 1 | grep Out: 
 
 int %test(int %N) {
 Entry:

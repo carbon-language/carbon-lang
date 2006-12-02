@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -tailcallelim | llvm-dis | not grep call
+; RUN: llvm-upgrade < %s | llvm-as | opt -tailcallelim | llvm-dis | not grep call
 
 int %factorial(int %x) {
 entry:

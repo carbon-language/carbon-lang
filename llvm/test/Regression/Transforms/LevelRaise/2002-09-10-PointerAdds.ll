@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -raise
+; RUN: llvm-upgrade < %s | llvm-as | opt -raise
 
 int* %test(int* %P, int* %Q) {
 	%P = cast int* %P to ulong

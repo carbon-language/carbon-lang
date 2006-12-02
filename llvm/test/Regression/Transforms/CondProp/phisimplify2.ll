@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -condprop | llvm-dis | not grep phi
+; RUN: llvm-upgrade < %s | llvm-as | opt -condprop | llvm-dis | not grep phi
 
 declare bool %foo()
 

@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=c | grep fmod
+; RUN: llvm-upgrade < %s | llvm-as | llc -march=c | grep fmod
 
 double %test(double %A, double %B) {
 	%C = rem double %A, %B

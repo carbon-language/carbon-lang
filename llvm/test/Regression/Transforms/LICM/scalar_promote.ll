@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt  -licm -stats 2>&1 | grep "memory locations promoted to register"
+; RUN: llvm-upgrade < %s | llvm-as | opt  -licm -stats 2>&1 | grep "memory locations promoted to register"
 
 %X = global int 7
 

@@ -1,6 +1,6 @@
-; RUN: llvm-as < %s | opt -instcombine -disable-output &&
-; RUN: llvm-as < %s | opt -instcombine | llvm-dis | grep 'lshr int' | wc -l | grep 2 &&
-; RUN: llvm-as < %s | opt -instcombine | llvm-dis | not grep ashr
+; RUN: llvm-upgrade < %s | llvm-as | opt -instcombine -disable-output &&
+; RUN: llvm-upgrade < %s | llvm-as | opt -instcombine | llvm-dis | grep 'lshr int' | wc -l | grep 2 &&
+; RUN: llvm-upgrade < %s | llvm-as | opt -instcombine | llvm-dis | not grep ashr
 
 int %test1(int %X, ubyte %A) {
 	%Y = shr int %X, ubyte %A  ; can be logical shift.

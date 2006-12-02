@@ -1,5 +1,5 @@
 ; Neither of these functions should contain algebraic right shifts
-; RUN: llvm-as < %s | llc -march=ppc32 | not grep srawi 
+; RUN: llvm-upgrade < %s | llvm-as | llc -march=ppc32 | not grep srawi 
 
 int %test1(uint %mode.0.i.0) {
         %tmp.79 = cast uint %mode.0.i.0 to int        ; <sbyte> [#uses=1]

@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -raise | llvm-dis | grep call | not grep '\.\.\.'
+; RUN: llvm-upgrade < %s | llvm-as | opt -raise | llvm-dis | grep call | not grep '\.\.\.'
 
 implementation
 

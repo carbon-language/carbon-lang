@@ -1,5 +1,5 @@
 ;
-; RUN: llvm-as < %s | opt -analyze -tddatastructure
+; RUN: llvm-upgrade < %s | llvm-as | opt -analyze -tddatastructure
 
 %G = global int 2		; <int*> [#uses=1]
 %H = global int* null

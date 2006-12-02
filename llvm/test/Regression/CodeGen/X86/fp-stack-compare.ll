@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=x86 -mcpu=i386 | grep fucomi.*st.[12]
+; RUN: llvm-upgrade < %s | llvm-as | llc -march=x86 -mcpu=i386 | grep fucomi.*st.[12]
 ; PR1012
 
 float %foo(float *%col.2.0) {

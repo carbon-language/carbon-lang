@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llvm-dis
+; RUN: llvm-upgrade < %s | llvm-as | llvm-dis
 
 %foo = global <2 x int> <int 0, int 1>;
 %bar = uninitialized global <2 x int>;

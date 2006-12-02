@@ -1,5 +1,5 @@
 ; Test that the IsDigitOptimizer works correctly
-; RUN: llvm-as < %s | opt -simplify-libcalls | llvm-dis | not grep 'call' 
+; RUN: llvm-upgrade < %s | llvm-as | opt -simplify-libcalls | llvm-dis | not grep 'call' 
 
 declare int %isdigit(int)
 declare int %isascii(int)

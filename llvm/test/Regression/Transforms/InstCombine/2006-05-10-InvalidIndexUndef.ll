@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -instcombine | llvm-dis | grep undef
+; RUN: llvm-upgrade < %s | llvm-as | opt -instcombine | llvm-dis | grep undef
 ; XFAIL: *
 
 %str = constant [4 x ubyte] c"str\00"

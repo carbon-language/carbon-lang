@@ -1,7 +1,7 @@
 ; This testcase was failing because without merging the return blocks, ADCE
 ; didn't know that it could get rid of the then.0 block.
 
-; RUN: llvm-as < %s | opt -adce | llvm-dis | not grep load
+; RUN: llvm-upgrade < %s | llvm-as | opt -adce | llvm-dis | not grep load
 
 
 implementation   ; Functions:

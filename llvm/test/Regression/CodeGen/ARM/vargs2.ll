@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=arm
+; RUN: llvm-upgrade < %s | llvm-as | llc -march=arm
 %str = internal constant [7 x ubyte] c"%d %d\0A\00"		; <[7 x ubyte]*> [#uses=1]
 
 implementation   ; Functions:

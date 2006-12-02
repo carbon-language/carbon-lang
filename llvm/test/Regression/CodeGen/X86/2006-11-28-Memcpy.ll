@@ -1,6 +1,6 @@
-; RUN: llvm-as < %s | llc -march=x86 &&
-; RUN: llvm-as < %s | llc -march=x86 | grep 3721182122 | wc -l | grep 2 &&
-; RUN: llvm-as < %s | llc -march=x86 | grep 'movl _bytes2' | wc -l | grep 1
+; RUN: llvm-upgrade < %s | llvm-as | llc -march=x86 &&
+; RUN: llvm-upgrade < %s | llvm-as | llc -march=x86 | grep 3721182122 | wc -l | grep 2 &&
+; RUN: llvm-upgrade < %s | llvm-as | llc -march=x86 | grep 'movl _bytes2' | wc -l | grep 1
 ; PR1022, 1023
 
 %fmt = constant [4 x sbyte] c"%x\0A\00"

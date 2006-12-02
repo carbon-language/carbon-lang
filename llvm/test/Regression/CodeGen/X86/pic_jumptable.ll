@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -relocation-model=pic -march=x86 | not grep -F .text
+; RUN: llvm-upgrade < %s | llvm-as | llc -relocation-model=pic -march=x86 | not grep -F .text
 target endian = little
 target pointersize = 32
 target triple = "i386-linux-gnu"

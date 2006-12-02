@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=sparc
+; RUN: llvm-upgrade < %s | llvm-as | llc -march=sparc
 
 void %execute_list() {
 	%tmp.33.i = div float 0.000000e+00, 0.000000e+00		; <float> [#uses=1]

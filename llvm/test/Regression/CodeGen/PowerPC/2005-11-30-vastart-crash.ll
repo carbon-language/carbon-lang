@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc
+; RUN: llvm-upgrade < %s | llvm-as | llc
 target endian = big
 target pointersize = 32
 target triple = "powerpc-apple-darwin8.2.0"

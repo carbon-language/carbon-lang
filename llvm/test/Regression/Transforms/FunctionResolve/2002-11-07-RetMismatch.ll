@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -funcresolve -funcresolve | llvm-dis | not grep declare
+; RUN: llvm-upgrade < %s | llvm-as | opt -funcresolve -funcresolve | llvm-dis | not grep declare
 
 declare void %qsortg(sbyte*, int, int)
 

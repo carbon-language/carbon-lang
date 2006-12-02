@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=x86 -relocation-model=static | not grep 'subl.*%esp'
+; RUN: llvm-upgrade < %s | llvm-as | llc -march=x86 -relocation-model=static | not grep 'subl.*%esp'
 
 %A = external global ushort*
 %B = external global uint

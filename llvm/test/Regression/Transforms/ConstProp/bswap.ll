@@ -1,6 +1,6 @@
 ; bswap should be constant folded when it is passed a constant argument
 
-; RUN: llvm-as < %s | opt -constprop | llvm-dis | not grep call
+; RUN: llvm-upgrade < %s | llvm-as | opt -constprop | llvm-dis | not grep call
 
 declare ushort %llvm.bswap.i16(ushort)
 declare uint %llvm.bswap.i32(uint)

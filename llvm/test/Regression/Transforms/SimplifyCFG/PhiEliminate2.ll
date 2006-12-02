@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -simplifycfg | llvm-dis | not grep br
+; RUN: llvm-upgrade < %s | llvm-as | opt -simplifycfg | llvm-dis | not grep br
 
 int %test(bool %C, int %V1, int %V2) {
 entry:

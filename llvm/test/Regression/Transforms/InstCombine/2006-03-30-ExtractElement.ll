@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -instcombine -disable-output
+; RUN: llvm-upgrade < %s | llvm-as | opt -instcombine -disable-output
 
 float %test(<4 x float> %V) {
 	%V2 = insertelement <4 x float> %V, float 1.0, uint 3

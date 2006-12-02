@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=x86
+; RUN: llvm-upgrade < %s | llvm-as | llc -march=x86
 
 void %_ZN13QFSFileEngine4readEPcx() {
 	%tmp201 = load int* null

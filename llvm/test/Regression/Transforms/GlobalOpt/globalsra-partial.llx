@@ -1,6 +1,6 @@
 ; In this case, the global can only be broken up by one level.
 
-; RUN: llvm-as < %s | opt -globalopt | llvm-dis | not grep 12345
+; RUN: llvm-upgrade < %s | llvm-as | opt -globalopt | llvm-dis | not grep 12345
 
 %G = internal global { int, [4 x float] } zeroinitializer
 

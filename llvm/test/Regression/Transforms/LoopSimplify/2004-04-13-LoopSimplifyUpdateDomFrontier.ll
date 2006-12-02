@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -scalarrepl -loopsimplify -licm -disable-output
+; RUN: llvm-upgrade < %s | llvm-as | opt -scalarrepl -loopsimplify -licm -disable-output
 
 implementation   ; Functions:
 

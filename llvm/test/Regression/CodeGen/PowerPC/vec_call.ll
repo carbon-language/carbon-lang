@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=ppc32 -mcpu=g5
+; RUN: llvm-upgrade < %s | llvm-as | llc -march=ppc32 -mcpu=g5
 
 <4 x int> %test_arg(<4 x int> %A, <4 x int> %B) {
         %C = add <4 x int> %A, %B

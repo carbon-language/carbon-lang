@@ -1,6 +1,6 @@
 ; this should not crash the ppc backend
 
-; RUN: llvm-as < %s | llc -march=ppc32
+; RUN: llvm-upgrade < %s | llvm-as | llc -march=ppc32
 
 uint %test( int %j.0.0.i) {
   %tmp.85.i = and int %j.0.0.i, 7

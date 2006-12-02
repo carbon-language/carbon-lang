@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -instcombine | llvm-dis | grep call | notcast
+; RUN: llvm-upgrade < %s | llvm-as | opt -instcombine | llvm-dis | grep call | notcast
 
 declare void %free(sbyte*)
 

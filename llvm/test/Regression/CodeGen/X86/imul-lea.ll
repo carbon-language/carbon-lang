@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=x86 | grep lea
+; RUN: llvm-upgrade < %s | llvm-as | llc -march=x86 | grep lea
 
 declare int %foo()
 int %test() {

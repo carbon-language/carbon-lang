@@ -1,5 +1,5 @@
 ; Make sure this testcase is supported by all code generators
-; RUN: llvm-as < %s | llc
+; RUN: llvm-upgrade < %s | llvm-as | llc
 
 declare long %llvm.ctpop(long)
 declare int %llvm.ctpop(int)

@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -raise
+; RUN: llvm-upgrade < %s | llvm-as | opt -raise
 
 declare void %foo()
 

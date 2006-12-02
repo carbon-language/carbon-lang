@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -loop-reduce -disable-output
+; RUN: llvm-upgrade < %s | llvm-as | opt -loop-reduce -disable-output
 
 int %image_to_texture(uint %indvar454) {
 loopentry.1.outer:

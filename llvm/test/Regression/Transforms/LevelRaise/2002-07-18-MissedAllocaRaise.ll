@@ -1,6 +1,6 @@
 ; Looks like we don't raise alloca's like we do mallocs
 ; XFAIL: *
-; RUN: llvm-as < %s | opt -raise | llvm-dis | not grep bitcast
+; RUN: llvm-upgrade < %s | llvm-as | opt -raise | llvm-dis | not grep bitcast
 
 implementation   ; Functions:
 

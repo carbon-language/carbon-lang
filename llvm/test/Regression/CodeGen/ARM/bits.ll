@@ -1,9 +1,9 @@
-; RUN: llvm-as < %s | llc -march=arm &&
-; RUN: llvm-as < %s | llc -march=arm | grep and      | wc -l | grep 1 &&
-; RUN: llvm-as < %s | llc -march=arm | grep orr      | wc -l | grep 1 &&
-; RUN: llvm-as < %s | llc -march=arm | grep eor      | wc -l | grep 1 &&
-; RUN: llvm-as < %s | llc -march=arm | grep mov.*lsl | wc -l | grep 1 &&
-; RUN: llvm-as < %s | llc -march=arm | grep mov.*asr | wc -l | grep 1
+; RUN: llvm-upgrade < %s | llvm-as | llc -march=arm &&
+; RUN: llvm-upgrade < %s | llvm-as | llc -march=arm | grep and      | wc -l | grep 1 &&
+; RUN: llvm-upgrade < %s | llvm-as | llc -march=arm | grep orr      | wc -l | grep 1 &&
+; RUN: llvm-upgrade < %s | llvm-as | llc -march=arm | grep eor      | wc -l | grep 1 &&
+; RUN: llvm-upgrade < %s | llvm-as | llc -march=arm | grep mov.*lsl | wc -l | grep 1 &&
+; RUN: llvm-upgrade < %s | llvm-as | llc -march=arm | grep mov.*asr | wc -l | grep 1
 
 int %f1(int %a, int %b) {
 entry:

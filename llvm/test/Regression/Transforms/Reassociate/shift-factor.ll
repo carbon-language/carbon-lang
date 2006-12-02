@@ -1,6 +1,6 @@
 ; There should be exactly one shift and one add left.
-; RUN: llvm-as < %s | opt -reassociate -instcombine | llvm-dis | grep shl | wc -l | grep 1 &&
-; RUN: llvm-as < %s | opt -reassociate -instcombine | llvm-dis | grep add | wc -l | grep 1
+; RUN: llvm-upgrade < %s | llvm-as | opt -reassociate -instcombine | llvm-dis | grep shl | wc -l | grep 1 &&
+; RUN: llvm-upgrade < %s | llvm-as | opt -reassociate -instcombine | llvm-dis | grep add | wc -l | grep 1
 
 int %test(int %X, int %Y) {
         %tmp.2 = shl int %X, ubyte 1            ; <int> [#uses=1]

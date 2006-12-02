@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=ppc64
+; RUN: llvm-upgrade < %s | llvm-as | llc -march=ppc64
 target endian = big
 target pointersize = 64
 target triple = "powerpc64-apple-darwin8"

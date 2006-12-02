@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -funcresolve | llvm-dis | not grep foo
+; RUN: llvm-upgrade < %s | llvm-as | opt -funcresolve | llvm-dis | not grep foo
 
 ; The funcresolve pass was resolving the two foo's together in this test,
 ; adding a ConstantPointerRef to one of them.  Then because of this

@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -sccp -disable-output
+; RUN: llvm-upgrade < %s | llvm-as | opt -sccp -disable-output
 
 target endian = big
 target pointersize = 32

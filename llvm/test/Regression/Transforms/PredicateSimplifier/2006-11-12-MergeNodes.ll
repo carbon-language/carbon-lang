@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -predsimplify -disable-output
+; RUN: llvm-upgrade < %s | llvm-as | opt -predsimplify -disable-output
 
 ; ModuleID = 'b.bc'
 target datalayout = "e-p:32:32"

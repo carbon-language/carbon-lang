@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -indvars -disable-output
+; RUN: llvm-upgrade < %s | llvm-as | opt -indvars -disable-output
 
 	%struct.__false_type = type { ubyte }
 	"struct.__gnu_cxx::_Hashtable_node<const llvm::Constant*>" = type { "struct.__gnu_cxx::_Hashtable_node<const llvm::Constant*>"*, "struct.llvm::Constant"* }

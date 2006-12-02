@@ -1,5 +1,5 @@
 ; Make sure this testcase codegens to the ctpop instruction
-; RUN: llvm-as < %s | llc -march=alpha | grep -i 'subl $16,1,$0'
+; RUN: llvm-upgrade < %s | llvm-as | llc -march=alpha | grep -i 'subl $16,1,$0'
 
 implementation   ; Functions:
 

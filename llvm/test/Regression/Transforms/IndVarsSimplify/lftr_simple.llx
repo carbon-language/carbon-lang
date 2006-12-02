@@ -1,6 +1,6 @@
 ; LFTR should eliminate the need for the computation of i*i completely.  It 
 ; is only used to compute the exit value.
-; RUN: llvm-as < %s | opt -indvars -dce | llvm-dis | not grep mul
+; RUN: llvm-upgrade < %s | llvm-as | opt -indvars -dce | llvm-dis | not grep mul
 
 %A = external global int
 

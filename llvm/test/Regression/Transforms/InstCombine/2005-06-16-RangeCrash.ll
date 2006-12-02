@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -instcombine -disable-output
+; RUN: llvm-upgrade < %s | llvm-as | opt -instcombine -disable-output
 ; PR585
 bool %test() {
 	%tmp.26 = div int 0, -2147483648		; <int> [#uses=1]

@@ -1,5 +1,5 @@
-; RUN: llvm-as < %s | llc -march=x86 | grep lea
-; RUN: llvm-as < %s | llc -march=x86 | not grep add
+; RUN: llvm-upgrade < %s | llvm-as | llc -march=x86 | grep lea
+; RUN: llvm-upgrade < %s | llvm-as | llc -march=x86 | not grep add
 
 int %test(int %X, int %Y) {
 	; Push the shl through the mul to allow an LEA to be formed, instead

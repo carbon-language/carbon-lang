@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -inline -disable-output
+; RUN: llvm-upgrade < %s | llvm-as | opt -inline -disable-output
 
 ; Inlining the first call caused the inliner function to delete the second
 ; call.  Then the inliner tries to inline the second call, which no longer

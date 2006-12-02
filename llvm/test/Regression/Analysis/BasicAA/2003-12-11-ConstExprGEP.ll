@@ -1,7 +1,7 @@
 ; This testcase consists of alias relations which should be completely
 ; resolvable by basicaa, but require analysis of getelementptr constant exprs.
 
-; RUN: llvm-as < %s | opt -aa-eval -print-may-aliases 2>&1 -disable-output | not grep May:
+; RUN: llvm-upgrade < %s | llvm-as | opt -aa-eval -print-may-aliases 2>&1 -disable-output | not grep May:
 
 %T = type { uint, [10 x ubyte] }
 

@@ -1,7 +1,7 @@
 ; Test promotion of loads that use the result of a select instruction.  This
 ; should be simplified by the instcombine pass.
 
-; RUN: llvm-as < %s | opt -instcombine -mem2reg | llvm-dis | not grep alloca
+; RUN: llvm-upgrade < %s | llvm-as | opt -instcombine -mem2reg | llvm-dis | not grep alloca
 
 int %main() {
         %mem_tmp.0 = alloca int         ; <int*> [#uses=3]

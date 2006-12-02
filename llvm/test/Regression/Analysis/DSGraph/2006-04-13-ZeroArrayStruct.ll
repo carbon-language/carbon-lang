@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -analyze -datastructure
+; RUN: llvm-upgrade < %s | llvm-as | opt -analyze -datastructure
 
 ; ModuleID = 'bug3.bc'
 target endian = little

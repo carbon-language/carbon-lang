@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -ipconstprop -disable-output
+; RUN: llvm-upgrade < %s | llvm-as | opt -ipconstprop -disable-output
 implementation
 
 internal void %foo(int %X) {

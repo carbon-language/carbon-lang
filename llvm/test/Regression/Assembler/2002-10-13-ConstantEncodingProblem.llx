@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llvm-dis
+; RUN: llvm-upgrade < %s | llvm-as | llvm-dis
 
 %Domain = type { %Domain**, %Domain* }
 

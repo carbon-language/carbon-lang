@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -inline -disable-output
+; RUN: llvm-upgrade < %s | llvm-as | opt -inline -disable-output
 
 implementation
 

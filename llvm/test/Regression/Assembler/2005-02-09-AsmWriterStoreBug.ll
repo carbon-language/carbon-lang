@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llvm-dis | llvm-as
+; RUN: llvm-upgrade < %s | llvm-as | llvm-dis | llvm-as
 
 ; Ensure that the asm writer emits types before both operands of the 
 ; store, even though they can be the same.

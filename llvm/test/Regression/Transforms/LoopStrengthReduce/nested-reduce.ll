@@ -1,5 +1,5 @@
-; RUN: llvm-as < %s | opt -loop-reduce &&
-; RUN: llvm-as < %s | opt -loop-reduce | llvm-dis | not grep mul
+; RUN: llvm-upgrade < %s | llvm-as | opt -loop-reduce &&
+; RUN: llvm-upgrade < %s | llvm-as | opt -loop-reduce | llvm-dis | not grep mul
 
 ; Make sure we don't get a multiply by 6 in this loop.
 

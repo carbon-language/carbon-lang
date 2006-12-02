@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -deadargelim -disable-output
+; RUN: llvm-upgrade < %s | llvm-as | opt -deadargelim -disable-output
 
 implementation
 

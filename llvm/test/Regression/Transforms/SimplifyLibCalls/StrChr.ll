@@ -1,5 +1,5 @@
 ; Test that the StrChrOptimizer works correctly
-; RUN: llvm-as < %s | opt -simplify-libcalls | llvm-dis | not grep 'call.*%strchr'
+; RUN: llvm-upgrade < %s | llvm-as | opt -simplify-libcalls | llvm-dis | not grep 'call.*%strchr'
 
 declare sbyte* %strchr(sbyte*,int)
 declare int %puts(sbyte*)

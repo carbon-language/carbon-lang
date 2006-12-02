@@ -1,5 +1,5 @@
 ; Test that the StrCatOptimizer works correctly
-; RUN: llvm-as < %s | opt -simplify-libcalls | llvm-dis | not grep 'call.*strlen'
+; RUN: llvm-upgrade < %s | llvm-as | opt -simplify-libcalls | llvm-dis | not grep 'call.*strlen'
 
 declare uint %strlen(sbyte*)
 %hello      = constant [6 x sbyte] c"hello\00"

@@ -1,7 +1,7 @@
 ; This test makes sure that div instructions are properly eliminated.
 ;
 
-; RUN: llvm-as < %s | opt -instcombine | llvm-dis | not grep div
+; RUN: llvm-upgrade < %s | llvm-as | opt -instcombine | llvm-dis | not grep div
 
 implementation
 

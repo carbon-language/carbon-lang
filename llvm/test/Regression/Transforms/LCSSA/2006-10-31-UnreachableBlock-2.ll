@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -lcssa -disable-output
+; RUN: llvm-upgrade < %s | llvm-as | opt -lcssa -disable-output
 ; PR977
 
 declare int %opost_block()

@@ -1,8 +1,8 @@
 ; This test makes sure that these instructions are properly eliminated.
 ;
 
-; RUN: llvm-as < %s | opt -instcombine -disable-output &&
-; RUN: llvm-as < %s | opt -instcombine | llvm-dis | not grep 'xor '
+; RUN: llvm-upgrade < %s | llvm-as | opt -instcombine -disable-output &&
+; RUN: llvm-upgrade < %s | llvm-as | opt -instcombine | llvm-dis | not grep 'xor '
 
 %G1 = global uint 0
 %G2 = global uint 0

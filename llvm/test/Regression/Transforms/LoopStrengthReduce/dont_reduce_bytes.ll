@@ -1,7 +1,7 @@
 ; Don't reduce the byte access to P[i], at least not on targets that 
 ; support an efficient 'mem[r1+r2]' addressing mode.
 
-; RUN: llvm-as < %s | opt -loop-reduce -disable-output
+; RUN: llvm-upgrade < %s | llvm-as | opt -loop-reduce -disable-output
 
 declare bool %pred(int)
 

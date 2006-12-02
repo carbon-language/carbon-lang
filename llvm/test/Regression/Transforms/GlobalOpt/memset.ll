@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -globalopt | llvm-dis | not grep internal
+; RUN: llvm-upgrade < %s | llvm-as | opt -globalopt | llvm-dis | not grep internal
 ; both globals are write only, delete them.
 
 %G0 = internal global [58 x sbyte] c"asdlfkajsdlfkajsd;lfkajds;lfkjasd;flkajsd;lkfja;sdlkfjasd\00"

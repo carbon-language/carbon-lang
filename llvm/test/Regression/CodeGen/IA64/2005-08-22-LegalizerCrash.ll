@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=ia64
+; RUN: llvm-upgrade < %s | llvm-as | llc -march=ia64
 
 %_ZN9__gnu_cxx16__stl_prime_listE = external global [28 x uint]		; <[28 x uint]*> [#uses=3]
 

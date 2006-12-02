@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -globaldce
+; RUN: llvm-upgrade < %s | llvm-as | opt -globaldce
 
 %foo = internal global int 7         ;; Should die when function %foo is killed
 

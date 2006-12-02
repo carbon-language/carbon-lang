@@ -5,7 +5,7 @@
 ; invoke instruction, we really cannot perform this transformation at all at
 ; least without splitting the critical edge.
 ;
-; RUN: llvm-as < %s | opt -instcombine -disable-output
+; RUN: llvm-upgrade < %s | llvm-as | opt -instcombine -disable-output
 
 declare sbyte* %test()
 

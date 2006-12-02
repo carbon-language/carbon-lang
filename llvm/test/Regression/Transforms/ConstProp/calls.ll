@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -constprop | llvm-dis | not grep call
+; RUN: llvm-upgrade < %s | llvm-as | opt -constprop | llvm-dis | not grep call
 
 declare double %cos(double)
 declare double %sin(double)

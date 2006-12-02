@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -analyze -datastructure-gc -dsgc-dspass=bu -dsgc-check-flags=A:SM
+; RUN: llvm-upgrade < %s | llvm-as | opt -analyze -datastructure-gc -dsgc-dspass=bu -dsgc-check-flags=A:SM
 ; Constant globals should not mark stuff incomplete.  This should allow the 
 ; bu pass to resolve the indirect call immediately in "test", allowing %A to
 ; be marked complete and the store to happen.

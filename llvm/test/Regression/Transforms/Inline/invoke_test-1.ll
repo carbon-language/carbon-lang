@@ -1,7 +1,7 @@
 ; Test that we can inline a simple function, turning the calls in it into invoke
 ; instructions
 
-; RUN: llvm-as < %s | opt -inline | llvm-dis | not grep 'call[^e]'
+; RUN: llvm-upgrade < %s | llvm-as | opt -inline | llvm-dis | not grep 'call[^e]'
 
 declare void %might_throw()
 

@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -lowersetjmp -disable-output
+; RUN: llvm-upgrade < %s | llvm-as | opt -lowersetjmp -disable-output
 	%struct.jmpenv = type { int, sbyte }
 
 implementation

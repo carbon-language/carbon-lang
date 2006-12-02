@@ -5,7 +5,7 @@
 ; This could be fixed by making all stores add themselves to a list, and check
 ; their arguments are consistent AFTER all other values are propogated.
 ; XFAIL: *
-; RUN: llvm-as < %s | opt -raise | llvm-dis | notcast
+; RUN: llvm-upgrade < %s | llvm-as | opt -raise | llvm-dis | notcast
 
         %Tree = type %struct.tree*
         %struct.tree = type { int, double, double, %Tree, %Tree, %Tree, %Tree }

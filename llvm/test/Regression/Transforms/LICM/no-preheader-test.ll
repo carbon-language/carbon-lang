@@ -1,5 +1,5 @@
 ; Test that LICM works when there is not a loop-preheader
-; RUN: llvm-as < %s | opt -licm | llvm-dis
+; RUN: llvm-upgrade < %s | llvm-as | opt -licm | llvm-dis
 
 void "testfunc"(int %i, bool %ifcond) {
 	br bool %ifcond, label %Then, label %Else

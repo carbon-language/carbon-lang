@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=ppc32 | not grep rlwinm
+; RUN: llvm-upgrade < %s | llvm-as | llc -march=ppc32 | not grep rlwinm
 
 int %setcc_one_or_zero(int* %a) {
 entry:

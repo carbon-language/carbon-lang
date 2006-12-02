@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=arm
+; RUN: llvm-upgrade < %s | llvm-as | llc -march=arm
 void %f(int %a, int %b, int %c, int %d, int %e) {
 entry:
 	%a_addr = alloca int		; <int*> [#uses=2]

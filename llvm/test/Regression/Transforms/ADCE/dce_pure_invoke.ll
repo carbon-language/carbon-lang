@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -adce | llvm-dis | not grep null
+; RUN: llvm-upgrade < %s | llvm-as | opt -adce | llvm-dis | not grep null
 
 declare int %strlen(sbyte*)
 

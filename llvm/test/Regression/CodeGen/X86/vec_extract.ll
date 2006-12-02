@@ -1,7 +1,7 @@
-; RUN: llvm-as < %s | llc -march=x86 -mattr=+sse2 | grep movss    | wc -l | grep 3 &&
-; RUN: llvm-as < %s | llc -march=x86 -mattr=+sse2 | grep movhlps  | wc -l | grep 1 &&
-; RUN: llvm-as < %s | llc -march=x86 -mattr=+sse2 | grep pshufd   | wc -l | grep 1 &&
-; RUN: llvm-as < %s | llc -march=x86 -mattr=+sse2 | grep unpckhpd | wc -l | grep 1
+; RUN: llvm-upgrade < %s | llvm-as | llc -march=x86 -mattr=+sse2 | grep movss    | wc -l | grep 3 &&
+; RUN: llvm-upgrade < %s | llvm-as | llc -march=x86 -mattr=+sse2 | grep movhlps  | wc -l | grep 1 &&
+; RUN: llvm-upgrade < %s | llvm-as | llc -march=x86 -mattr=+sse2 | grep pshufd   | wc -l | grep 1 &&
+; RUN: llvm-upgrade < %s | llvm-as | llc -march=x86 -mattr=+sse2 | grep unpckhpd | wc -l | grep 1
 
 void %test1(<4 x float>* %F, float* %f) {
 	%tmp = load <4 x float>* %F

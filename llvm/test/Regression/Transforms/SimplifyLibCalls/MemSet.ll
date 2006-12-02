@@ -1,5 +1,5 @@
 ; Test that the LLVMMemSetOptimizer works correctly
-; RUN: llvm-as < %s | opt -simplify-libcalls | llvm-dis | not grep 'call.*llvm.memset'
+; RUN: llvm-upgrade < %s | llvm-as | opt -simplify-libcalls | llvm-dis | not grep 'call.*llvm.memset'
 
 declare void %llvm.memset(sbyte*,ubyte,uint,uint)
 

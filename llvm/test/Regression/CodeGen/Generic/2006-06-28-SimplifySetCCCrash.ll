@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc
+; RUN: llvm-upgrade < %s | llvm-as | llc
 	%struct.rtunion = type { long }
 	%struct.rtx_def = type { ushort, ubyte, ubyte, [1 x %struct.rtunion] }
 %ix86_cpu = external global uint		; <uint*> [#uses=1]

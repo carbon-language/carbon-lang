@@ -1,6 +1,6 @@
 ; Test some floating point casting cases
-; RUN: llvm-as %s -o - | opt -instcombine | llvm-dis | notcast
-; RUN: llvm-as %s -o - | opt -instcombine | llvm-dis | \
+; RUN: llvm-upgrade %s -o - | llvm-as | opt -instcombine | llvm-dis | notcast
+; RUN: llvm-upgrade %s -o - | llvm-as | opt -instcombine | llvm-dis | \
 ; RUN:   grep 'ret [us]byte \(-1\)\|\(255\)'
 
 sbyte %test() {

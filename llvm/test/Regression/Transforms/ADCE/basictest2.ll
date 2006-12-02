@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -adce -simplifycfg | llvm-dis	
+; RUN: llvm-upgrade < %s | llvm-as | opt -adce -simplifycfg | llvm-dis	
 
 %FILE = type { int, ubyte*, ubyte*, ubyte, ubyte, uint, uint, uint }
 	%spec_fd_t = type { int, int, int, ubyte* }

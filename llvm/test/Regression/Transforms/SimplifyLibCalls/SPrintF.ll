@@ -1,6 +1,6 @@
 ; Test that the SPrintFOptimizer works correctly
-; RUN: llvm-as < %s | opt -simplify-libcalls -disable-output &&
-; RUN: llvm-as < %s | opt -simplify-libcalls | llvm-dis | not grep 'call.*sprintf'
+; RUN: llvm-upgrade < %s | llvm-as | opt -simplify-libcalls -disable-output &&
+; RUN: llvm-upgrade < %s | llvm-as | opt -simplify-libcalls | llvm-dis | not grep 'call.*sprintf'
 
 declare int %sprintf(sbyte*,sbyte*,...)
 declare int %puts(sbyte*)

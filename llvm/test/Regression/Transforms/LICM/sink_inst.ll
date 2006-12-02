@@ -2,7 +2,7 @@
 ; the instruction to the exit blocks instead of executing it on every
 ; iteration of the loop.
 ;
-; RUN: llvm-as < %s | opt -licm | llvm-dis | %prcontext mul 1 | grep Out: 
+; RUN: llvm-upgrade < %s | llvm-as | opt -licm | llvm-dis | %prcontext mul 1 | grep Out: 
 
 int %test(int %N) {
 Entry:

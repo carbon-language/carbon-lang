@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -simplifycfg -disable-output
+; RUN: llvm-upgrade < %s | llvm-as | opt -simplifycfg -disable-output
 
 bool %foo() {
 	%X = invoke bool %foo() to label %N unwind label %F

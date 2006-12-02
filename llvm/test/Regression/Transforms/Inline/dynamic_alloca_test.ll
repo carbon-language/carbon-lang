@@ -1,9 +1,9 @@
 ; Test that functions with dynamic allocas get inlined in a case where
 ; naively inlining it would result in a miscompilation.
 
-; RUN: llvm-as < %s | opt -inline &&
-; RUN: llvm-as < %s | opt -inline | llvm-dis | grep llvm.stacksave &&
-; RUN: llvm-as < %s | opt -inline | llvm-dis | not grep callee
+; RUN: llvm-upgrade < %s | llvm-as | opt -inline &&
+; RUN: llvm-upgrade < %s | llvm-as | opt -inline | llvm-dis | grep llvm.stacksave &&
+; RUN: llvm-upgrade < %s | llvm-as | opt -inline | llvm-dis | not grep callee
 
 declare void %ext(int*)
 implementation

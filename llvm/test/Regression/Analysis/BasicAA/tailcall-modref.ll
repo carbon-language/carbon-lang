@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -basicaa -load-vn -gcse -instcombine | llvm-dis | grep 'ret int 0'
+; RUN: llvm-upgrade < %s | llvm-as | opt -basicaa -load-vn -gcse -instcombine | llvm-dis | grep 'ret int 0'
 declare void %foo(int*)
 declare void %bar()
 

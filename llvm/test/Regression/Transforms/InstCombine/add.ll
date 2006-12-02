@@ -1,6 +1,6 @@
 ; This test makes sure that add instructions are properly eliminated.
 
-; RUN: llvm-as < %s | opt -instcombine | llvm-dis | grep -v OK | not grep add
+; RUN: llvm-upgrade < %s | llvm-as | opt -instcombine | llvm-dis | grep -v OK | not grep add
 
 implementation
 

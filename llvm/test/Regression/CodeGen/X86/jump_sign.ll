@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=x86 | grep jns
+; RUN: llvm-upgrade < %s | llvm-as | llc -march=x86 | grep jns
 int %f(int %X) {
 entry:
         %tmp1 = add int %X, 1           ; <int> [#uses=1]

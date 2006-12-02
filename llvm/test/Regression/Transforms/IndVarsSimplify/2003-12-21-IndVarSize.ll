@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -indvars | llvm-dis | grep indvar | not grep uint
+; RUN: llvm-upgrade < %s | llvm-as | opt -indvars | llvm-dis | grep indvar | not grep uint
 
 %G = global long 0
 

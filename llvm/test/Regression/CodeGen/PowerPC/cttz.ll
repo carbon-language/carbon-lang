@@ -1,5 +1,5 @@
 ; Make sure this testcase does not use ctpop
-; RUN: llvm-as < %s | llc -march=ppc32 | grep -i 'cntlzw'
+; RUN: llvm-upgrade < %s | llvm-as | llc -march=ppc32 | grep -i 'cntlzw'
 
 declare int %llvm.cttz(int)
 

@@ -1,6 +1,6 @@
 ; Make sure this doesn't turn into an infinite loop
 
-; RUN: llvm-as < %s | opt -simplifycfg -constprop -simplifycfg | llvm-dis | grep bb86
+; RUN: llvm-upgrade < %s | llvm-as | opt -simplifycfg -constprop -simplifycfg | llvm-dis | grep bb86
 
 	%struct.anon = type { uint, int, int, int, [1024 x sbyte] }
 %_zero_ = external global %struct.anon*		; <%struct.anon**> [#uses=2]

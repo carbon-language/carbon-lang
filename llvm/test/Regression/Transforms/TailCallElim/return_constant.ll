@@ -1,7 +1,7 @@
 ; Though this case seems to be fairly unlikely to occur in the wild, someone
 ; plunked it into the demo script, so maybe they care about it.
 ;
-; RUN: llvm-as < %s | opt -tailcallelim | llvm-dis | not grep call
+; RUN: llvm-upgrade < %s | llvm-as | opt -tailcallelim | llvm-dis | not grep call
 
 int %aaa(int %c) {
 entry:

@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc
+; RUN: llvm-upgrade < %s | llvm-as | llc
 
 sbyte %test1(double %X) {
 	%tmp.1 = cast double %X to sbyte

@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -loop-unroll -loopsimplify -disable-output
+; RUN: llvm-upgrade < %s | llvm-as | opt -loop-unroll -loopsimplify -disable-output
 
 implementation   ; Functions:
 

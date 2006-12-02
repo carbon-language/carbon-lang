@@ -1,5 +1,5 @@
-; RUN: llvm-as < %s | opt -lcssa | llvm-dis | grep "%SJE.0.0.lcssa = phi .struct.SetJmpMapEntry" &&
-; RUN: llvm-as < %s | opt -lcssa | llvm-dis | grep "%SJE.0.0.lcssa1 = phi .struct.SetJmpMapEntry"
+; RUN: llvm-upgrade < %s | llvm-as | opt -lcssa | llvm-dis | grep "%SJE.0.0.lcssa = phi .struct.SetJmpMapEntry" &&
+; RUN: llvm-upgrade < %s | llvm-as | opt -lcssa | llvm-dis | grep "%SJE.0.0.lcssa1 = phi .struct.SetJmpMapEntry"
 
 %struct.SetJmpMapEntry = type { sbyte*, uint, %struct.SetJmpMapEntry* }
 

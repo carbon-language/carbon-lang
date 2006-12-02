@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llvm-dis | grep -- -2147483648
+; RUN: llvm-upgrade < %s | llvm-as | llvm-dis | grep -- -2147483648
 
 int %foo() {
 	ret int -2147483648

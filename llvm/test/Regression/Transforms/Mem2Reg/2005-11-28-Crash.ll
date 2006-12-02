@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -mem2reg -disable-output
+; RUN: llvm-upgrade < %s | llvm-as | opt -mem2reg -disable-output
 ; PR670
 
 void %printk(int, ...) {

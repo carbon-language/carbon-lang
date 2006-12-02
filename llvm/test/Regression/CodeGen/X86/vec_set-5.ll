@@ -1,6 +1,6 @@
-; RUN: llvm-as < %s | llc -march=x86 -mattr=+sse2 | grep movlhps   | wc -l | grep 2 &&
-; RUN: llvm-as < %s | llc -march=x86 -mattr=+sse2 | grep unpcklps  | wc -l | grep 1 &&
-; RUN: llvm-as < %s | llc -march=x86 -mattr=+sse2 | grep punpckldq | wc -l | grep 1
+; RUN: llvm-upgrade < %s | llvm-as | llc -march=x86 -mattr=+sse2 | grep movlhps   | wc -l | grep 2 &&
+; RUN: llvm-upgrade < %s | llvm-as | llc -march=x86 -mattr=+sse2 | grep unpcklps  | wc -l | grep 1 &&
+; RUN: llvm-upgrade < %s | llvm-as | llc -march=x86 -mattr=+sse2 | grep punpckldq | wc -l | grep 1
 
 <4 x float> %test1(float %a, float %b) {
 	%tmp = insertelement <4 x float> zeroinitializer, float %a, uint 0

@@ -1,5 +1,5 @@
 ; This is a non-normal FP value
-; RUN: llvm-as < %s | llc -march=c | grep FPConstant | grep static
+; RUN: llvm-upgrade < %s | llvm-as | llc -march=c | grep FPConstant | grep static
 
 float %func () {
   ret float 0xFFF0000000000000  ; -inf

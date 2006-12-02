@@ -1,6 +1,6 @@
 ; Test CFG simplify removal of branch instructions...
 ;
-; RUN: llvm-as < %s | opt -simplifycfg | llvm-dis | not grep br
+; RUN: llvm-upgrade < %s | llvm-as | opt -simplifycfg | llvm-dis | not grep br
 
 
 void "test1"() {

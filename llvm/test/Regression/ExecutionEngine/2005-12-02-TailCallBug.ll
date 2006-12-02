@@ -1,5 +1,5 @@
 ; PR672
-; RUN: llvm-as < %s | lli
+; RUN: llvm-upgrade < %s | llvm-as | lli
 
 int %main(){ 
  %f   = cast int (int, int*, int)* %check_tail to int*

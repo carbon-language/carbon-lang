@@ -1,7 +1,7 @@
 ; This test makes sure that these instructions are properly eliminated.
 ;
 
-; RUN: llvm-as < %s | opt -instcombine | llvm-dis | grep -v 'sub int %Cok, %Bok' | not grep sub
+; RUN: llvm-upgrade < %s | llvm-as | opt -instcombine | llvm-dis | grep -v 'sub int %Cok, %Bok' | not grep sub
 
 implementation
 

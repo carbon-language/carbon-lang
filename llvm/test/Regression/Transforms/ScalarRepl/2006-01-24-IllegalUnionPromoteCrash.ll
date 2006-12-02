@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -scalarrepl -disable-output
+; RUN: llvm-upgrade < %s | llvm-as | opt -scalarrepl -disable-output
 
 target endian = big
 target pointersize = 32

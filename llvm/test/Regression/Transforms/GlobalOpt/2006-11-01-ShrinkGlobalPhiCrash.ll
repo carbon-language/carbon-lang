@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -globalopt -disable-output
+; RUN: llvm-upgrade < %s | llvm-as | opt -globalopt -disable-output
 	%struct._list = type { int*, %struct._list* }
 	%struct._play = type { int, int*, %struct._list*, %struct._play* }
 %nrow = internal global int 0		; <int*> [#uses=2]

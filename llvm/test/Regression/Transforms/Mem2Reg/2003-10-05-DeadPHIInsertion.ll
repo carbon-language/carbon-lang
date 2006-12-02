@@ -1,7 +1,7 @@
 ; Mem2reg should not insert dead PHI nodes!  The naive algorithm inserts a PHI
 ;  node in L3, even though there is no load of %A in anything dominated by L3.
 
-; RUN: llvm-as < %s | opt -mem2reg | llvm-dis | not grep phi
+; RUN: llvm-upgrade < %s | llvm-as | opt -mem2reg | llvm-dis | not grep phi
 
 void %test(int %B, bool %C) {
 	%A = alloca int

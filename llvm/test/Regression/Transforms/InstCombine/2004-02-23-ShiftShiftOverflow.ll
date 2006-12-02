@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -instcombine | llvm-dis | not grep 34
+; RUN: llvm-upgrade < %s | llvm-as | opt -instcombine | llvm-dis | not grep 34
 
 int %test(int %X) {
 	; Do not fold into shr X, 34, as this uses undefined behavior!

@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -instcombine | llvm-dis | not grep add
+; RUN: llvm-upgrade < %s | llvm-as | opt -instcombine | llvm-dis | not grep add
 
 int %test(int %A) {
   %A.neg = sub int 0, %A

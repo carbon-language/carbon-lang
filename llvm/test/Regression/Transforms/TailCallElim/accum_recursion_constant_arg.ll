@@ -3,7 +3,7 @@
 ; go out to the anonymous users of the demo script for "suggesting" 
 ; optimizations that should be done.  :)
 
-; RUN: llvm-as < %s | opt -tailcallelim | llvm-dis | not grep call
+; RUN: llvm-upgrade < %s | llvm-as | opt -tailcallelim | llvm-dis | not grep call
 
 int %mul(int %x, int %y) {
 entry:

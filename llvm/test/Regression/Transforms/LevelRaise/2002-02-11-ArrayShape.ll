@@ -18,7 +18,7 @@
 ; equivelent form.
 ;
 ; XFAIL: *
-; RUN: llvm-as < %s | opt -q -raise > Output/%s.raised.bc
+; RUN: llvm-upgrade < %s | llvm-as | opt -q -raise > Output/%s.raised.bc
 ; RUN: lli -force-interpreter -array-checks < Output/%s.raised.bc
 ;
 

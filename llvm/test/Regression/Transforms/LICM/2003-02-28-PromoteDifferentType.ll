@@ -1,6 +1,6 @@
 ; Test that hoisting is disabled for pointers of different types...
 ;
-; RUN: llvm-as < %s | opt -licm
+; RUN: llvm-upgrade < %s | llvm-as | opt -licm
 
 void %test(int* %P) {
 	br label %Loop

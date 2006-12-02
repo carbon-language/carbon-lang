@@ -1,6 +1,6 @@
 ; XFAIL: *
 ;
-; RUN: llvm-as < %s | opt -funcresolve -instcombine | llvm-dis | not grep '\.\.\.'
+; RUN: llvm-upgrade < %s | llvm-as | opt -funcresolve -instcombine | llvm-dis | not grep '\.\.\.'
 
 declare int %foo(...)
 declare int %foo(int)

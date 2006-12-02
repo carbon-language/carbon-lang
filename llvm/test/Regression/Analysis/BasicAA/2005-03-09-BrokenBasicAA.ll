@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -basicaa -load-vn -gcse -instcombine | llvm-dis | grep 'load int\* %A'
+; RUN: llvm-upgrade < %s | llvm-as | opt -basicaa -load-vn -gcse -instcombine | llvm-dis | grep 'load int\* %A'
 
 declare double* %useit(int*)
 

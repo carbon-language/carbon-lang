@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=ppc32
+; RUN: llvm-upgrade < %s | llvm-as | llc -march=ppc32
 
 void %img2buf(int %symbol_size_in_bytes, ushort* %ui16) {
 	%tmp93 = load ushort* null		; <ushort> [#uses=1]

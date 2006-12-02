@@ -1,6 +1,6 @@
-; RUN: llvm-as < %s | llc -march=arm &&
-; RUN: llvm-as < %s | llc -march=arm | grep bl &&
-; RUN: llvm-as < %s | llc -march=arm | grep blx
+; RUN: llvm-upgrade < %s | llvm-as | llc -march=arm &&
+; RUN: llvm-upgrade < %s | llvm-as | llc -march=arm | grep bl &&
+; RUN: llvm-upgrade < %s | llvm-as | llc -march=arm | grep blx
 
 void %f() {
 entry:

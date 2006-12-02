@@ -1,7 +1,7 @@
 ; The induction variable canonicalization pass shouldn't leave dead
 ; instructions laying around!
 ;
-; RUN: llvm-as < %s | opt -indvars | llvm-dis | not grep '#uses=0'
+; RUN: llvm-upgrade < %s | llvm-as | opt -indvars | llvm-dis | not grep '#uses=0'
 
 int %mul(int %x, int %y) {
 entry:

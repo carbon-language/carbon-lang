@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -inline | llvm-dis | grep 'ret int 1'
+; RUN: llvm-upgrade < %s | llvm-as | opt -inline | llvm-dis | grep 'ret int 1'
 ; ModuleID = 'short.opt.bc'
 
 implementation   ; Functions:

@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=x86 -mcpu=yonah 
+; RUN: llvm-upgrade < %s | llvm-as | llc -march=x86 -mcpu=yonah 
 
 target endian = little
 target pointersize = 32

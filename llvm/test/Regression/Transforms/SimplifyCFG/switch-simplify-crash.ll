@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -simplifycfg -disable-output
+; RUN: llvm-upgrade < %s | llvm-as | opt -simplifycfg -disable-output
 
 
 void %NewExtractNames() {

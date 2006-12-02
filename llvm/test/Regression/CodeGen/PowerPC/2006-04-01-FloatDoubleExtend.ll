@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=ppc32
+; RUN: llvm-upgrade < %s | llvm-as | llc -march=ppc32
 
 double %CalcSpeed(float %tmp127) {
 	%tmp145 = cast float %tmp127 to double		; <double> [#uses=1]

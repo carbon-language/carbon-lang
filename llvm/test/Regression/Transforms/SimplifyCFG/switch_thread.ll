@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -simplifycfg | llvm-dis | not grep 'call void %DEAD'
+; RUN: llvm-upgrade < %s | llvm-as | opt -simplifycfg | llvm-dis | not grep 'call void %DEAD'
 
 ; Test that we can thread a simple known condition through switch statements.
 

@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -analyze -domset -disable-verify
+; RUN: llvm-upgrade < %s | llvm-as | opt -analyze -domset -disable-verify
 ;
 int %re_match_2() {
 ENTRY:

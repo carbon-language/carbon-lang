@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc
+; RUN: llvm-upgrade < %s | llvm-as | llc
 ; PR1011
 
 	%struct.mng_data = type { sbyte* (%struct.mng_data*, uint)*, int, int, int, sbyte, sbyte, int, int, int, int, int }

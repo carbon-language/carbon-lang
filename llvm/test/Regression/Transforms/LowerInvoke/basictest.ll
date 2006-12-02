@@ -1,5 +1,5 @@
-; RUN: llvm-as < %s | opt -lowerinvoke -disable-output &&
-; RUN: llvm-as < %s | opt -lowerinvoke -disable-output -enable-correct-eh-support
+; RUN: llvm-upgrade < %s | llvm-as | opt -lowerinvoke -disable-output &&
+; RUN: llvm-upgrade < %s | llvm-as | opt -lowerinvoke -disable-output -enable-correct-eh-support
 
 implementation
 

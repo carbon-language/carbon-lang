@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -licm | llvm-dis
+; RUN: llvm-upgrade < %s | llvm-as | opt -licm | llvm-dis
 
 void "testfunc"(int %i) {
 

@@ -1,5 +1,5 @@
-; RUN: llvm-as < %s | llc -march=ppc32 -mcpu=g5 &&
-; RUN: llvm-as < %s | llc -march=ppc32 -mcpu=g5 | not grep vperm
+; RUN: llvm-upgrade < %s | llvm-as | llc -march=ppc32 -mcpu=g5 &&
+; RUN: llvm-upgrade < %s | llvm-as | llc -march=ppc32 -mcpu=g5 | not grep vperm
 
 <4 x float> %test_uu72(<4 x float> *%P1, <4 x float> *%P2) {
 	%V1 = load <4 x float> *%P1

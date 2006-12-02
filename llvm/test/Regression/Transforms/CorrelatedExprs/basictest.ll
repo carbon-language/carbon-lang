@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -cee -constprop -instcombine -dce | llvm-dis | not grep 'REMOVE'
+; RUN: llvm-upgrade < %s | llvm-as | opt -cee -constprop -instcombine -dce | llvm-dis | not grep 'REMOVE'
 
 int %test1(int %A) {
 	%cond = seteq int %A, 40

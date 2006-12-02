@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -simplifycfg
+; RUN: llvm-upgrade < %s | llvm-as | opt -simplifycfg
 
 int %test(int %A, int %B, bool %cond) {
 J:

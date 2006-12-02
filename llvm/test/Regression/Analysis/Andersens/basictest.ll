@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -anders-aa -aa-eval
+; RUN: llvm-upgrade < %s | llvm-as | opt -anders-aa -aa-eval
 
 implementation
 

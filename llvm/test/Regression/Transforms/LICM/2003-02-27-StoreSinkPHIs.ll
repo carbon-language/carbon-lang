@@ -1,6 +1,6 @@
 ; LICM is adding stores before phi nodes.  bad.
 
-; RUN: llvm-as < %s | opt -licm
+; RUN: llvm-upgrade < %s | llvm-as | opt -licm
 
 bool %test(bool %c) {
 	br bool %c, label %Loop, label %Out

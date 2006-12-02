@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -reassociate -disable-output
+; RUN: llvm-upgrade < %s | llvm-as | opt -reassociate -disable-output
 
 void %test(int %a, int %b, int %c, int %d) {
 	%tmp.2 = xor int %a, %b		; <int> [#uses=1]

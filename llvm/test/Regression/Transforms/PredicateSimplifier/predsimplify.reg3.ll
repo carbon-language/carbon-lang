@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -predsimplify -simplifycfg | llvm-dis | grep pass
+; RUN: llvm-upgrade < %s | llvm-as | opt -predsimplify -simplifycfg | llvm-dis | grep pass
 
 void %regtest(int %x) {
 entry:

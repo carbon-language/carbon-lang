@@ -1,5 +1,5 @@
-; RUN: llvm-as < %s | llc -march=x86 -mattr=+sse,+sse2 | grep minss | grep CPI | wc -l | grep 2 &&
-; RUN: llvm-as < %s | llc -march=x86 -mattr=+sse,+sse2 | grep CPI | not grep movss
+; RUN: llvm-upgrade < %s | llvm-as | llc -march=x86 -mattr=+sse,+sse2 | grep minss | grep CPI | wc -l | grep 2 &&
+; RUN: llvm-upgrade < %s | llvm-as | llc -march=x86 -mattr=+sse,+sse2 | grep CPI | not grep movss
 
 target endian = little
 target pointersize = 32

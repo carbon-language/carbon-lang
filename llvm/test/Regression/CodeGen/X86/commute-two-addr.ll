@@ -2,7 +2,7 @@
 ; insertion of register-register copies.
 
 ; Make sure there are only 3 mov's for each testcase
-; RUN: llvm-as < %s | llc -march=x86 -x86-asm-syntax=intel | grep 'mov ' | wc -l | grep 6
+; RUN: llvm-upgrade < %s | llvm-as | llc -march=x86 -x86-asm-syntax=intel | grep 'mov ' | wc -l | grep 6
 
 
 target triple = "i686-pc-linux-gnu"

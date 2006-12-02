@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -globalopt -disable-output
+; RUN: llvm-upgrade < %s | llvm-as | opt -globalopt -disable-output
 	%RPyString = type { int, %arraytype.Char }
 	%arraytype.Char = type { int, [0 x sbyte] }
 	%arraytype.Signed = type { int, [0 x int] }

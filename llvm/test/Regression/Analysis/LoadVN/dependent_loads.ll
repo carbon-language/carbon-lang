@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -basicaa -load-vn -gcse -instcombine | llvm-dis | not grep sub
+; RUN: llvm-upgrade < %s | llvm-as | opt -basicaa -load-vn -gcse -instcombine | llvm-dis | not grep sub
 
 %S = type { int, sbyte }
 

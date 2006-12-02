@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -globalopt -disable-output
+; RUN: llvm-upgrade < %s | llvm-as | opt -globalopt -disable-output
 ; PR579
 
 %g_40507551 = internal global short 31038		; <short*> [#uses=1]

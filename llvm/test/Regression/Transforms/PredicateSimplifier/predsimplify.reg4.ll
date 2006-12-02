@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -predsimplify -disable-output
+; RUN: llvm-upgrade < %s | llvm-as | opt -predsimplify -disable-output
 
 ; ModuleID = '<stdin>'
 target endian = little

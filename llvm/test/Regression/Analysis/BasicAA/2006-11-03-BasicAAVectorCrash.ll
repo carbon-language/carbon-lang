@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -licm -disable-output
+; RUN: llvm-upgrade < %s | llvm-as | opt -licm -disable-output
 target endian = big
 target pointersize = 32
 target triple = "powerpc-apple-darwin8.7.0"

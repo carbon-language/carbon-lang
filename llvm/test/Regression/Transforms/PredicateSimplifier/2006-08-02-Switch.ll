@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -predsimplify -disable-output
+; RUN: llvm-upgrade < %s | llvm-as | opt -predsimplify -disable-output
 
 fastcc void %_ov_splice(int %n1, int %n2, int %ch2) {
 entry:

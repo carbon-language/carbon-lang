@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=ppc32 -mcpu=g5
+; RUN: llvm-upgrade < %s | llvm-as | llc -march=ppc32 -mcpu=g5
 
 void %test(sbyte* %stack) {
 entry:

@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -instcombine | llvm-dis | not grep bitcast
+; RUN: llvm-upgrade < %s | llvm-as | opt -instcombine | llvm-dis | not grep bitcast
 
 bool %test1(uint %val) {
   %t1 = bitcast uint %val to int 

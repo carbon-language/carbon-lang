@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llvm-dis | not grep cast
+; RUN: llvm-upgrade < %s | llvm-as | llvm-dis | not grep cast
 ; All of these should be eliminable
 
 

@@ -1,13 +1,13 @@
-; RUN: llvm-as < %s | llc -march=arm &&
-; RUN: llvm-as < %s | llc -march=arm | grep fmsr &&
-; RUN: llvm-as < %s | llc -march=arm | grep fmrs &&
-; RUN: llvm-as < %s | llc -march=arm | grep fmrrd &&
-; RUN: llvm-as < %s | llc -march=arm | grep fmdrr &&
-; RUN: llvm-as < %s | llc -march=arm | grep fldd &&
-; RUN: llvm-as < %s | llc -march=arm | grep flds &&
-; RUN: llvm-as < %s | llc -march=arm | grep fstd &&
-; RUN: llvm-as < %s | llc -march=arm | grep fsts &&
-; RUN: llvm-as < %s | llc -march=arm | grep ".word.*1065353216"
+; RUN: llvm-upgrade < %s | llvm-as | llc -march=arm &&
+; RUN: llvm-upgrade < %s | llvm-as | llc -march=arm | grep fmsr &&
+; RUN: llvm-upgrade < %s | llvm-as | llc -march=arm | grep fmrs &&
+; RUN: llvm-upgrade < %s | llvm-as | llc -march=arm | grep fmrrd &&
+; RUN: llvm-upgrade < %s | llvm-as | llc -march=arm | grep fmdrr &&
+; RUN: llvm-upgrade < %s | llvm-as | llc -march=arm | grep fldd &&
+; RUN: llvm-upgrade < %s | llvm-as | llc -march=arm | grep flds &&
+; RUN: llvm-upgrade < %s | llvm-as | llc -march=arm | grep fstd &&
+; RUN: llvm-upgrade < %s | llvm-as | llc -march=arm | grep fsts &&
+; RUN: llvm-upgrade < %s | llvm-as | llc -march=arm | grep ".word.*1065353216"
 
 
 double %h(double* %v) {

@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=alpha | grep zapnot | wc -l | grep 2
+; RUN: llvm-upgrade < %s | llvm-as | llc -march=alpha | grep zapnot | wc -l | grep 2
 
 ulong %foo(ulong %y) {
         %tmp = and ulong %y,  65535

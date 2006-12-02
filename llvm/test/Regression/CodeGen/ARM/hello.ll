@@ -1,5 +1,5 @@
-; RUN: llvm-as < %s | llc -march=arm &&
-; RUN: llvm-as < %s | llc -march=arm | grep mov | wc -l | grep 1
+; RUN: llvm-upgrade < %s | llvm-as | llc -march=arm &&
+; RUN: llvm-upgrade < %s | llvm-as | llc -march=arm | grep mov | wc -l | grep 1
 %str = internal constant [12 x sbyte] c"Hello World\00"		; <[12 x sbyte]*> [#uses=1]
 
 implementation   ; Functions:

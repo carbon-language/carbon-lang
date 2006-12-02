@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -simplifycfg | llvm-dis | not grep unreachable
+; RUN: llvm-upgrade < %s | llvm-as | opt -simplifycfg | llvm-dis | not grep unreachable
 
 void %test1(bool %C, bool* %BP) {
 	br bool %C, label %T, label %F

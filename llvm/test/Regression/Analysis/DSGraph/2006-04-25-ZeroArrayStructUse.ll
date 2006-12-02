@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -analyze -datastructure-gc -dsgc-check-flags=x:IA
+; RUN: llvm-upgrade < %s | llvm-as | opt -analyze -datastructure-gc -dsgc-check-flags=x:IA
 
 ; ModuleID = 'bug3.bc'
 target endian = little

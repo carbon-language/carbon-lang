@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -dse
+; RUN: llvm-upgrade < %s | llvm-as | opt -dse
 
 "java/lang/Object" = type { %struct.llvm_java_object_base }
 	"java/lang/StringBuffer" = type { "java/lang/Object", int, { "java/lang/Object", uint, [0 x ushort] }*, bool }

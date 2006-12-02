@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -loop-unswitch -disable-output
+; RUN: llvm-upgrade < %s | llvm-as | opt -loop-unswitch -disable-output
 
 	%struct.BLEND_MAP = type { short, short, short, int, %struct.BLEND_MAP_ENTRY* }
 	%struct.BLEND_MAP_ENTRY = type { float, ubyte, { [5 x float], [4 x ubyte] } }

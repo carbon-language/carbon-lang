@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -ds-aa -load-vn -gcse | llvm-dis | grep 'load int\* %L'
+; RUN: llvm-upgrade < %s | llvm-as | opt -ds-aa -load-vn -gcse | llvm-dis | grep 'load int\* %L'
 
 %G = internal global int* null
 
