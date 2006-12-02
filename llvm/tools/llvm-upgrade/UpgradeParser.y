@@ -65,9 +65,10 @@ void UpgradeAssembly(const std::string &infile, std::istream& in,
 static void ResolveType(TypeInfo& Ty) {
   if (Ty.oldTy == UnresolvedTy) {
     TypeMap::iterator I = NamedTypes.find(*Ty.newTy);
-    if (I != NamedTypes.end())
+    if (I != NamedTypes.end()) {
       Ty.oldTy = I->second.oldTy;
-    else {
+      Ty.elemTy = I->second.elemTy;
+    } else {
       std::string msg("Can't resolve type: ");
       msg += *Ty.newTy;
       yyerror(msg.c_str());
@@ -76,6 +77,7 @@ static void ResolveType(TypeInfo& Ty) {
     unsigned ref = atoi(&((Ty.newTy->c_str())[1])); // Skip the '\\'
     if (ref < EnumeratedTypes.size()) {
       Ty.oldTy = EnumeratedTypes[ref].oldTy;
+      Ty.elemTy = EnumeratedTypes[ref].elemTy;
     } else {
       std::string msg("Can't resolve type: ");
       msg += *Ty.newTy;
@@ -204,6 +206,32 @@ static std::string getCastUpgrade(
   return Result;
 }
 
+const char* getDivRemOpcode(const std::string& opcode, const TypeInfo& TI) {
+  const char* op = opcode.c_str();
+  TypeInfo Ty = TI;
+  ResolveType(Ty);
+  if (Ty.isPacked())
+    Ty.oldTy = Ty.getElementType();
+  if (opcode == "div")
+    if (Ty.isFloatingPoint())
+      op = "fdiv";
+    else if (Ty.isUnsigned())
+      op = "udiv";
+    else if (Ty.isSigned())
+      op = "sdiv";
+    else
+      yyerror("Invalid type for div instruction");
+  else if (opcode == "rem")
+    if (Ty.isFloatingPoint())
+      op = "frem";
+    else if (Ty.isUnsigned())
+      op = "urem";
+    else if (Ty.isSigned())
+      op = "srem";
+    else
+      yyerror("Invalid type for rem instruction");
+  return op;
+}
 %}
 
 %file-prefix="UpgradeParser"
@@ -226,13 +254,13 @@ static std::string getCastUpgrade(
 %token <String> TO DOTDOTDOT CONST INTERNAL LINKONCE WEAK 
 %token <String> DLLIMPORT DLLEXPORT EXTERN_WEAK APPENDING
 %token <String> NOT EXTERNAL TARGET TRIPLE ENDIAN POINTERSIZE LITTLE BIG
-%token <String> ALIGN
+%token <String> ALIGN UNINITIALIZED
 %token <String> DEPLIBS CALL TAIL ASM_TOK MODULE SIDEEFFECT
 %token <String> CC_TOK CCC_TOK CSRETCC_TOK FASTCC_TOK COLDCC_TOK
 %token <String> X86_STDCALLCC_TOK X86_FASTCALLCC_TOK
 %token <String> DATALAYOUT
-%token <String> RET BR SWITCH INVOKE UNWIND UNREACHABLE
-%token <String> ADD SUB MUL UDIV SDIV FDIV UREM SREM FREM AND OR XOR
+%token <String> RET BR SWITCH INVOKE EXCEPT UNWIND UNREACHABLE
+%token <String> ADD SUB MUL DIV UDIV SDIV FDIV REM UREM SREM FREM AND OR XOR
 %token <String> SETLE SETGE SETLT SETGT SETEQ SETNE  // Binary Comparators
 %token <String> MALLOC ALLOCA FREE LOAD STORE GETELEMENTPTR
 %token <String> PHI_TOK SELECT SHL SHR ASHR LSHR VAARG
@@ -247,10 +275,10 @@ static std::string getCastUpgrade(
 %type <String> ArgVal ArgListH ArgList FunctionHeaderH BEGIN FunctionHeader END
 %type <String> Function FunctionProto BasicBlock TypeListI
 %type <String> InstructionList BBTerminatorInst JumpTable Inst PHIList
-%type <String> OptTailCall InstVal OptVolatile
+%type <String> OptTailCall InstVal OptVolatile Unwind
 %type <String> MemoryInst SymbolicValueRef OptSideEffect GlobalType
 %type <String> FnDeclareLinkage BasicBlockList BigOrLittle AsmBlock
-%type <String> Name ConstValueRef ConstVector
+%type <String> Name ConstValueRef ConstVector External
 %type <String> ShiftOps SetCondOps LogicalOps ArithmeticOps CastOps 
 
 %type <ValList> ValueRefList ValueRefListE IndexList
@@ -273,7 +301,8 @@ EInt64Val : ESINT64VAL | EUINT64VAL;
 
 // Operations that are notably excluded from this list include:
 // RET, BR, & SWITCH because they end basic blocks and are treated specially.
-ArithmeticOps: ADD | SUB | MUL | UDIV | SDIV | FDIV | UREM | SREM | FREM;
+ArithmeticOps: ADD | SUB | MUL | DIV | UDIV | SDIV | FDIV 
+             | REM | UREM | SREM | FREM;
 LogicalOps   : AND | OR | XOR;
 SetCondOps   : SETLE | SETGE | SETLT | SETGT | SETEQ | SETNE;
 ShiftOps     : SHL | SHR | ASHR | LSHR;
@@ -378,12 +407,10 @@ UpRTypes
     $$.newTy = $1;
     $$.oldTy = UnresolvedTy;
   }
-  | PrimType 
-  ;
-
-// Include derived types in the Types production.
-//
-UpRTypes : '\\' EUINT64VAL {                   // Type UpReference
+  | PrimType { 
+    $$ = $1; 
+  }
+  | '\\' EUINT64VAL {                   // Type UpReference
     $2->insert(0, "\\");
     $$.newTy = $2;
     $$.oldTy = NumericTy;
@@ -400,6 +427,7 @@ UpRTypes : '\\' EUINT64VAL {                   // Type UpReference
     delete $4.newTy;
     $$.newTy = $2;
     $$.oldTy = ArrayTy;
+    $$.elemTy = $4.oldTy;
   }
   | '<' EUINT64VAL 'x' UpRTypes '>' {          // Packed array type?
     $2->insert(0,"< ");
@@ -407,6 +435,7 @@ UpRTypes : '\\' EUINT64VAL {                   // Type UpReference
     delete $4.newTy;
     $$.newTy = $2;
     $$.oldTy = PackedTy;
+    $$.elemTy = $4.oldTy;
   }
   | '{' TypeListI '}' {                        // Structure type?
     $2->insert(0, "{ ");
@@ -420,6 +449,7 @@ UpRTypes : '\\' EUINT64VAL {                   // Type UpReference
   }
   | UpRTypes '*' {                             // Pointer type?
     *$1.newTy += '*';
+    $$.elemTy = $1.oldTy;
     $1.oldTy = PointerTy;
     $$ = $1;
   };
@@ -586,9 +616,10 @@ ConstExpr: CastOps '(' ConstVal TO Types ')' {
     $$ = $1;
   }
   | ArithmeticOps '(' ConstVal ',' ConstVal ')' {
-    *$1 += "(" + *$3.cnst + "," + *$5.cnst + ")";
-    $3.destroy(); $5.destroy();
-    $$ = $1;
+    const char* op = getDivRemOpcode(*$1, $3.type); 
+    $$ = new std::string(op);
+    *$$ += "(" + *$3.cnst + "," + *$5.cnst + ")";
+    delete $1; $3.destroy(); $5.destroy();
   }
   | LogicalOps '(' ConstVal ',' ConstVal ')' {
     *$1 += "(" + *$3.cnst + "," + *$5.cnst + ")";
@@ -671,12 +702,15 @@ DefinitionList : DefinitionList Function {
   }
   | ConstPool { $$ = 0; }
 
+External : EXTERNAL | UNINITIALIZED { $$ = $1; *$$ = "external"; }
+
 // ConstPool - Constants with optional names assigned to them.
 ConstPool : ConstPool OptAssign TYPE TypesV {
     EnumeratedTypes.push_back($4);
     if (!$2->empty()) {
       NamedTypes[*$2].newTy = new std::string(*$4.newTy);
       NamedTypes[*$2].oldTy = $4.oldTy;
+      NamedTypes[*$2].elemTy = $4.elemTy;
       *O << *$2 << " = ";
     }
     *O << "type " << *$4.newTy << "\n";
@@ -700,7 +734,7 @@ ConstPool : ConstPool OptAssign TYPE TypesV {
     delete $2; delete $3; delete $4; $5.destroy(); delete $6; 
     $$ = 0;
   }
-  | ConstPool OptAssign EXTERNAL GlobalType Types  GlobalVarAttributes {
+  | ConstPool OptAssign External GlobalType Types  GlobalVarAttributes {
     if (!$2->empty())
       *O << *$2 << " = ";
     *O <<  *$3 << " " << *$4 << " " << *$5.newTy << " " << *$6 << "\n";
@@ -837,12 +871,8 @@ FunctionHeaderH : OptCallingConv TypesV Name '(' ArgList ')'
     $$ = $1;
   };
 
-BEGIN : BEGINTOK {
-    $$ = new std::string("begin");
-  }
-  | '{' { 
-    $$ = new std::string ("{");
-  }
+BEGIN : BEGINTOK { $$ = new std::string("{"); delete $1; }
+  | '{' { $$ = new std::string ("{"); }
 
 FunctionHeader : OptLinkage FunctionHeaderH BEGIN {
   if (!$1->empty()) {
@@ -853,7 +883,7 @@ FunctionHeader : OptLinkage FunctionHeaderH BEGIN {
   $$ = 0;
 };
 
-END : ENDTOK { $$ = new std::string("end"); }
+END : ENDTOK { $$ = new std::string("}"); delete $1; }
     | '}' { $$ = new std::string("}"); };
 
 Function : FunctionHeader BasicBlockList END {
@@ -960,6 +990,8 @@ InstructionList : InstructionList Inst {
     $$ = 0;
   };
 
+Unwind : UNWIND | EXCEPT { $$ = $1; *$$ = "unwind"; }
+
 BBTerminatorInst : RET ResolvedVal {              // Return with a result...
     *O << "    " << *$1 << " " << *$2.val << "\n";
     delete $1; $2.destroy();
@@ -997,7 +1029,7 @@ BBTerminatorInst : RET ResolvedVal {              // Return with a result...
     $$ = 0;
   }
   | OptAssign INVOKE OptCallingConv TypesV ValueRef '(' ValueRefListE ')'
-    TO LABEL ValueRef UNWIND LABEL ValueRef {
+    TO LABEL ValueRef Unwind LABEL ValueRef {
     *O << "    ";
     if (!$1->empty())
       *O << *$1 << " = ";
@@ -1016,7 +1048,7 @@ BBTerminatorInst : RET ResolvedVal {              // Return with a result...
     $14.destroy(); 
     $$ = 0;
   }
-  | UNWIND {
+  | Unwind {
     *O << "    " << *$1 << "\n";
     delete $1;
     $$ = 0;
@@ -1089,9 +1121,10 @@ OptTailCall
   ;
 
 InstVal : ArithmeticOps Types ValueRef ',' ValueRef {
-    *$1 += " " + *$2.newTy + " " + *$3.val + ", " + *$5.val;
-    $2.destroy(); $3.destroy(); $5.destroy();
-    $$ = $1;
+    const char* op = getDivRemOpcode(*$1, $2); 
+    $$ = new std::string(op);
+    *$$ += " " + *$2.newTy + " " + *$3.val + ", " + *$5.val;
+    delete $1; $2.destroy(); $3.destroy(); $5.destroy();
   }
   | LogicalOps Types ValueRef ',' ValueRef {
     *$1 += " " + *$2.newTy + " " + *$3.val + ", " + *$5.val;

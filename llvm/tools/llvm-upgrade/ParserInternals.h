@@ -56,8 +56,11 @@ enum Types {
 struct TypeInfo {
   std::string* newTy;
   Types oldTy;
+  Types elemTy;
 
   void destroy() const { delete newTy; }
+
+  Types getElementType() const { return elemTy; }
 
   bool isSigned() const {
     return oldTy == SByteTy || oldTy == ShortTy || 
