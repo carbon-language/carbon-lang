@@ -1022,7 +1022,8 @@ void Parser::ParseParenDeclarator(Declarator &D) {
       
       // Inform the actions module about the parameter declarator, so it gets
       // added to the current scope.
-      Action::TypeResult ParamTy = Actions.ParseParamDeclaratorType(ParmDecl);
+      Action::TypeResult ParamTy =
+        Actions.ParseParamDeclaratorType(CurScope, ParmDecl);
         
       // Remember this parsed parameter in ParamInfo.
       ParamInfo.push_back(DeclaratorChunk::ParamInfo(ParmDecl.getIdentifier(),

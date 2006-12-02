@@ -58,6 +58,8 @@ public:
   
   virtual TypeResult ParseTypeName(Scope *S, Declarator &D);
   
+  virtual TypeResult ParseParamDeclaratorType(Scope *S, Declarator &D);
+  
   //===--------------------------------------------------------------------===//
   // Symbol table / Decl tracking callbacks: SemaDecl.cpp.
   //

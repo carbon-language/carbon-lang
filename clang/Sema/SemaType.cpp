@@ -146,3 +146,15 @@ Sema::TypeResult Sema::ParseTypeName(Scope *S, Declarator &D) {
   
   return T.getAsOpaquePtr();
 }
+
+Sema::TypeResult Sema::ParseParamDeclaratorType(Scope *S, Declarator &D) {
+  // Note: parameters have identifiers, but we don't care about them here, we
+  // just want the type converted.
+  TypeRef T = GetTypeForDeclarator(D, S);
+  
+  // If the type of the declarator was invalid, this is an invalid typename.
+  if (T.isNull())
+    return true;
+  
+  return T.getAsOpaquePtr();
+}

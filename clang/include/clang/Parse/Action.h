@@ -136,7 +136,7 @@ public:
     return 0;
   }
   
-  virtual TypeResult ParseParamDeclaratorType(Declarator &D) {
+  virtual TypeResult ParseParamDeclaratorType(Scope *S, Declarator &D) {
     return 0;
   }
   
