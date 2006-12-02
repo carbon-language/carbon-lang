@@ -264,8 +264,8 @@ void Parser::ParseDeclarationSpecifiers(DeclSpec &DS) {
                                                CurScope)) {
           isInvalid = DS.SetTypeSpecType(DeclSpec::TST_typedef, Loc, PrevSpec,
                                          TypeRep);
+          break;
         }
-        break;
       }
       // FALL THROUGH.
     default:
@@ -862,6 +862,7 @@ void Parser::ParseDirectDeclarator(Declarator &D) {
 ///         identifier
 ///         identifier-list ',' identifier
 ///
+#include <iostream>
 void Parser::ParseParenDeclarator(Declarator &D) {
   SourceLocation StartLoc = ConsumeParen();
   
@@ -912,14 +913,15 @@ void Parser::ParseParenDeclarator(Declarator &D) {
   // identifier list of a K&R-style function.
   bool IsVariadic;
   bool HasPrototype;
-  bool IsEmpty = false;
   bool ErrorEmitted = false;
 
+  // Build up an array of information about the parsed arguments.
+  SmallVector<DeclaratorTypeInfo::ParamInfo, 16> ParamInfo;
+  
   if (Tok.getKind() == tok::r_paren) {
     // int() -> no prototype, no '...'.
     IsVariadic   = false;
     HasPrototype = false;
-    IsEmpty      = true;
   } else if (Tok.getKind() == tok::identifier &&
              // K&R identifier lists can't have typedefs as identifiers, per
              // C99 6.7.5.3p11.
@@ -935,6 +937,9 @@ void Parser::ParseParenDeclarator(Declarator &D) {
     if (!D.getIdentifier())
       Diag(Tok, diag::ext_ident_list_in_param);
     
+    // FIXME: pass stuff.
+    ParamInfo.push_back(DeclaratorTypeInfo::ParamInfo());
+
     // TODO: Remember token.
     ConsumeToken();
     while (Tok.getKind() == tok::comma) {
@@ -945,6 +950,9 @@ void Parser::ParseParenDeclarator(Declarator &D) {
         ErrorEmitted = true;
         break;
       }
+
+      // FIXME: pass stuff.
+      ParamInfo.push_back(DeclaratorTypeInfo::ParamInfo());
     }
     
     // K&R 'prototype'.
@@ -1010,6 +1018,10 @@ void Parser::ParseParenDeclarator(Declarator &D) {
         DS.ClearStorageClassSpecs();
       }
       
+      
+      // FIXME: pass stuff.
+      ParamInfo.push_back(DeclaratorTypeInfo::ParamInfo());
+      
       // Inform the actions module about the parameter declarator, so it gets
       // added to the current scope.
       Actions.ParseDeclarator(CurScope, DeclaratorInfo, 0, 0);
@@ -1027,11 +1039,16 @@ void Parser::ParseParenDeclarator(Declarator &D) {
     ExitScope();
   }
   
-  // TODO: capture argument info.
+  DeclaratorTypeInfo::ParamInfo *ParamArray = 0;
+  if (!ParamInfo.empty()) {
+    ParamArray = new DeclaratorTypeInfo::ParamInfo[ParamInfo.size()];
+    memcpy(ParamArray, &ParamInfo[0], sizeof(ParamInfo[0])*ParamInfo.size());
+  }
   
   // Remember that we parsed a function type, and remember the attributes.
   D.AddTypeInfo(DeclaratorTypeInfo::getFunction(HasPrototype, IsVariadic,
-                                                IsEmpty, StartLoc));
+                                                ParamInfo.size(), ParamArray,
+                                                StartLoc));
   
   
   // If we have the closing ')', eat it and we're done.

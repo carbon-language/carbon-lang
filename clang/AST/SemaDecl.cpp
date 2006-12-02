@@ -140,7 +140,7 @@ Decl *Sema::ImplicitlyDefineFunction(SourceLocation Loc, IdentifierInfo &II,
   bool Error = DS.SetTypeSpecType(DeclSpec::TST_int, Loc, Dummy);
   assert(!Error && "Error setting up implicit decl!");
   Declarator D(DS, Declarator::BlockContext);
-  D.AddTypeInfo(DeclaratorTypeInfo::getFunction(false, false, true, Loc));
+  D.AddTypeInfo(DeclaratorTypeInfo::getFunction(false, false, 0, 0, Loc));
   D.SetIdentifier(&II, Loc);
   
   Decl *Result = static_cast<Decl*>(ParseDeclarator(S, D, 0, 0));

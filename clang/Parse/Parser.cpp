@@ -413,7 +413,7 @@ Parser::DeclTy *Parser::ParseFunctionDefinition(Declarator &D) {
   // If this declaration was formed with a K&R-style identifier list for the
   // arguments, parse declarations for all of the args next.
   // int foo(a,b) int a; float b; {}
-  if (!FnTypeInfo.Fun.hasPrototype && !FnTypeInfo.Fun.isEmpty) {
+  if (!FnTypeInfo.Fun.hasPrototype && FnTypeInfo.Fun.NumArgs != 0) {
     // Read all the argument declarations.
     while (isDeclarationSpecifier())
       ParseDeclaration(Declarator::KNRTypeListContext);

@@ -215,7 +215,7 @@ public:
   /// Finish - This does final analysis of the declspec, issuing diagnostics for
   /// things like "_Imaginary" (lacking an FP type).  After calling this method,
   /// DeclSpec is guaranteed self-consistent, even if an error occurred.
-  void Finish(Diagnostic &D,const LangOptions &Lang);
+  void Finish(Diagnostic &D, const LangOptions &Lang);
 };
 
 
@@ -249,6 +249,20 @@ struct DeclaratorTypeInfo {
     /// FIXME: make this be an expression* when we have expressions.
     void *NumElts;
   };
+  
+  /// ParamInfo - An array of paraminfo objects is allocated whenever a function
+  /// declarator is parsed.  There are two interesting styles of arguments here:
+  /// K&R-style identifier lists and parameter type lists.  K&R-style identifier
+  /// lists will have information about the identifier, but no type information.
+  /// Parameter type lists will have type info (if the actions module provides
+  /// it), but may have null identifier info: e.g. for 'void foo(int X, int)'.
+  struct ParamInfo {
+    /// Ident - In a K&R 
+    IdentifierInfo *Ident;
+    SourceLocation IdentLoc;
+    void *TypeInfo;
+  };
+  
   struct FunctionTypeInfo {
     /// hasPrototype - This is true if the function had at least one typed
     /// argument.  If the function is () or (a,b,c), then it has no prototype,
@@ -258,8 +272,15 @@ struct DeclaratorTypeInfo {
     /// isVariadic - If this function has a prototype, and if that proto ends
     /// with ',...)', this is true.
     bool isVariadic : 1;
-    // TODO: capture argument info.
-    bool isEmpty : 1;
+
+    /// NumArgs - This is the number of formal arguments provided for the
+    /// declarator.
+    unsigned NumArgs;
+
+    /// ArgInfo - This is a pointer to a new[]'d array of ParamInfo objects that
+    /// describe the arguments for this function declarator.  This is null if
+    /// there are no arguments specified.
+    ParamInfo *ArgInfo;
   };
   
   union {
@@ -294,17 +315,18 @@ struct DeclaratorTypeInfo {
     return I;
   }
   
-  /// getFunction - Return a DeclaratorTypeInfo for a function.
-  ///
+  /// getFunction - Return a DeclaratorTypeInfo for a function.  ArgInfo should
+  /// be a new[]'d array with NumArgs elements in it, or null if NumArgs is 0.
   static DeclaratorTypeInfo getFunction(bool hasProto, bool isVariadic,
-                                        bool isEmpty /*fixme arg info*/,
+                                        unsigned NumArgs, ParamInfo *ArgInfo,
                                         SourceLocation Loc) {
     DeclaratorTypeInfo I;
     I.Kind             = Function;
     I.Loc              = Loc;
     I.Fun.hasPrototype = hasProto;
     I.Fun.isVariadic   = isVariadic;
-    I.Fun.isEmpty      = isEmpty;
+    I.Fun.NumArgs      = NumArgs;
+    I.Fun.ArgInfo      = ArgInfo;
     return I;
   }
 };
@@ -350,15 +372,26 @@ public:
   Declarator(const DeclSpec &ds, TheContext C)
     : DS(ds), Identifier(0), Context(C) {
   }
+  
+  ~Declarator() {
+    clear();
+  }
 
   /// getDeclSpec - Return the declaration-specifier that this declarator was
   /// declared with.
   const DeclSpec &getDeclSpec() const { return DS; }
   
+  TheContext getContext() const { return Context; }
+  
   /// clear - Reset the contents of this Declarator.
   void clear() {
     Identifier = 0;
     IdentifierLoc = SourceLocation();
+    
+    for (unsigned i = 0, e = DeclTypeInfo.size(); i != e; ++i)
+      if (DeclTypeInfo[i].Kind == DeclaratorTypeInfo::Function)
+        delete [] DeclTypeInfo[i].Fun.ArgInfo;
+        
     DeclTypeInfo.clear();
   }
   
