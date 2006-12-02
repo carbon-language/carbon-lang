@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s -o /dev/null -f
+; RUN: llvm-upgrade < %s | llvm-as -o /dev/null -f
 
 %.LC0 = internal global [12 x sbyte] c"hello world\00"          ; <[12 x sbyte]*> [#uses=1]
 

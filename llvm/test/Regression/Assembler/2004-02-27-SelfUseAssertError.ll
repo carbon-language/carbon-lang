@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s -o /dev/null -f
+; RUN: llvm-upgrade < %s | llvm-as -o /dev/null -f
 
 ; %inc2 uses it's own value, but that's ok, as it's unreachable!
 

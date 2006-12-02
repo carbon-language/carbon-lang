@@ -1,7 +1,4 @@
-; RUN: llvm-as < %s -o /dev/null -f
-
-
-
+; RUN: llvm-upgrade < %s | llvm-as -o /dev/null -f
 
 int *%t1({ float, int }* %X) {
 	%W = getelementptr { float, int }* %X, int 20, uint 1

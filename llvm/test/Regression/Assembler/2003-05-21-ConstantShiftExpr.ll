@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s -o /dev/null -f
+; RUN: llvm-upgrade < %s | llvm-as -o /dev/null -f
 
 ; Test that shift instructions can be used in constant expressions.
 

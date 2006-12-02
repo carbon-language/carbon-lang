@@ -1,4 +1,4 @@
-; RUN: llvm-as %s -o /dev/null 2>&1 | grep "constant invalid for type"
+; RUN: llvm-upgrade %s | llvm-as -o /dev/null -f 2>&1 | grep "constant invalid for type"
 ; XFAIL: *
 
 ;; This is a testcase for PR409
