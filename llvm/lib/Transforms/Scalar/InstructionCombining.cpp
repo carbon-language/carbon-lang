@@ -1715,7 +1715,7 @@ Instruction *InstCombiner::visitAdd(BinaryOperator &I) {
       return ReplaceInstUsesWith(I, RHS);
 
     // X + 0 --> X
-    if (!I.getType()->isFloatingPoint()) { // NOTE: -0 + +0 = +0.
+    if (!I.getType()->isFPOrFPVector()) { // NOTE: -0 + +0 = +0.
       if (RHSC->isNullValue())
         return ReplaceInstUsesWith(I, LHS);
     } else if (ConstantFP *CFP = dyn_cast<ConstantFP>(RHSC)) {
@@ -1991,7 +1991,7 @@ Instruction *InstCombiner::visitSub(BinaryOperator &I) {
 
   if (BinaryOperator *Op1I = dyn_cast<BinaryOperator>(Op1)) {
     if (Op1I->getOpcode() == Instruction::Add &&
-        !Op0->getType()->isFloatingPoint()) {
+        !Op0->getType()->isFPOrFPVector()) {
       if (Op1I->getOperand(0) == Op0)              // X-(X+Y) == -Y
         return BinaryOperator::createNeg(Op1I->getOperand(1), I.getName());
       else if (Op1I->getOperand(1) == Op0)         // X-(Y+X) == -Y
@@ -2009,7 +2009,7 @@ Instruction *InstCombiner::visitSub(BinaryOperator &I) {
       // is not used by anyone else...
       //
       if (Op1I->getOpcode() == Instruction::Sub &&
-          !Op1I->getType()->isFloatingPoint()) {
+          !Op1I->getType()->isFPOrFPVector()) {
         // Swap the two operands of the subexpr...
         Value *IIOp0 = Op1I->getOperand(0), *IIOp1 = Op1I->getOperand(1);
         Op1I->setOperand(0, IIOp1);
@@ -2048,7 +2048,7 @@ Instruction *InstCombiner::visitSub(BinaryOperator &I) {
     }
   }
 
-  if (!Op0->getType()->isFloatingPoint())
+  if (!Op0->getType()->isFPOrFPVector())
     if (BinaryOperator *Op0I = dyn_cast<BinaryOperator>(Op0))
       if (Op0I->getOpcode() == Instruction::Add) {
         if (Op0I->getOperand(0) == Op1)             // (Y+X)-Y == X
