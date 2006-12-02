@@ -399,8 +399,8 @@ Parser::DeclTy *Parser::ParseDeclarationOrFunctionDefinition() {
 ///                 compound-statement                           [TODO]
 ///
 Parser::DeclTy *Parser::ParseFunctionDefinition(Declarator &D) {
-  const DeclaratorTypeInfo &FnTypeInfo = D.getTypeObject(0);
-  assert(FnTypeInfo.Kind == DeclaratorTypeInfo::Function &&
+  const DeclaratorChunk &FnTypeInfo = D.getTypeObject(0);
+  assert(FnTypeInfo.Kind == DeclaratorChunk::Function &&
          "This isn't a function declarator!");
 
   DeclTy *Res = Actions.ParseStartOfFunctionDef(CurScope, D);

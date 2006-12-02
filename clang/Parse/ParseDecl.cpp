@@ -784,7 +784,7 @@ void Parser::ParseDeclaratorInternal(Declarator &D) {
   ParseDeclaratorInternal(D);
 
   // Remember that we parsed a pointer type, and remember the type-quals.
-  D.AddTypeInfo(DeclaratorTypeInfo::getPointer(DS.getTypeQualifiers(), Loc));
+  D.AddTypeInfo(DeclaratorChunk::getPointer(DS.getTypeQualifiers(), Loc));
 }
 
 
@@ -862,7 +862,6 @@ void Parser::ParseDirectDeclarator(Declarator &D) {
 ///         identifier
 ///         identifier-list ',' identifier
 ///
-#include <iostream>
 void Parser::ParseParenDeclarator(Declarator &D) {
   SourceLocation StartLoc = ConsumeParen();
   
@@ -916,7 +915,7 @@ void Parser::ParseParenDeclarator(Declarator &D) {
   bool ErrorEmitted = false;
 
   // Build up an array of information about the parsed arguments.
-  SmallVector<DeclaratorTypeInfo::ParamInfo, 16> ParamInfo;
+  SmallVector<DeclaratorChunk::ParamInfo, 16> ParamInfo;
   
   if (Tok.getKind() == tok::r_paren) {
     // int() -> no prototype, no '...'.
@@ -936,23 +935,28 @@ void Parser::ParseParenDeclarator(Declarator &D) {
     // diagnose this.
     if (!D.getIdentifier())
       Diag(Tok, diag::ext_ident_list_in_param);
-    
-    // FIXME: pass stuff.
-    ParamInfo.push_back(DeclaratorTypeInfo::ParamInfo());
 
-    // TODO: Remember token.
+    // Remember this identifier in ParamInfo.
+    ParamInfo.push_back(DeclaratorChunk::ParamInfo(Tok.getIdentifierInfo(),
+                                                   Tok.getLocation(), 0));
+
     ConsumeToken();
     while (Tok.getKind() == tok::comma) {
       // Eat the comma.
       ConsumeToken();
       
-      if (ExpectAndConsume(tok::identifier, diag::err_expected_ident)) {
+      if (Tok.getKind() != tok::identifier) {
+        Diag(Tok, diag::err_expected_ident);
         ErrorEmitted = true;
         break;
       }
-
-      // FIXME: pass stuff.
-      ParamInfo.push_back(DeclaratorTypeInfo::ParamInfo());
+      
+      // Remember this identifier in ParamInfo.
+      ParamInfo.push_back(DeclaratorChunk::ParamInfo(Tok.getIdentifierInfo(),
+                                                     Tok.getLocation(), 0));
+      
+      // Eat the identifier.
+      ConsumeToken();
     }
     
     // K&R 'prototype'.
@@ -961,18 +965,18 @@ void Parser::ParseParenDeclarator(Declarator &D) {
   } else {
     // Finally, a normal, non-empty parameter type list.
     
-    // Enter function-declaration scope, limiting any declarators for arguments
-    // to the function scope.
+    // Enter function-declaration scope, limiting any declarators for struct
+    // tags to the function prototype scope.
+    // FIXME: is this needed?
     EnterScope(0);
     
     IsVariadic = false;
-    bool ReadArg = false;
     while (1) {
       if (Tok.getKind() == tok::ellipsis) {
         IsVariadic = true;
 
         // Check to see if this is "void(...)" which is not allowed.
-        if (!ReadArg) {
+        if (ParamInfo.empty()) {
           // Otherwise, parse parameter type list.  If it starts with an
           // ellipsis,  diagnose the malformed function.
           Diag(Tok, diag::err_ellipsis_first_arg);
@@ -984,16 +988,14 @@ void Parser::ParseParenDeclarator(Declarator &D) {
         break;
       }
       
-      ReadArg = true;
-
       // Parse the declaration-specifiers.
       DeclSpec DS;
       ParseDeclarationSpecifiers(DS);
 
       // Parse the declarator.  This is "PrototypeContext", because we must
       // accept either 'declarator' or 'abstract-declarator' here.
-      Declarator DeclaratorInfo(DS, Declarator::PrototypeContext);
-      ParseDeclarator(DeclaratorInfo);
+      Declarator ParmDecl(DS, Declarator::PrototypeContext);
+      ParseDeclarator(ParmDecl);
 
       // Parse GNU attributes, if present.
       if (Tok.getKind() == tok::kw___attribute)
@@ -1018,13 +1020,14 @@ void Parser::ParseParenDeclarator(Declarator &D) {
         DS.ClearStorageClassSpecs();
       }
       
-      
-      // FIXME: pass stuff.
-      ParamInfo.push_back(DeclaratorTypeInfo::ParamInfo());
-      
       // Inform the actions module about the parameter declarator, so it gets
       // added to the current scope.
-      Actions.ParseDeclarator(CurScope, DeclaratorInfo, 0, 0);
+      Action::TypeResult ParamTy = Actions.ParseParamDeclaratorType(ParmDecl);
+        
+      // Remember this parsed parameter in ParamInfo.
+      ParamInfo.push_back(DeclaratorChunk::ParamInfo(ParmDecl.getIdentifier(),
+                                                    ParmDecl.getIdentifierLoc(),
+                                                     ParamTy.Val));
       
       // If the next token is a comma, consume it and keep reading arguments.
       if (Tok.getKind() != tok::comma) break;
@@ -1039,16 +1042,16 @@ void Parser::ParseParenDeclarator(Declarator &D) {
     ExitScope();
   }
   
-  DeclaratorTypeInfo::ParamInfo *ParamArray = 0;
+  DeclaratorChunk::ParamInfo *ParamArray = 0;
   if (!ParamInfo.empty()) {
-    ParamArray = new DeclaratorTypeInfo::ParamInfo[ParamInfo.size()];
+    ParamArray = new DeclaratorChunk::ParamInfo[ParamInfo.size()];
     memcpy(ParamArray, &ParamInfo[0], sizeof(ParamInfo[0])*ParamInfo.size());
   }
   
   // Remember that we parsed a function type, and remember the attributes.
-  D.AddTypeInfo(DeclaratorTypeInfo::getFunction(HasPrototype, IsVariadic,
-                                                ParamInfo.size(), ParamArray,
-                                                StartLoc));
+  D.AddTypeInfo(DeclaratorChunk::getFunction(HasPrototype, IsVariadic,
+                                             ParamInfo.size(), ParamArray,
+                                             StartLoc));
   
   
   // If we have the closing ')', eat it and we're done.
@@ -1131,8 +1134,8 @@ void Parser::ParseBracketDeclarator(Declarator &D) {
   }
   
   // Remember that we parsed a pointer type, and remember the type-quals.
-  D.AddTypeInfo(DeclaratorTypeInfo::getArray(DS.getTypeQualifiers(),
-                                             StaticLoc.isValid(), isStar,
-                                             NumElements.Val, StartLoc));
+  D.AddTypeInfo(DeclaratorChunk::getArray(DS.getTypeQualifiers(),
+                                          StaticLoc.isValid(), isStar,
+                                          NumElements.Val, StartLoc));
 }
 

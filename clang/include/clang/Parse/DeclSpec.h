@@ -15,7 +15,7 @@
 #define LLVM_CLANG_PARSE_SEMADECLSPEC_H
 
 #include "clang/Basic/Diagnostic.h"
-#include "clang/Basic/SourceLocation.h"
+#include "clang/Parse/Action.h"
 #include "llvm/ADT/SmallVector.h"
 
 namespace llvm {
@@ -219,11 +219,11 @@ public:
 };
 
 
-/// DeclaratorTypeInfo - One instance of this struct is used for each type in a
+/// DeclaratorChunk - One instance of this struct is used for each type in a
 /// declarator that is parsed.
 ///
 /// This is intended to be a small value object.
-struct DeclaratorTypeInfo {
+struct DeclaratorChunk {
   enum {
     Pointer, Array, Function
   } Kind;
@@ -260,7 +260,12 @@ struct DeclaratorTypeInfo {
     /// Ident - In a K&R 
     IdentifierInfo *Ident;
     SourceLocation IdentLoc;
-    void *TypeInfo;
+    Action::TypeTy *TypeInfo;
+    
+    ParamInfo() {}
+    ParamInfo(IdentifierInfo *ident, SourceLocation iloc, Action::TypeTy *typ)
+      : Ident(ident), IdentLoc(iloc), TypeInfo(typ) {
+    }
   };
   
   struct FunctionTypeInfo {
@@ -290,22 +295,22 @@ struct DeclaratorTypeInfo {
   };
   
   
-  /// getPointer - Return a DeclaratorTypeInfo for a pointer.
+  /// getPointer - Return a DeclaratorChunk for a pointer.
   ///
-  static DeclaratorTypeInfo getPointer(unsigned TypeQuals, SourceLocation Loc) {
-    DeclaratorTypeInfo I;
+  static DeclaratorChunk getPointer(unsigned TypeQuals, SourceLocation Loc) {
+    DeclaratorChunk I;
     I.Kind          = Pointer;
     I.Loc           = Loc;
     I.Ptr.TypeQuals = TypeQuals;
     return I;
   }
   
-  /// getArray - Return a DeclaratorTypeInfo for an array.
+  /// getArray - Return a DeclaratorChunk for an array.
   ///
-  static DeclaratorTypeInfo getArray(unsigned TypeQuals, bool isStatic,
+  static DeclaratorChunk getArray(unsigned TypeQuals, bool isStatic,
                                      bool isStar, void *NumElts,
                                      SourceLocation Loc) {
-    DeclaratorTypeInfo I;
+    DeclaratorChunk I;
     I.Kind          = Array;
     I.Loc           = Loc;
     I.Arr.TypeQuals = TypeQuals;
@@ -315,12 +320,12 @@ struct DeclaratorTypeInfo {
     return I;
   }
   
-  /// getFunction - Return a DeclaratorTypeInfo for a function.  ArgInfo should
+  /// getFunction - Return a DeclaratorChunk for a function.  ArgInfo should
   /// be a new[]'d array with NumArgs elements in it, or null if NumArgs is 0.
-  static DeclaratorTypeInfo getFunction(bool hasProto, bool isVariadic,
+  static DeclaratorChunk getFunction(bool hasProto, bool isVariadic,
                                         unsigned NumArgs, ParamInfo *ArgInfo,
                                         SourceLocation Loc) {
-    DeclaratorTypeInfo I;
+    DeclaratorChunk I;
     I.Kind             = Function;
     I.Loc              = Loc;
     I.Fun.hasPrototype = hasProto;
@@ -366,7 +371,7 @@ private:
   /// parsed.  This is pushed from the identifier out, which means that element
   /// #0 will be the most closely bound to the identifier, and
   /// DeclTypeInfo.back() will be the least closely bound.
-  SmallVector<DeclaratorTypeInfo, 8> DeclTypeInfo;
+  SmallVector<DeclaratorChunk, 8> DeclTypeInfo;
   
 public:
   Declarator(const DeclSpec &ds, TheContext C)
@@ -389,7 +394,7 @@ public:
     IdentifierLoc = SourceLocation();
     
     for (unsigned i = 0, e = DeclTypeInfo.size(); i != e; ++i)
-      if (DeclTypeInfo[i].Kind == DeclaratorTypeInfo::Function)
+      if (DeclTypeInfo[i].Kind == DeclaratorChunk::Function)
         delete [] DeclTypeInfo[i].Fun.ArgInfo;
         
     DeclTypeInfo.clear();
@@ -420,7 +425,7 @@ public:
     IdentifierLoc = Loc;
   }
   
-  void AddTypeInfo(const DeclaratorTypeInfo &TI) {
+  void AddTypeInfo(const DeclaratorChunk &TI) {
     DeclTypeInfo.push_back(TI);
   }
   
@@ -430,7 +435,7 @@ public:
   
   /// Return the specified TypeInfo from this declarator.  TypeInfo #0 is
   /// closest to the identifier.
-  const DeclaratorTypeInfo &getTypeObject(unsigned i) const {
+  const DeclaratorChunk &getTypeObject(unsigned i) const {
     return DeclTypeInfo[i];
   }
   
@@ -438,7 +443,7 @@ public:
   /// this method returns true if the identifier is a function declarator.
   bool isFunctionDeclarator() const {
     return !DeclTypeInfo.empty() &&
-           DeclTypeInfo[0].Kind == DeclaratorTypeInfo::Function;
+           DeclTypeInfo[0].Kind == DeclaratorChunk::Function;
   }
 };
 

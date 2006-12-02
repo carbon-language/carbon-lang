@@ -103,17 +103,17 @@ TypeRef Sema::GetTypeForDeclarator(Declarator &D, Scope *S) {
   // Walk the DeclTypeInfo, building the recursive type as we go.  DeclTypeInfos
   // are ordered from the identifier out, which is opposite of what we want :).
   for (unsigned i = 0, e = D.getNumTypeObjects(); i != e; ++i) {
-    const DeclaratorTypeInfo &DeclType = D.getTypeObject(e-i-1);
+    const DeclaratorChunk &DeclType = D.getTypeObject(e-i-1);
     switch (DeclType.Kind) {
     default: assert(0 && "Unknown decltype!");
-    case DeclaratorTypeInfo::Pointer:
+    case DeclaratorChunk::Pointer:
       T = Context.getPointerType(T);
 
       // Apply the pointer typequals to the pointer object.
       T = T.getQualifiedType(DeclType.Ptr.TypeQuals);
       break;
-    case DeclaratorTypeInfo::Array: {
-      const DeclaratorTypeInfo::ArrayTypeInfo &ATI = DeclType.Arr;
+    case DeclaratorChunk::Array: {
+      const DeclaratorChunk::ArrayTypeInfo &ATI = DeclType.Arr;
       ArrayType::ArraySizeModifier ASM;
       if (ATI.isStar)
         ASM = ArrayType::Star;
@@ -125,7 +125,7 @@ TypeRef Sema::GetTypeForDeclarator(Declarator &D, Scope *S) {
       T = Context.getArrayType(T, ASM, ATI.TypeQuals, ATI.NumElts);
       break;
     }
-    case DeclaratorTypeInfo::Function:
+    case DeclaratorChunk::Function:
       return TypeRef();   // FIXME: implement these!
     }
   }

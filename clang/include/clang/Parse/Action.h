@@ -136,6 +136,10 @@ public:
     return 0;
   }
   
+  virtual TypeResult ParseParamDeclaratorType(Declarator &D) {
+    return 0;
+  }
+  
   //===--------------------------------------------------------------------===//
   // Statement Parsing Callbacks.
   //===--------------------------------------------------------------------===//
