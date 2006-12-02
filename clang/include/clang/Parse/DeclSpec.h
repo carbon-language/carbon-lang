@@ -308,8 +308,8 @@ struct DeclaratorChunk {
   /// getArray - Return a DeclaratorChunk for an array.
   ///
   static DeclaratorChunk getArray(unsigned TypeQuals, bool isStatic,
-                                     bool isStar, void *NumElts,
-                                     SourceLocation Loc) {
+                                  bool isStar, void *NumElts,
+                                  SourceLocation Loc) {
     DeclaratorChunk I;
     I.Kind          = Array;
     I.Loc           = Loc;
@@ -320,18 +320,23 @@ struct DeclaratorChunk {
     return I;
   }
   
-  /// getFunction - Return a DeclaratorChunk for a function.  ArgInfo should
-  /// be a new[]'d array with NumArgs elements in it, or null if NumArgs is 0.
+  /// getFunction - Return a DeclaratorChunk for a function.
   static DeclaratorChunk getFunction(bool hasProto, bool isVariadic,
-                                        unsigned NumArgs, ParamInfo *ArgInfo,
-                                        SourceLocation Loc) {
+                                     ParamInfo *ArgInfo, unsigned NumArgs,
+                                     SourceLocation Loc) {
     DeclaratorChunk I;
     I.Kind             = Function;
     I.Loc              = Loc;
     I.Fun.hasPrototype = hasProto;
     I.Fun.isVariadic   = isVariadic;
     I.Fun.NumArgs      = NumArgs;
-    I.Fun.ArgInfo      = ArgInfo;
+    I.Fun.ArgInfo      = 0;
+    
+    // new[] an argument array if needed.
+    if (NumArgs) {
+      I.Fun.ArgInfo = new DeclaratorChunk::ParamInfo[NumArgs];
+      memcpy(I.Fun.ArgInfo, ArgInfo, sizeof(ArgInfo[0])*NumArgs);
+    }
     return I;
   }
 };

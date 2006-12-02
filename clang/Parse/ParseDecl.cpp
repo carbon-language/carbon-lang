@@ -1048,17 +1048,10 @@ void Parser::ParseParenDeclarator(Declarator &D) {
     ExitScope();
   }
   
-  DeclaratorChunk::ParamInfo *ParamArray = 0;
-  if (!ParamInfo.empty()) {
-    ParamArray = new DeclaratorChunk::ParamInfo[ParamInfo.size()];
-    memcpy(ParamArray, &ParamInfo[0], sizeof(ParamInfo[0])*ParamInfo.size());
-  }
-  
   // Remember that we parsed a function type, and remember the attributes.
   D.AddTypeInfo(DeclaratorChunk::getFunction(HasPrototype, IsVariadic,
-                                             ParamInfo.size(), ParamArray,
+                                             &ParamInfo[0], ParamInfo.size(),
                                              StartLoc));
-  
   
   // If we have the closing ')', eat it and we're done.
   if (Tok.getKind() == tok::r_paren) {
