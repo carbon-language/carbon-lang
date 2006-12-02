@@ -50,6 +50,7 @@
 #define RET_TY(sym,OldTY,NewTY,sign) \
   Upgradelval.Type.newTy = new std::string(NewTY); \
   Upgradelval.Type.oldTy = OldTY; \
+  Upgradelval.Type.elemTy = VoidTy; \
   return sym
 
 #define YY_NEVER_INTERACTIVE 1
@@ -114,6 +115,7 @@ dllimport       { RET_TOK( DLLIMPORT); }
 dllexport       { RET_TOK( DLLEXPORT); }
 extern_weak     { RET_TOK( EXTERN_WEAK); }
 external        { RET_TOK( EXTERNAL); }
+uninitialized   { RET_TOK( UNINITIALIZED); }  // alias for external
 implementation  { RET_TOK( IMPLEMENTATION); }
 zeroinitializer { RET_TOK( ZEROINITIALIZER); }
 \.\.\.          { RET_TOK( DOTDOTDOT); }
@@ -163,11 +165,11 @@ type            { RET_TOK(TYPE);   }
 add             { RET_TOK( ADD); }
 sub             { RET_TOK( SUB); }
 mul             { RET_TOK( MUL); }
-div             { RET_TOK( UDIV); }
+div             { RET_TOK( DIV); }
 udiv            { RET_TOK( UDIV); }
 sdiv            { RET_TOK( SDIV); }
 fdiv            { RET_TOK( FDIV); }
-rem             { RET_TOK( UREM); }
+rem             { RET_TOK( REM);  }
 urem            { RET_TOK( UREM); }
 srem            { RET_TOK( SREM); }
 frem            { RET_TOK( FREM); }
@@ -207,7 +209,7 @@ br              { RET_TOK( BR); }
 switch          { RET_TOK( SWITCH); }
 invoke          { RET_TOK( INVOKE); }
 unwind          { RET_TOK( UNWIND); }
-except          { RET_TOK( UNWIND); }
+except          { RET_TOK( EXCEPT); } // alias for unwind
 unreachable     { RET_TOK( UNREACHABLE); }
 
 malloc          { RET_TOK( MALLOC); }

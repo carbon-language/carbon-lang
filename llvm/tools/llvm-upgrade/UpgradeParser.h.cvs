@@ -84,73 +84,77 @@
      LITTLE = 310,
      BIG = 311,
      ALIGN = 312,
-     DEPLIBS = 313,
-     CALL = 314,
-     TAIL = 315,
-     ASM_TOK = 316,
-     MODULE = 317,
-     SIDEEFFECT = 318,
-     CC_TOK = 319,
-     CCC_TOK = 320,
-     CSRETCC_TOK = 321,
-     FASTCC_TOK = 322,
-     COLDCC_TOK = 323,
-     X86_STDCALLCC_TOK = 324,
-     X86_FASTCALLCC_TOK = 325,
-     DATALAYOUT = 326,
-     RET = 327,
-     BR = 328,
-     SWITCH = 329,
-     INVOKE = 330,
-     UNWIND = 331,
-     UNREACHABLE = 332,
-     ADD = 333,
-     SUB = 334,
-     MUL = 335,
-     UDIV = 336,
-     SDIV = 337,
-     FDIV = 338,
-     UREM = 339,
-     SREM = 340,
-     FREM = 341,
-     AND = 342,
-     OR = 343,
-     XOR = 344,
-     SETLE = 345,
-     SETGE = 346,
-     SETLT = 347,
-     SETGT = 348,
-     SETEQ = 349,
-     SETNE = 350,
-     MALLOC = 351,
-     ALLOCA = 352,
-     FREE = 353,
-     LOAD = 354,
-     STORE = 355,
-     GETELEMENTPTR = 356,
-     PHI_TOK = 357,
-     SELECT = 358,
-     SHL = 359,
-     SHR = 360,
-     ASHR = 361,
-     LSHR = 362,
-     VAARG = 363,
-     EXTRACTELEMENT = 364,
-     INSERTELEMENT = 365,
-     SHUFFLEVECTOR = 366,
-     CAST = 367,
-     TRUNC = 368,
-     ZEXT = 369,
-     SEXT = 370,
-     FPTRUNC = 371,
-     FPEXT = 372,
-     FPTOUI = 373,
-     FPTOSI = 374,
-     UITOFP = 375,
-     SITOFP = 376,
-     PTRTOINT = 377,
-     INTTOPTR = 378,
-     BITCAST = 379
+     UNINITIALIZED = 313,
+     DEPLIBS = 314,
+     CALL = 315,
+     TAIL = 316,
+     ASM_TOK = 317,
+     MODULE = 318,
+     SIDEEFFECT = 319,
+     CC_TOK = 320,
+     CCC_TOK = 321,
+     CSRETCC_TOK = 322,
+     FASTCC_TOK = 323,
+     COLDCC_TOK = 324,
+     X86_STDCALLCC_TOK = 325,
+     X86_FASTCALLCC_TOK = 326,
+     DATALAYOUT = 327,
+     RET = 328,
+     BR = 329,
+     SWITCH = 330,
+     INVOKE = 331,
+     EXCEPT = 332,
+     UNWIND = 333,
+     UNREACHABLE = 334,
+     ADD = 335,
+     SUB = 336,
+     MUL = 337,
+     DIV = 338,
+     UDIV = 339,
+     SDIV = 340,
+     FDIV = 341,
+     REM = 342,
+     UREM = 343,
+     SREM = 344,
+     FREM = 345,
+     AND = 346,
+     OR = 347,
+     XOR = 348,
+     SETLE = 349,
+     SETGE = 350,
+     SETLT = 351,
+     SETGT = 352,
+     SETEQ = 353,
+     SETNE = 354,
+     MALLOC = 355,
+     ALLOCA = 356,
+     FREE = 357,
+     LOAD = 358,
+     STORE = 359,
+     GETELEMENTPTR = 360,
+     PHI_TOK = 361,
+     SELECT = 362,
+     SHL = 363,
+     SHR = 364,
+     ASHR = 365,
+     LSHR = 366,
+     VAARG = 367,
+     EXTRACTELEMENT = 368,
+     INSERTELEMENT = 369,
+     SHUFFLEVECTOR = 370,
+     CAST = 371,
+     TRUNC = 372,
+     ZEXT = 373,
+     SEXT = 374,
+     FPTRUNC = 375,
+     FPEXT = 376,
+     FPTOUI = 377,
+     FPTOSI = 378,
+     UITOFP = 379,
+     SITOFP = 380,
+     PTRTOINT = 381,
+     INTTOPTR = 382,
+     BITCAST = 383
    };
 #endif
 /* Tokens.  */
@@ -209,79 +213,83 @@
 #define LITTLE 310
 #define BIG 311
 #define ALIGN 312
-#define DEPLIBS 313
-#define CALL 314
-#define TAIL 315
-#define ASM_TOK 316
-#define MODULE 317
-#define SIDEEFFECT 318
-#define CC_TOK 319
-#define CCC_TOK 320
-#define CSRETCC_TOK 321
-#define FASTCC_TOK 322
-#define COLDCC_TOK 323
-#define X86_STDCALLCC_TOK 324
-#define X86_FASTCALLCC_TOK 325
-#define DATALAYOUT 326
-#define RET 327
-#define BR 328
-#define SWITCH 329
-#define INVOKE 330
-#define UNWIND 331
-#define UNREACHABLE 332
-#define ADD 333
-#define SUB 334
-#define MUL 335
-#define UDIV 336
-#define SDIV 337
-#define FDIV 338
-#define UREM 339
-#define SREM 340
-#define FREM 341
-#define AND 342
-#define OR 343
-#define XOR 344
-#define SETLE 345
-#define SETGE 346
-#define SETLT 347
-#define SETGT 348
-#define SETEQ 349
-#define SETNE 350
-#define MALLOC 351
-#define ALLOCA 352
-#define FREE 353
-#define LOAD 354
-#define STORE 355
-#define GETELEMENTPTR 356
-#define PHI_TOK 357
-#define SELECT 358
-#define SHL 359
-#define SHR 360
-#define ASHR 361
-#define LSHR 362
-#define VAARG 363
-#define EXTRACTELEMENT 364
-#define INSERTELEMENT 365
-#define SHUFFLEVECTOR 366
-#define CAST 367
-#define TRUNC 368
-#define ZEXT 369
-#define SEXT 370
-#define FPTRUNC 371
-#define FPEXT 372
-#define FPTOUI 373
-#define FPTOSI 374
-#define UITOFP 375
-#define SITOFP 376
-#define PTRTOINT 377
-#define INTTOPTR 378
-#define BITCAST 379
+#define UNINITIALIZED 313
+#define DEPLIBS 314
+#define CALL 315
+#define TAIL 316
+#define ASM_TOK 317
+#define MODULE 318
+#define SIDEEFFECT 319
+#define CC_TOK 320
+#define CCC_TOK 321
+#define CSRETCC_TOK 322
+#define FASTCC_TOK 323
+#define COLDCC_TOK 324
+#define X86_STDCALLCC_TOK 325
+#define X86_FASTCALLCC_TOK 326
+#define DATALAYOUT 327
+#define RET 328
+#define BR 329
+#define SWITCH 330
+#define INVOKE 331
+#define EXCEPT 332
+#define UNWIND 333
+#define UNREACHABLE 334
+#define ADD 335
+#define SUB 336
+#define MUL 337
+#define DIV 338
+#define UDIV 339
+#define SDIV 340
+#define FDIV 341
+#define REM 342
+#define UREM 343
+#define SREM 344
+#define FREM 345
+#define AND 346
+#define OR 347
+#define XOR 348
+#define SETLE 349
+#define SETGE 350
+#define SETLT 351
+#define SETGT 352
+#define SETEQ 353
+#define SETNE 354
+#define MALLOC 355
+#define ALLOCA 356
+#define FREE 357
+#define LOAD 358
+#define STORE 359
+#define GETELEMENTPTR 360
+#define PHI_TOK 361
+#define SELECT 362
+#define SHL 363
+#define SHR 364
+#define ASHR 365
+#define LSHR 366
+#define VAARG 367
+#define EXTRACTELEMENT 368
+#define INSERTELEMENT 369
+#define SHUFFLEVECTOR 370
+#define CAST 371
+#define TRUNC 372
+#define ZEXT 373
+#define SEXT 374
+#define FPTRUNC 375
+#define FPEXT 376
+#define FPTOUI 377
+#define FPTOSI 378
+#define UITOFP 379
+#define SITOFP 380
+#define PTRTOINT 381
+#define INTTOPTR 382
+#define BITCAST 383
 
 
 
 
 #if ! defined (YYSTYPE) && ! defined (YYSTYPE_IS_DECLARED)
-#line 211 "/proj/llvm/llvm-4/tools/llvm-upgrade/UpgradeParser.y"
+#line 239 "/proj/llvm/llvm-4/tools/llvm-upgrade/UpgradeParser.y"
 typedef union YYSTYPE {
   std::string*    String;
   TypeInfo        Type;
@@ -290,7 +298,7 @@ typedef union YYSTYPE {
   ValueList*      ValList;
 } YYSTYPE;
 /* Line 1447 of yacc.c.  */
-#line 294 "UpgradeParser.tab.h"
+#line 302 "UpgradeParser.tab.h"
 # define yystype YYSTYPE /* obsolescent; will be withdrawn */
 # define YYSTYPE_IS_DECLARED 1
 # define YYSTYPE_IS_TRIVIAL 1
