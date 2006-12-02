@@ -1,5 +1,5 @@
-; RUN: llvm-as < %s | opt -instcombine | llvm-dis | grep sub &&
-; RUN: llvm-as < %s | opt -instcombine | llvm-dis | grep add
+; RUN: llvm-upgrade < %s | llvm-as | opt -instcombine | llvm-dis | grep sub &&
+; RUN: llvm-upgrade < %s | llvm-as | opt -instcombine | llvm-dis | grep add
 
 <4 x float> %test(<4 x float> %tmp26, <4 x float> %tmp53) {
   ; (X+Y)-Y != X for fp vectors.
