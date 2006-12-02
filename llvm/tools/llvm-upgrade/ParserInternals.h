@@ -101,6 +101,8 @@ struct TypeInfo {
 struct ValueInfo {
   std::string* val;
   TypeInfo type;
+  bool constant;
+  bool isConstant() const { return constant; }
   void destroy() { delete val; type.destroy(); }
 };
 

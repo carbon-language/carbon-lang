@@ -31,6 +31,7 @@ static std::string CurFilename;
 static std::ostream *O = 0;
 std::istream* LexInput = 0;
 unsigned SizeOfPointer = 32;
+static uint64_t unique = 1;
 
 typedef std::vector<TypeInfo> TypeVector;
 static TypeVector EnumeratedTypes;
@@ -173,8 +174,9 @@ static std::string getCastUpgrade(
     if (isConst)
       Source = "ulong fptoui(" + Source + " to ulong)";
     else {
-      *O << "    %cast_upgrade = fptoui " + Source + " to ulong\n";
-      Source = "ulong %cast_upgrade";
+      *O << "    %cast_upgrade" << unique << " = fptoui " << Source 
+         << " to ulong\n";
+      Source = "ulong %cast_upgrade" + llvm::utostr(unique);
     }
     // Update the SrcTy for the getCastOpcode call below
     SrcTy.destroy();
@@ -248,7 +250,7 @@ static std::string getCastUpgrade(
 %type <String> OptTailCall InstVal OptVolatile
 %type <String> MemoryInst SymbolicValueRef OptSideEffect GlobalType
 %type <String> FnDeclareLinkage BasicBlockList BigOrLittle AsmBlock
-%type <String> Name ValueRef ConstValueRef ConstVector
+%type <String> Name ConstValueRef ConstVector
 %type <String> ShiftOps SetCondOps LogicalOps ArithmeticOps CastOps 
 
 %type <ValList> ValueRefList ValueRefListE IndexList
@@ -259,7 +261,7 @@ static std::string getCastUpgrade(
 %type <String> IntVal EInt64Val 
 %type <Const>  ConstVal
 
-%type <Value> ResolvedVal
+%type <Value> ValueRef ResolvedVal 
 
 %start Module
 
@@ -905,17 +907,28 @@ ConstValueRef
 SymbolicValueRef : IntVal | Name ;
 
 // ValueRef - A reference to a definition... either constant or symbolic
-ValueRef : SymbolicValueRef | ConstValueRef;
-
+ValueRef 
+  : SymbolicValueRef {
+    $$.val = $1;
+    $$.constant = false;
+    $$.type.newTy = 0;
+    $$.type.oldTy = UnresolvedTy;
+  }
+  | ConstValueRef {
+    $$.val = $1;
+    $$.constant = true;
+    $$.type.newTy = 0;
+    $$.type.oldTy = UnresolvedTy;
+  }
+  ;
 
 // ResolvedVal - a <type> <value> pair.  This is used only in cases where the
 // type immediately preceeds the value reference, and allows complex constant
 // pool references (for things like: 'ret [2 x int] [ int 12, int 42]')
 ResolvedVal : Types ValueRef {
+    $$ = $2;
     $$.type = $1;
-    $$.val = new std::string(*$1.newTy + " ");
-    *$$.val += *$2;
-    delete $2;
+    $$.val->insert(0, *$1.newTy + " ");
   };
 
 BasicBlockList : BasicBlockList BasicBlock {
@@ -958,27 +971,29 @@ BBTerminatorInst : RET ResolvedVal {              // Return with a result...
     $$ = 0;
   }
   | BR LABEL ValueRef {                         // Unconditional Branch...
-    *O << "    " << *$1 << " " << *$2.newTy << " " << *$3 << "\n";
-    delete $1; $2.destroy(); delete $3;
+    *O << "    " << *$1 << " " << *$2.newTy << " " << *$3.val << "\n";
+    delete $1; $2.destroy(); $3.destroy();
     $$ = 0;
   }                                                  // Conditional Branch...
   | BR BOOL ValueRef ',' LABEL ValueRef ',' LABEL ValueRef {  
-    *O << "    " << *$1 << " " << *$2.newTy << " " << *$3 << ", " 
-       << *$5.newTy << " " << *$6 << ", " << *$8.newTy << " " << *$9 << "\n";
-    delete $1; $2.destroy(); delete $3; $5.destroy(); delete $6; 
-    $8.destroy(); delete $9;
+    *O << "    " << *$1 << " " << *$2.newTy << " " << *$3.val << ", " 
+       << *$5.newTy << " " << *$6.val << ", " << *$8.newTy << " " 
+       << *$9.val << "\n";
+    delete $1; $2.destroy(); $3.destroy(); $5.destroy(); $6.destroy(); 
+    $8.destroy(); $9.destroy();
     $$ = 0;
   }
   | SWITCH IntType ValueRef ',' LABEL ValueRef '[' JumpTable ']' {
-    *O << "    " << *$1 << " " << *$2.newTy << " " << *$3 << ", " << *$5.newTy 
-       << " " << *$6 << " [" << *$8 << " ]\n";
-    delete $1; $2.destroy(); delete $3; $5.destroy(); delete $6; delete $8;
+    *O << "    " << *$1 << " " << *$2.newTy << " " << *$3.val << ", " 
+       << *$5.newTy << " " << *$6.val << " [" << *$8 << " ]\n";
+    delete $1; $2.destroy(); $3.destroy(); $5.destroy(); $6.destroy(); 
+    delete $8;
     $$ = 0;
   }
   | SWITCH IntType ValueRef ',' LABEL ValueRef '[' ']' {
-    *O << "    " << *$1 << " " << *$2.newTy << " " << *$3 << ", " 
-       << *$5.newTy << " " << *$6 << "[]\n";
-    delete $1; $2.destroy(); delete $3; $5.destroy(); delete $6;
+    *O << "    " << *$1 << " " << *$2.newTy << " " << *$3.val << ", " 
+       << *$5.newTy << " " << *$6.val << "[]\n";
+    delete $1; $2.destroy(); $3.destroy(); $5.destroy(); $6.destroy();
     $$ = 0;
   }
   | OptAssign INVOKE OptCallingConv TypesV ValueRef '(' ValueRefListE ')'
@@ -986,7 +1001,7 @@ BBTerminatorInst : RET ResolvedVal {              // Return with a result...
     *O << "    ";
     if (!$1->empty())
       *O << *$1 << " = ";
-    *O << *$2 << " " << *$3 << " " << *$4.newTy << " " << *$5 << " (";
+    *O << *$2 << " " << *$3 << " " << *$4.newTy << " " << *$5.val << " (";
     for (unsigned i = 0; i < $7->size(); ++i) {
       ValueInfo& VI = (*$7)[i];
       *O << *VI.val;
@@ -994,11 +1009,11 @@ BBTerminatorInst : RET ResolvedVal {              // Return with a result...
         *O << ", ";
       VI.destroy();
     }
-    *O << ") " << *$9 << " " << *$10.newTy << " " << *$11 << " " 
-       << *$12 << " " << *$13.newTy << " " << *$14 << "\n";
-    delete $1; delete $2; delete $3; $4.destroy(); delete $5; delete $7; 
-    delete $9; $10.destroy(); delete $11; delete $12; $13.destroy(); 
-    delete $14; 
+    *O << ") " << *$9 << " " << *$10.newTy << " " << *$11.val << " " 
+       << *$12 << " " << *$13.newTy << " " << *$14.val << "\n";
+    delete $1; delete $2; delete $3; $4.destroy(); $5.destroy(); delete $7; 
+    delete $9; $10.destroy(); $11.destroy(); delete $12; $13.destroy(); 
+    $14.destroy(); 
     $$ = 0;
   }
   | UNWIND {
@@ -1013,14 +1028,14 @@ BBTerminatorInst : RET ResolvedVal {              // Return with a result...
   };
 
 JumpTable : JumpTable IntType ConstValueRef ',' LABEL ValueRef {
-    *$1 += " " + *$2.newTy + " " + *$3 + ", " + *$5.newTy + " " + *$6;
-    $2.destroy(); delete $3; $5.destroy(); delete $6;
+    *$1 += " " + *$2.newTy + " " + *$3 + ", " + *$5.newTy + " " + *$6.val;
+    $2.destroy(); delete $3; $5.destroy(); $6.destroy();
     $$ = $1;
   }
   | IntType ConstValueRef ',' LABEL ValueRef {
     $2->insert(0, *$1.newTy + " " );
-    *$2 += ", " + *$4.newTy + " " + *$5;
-    $1.destroy(); $4.destroy(); delete $5;
+    *$2 += ", " + *$4.newTy + " " + *$5.val;
+    $1.destroy(); $4.destroy(); $5.destroy();
     $$ = $2;
   };
 
@@ -1035,14 +1050,15 @@ Inst
 
 PHIList 
   : Types '[' ValueRef ',' ValueRef ']' {    // Used for PHI nodes
-    $3->insert(0, *$1.newTy + "[");
-    *$3 += "," + *$5 + "]";
-    $1.destroy(); delete $5;
-    $$ = $3;
+    $3.val->insert(0, *$1.newTy + "[");
+    *$3.val += "," + *$5.val + "]";
+    $1.destroy(); $5.destroy();
+    $$ = new std::string(*$3.val);
+    $3.destroy();
   }
   | PHIList ',' '[' ValueRef ',' ValueRef ']' {
-    *$1 += ", [" + *$4 + "," + *$6 + "]";
-    delete $4; delete $6;
+    *$1 += ", [" + *$4.val + "," + *$6.val + "]";
+    $4.destroy(); $6.destroy();
     $$ = $1;
   };
 
@@ -1073,18 +1089,18 @@ OptTailCall
   ;
 
 InstVal : ArithmeticOps Types ValueRef ',' ValueRef {
-    *$1 += " " + *$2.newTy + " " + *$3 + ", " + *$5;
-    $2.destroy(); delete $3; delete $5;
+    *$1 += " " + *$2.newTy + " " + *$3.val + ", " + *$5.val;
+    $2.destroy(); $3.destroy(); $5.destroy();
     $$ = $1;
   }
   | LogicalOps Types ValueRef ',' ValueRef {
-    *$1 += " " + *$2.newTy + " " + *$3 + ", " + *$5;
-    $2.destroy(); delete $3; delete $5;
+    *$1 += " " + *$2.newTy + " " + *$3.val + ", " + *$5.val;
+    $2.destroy(); $3.destroy(); $5.destroy();
     $$ = $1;
   }
   | SetCondOps Types ValueRef ',' ValueRef {
-    *$1 += " " + *$2.newTy + " " + *$3 + ", " + *$5;
-    $2.destroy(); delete $3; delete $5;
+    *$1 += " " + *$2.newTy + " " + *$3.val + ", " + *$5.val;
+    $2.destroy(); $3.destroy(); $5.destroy();
     $$ = $1;
   }
   | NOT ResolvedVal {
@@ -1149,7 +1165,7 @@ InstVal : ArithmeticOps Types ValueRef ',' ValueRef {
       *$1 += " " + *$2;
     if (!$1->empty())
       *$1 += " ";
-    *$1 += *$3.newTy + " " + *$4 + "(";
+    *$1 += *$3.newTy + " " + *$4.val + "(";
     for (unsigned i = 0; i < $6->size(); ++i) {
       ValueInfo& VI = (*$6)[i];
       *$1 += *VI.val;
@@ -1158,7 +1174,7 @@ InstVal : ArithmeticOps Types ValueRef ',' ValueRef {
       VI.destroy();
     }
     *$1 += ")";
-    delete $2; $3.destroy(); delete $4; delete $6;
+    delete $2; $3.destroy(); $4.destroy(); delete $6;
     $$ = $1;
   }
   | MemoryInst ;
@@ -1183,10 +1199,10 @@ MemoryInst : MALLOC Types OptCAlign {
     $$ = $1;
   }
   | MALLOC Types ',' UINT ValueRef OptCAlign {
-    *$1 += " " + *$2.newTy + ", " + *$4.newTy + " " + *$5;
+    *$1 += " " + *$2.newTy + ", " + *$4.newTy + " " + *$5.val;
     if (!$6->empty())
       *$1 += " " + *$6;
-    $2.destroy(); $4.destroy(); delete $5; delete $6;
+    $2.destroy(); $4.destroy(); $5.destroy(); delete $6;
     $$ = $1;
   }
   | ALLOCA Types OptCAlign {
@@ -1197,10 +1213,10 @@ MemoryInst : MALLOC Types OptCAlign {
     $$ = $1;
   }
   | ALLOCA Types ',' UINT ValueRef OptCAlign {
-    *$1 += " " + *$2.newTy + ", " + *$4.newTy + " " + *$5;
+    *$1 += " " + *$2.newTy + ", " + *$4.newTy + " " + *$5.val;
     if (!$6->empty())
       *$1 += " " + *$6;
-    $2.destroy(); $4.destroy(); delete $5; delete $6;
+    $2.destroy(); $4.destroy(); $5.destroy(); delete $6;
     $$ = $1;
   }
   | FREE ResolvedVal {
@@ -1211,25 +1227,38 @@ MemoryInst : MALLOC Types OptCAlign {
   | OptVolatile LOAD Types ValueRef {
     if (!$1->empty())
       *$1 += " ";
-    *$1 += *$2 + " " + *$3.newTy + " " + *$4;
-    delete $2; $3.destroy(); delete $4;
+    *$1 += *$2 + " " + *$3.newTy + " " + *$4.val;
+    delete $2; $3.destroy(); $4.destroy();
     $$ = $1;
   }
   | OptVolatile STORE ResolvedVal ',' Types ValueRef {
     if (!$1->empty())
       *$1 += " ";
-    *$1 += *$2 + " " + *$3.val + ", " + *$5.newTy + " " + *$6;
-    delete $2; $3.destroy(); $5.destroy(); delete $6;
+    *$1 += *$2 + " " + *$3.val + ", " + *$5.newTy + " " + *$6.val;
+    delete $2; $3.destroy(); $5.destroy(); $6.destroy();
     $$ = $1;
   }
   | GETELEMENTPTR Types ValueRef IndexList {
-    *$1 += " " + *$2.newTy + " " + *$3;
+    // Upgrade the indices
+    for (unsigned i = 0; i < $4->size(); ++i) {
+      ValueInfo& VI = (*$4)[i];
+      if (VI.type.isUnsigned() && !VI.isConstant() && 
+          VI.type.getBitWidth() < 64) {
+        std::string* old = VI.val;
+        *O << "    %gep_upgrade" << unique << " = zext " << *old 
+           << " to ulong\n";
+        VI.val = new std::string("ulong %gep_upgrade" + llvm::utostr(unique++));
+        VI.type.oldTy = ULongTy;
+        delete old;
+      }
+    }
+    *$1 += " " + *$2.newTy + " " + *$3.val;
     for (unsigned i = 0; i < $4->size(); ++i) {
       ValueInfo& VI = (*$4)[i];
       *$1 += ", " + *VI.val;
       VI.destroy();
     }
-    $2.destroy(); delete $3; delete $4;
+    $2.destroy(); $3.destroy(); delete $4;
     $$ = $1;
   };
 
