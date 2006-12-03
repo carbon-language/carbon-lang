@@ -44,10 +44,6 @@ void set_scan_string (const char * str) {
   llvmAsmlval.type = Instruction::Enum; \
   return sym
 
-#define RET_ENUM(type, Enum, sym) \
-  llvmAsmlval.type = Enum; \
-  return sym
-
 // Construct a token value for an obsolete token
 #define RET_TY(CTYPE, SYM) \
   llvmAsmlval.PrimType = CTYPE;\
@@ -272,30 +268,26 @@ setle           { RET_TOK(BinaryOpVal, SetLE, SETLE); }
 setge           { RET_TOK(BinaryOpVal, SetGE, SETGE); }
 icmp            { RET_TOK(OtherOpVal,  ICmp,  ICMP); }
 fcmp            { RET_TOK(OtherOpVal,  FCmp,  FCMP); }
-eq              { RET_ENUM(IPredicate, ICmpInst::ICMP_EQ, EQ); }
-ne              { RET_ENUM(IPredicate, ICmpInst::ICMP_NE, NE); }
-slt             { RET_ENUM(IPredicate, ICmpInst::ICMP_SLT, SLT); }
-sgt             { RET_ENUM(IPredicate, ICmpInst::ICMP_SGT, SGT); }
-sle             { RET_ENUM(IPredicate, ICmpInst::ICMP_SLE, SLE); }
-sge             { RET_ENUM(IPredicate, ICmpInst::ICMP_SGE, SGE); }
-ult             { RET_ENUM(IPredicate, ICmpInst::ICMP_ULT, ULT); }
-ugt             { RET_ENUM(IPredicate, ICmpInst::ICMP_UGT, UGT); }
-ule             { RET_ENUM(IPredicate, ICmpInst::ICMP_ULE, ULE); }
-uge             { RET_ENUM(IPredicate, ICmpInst::ICMP_UGE, UGE); }
-ordeq           { RET_ENUM(FPredicate, FCmpInst::FCMP_OEQ, ORDEQ); }
-ordne           { RET_ENUM(FPredicate, FCmpInst::FCMP_ONE, ORDNE); }
-ordlt           { RET_ENUM(FPredicate, FCmpInst::FCMP_OLT, ORDLT); }
-ordgt           { RET_ENUM(FPredicate, FCmpInst::FCMP_OGT, ORDGT); }
-ordle           { RET_ENUM(FPredicate, FCmpInst::FCMP_OLE, ORDLE); }
-ordge           { RET_ENUM(FPredicate, FCmpInst::FCMP_OGE, ORDGE); }
-ord             { RET_ENUM(FPredicate, FCmpInst::FCMP_ORD, ORD); }
-uno             { RET_ENUM(FPredicate, FCmpInst::FCMP_UNO, UNO); }
-unoeq           { RET_ENUM(FPredicate, FCmpInst::FCMP_UEQ, UNOEQ); }
-unone           { RET_ENUM(FPredicate, FCmpInst::FCMP_UNE, UNONE); }
-unolt           { RET_ENUM(FPredicate, FCmpInst::FCMP_ULT, UNOLT); }
-unogt           { RET_ENUM(FPredicate, FCmpInst::FCMP_UGT, UNOGT); }
-unole           { RET_ENUM(FPredicate, FCmpInst::FCMP_ULE, UNOLE); }
-unoge           { RET_ENUM(FPredicate, FCmpInst::FCMP_UGE, UNOGE); }
+eq              { return EQ;  }
+ne              { return NE;  }
+slt             { return SLT; }
+sgt             { return SGT; }
+sle             { return SLE; }
+sge             { return SGE; }
+ult             { return ULT; }
+ugt             { return UGT; }
+ule             { return ULE; }
+uge             { return UGE; }
+oeq             { return OEQ; }
+one             { return ONE; }
+olt             { return OLT; }
+ogt             { return OGT; }
+ole             { return OLE; }
+oge             { return OGE; }
+ord             { return ORD; }
+uno             { return UNO; }
+ueq             { return UEQ; }
+une             { return UNE; }
 
 phi             { RET_TOK(OtherOpVal, PHI, PHI_TOK); }
 call            { RET_TOK(OtherOpVal, Call, CALL); }
