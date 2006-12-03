@@ -333,7 +333,7 @@
 
 
 #if ! defined (YYSTYPE) && ! defined (YYSTYPE_IS_DECLARED)
-#line 268 "/proj/llvm/llvm-4/tools/llvm-upgrade/UpgradeParser.y"
+#line 269 "/proj/llvm/llvm-4/tools/llvm-upgrade/UpgradeParser.y"
 typedef union YYSTYPE {
   std::string*    String;
   TypeInfo        Type;
