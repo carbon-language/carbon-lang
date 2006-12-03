@@ -397,6 +397,8 @@ DIAG(err_void_param_with_identifier, ERROR,
      "void argument may not have a name")
 DIAG(err_void_only_param, ERROR,
      "'void' must be the first and only parameter if specified")
+DIAG(err_void_param_qualified, ERROR,
+     "'void' as parameter must not have type qualifiers")
 
 DIAG(err_unexpected_typedef, ERROR,
      "unexpected type name '%s': expected expression")

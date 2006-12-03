@@ -159,6 +159,10 @@ TypeRef Sema::GetTypeForDeclarator(Declarator &D, Scope *S) {
               return TypeRef();
             }
             
+            // Reject, but continue to parse 'float(const void)'.
+            if (ArgTy.getQualifiers())
+              Diag(DeclType.Loc, diag::err_void_param_qualified);
+            
             // Do not add 'void' to the ArgTys list.
             break;
           }
