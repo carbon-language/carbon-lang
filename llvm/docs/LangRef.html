@@ -2491,9 +2491,9 @@ elements of the aggregate object to index to.  The actual types of the arguments
 provided depend on the type of the first pointer argument.  The
 '<tt>getelementptr</tt>' instruction is used to index down through the type
 levels of a structure or to a specific index in an array.  When indexing into a
-structure, only <tt>uint</tt>
-integer constants are allowed.  When indexing into an array or pointer,
-<tt>int</tt> and <tt>long</tt> and <tt>ulong</tt> indexes are allowed.</p>
+structure, only <tt>uint</tt> integer constants are allowed.  When indexing 
+into an array or pointer, integers of any size are allowed, and will be sign
+extended to 64-bit values.</p>
 
 <p>For example, let's consider a C code fragment and how it gets
 compiled to LLVM:</p>
@@ -2534,9 +2534,10 @@ compiled to LLVM:</p>
 
 <p>The index types specified for the '<tt>getelementptr</tt>' instruction depend
 on the pointer type that is being indexed into. <a href="#t_pointer">Pointer</a>
-and <a href="#t_array">array</a> types require <tt>int</tt>,
-<tt>ulong</tt>, or <tt>long</tt> values, and <a href="#t_struct">structure</a>
-types require <tt>uint</tt> <b>constants</b>.</p>
+and <a href="#t_array">array</a> types can use any 
+<a href="#t_integer">integer</a> type but the value will always be sign extended
+to 64-bits.  <a href="#t_struct">Structure</a> types, require <tt>uint</tt>
+<b>constants</b>.</p>
 
 <p>In the example above, the first index is indexing into the '<tt>%ST*</tt>'
 type, which is a pointer, yielding a '<tt>%ST</tt>' = '<tt>{ int, double, %RT
