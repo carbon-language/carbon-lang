@@ -18,6 +18,7 @@
 #include <map>
 #include <utility>
 #include <iostream>
+#include <cassert>
 
 #define YYERROR_VERBOSE 1
 #define YYINCLUDED_STDLIB_H
