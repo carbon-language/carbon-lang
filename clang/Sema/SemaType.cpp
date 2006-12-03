@@ -147,17 +147,17 @@ TypeRef Sema::GetTypeForDeclarator(Declarator &D, Scope *S) {
           // function with no other parameters (C99 6.7.5.3p10).  We record
           // int(void) as a FunctionTypeProto with an empty argument list.
           if (ArgTy->isVoidType()) {
-            // If this is something like 'float(int, void)', reject it.
+            // If this is something like 'float(int, void)', reject it.  'void'
+            // is an incomplete type (C99 6.2.5p19) and function decls cannot
+            // have arguments of incomplete type.
             if (FTI.NumArgs != 1 || FTI.isVariadic) {
               Diag(DeclType.Loc, diag::err_void_only_param);
               return TypeRef();
             }
-            // Reject 'int(void abc)'.
-            if (FTI.ArgInfo[i].Ident) {
+            // Reject, but continue to parse 'int(void abc)'.
+            if (FTI.ArgInfo[i].Ident)
               Diag(FTI.ArgInfo[i].IdentLoc,
                    diag::err_void_param_with_identifier);
-              return TypeRef();
-            }
             
             // Reject, but continue to parse 'float(const void)'.
             if (ArgTy.getQualifiers())

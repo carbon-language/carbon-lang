@@ -951,9 +951,24 @@ void Parser::ParseParenDeclarator(Declarator &D) {
         break;
       }
       
+      IdentifierInfo *ParmII = Tok.getIdentifierInfo();
+      
+      // Verify that the argument identifier has not already been mentioned.
+      // Note that the implementation of this check is N^2 in # arguments.  For
+      // reasonable number of arguments though (e.g. < 32) this is faster than
+      // building a set.
+      // FIXME: we need a SmallSet<const IdentifierInfo*, 16>.
+      for (unsigned i = 0, e = ParamInfo.size(); i != e; ++i)
+        if (ParamInfo[i].Ident == ParmII) {
+          Diag(Tok.getLocation(), diag::err_param_redefinition,
+               ParmII->getName());
+          ParmII = 0;
+          break;
+        }
+          
       // Remember this identifier in ParamInfo.
-      ParamInfo.push_back(DeclaratorChunk::ParamInfo(Tok.getIdentifierInfo(),
-                                                     Tok.getLocation(), 0));
+      ParamInfo.push_back(DeclaratorChunk::ParamInfo(ParmII, Tok.getLocation(),
+                                                     0));
       
       // Eat the identifier.
       ConsumeToken();
@@ -1026,7 +1041,24 @@ void Parser::ParseParenDeclarator(Declarator &D) {
         Actions.ParseParamDeclaratorType(CurScope, ParmDecl);
         
       // Remember this parsed parameter in ParamInfo.
-      ParamInfo.push_back(DeclaratorChunk::ParamInfo(ParmDecl.getIdentifier(),
+      IdentifierInfo *ParmII = ParmDecl.getIdentifier();
+      
+      // Verify that the argument identifier has not already been mentioned.
+      // Note that the implementation of this check is N^2 in # arguments.  For
+      // reasonable number of arguments though (e.g. < 32) this is faster than
+      // building a set.
+      // FIXME: we need a SmallSet<const IdentifierInfo*, 16>.
+      if (ParmII) {
+        for (unsigned i = 0, e = ParamInfo.size(); i != e; ++i)
+          if (ParamInfo[i].Ident == ParmII) {
+            Diag(ParmDecl.getIdentifierLoc(), diag::err_param_redefinition,
+                 ParmII->getName());
+            ParmII = 0;
+            break;
+          }
+      }
+        
+      ParamInfo.push_back(DeclaratorChunk::ParamInfo(ParmII,
                                                     ParmDecl.getIdentifierLoc(),
                                                      ParamTy.Val));
       
