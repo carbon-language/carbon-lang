@@ -18,7 +18,6 @@
 #include "llvm/Instructions.h"
 #include "llvm/Module.h"
 #include "llvm/SymbolTable.h"
-#include "llvm/Assembly/AutoUpgrade.h"
 #include "llvm/Support/GetElementPtrTypeIterator.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/Support/MathExtras.h"
