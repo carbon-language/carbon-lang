@@ -393,6 +393,11 @@ DIAG(err_unspecified_vla_size_with_static, ERROR,
 DIAG(err_invalid_storage_class_in_func_decl, ERROR,
      "invalid storage class specifier in function declarator")
 
+DIAG(err_void_param_with_identifier, ERROR,
+     "void argument may not have a name")
+DIAG(err_void_only_param, ERROR,
+     "'void' must be the first and only parameter if specified")
+
 DIAG(err_unexpected_typedef, ERROR,
      "unexpected type name '%s': expected expression")
 DIAG(err_undeclared_var_use, ERROR,

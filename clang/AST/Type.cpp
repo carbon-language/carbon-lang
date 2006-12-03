@@ -125,6 +125,9 @@ void FunctionTypeProto::getAsString(std::string &S) const {
     if (getNumArgs())
       S += ", ";
     S += "...";
+  } else if (getNumArgs() == 0) {
+    // Do not emit int() if we have a proto, emit 'int(void)'.
+    S += "void";
   }
   
   S += ")";

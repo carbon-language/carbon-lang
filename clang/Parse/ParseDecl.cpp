@@ -1021,9 +1021,26 @@ void Parser::ParseParenDeclarator(Declarator &D) {
       }
       
       
-      // FIXME: If this is 'void', validate it's ok, then break out of the loop
-      // it must be 'int foo(void)'.  Break from loop to prevent trouble with
-      // things like 'int foo(void, ...)' or 'int foo(void, int)'.
+      // Look for 'void'.  void is allowed only as a single argument to a
+      // function with no other parameters (C99 6.7.5.3p10).
+      if (ParmDecl.getNumTypeObjects() == 0 &&  // not void*.
+          DS.getTypeSpecType() == DeclSpec::TST_void) {
+        if (ParmDecl.getIdentifier()) {
+          Diag(ParmDecl.getIdentifierLoc(),
+               diag::err_void_param_with_identifier);
+          ErrorEmitted = true;
+        }
+        if (!ErrorEmitted &&
+            (!ParamInfo.empty() || Tok.getKind() != tok::r_paren)) {
+          Diag(DS.getTypeSpecTypeLoc(), diag::err_void_only_param);
+          ErrorEmitted = true;
+        }
+        
+        // We know now that we either emitted an error or that the next token
+        // is a ')'.  Exit this loop with an empty ParamInfo list, instead of
+        // adding void explicitly to the list.
+        break;
+      }
       
       // Inform the actions module about the parameter declarator, so it gets
       // added to the current scope.
@@ -1049,9 +1066,10 @@ void Parser::ParseParenDeclarator(Declarator &D) {
   }
   
   // Remember that we parsed a function type, and remember the attributes.
-  D.AddTypeInfo(DeclaratorChunk::getFunction(HasPrototype, IsVariadic,
-                                             &ParamInfo[0], ParamInfo.size(),
-                                             StartLoc));
+  if (!ErrorEmitted)
+    D.AddTypeInfo(DeclaratorChunk::getFunction(HasPrototype, IsVariadic,
+                                               &ParamInfo[0], ParamInfo.size(),
+                                               StartLoc));
   
   // If we have the closing ')', eat it and we're done.
   if (Tok.getKind() == tok::r_paren) {
