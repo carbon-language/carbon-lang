@@ -1130,20 +1130,20 @@ void AssemblyWriter::printInstruction(const Instruction &I) {
     const char *pred = 0;
     switch (FCI->getPredicate()) {
       case FCmpInst::FCMP_FALSE: pred = "false";
-      case FCmpInst::FCMP_OEQ:   pred = "ordeq";
-      case FCmpInst::FCMP_OGT:   pred = "ordgt";
-      case FCmpInst::FCMP_OGE:   pred = "ordge";
-      case FCmpInst::FCMP_OLT:   pred = "ordlt";
-      case FCmpInst::FCMP_OLE:   pred = "ordle";
-      case FCmpInst::FCMP_ONE:   pred = "ordne";
+      case FCmpInst::FCMP_OEQ:   pred = "oeq";
+      case FCmpInst::FCMP_OGT:   pred = "ogt";
+      case FCmpInst::FCMP_OGE:   pred = "oge";
+      case FCmpInst::FCMP_OLT:   pred = "olt";
+      case FCmpInst::FCMP_OLE:   pred = "ole";
+      case FCmpInst::FCMP_ONE:   pred = "one";
       case FCmpInst::FCMP_ORD:   pred = "ord";
       case FCmpInst::FCMP_UNO:   pred = "uno";
-      case FCmpInst::FCMP_UEQ:   pred = "unoeq";
-      case FCmpInst::FCMP_UGT:   pred = "unogt";
-      case FCmpInst::FCMP_UGE:   pred = "unoge";
-      case FCmpInst::FCMP_ULT:   pred = "unolt";
-      case FCmpInst::FCMP_ULE:   pred = "unole";
-      case FCmpInst::FCMP_UNE:   pred = "unone";
+      case FCmpInst::FCMP_UEQ:   pred = "ueq";
+      case FCmpInst::FCMP_UGT:   pred = "ugt";
+      case FCmpInst::FCMP_UGE:   pred = "uge";
+      case FCmpInst::FCMP_ULT:   pred = "ult";
+      case FCmpInst::FCMP_ULE:   pred = "ule";
+      case FCmpInst::FCMP_UNE:   pred = "une";
       case FCmpInst::FCMP_TRUE:  pred = "true";
     }
     Out << " " << pred;
