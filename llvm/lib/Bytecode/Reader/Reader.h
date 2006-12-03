@@ -226,26 +226,6 @@ protected:
     Function* F   ///< The function into which BBs will be inserted
   );
 
-  /// Convert previous opcode values into the current value and/or construct
-  /// the instruction. This function handles all *abnormal* cases for 
-  /// instruction generation based on obsolete opcode values. The normal cases 
-  /// are handled by the ParseInstruction function.
-  Instruction *upgradeInstrOpcodes(
-    unsigned &opcode,   ///< The old opcode, possibly updated by this function
-    std::vector<unsigned> &Oprnds, ///< The operands to the instruction
-    unsigned &iType,    ///< The type code from the bytecode file
-    const Type *InstTy, ///< The type of the instruction
-    BasicBlock *BB      ///< The basic block to insert into, if we need to
-  );
-
-  /// @brief Convert previous opcode values for ConstantExpr into the current 
-  /// value.
-  Constant *upgradeCEOpcodes(
-    unsigned &Opcode,                     ///< Opcode read from bytecode
-    const std::vector<Constant*> &ArgVec, ///< Arguments of instruction
-    unsigned TypeID                       ///< TypeID of the instruction type
-  );
-
   /// @brief Parse a single instruction.
   void ParseInstruction(
     std::vector<unsigned>& Args,   ///< The arguments to be filled in
@@ -290,24 +270,6 @@ private:
   /// Information about the module, extracted from the bytecode revision number.
   ///
   unsigned char RevisionNum;        // The rev # itself
-
-  /// Flags to distinguish LLVM 1.0 & 1.1 bytecode formats (revision #0)
-
-  // In version 6, the Div and Rem instructions were converted to be the 
-  // signed instructions UDiv, SDiv, URem and SRem. This flag will be true if
-  // the Div and Rem instructions are signless (ver 5 and prior).
-  bool hasSignlessDivRem;
-
-  // In version 7, the Shr, Cast and Setcc instructions changed to their 
-  // signed counterparts. This flag will be true if these instructions are
-  // signless (version 6 and prior).
-  bool hasSignlessShrCastSetcc;
-
-  /// In release 1.7 we changed intrinsic functions to not be overloaded. There
-  /// is no bytecode change for this, but to optimize the auto-upgrade of calls
-  /// to intrinsic functions, we save a mapping of old function definitions to
-  /// the new ones so call instructions can be upgraded efficiently.
-  std::map<Function*,Function*> upgradedFunctions;
 
   /// CompactionTypes - If a compaction table is active in the current function,
   /// this is the mapping that it contains.  We keep track of what resolved type

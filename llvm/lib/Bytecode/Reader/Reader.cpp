@@ -17,7 +17,6 @@
 //===----------------------------------------------------------------------===//
 
 #include "Reader.h"
-#include "llvm/Assembly/AutoUpgrade.h"
 #include "llvm/Bytecode/BytecodeHandler.h"
 #include "llvm/BasicBlock.h"
 #include "llvm/CallingConv.h"
@@ -215,9 +214,9 @@ const Type *BytecodeReader::getType(unsigned ID) {
   return Type::VoidTy;
 }
 
-/// This method just saves some coding. It uses read_vbr_uint to read
-/// in a sanitized type id, errors that its not the type type, and
-/// then calls getType to return the type value.
+/// This method just saves some coding. It uses read_vbr_uint to read in a 
+/// type id, errors that its not the type type, and then calls getType to 
+/// return the type value.
 inline const Type* BytecodeReader::readType() {
   return getType(read_vbr_uint());
 }
@@ -461,358 +460,6 @@ void BytecodeReader::insertArguments(Function* F) {
     insertValue(AI, getTypeSlot(AI->getType()), FunctionValues);
 }
 
-/// Convert previous opcode values into the current value and/or construct
-/// the instruction. This function handles all *abnormal* cases for instruction
-/// generation based on obsolete opcode values. The normal cases are handled
-/// in ParseInstruction below.  Generally this function just produces a new
-/// Opcode value (first argument). In a few cases (VAArg, VANext) the upgrade
-/// path requies that the instruction (sequence) be generated differently from
-/// the normal case in order to preserve the original semantics. In these 
-/// cases the result of the function will be a non-zero Instruction pointer. In
-/// all other cases, zero will be returned indicating that the *normal*
-/// instruction generation should be used, but with the new Opcode value.
-Instruction*
-BytecodeReader::upgradeInstrOpcodes(
-  unsigned &Opcode,   ///< The old opcode, possibly updated by this function
-  std::vector<unsigned> &Oprnds, ///< The operands to the instruction
-  unsigned &iType,    ///< The type code from the bytecode file
-  const Type *InstTy, ///< The type of the instruction
-  BasicBlock *BB      ///< The basic block to insert into, if we need to
-) {
-
-  // First, short circuit this if no conversion is required. When signless
-  // instructions were implemented the entire opcode sequence was revised in
-  // two stages: first Div/Rem became signed, then Shr/Cast/Setcc became 
-  // signed. If all of these instructions are signed then we don't have to
-  // upgrade the opcode.
-  if (!hasSignlessDivRem && !hasSignlessShrCastSetcc)
-    return 0; // The opcode is fine the way it is.
-
-  // If this is bytecode version 6, that only had signed Rem and Div 
-  // instructions, then we must compensate for those two instructions only.
-  // So that the switch statement below works, we're trying to turn this into
-  // a version 5 opcode. To do that we must adjust the opcode to 10 (Div) if its
-  // any of the UDiv, SDiv or FDiv instructions; or, adjust the opcode to 
-  // 11 (Rem) if its any of the URem, SRem, or FRem instructions; or, simply
-  // decrement the instruction code if its beyond FRem.
-  if (!hasSignlessDivRem) {
-    // If its one of the signed Div/Rem opcodes, its fine the way it is
-    if (Opcode >= 10 && Opcode <= 12) // UDiv through FDiv
-      Opcode = 10; // Div
-    else if (Opcode >=13 && Opcode <= 15) // URem through FRem
-      Opcode = 11; // Rem
-    else if (Opcode >= 16 && Opcode <= 35)  // And through Shr
-      // Adjust for new instruction codes
-      Opcode -= 4;
-    else if (Opcode >= 36 && Opcode <= 42) // Everything after Select
-      // In vers 6 bytecode we eliminated the placeholders for the obsolete
-      // VAARG and VANEXT instructions. Consequently those two slots were
-      // filled starting with Select (36) which was 34. So now we only need
-      // to subtract two. This circumvents hitting opcodes 32 and 33
-      Opcode -= 2;
-    else {   // Opcode < 10 or > 42
-      // No upgrade necessary.
-      return 0;
-    }
-  }
-
-  // Declare the resulting instruction we might build. In general we just 
-  // change the Opcode argument but in a few cases we need to generate the 
-  // Instruction here because the upgrade case is significantly different from 
-  // the normal case.
-  Instruction *Result = 0;
-
-  // We're dealing with an upgrade situation. For each of the opcode values,
-  // perform the necessary conversion.
-  switch (Opcode) {
-    default: // Error
-      // This switch statement provides cases for all known opcodes prior to
-      // version 6 bytecode format. We know we're in an upgrade situation so
-      // if there isn't a match in this switch, then something is horribly
-      // wrong.
-      error("Unknown obsolete opcode encountered.");
-      break;
-    case 1: // Ret
-      Opcode = Instruction::Ret;
-      break;
-    case 2: // Br
-      Opcode = Instruction::Br;
-      break;
-    case 3: // Switch
-      Opcode = Instruction::Switch;
-      break;
-    case 4: // Invoke
-      Opcode = Instruction::Invoke;
-      break;
-    case 5: // Unwind
-      Opcode = Instruction::Unwind;
-      break;
-    case 6: // Unreachable
-      Opcode = Instruction::Unreachable;
-      break;
-    case 7: // Add
-      Opcode = Instruction::Add;
-      break;
-    case 8: // Sub
-      Opcode = Instruction::Sub;
-      break;
-    case 9: // Mul
-      Opcode = Instruction::Mul;
-      break;
-    case 10: // Div 
-      // The type of the instruction is based on the operands. We need to select
-      // fdiv, udiv or sdiv based on that type. The iType values are hardcoded
-      // to the values used in bytecode version 5 (and prior) because it is
-      // likely these codes will change in future versions of LLVM.
-      if (iType == 10 || iType == 11 )
-        Opcode = Instruction::FDiv;
-      else if (iType >= 2 && iType <= 9 && iType % 2 != 0)
-        Opcode = Instruction::SDiv;
-      else
-        Opcode = Instruction::UDiv;
-      break;
-
-    case 11: // Rem
-      // As with "Div", make the signed/unsigned or floating point Rem 
-      // instruction choice based on the type of the operands.
-      if (iType == 10 || iType == 11)
-        Opcode = Instruction::FRem;
-      else if (iType >= 2 && iType <= 9 && iType % 2 != 0)
-        Opcode = Instruction::SRem;
-      else
-        Opcode = Instruction::URem;
-      break;
-    case 12: // And
-      Opcode = Instruction::And;
-      break;
-    case 13: // Or
-      Opcode = Instruction::Or;
-      break;
-    case 14: // Xor
-      Opcode = Instruction::Xor;
-      break;
-    case 15: // SetEQ
-      Opcode = Instruction::SetEQ;
-      break;
-    case 16: // SetNE
-      Opcode = Instruction::SetNE;
-      break;
-    case 17: // SetLE
-      Opcode = Instruction::SetLE;
-      break;
-    case 18: // SetGE
-      Opcode = Instruction::SetGE;
-      break;
-    case 19: // SetLT
-      Opcode = Instruction::SetLT;
-      break;
-    case 20: // SetGT
-      Opcode = Instruction::SetGT;
-      break;
-    case 21: // Malloc
-      Opcode = Instruction::Malloc;
-      break;
-    case 22: // Free
-      Opcode = Instruction::Free;
-      break;
-    case 23: // Alloca
-      Opcode = Instruction::Alloca;
-      break;
-    case 24: // Load
-      Opcode = Instruction::Load;
-      break;
-    case 25: // Store
-      Opcode = Instruction::Store;
-      break;
-    case 26: // GetElementPtr
-      Opcode = Instruction::GetElementPtr;
-      break;
-    case 27: // PHI
-      Opcode = Instruction::PHI;
-      break;
-    case 28: // Cast
-    {
-      Value *Source = getValue(iType, Oprnds[0]);
-      const Type *DestTy = getType(Oprnds[1]);
-      // The previous definition of cast to bool was a compare against zero. 
-      // We have to retain that semantic so we do it here.
-      if (DestTy == Type::BoolTy) { // if its a cast to bool
-        Opcode = Instruction::SetNE;
-        Result = new SetCondInst(Instruction::SetNE, Source, 
-                                Constant::getNullValue(Source->getType()));
-      } else if (Source->getType()->isFloatingPoint() && 
-                 isa<PointerType>(DestTy)) {
-        // Upgrade what is now an illegal cast (fp -> ptr) into two casts,
-        // fp -> ui, and ui -> ptr 
-        CastInst *CI = new FPToUIInst(Source, Type::ULongTy);
-        BB->getInstList().push_back(CI);
-        Result = new IntToPtrInst(CI, DestTy);
-      } else {
-        Result = CastInst::createInferredCast(Source, DestTy);
-      }
-      break;
-    }
-    case 29: // Call
-      Opcode = Instruction::Call;
-      break;
-    case 30: // Shl
-      Opcode = Instruction::Shl;
-      break;
-    case 31: // Shr
-      // The type of the instruction is based on the operands. We need to 
-      // select ashr or lshr based on that type. The iType values are hardcoded
-      // to the values used in bytecode version 5 (and prior) because it is 
-      // likely these codes will change in future versions of LLVM. This if 
-      // statement says "if (integer type and signed)"
-      if (iType >= 2 && iType <= 9 && iType % 2 != 0)
-        Opcode = Instruction::AShr;
-      else
-        Opcode = Instruction::LShr;
-      break;
-    case 32: { //VANext_old ( <= llvm 1.5 )
-      const Type* ArgTy = getValue(iType, Oprnds[0])->getType();
-      Function* NF = TheModule->getOrInsertFunction(
-        "llvm.va_copy", ArgTy, ArgTy, (Type *)0);
-
-      // In llvm 1.6 the VANext instruction was dropped because it was only 
-      // necessary to have a VAArg instruction. The code below transforms an
-      // old vanext instruction into the equivalent code given only the 
-      // availability of the new vaarg instruction. Essentially, the transform
-      // is as follows:
-      //    b = vanext a, t ->
-      //    foo = alloca 1 of t
-      //    bar = vacopy a
-      //    store bar -> foo
-      //    tmp = vaarg foo, t
-      //    b = load foo
-      AllocaInst* foo = new AllocaInst(ArgTy, 0, "vanext.fix");
-      BB->getInstList().push_back(foo);
-      CallInst* bar = new CallInst(NF, getValue(iType, Oprnds[0]));
-      BB->getInstList().push_back(bar);
-      BB->getInstList().push_back(new StoreInst(bar, foo));
-      Instruction* tmp = new VAArgInst(foo, getType(Oprnds[1]));
-      BB->getInstList().push_back(tmp);
-      Result = new LoadInst(foo);
-      break;
-    }
-    case 33: { //VAArg_old
-      const Type* ArgTy = getValue(iType, Oprnds[0])->getType();
-      Function* NF = TheModule->getOrInsertFunction(
-        "llvm.va_copy", ArgTy, ArgTy, (Type *)0);
-
-      // In llvm 1.6 the VAArg's instruction semantics were changed.  The code 
-      // below transforms an old vaarg instruction into the equivalent code 
-      // given only the availability of the new vaarg instruction. Essentially,
-      // the transform is as follows:
-      //    b = vaarg a, t ->
-      //    foo = alloca 1 of t
-      //    bar = vacopy a
-      //    store bar -> foo
-      //    b = vaarg foo, t
-      AllocaInst* foo = new AllocaInst(ArgTy, 0, "vaarg.fix");
-      BB->getInstList().push_back(foo);
-      CallInst* bar = new CallInst(NF, getValue(iType, Oprnds[0]));
-      BB->getInstList().push_back(bar);
-      BB->getInstList().push_back(new StoreInst(bar, foo));
-      Result = new VAArgInst(foo, getType(Oprnds[1]));
-      break;
-    }
-    case 34: // Select
-      Opcode = Instruction::Select;
-      break;
-    case 35: // UserOp1
-      Opcode = Instruction::UserOp1;
-      break;
-    case 36: // UserOp2
-      Opcode = Instruction::UserOp2;
-      break;
-    case 37: // VAArg
-      Opcode = Instruction::VAArg;
-      break;
-    case 38: // ExtractElement
-      Opcode = Instruction::ExtractElement;
-      break;
-    case 39: // InsertElement
-      Opcode = Instruction::InsertElement;
-      break;
-    case 40: // ShuffleVector
-      Opcode = Instruction::ShuffleVector;
-      break;
-    case 56:   // Invoke with encoded CC
-    case 57: { // Invoke Fast CC
-      if (Oprnds.size() < 3)
-        error("Invalid invoke instruction!");
-      Value *F = getValue(iType, Oprnds[0]);
-
-      // Check to make sure we have a pointer to function type
-      const PointerType *PTy = dyn_cast<PointerType>(F->getType());
-      if (PTy == 0)
-        error("Invoke to non function pointer value!");
-      const FunctionType *FTy = dyn_cast<FunctionType>(PTy->getElementType());
-      if (FTy == 0)
-        error("Invoke to non function pointer value!");
-
-      std::vector<Value *> Params;
-      BasicBlock *Normal, *Except;
-      unsigned CallingConv = CallingConv::C;
-      if (Opcode == 57)
-        CallingConv = CallingConv::Fast;
-      else if (Opcode == 56) {
-        CallingConv = Oprnds.back();
-        Oprnds.pop_back();
-      }
-      Opcode = Instruction::Invoke;
-
-      if (!FTy->isVarArg()) {
-        Normal = getBasicBlock(Oprnds[1]);
-        Except = getBasicBlock(Oprnds[2]);
-
-        FunctionType::param_iterator It = FTy->param_begin();
-        for (unsigned i = 3, e = Oprnds.size(); i != e; ++i) {
-          if (It == FTy->param_end())
-            error("Invalid invoke instruction!");
-          Params.push_back(getValue(getTypeSlot(*It++), Oprnds[i]));
-        }
-        if (It != FTy->param_end())
-          error("Invalid invoke instruction!");
-      } else {
-        Oprnds.erase(Oprnds.begin(), Oprnds.begin()+1);
-
-        Normal = getBasicBlock(Oprnds[0]);
-        Except = getBasicBlock(Oprnds[1]);
-
-        unsigned FirstVariableArgument = FTy->getNumParams()+2;
-        for (unsigned i = 2; i != FirstVariableArgument; ++i)
-          Params.push_back(getValue(getTypeSlot(FTy->getParamType(i-2)),
-                                    Oprnds[i]));
-
-        // Must be type/value pairs. If not, error out.
-        if (Oprnds.size()-FirstVariableArgument & 1) 
-          error("Invalid invoke instruction!");
-
-        for (unsigned i = FirstVariableArgument; i < Oprnds.size(); i += 2)
-          Params.push_back(getValue(Oprnds[i], Oprnds[i+1]));
-      }
-
-      Result = new InvokeInst(F, Normal, Except, Params);
-      if (CallingConv) cast<InvokeInst>(Result)->setCallingConv(CallingConv);
-      break;
-    }
-    case 58: // Call with extra operand for calling conv
-    case 59: // tail call, Fast CC
-    case 60: // normal call, Fast CC
-    case 61: // tail call, C Calling Conv
-    case 62: // volatile load
-    case 63: // volatile store
-      // In all these cases, we pass the opcode through. The new version uses
-      // the same code (for now, this might change in 2.0). These are listed
-      // here to document the opcodes in use in vers 5 bytecode and to make it
-      // easier to migrate these opcodes in the future.
-      break;
-  }
-  return Result;
-}
-
 //===----------------------------------------------------------------------===//
 // Bytecode Parsing Methods
 //===----------------------------------------------------------------------===//
@@ -895,23 +542,20 @@ void BytecodeReader::ParseInstruction(std::vector<unsigned> &Oprnds,
 
   // Make the necessary adjustments for dealing with backwards compatibility
   // of opcodes.
-  Instruction* Result = 
-    upgradeInstrOpcodes(Opcode, Oprnds, iType, InstTy, BB);
+  Instruction* Result = 0;
 
   // We have enough info to inform the handler now.
   if (Handler) 
     Handler->handleInstruction(Opcode, InstTy, Oprnds, At-SaveAt);
 
-  // If the backwards compatibility code didn't produce an instruction then
-  // we do the *normal* thing ..
-  if (!Result) {
-    // First, handle the easy binary operators case
-    if (Opcode >= Instruction::BinaryOpsBegin &&
-        Opcode <  Instruction::BinaryOpsEnd  && Oprnds.size() == 2)
-      Result = BinaryOperator::create(Instruction::BinaryOps(Opcode),
-                                      getValue(iType, Oprnds[0]),
-                                      getValue(iType, Oprnds[1]));
+  // First, handle the easy binary operators case
+  if (Opcode >= Instruction::BinaryOpsBegin &&
+      Opcode <  Instruction::BinaryOpsEnd  && Oprnds.size() == 2)
+    Result = BinaryOperator::create(Instruction::BinaryOps(Opcode),
+                                    getValue(iType, Oprnds[0]),
+                                    getValue(iType, Oprnds[1]));
 
+  if (!Result) {
     // Indicate that we don't think this is a call instruction (yet).
     // Process based on the Opcode read
     switch (Opcode) {
@@ -1307,7 +951,7 @@ void BytecodeReader::ParseInstruction(std::vector<unsigned> &Oprnds,
       Result = new UnreachableInst();
       break;
     }  // end switch(Opcode)
-  } // end if *normal*
+  } // end if !Result
 
   BB->getInstList().push_back(Result);
 
@@ -1610,159 +1254,6 @@ void BytecodeReader::ParseTypes(TypeListTy &Tab, unsigned NumEntries){
   }
 }
 
-// Upgrade obsolete constant expression opcodes (ver. 5 and prior) to the new 
-// values used after ver 6. bytecode format. The operands are provided to the
-// function so that decisions based on the operand type can be made when 
-// auto-upgrading obsolete opcodes to the new ones.
-// NOTE: This code needs to be kept synchronized with upgradeInstrOpcodes. 
-// We can't use that function because of that functions argument requirements.
-// This function only deals with the subset of opcodes that are applicable to
-// constant expressions and is therefore simpler than upgradeInstrOpcodes.
-inline Constant *BytecodeReader::upgradeCEOpcodes(
-  unsigned &Opcode, const std::vector<Constant*> &ArgVec, unsigned TypeID
-) {
-  // Determine if no upgrade necessary
-  if (!hasSignlessDivRem && !hasSignlessShrCastSetcc)
-    return 0;
-
-  // If this is bytecode version 6, that only had signed Rem and Div 
-  // instructions, then we must compensate for those two instructions only.
-  // So that the switch statement below works, we're trying to turn this into
-  // a version 5 opcode. To do that we must adjust the opcode to 10 (Div) if its
-  // any of the UDiv, SDiv or FDiv instructions; or, adjust the opcode to 
-  // 11 (Rem) if its any of the URem, SRem, or FRem instructions; or, simply
-  // decrement the instruction code if its beyond FRem.
-  if (!hasSignlessDivRem) {
-    // If its one of the signed Div/Rem opcodes, its fine the way it is
-    if (Opcode >= 10 && Opcode <= 12) // UDiv through FDiv
-      Opcode = 10; // Div
-    else if (Opcode >=13 && Opcode <= 15) // URem through FRem
-      Opcode = 11; // Rem
-    else if (Opcode >= 16 && Opcode <= 35)  // And through Shr
-      // Adjust for new instruction codes
-      Opcode -= 4;
-    else if (Opcode >= 36 && Opcode <= 42) // Everything after Select
-      // In vers 6 bytecode we eliminated the placeholders for the obsolete
-      // VAARG and VANEXT instructions. Consequently those two slots were
-      // filled starting with Select (36) which was 34. So now we only need
-      // to subtract two. This circumvents hitting opcodes 32 and 33
-      Opcode -= 2;
-    else {   // Opcode < 10 or > 42
-      // No upgrade necessary.
-      return 0;
-    }
-  }
-
-  switch (Opcode) {
-    default: // Pass Through
-      // If we don't match any of the cases here then the opcode is fine the
-      // way it is.
-      break;
-    case 7: // Add
-      Opcode = Instruction::Add;
-      break;
-    case 8: // Sub
-      Opcode = Instruction::Sub;
-      break;
-    case 9: // Mul
-      Opcode = Instruction::Mul;
-      break;
-    case 10: // Div 
-      // The type of the instruction is based on the operands. We need to select
-      // either udiv or sdiv based on that type. This expression selects the
-      // cases where the type is floating point or signed in which case we
-      // generated an sdiv instruction.
-      if (ArgVec[0]->getType()->isFloatingPoint())
-        Opcode = Instruction::FDiv;
-      else if (ArgVec[0]->getType()->isSigned())
-        Opcode = Instruction::SDiv;
-      else
-        Opcode = Instruction::UDiv;
-      break;
-    case 11: // Rem
-      // As with "Div", make the signed/unsigned or floating point Rem 
-      // instruction choice based on the type of the operands.
-      if (ArgVec[0]->getType()->isFloatingPoint())
-        Opcode = Instruction::FRem;
-      else if (ArgVec[0]->getType()->isSigned())
-        Opcode = Instruction::SRem;
-      else
-        Opcode = Instruction::URem;
-      break;
-    case 12: // And
-      Opcode = Instruction::And;
-      break;
-    case 13: // Or
-      Opcode = Instruction::Or;
-      break;
-    case 14: // Xor
-      Opcode = Instruction::Xor;
-      break;
-    case 15: // SetEQ
-      Opcode = Instruction::SetEQ;
-      break;
-    case 16: // SetNE
-      Opcode = Instruction::SetNE;
-      break;
-    case 17: // SetLE
-      Opcode = Instruction::SetLE;
-      break;
-    case 18: // SetGE
-      Opcode = Instruction::SetGE;
-      break;
-    case 19: // SetLT
-      Opcode = Instruction::SetLT;
-      break;
-    case 20: // SetGT
-      Opcode = Instruction::SetGT;
-      break;
-    case 26: // GetElementPtr
-      Opcode = Instruction::GetElementPtr;
-      break;
-    case 28: { // Cast
-      const Type *Ty = getType(TypeID);
-      if (Ty == Type::BoolTy) {
-        // The previous definition of cast to bool was a compare against zero. 
-        // We have to retain that semantic so we do it here.
-        Opcode = Instruction::SetEQ;
-        return ConstantExpr::get(Instruction::SetEQ, ArgVec[0], 
-                             Constant::getNullValue(ArgVec[0]->getType()));
-      } else if (ArgVec[0]->getType()->isFloatingPoint() && 
-                 isa<PointerType>(Ty)) {
-        // Upgrade what is now an illegal cast (fp -> ptr) into two casts,
-        // fp -> ui, and ui -> ptr 
-        Constant *CE = ConstantExpr::getFPToUI(ArgVec[0], Type::ULongTy);
-        return ConstantExpr::getIntToPtr(CE, Ty);
-      } else {
-        Opcode = CastInst::getCastOpcode(ArgVec[0], Ty);
-      }
-      break;
-    }
-    case 30: // Shl
-      Opcode = Instruction::Shl;
-      break;
-    case 31: // Shr
-      if (ArgVec[0]->getType()->isSigned())
-        Opcode = Instruction::AShr;
-      else
-        Opcode = Instruction::LShr;
-      break;
-    case 34: // Select
-      Opcode = Instruction::Select;
-      break;
-    case 38: // ExtractElement
-      Opcode = Instruction::ExtractElement;
-      break;
-    case 39: // InsertElement
-      Opcode = Instruction::InsertElement;
-      break;
-    case 40: // ShuffleVector
-      Opcode = Instruction::ShuffleVector;
-      break;
-  }
-  return 0;
-}
-
 /// Parse a single constant value
 Value *BytecodeReader::ParseConstantPoolValue(unsigned TypeID) {
   // We must check for a ConstantExpr before switching by type because
@@ -1808,12 +1299,6 @@ Value *BytecodeReader::ParseConstantPoolValue(unsigned TypeID) {
 
       // Get the arg value from its slot if it exists, otherwise a placeholder
       ArgVec.push_back(getConstantValue(ArgTypeSlot, ArgValSlot));
-    }
-
-    // Handle backwards compatibility for the opcode numbers
-    if (Constant *C = upgradeCEOpcodes(Opcode, ArgVec, TypeID)) {
-      if (Handler) Handler->handleConstantExpression(Opcode, ArgVec, C);
-      return C;
     }
 
     // Construct a ConstantExpr of the appropriate kind
@@ -2200,22 +1685,6 @@ void BytecodeReader::ParseFunctionBody(Function* F) {
     delete PlaceHolder;
   }
 
-  // If upgraded intrinsic functions were detected during reading of the 
-  // module information, then we need to look for instructions that need to
-  // be upgraded. This can't be done while the instructions are read in because
-  // additional instructions inserted mess up the slot numbering.
-  if (!upgradedFunctions.empty()) {
-    for (Function::iterator BI = F->begin(), BE = F->end(); BI != BE; ++BI) 
-      for (BasicBlock::iterator II = BI->begin(), IE = BI->end(); 
-           II != IE;)
-        if (CallInst* CI = dyn_cast<CallInst>(II++)) {
-          std::map<Function*,Function*>::iterator FI = 
-            upgradedFunctions.find(CI->getCalledFunction());
-          if (FI != upgradedFunctions.end())
-            UpgradeIntrinsicCall(CI, FI->second);
-        }
-  }
-
   // Clear out function-level types...
   FunctionTypes.clear();
   CompactionTypes.clear();
@@ -2520,47 +1989,10 @@ void BytecodeReader::ParseVersionInfo() {
 
   RevisionNum = Version >> 4;
 
-  // Default the backwards compatibility flag values for the current BC version
-  hasSignlessDivRem = false;
-  hasSignlessShrCastSetcc = false;
-
-  // Determine which backwards compatibility flags to set based on the
-  // bytecode file's version number
-  switch (RevisionNum) {
-  case 0: //  LLVM 1.0, 1.1 (Released)
-  case 1: // LLVM 1.2 (Released)
-  case 2: // 1.2.5 (Not Released)
-  case 3: // LLVM 1.3 (Released)
-  case 4: // 1.3.1 (Not Released)
-    error("Old bytecode formats no longer supported");
-    break;
-
-  case 5: // 1.4 (Released)
-    // In version 6, the Div and Rem instructions were converted to their
-    // signed and floating point counterparts: UDiv, SDiv, FDiv, URem, SRem, 
-    // and FRem. Versions prior to 6 need to indicate that they have the 
-    // signless Div and Rem instructions.
-    hasSignlessDivRem = true;
-
-    // FALL THROUGH
-    
-  case 6: // 1.9 (Released) 
-    // In version 5 and prior, instructions were signless while integer types
-    // were signed. In version 6, instructions became signed and types became
-    // signless. For example in version 5 we have the DIV instruction but in
-    // version 6 we have FDIV, SDIV and UDIV to replace it. This caused a 
-    // renumbering of the instruction codes in version 6 that must be dealt with
-    // when reading old bytecode files.
-    hasSignlessShrCastSetcc = true;
-
-    // FALL THROUGH
-
-  case 7:
-    break;
-
-  default:
-    error("Unknown bytecode version number: " + itostr(RevisionNum));
-  }
+  // We don't provide backwards compatibility in the Reader any more. To
+  // upgrade, the user should use llvm-upgrade.
+  if (RevisionNum < 7)
+    error("Bytecode formats < 7 are no longer supported. Use llvm-upgrade.");
 
   if (hasNoEndianness) Endianness  = Module::AnyEndianness;
   if (hasNoPointerSize) PointerSize = Module::AnyPointerSize;
@@ -2746,16 +2178,6 @@ bool BytecodeReader::ParseBytecode(volatile BufPtr Buf, unsigned Length,
   // Check for missing functions
   if (hasFunctions())
     error("Function expected, but bytecode stream ended!");
-
-  // Look for intrinsic functions to upgrade, upgrade them, and save the
-  // mapping from old function to new for use later when instructions are
-  // converted.
-  for (Module::iterator FI = TheModule->begin(), FE = TheModule->end();
-       FI != FE; ++FI)
-    if (Function* newF = UpgradeIntrinsicFunction(FI)) {
-      upgradedFunctions.insert(std::make_pair(FI, newF));
-      FI->setName("");
-    }
 
   // Tell the handler we're done with the module
   if (Handler)
