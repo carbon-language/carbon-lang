@@ -1076,11 +1076,10 @@ Module *llvm::RunVMAsmParser(const char * AsmString, Module * M) {
 %token <BinaryOpVal> ADD SUB MUL UDIV SDIV FDIV UREM SREM FREM AND OR XOR
 %token <BinaryOpVal> SETLE SETGE SETLT SETGT SETEQ SETNE  // Binary Comparators
 %token <OtherOpVal> ICMP FCMP
-%token <IPredicate> EQ NE SLT SGT SLE SGE ULT UGT ULE UGE
 %type  <IPredicate> IPredicates
-%token <FPredicate> ORDEQ ORDNE ORDLT ORDGT ORDLE ORDGE ORD UNO UNOEQ UNONE
-%token <FPredicate> UNOLT UNOGT UNOLE UNOGE
 %type  <FPredicate> FPredicates
+%token  EQ NE SLT SGT SLE SGE ULT UGT ULE UGE 
+%token  OEQ ONE OLT OGT OLE OGE ORD UNO UEQ UNE
 
 // Memory Instructions
 %token <MemOpVal> MALLOC ALLOCA FREE LOAD STORE GETELEMENTPTR
@@ -1128,9 +1127,25 @@ SetCondOps   : SETLE | SETGE | SETLT | SETGT | SETEQ | SETNE;
 CastOps      : TRUNC | ZEXT | SEXT | FPTRUNC | FPEXT | BITCAST | 
                UITOFP | SITOFP | FPTOUI | FPTOSI | INTTOPTR | PTRTOINT;
 ShiftOps     : SHL | LSHR | ASHR;
-IPredicates  : EQ | NE | SLT | SGT | SLE | SGE | ULT | UGT | ULE | UGE ;
-FPredicates  : ORDEQ | ORDNE | ORDLT | ORDGT | ORDLE | ORDGE | ORD | UNO 
-             | UNOEQ | UNONE | UNOLT | UNOGT | UNOLE | UNOGE ;
+IPredicates  
+  : EQ   { $$ = ICmpInst::ICMP_EQ; } | NE   { $$ = ICmpInst::ICMP_NE; }
+  | SLT  { $$ = ICmpInst::ICMP_SLT; } | SGT  { $$ = ICmpInst::ICMP_SGT; }
+  | SLE  { $$ = ICmpInst::ICMP_SLE; } | SGE  { $$ = ICmpInst::ICMP_SGE; }
+  | ULT  { $$ = ICmpInst::ICMP_ULT; } | UGT  { $$ = ICmpInst::ICMP_UGT; }
+  | ULE  { $$ = ICmpInst::ICMP_ULE; } | UGE  { $$ = ICmpInst::ICMP_UGE; } 
+  ;
+
+FPredicates  
+  : OEQ  { $$ = FCmpInst::FCMP_OEQ; } | ONE  { $$ = FCmpInst::FCMP_ONE; }
+  | OLT  { $$ = FCmpInst::FCMP_OLT; } | OGT  { $$ = FCmpInst::FCMP_OGT; }
+  | OLE  { $$ = FCmpInst::FCMP_OLE; } | OGE  { $$ = FCmpInst::FCMP_OGE; }
+  | ORD  { $$ = FCmpInst::FCMP_ORD; } | UNO  { $$ = FCmpInst::FCMP_UNO; }
+  | UEQ  { $$ = FCmpInst::FCMP_UEQ; } | UNE  { $$ = FCmpInst::FCMP_UNE; }
+  | ULT  { $$ = FCmpInst::FCMP_ULT; } | UGT  { $$ = FCmpInst::FCMP_UGT; }
+  | ULE  { $$ = FCmpInst::FCMP_ULE; } | UGE  { $$ = FCmpInst::FCMP_UGE; }
+  | TRUETOK { $$ = FCmpInst::FCMP_TRUE; }
+  | FALSETOK { $$ = FCmpInst::FCMP_FALSE; }
+  ;
 
 // These are some types that allow classification if we only want a particular 
 // thing... for example, only a signed, unsigned, or integral type.

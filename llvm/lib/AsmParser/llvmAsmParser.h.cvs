@@ -134,49 +134,45 @@
      UGT = 360,
      ULE = 361,
      UGE = 362,
-     ORDEQ = 363,
-     ORDNE = 364,
-     ORDLT = 365,
-     ORDGT = 366,
-     ORDLE = 367,
-     ORDGE = 368,
+     OEQ = 363,
+     ONE = 364,
+     OLT = 365,
+     OGT = 366,
+     OLE = 367,
+     OGE = 368,
      ORD = 369,
      UNO = 370,
-     UNOEQ = 371,
-     UNONE = 372,
-     UNOLT = 373,
-     UNOGT = 374,
-     UNOLE = 375,
-     UNOGE = 376,
-     MALLOC = 377,
-     ALLOCA = 378,
-     FREE = 379,
-     LOAD = 380,
-     STORE = 381,
-     GETELEMENTPTR = 382,
-     TRUNC = 383,
-     ZEXT = 384,
-     SEXT = 385,
-     FPTRUNC = 386,
-     FPEXT = 387,
-     BITCAST = 388,
-     UITOFP = 389,
-     SITOFP = 390,
-     FPTOUI = 391,
-     FPTOSI = 392,
-     INTTOPTR = 393,
-     PTRTOINT = 394,
-     PHI_TOK = 395,
-     SELECT = 396,
-     SHL = 397,
-     LSHR = 398,
-     ASHR = 399,
-     VAARG = 400,
-     EXTRACTELEMENT = 401,
-     INSERTELEMENT = 402,
-     SHUFFLEVECTOR = 403,
-     VAARG_old = 404,
-     VANEXT_old = 405
+     UEQ = 371,
+     UNE = 372,
+     MALLOC = 373,
+     ALLOCA = 374,
+     FREE = 375,
+     LOAD = 376,
+     STORE = 377,
+     GETELEMENTPTR = 378,
+     TRUNC = 379,
+     ZEXT = 380,
+     SEXT = 381,
+     FPTRUNC = 382,
+     FPEXT = 383,
+     BITCAST = 384,
+     UITOFP = 385,
+     SITOFP = 386,
+     FPTOUI = 387,
+     FPTOSI = 388,
+     INTTOPTR = 389,
+     PTRTOINT = 390,
+     PHI_TOK = 391,
+     SELECT = 392,
+     SHL = 393,
+     LSHR = 394,
+     ASHR = 395,
+     VAARG = 396,
+     EXTRACTELEMENT = 397,
+     INSERTELEMENT = 398,
+     SHUFFLEVECTOR = 399,
+     VAARG_old = 400,
+     VANEXT_old = 401
    };
 #endif
 /* Tokens.  */
@@ -285,49 +281,45 @@
 #define UGT 360
 #define ULE 361
 #define UGE 362
-#define ORDEQ 363
-#define ORDNE 364
-#define ORDLT 365
-#define ORDGT 366
-#define ORDLE 367
-#define ORDGE 368
+#define OEQ 363
+#define ONE 364
+#define OLT 365
+#define OGT 366
+#define OLE 367
+#define OGE 368
 #define ORD 369
 #define UNO 370
-#define UNOEQ 371
-#define UNONE 372
-#define UNOLT 373
-#define UNOGT 374
-#define UNOLE 375
-#define UNOGE 376
-#define MALLOC 377
-#define ALLOCA 378
-#define FREE 379
-#define LOAD 380
-#define STORE 381
-#define GETELEMENTPTR 382
-#define TRUNC 383
-#define ZEXT 384
-#define SEXT 385
-#define FPTRUNC 386
-#define FPEXT 387
-#define BITCAST 388
-#define UITOFP 389
-#define SITOFP 390
-#define FPTOUI 391
-#define FPTOSI 392
-#define INTTOPTR 393
-#define PTRTOINT 394
-#define PHI_TOK 395
-#define SELECT 396
-#define SHL 397
-#define LSHR 398
-#define ASHR 399
-#define VAARG 400
-#define EXTRACTELEMENT 401
-#define INSERTELEMENT 402
-#define SHUFFLEVECTOR 403
-#define VAARG_old 404
-#define VANEXT_old 405
+#define UEQ 371
+#define UNE 372
+#define MALLOC 373
+#define ALLOCA 374
+#define FREE 375
+#define LOAD 376
+#define STORE 377
+#define GETELEMENTPTR 378
+#define TRUNC 379
+#define ZEXT 380
+#define SEXT 381
+#define FPTRUNC 382
+#define FPEXT 383
+#define BITCAST 384
+#define UITOFP 385
+#define SITOFP 386
+#define FPTOUI 387
+#define FPTOSI 388
+#define INTTOPTR 389
+#define PTRTOINT 390
+#define PHI_TOK 391
+#define SELECT 392
+#define SHL 393
+#define LSHR 394
+#define ASHR 395
+#define VAARG 396
+#define EXTRACTELEMENT 397
+#define INSERTELEMENT 398
+#define SHUFFLEVECTOR 399
+#define VAARG_old 400
+#define VANEXT_old 401
 
 
 
@@ -377,7 +369,7 @@ typedef union YYSTYPE {
   llvm::FCmpInst::Predicate         FPredicate;
 } YYSTYPE;
 /* Line 1447 of yacc.c.  */
-#line 381 "llvmAsmParser.tab.h"
+#line 373 "llvmAsmParser.tab.h"
 # define yystype YYSTYPE /* obsolescent; will be withdrawn */
 # define YYSTYPE_IS_DECLARED 1
 # define YYSTYPE_IS_TRIVIAL 1
