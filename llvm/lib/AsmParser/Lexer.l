@@ -41,20 +41,16 @@ void set_scan_string (const char * str) {
 
 // Construct a token value for a non-obsolete token
 #define RET_TOK(type, Enum, sym) \
-  llvmAsmlval.type.opcode = Instruction::Enum; \
-  llvmAsmlval.type.obsolete = false; \
+  llvmAsmlval.type = Instruction::Enum; \
+  return sym
+
+#define RET_ENUM(type, Enum, sym) \
+  llvmAsmlval.type = Enum; \
   return sym
 
 // Construct a token value for an obsolete token
-#define RET_TOK_OBSOLETE(type, Enum, sym) \
-  llvmAsmlval.type.opcode = Instruction::Enum; \
-  llvmAsmlval.type.obsolete = true; \
-  return sym
-
-// Construct a token value for an obsolete token
-#define RET_TY(CTYPE, SIGN, SYM) \
-  llvmAsmlval.TypeVal.type = new PATypeHolder(CTYPE); \
-  llvmAsmlval.TypeVal.signedness = SIGN; \
+#define RET_TY(CTYPE, SYM) \
+  llvmAsmlval.PrimType = CTYPE;\
   return SYM
 
 namespace llvm {
@@ -209,7 +205,6 @@ appending       { return APPENDING; }
 dllimport       { return DLLIMPORT; }
 dllexport       { return DLLEXPORT; }
 extern_weak     { return EXTERN_WEAK; }
-uninitialized   { return EXTERNAL; }    /* Deprecated, turn into external */
 external        { return EXTERNAL; }
 implementation  { return IMPLEMENTATION; }
 zeroinitializer { return ZEROINITIALIZER; }
@@ -217,8 +212,6 @@ zeroinitializer { return ZEROINITIALIZER; }
 undef           { return UNDEF; }
 null            { return NULL_TOK; }
 to              { return TO; }
-except          { RET_TOK(TermOpVal, Unwind, UNWIND); }
-not             { return NOT; }  /* Deprecated, turned into XOR */
 tail            { return TAIL; }
 target          { return TARGET; }
 triple          { return TRIPLE; }
@@ -243,30 +236,28 @@ coldcc          { return COLDCC_TOK; }
 x86_stdcallcc   { return X86_STDCALLCC_TOK; }
 x86_fastcallcc  { return X86_FASTCALLCC_TOK; }
 
-void            { RET_TY(Type::VoidTy,  isSignless, VOID);  }
-bool            { RET_TY(Type::BoolTy,  isSignless, BOOL);  }
-sbyte           { RET_TY(Type::SByteTy, isSigned,   SBYTE); }
-ubyte           { RET_TY(Type::UByteTy, isUnsigned, UBYTE); }
-short           { RET_TY(Type::ShortTy, isSigned,   SHORT); }
-ushort          { RET_TY(Type::UShortTy,isUnsigned, USHORT);}
-int             { RET_TY(Type::IntTy,   isSigned,   INT);   }
-uint            { RET_TY(Type::UIntTy,  isUnsigned, UINT);  }
-long            { RET_TY(Type::LongTy,  isSigned,   LONG);  }
-ulong           { RET_TY(Type::ULongTy, isUnsigned, ULONG); }
-float           { RET_TY(Type::FloatTy, isSignless, FLOAT); }
-double          { RET_TY(Type::DoubleTy,isSignless, DOUBLE);}
-label           { RET_TY(Type::LabelTy, isSignless, LABEL); }
+void            { RET_TY(Type::VoidTy,  VOID);  }
+bool            { RET_TY(Type::BoolTy,  BOOL);  }
+sbyte           { RET_TY(Type::SByteTy, SBYTE); }
+ubyte           { RET_TY(Type::UByteTy, UBYTE); }
+short           { RET_TY(Type::ShortTy, SHORT); }
+ushort          { RET_TY(Type::UShortTy,USHORT);}
+int             { RET_TY(Type::IntTy,   INT);   }
+uint            { RET_TY(Type::UIntTy,  UINT);  }
+long            { RET_TY(Type::LongTy,  LONG);  }
+ulong           { RET_TY(Type::ULongTy, ULONG); }
+float           { RET_TY(Type::FloatTy, FLOAT); }
+double          { RET_TY(Type::DoubleTy,DOUBLE);}
+label           { RET_TY(Type::LabelTy, LABEL); }
 type            { return TYPE;   }
 opaque          { return OPAQUE; }
 
 add             { RET_TOK(BinaryOpVal, Add, ADD); }
 sub             { RET_TOK(BinaryOpVal, Sub, SUB); }
 mul             { RET_TOK(BinaryOpVal, Mul, MUL); }
-div             { RET_TOK_OBSOLETE(BinaryOpVal, UDiv, UDIV); }
 udiv            { RET_TOK(BinaryOpVal, UDiv, UDIV); }
 sdiv            { RET_TOK(BinaryOpVal, SDiv, SDIV); }
 fdiv            { RET_TOK(BinaryOpVal, FDiv, FDIV); }
-rem             { RET_TOK_OBSOLETE(BinaryOpVal, URem, UREM); }
 urem            { RET_TOK(BinaryOpVal, URem, UREM); }
 srem            { RET_TOK(BinaryOpVal, SRem, SREM); }
 frem            { RET_TOK(BinaryOpVal, FRem, FREM); }
@@ -279,10 +270,35 @@ setlt           { RET_TOK(BinaryOpVal, SetLT, SETLT); }
 setgt           { RET_TOK(BinaryOpVal, SetGT, SETGT); }
 setle           { RET_TOK(BinaryOpVal, SetLE, SETLE); }
 setge           { RET_TOK(BinaryOpVal, SetGE, SETGE); }
+icmp            { RET_TOK(OtherOpVal,  ICmp,  ICMP); }
+fcmp            { RET_TOK(OtherOpVal,  FCmp,  FCMP); }
+eq              { RET_ENUM(IPredicate, ICmpInst::ICMP_EQ, EQ); }
+ne              { RET_ENUM(IPredicate, ICmpInst::ICMP_NE, NE); }
+slt             { RET_ENUM(IPredicate, ICmpInst::ICMP_SLT, SLT); }
+sgt             { RET_ENUM(IPredicate, ICmpInst::ICMP_SGT, SGT); }
+sle             { RET_ENUM(IPredicate, ICmpInst::ICMP_SLE, SLE); }
+sge             { RET_ENUM(IPredicate, ICmpInst::ICMP_SGE, SGE); }
+ult             { RET_ENUM(IPredicate, ICmpInst::ICMP_ULT, ULT); }
+ugt             { RET_ENUM(IPredicate, ICmpInst::ICMP_UGT, UGT); }
+ule             { RET_ENUM(IPredicate, ICmpInst::ICMP_ULE, ULE); }
+uge             { RET_ENUM(IPredicate, ICmpInst::ICMP_UGE, UGE); }
+ordeq           { RET_ENUM(FPredicate, FCmpInst::FCMP_OEQ, ORDEQ); }
+ordne           { RET_ENUM(FPredicate, FCmpInst::FCMP_ONE, ORDNE); }
+ordlt           { RET_ENUM(FPredicate, FCmpInst::FCMP_OLT, ORDLT); }
+ordgt           { RET_ENUM(FPredicate, FCmpInst::FCMP_OGT, ORDGT); }
+ordle           { RET_ENUM(FPredicate, FCmpInst::FCMP_OLE, ORDLE); }
+ordge           { RET_ENUM(FPredicate, FCmpInst::FCMP_OGE, ORDGE); }
+ord             { RET_ENUM(FPredicate, FCmpInst::FCMP_ORD, ORD); }
+uno             { RET_ENUM(FPredicate, FCmpInst::FCMP_UNO, UNO); }
+unoeq           { RET_ENUM(FPredicate, FCmpInst::FCMP_UEQ, UNOEQ); }
+unone           { RET_ENUM(FPredicate, FCmpInst::FCMP_UNE, UNONE); }
+unolt           { RET_ENUM(FPredicate, FCmpInst::FCMP_ULT, UNOLT); }
+unogt           { RET_ENUM(FPredicate, FCmpInst::FCMP_UGT, UNOGT); }
+unole           { RET_ENUM(FPredicate, FCmpInst::FCMP_ULE, UNOLE); }
+unoge           { RET_ENUM(FPredicate, FCmpInst::FCMP_UGE, UNOGE); }
 
 phi             { RET_TOK(OtherOpVal, PHI, PHI_TOK); }
 call            { RET_TOK(OtherOpVal, Call, CALL); }
-cast            { RET_TOK_OBSOLETE(CastOpVal, Trunc, TRUNC); }
 trunc           { RET_TOK(CastOpVal, Trunc, TRUNC); }
 zext            { RET_TOK(CastOpVal, ZExt, ZEXT); }
 sext            { RET_TOK(CastOpVal, SExt, SEXT); }
@@ -297,11 +313,8 @@ ptrtoint        { RET_TOK(CastOpVal, PtrToInt, PTRTOINT); }
 bitcast         { RET_TOK(CastOpVal, BitCast, BITCAST); }
 select          { RET_TOK(OtherOpVal, Select, SELECT); }
 shl             { RET_TOK(OtherOpVal, Shl, SHL); }
-shr             { RET_TOK_OBSOLETE(OtherOpVal, LShr, LSHR); }
 lshr            { RET_TOK(OtherOpVal, LShr, LSHR); }
 ashr            { RET_TOK(OtherOpVal, AShr, ASHR); }
-vanext          { return VANEXT_old; }
-vaarg           { return VAARG_old; }
 va_arg          { RET_TOK(OtherOpVal, VAArg , VAARG); }
 ret             { RET_TOK(TermOpVal, Ret, RET); }
 br              { RET_TOK(TermOpVal, Br, BR); }
