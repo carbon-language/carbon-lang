@@ -312,26 +312,27 @@ ConstantPacked::~ConstantPacked() {
   delete [] OperandList;
 }
 
-/// UnaryConstantExpr - This class is private to Constants.cpp, and is used
-/// behind the scenes to implement unary constant exprs.
-namespace {
-class VISIBILITY_HIDDEN UnaryConstantExpr : public ConstantExpr {
-  Use Op;
-public:
-  UnaryConstantExpr(unsigned Opcode, Constant *C, const Type *Ty)
-    : ConstantExpr(Ty, Opcode, &Op, 1), Op(C, this) {}
-};
-}
-
 static bool isSetCC(unsigned Opcode) {
   return Opcode == Instruction::SetEQ || Opcode == Instruction::SetNE ||
          Opcode == Instruction::SetLT || Opcode == Instruction::SetGT ||
          Opcode == Instruction::SetLE || Opcode == Instruction::SetGE;
 }
 
+// We declare several classes private to this file, so use an anonymous
+// namespace
+namespace {
+
+/// UnaryConstantExpr - This class is private to Constants.cpp, and is used
+/// behind the scenes to implement unary constant exprs.
+class VISIBILITY_HIDDEN UnaryConstantExpr : public ConstantExpr {
+  Use Op;
+public:
+  UnaryConstantExpr(unsigned Opcode, Constant *C, const Type *Ty)
+    : ConstantExpr(Ty, Opcode, &Op, 1), Op(C, this) {}
+};
+
 /// BinaryConstantExpr - This class is private to Constants.cpp, and is used
 /// behind the scenes to implement binary constant exprs.
-namespace {
 class VISIBILITY_HIDDEN BinaryConstantExpr : public ConstantExpr {
   Use Ops[2];
 public:
@@ -342,11 +343,9 @@ public:
     Ops[1].init(C2, this);
   }
 };
-}
 
 /// SelectConstantExpr - This class is private to Constants.cpp, and is used
 /// behind the scenes to implement select constant exprs.
-namespace {
 class VISIBILITY_HIDDEN SelectConstantExpr : public ConstantExpr {
   Use Ops[3];
 public:
@@ -357,12 +356,10 @@ public:
     Ops[2].init(C3, this);
   }
 };
-}
 
 /// ExtractElementConstantExpr - This class is private to
 /// Constants.cpp, and is used behind the scenes to implement
 /// extractelement constant exprs.
-namespace {
 class VISIBILITY_HIDDEN ExtractElementConstantExpr : public ConstantExpr {
   Use Ops[2];
 public:
@@ -373,12 +370,10 @@ public:
     Ops[1].init(C2, this);
   }
 };
-}
 
 /// InsertElementConstantExpr - This class is private to
 /// Constants.cpp, and is used behind the scenes to implement
 /// insertelement constant exprs.
-namespace {
 class VISIBILITY_HIDDEN InsertElementConstantExpr : public ConstantExpr {
   Use Ops[3];
 public:
@@ -390,12 +385,10 @@ public:
     Ops[2].init(C3, this);
   }
 };
-}
 
 /// ShuffleVectorConstantExpr - This class is private to
 /// Constants.cpp, and is used behind the scenes to implement
 /// shufflevector constant exprs.
-namespace {
 class VISIBILITY_HIDDEN ShuffleVectorConstantExpr : public ConstantExpr {
   Use Ops[3];
 public:
@@ -407,11 +400,9 @@ public:
     Ops[2].init(C3, this);
   }
 };
-}
 
 /// GetElementPtrConstantExpr - This class is private to Constants.cpp, and is
 /// used behind the scenes to implement getelementpr constant exprs.
-namespace {
 struct VISIBILITY_HIDDEN GetElementPtrConstantExpr : public ConstantExpr {
   GetElementPtrConstantExpr(Constant *C, const std::vector<Constant*> &IdxList,
                             const Type *DestTy)
@@ -425,7 +416,23 @@ struct VISIBILITY_HIDDEN GetElementPtrConstantExpr : public ConstantExpr {
     delete [] OperandList;
   }
 };
-}
+
+// CompareConstantExpr - This class is private to Constants.cpp, and is used
+// behind the scenes to implement ICmp and FCmp constant expressions. This is
+// needed in order to store the predicate value for these instructions.
+struct VISIBILITY_HIDDEN CompareConstantExpr : public ConstantExpr {
+  unsigned short predicate;
+  Use Ops[2];
+  CompareConstantExpr(Instruction::OtherOps opc, unsigned short pred, 
+                      Constant* LHS, Constant* RHS)
+    : ConstantExpr(Type::BoolTy, Instruction::OtherOps(opc), Ops, 2),
+      predicate(pred) {
+    OperandList[0].init(LHS, this);
+    OperandList[1].init(RHS, this);
+  }
+};
+
+} // end anonymous namespace
 
 
 // Utility function for determining if a ConstantExpr is a CastOp or not. This
@@ -502,6 +509,27 @@ Constant *ConstantExpr::getSetLE(Constant *C1, Constant *C2) {
 }
 Constant *ConstantExpr::getSetGE(Constant *C1, Constant *C2) {
   return get(Instruction::SetGE, C1, C2);
+}
+Constant *
+ConstantExpr::getICmp(unsigned short pred, Constant* LHS, Constant* RHS) {
+  assert(LHS->getType() == RHS->getType());
+  assert(pred >= ICmpInst::FIRST_ICMP_PREDICATE && 
+         pred <= ICmpInst::LAST_ICMP_PREDICATE && "Invalid ICmp Predicate");
+  CompareConstantExpr *Result = 
+    new CompareConstantExpr(Instruction::ICmp, pred, LHS, RHS);
+  return Result;
+}
+Constant *
+ConstantExpr::getFCmp(unsigned short pred, Constant* LHS, Constant* RHS) {
+  assert(LHS->getType() == RHS->getType());
+  assert(pred <= FCmpInst::LAST_FCMP_PREDICATE && "Invalid ICmp Predicate");
+  CompareConstantExpr *Result = 
+    new CompareConstantExpr(Instruction::FCmp, pred, LHS, RHS);
+  return Result;
+}
+unsigned ConstantExpr::getPredicate() const {
+  assert(getOpcode() == Instruction::FCmp || getOpcode() == Instruction::ICmp);
+  return dynamic_cast<const CompareConstantExpr*>(this)->predicate;
 }
 Constant *ConstantExpr::getShl(Constant *C1, Constant *C2) {
   return get(Instruction::Shl, C1, C2);
@@ -1340,8 +1368,6 @@ void UndefValue::destroyConstant() {
 }
 
 
-
-
 //---- ConstantExpr::get() implementations...
 //
 typedef std::pair<unsigned, std::vector<Constant*> > ExprMapKeyType;
@@ -1349,7 +1375,8 @@ typedef std::pair<unsigned, std::vector<Constant*> > ExprMapKeyType;
 namespace llvm {
   template<>
   struct ConstantCreator<ConstantExpr, Type, ExprMapKeyType> {
-    static ConstantExpr *create(const Type *Ty, const ExprMapKeyType &V) {
+    static ConstantExpr *create(const Type *Ty, const ExprMapKeyType &V,
+        unsigned short pred = 0) {
       if (Instruction::isCast(V.first))
         return new UnaryConstantExpr(V.first, V.second[0], Ty);
       if ((V.first >= Instruction::BinaryOpsBegin &&
@@ -1368,9 +1395,14 @@ namespace llvm {
       if (V.first == Instruction::ShuffleVector)
         return new ShuffleVectorConstantExpr(V.second[0], V.second[1],
                                              V.second[2]);
-      
-      assert(V.first == Instruction::GetElementPtr && "Invalid ConstantExpr!");
+      if (V.first == Instruction::ICmp)
+        return new CompareConstantExpr(Instruction::ICmp, pred, 
+                                       V.second[0], V.second[1]);
+      if (V.first == Instruction::FCmp) 
+        return new CompareConstantExpr(Instruction::FCmp, pred, 
+                                       V.second[0], V.second[1]);
 
+      assert(V.first == Instruction::GetElementPtr && "Invalid ConstantExpr!");
       std::vector<Constant*> IdxList(V.second.begin()+1, V.second.end());
       return new GetElementPtrConstantExpr(V.second[0], IdxList, Ty);
     }
@@ -1821,7 +1853,6 @@ Constant *ConstantExpr::getShuffleVector(Constant *V1, Constant *V2,
          "Invalid shuffle vector constant expr operands!");
   return getShuffleVectorTy(V1->getType(), V1, V2, Mask);
 }
-
 
 // destroyConstant - Remove the constant from the constant table...
 //

@@ -547,7 +547,6 @@ public:
   /// @brief Return true if this is a convert constant expression
   bool isCast() const;
 
-
   /// Select constant expr
   ///
   static Constant *getSelect(Constant *C, Constant *V1, Constant *V2) {
@@ -591,6 +590,8 @@ public:
   static Constant *getSetGT(Constant *C1, Constant *C2);
   static Constant *getSetLE(Constant *C1, Constant *C2);
   static Constant *getSetGE(Constant *C1, Constant *C2);
+  static Constant* getICmp(unsigned short pred, Constant* LHS, Constant* RHS);
+  static Constant* getFCmp(unsigned short pred, Constant* LHS, Constant* RHS);
   static Constant *getShl(Constant *C1, Constant *C2);
   static Constant *getLShr(Constant *C1, Constant *C2);
   static Constant *getAShr(Constant *C1, Constant *C2);
@@ -606,13 +607,17 @@ public:
   static Constant *getExtractElement(Constant *Vec, Constant *Idx);
   static Constant *getInsertElement(Constant *Vec, Constant *Elt,Constant *Idx);
   static Constant *getShuffleVector(Constant *V1, Constant *V2, Constant *Mask);
-  
+
   /// isNullValue - Return true if this is the value that would be returned by
   /// getNullValue.
   virtual bool isNullValue() const { return false; }
 
   /// getOpcode - Return the opcode at the root of this constant expression
   unsigned getOpcode() const { return SubclassData; }
+
+  /// getPredicate - Return the ICMP or FCMP predicate value. Assert if this is
+  /// not an ICMP or FCMP constant expression.
+  unsigned getPredicate() const;
 
   /// getOpcodeName - Return a string representation for an opcode.
   const char *getOpcodeName() const;
