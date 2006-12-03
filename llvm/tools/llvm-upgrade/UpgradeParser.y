@@ -311,8 +311,8 @@ getCompareOp(const std::string& setcc, const TypeInfo& TI) {
 %type <String> MemoryInst SymbolicValueRef OptSideEffect GlobalType
 %type <String> FnDeclareLinkage BasicBlockList BigOrLittle AsmBlock
 %type <String> Name ConstValueRef ConstVector External
-%type <String> ShiftOps SetCondOps LogicalOps ArithmeticOps CastOps CompareOps
-%type <String> Predicates
+%type <String> ShiftOps SetCondOps LogicalOps ArithmeticOps CastOps
+%type <String> IPredicates FPredicates
 
 %type <ValList> ValueRefList ValueRefListE IndexList
 
@@ -338,9 +338,9 @@ ArithmeticOps: ADD | SUB | MUL | DIV | UDIV | SDIV | FDIV
              | REM | UREM | SREM | FREM;
 LogicalOps   : AND | OR | XOR;
 SetCondOps   : SETLE | SETGE | SETLT | SETGT | SETEQ | SETNE;
-CompareOps   : ICMP | FCMP;
-Predicates   : EQ | NE | SLT | SGT | SLE | SGE | ULT | UGT | ULE | UGE
-             | OEQ | ONE | OLT | OGT | OLE | OGE | ORD | UNO | UEQ | UNE  ;
+IPredicates  : EQ | NE | SLT | SGT | SLE | SGE | ULT | UGT | ULE | UGE;
+FPredicates  : OEQ | ONE | OLT | OGT | OLE | OGE | ORD | UNO | UEQ | UNE
+             | ULT | UGT | ULE | UGE | TRUETOK | FALSETOK;
 ShiftOps     : SHL | SHR | ASHR | LSHR;
 CastOps      : TRUNC | ZEXT | SEXT | FPTRUNC | FPEXT | FPTOUI | FPTOSI | 
                UITOFP | SITOFP | PTRTOINT | INTTOPTR | BITCAST | CAST
@@ -670,7 +670,12 @@ ConstExpr: CastOps '(' ConstVal TO Types ')' {
     $3.destroy(); $5.destroy();
     $$ = $1;
   }
-  | CompareOps Predicates '(' ConstVal ',' ConstVal ')' {
+  | ICMP IPredicates '(' ConstVal ',' ConstVal ')' {
+    *$1 += "(" + *$2 + "," + *$4.cnst + "," + *$6.cnst + ")";
+    delete $2; $4.destroy(); $6.destroy();
+    $$ = $1;
+  }
+  | FCMP FPredicates '(' ConstVal ',' ConstVal ')' {
     *$1 += "(" + *$2 + "," + *$4.cnst + "," + *$6.cnst + ")";
     delete $2; $4.destroy(); $6.destroy();
     $$ = $1;
@@ -1183,7 +1188,12 @@ InstVal : ArithmeticOps Types ValueRef ',' ValueRef {
     $2.destroy(); $3.destroy(); $5.destroy();
     $$ = $1;
   }
-  | CompareOps Predicates Types ValueRef ',' ValueRef ')' {
+  | ICMP IPredicates Types ValueRef ',' ValueRef ')' {
+    *$1 += " " + *$2 + " " + *$4.val + "," + *$6.val + ")";
+    delete $2; $4.destroy(); $6.destroy();
+    $$ = $1;
+  }
+  | FCMP FPredicates Types ValueRef ',' ValueRef ')' {
     *$1 += " " + *$2 + " " + *$4.val + "," + *$6.val + ")";
     delete $2; $4.destroy(); $6.destroy();
     $$ = $1;
