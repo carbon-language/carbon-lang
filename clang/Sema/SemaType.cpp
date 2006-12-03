@@ -133,6 +133,11 @@ TypeRef Sema::GetTypeForDeclarator(Declarator &D, Scope *S) {
       if (!FTI.hasPrototype) {
         // Simple void foo(), where the incoming T is the result type.
         T = Context.getFunctionTypeNoProto(T);
+
+        // C99 6.7.5.3p3: Reject int(x,y,z) when it's not a function definition.
+        if (FTI.NumArgs != 0)
+          Diag(FTI.ArgInfo[0].IdentLoc, diag::err_ident_list_in_fn_declaration);
+        
       } else {
         // Otherwise, we have a function with an argument list that is
         // potentially variadic.
