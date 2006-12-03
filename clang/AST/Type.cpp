@@ -22,11 +22,34 @@ Type::~Type() {}
 
 /// isVoidType - Helper method to determine if this is the 'void' type.
 bool Type::isVoidType() const {
-  if (const BuiltinType *BT = dyn_cast<BuiltinType>(getCanonicalType())) {
-    // FIXME: USE ENUMS!
-    return !strcmp(BT->getName(), "void");
-  }
+  if (const BuiltinType *BT = dyn_cast<BuiltinType>(getCanonicalType()))
+    return BT->getKind() == BuiltinType::Void;
   return false;
+}
+
+const char *BuiltinType::getName() const {
+  switch (getKind()) {
+  default: assert(0 && "Unknown builtin type!");
+  case Void:              return "void";
+  case Bool:              return "_Bool";
+  case Char:              return "char";
+  case SChar:             return "signed char";
+  case Short:             return "short";
+  case Int:               return "int";
+  case Long:              return "long";
+  case LongLong:          return "long long";
+  case UChar:             return "unsigned char";
+  case UShort:            return "unsigned short";
+  case UInt:              return "unsigned int";
+  case ULong:             return "unsigned long";
+  case ULongLong:         return "unsigned long long";
+  case Float:             return "float";
+  case Double:            return "double";
+  case LongDouble:        return "long double";
+  case FloatComplex:      return "float _Complex";
+  case DoubleComplex:     return "double _Complex";
+  case LongDoubleComplex: return "long double _Complex";
+  }
 }
 
 //===----------------------------------------------------------------------===//
@@ -68,11 +91,11 @@ void TypeRef::getAsString(std::string &S) const {
 
 void BuiltinType::getAsString(std::string &S) const {
   if (S.empty()) {
-    S = Name;
+    S = getName();
   } else {
     // Prefix the basic type, e.g. 'int X'.
     S = ' ' + S;
-    S = Name + S;
+    S = getName() + S;
   }
 }
 

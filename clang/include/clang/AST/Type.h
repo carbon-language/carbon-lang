@@ -179,11 +179,21 @@ public:
 /// BuiltinType - This class is used for builtin types like 'int'.  Builtin
 /// types are always canonical and have a literal name field.
 class BuiltinType : public Type {
-  const char *Name;
 public:
-  BuiltinType(const char *name) : Type(Builtin, 0), Name(name) {}
+  enum Kind {
+    Void, Bool, Char,
+    SChar,  Short,  Int,  Long,  LongLong,
+    UChar, UShort, UInt, ULong, ULongLong,
+    Float, Double, LongDouble,
+    FloatComplex, DoubleComplex, LongDoubleComplex
+  };
+private:
+  Kind TypeKind;
+public:
+  BuiltinType(Kind K) : Type(Builtin, 0), TypeKind(K) {}
   
-  const char *getName() const { return Name; }
+  Kind getKind() const { return TypeKind; }
+  const char *getName() const;
   
   virtual void getAsString(std::string &InnerString) const;
   

@@ -69,7 +69,7 @@ public:
   
 private:
   void InitBuiltinTypes();
-  void InitBuiltinType(TypeRef &R, const char *Name);
+  void InitBuiltinType(TypeRef &R, BuiltinType::Kind K);
 };
   
 }  // end namespace clang

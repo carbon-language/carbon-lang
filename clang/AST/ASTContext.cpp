@@ -37,8 +37,8 @@ ASTContext::~ASTContext() {
   }
 }
 
-void ASTContext::InitBuiltinType(TypeRef &R, const char *Name) {
-  Types.push_back((R = new BuiltinType(Name)).getTypePtr());
+void ASTContext::InitBuiltinType(TypeRef &R, BuiltinType::Kind K) {
+  Types.push_back((R = new BuiltinType(K)).getTypePtr());
 }
 
 
@@ -46,35 +46,35 @@ void ASTContext::InitBuiltinTypes() {
   assert(VoidTy.isNull() && "Context reinitialized?");
   
   // C99 6.2.5p19.
-  InitBuiltinType(VoidTy, "void");
+  InitBuiltinType(VoidTy,              BuiltinType::Void);
   
   // C99 6.2.5p2.
-  InitBuiltinType(BoolTy, "_Bool");
+  InitBuiltinType(BoolTy,              BuiltinType::Bool);
   // C99 6.2.5p3.
-  InitBuiltinType(CharTy, "char");
+  InitBuiltinType(CharTy,              BuiltinType::Char);
   // C99 6.2.5p4.
-  InitBuiltinType(SignedCharTy, "signed char");
-  InitBuiltinType(ShortTy, "short");
-  InitBuiltinType(IntTy, "int");
-  InitBuiltinType(LongTy, "long");
-  InitBuiltinType(LongLongTy, "long long");
+  InitBuiltinType(SignedCharTy,        BuiltinType::SChar);
+  InitBuiltinType(ShortTy,             BuiltinType::Short);
+  InitBuiltinType(IntTy,               BuiltinType::Int);
+  InitBuiltinType(LongTy,              BuiltinType::Long);
+  InitBuiltinType(LongLongTy,          BuiltinType::LongLong);
   
   // C99 6.2.5p6.
-  InitBuiltinType(UnsignedCharTy, "unsigned char");
-  InitBuiltinType(UnsignedShortTy, "unsigned short");
-  InitBuiltinType(UnsignedIntTy, "unsigned int");
-  InitBuiltinType(UnsignedLongTy, "unsigned long");
-  InitBuiltinType(UnsignedLongLongTy, "unsigned long long");
+  InitBuiltinType(UnsignedCharTy,      BuiltinType::UChar);
+  InitBuiltinType(UnsignedShortTy,     BuiltinType::UShort);
+  InitBuiltinType(UnsignedIntTy,       BuiltinType::UInt);
+  InitBuiltinType(UnsignedLongTy,      BuiltinType::ULong);
+  InitBuiltinType(UnsignedLongLongTy,  BuiltinType::ULongLong);
   
   // C99 6.2.5p10.
-  InitBuiltinType(FloatTy, "float");
-  InitBuiltinType(DoubleTy, "double");
-  InitBuiltinType(LongDoubleTy, "long double");
+  InitBuiltinType(FloatTy,             BuiltinType::Float);
+  InitBuiltinType(DoubleTy,            BuiltinType::Double);
+  InitBuiltinType(LongDoubleTy,        BuiltinType::LongDouble);
   
   // C99 6.2.5p11.
-  InitBuiltinType(FloatComplexTy, "float _Complex");
-  InitBuiltinType(DoubleComplexTy, "double _Complex");
-  InitBuiltinType(LongDoubleComplexTy, "long double _Complex");
+  InitBuiltinType(FloatComplexTy,      BuiltinType::FloatComplex);
+  InitBuiltinType(DoubleComplexTy,     BuiltinType::DoubleComplex);
+  InitBuiltinType(LongDoubleComplexTy, BuiltinType::LongDoubleComplex);
 }
 
 /// getPointerType - Return the uniqued reference to the type for a pointer to
