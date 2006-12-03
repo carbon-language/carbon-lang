@@ -122,35 +122,61 @@
      SETGT = 348,
      SETEQ = 349,
      SETNE = 350,
-     MALLOC = 351,
-     ALLOCA = 352,
-     FREE = 353,
-     LOAD = 354,
-     STORE = 355,
-     GETELEMENTPTR = 356,
-     TRUNC = 357,
-     ZEXT = 358,
-     SEXT = 359,
-     FPTRUNC = 360,
-     FPEXT = 361,
-     BITCAST = 362,
-     UITOFP = 363,
-     SITOFP = 364,
-     FPTOUI = 365,
-     FPTOSI = 366,
-     INTTOPTR = 367,
-     PTRTOINT = 368,
-     PHI_TOK = 369,
-     SELECT = 370,
-     SHL = 371,
-     LSHR = 372,
-     ASHR = 373,
-     VAARG = 374,
-     EXTRACTELEMENT = 375,
-     INSERTELEMENT = 376,
-     SHUFFLEVECTOR = 377,
-     VAARG_old = 378,
-     VANEXT_old = 379
+     ICMP = 351,
+     FCMP = 352,
+     EQ = 353,
+     NE = 354,
+     SLT = 355,
+     SGT = 356,
+     SLE = 357,
+     SGE = 358,
+     ULT = 359,
+     UGT = 360,
+     ULE = 361,
+     UGE = 362,
+     ORDEQ = 363,
+     ORDNE = 364,
+     ORDLT = 365,
+     ORDGT = 366,
+     ORDLE = 367,
+     ORDGE = 368,
+     ORD = 369,
+     UNO = 370,
+     UNOEQ = 371,
+     UNONE = 372,
+     UNOLT = 373,
+     UNOGT = 374,
+     UNOLE = 375,
+     UNOGE = 376,
+     MALLOC = 377,
+     ALLOCA = 378,
+     FREE = 379,
+     LOAD = 380,
+     STORE = 381,
+     GETELEMENTPTR = 382,
+     TRUNC = 383,
+     ZEXT = 384,
+     SEXT = 385,
+     FPTRUNC = 386,
+     FPEXT = 387,
+     BITCAST = 388,
+     UITOFP = 389,
+     SITOFP = 390,
+     FPTOUI = 391,
+     FPTOSI = 392,
+     INTTOPTR = 393,
+     PTRTOINT = 394,
+     PHI_TOK = 395,
+     SELECT = 396,
+     SHL = 397,
+     LSHR = 398,
+     ASHR = 399,
+     VAARG = 400,
+     EXTRACTELEMENT = 401,
+     INSERTELEMENT = 402,
+     SHUFFLEVECTOR = 403,
+     VAARG_old = 404,
+     VANEXT_old = 405
    };
 #endif
 /* Tokens.  */
@@ -247,59 +273,88 @@
 #define SETGT 348
 #define SETEQ 349
 #define SETNE 350
-#define MALLOC 351
-#define ALLOCA 352
-#define FREE 353
-#define LOAD 354
-#define STORE 355
-#define GETELEMENTPTR 356
-#define TRUNC 357
-#define ZEXT 358
-#define SEXT 359
-#define FPTRUNC 360
-#define FPEXT 361
-#define BITCAST 362
-#define UITOFP 363
-#define SITOFP 364
-#define FPTOUI 365
-#define FPTOSI 366
-#define INTTOPTR 367
-#define PTRTOINT 368
-#define PHI_TOK 369
-#define SELECT 370
-#define SHL 371
-#define LSHR 372
-#define ASHR 373
-#define VAARG 374
-#define EXTRACTELEMENT 375
-#define INSERTELEMENT 376
-#define SHUFFLEVECTOR 377
-#define VAARG_old 378
-#define VANEXT_old 379
+#define ICMP 351
+#define FCMP 352
+#define EQ 353
+#define NE 354
+#define SLT 355
+#define SGT 356
+#define SLE 357
+#define SGE 358
+#define ULT 359
+#define UGT 360
+#define ULE 361
+#define UGE 362
+#define ORDEQ 363
+#define ORDNE 364
+#define ORDLT 365
+#define ORDGT 366
+#define ORDLE 367
+#define ORDGE 368
+#define ORD 369
+#define UNO 370
+#define UNOEQ 371
+#define UNONE 372
+#define UNOLT 373
+#define UNOGT 374
+#define UNOLE 375
+#define UNOGE 376
+#define MALLOC 377
+#define ALLOCA 378
+#define FREE 379
+#define LOAD 380
+#define STORE 381
+#define GETELEMENTPTR 382
+#define TRUNC 383
+#define ZEXT 384
+#define SEXT 385
+#define FPTRUNC 386
+#define FPEXT 387
+#define BITCAST 388
+#define UITOFP 389
+#define SITOFP 390
+#define FPTOUI 391
+#define FPTOSI 392
+#define INTTOPTR 393
+#define PTRTOINT 394
+#define PHI_TOK 395
+#define SELECT 396
+#define SHL 397
+#define LSHR 398
+#define ASHR 399
+#define VAARG 400
+#define EXTRACTELEMENT 401
+#define INSERTELEMENT 402
+#define SHUFFLEVECTOR 403
+#define VAARG_old 404
+#define VANEXT_old 405
 
 
 
 
 #if ! defined (YYSTYPE) && ! defined (YYSTYPE_IS_DECLARED)
-#line 1038 "/proj/llvm/llvm-4/lib/AsmParser/llvmAsmParser.y"
+#line 968 "/proj/llvm/llvm-4/lib/AsmParser/llvmAsmParser.y"
 typedef union YYSTYPE {
   llvm::Module                           *ModuleVal;
   llvm::Function                         *FunctionVal;
-  std::pair<TypeInfo, char*>             *ArgVal;
+  std::pair<llvm::PATypeHolder*, char*>  *ArgVal;
   llvm::BasicBlock                       *BasicBlockVal;
   llvm::TerminatorInst                   *TermInstVal;
   llvm::Instruction                      *InstVal;
-  ConstInfo                              ConstVal;
-  TypeInfo                               TypeVal;
-  ValueInfo                              ValueVal;
+  llvm::Constant                         *ConstVal;
 
-  std::vector<std::pair<TypeInfo,char*> >*ArgList;
-  std::vector<ValueInfo>                 *ValueList;
-  std::list<TypeInfo>                    *TypeList;
+  const llvm::Type                       *PrimType;
+  llvm::PATypeHolder                     *TypeVal;
+  llvm::Value                            *ValueVal;
+
+  std::vector<std::pair<llvm::PATypeHolder*,char*> > *ArgList;
+  std::vector<llvm::Value*>              *ValueList;
+  std::list<llvm::PATypeHolder>          *TypeList;
   // Represent the RHS of PHI node
-  std::list<std::pair<llvm::Value*, llvm::BasicBlock*> > *PHIList;
+  std::list<std::pair<llvm::Value*,
+                      llvm::BasicBlock*> > *PHIList;
   std::vector<std::pair<llvm::Constant*, llvm::BasicBlock*> > *JumpTable;
-  std::vector<ConstInfo>                 *ConstVector;
+  std::vector<llvm::Constant*>           *ConstVector;
 
   llvm::GlobalValue::LinkageTypes         Linkage;
   int64_t                           SInt64Val;
@@ -312,15 +367,17 @@ typedef union YYSTYPE {
   char                             *StrVal;   // This memory is strdup'd!
   llvm::ValID                       ValIDVal; // strdup'd memory maybe!
 
-  BinaryOpInfo                      BinaryOpVal;
-  TermOpInfo                        TermOpVal;
-  MemOpInfo                         MemOpVal;
-  CastOpInfo                        CastOpVal;
-  OtherOpInfo                       OtherOpVal;
+  llvm::Instruction::BinaryOps      BinaryOpVal;
+  llvm::Instruction::TermOps        TermOpVal;
+  llvm::Instruction::MemoryOps      MemOpVal;
+  llvm::Instruction::CastOps        CastOpVal;
+  llvm::Instruction::OtherOps       OtherOpVal;
   llvm::Module::Endianness          Endianness;
+  llvm::ICmpInst::Predicate         IPredicate;
+  llvm::FCmpInst::Predicate         FPredicate;
 } YYSTYPE;
 /* Line 1447 of yacc.c.  */
-#line 324 "llvmAsmParser.tab.h"
+#line 381 "llvmAsmParser.tab.h"
 # define yystype YYSTYPE /* obsolescent; will be withdrawn */
 # define YYSTYPE_IS_DECLARED 1
 # define YYSTYPE_IS_TRIVIAL 1
