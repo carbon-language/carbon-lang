@@ -550,12 +550,11 @@ void BytecodeReader::ParseInstruction(std::vector<unsigned> &Oprnds,
 
   // First, handle the easy binary operators case
   if (Opcode >= Instruction::BinaryOpsBegin &&
-      Opcode <  Instruction::BinaryOpsEnd  && Oprnds.size() == 2)
+      Opcode <  Instruction::BinaryOpsEnd  && Oprnds.size() == 2) {
     Result = BinaryOperator::create(Instruction::BinaryOps(Opcode),
                                     getValue(iType, Oprnds[0]),
                                     getValue(iType, Oprnds[1]));
-
-  if (!Result) {
+  } else {
     // Indicate that we don't think this is a call instruction (yet).
     // Process based on the Opcode read
     switch (Opcode) {
@@ -700,6 +699,13 @@ void BytecodeReader::ParseInstruction(std::vector<unsigned> &Oprnds,
       Result = PN;
       break;
     }
+    case Instruction::ICmp:
+    case Instruction::FCmp:
+      // These instructions encode the comparison predicate as the 3rd operand.
+      Result = CmpInst::create(Instruction::OtherOps(Opcode),
+          static_cast<unsigned short>(Oprnds[2]),
+          getValue(iType, Oprnds[0]), getValue(iType, Oprnds[1]));
+      break;
     case Instruction::Shl:
     case Instruction::LShr:
     case Instruction::AShr:

@@ -718,6 +718,15 @@ void BytecodeWriter::outputInstruction(const Instruction &I) {
         if (Slots[1] > MaxOpSlot) MaxOpSlot = Slots[1];
         NumOperands = 2;
       }
+    } else if (isa<ICmpInst>(I) || isa<FCmpInst>(I)) {
+      // We need to encode the compare instruction's predicate as the third
+      // operand. Its not really a slot, but we don't want to break the 
+      // instruction format for these instructions.
+      NumOperands++;
+      assert(NumOperands == 3 && "CmpInst with wrong number of operands?");
+      Slots[2] = unsigned(cast<CmpInst>(&I)->getPredicate());
+      if (Slots[2] > MaxOpSlot)
+        MaxOpSlot = Slots[2];
     } else if (const GetElementPtrInst *GEP = dyn_cast<GetElementPtrInst>(&I)) {
       // We need to encode the type of sequential type indices into their slot #
       unsigned Idx = 1;
