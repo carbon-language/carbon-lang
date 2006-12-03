@@ -236,6 +236,7 @@ private:
   DeclTy *ParseExternalDeclaration();
   DeclTy *ParseDeclarationOrFunctionDefinition();
   DeclTy *ParseFunctionDefinition(Declarator &D);
+  void ParseKNRParamDeclarations(Declarator &D);
   void ParseSimpleAsm();
   void ParseAsmStringLiteral();
 

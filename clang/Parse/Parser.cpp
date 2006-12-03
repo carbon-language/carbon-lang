@@ -402,30 +402,22 @@ Parser::DeclTy *Parser::ParseFunctionDefinition(Declarator &D) {
   const DeclaratorChunk &FnTypeInfo = D.getTypeObject(0);
   assert(FnTypeInfo.Kind == DeclaratorChunk::Function &&
          "This isn't a function declarator!");
-
-  DeclTy *Res = Actions.ParseStartOfFunctionDef(CurScope, D);
-  
-  // FIXME: Enter a scope for the arguments.
-  //EnterScope(Scope::FnScope);
-  
-  
+  const DeclaratorChunk::FunctionTypeInfo &FTI = FnTypeInfo.Fun;
   
   // If this declaration was formed with a K&R-style identifier list for the
   // arguments, parse declarations for all of the args next.
   // int foo(a,b) int a; float b; {}
-  if (!FnTypeInfo.Fun.hasPrototype && FnTypeInfo.Fun.NumArgs != 0) {
-    // Read all the argument declarations.
-    while (isDeclarationSpecifier())
-      ParseDeclaration(Declarator::KNRTypeListContext);
-    
-    // Note, check that we got them all.
-  } else {
-    //if (isDeclarationSpecifier())
-    //  Diag('k&r declspecs with prototype?');
-    
-    // TODO: Install the arguments into the current scope.
-  }
+  if (!FTI.hasPrototype && FTI.NumArgs != 0)
+    ParseKNRParamDeclarations(D);
 
+  // Enter a scope for the function body.
+  EnterScope(Scope::FnScope);
+  
+  
+  
+  DeclTy *Res = Actions.ParseStartOfFunctionDef(CurScope, D);
+  
+  
   // We should have an opening brace now.
   if (Tok.getKind() != tok::l_brace) {
     Diag(Tok, diag::err_expected_fn_body);
@@ -434,20 +426,135 @@ Parser::DeclTy *Parser::ParseFunctionDefinition(Declarator &D) {
     SkipUntil(tok::l_brace, true, true);
     
     // If we didn't find the '{', bail out.
-    if (Tok.getKind() != tok::l_brace)
+    if (Tok.getKind() != tok::l_brace) {
+      ExitScope();
       return 0;
+    }
   }
   
   // Parse the function body as a compound stmt.
   StmtResult FnBody = ParseCompoundStatement();
-  if (FnBody.isInvalid) return 0;
+  if (FnBody.isInvalid) {
+    ExitScope();
+    return 0;
+  }
 
-  // FIXME: Leave the argument scope.
-  // ExitScope();
+  // Leave the function body scope.
+  ExitScope();
 
   // TODO: Pass argument information.
   return Actions.ParseFunctionDefBody(Res, FnBody.Val);
 }
+
+/// ParseKNRParamDeclarations - Parse 'declaration-list[opt]' which provides
+/// types for a function with a K&R-style identifier list for arguments.
+void Parser::ParseKNRParamDeclarations(Declarator &D) {
+  // We know that the top-level of this declarator is a function.
+  DeclaratorChunk::FunctionTypeInfo &FTI = D.getTypeObject(0).Fun;
+
+  // Read all the argument declarations.
+  while (isDeclarationSpecifier()) {
+    SourceLocation DSStart = Tok.getLocation();
+    
+    // Parse the common declaration-specifiers piece.
+    DeclSpec DS;
+    ParseDeclarationSpecifiers(DS);
+    
+    // C99 6.9.1p6: 'each declaration in the declaration list shall have at
+    // least one declarator'.
+    // NOTE: GCC just makes this an ext-warn.  It's not clear what it does with
+    // the declarations though.  It's trivial to ignore them, really hard to do
+    // anything else with them.
+    if (Tok.getKind() == tok::semi) {
+      Diag(DSStart, diag::err_declaration_does_not_declare_param);
+      ConsumeToken();
+      continue;
+    }
+    
+    // C99 6.9.1p6: Declarations shall contain no storage-class specifiers other
+    // than register.
+    if (DS.getStorageClassSpec() != DeclSpec::SCS_unspecified &&
+        DS.getStorageClassSpec() != DeclSpec::SCS_register) {
+      Diag(DS.getStorageClassSpecLoc(),
+           diag::err_invalid_storage_class_in_func_decl);
+      DS.ClearStorageClassSpecs();
+    }
+    if (DS.isThreadSpecified()) {
+      Diag(DS.getThreadSpecLoc(),
+           diag::err_invalid_storage_class_in_func_decl);
+      DS.ClearStorageClassSpecs();
+    }
+    
+    // Parse the first declarator attached to this declspec.
+    Declarator ParmDeclarator(DS, Declarator::KNRTypeListContext);
+    ParseDeclarator(ParmDeclarator);
+
+    // Handle the full declarator list.
+    while (1) {
+      // If attributes are present, parse them.
+      if (Tok.getKind() == tok::kw___attribute)
+        // FIXME: attach attributes too.
+        ParseAttributes();
+      
+      // Ask the actions module to compute the type for this declarator.
+      Action::TypeResult TR =
+        Actions.ParseParamDeclaratorType(CurScope, ParmDeclarator);
+      if (!TR.isInvalid && 
+          // A missing identifier has already been diagnosed.
+          ParmDeclarator.getIdentifier()) {
+
+        // Scan the argument list looking for the correct param to apply this
+        // type.
+        for (unsigned i = 0; ; ++i) {
+          // C99 6.9.1p6: those declarators shall declare only identifiers from
+          // the identifier list.
+          if (i == FTI.NumArgs) {
+            Diag(ParmDeclarator.getIdentifierLoc(), diag::err_no_matching_param,
+                 ParmDeclarator.getIdentifier()->getName());
+            break;
+          }
+          
+          if (FTI.ArgInfo[i].Ident == ParmDeclarator.getIdentifier()) {
+            // Reject redefinitions of parameters.
+            if (FTI.ArgInfo[i].TypeInfo) {
+              Diag(ParmDeclarator.getIdentifierLoc(),
+                   diag::err_param_redefinition,
+                   ParmDeclarator.getIdentifier()->getName());
+            } else {
+              FTI.ArgInfo[i].TypeInfo = TR.Val;
+            }
+            break;
+          }
+        }
+      }
+
+      // If we don't have a comma, it is either the end of the list (a ';') or
+      // an error, bail out.
+      if (Tok.getKind() != tok::comma)
+        break;
+      
+      // Consume the comma.
+      ConsumeToken();
+      
+      // Parse the next declarator.
+      ParmDeclarator.clear();
+      ParseDeclarator(ParmDeclarator);
+    }
+    
+    if (Tok.getKind() == tok::semi) {
+      ConsumeToken();
+    } else {
+      Diag(Tok, diag::err_parse_error);
+      // Skip to end of block or statement
+      SkipUntil(tok::semi, true);
+      if (Tok.getKind() == tok::semi)
+        ConsumeToken();
+    }
+  }
+  
+  // The actions module must verify that all arguments were declared.
+}
+
 
 /// ParseAsmStringLiteral - This is just a normal string-literal, but is not
 /// allowed to be a wide string, and is not subject to character translation.

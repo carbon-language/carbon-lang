@@ -261,7 +261,7 @@ struct DeclaratorChunk {
     IdentifierInfo *Ident;
     SourceLocation IdentLoc;
     Action::TypeTy *TypeInfo;
-    
+    // FIXME: this also needs an attribute list.
     ParamInfo() {}
     ParamInfo(IdentifierInfo *ident, SourceLocation iloc, Action::TypeTy *typ)
       : Ident(ident), IdentLoc(iloc), TypeInfo(typ) {
@@ -441,6 +441,11 @@ public:
   /// Return the specified TypeInfo from this declarator.  TypeInfo #0 is
   /// closest to the identifier.
   const DeclaratorChunk &getTypeObject(unsigned i) const {
+    assert(i < DeclTypeInfo.size() && "Invalid type chunk");
+    return DeclTypeInfo[i];
+  }
+  DeclaratorChunk &getTypeObject(unsigned i) {
+    assert(i < DeclTypeInfo.size() && "Invalid type chunk");
     return DeclTypeInfo[i];
   }
   

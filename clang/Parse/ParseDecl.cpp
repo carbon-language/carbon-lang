@@ -967,8 +967,9 @@ void Parser::ParseParenDeclarator(Declarator &D) {
         }
           
       // Remember this identifier in ParamInfo.
-      ParamInfo.push_back(DeclaratorChunk::ParamInfo(ParmII, Tok.getLocation(),
-                                                     0));
+      if (ParmII)
+        ParamInfo.push_back(DeclaratorChunk::ParamInfo(ParmII,
+                                                       Tok.getLocation(), 0));
       
       // Eat the identifier.
       ConsumeToken();
@@ -1017,17 +1018,12 @@ void Parser::ParseParenDeclarator(Declarator &D) {
         ParseAttributes();
       
       // Verify C99 6.7.5.3p2: The only SCS allowed is 'register'.
-      switch (DS.getStorageClassSpec()) {
-      case DeclSpec::SCS_unspecified:
-      case DeclSpec::SCS_register:
-        break;
-      case DeclSpec::SCS_auto:
-        // NOTE: we could trivially allow 'int foo(auto int X)' if we wanted.
-      default:
+      // NOTE: we could trivially allow 'int foo(auto int X)' if we wanted.
+      if (DS.getStorageClassSpec() != DeclSpec::SCS_unspecified &&
+          DS.getStorageClassSpec() != DeclSpec::SCS_register) {
         Diag(DS.getStorageClassSpecLoc(),
              diag::err_invalid_storage_class_in_func_decl);
         DS.ClearStorageClassSpecs();
-        break;
       }
       if (DS.isThreadSpecified()) {
         Diag(DS.getThreadSpecLoc(),

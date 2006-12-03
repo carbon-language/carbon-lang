@@ -402,6 +402,14 @@ DIAG(err_void_param_qualified, ERROR,
      "'void' as parameter must not have type qualifiers")
 DIAG(err_param_redefinition, ERROR,
      "redefinition of parameter '%s'")
+DIAG(err_ident_list_in_fn_declaration, ERROR,
+     "a parameter list without types is only allowed in a function definition")
+DIAG(err_declaration_does_not_declare_param, ERROR,
+     "declaration does not declare a parameter")
+DIAG(err_no_matching_param, ERROR,
+     "parameter named '%s' is missing")
+DIAG(err_param_not_declared, ERROR,
+     "parameter '%s' was not declared")
 
 DIAG(err_unexpected_typedef, ERROR,
      "unexpected type name '%s': expected expression")

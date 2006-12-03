@@ -12,6 +12,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "Sema.h"
+#include "clang/AST/ASTContext.h"
 #include "clang/AST/Decl.h"
 #include "clang/AST/Type.h"
 #include "clang/Parse/DeclSpec.h"
@@ -105,6 +106,28 @@ Sema::ParseDeclarator(Scope *S, Declarator &D, ExprTy *Init,
 Sema::DeclTy *Sema::ParseStartOfFunctionDef(Scope *S, Declarator &D
                                             /* TODO: FORMAL ARG INFO.*/) {
   assert(CurFunctionDecl == 0 && "Function parsing confused");
+  assert(D.getTypeObject(0).Kind == DeclaratorChunk::Function &&
+         "Not a function declarator!");
+  DeclaratorChunk::FunctionTypeInfo &FTI = D.getTypeObject(0).Fun;
+  
+  // Verify 6.9.1p6: 'every identifier in the identifier list shall be declared'
+  // for a K&R function.
+  if (!FTI.hasPrototype) {
+    for (unsigned i = 0, e = FTI.NumArgs; i != e; ++i) {
+      if (FTI.ArgInfo[i].TypeInfo == 0) {
+        Diag(FTI.ArgInfo[i].IdentLoc, diag::err_param_not_declared,
+             FTI.ArgInfo[i].Ident->getName());
+        // Implicitly declare the argument as type 'int' for lack of a better
+        // type.
+        FTI.ArgInfo[i].TypeInfo = Context.IntTy.getAsOpaquePtr();
+      }
+    }
+   
+    // Since this is a function definition, act as though we have information
+    // about the arguments.
+    FTI.hasPrototype = true;
+  }
+  
   
   FunctionDecl *FD = static_cast<FunctionDecl*>(ParseDeclarator(S, D, 0, 0));
   CurFunctionDecl = FD;
