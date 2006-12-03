@@ -701,6 +701,8 @@ void BytecodeReader::ParseInstruction(std::vector<unsigned> &Oprnds,
     }
     case Instruction::ICmp:
     case Instruction::FCmp:
+      if (Oprnds.size() != 3)
+        error("Cmp instructions requires 3 operands");
       // These instructions encode the comparison predicate as the 3rd operand.
       Result = CmpInst::create(Instruction::OtherOps(Opcode),
           static_cast<unsigned short>(Oprnds[2]),
@@ -1351,6 +1353,16 @@ Value *BytecodeReader::ParseConstantPoolValue(unsigned TypeID) {
         ConstantExpr::getShuffleVector(ArgVec[0], ArgVec[1], ArgVec[2]);
       if (Handler) Handler->handleConstantExpression(Opcode, ArgVec, Result);
       return Result;
+    } else if (Opcode == Instruction::ICmp) {
+      if (ArgVec.size() != 2) 
+        error("Invalid ICmp constant expr arguments");
+      unsigned short pred = read_vbr_uint();
+      return ConstantExpr::getICmp(pred, ArgVec[0], ArgVec[1]);
+    } else if (Opcode == Instruction::FCmp) {
+      if (ArgVec.size() != 2) 
+        error("Invalid FCmp constant expr arguments");
+      unsigned short pred = read_vbr_uint();
+      return ConstantExpr::getFCmp(pred, ArgVec[0], ArgVec[1]);
     } else {                            // All other 2-operand expressions
       Constant* Result = ConstantExpr::get(Opcode, ArgVec[0], ArgVec[1]);
       if (Handler) Handler->handleConstantExpression(Opcode, ArgVec, Result);

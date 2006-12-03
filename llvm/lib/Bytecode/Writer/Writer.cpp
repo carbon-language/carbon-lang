@@ -791,6 +791,13 @@ void BytecodeWriter::outputInstruction(const Instruction &I) {
     }
   }
 
+  // In the weird case of the ICmp or FCmp instructions, we need to also put
+  // out the instruction's predicate value. We do that here, after the
+  // instruction's type and operands have been written so we can reuse the
+  // code above.
+  if (const CmpInst* CI = dyn_cast<CmpInst>(&I))
+    output_vbr((unsigned)CI->getPredicate());
+
   // If we weren't handled before here, we either have a large number of
   // operands or a large operand index that we are referring to.
   outputInstructionFormat0(&I, Opcode, Table, Type);
