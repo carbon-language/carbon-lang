@@ -137,6 +137,8 @@ const char *Instruction::getOpcodeName(unsigned OpCode) {
   case BitCast:   return "bitcast";
 
   // Other instructions...
+  case ICmp:           return "icmp";
+  case FCmp:           return "fcmp";
   case PHI:            return "phi";
   case Select:         return "select";
   case Call:           return "call";

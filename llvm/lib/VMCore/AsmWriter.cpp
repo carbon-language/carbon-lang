@@ -1125,6 +1125,45 @@ void AssemblyWriter::printInstruction(const Instruction &I) {
   // Print out the opcode...
   Out << I.getOpcodeName();
 
+  // Print out the compare instruction predicates
+  if (const FCmpInst *FCI = dyn_cast<FCmpInst>(&I)) {
+    const char *pred = 0;
+    switch (FCI->getPredicate()) {
+      case FCmpInst::FCMP_FALSE: pred = "false";
+      case FCmpInst::FCMP_OEQ:   pred = "ordeq";
+      case FCmpInst::FCMP_OGT:   pred = "ordgt";
+      case FCmpInst::FCMP_OGE:   pred = "ordge";
+      case FCmpInst::FCMP_OLT:   pred = "ordlt";
+      case FCmpInst::FCMP_OLE:   pred = "ordle";
+      case FCmpInst::FCMP_ONE:   pred = "ordne";
+      case FCmpInst::FCMP_ORD:   pred = "ord";
+      case FCmpInst::FCMP_UNO:   pred = "uno";
+      case FCmpInst::FCMP_UEQ:   pred = "unoeq";
+      case FCmpInst::FCMP_UGT:   pred = "unogt";
+      case FCmpInst::FCMP_UGE:   pred = "unoge";
+      case FCmpInst::FCMP_ULT:   pred = "unolt";
+      case FCmpInst::FCMP_ULE:   pred = "unole";
+      case FCmpInst::FCMP_UNE:   pred = "unone";
+      case FCmpInst::FCMP_TRUE:  pred = "true";
+    }
+    Out << " " << pred;
+  } else if (const ICmpInst *ICI = dyn_cast<ICmpInst>(&I)) {
+    const char *pred = 0;
+    switch (ICI->getPredicate()) {
+      case ICmpInst::ICMP_EQ:    pred = "eq";
+      case ICmpInst::ICMP_NE:    pred = "ne";
+      case ICmpInst::ICMP_SGT:   pred = "sgt";
+      case ICmpInst::ICMP_SGE:   pred = "sge";
+      case ICmpInst::ICMP_SLT:   pred = "slt";
+      case ICmpInst::ICMP_SLE:   pred = "sle";
+      case ICmpInst::ICMP_UGT:   pred = "ugt";
+      case ICmpInst::ICMP_UGE:   pred = "uge";
+      case ICmpInst::ICMP_ULT:   pred = "ult";
+      case ICmpInst::ICMP_ULE:   pred = "ule";
+    }
+    Out << " " << pred;
+  }
+
   // Print out the type of the operands...
   const Value *Operand = I.getNumOperands() ? I.getOperand(0) : 0;
 
