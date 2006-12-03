@@ -1020,28 +1020,6 @@ void Parser::ParseParenDeclarator(Declarator &D) {
         DS.ClearStorageClassSpecs();
       }
       
-      
-      // Look for 'void'.  void is allowed only as a single argument to a
-      // function with no other parameters (C99 6.7.5.3p10).
-      if (ParmDecl.getNumTypeObjects() == 0 &&  // not void*.
-          DS.getTypeSpecType() == DeclSpec::TST_void) {
-        if (ParmDecl.getIdentifier()) {
-          Diag(ParmDecl.getIdentifierLoc(),
-               diag::err_void_param_with_identifier);
-          ErrorEmitted = true;
-        }
-        if (!ErrorEmitted &&
-            (!ParamInfo.empty() || Tok.getKind() != tok::r_paren)) {
-          Diag(DS.getTypeSpecTypeLoc(), diag::err_void_only_param);
-          ErrorEmitted = true;
-        }
-        
-        // We know now that we either emitted an error or that the next token
-        // is a ')'.  Exit this loop with an empty ParamInfo list, instead of
-        // adding void explicitly to the list.
-        break;
-      }
-      
       // Inform the actions module about the parameter declarator, so it gets
       // added to the current scope.
       Action::TypeResult ParamTy =

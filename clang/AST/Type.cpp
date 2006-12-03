@@ -20,6 +20,14 @@ using namespace clang;
 
 Type::~Type() {}
 
+/// isVoidType - Helper method to determine if this is the 'void' type.
+bool Type::isVoidType() const {
+  if (const BuiltinType *BT = dyn_cast<BuiltinType>(getCanonicalType())) {
+    // FIXME: USE ENUMS!
+    return !strcmp(BT->getName(), "void");
+  }
+  return false;
+}
 
 //===----------------------------------------------------------------------===//
 // Type Printing

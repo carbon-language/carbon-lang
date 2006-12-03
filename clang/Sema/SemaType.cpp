@@ -137,12 +137,36 @@ TypeRef Sema::GetTypeForDeclarator(Declarator &D, Scope *S) {
         // Otherwise, we have a function with an argument list that is
         // potentially variadic.
         SmallVector<TypeRef, 16> ArgTys;
+        
         for (unsigned i = 0, e = FTI.NumArgs; i != e; ++i) {
-          if (FTI.ArgInfo[i].TypeInfo == 0)
+          TypeRef ArgTy = TypeRef::getFromOpaquePtr(FTI.ArgInfo[i].TypeInfo);
+          if (ArgTy.isNull())
             return TypeRef();  // Error occurred parsing argument type.
-          ArgTys.push_back(TypeRef::getFromOpaquePtr(FTI.ArgInfo[i].TypeInfo));
+          
+          // Look for 'void'.  void is allowed only as a single argument to a
+          // function with no other parameters (C99 6.7.5.3p10).  We record
+          // int(void) as a FunctionTypeProto with an empty argument list.
+          if (ArgTy->isVoidType()) {
+            // If this is something like 'float(int, void)', reject it.
+            if (FTI.NumArgs != 1 || FTI.isVariadic) {
+              Diag(DeclType.Loc, diag::err_void_only_param);
+              return TypeRef();
+            }
+            // Reject 'int(void abc)'.
+            if (FTI.ArgInfo[i].Ident) {
+              Diag(FTI.ArgInfo[i].IdentLoc,
+                   diag::err_void_param_with_identifier);
+              return TypeRef();
+            }
+            
+            // Do not add 'void' to the ArgTys list.
+            break;
+          }
+          
+          ArgTys.push_back(ArgTy);
         }
-        T = Context.getFunctionType(T, &ArgTys[0], FTI.NumArgs, FTI.isVariadic);
+        T = Context.getFunctionType(T, &ArgTys[0], ArgTys.size(),
+                                    FTI.isVariadic);
       }
       break;
     }

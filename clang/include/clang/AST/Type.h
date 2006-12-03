@@ -167,6 +167,10 @@ public:
   bool isCanonical() const { return CanonicalType == this; }
   Type *getCanonicalType() const { return CanonicalType; }
   
+  /// isVoidType - Helper method to determine if this is the 'void' type.
+  bool isVoidType() const;
+  
+  
   virtual void getAsString(std::string &InnerString) const = 0;
   
   static bool classof(const Type *) { return true; }
@@ -178,6 +182,8 @@ class BuiltinType : public Type {
   const char *Name;
 public:
   BuiltinType(const char *name) : Type(Builtin, 0), Name(name) {}
+  
+  const char *getName() const { return Name; }
   
   virtual void getAsString(std::string &InnerString) const;
   
