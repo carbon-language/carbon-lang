@@ -1600,6 +1600,13 @@ Constant *llvm::ConstantFoldBinaryInstruction(unsigned Opcode,
   return 0;
 }
 
+Constant *llvm::ConstantFoldCompare(
+    unsigned opcode, Constant *C1, Constant  *C2, unsigned short predicate)
+{
+  // Place holder for future folding of ICmp and FCmp instructions
+  return 0;
+}
+
 Constant *llvm::ConstantFoldGetElementPtr(const Constant *C,
                                           const std::vector<Value*> &IdxList) {
   if (IdxList.size() == 0 ||
