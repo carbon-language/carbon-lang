@@ -2492,14 +2492,14 @@ subelement of an aggregate data structure.</p>
 
 <h5>Arguments:</h5>
 
-<p>This instruction takes a list of integer constants that indicate what
+<p>This instruction takes a list of integer operands that indicate what
 elements of the aggregate object to index to.  The actual types of the arguments
 provided depend on the type of the first pointer argument.  The
 '<tt>getelementptr</tt>' instruction is used to index down through the type
 levels of a structure or to a specific index in an array.  When indexing into a
 structure, only <tt>uint</tt> integer constants are allowed.  When indexing 
-into an array or pointer, integers of any size are allowed, and will be sign
-extended to 64-bit values.</p>
+into an array or pointer, only integers of 32 or 64 bits are allowed, and will 
+be sign extended to 64-bit values.</p>
 
 <p>For example, let's consider a C code fragment and how it gets
 compiled to LLVM:</p>
@@ -2540,7 +2540,7 @@ compiled to LLVM:</p>
 
 <p>The index types specified for the '<tt>getelementptr</tt>' instruction depend
 on the pointer type that is being indexed into. <a href="#t_pointer">Pointer</a>
-and <a href="#t_array">array</a> types can use any 
+and <a href="#t_array">array</a> types can use a 32-bit or 64-bit
 <a href="#t_integer">integer</a> type but the value will always be sign extended
 to 64-bits.  <a href="#t_struct">Structure</a> types, require <tt>uint</tt>
 <b>constants</b>.</p>
