@@ -561,6 +561,12 @@ public:
     const Type *Ty ///< The type to trunc or bitcast C to
   );
 
+  /// @brief Create a BitCast or a PtrToInt cast constant expression
+  static Constant *getPointerCast(
+    Constant *C,   ///< The pointer value to be casted (operand 0)
+    const Type *Ty ///< The type to which cast should be made
+  );
+
   // This method uses the CastInst::getCastOpcode method to infer the
   // cast opcode to use. 
   // @brief Get a ConstantExpr Conversion operator that casts C to Ty
@@ -597,7 +603,7 @@ public:
   ///
   static Constant *get(unsigned Opcode, Constant *C1, Constant *C2);
 
-  /// @brief Return an ICmp or FCmp comparison operator constante expression.
+  /// @brief Return an ICmp or FCmp comparison operator constant expression.
   static Constant *getCompare(unsigned Opcode, unsigned short pred, 
                               Constant *C1, Constant *C2);
 
