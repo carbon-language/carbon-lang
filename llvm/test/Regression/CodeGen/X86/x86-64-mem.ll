@@ -1,11 +1,11 @@
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=x86-64 &&
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=x86-64 | grep GOTPCREL | wc -l | grep 4 &&
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=x86-64 | grep rip | wc -l | grep 6 &&
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=x86-64 | grep movq | wc -l | grep 6 &&
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=x86-64 | grep leaq | wc -l | grep 1 &&
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=x86-64 -relocation-model=static | grep rip | wc -l | grep 4 &&
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=x86-64 -relocation-model=static | grep movl | wc -l | grep 2 &&
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=x86-64 -relocation-model=static | grep movq | wc -l | grep 2
+; RUN: llvm-upgrade < %s | llvm-as | llc -mtriple=x86_64-apple-darwin &&
+; RUN: llvm-upgrade < %s | llvm-as | llc -mtriple=x86_64-apple-darwin | grep GOTPCREL | wc -l | grep 4 &&
+; RUN: llvm-upgrade < %s | llvm-as | llc -mtriple=x86_64-apple-darwin | grep rip | wc -l | grep 6 &&
+; RUN: llvm-upgrade < %s | llvm-as | llc -mtriple=x86_64-apple-darwin | grep movq | wc -l | grep 6 &&
+; RUN: llvm-upgrade < %s | llvm-as | llc -mtriple=x86_64-apple-darwin | grep leaq | wc -l | grep 1 &&
+; RUN: llvm-upgrade < %s | llvm-as | llc -mtriple=x86_64-apple-darwin -relocation-model=static | grep rip | wc -l | grep 4 &&
+; RUN: llvm-upgrade < %s | llvm-as | llc -mtriple=x86_64-apple-darwin -relocation-model=static | grep movl | wc -l | grep 2 &&
+; RUN: llvm-upgrade < %s | llvm-as | llc -mtriple=x86_64-apple-darwin -relocation-model=static | grep movq | wc -l | grep 2
 
 %ptr = external global int*
 %src = external global [0 x int]
