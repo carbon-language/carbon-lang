@@ -76,9 +76,9 @@ Sema::ParseDeclarator(Scope *S, Declarator &D, ExprTy *Init,
   }
   
   Decl *New;
-  if (D.getDeclSpec().getStorageClassSpec() == DeclSpec::SCS_typedef) {
+  if (D.getDeclSpec().getStorageClassSpec() == DeclSpec::SCS_typedef)
     New = ParseTypedefDecl(S, D, PrevDecl);
-  } else if (D.isFunctionDeclarator())
+  else if (D.isFunctionDeclarator())
     New = new FunctionDecl(II, GetTypeForDeclarator(D, S), PrevDecl);
   else
     New = new VarDecl(II, GetTypeForDeclarator(D, S), PrevDecl);
@@ -126,11 +126,20 @@ Sema::DeclTy *Sema::ParseStartOfFunctionDef(Scope *S, Declarator &D
     // Since this is a function definition, act as though we have information
     // about the arguments.
     FTI.hasPrototype = true;
+  } else {
+    // FIXME: Diagnose arguments without names in C.
+    
   }
-  
   
   FunctionDecl *FD = static_cast<FunctionDecl*>(ParseDeclarator(S, D, 0, 0));
   CurFunctionDecl = FD;
+  
+  // Since this is a function definition, remember the names of the arguments in
+  // the FunctionDecl.
+  
+  // FIXME: TODO.  Add to FunctionDecl, install declarators into current scope.
+  
+  
   return FD;
 }
 

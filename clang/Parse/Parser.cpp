@@ -413,8 +413,8 @@ Parser::DeclTy *Parser::ParseFunctionDefinition(Declarator &D) {
   // Enter a scope for the function body.
   EnterScope(Scope::FnScope);
   
-  
-  
+  // Tell the actions module that we have entered a function definition with the
+  // specified Declarator for the function.
   DeclTy *Res = Actions.ParseStartOfFunctionDef(CurScope, D);
   
   
