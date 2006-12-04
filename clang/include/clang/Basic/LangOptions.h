@@ -29,13 +29,14 @@ struct LangOptions {
   unsigned Microsoft         : 1;  // Microsoft extensions.
   unsigned CPlusPlus         : 1;  // C++ Support
   unsigned NoExtensions      : 1;  // All extensions are disabled, strict mode.
-  
+  unsigned CXXOperatorNames  : 1;  // Treat C++ operator names as keywords.
+    
   unsigned ObjC1             : 1;  // Objective C 1 support enabled.
   unsigned ObjC2             : 1;  // Objective C 2 support enabled.
   
   LangOptions() {
     Trigraphs = BCPLComment = DollarIdents = Digraphs = ObjC1 = ObjC2 = 0;
-    C99 = Microsoft = CPlusPlus = NoExtensions = 0;
+    C99 = Microsoft = CPlusPlus = NoExtensions = CXXOperatorNames = 0;
   }
 };
 
