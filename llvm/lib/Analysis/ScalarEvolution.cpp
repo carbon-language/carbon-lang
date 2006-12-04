@@ -178,7 +178,8 @@ SCEVHandle SCEVConstant::get(ConstantInt *V) {
   // Make sure that SCEVConstant instances are all unsigned.
   if (V->getType()->isSigned()) {
     const Type *NewTy = V->getType()->getUnsignedVersion();
-    V = cast<ConstantInt>(ConstantExpr::getCast(V, NewTy));
+    V = cast<ConstantInt>(
+        ConstantExpr::getInferredCast(V, false, NewTy, false));
   }
 
   SCEVConstant *&R = (*SCEVConstants)[V];
@@ -465,7 +466,7 @@ SCEVHandle SCEVUnknown::getIntegerSCEV(int Val, const Type *Ty) {
     C = ConstantInt::get(Ty, Val);
   else {
     C = ConstantInt::get(Ty->getSignedVersion(), Val);
-    C = ConstantExpr::getCast(C, Ty);
+    C = ConstantExpr::getInferredCast(C, true, Ty, false);
   }
   return SCEVUnknown::get(C);
 }
@@ -511,7 +512,8 @@ static SCEVHandle PartialFact(SCEVHandle V, unsigned NumSteps) {
     for (; NumSteps; --NumSteps)
       Result *= Val-(NumSteps-1);
     Constant *Res = ConstantInt::get(Type::ULongTy, Result);
-    return SCEVUnknown::get(ConstantExpr::getCast(Res, V->getType()));
+    return SCEVUnknown::get(
+        ConstantExpr::getInferredCast(Res, false, V->getType(), true));
   }
 
   const Type *Ty = V->getType();
@@ -996,10 +998,11 @@ SCEVHandle SCEVSDivExpr::get(const SCEVHandle &LHS, const SCEVHandle &RHS) {
       Constant *LHSCV = LHSC->getValue();
       Constant *RHSCV = RHSC->getValue();
       if (LHSCV->getType()->isUnsigned())
-        LHSCV = ConstantExpr::getCast(LHSCV,
-                                      LHSCV->getType()->getSignedVersion());
+        LHSCV = ConstantExpr::getInferredCast(
+            LHSCV, false, LHSCV->getType()->getSignedVersion(), true);
       if (RHSCV->getType()->isUnsigned())
-        RHSCV = ConstantExpr::getCast(RHSCV, LHSCV->getType());
+        RHSCV = ConstantExpr::getInferredCast(
+            RHSCV, false, LHSCV->getType(), true);
       return SCEVUnknown::get(ConstantExpr::getSDiv(LHSCV, RHSCV));
     }
   }
