@@ -18,6 +18,7 @@ using namespace llvm::clang;
 
 static const char * const TokNames[] = {
 #define TOK(X) #X,
+#define KEYWORD(X,Y) #X,
 #include "clang/Basic/TokenKinds.def"
   0
 };
