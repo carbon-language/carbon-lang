@@ -1500,6 +1500,54 @@ CastInst *CastInst::create(Instruction::CastOps op, Value *S, const Type *Ty,
   return 0;
 }
 
+CastInst *CastInst::createZExtOrBitCast(Value *S, const Type *Ty, 
+                                        const std::string &Name,
+                                        Instruction *InsertBefore) {
+  if (S->getType()->getPrimitiveSizeInBits() == Ty->getPrimitiveSizeInBits())
+    return create(Instruction::BitCast, S, Ty, Name, InsertBefore);
+  return create(Instruction::ZExt, S, Ty, Name, InsertBefore);
+}
+
+CastInst *CastInst::createZExtOrBitCast(Value *S, const Type *Ty, 
+                                        const std::string &Name,
+                                        BasicBlock *InsertAtEnd) {
+  if (S->getType()->getPrimitiveSizeInBits() == Ty->getPrimitiveSizeInBits())
+    return create(Instruction::BitCast, S, Ty, Name, InsertAtEnd);
+  return create(Instruction::ZExt, S, Ty, Name, InsertAtEnd);
+}
+
+CastInst *CastInst::createSExtOrBitCast(Value *S, const Type *Ty, 
+                                        const std::string &Name,
+                                        Instruction *InsertBefore) {
+  if (S->getType()->getPrimitiveSizeInBits() == Ty->getPrimitiveSizeInBits())
+    return create(Instruction::BitCast, S, Ty, Name, InsertBefore);
+  return create(Instruction::SExt, S, Ty, Name, InsertBefore);
+}
+
+CastInst *CastInst::createSExtOrBitCast(Value *S, const Type *Ty, 
+                                        const std::string &Name,
+                                        BasicBlock *InsertAtEnd) {
+  if (S->getType()->getPrimitiveSizeInBits() == Ty->getPrimitiveSizeInBits())
+    return create(Instruction::BitCast, S, Ty, Name, InsertAtEnd);
+  return create(Instruction::SExt, S, Ty, Name, InsertAtEnd);
+}
+
+CastInst *CastInst::createTruncOrBitCast(Value *S, const Type *Ty,
+                                         const std::string &Name,
+                                         Instruction *InsertBefore) {
+  if (S->getType()->getPrimitiveSizeInBits() == Ty->getPrimitiveSizeInBits())
+    return create(Instruction::BitCast, S, Ty, Name, InsertBefore);
+  return create(Instruction::Trunc, S, Ty, Name, InsertBefore);
+}
+
+CastInst *CastInst::createTruncOrBitCast(Value *S, const Type *Ty,
+                                         const std::string &Name, 
+                                         BasicBlock *InsertAtEnd) {
+  if (S->getType()->getPrimitiveSizeInBits() == Ty->getPrimitiveSizeInBits())
+    return create(Instruction::BitCast, S, Ty, Name, InsertAtEnd);
+  return create(Instruction::Trunc, S, Ty, Name, InsertAtEnd);
+}
+
 // Provide a way to get a "cast" where the cast opcode is inferred from the 
 // types and size of the operand. This, basically, is a parallel of the 
 // logic in the checkCast function below.  This axiom should hold:

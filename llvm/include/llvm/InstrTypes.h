@@ -299,6 +299,54 @@ public:
     BasicBlock *InsertAtEnd  ///< The block to insert the instruction into
   );
 
+  /// @brief Create a ZExt or BitCast cast instruction
+  static CastInst *createZExtOrBitCast(
+    Value *S,                ///< The value to be casted (operand 0)
+    const Type *Ty,          ///< The type to which cast should be made
+    const std::string &Name = "", ///< Name for the instruction
+    Instruction *InsertBefore = 0 ///< Place to insert the instruction
+  );
+
+  /// @brief Create a ZExt or BitCast cast instruction
+  static CastInst *createZExtOrBitCast(
+    Value *S,                ///< The value to be casted (operand 0)
+    const Type *Ty,          ///< The type to which operand is casted
+    const std::string &Name, ///< The name for the instruction
+    BasicBlock *InsertAtEnd  ///< The block to insert the instruction into
+  );
+
+  /// @brief Create a SExt or BitCast cast instruction
+  static CastInst *createSExtOrBitCast(
+    Value *S,                ///< The value to be casted (operand 0)
+    const Type *Ty,          ///< The type to which cast should be made
+    const std::string &Name = "", ///< Name for the instruction
+    Instruction *InsertBefore = 0 ///< Place to insert the instruction
+  );
+
+  /// @brief Create a SExt or BitCast cast instruction
+  static CastInst *createSExtOrBitCast(
+    Value *S,                ///< The value to be casted (operand 0)
+    const Type *Ty,          ///< The type to which operand is casted
+    const std::string &Name, ///< The name for the instruction
+    BasicBlock *InsertAtEnd  ///< The block to insert the instruction into
+  );
+
+  /// @brief Create a Trunc or BitCast cast instruction
+  static CastInst *createTruncOrBitCast(
+    Value *S,                ///< The value to be casted (operand 0)
+    const Type *Ty,          ///< The type to which cast should be made
+    const std::string &Name = "", ///< Name for the instruction
+    Instruction *InsertBefore = 0 ///< Place to insert the instruction
+  );
+
+  /// @brief Create a Trunc or BitCast cast instruction
+  static CastInst *createTruncOrBitCast(
+    Value *S,                ///< The value to be casted (operand 0)
+    const Type *Ty,          ///< The type to which operand is casted
+    const std::string &Name, ///< The name for the instruction
+    BasicBlock *InsertAtEnd  ///< The block to insert the instruction into
+  );
+
   /// Returns the opcode necessary to cast Val into Ty using usual casting
   /// rules.
   static Instruction::CastOps getCastOpcode(

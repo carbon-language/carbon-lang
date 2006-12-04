@@ -1534,6 +1534,24 @@ Constant *ConstantExpr::getCast(unsigned oc, Constant *C, const Type *Ty) {
   return 0;
 }
 
+Constant *ConstantExpr::getZExtOrBitCast(Constant *C, const Type *Ty) {
+  if (C->getType()->getPrimitiveSizeInBits() == Ty->getPrimitiveSizeInBits())
+    return getCast(Instruction::BitCast, C, Ty);
+  return getCast(Instruction::ZExt, C, Ty);
+}
+
+Constant *ConstantExpr::getSExtOrBitCast(Constant *C, const Type *Ty) {
+  if (C->getType()->getPrimitiveSizeInBits() == Ty->getPrimitiveSizeInBits())
+    return getCast(Instruction::BitCast, C, Ty);
+  return getCast(Instruction::SExt, C, Ty);
+}
+
+Constant *ConstantExpr::getTruncOrBitCast(Constant *C, const Type *Ty) {
+  if (C->getType()->getPrimitiveSizeInBits() == Ty->getPrimitiveSizeInBits())
+    return getCast(Instruction::BitCast, C, Ty);
+  return getCast(Instruction::Trunc, C, Ty);
+}
+
 Constant *ConstantExpr::getTrunc(Constant *C, const Type *Ty) {
   assert(C->getType()->isInteger() && "Trunc operand must be integer");
   assert(Ty->isIntegral() && "Trunc produces only integral");
@@ -1616,14 +1634,14 @@ Constant *ConstantExpr::getBitCast(Constant *C, const Type *DstTy) {
   // can't cast pointers to anything but pointers.
   const Type *SrcTy = C->getType();
   assert((isa<PointerType>(SrcTy) == isa<PointerType>(DstTy)) &&
-         "Bitcast cannot cast pointer to non-pointer and vice versa");
+         "BitCast cannot cast pointer to non-pointer and vice versa");
 
   // Now we know we're not dealing with mismatched pointer casts (ptr->nonptr
   // or nonptr->ptr). For all the other types, the cast is okay if source and 
   // destination bit widths are identical.
   unsigned SrcBitSize = SrcTy->getPrimitiveSizeInBits();
   unsigned DstBitSize = DstTy->getPrimitiveSizeInBits();
-  assert(SrcBitSize == DstBitSize && "Bitcast requies types of same width");
+  assert(SrcBitSize == DstBitSize && "BitCast requies types of same width");
   return getFoldedCast(Instruction::BitCast, C, DstTy);
 }
 

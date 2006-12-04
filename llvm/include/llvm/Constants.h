@@ -541,6 +541,24 @@ public:
     const Type *Ty ///< The type to which the constant is converted
   );
 
+  // @brief Create a ZExt or BitCast cast constant expression
+  static Constant *getZExtOrBitCast(
+    Constant *C,   ///< The constant to zext or bitcast
+    const Type *Ty ///< The type to zext or bitcast C to
+  );
+
+  // @brief Create a SExt or BitCast cast constant expression 
+  static Constant *getSExtOrBitCast(
+    Constant *C,   ///< The constant to zext or bitcast
+    const Type *Ty ///< The type to zext or bitcast C to
+  );
+
+  // @brief Create a Trunc or BitCast cast constant expression
+  static Constant *getTruncOrBitCast(
+    Constant *C,   ///< The constant to zext or bitcast
+    const Type *Ty ///< The type to zext or bitcast C to
+  );
+
   // This method uses the CastInst::getCastOpcode method to infer the
   // cast opcode to use. 
   // @brief Get a ConstantExpr Conversion operator that casts C to Ty
