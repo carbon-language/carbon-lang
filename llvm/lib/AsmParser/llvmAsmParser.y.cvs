@@ -1127,7 +1127,7 @@ CastOps      : TRUNC | ZEXT | SEXT | FPTRUNC | FPEXT | BITCAST |
                UITOFP | SITOFP | FPTOUI | FPTOSI | INTTOPTR | PTRTOINT;
 ShiftOps     : SHL | LSHR | ASHR;
 IPredicates  
-  : EQ   { $$ = ICmpInst::ICMP_EQ; } | NE   { $$ = ICmpInst::ICMP_NE; }
+  : EQ   { $$ = ICmpInst::ICMP_EQ; }  | NE   { $$ = ICmpInst::ICMP_NE; }
   | SLT  { $$ = ICmpInst::ICMP_SLT; } | SGT  { $$ = ICmpInst::ICMP_SGT; }
   | SLE  { $$ = ICmpInst::ICMP_SLE; } | SGE  { $$ = ICmpInst::ICMP_SGE; }
   | ULT  { $$ = ICmpInst::ICMP_ULT; } | UGT  { $$ = ICmpInst::ICMP_UGT; }
@@ -1706,15 +1706,15 @@ ConstExpr: CastOps '(' ConstVal TO Types ')' {
     $$ = ConstantExpr::get($1, $3, $5);
     CHECK_FOR_ERROR
   }
-  | ICMP '(' IPredicates ',' ConstVal ',' ConstVal ')' {
-    if ($5->getType() != $7->getType())
+  | ICMP IPredicates '(' ConstVal ',' ConstVal ')' {
+    if ($4->getType() != $6->getType())
       GEN_ERROR("icmp operand types must match!");
-    $$ = ConstantExpr::getICmp($3, $5, $7);
+    $$ = ConstantExpr::getICmp($2, $4, $6);
   }
-  | FCMP '(' FPredicates ',' ConstVal ',' ConstVal ')' {
-    if ($5->getType() != $7->getType())
+  | FCMP FPredicates '(' ConstVal ',' ConstVal ')' {
+    if ($4->getType() != $6->getType())
       GEN_ERROR("fcmp operand types must match!");
-    $$ = ConstantExpr::getFCmp($3, $5, $7);
+    $$ = ConstantExpr::getFCmp($2, $4, $6);
   }
   | ShiftOps '(' ConstVal ',' ConstVal ')' {
     if ($5->getType() != Type::UByteTy)
