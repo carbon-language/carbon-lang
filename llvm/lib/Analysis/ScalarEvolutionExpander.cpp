@@ -15,6 +15,7 @@
 
 #include "llvm/Analysis/LoopInfo.h"
 #include "llvm/Analysis/ScalarEvolutionExpander.h"
+
 using namespace llvm;
 
 /// InsertCastOfTo - Insert a cast of V to the specified type, doing what
@@ -38,8 +39,8 @@ Value *SCEVExpander::InsertCastOfTo(Value *V, const Type *Ty) {
           return CI;
         }
     }
-    return CastInst::createInferredCast(V, Ty, V->getName(),
-                                       A->getParent()->getEntryBlock().begin());
+    return CastInst::createInferredCast(
+        V, Ty, V->getName(), A->getParent()->getEntryBlock().begin());
   }
     
   Instruction *I = cast<Instruction>(V);
