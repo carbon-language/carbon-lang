@@ -4,7 +4,7 @@
 
 implementation   ; Functions:
 
-declare {  }* %llvm.dbg.stoppoint({  }*, uint, uint, %lldb.compile_unit*)
+declare void %llvm.dbg.stoppoint(uint, uint, %lldb.compile_unit*)
 
 void %rb_raise(int, ...) {
 entry:
@@ -14,6 +14,6 @@ no_exit.i:		; preds = %entry
 	ret void
 
 strlen.exit:		; preds = %entry
-	%dbg.tmp.1.i2 = call {  }* %llvm.dbg.stoppoint( {  }* null, uint 4358, uint 0, %lldb.compile_unit* %d.compile_unit7 )		; <{  }*> [#uses=0]
+	call void %llvm.dbg.stoppoint(uint 4358, uint 0, %lldb.compile_unit* %d.compile_unit7 )		; <{  }*> [#uses=0]
 	unreachable
 }
