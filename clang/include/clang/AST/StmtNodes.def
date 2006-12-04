@@ -43,4 +43,7 @@ STMT(CastExpr             , Expr)
 STMT(BinaryOperator       , Expr)
 STMT(ConditionalOperator  , Expr)
 
+// C++ Expressions.
+STMT(CXXCastExpr          , CastExpr)
+
 #undef STMT

@@ -13,7 +13,7 @@
 
 #include "clang/AST/StmtVisitor.h"
 #include "clang/AST/Decl.h"
-#include "clang/AST/Expr.h"
+#include "clang/AST/ExprCXX.h"
 #include "clang/Lex/IdentifierTable.h"
 #include "llvm/Support/Compiler.h"
 #include <iostream>
@@ -293,6 +293,23 @@ void StmtPrinter::VisitCastExpr(CastExpr *Node) {
   Node->getDestType().getAsString(TypeStr);
   OS << TypeStr << ")";
   PrintExpr(Node->getSubExpr());
+}
+void StmtPrinter::VisitCXXCastExpr(CXXCastExpr *Node) {
+  switch (Node->getOpcode()) {
+  default:
+    assert(0 && "Not a C++ cast expression");
+    abort();
+  case CXXCastExpr::ConstCast:       OS << "const_cast<";       break;
+  case CXXCastExpr::DynamicCast:     OS << "dynamic_cast<";     break;
+  case CXXCastExpr::ReinterpretCast: OS << "reinterpret_cast<"; break;
+  case CXXCastExpr::StaticCast:      OS << "static_cast<";      break;
+  }
+
+  std::string TypeStr;
+  Node->getDestType().getAsString(TypeStr);
+  OS << TypeStr << ">(";
+  PrintExpr(Node->getSubExpr());
+  OS << ")";
 }
 void StmtPrinter::VisitBinaryOperator(BinaryOperator *Node) {
   PrintExpr(Node->getLHS());

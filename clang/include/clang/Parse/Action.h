@@ -305,6 +305,15 @@ public:
                                         ExprTy *Cond, ExprTy *LHS, ExprTy *RHS){
     return 0;
   }
+  
+  /// ParseCXXCasts - Parse {dynamic,static,reinterpret,const}_cast's.
+  virtual ExprResult ParseCXXCasts(SourceLocation OpLoc, tok::TokenKind Kind,
+                                   SourceLocation LAngleBracketLoc, TypeTy *Ty,
+                                   SourceLocation RAngleBracketLoc,
+                                   SourceLocation LParenLoc, ExprTy *Op,
+                                   SourceLocation RParenLoc) {
+    return 0;
+  }
 };
 
 /// MinimalAction - Minimal actions are used by light-weight clients of the

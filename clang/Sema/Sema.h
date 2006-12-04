@@ -177,6 +177,13 @@ public:
   virtual ExprResult ParseConditionalOp(SourceLocation QuestionLoc, 
                                         SourceLocation ColonLoc,
                                         ExprTy *Cond, ExprTy *LHS, ExprTy *RHS);
+
+  /// ParseCXXCasts - Parse {dynamic,static,reinterpret,const}_cast's.
+  virtual ExprResult ParseCXXCasts(SourceLocation OpLoc, tok::TokenKind Kind,
+                                   SourceLocation LAngleBracketLoc, TypeTy *Ty,
+                                   SourceLocation RAngleBracketLoc,
+                                   SourceLocation LParenLoc, ExprTy *E,
+                                   SourceLocation RParenLoc);
 };
 
 

@@ -559,6 +559,12 @@ Parser::ExprResult Parser::ParseCastExpression(bool isUnaryExpression) {
       
     return Res;
   }
+  case tok::kw_const_cast:
+  case tok::kw_dynamic_cast:
+  case tok::kw_reinterpret_cast:
+  case tok::kw_static_cast:
+    Res = ParseCXXCasts();
+    return Res;
   default:
     Diag(Tok, diag::err_expected_expression);
     return ExprResult(true);
@@ -825,7 +831,6 @@ Parser::ExprResult Parser::ParseBuiltinPrimaryExpression() {
   return ParsePostfixExpressionSuffix(Res);
 }
 
-
 /// ParseParenExpression - This parses the unit that starts with a '(' token,
 /// based on what is allowed by ExprType.  The actual thing parsed is returned
 /// in ExprType.
@@ -921,4 +926,3 @@ Parser::ExprResult Parser::ParseStringLiteralExpression() {
   // Pass the set of string tokens, ready for concatenation, to the actions.
   return Actions.ParseStringExpr(&StringToks[0], StringToks.size());
 }
-

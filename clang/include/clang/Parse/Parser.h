@@ -169,7 +169,6 @@ private:
     return L;
   }
   
-  
   /// ConsumeStringToken - Consume the current 'peek token', lexing a new one
   /// and returning the token kind.  This method is specific to strings, as it
   /// handles string literal concatenation, as per C99 5.1.1.2, translation
@@ -283,13 +282,20 @@ private:
                                   SourceLocation &RParenLoc);
   
   ExprResult ParseSimpleParenExpression() {  // Parse SimpleExpr only.
+    SourceLocation RParenLoc;
+    return ParseSimpleParenExpression(RParenLoc);
+  }
+  ExprResult ParseSimpleParenExpression(SourceLocation &RParenLoc) {
     ParenParseOption Op = SimpleExpr;
     TypeTy *CastTy;
-    SourceLocation RParenLoc;
     return ParseParenExpression(Op, CastTy, RParenLoc);
   }
   ExprResult ParseStringLiteralExpression();
   
+  //===--------------------------------------------------------------------===//
+  // C++ 5.2p1: C++ Casts
+  ExprResult ParseCXXCasts();
+
   //===--------------------------------------------------------------------===//
   // C99 6.7.8: Initialization.
   ExprResult ParseInitializer();

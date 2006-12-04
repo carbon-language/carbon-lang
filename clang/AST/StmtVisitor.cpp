@@ -12,7 +12,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "clang/AST/StmtVisitor.h"
-#include "clang/AST/Expr.h"
+#include "clang/AST/ExprCXX.h"
 using namespace llvm;
 using namespace clang;
 

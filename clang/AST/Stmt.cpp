@@ -12,7 +12,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "clang/AST/Stmt.h"
-#include "clang/AST/Expr.h"
+#include "clang/AST/ExprCXX.h"
 #include "clang/AST/StmtVisitor.h"
 using namespace llvm;
 using namespace clang;
@@ -23,4 +23,3 @@ void CLASS::visit(StmtVisitor &V) { return V.Visit##CLASS(this); }
 
 STMT(Stmt, )
 #include "clang/AST/StmtNodes.def"
-

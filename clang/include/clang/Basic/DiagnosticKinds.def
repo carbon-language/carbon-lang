@@ -313,6 +313,8 @@ DIAG(err_expected_rsquare, ERROR,
      "expected ']'")
 DIAG(err_expected_rbrace, ERROR,
      "expected '}'")
+DIAG(err_expected_greater, ERROR,
+     "expected '>'")
 DIAG(err_expected_semi_decl_list, ERROR,
      "expected ';' at end of declaration list")
 DIAG(err_expected_fn_body, ERROR,
@@ -323,6 +325,8 @@ DIAG(err_expected_statement, ERROR,
      "expected statement")
 DIAG(err_expected_lparen_after, ERROR,
      "expected '(' after '%s'")
+DIAG(err_expected_less_after, ERROR,
+     "expected '<' after '%s'")
 DIAG(err_expected_comma, ERROR,
      "expected ','")
 DIAG(err_expected_lbrace_in_compound_literal, ERROR,
