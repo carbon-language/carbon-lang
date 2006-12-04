@@ -170,7 +170,7 @@ PPCTargetLowering::PPCTargetLowering(PPCTargetMachine &TM)
   setOperationAction(ISD::VACOPY            , MVT::Other, Expand);
   setOperationAction(ISD::VAEND             , MVT::Other, Expand);
   setOperationAction(ISD::STACKSAVE         , MVT::Other, Expand); 
-  setOperationAction(ISD::STACKRESTORE      , MVT::Other, Expand);
+  setOperationAction(ISD::STACKRESTORE      , MVT::Other, Custom);
   setOperationAction(ISD::DYNAMIC_STACKALLOC, MVT::i32  , Custom);
   setOperationAction(ISD::DYNAMIC_STACKALLOC, MVT::i64  , Custom);
 
@@ -1606,6 +1606,32 @@ static SDOperand LowerRET(SDOperand Op, SelectionDAG &DAG) {
   return DAG.getNode(PPCISD::RET_FLAG, MVT::Other, Copy, Copy.getValue(1));
 }
 
+static SDOperand LowerSTACKRESTORE(SDOperand Op, SelectionDAG &DAG,
+                                   const PPCSubtarget &Subtarget) {
+  // When we pop the dynamic allocation we need to restore the SP link.
+  
+  // Get the corect type for pointers.
+  MVT::ValueType PtrVT = DAG.getTargetLoweringInfo().getPointerTy();
+
+  // Construct the stack pointer operand.
+  bool IsPPC64 = Subtarget.isPPC64();
+  unsigned SP = IsPPC64 ? PPC::X1 : PPC::R1;
+  SDOperand StackPtr = DAG.getRegister(SP, PtrVT);
+
+  // Get the operands for the STACKRESTORE.
+  SDOperand Chain = Op.getOperand(0);
+  SDOperand SaveSP = Op.getOperand(1);
+  
+  // Load the old link SP.
+  SDOperand LoadLinkSP = DAG.getLoad(PtrVT, Chain, StackPtr, NULL, 0);
+  
+  // Restore the stack pointer.
+  Chain = DAG.getCopyToReg(LoadLinkSP.getValue(1), SP, SaveSP);
+  
+  // Store the old link SP.
+  return DAG.getStore(Chain, LoadLinkSP, StackPtr, NULL, 0);
+}
+
 static SDOperand LowerDYNAMIC_STACKALLOC(SDOperand Op, SelectionDAG &DAG,
                                          const PPCSubtarget &Subtarget) {
   MachineFunction &MF = DAG.getMachineFunction();
@@ -2587,6 +2613,7 @@ SDOperand PPCTargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
       return LowerFORMAL_ARGUMENTS(Op, DAG, VarArgsFrameIndex);
   case ISD::CALL:               return LowerCALL(Op, DAG);
   case ISD::RET:                return LowerRET(Op, DAG);
+  case ISD::STACKRESTORE:       return LowerSTACKRESTORE(Op, DAG, PPCSubTarget);
   case ISD::DYNAMIC_STACKALLOC: return LowerDYNAMIC_STACKALLOC(Op, DAG,
                                                                PPCSubTarget);
     
