@@ -442,6 +442,10 @@ bool ConstantExpr::isCast() const {
   return Instruction::isCast(getOpcode());
 }
 
+bool ConstantExpr::isCompare() const {
+  return getOpcode() == Instruction::ICmp || getOpcode() == Instruction::FCmp;
+}
+
 /// ConstantExpr::get* - Return some common constants without having to
 /// specify the full Instruction::OPCODE identifier.
 ///
@@ -509,23 +513,6 @@ Constant *ConstantExpr::getSetLE(Constant *C1, Constant *C2) {
 }
 Constant *ConstantExpr::getSetGE(Constant *C1, Constant *C2) {
   return get(Instruction::SetGE, C1, C2);
-}
-Constant *
-ConstantExpr::getICmp(unsigned short pred, Constant* LHS, Constant* RHS) {
-  assert(LHS->getType() == RHS->getType());
-  assert(pred >= ICmpInst::FIRST_ICMP_PREDICATE && 
-         pred <= ICmpInst::LAST_ICMP_PREDICATE && "Invalid ICmp Predicate");
-  CompareConstantExpr *Result = 
-    new CompareConstantExpr(Instruction::ICmp, pred, LHS, RHS);
-  return Result;
-}
-Constant *
-ConstantExpr::getFCmp(unsigned short pred, Constant* LHS, Constant* RHS) {
-  assert(LHS->getType() == RHS->getType());
-  assert(pred <= FCmpInst::LAST_FCMP_PREDICATE && "Invalid ICmp Predicate");
-  CompareConstantExpr *Result = 
-    new CompareConstantExpr(Instruction::FCmp, pred, LHS, RHS);
-  return Result;
 }
 unsigned ConstantExpr::getPredicate() const {
   assert(getOpcode() == Instruction::FCmp || getOpcode() == Instruction::ICmp);
@@ -1370,41 +1357,68 @@ void UndefValue::destroyConstant() {
 
 //---- ConstantExpr::get() implementations...
 //
-typedef std::pair<unsigned, std::vector<Constant*> > ExprMapKeyType;
+struct ExprMapKeyType {
+  explicit ExprMapKeyType(unsigned opc, std::vector<Constant*> ops,
+      unsigned short pred = 0) : opcode(opc), operands(ops), predicate(pred) { }
+  unsigned opcode;
+  std::vector<Constant*> operands;
+  unsigned short predicate;
+  bool operator==(const ExprMapKeyType& that) const {
+    return this->opcode == that.opcode &&
+           this->predicate == that.predicate &&
+           this->operands == that.operands;
+  }
+  bool operator<(const ExprMapKeyType & that) const {
+    return this->opcode < that.opcode ||
+      (this->opcode == that.opcode && this->predicate < that.predicate) ||
+      (this->opcode == that.opcode && this->predicate == that.predicate &&
+       this->operands < that.operands);
+  }
+
+  bool operator!=(const ExprMapKeyType& that) const {
+    return !(*this == that);
+  }
+};
 
 namespace llvm {
   template<>
   struct ConstantCreator<ConstantExpr, Type, ExprMapKeyType> {
     static ConstantExpr *create(const Type *Ty, const ExprMapKeyType &V,
         unsigned short pred = 0) {
-      if (Instruction::isCast(V.first))
-        return new UnaryConstantExpr(V.first, V.second[0], Ty);
-      if ((V.first >= Instruction::BinaryOpsBegin &&
-           V.first < Instruction::BinaryOpsEnd) ||
-          V.first == Instruction::Shl           || 
-          V.first == Instruction::LShr          ||
-          V.first == Instruction::AShr)
-        return new BinaryConstantExpr(V.first, V.second[0], V.second[1]);
-      if (V.first == Instruction::Select)
-        return new SelectConstantExpr(V.second[0], V.second[1], V.second[2]);
-      if (V.first == Instruction::ExtractElement)
-        return new ExtractElementConstantExpr(V.second[0], V.second[1]);
-      if (V.first == Instruction::InsertElement)
-        return new InsertElementConstantExpr(V.second[0], V.second[1],
-                                             V.second[2]);
-      if (V.first == Instruction::ShuffleVector)
-        return new ShuffleVectorConstantExpr(V.second[0], V.second[1],
-                                             V.second[2]);
-      if (V.first == Instruction::ICmp)
-        return new CompareConstantExpr(Instruction::ICmp, pred, 
-                                       V.second[0], V.second[1]);
-      if (V.first == Instruction::FCmp) 
-        return new CompareConstantExpr(Instruction::FCmp, pred, 
-                                       V.second[0], V.second[1]);
+      if (Instruction::isCast(V.opcode))
+        return new UnaryConstantExpr(V.opcode, V.operands[0], Ty);
+      if ((V.opcode >= Instruction::BinaryOpsBegin &&
+           V.opcode < Instruction::BinaryOpsEnd) ||
+          V.opcode == Instruction::Shl           || 
+          V.opcode == Instruction::LShr          ||
+          V.opcode == Instruction::AShr)
+        return new BinaryConstantExpr(V.opcode, V.operands[0], V.operands[1]);
+      if (V.opcode == Instruction::Select)
+        return new SelectConstantExpr(V.operands[0], V.operands[1], 
+                                      V.operands[2]);
+      if (V.opcode == Instruction::ExtractElement)
+        return new ExtractElementConstantExpr(V.operands[0], V.operands[1]);
+      if (V.opcode == Instruction::InsertElement)
+        return new InsertElementConstantExpr(V.operands[0], V.operands[1],
+                                             V.operands[2]);
+      if (V.opcode == Instruction::ShuffleVector)
+        return new ShuffleVectorConstantExpr(V.operands[0], V.operands[1],
+                                             V.operands[2]);
+      if (V.opcode == Instruction::GetElementPtr) {
+        std::vector<Constant*> IdxList(V.operands.begin()+1, V.operands.end());
+        return new GetElementPtrConstantExpr(V.operands[0], IdxList, Ty);
+      }
 
-      assert(V.first == Instruction::GetElementPtr && "Invalid ConstantExpr!");
-      std::vector<Constant*> IdxList(V.second.begin()+1, V.second.end());
-      return new GetElementPtrConstantExpr(V.second[0], IdxList, Ty);
+      // The compare instructions are weird. We have to encode the predicate
+      // value and it is combined with the instruction opcode by multiplying
+      // the opcode by one hundred. We must decode this to get the predicate.
+      if (V.opcode == Instruction::ICmp)
+        return new CompareConstantExpr(Instruction::ICmp, V.predicate, 
+                                       V.operands[0], V.operands[1]);
+      if (V.opcode == Instruction::FCmp) 
+        return new CompareConstantExpr(Instruction::FCmp, V.predicate, 
+                                       V.operands[0], V.operands[1]);
+      assert(0 && "Invalid ConstantExpr!");
     }
   };
 
@@ -1465,7 +1479,8 @@ static ExprMapKeyType getValType(ConstantExpr *CE) {
   Operands.reserve(CE->getNumOperands());
   for (unsigned i = 0, e = CE->getNumOperands(); i != e; ++i)
     Operands.push_back(cast<Constant>(CE->getOperand(i)));
-  return ExprMapKeyType(CE->getOpcode(), Operands);
+  return ExprMapKeyType(CE->getOpcode(), Operands, 
+      CE->isCompare() ? CE->getPredicate() : 0);
 }
 
 static ManagedStatic<ValueMap<ExprMapKeyType, Type,
@@ -1482,7 +1497,7 @@ static inline Constant *getFoldedCast(
 
   // Look up the constant in the table first to ensure uniqueness
   std::vector<Constant*> argVec(1, C);
-  ExprMapKeyType Key = std::make_pair(opc, argVec);
+  ExprMapKeyType Key(opc, argVec);
   return ExprConstants->getOrCreate(Ty, Key);
 }
 
@@ -1627,10 +1642,15 @@ Constant *ConstantExpr::getPtrPtrFromArrayPtr(Constant *C) {
 }
 
 Constant *ConstantExpr::getTy(const Type *ReqTy, unsigned Opcode,
-                              Constant *C1, Constant *C2) {
+                              Constant *C1, Constant *C2, unsigned short pred) {
   if (Opcode == Instruction::Shl || Opcode == Instruction::LShr ||
       Opcode == Instruction::AShr)
     return getShiftTy(ReqTy, Opcode, C1, C2);
+  if (Opcode == Instruction::ICmp)
+    return getICmp(pred, C1, C2);
+  if (Opcode == Instruction::FCmp)
+    return getFCmp(pred, C1, C2);
+
   // Check the operands for consistency first
   assert(Opcode >= Instruction::BinaryOpsBegin &&
          Opcode <  Instruction::BinaryOpsEnd   &&
@@ -1644,11 +1664,11 @@ Constant *ConstantExpr::getTy(const Type *ReqTy, unsigned Opcode,
       return FC;          // Fold a few common cases...
 
   std::vector<Constant*> argVec(1, C1); argVec.push_back(C2);
-  ExprMapKeyType Key = std::make_pair(Opcode, argVec);
+  ExprMapKeyType Key(Opcode, argVec, pred);
   return ExprConstants->getOrCreate(ReqTy, Key);
 }
 
-Constant *ConstantExpr::get(unsigned Opcode, Constant *C1, Constant *C2) {
+Constant *ConstantExpr::get(unsigned Opcode, Constant *C1, Constant *C2, unsigned short pred) {
 #ifndef NDEBUG
   switch (Opcode) {
   case Instruction::Add: 
@@ -1696,6 +1716,10 @@ Constant *ConstantExpr::get(unsigned Opcode, Constant *C1, Constant *C2) {
   case Instruction::SetGE: case Instruction::SetEQ: case Instruction::SetNE:
     assert(C1->getType() == C2->getType() && "Op types should be identical!");
     break;
+  case Instruction::FCmp:
+  case Instruction::ICmp:
+    assert(C1->getType() == C2->getType() && "Op types should be identical!");
+    break;
   case Instruction::Shl:
   case Instruction::LShr:
   case Instruction::AShr:
@@ -1709,9 +1733,9 @@ Constant *ConstantExpr::get(unsigned Opcode, Constant *C1, Constant *C2) {
 #endif
 
   if (Instruction::isComparison(Opcode))
-    return getTy(Type::BoolTy, Opcode, C1, C2);
+    return getTy(Type::BoolTy, Opcode, C1, C2, pred);
   else
-    return getTy(C1->getType(), Opcode, C1, C2);
+    return getTy(C1->getType(), Opcode, C1, C2, pred);
 }
 
 Constant *ConstantExpr::getSelectTy(const Type *ReqTy, Constant *C,
@@ -1727,7 +1751,7 @@ Constant *ConstantExpr::getSelectTy(const Type *ReqTy, Constant *C,
   std::vector<Constant*> argVec(3, C);
   argVec[1] = V1;
   argVec[2] = V2;
-  ExprMapKeyType Key = std::make_pair(Instruction::Select, argVec);
+  ExprMapKeyType Key(Instruction::Select, argVec);
   return ExprConstants->getOrCreate(ReqTy, Key);
 }
 
@@ -1747,7 +1771,7 @@ Constant *ConstantExpr::getShiftTy(const Type *ReqTy, unsigned Opcode,
 
   // Look up the constant in the table first to ensure uniqueness
   std::vector<Constant*> argVec(1, C1); argVec.push_back(C2);
-  ExprMapKeyType Key = std::make_pair(Opcode, argVec);
+  ExprMapKeyType Key(Opcode, argVec);
   return ExprConstants->getOrCreate(ReqTy, Key);
 }
 
@@ -1768,7 +1792,7 @@ Constant *ConstantExpr::getGetElementPtrTy(const Type *ReqTy, Constant *C,
   ArgVec.push_back(C);
   for (unsigned i = 0, e = IdxList.size(); i != e; ++i)
     ArgVec.push_back(cast<Constant>(IdxList[i]));
-  const ExprMapKeyType &Key = std::make_pair(Instruction::GetElementPtr,ArgVec);
+  const ExprMapKeyType Key(Instruction::GetElementPtr,ArgVec);
   return ExprConstants->getOrCreate(ReqTy, Key);
 }
 
@@ -1792,6 +1816,41 @@ Constant *ConstantExpr::getGetElementPtr(Constant *C,
   return getGetElementPtrTy(PointerType::get(Ty), C, IdxList);
 }
 
+Constant *
+ConstantExpr::getICmp(unsigned short pred, Constant* LHS, Constant* RHS) {
+  assert(LHS->getType() == RHS->getType());
+  assert(pred >= ICmpInst::FIRST_ICMP_PREDICATE && 
+         pred <= ICmpInst::LAST_ICMP_PREDICATE && "Invalid ICmp Predicate");
+
+  if (Constant *FC = ConstantFoldCompare(Instruction::ICmp, LHS, RHS, pred))
+    return FC;          // Fold a few common cases...
+
+  // Look up the constant in the table first to ensure uniqueness
+  std::vector<Constant*> ArgVec;
+  ArgVec.push_back(LHS);
+  ArgVec.push_back(RHS);
+  // Fake up an opcode value that encodes both the opcode and predicate
+  const ExprMapKeyType Key(Instruction::ICmp, ArgVec, pred);
+  return ExprConstants->getOrCreate(Type::BoolTy, Key);
+}
+
+Constant *
+ConstantExpr::getFCmp(unsigned short pred, Constant* LHS, Constant* RHS) {
+  assert(LHS->getType() == RHS->getType());
+  assert(pred <= FCmpInst::LAST_FCMP_PREDICATE && "Invalid FCmp Predicate");
+
+  if (Constant *FC = ConstantFoldCompare(Instruction::FCmp, LHS, RHS, pred))
+    return FC;          // Fold a few common cases...
+
+  // Look up the constant in the table first to ensure uniqueness
+  std::vector<Constant*> ArgVec;
+  ArgVec.push_back(LHS);
+  ArgVec.push_back(RHS);
+  // Fake up an opcode value that encodes both the opcode and predicate
+  const ExprMapKeyType Key(Instruction::FCmp, ArgVec, pred);
+  return ExprConstants->getOrCreate(Type::BoolTy, Key);
+}
+
 Constant *ConstantExpr::getExtractElementTy(const Type *ReqTy, Constant *Val,
                                             Constant *Idx) {
   if (Constant *FC = ConstantFoldExtractElementInstruction(Val, Idx))
@@ -1799,7 +1858,7 @@ Constant *ConstantExpr::getExtractElementTy(const Type *ReqTy, Constant *Val,
   // Look up the constant in the table first to ensure uniqueness
   std::vector<Constant*> ArgVec(1, Val);
   ArgVec.push_back(Idx);
-  const ExprMapKeyType &Key = std::make_pair(Instruction::ExtractElement,ArgVec);
+  const ExprMapKeyType Key(Instruction::ExtractElement,ArgVec);
   return ExprConstants->getOrCreate(ReqTy, Key);
 }
 
@@ -1820,7 +1879,7 @@ Constant *ConstantExpr::getInsertElementTy(const Type *ReqTy, Constant *Val,
   std::vector<Constant*> ArgVec(1, Val);
   ArgVec.push_back(Elt);
   ArgVec.push_back(Idx);
-  const ExprMapKeyType &Key = std::make_pair(Instruction::InsertElement,ArgVec);
+  const ExprMapKeyType Key(Instruction::InsertElement,ArgVec);
   return ExprConstants->getOrCreate(ReqTy, Key);
 }
 
@@ -1844,7 +1903,7 @@ Constant *ConstantExpr::getShuffleVectorTy(const Type *ReqTy, Constant *V1,
   std::vector<Constant*> ArgVec(1, V1);
   ArgVec.push_back(V2);
   ArgVec.push_back(Mask);
-  const ExprMapKeyType &Key = std::make_pair(Instruction::ShuffleVector,ArgVec);
+  const ExprMapKeyType Key(Instruction::ShuffleVector,ArgVec);
   return ExprConstants->getOrCreate(ReqTy, Key);
 }
 
@@ -2071,6 +2130,15 @@ void ConstantExpr::replaceUsesOfWithOnConstant(Value *From, Value *ToV,
     if (C2 == From) C2 = To;
     if (C3 == From) C3 = To;
     Replacement = ConstantExpr::getShuffleVector(C1, C2, C3);
+  } else if (isCompare()) {
+    Constant *C1 = getOperand(0);
+    Constant *C2 = getOperand(1);
+    if (C1 == From) C1 = To;
+    if (C2 == From) C2 = To;
+    if (getOpcode() == Instruction::ICmp)
+      Replacement = ConstantExpr::getICmp(getPredicate(), C1, C2);
+    else
+      Replacement = ConstantExpr::getFCmp(getPredicate(), C1, C2);
   } else if (getNumOperands() == 2) {
     Constant *C1 = getOperand(0);
     Constant *C2 = getOperand(1);
