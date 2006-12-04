@@ -1660,14 +1660,10 @@ Constant *ConstantExpr::getPtrPtrFromArrayPtr(Constant *C) {
 }
 
 Constant *ConstantExpr::getTy(const Type *ReqTy, unsigned Opcode,
-                              Constant *C1, Constant *C2, unsigned short pred) {
+                              Constant *C1, Constant *C2) {
   if (Opcode == Instruction::Shl || Opcode == Instruction::LShr ||
       Opcode == Instruction::AShr)
     return getShiftTy(ReqTy, Opcode, C1, C2);
-  if (Opcode == Instruction::ICmp)
-    return getICmp(pred, C1, C2);
-  if (Opcode == Instruction::FCmp)
-    return getFCmp(pred, C1, C2);
 
   // Check the operands for consistency first
   assert(Opcode >= Instruction::BinaryOpsBegin &&
@@ -1682,11 +1678,18 @@ Constant *ConstantExpr::getTy(const Type *ReqTy, unsigned Opcode,
       return FC;          // Fold a few common cases...
 
   std::vector<Constant*> argVec(1, C1); argVec.push_back(C2);
-  ExprMapKeyType Key(Opcode, argVec, pred);
+  ExprMapKeyType Key(Opcode, argVec);
   return ExprConstants->getOrCreate(ReqTy, Key);
 }
 
-Constant *ConstantExpr::get(unsigned Opcode, Constant *C1, Constant *C2, unsigned short pred) {
+Constant *ConstantExpr::getCompareTy(unsigned Opcode, unsigned short predicate,
+                                     Constant *C1, Constant *C2) {
+  if (Opcode == Instruction::ICmp)
+    return getICmp(predicate, C1, C2);
+  return getFCmp(predicate, C1, C2);
+}
+
+Constant *ConstantExpr::get(unsigned Opcode, Constant *C1, Constant *C2) {
 #ifndef NDEBUG
   switch (Opcode) {
   case Instruction::Add: 
@@ -1734,10 +1737,6 @@ Constant *ConstantExpr::get(unsigned Opcode, Constant *C1, Constant *C2, unsigne
   case Instruction::SetGE: case Instruction::SetEQ: case Instruction::SetNE:
     assert(C1->getType() == C2->getType() && "Op types should be identical!");
     break;
-  case Instruction::FCmp:
-  case Instruction::ICmp:
-    assert(C1->getType() == C2->getType() && "Op types should be identical!");
-    break;
   case Instruction::Shl:
   case Instruction::LShr:
   case Instruction::AShr:
@@ -1750,10 +1749,13 @@ Constant *ConstantExpr::get(unsigned Opcode, Constant *C1, Constant *C2, unsigne
   }
 #endif
 
-  if (Instruction::isComparison(Opcode))
-    return getTy(Type::BoolTy, Opcode, C1, C2, pred);
-  else
-    return getTy(C1->getType(), Opcode, C1, C2, pred);
+  return getTy(C1->getType(), Opcode, C1, C2);
+}
+
+Constant *ConstantExpr::getCompare(unsigned Opcode, unsigned short pred, 
+                            Constant *C1, Constant *C2) {
+  assert(C1->getType() == C2->getType() && "Op types should be identical!");
+  return getCompareTy(Opcode, pred, C1, C2);
 }
 
 Constant *ConstantExpr::getSelectTy(const Type *ReqTy, Constant *C,
@@ -1792,7 +1794,6 @@ Constant *ConstantExpr::getShiftTy(const Type *ReqTy, unsigned Opcode,
   ExprMapKeyType Key(Opcode, argVec);
   return ExprConstants->getOrCreate(ReqTy, Key);
 }
-
 
 Constant *ConstantExpr::getGetElementPtrTy(const Type *ReqTy, Constant *C,
                                            const std::vector<Value*> &IdxList) {
