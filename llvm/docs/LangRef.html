@@ -1255,7 +1255,13 @@ following is the syntax for constant expressions:</p>
   <dt><b><tt>select ( COND, VAL1, VAL2 )</tt></b></dt>
 
   <dd>Perform the <a href="#i_select">select operation</a> on
-  constants.
+  constants.</dd>
+
+  <dt><b><tt>icmp COND ( VAL1, VAL2 )</tt></b></dt>
+  <dd>Performs the <a href="#i_icmp">icmp operation</a> on constants.</dd>
+
+  <dt><b><tt>fcmp COND ( VAL1, VAL2 )</tt></b></dt>
+  <dd>Performs the <a href="#i_fcmp">fcmp operation</a> on constants.</dd>
 
   <dt><b><tt>extractelement ( VAL, IDX )</tt></b></dt>
 
@@ -1265,13 +1271,13 @@ following is the syntax for constant expressions:</p>
   <dt><b><tt>insertelement ( VAL, ELT, IDX )</tt></b></dt>
 
   <dd>Perform the <a href="#i_insertelement">insertelement
-  operation</a> on constants.
+    operation</a> on constants.</dd>
 
 
   <dt><b><tt>shufflevector ( VEC1, VEC2, IDXMASK )</tt></b></dt>
 
   <dd>Perform the <a href="#i_shufflevector">shufflevector
-  operation</a> on constants.
+    operation</a> on constants.</dd>
 
   <dt><b><tt>OPCODE ( LHS, RHS )</tt></b></dt>
 
