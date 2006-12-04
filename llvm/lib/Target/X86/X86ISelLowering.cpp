@@ -5528,6 +5528,11 @@ getRegClassForInlineAsmConstraint(const std::string &Constraint,
       break;
     case 'r':   // GENERAL_REGS
     case 'R':   // LEGACY_REGS
+      if (VT == MVT::i64 && Subtarget->is64Bit())
+        return make_vector<unsigned>(X86::RAX, X86::RDX, X86::RCX, X86::RBX,
+                                     X86::RSI, X86::RDI, X86::RBP, X86::RSP,
+                                     X86::R8,  X86::R9,  X86::R10, X86::R11,
+                                     X86::R12, X86::R13, X86::R14, X86::R15, 0);
       if (VT == MVT::i32)
         return make_vector<unsigned>(X86::EAX, X86::EDX, X86::ECX, X86::EBX,
                                      X86::ESI, X86::EDI, X86::EBP, X86::ESP, 0);
