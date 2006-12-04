@@ -1359,10 +1359,10 @@ void UndefValue::destroyConstant() {
 //
 struct ExprMapKeyType {
   explicit ExprMapKeyType(unsigned opc, std::vector<Constant*> ops,
-      unsigned short pred = 0) : opcode(opc), operands(ops), predicate(pred) { }
-  unsigned opcode;
+      unsigned short pred = 0) : opcode(opc), predicate(pred), operands(ops) { }
+  uint16_t opcode;
+  uint16_t predicate;
   std::vector<Constant*> operands;
-  unsigned short predicate;
   bool operator==(const ExprMapKeyType& that) const {
     return this->opcode == that.opcode &&
            this->predicate == that.predicate &&
