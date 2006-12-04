@@ -20,6 +20,9 @@
 #include <ostream>
 using namespace llvm;
 
+/// isOnlyADirectCall - Return true if this callsite is *just* a direct call to
+/// the specified function.  Specifically return false if the callsite also
+/// takes the address of the function.
 static bool isOnlyADirectCall(Function *F, CallSite CS) {
   if (!CS.getInstruction()) return false;
   for (CallSite::arg_iterator I = CS.arg_begin(), E = CS.arg_end(); I != E; ++I)
@@ -179,10 +182,8 @@ private:
   //
   // destroy - Release memory for the call graph
   virtual void destroy() {
-    if (!CallsExternalNode) {
-      delete CallsExternalNode;
-      CallsExternalNode = 0;
-    }
+    delete CallsExternalNode;
+    CallsExternalNode = 0;
   }
 };
 
