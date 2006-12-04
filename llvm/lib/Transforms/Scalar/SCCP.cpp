@@ -749,6 +749,11 @@ void SCCPSolver::visitBinaryOperator(Instruction &I) {
 }
 
 void SCCPSolver::visitExtractElementInst(ExtractElementInst &I) {
+  // FIXME : SCCP does not handle vectors properly.
+  markOverdefined(&I);
+  return;
+
+#if 0
   LatticeVal &ValState = getValueState(I.getOperand(0));
   LatticeVal &IdxState = getValueState(I.getOperand(1));
 
@@ -757,9 +762,14 @@ void SCCPSolver::visitExtractElementInst(ExtractElementInst &I) {
   else if(ValState.isConstant() && IdxState.isConstant())
     markConstant(&I, ConstantExpr::getExtractElement(ValState.getConstant(),
                                                      IdxState.getConstant()));
+#endif
 }
 
 void SCCPSolver::visitInsertElementInst(InsertElementInst &I) {
+  // FIXME : SCCP does not handle vectors properly.
+  markOverdefined(&I);
+  return;
+#if 0
   LatticeVal &ValState = getValueState(I.getOperand(0));
   LatticeVal &EltState = getValueState(I.getOperand(1));
   LatticeVal &IdxState = getValueState(I.getOperand(2));
@@ -773,13 +783,18 @@ void SCCPSolver::visitInsertElementInst(InsertElementInst &I) {
                                                     EltState.getConstant(),
                                                     IdxState.getConstant()));
   else if (ValState.isUndefined() && EltState.isConstant() &&
-           IdxState.isConstant())
+           IdxState.isConstant()) 
     markConstant(&I, ConstantExpr::getInsertElement(UndefValue::get(I.getType()),
                                                     EltState.getConstant(),
                                                     IdxState.getConstant()));
+#endif
 }
 
 void SCCPSolver::visitShuffleVectorInst(ShuffleVectorInst &I) {
+  // FIXME : SCCP does not handle vectors properly.
+  markOverdefined(&I);
+  return;
+#if 0
   LatticeVal &V1State   = getValueState(I.getOperand(0));
   LatticeVal &V2State   = getValueState(I.getOperand(1));
   LatticeVal &MaskState = getValueState(I.getOperand(2));
@@ -801,6 +816,7 @@ void SCCPSolver::visitShuffleVectorInst(ShuffleVectorInst &I) {
       MaskState.getConstant() : UndefValue::get(I.getOperand(2)->getType());
     markConstant(&I, ConstantExpr::getShuffleVector(V1, V2, Mask));
   }
+#endif
 }
 
 // Handle getelementptr instructions... if all operands are constants then we
