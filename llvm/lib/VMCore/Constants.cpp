@@ -1486,9 +1486,11 @@ static inline Constant *getFoldedCast(
   return ExprConstants->getOrCreate(Ty, Key);
 }
 
-Constant *ConstantExpr::getCast( Constant *C, const Type *Ty ) {
+Constant *ConstantExpr::getInferredCast(Constant *C, bool SrcIsSigned, 
+                                const Type *Ty, bool DestIsSigned) {
   // Note: we can't inline this because it requires the Instructions.h header
-  return getCast(CastInst::getCastOpcode(C, Ty), C, Ty);
+  return getCast(
+    CastInst::getCastOpcode(C, SrcIsSigned, Ty, DestIsSigned), C, Ty);
 }
 
 Constant *ConstantExpr::getCast(unsigned oc, Constant *C, const Type *Ty) {
@@ -1612,10 +1614,9 @@ Constant *ConstantExpr::getBitCast(Constant *C, const Type *DstTy) {
 
 Constant *ConstantExpr::getSizeOf(const Type *Ty) {
   // sizeof is implemented as: (ulong) gep (Ty*)null, 1
-  return getCast(
-    getGetElementPtr(getNullValue(PointerType::get(Ty)),
-                 std::vector<Constant*>(1, ConstantInt::get(Type::UIntTy, 1))),
-    Type::ULongTy);
+  return getCast(Instruction::PtrToInt, getGetElementPtr(getNullValue(
+    PointerType::get(Ty)), std::vector<Constant*>(1, 
+    ConstantInt::get(Type::UIntTy, 1))), Type::ULongTy);
 }
 
 Constant *ConstantExpr::getPtrPtrFromArrayPtr(Constant *C) {

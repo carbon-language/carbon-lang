@@ -541,8 +541,15 @@ public:
     const Type *Ty ///< The type to which the constant is converted
   );
 
+  // This method uses the CastInst::getCastOpcode method to infer the
+  // cast opcode to use. 
   // @brief Get a ConstantExpr Conversion operator that casts C to Ty
-  static Constant *getCast(Constant *C, const Type *Ty);
+  static Constant *getInferredCast(Constant *C, bool SrcIsSigned, 
+                                   const Type *Ty, bool DestIsSigned);
+
+  static Constant *getCast(Constant *C, const Type *Ty) {
+    return getInferredCast(C, C->getType()->isSigned(), Ty, Ty->isSigned());
+  }
 
   /// @brief Return true if this is a convert constant expression
   bool isCast() const;

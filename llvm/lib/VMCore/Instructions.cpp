@@ -1507,7 +1507,8 @@ CastInst *CastInst::create(Instruction::CastOps op, Value *S, const Type *Ty,
 // should not assert in checkCast. In other words, this produces a "correct"
 // casting opcode for the arguments passed to it.
 Instruction::CastOps
-CastInst::getCastOpcode(const Value *Src, const Type *DestTy) {
+CastInst::getCastOpcode(
+  const Value *Src, bool SrcIsSigned, const Type *DestTy, bool DestIsSigned) {
   // Get the bit sizes, we'll need these
   const Type *SrcTy = Src->getType();
   unsigned SrcBits = SrcTy->getPrimitiveSizeInBits();   // 0 for ptr/packed
@@ -1519,7 +1520,7 @@ CastInst::getCastOpcode(const Value *Src, const Type *DestTy) {
       if (DestBits < SrcBits)
         return Trunc;                               // int -> smaller int
       else if (DestBits > SrcBits) {                // its an extension
-        if (SrcTy->isSigned())
+        if (SrcIsSigned)
           return SExt;                              // signed -> SEXT
         else
           return ZExt;                              // unsigned -> ZEXT
@@ -1527,7 +1528,7 @@ CastInst::getCastOpcode(const Value *Src, const Type *DestTy) {
         return BitCast;                             // Same size, No-op cast
       }
     } else if (SrcTy->isFloatingPoint()) {          // Casting from floating pt
-      if (DestTy->isSigned()) 
+      if (DestIsSigned) 
         return FPToSI;                              // FP -> sint
       else
         return FPToUI;                              // FP -> uint 
@@ -1542,7 +1543,7 @@ CastInst::getCastOpcode(const Value *Src, const Type *DestTy) {
     }
   } else if (DestTy->isFloatingPoint()) {           // Casting to floating pt
     if (SrcTy->isIntegral()) {                      // Casting from integral
-      if (SrcTy->isSigned())
+      if (SrcIsSigned)
         return SIToFP;                              // sint -> FP
       else
         return UIToFP;                              // uint -> FP
@@ -1647,6 +1648,20 @@ checkCast(Instruction::CastOps op, Value *S, const Type *DstTy) {
     // are identical.
     return SrcBitSize == DstBitSize;
   }
+}
+
+CastInst *CastInst::createInferredCast(
+  Value *S, const Type *Ty, const std::string &Name, Instruction *InsertBefore)
+{
+  return createInferredCast(S, S->getType()->isSigned(), Ty, Ty->isSigned(),
+      Name, InsertBefore);
+}
+
+CastInst *CastInst::createInferredCast(
+  Value *S, const Type *Ty, const std::string &Name, BasicBlock *InsertAtEnd) 
+{
+  return createInferredCast(S, S->getType()->isSigned(), Ty, Ty->isSigned(),
+      Name, InsertAtEnd);
 }
 
 TruncInst::TruncInst(
