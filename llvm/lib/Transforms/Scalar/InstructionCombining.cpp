@@ -388,7 +388,8 @@ static bool ValueRequiresCast(const Value *V, const Type *Ty, TargetData *TD) {
 
   // If this is another cast that can be eliminated, it isn't codegen either.
   if (const CastInst *CI = dyn_cast<CastInst>(V))
-    if (isEliminableCastPair(CI, CastInst::getCastOpcode(V, Ty), Ty, TD)) 
+    if (isEliminableCastPair(CI, CastInst::getCastOpcode(
+            V, V->getType()->isSigned(), Ty, Ty->isSigned()), Ty, TD)) 
       return false;
   return true;
 }
