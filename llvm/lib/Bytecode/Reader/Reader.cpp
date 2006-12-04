@@ -1355,14 +1355,18 @@ Value *BytecodeReader::ParseConstantPoolValue(unsigned TypeID) {
       return Result;
     } else if (Opcode == Instruction::ICmp) {
       if (ArgVec.size() != 2) 
-        error("Invalid ICmp constant expr arguments");
-      unsigned short pred = read_vbr_uint();
-      return ConstantExpr::getICmp(pred, ArgVec[0], ArgVec[1]);
+        error("Invalid ICmp constant expr arguments.");
+      unsigned predicate = read_vbr_uint();
+      Constant *Result = ConstantExpr::getICmp(predicate, ArgVec[0], ArgVec[1]);
+      if (Handler) Handler->handleConstantExpression(Opcode, ArgVec, Result);
+      return Result;
     } else if (Opcode == Instruction::FCmp) {
       if (ArgVec.size() != 2) 
-        error("Invalid FCmp constant expr arguments");
-      unsigned short pred = read_vbr_uint();
-      return ConstantExpr::getFCmp(pred, ArgVec[0], ArgVec[1]);
+        error("Invalid FCmp constant expr arguments.");
+      unsigned predicate = read_vbr_uint();
+      Constant *Result = ConstantExpr::getFCmp(predicate, ArgVec[0], ArgVec[1]);
+      if (Handler) Handler->handleConstantExpression(Opcode, ArgVec, Result);
+      return Result;
     } else {                            // All other 2-operand expressions
       Constant* Result = ConstantExpr::get(Opcode, ArgVec[0], ArgVec[1]);
       if (Handler) Handler->handleConstantExpression(Opcode, ArgVec, Result);

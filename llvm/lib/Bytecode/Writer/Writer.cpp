@@ -303,6 +303,8 @@ void BytecodeWriter::outputConstant(const Constant *CPV) {
       Slot = Table.getSlot((*OI)->getType());
       output_typeid((unsigned)Slot);
     }
+    if (CE->isCompare())
+      output_vbr((unsigned)CE->getPredicate());
     return;
   } else if (isa<UndefValue>(CPV)) {
     output_vbr(1U);       // 1 -> UndefValue constant.
