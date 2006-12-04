@@ -113,7 +113,7 @@ X86TargetMachine::X86TargetMachine(const Module &M, const std::string &FS, bool 
     if (Subtarget.isTargetDarwin())
       setRelocationModel(Reloc::DynamicNoPIC);
     else
-      setRelocationModel(Reloc::PIC_);
+      setRelocationModel(Reloc::Static);
   if (Subtarget.is64Bit()) {
     // No DynamicNoPIC support under X86-64.
     if (getRelocationModel() == Reloc::DynamicNoPIC)
