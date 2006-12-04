@@ -233,6 +233,11 @@ LangStd("std", cl::desc("Language standard to compile for"),
                               "extensions (default for C++)"),
                    clEnumValEnd));
 
+static cl::opt<bool>
+NoOperatorNames("fno-operator-names",
+                cl::desc("Do not treat C++ operator name keywords as "
+                         "synonyms for operators"));
+
 // FIXME: add:
 //   -ansi
 //   -trigraphs
@@ -265,6 +270,7 @@ static void InitializeLanguageStandard(LangOptions &Options) {
   case lang_gnucxx98:
   case lang_cxx98:
     Options.CPlusPlus = 1;
+    Options.CXXOperatorNames = !NoOperatorNames;
     // FALL THROUGH.
   case lang_gnu99:
   case lang_c99:

@@ -131,7 +131,7 @@ void IdentifierTable::AddKeywords(const LangOptions &LangOpts) {
 #define PPKEYWORD(NAME) \
   AddPPKeyword(tok::pp_##NAME, #NAME, strlen(#NAME), *this);
 #define CXX_KEYWORD_OPERATOR(NAME, ALIAS) \
-  if (LangOpts.CPlusPlus)                 \
+  if (LangOpts.CXXOperatorNames)          \
     AddCXXOperatorKeyword(#NAME, strlen(#NAME), tok::ALIAS, *this);
 #define OBJC1_AT_KEYWORD(NAME) \
   if (LangOpts.ObjC1)          \
