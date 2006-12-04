@@ -293,14 +293,9 @@ ConstantRange ConstantRange::zeroExtend(const Type *Ty) const {
 
   Constant *Lower = getLower();
   Constant *Upper = getUpper();
-  if (Lower->getType()->isInteger() && !Lower->getType()->isUnsigned()) {
-    // Ensure we are doing a ZERO extension even if the input range is signed.
-    Lower = ConstantExpr::getCast(Lower, Ty->getUnsignedVersion());
-    Upper = ConstantExpr::getCast(Upper, Ty->getUnsignedVersion());
-  }
 
-  return ConstantRange(ConstantExpr::getCast(Lower, Ty),
-                       ConstantExpr::getCast(Upper, Ty));
+  return ConstantRange(ConstantExpr::getCast(Instruction::ZExt, Lower, Ty),
+                       ConstantExpr::getCast(Instruction::ZExt, Upper, Ty));
 }
 
 /// truncate - Return a new range in the specified integer type, which must be
@@ -314,8 +309,9 @@ ConstantRange ConstantRange::truncate(const Type *Ty) const {
   if (isFullSet() || getSetSize() >= Size)
     return ConstantRange(getType());
 
-  return ConstantRange(ConstantExpr::getCast(getLower(), Ty),
-                       ConstantExpr::getCast(getUpper(), Ty));
+  return ConstantRange(
+      ConstantExpr::getCast(Instruction::Trunc, getLower(), Ty),
+      ConstantExpr::getCast(Instruction::Trunc, getUpper(), Ty));
 }
 
 
