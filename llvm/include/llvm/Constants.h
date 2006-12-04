@@ -498,7 +498,7 @@ protected:
   // These private methods are used by the type resolution code to create
   // ConstantExprs in intermediate forms.
   static Constant *getTy(const Type *Ty, unsigned Opcode,
-                         Constant *C1, Constant *C2);
+                         Constant *C1, Constant *C2, unsigned short pred = 0);
   static Constant *getShiftTy(const Type *Ty,
                               unsigned Opcode, Constant *C1, Constant *C2);
   static Constant *getSelectTy(const Type *Ty,
@@ -554,6 +554,9 @@ public:
   /// @brief Return true if this is a convert constant expression
   bool isCast() const;
 
+  /// @brief Return true if this is a compare constant expression
+  bool isCompare() const;
+
   /// Select constant expr
   ///
   static Constant *getSelect(Constant *C, Constant *V1, Constant *V2) {
@@ -572,7 +575,8 @@ public:
   /// ConstantExpr::get - Return a binary or shift operator constant expression,
   /// folding if possible.
   ///
-  static Constant *get(unsigned Opcode, Constant *C1, Constant *C2);
+  static Constant *get(unsigned Opcode, Constant *C1, Constant *C2, 
+                       unsigned short pred = 0);
 
   /// ConstantExpr::get* - Return some common constants without having to
   /// specify the full Instruction::OPCODE identifier.
