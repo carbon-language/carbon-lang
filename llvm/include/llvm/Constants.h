@@ -498,7 +498,9 @@ protected:
   // These private methods are used by the type resolution code to create
   // ConstantExprs in intermediate forms.
   static Constant *getTy(const Type *Ty, unsigned Opcode,
-                         Constant *C1, Constant *C2, unsigned short pred = 0);
+                         Constant *C1, Constant *C2);
+  static Constant *getCompareTy(unsigned Opcode, unsigned short pred, 
+                                Constant *C1, Constant *C2);
   static Constant *getShiftTy(const Type *Ty,
                               unsigned Opcode, Constant *C1, Constant *C2);
   static Constant *getSelectTy(const Type *Ty,
@@ -549,14 +551,14 @@ public:
 
   // @brief Create a SExt or BitCast cast constant expression 
   static Constant *getSExtOrBitCast(
-    Constant *C,   ///< The constant to zext or bitcast
-    const Type *Ty ///< The type to zext or bitcast C to
+    Constant *C,   ///< The constant to sext or bitcast
+    const Type *Ty ///< The type to sext or bitcast C to
   );
 
   // @brief Create a Trunc or BitCast cast constant expression
   static Constant *getTruncOrBitCast(
-    Constant *C,   ///< The constant to zext or bitcast
-    const Type *Ty ///< The type to zext or bitcast C to
+    Constant *C,   ///< The constant to trunc or bitcast
+    const Type *Ty ///< The type to trunc or bitcast C to
   );
 
   // This method uses the CastInst::getCastOpcode method to infer the
@@ -593,8 +595,11 @@ public:
   /// ConstantExpr::get - Return a binary or shift operator constant expression,
   /// folding if possible.
   ///
-  static Constant *get(unsigned Opcode, Constant *C1, Constant *C2, 
-                       unsigned short pred = 0);
+  static Constant *get(unsigned Opcode, Constant *C1, Constant *C2);
+
+  /// @brief Return an ICmp or FCmp comparison operator constante expression.
+  static Constant *getCompare(unsigned Opcode, unsigned short pred, 
+                              Constant *C1, Constant *C2);
 
   /// ConstantExpr::get* - Return some common constants without having to
   /// specify the full Instruction::OPCODE identifier.
