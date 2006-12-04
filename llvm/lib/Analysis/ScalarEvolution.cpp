@@ -1925,9 +1925,9 @@ SCEVHandle ScalarEvolutionsImpl::getSCEVAtScope(SCEV *V, const Loop *L) {
             }
           }
 
-      // Okay, this is a some expression that we cannot symbolically evaluate
+      // Okay, this is an expression that we cannot symbolically evaluate
       // into a SCEV.  Check to see if it's possible to symbolically evaluate
-      // the arguments into constants, and if see, try to constant propagate the
+      // the arguments into constants, and if so, try to constant propagate the
       // result.  This is particularly useful for computing loop exit values.
       if (CanConstantFold(I)) {
         std::vector<Constant*> Operands;
