@@ -115,18 +115,12 @@ namespace llvm {
 
     Value *visitTruncateExpr(SCEVTruncateExpr *S) {
       Value *V = expand(S->getOperand());
-      Instruction::CastOps Opcode = (V->getType()->getPrimitiveSizeInBits() ==
-          S->getType()->getPrimitiveSizeInBits()) ? Instruction::BitCast :
-          Instruction::Trunc;
-      return CastInst::create(Opcode, V, S->getType(), "tmp.", InsertPt);
+      return CastInst::createTruncOrBitCast(V, S->getType(), "tmp.", InsertPt);
     }
 
     Value *visitZeroExtendExpr(SCEVZeroExtendExpr *S) {
       Value *V = expandInTy(S->getOperand(),S->getType()->getUnsignedVersion());
-      Instruction::CastOps Opcode = (V->getType()->getPrimitiveSizeInBits() ==
-          S->getType()->getPrimitiveSizeInBits()) ? Instruction::BitCast :
-          Instruction::ZExt;
-      return CastInst::create(Opcode, V, S->getType(), "tmp.", InsertPt);
+      return CastInst::createZExtOrBitCast(V, S->getType(), "tmp.", InsertPt);
     }
 
     Value *visitAddExpr(SCEVAddExpr *S) {
