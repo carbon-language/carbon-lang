@@ -1,11 +1,11 @@
-// This is a regression test on debug info to make sure we don't hit a compile unit size
-// issue with gdb.
+// This is a regression test on debug info to make sure we don't hit a compile 
+// unit size issue with gdb.
 // RUN: %llvmgcc -S -O0 -g %s -o - | llvm-as | llc --disable-fp-elim -o Output/NoCompileUnit.s -f
 // RUN: as Output/NoCompileUnit.s -o Output/NoCompileUnit.o
 // RUN: g++ Output/NoCompileUnit.o -o Output/NoCompileUnit.exe
 // RUN: ( echo "break main"; echo "run" ; echo "p NoCompileUnit::pubname" ) > Output/NoCompileUnit.gdbin 
 // RUN: gdb -q -batch -n -x Output/NoCompileUnit.gdbin Output/NoCompileUnit.exe | tee Output/NoCompileUnit.out | not grep '"low == high"'
-// XFAIL: i[1-9]86|alpha|ia64|arm
+// XFAIL: alpha|ia64|arm
 
 
 class MamaDebugTest {
@@ -54,5 +54,3 @@ int main(int argc, const char *argv[]) {
   BabyDebugTest BDT(20);
   return BDT.doit();
 }
-
-
