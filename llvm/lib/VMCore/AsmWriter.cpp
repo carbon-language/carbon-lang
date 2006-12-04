@@ -414,6 +414,39 @@ static void PrintEscapedString(const std::string &Str, std::ostream &Out) {
   }
 }
 
+static const char * getPredicateText(unsigned predicate) {
+  const char * pred = "unknown";
+  switch (predicate) {
+    case FCmpInst::FCMP_FALSE: pred = "false"; break;
+    case FCmpInst::FCMP_OEQ:   pred = "oeq"; break;
+    case FCmpInst::FCMP_OGT:   pred = "ogt"; break;
+    case FCmpInst::FCMP_OGE:   pred = "oge"; break;
+    case FCmpInst::FCMP_OLT:   pred = "olt"; break;
+    case FCmpInst::FCMP_OLE:   pred = "ole"; break;
+    case FCmpInst::FCMP_ONE:   pred = "one"; break;
+    case FCmpInst::FCMP_ORD:   pred = "ord"; break;
+    case FCmpInst::FCMP_UNO:   pred = "uno"; break;
+    case FCmpInst::FCMP_UEQ:   pred = "ueq"; break;
+    case FCmpInst::FCMP_UGT:   pred = "ugt"; break;
+    case FCmpInst::FCMP_UGE:   pred = "uge"; break;
+    case FCmpInst::FCMP_ULT:   pred = "ult"; break;
+    case FCmpInst::FCMP_ULE:   pred = "ule"; break;
+    case FCmpInst::FCMP_UNE:   pred = "une"; break;
+    case FCmpInst::FCMP_TRUE:  pred = "true"; break;
+    case ICmpInst::ICMP_EQ:    pred = "eq"; break;
+    case ICmpInst::ICMP_NE:    pred = "ne"; break;
+    case ICmpInst::ICMP_SGT:   pred = "sgt"; break;
+    case ICmpInst::ICMP_SGE:   pred = "sge"; break;
+    case ICmpInst::ICMP_SLT:   pred = "slt"; break;
+    case ICmpInst::ICMP_SLE:   pred = "sle"; break;
+    case ICmpInst::ICMP_UGT:   pred = "ugt"; break;
+    case ICmpInst::ICMP_UGE:   pred = "uge"; break;
+    case ICmpInst::ICMP_ULT:   pred = "ult"; break;
+    case ICmpInst::ICMP_ULE:   pred = "ule"; break;
+  }
+  return pred;
+}
+
 /// @brief Internal constant writer.
 static void WriteConstantInt(std::ostream &Out, const Constant *CV,
                              bool PrintName,
@@ -533,7 +566,10 @@ static void WriteConstantInt(std::ostream &Out, const Constant *CV,
     Out << "undef";
 
   } else if (const ConstantExpr *CE = dyn_cast<ConstantExpr>(CV)) {
-    Out << CE->getOpcodeName() << " (";
+    Out << CE->getOpcodeName();
+    if (CE->isCompare())
+      Out << " " << getPredicateText(CE->getPredicate());
+    Out << " (";
 
     for (User::const_op_iterator OI=CE->op_begin(); OI != CE->op_end(); ++OI) {
       printTypeInt(Out, (*OI)->getType(), TypeTable);
@@ -1127,41 +1163,9 @@ void AssemblyWriter::printInstruction(const Instruction &I) {
 
   // Print out the compare instruction predicates
   if (const FCmpInst *FCI = dyn_cast<FCmpInst>(&I)) {
-    const char *pred = 0;
-    switch (FCI->getPredicate()) {
-      case FCmpInst::FCMP_FALSE: pred = "false";
-      case FCmpInst::FCMP_OEQ:   pred = "oeq";
-      case FCmpInst::FCMP_OGT:   pred = "ogt";
-      case FCmpInst::FCMP_OGE:   pred = "oge";
-      case FCmpInst::FCMP_OLT:   pred = "olt";
-      case FCmpInst::FCMP_OLE:   pred = "ole";
-      case FCmpInst::FCMP_ONE:   pred = "one";
-      case FCmpInst::FCMP_ORD:   pred = "ord";
-      case FCmpInst::FCMP_UNO:   pred = "uno";
-      case FCmpInst::FCMP_UEQ:   pred = "ueq";
-      case FCmpInst::FCMP_UGT:   pred = "ugt";
-      case FCmpInst::FCMP_UGE:   pred = "uge";
-      case FCmpInst::FCMP_ULT:   pred = "ult";
-      case FCmpInst::FCMP_ULE:   pred = "ule";
-      case FCmpInst::FCMP_UNE:   pred = "une";
-      case FCmpInst::FCMP_TRUE:  pred = "true";
-    }
-    Out << " " << pred;
+    Out << " " << getPredicateText(FCI->getPredicate());
   } else if (const ICmpInst *ICI = dyn_cast<ICmpInst>(&I)) {
-    const char *pred = 0;
-    switch (ICI->getPredicate()) {
-      case ICmpInst::ICMP_EQ:    pred = "eq";
-      case ICmpInst::ICMP_NE:    pred = "ne";
-      case ICmpInst::ICMP_SGT:   pred = "sgt";
-      case ICmpInst::ICMP_SGE:   pred = "sge";
-      case ICmpInst::ICMP_SLT:   pred = "slt";
-      case ICmpInst::ICMP_SLE:   pred = "sle";
-      case ICmpInst::ICMP_UGT:   pred = "ugt";
-      case ICmpInst::ICMP_UGE:   pred = "uge";
-      case ICmpInst::ICMP_ULT:   pred = "ult";
-      case ICmpInst::ICMP_ULE:   pred = "ule";
-    }
-    Out << " " << pred;
+    Out << " " << getPredicateText(ICI->getPredicate());
   }
 
   // Print out the type of the operands...
