@@ -777,8 +777,7 @@ static Constant *CastConstantPacked(ConstantPacked *CP,
         uint64_t V =
           DoubleToBits(cast<ConstantFP>(CP->getOperand(i))->getValue());
         Constant *C = ConstantInt::get(Type::ULongTy, V);
-        Result.push_back(
-            ConstantExpr::getInferredCast(C, false, DstEltTy, false));
+        Result.push_back(ConstantExpr::getTruncOrBitCast(C, DstEltTy ));
       }
       return ConstantPacked::get(Result);
     }
@@ -787,8 +786,7 @@ static Constant *CastConstantPacked(ConstantPacked *CP,
     for (unsigned i = 0; i != SrcNumElts; ++i) {
       uint32_t V = FloatToBits(cast<ConstantFP>(CP->getOperand(i))->getValue());
       Constant *C = ConstantInt::get(Type::UIntTy, V);
-      Result.push_back(
-        ConstantExpr::getInferredCast(C, false, DstEltTy, false));
+      Result.push_back(ConstantExpr::getTruncOrBitCast(C, DstEltTy));
     }
     return ConstantPacked::get(Result);
   }
@@ -855,7 +853,7 @@ Constant *llvm::ConstantFoldCastInstruction(unsigned opc, const Constant *V,
         }
       if (isAllNull)
         // This is casting one pointer type to another, always BitCast
-        return ConstantExpr::getCast(CE->getOperand(0), DestTy);
+        return ConstantExpr::getPointerCast(CE->getOperand(0), DestTy);
     }
   }
 
@@ -1644,7 +1642,7 @@ Constant *llvm::ConstantFoldGetElementPtr(const Constant *C,
         // We know R is unsigned, Idx0 is signed because it must be an index
         // through a sequential type (gep pointer operand) which is always
         // signed.
-        R = ConstantExpr::getInferredCast(R, false, Idx0->getType(), true);
+        R = ConstantExpr::getSExtOrBitCast(R, Idx0->getType());
         R = ConstantExpr::getMul(R, Idx0); // signed multiply
         // R is a signed integer, C is the GEP pointer so -> IntToPtr
         return ConstantExpr::getCast(Instruction::IntToPtr, R, C->getType());
@@ -1676,10 +1674,9 @@ Constant *llvm::ConstantFoldGetElementPtr(const Constant *C,
         if (!Idx0->isNullValue()) {
           const Type *IdxTy = Combined->getType();
           if (IdxTy != Idx0->getType()) {
-            Constant *C1 = ConstantExpr::getInferredCast(
-                Idx0, true, Type::LongTy, true);
-            Constant *C2 = ConstantExpr::getInferredCast(
-                Combined, true, Type::LongTy, true);
+            Constant *C1 = ConstantExpr::getSExtOrBitCast(Idx0, Type::LongTy);
+            Constant *C2 = ConstantExpr::getSExtOrBitCast(Combined, 
+                                                          Type::LongTy);
             Combined = ConstantExpr::get(Instruction::Add, C1, C2);
           } else {
             Combined =
