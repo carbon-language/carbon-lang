@@ -158,6 +158,9 @@ bool X86TargetMachine::addCodeEmitter(FunctionPassManager &PM, bool Fast,
                                       MachineCodeEmitter &MCE) {
   // FIXME: Move this to TargetJITInfo!
   setRelocationModel(Reloc::Static);
+  // JIT cannot ensure globals are placed in the lower 4G of address.
+  if (Subtarget.is64Bit())
+    setCodeModel(CodeModel::Large);
   
   PM.add(createX86CodeEmitterPass(*this, MCE));
   return false;

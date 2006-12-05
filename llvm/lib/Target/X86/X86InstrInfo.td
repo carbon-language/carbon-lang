@@ -163,15 +163,16 @@ def MRMInitReg : Format<32>;
 
 //===----------------------------------------------------------------------===//
 // X86 Instruction Predicate Definitions.
-def HasMMX   : Predicate<"Subtarget->hasMMX()">;
-def HasSSE1  : Predicate<"Subtarget->hasSSE1()">;
-def HasSSE2  : Predicate<"Subtarget->hasSSE2()">;
-def HasSSE3  : Predicate<"Subtarget->hasSSE3()">;
-def FPStack  : Predicate<"!Subtarget->hasSSE2()">;
-def In32BitMode : Predicate<"!Subtarget->is64Bit()">;
-def In64BitMode : Predicate<"Subtarget->is64Bit()">;
-def SmallCode : Predicate<"TM.getCodeModel() == CodeModel::Small">;
-def NotSmallCode :Predicate<"TM.getCodeModel() != CodeModel::Small">;
+def HasMMX       : Predicate<"Subtarget->hasMMX()">;
+def HasSSE1      : Predicate<"Subtarget->hasSSE1()">;
+def HasSSE2      : Predicate<"Subtarget->hasSSE2()">;
+def HasSSE3      : Predicate<"Subtarget->hasSSE3()">;
+def FPStack      : Predicate<"!Subtarget->hasSSE2()">;
+def In32BitMode  : Predicate<"!Subtarget->is64Bit()">;
+def In64BitMode  : Predicate<"Subtarget->is64Bit()">;
+def SmallCode    : Predicate<"TM.getCodeModel() == CodeModel::Small">;
+def NotSmallCode : Predicate<"TM.getCodeModel() != CodeModel::Small">;
+def IsStatic     : Predicate<"TM.getRelocationModel() == Reloc::Static">;
 
 //===----------------------------------------------------------------------===//
 // X86 specific pattern fragments.

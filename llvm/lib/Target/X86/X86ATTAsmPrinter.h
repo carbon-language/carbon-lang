@@ -35,7 +35,7 @@ struct X86ATTAsmPrinter : public X86SharedAsmPrinter {
 
   // These methods are used by the tablegen'erated instruction printer.
   void printOperand(const MachineInstr *MI, unsigned OpNo,
-                    const char *Modifier = 0);
+                    const char *Modifier = 0, bool NotRIPRel = false);
   void printi8mem(const MachineInstr *MI, unsigned OpNo) {
     printMemReference(MI, OpNo);
   }

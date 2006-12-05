@@ -595,44 +595,43 @@ bool X86DAGToDAGISel::MatchAddress(SDOperand N, X86ISelAddressMode &AM,
     // Under X86-64 non-small code model, GV (and friends) are 64-bits.
     if (is64Bit && TM.getCodeModel() != CodeModel::Small)
       break;
-
+    if (AM.GV != 0 || AM.CP != 0 || AM.ES != 0 || AM.JT != -1)
+      break;
     // If value is available in a register both base and index components have
     // been picked, we can't fit the result available in the register in the
     // addressing mode. Duplicate GlobalAddress or ConstantPool as displacement.
     if (!Available || (AM.Base.Reg.Val && AM.IndexReg.Val)) {
-      // For X86-64 PIC code, only allow GV / CP + displacement so we can use
-      // RIP relative addressing mode.
-      if (is64Bit &&
-          (AM.Base.Reg.Val || AM.Scale > 1 || AM.IndexReg.Val ||
-           AM.BaseType == X86ISelAddressMode::FrameIndexBase))
-        break;
-      if (ConstantPoolSDNode *CP =
-          dyn_cast<ConstantPoolSDNode>(N.getOperand(0))) {
-        if (AM.CP == 0) {
+      bool isStatic = TM.getRelocationModel() == Reloc::Static;
+      SDOperand N0 = N.getOperand(0);
+      if (GlobalAddressSDNode *G = dyn_cast<GlobalAddressSDNode>(N0)) {
+        GlobalValue *GV = G->getGlobal();
+        bool isAbs32 = !is64Bit ||
+          (isStatic && !(GV->isExternal() || GV->hasWeakLinkage() ||
+                         GV->hasLinkOnceLinkage()));
+        if (isAbs32 || isRoot) {
+          AM.GV = G->getGlobal();
+          AM.Disp += G->getOffset();
+          AM.isRIPRel = !isAbs32;
+          return false;
+        }
+      } else if (ConstantPoolSDNode *CP = dyn_cast<ConstantPoolSDNode>(N0)) {
+        if (!is64Bit || isStatic || isRoot) {
           AM.CP = CP->getConstVal();
           AM.Align = CP->getAlignment();
           AM.Disp += CP->getOffset();
-          AM.isRIPRel = is64Bit;
+          AM.isRIPRel = !isStatic;
           return false;
         }
-      } else if (GlobalAddressSDNode *G =
-                 dyn_cast<GlobalAddressSDNode>(N.getOperand(0))) {
-        if (AM.GV == 0) {
-          AM.GV = G->getGlobal();
-          AM.Disp += G->getOffset();
-          AM.isRIPRel = is64Bit;
-          return false;
-        }
-      } else if (isRoot && is64Bit) {
-        if (ExternalSymbolSDNode *S =
-            dyn_cast<ExternalSymbolSDNode>(N.getOperand(0))) {
+      } else if (ExternalSymbolSDNode *S =dyn_cast<ExternalSymbolSDNode>(N0)) {
+        if (isStatic || isRoot) {
           AM.ES = S->getSymbol();
-          AM.isRIPRel = true;
+          AM.isRIPRel = !isStatic;
           return false;
-        } else if (JumpTableSDNode *J =
-                   dyn_cast<JumpTableSDNode>(N.getOperand(0))) {
+        }
+      } else if (JumpTableSDNode *J = dyn_cast<JumpTableSDNode>(N0)) {
+        if (isStatic || isRoot) {
           AM.JT = J->getIndex();
-          AM.isRIPRel = true;
+          AM.isRIPRel = !isStatic;
           return false;
         }
       }
@@ -908,7 +907,7 @@ bool X86DAGToDAGISel::SelectLEAAddr(SDOperand Op, SDOperand N,
   if (AM.GV || AM.CP || AM.ES || AM.JT != -1) {
     // For X86-64, we should always use lea to materialize RIP relative
     // addresses.
-    if (Subtarget->is64Bit())
+    if (Subtarget->is64Bit() && TM.getRelocationModel() != Reloc::Static)
       Complexity = 4;
     else
       Complexity += 2;

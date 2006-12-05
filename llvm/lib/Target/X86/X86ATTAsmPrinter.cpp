@@ -156,7 +156,7 @@ bool X86ATTAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
 }
 
 void X86ATTAsmPrinter::printOperand(const MachineInstr *MI, unsigned OpNo,
-                                    const char *Modifier) {
+                                    const char *Modifier, bool NotRIPRel) {
   const MachineOperand &MO = MI->getOperand(OpNo);
   const MRegisterInfo &RI = *TM.getRegisterInfo();
   switch (MO.getType()) {
@@ -192,7 +192,7 @@ void X86ATTAsmPrinter::printOperand(const MachineInstr *MI, unsigned OpNo,
     if (X86PICStyle == PICStyle::Stub &&
         TM.getRelocationModel() == Reloc::PIC_)
       O << "-\"L" << getFunctionNumber() << "$pb\"";
-    if (isMemOp && Subtarget->is64Bit())
+    if (isMemOp && Subtarget->is64Bit() && !NotRIPRel)
       O << "(%rip)";
     return;
   }
@@ -210,7 +210,7 @@ void X86ATTAsmPrinter::printOperand(const MachineInstr *MI, unsigned OpNo,
     else if (Offset < 0)
       O << Offset;
 
-    if (isMemOp && Subtarget->is64Bit())
+    if (isMemOp && Subtarget->is64Bit() && !NotRIPRel)
       O << "(%rip)";
     return;
   }
@@ -267,8 +267,12 @@ void X86ATTAsmPrinter::printOperand(const MachineInstr *MI, unsigned OpNo,
 
     if (isMemOp && Subtarget->is64Bit()) {
       if (isExt && TM.getRelocationModel() != Reloc::Static)
-        O << "@GOTPCREL";
-      O << "(%rip)";
+        O << "@GOTPCREL(%rip)";
+      else if (!NotRIPRel)
+        // Use rip when possible to reduce code size, except when index or
+        // base register are also part of the address. e.g.
+        // foo(%rip)(%rcx,%rax,4) is not legal
+        O << "(%rip)";        
     }
 
     return;
@@ -329,10 +333,11 @@ void X86ATTAsmPrinter::printMemReference(const MachineInstr *MI, unsigned Op,
     return;
   }
 
+  bool NotRIPRel = IndexReg.getReg() || BaseReg.getReg();
   if (DispSpec.isGlobalAddress() ||
       DispSpec.isConstantPoolIndex() ||
       DispSpec.isJumpTableIndex()) {
-    printOperand(MI, Op+3, "mem");
+    printOperand(MI, Op+3, "mem", NotRIPRel);
   } else {
     int DispVal = DispSpec.getImmedValue();
     if (DispVal || (!IndexReg.getReg() && !BaseReg.getReg()))

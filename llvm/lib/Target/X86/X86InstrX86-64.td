@@ -1031,12 +1031,18 @@ def : Pat<(i64 (X86Wrapper tglobaladdr :$dst)),
 def : Pat<(i64 (X86Wrapper texternalsym:$dst)),
           (MOV64ri texternalsym:$dst)>, Requires<[NotSmallCode]>;
 
-/*
+def : Pat<(store (i64 (X86Wrapper tconstpool:$src)), addr:$dst),
+          (MOV64mi32 addr:$dst, tconstpool:$src)>,
+          Requires<[SmallCode, IsStatic]>;
+def : Pat<(store (i64 (X86Wrapper tjumptable:$src)), addr:$dst),
+          (MOV64mi32 addr:$dst, tjumptable:$src)>,
+          Requires<[SmallCode, IsStatic]>;
 def : Pat<(store (i64 (X86Wrapper tglobaladdr:$src)), addr:$dst),
-          (MOV64mi32 addr:$dst, tglobaladdr:$src)>, Requires<[SmallCode]>;
+          (MOV64mi32 addr:$dst, tglobaladdr:$src)>,
+          Requires<[SmallCode, IsStatic]>;
 def : Pat<(store (i64 (X86Wrapper texternalsym:$src)), addr:$dst),
-          (MOV64mi32 addr:$dst, texternalsym:$src)>, Requires<[SmallCode]>;
-*/
+          (MOV64mi32 addr:$dst, texternalsym:$src)>,
+          Requires<[SmallCode, IsStatic]>;
 
 // Calls
 // Direct PC relative function call for small code model. 32-bit displacement

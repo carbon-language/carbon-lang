@@ -229,41 +229,6 @@ list so it will be passed in register:
 
 //===---------------------------------------------------------------------===//
 
-For this:
-
-extern int dst[]; 
-extern int* ptr; 
-
-void test(void) {
-  ptr = dst;
-}
-
-We generate this code for static relocation model:
-
-_test:
-	leaq _dst(%rip), %rax
-	movq %rax, _ptr(%rip)
-	ret
-
-If we are in small code model, they we can treat _dst as a 32-bit constant.
-        movq $_dst, _ptr(%rip)
-
-Note, however, we should continue to use RIP relative addressing mode as much as
-possible. The above is actually one byte shorter than
-        movq $_dst, _ptr
-
-A better example is the code from PR1018. We are generating:
-	leaq xcalloc2(%rip), %rax
-	movq %rax, 8(%rsp)
-when we should be generating:
-       	movq $xcalloc2, 8(%rsp)
-
-The reason the better codegen isn't done now is support for static small
-code model in JIT mode. The JIT cannot ensure that all GV's are placed in the
-lower 4G so we are not treating GV labels as 32-bit values.
-
-//===---------------------------------------------------------------------===//
-
 Right now the asm printer assumes GlobalAddress are accessed via RIP relative
 addressing. Therefore, it is not possible to generate this:
         movabsq $__ZTV10polynomialIdE+16, %rax
