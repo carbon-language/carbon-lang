@@ -31,16 +31,19 @@ Mutex::~Mutex()
 bool 
 Mutex::acquire()
 {
+  return true;
 }
 
 bool 
 Mutex::release()
 {
+  return true;
 }
 
 bool 
 Mutex::tryacquire( void )
 {
+  return true;
 }
 
 }
