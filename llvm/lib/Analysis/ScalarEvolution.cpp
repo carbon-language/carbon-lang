@@ -560,7 +560,7 @@ SCEVHandle SCEVAddRecExpr::evaluateAtIteration(SCEVHandle It) const {
 SCEVHandle SCEVTruncateExpr::get(const SCEVHandle &Op, const Type *Ty) {
   if (SCEVConstant *SC = dyn_cast<SCEVConstant>(Op))
     return SCEVUnknown::get(
-        ConstantExpr::getTruncOrBitCast(SC->getValue(), Ty));
+        ConstantExpr::getTrunc(SC->getValue(), Ty));
 
   // If the input value is a chrec scev made out of constants, truncate
   // all of the constants.
@@ -584,7 +584,7 @@ SCEVHandle SCEVTruncateExpr::get(const SCEVHandle &Op, const Type *Ty) {
 SCEVHandle SCEVZeroExtendExpr::get(const SCEVHandle &Op, const Type *Ty) {
   if (SCEVConstant *SC = dyn_cast<SCEVConstant>(Op))
     return SCEVUnknown::get(
-        ConstantExpr::getZExtOrBitCast(SC->getValue(), Ty));
+        ConstantExpr::getZeroExtend(SC->getValue(), Ty));
 
   // FIXME: If the input value is a chrec scev, and we can prove that the value
   // did not overflow the old, smaller, value, we can zero extend all of the
@@ -999,11 +999,6 @@ SCEVHandle SCEVSDivExpr::get(const SCEVHandle &LHS, const SCEVHandle &RHS) {
     if (SCEVConstant *LHSC = dyn_cast<SCEVConstant>(LHS)) {
       Constant *LHSCV = LHSC->getValue();
       Constant *RHSCV = RHSC->getValue();
-      if (LHSCV->getType()->isUnsigned())
-        LHSCV = ConstantExpr::getBitCast(LHSCV, 
-                                         LHSCV->getType()->getSignedVersion());
-      if (RHSCV->getType()->isUnsigned())
-        RHSCV = ConstantExpr::getBitCast(RHSCV, LHSCV->getType());
       return SCEVUnknown::get(ConstantExpr::getSDiv(LHSCV, RHSCV));
     }
   }
@@ -1376,12 +1371,16 @@ SCEVHandle ScalarEvolutionsImpl::createSCEV(Value *V) {
       break;
 
     case Instruction::Trunc:
+      // We must prevent boolean types such as setne, etc. from entering here
+      // because we don't want to pass SCEVUnknown to the TruncateExpr.
       if (I->getType()->isInteger() && I->getOperand(0)->getType()->isInteger())
         return SCEVTruncateExpr::get(getSCEV(I->getOperand(0)), 
                                      I->getType()->getUnsignedVersion());
       break;
 
     case Instruction::ZExt:
+      // We must prevent boolean types such as setne, etc. from entering here
+      // because we don't want to pass SCEVUnknown to the ZExtExpr.
       if (I->getType()->isInteger() && I->getOperand(0)->getType()->isInteger())
         return SCEVZeroExtendExpr::get(getSCEV(I->getOperand(0)), 
                                        I->getType()->getUnsignedVersion());
