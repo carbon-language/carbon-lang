@@ -1552,6 +1552,16 @@ Constant *ConstantExpr::getTruncOrBitCast(Constant *C, const Type *Ty) {
   return getCast(Instruction::Trunc, C, Ty);
 }
 
+Constant *ConstantExpr::getPointerCast(Constant *S, const Type *Ty) {
+  assert(isa<PointerType>(S->getType()) && "Invalid cast");
+  assert((Ty->isIntegral() || Ty->getTypeID() == Type::PointerTyID) &&
+         "Invalid cast");
+
+  if (Ty->isIntegral())
+    return getCast(Instruction::PtrToInt, S, Ty);
+  return getCast(Instruction::BitCast, S, Ty);
+}
+
 Constant *ConstantExpr::getTrunc(Constant *C, const Type *Ty) {
   assert(C->getType()->isInteger() && "Trunc operand must be integer");
   assert(Ty->isIntegral() && "Trunc produces only integral");
