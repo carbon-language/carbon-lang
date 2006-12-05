@@ -1629,17 +1629,6 @@ ConstExpr: CastOps '(' ConstVal TO Types ')' {
     if (!isa<PointerType>($3->getType()))
       GEN_ERROR("GetElementPtr requires a pointer operand!");
 
-    // LLVM 1.2 and earlier used ubyte struct indices.  Convert any ubyte struct
-    // indices to uint struct indices for compatibility.
-    generic_gep_type_iterator<std::vector<Value*>::iterator>
-      GTI = gep_type_begin($3->getType(), $4->begin(), $4->end()),
-      GTE = gep_type_end($3->getType(), $4->begin(), $4->end());
-    for (unsigned i = 0, e = $4->size(); i != e && GTI != GTE; ++i, ++GTI)
-      if (isa<StructType>(*GTI))        // Only change struct indices
-        if (ConstantInt *CUI = dyn_cast<ConstantInt>((*$4)[i]))
-          if (CUI->getType() == Type::UByteTy)
-            (*$4)[i] = ConstantExpr::getCast(CUI, Type::UIntTy);
-
     const Type *IdxTy =
       GetElementPtrInst::getIndexedType($3->getType(), *$4, true);
     if (!IdxTy)
@@ -1669,25 +1658,7 @@ ConstExpr: CastOps '(' ConstVal TO Types ')' {
     if ($3->getType() != $5->getType())
       GEN_ERROR("Binary operator types must match!");
     CHECK_FOR_ERROR;
-
-    // HACK: llvm 1.3 and earlier used to emit invalid pointer constant exprs.
-    // To retain backward compatibility with these early compilers, we emit a
-    // cast to the appropriate integer type automatically if we are in the
-    // broken case.  See PR424 for more information.
-    if (!isa<PointerType>($3->getType())) {
-      $$ = ConstantExpr::get($1, $3, $5);
-    } else {
-      const Type *IntPtrTy = 0;
-      switch (CurModule.CurrentModule->getPointerSize()) {
-      case Module::Pointer32: IntPtrTy = Type::IntTy; break;
-      case Module::Pointer64: IntPtrTy = Type::LongTy; break;
-      default: GEN_ERROR("invalid pointer binary constant expr!");
-      }
-      $$ = ConstantExpr::get($1, ConstantExpr::getCast($3, IntPtrTy),
-                             ConstantExpr::getCast($5, IntPtrTy));
-      $$ = ConstantExpr::getCast($$, $3->getType());
-    }
-    CHECK_FOR_ERROR
+    $$ = ConstantExpr::get($1, $3, $5);
   }
   | LogicalOps '(' ConstVal ',' ConstVal ')' {
     if ($3->getType() != $5->getType())
@@ -2799,17 +2770,6 @@ MemoryInst : MALLOC Types OptCAlign {
   | GETELEMENTPTR Types ValueRef IndexList {
     if (!isa<PointerType>($2->get()))
       GEN_ERROR("getelementptr insn requires pointer operand!");
-
-    // LLVM 1.2 and earlier used ubyte struct indices.  Convert any ubyte struct
-    // indices to uint struct indices for compatibility.
-    generic_gep_type_iterator<std::vector<Value*>::iterator>
-      GTI = gep_type_begin($2->get(), $4->begin(), $4->end()),
-      GTE = gep_type_end($2->get(), $4->begin(), $4->end());
-    for (unsigned i = 0, e = $4->size(); i != e && GTI != GTE; ++i, ++GTI)
-      if (isa<StructType>(*GTI))        // Only change struct indices
-        if (ConstantInt *CUI = dyn_cast<ConstantInt>((*$4)[i]))
-          if (CUI->getType() == Type::UByteTy)
-            (*$4)[i] = ConstantExpr::getCast(CUI, Type::UIntTy);
 
     if (!GetElementPtrInst::getIndexedType(*$2, *$4, true))
       GEN_ERROR("Invalid getelementptr indices for type '" +
