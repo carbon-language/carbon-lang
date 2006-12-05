@@ -173,6 +173,8 @@ void Emitter::emitConstPoolAddress(unsigned CPI, unsigned Reloc,
                                    unsigned PCAdj /* = 0 */) {
   MCE.addRelocation(MachineRelocation::getConstPool(MCE.getCurrentPCOffset(),
                                                     Reloc, CPI, PCAdj));
+  if (Reloc == X86::reloc_absolute_dword)
+    MCE.emitWordLE(0);
   MCE.emitWordLE(Disp); // The relocated value will be added to the displacement
 }
 
@@ -183,6 +185,8 @@ void Emitter::emitJumpTableAddress(unsigned JTI, unsigned Reloc,
                                    unsigned PCAdj /* = 0 */) {
   MCE.addRelocation(MachineRelocation::getJumpTable(MCE.getCurrentPCOffset(),
                                                     Reloc, JTI, PCAdj));
+  if (Reloc == X86::reloc_absolute_dword)
+    MCE.emitWordLE(0);
   MCE.emitWordLE(0); // The relocated value will be added to the displacement
 }
 
@@ -617,7 +621,7 @@ void Emitter::emitInstruction(const MachineInstr &MI) {
   unsigned CurOp = 0;
   if (NumOps > 1 && Desc->getOperandConstraint(1, TOI::TIED_TO) != -1)
     CurOp++;
-  
+
   unsigned char BaseOpcode = II->getBaseOpcodeFor(Desc);
   switch (Desc->TSFlags & X86II::FormMask) {
   default: assert(0 && "Unknown FormMask value in X86 MachineCodeEmitter!");
@@ -675,9 +679,8 @@ void Emitter::emitInstruction(const MachineInstr &MI) {
         emitConstant(MO1.getImm(), Size);
       else {
         unsigned rt = Is64BitMode ? X86::reloc_pcrel_word : X86::reloc_absolute_word;
-        // FIXME
         if (Opcode == X86::MOV64ri)
-          rt = X86::reloc_absolute_dword;
+          rt = X86::reloc_absolute_dword;  // FIXME: add X86II flag?
         if (MO1.isGlobalAddress())
           emitGlobalAddressForPtr(MO1.getGlobal(), rt, MO1.getOffset());
         else if (MO1.isExternalSymbol())
@@ -743,10 +746,10 @@ void Emitter::emitInstruction(const MachineInstr &MI) {
       if (MO1.isImmediate())
         emitConstant(MO1.getImm(), Size);
       else {
-        unsigned rt = Is64BitMode ? X86::reloc_pcrel_word : X86::reloc_absolute_word;
-        // FIXME
+        unsigned rt = Is64BitMode ? X86::reloc_pcrel_word
+          : X86::reloc_absolute_word;
         if (Opcode == X86::MOV64ri32)
-          rt = X86::reloc_absolute_word;
+          rt = X86::reloc_absolute_word;  // FIXME: add X86II flag?
         if (MO1.isGlobalAddress())
           emitGlobalAddressForPtr(MO1.getGlobal(), rt, MO1.getOffset());
         else if (MO1.isExternalSymbol())
@@ -777,7 +780,10 @@ void Emitter::emitInstruction(const MachineInstr &MI) {
       if (MO.isImmediate())
         emitConstant(MO.getImm(), Size);
       else {
-        unsigned rt = Is64BitMode ? X86::reloc_pcrel_word : X86::reloc_absolute_word;
+        unsigned rt = Is64BitMode ? X86::reloc_pcrel_word
+          : X86::reloc_absolute_word;
+        if (Opcode == X86::MOV64mi32)
+          rt = X86::reloc_absolute_word;  // FIXME: add X86II flag?
         if (MO.isGlobalAddress())
           emitGlobalAddressForPtr(MO.getGlobal(), rt, MO.getOffset());
         else if (MO.isExternalSymbol())
