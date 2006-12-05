@@ -39,6 +39,7 @@ typedef std::vector<TypeInfo> TypeVector;
 static TypeVector EnumeratedTypes;
 typedef std::map<std::string,TypeInfo> TypeMap;
 static TypeMap NamedTypes;
+static TypeMap Globals;
 
 void destroy(ValueList* VL) {
   while (!VL->empty()) {
@@ -777,29 +778,37 @@ ConstPool : ConstPool OptAssign TYPE TypesV {
     $$ = 0;
   }
   | ConstPool OptAssign OptLinkage GlobalType ConstVal  GlobalVarAttributes {
-    if (!$2->empty())
+    if (!$2->empty()) {
       *O << *$2 << " = ";
+      Globals[*$2] = $5.type.clone();
+    }
     *O << *$3 << " " << *$4 << " " << *$5.cnst << " " << *$6 << "\n";
     delete $2; delete $3; delete $4; $5.destroy(); delete $6; 
     $$ = 0;
   }
   | ConstPool OptAssign External GlobalType Types  GlobalVarAttributes {
-    if (!$2->empty())
+    if (!$2->empty()) {
       *O << *$2 << " = ";
+      Globals[*$2] = $5.clone();
+    }
     *O <<  *$3 << " " << *$4 << " " << *$5.newTy << " " << *$6 << "\n";
     delete $2; delete $3; delete $4; $5.destroy(); delete $6;
     $$ = 0;
   }
   | ConstPool OptAssign DLLIMPORT GlobalType Types  GlobalVarAttributes {
-    if (!$2->empty())
+    if (!$2->empty()) {
       *O << *$2 << " = ";
+      Globals[*$2] = $5.clone();
+    }
     *O << *$3 << " " << *$4 << " " << *$5.newTy << " " << *$6 << "\n";
     delete $2; delete $3; delete $4; $5.destroy(); delete $6;
     $$ = 0;
   }
   | ConstPool OptAssign EXTERN_WEAK GlobalType Types  GlobalVarAttributes {
-    if (!$2->empty())
+    if (!$2->empty()) {
       *O << *$2 << " = ";
+      Globals[*$2] = $5.clone();
+    }
     *O << *$3 << " " << *$4 << " " << *$5.newTy << " " << *$6 << "\n";
     delete $2; delete $3; delete $4; $5.destroy(); delete $6;
     $$ = 0;
