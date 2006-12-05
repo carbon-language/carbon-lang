@@ -5511,7 +5511,7 @@ getRegClassForInlineAsmConstraint(const std::string &Constraint,
         return make_vector<unsigned>(X86::AX, X86::DX, X86::CX, X86::BX,
                                      X86::SI, X86::DI, X86::BP, X86::SP, 0);
       else if (VT == MVT::i8)
-        return make_vector<unsigned>(X86::AL, X86::DL, X86::CL, X86::DL, 0);
+        return make_vector<unsigned>(X86::AL, X86::DL, X86::CL, X86::BL, 0);
       break;
     case 'l':   // INDEX_REGS
       if (VT == MVT::i32)
