@@ -144,8 +144,13 @@ X86TargetLowering::X86TargetLowering(TargetMachine &TM)
       setOperationAction(ISD::FP_TO_UINT   , MVT::i32  , Promote);
   }
 
+  // TODO: when we have SSE, these could be more efficient, by using movd/movq.
   setOperationAction(ISD::BIT_CONVERT      , MVT::f32  , Expand);
   setOperationAction(ISD::BIT_CONVERT      , MVT::i32  , Expand);
+  if (Subtarget->is64Bit()) {
+    setOperationAction(ISD::BIT_CONVERT      , MVT::f64  , Expand);
+    setOperationAction(ISD::BIT_CONVERT      , MVT::i64  , Expand);
+  }
 
   setOperationAction(ISD::BR_JT            , MVT::Other, Expand);
   setOperationAction(ISD::BRCOND           , MVT::Other, Custom);
