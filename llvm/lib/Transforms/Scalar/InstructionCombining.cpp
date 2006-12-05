@@ -6023,6 +6023,23 @@ Instruction *InstCombiner::visitTrunc(CastInst &CI) {
           Value *V = InsertCastBefore(SrcI->getOperand(0), Ty, CI);
           return new ShiftInst(Instruction::LShr, V, SrcI->getOperand(1));
         }
+      } else {     // This is a variable shr.
+        
+        // Turn 'trunc (lshr X, Y) to bool' into '(X & (1 << Y)) != 0'.  This is
+        // more LLVM instructions, but allows '1 << Y' to be hoisted if
+        // loop-invariant and CSE'd.
+        if (CI.getType() == Type::BoolTy && SrcI->hasOneUse()) {
+          Value *One = ConstantInt::get(SrcI->getType(), 1);
+
+          Value *V = InsertNewInstBefore(new ShiftInst(Instruction::Shl, One,
+                                                       SrcI->getOperand(1),
+                                                       "tmp"), CI);
+          V = InsertNewInstBefore(BinaryOperator::createAnd(V,
+                                                            SrcI->getOperand(0),
+                                                            "tmp"), CI);
+          Value *Zero = Constant::getNullValue(V->getType());
+          return BinaryOperator::createSetNE(V, Zero);
+        }
       }
       break;
     }
