@@ -128,7 +128,7 @@ bool ARMAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
     break;
   case Function::WeakLinkage:
   case Function::LinkOnceLinkage:
-    assert(0 && "Not implemented");
+    O << "\t.weak\t" << CurrentFnName << "\n";
     break;
   }
   EmitAlignment(2, F);
