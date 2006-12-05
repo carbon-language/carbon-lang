@@ -75,7 +75,9 @@ ARMTargetLowering::ARMTargetLowering(TargetMachine &TM)
 
   setOperationAction(ISD::SELECT_CC, MVT::i32, Custom);
 
+  setOperationAction(ISD::MEMMOVE, MVT::Other, Expand);
   setOperationAction(ISD::MEMSET, MVT::Other, Expand);
+  setOperationAction(ISD::MEMCPY, MVT::Other, Expand);
 
   setOperationAction(ISD::BR_JT, MVT::Other, Expand);
   setOperationAction(ISD::BRIND, MVT::Other, Expand);
