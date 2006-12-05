@@ -777,7 +777,7 @@ static Constant *CastConstantPacked(ConstantPacked *CP,
         uint64_t V =
           DoubleToBits(cast<ConstantFP>(CP->getOperand(i))->getValue());
         Constant *C = ConstantInt::get(Type::ULongTy, V);
-        Result.push_back(ConstantExpr::getTruncOrBitCast(C, DstEltTy ));
+        Result.push_back(ConstantExpr::getBitCast(C, DstEltTy ));
       }
       return ConstantPacked::get(Result);
     }
@@ -786,7 +786,7 @@ static Constant *CastConstantPacked(ConstantPacked *CP,
     for (unsigned i = 0; i != SrcNumElts; ++i) {
       uint32_t V = FloatToBits(cast<ConstantFP>(CP->getOperand(i))->getValue());
       Constant *C = ConstantInt::get(Type::UIntTy, V);
-      Result.push_back(ConstantExpr::getTruncOrBitCast(C, DstEltTy));
+      Result.push_back(ConstantExpr::getBitCast(C, DstEltTy));
     }
     return ConstantPacked::get(Result);
   }
