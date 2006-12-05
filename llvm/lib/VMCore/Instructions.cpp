@@ -1337,7 +1337,14 @@ unsigned CastInst::isEliminableCastPair(
   // PTRTOINT     n/a      Pointer      n/a        Integral   Unsigned
   // INTTOPTR     n/a      Integral   Unsigned     Pointer      n/a
   // BITCONVERT    =       FirstClass   n/a       FirstClass    n/a   
-  // 
+  //
+  // NOTE: some transforms are safe, but we consider them to be non-profitable.
+  // For example, we could merge "fptoui double to uint" + "zext uint to ulong",
+  // into "fptoui double to ulong", but this loses information about the range
+  // of the produced value (we no longer know the top-part is all zeros). 
+  // Further this conversion is often much more expensive for typical hardware,
+  // and causes issues when building libgcc.  We disallow fptosi+sext for the 
+  // same reason.
   const unsigned numCastOps = 
     Instruction::CastOpsEnd - Instruction::CastOpsBegin;
   static const uint8_t CastResults[numCastOps][numCastOps] = {
@@ -1349,8 +1356,8 @@ unsigned CastInst::isEliminableCastPair(
     {  1, 0, 0,99,99, 0, 0,99,99,99, 0, 3 }, // Trunc      -+
     {  8, 1, 9,99,99, 2, 0,99,99,99, 2, 3 }, // ZExt        |
     {  8, 0, 1,99,99, 0, 2,99,99,99, 0, 3 }, // SExt        |
-    {  0, 1, 0,99,99, 0, 0,99,99,99, 0, 3 }, // FPToUI      |
-    {  0, 0, 1,99,99, 0, 0,99,99,99, 0, 3 }, // FPToSI      |
+    {  0, 0, 0,99,99, 0, 0,99,99,99, 0, 3 }, // FPToUI      |
+    {  0, 0, 0,99,99, 0, 0,99,99,99, 0, 3 }, // FPToSI      |
     { 99,99,99, 0, 0,99,99, 0, 0,99,99, 4 }, // UIToFP      +- firstOp
     { 99,99,99, 0, 0,99,99, 0, 0,99,99, 4 }, // SIToFP      |
     { 99,99,99, 0, 0,99,99, 1, 0,99,99, 4 }, // FPTrunc     |
