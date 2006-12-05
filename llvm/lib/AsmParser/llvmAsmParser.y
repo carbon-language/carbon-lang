@@ -64,9 +64,7 @@ static Module *ParserResult;
 
 #define YYERROR_VERBOSE 1
 
-static bool ObsoleteVarArgs;
 static bool NewVarArgs;
-static BasicBlock *CurBB;
 static GlobalVariable *CurGV;
 
 
@@ -811,7 +809,6 @@ static PATypeHolder HandleUpRefs(const Type *ty) {
 static Module* RunParser(Module * M) {
 
   llvmAsmlineno = 1;      // Reset the current line number...
-  ObsoleteVarArgs = false;
   NewVarArgs = false;
   CurModule.CurrentModule = M;
 
@@ -829,113 +826,6 @@ static Module* RunParser(Module * M) {
   // Reset ParserResult variable while saving its value for the result.
   Module *Result = ParserResult;
   ParserResult = 0;
-
-  //Not all functions use vaarg, so make a second check for ObsoleteVarArgs
-  {
-    Function* F;
-    if ((F = Result->getNamedFunction("llvm.va_start"))
-        && F->getFunctionType()->getNumParams() == 0)
-      ObsoleteVarArgs = true;
-    if((F = Result->getNamedFunction("llvm.va_copy"))
-       && F->getFunctionType()->getNumParams() == 1)
-      ObsoleteVarArgs = true;
-  }
-
-  if (ObsoleteVarArgs && NewVarArgs) {
-    GenerateError(
-      "This file is corrupt: it uses both new and old style varargs");
-    return 0;
-  }
-
-  if(ObsoleteVarArgs) {
-    if(Function* F = Result->getNamedFunction("llvm.va_start")) {
-      if (F->arg_size() != 0) {
-        GenerateError("Obsolete va_start takes 0 argument!");
-        return 0;
-      }
-      
-      //foo = va_start()
-      // ->
-      //bar = alloca typeof(foo)
-      //va_start(bar)
-      //foo = load bar
-
-      const Type* RetTy = Type::getPrimitiveType(Type::VoidTyID);
-      const Type* ArgTy = F->getFunctionType()->getReturnType();
-      const Type* ArgTyPtr = PointerType::get(ArgTy);
-      Function* NF = Result->getOrInsertFunction("llvm.va_start", 
-                                                 RetTy, ArgTyPtr, (Type *)0);
-
-      while (!F->use_empty()) {
-        CallInst* CI = cast<CallInst>(F->use_back());
-        AllocaInst* bar = new AllocaInst(ArgTy, 0, "vastart.fix.1", CI);
-        new CallInst(NF, bar, "", CI);
-        Value* foo = new LoadInst(bar, "vastart.fix.2", CI);
-        CI->replaceAllUsesWith(foo);
-        CI->getParent()->getInstList().erase(CI);
-      }
-      Result->getFunctionList().erase(F);
-    }
-    
-    if(Function* F = Result->getNamedFunction("llvm.va_end")) {
-      if(F->arg_size() != 1) {
-        GenerateError("Obsolete va_end takes 1 argument!");
-        return 0;
-      }
-
-      //vaend foo
-      // ->
-      //bar = alloca 1 of typeof(foo)
-      //vaend bar
-      const Type* RetTy = Type::getPrimitiveType(Type::VoidTyID);
-      const Type* ArgTy = F->getFunctionType()->getParamType(0);
-      const Type* ArgTyPtr = PointerType::get(ArgTy);
-      Function* NF = Result->getOrInsertFunction("llvm.va_end", 
-                                                 RetTy, ArgTyPtr, (Type *)0);
-
-      while (!F->use_empty()) {
-        CallInst* CI = cast<CallInst>(F->use_back());
-        AllocaInst* bar = new AllocaInst(ArgTy, 0, "vaend.fix.1", CI);
-        new StoreInst(CI->getOperand(1), bar, CI);
-        new CallInst(NF, bar, "", CI);
-        CI->getParent()->getInstList().erase(CI);
-      }
-      Result->getFunctionList().erase(F);
-    }
-
-    if(Function* F = Result->getNamedFunction("llvm.va_copy")) {
-      if(F->arg_size() != 1) {
-        GenerateError("Obsolete va_copy takes 1 argument!");
-        return 0;
-      }
-      //foo = vacopy(bar)
-      // ->
-      //a = alloca 1 of typeof(foo)
-      //b = alloca 1 of typeof(foo)
-      //store bar -> b
-      //vacopy(a, b)
-      //foo = load a
-      
-      const Type* RetTy = Type::getPrimitiveType(Type::VoidTyID);
-      const Type* ArgTy = F->getFunctionType()->getReturnType();
-      const Type* ArgTyPtr = PointerType::get(ArgTy);
-      Function* NF = Result->getOrInsertFunction("llvm.va_copy", 
-                                                 RetTy, ArgTyPtr, ArgTyPtr,
-                                                 (Type *)0);
-
-      while (!F->use_empty()) {
-        CallInst* CI = cast<CallInst>(F->use_back());
-        AllocaInst* a = new AllocaInst(ArgTy, 0, "vacopy.fix.1", CI);
-        AllocaInst* b = new AllocaInst(ArgTy, 0, "vacopy.fix.2", CI);
-        new StoreInst(CI->getOperand(1), b, CI);
-        new CallInst(NF, a, b, "", CI);
-        Value* foo = new LoadInst(a, "vacopy.fix.3", CI);
-        CI->replaceAllUsesWith(foo);
-        CI->getParent()->getInstList().erase(CI);
-      }
-      Result->getFunctionList().erase(F);
-    }
-  }
 
   return Result;
 }
@@ -1092,7 +982,6 @@ Module *llvm::RunVMAsmParser(const char * AsmString, Module * M) {
 %type  <OtherOpVal> ShiftOps
 %token <OtherOpVal> PHI_TOK SELECT SHL LSHR ASHR VAARG
 %token <OtherOpVal> EXTRACTELEMENT INSERTELEMENT SHUFFLEVECTOR
-%token VAARG_old VANEXT_old //OBSOLETE
 
 
 %start Module
@@ -2217,7 +2106,7 @@ InstructionList : InstructionList Inst {
     CHECK_FOR_ERROR
   }
   | /* empty */ {
-    $$ = CurBB = getBBVal(ValID::create((int)CurFun.NextBBNum++), true);
+    $$ = getBBVal(ValID::create((int)CurFun.NextBBNum++), true);
     CHECK_FOR_ERROR
 
     // Make sure to move the basic block to the correct location in the
@@ -2229,7 +2118,7 @@ InstructionList : InstructionList Inst {
     CHECK_FOR_ERROR
   }
   | LABELSTR {
-    $$ = CurBB = getBBVal(ValID::create($1), true);
+    $$ = getBBVal(ValID::create($1), true);
     CHECK_FOR_ERROR
 
     // Make sure to move the basic block to the correct location in the
@@ -2546,49 +2435,6 @@ InstVal : ArithmeticOps Types ValueRef ',' ValueRef {
   | VAARG ResolvedVal ',' Types {
     NewVarArgs = true;
     $$ = new VAArgInst($2, *$4);
-    delete $4;
-    CHECK_FOR_ERROR
-  }
-  | VAARG_old ResolvedVal ',' Types {
-    ObsoleteVarArgs = true;
-    const Type* ArgTy = $2->getType();
-    Function* NF = CurModule.CurrentModule->
-      getOrInsertFunction("llvm.va_copy", ArgTy, ArgTy, (Type *)0);
-
-    //b = vaarg a, t -> 
-    //foo = alloca 1 of t
-    //bar = vacopy a 
-    //store bar -> foo
-    //b = vaarg foo, t
-    AllocaInst* foo = new AllocaInst(ArgTy, 0, "vaarg.fix");
-    CurBB->getInstList().push_back(foo);
-    CallInst* bar = new CallInst(NF, $2);
-    CurBB->getInstList().push_back(bar);
-    CurBB->getInstList().push_back(new StoreInst(bar, foo));
-    $$ = new VAArgInst(foo, *$4);
-    delete $4;
-    CHECK_FOR_ERROR
-  }
-  | VANEXT_old ResolvedVal ',' Types {
-    ObsoleteVarArgs = true;
-    const Type* ArgTy = $2->getType();
-    Function* NF = CurModule.CurrentModule->
-      getOrInsertFunction("llvm.va_copy", ArgTy, ArgTy, (Type *)0);
-
-    //b = vanext a, t ->
-    //foo = alloca 1 of t
-    //bar = vacopy a
-    //store bar -> foo
-    //tmp = vaarg foo, t
-    //b = load foo
-    AllocaInst* foo = new AllocaInst(ArgTy, 0, "vanext.fix");
-    CurBB->getInstList().push_back(foo);
-    CallInst* bar = new CallInst(NF, $2);
-    CurBB->getInstList().push_back(bar);
-    CurBB->getInstList().push_back(new StoreInst(bar, foo));
-    Instruction* tmp = new VAArgInst(foo, *$4);
-    CurBB->getInstList().push_back(tmp);
-    $$ = new LoadInst(foo);
     delete $4;
     CHECK_FOR_ERROR
   }
