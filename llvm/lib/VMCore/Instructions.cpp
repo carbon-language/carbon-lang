@@ -1548,6 +1548,31 @@ CastInst *CastInst::createTruncOrBitCast(Value *S, const Type *Ty,
   return create(Instruction::Trunc, S, Ty, Name, InsertAtEnd);
 }
 
+CastInst *CastInst::createPointerCast(Value *S, const Type *Ty,
+                                      const std::string &Name,
+                                      BasicBlock *InsertAtEnd) {
+  assert(isa<PointerType>(S->getType()) && "Invalid cast");
+  assert((Ty->isIntegral() || Ty->getTypeID() == Type::PointerTyID) &&
+         "Invalid cast");
+
+  if (Ty->isIntegral())
+    return create(Instruction::PtrToInt, S, Ty, Name, InsertAtEnd);
+  return create(Instruction::BitCast, S, Ty, Name, InsertAtEnd);
+}
+
+/// @brief Create a BitCast or a PtrToInt cast instruction
+CastInst *CastInst::createPointerCast(Value *S, const Type *Ty, 
+                                      const std::string &Name, 
+                                      Instruction *InsertBefore) {
+  assert(isa<PointerType>(S->getType()) && "Invalid cast");
+  assert((Ty->isIntegral() || Ty->getTypeID() == Type::PointerTyID) &&
+         "Invalid cast");
+
+  if (Ty->isIntegral())
+    return create(Instruction::PtrToInt, S, Ty, Name, InsertBefore);
+  return create(Instruction::BitCast, S, Ty, Name, InsertBefore);
+}
+
 // Provide a way to get a "cast" where the cast opcode is inferred from the 
 // types and size of the operand. This, basically, is a parallel of the 
 // logic in the checkCast function below.  This axiom should hold:
