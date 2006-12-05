@@ -323,6 +323,9 @@ void X86JITInfo::relocate(void *Function, MachineRelocation *MR,
       // in memory.
       *((unsigned*)RelocPos) += (unsigned)ResultPtr;
       break;
+    case X86::reloc_absolute_dword:
+      *((intptr_t*)RelocPos) += ResultPtr;
+      break;
     }
   }
 }

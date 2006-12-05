@@ -3832,14 +3832,7 @@ X86TargetLowering::LowerConstantPool(SDOperand Op, SelectionDAG &DAG) {
   SDOperand Result = DAG.getTargetConstantPool(CP->getConstVal(),
                                                getPointerTy(),
                                                CP->getAlignment());
-  // Use X86ISD::WrapperRIP if we are in X86-64 small / medium PIC mode.
-  TargetMachine &tm = getTargetMachine();
-  unsigned WrapperOpcode = (Subtarget->is64Bit() &&
-                            (tm.getCodeModel() == CodeModel::Small ||
-                             tm.getCodeModel() == CodeModel::Medium) &&
-                            tm.getRelocationModel() == Reloc::PIC_)
-    ? X86ISD::WrapperRIP : X86ISD::Wrapper;
-  Result = DAG.getNode(WrapperOpcode, getPointerTy(), Result);
+  Result = DAG.getNode(X86ISD::Wrapper, getPointerTy(), Result);
   if (Subtarget->isTargetDarwin()) {
     // With PIC, the address is actually $g + Offset.
     if (!Subtarget->is64Bit() &&
@@ -3855,14 +3848,7 @@ SDOperand
 X86TargetLowering::LowerGlobalAddress(SDOperand Op, SelectionDAG &DAG) {
   GlobalValue *GV = cast<GlobalAddressSDNode>(Op)->getGlobal();
   SDOperand Result = DAG.getTargetGlobalAddress(GV, getPointerTy());
-  // Use X86ISD::WrapperRIP if we are in X86-64 small / medium PIC mode.
-  TargetMachine &tm = getTargetMachine();
-  unsigned WrapperOpcode = (Subtarget->is64Bit() &&
-                            (tm.getCodeModel() == CodeModel::Small ||
-                             tm.getCodeModel() == CodeModel::Medium) &&
-                            tm.getRelocationModel() == Reloc::PIC_)
-    ? X86ISD::WrapperRIP : X86ISD::Wrapper;
-  Result = DAG.getNode(WrapperOpcode, getPointerTy(), Result);
+  Result = DAG.getNode(X86ISD::Wrapper, getPointerTy(), Result);
   if (Subtarget->isTargetDarwin()) {
     // With PIC, the address is actually $g + Offset.
     if (!Subtarget->is64Bit() &&
@@ -3889,14 +3875,7 @@ SDOperand
 X86TargetLowering::LowerExternalSymbol(SDOperand Op, SelectionDAG &DAG) {
   const char *Sym = cast<ExternalSymbolSDNode>(Op)->getSymbol();
   SDOperand Result = DAG.getTargetExternalSymbol(Sym, getPointerTy());
-  // Use X86ISD::WrapperRIP if we are in X86-64 small / medium PIC mode.
-  TargetMachine &tm = getTargetMachine();
-  unsigned WrapperOpcode = (Subtarget->is64Bit() &&
-                            (tm.getCodeModel() == CodeModel::Small ||
-                             tm.getCodeModel() == CodeModel::Medium) &&
-                            tm.getRelocationModel() == Reloc::PIC_)
-    ? X86ISD::WrapperRIP : X86ISD::Wrapper;
-  Result = DAG.getNode(WrapperOpcode, getPointerTy(), Result);
+  Result = DAG.getNode(X86ISD::Wrapper, getPointerTy(), Result);
   if (Subtarget->isTargetDarwin()) {
     // With PIC, the address is actually $g + Offset.
     if (!Subtarget->is64Bit() &&
@@ -4264,14 +4243,7 @@ SDOperand X86TargetLowering::LowerBRCOND(SDOperand Op, SelectionDAG &DAG) {
 SDOperand X86TargetLowering::LowerJumpTable(SDOperand Op, SelectionDAG &DAG) {
   JumpTableSDNode *JT = cast<JumpTableSDNode>(Op);
   SDOperand Result = DAG.getTargetJumpTable(JT->getIndex(), getPointerTy());
-  // Use X86ISD::WrapperRIP if we are in X86-64 small / medium PIC mode.
-  TargetMachine &tm = getTargetMachine();
-  unsigned WrapperOpcode = (Subtarget->is64Bit() &&
-                            (tm.getCodeModel() == CodeModel::Small ||
-                             tm.getCodeModel() == CodeModel::Medium) &&
-                            tm.getRelocationModel() == Reloc::PIC_)
-    ? X86ISD::WrapperRIP : X86ISD::Wrapper;
-  Result = DAG.getNode(WrapperOpcode, getPointerTy(), Result);
+  Result = DAG.getNode(X86ISD::Wrapper, getPointerTy(), Result);
   if (Subtarget->isTargetDarwin()) {
     // With PIC, the address is actually $g + Offset.
     if (!Subtarget->is64Bit() &&
@@ -5005,7 +4977,6 @@ const char *X86TargetLowering::getTargetNodeName(unsigned Opcode) const {
   case X86ISD::LOAD_UA:            return "X86ISD::LOAD_UA";
   case X86ISD::GlobalBaseReg:      return "X86ISD::GlobalBaseReg";
   case X86ISD::Wrapper:            return "X86ISD::Wrapper";
-  case X86ISD::WrapperRIP:         return "X86ISD::WrapperRIP";
   case X86ISD::S2VEC:              return "X86ISD::S2VEC";
   case X86ISD::PEXTRW:             return "X86ISD::PEXTRW";
   case X86ISD::PINSRW:             return "X86ISD::PINSRW";
@@ -5249,7 +5220,7 @@ static SDOperand getShuffleScalarElt(SDNode *N, unsigned i, SelectionDAG &DAG) {
 /// node is a GlobalAddress + an offset.
 static bool isGAPlusOffset(SDNode *N, GlobalValue* &GA, int64_t &Offset) {
   unsigned Opc = N->getOpcode();
-  if (Opc == X86ISD::Wrapper || Opc == X86ISD::WrapperRIP) {
+  if (Opc == X86ISD::Wrapper) {
     if (dyn_cast<GlobalAddressSDNode>(N->getOperand(0))) {
       GA = cast<GlobalAddressSDNode>(N->getOperand(0))->getGlobal();
       return true;

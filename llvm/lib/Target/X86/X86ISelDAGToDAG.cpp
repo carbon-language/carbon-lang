@@ -590,11 +590,10 @@ bool X86DAGToDAGISel::MatchAddress(SDOperand N, X86ISelAddressMode &AM,
     break;
   }
 
-  case X86ISD::Wrapper:
-  case X86ISD::WrapperRIP: {
-    bool isRIP = N.getOpcode() == X86ISD::WrapperRIP;
+  case X86ISD::Wrapper: {
+    bool is64Bit = Subtarget->is64Bit();
     // Under X86-64 non-small code model, GV (and friends) are 64-bits.
-    if (!isRIP && Subtarget->is64Bit() && TM.getCodeModel() != CodeModel::Small)
+    if (is64Bit && TM.getCodeModel() != CodeModel::Small)
       break;
 
     // If value is available in a register both base and index components have
@@ -603,7 +602,7 @@ bool X86DAGToDAGISel::MatchAddress(SDOperand N, X86ISelAddressMode &AM,
     if (!Available || (AM.Base.Reg.Val && AM.IndexReg.Val)) {
       // For X86-64 PIC code, only allow GV / CP + displacement so we can use
       // RIP relative addressing mode.
-      if (isRIP &&
+      if (is64Bit &&
           (AM.Base.Reg.Val || AM.Scale > 1 || AM.IndexReg.Val ||
            AM.BaseType == X86ISelAddressMode::FrameIndexBase))
         break;
@@ -613,7 +612,7 @@ bool X86DAGToDAGISel::MatchAddress(SDOperand N, X86ISelAddressMode &AM,
           AM.CP = CP->getConstVal();
           AM.Align = CP->getAlignment();
           AM.Disp += CP->getOffset();
-          AM.isRIPRel = isRIP;
+          AM.isRIPRel = is64Bit;
           return false;
         }
       } else if (GlobalAddressSDNode *G =
@@ -621,10 +620,10 @@ bool X86DAGToDAGISel::MatchAddress(SDOperand N, X86ISelAddressMode &AM,
         if (AM.GV == 0) {
           AM.GV = G->getGlobal();
           AM.Disp += G->getOffset();
-          AM.isRIPRel = isRIP;
+          AM.isRIPRel = is64Bit;
           return false;
         }
-      } else if (isRoot && isRIP) {
+      } else if (isRoot && is64Bit) {
         if (ExternalSymbolSDNode *S =
             dyn_cast<ExternalSymbolSDNode>(N.getOperand(0))) {
           AM.ES = S->getSymbol();
@@ -997,8 +996,7 @@ SDNode *X86DAGToDAGISel::Select(SDOperand N) {
       SDOperand N0 = N.getOperand(0);
       SDOperand N1 = N.getOperand(1);
       if (N.Val->getValueType(0) == PtrVT &&
-          (N0.getOpcode() == X86ISD::Wrapper
-           || N0.getOpcode() == X86ISD::WrapperRIP) &&
+          N0.getOpcode() == X86ISD::Wrapper &&
           N1.getOpcode() == ISD::Constant) {
         unsigned Offset = (unsigned)cast<ConstantSDNode>(N1)->getValue();
         SDOperand C(0, 0);

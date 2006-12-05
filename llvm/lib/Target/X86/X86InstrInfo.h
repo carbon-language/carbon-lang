@@ -277,8 +277,8 @@ public:
   // getBaseOpcodeFor - This function returns the "base" X86 opcode for the
   // specified opcode number.
   //
-  unsigned char getBaseOpcodeFor(unsigned Opcode) const {
-    return get(Opcode).TSFlags >> X86II::OpcodeShift;
+  unsigned char getBaseOpcodeFor(const TargetInstrDescriptor *TID) const {
+    return TID->TSFlags >> X86II::OpcodeShift;
   }
 };
 

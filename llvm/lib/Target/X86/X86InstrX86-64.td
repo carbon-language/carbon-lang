@@ -36,7 +36,7 @@ def lea64_32mem : Operand<i32> {
 // Complex Pattern Definitions...
 //
 def lea64addr : ComplexPattern<i64, 4, "SelectLEAAddr",
-                               [add, mul, shl, or, frameindex, X86WrapperRIP],
+                               [add, mul, shl, or, frameindex, X86Wrapper],
                                []>;
 
 //===----------------------------------------------------------------------===//
@@ -1023,15 +1023,6 @@ def MOV64ri64i32 : Ii32<0xB8, AddRegFrm, (ops GR64:$dst, i64i32imm:$src),
 
 // ConstantPool GlobalAddress, ExternalSymbol, and JumpTable
 def : Pat<(i64 (X86Wrapper tconstpool  :$dst)),
-          (MOV64ri32 tconstpool  :$dst)>, Requires<[SmallCode]>;
-def : Pat<(i64 (X86Wrapper tjumptable  :$dst)),
-          (MOV64ri32 tjumptable  :$dst)>, Requires<[SmallCode]>;
-def : Pat<(i64 (X86Wrapper tglobaladdr :$dst)),
-          (MOV64ri32 tglobaladdr :$dst)>, Requires<[SmallCode]>;
-def : Pat<(i64 (X86Wrapper texternalsym:$dst)),
-          (MOV64ri32 texternalsym:$dst)>, Requires<[SmallCode]>;
-
-def : Pat<(i64 (X86Wrapper tconstpool  :$dst)),
           (MOV64ri tconstpool  :$dst)>, Requires<[NotSmallCode]>;
 def : Pat<(i64 (X86Wrapper tjumptable  :$dst)),
           (MOV64ri tjumptable  :$dst)>, Requires<[NotSmallCode]>;
@@ -1040,10 +1031,12 @@ def : Pat<(i64 (X86Wrapper tglobaladdr :$dst)),
 def : Pat<(i64 (X86Wrapper texternalsym:$dst)),
           (MOV64ri texternalsym:$dst)>, Requires<[NotSmallCode]>;
 
+/*
 def : Pat<(store (i64 (X86Wrapper tglobaladdr:$src)), addr:$dst),
           (MOV64mi32 addr:$dst, tglobaladdr:$src)>, Requires<[SmallCode]>;
 def : Pat<(store (i64 (X86Wrapper texternalsym:$src)), addr:$dst),
           (MOV64mi32 addr:$dst, texternalsym:$src)>, Requires<[SmallCode]>;
+*/
 
 // Calls
 // Direct PC relative function call for small code model. 32-bit displacement
