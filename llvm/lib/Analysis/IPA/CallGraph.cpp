@@ -51,11 +51,9 @@ class BasicCallGraph : public CallGraph, public ModulePass {
 
 public:
   BasicCallGraph() : Root(0), ExternalCallingNode(0), CallsExternalNode(0) {}
-  ~BasicCallGraph() { destroy(); }
 
   // runOnModule - Compute the call graph for the specified module.
   virtual bool runOnModule(Module &M) {
-    destroy();
     CallGraph::initialize(M);
     
     ExternalCallingNode = getOrInsertFunction(0);
@@ -182,8 +180,10 @@ private:
   //
   // destroy - Release memory for the call graph
   virtual void destroy() {
+    /// CallsExternalNode is not in the function map, delete it explicitly.
     delete CallsExternalNode;
     CallsExternalNode = 0;
+    CallGraph::destroy();
   }
 };
 
@@ -194,7 +194,6 @@ RegisterAnalysisGroup<CallGraph, true> Z(Y);
 } //End anonymous namespace
 
 void CallGraph::initialize(Module &M) {
-  destroy();
   Mod = &M;
 }
 
