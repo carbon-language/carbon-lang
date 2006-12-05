@@ -1683,6 +1683,11 @@ def MOVDI2PDIrm : PDI<0x6E, MRMSrcMem, (ops VR128:$dst, i32mem:$src),
                       [(set VR128:$dst,
                         (v4i32 (scalar_to_vector (loadi32 addr:$src))))]>;
 
+def MOVDI2SSrr  : PDI<0x6E, MRMSrcReg, (ops FR32:$dst, GR32:$src),
+                      "movd {$src, $dst|$dst, $src}",
+                      [(set FR32:$dst, (bitconvert GR32:$src))]>;
+
+
 // SSE2 instructions with XS prefix
 def MOVQI2PQIrm : I<0x7E, MRMSrcMem, (ops VR128:$dst, i64mem:$src),
                     "movq {$src, $dst|$dst, $src}",
@@ -1723,6 +1728,11 @@ def MOVPDI2DImr  : PDI<0x7E, MRMDestMem, (ops i32mem:$dst, VR128:$src),
                        "movd {$src, $dst|$dst, $src}",
                        [(store (i32 (vector_extract (v4i32 VR128:$src),
                                      (iPTR 0))), addr:$dst)]>;
+
+def MOVDSS2DIrr  : PDI<0x7E, MRMDestReg, (ops GR32:$dst, FR32:$src),
+                       "movd {$src, $dst|$dst, $src}",
+                       [(set GR32:$dst, (bitconvert FR32:$src))]>;
+
 
 // Move to lower bits of a VR128, leaving upper bits alone.
 // Three operand (but two address) aliases.

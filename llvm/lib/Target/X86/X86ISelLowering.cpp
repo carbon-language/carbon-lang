@@ -145,8 +145,10 @@ X86TargetLowering::X86TargetLowering(TargetMachine &TM)
   }
 
   // TODO: when we have SSE, these could be more efficient, by using movd/movq.
-  setOperationAction(ISD::BIT_CONVERT      , MVT::f32  , Expand);
-  setOperationAction(ISD::BIT_CONVERT      , MVT::i32  , Expand);
+  if (!X86ScalarSSE) {
+    setOperationAction(ISD::BIT_CONVERT      , MVT::f32  , Expand);
+    setOperationAction(ISD::BIT_CONVERT      , MVT::i32  , Expand);
+  }
   if (Subtarget->is64Bit()) {
     setOperationAction(ISD::BIT_CONVERT      , MVT::f64  , Expand);
     setOperationAction(ISD::BIT_CONVERT      , MVT::i64  , Expand);
