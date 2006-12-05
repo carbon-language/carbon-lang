@@ -192,7 +192,7 @@ void X86ATTAsmPrinter::printOperand(const MachineInstr *MI, unsigned OpNo,
     if (X86PICStyle == PICStyle::Stub &&
         TM.getRelocationModel() == Reloc::PIC_)
       O << "-\"L" << getFunctionNumber() << "$pb\"";
-    if (Subtarget->is64Bit())
+    if (isMemOp && Subtarget->is64Bit())
       O << "(%rip)";
     return;
   }
@@ -210,7 +210,7 @@ void X86ATTAsmPrinter::printOperand(const MachineInstr *MI, unsigned OpNo,
     else if (Offset < 0)
       O << Offset;
 
-    if (Subtarget->is64Bit())
+    if (isMemOp && Subtarget->is64Bit())
       O << "(%rip)";
     return;
   }
@@ -265,8 +265,7 @@ void X86ATTAsmPrinter::printOperand(const MachineInstr *MI, unsigned OpNo,
     else if (Offset < 0)
       O << Offset;
 
-    if (isMemOp &&
-        Subtarget->is64Bit()) {
+    if (isMemOp && Subtarget->is64Bit()) {
       if (isExt && TM.getRelocationModel() != Reloc::Static)
         O << "@GOTPCREL";
       O << "(%rip)";
@@ -288,8 +287,7 @@ void X86ATTAsmPrinter::printOperand(const MachineInstr *MI, unsigned OpNo,
     if (!isCallOp) O << '$';
     O << TAI->getGlobalPrefix() << MO.getSymbolName();
 
-    if (!isCallOp &&
-        Subtarget->is64Bit())
+    if (!isCallOp && Subtarget->is64Bit())
       O << "(%rip)";
 
     return;
