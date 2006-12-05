@@ -60,6 +60,12 @@ struct TypeInfo {
 
   void destroy() const { delete newTy; }
 
+  TypeInfo clone() const { 
+    TypeInfo result = *this; 
+    result.newTy = new std::string(*newTy);
+    return result;
+  }
+
   Types getElementType() const { return elemTy; }
 
   bool isSigned() const {
