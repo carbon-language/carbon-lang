@@ -18,6 +18,7 @@
 #include "llvm/Function.h"
 #include "llvm/Constants.h"
 #include "llvm/Intrinsics.h"
+#include "llvm/ADT/VectorExtras.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
@@ -37,6 +38,9 @@ namespace {
     ARMTargetLowering(TargetMachine &TM);
     virtual SDOperand LowerOperation(SDOperand Op, SelectionDAG &DAG);
     virtual const char *getTargetNodeName(unsigned Opcode) const;
+    std::vector<unsigned>
+    getRegClassForInlineAsmConstraint(const std::string &Constraint,
+				      MVT::ValueType VT) const;
   };
 
 }
@@ -198,6 +202,29 @@ static ARMCC::CondCodes DAGIntCCToARMCC(ISD::CondCode CC) {
   case ISD::SETUGT: return ARMCC::HI;
   case ISD::SETUGE: return ARMCC::CS;
   }
+}
+
+std::vector<unsigned> ARMTargetLowering::
+getRegClassForInlineAsmConstraint(const std::string &Constraint,
+                                  MVT::ValueType VT) const {
+  if (Constraint.size() == 1) {
+    // FIXME: handling only r regs
+    switch (Constraint[0]) {
+    default: break;  // Unknown constraint letter
+
+    case 'r':   // GENERAL_REGS
+    case 'R':   // LEGACY_REGS
+      if (VT == MVT::i32)
+        return make_vector<unsigned>(ARM::R0,  ARM::R1,  ARM::R2,  ARM::R3,
+                                     ARM::R4,  ARM::R5,  ARM::R6,  ARM::R7,
+                                     ARM::R8,  ARM::R9,  ARM::R10, ARM::R11,
+                                     ARM::R12, ARM::R13, ARM::R14, 0);
+      break;
+
+    }
+  }
+
+  return std::vector<unsigned>();
 }
 
 const char *ARMTargetLowering::getTargetNodeName(unsigned Opcode) const {
