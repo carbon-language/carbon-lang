@@ -67,7 +67,7 @@ namespace {
   struct CallGraphPrinter : public ModulePass {
     virtual void getAnalysisUsage(AnalysisUsage &AU) const {
       AU.setPreservesAll();
-      AU.addRequired<CallGraph>();
+      AU.addRequiredTransitive<CallGraph>();
     }
     virtual bool runOnModule(Module &M) { return false; }
 
