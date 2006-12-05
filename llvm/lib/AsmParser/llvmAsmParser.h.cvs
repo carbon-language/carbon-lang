@@ -170,9 +170,7 @@
      VAARG = 396,
      EXTRACTELEMENT = 397,
      INSERTELEMENT = 398,
-     SHUFFLEVECTOR = 399,
-     VAARG_old = 400,
-     VANEXT_old = 401
+     SHUFFLEVECTOR = 399
    };
 #endif
 /* Tokens.  */
@@ -318,14 +316,12 @@
 #define EXTRACTELEMENT 397
 #define INSERTELEMENT 398
 #define SHUFFLEVECTOR 399
-#define VAARG_old 400
-#define VANEXT_old 401
 
 
 
 
 #if ! defined (YYSTYPE) && ! defined (YYSTYPE_IS_DECLARED)
-#line 967 "/proj/llvm/llvm-1/lib/AsmParser/llvmAsmParser.y"
+#line 857 "/proj/llvm/llvm-1/lib/AsmParser/llvmAsmParser.y"
 typedef union YYSTYPE {
   llvm::Module                           *ModuleVal;
   llvm::Function                         *FunctionVal;
@@ -369,7 +365,7 @@ typedef union YYSTYPE {
   llvm::FCmpInst::Predicate         FPredicate;
 } YYSTYPE;
 /* Line 1447 of yacc.c.  */
-#line 373 "llvmAsmParser.tab.h"
+#line 369 "llvmAsmParser.tab.h"
 # define yystype YYSTYPE /* obsolescent; will be withdrawn */
 # define YYSTYPE_IS_DECLARED 1
 # define YYSTYPE_IS_TRIVIAL 1
