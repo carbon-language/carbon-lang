@@ -1500,14 +1500,7 @@ static inline Constant *getFoldedCast(
   ExprMapKeyType Key(opc, argVec);
   return ExprConstants->getOrCreate(Ty, Key);
 }
-
-Constant *ConstantExpr::getInferredCast(Constant *C, bool SrcIsSigned, 
-                                const Type *Ty, bool DestIsSigned) {
-  // Note: we can't inline this because it requires the Instructions.h header
-  return getCast(
-    CastInst::getCastOpcode(C, SrcIsSigned, Ty, DestIsSigned), C, Ty);
-}
-
+ 
 Constant *ConstantExpr::getCast(unsigned oc, Constant *C, const Type *Ty) {
   Instruction::CastOps opc = Instruction::CastOps(oc);
   assert(Instruction::isCast(opc) && "opcode out of range");
@@ -1532,7 +1525,14 @@ Constant *ConstantExpr::getCast(unsigned oc, Constant *C, const Type *Ty) {
     case Instruction::BitCast:  return getBitCast(C, Ty);
   }
   return 0;
+} 
+
+Constant *ConstantExpr::getCast(Constant *C, const Type *Ty) {
+  // Note: we can't inline this because it requires the Instructions.h header
+  return getCast(CastInst::getCastOpcode(
+        C, C->getType()->isSigned(), Ty, Ty->isSigned()), C, Ty);
 }
+
 
 Constant *ConstantExpr::getZExtOrBitCast(Constant *C, const Type *Ty) {
   if (C->getType()->getPrimitiveSizeInBits() == Ty->getPrimitiveSizeInBits())

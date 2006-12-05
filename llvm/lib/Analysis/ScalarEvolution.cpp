@@ -179,7 +179,7 @@ SCEVHandle SCEVConstant::get(ConstantInt *V) {
   if (V->getType()->isSigned()) {
     const Type *NewTy = V->getType()->getUnsignedVersion();
     V = cast<ConstantInt>(
-        ConstantExpr::getInferredCast(V, false, NewTy, false));
+        ConstantExpr::getBitCast(V, NewTy));
   }
 
   SCEVConstant *&R = (*SCEVConstants)[V];
@@ -466,7 +466,7 @@ SCEVHandle SCEVUnknown::getIntegerSCEV(int Val, const Type *Ty) {
     C = ConstantInt::get(Ty, Val);
   else {
     C = ConstantInt::get(Ty->getSignedVersion(), Val);
-    C = ConstantExpr::getInferredCast(C, true, Ty, false);
+    C = ConstantExpr::getBitCast(C, Ty);
   }
   return SCEVUnknown::get(C);
 }
@@ -513,7 +513,7 @@ static SCEVHandle PartialFact(SCEVHandle V, unsigned NumSteps) {
       Result *= Val-(NumSteps-1);
     Constant *Res = ConstantInt::get(Type::ULongTy, Result);
     return SCEVUnknown::get(
-        ConstantExpr::getInferredCast(Res, false, V->getType(), true));
+        ConstantExpr::getTruncOrBitCast(Res, V->getType()));
   }
 
   const Type *Ty = V->getType();
@@ -559,7 +559,8 @@ SCEVHandle SCEVAddRecExpr::evaluateAtIteration(SCEVHandle It) const {
 
 SCEVHandle SCEVTruncateExpr::get(const SCEVHandle &Op, const Type *Ty) {
   if (SCEVConstant *SC = dyn_cast<SCEVConstant>(Op))
-    return SCEVUnknown::get(ConstantExpr::getCast(SC->getValue(), Ty));
+    return SCEVUnknown::get(
+        ConstantExpr::getTruncOrBitCast(SC->getValue(), Ty));
 
   // If the input value is a chrec scev made out of constants, truncate
   // all of the constants.
@@ -582,7 +583,8 @@ SCEVHandle SCEVTruncateExpr::get(const SCEVHandle &Op, const Type *Ty) {
 
 SCEVHandle SCEVZeroExtendExpr::get(const SCEVHandle &Op, const Type *Ty) {
   if (SCEVConstant *SC = dyn_cast<SCEVConstant>(Op))
-    return SCEVUnknown::get(ConstantExpr::getCast(SC->getValue(), Ty));
+    return SCEVUnknown::get(
+        ConstantExpr::getZExtOrBitCast(SC->getValue(), Ty));
 
   // FIXME: If the input value is a chrec scev, and we can prove that the value
   // did not overflow the old, smaller, value, we can zero extend all of the
@@ -998,11 +1000,10 @@ SCEVHandle SCEVSDivExpr::get(const SCEVHandle &LHS, const SCEVHandle &RHS) {
       Constant *LHSCV = LHSC->getValue();
       Constant *RHSCV = RHSC->getValue();
       if (LHSCV->getType()->isUnsigned())
-        LHSCV = ConstantExpr::getInferredCast(
-            LHSCV, false, LHSCV->getType()->getSignedVersion(), true);
+        LHSCV = ConstantExpr::getBitCast(LHSCV, 
+                                         LHSCV->getType()->getSignedVersion());
       if (RHSCV->getType()->isUnsigned())
-        RHSCV = ConstantExpr::getInferredCast(
-            RHSCV, false, LHSCV->getType(), true);
+        RHSCV = ConstantExpr::getBitCast(RHSCV, LHSCV->getType());
       return SCEVUnknown::get(ConstantExpr::getSDiv(LHSCV, RHSCV));
     }
   }
