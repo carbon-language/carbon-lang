@@ -907,7 +907,7 @@ bool X86DAGToDAGISel::SelectLEAAddr(SDOperand Op, SDOperand N,
   if (AM.GV || AM.CP || AM.ES || AM.JT != -1) {
     // For X86-64, we should always use lea to materialize RIP relative
     // addresses.
-    if (Subtarget->is64Bit() && TM.getRelocationModel() != Reloc::Static)
+    if (Subtarget->is64Bit())
       Complexity = 4;
     else
       Complexity += 2;
