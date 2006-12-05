@@ -64,7 +64,6 @@ static Module *ParserResult;
 
 #define YYERROR_VERBOSE 1
 
-static bool NewVarArgs;
 static GlobalVariable *CurGV;
 
 
@@ -809,7 +808,6 @@ static PATypeHolder HandleUpRefs(const Type *ty) {
 static Module* RunParser(Module * M) {
 
   llvmAsmlineno = 1;      // Reset the current line number...
-  NewVarArgs = false;
   CurModule.CurrentModule = M;
 
   // Check to make sure the parser succeeded
@@ -2433,7 +2431,6 @@ InstVal : ArithmeticOps Types ValueRef ',' ValueRef {
     CHECK_FOR_ERROR
   }
   | VAARG ResolvedVal ',' Types {
-    NewVarArgs = true;
     $$ = new VAArgInst($2, *$4);
     delete $4;
     CHECK_FOR_ERROR
