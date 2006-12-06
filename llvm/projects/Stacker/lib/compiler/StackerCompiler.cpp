@@ -38,7 +38,7 @@ extern int Stackerparse();
 
 StackerCompiler* StackerCompiler::TheInstance = 0;
 
-static Statistic<> NumDefinitions(
+static Statistic NumDefinitions(
         "numdefs","The # of definitions encoutered while compiling Stacker");
 
 StackerCompiler::StackerCompiler()
