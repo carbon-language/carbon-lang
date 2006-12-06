@@ -37,8 +37,8 @@ using namespace llvm;
 
 namespace {
 
-  static Statistic<double> efficiency
-  ("regalloc", "Ratio of intervals processed over total intervals");
+  static Statistic<> NumIters
+  ("regalloc", "Number of iterations performed");
   static Statistic<> NumBacktracks
   ("regalloc", "Number of times we had to backtrack");
 
@@ -273,7 +273,7 @@ void RA::linearScan()
     DEBUG(printIntervals("inactive", inactive_.begin(), inactive_.end()));
   }
   numIntervals += li_->getNumIntervals();
-  efficiency = double(numIterations) / double(numIntervals);
+  NumIters += numIterations;
 
   // expire any remaining active intervals
   for (IntervalPtrs::reverse_iterator
