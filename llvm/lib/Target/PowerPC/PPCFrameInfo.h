@@ -21,26 +21,18 @@ namespace llvm {
 
 class PPCFrameInfo: public TargetFrameInfo {
   const TargetMachine &TM;
-  std::pair<unsigned, int> LR[1];
 
 public:
   PPCFrameInfo(const TargetMachine &tm, bool LP64)
     : TargetFrameInfo(TargetFrameInfo::StackGrowsDown, 16, 0), TM(tm) {
-    if (LP64) {
-      LR[0].first = PPC::LR8;
-      LR[0].second = 16;
-    } else {
-      LR[0].first = PPC::LR;
-      LR[0].second = 8;
-    }
   }
 
-  const std::pair<unsigned, int> *
-  getCalleeSaveSpillSlots(unsigned &NumEntries) const {
-    NumEntries = 1;
-    return &LR[0];
+  /// getReturnSaveOffset - Return the previous frame offset to save the
+  /// return address.
+  static unsigned getReturnSaveOffset(bool LP64) {
+    return LP64 ? 16 : 8;
   }
-  
+
   /// getFramePointerSaveOffset - Return the previous frame offset to save the
   /// frame pointer.
   static unsigned getFramePointerSaveOffset(bool LP64) {
