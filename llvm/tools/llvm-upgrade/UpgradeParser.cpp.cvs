@@ -381,7 +381,7 @@
 #define YYERROR_VERBOSE 1
 #define YYINCLUDED_STDLIB_H
 #define YYDEBUG 1
-#define UPGRADE_SETCOND_OPS 1
+#define UPGRADE_SETCOND_OPS 0
 
 int yylex();                       // declaration" of xxx warnings.
 int yyparse();
