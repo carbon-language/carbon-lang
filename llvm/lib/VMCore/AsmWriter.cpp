@@ -152,7 +152,6 @@ static RegisterPass<PrintFunctionPass>
 Y("print","Print function to stderr");
 
 static void WriteAsOperandInternal(std::ostream &Out, const Value *V,
-                                   bool PrintName,
                                std::map<const Type *, std::string> &TypeTable,
                                    SlotMachine *Machine);
 
@@ -427,7 +426,6 @@ static const char * getPredicateText(unsigned predicate) {
 
 /// @brief Internal constant writer.
 static void WriteConstantInt(std::ostream &Out, const Constant *CV,
-                             bool PrintName,
                              std::map<const Type *, std::string> &TypeTable,
                              SlotMachine *Machine) {
   const int IndentSize = 4;
@@ -484,12 +482,11 @@ static void WriteConstantInt(std::ostream &Out, const Constant *CV,
         Out << ' ';
         printTypeInt(Out, ETy, TypeTable);
         WriteAsOperandInternal(Out, CA->getOperand(0),
-                               PrintName, TypeTable, Machine);
+                               TypeTable, Machine);
         for (unsigned i = 1, e = CA->getNumOperands(); i != e; ++i) {
           Out << ", ";
           printTypeInt(Out, ETy, TypeTable);
-          WriteAsOperandInternal(Out, CA->getOperand(i), PrintName,
-                                 TypeTable, Machine);
+          WriteAsOperandInternal(Out, CA->getOperand(i), TypeTable, Machine);
         }
       }
       Out << " ]";
@@ -506,16 +503,14 @@ static void WriteConstantInt(std::ostream &Out, const Constant *CV,
       }
       printTypeInt(Out, CS->getOperand(0)->getType(), TypeTable);
 
-      WriteAsOperandInternal(Out, CS->getOperand(0),
-                             PrintName, TypeTable, Machine);
+      WriteAsOperandInternal(Out, CS->getOperand(0), TypeTable, Machine);
 
       for (unsigned i = 1; i < N; i++) {
         Out << ", ";
         if (N > 2) Out << Indent;
         printTypeInt(Out, CS->getOperand(i)->getType(), TypeTable);
 
-        WriteAsOperandInternal(Out, CS->getOperand(i),
-                               PrintName, TypeTable, Machine);
+        WriteAsOperandInternal(Out, CS->getOperand(i), TypeTable, Machine);
       }
       if (N > 2) Indent.resize(Indent.size() - IndentSize);
     }
@@ -528,13 +523,11 @@ static void WriteConstantInt(std::ostream &Out, const Constant *CV,
       Out << '<';
       Out << ' ';
       printTypeInt(Out, ETy, TypeTable);
-      WriteAsOperandInternal(Out, CP->getOperand(0),
-                             PrintName, TypeTable, Machine);
+      WriteAsOperandInternal(Out, CP->getOperand(0), TypeTable, Machine);
       for (unsigned i = 1, e = CP->getNumOperands(); i != e; ++i) {
           Out << ", ";
           printTypeInt(Out, ETy, TypeTable);
-          WriteAsOperandInternal(Out, CP->getOperand(i), PrintName,
-                                 TypeTable, Machine);
+          WriteAsOperandInternal(Out, CP->getOperand(i), TypeTable, Machine);
       }
       Out << " >";
   } else if (isa<ConstantPointerNull>(CV)) {
@@ -551,7 +544,7 @@ static void WriteConstantInt(std::ostream &Out, const Constant *CV,
 
     for (User::const_op_iterator OI=CE->op_begin(); OI != CE->op_end(); ++OI) {
       printTypeInt(Out, (*OI)->getType(), TypeTable);
-      WriteAsOperandInternal(Out, *OI, PrintName, TypeTable, Machine);
+      WriteAsOperandInternal(Out, *OI, TypeTable, Machine);
       if (OI+1 != CE->op_end())
         Out << ", ";
     }
@@ -574,16 +567,15 @@ static void WriteConstantInt(std::ostream &Out, const Constant *CV,
 /// the whole instruction that generated it.
 ///
 static void WriteAsOperandInternal(std::ostream &Out, const Value *V,
-                                   bool PrintName,
                                   std::map<const Type*, std::string> &TypeTable,
                                    SlotMachine *Machine) {
   Out << ' ';
-  if ((PrintName || isa<GlobalValue>(V)) && V->hasName())
+  if (V->hasName())
     Out << getLLVMName(V->getName());
   else {
     const Constant *CV = dyn_cast<Constant>(V);
     if (CV && !isa<GlobalValue>(CV)) {
-      WriteConstantInt(Out, CV, PrintName, TypeTable, Machine);
+      WriteConstantInt(Out, CV, TypeTable, Machine);
     } else if (const InlineAsm *IA = dyn_cast<InlineAsm>(V)) {
       Out << "asm ";
       if (IA->hasSideEffects())
@@ -628,7 +620,7 @@ std::ostream &llvm::WriteAsOperand(std::ostream &Out, const Value *V,
   if (PrintType)
     printTypeInt(Out, V->getType(), TypeNames);
 
-  WriteAsOperandInternal(Out, V, true, TypeNames, 0);
+  WriteAsOperandInternal(Out, V, TypeNames, 0);
   return Out;
 }
 
@@ -660,7 +652,7 @@ public:
   inline void write(const Constant *CPV)     { printConstant(CPV);  }
   inline void write(const Type *Ty)          { printType(Ty);       }
 
-  void writeOperand(const Value *Op, bool PrintType, bool PrintName = true);
+  void writeOperand(const Value *Op, bool PrintType);
 
   const Module* getModule() { return TheModule; }
 
@@ -738,13 +730,12 @@ std::ostream &AssemblyWriter::printTypeAtLeastOneLevel(const Type *Ty) {
 }
 
 
-void AssemblyWriter::writeOperand(const Value *Operand, bool PrintType,
-                                  bool PrintName) {
-  if (Operand != 0) {
-    if (PrintType) { Out << ' '; printType(Operand->getType()); }
-    WriteAsOperandInternal(Out, Operand, PrintName, TypeNames, &Machine);
-  } else {
+void AssemblyWriter::writeOperand(const Value *Operand, bool PrintType) {
+  if (Operand == 0) {
     Out << "<null operand!>";
+  } else {
+    if (PrintType) { Out << ' '; printType(Operand->getType()); }
+    WriteAsOperandInternal(Out, Operand, TypeNames, &Machine);
   }
 }
 
@@ -850,7 +841,7 @@ void AssemblyWriter::printGlobal(const GlobalVariable *GV) {
   if (GV->hasInitializer()) {
     Constant* C = cast<Constant>(GV->getInitializer());
     assert(C &&  "GlobalVar initializer isn't constant?");
-    writeOperand(GV->getInitializer(), false, isa<GlobalValue>(C));
+    writeOperand(GV->getInitializer(), false);
   }
   
   if (GV->hasSection())
@@ -904,8 +895,8 @@ void AssemblyWriter::printConstant(const Constant *CPV) {
   // Print out name...
   Out << "\t" << getLLVMName(CPV->getName()) << " =";
 
-  // Write the value out now...
-  writeOperand(CPV, true, false);
+  // Write the value out now.
+  writeOperand(CPV, true);
 
   printInfoComment(*CPV);
   Out << "\n";
@@ -1037,10 +1028,10 @@ void AssemblyWriter::printBasicBlock(const BasicBlock *BB) {
         Out << " No predecessors!";
       } else {
         Out << " preds =";
-        writeOperand(*PI, false, true);
+        writeOperand(*PI, false);
         for (++PI; PI != PE; ++PI) {
           Out << ',';
-          writeOperand(*PI, false, true);
+          writeOperand(*PI, false);
         }
       }
     }
@@ -1299,7 +1290,7 @@ void Function::print(std::ostream &o, AssemblyAnnotationWriter *AAW) const {
 }
 
 void InlineAsm::print(std::ostream &o, AssemblyAnnotationWriter *AAW) const {
-  WriteAsOperand(o, this, true, true, 0);
+  WriteAsOperand(o, this, true, 0);
 }
 
 void BasicBlock::print(std::ostream &o, AssemblyAnnotationWriter *AAW) const {
@@ -1323,7 +1314,7 @@ void Constant::print(std::ostream &o) const {
   o << ' ' << getType()->getDescription() << ' ';
 
   std::map<const Type *, std::string> TypeTable;
-  WriteConstantInt(o, this, false, TypeTable, 0);
+  WriteConstantInt(o, this, TypeTable, 0);
 }
 
 void Type::print(std::ostream &o) const {
@@ -1334,8 +1325,7 @@ void Type::print(std::ostream &o) const {
 }
 
 void Argument::print(std::ostream &o) const {
-  WriteAsOperand(o, this, true, true,
-                 getParent() ? getParent()->getParent() : 0);
+  WriteAsOperand(o, this, true, getParent() ? getParent()->getParent() : 0);
 }
 
 // Value::dump - allow easy printing of  Values from the debugger.
@@ -1376,7 +1366,7 @@ CachedWriter &CachedWriter::operator<<(const Value &V) {
   else if (const GlobalVariable *GV = dyn_cast<GlobalVariable>(&V))
     AW->write(GV);
   else
-    AW->writeOperand(&V, true, true);
+    AW->writeOperand(&V, true);
   return *this;
 }
 
