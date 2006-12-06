@@ -127,11 +127,11 @@ int PPCCodeEmitter::getMachineOpValue(MachineInstr &MI, MachineOperand &MO) {
   } else if (MO.isGlobalAddress() || MO.isExternalSymbol() ||
              MO.isConstantPoolIndex() || MO.isJumpTableIndex()) {
     unsigned Reloc = 0;
-    if (MI.getOpcode() == PPC::BL)
+    if (MI.getOpcode() == PPC::BL || MI.getOpcode() == PPC::BL8)
       Reloc = PPC::reloc_pcrel_bx;
     else {
       switch (MI.getOpcode()) {
-      default: DEBUG(MI.dump()); assert(0 && "Unknown instruction for relocation!");
+      default: MI.dump(); assert(0 && "Unknown instruction for relocation!");
       case PPC::LIS:
       case PPC::LIS8:
       case PPC::ADDIS:
