@@ -118,8 +118,8 @@ private:
   /// Values can be crammed into here at will. If they haven't
   /// been inserted already, they get inserted, otherwise they are ignored.
   /// Either way, the slot number for the Value* is returned.
-  unsigned createSlot(const Value *V);
-  unsigned createSlot(const Type *Ty);
+  unsigned getOrCreateSlot(const Value *V);
+  unsigned getOrCreateSlot(const Type *Ty);
 
   /// Insert a value into the value table. Return the slot number
   /// that it now occupies.  BadThings(TM) will happen if you insert a
@@ -1495,9 +1495,8 @@ inline void SlotMachine::initialize(void) {
     processModule();
     TheModule = 0; ///< Prevent re-processing next time we're called.
   }
-  if (TheFunction && ! FunctionProcessed) {
+  if (TheFunction && !FunctionProcessed)
     processFunction();
-  }
 }
 
 // Iterate through all the global variables, functions, and global
@@ -1508,12 +1507,12 @@ void SlotMachine::processModule() {
   // Add all of the global variables to the value table...
   for (Module::const_global_iterator I = TheModule->global_begin(),
        E = TheModule->global_end(); I != E; ++I)
-    createSlot(I);
+    getOrCreateSlot(I);
 
   // Add all the functions to the table
   for (Module::const_iterator I = TheModule->begin(), E = TheModule->end();
        I != E; ++I)
-    createSlot(I);
+    getOrCreateSlot(I);
 
   SC_DEBUG("end processModule!\n");
 }
@@ -1526,17 +1525,16 @@ void SlotMachine::processFunction() {
   // Add all the function arguments
   for(Function::const_arg_iterator AI = TheFunction->arg_begin(),
       AE = TheFunction->arg_end(); AI != AE; ++AI)
-    createSlot(AI);
+    getOrCreateSlot(AI);
 
   SC_DEBUG("Inserting Instructions:\n");
 
   // Add all of the basic blocks and instructions
   for (Function::const_iterator BB = TheFunction->begin(),
        E = TheFunction->end(); BB != E; ++BB) {
-    createSlot(BB);
-    for (BasicBlock::const_iterator I = BB->begin(), E = BB->end(); I!=E; ++I) {
-      createSlot(I);
-    }
+    getOrCreateSlot(BB);
+    for (BasicBlock::const_iterator I = BB->begin(), E = BB->end(); I!=E; ++I)
+      getOrCreateSlot(I);
   }
 
   FunctionProcessed = true;
@@ -1544,10 +1542,10 @@ void SlotMachine::processFunction() {
   SC_DEBUG("end processFunction!\n");
 }
 
-// Clean up after incorporating a function. This is the only way
-// to get out of the function incorporation state that affects the
-// getSlot/createSlot lock. Function incorporation state is indicated
-// by TheFunction != 0.
+/// Clean up after incorporating a function. This is the only way to get out of
+/// the function incorporation state that affects the
+/// getSlot/getOrCreateSlot lock. Function incorporation state is indicated
+/// by TheFunction != 0.
 void SlotMachine::purgeFunction() {
   SC_DEBUG("begin purgeFunction!\n");
   fMap.clear(); // Simply discard the function level map
@@ -1558,7 +1556,7 @@ void SlotMachine::purgeFunction() {
 }
 
 /// Get the slot number for a value. This function will assert if you
-/// ask for a Value that hasn't previously been inserted with createSlot.
+/// ask for a Value that hasn't previously been inserted with getOrCreateSlot.
 /// Types are forbidden because Type does not inherit from Value (any more).
 int SlotMachine::getSlot(const Value *V) {
   assert(V && "Can't get slot for null Value");
@@ -1619,7 +1617,7 @@ int SlotMachine::getSlot(const Value *V) {
 }
 
 /// Get the slot number for a value. This function will assert if you
-/// ask for a Value that hasn't previously been inserted with createSlot.
+/// ask for a Value that hasn't previously been inserted with getOrCreateSlot.
 /// Types are forbidden because Type does not inherit from Value (any more).
 int SlotMachine::getSlot(const Type *Ty) {
   assert(Ty && "Can't get slot for null Type");
@@ -1661,7 +1659,7 @@ int SlotMachine::getSlot(const Type *Ty) {
 // Create a new slot, or return the existing slot if it is already
 // inserted. Note that the logic here parallels getSlot but instead
 // of asserting when the Value* isn't found, it inserts the value.
-unsigned SlotMachine::createSlot(const Value *V) {
+unsigned SlotMachine::getOrCreateSlot(const Value *V) {
   assert(V && "Can't insert a null Value to SlotMachine");
   assert(!isa<Constant>(V) || isa<GlobalValue>(V) &&
     "Can't insert a non-GlobalValue Constant into SlotMachine");
@@ -1742,7 +1740,7 @@ unsigned SlotMachine::createSlot(const Value *V) {
 // Create a new slot, or return the existing slot if it is already
 // inserted. Note that the logic here parallels getSlot but instead
 // of asserting when the Value* isn't found, it inserts the value.
-unsigned SlotMachine::createSlot(const Type *Ty) {
+unsigned SlotMachine::getOrCreateSlot(const Type *Ty) {
   assert(Ty && "Can't insert a null Type to SlotMachine");
 
   if (TheFunction) {
@@ -1779,7 +1777,7 @@ unsigned SlotMachine::createSlot(const Type *Ty) {
 }
 
 // Low level insert function. Minimal checking is done. This
-// function is just for the convenience of createSlot (above).
+// function is just for the convenience of getOrCreateSlot (above).
 unsigned SlotMachine::insertValue(const Value *V) {
   assert(V && "Can't insert a null Value into SlotMachine!");
   assert(!isa<Constant>(V) || isa<GlobalValue>(V) &&
@@ -1817,7 +1815,7 @@ unsigned SlotMachine::insertValue(const Value *V) {
 }
 
 // Low level insert function. Minimal checking is done. This
-// function is just for the convenience of createSlot (above).
+// function is just for the convenience of getOrCreateSlot (above).
 unsigned SlotMachine::insertValue(const Type *Ty) {
   assert(Ty && "Can't insert a null Type into SlotMachine!");
 
