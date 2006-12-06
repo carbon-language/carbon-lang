@@ -29,6 +29,52 @@
 #include <ostream>
 using namespace llvm;
 
+static ConstantIntegral *getMaxValue(const Type *Ty) {
+  switch (Ty->getTypeID()) {
+  case Type::BoolTyID:   return ConstantBool::getTrue();
+  case Type::SByteTyID:
+  case Type::ShortTyID:
+  case Type::IntTyID:
+  case Type::LongTyID: {
+    // Calculate 011111111111111...
+    unsigned TypeBits = Ty->getPrimitiveSize()*8;
+    int64_t Val = INT64_MAX;             // All ones
+    Val >>= 64-TypeBits;                 // Shift out unwanted 1 bits...
+    return ConstantInt::get(Ty, Val);
+  }
+
+  case Type::UByteTyID:
+  case Type::UShortTyID:
+  case Type::UIntTyID:
+  case Type::ULongTyID:  return ConstantInt::getAllOnesValue(Ty);
+
+  default: return 0;
+  }
+}
+
+// Static constructor to create the minimum constant for an integral type...
+static ConstantIntegral *getMinValue(const Type *Ty) {
+  switch (Ty->getTypeID()) {
+  case Type::BoolTyID:   return ConstantBool::getFalse();
+  case Type::SByteTyID:
+  case Type::ShortTyID:
+  case Type::IntTyID:
+  case Type::LongTyID: {
+     // Calculate 1111111111000000000000
+     unsigned TypeBits = Ty->getPrimitiveSize()*8;
+     int64_t Val = -1;                    // All ones
+     Val <<= TypeBits-1;                  // Shift over to the right spot
+     return ConstantInt::get(Ty, Val);
+  }
+
+  case Type::UByteTyID:
+  case Type::UShortTyID:
+  case Type::UIntTyID:
+  case Type::ULongTyID:  return ConstantInt::get(Ty, 0);
+
+  default: return 0;
+  }
+}
 static ConstantIntegral *Next(ConstantIntegral *CI) {
   if (ConstantBool *CB = dyn_cast<ConstantBool>(CI))
     return ConstantBool::get(!CB->getValue());
@@ -65,9 +111,9 @@ ConstantRange::ConstantRange(const Type *Ty, bool Full) {
   assert(Ty->isIntegral() &&
          "Cannot make constant range of non-integral type!");
   if (Full)
-    Lower = Upper = ConstantIntegral::getMaxValue(Ty);
+    Lower = Upper = getMaxValue(Ty);
   else
-    Lower = Upper = ConstantIntegral::getMinValue(Ty);
+    Lower = Upper = getMinValue(Ty);
 }
 
 /// Initialize a range to hold the single specified value.
@@ -86,8 +132,8 @@ ConstantRange::ConstantRange(Constant *L, Constant *U)
          "Incompatible types for ConstantRange!");
 
   // Make sure that if L & U are equal that they are either Min or Max...
-  assert((L != U || (L == ConstantIntegral::getMaxValue(L->getType()) ||
-                     L == ConstantIntegral::getMinValue(L->getType()))) &&
+  assert((L != U || (L == getMaxValue(L->getType()) ||
+                     L == getMinValue(L->getType()))) &&
          "Lower == Upper, but they aren't min or max for type!");
 }
 
@@ -99,20 +145,20 @@ ConstantRange::ConstantRange(unsigned SetCCOpcode, ConstantIntegral *C) {
   case Instruction::SetEQ: Lower = C; Upper = Next(C); return;
   case Instruction::SetNE: Upper = C; Lower = Next(C); return;
   case Instruction::SetLT:
-    Lower = ConstantIntegral::getMinValue(C->getType());
+    Lower = getMinValue(C->getType());
     Upper = C;
     return;
   case Instruction::SetGT:
     Lower = Next(C);
-    Upper = ConstantIntegral::getMinValue(C->getType());  // Min = Next(Max)
+    Upper = getMinValue(C->getType());  // Min = Next(Max)
     return;
   case Instruction::SetLE:
-    Lower = ConstantIntegral::getMinValue(C->getType());
+    Lower = getMinValue(C->getType());
     Upper = Next(C);
     return;
   case Instruction::SetGE:
     Lower = C;
-    Upper = ConstantIntegral::getMinValue(C->getType());  // Min = Next(Max)
+    Upper = getMinValue(C->getType());  // Min = Next(Max)
     return;
   }
 }
@@ -124,13 +170,13 @@ const Type *ConstantRange::getType() const { return Lower->getType(); }
 /// isFullSet - Return true if this set contains all of the elements possible
 /// for this data-type
 bool ConstantRange::isFullSet() const {
-  return Lower == Upper && Lower == ConstantIntegral::getMaxValue(getType());
+  return Lower == Upper && Lower == getMaxValue(getType());
 }
 
 /// isEmptySet - Return true if this set contains no members.
 ///
 bool ConstantRange::isEmptySet() const {
-  return Lower == Upper && Lower == ConstantIntegral::getMinValue(getType());
+  return Lower == Upper && Lower == getMinValue(getType());
 }
 
 /// isWrappedSet - Return true if this set wraps around the top of the range,

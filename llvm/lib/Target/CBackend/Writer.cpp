@@ -753,7 +753,7 @@ void CWriter::printConstant(Constant *CPV) {
     break;
 
   case Type::LongTyID:
-    if (cast<ConstantInt>(CPV)->isMinValue())
+    if (cast<ConstantInt>(CPV)->isMinValue(CPV->getType()->isSigned()))
       Out << "(/*INT64_MIN*/(-9223372036854775807LL)-1)";
     else
       Out << cast<ConstantInt>(CPV)->getSExtValue() << "ll";
