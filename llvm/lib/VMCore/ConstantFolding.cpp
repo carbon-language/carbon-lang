@@ -1202,17 +1202,14 @@ static Instruction::BinaryOps evaluateRelation(Constant *V1, Constant *V2) {
     // Now we know that the RHS is a GlobalValue or simple constant,
     // which (since the types must match) means that it's a ConstantPointerNull.
     if (const GlobalValue *CPR2 = dyn_cast<GlobalValue>(V2)) {
-      assert(CPR1 != CPR2 &&
-             "GVs for the same value exist at different addresses??");
-      // FIXME: If both globals are external weak, they might both be null!
-      return Instruction::SetNE;
+      if (!CPR1->hasExternalWeakLinkage() || !CPR2->hasExternalWeakLinkage())
+        return Instruction::SetNE;
     } else {
+      // GlobalVals can never be null.
       assert(isa<ConstantPointerNull>(V2) && "Canonicalization guarantee!");
-      // Global can never be null.  FIXME: if we implement external weak
-      // linkage, this is not necessarily true!
-      return Instruction::SetNE;
+      if (!CPR1->hasExternalWeakLinkage())
+        return Instruction::SetNE;
     }
-
   } else {
     // Ok, the LHS is known to be a constantexpr.  The RHS can be any of a
     // constantexpr, a CPR, or a simple constant.
@@ -1258,10 +1255,15 @@ static Instruction::BinaryOps evaluateRelation(Constant *V1, Constant *V2) {
       if (isa<ConstantPointerNull>(V2)) {
         // If we are comparing a GEP to a null pointer, check to see if the base
         // of the GEP equals the null pointer.
-        if (isa<GlobalValue>(CE1Op0)) {
-          // FIXME: this is not true when we have external weak references!
-          // No offset can go from a global to a null pointer.
-          return Instruction::SetGT;
+        if (GlobalValue *GV = dyn_cast<GlobalValue>(CE1Op0)) {
+          if (GV->hasExternalWeakLinkage())
+            // Weak linkage GVals could be zero or not. We're comparing that
+            // to null pointer so its greater-or-equal
+            return Instruction::SetGE;
+          else 
+            // If its not weak linkage, the GVal must have a non-zero address
+            // so the result is greater-than
+            return Instruction::SetGT;
         } else if (isa<ConstantPointerNull>(CE1Op0)) {
           // If we are indexing from a null pointer, check to see if we have any
           // non-zero indices.
@@ -1275,8 +1277,14 @@ static Instruction::BinaryOps evaluateRelation(Constant *V1, Constant *V2) {
         // Otherwise, we can't really say if the first operand is null or not.
       } else if (const GlobalValue *CPR2 = dyn_cast<GlobalValue>(V2)) {
         if (isa<ConstantPointerNull>(CE1Op0)) {
-          // FIXME: This is not true with external weak references.
-          return Instruction::SetLT;
+          if (CPR2->hasExternalWeakLinkage())
+            // Weak linkage GVals could be zero or not. We're comparing it to
+            // a null pointer, so its less-or-equal
+            return Instruction::SetLE;
+          else
+            // If its not weak linkage, the GVal must have a non-zero address
+            // so the result is less-than
+            return Instruction::SetLT;
         } else if (const GlobalValue *CPR1 = dyn_cast<GlobalValue>(CE1Op0)) {
           if (CPR1 == CPR2) {
             // If this is a getelementptr of the same global, then it must be
