@@ -38,7 +38,7 @@ $(LibDeps): $(GenLibDeps) $(LibDir) $(wildcard $(LibDir)/*.a $(LibDir)/*.o)
 # Find all the cyclic dependencies between various LLVM libraries, so we
 # don't have to process them at runtime.
 $(FinalLibDeps): find-cycles.pl $(LibDeps)
-	$(Echo) "Finding cyclic dependencies between LLVM libraries."
+	$(Echo) "Checking for cyclic dependencies between LLVM libraries."
 	$(Verb) $(PERL) $< < $(LibDeps) > $@ || rm -f $@
 
 # Rerun our configure substitutions as needed.
