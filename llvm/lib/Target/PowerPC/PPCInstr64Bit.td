@@ -224,6 +224,14 @@ def SRD  : XForm_6<31, 539, (ops G8RC:$rA, G8RC:$rS, GPRC:$rB),
 def SRAD : XForm_6<31, 794, (ops G8RC:$rA, G8RC:$rS, GPRC:$rB),
                    "srad $rA, $rS, $rB", IntRotateD,
                    [(set G8RC:$rA, (sra G8RC:$rS, GPRC:$rB))]>, isPPC64;
+                   
+def EXTSB8 : XForm_11<31, 954, (ops G8RC:$rA, G8RC:$rS),
+                      "extsb $rA, $rS", IntGeneral,
+                      [(set G8RC:$rA, (sext_inreg G8RC:$rS, i8))]>;
+def EXTSH8 : XForm_11<31, 922, (ops G8RC:$rA, G8RC:$rS),
+                      "extsh $rA, $rS", IntGeneral,
+                      [(set G8RC:$rA, (sext_inreg G8RC:$rS, i16))]>;
+
 def EXTSW  : XForm_11<31, 986, (ops G8RC:$rA, G8RC:$rS),
                       "extsw $rA, $rS", IntGeneral,
                       [(set G8RC:$rA, (sext_inreg G8RC:$rS, i32))]>, isPPC64;
