@@ -50,12 +50,12 @@ struct DOTGraphTraits<const Function*> : public DefaultDOTGraphTraits {
 
     std::ostringstream Out;
     if (CFGOnly) {
-      WriteAsOperand(Out, Node, false, true);
+      WriteAsOperand(Out, Node, false);
       return Out.str();
     }
 
     if (Node->getName().empty()) {
-      WriteAsOperand(Out, Node, false, true);
+      WriteAsOperand(Out, Node, false);
       Out << ":";
     }
 

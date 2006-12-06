@@ -81,7 +81,7 @@ static std::string getCaption(const DSNode *N, const DSGraph *G) {
   if (G) GlobalECs = &G->getGlobalECs();
 
   for (unsigned i = 0, e = N->getGlobalsList().size(); i != e; ++i) {
-    WriteAsOperand(OS, N->getGlobalsList()[i], false, true, M);
+    WriteAsOperand(OS, N->getGlobalsList()[i], false, M);
 
     // Figure out how many globals are equivalent to this one.
     if (GlobalECs) {
@@ -157,7 +157,7 @@ struct DOTGraphTraits<const DSGraph*> : public DefaultDOTGraphTraits {
     for (DSGraph::ScalarMapTy::const_iterator I = VM.begin(); I != VM.end();++I)
       if (!isa<GlobalValue>(I->first)) {
         std::stringstream OS;
-        WriteAsOperand(OS, I->first, false, true, CurMod);
+        WriteAsOperand(OS, I->first, false, CurMod);
         GW.emitSimpleNode(I->first, "", OS.str());
 
         // Add edge from return node to real destination

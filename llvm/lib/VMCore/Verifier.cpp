@@ -218,7 +218,7 @@ namespace {  // Anonymous namespace for class
       if (isa<Instruction>(V)) {
         msgs << *V;
       } else {
-        WriteAsOperand (msgs, V, true, true, Mod);
+        WriteAsOperand(msgs, V, true, Mod);
         msgs << "\n";
       }
     }

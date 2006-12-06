@@ -38,7 +38,7 @@ void Trace::print(llvm_ostream &O) const {
   for (const_iterator i = begin(), e = end(); i != e; ++i) {
     O << "; ";
     if (O.stream())
-      WriteAsOperand(*O.stream(), *i, true, true, getModule());
+      WriteAsOperand(*O.stream(), *i, true, getModule());
     O << "\n";
   }
   O << "; Trace parent function: \n" << *F;

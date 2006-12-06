@@ -38,7 +38,7 @@ std::ostream &WriteTypeSymbolic(std::ostream &, const Type *, const Module *M);
 // pointer is printed symbolically.
 //
 std::ostream &WriteAsOperand(std::ostream &, const Value *, bool PrintTy = true,
-                             bool PrintName = true, const Module *Context = 0);
+                             const Module *Context = 0);
 
 } // End llvm namespace
 

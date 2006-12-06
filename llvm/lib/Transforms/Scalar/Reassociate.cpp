@@ -60,7 +60,7 @@ static void PrintOps(Instruction *I, const std::vector<ValueEntry> &Ops) {
   std::cerr << Instruction::getOpcodeName(I->getOpcode()) << " "
   << *Ops[0].Op->getType();
   for (unsigned i = 0, e = Ops.size(); i != e; ++i)
-    WriteAsOperand(std::cerr << " ", Ops[i].Op, false, true, M)
+    WriteAsOperand(std::cerr << " ", Ops[i].Op, false, M)
       << "," << Ops[i].Rank;
 }
   

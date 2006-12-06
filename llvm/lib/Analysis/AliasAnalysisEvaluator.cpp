@@ -80,8 +80,8 @@ static inline void PrintResults(const char *Msg, bool P, Value *V1, Value *V2,
                                 Module *M) {
   if (P) {
     llvm_cerr << "  " << Msg << ":\t";
-    WriteAsOperand(std::cerr, V1, true, true, M) << ", ";
-    WriteAsOperand(std::cerr, V2, true, true, M) << "\n";
+    WriteAsOperand(std::cerr, V1, true, M) << ", ";
+    WriteAsOperand(std::cerr, V2, true, M) << "\n";
   }
 }
 
@@ -90,7 +90,7 @@ PrintModRefResults(const char *Msg, bool P, Instruction *I, Value *Ptr,
                    Module *M) {
   if (P) {
     llvm_cerr << "  " << Msg << ":  Ptr: ";
-    WriteAsOperand(std::cerr, Ptr, true, true, M);
+    WriteAsOperand(std::cerr, Ptr, true, M);
     llvm_cerr << "\t<->" << *I;
   }
 }
