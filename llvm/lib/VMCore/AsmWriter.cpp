@@ -638,23 +638,6 @@ std::ostream &llvm::WriteAsOperand(std::ostream &Out, const Value *V,
 }
 
 
-/// WriteAsOperand - Write the name of the specified value out to the specified
-/// ostream.  This can be useful when you just want to print int %reg126, not
-/// the whole instruction that generated it.
-///
-std::ostream &llvm::WriteAsOperand(std::ostream &Out, const Type *Ty,
-                                   bool PrintType, bool PrintName,
-                                   const Module *Context) {
-  std::map<const Type *, std::string> TypeNames;
-  assert(Context != 0 && "Can't write types as operand without module context");
-
-  fillTypeNameTable(Context, TypeNames);
-
-  printTypeInt(Out, Ty, TypeNames);
-
-  return Out << ' ' << Ty->getDescription();
-}
-
 namespace llvm {
 
 class AssemblyWriter {
@@ -1674,9 +1657,8 @@ unsigned SlotMachine::insertValue(const Value *V) {
 
   SC_DEBUG("  Inserting value [" << VTy << "] = " << V << " slot=" <<
            DestSlot << " [");
-  // G = Global, C = Constant, T = Type, F = Function, o = other
-  SC_DEBUG((isa<GlobalVariable>(V) ? 'G' : (isa<Function>(V) ? 'F' :
-           (isa<Constant>(V) ? 'C' : 'o'))));
+  // G = Global, F = Function, o = other
+  SC_DEBUG((isa<GlobalVariable>(V) ? 'G' : (isa<Function>(V) ? 'F' : 'o')));
   SC_DEBUG("]\n");
   return DestSlot;
 }
