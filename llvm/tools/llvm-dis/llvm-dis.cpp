@@ -21,6 +21,7 @@
 #include "llvm/Bytecode/Reader.h"
 #include "llvm/Assembly/PrintModulePass.h"
 #include "llvm/Support/CommandLine.h"
+#include "llvm/Support/ManagedStatic.h"
 #include "llvm/Support/Streams.h"
 #include "llvm/System/Signals.h"
 #include <iostream>
@@ -39,6 +40,7 @@ static cl::opt<bool>
 Force("f", cl::desc("Overwrite output files"));
 
 int main(int argc, char **argv) {
+  llvm_shutdown_obj X;  // Call llvm_shutdown() on exit.
   try {
     cl::ParseCommandLineOptions(argc, argv, " llvm .bc -> .ll disassembler\n");
     sys::PrintStackTraceOnErrorSignal();
@@ -115,6 +117,7 @@ int main(int argc, char **argv) {
   } catch (...) {
     llvm_cerr << argv[0] << ": Unexpected unknown exception occurred.\n";
   }
+
   return 1;
 }
 

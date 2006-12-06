@@ -16,12 +16,12 @@
 #include "llvm/Bytecode/Archive.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Compressor.h"
+#include "llvm/Support/ManagedStatic.h"
 #include "llvm/System/Signals.h"
 #include <iostream>
 #include <algorithm>
 #include <iomanip>
 #include <memory>
-
 using namespace llvm;
 
 // Option for compatibility with ASIX, not used but must allow it to be present.
@@ -696,6 +696,7 @@ doReplaceOrInsert(std::string* ErrMsg) {
 
 // main - main program for llvm-ar .. see comments in the code
 int main(int argc, char **argv) {
+  llvm_shutdown_obj X;  // Call llvm_shutdown() on exit.
 
   // Have the command line options parsed and handle things
   // like --help and --version.

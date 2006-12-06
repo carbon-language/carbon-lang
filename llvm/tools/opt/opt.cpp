@@ -22,6 +22,7 @@
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Support/PassNameParser.h"
 #include "llvm/System/Signals.h"
+#include "llvm/Support/ManagedStatic.h"
 #include "llvm/Support/PluginLoader.h"
 #include "llvm/Support/Streams.h"
 #include "llvm/Support/SystemUtils.h"
@@ -156,6 +157,7 @@ struct BasicBlockPassPrinter : public BasicBlockPass {
 // main for opt
 //
 int main(int argc, char **argv) {
+  llvm_shutdown_obj X;  // Call llvm_shutdown() on exit.
   try {
     cl::ParseCommandLineOptions(argc, argv,
       " llvm .bc -> .bc modular optimizer and analysis printer \n");

@@ -24,6 +24,7 @@
 #include "llvm/Transforms/Scalar.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Streams.h"
+#include "llvm/Support/ManagedStatic.h"
 #include "llvm/System/Signals.h"
 #include <iostream>
 #include <memory>
@@ -133,6 +134,7 @@ void AddConfiguredTransformationPasses(PassManager &PM) {
 
 
 int main(int argc, char **argv) {
+  llvm_shutdown_obj X;  // Call llvm_shutdown() on exit.
   try {
     cl::ParseCommandLineOptions(argc, argv,
                                 " llvm .s -> .o assembler for GCC\n");

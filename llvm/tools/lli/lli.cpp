@@ -22,6 +22,7 @@
 #include "llvm/ExecutionEngine/Interpreter.h"
 #include "llvm/ExecutionEngine/GenericValue.h"
 #include "llvm/Support/CommandLine.h"
+#include "llvm/Support/ManagedStatic.h"
 #include "llvm/Support/PluginLoader.h"
 #include "llvm/System/Process.h"
 #include "llvm/System/Signals.h"
@@ -56,6 +57,7 @@ namespace {
 // main Driver function
 //
 int main(int argc, char **argv, char * const *envp) {
+  llvm_shutdown_obj X;  // Call llvm_shutdown() on exit.
   try {
     cl::ParseCommandLineOptions(argc, argv,
                                 " llvm interpreter & dynamic compiler\n");

@@ -18,6 +18,7 @@
 #include "llvm/Bytecode/Reader.h"
 #include "llvm/Bytecode/Writer.h"
 #include "llvm/Support/CommandLine.h"
+#include "llvm/Support/ManagedStatic.h"
 #include "llvm/Support/Streams.h"
 #include "llvm/System/Signals.h"
 #include "llvm/System/Path.h"
@@ -75,6 +76,7 @@ static inline std::auto_ptr<Module> LoadFile(const std::string &FN) {
 }
 
 int main(int argc, char **argv) {
+  llvm_shutdown_obj X;  // Call llvm_shutdown() on exit.
   try {
     cl::ParseCommandLineOptions(argc, argv, " llvm linker\n");
     sys::PrintStackTraceOnErrorSignal();

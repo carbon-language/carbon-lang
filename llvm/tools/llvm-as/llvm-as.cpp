@@ -20,6 +20,7 @@
 #include "llvm/Bytecode/Writer.h"
 #include "llvm/Analysis/Verifier.h"
 #include "llvm/Support/CommandLine.h"
+#include "llvm/Support/ManagedStatic.h"
 #include "llvm/Support/Streams.h"
 #include "llvm/Support/SystemUtils.h"
 #include "llvm/System/Signals.h"
@@ -50,6 +51,7 @@ DisableVerify("disable-verify", cl::Hidden,
               cl::desc("Do not run verifier on input LLVM (dangerous!)"));
 
 int main(int argc, char **argv) {
+  llvm_shutdown_obj X;  // Call llvm_shutdown() on exit.
   cl::ParseCommandLineOptions(argc, argv, " llvm .ll -> .bc assembler\n");
   sys::PrintStackTraceOnErrorSignal();
 

@@ -32,6 +32,7 @@
 #include "llvm/Analysis/Verifier.h"
 #include "llvm/Bytecode/Analyzer.h"
 #include "llvm/Support/CommandLine.h"
+#include "llvm/Support/ManagedStatic.h"
 #include "llvm/System/Signals.h"
 #include <fstream>
 #include <iostream>
@@ -48,8 +49,8 @@ static cl::opt<bool> NoDetails ("nodetails", cl::desc("Skip detailed output"));
 static cl::opt<bool> Dump      ("dump", cl::desc("Dump low level bytecode trace"));
 static cl::opt<bool> Verify    ("verify", cl::desc("Progressively verify module"));
 
-int
-main(int argc, char **argv) {
+int main(int argc, char **argv) {
+  llvm_shutdown_obj X;  // Call llvm_shutdown() on exit.
   try {
     cl::ParseCommandLineOptions(argc, argv,
       " llvm-bcanalyzer Analysis of ByteCode Dumper\n");

@@ -21,6 +21,7 @@
 
 #include "ParserInternals.h"
 #include "llvm/Support/CommandLine.h"
+#include "llvm/Support/ManagedStatic.h"
 #include "llvm/Support/Streams.h"
 #include "llvm/Support/SystemUtils.h"
 #include "llvm/System/Signals.h"
@@ -44,6 +45,7 @@ Debug("debug", cl::desc("Print debug output from yacc parser"),cl::Hidden,
     cl::init(false));
 
 int main(int argc, char **argv) {
+  llvm_shutdown_obj X;  // Call llvm_shutdown() on exit.
   cl::ParseCommandLineOptions(argc, argv, " llvm .ll -> .bc assembler\n");
   sys::PrintStackTraceOnErrorSignal();
 

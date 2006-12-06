@@ -19,6 +19,7 @@
 #include "llvm/Transforms/IPO.h"
 #include "llvm/Target/TargetData.h"
 #include "llvm/Support/CommandLine.h"
+#include "llvm/Support/ManagedStatic.h"
 #include "llvm/Support/Streams.h"
 #include "llvm/System/Signals.h"
 #include <iostream>
@@ -47,6 +48,7 @@ ExtractFunc("func", cl::desc("Specify function to extract"), cl::init("main"),
             cl::value_desc("function"));
 
 int main(int argc, char **argv) {
+  llvm_shutdown_obj X;  // Call llvm_shutdown() on exit.
   try {
     cl::ParseCommandLineOptions(argc, argv, " llvm extractor\n");
     sys::PrintStackTraceOnErrorSignal();

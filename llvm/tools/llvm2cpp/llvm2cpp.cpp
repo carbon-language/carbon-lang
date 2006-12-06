@@ -20,6 +20,7 @@
 #include "llvm/Bytecode/Reader.h"
 #include "llvm/Analysis/Verifier.h"
 #include "llvm/Support/CommandLine.h"
+#include "llvm/Support/ManagedStatic.h"
 #include "llvm/Support/SystemUtils.h"
 #include "llvm/System/Signals.h"
 #include "CppWriter.h"
@@ -41,6 +42,7 @@ static cl::opt<bool>
 Force("f", cl::desc("Overwrite output files"));
 
 int main(int argc, char **argv) {
+  llvm_shutdown_obj X;  // Call llvm_shutdown() on exit.
   cl::ParseCommandLineOptions(argc, argv, " llvm .ll -> .cpp assembler\n");
   sys::PrintStackTraceOnErrorSignal();
 

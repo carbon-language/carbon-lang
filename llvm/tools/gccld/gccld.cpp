@@ -30,6 +30,7 @@
 #include "llvm/Transforms/Scalar.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/FileUtilities.h"
+#include "llvm/Support/ManagedStatic.h"
 #include "llvm/Support/Streams.h"
 #include "llvm/System/Signals.h"
 #include "llvm/Support/SystemUtils.h"
@@ -214,6 +215,7 @@ static void BuildLinkItems(
 }
 
 int main(int argc, char **argv, char **envp ) {
+  llvm_shutdown_obj X;  // Call llvm_shutdown() on exit.
   cl::ParseCommandLineOptions(argc, argv, " llvm linker for GCC\n");
   sys::PrintStackTraceOnErrorSignal();
 

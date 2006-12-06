@@ -18,6 +18,7 @@
 #include "llvm/LinkAllPasses.h"
 #include "llvm/Support/PassNameParser.h"
 #include "llvm/Support/CommandLine.h"
+#include "llvm/Support/ManagedStatic.h"
 #include "llvm/Support/PluginLoader.h"
 #include "llvm/System/Process.h"
 #include "llvm/System/Signals.h"
@@ -59,6 +60,7 @@ static void BugpointInterruptFunction() {
 }
 
 int main(int argc, char **argv) {
+  llvm_shutdown_obj X;  // Call llvm_shutdown() on exit.
   cl::ParseCommandLineOptions(argc, argv,
                               " LLVM automatic testcase reducer. See\nhttp://"
                               "llvm.org/docs/CommandGuide/bugpoint.html"

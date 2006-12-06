@@ -14,6 +14,7 @@
 #include "llvm/Module.h"
 #include "llvm/Bytecode/Archive.h"
 #include "llvm/Support/CommandLine.h"
+#include "llvm/Support/ManagedStatic.h"
 #include "llvm/System/Signals.h"
 #include <iostream>
 #include <iomanip>
@@ -41,6 +42,7 @@ void printSymbolTable(Archive* TheArchive) {
 }
 
 int main(int argc, char **argv) {
+  llvm_shutdown_obj X;  // Call llvm_shutdown() on exit.
 
   // Have the command line options parsed and handle things
   // like --help and --version.

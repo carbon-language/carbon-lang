@@ -20,11 +20,12 @@
 #include "llvm/Instructions.h"
 #include "llvm/Module.h"
 #include "llvm/SymbolTable.h"
-#include "llvm/Support/CFG.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/ADT/STLExtras.h"
-#include "llvm/Support/MathExtras.h"
 #include "llvm/Support/CommandLine.h"
+#include "llvm/Support/CFG.h"
+#include "llvm/Support/ManagedStatic.h"
+#include "llvm/Support/MathExtras.h"
 #include "llvm/Config/config.h"
 #include <algorithm>
 #include <iostream>
