@@ -119,13 +119,11 @@ private:
   /// been inserted already, they get inserted, otherwise they are ignored.
   /// Either way, the slot number for the Value* is returned.
   unsigned getOrCreateSlot(const Value *V);
-  unsigned getOrCreateSlot(const Type *Ty);
 
   /// Insert a value into the value table. Return the slot number
   /// that it now occupies.  BadThings(TM) will happen if you insert a
   /// Value that's already been inserted.
   unsigned insertValue(const Value *V);
-  unsigned insertValue(const Type *Ty);
 
   /// Add all of the module level global variables (and their initializers)
   /// and function declarations, but not the contents of those functions.
@@ -1666,8 +1664,9 @@ unsigned SlotMachine::getOrCreateSlot(const Value *V) {
 
   const Type* VTy = V->getType();
 
-  // Just ignore void typed things
-  if (VTy == Type::VoidTy) return 0; // FIXME: Wrong return value!
+  // Just ignore void typed things or things with names.
+  if (VTy == Type::VoidTy || V->hasName())
+    return 0; // FIXME: Wrong return value!
 
   // Look up the type plane for the Value's type from the module map
   TypedPlanes::const_iterator MI = mMap.find(VTy);
@@ -1737,58 +1736,14 @@ unsigned SlotMachine::getOrCreateSlot(const Value *V) {
   return insertValue(V);
 }
 
-// Create a new slot, or return the existing slot if it is already
-// inserted. Note that the logic here parallels getSlot but instead
-// of asserting when the Value* isn't found, it inserts the value.
-unsigned SlotMachine::getOrCreateSlot(const Type *Ty) {
-  assert(Ty && "Can't insert a null Type to SlotMachine");
-
-  if (TheFunction) {
-    // Lookup the Type in the function map
-    TypeMap::const_iterator FTI = fTypes.map.find(Ty);
-    // If the type doesn't exist in the function map
-    if (FTI == fTypes.map.end()) {
-      // Look up the type in the module map
-      TypeMap::const_iterator MTI = mTypes.map.find(Ty);
-      // If we didn't find it, it wasn't inserted
-      if (MTI == mTypes.map.end())
-        return insertValue(Ty);
-      else
-        // We found it only at the module level
-        return MTI->second;
-
-    // else the value exists in the function map
-    } else {
-      // Return the slot number as the module's contribution to
-      // the type plane plus the index in the function's contribution
-      // to the type plane.
-      return mTypes.next_slot + FTI->second;
-    }
-  }
-
-  // N.B. Can only get here if !TheFunction
-
-  // Lookup the type in the module's map
-  TypeMap::const_iterator MTI = mTypes.map.find(Ty);
-  if (MTI != mTypes.map.end())
-    return MTI->second;
-
-  return insertValue(Ty);
-}
 
 // Low level insert function. Minimal checking is done. This
 // function is just for the convenience of getOrCreateSlot (above).
 unsigned SlotMachine::insertValue(const Value *V) {
   assert(V && "Can't insert a null Value into SlotMachine!");
   assert(!isa<Constant>(V) || isa<GlobalValue>(V) &&
-    "Can't insert a non-GlobalValue Constant into SlotMachine");
-
-  // If this value does not contribute to a plane (is void)
-  // or if the value already has a name then ignore it.
-  if (V->getType() == Type::VoidTy || V->hasName()) {
-      SC_DEBUG("ignored value " << *V << "\n");
-      return 0;   // FIXME: Wrong return value
-  }
+         "Can't insert a non-GlobalValue Constant into SlotMachine");
+  assert(V->getType() != Type::VoidTy && !V->hasName());
 
   const Type *VTy = V->getType();
   unsigned DestSlot = 0;
@@ -1813,21 +1768,3 @@ unsigned SlotMachine::insertValue(const Value *V) {
   SC_DEBUG("]\n");
   return DestSlot;
 }
-
-// Low level insert function. Minimal checking is done. This
-// function is just for the convenience of getOrCreateSlot (above).
-unsigned SlotMachine::insertValue(const Type *Ty) {
-  assert(Ty && "Can't insert a null Type into SlotMachine!");
-
-  unsigned DestSlot = 0;
-
-  if (TheFunction) {
-    DestSlot = fTypes.map[Ty] = fTypes.next_slot++;
-  } else {
-    DestSlot = fTypes.map[Ty] = fTypes.next_slot++;
-  }
-  SC_DEBUG("  Inserting type [" << DestSlot << "] = " << Ty << "\n");
-  return DestSlot;
-}
-
-// vim: sw=2
