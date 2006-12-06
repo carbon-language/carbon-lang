@@ -23,4 +23,5 @@ ARMTargetAsmInfo::ARMTargetAsmInfo(const ARMTargetMachine &TM) {
   CommentString = "@";
   ConstantPoolSection = "\t.text\n";
   AlignmentIsInBytes = false;
+  WeakRefDirective = "\t.weak\t";
 }
