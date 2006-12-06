@@ -17,7 +17,7 @@
 #include "llvm/Constants.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/Module.h"
-#include "llvm/Assembly/CachedWriter.h"
+#include "llvm/Assembly/Writer.h"
 #include "llvm/Support/InstIterator.h"
 using namespace llvm;
 
@@ -91,15 +91,9 @@ bool FindUsedTypes::runOnModule(Module &m) {
 //
 void FindUsedTypes::print(std::ostream &o, const Module *M) const {
   o << "Types in use by this module:\n";
-  if (M) {
-    CachedWriter CW(M, o);
-    for (std::set<const Type *>::const_iterator I = UsedTypes.begin(),
-           E = UsedTypes.end(); I != E; ++I)
-      CW << "  " << **I << "\n";
-  } else
-    for (std::set<const Type *>::const_iterator I = UsedTypes.begin(),
-           E = UsedTypes.end(); I != E; ++I)
-      o << "  " << **I << "\n";
+  for (std::set<const Type *>::const_iterator I = UsedTypes.begin(),
+       E = UsedTypes.end(); I != E; ++I)
+    WriteTypeSymbolic(o << "  ", *I, M) << "\n";
 }
 
 // Ensure that this file gets linked in when FindUsedTypes.h is used.
