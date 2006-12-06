@@ -23,6 +23,7 @@
 
 #include "llvm/ADT/Statistic.h"
 #include "llvm/Support/CommandLine.h"
+#include "llvm/ADT/StringExtras.h"
 #include <sstream>
 #include <iostream>
 #include <algorithm>
@@ -31,7 +32,7 @@ using namespace llvm;
 // GetLibSupportInfoOutputFile - Return a file stream to print our output on...
 namespace llvm { extern std::ostream *GetLibSupportInfoOutputFile(); }
 
-unsigned StatisticBase::NumStats = 0;
+unsigned Statistic::NumStats = 0;
 
 // -stats - Command line option to cause transformations to emit stats about
 // what they did.
@@ -61,19 +62,13 @@ struct StatRecord {
 
 static std::vector<StatRecord> *AccumStats = 0;
 
-// Out of line virtual dtor, to give the vtable etc a home.
-StatisticBase::~StatisticBase() {
-}
-
 // Print information when destroyed, iff command line option is specified
-void StatisticBase::destroy() const {
-  if (Enabled && hasSomeData()) {
+Statistic::~Statistic() {
+  if (Enabled && Value != 0) {
     if (AccumStats == 0)
       AccumStats = new std::vector<StatRecord>();
 
-    std::ostringstream Out;
-    printValue(Out);
-    AccumStats->push_back(StatRecord(Out.str(), Name, Desc));
+    AccumStats->push_back(StatRecord(utostr(Value), Name, Desc));
   }
 
   if (--NumStats == 0 && AccumStats) {
