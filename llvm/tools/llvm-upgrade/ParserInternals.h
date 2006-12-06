@@ -78,6 +78,10 @@ struct TypeInfo {
            oldTy == UIntTy || oldTy == ULongTy;
   }
 
+  bool isBool() const {
+    return oldTy == BoolTy;
+  }
+
   bool isSignless() const { return !isSigned() && !isUnsigned(); }
   bool isInteger() const { return isSigned() || isUnsigned(); }
   bool isIntegral() const { return oldTy == BoolTy || isInteger(); }

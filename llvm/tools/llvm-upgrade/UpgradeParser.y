@@ -23,7 +23,7 @@
 #define YYERROR_VERBOSE 1
 #define YYINCLUDED_STDLIB_H
 #define YYDEBUG 1
-#define UPGRADE_SETCOND_OPS 0
+#define UPGRADE_SETCOND_OPS 1
 
 int yylex();                       // declaration" of xxx warnings.
 int yyparse();
@@ -255,7 +255,7 @@ getCompareOp(const std::string& setcc, const TypeInfo& TI) {
       result.erase(5,1);
     else if (TI.isSigned())
       result[5] = 's';
-    else if (TI.isUnsigned() || TI.isPointer())
+    else if (TI.isUnsigned() || TI.isPointer() || TI.isBool())
       result[5] = 'u';
     else
       yyerror("Invalid integral type for setcc");
