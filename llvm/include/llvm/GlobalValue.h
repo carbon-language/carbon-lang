@@ -29,13 +29,13 @@ class GlobalValue : public Constant {
 public:
   enum LinkageTypes {
     ExternalLinkage,     /// Externally visible function
-    LinkOnceLinkage,     /// Keep one copy of named function when linking (inline)
+    LinkOnceLinkage,     /// Keep one copy of function when linking (inline)
     WeakLinkage,         /// Keep one copy of named function when linking (weak)
     AppendingLinkage,    /// Special purpose, only applies to global arrays
     InternalLinkage,     /// Rename collisions when linking (static functions)
     DLLImportLinkage,    /// Function to be imported from DLL
     DLLExportLinkage,    /// Function to be accessible from DLL
-    ExternalWeakLinkage, /// TBD: ExternalWeak linkage description
+    ExternalWeakLinkage, /// ExternalWeak linkage description
     GhostLinkage         /// Stand-in functions for streaming fns from BC files    
   };
 protected:
