@@ -35,16 +35,16 @@ inline unsigned Lo_32(uint64_t Value) {
 }
 
 // is?Type - these functions produce optimal testing for integer data types.
-inline bool isInt8  (int Value)     { 
+inline bool isInt8  (int64_t Value)     { 
   return static_cast<signed char>(Value) == Value; 
 }
-inline bool isUInt8 (int Value)     { 
+inline bool isUInt8 (int64_t Value)     { 
   return static_cast<unsigned char>(Value) == Value; 
 }
-inline bool isInt16 (int Value)     { 
+inline bool isInt16 (int64_t Value)     { 
   return static_cast<signed short>(Value) == Value; 
 }
-inline bool isUInt16(int Value)     { 
+inline bool isUInt16(int64_t Value)     { 
   return static_cast<unsigned short>(Value) == Value; 
 }
 inline bool isInt32 (int64_t Value) { 
