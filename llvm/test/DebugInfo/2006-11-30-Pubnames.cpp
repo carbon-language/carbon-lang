@@ -5,7 +5,7 @@
 // RUN: g++ Output/Pubnames.o -o Output/Pubnames.exe
 // RUN: ( echo "break main"; echo "run" ; echo "p Pubnames::pubname" ) > Output/Pubnames.gdbin 
 // RUN: gdb -q -batch -n -x Output/Pubnames.gdbin Output/Pubnames.exe | tee Output/Pubnames.out | grep '10'
-// XFAIL: alpha|ia64|arm
+// XFAIL: alpha|ia64|arm|linux
 
 struct Pubnames {
   static int pubname;
