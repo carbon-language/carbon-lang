@@ -873,7 +873,8 @@ void AssemblyWriter::printModule(const Module *M) {
   // Loop over the symbol table, emitting all named constants.
   printSymbolTable(M->getSymbolTable());
 
-  for (Module::const_global_iterator I = M->global_begin(), E = M->global_end(); I != E; ++I)
+  for (Module::const_global_iterator I = M->global_begin(), E = M->global_end();
+       I != E; ++I)
     printGlobal(I);
 
   Out << "\nimplementation   ; Functions:\n";
@@ -1028,7 +1029,8 @@ void AssemblyWriter::printFunction(const Function *F) {
   // Loop over the arguments, printing them...
   const FunctionType *FT = F->getFunctionType();
 
-  for(Function::const_arg_iterator I = F->arg_begin(), E = F->arg_end(); I != E; ++I)
+  for (Function::const_arg_iterator I = F->arg_begin(), E = F->arg_end();
+       I != E; ++I)
     printArgument(I);
 
   // Finish printing arguments...
@@ -1504,8 +1506,8 @@ void SlotMachine::processModule() {
   SC_DEBUG("begin processModule!\n");
 
   // Add all of the global variables to the value table...
-  for (Module::const_global_iterator I = TheModule->global_begin(), E = TheModule->global_end();
-       I != E; ++I)
+  for (Module::const_global_iterator I = TheModule->global_begin(),
+       E = TheModule->global_end(); I != E; ++I)
     createSlot(I);
 
   // Add all the functions to the table
