@@ -502,8 +502,8 @@ class XFXForm_7_ext<bits<6> opcode, bits<10> xo, bits<10> spr,
 class XSForm_1<bits<6> opcode, bits<9> xo, dag OL, string asmstr,
                InstrItinClass itin, list<dag> pattern>
          : I<opcode, OL, asmstr, itin> {
-  bits<5> RS;
   bits<5> A;
+  bits<5> RS;
   bits<6> SH;
 
   bit RC = 0;    // set by isDOT
