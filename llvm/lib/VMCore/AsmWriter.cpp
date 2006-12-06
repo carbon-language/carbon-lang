@@ -14,7 +14,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "llvm/Assembly/CachedWriter.h"
 #include "llvm/Assembly/Writer.h"
 #include "llvm/Assembly/PrintModulePass.h"
 #include "llvm/Assembly/AsmAnnotationWriter.h"
@@ -32,6 +31,7 @@
 #include "llvm/Support/MathExtras.h"
 #include "llvm/Support/Streams.h"
 #include <algorithm>
+#include <iostream>
 using namespace llvm;
 
 namespace llvm {
@@ -322,10 +322,10 @@ static void calcTypeName(const Type *Ty,
     break;
   default:
     Result += "<unrecognized-type>";
+    break;
   }
 
   TypeStack.pop_back();       // Remove self from stack...
-  return;
 }
 
 
@@ -364,16 +364,14 @@ std::ostream &llvm::WriteTypeSymbolic(std::ostream &Out, const Type *Ty,
                                       const Module *M) {
   Out << ' ';
 
-  // If they want us to print out a type, attempt to make it symbolic if there
-  // is a symbol table in the module...
-  if (M) {
-    std::map<const Type *, std::string> TypeNames;
-    fillTypeNameTable(M, TypeNames);
-
-    return printTypeInt(Out, Ty, TypeNames);
-  } else {
+  // If they want us to print out a type, but there is no context, we can't
+  // print it symbolically.
+  if (!M)
     return Out << Ty->getDescription();
-  }
+    
+  std::map<const Type *, std::string> TypeNames;
+  fillTypeNameTable(M, TypeNames);
+  return printTypeInt(Out, Ty, TypeNames);
 }
 
 // PrintEscapedString - Print each character of the specified string, escaping
@@ -391,7 +389,7 @@ static void PrintEscapedString(const std::string &Str, std::ostream &Out) {
   }
 }
 
-static const char * getPredicateText(unsigned predicate) {
+static const char *getPredicateText(unsigned predicate) {
   const char * pred = "unknown";
   switch (predicate) {
     case FCmpInst::FCMP_FALSE: pred = "false"; break;
@@ -1337,51 +1335,7 @@ void Value::dump() const { print(std::cerr); llvm_cerr << '\n'; }
 void Type::dump() const { print(std::cerr); llvm_cerr << '\n'; }
 
 //===----------------------------------------------------------------------===//
-//  CachedWriter Class Implementation
-//===----------------------------------------------------------------------===//
-
-void CachedWriter::setModule(const Module *M) {
-  delete SC; delete AW;
-  if (M) {
-    SC = new SlotMachine(M);
-    AW = new AssemblyWriter(Out, *SC, M, 0);
-  } else {
-    SC = 0; AW = 0;
-  }
-}
-
-CachedWriter::~CachedWriter() {
-  delete AW;
-  delete SC;
-}
-
-CachedWriter &CachedWriter::operator<<(const Value &V) {
-  assert(AW && SC && "CachedWriter does not have a current module!");
-  if (const Instruction *I = dyn_cast<Instruction>(&V))
-    AW->write(I);
-  else if (const BasicBlock *BB = dyn_cast<BasicBlock>(&V))
-    AW->write(BB);
-  else if (const Function *F = dyn_cast<Function>(&V))
-    AW->write(F);
-  else if (const GlobalVariable *GV = dyn_cast<GlobalVariable>(&V))
-    AW->write(GV);
-  else
-    AW->writeOperand(&V, true);
-  return *this;
-}
-
-CachedWriter& CachedWriter::operator<<(const Type &Ty) {
-  if (SymbolicTypes) {
-    const Module *M = AW->getModule();
-    if (M) WriteTypeSymbolic(Out, &Ty, M);
-  } else {
-    AW->write(&Ty);
-  }
-  return *this;
-}
-
-//===----------------------------------------------------------------------===//
-//===--                    SlotMachine Implementation
+//                         SlotMachine Implementation
 //===----------------------------------------------------------------------===//
 
 #if 0
