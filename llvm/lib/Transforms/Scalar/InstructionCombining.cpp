@@ -2889,7 +2889,7 @@ Instruction *InstCombiner::InsertRangeTest(Value *V, Constant *Lo, Constant *Hi,
   if (Inside) {
     if (Lo == Hi)  // Trivially false.
       return new SetCondInst(Instruction::SetNE, V, V);
-    if (cast<ConstantIntegral>(Lo)->isMinValue())
+    if (cast<ConstantIntegral>(Lo)->isMinValue(Lo->getType()->isSigned()))
       return new SetCondInst(Instruction::SetLT, V, Hi);
 
     Constant *AddCST = ConstantExpr::getNeg(Lo);
@@ -2909,7 +2909,7 @@ Instruction *InstCombiner::InsertRangeTest(Value *V, Constant *Lo, Constant *Hi,
   Hi = SubOne(cast<ConstantInt>(Hi));
 
   // V < 0 || V >= Hi ->'V > Hi-1'
-  if (cast<ConstantIntegral>(Lo)->isMinValue())
+  if (cast<ConstantIntegral>(Lo)->isMinValue(Lo->getType()->isSigned()))
     return new SetCondInst(Instruction::SetGT, V, Hi);
 
   // Emit X-Lo > Hi-Lo-1
@@ -4165,7 +4165,7 @@ Instruction *InstCombiner::visitSetCondInst(SetCondInst &I) {
   // can be folded into the comparison.
   if (ConstantInt *CI = dyn_cast<ConstantInt>(Op1)) {
     // Check to see if we are comparing against the minimum or maximum value...
-    if (CI->isMinValue()) {
+    if (CI->isMinValue(CI->getType()->isSigned())) {
       if (I.getOpcode() == Instruction::SetLT)       // A < MIN -> FALSE
         return ReplaceInstUsesWith(I, ConstantBool::getFalse());
       if (I.getOpcode() == Instruction::SetGE)       // A >= MIN -> TRUE
@@ -4175,7 +4175,7 @@ Instruction *InstCombiner::visitSetCondInst(SetCondInst &I) {
       if (I.getOpcode() == Instruction::SetGT)       // A > MIN -> A != MIN
         return BinaryOperator::createSetNE(Op0, Op1);
 
-    } else if (CI->isMaxValue()) {
+    } else if (CI->isMaxValue(CI->getType()->isSigned())) {
       if (I.getOpcode() == Instruction::SetGT)       // A > MAX -> FALSE
         return ReplaceInstUsesWith(I, ConstantBool::getFalse());
       if (I.getOpcode() == Instruction::SetLE)       // A <= MAX -> TRUE
