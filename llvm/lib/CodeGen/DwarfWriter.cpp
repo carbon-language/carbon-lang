@@ -1096,11 +1096,15 @@ public:
   /// EmitDifference - Emit the difference between two labels.  Some
   /// assemblers do not behave with absolute expressions with data directives,
   /// so there is an option (needsSet) to use an intermediary set expression.
-  void EmitDifference(DWLabel LabelHi, DWLabel LabelLo) const {
-    EmitDifference(LabelHi.Tag, LabelHi.Number, LabelLo.Tag, LabelLo.Number);
+  void EmitDifference(DWLabel LabelHi, DWLabel LabelLo,
+                      bool IsSmall = false) const {
+    EmitDifference(LabelHi.Tag, LabelHi.Number,
+                   LabelLo.Tag, LabelLo.Number,
+                   IsSmall);
   }
   void EmitDifference(const char *TagHi, unsigned NumberHi,
-                      const char *TagLo, unsigned NumberLo) const {
+                      const char *TagLo, unsigned NumberLo,
+                      bool IsSmall = false) const {
     if (TAI->needsSet()) {
       static unsigned SetCounter = 0;
       
@@ -1112,7 +1116,7 @@ public:
       PrintLabelName(TagLo, NumberLo);
       O << "\n";
       
-      if (TAI->getAddressSize() == sizeof(int32_t))
+      if (IsSmall || TAI->getAddressSize() == sizeof(int32_t))
         O << TAI->getData32bitsDirective();
       else
         O << TAI->getData64bitsDirective();
@@ -1121,7 +1125,7 @@ public:
       
       ++SetCounter;
     } else {
-      if (TAI->getAddressSize() == sizeof(int32_t))
+      if (IsSmall || TAI->getAddressSize() == sizeof(int32_t))
         O << TAI->getData32bitsDirective();
       else
         O << TAI->getData64bitsDirective();
@@ -2119,7 +2123,7 @@ private:
       if (BaseLabel && LabelID && BaseLabelID != LabelID) {
         EmitInt8(DW_CFA_advance_loc4);
         EOL("DW_CFA_advance_loc4");
-        EmitDifference("loc", LabelID, BaseLabel, BaseLabelID);
+        EmitDifference("loc", LabelID, BaseLabel, BaseLabelID, true);
         EOL("");
         
         BaseLabelID = LabelID;
@@ -2198,7 +2202,7 @@ private:
                            
     EmitInt32(ContentSize);  EOL("Length of Compilation Unit Info");
     EmitInt16(DWARF_VERSION); EOL("DWARF version number");
-    EmitDifference("abbrev_begin", 0, "section_abbrev", 0);
+    EmitDifference("abbrev_begin", 0, "section_abbrev", 0, true);
     EOL("Offset Into Abbrev. Section");
     EmitInt8(TAI->getAddressSize()); EOL("Address Size (in bytes)");
   
@@ -2255,13 +2259,13 @@ private:
     
     // Construct the section header.
     
-    EmitDifference("line_end", 0, "line_begin", 0);
+    EmitDifference("line_end", 0, "line_begin", 0, true);
     EOL("Length of Source Line Info");
     EmitLabel("line_begin", 0);
     
     EmitInt16(DWARF_VERSION); EOL("DWARF version number");
     
-    EmitDifference("line_prolog_end", 0, "line_prolog_begin", 0);
+    EmitDifference("line_prolog_end", 0, "line_prolog_begin", 0, true);
     EOL("Prolog Length");
     EmitLabel("line_prolog_begin", 0);
     
@@ -2345,7 +2349,7 @@ private:
 
         // Define the line address.
         EmitInt8(0); EOL("Extended Op");
-        EmitInt8(4 + 1); EOL("Op size");
+        EmitInt8(TAI->getAddressSize() + 1); EOL("Op size");
         EmitInt8(DW_LNE_set_address); EOL("DW_LNE_set_address");
         EmitReference("loc",  LabelID); EOL("Location label");
         
@@ -2383,7 +2387,7 @@ private:
 
       // Define last address of section.
       EmitInt8(0); EOL("Extended Op");
-      EmitInt8(4 + 1); EOL("Op size");
+      EmitInt8(TAI->getAddressSize() + 1); EOL("Op size");
       EmitInt8(DW_LNE_set_address); EOL("DW_LNE_set_address");
       EmitReference("section_end", j + 1); EOL("Section end label");
 
@@ -2414,7 +2418,7 @@ private:
 
     EmitLabel("frame_common", 0);
     EmitDifference("frame_common_end", 0,
-                   "frame_common_begin", 0);
+                   "frame_common_begin", 0, true);
     EOL("Length of Common Information Entry");
 
     EmitLabel("frame_common_begin", 0);
@@ -2446,12 +2450,12 @@ private:
     Asm->SwitchToDataSection(TAI->getDwarfFrameSection());
     
     EmitDifference("frame_end", SubprogramCount,
-                   "frame_begin", SubprogramCount);
+                   "frame_begin", SubprogramCount, true);
     EOL("Length of Frame Information Entry");
     
     EmitLabel("frame_begin", SubprogramCount);
     
-    EmitDifference("frame_common", 0, "section_frame", 0);
+    EmitDifference("frame_common", 0, "section_frame", 0, true);
     EOL("FDE CIE offset");
 
     EmitReference("func_begin", SubprogramCount); EOL("FDE initial location");
@@ -2478,17 +2482,17 @@ private:
     CompileUnit *Unit = GetBaseCompileUnit(); 
  
     EmitDifference("pubnames_end", Unit->getID(),
-                   "pubnames_begin", Unit->getID());
+                   "pubnames_begin", Unit->getID(), true);
     EOL("Length of Public Names Info");
     
     EmitLabel("pubnames_begin", Unit->getID());
     
     EmitInt16(DWARF_VERSION); EOL("DWARF Version");
     
-    EmitDifference("info_begin", Unit->getID(), "section_info", 0);
+    EmitDifference("info_begin", Unit->getID(), "section_info", 0, true);
     EOL("Offset of Compilation Unit Info");
 
-    EmitDifference("info_end", Unit->getID(), "info_begin", Unit->getID());
+    EmitDifference("info_end", Unit->getID(), "info_begin", Unit->getID(),true);
     EOL("Compilation Unit Length");
     
     std::map<std::string, DIE *> &Globals = Unit->getGlobals();
@@ -2567,7 +2571,7 @@ private:
 
     // Range 1
     EmitReference("text_begin", 0); EOL("Address");
-    EmitDifference("text_end", 0, "text_begin", 0); EOL("Length");
+    EmitDifference("text_end", 0, "text_begin", 0, true); EOL("Length");
 
     EmitInt32(0); EOL("EOM (1)");
     EmitInt32(0); EOL("EOM (2)");
@@ -2930,12 +2934,14 @@ unsigned DIEObjectLabel::SizeOf(const Dwarf &DW, unsigned Form) const {
 /// EmitValue - Emit delta value.
 ///
 void DIEDelta::EmitValue(const Dwarf &DW, unsigned Form) const {
-  DW.EmitDifference(LabelHi, LabelLo);
+  bool IsSmall = Form == DW_FORM_data4;
+  DW.EmitDifference(LabelHi, LabelLo, IsSmall);
 }
 
 /// SizeOf - Determine size of delta value in bytes.
 ///
 unsigned DIEDelta::SizeOf(const Dwarf &DW, unsigned Form) const {
+  if (Form == DW_FORM_data4) return 4;
   return DW.getTargetAsmInfo()->getAddressSize();
 }
 
