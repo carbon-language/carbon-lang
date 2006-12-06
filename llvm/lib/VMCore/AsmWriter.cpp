@@ -79,10 +79,6 @@ public:
   /// Its an error to ask for a Type*
   int getSlot(const Value *V);
 
-  /// Determine if a Value has a slot or not
-  bool hasSlot(const Value* V);
-  bool hasSlot(const Type* Ty);
-
 /// @}
 /// @name Mutators
 /// @{
@@ -622,8 +618,7 @@ static void WriteAsOperandInternal(std::ostream &Out, const Value *V,
 /// the whole instruction that generated it.
 ///
 std::ostream &llvm::WriteAsOperand(std::ostream &Out, const Value *V,
-                                   bool PrintType, bool PrintName,
-                                   const Module *Context) {
+                                   bool PrintType, const Module *Context) {
   std::map<const Type *, std::string> TypeNames;
   if (Context == 0) Context = getModuleFromVal(V);
 
@@ -633,7 +628,7 @@ std::ostream &llvm::WriteAsOperand(std::ostream &Out, const Value *V,
   if (PrintType)
     printTypeInt(Out, V->getType(), TypeNames);
 
-  WriteAsOperandInternal(Out, V, PrintName, TypeNames, 0);
+  WriteAsOperandInternal(Out, V, true, TypeNames, 0);
   return Out;
 }
 
@@ -1437,15 +1432,17 @@ inline void SlotMachine::initialize(void) {
 void SlotMachine::processModule() {
   SC_DEBUG("begin processModule!\n");
 
-  // Add all of the global variables to the value table...
+  // Add all of the unnamed global variables to the value table.
   for (Module::const_global_iterator I = TheModule->global_begin(),
        E = TheModule->global_end(); I != E; ++I)
-    getOrCreateSlot(I);
+    if (!I->hasName()) 
+      getOrCreateSlot(I);
 
-  // Add all the functions to the table
+  // Add all the unnamed functions to the table.
   for (Module::const_iterator I = TheModule->begin(), E = TheModule->end();
        I != E; ++I)
-    getOrCreateSlot(I);
+    if (!I->hasName())
+      getOrCreateSlot(I);
 
   SC_DEBUG("end processModule!\n");
 }
@@ -1455,19 +1452,22 @@ void SlotMachine::processModule() {
 void SlotMachine::processFunction() {
   SC_DEBUG("begin processFunction!\n");
 
-  // Add all the function arguments
+  // Add all the function arguments with no names.
   for(Function::const_arg_iterator AI = TheFunction->arg_begin(),
       AE = TheFunction->arg_end(); AI != AE; ++AI)
-    getOrCreateSlot(AI);
+    if (!AI->hasName())
+      getOrCreateSlot(AI);
 
   SC_DEBUG("Inserting Instructions:\n");
 
-  // Add all of the basic blocks and instructions
+  // Add all of the basic blocks and instructions with no names.
   for (Function::const_iterator BB = TheFunction->begin(),
        E = TheFunction->end(); BB != E; ++BB) {
-    getOrCreateSlot(BB);
-    for (BasicBlock::const_iterator I = BB->begin(), E = BB->end(); I!=E; ++I)
-      getOrCreateSlot(I);
+    if (!BB->hasName())
+      getOrCreateSlot(BB);
+    for (BasicBlock::const_iterator I = BB->begin(), E = BB->end(); I != E; ++I)
+      if (I->getType() != Type::VoidTy && !I->hasName())
+        getOrCreateSlot(I);
   }
 
   FunctionProcessed = true;
@@ -1553,15 +1553,10 @@ int SlotMachine::getSlot(const Value *V) {
 // inserted. Note that the logic here parallels getSlot but instead
 // of asserting when the Value* isn't found, it inserts the value.
 unsigned SlotMachine::getOrCreateSlot(const Value *V) {
-  assert(V && "Can't insert a null Value to SlotMachine");
+  const Type* VTy = V->getType();
+  assert(VTy != Type::VoidTy && !V->hasName() && "Doesn't need a slot!");
   assert(!isa<Constant>(V) || isa<GlobalValue>(V) &&
     "Can't insert a non-GlobalValue Constant into SlotMachine");
-
-  const Type* VTy = V->getType();
-
-  // Just ignore void typed things or things with names.
-  if (VTy == Type::VoidTy || V->hasName())
-    return 0; // FIXME: Wrong return value!
 
   // Look up the type plane for the Value's type from the module map
   TypedPlanes::const_iterator MI = mMap.find(VTy);
@@ -1618,7 +1613,7 @@ unsigned SlotMachine::getOrCreateSlot(const Value *V) {
     }
   }
 
-  // N.B. Can only get here if !TheFunction
+  // N.B. Can only get here if TheFunction == 0
 
   // If the module map's type plane is not for the Value's type
   if (MI != mMap.end()) {
