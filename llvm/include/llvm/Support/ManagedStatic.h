@@ -74,6 +74,14 @@ public:
 /// llvm_shutdown - Deallocate and destroy all ManagedStatic variables.
 void llvm_shutdown();
 
+  
+/// llvm_shutdown_obj - This is a simple helper class that calls
+/// llvm_shutdown() when it is destroyed.
+struct llvm_shutdown_obj {
+  llvm_shutdown_obj() {}
+  ~llvm_shutdown_obj() { llvm_shutdown(); }
+};
+  
 }
 
 #endif
