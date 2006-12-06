@@ -21,6 +21,7 @@
 #include "llvm/CodeGen/AsmPrinter.h"
 #include "llvm/Target/TargetAsmInfo.h"
 #include "llvm/Target/TargetMachine.h"
+#include "llvm/Support/Compiler.h"
 #include "llvm/Support/Mangler.h"
 #include "llvm/ADT/Statistic.h"
 #include <iostream>
