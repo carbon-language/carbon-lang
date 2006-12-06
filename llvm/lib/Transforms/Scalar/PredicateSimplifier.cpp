@@ -82,6 +82,7 @@
 #include "llvm/Analysis/ET-Forest.h"
 #include "llvm/Assembly/Writer.h"
 #include "llvm/Support/CFG.h"
+#include "llvm/Support/Compiler.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/InstVisitor.h"
 #include "llvm/Transforms/Utils/Local.h"

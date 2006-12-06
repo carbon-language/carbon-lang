@@ -23,6 +23,7 @@
 #include "llvm/CodeGen/DwarfWriter.h"
 #include "llvm/CodeGen/MachineDebugInfo.h"
 #include "llvm/ADT/Statistic.h"
+#include "llvm/Support/Compiler.h"
 #include <set>
 
 
