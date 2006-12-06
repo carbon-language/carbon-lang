@@ -27,7 +27,7 @@
 #include "llvm/Support/MathExtras.h"
 using namespace llvm;
 
-static Statistic<> NumExpanded("ppc-branch-select",
+static Statistic NumExpanded("ppc-branch-select",
                                "Num branches expanded to long format");
 
 namespace {

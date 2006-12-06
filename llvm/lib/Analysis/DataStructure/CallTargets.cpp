@@ -29,10 +29,10 @@
 using namespace llvm;
 
 namespace {
-  Statistic<> DirCall("calltarget", "Number of direct calls");
-  Statistic<> IndCall("calltarget", "Number of indirect calls");
-  Statistic<> CompleteInd("calltarget", "Number of complete indirect calls");
-  Statistic<> CompleteEmpty("calltarget", "Number of complete empty calls");
+  Statistic DirCall("calltarget", "Number of direct calls");
+  Statistic IndCall("calltarget", "Number of indirect calls");
+  Statistic CompleteInd("calltarget", "Number of complete indirect calls");
+  Statistic CompleteEmpty("calltarget", "Number of complete empty calls");
 
   RegisterPass<CallTargetFinder> X("calltarget","Find Call Targets (uses DSA)");
 }

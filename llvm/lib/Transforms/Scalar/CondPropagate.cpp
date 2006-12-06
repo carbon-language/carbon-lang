@@ -26,9 +26,9 @@
 using namespace llvm;
 
 namespace {
-  Statistic<>
+  Statistic
   NumBrThread("condprop", "Number of CFG edges threaded through branches");
-  Statistic<>
+  Statistic
   NumSwThread("condprop", "Number of CFG edges threaded through switches");
 
   struct CondProp : public FunctionPass {

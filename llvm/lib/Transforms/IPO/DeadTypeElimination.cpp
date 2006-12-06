@@ -37,7 +37,7 @@ namespace {
     }
   };
   RegisterPass<DTE> X("deadtypeelim", "Dead Type Elimination");
-  Statistic<>
+  Statistic
   NumKilled("deadtypeelim", "Number of unused typenames removed from symtab");
 }
 

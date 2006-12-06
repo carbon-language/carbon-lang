@@ -48,11 +48,11 @@
 using namespace llvm;
 
 namespace {
-  Statistic<> NumArgumentsPromoted("argpromotion",
+  Statistic NumArgumentsPromoted("argpromotion",
                                    "Number of pointer arguments promoted");
-  Statistic<> NumAggregatesPromoted("argpromotion",
+  Statistic NumAggregatesPromoted("argpromotion",
                                     "Number of aggregate arguments promoted");
-  Statistic<> NumArgumentsDead("argpromotion",
+  Statistic NumArgumentsDead("argpromotion",
                                "Number of dead pointer args eliminated");
 
   /// ArgPromotion - The 'by reference' to 'by value' argument promotion pass.

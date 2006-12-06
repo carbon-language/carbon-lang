@@ -26,7 +26,7 @@
 using namespace llvm;
 
 namespace {
-  Statistic<> NumExtracted("loop-extract", "Number of loops extracted");
+  Statistic NumExtracted("loop-extract", "Number of loops extracted");
 
   // FIXME: This is not a function pass, but the PassManager doesn't allow
   // Module passes to require FunctionPasses, so we can't get loop info if we're

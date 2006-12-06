@@ -15,7 +15,7 @@
 // This is useful for reporting information like the number of instructions
 // simplified, optimized or removed by various transformations, like this:
 //
-// static Statistic<> NumInstEliminated("GCSE - Number of instructions killed");
+// static Statistic NumInstEliminated("GCSE - Number of instructions killed");
 //
 // Later, in the code: ++NumInstEliminated;
 //
@@ -32,8 +32,6 @@ using namespace llvm;
 namespace llvm { extern std::ostream *GetLibSupportInfoOutputFile(); }
 
 unsigned StatisticBase::NumStats = 0;
-
-TEMPLATE_INSTANTIATION(class Statistic<unsigned>);
 
 // -stats - Command line option to cause transformations to emit stats about
 // what they did.

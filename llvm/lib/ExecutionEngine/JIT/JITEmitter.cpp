@@ -34,8 +34,8 @@
 using namespace llvm;
 
 namespace {
-  Statistic<> NumBytes("jit", "Number of bytes of machine code compiled");
-  Statistic<> NumRelos("jit", "Number of relocations applied");
+  Statistic NumBytes("jit", "Number of bytes of machine code compiled");
+  Statistic NumRelos("jit", "Number of relocations applied");
   JIT *TheJIT = 0;
 }
 

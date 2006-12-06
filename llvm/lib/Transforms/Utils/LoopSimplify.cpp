@@ -49,9 +49,9 @@
 using namespace llvm;
 
 namespace {
-  Statistic<>
+  Statistic
   NumInserted("loopsimplify", "Number of pre-header or exit blocks inserted");
-  Statistic<>
+  Statistic
   NumNested("loopsimplify", "Number of nested loops split out");
 
   struct VISIBILITY_HIDDEN LoopSimplify : public FunctionPass {

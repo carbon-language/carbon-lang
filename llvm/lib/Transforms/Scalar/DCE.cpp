@@ -26,8 +26,8 @@
 using namespace llvm;
 
 namespace {
-  Statistic<> DIEEliminated("die", "Number of insts removed");
-  Statistic<> DCEEliminated("dce", "Number of insts removed");
+  Statistic DIEEliminated("die", "Number of insts removed");
+  Statistic DCEEliminated("dce", "Number of insts removed");
 
   //===--------------------------------------------------------------------===//
   // DeadInstElimination pass implementation

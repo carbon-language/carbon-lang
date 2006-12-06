@@ -30,7 +30,7 @@
 using namespace llvm;
 
 namespace {
-  Statistic<> NumDemoted("reg2mem", "Number of registers demoted");
+  Statistic NumDemoted("reg2mem", "Number of registers demoted");
   
   struct RegToMem : public FunctionPass {
 

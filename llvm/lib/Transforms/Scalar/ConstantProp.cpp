@@ -29,7 +29,7 @@
 using namespace llvm;
 
 namespace {
-  Statistic<> NumInstKilled("constprop", "Number of instructions killed");
+  Statistic NumInstKilled("constprop", "Number of instructions killed");
 
   struct ConstantPropagation : public FunctionPass {
     bool runOnFunction(Function &F);

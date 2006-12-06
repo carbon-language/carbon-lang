@@ -21,13 +21,13 @@
 using namespace llvm;
 
 namespace {
-  Statistic<> TotalInsts ("instcount", "Number of instructions (of all types)");
-  Statistic<> TotalBlocks("instcount", "Number of basic blocks");
-  Statistic<> TotalFuncs ("instcount", "Number of non-external functions");
-  Statistic<> TotalMemInst("instcount", "Number of memory instructions");
+  Statistic TotalInsts ("instcount", "Number of instructions (of all types)");
+  Statistic TotalBlocks("instcount", "Number of basic blocks");
+  Statistic TotalFuncs ("instcount", "Number of non-external functions");
+  Statistic TotalMemInst("instcount", "Number of memory instructions");
 
 #define HANDLE_INST(N, OPCODE, CLASS) \
-    Statistic<> Num##OPCODE##Inst("instcount", "Number of " #OPCODE " insts");
+    Statistic Num##OPCODE##Inst("instcount", "Number of " #OPCODE " insts");
 
 #include "llvm/Instruction.def"
 

@@ -43,7 +43,7 @@
 using namespace llvm;
 
 namespace {
-  static Statistic<> NumLCSSA("lcssa",
+  static Statistic NumLCSSA("lcssa",
                               "Number of live out of a loop variables");
   
   struct LCSSA : public FunctionPass {

@@ -23,19 +23,19 @@
 using namespace llvm;
 
 namespace {
-  Statistic<> TotalNumCallees("totalcallees",
+  Statistic TotalNumCallees("totalcallees",
                 "Total number of callee functions at all indirect call sites");
-  Statistic<> NumIndirectCalls("numindirect",
+  Statistic NumIndirectCalls("numindirect",
                 "Total number of indirect call sites in the program");
-  Statistic<> NumPoolNodes("numpools",
+  Statistic NumPoolNodes("numpools",
                   "Number of allocation nodes that could be pool allocated");
 
   // Typed/Untyped memory accesses: If DSA can infer that the types the loads
   // and stores are accessing are correct (ie, the node has not been collapsed),
   // increment the appropriate counter.
-  Statistic<> NumTypedMemAccesses("numtypedmemaccesses",
+  Statistic NumTypedMemAccesses("numtypedmemaccesses",
                                 "Number of loads/stores which are fully typed");
-  Statistic<> NumUntypedMemAccesses("numuntypedmemaccesses",
+  Statistic NumUntypedMemAccesses("numuntypedmemaccesses",
                                 "Number of loads/stores which are untyped");
 
   class DSGraphStats : public FunctionPass, public InstVisitor<DSGraphStats> {

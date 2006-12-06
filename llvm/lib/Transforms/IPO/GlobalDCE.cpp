@@ -24,8 +24,8 @@
 using namespace llvm;
 
 namespace {
-  Statistic<> NumFunctions("globaldce","Number of functions removed");
-  Statistic<> NumVariables("globaldce","Number of global variables removed");
+  Statistic NumFunctions("globaldce","Number of functions removed");
+  Statistic NumVariables("globaldce","Number of global variables removed");
 
   struct GlobalDCE : public ModulePass {
     // run - Do the GlobalDCE pass on the specified module, optionally updating

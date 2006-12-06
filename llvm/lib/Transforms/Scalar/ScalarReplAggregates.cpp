@@ -37,9 +37,9 @@
 using namespace llvm;
 
 namespace {
-  Statistic<> NumReplaced("scalarrepl", "Number of allocas broken up");
-  Statistic<> NumPromoted("scalarrepl", "Number of allocas promoted");
-  Statistic<> NumConverted("scalarrepl",
+  Statistic NumReplaced("scalarrepl", "Number of allocas broken up");
+  Statistic NumPromoted("scalarrepl", "Number of allocas promoted");
+  Statistic NumConverted("scalarrepl",
                            "Number of aggregates converted to scalar");
 
   struct VISIBILITY_HIDDEN SROA : public FunctionPass {

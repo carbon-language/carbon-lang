@@ -30,7 +30,7 @@
 
 using namespace llvm;
 
-Statistic<> llvm::EmittedInsts("asm-printer",
+Statistic llvm::EmittedInsts("asm-printer",
                                "Number of machine instrs printed");
 
 static X86FunctionInfo calculateFunctionInfo(const Function *F,

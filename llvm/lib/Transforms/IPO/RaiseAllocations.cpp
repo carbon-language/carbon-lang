@@ -23,7 +23,7 @@
 using namespace llvm;
 
 namespace {
-  Statistic<> NumRaised("raiseallocs", "Number of allocations raised");
+  Statistic NumRaised("raiseallocs", "Number of allocations raised");
 
   // RaiseAllocations - Turn %malloc and %free calls into the appropriate
   // instruction.

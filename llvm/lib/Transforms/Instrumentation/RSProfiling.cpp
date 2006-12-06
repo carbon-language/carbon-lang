@@ -52,7 +52,7 @@
 using namespace llvm;
 
 namespace {
-  Statistic<> NumBackEdges("bedge", "Number of BackEdges");
+  Statistic NumBackEdges("bedge", "Number of BackEdges");
 
   enum RandomMeth {
     GBV, GBVO, HOSTCC

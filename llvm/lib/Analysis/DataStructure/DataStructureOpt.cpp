@@ -22,9 +22,9 @@
 using namespace llvm;
 
 namespace {
-  Statistic<>
+  Statistic
   NumGlobalsConstanted("ds-opt", "Number of globals marked constant");
-  Statistic<>
+  Statistic
   NumGlobalsIsolated("ds-opt", "Number of globals with references dropped");
 
   class DSOpt : public ModulePass {

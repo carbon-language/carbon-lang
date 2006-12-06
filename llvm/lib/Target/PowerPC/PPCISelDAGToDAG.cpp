@@ -36,7 +36,7 @@
 using namespace llvm;
 
 namespace {
-  Statistic<> FrameOff("ppc-codegen", "Number of frame idx offsets collapsed");
+  Statistic FrameOff("ppc-codegen", "Number of frame idx offsets collapsed");
     
   //===--------------------------------------------------------------------===//
   /// PPCDAGToDAGISel - PPC specific code to select PPC machine

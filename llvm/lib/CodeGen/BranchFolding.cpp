@@ -30,9 +30,9 @@
 #include <algorithm>
 using namespace llvm;
 
-static Statistic<> NumDeadBlocks("branchfold", "Number of dead blocks removed");
-static Statistic<> NumBranchOpts("branchfold", "Number of branches optimized");
-static Statistic<> NumTailMerge ("branchfold", "Number of block tails merged");
+static Statistic NumDeadBlocks("branchfold", "Number of dead blocks removed");
+static Statistic NumBranchOpts("branchfold", "Number of branches optimized");
+static Statistic NumTailMerge ("branchfold", "Number of block tails merged");
 static cl::opt<bool> EnableTailMerge("enable-tail-merge", cl::Hidden);
 
 namespace {

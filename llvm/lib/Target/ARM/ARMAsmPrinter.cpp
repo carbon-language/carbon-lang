@@ -35,7 +35,7 @@
 using namespace llvm;
 
 namespace {
-  Statistic<> EmittedInsts("asm-printer", "Number of machine instrs printed");
+  Statistic EmittedInsts("asm-printer", "Number of machine instrs printed");
 
   static const char *ARMCondCodeToString(ARMCC::CondCodes CC) {
     switch (CC) {

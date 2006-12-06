@@ -32,21 +32,21 @@
 using namespace llvm;
 
 namespace {
-  Statistic<> NumMarked   ("globalopt", "Number of globals marked constant");
-  Statistic<> NumSRA      ("globalopt", "Number of aggregate globals broken "
+  Statistic NumMarked   ("globalopt", "Number of globals marked constant");
+  Statistic NumSRA      ("globalopt", "Number of aggregate globals broken "
                            "into scalars");
-  Statistic<> NumHeapSRA  ("globalopt", "Number of heap objects SRA'd");
-  Statistic<> NumSubstitute("globalopt",
+  Statistic NumHeapSRA  ("globalopt", "Number of heap objects SRA'd");
+  Statistic NumSubstitute("globalopt",
                         "Number of globals with initializers stored into them");
-  Statistic<> NumDeleted  ("globalopt", "Number of globals deleted");
-  Statistic<> NumFnDeleted("globalopt", "Number of functions deleted");
-  Statistic<> NumGlobUses ("globalopt", "Number of global uses devirtualized");
-  Statistic<> NumLocalized("globalopt", "Number of globals localized");
-  Statistic<> NumShrunkToBool("globalopt",
+  Statistic NumDeleted  ("globalopt", "Number of globals deleted");
+  Statistic NumFnDeleted("globalopt", "Number of functions deleted");
+  Statistic NumGlobUses ("globalopt", "Number of global uses devirtualized");
+  Statistic NumLocalized("globalopt", "Number of globals localized");
+  Statistic NumShrunkToBool("globalopt",
                               "Number of global vars shrunk to booleans");
-  Statistic<> NumFastCallFns("globalopt",
+  Statistic NumFastCallFns("globalopt",
                              "Number of functions converted to fastcc");
-  Statistic<> NumCtorsEvaluated("globalopt","Number of static ctors evaluated");
+  Statistic NumCtorsEvaluated("globalopt","Number of static ctors evaluated");
 
   struct GlobalOpt : public ModulePass {
     virtual void getAnalysisUsage(AnalysisUsage &AU) const {

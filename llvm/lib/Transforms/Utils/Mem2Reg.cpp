@@ -24,7 +24,7 @@
 using namespace llvm;
 
 namespace {
-  Statistic<> NumPromoted("mem2reg", "Number of alloca's promoted");
+  Statistic NumPromoted("mem2reg", "Number of alloca's promoted");
 
   struct VISIBILITY_HIDDEN PromotePass : public FunctionPass {
     // runOnFunction - To run this pass, first we calculate the alloca

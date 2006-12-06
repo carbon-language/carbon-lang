@@ -46,9 +46,9 @@
 using namespace llvm;
 
 namespace {
-  Statistic<> NumSetCCRemoved("cee", "Number of setcc instruction eliminated");
-  Statistic<> NumOperandsCann("cee", "Number of operands canonicalized");
-  Statistic<> BranchRevectors("cee", "Number of branches revectored");
+  Statistic NumSetCCRemoved("cee", "Number of setcc instruction eliminated");
+  Statistic NumOperandsCann("cee", "Number of operands canonicalized");
+  Statistic BranchRevectors("cee", "Number of branches revectored");
 
   class ValueInfo;
   class Relation {

@@ -37,11 +37,11 @@
 using namespace llvm;
 
 namespace {
-  Statistic<> NumLinear ("reassociate","Number of insts linearized");
-  Statistic<> NumChanged("reassociate","Number of insts reassociated");
-  Statistic<> NumSwapped("reassociate","Number of insts with operands swapped");
-  Statistic<> NumAnnihil("reassociate","Number of expr tree annihilated");
-  Statistic<> NumFactor ("reassociate","Number of multiplies factored");
+  Statistic NumLinear ("reassociate","Number of insts linearized");
+  Statistic NumChanged("reassociate","Number of insts reassociated");
+  Statistic NumSwapped("reassociate","Number of insts with operands swapped");
+  Statistic NumAnnihil("reassociate","Number of expr tree annihilated");
+  Statistic NumFactor ("reassociate","Number of multiplies factored");
 
   struct ValueEntry {
     unsigned Rank;

@@ -46,7 +46,7 @@
 using namespace llvm;
 
 namespace {
-  Statistic<> EmittedInsts("asm-printer", "Number of machine instrs printed");
+  Statistic EmittedInsts("asm-printer", "Number of machine instrs printed");
 
   struct VISIBILITY_HIDDEN PPCAsmPrinter : public AsmPrinter {
     std::set<std::string> FnStubs, GVStubs;

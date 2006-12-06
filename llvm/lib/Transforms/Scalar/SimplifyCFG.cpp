@@ -30,7 +30,7 @@
 using namespace llvm;
 
 namespace {
-  Statistic<> NumSimpl("cfgsimplify", "Number of blocks simplified");
+  Statistic NumSimpl("cfgsimplify", "Number of blocks simplified");
 
   struct CFGSimplifyPass : public FunctionPass {
     virtual bool runOnFunction(Function &F);

@@ -85,20 +85,20 @@ namespace {
   RegisterPass<ScalarEvolution>
   R("scalar-evolution", "Scalar Evolution Analysis");
 
-  Statistic<>
+  Statistic
   NumBruteForceEvaluations("scalar-evolution",
                            "Number of brute force evaluations needed to "
                            "calculate high-order polynomial exit values");
-  Statistic<>
+  Statistic
   NumArrayLenItCounts("scalar-evolution",
                       "Number of trip counts computed with array length");
-  Statistic<>
+  Statistic
   NumTripCountsComputed("scalar-evolution",
                         "Number of loops with predictable loop counts");
-  Statistic<>
+  Statistic
   NumTripCountsNotComputed("scalar-evolution",
                            "Number of loops without predictable loop counts");
-  Statistic<>
+  Statistic
   NumBruteForceTripCountsComputed("scalar-evolution",
                         "Number of loops with trip counts computed by force");
 

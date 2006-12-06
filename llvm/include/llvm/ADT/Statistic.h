@@ -8,16 +8,18 @@
 //===----------------------------------------------------------------------===//
 //
 // This file defines the 'Statistic' class, which is designed to be an easy way
-// to expose various success metrics from passes.  These statistics are printed
-// at the end of a run, when the -stats command line option is enabled on the
-// command line.
+// to expose various metrics from passes.  These statistics are printed at the
+// end of a run (from llvm_shutdown), when the -stats command line option is
+// passed on the command line.
 //
 // This is useful for reporting information like the number of instructions
 // simplified, optimized or removed by various transformations, like this:
 //
-// static Statistic<> NumInstsKilled("gcse", "Number of instructions killed");
+// static Statistic NumInstsKilled("gcse", "Number of instructions killed");
 //
 // Later, in the code: ++NumInstsKilled;
+//
+// NOTE: Statistics *must* be declared as global variables.
 //
 //===----------------------------------------------------------------------===//
 
@@ -29,7 +31,7 @@
 
 namespace llvm {
 
-// StatisticBase - Nontemplated base class for Statistic<> class...
+// StatisticBase - Nontemplated base class for Statistic class...
 class StatisticBase {
   const char *Name;
   const char *Desc;
@@ -55,38 +57,35 @@ protected:
 };
 
 // Statistic Class - templated on the data type we are monitoring...
-template <typename DataType=unsigned>
 class Statistic : private StatisticBase {
-  DataType Value;
+  unsigned Value;
 
   virtual void printValue(std::ostream &o) const { o << Value; }
-  virtual bool hasSomeData() const { return Value != DataType(); }
+  virtual bool hasSomeData() const { return Value != 0; }
 public:
   // Normal constructor, default initialize data item...
   Statistic(const char *name, const char *desc)
-    : StatisticBase(name, desc), Value(DataType()) {}
+    : StatisticBase(name, desc), Value(0) {}
 
   // Constructor to provide an initial value...
-  Statistic(const DataType &Val, const char *name, const char *desc)
+  Statistic(const unsigned &Val, const char *name, const char *desc)
     : StatisticBase(name, desc), Value(Val) {}
 
   // Print information when destroyed, iff command line option is specified
   ~Statistic() { destroy(); }
 
   // Allow use of this class as the value itself...
-  operator DataType() const { return Value; }
-  const Statistic &operator=(DataType Val) { Value = Val; return *this; }
+  operator unsigned() const { return Value; }
+  const Statistic &operator=(unsigned Val) { Value = Val; return *this; }
   const Statistic &operator++() { ++Value; return *this; }
-  DataType operator++(int) { return Value++; }
+  unsigned operator++(int) { return Value++; }
   const Statistic &operator--() { --Value; return *this; }
-  DataType operator--(int) { return Value--; }
-  const Statistic &operator+=(const DataType &V) { Value += V; return *this; }
-  const Statistic &operator-=(const DataType &V) { Value -= V; return *this; }
-  const Statistic &operator*=(const DataType &V) { Value *= V; return *this; }
-  const Statistic &operator/=(const DataType &V) { Value /= V; return *this; }
+  unsigned operator--(int) { return Value--; }
+  const Statistic &operator+=(const unsigned &V) { Value += V; return *this; }
+  const Statistic &operator-=(const unsigned &V) { Value -= V; return *this; }
+  const Statistic &operator*=(const unsigned &V) { Value *= V; return *this; }
+  const Statistic &operator/=(const unsigned &V) { Value /= V; return *this; }
 };
-
-EXTERN_TEMPLATE_INSTANTIATION(class Statistic<unsigned>);
 
 } // End llvm namespace
 

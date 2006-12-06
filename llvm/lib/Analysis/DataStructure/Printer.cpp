@@ -33,8 +33,8 @@ using namespace llvm;
 namespace {
   cl::opt<bool> OnlyPrintMain("only-print-main-ds", cl::ReallyHidden);
   cl::opt<bool> DontPrintAnything("dont-print-ds", cl::ReallyHidden);
-  Statistic<> MaxGraphSize   ("dsa", "Maximum graph size");
-  Statistic<> NumFoldedNodes ("dsa", "Number of folded nodes (in final graph)");
+  Statistic MaxGraphSize   ("dsa", "Maximum graph size");
+  Statistic NumFoldedNodes ("dsa", "Number of folded nodes (in final graph)");
 }
 
 void DSNode::dump() const { print(llvm_cerr, 0); }

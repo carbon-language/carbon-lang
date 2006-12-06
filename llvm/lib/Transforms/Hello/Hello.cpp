@@ -21,7 +21,7 @@
 using namespace llvm;
 
 namespace {
-  Statistic<> HelloCounter("hellocount",
+  Statistic HelloCounter("hellocount",
       "Counts number of functions greeted");
   // Hello - The first implementation, without getAnalysisUsage.
   struct Hello : public FunctionPass {

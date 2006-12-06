@@ -26,8 +26,8 @@
 using namespace llvm;
 
 namespace {
-  Statistic<> NumInlined("inline", "Number of functions inlined");
-  Statistic<> NumDeleted("inline",
+  Statistic NumInlined("inline", "Number of functions inlined");
+  Statistic NumDeleted("inline",
                        "Number of functions deleted because all callers found");
   cl::opt<unsigned>             // FIXME: 200 is VERY conservative
   InlineLimit("inline-threshold", cl::Hidden, cl::init(200),

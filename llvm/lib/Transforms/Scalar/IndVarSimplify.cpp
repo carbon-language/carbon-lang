@@ -52,11 +52,11 @@
 using namespace llvm;
 
 namespace {
-  Statistic<> NumRemoved ("indvars", "Number of aux indvars removed");
-  Statistic<> NumPointer ("indvars", "Number of pointer indvars promoted");
-  Statistic<> NumInserted("indvars", "Number of canonical indvars added");
-  Statistic<> NumReplaced("indvars", "Number of exit values replaced");
-  Statistic<> NumLFTR    ("indvars", "Number of loop exit tests replaced");
+  Statistic NumRemoved ("indvars", "Number of aux indvars removed");
+  Statistic NumPointer ("indvars", "Number of pointer indvars promoted");
+  Statistic NumInserted("indvars", "Number of canonical indvars added");
+  Statistic NumReplaced("indvars", "Number of exit values replaced");
+  Statistic NumLFTR    ("indvars", "Number of loop exit tests replaced");
 
   class IndVarSimplify : public FunctionPass {
     LoopInfo        *LI;

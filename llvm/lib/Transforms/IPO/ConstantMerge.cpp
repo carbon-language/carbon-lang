@@ -24,7 +24,7 @@
 using namespace llvm;
 
 namespace {
-  Statistic<> NumMerged("constmerge", "Number of global constants merged");
+  Statistic NumMerged("constmerge", "Number of global constants merged");
 
   struct ConstantMerge : public ModulePass {
     // run - For this pass, process all of the globals in the module,

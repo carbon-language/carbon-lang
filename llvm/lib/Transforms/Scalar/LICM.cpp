@@ -54,11 +54,11 @@ namespace {
   DisablePromotion("disable-licm-promotion", cl::Hidden,
                    cl::desc("Disable memory promotion in LICM pass"));
 
-  Statistic<> NumSunk("licm", "Number of instructions sunk out of loop");
-  Statistic<> NumHoisted("licm", "Number of instructions hoisted out of loop");
-  Statistic<> NumMovedLoads("licm", "Number of load insts hoisted or sunk");
-  Statistic<> NumMovedCalls("licm", "Number of call insts hoisted or sunk");
-  Statistic<> NumPromoted("licm",
+  Statistic NumSunk("licm", "Number of instructions sunk out of loop");
+  Statistic NumHoisted("licm", "Number of instructions hoisted out of loop");
+  Statistic NumMovedLoads("licm", "Number of load insts hoisted or sunk");
+  Statistic NumMovedCalls("licm", "Number of call insts hoisted or sunk");
+  Statistic NumPromoted("licm",
                           "Number of memory locations promoted to registers");
 
   struct LICM : public FunctionPass {

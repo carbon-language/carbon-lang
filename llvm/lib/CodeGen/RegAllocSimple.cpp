@@ -31,8 +31,8 @@
 using namespace llvm;
 
 namespace {
-  static Statistic<> NumStores("ra-simple", "Number of stores added");
-  static Statistic<> NumLoads ("ra-simple", "Number of loads added");
+  static Statistic NumStores("ra-simple", "Number of stores added");
+  static Statistic NumLoads ("ra-simple", "Number of loads added");
 
   static RegisterRegAlloc
     simpleRegAlloc("simple", "  simple register allocator",

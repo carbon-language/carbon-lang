@@ -30,19 +30,19 @@
 using namespace llvm;
 
 namespace {
-  Statistic<>
+  Statistic
   NumNonAddrTakenGlobalVars("globalsmodref-aa",
                             "Number of global vars without address taken");
-  Statistic<>
+  Statistic
   NumNonAddrTakenFunctions("globalsmodref-aa",
                            "Number of functions without address taken");
-  Statistic<>
+  Statistic
   NumNoMemFunctions("globalsmodref-aa",
                     "Number of functions that do not access memory");
-  Statistic<>
+  Statistic
   NumReadMemFunctions("globalsmodref-aa",
                       "Number of functions that only read memory");
-  Statistic<>
+  Statistic
   NumIndirectGlobalVars("globalsmodref-aa",
                         "Number of indirect global objects");
   

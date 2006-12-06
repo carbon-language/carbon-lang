@@ -36,7 +36,7 @@
 using namespace llvm;
 
 namespace {
-  Statistic<> NumMoved("block-placement", "Number of basic blocks moved");
+  Statistic NumMoved("block-placement", "Number of basic blocks moved");
 
   struct BlockPlacement : public FunctionPass {
     virtual bool runOnFunction(Function &F);

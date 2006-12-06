@@ -28,12 +28,12 @@
 using namespace llvm;
 
 namespace {
-  Statistic<> NumInstRemoved("gcse", "Number of instructions removed");
-  Statistic<> NumLoadRemoved("gcse", "Number of loads removed");
-  Statistic<> NumCallRemoved("gcse", "Number of calls removed");
-  Statistic<> NumNonInsts   ("gcse", "Number of instructions removed due "
+  Statistic NumInstRemoved("gcse", "Number of instructions removed");
+  Statistic NumLoadRemoved("gcse", "Number of loads removed");
+  Statistic NumCallRemoved("gcse", "Number of calls removed");
+  Statistic NumNonInsts   ("gcse", "Number of instructions removed due "
                              "to non-instruction values");
-  Statistic<> NumArgsRepl   ("gcse", "Number of function arguments replaced "
+  Statistic NumArgsRepl   ("gcse", "Number of function arguments replaced "
                              "with constant values");
 
   struct GCSE : public FunctionPass {

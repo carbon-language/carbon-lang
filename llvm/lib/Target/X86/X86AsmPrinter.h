@@ -28,7 +28,7 @@
 
 namespace llvm {
 
-extern Statistic<> EmittedInsts;
+extern Statistic EmittedInsts;
 
 // FIXME: Move this to CodeGen/AsmPrinter.h
 namespace PICStyle {

@@ -43,12 +43,12 @@
 using namespace llvm;
 
 namespace {
-  static Statistic<> NodesCombined ("dagcombiner", 
+  static Statistic NodesCombined ("dagcombiner", 
 				    "Number of dag nodes combined");
             
-  static Statistic<> PreIndexedNodes ("pre_indexed_ops", 
+  static Statistic PreIndexedNodes ("pre_indexed_ops", 
                                       "Number of pre-indexed nodes created");
-  static Statistic<> PostIndexedNodes ("post_indexed_ops", 
+  static Statistic PostIndexedNodes ("post_indexed_ops", 
                                        "Number of post-indexed nodes created");
             
   static cl::opt<bool>

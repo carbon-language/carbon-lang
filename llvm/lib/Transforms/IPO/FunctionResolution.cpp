@@ -33,8 +33,8 @@
 using namespace llvm;
 
 namespace {
-  Statistic<>NumResolved("funcresolve", "Number of varargs functions resolved");
-  Statistic<> NumGlobals("funcresolve", "Number of global variables resolved");
+  Statistic NumResolved("funcresolve", "Number of varargs functions resolved");
+  Statistic NumGlobals("funcresolve", "Number of global variables resolved");
 
   struct FunctionResolvingPass : public ModulePass {
     virtual void getAnalysisUsage(AnalysisUsage &AU) const {

@@ -35,7 +35,7 @@ namespace {
 
 /// This statistic keeps track of the total number of library calls that have
 /// been simplified regardless of which call it is.
-Statistic<> SimplifiedLibCalls("simplify-libcalls",
+Statistic SimplifiedLibCalls("simplify-libcalls",
   "Number of library calls simplified");
 
 // Forward declarations
@@ -68,7 +68,7 @@ class LibCallOptimization {
   LibCallOptimization **Prev, *Next;
   const char *FunctionName; ///< Name of the library call we optimize
 #ifndef NDEBUG
-  Statistic<> occurrences; ///< debug statistic (-debug-only=simplify-libcalls)
+  Statistic occurrences; ///< debug statistic (-debug-only=simplify-libcalls)
 #endif
 public:
   /// The \p fname argument must be the name of the library function being

@@ -76,10 +76,10 @@ namespace {
 }
 
 namespace {
-  Statistic<>
+  Statistic
   NumFPKill("x86-codegen", "Number of FP_REG_KILL instructions added");
 
-  Statistic<>
+  Statistic
   NumLoadMoved("x86-codegen", "Number of loads moved below TokenFactor");
 
   //===--------------------------------------------------------------------===//

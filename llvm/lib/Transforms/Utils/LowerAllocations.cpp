@@ -25,7 +25,7 @@
 using namespace llvm;
 
 namespace {
-  Statistic<> NumLowered("lowerallocs", "Number of allocations lowered");
+  Statistic NumLowered("lowerallocs", "Number of allocations lowered");
 
   /// LowerAllocations - Turn malloc and free instructions into %malloc and
   /// %free calls.

@@ -23,8 +23,8 @@
 using namespace llvm;
 
 namespace {
-  Statistic<> nopintro("alpha-nops", "Number of nops inserted");
-  Statistic<> nopalign("alpha-nops-align", 
+  Statistic nopintro("alpha-nops", "Number of nops inserted");
+  Statistic nopalign("alpha-nops-align", 
 		       "Number of nops inserted for alignment");
 
   cl::opt<bool>

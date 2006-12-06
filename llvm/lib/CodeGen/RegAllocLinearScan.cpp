@@ -37,9 +37,9 @@ using namespace llvm;
 
 namespace {
 
-  static Statistic<> NumIters
+  static Statistic NumIters
   ("regalloc", "Number of iterations performed");
-  static Statistic<> NumBacktracks
+  static Statistic NumBacktracks
   ("regalloc", "Number of times we had to backtrack");
 
   static RegisterRegAlloc

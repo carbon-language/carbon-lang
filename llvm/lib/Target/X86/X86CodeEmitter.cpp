@@ -29,7 +29,7 @@
 using namespace llvm;
 
 namespace {
-  Statistic<>
+  Statistic
   NumEmitted("x86-emitter", "Number of machine instructions emitted");
 }
 

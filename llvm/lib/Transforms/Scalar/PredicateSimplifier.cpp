@@ -93,11 +93,11 @@
 using namespace llvm;
 
 namespace {
-  Statistic<>
+  Statistic
   NumVarsReplaced("predsimplify", "Number of argument substitutions");
-  Statistic<>
+  Statistic
   NumInstruction("predsimplify", "Number of instructions removed");
-  Statistic<>
+  Statistic
   NumSimple("predsimplify", "Number of simple replacements");
 
   /// The InequalityGraph stores the relationships between values.

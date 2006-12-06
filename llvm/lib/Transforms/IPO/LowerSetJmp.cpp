@@ -50,13 +50,13 @@
 using namespace llvm;
 
 namespace {
-  Statistic<> LongJmpsTransformed("lowersetjmp",
+  Statistic LongJmpsTransformed("lowersetjmp",
                                   "Number of longjmps transformed");
-  Statistic<> SetJmpsTransformed("lowersetjmp",
+  Statistic SetJmpsTransformed("lowersetjmp",
                                  "Number of setjmps transformed");
-  Statistic<> CallsTransformed("lowersetjmp",
+  Statistic CallsTransformed("lowersetjmp",
                                "Number of calls invokified");
-  Statistic<> InvokesTransformed("lowersetjmp",
+  Statistic InvokesTransformed("lowersetjmp",
                                  "Number of invokes modified");
 
   //===--------------------------------------------------------------------===//

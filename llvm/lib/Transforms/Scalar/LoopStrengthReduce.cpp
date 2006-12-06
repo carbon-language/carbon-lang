@@ -38,9 +38,9 @@
 using namespace llvm;
 
 namespace {
-  Statistic<> NumReduced ("loop-reduce", "Number of GEPs strength reduced");
-  Statistic<> NumInserted("loop-reduce", "Number of PHIs inserted");
-  Statistic<> NumVariable("loop-reduce","Number of PHIs with variable strides");
+  Statistic NumReduced ("loop-reduce", "Number of GEPs strength reduced");
+  Statistic NumInserted("loop-reduce", "Number of PHIs inserted");
+  Statistic NumVariable("loop-reduce","Number of PHIs with variable strides");
 
   /// IVStrideUse - Keep track of one use of a strided induction variable, where
   /// the stride is stored externally.  The Offset member keeps track of the 

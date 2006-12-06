@@ -49,8 +49,8 @@
 using namespace llvm;
 
 namespace {
-  Statistic<> NumFXCH("x86-codegen", "Number of fxch instructions inserted");
-  Statistic<> NumFP  ("x86-codegen", "Number of floating point instructions");
+  Statistic NumFXCH("x86-codegen", "Number of fxch instructions inserted");
+  Statistic NumFP  ("x86-codegen", "Number of floating point instructions");
 
   struct VISIBILITY_HIDDEN FPS : public MachineFunctionPass {
     virtual bool runOnMachineFunction(MachineFunction &MF);

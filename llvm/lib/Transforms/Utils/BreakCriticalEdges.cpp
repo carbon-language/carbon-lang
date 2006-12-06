@@ -30,7 +30,7 @@
 using namespace llvm;
 
 namespace {
-  Statistic<> NumBroken("break-crit-edges", "Number of blocks inserted");
+  Statistic NumBroken("break-crit-edges", "Number of blocks inserted");
 
   struct VISIBILITY_HIDDEN BreakCriticalEdges : public FunctionPass {
     virtual bool runOnFunction(Function &F);

@@ -65,15 +65,15 @@
 using namespace llvm;
 
 namespace {
-  Statistic<>
+  Statistic
   NumIters("anders-aa", "Number of iterations to reach convergence");
-  Statistic<>
+  Statistic
   NumConstraints("anders-aa", "Number of constraints");
-  Statistic<>
+  Statistic
   NumNodes("anders-aa", "Number of nodes");
-  Statistic<>
+  Statistic
   NumEscapingFunctions("anders-aa", "Number of internal functions that escape");
-  Statistic<>
+  Statistic
   NumIndirectCallees("anders-aa", "Number of indirect callees found");
 
   class Andersens : public ModulePass, public AliasAnalysis,

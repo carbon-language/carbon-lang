@@ -28,8 +28,8 @@
 using namespace llvm;
 
 namespace {
-  Statistic<> NumStores("dse", "Number of stores deleted");
-  Statistic<> NumOther ("dse", "Number of other instrs removed");
+  Statistic NumStores("dse", "Number of stores deleted");
+  Statistic NumOther ("dse", "Number of other instrs removed");
 
   struct DSE : public FunctionPass {
 

@@ -24,7 +24,7 @@
 using namespace llvm;
 
 namespace {
-  Statistic<> NumDynamicInsts("lli", "Number of dynamic instructions executed");
+  Statistic NumDynamicInsts("lli", "Number of dynamic instructions executed");
 
   Interpreter *TheEE = 0;
 }

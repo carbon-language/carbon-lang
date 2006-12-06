@@ -28,7 +28,7 @@
 using namespace llvm;
 
 namespace {
-  Statistic<> NumLowered("lowerselect","Number of select instructions lowered");
+  Statistic NumLowered("lowerselect","Number of select instructions lowered");
 
   /// LowerSelect - Turn select instructions into conditional branches.
   ///

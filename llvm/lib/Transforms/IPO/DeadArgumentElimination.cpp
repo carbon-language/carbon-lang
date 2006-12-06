@@ -33,9 +33,9 @@
 using namespace llvm;
 
 namespace {
-  Statistic<> NumArgumentsEliminated("deadargelim",
+  Statistic NumArgumentsEliminated("deadargelim",
                                      "Number of unread args removed");
-  Statistic<> NumRetValsEliminated("deadargelim",
+  Statistic NumRetValsEliminated("deadargelim",
                                    "Number of unused return values removed");
 
   /// DAE - The dead argument elimination pass.

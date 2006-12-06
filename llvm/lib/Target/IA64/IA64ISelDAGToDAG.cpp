@@ -33,8 +33,8 @@
 using namespace llvm;
 
 namespace {
-  Statistic<> FusedFP ("ia64-codegen", "Number of fused fp operations");
-  Statistic<> FrameOff("ia64-codegen", "Number of frame idx offsets collapsed");
+  Statistic FusedFP ("ia64-codegen", "Number of fused fp operations");
+  Statistic FrameOff("ia64-codegen", "Number of frame idx offsets collapsed");
     
   //===--------------------------------------------------------------------===//
   /// IA64DAGToDAGISel - IA64 specific code to select IA64 machine

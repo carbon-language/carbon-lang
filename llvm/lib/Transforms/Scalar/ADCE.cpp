@@ -30,9 +30,9 @@
 using namespace llvm;
 
 namespace {
-  Statistic<> NumBlockRemoved("adce", "Number of basic blocks removed");
-  Statistic<> NumInstRemoved ("adce", "Number of instructions removed");
-  Statistic<> NumCallRemoved ("adce", "Number of calls and invokes removed");
+  Statistic NumBlockRemoved("adce", "Number of basic blocks removed");
+  Statistic NumInstRemoved ("adce", "Number of instructions removed");
+  Statistic NumCallRemoved ("adce", "Number of calls and invokes removed");
 
 //===----------------------------------------------------------------------===//
 // ADCE Class

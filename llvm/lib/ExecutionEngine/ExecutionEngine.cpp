@@ -27,8 +27,8 @@
 using namespace llvm;
 
 namespace {
-  Statistic<> NumInitBytes("lli", "Number of bytes of global vars initialized");
-  Statistic<> NumGlobals  ("lli", "Number of global vars initialized");
+  Statistic NumInitBytes("lli", "Number of bytes of global vars initialized");
+  Statistic NumGlobals  ("lli", "Number of global vars initialized");
 }
 
 ExecutionEngine::EECtorFn ExecutionEngine::JITCtor = 0;

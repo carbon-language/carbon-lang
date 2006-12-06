@@ -50,9 +50,9 @@
 using namespace llvm;
 
 namespace {
-  Statistic<> NumInvokes("lowerinvoke", "Number of invokes replaced");
-  Statistic<> NumUnwinds("lowerinvoke", "Number of unwinds replaced");
-  Statistic<> NumSpilled("lowerinvoke",
+  Statistic NumInvokes("lowerinvoke", "Number of invokes replaced");
+  Statistic NumUnwinds("lowerinvoke", "Number of unwinds replaced");
+  Statistic NumSpilled("lowerinvoke",
                          "Number of registers live across unwind edges");
   cl::opt<bool> ExpensiveEHSupport("enable-correct-eh-support",
  cl::desc("Make the -lowerinvoke pass insert expensive, but correct, EH code"));

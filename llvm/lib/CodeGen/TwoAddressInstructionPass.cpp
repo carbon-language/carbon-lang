@@ -45,11 +45,11 @@
 using namespace llvm;
 
 namespace {
-  static Statistic<> NumTwoAddressInstrs("twoaddressinstruction",
+  static Statistic NumTwoAddressInstrs("twoaddressinstruction",
                                   "Number of two-address instructions");
-  static Statistic<> NumCommuted("twoaddressinstruction",
+  static Statistic NumCommuted("twoaddressinstruction",
                           "Number of instructions commuted to coalesce");
-  static Statistic<> NumConvertedTo3Addr("twoaddressinstruction",
+  static Statistic NumConvertedTo3Addr("twoaddressinstruction",
                                 "Number of instructions promoted to 3-address");
 
   struct VISIBILITY_HIDDEN TwoAddressInstructionPass

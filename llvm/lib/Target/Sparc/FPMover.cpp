@@ -23,8 +23,8 @@
 using namespace llvm;
 
 namespace {
-  Statistic<> NumFpDs("fpmover", "Number of instructions translated");
-  Statistic<> NoopFpDs("fpmover", "Number of noop instructions removed");
+  Statistic NumFpDs("fpmover", "Number of instructions translated");
+  Statistic NoopFpDs("fpmover", "Number of noop instructions removed");
 
   struct FPMover : public MachineFunctionPass {
     /// Target machine description which we query for reg. names, data

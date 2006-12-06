@@ -34,7 +34,7 @@
 using namespace llvm;
 
 namespace {
-  Statistic<> EmittedInsts("asm-printer", "Number of machine instrs printed");
+  Statistic EmittedInsts("asm-printer", "Number of machine instrs printed");
 
   struct VISIBILITY_HIDDEN SparcAsmPrinter : public AsmPrinter {
     SparcAsmPrinter(std::ostream &O, TargetMachine &TM, const TargetAsmInfo *T)

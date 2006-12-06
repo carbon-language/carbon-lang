@@ -39,19 +39,19 @@ using namespace llvm;
 namespace {
   RegisterPass<LiveIntervals> X("liveintervals", "Live Interval Analysis");
 
-  static Statistic<> numIntervals
+  static Statistic numIntervals
   ("liveintervals", "Number of original intervals");
 
-  static Statistic<> numIntervalsAfter
+  static Statistic numIntervalsAfter
   ("liveintervals", "Number of intervals after coalescing");
 
-  static Statistic<> numJoins
+  static Statistic numJoins
   ("liveintervals", "Number of interval joins performed");
 
-  static Statistic<> numPeep
+  static Statistic numPeep
   ("liveintervals", "Number of identity moves eliminated after coalescing");
 
-  static Statistic<> numFolded
+  static Statistic numFolded
   ("liveintervals", "Number of loads/stores folded into instructions");
 
   static cl::opt<bool>

@@ -1080,8 +1080,8 @@ bool SCCPSolver::ResolveBranchesIn(Function &F) {
 
 
 namespace {
-  Statistic<> NumInstRemoved("sccp", "Number of instructions removed");
-  Statistic<> NumDeadBlocks ("sccp", "Number of basic blocks unreachable");
+  Statistic NumInstRemoved("sccp", "Number of instructions removed");
+  Statistic NumDeadBlocks ("sccp", "Number of basic blocks unreachable");
 
   //===--------------------------------------------------------------------===//
   //
@@ -1191,11 +1191,11 @@ bool SCCP::runOnFunction(Function &F) {
 }
 
 namespace {
-  Statistic<> IPNumInstRemoved("ipsccp", "Number of instructions removed");
-  Statistic<> IPNumDeadBlocks ("ipsccp", "Number of basic blocks unreachable");
-  Statistic<> IPNumArgsElimed ("ipsccp",
+  Statistic IPNumInstRemoved("ipsccp", "Number of instructions removed");
+  Statistic IPNumDeadBlocks ("ipsccp", "Number of basic blocks unreachable");
+  Statistic IPNumArgsElimed ("ipsccp",
                                "Number of arguments constant propagated");
-  Statistic<> IPNumGlobalConst("ipsccp",
+  Statistic IPNumGlobalConst("ipsccp",
                                "Number of globals found to be constant");
 
   //===--------------------------------------------------------------------===//

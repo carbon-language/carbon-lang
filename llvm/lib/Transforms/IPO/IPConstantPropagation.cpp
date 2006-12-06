@@ -25,9 +25,9 @@
 using namespace llvm;
 
 namespace {
-  Statistic<> NumArgumentsProped("ipconstprop",
+  Statistic NumArgumentsProped("ipconstprop",
                                  "Number of args turned into constants");
-  Statistic<> NumReturnValProped("ipconstprop",
+  Statistic NumReturnValProped("ipconstprop",
                               "Number of return values turned into constants");
 
   /// IPCP - The interprocedural constant propagation pass

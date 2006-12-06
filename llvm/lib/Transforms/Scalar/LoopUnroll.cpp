@@ -37,7 +37,7 @@
 using namespace llvm;
 
 namespace {
-  Statistic<> NumUnrolled("loop-unroll", "Number of loops completely unrolled");
+  Statistic NumUnrolled("loop-unroll", "Number of loops completely unrolled");
 
   cl::opt<unsigned>
   UnrollThreshold("unroll-threshold", cl::init(100), cl::Hidden,

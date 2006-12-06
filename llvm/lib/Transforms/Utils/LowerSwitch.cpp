@@ -26,7 +26,7 @@
 using namespace llvm;
 
 namespace {
-  Statistic<> NumLowered("lowerswitch", "Number of SwitchInst's replaced");
+  Statistic NumLowered("lowerswitch", "Number of SwitchInst's replaced");
 
   /// LowerSwitch Pass - Replace all SwitchInst instructions with chained branch
   /// instructions.  Note that this cannot be a BasicBlock pass because it

@@ -61,8 +61,8 @@
 using namespace llvm;
 
 namespace {
-  Statistic<> NumEliminated("tailcallelim", "Number of tail calls removed");
-  Statistic<> NumAccumAdded("tailcallelim","Number of accumulators introduced");
+  Statistic NumEliminated("tailcallelim", "Number of tail calls removed");
+  Statistic NumAccumAdded("tailcallelim","Number of accumulators introduced");
 
   struct TailCallElim : public FunctionPass {
     virtual bool runOnFunction(Function &F);

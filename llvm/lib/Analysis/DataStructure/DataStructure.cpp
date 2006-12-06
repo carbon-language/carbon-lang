@@ -34,12 +34,12 @@ using namespace llvm;
 #define COLLAPSE_ARRAYS_AGGRESSIVELY 0
 
 namespace {
-  Statistic<> NumFolds          ("dsa", "Number of nodes completely folded");
-  Statistic<> NumCallNodesMerged("dsa", "Number of call nodes merged");
-  Statistic<> NumNodeAllocated  ("dsa", "Number of nodes allocated");
-  Statistic<> NumDNE            ("dsa", "Number of nodes removed by reachability");
-  Statistic<> NumTrivialDNE     ("dsa", "Number of nodes trivially removed");
-  Statistic<> NumTrivialGlobalDNE("dsa", "Number of globals trivially removed");
+  Statistic NumFolds          ("dsa", "Number of nodes completely folded");
+  Statistic NumCallNodesMerged("dsa", "Number of call nodes merged");
+  Statistic NumNodeAllocated  ("dsa", "Number of nodes allocated");
+  Statistic NumDNE            ("dsa", "Number of nodes removed by reachability");
+  Statistic NumTrivialDNE     ("dsa", "Number of nodes trivially removed");
+  Statistic NumTrivialGlobalDNE("dsa", "Number of globals trivially removed");
   static cl::opt<unsigned>
   DSAFieldLimit("dsa-field-limit", cl::Hidden,
                 cl::desc("Number of fields to track before collapsing a node"),

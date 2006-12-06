@@ -33,9 +33,9 @@
 using namespace llvm;
 
 namespace {
-  static Statistic<> NumStores("ra-local", "Number of stores added");
-  static Statistic<> NumLoads ("ra-local", "Number of loads added");
-  static Statistic<> NumFolded("ra-local", "Number of loads/stores folded "
+  static Statistic NumStores("ra-local", "Number of stores added");
+  static Statistic NumLoads ("ra-local", "Number of loads added");
+  static Statistic NumFolded("ra-local", "Number of loads/stores folded "
 			       "into instructions");
 
   static RegisterRegAlloc

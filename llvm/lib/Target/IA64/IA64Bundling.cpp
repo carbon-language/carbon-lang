@@ -33,7 +33,7 @@
 using namespace llvm;
 
 namespace {
-  Statistic<> StopBitsAdded("ia64-codegen", "Number of stop bits added");
+  Statistic StopBitsAdded("ia64-codegen", "Number of stop bits added");
 
   struct IA64BundlingPass : public MachineFunctionPass {
     /// Target machine description which we query for reg. names, data

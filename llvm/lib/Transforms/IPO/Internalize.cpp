@@ -24,8 +24,8 @@
 using namespace llvm;
 
 namespace {
-  Statistic<> NumFunctions("internalize", "Number of functions internalized");
-  Statistic<> NumGlobals  ("internalize", "Number of global vars internalized");
+  Statistic NumFunctions("internalize", "Number of functions internalized");
+  Statistic NumGlobals  ("internalize", "Number of global vars internalized");
 
   // APIFile - A file which contains a list of symbols that should not be marked
   // external.

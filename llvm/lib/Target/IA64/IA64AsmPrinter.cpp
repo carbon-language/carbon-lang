@@ -30,7 +30,7 @@
 using namespace llvm;
 
 namespace {
-  Statistic<> EmittedInsts("asm-printer", "Number of machine instrs printed");
+  Statistic EmittedInsts("asm-printer", "Number of machine instrs printed");
   
   struct IA64AsmPrinter : public AsmPrinter {
     std::set<std::string> ExternalFunctionNames, ExternalObjectNames;

@@ -34,22 +34,22 @@ static cl::opt<std::string>
 StartInst("raise-start-inst", cl::Hidden, cl::value_desc("inst name"),
        cl::desc("Start raise pass at the instruction with the specified name"));
 
-static Statistic<>
+static Statistic
 NumLoadStorePeepholes("raise", "Number of load/store peepholes");
 
-static Statistic<>
+static Statistic
 NumGEPInstFormed("raise", "Number of other getelementptr's formed");
 
-static Statistic<>
+static Statistic
 NumExprTreesConv("raise", "Number of expression trees converted");
 
-static Statistic<>
+static Statistic
 NumCastOfCast("raise", "Number of cast-of-self removed");
 
-static Statistic<>
+static Statistic
 NumDCEorCP("raise", "Number of insts DCEd or constprop'd");
 
-static Statistic<>
+static Statistic
 NumVarargCallChanges("raise", "Number of vararg call peepholes");
 
 #define PRINT_PEEPHOLE(ID, NUM, I)            \

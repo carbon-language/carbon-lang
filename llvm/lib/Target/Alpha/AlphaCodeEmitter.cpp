@@ -27,7 +27,7 @@
 using namespace llvm;
 
 namespace {
-  Statistic<>
+  Statistic
   NumEmitted("alpha-emitter", "Number of machine instructions emitted");
 }
 

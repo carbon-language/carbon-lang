@@ -28,8 +28,8 @@
 using namespace llvm;
 
 namespace {
-  Statistic<> NumRemoved("prune-eh", "Number of invokes removed");
-  Statistic<> NumUnreach("prune-eh", "Number of noreturn calls optimized");
+  Statistic NumRemoved("prune-eh", "Number of invokes removed");
+  Statistic NumUnreach("prune-eh", "Number of noreturn calls optimized");
 
   struct PruneEH : public CallGraphSCCPass {
     /// DoesNotUnwind - This set contains all of the functions which we have

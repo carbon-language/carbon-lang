@@ -26,7 +26,7 @@ using namespace llvm;
 namespace {
   RegisterPass<CompleteBUDataStructures>
   X("cbudatastructure", "'Complete' Bottom-up Data Structure Analysis");
-  Statistic<> NumCBUInlines("cbudatastructures", "Number of graphs inlined");
+  Statistic NumCBUInlines("cbudatastructures", "Number of graphs inlined");
 }
 
 

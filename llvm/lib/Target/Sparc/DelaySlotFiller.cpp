@@ -20,7 +20,7 @@
 using namespace llvm;
 
 namespace {
-  Statistic<> FilledSlots("delayslotfiller", "Num. of delay slots filled");
+  Statistic FilledSlots("delayslotfiller", "Num. of delay slots filled");
 
   struct Filler : public MachineFunctionPass {
     /// Target machine description which we query for reg. names, data

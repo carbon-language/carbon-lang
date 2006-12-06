@@ -28,8 +28,8 @@
 using namespace llvm;
 
 namespace {
-  Statistic<> NumBounceSites("indmemrem", "Number of sites modified");
-  Statistic<> NumBounce  ("indmemrem", "Number of bounce functions created");
+  Statistic NumBounceSites("indmemrem", "Number of sites modified");
+  Statistic NumBounce  ("indmemrem", "Number of bounce functions created");
 
   class IndMemRemPass : public ModulePass {
 

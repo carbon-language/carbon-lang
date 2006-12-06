@@ -45,7 +45,7 @@ const unsigned BCVersionNum = 7;
 
 static RegisterPass<WriteBytecodePass> X("emitbytecode", "Bytecode Writer");
 
-static Statistic<>
+static Statistic
 BytesWritten("bytecodewriter", "Number of bytecode bytes written");
 
 //===----------------------------------------------------------------------===//
