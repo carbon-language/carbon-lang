@@ -75,28 +75,20 @@ public:
   /// constant's type.
   /// @returns true if the constant's value is maximal.
   /// @brief Determine if the value is maximal.
-  virtual bool isMaxValue() const = 0;
+  virtual bool isMaxValue(bool isSigned) const = 0;
 
   /// This function is implemented by subclasses and will return true iff this 
   /// constant represents the smallest value that may be represented by this 
   /// constant's type.
   /// @returns true if the constant's value is minimal
   /// @brief Determine if the value is minimal.
-  virtual bool isMinValue() const = 0;
+  virtual bool isMinValue(bool isSigned) const = 0;
 
   /// This function is implemented by subclasses and will return true iff every
   /// bit in this constant is set to true.
   /// @returns true if all bits of the constant are ones.
   /// @brief Determine if the value is all ones.
   virtual bool isAllOnesValue() const = 0;
-
-  /// @returns the largest value for an integer constant of the given type 
-  /// @brief Get the maximal value
-  static ConstantIntegral *getMaxValue(const Type *Ty);
-
-  /// @returns the smallest value for an integer constant of the given type 
-  /// @brief Get the minimal value
-  static ConstantIntegral *getMinValue(const Type *Ty);
 
   /// @returns the value for an integer constant of the given type that has all
   /// its bits set to true.
@@ -147,8 +139,8 @@ public:
   /// @see ConstantIntegral for details
   /// @brief Implement overrides
   virtual bool isNullValue() const { return getValue() == false; }
-  virtual bool isMaxValue() const { return getValue() == true; }
-  virtual bool isMinValue() const { return getValue() == false; }
+  virtual bool isMaxValue(bool isSigned) const { return getValue() == true; }
+  virtual bool isMinValue(bool isSigned) const { return getValue() == false; }
   virtual bool isAllOnesValue() const { return getValue() == true; }
 
   /// @brief Methods to support type inquiry through isa, cast, and dyn_cast:
@@ -208,8 +200,8 @@ public:
   /// by this type.
   /// @see ConstantIntegeral
   /// @brief Override implementation
-  virtual bool isMaxValue() const {
-    if (getType()->isSigned()) {
+  virtual bool isMaxValue(bool isSigned) const {
+    if (isSigned) {
       int64_t V = getSExtValue();
       if (V < 0) return false;    // Be careful about wrap-around on 'long's
       ++V;
@@ -222,8 +214,8 @@ public:
   /// this type.
   /// @see ConstantIntegral
   /// @brief Override implementation
-  virtual bool isMinValue() const {
-    if (getType()->isSigned()) {
+  virtual bool isMinValue(bool isSigned) const {
+    if (isSigned) {
       int64_t V = getSExtValue();
       if (V > 0) return false;    // Be careful about wrap-around on 'long's
       --V;

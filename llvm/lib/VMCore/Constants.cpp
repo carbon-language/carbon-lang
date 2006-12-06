@@ -152,53 +152,6 @@ Constant *Constant::getNullValue(const Type *Ty) {
   }
 }
 
-// Static constructor to create the maximum constant of an integral type...
-ConstantIntegral *ConstantIntegral::getMaxValue(const Type *Ty) {
-  switch (Ty->getTypeID()) {
-  case Type::BoolTyID:   return ConstantBool::getTrue();
-  case Type::SByteTyID:
-  case Type::ShortTyID:
-  case Type::IntTyID:
-  case Type::LongTyID: {
-    // Calculate 011111111111111...
-    unsigned TypeBits = Ty->getPrimitiveSize()*8;
-    int64_t Val = INT64_MAX;             // All ones
-    Val >>= 64-TypeBits;                 // Shift out unwanted 1 bits...
-    return ConstantInt::get(Ty, Val);
-  }
-
-  case Type::UByteTyID:
-  case Type::UShortTyID:
-  case Type::UIntTyID:
-  case Type::ULongTyID:  return getAllOnesValue(Ty);
-
-  default: return 0;
-  }
-}
-
-// Static constructor to create the minimum constant for an integral type...
-ConstantIntegral *ConstantIntegral::getMinValue(const Type *Ty) {
-  switch (Ty->getTypeID()) {
-  case Type::BoolTyID:   return ConstantBool::getFalse();
-  case Type::SByteTyID:
-  case Type::ShortTyID:
-  case Type::IntTyID:
-  case Type::LongTyID: {
-     // Calculate 1111111111000000000000
-     unsigned TypeBits = Ty->getPrimitiveSize()*8;
-     int64_t Val = -1;                    // All ones
-     Val <<= TypeBits-1;                  // Shift over to the right spot
-     return ConstantInt::get(Ty, Val);
-  }
-
-  case Type::UByteTyID:
-  case Type::UShortTyID:
-  case Type::UIntTyID:
-  case Type::ULongTyID:  return ConstantInt::get(Ty, 0);
-
-  default: return 0;
-  }
-}
 
 // Static constructor to create an integral constant with all bits set
 ConstantIntegral *ConstantIntegral::getAllOnesValue(const Type *Ty) {
