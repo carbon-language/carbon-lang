@@ -3152,6 +3152,8 @@ a value, just a keyword. The possibilities for the condition code are:
   <li><tt>uno</tt>: unordered (either nans)</li>
   <li><tt>true</tt>: no comparison, always returns true</li>
 </ol>
+<p>In the preceding, <i>ordered</i> means that neither operand is a QNAN while
+<i>unordered</i> means that either operand may be a QNAN.</p>
 <p>The <tt>val1</tt> and <tt>val2</tt> arguments must be of 
 <a href="#t_floating">floating point</a>, or a <a href="#t_packed">packed</a> 
 floating point type. They must have identical types.</p>
