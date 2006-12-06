@@ -265,7 +265,7 @@ getCompareOp(const std::string& setcc, const TypeInfo& TI) {
 
 %}
 
-%file-prefix="UpgradeParser"
+// %file-prefix="UpgradeParser"
 
 %union {
   std::string*    String;
@@ -382,7 +382,7 @@ OptCallingConv
 OptAlign 
   : /*empty*/        { $$ = new std::string(); }
   | ALIGN EUINT64VAL { *$1 += " " + *$2; delete $2; $$ = $1; };
-         ;
+
 OptCAlign 
   : /*empty*/            { $$ = new std::string(); } 
   | ',' ALIGN EUINT64VAL { 
