@@ -20,7 +20,6 @@
 #include "IA64TargetMachine.h"
 #include "llvm/Module.h"
 #include "llvm/Type.h"
-#include "llvm/Assembly/Writer.h"
 #include "llvm/CodeGen/AsmPrinter.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
 #include "llvm/Target/TargetAsmInfo.h"
@@ -282,14 +281,12 @@ bool IA64AsmPrinter::doFinalization(Module &M) {
         if (I->hasInternalLinkage()) {
           O << "\t.lcomm " << name << "#," << TD->getTypeSize(C->getType())
           << "," << (1 << Align);
-          O << "\t\t// ";
+          O << "\n";
         } else {
           O << "\t.common " << name << "#," << TD->getTypeSize(C->getType())
           << "," << (1 << Align);
-          O << "\t\t// ";
+          O << "\n";
         }
-        WriteAsOperand(O, I, true, true, &M);
-        O << "\n";
       } else {
         switch (I->getLinkage()) {
           case GlobalValue::LinkOnceLinkage:
@@ -326,11 +323,7 @@ bool IA64AsmPrinter::doFinalization(Module &M) {
         EmitAlignment(Align);
         O << "\t.type " << name << ",@object\n";
         O << "\t.size " << name << "," << Size << "\n";
-        O << name << ":\t\t\t\t// ";
-        WriteAsOperand(O, I, true, true, &M);
-        O << " = ";
-        WriteAsOperand(O, C, false, false, &M);
-        O << "\n";
+        O << name << ":\t\t\t\t// " << *C << "\n";
         EmitGlobalConstant(C);
       }
     }

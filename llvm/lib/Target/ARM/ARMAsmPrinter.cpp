@@ -18,7 +18,6 @@
 #include "llvm/Constants.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/Module.h"
-#include "llvm/Assembly/Writer.h"
 #include "llvm/CodeGen/AsmPrinter.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
 #include "llvm/CodeGen/MachineConstantPool.h"
@@ -300,9 +299,6 @@ bool ARMAsmPrinter::doFinalization(Module &M) {
 
       O << "\t.comm " << name << "," << TD->getTypeSize(C->getType())
         << "," << (unsigned)TD->getTypeAlignment(C->getType());
-      O << "\t\t";
-      O << TAI->getCommentString() << " ";
-      WriteAsOperand(O, I, true, true, &M);
       O << "\n";
     } else {
       switch (I->getLinkage()) {

@@ -17,7 +17,6 @@
 #include "llvm/Constants.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/Module.h"
-#include "llvm/Assembly/Writer.h"
 #include "llvm/CodeGen/AsmPrinter.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
 #include "llvm/CodeGen/MachineConstantPool.h"
@@ -241,8 +240,6 @@ bool SparcAsmPrinter::doFinalization(Module &M) {
 
         O << "\t.comm " << name << "," << TD->getTypeSize(C->getType())
           << "," << (unsigned)TD->getTypeAlignment(C->getType());
-        O << "\t\t! ";
-        WriteAsOperand(O, I, true, true, &M);
         O << "\n";
       } else {
         switch (I->getLinkage()) {
@@ -284,9 +281,7 @@ bool SparcAsmPrinter::doFinalization(Module &M) {
         O << "\t.align " << Align << "\n";
         O << "\t.type " << name << ",#object\n";
         O << "\t.size " << name << "," << Size << "\n";
-        O << name << ":\t\t\t\t! ";
-        WriteAsOperand(O, I, true, true, &M);
-        O << "\n";
+        O << name << ":\n";
         EmitGlobalConstant(C);
       }
     }
