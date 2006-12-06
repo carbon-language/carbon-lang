@@ -386,25 +386,13 @@ public:
     delete removeFromParent();
   }
 
+  /// findRegisterUseOperand() - Returns the MachineOperand that is a use of
+  /// the specific register or NULL if it is not found.
+  MachineOperand *findRegisterUseOperand(unsigned Reg);
+  
   /// copyKillDeadInfo - Copies kill / dead operand properties from MI.
   ///
-  void copyKillDeadInfo(const MachineInstr *MI) {
-    for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
-      const MachineOperand &MO = MI->getOperand(i);
-      if (MO.isReg() && (MO.isKill() || MO.isDead())) {
-        for (unsigned j = 0, ee = getNumOperands(); j != ee; ++j) {
-          MachineOperand &MOp = getOperand(j);
-          if (MOp.isIdenticalTo(MO)) {
-            if (MO.isKill())
-              MOp.setIsKill();
-            else
-              MOp.setIsDead();
-            break;
-          }
-        }
-      }
-    }
-  }
+  void copyKillDeadInfo(const MachineInstr *MI);
 
   //
   // Debugging support

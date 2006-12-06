@@ -169,6 +169,37 @@ bool MachineOperand::isIdenticalTo(const MachineOperand &Other) const {
   }
 }
 
+/// findRegisterUseOperand() - Returns the MachineOperand that is a use of
+/// the specific register or NULL if it is not found.
+MachineOperand *MachineInstr::findRegisterUseOperand(unsigned Reg) {
+  for (unsigned i = 0, e = getNumOperands(); i != e; ++i) {
+    MachineOperand &MO = getOperand(i);
+    if (MO.isReg() && MO.isUse() && MO.getReg() == Reg)
+      return &MO;
+  }
+  return NULL;
+}
+  
+/// copyKillDeadInfo - Copies kill / dead operand properties from MI.
+///
+void MachineInstr::copyKillDeadInfo(const MachineInstr *MI) {
+  for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
+    const MachineOperand &MO = MI->getOperand(i);
+    if (!MO.isReg() || (!MO.isKill() && !MO.isDead()))
+      continue;
+    for (unsigned j = 0, ee = getNumOperands(); j != ee; ++j) {
+      MachineOperand &MOp = getOperand(j);
+      if (!MOp.isIdenticalTo(MO))
+        continue;
+      if (MO.isKill())
+        MOp.setIsKill();
+      else
+        MOp.setIsDead();
+      break;
+    }
+  }
+}
+
 void MachineInstr::dump() const {
   llvm_cerr << "  " << *this;
 }
