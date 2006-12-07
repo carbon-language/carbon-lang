@@ -269,6 +269,11 @@ public:
   /// Return true IFF AnalysisID AID is currently available.
   Pass *getAnalysisPassFromManager(AnalysisID AID);
 
+  /// Pass Manager itself does not invalidate any analysis info.
+  void getAnalysisUsage(AnalysisUsage &Info) const {
+    Info.setPreservesAll();
+  }
+
 private:
 };
 
@@ -311,6 +316,12 @@ public:
   /// doFinalization - Run all of the initializers for the function passes.
   ///
   bool doFinalization(Module &M);
+
+  /// Pass Manager itself does not invalidate any analysis info.
+  void getAnalysisUsage(AnalysisUsage &Info) const {
+    Info.setPreservesAll();
+  }
+
 private:
   // Active Pass Managers
   BasicBlockPassManager_New *activeBBPassManager;
@@ -333,7 +344,12 @@ public:
 
   /// Return true IFF AnalysisID AID is currently available.
   Pass *getAnalysisPassFromManager(AnalysisID AID);
-  
+
+  /// Pass Manager itself does not invalidate any analysis info.
+  void getAnalysisUsage(AnalysisUsage &Info) const {
+    Info.setPreservesAll();
+  }
+
 private:
   // Active Pass Manager
   FunctionPassManagerImpl_New *activeFunctionPassManager;
@@ -356,6 +372,11 @@ public:
 
   /// Return true IFF AnalysisID AID is currently available.
   Pass *getAnalysisPassFromManager(AnalysisID AID);
+
+  /// Pass Manager itself does not invalidate any analysis info.
+  void getAnalysisUsage(AnalysisUsage &Info) const {
+    Info.setPreservesAll();
+  }
 
 private:
 
