@@ -107,9 +107,6 @@ public:
       return I->second;
   }
 
-  /// Augment RequiredAnalysis by adding analysis required by pass P.
-  void noteDownRequiredAnalysis(Pass *P);
-
   /// Augment AvailableAnalysis by adding analysis made available by pass P.
   void noteDownAvailableAnalysis(Pass *P);
 
@@ -119,13 +116,12 @@ public:
   /// Remove dead passes
   void removeDeadPasses(Pass *P);
 
-  /// Add pass P into the PassVector. Update RequiredAnalysis and
+  /// Add pass P into the PassVector. Update 
   /// AvailableAnalysis appropriately if ProcessAnalysis is true.
   void addPassToManager (Pass *P, bool ProcessAnalysis = true);
 
   // Initialize available analysis information.
   void initializeAnalysisInfo() { 
-    RequiredAnalysis.clear();
     AvailableAnalysis.clear();
     LastUser.clear();
   }
@@ -151,12 +147,6 @@ public:
   }
 
 private:
-  // Analysis required by the passes managed by this manager. This information
-  // used while selecting pass manager during addPass. If a pass does not
-  // preserve any analysis required by other passes managed by current
-  // pass manager then new pass manager is used.
-  std::vector<AnalysisID> RequiredAnalysis;
-
   // Set of available Analysis. This information is used while scheduling 
   // pass. If a pass requires an analysis which is not not available then 
   // equired analysis pass is scheduled to run before the pass itself is 
@@ -307,35 +297,14 @@ private:
 /// manager.
 bool PMDataManager::manageablePass(Pass *P) {
 
-  AnalysisUsage AnUsage;
-  P->getAnalysisUsage(AnUsage);
-
-  // If this pass is not preserving information that is required by the other
-  // passes managed by this manager then use new manager
-  if (!AnUsage.getPreservesAll()) {
-    const std::vector<AnalysisID> &PreservedSet = AnUsage.getPreservedSet();
-    for (std::vector<AnalysisID>::iterator I = RequiredAnalysis.begin(),
-           E = RequiredAnalysis.end(); I != E; ++I) {
-      if (std::find(PreservedSet.begin(), PreservedSet.end(), *I) == 
-          PreservedSet.end())
-        // This analysis is not preserved. Need new manager.
-        return false;
-    }
-  }
+  // TODO 
+  // If this pass is not preserving information that is required by a
+  // pass maintained by higher level pass manager then do not insert
+  // this pass into current manager. Use new manager. For example,
+  // For example, If FunctionPass F is not preserving ModulePass Info M1
+  // that is used by another ModulePass M2 then do not insert F in
+  // current function pass manager.
   return true;
-}
-
-/// Augment RequiredAnalysis by adding analysis required by pass P.
-void PMDataManager::noteDownRequiredAnalysis(Pass *P) {
-  AnalysisUsage AnUsage;
-  P->getAnalysisUsage(AnUsage);
-  const std::vector<AnalysisID> &RequiredSet = AnUsage.getRequiredSet();
-
-  // FIXME: What about duplicates ?
-  RequiredAnalysis.insert(RequiredAnalysis.end(), RequiredSet.begin(), 
-                          RequiredSet.end());
-
-  initializeAnalysisImpl(P);
 }
 
 /// Augement AvailableAnalysis by adding analysis made available by pass P.
@@ -389,14 +358,14 @@ void PMDataManager::removeDeadPasses(Pass *P) {
   }
 }
 
-/// Add pass P into the PassVector. Update RequiredAnalysis and
+/// Add pass P into the PassVector. Update 
 /// AvailableAnalysis appropriately if ProcessAnalysis is true.
 void PMDataManager::addPassToManager (Pass *P, 
                                               bool ProcessAnalysis) {
 
   if (ProcessAnalysis) {
     // Take a note of analysis required and made available by this pass
-    noteDownRequiredAnalysis(P);
+    initializeAnalysisImpl(P);
     noteDownAvailableAnalysis(P);
 
     // Remove the analysis not preserved by this pass
