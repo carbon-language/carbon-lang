@@ -292,7 +292,7 @@ bool ARMAsmPrinter::doFinalization(Module &M) {
     std::string name = Mang->getValueName(I);
     Constant *C = I->getInitializer();
     unsigned Size = TD->getTypeSize(C->getType());
-    unsigned Align = TD->getTypeAlignment(C->getType());
+    unsigned Align = Log2_32(TD->getTypeAlignment(C->getType()));
 
     if (C->isNullValue() &&
         !I->hasSection() &&
@@ -302,8 +302,8 @@ bool ARMAsmPrinter::doFinalization(Module &M) {
       if (I->hasInternalLinkage())
         O << "\t.local " << name << "\n";
 
-      O << "\t.comm " << name << "," << TD->getTypeSize(C->getType())
-        << "," << (unsigned)TD->getTypeAlignment(C->getType());
+      O << "\t.comm " << name << "," << Size
+        << "," << (unsigned)Align;
       O << "\n";
     } else {
       switch (I->getLinkage()) {

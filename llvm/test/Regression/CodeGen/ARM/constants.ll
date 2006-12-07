@@ -5,7 +5,7 @@
 ; RUN: llvm-upgrade < %s | llvm-as | llc -march=arm | grep ".word.*257" | wc -l | grep 1 &&
 ; RUN: llvm-upgrade < %s | llvm-as | llc -march=arm | grep "mov r0, #-1073741761" | wc -l | grep 1 &&
 ; RUN: llvm-upgrade < %s | llvm-as | llc -march=arm | grep "mov r0, #1008" | wc -l | grep 1 &&
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=arm | grep "\.comm.*a,4,4" | wc -l | grep 1
+; RUN: llvm-upgrade < %s | llvm-as | llc -march=arm | grep "\.comm.*a,4,2" | wc -l | grep 1
 
 %a = internal global int 0
 
