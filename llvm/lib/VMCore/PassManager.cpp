@@ -436,8 +436,11 @@ void PMDataManager::recordAvailableAnalysis(Pass *P) {
 void PMDataManager::removeNotPreservedAnalysis(Pass *P) {
   AnalysisUsage AnUsage;
   P->getAnalysisUsage(AnUsage);
-  const std::vector<AnalysisID> &PreservedSet = AnUsage.getPreservedSet();
 
+  if (AnUsage.getPreservesAll())
+    return;
+
+  const std::vector<AnalysisID> &PreservedSet = AnUsage.getPreservedSet();
   for (std::map<AnalysisID, Pass*>::iterator I = AvailableAnalysis.begin(),
          E = AvailableAnalysis.end(); I != E; ++I ) {
     if (std::find(PreservedSet.begin(), PreservedSet.end(), I->first) == 
@@ -470,8 +473,8 @@ void PMDataManager::removeDeadPasses(Pass *P) {
 
 /// Add pass P into the PassVector. Update 
 /// AvailableAnalysis appropriately if ProcessAnalysis is true.
-void PMDataManager::addPassToManager (Pass *P, 
-                                              bool ProcessAnalysis) {
+void PMDataManager::addPassToManager(Pass *P, 
+                                     bool ProcessAnalysis) {
 
   if (ProcessAnalysis) {
     // Take a note of analysis required and made available by this pass
