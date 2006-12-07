@@ -21,9 +21,7 @@
 #include "llvm/Instructions.h"
 #include "llvm/Module.h"
 #include "llvm/Support/Dwarf.h"
-
-#include <iostream>
-
+#include "llvm/Support/Streams.h"
 using namespace llvm;
 using namespace llvm::dwarf;
 
@@ -589,10 +587,10 @@ const char *AnchorDesc::getTypeString() const {
 
 #ifndef NDEBUG
 void AnchorDesc::dump() {
-  std::cerr << getDescString() << " "
-            << "Version(" << getVersion() << "), "
-            << "Tag(" << getTag() << "), "
-            << "AnchorTag(" << AnchorTag << ")\n";
+  cerr << getDescString() << " "
+       << "Version(" << getVersion() << "), "
+       << "Tag(" << getTag() << "), "
+       << "AnchorTag(" << AnchorTag << ")\n";
 }
 #endif
 
@@ -664,14 +662,14 @@ const char *CompileUnitDesc::getAnchorString() const {
 
 #ifndef NDEBUG
 void CompileUnitDesc::dump() {
-  std::cerr << getDescString() << " "
-            << "Version(" << getVersion() << "), "
-            << "Tag(" << getTag() << "), "
-            << "Anchor(" << getAnchor() << "), "
-            << "Language(" << Language << "), "
-            << "FileName(\"" << FileName << "\"), "
-            << "Directory(\"" << Directory << "\"), "
-            << "Producer(\"" << Producer << "\")\n";
+  cerr << getDescString() << " "
+       << "Version(" << getVersion() << "), "
+       << "Tag(" << getTag() << "), "
+       << "Anchor(" << getAnchor() << "), "
+       << "Language(" << Language << "), "
+       << "FileName(\"" << FileName << "\"), "
+       << "Directory(\"" << Directory << "\"), "
+       << "Producer(\"" << Producer << "\")\n";
 }
 #endif
 
@@ -718,17 +716,17 @@ const char *TypeDesc::getTypeString() const {
 
 #ifndef NDEBUG
 void TypeDesc::dump() {
-  std::cerr << getDescString() << " "
-            << "Version(" << getVersion() << "), "
-            << "Tag(" << getTag() << "), "
-            << "Context(" << Context << "), "
-            << "Name(\"" << Name << "\"), "
-            << "File(" << File << "), "
-            << "Line(" << Line << "), "
-            << "Size(" << Size << "), "
-            << "Align(" << Align << "), "
-            << "Offset(" << Offset << "), "
-            << "Flags(" << Flags << ")\n";
+  cerr << getDescString() << " "
+       << "Version(" << getVersion() << "), "
+       << "Tag(" << getTag() << "), "
+       << "Context(" << Context << "), "
+       << "Name(\"" << Name << "\"), "
+       << "File(" << File << "), "
+       << "Line(" << Line << "), "
+       << "Size(" << Size << "), "
+       << "Align(" << Align << "), "
+       << "Offset(" << Offset << "), "
+       << "Flags(" << Flags << ")\n";
 }
 #endif
 
@@ -766,13 +764,13 @@ const char *BasicTypeDesc::getTypeString() const {
 
 #ifndef NDEBUG
 void BasicTypeDesc::dump() {
-  std::cerr << getDescString() << " "
-            << "Version(" << getVersion() << "), "
-            << "Tag(" << getTag() << "), "
-            << "Context(" << getContext() << "), "
-            << "Name(\"" << getName() << "\"), "
-            << "Size(" << getSize() << "), "
-            << "Encoding(" << Encoding << ")\n";
+  cerr << getDescString() << " "
+       << "Version(" << getVersion() << "), "
+       << "Tag(" << getTag() << "), "
+       << "Context(" << getContext() << "), "
+       << "Name(\"" << getName() << "\"), "
+       << "Size(" << getSize() << "), "
+       << "Encoding(" << Encoding << ")\n";
 }
 #endif
 
@@ -823,15 +821,15 @@ const char *DerivedTypeDesc::getTypeString() const {
 
 #ifndef NDEBUG
 void DerivedTypeDesc::dump() {
-  std::cerr << getDescString() << " "
-            << "Version(" << getVersion() << "), "
-            << "Tag(" << getTag() << "), "
-            << "Context(" << getContext() << "), "
-            << "Name(\"" << getName() << "\"), "
-            << "Size(" << getSize() << "), "
-            << "File(" << getFile() << "), "
-            << "Line(" << getLine() << "), "
-            << "FromType(" << FromType << ")\n";
+  cerr << getDescString() << " "
+       << "Version(" << getVersion() << "), "
+       << "Tag(" << getTag() << "), "
+       << "Context(" << getContext() << "), "
+       << "Name(\"" << getName() << "\"), "
+       << "Size(" << getSize() << "), "
+       << "File(" << getFile() << "), "
+       << "Line(" << getLine() << "), "
+       << "FromType(" << FromType << ")\n";
 }
 #endif
 
@@ -880,16 +878,16 @@ const char *CompositeTypeDesc::getTypeString() const {
 
 #ifndef NDEBUG
 void CompositeTypeDesc::dump() {
-  std::cerr << getDescString() << " "
-            << "Version(" << getVersion() << "), "
-            << "Tag(" << getTag() << "), "
-            << "Context(" << getContext() << "), "
-            << "Name(\"" << getName() << "\"), "
-            << "Size(" << getSize() << "), "
-            << "File(" << getFile() << "), "
-            << "Line(" << getLine() << "), "
-            << "FromType(" << getFromType() << "), "
-            << "Elements.size(" << Elements.size() << ")\n";
+  cerr << getDescString() << " "
+       << "Version(" << getVersion() << "), "
+       << "Tag(" << getTag() << "), "
+       << "Context(" << getContext() << "), "
+       << "Name(\"" << getName() << "\"), "
+       << "Size(" << getSize() << "), "
+       << "File(" << getFile() << "), "
+       << "Line(" << getLine() << "), "
+       << "FromType(" << getFromType() << "), "
+       << "Elements.size(" << Elements.size() << ")\n";
 }
 #endif
 
@@ -929,11 +927,11 @@ const char *SubrangeDesc::getTypeString() const {
 
 #ifndef NDEBUG
 void SubrangeDesc::dump() {
-  std::cerr << getDescString() << " "
-            << "Version(" << getVersion() << "), "
-            << "Tag(" << getTag() << "), "
-            << "Lo(" << Lo << "), "
-            << "Hi(" << Hi << ")\n";
+  cerr << getDescString() << " "
+       << "Version(" << getVersion() << "), "
+       << "Tag(" << getTag() << "), "
+       << "Lo(" << Lo << "), "
+       << "Hi(" << Hi << ")\n";
 }
 #endif
 
@@ -973,11 +971,11 @@ const char *EnumeratorDesc::getTypeString() const {
 
 #ifndef NDEBUG
 void EnumeratorDesc::dump() {
-  std::cerr << getDescString() << " "
-            << "Version(" << getVersion() << "), "
-            << "Tag(" << getTag() << "), "
-            << "Name(" << Name << "), "
-            << "Value(" << Value << ")\n";
+  cerr << getDescString() << " "
+       << "Version(" << getVersion() << "), "
+       << "Tag(" << getTag() << "), "
+       << "Name(" << Name << "), "
+       << "Value(" << Value << ")\n";
 }
 #endif
 
@@ -1031,14 +1029,14 @@ const char *VariableDesc::getTypeString() const {
 
 #ifndef NDEBUG
 void VariableDesc::dump() {
-  std::cerr << getDescString() << " "
-            << "Version(" << getVersion() << "), "
-            << "Tag(" << getTag() << "), "
-            << "Context(" << Context << "), "
-            << "Name(\"" << Name << "\"), "
-            << "File(" << File << "), "
-            << "Line(" << Line << "), "
-            << "TyDesc(" << TyDesc << ")\n";
+  cerr << getDescString() << " "
+       << "Version(" << getVersion() << "), "
+       << "Tag(" << getTag() << "), "
+       << "Context(" << Context << "), "
+       << "Name(\"" << Name << "\"), "
+       << "File(" << File << "), "
+       << "Line(" << Line << "), "
+       << "TyDesc(" << TyDesc << ")\n";
 }
 #endif
 
@@ -1114,19 +1112,19 @@ const char *GlobalVariableDesc::getAnchorString() const {
 
 #ifndef NDEBUG
 void GlobalVariableDesc::dump() {
-  std::cerr << getDescString() << " "
-            << "Version(" << getVersion() << "), "
-            << "Tag(" << getTag() << "), "
-            << "Anchor(" << getAnchor() << "), "
-            << "Name(\"" << getName() << "\"), "
-            << "FullName(\"" << getFullName() << "\"), "
-            << "LinkageName(\"" << getLinkageName() << "\"), "
-            << "File(" << getFile() << "),"
-            << "Line(" << getLine() << "),"
-            << "Type(" << getType() << "), "
-            << "IsStatic(" << (isStatic() ? "true" : "false") << "), "
-            << "IsDefinition(" << (isDefinition() ? "true" : "false") << "), "
-            << "Global(" << Global << ")\n";
+  cerr << getDescString() << " "
+       << "Version(" << getVersion() << "), "
+       << "Tag(" << getTag() << "), "
+       << "Anchor(" << getAnchor() << "), "
+       << "Name(\"" << getName() << "\"), "
+       << "FullName(\"" << getFullName() << "\"), "
+       << "LinkageName(\"" << getLinkageName() << "\"), "
+       << "File(" << getFile() << "),"
+       << "Line(" << getLine() << "),"
+       << "Type(" << getType() << "), "
+       << "IsStatic(" << (isStatic() ? "true" : "false") << "), "
+       << "IsDefinition(" << (isDefinition() ? "true" : "false") << "), "
+       << "Global(" << Global << ")\n";
 }
 #endif
 
@@ -1168,18 +1166,18 @@ const char *SubprogramDesc::getAnchorString() const {
 
 #ifndef NDEBUG
 void SubprogramDesc::dump() {
-  std::cerr << getDescString() << " "
-            << "Version(" << getVersion() << "), "
-            << "Tag(" << getTag() << "), "
-            << "Anchor(" << getAnchor() << "), "
-            << "Name(\"" << getName() << "\"), "
-            << "FullName(\"" << getFullName() << "\"), "
-            << "LinkageName(\"" << getLinkageName() << "\"), "
-            << "File(" << getFile() << "),"
-            << "Line(" << getLine() << "),"
-            << "Type(" << getType() << "), "
-            << "IsStatic(" << (isStatic() ? "true" : "false") << "), "
-            << "IsDefinition(" << (isDefinition() ? "true" : "false") << ")\n";
+  cerr << getDescString() << " "
+       << "Version(" << getVersion() << "), "
+       << "Tag(" << getTag() << "), "
+       << "Anchor(" << getAnchor() << "), "
+       << "Name(\"" << getName() << "\"), "
+       << "FullName(\"" << getFullName() << "\"), "
+       << "LinkageName(\"" << getLinkageName() << "\"), "
+       << "File(" << getFile() << "),"
+       << "Line(" << getLine() << "),"
+       << "Type(" << getType() << "), "
+       << "IsStatic(" << (isStatic() ? "true" : "false") << "), "
+       << "IsDefinition(" << (isDefinition() ? "true" : "false") << ")\n";
 }
 #endif
 
@@ -1217,10 +1215,10 @@ const char *BlockDesc::getTypeString() const {
 
 #ifndef NDEBUG
 void BlockDesc::dump() {
-  std::cerr << getDescString() << " "
-            << "Version(" << getVersion() << "), "
-            << "Tag(" << getTag() << "),"
-            << "Context(" << Context << ")\n";
+  cerr << getDescString() << " "
+       << "Version(" << getVersion() << "), "
+       << "Tag(" << getTag() << "),"
+       << "Context(" << Context << ")\n";
 }
 #endif
 

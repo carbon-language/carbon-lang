@@ -31,7 +31,6 @@
 #include "llvm/Support/MathExtras.h"
 #include "llvm/Support/Streams.h"
 #include <algorithm>
-#include <iostream>
 using namespace llvm;
 
 namespace llvm {
@@ -1328,11 +1327,11 @@ void Argument::print(std::ostream &o) const {
 
 // Value::dump - allow easy printing of  Values from the debugger.
 // Located here because so much of the needed functionality is here.
-void Value::dump() const { print(std::cerr); cerr << '\n'; }
+void Value::dump() const { print(*cerr.stream()); cerr << '\n'; }
 
 // Type::dump - allow easy printing of  Values from the debugger.
 // Located here because so much of the needed functionality is here.
-void Type::dump() const { print(std::cerr); cerr << '\n'; }
+void Type::dump() const { print(*cerr.stream()); cerr << '\n'; }
 
 //===----------------------------------------------------------------------===//
 //                         SlotMachine Implementation

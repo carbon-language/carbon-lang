@@ -27,7 +27,6 @@
 #include "llvm/Target/TargetData.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetJITInfo.h"
-#include <iostream>
 using namespace llvm;
 
 #ifdef __APPLE__ 
@@ -64,7 +63,7 @@ JIT::JIT(ModuleProvider *MP, TargetMachine &tm, TargetJITInfo &tji)
   // Turn the machine code intermediate representation into bytes in memory that
   // may be executed.
   if (TM.addPassesToEmitMachineCode(PM, *MCE, false /*fast*/)) {
-    std::cerr << "Target does not support machine code emission!\n";
+    cerr << "Target does not support machine code emission!\n";
     abort();
   }
   
@@ -279,8 +278,8 @@ void *JIT::getPointerToFunction(Function *F) {
     
     std::string ErrorMsg;
     if (MP->materializeFunction(F, &ErrorMsg)) {
-      std::cerr << "Error reading function '" << F->getName()
-                << "' from bytecode file: " << ErrorMsg << "\n";
+      cerr << "Error reading function '" << F->getName()
+           << "' from bytecode file: " << ErrorMsg << "\n";
       abort();
     }
   }
@@ -323,8 +322,8 @@ void *JIT::getOrEmitGlobalVariable(const GlobalVariable *GV) {
 #endif
     Ptr = sys::DynamicLibrary::SearchForAddressOfSymbol(GV->getName().c_str());
     if (Ptr == 0) {
-      std::cerr << "Could not resolve external global address: "
-                << GV->getName() << "\n";
+      cerr << "Could not resolve external global address: "
+           << GV->getName() << "\n";
       abort();
     }
   } else {

@@ -24,9 +24,7 @@
 #include "llvm/Target/TargetLowering.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/MathExtras.h"
-#include <iostream>
 using namespace llvm;
-
 
 /// BuildSchedUnits - Build SUnits from the selection dag that we are input.
 /// This SUnit graph is similar to the SelectionDAG, but represents flagged
@@ -430,9 +428,9 @@ void ScheduleDAG::EmitNode(SDNode *Node,
     if (CommuteSet.count(Node)) {
       MachineInstr *NewMI = TII->commuteInstruction(MI);
       if (NewMI == 0)
-        DEBUG(std::cerr << "Sched: COMMUTING FAILED!\n");
+        DOUT << "Sched: COMMUTING FAILED!\n";
       else {
-        DEBUG(std::cerr << "Sched: COMMUTED TO: " << *NewMI);
+        DOUT << "Sched: COMMUTED TO: " << *NewMI;
         if (MI != NewMI) {
           delete MI;
           MI = NewMI;
@@ -614,7 +612,7 @@ void ScheduleDAG::dumpSchedule() const {
     if (SUnit *SU = Sequence[i])
       SU->dump(&DAG);
     else
-      std::cerr << "**** NOOP ****\n";
+      cerr << "**** NOOP ****\n";
   }
 }
 
@@ -634,14 +632,14 @@ MachineBasicBlock *ScheduleDAG::Run() {
 /// SUnit - Scheduling unit. It's an wrapper around either a single SDNode or
 /// a group of nodes flagged together.
 void SUnit::dump(const SelectionDAG *G) const {
-  std::cerr << "SU(" << NodeNum << "): ";
+  cerr << "SU(" << NodeNum << "): ";
   Node->dump(G);
-  std::cerr << "\n";
+  cerr << "\n";
   if (FlaggedNodes.size() != 0) {
     for (unsigned i = 0, e = FlaggedNodes.size(); i != e; i++) {
-      std::cerr << "    ";
+      cerr << "    ";
       FlaggedNodes[i]->dump(G);
-      std::cerr << "\n";
+      cerr << "\n";
     }
   }
 }
@@ -649,35 +647,35 @@ void SUnit::dump(const SelectionDAG *G) const {
 void SUnit::dumpAll(const SelectionDAG *G) const {
   dump(G);
 
-  std::cerr << "  # preds left       : " << NumPredsLeft << "\n";
-  std::cerr << "  # succs left       : " << NumSuccsLeft << "\n";
-  std::cerr << "  # chain preds left : " << NumChainPredsLeft << "\n";
-  std::cerr << "  # chain succs left : " << NumChainSuccsLeft << "\n";
-  std::cerr << "  Latency            : " << Latency << "\n";
-  std::cerr << "  Depth              : " << Depth << "\n";
-  std::cerr << "  Height             : " << Height << "\n";
+  cerr << "  # preds left       : " << NumPredsLeft << "\n";
+  cerr << "  # succs left       : " << NumSuccsLeft << "\n";
+  cerr << "  # chain preds left : " << NumChainPredsLeft << "\n";
+  cerr << "  # chain succs left : " << NumChainSuccsLeft << "\n";
+  cerr << "  Latency            : " << Latency << "\n";
+  cerr << "  Depth              : " << Depth << "\n";
+  cerr << "  Height             : " << Height << "\n";
 
   if (Preds.size() != 0) {
-    std::cerr << "  Predecessors:\n";
+    cerr << "  Predecessors:\n";
     for (SUnit::const_succ_iterator I = Preds.begin(), E = Preds.end();
          I != E; ++I) {
       if (I->second)
-        std::cerr << "   ch  #";
+        cerr << "   ch  #";
       else
-        std::cerr << "   val #";
-      std::cerr << I->first << " - SU(" << I->first->NodeNum << ")\n";
+        cerr << "   val #";
+      cerr << I->first << " - SU(" << I->first->NodeNum << ")\n";
     }
   }
   if (Succs.size() != 0) {
-    std::cerr << "  Successors:\n";
+    cerr << "  Successors:\n";
     for (SUnit::const_succ_iterator I = Succs.begin(), E = Succs.end();
          I != E; ++I) {
       if (I->second)
-        std::cerr << "   ch  #";
+        cerr << "   ch  #";
       else
-        std::cerr << "   val #";
-      std::cerr << I->first << " - SU(" << I->first->NodeNum << ")\n";
+        cerr << "   val #";
+      cerr << I->first << " - SU(" << I->first->NodeNum << ")\n";
     }
   }
-  std::cerr << "\n";
+  cerr << "\n";
 }

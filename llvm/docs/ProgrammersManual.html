@@ -395,7 +395,7 @@ tool) is run with the '<tt>-debug</tt>' command line argument:</p>
 
 <div class="doc_code">
 <pre>
-DEBUG(std::cerr &lt;&lt; "I am here!\n");
+DOUT &lt;&lt; "I am here!\n";
 </pre>
 </div>
 
@@ -440,16 +440,16 @@ option as follows:</p>
 
 <div class="doc_code">
 <pre>
-DEBUG(std::cerr &lt;&lt; "No debug type\n");
+DOUT &lt;&lt; "No debug type\n";
 #undef  DEBUG_TYPE
 #define DEBUG_TYPE "foo"
-DEBUG(std::cerr &lt;&lt; "'foo' debug type\n");
+DOUT &lt;&lt; "'foo' debug type\n";
 #undef  DEBUG_TYPE
 #define DEBUG_TYPE "bar"
-DEBUG(std::cerr &lt;&lt; "'bar' debug type\n");
+DOUT &lt;&lt; "'bar' debug type\n";
 #undef  DEBUG_TYPE
 #define DEBUG_TYPE ""
-DEBUG(std::cerr &lt;&lt; "No debug type (2)\n");
+DOUT &lt;&lt; "No debug type (2)\n";
 </pre>
 </div>
 
@@ -695,8 +695,8 @@ an example that prints the name of a <tt>BasicBlock</tt> and the number of
 for (Function::iterator i = func-&gt;begin(), e = func-&gt;end(); i != e; ++i)
   // <i>Print out the name of the basic block if it has one, and then the</i>
   // <i>number of instructions that it contains</i>
-  std::cerr &lt;&lt; "Basic block (name=" &lt;&lt; i-&gt;getName() &lt;&lt; ") has "
-            &lt;&lt; i-&gt;size() &lt;&lt; " instructions.\n";
+  llvm::cerr &lt;&lt; "Basic block (name=" &lt;&lt; i-&gt;getName() &lt;&lt; ") has "
+             &lt;&lt; i-&gt;size() &lt;&lt; " instructions.\n";
 </pre>
 </div>
 
@@ -728,14 +728,14 @@ a <tt>BasicBlock</tt>:</p>
 for (BasicBlock::iterator i = blk-&gt;begin(), e = blk-&gt;end(); i != e; ++i)
    // <i>The next statement works since operator&lt;&lt;(ostream&amp;,...)</i>
    // <i>is overloaded for Instruction&amp;</i>
-   std::cerr &lt;&lt; *i &lt;&lt; "\n";
+   llvm::cerr &lt;&lt; *i &lt;&lt; "\n";
 </pre>
 </div>
 
 <p>However, this isn't really the best way to print out the contents of a
 <tt>BasicBlock</tt>!  Since the ostream operators are overloaded for virtually
 anything you'll care about, you could have just invoked the print routine on the
-basic block itself: <tt>std::cerr &lt;&lt; *blk &lt;&lt; "\n";</tt>.</p>
+basic block itself: <tt>llvm::cerr &lt;&lt; *blk &lt;&lt; "\n";</tt>.</p>
 
 </div>
 
@@ -761,7 +761,7 @@ small example that shows how to dump all instructions in a function to the stand
 
 // <i>F is a ptr to a Function instance</i>
 for (inst_iterator i = inst_begin(F), e = inst_end(F); i != e; ++i)
-  std::cerr &lt;&lt; *i &lt;&lt; "\n";
+  llvm::cerr &lt;&lt; *i &lt;&lt; "\n";
 </pre>
 </div>
 
@@ -837,7 +837,7 @@ without actually obtaining it via iteration over some structure:</p>
 void printNextInstruction(Instruction* inst) {
   BasicBlock::iterator it(inst);
   ++it; // <i>After this line, it refers to the instruction after *inst</i>
-  if (it != inst-&gt;getParent()-&gt;end()) std::cerr &lt;&lt; *it &lt;&lt; "\n";
+  if (it != inst-&gt;getParent()-&gt;end()) llvm::cerr &lt;&lt; *it &lt;&lt; "\n";
 }
 </pre>
 </div>
@@ -956,8 +956,8 @@ Function* F = ...;
 
 for (Value::use_iterator i = F-&gt;use_begin(), e = F-&gt;use_end(); i != e; ++i)
   if (Instruction *Inst = dyn_cast&lt;Instruction&gt;(*i)) {
-    std::cerr &lt;&lt; "F is used in instruction:\n";
-    std::cerr &lt;&lt; *Inst &lt;&lt; "\n";
+    llvm::cerr &lt;&lt; "F is used in instruction:\n";
+    llvm::cerr &lt;&lt; *Inst &lt;&lt; "\n";
   }
 </pre>
 </div>

@@ -42,7 +42,6 @@
 #include "llvm/ADT/PostOrderIterator.h"
 #include "llvm/ADT/Statistic.h"
 #include <algorithm>
-#include <iostream>
 using namespace llvm;
 
 namespace {
@@ -336,7 +335,7 @@ bool CEE::TransformRegion(BasicBlock *BB, std::set<BasicBlock*> &VisitedBlocks){
   ComputeReplacements(RI);
 
   // If debugging, print computed region information...
-  DEBUG(RI.print(std::cerr));
+  DEBUG(RI.print(*cerr.stream()));
 
   // Simplify the contents of this block...
   bool Changed = SimplifyBasicBlock(*BB, RI);
@@ -517,11 +516,10 @@ void CEE::ForwardSuccessorTo(TerminatorInst *TI, unsigned SuccNo,
   BasicBlock *OldSucc = TI->getSuccessor(SuccNo);
   BasicBlock *BB = TI->getParent();
 
-  DEBUG(std::cerr << "Forwarding branch in basic block %" << BB->getName()
-        << " from block %" << OldSucc->getName() << " to block %"
-        << Dest->getName() << "\n");
-
-  DEBUG(std::cerr << "Before forwarding: " << *BB->getParent());
+  DOUT << "Forwarding branch in basic block %" << BB->getName()
+       << " from block %" << OldSucc->getName() << " to block %"
+       << Dest->getName() << "\n"
+       << "Before forwarding: " << *BB->getParent();
 
   // Because we know that there cannot be critical edges in the flow graph, and
   // that OldSucc has multiple outgoing edges, this means that Dest cannot have
@@ -628,7 +626,7 @@ void CEE::ForwardSuccessorTo(TerminatorInst *TI, unsigned SuccNo,
   // FIXME: This is much worse than it really should be!
   //EF->recalculate();
 
-  DEBUG(std::cerr << "After forwarding: " << *BB->getParent());
+  DOUT << "After forwarding: " << *BB->getParent();
 }
 
 /// ReplaceUsesOfValueInRegion - This method replaces all uses of Orig with uses
@@ -921,9 +919,9 @@ void CEE::PropagateRelation(Instruction::BinaryOps Opcode, Value *Op0,
   //
   if (Op1R.contradicts(Opcode, VI)) {
     Op1R.contradicts(Opcode, VI);
-    std::cerr << "Contradiction found for opcode: "
-              << Instruction::getOpcodeName(Opcode) << "\n";
-    Op1R.print(std::cerr);
+    cerr << "Contradiction found for opcode: "
+         << Instruction::getOpcodeName(Opcode) << "\n";
+    Op1R.print(*cerr.stream());
     return;
   }
 
@@ -1033,8 +1031,7 @@ bool CEE::SimplifyBasicBlock(BasicBlock &BB, const RegionInfo &RI) {
       // Try to simplify a setcc instruction based on inherited information
       Relation::KnownResult Result = getSetCCResult(SCI, RI);
       if (Result != Relation::Unknown) {
-        DEBUG(std::cerr << "Replacing setcc with " << Result
-                        << " constant: " << *SCI);
+        DOUT << "Replacing setcc with " << Result << " constant: " << *SCI;
 
         SCI->replaceAllUsesWith(ConstantBool::get((bool)Result));
         // The instruction is now dead, remove it from the program.
@@ -1061,8 +1058,8 @@ bool CEE::SimplifyInstruction(Instruction *I, const RegionInfo &RI) {
       if (Value *Repl = VI->getReplacement()) {
         // If we know if a replacement with lower rank than Op0, make the
         // replacement now.
-        DEBUG(std::cerr << "In Inst: " << *I << "  Replacing operand #" << i
-                        << " with " << *Repl << "\n");
+        DOUT << "In Inst: " << *I << "  Replacing operand #" << i
+             << " with " << *Repl << "\n";
         I->setOperand(i, Repl);
         Changed = true;
         ++NumOperandsCann;
@@ -1090,7 +1087,7 @@ Relation::KnownResult CEE::getSetCCResult(SetCondInst *SCI,
     if (isa<Constant>(Op1)) {
       if (Constant *Result = ConstantFoldInstruction(SCI)) {
         // Wow, this is easy, directly eliminate the SetCondInst.
-        DEBUG(std::cerr << "Replacing setcc with constant fold: " << *SCI);
+        DOUT << "Replacing setcc with constant fold: " << *SCI;
         return cast<ConstantBool>(Result)->getValue()
           ? Relation::KnownTrue : Relation::KnownFalse;
       }
@@ -1313,6 +1310,6 @@ void Relation::print(std::ostream &OS) const {
 }
 
 // Don't inline these methods or else we won't be able to call them from GDB!
-void Relation::dump() const { print(std::cerr); }
-void ValueInfo::dump() const { print(std::cerr, 0); }
-void RegionInfo::dump() const { print(std::cerr); }
+void Relation::dump() const { print(*cerr.stream()); }
+void ValueInfo::dump() const { print(*cerr.stream(), 0); }
+void RegionInfo::dump() const { print(*cerr.stream()); }

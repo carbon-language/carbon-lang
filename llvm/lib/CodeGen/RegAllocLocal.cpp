@@ -758,7 +758,7 @@ void RA::AllocateBasicBlock(MachineBasicBlock &MBB) {
   for (unsigned i = MRegisterInfo::FirstVirtualRegister,
            e = MF->getSSARegMap()->getLastVirtReg(); i <= e; ++i)
     if (unsigned PR = Virt2PhysRegMap[i]) {
-      std::cerr << "Register still mapped: " << i << " -> " << PR << "\n";
+      cerr << "Register still mapped: " << i << " -> " << PR << "\n";
       AllOk = false;
     }
   assert(AllOk && "Virtual registers still in phys regs?");

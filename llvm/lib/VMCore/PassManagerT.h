@@ -27,7 +27,6 @@
 #include "llvm/Support/LeakDetector.h"
 #include "llvm/Support/Timer.h"
 #include <algorithm>
-#include <iostream>
 
 namespace llvm {
 
@@ -62,9 +61,9 @@ struct PMDebug {
   static void PerformPassStartupStuff(Pass *P) {
     // If debugging is enabled, print out argument information...
     if (PassDebugging >= Arguments) {
-      std::cerr << "Pass Arguments: ";
+      cerr << "Pass Arguments: ";
       PrintArgumentInformation(P);
-      std::cerr << "\n";
+      cerr << "\n";
 
       // Print the pass execution structure
       if (PassDebugging >= Structure)
@@ -289,8 +288,8 @@ public:
     for (unsigned i = 0, e = ImmutablePasses.size(); i != e; ++i)
       ImmutablePasses[i]->dumpPassStructure(0);
 
-    std::cerr << std::string(Offset*2, ' ') << this->getPMName()
-              << " Pass Manager\n";
+    cerr << std::string(Offset*2, ' ') << this->getPMName()
+         << " Pass Manager\n";
     for (typename std::vector<PassClass*>::iterator
            I = Passes.begin(), E = Passes.end(); I != E; ++I) {
       PassClass *P = *I;
@@ -300,7 +299,7 @@ public:
       for (std::map<Pass*, Pass*>::iterator I = LastUseOf.begin(),
                                             E = LastUseOf.end(); I != E; ++I) {
         if (P == I->second) {
-          std::cerr << "--" << std::string(Offset*2, ' ');
+          cerr << "--" << std::string(Offset*2, ' ');
           I->first->dumpPassStructure(0);
         }
       }
@@ -543,13 +542,13 @@ public:
            E = AU.getRequiredSet().end(); I != E; ++I) {
       Pass *Impl = getAnalysisOrNullUp(*I);
       if (Impl == 0) {
-        std::cerr << "Analysis '" << (*I)->getPassName()
-                  << "' used but not available!";
+        cerr << "Analysis '" << (*I)->getPassName()
+             << "' used but not available!";
         assert(0 && "Analysis used but not available!");
       } else if (PassDebugging == Details) {
         if ((*I)->getPassName() != std::string(Impl->getPassName()))
-          std::cerr << "    Interface '" << (*I)->getPassName()
-                    << "' implemented by '" << Impl->getPassName() << "'\n";
+          cerr << "    Interface '" << (*I)->getPassName()
+               << "' implemented by '" << Impl->getPassName() << "'\n";
       }
       IP->AnalysisImpls.push_back(std::make_pair(*I, Impl));
     }
@@ -632,13 +631,13 @@ private:
          E = AnUsage.getRequiredSet().end(); I != E; ++I) {
       Pass *Impl = getAnalysisOrNullUp(*I);
       if (Impl == 0) {
-        std::cerr << "Analysis '" << (*I)->getPassName()
-                  << "' used but not available!";
+        cerr << "Analysis '" << (*I)->getPassName()
+             << "' used but not available!";
         assert(0 && "Analysis used but not available!");
       } else if (PassDebugging == Details) {
         if ((*I)->getPassName() != std::string(Impl->getPassName()))
-          std::cerr << "    Interface '" << (*I)->getPassName()
-                  << "' implemented by '" << Impl->getPassName() << "'\n";
+          cerr << "    Interface '" << (*I)->getPassName()
+               << "' implemented by '" << Impl->getPassName() << "'\n";
       }
       
       P->AnalysisImpls.push_back(std::make_pair(*I, Impl));

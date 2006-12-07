@@ -27,7 +27,6 @@
 #include "llvm/Support/Compiler.h"
 #include "llvm/ADT/Statistic.h"
 #include <climits>
-#include <iostream>
 #include <queue>
 #include "llvm/Support/CommandLine.h"
 using namespace llvm;
@@ -85,7 +84,7 @@ private:
 
 /// Schedule - Schedule the DAG using list scheduling.
 void ScheduleDAGRRList::Schedule() {
-  DEBUG(std::cerr << "********** List Scheduling **********\n");
+  DOUT << "********** List Scheduling **********\n";
   
   // Build scheduling units.
   BuildSchedUnits();
@@ -107,9 +106,9 @@ void ScheduleDAGRRList::Schedule() {
 
   CommuteNodesToReducePressure();
   
-  DEBUG(std::cerr << "*** Final schedule ***\n");
+  DOUT << "*** Final schedule ***\n";
   DEBUG(dumpSchedule());
-  DEBUG(std::cerr << "\n");
+  DOUT << "\n";
   
   // Emit in scheduled order
   EmitSchedule();
@@ -186,9 +185,9 @@ void ScheduleDAGRRList::ReleasePred(SUnit *PredSU, bool isChain,
   
 #ifndef NDEBUG
   if (PredSU->NumSuccsLeft < 0 || PredSU->NumChainSuccsLeft < 0) {
-    std::cerr << "*** List scheduling failed! ***\n";
+    cerr << "*** List scheduling failed! ***\n";
     PredSU->dump(&DAG);
-    std::cerr << " has been released too many times!\n";
+    cerr << " has been released too many times!\n";
     assert(0);
   }
 #endif
@@ -206,7 +205,7 @@ void ScheduleDAGRRList::ReleasePred(SUnit *PredSU, bool isChain,
 /// count of its predecessors. If a predecessor pending count is zero, add it to
 /// the Available queue.
 void ScheduleDAGRRList::ScheduleNodeBottomUp(SUnit *SU, unsigned CurCycle) {
-  DEBUG(std::cerr << "*** Scheduling [" << CurCycle << "]: ");
+  DOUT << "*** Scheduling [" << CurCycle << "]: ";
   DEBUG(SU->dump(&DAG));
   SU->Cycle = CurCycle;
 
@@ -268,9 +267,9 @@ void ScheduleDAGRRList::ListScheduleBottomUp() {
   for (unsigned i = 0, e = SUnits.size(); i != e; ++i) {
     if (SUnits[i].NumSuccsLeft != 0 || SUnits[i].NumChainSuccsLeft != 0) {
       if (!AnyNotSched)
-        std::cerr << "*** List scheduling failed! ***\n";
+        cerr << "*** List scheduling failed! ***\n";
       SUnits[i].dump(&DAG);
-      std::cerr << "has not been scheduled!\n";
+      cerr << "has not been scheduled!\n";
       AnyNotSched = true;
     }
   }
@@ -299,9 +298,9 @@ void ScheduleDAGRRList::ReleaseSucc(SUnit *SuccSU, bool isChain,
   
 #ifndef NDEBUG
   if (SuccSU->NumPredsLeft < 0 || SuccSU->NumChainPredsLeft < 0) {
-    std::cerr << "*** List scheduling failed! ***\n";
+    cerr << "*** List scheduling failed! ***\n";
     SuccSU->dump(&DAG);
-    std::cerr << " has been released too many times!\n";
+    cerr << " has been released too many times!\n";
     assert(0);
   }
 #endif
@@ -317,7 +316,7 @@ void ScheduleDAGRRList::ReleaseSucc(SUnit *SuccSU, bool isChain,
 /// count of its successors. If a successor pending count is zero, add it to
 /// the Available queue.
 void ScheduleDAGRRList::ScheduleNodeTopDown(SUnit *SU, unsigned CurCycle) {
-  DEBUG(std::cerr << "*** Scheduling [" << CurCycle << "]: ");
+  DOUT << "*** Scheduling [" << CurCycle << "]: ";
   DEBUG(SU->dump(&DAG));
   SU->Cycle = CurCycle;
 
@@ -374,9 +373,9 @@ void ScheduleDAGRRList::ListScheduleTopDown() {
   for (unsigned i = 0, e = SUnits.size(); i != e; ++i) {
     if (!SUnits[i].isScheduled) {
       if (!AnyNotSched)
-        std::cerr << "*** List scheduling failed! ***\n";
+        cerr << "*** List scheduling failed! ***\n";
       SUnits[i].dump(&DAG);
-      std::cerr << "has not been scheduled!\n";
+      cerr << "has not been scheduled!\n";
       AnyNotSched = true;
     }
   }
@@ -707,8 +706,8 @@ void BURegReductionPriorityQueue<SF>::AddPseudoTwoAddrDeps() {
               (!canClobber(SuccSU, DUSU) ||
                (!SU->isCommutable && SuccSU->isCommutable))){
             if (SuccSU->Depth == SU->Depth && !isReachable(SuccSU, SU)) {
-              DEBUG(std::cerr << "Adding an edge from SU # " << SU->NodeNum
-                    << " to SU #" << SuccSU->NodeNum << "\n");
+              DOUT << "Adding an edge from SU # " << SU->NodeNum
+                   << " to SU #" << SuccSU->NodeNum << "\n";
               if (SU->addPred(SuccSU, true))
                 SU->NumChainPredsLeft++;
               if (SuccSU->addSucc(SU, true))

@@ -31,7 +31,6 @@
 #include "llvm/Support/Compiler.h"
 #include "llvm/ADT/Statistic.h"
 #include <climits>
-#include <iostream>
 #include <queue>
 using namespace llvm;
 
@@ -93,7 +92,7 @@ HazardRecognizer::~HazardRecognizer() {}
 
 /// Schedule - Schedule the DAG using list scheduling.
 void ScheduleDAGList::Schedule() {
-  DEBUG(std::cerr << "********** List Scheduling **********\n");
+  DOUT << "********** List Scheduling **********\n";
   
   // Build scheduling units.
   BuildSchedUnits();
@@ -104,9 +103,9 @@ void ScheduleDAGList::Schedule() {
   
   AvailableQueue->releaseState();
   
-  DEBUG(std::cerr << "*** Final schedule ***\n");
+  DOUT << "*** Final schedule ***\n";
   DEBUG(dumpSchedule());
-  DEBUG(std::cerr << "\n");
+  DOUT << "\n";
   
   // Emit in scheduled order
   EmitSchedule();
@@ -155,7 +154,7 @@ void ScheduleDAGList::ReleaseSucc(SUnit *SuccSU, bool isChain) {
 /// count of its successors. If a successor pending count is zero, add it to
 /// the Available queue.
 void ScheduleDAGList::ScheduleNodeTopDown(SUnit *SU, unsigned CurCycle) {
-  DEBUG(std::cerr << "*** Scheduling [" << CurCycle << "]: ");
+  DOUT << "*** Scheduling [" << CurCycle << "]: ";
   DEBUG(SU->dump(&DAG));
   
   Sequence.push_back(SU);
@@ -259,7 +258,7 @@ void ScheduleDAGList::ListScheduleTopDown() {
     } else if (!HasNoopHazards) {
       // Otherwise, we have a pipeline stall, but no other problem, just advance
       // the current cycle and try again.
-      DEBUG(std::cerr << "*** Advancing cycle, no work to do\n");
+      DOUT << "*** Advancing cycle, no work to do\n";
       HazardRec->AdvanceCycle();
       ++NumStalls;
       ++CurCycle;
@@ -267,7 +266,7 @@ void ScheduleDAGList::ListScheduleTopDown() {
       // Otherwise, we have no instructions to issue and we have instructions
       // that will fault if we don't do this right.  This is the case for
       // processors without pipeline interlocks and other cases.
-      DEBUG(std::cerr << "*** Emitting noop\n");
+      DOUT << "*** Emitting noop\n";
       HazardRec->EmitNoop();
       Sequence.push_back(0);   // NULL SUnit* -> noop
       ++NumNoops;
@@ -281,9 +280,9 @@ void ScheduleDAGList::ListScheduleTopDown() {
   for (unsigned i = 0, e = SUnits.size(); i != e; ++i) {
     if (SUnits[i].NumPredsLeft != 0 || SUnits[i].NumChainPredsLeft != 0) {
       if (!AnyNotSched)
-        std::cerr << "*** List scheduling failed! ***\n";
+        cerr << "*** List scheduling failed! ***\n";
       SUnits[i].dump(&DAG);
-      std::cerr << "has not been scheduled!\n";
+      cerr << "has not been scheduled!\n";
       AnyNotSched = true;
     }
   }

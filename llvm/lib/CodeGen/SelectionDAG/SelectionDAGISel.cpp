@@ -44,7 +44,6 @@
 #include "llvm/Support/MathExtras.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/Compiler.h"
-#include <iostream>
 #include <algorithm>
 using namespace llvm;
 
@@ -2614,8 +2613,8 @@ void SelectionDAGLowering::visitInlineAsm(CallInst &I) {
                              true, UsesInputRegister, 
                              OutputRegs, InputRegs);
       if (Regs.Regs.empty()) {
-        std::cerr << "Couldn't allocate output reg for contraint '"
-                  << ConstraintCode << "'!\n";
+        cerr << "Couldn't allocate output reg for contraint '"
+             << ConstraintCode << "'!\n";
         exit(1);
       }
 
@@ -2686,8 +2685,8 @@ void SelectionDAGLowering::visitInlineAsm(CallInst &I) {
         InOperandVal = TLI.isOperandValidForConstraint(InOperandVal,
                                                        ConstraintCode[0], DAG);
         if (!InOperandVal.Val) {
-          std::cerr << "Invalid operand for inline asm constraint '"
-                    << ConstraintCode << "'!\n";
+          cerr << "Invalid operand for inline asm constraint '"
+               << ConstraintCode << "'!\n";
           exit(1);
         }
         
@@ -2826,9 +2825,9 @@ void SelectionDAGLowering::visitFree(FreeInst &I) {
 // basic blocks, and the scheduler passes ownership of it to this method.
 MachineBasicBlock *TargetLowering::InsertAtEndOfBasicBlock(MachineInstr *MI,
                                                        MachineBasicBlock *MBB) {
-  std::cerr << "If a target marks an instruction with "
-               "'usesCustomDAGSchedInserter', it must implement "
-               "TargetLowering::InsertAtEndOfBasicBlock!\n";
+  cerr << "If a target marks an instruction with "
+       << "'usesCustomDAGSchedInserter', it must implement "
+       << "TargetLowering::InsertAtEndOfBasicBlock!\n";
   abort();
   return 0;  
 }
@@ -3757,7 +3756,7 @@ static void SplitEdgeNicely(TerminatorInst *TI, unsigned SuccNum, Pass *P) {
 bool SelectionDAGISel::runOnFunction(Function &Fn) {
   MachineFunction &MF = MachineFunction::construct(&Fn, TLI.getTargetMachine());
   RegMap = MF.getSSARegMap();
-  DEBUG(std::cerr << "\n\n\n=== " << Fn.getName() << "\n");
+  DOUT << "\n\n\n=== " << Fn.getName() << "\n";
 
   // First, split all critical edges.
   //
@@ -4092,14 +4091,14 @@ void SelectionDAGISel::CodeGenAndEmitDAG(SelectionDAG &DAG) {
   // Run the DAG combiner in pre-legalize mode.
   DAG.Combine(false, AA);
   
-  DEBUG(std::cerr << "Lowered selection DAG:\n");
+  DOUT << "Lowered selection DAG:\n";
   DEBUG(DAG.dump());
   
   // Second step, hack on the DAG until it only uses operations and types that
   // the target supports.
   DAG.Legalize();
   
-  DEBUG(std::cerr << "Legalized selection DAG:\n");
+  DOUT << "Legalized selection DAG:\n";
   DEBUG(DAG.dump());
   
   // Run the DAG combiner in post-legalize mode.
@@ -4111,7 +4110,7 @@ void SelectionDAGISel::CodeGenAndEmitDAG(SelectionDAG &DAG) {
   // code to the MachineBasicBlock.
   InstructionSelectBasicBlock(DAG);
   
-  DEBUG(std::cerr << "Selected machine code:\n");
+  DOUT << "Selected machine code:\n";
   DEBUG(BB->dump());
 }  
 
@@ -4353,7 +4352,7 @@ SelectInlineAsmMemoryOperands(std::vector<SDOperand> &Ops, SelectionDAG &DAG) {
       // Otherwise, this is a memory operand.  Ask the target to select it.
       std::vector<SDOperand> SelOps;
       if (SelectInlineAsmMemoryOperand(InOps[i+1], 'm', SelOps, DAG)) {
-        std::cerr << "Could not match memory address.  Inline asm failure!\n";
+        cerr << "Could not match memory address.  Inline asm failure!\n";
         exit(1);
       }
       

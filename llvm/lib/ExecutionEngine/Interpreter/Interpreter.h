@@ -21,7 +21,6 @@
 #include "llvm/Support/CallSite.h"
 #include "llvm/Target/TargetData.h"
 #include "llvm/Support/DataTypes.h"
-#include <iostream>
 
 namespace llvm {
 
@@ -158,7 +157,7 @@ public:
   void visitAShr(ShiftInst &I);
   void visitVAArgInst(VAArgInst &I);
   void visitInstruction(Instruction &I) {
-    std::cerr << I;
+    cerr << I;
     assert(0 && "Instruction not interpretable yet!");
   }
 

@@ -25,9 +25,7 @@
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/Compiler.h"
 #include <algorithm>
-#include <iostream>
 using namespace llvm;
-
 
 namespace {
 
@@ -475,7 +473,7 @@ private:
   
   /// print - Print ordering to specified output stream.
   ///
-  void print(std::ostream &O) const;
+  void print(OStream &O) const;
   
   void dump(const char *tag) const;
   
@@ -487,7 +485,7 @@ private:
 
   /// printNI - Print node info.
   ///
-  void printNI(std::ostream &O, NodeInfo *NI) const;
+  void printNI(OStream &O, NodeInfo *NI) const;
   
   /// printChanges - Hilight changes in order caused by scheduling.
   ///
@@ -638,7 +636,7 @@ void ScheduleDAGSimple::AddToGroup(NodeInfo *D, NodeInfo *U) {
 
 /// print - Print ordering to specified output stream.
 ///
-void ScheduleDAGSimple::print(std::ostream &O) const {
+void ScheduleDAGSimple::print(OStream &O) const {
 #ifndef NDEBUG
   O << "Ordering\n";
   for (unsigned i = 0, N = Ordering.size(); i < N; i++) {
@@ -659,11 +657,11 @@ void ScheduleDAGSimple::print(std::ostream &O) const {
 }
 
 void ScheduleDAGSimple::dump(const char *tag) const {
-  std::cerr << tag; dump();
+  cerr << tag; dump();
 }
 
 void ScheduleDAGSimple::dump() const {
-  print(std::cerr);
+  print(cerr);
 }
 
 
@@ -712,7 +710,7 @@ static bool isFlagUser(SDNode *A) {
 
 /// printNI - Print node info.
 ///
-void ScheduleDAGSimple::printNI(std::ostream &O, NodeInfo *NI) const {
+void ScheduleDAGSimple::printNI(OStream &O, NodeInfo *NI) const {
 #ifndef NDEBUG
   SDNode *Node = NI->Node;
   O << " "
@@ -741,25 +739,25 @@ void ScheduleDAGSimple::printChanges(unsigned Index) const {
   }
   
   if (i < N) {
-    std::cerr << Index << ". New Ordering\n";
+    cerr << Index << ". New Ordering\n";
     
     for (i = 0; i < N; i++) {
       NodeInfo *NI = Ordering[i];
-      std::cerr << "  " << NI->Preorder << ". ";
-      printNI(std::cerr, NI);
-      std::cerr << "\n";
+      cerr << "  " << NI->Preorder << ". ";
+      printNI(cerr, NI);
+      cerr << "\n";
       if (NI->isGroupDominator()) {
         NodeGroup *Group = NI->Group;
         for (NIIterator NII = Group->group_begin(), E = Group->group_end();
              NII != E; NII++) {
-          std::cerr << "          ";
-          printNI(std::cerr, *NII);
-          std::cerr << "\n";
+          cerr << "          ";
+          printNI(cerr, *NII);
+          cerr << "\n";
         }
       }
     }
   } else {
-    std::cerr << Index << ". No Changes\n";
+    cerr << Index << ". No Changes\n";
   }
 #endif
 }

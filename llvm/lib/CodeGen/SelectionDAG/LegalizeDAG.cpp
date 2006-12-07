@@ -24,7 +24,6 @@
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Compiler.h"
 #include "llvm/ADT/SmallVector.h"
-#include <iostream>
 #include <map>
 using namespace llvm;
 
@@ -556,7 +555,7 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
     }
     // Otherwise this is an unhandled builtin node.  splat.
 #ifndef NDEBUG
-    std::cerr << "NODE: "; Node->dump(); std::cerr << "\n";
+    cerr << "NODE: "; Node->dump(); cerr << "\n";
 #endif
     assert(0 && "Do not know how to legalize this operator!");
     abort();
@@ -2975,7 +2974,7 @@ SDOperand SelectionDAGLegalize::PromoteOp(SDOperand Op) {
     assert(0 && "CopyFromReg must be legal!");
   default:
 #ifndef NDEBUG
-    std::cerr << "NODE: "; Node->dump(); std::cerr << "\n";
+    cerr << "NODE: "; Node->dump(); cerr << "\n";
 #endif
     assert(0 && "Do not know how to promote this operator!");
     abort();
@@ -4371,7 +4370,7 @@ void SelectionDAGLegalize::ExpandOp(SDOperand Op, SDOperand &Lo, SDOperand &Hi){
     assert(0 && "CopyFromReg must be legal!");
   default:
 #ifndef NDEBUG
-    std::cerr << "NODE: "; Node->dump(); std::cerr << "\n";
+    cerr << "NODE: "; Node->dump(); cerr << "\n";
 #endif
     assert(0 && "Do not know how to expand this operator!");
     abort();
@@ -5020,7 +5019,7 @@ SDOperand SelectionDAGLegalize::PackVectorOp(SDOperand Op,
   switch (Node->getOpcode()) {
   default: 
 #ifndef NDEBUG
-    Node->dump(); std::cerr << "\n";
+    Node->dump(); cerr << "\n";
 #endif
     assert(0 && "Unknown vector operation in PackVectorOp!");
   case ISD::VADD:

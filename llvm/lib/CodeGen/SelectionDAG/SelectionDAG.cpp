@@ -559,7 +559,7 @@ void SelectionDAG::RemoveNodeFromCSEMaps(SDNode *N) {
   if (!Erased && N->getValueType(N->getNumValues()-1) != MVT::Flag &&
       !N->isTargetOpcode()) {
     N->dump();
-    std::cerr << "\n";
+    cerr << "\n";
     assert(0 && "Node is not in map!");
   }
 #endif
@@ -2860,102 +2860,102 @@ const char *SDNode::getIndexedModeName(ISD::MemIndexedMode AM) {
 
 void SDNode::dump() const { dump(0); }
 void SDNode::dump(const SelectionDAG *G) const {
-  std::cerr << (void*)this << ": ";
+  cerr << (void*)this << ": ";
 
   for (unsigned i = 0, e = getNumValues(); i != e; ++i) {
-    if (i) std::cerr << ",";
+    if (i) cerr << ",";
     if (getValueType(i) == MVT::Other)
-      std::cerr << "ch";
+      cerr << "ch";
     else
-      std::cerr << MVT::getValueTypeString(getValueType(i));
+      cerr << MVT::getValueTypeString(getValueType(i));
   }
-  std::cerr << " = " << getOperationName(G);
+  cerr << " = " << getOperationName(G);
 
-  std::cerr << " ";
+  cerr << " ";
   for (unsigned i = 0, e = getNumOperands(); i != e; ++i) {
-    if (i) std::cerr << ", ";
-    std::cerr << (void*)getOperand(i).Val;
+    if (i) cerr << ", ";
+    cerr << (void*)getOperand(i).Val;
     if (unsigned RN = getOperand(i).ResNo)
-      std::cerr << ":" << RN;
+      cerr << ":" << RN;
   }
 
   if (const ConstantSDNode *CSDN = dyn_cast<ConstantSDNode>(this)) {
-    std::cerr << "<" << CSDN->getValue() << ">";
+    cerr << "<" << CSDN->getValue() << ">";
   } else if (const ConstantFPSDNode *CSDN = dyn_cast<ConstantFPSDNode>(this)) {
-    std::cerr << "<" << CSDN->getValue() << ">";
+    cerr << "<" << CSDN->getValue() << ">";
   } else if (const GlobalAddressSDNode *GADN =
              dyn_cast<GlobalAddressSDNode>(this)) {
     int offset = GADN->getOffset();
-    std::cerr << "<";
+    cerr << "<";
     WriteAsOperand(std::cerr, GADN->getGlobal()) << ">";
     if (offset > 0)
-      std::cerr << " + " << offset;
+      cerr << " + " << offset;
     else
-      std::cerr << " " << offset;
+      cerr << " " << offset;
   } else if (const FrameIndexSDNode *FIDN = dyn_cast<FrameIndexSDNode>(this)) {
-    std::cerr << "<" << FIDN->getIndex() << ">";
+    cerr << "<" << FIDN->getIndex() << ">";
   } else if (const JumpTableSDNode *JTDN = dyn_cast<JumpTableSDNode>(this)) {
-    std::cerr << "<" << JTDN->getIndex() << ">";
+    cerr << "<" << JTDN->getIndex() << ">";
   } else if (const ConstantPoolSDNode *CP = dyn_cast<ConstantPoolSDNode>(this)){
     int offset = CP->getOffset();
     if (CP->isMachineConstantPoolEntry())
-      std::cerr << "<" << *CP->getMachineCPVal() << ">";
+      cerr << "<" << *CP->getMachineCPVal() << ">";
     else
-      std::cerr << "<" << *CP->getConstVal() << ">";
+      cerr << "<" << *CP->getConstVal() << ">";
     if (offset > 0)
-      std::cerr << " + " << offset;
+      cerr << " + " << offset;
     else
-      std::cerr << " " << offset;
+      cerr << " " << offset;
   } else if (const BasicBlockSDNode *BBDN = dyn_cast<BasicBlockSDNode>(this)) {
-    std::cerr << "<";
+    cerr << "<";
     const Value *LBB = (const Value*)BBDN->getBasicBlock()->getBasicBlock();
     if (LBB)
-      std::cerr << LBB->getName() << " ";
-    std::cerr << (const void*)BBDN->getBasicBlock() << ">";
+      cerr << LBB->getName() << " ";
+    cerr << (const void*)BBDN->getBasicBlock() << ">";
   } else if (const RegisterSDNode *R = dyn_cast<RegisterSDNode>(this)) {
     if (G && R->getReg() && MRegisterInfo::isPhysicalRegister(R->getReg())) {
-      std::cerr << " " <<G->getTarget().getRegisterInfo()->getName(R->getReg());
+      cerr << " " <<G->getTarget().getRegisterInfo()->getName(R->getReg());
     } else {
-      std::cerr << " #" << R->getReg();
+      cerr << " #" << R->getReg();
     }
   } else if (const ExternalSymbolSDNode *ES =
              dyn_cast<ExternalSymbolSDNode>(this)) {
-    std::cerr << "'" << ES->getSymbol() << "'";
+    cerr << "'" << ES->getSymbol() << "'";
   } else if (const SrcValueSDNode *M = dyn_cast<SrcValueSDNode>(this)) {
     if (M->getValue())
-      std::cerr << "<" << M->getValue() << ":" << M->getOffset() << ">";
+      cerr << "<" << M->getValue() << ":" << M->getOffset() << ">";
     else
-      std::cerr << "<null:" << M->getOffset() << ">";
+      cerr << "<null:" << M->getOffset() << ">";
   } else if (const VTSDNode *N = dyn_cast<VTSDNode>(this)) {
-    std::cerr << ":" << getValueTypeString(N->getVT());
+    cerr << ":" << getValueTypeString(N->getVT());
   } else if (const LoadSDNode *LD = dyn_cast<LoadSDNode>(this)) {
     bool doExt = true;
     switch (LD->getExtensionType()) {
     default: doExt = false; break;
     case ISD::EXTLOAD:
-      std::cerr << " <anyext ";
+      cerr << " <anyext ";
       break;
     case ISD::SEXTLOAD:
-      std::cerr << " <sext ";
+      cerr << " <sext ";
       break;
     case ISD::ZEXTLOAD:
-      std::cerr << " <zext ";
+      cerr << " <zext ";
       break;
     }
     if (doExt)
-      std::cerr << MVT::getValueTypeString(LD->getLoadedVT()) << ">";
+      cerr << MVT::getValueTypeString(LD->getLoadedVT()) << ">";
 
     const char *AM = getIndexedModeName(LD->getAddressingMode());
     if (AM != "")
-      std::cerr << " " << AM;
+      cerr << " " << AM;
   } else if (const StoreSDNode *ST = dyn_cast<StoreSDNode>(this)) {
     if (ST->isTruncatingStore())
-      std::cerr << " <trunc "
-                << MVT::getValueTypeString(ST->getStoredVT()) << ">";
+      cerr << " <trunc "
+           << MVT::getValueTypeString(ST->getStoredVT()) << ">";
 
     const char *AM = getIndexedModeName(ST->getAddressingMode());
     if (AM != "")
-      std::cerr << " " << AM;
+      cerr << " " << AM;
   }
 }
 
@@ -2964,16 +2964,16 @@ static void DumpNodes(const SDNode *N, unsigned indent, const SelectionDAG *G) {
     if (N->getOperand(i).Val->hasOneUse())
       DumpNodes(N->getOperand(i).Val, indent+2, G);
     else
-      std::cerr << "\n" << std::string(indent+2, ' ')
-                << (void*)N->getOperand(i).Val << ": <multiple use>";
+      cerr << "\n" << std::string(indent+2, ' ')
+           << (void*)N->getOperand(i).Val << ": <multiple use>";
 
 
-  std::cerr << "\n" << std::string(indent, ' ');
+  cerr << "\n" << std::string(indent, ' ');
   N->dump(G);
 }
 
 void SelectionDAG::dump() const {
-  std::cerr << "SelectionDAG has " << AllNodes.size() << " nodes:";
+  cerr << "SelectionDAG has " << AllNodes.size() << " nodes:";
   std::vector<const SDNode*> Nodes;
   for (allnodes_const_iterator I = allnodes_begin(), E = allnodes_end();
        I != E; ++I)
@@ -2988,7 +2988,7 @@ void SelectionDAG::dump() const {
 
   if (getRoot().Val) DumpNodes(getRoot().Val, 2, this);
 
-  std::cerr << "\n\n";
+  cerr << "\n\n";
 }
 
 const Type *ConstantPoolSDNode::getType() const {

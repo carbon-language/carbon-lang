@@ -22,7 +22,6 @@
 #include <algorithm>
 #include <cstdarg>
 #include <cstdlib>
-#include <iostream>
 #include <map>
 using namespace llvm;
 
@@ -83,7 +82,7 @@ Module::~Module() {
 
 // Module::dump() - Allow printing from debugger
 void Module::dump() const {
-  print(std::cerr);
+  print(*cerr.stream());
 }
 
 /// Target endian information...

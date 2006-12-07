@@ -62,13 +62,13 @@ static bool ResolveFunctions(Module &M, std::vector<GlobalValue*> &Globals,
       if (OldFT->getNumParams() > ConcreteFT->getNumParams() &&
           !ConcreteFT->isVarArg())
         if (!Old->use_empty()) {
-          std::cerr << "WARNING: Linking function '" << Old->getName()
-                    << "' is causing arguments to be dropped.\n";
-          std::cerr << "WARNING: Prototype: ";
+          cerr << "WARNING: Linking function '" << Old->getName()
+               << "' is causing arguments to be dropped.\n";
+          cerr << "WARNING: Prototype: ";
           WriteAsOperand(std::cerr, Old);
-          std::cerr << " resolved to ";
+          cerr << " resolved to ";
           WriteAsOperand(std::cerr, Concrete);
-          std::cerr << "\n";
+          cerr << "\n";
         }
 
       // Check to make sure that if there are specified types, that they
@@ -82,14 +82,14 @@ static bool ResolveFunctions(Module &M, std::vector<GlobalValue*> &Globals,
           if (OldFT->getParamType(i) != ConcreteFT->getParamType(i))
             if (OldFT->getParamType(i)->getTypeID() !=
                 ConcreteFT->getParamType(i)->getTypeID()) {
-              std::cerr << "WARNING: Function [" << Old->getName()
-                        << "]: Parameter types conflict for: '";
+              cerr << "WARNING: Function [" << Old->getName()
+                   << "]: Parameter types conflict for: '";
               WriteTypeSymbolic(std::cerr, OldFT, &M);
-              std::cerr << "' (in " 
-                << Old->getParent()->getModuleIdentifier() << ") and '";
+              cerr << "' (in " 
+                   << Old->getParent()->getModuleIdentifier() << ") and '";
               WriteTypeSymbolic(std::cerr, ConcreteFT, &M);
-              std::cerr << "'(in " 
-                << Concrete->getParent()->getModuleIdentifier() << ")\n";
+              cerr << "'(in " 
+                   << Concrete->getParent()->getModuleIdentifier() << ")\n";
               return Changed;
             }
 
@@ -164,8 +164,8 @@ static bool ProcessGlobalsWithSameName(Module &M, TargetData &TD,
 
   for (unsigned i = 0; i != Globals.size(); ) {
     if (isa<Function>(Globals[i]) != isFunction) {
-      std::cerr << "WARNING: Found function and global variable with the "
-                << "same name: '" << Globals[i]->getName() << "'.\n";
+      cerr << "WARNING: Found function and global variable with the "
+           << "same name: '" << Globals[i]->getName() << "'.\n";
       return false;                 // Don't know how to handle this, bail out!
     }
 
@@ -192,9 +192,9 @@ static bool ProcessGlobalsWithSameName(Module &M, TargetData &TD,
       GlobalVariable *GV = cast<GlobalVariable>(Globals[i]);
       if (!GV->isExternal()) {
         if (Concrete) {
-          std::cerr << "WARNING: Two global variables with external linkage"
-                    << " exist with the same name: '" << GV->getName()
-                    << "'!\n";
+          cerr << "WARNING: Two global variables with external linkage"
+               << " exist with the same name: '" << GV->getName()
+               << "'!\n";
           return false;
         }
         Concrete = GV;
@@ -251,11 +251,11 @@ static bool ProcessGlobalsWithSameName(Module &M, TargetData &TD,
     }
 
     if (0 && !DontPrintWarning) {
-      std::cerr << "WARNING: Found global types that are not compatible:\n";
+      cerr << "WARNING: Found global types that are not compatible:\n";
       for (unsigned i = 0; i < Globals.size(); ++i) {
-        std::cerr << "\t";
+        cerr << "\t";
         WriteTypeSymbolic(std::cerr, Globals[i]->getType(), &M);
-        std::cerr << " %" << Globals[i]->getName() << "\n";
+        cerr << " %" << Globals[i]->getName() << "\n";
       }
     }
 

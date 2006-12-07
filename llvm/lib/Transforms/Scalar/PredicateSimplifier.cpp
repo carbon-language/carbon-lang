@@ -88,7 +88,6 @@
 #include "llvm/Transforms/Utils/Local.h"
 #include <algorithm>
 #include <deque>
-#include <iostream>
 #include <sstream>
 #include <map>
 using namespace llvm;
@@ -272,7 +271,7 @@ namespace {
     }
 
     Node *newNode(Value *V) {
-      //DEBUG(std::cerr << "new node: " << *V << "\n");
+      //DOUT << "new node: " << *V << "\n";
       materialize();
       Node *&N = Nodes[V];
       assert(N == 0 && "Node already exists for value.");
@@ -561,7 +560,7 @@ namespace {
     }
 
     void addToWorklist(Instruction *I) {
-      //DEBUG(std::cerr << "addToWorklist: " << *I << "\n");
+      //DOUT << "addToWorklist: " << *I << "\n";
 
       if (!isa<BinaryOperator>(I) && !isa<SelectInst>(I)) return;
 
@@ -574,7 +573,7 @@ namespace {
     }
 
     void addRecursive(Value *V) {
-      //DEBUG(std::cerr << "addRecursive: " << *V << "\n");
+      //DOUT << "addRecursive: " << *V << "\n";
 
       Instruction *I = dyn_cast<Instruction>(V);
       if (I)
@@ -582,7 +581,7 @@ namespace {
       else if (!isa<Argument>(V))
         return;
 
-      //DEBUG(std::cerr << "addRecursive uses...\n");
+      //DOUT << "addRecursive uses...\n";
       for (Value::use_iterator UI = V->use_begin(), UE = V->use_end();
            UI != UE; ++UI) {
         // Use must be either be dominated by Top, or dominate Top.
@@ -594,14 +593,14 @@ namespace {
       }
 
       if (I) {
-        //DEBUG(std::cerr << "addRecursive ops...\n");
+        //DOUT << "addRecursive ops...\n";
         for (User::op_iterator OI = I->op_begin(), OE = I->op_end();
              OI != OE; ++OI) {
           if (Instruction *Inst = dyn_cast<Instruction>(*OI))
             addToWorklist(Inst);
         }
       }
-      //DEBUG(std::cerr << "exit addRecursive (" << *V << ").\n");
+      //DOUT << "exit addRecursive (" << *V << ").\n";
     }
 
   public:
@@ -660,8 +659,7 @@ namespace {
     // you may no longer perform any queries on the InequalityGraph.
 
     bool addEqual(Value *V1, Value *V2) {
-      //DEBUG(std::cerr << "addEqual(" << *V1 << ", "
-      //                               << *V2 << ")\n");
+      //DOUT << "addEqual(" << *V1 << ", " << *V2 << ")\n";
       if (isEqual(V1, V2)) return true;
 
       const Node *cN1 = cIG.getNode(V1), *cN2 = cIG.getNode(V2);
@@ -694,8 +692,8 @@ namespace {
           if (Top != Node_I2 && Node_I2->DominatedBy(Top)) {
             Value *V = V1;
             if (cN1 && compare(V1, cN1->getValue())) V = cN1->getValue();
-            //DEBUG(std::cerr << "Simply removing " << *I2
-            //                << ", replacing with " << *V << "\n");
+            //DOUT << "Simply removing " << *I2
+            //     << ", replacing with " << *V << "\n";
             I2->replaceAllUsesWith(V);
             // leave it dead; it'll get erased later.
             ++NumSimple;
@@ -772,8 +770,7 @@ namespace {
     }
 
     bool addNotEqual(Value *V1, Value *V2) {
-      //DEBUG(std::cerr << "addNotEqual(" << *V1 << ", "
-      //                                  << *V2 << ")\n");
+      //DOUT << "addNotEqual(" << *V1 << ", " << *V2 << ")\n");
       if (isNotEqual(V1, V2)) return true;
 
       // Never permit %x NE true/false.
@@ -837,9 +834,9 @@ namespace {
     }
 
     void solve() {
-      DEBUG(std::cerr << "WorkList entry, size: " << WorkList.size() << "\n");
+      DOUT << "WorkList entry, size: " << WorkList.size() << "\n";
       while (!WorkList.empty()) {
-        DEBUG(std::cerr << "WorkList size: " << WorkList.size() << "\n");
+        DOUT << "WorkList size: " << WorkList.size() << "\n";
 
         Instruction *I = WorkList.front();
         WorkList.pop_front();
@@ -847,8 +844,8 @@ namespace {
         Value *Canonical = cIG.canonicalize(I);
         const Type *Ty = I->getType();
 
-        //DEBUG(std::cerr << "solving: " << *I << "\n");
-        //DEBUG(IG.debug(std::cerr));
+        //DOUT << "solving: " << *I << "\n";
+        //DEBUG(IG.debug(*cerr.stream()));
 
         if (BinaryOperator *BO = dyn_cast<BinaryOperator>(I)) {
           Value *Op0 = cIG.canonicalize(BO->getOperand(0)),
@@ -1135,17 +1132,17 @@ namespace {
 
     // Visits each instruction in the basic block.
     void visitBasicBlock(BasicBlock *BB, InequalityGraph &IG) {
-     DEBUG(std::cerr << "Entering Basic Block: " << BB->getName() << "\n");
-     for (BasicBlock::iterator I = BB->begin(), E = BB->end(); I != E;) {
-       visitInstruction(I++, IG);
+      DOUT << "Entering Basic Block: " << BB->getName() << "\n";
+      for (BasicBlock::iterator I = BB->begin(), E = BB->end(); I != E;) {
+        visitInstruction(I++, IG);
       }
     }
 
     // Tries to simplify each Instruction and add new properties to
     // the PropertySet.
     void visitInstruction(Instruction *I, InequalityGraph &IG) {
-      DEBUG(std::cerr << "Considering instruction " << *I << "\n");
-      DEBUG(IG.debug(std::cerr));
+      DOUT << "Considering instruction " << *I << "\n";
+      DEBUG(IG.debug(*cerr.stream()));
 
       // Sometimes instructions are made dead due to earlier analysis.
       if (isInstructionTriviallyDead(I)) {
@@ -1158,8 +1155,7 @@ namespace {
       if (V != I) {
         modified = true;
         ++NumInstruction;
-        DEBUG(std::cerr << "Removing " << *I << ", replacing with "
-                        << *V << "\n");
+        DOUT << "Removing " << *I << ", replacing with " << *V << "\n";
         IG.remove(I);
         I->replaceAllUsesWith(V);
         I->eraseFromParent();
@@ -1173,16 +1169,16 @@ namespace {
         if (V != Oper) {
           modified = true;
           ++NumVarsReplaced;
-          DEBUG(std::cerr << "Resolving " << *I);
+          DOUT << "Resolving " << *I;
           I->setOperand(i, V);
-          DEBUG(std::cerr << " into " << *I);
+          DOUT << " into " << *I;
         }
       }
 
-      //DEBUG(std::cerr << "push (%" << I->getParent()->getName() << ")\n");
+      //DOUT << "push (%" << I->getParent()->getName() << ")\n";
       Forwards visit(this, IG);
       visit.visit(*I);
-      //DEBUG(std::cerr << "pop (%" << I->getParent()->getName() << ")\n");
+      //DOUT << "pop (%" << I->getParent()->getName() << ")\n";
     }
   };
 
@@ -1190,7 +1186,7 @@ namespace {
     DT = &getAnalysis<DominatorTree>();
     Forest = &getAnalysis<ETForest>();
 
-    DEBUG(std::cerr << "Entering Function: " << F.getName() << "\n");
+    DOUT << "Entering Function: " << F.getName() << "\n";
 
     modified = false;
     WorkList.push_back(State(DT->getRoot(), new InequalityGraph()));
@@ -1236,15 +1232,15 @@ namespace {
       VRPSolver Solver(*DestProperties, PS->Forest, Dest);
 
       if (Dest == TrueDest) {
-        DEBUG(std::cerr << "(" << BB->getName() << ") true set:\n");
+        DOUT << "(" << BB->getName() << ") true set:\n";
         if (!Solver.addEqual(ConstantBool::getTrue(), Condition)) continue;
         Solver.solve();
-        DEBUG(DestProperties->debug(std::cerr));
+        DEBUG(DestProperties->debug(*cerr.stream()));
       } else if (Dest == FalseDest) {
-        DEBUG(std::cerr << "(" << BB->getName() << ") false set:\n");
+        DOUT << "(" << BB->getName() << ") false set:\n";
         if (!Solver.addEqual(ConstantBool::getFalse(), Condition)) continue;
         Solver.solve();
-        DEBUG(DestProperties->debug(std::cerr));
+        DEBUG(DestProperties->debug(*cerr.stream()));
       }
 
       PS->proceedToSuccessor(DestProperties, Dest);

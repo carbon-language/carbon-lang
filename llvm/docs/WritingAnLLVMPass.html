@@ -257,7 +257,7 @@ time.</p>
 
 <div class="doc_code"><pre>
     <b>virtual bool</b> <a href="#runOnFunction">runOnFunction</a>(Function &amp;F) {
-      std::cerr &lt;&lt; "<i>Hello: </i>" &lt;&lt; F.getName() &lt;&lt; "\n";
+      llvm::cerr &lt;&lt; "<i>Hello: </i>" &lt;&lt; F.getName() &lt;&lt; "\n";
       <b>return false</b>;
     }
   };  <i>// end of struct Hello</i>
@@ -289,7 +289,7 @@ argument "<tt>hello</tt>", and a name "<tt>Hello World Pass</tt>".</p>
 <b>namespace</b> {
   <b>struct Hello</b> : <b>public</b> <a href="#FunctionPass">FunctionPass</a> {
     <b>virtual bool</b> <a href="#runOnFunction">runOnFunction</a>(Function &amp;F) {
-      std::cerr &lt;&lt; "<i>Hello: </i>" &lt;&lt; F.getName() &lt;&lt; "\n";
+      llvm::cerr &lt;&lt; "<i>Hello: </i>" &lt;&lt; F.getName() &lt;&lt; "\n";
       <b>return false</b>;
     }
   };
@@ -863,7 +863,7 @@ implement the virtual <tt>print</tt> method:</p>
 <div class="doc_text">
 
 <div class="doc_code"><pre>
-  <b>virtual void</b> print(std::ostream &amp;O, <b>const</b> Module *M) <b>const</b>;
+  <b>virtual void</b> print(llvm::OStream &amp;O, <b>const</b> Module *M) <b>const</b>;
 </pre></div>
 
 <p>The <tt>print</tt> method must be implemented by "analyses" in order to print
@@ -871,7 +871,7 @@ a human readable version of the analysis results.  This is useful for debugging
 an analysis itself, as well as for other people to figure out how an analysis
 works.  Use the <tt>opt -analyze</tt> argument to invoke this method.</p>
 
-<p>The <tt>ostream</tt> parameter specifies the stream to write the results on,
+<p>The <tt>llvm::OStream</tt> parameter specifies the stream to write the results on,
 and the <tt>Module</tt> parameter gives a pointer to the top level module of the
 program that has been analyzed.  Note however that this pointer may be null in
 certain circumstances (such as calling the <tt>Pass::dump()</tt> from a

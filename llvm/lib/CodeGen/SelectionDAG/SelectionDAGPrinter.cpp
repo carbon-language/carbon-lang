@@ -24,7 +24,6 @@
 #include "llvm/Config/config.h"
 #include <fstream>
 #include <sstream>
-#include <iostream>
 using namespace llvm;
 
 namespace llvm {
@@ -185,8 +184,8 @@ void SelectionDAG::viewGraph() {
 #ifndef NDEBUG
   ViewGraph(this, "dag." + getMachineFunction().getFunction()->getName());
 #else
-  std::cerr << "SelectionDAG::viewGraph is only available in debug builds on "
-            << "systems with Graphviz or gv!\n";
+  cerr << "SelectionDAG::viewGraph is only available in debug builds on "
+       << "systems with Graphviz or gv!\n";
 #endif  // NDEBUG
 }
 
@@ -197,8 +196,8 @@ void SelectionDAG::clearGraphAttrs() {
 #ifndef NDEBUG
   NodeGraphAttrs.clear();
 #else
-  std::cerr << "SelectionDAG::clearGraphAttrs is only available in debug builds"
-            << " on systems with Graphviz or gv!\n";
+  cerr << "SelectionDAG::clearGraphAttrs is only available in debug builds"
+       << " on systems with Graphviz or gv!\n";
 #endif
 }
 
@@ -209,8 +208,8 @@ void SelectionDAG::setGraphAttrs(const SDNode *N, const char *Attrs) {
 #ifndef NDEBUG
   NodeGraphAttrs[N] = Attrs;
 #else
-  std::cerr << "SelectionDAG::setGraphAttrs is only available in debug builds"
-            << " on systems with Graphviz or gv!\n";
+  cerr << "SelectionDAG::setGraphAttrs is only available in debug builds"
+       << " on systems with Graphviz or gv!\n";
 #endif
 }
 
@@ -227,8 +226,8 @@ const std::string SelectionDAG::getGraphAttrs(const SDNode *N) const {
   else
     return "";
 #else
-  std::cerr << "SelectionDAG::getGraphAttrs is only available in debug builds"
-            << " on systems with Graphviz or gv!\n";
+  cerr << "SelectionDAG::getGraphAttrs is only available in debug builds"
+       << " on systems with Graphviz or gv!\n";
   return std::string("");
 #endif
 }
@@ -239,8 +238,8 @@ void SelectionDAG::setGraphColor(const SDNode *N, const char *Color) {
 #ifndef NDEBUG
   NodeGraphAttrs[N] = std::string("color=") + Color;
 #else
-  std::cerr << "SelectionDAG::setGraphColor is only available in debug builds"
-            << " on systems with Graphviz or gv!\n";
+  cerr << "SelectionDAG::setGraphColor is only available in debug builds"
+       << " on systems with Graphviz or gv!\n";
 #endif
 }
 

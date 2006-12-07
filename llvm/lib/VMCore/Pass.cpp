@@ -20,7 +20,6 @@
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/Support/ManagedStatic.h"
 #include "llvm/Support/TypeInfo.h"
-#include <iostream>
 #include <set>
 using namespace llvm;
 
@@ -68,7 +67,7 @@ bool FunctionPassManager::doInitialization() {
 bool FunctionPassManager::run(Function &F) {
   std::string errstr;
   if (MP->materializeFunction(&F, &errstr)) {
-    std::cerr << "Error reading bytecode file: " << errstr << "\n";
+    cerr << "Error reading bytecode file: " << errstr << "\n";
     abort();
   }
   return PM->runOnFunction(F);
@@ -114,49 +113,49 @@ void PMDebug::PrintArgumentInformation(const Pass *P) {
     // Print out arguments for registered passes that are _optimizations_
     if (const PassInfo *PI = P->getPassInfo())
       if (!PI->isAnalysisGroup())
-        std::cerr << " -" << PI->getPassArgument();
+        cerr << " -" << PI->getPassArgument();
   }
 }
 
 void PMDebug::PrintPassInformation(unsigned Depth, const char *Action,
                                    Pass *P, Module *M) {
   if (PassDebugging >= Executions) {
-    std::cerr << (void*)P << std::string(Depth*2+1, ' ') << Action << " '"
-              << P->getPassName();
-    if (M) std::cerr << "' on Module '" << M->getModuleIdentifier() << "'\n";
-    std::cerr << "'...\n";
+    cerr << (void*)P << std::string(Depth*2+1, ' ') << Action << " '"
+         << P->getPassName();
+    if (M) cerr << "' on Module '" << M->getModuleIdentifier() << "'\n";
+    cerr << "'...\n";
   }
 }
 
 void PMDebug::PrintPassInformation(unsigned Depth, const char *Action,
                                    Pass *P, Function *F) {
   if (PassDebugging >= Executions) {
-    std::cerr << (void*)P << std::string(Depth*2+1, ' ') << Action << " '"
-              << P->getPassName();
-    if (F) std::cerr << "' on Function '" << F->getName();
-    std::cerr << "'...\n";
+    cerr << (void*)P << std::string(Depth*2+1, ' ') << Action << " '"
+         << P->getPassName();
+    if (F) cerr << "' on Function '" << F->getName();
+    cerr << "'...\n";
   }
 }
 
 void PMDebug::PrintPassInformation(unsigned Depth, const char *Action,
                                    Pass *P, BasicBlock *BB) {
   if (PassDebugging >= Executions) {
-    std::cerr << (void*)P << std::string(Depth*2+1, ' ') << Action << " '"
-              << P->getPassName();
-    if (BB) std::cerr << "' on BasicBlock '" << BB->getName();
-    std::cerr << "'...\n";
+    cerr << (void*)P << std::string(Depth*2+1, ' ') << Action << " '"
+         << P->getPassName();
+    if (BB) cerr << "' on BasicBlock '" << BB->getName();
+    cerr << "'...\n";
   }
 }
 
 void PMDebug::PrintAnalysisSetInfo(unsigned Depth, const char *Msg,
                                    Pass *P, const std::vector<AnalysisID> &Set){
   if (PassDebugging >= Details && !Set.empty()) {
-    std::cerr << (void*)P << std::string(Depth*2+3, ' ') << Msg << " Analyses:";
+    cerr << (void*)P << std::string(Depth*2+3, ' ') << Msg << " Analyses:";
     for (unsigned i = 0; i != Set.size(); ++i) {
-      if (i) std::cerr << ",";
-      std::cerr << " " << Set[i]->getPassName();
+      if (i) cerr << ",";
+      cerr << " " << Set[i]->getPassName();
     }
-    std::cerr << "\n";
+    cerr << "\n";
   }
 }
 
@@ -174,7 +173,7 @@ bool Pass::mustPreserveAnalysisID(const PassInfo *AnalysisID) const {
 
 // dumpPassStructure - Implement the -debug-passes=Structure option
 void Pass::dumpPassStructure(unsigned Offset) {
-  std::cerr << std::string(Offset*2, ' ') << getPassName() << "\n";
+  cerr << std::string(Offset*2, ' ') << getPassName() << "\n";
 }
 
 // getPassName - Use C++ RTTI to get a SOMEWHAT intelligible name for the pass.
@@ -193,9 +192,9 @@ void Pass::print(std::ostream &O,const Module*) const {
   O << "Pass::print not implemented for pass: '" << getPassName() << "'!\n";
 }
 
-// dump - call print(std::cerr);
+// dump - call print(cerr);
 void Pass::dump() const {
-  print(std::cerr, 0);
+  print(*cerr.stream(), 0);
 }
 
 //===----------------------------------------------------------------------===//

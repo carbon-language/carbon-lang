@@ -30,7 +30,6 @@
 #include "llvm/ADT/Statistic.h"
 #include "llvm/System/Memory.h"
 #include <algorithm>
-#include <iostream>
 using namespace llvm;
 
 namespace {
@@ -410,7 +409,7 @@ unsigned char *JITMemoryManager::allocateStub(unsigned StubSize,
                                 ~(intptr_t)(Alignment-1));
   if (CurStubPtr < StubBase) {
     // FIXME: allocate a new block
-    std::cerr << "JIT ran out of memory for function stubs!\n";
+    cerr << "JIT ran out of memory for function stubs!\n";
     abort();
   }
   return CurStubPtr;
@@ -422,8 +421,8 @@ sys::MemoryBlock JITMemoryManager::getNewMemoryBlock(unsigned size) {
   std::string ErrMsg;
   sys::MemoryBlock B = sys::Memory::AllocateRWX(size, BOld, &ErrMsg);
   if (B.base() == 0) {
-    std::cerr << "Allocation failed when allocating new memory in the JIT\n";
-    std::cerr << ErrMsg << "\n";
+    cerr << "Allocation failed when allocating new memory in the JIT\n";
+    cerr << ErrMsg << "\n";
     abort();
   }
   Blocks.push_back(B);
@@ -562,8 +561,8 @@ void *JITResolver::getFunctionStub(Function *F) {
   // Invalidate the icache if necessary.
   synchronizeICache(Stub, MCE.getCurrentPCValue()-(intptr_t)Stub);
 
-  DEBUG(std::cerr << "JIT: Stub emitted at [" << Stub << "] for function '"
-                  << F->getName() << "'\n");
+  DOUT << "JIT: Stub emitted at [" << Stub << "] for function '"
+       << F->getName() << "'\n";
 
   // Finally, keep track of the stub-to-Function mapping so that the
   // JITCompilerFn knows which function to compile!
@@ -583,8 +582,8 @@ void *JITResolver::getExternalFunctionStub(void *FnAddr) {
   // Invalidate the icache if necessary.
   synchronizeICache(Stub, MCE.getCurrentPCValue()-(intptr_t)Stub);
 
-  DEBUG(std::cerr << "JIT: Stub emitted at [" << Stub
-        << "] for external function at '" << FnAddr << "'\n");
+  DOUT << "JIT: Stub emitted at [" << Stub
+       << "] for external function at '" << FnAddr << "'\n";
   return Stub;
 }
 
@@ -593,8 +592,8 @@ unsigned JITResolver::getGOTIndexForAddr(void* addr) {
   if (!idx) {
     idx = ++nextGOTIndex;
     revGOTMap[addr] = idx;
-    DEBUG(std::cerr << "Adding GOT entry " << idx
-          << " for addr " << addr << "\n");
+    DOUT << "Adding GOT entry " << idx
+         << " for addr " << addr << "\n";
     //    ((void**)MemMgr.getGOTBase())[idx] = addr;
   }
   return idx;
@@ -618,8 +617,8 @@ void *JITResolver::JITCompilerFn(void *Stub) {
 
   // If disabled, emit a useful error message and abort.
   if (TheJIT->isLazyCompilationDisabled()) {
-    std::cerr << "LLVM JIT requested to do lazy compilation of function '"
-              << F->getName() << "' when lazy compiles are disabled!\n";
+    cerr << "LLVM JIT requested to do lazy compilation of function '"
+         << F->getName() << "' when lazy compiles are disabled!\n";
     abort();
   }
   
@@ -630,9 +629,9 @@ void *JITResolver::JITCompilerFn(void *Stub) {
   // needs to call.
   //JR.state.getStubToFunctionMap(locked).erase(I);
 
-  DEBUG(std::cerr << "JIT: Lazily resolving function '" << F->getName()
-                  << "' In stub ptr = " << Stub << " actual ptr = "
-                  << I->first << "\n");
+  DOUT << "JIT: Lazily resolving function '" << F->getName()
+       << "' In stub ptr = " << Stub << " actual ptr = "
+       << I->first << "\n";
 
   void *Result = TheJIT->getPointerToFunction(F);
 
@@ -693,7 +692,7 @@ namespace {
 public:
     JITEmitter(JIT &jit) : MemMgr(jit.getJITInfo().needsGOT()) {
       TheJIT = &jit;
-      DEBUG(if (MemMgr.isManagingGOT()) std::cerr << "JIT is managing a GOT\n");
+      if (MemMgr.isManagingGOT()) DOUT << "JIT is managing a GOT\n";
     }
 
     virtual void startFunction(MachineFunction &F);
@@ -788,7 +787,7 @@ void JITEmitter::startFunction(MachineFunction &F) {
 bool JITEmitter::finishFunction(MachineFunction &F) {
   if (CurBufferPtr == BufferEnd) {
     // FIXME: Allocate more space, then try again.
-    std::cerr << "JIT: Ran out of space for generated machine code!\n";
+    cerr << "JIT: Ran out of space for generated machine code!\n";
     abort();
   }
   
@@ -837,9 +836,9 @@ bool JITEmitter::finishFunction(MachineFunction &F) {
         unsigned idx = getJITResolver(this).getGOTIndexForAddr(ResultPtr);
         MR.setGOTIndex(idx);
         if (((void**)MemMgr.getGOTBase())[idx] != ResultPtr) {
-          DEBUG(std::cerr << "GOT was out of date for " << ResultPtr
-                << " pointing at " << ((void**)MemMgr.getGOTBase())[idx]
-                << "\n");
+          DOUT << "GOT was out of date for " << ResultPtr
+               << " pointing at " << ((void**)MemMgr.getGOTBase())[idx]
+               << "\n";
           ((void**)MemMgr.getGOTBase())[idx] = ResultPtr;
         }
       }
@@ -853,8 +852,8 @@ bool JITEmitter::finishFunction(MachineFunction &F) {
   if(MemMgr.isManagingGOT()) {
     unsigned idx = getJITResolver(this).getGOTIndexForAddr((void*)BufferBegin);
     if (((void**)MemMgr.getGOTBase())[idx] != (void*)BufferBegin) {
-      DEBUG(std::cerr << "GOT was out of date for " << (void*)BufferBegin
-            << " pointing at " << ((void**)MemMgr.getGOTBase())[idx] << "\n");
+      DOUT << "GOT was out of date for " << (void*)BufferBegin
+           << " pointing at " << ((void**)MemMgr.getGOTBase())[idx] << "\n";
       ((void**)MemMgr.getGOTBase())[idx] = (void*)BufferBegin;
     }
   }
@@ -862,10 +861,10 @@ bool JITEmitter::finishFunction(MachineFunction &F) {
   // Invalidate the icache if necessary.
   synchronizeICache(FnStart, FnEnd-FnStart);
 
-  DEBUG(std::cerr << "JIT: Finished CodeGen of [" << (void*)FnStart
-                  << "] Function: " << F.getFunction()->getName()
-                  << ": " << (FnEnd-FnStart) << " bytes of text, "
-                  << Relocations.size() << " relocations\n");
+  DOUT << "JIT: Finished CodeGen of [" << (void*)FnStart
+       << "] Function: " << F.getFunction()->getName()
+       << ": " << (FnEnd-FnStart) << " bytes of text, "
+       << Relocations.size() << " relocations\n";
   Relocations.clear();
   return false;
 }
@@ -890,8 +889,8 @@ void JITEmitter::emitConstantPool(MachineConstantPool *MCP) {
     void *CAddr = (char*)ConstantPoolBase+Constants[i].Offset;
     if (Constants[i].isMachineConstantPoolEntry()) {
       // FIXME: add support to lower machine constant pool values into bytes!
-      std::cerr << "Initialize memory with machine specific constant pool entry"
-                << " has not been implemented!\n";
+      cerr << "Initialize memory with machine specific constant pool entry"
+           << " has not been implemented!\n";
       abort();
     }
     TheJIT->InitializeMemory(Constants[i].Val.ConstVal, CAddr);

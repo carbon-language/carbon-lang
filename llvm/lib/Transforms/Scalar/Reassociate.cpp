@@ -33,7 +33,6 @@
 #include "llvm/ADT/PostOrderIterator.h"
 #include "llvm/ADT/Statistic.h"
 #include <algorithm>
-#include <iostream>
 using namespace llvm;
 
 namespace {
@@ -57,10 +56,10 @@ namespace {
 ///
 static void PrintOps(Instruction *I, const std::vector<ValueEntry> &Ops) {
   Module *M = I->getParent()->getParent()->getParent();
-  std::cerr << Instruction::getOpcodeName(I->getOpcode()) << " "
+  cerr << Instruction::getOpcodeName(I->getOpcode()) << " "
   << *Ops[0].Op->getType();
   for (unsigned i = 0, e = Ops.size(); i != e; ++i)
-    WriteAsOperand(std::cerr << " ", Ops[i].Op, false, M)
+    WriteAsOperand(*cerr.stream() << " ", Ops[i].Op, false, M)
       << "," << Ops[i].Rank;
 }
   
@@ -169,8 +168,8 @@ unsigned Reassociate::getRank(Value *V) {
       (!BinaryOperator::isNot(I) && !BinaryOperator::isNeg(I)))
     ++Rank;
 
-  //DEBUG(std::cerr << "Calculated Rank[" << V->getName() << "] = "
-  //<< Rank << "\n");
+  //DOUT << "Calculated Rank[" << V->getName() << "] = "
+  //     << Rank << "\n";
 
   return CachedRank = Rank;
 }
@@ -212,7 +211,7 @@ void Reassociate::LinearizeExpr(BinaryOperator *I) {
          isReassociableOp(RHS, I->getOpcode()) &&
          "Not an expression that needs linearization?");
 
-  DEBUG(std::cerr << "Linear" << *LHS << *RHS << *I);
+  DOUT << "Linear" << *LHS << *RHS << *I;
 
   // Move the RHS instruction to live immediately before I, avoiding breaking
   // dominator properties.
@@ -225,7 +224,7 @@ void Reassociate::LinearizeExpr(BinaryOperator *I) {
 
   ++NumLinear;
   MadeChange = true;
-  DEBUG(std::cerr << "Linearized: " << *I);
+  DOUT << "Linearized: " << *I;
 
   // If D is part of this expression tree, tail recurse.
   if (isReassociableOp(I->getOperand(1), I->getOpcode()))
@@ -320,10 +319,10 @@ void Reassociate::RewriteExprTree(BinaryOperator *I,
     if (I->getOperand(0) != Ops[i].Op ||
         I->getOperand(1) != Ops[i+1].Op) {
       Value *OldLHS = I->getOperand(0);
-      DEBUG(std::cerr << "RA: " << *I);
+      DOUT << "RA: " << *I;
       I->setOperand(0, Ops[i].Op);
       I->setOperand(1, Ops[i+1].Op);
-      DEBUG(std::cerr << "TO: " << *I);
+      DOUT << "TO: " << *I;
       MadeChange = true;
       ++NumChanged;
       
@@ -336,9 +335,9 @@ void Reassociate::RewriteExprTree(BinaryOperator *I,
   assert(i+2 < Ops.size() && "Ops index out of range!");
 
   if (I->getOperand(1) != Ops[i].Op) {
-    DEBUG(std::cerr << "RA: " << *I);
+    DOUT << "RA: " << *I;
     I->setOperand(1, Ops[i].Op);
-    DEBUG(std::cerr << "TO: " << *I);
+    DOUT << "TO: " << *I;
     MadeChange = true;
     ++NumChanged;
   }
@@ -419,7 +418,7 @@ static Instruction *BreakUpSubtract(Instruction *Sub) {
   Sub->replaceAllUsesWith(New);
   Sub->eraseFromParent();
 
-  DEBUG(std::cerr << "Negated: " << *New);
+  DOUT << "Negated: " << *New;
   return New;
 }
 
@@ -693,8 +692,7 @@ Value *Reassociate::OptimizeExpression(BinaryOperator *I,
 
     // If any factor occurred more than one time, we can pull it out.
     if (MaxOcc > 1) {
-      DEBUG(std::cerr << "\nFACTORING [" << MaxOcc << "]: "
-                      << *MaxOccVal << "\n");
+      DOUT << "\nFACTORING [" << MaxOcc << "]: " << *MaxOccVal << "\n";
       
       // Create a new instruction that uses the MaxOccVal twice.  If we don't do
       // this, we could otherwise run into situations where removing a factor
@@ -807,8 +805,7 @@ void Reassociate::ReassociateExpression(BinaryOperator *I) {
   std::vector<ValueEntry> Ops;
   LinearizeExprTree(I, Ops);
   
-  DEBUG(std::cerr << "RAIn:\t"; PrintOps(I, Ops);
-        std::cerr << "\n");
+  DOUT << "RAIn:\t"; DEBUG(PrintOps(I, Ops)); DOUT << "\n";
   
   // Now that we have linearized the tree to a list and have gathered all of
   // the operands and their ranks, sort the operands by their rank.  Use a
@@ -823,7 +820,7 @@ void Reassociate::ReassociateExpression(BinaryOperator *I) {
   if (Value *V = OptimizeExpression(I, Ops)) {
     // This expression tree simplified to something that isn't a tree,
     // eliminate it.
-    DEBUG(std::cerr << "Reassoc to scalar: " << *V << "\n");
+    DOUT << "Reassoc to scalar: " << *V << "\n";
     I->replaceAllUsesWith(V);
     RemoveDeadBinaryOp(I);
     return;
@@ -841,8 +838,7 @@ void Reassociate::ReassociateExpression(BinaryOperator *I) {
     Ops.pop_back();
   }
   
-  DEBUG(std::cerr << "RAOut:\t"; PrintOps(I, Ops);
-        std::cerr << "\n");
+  DOUT << "RAOut:\t"; DEBUG(PrintOps(I, Ops)); DOUT << "\n";
   
   if (Ops.size() == 1) {
     // This expression tree simplified to something that isn't a tree,

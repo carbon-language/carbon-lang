@@ -38,8 +38,6 @@
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/CommandLine.h"
 #include <algorithm>
-#include <iostream>
-#include <algorithm>
 using namespace llvm;
 
 namespace {
@@ -101,9 +99,9 @@ namespace {
                         bool AddTo = true) {
       assert(N->getNumValues() == NumTo && "Broken CombineTo call!");
       ++NodesCombined;
-      DEBUG(std::cerr << "\nReplacing.1 "; N->dump();
-            std::cerr << "\nWith: "; To[0].Val->dump(&DAG);
-            std::cerr << " and " << NumTo-1 << " other values\n");
+      DOUT << "\nReplacing.1 "; DEBUG(N->dump());
+      DOUT << "\nWith: "; DEBUG(To[0].Val->dump(&DAG));
+      DOUT << " and " << NumTo-1 << " other values\n";
       std::vector<SDNode*> NowDead;
       DAG.ReplaceAllUsesWith(N, To, &NowDead);
       
@@ -152,9 +150,9 @@ namespace {
       
       // Replace the old value with the new one.
       ++NodesCombined;
-      DEBUG(std::cerr << "\nReplacing.2 "; TLO.Old.Val->dump();
-            std::cerr << "\nWith: "; TLO.New.Val->dump(&DAG);
-            std::cerr << '\n');
+      DOUT << "\nReplacing.2 "; DEBUG(TLO.Old.Val->dump());
+      DOUT << "\nWith: "; DEBUG(TLO.New.Val->dump(&DAG));
+      DOUT << '\n';
 
       std::vector<SDNode*> NowDead;
       DAG.ReplaceAllUsesOfValueWith(TLO.Old, TLO.New, NowDead);
@@ -455,9 +453,9 @@ void DAGCombiner::Run(bool RunningAfterLegalize) {
                RV.Val->getOpcode() != ISD::DELETED_NODE &&
                "Node was deleted but visit returned new node!");
 
-        DEBUG(std::cerr << "\nReplacing.3 "; N->dump();
-              std::cerr << "\nWith: "; RV.Val->dump(&DAG);
-              std::cerr << '\n');
+        DOUT << "\nReplacing.3 "; DEBUG(N->dump());
+        DOUT << "\nWith: "; DEBUG(RV.Val->dump(&DAG));
+        DOUT << '\n';
         std::vector<SDNode*> NowDead;
         if (N->getNumValues() == RV.Val->getNumValues())
           DAG.ReplaceAllUsesWith(N, RV.Val, &NowDead);
@@ -2801,9 +2799,9 @@ bool DAGCombiner::CombineToPreIndexedLoadStore(SDNode *N) {
     Result = DAG.getIndexedStore(SDOperand(N,0), BasePtr, Offset, AM);
   ++PreIndexedNodes;
   ++NodesCombined;
-  DEBUG(std::cerr << "\nReplacing.4 "; N->dump();
-        std::cerr << "\nWith: "; Result.Val->dump(&DAG);
-        std::cerr << '\n');
+  DOUT << "\nReplacing.4 "; DEBUG(N->dump());
+  DOUT << "\nWith: "; DEBUG(Result.Val->dump(&DAG));
+  DOUT << '\n';
   std::vector<SDNode*> NowDead;
   if (isLoad) {
     DAG.ReplaceAllUsesOfValueWith(SDOperand(N, 0), Result.getValue(0),
@@ -2924,9 +2922,9 @@ bool DAGCombiner::CombineToPostIndexedLoadStore(SDNode *N) {
           : DAG.getIndexedStore(SDOperand(N,0), BasePtr, Offset, AM);
         ++PostIndexedNodes;
         ++NodesCombined;
-        DEBUG(std::cerr << "\nReplacing.5 "; N->dump();
-              std::cerr << "\nWith: "; Result.Val->dump(&DAG);
-              std::cerr << '\n');
+        DOUT << "\nReplacing.5 "; DEBUG(N->dump());
+        DOUT << "\nWith: "; DEBUG(Result.Val->dump(&DAG));
+        DOUT << '\n';
         std::vector<SDNode*> NowDead;
         if (isLoad) {
           DAG.ReplaceAllUsesOfValueWith(SDOperand(N, 0), Result.getValue(0),
