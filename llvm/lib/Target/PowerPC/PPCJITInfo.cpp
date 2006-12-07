@@ -30,7 +30,7 @@ static TargetJITInfo::JITCompilerFn JITCompilerFunction;
   ((25 << 26) | ((RS) << 21) | ((RD) << 16) | ((UIMM16) & 65535))
 #define BUILD_RLDICR(RD,RS,SH,ME) \
   ((30 << 26) | ((RS) << 21) | ((RD) << 16) | (((SH) & 31) << 11) | \
-   (((ME) & 63) << 6) | (1 << 3) | (((SH) >> 5) & 1))
+   (((ME) & 63) << 6) | (1 << 2) | ((((SH) >> 5) & 1) << 1))
 #define BUILD_MTSPR(RS,SPR)      \
   ((31 << 26) | ((RS) << 21) | ((SPR) << 16) | (467 << 1))
 #define BUILD_BCCTRx(BO,BI,LINK) \
