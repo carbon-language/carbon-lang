@@ -3755,7 +3755,10 @@ SDOperand DAGCombiner::SimplifySelectCC(SDOperand N0, SDOperand N1,
     // cast from setcc result type to select result type
     if (AfterLegalize) {
       SCC  = DAG.getSetCC(TLI.getSetCCResultTy(), N0, N1, CC);
-      Temp = DAG.getZeroExtendInReg(SCC, N2.getValueType());
+      if (N2.getValueType() < SCC.getValueType())
+        Temp = DAG.getZeroExtendInReg(SCC, N2.getValueType());
+      else
+        Temp = DAG.getNode(ISD::ZERO_EXTEND, N2.getValueType(), SCC);
     } else {
       SCC  = DAG.getSetCC(MVT::i1, N0, N1, CC);
       Temp = DAG.getNode(ISD::ZERO_EXTEND, N2.getValueType(), SCC);
