@@ -209,7 +209,7 @@ class PMDataManager {
 
 public:
 
-  PMDataManager() : TPM(NULL) {
+  PMDataManager(int D) : TPM(NULL), Depth(D) {
     initializeAnalysisInfo();
   }
 
@@ -275,6 +275,8 @@ public:
   PMTopLevelManager *getTopLevelManager() { return TPM; }
   void setTopLevelManager(PMTopLevelManager *T) { TPM = T; }
 
+  unsigned getDepth() { return Depth; }
+
 private:
   // Set of available Analysis. This information is used while scheduling 
   // pass. If a pass requires an analysis which is not not available then 
@@ -288,6 +290,8 @@ private:
   // Top level manager.
   // TODO : Make it a reference.
   PMTopLevelManager *TPM;
+
+  unsigned Depth;
 };
 
 /// BasicBlockPassManager_New manages BasicBlockPass. It batches all the
@@ -297,7 +301,7 @@ class BasicBlockPassManager_New : public PMDataManager,
                                   public FunctionPass {
 
 public:
-  BasicBlockPassManager_New() { }
+  BasicBlockPassManager_New(int D) : PMDataManager(D) { }
 
   /// Add a pass into a passmanager queue. 
   bool addPass(Pass *p);
@@ -326,8 +330,9 @@ class FunctionPassManagerImpl_New : public ModulePass,
                                     public PMDataManager,
                                     public PMTopLevelManager {
 public:
-  FunctionPassManagerImpl_New(ModuleProvider *P) { /* TODO */ }
-  FunctionPassManagerImpl_New() { 
+  FunctionPassManagerImpl_New(ModuleProvider *P, int D) :
+    PMDataManager(D) { /* TODO */ }
+  FunctionPassManagerImpl_New(int D) : PMDataManager(D) { 
     activeBBPassManager = NULL;
   }
   ~FunctionPassManagerImpl_New() { /* TODO */ };
@@ -382,7 +387,9 @@ private:
 class ModulePassManager_New : public PMDataManager {
  
 public:
-  ModulePassManager_New() { activeFunctionPassManager = NULL; }
+  ModulePassManager_New(int D) : PMDataManager(D) { 
+    activeFunctionPassManager = NULL; 
+  }
   
   /// Add a pass into a passmanager queue. 
   bool addPass(Pass *p);
@@ -411,6 +418,8 @@ class PassManagerImpl_New : public Pass,
                             public PMTopLevelManager {
 
 public:
+
+  PassManagerImpl_New(int D) : PMDataManager(D) {}
 
   /// add - Add a pass to the queue of passes to run.  This passes ownership of
   /// the Pass to the PassManager.  When the PassManager is destroyed, the pass
@@ -615,7 +624,7 @@ Pass * BasicBlockPassManager_New::getAnalysisPassFromManager(AnalysisID AID) {
 
 /// Create new Function pass manager
 FunctionPassManager_New::FunctionPassManager_New() {
-  FPM = new FunctionPassManagerImpl_New();
+  FPM = new FunctionPassManagerImpl_New(0);
 }
 
 /// add - Add a pass to the queue of passes to run.  This passes
@@ -679,7 +688,8 @@ FunctionPassManagerImpl_New::addPass(Pass *P) {
         activeBBPassManager->initializeAnalysisInfo();
 
       // Create and add new manager
-      activeBBPassManager = new BasicBlockPassManager_New();
+      activeBBPassManager = 
+        new BasicBlockPassManager_New(getDepth() + 1);
       addPassToManager(activeBBPassManager, false);
 
       // Add pass into new manager. This time it must succeed.
@@ -818,7 +828,8 @@ ModulePassManager_New::addPass(Pass *P) {
         activeFunctionPassManager->initializeAnalysisInfo();
 
       // Create and add new manager
-      activeFunctionPassManager = new FunctionPassManagerImpl_New();
+      activeFunctionPassManager = 
+        new FunctionPassManagerImpl_New(getDepth() + 1);
       addPassToManager(activeFunctionPassManager, false);
 
       // Add pass into new manager. This time it must succeed.
@@ -905,7 +916,7 @@ Pass *PassManagerImpl_New::getAnalysisPassFromManager(AnalysisID AID) {
 bool PassManagerImpl_New::addPass(Pass *P) {
 
   if (!activeManager || !activeManager->addPass(P)) {
-    activeManager = new ModulePassManager_New();
+    activeManager = new ModulePassManager_New(getDepth() + 1);
     PassManagers.push_back(activeManager);
     return activeManager->addPass(P);
   }
@@ -930,7 +941,7 @@ bool PassManagerImpl_New::run(Module &M) {
 
 /// Create new pass manager
 PassManager_New::PassManager_New() {
-  PM = new PassManagerImpl_New();
+  PM = new PassManagerImpl_New(0);
 }
 
 /// add - Add a pass to the queue of passes to run.  This passes ownership of
