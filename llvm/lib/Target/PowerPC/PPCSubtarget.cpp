@@ -15,7 +15,6 @@
 #include "PPC.h"
 #include "llvm/Module.h"
 #include "PPCGenSubtarget.inc"
-#include <iostream>
 using namespace llvm;
 
 #if defined(__APPLE__)
@@ -80,8 +79,8 @@ PPCSubtarget::PPCSubtarget(const Module &M, const std::string &FS, bool is64Bit)
   // If we are generating code for ppc64, verify that options make sense.
   if (is64Bit) {
     if (!has64BitSupport()) {
-      std::cerr << "PPC: Generation of 64-bit code for a 32-bit processor "
-                   "requested.  Ignoring 32-bit processor feature.\n";
+      cerr << "PPC: Generation of 64-bit code for a 32-bit processor "
+           << "requested.  Ignoring 32-bit processor feature.\n";
       Has64BitSupport = true;
     }
     // Silently force 64-bit register use on ppc64.
@@ -91,8 +90,8 @@ PPCSubtarget::PPCSubtarget(const Module &M, const std::string &FS, bool is64Bit)
   // If the user requested use of 64-bit regs, but the cpu selected doesn't
   // support it, warn and ignore.
   if (use64BitRegs() && !has64BitSupport()) {
-    std::cerr << "PPC: 64-bit registers requested on CPU without support.  "
-                 "Disabling 64-bit register use.\n";
+    cerr << "PPC: 64-bit registers requested on CPU without support.  "
+         << "Disabling 64-bit register use.\n";
     Use64BitRegs = false;
   }
   

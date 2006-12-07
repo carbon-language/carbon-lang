@@ -24,7 +24,6 @@
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/Mangler.h"
 #include "llvm/ADT/Statistic.h"
-#include <iostream>
 using namespace llvm;
 
 namespace {
@@ -105,7 +104,7 @@ void AlphaAsmPrinter::printOp(const MachineOperand &MO, bool IsCallOp) {
     return;
 
   case MachineOperand::MO_Immediate:
-    std::cerr << "printOp() does not handle immediate values\n";
+    cerr << "printOp() does not handle immediate values\n";
     abort();
     return;
 
@@ -265,13 +264,13 @@ bool AlphaAsmPrinter::doFinalization(Module &M) {
                               "\t.section .data", I);
           break;
         case GlobalValue::GhostLinkage:
-          std::cerr << "GhostLinkage cannot appear in AlphaAsmPrinter!\n";
+          cerr << "GhostLinkage cannot appear in AlphaAsmPrinter!\n";
           abort();
         case GlobalValue::DLLImportLinkage:
-          std::cerr << "DLLImport linkage is not supported by this target!\n";
+          cerr << "DLLImport linkage is not supported by this target!\n";
           abort();
         case GlobalValue::DLLExportLinkage:
-          std::cerr << "DLLExport linkage is not supported by this target!\n";
+          cerr << "DLLExport linkage is not supported by this target!\n";
           abort();
         default:
           assert(0 && "Unknown linkage type!");

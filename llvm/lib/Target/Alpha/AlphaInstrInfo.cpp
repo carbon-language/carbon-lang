@@ -15,7 +15,6 @@
 #include "AlphaInstrInfo.h"
 #include "AlphaGenInstrInfo.inc"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
-#include <iostream>
 using namespace llvm;
 
 AlphaInstrInfo::AlphaInstrInfo()

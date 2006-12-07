@@ -15,7 +15,6 @@
 #include "X86GenSubtarget.inc"
 #include "llvm/Module.h"
 #include "llvm/Support/CommandLine.h"
-#include <iostream>
 using namespace llvm;
 
 cl::opt<X86Subtarget::AsmWriterFlavorTy>
@@ -224,10 +223,10 @@ X86Subtarget::X86Subtarget(const Module &M, const std::string &FS, bool is64Bit)
     ParseSubtargetFeatures(FS, CPU);
     
     if (Is64Bit && !HasX86_64)
-      std::cerr << "Warning: Generation of 64-bit code for a 32-bit processor "
-                   "requested.\n";
+      cerr << "Warning: Generation of 64-bit code for a 32-bit processor "
+           << "requested.\n";
     if (Is64Bit && X86SSELevel < SSE2)
-      std::cerr << "Warning: 64-bit processors all have at least SSE2.\n";
+      cerr << "Warning: 64-bit processors all have at least SSE2.\n";
   } else {
     // Otherwise, use CPUID to auto-detect feature set.
     AutoDetectSubtargetFeatures();

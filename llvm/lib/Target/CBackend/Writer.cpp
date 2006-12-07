@@ -42,9 +42,7 @@
 #include "llvm/Support/MathExtras.h"
 #include "llvm/Config/config.h"
 #include <algorithm>
-#include <iostream>
 #include <ios>
-#include <sstream>
 using namespace llvm;
 
 namespace {
@@ -229,7 +227,7 @@ namespace {
     void visitVAArgInst (VAArgInst &I);
 
     void visitInstruction(Instruction &I) {
-      std::cerr << "C Writer does not know about " << I;
+      cerr << "C Writer does not know about " << I;
       abort();
     }
 
@@ -375,7 +373,7 @@ std::ostream &CWriter::printType(std::ostream &Out, const Type *Ty,
     case Type::FloatTyID:  return Out << "float "              << NameSoFar;
     case Type::DoubleTyID: return Out << "double "             << NameSoFar;
     default :
-      std::cerr << "Unknown primitive type: " << *Ty << "\n";
+      cerr << "Unknown primitive type: " << *Ty << "\n";
       abort();
     }
 
@@ -726,8 +724,8 @@ void CWriter::printConstant(Constant *CPV) {
     }
 
     default:
-      std::cerr << "CWriter Error: Unhandled constant expression: "
-                << *CE << "\n";
+      cerr << "CWriter Error: Unhandled constant expression: "
+           << *CE << "\n";
       abort();
     }
   } else if (isa<UndefValue>(CPV) && CPV->getType()->isFirstClassType()) {
@@ -901,7 +899,7 @@ void CWriter::printConstant(Constant *CPV) {
     }
     // FALL THROUGH
   default:
-    std::cerr << "Unknown constant type: " << *CPV << "\n";
+    cerr << "Unknown constant type: " << *CPV << "\n";
     abort();
   }
 }
@@ -1973,7 +1971,7 @@ void CWriter::visitBinaryOperator(Instruction &I) {
     case Instruction::Shl : Out << " << "; break;
     case Instruction::LShr:
     case Instruction::AShr: Out << " >> "; break;
-    default: std::cerr << "Invalid operator type!" << I; abort();
+    default: cerr << "Invalid operator type!" << I; abort();
     }
 
     writeOperandWithCast(I.getOperand(1), I.getOpcode());
@@ -2099,9 +2097,9 @@ void CWriter::visitCallInst(CallInst &I) {
         Out << ", ";
         // Output the last argument to the enclosing function...
         if (I.getParent()->getParent()->arg_empty()) {
-          std::cerr << "The C backend does not currently support zero "
-                    << "argument varargs functions, such as '"
-                    << I.getParent()->getParent()->getName() << "'!\n";
+          cerr << "The C backend does not currently support zero "
+               << "argument varargs functions, such as '"
+               << I.getParent()->getParent()->getName() << "'!\n";
           abort();
         }
         writeOperand(--I.getParent()->getParent()->arg_end());

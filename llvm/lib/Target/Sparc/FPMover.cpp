@@ -19,7 +19,6 @@
 #include "llvm/Target/TargetInstrInfo.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/Support/Debug.h"
-#include <iostream>
 using namespace llvm;
 
 namespace {
@@ -108,12 +107,12 @@ bool FPMover::runOnMachineBasicBlock(MachineBasicBlock &MBB) {
         
       MI->getOperand(0).setReg(EvenDestReg);
       MI->getOperand(1).setReg(EvenSrcReg);
-      DEBUG(std::cerr << "FPMover: the modified instr is: " << *MI);
+      DOUT << "FPMover: the modified instr is: " << *MI;
       // Insert copy for the other half of the double.
       if (DestDReg != SrcDReg) {
         MI = BuildMI(MBB, I, TM.getInstrInfo()->get(SP::FMOVS), OddDestReg)
           .addReg(OddSrcReg);
-        DEBUG(std::cerr << "FPMover: the inserted instr is: " << *MI);
+        DOUT << "FPMover: the inserted instr is: " << *MI;
       }
       ++NumFpDs;
     }

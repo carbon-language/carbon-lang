@@ -18,7 +18,7 @@
 #include <string>
 #include <vector>
 #include <map>
-#include <iostream>
+#include <ostream>
 #include <cassert>
 
 namespace llvm {

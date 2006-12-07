@@ -13,7 +13,6 @@
 
 #include "TableGenBackend.h"
 #include "Record.h"
-#include <iostream>
 using namespace llvm;
 
 void TableGenBackend::EmitSourceFileHeader(const std::string &Desc,

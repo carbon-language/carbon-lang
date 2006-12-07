@@ -501,7 +501,7 @@ goto find_rule; \
 #define YY_MORE_ADJ 0
 #define YY_RESTORE_YY_MORE_OFFSET
 char *yytext;
-#line 1 "/Users/sabre/cvs/llvm/utils/TableGen/FileLexer.l"
+#line 1 "/Volumes/Gir/devel/llvm/llvm.src/utils/TableGen/FileLexer.l"
 #define INITIAL 0
 /*===-- FileLexer.l - Scanner for TableGen Files ----------------*- C++ -*-===//
 // 
@@ -519,8 +519,9 @@ char *yytext;
 #define YY_NEVER_INTERACTIVE 1
 #define comment 1
 
-#line 30 "/Users/sabre/cvs/llvm/utils/TableGen/FileLexer.l"
+#line 30 "/Volumes/Gir/devel/llvm/llvm.src/utils/TableGen/FileLexer.l"
 #include "llvm/Config/config.h"
+#include "llvm/Support/Streams.h"
 #include "Record.h"
 typedef std::pair<llvm::Record*, std::vector<llvm::Init*>*> SubClassRefTy;
 #include "FileParser.h"
@@ -556,14 +557,17 @@ struct IncludeRec {
 static std::vector<IncludeRec> IncludeStack;
 
 std::ostream &err() {
-  if (IncludeStack.empty())
-    return std::cerr << "At end of input: ";
+  if (IncludeStack.empty()) {
+    cerr << "At end of input: ";
+    return *cerr.stream();
+  }
 
   for (unsigned i = 0, e = IncludeStack.size()-1; i != e; ++i)
-    std::cerr << "Included from " << IncludeStack[i].Filename << ":"
-              << IncludeStack[i].LineNo << ":\n";
-  return std::cerr << "Parsing " << IncludeStack.back().Filename << ":"
-                   << Filelineno << ": ";
+    cerr << "Included from " << IncludeStack[i].Filename << ":"
+         << IncludeStack[i].LineNo << ":\n";
+  cerr << "Parsing " << IncludeStack.back().Filename << ":"
+       << Filelineno << ": ";
+  return *cerr.stream();
 }
 
 /// ParseFile - this function begins the parsing of the specified tablegen file.
@@ -575,7 +579,7 @@ void ParseFile(const std::string &Filename,
     F = fopen(Filename.c_str(), "r");
 
     if (F == 0) {
-      std::cerr << "Could not open input file '" + Filename + "'!\n";
+      cerr << "Could not open input file '" + Filename + "'!\n";
       exit (1);
     }
     IncludeStack.push_back(IncludeRec(Filename, F));
@@ -607,7 +611,7 @@ static void HandleInclude(const char *Buffer) {
   }
   assert(Length >= 2 && "Double quotes not found?");
   std::string Filename(Buffer+1, Buffer+Length-1);
-  //std::cerr << "Filename = '" << Filename << "'\n";
+  //cerr << "Filename = '" << Filename << "'\n";
 
   // Save the line number and lex buffer of the includer...
   IncludeStack.back().LineNo = Filelineno;
@@ -661,7 +665,7 @@ int yywrap(void) {
 
 using namespace llvm;
 
-#line 665 "Lexer.cpp"
+#line 669 "Lexer.cpp"
 
 /* Macros after this point can all be overridden by user definitions in
  * section 1.
@@ -812,10 +816,10 @@ YY_DECL
 	register char *yy_cp, *yy_bp;
 	register int yy_act;
 
-#line 181 "/Users/sabre/cvs/llvm/utils/TableGen/FileLexer.l"
+#line 185 "/Volumes/Gir/devel/llvm/llvm.src/utils/TableGen/FileLexer.l"
 
 
-#line 819 "Lexer.cpp"
+#line 823 "Lexer.cpp"
 
 	if ( yy_init )
 		{
@@ -908,183 +912,183 @@ do_action:	/* This label is used only to access EOF actions. */
 	{ /* beginning of action switch */
 case 1:
 YY_RULE_SETUP
-#line 183 "/Users/sabre/cvs/llvm/utils/TableGen/FileLexer.l"
+#line 187 "/Volumes/Gir/devel/llvm/llvm.src/utils/TableGen/FileLexer.l"
 { /* Ignore comments */ }
 	YY_BREAK
 case 2:
 YY_RULE_SETUP
-#line 185 "/Users/sabre/cvs/llvm/utils/TableGen/FileLexer.l"
+#line 189 "/Volumes/Gir/devel/llvm/llvm.src/utils/TableGen/FileLexer.l"
 { HandleInclude(yytext); }
 	YY_BREAK
 case 3:
 YY_RULE_SETUP
-#line 186 "/Users/sabre/cvs/llvm/utils/TableGen/FileLexer.l"
+#line 190 "/Volumes/Gir/devel/llvm/llvm.src/utils/TableGen/FileLexer.l"
 { Filelval.StrVal = new std::string(yytext+2, yytext+yyleng-2);
                  return CODEFRAGMENT; }
 	YY_BREAK
 case 4:
 YY_RULE_SETUP
-#line 189 "/Users/sabre/cvs/llvm/utils/TableGen/FileLexer.l"
+#line 193 "/Volumes/Gir/devel/llvm/llvm.src/utils/TableGen/FileLexer.l"
 { return INT; }
 	YY_BREAK
 case 5:
 YY_RULE_SETUP
-#line 190 "/Users/sabre/cvs/llvm/utils/TableGen/FileLexer.l"
+#line 194 "/Volumes/Gir/devel/llvm/llvm.src/utils/TableGen/FileLexer.l"
 { return BIT; }
 	YY_BREAK
 case 6:
 YY_RULE_SETUP
-#line 191 "/Users/sabre/cvs/llvm/utils/TableGen/FileLexer.l"
+#line 195 "/Volumes/Gir/devel/llvm/llvm.src/utils/TableGen/FileLexer.l"
 { return BITS; }
 	YY_BREAK
 case 7:
 YY_RULE_SETUP
-#line 192 "/Users/sabre/cvs/llvm/utils/TableGen/FileLexer.l"
+#line 196 "/Volumes/Gir/devel/llvm/llvm.src/utils/TableGen/FileLexer.l"
 { return STRING; }
 	YY_BREAK
 case 8:
 YY_RULE_SETUP
-#line 193 "/Users/sabre/cvs/llvm/utils/TableGen/FileLexer.l"
+#line 197 "/Volumes/Gir/devel/llvm/llvm.src/utils/TableGen/FileLexer.l"
 { return LIST; }
 	YY_BREAK
 case 9:
 YY_RULE_SETUP
-#line 194 "/Users/sabre/cvs/llvm/utils/TableGen/FileLexer.l"
+#line 198 "/Volumes/Gir/devel/llvm/llvm.src/utils/TableGen/FileLexer.l"
 { return CODE; }
 	YY_BREAK
 case 10:
 YY_RULE_SETUP
-#line 195 "/Users/sabre/cvs/llvm/utils/TableGen/FileLexer.l"
+#line 199 "/Volumes/Gir/devel/llvm/llvm.src/utils/TableGen/FileLexer.l"
 { return DAG; }
 	YY_BREAK
 case 11:
 YY_RULE_SETUP
-#line 197 "/Users/sabre/cvs/llvm/utils/TableGen/FileLexer.l"
+#line 201 "/Volumes/Gir/devel/llvm/llvm.src/utils/TableGen/FileLexer.l"
 { return CLASS; }
 	YY_BREAK
 case 12:
 YY_RULE_SETUP
-#line 198 "/Users/sabre/cvs/llvm/utils/TableGen/FileLexer.l"
+#line 202 "/Volumes/Gir/devel/llvm/llvm.src/utils/TableGen/FileLexer.l"
 { return DEF; }
 	YY_BREAK
 case 13:
 YY_RULE_SETUP
-#line 199 "/Users/sabre/cvs/llvm/utils/TableGen/FileLexer.l"
+#line 203 "/Volumes/Gir/devel/llvm/llvm.src/utils/TableGen/FileLexer.l"
 { return DEFM; }
 	YY_BREAK
 case 14:
 YY_RULE_SETUP
-#line 200 "/Users/sabre/cvs/llvm/utils/TableGen/FileLexer.l"
+#line 204 "/Volumes/Gir/devel/llvm/llvm.src/utils/TableGen/FileLexer.l"
 { return MULTICLASS; }
 	YY_BREAK
 case 15:
 YY_RULE_SETUP
-#line 201 "/Users/sabre/cvs/llvm/utils/TableGen/FileLexer.l"
+#line 205 "/Volumes/Gir/devel/llvm/llvm.src/utils/TableGen/FileLexer.l"
 { return FIELD; }
 	YY_BREAK
 case 16:
 YY_RULE_SETUP
-#line 202 "/Users/sabre/cvs/llvm/utils/TableGen/FileLexer.l"
+#line 206 "/Volumes/Gir/devel/llvm/llvm.src/utils/TableGen/FileLexer.l"
 { return LET; }
 	YY_BREAK
 case 17:
 YY_RULE_SETUP
-#line 203 "/Users/sabre/cvs/llvm/utils/TableGen/FileLexer.l"
+#line 207 "/Volumes/Gir/devel/llvm/llvm.src/utils/TableGen/FileLexer.l"
 { return IN; }
 	YY_BREAK
 case 18:
 YY_RULE_SETUP
-#line 205 "/Users/sabre/cvs/llvm/utils/TableGen/FileLexer.l"
+#line 209 "/Volumes/Gir/devel/llvm/llvm.src/utils/TableGen/FileLexer.l"
 { return SRATOK; }
 	YY_BREAK
 case 19:
 YY_RULE_SETUP
-#line 206 "/Users/sabre/cvs/llvm/utils/TableGen/FileLexer.l"
+#line 210 "/Volumes/Gir/devel/llvm/llvm.src/utils/TableGen/FileLexer.l"
 { return SRLTOK; }
 	YY_BREAK
 case 20:
 YY_RULE_SETUP
-#line 207 "/Users/sabre/cvs/llvm/utils/TableGen/FileLexer.l"
+#line 211 "/Volumes/Gir/devel/llvm/llvm.src/utils/TableGen/FileLexer.l"
 { return SHLTOK; }
 	YY_BREAK
 case 21:
 YY_RULE_SETUP
-#line 208 "/Users/sabre/cvs/llvm/utils/TableGen/FileLexer.l"
+#line 212 "/Volumes/Gir/devel/llvm/llvm.src/utils/TableGen/FileLexer.l"
 { return STRCONCATTOK; }
 	YY_BREAK
 case 22:
 YY_RULE_SETUP
-#line 211 "/Users/sabre/cvs/llvm/utils/TableGen/FileLexer.l"
+#line 215 "/Volumes/Gir/devel/llvm/llvm.src/utils/TableGen/FileLexer.l"
 { Filelval.StrVal = new std::string(yytext, yytext+yyleng);
                  return ID; }
 	YY_BREAK
 case 23:
 YY_RULE_SETUP
-#line 213 "/Users/sabre/cvs/llvm/utils/TableGen/FileLexer.l"
+#line 217 "/Volumes/Gir/devel/llvm/llvm.src/utils/TableGen/FileLexer.l"
 { Filelval.StrVal = new std::string(yytext+1, yytext+yyleng);
                  return VARNAME; } 
 	YY_BREAK
 case 24:
 YY_RULE_SETUP
-#line 216 "/Users/sabre/cvs/llvm/utils/TableGen/FileLexer.l"
+#line 220 "/Volumes/Gir/devel/llvm/llvm.src/utils/TableGen/FileLexer.l"
 { Filelval.StrVal = new std::string(yytext+1, yytext+yyleng-1);
                  return STRVAL; }
 	YY_BREAK
 case 25:
 YY_RULE_SETUP
-#line 219 "/Users/sabre/cvs/llvm/utils/TableGen/FileLexer.l"
+#line 223 "/Volumes/Gir/devel/llvm/llvm.src/utils/TableGen/FileLexer.l"
 { Filelval.IntVal = ParseInt(Filetext); return INTVAL; }
 	YY_BREAK
 case 26:
 YY_RULE_SETUP
-#line 221 "/Users/sabre/cvs/llvm/utils/TableGen/FileLexer.l"
+#line 225 "/Volumes/Gir/devel/llvm/llvm.src/utils/TableGen/FileLexer.l"
 { /* Ignore whitespace */ }
 	YY_BREAK
 case 27:
 YY_RULE_SETUP
-#line 224 "/Users/sabre/cvs/llvm/utils/TableGen/FileLexer.l"
+#line 228 "/Volumes/Gir/devel/llvm/llvm.src/utils/TableGen/FileLexer.l"
 { BEGIN(comment); CommentDepth++; }
 	YY_BREAK
 case 28:
 YY_RULE_SETUP
-#line 225 "/Users/sabre/cvs/llvm/utils/TableGen/FileLexer.l"
+#line 229 "/Volumes/Gir/devel/llvm/llvm.src/utils/TableGen/FileLexer.l"
 {} /* eat anything that's not a '*' or '/' */
 	YY_BREAK
 case 29:
 YY_RULE_SETUP
-#line 226 "/Users/sabre/cvs/llvm/utils/TableGen/FileLexer.l"
+#line 230 "/Volumes/Gir/devel/llvm/llvm.src/utils/TableGen/FileLexer.l"
 {} /* eat up '*'s not followed by '/'s */
 	YY_BREAK
 case 30:
 YY_RULE_SETUP
-#line 227 "/Users/sabre/cvs/llvm/utils/TableGen/FileLexer.l"
+#line 231 "/Volumes/Gir/devel/llvm/llvm.src/utils/TableGen/FileLexer.l"
 { ++CommentDepth; }
 	YY_BREAK
 case 31:
 YY_RULE_SETUP
-#line 228 "/Users/sabre/cvs/llvm/utils/TableGen/FileLexer.l"
+#line 232 "/Volumes/Gir/devel/llvm/llvm.src/utils/TableGen/FileLexer.l"
 {} /* eat up /'s not followed by *'s */
 	YY_BREAK
 case 32:
 YY_RULE_SETUP
-#line 229 "/Users/sabre/cvs/llvm/utils/TableGen/FileLexer.l"
+#line 233 "/Volumes/Gir/devel/llvm/llvm.src/utils/TableGen/FileLexer.l"
 { if (!--CommentDepth) { BEGIN(INITIAL); } }
 	YY_BREAK
 case YY_STATE_EOF(comment):
-#line 230 "/Users/sabre/cvs/llvm/utils/TableGen/FileLexer.l"
+#line 234 "/Volumes/Gir/devel/llvm/llvm.src/utils/TableGen/FileLexer.l"
 { err() << "Unterminated comment!\n"; exit(1); }
 	YY_BREAK
 case 33:
 YY_RULE_SETUP
-#line 232 "/Users/sabre/cvs/llvm/utils/TableGen/FileLexer.l"
+#line 236 "/Volumes/Gir/devel/llvm/llvm.src/utils/TableGen/FileLexer.l"
 { return Filetext[0]; }
 	YY_BREAK
 case 34:
 YY_RULE_SETUP
-#line 234 "/Users/sabre/cvs/llvm/utils/TableGen/FileLexer.l"
+#line 238 "/Volumes/Gir/devel/llvm/llvm.src/utils/TableGen/FileLexer.l"
 YY_FATAL_ERROR( "flex scanner jammed" );
 	YY_BREAK
-#line 1088 "Lexer.cpp"
+#line 1092 "Lexer.cpp"
 			case YY_STATE_EOF(INITIAL):
 				yyterminate();
 
@@ -1508,7 +1512,7 @@ static int input()
 				case EOB_ACT_END_OF_FILE:
 					{
 					if ( yywrap() )
-						return EOF;
+						return 0;
 
 					if ( ! yy_did_buffer_switch_on_eof )
 						YY_NEW_FILE;
@@ -1968,6 +1972,6 @@ int main()
 	return 0;
 	}
 #endif
-#line 234 "/Users/sabre/cvs/llvm/utils/TableGen/FileLexer.l"
+#line 238 "/Volumes/Gir/devel/llvm/llvm.src/utils/TableGen/FileLexer.l"
 
 

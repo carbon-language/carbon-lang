@@ -21,7 +21,6 @@
 #include "llvm/Target/TargetInstrInfo.h"
 #include "llvm/Type.h"
 #include "llvm/ADT/STLExtras.h"
-#include <iostream>
 using namespace llvm;
 
 SparcRegisterInfo::SparcRegisterInfo(SparcSubtarget &st,

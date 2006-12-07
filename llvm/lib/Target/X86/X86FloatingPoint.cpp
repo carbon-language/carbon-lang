@@ -44,7 +44,6 @@
 #include "llvm/ADT/Statistic.h"
 #include "llvm/ADT/STLExtras.h"
 #include <algorithm>
-#include <iostream>
 #include <set>
 using namespace llvm;
 
@@ -70,12 +69,12 @@ namespace {
     unsigned StackTop;          // The current top of the FP stack.
 
     void dumpStack() const {
-      std::cerr << "Stack contents:";
+      cerr << "Stack contents:";
       for (unsigned i = 0; i != StackTop; ++i) {
-        std::cerr << " FP" << Stack[i];
+        cerr << " FP" << Stack[i];
         assert(RegMap[Stack[i]] == i && "Stack[] doesn't match RegMap[]!");
       }
-      std::cerr << "\n";
+      cerr << "\n";
     }
   private:
     // getSlot - Return the stack slot number a particular register number is
@@ -211,7 +210,7 @@ bool FPS::processBasicBlock(MachineFunction &MF, MachineBasicBlock &BB) {
         PrevMI = prior(I);
 
     ++NumFP;  // Keep track of # of pseudo instrs
-    DEBUG(std::cerr << "\nFPInst:\t"; MI->print(std::cerr, &(MF.getTarget())));
+    DOUT << "\nFPInst:\t"; MI->print(*cerr.stream(), &(MF.getTarget()));
 
     // Get dead variables list now because the MI pointer may be deleted as part
     // of processing!
@@ -238,7 +237,7 @@ bool FPS::processBasicBlock(MachineFunction &MF, MachineBasicBlock &BB) {
     for (unsigned i = 0, e = DeadRegs.size(); i != e; ++i) {
       unsigned Reg = DeadRegs[i];
       if (Reg >= X86::FP0 && Reg <= X86::FP6) {
-        DEBUG(std::cerr << "Register FP#" << Reg-X86::FP0 << " is dead!\n");
+        DOUT << "Register FP#" << Reg-X86::FP0 << " is dead!\n";
         freeStackSlotAfter(I, Reg-X86::FP0);
       }
     }
@@ -247,13 +246,13 @@ bool FPS::processBasicBlock(MachineFunction &MF, MachineBasicBlock &BB) {
     DEBUG(
       MachineBasicBlock::iterator PrevI(PrevMI);
       if (I == PrevI) {
-        std::cerr << "Just deleted pseudo instruction\n";
+        cerr << "Just deleted pseudo instruction\n";
       } else {
         MachineBasicBlock::iterator Start = I;
         // Rewind to first instruction newly inserted.
         while (Start != BB.begin() && prior(Start) != PrevI) --Start;
-        std::cerr << "Inserted instructions:\n\t";
-        Start->print(std::cerr, &MF.getTarget());
+        cerr << "Inserted instructions:\n\t";
+        Start->print(*cerr.stream(), &MF.getTarget());
         while (++Start != next(I));
       }
       dumpStack();

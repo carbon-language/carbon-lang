@@ -31,7 +31,6 @@
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/MathExtras.h"
 #include <cctype>
-#include <iostream>
 using namespace llvm;
 
 namespace {

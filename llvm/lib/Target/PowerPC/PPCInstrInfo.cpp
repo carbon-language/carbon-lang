@@ -16,7 +16,6 @@
 #include "PPCGenInstrInfo.inc"
 #include "PPCTargetMachine.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
-#include <iostream>
 using namespace llvm;
 
 PPCInstrInfo::PPCInstrInfo(PPCTargetMachine &tm)

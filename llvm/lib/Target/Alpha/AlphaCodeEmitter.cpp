@@ -23,7 +23,6 @@
 #include "llvm/Function.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/ADT/Statistic.h"
-#include <iostream>
 using namespace llvm;
 
 namespace {
@@ -158,7 +157,7 @@ int AlphaCodeEmitter::getMachineOpValue(MachineInstr &MI, MachineOperand &MO) {
     rv = MO.getImmedValue();
   } else if (MO.isGlobalAddress() || MO.isExternalSymbol()
              || MO.isConstantPoolIndex()) {
-    DEBUG(std::cerr << MO << " is a relocated op for " << MI << "\n";);
+    DOUT << MO << " is a relocated op for " << MI << "\n";
     unsigned Reloc = 0;
     int Offset = 0;
     bool useGOT = false;
@@ -214,7 +213,7 @@ int AlphaCodeEmitter::getMachineOpValue(MachineInstr &MI, MachineOperand &MO) {
                                                Alpha::reloc_bsr,
                                                MO.getMachineBasicBlock()));
   }else {
-    std::cerr << "ERROR: Unknown type of MachineOperand: " << MO << "\n";
+    cerr << "ERROR: Unknown type of MachineOperand: " << MO << "\n";
     abort();
   }
 

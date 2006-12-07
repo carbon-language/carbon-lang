@@ -214,7 +214,7 @@ void CodeEmitterGen::run(std::ostream &o) {
 
   // Default case: unhandled opcode
   o << "  default:\n"
-    << "    std::cerr << \"Not supported instr: \" << MI << \"\\n\";\n"
+    << "    cerr << \"Not supported instr: \" << MI << \"\\n\";\n"
     << "    abort();\n"
     << "  }\n"
     << "  return Value;\n"

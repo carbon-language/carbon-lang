@@ -32,8 +32,6 @@
 #include "llvm/Target/TargetOptions.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/ADT/STLExtras.h"
-#include <iostream>
-
 using namespace llvm;
 
 namespace {
@@ -244,8 +242,8 @@ namespace {
 static bool TableIsSorted(const TableEntry *Table, unsigned NumEntries) {
   for (unsigned i = 1; i != NumEntries; ++i)
     if (!(Table[i-1] < Table[i])) {
-      std::cerr << "Entries out of order " << Table[i-1].from
-                << " " << Table[i].from << "\n";
+      cerr << "Entries out of order " << Table[i-1].from
+           << " " << Table[i].from << "\n";
       return false;
     }
   return true;
@@ -845,8 +843,8 @@ MachineInstr* X86RegisterInfo::foldMemoryOperand(MachineInstr *MI,
   
   // No fusion 
   if (PrintFailedFusing)
-    std::cerr << "We failed to fuse ("
-              << ((i == 1) ? "r" : "s") << "): " << *MI;
+    cerr << "We failed to fuse ("
+         << ((i == 1) ? "r" : "s") << "): " << *MI;
   return NULL;
 }
 

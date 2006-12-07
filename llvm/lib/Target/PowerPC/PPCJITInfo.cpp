@@ -18,7 +18,6 @@
 #include "llvm/Config/alloca.h"
 #include "llvm/Support/Debug.h"
 #include <set>
-#include <iostream>
 using namespace llvm;
 
 static TargetJITInfo::JITCompilerFn JITCompilerFunction;

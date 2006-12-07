@@ -37,7 +37,7 @@ void InstrInfoEmitter::runEnums(std::ostream &OS) {
   }
   
   if (Namespace.empty()) {
-    std::cerr << "No instructions defined!\n";
+    cerr << "No instructions defined!\n";
     exit(1);
   }
 
@@ -349,7 +349,7 @@ void InstrInfoEmitter::emitShiftedValue(Record *R, StringInit *Val,
     return;
   }
 
-  std::cerr << "Unhandled initializer: " << *Val << "\n";
+  cerr << "Unhandled initializer: " << *Val << "\n";
   throw "In record '" + R->getName() + "' for TSFlag emission.";
 }
 

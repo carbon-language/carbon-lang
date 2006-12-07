@@ -19,6 +19,7 @@
 #include "Record.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/Support/CommandLine.h"
+#include "llvm/Support/Streams.h"
 #include <set>
 #include <algorithm>
 using namespace llvm;
@@ -527,8 +528,8 @@ ComplexPattern::ComplexPattern(Record *R) {
     } else if (PropList[i]->getName() == "SDNPOptInFlag") {
       Properties |= 1 << SDNPOptInFlag;
     } else {
-      std::cerr << "Unsupported SD Node property '" << PropList[i]->getName()
-                << "' on ComplexPattern '" << R->getName() << "'!\n";
+      cerr << "Unsupported SD Node property '" << PropList[i]->getName()
+           << "' on ComplexPattern '" << R->getName() << "'!\n";
       exit(1);
     }
 }

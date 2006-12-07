@@ -19,7 +19,6 @@
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/MathExtras.h"
 #include <algorithm>
-#include <ostream>
 using namespace llvm;
 
 static bool isIdentChar(char C) {
@@ -551,8 +550,8 @@ void AsmWriterEmitter::run(std::ostream &O) {
     
     // If we don't have enough bits for this operand, don't include it.
     if (NumBits > BitsLeft) {
-      DEBUG(std::cerr << "Not enough bits to densely encode " << NumBits
-                      << " more bits\n");
+      DOUT << "Not enough bits to densely encode " << NumBits
+           << " more bits\n";
       break;
     }
     

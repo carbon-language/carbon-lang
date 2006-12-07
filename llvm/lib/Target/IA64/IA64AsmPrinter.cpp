@@ -26,7 +26,6 @@
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Support/Mangler.h"
 #include "llvm/ADT/Statistic.h"
-#include <iostream>
 using namespace llvm;
 
 namespace {
@@ -308,13 +307,13 @@ bool IA64AsmPrinter::doFinalization(Module &M) {
             SwitchToDataSection(C->isNullValue() ? ".bss" : ".data", I);
             break;
           case GlobalValue::GhostLinkage:
-            std::cerr << "GhostLinkage cannot appear in IA64AsmPrinter!\n";
+            cerr << "GhostLinkage cannot appear in IA64AsmPrinter!\n";
             abort();
           case GlobalValue::DLLImportLinkage:
-            std::cerr << "DLLImport linkage is not supported by this target!\n";
+            cerr << "DLLImport linkage is not supported by this target!\n";
             abort();
           case GlobalValue::DLLExportLinkage:
-            std::cerr << "DLLExport linkage is not supported by this target!\n";
+            cerr << "DLLExport linkage is not supported by this target!\n";
             abort();
           default:
             assert(0 && "Unknown linkage type!");            

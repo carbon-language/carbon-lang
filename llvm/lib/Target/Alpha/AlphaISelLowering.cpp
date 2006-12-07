@@ -22,8 +22,6 @@
 #include "llvm/Function.h"
 #include "llvm/Module.h"
 #include "llvm/Support/CommandLine.h"
-#include <iostream>
-
 using namespace llvm;
 
 /// AddLiveIn - This helper function adds the specified physical register to the
@@ -224,7 +222,7 @@ static SDOperand LowerFORMAL_ARGUMENTS(SDOperand Op, SelectionDAG &DAG,
     if (ArgNo  < 6) {
       switch (ObjectVT) {
       default:
-        std::cerr << "Unknown Type " << ObjectVT << "\n";
+        cerr << "Unknown Type " << ObjectVT << "\n";
         abort();
       case MVT::f64:
         args_float[ArgNo] = AddLiveIn(MF, args_float[ArgNo], 

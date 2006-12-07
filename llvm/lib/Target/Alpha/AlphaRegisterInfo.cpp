@@ -30,7 +30,6 @@
 #include "llvm/Support/Debug.h"
 #include "llvm/ADT/STLExtras.h"
 #include <cstdlib>
-#include <iostream>
 using namespace llvm;
 
 //These describe LDAx
@@ -63,8 +62,8 @@ AlphaRegisterInfo::storeRegToStackSlot(MachineBasicBlock &MBB,
                                        MachineBasicBlock::iterator MI,
                                        unsigned SrcReg, int FrameIdx,
                                        const TargetRegisterClass *RC) const {
-  //std::cerr << "Trying to store " << getPrettyName(SrcReg) << " to "
-  //<< FrameIdx << "\n";
+  //cerr << "Trying to store " << getPrettyName(SrcReg) << " to "
+  //     << FrameIdx << "\n";
   //BuildMI(MBB, MI, Alpha::WTF, 0).addReg(SrcReg);
   if (RC == Alpha::F4RCRegisterClass)
     BuildMI(MBB, MI, TII.get(Alpha::STS))
@@ -84,8 +83,8 @@ AlphaRegisterInfo::loadRegFromStackSlot(MachineBasicBlock &MBB,
                                         MachineBasicBlock::iterator MI,
                                         unsigned DestReg, int FrameIdx,
                                         const TargetRegisterClass *RC) const {
-  //std::cerr << "Trying to load " << getPrettyName(DestReg) << " to "
-  //<< FrameIdx << "\n";
+  //cerr << "Trying to load " << getPrettyName(DestReg) << " to "
+  //     << FrameIdx << "\n";
   if (RC == Alpha::F4RCRegisterClass)
     BuildMI(MBB, MI, TII.get(Alpha::LDS), DestReg)
       .addFrameIndex(FrameIdx).addReg(Alpha::F31);
@@ -139,7 +138,7 @@ void AlphaRegisterInfo::copyRegToReg(MachineBasicBlock &MBB,
                                      MachineBasicBlock::iterator MI,
                                      unsigned DestReg, unsigned SrcReg,
                                      const TargetRegisterClass *RC) const {
-  //  std::cerr << "copyRegToReg " << DestReg << " <- " << SrcReg << "\n";
+  //cerr << "copyRegToReg " << DestReg << " <- " << SrcReg << "\n";
   if (RC == Alpha::GPRCRegisterClass) {
     BuildMI(MBB, MI, TII.get(Alpha::BISr), DestReg).addReg(SrcReg).addReg(SrcReg);
   } else if (RC == Alpha::F4RCRegisterClass) {
@@ -147,8 +146,8 @@ void AlphaRegisterInfo::copyRegToReg(MachineBasicBlock &MBB,
   } else if (RC == Alpha::F8RCRegisterClass) {
     BuildMI(MBB, MI, TII.get(Alpha::CPYST), DestReg).addReg(SrcReg).addReg(SrcReg);
   } else {
-    std::cerr << "Attempt to copy register that is not GPR or FPR";
-     abort();
+    cerr << "Attempt to copy register that is not GPR or FPR";
+    abort();
   }
 }
 
@@ -255,16 +254,16 @@ AlphaRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II) const {
   // Now add the frame object offset to the offset from the virtual frame index.
   int Offset = MF.getFrameInfo()->getObjectOffset(FrameIndex);
 
-  DEBUG(std::cerr << "FI: " << FrameIndex << " Offset: " << Offset << "\n");
+  DOUT << "FI: " << FrameIndex << " Offset: " << Offset << "\n";
 
   Offset += MF.getFrameInfo()->getStackSize();
 
-  DEBUG(std::cerr << "Corrected Offset " << Offset <<
-        " for stack size: " << MF.getFrameInfo()->getStackSize() << "\n");
+  DOUT << "Corrected Offset " << Offset
+       << " for stack size: " << MF.getFrameInfo()->getStackSize() << "\n";
 
   if (Offset > IMM_HIGH || Offset < IMM_LOW) {
-    DEBUG(std::cerr << "Unconditionally using R28 for evil purposes Offset: "
-          << Offset << "\n");
+    DOUT << "Unconditionally using R28 for evil purposes Offset: "
+         << Offset << "\n";
     //so in this case, we need to use a temporary register, and move the
     //original inst off the SP/FP
     //fix up the old:
@@ -309,8 +308,8 @@ void AlphaRegisterInfo::emitPrologue(MachineFunction &MF) const {
     // brackets around call sites.
     //If there is a frame pointer, then we don't do this
     NumBytes += MFI->getMaxCallFrameSize();
-    DEBUG(std::cerr << "Added " << MFI->getMaxCallFrameSize()
-          << " to the stack due to calls\n");
+    DOUT << "Added " << MFI->getMaxCallFrameSize()
+         << " to the stack due to calls\n";
   }
 
   if (FP)
@@ -336,7 +335,7 @@ void AlphaRegisterInfo::emitPrologue(MachineFunction &MF) const {
     BuildMI(MBB, MBBI, TII.get(Alpha::LDA), Alpha::R30).addImm(getLower16(NumBytes))
       .addReg(Alpha::R30);
   } else {
-    std::cerr << "Too big a stack frame at " << NumBytes << "\n";
+    cerr << "Too big a stack frame at " << NumBytes << "\n";
     abort();
   }
 
@@ -386,7 +385,7 @@ void AlphaRegisterInfo::emitEpilogue(MachineFunction &MF,
          BuildMI(MBB, MBBI, TII.get(Alpha::LDA), Alpha::R30)
            .addImm(getLower16(NumBytes)).addReg(Alpha::R30);
        } else {
-         std::cerr << "Too big a stack frame at " << NumBytes << "\n";
+         cerr << "Too big a stack frame at " << NumBytes << "\n";
          abort();
        }
      }

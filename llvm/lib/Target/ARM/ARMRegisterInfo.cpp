@@ -24,7 +24,6 @@
 #include "llvm/Target/TargetOptions.h"
 #include "llvm/Target/TargetInstrInfo.h"
 #include "llvm/ADT/STLExtras.h"
-#include <iostream>
 using namespace llvm;
 
 // hasFP - Return true if the specified function should have a dedicated frame

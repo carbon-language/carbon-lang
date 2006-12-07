@@ -13,6 +13,7 @@
 
 #include "Record.h"
 #include "llvm/Support/DataTypes.h"
+#include "llvm/Support/Streams.h"
 #include <ios>
 
 using namespace llvm;
@@ -21,7 +22,7 @@ using namespace llvm;
 //    Type implementations
 //===----------------------------------------------------------------------===//
 
-void RecTy::dump() const { print(std::cerr); }
+void RecTy::dump() const { print(*cerr.stream()); }
 
 Init *BitRecTy::convertValue(BitsInit *BI) {
   if (BI->getNumBits() != 1) return 0; // Only accept if just one bit!
@@ -213,7 +214,7 @@ bool RecordRecTy::baseClassOf(const RecordRecTy *RHS) const {
 //    Initializer implementations
 //===----------------------------------------------------------------------===//
 
-void Init::dump() const { return print(std::cerr); }
+void Init::dump() const { return print(*cerr.stream()); }
 
 Init *BitsInit::convertInitializerBitRange(const std::vector<unsigned> &Bits) {
   BitsInit *BI = new BitsInit(Bits.size());
@@ -602,7 +603,7 @@ Init *FieldInit::resolveReferences(Record &R, const RecordVal *RV) {
 
   if (NewRec != Rec) {
     dump();
-    NewRec->dump(); std::cerr << "\n";
+    NewRec->dump(); cerr << "\n";
     return new FieldInit(NewRec, FieldName);
   }
   return this;
@@ -646,7 +647,7 @@ RecordVal::RecordVal(const std::string &N, RecTy *T, unsigned P)
   assert(Value && "Cannot create unset value for current type!");
 }
 
-void RecordVal::dump() const { std::cerr << *this; }
+void RecordVal::dump() const { cerr << *this; }
 
 void RecordVal::print(std::ostream &OS, bool PrintSem) const {
   if (getPrefix()) OS << "field ";
@@ -681,7 +682,7 @@ void Record::resolveReferencesTo(const RecordVal *RV) {
 }
 
 
-void Record::dump() const { std::cerr << *this; }
+void Record::dump() const { cerr << *this; }
 
 std::ostream &llvm::operator<<(std::ostream &OS, const Record &R) {
   OS << R.getName();
@@ -874,7 +875,7 @@ std::string Record::getValueAsCode(const std::string &FieldName) const {
 }
 
 
-void RecordKeeper::dump() const { std::cerr << *this; }
+void RecordKeeper::dump() const { cerr << *this; }
 
 std::ostream &llvm::operator<<(std::ostream &OS, const RecordKeeper &RK) {
   OS << "------------- Classes -----------------\n";

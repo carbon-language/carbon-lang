@@ -24,7 +24,6 @@
 #include "llvm/Support/Debug.h"                   
 #include "llvm/Support/Compiler.h"
 #include "llvm/Target/TargetOptions.h"
-#include <iostream>
 using namespace llvm;
 
 namespace {
@@ -193,7 +192,7 @@ int PPCCodeEmitter::getMachineOpValue(MachineInstr &MI, MachineOperand &MO) {
                                                Reloc,
                                                MO.getMachineBasicBlock()));
   } else {
-    std::cerr << "ERROR: Unknown type of MachineOperand: " << MO << "\n";
+    cerr << "ERROR: Unknown type of MachineOperand: " << MO << "\n";
     abort();
   }
 

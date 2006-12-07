@@ -29,9 +29,7 @@
 #include "llvm/Target/TargetInstrInfo.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/ADT/STLExtras.h"
-#include <iostream>
 using namespace llvm;
-
 
 IA64RegisterInfo::IA64RegisterInfo(const TargetInstrInfo &tii)
   : IA64GenRegisterInfo(IA64::ADJUSTCALLSTACKDOWN, IA64::ADJUSTCALLSTACKUP),

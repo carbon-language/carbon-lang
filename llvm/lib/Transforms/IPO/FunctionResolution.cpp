@@ -29,7 +29,6 @@
 #include "llvm/Assembly/Writer.h"
 #include "llvm/ADT/Statistic.h"
 #include <algorithm>
-#include <iostream>
 using namespace llvm;
 
 namespace {
@@ -65,9 +64,9 @@ static bool ResolveFunctions(Module &M, std::vector<GlobalValue*> &Globals,
           cerr << "WARNING: Linking function '" << Old->getName()
                << "' is causing arguments to be dropped.\n";
           cerr << "WARNING: Prototype: ";
-          WriteAsOperand(std::cerr, Old);
+          WriteAsOperand(*cerr.stream(), Old);
           cerr << " resolved to ";
-          WriteAsOperand(std::cerr, Concrete);
+          WriteAsOperand(*cerr.stream(), Concrete);
           cerr << "\n";
         }
 
@@ -84,10 +83,10 @@ static bool ResolveFunctions(Module &M, std::vector<GlobalValue*> &Globals,
                 ConcreteFT->getParamType(i)->getTypeID()) {
               cerr << "WARNING: Function [" << Old->getName()
                    << "]: Parameter types conflict for: '";
-              WriteTypeSymbolic(std::cerr, OldFT, &M);
+              WriteTypeSymbolic(*cerr.stream(), OldFT, &M);
               cerr << "' (in " 
                    << Old->getParent()->getModuleIdentifier() << ") and '";
-              WriteTypeSymbolic(std::cerr, ConcreteFT, &M);
+              WriteTypeSymbolic(*cerr.stream(), ConcreteFT, &M);
               cerr << "'(in " 
                    << Concrete->getParent()->getModuleIdentifier() << ")\n";
               return Changed;
@@ -254,7 +253,7 @@ static bool ProcessGlobalsWithSameName(Module &M, TargetData &TD,
       cerr << "WARNING: Found global types that are not compatible:\n";
       for (unsigned i = 0; i < Globals.size(); ++i) {
         cerr << "\t";
-        WriteTypeSymbolic(std::cerr, Globals[i]->getType(), &M);
+        WriteTypeSymbolic(*cerr.stream(), Globals[i]->getType(), &M);
         cerr << " %" << Globals[i]->getName() << "\n";
       }
     }

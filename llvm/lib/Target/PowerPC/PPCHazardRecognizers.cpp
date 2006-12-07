@@ -16,9 +16,7 @@
 #include "PPC.h"
 #include "PPCInstrInfo.h"
 #include "llvm/Support/Debug.h"
-#include <iostream>
 using namespace llvm;
-
 
 //===----------------------------------------------------------------------===//
 // PowerPC 970 Hazard Recognizer
@@ -52,7 +50,7 @@ PPCHazardRecognizer970::PPCHazardRecognizer970(const TargetInstrInfo &tii)
 }
 
 void PPCHazardRecognizer970::EndDispatchGroup() {
-  DEBUG(std::cerr << "=== Start of dispatch group\n");
+  DOUT << "=== Start of dispatch group\n";
   NumIssued = 0;
   
   // Structural hazard info.

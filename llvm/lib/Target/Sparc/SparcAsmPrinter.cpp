@@ -30,7 +30,6 @@
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/MathExtras.h"
 #include <cctype>
-#include <iostream>
 using namespace llvm;
 
 namespace {
@@ -266,13 +265,13 @@ bool SparcAsmPrinter::doFinalization(Module &M) {
             SwitchToDataSection(".data", I);
           break;
         case GlobalValue::GhostLinkage:
-          std::cerr << "Should not have any unmaterialized functions!\n";
+          cerr << "Should not have any unmaterialized functions!\n";
           abort();
         case GlobalValue::DLLImportLinkage:
-          std::cerr << "DLLImport linkage is not supported by this target!\n";
+          cerr << "DLLImport linkage is not supported by this target!\n";
           abort();
         case GlobalValue::DLLExportLinkage:
-          std::cerr << "DLLExport linkage is not supported by this target!\n";
+          cerr << "DLLExport linkage is not supported by this target!\n";
           abort();
         default:
           assert(0 && "Unknown linkage type!");          

@@ -41,7 +41,6 @@
 #include "llvm/Target/TargetOptions.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/ADT/StringExtras.h"
-#include <iostream>
 #include <set>
 using namespace llvm;
 
@@ -295,7 +294,7 @@ namespace {
 void PPCAsmPrinter::printOp(const MachineOperand &MO) {
   switch (MO.getType()) {
   case MachineOperand::MO_Immediate:
-    std::cerr << "printOp() does not handle immediate values\n";
+    cerr << "printOp() does not handle immediate values\n";
     abort();
     return;
 
@@ -629,7 +628,7 @@ bool DarwinAsmPrinter::doFinalization(Module &M) {
         SwitchToDataSection("\t.data", I);
         break;
       default:
-        std::cerr << "Unknown linkage type!";
+        cerr << "Unknown linkage type!";
         abort();
       }
 

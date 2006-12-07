@@ -18,7 +18,6 @@
 #include "llvm/Config/alloca.h"
 #include "llvm/Support/Debug.h"
 #include <cstdlib>
-#include <iostream>
 #include <map>
 using namespace llvm;
 
@@ -58,12 +57,12 @@ static void EmitBranchToAt(void *At, void *To) {
 
   AtI[0] = BUILD_OR(0, 27, 27);
 
-  DEBUG(std::cerr << "Stub targeting " << To << "\n");
+  DOUT << "Stub targeting " << To << "\n";
 
   for (int x = 1; x <= 8; ++x) {
     AtI[2*x - 1] = BUILD_SLLi(27,27,8);
     unsigned d = (Fn >> (64 - 8 * x)) & 0x00FF;
-    //    DEBUG(std::cerr << "outputing " << hex << d << dec << "\n");
+    //DOUT << "outputing " << hex << d << dec << "\n";
     AtI[2*x] = BUILD_ORi(27, 27, d);
   }
   AtI[17] = BUILD_JMP(31,27,0); //jump, preserving ra, and setting pv
@@ -87,12 +86,12 @@ extern "C" {
 
     //rewrite the stub to an unconditional branch
     if (((unsigned*)CameFromStub)[18] == 0x00FFFFFF) {
-      DEBUG(std::cerr << "Came from a stub, rewriting\n");
+      DOUT << "Came from a stub, rewriting\n";
       EmitBranchToAt(CameFromStub, Target);
     } else {
-      DEBUG(std::cerr << "confused, didn't come from stub at " << CameFromStub
-            << " old jump vector " << oldpv
-            << " new jump vector " << Target << "\n");
+      DOUT << "confused, didn't come from stub at " << CameFromStub
+           << " old jump vector " << oldpv
+           << " new jump vector " << Target << "\n";
     }
 
     //Change pv to new Target
@@ -185,7 +184,7 @@ extern "C" {
       );
 #else
   void AlphaCompilationCallback() {
-    std::cerr << "Cannot call AlphaCompilationCallback() on a non-Alpha arch!\n";
+    cerr << "Cannot call AlphaCompilationCallback() on a non-Alpha arch!\n";
     abort();
   }
 #endif
@@ -199,7 +198,7 @@ void *AlphaJITInfo::emitFunctionStub(void *Fn, MachineCodeEmitter &MCE) {
   for (int x = 0; x < 19; ++ x)
     MCE.emitWordLE(0);
   EmitBranchToAt(Addr, Fn);
-  DEBUG(std::cerr << "Emitting Stub to " << Fn << " at [" << Addr << "]\n");
+  DOUT << "Emitting Stub to " << Fn << " at [" << Addr << "]\n";
   return MCE.finishFunctionStub(0);
 }
 
@@ -250,30 +249,30 @@ void AlphaJITInfo::relocate(void *Function, MachineRelocation *MR,
     case Alpha::reloc_literal:
       //This is a LDQl
       idx = MR->getGOTIndex();
-      DEBUG(std::cerr << "Literal relocation to slot " << idx);
+      DOUT << "Literal relocation to slot " << idx;
       idx = (idx - GOToffset) * 8;
-      DEBUG(std::cerr << " offset " << idx << "\n");
+      DOUT << " offset " << idx << "\n";
       break;
     case Alpha::reloc_gprellow:
       idx = (unsigned char*)MR->getResultPointer() - &GOTBase[GOToffset * 8];
       idx = getLower16(idx);
-      DEBUG(std::cerr << "gprellow relocation offset " << idx << "\n");
-      DEBUG(std::cerr << " Pointer is " << (void*)MR->getResultPointer()
-            << " GOT is " << (void*)&GOTBase[GOToffset * 8] << "\n");
+      DOUT << "gprellow relocation offset " << idx << "\n";
+      DOUT << " Pointer is " << (void*)MR->getResultPointer()
+           << " GOT is " << (void*)&GOTBase[GOToffset * 8] << "\n";
       break;
     case Alpha::reloc_gprelhigh:
       idx = (unsigned char*)MR->getResultPointer() - &GOTBase[GOToffset * 8];
       idx = getUpper16(idx);
-      DEBUG(std::cerr << "gprelhigh relocation offset " << idx << "\n");
-      DEBUG(std::cerr << " Pointer is " << (void*)MR->getResultPointer()
-            << " GOT is " << (void*)&GOTBase[GOToffset * 8] << "\n");
+      DOUT << "gprelhigh relocation offset " << idx << "\n";
+      DOUT << " Pointer is " << (void*)MR->getResultPointer()
+           << " GOT is " << (void*)&GOTBase[GOToffset * 8] << "\n";
       break;
     case Alpha::reloc_gpdist:
       switch (*RelocPos >> 26) {
       case 0x09: //LDAH
         idx = &GOTBase[GOToffset * 8] - (unsigned char*)RelocPos;
         idx = getUpper16(idx);
-        DEBUG(std::cerr << "LDAH: " << idx << "\n");
+        DOUT << "LDAH: " << idx << "\n";
         //add the relocation to the map
         gpdistmap[std::make_pair(Function, MR->getConstantVal())] = RelocPos;
         break;
@@ -283,7 +282,7 @@ void AlphaJITInfo::relocate(void *Function, MachineRelocation *MR,
         idx = &GOTBase[GOToffset * 8] -
           (unsigned char*)gpdistmap[std::make_pair(Function, MR->getConstantVal())];
         idx = getLower16(idx);
-        DEBUG(std::cerr << "LDA: " << idx << "\n");
+        DOUT << "LDA: " << idx << "\n";
         break;
       default:
         assert(0 && "Cannot handle gpdist yet");

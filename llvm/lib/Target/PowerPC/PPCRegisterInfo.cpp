@@ -36,7 +36,6 @@
 #include "llvm/Support/MathExtras.h"
 #include "llvm/ADT/STLExtras.h"
 #include <cstdlib>
-#include <iostream>
 using namespace llvm;
 
 /// getRegisterNumbering - Given the enum value for some register, e.g.
@@ -77,7 +76,7 @@ unsigned PPCRegisterInfo::getRegisterNumbering(unsigned RegEnum) {
   case R30:  case X30:  case F30:  case V30: return 30;
   case R31:  case X31:  case F31:  case V31: return 31;
   default:
-    std::cerr << "Unhandled reg in PPCRegisterInfo::getRegisterNumbering!\n";
+    cerr << "Unhandled reg in PPCRegisterInfo::getRegisterNumbering!\n";
     abort();
   }
 }
@@ -234,7 +233,7 @@ void PPCRegisterInfo::copyRegToReg(MachineBasicBlock &MBB,
   } else if (RC == PPC::VRRCRegisterClass) {
     BuildMI(MBB, MI, TII.get(PPC::VOR), DestReg).addReg(SrcReg).addReg(SrcReg);
   } else {
-    std::cerr << "Attempt to copy register that is not GPR or FPR";
+    cerr << "Attempt to copy register that is not GPR or FPR";
     abort();
   }
 }
