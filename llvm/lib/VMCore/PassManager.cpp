@@ -327,8 +327,9 @@ private:
 /// It batches all function passes and basic block pass managers together and
 /// sequence them to process one function at a time before processing next
 /// function.
-class FunctionPassManagerImpl_New : public PMDataManager,
-                                    public ModulePass {
+class FunctionPassManagerImpl_New : public ModulePass, 
+                                    public PMDataManager,
+                                    public PMTopLevelManager {
 public:
   FunctionPassManagerImpl_New(ModuleProvider *P) { /* TODO */ }
   FunctionPassManagerImpl_New() { 
@@ -336,6 +337,10 @@ public:
   }
   ~FunctionPassManagerImpl_New() { /* TODO */ };
  
+  inline void addTopLevelPass(Pass *P) { 
+    addPass(P);
+  }
+
   /// add - Add a pass to the queue of passes to run.  This passes
   /// ownership of the Pass to the PassManager.  When the
   /// PassManager_X is destroyed, the pass will be destroyed as well, so
@@ -402,7 +407,8 @@ private:
 };
 
 /// PassManager_New manages ModulePassManagers
-class PassManagerImpl_New : public PMDataManager {
+class PassManagerImpl_New : public PMDataManager,
+                            public PMTopLevelManager {
 
 public:
 
@@ -422,6 +428,10 @@ public:
   /// Pass Manager itself does not invalidate any analysis info.
   void getAnalysisUsage(AnalysisUsage &Info) const {
     Info.setPreservesAll();
+  }
+
+  inline void addTopLevelPass(Pass *P) {
+    addPass(P);
   }
 
 private:
