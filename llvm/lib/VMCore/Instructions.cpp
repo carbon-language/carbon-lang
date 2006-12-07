@@ -2252,8 +2252,7 @@ BinaryOperator *BinaryOperator::clone() const {
 }
 
 CmpInst* CmpInst::clone() const {
-  return create(Instruction::OtherOps(getOpcode()), getPredicate(), 
-                Ops[0], Ops[1]);
+  return create(getOpcode(), getPredicate(), Ops[0], Ops[1]);
 }
 
 MallocInst *MallocInst::clone()   const { return new MallocInst(*this); }

@@ -378,8 +378,7 @@ struct VISIBILITY_HIDDEN CompareConstantExpr : public ConstantExpr {
   Use Ops[2];
   CompareConstantExpr(Instruction::OtherOps opc, unsigned short pred, 
                       Constant* LHS, Constant* RHS)
-    : ConstantExpr(Type::BoolTy, Instruction::OtherOps(opc), Ops, 2),
-      predicate(pred) {
+    : ConstantExpr(Type::BoolTy, opc, Ops, 2), predicate(pred) {
     OperandList[0].init(LHS, this);
     OperandList[1].init(RHS, this);
   }

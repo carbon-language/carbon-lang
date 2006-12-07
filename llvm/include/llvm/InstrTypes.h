@@ -521,6 +521,11 @@ public:
   /// @brief Implement superclass method.
   virtual CmpInst *clone() const;
 
+  /// @brief Get the opcode casted to the right type
+  OtherOps getOpcode() const {
+    return static_cast<OtherOps>(Instruction::getOpcode());
+  }
+
   /// The predicate for CmpInst is defined by the subclasses but stored in 
   /// the SubclassData field (see Value.h).  We allow it to be fetched here
   /// as the predicate but there is no enum type for it, just the raw unsigned 
