@@ -97,8 +97,7 @@ void VirtRegMap::virtFolded(unsigned VirtReg, MachineInstr *OldMI,
   }
 
   ModRef MRInfo;
-  if (OldMI->getInstrDescriptor()->
-      getOperandConstraint(OpNo, TOI::TIED_TO) != -1) {
+  if (TII.getOperandConstraint(OldMI->getOpcode(), OpNo, TOI::TIED_TO)) {
     // Folded a two-address operand.
     MRInfo = isModRef;
   } else if (OldMI->getOperand(OpNo).isDef()) {
