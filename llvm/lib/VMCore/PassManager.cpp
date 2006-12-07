@@ -173,6 +173,33 @@ void PMTopLevelManager::collectLastUses(std::vector<Pass *> &LastUses,
         LastUses.push_back(LUI->first);
 }
 
+/// Schedule pass P for execution. Make sure that passes required by
+/// P are run before P is run. Update analysis info maintained by
+/// the manager. Remove dead passes. This is a recursive function.
+void PMTopLevelManager::schedulePass(Pass *P, Pass *PM) {
+
+  // TODO : Allocate function manager for this pass, other wise required set
+  // may be inserted into previous function manager
+
+  AnalysisUsage AnUsage;
+  P->getAnalysisUsage(AnUsage);
+  const std::vector<AnalysisID> &RequiredSet = AnUsage.getRequiredSet();
+  for (std::vector<AnalysisID>::const_iterator I = RequiredSet.begin(),
+         E = RequiredSet.end(); I != E; ++I) {
+
+    Pass *AnalysisPass = NULL; // FIXME PM->getAnalysisPass(*I, true);
+    if (!AnalysisPass) {
+      // Schedule this analysis run first.
+      AnalysisPass = (*I)->createPass();
+      schedulePass(AnalysisPass, PM);
+    }
+  }
+
+  // Now all required passes are available.
+  addTopLevelPass(P);
+}
+
+
 //===----------------------------------------------------------------------===//
 // PMDataManager
 
@@ -399,17 +426,8 @@ public:
 
 private:
 
-  /// Add a pass into a passmanager queue. This is used by schedulePasses
+  /// Add a pass into a passmanager queue.
   bool addPass(Pass *p);
-
-  /// Schedule pass P for execution. Make sure that passes required by
-  /// P are run before P is run. Update analysis info maintained by
-  /// the manager. Remove dead passes. This is a recursive function.
-  void schedulePass(Pass *P);
-
-  /// Schedule all passes collected in pass queue using add(). Add all the
-  /// schedule passes into various manager's queue using addPass().
-  void schedulePasses();
 
   // Collection of pass managers
   std::vector<ModulePassManager_New *> PassManagers;
@@ -842,46 +860,6 @@ Pass *PassManagerImpl_New::getAnalysisPassFromManager(AnalysisID AID) {
   return P;
 }
 
-/// Schedule pass P for execution. Make sure that passes required by
-/// P are run before P is run. Update analysis info maintained by
-/// the manager. Remove dead passes. This is a recursive function.
-void PassManagerImpl_New::schedulePass(Pass *P) {
-
-  AnalysisUsage AnUsage;
-  P->getAnalysisUsage(AnUsage);
-  const std::vector<AnalysisID> &RequiredSet = AnUsage.getRequiredSet();
-  for (std::vector<AnalysisID>::const_iterator I = RequiredSet.begin(),
-         E = RequiredSet.end(); I != E; ++I) {
-
-    Pass *AnalysisPass = getAnalysisPassFromManager(*I);
-    if (!AnalysisPass) {
-      // Schedule this analysis run first.
-      AnalysisPass = (*I)->createPass();
-      schedulePass(AnalysisPass);
-    }
-    setLastUser (AnalysisPass, P);
-
-    // Prolong live range of analyses that are needed after an analysis pass
-    // is destroyed, for querying by subsequent passes
-    const std::vector<AnalysisID> &IDs = AnUsage.getRequiredTransitiveSet();
-    for (std::vector<AnalysisID>::const_iterator I = IDs.begin(),
-           E = IDs.end(); I != E; ++I) {
-      Pass *AP = getAnalysisPassFromManager(*I);
-      assert (AP && "Analysis pass is not available");
-      setLastUser(AP, P);
-    }
-  }
-  addPass(P);
-}
-
-/// Schedule all passes from the queue by adding them in their
-/// respective manager's queue. 
-void PassManagerImpl_New::schedulePasses() {
-  for (std::vector<Pass *>::iterator I = passVectorBegin(),
-         E = passVectorEnd(); I != E; ++I)
-    schedulePass (*I);
-}
-
 /// Add pass P to the queue of passes to run.
 void PassManagerImpl_New::add(Pass *P) {
   // Do not process Analysis now. Analysis is process while scheduling
@@ -906,7 +884,6 @@ bool PassManagerImpl_New::addPass(Pass *P) {
 /// whether any of the passes modifies the module, and if so, return true.
 bool PassManagerImpl_New::run(Module &M) {
 
-  schedulePasses();
   bool Changed = false;
   for (std::vector<ModulePassManager_New *>::iterator itr = PassManagers.begin(),
          e = PassManagers.end(); itr != e; ++itr) {
