@@ -14,11 +14,11 @@
 #include "llvm/Support/Timer.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/ManagedStatic.h"
+#include "llvm/Support/Streams.h"
 #include "llvm/System/Process.h"
 #include <algorithm>
 #include <fstream>
 #include <functional>
-#include <iostream>
 #include <map>
 using namespace llvm;
 
@@ -263,17 +263,17 @@ std::ostream *
 llvm::GetLibSupportInfoOutputFile() {
   std::string &LibSupportInfoOutputFilename = getLibSupportInfoOutputFilename();
   if (LibSupportInfoOutputFilename.empty())
-    return &std::cerr;
+    return cerr.stream();
   if (LibSupportInfoOutputFilename == "-")
-    return &std::cout;
+    return cout.stream();
 
   std::ostream *Result = new std::ofstream(LibSupportInfoOutputFilename.c_str(),
                                            std::ios::app);
   if (!Result->good()) {
-    std::cerr << "Error opening info-output-file '"
-              << LibSupportInfoOutputFilename << " for appending!\n";
+    cerr << "Error opening info-output-file '"
+         << LibSupportInfoOutputFilename << " for appending!\n";
     delete Result;
-    return &std::cerr;
+    return cerr.stream();
   }
   return Result;
 }
@@ -342,7 +342,7 @@ void TimerGroup::removeTimer() {
 
     TimersToPrint.clear();
 
-    if (OutStream != &std::cerr && OutStream != &std::cout)
+    if (OutStream != cerr.stream() && OutStream != cout.stream())
       delete OutStream;   // Close the file...
   }
 

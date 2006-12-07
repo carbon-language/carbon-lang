@@ -19,7 +19,6 @@
 #include "llvm/Target/TargetInstrInfo.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Support/LeakDetector.h"
-#include <iostream>
 #include <algorithm>
 using namespace llvm;
 
@@ -87,7 +86,7 @@ MachineBasicBlock::iterator MachineBasicBlock::getFirstTerminator() {
 }
 
 void MachineBasicBlock::dump() const {
-  print(std::cerr);
+  print(*cerr.stream());
 }
 
 void MachineBasicBlock::print(std::ostream &OS) const {

@@ -26,7 +26,6 @@
 #include "llvm/ADT/SetVector.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StringExtras.h"
-#include <iostream>
 #include <set>
 #include <algorithm>
 #include <cmath>
@@ -2887,7 +2886,7 @@ void SDNode::dump(const SelectionDAG *G) const {
              dyn_cast<GlobalAddressSDNode>(this)) {
     int offset = GADN->getOffset();
     cerr << "<";
-    WriteAsOperand(std::cerr, GADN->getGlobal()) << ">";
+    WriteAsOperand(*cerr.stream(), GADN->getGlobal()) << ">";
     if (offset > 0)
       cerr << " + " << offset;
     else

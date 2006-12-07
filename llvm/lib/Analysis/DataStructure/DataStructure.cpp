@@ -26,7 +26,6 @@
 #include "llvm/ADT/SCCIterator.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/Support/Timer.h"
-#include <iostream>
 #include <algorithm>
 using namespace llvm;
 
@@ -721,10 +720,10 @@ bool DSNode::mergeTypeInfo(const Type *NewTy, unsigned Offset,
     M = getParentGraph()->retnodes_begin()->first->getParent();
 
   DOUT << "MergeTypeInfo Folding OrigTy: ";
-  DEBUG(WriteTypeSymbolic(std::cerr, Ty, M) << "\n due to:";
-        WriteTypeSymbolic(std::cerr, NewTy, M) << " @ " << Offset << "!\n"
-                                               << "SubType: ";
-        WriteTypeSymbolic(std::cerr, SubType, M) << "\n\n");
+  DEBUG(WriteTypeSymbolic(*cerr.stream(), Ty, M) << "\n due to:";
+        WriteTypeSymbolic(*cerr.stream(), NewTy, M) << " @ " << Offset << "!\n"
+                                                    << "SubType: ";
+        WriteTypeSymbolic(*cerr.stream(), SubType, M) << "\n\n");
 
   if (FoldIfIncompatible) foldNodeCompletely();
   return true;

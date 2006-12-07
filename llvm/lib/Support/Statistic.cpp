@@ -23,9 +23,8 @@
 
 #include "llvm/ADT/Statistic.h"
 #include "llvm/Support/CommandLine.h"
+#include "llvm/Support/Streams.h"
 #include "llvm/ADT/StringExtras.h"
-#include <sstream>
-#include <iostream>
 #include <algorithm>
 using namespace llvm;
 
@@ -100,7 +99,7 @@ Statistic::~Statistic() {
     // Free all accumulated statistics...
     delete AccumStats;
     AccumStats = 0;
-    if (OutStream != &std::cerr && OutStream != &std::cout)
+    if (OutStream != cerr.stream() && OutStream != cout.stream())
       delete OutStream;   // Close the file...
   }
 }

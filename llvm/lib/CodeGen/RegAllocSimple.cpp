@@ -27,7 +27,6 @@
 #include "llvm/Support/Compiler.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/ADT/STLExtras.h"
-#include <iostream>
 using namespace llvm;
 
 namespace {
@@ -192,7 +191,7 @@ void RegAllocSimple::AllocateBasicBlock(MachineBasicBlock &MBB) {
         unsigned virtualReg = (unsigned) op.getReg();
         DOUT << "op: " << op << "\n";
         DOUT << "\t inst[" << i << "]: ";
-        DEBUG(MI->print(std::cerr, TM));
+        DEBUG(MI->print(*cerr.stream(), TM));
 
         // make sure the same virtual register maps to the same physical
         // register in any given instruction

@@ -29,7 +29,6 @@
 #include "llvm/Support/InstIterator.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Streams.h"
-#include <iostream>
 #include <set>
 using namespace llvm;
 
@@ -80,8 +79,8 @@ static inline void PrintResults(const char *Msg, bool P, Value *V1, Value *V2,
                                 Module *M) {
   if (P) {
     cerr << "  " << Msg << ":\t";
-    WriteAsOperand(std::cerr, V1, true, M) << ", ";
-    WriteAsOperand(std::cerr, V2, true, M) << "\n";
+    WriteAsOperand(*cerr.stream(), V1, true, M) << ", ";
+    WriteAsOperand(*cerr.stream(), V2, true, M) << "\n";
   }
 }
 
@@ -90,7 +89,7 @@ PrintModRefResults(const char *Msg, bool P, Instruction *I, Value *Ptr,
                    Module *M) {
   if (P) {
     cerr << "  " << Msg << ":  Ptr: ";
-    WriteAsOperand(std::cerr, Ptr, true, M);
+    WriteAsOperand(*cerr.stream(), Ptr, true, M);
     cerr << "\t<->" << *I;
   }
 }

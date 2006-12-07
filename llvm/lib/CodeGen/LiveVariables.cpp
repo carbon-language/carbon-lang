@@ -35,27 +35,26 @@
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/Config/alloca.h"
 #include <algorithm>
-#include <iostream>
 using namespace llvm;
 
 static RegisterPass<LiveVariables> X("livevars", "Live Variable Analysis");
 
 void LiveVariables::VarInfo::dump() const {
-  std::cerr << "Register Defined by: ";
+  cerr << "Register Defined by: ";
   if (DefInst) 
-    std::cerr << *DefInst;
+    cerr << *DefInst;
   else
-    std::cerr << "<null>\n";
-  std::cerr << "  Alive in blocks: ";
+    cerr << "<null>\n";
+  cerr << "  Alive in blocks: ";
   for (unsigned i = 0, e = AliveBlocks.size(); i != e; ++i)
-    if (AliveBlocks[i]) std::cerr << i << ", ";
-  std::cerr << "\n  Killed by:";
+    if (AliveBlocks[i]) cerr << i << ", ";
+  cerr << "\n  Killed by:";
   if (Kills.empty())
-    std::cerr << " No instructions.\n";
+    cerr << " No instructions.\n";
   else {
     for (unsigned i = 0, e = Kills.size(); i != e; ++i)
-      std::cerr << "\n    #" << i << ": " << *Kills[i];
-    std::cerr << "\n";
+      cerr << "\n    #" << i << ": " << *Kills[i];
+    cerr << "\n";
   }
 }
 

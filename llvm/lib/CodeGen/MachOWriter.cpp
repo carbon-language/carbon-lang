@@ -32,7 +32,6 @@
 #include "llvm/Support/Mangler.h"
 #include "llvm/Support/MathExtras.h"
 #include <algorithm>
-#include <iostream>
 using namespace llvm;
 
 //===----------------------------------------------------------------------===//

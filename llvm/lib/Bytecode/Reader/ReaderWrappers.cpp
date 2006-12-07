@@ -21,9 +21,7 @@
 #include "llvm/System/MappedFile.h"
 #include "llvm/System/Program.h"
 #include <cerrno>
-#include <iostream>
 #include <memory>
-
 using namespace llvm;
 
 //===----------------------------------------------------------------------===//
@@ -164,9 +162,9 @@ BytecodeStdinReader::read(std::string* ErrMsg)
   char Buffer[4096*4];
 
   // Read in all of the data from stdin, we cannot mmap stdin...
-  while (std::cin.good()) {
-    std::cin.read(Buffer, 4096*4);
-    int BlockSize = std::cin.gcount();
+  while (cin.stream()->good()) {
+    cin.stream()->read(Buffer, 4096*4);
+    int BlockSize = cin.stream()->gcount();
     if (0 >= BlockSize)
       break;
     FileData.insert(FileData.end(), Buffer, Buffer+BlockSize);

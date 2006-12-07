@@ -18,7 +18,6 @@
 #include "llvm/Assembly/Writer.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Streams.h"
-#include <iostream>
 using namespace llvm;
 
 namespace {
@@ -131,9 +130,9 @@ AliasAnalysisCounter::alias(const Value *V1, unsigned V1Size,
   if (PrintAll || (PrintAllFailures && R == MayAlias)) {
     cerr << AliasString << ":\t";
     cerr << "[" << V1Size << "B] ";
-    WriteAsOperand(std::cerr, V1, true, M) << ", ";
+    WriteAsOperand(*cerr.stream(), V1, true, M) << ", ";
     cerr << "[" << V2Size << "B] ";
-    WriteAsOperand(std::cerr, V2, true, M) << "\n";
+    WriteAsOperand(*cerr.stream(), V2, true, M) << "\n";
   }
 
   return R;
@@ -155,7 +154,7 @@ AliasAnalysisCounter::getModRefInfo(CallSite CS, Value *P, unsigned Size) {
   if (PrintAll || (PrintAllFailures && R == ModRef)) {
     cerr << MRString << ":  Ptr: ";
     cerr << "[" << Size << "B] ";
-    WriteAsOperand(std::cerr, P, true, M);
+    WriteAsOperand(*cerr.stream(), P, true, M);
     cerr << "\t<->" << *CS.getInstruction();
   }
   return R;

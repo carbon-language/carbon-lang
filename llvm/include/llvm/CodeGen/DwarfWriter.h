@@ -20,7 +20,7 @@
 #ifndef LLVM_CODEGEN_DWARFWRITER_H
 #define LLVM_CODEGEN_DWARFWRITER_H
 
-#include <iostream>
+#include <iosfwd>
 
 namespace llvm {
 

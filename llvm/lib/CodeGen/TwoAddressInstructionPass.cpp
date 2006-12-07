@@ -41,7 +41,6 @@
 #include "llvm/Support/Compiler.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/ADT/STLExtras.h"
-#include <iostream>
 using namespace llvm;
 
 namespace {
@@ -102,7 +101,7 @@ bool TwoAddressInstructionPass::runOnMachineFunction(MachineFunction &MF) {
 
         if (FirstTied) {
           ++NumTwoAddressInstrs;
-          DOUT << '\t'; DEBUG(mi->print(std::cerr, &TM));
+          DOUT << '\t'; DEBUG(mi->print(*cerr.stream(), &TM));
         }
         FirstTied = false;
 
@@ -195,7 +194,7 @@ bool TwoAddressInstructionPass::runOnMachineFunction(MachineFunction &MF) {
           MRI.copyRegToReg(*mbbi, mi, regA, regB, rc);
 
           MachineBasicBlock::iterator prevMi = prior(mi);
-          DOUT << "\t\tprepend:\t"; DEBUG(prevMi->print(std::cerr, &TM));
+          DOUT << "\t\tprepend:\t"; DEBUG(prevMi->print(*cerr.stream(), &TM));
 
           // Update live variables for regA
           LiveVariables::VarInfo& varInfo = LV.getVarInfo(regA);
@@ -220,7 +219,7 @@ bool TwoAddressInstructionPass::runOnMachineFunction(MachineFunction &MF) {
         mi->getOperand(ti).setReg(mi->getOperand(si).getReg());
         MadeChange = true;
 
-        DOUT << "\t\trewrite to:\t"; DEBUG(mi->print(std::cerr, &TM));
+        DOUT << "\t\trewrite to:\t"; DEBUG(mi->print(*cerr.stream(), &TM));
       }
     }
   }
