@@ -296,6 +296,7 @@ bool ARMAsmPrinter::doFinalization(Module &M) {
     unsigned Align = TD->getTypeAlignment(C->getType());
 
     if (C->isNullValue() &&
+        !I->hasSection() &&
         (I->hasLinkOnceLinkage() || I->hasInternalLinkage() ||
          I->hasWeakLinkage())) {
       SwitchToDataSection(".data", I);
