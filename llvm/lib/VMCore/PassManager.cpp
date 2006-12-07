@@ -367,6 +367,7 @@ private:
 
 } // End of llvm namespace
 
+//===----------------------------------------------------------------------===//
 // PMDataManager implementation
 
 /// Return true IFF pass P's required analysis set does not required new
@@ -470,7 +471,8 @@ void PMDataManager::initializeAnalysisImpl(Pass *P) {
   }
 }
 
-/// BasicBlockPassManager implementation
+//===----------------------------------------------------------------------===//
+// BasicBlockPassManager_New implementation
 
 /// Add pass P into PassVector and return true. If this pass is not
 /// manageable by this manager then return false.
@@ -519,7 +521,9 @@ Pass * BasicBlockPassManager_New::getAnalysisPassFromManager(AnalysisID AID) {
   return getAnalysisPass(AID);
 }
 
+//===----------------------------------------------------------------------===//
 // FunctionPassManager_New implementation
+
 /// Create new Function pass manager
 FunctionPassManager_New::FunctionPassManager_New() {
   FPM = new FunctionPassManagerImpl_New();
@@ -567,9 +571,8 @@ bool FunctionPassManager_New::doFinalization() {
   return FPM->doFinalization(*MP->getModule());
 }
 
+//===----------------------------------------------------------------------===//
 // FunctionPassManagerImpl_New implementation
-
-// FunctionPassManager
 
 /// Add pass P into the pass manager queue. If P is a BasicBlockPass then
 /// either use it into active basic block pass manager or create new basic
@@ -693,7 +696,7 @@ inline bool FunctionPassManagerImpl_New::doFinalization(Module &M) {
   return Changed;
 }
 
-
+//===----------------------------------------------------------------------===//
 // ModulePassManager implementation
 
 /// Add P into pass vector if it is manageble. If P is a FunctionPass
@@ -769,6 +772,9 @@ Pass *ModulePassManager_New::getAnalysisPassFromManager(AnalysisID AID) {
   // TODO : Check inactive managers
   return NULL;
 }
+
+//===----------------------------------------------------------------------===//
+// PassManagerImpl implementation
 
 /// Return true IFF AnalysisID AID is currently available.
 Pass *PassManagerImpl_New::getAnalysisPassFromManager(AnalysisID AID) {
@@ -853,6 +859,9 @@ bool PassManagerImpl_New::run(Module &M) {
   }
   return Changed;
 }
+
+//===----------------------------------------------------------------------===//
+// PassManager implementation
 
 /// Create new pass manager
 PassManager_New::PassManager_New() {
