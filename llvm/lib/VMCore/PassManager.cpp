@@ -533,12 +533,11 @@ void PMDataManager::addPassToManager(Pass *P,
                                      bool ProcessAnalysis) {
 
   if (ProcessAnalysis) {
-    // Take a note of analysis required and made available by this pass
-    initializeAnalysisImpl(P);
-    recordAvailableAnalysis(P);
-
+    // Take a note of analysis required and made available by this pass.
     // Remove the analysis not preserved by this pass
+    initializeAnalysisImpl(P);
     removeNotPreservedAnalysis(P);
+    recordAvailableAnalysis(P);
   }
 
   // Add pass
@@ -600,10 +599,10 @@ BasicBlockPassManager_New::runOnFunction(Function &F) {
            e = passVectorEnd(); itr != e; ++itr) {
       Pass *P = *itr;
       
-      recordAvailableAnalysis(P);
       BasicBlockPass *BP = dynamic_cast<BasicBlockPass*>(P);
       Changed |= BP->runOnBasicBlock(*I);
       removeNotPreservedAnalysis(P);
+      recordAvailableAnalysis(P);
       removeDeadPasses(P);
     }
   return Changed;
@@ -718,10 +717,10 @@ bool FunctionPassManagerImpl_New::runOnModule(Module &M) {
            e = passVectorEnd(); itr != e; ++itr) {
       Pass *P = *itr;
       
-      recordAvailableAnalysis(P);
       FunctionPass *FP = dynamic_cast<FunctionPass*>(P);
       Changed |= FP->runOnFunction(*I);
       removeNotPreservedAnalysis(P);
+      recordAvailableAnalysis(P);
       removeDeadPasses(P);
     }
   return Changed;
@@ -739,10 +738,10 @@ bool FunctionPassManagerImpl_New::runOnFunction(Function &F) {
          e = passVectorEnd(); itr != e; ++itr) {
     Pass *P = *itr;
     
-    recordAvailableAnalysis(P);
     FunctionPass *FP = dynamic_cast<FunctionPass*>(P);
     Changed |= FP->runOnFunction(F);
     removeNotPreservedAnalysis(P);
+    recordAvailableAnalysis(P);
     removeDeadPasses(P);
   }
   return Changed;
@@ -848,10 +847,10 @@ ModulePassManager_New::runOnModule(Module &M) {
          e = passVectorEnd(); itr != e; ++itr) {
     Pass *P = *itr;
 
-    recordAvailableAnalysis(P);
     ModulePass *MP = dynamic_cast<ModulePass*>(P);
     Changed |= MP->runOnModule(M);
     removeNotPreservedAnalysis(P);
+    recordAvailableAnalysis(P);
     removeDeadPasses(P);
   }
   return Changed;
