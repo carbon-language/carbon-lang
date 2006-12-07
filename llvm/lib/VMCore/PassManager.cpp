@@ -241,7 +241,7 @@ public:
   /// AvailableAnalysis appropriately if ProcessAnalysis is true.
   void addPassToManager (Pass *P, bool ProcessAnalysis = true);
 
-  // Initialize available analysis information.
+  /// Initialize available analysis information.
   void initializeAnalysisInfo() { 
     AvailableAnalysis.clear();
 
@@ -252,12 +252,16 @@ public:
       recordAvailableAnalysis(*I);
   }
 
-  // All Required analyses should be available to the pass as it runs!  Here
-  // we fill in the AnalysisImpls member of the pass so that it can
-  // successfully use the getAnalysis() method to retrieve the
-  // implementations it needs.
-  //
- void initializeAnalysisImpl(Pass *P);
+  /// Populate RequiredPasses with the analysis pass that are required by
+  /// pass P.
+  void collectRequiredAnalysisPasses(std::vector<Pass *> &RequiredPasses,
+                                     Pass *P);
+
+  /// All Required analyses should be available to the pass as it runs!  Here
+  /// we fill in the AnalysisImpls member of the pass so that it can
+  /// successfully use the getAnalysis() method to retrieve the
+  /// implementations it needs.
+  void initializeAnalysisImpl(Pass *P);
 
   inline std::vector<Pass *>::iterator passVectorBegin() { 
     return PassVector.begin(); 
@@ -518,6 +522,22 @@ void PMDataManager::addPassToManager(Pass *P,
 
   // Add pass
   PassVector.push_back(P);
+}
+
+/// Populate RequiredPasses with the analysis pass that are required by
+/// pass P.
+void PMDataManager::collectRequiredAnalysisPasses(std::vector<Pass *> &RP,
+                                                  Pass *P) {
+  AnalysisUsage AnUsage;
+  P->getAnalysisUsage(AnUsage);
+  const std::vector<AnalysisID> &RequiredSet = AnUsage.getRequiredSet();
+  for (std::vector<AnalysisID>::const_iterator 
+         I = RequiredSet.begin(), E = RequiredSet.end();
+       I != E; ++I) {
+    Pass *AnalysisPass = NULL; //FIXME findAnalysisPass(*I,true);
+    assert (AnalysisPass && "Analysis pass is not available");
+    RP.push_back(AnalysisPass);
+  }
 }
 
 // All Required analyses should be available to the pass as it runs!  Here
