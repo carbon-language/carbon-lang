@@ -346,7 +346,9 @@ public:
   /// PassManager_X is destroyed, the pass will be destroyed as well, so
   /// there is no need to delete the pass. (TODO delete passes.)
   /// This implies that all passes MUST be allocated with 'new'.
-  void add(Pass *P) { /* TODO*/  }
+  void add(Pass *P) { 
+    schedulePass(P, this);
+  }
 
   /// Add pass into the pass manager queue.
   bool addPass(Pass *P);
@@ -407,7 +409,8 @@ private:
 };
 
 /// PassManager_New manages ModulePassManagers
-class PassManagerImpl_New : public PMDataManager,
+class PassManagerImpl_New : public Pass,
+                            public PMDataManager,
                             public PMTopLevelManager {
 
 public:
@@ -416,7 +419,9 @@ public:
   /// the Pass to the PassManager.  When the PassManager is destroyed, the pass
   /// will be destroyed as well, so there is no need to delete the pass.  This
   /// implies that all passes MUST be allocated with 'new'.
-  void add(Pass *P);
+  void add(Pass *P) {
+    schedulePass(P, this);
+  }
  
   /// run - Execute all of the passes scheduled for execution.  Keep track of
   /// whether any of the passes modifies the module, and if so, return true.
@@ -868,13 +873,6 @@ Pass *PassManagerImpl_New::getAnalysisPassFromManager(AnalysisID AID) {
          e = PassManagers.end(); !P && itr != e; ++itr)
     P  = (*itr)->getAnalysisPassFromManager(AID);
   return P;
-}
-
-/// Add pass P to the queue of passes to run.
-void PassManagerImpl_New::add(Pass *P) {
-  // Do not process Analysis now. Analysis is process while scheduling
-  // the pass vector.
-  addPassToManager(P, false);
 }
 
 // PassManager_New implementation
