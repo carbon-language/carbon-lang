@@ -244,7 +244,6 @@ public:
   // Initialize available analysis information.
   void initializeAnalysisInfo() { 
     AvailableAnalysis.clear();
-    LastUser.clear();
 
     // Include immutable passes into AvailableAnalysis vector.
     std::vector<ImmutablePass *> &ImmutablePasses =  TPM->getImmutablePasses();
@@ -268,11 +267,6 @@ public:
     return PassVector.end();
   }
 
-  inline void setLastUser(Pass *P, Pass *LU) {
-    LastUser[P] = LU; 
-    // TODO : Check if pass P is available.
-  }
-
   // Access toplevel manager
   PMTopLevelManager *getTopLevelManager() { return TPM; }
   void setTopLevelManager(PMTopLevelManager *T) { TPM = T; }
@@ -283,10 +277,6 @@ private:
   // equired analysis pass is scheduled to run before the pass itself is 
   // scheduled to run.
   std::map<AnalysisID, Pass*> AvailableAnalysis;
-
-  // Map to keep track of last user of the analysis pass.
-  // LastUser->second is the last user of Lastuser->first.
-  std::map<Pass *, Pass *> LastUser;
 
   // Collection of pass that are managed by this manager
   std::vector<Pass *> PassVector;
@@ -510,21 +500,7 @@ void PMDataManager::removeNotPreservedAnalysis(Pass *P) {
 
 /// Remove analysis passes that are not used any longer
 void PMDataManager::removeDeadPasses(Pass *P) {
-
-  for (std::map<Pass *, Pass *>::iterator I = LastUser.begin(),
-         E = LastUser.end(); I !=E; ++I) {
-    if (I->second == P) {
-      Pass *deadPass = I->first;
-      deadPass->releaseMemory();
-
-      std::map<AnalysisID, Pass*>::iterator Pos = 
-        AvailableAnalysis.find(deadPass->getPassInfo());
-      
-      assert (Pos != AvailableAnalysis.end() &&
-              "Pass is not available");
-      AvailableAnalysis.erase(Pos);
-    }
-  }
+  // TODO : reimplement
 }
 
 /// Add pass P into the PassVector. Update 
