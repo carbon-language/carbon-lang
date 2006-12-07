@@ -62,7 +62,7 @@ namespace llvm {
   };
 
   std::ostream& operator<<(std::ostream& os, const LiveRange &LR);
-  inline llvm_ostream& operator<<(llvm_ostream& os, const LiveRange &LR) {
+  inline OStream& operator<<(OStream& os, const LiveRange &LR) {
     if (os.stream()) *os.stream() << LR;
     return os;
   }
@@ -258,9 +258,9 @@ namespace llvm {
       return beginNumber() < other.beginNumber();
     }
 
-    void print(llvm_ostream OS, const MRegisterInfo *MRI = 0) const;
+    void print(OStream OS, const MRegisterInfo *MRI = 0) const;
     void print(std::ostream &OS, const MRegisterInfo *MRI = 0) const {
-      print(llvm_ostream(OS), MRI);
+      print(OStream(OS), MRI);
     }
     void dump() const;
 
@@ -271,7 +271,7 @@ namespace llvm {
     LiveInterval& operator=(const LiveInterval& rhs); // DO NOT IMPLEMENT
   };
 
-  inline llvm_ostream &operator<<(llvm_ostream &OS, const LiveInterval &LI) {
+  inline OStream &operator<<(OStream &OS, const LiveInterval &LI) {
     LI.print(OS);
     return OS;
   }

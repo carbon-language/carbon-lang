@@ -50,11 +50,11 @@ int main(int argc, char **argv) {
 
     std::auto_ptr<Module> M(ParseBytecodeFile(InputFilename, &ErrorMessage));
     if (M.get() == 0) {
-      llvm_cerr << argv[0] << ": ";
+      cerr << argv[0] << ": ";
       if (ErrorMessage.size())
-        llvm_cerr << ErrorMessage << "\n";
+        cerr << ErrorMessage << "\n";
       else
-        llvm_cerr << "bytecode didn't read correctly.\n";
+        cerr << "bytecode didn't read correctly.\n";
       return 1;
     }
 
@@ -62,8 +62,8 @@ int main(int argc, char **argv) {
       if (OutputFilename != "-") { // Not stdout?
         if (!Force && std::ifstream(OutputFilename.c_str())) {
           // If force is not specified, make sure not to overwrite a file!
-          llvm_cerr << argv[0] << ": error opening '" << OutputFilename
-                    << "': file exists! Sending to standard output.\n";
+          cerr << argv[0] << ": error opening '" << OutputFilename
+               << "': file exists! Sending to standard output.\n";
         } else {
           Out = new std::ofstream(OutputFilename.c_str());
         }
@@ -83,8 +83,8 @@ int main(int argc, char **argv) {
 
         if (!Force && std::ifstream(OutputFilename.c_str())) {
           // If force is not specified, make sure not to overwrite a file!
-          llvm_cerr << argv[0] << ": error opening '" << OutputFilename
-                    << "': file exists! Sending to standard output.\n";
+          cerr << argv[0] << ": error opening '" << OutputFilename
+               << "': file exists! Sending to standard output.\n";
         } else {
           Out = new std::ofstream(OutputFilename.c_str());
 
@@ -96,14 +96,14 @@ int main(int argc, char **argv) {
     }
 
     if (!Out->good()) {
-      llvm_cerr << argv[0] << ": error opening " << OutputFilename
-                << ": sending to stdout instead!\n";
+      cerr << argv[0] << ": error opening " << OutputFilename
+           << ": sending to stdout instead!\n";
       Out = &std::cout;
     }
 
     // All that llvm-dis does is write the assembly to a file.
     PassManager Passes;
-    llvm_ostream L(*Out);
+    OStream L(*Out);
     Passes.add(new PrintModulePass(&L));
     Passes.run(*M.get());
 
@@ -113,9 +113,9 @@ int main(int argc, char **argv) {
     }
     return 0;
   } catch (const std::string& msg) {
-    llvm_cerr << argv[0] << ": " << msg << "\n";
+    cerr << argv[0] << ": " << msg << "\n";
   } catch (...) {
-    llvm_cerr << argv[0] << ": Unexpected unknown exception occurred.\n";
+    cerr << argv[0] << ": Unexpected unknown exception occurred.\n";
   }
 
   return 1;

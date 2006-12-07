@@ -55,15 +55,15 @@ int main(int argc, char **argv) {
 
     std::auto_ptr<Module> M(ParseBytecodeFile(InputFilename));
     if (M.get() == 0) {
-      llvm_cerr << argv[0] << ": bytecode didn't read correctly.\n";
+      cerr << argv[0] << ": bytecode didn't read correctly.\n";
       return 1;
     }
 
     // Figure out which function we should extract
     Function *F = M.get()->getNamedFunction(ExtractFunc);
     if (F == 0) {
-      llvm_cerr << argv[0] << ": program doesn't contain function named '"
-                << ExtractFunc << "'!\n";
+      cerr << argv[0] << ": program doesn't contain function named '"
+           << ExtractFunc << "'!\n";
       return 1;
     }
 
@@ -82,9 +82,9 @@ int main(int argc, char **argv) {
     if (OutputFilename != "-") {  // Not stdout?
       if (!Force && std::ifstream(OutputFilename.c_str())) {
         // If force is not specified, make sure not to overwrite a file!
-        llvm_cerr << argv[0] << ": error opening '" << OutputFilename
-                  << "': file exists!\n"
-                  << "Use -f command line argument to force output\n";
+        cerr << argv[0] << ": error opening '" << OutputFilename
+             << "': file exists!\n"
+             << "Use -f command line argument to force output\n";
         return 1;
       }
       std::ios::openmode io_mode = std::ios::out | std::ios::trunc |
@@ -95,7 +95,7 @@ int main(int argc, char **argv) {
       Out = &std::cout;
     }
 
-    llvm_ostream L(*Out);
+    OStream L(*Out);
     Passes.add(new WriteBytecodePass(&L));  // Write bytecode to file...
     Passes.run(*M.get());
 
@@ -103,9 +103,9 @@ int main(int argc, char **argv) {
       delete Out;
     return 0;
   } catch (const std::string& msg) {
-    llvm_cerr << argv[0] << ": " << msg << "\n";
+    cerr << argv[0] << ": " << msg << "\n";
   } catch (...) {
-    llvm_cerr << argv[0] << ": Unexpected unknown exception occurred.\n";
+    cerr << argv[0] << ": Unexpected unknown exception occurred.\n";
   }
   return 1;
 }

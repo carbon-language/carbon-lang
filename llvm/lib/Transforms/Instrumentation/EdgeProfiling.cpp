@@ -17,6 +17,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "ProfilingUtils.h"
 #include "llvm/Constants.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/Module.h"
@@ -24,7 +25,6 @@
 #include "llvm/Support/Streams.h"
 #include "llvm/Transforms/Utils/BasicBlockUtils.h"
 #include "llvm/Transforms/Instrumentation.h"
-#include "ProfilingUtils.h"
 #include <set>
 using namespace llvm;
 
@@ -42,8 +42,8 @@ ModulePass *llvm::createEdgeProfilerPass() { return new EdgeProfiler(); }
 bool EdgeProfiler::runOnModule(Module &M) {
   Function *Main = M.getMainFunction();
   if (Main == 0) {
-    llvm_cerr << "WARNING: cannot insert edge profiling into a module"
-              << " with no main function!\n";
+    cerr << "WARNING: cannot insert edge profiling into a module"
+         << " with no main function!\n";
     return false;  // No main, no instrumentation!
   }
 

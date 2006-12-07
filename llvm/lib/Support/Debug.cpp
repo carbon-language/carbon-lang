@@ -68,9 +68,9 @@ bool llvm::isCurrentDebugType(const char *DebugType) {
 // places the std::c* I/O streams into one .cpp file and relieves the whole
 // program from having to have hundreds of static c'tor/d'tors for them.
 // 
-llvm_ostream llvm::getErrorOutputStream(const char *DebugType) {
+OStream llvm::getErrorOutputStream(const char *DebugType) {
   if (DebugFlag && isCurrentDebugType(DebugType))
-    return llvm_cerr;
+    return cerr;
   else
-    return llvm_null;
+    return NullStream;
 }

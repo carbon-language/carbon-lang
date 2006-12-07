@@ -74,7 +74,7 @@ public:
     AU.setPreservesAll();
   }
 
-  void print(llvm_ostream &o, const Module *M) const {
+  void print(OStream &o, const Module *M) const {
     if (o.stream()) print(*o.stream(), M);
   }
 
@@ -95,7 +95,7 @@ public:
   /// dump - Print out this call graph.
   ///
   inline void dump() const {
-    print(llvm_cerr, Mod);
+    print(cerr, Mod);
   }
 
   CallGraphNode* getExternalCallingNode() const { return ExternalCallingNode; }
@@ -212,7 +212,7 @@ void CallGraph::print(std::ostream &OS, const Module *M) const {
 }
 
 void CallGraph::dump() const {
-  print(llvm_cerr, 0);
+  print(cerr, 0);
 }
 
 //===----------------------------------------------------------------------===//
@@ -275,7 +275,7 @@ void CallGraphNode::print(std::ostream &OS) const {
   OS << "\n";
 }
 
-void CallGraphNode::dump() const { print(llvm_cerr); }
+void CallGraphNode::dump() const { print(cerr); }
 
 void CallGraphNode::removeCallEdgeTo(CallGraphNode *Callee) {
   for (unsigned i = CalledFunctions.size(); ; --i) {

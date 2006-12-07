@@ -25,13 +25,12 @@
 namespace llvm {
 
 class PrintModulePass : public ModulePass {
-  llvm_ostream *Out;      // ostream to print on
+  OStream *Out;           // ostream to print on
   bool DeleteStream;      // Delete the ostream in our dtor?
 public:
-  PrintModulePass() : Out(&llvm_cerr), DeleteStream(false) {}
-  PrintModulePass(llvm_ostream *o, bool DS = false)
-    : Out(o), DeleteStream(DS) {
-  }
+  PrintModulePass() : Out(&cerr), DeleteStream(false) {}
+  PrintModulePass(OStream *o, bool DS = false)
+    : Out(o), DeleteStream(DS) {}
 
   ~PrintModulePass() {
     if (DeleteStream) delete Out;
@@ -49,14 +48,13 @@ public:
 
 class PrintFunctionPass : public FunctionPass {
   std::string Banner;     // String to print before each function
-  llvm_ostream *Out;      // ostream to print on
+  OStream *Out;           // ostream to print on
   bool DeleteStream;      // Delete the ostream in our dtor?
 public:
-  PrintFunctionPass() : Banner(""), Out(&llvm_cerr), DeleteStream(false) {}
-  PrintFunctionPass(const std::string &B, llvm_ostream *o = &llvm_cout,
+  PrintFunctionPass() : Banner(""), Out(&cerr), DeleteStream(false) {}
+  PrintFunctionPass(const std::string &B, OStream *o = &cout,
                     bool DS = false)
-    : Banner(B), Out(o), DeleteStream(DS) {
-  }
+    : Banner(B), Out(o), DeleteStream(DS) {}
 
   inline ~PrintFunctionPass() {
     if (DeleteStream) delete Out;

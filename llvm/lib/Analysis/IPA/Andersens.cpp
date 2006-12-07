@@ -533,7 +533,7 @@ Andersens::Node *Andersens::getNodeForConstantPointer(Constant *C) {
     case Instruction::BitCast:
       return getNodeForConstantPointer(CE->getOperand(0));
     default:
-      llvm_cerr << "Constant Expr not yet handled: " << *CE << "\n";
+      cerr << "Constant Expr not yet handled: " << *CE << "\n";
       assert(0);
     }
   } else {
@@ -560,7 +560,7 @@ Andersens::Node *Andersens::getNodeForConstantPointerTarget(Constant *C) {
     case Instruction::BitCast:
       return getNodeForConstantPointerTarget(CE->getOperand(0));
     default:
-      llvm_cerr << "Constant Expr not yet handled: " << *CE << "\n";
+      cerr << "Constant Expr not yet handled: " << *CE << "\n";
       assert(0);
     }
   } else {
@@ -786,7 +786,7 @@ void Andersens::visitInstruction(Instruction &I) {
     return;
   default:
     // Is this something we aren't handling yet?
-    llvm_cerr << "Unknown instruction: " << I;
+    cerr << "Unknown instruction: " << I;
     abort();
   }
 }
@@ -1104,13 +1104,13 @@ void Andersens::SolveConstraints() {
 
 void Andersens::PrintNode(Node *N) {
   if (N == &GraphNodes[UniversalSet]) {
-    llvm_cerr << "<universal>";
+    cerr << "<universal>";
     return;
   } else if (N == &GraphNodes[NullPtr]) {
-    llvm_cerr << "<nullptr>";
+    cerr << "<nullptr>";
     return;
   } else if (N == &GraphNodes[NullObject]) {
-    llvm_cerr << "<null>";
+    cerr << "<null>";
     return;
   }
 
@@ -1119,56 +1119,56 @@ void Andersens::PrintNode(Node *N) {
   if (Function *F = dyn_cast<Function>(V)) {
     if (isa<PointerType>(F->getFunctionType()->getReturnType()) &&
         N == getReturnNode(F)) {
-      llvm_cerr << F->getName() << ":retval";
+      cerr << F->getName() << ":retval";
       return;
     } else if (F->getFunctionType()->isVarArg() && N == getVarargNode(F)) {
-      llvm_cerr << F->getName() << ":vararg";
+      cerr << F->getName() << ":vararg";
       return;
     }
   }
 
   if (Instruction *I = dyn_cast<Instruction>(V))
-    llvm_cerr << I->getParent()->getParent()->getName() << ":";
+    cerr << I->getParent()->getParent()->getName() << ":";
   else if (Argument *Arg = dyn_cast<Argument>(V))
-    llvm_cerr << Arg->getParent()->getName() << ":";
+    cerr << Arg->getParent()->getName() << ":";
 
   if (V->hasName())
-    llvm_cerr << V->getName();
+    cerr << V->getName();
   else
-    llvm_cerr << "(unnamed)";
+    cerr << "(unnamed)";
 
   if (isa<GlobalValue>(V) || isa<AllocationInst>(V))
     if (N == getObject(V))
-      llvm_cerr << "<mem>";
+      cerr << "<mem>";
 }
 
 void Andersens::PrintConstraints() {
-  llvm_cerr << "Constraints:\n";
+  cerr << "Constraints:\n";
   for (unsigned i = 0, e = Constraints.size(); i != e; ++i) {
-    llvm_cerr << "  #" << i << ":  ";
+    cerr << "  #" << i << ":  ";
     Constraint &C = Constraints[i];
     if (C.Type == Constraint::Store)
-      llvm_cerr << "*";
+      cerr << "*";
     PrintNode(C.Dest);
-    llvm_cerr << " = ";
+    cerr << " = ";
     if (C.Type == Constraint::Load)
-      llvm_cerr << "*";
+      cerr << "*";
     PrintNode(C.Src);
-    llvm_cerr << "\n";
+    cerr << "\n";
   }
 }
 
 void Andersens::PrintPointsToGraph() {
-  llvm_cerr << "Points-to graph:\n";
+  cerr << "Points-to graph:\n";
   for (unsigned i = 0, e = GraphNodes.size(); i != e; ++i) {
     Node *N = &GraphNodes[i];
-    llvm_cerr << "[" << (N->end() - N->begin()) << "] ";
+    cerr << "[" << (N->end() - N->begin()) << "] ";
     PrintNode(N);
-    llvm_cerr << "\t--> ";
+    cerr << "\t--> ";
     for (Node::iterator I = N->begin(), E = N->end(); I != E; ++I) {
-      if (I != N->begin()) llvm_cerr << ", ";
+      if (I != N->begin()) cerr << ", ";
       PrintNode(*I);
     }
-    llvm_cerr << "\n";
+    cerr << "\n";
   }
 }

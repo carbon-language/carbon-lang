@@ -60,7 +60,6 @@
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/Support/Compiler.h"
 #include <algorithm>
-#include <sstream>
 #include <cstdarg>
 using namespace llvm;
 
@@ -156,11 +155,11 @@ namespace {  // Anonymous namespace for class
         switch (action) {
           case AbortProcessAction:
             msgs << "compilation aborted!\n";
-            llvm_cerr << msgs.str();
+            cerr << msgs.str();
             abort();
           case PrintMessageAction:
             msgs << "verification continues.\n";
-            llvm_cerr << msgs.str();
+            cerr << msgs.str();
             return false;
           case ReturnStatusAction:
             msgs << "compilation terminated.\n";

@@ -156,7 +156,7 @@ public:
   iterator end()   const { return iterator(); }
   bool empty() const { return PtrList == 0; }
 
-  void print(llvm_ostream &OS) const {
+  void print(OStream &OS) const {
     if (OS.stream()) print(*OS.stream());
   }
   void print(std::ostream &OS) const;
@@ -248,7 +248,7 @@ private:
   bool aliasesCallSite(CallSite CS, AliasAnalysis &AA) const;
 };
 
-inline llvm_ostream& operator<<(llvm_ostream &OS, const AliasSet &AS) {
+inline OStream& operator<<(OStream &OS, const AliasSet &AS) {
   AS.print(OS);
   return OS;
 }
@@ -361,7 +361,7 @@ public:
   iterator begin() { return AliasSets.begin(); }
   iterator end()   { return AliasSets.end(); }
 
-  void print(llvm_ostream &OS) const {
+  void print(OStream &OS) const {
     if (OS.stream()) print(*OS.stream());
   }
   void print(std::ostream &OS) const;
@@ -390,7 +390,7 @@ private:
   AliasSet *findAliasSetForCallSite(CallSite CS);
 };
 
-inline llvm_ostream& operator<<(llvm_ostream &OS, const AliasSetTracker &AST) {
+inline OStream& operator<<(OStream &OS, const AliasSetTracker &AST) {
   AST.print(OS);
   return OS;
 }

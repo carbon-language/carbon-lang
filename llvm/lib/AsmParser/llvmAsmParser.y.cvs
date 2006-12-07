@@ -57,7 +57,7 @@ static Module *ParserResult;
 //
 //#define DEBUG_UPREFS 1
 #ifdef DEBUG_UPREFS
-#define UR_OUT(X) llvm_cerr << X
+#define UR_OUT(X) cerr << X
 #else
 #define UR_OUT(X)
 #endif
@@ -2390,8 +2390,8 @@ InstVal : ArithmeticOps Types ValueRef ',' ValueRef {
       GEN_ERROR("fcmp operator returned null!");
   }
   | NOT ResolvedVal {
-    llvm_cerr << "WARNING: Use of eliminated 'not' instruction:"
-              << " Replacing with 'xor'.\n";
+    cerr << "WARNING: Use of eliminated 'not' instruction:"
+         << " Replacing with 'xor'.\n";
 
     Value *Ones = ConstantIntegral::getAllOnesValue($2->getType());
     if (Ones == 0)

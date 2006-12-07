@@ -84,8 +84,8 @@ FunctionPass *llvm::createDataStructureGraphCheckerPass() {
 DSGC::DSGC() {
   if (!AbortIfAnyCollapsed && AbortIfCollapsed.empty() &&
       CheckFlags.empty() && AbortIfMerged.empty()) {
-    llvm_cerr << "The -datastructure-gc is useless if you don't specify any"
-                 " -dsgc-* options.  See the -help-hidden output for a list.\n";
+    cerr << "The -datastructure-gc is useless if you don't specify any"
+         << " -dsgc-* options.  See the -help-hidden output for a list.\n";
     abort();
   }
 }
@@ -123,8 +123,8 @@ void DSGC::verify(const DSGraph &G) {
     for (DSGraph::node_const_iterator I = G.node_begin(), E = G.node_end();
          I != E; ++I)
       if (I->isNodeCompletelyFolded()) {
-        llvm_cerr << "Node is collapsed: ";
-        I->print(llvm_cerr, &G);
+        cerr << "Node is collapsed: ";
+        I->print(cerr, &G);
         abort();
       }
   }
@@ -142,8 +142,8 @@ void DSGC::verify(const DSGraph &G) {
            E = CheckFlags.end(); I != E; ++I) {
       std::string::size_type ColonPos = I->rfind(':');
       if (ColonPos == std::string::npos) {
-        llvm_cerr << "Error: '" << *I
-               << "' is an invalid value for the --dsgc-check-flags option!\n";
+        cerr << "Error: '" << *I
+             << "' is an invalid value for the --dsgc-check-flags option!\n";
         abort();
       }
 
@@ -158,7 +158,7 @@ void DSGC::verify(const DSGraph &G) {
         case 'M': Flags |= DSNode::Modified;    break;
         case 'R': Flags |= DSNode::Read;        break;
         case 'A': Flags |= DSNode::Array;       break;
-        default: llvm_cerr << "Invalid DSNode flag!\n"; abort();
+        default: cerr << "Invalid DSNode flag!\n"; abort();
         }
       CheckFlagsM[std::string(I->begin(), I->begin()+ColonPos)] = Flags;
     }
@@ -176,25 +176,25 @@ void DSGC::verify(const DSGraph &G) {
 
         // Verify it is not collapsed if it is not supposed to be...
         if (N->isNodeCompletelyFolded() && AbortIfCollapsedS.count(Name)) {
-          llvm_cerr << "Node for value '%" << Name << "' is collapsed: ";
-          N->print(llvm_cerr, &G);
+          cerr << "Node for value '%" << Name << "' is collapsed: ";
+          N->print(cerr, &G);
           abort();
         }
 
         if (CheckFlagsM.count(Name) && CheckFlagsM[Name] != N->getNodeFlags()) {
-          llvm_cerr << "Node flags are not as expected for node: " << Name 
-                    << " (" << CheckFlagsM[Name] << ":" <<N->getNodeFlags()
-                    << ")\n";
-          N->print(llvm_cerr, &G);
+          cerr << "Node flags are not as expected for node: " << Name 
+               << " (" << CheckFlagsM[Name] << ":" <<N->getNodeFlags()
+               << ")\n";
+          N->print(cerr, &G);
           abort();
         }
 
         // Verify that it is not merged if it is not supposed to be...
         if (AbortIfMergedS.count(Name)) {
           if (AbortIfMergedNodes.count(N)) {
-            llvm_cerr << "Nodes for values '%" << Name << "' and '%"
-                      << AbortIfMergedNodes[N] << "' is merged: ";
-            N->print(llvm_cerr, &G);
+            cerr << "Nodes for values '%" << Name << "' and '%"
+                 << AbortIfMergedNodes[N] << "' is merged: ";
+            N->print(cerr, &G);
             abort();
           }
           AbortIfMergedNodes[N] = Name;

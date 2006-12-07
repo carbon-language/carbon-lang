@@ -501,7 +501,7 @@ DSGraph &BUDataStructures::CreateGraphForExternalFunction(const Function &Fn) {
     DSG->getNodeForValue(F->arg_begin()).mergeWith(N);
 
   } else {
-    llvm_cerr << "Unrecognized external function: " << F->getName() << "\n";
+    cerr << "Unrecognized external function: " << F->getName() << "\n";
     abort();
   }
 
@@ -588,21 +588,21 @@ void BUDataStructures::calculateGraph(DSGraph &Graph) {
         ++NumBUInlines;
       } else {
         if (!Printed)
-          llvm_cerr << "In Fns: " << Graph.getFunctionNames() << "\n";
-        llvm_cerr << "  calls " << CalledFuncs.size()
-                  << " fns from site: " << CS.getCallSite().getInstruction()
-                  << "  " << *CS.getCallSite().getInstruction();
-        llvm_cerr << "   Fns =";
+          cerr << "In Fns: " << Graph.getFunctionNames() << "\n";
+        cerr << "  calls " << CalledFuncs.size()
+             << " fns from site: " << CS.getCallSite().getInstruction()
+             << "  " << *CS.getCallSite().getInstruction();
+        cerr << "   Fns =";
         unsigned NumPrinted = 0;
 
         for (std::vector<Function*>::iterator I = CalledFuncs.begin(),
                E = CalledFuncs.end(); I != E; ++I) {
-          if (NumPrinted++ < 8) llvm_cerr << " " << (*I)->getName();
+          if (NumPrinted++ < 8) cerr << " " << (*I)->getName();
 
           // Add the call edges to the call graph.
           ActualCallees.insert(std::make_pair(TheCall, *I));
         }
-        llvm_cerr << "\n";
+        cerr << "\n";
 
         // See if we already computed a graph for this set of callees.
         std::sort(CalledFuncs.begin(), CalledFuncs.end());
@@ -645,7 +645,7 @@ void BUDataStructures::calculateGraph(DSGraph &Graph) {
           // Clean up the final graph!
           GI->removeDeadNodes(DSGraph::KeepUnreachableGlobals);
         } else {
-          llvm_cerr << "***\n*** RECYCLED GRAPH ***\n***\n";
+          cerr << "***\n*** RECYCLED GRAPH ***\n***\n";
         }
 
         GI = IndCallGraph.first;
@@ -685,7 +685,7 @@ void BUDataStructures::calculateGraph(DSGraph &Graph) {
          E = MainSM.global_end(); I != E; ++I)
     RC.getClonedNH(MainSM[*I]);
 
-  //Graph.writeGraphToFile(llvm_cerr, "bu_" + F.getName());
+  //Graph.writeGraphToFile(cerr, "bu_" + F.getName());
 }
 
 static const Function *getFnForValue(const Value *V) {
@@ -746,8 +746,8 @@ void BUDataStructures::copyValue(Value *From, Value *To) {
     return;
   }
 
-  llvm_cerr << *From;
-  llvm_cerr << *To;
+  cerr << *From;
+  cerr << *To;
   assert(0 && "Do not know how to copy this yet!");
   abort();
 }

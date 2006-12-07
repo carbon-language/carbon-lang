@@ -73,8 +73,7 @@ public:
    /// @param I the unhandled instruction
    void visitInstruction(Instruction &I) {
      if (isa<PackedType>(I.getType()))
-       llvm_cerr << "Unhandled Instruction with Packed ReturnType: "
-                 << I << '\n';
+       cerr << "Unhandled Instruction with Packed ReturnType: " << I << '\n';
    }
 private:
    /// @brief Retrieves lowered values for a packed value.

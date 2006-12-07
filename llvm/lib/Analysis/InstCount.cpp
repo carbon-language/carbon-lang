@@ -43,7 +43,7 @@ namespace {
 #include "llvm/Instruction.def"
 
     void visitInstruction(Instruction &I) {
-      llvm_cerr << "Instruction Count does not know about " << I;
+      cerr << "Instruction Count does not know about " << I;
       abort();
     }
   public:

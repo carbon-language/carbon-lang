@@ -96,8 +96,7 @@ bool LowerSwitch::runOnFunction(Function &F) {
 
 // operator<< - Used for debugging purposes.
 //
-llvm_ostream& operator<<(llvm_ostream &O,
-                         const std::vector<LowerSwitch::Case> &C) {
+OStream& operator<<(OStream &O, const std::vector<LowerSwitch::Case> &C) {
   O << "[";
 
   for (std::vector<LowerSwitch::Case>::const_iterator B = C.begin(),

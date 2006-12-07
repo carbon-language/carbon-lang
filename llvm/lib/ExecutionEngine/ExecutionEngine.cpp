@@ -402,7 +402,7 @@ GenericValue ExecutionEngine::getConstantValue(const Constant *C) {
     default:
       break;
     }
-    llvm_cerr << "ConstantExpr not handled as global var init: " << *CE << "\n";
+    cerr << "ConstantExpr not handled as global var init: " << *CE << "\n";
     abort();
   }
 
@@ -432,7 +432,7 @@ GenericValue ExecutionEngine::getConstantValue(const Constant *C) {
       assert(0 && "Unknown constant pointer type!");
     break;
   default:
-    llvm_cerr << "ERROR: Constant unimp for type: " << *C->getType() << "\n";
+    cerr << "ERROR: Constant unimp for type: " << *C->getType() << "\n";
     abort();
   }
   return Result;
@@ -477,7 +477,7 @@ void ExecutionEngine::StoreValueToMemory(GenericValue Val, GenericValue *Ptr,
       Ptr->Untyped[7] = (unsigned char)(Val.ULongVal >> 56);
       break;
     default:
-      llvm_cerr << "Cannot store value of type " << *Ty << "!\n";
+      cerr << "Cannot store value of type " << *Ty << "!\n";
     }
   } else {
     switch (Ty->getTypeID()) {
@@ -511,7 +511,7 @@ void ExecutionEngine::StoreValueToMemory(GenericValue Val, GenericValue *Ptr,
       Ptr->Untyped[0] = (unsigned char)(Val.ULongVal >> 56);
       break;
     default:
-      llvm_cerr << "Cannot store value of type " << *Ty << "!\n";
+      cerr << "Cannot store value of type " << *Ty << "!\n";
     }
   }
 }
@@ -552,7 +552,7 @@ GenericValue ExecutionEngine::LoadValueFromMemory(GenericValue *Ptr,
                                              ((uint64_t)Ptr->Untyped[7] << 56);
                             break;
     default:
-      llvm_cerr << "Cannot load value of type " << *Ty << "!\n";
+      cerr << "Cannot load value of type " << *Ty << "!\n";
       abort();
     }
   } else {
@@ -586,7 +586,7 @@ GenericValue ExecutionEngine::LoadValueFromMemory(GenericValue *Ptr,
                                              ((uint64_t)Ptr->Untyped[0] << 56);
                             break;
     default:
-      llvm_cerr << "Cannot load value of type " << *Ty << "!\n";
+      cerr << "Cannot load value of type " << *Ty << "!\n";
       abort();
     }
   }
@@ -634,7 +634,7 @@ void ExecutionEngine::InitializeMemory(const Constant *Init, void *Addr) {
   }
 
   default:
-    llvm_cerr << "Bad Type: " << *Init->getType() << "\n";
+    cerr << "Bad Type: " << *Init->getType() << "\n";
     assert(0 && "Unknown constant type to initialize memory with!");
   }
 }
@@ -718,8 +718,8 @@ void ExecutionEngine::emitGlobals() {
             sys::DynamicLibrary::SearchForAddressOfSymbol(I->getName().c_str()))
           addGlobalMapping(I, SymAddr);
         else {
-          llvm_cerr << "Could not resolve external global address: "
-                    << I->getName() << "\n";
+          cerr << "Could not resolve external global address: "
+               << I->getName() << "\n";
           abort();
         }
       }

@@ -101,7 +101,7 @@ public:
   /// provide the Module* in case the analysis doesn't need it it can just be
   /// ignored.
   ///
-  void print(llvm_ostream &O, const Module *M) const {
+  void print(OStream &O, const Module *M) const {
     if (O.stream()) print(*O.stream(), M);
   }
   virtual void print(std::ostream &O, const Module *M) const;

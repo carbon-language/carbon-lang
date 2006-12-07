@@ -76,8 +76,8 @@ bool LoaderPass::runOnModule(Module &M) {
     TerminatorInst *TI = BB->getTerminator();
     if (SuccNum >= TI->getNumSuccessors()) {
       if (!PrintedWarning) {
-        llvm_cerr << "WARNING: profile information is inconsistent with "
-                  << "the current program!\n";
+        cerr << "WARNING: profile information is inconsistent with "
+             << "the current program!\n";
         PrintedWarning = true;
       }
     } else {

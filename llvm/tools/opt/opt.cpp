@@ -87,9 +87,8 @@ struct ModulePassPrinter : public ModulePass {
 
   virtual bool runOnModule(Module &M) {
     if (!Quiet) {
-      llvm_cout << "Printing analysis '" << PassToPrint->getPassName() 
-                << "':\n";
-      getAnalysisID<Pass>(PassToPrint).print(llvm_cout, &M);
+      cout << "Printing analysis '" << PassToPrint->getPassName() << "':\n";
+      getAnalysisID<Pass>(PassToPrint).print(cout, &M);
     }
 
     // Get and print pass...
@@ -110,11 +109,11 @@ struct FunctionPassPrinter : public FunctionPass {
 
   virtual bool runOnFunction(Function &F) {
     if (!Quiet) {
-      llvm_cout << "Printing analysis '" << PassToPrint->getPassName()
-		<< "' for function '" << F.getName() << "':\n";
+      cout << "Printing analysis '" << PassToPrint->getPassName()
+           << "' for function '" << F.getName() << "':\n";
     }
     // Get and print pass...
-    getAnalysisID<Pass>(PassToPrint).print(llvm_cout, F.getParent());
+    getAnalysisID<Pass>(PassToPrint).print(cout, F.getParent());
     return false;
   }
 
@@ -132,13 +131,12 @@ struct BasicBlockPassPrinter : public BasicBlockPass {
 
   virtual bool runOnBasicBlock(BasicBlock &BB) {
     if (!Quiet) {
-      llvm_cout << "Printing Analysis info for BasicBlock '" << BB.getName()
-		<< "': Pass " << PassToPrint->getPassName() << ":\n";
+      cout << "Printing Analysis info for BasicBlock '" << BB.getName()
+           << "': Pass " << PassToPrint->getPassName() << ":\n";
     }
 
     // Get and print pass...
-    getAnalysisID<Pass>(PassToPrint).print(
-      llvm_cout, BB.getParent()->getParent());
+    getAnalysisID<Pass>(PassToPrint).print(cout, BB.getParent()->getParent());
     return false;
   }
 
@@ -172,11 +170,11 @@ int main(int argc, char **argv) {
     // Load the input module...
     std::auto_ptr<Module> M(ParseBytecodeFile(InputFilename, &ErrorMessage));
     if (M.get() == 0) {
-      llvm_cerr << argv[0] << ": ";
+      cerr << argv[0] << ": ";
       if (ErrorMessage.size())
-        llvm_cerr << ErrorMessage << "\n";
+        cerr << ErrorMessage << "\n";
       else
-        llvm_cerr << "bytecode didn't read correctly.\n";
+        cerr << "bytecode didn't read correctly.\n";
       return 1;
     }
 
@@ -186,9 +184,9 @@ int main(int argc, char **argv) {
     if (OutputFilename != "-") {
       if (!Force && std::ifstream(OutputFilename.c_str())) {
         // If force is not specified, make sure not to overwrite a file!
-        llvm_cerr << argv[0] << ": error opening '" << OutputFilename
-                  << "': file exists!\n"
-                  << "Use -f command line argument to force output\n";
+        cerr << argv[0] << ": error opening '" << OutputFilename
+             << "': file exists!\n"
+             << "Use -f command line argument to force output\n";
         return 1;
       }
       std::ios::openmode io_mode = std::ios::out | std::ios::trunc |
@@ -196,7 +194,7 @@ int main(int argc, char **argv) {
       Out = new std::ofstream(OutputFilename.c_str(), io_mode);
 
       if (!Out->good()) {
-        llvm_cerr << argv[0] << ": error opening " << OutputFilename << "!\n";
+        cerr << argv[0] << ": error opening " << OutputFilename << "!\n";
         return 1;
       }
 
@@ -227,8 +225,8 @@ int main(int argc, char **argv) {
       if (PassInf->getNormalCtor())
         P = PassInf->getNormalCtor()();
       else
-        llvm_cerr << argv[0] << ": cannot create pass: "
-                  << PassInf->getPassName() << "\n";
+        cerr << argv[0] << ": cannot create pass: "
+             << PassInf->getPassName() << "\n";
       if (P) {
         Passes.add(P);
         
@@ -243,7 +241,7 @@ int main(int argc, char **argv) {
       }
       
       if (PrintEachXForm)
-        Passes.add(new PrintModulePass(&llvm_cerr));
+        Passes.add(new PrintModulePass(&cerr));
     }
 
     // Check that the module is well formed on completion of optimization
@@ -251,7 +249,7 @@ int main(int argc, char **argv) {
       Passes.add(createVerifierPass());
 
     // Write bytecode out to disk or cout as the last step...
-    llvm_ostream L(*Out);
+    OStream L(*Out);
     if (!NoOutput && !AnalyzeOnly)
       Passes.add(new WriteBytecodePass(&L, false, !NoCompress));
 
@@ -261,9 +259,9 @@ int main(int argc, char **argv) {
     return 0;
 
   } catch (const std::string& msg) {
-    llvm_cerr << argv[0] << ": " << msg << "\n";
+    cerr << argv[0] << ": " << msg << "\n";
   } catch (...) {
-    llvm_cerr << argv[0] << ": Unexpected unknown exception occurred.\n";
+    cerr << argv[0] << ": Unexpected unknown exception occurred.\n";
   }
   return 1;
 }

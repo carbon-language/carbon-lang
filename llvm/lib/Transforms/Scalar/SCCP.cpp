@@ -350,7 +350,7 @@ private:
 
   void visitInstruction(Instruction &I) {
     // If a new instruction is added to LLVM that we don't handle...
-    llvm_cerr << "SCCP: Don't know how to handle: " << I;
+    cerr << "SCCP: Don't know how to handle: " << I;
     markOverdefined(&I);   // Just in case
   }
 };
@@ -400,7 +400,7 @@ void SCCPSolver::getFeasibleSuccessors(TerminatorInst &TI,
       Succs[0] = true;
     }
   } else {
-    llvm_cerr << "SCCP: Don't know how to handle: " << TI;
+    cerr << "SCCP: Don't know how to handle: " << TI;
     Succs.assign(TI.getNumSuccessors(), true);
   }
 }
@@ -459,7 +459,7 @@ bool SCCPSolver::isEdgeFeasible(BasicBlock *From, BasicBlock *To) {
     }
     return false;
   } else {
-    llvm_cerr << "Unknown terminator instruction: " << *TI;
+    cerr << "Unknown terminator instruction: " << *TI;
     abort();
   }
 }

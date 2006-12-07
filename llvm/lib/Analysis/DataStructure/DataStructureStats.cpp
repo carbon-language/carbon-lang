@@ -92,18 +92,18 @@ void DSGraphStats::countCallees(const Function& F) {
         totalNumCallees  += Callees.size();
         ++numIndirectCalls;
       } else
-        llvm_cerr << "WARNING: No callee in Function '" << F.getName()
-                  << "' at call: \n"
-                  << *I->getCallSite().getInstruction();
+        cerr << "WARNING: No callee in Function '" << F.getName()
+             << "' at call: \n"
+             << *I->getCallSite().getInstruction();
     }
 
   TotalNumCallees  += totalNumCallees;
   NumIndirectCalls += numIndirectCalls;
 
   if (numIndirectCalls)
-    llvm_cout << "  In function " << F.getName() << ":  "
-              << (totalNumCallees / (double) numIndirectCalls)
-              << " average callees per indirect call\n";
+    cout << "  In function " << F.getName() << ":  "
+         << (totalNumCallees / (double) numIndirectCalls)
+         << " average callees per indirect call\n";
 }
 
 DSNode *DSGraphStats::getNodeForValue(Value *V) {

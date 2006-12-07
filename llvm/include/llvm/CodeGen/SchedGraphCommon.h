@@ -70,7 +70,7 @@ public:
   void dump(int indent=0) const;
 
   // Debugging support
-  void print(llvm_ostream &os) const {
+  void print(OStream &os) const {
     if (os.stream()) print(*os.stream());
   }
   virtual void print(std::ostream &os) const = 0;
@@ -96,8 +96,8 @@ protected:
 };
 
 // ostream << operator for SchedGraphNode class
-inline llvm_ostream &operator<<(llvm_ostream &os,
-                                const SchedGraphNodeCommon &node) {
+inline OStream &operator<<(OStream &os,
+                           const SchedGraphNodeCommon &node) {
   node.print(os);
   return os;
 }
@@ -188,7 +188,7 @@ public:
 
 public:
   // Debugging support
-  void print(llvm_ostream &os) const {
+  void print(OStream &os) const {
     if (os.stream()) print(*os.stream());
   }
   void print(std::ostream &os) const;
@@ -200,7 +200,7 @@ private:
 };
 
 // ostream << operator for SchedGraphNode class
-inline llvm_ostream &operator<<(llvm_ostream &os, const SchedGraphEdge &edge) {
+inline OStream &operator<<(OStream &os, const SchedGraphEdge &edge) {
   edge.print(os);
   return os;
 }

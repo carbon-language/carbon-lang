@@ -25,7 +25,6 @@
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/SCCIterator.h"
 #include "llvm/ADT/Statistic.h"
-#include "llvm/Support/Streams.h"
 #include "llvm/Support/Timer.h"
 #include <iostream>
 #include <algorithm>
@@ -1263,7 +1262,7 @@ DSGraph::~DSGraph() {
 }
 
 // dump - Allow inspection of graph in a debugger.
-void DSGraph::dump() const { print(llvm_cerr); }
+void DSGraph::dump() const { print(cerr); }
 
 
 /// remapLinks - Change all of the Links in the current node according to the

@@ -26,8 +26,8 @@ void PluginLoader::operator=(const std::string &Filename) {
 
   std::string Error;
   if (sys::DynamicLibrary::LoadLibraryPermanently(Filename.c_str(), &Error)) {
-    llvm_cerr << "Error opening '" << Filename << "': " << Error
-              << "\n  -load request ignored.\n";
+    cerr << "Error opening '" << Filename << "': " << Error
+         << "\n  -load request ignored.\n";
   } else {
     Plugins->push_back(Filename);
   }

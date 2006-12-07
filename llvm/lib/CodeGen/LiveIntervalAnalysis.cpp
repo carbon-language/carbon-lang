@@ -419,9 +419,9 @@ addIntervalsForSpills(const LiveInterval &li, VirtRegMap &vrm, int slot) {
 
 void LiveIntervals::printRegName(unsigned reg) const {
   if (MRegisterInfo::isPhysicalRegister(reg))
-    llvm_cerr << mri_->getName(reg);
+    cerr << mri_->getName(reg);
   else
-    llvm_cerr << "%reg" << reg;
+    cerr << "%reg" << reg;
 }
 
 /// isReDefinedByTwoAddr - Returns true if the Reg re-definition is due to

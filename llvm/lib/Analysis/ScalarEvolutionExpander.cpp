@@ -13,9 +13,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "llvm/Analysis/LoopInfo.h"
 #include "llvm/Analysis/ScalarEvolutionExpander.h"
-
+#include "llvm/Analysis/LoopInfo.h"
 using namespace llvm;
 
 /// InsertCastOfTo - Insert a cast of V to the specified type, doing what
@@ -175,7 +174,7 @@ Value *SCEVExpander::visitAddRecExpr(SCEVAddRecExpr *S) {
   SCEVHandle IH = SCEVUnknown::get(I);   // Get I as a "symbolic" SCEV.
 
   SCEVHandle V = S->evaluateAtIteration(IH);
-  //llvm_cerr << "Evaluated: " << *this << "\n     to: " << *V << "\n";
+  //cerr << "Evaluated: " << *this << "\n     to: " << *V << "\n";
 
   return expandInTy(V, Ty);
 }

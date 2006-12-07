@@ -39,7 +39,6 @@
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Support/Mangler.h"
 #include "llvm/Support/Streams.h"
-#include <ostream>
 using namespace llvm;
 
 //===----------------------------------------------------------------------===//
@@ -104,9 +103,9 @@ void ELFCodeEmitter::startFunction(MachineFunction &F) {
                       ELFWriter::ELFSection::SHF_EXECINSTR |
                       ELFWriter::ELFSection::SHF_ALLOC);
   OutBuffer = &ES->SectionData;
-  llvm_cerr << "FIXME: This code needs to be updated for changes in the"
-            << " CodeEmitter interfaces.  In particular, this should set "
-            << "BufferBegin/BufferEnd/CurBufferPtr, not deal with OutBuffer!";
+  cerr << "FIXME: This code needs to be updated for changes in the"
+       << " CodeEmitter interfaces.  In particular, this should set "
+       << "BufferBegin/BufferEnd/CurBufferPtr, not deal with OutBuffer!";
   abort();
 
   // Upgrade the section alignment if required.

@@ -47,8 +47,8 @@ ModulePass *llvm::createFunctionProfilerPass() {
 bool FunctionProfiler::runOnModule(Module &M) {
   Function *Main = M.getMainFunction();
   if (Main == 0) {
-    llvm_cerr << "WARNING: cannot insert function profiling into a module"
-              << " with no main function!\n";
+    cerr << "WARNING: cannot insert function profiling into a module"
+         << " with no main function!\n";
     return false;  // No main, no instrumentation!
   }
 
@@ -90,8 +90,8 @@ ModulePass *llvm::createBlockProfilerPass() { return new BlockProfiler(); }
 bool BlockProfiler::runOnModule(Module &M) {
   Function *Main = M.getMainFunction();
   if (Main == 0) {
-    llvm_cerr << "WARNING: cannot insert block profiling into a module"
-              << " with no main function!\n";
+    cerr << "WARNING: cannot insert block profiling into a module"
+         << " with no main function!\n";
     return false;  // No main, no instrumentation!
   }
 

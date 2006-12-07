@@ -136,7 +136,7 @@ protected:
   ///
   mutable std::vector<AbstractTypeUser *> AbstractTypeUsers;
 public:
-  void print(llvm_ostream &O) const {
+  void print(OStream &O) const {
     if (O.stream()) print(*O.stream());
   }
   void print(std::ostream &O) const;

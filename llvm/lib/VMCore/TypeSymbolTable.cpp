@@ -66,7 +66,7 @@ Type* TypeSymbolTable::erase(iterator Entry) {
 
 #if DEBUG_SYMBOL_TABLE
   dump();
-  llvm_cerr << " Removing Value: " << Result->getName() << "\n";
+  cerr << " Removing Value: " << Result->getName() << "\n";
 #endif
 
   tmap.erase(Entry);
@@ -75,7 +75,7 @@ Type* TypeSymbolTable::erase(iterator Entry) {
   // list...
   if (Result->isAbstract()) {
 #if DEBUG_ABSTYPE
-    llvm_cerr << "Removing abstract type from symtab" << Result->getDescription()<<"\n";
+    cerr << "Removing abstract type from symtab" << Result->getDescription()<<"\n";
 #endif
     cast<DerivedType>(Result)->removeAbstractTypeUser(this);
   }
@@ -95,8 +95,8 @@ void TypeSymbolTable::insert(const std::string& Name, const Type* T) {
 
 #if DEBUG_SYMBOL_TABLE
   dump();
-  llvm_cerr << " Inserting type: " << UniqueName << ": "
-            << T->getDescription() << "\n";
+  cerr << " Inserting type: " << UniqueName << ": "
+       << T->getDescription() << "\n";
 #endif
 
   // Insert the tmap entry
@@ -106,7 +106,7 @@ void TypeSymbolTable::insert(const std::string& Name, const Type* T) {
   if (T->isAbstract()) {
     cast<DerivedType>(T)->addAbstractTypeUser(this);
 #if DEBUG_ABSTYPE
-    llvm_cerr << "Added abstract type to ST: " << T->getDescription() << "\n";
+    cerr << "Added abstract type to ST: " << T->getDescription() << "\n";
 #endif
   }
 }
@@ -152,14 +152,14 @@ void TypeSymbolTable::refineAbstractType(const DerivedType *OldType,
   for (iterator I = begin(), E = end(); I != E; ++I) {
     if (I->second == (Type*)OldType) {  // FIXME when Types aren't const.
 #if DEBUG_ABSTYPE
-      llvm_cerr << "Removing type " << OldType->getDescription() << "\n";
+      cerr << "Removing type " << OldType->getDescription() << "\n";
 #endif
       OldType->removeAbstractTypeUser(this);
 
       I->second = (Type*)NewType;  // TODO FIXME when types aren't const
       if (NewType->isAbstract()) {
 #if DEBUG_ABSTYPE
-        llvm_cerr << "Added type " << NewType->getDescription() << "\n";
+        cerr << "Added type " << NewType->getDescription() << "\n";
 #endif
         cast<DerivedType>(NewType)->addAbstractTypeUser(this);
       }
@@ -179,13 +179,13 @@ void TypeSymbolTable::typeBecameConcrete(const DerivedType *AbsTy) {
 }
 
 static void DumpTypes(const std::pair<const std::string, const Type*>& T ) {
-  llvm_cerr << "  '" << T.first << "' = ";
+  cerr << "  '" << T.first << "' = ";
   T.second->dump();
-  llvm_cerr << "\n";
+  cerr << "\n";
 }
 
 void TypeSymbolTable::dump() const {
-  llvm_cerr << "TypeSymbolPlane: ";
+  cerr << "TypeSymbolPlane: ";
   for_each(tmap.begin(), tmap.end(), DumpTypes);
 }
 

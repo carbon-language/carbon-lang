@@ -75,7 +75,7 @@ public:
 
   /// print - Implement operator<< on Value...
   ///
-  void print(llvm_ostream &O) const {
+  void print(OStream &O) const {
     if (O.stream()) print(*O.stream());
   }
   virtual void print(std::ostream &O) const = 0;

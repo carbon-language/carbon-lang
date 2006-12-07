@@ -45,7 +45,7 @@ bool
 Linker::error(const std::string& message) {
   Error = message;
   if (!(Flags&QuietErrors))
-    llvm_cerr << ProgramName << ": error: " << message << "\n";
+    cerr << ProgramName << ": error: " << message << "\n";
   return true;
 }
 
@@ -53,14 +53,14 @@ bool
 Linker::warning(const std::string& message) {
   Error = message;
   if (!(Flags&QuietErrors))
-    llvm_cerr << ProgramName << ": warning: " << message << "\n";
+    cerr << ProgramName << ": warning: " << message << "\n";
   return false;
 }
 
 void
 Linker::verbose(const std::string& message) {
   if (Flags&Verbose)
-    llvm_cerr << "  " << message << "\n";
+    cerr << "  " << message << "\n";
 }
 
 void

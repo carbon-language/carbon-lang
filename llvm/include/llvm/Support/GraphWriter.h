@@ -247,16 +247,16 @@ sys::Path WriteGraph(const GraphType &G,
   std::string ErrMsg;
   sys::Path Filename = sys::Path::GetTemporaryDirectory(&ErrMsg);
   if (Filename.isEmpty()) {
-    llvm_cerr << "Error: " << ErrMsg << "\n";
+    cerr << "Error: " << ErrMsg << "\n";
     return Filename;
   }
   Filename.appendComponent(Name + ".dot");
   if (Filename.makeUnique(true,&ErrMsg)) {
-    llvm_cerr << "Error: " << ErrMsg << "\n";
+    cerr << "Error: " << ErrMsg << "\n";
     return sys::Path();
   }
 
-  llvm_cerr << "Writing '" << Filename << "'... ";
+  cerr << "Writing '" << Filename << "'... ";
   
   std::ofstream O(Filename.c_str());
 
@@ -275,12 +275,12 @@ sys::Path WriteGraph(const GraphType &G,
 
     // Output the end of the graph
     W.writeFooter();
-    llvm_cerr << " done. \n";
+    cerr << " done. \n";
 
     O.close();
     
   } else {
-    llvm_cerr << "error opening file for writing!\n";
+    cerr << "error opening file for writing!\n";
     Filename.clear();
   }
   

@@ -37,7 +37,7 @@ static void ReadProfilingBlock(const char *ToolName, FILE *F,
   // Read the number of entries...
   unsigned NumEntries;
   if (fread(&NumEntries, sizeof(unsigned), 1, F) != 1) {
-    llvm_cerr << ToolName << ": data packet truncated!\n";
+    cerr << ToolName << ": data packet truncated!\n";
     perror(0);
     exit(1);
   }
@@ -48,7 +48,7 @@ static void ReadProfilingBlock(const char *ToolName, FILE *F,
 
   // Read in the block of data...
   if (fread(&TempSpace[0], sizeof(unsigned)*NumEntries, 1, F) != 1) {
-    llvm_cerr << ToolName << ": data packet truncated!\n";
+    cerr << ToolName << ": data packet truncated!\n";
     perror(0);
     exit(1);
   }
@@ -75,7 +75,7 @@ ProfileInfoLoader::ProfileInfoLoader(const char *ToolName,
                                      Module &TheModule) : M(TheModule) {
   FILE *F = fopen(Filename.c_str(), "r");
   if (F == 0) {
-    llvm_cerr << ToolName << ": Error opening '" << Filename << "': ";
+    cerr << ToolName << ": Error opening '" << Filename << "': ";
     perror(0);
     exit(1);
   }
@@ -93,7 +93,7 @@ ProfileInfoLoader::ProfileInfoLoader(const char *ToolName,
     case ArgumentInfo: {
       unsigned ArgLength;
       if (fread(&ArgLength, sizeof(unsigned), 1, F) != 1) {
-        llvm_cerr << ToolName << ": arguments packet truncated!\n";
+        cerr << ToolName << ": arguments packet truncated!\n";
         perror(0);
         exit(1);
       }
@@ -104,7 +104,7 @@ ProfileInfoLoader::ProfileInfoLoader(const char *ToolName,
 
       if (ArgLength)
         if (fread(&Chars[0], (ArgLength+3) & ~3, 1, F) != 1) {
-          llvm_cerr << ToolName << ": arguments packet truncated!\n";
+          cerr << ToolName << ": arguments packet truncated!\n";
           perror(0);
           exit(1);
         }
@@ -129,7 +129,7 @@ ProfileInfoLoader::ProfileInfoLoader(const char *ToolName,
       break;
 
     default:
-      llvm_cerr << ToolName << ": Unknown packet type #" << PacketType << "!\n";
+      cerr << ToolName << ": Unknown packet type #" << PacketType << "!\n";
       exit(1);
     }
   }
@@ -156,7 +156,7 @@ void ProfileInfoLoader::getFunctionCounts(std::vector<std::pair<Function*,
           Counts.push_back(std::make_pair(BlockCounts[i].first->getParent(),
                                           BlockCounts[i].second));
     } else {
-      llvm_cerr << "Function counts are not available!\n";
+      cerr << "Function counts are not available!\n";
     }
     return;
   }
@@ -200,8 +200,8 @@ void ProfileInfoLoader::getBlockCounts(std::vector<std::pair<BasicBlock*,
         if (SuccNum >= TI->getNumSuccessors()) {
           static bool Warned = false;
           if (!Warned) {
-            llvm_cerr << "WARNING: profile info doesn't seem to match"
-                      << " the program!\n";
+            cerr << "WARNING: profile info doesn't seem to match"
+                 << " the program!\n";
             Warned = true;
           }
         } else {
@@ -226,7 +226,7 @@ void ProfileInfoLoader::getBlockCounts(std::vector<std::pair<BasicBlock*,
       }
 
     } else {
-      llvm_cerr << "Block counts are not available!\n";
+      cerr << "Block counts are not available!\n";
     }
     return;
   }
@@ -247,8 +247,8 @@ void ProfileInfoLoader::getBlockCounts(std::vector<std::pair<BasicBlock*,
 void ProfileInfoLoader::getEdgeCounts(std::vector<std::pair<Edge,
                                                   unsigned> > &Counts) {
   if (EdgeCounts.empty()) {
-    llvm_cerr << "Edge counts not available, and no synthesis "
-              << "is implemented yet!\n";
+    cerr << "Edge counts not available, and no synthesis "
+         << "is implemented yet!\n";
     return;
   }
 
@@ -268,9 +268,8 @@ void ProfileInfoLoader::getEdgeCounts(std::vector<std::pair<Edge,
 //
 void ProfileInfoLoader::getBBTrace(std::vector<BasicBlock *> &Trace) {
   if (BBTrace.empty ()) {
-    llvm_cerr << "Basic block trace is not available!\n";
+    cerr << "Basic block trace is not available!\n";
     return;
   }
-  llvm_cerr << "Basic block trace loading is not implemented yet!\n";
+  cerr << "Basic block trace loading is not implemented yet!\n";
 }
-

@@ -25,14 +25,13 @@ Function *Trace::getFunction() const {
   return getEntryBasicBlock()->getParent();
 }
 
-
 Module *Trace::getModule() const {
   return getFunction()->getParent();
 }
 
 /// print - Write trace to output stream.
 ///
-void Trace::print(llvm_ostream &O) const {
+void Trace::print(OStream &O) const {
   Function *F = getFunction ();
   O << "; Trace from function " << F->getName() << ", blocks:\n";
   for (const_iterator i = begin(), e = end(); i != e; ++i) {
@@ -48,5 +47,5 @@ void Trace::print(llvm_ostream &O) const {
 /// output stream.
 ///
 void Trace::dump() const {
-  print(llvm_cerr);
+  print(cerr);
 }

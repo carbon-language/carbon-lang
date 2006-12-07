@@ -53,7 +53,7 @@ namespace {
     }
 
     // print - Implement the Pass::print method...
-    void print(llvm_ostream O, const Module *M) const {
+    void print(OStream O, const Module *M) const {
       if (O.stream()) print(*O.stream(), M);
     }
     void print(std::ostream &O, const Module *M) const {

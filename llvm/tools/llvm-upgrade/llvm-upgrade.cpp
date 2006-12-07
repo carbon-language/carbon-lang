@@ -57,9 +57,9 @@ int main(int argc, char **argv) {
       if (OutputFilename != "-") {  // Not stdout?
         if (!Force && std::ifstream(OutputFilename.c_str())) {
           // If force is not specified, make sure not to overwrite a file!
-          llvm_cerr << argv[0] << ": error opening '" << OutputFilename
-                    << "': file exists!\n"
-                    << "Use -f command line argument to force output\n";
+          cerr << argv[0] << ": error opening '" << OutputFilename
+               << "': file exists!\n"
+               << "Use -f command line argument to force output\n";
           return 1;
         }
         Out = new std::ofstream(OutputFilename.c_str(), std::ios::out |
@@ -84,9 +84,9 @@ int main(int argc, char **argv) {
 
         if (!Force && std::ifstream(OutputFilename.c_str())) {
           // If force is not specified, make sure not to overwrite a file!
-          llvm_cerr << argv[0] << ": error opening '" << OutputFilename
-                    << "': file exists!\n"
-                    << "Use -f command line argument to force output\n";
+          cerr << argv[0] << ": error opening '" << OutputFilename
+               << "': file exists!\n"
+               << "Use -f command line argument to force output\n";
           return 1;
         }
 
@@ -106,22 +106,22 @@ int main(int argc, char **argv) {
     }
 
     if (!Out->good()) {
-      llvm_cerr << argv[0] << ": error opening " << OutputFilename << "!\n";
+      cerr << argv[0] << ": error opening " << OutputFilename << "!\n";
       return 1;
     }
 
     if (!In->good()) {
-      llvm_cerr << argv[0] << ": error opening " << InputFilename << "!\n";
+      cerr << argv[0] << ": error opening " << InputFilename << "!\n";
       return 1;
     }
 
     UpgradeAssembly(InputFilename, *In, *Out, Debug);
 
   } catch (const std::string& caught_message) {
-    llvm_cerr << argv[0] << ": " << caught_message << "\n";
+    cerr << argv[0] << ": " << caught_message << "\n";
     exitCode = 1;
   } catch (...) {
-    llvm_cerr << argv[0] << ": Unexpected unknown exception occurred.\n";
+    cerr << argv[0] << ": Unexpected unknown exception occurred.\n";
     exitCode = 1;
   }
 

@@ -442,7 +442,7 @@ bool FunctionPassManager_New::runOnModule(Module &M) {
 bool FunctionPassManager_New::run(Function &F) {
   std::string errstr;
   if (MP->materializeFunction(&F, &errstr)) {
-    llvm_cerr << "Error reading bytecode file: " << errstr << "\n";
+    cerr << "Error reading bytecode file: " << errstr << "\n";
     abort();
   }
   return FPM->runOnFunction(F);

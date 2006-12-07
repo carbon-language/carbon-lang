@@ -362,7 +362,7 @@ public:
   ///
   void forwardNode(DSNode *To, unsigned Offset);
 
-  void print(llvm_ostream &O, const DSGraph *G) const {
+  void print(OStream &O, const DSGraph *G) const {
     if (O.stream()) print(*O.stream(), G);
   }
   void print(std::ostream &O, const DSGraph *G) const;

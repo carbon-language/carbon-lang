@@ -745,8 +745,8 @@ BasicAliasAnalysis::CheckGEPInstructions(
     assert(Offset1<Offset2 && "There is at least one different constant here!");
 
     if ((uint64_t)(Offset2-Offset1) >= SizeMax) {
-      //llvm_cerr << "Determined that these two GEP's don't alias ["
-      //          << SizeMax << " bytes]: \n" << *GEP1 << *GEP2;
+      //cerr << "Determined that these two GEP's don't alias ["
+      //     << SizeMax << " bytes]: \n" << *GEP1 << *GEP2;
       return NoAlias;
     }
   }

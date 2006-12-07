@@ -18,7 +18,6 @@
 #include "llvm/Target/MRegisterInfo.h"
 #include "llvm/Support/LeakDetector.h"
 #include "llvm/Support/Streams.h"
-#include <iostream>
 using namespace llvm;
 
 /// MachineInstr ctor - This constructor creates a dummy MachineInstr with
@@ -201,7 +200,7 @@ void MachineInstr::copyKillDeadInfo(const MachineInstr *MI) {
 }
 
 void MachineInstr::dump() const {
-  llvm_cerr << "  " << *this;
+  cerr << "  " << *this;
 }
 
 static inline void OutputReg(std::ostream &os, unsigned RegNo,

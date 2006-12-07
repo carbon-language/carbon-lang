@@ -361,7 +361,7 @@ LTO::optimizeModules(const std::string &OutputFilename,
     std::string tempFileName(FinalOutputPath.c_str());
     tempFileName += "0.bc";
     std::ofstream Out(tempFileName.c_str(), io_mode);
-    llvm_ostream L(Out);
+    OStream L(Out);
     WriteBytecodeToFile(bigOne, L, true);
   }
 
@@ -378,17 +378,17 @@ LTO::optimizeModules(const std::string &OutputFilename,
   std::string ErrMsg;
   sys::Path TempDir = sys::Path::GetTemporaryDirectory(&ErrMsg);
   if (TempDir.isEmpty()) {
-    llvm_cerr << "lto: " << ErrMsg << "\n";
+    cerr << "lto: " << ErrMsg << "\n";
     return LTO_WRITE_FAILURE;
   }
   sys::Path tmpAsmFilePath(TempDir);
   if (!tmpAsmFilePath.appendComponent("lto")) {
-    llvm_cerr << "lto: " << ErrMsg << "\n";
+    cerr << "lto: " << ErrMsg << "\n";
     TempDir.eraseFromDisk(true);
     return LTO_WRITE_FAILURE;
   }
   if (tmpAsmFilePath.createTemporaryFileOnDisk(&ErrMsg)) {
-    llvm_cerr << "lto: " << ErrMsg << "\n";
+    cerr << "lto: " << ErrMsg << "\n";
     TempDir.eraseFromDisk(true);
     return LTO_WRITE_FAILURE;
   }
@@ -415,7 +415,7 @@ LTO::optimizeModules(const std::string &OutputFilename,
     std::string tempFileName(FinalOutputPath.c_str());
     tempFileName += "1.bc";
     std::ofstream Out(tempFileName.c_str(), io_mode);
-    llvm_ostream L(Out);
+    OStream L(Out);
     WriteBytecodeToFile(bigOne, L, true);
   }
 
@@ -445,7 +445,7 @@ LTO::optimizeModules(const std::string &OutputFilename,
   args.push_back(0);
 
   if (sys::Program::ExecuteAndWait(gcc, &args[0], 0, 0, 1, &ErrMsg)) {
-    llvm_cerr << "lto: " << ErrMsg << "\n";
+    cerr << "lto: " << ErrMsg << "\n";
     return LTO_ASM_FAILURE;
   }
 

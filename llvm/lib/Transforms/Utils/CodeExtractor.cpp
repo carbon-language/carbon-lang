@@ -699,10 +699,10 @@ ExtractCodeRegion(const std::vector<BasicBlock*> &code) {
           }
     }
 
-  //llvm_cerr << "NEW FUNCTION: " << *newFunction;
+  //cerr << "NEW FUNCTION: " << *newFunction;
   //  verifyFunction(*newFunction);
 
-  //  llvm_cerr << "OLD FUNCTION: " << *oldFunction;
+  //  cerr << "OLD FUNCTION: " << *oldFunction;
   //  verifyFunction(*oldFunction);
 
   DEBUG(if (verifyFunction(*newFunction)) abort());

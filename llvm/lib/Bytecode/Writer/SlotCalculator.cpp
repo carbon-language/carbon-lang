@@ -32,7 +32,7 @@ using namespace llvm;
 
 #if 0
 #include "llvm/Support/Streams.h"
-#define SC_DEBUG(X) llvm_cerr << X
+#define SC_DEBUG(X) cerr << X
 #else
 #define SC_DEBUG(X)
 #endif

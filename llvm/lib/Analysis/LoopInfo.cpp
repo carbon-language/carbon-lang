@@ -80,7 +80,7 @@ void Loop::print(std::ostream &OS, unsigned Depth) const {
 }
 
 void Loop::dump() const {
-  print(llvm_cerr);
+  print(cerr);
 }
 
 

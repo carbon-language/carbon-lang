@@ -109,7 +109,7 @@ static std::string progname;
 ///  Message  - The message to print to standard error.
 ///
 static int PrintAndReturn(const std::string &Message) {
-  llvm_cerr << progname << ": " << Message << "\n";
+  cerr << progname << ": " << Message << "\n";
   return 1;
 }
 
@@ -208,7 +208,7 @@ void GenerateBytecode(Module* M, const std::string& FileName) {
   sys::RemoveFileOnSignal(sys::Path(FileName));
 
   // Write it out
-  llvm_ostream L(Out);
+  OStream L(Out);
   WriteBytecodeToFile(M, L, !DisableCompression);
 
   // Close the bytecode file.
@@ -352,12 +352,12 @@ static void EmitShellScript(char **argv) {
   std::string ErrMsg;  
   sys::Path llvmstub = FindExecutable("llvm-stub.exe", argv[0]);
   if (llvmstub.isEmpty()) {
-    llvm_cerr << "Could not find llvm-stub.exe executable!\n";
+    cerr << "Could not find llvm-stub.exe executable!\n";
     exit(1);
   }
 
   if (0 != sys::CopyFile(sys::Path(OutputFilename), llvmstub, &ErrMsg)) {
-    llvm_cerr << argv[0] << ": " << ErrMsg << "\n";
+    cerr << argv[0] << ": " << ErrMsg << "\n";
     exit(1);    
   }
 
@@ -520,14 +520,14 @@ int main(int argc, char **argv, char **envp) {
               sys::Path target(RealBytecodeOutput);
               target.eraseFromDisk();
               if (tmp_output.renamePathOnDisk(target, &ErrMsg)) {
-                llvm_cerr << argv[0] << ": " << ErrMsg << "\n";
+                cerr << argv[0] << ": " << ErrMsg << "\n";
                 return 2;
               }
             } else
               return PrintAndReturn(
                 "Post-link optimization output is not bytecode");
           } else {
-            llvm_cerr << argv[0] << ": " << ErrMsg << "\n";
+            cerr << argv[0] << ": " << ErrMsg << "\n";
             return 2;
           }
         }
@@ -556,18 +556,18 @@ int main(int argc, char **argv, char **envp) {
           return PrintAndReturn("Failed to find gcc");
 
         // Generate an assembly language file for the bytecode.
-        if (Verbose) llvm_cout << "Generating Assembly Code\n";
+        if (Verbose) cout << "Generating Assembly Code\n";
         std::string ErrMsg;
         if (0 != GenerateAssembly(AssemblyFile.toString(), RealBytecodeOutput,
             llc, ErrMsg)) {
-          llvm_cerr << argv[0] << ": " << ErrMsg << "\n";
+          cerr << argv[0] << ": " << ErrMsg << "\n";
           return 1;
         }
 
-        if (Verbose) llvm_cout << "Generating Native Code\n";
+        if (Verbose) cout << "Generating Native Code\n";
         if (0 != GenerateNative(OutputFilename, AssemblyFile.toString(),
             LinkItems,gcc,envp,ErrMsg)) {
-          llvm_cerr << argv[0] << ": " << ErrMsg << "\n";
+          cerr << argv[0] << ": " << ErrMsg << "\n";
           return 1;
         }
 
@@ -591,18 +591,18 @@ int main(int argc, char **argv, char **envp) {
           return PrintAndReturn("Failed to find gcc");
 
         // Generate an assembly language file for the bytecode.
-        if (Verbose) llvm_cout << "Generating Assembly Code\n";
+        if (Verbose) cout << "Generating Assembly Code\n";
         std::string ErrMsg;
         if (0 != GenerateCFile(
             CFile.toString(), RealBytecodeOutput, llc, ErrMsg)) {
-          llvm_cerr << argv[0] << ": " << ErrMsg << "\n";
+          cerr << argv[0] << ": " << ErrMsg << "\n";
           return 1;
         }
 
-        if (Verbose) llvm_cout << "Generating Native Code\n";
+        if (Verbose) cout << "Generating Native Code\n";
         if (0 != GenerateNative(OutputFilename, CFile.toString(), LinkItems, 
             gcc, envp, ErrMsg)) {
-          llvm_cerr << argv[0] << ": " << ErrMsg << "\n";
+          cerr << argv[0] << ": " << ErrMsg << "\n";
           return 1;
         }
 
@@ -616,26 +616,26 @@ int main(int argc, char **argv, char **envp) {
       // Make the script executable...
       std::string ErrMsg;
       if (sys::Path(OutputFilename).makeExecutableOnDisk(&ErrMsg)) {
-        llvm_cerr << argv[0] << ": " << ErrMsg << "\n";
+        cerr << argv[0] << ": " << ErrMsg << "\n";
         return 1;
       }
 
       // Make the bytecode file readable and directly executable in LLEE as well
       if (sys::Path(RealBytecodeOutput).makeExecutableOnDisk(&ErrMsg)) {
-        llvm_cerr << argv[0] << ": " << ErrMsg << "\n";
+        cerr << argv[0] << ": " << ErrMsg << "\n";
         return 1;
       }
       if (sys::Path(RealBytecodeOutput).makeReadableOnDisk(&ErrMsg)) {
-        llvm_cerr << argv[0] << ": " << ErrMsg << "\n";
+        cerr << argv[0] << ": " << ErrMsg << "\n";
         return 1;
       }
     }
 
     return 0;
   } catch (const std::string& msg) {
-    llvm_cerr << argv[0] << ": " << msg << "\n";
+    cerr << argv[0] << ": " << msg << "\n";
   } catch (...) {
-    llvm_cerr << argv[0] << ": Unexpected unknown exception occurred.\n";
+    cerr << argv[0] << ": Unexpected unknown exception occurred.\n";
   }
   return 1;
 }

@@ -152,7 +152,7 @@ public:
   ///
   void initialize(Module &M);
 
-  void print(llvm_ostream &o, const Module *M) const {
+  void print(OStream &o, const Module *M) const {
     if (o.stream()) print(*o.stream(), M);
   }
   virtual void print(std::ostream &o, const Module *M) const;
@@ -201,7 +201,7 @@ public:
   /// dump - Print out this call graph node.
   ///
   void dump() const;
-  void print(llvm_ostream &OS) const {
+  void print(OStream &OS) const {
     if (OS.stream()) print(*OS.stream());
   }
   void print(std::ostream &OS) const;

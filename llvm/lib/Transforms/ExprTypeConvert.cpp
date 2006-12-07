@@ -693,8 +693,8 @@ static void ConvertOperandToType(User *U, Value *OldVal, Value *NewVal,
   I->setName("");
   Instruction *Res;     // Result of conversion
 
-  //llvm_cerr << endl << endl << "Type:\t" << Ty << "\nInst: " << I
-  //          << "BB Before: " << BB << endl;
+  //cerr << endl << endl << "Type:\t" << Ty << "\nInst: " << I
+  //     << "BB Before: " << BB << endl;
 
   // Prevent I from being removed...
   ValueHandle IHandle(VMC, I);

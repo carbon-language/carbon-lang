@@ -31,10 +31,8 @@
 #include "llvm/Target/TargetData.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetFrameInfo.h"
-
 #include <ostream>
 #include <string>
-
 using namespace llvm;
 using namespace llvm::dwarf;
 
@@ -139,7 +137,7 @@ public:
   }
   
 #ifndef NDEBUG
-  void print(llvm_ostream &O) const {
+  void print(OStream &O) const {
     if (O.stream()) print(*O.stream());
   }
   void print(std::ostream &O) const {
@@ -247,7 +245,7 @@ public:
   void Emit(const Dwarf &DW) const; 
       
 #ifndef NDEBUG
-  void print(llvm_ostream &O) {
+  void print(OStream &O) {
     if (O.stream()) print(*O.stream());
   }
   void print(std::ostream &O);
@@ -337,7 +335,7 @@ public:
   void Profile(FoldingSetNodeID &ID) ;
       
 #ifndef NDEBUG
-  void print(llvm_ostream &O, unsigned IncIndent = 0) {
+  void print(OStream &O, unsigned IncIndent = 0) {
     if (O.stream()) print(*O.stream(), IncIndent);
   }
   void print(std::ostream &O, unsigned IncIndent = 0);
@@ -388,7 +386,7 @@ public:
   virtual void Profile(FoldingSetNodeID &ID) = 0;
       
 #ifndef NDEBUG
-  void print(llvm_ostream &O) {
+  void print(OStream &O) {
     if (O.stream()) print(*O.stream());
   }
   virtual void print(std::ostream &O) = 0;
@@ -2861,14 +2859,14 @@ void DIEAbbrev::print(std::ostream &O) {
       << "\n";
   }
 }
-void DIEAbbrev::dump() { print(llvm_cerr); }
+void DIEAbbrev::dump() { print(cerr); }
 #endif
 
 //===----------------------------------------------------------------------===//
 
 #ifndef NDEBUG
 void DIEValue::dump() {
-  print(llvm_cerr);
+  print(cerr);
 }
 #endif
 
@@ -3079,7 +3077,7 @@ void DIE::print(std::ostream &O, unsigned IncIndent) {
 }
 
 void DIE::dump() {
-  print(llvm_cerr);
+  print(cerr);
 }
 #endif
 

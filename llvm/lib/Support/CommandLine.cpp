@@ -84,8 +84,8 @@ static Option *getOption(const std::string &Str) {
 
 static void AddArgument(const char *ArgName, Option *Opt) {
   if (getOption(ArgName)) {
-    llvm_cerr << ProgramName << ": CommandLine Error: Argument '"
-              << ArgName << "' defined more than once!\n";
+    cerr << ProgramName << ": CommandLine Error: Argument '"
+         << ArgName << "' defined more than once!\n";
   } else {
     // Add argument to the argument map!
     (*Options)[ArgName] = Opt;
@@ -129,9 +129,9 @@ static inline bool ProvideOption(Option *Handler, const char *ArgName,
   case ValueOptional:
     break;
   default:
-    llvm_cerr << ProgramName
-              << ": Bad ValueMask flag! CommandLine usage error:"
-              << Handler->getValueExpectedFlag() << "\n";
+    cerr << ProgramName
+         << ": Bad ValueMask flag! CommandLine usage error:"
+         << Handler->getValueExpectedFlag() << "\n";
     abort();
     break;
   }
@@ -468,8 +468,8 @@ void cl::ParseCommandLineOptions(int &argc, char **argv,
     }
 
     if (Handler == 0) {
-      llvm_cerr << ProgramName << ": Unknown command line argument '"
-                << argv[i] << "'.  Try: '" << argv[0] << " --help'\n";
+      cerr << ProgramName << ": Unknown command line argument '"
+           << argv[i] << "'.  Try: '" << argv[0] << " --help'\n";
       ErrorParsing = true;
       continue;
     }
@@ -505,18 +505,18 @@ void cl::ParseCommandLineOptions(int &argc, char **argv,
 
   // Check and handle positional arguments now...
   if (NumPositionalRequired > PositionalVals.size()) {
-    llvm_cerr << ProgramName
-              << ": Not enough positional command line arguments specified!\n"
-              << "Must specify at least " << NumPositionalRequired
-              << " positional arguments: See: " << argv[0] << " --help\n";
+    cerr << ProgramName
+         << ": Not enough positional command line arguments specified!\n"
+         << "Must specify at least " << NumPositionalRequired
+         << " positional arguments: See: " << argv[0] << " --help\n";
     
     ErrorParsing = true;
   } else if (!HasUnlimitedPositionals
              && PositionalVals.size() > PositionalOpts.size()) {
-    llvm_cerr << ProgramName
-              << ": Too many positional arguments specified!\n"
-              << "Can specify at most " << PositionalOpts.size()
-              << " positional arguments: See: " << argv[0] << " --help\n";
+    cerr << ProgramName
+         << ": Too many positional arguments specified!\n"
+         << "Can specify at most " << PositionalOpts.size()
+         << " positional arguments: See: " << argv[0] << " --help\n";
     ErrorParsing = true;
 
   } else if (ConsumeAfterOpt == 0) {
@@ -617,11 +617,11 @@ void cl::ParseCommandLineOptions(int &argc, char **argv,
 bool Option::error(std::string Message, const char *ArgName) {
   if (ArgName == 0) ArgName = ArgStr;
   if (ArgName[0] == 0)
-    llvm_cerr << HelpStr;  // Be nice for positional arguments
+    cerr << HelpStr;  // Be nice for positional arguments
   else
-    llvm_cerr << ProgramName << ": for the -" << ArgName;
+    cerr << ProgramName << ": for the -" << ArgName;
   
-  llvm_cerr << " option: " << Message << "\n";
+  cerr << " option: " << Message << "\n";
   return true;
 }
 
@@ -701,8 +701,8 @@ unsigned alias::getOptionWidth() const {
 // Print out the option for the alias.
 void alias::printOptionInfo(unsigned GlobalWidth) const {
   unsigned L = std::strlen(ArgStr);
-  llvm_cout << "  -" << ArgStr << std::string(GlobalWidth-L-6, ' ') << " - "
-            << HelpStr << "\n";
+  cout << "  -" << ArgStr << std::string(GlobalWidth-L-6, ' ') << " - "
+       << HelpStr << "\n";
 }
 
 
@@ -728,13 +728,13 @@ unsigned basic_parser_impl::getOptionWidth(const Option &O) const {
 //
 void basic_parser_impl::printOptionInfo(const Option &O,
                                         unsigned GlobalWidth) const {
-  llvm_cout << "  -" << O.ArgStr;
+  cout << "  -" << O.ArgStr;
 
   if (const char *ValName = getValueName())
-    llvm_cout << "=<" << getValueStr(O, ValName) << ">";
+    cout << "=<" << getValueStr(O, ValName) << ">";
 
-  llvm_cout << std::string(GlobalWidth-getOptionWidth(O), ' ') << " - "
-            << O.HelpStr << "\n";
+  cout << std::string(GlobalWidth-getOptionWidth(O), ' ') << " - "
+       << O.HelpStr << "\n";
 }
 
 
@@ -850,21 +850,21 @@ void generic_parser_base::printOptionInfo(const Option &O,
                                           unsigned GlobalWidth) const {
   if (O.hasArgStr()) {
     unsigned L = std::strlen(O.ArgStr);
-    llvm_cout << "  -" << O.ArgStr << std::string(GlobalWidth-L-6, ' ')
-              << " - " << O.HelpStr << "\n";
+    cout << "  -" << O.ArgStr << std::string(GlobalWidth-L-6, ' ')
+         << " - " << O.HelpStr << "\n";
 
     for (unsigned i = 0, e = getNumOptions(); i != e; ++i) {
       unsigned NumSpaces = GlobalWidth-strlen(getOption(i))-8;
-      llvm_cout << "    =" << getOption(i) << std::string(NumSpaces, ' ')
-                << " - " << getDescription(i) << "\n";
+      cout << "    =" << getOption(i) << std::string(NumSpaces, ' ')
+           << " - " << getDescription(i) << "\n";
     }
   } else {
     if (O.HelpStr[0])
-      llvm_cout << "  " << O.HelpStr << "\n";
+      cout << "  " << O.HelpStr << "\n";
     for (unsigned i = 0, e = getNumOptions(); i != e; ++i) {
       unsigned L = std::strlen(getOption(i));
-      llvm_cout << "    -" << getOption(i) << std::string(GlobalWidth-L-8, ' ')
-                << " - " << getDescription(i) << "\n";
+      cout << "    -" << getOption(i) << std::string(GlobalWidth-L-8, ' ')
+           << " - " << getDescription(i) << "\n";
     }
   }
 }
@@ -917,9 +917,9 @@ public:
     }
 
     if (ProgramOverview)
-      llvm_cout << "OVERVIEW:" << ProgramOverview << "\n";
+      cout << "OVERVIEW:" << ProgramOverview << "\n";
 
-    llvm_cout << "USAGE: " << ProgramName << " [options]";
+    cout << "USAGE: " << ProgramName << " [options]";
 
     // Print out the positional options.
     std::vector<Option*> &PosOpts = *PositionalOptions;
@@ -929,28 +929,28 @@ public:
 
     for (unsigned i = CAOpt != 0, e = PosOpts.size(); i != e; ++i) {
       if (PosOpts[i]->ArgStr[0])
-        llvm_cout << " --" << PosOpts[i]->ArgStr;
-      llvm_cout << " " << PosOpts[i]->HelpStr;
+        cout << " --" << PosOpts[i]->ArgStr;
+      cout << " " << PosOpts[i]->HelpStr;
     }
 
     // Print the consume after option info if it exists...
-    if (CAOpt) llvm_cout << " " << CAOpt->HelpStr;
+    if (CAOpt) cout << " " << CAOpt->HelpStr;
 
-    llvm_cout << "\n\n";
+    cout << "\n\n";
 
     // Compute the maximum argument length...
     MaxArgLen = 0;
     for (unsigned i = 0, e = Opts.size(); i != e; ++i)
       MaxArgLen = std::max(MaxArgLen, Opts[i].second->getOptionWidth());
 
-    llvm_cout << "OPTIONS:\n";
+    cout << "OPTIONS:\n";
     for (unsigned i = 0, e = Opts.size(); i != e; ++i)
       Opts[i].second->printOptionInfo(MaxArgLen);
 
     // Print any extra help the user has declared.
     for (std::vector<const char *>::iterator I = MoreHelp->begin(),
           E = MoreHelp->end(); I != E; ++I)
-      llvm_cout << *I;
+      cout << *I;
     MoreHelp->clear();
 
     // Halt the program since help information was printed
@@ -982,21 +982,21 @@ public:
   void operator=(bool OptionWasSpecified) {
     if (OptionWasSpecified) {
       if (OverrideVersionPrinter == 0) {
-        llvm_cout << "Low Level Virtual Machine (http://llvm.org/):\n";
-        llvm_cout << "  " << PACKAGE_NAME << " version " << PACKAGE_VERSION;
+        cout << "Low Level Virtual Machine (http://llvm.org/):\n";
+        cout << "  " << PACKAGE_NAME << " version " << PACKAGE_VERSION;
 #ifdef LLVM_VERSION_INFO
-        llvm_cout << LLVM_VERSION_INFO;
+        cout << LLVM_VERSION_INFO;
 #endif
-        llvm_cout << "\n  ";
+        cout << "\n  ";
 #ifndef __OPTIMIZE__
-        llvm_cout << "DEBUG build";
+        cout << "DEBUG build";
 #else
-        llvm_cout << "Optimized build";
+        cout << "Optimized build";
 #endif
 #ifndef NDEBUG
-        llvm_cout << " with assertions";
+        cout << " with assertions";
 #endif
-        llvm_cout << ".\n";
+        cout << ".\n";
         Options->clear();  // Don't bother making option dtors remove from map.
         exit(1);
       } else {

@@ -30,7 +30,7 @@ namespace {
       HelloCounter++;
       std::string fname = F.getName();
       EscapeString(fname);
-      llvm_cerr << "Hello: " << fname << "\n";
+      cerr << "Hello: " << fname << "\n";
       return false;
     }
   };
@@ -43,7 +43,7 @@ namespace {
       HelloCounter++;
       std::string fname = F.getName();
       EscapeString(fname);
-      llvm_cerr << "Hello: " << fname << "\n";
+      cerr << "Hello: " << fname << "\n";
       return false;
     }
 

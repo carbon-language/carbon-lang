@@ -13,6 +13,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "ProfilingUtils.h"
 #include "llvm/Constants.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/Module.h"
@@ -20,7 +21,6 @@
 #include "llvm/Transforms/Utils/BasicBlockUtils.h"
 #include "llvm/Transforms/Instrumentation.h"
 #include "llvm/Instructions.h"
-#include "ProfilingUtils.h"
 #include "llvm/Support/Debug.h"
 #include <set>
 using namespace llvm;
@@ -61,8 +61,8 @@ static void InsertInstrumentationCall (BasicBlock *BB,
 bool TraceBasicBlocks::runOnModule(Module &M) {
   Function *Main = M.getMainFunction();
   if (Main == 0) {
-    llvm_cerr << "WARNING: cannot insert basic-block trace instrumentation"
-              << " into a module with no main function!\n";
+    cerr << "WARNING: cannot insert basic-block trace instrumentation"
+         << " into a module with no main function!\n";
     return false;  // No main, no instrumentation!
   }
 

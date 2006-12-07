@@ -494,17 +494,17 @@ static bool AllUsesOfValueWillTrapIfNull(Value *V) {
       // Will trap.
     } else if (StoreInst *SI = dyn_cast<StoreInst>(*UI)) {
       if (SI->getOperand(0) == V) {
-        //llvm_cerr << "NONTRAPPING USE: " << **UI;
+        //cerr << "NONTRAPPING USE: " << **UI;
         return false;  // Storing the value.
       }
     } else if (CallInst *CI = dyn_cast<CallInst>(*UI)) {
       if (CI->getOperand(0) != V) {
-        //llvm_cerr << "NONTRAPPING USE: " << **UI;
+        //cerr << "NONTRAPPING USE: " << **UI;
         return false;  // Not calling the ptr
       }
     } else if (InvokeInst *II = dyn_cast<InvokeInst>(*UI)) {
       if (II->getOperand(0) != V) {
-        //llvm_cerr << "NONTRAPPING USE: " << **UI;
+        //cerr << "NONTRAPPING USE: " << **UI;
         return false;  // Not calling the ptr
       }
     } else if (CastInst *CI = dyn_cast<CastInst>(*UI)) {
@@ -515,7 +515,7 @@ static bool AllUsesOfValueWillTrapIfNull(Value *V) {
                isa<ConstantPointerNull>(UI->getOperand(1))) {
       // Ignore setcc X, null
     } else {
-      //llvm_cerr << "NONTRAPPING USE: " << **UI;
+      //cerr << "NONTRAPPING USE: " << **UI;
       return false;
     }
   return true;
@@ -533,7 +533,7 @@ static bool AllUsesOfLoadedValueWillTrapIfNull(GlobalVariable *GV) {
       // Ignore stores to the global.
     } else {
       // We don't know or understand this user, bail out.
-      //llvm_cerr << "UNKNOWN USER OF GLOBAL!: " << **UI;
+      //cerr << "UNKNOWN USER OF GLOBAL!: " << **UI;
       return false;
     }
 
@@ -1206,25 +1206,25 @@ bool GlobalOpt::ProcessInternalGlobal(GlobalVariable *GV,
 
   if (!AnalyzeGlobal(GV, GS, PHIUsers)) {
 #if 0
-    llvm_cerr << "Global: " << *GV;
-    llvm_cerr << "  isLoaded = " << GS.isLoaded << "\n";
-    llvm_cerr << "  StoredType = ";
+    cerr << "Global: " << *GV;
+    cerr << "  isLoaded = " << GS.isLoaded << "\n";
+    cerr << "  StoredType = ";
     switch (GS.StoredType) {
-    case GlobalStatus::NotStored: llvm_cerr << "NEVER STORED\n"; break;
-    case GlobalStatus::isInitializerStored: llvm_cerr << "INIT STORED\n"; break;
-    case GlobalStatus::isStoredOnce: llvm_cerr << "STORED ONCE\n"; break;
-    case GlobalStatus::isStored: llvm_cerr << "stored\n"; break;
+    case GlobalStatus::NotStored: cerr << "NEVER STORED\n"; break;
+    case GlobalStatus::isInitializerStored: cerr << "INIT STORED\n"; break;
+    case GlobalStatus::isStoredOnce: cerr << "STORED ONCE\n"; break;
+    case GlobalStatus::isStored: cerr << "stored\n"; break;
     }
     if (GS.StoredType == GlobalStatus::isStoredOnce && GS.StoredOnceValue)
-      llvm_cerr << "  StoredOnceValue = " << *GS.StoredOnceValue << "\n";
+      cerr << "  StoredOnceValue = " << *GS.StoredOnceValue << "\n";
     if (GS.AccessingFunction && !GS.HasMultipleAccessingFunctions)
-      llvm_cerr << "  AccessingFunction = " << GS.AccessingFunction->getName()
+      cerr << "  AccessingFunction = " << GS.AccessingFunction->getName()
                 << "\n";
-    llvm_cerr << "  HasMultipleAccessingFunctions =  "
+    cerr << "  HasMultipleAccessingFunctions =  "
               << GS.HasMultipleAccessingFunctions << "\n";
-    llvm_cerr << "  HasNonInstructionUser = " << GS.HasNonInstructionUser<<"\n";
-    llvm_cerr << "  isNotSuitableForSRA = " << GS.isNotSuitableForSRA << "\n";
-    llvm_cerr << "\n";
+    cerr << "  HasNonInstructionUser = " << GS.HasNonInstructionUser<<"\n";
+    cerr << "  isNotSuitableForSRA = " << GS.isNotSuitableForSRA << "\n";
+    cerr << "\n";
 #endif
     
     // If this is a first class global and has only one accessing function

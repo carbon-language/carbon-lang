@@ -123,10 +123,10 @@ static void RemoveEnv(const char * name, char ** const envp) {
 }
 
 static void dumpArgs(const char **args) {
-  llvm_cerr << *args++;
+  cerr << *args++;
   while (*args)
-    llvm_cerr << ' ' << *args++;
-  llvm_cerr << '\n' << std::flush;
+    cerr << ' ' << *args++;
+  cerr << '\n' << std::flush;
 }
 
 static inline void addPass(PassManager &PM, Pass *P) {
@@ -283,7 +283,7 @@ int llvm::GenerateBytecode(Module *M, int StripLevel, bool Internalize,
   Passes.add(createVerifierPass());
 
   // Add the pass that writes bytecode to the output file...
-  llvm_ostream L(*Out);
+  OStream L(*Out);
   addPass(Passes, new WriteBytecodePass(&L, false, !NoCompress));
 
   // Run our queue of passes all at once now, efficiently.

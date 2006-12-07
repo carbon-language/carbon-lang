@@ -274,12 +274,12 @@ void IntrinsicLowering::LowerIntrinsicCall(CallInst *CI) {
 
   switch (Callee->getIntrinsicID()) {
   case Intrinsic::not_intrinsic:
-    llvm_cerr << "Cannot lower a call to a non-intrinsic function '"
-              << Callee->getName() << "'!\n";
+    cerr << "Cannot lower a call to a non-intrinsic function '"
+         << Callee->getName() << "'!\n";
     abort();
   default:
-    llvm_cerr << "Error: Code generator does not support intrinsic function '"
-              << Callee->getName() << "'!\n";
+    cerr << "Error: Code generator does not support intrinsic function '"
+         << Callee->getName() << "'!\n";
     abort();
 
     // The setjmp/longjmp intrinsics should only exist in the code if it was
@@ -356,9 +356,9 @@ void IntrinsicLowering::LowerIntrinsicCall(CallInst *CI) {
   case Intrinsic::stackrestore: {
     static bool Warned = false;
     if (!Warned)
-      llvm_cerr << "WARNING: this target does not support the llvm.stack"
-                << (Callee->getIntrinsicID() == Intrinsic::stacksave ?
-                    "save" : "restore") << " intrinsic.\n";
+      cerr << "WARNING: this target does not support the llvm.stack"
+           << (Callee->getIntrinsicID() == Intrinsic::stacksave ?
+               "save" : "restore") << " intrinsic.\n";
     Warned = true;
     if (Callee->getIntrinsicID() == Intrinsic::stacksave)
       CI->replaceAllUsesWith(Constant::getNullValue(CI->getType()));
@@ -367,9 +367,9 @@ void IntrinsicLowering::LowerIntrinsicCall(CallInst *CI) {
     
   case Intrinsic::returnaddress:
   case Intrinsic::frameaddress:
-    llvm_cerr << "WARNING: this target does not support the llvm."
-              << (Callee->getIntrinsicID() == Intrinsic::returnaddress ?
-                  "return" : "frame") << "address intrinsic.\n";
+    cerr << "WARNING: this target does not support the llvm."
+         << (Callee->getIntrinsicID() == Intrinsic::returnaddress ?
+             "return" : "frame") << "address intrinsic.\n";
     CI->replaceAllUsesWith(ConstantPointerNull::get(
                                             cast<PointerType>(CI->getType())));
     break;
@@ -380,8 +380,8 @@ void IntrinsicLowering::LowerIntrinsicCall(CallInst *CI) {
   case Intrinsic::pcmarker:
     break;    // Simply strip out pcmarker on unsupported architectures
   case Intrinsic::readcyclecounter: {
-    llvm_cerr << "WARNING: this target does not support the llvm.readcyclecoun"
-              << "ter intrinsic.  It is being lowered to a constant 0\n";
+    cerr << "WARNING: this target does not support the llvm.readcyclecoun"
+         << "ter intrinsic.  It is being lowered to a constant 0\n";
     CI->replaceAllUsesWith(ConstantInt::get(Type::ULongTy, 0));
     break;
   }

@@ -92,14 +92,14 @@ namespace {
   struct CFGPrinter : public FunctionPass {
     virtual bool runOnFunction(Function &F) {
       std::string Filename = "cfg." + F.getName() + ".dot";
-      llvm_cerr << "Writing '" << Filename << "'...";
+      cerr << "Writing '" << Filename << "'...";
       std::ofstream File(Filename.c_str());
 
       if (File.good())
         WriteGraph(File, (const Function*)&F);
       else
-        llvm_cerr << "  error opening file for writing!";
-      llvm_cerr << "\n";
+        cerr << "  error opening file for writing!";
+      cerr << "\n";
       return false;
     }
 

@@ -285,7 +285,7 @@ public:
     IsDead = false;
   }
 
-  friend llvm_ostream& operator<<(llvm_ostream& os, const MachineOperand& mop) {
+  friend OStream& operator<<(OStream& os, const MachineOperand& mop) {
     if (os.stream()) *os.stream() << mop;
     return os;
   }
@@ -397,12 +397,12 @@ public:
   //
   // Debugging support
   //
-  void print(llvm_ostream &OS, const TargetMachine *TM) const {
+  void print(OStream &OS, const TargetMachine *TM) const {
     if (OS.stream()) print(*OS.stream(), TM);
   }
   void print(std::ostream &OS, const TargetMachine *TM) const;
   void dump() const;
-  friend llvm_ostream& operator<<(llvm_ostream& os, const MachineInstr& minstr){
+  friend OStream& operator<<(OStream& os, const MachineInstr& minstr){
     if (os.stream()) *os.stream() << minstr;
     return os;
   }

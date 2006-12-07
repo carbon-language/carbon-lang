@@ -118,7 +118,7 @@ namespace {
 //
 SCEV::~SCEV() {}
 void SCEV::dump() const {
-  print(llvm_cerr);
+  print(cerr);
 }
 
 /// getValueRange - Return the tightest constant bounds that this value is
@@ -1558,11 +1558,11 @@ SCEVHandle ScalarEvolutionsImpl::ComputeIterationCount(const Loop *L) {
     break;
   default:
 #if 0
-    llvm_cerr << "ComputeIterationCount ";
+    cerr << "ComputeIterationCount ";
     if (ExitCond->getOperand(0)->getType()->isUnsigned())
-      llvm_cerr << "[unsigned] ";
-    llvm_cerr << *LHS << "   "
-              << Instruction::getOpcodeName(Cond) << "   " << *RHS << "\n";
+      cerr << "[unsigned] ";
+    cerr << *LHS << "   "
+         << Instruction::getOpcodeName(Cond) << "   " << *RHS << "\n";
 #endif
     break;
   }
@@ -1678,9 +1678,9 @@ ComputeLoadConstantCompareIterationCount(LoadInst *LI, Constant *RHS,
     if (!isa<ConstantBool>(Result)) break;  // Couldn't decide for sure
     if (cast<ConstantBool>(Result)->getValue() == false) {
 #if 0
-      llvm_cerr << "\n***\n*** Computed loop count " << *ItCst
-                << "\n*** From global " << *GV << "*** BB: " << *L->getHeader()
-                << "***\n";
+      cerr << "\n***\n*** Computed loop count " << *ItCst
+           << "\n*** From global " << *GV << "*** BB: " << *L->getHeader()
+           << "***\n";
 #endif
       ++NumArrayLenItCounts;
       return SCEVConstant::get(ItCst);   // Found terminating iteration!
@@ -2147,8 +2147,8 @@ SCEVHandle ScalarEvolutionsImpl::HowFarToZero(SCEV *V, const Loop *L) {
     SCEVConstant *R2 = dyn_cast<SCEVConstant>(Roots.second);
     if (R1) {
 #if 0
-      llvm_cerr << "HFTZ: " << *V << " - sol#1: " << *R1
-                << "  sol#2: " << *R2 << "\n";
+      cerr << "HFTZ: " << *V << " - sol#1: " << *R1
+           << "  sol#2: " << *R2 << "\n";
 #endif
       // Pick the smallest positive root value.
       assert(R1->getType()->isUnsigned()&&"Didn't canonicalize to unsigned?");
@@ -2276,8 +2276,8 @@ HowManyLessThans(SCEV *LHS, SCEV *RHS, const Loop *L) {
     default: break;
     }
 
-    //llvm_cerr << "Computed Loop Trip Count as: " <<
-    //  *SCEV::getMinusSCEV(RHS, AddRec->getOperand(0)) << "\n";
+    //cerr << "Computed Loop Trip Count as: "
+    //     << *SCEV::getMinusSCEV(RHS, AddRec->getOperand(0)) << "\n";
     return SCEV::getMinusSCEV(RHS, AddRec->getOperand(0));
   }
 
@@ -2492,20 +2492,20 @@ static void PrintLoopInfo(std::ostream &OS, const ScalarEvolution *SE,
   for (Loop::iterator I = L->begin(), E = L->end(); I != E; ++I)
     PrintLoopInfo(OS, SE, *I);
 
-  llvm_cerr << "Loop " << L->getHeader()->getName() << ": ";
+  cerr << "Loop " << L->getHeader()->getName() << ": ";
 
   std::vector<BasicBlock*> ExitBlocks;
   L->getExitBlocks(ExitBlocks);
   if (ExitBlocks.size() != 1)
-    llvm_cerr << "<multiple exits> ";
+    cerr << "<multiple exits> ";
 
   if (SE->hasLoopInvariantIterationCount(L)) {
-    llvm_cerr << *SE->getIterationCount(L) << " iterations! ";
+    cerr << *SE->getIterationCount(L) << " iterations! ";
   } else {
-    llvm_cerr << "Unpredictable iteration count. ";
+    cerr << "Unpredictable iteration count. ";
   }
 
-  llvm_cerr << "\n";
+  cerr << "\n";
 }
 
 void ScalarEvolution::print(std::ostream &OS, const Module* ) const {

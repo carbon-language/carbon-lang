@@ -115,7 +115,7 @@ int main(int argc, char **argv)
       }
 
       if (DumpAsm)
-        llvm_cerr << "Here's the assembly:" << M.get();
+        cerr << "Here's the assembly:" << M.get();
 
       if (OutputFilename != "") {   // Specified an output filename?
         if (OutputFilename != "-") {  // Not stdout?
@@ -163,15 +163,15 @@ int main(int argc, char **argv)
         throw std::string("error opening ") + OutputFilename + "!";
       }
 
-      llvm_ostream L(*Out);
+      OStream L(*Out);
       WriteBytecodeToFile(M.get(), L);
     } catch (const ParseError &E) {
-      llvm_cerr << argv[0] << ": " << E.getMessage() << "\n";
+      cerr << argv[0] << ": " << E.getMessage() << "\n";
       return 1;
     }
   }
   catch (const std::string& msg ) {
-    llvm_cerr << argv[0] << ": " << msg << "\n";
+    cerr << argv[0] << ": " << msg << "\n";
     return 1;
   }
 

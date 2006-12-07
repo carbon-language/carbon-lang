@@ -143,7 +143,7 @@ int main(int argc, char **argv) {
     ParseError Err;
     std::auto_ptr<Module> M(ParseAssemblyFile(InputFilename,&Err));
     if (M.get() == 0) {
-      llvm_cerr << argv[0] << ": " << Err.getMessage() << "\n"; 
+      cerr << argv[0] << ": " << Err.getMessage() << "\n"; 
       return 1;
     }
 
@@ -178,7 +178,7 @@ int main(int argc, char **argv) {
 
 
     if (!Out->good()) {
-      llvm_cerr << argv[0] << ": error opening " << OutputFilename << "!\n";
+      cerr << argv[0] << ": error opening " << OutputFilename << "!\n";
       return 1;
     }
 
@@ -197,7 +197,7 @@ int main(int argc, char **argv) {
     Passes.add(createVerifierPass());
 
     // Write bytecode to file...
-    llvm_ostream L(*Out);
+    OStream L(*Out);
     Passes.add(new WriteBytecodePass(&L,false,!NoCompress));
 
     // Run our queue of passes all at once now, efficiently.
@@ -206,9 +206,9 @@ int main(int argc, char **argv) {
     if (Out != &std::cout) delete Out;
     return 0;
   } catch (const std::string& msg) {
-    llvm_cerr << argv[0] << ": " << msg << "\n";
+    cerr << argv[0] << ": " << msg << "\n";
   } catch (...) {
-    llvm_cerr << argv[0] << ": Unexpected unknown exception occurred.\n";
+    cerr << argv[0] << ": Unexpected unknown exception occurred.\n";
   }
   return 1;
 }

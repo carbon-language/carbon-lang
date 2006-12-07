@@ -25,7 +25,6 @@
 #include "llvm/Assembly/Writer.h"
 #include "llvm/Support/Streams.h"
 #include "llvm/System/Path.h"
-#include <sstream>
 using namespace llvm;
 
 // Error - Simple wrapper function to conditionally assign to E and return true.
@@ -251,11 +250,11 @@ static bool LinkTypes(Module *Dest, const Module *Src, std::string *Err) {
 static void PrintMap(const std::map<const Value*, Value*> &M) {
   for (std::map<const Value*, Value*>::const_iterator I = M.begin(), E =M.end();
        I != E; ++I) {
-    llvm_cerr << " Fr: " << (void*)I->first << " ";
+    cerr << " Fr: " << (void*)I->first << " ";
     I->first->dump();
-    llvm_cerr << " To: " << (void*)I->second << " ";
+    cerr << " To: " << (void*)I->second << " ";
     I->second->dump();
-    llvm_cerr << "\n";
+    cerr << "\n";
   }
 }
 
@@ -313,10 +312,10 @@ static Value *RemapOperand(const Value *In,
   }
   
 
-  llvm_cerr << "LinkModules ValueMap: \n";
+  cerr << "LinkModules ValueMap: \n";
   PrintMap(ValueMap);
 
-  llvm_cerr << "Couldn't remap value: " << (void*)In << " " << *In << "\n";
+  cerr << "Couldn't remap value: " << (void*)In << " " << *In << "\n";
   assert(0 && "Couldn't remap value!");
   return 0;
 }
@@ -844,13 +843,13 @@ Linker::LinkModules(Module *Dest, Module *Src, std::string *ErrorMsg) {
 
   if (Src->getEndianness() != Module::AnyEndianness &&
       Dest->getEndianness() != Src->getEndianness())
-    llvm_cerr << "WARNING: Linking two modules of different endianness!\n";
+    cerr << "WARNING: Linking two modules of different endianness!\n";
   if (Src->getPointerSize() != Module::AnyPointerSize &&
       Dest->getPointerSize() != Src->getPointerSize())
-    llvm_cerr << "WARNING: Linking two modules of different pointer size!\n";
+    cerr << "WARNING: Linking two modules of different pointer size!\n";
   if (!Src->getTargetTriple().empty() &&
       Dest->getTargetTriple() != Src->getTargetTriple())
-    llvm_cerr << "WARNING: Linking two modules of different target triples!\n";
+    cerr << "WARNING: Linking two modules of different target triples!\n";
 
   if (!Src->getModuleInlineAsm().empty()) {
     if (Dest->getModuleInlineAsm().empty())

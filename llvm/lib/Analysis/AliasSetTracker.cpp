@@ -543,8 +543,8 @@ void AliasSetTracker::print(std::ostream &OS) const {
   OS << "\n";
 }
 
-void AliasSet::dump() const { print (llvm_cerr); }
-void AliasSetTracker::dump() const { print(llvm_cerr); }
+void AliasSet::dump() const { print (cerr); }
+void AliasSetTracker::dump() const { print(cerr); }
 
 //===----------------------------------------------------------------------===//
 //                            AliasSetPrinter Pass
@@ -564,7 +564,7 @@ namespace {
 
       for (inst_iterator I = inst_begin(F), E = inst_end(F); I != E; ++I)
         Tracker->add(&*I);
-      Tracker->print(llvm_cerr);
+      Tracker->print(cerr);
       delete Tracker;
       return false;
     }

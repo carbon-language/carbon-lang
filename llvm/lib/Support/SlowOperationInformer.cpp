@@ -28,8 +28,8 @@ SlowOperationInformer::~SlowOperationInformer() {
   if (LastPrintAmount) {
     // If we have printed something, make _sure_ we print the 100% amount, and
     // also print a newline.
-    llvm_cout << std::string(LastPrintAmount, '\b') << "Progress "
-              << OperationName << ": 100%  \n";
+    cout << std::string(LastPrintAmount, '\b') << "Progress "
+         << OperationName << ": 100%  \n";
   }
 }
 
@@ -40,7 +40,7 @@ SlowOperationInformer::~SlowOperationInformer() {
 bool SlowOperationInformer::progress(unsigned Amount) {
   int status = sys::AlarmStatus();
   if (status == -1) {
-    llvm_cout << "\n";
+    cout << "\n";
     LastPrintAmount = 0;
     return true;
   }
@@ -61,6 +61,6 @@ bool SlowOperationInformer::progress(unsigned Amount) {
     OS << "%  ";
 
   LastPrintAmount = OS.str().size();
-  llvm_cout << ToPrint+OS.str() << std::flush;
+  cout << ToPrint+OS.str() << std::flush;
   return false;
 }

@@ -102,6 +102,6 @@ void BumpPtrAllocator::PrintStats() const {
   for (; R; R = R->getNext(), ++NumRegions)
     BytesUsed += R->getNumBytesAllocated();
 
-  llvm_cerr << "\nNumber of memory regions: " << NumRegions << "\n";
-  llvm_cerr << "Bytes allocated: " << BytesUsed << "\n";
+  cerr << "\nNumber of memory regions: " << NumRegions << "\n";
+  cerr << "Bytes allocated: " << BytesUsed << "\n";
 }

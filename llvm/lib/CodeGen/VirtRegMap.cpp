@@ -112,11 +112,11 @@ void VirtRegMap::virtFolded(unsigned VirtReg, MachineInstr *OldMI,
 }
 
 void VirtRegMap::print(std::ostream &OS) const {
-  llvm_ostream LOS(OS);
+  OStream LOS(OS);
   print(LOS);
 }
 
-void VirtRegMap::print(llvm_ostream &OS) const {
+void VirtRegMap::print(OStream &OS) const {
   const MRegisterInfo* MRI = MF.getTarget().getRegisterInfo();
 
   OS << "********** REGISTER MAP **********\n";
@@ -135,7 +135,7 @@ void VirtRegMap::print(llvm_ostream &OS) const {
 }
 
 void VirtRegMap::dump() const {
-  llvm_ostream OS = DOUT;
+  OStream OS = DOUT;
   print(OS);
 }
 

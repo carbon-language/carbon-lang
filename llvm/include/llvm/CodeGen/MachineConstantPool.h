@@ -49,14 +49,14 @@ public:
 
   /// print - Implement operator<<...
   ///
-  void print(llvm_ostream &O) const {
+  void print(OStream &O) const {
     if (O.stream()) print(*O.stream());
   }
   virtual void print(std::ostream &O) const = 0;
 };
 
-inline llvm_ostream &operator<<(llvm_ostream &OS,
-                                const MachineConstantPoolValue &V) {
+inline OStream &operator<<(OStream &OS,
+                           const MachineConstantPoolValue &V) {
   V.print(OS);
   return OS;
 }
@@ -143,7 +143,7 @@ public:
   /// print - Used by the MachineFunction printer to print information about
   /// constant pool objects.  Implemented in MachineFunction.cpp
   ///
-  void print(llvm_ostream &OS) const {
+  void print(OStream &OS) const {
     if (OS.stream()) print(*OS.stream());
   }
   void print(std::ostream &OS) const;

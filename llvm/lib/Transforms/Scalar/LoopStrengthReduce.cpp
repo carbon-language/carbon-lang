@@ -507,12 +507,12 @@ namespace {
 }
 
 void BasedUser::dump() const {
-  llvm_cerr << " Base=" << *Base;
-  llvm_cerr << " Imm=" << *Imm;
+  cerr << " Base=" << *Base;
+  cerr << " Imm=" << *Imm;
   if (EmittedBase)
-    llvm_cerr << "  EB=" << *EmittedBase;
+    cerr << "  EB=" << *EmittedBase;
 
-  llvm_cerr << "   Inst: " << *Inst;
+  cerr << "   Inst: " << *Inst;
 }
 
 Value *BasedUser::InsertCodeForBaseAtPosition(const SCEVHandle &NewBase, 

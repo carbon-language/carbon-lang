@@ -29,7 +29,6 @@
 #include <bitset>
 #include <vector>
 #include <functional>
-#include <ostream>
 
 namespace llvm {
 
@@ -174,11 +173,11 @@ public:
   ///
   ///  Printing and debugging support
   ///
-  void print(llvm_ostream &O) const {
+  void print(OStream &O) const {
     if (O.stream()) print(*O.stream());
   }
   void print(std::ostream &O) const;
-  void dump() const { print(llvm_cerr); }
+  void dump() const { print(cerr); }
 
 public:
   //
@@ -235,6 +234,9 @@ public:
       return (I.bitvec == bitvec &&
               I.currentWord == currentWord && I.currentBit == currentBit);
     }
+    bool operator!=(const iterator& I) {
+      return !(*this == I);
+    }
 
   protected:
     static iterator begin(BitSetVector& _bitvec) { return iterator(_bitvec); }
@@ -252,7 +254,7 @@ inline void BitSetVector::print(std::ostream& O) const
     O << "<" << (*I) << ">" << (I+1 == E? "\n" : ", ");
 }
 
-inline llvm_ostream& operator<< (llvm_ostream& O, const BitSetVector& bset) {
+inline OStream& operator<< (OStream& O, const BitSetVector& bset) {
   bset.print(O);
   return O;
 }

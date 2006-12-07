@@ -23,7 +23,6 @@
 #include "llvm/Support/Streams.h"
 #include "llvm/Target/MRegisterInfo.h"
 #include <algorithm>
-#include <iostream>
 #include <map>
 using namespace llvm;
 
@@ -472,10 +471,10 @@ std::ostream& llvm::operator<<(std::ostream& os, const LiveRange &LR) {
 }
 
 void LiveRange::dump() const {
-  llvm_cerr << *this << "\n";
+  cerr << *this << "\n";
 }
 
-void LiveInterval::print(llvm_ostream OS, const MRegisterInfo *MRI) const {
+void LiveInterval::print(OStream OS, const MRegisterInfo *MRI) const {
   if (MRI && MRegisterInfo::isPhysicalRegister(reg))
     OS << MRI->getName(reg);
   else
@@ -508,5 +507,5 @@ void LiveInterval::print(llvm_ostream OS, const MRegisterInfo *MRI) const {
 }
 
 void LiveInterval::dump() const {
-  llvm_cerr << *this << "\n";
+  cerr << *this << "\n";
 }

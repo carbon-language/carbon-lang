@@ -434,7 +434,7 @@ void GraphBuilder::visitGetElementPtrInst(User &GEP) {
         // Variable index into a node.  We must merge all of the elements of the
         // sequential type here.
         if (isa<PointerType>(STy))
-          llvm_cerr << "Pointer indexing not handled yet!\n";
+          cerr << "Pointer indexing not handled yet!\n";
         else {
           const ArrayType *ATy = cast<ArrayType>(STy);
           unsigned ElSize = TD.getTypeSize(CurTy);
@@ -1061,7 +1061,7 @@ void GraphBuilder::visitCallSite(CallSite CS) {
   if (DisableDirectCallOpt || !isa<Function>(Callee)) {
     CalleeNode = getValueDest(*Callee).getNode();
     if (CalleeNode == 0) {
-      llvm_cerr << "WARNING: Program is calling through a null pointer?\n"<< *I;
+      cerr << "WARNING: Program is calling through a null pointer?\n"<< *I;
       return;  // Calling a null pointer?
     }
   }

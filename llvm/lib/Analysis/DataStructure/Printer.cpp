@@ -37,7 +37,7 @@ namespace {
   Statistic NumFoldedNodes ("dsa", "Number of folded nodes (in final graph)");
 }
 
-void DSNode::dump() const { print(llvm_cerr, 0); }
+void DSNode::dump() const { print(cerr, 0); }
 
 static std::string getCaption(const DSNode *N, const DSGraph *G) {
   std::stringstream OS;

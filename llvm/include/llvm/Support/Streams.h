@@ -7,48 +7,64 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This file implements a wrapper for the std::cout and std::cerr I/O streams.
-// It prevents the need to include <iostream> to each file just to get I/O.
+// This file implements a wrapper for the STL I/O streams.  It prevents the need
+// to include <iostream> in a file just to get I/O.
 //
 //===----------------------------------------------------------------------===//
 
 #ifndef LLVM_SUPPORT_STREAMS_H
 #define LLVM_SUPPORT_STREAMS_H
 
-#include <ostream>              // Doesn't have static d'tors!!
+#include <sstream>
 
 namespace llvm {
 
-  /// llvm_ostream - Acts like an ostream. It's a wrapper for the std::cerr and
-  /// std::cout ostreams. However, it doesn't require #including <iostream> in
-  /// every file, which increases static c'tors & d'tors in the object code.
+  /// BaseStream - Acts like the STL streams. It's a wrapper for the std::cerr,
+  /// std::cout, std::cin, etc. streams. However, it doesn't require #including
+  /// <iostream> in every file (doing so increases static c'tors & d'tors in the
+  /// object code).
   /// 
-  class llvm_ostream {
-    std::ostream* Stream;
+  template <typename StreamTy>
+  class BaseStream {
+    StreamTy *Stream;
   public:
-    llvm_ostream() : Stream(0) {}
-    llvm_ostream(std::ostream &OStream) : Stream(&OStream) {}
+    BaseStream() : Stream(0) {}
+    BaseStream(StreamTy &S) : Stream(&S) {}
+    BaseStream(StreamTy *S) : Stream(S) {}
 
-    std::ostream* stream() const { return Stream; }
+    StreamTy *stream() const { return Stream; }
 
-    inline llvm_ostream &operator << (std::ostream& (*Func)(std::ostream&)) {
+    inline BaseStream &operator << (StreamTy &(*Func)(StreamTy&)) {
       if (Stream) *Stream << Func;
       return *this;
     }
-      
+
     template <typename Ty>
-    llvm_ostream &operator << (const Ty &Thing) {
+    BaseStream &operator << (const Ty &Thing) {
       if (Stream) *Stream << Thing;
       return *this;
     }
 
-    bool operator == (const std::ostream &OS) { return &OS == Stream; }
-    bool operator == (const llvm_ostream &OS) { return OS.Stream == Stream; }
+    template <typename Ty>
+    BaseStream &operator >> (const Ty &Thing) {
+      if (Stream) *Stream >> Thing;
+      return *this;
+    }
+
+    bool operator == (const StreamTy &S) { return &S == Stream; }
+    bool operator != (const StreamTy &S) { return !(*this == S); }
+    bool operator == (const BaseStream &S) { return S.Stream == Stream; }
+    bool operator != (const BaseStream &S) { return !(*this == S); }
   };
 
-  extern llvm_ostream llvm_null;
-  extern llvm_ostream llvm_cout;
-  extern llvm_ostream llvm_cerr;
+  typedef BaseStream<std::ostream> OStream;
+  typedef BaseStream<std::istream> IStream;
+  typedef BaseStream<std::stringstream> StringStream;
+
+  extern OStream NullStream;
+  extern OStream cout;
+  extern OStream cerr;
+  extern IStream cin;
 
 } // End llvm namespace
 

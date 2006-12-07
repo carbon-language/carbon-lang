@@ -141,7 +141,7 @@ class ConstantRange {
 
   /// print - Print out the bounds to a stream...
   ///
-  void print(llvm_ostream &OS) const {
+  void print(OStream &OS) const {
     if (OS.stream()) print(*OS.stream());
   }
   void print(std::ostream &OS) const;

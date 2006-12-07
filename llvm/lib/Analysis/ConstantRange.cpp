@@ -370,5 +370,5 @@ void ConstantRange::print(std::ostream &OS) const {
 /// dump - Allow printing from a debugger easily...
 ///
 void ConstantRange::dump() const {
-  print(llvm_cerr);
+  print(cerr);
 }

@@ -829,7 +829,7 @@ void AssemblyWriter::printGlobal(const GlobalVariable *GV) {
     case GlobalValue::ExternalWeakLinkage: Out << "extern_weak "; break;
     case GlobalValue::ExternalLinkage:     break;
     case GlobalValue::GhostLinkage:
-      llvm_cerr << "GhostLinkage not allowed in AsmWriter!\n";
+      cerr << "GhostLinkage not allowed in AsmWriter!\n";
       abort();
     }
 
@@ -928,7 +928,7 @@ void AssemblyWriter::printFunction(const Function *F) {
     case GlobalValue::ExternalWeakLinkage: Out << "extern_weak "; break;      
     case GlobalValue::ExternalLinkage: break;
     case GlobalValue::GhostLinkage:
-      llvm_cerr << "GhostLinkage not allowed in AsmWriter!\n";
+      cerr << "GhostLinkage not allowed in AsmWriter!\n";
       abort();
     }
 
@@ -1328,18 +1328,18 @@ void Argument::print(std::ostream &o) const {
 
 // Value::dump - allow easy printing of  Values from the debugger.
 // Located here because so much of the needed functionality is here.
-void Value::dump() const { print(std::cerr); llvm_cerr << '\n'; }
+void Value::dump() const { print(std::cerr); cerr << '\n'; }
 
 // Type::dump - allow easy printing of  Values from the debugger.
 // Located here because so much of the needed functionality is here.
-void Type::dump() const { print(std::cerr); llvm_cerr << '\n'; }
+void Type::dump() const { print(std::cerr); cerr << '\n'; }
 
 //===----------------------------------------------------------------------===//
 //                         SlotMachine Implementation
 //===----------------------------------------------------------------------===//
 
 #if 0
-#define SC_DEBUG(X) llvm_cerr << X
+#define SC_DEBUG(X) cerr << X
 #else
 #define SC_DEBUG(X)
 #endif

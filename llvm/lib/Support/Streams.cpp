@@ -16,6 +16,7 @@
 #include <iostream>
 using namespace llvm;
 
-llvm_ostream llvm::llvm_null;
-llvm_ostream llvm::llvm_cout(std::cout);
-llvm_ostream llvm::llvm_cerr(std::cerr);
+OStream llvm::NullStream;
+OStream llvm::cout(std::cout);
+OStream llvm::cerr(std::cerr);
+IStream llvm::cin(std::cin);

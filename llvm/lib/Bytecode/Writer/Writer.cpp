@@ -276,8 +276,8 @@ void BytecodeWriter::outputType(const Type *T) {
     break;
 
   default:
-    llvm_cerr << __FILE__ << ":" << __LINE__ << ": Don't know how to serialize"
-              << " Type '" << T->getDescription() << "'\n";
+    cerr << __FILE__ << ":" << __LINE__ << ": Don't know how to serialize"
+         << " Type '" << T->getDescription() << "'\n";
     break;
   }
 }
@@ -387,8 +387,8 @@ void BytecodeWriter::outputConstant(const Constant *CPV) {
   case Type::VoidTyID:
   case Type::LabelTyID:
   default:
-    llvm_cerr << __FILE__ << ":" << __LINE__ << ": Don't know how to serialize"
-              << " type '" << *CPV->getType() << "'\n";
+    cerr << __FILE__ << ":" << __LINE__ << ": Don't know how to serialize"
+         << " type '" << *CPV->getType() << "'\n";
     break;
   }
   return;
@@ -1239,13 +1239,13 @@ void BytecodeWriter::outputSymbolTable(const SymbolTable &MST) {
   }
 }
 
-void llvm::WriteBytecodeToFile(const Module *M, llvm_ostream &Out,
+void llvm::WriteBytecodeToFile(const Module *M, OStream &Out,
                                bool compress) {
   assert(M && "You can't write a null module!!");
 
   // Make sure that std::cout is put into binary mode for systems
   // that care.
-  if (Out == llvm_cout)
+  if (Out == cout)
     sys::Program::ChangeStdoutToBinary();
 
   // Create a vector of unsigned char for the bytecode output. We

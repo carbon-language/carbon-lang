@@ -53,7 +53,7 @@ int main() {
   BB->getInstList().push_back(new ReturnInst(Add));
 
   // Output the bytecode file to stdout
-  WriteBytecodeToFile(M, llvm_cout);
+  WriteBytecodeToFile(M, cout);
 
   // Delete the module and all of its contents.
   delete M;

@@ -43,8 +43,8 @@ namespace llvm {
 ///    if (!I->isLeader()) continue;   // Ignore non-leader sets.
 ///    for (EquivalenceClasses<int>::member_iterator MI = EC.member_begin(I);
 ///         MI != EC.member_end(); ++MI)   // Loop over members in this set.
-///      llvm_cerr << *MI << " ";  // Print member.
-///    llvm_cerr << "\n";   // Finish set.
+///      cerr << *MI << " ";  // Print member.
+///    cerr << "\n";   // Finish set.
 ///  }
 ///
 /// This example prints:

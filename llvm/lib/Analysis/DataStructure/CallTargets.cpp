@@ -17,15 +17,15 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "llvm/Analysis/DataStructure/CallTargets.h"
 #include "llvm/Module.h"
 #include "llvm/Instructions.h"
 #include "llvm/Analysis/DataStructure/DataStructure.h"
 #include "llvm/Analysis/DataStructure/DSGraph.h"
-#include "llvm/Analysis/DataStructure/CallTargets.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/Support/Streams.h"
-#include <ostream>
 #include "llvm/Constants.h"
+#include <ostream>
 using namespace llvm;
 
 namespace {
@@ -58,11 +58,11 @@ void CallTargetFinder::findIndTargets(Module &M)
               } 
               if (N->isComplete() && !IndMap[cs].size()) {
                 ++CompleteEmpty;
-                llvm_cerr << "Call site empty: '"
-                << cs.getInstruction()->getName() 
-                          << "' In '"
-                << cs.getInstruction()->getParent()->getParent()->getName()
-                          << "'\n";
+                cerr << "Call site empty: '"
+                     << cs.getInstruction()->getName() 
+                     << "' In '"
+                     << cs.getInstruction()->getParent()->getParent()->getName()
+                     << "'\n";
               }
             } else {
               ++DirCall;

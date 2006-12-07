@@ -189,7 +189,7 @@ public:
 
   // Debugging methods.
   void dump() const;
-  void print(llvm_ostream &OS) const {
+  void print(OStream &OS) const {
     if (OS.stream()) print(*OS.stream());
   }
   void print(std::ostream &OS) const;
@@ -226,7 +226,7 @@ private:   // Methods used to maintain doubly linked list of blocks...
 };
 
 std::ostream& operator<<(std::ostream &OS, const MachineBasicBlock &MBB);
-inline llvm_ostream& operator<<(llvm_ostream &OS, const MachineBasicBlock &MBB){
+inline OStream& operator<<(OStream &OS, const MachineBasicBlock &MBB){
   if (OS.stream()) *OS.stream() << MBB;
   return OS;
 }

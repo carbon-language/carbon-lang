@@ -90,7 +90,7 @@ bool EquivClassGraphs::runOnModule(Module &M) {
   if (MainFunc && !MainFunc->isExternal()) {
     processSCC(getOrCreateGraph(*MainFunc), Stack, NextID, ValMap);
   } else {
-    llvm_cerr << "Fold Graphs: No 'main' function found!\n";
+    cerr << "Fold Graphs: No 'main' function found!\n";
   }
 
   for (Module::iterator I = M.begin(), E = M.end(); I != E; ++I)
