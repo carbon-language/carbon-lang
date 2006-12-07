@@ -652,13 +652,17 @@ FunctionPassManagerImpl_New::addPass(Pass *P) {
   // If P is a BasicBlockPass then use BasicBlockPassManager_New.
   if (BasicBlockPass *BP = dynamic_cast<BasicBlockPass*>(P)) {
 
-    if (!activeBBPassManager
-        || !activeBBPassManager->addPass(BP)) {
+    if (!activeBBPassManager || !activeBBPassManager->addPass(BP)) {
 
-      // TODO : intialize AvailableAnalysis info
+      // If active manager exists then clear its analysis info.
+      if (activeBBPassManager)
+        activeBBPassManager->initializeAnalysisInfo();
 
+      // Create and add new manager
       activeBBPassManager = new BasicBlockPassManager_New();
       addPassToManager(activeBBPassManager, false);
+
+      // Add pass into new manager. This time it must succeed.
       if (!activeBBPassManager->addPass(BP))
         assert(0 && "Unable to add Pass");
     }
@@ -675,8 +679,13 @@ FunctionPassManagerImpl_New::addPass(Pass *P) {
     return false;
 
   addPassToManager (FP);
-  // TODO : intialize AvailableAnalysis info
-  activeBBPassManager = NULL;
+
+  // If active manager exists then clear its analysis info.
+  if (activeBBPassManager) {
+    activeBBPassManager->initializeAnalysisInfo();
+    activeBBPassManager = NULL;
+  }
+
   return true;
 }
 
@@ -784,11 +793,15 @@ ModulePassManager_New::addPass(Pass *P) {
     if (!activeFunctionPassManager
         || !activeFunctionPassManager->addPass(P)) {
 
-      // TODO : intialize AvailableAnalysis info
-      activeFunctionPassManager = NULL;
+      // If active manager exists then clear its analysis info.
+      if (activeFunctionPassManager) 
+        activeFunctionPassManager->initializeAnalysisInfo();
 
+      // Create and add new manager
       activeFunctionPassManager = new FunctionPassManagerImpl_New();
       addPassToManager(activeFunctionPassManager, false);
+
+      // Add pass into new manager. This time it must succeed.
       if (!activeFunctionPassManager->addPass(FP))
         assert(0 && "Unable to add pass");
     }
@@ -805,8 +818,12 @@ ModulePassManager_New::addPass(Pass *P) {
     return false;
 
   addPassToManager(MP);
-  // TODO : intialize AvailableAnalysis info
-  activeFunctionPassManager = NULL;
+  // If active manager exists then clear its analysis info.
+  if (activeFunctionPassManager) {
+    activeFunctionPassManager->initializeAnalysisInfo();
+    activeFunctionPassManager = NULL;
+  }
+
   return true;
 }
 
