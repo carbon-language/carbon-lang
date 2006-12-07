@@ -122,6 +122,16 @@ public:
     PassManagers.clear();
   }
 
+  /// Add immutable pass and initialize it.
+  inline void addImmutablePass(ImmutablePass *P) {
+    P->initializePass();
+    ImmutablePasses.push_back(P);
+  }
+
+  inline std::vector<ImmutablePass *>& getImmutablePasses() {
+    return ImmutablePasses;
+  }
+
 private:
   
   /// Collection of pass managers
@@ -130,6 +140,9 @@ private:
   // Map to keep track of last user of the analysis pass.
   // LastUser->second is the last user of Lastuser->first.
   std::map<Pass *, Pass *> LastUser;
+
+  /// Immutable passes are managed by top level manager.
+  std::vector<ImmutablePass *> ImmutablePasses;
 };
   
 /// Set pass P as the last user of the given analysis passes.
