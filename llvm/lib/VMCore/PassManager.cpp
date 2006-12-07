@@ -123,9 +123,8 @@ public:
   /// AvailableAnalysis appropriately if ProcessAnalysis is true.
   void addPassToManager (Pass *P, bool ProcessAnalysis = true);
 
-  /// Clear analysis vectors RequiredAnalysis and AvailableAnalysis.
-  /// This is used before running passes managed by the manager.
-  void clearAnalysis() { 
+  // Initialize available analysis information.
+  void initializeAnalysisInfo() { 
     RequiredAnalysis.clear();
     AvailableAnalysis.clear();
     LastUser.clear();
@@ -455,7 +454,7 @@ bool
 BasicBlockPassManager_New::runOnFunction(Function &F) {
 
   bool Changed = false;
-  clearAnalysis();
+  initializeAnalysisInfo();
 
   for (Function::iterator I = F.begin(), E = F.end(); I != E; ++I)
     for (std::vector<Pass *>::iterator itr = passVectorBegin(),
@@ -568,7 +567,7 @@ FunctionPassManagerImpl_New::addPass(Pass *P) {
 bool FunctionPassManagerImpl_New::runOnModule(Module &M) {
 
   bool Changed = false;
-  clearAnalysis();
+  initializeAnalysisInfo();
 
   for (Module::iterator I = M.begin(), E = M.end(); I != E; ++I)
     for (std::vector<Pass *>::iterator itr = passVectorBegin(),
@@ -590,7 +589,7 @@ bool FunctionPassManagerImpl_New::runOnModule(Module &M) {
 bool FunctionPassManagerImpl_New::runOnFunction(Function &F) {
 
   bool Changed = false;
-  clearAnalysis();
+  initializeAnalysisInfo();
 
   for (std::vector<Pass *>::iterator itr = passVectorBegin(),
          e = passVectorEnd(); itr != e; ++itr) {
@@ -696,7 +695,7 @@ ModulePassManager_New::addPass(Pass *P) {
 bool
 ModulePassManager_New::runOnModule(Module &M) {
   bool Changed = false;
-  clearAnalysis();
+  initializeAnalysisInfo();
 
   for (std::vector<Pass *>::iterator itr = passVectorBegin(),
          e = passVectorEnd(); itr != e; ++itr) {
