@@ -218,6 +218,12 @@ public:
   void initializeAnalysisInfo() { 
     AvailableAnalysis.clear();
     LastUser.clear();
+
+    // Include immutable passes into AvailableAnalysis vector.
+    std::vector<ImmutablePass *> &ImmutablePasses =  TPM->getImmutablePasses();
+    for (std::vector<ImmutablePass *>::iterator I = ImmutablePasses.begin(),
+           E = ImmutablePasses.end(); I != E; ++I) 
+      recordAvailableAnalysis(*I);
   }
 
   // All Required analyses should be available to the pass as it runs!  Here
