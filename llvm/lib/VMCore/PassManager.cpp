@@ -243,6 +243,7 @@ public:
 
   /// Initialize available analysis information.
   void initializeAnalysisInfo() { 
+    ForcedLastUses.clear();
     AvailableAnalysis.clear();
 
     // Include immutable passes into AvailableAnalysis vector.
@@ -277,6 +278,17 @@ public:
 
   unsigned getDepth() { return Depth; }
 
+protected:
+
+  // Collection of pass whose last user asked this manager to claim
+  // last use. If a FunctionPass F is the last user of ModulePass info M
+  // then the F's manager, not F, records itself as a last user of M.
+  std::vector<Pass *> ForcedLastUses;
+
+  // Top level manager.
+  // TODO : Make it a reference.
+  PMTopLevelManager *TPM;
+
 private:
   // Set of available Analysis. This information is used while scheduling 
   // pass. If a pass requires an analysis which is not not available then 
@@ -286,10 +298,6 @@ private:
 
   // Collection of pass that are managed by this manager
   std::vector<Pass *> PassVector;
-
-  // Top level manager.
-  // TODO : Make it a reference.
-  PMTopLevelManager *TPM;
 
   unsigned Depth;
 };
@@ -384,7 +392,8 @@ private:
 /// ModulePassManager_New manages ModulePasses and function pass managers.
 /// It batches all Module passes  passes and function pass managers together and
 /// sequence them to process one module.
-class ModulePassManager_New : public PMDataManager {
+class ModulePassManager_New : public Pass,
+                              public PMDataManager {
  
 public:
   ModulePassManager_New(int D) : PMDataManager(D) { 
@@ -522,6 +531,33 @@ void PMDataManager::addPassToManager(Pass *P,
                                      bool ProcessAnalysis) {
 
   if (ProcessAnalysis) {
+
+    // At the moment, this pass is the last user of all required passes.
+    std::vector<Pass *> LastUses;
+    std::vector<Pass *> RequiredPasses;
+    unsigned PDepth = this->getDepth();
+
+    collectRequiredAnalysisPasses(RequiredPasses, P);
+    for (std::vector<Pass *>::iterator I = RequiredPasses.begin(),
+           E = RequiredPasses.end(); I != E; ++I) {
+      Pass *PRequired = *I;
+      unsigned RDepth = 0;
+      //FIXME: RDepth = PRequired->getResolver()->getDepth();
+      if (PDepth == RDepth)
+        LastUses.push_back(PRequired);
+      else if (PDepth >  RDepth) {
+        // Let the parent claim responsibility of last use
+        ForcedLastUses.push_back(PRequired);
+      } else {
+        // Note : This feature is not yet implemented
+        assert (0 && 
+                "Unable to handle Pass that requires lower level Analysis pass");
+      }
+    }
+
+    if (!LastUses.empty())
+      TPM->setLastUser(LastUses, P);
+
     // Take a note of analysis required and made available by this pass.
     // Remove the analysis not preserved by this pass
     initializeAnalysisImpl(P);
@@ -696,6 +732,10 @@ FunctionPassManagerImpl_New::addPass(Pass *P) {
       if (!activeBBPassManager->addPass(BP))
         assert(0 && "Unable to add Pass");
     }
+
+    if (!ForcedLastUses.empty())
+      TPM->setLastUser(ForcedLastUses, this);
+
     return true;
   }
 
@@ -836,6 +876,10 @@ ModulePassManager_New::addPass(Pass *P) {
       if (!activeFunctionPassManager->addPass(FP))
         assert(0 && "Unable to add pass");
     }
+
+    if (!ForcedLastUses.empty())
+      TPM->setLastUser(ForcedLastUses, this);
+
     return true;
   }
 
