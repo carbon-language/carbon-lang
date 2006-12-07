@@ -33,19 +33,10 @@ namespace {
 
     /// Unique incrementer for label values for referencing Global values.
     ///
-    unsigned LabelNumber;
 
     AlphaAsmPrinter(std::ostream &o, TargetMachine &tm, const TargetAsmInfo *T)
-       : AsmPrinter(o, tm, T), LabelNumber(0) {
+      : AsmPrinter(o, tm, T) {
     }
-
-    /// We name each basic block in a Function with a unique number, so
-    /// that we can consistently refer to them later. This is cleared
-    /// at the beginning of each call to runOnMachineFunction().
-    ///
-    typedef std::map<const Value *, unsigned> ValueMapTy;
-    ValueMapTy NumberForBB;
-    std::string CurSection;
 
     virtual const char *getPassName() const {
       return "Alpha Assembly Printer";
@@ -54,7 +45,6 @@ namespace {
     void printOp(const MachineOperand &MO, bool IsCallOp = false);
     void printOperand(const MachineInstr *MI, int opNum);
     void printBaseOffsetPair (const MachineInstr *MI, int i, bool brackets=true);
-    void printMachineInstruction(const MachineInstr *MI);
     bool runOnMachineFunction(MachineFunction &F);
     bool doInitialization(Module &M);
     bool doFinalization(Module &M);
@@ -136,20 +126,6 @@ void AlphaAsmPrinter::printOp(const MachineOperand &MO, bool IsCallOp) {
   }
 }
 
-/// printMachineInstruction -- Print out a single Alpha MI to
-/// the current output stream.
-///
-void AlphaAsmPrinter::printMachineInstruction(const MachineInstr *MI) {
-  ++EmittedInsts;
-  if (printInstruction(MI))
-    return; // Printer was automatically generated
-
-  assert(0 && "Unhandled instruction in asm writer!");
-  abort();
-  return;
-}
-
-
 /// runOnMachineFunction - This uses the printMachineInstruction()
 /// method to print assembly for each instruction.
 ///
@@ -177,7 +153,7 @@ bool AlphaAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
      break;
   case Function::WeakLinkage:
   case Function::LinkOnceLinkage:
-    O << "\t.weak " << CurrentFnName << "\n";
+    O << TAI->getWeakRefDirective() << CurrentFnName << "\n";
     break;
   }
 
@@ -188,16 +164,21 @@ bool AlphaAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
   // Print out code for the function.
   for (MachineFunction::const_iterator I = MF.begin(), E = MF.end();
        I != E; ++I) {
-    printBasicBlockLabel(I, true);
-    O << '\n';
+    if (I != MF.begin()) {
+      printBasicBlockLabel(I, true);
+      O << '\n';
+    }
     for (MachineBasicBlock::const_iterator II = I->begin(), E = I->end();
          II != E; ++II) {
       // Print the assembly for the instruction.
+      ++EmittedInsts;
       O << "\t";
-      printMachineInstruction(II);
+      if (!printInstruction(II)) {
+        assert(0 && "Unhandled instruction in asm writer!");
+        abort();
+      }
     }
   }
-  ++LabelNumber;
 
   O << "\t.end " << CurrentFnName << "\n";
 
