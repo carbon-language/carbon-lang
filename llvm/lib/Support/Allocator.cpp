@@ -14,6 +14,7 @@
 #include "llvm/Support/Allocator.h"
 #include "llvm/Support/DataTypes.h"
 #include "llvm/Support/Streams.h"
+#include <ostream>
 using namespace llvm;
 
 //===----------------------------------------------------------------------===//

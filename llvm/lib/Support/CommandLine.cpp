@@ -24,6 +24,7 @@
 #include <algorithm>
 #include <functional>
 #include <map>
+#include <ostream>
 #include <set>
 #include <cstdlib>
 #include <cerrno>

@@ -42,7 +42,7 @@
 #include "llvm/Support/MathExtras.h"
 #include "llvm/Config/config.h"
 #include <algorithm>
-#include <ios>
+#include <sstream>
 using namespace llvm;
 
 namespace {

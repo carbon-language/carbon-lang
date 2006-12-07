@@ -16,6 +16,7 @@
 #include "llvm/Support/SystemUtils.h"
 #include "llvm/System/Process.h"
 #include "llvm/System/Program.h"
+#include <ostream>
 using namespace llvm;
 
 bool llvm::CheckBytecodeOutputToConsole(std::ostream* stream_to_check,

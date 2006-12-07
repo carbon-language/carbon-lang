@@ -15,6 +15,7 @@
 #include "llvm/Support/PluginLoader.h"
 #include "llvm/Support/Streams.h"
 #include "llvm/System/DynamicLibrary.h"
+#include <ostream>
 #include <vector>
 using namespace llvm;
 

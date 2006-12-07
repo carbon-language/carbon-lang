@@ -15,6 +15,7 @@
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/Support/Streams.h"
 #include <algorithm>
+#include <ostream>
 #include <cassert>
 #include <cctype>
 using namespace llvm;

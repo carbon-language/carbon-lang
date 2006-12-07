@@ -25,6 +25,7 @@
 #include "llvm/Assembly/Writer.h"
 #include "llvm/Support/Streams.h"
 #include "llvm/System/Path.h"
+#include <sstream>
 using namespace llvm;
 
 // Error - Simple wrapper function to conditionally assign to E and return true.

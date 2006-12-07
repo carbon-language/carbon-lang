@@ -17,6 +17,7 @@
 #include "llvm/Debugger/ProgramInfo.h"
 #include "llvm/Support/Streams.h"
 #include <cassert>
+#include <ostream>
 using namespace llvm;
 
 //===----------------------------------------------------------------------===//

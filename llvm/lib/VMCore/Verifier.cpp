@@ -60,6 +60,7 @@
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/Support/Compiler.h"
 #include <algorithm>
+#include <sstream>
 #include <cstdarg>
 using namespace llvm;
 
