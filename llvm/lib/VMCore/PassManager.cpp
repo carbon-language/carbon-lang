@@ -20,6 +20,70 @@
 #include <map>
 using namespace llvm;
 
+//===----------------------------------------------------------------------===//
+// Overview:
+// The Pass Manager Infrastructure manages passes. It's responsibilities are:
+// 
+//   o Manage optimization pass execution order
+//   o Make required Analysis information available before pass P is run
+//   o Release memory occupied by dead passes
+//   o If Analysis information is dirtied by a pass then regenerate Analysis 
+//     information before it is consumed by another pass.
+//
+// Pass Manager Infrastructure uses multipe pass managers. They are PassManager,
+// FunctionPassManager, ModulePassManager, BasicBlockPassManager. This class 
+// hierarcy uses multiple inheritance but pass managers do not derive from
+// another pass manager.
+//
+// PassManager and FunctionPassManager are two top level pass manager that
+// represents the external interface of this entire pass manager infrastucture.
+//
+// Important classes :
+//
+// [o] class PMTopLevelManager;
+//
+// Two top level managers, PassManager and FunctionPassManager, derive from 
+// PMTopLevelManager. PMTopLevelManager manages information used by top level 
+// managers such as last user info.
+//
+// [o] class PMDataManager;
+//
+// PMDataManager manages information, e.g. list of available analysis info, 
+// used by a pass manager to manage execution order of passes. It also provides
+// a place to implement common pass manager APIs. All pass managers derive from
+// PMDataManager.
+//
+// [o] class BasicBlockPassManager : public FunctionPass, public PMDataManager;
+//
+// BasicBlockPassManager manages BasicBlockPasses.
+//
+// [o] class FunctionPassManager;
+//
+// This is a external interface used by JIT to manage FunctionPasses. This
+// interface relies on FunctionPassManagerImpl to do all the tasks.
+//
+// [o] class FunctionPassManagerImpl : public ModulePass, PMDataManager,
+//                                     public PMTopLevelManager;
+//
+// FunctionPassManagerImpl is a top level manager. It manages FunctionPasses
+// and BasicBlockPassManagers.
+//
+// [o] class ModulePassManager : public Pass, public PMDataManager;
+//
+// ModulePassManager manages ModulePasses and FunctionPassManagerImpls.
+//
+// [o] class PassManager;
+//
+// This is a external interface used by various tools to manages passes. It
+// relies on PassManagerImpl to do all the tasks.
+//
+// [o] class PassManagerImpl : public Pass, public PMDataManager,
+//                             public PMDTopLevelManager
+//
+// PassManagerImpl is a top level pass manager responsible for managing
+// ModulePassManagers.
+//===----------------------------------------------------------------------===//
+
 namespace llvm {
 
 /// CommonPassManagerImpl helps pass manager analysis required by
