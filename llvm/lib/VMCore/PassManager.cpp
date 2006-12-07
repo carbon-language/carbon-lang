@@ -313,6 +313,7 @@ public:
   bool runOnFunction(Function &F);
 
   /// Return true IFF AnalysisID AID is currently available.
+  /// TODO : Replace this method with getAnalysisPass()
   Pass *getAnalysisPassFromManager(AnalysisID AID);
 
   /// Pass Manager itself does not invalidate any analysis info.
@@ -360,6 +361,7 @@ public:
   bool runOnFunction(Function &F);
 
   /// Return true IFF AnalysisID AID is currently available.
+  /// TODO : Replace this method with getAnalysisPass()
   Pass *getAnalysisPassFromManager(AnalysisID AID);
 
   /// doInitialization - Run all of the initializers for the function passes.
@@ -396,6 +398,7 @@ public:
   bool runOnModule(Module &M);
 
   /// Return true IFF AnalysisID AID is currently available.
+  /// TODO : Replace this method with getAnalysisPass()
   Pass *getAnalysisPassFromManager(AnalysisID AID);
 
   /// Pass Manager itself does not invalidate any analysis info.
@@ -428,6 +431,7 @@ public:
   bool run(Module &M);
 
   /// Return true IFF AnalysisID AID is currently available.
+  /// TODO : Replace this method with getAnalysisPass()
   Pass *getAnalysisPassFromManager(AnalysisID AID);
 
   /// Pass Manager itself does not invalidate any analysis info.
@@ -606,6 +610,7 @@ BasicBlockPassManager_New::runOnFunction(Function &F) {
 }
 
 /// Return true IFF AnalysisID AID is currently available.
+/// TODO : Replace this method with getAnalysisPass()
 Pass * BasicBlockPassManager_New::getAnalysisPassFromManager(AnalysisID AID) {
   return getAnalysisPass(AID);
 }
@@ -675,6 +680,8 @@ FunctionPassManagerImpl_New::addPass(Pass *P) {
     if (!activeBBPassManager
         || !activeBBPassManager->addPass(BP)) {
 
+      // TODO : intialize AvailableAnalysis info
+
       activeBBPassManager = new BasicBlockPassManager_New();
       addPassToManager(activeBBPassManager, false);
       if (!activeBBPassManager->addPass(BP))
@@ -693,6 +700,7 @@ FunctionPassManagerImpl_New::addPass(Pass *P) {
     return false;
 
   addPassToManager (FP);
+  // TODO : intialize AvailableAnalysis info
   activeBBPassManager = NULL;
   return true;
 }
@@ -742,6 +750,7 @@ bool FunctionPassManagerImpl_New::runOnFunction(Function &F) {
 
 
 /// Return true IFF AnalysisID AID is currently available.
+/// TODO : Replace this method with getAnalysisPass()
 Pass *FunctionPassManagerImpl_New::getAnalysisPassFromManager(AnalysisID AID) {
 
   Pass *P = getAnalysisPass(AID);
@@ -797,10 +806,11 @@ ModulePassManager_New::addPass(Pass *P) {
   // If P is FunctionPass then use function pass maanager.
   if (FunctionPass *FP = dynamic_cast<FunctionPass*>(P)) {
 
-    activeFunctionPassManager = NULL;
-
     if (!activeFunctionPassManager
         || !activeFunctionPassManager->addPass(P)) {
+
+      // TODO : intialize AvailableAnalysis info
+      activeFunctionPassManager = NULL;
 
       activeFunctionPassManager = new FunctionPassManagerImpl_New();
       addPassToManager(activeFunctionPassManager, false);
@@ -820,6 +830,7 @@ ModulePassManager_New::addPass(Pass *P) {
     return false;
 
   addPassToManager(MP);
+  // TODO : intialize AvailableAnalysis info
   activeFunctionPassManager = NULL;
   return true;
 }
@@ -847,9 +858,9 @@ ModulePassManager_New::runOnModule(Module &M) {
 }
 
 /// Return true IFF AnalysisID AID is currently available.
+/// TODO : Replace this method with getAnalysisPass()
 Pass *ModulePassManager_New::getAnalysisPassFromManager(AnalysisID AID) {
 
-  
   Pass *P = getAnalysisPass(AID);
   if (P)
     return P;
@@ -866,6 +877,7 @@ Pass *ModulePassManager_New::getAnalysisPassFromManager(AnalysisID AID) {
 // PassManagerImpl implementation
 
 /// Return true IFF AnalysisID AID is currently available.
+/// TODO : Replace this method with getAnalysisPass()
 Pass *PassManagerImpl_New::getAnalysisPassFromManager(AnalysisID AID) {
 
   Pass *P = NULL;
