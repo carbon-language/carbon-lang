@@ -181,7 +181,8 @@ PPCTargetLowering::PPCTargetLowering(PPCTargetMachine &TM)
     // They also have instructions for converting between i64 and fp.
     setOperationAction(ISD::FP_TO_SINT, MVT::i64, Custom);
     setOperationAction(ISD::SINT_TO_FP, MVT::i64, Custom);
-    
+    setOperationAction(ISD::UINT_TO_FP, MVT::i64, Expand);
+
     // FIXME: disable this lowered code.  This generates 64-bit register values,
     // and we don't model the fact that the top part is clobbered by calls.  We
     // need to flag these together so that the value isn't live across a call.
