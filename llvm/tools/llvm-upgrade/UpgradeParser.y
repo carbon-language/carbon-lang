@@ -24,6 +24,7 @@
 #define YYINCLUDED_STDLIB_H
 #define YYDEBUG 1
 #define UPGRADE_SETCOND_OPS 0
+#define GENERATE_FCMP_INSTS 0
 
 int yylex();                       // declaration" of xxx warnings.
 int yyparse();
@@ -247,8 +248,16 @@ getCompareOp(const std::string& setcc, const TypeInfo& TI) {
   result[6] = cc1;
   result[7] = cc2;
   if (TI.isFloatingPoint()) {
+#if GENERATE_FCMP_INSTS
     result[0] = 'f';
     result[5] = 'o'; // FIXME: Always map to ordered comparison ?
+    if (cc1 == 'n')
+      result[5] = 'u'; // NE maps to unordered
+    else
+      result[5] = 'o'; // everything else maps to ordered
+#else
+    result = setcc;
+#endif
   } else if (TI.isIntegral() || TI.isPointer()) {
     result[0] = 'i';
     if ((cc1 == 'e' && cc2 == 'q') || (cc1 == 'n' && cc2 == 'e'))
