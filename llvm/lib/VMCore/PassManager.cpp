@@ -160,13 +160,18 @@ void PMTopLevelManager::collectLastUses(std::vector<Pass *> &LastUses,
         LastUses.push_back(LUI->first);
 }
 
-
+//===----------------------------------------------------------------------===//
+// PMDataManager
 
 /// PMDataManager provides the common place to manage the analysis data
 /// used by pass managers.
 class PMDataManager {
 
 public:
+
+  PMDataManager() : TPM(NULL) {
+    initializeAnalysisInfo();
+  }
 
   /// Return true IFF pass P's required analysis set does not required new
   /// manager.
@@ -222,6 +227,10 @@ public:
     // TODO : Check if pass P is available.
   }
 
+  // Access toplevel manager
+  PMTopLevelManager *getTopLevelManager() { return TPM; }
+  void setTopLevelManager(PMTopLevelManager *T) { TPM = T; }
+
 private:
   // Set of available Analysis. This information is used while scheduling 
   // pass. If a pass requires an analysis which is not not available then 
@@ -235,6 +244,10 @@ private:
 
   // Collection of pass that are managed by this manager
   std::vector<Pass *> PassVector;
+
+  // Top level manager.
+  // TODO : Make it a reference.
+  PMTopLevelManager *TPM;
 };
 
 /// BasicBlockPassManager_New manages BasicBlockPass. It batches all the
