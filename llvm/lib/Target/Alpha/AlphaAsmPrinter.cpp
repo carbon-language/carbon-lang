@@ -285,6 +285,13 @@ bool AlphaAsmPrinter::doFinalization(Module &M) {
       }
     }
 
+  for (Module::const_iterator I = M.begin(), E = M.end(); I != E; ++I)
+    if (I->hasExternalWeakLinkage()) {
+      O << "\n\n";
+      std::string name = Mang->getValueName(I);
+      O << "\t.weak " << name << "\n";
+    }
+
   AsmPrinter::doFinalization(M);
   return false;
 }

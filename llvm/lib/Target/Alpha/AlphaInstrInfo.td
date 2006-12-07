@@ -140,11 +140,11 @@ class CmpOpFrag<dag res> : PatFrag<(ops node:$R), res>;
 
 //Pseudo ops for selection
 
-def IDEF_I : PseudoInstAlpha<(ops GPRC:$RA), "#idef $RA",
+def IDEF_I : PseudoInstAlpha<(ops GPRC:$RA), ";#idef $RA",
              [(set GPRC:$RA, (undef))], s_pseudo>;
-def IDEF_F32 : PseudoInstAlpha<(ops F4RC:$RA), "#idef $RA",
+def IDEF_F32 : PseudoInstAlpha<(ops F4RC:$RA), ";#idef $RA",
              [(set F4RC:$RA, (undef))], s_pseudo>;
-def IDEF_F64 : PseudoInstAlpha<(ops F8RC:$RA), "#idef $RA",
+def IDEF_F64 : PseudoInstAlpha<(ops F8RC:$RA), ";#idef $RA",
              [(set F8RC:$RA, (undef))], s_pseudo>;
 
 def WTF : PseudoInstAlpha<(ops variable_ops), "#wtf", [], s_pseudo>;
