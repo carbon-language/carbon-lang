@@ -94,6 +94,7 @@ PPCRegisterInfo::PPCRegisterInfo(const PPCSubtarget &ST,
   ImmToIdxMap[PPC::STH]  = PPC::STHX;   ImmToIdxMap[PPC::STW]  = PPC::STWX;
   ImmToIdxMap[PPC::STFS] = PPC::STFSX;  ImmToIdxMap[PPC::STFD] = PPC::STFDX;
   ImmToIdxMap[PPC::ADDI] = PPC::ADD4;
+  ImmToIdxMap[PPC::ADDI8] = PPC::ADD8;
 }
 
 void
