@@ -184,7 +184,7 @@ public:
   }
 
   /// Augment AvailableAnalysis by adding analysis made available by pass P.
-  void noteDownAvailableAnalysis(Pass *P);
+  void recordAvailableAnalysis(Pass *P);
 
   /// Remove Analysis that is not preserved by the pass
   void removeNotPreservedAnalysis(Pass *P);
@@ -384,17 +384,16 @@ bool PMDataManager::manageablePass(Pass *P) {
 }
 
 /// Augement AvailableAnalysis by adding analysis made available by pass P.
-void PMDataManager::noteDownAvailableAnalysis(Pass *P) {
+void PMDataManager::recordAvailableAnalysis(Pass *P) {
                                                 
   if (const PassInfo *PI = P->getPassInfo()) {
     AvailableAnalysis[PI] = P;
 
-    //TODO This pass is the current implementation of all of the interfaces it
-    //TODO implements as well.
-    //TODO
-    //TODO const std::vector<const PassInfo*> &II = PI->getInterfacesImplemented();
-    //TODO for (unsigned i = 0, e = II.size(); i != e; ++i)
-    //TODO CurrentAnalyses[II[i]] = P;
+    //This pass is the current implementation of all of the interfaces it
+    //implements as well.
+    const std::vector<const PassInfo*> &II = PI->getInterfacesImplemented();
+    for (unsigned i = 0, e = II.size(); i != e; ++i)
+      AvailableAnalysis[II[i]] = P;
   }
 }
 
@@ -442,7 +441,7 @@ void PMDataManager::addPassToManager (Pass *P,
   if (ProcessAnalysis) {
     // Take a note of analysis required and made available by this pass
     initializeAnalysisImpl(P);
-    noteDownAvailableAnalysis(P);
+    recordAvailableAnalysis(P);
 
     // Remove the analysis not preserved by this pass
     removeNotPreservedAnalysis(P);
@@ -506,7 +505,7 @@ BasicBlockPassManager_New::runOnFunction(Function &F) {
            e = passVectorEnd(); itr != e; ++itr) {
       Pass *P = *itr;
       
-      noteDownAvailableAnalysis(P);
+      recordAvailableAnalysis(P);
       BasicBlockPass *BP = dynamic_cast<BasicBlockPass*>(P);
       Changed |= BP->runOnBasicBlock(*I);
       removeNotPreservedAnalysis(P);
@@ -619,7 +618,7 @@ bool FunctionPassManagerImpl_New::runOnModule(Module &M) {
            e = passVectorEnd(); itr != e; ++itr) {
       Pass *P = *itr;
       
-      noteDownAvailableAnalysis(P);
+      recordAvailableAnalysis(P);
       FunctionPass *FP = dynamic_cast<FunctionPass*>(P);
       Changed |= FP->runOnFunction(*I);
       removeNotPreservedAnalysis(P);
@@ -640,7 +639,7 @@ bool FunctionPassManagerImpl_New::runOnFunction(Function &F) {
          e = passVectorEnd(); itr != e; ++itr) {
     Pass *P = *itr;
     
-    noteDownAvailableAnalysis(P);
+    recordAvailableAnalysis(P);
     FunctionPass *FP = dynamic_cast<FunctionPass*>(P);
     Changed |= FP->runOnFunction(F);
     removeNotPreservedAnalysis(P);
@@ -746,7 +745,7 @@ ModulePassManager_New::runOnModule(Module &M) {
          e = passVectorEnd(); itr != e; ++itr) {
     Pass *P = *itr;
 
-    noteDownAvailableAnalysis(P);
+    recordAvailableAnalysis(P);
     ModulePass *MP = dynamic_cast<ModulePass*>(P);
     Changed |= MP->runOnModule(M);
     removeNotPreservedAnalysis(P);
