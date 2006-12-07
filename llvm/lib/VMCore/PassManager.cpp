@@ -86,10 +86,9 @@ using namespace llvm;
 
 namespace llvm {
 
-/// CommonPassManagerImpl helps pass manager analysis required by
-/// the managed passes. It provides methods to add/remove analysis
-/// available and query if certain analysis is available or not.
-class CommonPassManagerImpl {
+/// PMDataManager provides the common place to manage the analysis data
+/// used by pass managers.
+class PMDataManager {
 
 public:
 
@@ -176,7 +175,7 @@ private:
 /// BasicBlockPassManager_New manages BasicBlockPass. It batches all the
 /// pass together and sequence them to process one basic block before
 /// processing next basic block.
-class BasicBlockPassManager_New : public CommonPassManagerImpl, 
+class BasicBlockPassManager_New : public PMDataManager, 
                                   public FunctionPass {
 
 public:
@@ -199,7 +198,7 @@ private:
 /// It batches all function passes and basic block pass managers together and
 /// sequence them to process one function at a time before processing next
 /// function.
-class FunctionPassManagerImpl_New : public CommonPassManagerImpl,
+class FunctionPassManagerImpl_New : public PMDataManager,
                                     public ModulePass {
 public:
   FunctionPassManagerImpl_New(ModuleProvider *P) { /* TODO */ }
@@ -242,7 +241,7 @@ private:
 /// ModulePassManager_New manages ModulePasses and function pass managers.
 /// It batches all Module passes  passes and function pass managers together and
 /// sequence them to process one module.
-class ModulePassManager_New : public CommonPassManagerImpl {
+class ModulePassManager_New : public PMDataManager {
  
 public:
   ModulePassManager_New() { activeFunctionPassManager = NULL; }
@@ -263,7 +262,7 @@ private:
 };
 
 /// PassManager_New manages ModulePassManagers
-class PassManagerImpl_New : public CommonPassManagerImpl {
+class PassManagerImpl_New : public PMDataManager {
 
 public:
 
@@ -303,11 +302,11 @@ private:
 
 } // End of llvm namespace
 
-// CommonPassManagerImpl implementation
+// PMDataManager implementation
 
 /// Return true IFF pass P's required analysis set does not required new
 /// manager.
-bool CommonPassManagerImpl::manageablePass(Pass *P) {
+bool PMDataManager::manageablePass(Pass *P) {
 
   AnalysisUsage AnUsage;
   P->getAnalysisUsage(AnUsage);
@@ -328,7 +327,7 @@ bool CommonPassManagerImpl::manageablePass(Pass *P) {
 }
 
 /// Augment RequiredAnalysis by adding analysis required by pass P.
-void CommonPassManagerImpl::noteDownRequiredAnalysis(Pass *P) {
+void PMDataManager::noteDownRequiredAnalysis(Pass *P) {
   AnalysisUsage AnUsage;
   P->getAnalysisUsage(AnUsage);
   const std::vector<AnalysisID> &RequiredSet = AnUsage.getRequiredSet();
@@ -341,7 +340,7 @@ void CommonPassManagerImpl::noteDownRequiredAnalysis(Pass *P) {
 }
 
 /// Augement AvailableAnalysis by adding analysis made available by pass P.
-void CommonPassManagerImpl::noteDownAvailableAnalysis(Pass *P) {
+void PMDataManager::noteDownAvailableAnalysis(Pass *P) {
                                                 
   if (const PassInfo *PI = P->getPassInfo()) {
     AvailableAnalysis[PI] = P;
@@ -356,7 +355,7 @@ void CommonPassManagerImpl::noteDownAvailableAnalysis(Pass *P) {
 }
 
 /// Remove Analyss not preserved by Pass P
-void CommonPassManagerImpl::removeNotPreservedAnalysis(Pass *P) {
+void PMDataManager::removeNotPreservedAnalysis(Pass *P) {
   AnalysisUsage AnUsage;
   P->getAnalysisUsage(AnUsage);
   const std::vector<AnalysisID> &PreservedSet = AnUsage.getPreservedSet();
@@ -373,7 +372,7 @@ void CommonPassManagerImpl::removeNotPreservedAnalysis(Pass *P) {
 }
 
 /// Remove analysis passes that are not used any longer
-void CommonPassManagerImpl::removeDeadPasses(Pass *P) {
+void PMDataManager::removeDeadPasses(Pass *P) {
 
   for (std::map<Pass *, Pass *>::iterator I = LastUser.begin(),
          E = LastUser.end(); I !=E; ++I) {
@@ -393,7 +392,7 @@ void CommonPassManagerImpl::removeDeadPasses(Pass *P) {
 
 /// Add pass P into the PassVector. Update RequiredAnalysis and
 /// AvailableAnalysis appropriately if ProcessAnalysis is true.
-void CommonPassManagerImpl::addPassToManager (Pass *P, 
+void PMDataManager::addPassToManager (Pass *P, 
                                               bool ProcessAnalysis) {
 
   if (ProcessAnalysis) {
@@ -414,7 +413,7 @@ void CommonPassManagerImpl::addPassToManager (Pass *P,
 // successfully use the getAnalysis() method to retrieve the
 // implementations it needs.
 //
-void CommonPassManagerImpl::initializeAnalysisImpl(Pass *P) {
+void PMDataManager::initializeAnalysisImpl(Pass *P) {
   AnalysisUsage AnUsage;
   P->getAnalysisUsage(AnUsage);
  
