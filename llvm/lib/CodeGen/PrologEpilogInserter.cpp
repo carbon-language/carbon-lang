@@ -115,6 +115,10 @@ void PEI::calculateCalleeSavedRegisters(MachineFunction &Fn) {
   int FrameSetupOpcode   = RegInfo->getCallFrameSetupOpcode();
   int FrameDestroyOpcode = RegInfo->getCallFrameDestroyOpcode();
 
+  // These are used to keep track the callee-save area. Initialize them.
+  MinCSFrameIndex = INT_MAX;
+  MaxCSFrameIndex = 0;
+
   // Early exit for targets which have no callee saved registers and no call
   // frame setup/destroy pseudo instructions.
   if ((CSRegs == 0 || CSRegs[0] == 0) &&
@@ -174,8 +178,6 @@ void PEI::calculateCalleeSavedRegisters(MachineFunction &Fn) {
 
   // Now that we know which registers need to be saved and restored, allocate
   // stack slots for them.
-  MinCSFrameIndex = INT_MAX;
-  MaxCSFrameIndex = 0;
   for (unsigned i = 0, e = CSI.size(); i != e; ++i) {
     unsigned Reg = CSI[i].getReg();
     const TargetRegisterClass *RC = CSI[i].getRegClass();
