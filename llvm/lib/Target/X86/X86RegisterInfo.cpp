@@ -27,6 +27,7 @@
 #include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/CodeGen/MachineLocation.h"
 #include "llvm/Target/TargetFrameInfo.h"
+#include "llvm/Target/TargetInstrInfo.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetOptions.h"
 #include "llvm/Support/CommandLine.h"
@@ -289,7 +290,7 @@ MachineInstr* X86RegisterInfo::foldMemoryOperand(MachineInstr *MI,
   bool isTwoAddrFold = false;
   unsigned NumOps = TII.getNumOperands(MI->getOpcode());
   bool isTwoAddr = NumOps > 1 &&
-    TII.getOperandConstraint(MI->getOpcode(), 1, TOI::TIED_TO) != -1;
+    MI->getInstrDescriptor()->getOperandConstraint(1, TOI::TIED_TO) != -1;
 
   MachineInstr *NewMI = NULL;
   // Folding a memory location into the two-address part of a two-address

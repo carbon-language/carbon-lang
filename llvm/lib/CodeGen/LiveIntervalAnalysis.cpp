@@ -434,7 +434,8 @@ static bool isReDefinedByTwoAddr(MachineInstr *MI, unsigned Reg,
       for (unsigned j = i+1; j < e; ++j) {
         MachineOperand &MO2 = MI->getOperand(j);
         if (MO2.isRegister() && MO2.isUse() && MO2.getReg() == Reg &&
-            TII->getOperandConstraint(MI->getOpcode(),j,TOI::TIED_TO) == (int)i)
+            MI->getInstrDescriptor()->
+            getOperandConstraint(j, TOI::TIED_TO) == (int)i)
           return true;
       }
     }
