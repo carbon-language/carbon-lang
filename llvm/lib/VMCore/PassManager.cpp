@@ -86,6 +86,82 @@ using namespace llvm;
 
 namespace llvm {
 
+//===----------------------------------------------------------------------===//
+// PMTopLevelManager
+//
+/// PMTopLevelManager manages LastUser info and collects common APIs used by
+/// top level pass managers.
+class PMTopLevelManager {
+
+public:
+
+  inline std::vector<Pass *>::iterator passManagersBegin() { 
+    return PassManagers.begin(); 
+  }
+
+  inline std::vector<Pass *>::iterator passManagersEnd() { 
+    return PassManagers.end();
+  }
+
+  /// Schedule pass P for execution. Make sure that passes required by
+  /// P are run before P is run. Update analysis info maintained by
+  /// the manager. Remove dead passes. This is a recursive function.
+  void schedulePass(Pass *P, Pass *PM);
+
+  /// This is implemented by top level pass manager and used by 
+  /// schedulePass() to add analysis info passes that are not available.
+  virtual void addTopLevelPass(Pass  *P) = 0;
+
+  /// Set pass P as the last user of the given analysis passes.
+  void setLastUser(std::vector<Pass *> &AnalysisPasses, Pass *P);
+
+  /// Collect passes whose last user is P
+  void collectLastUses(std::vector<Pass *> &LastUses, Pass *P);
+
+  virtual ~PMTopLevelManager() {
+    PassManagers.clear();
+  }
+
+private:
+  
+  /// Collection of pass managers
+  std::vector<Pass *> PassManagers;
+
+  // Map to keep track of last user of the analysis pass.
+  // LastUser->second is the last user of Lastuser->first.
+  std::map<Pass *, Pass *> LastUser;
+};
+  
+/// Set pass P as the last user of the given analysis passes.
+void PMTopLevelManager::setLastUser(std::vector<Pass *> &AnalysisPasses, 
+                                    Pass *P) {
+
+  for (std::vector<Pass *>::iterator I = AnalysisPasses.begin(),
+         E = AnalysisPasses.end(); I != E; ++I) {
+    Pass *AP = *I;
+    LastUser[AP] = P;
+    // If AP is the last user of other passes then make P last user of
+    // such passes.
+    for (std::map<Pass *, Pass *>::iterator LUI = LastUser.begin(),
+           LUE = LastUser.end(); LUI != LUE; ++LUI) {
+      if (LUI->second == AP)
+        LastUser[LUI->first] = P;
+    }
+  }
+
+}
+
+/// Collect passes whose last user is P
+void PMTopLevelManager::collectLastUses(std::vector<Pass *> &LastUses,
+                                            Pass *P) {
+   for (std::map<Pass *, Pass *>::iterator LUI = LastUser.begin(),
+          LUE = LastUser.end(); LUI != LUE; ++LUI)
+      if (LUI->second == P)
+        LastUses.push_back(LUI->first);
+}
+
+
+
 /// PMDataManager provides the common place to manage the analysis data
 /// used by pass managers.
 class PMDataManager {
