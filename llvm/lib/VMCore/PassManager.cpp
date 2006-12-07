@@ -883,9 +883,9 @@ bool PassManagerImpl_New::addPass(Pass *P) {
   if (!activeManager || !activeManager->addPass(P)) {
     activeManager = new ModulePassManager_New();
     PassManagers.push_back(activeManager);
+    return activeManager->addPass(P);
   }
-
-  return activeManager->addPass(P);
+  return true;
 }
 
 /// run - Execute all of the passes scheduled for execution.  Keep track of
