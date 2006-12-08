@@ -198,8 +198,8 @@ void RegAllocSimple::AllocateBasicBlock(MachineBasicBlock &MBB) {
         unsigned physReg = Virt2PhysRegMap[virtualReg];
         if (physReg == 0) {
           if (op.isDef()) {
-            int TiedOp = TM->getInstrInfo()
-              ->findTiedToSrcOperand(MI->getOpcode(), i);
+            int TiedOp = TM->getInstrInfo()->
+              findTiedToSrcOperand(MI->getInstrDescriptor(), i);
             if (TiedOp == -1) {
               physReg = getFreeReg(virtualReg);
             } else {
