@@ -401,6 +401,7 @@ public:
   /// so, return true.
   bool runOnModule(Module &M);
   bool runOnFunction(Function &F);
+  bool run(Function &F);
 
   /// doInitialization - Run all of the initializers for the function passes.
   ///
@@ -800,7 +801,7 @@ bool FunctionPassManager_New::run(Function &F) {
     cerr << "Error reading bytecode file: " << errstr << "\n";
     abort();
   }
-  return FPM->runOnFunction(F);
+  return FPM->run(F);
 }
 
 
@@ -931,6 +932,19 @@ inline bool FunctionPassManagerImpl_New::doFinalization(Module &M) {
     Changed |= FP->doFinalization(M);
   }
 
+  return Changed;
+}
+
+// Execute all the passes managed by this top level manager.
+// Return true if any function is modified by a pass.
+bool FunctionPassManagerImpl_New::run(Function &F) {
+
+  bool Changed = false;
+  for (std::vector<Pass *>::iterator I = passManagersBegin(),
+         E = passManagersEnd(); I != E; ++I) {
+    FunctionPass *FP = dynamic_cast<FunctionPass *>(*I);
+    Changed |= FP->runOnFunction(F);
+  }
   return Changed;
 }
 
