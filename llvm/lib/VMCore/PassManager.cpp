@@ -393,6 +393,15 @@ public:
   ~FunctionPassManagerImpl_New() { /* TODO */ };
  
   inline void addTopLevelPass(Pass *P) { 
+
+    if (dynamic_cast<ImmutablePass *> (P)) {
+
+      // P is a immutable pass then it will be managed by this
+      // top level manager. Set up analysis resolver to connect them.
+      AnalysisResolver_New *AR = new AnalysisResolver_New(*this);
+      P->setResolver(AR);
+    }
+
     addPass(P);
   }
 
@@ -488,6 +497,15 @@ public:
   }
 
   inline void addTopLevelPass(Pass *P) {
+
+    if (dynamic_cast<ImmutablePass *> (P)) {
+      
+      // P is a immutable pass and it will be managed by this
+      // top level manager. Set up analysis resolver to connect them.
+      AnalysisResolver_New *AR = new AnalysisResolver_New(*this);
+      P->setResolver(AR);
+    }
+
     addPass(P);
   }
 
@@ -576,6 +594,11 @@ void PMDataManager::removeDeadPasses(Pass *P) {
 /// AvailableAnalysis appropriately if ProcessAnalysis is true.
 void PMDataManager::addPassToManager(Pass *P, 
                                      bool ProcessAnalysis) {
+
+  // This manager is going to manage pass P. Set up analysis resolver
+  // to connect them.
+  AnalysisResolver_New *AR = new AnalysisResolver_New(*this);
+  P->setResolver(AR);
 
   if (ProcessAnalysis) {
 
@@ -1055,6 +1078,12 @@ bool PassManagerImpl_New::addPass(Pass *P) {
 
   if (!activeManager || !activeManager->addPass(P)) {
     activeManager = new ModulePassManager_New(getDepth() + 1);
+
+    // This top level manager is going to manage activeManager. 
+    // Set up analysis resolver to connect them.
+    AnalysisResolver_New *AR = new AnalysisResolver_New(*this);
+    activeManager->setResolver(AR);
+
     addPassManager(activeManager);
     return activeManager->addPass(P);
   }
