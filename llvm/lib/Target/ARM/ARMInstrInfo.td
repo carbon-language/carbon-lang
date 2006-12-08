@@ -342,6 +342,4 @@ def : Pat<(i32 (zextloadi1 IntRegs:$addr)), (LDRB IntRegs:$addr)>;
 
 // truncstore bool -> truncstore byte.
 def : Pat<(truncstorei1 IntRegs:$src, IntRegs:$addr),
-          (STRB IntRegs:$addr, IntRegs:$src)>;
-def : Pat<(truncstorei1 IntRegs:$src, IntRegs:$addr),
-          (STRB IntRegs:$addr, IntRegs:$src)>;
+          (STRB IntRegs:$src, IntRegs:$addr)>;
