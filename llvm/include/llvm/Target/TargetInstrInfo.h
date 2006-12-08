@@ -259,7 +259,8 @@ public:
 
   /// findTiedToSrcOperand - Returns the operand that is tied to the specified
   /// dest operand. Returns -1 if there isn't one.
-  int findTiedToSrcOperand(MachineOpCode Opcode, unsigned OpNum) const;
+  int findTiedToSrcOperand(const TargetInstrDescriptor *TID,
+                           unsigned OpNum) const;
 
   /// getDWARF_LABELOpcode - Return the opcode of the target's DWARF_LABEL
   /// instruction if it has one.  This is used by codegen passes that update

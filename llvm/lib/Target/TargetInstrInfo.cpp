@@ -27,13 +27,12 @@ TargetInstrInfo::~TargetInstrInfo() {
 
 /// findTiedToSrcOperand - Returns the operand that is tied to the specified
 /// dest operand. Returns -1 if there isn't one.
-int
-TargetInstrInfo::findTiedToSrcOperand(MachineOpCode Opc, unsigned OpNum) const {
-  for (unsigned i = 0, e = getNumOperands(Opc); i != e; ++i) {
+int TargetInstrInfo::findTiedToSrcOperand(const TargetInstrDescriptor *TID,
+                                          unsigned OpNum) const {
+  for (unsigned i = 0, e = TID->numOperands; i != e; ++i) {
     if (i == OpNum)
       continue;
-    int ti = getOperandConstraint(Opc, i, TOI::TIED_TO);
-    if (ti == (int)OpNum)
+    if (TID->getOperandConstraint(i, TOI::TIED_TO) == (int)OpNum)
       return i;
   }
   return -1;
