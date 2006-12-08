@@ -118,6 +118,11 @@ public:
   /// Collect passes whose last user is P
   void collectLastUses(std::vector<Pass *> &LastUses, Pass *P);
 
+  /// Find the pass that implements Analysis AID. Search immutable
+  /// passes and all pass managers. If desired pass is not found
+  /// then return NULL.
+  Pass *findAnalysisPass(AnalysisID AID);
+
   virtual ~PMTopLevelManager() {
     PassManagers.clear();
   }
@@ -187,7 +192,7 @@ void PMTopLevelManager::schedulePass(Pass *P, Pass *PM) {
   for (std::vector<AnalysisID>::const_iterator I = RequiredSet.begin(),
          E = RequiredSet.end(); I != E; ++I) {
 
-    Pass *AnalysisPass = NULL; // FIXME PM->getAnalysisPass(*I, true);
+    Pass *AnalysisPass = findAnalysisPass(*I);
     if (!AnalysisPass) {
       // Schedule this analysis run first.
       AnalysisPass = (*I)->createPass();
@@ -197,6 +202,40 @@ void PMTopLevelManager::schedulePass(Pass *P, Pass *PM) {
 
   // Now all required passes are available.
   addTopLevelPass(P);
+}
+
+/// Find the pass that implements Analysis AID. Search immutable
+/// passes and all pass managers. If desired pass is not found
+/// then return NULL.
+Pass *PMTopLevelManager::findAnalysisPass(AnalysisID AID) {
+
+  Pass *P = NULL;
+  for (std::vector<ImmutablePass *>::iterator I = ImmutablePasses.begin(),
+         E = ImmutablePasses.end(); P == NULL && I != E; ++I) {
+    const PassInfo *PI = (*I)->getPassInfo();
+    if (PI == AID)
+      P = *I;
+
+    // If Pass not found then check the interfaces implemented by Immutable Pass
+    if (!P) {
+      const std::vector<const PassInfo*> &ImmPI = 
+        PI->getInterfacesImplemented();
+      for (unsigned Index = 0, End = ImmPI.size(); 
+           P == NULL && Index != End; ++Index)
+        if (ImmPI[Index] == AID)
+          P = *I;
+    }
+  }
+
+  if (P)
+    return P;
+
+  // Check pass managers;
+  for (std::vector<Pass *>::iterator I = PassManagers.begin(),
+         E = PassManagers.end(); P == NULL && I != E; ++I) 
+    P = NULL; // FIXME: (*I)->findAnalysisPass(AID, false /* Search downward */);
+
+  return P;
 }
 
 //===----------------------------------------------------------------------===//
@@ -262,6 +301,10 @@ public:
   /// successfully use the getAnalysis() method to retrieve the
   /// implementations it needs.
   void initializeAnalysisImpl(Pass *P);
+
+  /// Find the pass that implements Analysis AID. If desired pass is not found
+  /// then return NULL.
+  Pass *findAnalysisPass(AnalysisID AID, bool Direction);
 
   inline std::vector<Pass *>::iterator passVectorBegin() { 
     return PassVector.begin(); 
@@ -596,7 +639,7 @@ void PMDataManager::collectRequiredAnalysisPasses(std::vector<Pass *> &RP,
   for (std::vector<AnalysisID>::const_iterator 
          I = RequiredSet.begin(), E = RequiredSet.end();
        I != E; ++I) {
-    Pass *AnalysisPass = NULL; //FIXME findAnalysisPass(*I,true);
+    Pass *AnalysisPass = findAnalysisPass(*I, true);
     assert (AnalysisPass && "Analysis pass is not available");
     RP.push_back(AnalysisPass);
   }
@@ -614,11 +657,35 @@ void PMDataManager::initializeAnalysisImpl(Pass *P) {
   for (std::vector<const PassInfo *>::const_iterator
          I = AnUsage.getRequiredSet().begin(),
          E = AnUsage.getRequiredSet().end(); I != E; ++I) {
-    Pass *Impl = getAnalysisPass(*I);
+    Pass *Impl = findAnalysisPass(*I, true);
     if (Impl == 0)
       assert(0 && "Analysis used but not available!");
     // TODO:  P->AnalysisImpls.push_back(std::make_pair(*I, Impl));
   }
+}
+
+/// Find the pass that implements Analysis AID. If desired pass is not found
+/// then return NULL.
+Pass *PMDataManager::findAnalysisPass(AnalysisID AID, bool SearchParent) {
+
+  // Check if AvailableAnalysis map has one entry.
+  std::map<AnalysisID, Pass*>::const_iterator I =  AvailableAnalysis.find(AID);
+
+  if (I != AvailableAnalysis.end())
+    return I->second;
+
+  // Search Parents through TopLevelManager
+  if (SearchParent)
+    return TPM->findAnalysisPass(AID);
+  
+  // FIXME : This is expensive and requires. Need to check only managers not all passes.
+  // One solution is to collect managers in advance at TPM level.
+  Pass *P = NULL;
+  for(std::vector<Pass *>::iterator I = passVectorBegin(),
+        E = passVectorEnd(); P == NULL && I!= E; ++I )
+    P = NULL; // FIXME : P = (*I)->getResolver()->getAnalysisToUpdate(AID, false /* Do not search parents again */);
+
+  return P;
 }
 
 //===----------------------------------------------------------------------===//
@@ -912,7 +979,6 @@ inline bool FunctionPassManagerImpl_New::doFinalization(Module &M) {
     Changed |= FP->doFinalization(M);
   }
 
-
   return Changed;
 }
 
@@ -928,8 +994,7 @@ ModulePassManager_New::addPass(Pass *P) {
   // If P is FunctionPass then use function pass maanager.
   if (FunctionPass *FP = dynamic_cast<FunctionPass*>(P)) {
 
-    if (!activeFunctionPassManager
-        || !activeFunctionPassManager->addPass(P)) {
+    if (!activeFunctionPassManager || !activeFunctionPassManager->addPass(P)) {
 
       // If active manager exists then clear its analysis info.
       if (activeFunctionPassManager) 
