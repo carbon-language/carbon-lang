@@ -53,7 +53,7 @@ StructLayout::StructLayout(const StructType *ST, const TargetData &TD) {
     unsigned TyAlign;
     uint64_t TySize;
     getTypeInfo(Ty, &TD, TySize, A);
-    TyAlign = A;
+    TyAlign = ST->isPacked() ? 1 : A;
 
     // Add padding if necessary to make the data element aligned properly...
     if (StructSize % TyAlign != 0)

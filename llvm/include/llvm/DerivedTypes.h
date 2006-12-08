@@ -163,13 +163,14 @@ protected:
   ///
   /// Private ctor - Only can be created by a static member...
   ///
-  StructType(const std::vector<const Type*> &Types);
+  StructType(const std::vector<const Type*> &Types, bool isPacked);
 
 public:
   /// StructType::get - This static method is the primary way to create a
   /// StructType.
   ///
-  static StructType *get(const std::vector<const Type*> &Params);
+  static StructType *get(const std::vector<const Type*> &Params, 
+                         bool isPacked=false);
 
   // Iterator access to the elements
   typedef std::vector<PATypeHandle>::const_iterator element_iterator;
@@ -198,6 +199,8 @@ public:
   static inline bool classof(const Type *T) {
     return T->getTypeID() == StructTyID;
   }
+
+  bool isPacked() const { return getSubclassData(); }
 };
 
 

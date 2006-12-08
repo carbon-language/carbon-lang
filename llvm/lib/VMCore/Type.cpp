@@ -22,6 +22,7 @@
 #include "llvm/Support/MathExtras.h"
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/ManagedStatic.h"
+#include "llvm/Support/Debug.h"
 #include <algorithm>
 using namespace llvm;
 
@@ -29,7 +30,7 @@ using namespace llvm;
 // created and later destroyed, all in an effort to make sure that there is only
 // a single canonical version of a type.
 //
-//#define DEBUG_MERGE_TYPES 1
+// #define DEBUG_MERGE_TYPES 1
 
 AbstractTypeUser::~AbstractTypeUser() {}
 
@@ -318,7 +319,10 @@ static std::string getTypeDescription(const Type *Ty,
   }
   case Type::StructTyID: {
     const StructType *STy = cast<StructType>(Ty);
-    Result = "{ ";
+    if (STy->isPacked())
+      Result = "<{ ";
+    else
+      Result = "{ ";
     for (StructType::element_iterator I = STy->element_begin(),
            E = STy->element_end(); I != E; ++I) {
       if (I != STy->element_begin())
@@ -326,6 +330,8 @@ static std::string getTypeDescription(const Type *Ty,
       Result += getTypeDescription(*I, TypeStack);
     }
     Result += " }";
+    if (STy->isPacked())
+      Result += ">";
     break;
   }
   case Type::PointerTyID: {
@@ -454,8 +460,9 @@ FunctionType::FunctionType(const Type *Result,
   setAbstract(isAbstract);
 }
 
-StructType::StructType(const std::vector<const Type*> &Types)
+StructType::StructType(const std::vector<const Type*> &Types, bool isPacked)
   : CompositeType(StructTyID) {
+  setSubclassData(isPacked);
   ContainedTys.reserve(Types.size());
   bool isAbstract = false;
   for (unsigned i = 0; i < Types.size(); ++i) {
@@ -630,6 +637,7 @@ static bool TypesEqual(const Type *Ty, const Type *Ty2,
   } else if (const StructType *STy = dyn_cast<StructType>(Ty)) {
     const StructType *STy2 = cast<StructType>(Ty2);
     if (STy->getNumElements() != STy2->getNumElements()) return false;
+    if (STy->isPacked() != STy2->isPacked()) return false;
     for (unsigned i = 0, e = STy2->getNumElements(); i != e; ++i)
       if (!TypesEqual(STy->getElementType(i), STy2->getElementType(i), EqTypes))
         return false;
@@ -1137,8 +1145,10 @@ namespace llvm {
 //
 class StructValType {
   std::vector<const Type*> ElTypes;
+  bool packed;
 public:
-  StructValType(const std::vector<const Type*> &args) : ElTypes(args) {}
+  StructValType(const std::vector<const Type*> &args, bool isPacked)
+    : ElTypes(args), packed(isPacked) {}
 
   static StructValType get(const StructType *ST) {
     std::vector<const Type *> ElTypes;
@@ -1146,7 +1156,7 @@ public:
     for (unsigned i = 0, e = ST->getNumElements(); i != e; ++i)
       ElTypes.push_back(ST->getElementType(i));
 
-    return StructValType(ElTypes);
+    return StructValType(ElTypes, ST->isPacked());
   }
 
   static unsigned hashTypeStructure(const StructType *ST) {
@@ -1160,20 +1170,23 @@ public:
   }
 
   inline bool operator<(const StructValType &STV) const {
-    return ElTypes < STV.ElTypes;
+    if (ElTypes < STV.ElTypes) return true;
+    else if (ElTypes > STV.ElTypes) return false;
+    else return (int)packed < (int)STV.packed;
   }
 };
 }
 
 static ManagedStatic<TypeMap<StructValType, StructType> > StructTypes;
 
-StructType *StructType::get(const std::vector<const Type*> &ETypes) {
-  StructValType STV(ETypes);
+StructType *StructType::get(const std::vector<const Type*> &ETypes, 
+                            bool isPacked) {
+  StructValType STV(ETypes, isPacked);
   StructType *ST = StructTypes->get(STV);
   if (ST) return ST;
 
   // Value not found.  Derive a new type!
-  StructTypes->add(STV, ST = new StructType(ETypes));
+  StructTypes->add(STV, ST = new StructType(ETypes, isPacked));
 
 #ifdef DEBUG_MERGE_TYPES
   DOUT << "Derived new type: " << *ST << "\n";

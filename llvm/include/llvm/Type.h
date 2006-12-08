@@ -85,6 +85,7 @@ public:
     ArrayTyID     , PointerTyID,        // Array... pointer...
     OpaqueTyID,                         // Opaque type instances...
     PackedTyID,                         // SIMD 'packed' format...
+    BC_ONLY_PackedStructTyID,           // packed struct, for BC rep only
     //...
 
     NumTypeIDs,                         // Must remain as last defined ID
@@ -95,6 +96,7 @@ public:
 private:
   TypeID   ID : 8;    // The current base type of this type.
   bool     Abstract : 1;  // True if type contains an OpaqueType
+  bool     SubclassData : 1; //Space for subclasses to store a flag
 
   /// RefCount - This counts the number of PATypeHolders that are pointing to
   /// this type.  When this number falls to zero, if the type is abstract and
@@ -116,6 +118,9 @@ protected:
   inline void setAbstract(bool Val) { Abstract = Val; }
 
   unsigned getRefCount() const { return RefCount; }
+
+  bool getSubclassData() const { return SubclassData; }
+  void setSubclassData(bool b) { SubclassData = b; }
 
   /// ForwardType - This field is used to implement the union find scheme for
   /// abstract types.  When types are refined to other types, this field is set

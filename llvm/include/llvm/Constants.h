@@ -370,7 +370,7 @@ public:
   /// get() - Static factory methods - Return objects of the specified value
   ///
   static Constant *get(const StructType *T, const std::vector<Constant*> &V);
-  static Constant *get(const std::vector<Constant*> &V);
+  static Constant *get(const std::vector<Constant*> &V, bool packed = false);
 
   /// getType() specialization - Reduce amount of casting...
   ///

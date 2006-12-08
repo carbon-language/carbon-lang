@@ -287,6 +287,8 @@ static void calcTypeName(const Type *Ty,
   }
   case Type::StructTyID: {
     const StructType *STy = cast<StructType>(Ty);
+    if (STy->isPacked())
+      Result += '<';
     Result += "{ ";
     for (StructType::element_iterator I = STy->element_begin(),
            E = STy->element_end(); I != E; ++I) {
@@ -295,6 +297,8 @@ static void calcTypeName(const Type *Ty,
       calcTypeName(*I, TypeStack, TypeNames, Result);
     }
     Result += " }";
+    if (STy->isPacked())
+      Result += '>';
     break;
   }
   case Type::PointerTyID:
@@ -699,6 +703,8 @@ std::ostream &AssemblyWriter::printTypeAtLeastOneLevel(const Type *Ty) {
     }
     Out << ')';
   } else if (const StructType *STy = dyn_cast<StructType>(Ty)) {
+    if (STy->isPacked())
+      Out << '<';
     Out << "{ ";
     for (StructType::element_iterator I = STy->element_begin(),
            E = STy->element_end(); I != E; ++I) {
@@ -707,6 +713,8 @@ std::ostream &AssemblyWriter::printTypeAtLeastOneLevel(const Type *Ty) {
       printType(*I);
     }
     Out << " }";
+    if (STy->isPacked())
+      Out << '>';
   } else if (const PointerType *PTy = dyn_cast<PointerType>(Ty)) {
     printType(PTy->getElementType()) << '*';
   } else if (const ArrayType *ATy = dyn_cast<ArrayType>(Ty)) {

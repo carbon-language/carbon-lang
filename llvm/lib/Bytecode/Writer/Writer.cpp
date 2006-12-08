@@ -197,7 +197,11 @@ inline BytecodeBlock::~BytecodeBlock() { // Do backpatch when block goes out
 //===----------------------------------------------------------------------===//
 
 void BytecodeWriter::outputType(const Type *T) {
-  output_vbr((unsigned)T->getTypeID());
+  const StructType* STy = dyn_cast<StructType>(T);
+  if(STy && STy->isPacked())
+    output_vbr((unsigned)Type::BC_ONLY_PackedStructTyID);
+  else
+    output_vbr((unsigned)T->getTypeID());
 
   // That's all there is to handling primitive types...
   if (T->isPrimitiveType()) {
@@ -246,10 +250,8 @@ void BytecodeWriter::outputType(const Type *T) {
     break;
   }
 
-
   case Type::StructTyID: {
     const StructType *ST = cast<StructType>(T);
-
     // Output all of the element types...
     for (StructType::element_iterator I = ST->element_begin(),
            E = ST->element_end(); I != E; ++I) {

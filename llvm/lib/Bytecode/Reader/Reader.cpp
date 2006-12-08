@@ -1192,7 +1192,18 @@ const Type *BytecodeReader::ParseType() {
       Typ = read_vbr_uint();
     }
 
-    Result = StructType::get(Elements);
+    Result = StructType::get(Elements, false);
+    break;
+  }
+  case Type::BC_ONLY_PackedStructTyID: {
+    std::vector<const Type*> Elements;
+    unsigned Typ = read_vbr_uint();
+    while (Typ) {         // List is terminated by void/0 typeid
+      Elements.push_back(getType(Typ));
+      Typ = read_vbr_uint();
+    }
+
+    Result = StructType::get(Elements, true);
     break;
   }
   case Type::PointerTyID: {
