@@ -675,6 +675,14 @@ Pass *PMDataManager::findAnalysisPass(AnalysisID AID, bool SearchParent) {
   return P;
 }
 
+
+//===----------------------------------------------------------------------===//
+// NOTE: Is this the right place to define this method ?
+// getAnalysisToUpdate - Return an analysis result or null if it doesn't exist
+Pass *AnalysisResolver_New::getAnalysisToUpdate(AnalysisID ID, bool dir) const {
+  return PM.findAnalysisPass(ID, dir);
+}
+
 //===----------------------------------------------------------------------===//
 // BasicBlockPassManager_New implementation
 

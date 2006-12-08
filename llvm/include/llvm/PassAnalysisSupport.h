@@ -100,7 +100,51 @@ public:
   const std::vector<AnalysisID> &getPreservedSet() const { return Preserved; }
 };
 
+//===----------------------------------------------------------------------===//
+// AnalysisResolver - Simple interface used by Pass objects to pull all
+// analysis information out of pass manager that is responsible to manage
+// the pass.
+//
+class PMDataManager;
+class AnalysisResolver_New {
+private:
+  AnalysisResolver_New();  // DO NOT IMPLEMENT
 
+public:
+  AnalysisResolver_New(PMDataManager &P) : PM(P) { }
+  
+  inline PMDataManager &getPMDataManager() { return PM; }
+
+  // Find pass that is implementing PI.
+  Pass *findImplPass(const PassInfo *PI) {
+    Pass *ResultPass = 0;
+    for (unsigned i = 0; i < AnalysisImpls.size() ; ++i) {
+      if (AnalysisImpls[i].first == PI) {
+        ResultPass = AnalysisImpls[i].second;
+        break;
+      }
+    }
+    return ResultPass;
+  }
+
+  void addAnalysisImplsPair(const PassInfo *PI, Pass *P) {
+    std::pair<const PassInfo*, Pass*> pir = std::make_pair(PI,P);
+    AnalysisImpls.push_back(pir);
+  }
+
+  // getAnalysisToUpdate - Return an analysis result or null if it doesn't exist
+  Pass *getAnalysisToUpdate(AnalysisID ID, bool Direction) const;
+
+  // AnalysisImpls - This keeps track of which passes implements the interfaces
+  // that are required by the current pass (to implement getAnalysis()).
+  // NOTE : Remove AnalysisImpls from class Pass, when AnalysisResolver_New
+  // replaces AnalysisResolver
+  std::vector<std::pair<const PassInfo*, Pass*> > AnalysisImpls;
+
+private:
+  // PassManager that is used to resolve analysis info
+  PMDataManager &PM;
+};
 
 //===----------------------------------------------------------------------===//
 // AnalysisResolver - Simple interface implemented by PassManager objects that
