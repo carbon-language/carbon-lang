@@ -322,7 +322,7 @@ bool ARMAsmPrinter::doFinalization(Module &M) {
            I->getSection() == ".dtors")) {
         std::string SectionName = ".section " + I->getSection();
 
-        SectionName += ",\"aw\",@progbits";
+        SectionName += ",\"aw\",%progbits";
 
         SwitchToDataSection(SectionName.c_str());
       } else {
