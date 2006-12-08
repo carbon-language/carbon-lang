@@ -34929,15 +34929,3 @@ echo "$as_me: error: $ac_sub_configure failed for $ac_dir" >&2;}
 fi
 
 
-if test "$llvm_cv_llvmgcc_sanity" = "no" ; then
- { echo "$as_me:$LINENO: WARNING: ***** llvm-gcc/llvm-g++ was not found, or does not appear to be " >&5
-echo "$as_me: WARNING: ***** llvm-gcc/llvm-g++ was not found, or does not appear to be " >&2;}
- { echo "$as_me:$LINENO: WARNING: ***** working. Please make sure you have llvm-gcc and llvm-g++ in" >&5
-echo "$as_me: WARNING: ***** working. Please make sure you have llvm-gcc and llvm-g++ in" >&2;}
- { echo "$as_me:$LINENO: WARNING: ***** your path before configuring LLVM. The runtime libraries" >&5
-echo "$as_me: WARNING: ***** your path before configuring LLVM. The runtime libraries" >&2;}
- { echo "$as_me:$LINENO: WARNING: ***** (llvm/runtime) will not be built but you should be able to" >&5
-echo "$as_me: WARNING: ***** (llvm/runtime) will not be built but you should be able to" >&2;}
- { echo "$as_me:$LINENO: WARNING: ***** build the llvm tools." >&5
-echo "$as_me: WARNING: ***** build the llvm tools." >&2;}
-fi
