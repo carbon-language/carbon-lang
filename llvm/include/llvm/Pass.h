@@ -50,6 +50,7 @@ class BasicBlockPassManager;
 class FunctionPassManagerT;
 class ModulePassManager;
 struct AnalysisResolver;
+class AnalysisResolver_New;
 
 // AnalysisID - Use the PassInfo to identify a pass...
 typedef const PassInfo* AnalysisID;
@@ -62,6 +63,7 @@ typedef const PassInfo* AnalysisID;
 class Pass {
   friend struct AnalysisResolver;
   AnalysisResolver *Resolver;  // AnalysisResolver this pass is owned by...
+  AnalysisResolver_New *Resolver_New;  // Used to resolve analysis
   const PassInfo *PassInfoCache;
 
   // AnalysisImpls - This keeps track of which passes implement the interfaces
@@ -72,7 +74,7 @@ class Pass {
   void operator=(const Pass&);  // DO NOT IMPLEMENT
   Pass(const Pass &);           // DO NOT IMPLEMENT
 public:
-  Pass() : Resolver(0), PassInfoCache(0) {}
+  Pass() : Resolver(0), Resolver_New(0), PassInfoCache(0) {}
   virtual ~Pass() {} // Destructor is virtual so we can be subclassed
 
   /// getPassName - Return a nice clean name for a pass.  This usually
@@ -107,6 +109,9 @@ public:
   virtual void print(std::ostream &O, const Module *M) const;
   void dump() const; // dump - call print(std::cerr, 0);
 
+  // Access AnalysisResolver_New
+  inline void setResolver(AnalysisResolver_New *AR) { Resolver_New = AR; }
+  inline AnalysisResolver_New *getResolver() { return Resolver_New; }
 
   /// getAnalysisUsage - This function should be overriden by passes that need
   /// analysis information to do their job.  If a pass specifies that it uses a
