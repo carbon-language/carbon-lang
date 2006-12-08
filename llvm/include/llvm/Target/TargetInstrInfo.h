@@ -139,6 +139,10 @@ public:
     }
     return -1;
   }
+
+  /// findTiedToSrcOperand - Returns the operand that is tied to the specified
+  /// dest operand. Returns -1 if there isn't one.
+  int findTiedToSrcOperand(unsigned OpNum) const;
 };
 
 
@@ -256,11 +260,6 @@ public:
                            TOI::OperandConstraint Constraint) const {
     return get(Opcode).getOperandConstraint(OpNum, Constraint);
   }
-
-  /// findTiedToSrcOperand - Returns the operand that is tied to the specified
-  /// dest operand. Returns -1 if there isn't one.
-  int findTiedToSrcOperand(const TargetInstrDescriptor *TID,
-                           unsigned OpNum) const;
 
   /// getDWARF_LABELOpcode - Return the opcode of the target's DWARF_LABEL
   /// instruction if it has one.  This is used by codegen passes that update

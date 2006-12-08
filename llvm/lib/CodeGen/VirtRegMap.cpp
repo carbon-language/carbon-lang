@@ -99,7 +99,7 @@ void VirtRegMap::virtFolded(unsigned VirtReg, MachineInstr *OldMI,
   ModRef MRInfo;
   const TargetInstrDescriptor *TID = OldMI->getInstrDescriptor();
   if (TID->getOperandConstraint(OpNo, TOI::TIED_TO) != -1 ||
-      TII.findTiedToSrcOperand(TID, OpNo) != -1) {
+      TID->findTiedToSrcOperand(OpNo) != -1) {
     // Folded a two-address operand.
     MRInfo = isModRef;
   } else if (OldMI->getOperand(OpNo).isDef()) {
@@ -851,7 +851,7 @@ void LocalSpiller::RewriteMBB(MachineBasicBlock &MBB, VirtRegMap &VRM) {
         // If this def is part of a two-address operand, make sure to execute
         // the store from the correct physical register.
         unsigned PhysReg;
-        int TiedOp = TII->findTiedToSrcOperand(MI.getInstrDescriptor(), i);
+        int TiedOp = MI.getInstrDescriptor()->findTiedToSrcOperand(i);
         if (TiedOp != -1)
           PhysReg = MI.getOperand(TiedOp).getReg();
         else {

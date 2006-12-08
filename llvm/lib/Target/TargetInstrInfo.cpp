@@ -17,6 +17,19 @@
 #include "llvm/DerivedTypes.h"
 using namespace llvm;
 
+/// findTiedToSrcOperand - Returns the operand that is tied to the specified
+/// dest operand. Returns -1 if there isn't one.
+int TargetInstrDescriptor::findTiedToSrcOperand(unsigned OpNum) const {
+  for (unsigned i = 0, e = numOperands; i != e; ++i) {
+    if (i == OpNum)
+      continue;
+    if (getOperandConstraint(i, TOI::TIED_TO) == (int)OpNum)
+      return i;
+  }
+  return -1;
+}
+
+
 TargetInstrInfo::TargetInstrInfo(const TargetInstrDescriptor* Desc,
                                  unsigned numOpcodes)
   : desc(Desc), NumOpcodes(numOpcodes) {
@@ -24,20 +37,6 @@ TargetInstrInfo::TargetInstrInfo(const TargetInstrDescriptor* Desc,
 
 TargetInstrInfo::~TargetInstrInfo() {
 }
-
-/// findTiedToSrcOperand - Returns the operand that is tied to the specified
-/// dest operand. Returns -1 if there isn't one.
-int TargetInstrInfo::findTiedToSrcOperand(const TargetInstrDescriptor *TID,
-                                          unsigned OpNum) const {
-  for (unsigned i = 0, e = TID->numOperands; i != e; ++i) {
-    if (i == OpNum)
-      continue;
-    if (TID->getOperandConstraint(i, TOI::TIED_TO) == (int)OpNum)
-      return i;
-  }
-  return -1;
-}
-
 
 // commuteInstruction - The default implementation of this method just exchanges
 // operand 1 and 2.
