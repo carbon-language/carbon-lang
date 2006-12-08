@@ -649,7 +649,7 @@ BasicBlockPassManager_New::addPass(Pass *P) {
 bool
 BasicBlockPassManager_New::runOnFunction(Function &F) {
 
-  bool Changed = false;
+  bool Changed = doInitialization(F);
   initializeAnalysisInfo();
 
   for (Function::iterator I = F.begin(), E = F.end(); I != E; ++I)
@@ -663,7 +663,7 @@ BasicBlockPassManager_New::runOnFunction(Function &F) {
       recordAvailableAnalysis(P);
       removeDeadPasses(P);
     }
-  return Changed;
+  return Changed | doFinalization(F);
 }
 
 /// Return true IFF AnalysisID AID is currently available.
