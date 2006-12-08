@@ -137,6 +137,10 @@ public:
     return ImmutablePasses;
   }
 
+  void addPassManager(Pass *Manager) {
+    PassManagers.push_back(Manager);
+  }
+
 private:
   
   /// Collection of pass managers
@@ -478,9 +482,6 @@ private:
 
   /// Add a pass into a passmanager queue.
   bool addPass(Pass *p);
-
-  // Collection of pass managers
-  std::vector<ModulePassManager_New *> PassManagers;
 
   // Active Pass Manager
   ModulePassManager_New *activeManager;
@@ -1018,7 +1019,7 @@ bool PassManagerImpl_New::addPass(Pass *P) {
 
   if (!activeManager || !activeManager->addPass(P)) {
     activeManager = new ModulePassManager_New(getDepth() + 1);
-    PassManagers.push_back(activeManager);
+    addPassManager(activeManager);
     return activeManager->addPass(P);
   }
   return true;
@@ -1029,10 +1030,10 @@ bool PassManagerImpl_New::addPass(Pass *P) {
 bool PassManagerImpl_New::run(Module &M) {
 
   bool Changed = false;
-  for (std::vector<ModulePassManager_New *>::iterator itr = PassManagers.begin(),
-         e = PassManagers.end(); itr != e; ++itr) {
-    ModulePassManager_New *pm = *itr;
-    Changed |= pm->runOnModule(M);
+  for (std::vector<Pass *>::iterator I = passManagersBegin(),
+         E = passManagersEnd(); I != E; ++I) {
+    ModulePassManager_New *MP = dynamic_cast<ModulePassManager_New *>(*I);
+    Changed |= MP->runOnModule(M);
   }
   return Changed;
 }
