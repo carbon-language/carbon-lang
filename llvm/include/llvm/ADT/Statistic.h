@@ -31,29 +31,36 @@ namespace llvm {
 class Statistic {
   const char *Name;
   const char *Desc;
-  unsigned Value;
-  static unsigned NumStats;
+  unsigned Value : 31;
+  bool Initialized : 1;
 public:
   // Normal constructor, default initialize data item...
   Statistic(const char *name, const char *desc)
-    : Name(name), Desc(desc), Value(0) {
-    ++NumStats;  // Keep track of how many stats are created...
+    : Name(name), Desc(desc), Value(0), Initialized(0) {
   }
 
-  // Print information when destroyed, iff command line option is specified
-  ~Statistic();
-
-  // Allow use of this class as the value itself...
+  unsigned getValue() const { return Value; }
+  const char *getName() const { return Name; }
+  const char *getDesc() const { return Desc; }
+  
+  // Allow use of this class as the value itself.
   operator unsigned() const { return Value; }
-  const Statistic &operator=(unsigned Val) { Value = Val; return *this; }
-  const Statistic &operator++() { ++Value; return *this; }
-  unsigned operator++(int) { return Value++; }
-  const Statistic &operator--() { --Value; return *this; }
-  unsigned operator--(int) { return Value--; }
-  const Statistic &operator+=(const unsigned &V) { Value += V; return *this; }
-  const Statistic &operator-=(const unsigned &V) { Value -= V; return *this; }
-  const Statistic &operator*=(const unsigned &V) { Value *= V; return *this; }
-  const Statistic &operator/=(const unsigned &V) { Value /= V; return *this; }
+  const Statistic &operator=(unsigned Val) { Value = Val; return init(); }
+  const Statistic &operator++() { ++Value; return init(); }
+  unsigned operator++(int) { init(); return Value++; }
+  const Statistic &operator--() { --Value; return init(); }
+  unsigned operator--(int) { init(); return Value--; }
+  const Statistic &operator+=(const unsigned &V) { Value += V; return init(); }
+  const Statistic &operator-=(const unsigned &V) { Value -= V; return init(); }
+  const Statistic &operator*=(const unsigned &V) { Value *= V; return init(); }
+  const Statistic &operator/=(const unsigned &V) { Value /= V; return init(); }
+  
+private:
+  Statistic &init() {
+    if (!Initialized) RegisterStatistic();
+    return *this;
+  }
+  void RegisterStatistic();
 };
 
 } // End llvm namespace
