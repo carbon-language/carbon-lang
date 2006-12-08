@@ -317,10 +317,17 @@ bool ARMAsmPrinter::doFinalization(Module &M) {
         break;
       }
 
-      if (C->isNullValue())
-        SwitchToDataSection(".bss",  I);
-      else
-        SwitchToDataSection(".data", I);
+      if (I->hasSection() &&
+          (I->getSection() == ".ctors" ||
+           I->getSection() == ".dtors")) {
+        std::string SectionName = ".section " + I->getSection();
+
+        SectionName += ",\"aw\",@progbits";
+
+        SwitchToDataSection(SectionName.c_str());
+      } else {
+        SwitchToDataSection(TAI->getDataSection(), I);
+      }
 
       EmitAlignment(Align, I);
       O << "\t.type " << name << ", %object\n";
