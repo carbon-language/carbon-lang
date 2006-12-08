@@ -73,7 +73,7 @@ static bool MarkAliveBlocks(BasicBlock *BB, std::set<BasicBlock*> &Reachable) {
 
   bool Changed = ConstantFoldTerminator(BB);
   for (succ_iterator SI = succ_begin(BB), SE = succ_end(BB); SI != SE; ++SI)
-    MarkAliveBlocks(*SI, Reachable);
+    Changed |= MarkAliveBlocks(*SI, Reachable);
 
   return Changed;
 }
