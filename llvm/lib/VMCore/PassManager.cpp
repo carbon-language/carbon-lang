@@ -255,17 +255,6 @@ public:
   /// manager.
   bool manageablePass(Pass *P);
 
-  Pass *getAnalysisPass(AnalysisID AID) const {
-
-    std::map<AnalysisID, Pass*>::const_iterator I = 
-      AvailableAnalysis.find(AID);
-
-    if (I != AvailableAnalysis.end())
-      return NULL;
-    else
-      return I->second;
-  }
-
   /// Augment AvailableAnalysis by adding analysis made available by pass P.
   void recordAvailableAnalysis(Pass *P);
 
@@ -360,10 +349,6 @@ public:
   /// whether any of the passes modifies the function, and if so, return true.
   bool runOnFunction(Function &F);
 
-  /// Return true IFF AnalysisID AID is currently available.
-  /// TODO : Replace this method with getAnalysisPass()
-  Pass *getAnalysisPassFromManager(AnalysisID AID);
-
   /// Pass Manager itself does not invalidate any analysis info.
   void getAnalysisUsage(AnalysisUsage &Info) const {
     Info.setPreservesAll();
@@ -413,10 +398,6 @@ public:
   bool runOnModule(Module &M);
   bool runOnFunction(Function &F);
 
-  /// Return true IFF AnalysisID AID is currently available.
-  /// TODO : Replace this method with getAnalysisPass()
-  Pass *getAnalysisPassFromManager(AnalysisID AID);
-
   /// doInitialization - Run all of the initializers for the function passes.
   ///
   bool doInitialization(Module &M);
@@ -453,10 +434,6 @@ public:
   /// whether any of the passes modifies the module, and if so, return true.
   bool runOnModule(Module &M);
 
-  /// Return true IFF AnalysisID AID is currently available.
-  /// TODO : Replace this method with getAnalysisPass()
-  Pass *getAnalysisPassFromManager(AnalysisID AID);
-
   /// Pass Manager itself does not invalidate any analysis info.
   void getAnalysisUsage(AnalysisUsage &Info) const {
     Info.setPreservesAll();
@@ -487,10 +464,6 @@ public:
   /// run - Execute all of the passes scheduled for execution.  Keep track of
   /// whether any of the passes modifies the module, and if so, return true.
   bool run(Module &M);
-
-  /// Return true IFF AnalysisID AID is currently available.
-  /// TODO : Replace this method with getAnalysisPass()
-  Pass *getAnalysisPassFromManager(AnalysisID AID);
 
   /// Pass Manager itself does not invalidate any analysis info.
   void getAnalysisUsage(AnalysisUsage &Info) const {
@@ -733,12 +706,6 @@ BasicBlockPassManager_New::runOnFunction(Function &F) {
   return Changed | doFinalization(F);
 }
 
-/// Return true IFF AnalysisID AID is currently available.
-/// TODO : Replace this method with getAnalysisPass()
-Pass * BasicBlockPassManager_New::getAnalysisPassFromManager(AnalysisID AID) {
-  return getAnalysisPass(AID);
-}
-
 // Implement doInitialization and doFinalization
 inline bool BasicBlockPassManager_New::doInitialization(Module &M) {
   bool Changed = false;
@@ -938,22 +905,6 @@ bool FunctionPassManagerImpl_New::runOnFunction(Function &F) {
 }
 
 
-/// Return true IFF AnalysisID AID is currently available.
-/// TODO : Replace this method with getAnalysisPass()
-Pass *FunctionPassManagerImpl_New::getAnalysisPassFromManager(AnalysisID AID) {
-
-  Pass *P = getAnalysisPass(AID);
-  if (P)
-    return P;
-
-  if (activeBBPassManager && 
-      activeBBPassManager->getAnalysisPass(AID) != 0)
-    return activeBBPassManager->getAnalysisPass(AID);
-
-  // TODO : Check inactive managers
-  return NULL;
-}
-
 inline bool FunctionPassManagerImpl_New::doInitialization(Module &M) {
   bool Changed = false;
 
@@ -1057,35 +1008,8 @@ ModulePassManager_New::runOnModule(Module &M) {
   return Changed;
 }
 
-/// Return true IFF AnalysisID AID is currently available.
-/// TODO : Replace this method with getAnalysisPass()
-Pass *ModulePassManager_New::getAnalysisPassFromManager(AnalysisID AID) {
-
-  Pass *P = getAnalysisPass(AID);
-  if (P)
-    return P;
-
-  if (activeFunctionPassManager && 
-      activeFunctionPassManager->getAnalysisPass(AID) != 0)
-    return activeFunctionPassManager->getAnalysisPass(AID);
-
-  // TODO : Check inactive managers
-  return NULL;
-}
-
 //===----------------------------------------------------------------------===//
 // PassManagerImpl implementation
-
-/// Return true IFF AnalysisID AID is currently available.
-/// TODO : Replace this method with getAnalysisPass()
-Pass *PassManagerImpl_New::getAnalysisPassFromManager(AnalysisID AID) {
-
-  Pass *P = NULL;
-  for (std::vector<ModulePassManager_New *>::iterator itr = PassManagers.begin(),
-         e = PassManagers.end(); !P && itr != e; ++itr)
-    P  = (*itr)->getAnalysisPassFromManager(AID);
-  return P;
-}
 
 // PassManager_New implementation
 /// Add P into active pass manager or use new module pass manager to
