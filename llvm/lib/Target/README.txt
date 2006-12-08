@@ -303,6 +303,16 @@ unsigned int swap_32(unsigned int v) {
   return v;
 }
 
+Nor is this (yes, it really is bswap):
+
+unsigned long reverse(unsigned v) {
+    unsigned t;
+    t = v ^ ((v << 16) | (v >> 16));
+    t &= ~0xff0000;
+    v = (v << 24) | (v >> 8);
+    return v ^ (t >> 8);
+}
+
 //===---------------------------------------------------------------------===//
 
 These should turn into single 16-bit (unaligned?) loads on little/big endian
