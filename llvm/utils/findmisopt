@@ -61,6 +61,7 @@ optll="$outdir/${name}.opt.ll"
 opts="$outdir/${name}.opt.s"
 optprog="$outdir/${name}.opt"
 optout="$outdir/${name}.opt.out"
+ldflags="-lstdc++ -lm -ldl -lc"
 
 echo "Test Name: $name"
 echo "Unoptimized program: $prog"
@@ -81,7 +82,7 @@ llvm-dis "$bcfile" -o "$ll" -f || exit 1
 
 # Generate the non-optimized program
 llc "$bcfile" -o "$s" -f || exit 1
-gcc "$s" -o "$prog" -lstdc++ -lc -lm || exit 1
+gcc "$s" -o "$prog" $ldflags || exit 1
 
 # Define the list of optimizations to run. This comprises the same set of 
 # optimizations that gccas and gccld run, in the same order.
@@ -96,7 +97,7 @@ function tryit {
   opt $switches_to_use "$bcfile" -o "$optbc" -f || exit
   llvm-dis "$optbc" -o "$optll" -f || exit
   llc "$optbc" -o "$opts" -f || exit
-  gcc "$opts" -o "$optprog" -lstdc++ -lc -lm || exit
+  gcc "$opts" -o "$optprog" $ldflags || exit
   "$prog" $args > "$out" 2>&1
   ex1=$?
   "$optprog" $args > "$optout" 2>&1
