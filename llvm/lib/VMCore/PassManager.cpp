@@ -106,7 +106,7 @@ public:
   /// Schedule pass P for execution. Make sure that passes required by
   /// P are run before P is run. Update analysis info maintained by
   /// the manager. Remove dead passes. This is a recursive function.
-  void schedulePass(Pass *P, Pass *PM);
+  void schedulePass(Pass *P);
 
   /// This is implemented by top level pass manager and used by 
   /// schedulePass() to add analysis info passes that are not available.
@@ -181,7 +181,7 @@ void PMTopLevelManager::collectLastUses(std::vector<Pass *> &LastUses,
 /// Schedule pass P for execution. Make sure that passes required by
 /// P are run before P is run. Update analysis info maintained by
 /// the manager. Remove dead passes. This is a recursive function.
-void PMTopLevelManager::schedulePass(Pass *P, Pass *PM) {
+void PMTopLevelManager::schedulePass(Pass *P) {
 
   // TODO : Allocate function manager for this pass, other wise required set
   // may be inserted into previous function manager
@@ -196,7 +196,7 @@ void PMTopLevelManager::schedulePass(Pass *P, Pass *PM) {
     if (!AnalysisPass) {
       // Schedule this analysis run first.
       AnalysisPass = (*I)->createPass();
-      schedulePass(AnalysisPass, PM);
+      schedulePass(AnalysisPass);
     }
   }
 
@@ -386,7 +386,7 @@ public:
   /// there is no need to delete the pass. (TODO delete passes.)
   /// This implies that all passes MUST be allocated with 'new'.
   void add(Pass *P) { 
-    schedulePass(P, this);
+    schedulePass(P);
   }
 
   /// Add pass into the pass manager queue.
@@ -458,7 +458,7 @@ public:
   /// will be destroyed as well, so there is no need to delete the pass.  This
   /// implies that all passes MUST be allocated with 'new'.
   void add(Pass *P) {
-    schedulePass(P, this);
+    schedulePass(P);
   }
  
   /// run - Execute all of the passes scheduled for execution.  Keep track of
