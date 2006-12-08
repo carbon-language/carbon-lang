@@ -734,6 +734,11 @@ FunctionPassManager_New::FunctionPassManager_New() {
   FPM = new FunctionPassManagerImpl_New(0);
 }
 
+FunctionPassManager_New::FunctionPassManager_New(ModuleProvider *P) {
+  FPM = new FunctionPassManagerImpl_New(0);
+  MP = P;
+}
+
 /// add - Add a pass to the queue of passes to run.  This passes
 /// ownership of the Pass to the PassManager.  When the
 /// PassManager_X is destroyed, the pass will be destroyed as well, so

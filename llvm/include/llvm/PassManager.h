@@ -119,7 +119,7 @@ private:
 /// FunctionPassManager_New manages FunctionPasses and BasicBlockPassManagers.
 class FunctionPassManager_New {
 public:
-  FunctionPassManager_New(ModuleProvider *P) { /* TODO */ }
+  FunctionPassManager_New(ModuleProvider *P);
   FunctionPassManager_New();
   ~FunctionPassManager_New() { /* TODO */ };
  
