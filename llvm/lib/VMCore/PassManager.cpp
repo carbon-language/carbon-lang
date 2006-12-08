@@ -844,16 +844,8 @@ bool FunctionPassManagerImpl_New::runOnModule(Module &M) {
   initializeAnalysisInfo();
 
   for (Module::iterator I = M.begin(), E = M.end(); I != E; ++I)
-    for (std::vector<Pass *>::iterator itr = passVectorBegin(),
-           e = passVectorEnd(); itr != e; ++itr) {
-      Pass *P = *itr;
-      
-      FunctionPass *FP = dynamic_cast<FunctionPass*>(P);
-      Changed |= FP->runOnFunction(*I);
-      removeNotPreservedAnalysis(P);
-      recordAvailableAnalysis(P);
-      removeDeadPasses(P);
-    }
+    this->runOnFunction(*I);
+
   return Changed;
 }
 
