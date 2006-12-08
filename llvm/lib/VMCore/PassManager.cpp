@@ -394,15 +394,16 @@ public:
  
   inline void addTopLevelPass(Pass *P) { 
 
-    if (dynamic_cast<ImmutablePass *> (P)) {
+    if (ImmutablePass *IP = dynamic_cast<ImmutablePass *> (P)) {
 
       // P is a immutable pass then it will be managed by this
       // top level manager. Set up analysis resolver to connect them.
       AnalysisResolver_New *AR = new AnalysisResolver_New(*this);
       P->setResolver(AR);
-    }
-
-    addPass(P);
+      addImmutablePass(IP);
+    } 
+    else 
+      addPass(P);
   }
 
   /// add - Add a pass to the queue of passes to run.  This passes
@@ -498,15 +499,16 @@ public:
 
   inline void addTopLevelPass(Pass *P) {
 
-    if (dynamic_cast<ImmutablePass *> (P)) {
+    if (ImmutablePass *IP = dynamic_cast<ImmutablePass *> (P)) {
       
       // P is a immutable pass and it will be managed by this
       // top level manager. Set up analysis resolver to connect them.
       AnalysisResolver_New *AR = new AnalysisResolver_New(*this);
       P->setResolver(AR);
+      addImmutablePass(IP);
     }
-
-    addPass(P);
+    else 
+      addPass(P);
   }
 
 private:
