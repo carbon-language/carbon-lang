@@ -141,10 +141,20 @@ public:
     PassManagers.push_back(Manager);
   }
 
+  // Add Manager into the list of managers that are not directly
+  // maintained by this top level pass manager
+  void addOtherPassManager(Pass *Manager) {
+    OtherPassManagers.push_back(Manager);
+  }
+
 private:
   
   /// Collection of pass managers
   std::vector<Pass *> PassManagers;
+
+  /// Collection of pass managers that are not directly maintained
+  /// by this pass manager
+  std::vector<Pass *> OtherPassManagers;
 
   // Map to keep track of last user of the analysis pass.
   // LastUser->second is the last user of Lastuser->first.
@@ -231,12 +241,14 @@ Pass *PMTopLevelManager::findAnalysisPass(AnalysisID AID) {
     }
   }
 
-  if (P)
-    return P;
-
-  // Check pass managers;
+  // Check pass managers
   for (std::vector<Pass *>::iterator I = PassManagers.begin(),
          E = PassManagers.end(); P == NULL && I != E; ++I) 
+    P = NULL; // FIXME: (*I)->findAnalysisPass(AID, false /* Search downward */);
+
+  // Check other pass managers
+  for (std::vector<Pass *>::iterator I = OtherPassManagers.begin(),
+         E = OtherPassManagers.end(); P == NULL && I != E; ++I) 
     P = NULL; // FIXME: (*I)->findAnalysisPass(AID, false /* Search downward */);
 
   return P;
@@ -839,6 +851,7 @@ FunctionPassManagerImpl_New::addPass(Pass *P) {
       activeBBPassManager = 
         new BasicBlockPassManager_New(getDepth() + 1);
       addPassToManager(activeBBPassManager, false);
+      TPM->addOtherPassManager(activeBBPassManager);
 
       // Add pass into new manager. This time it must succeed.
       if (!activeBBPassManager->addPass(BP))
@@ -970,7 +983,8 @@ ModulePassManager_New::addPass(Pass *P) {
       activeFunctionPassManager = 
         new FunctionPassManagerImpl_New(getDepth() + 1);
       addPassToManager(activeFunctionPassManager, false);
-
+      TPM->addOtherPassManager(activeFunctionPassManager);
+      
       // Add pass into new manager. This time it must succeed.
       if (!activeFunctionPassManager->addPass(FP))
         assert(0 && "Unable to add pass");
