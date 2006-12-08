@@ -8,6 +8,10 @@
 %foos = external global %struct.anon 
 %bara = external global [2 x <{ int, sbyte }>]
 
+;initializers should work for packed and non-packed the same way
+%E1 = global <{sbyte, int, int}> {sbyte 1, int 2, int 3}
+%E2 = global {sbyte, int, int} {sbyte 4, int 5, int 6}
+
 implementation   ; Functions:
 
 int %main() 
