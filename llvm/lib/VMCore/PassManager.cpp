@@ -840,13 +840,13 @@ FunctionPassManagerImpl_New::addPass(Pass *P) {
 /// the function, and if so, return true.
 bool FunctionPassManagerImpl_New::runOnModule(Module &M) {
 
-  bool Changed = false;
+  bool Changed = doInitialization(M);
   initializeAnalysisInfo();
 
   for (Module::iterator I = M.begin(), E = M.end(); I != E; ++I)
     this->runOnFunction(*I);
 
-  return Changed;
+  return Changed | doFinalization(M);
 }
 
 /// Execute all of the passes scheduled for execution by invoking 
