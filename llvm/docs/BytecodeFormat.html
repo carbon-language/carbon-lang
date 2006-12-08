@@ -862,10 +862,6 @@ missing otherwise.</td>
       <td class="td_left">Type ID for structure types (14)</td>
     </tr>
     <tr>
-      <td><a href="#uint32_vbr">uint32_vbr</a></td>
-      <td class="td_left">Value 0 if a normal structure, 1 if a packed structure</td>
-    </tr>
-    <tr>
       <td><a href="#zlist">zlist</a>(<a href="#uint24_vbr">uint24_vbr</a>)</td>
       <td class="td_left">Slot number of each of the element's fields.</td>
     </tr>
@@ -940,6 +936,23 @@ missing otherwise.</td>
     <tr>
       <td><a href="#uint32_vbr">uint32_vbr</a></td>
       <td class="td_left">The number of elements in the packed vector.</td>
+    </tr>
+  </tbody>
+</table>
+<h3>Packed Structure Types</h3>
+<table>
+  <tbody>
+    <tr>
+      <th><b>Type</b></th>
+      <th class="td_left"><b>Description</b></th>
+    </tr>
+    <tr>
+      <td><a href="#uint24_vbr">uint24_vbr</a></td>
+      <td class="td_left">Type ID for packed structure types (19)</td>
+    </tr>
+    <tr>
+      <td><a href="#zlist">zlist</a>(<a href="#uint24_vbr">uint24_vbr</a>)</td>
+      <td class="td_left">Slot number of each of the element's fields.</td>
     </tr>
   </tbody>
 </table>
