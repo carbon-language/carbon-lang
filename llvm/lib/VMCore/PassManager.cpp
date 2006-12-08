@@ -199,7 +199,6 @@ void PMTopLevelManager::schedulePass(Pass *P, Pass *PM) {
   addTopLevelPass(P);
 }
 
-
 //===----------------------------------------------------------------------===//
 // PMDataManager
 
@@ -327,7 +326,11 @@ public:
     Info.setPreservesAll();
   }
 
-private:
+  bool doInitialization(Module &M);
+  bool doInitialization(Function &F);
+  bool doFinalization(Module &M);
+  bool doFinalization(Function &F);
+
 };
 
 /// FunctionPassManagerImpl_New manages FunctionPasses and BasicBlockPassManagers.
@@ -533,7 +536,7 @@ void PMDataManager::removeDeadPasses(Pass *P) {
     std::map<AnalysisID, Pass*>::iterator Pos = 
       AvailableAnalysis.find((*I)->getPassInfo());
     
-    // It is possible that deadPass is already removed from the AvailableAnalysis
+    // It is possible that pass is already removed from the AvailableAnalysis
     if (Pos != AvailableAnalysis.end())
       AvailableAnalysis.erase(Pos);
   }
@@ -668,6 +671,60 @@ BasicBlockPassManager_New::runOnFunction(Function &F) {
 Pass * BasicBlockPassManager_New::getAnalysisPassFromManager(AnalysisID AID) {
   return getAnalysisPass(AID);
 }
+
+// Implement doInitialization and doFinalization
+inline bool BasicBlockPassManager_New::doInitialization(Module &M) {
+  bool Changed = false;
+
+  for (std::vector<Pass *>::iterator itr = passVectorBegin(),
+         e = passVectorEnd(); itr != e; ++itr) {
+    Pass *P = *itr;
+    BasicBlockPass *BP = dynamic_cast<BasicBlockPass*>(P);    
+    Changed |= BP->doInitialization(M);
+  }
+
+  return Changed;
+}
+
+inline bool BasicBlockPassManager_New::doFinalization(Module &M) {
+  bool Changed = false;
+
+  for (std::vector<Pass *>::iterator itr = passVectorBegin(),
+         e = passVectorEnd(); itr != e; ++itr) {
+    Pass *P = *itr;
+    BasicBlockPass *BP = dynamic_cast<BasicBlockPass*>(P);    
+    Changed |= BP->doFinalization(M);
+  }
+
+  return Changed;
+}
+
+inline bool BasicBlockPassManager_New::doInitialization(Function &F) {
+  bool Changed = false;
+
+  for (std::vector<Pass *>::iterator itr = passVectorBegin(),
+         e = passVectorEnd(); itr != e; ++itr) {
+    Pass *P = *itr;
+    BasicBlockPass *BP = dynamic_cast<BasicBlockPass*>(P);    
+    Changed |= BP->doInitialization(F);
+  }
+
+  return Changed;
+}
+
+inline bool BasicBlockPassManager_New::doFinalization(Function &F) {
+  bool Changed = false;
+
+  for (std::vector<Pass *>::iterator itr = passVectorBegin(),
+         e = passVectorEnd(); itr != e; ++itr) {
+    Pass *P = *itr;
+    BasicBlockPass *BP = dynamic_cast<BasicBlockPass*>(P);    
+    Changed |= BP->doFinalization(F);
+  }
+
+  return Changed;
+}
+
 
 //===----------------------------------------------------------------------===//
 // FunctionPassManager_New implementation
