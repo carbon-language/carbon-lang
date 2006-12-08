@@ -522,7 +522,21 @@ void PMDataManager::removeNotPreservedAnalysis(Pass *P) {
 
 /// Remove analysis passes that are not used any longer
 void PMDataManager::removeDeadPasses(Pass *P) {
-  // TODO : reimplement
+
+  std::vector<Pass *> DeadPasses;
+  TPM->collectLastUses(DeadPasses, P);
+
+  for (std::vector<Pass *>::iterator I = DeadPasses.begin(),
+         E = DeadPasses.end(); I != E; ++I) {
+    (*I)->releaseMemory();
+    
+    std::map<AnalysisID, Pass*>::iterator Pos = 
+      AvailableAnalysis.find((*I)->getPassInfo());
+    
+    // It is possible that deadPass is already removed from the AvailableAnalysis
+    if (Pos != AvailableAnalysis.end())
+      AvailableAnalysis.erase(Pos);
+  }
 }
 
 /// Add pass P into the PassVector. Update 
