@@ -210,7 +210,7 @@ bool FPS::processBasicBlock(MachineFunction &MF, MachineBasicBlock &BB) {
         PrevMI = prior(I);
 
     ++NumFP;  // Keep track of # of pseudo instrs
-    DOUT << "\nFPInst:\t"; MI->print(*cerr.stream(), &(MF.getTarget()));
+    DOUT << "\nFPInst:\t" << *MI;
 
     // Get dead variables list now because the MI pointer may be deleted as part
     // of processing!
