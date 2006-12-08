@@ -40,6 +40,7 @@
           <li><a href="#t_function">Function Type</a></li>
           <li><a href="#t_pointer">Pointer Type</a></li>
           <li><a href="#t_struct">Structure Type</a></li>
+          <li><a href="#t_pstruct">Packed Structure Type</a></li>
           <li><a href="#t_packed">Packed Type</a></li>
           <li><a href="#t_opaque">Opaque Type</a></li>
         </ol>
@@ -921,6 +922,38 @@ instruction.</p>
     <td class="left">
       <tt>{ int, int, int }</tt><br/>
       <tt>{ float, int (int) * }</tt><br/>
+    </td>
+    <td class="left">
+      a triple of three <tt>int</tt> values<br/>
+      A pair, where the first element is a <tt>float</tt> and the second element 
+      is a <a href="#t_pointer">pointer</a> to a <a href="#t_function">function</a> 
+      that takes an <tt>int</tt>, returning an <tt>int</tt>.<br/>
+    </td>
+  </tr>
+</table>
+</div>
+
+<!-- _______________________________________________________________________ -->
+<div class="doc_subsubsection"> <a name="t_pstruct">Packed Structure Type</a>
+</div>
+<div class="doc_text">
+<h5>Overview:</h5>
+<p>The packed structure type is used to represent a collection of data members
+together in memory.  There is no padding between fields.  Further, the alignment
+of a packed structure is 1 byte.  The elements of a packed structure may
+be any type that has a size.</p>
+<p>Structures are accessed using '<tt><a href="#i_load">load</a></tt>
+and '<tt><a href="#i_store">store</a></tt>' by getting a pointer to a
+field with the '<tt><a href="#i_getelementptr">getelementptr</a></tt>'
+instruction.</p>
+<h5>Syntax:</h5>
+<pre>  &lt; { &lt;type list&gt; } &gt; <br></pre>
+<h5>Examples:</h5>
+<table class="layout">
+  <tr class="layout">
+    <td class="left">
+      <tt> &lt; { int, int, int } &gt; </tt><br/>
+      <tt> &lt; { float, int (int) * } &gt; </tt><br/>
     </td>
     <td class="left">
       a triple of three <tt>int</tt> values<br/>
