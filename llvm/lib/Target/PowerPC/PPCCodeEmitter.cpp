@@ -31,6 +31,10 @@ namespace {
     TargetMachine &TM;
     MachineCodeEmitter &MCE;
 
+    /// MovePCtoLROffset - When/if we see a MovePCtoLR instruction, we record
+    /// its address in the function into this pointer.
+    void *MovePCtoLROffset;
+    
     /// getMachineOpValue - evaluates the MachineOperand of a given MachineInstr
     ///
     int getMachineOpValue(MachineInstr &MI, MachineOperand &MO);
@@ -77,6 +81,7 @@ bool PPCCodeEmitter::runOnMachineFunction(MachineFunction &MF) {
           MF.getTarget().getRelocationModel() != Reloc::Static) &&
          "JIT relocation model must be set to static or default!");
   do {
+    MovePCtoLROffset = 0;
     MCE.startFunction(MF);
     for (MachineFunction::iterator BB = MF.begin(), E = MF.end(); BB != E; ++BB)
       emitBasicBlock(*BB);
@@ -102,7 +107,9 @@ void PPCCodeEmitter::emitBasicBlock(MachineBasicBlock &MBB) {
       break; // pseudo opcode, no side effects
     case PPC::MovePCtoLR:
     case PPC::MovePCtoLR8:
-      assert(0 && "CodeEmitter does not support MovePCtoLR instruction");
+      assert(TM.getRelocationModel() == Reloc::PIC_);
+      MovePCtoLROffset = (void*)MCE.getCurrentPCValue();
+      MCE.emitWordBE(0x48000005);   // bl 1
       break;
     }
   }
@@ -129,6 +136,15 @@ int PPCCodeEmitter::getMachineOpValue(MachineInstr &MI, MachineOperand &MO) {
     if (MI.getOpcode() == PPC::BL || MI.getOpcode() == PPC::BL8)
       Reloc = PPC::reloc_pcrel_bx;
     else {
+      // If in PIC mode, we need to encode the negated address of the
+      // 'movepctolr' into the unrelocated field.  After relocation, we'll have
+      // &gv-&movepctolr in the imm field.  Once &movepctolr is added to the imm
+      // field, we get &gv.
+      if (TM.getRelocationModel() == Reloc::PIC_) {
+        assert(MovePCtoLROffset && "MovePCtoLR not seen yet?");
+        rv = -(intptr_t)MovePCtoLROffset - 4;
+      }
+      
       switch (MI.getOpcode()) {
       default: MI.dump(); assert(0 && "Unknown instruction for relocation!");
       case PPC::LIS:
@@ -136,6 +152,7 @@ int PPCCodeEmitter::getMachineOpValue(MachineInstr &MI, MachineOperand &MO) {
       case PPC::ADDIS:
       case PPC::ADDIS8:
         Reloc = PPC::reloc_absolute_high;       // Pointer to symbol
+        rv >>= 16;
         break;
       case PPC::LI:
       case PPC::LI8:
@@ -156,6 +173,7 @@ int PPCCodeEmitter::getMachineOpValue(MachineInstr &MI, MachineOperand &MO) {
       case PPC::STFS:
       case PPC::STFD:
         Reloc = PPC::reloc_absolute_low;
+        rv &= 0xFFFF;
         break;
 
       case PPC::LWA:
@@ -163,6 +181,8 @@ int PPCCodeEmitter::getMachineOpValue(MachineInstr &MI, MachineOperand &MO) {
       case PPC::STD:
       case PPC::STD_32:
         Reloc = PPC::reloc_absolute_low_ix;
+        rv &= 0xFFFF;
+        rv >>= 2;
         break;
       }
     }
@@ -185,8 +205,7 @@ int PPCCodeEmitter::getMachineOpValue(MachineInstr &MI, MachineOperand &MO) {
     unsigned Opcode = MI.getOpcode();
     if (Opcode == PPC::B || Opcode == PPC::BL || Opcode == PPC::BLA)
       Reloc = PPC::reloc_pcrel_bx;
-    else
-      // BLT,BLE,BEQ,BGE,BGT,BNE, or other bcx instruction
+    else // BCC instruction
       Reloc = PPC::reloc_pcrel_bcx;
     MCE.addRelocation(MachineRelocation::getBB(MCE.getCurrentPCOffset(),
                                                Reloc,

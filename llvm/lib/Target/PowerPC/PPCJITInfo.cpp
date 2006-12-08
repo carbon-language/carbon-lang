@@ -103,6 +103,7 @@ asm(
     // Arguments to Compilation Callback:
     // r3 - our lr (address of the call instruction in stub plus 4)
     // r4 - stub's lr (address of instruction that called the stub plus 4)
+    // r5 - is64Bit - always 0.
     "mr   r3, r0\n"
     "lwz  r2, 208(r1)\n" // stub's frame
     "lwz  r4, 8(r2)\n" // stub's lr
@@ -164,6 +165,7 @@ asm(
     // Arguments to Compilation Callback:
     // r3 - our lr (address of the call instruction in stub plus 4)
     // r4 - stub's lr (address of instruction that called the stub plus 4)
+    // r5 - is64Bit - always 1.
     "mr   r3, r0\n"
     "ld   r2, 208(r1)\n" // stub's frame
     "ld   r4, 16(r2)\n"  // stub's lr

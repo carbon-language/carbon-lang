@@ -135,9 +135,17 @@ bool PPCTargetMachine::addObjectWriter(FunctionPassManager &PM, bool Fast,
 
 bool PPCTargetMachine::addCodeEmitter(FunctionPassManager &PM, bool Fast,
                                       MachineCodeEmitter &MCE) {
-  // The JIT should use the static relocation model.
+  // The JIT should use the static relocation model in ppc32 mode, PIC in ppc64.
   // FIXME: This should be moved to TargetJITInfo!!
-  setRelocationModel(Reloc::Static);
+  if (Subtarget.isPPC64()) {
+    // We use PIC codegen in ppc64 mode, because otherwise we'd have to use many
+    // instructions to materialize arbitrary global variable + function +
+    // constant pool addresses.
+    setRelocationModel(Reloc::PIC_);
+  } else {
+    setRelocationModel(Reloc::Static);
+  }
+  
   
   // Machine code emitter pass for PowerPC.
   PM.add(createPPCCodeEmitterPass(*this, MCE));
