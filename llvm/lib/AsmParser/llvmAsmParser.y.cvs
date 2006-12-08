@@ -1209,6 +1209,20 @@ UpRTypes : '\\' EUINT64VAL {                   // Type UpReference
     $$ = new PATypeHolder(StructType::get(std::vector<const Type*>()));
     CHECK_FOR_ERROR
   }
+  | '<' '{' TypeListI '}' '>' {
+    std::vector<const Type*> Elements;
+    for (std::list<llvm::PATypeHolder>::iterator I = $3->begin(),
+           E = $3->end(); I != E; ++I)
+      Elements.push_back(*I);
+
+    $$ = new PATypeHolder(HandleUpRefs(StructType::get(Elements, true)));
+    delete $3;
+    CHECK_FOR_ERROR
+  }
+  | '<' '{' '}' '>' {                         // Empty structure type?
+    $$ = new PATypeHolder(StructType::get(std::vector<const Type*>(), true));
+    CHECK_FOR_ERROR
+  }
   | UpRTypes '*' {                             // Pointer type?
     if (*$1 == Type::LabelTy)
       GEN_ERROR("Cannot form a pointer to a basic block");
