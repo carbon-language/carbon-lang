@@ -693,14 +693,7 @@ Pass *PMDataManager::findAnalysisPass(AnalysisID AID, bool SearchParent) {
   if (SearchParent)
     return TPM->findAnalysisPass(AID);
   
-  // FIXME : This is expensive and requires. Need to check only managers not all passes.
-  // One solution is to collect managers in advance at TPM level.
-  Pass *P = NULL;
-  for(std::vector<Pass *>::iterator I = passVectorBegin(),
-        E = passVectorEnd(); P == NULL && I!= E; ++I ) {
-    P = (*I)->getResolver()->getAnalysisToUpdate(AID, false /* Do not search parents again */);
-  }
-  return P;
+  return NULL;
 }
 
 
