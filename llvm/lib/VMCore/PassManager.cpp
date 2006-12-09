@@ -243,13 +243,13 @@ Pass *PMTopLevelManager::findAnalysisPass(AnalysisID AID) {
 
   // Check pass managers
   for (std::vector<Pass *>::iterator I = PassManagers.begin(),
-         E = PassManagers.end(); P == NULL && I != E; ++I) 
-    P = NULL; // FIXME: (*I)->findAnalysisPass(AID, false /* Search downward */);
+         E = PassManagers.end(); P == NULL && I != E; ++I)
+    P = (*I)->getResolver()->getAnalysisToUpdate(AID, false);
 
   // Check other pass managers
   for (std::vector<Pass *>::iterator I = OtherPassManagers.begin(),
-         E = OtherPassManagers.end(); P == NULL && I != E; ++I) 
-    P = NULL; // FIXME: (*I)->findAnalysisPass(AID, false /* Search downward */);
+         E = OtherPassManagers.end(); P == NULL && I != E; ++I)
+    P = (*I)->getResolver()->getAnalysisToUpdate(AID, false);
 
   return P;
 }
@@ -614,7 +614,10 @@ void PMDataManager::addPassToManager(Pass *P,
            E = RequiredPasses.end(); I != E; ++I) {
       Pass *PRequired = *I;
       unsigned RDepth = 0;
-      //FIXME: RDepth = PRequired->getResolver()->getDepth();
+
+      PMDataManager &DM = PRequired->getResolver()->getPMDataManager();
+      RDepth = DM.getDepth();
+
       if (PDepth == RDepth)
         LastUses.push_back(PRequired);
       else if (PDepth >  RDepth) {
@@ -694,9 +697,9 @@ Pass *PMDataManager::findAnalysisPass(AnalysisID AID, bool SearchParent) {
   // One solution is to collect managers in advance at TPM level.
   Pass *P = NULL;
   for(std::vector<Pass *>::iterator I = passVectorBegin(),
-        E = passVectorEnd(); P == NULL && I!= E; ++I )
-    P = NULL; // FIXME : P = (*I)->getResolver()->getAnalysisToUpdate(AID, false /* Do not search parents again */);
-
+        E = passVectorEnd(); P == NULL && I!= E; ++I ) {
+    P = (*I)->getResolver()->getAnalysisToUpdate(AID, false /* Do not search parents again */);
+  }
   return P;
 }
 
