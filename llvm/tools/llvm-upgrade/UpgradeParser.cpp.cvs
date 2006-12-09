@@ -546,7 +546,7 @@ static std::string getCastUpgrade(
     SrcTy.destroy();
     SrcTy.newTy = new std::string("ulong");
     SrcTy.oldTy = ULongTy;
-  } else if (DstTy.oldTy == BoolTy) {
+  } else if (DstTy.oldTy == BoolTy && SrcTy.oldTy != BoolTy) {
     // cast ptr %x to  bool was previously defined as setne ptr %x, null
     // The ptrtoint semantic is to truncate, not compare so we must retain
     // the original intent by replace the cast with a setne
