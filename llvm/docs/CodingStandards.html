@@ -547,6 +547,13 @@ library. There are two problems with this:</p>
       <td align="left"><pre>std::stringstream</pre></td>
       <td align="left"><pre>llvm::StringStream</pre></td>
     </tr>
+    <tr>
+      <td align="left"><pre>void print(std::ostream &Out);
+// ...
+print(std::cerr);</pre></td>
+      <td align="left"><pre>void print(std::ostream &Out);
+// ...
+print(*llvm::cerr.stream());</pre></td>
   </tbody>
 </table>
 
