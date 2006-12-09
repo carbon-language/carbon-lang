@@ -26,6 +26,8 @@
 #          is a directory into which intermediate results are placed
 #      progargs
 #          is a single argument containing all the arguments the program needs
+#      proginput
+#          is a file name from which stdin should be directed
 #      match
 #          if specified to any value causes the result code of the program to
 #          be used to determine success/fail. If not specified success/fail is
@@ -50,7 +52,11 @@ fi
 bcfile="$1"
 outdir="$2"
 args="$3"
-match="$4"
+input="$4"
+if [ ! -f "$input" ] ; then
+  input="/dev/null"
+fi
+match="$5"
 name=`basename $bcfile .bc`
 ll="$outdir/${name}.ll"
 s="$outdir/${name}.s"
@@ -80,9 +86,11 @@ fi
 # Generate the disassembly
 llvm-dis "$bcfile" -o "$ll" -f || exit 1
 
-# Generate the non-optimized program
+# Generate the non-optimized program and its output
 llc "$bcfile" -o "$s" -f || exit 1
 gcc "$s" -o "$prog" $ldflags || exit 1
+"$prog" $args > "$out" 2>&1 <$input
+ex1=$?
 
 # Define the list of optimizations to run. This comprises the same set of 
 # optimizations that gccas and gccld run, in the same order.
@@ -98,9 +106,7 @@ function tryit {
   llvm-dis "$optbc" -o "$optll" -f || exit
   llc "$optbc" -o "$opts" -f || exit
   gcc "$opts" -o "$optprog" $ldflags || exit
-  "$prog" $args > "$out" 2>&1
-  ex1=$?
-  "$optprog" $args > "$optout" 2>&1
+  "$optprog" $args > "$optout" 2>&1 <"$input"
   ex2=$?
 
   if [ -n "$match" ] ; then
