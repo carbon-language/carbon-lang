@@ -132,7 +132,7 @@ bool X86SharedAsmPrinter::doFinalization(Module &M) {
   // Print out module-level global variables here.
   for (Module::const_global_iterator I = M.global_begin(), E = M.global_end();
        I != E; ++I) {
-    if (!I->hasInitializer() && !I->hasExternalWeakLinkage())
+    if (!I->hasInitializer())
       continue;   // External global require no code
     
     // Check to see if this is a special global used by LLVM, if so, emit it.
