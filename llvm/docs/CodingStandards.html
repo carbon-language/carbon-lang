@@ -41,12 +41,15 @@
           <li><a href="#hl_dontinclude">#include as Little as Possible</a></li>
           <li><a href="#hl_privateheaders">Keep "internal" Headers
               Private</a></li>
+          <li><a href="#ll_iostream"><tt>#include &lt;iostream&gt;</tt> is
+              <em>forbidden</em></a></li>
         </ol></li>
       <li><a href="#micro">The Low Level Issues</a>
         <ol>
           <li><a href="#ll_assert">Assert Liberally</a></li>
           <li><a href="#ll_ns_std">Do not use 'using namespace std'</a></li>
-          <li><a href="#ll_virtual_anch">Provide a virtual method anchor for clases in headers</a></li>
+          <li><a href="#ll_virtual_anch">Provide a virtual method anchor for
+              clases in headers</a></li>
           <li><a href="#ll_preincrement">Prefer Preincrement</a></li>
           <li><a href="#ll_avoidendl">Avoid <tt>std::endl</tt></a></li>
         </ol></li>
@@ -55,7 +58,8 @@
 </ol>
 
 <div class="doc_author">
-  <p>Written by <a href="mailto:sabre@nondot.org">Chris Lattner</a></p>
+  <p>Written by <a href="mailto:sabre@nondot.org">Chris Lattner</a> and
+     <a href="mailto:void@nondot.org">Bill Wendling</a></p>
 </div>
 
 
@@ -482,6 +486,73 @@ class itself... just make them private (or protected), and all is well.</p>
 
 </div>
 
+<!-- _______________________________________________________________________ -->
+<div class="doc_subsubsection">
+  <a name="ll_iostream"><tt>#include &lt;iostream&gt;</tt> is forbidden</a>
+</div>
+
+<div class="doc_text">
+
+<p>The use of <tt>#include &lt;iostream&gt;</tt> in library files is
+hereby <b><em>forbidden</em></b>. The primary reason for doing this is to
+support clients using LLVM libraries as part of larger systems. In particular,
+we statically link LLVM into some dynamic libraries. Even if LLVM isn't used,
+the static c'tors are run whenever an application start up that uses the dynamic
+library. There are two problems with this:</p>
+
+<ol>
+  <li>The time to run the static c'tors impacts startup time of
+      applications&mdash;a critical time for gui apps.</li>
+  <li>The static c'tors cause the app to pull many extra pages of memory off the
+      disk: both the code for the static c'tors in each .o file and the small
+      amount of data that gets touched.  In addition, touched/dirty pages put
+      more pressure on the VM system on low-memory machines.</li>
+</ol>
+
+<table>
+  <tbody>
+    <tr>
+      <th>Old Way</th>
+      <th>New Way</th>
+    </tr>
+    <tr>
+      <td align="left"><pre>#include &lt;iostream&gt;</pre></td>
+      <td align="left"><pre>#include "llvm/Support/Streams.h"</pre></td>
+    </tr>
+    <tr>
+      <td align="left"><pre>DEBUG(std::cerr &lt;&lt; ...);</pre></td>
+      <td align="left"><pre>DOUT &lt;&lt; ...;</pre></td>
+    </tr>
+    <tr>
+      <td align="left"><pre>std::cerr &lt;&lt; "Hello world\n";</pre></td>
+      <td align="left"><pre>llvm::cerr &lt;&lt; "Hello world\n";</pre></td>
+    </tr>
+    <tr>
+      <td align="left"><pre>std::cout &lt;&lt; "Hello world\n";</pre></td>
+      <td align="left"><pre>llvm::cout &lt;&lt; "Hello world\n";</pre></td>
+    </tr>
+    <tr>
+      <td align="left"><pre>std::cin &gt;&gt; Var;</pre></td>
+      <td align="left"><pre>llvm::cin &gt;&gt; Var;</pre></td>
+    </tr>
+    <tr>
+      <td align="left"><pre>std::ostream</pre></td>
+      <td align="left"><pre>llvm::OStream</pre></td>
+    </tr>
+    <tr>
+      <td align="left"><pre>std::istream</pre></td>
+      <td align="left"><pre>llvm::IStream</pre></td>
+    </tr>
+    <tr>
+      <td align="left"><pre>std::stringstream</pre></td>
+      <td align="left"><pre>llvm::StringStream</pre></td>
+    </tr>
+  </tbody>
+</table>
+
+</div>
+
+
 <!-- ======================================================================= -->
 <div class="doc_subsection">
   <a name="micro">The Low Level Issues</a>
@@ -630,6 +701,7 @@ std::cout &lt;&lt; '\n' &lt;&lt; std::flush;
 it's better to use a literal <tt>'\n'</tt>.</p>
 
 </div>
+
 
 <!-- *********************************************************************** -->
 <div class="doc_section">
