@@ -675,7 +675,8 @@ void PMDataManager::initializeAnalysisImpl(Pass *P) {
     Pass *Impl = findAnalysisPass(*I, true);
     if (Impl == 0)
       assert(0 && "Analysis used but not available!");
-    // TODO:  P->AnalysisImpls.push_back(std::make_pair(*I, Impl));
+    AnalysisResolver_New *AR = P->getResolver();
+    AR->addAnalysisImplsPair(*I, Impl);
   }
 }
 
