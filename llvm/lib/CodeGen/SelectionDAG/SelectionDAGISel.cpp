@@ -2954,7 +2954,10 @@ TargetLowering::LowerArguments(Function &F, SelectionDAG &DAG) {
         // integers it is.
         MVT::ValueType NVT = getTypeToTransformTo(VT);
         unsigned NumVals = MVT::getSizeInBits(VT)/MVT::getSizeInBits(NVT);
-        if (NumVals == 2) {
+        if (NumVals == 1) {
+          SDOperand Tmp = SDOperand(Result, i++);
+          Ops.push_back(DAG.getNode(ISD::BIT_CONVERT, VT, Tmp));
+        } else if (NumVals == 2) {
           SDOperand Lo = SDOperand(Result, i++);
           SDOperand Hi = SDOperand(Result, i++);
           
@@ -3040,7 +3043,10 @@ TargetLowering::LowerCallTo(SDOperand Chain, const Type *RetTy, bool isVarArg,
         // integers it is.
         MVT::ValueType NVT = getTypeToTransformTo(VT);
         unsigned NumVals = MVT::getSizeInBits(VT)/MVT::getSizeInBits(NVT);
-        if (NumVals == 2) {
+        if (NumVals == 1) {
+          Ops.push_back(DAG.getNode(ISD::BIT_CONVERT, VT, Op));
+          Ops.push_back(DAG.getConstant(isSigned, MVT::i32));
+        } else if (NumVals == 2) {
           SDOperand Lo = DAG.getNode(ISD::EXTRACT_ELEMENT, NVT, Op,
                                      DAG.getConstant(0, getPointerTy()));
           SDOperand Hi = DAG.getNode(ISD::EXTRACT_ELEMENT, NVT, Op,
@@ -3166,7 +3172,10 @@ TargetLowering::LowerCallTo(SDOperand Chain, const Type *RetTy, bool isVarArg,
           ResVal = DAG.getNode(ISD::TRUNCATE, VT, ResVal);
         } else {
           assert(MVT::isFloatingPoint(VT));
-          ResVal = DAG.getNode(ISD::FP_ROUND, VT, ResVal);
+          if (getTypeAction(VT) == Expand)
+            ResVal = DAG.getNode(ISD::BIT_CONVERT, VT, ResVal);
+          else
+            ResVal = DAG.getNode(ISD::FP_ROUND, VT, ResVal);
         }
       }
     } else if (RetTys.size() == 3) {

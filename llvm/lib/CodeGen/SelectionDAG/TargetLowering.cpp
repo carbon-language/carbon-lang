@@ -86,10 +86,17 @@ static void SetValueTypeAction(MVT::ValueType VT,
     assert(VT < PromoteTo && "Must promote to a larger type!");
     TransformToType[VT] = PromoteTo;
   } else if (Action == TargetLowering::Expand) {
-    assert((VT == MVT::Vector || MVT::isInteger(VT)) && VT > MVT::i8 &&
-           "Cannot expand this type: target must support SOME integer reg!");
-    // Expand to the next smaller integer type!
-    TransformToType[VT] = (MVT::ValueType)(VT-1);
+    // f32 and f64 is each expanded to corresponding integer type of same size.
+    if (VT == MVT::f32)
+      TransformToType[VT] = MVT::i32;
+    else if (VT == MVT::f64)
+      TransformToType[VT] = MVT::i64;
+    else {
+      assert((VT == MVT::Vector || MVT::isInteger(VT)) && VT > MVT::i8 &&
+             "Cannot expand this type: target must support SOME integer reg!");
+      // Expand to the next smaller integer type!
+      TransformToType[VT] = (MVT::ValueType)(VT-1);
+    }
   }
 }
 
@@ -129,12 +136,27 @@ void TargetLowering::computeRegisterProperties() {
     else
       TransformToType[(MVT::ValueType)IntReg] = (MVT::ValueType)IntReg;
 
-  // If the target does not have native support for F32, promote it to F64.
-  if (!isTypeLegal(MVT::f32))
-    SetValueTypeAction(MVT::f32, Promote, *this,
-                       TransformToType, ValueTypeActions);
-  else
+  // If the target does not have native F64 support, expand it to I64. We will
+  // be generating soft float library calls. If the target does not have native
+  // support for F32, promote it to F64 if it is legal. Otherwise, expand it to
+  // I32.
+  if (isTypeLegal(MVT::f64))
+    TransformToType[MVT::f64] = MVT::f64;  
+  else {
+    NumElementsForVT[MVT::f64] = NumElementsForVT[MVT::i64];
+    SetValueTypeAction(MVT::f64, Expand, *this, TransformToType,
+                       ValueTypeActions);
+  }
+  if (isTypeLegal(MVT::f32))
     TransformToType[MVT::f32] = MVT::f32;
+  else if (isTypeLegal(MVT::f64))
+    SetValueTypeAction(MVT::f32, Promote, *this, TransformToType,
+                       ValueTypeActions);
+  else {
+    NumElementsForVT[MVT::f32] = NumElementsForVT[MVT::i32];
+    SetValueTypeAction(MVT::f32, Expand, *this, TransformToType,
+                       ValueTypeActions);
+  }
   
   // Set MVT::Vector to always be Expanded
   SetValueTypeAction(MVT::Vector, Expand, *this, TransformToType, 
@@ -147,9 +169,6 @@ void TargetLowering::computeRegisterProperties() {
     if (isTypeLegal((MVT::ValueType)i))
       TransformToType[i] = (MVT::ValueType)i;
   }
-
-  assert(isTypeLegal(MVT::f64) && "Target does not support FP?");
-  TransformToType[MVT::f64] = MVT::f64;
 }
 
 const char *TargetLowering::getTargetNodeName(unsigned Opcode) const {

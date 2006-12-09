@@ -4351,9 +4351,8 @@ void SelectionDAGLegalize::ExpandOp(SDOperand Op, SDOperand &Lo, SDOperand &Hi){
   MVT::ValueType NVT = TLI.getTypeToTransformTo(VT);
   SDNode *Node = Op.Val;
   assert(getTypeAction(VT) == Expand && "Not an expanded type!");
-  assert((MVT::isInteger(VT) || VT == MVT::Vector) && 
-         "Cannot expand FP values!");
-  assert(((MVT::isInteger(NVT) && NVT < VT) || VT == MVT::Vector) &&
+  assert(((MVT::isInteger(NVT) && NVT < VT) || MVT::isFloatingPoint(VT) ||
+         VT == MVT::Vector) &&
          "Cannot expand to FP value or to larger int value!");
 
   // See if we already expanded it.
@@ -4583,9 +4582,18 @@ void SelectionDAGLegalize::ExpandOp(SDOperand Op, SDOperand &Lo, SDOperand &Hi){
       Tmp = TLI.LowerOperation(DAG.getNode(ISD::BIT_CONVERT, VT, Tmp), DAG);
     }
 
+    MVT::ValueType NVT = Node->getValueType(0);
+    // f32 / f64 must be expanded to i32 / i64.
+    if (NVT == MVT::f32 || NVT == MVT::f64) {
+      Lo = DAG.getNode(ISD::BIT_CONVERT, TLI.getTypeToTransformTo(NVT),
+                       Node->getOperand(0));
+      Hi = DAG.getConstant(0, TLI.getTypeToTransformTo(NVT));
+      break;
+    }
+
     // Turn this into a load/store pair by default.
     if (Tmp.Val == 0)
-      Tmp = ExpandBIT_CONVERT(Node->getValueType(0), Node->getOperand(0));
+      Tmp = ExpandBIT_CONVERT(NVT, Node->getOperand(0));
     
     ExpandOp(Tmp, Lo, Hi);
     break;
@@ -4858,6 +4866,25 @@ void SelectionDAGLegalize::ExpandOp(SDOperand Op, SDOperand &Lo, SDOperand &Hi){
   case ISD::UDIV: Lo = ExpandLibCall("__udivdi3", Node, Hi); break;
   case ISD::SREM: Lo = ExpandLibCall("__moddi3" , Node, Hi); break;
   case ISD::UREM: Lo = ExpandLibCall("__umoddi3", Node, Hi); break;
+  
+  case ISD::FADD:
+    Lo = ExpandLibCall(((VT == MVT::f32) ? "__addsf3" : "__adddf3"), Node, Hi);
+    break;
+  case ISD::FSUB:
+    Lo = ExpandLibCall(((VT == MVT::f32) ? "__subsf3" : "__subdf3"), Node, Hi);
+    break;
+  case ISD::FMUL:
+    Lo = ExpandLibCall(((VT == MVT::f32) ? "__mulsf3" : "__muldf3"), Node, Hi);
+    break;
+  case ISD::FDIV:
+    Lo = ExpandLibCall(((VT == MVT::f32) ? "__divsf3" : "__divdf3"), Node, Hi);
+    break;
+  case ISD::FP_EXTEND:
+    Lo = ExpandLibCall("__extendsfdf2", Node, Hi);
+    break;
+  case ISD::FP_ROUND:
+    Lo = ExpandLibCall("__truncdfsf2", Node, Hi);
+    break;
   }
 
   // Make sure the resultant values have been legalized themselves, unless this
