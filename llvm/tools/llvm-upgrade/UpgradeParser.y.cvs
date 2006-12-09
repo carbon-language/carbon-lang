@@ -194,10 +194,16 @@ static std::string getCastUpgrade(
     // the original intent by replace the cast with a setne
     const char* comparator = SrcTy.isPointer() ? ", null" : 
       (SrcTy.isFloatingPoint() ? ", 0.0" : ", 0");
-    if (isConst) 
-      Result = "setne (" + Source + comparator + ")";
-    else
-      Result = "setne " + Source + comparator;
+#if UPGRADE_SETCOND_OPS 
+    const char* compareOp = SrcTy.isFloatingPoint() ? "setne " : "icmp ne ";
+#else
+    const char* compareOp = "setne";
+#endif
+    if (isConst) { 
+      Result = "(" + Source + comparator + ")";
+      Result = compareOp + Result;
+    } else
+      Result = compareOp + Source + comparator;
     return Result; // skip cast processing below
   }
   ResolveType(SrcTy);
