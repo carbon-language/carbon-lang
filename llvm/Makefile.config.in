@@ -47,15 +47,16 @@ LLVM_SRC_ROOT   := $(shell cd @abs_top_srcdir@; $(PWD))
 LLVM_OBJ_ROOT   := $(shell cd @abs_top_builddir@; $(PWD))
 PROJ_SRC_ROOT   := $(shell cd $(LLVM_SRC_ROOT); $(PWD))
 PROJ_SRC_DIR    := $(shell cd $(LLVM_SRC_ROOT)/$(patsubst $(PROJ_OBJ_ROOT)%,%,$(PROJ_OBJ_DIR)); $(PWD))
-PROJ_prefix     := @prefix@
-PROJ_bindir     := @prefix@/bin
-PROJ_libdir     := @prefix@/lib
-PROJ_datadir    := @prefix@/share
-PROJ_docsdir    := @prefix@/docs/llvm
-PROJ_etcdir     := @prefix@/etc/llvm
-PROJ_includedir := @prefix@/include
-PROJ_infodir    := @prefix@/info
-PROJ_mandir     := @prefix@/man
+DESTDIR         := @prefix@
+PROJ_prefix     := $(DESTDIR)
+PROJ_bindir     := $(DESTDIR)bin
+PROJ_libdir     := $(DESTDIR)lib
+PROJ_datadir    := $(DESTDIR)share
+PROJ_docsdir    := $(DESTDIR)docs/llvm
+PROJ_etcdir     := $(DESTDIR)etc/llvm
+PROJ_includedir := $(DESTDIR)include
+PROJ_infodir    := $(DESTDIR)info
+PROJ_mandir     := $(DESTDIR)man
 PROJ_VERSION    := $(LLVMVersion)
 else
 ifndef PROJ_SRC_ROOT
