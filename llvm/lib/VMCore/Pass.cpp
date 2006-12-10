@@ -99,8 +99,8 @@ void TimingInfo::createTheTimeInfo() {
   // Constructed the first time this is called, iff -time-passes is enabled.
   // This guarantees that the object will be constructed before static globals,
   // thus it will be destroyed before them.
-  static TimingInfo TTI;
-  TheTimeInfo = &TTI;
+  static ManagedStatic<TimingInfo> TTI;
+  TheTimeInfo = &*TTI;
 }
 
 void PMDebug::PrintArgumentInformation(const Pass *P) {

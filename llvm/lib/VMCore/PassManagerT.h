@@ -90,9 +90,10 @@ class TimingInfo {
   std::map<Pass*, Timer> TimingData;
   TimerGroup TG;
 
-  // Private ctor, must use 'create' member
-  TimingInfo() : TG("... Pass execution timing report ...") {}
 public:
+  // Use 'create' member to get this.
+  TimingInfo() : TG("... Pass execution timing report ...") {}
+  
   // TimingDtor - Print out information about timing information
   ~TimingInfo() {
     // Delete all of the timers...
