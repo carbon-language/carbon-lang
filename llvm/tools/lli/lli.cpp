@@ -57,7 +57,7 @@ namespace {
 // main Driver function
 //
 int main(int argc, char **argv, char * const *envp) {
-  llvm_shutdown_obj X;  // Call llvm_shutdown() on exit.
+  atexit(llvm_shutdown);  // Call llvm_shutdown() on exit.
   try {
     cl::ParseCommandLineOptions(argc, argv,
                                 " llvm interpreter & dynamic compiler\n");
