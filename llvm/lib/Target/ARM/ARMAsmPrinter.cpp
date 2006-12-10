@@ -303,7 +303,7 @@ bool ARMAsmPrinter::doFinalization(Module &M) {
         O << "\t.local " << name << "\n";
 
       O << "\t.comm " << name << "," << Size
-        << "," << (unsigned)Align;
+        << "," << (unsigned) (1 << Align);
       O << "\n";
     } else {
       switch (I->getLinkage()) {
