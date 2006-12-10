@@ -326,13 +326,14 @@ endif
 ifeq ($(LLVMGCC_MAJVERS),3)
 UPGRADE_MSG = $(Echo) "Upgrading $(1) assembly to latest."
 UPGRADE_LL  = $(Verb)$(LUPGRADE) $(1) -o $(1).up.tmp -f ; $(MV) $(1).up.tmp $(1)
+LLVMGCCWITHPATH  := PATH="$(LLVMToolDir):$(PATH)" $(LLVMGCC)
+LLVMGXXWITHPATH  := PATH="$(LLVMToolDir):$(PATH)" $(LLVMGXX)
 else
 UPGRADE_MSG =
 UPGRADE_LL  =
+LLVMGCCWITHPATH  := $(LLVMGCC)
+LLVMGXXWITHPATH  := $(LLVMGXX)
 endif
-
-LLVMGCCWITHPATH  := PATH="$(LLVMToolDir):$(PATH)" $(LLVMGCC)
-LLVMGXXWITHPATH  := PATH="$(LLVMToolDir):$(PATH)" $(LLVMGXX)
 
 #--------------------------------------------------------------------
 # Adjust to user's request
@@ -1104,7 +1105,7 @@ $(BuildMode)/%.ii: %.cc $(ObjDir)/.dir $(BUILT_SOURCES)
 	$(Echo) "Compiling $*.cc for $(BuildMode) build to .ii file"
 	$(Verb) $(Preprocess.CXX) $< -o $@
 
- $(BuildMode)/%.i: %.c $(ObjDir)/.dir $(BUILT_SOURCES)
+$(BuildMode)/%.i: %.c $(ObjDir)/.dir $(BUILT_SOURCES)
 	$(Echo) "Compiling $*.c for $(BuildMode) build to .i file"
 	$(Verb) $(Preprocess.C) $< -o $@
 
