@@ -379,12 +379,18 @@ public:
     return allowUnalignedMemoryAccesses;
   }
   
-  /// usesUnderscoreSetJmpLongJmp - Determine if we should use _setjmp or setjmp
+  /// usesUnderscoreSetJmp - Determine if we should use _setjmp or setjmp
   /// to implement llvm.setjmp.
-  bool usesUnderscoreSetJmpLongJmp() const {
-    return UseUnderscoreSetJmpLongJmp;
+  bool usesUnderscoreSetJmp() const {
+    return UseUnderscoreSetJmp;
   }
-  
+
+  /// usesUnderscoreLongJmp - Determine if we should use _longjmp or longjmp
+  /// to implement llvm.longjmp.
+  bool usesUnderscoreLongJmp() const {
+    return UseUnderscoreLongJmp;
+  }
+
   /// getStackPointerRegisterToSaveRestore - If a physical register, this
   /// specifies the register that llvm.savestack/llvm.restorestack should save
   /// and restore.
@@ -564,13 +570,20 @@ protected:
     ShiftAmtHandling = OORSA;
   }
 
-  /// setUseUnderscoreSetJmpLongJmp - Indicate whether this target prefers to
-  /// use _setjmp and _longjmp to or implement llvm.setjmp/llvm.longjmp or
-  /// the non _ versions.  Defaults to false.
-  void setUseUnderscoreSetJmpLongJmp(bool Val) {
-    UseUnderscoreSetJmpLongJmp = Val;
+  /// setUseUnderscoreSetJmp - Indicate whether this target prefers to
+  /// use _setjmp to implement llvm.setjmp or the non _ version.
+  /// Defaults to false.
+  void setUseUnderscoreSetJmp(bool Val) {
+    UseUnderscoreSetJmp = Val;
   }
-  
+
+  /// setUseUnderscoreLongJmp - Indicate whether this target prefers to
+  /// use _longjmp to implement llvm.longjmp or the non _ version.
+  /// Defaults to false.
+  void setUseUnderscoreLongJmp(bool Val) {
+    UseUnderscoreLongJmp = Val;
+  }
+
   /// setStackPointerRegisterToSaveRestore - If set to a physical register, this
   /// specifies the register that llvm.savestack/llvm.restorestack should save
   /// and restore.
@@ -883,10 +896,14 @@ private:
   /// total cycles or lowest register usage.
   SchedPreference SchedPreferenceInfo;
   
-  /// UseUnderscoreSetJmpLongJmp - This target prefers to use _setjmp and
-  /// _longjmp to implement llvm.setjmp/llvm.longjmp.  Defaults to false.
-  bool UseUnderscoreSetJmpLongJmp;
-  
+  /// UseUnderscoreSetJmp - This target prefers to use _setjmp to implement
+  /// llvm.setjmp.  Defaults to false.
+  bool UseUnderscoreSetJmp;
+
+  /// UseUnderscoreLongJmp - This target prefers to use _longjmp to implement
+  /// llvm.longjmp.  Defaults to false.
+  bool UseUnderscoreLongJmp;
+
   /// JumpBufSize - The size, in bytes, of the target's jmp_buf buffers
   unsigned JumpBufSize;
   

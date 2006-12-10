@@ -54,10 +54,19 @@ X86TargetLowering::X86TargetLowering(TargetMachine &TM)
   setShiftAmountFlavor(Mask);   // shl X, 32 == shl X, 0
   setStackPointerRegisterToSaveRestore(X86StackPtr);
 
-  if (!Subtarget->isTargetDarwin())
+  if (Subtarget->isTargetDarwin()) {
     // Darwin should use _setjmp/_longjmp instead of setjmp/longjmp.
-    setUseUnderscoreSetJmpLongJmp(true);
-
+    setUseUnderscoreSetJmp(false);
+    setUseUnderscoreLongJmp(false);
+  } else if (Subtarget->isTargetCygwin()) {
+    // MS runtime is weird: it exports _setjmp, but longjmp!
+    setUseUnderscoreSetJmp(true);
+    setUseUnderscoreLongJmp(false);
+  } else {
+    setUseUnderscoreSetJmp(true);
+    setUseUnderscoreLongJmp(true);
+  }
+  
   // Add legal addressing mode scale values.
   addLegalAddressScale(8);
   addLegalAddressScale(4);

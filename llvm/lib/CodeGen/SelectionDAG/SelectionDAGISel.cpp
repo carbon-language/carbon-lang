@@ -1974,10 +1974,10 @@ SelectionDAGLowering::visitIntrinsicCall(CallInst &I, unsigned Intrinsic) {
   case Intrinsic::returnaddress: visitFrameReturnAddress(I, false); return 0;
   case Intrinsic::frameaddress:  visitFrameReturnAddress(I, true); return 0;
   case Intrinsic::setjmp:
-    return "_setjmp"+!TLI.usesUnderscoreSetJmpLongJmp();
+    return "_setjmp"+!TLI.usesUnderscoreSetJmp();
     break;
   case Intrinsic::longjmp:
-    return "_longjmp"+!TLI.usesUnderscoreSetJmpLongJmp();
+    return "_longjmp"+!TLI.usesUnderscoreLongJmp();
     break;
   case Intrinsic::memcpy_i32:
   case Intrinsic::memcpy_i64:

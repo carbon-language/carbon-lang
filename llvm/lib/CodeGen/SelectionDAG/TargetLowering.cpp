@@ -47,7 +47,8 @@ TargetLowering::TargetLowering(TargetMachine &tm)
          sizeof(TargetDAGCombineArray)/sizeof(TargetDAGCombineArray[0]));
   maxStoresPerMemset = maxStoresPerMemcpy = maxStoresPerMemmove = 8;
   allowUnalignedMemoryAccesses = false;
-  UseUnderscoreSetJmpLongJmp = false;
+  UseUnderscoreSetJmp = false;
+  UseUnderscoreLongJmp = false;
   IntDivIsCheap = false;
   Pow2DivIsCheap = false;
   StackPointerRegisterToSaveRestore = 0;

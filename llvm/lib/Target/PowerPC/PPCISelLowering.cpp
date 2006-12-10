@@ -41,7 +41,8 @@ PPCTargetLowering::PPCTargetLowering(PPCTargetMachine &TM)
   setPow2DivIsCheap();
   
   // Use _setjmp/_longjmp instead of setjmp/longjmp.
-  setUseUnderscoreSetJmpLongJmp(true);
+  setUseUnderscoreSetJmp(true);
+  setUseUnderscoreLongJmp(true);
     
   // Set up the register classes.
   addRegisterClass(MVT::i32, PPC::GPRCRegisterClass);

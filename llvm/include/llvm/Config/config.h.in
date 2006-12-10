@@ -416,12 +416,6 @@
 /* Define to 1 if you have the <windows.h> header file. */
 #undef HAVE_WINDOWS_H
 
-/* Define to 1 if you have the `_longjmp' function. */
-#undef HAVE__LONGJMP
-
-/* Define to 1 if you have the `_setjmp' function. */
-#undef HAVE__SETJMP
-
 /* Installation directory for binary executables */
 #undef LLVM_BINDIR
 
