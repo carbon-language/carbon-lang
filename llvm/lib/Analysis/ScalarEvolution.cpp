@@ -1371,24 +1371,24 @@ SCEVHandle ScalarEvolutionsImpl::createSCEV(Value *V) {
       break;
 
     case Instruction::Trunc:
-      // We must prevent boolean types such as setne, etc. from entering here
-      // because we don't want to pass SCEVUnknown to the TruncateExpr.
-      if (I->getType()->isInteger() && I->getOperand(0)->getType()->isInteger())
+      // We don't handle trunc to bool yet.
+      if (I->getType()->isInteger())
         return SCEVTruncateExpr::get(getSCEV(I->getOperand(0)), 
                                      I->getType()->getUnsignedVersion());
       break;
 
     case Instruction::ZExt:
-      // We must prevent boolean types such as setne, etc. from entering here
-      // because we don't want to pass SCEVUnknown to the ZExtExpr.
-      if (I->getType()->isInteger() && I->getOperand(0)->getType()->isInteger())
+      // We don't handle zext from bool yet.
+      if (I->getOperand(0)->getType()->isInteger())
         return SCEVZeroExtendExpr::get(getSCEV(I->getOperand(0)), 
                                        I->getType()->getUnsignedVersion());
       break;
 
     case Instruction::BitCast:
       // BitCasts are no-op casts so we just eliminate the cast.
-      return getSCEV(I->getOperand(0));
+      if (I->getType()->isInteger() && I->getOperand(0)->getType()->isInteger())
+        return getSCEV(I->getOperand(0));
+      break;
 
     case Instruction::PHI:
       return createNodeForPHI(cast<PHINode>(I));
