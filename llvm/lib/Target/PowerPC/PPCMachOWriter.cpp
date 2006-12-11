@@ -31,8 +31,8 @@ namespace {
       Header.cpusubtype = MachOHeader::CPU_SUBTYPE_POWERPC_ALL;
     }
 
-    virtual void GetTargetRelocation(MachineRelocation &MR, MachOSection &MOS,
-                                     unsigned ToIndex);
+    virtual void GetTargetRelocation(MachineRelocation &MR, MachOSection &From,
+                                     MachOSection &To);
     virtual MachineRelocation GetJTRelocation(unsigned Offset,
                                               MachineBasicBlock *MBB);
     
@@ -69,8 +69,8 @@ void llvm::addPPCMachOObjectWriterPass(FunctionPassManager &FPM,
 /// MachOSection, and rewrite the instruction at the section offset if required 
 /// by that relocation type.
 void PPCMachOWriter::GetTargetRelocation(MachineRelocation &MR,
-                                         MachOSection &MOS,
-                                         unsigned ToIndex) {
+                                         MachOSection &From,
+                                         MachOSection &To) {
   uint64_t Addr = 0;
   
   // Keep track of whether or not this is an externally defined relocation.
@@ -78,7 +78,7 @@ void PPCMachOWriter::GetTargetRelocation(MachineRelocation &MR,
   
   // Get the address of whatever it is we're relocating, if possible.
   if (!isExtern)
-    Addr = (uintptr_t)MR.getResultPointer();
+    Addr = (uintptr_t)MR.getResultPointer() + To.addr;
     
   switch ((PPC::RelocationType)MR.getRelocationType()) {
   default: assert(0 && "Unknown PPC relocation type!");
@@ -88,57 +88,59 @@ void PPCMachOWriter::GetTargetRelocation(MachineRelocation &MR,
   case PPC::reloc_vanilla:
     {
       // FIXME: need to handle 64 bit vanilla relocs
-      MachORelocation VANILLA(MR.getMachineCodeOffset(), ToIndex, false, 2, 
+      MachORelocation VANILLA(MR.getMachineCodeOffset(), To.Index, false, 2, 
                               isExtern, PPC_RELOC_VANILLA);
-      outword(MOS.RelocBuffer, VANILLA.r_address);
-      outword(MOS.RelocBuffer, VANILLA.getPackedFields());
+      ++From.nreloc;
+      outword(From.RelocBuffer, VANILLA.r_address);
+      outword(From.RelocBuffer, VANILLA.getPackedFields());
     }
-    MOS.nreloc += 1;
-    fixword(MOS.SectionData, Addr, MR.getMachineCodeOffset());
+    fixword(From.SectionData, Addr, MR.getMachineCodeOffset());
     break;
   case PPC::reloc_pcrel_bx:
     Addr -= MR.getMachineCodeOffset();
     Addr >>= 2;
     Addr &= 0xFFFFFF;
     Addr <<= 2;
-    Addr |= (MOS.SectionData[MR.getMachineCodeOffset()] << 24);
-    fixword(MOS.SectionData, Addr, MR.getMachineCodeOffset());
+    Addr |= (From.SectionData[MR.getMachineCodeOffset()] << 24);
+    fixword(From.SectionData, Addr, MR.getMachineCodeOffset());
     break;
   case PPC::reloc_pcrel_bcx:
     Addr -= MR.getMachineCodeOffset();
     Addr &= 0xFFFC;
-    fixhalf(MOS.SectionData, Addr, MR.getMachineCodeOffset() + 2);
+    fixhalf(From.SectionData, Addr, MR.getMachineCodeOffset() + 2);
     break;
   case PPC::reloc_absolute_high:
     {
-      MachORelocation HA16(MR.getMachineCodeOffset(), ToIndex, false, 2,
+      MachORelocation HA16(MR.getMachineCodeOffset(), To.Index, false, 2,
                            isExtern, PPC_RELOC_HA16);
       MachORelocation PAIR(Addr & 0xFFFF, 0xFFFFFF, false, 2, isExtern,
                            PPC_RELOC_PAIR);
-      outword(MOS.RelocBuffer, HA16.r_address);
-      outword(MOS.RelocBuffer, HA16.getPackedFields());
-      outword(MOS.RelocBuffer, PAIR.r_address);
-      outword(MOS.RelocBuffer, PAIR.getPackedFields());
+      ++From.nreloc;
+      ++From.nreloc;
+      outword(From.RelocBuffer, HA16.r_address);
+      outword(From.RelocBuffer, HA16.getPackedFields());
+      outword(From.RelocBuffer, PAIR.r_address);
+      outword(From.RelocBuffer, PAIR.getPackedFields());
     }
     printf("ha16: %x\n", (unsigned)Addr);
-    MOS.nreloc += 2;
     Addr += 0x8000;
-    fixhalf(MOS.SectionData, Addr >> 16, MR.getMachineCodeOffset() + 2);
+    fixhalf(From.SectionData, Addr >> 16, MR.getMachineCodeOffset() + 2);
     break;
   case PPC::reloc_absolute_low:
     {
-      MachORelocation LO16(MR.getMachineCodeOffset(), ToIndex, false, 2,
+      MachORelocation LO16(MR.getMachineCodeOffset(), To.Index, false, 2,
                            isExtern, PPC_RELOC_LO16);
       MachORelocation PAIR(Addr >> 16, 0xFFFFFF, false, 2, isExtern,
                            PPC_RELOC_PAIR);
-      outword(MOS.RelocBuffer, LO16.r_address);
-      outword(MOS.RelocBuffer, LO16.getPackedFields());
-      outword(MOS.RelocBuffer, PAIR.r_address);
-      outword(MOS.RelocBuffer, PAIR.getPackedFields());
+      ++From.nreloc;
+      ++From.nreloc;
+      outword(From.RelocBuffer, LO16.r_address);
+      outword(From.RelocBuffer, LO16.getPackedFields());
+      outword(From.RelocBuffer, PAIR.r_address);
+      outword(From.RelocBuffer, PAIR.getPackedFields());
     }
     printf("lo16: %x\n", (unsigned)Addr);
-    MOS.nreloc += 2;
-    fixhalf(MOS.SectionData, Addr, MR.getMachineCodeOffset() + 2);
+    fixhalf(From.SectionData, Addr, MR.getMachineCodeOffset() + 2);
     break;
   }
 }

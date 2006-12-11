@@ -19,7 +19,6 @@
 #include "llvm/CodeGen/MachineRelocation.h"
 #include "llvm/Target/TargetData.h"
 #include "llvm/Target/TargetMachine.h"
-#include <list>
 
 namespace llvm {
   class GlobalVariable;
@@ -71,7 +70,8 @@ namespace llvm {
            N_WEAK_DEF      = 0x0080  // coalesced symbol is a weak definition
     };
     
-    MachOSym(const GlobalValue *gv, std::string name, uint8_t sect);
+    MachOSym(const GlobalValue *gv, std::string name, uint8_t sect,
+             TargetMachine &TM);
   };
       
   /// MachOWriter - This class implements the common target-independent code for
@@ -435,25 +435,35 @@ namespace llvm {
     /// SectionList - This is the list of sections that we have emitted to the
     /// file.  Once the file has been completely built, the segment load command
     /// SectionCommands are constructed from this info.
-    std::list<MachOSection> SectionList;
+    std::vector<MachOSection*> SectionList;
 
     /// SectionLookup - This is a mapping from section name to SectionList entry
     std::map<std::string, MachOSection*> SectionLookup;
+    
+    /// GVSection - This is a mapping from a GlobalValue to a MachOSection,
+    /// to aid in emitting relocations.
+    std::map<GlobalValue*, MachOSection*> GVSection;
+
+    /// GVOffset - This is a mapping from a GlobalValue to an offset from the 
+    /// start of the section in which the GV resides, to aid in emitting
+    /// relocations.
+    std::map<GlobalValue*, intptr_t> GVOffset;
 
     /// getSection - Return the section with the specified name, creating a new
     /// section if one does not already exist.
-    MachOSection &getSection(const std::string &seg, const std::string &sect,
+    MachOSection *getSection(const std::string &seg, const std::string &sect,
                              unsigned Flags = 0) {
-      MachOSection *&SN = SectionLookup[seg+sect];
-      if (SN) return *SN;
+      MachOSection *MOS = SectionLookup[seg+sect];
+      if (MOS) return MOS;
 
-      SectionList.push_back(MachOSection(seg, sect));
-      SN = &SectionList.back();
-      SN->Index = SectionList.size();
-      SN->flags = MachOSection::S_REGULAR | Flags;
-      return *SN;
+      MOS = new MachOSection(seg, sect);
+      SectionList.push_back(MOS);
+      MOS->Index = SectionList.size();
+      MOS->flags = MachOSection::S_REGULAR | Flags;
+      SectionLookup[seg+sect] = MOS;
+      return MOS;
     }
-    MachOSection &getTextSection(bool isCode = true) {
+    MachOSection *getTextSection(bool isCode = true) {
       if (isCode)
         return getSection("__TEXT", "__text", 
                           MachOSection::S_ATTR_PURE_INSTRUCTIONS |
@@ -461,13 +471,13 @@ namespace llvm {
       else
         return getSection("__TEXT", "__text");
     }
-    MachOSection &getBSSSection() {
+    MachOSection *getBSSSection() {
       return getSection("__DATA", "__bss", MachOSection::S_ZEROFILL);
     }
-    MachOSection &getDataSection() {
+    MachOSection *getDataSection() {
       return getSection("__DATA", "__data");
     }
-    MachOSection &getConstSection(const Type *Ty) {
+    MachOSection *getConstSection(const Type *Ty) {
       // FIXME: support cstring literals and pointer literal
       if (Ty->isPrimitiveType()) {
         unsigned Size = TM.getTargetData()->getTypeSize(Ty);
@@ -486,7 +496,7 @@ namespace llvm {
       }
       return getSection("__TEXT", "__const");
     }
-    MachOSection &getJumpTableSection() {
+    MachOSection *getJumpTableSection() {
       if (TM.getRelocationModel() == Reloc::PIC_)
         return getTextSection(false);
       else
@@ -556,6 +566,7 @@ namespace llvm {
     MachODySymTab DySymTab;
 
     struct MachOSymCmp {
+      // FIXME: this does not appear to be sorting 'f' after 'F'
       bool operator()(const MachOSym &LHS, const MachOSym &RHS) {
         return LHS.GVName < RHS.GVName;
       }
@@ -687,19 +698,23 @@ namespace llvm {
       P[2] = (X >> (isLittleEndian ? 16 :  8)) & 255;
       P[3] = (X >> (isLittleEndian ? 24 :  0)) & 255;
     }
+    
+    static void InitMem(const Constant *C, void *Addr, intptr_t Offset,
+                        const TargetData *TD, 
+                        std::vector<MachineRelocation> &MRs);
 
   private:
-    void AddSymbolToSection(MachOSection &MOS, GlobalVariable *GV);
+    void AddSymbolToSection(MachOSection *MOS, GlobalVariable *GV);
     void EmitGlobal(GlobalVariable *GV);
     void EmitHeaderAndLoadCommands();
     void EmitSections();
     void BufferSymbolAndStringTable();
-    void CalculateRelocations(MachOSection &MOS, unsigned RelOffset);
+    void CalculateRelocations(MachOSection &MOS);
 
     virtual MachineRelocation GetJTRelocation(unsigned Offset,
                                               MachineBasicBlock *MBB) = 0;
-    virtual void GetTargetRelocation(MachineRelocation &MR, MachOSection &MOS,
-                                     unsigned ToIndex) = 0;
+    virtual void GetTargetRelocation(MachineRelocation &MR, MachOSection &From,
+                                     MachOSection &To) = 0;
   };
 }
 
