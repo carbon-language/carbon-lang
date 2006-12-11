@@ -27,6 +27,19 @@ compiles to
 mov r1, r1, lsl r2
 add r0, r1, r0
 
+---------------------------------------------------------
+%tmp1 = shl int %b, ubyte 4
+%tmp2 = add int %a, %tmp1
+
+compiles to
+
+mov r2, #4
+add r0, r0, r1, lsl r2
+
+should be
+
+add r0, r0, r1, lsl #4
+
 ----------------------------------------------------------
 
 add an offset to FLDS/FLDD/FSTD/FSTS addressing mode
