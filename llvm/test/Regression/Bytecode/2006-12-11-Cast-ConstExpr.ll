@@ -1,0 +1,8 @@
+; This test ensures that we get a bitcast constant expression in and out,
+; not a sitofp constant expression. 
+; RUN: llvm-as < %s | llvm-dis | grep 'bitcast ('
+%G = external global int
+
+float %tryit(int %A) {
+   ret float bitcast( int ptrtoint (int* %G to int) to float)
+}
