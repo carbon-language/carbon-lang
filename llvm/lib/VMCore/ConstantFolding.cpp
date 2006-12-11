@@ -828,10 +828,6 @@ Constant *llvm::ConstantFoldCastInstruction(unsigned opc, const Constant *V,
                                             const Type *DestTy) {
   const Type *SrcTy = V->getType();
 
-  // Handle some simple cases
-  if (SrcTy == DestTy) 
-    return (Constant*)V; // no-op cast
-
   if (isa<UndefValue>(V))
     return UndefValue::get(DestTy);
 
@@ -901,6 +897,8 @@ Constant *llvm::ConstantFoldCastInstruction(unsigned opc, const Constant *V,
       return ConstantIntegral::get(DestTy, CI->getZExtValue());
     return 0;
   case Instruction::BitCast:
+    if (SrcTy == DestTy) return (Constant*)V; // no-op cast
+    
     // Check to see if we are casting a pointer to an aggregate to a pointer to
     // the first element.  If so, return the appropriate GEP instruction.
     if (const PointerType *PTy = dyn_cast<PointerType>(V->getType()))
@@ -960,18 +958,38 @@ Constant *llvm::ConstantFoldCastInstruction(unsigned opc, const Constant *V,
       }
     }
 
-    // Handle sign conversion for integer no-op casts. We need to cast the
-    // value to the correct signedness before we try to cast it to the
-    // destination type. Be careful to do this only for integer types.
-    if (isa<ConstantIntegral>(V) && SrcTy->isInteger()) {
-      if (SrcTy->isSigned())
-        V = ConstantInt::get(SrcTy->getUnsignedVersion(), 
-                             cast<ConstantIntegral>(V)->getZExtValue());
-       else 
-        V = ConstantInt::get(SrcTy->getSignedVersion(), 
-                             cast<ConstantIntegral>(V)->getSExtValue());
+    // Finally, implement bitcast folding now.   The code below doesn't handle
+    // bitcast right.
+    if (isa<ConstantPointerNull>(V))  // ptr->ptr cast.
+      return ConstantPointerNull::get(cast<PointerType>(DestTy));
+
+    // Handle integral constant input.
+    if (const ConstantInt *CI = dyn_cast<ConstantInt>(V)) {
+      // Integral -> Integral, must be changing sign.
+      if (DestTy->isIntegral())
+        return ConstantInt::get(DestTy, CI->getZExtValue());
+
+      if (DestTy->isFloatingPoint()) {
+        if (DestTy == Type::FloatTy)
+          return ConstantFP::get(DestTy, BitsToFloat(CI->getZExtValue()));
+        assert(DestTy == Type::DoubleTy && "Unknown FP type!");
+        return ConstantFP::get(DestTy, BitsToDouble(CI->getZExtValue()));
+      }
+      // Otherwise, can't fold this (packed?)
+      return 0;
     }
-    break;
+      
+    // Handle ConstantFP input.
+    if (const ConstantFP *FP = dyn_cast<ConstantFP>(V)) {
+      // FP -> Integral.
+      if (DestTy->isIntegral()) {
+        if (DestTy == Type::FloatTy)
+          return ConstantInt::get(DestTy, FloatToBits(FP->getValue()));
+        assert(DestTy == Type::DoubleTy && "Unknown FP type!");
+        return ConstantInt::get(DestTy, DoubleToBits(FP->getValue()));
+      }
+    }
+    return 0;
   default:
     assert(!"Invalid CE CastInst opcode");
     break;
