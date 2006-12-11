@@ -2,20 +2,6 @@ Target Independent Opportunities:
 
 //===---------------------------------------------------------------------===//
 
-We should make the following changes to clean up MachineInstr:
-
-1. Add an Opcode field to TargetInstrDescriptor, so you can tell the opcode of
-   an instruction with just a TargetInstrDescriptor*.
-2. Remove the Opcode field from MachineInstr, replacing it with a
-   TargetInstrDescriptor*.
-3. Getting information about a machine instr then becomes:
-     MI->getInfo()->isTwoAddress()
-   instead of:
-     const TargetInstrInfo &TII = ...
-     TII.isTwoAddrInstr(MI->getOpcode())
-
-//===---------------------------------------------------------------------===//
-
 With the recent changes to make the implicit def/use set explicit in
 machineinstrs, we should change the target descriptions for 'call' instructions
 so that the .td files don't list all the call-clobbered registers as implicit
@@ -136,16 +122,6 @@ for 1,2,4,8 bytes.
 
 //===---------------------------------------------------------------------===//
 
-This code:
-int rot(unsigned char b) { int a = ((b>>1) ^ (b<<7)) & 0xff; return a; }
-
-Can be improved in two ways:
-
-1. The instcombiner should eliminate the type conversions.
-2. The X86 backend should turn this into a rotate by one bit.
-
-//===---------------------------------------------------------------------===//
-
 Add LSR exit value substitution. It'll probably be a win for Ackermann, etc.
 
 //===---------------------------------------------------------------------===//
@@ -216,17 +192,37 @@ Scalar Repl cannot currently promote this testcase to 'ret long cst':
         %struct.X = type { int, int }
         %struct.Y = type { %struct.X }
 ulong %bar() {
-        %retval = alloca %struct.Y, align 8             ; <%struct.Y*> [#uses=3]
+        %retval = alloca %struct.Y, align 8             
         %tmp12 = getelementptr %struct.Y* %retval, int 0, uint 0, uint 0
         store int 0, int* %tmp12
         %tmp15 = getelementptr %struct.Y* %retval, int 0, uint 0, uint 1
         store int 1, int* %tmp15
-        %retval = cast %struct.Y* %retval to ulong*
-        %retval = load ulong* %retval           ; <ulong> [#uses=1]
+        %retval = bitcast %struct.Y* %retval to ulong*
+        %retval = load ulong* %retval
         ret ulong %retval
 }
 
 it should be extended to do so.
+
+//===---------------------------------------------------------------------===//
+
+-scalarrepl should promote this to be a vector scalar.
+
+        %struct..0anon = type { <4 x float> }
+
+implementation   ; Functions:
+
+void %test1(<4 x float> %V, float* %P) {
+        %u = alloca %struct..0anon, align 16
+        %tmp = getelementptr %struct..0anon* %u, int 0, uint 0
+        store <4 x float> %V, <4 x float>* %tmp
+        %tmp1 = bitcast %struct..0anon* %u to [4 x float]*
+        %tmp = getelementptr [4 x float]* %tmp1, int 0, int 1
+        %tmp = load float* %tmp
+        %tmp3 = mul float %tmp, 2.000000e+00
+        store float %tmp3, float* %P
+        ret void
+}
 
 //===---------------------------------------------------------------------===//
 
@@ -323,25 +319,6 @@ unsigned short read_16_le(const unsigned char *adr) {
 }
 unsigned short read_16_be(const unsigned char *adr) {
   return (adr[0] << 8) | adr[1];
-}
-
-//===---------------------------------------------------------------------===//
-
--scalarrepl should promote this to be a vector scalar.
-
-        %struct..0anon = type { <4 x float> }
-implementation   ; Functions:
-void %test1(<4 x float> %V, float* %P) {
-entry:
-        %u = alloca %struct..0anon, align 16            ; <%struct..0anon*> [#uses=2]
-        %tmp = getelementptr %struct..0anon* %u, int 0, uint 0          ; <<4 x float>*> [#uses=1]
-        store <4 x float> %V, <4 x float>* %tmp
-        %tmp1 = cast %struct..0anon* %u to [4 x float]*         ; <[4 x float]*> [#uses=1]
-        %tmp = getelementptr [4 x float]* %tmp1, int 0, int 1           ; <float*> [#uses=1]
-        %tmp = load float* %tmp         ; <float> [#uses=1]
-        %tmp3 = mul float %tmp, 2.000000e+00            ; <float> [#uses=1]
-        store float %tmp3, float* %P
-        ret void
 }
 
 //===---------------------------------------------------------------------===//
