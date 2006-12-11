@@ -136,15 +136,9 @@ int PPCCodeEmitter::getMachineOpValue(MachineInstr &MI, MachineOperand &MO) {
     if (MI.getOpcode() == PPC::BL || MI.getOpcode() == PPC::BL8)
       Reloc = PPC::reloc_pcrel_bx;
     else {
-      // If in PIC mode, we need to encode the negated address of the
-      // 'movepctolr' into the unrelocated field.  After relocation, we'll have
-      // &gv-&movepctolr in the imm field.  Once &movepctolr is added to the imm
-      // field, we get &gv.
       if (TM.getRelocationModel() == Reloc::PIC_) {
         assert(MovePCtoLROffset && "MovePCtoLR not seen yet?");
-        rv = -(intptr_t)MovePCtoLROffset - 4;
       }
-      
       switch (MI.getOpcode()) {
       default: MI.dump(); assert(0 && "Unknown instruction for relocation!");
       case PPC::LIS:
@@ -152,7 +146,6 @@ int PPCCodeEmitter::getMachineOpValue(MachineInstr &MI, MachineOperand &MO) {
       case PPC::ADDIS:
       case PPC::ADDIS8:
         Reloc = PPC::reloc_absolute_high;       // Pointer to symbol
-        rv >>= 16;
         break;
       case PPC::LI:
       case PPC::LI8:
@@ -173,7 +166,6 @@ int PPCCodeEmitter::getMachineOpValue(MachineInstr &MI, MachineOperand &MO) {
       case PPC::STFS:
       case PPC::STFD:
         Reloc = PPC::reloc_absolute_low;
-        rv &= 0xFFFF;
         break;
 
       case PPC::LWA:
@@ -181,25 +173,37 @@ int PPCCodeEmitter::getMachineOpValue(MachineInstr &MI, MachineOperand &MO) {
       case PPC::STD:
       case PPC::STD_32:
         Reloc = PPC::reloc_absolute_low_ix;
-        rv &= 0xFFFF;
-        rv >>= 2;
         break;
       }
     }
-    if (MO.isGlobalAddress())
-      MCE.addRelocation(MachineRelocation::getGV(MCE.getCurrentPCOffset(),
-                                          Reloc, MO.getGlobal(), 0));
-    else if (MO.isExternalSymbol())
-      MCE.addRelocation(MachineRelocation::getExtSym(MCE.getCurrentPCOffset(),
-                                          Reloc, MO.getSymbolName(), 0));
-    else if (MO.isConstantPoolIndex())
-      MCE.addRelocation(MachineRelocation::getConstPool(
-                                          MCE.getCurrentPCOffset(),
-                                          Reloc, MO.getConstantPoolIndex(), 0));
-    else // isJumpTableIndex
-      MCE.addRelocation(MachineRelocation::getJumpTable(
-                                          MCE.getCurrentPCOffset(),
-                                          Reloc, MO.getJumpTableIndex(), 0));
+    
+    MachineRelocation R;
+    if (MO.isGlobalAddress()) {
+      R = MachineRelocation::getGV(MCE.getCurrentPCOffset(), Reloc,
+                                   MO.getGlobal(), 0);
+    } else if (MO.isExternalSymbol()) {
+      R = MachineRelocation::getExtSym(MCE.getCurrentPCOffset(),
+                                       Reloc, MO.getSymbolName(), 0);
+    } else if (MO.isConstantPoolIndex()) {
+      R = MachineRelocation::getConstPool(MCE.getCurrentPCOffset(),
+                                          Reloc, MO.getConstantPoolIndex(), 0);
+    } else {
+      assert(MO.isJumpTableIndex());
+      R = MachineRelocation::getJumpTable(MCE.getCurrentPCOffset(),
+                                          Reloc, MO.getJumpTableIndex(), 0);
+    }
+    
+    // If in PIC mode, we need to encode the negated address of the
+    // 'movepctolr' into the unrelocated field.  After relocation, we'll have
+    // &gv-&movepctolr-4 in the imm field.  Once &movepctolr is added to the imm
+    // field, we get &gv.  This doesn't happen for branch relocations, which are
+    // always implicitly pc relative.
+    if (TM.getRelocationModel() == Reloc::PIC_ && Reloc != PPC::reloc_pcrel_bx){
+      assert(MovePCtoLROffset && "MovePCtoLR not seen yet?");
+      R.setConstantVal(-(intptr_t)MovePCtoLROffset - 4);
+    }
+    MCE.addRelocation(R);
+    
   } else if (MO.isMachineBasicBlock()) {
     unsigned Reloc = 0;
     unsigned Opcode = MI.getOpcode();

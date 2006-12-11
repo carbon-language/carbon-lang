@@ -1015,8 +1015,7 @@ static SDOperand LowerGlobalAddress(SDOperand Op, SelectionDAG &DAG) {
   
   Lo = DAG.getNode(ISD::ADD, PtrVT, Hi, Lo);
   
-  if (!GV->hasWeakLinkage() && !GV->hasLinkOnceLinkage() &&
-      (!GV->isExternal() || GV->hasNotBeenReadFromBytecode()))
+  if (!TM.getSubtarget<PPCSubtarget>().hasLazyResolverStub(GV))
     return Lo;
   
   // If the global is weak or external, we have to go through the lazy

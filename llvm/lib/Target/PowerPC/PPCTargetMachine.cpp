@@ -81,7 +81,7 @@ unsigned PPC64TargetMachine::getModuleMatchQuality(const Module &M) {
 
 PPCTargetMachine::PPCTargetMachine(const Module &M, const std::string &FS,
                                    bool is64Bit)
-  : Subtarget(M, FS, is64Bit),
+  : Subtarget(*this, M, FS, is64Bit),
     DataLayout(Subtarget.getTargetDataString()), InstrInfo(*this),
     FrameInfo(*this, is64Bit), JITInfo(*this, is64Bit), TLInfo(*this),
     InstrItins(Subtarget.getInstrItineraryData()) {
@@ -146,6 +146,9 @@ bool PPCTargetMachine::addCodeEmitter(FunctionPassManager &PM, bool Fast,
     setRelocationModel(Reloc::Static);
   }
   
+  // Inform the subtarget that we are in JIT mode.  FIXME: does this break macho
+  // writing?
+  Subtarget.SetJITMode();
   
   // Machine code emitter pass for PowerPC.
   PM.add(createPPCCodeEmitterPass(*this, MCE));

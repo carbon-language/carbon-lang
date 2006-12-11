@@ -14,6 +14,7 @@
 #include "PPCSubtarget.h"
 #include "PPC.h"
 #include "llvm/Module.h"
+#include "llvm/Target/TargetMachine.h"
 #include "PPCGenSubtarget.inc"
 using namespace llvm;
 
@@ -55,9 +56,10 @@ static const char *GetCurrentPowerPCCPU() {
 #endif
 
 
-PPCSubtarget::PPCSubtarget(const Module &M, const std::string &FS, bool is64Bit)
-  : StackAlignment(16)
-  , InstrItins()
+PPCSubtarget::PPCSubtarget(const TargetMachine &tm, const Module &M,
+                           const std::string &FS, bool is64Bit)
+  : TM(tm)
+  , StackAlignment(16)
   , IsGigaProcessor(false)
   , Has64BitSupport(false)
   , Use64BitRegs(false)
@@ -65,7 +67,8 @@ PPCSubtarget::PPCSubtarget(const Module &M, const std::string &FS, bool is64Bit)
   , HasAltivec(false)
   , HasFSQRT(false)
   , HasSTFIWX(false)
-  , IsDarwin(false) {
+  , IsDarwin(false)
+  , HasLazyResolverStubs(false) {
 
   // Determine default and user specified characteristics
   std::string CPU = "generic";
@@ -105,4 +108,31 @@ PPCSubtarget::PPCSubtarget(const Module &M, const std::string &FS, bool is64Bit)
     IsDarwin = true;
 #endif
   }
+
+  // Set up darwin-specific properties.
+  if (IsDarwin) {
+    HasLazyResolverStubs = true;
+  }
+}
+
+/// SetJITMode - This is called to inform the subtarget info that we are
+/// producing code for the JIT.
+void PPCSubtarget::SetJITMode() {
+  // JIT mode doesn't want lazy resolver stubs, it knows exactly where
+  // everything is.  This matters for PPC64, which codegens in PIC mode without
+  // stubs.
+  HasLazyResolverStubs = false;
+}
+
+
+/// hasLazyResolverStub - Return true if accesses to the specified global have
+/// to go through a dyld lazy resolution stub.  This means that an extra load
+/// is required to get the address of the global.
+bool PPCSubtarget::hasLazyResolverStub(const GlobalValue *GV) const {
+  // We never hae stubs if HasLazyResolverStubs=false or if in static mode.
+  if (!HasLazyResolverStubs || TM.getRelocationModel() == Reloc::Static)
+    return false;
+  
+  return GV->hasWeakLinkage() || GV->hasLinkOnceLinkage() ||
+         (GV->isExternal() && !GV->hasNotBeenReadFromBytecode());
 }
