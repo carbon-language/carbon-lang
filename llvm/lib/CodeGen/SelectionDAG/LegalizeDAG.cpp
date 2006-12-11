@@ -1547,7 +1547,10 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
         if (Tmp2.getValueType() != MVT::Vector) {
           SDOperand Lo, Hi;
           ExpandOp(Tmp2, Lo, Hi);
-          Result = DAG.getNode(ISD::RET, MVT::Other, Tmp1, Lo, Tmp3, Hi, Tmp3);
+          if (Hi.Val)
+            Result = DAG.getNode(ISD::RET, MVT::Other, Tmp1, Lo, Tmp3, Hi,Tmp3);
+          else
+            Result = DAG.getNode(ISD::RET, MVT::Other, Tmp1, Lo, Tmp3);
           Result = LegalizeOp(Result);
         } else {
           SDNode *InVal = Tmp2.Val;
@@ -1609,8 +1612,10 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
           ExpandOp(Node->getOperand(i), Lo, Hi);
           NewValues.push_back(Lo);
           NewValues.push_back(Node->getOperand(i+1));
-          NewValues.push_back(Hi);
-          NewValues.push_back(Node->getOperand(i+1));
+          if (Hi.Val) {
+            NewValues.push_back(Hi);
+            NewValues.push_back(Node->getOperand(i+1));
+          }
           break;
         }
         case Promote:
@@ -4567,18 +4572,16 @@ void SelectionDAGLegalize::ExpandOp(SDOperand Op, SDOperand &Lo, SDOperand &Hi){
       Tmp = TLI.LowerOperation(DAG.getNode(ISD::BIT_CONVERT, VT, Tmp), DAG);
     }
 
-    MVT::ValueType NVT = Node->getValueType(0);
     // f32 / f64 must be expanded to i32 / i64.
-    if (NVT == MVT::f32 || NVT == MVT::f64) {
-      Lo = DAG.getNode(ISD::BIT_CONVERT, TLI.getTypeToTransformTo(NVT),
-                       Node->getOperand(0));
-      Hi = DAG.getConstant(0, TLI.getTypeToTransformTo(NVT));
+    if (VT == MVT::f32 || VT == MVT::f64) {
+      Lo = DAG.getNode(ISD::BIT_CONVERT, NVT, Node->getOperand(0));
+      Hi = SDOperand();
       break;
     }
 
     // Turn this into a load/store pair by default.
     if (Tmp.Val == 0)
-      Tmp = ExpandBIT_CONVERT(NVT, Node->getOperand(0));
+      Tmp = ExpandBIT_CONVERT(VT, Node->getOperand(0));
     
     ExpandOp(Tmp, Lo, Hi);
     break;
@@ -4875,7 +4878,9 @@ void SelectionDAGLegalize::ExpandOp(SDOperand Op, SDOperand &Lo, SDOperand &Hi){
   // is a type that requires multi-step expansion.
   if (getTypeAction(NVT) != Expand && NVT != MVT::isVoid) {
     Lo = LegalizeOp(Lo);
-    Hi = LegalizeOp(Hi);
+    if (Hi.Val)
+      // Don't legalize the high part if it is expanded to a single node.
+      Hi = LegalizeOp(Hi);
   }
 
   // Remember in a map if the values will be reused later.
