@@ -1643,21 +1643,6 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
     Tmp2 = LegalizeOp(ST->getBasePtr());  // Legalize the pointer.
 
     if (!ST->isTruncatingStore()) {
-      // Turn 'store float 1.0, Ptr' -> 'store int 0x12345678, Ptr'
-      // FIXME: We shouldn't do this for TargetConstantFP's.
-      // FIXME: move this to the DAG Combiner!
-      if (ConstantFPSDNode *CFP =dyn_cast<ConstantFPSDNode>(ST->getValue())) {
-        if (CFP->getValueType(0) == MVT::f32) {
-          Tmp3 = DAG.getConstant(FloatToBits(CFP->getValue()), MVT::i32);
-        } else {
-          assert(CFP->getValueType(0) == MVT::f64 && "Unknown FP type!");
-          Tmp3 = DAG.getConstant(DoubleToBits(CFP->getValue()), MVT::i64);
-        }
-        Result = DAG.getStore(Tmp1, Tmp3, Tmp2, ST->getSrcValue(),
-                              ST->getSrcValueOffset());
-        break;
-      }
-
       switch (getTypeAction(ST->getStoredVT())) {
       case Legal: {
         Tmp3 = LegalizeOp(ST->getValue());
@@ -4825,6 +4810,7 @@ void SelectionDAGLegalize::ExpandOp(SDOperand Op, SDOperand &Lo, SDOperand &Hi){
       ExpandOp(Node->getOperand(0), LL, LH);
       ExpandOp(Node->getOperand(1), RL, RH);
       unsigned SH = MVT::getSizeInBits(RH.getValueType())-1;
+      // FIXME: Move this to the dag combiner.
       // MULHS implicitly sign extends its inputs.  Check to see if ExpandOp
       // extended the sign bit of the low half through the upper half, and if so
       // emit a MULHS instead of the alternate sequence that is valid for any
@@ -4838,8 +4824,6 @@ void SelectionDAGLegalize::ExpandOp(SDOperand Op, SDOperand &Lo, SDOperand &Hi){
           LH.getOpcode() == ISD::SRA && LH.getOperand(0) == LL &&
           LH.getOperand(1).getOpcode() == ISD::Constant &&
           cast<ConstantSDNode>(LH.getOperand(1))->getValue() == SH) {
-        // FIXME: Move this to the dag combiner.
-        
         // Low part:
         Lo = DAG.getNode(ISD::MUL, NVT, LL, RL);
         // High part:
