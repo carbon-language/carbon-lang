@@ -57,7 +57,7 @@ public:
   
   /// getInstrItins - Return the instruction itineraies based on subtarget 
   /// selection.
-  const InstrItineraryData getInstrItineraryData() const { return InstrItins; }
+  const InstrItineraryData &getInstrItineraryData() const { return InstrItins; }
 
   /// getTargetDataString - Return the pointer size and type alignment
   /// properties of this subtarget.
