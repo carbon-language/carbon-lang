@@ -713,13 +713,13 @@ static bool isFlagUser(SDNode *A) {
 void ScheduleDAGSimple::printNI(OStream &O, NodeInfo *NI) const {
 #ifndef NDEBUG
   SDNode *Node = NI->Node;
-  O << " "
-    << std::hex << Node << std::dec
-    << ", Lat=" << NI->Latency
-    << ", Slot=" << NI->Slot
-    << ", ARITY=(" << Node->getNumOperands() << ","
-    << Node->getNumValues() << ")"
-    << " " << Node->getOperationName(&DAG);
+  *(O.stream()) << " "
+                << std::hex << Node << std::dec
+                << ", Lat=" << NI->Latency
+                << ", Slot=" << NI->Slot
+                << ", ARITY=(" << Node->getNumOperands() << ","
+                << Node->getNumValues() << ")"
+                << " " << Node->getOperationName(&DAG);
   if (isFlagDefiner(Node)) O << "<#";
   if (isFlagUser(Node)) O << ">#";
 #endif
