@@ -84,9 +84,14 @@ asm(
     // FIXME: need to save v[0-19] for altivec?
     // FIXME: could shrink frame
     // Set up a proper stack frame
-    "stwu r1, -208(r1)\n"
+    // FIXME Layout
+    //   PowerPC64 ABI linkage    -  24 bytes
+    //                 parameters -  32 bytes
+    //   13 double registers      - 104 bytes
+    //   8 int registers          -  32 bytes
     "mflr r0\n"
-    "stw r0,  216(r1)\n"
+    "stw r0,  8(r1)\n"
+    "stwu r1, -208(r1)\n"
     // Save all int arg registers
     "stw r10, 204(r1)\n"    "stw r9,  200(r1)\n"
     "stw r8,  196(r1)\n"    "stw r7,  192(r1)\n"
@@ -146,47 +151,52 @@ asm(
     // Make space for 8 ints r[3-10] and 13 doubles f[1-13] and the 
     // FIXME: need to save v[0-19] for altivec?
     // Set up a proper stack frame
-    "stdu r1, -208(r1)\n"
+    // Layout
+    //   PowerPC64 ABI linkage    -  48 bytes
+    //                 parameters -  64 bytes
+    //   13 double registers      - 104 bytes
+    //   8 int registers          -  64 bytes
     "mflr r0\n"
-    "std r0,  224(r1)\n"
+    "std r0,  16(r1)\n"
+    "stdu r1, -280(r1)\n"
     // Save all int arg registers
-    "std r10, 200(r1)\n"    "std r9,  192(r1)\n"
-    "std r8,  184(r1)\n"    "std r7,  176(r1)\n"
-    "std r6,  168(r1)\n"    "std r5,  160(r1)\n"
-    "std r4,  152(r1)\n"    "std r3,  144(r1)\n"
+    "std r10, 272(r1)\n"    "std r9,  264(r1)\n"
+    "std r8,  256(r1)\n"    "std r7,  248(r1)\n"
+    "std r6,  240(r1)\n"    "std r5,  232(r1)\n"
+    "std r4,  224(r1)\n"    "std r3,  216(r1)\n"
     // Save all call-clobbered FP regs.
-    "stfd f13, 136(r1)\n"   "stfd f12, 128(r1)\n"
-    "stfd f11, 120(r1)\n"   "stfd f10, 112(r1)\n"
-    "stfd f9,  104(r1)\n"   "stfd f8,   96(r1)\n"
-    "stfd f7,   88(r1)\n"   "stfd f6,   80(r1)\n"
-    "stfd f5,   72(r1)\n"   "stfd f4,   64(r1)\n"
-    "stfd f3,   56(r1)\n"   "stfd f2,   48(r1)\n"
-    "stfd f1,   40(r1)\n"
+    "stfd f13, 208(r1)\n"    "stfd f12, 200(r1)\n"
+    "stfd f11, 192(r1)\n"    "stfd f10, 184(r1)\n"
+    "stfd f9,  176(r1)\n"    "stfd f8,  168(r1)\n"
+    "stfd f7,  160(r1)\n"    "stfd f6,  152(r1)\n"
+    "stfd f5,  144(r1)\n"    "stfd f4,  136(r1)\n"
+    "stfd f3,  128(r1)\n"    "stfd f2,  120(r1)\n"
+    "stfd f1,  112(r1)\n"
     // Arguments to Compilation Callback:
     // r3 - our lr (address of the call instruction in stub plus 4)
     // r4 - stub's lr (address of instruction that called the stub plus 4)
     // r5 - is64Bit - always 1.
     "mr   r3, r0\n"
-    "ld   r2, 208(r1)\n" // stub's frame
+    "ld   r2, 280(r1)\n" // stub's frame
     "ld   r4, 16(r2)\n"  // stub's lr
     "li   r5, 1\n"       // 1 == 64 bit
     "bl _PPCCompilationCallbackC\n"
     "mtctr r3\n"
     // Restore all int arg registers
-    "ld r10, 200(r1)\n"    "ld r9,  192(r1)\n"
-    "ld r8,  184(r1)\n"    "ld r7,  176(r1)\n"
-    "ld r6,  168(r1)\n"    "ld r5,  160(r1)\n"
-    "ld r4,  152(r1)\n"    "ld r3,  144(r1)\n"
+    "ld r10, 272(r1)\n"    "ld r9,  264(r1)\n"
+    "ld r8,  256(r1)\n"    "ld r7,  248(r1)\n"
+    "ld r6,  240(r1)\n"    "ld r5,  232(r1)\n"
+    "ld r4,  224(r1)\n"    "ld r3,  216(r1)\n"
     // Restore all FP arg registers
-    "lfd f13, 136(r1)\n"    "lfd f12, 128(r1)\n"
-    "lfd f11, 120(r1)\n"    "lfd f10, 112(r1)\n"
-    "lfd f9,  104(r1)\n"    "lfd f8,   96(r1)\n"
-    "lfd f7,   88(r1)\n"    "lfd f6,   80(r1)\n"
-    "lfd f5,   72(r1)\n"    "lfd f4,   64(r1)\n"
-    "lfd f3,   56(r1)\n"    "lfd f2,   48(r1)\n"
-    "lfd f1,   40(r1)\n"
+    "lfd f13, 208(r1)\n"    "lfd f12, 200(r1)\n"
+    "lfd f11, 192(r1)\n"    "lfd f10, 184(r1)\n"
+    "lfd f9,  176(r1)\n"    "lfd f8,  168(r1)\n"
+    "lfd f7,  160(r1)\n"    "lfd f6,  152(r1)\n"
+    "lfd f5,  144(r1)\n"    "lfd f4,  136(r1)\n"
+    "lfd f3,  128(r1)\n"    "lfd f2,  120(r1)\n"
+    "lfd f1,  112(r1)\n"
     // Pop 3 frames off the stack and branch to target
-    "ld  r1, 208(r1)\n"
+    "ld  r1, 280(r1)\n"
     "ld  r2, 16(r1)\n"
     "mtlr r2\n"
     "bctr\n"
