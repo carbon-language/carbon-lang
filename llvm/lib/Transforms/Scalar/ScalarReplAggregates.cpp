@@ -660,8 +660,17 @@ void SROA::ConvertUsesToScalar(Value *Ptr, AllocaInst *NewAI, unsigned Offset) {
           } else if (LI->getType()->isFloatingPoint()) {
             // If needed, truncate the integer to the appropriate size.
             if (NV->getType()->getPrimitiveSize() > 
-                  LI->getType()->getPrimitiveSize())
-              NV = new TruncInst(NV, LI->getType(), LI->getName(), LI);
+                LI->getType()->getPrimitiveSize()) {
+              switch (LI->getType()->getTypeID()) {
+              default: assert(0 && "Unknown FP type!");
+              case Type::FloatTyID:
+                NV = new TruncInst(NV, Type::UIntTy, LI->getName(), LI);
+                break;
+              case Type::DoubleTyID:
+                NV = new TruncInst(NV, Type::ULongTy, LI->getName(), LI);
+                break;
+              }
+            }
             
             // Then do a bitcast.
             NV = new BitCastInst(NV, LI->getType(), LI->getName(), LI);
