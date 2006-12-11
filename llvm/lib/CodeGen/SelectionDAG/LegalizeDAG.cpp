@@ -4567,12 +4567,10 @@ void SelectionDAGLegalize::ExpandOp(SDOperand Op, SDOperand &Lo, SDOperand &Hi){
       Tmp = TLI.LowerOperation(DAG.getNode(ISD::BIT_CONVERT, VT, Tmp), DAG);
     }
 
-    MVT::ValueType NVT = Node->getValueType(0);
     // f32 / f64 must be expanded to i32 / i64.
-    if (NVT == MVT::f32 || NVT == MVT::f64) {
-      Lo = DAG.getNode(ISD::BIT_CONVERT, TLI.getTypeToTransformTo(NVT),
-                       Node->getOperand(0));
-      Hi = DAG.getConstant(0, TLI.getTypeToTransformTo(NVT));
+    if (VT == MVT::f32 || VT == MVT::f64) {
+      Lo = DAG.getNode(ISD::BIT_CONVERT, NVT, Node->getOperand(0));
+      Hi = DAG.getConstant(0, NVT);
       break;
     }
 
