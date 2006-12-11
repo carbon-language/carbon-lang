@@ -310,6 +310,7 @@ const char *PPCTargetLowering::getTargetNodeName(unsigned Opcode) const {
   case PPCISD::VPERM:         return "PPCISD::VPERM";
   case PPCISD::Hi:            return "PPCISD::Hi";
   case PPCISD::Lo:            return "PPCISD::Lo";
+  case PPCISD::DYNALLOC:      return "PPCISD::DYNALLOC";
   case PPCISD::GlobalBaseReg: return "PPCISD::GlobalBaseReg";
   case PPCISD::SRL:           return "PPCISD::SRL";
   case PPCISD::SRA:           return "PPCISD::SRA";
