@@ -1156,7 +1156,7 @@ static int IdxCompare(Constant *C1, Constant *C2, const Type *ElTy) {
 /// evaluateRelation - This function determines if there is anything we can
 /// decide about the two constants provided.  This doesn't need to handle simple
 /// things like integer comparisons, but should instead handle ConstantExprs
-/// and GlobalValuess.  If we can determine that the two constants have a
+/// and GlobalValues.  If we can determine that the two constants have a
 /// particular relation to each other, we should return the corresponding SetCC
 /// code, otherwise return Instruction::BinaryOpsEnd.
 ///
