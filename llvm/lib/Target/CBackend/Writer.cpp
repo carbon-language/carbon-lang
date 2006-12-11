@@ -169,7 +169,7 @@ namespace {
       // Must not be used in inline asm
       if (I.hasOneUse() && isInlineAsm(*I.use_back())) return false;
 
-      // Only inline instruction it it's use is in the same BB as the inst.
+      // Only inline instruction it if it's use is in the same BB as the inst.
       return I.getParent() == cast<Instruction>(I.use_back())->getParent();
     }
 
@@ -1508,6 +1508,16 @@ void CWriter::printFloatingPointConstants(Function &F) {
 /// type name is found, emit its declaration...
 ///
 void CWriter::printModuleTypes(const SymbolTable &ST) {
+  Out << "/* Helper union for bitcasts */\n";
+  Out << "typedef union {\n";
+  Out << "  unsigned int  UInt;\n";
+  Out << "    signed int  SInt;\n";
+  Out << "  unsigned long ULong;\n";
+  Out << "    signed long SLong;\n";
+  Out << "          float Float;\n";
+  Out << "         double Double;\n";
+  Out << "} llvmBitCastUnion;\n";
+
   // We are only interested in the type plane of the symbol table.
   SymbolTable::type_const_iterator I   = ST.type_begin();
   SymbolTable::type_const_iterator End = ST.type_end();
@@ -1704,6 +1714,15 @@ void CWriter::printFunction(Function &F) {
         Out << ";\n";
       }
       PrintedVar = true;
+    } else if (isa<BitCastInst>(*I) && 
+               ((I->getType()->isFloatingPoint() && 
+                 I->getOperand(0)->getType()->isInteger()) ||
+                (I->getType()->isInteger() && 
+                 I->getOperand(0)->getType()->isFloatingPoint()))) {
+      // We need a temporary for the BitCast to use so it can pluck a 
+      // value out of a union to do the BitCast.
+      Out << "  llvmBitCastUnion " << Mang->getValueName(&*I)
+          << "__BITCAST_TEMPORARY;\n";
     }
 
   if (PrintedVar)
@@ -1986,23 +2005,48 @@ void CWriter::visitBinaryOperator(Instruction &I) {
   }
 }
 
+static const char * getFloatBitCastField(const Type *Ty) {
+  switch (Ty->getTypeID()) {
+    default: assert(0 && "Invalid Type");
+    case Type::FloatTyID: return "Float";
+    case Type::UIntTyID:  return "UInt";
+    case Type::IntTyID:   return "SInt";
+    case Type::DoubleTyID:return "Double";
+    case Type::ULongTyID: return "ULong";
+    case Type::LongTyID:  return "SLong";
+  }
+}
+
 void CWriter::visitCastInst(CastInst &I) {
   const Type *DstTy = I.getType();
   const Type *SrcTy = I.getOperand(0)->getType();
   Out << '(';
-  printCast(I.getOpcode(), SrcTy, DstTy);
-  if (I.getOpcode() == Instruction::SExt && SrcTy == Type::BoolTy) {
-    // Make sure we really get a sext from bool by subtracing the bool from 0
-    Out << "0-";
-  }
-  writeOperand(I.getOperand(0));
-  if (DstTy == Type::BoolTy && 
-      (I.getOpcode() == Instruction::Trunc ||
-       I.getOpcode() == Instruction::FPToUI ||
-       I.getOpcode() == Instruction::FPToSI ||
-       I.getOpcode() == Instruction::PtrToInt)) {
-    // Make sure we really get a trunc to bool by anding the operand with 1 
-    Out << "&1u";
+  if (isa<BitCastInst>(I) &&
+      ((I.getType()->isFloatingPoint() && 
+        I.getOperand(0)->getType()->isInteger()) ||
+       (I.getType()->isInteger() && 
+        I.getOperand(0)->getType()->isFloatingPoint()))) {
+    // These int<->float and long<->double casts need to be handled specially
+    Out << Mang->getValueName(&I) << "__BITCAST_TEMPORARY." 
+        << getFloatBitCastField(I.getOperand(0)->getType()) << " = ";
+    writeOperand(I.getOperand(0));
+    Out << ", " << Mang->getValueName(&I) << "__BITCAST_TEMPORARY."
+        << getFloatBitCastField(I.getType());
+  } else {
+    printCast(I.getOpcode(), SrcTy, DstTy);
+    if (I.getOpcode() == Instruction::SExt && SrcTy == Type::BoolTy) {
+      // Make sure we really get a sext from bool by subtracing the bool from 0
+      Out << "0-";
+    }
+    writeOperand(I.getOperand(0));
+    if (DstTy == Type::BoolTy && 
+        (I.getOpcode() == Instruction::Trunc ||
+         I.getOpcode() == Instruction::FPToUI ||
+         I.getOpcode() == Instruction::FPToSI ||
+         I.getOpcode() == Instruction::PtrToInt)) {
+      // Make sure we really get a trunc to bool by anding the operand with 1 
+      Out << "&1u";
+    }
   }
   Out << ')';
 }
