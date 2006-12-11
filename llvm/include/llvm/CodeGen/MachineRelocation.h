@@ -68,6 +68,13 @@ class MachineRelocation {
   bool GOTRelative        : 1; // Should this relocation be relative to the GOT?
 
 public:
+ // Relocation types used in a generic implementation.  Currently, relocation
+ // entries for all things use the generic VANILLA type until they are refined
+ // into target relocation types.
+  enum RelocationType {
+    VANILLA
+  };
+  
   /// MachineRelocation::getGV - Return a relocation entry for a GlobalValue.
   ///
   static MachineRelocation getGV(intptr_t offset, unsigned RelocationType, 
@@ -171,6 +178,13 @@ public:
   ///
   intptr_t getConstantVal() const {
     return ConstantVal;
+  }
+
+  /// setConstantVal - Set the constant value associated with this relocation.
+  /// This is often an offset from the symbol.
+  ///
+  void setConstantVal(intptr_t val) {
+    ConstantVal = val;
   }
 
   /// isGlobalValue - Return true if this relocation is a GlobalValue, as
