@@ -430,16 +430,13 @@ void pairtest(pair P, float *FP) {
 We currently generate this code with llvmgcc4:
 
 _pairtest:
-        subl $12, %esp
-        movl 20(%esp), %eax
-        movl %eax, 4(%esp)
-        movl 16(%esp), %eax
-        movl %eax, (%esp)
-        movss (%esp), %xmm0
-        addss 4(%esp), %xmm0
-        movl 24(%esp), %eax
-        movss %xmm0, (%eax)
-        addl $12, %esp
+        movl 8(%esp), %eax
+        movl 4(%esp), %ecx
+        movd %eax, %xmm0
+        movd %ecx, %xmm1
+        addss %xmm0, %xmm1
+        movl 12(%esp), %eax
+        movss %xmm1, (%eax)
         ret
 
 we should be able to generate:
@@ -454,6 +451,10 @@ The issue is that llvmgcc4 is forcing the struct to memory, then passing it as
 integer chunks.  It does this so that structs like {short,short} are passed in
 a single 32-bit integer stack slot.  We should handle the safe cases above much
 nicer, while still handling the hard cases.
+
+While true in general, in this specific case we could do better by promoting
+load int + bitcast to float -> load fload.  This basically needs alignment info,
+the code is already implemented (but disabled) in dag combine).
 
 //===---------------------------------------------------------------------===//
 
