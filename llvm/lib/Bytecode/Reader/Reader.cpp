@@ -1325,7 +1325,8 @@ Value *BytecodeReader::ParseConstantPoolValue(unsigned TypeID) {
       if (!Instruction::isCast(Opcode))
         error("Only cast instruction has one argument for ConstantExpr");
 
-      Constant *Result = ConstantExpr::getCast(ArgVec[0], getType(TypeID));
+      Constant *Result = ConstantExpr::getCast(Opcode, ArgVec[0], 
+                                               getType(TypeID));
       if (Handler) Handler->handleConstantExpression(Opcode, ArgVec, Result);
       return Result;
     } else if (Opcode == Instruction::GetElementPtr) { // GetElementPtr
