@@ -433,6 +433,8 @@ static bool MergeInType(const Type *In, const Type *&Accum,
   const PackedType *PTy;
   if (Accum == Type::VoidTy || In == Accum) {
     Accum = In;
+  } else if (In == Type::VoidTy) {
+    // Noop.
   } else if (In->isIntegral() && Accum->isIntegral()) {   // integer union.
     // Otherwise pick whichever type is larger.
     if (In->getTypeID() > Accum->getTypeID())
