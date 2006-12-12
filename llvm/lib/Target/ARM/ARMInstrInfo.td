@@ -18,11 +18,6 @@ def op_addr_mode1 : Operand<iPTR> {
   let MIOperandInfo = (ops ptr_rc, ptr_rc, i32imm);
 }
 
-def op_addr_mode1a : Operand<iPTR> {
-  let PrintMethod = "printAddrMode1";
-  let MIOperandInfo = (ops ptr_rc, ptr_rc, i32imm);
-}
-
 def op_addr_mode2 : Operand<iPTR> {
   let PrintMethod = "printAddrMode2";
   let MIOperandInfo = (ops ptr_rc, i32imm);
@@ -37,9 +32,6 @@ def op_addr_mode5 : Operand<iPTR> {
 //Addressing Mode 1: data processing operands
 def addr_mode1 : ComplexPattern<iPTR, 3, "SelectAddrMode1", [imm, sra, shl, srl],
                                 []>;
-
-//Addressing Mode 1a: MVN hack
-def addr_mode1a : ComplexPattern<iPTR, 3, "SelectAddrMode1a", [imm], []>;
 
 //Addressing Mode 2: Load and Store Word or Unsigned Byte
 def addr_mode2 : ComplexPattern<iPTR, 2, "SelectAddrMode2", [], []>;
@@ -200,9 +192,6 @@ def MOV   : InstARM<(ops IntRegs:$dst, op_addr_mode1:$src),
 
 def MVN     : InstARM<(ops IntRegs:$dst, op_addr_mode1:$src),
                        "mvn $dst, $src", [(set IntRegs:$dst, (not addr_mode1:$src))]>;
-
-def MVN2    : InstARM<(ops IntRegs:$dst, op_addr_mode1:$src),
-                       "mvn $dst, $src", [(set IntRegs:$dst, addr_mode1a:$src)]>;
 
 def ADD     : Addr1BinOp<"add",  add>;
 def ADCS    : Addr1BinOp<"adcs", adde>;

@@ -1,5 +1,5 @@
 ; RUN: llvm-upgrade < %s | llvm-as | llc -march=arm &&
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=arm | grep mvn | wc -l | grep 6
+; RUN: llvm-upgrade < %s | llvm-as | llc -march=arm | grep mvn | wc -l | grep 7
 
 int %f1() {
 entry:
@@ -63,4 +63,10 @@ cond_true4848:          ; preds = %bb4835
         %tmp4851 = sub int -3, 0                ; <int> [#uses=1]
         %abc = add int %tmp4851, %tmp4845
         ret int %abc
+}
+
+bool %f10(int %a) {
+entry:
+        %tmp102 = seteq int -2, %a              ; <bool> [#uses=1]
+        ret bool %tmp102
 }

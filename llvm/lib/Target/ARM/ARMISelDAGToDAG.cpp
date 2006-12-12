@@ -849,13 +849,17 @@ bool ARMDAGToDAGISel::SelectAddrMode1(SDOperand Op,
   case ISD::Constant: {
     uint32_t val = cast<ConstantSDNode>(N)->getValue();
     if(!isRotInt8Immediate(val)) {
-      if (isRotInt8Immediate(~val))
-        return false; //use MVN
-      Constant    *C = ConstantInt::get(Type::UIntTy, val);
-      int  alignment = 2;
-      SDOperand Addr = CurDAG->getTargetConstantPool(C, MVT::i32, alignment);
-      SDOperand    Z = CurDAG->getTargetConstant(0,     MVT::i32);
-      SDNode      *n = CurDAG->getTargetNode(ARM::LDR,  MVT::i32, Addr, Z);
+      SDOperand Z = CurDAG->getTargetConstant(0,     MVT::i32);
+      SDNode *n;
+      if (isRotInt8Immediate(~val)) {
+        SDOperand C = CurDAG->getTargetConstant(~val,  MVT::i32);
+        n           = CurDAG->getTargetNode(ARM::MVN,  MVT::i32, C, Z, Z);
+     } else {
+        Constant    *C = ConstantInt::get(Type::UIntTy, val);
+        int  alignment = 2;
+        SDOperand Addr = CurDAG->getTargetConstantPool(C, MVT::i32, alignment);
+        n              = CurDAG->getTargetNode(ARM::LDR,  MVT::i32, Addr, Z);
+      }
       Arg            = SDOperand(n, 0);
     } else
       Arg            = CurDAG->getTargetConstant(val,    MVT::i32);
@@ -884,25 +888,6 @@ bool ARMDAGToDAGISel::SelectAddrMode1(SDOperand Op,
   Arg       = N;
   Shift     = CurDAG->getTargetConstant(0, MVT::i32);
   ShiftType = CurDAG->getTargetConstant(ARMShift::LSL, MVT::i32);
-  return true;
-}
-
-bool ARMDAGToDAGISel::SelectAddrMode1a(SDOperand Op,
-				       SDOperand N,
-				       SDOperand &Arg,
-				       SDOperand &Shift,
-				       SDOperand &ShiftType) {
-  if (N.getOpcode() != ISD::Constant)
-    return false;
-
-  uint32_t val = ~cast<ConstantSDNode>(N)->getValue();
-  if(!isRotInt8Immediate(val))
-    return false;
-
-  Arg       = CurDAG->getTargetConstant(val,    MVT::i32);
-  Shift     = CurDAG->getTargetConstant(0,             MVT::i32);
-  ShiftType = CurDAG->getTargetConstant(ARMShift::LSL, MVT::i32);
-
   return true;
 }
 
