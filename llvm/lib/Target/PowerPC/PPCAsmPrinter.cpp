@@ -542,23 +542,26 @@ bool DarwinAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
 
 
 bool DarwinAsmPrinter::doInitialization(Module &M) {
-#if 1
-  if (Subtarget.isGigaProcessor())
-     O << "\t.machine ppc970\n";
-#else
-  const std::string &CPU = Subtarget.getCPU();
-  
-  if (CPU != "generic")
-    O << "\t.machine ppc" << CPU << "\n";
-  else if (Subtarget.isGigaProcessor())
-    O << "\t.machine ppc970\n";
-  else if (Subtarget.isPPC64())
-    O << "\t.machine ppc64\n";
-  else if (Subtarget.hasAltivec())
-    O << "\t.machine ppc7400\n";
-  else
-    O << "\t.machine ppc\n";
-#endif
+  static const char *CPUDirectives[] = {
+    "ppc",
+    "ppc601",
+    "ppc602",
+    "ppc603",
+    "ppc7400",
+    "ppc750",
+    "ppc970",
+    "ppc64"
+  };
+
+  unsigned Directive = Subtarget.getDarwinDirective();
+  if (Subtarget.isGigaProcessor() && Directive < PPC::DIR_970)
+    Directive = PPC::DIR_970;
+  if (Subtarget.hasAltivec() && Directive < PPC::DIR_7400)
+    Directive = PPC::DIR_7400;
+  if (Subtarget.isPPC64() && Directive < PPC::DIR_970)
+    Directive = PPC::DIR_64;
+  assert(Directive <= PPC::DIR_64 && "Directive out of range.");
+  O << "\t.machine " << CPUDirectives[Directive] << "\n";
      
   AsmPrinter::doInitialization(M);
   

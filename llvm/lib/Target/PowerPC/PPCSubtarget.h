@@ -20,6 +20,21 @@
 #include <string>
 
 namespace llvm {
+
+namespace PPC {
+  // -m directive values.
+  enum {
+    DIR_32,
+    DIR_601, 
+    DIR_602, 
+    DIR_603, 
+    DIR_7400,
+    DIR_750, 
+    DIR_970, 
+    DIR_64  
+  };
+}
+
 class Module;
 class GlobalValue;
 class TargetMachine;
@@ -34,6 +49,9 @@ protected:
   
   /// Selected instruction itineraries (one entry per itinerary class.)
   InstrItineraryData InstrItins;
+  
+  /// Which cpu directive was used.
+  unsigned DarwinDirective;
 
   /// Used by the ISel to turn in optimizations for POWER4-derived architectures
   bool IsGigaProcessor;
@@ -64,6 +82,10 @@ public:
   /// stack frame on entry to the function and which must be maintained by every
   /// function for this subtarget.
   unsigned getStackAlignment() const { return StackAlignment; }
+  
+  /// getDarwinDirective - Returns the -m directive specified for the cpu.
+  ///
+  unsigned getDarwinDirective() const { return DarwinDirective; }
   
   /// getInstrItins - Return the instruction itineraies based on subtarget 
   /// selection.

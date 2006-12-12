@@ -19,6 +19,21 @@ include "../Target.td"
 // PowerPC Subtarget features.
 //
  
+//===----------------------------------------------------------------------===//
+// CPU Directives                                                             //
+//===----------------------------------------------------------------------===//
+
+def Directive601 : SubtargetFeature<"", "DarwinDirective", "PPC::DIR_601", "">;
+def Directive602 : SubtargetFeature<"", "DarwinDirective", "PPC::DIR_602", "">;
+def Directive603 : SubtargetFeature<"", "DarwinDirective", "PPC::DIR_603", "">;
+def Directive604 : SubtargetFeature<"", "DarwinDirective", "PPC::DIR_603", "">;
+def Directive620 : SubtargetFeature<"", "DarwinDirective", "PPC::DIR_603", "">;
+def Directive7400: SubtargetFeature<"", "DarwinDirective", "PPC::DIR_7400", "">;
+def Directive750 : SubtargetFeature<"", "DarwinDirective", "PPC::DIR_750", "">;
+def Directive970 : SubtargetFeature<"", "DarwinDirective", "PPC::DIR_970", "">;
+def Directive32  : SubtargetFeature<"", "DarwinDirective", "PPC::DIR_32", "">;
+def Directive64  : SubtargetFeature<"", "DarwinDirective", "PPC::DIR_64", "">;
+
 def Feature64Bit     : SubtargetFeature<"64bit","Has64BitSupport", "true",
                                         "Enable 64-bit instructions">;
 def Feature64BitRegs : SubtargetFeature<"64bitregs","Use64BitRegs", "true",
@@ -44,26 +59,33 @@ include "PPCInstrInfo.td"
 // PowerPC processors supported.
 //
 
-def : Processor<"generic", G3Itineraries, []>;
-def : Processor<"601", G3Itineraries, []>;
-def : Processor<"602", G3Itineraries, []>;
-def : Processor<"603", G3Itineraries, []>;
-def : Processor<"603e", G3Itineraries, []>;
-def : Processor<"603ev", G3Itineraries, []>;
-def : Processor<"604", G3Itineraries, []>;
-def : Processor<"604e", G3Itineraries, []>;
-def : Processor<"620", G3Itineraries, []>;
-def : Processor<"g3", G3Itineraries, []>;
-def : Processor<"7400", G4Itineraries, [FeatureAltivec]>;
-def : Processor<"g4", G4Itineraries, [FeatureAltivec]>;
-def : Processor<"7450", G4PlusItineraries, [FeatureAltivec]>;
-def : Processor<"g4+", G4PlusItineraries, [FeatureAltivec]>;
-def : Processor<"750", G3Itineraries, []>;
+def : Processor<"generic", G3Itineraries, [Directive32]>;
+def : Processor<"601", G3Itineraries, [Directive601]>;
+def : Processor<"602", G3Itineraries, [Directive602]>;
+def : Processor<"603", G3Itineraries, [Directive603]>;
+def : Processor<"603e", G3Itineraries, [Directive603]>;
+def : Processor<"603ev", G3Itineraries, [Directive603]>;
+def : Processor<"604", G3Itineraries, [Directive604]>;
+def : Processor<"604e", G3Itineraries, [Directive604]>;
+def : Processor<"620", G3Itineraries, [Directive620]>;
+def : Processor<"g3", G3Itineraries, [Directive7400]>;
+def : Processor<"7400", G4Itineraries, [Directive7400, FeatureAltivec]>;
+def : Processor<"g4", G4Itineraries, [Directive7400, FeatureAltivec]>;
+def : Processor<"7450", G4PlusItineraries, [Directive7400, FeatureAltivec]>;
+def : Processor<"g4+", G4PlusItineraries, [Directive750, FeatureAltivec]>;
+def : Processor<"750", G4Itineraries, [Directive750, FeatureAltivec]>;
 def : Processor<"970", G5Itineraries,
-                  [FeatureAltivec, FeatureGPUL, FeatureFSqrt, FeatureSTFIWX,
+                  [Directive970, FeatureAltivec,
+                   FeatureGPUL, FeatureFSqrt, FeatureSTFIWX,
                    Feature64Bit /*, Feature64BitRegs */]>;
 def : Processor<"g5", G5Itineraries,
-                  [FeatureAltivec, FeatureGPUL, FeatureFSqrt, FeatureSTFIWX,
+                  [Directive970, FeatureAltivec,
+                   FeatureGPUL, FeatureFSqrt, FeatureSTFIWX,
+                   Feature64Bit /*, Feature64BitRegs */]>;
+def : Processor<"ppc", G3Itineraries, [Directive32]>;
+def : Processor<"ppc64", G5Itineraries,
+                  [Directive64, FeatureAltivec,
+                   FeatureGPUL, FeatureFSqrt, FeatureSTFIWX,
                    Feature64Bit /*, Feature64BitRegs */]>;
 
 
