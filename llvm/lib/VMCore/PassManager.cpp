@@ -86,6 +86,8 @@ using namespace llvm;
 
 namespace llvm {
 
+class PMDataManager;
+
 //===----------------------------------------------------------------------===//
 // PMTopLevelManager
 //
@@ -143,8 +145,8 @@ public:
 
   // Add Manager into the list of managers that are not directly
   // maintained by this top level pass manager
-  void addOtherPassManager(Pass *Manager) {
-    OtherPassManagers.push_back(Manager);
+  inline void addIndirectPassManager(PMDataManager *Manager) {
+    IndirectPassManagers.push_back(Manager);
   }
 
 private:
@@ -154,7 +156,7 @@ private:
 
   /// Collection of pass managers that are not directly maintained
   /// by this pass manager
-  std::vector<Pass *> OtherPassManagers;
+  std::vector<PMDataManager *> IndirectPassManagers;
 
   // Map to keep track of last user of the analysis pass.
   // LastUser->second is the last user of Lastuser->first.
@@ -164,96 +166,6 @@ private:
   std::vector<ImmutablePass *> ImmutablePasses;
 };
   
-/// Set pass P as the last user of the given analysis passes.
-void PMTopLevelManager::setLastUser(std::vector<Pass *> &AnalysisPasses, 
-                                    Pass *P) {
-
-  for (std::vector<Pass *>::iterator I = AnalysisPasses.begin(),
-         E = AnalysisPasses.end(); I != E; ++I) {
-    Pass *AP = *I;
-    LastUser[AP] = P;
-    // If AP is the last user of other passes then make P last user of
-    // such passes.
-    for (std::map<Pass *, Pass *>::iterator LUI = LastUser.begin(),
-           LUE = LastUser.end(); LUI != LUE; ++LUI) {
-      if (LUI->second == AP)
-        LastUser[LUI->first] = P;
-    }
-  }
-
-}
-
-/// Collect passes whose last user is P
-void PMTopLevelManager::collectLastUses(std::vector<Pass *> &LastUses,
-                                            Pass *P) {
-   for (std::map<Pass *, Pass *>::iterator LUI = LastUser.begin(),
-          LUE = LastUser.end(); LUI != LUE; ++LUI)
-      if (LUI->second == P)
-        LastUses.push_back(LUI->first);
-}
-
-/// Schedule pass P for execution. Make sure that passes required by
-/// P are run before P is run. Update analysis info maintained by
-/// the manager. Remove dead passes. This is a recursive function.
-void PMTopLevelManager::schedulePass(Pass *P) {
-
-  // TODO : Allocate function manager for this pass, other wise required set
-  // may be inserted into previous function manager
-
-  AnalysisUsage AnUsage;
-  P->getAnalysisUsage(AnUsage);
-  const std::vector<AnalysisID> &RequiredSet = AnUsage.getRequiredSet();
-  for (std::vector<AnalysisID>::const_iterator I = RequiredSet.begin(),
-         E = RequiredSet.end(); I != E; ++I) {
-
-    Pass *AnalysisPass = findAnalysisPass(*I);
-    if (!AnalysisPass) {
-      // Schedule this analysis run first.
-      AnalysisPass = (*I)->createPass();
-      schedulePass(AnalysisPass);
-    }
-  }
-
-  // Now all required passes are available.
-  addTopLevelPass(P);
-}
-
-/// Find the pass that implements Analysis AID. Search immutable
-/// passes and all pass managers. If desired pass is not found
-/// then return NULL.
-Pass *PMTopLevelManager::findAnalysisPass(AnalysisID AID) {
-
-  Pass *P = NULL;
-  for (std::vector<ImmutablePass *>::iterator I = ImmutablePasses.begin(),
-         E = ImmutablePasses.end(); P == NULL && I != E; ++I) {
-    const PassInfo *PI = (*I)->getPassInfo();
-    if (PI == AID)
-      P = *I;
-
-    // If Pass not found then check the interfaces implemented by Immutable Pass
-    if (!P) {
-      const std::vector<const PassInfo*> &ImmPI = 
-        PI->getInterfacesImplemented();
-      for (unsigned Index = 0, End = ImmPI.size(); 
-           P == NULL && Index != End; ++Index)
-        if (ImmPI[Index] == AID)
-          P = *I;
-    }
-  }
-
-  // Check pass managers
-  for (std::vector<Pass *>::iterator I = PassManagers.begin(),
-         E = PassManagers.end(); P == NULL && I != E; ++I)
-    P = (*I)->getResolver()->getAnalysisToUpdate(AID, false);
-
-  // Check other pass managers
-  for (std::vector<Pass *>::iterator I = OtherPassManagers.begin(),
-         E = OtherPassManagers.end(); P == NULL && I != E; ++I)
-    P = (*I)->getResolver()->getAnalysisToUpdate(AID, false);
-
-  return P;
-}
-
 //===----------------------------------------------------------------------===//
 // PMDataManager
 
@@ -524,6 +436,99 @@ private:
 };
 
 } // End of llvm namespace
+
+//===----------------------------------------------------------------------===//
+// PMTopLevelManager implementation
+
+/// Set pass P as the last user of the given analysis passes.
+void PMTopLevelManager::setLastUser(std::vector<Pass *> &AnalysisPasses, 
+                                    Pass *P) {
+
+  for (std::vector<Pass *>::iterator I = AnalysisPasses.begin(),
+         E = AnalysisPasses.end(); I != E; ++I) {
+    Pass *AP = *I;
+    LastUser[AP] = P;
+    // If AP is the last user of other passes then make P last user of
+    // such passes.
+    for (std::map<Pass *, Pass *>::iterator LUI = LastUser.begin(),
+           LUE = LastUser.end(); LUI != LUE; ++LUI) {
+      if (LUI->second == AP)
+        LastUser[LUI->first] = P;
+    }
+  }
+
+}
+
+/// Collect passes whose last user is P
+void PMTopLevelManager::collectLastUses(std::vector<Pass *> &LastUses,
+                                            Pass *P) {
+   for (std::map<Pass *, Pass *>::iterator LUI = LastUser.begin(),
+          LUE = LastUser.end(); LUI != LUE; ++LUI)
+      if (LUI->second == P)
+        LastUses.push_back(LUI->first);
+}
+
+/// Schedule pass P for execution. Make sure that passes required by
+/// P are run before P is run. Update analysis info maintained by
+/// the manager. Remove dead passes. This is a recursive function.
+void PMTopLevelManager::schedulePass(Pass *P) {
+
+  // TODO : Allocate function manager for this pass, other wise required set
+  // may be inserted into previous function manager
+
+  AnalysisUsage AnUsage;
+  P->getAnalysisUsage(AnUsage);
+  const std::vector<AnalysisID> &RequiredSet = AnUsage.getRequiredSet();
+  for (std::vector<AnalysisID>::const_iterator I = RequiredSet.begin(),
+         E = RequiredSet.end(); I != E; ++I) {
+
+    Pass *AnalysisPass = findAnalysisPass(*I);
+    if (!AnalysisPass) {
+      // Schedule this analysis run first.
+      AnalysisPass = (*I)->createPass();
+      schedulePass(AnalysisPass);
+    }
+  }
+
+  // Now all required passes are available.
+  addTopLevelPass(P);
+}
+
+/// Find the pass that implements Analysis AID. Search immutable
+/// passes and all pass managers. If desired pass is not found
+/// then return NULL.
+Pass *PMTopLevelManager::findAnalysisPass(AnalysisID AID) {
+
+  Pass *P = NULL;
+  for (std::vector<ImmutablePass *>::iterator I = ImmutablePasses.begin(),
+         E = ImmutablePasses.end(); P == NULL && I != E; ++I) {
+    const PassInfo *PI = (*I)->getPassInfo();
+    if (PI == AID)
+      P = *I;
+
+    // If Pass not found then check the interfaces implemented by Immutable Pass
+    if (!P) {
+      const std::vector<const PassInfo*> &ImmPI = 
+        PI->getInterfacesImplemented();
+      for (unsigned Index = 0, End = ImmPI.size(); 
+           P == NULL && Index != End; ++Index)
+        if (ImmPI[Index] == AID)
+          P = *I;
+    }
+  }
+
+  // Check pass managers
+  for (std::vector<Pass *>::iterator I = PassManagers.begin(),
+         E = PassManagers.end(); P == NULL && I != E; ++I)
+    P = (*I)->getResolver()->getAnalysisToUpdate(AID, false);
+
+  // Check other pass managers
+  for (std::vector<PMDataManager *>::iterator I = IndirectPassManagers.begin(),
+         E = IndirectPassManagers.end(); P == NULL && I != E; ++I)
+    P = (*I)->findAnalysisPass(AID, false);
+
+  return P;
+}
 
 //===----------------------------------------------------------------------===//
 // PMDataManager implementation
@@ -886,8 +891,14 @@ FunctionPassManagerImpl_New::addPass(Pass *P) {
         new BasicBlockPassManager_New(getDepth() + 1);
       // Inherit top level manager
       activeBBPassManager->setTopLevelManager(this->getTopLevelManager());
+
+      // Add new manager into current manager's list.
       addPassToManager(activeBBPassManager, false);
-      TPM->addOtherPassManager(activeBBPassManager);
+
+      // Add new manager into top level manager's indirect passes list
+      PMDataManager *PMD = dynamic_cast<PMDataManager *>(activeBBPassManager);
+      assert (PMD && "Manager is not Pass Manager");
+      TPM->addIndirectPassManager(PMD);
 
       // Add pass into new manager. This time it must succeed.
       if (!activeBBPassManager->addPass(BP))
@@ -1018,10 +1029,17 @@ ModulePassManager_New::addPass(Pass *P) {
       // Create and add new manager
       activeFunctionPassManager = 
         new FunctionPassManagerImpl_New(getDepth() + 1);
+      
+      // Add new manager into current manager's list
       addPassToManager(activeFunctionPassManager, false);
+
       // Inherit top level manager
       activeFunctionPassManager->setTopLevelManager(this->getTopLevelManager());
-      TPM->addOtherPassManager(activeFunctionPassManager);
+
+      // Add new manager into top level manager's indirect passes list
+      PMDataManager *PMD = dynamic_cast<PMDataManager *>(activeFunctionPassManager);
+      assert (PMD && "Manager is not Pass Manager");
+      TPM->addIndirectPassManager(PMD);
       
       // Add pass into new manager. This time it must succeed.
       if (!activeFunctionPassManager->addPass(FP))
