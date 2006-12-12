@@ -488,6 +488,37 @@ void SelectionDAGLegalize::HandleOp(SDOperand Op) {
   }
 }
 
+/// ExpandConstantFP - Expands the ConstantFP node by spilling the constant to
+/// memory.
+static SDOperand ExpandConstantFP(ConstantFPSDNode *CFP, SelectionDAG &DAG,
+                                  TargetLowering &TLI) {
+  bool Extend = false;
+
+  // If a FP immediate is precise when represented as a float and if the
+  // target can do an extending load from float to double, we put it into
+  // the constant pool as a float, even if it's is statically typed as a
+  // double.
+  MVT::ValueType VT = CFP->getValueType(0);
+  bool isDouble = VT == MVT::f64;
+  ConstantFP *LLVMC = ConstantFP::get(isDouble ? Type::DoubleTy :
+                                      Type::FloatTy, CFP->getValue());
+  if (isDouble && CFP->isExactlyValue((float)CFP->getValue()) &&
+      // Only do this if the target has a native EXTLOAD instruction from f32.
+      TLI.isLoadXLegal(ISD::EXTLOAD, MVT::f32)) {
+    LLVMC = cast<ConstantFP>(ConstantExpr::getFPTrunc(LLVMC,Type::FloatTy));
+    VT = MVT::f32;
+    Extend = true;
+  }
+
+  SDOperand CPIdx = DAG.getConstantPool(LLVMC, TLI.getPointerTy());
+  if (Extend) {
+    return DAG.getExtLoad(ISD::EXTLOAD, MVT::f64, DAG.getEntryNode(),
+                          CPIdx, NULL, 0, MVT::f32);
+  } else {
+    return DAG.getLoad(VT, DAG.getEntryNode(), CPIdx, NULL, 0);
+  }
+}
+
 
 /// LegalizeOp - We know that the specified value has a legal type.
 /// Recursively ensure that the operands have legal types, then return the
@@ -775,33 +806,7 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
       }
       // FALLTHROUGH
     case TargetLowering::Expand:
-      // Otherwise we need to spill the constant to memory.
-      bool Extend = false;
-
-      // If a FP immediate is precise when represented as a float and if the
-      // target can do an extending load from float to double, we put it into
-      // the constant pool as a float, even if it's is statically typed as a
-      // double.
-      MVT::ValueType VT = CFP->getValueType(0);
-      bool isDouble = VT == MVT::f64;
-      ConstantFP *LLVMC = ConstantFP::get(isDouble ? Type::DoubleTy :
-                                             Type::FloatTy, CFP->getValue());
-      if (isDouble && CFP->isExactlyValue((float)CFP->getValue()) &&
-          // Only do this if the target has a native EXTLOAD instruction from
-          // f32.
-          TLI.isLoadXLegal(ISD::EXTLOAD, MVT::f32)) {
-        LLVMC = cast<ConstantFP>(ConstantExpr::getFPTrunc(LLVMC,Type::FloatTy));
-        VT = MVT::f32;
-        Extend = true;
-      }
-
-      SDOperand CPIdx = DAG.getConstantPool(LLVMC, TLI.getPointerTy());
-      if (Extend) {
-        Result = DAG.getExtLoad(ISD::EXTLOAD, MVT::f64, DAG.getEntryNode(),
-                                CPIdx, NULL, 0, MVT::f32);
-      } else {
-        Result = DAG.getLoad(VT, DAG.getEntryNode(), CPIdx, NULL, 0);
-      }
+      Result = ExpandConstantFP(CFP, DAG, TLI);
     }
     break;
   }
@@ -4398,6 +4403,12 @@ void SelectionDAGLegalize::ExpandOp(SDOperand Op, SDOperand &Lo, SDOperand &Hi){
     Hi = DAG.getConstant(Cst >> MVT::getSizeInBits(NVT), NVT);
     break;
   }
+  case ISD::ConstantFP: {
+    ConstantFPSDNode *CFP = cast<ConstantFPSDNode>(Node);
+    SDOperand Tmp = ExpandConstantFP(CFP, DAG, TLI);
+    ExpandOp(Tmp, Lo, Hi);
+    break;
+  }
   case ISD::BUILD_PAIR:
     // Return the operands.
     Lo = Node->getOperand(0);
@@ -4484,6 +4495,12 @@ void SelectionDAGLegalize::ExpandOp(SDOperand Op, SDOperand &Lo, SDOperand &Hi){
 
     if (ExtType == ISD::NON_EXTLOAD) {
       Lo = DAG.getLoad(NVT, Ch, Ptr, LD->getSrcValue(), LD->getSrcValueOffset());
+      if (VT == MVT::f32 || VT == MVT::f64) {
+        // f32->i32 or f64->i64 one to one expansion.
+        // Remember that we legalized the chain.
+        AddLegalizedOperand(SDOperand(Node, 1), LegalizeOp(Lo.getValue(1)));
+        break;
+      }
 
       // Increment the pointer to the other half.
       unsigned IncrementSize = MVT::getSizeInBits(Lo.getValueType())/8;
