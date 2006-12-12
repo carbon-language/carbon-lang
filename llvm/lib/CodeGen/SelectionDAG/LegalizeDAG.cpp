@@ -1648,6 +1648,24 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
     Tmp2 = LegalizeOp(ST->getBasePtr());  // Legalize the pointer.
 
     if (!ST->isTruncatingStore()) {
+      // Turn 'store float 1.0, Ptr' -> 'store int 0x12345678, Ptr'
+      // FIXME: We shouldn't do this for TargetConstantFP's.
+      // FIXME: move this to the DAG Combiner!  Note that we can't regress due
+      // to phase ordering between legalized code and the dag combiner.  This
+      // probably means that we need to integrate dag combiner and legalizer
+      // together.
+      if (ConstantFPSDNode *CFP = dyn_cast<ConstantFPSDNode>(ST->getValue())) {
+        if (CFP->getValueType(0) == MVT::f32) {
+          Tmp3 = DAG.getConstant(FloatToBits(CFP->getValue()), MVT::i32);
+        } else {
+          assert(CFP->getValueType(0) == MVT::f64 && "Unknown FP type!");
+          Tmp3 = DAG.getConstant(DoubleToBits(CFP->getValue()), MVT::i64);
+        }
+        Result = DAG.getStore(Tmp1, Tmp3, Tmp2, ST->getSrcValue(),
+                              ST->getSrcValueOffset());
+        break;
+      }
+      
       switch (getTypeAction(ST->getStoredVT())) {
       case Legal: {
         Tmp3 = LegalizeOp(ST->getValue());
