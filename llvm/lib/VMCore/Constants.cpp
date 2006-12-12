@@ -1531,9 +1531,10 @@ Constant *ConstantExpr::getFPCast(Constant *C, const Type *Ty) {
          "Invalid cast");
   unsigned SrcBits = C->getType()->getPrimitiveSizeInBits();
   unsigned DstBits = Ty->getPrimitiveSizeInBits();
+  if (SrcBits == DstBits)
+    return C; // Avoid a useless cast
   Instruction::CastOps opcode =
-    (SrcBits == DstBits ? Instruction::BitCast :
-     (SrcBits > DstBits ? Instruction::FPTrunc : Instruction::FPExt));
+     (SrcBits > DstBits ? Instruction::FPTrunc : Instruction::FPExt);
   return getCast(opcode, C, Ty);
 }
 
