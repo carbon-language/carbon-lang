@@ -761,6 +761,9 @@ BasicBlockPassManager_New::addPass(Pass *P) {
 bool
 BasicBlockPassManager_New::runOnFunction(Function &F) {
 
+  if (F.isExternal())
+    return false;
+
   bool Changed = doInitialization(F);
   initializeAnalysisInfo();
 
@@ -972,6 +975,10 @@ bool FunctionPassManagerImpl_New::runOnModule(Module &M) {
 bool FunctionPassManagerImpl_New::runOnFunction(Function &F) {
 
   bool Changed = false;
+
+  if (F.isExternal())
+    return false;
+
   initializeAnalysisInfo();
 
   for (std::vector<Pass *>::iterator itr = passVectorBegin(),
