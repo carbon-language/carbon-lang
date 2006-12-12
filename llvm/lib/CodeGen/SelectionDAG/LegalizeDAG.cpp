@@ -488,10 +488,10 @@ void SelectionDAGLegalize::HandleOp(SDOperand Op) {
   }
 }
 
-/// ExpandConstantFP - Expands the ConstantFP node by spilling the constant to
-/// memory.
-static SDOperand ExpandConstantFP(ConstantFPSDNode *CFP, SelectionDAG &DAG,
-                                  TargetLowering &TLI) {
+/// ExpandConstantFP - Expands the ConstantFP node by either converting it to
+/// integer constant or spilling the constant to memory.
+static SDOperand ExpandConstantFP(ConstantFPSDNode *CFP, bool ToMem,
+                                  SelectionDAG &DAG, TargetLowering &TLI) {
   bool Extend = false;
 
   // If a FP immediate is precise when represented as a float and if the
@@ -502,6 +502,13 @@ static SDOperand ExpandConstantFP(ConstantFPSDNode *CFP, SelectionDAG &DAG,
   bool isDouble = VT == MVT::f64;
   ConstantFP *LLVMC = ConstantFP::get(isDouble ? Type::DoubleTy :
                                       Type::FloatTy, CFP->getValue());
+  if (!ToMem) {
+    double Val = LLVMC->getValue();
+    return isDouble
+      ? DAG.getConstant(DoubleToBits(Val), MVT::i64)
+      : DAG.getConstant(FloatToBits(Val), MVT::i32);
+  }
+
   if (isDouble && CFP->isExactlyValue((float)CFP->getValue()) &&
       // Only do this if the target has a native EXTLOAD instruction from f32.
       TLI.isLoadXLegal(ISD::EXTLOAD, MVT::f32)) {
@@ -806,7 +813,7 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
       }
       // FALLTHROUGH
     case TargetLowering::Expand:
-      Result = ExpandConstantFP(CFP, DAG, TLI);
+      Result = ExpandConstantFP(CFP, true, DAG, TLI);
     }
     break;
   }
@@ -4405,8 +4412,7 @@ void SelectionDAGLegalize::ExpandOp(SDOperand Op, SDOperand &Lo, SDOperand &Hi){
   }
   case ISD::ConstantFP: {
     ConstantFPSDNode *CFP = cast<ConstantFPSDNode>(Node);
-    SDOperand Tmp = ExpandConstantFP(CFP, DAG, TLI);
-    ExpandOp(Tmp, Lo, Hi);
+    Lo = ExpandConstantFP(CFP, false, DAG, TLI);
     break;
   }
   case ISD::BUILD_PAIR:
