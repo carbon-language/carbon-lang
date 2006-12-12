@@ -761,8 +761,23 @@ void CppWriter::printConstant(const Constant *CV) {
     } else if (CE->isCast()) {
       printConstant(CE->getOperand(0));
       Out << "Constant* " << constName << " = ConstantExpr::getCast(";
-      Out << getCppName(CE->getOperand(0)) << ", " << getCppName(CE->getType())
-          << ");";
+      switch (CE->getOpcode()) {
+        default: assert(0 && "Invalid cast opcode");
+        case Instruction::Trunc: Out << "Instruction::Trunc"; break;
+        case Instruction::ZExt:  Out << "Instruction::ZExt"; break;
+        case Instruction::SExt:  Out << "Instruction::SExt"; break;
+        case Instruction::FPTrunc:  Out << "Instruction::FPTrunc"; break;
+        case Instruction::FPExt:  Out << "Instruction::FPExt"; break;
+        case Instruction::FPToUI:  Out << "Instruction::FPToUI"; break;
+        case Instruction::FPToSI:  Out << "Instruction::FPToSI"; break;
+        case Instruction::UIToFP:  Out << "Instruction::UIToFP"; break;
+        case Instruction::SIToFP:  Out << "Instruction::SIToFP"; break;
+        case Instruction::PtrToInt:  Out << "Instruction::PtrToInt"; break;
+        case Instruction::IntToPtr:  Out << "Instruction::IntToPtr"; break;
+        case Instruction::BitCast:  Out << "Instruction::BitCast"; break;
+      }
+      Out << ", " << getCppName(CE->getOperand(0)) << ", " 
+          << getCppName(CE->getType()) << ");";
     } else {
       unsigned N = CE->getNumOperands();
       for (unsigned i = 0; i < N; ++i ) {
