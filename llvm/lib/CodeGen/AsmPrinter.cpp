@@ -437,33 +437,26 @@ void AsmPrinter::EmitConstantValueOnly(const Constant *CV) {
     case Instruction::BitCast:
       return EmitConstantValueOnly(CE->getOperand(0));
 
-    case Instruction::IntToPtr:
-    case Instruction::PtrToInt:{
+    case Instruction::IntToPtr: {
+      // Handle casts to pointers by changing them into casts to the appropriate
+      // integer type.  This promotes constant folding and simplifies this code.
+      Constant *Op = CE->getOperand(0);
+      Op = ConstantExpr::getIntegerCast(Op, TD->getIntPtrType(), false/*ZExt*/);
+      return EmitConstantValueOnly(Op);
+    }
+      
+      
+    case Instruction::PtrToInt: {
       // Support only foldable casts to/from pointers that can be eliminated by
       // changing the pointer to the appropriately sized integer type.
       Constant *Op = CE->getOperand(0);
-      const Type *OpTy = Op->getType(), *Ty = CE->getType();
+      const Type *Ty = CE->getType();
 
-      // Handle casts to pointers by changing them into casts to the appropriate
-      // integer type.  This promotes constant folding and simplifies this code.
-      if (isa<PointerType>(Ty)) {
-        const Type *IntPtrTy = TD->getIntPtrType();
-        Instruction::CastOps opcode = Instruction::CastOps(CE->getOpcode());
-        if (opcode == Instruction::IntToPtr)
-          Op = ConstantExpr::getIntegerCast(Op, IntPtrTy, false /*ZExt*/);
-        else 
-          Op = ConstantExpr::getPtrToInt(Op, IntPtrTy);
+      // We can emit the pointer value into this slot if the slot is an
+      // integer slot greater or equal to the size of the pointer.
+      if (Ty->isIntegral() &&
+          Ty->getPrimitiveSize() >= TD->getTypeSize(Op->getType()))
         return EmitConstantValueOnly(Op);
-      }
-      
-      // We know the dest type is not a pointer.  Is the src value a pointer or
-      // integral?
-      if (isa<PointerType>(OpTy) || OpTy->isIntegral()) {
-        // We can emit the pointer value into this slot if the slot is an
-        // integer slot greater or equal to the size of the pointer.
-        if (Ty->isIntegral() && TD->getTypeSize(Ty) >= TD->getTypeSize(OpTy))
-          return EmitConstantValueOnly(Op);
-      }
       
       assert(0 && "FIXME: Don't yet support this kind of constant cast expr");
       EmitConstantValueOnly(Op);
