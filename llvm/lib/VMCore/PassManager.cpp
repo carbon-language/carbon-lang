@@ -296,8 +296,6 @@ class FunctionPassManagerImpl_New : public ModulePass,
                                     public PMDataManager,
                                     public PMTopLevelManager {
 public:
-  FunctionPassManagerImpl_New(ModuleProvider *P, int D) :
-    PMDataManager(D) { /* TODO */ }
   FunctionPassManagerImpl_New(int D) : PMDataManager(D) { 
     activeBBPassManager = NULL;
   }
