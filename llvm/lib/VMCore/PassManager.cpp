@@ -580,13 +580,17 @@ void PMDataManager::removeNotPreservedAnalysis(Pass *P) {
 
   const std::vector<AnalysisID> &PreservedSet = AnUsage.getPreservedSet();
   for (std::map<AnalysisID, Pass*>::iterator I = AvailableAnalysis.begin(),
-         E = AvailableAnalysis.end(); I != E; ++I ) {
+         E = AvailableAnalysis.end(); I != E; ) {
     if (std::find(PreservedSet.begin(), PreservedSet.end(), I->first) == 
         PreservedSet.end()) {
       // Remove this analysis
-      std::map<AnalysisID, Pass*>::iterator J = I++;
-      AvailableAnalysis.erase(J);
-    }
+      if (!dynamic_cast<ImmutablePass*>(I->second)) {
+        std::map<AnalysisID, Pass*>::iterator J = I++;
+        AvailableAnalysis.erase(J);
+      } else
+        ++I;
+    } else
+      ++I;
   }
 }
 
