@@ -4902,7 +4902,10 @@ void SelectionDAGLegalize::ExpandOp(SDOperand Op, SDOperand &Lo, SDOperand &Hi){
   case ISD::UDIV: Lo = ExpandLibCall("__udivdi3", Node, Hi); break;
   case ISD::SREM: Lo = ExpandLibCall("__moddi3" , Node, Hi); break;
   case ISD::UREM: Lo = ExpandLibCall("__umoddi3", Node, Hi); break;
-  
+
+  case ISD::FNEG:
+    Lo = ExpandLibCall(((VT == MVT::f32) ? "__negsf2" : "__negdf2"), Node, Hi);
+    break;
   case ISD::FADD:
     Lo = ExpandLibCall(((VT == MVT::f32) ? "__addsf3" : "__adddf3"), Node, Hi);
     break;
@@ -4920,6 +4923,22 @@ void SelectionDAGLegalize::ExpandOp(SDOperand Op, SDOperand &Lo, SDOperand &Hi){
     break;
   case ISD::FP_ROUND:
     Lo = ExpandLibCall("__truncdfsf2", Node, Hi);
+    break;
+  case ISD::SINT_TO_FP:
+    if (Node->getOperand(0).getValueType() == MVT::i64)
+      Lo = ExpandLibCall(((VT == MVT::f32) ? "__floatdisf" : "__floatdidf"),
+                         Node, Hi);
+    else
+      Lo = ExpandLibCall(((VT == MVT::f32) ? "__floatsisf" : "__floatsidf"),
+                         Node, Hi);
+    break;
+  case ISD::UINT_TO_FP:
+    if (Node->getOperand(0).getValueType() == MVT::i64)
+      Lo = ExpandLibCall(((VT == MVT::f32) ? "__floatundisf" : "__floatundidf"),
+                         Node, Hi);
+    else
+      Lo = ExpandLibCall(((VT == MVT::f32) ? "__floatunsisf" : "__floatunsidf"),
+                         Node, Hi);
     break;
   }
 
