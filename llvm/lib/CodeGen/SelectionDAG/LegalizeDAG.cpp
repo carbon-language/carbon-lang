@@ -1735,7 +1735,7 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
           }
         } else {
           ExpandOp(Node->getOperand(1), Lo, Hi);
-          IncrementSize = MVT::getSizeInBits(Hi.getValueType())/8;
+          IncrementSize = Hi.Val ? MVT::getSizeInBits(Hi.getValueType())/8 : 0;
 
           if (!TLI.isLittleEndian())
             std::swap(Lo, Hi);
@@ -1743,6 +1743,13 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
 
         Lo = DAG.getStore(Tmp1, Lo, Tmp2, ST->getSrcValue(),
                           ST->getSrcValueOffset());
+
+        if (Hi.Val == NULL) {
+          // Must be int <-> float one-to-one expansion.
+          Result = Lo;
+          break;
+        }
+
         Tmp2 = DAG.getNode(ISD::ADD, Tmp2.getValueType(), Tmp2,
                            getIntPtrConstant(IncrementSize));
         assert(isTypeLegal(Tmp2.getValueType()) &&
@@ -4593,7 +4600,14 @@ void SelectionDAGLegalize::ExpandOp(SDOperand Op, SDOperand &Lo, SDOperand &Hi){
     // f32 / f64 must be expanded to i32 / i64.
     if (VT == MVT::f32 || VT == MVT::f64) {
       Lo = DAG.getNode(ISD::BIT_CONVERT, NVT, Node->getOperand(0));
-      Hi = SDOperand();
+      break;
+    }
+
+    // If source operand will be expanded to the same type as VT, i.e.
+    // i64 <- f64, i32 <- f32, expand the source operand instead.
+    MVT::ValueType VT0 = Node->getOperand(0).getValueType();
+    if (getTypeAction(VT0) == Expand && TLI.getTypeToTransformTo(VT0) == VT) {
+      ExpandOp(Node->getOperand(0), Lo, Hi);
       break;
     }
 
