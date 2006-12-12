@@ -1,5 +1,5 @@
 ; RUN: llvm-upgrade < %s | llvm-as | llc -march=arm &&
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=arm | grep mvn | wc -l | grep 5
+; RUN: llvm-upgrade < %s | llvm-as | llc -march=arm | grep mvn | wc -l | grep 6
 
 int %f1() {
 entry:
@@ -52,4 +52,15 @@ entry:
 	%tmp3 = ashr int %a, ubyte %b		; <int> [#uses=1]
 	%tmp3not = xor int %tmp3, -1		; <int> [#uses=1]
 	ret int %tmp3not
+}
+
+int %f9() {
+entry:
+        %tmp4845 = add int 0, 0
+        br  label %cond_true4848
+
+cond_true4848:          ; preds = %bb4835
+        %tmp4851 = sub int -3, 0                ; <int> [#uses=1]
+        %abc = add int %tmp4851, %tmp4845
+        ret int %abc
 }
