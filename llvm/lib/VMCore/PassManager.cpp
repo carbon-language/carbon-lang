@@ -395,7 +395,9 @@ class PassManagerImpl_New : public Pass,
 
 public:
 
-  PassManagerImpl_New(int D) : PMDataManager(D) {}
+  PassManagerImpl_New(int D) : PMDataManager(D) {
+    activeManager = NULL;
+  }
 
   /// add - Add a pass to the queue of passes to run.  This passes ownership of
   /// the Pass to the PassManager.  When the PassManager is destroyed, the pass
