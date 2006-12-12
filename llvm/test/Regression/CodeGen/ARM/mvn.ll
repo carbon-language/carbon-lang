@@ -1,10 +1,10 @@
 ; RUN: llvm-upgrade < %s | llvm-as | llc -march=arm &&
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=arm | grep mvn | wc -l | grep 4
+; RUN: llvm-upgrade < %s | llvm-as | llc -march=arm | grep mvn | wc -l | grep 5
 
-;int %f1() {
-;entry:
-;	ret int -1
-;}
+int %f1() {
+entry:
+	ret int -1
+}
 
 int %f2(int %a) {
 entry:

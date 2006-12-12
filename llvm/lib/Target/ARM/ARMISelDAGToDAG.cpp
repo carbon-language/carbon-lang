@@ -781,6 +781,8 @@ public:
   virtual void InstructionSelectBasicBlock(SelectionDAG &DAG);
   bool SelectAddrMode1(SDOperand Op, SDOperand N, SDOperand &Arg,
                        SDOperand &Shift, SDOperand &ShiftType);
+  bool SelectAddrMode1a(SDOperand Op, SDOperand N, SDOperand &Arg,
+			SDOperand &Shift, SDOperand &ShiftType);
   bool SelectAddrMode2(SDOperand Op, SDOperand N, SDOperand &Arg,
                        SDOperand &Offset);
   bool SelectAddrMode5(SDOperand Op, SDOperand N, SDOperand &Arg,
@@ -880,6 +882,25 @@ bool ARMDAGToDAGISel::SelectAddrMode1(SDOperand Op,
   Arg       = N;
   Shift     = CurDAG->getTargetConstant(0, MVT::i32);
   ShiftType = CurDAG->getTargetConstant(ARMShift::LSL, MVT::i32);
+  return true;
+}
+
+bool ARMDAGToDAGISel::SelectAddrMode1a(SDOperand Op,
+				       SDOperand N,
+				       SDOperand &Arg,
+				       SDOperand &Shift,
+				       SDOperand &ShiftType) {
+  if (N.getOpcode() != ISD::Constant)
+    return false;
+
+  uint32_t val = ~cast<ConstantSDNode>(N)->getValue();
+  if(!isRotInt8Immediate(val))
+    return false;
+
+  Arg       = CurDAG->getTargetConstant(val,    MVT::i32);
+  Shift     = CurDAG->getTargetConstant(0,             MVT::i32);
+  ShiftType = CurDAG->getTargetConstant(ARMShift::LSL, MVT::i32);
+
   return true;
 }
 
