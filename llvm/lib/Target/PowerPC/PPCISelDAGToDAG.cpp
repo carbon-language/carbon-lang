@@ -766,6 +766,81 @@ SDNode *PPCDAGToDAGISel::Select(SDOperand Op) {
 
   switch (N->getOpcode()) {
   default: break;
+  
+  case ISD::Constant: {
+    if (N->getValueType(0) == MVT::i64) {
+      // Get 64 bit value.
+      int64_t Imm = cast<ConstantSDNode>(N)->getValue();
+      // Assume no remaining bits.
+      unsigned Remainder = 0;
+      // Assume no shift required.
+      unsigned Shift = 0;
+      
+      // If it can't be represented as a 32 bit value.
+      if (!isInt32(Imm)) {
+        Shift = CountTrailingZeros_64(Imm);
+        int64_t ImmSh = static_cast<uint64_t>(Imm) >> Shift;
+        
+        // If the shifted value fits 32 bits.
+        if (isInt32(ImmSh)) {
+          // Go with the shifted value.
+          Imm = ImmSh;
+        } else {
+          // Still stuck with a 64 bit value.
+          Remainder = Imm;
+          Shift = 32;
+          Imm >>= 32;
+        }
+      }
+      
+      // Intermediate operand.
+      SDNode *Result;
+
+      // Handle first 32 bits.
+      unsigned Lo = Imm & 0xFFFF;
+      unsigned Hi = (Imm >> 16) & 0xFFFF;
+      
+      // Simple value.
+      if (isInt16(Imm)) {
+       // Just the Lo bits.
+        Result = CurDAG->getTargetNode(PPC::LI8, MVT::i64, getI32Imm(Lo));
+      } else if (Lo) {
+        // Handle the Hi bits.
+        unsigned OpC = Hi ? PPC::LIS8 : PPC::LI8;
+        Result = CurDAG->getTargetNode(OpC, MVT::i64, getI32Imm(Hi));
+        // And Lo bits.
+        Result = CurDAG->getTargetNode(PPC::ORI8, MVT::i64,
+                                       SDOperand(Result, 0), getI32Imm(Lo));
+      } else {
+       // Just the Hi bits.
+        Result = CurDAG->getTargetNode(PPC::LIS8, MVT::i64, getI32Imm(Hi));
+      }
+      
+      // If no shift, we're done.
+      if (!Shift) return Result;
+
+      // Shift for next step if the upper 32-bits were not zero.
+      if (Imm) {
+        Result = CurDAG->getTargetNode(PPC::RLDICR, MVT::i64,
+                                       SDOperand(Result, 0),
+                                       getI32Imm(Shift), getI32Imm(63 - Shift));
+      }
+
+      // Add in the last bits as required.
+      if ((Hi = (Remainder >> 16) & 0xFFFF)) {
+        Result = CurDAG->getTargetNode(PPC::ORIS8, MVT::i64,
+                                       SDOperand(Result, 0), getI32Imm(Hi));
+      } 
+      if ((Lo = Remainder & 0xFFFF)) {
+        Result = CurDAG->getTargetNode(PPC::ORI8, MVT::i64,
+                                       SDOperand(Result, 0), getI32Imm(Lo));
+      }
+      
+      return Result;
+    }
+    break;
+  }
+  
   case ISD::SETCC:
     return SelectSETCC(Op);
   case PPCISD::GlobalBaseReg:

@@ -474,48 +474,6 @@ def FCTIDZ : XForm_26<63, 815, (ops F8RC:$frD, F8RC:$frB),
 // Instruction Patterns
 //
 
-// Immediate support.
-// Handled above:
-//   sext(0x0000_0000_0000_FFFF,  i8) -> li imm
-//   sext(0x0000_0000_FFFF_0000, i16) -> lis imm>>16
-
-// sext(0x0000_0000_FFFF_FFFF,  i16)  -> lis + ori
-def sext_0x0000_0000_FFFF_FFFF_i16 : PatLeaf<(imm), [{
-  return N->getValue() == (uint64_t)(int32_t)N->getValue();
-}]>;
-def : Pat<(i64 sext_0x0000_0000_FFFF_FFFF_i16:$imm),
-          (ORI8 (LIS8 (HI16 imm:$imm)), (LO16 imm:$imm))>;
-
-// zext(0x0000_0000_FFFF_7FFF, i16) -> oris (li lo16(imm)), imm>>16
-def zext_0x0000_0000_FFFF_7FFF_i16 : PatLeaf<(imm), [{
-  return (N->getValue() & 0xFFFFFFFF00008000ULL) == 0;
-}]>;
-def : Pat<(i64 zext_0x0000_0000_FFFF_7FFF_i16:$imm),
-          (ORIS8 (LI8 (LO16 imm:$imm)), (HI16 imm:$imm))>;
-
-// zext(0x0000_0000_FFFF_FFFF, i16) -> oris (ori (li 0), lo16(imm)), imm>>16
-def zext_0x0000_0000_FFFF_FFFF_i16 : PatLeaf<(imm), [{
-  return (N->getValue() & 0xFFFFFFFF00000000ULL) == 0;
-}]>;
-def : Pat<(i64 zext_0x0000_0000_FFFF_FFFF_i16:$imm),
-          (ORIS8 (ORI8 (LI8 0), (LO16 imm:$imm)), (HI16 imm:$imm))>;
-
-// FIXME: Handle smart forms where the top 32-bits are set.  Right now, stuff
-// like 0xABCD0123BCDE0000 hits the case below, which produces ORI R, R, 0's! 
-
-// Fully general (and most expensive: 6 instructions!) immediate pattern.
-def : Pat<(i64 imm:$imm),
-          (ORI8 
-             (ORIS8 
-                (RLDICR
-                   (ORI8
-                      (LIS8 (HI48_64 imm:$imm)),
-                      (HI32_48 imm:$imm)),
-                   32, 31),
-                (HI16 imm:$imm)),
-             (LO16 imm:$imm))>;
-
-
 // Extensions and truncates to/from 32-bit regs.
 def : Pat<(i64 (zext GPRC:$in)),
           (RLDICL (OR4To8 GPRC:$in, GPRC:$in), 0, 32)>;
