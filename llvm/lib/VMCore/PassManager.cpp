@@ -260,6 +260,9 @@ private:
   unsigned Depth;
 };
 
+//===----------------------------------------------------------------------===//
+// BasicBlockPassManager_New
+//
 /// BasicBlockPassManager_New manages BasicBlockPass. It batches all the
 /// pass together and sequence them to process one basic block before
 /// processing next basic block.
@@ -288,6 +291,9 @@ public:
 
 };
 
+//===----------------------------------------------------------------------===//
+// FunctionPassManagerImpl_New
+//
 /// FunctionPassManagerImpl_New manages FunctionPasses and BasicBlockPassManagers.
 /// It batches all function passes and basic block pass managers together and
 /// sequence them to process one function at a time before processing next
@@ -356,6 +362,9 @@ private:
   BasicBlockPassManager_New *activeBBPassManager;
 };
 
+//===----------------------------------------------------------------------===//
+// ModulePassManager_New
+//
 /// ModulePassManager_New manages ModulePasses and function pass managers.
 /// It batches all Module passes  passes and function pass managers together and
 /// sequence them to process one module.
@@ -384,7 +393,10 @@ private:
   FunctionPassManagerImpl_New *activeFunctionPassManager;
 };
 
-/// PassManager_New manages ModulePassManagers
+//===----------------------------------------------------------------------===//
+// PassManagerImpl_New
+//
+/// PassManagerImpl_New manages ModulePassManagers
 class PassManagerImpl_New : public Pass,
                             public PMDataManager,
                             public PMTopLevelManager {
@@ -519,8 +531,11 @@ Pass *PMTopLevelManager::findAnalysisPass(AnalysisID AID) {
 
   // Check pass managers
   for (std::vector<Pass *>::iterator I = PassManagers.begin(),
-         E = PassManagers.end(); P == NULL && I != E; ++I)
-    P = (*I)->getResolver()->getAnalysisToUpdate(AID, false);
+         E = PassManagers.end(); P == NULL && I != E; ++I) {
+    PMDataManager *PMD = dynamic_cast<PMDataManager *>(*I);
+    assert(PMD && "This is not a PassManager");
+    P = PMD->findAnalysisPass(AID, false);
+  }
 
   // Check other pass managers
   for (std::vector<PMDataManager *>::iterator I = IndirectPassManagers.begin(),
