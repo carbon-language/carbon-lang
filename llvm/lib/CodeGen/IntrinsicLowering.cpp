@@ -238,9 +238,7 @@ static Value *LowerCTPOP(Value *V, Instruction *IP) {
   unsigned BitSize = V->getType()->getPrimitiveSizeInBits();
 
   for (unsigned i = 1, ct = 0; i != BitSize; i <<= 1, ++ct) {
-    Value *MaskCst =
-      ConstantExpr::getTruncOrBitCast(ConstantInt::get(Type::ULongTy, MaskValues[ct]),
-                                             V->getType());
+    Value *MaskCst = ConstantInt::get(V->getType(), MaskValues[ct]);
     Value *LHS = BinaryOperator::createAnd(V, MaskCst, "cppop.and1", IP);
     Value *VShift = new ShiftInst(Instruction::LShr, V,
                       ConstantInt::get(Type::UByteTy, i), "ctpop.sh", IP);
