@@ -1580,6 +1580,58 @@ CastInst *CastInst::createPointerCast(Value *S, const Type *Ty,
   return create(Instruction::BitCast, S, Ty, Name, InsertBefore);
 }
 
+CastInst *CastInst::createIntegerCast(Value *C, const Type *Ty, 
+                                      bool isSigned, const std::string &Name,
+                                      Instruction *InsertBefore) {
+  assert(C->getType()->isIntegral() && Ty->isIntegral() && "Invalid cast");
+  unsigned SrcBits = C->getType()->getPrimitiveSizeInBits();
+  unsigned DstBits = Ty->getPrimitiveSizeInBits();
+  Instruction::CastOps opcode =
+    (SrcBits == DstBits ? Instruction::BitCast :
+     (SrcBits > DstBits ? Instruction::Trunc :
+      (isSigned ? Instruction::SExt : Instruction::ZExt)));
+  return create(opcode, C, Ty, Name, InsertBefore);
+}
+
+CastInst *CastInst::createIntegerCast(Value *C, const Type *Ty, 
+                                      bool isSigned, const std::string &Name,
+                                      BasicBlock *InsertAtEnd) {
+  assert(C->getType()->isIntegral() && Ty->isIntegral() && "Invalid cast");
+  unsigned SrcBits = C->getType()->getPrimitiveSizeInBits();
+  unsigned DstBits = Ty->getPrimitiveSizeInBits();
+  Instruction::CastOps opcode =
+    (SrcBits == DstBits ? Instruction::BitCast :
+     (SrcBits > DstBits ? Instruction::Trunc :
+      (isSigned ? Instruction::SExt : Instruction::ZExt)));
+  return create(opcode, C, Ty, Name, InsertAtEnd);
+}
+
+CastInst *CastInst::createFPCast(Value *C, const Type *Ty, 
+                                 const std::string &Name, 
+                                 Instruction *InsertBefore) {
+  assert(C->getType()->isFloatingPoint() && Ty->isFloatingPoint() && 
+         "Invalid cast");
+  unsigned SrcBits = C->getType()->getPrimitiveSizeInBits();
+  unsigned DstBits = Ty->getPrimitiveSizeInBits();
+  Instruction::CastOps opcode =
+    (SrcBits == DstBits ? Instruction::BitCast :
+     (SrcBits > DstBits ? Instruction::FPTrunc : Instruction::FPExt));
+  return create(opcode, C, Ty, Name, InsertBefore);
+}
+
+CastInst *CastInst::createFPCast(Value *C, const Type *Ty, 
+                                 const std::string &Name, 
+                                 BasicBlock *InsertAtEnd) {
+  assert(C->getType()->isFloatingPoint() && Ty->isFloatingPoint() && 
+         "Invalid cast");
+  unsigned SrcBits = C->getType()->getPrimitiveSizeInBits();
+  unsigned DstBits = Ty->getPrimitiveSizeInBits();
+  Instruction::CastOps opcode =
+    (SrcBits == DstBits ? Instruction::BitCast :
+     (SrcBits > DstBits ? Instruction::FPTrunc : Instruction::FPExt));
+  return create(opcode, C, Ty, Name, InsertAtEnd);
+}
+
 // Provide a way to get a "cast" where the cast opcode is inferred from the 
 // types and size of the operand. This, basically, is a parallel of the 
 // logic in the checkCast function below.  This axiom should hold:

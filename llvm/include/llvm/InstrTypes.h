@@ -339,6 +339,40 @@ public:
     Instruction *InsertBefore = 0 ///< Place to insert the instruction
   );
 
+  /// @brief Create a ZExt, BitCast, or Trunc for int -> int casts.
+  static CastInst *createIntegerCast(
+    Value *S,                ///< The pointer value to be casted (operand 0)
+    const Type *Ty,          ///< The type to which cast should be made
+    bool isSigned,           ///< Whether to regard S as signed or not
+    const std::string &Name = "", ///< Name for the instruction
+    Instruction *InsertBefore = 0 ///< Place to insert the instruction
+  );
+
+  /// @brief Create a ZExt, BitCast, or Trunc for int -> int casts.
+  static CastInst *createIntegerCast(
+    Value *S,                ///< The integer value to be casted (operand 0)
+    const Type *Ty,          ///< The integer type to which operand is casted
+    bool isSigned,           ///< Whether to regard S as signed or not
+    const std::string &Name, ///< The name for the instruction
+    BasicBlock *InsertAtEnd  ///< The block to insert the instruction into
+  );
+
+  /// @brief Create an FPExt, BitCast, or FPTrunc for fp -> fp casts
+  static CastInst *createFPCast(
+    Value *S,                ///< The floating point value to be casted 
+    const Type *Ty,          ///< The floating point type to cast to
+    const std::string &Name = "", ///< Name for the instruction
+    Instruction *InsertBefore = 0 ///< Place to insert the instruction
+  );
+
+  /// @brief Create an FPExt, BitCast, or FPTrunc for fp -> fp casts
+  static CastInst *createFPCast(
+    Value *S,                ///< The floating point value to be casted 
+    const Type *Ty,          ///< The floating point type to cast to
+    const std::string &Name, ///< The name for the instruction
+    BasicBlock *InsertAtEnd  ///< The block to insert the instruction into
+  );
+
   /// @brief Create a SExt or BitCast cast instruction
   static CastInst *createSExtOrBitCast(
     Value *S,                ///< The value to be casted (operand 0)
