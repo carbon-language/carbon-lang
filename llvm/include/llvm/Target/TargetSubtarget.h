@@ -14,8 +14,6 @@
 #ifndef LLVM_TARGET_TARGETSUBTARGET_H
 #define LLVM_TARGET_TARGETSUBTARGET_H
 
-#include <string>
-
 namespace llvm {
 
 //===----------------------------------------------------------------------===//
