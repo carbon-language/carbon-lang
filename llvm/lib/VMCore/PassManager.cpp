@@ -512,6 +512,19 @@ void PMTopLevelManager::schedulePass(Pass *P) {
 Pass *PMTopLevelManager::findAnalysisPass(AnalysisID AID) {
 
   Pass *P = NULL;
+  // Check pass managers
+  for (std::vector<Pass *>::iterator I = PassManagers.begin(),
+         E = PassManagers.end(); P == NULL && I != E; ++I) {
+    PMDataManager *PMD = dynamic_cast<PMDataManager *>(*I);
+    assert(PMD && "This is not a PassManager");
+    P = PMD->findAnalysisPass(AID, false);
+  }
+
+  // Check other pass managers
+  for (std::vector<PMDataManager *>::iterator I = IndirectPassManagers.begin(),
+         E = IndirectPassManagers.end(); P == NULL && I != E; ++I)
+    P = (*I)->findAnalysisPass(AID, false);
+
   for (std::vector<ImmutablePass *>::iterator I = ImmutablePasses.begin(),
          E = ImmutablePasses.end(); P == NULL && I != E; ++I) {
     const PassInfo *PI = (*I)->getPassInfo();
@@ -528,19 +541,6 @@ Pass *PMTopLevelManager::findAnalysisPass(AnalysisID AID) {
           P = *I;
     }
   }
-
-  // Check pass managers
-  for (std::vector<Pass *>::iterator I = PassManagers.begin(),
-         E = PassManagers.end(); P == NULL && I != E; ++I) {
-    PMDataManager *PMD = dynamic_cast<PMDataManager *>(*I);
-    assert(PMD && "This is not a PassManager");
-    P = PMD->findAnalysisPass(AID, false);
-  }
-
-  // Check other pass managers
-  for (std::vector<PMDataManager *>::iterator I = IndirectPassManagers.begin(),
-         E = IndirectPassManagers.end(); P == NULL && I != E; ++I)
-    P = (*I)->findAnalysisPass(AID, false);
 
   return P;
 }
