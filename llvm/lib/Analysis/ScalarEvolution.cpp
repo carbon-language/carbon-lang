@@ -1339,6 +1339,49 @@ SCEVHandle ScalarEvolutionsImpl::createNodeForPHI(PHINode *PN) {
   return SCEVUnknown::get(PN);
 }
 
+/// GetConstantFactor - Determine the largest constant factor that S has.  For
+/// example, turn {4,+,8} -> 4.    (S umod result) should always equal zero.
+static uint64_t GetConstantFactor(SCEVHandle S) {
+  if (SCEVConstant *C = dyn_cast<SCEVConstant>(S)) {
+    if (uint64_t V = C->getValue()->getZExtValue())
+      return V;
+    else   // Zero is a multiple of everything.
+      return 1ULL << (S->getType()->getPrimitiveSizeInBits()-1);
+  }
+
+  if (SCEVTruncateExpr *T = dyn_cast<SCEVTruncateExpr>(S))
+    return GetConstantFactor(T->getOperand()) &
+           T->getType()->getIntegralTypeMask();
+  if (SCEVZeroExtendExpr *E = dyn_cast<SCEVZeroExtendExpr>(S))
+    return GetConstantFactor(E->getOperand());
+  
+  if (SCEVAddExpr *A = dyn_cast<SCEVAddExpr>(S)) {
+    // The result is the min of all operands.
+    uint64_t Res = GetConstantFactor(A->getOperand(0));
+    for (unsigned i = 1, e = A->getNumOperands(); i != e && Res > 1; ++i)
+      Res = std::min(Res, GetConstantFactor(A->getOperand(i)));
+    return Res;
+  }
+
+  if (SCEVMulExpr *M = dyn_cast<SCEVMulExpr>(S)) {
+    // The result is the product of all the operands.
+    uint64_t Res = GetConstantFactor(M->getOperand(0));
+    for (unsigned i = 1, e = M->getNumOperands(); i != e; ++i)
+      Res *= GetConstantFactor(M->getOperand(i));
+    return Res;
+  }
+    
+  if (SCEVAddRecExpr *A = dyn_cast<SCEVAddRecExpr>(S)) {
+    // FIXME: Generalize.
+    if (A->getNumOperands() == 2)
+      return std::min(GetConstantFactor(A->getOperand(0)),
+                      GetConstantFactor(A->getOperand(1)));
+    // ?
+  }
+  
+  // SCEVSDivExpr, SCEVUnknown.
+  return 1;
+}
 
 /// createSCEV - We know that there is no SCEV for the specified value.
 /// Analyze the expression.
@@ -1360,7 +1403,22 @@ SCEVHandle ScalarEvolutionsImpl::createSCEV(Value *V) {
     case Instruction::Sub:
       return SCEV::getMinusSCEV(getSCEV(I->getOperand(0)),
                                 getSCEV(I->getOperand(1)));
-
+    case Instruction::Or:
+      // If the RHS of the Or is a constant, we may have something like:
+      // X*4+1 which got turned into X*4|1.  Handle this as an add so loop
+      // optimizations will transparently handle this case.
+      if (ConstantInt *CI = dyn_cast<ConstantInt>(I->getOperand(1))) {
+        SCEVHandle LHS = getSCEV(I->getOperand(0));
+        uint64_t CommonFact = GetConstantFactor(LHS);
+        assert(CommonFact && "Common factor should at least be 1!");
+        if (CommonFact > CI->getZExtValue()) {
+          // If the LHS is a multiple that is larger than the RHS, use +.
+          return SCEVAddExpr::get(LHS,
+                                  getSCEV(I->getOperand(1)));
+        }
+      }
+      break;
+      
     case Instruction::Shl:
       // Turn shift left of a constant amount into a multiply.
       if (ConstantInt *SA = dyn_cast<ConstantInt>(I->getOperand(1))) {
