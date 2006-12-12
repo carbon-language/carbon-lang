@@ -901,10 +901,6 @@ inline bool BasicBlockPassManager_New::doFinalization(Function &F) {
 // FunctionPassManager_New implementation
 
 /// Create new Function pass manager
-FunctionPassManager_New::FunctionPassManager_New() {
-  FPM = new FunctionPassManagerImpl_New(0);
-}
-
 FunctionPassManager_New::FunctionPassManager_New(ModuleProvider *P) {
   FPM = new FunctionPassManagerImpl_New(0);
   // FPM is the top level manager.
