@@ -212,7 +212,7 @@ GenericValue JIT::runFunction(Function *F,
       } else {
         C = ConstantInt::get(Type::LongTy, (intptr_t)ArgPtr);
       }
-      C = ConstantExpr::getCast(C, ArgTy);  // Cast the integer to pointer
+      C = ConstantExpr::getIntToPtr(C, ArgTy);  // Cast the integer to pointer
       break;
     }
     Args.push_back(C);

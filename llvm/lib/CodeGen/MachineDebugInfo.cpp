@@ -292,7 +292,7 @@ public:
     
     if (GV) {
       // Set to pointer to global.
-      Elements.push_back(ConstantExpr::getCast(GV, EmptyTy));
+      Elements.push_back(ConstantExpr::getBitCast(GV, EmptyTy));
     } else {
       // Use NULL.
       Elements.push_back(ConstantPointerNull::get(EmptyTy));
@@ -301,7 +301,7 @@ public:
   virtual void Apply(GlobalVariable *&Field) {
     const PointerType *EmptyTy = SR.getEmptyStructPtrType();
     if (Field) {
-      Elements.push_back(ConstantExpr::getCast(Field, EmptyTy));
+      Elements.push_back(ConstantExpr::getBitCast(Field, EmptyTy));
     } else {
       Elements.push_back(ConstantPointerNull::get(EmptyTy));
     }
@@ -315,7 +315,7 @@ public:
     for (unsigned i = 0, N = Field.size(); i < N; ++i) {
       if (DebugInfoDesc *Element = Field[i]) {
         GlobalVariable *GVE = SR.Serialize(Element);
-        Constant *CE = ConstantExpr::getCast(GVE, EmptyTy);
+        Constant *CE = ConstantExpr::getBitCast(GVE, EmptyTy);
         ArrayElements.push_back(cast<Constant>(CE));
       } else {
         ArrayElements.push_back(ConstantPointerNull::get(EmptyTy));
@@ -328,7 +328,7 @@ public:
                                               CA, "llvm.dbg.array",
                                               SR.getModule());
     CAGV->setSection("llvm.metadata");
-    Constant *CAE = ConstantExpr::getCast(CAGV, EmptyTy);
+    Constant *CAE = ConstantExpr::getBitCast(CAGV, EmptyTy);
     Elements.push_back(CAE);
   }
 };
@@ -1323,7 +1323,7 @@ Constant *DISerializer::getString(const std::string &String) {
                                                ConstStr, "str", M);
     StrGV->setSection("llvm.metadata");
     // Convert to generic string pointer.
-    Slot = ConstantExpr::getCast(StrGV, getStrPtrType());
+    Slot = ConstantExpr::getBitCast(StrGV, getStrPtrType());
   }
   return Slot;
   

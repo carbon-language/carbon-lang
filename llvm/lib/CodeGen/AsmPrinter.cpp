@@ -446,7 +446,11 @@ void AsmPrinter::EmitConstantValueOnly(const Constant *CV) {
       // integer type.  This promotes constant folding and simplifies this code.
       if (isa<PointerType>(Ty)) {
         const Type *IntPtrTy = TD->getIntPtrType();
-        Op = ConstantExpr::getCast(Op, IntPtrTy);
+        Instruction::CastOps opcode = Instruction::CastOps(CE->getOpcode());
+        if (opcode == Instruction::IntToPtr)
+          Op = ConstantExpr::getIntegerCast(Op, IntPtrTy, false /*ZExt*/);
+        else 
+          Op = ConstantExpr::getCast(Instruction::PtrToInt, Op, IntPtrTy);
         return EmitConstantValueOnly(Op);
       }
       
