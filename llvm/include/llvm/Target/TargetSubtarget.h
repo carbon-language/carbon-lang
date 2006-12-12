@@ -27,13 +27,10 @@ namespace llvm {
 class TargetSubtarget {
   TargetSubtarget(const TargetSubtarget&);   // DO NOT IMPLEMENT
   void operator=(const TargetSubtarget&);  // DO NOT IMPLEMENT
-  std::string CPU; // CPU name.
 protected: // Can only create subclasses...
   TargetSubtarget();
 public:
   virtual ~TargetSubtarget();
-  void setCPU(const std::string &C) { CPU = C; }
-  const std::string &getCPU() const { return CPU; }
 };
 
 } // End llvm namespace

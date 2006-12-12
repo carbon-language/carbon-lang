@@ -542,6 +542,10 @@ bool DarwinAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
 
 
 bool DarwinAsmPrinter::doInitialization(Module &M) {
+#if 1
+  if (Subtarget.isGigaProcessor())
+     O << "\t.machine ppc970\n";
+#else
   const std::string &CPU = Subtarget.getCPU();
   
   if (CPU != "generic")
@@ -554,6 +558,7 @@ bool DarwinAsmPrinter::doInitialization(Module &M) {
     O << "\t.machine ppc7400\n";
   else
     O << "\t.machine ppc\n";
+#endif
      
   AsmPrinter::doInitialization(M);
   

@@ -460,7 +460,6 @@ void SubtargetEmitter::ParseFeaturesFunction(std::ostream &OS) {
         "                                  const std::string &CPU) {\n"
         "  SubtargetFeatures Features(FS);\n"
         "  Features.setCPUIfNone(CPU);\n"
-        "  setCPU(Features.getCPU());\n"
         "  uint32_t Bits =  Features.getBits(SubTypeKV, SubTypeKVSize,\n"
         "                                    FeatureKV, FeatureKVSize);\n";
         
