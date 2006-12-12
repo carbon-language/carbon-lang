@@ -333,7 +333,6 @@ protected:
   std::vector<Pass *> ForcedLastUses;
 
   // Top level manager.
-  // TODO : Make it a reference.
   PMTopLevelManager *TPM;
 
 private:
@@ -814,6 +813,8 @@ FunctionPassManager_New::FunctionPassManager_New() {
 
 FunctionPassManager_New::FunctionPassManager_New(ModuleProvider *P) {
   FPM = new FunctionPassManagerImpl_New(0);
+  // FPM is the top level manager.
+  FPM->setTopLevelManager(FPM);
   MP = P;
 }
 
@@ -880,6 +881,8 @@ FunctionPassManagerImpl_New::addPass(Pass *P) {
       // Create and add new manager
       activeBBPassManager = 
         new BasicBlockPassManager_New(getDepth() + 1);
+      // Inherit top level manager
+      activeBBPassManager->setTopLevelManager(this->getTopLevelManager());
       addPassToManager(activeBBPassManager, false);
       TPM->addOtherPassManager(activeBBPassManager);
 
@@ -1013,6 +1016,8 @@ ModulePassManager_New::addPass(Pass *P) {
       activeFunctionPassManager = 
         new FunctionPassManagerImpl_New(getDepth() + 1);
       addPassToManager(activeFunctionPassManager, false);
+      // Inherit top level manager
+      activeFunctionPassManager->setTopLevelManager(this->getTopLevelManager());
       TPM->addOtherPassManager(activeFunctionPassManager);
       
       // Add pass into new manager. This time it must succeed.
@@ -1077,6 +1082,8 @@ bool PassManagerImpl_New::addPass(Pass *P) {
 
   if (!activeManager || !activeManager->addPass(P)) {
     activeManager = new ModulePassManager_New(getDepth() + 1);
+    // Inherit top level manager
+    activeManager->setTopLevelManager(this->getTopLevelManager());
 
     // This top level manager is going to manage activeManager. 
     // Set up analysis resolver to connect them.
@@ -1108,6 +1115,8 @@ bool PassManagerImpl_New::run(Module &M) {
 /// Create new pass manager
 PassManager_New::PassManager_New() {
   PM = new PassManagerImpl_New(0);
+  // PM is the top level manager
+  PM->setTopLevelManager(PM);
 }
 
 /// add - Add a pass to the queue of passes to run.  This passes ownership of
