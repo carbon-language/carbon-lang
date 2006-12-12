@@ -399,7 +399,9 @@ public:
       // top level manager. Set up analysis resolver to connect them.
       AnalysisResolver_New *AR = new AnalysisResolver_New(*this);
       P->setResolver(AR);
+      initializeAnalysisImpl(P);
       addImmutablePass(IP);
+      recordAvailableAnalysis(IP);
     } 
     else 
       addPass(P);
@@ -504,7 +506,9 @@ public:
       // top level manager. Set up analysis resolver to connect them.
       AnalysisResolver_New *AR = new AnalysisResolver_New(*this);
       P->setResolver(AR);
+      initializeAnalysisImpl(P);
       addImmutablePass(IP);
+      recordAvailableAnalysis(IP);
     }
     else 
       addPass(P);
@@ -634,7 +638,6 @@ void PMDataManager::addPassToManager(Pass *P,
 
     // Take a note of analysis required and made available by this pass.
     // Remove the analysis not preserved by this pass
-    initializeAnalysisImpl(P);
     removeNotPreservedAnalysis(P);
     recordAvailableAnalysis(P);
   }
