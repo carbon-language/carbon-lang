@@ -3942,6 +3942,9 @@ SDOperand SelectionDAGLowering::CopyValueToVirtualRegister(Value *V,
     else
       Op = DAG.getNode(ISD::ANY_EXTEND, DestVT, Op);
     return DAG.getCopyToReg(getRoot(), Reg, Op);
+  } else if (SrcVT == MVT::f32 || SrcVT == MVT::f64) {
+    return DAG.getCopyToReg(getRoot(), Reg,
+                            DAG.getNode(ISD::BIT_CONVERT, DestVT, Op));
   } else  {
     // The src value is expanded into multiple registers.
     SDOperand Lo = DAG.getNode(ISD::EXTRACT_ELEMENT, DestVT,
