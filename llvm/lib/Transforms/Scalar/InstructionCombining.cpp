@@ -205,13 +205,14 @@ namespace {
     /// InsertCastBefore - Insert a cast of V to TY before the instruction POS.
     /// This also adds the cast to the worklist.  Finally, this returns the
     /// cast.
-    Value *InsertCastBefore(Value *V, const Type *Ty, Instruction &Pos) {
+    Value *InsertCastBefore(Instruction::CastOps opc, Value *V, const Type *Ty,
+                            Instruction &Pos) {
       if (V->getType() == Ty) return V;
 
       if (Constant *CV = dyn_cast<Constant>(V))
-        return ConstantExpr::getCast(CV, Ty);
+        return ConstantExpr::getCast(opc, CV, Ty);
       
-      Instruction *C = CastInst::createInferredCast(V, Ty, V->getName(), &Pos);
+      Instruction *C = CastInst::create(opc, V, Ty, V->getName(), &Pos);
       WorkList.push_back(C);
       return C;
     }
@@ -269,7 +270,8 @@ namespace {
     /// InsertBefore instruction.  This is specialized a bit to avoid inserting
     /// casts that are known to not do anything...
     ///
-    Value *InsertOperandCastBefore(Value *V, const Type *DestTy,
+    Value *InsertOperandCastBefore(Instruction::CastOps opcode,
+                                   Value *V, const Type *DestTy,
                                    Instruction *InsertBefore);
 
     // SimplifyCommutative - This performs a few simplifications for commutative
@@ -398,13 +400,14 @@ static bool ValueRequiresCast(const Value *V, const Type *Ty, TargetData *TD) {
 /// InsertBefore instruction.  This is specialized a bit to avoid inserting
 /// casts that are known to not do anything...
 ///
-Value *InstCombiner::InsertOperandCastBefore(Value *V, const Type *DestTy,
+Value *InstCombiner::InsertOperandCastBefore(Instruction::CastOps opcode,
+                                             Value *V, const Type *DestTy,
                                              Instruction *InsertBefore) {
   if (V->getType() == DestTy) return V;
   if (Constant *C = dyn_cast<Constant>(V))
-    return ConstantExpr::getCast(C, DestTy);
+    return ConstantExpr::getCast(opcode, C, DestTy);
   
-  return InsertCastBefore(V, DestTy, *InsertBefore);
+  return InsertCastBefore(opcode, V, DestTy, *InsertBefore);
 }
 
 // SimplifyCommutative - This performs a few simplifications for commutative
@@ -1894,7 +1897,7 @@ FoundSExt:
         (CI->getType()->getPrimitiveSize() == 
          TD->getIntPtrType()->getPrimitiveSize()) 
         && isa<PointerType>(CI->getOperand(0)->getType())) {
-      Value *I2 = InsertCastBefore(CI->getOperand(0),
+      Value *I2 = InsertCastBefore(Instruction::BitCast, CI->getOperand(0),
                                    PointerType::get(Type::SByteTy), I);
       I2 = InsertNewInstBefore(new GetElementPtrInst(I2, Other, "ctg2"), I);
       return new PtrToIntInst(I2, CI->getType());
@@ -2190,7 +2193,7 @@ Instruction *InstCombiner::visitMul(BinaryOperator &I) {
                                           SCOpTy->getPrimitiveSizeInBits()-1);
         if (SCIOp0->getType()->isUnsigned()) {
           const Type *NewTy = SCIOp0->getType()->getSignedVersion();
-          SCIOp0 = InsertCastBefore(SCIOp0, NewTy, I);
+          SCIOp0 = InsertCastBefore(Instruction::BitCast, SCIOp0, NewTy, I);
         }
 
         Value *V =
@@ -2200,8 +2203,14 @@ Instruction *InstCombiner::visitMul(BinaryOperator &I) {
 
         // If the multiply type is not the same as the source type, sign extend
         // or truncate to the multiply type.
-        if (I.getType() != V->getType())
-          V = InsertCastBefore(V, I.getType(), I);
+        if (I.getType() != V->getType()) {
+          unsigned SrcBits = V->getType()->getPrimitiveSizeInBits();
+          unsigned DstBits = I.getType()->getPrimitiveSizeInBits();
+          Instruction::CastOps opcode = 
+            (SrcBits == DstBits ? Instruction::BitCast : 
+             (SrcBits < DstBits ? Instruction::SExt : Instruction::Trunc));
+          V = InsertCastBefore(opcode, V, I.getType(), I);
+        }
 
         Value *OtherOp = Op0 == BoolCast ? I.getOperand(1) : Op0;
         return BinaryOperator::createAnd(V, OtherOp);
@@ -2863,12 +2872,14 @@ Instruction *InstCombiner::OptAndOp(Instruction *Op,
       Constant *ShrMask = ConstantExpr::getLShr(AllOne, OpRHS);
       Constant *CI = ConstantExpr::getAnd(AndRHS, ShrMask);
       if (CI == AndRHS) {          // Masking out bits shifted in.
+        // (Val ashr C1) & C2 -> (Val lshr C1) & C2
         // Make the argument unsigned.
         Value *ShVal = Op->getOperand(0);
         ShVal = InsertNewInstBefore(new ShiftInst(Instruction::LShr, ShVal,
                                                   OpRHS, Op->getName()),
                                     TheAnd);
-        Value *AndRHS2 = ConstantExpr::getCast(AndRHS, ShVal->getType());
+        Value *AndRHS2 = ConstantExpr::getBitCast(AndRHS, ShVal->getType());
+                                                 
         return BinaryOperator::createAnd(ShVal, AndRHS2, TheAnd.getName());
       }
     }
@@ -2897,9 +2908,9 @@ Instruction *InstCombiner::InsertRangeTest(Value *V, Constant *Lo, Constant *Hi,
     InsertNewInstBefore(Add, IB);
     // Convert to unsigned for the comparison.
     const Type *UnsType = Add->getType()->getUnsignedVersion();
-    Value *OffsetVal = InsertCastBefore(Add, UnsType, IB);
+    Value *OffsetVal = InsertCastBefore(Instruction::BitCast, Add, UnsType, IB);
     AddCST = ConstantExpr::getAdd(AddCST, Hi);
-    AddCST = ConstantExpr::getCast(AddCST, UnsType);
+    AddCST = ConstantExpr::getBitCast(AddCST, UnsType);
     return new SetCondInst(Instruction::SetLT, OffsetVal, AddCST);
   }
 
@@ -2918,9 +2929,9 @@ Instruction *InstCombiner::InsertRangeTest(Value *V, Constant *Lo, Constant *Hi,
   InsertNewInstBefore(Add, IB);
   // Convert to unsigned for the comparison.
   const Type *UnsType = Add->getType()->getUnsignedVersion();
-  Value *OffsetVal = InsertCastBefore(Add, UnsType, IB);
+  Value *OffsetVal = InsertCastBefore(Instruction::BitCast, Add, UnsType, IB);
   AddCST = ConstantExpr::getAdd(AddCST, Hi);
-  AddCST = ConstantExpr::getCast(AddCST, UnsType);
+  AddCST = ConstantExpr::getBitCast(AddCST, UnsType);
   return new SetCondInst(Instruction::SetGT, OffsetVal, AddCST);
 }
 
@@ -3101,7 +3112,7 @@ Instruction *InstCombiner::visitAnd(BinaryOperator &I) {
             } else if (CastOp->getOpcode() == Instruction::Or) {
               // Change: and (cast (or X, C1) to T), C2
               // into  : trunc(C1)&C2 iff trunc(C1)&C2 == C2
-              Constant *C3 = ConstantExpr::getCast(AndCI, I.getType());
+              Constant *C3 = ConstantExpr::getBitCast(AndCI, I.getType());
               if (ConstantExpr::getAnd(C3, AndRHS) == AndRHS)   // trunc(C1)&C2
                 return ReplaceInstUsesWith(I, AndRHS);
             }
@@ -3226,9 +3237,10 @@ Instruction *InstCombiner::visitAnd(BinaryOperator &I) {
                                                       LHSVal->getName()+".off");
                 InsertNewInstBefore(Add, I);
                 const Type *UnsType = Add->getType()->getUnsignedVersion();
-                Value *OffsetVal = InsertCastBefore(Add, UnsType, I);
+                Value *OffsetVal = InsertCastBefore(Instruction::BitCast, Add,
+                                                    UnsType, I);
                 AddCST = ConstantExpr::getSub(RHSCst, LHSCst);
-                AddCST = ConstantExpr::getCast(AddCST, UnsType);
+                AddCST = ConstantExpr::getBitCast(AddCST, UnsType);
                 return new SetCondInst(Instruction::SetGT, OffsetVal, AddCST);
               }
               break;                        // (X != 13 & X != 15) -> no change
@@ -3614,9 +3626,10 @@ Instruction *InstCombiner::visitOr(BinaryOperator &I) {
                                                       LHSVal->getName()+".off");
                 InsertNewInstBefore(Add, I);
                 const Type *UnsType = Add->getType()->getUnsignedVersion();
-                Value *OffsetVal = InsertCastBefore(Add, UnsType, I);
+                Value *OffsetVal = InsertCastBefore(Instruction::BitCast, Add,
+                                                    UnsType, I);
                 AddCST = ConstantExpr::getSub(AddOne(RHSCst), LHSCst);
-                AddCST = ConstantExpr::getCast(AddCST, UnsType);
+                AddCST = ConstantExpr::getBitCast(AddCST, UnsType);
                 return new SetCondInst(Instruction::SetLT, OffsetVal, AddCST);
               }
               break;                  // (X == 13 | X == 15) -> no change
@@ -3917,11 +3930,11 @@ static Value *EmitGEPOffset(User *GEP, Instruction &I, InstCombiner &IC) {
   for (unsigned i = 1, e = GEP->getNumOperands(); i != e; ++i, ++GTI) {
     Value *Op = GEP->getOperand(i);
     uint64_t Size = TD.getTypeSize(GTI.getIndexedType()) & PtrSizeMask;
-    Constant *Scale = ConstantExpr::getCast(ConstantInt::get(UIntPtrTy, Size),
+    Constant *Scale = ConstantExpr::getBitCast(ConstantInt::get(UIntPtrTy, Size),
                                             SIntPtrTy);
     if (Constant *OpC = dyn_cast<Constant>(Op)) {
       if (!OpC->isNullValue()) {
-        OpC = ConstantExpr::getCast(OpC, SIntPtrTy);
+        OpC = ConstantExpr::getIntegerCast(OpC, SIntPtrTy, true /*SExt*/);
         Scale = ConstantExpr::getMul(OpC, Scale);
         if (Constant *RC = dyn_cast<Constant>(Result))
           Result = ConstantExpr::getAdd(RC, Scale);
@@ -4089,9 +4102,9 @@ Instruction *InstCombiner::FoldGEPSetCC(User *GEPLHS, Value *RHS,
         // signed comparison.
         const Type *NewTy = LHSV->getType()->getSignedVersion();
         if (LHSV->getType() != NewTy)
-          LHSV = InsertCastBefore(LHSV, NewTy, I);
+          LHSV = InsertCastBefore(Instruction::BitCast, LHSV, NewTy, I);
         if (RHSV->getType() != NewTy)
-          RHSV = InsertCastBefore(RHSV, NewTy, I);
+          RHSV = InsertCastBefore(Instruction::BitCast, RHSV, NewTy, I);
         return new SetCondInst(Cond, LHSV, RHSV);
       }
     }
@@ -4388,7 +4401,8 @@ Instruction *InstCombiner::visitSetCondInst(SetCondInst &I) {
                 if (AndTy == Ty) 
                   LHSI->setOperand(0, Shift->getOperand(0));
                 else {
-                  Value *NewCast = InsertCastBefore(Shift->getOperand(0), AndTy,
+                  Value *NewCast = InsertCastBefore(Instruction::BitCast,
+                                                    Shift->getOperand(0), AndTy,
                                                     *Shift);
                   LHSI->setOperand(0, NewCast);
                 }
@@ -4414,7 +4428,7 @@ Instruction *InstCombiner::visitSetCondInst(SetCondInst &I) {
               // Make sure we insert a logical shift.
               Constant *NewAndCST = AndCST;
               if (AndCST->getType()->isSigned())
-                NewAndCST = ConstantExpr::getCast(AndCST,
+                NewAndCST = ConstantExpr::getBitCast(AndCST,
                                       AndCST->getType()->getUnsignedVersion());
               NS = new ShiftInst(Instruction::LShr, NewAndCST,
                                  Shift->getOperand(1), "tmp");
@@ -4423,11 +4437,13 @@ Instruction *InstCombiner::visitSetCondInst(SetCondInst &I) {
 
             // If C's sign doesn't agree with the and, insert a cast now.
             if (NS->getType() != LHSI->getType())
-              NS = InsertCastBefore(NS, LHSI->getType(), I);
+              NS = InsertCastBefore(Instruction::BitCast, NS, LHSI->getType(),
+                                    I);
 
             Value *ShiftOp = Shift->getOperand(0);
             if (ShiftOp->getType() != LHSI->getType())
-              ShiftOp = InsertCastBefore(ShiftOp, LHSI->getType(), I);
+              ShiftOp = InsertCastBefore(Instruction::BitCast, ShiftOp, 
+                                         LHSI->getType(), I);
               
             // Compute X & (C << Y).
             Instruction *NewAnd =
@@ -4755,7 +4771,7 @@ Instruction *InstCombiner::visitSetCondInst(SetCondInst &I) {
               // If 'X' is not signed, insert a cast now...
               if (!BOC->getType()->isSigned()) {
                 const Type *DestTy = BOC->getType()->getSignedVersion();
-                X = InsertCastBefore(X, DestTy, I);
+                X = InsertCastBefore(Instruction::BitCast, X, DestTy, I);
               }
               return new SetCondInst(isSetNE ? Instruction::SetLT :
                                          Instruction::SetGE, X,
@@ -4770,8 +4786,8 @@ Instruction *InstCombiner::visitSetCondInst(SetCondInst &I) {
               // If 'X' is signed, insert a cast now.
               if (NegX->getType()->isSigned()) {
                 const Type *DestTy = NegX->getType()->getUnsignedVersion();
-                X = InsertCastBefore(X, DestTy, I);
-                NegX = ConstantExpr::getCast(NegX, DestTy);
+                X = InsertCastBefore(Instruction::BitCast, X, DestTy, I);
+                NegX = ConstantExpr::getBitCast(NegX, DestTy);
               }
 
               return new SetCondInst(isSetNE ? Instruction::SetGE :
@@ -4928,10 +4944,11 @@ Instruction *InstCombiner::visitSetCondInst(SetCondInst &I) {
       // If Op1 is a constant, we can fold the cast into the constant.
       if (Op1->getType() != Op0->getType())
         if (Constant *Op1C = dyn_cast<Constant>(Op1)) {
-          Op1 = ConstantExpr::getCast(Op1C, Op0->getType());
+          Op1 = ConstantExpr::getCast(Instruction::BitCast, Op1C, 
+                                      Op0->getType());
         } else {
           // Otherwise, cast the RHS right before the setcc
-          Op1 = InsertCastBefore(Op1, Op0->getType(), I);
+          Op1 = InsertCastBefore(Instruction::BitCast, Op1, Op0->getType(), I);
         }
       return BinaryOperator::create(I.getOpcode(), Op0, Op1);
     }
@@ -5398,7 +5415,7 @@ Instruction *InstCombiner::FoldShiftByConstant(Value *Op0, ConstantInt *Op1,
       
       Value *Op = ShiftOp->getOperand(0);
       if (Op->getType() != C->getType())
-        Op = InsertCastBefore(Op, I.getType(), I);
+        Op = InsertCastBefore(Instruction::BitCast, Op, I.getType(), I);
       
       Instruction *Mask =
         BinaryOperator::createAnd(Op, C, Op->getName()+".mask");
@@ -5420,7 +5437,8 @@ Instruction *InstCombiner::FoldShiftByConstant(Value *Op0, ConstantInt *Op1,
         }
       } else {
         // (X >>s C1) << C2  where C1 > C2  === (X >>s (C1-C2)) & mask
-        Op = InsertCastBefore(Mask, I.getType()->getSignedVersion(), I);
+        Op = InsertCastBefore(Instruction::BitCast, Mask, 
+                              I.getType()->getSignedVersion(), I);
         Instruction *Shift =
           new ShiftInst(ShiftOp->getOpcode(), Op,
                         ConstantInt::get(Type::UByteTy, ShiftAmt1-ShiftAmt2));
@@ -5851,7 +5869,8 @@ Instruction *InstCombiner::commonIntCastTransforms(CastInst &CI) {
       case Instruction::SExt:
         // We need to emit a cast to truncate, then a cast to sext.
         return CastInst::create(Instruction::SExt,
-            InsertCastBefore(Res, Src->getType(), CI), DestTy);
+            InsertCastBefore(Instruction::Trunc, Res, Src->getType(), 
+                             CI), DestTy);
       }
     }
   }
@@ -5874,10 +5893,15 @@ Instruction *InstCombiner::commonIntCastTransforms(CastInst &CI) {
       if (DestBitSize == SrcBitSize || 
           !ValueRequiresCast(Op1, DestTy,TD) ||
           !ValueRequiresCast(Op0, DestTy, TD)) {
-        Value *Op0c = InsertOperandCastBefore(Op0, DestTy, SrcI);
-        Value *Op1c = InsertOperandCastBefore(Op1, DestTy, SrcI);
-        return BinaryOperator::create(cast<BinaryOperator>(SrcI)
-                         ->getOpcode(), Op0c, Op1c);
+        unsigned Op0BitSize = Op0->getType()->getPrimitiveSizeInBits();
+        Instruction::CastOps opcode =
+          (Op0BitSize > DestBitSize ? Instruction::Trunc :
+           (Op0BitSize == DestBitSize ? Instruction::BitCast : 
+            Op0->getType()->isSigned() ? Instruction::SExt :Instruction::ZExt));
+        Value *Op0c = InsertOperandCastBefore(opcode, Op0, DestTy, SrcI);
+        Value *Op1c = InsertOperandCastBefore(opcode, Op1, DestTy, SrcI);
+        return BinaryOperator::create(
+            cast<BinaryOperator>(SrcI)->getOpcode(), Op0c, Op1c);
       }
     }
 
@@ -5886,7 +5910,7 @@ Instruction *InstCombiner::commonIntCastTransforms(CastInst &CI) {
         SrcI->getOpcode() == Instruction::Xor &&
         Op1 == ConstantBool::getTrue() &&
         (!Op0->hasOneUse() || !isa<SetCondInst>(Op0))) {
-      Value *New = InsertOperandCastBefore(Op0, DestTy, &CI);
+      Value *New = InsertOperandCastBefore(Instruction::ZExt, Op0, DestTy, &CI);
       return BinaryOperator::createXor(New, ConstantInt::get(CI.getType(), 1));
     }
     break;
@@ -5901,8 +5925,10 @@ Instruction *InstCombiner::commonIntCastTransforms(CastInst &CI) {
       // only be converting signedness, which is a noop.
       if (!ValueRequiresCast(Op1, DestTy,TD) || 
           !ValueRequiresCast(Op0, DestTy, TD)) {
-        Value *Op0c = InsertOperandCastBefore(Op0, DestTy, SrcI);
-        Value *Op1c = InsertOperandCastBefore(Op1, DestTy, SrcI);
+        Value *Op0c = InsertOperandCastBefore(Instruction::BitCast, 
+                                              Op0, DestTy, SrcI);
+        Value *Op1c = InsertOperandCastBefore(Instruction::BitCast, 
+                                              Op1, DestTy, SrcI);
         return BinaryOperator::create(
           cast<BinaryOperator>(SrcI)->getOpcode(), Op0c, Op1c);
       }
@@ -5917,7 +5943,9 @@ Instruction *InstCombiner::commonIntCastTransforms(CastInst &CI) {
     // in the value.
     if (DestBitSize == SrcBitSize ||
         (DestBitSize < SrcBitSize && isa<Constant>(Op1))) {
-      Value *Op0c = InsertOperandCastBefore(Op0, DestTy, SrcI);
+      Instruction::CastOps opcode = (DestBitSize == SrcBitSize ?
+          Instruction::BitCast : Instruction::Trunc);
+      Value *Op0c = InsertOperandCastBefore(opcode, Op0, DestTy, SrcI);
       return new ShiftInst(Instruction::Shl, Op0c, Op1);
     }
     break;
@@ -6014,13 +6042,18 @@ Instruction *InstCombiner::visitTrunc(CastInst &CI) {
         
         // Get a mask for the bits shifting in.
         uint64_t Mask = (~0ULL >> (64-ShAmt)) << DestBitWidth;
-        if (SrcI->hasOneUse() && MaskedValueIsZero(SrcI->getOperand(0), Mask)) {
+        Value* SrcIOp0 = SrcI->getOperand(0);
+        if (SrcI->hasOneUse() && MaskedValueIsZero(SrcIOp0, Mask)) {
           if (ShAmt >= DestBitWidth)        // All zeros.
             return ReplaceInstUsesWith(CI, Constant::getNullValue(Ty));
 
           // Okay, we can shrink this.  Truncate the input, then return a new
           // shift.
-          Value *V = InsertCastBefore(SrcI->getOperand(0), Ty, CI);
+          Instruction::CastOps opcode = 
+            (SrcIOp0->getType()->getPrimitiveSizeInBits() == 
+             Ty->getPrimitiveSizeInBits() ? Instruction::BitCast :
+             Instruction::Trunc);
+          Value *V = InsertCastBefore(opcode, SrcIOp0, Ty, CI);
           return new ShiftInst(Instruction::LShr, V, SrcI->getOperand(1));
         }
       } else {     // This is a variable shr.
@@ -6188,8 +6221,10 @@ Instruction *InstCombiner::visitBitCast(CastInst &CI) {
              Tmp->getOperand(0)->getType() == DestTy) ||
             ((Tmp = dyn_cast<CastInst>(SVI->getOperand(1))) && 
              Tmp->getOperand(0)->getType() == DestTy)) {
-          Value *LHS = InsertOperandCastBefore(SVI->getOperand(0), DestTy, &CI);
-          Value *RHS = InsertOperandCastBefore(SVI->getOperand(1), DestTy, &CI);
+          Value *LHS = InsertOperandCastBefore(Instruction::BitCast,
+                                               SVI->getOperand(0), DestTy, &CI);
+          Value *RHS = InsertOperandCastBefore(Instruction::BitCast,
+                                               SVI->getOperand(1), DestTy, &CI);
           // Return a new shuffle vector.  Use the same element ID's, as we
           // know the vector types match #elts.
           return new ShuffleVectorInst(LHS, RHS, SVI->getOperand(2));
@@ -6737,7 +6772,7 @@ Instruction *InstCombiner::visitCallInst(CallInst &CI) {
       // Turn PPC lvx     -> load if the pointer is known aligned.
       // Turn X86 loadups -> load if the pointer is known aligned.
       if (GetKnownAlignment(II->getOperand(1), TD) >= 16) {
-        Value *Ptr = InsertCastBefore(II->getOperand(1),
+        Value *Ptr = InsertCastBefore(Instruction::BitCast, II->getOperand(1),
                                       PointerType::get(II->getType()), CI);
         return new LoadInst(Ptr);
       }
@@ -6747,7 +6782,8 @@ Instruction *InstCombiner::visitCallInst(CallInst &CI) {
       // Turn stvx -> store if the pointer is known aligned.
       if (GetKnownAlignment(II->getOperand(2), TD) >= 16) {
         const Type *OpPtrTy = PointerType::get(II->getOperand(1)->getType());
-        Value *Ptr = InsertCastBefore(II->getOperand(2), OpPtrTy, CI);
+        Value *Ptr = InsertCastBefore(Instruction::BitCast, II->getOperand(2),
+                                      OpPtrTy, CI);
         return new StoreInst(II->getOperand(1), Ptr);
       }
       break;
@@ -6758,7 +6794,8 @@ Instruction *InstCombiner::visitCallInst(CallInst &CI) {
       // Turn X86 storeu -> store if the pointer is known aligned.
       if (GetKnownAlignment(II->getOperand(1), TD) >= 16) {
         const Type *OpPtrTy = PointerType::get(II->getOperand(2)->getType());
-        Value *Ptr = InsertCastBefore(II->getOperand(1), OpPtrTy, CI);
+        Value *Ptr = InsertCastBefore(Instruction::BitCast, II->getOperand(1),
+                                      OpPtrTy, CI);
         return new StoreInst(II->getOperand(2), Ptr);
       }
       break;
@@ -6792,8 +6829,10 @@ Instruction *InstCombiner::visitCallInst(CallInst &CI) {
         
         if (AllEltsOk) {
           // Cast the input vectors to byte vectors.
-          Value *Op0 = InsertCastBefore(II->getOperand(1), Mask->getType(), CI);
-          Value *Op1 = InsertCastBefore(II->getOperand(2), Mask->getType(), CI);
+          Value *Op0 = InsertCastBefore(Instruction::BitCast, 
+                                        II->getOperand(1), Mask->getType(), CI);
+          Value *Op1 = InsertCastBefore(Instruction::BitCast,
+                                        II->getOperand(2), Mask->getType(), CI);
           Value *Result = UndefValue::get(Op0->getType());
           
           // Only extract each element once.
@@ -7316,15 +7355,18 @@ Instruction *InstCombiner::visitPHINode(PHINode &PN) {
   return 0;
 }
 
-static Value *InsertSignExtendToPtrTy(Value *V, const Type *DTy,
-                                      Instruction *InsertPoint,
-                                      InstCombiner *IC) {
-  unsigned PS = IC->getTargetData().getPointerSize();
-  const Type *VTy = V->getType();
-  if (!VTy->isSigned() && VTy->getPrimitiveSize() < PS)
-    // We must insert a cast to ensure we sign-extend.
-    V = IC->InsertCastBefore(V, VTy->getSignedVersion(), *InsertPoint);
-  return IC->InsertCastBefore(V, DTy, *InsertPoint);
+static Value *InsertCastToIntPtrTy(Value *V, const Type *DTy,
+                                   Instruction *InsertPoint,
+                                   InstCombiner *IC) {
+  unsigned PtrSize = IC->getTargetData().getPointerSize();
+  unsigned VTySize = V->getType()->getPrimitiveSize();
+  // We must cast correctly to the pointer type. Ensure that we
+  // sign extend the integer value if it is smaller as this is
+  // used for address computation.
+  Instruction::CastOps opcode = 
+     (VTySize < PtrSize ? Instruction::SExt :
+      (VTySize == PtrSize ? Instruction::BitCast : Instruction::Trunc));
+  return IC->InsertCastBefore(opcode, V, DTy, *InsertPoint);
 }
 
 
@@ -7384,11 +7426,12 @@ Instruction *InstCombiner::visitGetElementPtrInst(GetElementPtrInst &GEP) {
       Value *Op = GEP.getOperand(i);
       if (Op->getType()->getPrimitiveSize() > TD->getPointerSize())
         if (Constant *C = dyn_cast<Constant>(Op)) {
-          GEP.setOperand(i, ConstantExpr::getCast(C,
+          GEP.setOperand(i, ConstantExpr::getTrunc(C,
                                      TD->getIntPtrType()->getSignedVersion()));
           MadeChange = true;
         } else {
-          Op = InsertCastBefore(Op, TD->getIntPtrType(), GEP);
+          Op = InsertCastBefore(Instruction::Trunc, Op, TD->getIntPtrType(),
+                                GEP);
           GEP.setOperand(i, Op);
           MadeChange = true;
         }
@@ -7398,7 +7441,7 @@ Instruction *InstCombiner::visitGetElementPtrInst(GetElementPtrInst &GEP) {
       if (ConstantInt *CUI = dyn_cast<ConstantInt>(Op))
         if (CUI->getType()->isUnsigned()) {
           GEP.setOperand(i, 
-            ConstantExpr::getCast(CUI, CUI->getType()->getSignedVersion()));
+            ConstantExpr::getBitCast(CUI, CUI->getType()->getSignedVersion()));
           MadeChange = true;
         }
     }
@@ -7444,22 +7487,22 @@ Instruction *InstCombiner::visitGetElementPtrInst(GetElementPtrInst &GEP) {
         // target's pointer size.
         if (SO1->getType() != GO1->getType()) {
           if (Constant *SO1C = dyn_cast<Constant>(SO1)) {
-            SO1 = ConstantExpr::getCast(SO1C, GO1->getType());
+            SO1 = ConstantExpr::getIntegerCast(SO1C, GO1->getType(), true);
           } else if (Constant *GO1C = dyn_cast<Constant>(GO1)) {
-            GO1 = ConstantExpr::getCast(GO1C, SO1->getType());
+            GO1 = ConstantExpr::getIntegerCast(GO1C, SO1->getType(), true);
           } else {
             unsigned PS = TD->getPointerSize();
             if (SO1->getType()->getPrimitiveSize() == PS) {
               // Convert GO1 to SO1's type.
-              GO1 = InsertSignExtendToPtrTy(GO1, SO1->getType(), &GEP, this);
+              GO1 = InsertCastToIntPtrTy(GO1, SO1->getType(), &GEP, this);
 
             } else if (GO1->getType()->getPrimitiveSize() == PS) {
               // Convert SO1 to GO1's type.
-              SO1 = InsertSignExtendToPtrTy(SO1, GO1->getType(), &GEP, this);
+              SO1 = InsertCastToIntPtrTy(SO1, GO1->getType(), &GEP, this);
             } else {
               const Type *PT = TD->getIntPtrType();
-              SO1 = InsertSignExtendToPtrTy(SO1, PT, &GEP, this);
-              GO1 = InsertSignExtendToPtrTy(GO1, PT, &GEP, this);
+              SO1 = InsertCastToIntPtrTy(SO1, PT, &GEP, this);
+              GO1 = InsertCastToIntPtrTy(GO1, PT, &GEP, this);
             }
           }
         }
@@ -7593,7 +7636,8 @@ Instruction *InstCombiner::visitGetElementPtrInst(GetElementPtrInst &GEP) {
             Scale = ConstantInt::get(Scale->getType(),
                                       Scale->getZExtValue() / ArrayEltSize);
           if (Scale->getZExtValue() != 1) {
-            Constant *C = ConstantExpr::getCast(Scale, NewIdx->getType());
+            Constant *C = ConstantExpr::getIntegerCast(Scale, NewIdx->getType(),
+                                                       true /*SExt*/);
             Instruction *Sc = BinaryOperator::createMul(NewIdx, C, "idxscale");
             NewIdx = InsertNewInstBefore(Sc, GEP);
           }
@@ -8279,7 +8323,7 @@ Instruction *InstCombiner::visitExtractElementInst(ExtractElementInst &EI) {
           return BinaryOperator::create(BO->getOpcode(), newEI0, newEI1);
         }
       } else if (isa<LoadInst>(I)) {
-        Value *Ptr = InsertCastBefore(I->getOperand(0),
+        Value *Ptr = InsertCastBefore(Instruction::BitCast, I->getOperand(0),
                                       PointerType::get(EI.getType()), EI);
         GetElementPtrInst *GEP = 
           new GetElementPtrInst(Ptr, EI.getOperand(1), I->getName() + ".gep");
@@ -8659,7 +8703,7 @@ static bool TryToSinkInstruction(Instruction *I, BasicBlock *DestBlock) {
 }
 
 /// OptimizeConstantExpr - Given a constant expression and target data layout
-/// information, symbolically evaluation the constant expr to something simpler
+/// information, symbolically evaluate the constant expr to something simpler
 /// if possible.
 static Constant *OptimizeConstantExpr(ConstantExpr *CE, const TargetData *TD) {
   if (!TD) return CE;
@@ -8677,8 +8721,8 @@ static Constant *OptimizeConstantExpr(ConstantExpr *CE, const TargetData *TD) {
       std::vector<Value*> Ops(CE->op_begin()+1, CE->op_end());
       uint64_t Offset = TD->getIndexedOffset(Ptr->getType(), Ops);
       Constant *C = ConstantInt::get(Type::ULongTy, Offset);
-      C = ConstantExpr::getCast(C, TD->getIntPtrType());
-      return ConstantExpr::getCast(C, CE->getType());
+      C = ConstantExpr::getIntegerCast(C, TD->getIntPtrType(), true /*SExt*/);
+      return ConstantExpr::getIntToPtr(C, CE->getType());
     }
   }
   
