@@ -190,6 +190,9 @@ def STRH    : InstARM<(ops IntRegs:$src, IntRegs:$addr),
 def MOV   : InstARM<(ops IntRegs:$dst, op_addr_mode1:$src),
                     "mov $dst, $src", [(set IntRegs:$dst, addr_mode1:$src)]>;
 
+def MVN     : InstARM<(ops IntRegs:$dst, op_addr_mode1:$src),
+                       "mvn $dst, $src", [(set IntRegs:$dst, (not addr_mode1:$src))]>;
+
 def ADD     : Addr1BinOp<"add",  add>;
 def ADCS    : Addr1BinOp<"adcs", adde>;
 def ADDS    : Addr1BinOp<"adds", addc>;
