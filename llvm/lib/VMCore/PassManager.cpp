@@ -768,7 +768,7 @@ BasicBlockPassManager_New::runOnFunction(Function &F) {
     for (std::vector<Pass *>::iterator itr = passVectorBegin(),
            e = passVectorEnd(); itr != e; ++itr) {
       Pass *P = *itr;
-      
+      initializeAnalysisImpl(P);
       BasicBlockPass *BP = dynamic_cast<BasicBlockPass*>(P);
       Changed |= BP->runOnBasicBlock(*I);
       removeNotPreservedAnalysis(P);
@@ -977,7 +977,7 @@ bool FunctionPassManagerImpl_New::runOnFunction(Function &F) {
   for (std::vector<Pass *>::iterator itr = passVectorBegin(),
          e = passVectorEnd(); itr != e; ++itr) {
     Pass *P = *itr;
-    
+    initializeAnalysisImpl(P);    
     FunctionPass *FP = dynamic_cast<FunctionPass*>(P);
     Changed |= FP->runOnFunction(F);
     removeNotPreservedAnalysis(P);
@@ -1104,7 +1104,7 @@ ModulePassManager_New::runOnModule(Module &M) {
   for (std::vector<Pass *>::iterator itr = passVectorBegin(),
          e = passVectorEnd(); itr != e; ++itr) {
     Pass *P = *itr;
-
+    initializeAnalysisImpl(P);
     ModulePass *MP = dynamic_cast<ModulePass*>(P);
     Changed |= MP->runOnModule(M);
     removeNotPreservedAnalysis(P);
