@@ -1514,6 +1514,29 @@ Constant *ConstantExpr::getPointerCast(Constant *S, const Type *Ty) {
   return getCast(Instruction::BitCast, S, Ty);
 }
 
+Constant *ConstantExpr::getIntegerCast(Constant *C, const Type *Ty, 
+                                       bool isSigned) {
+  assert(C->getType()->isIntegral() && Ty->isIntegral() && "Invalid cast");
+  unsigned SrcBits = C->getType()->getPrimitiveSizeInBits();
+  unsigned DstBits = Ty->getPrimitiveSizeInBits();
+  Instruction::CastOps opcode =
+    (SrcBits == DstBits ? Instruction::BitCast :
+     (SrcBits > DstBits ? Instruction::Trunc :
+      (isSigned ? Instruction::SExt : Instruction::ZExt)));
+  return getCast(opcode, C, Ty);
+}
+
+Constant *ConstantExpr::getFPCast(Constant *C, const Type *Ty) {
+  assert(C->getType()->isFloatingPoint() && Ty->isFloatingPoint() && 
+         "Invalid cast");
+  unsigned SrcBits = C->getType()->getPrimitiveSizeInBits();
+  unsigned DstBits = Ty->getPrimitiveSizeInBits();
+  Instruction::CastOps opcode =
+    (SrcBits == DstBits ? Instruction::BitCast :
+     (SrcBits > DstBits ? Instruction::FPTrunc : Instruction::FPExt));
+  return getCast(opcode, C, Ty);
+}
+
 Constant *ConstantExpr::getTrunc(Constant *C, const Type *Ty) {
   assert(C->getType()->isInteger() && "Trunc operand must be integer");
   assert(Ty->isIntegral() && "Trunc produces only integral");

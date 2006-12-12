@@ -559,6 +559,19 @@ public:
     const Type *Ty ///< The type to which cast should be made
   );
 
+  /// @brief Create a ZExt, Bitcast or Trunc for integer -> integer casts
+  static Constant *getIntegerCast(
+    Constant *C,    ///< The integer constant to be casted 
+    const Type *Ty, ///< The integer type to cast to
+    bool isSigned   ///< Whether C should be treated as signed or not
+  );
+
+  /// @brief Create a FPExt, Bitcast or FPTrunc for fp -> fp casts
+  static Constant *getFPCast(
+    Constant *C,    ///< The integer constant to be casted 
+    const Type *Ty ///< The integer type to cast to
+  );
+
   static Constant *getCast(Constant *C, const Type *Ty);
 
   /// @brief Return true if this is a convert constant expression
