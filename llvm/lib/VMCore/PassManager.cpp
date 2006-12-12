@@ -149,6 +149,9 @@ public:
     IndirectPassManagers.push_back(Manager);
   }
 
+  // Print passes managed by this top level manager.
+  void dumpPasses();
+
 private:
   
   /// Collection of pass managers
@@ -231,6 +234,21 @@ public:
 
   unsigned getDepth() { return Depth; }
 
+  // Print list of passes that are last used by P.
+  void dumpLastUses(Pass *P, unsigned Offset) {
+    
+    std::vector<Pass *> LUses;
+
+    assert (TPM && "Top Level Manager is missing");
+    TPM->collectLastUses(LUses, P);
+    
+    for (std::vector<Pass *>::iterator I = LUses.begin(),
+           E = LUses.end(); I != E; ++I) {
+      llvm::cerr << "--" << std::string(Offset*2, ' ');
+      (*I)->dumpPassStructure(0);
+    }
+  }
+
 protected:
 
   // Collection of pass whose last user asked this manager to claim
@@ -282,6 +300,16 @@ public:
   bool doInitialization(Function &F);
   bool doFinalization(Module &M);
   bool doFinalization(Function &F);
+
+  // Print passes managed by this manager
+  void dumpPassStructure(unsigned Offset) {
+    llvm::cerr << std::string(Offset*2, ' ') << "BasicBLockPass Manager\n";
+    for (std::vector<Pass *>::iterator I = passVectorBegin(),
+           E = passVectorEnd(); I != E; ++I)  {
+      (*I)->dumpPassStructure(Offset + 1);
+      dumpLastUses(*I, Offset+1);
+    }
+  }
 
 };
 
@@ -349,6 +377,16 @@ public:
     Info.setPreservesAll();
   }
 
+  // Print passes managed by this manager
+  void dumpPassStructure(unsigned Offset) {
+    llvm::cerr << std::string(Offset*2, ' ') << "FunctionPass Manager\n";
+    for (std::vector<Pass *>::iterator I = passVectorBegin(),
+           E = passVectorEnd(); I != E; ++I)  {
+      (*I)->dumpPassStructure(Offset + 1);
+      dumpLastUses(*I, Offset+1);
+    }
+  }
+
 private:
   // Active Pass Managers
   BasicBlockPassManager_New *activeBBPassManager;
@@ -378,6 +416,16 @@ public:
   /// Pass Manager itself does not invalidate any analysis info.
   void getAnalysisUsage(AnalysisUsage &Info) const {
     Info.setPreservesAll();
+  }
+
+  // Print passes managed by this manager
+  void dumpPassStructure(unsigned Offset) {
+    llvm::cerr << std::string(Offset*2, ' ') << "ModulePass Manager\n";
+    for (std::vector<Pass *>::iterator I = passVectorBegin(),
+           E = passVectorEnd(); I != E; ++I)  {
+      (*I)->dumpPassStructure(Offset + 1);
+      dumpLastUses(*I, Offset+1);
+    }
   }
 
 private:
@@ -537,6 +585,20 @@ Pass *PMTopLevelManager::findAnalysisPass(AnalysisID AID) {
   }
 
   return P;
+}
+
+// Print passes managed by this top level manager.
+void PMTopLevelManager::dumpPasses() {
+
+  // Print out the immutable passes
+  for (unsigned i = 0, e = ImmutablePasses.size(); i != e; ++i) {
+    ImmutablePasses[i]->dumpPassStructure(0);
+  }
+  
+  for (std::vector<Pass *>::iterator I = PassManagers.begin(),
+         E = PassManagers.end(); I != E; ++I)
+    (*I)->dumpPassStructure(1);
+
 }
 
 //===----------------------------------------------------------------------===//
