@@ -3112,7 +3112,7 @@ Instruction *InstCombiner::visitAnd(BinaryOperator &I) {
             } else if (CastOp->getOpcode() == Instruction::Or) {
               // Change: and (cast (or X, C1) to T), C2
               // into  : trunc(C1)&C2 iff trunc(C1)&C2 == C2
-              Constant *C3 = ConstantExpr::getTrunc(AndCI, I.getType());
+              Constant *C3 = ConstantExpr::getTruncOrBitCast(AndCI,I.getType());
               if (ConstantExpr::getAnd(C3, AndRHS) == AndRHS)   // trunc(C1)&C2
                 return ReplaceInstUsesWith(I, AndRHS);
             }
