@@ -678,6 +678,14 @@ void PMDataManager::collectRequiredAnalysisPasses(std::vector<Pass *> &RP,
     assert (AnalysisPass && "Analysis pass is not available");
     RP.push_back(AnalysisPass);
   }
+
+  const std::vector<AnalysisID> &IDs = AnUsage.getRequiredTransitiveSet();
+  for (std::vector<AnalysisID>::const_iterator I = IDs.begin(),
+         E = IDs.end(); I != E; ++I) {
+    Pass *AnalysisPass = findAnalysisPass(*I, true);
+    assert (AnalysisPass && "Analysis pass is not available");
+    RP.push_back(AnalysisPass);
+  }
 }
 
 // All Required analyses should be available to the pass as it runs!  Here
