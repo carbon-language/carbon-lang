@@ -103,7 +103,7 @@ static bool ResolveFunctions(Module &M, std::vector<GlobalValue*> &Globals,
       if (!Old->use_empty()) {
         Value *Replacement = Concrete;
         if (Concrete->getType() != Old->getType())
-          Replacement = ConstantExpr::getCast(Concrete, Old->getType());
+          Replacement = ConstantExpr::getBitCast(Concrete, Old->getType());
         NumResolved += Old->getNumUses();
         Old->replaceAllUsesWith(Replacement);
       }
@@ -122,7 +122,7 @@ static bool ResolveGlobalVariables(Module &M,
 
   for (unsigned i = 0; i != Globals.size(); ++i)
     if (Globals[i] != Concrete) {
-      Constant *Cast = ConstantExpr::getCast(Concrete, Globals[i]->getType());
+      Constant *Cast = ConstantExpr::getBitCast(Concrete,Globals[i]->getType());
       Globals[i]->replaceAllUsesWith(Cast);
 
       // Since there are no uses of Old anymore, remove it from the module.

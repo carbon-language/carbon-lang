@@ -296,7 +296,7 @@ bool CBackendNameAllUsedStructsAndMergeFunctions::runOnModule(Module &M) {
       if (!X.second) {
         // Found a conflict, replace this global with the previous one.
         GlobalValue *OldGV = X.first->second;
-        GV->replaceAllUsesWith(ConstantExpr::getCast(OldGV, GV->getType()));
+        GV->replaceAllUsesWith(ConstantExpr::getBitCast(OldGV, GV->getType()));
         GV->eraseFromParent();
         Changed = true;
       }
@@ -312,7 +312,7 @@ bool CBackendNameAllUsedStructsAndMergeFunctions::runOnModule(Module &M) {
       if (!X.second) {
         // Found a conflict, replace this global with the previous one.
         GlobalValue *OldGV = X.first->second;
-        GV->replaceAllUsesWith(ConstantExpr::getCast(OldGV, GV->getType()));
+        GV->replaceAllUsesWith(ConstantExpr::getBitCast(OldGV, GV->getType()));
         GV->eraseFromParent();
         Changed = true;
       }

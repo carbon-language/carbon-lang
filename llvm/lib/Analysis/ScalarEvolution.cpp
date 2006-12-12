@@ -1566,7 +1566,9 @@ SCEVHandle ScalarEvolutionsImpl::ComputeIterationCount(const Loop *L) {
         // comparison.
         ConstantInt *CompVal = RHSC->getValue();
         const Type *RealTy = ExitCond->getOperand(0)->getType();
-        CompVal = dyn_cast<ConstantInt>(ConstantExpr::getCast(CompVal, RealTy));
+        CompVal = dyn_cast<ConstantInt>(
+          ConstantExpr::getIntegerCast(CompVal, RealTy, 
+                                       CompVal->getType()->isSigned()));
         if (CompVal) {
           // Form the constant range.
           ConstantRange CompRange(Cond, CompVal);
@@ -1575,8 +1577,12 @@ SCEVHandle ScalarEvolutionsImpl::ComputeIterationCount(const Loop *L) {
           // range.
           if (CompRange.getLower()->getType()->isSigned()) {
             const Type *NewTy = RHSC->getValue()->getType();
-            Constant *NewL = ConstantExpr::getCast(CompRange.getLower(), NewTy);
-            Constant *NewU = ConstantExpr::getCast(CompRange.getUpper(), NewTy);
+            Constant *NewL = 
+              ConstantExpr::getIntegerCast(CompRange.getLower(), NewTy, 
+                 CompRange.getLower()->getType()->isSigned());
+            Constant *NewU = 
+              ConstantExpr::getIntegerCast(CompRange.getUpper(), NewTy,
+                 CompRange.getUpper()->getType()->isSigned());
             CompRange = ConstantRange(NewL, NewU);
           }
 

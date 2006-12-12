@@ -508,7 +508,8 @@ static bool LinkGlobals(Module *Dest, Module *Src,
                              DGV->isConstant(), DGV->getLinkage());
         NewDGV->setAlignment(DGV->getAlignment());
         Dest->getGlobalList().insert(DGV, NewDGV);
-        DGV->replaceAllUsesWith(ConstantExpr::getCast(NewDGV, DGV->getType()));
+        DGV->replaceAllUsesWith(
+            ConstantExpr::getBitCast(NewDGV, DGV->getType()));
         DGV->eraseFromParent();
         NewDGV->setName(SGV->getName());
         DGV = NewDGV;
@@ -529,9 +530,8 @@ static bool LinkGlobals(Module *Dest, Module *Src,
         SGV->setInitializer(0);
       }
 
-      ValueMap.insert(std::make_pair(SGV,
-                                     ConstantExpr::getCast(DGV,
-                                                           SGV->getType())));
+      ValueMap.insert(
+        std::make_pair(SGV, ConstantExpr::getBitCast(DGV, SGV->getType())));
     }
   }
   return false;
@@ -807,8 +807,8 @@ static bool LinkAppendingVars(Module *M,
 
       // FIXME: This should rewrite simple/straight-forward uses such as
       // getelementptr instructions to not use the Cast!
-      G1->replaceAllUsesWith(ConstantExpr::getCast(NG, G1->getType()));
-      G2->replaceAllUsesWith(ConstantExpr::getCast(NG, G2->getType()));
+      G1->replaceAllUsesWith(ConstantExpr::getBitCast(NG, G1->getType()));
+      G2->replaceAllUsesWith(ConstantExpr::getBitCast(NG, G2->getType()));
 
       // Remove the two globals from the module now...
       M->getGlobalList().erase(G1);

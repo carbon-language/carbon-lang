@@ -589,7 +589,8 @@ void SCCPSolver::visitCastInst(CastInst &I) {
   if (VState.isOverdefined())          // Inherit overdefinedness of operand
     markOverdefined(&I);
   else if (VState.isConstant())        // Propagate constant value
-    markConstant(&I, ConstantExpr::getCast(VState.getConstant(), I.getType()));
+    markConstant(&I, ConstantExpr::getCast(I.getOpcode(), 
+                                           VState.getConstant(), I.getType()));
 }
 
 void SCCPSolver::visitSelectInst(SelectInst &I) {

@@ -215,8 +215,12 @@ void LowerInvoke::writeAbortMessage(Instruction *IB) {
     unsigned NumArgs = FT->getNumParams();
     for (unsigned i = 0; i != 3; ++i)
       if (i < NumArgs && FT->getParamType(i) != Args[i]->getType())
-        Args[i] = ConstantExpr::getCast(cast<Constant>(Args[i]),
-                                        FT->getParamType(i));
+        if (Args[i]->getType()->isInteger())
+          Args[i] = ConstantExpr::getIntegerCast(cast<Constant>(Args[i]),
+                                                 FT->getParamType(i), true);
+        else
+          Args[i] = ConstantExpr::getBitCast(cast<Constant>(Args[i]),
+                                             FT->getParamType(i));
 
     (new CallInst(WriteFn, Args, "", IB))->setTailCall();
   }

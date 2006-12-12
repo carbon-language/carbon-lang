@@ -200,12 +200,17 @@ FunctionPass *llvm::createLoopStrengthReducePass(const TargetLowering *TLI) {
   return new LoopStrengthReduce(TLI);
 }
 
-/// getCastedVersionOf - Return the specified value casted to uintptr_t.
+/// getCastedVersionOf - Return the specified value casted to uintptr_t. This
+/// assumes that the Value* V is of integer or pointer type only.
 ///
 Value *LoopStrengthReduce::getCastedVersionOf(Value *V) {
   if (V->getType() == UIntPtrTy) return V;
   if (Constant *CB = dyn_cast<Constant>(V))
-    return ConstantExpr::getCast(CB, UIntPtrTy);
+    if (CB->getType()->isInteger())
+      return ConstantExpr::getIntegerCast(CB, UIntPtrTy, 
+                                          CB->getType()->isSigned());
+    else
+      return ConstantExpr::getPtrToInt(CB, UIntPtrTy);
 
   Value *&New = CastedPointers[V];
   if (New) return New;
