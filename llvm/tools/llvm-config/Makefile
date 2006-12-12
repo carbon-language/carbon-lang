@@ -29,11 +29,16 @@ SUB_LDFLAGS =
 
 FinalLibDeps = $(PROJ_OBJ_DIR)/FinalLibDeps.txt
 LibDeps      = $(PROJ_OBJ_DIR)/LibDeps.txt
+LibDepsTemp  = $(PROJ_OBJ_DIR)/LibDeps.txt.tmp
 GenLibDeps   = $(PROJ_SRC_ROOT)/utils/GenLibDeps.pl
 
-$(LibDeps): $(GenLibDeps) $(LibDir) $(wildcard $(LibDir)/*.a $(LibDir)/*.o)
-	$(Echo) "Regenerating LibDeps.txt"
-	$(Verb) $(GenLibDeps) -flat $(LibDir) $(NM_PATH) > $(LibDeps)
+$(LibDepsTemp): $(GenLibDeps) $(LibDir) $(wildcard $(LibDir)/*.a $(LibDir)/*.o)
+	$(Echo) "Regenerating LibDeps.txt.tmp"
+	$(Verb) $(GenLibDeps) -flat $(LibDir) $(NM_PATH) > $(LibDepsTemp)
+
+$(LibDeps): $(LibDepsTemp)
+	$(Verb) $(CMP) -s $@ $< || ( $(CP) $< $@ && \
+	  $(EchoCmd) Updated LibDeps.txt because dependencies changes )
 
 # Find all the cyclic dependencies between various LLVM libraries, so we
 # don't have to process them at runtime.
