@@ -790,7 +790,7 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
           // Only do this if the target has a native EXTLOAD instruction from
           // f32.
           TLI.isLoadXLegal(ISD::EXTLOAD, MVT::f32)) {
-        LLVMC = cast<ConstantFP>(ConstantExpr::getFPCast(LLVMC, Type::FloatTy));
+        LLVMC = cast<ConstantFP>(ConstantExpr::getFPTrunc(LLVMC, Type::FloatTy));
         VT = MVT::f32;
         Extend = true;
       }
