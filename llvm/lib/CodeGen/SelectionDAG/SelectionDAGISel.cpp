@@ -2860,6 +2860,32 @@ void SelectionDAGLowering::visitVACopy(CallInst &I) {
                           DAG.getSrcValue(I.getOperand(2))));
 }
 
+/// ExpandScalarFormalArgs - Recursively expand the formal_argument node, either
+/// bit_convert it or join a pair of them with a BUILD_PAIR when appropriate.
+static SDOperand ExpandScalarFormalArgs(MVT::ValueType VT, SDNode *Arg,
+                                        unsigned &i, SelectionDAG &DAG,
+                                        TargetLowering &TLI) {
+  if (TLI.getTypeAction(VT) != TargetLowering::Expand)
+    return SDOperand(Arg, i++);
+
+  MVT::ValueType EVT = TLI.getTypeToTransformTo(VT);
+  unsigned NumVals = MVT::getSizeInBits(VT) / MVT::getSizeInBits(EVT);
+  if (NumVals == 1) {
+    return DAG.getNode(ISD::BIT_CONVERT, VT,
+                       ExpandScalarFormalArgs(EVT, Arg, i, DAG, TLI));
+  } else if (NumVals == 2) {
+    SDOperand Lo = ExpandScalarFormalArgs(EVT, Arg, i, DAG, TLI);
+    SDOperand Hi = ExpandScalarFormalArgs(EVT, Arg, i, DAG, TLI);
+    if (!TLI.isLittleEndian())
+      std::swap(Lo, Hi);
+    return DAG.getNode(ISD::BUILD_PAIR, VT, Lo, Hi);
+  } else {
+    // Value scalarized into many values.  Unimp for now.
+    assert(0 && "Cannot expand i64 -> i16 yet!");
+  }
+  return SDOperand();
+}
+
 /// TargetLowering::LowerArguments - This is the default LowerArguments
 /// implementation, which just inserts a FORMAL_ARGUMENTS node.  FIXME: When all
 /// targets are migrated to using FORMAL_ARGUMENTS, this hook should be 
@@ -2890,8 +2916,12 @@ TargetLowering::LowerArguments(Function &F, SelectionDAG &DAG) {
         // If this is a large integer, it needs to be broken up into small
         // integers.  Figure out what the destination type is and how many small
         // integers it turns into.
-        MVT::ValueType NVT = getTypeToTransformTo(VT);
-        unsigned NumVals = MVT::getSizeInBits(VT)/MVT::getSizeInBits(NVT);
+        MVT::ValueType NVT = VT;
+        unsigned NumVals = 1;
+        while (getTypeAction(NVT) == Expand) {
+          NVT = getTypeToTransformTo(NVT);
+          NumVals *= MVT::getSizeInBits(VT)/MVT::getSizeInBits(NVT);
+        }
         for (unsigned i = 0; i != NumVals; ++i)
           RetVals.push_back(NVT);
       } else {
@@ -2949,26 +2979,10 @@ TargetLowering::LowerArguments(Function &F, SelectionDAG &DAG) {
     }
     case Expand:
       if (VT != MVT::Vector) {
-        // If this is a large integer, it needs to be reassembled from small
-        // integers.  Figure out what the source elt type is and how many small
-        // integers it is.
-        MVT::ValueType NVT = getTypeToTransformTo(VT);
-        unsigned NumVals = MVT::getSizeInBits(VT)/MVT::getSizeInBits(NVT);
-        if (NumVals == 1) {
-          SDOperand Tmp = SDOperand(Result, i++);
-          Ops.push_back(DAG.getNode(ISD::BIT_CONVERT, VT, Tmp));
-        } else if (NumVals == 2) {
-          SDOperand Lo = SDOperand(Result, i++);
-          SDOperand Hi = SDOperand(Result, i++);
-          
-          if (!isLittleEndian())
-            std::swap(Lo, Hi);
-            
-          Ops.push_back(DAG.getNode(ISD::BUILD_PAIR, VT, Lo, Hi));
-        } else {
-          // Value scalarized into many values.  Unimp for now.
-          assert(0 && "Cannot expand i64 -> i16 yet!");
-        }
+        // If this is a large integer or a floating point node that needs to be
+        // expanded, it needs to be reassembled from small integers.  Figure out
+        // what the source elt type is and how many small integers it is.
+        Ops.push_back(ExpandScalarFormalArgs(VT, Result, i, DAG, *this));
       } else {
         // Otherwise, this is a vector type.  We only support legal vectors
         // right now.
@@ -2997,6 +3011,39 @@ TargetLowering::LowerArguments(Function &F, SelectionDAG &DAG) {
   return Ops;
 }
 
+
+/// ExpandScalarCallArgs - Recursively expand call argument node by
+/// bit_converting it or extract a pair of elements from the larger  node.
+static void ExpandScalarCallArgs(MVT::ValueType VT, SDOperand Arg,
+                                 bool isSigned, 
+                                 SmallVector<SDOperand, 32> &Ops,
+                                 SelectionDAG &DAG,
+                                 TargetLowering &TLI) {
+  if (TLI.getTypeAction(VT) != TargetLowering::Expand) {
+    Ops.push_back(Arg);
+    Ops.push_back(DAG.getConstant(isSigned, MVT::i32));
+    return;
+  }
+
+  MVT::ValueType EVT = TLI.getTypeToTransformTo(VT);
+  unsigned NumVals = MVT::getSizeInBits(VT) / MVT::getSizeInBits(EVT);
+  if (NumVals == 1) {
+    Arg = DAG.getNode(ISD::BIT_CONVERT, EVT, Arg);
+    ExpandScalarCallArgs(EVT, Arg, isSigned, Ops, DAG, TLI);
+  } else if (NumVals == 2) {
+    SDOperand Lo = DAG.getNode(ISD::EXTRACT_ELEMENT, EVT, Arg,
+                               DAG.getConstant(0, TLI.getPointerTy()));
+    SDOperand Hi = DAG.getNode(ISD::EXTRACT_ELEMENT, EVT, Arg,
+                               DAG.getConstant(1, TLI.getPointerTy()));
+    if (!TLI.isLittleEndian())
+      std::swap(Lo, Hi);
+    ExpandScalarCallArgs(EVT, Lo, isSigned, Ops, DAG, TLI);
+    ExpandScalarCallArgs(EVT, Hi, isSigned, Ops, DAG, TLI);
+  } else {
+    // Value scalarized into many values.  Unimp for now.
+    assert(0 && "Cannot expand i64 -> i16 yet!");
+  }
+}
 
 /// TargetLowering::LowerCallTo - This is the default LowerCallTo
 /// implementation, which just inserts an ISD::CALL node, which is later custom
@@ -3041,27 +3088,7 @@ TargetLowering::LowerCallTo(SDOperand Chain, const Type *RetTy, bool isVarArg,
         // If this is a large integer, it needs to be broken down into small
         // integers.  Figure out what the source elt type is and how many small
         // integers it is.
-        MVT::ValueType NVT = getTypeToTransformTo(VT);
-        unsigned NumVals = MVT::getSizeInBits(VT)/MVT::getSizeInBits(NVT);
-        if (NumVals == 1) {
-          Ops.push_back(DAG.getNode(ISD::BIT_CONVERT, VT, Op));
-          Ops.push_back(DAG.getConstant(isSigned, MVT::i32));
-        } else if (NumVals == 2) {
-          SDOperand Lo = DAG.getNode(ISD::EXTRACT_ELEMENT, NVT, Op,
-                                     DAG.getConstant(0, getPointerTy()));
-          SDOperand Hi = DAG.getNode(ISD::EXTRACT_ELEMENT, NVT, Op,
-                                     DAG.getConstant(1, getPointerTy()));
-          if (!isLittleEndian())
-            std::swap(Lo, Hi);
-          
-          Ops.push_back(Lo);
-          Ops.push_back(DAG.getConstant(isSigned, MVT::i32));
-          Ops.push_back(Hi);
-          Ops.push_back(DAG.getConstant(isSigned, MVT::i32));
-        } else {
-          // Value scalarized into many values.  Unimp for now.
-          assert(0 && "Cannot expand i64 -> i16 yet!");
-        }
+        ExpandScalarCallArgs(VT, Op, isSigned, Ops, DAG, *this);
       } else {
         // Otherwise, this is a vector type.  We only support legal vectors
         // right now.
@@ -3104,8 +3131,12 @@ TargetLowering::LowerCallTo(SDOperand Chain, const Type *RetTy, bool isVarArg,
         // If this is a large integer, it needs to be reassembled from small
         // integers.  Figure out what the source elt type is and how many small
         // integers it is.
-        MVT::ValueType NVT = getTypeToTransformTo(VT);
-        unsigned NumVals = MVT::getSizeInBits(VT)/MVT::getSizeInBits(NVT);
+        MVT::ValueType NVT = VT;
+        unsigned NumVals = 1;
+        while (getTypeAction(NVT) == Expand) {
+          NVT = getTypeToTransformTo(NVT);
+          NumVals *= MVT::getSizeInBits(VT)/MVT::getSizeInBits(NVT);
+        }
         for (unsigned i = 0; i != NumVals; ++i)
           RetTys.push_back(NVT);
       } else {
