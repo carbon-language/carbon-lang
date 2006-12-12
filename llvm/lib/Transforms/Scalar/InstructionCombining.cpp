@@ -1792,8 +1792,7 @@ FoundSExt:
       case 8:  MiddleType = Type::SByteTy; break;
       }
       if (MiddleType) {
-        Instruction *NewTrunc = 
-          CastInst::createInferredCast(XorLHS, MiddleType, "sext");
+        Instruction *NewTrunc = new TruncInst(XorLHS, MiddleType, "sext");
         InsertNewInstBefore(NewTrunc, I);
         return new SExtInst(NewTrunc, I.getType());
       }
@@ -3097,16 +3096,12 @@ Instruction *InstCombiner::visitAnd(BinaryOperator &I) {
               // into  : and (cast X to T), trunc_or_bitcast(C1)&C2
               // This will fold the two constants together, which may allow 
               // other simplifications.
-              Instruction *NewCast =
-                CastInst::createInferredCast(CastOp->getOperand(0), I.getType(),
-                             CastOp->getName()+".shrunk");
+              Instruction *NewCast = CastInst::createTruncOrBitCast(
+                CastOp->getOperand(0), I.getType(), 
+                CastOp->getName()+".shrunk");
               NewCast = InsertNewInstBefore(NewCast, I);
               // trunc_or_bitcast(C1)&C2
-              Instruction::CastOps opc = (
-                  AndCI->getType()->getPrimitiveSizeInBits() == 
-                  I.getType()->getPrimitiveSizeInBits() ? 
-                  Instruction::BitCast : Instruction::Trunc);
-              Constant *C3 = ConstantExpr::getCast(opc, AndCI, I.getType());
+              Constant *C3 = ConstantExpr::getTruncOrBitCast(AndCI,I.getType());
               C3 = ConstantExpr::getAnd(C3, AndRHS);
               return BinaryOperator::createAnd(NewCast, C3);
             } else if (CastOp->getOpcode() == Instruction::Or) {
@@ -3286,7 +3281,8 @@ Instruction *InstCombiner::visitAnd(BinaryOperator &I) {
                                                        Op1C->getOperand(0),
                                                        I.getName());
         InsertNewInstBefore(NewOp, I);
-        return CastInst::createInferredCast(NewOp, I.getType());
+        return CastInst::createIntegerCast(NewOp, I.getType(), 
+                                           SrcTy->isSigned());
       }
     }
   }
@@ -3690,7 +3686,8 @@ Instruction *InstCombiner::visitOr(BinaryOperator &I) {
                                                       Op1C->getOperand(0),
                                                       I.getName());
         InsertNewInstBefore(NewOp, I);
-        return CastInst::createInferredCast(NewOp, I.getType());
+        return CastInst::createIntegerCast(NewOp, I.getType(),
+                                           SrcTy->isSigned());
       }
   }
       
@@ -3871,7 +3868,8 @@ Instruction *InstCombiner::visitXor(BinaryOperator &I) {
                                                        Op1C->getOperand(0),
                                                        I.getName());
         InsertNewInstBefore(NewOp, I);
-        return CastInst::createInferredCast(NewOp, I.getType());
+        return CastInst::createIntegerCast(NewOp, I.getType(), 
+                                           SrcTy->isSigned());
       }
   }
 
@@ -3947,7 +3945,7 @@ static Value *EmitGEPOffset(User *GEP, Instruction &I, InstCombiner &IC) {
       }
     } else {
       // Convert to correct type.
-      Op = IC.InsertNewInstBefore(CastInst::createInferredCast(Op, SIntPtrTy,
+      Op = IC.InsertNewInstBefore(CastInst::createSExtOrBitCast(Op, SIntPtrTy,
                                                Op->getName()+".c"), I);
       if (Size != 1)
         // We'll let instcombine(mul) convert this to a shl if possible.
@@ -4944,8 +4942,7 @@ Instruction *InstCombiner::visitSetCondInst(SetCondInst &I) {
       // If Op1 is a constant, we can fold the cast into the constant.
       if (Op1->getType() != Op0->getType())
         if (Constant *Op1C = dyn_cast<Constant>(Op1)) {
-          Op1 = ConstantExpr::getCast(Instruction::BitCast, Op1C, 
-                                      Op0->getType());
+          Op1 = ConstantExpr::getBitCast(Op1C, Op0->getType());
         } else {
           // Otherwise, cast the RHS right before the setcc
           Op1 = InsertCastBefore(Instruction::BitCast, Op1, Op0->getType(), I);
@@ -5392,8 +5389,7 @@ Instruction *InstCombiner::FoldShiftByConstant(Value *Op0, ConstantInt *Op1,
       
       Value *Op = ShiftOp->getOperand(0);
       if (isShiftOfSignedShift != isSignedShift)
-        Op = InsertNewInstBefore(
-               CastInst::createInferredCast(Op, I.getType(), "tmp"), I);
+        Op = InsertNewInstBefore(new BitCastInst(Op, I.getType(), "tmp"), I);
       ShiftInst *ShiftResult = new ShiftInst(I.getOpcode(), Op,
                            ConstantInt::get(Type::UByteTy, Amt));
       if (I.getType() == ShiftResult->getType())
@@ -5681,7 +5677,7 @@ static bool CanEvaluateInDifferentType(Value *V, const Type *Ty,
 /// evaluate the expression.
 Value *InstCombiner::EvaluateInDifferentType(Value *V, const Type *Ty) {
   if (Constant *C = dyn_cast<Constant>(V))
-    return ConstantExpr::getCast(C, Ty);
+    return ConstantExpr::getIntegerCast(C, Ty, C->getType()->isSigned());
 
   // Otherwise, it must be an instruction.
   Instruction *I = cast<Instruction>(V);
@@ -5990,7 +5986,7 @@ Instruction *InstCombiner::commonIntCastTransforms(CastInst &CI) {
             // (X&4) == 2 --> false
             // (X&4) != 2 --> true
             Constant *Res = ConstantBool::get(isSetNE);
-            Res = ConstantExpr::getZeroExtend(Res, CI.getType());
+            Res = ConstantExpr::getZExt(Res, CI.getType());
             return ReplaceInstUsesWith(CI, Res);
           }
           
@@ -6014,7 +6010,7 @@ Instruction *InstCombiner::commonIntCastTransforms(CastInst &CI) {
           if (CI.getType() == In->getType())
             return ReplaceInstUsesWith(CI, In);
           else
-            return CastInst::createInferredCast(In, CI.getType());
+            return CastInst::createIntegerCast(In, CI.getType(), false/*ZExt*/);
         }
       }
     }
@@ -6090,9 +6086,6 @@ Instruction *InstCombiner::visitZExt(CastInst &CI) {
 
   // If this is a cast of a cast
   if (CastInst *CSrc = dyn_cast<CastInst>(Src)) {   // A->B->C cast
-    // If the operand of the ZEXT is a TRUNC then we are dealing with integral
-    // types and we can convert this to a logical AND if the sizes are just 
-    // right. This will be much cheaper than the pair of casts.
     // If this is a TRUNC followed by a ZEXT then we are dealing with integral
     // types and if the sizes are just right we can convert this into a logical
     // 'and' which will be much cheaper than the pair of casts.
@@ -6113,7 +6106,7 @@ Instruction *InstCombiner::visitZExt(CastInst &CI) {
         if (And->getType() != CI.getType()) {
           And->setName(CSrc->getName()+".mask");
           InsertNewInstBefore(And, CI);
-          And = CastInst::createInferredCast(And, CI.getType());
+          And = CastInst::createIntegerCast(And, CI.getType(), false/*ZExt*/);
         }
         return And;
       }
@@ -7770,7 +7763,7 @@ static Instruction *InstCombineLoadCast(InstCombiner &IC, LoadInst &LI) {
                                                              CI->getName(),
                                                          LI.isVolatile()),LI);
         // Now cast the result of the load.
-        return CastInst::createInferredCast(NewLoad, LI.getType());
+        return new BitCastInst(NewLoad, LI.getType());
       }
     }
   }
@@ -7950,13 +7943,20 @@ static Instruction *InstCombineStoreToCast(InstCombiner &IC, StoreInst &SI) {
         // the same size.  Instead of casting the pointer before the store, cast
         // the value to be stored.
         Value *NewCast;
-        if (Constant *C = dyn_cast<Constant>(SI.getOperand(0)))
-          NewCast = ConstantExpr::getCast(C, SrcPTy);
+        Instruction::CastOps opcode = Instruction::BitCast;
+        Value *SIOp0 = SI.getOperand(0);
+        if (SrcPTy->getTypeID() == Type::PointerTyID) {
+          if (SIOp0->getType()->isIntegral())
+            opcode = Instruction::IntToPtr;
+        } else if (SrcPTy->isIntegral()) {
+          if (SIOp0->getType()->getTypeID() == Type::PointerTyID)
+            opcode = Instruction::PtrToInt;
+        }
+        if (Constant *C = dyn_cast<Constant>(SIOp0))
+          NewCast = ConstantExpr::getCast(opcode, C, SrcPTy);
         else
           NewCast = IC.InsertNewInstBefore(
-            CastInst::createInferredCast(SI.getOperand(0), SrcPTy,
-                                 SI.getOperand(0)->getName()+".c"), SI);
-
+            CastInst::create(opcode, SIOp0, SrcPTy, SIOp0->getName()+".c"), SI);
         return new StoreInst(NewCast, CastOp);
       }
     }

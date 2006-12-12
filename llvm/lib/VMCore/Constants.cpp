@@ -1391,8 +1391,8 @@ namespace llvm {
       case Instruction::PtrToInt:
       case Instruction::IntToPtr:
       case Instruction::BitCast:
-        New = ConstantExpr::getCast(
-            OldC->getOpcode(), OldC->getOperand(0), NewTy);
+        New = ConstantExpr::getCast(OldC->getOpcode(), OldC->getOperand(0), 
+                                    NewTy);
         break;
       case Instruction::Select:
         New = ConstantExpr::getSelectTy(NewTy, OldC->getOperand(0),
@@ -1464,8 +1464,8 @@ Constant *ConstantExpr::getCast(unsigned oc, Constant *C, const Type *Ty) {
       assert(0 && "Invalid cast opcode");
       break;
     case Instruction::Trunc:    return getTrunc(C, Ty);
-    case Instruction::ZExt:     return getZeroExtend(C, Ty);
-    case Instruction::SExt:     return getSignExtend(C, Ty);
+    case Instruction::ZExt:     return getZExt(C, Ty);
+    case Instruction::SExt:     return getSExt(C, Ty);
     case Instruction::FPTrunc:  return getFPTrunc(C, Ty);
     case Instruction::FPExt:    return getFPExtend(C, Ty);
     case Instruction::UIToFP:   return getUIToFP(C, Ty);
@@ -1547,7 +1547,7 @@ Constant *ConstantExpr::getTrunc(Constant *C, const Type *Ty) {
   return getFoldedCast(Instruction::Trunc, C, Ty);
 }
 
-Constant *ConstantExpr::getSignExtend(Constant *C, const Type *Ty) {
+Constant *ConstantExpr::getSExt(Constant *C, const Type *Ty) {
   assert(C->getType()->isIntegral() && "SEXt operand must be integral");
   assert(Ty->isInteger() && "SExt produces only integer");
   assert(C->getType()->getPrimitiveSizeInBits() < Ty->getPrimitiveSizeInBits()&&
@@ -1556,7 +1556,7 @@ Constant *ConstantExpr::getSignExtend(Constant *C, const Type *Ty) {
   return getFoldedCast(Instruction::SExt, C, Ty);
 }
 
-Constant *ConstantExpr::getZeroExtend(Constant *C, const Type *Ty) {
+Constant *ConstantExpr::getZExt(Constant *C, const Type *Ty) {
   assert(C->getType()->isIntegral() && "ZEXt operand must be integral");
   assert(Ty->isInteger() && "ZExt produces only integer");
   assert(C->getType()->getPrimitiveSizeInBits() < Ty->getPrimitiveSizeInBits()&&

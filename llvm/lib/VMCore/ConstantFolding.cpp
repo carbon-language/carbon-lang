@@ -743,8 +743,7 @@ static Constant *CastConstantPacked(ConstantPacked *CP,
         (SrcEltTy->isFloatingPoint() && DstEltTy->isFloatingPoint())) {
       for (unsigned i = 0; i != SrcNumElts; ++i)
         Result.push_back(
-          ConstantExpr::getCast(Instruction::BitCast, CP->getOperand(i), 
-                                DstEltTy));
+          ConstantExpr::getBitCast(CP->getOperand(i), DstEltTy));
       return ConstantPacked::get(Result);
     }
     
@@ -1148,11 +1147,11 @@ static int IdxCompare(Constant *C1, Constant *C2, const Type *ElTy) {
   // Ok, we have two differing integer indices.  Sign extend them to be the same
   // type.  Long is always big enough, so we use it.
   if (C1->getType() != Type::LongTy && C1->getType() != Type::ULongTy)
-    C1 = ConstantExpr::getSignExtend(C1, Type::LongTy);
+    C1 = ConstantExpr::getSExt(C1, Type::LongTy);
   else
     C1 = ConstantExpr::getBitCast(C1, Type::LongTy);
   if (C2->getType() != Type::LongTy && C1->getType() != Type::ULongTy)
-    C2 = ConstantExpr::getSignExtend(C2, Type::LongTy);
+    C2 = ConstantExpr::getSExt(C2, Type::LongTy);
   else
     C2 = ConstantExpr::getBitCast(C2, Type::LongTy);
 
@@ -1672,7 +1671,7 @@ Constant *llvm::ConstantFoldGetElementPtr(const Constant *C,
         R = ConstantExpr::getSExtOrBitCast(R, Idx0->getType());
         R = ConstantExpr::getMul(R, Idx0); // signed multiply
         // R is a signed integer, C is the GEP pointer so -> IntToPtr
-        return ConstantExpr::getCast(Instruction::IntToPtr, R, C->getType());
+        return ConstantExpr::getIntToPtr(R, C->getType());
       }
     }
   }

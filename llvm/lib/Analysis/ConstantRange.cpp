@@ -340,8 +340,8 @@ ConstantRange ConstantRange::zeroExtend(const Type *Ty) const {
   Constant *Lower = getLower();
   Constant *Upper = getUpper();
 
-  return ConstantRange(ConstantExpr::getCast(Instruction::ZExt, Lower, Ty),
-                       ConstantExpr::getCast(Instruction::ZExt, Upper, Ty));
+  return ConstantRange(ConstantExpr::getZExt(Lower, Ty),
+                       ConstantExpr::getZExt(Upper, Ty));
 }
 
 /// truncate - Return a new range in the specified integer type, which must be
@@ -356,8 +356,8 @@ ConstantRange ConstantRange::truncate(const Type *Ty) const {
     return ConstantRange(getType());
 
   return ConstantRange(
-      ConstantExpr::getCast(Instruction::Trunc, getLower(), Ty),
-      ConstantExpr::getCast(Instruction::Trunc, getUpper(), Ty));
+      ConstantExpr::getTrunc(getLower(), Ty),
+      ConstantExpr::getTrunc(getUpper(), Ty));
 }
 
 

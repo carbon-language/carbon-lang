@@ -584,7 +584,7 @@ SCEVHandle SCEVTruncateExpr::get(const SCEVHandle &Op, const Type *Ty) {
 SCEVHandle SCEVZeroExtendExpr::get(const SCEVHandle &Op, const Type *Ty) {
   if (SCEVConstant *SC = dyn_cast<SCEVConstant>(Op))
     return SCEVUnknown::get(
-        ConstantExpr::getZeroExtend(SC->getValue(), Ty));
+        ConstantExpr::getZExt(SC->getValue(), Ty));
 
   // FIXME: If the input value is a chrec scev, and we can prove that the value
   // did not overflow the old, smaller, value, we can zero extend all of the
@@ -2000,11 +2000,14 @@ SCEVHandle ScalarEvolutionsImpl::getSCEVAtScope(SCEV *V, const Loop *L) {
           } else {
             SCEVHandle OpV = getSCEVAtScope(getSCEV(Op), L);
             if (SCEVConstant *SC = dyn_cast<SCEVConstant>(OpV))
-              Operands.push_back(ConstantExpr::getCast(SC->getValue(),
-                                                       Op->getType()));
+              Operands.push_back(ConstantExpr::getIntegerCast(SC->getValue(), 
+                                                              Op->getType(), 
+                                                              false));
             else if (SCEVUnknown *SU = dyn_cast<SCEVUnknown>(OpV)) {
               if (Constant *C = dyn_cast<Constant>(SU->getValue()))
-                Operands.push_back(ConstantExpr::getCast(C, Op->getType()));
+                Operands.push_back(ConstantExpr::getIntegerCast(C, 
+                                                                Op->getType(), 
+                                                                false));
               else
                 return V;
             } else {
@@ -2122,7 +2125,7 @@ SolveQuadraticEquation(const SCEVAddRecExpr *AddRec) {
 
   // Compute floor(sqrt(B^2-4ac))
   ConstantInt *SqrtVal =
-    cast<ConstantInt>(ConstantExpr::getCast(SqrtTerm,
+    cast<ConstantInt>(ConstantExpr::getBitCast(SqrtTerm,
                                    SqrtTerm->getType()->getUnsignedVersion()));
   uint64_t SqrtValV = SqrtVal->getZExtValue();
   uint64_t SqrtValV2 = (uint64_t)sqrt((double)SqrtValV);
@@ -2135,16 +2138,16 @@ SolveQuadraticEquation(const SCEVAddRecExpr *AddRec) {
   }
 
   SqrtVal = ConstantInt::get(Type::ULongTy, SqrtValV2);
-  SqrtTerm = ConstantExpr::getCast(SqrtVal, SqrtTerm->getType());
+  SqrtTerm = ConstantExpr::getTruncOrBitCast(SqrtVal, SqrtTerm->getType());
 
   Constant *NegB = ConstantExpr::getNeg(B);
   Constant *TwoA = ConstantExpr::getMul(A, Two);
 
   // The divisions must be performed as signed divisions.
   const Type *SignedTy = NegB->getType()->getSignedVersion();
-  NegB = ConstantExpr::getCast(NegB, SignedTy);
-  TwoA = ConstantExpr::getCast(TwoA, SignedTy);
-  SqrtTerm = ConstantExpr::getCast(SqrtTerm, SignedTy);
+  NegB = ConstantExpr::getBitCast(NegB, SignedTy);
+  TwoA = ConstantExpr::getBitCast(TwoA, SignedTy);
+  SqrtTerm = ConstantExpr::getBitCast(SqrtTerm, SignedTy);
 
   Constant *Solution1 =
     ConstantExpr::getSDiv(ConstantExpr::getAdd(NegB, SqrtTerm), TwoA);

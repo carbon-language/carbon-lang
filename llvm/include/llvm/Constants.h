@@ -514,18 +514,18 @@ public:
 
   /// Cast constant expr
   ///
-  static Constant *getTrunc      (Constant *C, const Type *Ty);
-  static Constant *getSignExtend (Constant *C, const Type *Ty);
-  static Constant *getZeroExtend (Constant *C, const Type *Ty);
-  static Constant *getFPTrunc    (Constant *C, const Type *Ty);
-  static Constant *getFPExtend   (Constant *C, const Type *Ty);
-  static Constant *getUIToFP     (Constant *C, const Type *Ty);
-  static Constant *getSIToFP     (Constant *C, const Type *Ty);
-  static Constant *getFPToUI     (Constant *C, const Type *Ty);
-  static Constant *getFPToSI     (Constant *C, const Type *Ty);
-  static Constant *getPtrToInt   (Constant *C, const Type *Ty);
-  static Constant *getIntToPtr   (Constant *C, const Type *Ty);
-  static Constant *getBitCast    (Constant *C, const Type *Ty);
+  static Constant *getTrunc   (Constant *C, const Type *Ty);
+  static Constant *getSExt    (Constant *C, const Type *Ty);
+  static Constant *getZExt    (Constant *C, const Type *Ty);
+  static Constant *getFPTrunc (Constant *C, const Type *Ty);
+  static Constant *getFPExtend(Constant *C, const Type *Ty);
+  static Constant *getUIToFP  (Constant *C, const Type *Ty);
+  static Constant *getSIToFP  (Constant *C, const Type *Ty);
+  static Constant *getFPToUI  (Constant *C, const Type *Ty);
+  static Constant *getFPToSI  (Constant *C, const Type *Ty);
+  static Constant *getPtrToInt(Constant *C, const Type *Ty);
+  static Constant *getIntToPtr(Constant *C, const Type *Ty);
+  static Constant *getBitCast (Constant *C, const Type *Ty);
 
   // @brief Convenience function for getting one of the casting operations
   // using a CastOps opcode.

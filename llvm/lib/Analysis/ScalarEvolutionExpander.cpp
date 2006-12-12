@@ -20,9 +20,27 @@ using namespace llvm;
 /// InsertCastOfTo - Insert a cast of V to the specified type, doing what
 /// we can to share the casts.
 Value *SCEVExpander::InsertCastOfTo(Value *V, const Type *Ty) {
+  // Compute the Cast opcode to use
+  Instruction::CastOps opcode = Instruction::BitCast;
+  if (Ty->isIntegral()) {
+    if (V->getType()->getTypeID() == Type::PointerTyID)
+      opcode = Instruction::PtrToInt;
+    else {
+      unsigned SrcBits = V->getType()->getPrimitiveSizeInBits();
+      unsigned DstBits = Ty->getPrimitiveSizeInBits();
+      opcode = (SrcBits > DstBits ? Instruction::Trunc : 
+                (SrcBits == DstBits ? Instruction::BitCast :
+                 (V->getType()->isSigned() ? Instruction::SExt : 
+                  Instruction::ZExt)));
+    }
+  } else if (Ty->isFloatingPoint())
+    opcode = Instruction::UIToFP;
+  else if (Ty->getTypeID() == Type::PointerTyID && V->getType()->isIntegral())
+    opcode = Instruction::IntToPtr;
+
   // FIXME: keep track of the cast instruction.
   if (Constant *C = dyn_cast<Constant>(V))
-    return ConstantExpr::getCast(C, Ty);
+    return ConstantExpr::getCast(opcode, C, Ty);
   
   if (Argument *A = dyn_cast<Argument>(V)) {
     // Check to see if there is already a cast!
@@ -38,8 +56,8 @@ Value *SCEVExpander::InsertCastOfTo(Value *V, const Type *Ty) {
           return CI;
         }
     }
-    return CastInst::createInferredCast(
-        V, Ty, V->getName(), A->getParent()->getEntryBlock().begin());
+    return CastInst::create(opcode, V, Ty, V->getName(), 
+                            A->getParent()->getEntryBlock().begin());
   }
     
   Instruction *I = cast<Instruction>(V);
@@ -64,7 +82,7 @@ Value *SCEVExpander::InsertCastOfTo(Value *V, const Type *Ty) {
   if (InvokeInst *II = dyn_cast<InvokeInst>(I))
     IP = II->getNormalDest()->begin();
   while (isa<PHINode>(IP)) ++IP;
-  return CastInst::createInferredCast(V, Ty, V->getName(), IP);
+  return CastInst::create(opcode, V, Ty, V->getName(), IP);
 }
 
 Value *SCEVExpander::visitMulExpr(SCEVMulExpr *S) {

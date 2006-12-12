@@ -459,11 +459,11 @@ static bool IndexOperandsEqual(Value *V1, Value *V2) {
     if (Constant *C2 = dyn_cast<Constant>(V2)) {
       // Sign extend the constants to long types, if necessary
       if (C1->getType()->getPrimitiveSizeInBits() < 64)
-        C1 = ConstantExpr::getSignExtend(C1, Type::LongTy);
+        C1 = ConstantExpr::getSExt(C1, Type::LongTy);
       else if (C1->getType() == Type::ULongTy)
         C1 = ConstantExpr::getBitCast(C1, Type::LongTy);
       if (C2->getType()->getPrimitiveSizeInBits() < 64)
-        C2 = ConstantExpr::getSignExtend(C2, Type::LongTy);
+        C2 = ConstantExpr::getSExt(C2, Type::LongTy);
       else if (C2->getType() == Type::ULongTy)
         C2 = ConstantExpr::getBitCast(C2, Type::LongTy);
       return C1 == C2;
@@ -555,11 +555,11 @@ BasicAliasAnalysis::CheckGEPInstructions(
           if (G1OC->getType() != G2OC->getType()) {
             // Sign extend both operands to long.
             if (G1OC->getType()->getPrimitiveSizeInBits() < 64)
-              G1OC = ConstantExpr::getSignExtend(G1OC, Type::LongTy);
+              G1OC = ConstantExpr::getSExt(G1OC, Type::LongTy);
             else if (G1OC->getType() == Type::ULongTy)
               G1OC = ConstantExpr::getBitCast(G1OC, Type::LongTy);
             if (G2OC->getType()->getPrimitiveSizeInBits() < 64)
-              G2OC = ConstantExpr::getSignExtend(G2OC, Type::LongTy);
+              G2OC = ConstantExpr::getSExt(G2OC, Type::LongTy);
             else if (G2OC->getType() == Type::ULongTy)
               G2OC = ConstantExpr::getBitCast(G2OC, Type::LongTy);
             GEP1Ops[FirstConstantOper] = G1OC;
