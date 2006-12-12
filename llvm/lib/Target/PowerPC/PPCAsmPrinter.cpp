@@ -542,8 +542,19 @@ bool DarwinAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
 
 
 bool DarwinAsmPrinter::doInitialization(Module &M) {
-  if (Subtarget.isGigaProcessor())
+  const std::string &CPU = Subtarget.getCPU();
+  
+  if (CPU != "generic")
+    O << "\t.machine ppc" << CPU << "\n";
+  else if (Subtarget.isGigaProcessor())
     O << "\t.machine ppc970\n";
+  else if (Subtarget.isPPC64())
+    O << "\t.machine ppc64\n";
+  else if (Subtarget.hasAltivec())
+    O << "\t.machine ppc7400\n";
+  else
+    O << "\t.machine ppc\n";
+     
   AsmPrinter::doInitialization(M);
   
   // Darwin wants symbols to be quoted if they have complex names.
