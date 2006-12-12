@@ -3038,15 +3038,38 @@ SDOperand DAGCombiner::visitSTORE(SDNode *N) {
   if (ConstantFPSDNode *CFP = dyn_cast<ConstantFPSDNode>(Value)) {
     if (Value.getOpcode() != ISD::TargetConstantFP) {
       SDOperand Tmp;
-      if (CFP->getValueType(0) == MVT::f32) {
-        Tmp = DAG.getConstant(FloatToBits(CFP->getValue()), MVT::i32);
-        return DAG.getStore(Chain, Tmp, Ptr, ST->getSrcValue(),
-                            ST->getSrcValueOffset());
-      } else if (TLI.isTypeLegal(MVT::i64)) {
-        assert(CFP->getValueType(0) == MVT::f64 && "Unknown FP type!");
-        Tmp = DAG.getConstant(DoubleToBits(CFP->getValue()), MVT::i64);
-        return DAG.getStore(Chain, Tmp, Ptr, ST->getSrcValue(),
-                            ST->getSrcValueOffset());
+      switch (CFP->getValueType(0)) {
+      default: assert(0 && "Unknown FP type");
+      case MVT::f32:
+        if (!AfterLegalize || TLI.isTypeLegal(MVT::i32)) {
+          Tmp = DAG.getConstant(FloatToBits(CFP->getValue()), MVT::i32);
+          return DAG.getStore(Chain, Tmp, Ptr, ST->getSrcValue(),
+                              ST->getSrcValueOffset());
+        }
+        break;
+      case MVT::f64:
+        if (!AfterLegalize || TLI.isTypeLegal(MVT::i64)) {
+          Tmp = DAG.getConstant(DoubleToBits(CFP->getValue()), MVT::i64);
+          return DAG.getStore(Chain, Tmp, Ptr, ST->getSrcValue(),
+                              ST->getSrcValueOffset());
+        } else if (TLI.isTypeLegal(MVT::i32)) {
+          // Many FP stores are not make apparent until after legalize, e.g. for
+          // argument passing.  Since this is so common, custom legalize the
+          // 64-bit integer store into two 32-bit stores.
+          uint64_t Val = DoubleToBits(CFP->getValue());
+          SDOperand Lo = DAG.getConstant(Val & 0xFFFFFFFF, MVT::i32);
+          SDOperand Hi = DAG.getConstant(Val >> 32, MVT::i32);
+          if (!TLI.isLittleEndian()) std::swap(Lo, Hi);
+
+          SDOperand St0 = DAG.getStore(Chain, Lo, Ptr, ST->getSrcValue(),
+                                       ST->getSrcValueOffset());
+          Ptr = DAG.getNode(ISD::ADD, Ptr.getValueType(), Ptr,
+                            DAG.getConstant(4, Ptr.getValueType()));
+          SDOperand St1 = DAG.getStore(Chain, Hi, Ptr, ST->getSrcValue(),
+                                       ST->getSrcValueOffset()+4);
+          return DAG.getNode(ISD::TokenFactor, MVT::Other, St0, St1);
+        }
+        break;
       }
     }
   }
