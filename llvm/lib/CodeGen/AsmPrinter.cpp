@@ -450,7 +450,7 @@ void AsmPrinter::EmitConstantValueOnly(const Constant *CV) {
         if (opcode == Instruction::IntToPtr)
           Op = ConstantExpr::getIntegerCast(Op, IntPtrTy, false /*ZExt*/);
         else 
-          Op = ConstantExpr::getCast(Instruction::PtrToInt, Op, IntPtrTy);
+          Op = ConstantExpr::getPtrToInt(Op, IntPtrTy);
         return EmitConstantValueOnly(Op);
       }
       
