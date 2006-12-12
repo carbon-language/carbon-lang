@@ -1510,12 +1510,12 @@ void CWriter::printFloatingPointConstants(Function &F) {
 void CWriter::printModuleTypes(const SymbolTable &ST) {
   Out << "/* Helper union for bitcasts */\n";
   Out << "typedef union {\n";
-  Out << "  unsigned int  UInt;\n";
-  Out << "    signed int  SInt;\n";
-  Out << "  unsigned long ULong;\n";
-  Out << "    signed long SLong;\n";
-  Out << "          float Float;\n";
-  Out << "         double Double;\n";
+  Out << "  unsigned int UInt;\n";
+  Out << "  signed int SInt;\n";
+  Out << "  unsigned long long ULong;\n";
+  Out << "  signed long long SLong;\n";
+  Out << "  float Float;\n";
+  Out << "  double Double;\n";
   Out << "} llvmBitCastUnion;\n";
 
   // We are only interested in the type plane of the symbol table.
