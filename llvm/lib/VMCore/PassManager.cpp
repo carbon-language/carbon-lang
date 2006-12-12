@@ -847,6 +847,12 @@ FunctionPassManager_New::FunctionPassManager_New(ModuleProvider *P) {
   FPM = new FunctionPassManagerImpl_New(0);
   // FPM is the top level manager.
   FPM->setTopLevelManager(FPM);
+
+  PMDataManager *PMD = dynamic_cast<PMDataManager *>(FPM);
+  AnalysisResolver_New *AR = new AnalysisResolver_New(*PMD);
+  FPM->setResolver(AR);
+  
+  FPM->addPassManager(FPM);
   MP = P;
 }
 
