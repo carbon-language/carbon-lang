@@ -488,9 +488,9 @@ void SelectionDAGLegalize::HandleOp(SDOperand Op) {
   }
 }
 
-/// ExpandConstantFP - Expands the ConstantFP node by either converting it to
-/// integer constant or spilling the constant to memory.
-static SDOperand ExpandConstantFP(ConstantFPSDNode *CFP, bool ToMem,
+/// ExpandConstantFP - Expands the ConstantFP node to an integer constant or
+/// a load from the constant pool.
+static SDOperand ExpandConstantFP(ConstantFPSDNode *CFP, bool UseCP,
                                   SelectionDAG &DAG, TargetLowering &TLI) {
   bool Extend = false;
 
@@ -502,7 +502,7 @@ static SDOperand ExpandConstantFP(ConstantFPSDNode *CFP, bool ToMem,
   bool isDouble = VT == MVT::f64;
   ConstantFP *LLVMC = ConstantFP::get(isDouble ? Type::DoubleTy :
                                       Type::FloatTy, CFP->getValue());
-  if (!ToMem) {
+  if (!UseCP) {
     double Val = LLVMC->getValue();
     return isDouble
       ? DAG.getConstant(DoubleToBits(Val), MVT::i64)
@@ -4434,6 +4434,8 @@ void SelectionDAGLegalize::ExpandOp(SDOperand Op, SDOperand &Lo, SDOperand &Hi){
   case ISD::ConstantFP: {
     ConstantFPSDNode *CFP = cast<ConstantFPSDNode>(Node);
     Lo = ExpandConstantFP(CFP, false, DAG, TLI);
+    if (getTypeAction(Lo.getValueType()) == Expand)
+      ExpandOp(Lo, Lo, Hi);
     break;
   }
   case ISD::BUILD_PAIR:
@@ -4526,6 +4528,9 @@ void SelectionDAGLegalize::ExpandOp(SDOperand Op, SDOperand &Lo, SDOperand &Hi){
         // f32->i32 or f64->i64 one to one expansion.
         // Remember that we legalized the chain.
         AddLegalizedOperand(SDOperand(Node, 1), LegalizeOp(Lo.getValue(1)));
+        // Recursively expand the new load.
+        if (getTypeAction(NVT) == Expand)
+          ExpandOp(Lo, Lo, Hi);
         break;
       }
 

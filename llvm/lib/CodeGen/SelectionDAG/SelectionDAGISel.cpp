@@ -346,13 +346,10 @@ unsigned FunctionLoweringInfo::CreateRegForValue(const Value *V) {
   
   // If this value is represented with multiple target registers, make sure
   // to create enough consecutive registers of the right (smaller) type.
-  unsigned NT = VT-1;  // Find the type to use.
-  while (TLI.getNumElements((MVT::ValueType)NT) != 1)
-    --NT;
-  
-  unsigned R = MakeReg((MVT::ValueType)NT);
+  VT = TLI.getTypeToExpandTo(VT);
+  unsigned R = MakeReg(VT);
   for (unsigned i = 1; i != NV*NumVectorRegs; ++i)
-    MakeReg((MVT::ValueType)NT);
+    MakeReg(VT);
   return R;
 }
 
@@ -689,19 +686,26 @@ SDOperand SelectionDAGLowering::getValue(const Value *V) {
   
   // If this type is not legal, make it so now.
   if (VT != MVT::Vector) {
-    MVT::ValueType DestVT = TLI.getTypeToTransformTo(VT);
-  
-    N = DAG.getCopyFromReg(DAG.getEntryNode(), InReg, DestVT);
-    if (DestVT < VT) {
+    if (TLI.getTypeAction(VT) == TargetLowering::Expand) {
       // Source must be expanded.  This input value is actually coming from the
       // register pair VMI->second and VMI->second+1.
-      N = DAG.getNode(ISD::BUILD_PAIR, VT, N,
-                      DAG.getCopyFromReg(DAG.getEntryNode(), InReg+1, DestVT));
-    } else if (DestVT > VT) { // Promotion case
-      if (MVT::isFloatingPoint(VT))
-        N = DAG.getNode(ISD::FP_ROUND, VT, N);
-      else
-        N = DAG.getNode(ISD::TRUNCATE, VT, N);
+      MVT::ValueType DestVT = TLI.getTypeToExpandTo(VT);
+      unsigned NumVals = TLI.getNumElements(VT);
+      N = DAG.getCopyFromReg(DAG.getEntryNode(), InReg, DestVT);
+      if (NumVals == 1)
+        N = DAG.getNode(ISD::BIT_CONVERT, VT, N);
+      else {
+        assert(NumVals == 2 && "1 to 4 (and more) expansion not implemented!");
+        N = DAG.getNode(ISD::BUILD_PAIR, VT, N,
+                       DAG.getCopyFromReg(DAG.getEntryNode(), InReg+1, DestVT));
+      }
+    } else {
+      MVT::ValueType DestVT = TLI.getTypeToTransformTo(VT);
+      N = DAG.getCopyFromReg(DAG.getEntryNode(), InReg, DestVT);
+      if (TLI.getTypeAction(VT) == TargetLowering::Promote) // Promotion case
+        N = MVT::isFloatingPoint(VT)
+          ? DAG.getNode(ISD::FP_ROUND, VT, N)
+          : DAG.getNode(ISD::TRUNCATE, VT, N);
     }
   } else {
     // Otherwise, if this is a vector, make it available as a generic vector
@@ -2916,12 +2920,8 @@ TargetLowering::LowerArguments(Function &F, SelectionDAG &DAG) {
         // If this is a large integer, it needs to be broken up into small
         // integers.  Figure out what the destination type is and how many small
         // integers it turns into.
-        MVT::ValueType NVT = VT;
-        unsigned NumVals = 1;
-        while (getTypeAction(NVT) == Expand) {
-          NVT = getTypeToTransformTo(NVT);
-          NumVals *= MVT::getSizeInBits(VT)/MVT::getSizeInBits(NVT);
-        }
+        MVT::ValueType NVT = getTypeToExpandTo(VT);
+        unsigned NumVals = getNumElements(VT);
         for (unsigned i = 0; i != NumVals; ++i)
           RetVals.push_back(NVT);
       } else {
@@ -3131,12 +3131,8 @@ TargetLowering::LowerCallTo(SDOperand Chain, const Type *RetTy, bool isVarArg,
         // If this is a large integer, it needs to be reassembled from small
         // integers.  Figure out what the source elt type is and how many small
         // integers it is.
-        MVT::ValueType NVT = VT;
-        unsigned NumVals = 1;
-        while (getTypeAction(NVT) == Expand) {
-          NVT = getTypeToTransformTo(NVT);
-          NumVals *= MVT::getSizeInBits(VT)/MVT::getSizeInBits(NVT);
-        }
+        MVT::ValueType NVT = getTypeToExpandTo(VT);
+        unsigned NumVals = getNumElements(VT);
         for (unsigned i = 0; i != NumVals; ++i)
           RetTys.push_back(NVT);
       } else {
@@ -3935,17 +3931,20 @@ SDOperand SelectionDAGLowering::CopyValueToVirtualRegister(Value *V,
     }
     return DAG.getNode(ISD::TokenFactor, MVT::Other,
                        &OutChains[0], OutChains.size());
-  } else if (SrcVT < DestVT) {
+  } else if (TLI.getTypeAction(SrcVT) == TargetLowering::Promote) {
     // The src value is promoted to the register.
     if (MVT::isFloatingPoint(SrcVT))
       Op = DAG.getNode(ISD::FP_EXTEND, DestVT, Op);
     else
       Op = DAG.getNode(ISD::ANY_EXTEND, DestVT, Op);
     return DAG.getCopyToReg(getRoot(), Reg, Op);
-  } else if (SrcVT == MVT::f32 || SrcVT == MVT::f64) {
-    return DAG.getCopyToReg(getRoot(), Reg,
-                            DAG.getNode(ISD::BIT_CONVERT, DestVT, Op));
   } else  {
+    DestVT = TLI.getTypeToExpandTo(SrcVT);
+    unsigned NumVals = TLI.getNumElements(SrcVT);
+    if (NumVals == 1)
+      return DAG.getCopyToReg(getRoot(), Reg,
+                              DAG.getNode(ISD::BIT_CONVERT, DestVT, Op));
+    assert(NumVals == 2 && "1 to 4 (and more) expansion not implemented!");
     // The src value is expanded into multiple registers.
     SDOperand Lo = DAG.getNode(ISD::EXTRACT_ELEMENT, DestVT,
                                Op, DAG.getConstant(0, TLI.getPointerTy()));
