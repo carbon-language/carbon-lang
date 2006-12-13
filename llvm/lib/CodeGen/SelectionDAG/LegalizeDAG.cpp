@@ -2860,8 +2860,29 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
         break;
       }
       break;
-    case Expand:
-      assert(0 && "Shouldn't need to expand other operators here!");
+    case Expand: {
+      // Convert f32 / f64 to i32 / i64.
+      MVT::ValueType VT = Op.getValueType();
+      const char *FnName = 0;
+      switch (Node->getOpcode()) {
+      case ISD::FP_TO_SINT:
+        if (Node->getOperand(0).getValueType() == MVT::f32)
+          FnName = (VT == MVT::i32) ? "__fixsfsi" : "__fixsfdi";
+        else
+          FnName = (VT == MVT::i32) ? "__fixdfsi" : "__fixdfdi";
+        break;
+      case ISD::FP_TO_UINT:
+        if (Node->getOperand(0).getValueType() == MVT::f32)
+          FnName = (VT == MVT::i32) ? "__fixunssfsi" : "__fixunssfdi";
+        else
+          FnName = (VT == MVT::i32) ? "__fixunsdfsi" : "__fixunsdfdi";
+        break;
+      default: assert(0 && "Unreachable!");
+      }
+      SDOperand Dummy;
+      Result = ExpandLibCall(FnName, Node, Dummy);
+      break;
+    }
     case Promote:
       Tmp1 = PromoteOp(Node->getOperand(0));
       Result = DAG.UpdateNodeOperands(Result, LegalizeOp(Tmp1));
