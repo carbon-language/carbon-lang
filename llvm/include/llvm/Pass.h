@@ -355,6 +355,11 @@ private:
 /// @brief This is the storage for the -time-passes option.
 extern bool TimePassesIsEnabled;
 
+// Different debug levels that can be enabled...
+enum PassDebugLevel {
+  PDLNone, PDLArguments, PDLStructure, PDLExecutions, PDLDetails
+};
+
 } // End llvm namespace
 
 // Include support files that contain important APIs commonly used by Passes,

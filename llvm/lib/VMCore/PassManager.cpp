@@ -13,6 +13,7 @@
 
 
 #include "llvm/PassManager.h"
+#include "llvm/Support/CommandLine.h"
 #include "llvm/Module.h"
 #include "llvm/ModuleProvider.h"
 #include "llvm/Support/Streams.h"
@@ -83,6 +84,27 @@ using namespace llvm;
 // PassManagerImpl is a top level pass manager responsible for managing
 // ModulePassManagers.
 //===----------------------------------------------------------------------===//
+
+namespace llvm {
+
+//===----------------------------------------------------------------------===//
+// Pass debugging information.  Often it is useful to find out what pass is
+// running when a crash occurs in a utility.  When this library is compiled with
+// debugging on, a command line option (--debug-pass) is enabled that causes the
+// pass name to be printed before it executes.
+//
+
+static cl::opt<enum PassDebugLevel>
+PassDebugging_New("debug-pass", cl::Hidden,
+                  cl::desc("Print PassManager debugging information"),
+                  cl::values(
+  clEnumVal(PDLNone      , "disable debug output"),
+  clEnumVal(PDLArguments , "print pass arguments to pass to 'opt'"),
+  clEnumVal(PDLStructure , "print pass structure before run()"),
+  clEnumVal(PDLExecutions, "print pass name before it is executed"),
+  clEnumVal(PDLDetails   , "print pass details when it is executed"),
+                             clEnumValEnd));
+} // End of llvm namespace
 
 #ifndef USE_OLD_PASSMANAGER
 namespace llvm {
@@ -1241,6 +1263,10 @@ bool PassManagerImpl_New::addPass(Pass *P) {
 bool PassManagerImpl_New::run(Module &M) {
 
   bool Changed = false;
+
+  if (PassDebugging_New >= PDLStructure)
+    dumpPasses();
+
   for (std::vector<Pass *>::iterator I = passManagersBegin(),
          E = passManagersEnd(); I != E; ++I) {
     ModulePassManager *MP = dynamic_cast<ModulePassManager *>(*I);
