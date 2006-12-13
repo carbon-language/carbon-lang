@@ -1747,7 +1747,7 @@ public:
     SetCondInst* setcond_inst = new SetCondInst(Instruction::SetLE,sub_inst,
         ConstantInt::get(Type::UIntTy,9),
         ci->getOperand(1)->getName()+".cmp",ci);
-    CastInst* c2 = new SExtInst(setcond_inst, Type::IntTy, 
+    CastInst* c2 = new ZExtInst(setcond_inst, Type::IntTy, 
         ci->getOperand(1)->getName()+".isdigit", ci);
     ci->replaceAllUsesWith(c2);
     ci->eraseFromParent();
@@ -1873,7 +1873,7 @@ public:
     Value *V = CastInst::createIntegerCast(TheCall->getOperand(1), ArgType, 
                                            false/*ZExt*/, "tmp", TheCall);
     Value *V2 = new CallInst(F, V, "tmp", TheCall);
-    V2 = CastInst::createIntegerCast(V2, Type::IntTy, true/*SExt*/, 
+    V2 = CastInst::createIntegerCast(V2, Type::IntTy, false/*ZExt*/, 
                                      "tmp", TheCall);
     V2 = BinaryOperator::createAdd(V2, ConstantInt::get(Type::IntTy, 1),
                                    "tmp", TheCall);
@@ -2117,7 +2117,7 @@ bool getConstantStringLength(Value *V, uint64_t &len, ConstantArray **CA) {
 /// inserting the cast before IP, and return the cast.
 /// @brief Cast a value to a "C" string.
 Value *CastToCStr(Value *V, Instruction &IP) {
-  assert(V->getType()->getTypeID() == Type::PointerTyID && 
+  assert(isa<PointerType>(V->getType()) && 
          "Can't cast non-pointer type to C string type");
   const Type *SBPTy = PointerType::get(Type::SByteTy);
   if (V->getType() != SBPTy)
