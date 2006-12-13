@@ -9,7 +9,7 @@
 LEVEL = ../..
 TOOLNAME = llvmc
 LINK_COMPONENTS = support system
-CONFIG_FILES = c cpp ll
+CONFIG_FILES = c cpp ll st
 EXTRA_DIST = c cpp ll ConfigLexer.cpp.cvs ConfigLexer.l.cvs
 REQUIRES_EH := 1
 
