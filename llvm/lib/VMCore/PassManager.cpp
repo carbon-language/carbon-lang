@@ -126,6 +126,15 @@ public:
   Pass *findAnalysisPass(AnalysisID AID);
 
   virtual ~PMTopLevelManager() {
+
+    for (std::vector<Pass *>::iterator I = PassManagers.begin(),
+           E = PassManagers.end(); I != E; ++I)
+      delete *I;
+
+    for (std::vector<ImmutablePass *>::iterator
+           I = ImmutablePasses.begin(), E = ImmutablePasses.end(); I != E; ++I)
+      delete *I;
+
     PassManagers.clear();
   }
 
@@ -180,6 +189,15 @@ public:
 
   PMDataManager(int D) : TPM(NULL), Depth(D) {
     initializeAnalysisInfo();
+  }
+
+  virtual ~PMDataManager() {
+
+    for (std::vector<Pass *>::iterator I = PassVector.begin(),
+           E = PassVector.end(); I != E; ++I)
+      delete *I;
+
+    PassVector.clear();
   }
 
   /// Return true IFF pass P's required analysis set does not required new
@@ -914,6 +932,10 @@ FunctionPassManager_New::FunctionPassManager_New(ModuleProvider *P) {
   MP = P;
 }
 
+FunctionPassManager_New::~FunctionPassManager_New() {
+  delete FPM;
+}
+
 /// add - Add a pass to the queue of passes to run.  This passes
 /// ownership of the Pass to the PassManager.  When the
 /// PassManager_X is destroyed, the pass will be destroyed as well, so
@@ -1187,8 +1209,7 @@ ModulePassManager_New::runOnModule(Module &M) {
 
 //===----------------------------------------------------------------------===//
 // PassManagerImpl implementation
-
-// PassManager_New implementation
+//
 /// Add P into active pass manager or use new module pass manager to
 /// manage it.
 bool PassManagerImpl_New::addPass(Pass *P) {
@@ -1230,6 +1251,10 @@ PassManager_New::PassManager_New() {
   PM = new PassManagerImpl_New(0);
   // PM is the top level manager
   PM->setTopLevelManager(PM);
+}
+
+PassManager_New::~PassManager_New() {
+  delete PM;
 }
 
 /// add - Add a pass to the queue of passes to run.  This passes ownership of

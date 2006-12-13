@@ -97,6 +97,7 @@ class PassManager_New {
 public:
 
   PassManager_New();
+  ~PassManager_New();
 
   /// add - Add a pass to the queue of passes to run.  This passes ownership of
   /// the Pass to the PassManager.  When the PassManager is destroyed, the pass
@@ -121,7 +122,7 @@ class FunctionPassManager_New {
 public:
   FunctionPassManager_New(ModuleProvider *P);
   FunctionPassManager_New();
-  ~FunctionPassManager_New() { /* TODO */ };
+  ~FunctionPassManager_New();
  
   /// add - Add a pass to the queue of passes to run.  This passes
   /// ownership of the Pass to the PassManager.  When the
