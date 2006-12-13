@@ -192,6 +192,7 @@ public:
 
   // Print passes managed by this top level manager.
   void dumpPasses();
+  void dumpArguments();
 
 private:
   
@@ -299,6 +300,18 @@ public:
     }
   }
 
+  void dumpPassArguments() {
+    for(std::vector<Pass *>::iterator I = PassVector.begin(),
+          E = PassVector.end(); I != E; ++I) {
+      if (PMDataManager *PMD = dynamic_cast<PMDataManager *>(*I))
+        PMD->dumpPassArguments();
+      else
+        if (const PassInfo *PI = (*I)->getPassInfo())
+          if (!PI->isAnalysisGroup())
+            cerr << " -" << PI->getPassArgument();
+    }
+  }
+
 protected:
 
   // Collection of pass whose last user asked this manager to claim
@@ -360,7 +373,6 @@ public:
       dumpLastUses(*I, Offset+1);
     }
   }
-
 };
 
 //===----------------------------------------------------------------------===//
@@ -649,6 +661,21 @@ void PMTopLevelManager::dumpPasses() {
          E = PassManagers.end(); I != E; ++I)
     (*I)->dumpPassStructure(1);
 
+}
+
+void PMTopLevelManager::dumpArguments() {
+
+  if (PassDebugging_New < Arguments)
+    return;
+
+  cerr << "Pass Arguments: ";
+  for (std::vector<Pass *>::iterator I = PassManagers.begin(),
+         E = PassManagers.end(); I != E; ++I) {
+    PMDataManager *PMD = dynamic_cast<PMDataManager *>(*I);
+    assert(PMD && "This is not a PassManager");
+    PMD->dumpPassArguments();
+  }
+  cerr << "\n";
 }
 
 //===----------------------------------------------------------------------===//
@@ -1270,6 +1297,7 @@ bool PassManagerImpl_New::run(Module &M) {
 
   bool Changed = false;
 
+  dumpArguments();
   if (PassDebugging_New >= Structure)
     dumpPasses();
 
