@@ -131,11 +131,6 @@ public:
   /// This implies that all passes MUST be allocated with 'new'.
   void add(Pass *P);
 
-  /// Execute all of the passes scheduled for execution.  Keep
-  /// track of whether any of the passes modifies the function, and if
-  /// so, return true.
-  bool runOnModule(Module &M);
-
   /// run - Execute all of the passes scheduled for execution.  Keep
   /// track of whether any of the passes modifies the function, and if
   /// so, return true.
