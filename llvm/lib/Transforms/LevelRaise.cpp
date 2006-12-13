@@ -258,8 +258,8 @@ bool RPR::PeepholeOptimize(BasicBlock *BB, BasicBlock::iterator &BI) {
               // The existing and new operand 0 types are different so we must
               // replace CI with a new CastInst so that we are assured to 
               // get the correct cast opcode.
-              CastInst *NewCI = CastInst::createInferredCast(
-                GEP, CI->getType(), CI->getName(), CI);
+              CastInst *NewCI = new BitCastInst(GEP, CI->getType(), 
+                                                CI->getName(), CI);
               CI->replaceAllUsesWith(NewCI);
               CI->eraseFromParent();
               CI = NewCI;

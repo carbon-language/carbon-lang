@@ -3519,8 +3519,8 @@ static bool OptimizeNoopCopyExpression(CastInst *CI) {
       while (isa<PHINode>(InsertPt)) ++InsertPt;
       
       InsertedCast = 
-        CastInst::createInferredCast(CI->getOperand(0), CI->getType(), "", 
-                                     InsertPt);
+        CastInst::create(CI->getOpcode(), CI->getOperand(0), CI->getType(), "", 
+                         InsertPt);
       MadeChange = true;
     }
     
@@ -3559,8 +3559,8 @@ static Instruction *InsertGEPComputeCode(Instruction *&V, BasicBlock *BB,
   // operand).
   if (CastInst *CI = dyn_cast<CastInst>(Ptr))
     if (CI->getParent() != BB && isa<PointerType>(CI->getOperand(0)->getType()))
-      Ptr = CastInst::createInferredCast(CI->getOperand(0), CI->getType(), "",
-                                         InsertPt);
+      Ptr = CastInst::create(CI->getOpcode(), CI->getOperand(0), CI->getType(),
+                             "", InsertPt);
   
   // Add the offset, cast it to the right type.
   Ptr = BinaryOperator::createAdd(Ptr, PtrOffset, "", InsertPt);
@@ -3702,7 +3702,7 @@ static bool OptimizeGEPExpression(GetElementPtrInst *GEPI,
       // Ptr = Ptr + Idx * ElementSize;
       
       // Cast Idx to UIntPtrTy if needed.
-      Idx = CastInst::createInferredCast(Idx, UIntPtrTy, "", GEPI);
+      Idx = CastInst::createIntegerCast(Idx, UIntPtrTy, true/*SExt*/, "", GEPI);
       
       uint64_t ElementSize = TD->getTypeSize(Ty);
       // Mask off bits that should not be set.

@@ -135,7 +135,8 @@ bool LowerAllocations::runOnBasicBlock(BasicBlock &BB) {
         } else {
           Value *Scale = MI->getOperand(0);
           if (Scale->getType() != IntPtrTy)
-            Scale = CastInst::createInferredCast(Scale, IntPtrTy, "", I);
+            Scale = CastInst::createIntegerCast(Scale, IntPtrTy, false /*ZExt*/,
+                                                "", I);
 
           // Multiply it by the array size if necessary...
           MallocArg = BinaryOperator::create(Instruction::Mul, Scale,
@@ -149,13 +150,12 @@ bool LowerAllocations::runOnBasicBlock(BasicBlock &BB) {
       if (MallocFTy->getNumParams() > 0 || MallocFTy->isVarArg()) {
         if (MallocFTy->isVarArg()) {
           if (MallocArg->getType() != IntPtrTy)
-            MallocArg = CastInst::createInferredCast(MallocArg, IntPtrTy, "", 
-                                                     I);
+            MallocArg = CastInst::createIntegerCast(MallocArg, IntPtrTy, 
+                                                    false /*ZExt*/, "", I);
         } else if (MallocFTy->getNumParams() > 0 &&
                    MallocFTy->getParamType(0) != Type::UIntTy)
-          MallocArg = 
-            CastInst::createInferredCast(MallocArg, MallocFTy->getParamType(0),
-                                         "",I);
+          MallocArg = CastInst::createIntegerCast(
+              MallocArg, MallocFTy->getParamType(0), false/*ZExt*/, "",I);
         MallocArgs.push_back(MallocArg);
       }
 
@@ -170,7 +170,7 @@ bool LowerAllocations::runOnBasicBlock(BasicBlock &BB) {
       // Create a cast instruction to convert to the right type...
       Value *MCast;
       if (MCall->getType() != Type::VoidTy)
-        MCast = CastInst::createInferredCast(MCall, MI->getType(), "", I);
+        MCast = new BitCastInst(MCall, MI->getType(), "", I);
       else
         MCast = Constant::getNullValue(MI->getType());
 
@@ -187,8 +187,7 @@ bool LowerAllocations::runOnBasicBlock(BasicBlock &BB) {
         Value *MCast = FI->getOperand(0);
         if (FreeFTy->getNumParams() > 0 &&
             FreeFTy->getParamType(0) != MCast->getType())
-          MCast = CastInst::createInferredCast(MCast, FreeFTy->getParamType(0), 
-                                               "", I);
+          MCast = new BitCastInst(MCast, FreeFTy->getParamType(0), "", I);
         FreeArgs.push_back(MCast);
       }
 

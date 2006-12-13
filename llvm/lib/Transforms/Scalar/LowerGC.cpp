@@ -146,8 +146,7 @@ static void Coerce(Instruction *I, unsigned OpNum, Type *Ty) {
     if (Constant *C = dyn_cast<Constant>(I->getOperand(OpNum)))
       I->setOperand(OpNum, ConstantExpr::getBitCast(C, Ty));
     else {
-      CastInst *CI = 
-        CastInst::createInferredCast(I->getOperand(OpNum), Ty, "", I);
+      CastInst *CI = new BitCastInst(I->getOperand(OpNum), Ty, "", I);
       I->setOperand(OpNum, CI);
     }
   }

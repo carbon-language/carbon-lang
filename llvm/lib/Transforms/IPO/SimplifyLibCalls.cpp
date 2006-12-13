@@ -1009,7 +1009,8 @@ struct memcmpOptimization : public LibCallOptimization {
       Value *S2V = new LoadInst(Op2Cast, RHS->getName()+".val", CI);
       Value *RV = BinaryOperator::createSub(S1V, S2V, CI->getName()+".diff",CI);
       if (RV->getType() != CI->getType())
-        RV = CastInst::createInferredCast(RV, CI->getType(), RV->getName(), CI);
+        RV = CastInst::createIntegerCast(RV, CI->getType(), false, 
+                                         RV->getName(), CI);
       CI->replaceAllUsesWith(RV);
       CI->eraseFromParent();
       return true;
@@ -1037,8 +1038,8 @@ struct memcmpOptimization : public LibCallOptimization {
                                               CI->getName()+".d1", CI);
         Value *Or = BinaryOperator::createOr(D1, D2, CI->getName()+".res", CI);
         if (Or->getType() != CI->getType())
-          Or = CastInst::createInferredCast(Or, CI->getType(), Or->getName(), 
-                                            CI);
+          Or = CastInst::createIntegerCast(Or, CI->getType(), false /*ZExt*/, 
+                                           Or->getName(), CI);
         CI->replaceAllUsesWith(Or);
         CI->eraseFromParent();
         return true;
@@ -1222,8 +1223,8 @@ struct LLVMMemSetOptimization : public LibCallOptimization {
     }
 
     // Cast dest to the right sized primitive and then load/store
-    CastInst* DestCast = CastInst::createInferredCast(
-        dest, PointerType::get(castType), dest->getName()+".cast", ci);
+    CastInst* DestCast = new BitCastInst(dest, PointerType::get(castType), 
+                                         dest->getName()+".cast", ci);
     new StoreInst(ConstantInt::get(castType,fill_value),DestCast, ci);
     ci->eraseFromParent();
     return true;
@@ -1365,7 +1366,7 @@ public:
         Function* putchar_func = SLC.get_putchar();
         if (!putchar_func)
           return false;
-        CastInst* cast = CastInst::createInferredCast(
+        CastInst* cast = CastInst::createSExtOrBitCast(
             ci->getOperand(2), Type::IntTy, CI->getName()+".int", ci);
         new CallInst(putchar_func, cast, "", ci);
         ci->replaceAllUsesWith(ConstantInt::get(Type::IntTy, 1));
@@ -1499,7 +1500,7 @@ public:
         Function* fputc_func = SLC.get_fputc(FILEptr_type);
         if (!fputc_func)
           return false;
-        CastInst* cast = CastInst::createInferredCast(
+        CastInst* cast = CastInst::createSExtOrBitCast(
             ci->getOperand(3), Type::IntTy, CI->getName()+".int", ci);
         new CallInst(fputc_func,cast,ci->getOperand(1),"",ci);
         ci->replaceAllUsesWith(ConstantInt::get(Type::IntTy,1));
@@ -1606,8 +1607,8 @@ public:
                                             ConstantInt::get(Len->getType(), 1),
                                               Len->getName()+"1", ci);
       if (Len1->getType() != SLC.getIntPtrType())
-        Len1 = CastInst::createInferredCast(
-            Len1, SLC.getIntPtrType(), Len1->getName(), ci);
+        Len1 = CastInst::createIntegerCast(Len1, SLC.getIntPtrType(), false,
+                                           Len1->getName(), ci);
       std::vector<Value*> args;
       args.push_back(CastToCStr(ci->getOperand(1), *ci));
       args.push_back(CastToCStr(ci->getOperand(3), *ci));
@@ -1618,8 +1619,8 @@ public:
       // The strlen result is the unincremented number of bytes in the string.
       if (!ci->use_empty()) {
         if (Len->getType() != ci->getType())
-          Len = CastInst::createInferredCast(
-              Len, ci->getType(), Len->getName(), ci);
+          Len = CastInst::createIntegerCast(Len, ci->getType(), false, 
+                                            Len->getName(), ci);
         ci->replaceAllUsesWith(Len);
       }
       ci->eraseFromParent();
@@ -1627,7 +1628,7 @@ public:
     }
     case 'c': {
       // sprintf(dest,"%c",chr) -> store chr, dest
-      CastInst* cast = CastInst::createInferredCast(
+      CastInst* cast = CastInst::createTruncOrBitCast(
           ci->getOperand(3), Type::SByteTy, "char", ci);
       new StoreInst(cast, ci->getOperand(1), ci);
       GetElementPtrInst* gep = new GetElementPtrInst(ci->getOperand(1),
@@ -1684,8 +1685,8 @@ public:
           return false;
         LoadInst* loadi = new LoadInst(ci->getOperand(1),
           ci->getOperand(1)->getName()+".byte",ci);
-        CastInst* casti = CastInst::createInferredCast(
-            loadi, Type::IntTy, loadi->getName()+".int", ci);
+        CastInst* casti = new SExtInst(loadi, Type::IntTy, 
+                                       loadi->getName()+".int", ci);
         new CallInst(fputc_func,casti,ci->getOperand(2),"",ci);
         break;
       }
@@ -1738,16 +1739,16 @@ public:
     }
 
     // isdigit(c)   -> (unsigned)c - '0' <= 9
-    CastInst* cast = CastInst::createInferredCast(ci->getOperand(1),
-        Type::UIntTy, ci->getOperand(1)->getName()+".uint", ci);
+    CastInst* cast = CastInst::createIntegerCast(ci->getOperand(1),
+        Type::UIntTy, false/*ZExt*/, ci->getOperand(1)->getName()+".uint", ci);
     BinaryOperator* sub_inst = BinaryOperator::createSub(cast,
         ConstantInt::get(Type::UIntTy,0x30),
         ci->getOperand(1)->getName()+".sub",ci);
     SetCondInst* setcond_inst = new SetCondInst(Instruction::SetLE,sub_inst,
         ConstantInt::get(Type::UIntTy,9),
         ci->getOperand(1)->getName()+".cmp",ci);
-    CastInst* c2 = CastInst::createInferredCast(
-        setcond_inst, Type::IntTy, ci->getOperand(1)->getName()+".isdigit", ci);
+    CastInst* c2 = new SExtInst(setcond_inst, Type::IntTy, 
+        ci->getOperand(1)->getName()+".isdigit", ci);
     ci->replaceAllUsesWith(c2);
     ci->eraseFromParent();
     return true;
@@ -1769,14 +1770,13 @@ public:
     // isascii(c)   -> (unsigned)c < 128
     Value *V = CI->getOperand(1);
     if (V->getType()->isSigned())
-      V = CastInst::createInferredCast(V, V->getType()->getUnsignedVersion(), 
-                                       V->getName(), CI);
+      V = new BitCastInst(V, V->getType()->getUnsignedVersion(), V->getName(), 
+                          CI);
     Value *Cmp = BinaryOperator::createSetLT(V, ConstantInt::get(V->getType(),
                                                                   128),
                                              V->getName()+".isascii", CI);
     if (Cmp->getType() != CI->getType())
-      Cmp = CastInst::createInferredCast(
-          Cmp, CI->getType(), Cmp->getName(), CI);
+      Cmp = new BitCastInst(Cmp, CI->getType(), Cmp->getName(), CI);
     CI->replaceAllUsesWith(Cmp);
     CI->eraseFromParent();
     return true;
@@ -1870,10 +1870,11 @@ public:
     
     Function *F = SLC.getModule()->getOrInsertFunction(CTTZName, ArgType,
                                                        ArgType, NULL);
-    Value *V = CastInst::createInferredCast(
-        TheCall->getOperand(1), ArgType, "tmp", TheCall);
+    Value *V = CastInst::createIntegerCast(TheCall->getOperand(1), ArgType, 
+                                           false/*ZExt*/, "tmp", TheCall);
     Value *V2 = new CallInst(F, V, "tmp", TheCall);
-    V2 = CastInst::createInferredCast(V2, Type::IntTy, "tmp", TheCall);
+    V2 = CastInst::createIntegerCast(V2, Type::IntTy, true/*SExt*/, 
+                                     "tmp", TheCall);
     V2 = BinaryOperator::createAdd(V2, ConstantInt::get(Type::IntTy, 1),
                                    "tmp", TheCall);
     Value *Cond = 
@@ -2116,9 +2117,11 @@ bool getConstantStringLength(Value *V, uint64_t &len, ConstantArray **CA) {
 /// inserting the cast before IP, and return the cast.
 /// @brief Cast a value to a "C" string.
 Value *CastToCStr(Value *V, Instruction &IP) {
+  assert(V->getType()->getTypeID() == Type::PointerTyID && 
+         "Can't cast non-pointer type to C string type");
   const Type *SBPTy = PointerType::get(Type::SByteTy);
   if (V->getType() != SBPTy)
-    return CastInst::createInferredCast(V, SBPTy, V->getName(), &IP);
+    return new BitCastInst(V, SBPTy, V->getName(), &IP);
   return V;
 }
 

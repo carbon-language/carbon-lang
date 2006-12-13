@@ -281,7 +281,7 @@ InsertReleaseInst(Value *V, BasicBlock *BB,
 
   const Type *SBP = PointerType::get(Type::SByteTy);
   if (V->getType() != SBP)    // Cast pointer to be sbyte*
-    V = CastInst::createInferredCast(V, SBP, "RPSN_cast", InsertBefore);
+    V = new BitCastInst(V, SBP, "RPSN_cast", InsertBefore);
 
   std::vector<Value*> releaseArgs(1, V);
   new CallInst(ReleasePtrFunc, releaseArgs, "", InsertBefore);
@@ -293,7 +293,7 @@ InsertRecordInst(Value *V, BasicBlock *BB,
                  Function* RecordPtrFunc) {
     const Type *SBP = PointerType::get(Type::SByteTy);
   if (V->getType() != SBP)     // Cast pointer to be sbyte*
-    V = CastInst::createInferredCast(V, SBP, "RP_cast", InsertBefore);
+    V = new BitCastInst(V, SBP, "RP_cast", InsertBefore);
 
   std::vector<Value*> releaseArgs(1, V);
   new CallInst(RecordPtrFunc, releaseArgs, "", InsertBefore);

@@ -141,8 +141,8 @@ bool RaiseAllocations::runOnModule(Module &M) {
           // source size.
           if (Source->getType() != Type::UIntTy)
             Source = 
-              CastInst::createInferredCast(Source, Type::UIntTy,
-                                           "MallocAmtCast", I);
+              CastInst::createIntegerCast(Source, Type::UIntTy, false/*ZExt*/,
+                                          "MallocAmtCast", I);
 
           std::string Name(I->getName()); I->setName("");
           MallocInst *MI = new MallocInst(Type::SByteTy, Source, Name, I);
@@ -193,8 +193,8 @@ bool RaiseAllocations::runOnModule(Module &M) {
           //
           Value *Source = *CS.arg_begin();
           if (!isa<PointerType>(Source->getType()))
-            Source = CastInst::createInferredCast(
-                Source, PointerType::get(Type::SByteTy), "FreePtrCast", I);
+            Source = new IntToPtrInst(Source, PointerType::get(Type::SByteTy), 
+                                      "FreePtrCast", I);
           new FreeInst(Source, I);
 
           // If the old instruction was an invoke, add an unconditional branch

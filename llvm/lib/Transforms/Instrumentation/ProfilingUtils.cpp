@@ -67,6 +67,7 @@ void llvm::InsertProfilingInitCall(Function *MainFn, const char *FnName,
     } else {
       InitCall->setOperand(2, AI);
     }
+    /* FALL THROUGH */
 
   case 1:
     AI = MainFn->arg_begin();
