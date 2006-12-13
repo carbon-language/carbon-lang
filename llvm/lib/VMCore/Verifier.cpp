@@ -112,6 +112,7 @@ namespace {  // Anonymous namespace for class
     bool runOnFunction(Function &F) {
       // Get dominator information if we are being run by PassManager
       if (RealPass) EF = &getAnalysis<ETForest>();
+      
       visit(F);
       InstsInThisBlock.clear();
 
@@ -333,6 +334,12 @@ void Verifier::visitFunction(Function &F) {
           F.getReturnType() == Type::VoidTy,
           "Functions cannot return aggregate values!", &F);
 
+  // Verify that this function (which has a body) is not named "llvm.*".  It
+  // is not legal to define intrinsics.
+  if (F.getName().size() >= 5)
+    Assert1(F.getName().substr(0, 5) != "llvm.",
+            "llvm intrinsics cannot be defined!", &F);
+  
   // Check that this function meets the restrictions on this calling convention.
   switch (F.getCallingConv()) {
   default:
