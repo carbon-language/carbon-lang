@@ -4951,22 +4951,37 @@ void SelectionDAGLegalize::ExpandOp(SDOperand Op, SDOperand &Lo, SDOperand &Hi){
   case ISD::FP_ROUND:
     Lo = ExpandLibCall("__truncdfsf2", Node, Hi);
     break;
-  case ISD::SINT_TO_FP:
+  case ISD::SINT_TO_FP: {
+    const char *FnName = 0;
     if (Node->getOperand(0).getValueType() == MVT::i64)
-      Lo = ExpandLibCall(((VT == MVT::f32) ? "__floatdisf" : "__floatdidf"),
-                         Node, Hi);
+      FnName = (VT == MVT::f32) ? "__floatdisf" : "__floatdidf";
     else
-      Lo = ExpandLibCall(((VT == MVT::f32) ? "__floatsisf" : "__floatsidf"),
-                         Node, Hi);
+      FnName = (VT == MVT::f32) ? "__floatsisf" : "__floatsidf";
+    Lo = ExpandLibCall(FnName, Node, Hi);
     break;
-  case ISD::UINT_TO_FP:
+  }
+  case ISD::UINT_TO_FP: {
+    const char *FnName = 0;
     if (Node->getOperand(0).getValueType() == MVT::i64)
-      Lo = ExpandLibCall(((VT == MVT::f32) ? "__floatundisf" : "__floatundidf"),
-                         Node, Hi);
+      FnName = (VT == MVT::f32) ? "__floatundisf" : "__floatundidf";
     else
-      Lo = ExpandLibCall(((VT == MVT::f32) ? "__floatunsisf" : "__floatunsidf"),
-                         Node, Hi);
+      FnName = (VT == MVT::f32) ? "__floatunsisf" : "__floatunsidf";
+    Lo = ExpandLibCall(FnName, Node, Hi);
     break;
+  }
+  case ISD::FSQRT:
+  case ISD::FSIN:
+  case ISD::FCOS: {
+    const char *FnName = 0;
+    switch(Node->getOpcode()) {
+    case ISD::FSQRT: FnName = (VT == MVT::f32) ? "sqrtf" : "sqrt"; break;
+    case ISD::FSIN:  FnName = (VT == MVT::f32) ? "sinf"  : "sin";  break;
+    case ISD::FCOS:  FnName = (VT == MVT::f32) ? "cosf"  : "cos";  break;
+    default: assert(0 && "Unreachable!");
+    }
+    Lo = ExpandLibCall(FnName, Node, Hi);
+    break;
+  }
   }
 
   // Make sure the resultant values have been legalized themselves, unless this
