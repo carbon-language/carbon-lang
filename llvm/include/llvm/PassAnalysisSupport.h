@@ -213,10 +213,9 @@ AnalysisType &Pass::getAnalysis() const {
 #ifdef USE_OLD_PASSMANAGER
   assert(Resolver && "Pass has not been inserted into a PassManager object!");
 #else
-  assert(Resolver_New && "Pass has not been inserted into a PassManager object!");
+  assert(Resolver_New&&"Pass has not been inserted into a PassManager object!");
 #endif
-  const PassInfo *PI = getClassPassInfo<AnalysisType>();
-  return getAnalysisID<AnalysisType>(PI);
+  return getAnalysisID<AnalysisType>(getClassPassInfo<AnalysisType>());
 }
 
 template<typename AnalysisType>
@@ -239,7 +238,7 @@ AnalysisType &Pass::getAnalysisID(const PassInfo *PI) const {
     }
   }
 #else
-  assert(Resolver_New && "Pass has not been inserted into a PassManager object!");
+  assert(Resolver_New&&"Pass has not been inserted into a PassManager object!");
   // PI *must* appear in AnalysisImpls.  Because the number of passes used
   // should be a small number, we just do a linear search over a (dense)
   // vector.

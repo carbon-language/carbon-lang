@@ -366,10 +366,10 @@ public:
 //===----------------------------------------------------------------------===//
 // FunctionPassManagerImpl_New
 //
-/// FunctionPassManagerImpl_New manages FunctionPasses and BasicBlockPassManagers.
-/// It batches all function passes and basic block pass managers together and
-/// sequence them to process one function at a time before processing next
-/// function.
+/// FunctionPassManagerImpl_New manages FunctionPasses and
+/// BasicBlockPassManagers.  It batches all function passes and basic block pass
+/// managers together and sequence them to process one function at a time before
+/// processing next function.
 class FunctionPassManagerImpl_New : public ModulePass, 
                                     public PMDataManager,
                                     public PMTopLevelManager {
@@ -1184,8 +1184,9 @@ ModulePassManager::addPass(Pass *P) {
       activeFunctionPassManager->setTopLevelManager(this->getTopLevelManager());
 
       // Add new manager into top level manager's indirect passes list
-      PMDataManager *PMD = dynamic_cast<PMDataManager *>(activeFunctionPassManager);
-      assert (PMD && "Manager is not Pass Manager");
+      PMDataManager *PMD =
+        dynamic_cast<PMDataManager *>(activeFunctionPassManager);
+      assert(PMD && "Manager is not Pass Manager");
       TPM->addIndirectPassManager(PMD);
       
       // Add pass into new manager. This time it must succeed.
