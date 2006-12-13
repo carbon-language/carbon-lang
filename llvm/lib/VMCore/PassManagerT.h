@@ -37,15 +37,20 @@ namespace llvm {
 // pass name to be printed before it executes.
 //
 
+// Different debug levels that can be enabled...
+enum PassDebugLevel {
+  None, Arguments, Structure, Executions, Details
+};
+
 static cl::opt<enum PassDebugLevel>
 PassDebugging("debug-pass", cl::Hidden,
              cl::desc("Print PassManager debugging information"),
              cl::values(
-  clEnumVal(PDLNone      , "disable debug output"),
-  clEnumVal(PDLArguments , "print pass arguments to pass to 'opt'"),
-  clEnumVal(PDLStructure , "print pass structure before run()"),
-  clEnumVal(PDLExecutions, "print pass name before it is executed"),
-  clEnumVal(PDLDetails   , "print pass details when it is executed"),
+  clEnumVal(None      , "disable debug output"),
+  clEnumVal(Arguments , "print pass arguments to pass to 'opt'"),
+  clEnumVal(Structure , "print pass structure before run()"),
+  clEnumVal(Executions, "print pass name before it is executed"),
+  clEnumVal(Details   , "print pass details when it is executed"),
                         clEnumValEnd));
 
 //===----------------------------------------------------------------------===//
@@ -55,13 +60,13 @@ PassDebugging("debug-pass", cl::Hidden,
 struct PMDebug {
   static void PerformPassStartupStuff(Pass *P) {
     // If debugging is enabled, print out argument information...
-    if (PassDebugging >= PDLArguments) {
+    if (PassDebugging >= Arguments) {
       cerr << "Pass Arguments: ";
       PrintArgumentInformation(P);
       cerr << "\n";
 
       // Print the pass execution structure
-      if (PassDebugging >= PDLStructure)
+      if (PassDebugging >= Structure)
         P->dumpPassStructure();
     }
   }
@@ -541,7 +546,7 @@ public:
         cerr << "Analysis '" << (*I)->getPassName()
              << "' used but not available!";
         assert(0 && "Analysis used but not available!");
-      } else if (PassDebugging == PDLDetails) {
+      } else if (PassDebugging == Details) {
         if ((*I)->getPassName() != std::string(Impl->getPassName()))
           cerr << "    Interface '" << (*I)->getPassName()
                << "' implemented by '" << Impl->getPassName() << "'\n";
@@ -630,7 +635,7 @@ private:
         cerr << "Analysis '" << (*I)->getPassName()
              << "' used but not available!";
         assert(0 && "Analysis used but not available!");
-      } else if (PassDebugging == PDLDetails) {
+      } else if (PassDebugging == Details) {
         if ((*I)->getPassName() != std::string(Impl->getPassName()))
           cerr << "    Interface '" << (*I)->getPassName()
                << "' implemented by '" << Impl->getPassName() << "'\n";

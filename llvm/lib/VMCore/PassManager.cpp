@@ -94,15 +94,20 @@ namespace llvm {
 // pass name to be printed before it executes.
 //
 
+// Different debug levels that can be enabled...
+enum PassDebugLevel {
+  None, Arguments, Structure, Executions, Details
+};
+
 static cl::opt<enum PassDebugLevel>
 PassDebugging_New("debug-pass", cl::Hidden,
                   cl::desc("Print PassManager debugging information"),
                   cl::values(
-  clEnumVal(PDLNone      , "disable debug output"),
-  clEnumVal(PDLArguments , "print pass arguments to pass to 'opt'"),
-  clEnumVal(PDLStructure , "print pass structure before run()"),
-  clEnumVal(PDLExecutions, "print pass name before it is executed"),
-  clEnumVal(PDLDetails   , "print pass details when it is executed"),
+  clEnumVal(None      , "disable debug output"),
+  clEnumVal(Arguments , "print pass arguments to pass to 'opt'"),
+  clEnumVal(Structure , "print pass structure before run()"),
+  clEnumVal(Executions, "print pass name before it is executed"),
+  clEnumVal(Details   , "print pass details when it is executed"),
                              clEnumValEnd));
 } // End of llvm namespace
 
@@ -1264,7 +1269,7 @@ bool PassManagerImpl_New::run(Module &M) {
 
   bool Changed = false;
 
-  if (PassDebugging_New >= PDLStructure)
+  if (PassDebugging_New >= Structure)
     dumpPasses();
 
   for (std::vector<Pass *>::iterator I = passManagersBegin(),

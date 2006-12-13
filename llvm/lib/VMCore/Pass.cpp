@@ -122,7 +122,7 @@ void PMDebug::PrintArgumentInformation(const Pass *P) {
 
 void PMDebug::PrintPassInformation(unsigned Depth, const char *Action,
                                    Pass *P, Module *M) {
-  if (PassDebugging >= PDLExecutions) {
+  if (PassDebugging >= Executions) {
     cerr << (void*)P << std::string(Depth*2+1, ' ') << Action << " '"
          << P->getPassName();
     if (M) cerr << "' on Module '" << M->getModuleIdentifier() << "'\n";
@@ -132,7 +132,7 @@ void PMDebug::PrintPassInformation(unsigned Depth, const char *Action,
 
 void PMDebug::PrintPassInformation(unsigned Depth, const char *Action,
                                    Pass *P, Function *F) {
-  if (PassDebugging >= PDLExecutions) {
+  if (PassDebugging >= Executions) {
     cerr << (void*)P << std::string(Depth*2+1, ' ') << Action << " '"
          << P->getPassName();
     if (F) cerr << "' on Function '" << F->getName();
@@ -142,7 +142,7 @@ void PMDebug::PrintPassInformation(unsigned Depth, const char *Action,
 
 void PMDebug::PrintPassInformation(unsigned Depth, const char *Action,
                                    Pass *P, BasicBlock *BB) {
-  if (PassDebugging >= PDLExecutions) {
+  if (PassDebugging >= Executions) {
     cerr << (void*)P << std::string(Depth*2+1, ' ') << Action << " '"
          << P->getPassName();
     if (BB) cerr << "' on BasicBlock '" << BB->getName();
@@ -152,7 +152,7 @@ void PMDebug::PrintPassInformation(unsigned Depth, const char *Action,
 
 void PMDebug::PrintAnalysisSetInfo(unsigned Depth, const char *Msg,
                                    Pass *P, const std::vector<AnalysisID> &Set){
-  if (PassDebugging >= PDLDetails && !Set.empty()) {
+  if (PassDebugging >= Details && !Set.empty()) {
     cerr << (void*)P << std::string(Depth*2+3, ' ') << Msg << " Analyses:";
     for (unsigned i = 0; i != Set.size(); ++i) {
       if (i) cerr << ",";
