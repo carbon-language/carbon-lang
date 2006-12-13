@@ -189,10 +189,19 @@ protected:
 ///
 template<typename AnalysisType>
 AnalysisType *Pass::getAnalysisToUpdate() const {
+#ifdef USE_OLD_PASSMANAGER
   assert(Resolver && "Pass not resident in a PassManager object!");
+#else
+  assert(Resolver_New && "Pass not resident in a PassManager object!");
+#endif
   const PassInfo *PI = getClassPassInfo<AnalysisType>();
   if (PI == 0) return 0;
+#ifdef USE_OLD_PASSMANAGER
   return dynamic_cast<AnalysisType*>(Resolver->getAnalysisToUpdate(PI));
+#else
+  return dynamic_cast<AnalysisType*>
+    (Resolver_New->getAnalysisToUpdate(PI, true));
+#endif
 }
 
 /// getAnalysis<AnalysisType>() - This function is used by subclasses to get
@@ -201,15 +210,20 @@ AnalysisType *Pass::getAnalysisToUpdate() const {
 ///
 template<typename AnalysisType>
 AnalysisType &Pass::getAnalysis() const {
+#ifdef USE_OLD_PASSMANAGER
   assert(Resolver && "Pass has not been inserted into a PassManager object!");
+#else
+  assert(Resolver_New && "Pass has not been inserted into a PassManager object!");
+#endif
   const PassInfo *PI = getClassPassInfo<AnalysisType>();
   return getAnalysisID<AnalysisType>(PI);
 }
 
 template<typename AnalysisType>
 AnalysisType &Pass::getAnalysisID(const PassInfo *PI) const {
-  assert(Resolver && "Pass has not been inserted into a PassManager object!");
   assert(PI && "getAnalysis for unregistered pass!");
+#ifdef USE_OLD_PASSMANAGER
+  assert(Resolver && "Pass has not been inserted into a PassManager object!");
   
   // PI *must* appear in AnalysisImpls.  Because the number of passes used
   // should be a small number, we just do a linear search over a (dense)
@@ -224,7 +238,17 @@ AnalysisType &Pass::getAnalysisID(const PassInfo *PI) const {
       break;
     }
   }
-  
+#else
+  assert(Resolver_New && "Pass has not been inserted into a PassManager object!");
+  // PI *must* appear in AnalysisImpls.  Because the number of passes used
+  // should be a small number, we just do a linear search over a (dense)
+  // vector.
+  Pass *ResultPass = Resolver_New->findImplPass(PI);
+  assert (ResultPass && 
+          "getAnalysis*() called on an analysis that was not "
+          "'required' by pass!");
+
+#endif
   // Because the AnalysisType may not be a subclass of pass (for
   // AnalysisGroups), we must use dynamic_cast here to potentially adjust the
   // return pointer (because the class may multiply inherit, once from pass,

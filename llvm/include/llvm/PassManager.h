@@ -25,6 +25,9 @@ class Pass;
 class ModulePass;
 class Module;
 class ModuleProvider;
+
+#ifdef USE_OLD_PASSMANAGER
+
 class ModulePassManager;
 class FunctionPassManagerT;
 class BasicBlockPassManager;
@@ -87,17 +90,19 @@ public:
   bool doFinalization();
 };
 
-class ModulePassManager_New;
+#else
+
+class ModulePassManager;
 class PassManagerImpl_New;
 class FunctionPassManagerImpl_New;
 
-/// PassManager_New manages ModulePassManagers
-class PassManager_New {
+/// PassManager manages ModulePassManagers
+class PassManager {
 
 public:
 
-  PassManager_New();
-  ~PassManager_New();
+  PassManager();
+  ~PassManager();
 
   /// add - Add a pass to the queue of passes to run.  This passes ownership of
   /// the Pass to the PassManager.  When the PassManager is destroyed, the pass
@@ -111,18 +116,18 @@ public:
 
 private:
 
-  /// PassManagerImpl_New is the actual class. PassManager_New is just the 
+  /// PassManagerImpl_New is the actual class. PassManager is just the 
   /// wraper to publish simple pass manager interface
   PassManagerImpl_New *PM;
 
 };
 
-/// FunctionPassManager_New manages FunctionPasses and BasicBlockPassManagers.
-class FunctionPassManager_New {
+/// FunctionPassManager manages FunctionPasses and BasicBlockPassManagers.
+class FunctionPassManager {
 public:
-  FunctionPassManager_New(ModuleProvider *P);
-  FunctionPassManager_New();
-  ~FunctionPassManager_New();
+  FunctionPassManager(ModuleProvider *P);
+  FunctionPassManager();
+  ~FunctionPassManager();
  
   /// add - Add a pass to the queue of passes to run.  This passes
   /// ownership of the Pass to the PassManager.  When the
@@ -150,6 +155,7 @@ private:
   ModuleProvider *MP;
 };
 
+#endif
 
 } // End llvm namespace
 

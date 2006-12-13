@@ -84,6 +84,7 @@ using namespace llvm;
 // ModulePassManagers.
 //===----------------------------------------------------------------------===//
 
+#ifndef USE_OLD_PASSMANAGER
 namespace llvm {
 
 class PMDataManager;
@@ -124,6 +125,10 @@ public:
   /// passes and all pass managers. If desired pass is not found
   /// then return NULL.
   Pass *findAnalysisPass(AnalysisID AID);
+
+  inline void clearManagers() { 
+    PassManagers.clear();
+  }
 
   virtual ~PMTopLevelManager() {
 
@@ -291,16 +296,16 @@ private:
 };
 
 //===----------------------------------------------------------------------===//
-// BasicBlockPassManager_New
+// BasicBlockPassManager
 //
-/// BasicBlockPassManager_New manages BasicBlockPass. It batches all the
+/// BasicBlockPassManager manages BasicBlockPass. It batches all the
 /// pass together and sequence them to process one basic block before
 /// processing next basic block.
-class BasicBlockPassManager_New : public PMDataManager, 
+class BasicBlockPassManager : public PMDataManager, 
                                   public FunctionPass {
 
 public:
-  BasicBlockPassManager_New(int D) : PMDataManager(D) { }
+  BasicBlockPassManager(int D) : PMDataManager(D) { }
 
   /// Add a pass into a passmanager queue. 
   bool addPass(Pass *p);
@@ -407,20 +412,20 @@ public:
 
 private:
   // Active Pass Managers
-  BasicBlockPassManager_New *activeBBPassManager;
+  BasicBlockPassManager *activeBBPassManager;
 };
 
 //===----------------------------------------------------------------------===//
-// ModulePassManager_New
+// ModulePassManager
 //
-/// ModulePassManager_New manages ModulePasses and function pass managers.
+/// ModulePassManager manages ModulePasses and function pass managers.
 /// It batches all Module passes  passes and function pass managers together and
 /// sequence them to process one module.
-class ModulePassManager_New : public Pass,
+class ModulePassManager : public Pass,
                               public PMDataManager {
  
 public:
-  ModulePassManager_New(int D) : PMDataManager(D) { 
+  ModulePassManager(int D) : PMDataManager(D) { 
     activeFunctionPassManager = NULL; 
   }
   
@@ -504,7 +509,7 @@ private:
   bool addPass(Pass *p);
 
   // Active Pass Manager
-  ModulePassManager_New *activeManager;
+  ModulePassManager *activeManager;
 };
 
 } // End of llvm namespace
@@ -814,12 +819,12 @@ Pass *AnalysisResolver_New::getAnalysisToUpdate(AnalysisID ID, bool dir) const {
 }
 
 //===----------------------------------------------------------------------===//
-// BasicBlockPassManager_New implementation
+// BasicBlockPassManager implementation
 
 /// Add pass P into PassVector and return true. If this pass is not
 /// manageable by this manager then return false.
 bool
-BasicBlockPassManager_New::addPass(Pass *P) {
+BasicBlockPassManager::addPass(Pass *P) {
 
   BasicBlockPass *BP = dynamic_cast<BasicBlockPass*>(P);
   if (!BP)
@@ -839,7 +844,7 @@ BasicBlockPassManager_New::addPass(Pass *P) {
 /// runOnBasicBlock method.  Keep track of whether any of the passes modifies 
 /// the function, and if so, return true.
 bool
-BasicBlockPassManager_New::runOnFunction(Function &F) {
+BasicBlockPassManager::runOnFunction(Function &F) {
 
   if (F.isExternal())
     return false;
@@ -862,7 +867,7 @@ BasicBlockPassManager_New::runOnFunction(Function &F) {
 }
 
 // Implement doInitialization and doFinalization
-inline bool BasicBlockPassManager_New::doInitialization(Module &M) {
+inline bool BasicBlockPassManager::doInitialization(Module &M) {
   bool Changed = false;
 
   for (std::vector<Pass *>::iterator itr = passVectorBegin(),
@@ -875,7 +880,7 @@ inline bool BasicBlockPassManager_New::doInitialization(Module &M) {
   return Changed;
 }
 
-inline bool BasicBlockPassManager_New::doFinalization(Module &M) {
+inline bool BasicBlockPassManager::doFinalization(Module &M) {
   bool Changed = false;
 
   for (std::vector<Pass *>::iterator itr = passVectorBegin(),
@@ -888,7 +893,7 @@ inline bool BasicBlockPassManager_New::doFinalization(Module &M) {
   return Changed;
 }
 
-inline bool BasicBlockPassManager_New::doInitialization(Function &F) {
+inline bool BasicBlockPassManager::doInitialization(Function &F) {
   bool Changed = false;
 
   for (std::vector<Pass *>::iterator itr = passVectorBegin(),
@@ -901,7 +906,7 @@ inline bool BasicBlockPassManager_New::doInitialization(Function &F) {
   return Changed;
 }
 
-inline bool BasicBlockPassManager_New::doFinalization(Function &F) {
+inline bool BasicBlockPassManager::doFinalization(Function &F) {
   bool Changed = false;
 
   for (std::vector<Pass *>::iterator itr = passVectorBegin(),
@@ -916,10 +921,10 @@ inline bool BasicBlockPassManager_New::doFinalization(Function &F) {
 
 
 //===----------------------------------------------------------------------===//
-// FunctionPassManager_New implementation
+// FunctionPassManager implementation
 
 /// Create new Function pass manager
-FunctionPassManager_New::FunctionPassManager_New(ModuleProvider *P) {
+FunctionPassManager::FunctionPassManager(ModuleProvider *P) {
   FPM = new FunctionPassManagerImpl_New(0);
   // FPM is the top level manager.
   FPM->setTopLevelManager(FPM);
@@ -932,7 +937,14 @@ FunctionPassManager_New::FunctionPassManager_New(ModuleProvider *P) {
   MP = P;
 }
 
-FunctionPassManager_New::~FunctionPassManager_New() {
+FunctionPassManager::~FunctionPassManager() {
+  // Note : FPM maintains one entry in PassManagers vector.
+  // This one entry is FPM itself. This is not ideal. One
+  // alternative is have one additional layer between
+  // FunctionPassManager and FunctionPassManagerImpl.
+  // Meanwhile, to avoid going into infinte loop, first
+  // remove FPM from its PassMangers vector.
+  FPM->clearManagers();
   delete FPM;
 }
 
@@ -941,7 +953,7 @@ FunctionPassManager_New::~FunctionPassManager_New() {
 /// PassManager_X is destroyed, the pass will be destroyed as well, so
 /// there is no need to delete the pass. (TODO delete passes.)
 /// This implies that all passes MUST be allocated with 'new'.
-void FunctionPassManager_New::add(Pass *P) { 
+void FunctionPassManager::add(Pass *P) { 
   FPM->add(P);
 }
 
@@ -949,7 +961,7 @@ void FunctionPassManager_New::add(Pass *P) {
 /// track of whether any of the passes modifies the function, and if
 /// so, return true.
 ///
-bool FunctionPassManager_New::run(Function &F) {
+bool FunctionPassManager::run(Function &F) {
   std::string errstr;
   if (MP->materializeFunction(&F, &errstr)) {
     cerr << "Error reading bytecode file: " << errstr << "\n";
@@ -961,13 +973,13 @@ bool FunctionPassManager_New::run(Function &F) {
 
 /// doInitialization - Run all of the initializers for the function passes.
 ///
-bool FunctionPassManager_New::doInitialization() {
+bool FunctionPassManager::doInitialization() {
   return FPM->doInitialization(*MP->getModule());
 }
 
 /// doFinalization - Run all of the initializers for the function passes.
 ///
-bool FunctionPassManager_New::doFinalization() {
+bool FunctionPassManager::doFinalization() {
   return FPM->doFinalization(*MP->getModule());
 }
 
@@ -980,7 +992,7 @@ bool FunctionPassManager_New::doFinalization() {
 bool
 FunctionPassManagerImpl_New::addPass(Pass *P) {
 
-  // If P is a BasicBlockPass then use BasicBlockPassManager_New.
+  // If P is a BasicBlockPass then use BasicBlockPassManager.
   if (BasicBlockPass *BP = dynamic_cast<BasicBlockPass*>(P)) {
 
     if (!activeBBPassManager || !activeBBPassManager->addPass(BP)) {
@@ -991,7 +1003,7 @@ FunctionPassManagerImpl_New::addPass(Pass *P) {
 
       // Create and add new manager
       activeBBPassManager = 
-        new BasicBlockPassManager_New(getDepth() + 1);
+        new BasicBlockPassManager(getDepth() + 1);
       // Inherit top level manager
       activeBBPassManager->setTopLevelManager(this->getTopLevelManager());
 
@@ -1109,7 +1121,8 @@ bool FunctionPassManagerImpl_New::run(Function &F) {
   bool Changed = false;
   for (std::vector<Pass *>::iterator I = passManagersBegin(),
          E = passManagersEnd(); I != E; ++I) {
-    FunctionPass *FP = dynamic_cast<FunctionPass *>(*I);
+    FunctionPassManagerImpl_New *FP = 
+      dynamic_cast<FunctionPassManagerImpl_New *>(*I);
     Changed |= FP->runOnFunction(F);
   }
   return Changed;
@@ -1122,7 +1135,7 @@ bool FunctionPassManagerImpl_New::run(Function &F) {
 /// then use FunctionPassManagerImpl_New to manage it. Return false if P
 /// is not manageable by this manager.
 bool
-ModulePassManager_New::addPass(Pass *P) {
+ModulePassManager::addPass(Pass *P) {
 
   // If P is FunctionPass then use function pass maanager.
   if (FunctionPass *FP = dynamic_cast<FunctionPass*>(P)) {
@@ -1183,7 +1196,7 @@ ModulePassManager_New::addPass(Pass *P) {
 /// runOnModule method.  Keep track of whether any of the passes modifies 
 /// the module, and if so, return true.
 bool
-ModulePassManager_New::runOnModule(Module &M) {
+ModulePassManager::runOnModule(Module &M) {
   bool Changed = false;
   initializeAnalysisInfo();
 
@@ -1208,7 +1221,7 @@ ModulePassManager_New::runOnModule(Module &M) {
 bool PassManagerImpl_New::addPass(Pass *P) {
 
   if (!activeManager || !activeManager->addPass(P)) {
-    activeManager = new ModulePassManager_New(getDepth() + 1);
+    activeManager = new ModulePassManager(getDepth() + 1);
     // Inherit top level manager
     activeManager->setTopLevelManager(this->getTopLevelManager());
 
@@ -1230,7 +1243,7 @@ bool PassManagerImpl_New::run(Module &M) {
   bool Changed = false;
   for (std::vector<Pass *>::iterator I = passManagersBegin(),
          E = passManagersEnd(); I != E; ++I) {
-    ModulePassManager_New *MP = dynamic_cast<ModulePassManager_New *>(*I);
+    ModulePassManager *MP = dynamic_cast<ModulePassManager *>(*I);
     Changed |= MP->runOnModule(M);
   }
   return Changed;
@@ -1240,13 +1253,13 @@ bool PassManagerImpl_New::run(Module &M) {
 // PassManager implementation
 
 /// Create new pass manager
-PassManager_New::PassManager_New() {
+PassManager::PassManager() {
   PM = new PassManagerImpl_New(0);
   // PM is the top level manager
   PM->setTopLevelManager(PM);
 }
 
-PassManager_New::~PassManager_New() {
+PassManager::~PassManager() {
   delete PM;
 }
 
@@ -1255,14 +1268,15 @@ PassManager_New::~PassManager_New() {
 /// will be destroyed as well, so there is no need to delete the pass.  This
 /// implies that all passes MUST be allocated with 'new'.
 void 
-PassManager_New::add(Pass *P) {
+PassManager::add(Pass *P) {
   PM->add(P);
 }
 
 /// run - Execute all of the passes scheduled for execution.  Keep track of
 /// whether any of the passes modifies the module, and if so, return true.
 bool
-PassManager_New::run(Module &M) {
+PassManager::run(Module &M) {
   return PM->run(M);
 }
 
+#endif

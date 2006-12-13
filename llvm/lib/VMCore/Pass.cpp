@@ -14,7 +14,9 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/PassManager.h"
+#ifdef USE_OLD_PASSMANAGER
 #include "PassManagerT.h"         // PassManagerT implementation
+#endif
 #include "llvm/Module.h"
 #include "llvm/ModuleProvider.h"
 #include "llvm/ADT/STLExtras.h"
@@ -34,6 +36,7 @@ void AnalysisResolver::setAnalysisResolver(Pass *P, AnalysisResolver *AR) {
   P->Resolver = AR;
 }
 
+#ifdef USE_OLD_PASSMANAGER
 //===----------------------------------------------------------------------===//
 // PassManager implementation - The PassManager class is a simple Pimpl class
 // that wraps the PassManagerT template.
@@ -158,17 +161,24 @@ void PMDebug::PrintAnalysisSetInfo(unsigned Depth, const char *Msg,
     cerr << "\n";
   }
 }
+#endif
 
 //===----------------------------------------------------------------------===//
 // Pass Implementation
 //
 
+#ifdef USE_OLD_PASSMANAGER
 void ModulePass::addToPassManager(ModulePassManager *PM, AnalysisUsage &AU) {
   PM->addPass(this, AU);
 }
+#endif
 
 bool Pass::mustPreserveAnalysisID(const PassInfo *AnalysisID) const {
+#ifdef USE_OLD_PASSMANAGER
   return Resolver->getAnalysisToUpdate(AnalysisID) != 0;
+#else
+  return Resolver_New->getAnalysisToUpdate(AnalysisID, true) != 0;
+#endif
 }
 
 // dumpPassStructure - Implement the -debug-passes=Structure option
@@ -200,11 +210,12 @@ void Pass::dump() const {
 //===----------------------------------------------------------------------===//
 // ImmutablePass Implementation
 //
+#ifdef USE_OLD_PASSMANAGER
 void ImmutablePass::addToPassManager(ModulePassManager *PM, 
                                      AnalysisUsage &AU) {
   PM->addPass(this, AU);
 }
-
+#endif
 
 //===----------------------------------------------------------------------===//
 // FunctionPass Implementation
@@ -233,6 +244,7 @@ bool FunctionPass::run(Function &F) {
   return Changed | doFinalization(*F.getParent());
 }
 
+#ifdef USE_OLD_PASSMANAGER
 void FunctionPass::addToPassManager(ModulePassManager *PM,
                                     AnalysisUsage &AU) {
   PM->addPass(this, AU);
@@ -242,6 +254,7 @@ void FunctionPass::addToPassManager(FunctionPassManagerT *PM,
                                     AnalysisUsage &AU) {
   PM->addPass(this, AU);
 }
+#endif
 
 //===----------------------------------------------------------------------===//
 // BasicBlockPass Implementation
@@ -271,6 +284,7 @@ bool BasicBlockPass::runPass(BasicBlock &BB) {
   return Changed;
 }
 
+#ifdef USE_OLD_PASSMANAGER
 void BasicBlockPass::addToPassManager(FunctionPassManagerT *PM,
                                       AnalysisUsage &AU) {
   PM->addPass(this, AU);
@@ -280,7 +294,7 @@ void BasicBlockPass::addToPassManager(BasicBlockPassManager *PM,
                                       AnalysisUsage &AU) {
   PM->addPass(this, AU);
 }
-
+#endif
 
 //===----------------------------------------------------------------------===//
 // Pass Registration mechanism

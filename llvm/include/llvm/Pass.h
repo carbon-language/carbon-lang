@@ -36,6 +36,8 @@
 #include <typeinfo>
 #include <cassert>
 
+#define USE_OLD_PASSMANAGER 1
+
 namespace llvm {
 
 class Value;
@@ -203,7 +205,9 @@ public:
   virtual bool runPass(Module &M) { return runOnModule(M); }
   virtual bool runPass(BasicBlock&) { return false; }
 
+#ifdef USE_OLD_PASSMANAGER
   virtual void addToPassManager(ModulePassManager *PM, AnalysisUsage &AU);
+#endif
 };
 
 
@@ -226,10 +230,12 @@ public:
   ///
   virtual bool runOnModule(Module &M) { return false; }
 
+#ifdef USE_OLD_PASSMANAGER
 private:
   template<typename Trait> friend class PassManagerT;
   friend class ModulePassManager;
   virtual void addToPassManager(ModulePassManager *PM, AnalysisUsage &AU);
+#endif
 };
 
 //===----------------------------------------------------------------------===//
@@ -269,6 +275,7 @@ public:
   ///
   bool run(Function &F);
 
+#ifdef USE_OLD_PASSMANAGER
 protected:
   template<typename Trait> friend class PassManagerT;
   friend class ModulePassManager;
@@ -276,6 +283,7 @@ protected:
   friend class BasicBlockPassManager;
   virtual void addToPassManager(ModulePassManager *PM, AnalysisUsage &AU);
   virtual void addToPassManager(FunctionPassManagerT *PM, AnalysisUsage &AU);
+#endif
 };
 
 
@@ -329,6 +337,7 @@ public:
   virtual bool runPass(Module &M) { return false; }
   virtual bool runPass(BasicBlock &BB);
 
+#ifdef USE_OLD_PASSMANAGER
 private:
   template<typename Trait> friend class PassManagerT;
   friend class FunctionPassManagerT;
@@ -338,6 +347,7 @@ private:
   }
   virtual void addToPassManager(FunctionPassManagerT *PM, AnalysisUsage &AU);
   virtual void addToPassManager(BasicBlockPassManager *PM,AnalysisUsage &AU);
+#endif
 };
 
 /// If the user specifies the -time-passes argument on an LLVM tool command line
