@@ -19,25 +19,8 @@ using namespace llvm;
 
 /// InsertCastOfTo - Insert a cast of V to the specified type, doing what
 /// we can to share the casts.
-Value *SCEVExpander::InsertCastOfTo(Value *V, const Type *Ty) {
-  // Compute the Cast opcode to use
-  Instruction::CastOps opcode = Instruction::BitCast;
-  if (Ty->isIntegral()) {
-    if (V->getType()->getTypeID() == Type::PointerTyID)
-      opcode = Instruction::PtrToInt;
-    else {
-      unsigned SrcBits = V->getType()->getPrimitiveSizeInBits();
-      unsigned DstBits = Ty->getPrimitiveSizeInBits();
-      opcode = (SrcBits > DstBits ? Instruction::Trunc : 
-                (SrcBits == DstBits ? Instruction::BitCast :
-                 (V->getType()->isSigned() ? Instruction::SExt : 
-                  Instruction::ZExt)));
-    }
-  } else if (Ty->isFloatingPoint())
-    opcode = Instruction::UIToFP;
-  else if (Ty->getTypeID() == Type::PointerTyID && V->getType()->isIntegral())
-    opcode = Instruction::IntToPtr;
-
+Value *SCEVExpander::InsertCastOfTo(Instruction::CastOps opcode, Value *V, 
+                                    const Type *Ty) {
   // FIXME: keep track of the cast instruction.
   if (Constant *C = dyn_cast<Constant>(V))
     return ConstantExpr::getCast(opcode, C, Ty);

@@ -177,7 +177,7 @@ namespace {
     
     /// getCastedVersionOf - Return the specified value casted to uintptr_t.
     ///
-    Value *getCastedVersionOf(Value *V);
+    Value *getCastedVersionOf(Instruction::CastOps opcode, Value *V);
 private:
     void runOnLoop(Loop *L);
     bool AddUsersIfInteresting(Instruction *I, Loop *L,
@@ -203,19 +203,16 @@ FunctionPass *llvm::createLoopStrengthReducePass(const TargetLowering *TLI) {
 /// getCastedVersionOf - Return the specified value casted to uintptr_t. This
 /// assumes that the Value* V is of integer or pointer type only.
 ///
-Value *LoopStrengthReduce::getCastedVersionOf(Value *V) {
+Value *LoopStrengthReduce::getCastedVersionOf(Instruction::CastOps opcode, 
+                                              Value *V) {
   if (V->getType() == UIntPtrTy) return V;
   if (Constant *CB = dyn_cast<Constant>(V))
-    if (CB->getType()->isInteger())
-      return ConstantExpr::getIntegerCast(CB, UIntPtrTy, 
-                                          CB->getType()->isSigned());
-    else
-      return ConstantExpr::getPtrToInt(CB, UIntPtrTy);
+    return ConstantExpr::getCast(opcode, CB, UIntPtrTy);
 
   Value *&New = CastedPointers[V];
   if (New) return New;
   
-  New = SCEVExpander::InsertCastOfTo(V, UIntPtrTy);
+  New = SCEVExpander::InsertCastOfTo(opcode, V, UIntPtrTy);
   DeadInsts.insert(cast<Instruction>(New));
   return New;
 }
@@ -258,7 +255,8 @@ SCEVHandle LoopStrengthReduce::GetExpressionSCEV(Instruction *Exp, Loop *L) {
 
   // Build up the base expression.  Insert an LLVM cast of the pointer to
   // uintptr_t first.
-  SCEVHandle GEPVal = SCEVUnknown::get(getCastedVersionOf(GEP->getOperand(0)));
+  SCEVHandle GEPVal = SCEVUnknown::get(
+      getCastedVersionOf(Instruction::PtrToInt, GEP->getOperand(0)));
 
   gep_type_iterator GTI = gep_type_begin(GEP);
   
@@ -273,7 +271,13 @@ SCEVHandle LoopStrengthReduce::GetExpressionSCEV(Instruction *Exp, Loop *L) {
       GEPVal = SCEVAddExpr::get(GEPVal,
                                 SCEVUnknown::getIntegerSCEV(Offset, UIntPtrTy));
     } else {
-      Value *OpVal = getCastedVersionOf(GEP->getOperand(i));
+      unsigned GEPOpiBits = 
+        GEP->getOperand(i)->getType()->getPrimitiveSizeInBits();
+      unsigned IntPtrBits = UIntPtrTy->getPrimitiveSizeInBits();
+      Instruction::CastOps opcode = (GEPOpiBits < IntPtrBits ? 
+          Instruction::SExt : (GEPOpiBits > IntPtrBits ? Instruction::Trunc :
+            Instruction::BitCast));
+      Value *OpVal = getCastedVersionOf(opcode, GEP->getOperand(i));
       SCEVHandle Idx = SE->getSCEV(OpVal);
 
       uint64_t TypeSize = TD->getTypeSize(GTI.getIndexedType());
@@ -1125,8 +1129,13 @@ void LoopStrengthReduce::StrengthReduceStridedIVUsers(const SCEVHandle &Stride,
         if (L->contains(User.Inst->getParent()))
           User.Inst->moveBefore(LatchBlock->getTerminator());
       }
-      if (RewriteOp->getType() != ReplacedTy)
-        RewriteOp = SCEVExpander::InsertCastOfTo(RewriteOp, ReplacedTy);
+      if (RewriteOp->getType() != ReplacedTy) {
+        Instruction::CastOps opcode = Instruction::Trunc;
+        if (ReplacedTy->getPrimitiveSizeInBits() ==
+            RewriteOp->getType()->getPrimitiveSizeInBits())
+          opcode = Instruction::BitCast;
+        RewriteOp = SCEVExpander::InsertCastOfTo(opcode, RewriteOp, ReplacedTy);
+      }
 
       SCEVHandle RewriteExpr = SCEVUnknown::get(RewriteOp);
 

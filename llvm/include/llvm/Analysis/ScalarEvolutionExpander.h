@@ -88,7 +88,8 @@ namespace llvm {
 
     /// InsertCastOfTo - Insert a cast of V to the specified type, doing what
     /// we can to share the casts.
-    static Value *InsertCastOfTo(Value *V, const Type *Ty);
+    static Value *InsertCastOfTo(Instruction::CastOps opcode, Value *V, 
+                                 const Type *Ty);
     
   protected:
     Value *expand(SCEV *S) {
@@ -104,8 +105,20 @@ namespace llvm {
 
     Value *expandInTy(SCEV *S, const Type *Ty) {
       Value *V = expand(S);
-      if (Ty && V->getType() != Ty)
-        return InsertCastOfTo(V, Ty);
+      if (Ty && V->getType() != Ty) {
+        if (isa<PointerType>(Ty) && V->getType()->isInteger())
+          return InsertCastOfTo(Instruction::IntToPtr, V, Ty);
+        else if (Ty->isInteger() && isa<PointerType>(V->getType()))
+          return InsertCastOfTo(Instruction::PtrToInt, V, Ty);
+        else if (Ty->getPrimitiveSizeInBits() == 
+                 V->getType()->getPrimitiveSizeInBits())
+          return InsertCastOfTo(Instruction::BitCast, V, Ty);
+        else if (Ty->getPrimitiveSizeInBits() > 
+                 V->getType()->getPrimitiveSizeInBits())
+          return InsertCastOfTo(Instruction::ZExt, V, Ty);
+        else
+          return InsertCastOfTo(Instruction::Trunc, V, Ty);
+      }
       return V;
     }
 
@@ -119,7 +132,7 @@ namespace llvm {
     }
 
     Value *visitZeroExtendExpr(SCEVZeroExtendExpr *S) {
-      Value *V = expandInTy(S->getOperand(),S->getType()->getUnsignedVersion());
+      Value *V = expandInTy(S->getOperand(), S->getType());
       return CastInst::createZExtOrBitCast(V, S->getType(), "tmp.", InsertPt);
     }
 
