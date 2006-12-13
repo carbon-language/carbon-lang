@@ -307,7 +307,7 @@ namespace {
     Instruction *PromoteCastOfAllocation(CastInst &CI, AllocationInst &AI);
     Instruction *MatchBSwap(BinaryOperator &I);
 
-    Value *EvaluateInDifferentType(Value *V, const Type *Ty);
+    Value *EvaluateInDifferentType(Value *V, const Type *Ty, bool isSigned);
   };
 
   RegisterPass<InstCombiner> X("instcombine", "Combine redundant instructions");
@@ -2171,14 +2171,12 @@ Instruction *InstCombiner::visitMul(BinaryOperator &I) {
   // See if we can simplify things based on how the boolean was originally
   // formed.
   CastInst *BoolCast = 0;
-  if (CastInst *CI = dyn_cast<CastInst>(I.getOperand(0)))
-    if (CI->getOperand(0)->getType() == Type::BoolTy &&
-        CI->getOpcode() == Instruction::ZExt)
+  if (ZExtInst *CI = dyn_cast<ZExtInst>(I.getOperand(0)))
+    if (CI->getOperand(0)->getType() == Type::BoolTy)
       BoolCast = CI;
   if (!BoolCast)
-    if (CastInst *CI = dyn_cast<CastInst>(I.getOperand(1)))
-      if (CI->getOperand(0)->getType() == Type::BoolTy &&
-        CI->getOpcode() == Instruction::ZExt)
+    if (ZExtInst *CI = dyn_cast<ZExtInst>(I.getOperand(1)))
+      if (CI->getOperand(0)->getType() == Type::BoolTy)
         BoolCast = CI;
   if (BoolCast) {
     if (SetCondInst *SCI = dyn_cast<SetCondInst>(BoolCast->getOperand(0))) {
@@ -4333,8 +4331,7 @@ Instruction *InstCombiner::visitSetCondInst(SetCondInst &I) {
           // Check to see if there is a noop-cast between the shift and the and.
           if (!Shift) {
             if (CastInst *CI = dyn_cast<CastInst>(LHSI->getOperand(0)))
-              if (CI->getOpcode() == Instruction::BitCast && 
-                  CI->getType()->isIntegral())
+              if (CI->getOpcode() == Instruction::BitCast)
                 Shift = dyn_cast<ShiftInst>(CI->getOperand(0));
           }
 
@@ -5375,10 +5372,8 @@ Instruction *InstCombiner::FoldShiftByConstant(Value *Op0, ConstantInt *Op1,
         Amt = Op0->getType()->getPrimitiveSizeInBits();
       
       Value *Op = ShiftOp->getOperand(0);
-      if (isShiftOfSignedShift != isSignedShift)
-        Op = InsertNewInstBefore(new BitCastInst(Op, I.getType(), "tmp"), I);
       ShiftInst *ShiftResult = new ShiftInst(I.getOpcode(), Op,
-                           ConstantInt::get(Type::UByteTy, Amt));
+                                          ConstantInt::get(Type::UByteTy, Amt));
       if (I.getType() == ShiftResult->getType())
         return ShiftResult;
       InsertNewInstBefore(ShiftResult, I);
@@ -5658,9 +5653,10 @@ static bool CanEvaluateInDifferentType(Value *V, const Type *Ty,
 /// EvaluateInDifferentType - Given an expression that 
 /// CanEvaluateInDifferentType returns true for, actually insert the code to
 /// evaluate the expression.
-Value *InstCombiner::EvaluateInDifferentType(Value *V, const Type *Ty) {
+Value *InstCombiner::EvaluateInDifferentType(Value *V, const Type *Ty, 
+                                             bool isSigned ) {
   if (Constant *C = dyn_cast<Constant>(V))
-    return ConstantExpr::getIntegerCast(C, Ty, C->getType()->isSigned());
+    return ConstantExpr::getIntegerCast(C, Ty, isSigned /*Sext or ZExt*/);
 
   // Otherwise, it must be an instruction.
   Instruction *I = cast<Instruction>(V);
@@ -5669,8 +5665,8 @@ Value *InstCombiner::EvaluateInDifferentType(Value *V, const Type *Ty) {
   case Instruction::And:
   case Instruction::Or:
   case Instruction::Xor: {
-    Value *LHS = EvaluateInDifferentType(I->getOperand(0), Ty);
-    Value *RHS = EvaluateInDifferentType(I->getOperand(1), Ty);
+    Value *LHS = EvaluateInDifferentType(I->getOperand(0), Ty, isSigned);
+    Value *RHS = EvaluateInDifferentType(I->getOperand(1), Ty, isSigned);
     Res = BinaryOperator::create((Instruction::BinaryOps)I->getOpcode(),
                                  LHS, RHS, I->getName());
     break;
@@ -5678,7 +5674,7 @@ Value *InstCombiner::EvaluateInDifferentType(Value *V, const Type *Ty) {
   case Instruction::AShr:
   case Instruction::LShr:
   case Instruction::Shl: {
-    Value *LHS = EvaluateInDifferentType(I->getOperand(0), Ty);
+    Value *LHS = EvaluateInDifferentType(I->getOperand(0), Ty, isSigned);
     Res = new ShiftInst((Instruction::OtherOps)I->getOpcode(), LHS,
                         I->getOperand(1), I->getName());
     break;
@@ -5824,7 +5820,8 @@ Instruction *InstCombiner::commonIntCastTransforms(CastInst &CI) {
     }
     
     if (DoXForm) {
-      Value *Res = EvaluateInDifferentType(SrcI, DestTy);
+      Value *Res = EvaluateInDifferentType(SrcI, DestTy, 
+                                           CI.getOpcode() == Instruction::SExt);
       assert(Res->getType() == DestTy);
       switch (CI.getOpcode()) {
       default: assert(0 && "Unknown cast type!");
@@ -7920,11 +7917,11 @@ static Instruction *InstCombineStoreToCast(InstCombiner &IC, StoreInst &SI) {
         Value *NewCast;
         Instruction::CastOps opcode = Instruction::BitCast;
         Value *SIOp0 = SI.getOperand(0);
-        if (SrcPTy->getTypeID() == Type::PointerTyID) {
+        if (isa<PointerType>(SrcPTy)) {
           if (SIOp0->getType()->isIntegral())
             opcode = Instruction::IntToPtr;
         } else if (SrcPTy->isIntegral()) {
-          if (SIOp0->getType()->getTypeID() == Type::PointerTyID)
+          if (isa<PointerType>(SIOp0->getType()))
             opcode = Instruction::PtrToInt;
         }
         if (Constant *C = dyn_cast<Constant>(SIOp0))
