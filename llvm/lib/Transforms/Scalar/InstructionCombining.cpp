@@ -2172,11 +2172,13 @@ Instruction *InstCombiner::visitMul(BinaryOperator &I) {
   // formed.
   CastInst *BoolCast = 0;
   if (CastInst *CI = dyn_cast<CastInst>(I.getOperand(0)))
-    if (CI->getOperand(0)->getType() == Type::BoolTy)
+    if (CI->getOperand(0)->getType() == Type::BoolTy &&
+        CI->getOpcode() == Instruction::ZExt)
       BoolCast = CI;
   if (!BoolCast)
     if (CastInst *CI = dyn_cast<CastInst>(I.getOperand(1)))
-      if (CI->getOperand(0)->getType() == Type::BoolTy)
+      if (CI->getOperand(0)->getType() == Type::BoolTy &&
+        CI->getOpcode() == Instruction::ZExt)
         BoolCast = CI;
   if (BoolCast) {
     if (SetCondInst *SCI = dyn_cast<SetCondInst>(BoolCast->getOperand(0))) {
