@@ -168,9 +168,10 @@ public:
 
   /// getTypeToTransformTo - For types supported by the target, this is an
   /// identity function.  For types that must be promoted to larger types, this
-  /// returns the larger type to promote to.  For types that are larger than the
-  /// largest integer register, this contains one step in the expansion to get
-  /// to the smaller register.
+  /// returns the larger type to promote to.  For integer types that are larger
+  /// than the largest integer register, this contains one step in the expansion
+  /// to get to the smaller register. For illegal floating point types, this
+  /// returns the integer type to transform to.
   MVT::ValueType getTypeToTransformTo(MVT::ValueType VT) const {
     return TransformToType[VT];
   }
