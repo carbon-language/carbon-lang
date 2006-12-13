@@ -338,9 +338,9 @@ public:
   }
 
   /// getNumElements - Return the number of registers that this ValueType will
-  /// eventually require.  This is always one for all non-integer types, is
-  /// one for any types promoted to live in larger registers, but may be more
-  /// than one for types (like i64) that are split into pieces.
+  /// eventually require.  This is one for any types promoted to live in larger
+  /// registers, but may be more than one for types (like i64) that are split
+  /// into pieces.
   unsigned getNumElements(MVT::ValueType VT) const {
     return NumElementsForVT[VT];
   }
