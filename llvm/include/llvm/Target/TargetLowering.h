@@ -176,6 +176,26 @@ public:
     return TransformToType[VT];
   }
   
+  /// getTypeToExpandTo - For types supported by the target, this is an
+  /// identity function.  For types that must be expanded (i.e. integer types
+  /// that are larger than the largest integer register or illegal floating
+  /// point types), this returns the largest legal type it will be expanded to.
+  MVT::ValueType getTypeToExpandTo(MVT::ValueType VT) const {
+    while (true) {
+      switch (getTypeAction(VT)) {
+      case Legal:
+        return VT;
+      case Expand:
+        VT = TransformToType[VT];
+        break;
+      default:
+        assert(false && "Type is not legal nor is it to be expanded!");
+        return VT;
+      }
+    }
+    return VT;
+  }
+
   /// getPackedTypeBreakdown - Packed types are broken down into some number of
   /// legal first class types.  For example, <8 x float> maps to 2 MVT::v4f32
   /// with Altivec or SSE1, or 8 promoted MVT::f64 values with the X86 FP stack.
