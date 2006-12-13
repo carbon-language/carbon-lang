@@ -195,6 +195,46 @@ AnalysisType *Pass::getAnalysisToUpdate() const {
   return dynamic_cast<AnalysisType*>(Resolver->getAnalysisToUpdate(PI));
 }
 
+/// getAnalysis<AnalysisType>() - This function is used by subclasses to get
+/// to the analysis information that they claim to use by overriding the
+/// getAnalysisUsage function.
+///
+template<typename AnalysisType>
+AnalysisType &Pass::getAnalysis() const {
+  assert(Resolver && "Pass has not been inserted into a PassManager object!");
+  const PassInfo *PI = getClassPassInfo<AnalysisType>();
+  return getAnalysisID<AnalysisType>(PI);
+}
+
+template<typename AnalysisType>
+AnalysisType &Pass::getAnalysisID(const PassInfo *PI) const {
+  assert(Resolver && "Pass has not been inserted into a PassManager object!");
+  assert(PI && "getAnalysis for unregistered pass!");
+  
+  // PI *must* appear in AnalysisImpls.  Because the number of passes used
+  // should be a small number, we just do a linear search over a (dense)
+  // vector.
+  Pass *ResultPass = 0;
+  for (unsigned i = 0; ; ++i) {
+    assert(i != AnalysisImpls.size() &&
+           "getAnalysis*() called on an analysis that was not "
+           "'required' by pass!");
+    if (AnalysisImpls[i].first == PI) {
+      ResultPass = AnalysisImpls[i].second;
+      break;
+    }
+  }
+  
+  // Because the AnalysisType may not be a subclass of pass (for
+  // AnalysisGroups), we must use dynamic_cast here to potentially adjust the
+  // return pointer (because the class may multiply inherit, once from pass,
+  // once from AnalysisType).
+  //
+  AnalysisType *Result = dynamic_cast<AnalysisType*>(ResultPass);
+  assert(Result && "Pass does not implement interface required!");
+  return *Result;
+}
+
 } // End llvm namespace
 
 #endif

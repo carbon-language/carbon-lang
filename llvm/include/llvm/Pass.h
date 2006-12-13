@@ -173,41 +173,11 @@ public:
   /// getAnalysisUsage function.
   ///
   template<typename AnalysisType>
-  AnalysisType &getAnalysis() const {
-    assert(Resolver && "Pass has not been inserted into a PassManager object!");
-    const PassInfo *PI = getClassPassInfo<AnalysisType>();
-    return getAnalysisID<AnalysisType>(PI);
-  }
+  AnalysisType &getAnalysis() const; // Defined in PassAnalysisSupport.h
 
   template<typename AnalysisType>
-  AnalysisType &getAnalysisID(const PassInfo *PI) const {
-    assert(Resolver && "Pass has not been inserted into a PassManager object!");
-    assert(PI && "getAnalysis for unregistered pass!");
-
-    // PI *must* appear in AnalysisImpls.  Because the number of passes used
-    // should be a small number, we just do a linear search over a (dense)
-    // vector.
-    Pass *ResultPass = 0;
-    for (unsigned i = 0; ; ++i) {
-      assert(i != AnalysisImpls.size() &&
-             "getAnalysis*() called on an analysis that was not "
-             "'required' by pass!");
-      if (AnalysisImpls[i].first == PI) {
-        ResultPass = AnalysisImpls[i].second;
-        break;
-      }
-    }
-
-    // Because the AnalysisType may not be a subclass of pass (for
-    // AnalysisGroups), we must use dynamic_cast here to potentially adjust the
-    // return pointer (because the class may multiply inherit, once from pass,
-    // once from AnalysisType).
-    //
-    AnalysisType *Result = dynamic_cast<AnalysisType*>(ResultPass);
-    assert(Result && "Pass does not implement interface required!");
-    return *Result;
-  }
-
+  AnalysisType &getAnalysisID(const PassInfo *PI) const;
+    
 private:
   template<typename Trait> friend class PassManagerT;
   friend class ModulePassManager;
