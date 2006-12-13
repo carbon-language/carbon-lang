@@ -367,7 +367,7 @@ StackerCompiler::incr_stack_index( BasicBlock* bb, Value* ival = 0 )
 
     // Increment the loaded index value
     if ( ival == 0 ) ival = One;
-    CastInst* caster = CastInst::createInferredCast( ival, Type::LongTy );
+    CastInst* caster = CastInst::createSExtOrBitCast( ival, Type::LongTy );
     bb->getInstList().push_back( caster );
     BinaryOperator* addop = BinaryOperator::create( Instruction::Add,
             loadop, caster);
@@ -388,7 +388,7 @@ StackerCompiler::decr_stack_index( BasicBlock* bb, Value* ival = 0 )
 
     // Decrement the loaded index value
     if ( ival == 0 ) ival = One;
-    CastInst* caster = CastInst::createInferredCast( ival, Type::LongTy );
+    CastInst* caster = CastInst::createSExtOrBitCast( ival, Type::LongTy );
     bb->getInstList().push_back( caster );
     BinaryOperator* subop = BinaryOperator::create( Instruction::Sub,
             loadop, caster);
@@ -422,7 +422,7 @@ StackerCompiler::get_stack_pointer( BasicBlock* bb, Value* index = 0 )
     }
     else
     {
-        CastInst* caster = CastInst::createInferredCast( index, Type::LongTy );
+        CastInst* caster = CastInst::createSExtOrBitCast( index, Type::LongTy );
         bb->getInstList().push_back( caster );
         BinaryOperator* subop = BinaryOperator::create(
             Instruction::Sub, loadop, caster );
@@ -448,7 +448,11 @@ StackerCompiler::push_value( BasicBlock* bb, Value* val )
             get_stack_pointer( bb ) );
 
     // Cast the value to a long .. hopefully it works
-    CastInst* cast_inst = CastInst::createInferredCast( val, Type::LongTy );
+    Instruction::CastOps opcode = 
+       (isa<PointerType>(val->getType()) ? Instruction::PtrToInt :
+        (val->getType()->getPrimitiveSizeInBits() < 64 ? Instruction::SExt :
+         Instruction::BitCast));
+    CastInst* cast_inst = CastInst::create(opcode, val, Type::LongTy );
     bb->getInstList().push_back( cast_inst );
 
     // Store the value
@@ -523,7 +527,7 @@ StackerCompiler::pop_string( BasicBlock* bb )
 
     // Cast the integer to a sbyte*
     CastInst* caster = 
-      CastInst::createInferredCast( loader, PointerType::get(Type::SByteTy) );
+      new IntToPtrInst(loader, PointerType::get(Type::SByteTy));
     bb->getInstList().push_back( caster );
 
     // Decrement stack index
@@ -576,7 +580,7 @@ StackerCompiler::stack_top_string( BasicBlock* bb, Value* index = 0 )
 
     // Cast the integer to a sbyte*
     CastInst* caster = 
-      CastInst::createInferredCast( loader, PointerType::get(Type::SByteTy) );
+      new IntToPtrInst(loader, PointerType::get(Type::SByteTy) );
     bb->getInstList().push_back( caster );
 
     // Return the value
@@ -1245,7 +1249,7 @@ StackerCompiler::handle_word( int tkn )
         if (echo) bb->setName("SHL");
         LoadInst* op1 = cast<LoadInst>(pop_integer(bb));
         LoadInst* op2 = cast<LoadInst>(pop_integer(bb));
-        CastInst* castop = CastInst::createInferredCast( op1, Type::UByteTy );
+        CastInst* castop = new TruncInst( op1, Type::UByteTy );
         bb->getInstList().push_back( castop );
         ShiftInst* shlop = new ShiftInst( Instruction::Shl, op2, castop );
         bb->getInstList().push_back( shlop );
@@ -1257,7 +1261,7 @@ StackerCompiler::handle_word( int tkn )
         if (echo) bb->setName("SHR");
         LoadInst* op1 = cast<LoadInst>(pop_integer(bb));
         LoadInst* op2 = cast<LoadInst>(pop_integer(bb));
-        CastInst* castop = CastInst::createInferredCast( op1, Type::UByteTy );
+        CastInst* castop = new TruncInst( op1, Type::UByteTy );
         bb->getInstList().push_back( castop );
         ShiftInst* shrop = new ShiftInst( Instruction::AShr, op2, castop );
         bb->getInstList().push_back( shrop );
@@ -1479,7 +1483,7 @@ StackerCompiler::handle_word( int tkn )
         LoadInst* op1 = cast<LoadInst>( pop_integer(bb) );
 
         // Make sure its a UIntTy
-        CastInst* caster = CastInst::createInferredCast( op1, Type::UIntTy );
+        CastInst* caster = CastInst::createTruncOrBitCast( op1, Type::UIntTy );
         bb->getInstList().push_back( caster );
 
         // Allocate the bytes
@@ -1507,7 +1511,7 @@ StackerCompiler::handle_word( int tkn )
         if (echo) bb->setName("GET");
         // Get the character index
         LoadInst* op1 = cast<LoadInst>( stack_top(bb) );
-        CastInst* chr_idx = CastInst::createInferredCast( op1, Type::LongTy );
+        CastInst* chr_idx = CastInst::createSExtOrBitCast( op1, Type::LongTy );
         bb->getInstList().push_back( chr_idx );
 
         // Get the String pointer
@@ -1522,7 +1526,7 @@ StackerCompiler::handle_word( int tkn )
         // Get the value and push it
         LoadInst* loader = new LoadInst( gep );
         bb->getInstList().push_back( loader );
-        CastInst* caster = CastInst::createInferredCast( loader, Type::IntTy );
+        CastInst* caster = CastInst::createTruncOrBitCast(loader, Type::IntTy);
         bb->getInstList().push_back( caster );
 
         // Push the result back on stack
@@ -1539,7 +1543,7 @@ StackerCompiler::handle_word( int tkn )
 
         // Get the character index
         LoadInst* w2 = cast<LoadInst>( pop_integer(bb) );
-        CastInst* chr_idx = CastInst::createInferredCast( w2, Type::LongTy );
+        CastInst* chr_idx = CastInst::createSExtOrBitCast( w2, Type::LongTy );
         bb->getInstList().push_back( chr_idx );
 
         // Get the String pointer
@@ -1552,7 +1556,7 @@ StackerCompiler::handle_word( int tkn )
         bb->getInstList().push_back( gep );
 
         // Cast the value and put it
-        CastInst* caster = CastInst::createInferredCast( w1, Type::SByteTy );
+        CastInst* caster = new TruncInst( w1, Type::SByteTy );
         bb->getInstList().push_back( caster );
         StoreInst* storer = new StoreInst( caster, gep );
         bb->getInstList().push_back( storer );
@@ -1580,7 +1584,7 @@ StackerCompiler::handle_word( int tkn )
         LoadInst* op1 = cast<LoadInst>(pop_integer(bb));
 
         // Cast down to an integer
-        CastInst* caster = CastInst::createInferredCast( op1, Type::IntTy );
+        CastInst* caster = new TruncInst( op1, Type::IntTy );
         bb->getInstList().push_back( caster );
 
         // Call exit(3)
