@@ -419,64 +419,39 @@ void SROA::CanonicalizeAllocaUsers(AllocationInst *AI) {
 /// types are incompatible, return true, otherwise update Accum and return
 /// false.
 ///
-/// There are three cases we handle here:
-///   1) An effectively-integer union, where the pieces are stored into as
+/// There are two cases we handle here:
+///   1) An effectively integer union, where the pieces are stored into as
 ///      smaller integers (common with byte swap and other idioms).
-///   2) A union of vector types of the same size and potentially its elements.
-///      Here we turn element accesses into insert/extract element operations.
-///   3) A union of scalar types, such as int/float or int/pointer.  Here we
-///      merge together into integers, allowing the xform to work with #1 as
-///      well.
+///   2) A union of a vector and its elements.  Here we turn element accesses
+///      into insert/extract element operations.
 static bool MergeInType(const Type *In, const Type *&Accum,
                         const TargetData &TD) {
   // If this is our first type, just use it.
   const PackedType *PTy;
   if (Accum == Type::VoidTy || In == Accum) {
     Accum = In;
-  } else if (In == Type::VoidTy) {
-    // Noop.
   } else if (In->isIntegral() && Accum->isIntegral()) {   // integer union.
     // Otherwise pick whichever type is larger.
     if (In->getTypeID() > Accum->getTypeID())
       Accum = In;
   } else if (isa<PointerType>(In) && isa<PointerType>(Accum)) {
     // Pointer unions just stay as one of the pointers.
-  } else if (isa<PackedType>(In) || isa<PackedType>(Accum)) {
-    if ((PTy = dyn_cast<PackedType>(Accum)) && 
-        PTy->getElementType() == In) {
-      // Accum is a vector, and we are accessing an element: ok.
-    } else if ((PTy = dyn_cast<PackedType>(In)) && 
-               PTy->getElementType() == Accum) {
-      // In is a vector, and accum is an element: ok, remember In.
-      Accum = In;
-    } else if ((PTy = dyn_cast<PackedType>(In)) && isa<PackedType>(Accum) &&
-               PTy->getBitWidth() == cast<PackedType>(Accum)->getBitWidth()) {
-      // Two vectors of the same size: keep Accum.
-    } else {
-      // Cannot insert an short into a <4 x int> or handle
-      // <2 x int> -> <4 x int>
-      return true;
-    }
-  } else {
-    // Pointer/FP/Integer unions merge together as integers.
-    switch (Accum->getTypeID()) {
-    case Type::PointerTyID: Accum = TD.getIntPtrType(); break;
-    case Type::FloatTyID:   Accum = Type::UIntTy; break;
-    case Type::DoubleTyID:  Accum = Type::ULongTy; break;
-    default:
-      assert(Accum->isIntegral() && "Unknown FP type!");
-      break;
-    }
-    
-    switch (In->getTypeID()) {
-    case Type::PointerTyID: In = TD.getIntPtrType(); break;
-    case Type::FloatTyID:   In = Type::UIntTy; break;
-    case Type::DoubleTyID:  In = Type::ULongTy; break;
-    default:
-      assert(In->isIntegral() && "Unknown FP type!");
-      break;
-    }
+  } else if ((PTy = dyn_cast<PackedType>(Accum)) && 
+             PTy->getElementType() == In) {
+    // Accum is a vector, and we are accessing an element: ok.
+  } else if ((PTy = dyn_cast<PackedType>(In)) && 
+             PTy->getElementType() == Accum) {
+    // In is a vector, and accum is an element: ok, remember In.
+    Accum = In;
+  } else if (isa<PointerType>(In) && Accum->isIntegral()) {
+    // Pointer/Integer unions merge together as integers.
+    return MergeInType(TD.getIntPtrType(), Accum, TD);
+  } else if (isa<PointerType>(Accum) && In->isIntegral()) {
+    // Pointer/Integer unions merge together as integers.
+    Accum = TD.getIntPtrType();
     return MergeInType(In, Accum, TD);
+  } else {
+    return true;
   }
   return false;
 }
@@ -518,7 +493,8 @@ const Type *SROA::CanConvertToScalar(Value *V, bool &IsNotTrivial) {
       
       if (MergeInType(SI->getOperand(0)->getType(), UsedType, TD))
         return 0;
-    } else if (BitCastInst *CI = dyn_cast<BitCastInst>(User)) {
+    } else if (CastInst *CI = dyn_cast<CastInst>(User)) {
+      if (!isa<PointerType>(CI->getType())) return 0;
       IsNotTrivial = true;
       const Type *SubTy = CanConvertToScalar(CI, IsNotTrivial);
       if (!SubTy || MergeInType(SubTy, UsedType, TD)) return 0;
@@ -632,54 +608,24 @@ void SROA::ConvertUsesToScalar(Value *Ptr, AllocaInst *NewAI, unsigned Offset) {
       Value *NV = new LoadInst(NewAI, LI->getName(), LI);
       if (NV->getType() != LI->getType()) {
         if (const PackedType *PTy = dyn_cast<PackedType>(NV->getType())) {
-          // If the result alloca is a packed type, this is either an element
-          // access or a bitcast to another packed type.
-          if (isa<PackedType>(LI->getType())) {
-            NV = new BitCastInst(NV, LI->getType(), LI->getName(), LI);
-          } else {
-            // Must be an element access.
-            unsigned Elt = Offset/(TD.getTypeSize(PTy->getElementType())*8);
-            NV = new ExtractElementInst(NV, ConstantInt::get(Type::UIntTy, Elt),
-                                        "tmp", LI);
-          }
-        } else if (isa<PointerType>(NV->getType())) {
-          assert(isa<PointerType>(LI->getType()));
-          // Must be ptr->ptr cast.  Anything else would result in NV being
-          // an integer.
-          NV = new BitCastInst(NV, LI->getType(), LI->getName(), LI);
+          // Must be an element access.
+          unsigned Elt = Offset/(TD.getTypeSize(PTy->getElementType())*8);
+          NV = new ExtractElementInst(NV, ConstantInt::get(Type::UIntTy, Elt),
+                                      "tmp", LI);
         } else {
-          assert(NV->getType()->isInteger() && "Unknown promotion!");
-          if (Offset && Offset < TD.getTypeSize(NV->getType())*8) {
-            NV = new ShiftInst(Instruction::LShr, NV, 
-                               ConstantInt::get(Type::UByteTy, Offset), 
-                               LI->getName(), LI);
-          }
-          
-          // If the result is an integer, this is a trunc or bitcast.
-          if (LI->getType()->isIntegral()) {
-            NV = CastInst::createTruncOrBitCast(NV, LI->getType(),
-                                                LI->getName(), LI);
-          } else if (LI->getType()->isFloatingPoint()) {
-            // If needed, truncate the integer to the appropriate size.
-            if (NV->getType()->getPrimitiveSize() > 
-                LI->getType()->getPrimitiveSize()) {
-              switch (LI->getType()->getTypeID()) {
-              default: assert(0 && "Unknown FP type!");
-              case Type::FloatTyID:
-                NV = new TruncInst(NV, Type::UIntTy, LI->getName(), LI);
-                break;
-              case Type::DoubleTyID:
-                NV = new TruncInst(NV, Type::ULongTy, LI->getName(), LI);
-                break;
-              }
+          if (Offset) {
+            assert(NV->getType()->isInteger() && "Unknown promotion!");
+            if (Offset < TD.getTypeSize(NV->getType())*8) {
+              NV = new ShiftInst(Instruction::LShr, NV, 
+                                 ConstantInt::get(Type::UByteTy, Offset), 
+                                 LI->getName(), LI);
             }
-            
-            // Then do a bitcast.
-            NV = new BitCastInst(NV, LI->getType(), LI->getName(), LI);
           } else {
-            // Otherwise must be a pointer.
-            NV = new IntToPtrInst(NV, LI->getType(), LI->getName(), LI);
+            assert((NV->getType()->isInteger() ||
+                    isa<PointerType>(NV->getType())) && "Unknown promotion!");
           }
+          NV = CastInst::createInferredCast(NV, LI->getType(), LI->getName(), 
+                                            LI);
         }
       }
       LI->replaceAllUsesWith(NV);
@@ -695,55 +641,30 @@ void SROA::ConvertUsesToScalar(Value *Ptr, AllocaInst *NewAI, unsigned Offset) {
         Value *Old = new LoadInst(NewAI, NewAI->getName()+".in", SI);
         
         if (const PackedType *PTy = dyn_cast<PackedType>(AllocaType)) {
-          // If the result alloca is a packed type, this is either an element
-          // access or a bitcast to another packed type.
-          if (isa<PackedType>(SV->getType())) {
-            SV = new BitCastInst(SV, AllocaType, SV->getName(), SI);
-          } else {            
-            // Must be an element insertion.
-            unsigned Elt = Offset/(TD.getTypeSize(PTy->getElementType())*8);
-            SV = new InsertElementInst(Old, SV,
-                                       ConstantInt::get(Type::UIntTy, Elt),
-                                       "tmp", SI);
-          }
+          // Must be an element insertion.
+          unsigned Elt = Offset/(TD.getTypeSize(PTy->getElementType())*8);
+          SV = new InsertElementInst(Old, SV,
+                                     ConstantInt::get(Type::UIntTy, Elt),
+                                     "tmp", SI);
         } else {
-          // If SV is a float, convert it to the appropriate integer type.
-          // If it is a pointer, do the same, and also handle ptr->ptr casts
-          // here.
-          switch (SV->getType()->getTypeID()) {
-          default:
-            assert(!SV->getType()->isFloatingPoint() && "Unknown FP type!");
-            break;
-          case Type::FloatTyID:
-            SV = new BitCastInst(SV, Type::UIntTy, SV->getName(), SI);
-            break;
-          case Type::DoubleTyID:
-            SV = new BitCastInst(SV, Type::ULongTy, SV->getName(), SI);
-            break;
-          case Type::PointerTyID:
-            if (isa<PointerType>(AllocaType))
-              SV = new BitCastInst(SV, AllocaType, SV->getName(), SI);
-            else
-              SV = new PtrToIntInst(SV, TD.getIntPtrType(), SV->getName(), SI);
-            break;
-          }
-
-          unsigned SrcSize = TD.getTypeSize(SV->getType())*8;
-
-          // Always zero extend the value if needed.
-          if (SV->getType() != AllocaType)
-            SV = CastInst::createZExtOrBitCast(SV, AllocaType,
-                                               SV->getName(), SI);
-          if (Offset && Offset < AllocaType->getPrimitiveSizeInBits())
+          // Always zero extend the value.
+          if (SV->getType()->isSigned())
+            SV = CastInst::createInferredCast(SV, 
+                SV->getType()->getUnsignedVersion(), SV->getName(), SI);
+          SV = CastInst::createInferredCast(SV, Old->getType(), SV->getName(), 
+                                            SI);
+          if (Offset && Offset < TD.getTypeSize(SV->getType())*8)
             SV = new ShiftInst(Instruction::Shl, SV,
                                ConstantInt::get(Type::UByteTy, Offset),
                                SV->getName()+".adj", SI);
           // Mask out the bits we are about to insert from the old value.
           unsigned TotalBits = TD.getTypeSize(SV->getType())*8;
-          if (TotalBits != SrcSize) {
-            assert(TotalBits > SrcSize);
-            uint64_t Mask = ~(((1ULL << SrcSize)-1) << Offset);
-            Mask = Mask & SV->getType()->getIntegralTypeMask();
+          unsigned InsertBits = TD.getTypeSize(SI->getOperand(0)->getType())*8;
+          if (TotalBits != InsertBits) {
+            assert(TotalBits > InsertBits);
+            uint64_t Mask = ~(((1ULL << InsertBits)-1) << Offset);
+            if (TotalBits != 64)
+              Mask = Mask & ((1ULL << TotalBits)-1);
             Old = BinaryOperator::createAnd(Old,
                                         ConstantInt::get(Old->getType(), Mask),
                                             Old->getName()+".mask", SI);
