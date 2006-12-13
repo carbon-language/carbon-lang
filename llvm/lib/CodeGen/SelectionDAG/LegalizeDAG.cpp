@@ -4547,6 +4547,16 @@ void SelectionDAGLegalize::ExpandOp(SDOperand Op, SDOperand &Lo, SDOperand &Hi){
         std::swap(Lo, Hi);
     } else {
       MVT::ValueType EVT = LD->getLoadedVT();
+
+      if (VT == MVT::f64 && EVT == MVT::f32) {
+        // f64 = EXTLOAD f32 should expand to LOAD, FP_EXTEND
+        SDOperand Load = DAG.getLoad(EVT, Ch, Ptr, LD->getSrcValue(),
+                                     LD->getSrcValueOffset());
+        // Remember that we legalized the chain.
+        AddLegalizedOperand(SDOperand(Node, 1), LegalizeOp(Load.getValue(1)));
+        ExpandOp(DAG.getNode(ISD::FP_EXTEND, VT, Load), Lo, Hi);
+        break;
+      }
     
       if (EVT == NVT)
         Lo = DAG.getLoad(NVT, Ch, Ptr, LD->getSrcValue(),
