@@ -244,7 +244,7 @@ public:
   void removeNotPreservedAnalysis(Pass *P);
   
   /// Remove dead passes
-  void removeDeadPasses(Pass *P);
+  void removeDeadPasses(Pass *P, std::string &Msg);
 
   /// Add pass P into the PassVector. Update 
   /// AvailableAnalysis appropriately if ProcessAnalysis is true.
@@ -310,6 +310,15 @@ public:
           if (!PI->isAnalysisGroup())
             cerr << " -" << PI->getPassArgument();
     }
+  }
+
+  void dumpPassInfo(Pass *P,  std::string &Msg1, std::string &Msg2) {
+    if (PassDebugging_New < Executions)
+      return;
+    cerr << (void*)this << std::string(getDepth()*2+1, ' ');
+    cerr << Msg1;
+    cerr << P->getPassName();
+    cerr << Msg2;
   }
 
 protected:
@@ -572,7 +581,6 @@ void PMTopLevelManager::setLastUser(std::vector<Pass *> &AnalysisPasses,
         LastUser[LUI->first] = P;
     }
   }
-
 }
 
 /// Collect passes whose last user is P
@@ -734,13 +742,17 @@ void PMDataManager::removeNotPreservedAnalysis(Pass *P) {
 }
 
 /// Remove analysis passes that are not used any longer
-void PMDataManager::removeDeadPasses(Pass *P) {
+void PMDataManager::removeDeadPasses(Pass *P, std::string &Msg) {
 
   std::vector<Pass *> DeadPasses;
   TPM->collectLastUses(DeadPasses, P);
 
   for (std::vector<Pass *>::iterator I = DeadPasses.begin(),
          E = DeadPasses.end(); I != E; ++I) {
+
+    std::string Msg1 = "  Freeing Pass '";
+    dumpPassInfo(*I, Msg1, Msg);
+
     (*I)->releaseMemory();
     
     std::map<AnalysisID, Pass*>::iterator Pos = 
@@ -910,12 +922,15 @@ BasicBlockPassManager::runOnFunction(Function &F) {
     for (std::vector<Pass *>::iterator itr = passVectorBegin(),
            e = passVectorEnd(); itr != e; ++itr) {
       Pass *P = *itr;
+      std::string Msg1 = "Executing Pass '";
+      std::string Msg2 = "' on BasicBlock '" + (*I).getName() + "'...\n";
+      dumpPassInfo(P, Msg1, Msg2);
       initializeAnalysisImpl(P);
       BasicBlockPass *BP = dynamic_cast<BasicBlockPass*>(P);
       Changed |= BP->runOnBasicBlock(*I);
       removeNotPreservedAnalysis(P);
       recordAvailableAnalysis(P);
-      removeDeadPasses(P);
+      removeDeadPasses(P, Msg2);
     }
   return Changed | doFinalization(F);
 }
@@ -1129,12 +1144,15 @@ bool FunctionPassManagerImpl_New::runOnFunction(Function &F) {
   for (std::vector<Pass *>::iterator itr = passVectorBegin(),
          e = passVectorEnd(); itr != e; ++itr) {
     Pass *P = *itr;
+    std::string Msg1 = "Executing Pass '";
+    std::string Msg2 = "' on Function '" + F.getName() + "'...\n";
+    dumpPassInfo(P, Msg1, Msg2);
     initializeAnalysisImpl(P);    
     FunctionPass *FP = dynamic_cast<FunctionPass*>(P);
     Changed |= FP->runOnFunction(F);
     removeNotPreservedAnalysis(P);
     recordAvailableAnalysis(P);
-    removeDeadPasses(P);
+    removeDeadPasses(P, Msg2);
   }
   return Changed;
 }
@@ -1258,12 +1276,15 @@ ModulePassManager::runOnModule(Module &M) {
   for (std::vector<Pass *>::iterator itr = passVectorBegin(),
          e = passVectorEnd(); itr != e; ++itr) {
     Pass *P = *itr;
+    std::string Msg1 = "Executing Pass '";
+    std::string Msg2 = "' on Module '" + M.getModuleIdentifier() + "'...\n";
+    dumpPassInfo(P, Msg1, Msg2);
     initializeAnalysisImpl(P);
     ModulePass *MP = dynamic_cast<ModulePass*>(P);
     Changed |= MP->runOnModule(M);
     removeNotPreservedAnalysis(P);
     recordAvailableAnalysis(P);
-    removeDeadPasses(P);
+    removeDeadPasses(P, Msg2);
   }
   return Changed;
 }
