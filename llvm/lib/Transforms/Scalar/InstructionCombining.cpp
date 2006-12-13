@@ -3270,22 +3270,21 @@ Instruction *InstCombiner::visitAnd(BinaryOperator &I) {
   }
 
   // fold (and (cast A), (cast B)) -> (cast (and A, B))
-  if (CastInst *Op1C = dyn_cast<CastInst>(Op1)) {
-    if (CastInst *Op0C = dyn_cast<CastInst>(Op0)) {
-      const Type *SrcTy = Op0C->getOperand(0)->getType();
-      if (SrcTy == Op1C->getOperand(0)->getType() && SrcTy->isIntegral() &&
-          // Only do this if the casts both really cause code to be generated.
-          ValueRequiresCast(Op0C->getOperand(0), I.getType(), TD) &&
-          ValueRequiresCast(Op1C->getOperand(0), I.getType(), TD)) {
-        Instruction *NewOp = BinaryOperator::createAnd(Op0C->getOperand(0),
-                                                       Op1C->getOperand(0),
-                                                       I.getName());
-        InsertNewInstBefore(NewOp, I);
-        return CastInst::createIntegerCast(NewOp, I.getType(), 
-                                           SrcTy->isSigned());
+  if (CastInst *Op0C = dyn_cast<CastInst>(Op0))
+    if (CastInst *Op1C = dyn_cast<CastInst>(Op1))
+      if (Op0C->getOpcode() == Op1C->getOpcode()) { // same cast kind ?
+        const Type *SrcTy = Op0C->getOperand(0)->getType();
+        if (SrcTy == Op1C->getOperand(0)->getType() && SrcTy->isIntegral() &&
+            // Only do this if the casts both really cause code to be generated.
+            ValueRequiresCast(Op0C->getOperand(0), I.getType(), TD) &&
+            ValueRequiresCast(Op1C->getOperand(0), I.getType(), TD)) {
+          Instruction *NewOp = BinaryOperator::createAnd(Op0C->getOperand(0),
+                                                         Op1C->getOperand(0),
+                                                         I.getName());
+          InsertNewInstBefore(NewOp, I);
+          return CastInst::create(Op0C->getOpcode(), NewOp, I.getType());
+        }
       }
-    }
-  }
     
   // (X >> Z) & (Y >> Z)  -> (X&Y) >> Z  for all shifts.
   if (ShiftInst *SI1 = dyn_cast<ShiftInst>(Op1)) {
@@ -3675,21 +3674,21 @@ Instruction *InstCombiner::visitOr(BinaryOperator &I) {
   }
     
   // fold (or (cast A), (cast B)) -> (cast (or A, B))
-  if (CastInst *Op0C = dyn_cast<CastInst>(Op0)) {
-    const Type *SrcTy = Op0C->getOperand(0)->getType();
+  if (CastInst *Op0C = dyn_cast<CastInst>(Op0))
     if (CastInst *Op1C = dyn_cast<CastInst>(Op1))
-      if (SrcTy == Op1C->getOperand(0)->getType() && SrcTy->isIntegral() &&
-          // Only do this if the casts both really cause code to be generated.
-          ValueRequiresCast(Op0C->getOperand(0), I.getType(), TD) &&
-          ValueRequiresCast(Op1C->getOperand(0), I.getType(), TD)) {
-        Instruction *NewOp = BinaryOperator::createOr(Op0C->getOperand(0),
-                                                      Op1C->getOperand(0),
-                                                      I.getName());
-        InsertNewInstBefore(NewOp, I);
-        return CastInst::createIntegerCast(NewOp, I.getType(),
-                                           SrcTy->isSigned());
+      if (Op0C->getOpcode() == Op1C->getOpcode()) {// same cast kind ?
+        const Type *SrcTy = Op0C->getOperand(0)->getType();
+        if (SrcTy == Op1C->getOperand(0)->getType() && SrcTy->isIntegral() &&
+            // Only do this if the casts both really cause code to be generated.
+            ValueRequiresCast(Op0C->getOperand(0), I.getType(), TD) &&
+            ValueRequiresCast(Op1C->getOperand(0), I.getType(), TD)) {
+          Instruction *NewOp = BinaryOperator::createOr(Op0C->getOperand(0),
+                                                        Op1C->getOperand(0),
+                                                        I.getName());
+          InsertNewInstBefore(NewOp, I);
+          return CastInst::create(Op0C->getOpcode(), NewOp, I.getType());
+        }
       }
-  }
       
 
   return Changed ? &I : 0;
@@ -3857,21 +3856,21 @@ Instruction *InstCombiner::visitXor(BinaryOperator &I) {
       return R;
 
   // fold (xor (cast A), (cast B)) -> (cast (xor A, B))
-  if (CastInst *Op0C = dyn_cast<CastInst>(Op0)) {
-    const Type *SrcTy = Op0C->getOperand(0)->getType();
+  if (CastInst *Op0C = dyn_cast<CastInst>(Op0)) 
     if (CastInst *Op1C = dyn_cast<CastInst>(Op1))
-      if (SrcTy == Op1C->getOperand(0)->getType() && SrcTy->isIntegral() &&
-          // Only do this if the casts both really cause code to be generated.
-          ValueRequiresCast(Op0C->getOperand(0), I.getType(), TD) &&
-          ValueRequiresCast(Op1C->getOperand(0), I.getType(), TD)) {
-        Instruction *NewOp = BinaryOperator::createXor(Op0C->getOperand(0),
-                                                       Op1C->getOperand(0),
-                                                       I.getName());
-        InsertNewInstBefore(NewOp, I);
-        return CastInst::createIntegerCast(NewOp, I.getType(), 
-                                           SrcTy->isSigned());
+      if (Op0C->getOpcode() == Op1C->getOpcode()) { // same cast kind?
+        const Type *SrcTy = Op0C->getOperand(0)->getType();
+        if (SrcTy == Op1C->getOperand(0)->getType() && SrcTy->isIntegral() &&
+            // Only do this if the casts both really cause code to be generated.
+            ValueRequiresCast(Op0C->getOperand(0), I.getType(), TD) &&
+            ValueRequiresCast(Op1C->getOperand(0), I.getType(), TD)) {
+          Instruction *NewOp = BinaryOperator::createXor(Op0C->getOperand(0),
+                                                         Op1C->getOperand(0),
+                                                         I.getName());
+          InsertNewInstBefore(NewOp, I);
+          return CastInst::create(Op0C->getOpcode(), NewOp, I.getType());
+        }
       }
-  }
 
   // (X >> Z) ^ (Y >> Z)  -> (X^Y) >> Z  for all shifts.
   if (ShiftInst *SI1 = dyn_cast<ShiftInst>(Op1)) {
