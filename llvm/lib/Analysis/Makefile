@@ -9,7 +9,7 @@
 
 LEVEL = ../..
 LIBRARYNAME = LLVMAnalysis
-PARALLEL_DIRS = IPA
+DIRS = IPA
 BUILD_ARCHIVE = 1
 
 include $(LEVEL)/Makefile.common
