@@ -701,7 +701,7 @@ public:
     
     void emitConstantPool(MachineConstantPool *MCP);
     void initJumpTableInfo(MachineJumpTableInfo *MJTI);
-    void emitJumpTableInfo(MachineJumpTableInfo *MJTI, Reloc::Model RM);
+    void emitJumpTableInfo(MachineJumpTableInfo *MJTI);
     
     virtual void startFunctionStub(unsigned StubSize, unsigned Alignment = 1);
     virtual void* finishFunctionStub(const Function *F);
@@ -792,7 +792,7 @@ bool JITEmitter::finishFunction(MachineFunction &F) {
     abort();
   }
   
-  emitJumpTableInfo(F.getJumpTableInfo(), F.getTarget().getRelocationModel());
+  emitJumpTableInfo(F.getJumpTableInfo());
   
   // FnStart is the start of the text, not the start of the constant pool and
   // other per-function data.
@@ -915,11 +915,11 @@ void JITEmitter::initJumpTableInfo(MachineJumpTableInfo *MJTI) {
   JumpTableBase = allocateSpace(NumEntries * EntrySize, MJTI->getAlignment());
 }
 
-void JITEmitter::emitJumpTableInfo(MachineJumpTableInfo *MJTI, Reloc::Model RM){
+void JITEmitter::emitJumpTableInfo(MachineJumpTableInfo *MJTI) {
   const std::vector<MachineJumpTableEntry> &JT = MJTI->getJumpTables();
   if (JT.empty() || JumpTableBase == 0) return;
   
-  if (RM == Reloc::PIC_) {
+  if (TargetMachine::getRelocationModel() == Reloc::PIC_) {
     assert(MJTI->getEntrySize() == 4 && "Cross JIT'ing?");
     // For each jump table, place the offset from the beginning of the table
     // to the target address.
