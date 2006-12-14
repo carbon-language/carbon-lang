@@ -660,14 +660,91 @@ static SDOperand GetARMCC(ISD::CondCode CC, MVT::ValueType vt,
     return DAG.getConstant(DAGFPCCToARMCC(CC), MVT::i32);
 }
 
+static bool isUInt8Immediate(uint32_t x) {
+  return x < (1 << 8);
+}
+
+static uint32_t rotateL(uint32_t x) {
+  uint32_t bit31 = (x & (1 << 31)) >> 31;
+  uint32_t     t = x << 1;
+  return t | bit31;
+}
+
+static bool isRotInt8Immediate(uint32_t x) {
+  int r;
+  for (r = 0; r < 16; r++) {
+    if (isUInt8Immediate(x))
+      return true;
+    x = rotateL(rotateL(x));
+  }
+  return false;
+}
+
+static void LowerCMP(SDOperand &Cmp, SDOperand &ARMCC, SDOperand LHS,
+                     SDOperand RHS, ISD::CondCode CC, SelectionDAG &DAG) {
+  MVT::ValueType vt = LHS.getValueType();
+  if (vt == MVT::i32) {
+    assert(!isa<ConstantSDNode>(LHS));
+    if (ConstantSDNode *SD_C = dyn_cast<ConstantSDNode>(RHS.Val)) {
+      uint32_t C = SD_C->getValue();
+
+      uint32_t NC;
+      switch(CC) {
+      default:
+        NC = C; break;
+      case ISD::SETLT:
+      case ISD::SETULT:
+      case ISD::SETGE:
+      case ISD::SETUGE:
+        NC = C - 1; break;
+      case ISD::SETLE:
+      case ISD::SETULE:
+      case ISD::SETGT:
+      case ISD::SETUGT:
+        NC = C + 1; break;
+      }
+
+      ISD::CondCode NCC;
+      switch(CC) {
+      default:
+        NCC = CC; break;
+      case ISD::SETLT:
+        NCC = ISD::SETLE; break;
+      case ISD::SETULT:
+        NCC = ISD::SETULE; break;
+      case ISD::SETGE:
+        NCC = ISD::SETGT; break;
+      case ISD::SETUGE:
+        NCC = ISD::SETUGT; break;
+      case ISD::SETLE:
+        NCC = ISD::SETLT; break;
+      case ISD::SETULE:
+        NCC = ISD::SETULT; break;
+      case ISD::SETGT:
+        NCC = ISD::SETGE; break;
+      case ISD::SETUGT:
+        NCC = ISD::SETUGE; break;
+      }
+
+      if (!isRotInt8Immediate(C) && isRotInt8Immediate(NC)) {
+        RHS = DAG.getConstant(NC, MVT::i32);
+        CC  = NCC;
+      }
+    }
+  }
+  Cmp   = GetCMP(CC, LHS, RHS, DAG);
+  ARMCC = GetARMCC(CC, vt, DAG);
+}
+
 static SDOperand LowerSELECT_CC(SDOperand Op, SelectionDAG &DAG) {
   SDOperand LHS = Op.getOperand(0);
   SDOperand RHS = Op.getOperand(1);
   ISD::CondCode CC = cast<CondCodeSDNode>(Op.getOperand(4))->get();
   SDOperand TrueVal = Op.getOperand(2);
   SDOperand FalseVal = Op.getOperand(3);
-  SDOperand      Cmp = GetCMP(CC, LHS, RHS, DAG);
-  SDOperand    ARMCC = GetARMCC(CC, LHS.getValueType(), DAG);
+  SDOperand Cmp;
+  SDOperand ARMCC;
+  LowerCMP(Cmp, ARMCC, LHS, RHS, CC, DAG);
   return DAG.getNode(ARMISD::SELECT, MVT::i32, TrueVal, FalseVal, ARMCC, Cmp);
 }
 
@@ -677,8 +754,9 @@ static SDOperand LowerBR_CC(SDOperand Op, SelectionDAG &DAG) {
   SDOperand    LHS = Op.getOperand(2);
   SDOperand    RHS = Op.getOperand(3);
   SDOperand   Dest = Op.getOperand(4);
-  SDOperand    Cmp = GetCMP(CC, LHS, RHS, DAG);
-  SDOperand  ARMCC = GetARMCC(CC, LHS.getValueType(), DAG);
+  SDOperand Cmp;
+  SDOperand ARMCC;
+  LowerCMP(Cmp, ARMCC, LHS, RHS, CC, DAG);
   return DAG.getNode(ARMISD::BR, MVT::Other, Chain, Dest, ARMCC, Cmp);
 }
 
@@ -818,26 +896,6 @@ static bool isInt12Immediate(SDNode *N, short &Imm) {
 
 static bool isInt12Immediate(SDOperand Op, short &Imm) {
   return isInt12Immediate(Op.Val, Imm);
-}
-
-static uint32_t rotateL(uint32_t x) {
-  uint32_t bit31 = (x & (1 << 31)) >> 31;
-  uint32_t     t = x << 1;
-  return t | bit31;
-}
-
-static bool isUInt8Immediate(uint32_t x) {
-  return x < (1 << 8);
-}
-
-static bool isRotInt8Immediate(uint32_t x) {
-  int r;
-  for (r = 0; r < 16; r++) {
-    if (isUInt8Immediate(x))
-      return true;
-    x = rotateL(rotateL(x));
-  }
-  return false;
 }
 
 bool ARMDAGToDAGISel::SelectAddrMode1(SDOperand Op,
