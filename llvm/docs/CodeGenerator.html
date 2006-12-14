@@ -84,6 +84,13 @@
   <li><a href="#targetimpls">Target-specific Implementation Notes</a>
     <ul>
     <li><a href="#x86">The X86 backend</a></li>
+    <li><a href="#ppc">The PowerPC backend</a></li>
+      <ul>
+      <li><a href="#ppc_abi">LLVM PowerPC ABI</a></li>
+      <li><a href="#ppc_frame">Frame Layout</a></li>
+      <li><a href="#ppc_prolog">Prolog/Epilog</a></li>
+      <li><a href="#ppc_dynamic">Dynamic Allocation</a></li>
+      </ul>
     </ul>
   </li>
 
@@ -1722,6 +1729,221 @@ a character per operand with an optional special size. For example:</p>
 </p>
 
 </div>
+
+<!-- ======================================================================= -->
+<div class="doc_subsection">
+  <a name="ppc">The PowerPC backend</a>
+</div>
+
+<div class="doc_text">
+<p>The PowerPC code generator lives in the lib/Target/PowerPC directory.  The
+code generation is retargetable to several variations or <i>subtargets</i> of
+the PowerPC ISA; including ppc32, ppc64 and altivec.
+</p>
+</div>
+
+<!-- _______________________________________________________________________ -->
+<div class="doc_subsubsection">
+  <a name="ppc_abi">LLVM PowerPC ABI</a>
+</div>
+
+<div class="doc_text">
+<p>LLVM follows the AIX PowerPC ABI, with two deviations. LLVM uses a PC
+relative (PIC) or static addressing for accessing global values, so no TOC (r2)
+is used. Second, r31 is used as a frame pointer to allow dynamic growth of a
+stack frame.  LLVM takes advantage of having no TOC to provide space to save
+the frame pointer in the PowerPC linkage area of the caller frame.  Other
+details of PowerPC ABI can be found at <a
+href="http://developer.apple.com/documentation/DeveloperTools/Conceptual/
+LowLevelABI/Articles/32bitPowerPC.html" target="_blank">PowerPC ABI.</a> Note:
+This link describes the 32 bit ABI.  The 64 bit ABI is similar except space for
+GPRs are 8 bytes wide (not 4) and r13 is reserved for system use.</p>
+</div>
+
+<!-- _______________________________________________________________________ -->
+<div class="doc_subsubsection">
+  <a name="ppc_frame">Frame Layout</a>
+</div>
+
+<div class="doc_text">
+<p>The size of a PowerPC frame is usually fixed for the duration of a
+function&apos;s invocation.  Since the frame is fixed size, all references into
+the frame can be accessed via fixed offsets from the stack pointer.  The
+exception to this is when dynamic alloca or variable sized arrays are present,
+then a base pointer (r31) is used as a proxy for the stack pointer and stack
+pointer is free to grow or shrink.  A base pointer is also used if llvm-gcc is
+not passed the -fomit-frame-pointer flag. The stack pointer is always aligned to
+16 bytes, so that space allocated for altivec vectors will be properly
+aligned.</p>
+<p>An invocation frame is layed out as follows (low memory at top);</p>
+</div>
+
+<div class="doc_text">
+<table class="layout">
+	<tr>
+		<td>Linkage<br><br></td>
+	</tr>
+	<tr>
+		<td>Parameter area<br><br></td>
+	</tr>
+	<tr>
+		<td>Dynamic area<br><br></td>
+	</tr>
+	<tr>
+		<td>Locals area<br><br></td>
+	</tr>
+	<tr>
+		<td>Saved registers area<br><br></td>
+	</tr>
+	<tr style="border-style: none hidden none hidden;">
+		<td><br></td>
+	</tr>
+	<tr>
+		<td>Previous Frame<br><br></td>
+	</tr>
+</table>
+</div>
+
+<div class="doc_text">
+<p>The <i>linkage</i> area is used by a callee to save special registers prior
+to allocating its own frame.  Only three entries are relevant to LLVM. The
+first entry is the previous stack pointer (sp), aka link.  This allows probing
+tools like gdb or exception handlers to quickly scan the frames in the stack.  A
+function epilog can also use the link to pop the frame from the stack.  The
+third entry in the linkage area is used to save the return address from the lr
+register. Finally, as mentioned above, the last entry is used to save the
+previous frame pointer (r31.)  The entries in the linkage area are the size of a
+GPR, thus the linkage area is 24 bytes long in 32 bit mode and 48 bytes in 64
+bit mode.</p>
+</div>
+
+<div class="doc_text">
+<p>32 bit linkage area</p>
+<table class="layout">
+	<tr>
+		<td>0</td>
+		<td>Saved SP (r1)</td>
+	</tr>
+	<tr>
+		<td>4</td>
+		<td>Saved CR</td>
+	</tr>
+	<tr>
+		<td>8</td>
+		<td>Saved LR</td>
+	</tr>
+	<tr>
+		<td>12</td>
+		<td>Reserved</td>
+	</tr>
+	<tr>
+		<td>16</td>
+		<td>Reserved</td>
+	</tr>
+	<tr>
+		<td>20</td>
+		<td>Saved FP (r31)</td>
+	</tr>
+</table>
+</div>
+
+<div class="doc_text">
+<p>64 bit linkage area</p>
+<table class="layout">
+	<tr>
+		<td>0</td>
+		<td>Saved SP (r1)</td>
+	</tr>
+	<tr>
+		<td>8</td>
+		<td>Saved CR</td>
+	</tr>
+	<tr>
+		<td>16</td>
+		<td>Saved LR</td>
+	</tr>
+	<tr>
+		<td>24</td>
+		<td>Reserved</td>
+	</tr>
+	<tr>
+		<td>32</td>
+		<td>Reserved</td>
+	</tr>
+	<tr>
+		<td>40</td>
+		<td>Saved FP (r31)</td>
+	</tr>
+</table>
+</div>
+
+<div class="doc_text">
+<p>The <i>parameter area</i> is used to store arguments being passed to a callee
+function.  Following the PowerPC ABI, the first few arguments are actually
+passed in registers, with the space in the parameter area unused.  However, if
+there are not enough registers or the callee is a thunk or vararg function,
+these register arguments can be spilled into the parameter area.  Thus, the
+parameter area must be large enough to store all the parameters for the largest
+call sequence made by the caller.  The size must also be mimimally large enough
+to spill registers r3-r10.  This allows callees blind to the call signature,
+such as thunks and vararg functions, enough space to cache the argument
+registers.  Therefore, the parameter area is minimally 32 bytes (64 bytes in 64
+bit mode.)  Also note that since the parameter area is a fixed offset from the
+top of the frame, that a callee can access its spilt arguments using fixed
+offsets from the stack pointer (or base pointer.)</p>
+</div>
+
+<div class="doc_text">
+<p>Combining the information about the linkage, parameter areas and alignment. A
+stack frame is minimally 64 bytes in 32 bit mode and 128 bytes in 64 bit
+mode.</p>
+</div>
+
+<div class="doc_text">
+<p>The <i>dynamic area</i> starts out as size zero.  If a function uses dynamic
+alloca then space is added to the stack, the linkage and parameter areas are
+shifted to top of stack, and the new space is available immediately below the
+linkage and parameter areas.  The cost of shifting the linkage and parameter
+areas is minor since only the link value needs to be copied.  The link value can
+be easily fetched by adding the original frame size to the base pointer.  Note
+that allocations in the dynamic space need to observe 16 byte aligment.</p>
+</div>
+
+<div class="doc_text">
+<p>The <i>locals area</i> is where the llvm compiler reserves space for local
+variables.</p>
+</div>
+
+<div class="doc_text">
+<p>The <i>saved registers area</i> is where the llvm compiler spills callee saved
+registers on entry to the callee.</p>
+</div>
+
+<!-- _______________________________________________________________________ -->
+<div class="doc_subsubsection">
+  <a name="ppc_prolog">Prolog/Epilog</a>
+</div>
+
+<div class="doc_text">
+<p>The llvm prolog and epilog are the same as described in the PowerPC ABI, with
+the following exceptions.  Callee saved registers are spilled after the frame is
+created.  This allows the llvm epilog/prolog support to be common with other
+targets.  The base pointer callee saved register r31 is saved in the TOC slot of
+linkage area.  This simplifies allocation of space for the base pointer and
+makes it convenient to locate programatically and during debugging.</p>
+</div>
+
+<!-- _______________________________________________________________________ -->
+<div class="doc_subsubsection">
+  <a name="ppc_dynamic">Dynamic Allocation</a>
+</div>
+
+<div class="doc_text">
+<p></p>
+</div>
+
+<i>TODO - More to come.</i>
+
 
 <!-- *********************************************************************** -->
 <hr>
