@@ -25,6 +25,7 @@
 #include "llvm/ExecutionEngine/GenericValue.h"
 #include "llvm/Target/TargetData.h"
 #include "llvm/Target/TargetJITInfo.h"
+#include "llvm/Target/TargetMachine.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/MutexGuard.h"
 #include "llvm/ADT/Statistic.h"
@@ -700,7 +701,7 @@ public:
     
     void emitConstantPool(MachineConstantPool *MCP);
     void initJumpTableInfo(MachineJumpTableInfo *MJTI);
-    void emitJumpTableInfo(MachineJumpTableInfo *MJTI);
+    void emitJumpTableInfo(MachineJumpTableInfo *MJTI, Reloc::Model RM);
     
     virtual void startFunctionStub(unsigned StubSize, unsigned Alignment = 1);
     virtual void* finishFunctionStub(const Function *F);
@@ -791,7 +792,7 @@ bool JITEmitter::finishFunction(MachineFunction &F) {
     abort();
   }
   
-  emitJumpTableInfo(F.getJumpTableInfo());
+  emitJumpTableInfo(F.getJumpTableInfo(), F.getTarget().getRelocationModel());
   
   // FnStart is the start of the text, not the start of the constant pool and
   // other per-function data.
@@ -821,7 +822,7 @@ bool JITEmitter::finishFunction(MachineFunction &F) {
                                        MR.doesntNeedFunctionStub());
       } else if (MR.isBasicBlock()) {
         ResultPtr = (void*)getMachineBasicBlockAddress(MR.getBasicBlock());
-      } else if (MR.isConstantPoolIndex()){
+      } else if (MR.isConstantPoolIndex()) {
         ResultPtr=(void*)getConstantPoolEntryAddress(MR.getConstantPoolIndex());
       } else {
         assert(MR.isJumpTableIndex());
@@ -914,22 +915,38 @@ void JITEmitter::initJumpTableInfo(MachineJumpTableInfo *MJTI) {
   JumpTableBase = allocateSpace(NumEntries * EntrySize, MJTI->getAlignment());
 }
 
-void JITEmitter::emitJumpTableInfo(MachineJumpTableInfo *MJTI) {
+void JITEmitter::emitJumpTableInfo(MachineJumpTableInfo *MJTI, Reloc::Model RM){
   const std::vector<MachineJumpTableEntry> &JT = MJTI->getJumpTables();
   if (JT.empty() || JumpTableBase == 0) return;
-
-  assert(MJTI->getEntrySize() == sizeof(void*) && "Cross JIT'ing?");
   
-  // For each jump table, map each target in the jump table to the address of 
-  // an emitted MachineBasicBlock.
-  intptr_t *SlotPtr = (intptr_t*)JumpTableBase;
+  if (RM == Reloc::PIC_) {
+    assert(MJTI->getEntrySize() == 4 && "Cross JIT'ing?");
+    // For each jump table, place the offset from the beginning of the table
+    // to the target address.
+    int *SlotPtr = (int*)JumpTableBase;
 
-  for (unsigned i = 0, e = JT.size(); i != e; ++i) {
-    const std::vector<MachineBasicBlock*> &MBBs = JT[i].MBBs;
-    // Store the address of the basic block for this jump table slot in the
-    // memory we allocated for the jump table in 'initJumpTableInfo'
-    for (unsigned mi = 0, me = MBBs.size(); mi != me; ++mi)
-      *SlotPtr++ = getMachineBasicBlockAddress(MBBs[mi]);
+    for (unsigned i = 0, e = JT.size(); i != e; ++i) {
+      const std::vector<MachineBasicBlock*> &MBBs = JT[i].MBBs;
+      // Store the offset of the basic block for this jump table slot in the
+      // memory we allocated for the jump table in 'initJumpTableInfo'
+      intptr_t Base = (intptr_t)SlotPtr;
+      for (unsigned mi = 0, me = MBBs.size(); mi != me; ++mi)
+        *SlotPtr++ = (intptr_t)getMachineBasicBlockAddress(MBBs[mi]) - Base;
+    }
+  } else {
+    assert(MJTI->getEntrySize() == sizeof(void*) && "Cross JIT'ing?");
+    
+    // For each jump table, map each target in the jump table to the address of 
+    // an emitted MachineBasicBlock.
+    intptr_t *SlotPtr = (intptr_t*)JumpTableBase;
+
+    for (unsigned i = 0, e = JT.size(); i != e; ++i) {
+      const std::vector<MachineBasicBlock*> &MBBs = JT[i].MBBs;
+      // Store the address of the basic block for this jump table slot in the
+      // memory we allocated for the jump table in 'initJumpTableInfo'
+      for (unsigned mi = 0, me = MBBs.size(); mi != me; ++mi)
+        *SlotPtr++ = getMachineBasicBlockAddress(MBBs[mi]);
+    }
   }
 }
 
@@ -972,7 +989,9 @@ intptr_t JITEmitter::getJumpTableEntryAddress(unsigned Index) const {
   unsigned EntrySize = JumpTable->getEntrySize();
   
   for (unsigned i = 0; i < Index; ++i)
-    Offset += JT[i].MBBs.size() * EntrySize;
+    Offset += JT[i].MBBs.size();
+  
+   Offset *= EntrySize;
   
   return (intptr_t)((char *)JumpTableBase + Offset);
 }

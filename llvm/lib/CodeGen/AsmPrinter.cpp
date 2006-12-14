@@ -188,36 +188,31 @@ void AsmPrinter::EmitJumpTableInfo(MachineJumpTableInfo *MJTI,
                                    MachineFunction &MF) {
   const std::vector<MachineJumpTableEntry> &JT = MJTI->getJumpTables();
   if (JT.empty()) return;
-  const TargetData *TD = TM.getTargetData();
+  bool IsPic = TM.getRelocationModel() == Reloc::PIC_;
   
-  // JTEntryDirective is a string to print sizeof(ptr) for non-PIC jump tables,
-  // and 32 bits for PIC since PIC jump table entries are differences, not
-  // pointers to blocks.
-  // Use the architecture specific relocation directive, if it is set
+  // Use JumpTableDirective otherwise honor the entry size from the jump table
+  // info.
   const char *JTEntryDirective = TAI->getJumpTableDirective();
-  if (!JTEntryDirective)
-    JTEntryDirective = TAI->getData32bitsDirective();
+  bool HadJTEntryDirective = JTEntryDirective != NULL;
+  if (!HadJTEntryDirective) {
+    JTEntryDirective = MJTI->getEntrySize() == 4 ?
+      TAI->getData32bitsDirective() : TAI->getData64bitsDirective();
+  }
   
   // Pick the directive to use to print the jump table entries, and switch to 
   // the appropriate section.
-  if (TM.getRelocationModel() == Reloc::PIC_) {
-    TargetLowering *LoweringInfo = TM.getTargetLowering();
-    if (LoweringInfo && LoweringInfo->usesGlobalOffsetTable()) {
-      SwitchToDataSection(TAI->getJumpTableDataSection());
-      if (TD->getPointerSize() == 8 && !JTEntryDirective)
-        JTEntryDirective = TAI->getData64bitsDirective();
-    } else {      
-      // In PIC mode, we need to emit the jump table to the same section as the
-      // function body itself, otherwise the label differences won't make sense.
-      const Function *F = MF.getFunction();
-      SwitchToTextSection(getSectionForFunction(*F).c_str(), F);
-    }
+  TargetLowering *LoweringInfo = TM.getTargetLowering();
+  
+  if (IsPic && !(LoweringInfo && LoweringInfo->usesGlobalOffsetTable())) {
+    // In PIC mode, we need to emit the jump table to the same section as the
+    // function body itself, otherwise the label differences won't make sense.
+    const Function *F = MF.getFunction();
+    SwitchToTextSection(getSectionForFunction(*F).c_str(), F);
   } else {
     SwitchToDataSection(TAI->getJumpTableDataSection());
-    if (TD->getPointerSize() == 8)
-      JTEntryDirective = TAI->getData64bitsDirective();
   }
-  EmitAlignment(Log2_32(TD->getPointerAlignment()));
+  
+  EmitAlignment(Log2_32(MJTI->getAlignment()));
   
   for (unsigned i = 0, e = JT.size(); i != e; ++i) {
     const std::vector<MachineBasicBlock*> &JTBBs = JT[i].MBBs;
@@ -229,7 +224,7 @@ void AsmPrinter::EmitJumpTableInfo(MachineJumpTableInfo *MJTI,
     // the number of relocations the assembler will generate for the jump table.
     // Set directives are all printed before the jump table itself.
     std::set<MachineBasicBlock*> EmittedSets;
-    if (TAI->getSetDirective() && TM.getRelocationModel() == Reloc::PIC_)
+    if (TAI->getSetDirective() && IsPic)
       for (unsigned ii = 0, ee = JTBBs.size(); ii != ee; ++ii)
         if (EmittedSets.insert(JTBBs[ii]).second)
           printSetLabel(i, JTBBs[ii]);
@@ -247,12 +242,12 @@ void AsmPrinter::EmitJumpTableInfo(MachineJumpTableInfo *MJTI,
       if (!EmittedSets.empty()) {
         O << TAI->getPrivateGlobalPrefix() << getFunctionNumber()
           << '_' << i << "_set_" << JTBBs[ii]->getNumber();
-      } else if (TM.getRelocationModel() == Reloc::PIC_) {
+      } else if (IsPic) {
         printBasicBlockLabel(JTBBs[ii], false, false);
-	//If the arch uses custom Jump Table directives, don't calc relative to JT
-	if (!TAI->getJumpTableDirective()) 
-	  O << '-' << TAI->getPrivateGlobalPrefix() << "JTI"
-	    << getFunctionNumber() << '_' << i;
+        //If the arch uses custom Jump Table directives, don't calc relative to JT
+        if (!HadJTEntryDirective) 
+          O << '-' << TAI->getPrivateGlobalPrefix() << "JTI"
+            << getFunctionNumber() << '_' << i;
       } else {
         printBasicBlockLabel(JTBBs[ii], false, false);
       }

@@ -21,6 +21,7 @@
 #include "llvm/CodeGen/MachineJumpTableInfo.h"
 #include "llvm/CodeGen/Passes.h"
 #include "llvm/Target/TargetData.h"
+#include "llvm/Target/TargetLowering.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetFrameInfo.h"
 #include "llvm/Function.h"
@@ -117,7 +118,14 @@ MachineFunction::MachineFunction(const Function *F,
   MFInfo = 0;
   FrameInfo = new MachineFrameInfo();
   ConstantPool = new MachineConstantPool(TM.getTargetData());
-  JumpTableInfo = new MachineJumpTableInfo(TM.getTargetData());
+  
+  // Set up jump table.
+  const TargetData &TD = *TM.getTargetData();
+  bool IsPic = TM.getRelocationModel() == Reloc::PIC_;
+  unsigned EntrySize = IsPic ? 4 : TD.getPointerSize();
+  unsigned Alignment = IsPic ? TD.getIntAlignment() : TD.getPointerAlignment();
+  JumpTableInfo = new MachineJumpTableInfo(EntrySize, Alignment);
+  
   BasicBlocks.Parent = this;
 }
 
@@ -378,14 +386,6 @@ void MachineJumpTableInfo::print(std::ostream &OS) const {
     OS << "  <jt #" << i << "> has " << JumpTables[i].MBBs.size() 
        << " entries\n";
   }
-}
-
-unsigned MachineJumpTableInfo::getEntrySize() const { 
-  return TD->getPointerSize(); 
-}
-
-unsigned MachineJumpTableInfo::getAlignment() const { 
-  return TD->getPointerAlignment(); 
 }
 
 void MachineJumpTableInfo::dump() const { print(*cerr.stream()); }

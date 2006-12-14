@@ -39,9 +39,11 @@ struct MachineJumpTableEntry {
   
 class MachineJumpTableInfo {
   const TargetData *TD;
+  unsigned EntrySize;
   std::vector<MachineJumpTableEntry> JumpTables;
 public:
-  MachineJumpTableInfo(const TargetData *td) : TD(td) {}
+  MachineJumpTableInfo(const TargetData *td, unsigned ES)
+  : TD(td), EntrySize(ES) {}
     
   /// getJumpTableIndex - Create a new jump table or return an existing one.
   ///
@@ -77,8 +79,9 @@ public:
     return MadeChange;
   }
   
-  /// getEntrySize - returns the size of an individual field in a jump table 
-  unsigned getEntrySize() const;
+  /// getEntrySize - Returns the size of an individual field in a jump table. 
+  ///
+  unsigned getEntrySize() const { return EntrySize; }
   
   /// getAlignment - returns the target's preferred alignment for jump tables
   unsigned getAlignment() const;

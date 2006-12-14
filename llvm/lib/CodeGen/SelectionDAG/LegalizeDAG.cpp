@@ -14,6 +14,7 @@
 #include "llvm/CodeGen/SelectionDAG.h"
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"
+#include "llvm/CodeGen/MachineJumpTableInfo.h"
 #include "llvm/Target/TargetLowering.h"
 #include "llvm/Target/TargetData.h"
 #include "llvm/Target/TargetMachine.h"
@@ -1275,13 +1276,19 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
       SDOperand Index = Result.getOperand(2);
 
       MVT::ValueType PTy = TLI.getPointerTy();
-      bool isPIC = TLI.getTargetMachine().getRelocationModel() == Reloc::PIC_;
-      // PIC jump table entries are 32-bit values.
-      unsigned EntrySize = isPIC ? 4 : MVT::getSizeInBits(PTy)/8;
+      MachineFunction &MF = DAG.getMachineFunction();
+      unsigned EntrySize = MF.getJumpTableInfo()->getEntrySize();
       Index= DAG.getNode(ISD::MUL, PTy, Index, DAG.getConstant(EntrySize, PTy));
       SDOperand Addr = DAG.getNode(ISD::ADD, PTy, Index, Table);
-      SDOperand LD = DAG.getLoad(isPIC ? MVT::i32 : PTy, Chain, Addr, NULL, 0);
-      if (isPIC) {
+      
+      SDOperand LD;
+      switch (EntrySize) {
+      default: assert(0 && "Size of jump table not supported yet."); break;
+      case 4: LD = DAG.getLoad(MVT::i32, Chain, Addr, NULL, 0); break;
+      case 8: LD = DAG.getLoad(MVT::i64, Chain, Addr, NULL, 0); break;
+      }
+
+      if (TLI.getTargetMachine().getRelocationModel() == Reloc::PIC_) {
         // For PIC, the sequence is:
         // BRIND(load(Jumptable + index) + RelocBase)
         // RelocBase is the JumpTable on PPC and X86, GOT on Alpha
