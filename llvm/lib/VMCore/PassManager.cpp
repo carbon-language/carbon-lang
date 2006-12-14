@@ -14,9 +14,11 @@
 
 #include "llvm/PassManager.h"
 #include "llvm/Support/CommandLine.h"
+#include "llvm/Support/Timer.h"
 #include "llvm/Module.h"
 #include "llvm/ModuleProvider.h"
 #include "llvm/Support/Streams.h"
+#include "llvm/Support/ManagedStatic.h"
 #include <vector>
 #include <map>
 using namespace llvm;
@@ -571,6 +573,55 @@ private:
   ModulePassManager *activeManager;
 };
 
+//===----------------------------------------------------------------------===//
+// TimingInfo Class - This class is used to calculate information about the
+// amount of time each pass takes to execute.  This only happens when
+// -time-passes is enabled on the command line.
+//
+
+class TimingInfo {
+  std::map<Pass*, Timer> TimingData;
+  TimerGroup TG;
+
+public:
+  // Use 'create' member to get this.
+  TimingInfo() : TG("... Pass execution timing report ...") {}
+  
+  // TimingDtor - Print out information about timing information
+  ~TimingInfo() {
+    // Delete all of the timers...
+    TimingData.clear();
+    // TimerGroup is deleted next, printing the report.
+  }
+
+  // createTheTimeInfo - This method either initializes the TheTimeInfo pointer
+  // to a non null value (if the -time-passes option is enabled) or it leaves it
+  // null.  It may be called multiple times.
+  static void createTheTimeInfo();
+
+  void passStarted(Pass *P) {
+
+    if (dynamic_cast<PMDataManager *>(P)) 
+      return;
+
+    std::map<Pass*, Timer>::iterator I = TimingData.find(P);
+    if (I == TimingData.end())
+      I=TimingData.insert(std::make_pair(P, Timer(P->getPassName(), TG))).first;
+    I->second.startTimer();
+  }
+  void passEnded(Pass *P) {
+
+    if (dynamic_cast<PMDataManager *>(P)) 
+      return;
+
+    std::map<Pass*, Timer>::iterator I = TimingData.find(P);
+    assert (I != TimingData.end() && "passStarted/passEnded not nested right!");
+    I->second.stopTimer();
+  }
+};
+
+static TimingInfo *TheTimeInfo;
+
 } // End of llvm namespace
 
 //===----------------------------------------------------------------------===//
@@ -764,8 +815,10 @@ void PMDataManager::removeDeadPasses(Pass *P, std::string &Msg) {
     std::string Msg1 = "  Freeing Pass '";
     dumpPassInfo(*I, Msg1, Msg);
 
+    if (TheTimeInfo) TheTimeInfo->passStarted(P);
     (*I)->releaseMemory();
-    
+    if (TheTimeInfo) TheTimeInfo->passEnded(P);
+
     std::map<AnalysisID, Pass*>::iterator Pos = 
       AvailableAnalysis.find((*I)->getPassInfo());
     
@@ -946,7 +999,9 @@ BasicBlockPassManager::runOnFunction(Function &F) {
       initializeAnalysisImpl(P);
 
       BasicBlockPass *BP = dynamic_cast<BasicBlockPass*>(P);
+      if (TheTimeInfo) TheTimeInfo->passStarted(P);
       Changed |= BP->runOnBasicBlock(*I);
+      if (TheTimeInfo) TheTimeInfo->passEnded(P);
 
       if (Changed)
         dumpPassInfo(P, Msg3, Msg2);
@@ -1180,7 +1235,10 @@ bool FunctionPassManagerImpl_New::runOnFunction(Function &F) {
 
     initializeAnalysisImpl(P);    
     FunctionPass *FP = dynamic_cast<FunctionPass*>(P);
+
+    if (TheTimeInfo) TheTimeInfo->passStarted(P);
     Changed |= FP->runOnFunction(F);
+    if (TheTimeInfo) TheTimeInfo->passEnded(P);
 
     if (Changed)
       dumpPassInfo(P, Msg3, Msg2);
@@ -1324,7 +1382,10 @@ ModulePassManager::runOnModule(Module &M) {
 
     initializeAnalysisImpl(P);
     ModulePass *MP = dynamic_cast<ModulePass*>(P);
+
+    if (TheTimeInfo) TheTimeInfo->passStarted(P);
     Changed |= MP->runOnModule(M);
+    if (TheTimeInfo) TheTimeInfo->passEnded(P);
 
     if (Changed)
       dumpPassInfo(P, Msg3, Msg2);
@@ -1366,6 +1427,8 @@ bool PassManagerImpl_New::run(Module &M) {
 
   bool Changed = false;
 
+  TimingInfo::createTheTimeInfo();
+
   dumpArguments();
   if (PassDebugging_New >= Structure)
     dumpPasses();
@@ -1406,6 +1469,29 @@ PassManager::add(Pass *P) {
 bool
 PassManager::run(Module &M) {
   return PM->run(M);
+}
+
+//===----------------------------------------------------------------------===//
+// TimingInfo Class - This class is used to calculate information about the
+// amount of time each pass takes to execute.  This only happens with
+// -time-passes is enabled on the command line.
+//
+bool llvm::TimePassesIsEnabled = false;
+static cl::opt<bool,true>
+EnableTiming("time-passes", cl::location(TimePassesIsEnabled),
+            cl::desc("Time each pass, printing elapsed time for each on exit"));
+
+// createTheTimeInfo - This method either initializes the TheTimeInfo pointer to
+// a non null value (if the -time-passes option is enabled) or it leaves it
+// null.  It may be called multiple times.
+void TimingInfo::createTheTimeInfo() {
+  if (!TimePassesIsEnabled || TheTimeInfo) return;
+
+  // Constructed the first time this is called, iff -time-passes is enabled.
+  // This guarantees that the object will be constructed before static globals,
+  // thus it will be destroyed before them.
+  static ManagedStatic<TimingInfo> TTI;
+  TheTimeInfo = &*TTI;
 }
 
 #endif
