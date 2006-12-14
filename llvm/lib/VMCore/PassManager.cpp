@@ -33,12 +33,12 @@ using namespace llvm;
 //   o If Analysis information is dirtied by a pass then regenerate Analysis 
 //     information before it is consumed by another pass.
 //
-// Pass Manager Infrastructure uses multipe pass managers. They are PassManager,
-// FunctionPassManager, ModulePassManager, BasicBlockPassManager. This class 
-// hierarcy uses multiple inheritance but pass managers do not derive from
-// another pass manager.
+// Pass Manager Infrastructure uses multiple pass managers.  They are
+// PassManager, FunctionPassManager, ModulePassManager, BasicBlockPassManager.
+// This class hierarcy uses multiple inheritance but pass managers do not derive
+// from another pass manager.
 //
-// PassManager and FunctionPassManager are two top level pass manager that
+// PassManager and FunctionPassManager are two top-level pass manager that
 // represents the external interface of this entire pass manager infrastucture.
 //
 // Important classes :
@@ -124,7 +124,6 @@ class PMDataManager;
 /// PMTopLevelManager manages LastUser info and collects common APIs used by
 /// top level pass managers.
 class PMTopLevelManager {
-
 public:
 
   inline std::vector<Pass *>::iterator passManagersBegin() { 
@@ -160,7 +159,6 @@ public:
   }
 
   virtual ~PMTopLevelManager() {
-
     for (std::vector<Pass *>::iterator I = PassManagers.begin(),
            E = PassManagers.end(); I != E; ++I)
       delete *I;
@@ -219,9 +217,7 @@ private:
 /// PMDataManager provides the common place to manage the analysis data
 /// used by pass managers.
 class PMDataManager {
-
 public:
-
   PMDataManager(int D) : TPM(NULL), Depth(D) {
     initializeAnalysisInfo();
   }
@@ -250,7 +246,7 @@ public:
 
   /// Add pass P into the PassVector. Update 
   /// AvailableAnalysis appropriately if ProcessAnalysis is true.
-  void addPassToManager (Pass *P, bool ProcessAnalysis = true);
+  void addPassToManager(Pass *P, bool ProcessAnalysis = true);
 
   /// Initialize available analysis information.
   void initializeAnalysisInfo() { 
@@ -364,7 +360,7 @@ private:
 /// pass together and sequence them to process one basic block before
 /// processing next basic block.
 class BasicBlockPassManager : public PMDataManager, 
-                                  public FunctionPass {
+                              public FunctionPass {
 
 public:
   BasicBlockPassManager(int D) : PMDataManager(D) { }
@@ -482,8 +478,7 @@ private:
 /// ModulePassManager manages ModulePasses and function pass managers.
 /// It batches all Module passes  passes and function pass managers together and
 /// sequence them to process one module.
-class ModulePassManager : public Pass,
-                              public PMDataManager {
+class ModulePassManager : public Pass, public PMDataManager {
  
 public:
   ModulePassManager(int D) : PMDataManager(D) { 
@@ -965,7 +960,7 @@ BasicBlockPassManager::addPass(Pass *P) {
   if (!manageablePass(P))
     return false;
 
-  addPassToManager (BP);
+  addPassToManager(BP);
 
   return true;
 }
