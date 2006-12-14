@@ -918,16 +918,23 @@ BasicBlockPassManager::runOnFunction(Function &F) {
   bool Changed = doInitialization(F);
   initializeAnalysisInfo();
 
+  std::string Msg1 = "Executing Pass '";
+  std::string Msg3 = "' Made Modification '";
+
   for (Function::iterator I = F.begin(), E = F.end(); I != E; ++I)
     for (std::vector<Pass *>::iterator itr = passVectorBegin(),
            e = passVectorEnd(); itr != e; ++itr) {
       Pass *P = *itr;
-      std::string Msg1 = "Executing Pass '";
       std::string Msg2 = "' on BasicBlock '" + (*I).getName() + "'...\n";
       dumpPassInfo(P, Msg1, Msg2);
       initializeAnalysisImpl(P);
+
       BasicBlockPass *BP = dynamic_cast<BasicBlockPass*>(P);
       Changed |= BP->runOnBasicBlock(*I);
+
+      if (Changed)
+        dumpPassInfo(P, Msg3, Msg2);
+
       removeNotPreservedAnalysis(P);
       recordAvailableAnalysis(P);
       removeDeadPasses(P, Msg2);
@@ -1141,15 +1148,23 @@ bool FunctionPassManagerImpl_New::runOnFunction(Function &F) {
 
   initializeAnalysisInfo();
 
+  std::string Msg1 = "Executing Pass '";
+  std::string Msg3 = "' Made Modification '";
+
   for (std::vector<Pass *>::iterator itr = passVectorBegin(),
          e = passVectorEnd(); itr != e; ++itr) {
     Pass *P = *itr;
-    std::string Msg1 = "Executing Pass '";
+
     std::string Msg2 = "' on Function '" + F.getName() + "'...\n";
     dumpPassInfo(P, Msg1, Msg2);
+
     initializeAnalysisImpl(P);    
     FunctionPass *FP = dynamic_cast<FunctionPass*>(P);
     Changed |= FP->runOnFunction(F);
+
+    if (Changed)
+      dumpPassInfo(P, Msg3, Msg2);
+
     removeNotPreservedAnalysis(P);
     recordAvailableAnalysis(P);
     removeDeadPasses(P, Msg2);
@@ -1273,15 +1288,23 @@ ModulePassManager::runOnModule(Module &M) {
   bool Changed = false;
   initializeAnalysisInfo();
 
+  std::string Msg1 = "Executing Pass '";
+  std::string Msg3 = "' Made Modification '";
+
   for (std::vector<Pass *>::iterator itr = passVectorBegin(),
          e = passVectorEnd(); itr != e; ++itr) {
     Pass *P = *itr;
-    std::string Msg1 = "Executing Pass '";
+
     std::string Msg2 = "' on Module '" + M.getModuleIdentifier() + "'...\n";
     dumpPassInfo(P, Msg1, Msg2);
+
     initializeAnalysisImpl(P);
     ModulePass *MP = dynamic_cast<ModulePass*>(P);
     Changed |= MP->runOnModule(M);
+
+    if (Changed)
+      dumpPassInfo(P, Msg3, Msg2);
+
     removeNotPreservedAnalysis(P);
     recordAvailableAnalysis(P);
     removeDeadPasses(P, Msg2);
