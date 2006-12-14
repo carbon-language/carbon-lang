@@ -321,6 +321,17 @@ public:
     cerr << Msg2;
   }
 
+  void dumpAnalysisSetInfo(const char *Msg, Pass *P,
+                           const std::vector<AnalysisID> &Set) {
+    if (PassDebugging_New >= Details && !Set.empty()) {
+      cerr << (void*)P << std::string(getDepth()*2+3, ' ') << Msg << " Analyses:";
+      for (unsigned i = 0; i != Set.size(); ++i) {
+        if (i) cerr << ",";
+        cerr << " " << Set[i]->getPassName();
+      }
+      cerr << "\n";
+    }
+  }
 protected:
 
   // Collection of pass whose last user asked this manager to claim
@@ -925,8 +936,13 @@ BasicBlockPassManager::runOnFunction(Function &F) {
     for (std::vector<Pass *>::iterator itr = passVectorBegin(),
            e = passVectorEnd(); itr != e; ++itr) {
       Pass *P = *itr;
+      AnalysisUsage AnUsage;
+      P->getAnalysisUsage(AnUsage);
+
       std::string Msg2 = "' on BasicBlock '" + (*I).getName() + "'...\n";
       dumpPassInfo(P, Msg1, Msg2);
+      dumpAnalysisSetInfo("Required", P, AnUsage.getRequiredSet());
+
       initializeAnalysisImpl(P);
 
       BasicBlockPass *BP = dynamic_cast<BasicBlockPass*>(P);
@@ -934,6 +950,7 @@ BasicBlockPassManager::runOnFunction(Function &F) {
 
       if (Changed)
         dumpPassInfo(P, Msg3, Msg2);
+      dumpAnalysisSetInfo("Preserved", P, AnUsage.getPreservedSet());
 
       removeNotPreservedAnalysis(P);
       recordAvailableAnalysis(P);
@@ -1154,9 +1171,12 @@ bool FunctionPassManagerImpl_New::runOnFunction(Function &F) {
   for (std::vector<Pass *>::iterator itr = passVectorBegin(),
          e = passVectorEnd(); itr != e; ++itr) {
     Pass *P = *itr;
+    AnalysisUsage AnUsage;
+    P->getAnalysisUsage(AnUsage);
 
     std::string Msg2 = "' on Function '" + F.getName() + "'...\n";
     dumpPassInfo(P, Msg1, Msg2);
+    dumpAnalysisSetInfo("Required", P, AnUsage.getRequiredSet());
 
     initializeAnalysisImpl(P);    
     FunctionPass *FP = dynamic_cast<FunctionPass*>(P);
@@ -1164,6 +1184,7 @@ bool FunctionPassManagerImpl_New::runOnFunction(Function &F) {
 
     if (Changed)
       dumpPassInfo(P, Msg3, Msg2);
+    dumpAnalysisSetInfo("Preserved", P, AnUsage.getPreservedSet());
 
     removeNotPreservedAnalysis(P);
     recordAvailableAnalysis(P);
@@ -1294,9 +1315,12 @@ ModulePassManager::runOnModule(Module &M) {
   for (std::vector<Pass *>::iterator itr = passVectorBegin(),
          e = passVectorEnd(); itr != e; ++itr) {
     Pass *P = *itr;
+    AnalysisUsage AnUsage;
+    P->getAnalysisUsage(AnUsage);
 
     std::string Msg2 = "' on Module '" + M.getModuleIdentifier() + "'...\n";
     dumpPassInfo(P, Msg1, Msg2);
+    dumpAnalysisSetInfo("Required", P, AnUsage.getRequiredSet());
 
     initializeAnalysisImpl(P);
     ModulePass *MP = dynamic_cast<ModulePass*>(P);
@@ -1304,7 +1328,8 @@ ModulePassManager::runOnModule(Module &M) {
 
     if (Changed)
       dumpPassInfo(P, Msg3, Msg2);
-
+    dumpAnalysisSetInfo("Preserved", P, AnUsage.getPreservedSet());
+      
     removeNotPreservedAnalysis(P);
     recordAvailableAnalysis(P);
     removeDeadPasses(P, Msg2);
