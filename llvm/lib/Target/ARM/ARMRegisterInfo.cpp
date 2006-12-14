@@ -35,6 +35,80 @@ static bool hasFP(const MachineFunction &MF) {
   return NoFramePointerElim || MFI->hasVarSizedObjects();
 }
 
+#define ROTATE32L(x, n) (((x) << (n)) | ((x)  >> (32 - (n))))
+
+#define ROTATE32R(x, n) (((x) >> (n)) | ((x)  << (32 - (n))))
+
+// finds the end position of largest sequence of zeros in binary representation
+// of 'immediate'.
+static int findLargestZeroSequence(unsigned immediate){
+  int max_zero_pos;
+  int max_zero_length = 0;
+  int zero_pos;
+  int zero_length;
+  int pos = 0;
+  int end_pos;
+
+  while ((immediate & 0x3) == 0) {
+    immediate = ROTATE32R(immediate, 2);
+    pos+=2;
+  }
+  end_pos = pos+32;
+
+  while (pos<end_pos){
+    while ((immediate & 0x3) != 0) {
+      immediate = ROTATE32R(immediate, 2);
+      pos+=2;
+    }
+    zero_pos = pos;
+    while ((immediate & 0x3) == 0) {
+      immediate = ROTATE32R(immediate, 2);
+      pos+=2;
+    }
+    zero_length = pos - zero_pos;
+    if (zero_length > max_zero_length){
+      max_zero_length = zero_length;
+      max_zero_pos = zero_pos % 32;
+    }
+
+  }
+
+  return (max_zero_pos + max_zero_length) % 32;
+}
+
+static void splitInstructionWithImmediate(MachineBasicBlock &BB,
+				       MachineBasicBlock::iterator I,
+				       const TargetInstrDescriptor &TID,
+				       unsigned DestReg,
+				       unsigned OrigReg,
+				       unsigned immediate){
+
+  if (immediate == 0){
+    BuildMI(BB, I, TID, DestReg).addReg(OrigReg).addImm(0)
+	.addImm(0).addImm(ARMShift::LSL);
+    return;
+  }
+
+  int start_pos = findLargestZeroSequence(immediate);
+  unsigned immediate_tmp = ROTATE32R(immediate, start_pos);
+
+  int pos = 0;
+  while (pos < 32){
+    while(((immediate_tmp&0x3) == 0)&&(pos<32)){
+      immediate_tmp = ROTATE32R(immediate_tmp,2);
+      pos+=2;
+    }
+    if (pos < 32){
+      BuildMI(BB, I, TID, DestReg).addReg(OrigReg)
+	.addImm(ROTATE32L(immediate_tmp&0xFF, (start_pos + pos) % 32 ))
+	.addImm(0).addImm(ARMShift::LSL);
+      immediate_tmp = ROTATE32R(immediate_tmp,8);
+      pos+=8;
+    }
+  }
+
+}
+
 ARMRegisterInfo::ARMRegisterInfo(const TargetInstrInfo &tii)
   : ARMGenRegisterInfo(ARM::ADJCALLSTACKDOWN, ARM::ADJCALLSTACKUP),
     TII(tii) {
@@ -110,13 +184,13 @@ eliminateCallFramePseudoInstr(MachineFunction &MF, MachineBasicBlock &MBB,
 
       if (Old->getOpcode() == ARM::ADJCALLSTACKDOWN) {
         // sub sp, sp, amount
-        BuildMI(MBB, I, TII.get(ARM::SUB), ARM::R13).addReg(ARM::R13).addImm(Amount)
-          .addImm(0).addImm(ARMShift::LSL);
+	splitInstructionWithImmediate(MBB, I, TII.get(ARM::SUB), ARM::R13,
+				   ARM::R13, Amount);
       } else {
         // add sp, sp, amount
         assert(Old->getOpcode() == ARM::ADJCALLSTACKUP);
-        BuildMI(MBB, I, TII.get(ARM::ADD), ARM::R13).addReg(ARM::R13).addImm(Amount)
-          .addImm(0).addImm(ARMShift::LSL);
+	splitInstructionWithImmediate(MBB, I, TII.get(ARM::ADD), ARM::R13,
+				   ARM::R13, Amount);
       }
     }
   }
@@ -156,8 +230,8 @@ ARMRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II) const {
     // Insert a set of r12 with the full address
     // r12 = r13 + offset
     MachineBasicBlock *MBB2 = MI.getParent();
-    BuildMI(*MBB2, II, TII.get(ARM::ADD), ARM::R12).addReg(BaseRegister)
-      .addImm(Offset).addImm(0).addImm(ARMShift::LSL);
+    splitInstructionWithImmediate(*MBB2, II, TII.get(ARM::ADD), ARM::R12,
+			       BaseRegister, Offset);
 
     // Replace the FrameIndex with r12
     MI.getOperand(FrameIdx).ChangeToRegister(ARM::R12, false);
@@ -192,8 +266,9 @@ void ARMRegisterInfo::emitPrologue(MachineFunction &MF) const {
   MFI->setStackSize(NumBytes);
 
   //sub sp, sp, #NumBytes
-  BuildMI(MBB, MBBI, TII.get(ARM::SUB), ARM::R13).addReg(ARM::R13).addImm(NumBytes)
-	  .addImm(0).addImm(ARMShift::LSL);
+  splitInstructionWithImmediate(MBB, MBBI, TII.get(ARM::SUB), ARM::R13,
+			     ARM::R13, NumBytes);
+
 
   if (HasFP) {
     BuildMI(MBB, MBBI, TII.get(ARM::STR))
@@ -219,8 +294,9 @@ void ARMRegisterInfo::emitEpilogue(MachineFunction &MF,
   }
 
   //add sp, sp, #NumBytes
-  BuildMI(MBB, MBBI, TII.get(ARM::ADD), ARM::R13).addReg(ARM::R13).addImm(NumBytes)
-	  .addImm(0).addImm(ARMShift::LSL);
+  splitInstructionWithImmediate(MBB, MBBI, TII.get(ARM::ADD), ARM::R13,
+			     ARM::R13, NumBytes);
+
 }
 
 unsigned ARMRegisterInfo::getRARegister() const {
