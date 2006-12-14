@@ -272,6 +272,8 @@ class VISIBILITY_HIDDEN AvailableSpills {
   // invalidate entries in SpillSlotsAvailable when a physreg is modified.
   std::multimap<unsigned, int> PhysRegsAvailable;
   
+  void disallowClobberPhysRegOnly(unsigned PhysReg);
+
   void ClobberPhysRegOnly(unsigned PhysReg);
 public:
   AvailableSpills(const MRegisterInfo *mri, const TargetInstrInfo *tii)
@@ -303,7 +305,7 @@ public:
     DOUT << "Remembering SS#" << Slot << " in physreg "
          << MRI->getName(Reg) << "\n";
   }
-  
+
   /// canClobberPhysReg - Return true if the spiller is allowed to change the 
   /// value of the specified stackslot register if it desires.  The specified
   /// stack slot must be available in a physreg for this query to make sense.
@@ -311,6 +313,11 @@ public:
     assert(SpillSlotsAvailable.count(Slot) && "Slot not available!");
     return SpillSlotsAvailable.find(Slot)->second & 1;
   }
+  
+  /// disallowClobberPhysReg - Unset the CanClobber bit of the specified
+  /// stackslot register. The register is still available but is no longer
+  /// allowed to be modifed.
+  void disallowClobberPhysReg(unsigned PhysReg);
   
   /// ClobberPhysReg - This is called when the specified physreg changes
   /// value.  We use this to invalidate any info about stuff we thing lives in
@@ -322,6 +329,32 @@ public:
   /// for this slot lives in (as the previous value is dead now).
   void ModifyStackSlot(int Slot);
 };
+}
+
+/// disallowClobberPhysRegOnly - Unset the CanClobber bit of the specified
+/// stackslot register. The register is still available but is no longer
+/// allowed to be modifed.
+void AvailableSpills::disallowClobberPhysRegOnly(unsigned PhysReg) {
+  std::multimap<unsigned, int>::iterator I =
+    PhysRegsAvailable.lower_bound(PhysReg);
+  while (I != PhysRegsAvailable.end() && I->first == PhysReg) {
+    int Slot = I->second;
+    I++;
+    assert((SpillSlotsAvailable[Slot] >> 1) == PhysReg &&
+           "Bidirectional map mismatch!");
+    SpillSlotsAvailable[Slot] &= ~1;
+    DOUT << "PhysReg " << MRI->getName(PhysReg)
+         << " copied, it is available for use but can no longer be modified\n";
+  }
+}
+
+/// disallowClobberPhysReg - Unset the CanClobber bit of the specified
+/// stackslot register and its aliases. The register and its aliases may
+/// still available but is no longer allowed to be modifed.
+void AvailableSpills::disallowClobberPhysReg(unsigned PhysReg) {
+  for (const unsigned *AS = MRI->getAliasSet(PhysReg); *AS; ++AS)
+    disallowClobberPhysRegOnly(*AS);
+  disallowClobberPhysRegOnly(PhysReg);
 }
 
 /// ClobberPhysRegOnly - This is called when the specified physreg changes
@@ -822,6 +855,7 @@ void LocalSpiller::RewriteMBB(MachineBasicBlock &MBB, VirtRegMap &VRM) {
             DOUT << "Removing now-noop copy: " << MI;
             MBB.erase(&MI);
             VRM.RemoveFromFoldedVirtMap(&MI);
+            Spills.disallowClobberPhysReg(VirtReg);
             goto ProcessNextInst;
           }
           
