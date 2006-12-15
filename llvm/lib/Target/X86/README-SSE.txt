@@ -18,11 +18,6 @@ Think about doing i64 math in SSE regs.
 
 //===---------------------------------------------------------------------===//
 
-Bitcast to<->from SSE registers should use movd/movq instead of going through
-the stack.  Testcase here: CodeGen/X86/bitcast.ll
-
-//===---------------------------------------------------------------------===//
-
 This testcase should have no SSE instructions in it, and only one load from
 a constant pool:
 
