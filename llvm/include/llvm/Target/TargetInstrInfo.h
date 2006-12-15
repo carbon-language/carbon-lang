@@ -132,8 +132,10 @@ public:
   /// it is set. Returns -1 if it is not set.
   int getOperandConstraint(unsigned OpNum,
                            TOI::OperandConstraint Constraint) const {
-    assert(OpNum < numOperands && "Invalid operand # of TargetInstrInfo");
-    if (OpInfo[OpNum].Constraints & (1 << Constraint)) {
+    assert((OpNum < numOperands || (Flags & M_VARIABLE_OPS)) &&
+           "Invalid operand # of TargetInstrInfo");
+    if (OpNum < numOperands &&
+        (OpInfo[OpNum].Constraints & (1 << Constraint))) {
       unsigned Pos = 16 + Constraint * 4;
       return (int)(OpInfo[OpNum].Constraints >> Pos) & 0xf;
     }
