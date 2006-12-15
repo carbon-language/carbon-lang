@@ -4705,18 +4705,24 @@ void SelectionDAGLegalize::ExpandOp(SDOperand Op, SDOperand &Lo, SDOperand &Hi){
     SDOperand LL, LH, RL, RH;
     ExpandOp(Node->getOperand(1), LL, LH);
     ExpandOp(Node->getOperand(2), RL, RH);
+    if (getTypeAction(NVT) == Expand)
+      NVT = TLI.getTypeToExpandTo(NVT);
     Lo = DAG.getNode(ISD::SELECT, NVT, Node->getOperand(0), LL, RL);
-    Hi = DAG.getNode(ISD::SELECT, NVT, Node->getOperand(0), LH, RH);
+    if (VT != MVT::f32)
+      Hi = DAG.getNode(ISD::SELECT, NVT, Node->getOperand(0), LH, RH);
     break;
   }
   case ISD::SELECT_CC: {
     SDOperand TL, TH, FL, FH;
     ExpandOp(Node->getOperand(2), TL, TH);
     ExpandOp(Node->getOperand(3), FL, FH);
+    if (getTypeAction(NVT) == Expand)
+      NVT = TLI.getTypeToExpandTo(NVT);
     Lo = DAG.getNode(ISD::SELECT_CC, NVT, Node->getOperand(0),
                      Node->getOperand(1), TL, FL, Node->getOperand(4));
-    Hi = DAG.getNode(ISD::SELECT_CC, NVT, Node->getOperand(0),
-                     Node->getOperand(1), TH, FH, Node->getOperand(4));
+    if (VT != MVT::f32)
+      Hi = DAG.getNode(ISD::SELECT_CC, NVT, Node->getOperand(0),
+                       Node->getOperand(1), TH, FH, Node->getOperand(4));
     break;
   }
   case ISD::ANY_EXTEND:
@@ -4761,6 +4767,8 @@ void SelectionDAGLegalize::ExpandOp(SDOperand Op, SDOperand &Lo, SDOperand &Hi){
     // f32 / f64 must be expanded to i32 / i64.
     if (VT == MVT::f32 || VT == MVT::f64) {
       Lo = DAG.getNode(ISD::BIT_CONVERT, NVT, Node->getOperand(0));
+      if (getTypeAction(NVT) == Expand)
+        ExpandOp(Lo, Lo, Hi);
       break;
     }
 
