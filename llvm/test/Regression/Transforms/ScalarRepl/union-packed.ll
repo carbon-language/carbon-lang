@@ -1,8 +1,6 @@
 ; RUN: llvm-upgrade < %s | llvm-as | opt -scalarrepl | llvm-dis | not grep alloca &&
 ; RUN: llvm-upgrade < %s | llvm-as | opt -scalarrepl | llvm-dis | grep 'bitcast'
 
-; XFAIL: *
-
 target endian = little
 
 <4 x int> %test(<4 x float> %X) {
