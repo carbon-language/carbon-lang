@@ -152,17 +152,23 @@ int PPCCodeEmitter::getMachineOpValue(MachineInstr &MI, MachineOperand &MO) {
       case PPC::LA:
       // Loads.
       case PPC::LBZ:
+      case PPC::LBZ8:
       case PPC::LHA:
+      case PPC::LHA8:
       case PPC::LHZ:
+      case PPC::LHZ8:
       case PPC::LWZ:
+      case PPC::LWZ8:
       case PPC::LFS:
       case PPC::LFD:
-      case PPC::LWZ8:
       
       // Stores.
       case PPC::STB:
+      case PPC::STB8:
       case PPC::STH:
+      case PPC::STH8:
       case PPC::STW:
+      case PPC::STW8:
       case PPC::STFS:
       case PPC::STFD:
         Reloc = PPC::reloc_absolute_low;
