@@ -21,7 +21,9 @@
 #include "llvm/Support/ManagedStatic.h"
 #include <vector>
 #include <map>
+
 using namespace llvm;
+class llvm::PMDataManager;
 
 //===----------------------------------------------------------------------===//
 // Overview:
@@ -114,16 +116,14 @@ PassDebugging_New("debug-pass", cl::Hidden,
 } // End of llvm namespace
 
 #ifndef USE_OLD_PASSMANAGER
-namespace llvm {
-
-class PMDataManager;
+namespace {
 
 //===----------------------------------------------------------------------===//
 // PMTopLevelManager
 //
 /// PMTopLevelManager manages LastUser info and collects common APIs used by
 /// top level pass managers.
-class PMTopLevelManager {
+class VISIBILITY_HIDDEN PMTopLevelManager {
 public:
 
   inline std::vector<Pass *>::iterator passManagersBegin() { 
@@ -210,10 +210,13 @@ private:
   /// Immutable passes are managed by top level manager.
   std::vector<ImmutablePass *> ImmutablePasses;
 };
+
+} // End of anon namespace
   
 //===----------------------------------------------------------------------===//
 // PMDataManager
 
+namespace llvm {
 /// PMDataManager provides the common place to manage the analysis data
 /// used by pass managers.
 class PMDataManager {
@@ -365,7 +368,7 @@ private:
 /// BasicBlockPassManager manages BasicBlockPass. It batches all the
 /// pass together and sequence them to process one basic block before
 /// processing next basic block.
-class BasicBlockPassManager : public PMDataManager, 
+class VISIBILITY_HIDDEN BasicBlockPassManager : public PMDataManager, 
                               public FunctionPass {
 
 public:
@@ -390,7 +393,7 @@ public:
 
   // Print passes managed by this manager
   void dumpPassStructure(unsigned Offset) {
-    llvm::cerr << std::string(Offset*2, ' ') << "BasicBLockPass Manager\n";
+    llvm::cerr << std::string(Offset*2, ' ') << "BasicBlockPass Manager\n";
     for (std::vector<Pass *>::iterator I = passVectorBegin(),
            E = passVectorEnd(); I != E; ++I)  {
       (*I)->dumpPassStructure(Offset + 1);
@@ -574,13 +577,17 @@ private:
   ModulePassManager *activeManager;
 };
 
+} // End of llvm namespace
+
+namespace {
+
 //===----------------------------------------------------------------------===//
 // TimingInfo Class - This class is used to calculate information about the
 // amount of time each pass takes to execute.  This only happens when
 // -time-passes is enabled on the command line.
 //
 
-class TimingInfo {
+class VISIBILITY_HIDDEN TimingInfo {
   std::map<Pass*, Timer> TimingData;
   TimerGroup TG;
 
@@ -623,7 +630,7 @@ public:
 
 static TimingInfo *TheTimeInfo;
 
-} // End of llvm namespace
+} // End of anon namespace
 
 //===----------------------------------------------------------------------===//
 // PMTopLevelManager implementation
