@@ -221,7 +221,7 @@ namespace llvm {
 /// used by pass managers.
 class PMDataManager {
 public:
-  PMDataManager(int D) : TPM(NULL), Depth(D) {
+  PMDataManager(int Depth) : TPM(NULL), Depth(Depth) {
     initializeAnalysisInfo();
   }
 
@@ -331,7 +331,7 @@ class VISIBILITY_HIDDEN BasicBlockPassManager : public PMDataManager,
                               public FunctionPass {
 
 public:
-  BasicBlockPassManager(int D) : PMDataManager(D) { }
+  BasicBlockPassManager(int Depth) : PMDataManager(Depth) { }
 
   /// Add a pass into a passmanager queue. 
   bool addPass(Pass *p);
@@ -372,7 +372,7 @@ class FunctionPassManagerImpl_New : public ModulePass,
                                     public PMDataManager,
                                     public PMTopLevelManager {
 public:
-  FunctionPassManagerImpl_New(int D) : PMDataManager(D) { 
+  FunctionPassManagerImpl_New(int Depth) : PMDataManager(Depth) { 
     activeBBPassManager = NULL;
   }
   ~FunctionPassManagerImpl_New() { /* TODO */ };
@@ -449,7 +449,7 @@ private:
 class ModulePassManager : public Pass, public PMDataManager {
  
 public:
-  ModulePassManager(int D) : PMDataManager(D) { 
+  ModulePassManager(int Depth) : PMDataManager(Depth) { 
     activeFunctionPassManager = NULL; 
   }
   
@@ -490,7 +490,7 @@ class PassManagerImpl_New : public Pass,
 
 public:
 
-  PassManagerImpl_New(int D) : PMDataManager(D) {
+  PassManagerImpl_New(int Depth) : PMDataManager(Depth) {
     activeManager = NULL;
   }
 
@@ -674,12 +674,9 @@ Pass *PMTopLevelManager::findAnalysisPass(AnalysisID AID) {
 
     // If Pass not found then check the interfaces implemented by Immutable Pass
     if (!P) {
-      const std::vector<const PassInfo*> &ImmPI = 
-        PI->getInterfacesImplemented();
-      for (unsigned Index = 0, End = ImmPI.size(); 
-           P == NULL && Index != End; ++Index)
-        if (ImmPI[Index] == AID)
-          P = *I;
+      const std::vector<const PassInfo*> &ImmPI = PI->getInterfacesImplemented();
+      if (std::find(ImmPI.begin(), ImmPI.end(), AID) != ImmPI.end())
+        P = *I;
     }
   }
 
@@ -756,16 +753,13 @@ void PMDataManager::removeNotPreservedAnalysis(Pass *P) {
   const std::vector<AnalysisID> &PreservedSet = AnUsage.getPreservedSet();
   for (std::map<AnalysisID, Pass*>::iterator I = AvailableAnalysis.begin(),
          E = AvailableAnalysis.end(); I != E; ) {
-    if (std::find(PreservedSet.begin(), PreservedSet.end(), I->first) == 
+    std::map<AnalysisID, Pass*>::iterator Info = I++;
+    if (std::find(PreservedSet.begin(), PreservedSet.end(), Info->first) == 
         PreservedSet.end()) {
       // Remove this analysis
-      if (!dynamic_cast<ImmutablePass*>(I->second)) {
-        std::map<AnalysisID, Pass*>::iterator J = I++;
-        AvailableAnalysis.erase(J);
-      } else
-        ++I;
-    } else
-      ++I;
+      if (!dynamic_cast<ImmutablePass*>(Info->second))
+        AvailableAnalysis.erase(Info);
+    }
   }
 }
 
@@ -975,8 +969,8 @@ BasicBlockPassManager::addPass(Pass *P) {
   if (!BP)
     return false;
 
-  // If this pass does not preserve anlysis that is used by other passes
-  // managed by this manager than it is not a suiable pass for this manager.
+  // If this pass does not preserve analysis that is used by other passes
+  // managed by this manager than it is not a suitable pass for this manager.
   if (!manageablePass(P))
     return false;
 
@@ -1026,7 +1020,7 @@ BasicBlockPassManager::runOnFunction(Function &F) {
       recordAvailableAnalysis(P);
       removeDeadPasses(P, Msg2);
     }
-  return Changed | doFinalization(F);
+  return Changed |= doFinalization(F);
 }
 
 // Implement doInitialization and doFinalization
@@ -1197,8 +1191,8 @@ FunctionPassManagerImpl_New::addPass(Pass *P) {
   if (!FP)
     return false;
 
-  // If this pass does not preserve anlysis that is used by other passes
-  // managed by this manager than it is not a suiable pass for this manager.
+  // If this pass does not preserve analysis that is used by other passes
+  // managed by this manager than it is not a suitable pass for this manager.
   if (!manageablePass(P))
     return false;
 
@@ -1224,7 +1218,7 @@ bool FunctionPassManagerImpl_New::runOnModule(Module &M) {
   for (Module::iterator I = M.begin(), E = M.end(); I != E; ++I)
     this->runOnFunction(*I);
 
-  return Changed | doFinalization(M);
+  return Changed |= doFinalization(M);
 }
 
 /// Execute all of the passes scheduled for execution by invoking 
@@ -1366,8 +1360,8 @@ ModulePassManager::addPass(Pass *P) {
   if (!MP)
     return false;
 
-  // If this pass does not preserve anlysis that is used by other passes
-  // managed by this manager than it is not a suiable pass for this manager.
+  // If this pass does not preserve analysis that is used by other passes
+  // managed by this manager than it is not a suitable pass for this manager.
   if (!manageablePass(P))
     return false;
 
