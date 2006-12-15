@@ -3538,7 +3538,7 @@ void SelectionDAGLegalize::LegalizeSetCCOperands(SDOperand &LHS,
     if (VT == MVT::f32 || VT == MVT::f64) {
       // Expand into one or more soft-fp libcall(s).
       const char *FnName1 = NULL, *FnName2 = NULL;
-      ISD::CondCode CC1, CC2;
+      ISD::CondCode CC1, CC2 = ISD::SETCC_INVALID;
       switch (cast<CondCodeSDNode>(CC)->get()) {
       case ISD::SETEQ:
       case ISD::SETOEQ:
