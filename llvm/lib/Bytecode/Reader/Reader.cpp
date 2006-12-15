@@ -1758,8 +1758,13 @@ void BytecodeReader::ParseFunctionLazily() {
 /// @see ParseBytecode
 bool BytecodeReader::ParseFunction(Function* Func, std::string* ErrMsg) {
 
-  if (setjmp(context))
+  if (setjmp(context)) {
+    // Set caller's error message, if requested
+    if (ErrMsg)
+      *ErrMsg = ErrorMsg;
+    // Indicate an error occurred
     return true;
+  }
 
   // Find {start, end} pointers and slot in the map. If not there, we're done.
   LazyFunctionMap::iterator Fi = LazyFunctionLoadMap.find(Func);
@@ -1788,8 +1793,13 @@ bool BytecodeReader::ParseFunction(Function* Func, std::string* ErrMsg) {
 /// to materialize the functions.
 /// @see ParseBytecode
 bool BytecodeReader::ParseAllFunctionBodies(std::string* ErrMsg) {
-  if (setjmp(context))
+  if (setjmp(context)) {
+    // Set caller's error message, if requested
+    if (ErrMsg)
+      *ErrMsg = ErrorMsg;
+    // Indicate an error occurred
     return true;
+  }
 
   LazyFunctionMap::iterator Fi = LazyFunctionLoadMap.begin();
   LazyFunctionMap::iterator Fe = LazyFunctionLoadMap.end();

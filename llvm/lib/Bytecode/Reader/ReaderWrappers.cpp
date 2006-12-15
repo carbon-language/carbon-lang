@@ -309,7 +309,7 @@ Module *llvm::ParseBytecodeBuffer(const unsigned char *Buffer, unsigned Length,
   ModuleProvider *MP = 
     getBytecodeBufferModuleProvider(Buffer, Length, ModuleID, ErrMsg, 0);
   if (!MP) return 0;
-  Module *M = MP->releaseModule();
+  Module *M = MP->releaseModule(ErrMsg);
   delete MP;
   return M;
 }
@@ -341,7 +341,7 @@ Module *llvm::ParseBytecodeFile(const std::string &Filename,
                                 std::string *ErrMsg) {
   ModuleProvider* MP = getBytecodeModuleProvider(Filename, ErrMsg);
   if (!MP) return 0;
-  Module *M = MP->releaseModule();
+  Module *M = MP->releaseModule(ErrMsg);
   delete MP;
   return M;
 }
@@ -356,7 +356,7 @@ Module* llvm::AnalyzeBytecodeFile(
   BytecodeHandler* AH = createBytecodeAnalyzerHandler(bca,output);
   ModuleProvider* MP = getBytecodeModuleProvider(Filename, ErrMsg, AH);
   if (!MP) return 0;
-  Module *M = MP->releaseModule();
+  Module *M = MP->releaseModule(ErrMsg);
   delete MP;
   return M;
 }
@@ -375,7 +375,7 @@ Module* llvm::AnalyzeBytecodeBuffer(
   ModuleProvider* MP = 
     getBytecodeBufferModuleProvider(Buffer, Length, ModuleID, ErrMsg, hdlr);
   if (!MP) return 0;
-  Module *M = MP->releaseModule();
+  Module *M = MP->releaseModule(ErrMsg);
   delete MP;
   return M;
 }
@@ -388,7 +388,7 @@ bool llvm::GetBytecodeDependentLibraries(const std::string &fname,
     deplibs.clear();
     return true;
   }
-  Module* M = MP->releaseModule();
+  Module* M = MP->releaseModule(ErrMsg);
   deplibs = M->getLibraries();
   delete M;
   delete MP;
