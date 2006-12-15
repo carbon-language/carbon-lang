@@ -491,10 +491,6 @@ def : Pat<(extloadi1 iaddr:$src),
           (LBZ8 iaddr:$src)>;
 def : Pat<(extloadi1 xaddr:$src),
           (LBZX8 xaddr:$src)>;
-def : Pat<(sextloadi8 iaddr:$src),
-          (EXTSB8 (LBZ8 iaddr:$src))>;
-def : Pat<(sextloadi8 xaddr:$src),
-          (EXTSB8 (LBZX8 xaddr:$src))>;
 def : Pat<(extloadi8 iaddr:$src),
           (LBZ8 iaddr:$src)>;
 def : Pat<(extloadi8 xaddr:$src),
