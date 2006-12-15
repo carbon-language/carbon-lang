@@ -2011,10 +2011,10 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
       isCustom = true;
       // FALLTHROUGH.
     case TargetLowering::Legal:
-      Result = DAG.UpdateNodeOperands(Result, Tmp1, Tmp2, Node->getOperand(2));
+      Result = DAG.UpdateNodeOperands(Result, Tmp1, Tmp2, Tmp3);
       if (isCustom) {
-        Tmp3 = TLI.LowerOperation(Result, DAG);
-        if (Tmp3.Val) Result = Tmp3;
+        Tmp4 = TLI.LowerOperation(Result, DAG);
+        if (Tmp4.Val) Result = Tmp4;
       }
       break;
     case TargetLowering::Promote: {
@@ -2045,7 +2045,7 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
       }
       Tmp1 = LegalizeOp(Tmp1);
       Tmp2 = LegalizeOp(Tmp2);
-      Result = DAG.UpdateNodeOperands(Result, Tmp1, Tmp2, Node->getOperand(2));
+      Result = DAG.UpdateNodeOperands(Result, Tmp1, Tmp2, Tmp3);
       Result = LegalizeOp(Result);
       break;
     }
@@ -2055,7 +2055,7 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
       MVT::ValueType VT = Node->getValueType(0);
       Result = DAG.getNode(ISD::SELECT_CC, VT, Tmp1, Tmp2, 
                            DAG.getConstant(1, VT), DAG.getConstant(0, VT),
-                           Node->getOperand(2));
+                           Tmp3);
       break;
     }
     break;
@@ -3533,10 +3533,104 @@ void SelectionDAGLegalize::LegalizeSetCCOperands(SDOperand &LHS,
       }
     }
     break;
-  case Expand:
+  case Expand: {
+    MVT::ValueType VT = LHS.getValueType();
+    if (VT == MVT::f32 || VT == MVT::f64) {
+      // Expand into one or more soft-fp libcall(s).
+      const char *FnName1 = NULL, *FnName2 = NULL;
+      ISD::CondCode CC1, CC2;
+      switch (cast<CondCodeSDNode>(CC)->get()) {
+      case ISD::SETEQ:
+      case ISD::SETOEQ:
+        FnName1 = (VT == MVT::f32) ? "__eqsf2" : "__eqdf2";
+        CC1 = ISD::SETEQ;
+        break;
+      case ISD::SETNE:
+      case ISD::SETUNE:
+        FnName1 = (VT == MVT::f32) ? "__nesf2" : "__nedf2";
+        CC1 = ISD::SETNE;
+        break;
+      case ISD::SETGE:
+      case ISD::SETOGE:
+        FnName1 = (VT == MVT::f32) ? "__gesf2" : "__gedf2";
+        CC1 = ISD::SETGE;
+        break;
+      case ISD::SETLT:
+      case ISD::SETOLT:
+        FnName1 = (VT == MVT::f32) ? "__ltsf2" : "__ltdf2";
+        CC1 = ISD::SETLT;
+        break;
+      case ISD::SETLE:
+      case ISD::SETOLE:
+        FnName1 = (VT == MVT::f32) ? "__lesf2" : "__ledf2";
+        CC1 = ISD::SETLE;
+        break;
+      case ISD::SETGT:
+      case ISD::SETOGT:
+        FnName1 = (VT == MVT::f32) ? "__gtsf2" : "__gtdf2";
+        CC1 = ISD::SETGT;
+        break;
+      case ISD::SETUO:
+      case ISD::SETO:
+        FnName1 = (VT == MVT::f32) ? "__unordsf2" : "__unorddf2";
+        CC1 = cast<CondCodeSDNode>(CC)->get() == ISD::SETO
+          ? ISD::SETEQ : ISD::SETNE;
+        break;
+      default:
+        FnName1 = (VT == MVT::f32) ? "__unordsf2" : "__unorddf2";
+        CC1 = ISD::SETNE;
+        switch (cast<CondCodeSDNode>(CC)->get()) {
+        case ISD::SETONE:
+          // SETONE = SETOLT | SETOGT
+          FnName1 = (VT == MVT::f32) ? "__ltsf2" : "__ltdf2";
+          CC1 = ISD::SETLT;
+          // Fallthrough
+        case ISD::SETUGT:
+          FnName2 = (VT == MVT::f32) ? "__gtsf2" : "__gtdf2";
+          CC2 = ISD::SETGT;
+          break;
+        case ISD::SETUGE:
+          FnName2 = (VT == MVT::f32) ? "__gesf2" : "__gedf2";
+          CC2 = ISD::SETGE;
+          break;
+        case ISD::SETULT:
+          FnName2 = (VT == MVT::f32) ? "__ltsf2" : "__ltdf2";
+          CC2 = ISD::SETLT;
+          break;
+        case ISD::SETULE:
+          FnName2 = (VT == MVT::f32) ? "__lesf2" : "__ledf2";
+          CC2 = ISD::SETLE;
+          break;
+          case ISD::SETUEQ:
+            FnName2 = (VT == MVT::f32) ? "__eqsf2" : "__eqdf2";
+            CC2 = ISD::SETEQ;
+            break;
+        default: assert(0 && "Unsupported FP setcc!");
+        }
+      }
+      
+      SDOperand Dummy;
+      Tmp1 = ExpandLibCall(FnName1,
+                       DAG.getNode(ISD::MERGE_VALUES, VT, LHS, RHS).Val, Dummy);
+      Tmp2 = DAG.getConstant(0, MVT::i32);
+      CC = DAG.getCondCode(CC1);
+      if (FnName2) {
+        Tmp1 = DAG.getNode(ISD::SETCC, TLI.getSetCCResultTy(), Tmp1, Tmp2, CC);
+        LHS = ExpandLibCall(FnName2,
+                       DAG.getNode(ISD::MERGE_VALUES, VT, LHS, RHS).Val, Dummy);
+        Tmp2 = DAG.getNode(ISD::SETCC, TLI.getSetCCResultTy(), LHS, Tmp2,
+                           DAG.getCondCode(CC2));
+        Tmp1 = DAG.getNode(ISD::OR, Tmp1.getValueType(), Tmp1, Tmp2);
+        Tmp2 = SDOperand();
+      }
+      LHS = Tmp1;
+      RHS = Tmp2;
+      return;
+    }
+
     SDOperand LHSLo, LHSHi, RHSLo, RHSHi;
     ExpandOp(LHS, LHSLo, LHSHi);
-    ExpandOp(RHS, RHSLo, RHSHi);
+    ExpandOp(RHS, RHSLo, RHSHi);    
     switch (cast<CondCodeSDNode>(CC)->get()) {
     case ISD::SETEQ:
     case ISD::SETNE:
@@ -3595,6 +3689,7 @@ void SelectionDAGLegalize::LegalizeSetCCOperands(SDOperand &LHS,
       Tmp1 = Result;
       Tmp2 = SDOperand();
     }
+  }
   }
   LHS = Tmp1;
   RHS = Tmp2;
