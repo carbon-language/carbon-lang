@@ -22,7 +22,6 @@
 #include <vector>
 #include <cassert>
 #include <iosfwd>
-#include <ostream>
 
 namespace llvm {
 
@@ -286,10 +285,7 @@ public:
     IsDead = false;
   }
 
-  friend OStream& operator<<(OStream& os, const MachineOperand& mop) {
-    if (os.stream()) *os.stream() << mop;
-    return os;
-  }
+  friend OStream& operator<<(OStream& os, const MachineOperand& mop);
   friend std::ostream& operator<<(std::ostream& os, const MachineOperand& mop);
 
   friend class MachineInstr;
@@ -403,10 +399,7 @@ public:
   }
   void print(std::ostream &OS, const TargetMachine *TM) const;
   void dump() const;
-  friend OStream& operator<<(OStream& os, const MachineInstr& minstr){
-    if (os.stream()) *os.stream() << minstr;
-    return os;
-  }
+  friend OStream& operator<<(OStream& os, const MachineInstr& minstr);
   friend std::ostream& operator<<(std::ostream& os, const MachineInstr& minstr);
 
   //===--------------------------------------------------------------------===//

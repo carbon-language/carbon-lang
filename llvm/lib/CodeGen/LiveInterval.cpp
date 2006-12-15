@@ -24,6 +24,7 @@
 #include "llvm/Target/MRegisterInfo.h"
 #include <algorithm>
 #include <map>
+#include <ostream>
 using namespace llvm;
 
 // An example for liveAt():
@@ -508,4 +509,10 @@ void LiveInterval::print(OStream OS, const MRegisterInfo *MRI) const {
 
 void LiveInterval::dump() const {
   cerr << *this << "\n";
+}
+
+
+OStream& llvm::operator<<(OStream& os, const LiveRange &LR) {
+  if (os.stream()) *os.stream() << LR;
+  return os;
 }

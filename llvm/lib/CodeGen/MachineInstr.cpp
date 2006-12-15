@@ -18,6 +18,7 @@
 #include "llvm/Target/MRegisterInfo.h"
 #include "llvm/Support/LeakDetector.h"
 #include "llvm/Support/Streams.h"
+#include <ostream>
 using namespace llvm;
 
 /// MachineInstr ctor - This constructor creates a dummy MachineInstr with
@@ -363,3 +364,14 @@ std::ostream &llvm::operator<<(std::ostream &OS, const MachineOperand &MO) {
 
   return OS;
 }
+
+OStream& llvm::operator<<(OStream& os, const MachineInstr& minstr) {
+  if (os.stream()) *os.stream() << minstr;
+  return os;
+}
+
+OStream& llvm::operator<<(OStream& os, const MachineOperand& mop) {
+  if (os.stream()) *os.stream() << mop;
+  return os;
+}
+

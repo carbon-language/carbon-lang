@@ -31,6 +31,11 @@ std::ostream& llvm::operator<<(std::ostream &OS, const MachineBasicBlock &MBB) {
   return OS;
 }
 
+OStream& llvm::operator<<(OStream &OS, const MachineBasicBlock &MBB) {
+  if (OS.stream()) *OS.stream() << MBB;
+  return OS;
+}
+
 // MBBs start out as #-1. When a MBB is added to a MachineFunction, it
 // gets the next available unique MBB number. If it is removed from a
 // MachineFunction, it goes back to being #-1.

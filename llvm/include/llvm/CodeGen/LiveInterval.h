@@ -26,7 +26,6 @@
 #include <iosfwd>
 #include <vector>
 #include <cassert>
-#include <ostream>
 
 namespace llvm {
   class MRegisterInfo;
@@ -63,10 +62,7 @@ namespace llvm {
   };
 
   std::ostream& operator<<(std::ostream& os, const LiveRange &LR);
-  inline OStream& operator<<(OStream& os, const LiveRange &LR) {
-    if (os.stream()) *os.stream() << LR;
-    return os;
-  }
+  OStream& operator<<(OStream& os, const LiveRange &LR);
 
   inline bool operator<(unsigned V, const LiveRange &LR) {
     return V < LR.start;
