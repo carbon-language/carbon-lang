@@ -573,7 +573,8 @@ void LocalSpiller::RewriteMBB(MachineBasicBlock &MBB, VirtRegMap &VRM) {
 
     // Loop over all of the implicit defs, clearing them from our available
     // sets.
-    const unsigned *ImpDef = TII->getImplicitDefs(MI.getOpcode());
+    const TargetInstrDescriptor *TID = MI.getInstrDescriptor();
+    const unsigned *ImpDef = TID->ImplicitDefs;
     if (ImpDef) {
       for ( ; *ImpDef; ++ImpDef) {
         PhysRegsUsed[*ImpDef] = true;
@@ -626,7 +627,7 @@ void LocalSpiller::RewriteMBB(MachineBasicBlock &MBB, VirtRegMap &VRM) {
         // aren't allowed to modify the reused register.  If none of these cases
         // apply, reuse it.
         bool CanReuse = true;
-        int ti = MI.getInstrDescriptor()->getOperandConstraint(i, TOI::TIED_TO);
+        int ti = TID->getOperandConstraint(i, TOI::TIED_TO);
         if (ti != -1 &&
             MI.getOperand(ti).isReg() && 
             MI.getOperand(ti).getReg() == VirtReg) {
