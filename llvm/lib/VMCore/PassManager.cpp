@@ -191,8 +191,8 @@ public:
   }
 
   // Print passes managed by this top level manager.
-  void dumpPasses();
-  void dumpArguments();
+  void dumpPasses() const;
+  void dumpArguments() const;
 
 private:
   
@@ -284,55 +284,14 @@ public:
   PMTopLevelManager *getTopLevelManager() { return TPM; }
   void setTopLevelManager(PMTopLevelManager *T) { TPM = T; }
 
-  unsigned getDepth() { return Depth; }
+  unsigned getDepth() const { return Depth; }
 
-  // Print list of passes that are last used by P.
-  void dumpLastUses(Pass *P, unsigned Offset) {
-    
-    std::vector<Pass *> LUses;
-
-    assert (TPM && "Top Level Manager is missing");
-    TPM->collectLastUses(LUses, P);
-    
-    for (std::vector<Pass *>::iterator I = LUses.begin(),
-           E = LUses.end(); I != E; ++I) {
-      llvm::cerr << "--" << std::string(Offset*2, ' ');
-      (*I)->dumpPassStructure(0);
-    }
-  }
-
-  void dumpPassArguments() {
-    for(std::vector<Pass *>::iterator I = PassVector.begin(),
-          E = PassVector.end(); I != E; ++I) {
-      if (PMDataManager *PMD = dynamic_cast<PMDataManager *>(*I))
-        PMD->dumpPassArguments();
-      else
-        if (const PassInfo *PI = (*I)->getPassInfo())
-          if (!PI->isAnalysisGroup())
-            cerr << " -" << PI->getPassArgument();
-    }
-  }
-
-  void dumpPassInfo(Pass *P,  std::string &Msg1, std::string &Msg2) {
-    if (PassDebugging_New < Executions)
-      return;
-    cerr << (void*)this << std::string(getDepth()*2+1, ' ');
-    cerr << Msg1;
-    cerr << P->getPassName();
-    cerr << Msg2;
-  }
-
+  // Print routines used by debug-pass
+  void dumpLastUses(Pass *P, unsigned Offset) const;
+  void dumpPassArguments() const;
+  void dumpPassInfo(Pass *P,  std::string &Msg1, std::string &Msg2) const;
   void dumpAnalysisSetInfo(const char *Msg, Pass *P,
-                           const std::vector<AnalysisID> &Set) {
-    if (PassDebugging_New >= Details && !Set.empty()) {
-      cerr << (void*)P << std::string(getDepth()*2+3, ' ') << Msg << " Analyses:";
-      for (unsigned i = 0; i != Set.size(); ++i) {
-        if (i) cerr << ",";
-        cerr << " " << Set[i]->getPassName();
-      }
-      cerr << "\n";
-    }
-  }
+                           const std::vector<AnalysisID> &Set) const;
 
   std::vector<Pass *>& getTransferredLastUses() {
     return TransferLastUses;
@@ -728,26 +687,25 @@ Pass *PMTopLevelManager::findAnalysisPass(AnalysisID AID) {
 }
 
 // Print passes managed by this top level manager.
-void PMTopLevelManager::dumpPasses() {
+void PMTopLevelManager::dumpPasses() const {
 
   // Print out the immutable passes
   for (unsigned i = 0, e = ImmutablePasses.size(); i != e; ++i) {
     ImmutablePasses[i]->dumpPassStructure(0);
   }
   
-  for (std::vector<Pass *>::iterator I = PassManagers.begin(),
+  for (std::vector<Pass *>::const_iterator I = PassManagers.begin(),
          E = PassManagers.end(); I != E; ++I)
     (*I)->dumpPassStructure(1);
-
 }
 
-void PMTopLevelManager::dumpArguments() {
+void PMTopLevelManager::dumpArguments() const {
 
   if (PassDebugging_New < Arguments)
     return;
 
   cerr << "Pass Arguments: ";
-  for (std::vector<Pass *>::iterator I = PassManagers.begin(),
+  for (std::vector<Pass *>::const_iterator I = PassManagers.begin(),
          E = PassManagers.end(); I != E; ++I) {
     PMDataManager *PMD = dynamic_cast<PMDataManager *>(*I);
     assert(PMD && "This is not a PassManager");
@@ -948,6 +906,55 @@ Pass *PMDataManager::findAnalysisPass(AnalysisID AID, bool SearchParent) {
   return NULL;
 }
 
+// Print list of passes that are last used by P.
+void PMDataManager::dumpLastUses(Pass *P, unsigned Offset) const{
+
+  std::vector<Pass *> LUses;
+  
+  assert (TPM && "Top Level Manager is missing");
+  TPM->collectLastUses(LUses, P);
+  
+  for (std::vector<Pass *>::iterator I = LUses.begin(),
+         E = LUses.end(); I != E; ++I) {
+    llvm::cerr << "--" << std::string(Offset*2, ' ');
+    (*I)->dumpPassStructure(0);
+  }
+}
+
+void PMDataManager::dumpPassArguments() const {
+  for(std::vector<Pass *>::const_iterator I = PassVector.begin(),
+        E = PassVector.end(); I != E; ++I) {
+    if (PMDataManager *PMD = dynamic_cast<PMDataManager *>(*I))
+      PMD->dumpPassArguments();
+    else
+      if (const PassInfo *PI = (*I)->getPassInfo())
+        if (!PI->isAnalysisGroup())
+          cerr << " -" << PI->getPassArgument();
+  }
+}
+
+void PMDataManager:: dumpPassInfo(Pass *P,  std::string &Msg1, 
+                                  std::string &Msg2) const {
+  if (PassDebugging_New < Executions)
+    return;
+  cerr << (void*)this << std::string(getDepth()*2+1, ' ');
+  cerr << Msg1;
+  cerr << P->getPassName();
+  cerr << Msg2;
+}
+
+void PMDataManager::dumpAnalysisSetInfo(const char *Msg, Pass *P,
+                                        const std::vector<AnalysisID> &Set) 
+  const {
+  if (PassDebugging_New >= Details && !Set.empty()) {
+    cerr << (void*)P << std::string(getDepth()*2+3, ' ') << Msg << " Analyses:";
+      for (unsigned i = 0; i != Set.size(); ++i) {
+        if (i) cerr << ",";
+        cerr << " " << Set[i]->getPassName();
+      }
+      cerr << "\n";
+  }
+}
 
 //===----------------------------------------------------------------------===//
 // NOTE: Is this the right place to define this method ?
