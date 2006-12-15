@@ -387,7 +387,7 @@ public:
 
   virtual void handleBasicBlockEnd(unsigned blocknum) {
     if (os)
-      *os << "      } END BLOCK: BasicBlock #" << blocknum << "{\n";
+      *os << "      } END BLOCK: BasicBlock #" << blocknum << "\n";
   }
 
   virtual void handleGlobalConstantsBegin() {
