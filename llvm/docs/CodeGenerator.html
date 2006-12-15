@@ -2,6 +2,7 @@
                       "http://www.w3.org/TR/html4/strict.dtd">
 <html>
 <head>
+  <meta http-equiv="content-type" content="text/html; charset=utf-8">
   <title>The LLVM Target-Independent Code Generator</title>
   <link rel="stylesheet" href="llvm.css" type="text/css">
 </head>
@@ -84,15 +85,14 @@
   <li><a href="#targetimpls">Target-specific Implementation Notes</a>
     <ul>
     <li><a href="#x86">The X86 backend</a></li>
-    <li><a href="#ppc">The PowerPC backend</a></li>
+    <li><a href="#ppc">The PowerPC backend</a>
       <ul>
       <li><a href="#ppc_abi">LLVM PowerPC ABI</a></li>
       <li><a href="#ppc_frame">Frame Layout</a></li>
       <li><a href="#ppc_prolog">Prolog/Epilog</a></li>
       <li><a href="#ppc_dynamic">Dynamic Allocation</a></li>
-      </ul>
-    </ul>
-  </li>
+      </ul></li>
+    </ul></li>
 
 </ol>
 
@@ -381,7 +381,7 @@ operations.  Among other things, this class indicates:</p>
   <li>the type to use for shift amounts</li>
   <li>various high-level characteristics, like whether it is profitable to turn
       division by a constant into a multiplication sequence</li>
-</ol>
+</ul>
 
 </div>
 
@@ -1114,7 +1114,7 @@ primarily because it is a work in progress and is not yet finished:</p>
     fragment can match multiple different patterns.</li>
 <li>We don't automatically infer flags like isStore/isLoad yet.</li>
 <li>We don't automatically generate the set of supported registers and
-    operations for the <a href="#"selectiondag_legalize>Legalizer</a> yet.</li>
+    operations for the <a href="#selectiondag_legalize">Legalizer</a> yet.</li>
 <li>We don't have a way of tying in custom legalized nodes yet.</li>
 </ul>
 
@@ -1155,7 +1155,6 @@ SelectionDAGs.</p>
 <ol>
 <li>Optional function-at-a-time selection.</li>
 <li>Auto-generate entire selector from <tt>.td</tt> file.</li>
-</li>
 </ol>
 
 </div>
@@ -1246,8 +1245,6 @@ variable is live.</p>
 
 <p><i><b>More to come...</b></i></p>
 
-</ol>
-
 </div>
 
 <!-- ======================================================================= -->
@@ -1307,10 +1304,10 @@ this code can be used:
 
 <div class="doc_code">
 <pre>
-bool RegMapping_Fer::compatible_class(MachineFunction &mf,
+bool RegMapping_Fer::compatible_class(MachineFunction &amp;mf,
                                       unsigned v_reg,
                                       unsigned p_reg) {
-  assert(MRegisterInfo::isPhysicalRegister(p_reg) &&
+  assert(MRegisterInfo::isPhysicalRegister(p_reg) &amp;&amp;
          "Target register must be physical");
   const TargetRegisterClass *trc = mf.getSSARegMap()->getRegClass(v_reg);
   return trc->contains(p_reg);
@@ -1753,11 +1750,11 @@ relative (PIC) or static addressing for accessing global values, so no TOC (r2)
 is used. Second, r31 is used as a frame pointer to allow dynamic growth of a
 stack frame.  LLVM takes advantage of having no TOC to provide space to save
 the frame pointer in the PowerPC linkage area of the caller frame.  Other
-details of PowerPC ABI can be found at <a
-href="http://developer.apple.com/documentation/DeveloperTools/Conceptual/
-LowLevelABI/Articles/32bitPowerPC.html" target="_blank">PowerPC ABI.</a> Note:
-This link describes the 32 bit ABI.  The 64 bit ABI is similar except space for
-GPRs are 8 bytes wide (not 4) and r13 is reserved for system use.</p>
+details of PowerPC ABI can be found at <a href=
+"http://developer.apple.com/documentation/DeveloperTools/Conceptual/LowLevelABI/Articles/32bitPowerPC.html"
+>PowerPC ABI.</a> Note: This link describes the 32 bit ABI.  The
+64 bit ABI is similar except space for GPRs are 8 bytes wide (not 4) and r13 is
+reserved for system use.</p>
 </div>
 
 <!-- _______________________________________________________________________ -->
@@ -1767,7 +1764,7 @@ GPRs are 8 bytes wide (not 4) and r13 is reserved for system use.</p>
 
 <div class="doc_text">
 <p>The size of a PowerPC frame is usually fixed for the duration of a
-function&apos;s invocation.  Since the frame is fixed size, all references into
+function&rsquo;s invocation.  Since the frame is fixed size, all references into
 the frame can be accessed via fixed offsets from the stack pointer.  The
 exception to this is when dynamic alloca or variable sized arrays are present,
 then a base pointer (r31) is used as a proxy for the stack pointer and stack
@@ -1942,7 +1939,9 @@ makes it convenient to locate programatically and during debugging.</p>
 <p></p>
 </div>
 
-<i>TODO - More to come.</i>
+<div class="doc_text">
+<p><i>TODO - More to come.</i></p>
+</div>
 
 
 <!-- *********************************************************************** -->
