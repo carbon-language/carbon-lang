@@ -365,6 +365,10 @@ static bool GetLinkageResult(GlobalValue *Dest, GlobalValue *Src,
         LinkFromSrc = true;
         LT = Src->getLinkage();
       }      
+    } else if (Dest->hasExternalWeakLinkage()) {
+      //If the Dest is weak, use the source linkage
+      LinkFromSrc = true;
+      LT = Src->getLinkage();
     } else {
       LinkFromSrc = false;
       LT = Dest->getLinkage();
@@ -446,7 +450,7 @@ static bool LinkGlobals(Module *Dest, Module *Src,
     if (DGV && DGV->hasInternalLinkage())
       DGV = 0;
 
-    assert(SGV->hasInitializer() ||
+    assert(SGV->hasInitializer() || SGV->hasExternalWeakLinkage() ||
            SGV->hasExternalLinkage() || SGV->hasDLLImportLinkage() &&
            "Global must either be external or have an initializer!");
 
