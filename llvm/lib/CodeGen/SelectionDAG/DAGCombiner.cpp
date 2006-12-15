@@ -1943,13 +1943,15 @@ SDOperand DAGCombiner::visitSIGN_EXTEND(SDNode *N) {
   if ((ISD::isSEXTLoad(N0.Val) || ISD::isEXTLoad(N0.Val)) && N0.hasOneUse()) {
     LoadSDNode *LN0 = cast<LoadSDNode>(N0);
     MVT::ValueType EVT = LN0->getLoadedVT();
-    SDOperand ExtLoad = DAG.getExtLoad(ISD::SEXTLOAD, VT, LN0->getChain(),
-                                       LN0->getBasePtr(), LN0->getSrcValue(),
-                                       LN0->getSrcValueOffset(), EVT);
-    CombineTo(N, ExtLoad);
-    CombineTo(N0.Val, DAG.getNode(ISD::TRUNCATE, N0.getValueType(), ExtLoad),
-              ExtLoad.getValue(1));
-    return SDOperand(N, 0);   // Return N so it doesn't get rechecked!
+    if (!AfterLegalize || TLI.isLoadXLegal(ISD::SEXTLOAD, EVT)) {
+      SDOperand ExtLoad = DAG.getExtLoad(ISD::SEXTLOAD, VT, LN0->getChain(),
+                                         LN0->getBasePtr(), LN0->getSrcValue(),
+                                         LN0->getSrcValueOffset(), EVT);
+      CombineTo(N, ExtLoad);
+      CombineTo(N0.Val, DAG.getNode(ISD::TRUNCATE, N0.getValueType(), ExtLoad),
+                ExtLoad.getValue(1));
+      return SDOperand(N, 0);   // Return N so it doesn't get rechecked!
+    }
   }
   
   return SDOperand();
