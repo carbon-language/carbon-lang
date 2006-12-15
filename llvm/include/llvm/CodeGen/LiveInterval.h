@@ -26,6 +26,7 @@
 #include <iosfwd>
 #include <vector>
 #include <cassert>
+#include <ostream>
 
 namespace llvm {
   class MRegisterInfo;
