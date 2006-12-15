@@ -250,7 +250,7 @@ public:
 
   /// Initialize available analysis information.
   void initializeAnalysisInfo() { 
-    ForcedLastUses.clear();
+    TransferLastUses.clear();
     AvailableAnalysis.clear();
   }
 
@@ -330,12 +330,18 @@ public:
       cerr << "\n";
     }
   }
+
+  std::vector<Pass *>& getTransferredLastUses() {
+    return TransferLastUses;
+  }
+
 protected:
 
-  // Collection of pass whose last user asked this manager to claim
-  // last use. If a FunctionPass F is the last user of ModulePass info M
+  // If a FunctionPass F is the last user of ModulePass info M
   // then the F's manager, not F, records itself as a last user of M.
-  std::vector<Pass *> ForcedLastUses;
+  // Current pass manage is requesting parent manager to record parent
+  // manager as the last user of these TrransferLastUses passes.
+  std::vector<Pass *> TransferLastUses;
 
   // Top level manager.
   PMTopLevelManager *TPM;
@@ -853,7 +859,7 @@ void PMDataManager::addPassToManager(Pass *P,
         LastUses.push_back(PRequired);
       else if (PDepth >  RDepth) {
         // Let the parent claim responsibility of last use
-        ForcedLastUses.push_back(PRequired);
+        TransferLastUses.push_back(PRequired);
       } else {
         // Note : This feature is not yet implemented
         assert (0 && 
@@ -861,8 +867,8 @@ void PMDataManager::addPassToManager(Pass *P,
       }
     }
 
-    if (!LastUses.empty())
-      TPM->setLastUser(LastUses, P);
+    LastUses.push_back(P);
+    TPM->setLastUser(LastUses, P);
 
     // Take a note of analysis required and made available by this pass.
     // Remove the analysis not preserved by this pass
@@ -1161,10 +1167,14 @@ FunctionPassManagerImpl_New::addPass(Pass *P) {
       // Add pass into new manager. This time it must succeed.
       if (!activeBBPassManager->addPass(BP))
         assert(0 && "Unable to add Pass");
+
+      // If activeBBPassManager transfered any Last Uses then handle them here.
+      std::vector<Pass *> &TLU = activeBBPassManager->getTransferredLastUses();
+      if (!TLU.empty())
+        TPM->setLastUser(TLU, this);
+
     }
 
-    if (!ForcedLastUses.empty())
-      TPM->setLastUser(ForcedLastUses, this);
 
     return true;
   }
@@ -1326,10 +1336,14 @@ ModulePassManager::addPass(Pass *P) {
       // Add pass into new manager. This time it must succeed.
       if (!activeFunctionPassManager->addPass(FP))
         assert(0 && "Unable to add pass");
-    }
 
-    if (!ForcedLastUses.empty())
-      TPM->setLastUser(ForcedLastUses, this);
+      // If activeFunctionPassManager transfered any Last Uses then 
+      // handle them here.
+      std::vector<Pass *> &TLU = 
+        activeFunctionPassManager->getTransferredLastUses();
+      if (!TLU.empty())
+        TPM->setLastUser(TLU, this);
+    }
 
     return true;
   }
