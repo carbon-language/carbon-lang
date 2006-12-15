@@ -1371,6 +1371,7 @@ namespace llvm {
         return new CompareConstantExpr(Instruction::FCmp, V.predicate, 
                                        V.operands[0], V.operands[1]);
       assert(0 && "Invalid ConstantExpr!");
+      return 0;
     }
   };
 
