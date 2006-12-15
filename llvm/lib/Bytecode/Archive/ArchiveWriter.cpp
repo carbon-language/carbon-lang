@@ -153,7 +153,11 @@ Archive::fillHeader(const ArchiveMember &mbr, ArchiveMemberHeader& hdr,
 bool
 Archive::addFileBefore(const sys::Path& filePath, iterator where, 
                         std::string* ErrMsg) {
-  assert(filePath.exists() && "Can't add a non-existent file");
+  if (!filePath.exists()) {
+    if (ErrMsg)
+      *ErrMsg = "Can not add a non-existent file to archive";
+    return true;
+  }
 
   ArchiveMember* mbr = new ArchiveMember(this);
 
@@ -385,8 +389,11 @@ Archive::writeToDisk(bool CreateSymbolTable, bool TruncateNames, bool Compress,
 {
   // Make sure they haven't opened up the file, not loaded it,
   // but are now trying to write it which would wipe out the file.
-  assert(!(members.empty() && mapfile->size() > 8) &&
-         "Can't write an archive not opened for writing");
+  if (members.empty() && mapfile->size() > 8) {
+    if (ErrMsg)
+      *ErrMsg = "Can't write an archive not opened for writing";
+    return true;
+  }
 
   // Create a temporary file to store the archive in
   sys::Path TmpArchive = archPath;

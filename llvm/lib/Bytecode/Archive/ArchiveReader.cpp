@@ -68,7 +68,11 @@ Archive::parseSymbolTable(const void* data, unsigned size, std::string* error) {
 ArchiveMember*
 Archive::parseMemberHeader(const char*& At, const char* End, std::string* error)
 {
-  assert(At + sizeof(ArchiveMemberHeader) < End && "Not enough data");
+  if (At + sizeof(ArchiveMemberHeader) >= End) {
+    if (error)
+      *error = "Unexpected end of file";
+    return 0;
+  }
 
   // Cast archive member header
   ArchiveMemberHeader* Hdr = (ArchiveMemberHeader*)At;
@@ -498,7 +502,12 @@ Archive::findModulesDefiningSymbols(std::set<std::string>& symbols,
                                     std::set<ModuleProvider*>& result,
                                     std::string* error)
 {
-  assert(mapfile && base && "Can't findModulesDefiningSymbols on new archive");
+  if (!mapfile || !base) {
+    if (error)
+      *error = "Empty archive invalid for finding modules defining symbols";
+    return false;
+  }
+
   if (symTab.empty()) {
     // We don't have a symbol table, so we must build it now but lets also
     // make sure that we populate the modules table as we do this to ensure

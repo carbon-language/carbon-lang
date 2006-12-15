@@ -62,7 +62,12 @@ ArchiveMember::ArchiveMember(Archive* PAR)
 // different file, presumably as an update to the member. It also makes sure
 // the flags are reset correctly.
 bool ArchiveMember::replaceWith(const sys::Path& newFile, std::string* ErrMsg) {
-  assert(newFile.exists() && "Can't replace with a non-existent file");
+  if (!newFile.exists()) {
+    if (ErrMsg) 
+      *ErrMsg = "Can not replace an archive member with a non-existent file";
+    return true;
+  }
+
   data = 0;
   path = newFile;
 
