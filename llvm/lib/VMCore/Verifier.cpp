@@ -355,7 +355,8 @@ void Verifier::visitFunction(Function &F) {
   
   // Check that the argument values match the function type for this function...
   unsigned i = 0;
-  for (Function::arg_iterator I = F.arg_begin(), E = F.arg_end(); I != E; ++I, ++i) {
+  for (Function::arg_iterator I = F.arg_begin(), E = F.arg_end();
+       I != E; ++I, ++i) {
     Assert2(I->getType() == FT->getParamType(i),
             "Argument value does not match function argument type!",
             I, FT->getParamType(i));
@@ -898,9 +899,42 @@ void Verifier::visitInstruction(Instruction &I) {
       if (!isa<PHINode>(I)) {
         // Invoke results are only usable in the normal destination, not in the
         // exceptional destination.
-        if (InvokeInst *II = dyn_cast<InvokeInst>(Op))
+        if (InvokeInst *II = dyn_cast<InvokeInst>(Op)) {
           OpBlock = II->getNormalDest();
-        else if (OpBlock == BB) {
+          
+          // If the normal successor of an invoke instruction has multiple
+          // predecessors, then the normal edge from the invoke is critical, so
+          // the invoke value can only be live if the destination block
+          // dominates all of it's predecessors (other than the invoke) or if
+          // the invoke value is only used by a phi in the successor.
+          if (!OpBlock->getSinglePredecessor() &&
+              EF->dominates(&BB->getParent()->getEntryBlock(), BB)) {
+            // The first case we allow is if the use is a PHI operand in the
+            // normal block, and if that PHI operand corresponds to the invoke's
+            // block.
+            bool Bad = true;
+            if (PHINode *PN = dyn_cast<PHINode>(&I))
+              if (PN->getParent() == OpBlock &&
+                  PN->getIncomingBlock(i/2) == Op->getParent())
+                Bad = false;
+            
+            // If it is used by something non-phi, then the other case is that
+            // 'OpBlock' dominates all of its predecessors other than the
+            // invoke.  In this case, the invoke value can still be used.
+            if (Bad) {
+              Bad = false;
+              for (pred_iterator PI = pred_begin(OpBlock),
+                   E = pred_end(OpBlock); PI != E; ++PI) {
+                if (*PI != II->getParent() && !EF->dominates(OpBlock, *PI)) {
+                  Bad = true;
+                  break;
+                }
+              }
+            }
+            Assert1(!Bad,
+                    "Invoke value defined on critical edge but not dead!", &I);
+          }
+        } else if (OpBlock == BB) {
           // If they are in the same basic block, make sure that the definition
           // comes before the use.
           Assert2(InstsInThisBlock.count(Op) ||
