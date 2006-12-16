@@ -499,8 +499,6 @@ void DAE::RemoveDeadArgumentsFromFunction(Function *F) {
   // Work around LLVM bug PR56: the CWriter cannot emit varargs functions which
   // have zero fixed arguments.
   //
-  // FIXME: once this bug is fixed in the CWriter, this hack should be removed.
-  //
   bool ExtraArgHack = false;
   if (Params.empty() && FTy->isVarArg()) {
     ExtraArgHack = true;
@@ -530,7 +528,7 @@ void DAE::RemoveDeadArgumentsFromFunction(Function *F) {
         Args.push_back(*AI);
 
     if (ExtraArgHack)
-      Args.push_back(Constant::getNullValue(Type::IntTy));
+      Args.push_back(UndefValue::get(Type::IntTy));
 
     // Push any varargs arguments on the list
     for (; AI != CS.arg_end(); ++AI)
