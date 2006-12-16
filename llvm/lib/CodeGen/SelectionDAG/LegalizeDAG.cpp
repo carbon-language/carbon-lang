@@ -3155,6 +3155,7 @@ SDOperand SelectionDAGLegalize::PromoteOp(SDOperand Op) {
   case ISD::FP_TO_UINT:
     switch (getTypeAction(Node->getOperand(0).getValueType())) {
     case Legal:
+    case Expand:
       Tmp1 = Node->getOperand(0);
       break;
     case Promote:
@@ -3162,8 +3163,6 @@ SDOperand SelectionDAGLegalize::PromoteOp(SDOperand Op) {
       // special.
       Tmp1 = PromoteOp(Node->getOperand(0));
       break;
-    case Expand:
-      assert(0 && "not implemented");
     }
     // If we're promoting a UINT to a larger size, check to see if the new node
     // will be legal.  If it isn't, check to see if FP_TO_SINT is legal, since
