@@ -2727,12 +2727,17 @@ bool DAGCombiner::CombineToPreIndexedLoadStore(SDNode *N) {
   SDOperand Ptr;
   MVT::ValueType VT;
   if (LoadSDNode *LD  = dyn_cast<LoadSDNode>(N)) {
+    if (LD->getAddressingMode() != ISD::UNINDEXED)
+      return false;
     VT = LD->getLoadedVT();
-    if (!TLI.isIndexedLoadLegal(ISD::PRE_INC, VT) &&
+    if (LD->getAddressingMode() != ISD::UNINDEXED &&
+        !TLI.isIndexedLoadLegal(ISD::PRE_INC, VT) &&
         !TLI.isIndexedLoadLegal(ISD::PRE_DEC, VT))
       return false;
     Ptr = LD->getBasePtr();
   } else if (StoreSDNode *ST  = dyn_cast<StoreSDNode>(N)) {
+    if (ST->getAddressingMode() != ISD::UNINDEXED)
+      return false;
     VT = ST->getStoredVT();
     if (!TLI.isIndexedStoreLegal(ISD::PRE_INC, VT) &&
         !TLI.isIndexedStoreLegal(ISD::PRE_DEC, VT))
@@ -2846,12 +2851,16 @@ bool DAGCombiner::CombineToPostIndexedLoadStore(SDNode *N) {
   SDOperand Ptr;
   MVT::ValueType VT;
   if (LoadSDNode *LD  = dyn_cast<LoadSDNode>(N)) {
+    if (LD->getAddressingMode() != ISD::UNINDEXED)
+      return false;
     VT = LD->getLoadedVT();
     if (!TLI.isIndexedLoadLegal(ISD::POST_INC, VT) &&
         !TLI.isIndexedLoadLegal(ISD::POST_DEC, VT))
       return false;
     Ptr = LD->getBasePtr();
   } else if (StoreSDNode *ST  = dyn_cast<StoreSDNode>(N)) {
+    if (ST->getAddressingMode() != ISD::UNINDEXED)
+      return false;
     VT = ST->getStoredVT();
     if (!TLI.isIndexedStoreLegal(ISD::POST_INC, VT) &&
         !TLI.isIndexedStoreLegal(ISD::POST_DEC, VT))
