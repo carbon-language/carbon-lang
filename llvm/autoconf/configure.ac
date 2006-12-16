@@ -322,6 +322,20 @@ case "$enableval" in
 esac
 AC_DEFINE_UNQUOTED([ENABLE_THREADS],$ENABLE_THREADS,[Define if threads enabled])
 
+dnl Allow building with position independent code
+AC_ARG_ENABLE(pic,
+  AS_HELP_STRING([--enable-pic],
+                 [Build LLVM with Position Independent Code (default is NO)]),,
+                 enableval=default)
+case "$enableval" in
+  yes) AC_SUBST(ENABLE_PIC,[1]) ;;
+  no)  AC_SUBST(ENABLE_PIC,[0]) ;;
+  default) AC_SUBST(ENABLE_PIC,[0]) ;;
+  *) AC_MSG_ERROR([Invalid setting for --enable-pic. Use "yes" or "no"]) ;;
+esac
+AC_DEFINE_UNQUOTED([ENABLE_PIC],$ENABLE_PIC,
+                   [Define if position independent code is enabled])
+
 dnl Allow specific targets to be specified for building (or not)
 TARGETS_TO_BUILD=""
 AC_ARG_ENABLE([targets],AS_HELP_STRING([--enable-targets],

@@ -255,6 +255,11 @@ else
   C.Flags   += -D_DEBUG
 endif
 
+ifeq ($(ENABLE_PIC),1)
+  CXX.Flags += -fPIC
+  C.Flags   += -fPIC
+endif
+
 CXX.Flags     += $(CXXFLAGS) -Woverloaded-virtual
 C.Flags       += $(CFLAGS)
 CPP.BaseFlags += $(CPPFLAGS)
@@ -264,8 +269,12 @@ LibTool.Flags := --tag=CXX
 
 # Make Floating point IEEE compliant on Alpha.
 ifeq ($(ARCH),Alpha)
-  CXX.Flags     += -mieee -fPIC
-  CPP.BaseFlags += -mieee -fPIC
+  CXX.Flags     += -mieee
+  CPP.BaseFlags += -mieee
+ifeq ($(ENABLE_PIC),0)
+  CXX.Flags     += -fPIC
+  CPP.BaseFlags += -fPIC
+endif
 endif
 
 #--------------------------------------------------------------------

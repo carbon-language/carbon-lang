@@ -224,6 +224,9 @@ ENABLE_DOXYGEN = @ENABLE_DOXYGEN@
 # Do we want to enable threads?
 ENABLE_THREADS := @ENABLE_THREADS@
 
+# Do we want to build with position independent code?
+ENABLE_PIC := @ENABLE_PIC@
+
 # This option tells the Makefiles to produce verbose output.
 # It essentially prints the commands that make is executing
 #VERBOSE = 1
