@@ -1481,7 +1481,7 @@ public:
   unsigned getAlignment() const { return Alignment; }
   bool isVolatile() const { return IsVolatile; }
 
-  static bool classof(const LoadSDNode *) { return true; }
+  static bool classof(const StoreSDNode *) { return true; }
   static bool classof(const SDNode *N) {
     return N->getOpcode() == ISD::STORE;
   }
