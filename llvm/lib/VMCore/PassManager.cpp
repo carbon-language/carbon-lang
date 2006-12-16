@@ -272,14 +272,6 @@ public:
   /// then return NULL.
   Pass *findAnalysisPass(AnalysisID AID, bool Direction);
 
-  inline std::vector<Pass *>::iterator passVectorBegin() { 
-    return PassVector.begin(); 
-  }
-
-  inline std::vector<Pass *>::iterator passVectorEnd() { 
-    return PassVector.end();
-  }
-
   // Access toplevel manager
   PMTopLevelManager *getTopLevelManager() { return TPM; }
   void setTopLevelManager(PMTopLevelManager *T) { TPM = T; }
@@ -297,6 +289,10 @@ public:
     return TransferLastUses;
   }
 
+  virtual unsigned getNumContainedPasses() { 
+    return PassVector.size();
+  }
+
 protected:
 
   // If a FunctionPass F is the last user of ModulePass info M
@@ -308,15 +304,15 @@ protected:
   // Top level manager.
   PMTopLevelManager *TPM;
 
+  // Collection of pass that are managed by this manager
+  std::vector<Pass *> PassVector;
+
 private:
   // Set of available Analysis. This information is used while scheduling 
   // pass. If a pass requires an analysis which is not not available then 
   // equired analysis pass is scheduled to run before the pass itself is 
   // scheduled to run.
   std::map<AnalysisID, Pass*> AvailableAnalysis;
-
-  // Collection of pass that are managed by this manager
-  std::vector<Pass *> PassVector;
 
   unsigned Depth;
 };
@@ -353,11 +349,17 @@ public:
   // Print passes managed by this manager
   void dumpPassStructure(unsigned Offset) {
     llvm::cerr << std::string(Offset*2, ' ') << "BasicBlockPass Manager\n";
-    for (std::vector<Pass *>::iterator I = passVectorBegin(),
-           E = passVectorEnd(); I != E; ++I)  {
-      (*I)->dumpPassStructure(Offset + 1);
-      dumpLastUses(*I, Offset+1);
+    for (unsigned Index = 0; Index < getNumContainedPasses(); ++Index) {
+      BasicBlockPass *BP = getContainedPass(Index);
+      BP->dumpPassStructure(Offset + 1);
+      dumpLastUses(BP, Offset+1);
     }
+  }
+
+  BasicBlockPass *getContainedPass(unsigned N) {
+    assert ( N < PassVector.size() && "Pass number out of range!");
+    BasicBlockPass *BP = static_cast<BasicBlockPass *>(PassVector[N]);
+    return BP;
   }
 };
 
@@ -427,12 +429,18 @@ public:
 
   // Print passes managed by this manager
   void dumpPassStructure(unsigned Offset) {
-    llvm::cerr << std::string(Offset*2, ' ') << "FunctionPass Manager\n";
-    for (std::vector<Pass *>::iterator I = passVectorBegin(),
-           E = passVectorEnd(); I != E; ++I)  {
-      (*I)->dumpPassStructure(Offset + 1);
-      dumpLastUses(*I, Offset+1);
+    llvm::cerr << std::string(Offset*2, ' ') << "FunctionPass Manager 42\n";
+    for (unsigned Index = 0; Index < getNumContainedPasses(); ++Index) {
+      FunctionPass *FP = getContainedPass(Index);
+      FP->dumpPassStructure(Offset + 1);
+      dumpLastUses(FP, Offset+1);
     }
+  }
+
+  FunctionPass *getContainedPass(unsigned N) {
+    assert ( N < PassVector.size() && "Pass number out of range!");
+    FunctionPass *FP = static_cast<FunctionPass *>(PassVector[N]);
+    return FP;
   }
 
 private:
@@ -468,11 +476,17 @@ public:
   // Print passes managed by this manager
   void dumpPassStructure(unsigned Offset) {
     llvm::cerr << std::string(Offset*2, ' ') << "ModulePass Manager\n";
-    for (std::vector<Pass *>::iterator I = passVectorBegin(),
-           E = passVectorEnd(); I != E; ++I)  {
-      (*I)->dumpPassStructure(Offset + 1);
-      dumpLastUses(*I, Offset+1);
+    for (unsigned Index = 0; Index < getNumContainedPasses(); ++Index) {
+      ModulePass *MP = getContainedPass(Index);
+      MP->dumpPassStructure(Offset + 1);
+      dumpLastUses(MP, Offset+1);
     }
+  }
+
+  ModulePass *getContainedPass(unsigned N) {
+    assert ( N < PassVector.size() && "Pass number out of range!");
+    ModulePass *MP = static_cast<ModulePass *>(PassVector[N]);
+    return MP;
   }
 
 private:
@@ -995,30 +1009,28 @@ BasicBlockPassManager::runOnFunction(Function &F) {
   std::string Msg3 = "' Made Modification '";
 
   for (Function::iterator I = F.begin(), E = F.end(); I != E; ++I)
-    for (std::vector<Pass *>::iterator itr = passVectorBegin(),
-           e = passVectorEnd(); itr != e; ++itr) {
-      Pass *P = *itr;
+    for (unsigned Index = 0; Index < getNumContainedPasses(); ++Index) {
+      BasicBlockPass *BP = getContainedPass(Index);
       AnalysisUsage AnUsage;
-      P->getAnalysisUsage(AnUsage);
+      BP->getAnalysisUsage(AnUsage);
 
       std::string Msg2 = "' on BasicBlock '" + (*I).getName() + "'...\n";
-      dumpPassInfo(P, Msg1, Msg2);
-      dumpAnalysisSetInfo("Required", P, AnUsage.getRequiredSet());
+      dumpPassInfo(BP, Msg1, Msg2);
+      dumpAnalysisSetInfo("Required", BP, AnUsage.getRequiredSet());
 
-      initializeAnalysisImpl(P);
+      initializeAnalysisImpl(BP);
 
-      BasicBlockPass *BP = dynamic_cast<BasicBlockPass*>(P);
-      if (TheTimeInfo) TheTimeInfo->passStarted(P);
+      if (TheTimeInfo) TheTimeInfo->passStarted(BP);
       Changed |= BP->runOnBasicBlock(*I);
-      if (TheTimeInfo) TheTimeInfo->passEnded(P);
+      if (TheTimeInfo) TheTimeInfo->passEnded(BP);
 
       if (Changed)
-        dumpPassInfo(P, Msg3, Msg2);
-      dumpAnalysisSetInfo("Preserved", P, AnUsage.getPreservedSet());
+        dumpPassInfo(BP, Msg3, Msg2);
+      dumpAnalysisSetInfo("Preserved", BP, AnUsage.getPreservedSet());
 
-      removeNotPreservedAnalysis(P);
-      recordAvailableAnalysis(P);
-      removeDeadPasses(P, Msg2);
+      removeNotPreservedAnalysis(BP);
+      recordAvailableAnalysis(BP);
+      removeDeadPasses(BP, Msg2);
     }
   return Changed |= doFinalization(F);
 }
@@ -1027,10 +1039,8 @@ BasicBlockPassManager::runOnFunction(Function &F) {
 inline bool BasicBlockPassManager::doInitialization(Module &M) {
   bool Changed = false;
 
-  for (std::vector<Pass *>::iterator itr = passVectorBegin(),
-         e = passVectorEnd(); itr != e; ++itr) {
-    Pass *P = *itr;
-    BasicBlockPass *BP = dynamic_cast<BasicBlockPass*>(P);    
+  for (unsigned Index = 0; Index < getNumContainedPasses(); ++Index) {
+    BasicBlockPass *BP = getContainedPass(Index);
     Changed |= BP->doInitialization(M);
   }
 
@@ -1040,10 +1050,8 @@ inline bool BasicBlockPassManager::doInitialization(Module &M) {
 inline bool BasicBlockPassManager::doFinalization(Module &M) {
   bool Changed = false;
 
-  for (std::vector<Pass *>::iterator itr = passVectorBegin(),
-         e = passVectorEnd(); itr != e; ++itr) {
-    Pass *P = *itr;
-    BasicBlockPass *BP = dynamic_cast<BasicBlockPass*>(P);    
+  for (unsigned Index = 0; Index < getNumContainedPasses(); ++Index) {
+    BasicBlockPass *BP = getContainedPass(Index);
     Changed |= BP->doFinalization(M);
   }
 
@@ -1053,10 +1061,8 @@ inline bool BasicBlockPassManager::doFinalization(Module &M) {
 inline bool BasicBlockPassManager::doInitialization(Function &F) {
   bool Changed = false;
 
-  for (std::vector<Pass *>::iterator itr = passVectorBegin(),
-         e = passVectorEnd(); itr != e; ++itr) {
-    Pass *P = *itr;
-    BasicBlockPass *BP = dynamic_cast<BasicBlockPass*>(P);    
+  for (unsigned Index = 0; Index < getNumContainedPasses(); ++Index) {
+    BasicBlockPass *BP = getContainedPass(Index);
     Changed |= BP->doInitialization(F);
   }
 
@@ -1066,10 +1072,8 @@ inline bool BasicBlockPassManager::doInitialization(Function &F) {
 inline bool BasicBlockPassManager::doFinalization(Function &F) {
   bool Changed = false;
 
-  for (std::vector<Pass *>::iterator itr = passVectorBegin(),
-         e = passVectorEnd(); itr != e; ++itr) {
-    Pass *P = *itr;
-    BasicBlockPass *BP = dynamic_cast<BasicBlockPass*>(P);    
+  for (unsigned Index = 0; Index < getNumContainedPasses(); ++Index) {
+    BasicBlockPass *BP = getContainedPass(Index);
     Changed |= BP->doFinalization(F);
   }
 
@@ -1236,30 +1240,29 @@ bool FunctionPassManagerImpl_New::runOnFunction(Function &F) {
   std::string Msg1 = "Executing Pass '";
   std::string Msg3 = "' Made Modification '";
 
-  for (std::vector<Pass *>::iterator itr = passVectorBegin(),
-         e = passVectorEnd(); itr != e; ++itr) {
-    Pass *P = *itr;
+  for (unsigned Index = 0; Index < getNumContainedPasses(); ++Index) {
+    FunctionPass *FP = getContainedPass(Index);
+
     AnalysisUsage AnUsage;
-    P->getAnalysisUsage(AnUsage);
+    FP->getAnalysisUsage(AnUsage);
 
     std::string Msg2 = "' on Function '" + F.getName() + "'...\n";
-    dumpPassInfo(P, Msg1, Msg2);
-    dumpAnalysisSetInfo("Required", P, AnUsage.getRequiredSet());
+    dumpPassInfo(FP, Msg1, Msg2);
+    dumpAnalysisSetInfo("Required", FP, AnUsage.getRequiredSet());
 
-    initializeAnalysisImpl(P);    
-    FunctionPass *FP = dynamic_cast<FunctionPass*>(P);
+    initializeAnalysisImpl(FP);
 
-    if (TheTimeInfo) TheTimeInfo->passStarted(P);
+    if (TheTimeInfo) TheTimeInfo->passStarted(FP);
     Changed |= FP->runOnFunction(F);
-    if (TheTimeInfo) TheTimeInfo->passEnded(P);
+    if (TheTimeInfo) TheTimeInfo->passEnded(FP);
 
     if (Changed)
-      dumpPassInfo(P, Msg3, Msg2);
-    dumpAnalysisSetInfo("Preserved", P, AnUsage.getPreservedSet());
+      dumpPassInfo(FP, Msg3, Msg2);
+    dumpAnalysisSetInfo("Preserved", FP, AnUsage.getPreservedSet());
 
-    removeNotPreservedAnalysis(P);
-    recordAvailableAnalysis(P);
-    removeDeadPasses(P, Msg2);
+    removeNotPreservedAnalysis(FP);
+    recordAvailableAnalysis(FP);
+    removeDeadPasses(FP, Msg2);
   }
   return Changed;
 }
@@ -1268,11 +1271,8 @@ bool FunctionPassManagerImpl_New::runOnFunction(Function &F) {
 inline bool FunctionPassManagerImpl_New::doInitialization(Module &M) {
   bool Changed = false;
 
-  for (std::vector<Pass *>::iterator itr = passVectorBegin(),
-         e = passVectorEnd(); itr != e; ++itr) {
-    Pass *P = *itr;
-    
-    FunctionPass *FP = dynamic_cast<FunctionPass*>(P);
+  for (unsigned Index = 0; Index < getNumContainedPasses(); ++Index) {  
+    FunctionPass *FP = getContainedPass(Index);
     Changed |= FP->doInitialization(M);
   }
 
@@ -1282,11 +1282,8 @@ inline bool FunctionPassManagerImpl_New::doInitialization(Module &M) {
 inline bool FunctionPassManagerImpl_New::doFinalization(Module &M) {
   bool Changed = false;
 
-  for (std::vector<Pass *>::iterator itr = passVectorBegin(),
-         e = passVectorEnd(); itr != e; ++itr) {
-    Pass *P = *itr;
-    
-    FunctionPass *FP = dynamic_cast<FunctionPass*>(P);
+  for (unsigned Index = 0; Index < getNumContainedPasses(); ++Index) {  
+    FunctionPass *FP = getContainedPass(Index);
     Changed |= FP->doFinalization(M);
   }
 
@@ -1387,30 +1384,29 @@ ModulePassManager::runOnModule(Module &M) {
   std::string Msg1 = "Executing Pass '";
   std::string Msg3 = "' Made Modification '";
 
-  for (std::vector<Pass *>::iterator itr = passVectorBegin(),
-         e = passVectorEnd(); itr != e; ++itr) {
-    Pass *P = *itr;
+  for (unsigned Index = 0; Index < getNumContainedPasses(); ++Index) {
+    ModulePass *MP = getContainedPass(Index);
+
     AnalysisUsage AnUsage;
-    P->getAnalysisUsage(AnUsage);
+    MP->getAnalysisUsage(AnUsage);
 
     std::string Msg2 = "' on Module '" + M.getModuleIdentifier() + "'...\n";
-    dumpPassInfo(P, Msg1, Msg2);
-    dumpAnalysisSetInfo("Required", P, AnUsage.getRequiredSet());
+    dumpPassInfo(MP, Msg1, Msg2);
+    dumpAnalysisSetInfo("Required", MP, AnUsage.getRequiredSet());
 
-    initializeAnalysisImpl(P);
-    ModulePass *MP = dynamic_cast<ModulePass*>(P);
+    initializeAnalysisImpl(MP);
 
-    if (TheTimeInfo) TheTimeInfo->passStarted(P);
+    if (TheTimeInfo) TheTimeInfo->passStarted(MP);
     Changed |= MP->runOnModule(M);
-    if (TheTimeInfo) TheTimeInfo->passEnded(P);
+    if (TheTimeInfo) TheTimeInfo->passEnded(MP);
 
     if (Changed)
-      dumpPassInfo(P, Msg3, Msg2);
-    dumpAnalysisSetInfo("Preserved", P, AnUsage.getPreservedSet());
+      dumpPassInfo(MP, Msg3, Msg2);
+    dumpAnalysisSetInfo("Preserved", MP, AnUsage.getPreservedSet());
       
-    removeNotPreservedAnalysis(P);
-    recordAvailableAnalysis(P);
-    removeDeadPasses(P, Msg2);
+    removeNotPreservedAnalysis(MP);
+    recordAvailableAnalysis(MP);
+    removeDeadPasses(MP, Msg2);
   }
   return Changed;
 }
