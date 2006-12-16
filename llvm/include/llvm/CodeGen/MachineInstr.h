@@ -76,6 +76,9 @@ private:
   int offset;
 
   MachineOperand() {}
+
+  void print(std::ostream &os) const;
+
 public:
   MachineOperand(const MachineOperand &M) {
     *this = M;
@@ -285,8 +288,14 @@ public:
     IsDead = false;
   }
 
-  friend OStream& operator<<(OStream& os, const MachineOperand& mop);
-  friend std::ostream& operator<<(std::ostream& os, const MachineOperand& mop);
+  friend OStream& operator<<(OStream& os, const MachineOperand& mop) {
+    if (os.stream()) mop.print(*os.stream());
+    return os;
+  }
+  friend std::ostream& operator<<(std::ostream& os, const MachineOperand& mop) {
+    mop.print(os);
+    return os;
+  }
 
   friend class MachineInstr;
 };
@@ -398,9 +407,16 @@ public:
     if (OS.stream()) print(*OS.stream(), TM);
   }
   void print(std::ostream &OS, const TargetMachine *TM) const;
+  void print(std::ostream &OS) const;
   void dump() const;
-  friend OStream& operator<<(OStream& os, const MachineInstr& minstr);
-  friend std::ostream& operator<<(std::ostream& os, const MachineInstr& minstr);
+  friend OStream& operator<<(OStream& os, const MachineInstr& minstr) {
+    if (os.stream()) minstr.print(*os.stream());
+    return os;
+  }
+  friend std::ostream& operator<<(std::ostream& os, const MachineInstr& minstr){
+    minstr.print(os);
+    return os;
+  }
 
   //===--------------------------------------------------------------------===//
   // Accessors to add operands when building up machine instructions.

@@ -304,74 +304,61 @@ void MachineInstr::print(std::ostream &OS, const TargetMachine *TM) const {
   OS << "\n";
 }
 
-std::ostream &llvm::operator<<(std::ostream &os, const MachineInstr &MI) {
+void MachineInstr::print(std::ostream &os) const {
   // If the instruction is embedded into a basic block, we can find the target
   // info for the instruction.
-  if (const MachineBasicBlock *MBB = MI.getParent()) {
+  if (const MachineBasicBlock *MBB = getParent()) {
     const MachineFunction *MF = MBB->getParent();
     if (MF)
-      MI.print(os, &MF->getTarget());
+      print(os, &MF->getTarget());
     else
-      MI.print(os, 0);
-    return os;
+      print(os, 0);
   }
 
   // Otherwise, print it out in the "raw" format without symbolic register names
   // and such.
-  os << MI.getInstrDescriptor()->Name;
+  os << getInstrDescriptor()->Name;
 
-  for (unsigned i = 0, N = MI.getNumOperands(); i < N; i++) {
-    os << "\t" << MI.getOperand(i);
-    if (MI.getOperand(i).isReg() && MI.getOperand(i).isDef())
+  for (unsigned i = 0, N = getNumOperands(); i < N; i++) {
+    os << "\t" << getOperand(i);
+    if (getOperand(i).isReg() && getOperand(i).isDef())
       os << "<d>";
   }
 
-  return os << "\n";
+  os << "\n";
 }
 
-std::ostream &llvm::operator<<(std::ostream &OS, const MachineOperand &MO) {
-  switch (MO.getType()) {
-  case MachineOperand::MO_Register:
-    OutputReg(OS, MO.getReg());
+void MachineOperand::print(std::ostream &OS) const {
+  switch (getType()) {
+  case MO_Register:
+    OutputReg(OS, getReg());
     break;
-  case MachineOperand::MO_Immediate:
-    OS << (long)MO.getImmedValue();
+  case MO_Immediate:
+    OS << (long)getImmedValue();
     break;
-  case MachineOperand::MO_MachineBasicBlock:
+  case MO_MachineBasicBlock:
     OS << "<mbb:"
-       << ((Value*)MO.getMachineBasicBlock()->getBasicBlock())->getName()
-       << "@" << (void*)MO.getMachineBasicBlock() << ">";
+       << ((Value*)getMachineBasicBlock()->getBasicBlock())->getName()
+       << "@" << (void*)getMachineBasicBlock() << ">";
     break;
-  case MachineOperand::MO_FrameIndex:
-    OS << "<fi#" << MO.getFrameIndex() << ">";
+  case MO_FrameIndex:
+    OS << "<fi#" << getFrameIndex() << ">";
     break;
-  case MachineOperand::MO_ConstantPoolIndex:
-    OS << "<cp#" << MO.getConstantPoolIndex() << ">";
+  case MO_ConstantPoolIndex:
+    OS << "<cp#" << getConstantPoolIndex() << ">";
     break;
-  case MachineOperand::MO_JumpTableIndex:
-    OS << "<jt#" << MO.getJumpTableIndex() << ">";
+  case MO_JumpTableIndex:
+    OS << "<jt#" << getJumpTableIndex() << ">";
     break;
-  case MachineOperand::MO_GlobalAddress:
-    OS << "<ga:" << ((Value*)MO.getGlobal())->getName() << ">";
+  case MO_GlobalAddress:
+    OS << "<ga:" << ((Value*)getGlobal())->getName() << ">";
     break;
-  case MachineOperand::MO_ExternalSymbol:
-    OS << "<es:" << MO.getSymbolName() << ">";
+  case MO_ExternalSymbol:
+    OS << "<es:" << getSymbolName() << ">";
     break;
   default:
     assert(0 && "Unrecognized operand type");
     break;
   }
-
-  return OS;
-}
-
-OStream& llvm::operator<<(OStream& os, const MachineInstr& minstr) {
-  if (os.stream()) *os.stream() << minstr;
-  return os;
-}
-
-OStream& llvm::operator<<(OStream& os, const MachineOperand& mop) {
-  if (os.stream()) *os.stream() << mop;
-  return os;
 }
 

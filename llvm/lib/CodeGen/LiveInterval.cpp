@@ -512,7 +512,6 @@ void LiveInterval::dump() const {
 }
 
 
-OStream& llvm::operator<<(OStream& os, const LiveRange &LR) {
-  if (os.stream()) *os.stream() << LR;
-  return os;
+void LiveRange::print(std::ostream &os) const {
+  os << *this;
 }

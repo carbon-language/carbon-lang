@@ -226,7 +226,10 @@ private:   // Methods used to maintain doubly linked list of blocks...
 };
 
 std::ostream& operator<<(std::ostream &OS, const MachineBasicBlock &MBB);
-OStream& operator<<(OStream &OS, const MachineBasicBlock &MBB);
+inline OStream& operator<<(OStream &OS, const MachineBasicBlock &MBB) {
+  if (OS.stream()) MBB.print(*OS.stream());
+  return OS;
+}
 
 //===--------------------------------------------------------------------===//
 // GraphTraits specializations for machine basic block graphs (machine-CFGs)

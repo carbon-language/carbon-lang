@@ -56,13 +56,18 @@ namespace llvm {
     }
 
     void dump() const;
+    void print(std::ostream &os) const;
 
   private:
     LiveRange(); // DO NOT IMPLEMENT
   };
 
   std::ostream& operator<<(std::ostream& os, const LiveRange &LR);
-  OStream& operator<<(OStream& os, const LiveRange &LR);
+  inline OStream& operator<<(OStream& os, const LiveRange &LR) {
+    if (os.stream()) LR.print(*os.stream());
+    return os;
+  }
+
 
   inline bool operator<(unsigned V, const LiveRange &LR) {
     return V < LR.start;
