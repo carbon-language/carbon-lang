@@ -24,11 +24,11 @@ namespace {
   public:
     PPCMachOWriter(std::ostream &O, PPCTargetMachine &TM) : MachOWriter(O, TM) {
       if (TM.getTargetData()->getPointerSizeInBits() == 64) {
-        Header.cputype = MachOHeader::CPU_TYPE_POWERPC64;
+        Header.cputype = MachOHeader::HDR_CPU_TYPE_POWERPC64;
       } else {
-        Header.cputype = MachOHeader::CPU_TYPE_POWERPC;
+        Header.cputype = MachOHeader::HDR_CPU_TYPE_POWERPC;
       }
-      Header.cpusubtype = MachOHeader::CPU_SUBTYPE_POWERPC_ALL;
+      Header.cpusubtype = MachOHeader::HDR_CPU_SUBTYPE_POWERPC_ALL;
     }
 
     virtual void GetTargetRelocation(MachineRelocation &MR, MachOSection &From,

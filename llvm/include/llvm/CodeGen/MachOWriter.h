@@ -138,23 +138,60 @@ namespace llvm {
       /// up for emission to the file.
       DataBuffer HeaderData;
 
+      // The various CPU_TYPE_* constants are already defined by at least one
+      // system header file and create compilation errors if not respected.
+#if !defined(CPU_TYPE_I386)
+#define CPU_TYPE_I386		7
+#endif
+#if !defined(CPU_TYPE_X86_64)
+#define CPU_TYPE_X86_64		(CPU_TYPE_I386 | 0x1000000)
+#endif
+#if !defined(CPU_TYPE_ARM)
+#define CPU_TYPE_ARM		12
+#endif
+#if !defined(CPU_TYPE_SPARC)
+#define CPU_TYPE_SPARC		14
+#endif
+#if !defined(CPU_TYPE_POWERPC)
+#define CPU_TYPE_POWERPC	18
+#endif
+#if !defined(CPU_TYPE_POWERPC64)
+#define CPU_TYPE_POWERPC64	(CPU_TYPE_POWERPC | 0x1000000)
+#endif
+
       // Constants for the cputype field
       // see <mach/machine.h>
-      enum { CPU_TYPE_I386      = 7,
-             CPU_TYPE_X86_64    = 7 | 0x1000000,
-             CPU_TYPE_ARM       = 12,
-             CPU_TYPE_SPARC     = 14,
-             CPU_TYPE_POWERPC   = 18,
-             CPU_TYPE_POWERPC64 = 18 | 0x1000000
+      enum { HDR_CPU_TYPE_I386      = CPU_TYPE_I386,
+             HDR_CPU_TYPE_X86_64    = CPU_TYPE_X86_64,
+             HDR_CPU_TYPE_ARM       = CPU_TYPE_ARM,
+             HDR_CPU_TYPE_SPARC     = CPU_TYPE_SPARC,
+             HDR_CPU_TYPE_POWERPC   = CPU_TYPE_POWERPC,
+             HDR_CPU_TYPE_POWERPC64 = CPU_TYPE_POWERPC64
       };
       
+#if !defined(CPU_SUBTYPE_I386_ALL)
+#define CPU_SUBTYPE_I386_ALL	3
+#endif
+#if !defined(CPU_SUBTYPE_X86_64_ALL)
+#define CPU_SUBTYPE_X86_64_ALL	3
+#endif
+#if !defined(CPU_SUBTYPE_ARM_ALL)
+#define CPU_SUBTYPE_ARM_ALL	0
+#endif
+#if !defined(CPU_SUBTYPE_SPARC_ALL)
+#define CPU_SUBTYPE_SPARC_ALL	0
+#endif
+#if !defined(CPU_SUBTYPE_POWERPC_ALL)
+#define CPU_SUBTYPE_POWERPC_ALL	0
+
+#endif
       // Constants for the cpusubtype field
       // see <mach/machine.h>
-      enum { CPU_SUBTYPE_I386_ALL    = 3,
-             CPU_SUBTYPE_X86_64_ALL  = 3,
-             CPU_SUBTYPE_ARM_ALL     = 0,
-             CPU_SUBTYPE_SPARC_ALL   = 0,
-             CPU_SUBTYPE_POWERPC_ALL = 0
+      enum { HDR_CPU_SUBTYPE_I386_ALL = CPU_SUBTYPE_I386_ALL,
+             HDR_CPU_SUBTYPE_X86_64_ALL = CPU_SUBTYPE_X86_64_ALL,
+             HDR_CPU_SUBTYPE_ARM_ALL = CPU_SUBTYPE_ARM_ALL,
+             HDR_CPU_SUBTYPE_SPARC_ALL = CPU_SUBTYPE_SPARC_ALL,
+             HDR_CPU_SUBTYPE_POWERPC_ALL = CPU_SUBTYPE_POWERPC_ALL
       };
              
       // Constants for the filetype field
@@ -267,13 +304,31 @@ namespace llvm {
       uint32_t    nsects;   // number of sections in this segment
       uint32_t    flags;    // flags
       
+      // The following constants are getting pulled in by one of the
+      // system headers, which creates a neat clash with the enum.
+#if !defined(VM_PROT_NONE)
+#define VM_PROT_NONE		0x00
+#endif
+#if !defined(VM_PROT_READ)
+#define VM_PROT_READ		0x01
+#endif
+#if !defined(VM_PROT_WRITE)
+#define VM_PROT_WRITE		0x02
+#endif
+#if !defined(VM_PROT_EXECUTE)
+#define VM_PROT_EXECUTE		0x04
+#endif
+#if !defined(VM_PROT_ALL)
+#define VM_PROT_ALL		0x07
+#endif
+
       // Constants for the vm protection fields
       // see <mach-o/vm_prot.h>
-      enum { VM_PROT_NONE    = 0x00, 
-             VM_PROT_READ    = 0x01, // read permission
-             VM_PROT_WRITE   = 0x02, // write permission
-             VM_PROT_EXECUTE = 0x04, // execute permission,
-             VM_PROT_ALL     = 0x07
+      enum { SEG_VM_PROT_NONE     = VM_PROT_NONE, 
+             SEG_VM_PROT_READ     = VM_PROT_READ, // read permission
+             SEG_VM_PROT_WRITE    = VM_PROT_WRITE, // write permission
+             SEG_VM_PROT_EXECUTE  = VM_PROT_EXECUTE,
+             SEG_VM_PROT_ALL      = VM_PROT_ALL
       };
       
       // Constants for the cmd field
