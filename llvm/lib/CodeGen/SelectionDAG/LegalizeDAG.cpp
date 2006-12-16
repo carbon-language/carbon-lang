@@ -5055,9 +5055,6 @@ void SelectionDAGLegalize::ExpandOp(SDOperand Op, SDOperand &Lo, SDOperand &Hi){
   case ISD::SREM: Lo = ExpandLibCall("__moddi3" , Node, Hi); break;
   case ISD::UREM: Lo = ExpandLibCall("__umoddi3", Node, Hi); break;
 
-  case ISD::FNEG:
-    Lo = ExpandLibCall(((VT == MVT::f32) ? "__negsf2" : "__negdf2"), Node, Hi);
-    break;
   case ISD::FADD:
     Lo = ExpandLibCall(((VT == MVT::f32) ? "__addsf3" : "__adddf3"), Node, Hi);
     break;
@@ -5105,6 +5102,28 @@ void SelectionDAGLegalize::ExpandOp(SDOperand Op, SDOperand &Lo, SDOperand &Hi){
     default: assert(0 && "Unreachable!");
     }
     Lo = ExpandLibCall(FnName, Node, Hi);
+    break;
+  }
+  case ISD::FABS: {
+    SDOperand Mask = (VT == MVT::f64)
+      ? DAG.getConstantFP(BitsToDouble(~(1ULL << 63)), VT)
+      : DAG.getConstantFP(BitsToFloat(~(1U << 31)), VT);
+    Mask = DAG.getNode(ISD::BIT_CONVERT, NVT, Mask);
+    Lo = DAG.getNode(ISD::BIT_CONVERT, NVT, Node->getOperand(0));
+    Lo = DAG.getNode(ISD::AND, NVT, Lo, Mask);
+    if (getTypeAction(NVT) == Expand)
+      ExpandOp(Lo, Lo, Hi);
+    break;
+  }
+  case ISD::FNEG: {
+    SDOperand Mask = (VT == MVT::f64)
+      ? DAG.getConstantFP(BitsToDouble(1ULL << 63), VT)
+      : DAG.getConstantFP(BitsToFloat(1U << 31), VT);
+    Mask = DAG.getNode(ISD::BIT_CONVERT, NVT, Mask);
+    Lo = DAG.getNode(ISD::BIT_CONVERT, NVT, Node->getOperand(0));
+    Lo = DAG.getNode(ISD::XOR, NVT, Lo, Mask);
+    if (getTypeAction(NVT) == Expand)
+      ExpandOp(Lo, Lo, Hi);
     break;
   }
   }
