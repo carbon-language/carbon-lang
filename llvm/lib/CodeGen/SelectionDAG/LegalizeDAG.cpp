@@ -4523,6 +4523,7 @@ void SelectionDAGLegalize::ExpandOp(SDOperand Op, SDOperand &Lo, SDOperand &Hi){
     assert(0 && "Do not know how to expand this operator!");
     abort();
   case ISD::UNDEF:
+    NVT = TLI.getTypeToExpandTo(VT);
     Lo = DAG.getNode(ISD::UNDEF, NVT);
     Hi = DAG.getNode(ISD::UNDEF, NVT);
     break;
