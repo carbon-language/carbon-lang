@@ -4399,7 +4399,8 @@ SelectInlineAsmMemoryOperands(std::vector<SDOperand> &Ops, SelectionDAG &DAG) {
       }
       
       // Add this to the output node.
-      Ops.push_back(DAG.getConstant(4/*MEM*/ | (SelOps.size() << 3), MVT::i32));
+      Ops.push_back(DAG.getTargetConstant(4/*MEM*/ | (SelOps.size() << 3),
+                                          MVT::i32));
       Ops.insert(Ops.end(), SelOps.begin(), SelOps.end());
       i += 2;
     }
