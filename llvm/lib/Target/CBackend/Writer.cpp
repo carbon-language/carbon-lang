@@ -1696,7 +1696,7 @@ void CWriter::printFunction(Function &F) {
   bool PrintedVar = false;
   
   // print local variable information for the function
-  for (inst_iterator I = inst_begin(&F), E = inst_end(&F); I != E; ++I)
+  for (inst_iterator I = inst_begin(&F), E = inst_end(&F); I != E; ++I) {
     if (const AllocaInst *AI = isDirectAlloca(&*I)) {
       Out << "  ";
       printType(Out, AI->getAllocatedType(), Mang->getValueName(AI));
@@ -1714,16 +1714,20 @@ void CWriter::printFunction(Function &F) {
         Out << ";\n";
       }
       PrintedVar = true;
-    } else if (isa<BitCastInst>(*I) && 
-               ((I->getType()->isFloatingPoint() && 
-                 I->getOperand(0)->getType()->isInteger()) ||
-                (I->getType()->isInteger() && 
-                 I->getOperand(0)->getType()->isFloatingPoint()))) {
-      // We need a temporary for the BitCast to use so it can pluck a 
-      // value out of a union to do the BitCast.
+    }
+    // We need a temporary for the BitCast to use so it can pluck a value out
+    // of a uniont to do the BitCast. This is separate from the need for a
+    // variable to hold the result of the BitCast. 
+    if (isa<BitCastInst>(*I) && 
+        ((I->getType()->isFloatingPoint() && 
+          I->getOperand(0)->getType()->isInteger()) ||
+         (I->getType()->isInteger() && 
+          I->getOperand(0)->getType()->isFloatingPoint()))) {
       Out << "  llvmBitCastUnion " << Mang->getValueName(&*I)
           << "__BITCAST_TEMPORARY;\n";
+      PrintedVar = true;
     }
+  }
 
   if (PrintedVar)
     Out << '\n';
@@ -2026,6 +2030,7 @@ void CWriter::visitCastInst(CastInst &I) {
         I.getOperand(0)->getType()->isInteger()) ||
        (I.getType()->isInteger() && 
         I.getOperand(0)->getType()->isFloatingPoint()))) {
+    
     // These int<->float and long<->double casts need to be handled specially
     Out << Mang->getValueName(&I) << "__BITCAST_TEMPORARY." 
         << getFloatBitCastField(I.getOperand(0)->getType()) << " = ";
