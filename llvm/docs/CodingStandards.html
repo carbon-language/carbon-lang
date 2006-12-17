@@ -509,7 +509,7 @@ library. There are two problems with this:</p>
       more pressure on the VM system on low-memory machines.</li>
 </ol>
 
-<table>
+<table align="center">
   <tbody>
     <tr>
       <th>Old Way</th>
@@ -520,8 +520,10 @@ library. There are two problems with this:</p>
       <td align="left"><pre>#include "llvm/Support/Streams.h"</pre></td>
     </tr>
     <tr>
-      <td align="left"><pre>DEBUG(std::cerr &lt;&lt; ...);</pre></td>
-      <td align="left"><pre>DOUT &lt;&lt; ...;</pre></td>
+      <td align="left"><pre>DEBUG(std::cerr &lt;&lt; ...);
+DEBUG(dump(std::cerr));</pre></td>
+      <td align="left"><pre>DOUT &lt;&lt; ...;
+dump(DOUT);</pre></td>
     </tr>
     <tr>
       <td align="left"><pre>std::cerr &lt;&lt; "Hello world\n";</pre></td>
@@ -534,6 +536,12 @@ library. There are two problems with this:</p>
     <tr>
       <td align="left"><pre>std::cin &gt;&gt; Var;</pre></td>
       <td align="left"><pre>llvm::cin &gt;&gt; Var;</pre></td>
+    </tr>
+    <tr>
+      <td align="left"><em>N/A</em></td>
+      <td align="left"><pre>llvm::cnull &gt;&gt; Var;</pre>
+        <ul><i>N.B.</i> Eats up argument <tt>Var</tt> outputting
+            nothing.</ul></td>
     </tr>
     <tr>
       <td align="left"><pre>std::ostream</pre></td>
@@ -552,9 +560,14 @@ library. There are two problems with this:</p>
 // ...
 print(std::cerr);</pre></td>
       <td align="left"><pre>void print(std::ostream &Out);
+void print(std::ostream *Out) { if (Out) print(*Out) }
 // ...
-print(*llvm::cerr.stream());</pre></td>
-  </tbody>
+print(llvm::cerr);</pre>
+
+<ul><i>N.B.</i> The second <tt>print</tt> method is called by the <tt>print</tt>
+expression. It prevents the execution of the first <tt>print</tt> method if the
+stream is <tt>cnull</tt>.</ul></td>
+   </tbody>
 </table>
 
 </div>
