@@ -1676,6 +1676,15 @@ void CWriter::printFunctionSignature(const Function *F, bool Prototype) {
   printType(Out, RetTy, FunctionInnards.str());
 }
 
+static inline bool isFPIntBitCast(const Instruction &I) {
+  if (!isa<BitCastInst>(I))
+    return false;
+  const Type *SrcTy = I.getOperand(0)->getType();
+  const Type *DstTy = I.getType();
+  return (SrcTy->isFloatingPoint() && DstTy->isInteger()) ||
+         (DstTy->isFloatingPoint() && SrcTy->isInteger());
+}
+
 void CWriter::printFunction(Function &F) {
   printFunctionSignature(&F, false);
   Out << " {\n";
@@ -1718,11 +1727,7 @@ void CWriter::printFunction(Function &F) {
     // We need a temporary for the BitCast to use so it can pluck a value out
     // of a uniont to do the BitCast. This is separate from the need for a
     // variable to hold the result of the BitCast. 
-    if (isa<BitCastInst>(*I) && 
-        ((I->getType()->isFloatingPoint() && 
-          I->getOperand(0)->getType()->isInteger()) ||
-         (I->getType()->isInteger() && 
-          I->getOperand(0)->getType()->isFloatingPoint()))) {
+    if (isFPIntBitCast(*I)) {
       Out << "  llvmBitCastUnion " << Mang->getValueName(&*I)
           << "__BITCAST_TEMPORARY;\n";
       PrintedVar = true;
@@ -2025,12 +2030,7 @@ void CWriter::visitCastInst(CastInst &I) {
   const Type *DstTy = I.getType();
   const Type *SrcTy = I.getOperand(0)->getType();
   Out << '(';
-  if (isa<BitCastInst>(I) &&
-      ((I.getType()->isFloatingPoint() && 
-        I.getOperand(0)->getType()->isInteger()) ||
-       (I.getType()->isInteger() && 
-        I.getOperand(0)->getType()->isFloatingPoint()))) {
-    
+  if (isFPIntBitCast(I)) {
     // These int<->float and long<->double casts need to be handled specially
     Out << Mang->getValueName(&I) << "__BITCAST_TEMPORARY." 
         << getFloatBitCastField(I.getOperand(0)->getType()) << " = ";
