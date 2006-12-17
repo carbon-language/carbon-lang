@@ -487,7 +487,7 @@ private:
   /// printNI - Print node info.
   ///
   void printNI(std::ostream &O, NodeInfo *NI) const;
-  void printNI(std::ostream *O, NodeInfo *NI) const { if (O) printNI(O, NI); }
+  void printNI(std::ostream *O, NodeInfo *NI) const { if (O) printNI(*O, NI); }
   
   /// printChanges - Hilight changes in order caused by scheduling.
   ///
