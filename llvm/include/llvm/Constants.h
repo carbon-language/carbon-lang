@@ -205,7 +205,7 @@ public:
       int64_t V = getSExtValue();
       if (V < 0) return false;    // Be careful about wrap-around on 'long's
       ++V;
-      return !isValueValidForType(getType(), V) || V < 0;
+      return !isValueValidForType(getType()->getSignedVersion(), V) || V < 0;
     }
     return isAllOnesValue();
   }
@@ -219,7 +219,7 @@ public:
       int64_t V = getSExtValue();
       if (V > 0) return false;    // Be careful about wrap-around on 'long's
       --V;
-      return !isValueValidForType(getType(), V) || V > 0;
+      return !isValueValidForType(getType()->getSignedVersion(), V) || V > 0;
     }
     return getZExtValue() == 0;
   }
