@@ -61,6 +61,9 @@ public:
 
   // print - Show contents in human readable format...
   virtual void print(std::ostream &O, const Module* = 0) const;
+  void print(std::ostream *O, const Module* M = 0) const {
+    if (O) print(*O, M);
+  }
 
   // getRootInterval() - Return the root interval that contains the starting
   // block of the function.

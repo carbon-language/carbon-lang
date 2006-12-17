@@ -152,10 +152,8 @@ public:
   ///
   void initialize(Module &M);
 
-  void print(OStream &o, const Module *M) const {
-    if (o.stream()) print(*o.stream(), M);
-  }
   virtual void print(std::ostream &o, const Module *M) const;
+  void print(std::ostream *o, const Module *M) const { if (o) print(*o, M); }
   void dump() const;
   
   // stub - dummy function, just ignore it
@@ -201,10 +199,8 @@ public:
   /// dump - Print out this call graph node.
   ///
   void dump() const;
-  void print(OStream &OS) const {
-    if (OS.stream()) print(*OS.stream());
-  }
   void print(std::ostream &OS) const;
+  void print(std::ostream *OS) const { if (OS) print(*OS); }
 
   //===---------------------------------------------------------------------
   // Methods to keep a call graph up to date with a function that has been

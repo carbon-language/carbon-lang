@@ -75,10 +75,8 @@ public:
 
   /// print - Implement operator<< on Value...
   ///
-  void print(OStream &O) const {
-    if (O.stream()) print(*O.stream());
-  }
   virtual void print(std::ostream &O) const = 0;
+  void print(std::ostream *O) const { if (O) print(*O); }
 
   /// All values are typed, get the type of this value.
   ///

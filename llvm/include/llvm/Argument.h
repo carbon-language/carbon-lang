@@ -53,6 +53,9 @@ public:
   const Argument *getPrev() const { return Prev; }
 
   virtual void print(std::ostream &OS) const;
+  void print(std::ostream *OS) const {
+    if (OS) print(*OS);
+  }
 
   /// classof - Methods for support type inquiry through isa, cast, and
   /// dyn_cast:

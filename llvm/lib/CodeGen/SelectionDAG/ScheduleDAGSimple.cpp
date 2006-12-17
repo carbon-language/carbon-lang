@@ -473,7 +473,8 @@ private:
   
   /// print - Print ordering to specified output stream.
   ///
-  void print(OStream &O) const;
+  void print(std::ostream &O) const;
+  void print(std::ostream *O) const { if (O) print(*O); }
   
   void dump(const char *tag) const;
   
@@ -485,7 +486,8 @@ private:
 
   /// printNI - Print node info.
   ///
-  void printNI(OStream &O, NodeInfo *NI) const;
+  void printNI(std::ostream &O, NodeInfo *NI) const;
+  void printNI(std::ostream *O, NodeInfo *NI) const { if (O) printNI(O, NI); }
   
   /// printChanges - Hilight changes in order caused by scheduling.
   ///
@@ -636,7 +638,7 @@ void ScheduleDAGSimple::AddToGroup(NodeInfo *D, NodeInfo *U) {
 
 /// print - Print ordering to specified output stream.
 ///
-void ScheduleDAGSimple::print(OStream &O) const {
+void ScheduleDAGSimple::print(std::ostream &O) const {
 #ifndef NDEBUG
   O << "Ordering\n";
   for (unsigned i = 0, N = Ordering.size(); i < N; i++) {
@@ -710,16 +712,16 @@ static bool isFlagUser(SDNode *A) {
 
 /// printNI - Print node info.
 ///
-void ScheduleDAGSimple::printNI(OStream &O, NodeInfo *NI) const {
+void ScheduleDAGSimple::printNI(std::ostream &O, NodeInfo *NI) const {
 #ifndef NDEBUG
   SDNode *Node = NI->Node;
-  *(O.stream()) << " "
-                << std::hex << Node << std::dec
-                << ", Lat=" << NI->Latency
-                << ", Slot=" << NI->Slot
-                << ", ARITY=(" << Node->getNumOperands() << ","
-                << Node->getNumValues() << ")"
-                << " " << Node->getOperationName(&DAG);
+  O << " "
+    << std::hex << Node << std::dec
+    << ", Lat=" << NI->Latency
+    << ", Slot=" << NI->Slot
+    << ", ARITY=(" << Node->getNumOperands() << ","
+    << Node->getNumValues() << ")"
+    << " " << Node->getOperationName(&DAG);
   if (isFlagDefiner(Node)) O << "<#";
   if (isFlagUser(Node)) O << ">#";
 #endif

@@ -99,6 +99,7 @@ public:
 
   /// print - Show contents in human readable format...
   void print(std::ostream &O) const;
+  void print(std::ostream *O) const { if (O) print(*O); }
 };
 
 /// succ_begin/succ_end - define methods so that Intervals may be used

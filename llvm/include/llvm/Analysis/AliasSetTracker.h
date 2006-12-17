@@ -156,10 +156,8 @@ public:
   iterator end()   const { return iterator(); }
   bool empty() const { return PtrList == 0; }
 
-  void print(OStream &OS) const {
-    if (OS.stream()) print(*OS.stream());
-  }
   void print(std::ostream &OS) const;
+  void print(std::ostream *OS) const { if (OS) print(*OS); }
   void dump() const;
 
   /// Define an iterator for alias sets... this is just a forward iterator.
@@ -248,10 +246,6 @@ private:
   bool aliasesCallSite(CallSite CS, AliasAnalysis &AA) const;
 };
 
-inline OStream& operator<<(OStream &OS, const AliasSet &AS) {
-  AS.print(OS);
-  return OS;
-}
 inline std::ostream& operator<<(std::ostream &OS, const AliasSet &AS) {
   AS.print(OS);
   return OS;
@@ -361,10 +355,8 @@ public:
   iterator begin() { return AliasSets.begin(); }
   iterator end()   { return AliasSets.end(); }
 
-  void print(OStream &OS) const {
-    if (OS.stream()) print(*OS.stream());
-  }
   void print(std::ostream &OS) const;
+  void print(std::ostream *OS) const { if (OS) print(*OS); }
   void dump() const;
 
 private:
@@ -390,10 +382,6 @@ private:
   AliasSet *findAliasSetForCallSite(CallSite CS);
 };
 
-inline OStream& operator<<(OStream &OS, const AliasSetTracker &AST) {
-  AST.print(OS);
-  return OS;
-}
 inline std::ostream& operator<<(std::ostream &OS, const AliasSetTracker &AST) {
   AST.print(OS);
   return OS;

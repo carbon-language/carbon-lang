@@ -98,6 +98,7 @@ public:
   
   /// Print feature string.
   void print(std::ostream &OS) const;
+  void print(std::ostream *OS) const { if (OS) print(*OS); }
   
   // Dump feature info.
   void dump() const;

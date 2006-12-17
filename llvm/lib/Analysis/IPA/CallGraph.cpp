@@ -74,8 +74,8 @@ public:
     AU.setPreservesAll();
   }
 
-  void print(OStream &o, const Module *M) const {
-    if (o.stream()) print(*o.stream(), M);
+  void print(std::ostream *o, const Module *M) const {
+    if (o) print(*o, M);
   }
 
   virtual void print(std::ostream &o, const Module *M) const {

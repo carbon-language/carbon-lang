@@ -31,6 +31,7 @@ namespace {
       (void) llvm::createSimpleRegisterAllocator();
       (void) llvm::createLocalRegisterAllocator();
       (void) llvm::createLinearScanRegisterAllocator();
+      (void) llvm::createGraphColoringRegisterAllocator();
       
       (void) llvm::createBFS_DAGScheduler(NULL, NULL, NULL);
       (void) llvm::createSimpleDAGScheduler(NULL, NULL, NULL);

@@ -106,7 +106,8 @@ public:
 
   /// print - Write trace to output stream.
   ///
-  void print (OStream &O) const;
+  void print (std::ostream &O) const;
+  void print (std::ostream *O) const { if (O) print(*O); }
 
   /// dump - Debugger convenience method; writes trace to standard error
   /// output stream.

@@ -27,7 +27,6 @@
 
 #include "llvm/Support/Streams.h"
 #include <bitset>
-#include <vector>
 #include <functional>
 
 namespace llvm {
@@ -173,10 +172,8 @@ public:
   ///
   ///  Printing and debugging support
   ///
-  void print(OStream &O) const {
-    if (O.stream()) print(*O.stream());
-  }
   void print(std::ostream &O) const;
+  void print(std::ostream *O) const { if (O) print(*O); }
   void dump() const { print(cerr); }
 
 public:
@@ -247,23 +244,17 @@ public:
 };
 
 
-inline void BitSetVector::print(std::ostream& O) const
+inline void BitSetVector::print(llvm_ostream& O) const
 {
   for (std::vector<bitword>::const_iterator
          I=bitsetVec.begin(), E=bitsetVec.end(); I != E; ++I)
     O << "<" << (*I) << ">" << (I+1 == E? "\n" : ", ");
 }
 
-inline OStream& operator<< (OStream& O, const BitSetVector& bset) {
+inline std::ostream& operator<<(std::ostream& O, const BitSetVector& bset) {
   bset.print(O);
   return O;
 }
-inline std::ostream& operator<< (std::ostream& O, const BitSetVector& bset)
-{
-  bset.print(O);
-  return O;
-}
-
 
 ///
 /// Optimized versions of fundamental comparison operations

@@ -145,10 +145,14 @@ namespace llvm {
     }
 
     void print(std::ostream &OS) const;
-    void print(OStream &OS) const;
+    void print(std::ostream *OS) const { if (OS) print(*OS); }
     void dump() const;
   };
 
+  inline std::ostream *operator<<(std::ostream *OS, const VirtRegMap &VRM) {
+    VRM.print(OS);
+    return OS;
+  }
   inline std::ostream &operator<<(std::ostream &OS, const VirtRegMap &VRM) {
     VRM.print(OS);
     return OS;

@@ -141,10 +141,8 @@ class ConstantRange {
 
   /// print - Print out the bounds to a stream...
   ///
-  void print(OStream &OS) const {
-    if (OS.stream()) print(*OS.stream());
-  }
   void print(std::ostream &OS) const;
+  void print(std::ostream *OS) const { if (OS) print(*OS); }
 
   /// dump - Allow printing from a debugger easily...
   ///

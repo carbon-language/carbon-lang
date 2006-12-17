@@ -96,7 +96,8 @@ bool LowerSwitch::runOnFunction(Function &F) {
 
 // operator<< - Used for debugging purposes.
 //
-OStream& operator<<(OStream &O, const std::vector<LowerSwitch::Case> &C) {
+std::ostream& operator<<(std::ostream &O,
+                         const std::vector<LowerSwitch::Case> &C) {
   O << "[";
 
   for (std::vector<LowerSwitch::Case>::const_iterator B = C.begin(),
@@ -106,6 +107,10 @@ OStream& operator<<(OStream &O, const std::vector<LowerSwitch::Case> &C) {
   }
 
   return O << "]";
+}
+OStream& operator<<(OStream &O, const std::vector<LowerSwitch::Case> &C) {
+  if (O.stream()) *O.stream() << C;
+  return O;
 }
 
 // switchConvert - Convert the switch statement into a binary lookup of

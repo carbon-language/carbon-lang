@@ -31,13 +31,12 @@ Module *Trace::getModule() const {
 
 /// print - Write trace to output stream.
 ///
-void Trace::print(OStream &O) const {
+void Trace::print(std::ostream &O) const {
   Function *F = getFunction ();
   O << "; Trace from function " << F->getName() << ", blocks:\n";
   for (const_iterator i = begin(), e = end(); i != e; ++i) {
     O << "; ";
-    if (O.stream())
-      WriteAsOperand(*O.stream(), *i, true, getModule());
+    WriteAsOperand(O, *i, true, getModule());
     O << "\n";
   }
   O << "; Trace parent function: \n" << *F;

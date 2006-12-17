@@ -141,10 +141,8 @@ protected:
   ///
   mutable std::vector<AbstractTypeUser *> AbstractTypeUsers;
 public:
-  void print(OStream &O) const {
-    if (O.stream()) print(*O.stream());
-  }
   void print(std::ostream &O) const;
+  void print(std::ostream *O) const { if (O) print(*O); }
 
   /// @brief Debugging support: print to stderr
   void dump() const;

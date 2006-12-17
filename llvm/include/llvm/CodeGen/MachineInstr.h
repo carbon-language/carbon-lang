@@ -78,6 +78,7 @@ private:
   MachineOperand() {}
 
   void print(std::ostream &os) const;
+  void print(std::ostream *os) const { if (os) print(*os); }
 
 public:
   MachineOperand(const MachineOperand &M) {
@@ -288,10 +289,6 @@ public:
     IsDead = false;
   }
 
-  friend OStream& operator<<(OStream& os, const MachineOperand& mop) {
-    if (os.stream()) mop.print(*os.stream());
-    return os;
-  }
   friend std::ostream& operator<<(std::ostream& os, const MachineOperand& mop) {
     mop.print(os);
     return os;
@@ -403,16 +400,13 @@ public:
   //
   // Debugging support
   //
-  void print(OStream &OS, const TargetMachine *TM) const {
-    if (OS.stream()) print(*OS.stream(), TM);
+  void print(std::ostream *OS, const TargetMachine *TM) const {
+    if (OS) print(*OS, TM);
   }
   void print(std::ostream &OS, const TargetMachine *TM) const;
   void print(std::ostream &OS) const;
+  void print(std::ostream *OS) const { if (OS) print(*OS); }
   void dump() const;
-  friend OStream& operator<<(OStream& os, const MachineInstr& minstr) {
-    if (os.stream()) minstr.print(*os.stream());
-    return os;
-  }
   friend std::ostream& operator<<(std::ostream& os, const MachineInstr& minstr){
     minstr.print(os);
     return os;

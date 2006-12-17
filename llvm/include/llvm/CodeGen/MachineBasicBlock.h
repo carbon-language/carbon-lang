@@ -189,10 +189,8 @@ public:
 
   // Debugging methods.
   void dump() const;
-  void print(OStream &OS) const {
-    if (OS.stream()) print(*OS.stream());
-  }
   void print(std::ostream &OS) const;
+  void print(std::ostream *OS) const { if (OS) print(*OS); }
 
   /// getNumber - MachineBasicBlocks are uniquely numbered at the function
   /// level, unless they're not in a MachineFunction yet, in which case this
@@ -226,10 +224,6 @@ private:   // Methods used to maintain doubly linked list of blocks...
 };
 
 std::ostream& operator<<(std::ostream &OS, const MachineBasicBlock &MBB);
-inline OStream& operator<<(OStream &OS, const MachineBasicBlock &MBB) {
-  if (OS.stream()) MBB.print(*OS.stream());
-  return OS;
-}
 
 //===--------------------------------------------------------------------===//
 // GraphTraits specializations for machine basic block graphs (machine-CFGs)

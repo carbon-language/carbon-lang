@@ -57,16 +57,13 @@ namespace llvm {
 
     void dump() const;
     void print(std::ostream &os) const;
+    void print(std::ostream *os) const { if (os) print(*os); }
 
   private:
     LiveRange(); // DO NOT IMPLEMENT
   };
 
   std::ostream& operator<<(std::ostream& os, const LiveRange &LR);
-  inline OStream& operator<<(OStream& os, const LiveRange &LR) {
-    if (os.stream()) LR.print(*os.stream());
-    return os;
-  }
 
 
   inline bool operator<(unsigned V, const LiveRange &LR) {
@@ -260,9 +257,9 @@ namespace llvm {
       return beginNumber() < other.beginNumber();
     }
 
-    void print(OStream OS, const MRegisterInfo *MRI = 0) const;
-    void print(std::ostream &OS, const MRegisterInfo *MRI = 0) const {
-      print(OStream(OS), MRI);
+    void print(std::ostream &OS, const MRegisterInfo *MRI = 0) const;
+    void print(std::ostream *OS, const MRegisterInfo *MRI = 0) const {
+      if (OS) print(*OS, MRI);
     }
     void dump() const;
 
@@ -272,11 +269,6 @@ namespace llvm {
     Ranges::iterator extendIntervalStartTo(Ranges::iterator I, unsigned NewStr);
     LiveInterval& operator=(const LiveInterval& rhs); // DO NOT IMPLEMENT
   };
-
-  inline OStream &operator<<(OStream &OS, const LiveInterval &LI) {
-    LI.print(OS);
-    return OS;
-  }
 
   inline std::ostream &operator<<(std::ostream &OS, const LiveInterval &LI) {
     LI.print(OS);

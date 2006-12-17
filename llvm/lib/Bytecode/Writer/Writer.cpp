@@ -1297,4 +1297,6 @@ void llvm::WriteBytecodeToFile(const Module *M, OStream &Out,
 
   // make sure it hits disk now
   Out.stream()->flush();
+  void * p;
+  Out << std::hex << p << "\n";
 }

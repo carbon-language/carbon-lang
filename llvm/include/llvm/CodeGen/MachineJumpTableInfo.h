@@ -90,6 +90,7 @@ public:
   /// jump tables.  Implemented in MachineFunction.cpp
   ///
   void print(std::ostream &OS) const;
+  void print(std::ostream *OS) const { if (OS) print(*OS); }
 
   /// dump - Call print(std::cerr) to be called from the debugger.
   ///

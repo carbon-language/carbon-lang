@@ -97,20 +97,14 @@ namespace llvm {
     /// print - Print out the internal representation of this scalar to the
     /// specified stream.  This should really only be used for debugging
     /// purposes.
-    void print(OStream &OS) const {
-      if (OS.stream()) print(*OS.stream());
-    }
     virtual void print(std::ostream &OS) const = 0;
+    void print(std::ostream *OS) const { if (OS) print(*OS); }
 
     /// dump - This method is used for debugging.
     ///
     void dump() const;
   };
 
-  inline OStream &operator<<(OStream &OS, const SCEV &S) {
-    S.print(OS);
-    return OS;
-  }
   inline std::ostream &operator<<(std::ostream &OS, const SCEV &S) {
     S.print(OS);
     return OS;
@@ -128,10 +122,8 @@ namespace llvm {
     virtual bool isLoopInvariant(const Loop *L) const;
     virtual const Type *getType() const;
     virtual bool hasComputableLoopEvolution(const Loop *L) const;
-    void print(OStream &OS) const {
-      if (OS.stream()) print(*OS.stream());
-    }
     virtual void print(std::ostream &OS) const;
+    void print(std::ostream *OS) const { if (OS) print(*OS); }
     virtual SCEVHandle
     replaceSymbolicValuesWithConcrete(const SCEVHandle &Sym,
                                       const SCEVHandle &Conc) const;
@@ -242,10 +234,10 @@ namespace llvm {
     virtual bool runOnFunction(Function &F);
     virtual void releaseMemory();
     virtual void getAnalysisUsage(AnalysisUsage &AU) const;
-    void print(OStream &OS, const Module* = 0) const {
-      if (OS.stream()) print(*OS.stream());
-    }
     virtual void print(std::ostream &OS, const Module* = 0) const;
+    void print(std::ostream *OS, const Module* M = 0) const {
+      if (OS) print(*OS, M);
+    }
   };
 }
 

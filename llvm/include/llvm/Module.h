@@ -295,15 +295,13 @@ public:
 /// @{
 public:
   /// Print the module to an output stream
-  void print(OStream &OS) const {
-    if (OS.stream()) print(*OS.stream(), 0);
-  }
   void print(std::ostream &OS) const { print(OS, 0); }
+  void print(std::ostream *OS) const { if (OS) print(*OS); }
   /// Print the module to an output stream with AssemblyAnnotationWriter.
-  void print(OStream &OS, AssemblyAnnotationWriter *AAW) const {
-    if (OS.stream()) print(*OS.stream(), AAW);
-  }
   void print(std::ostream &OS, AssemblyAnnotationWriter *AAW) const;
+  void print(std::ostream *OS, AssemblyAnnotationWriter *AAW) const {
+    if (OS) print(*OS, AAW);
+  }
   /// Dump the module to std::cerr (for debugging).
   void dump() const;
   /// This function causes all the subinstructions to "let go" of all references

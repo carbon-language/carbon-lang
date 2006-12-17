@@ -137,8 +137,8 @@ public:
   }
   
 #ifndef NDEBUG
-  void print(OStream &O) const {
-    if (O.stream()) print(*O.stream());
+  void print(std::ostream *O) const {
+    if (O) print(*O);
   }
   void print(std::ostream &O) const {
     O << ".debug_" << Tag;
@@ -245,8 +245,8 @@ public:
   void Emit(const Dwarf &DW) const; 
       
 #ifndef NDEBUG
-  void print(OStream &O) {
-    if (O.stream()) print(*O.stream());
+  void print(std::ostream *O) {
+    if (O) print(*O);
   }
   void print(std::ostream &O);
   void dump();
@@ -335,8 +335,8 @@ public:
   void Profile(FoldingSetNodeID &ID) ;
       
 #ifndef NDEBUG
-  void print(OStream &O, unsigned IncIndent = 0) {
-    if (O.stream()) print(*O.stream(), IncIndent);
+  void print(std::ostream *O, unsigned IncIndent = 0) {
+    if (O) print(*O, IncIndent);
   }
   void print(std::ostream &O, unsigned IncIndent = 0);
   void dump();
@@ -386,8 +386,8 @@ public:
   virtual void Profile(FoldingSetNodeID &ID) = 0;
       
 #ifndef NDEBUG
-  void print(OStream &O) {
-    if (O.stream()) print(*O.stream());
+  void print(std::ostream *O) {
+    if (O) print(*O);
   }
   virtual void print(std::ostream &O) = 0;
   void dump();

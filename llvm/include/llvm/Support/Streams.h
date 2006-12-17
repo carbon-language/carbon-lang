@@ -39,6 +39,11 @@ namespace llvm {
       return *this;
     }
 
+//     inline BaseStream &operator << (std::ios &(*Func)(std::ios&)) {
+//       if (Stream) *Stream << Func;
+//       return *this;
+//     }
+      
     template <typename Ty>
     BaseStream &operator << (const Ty &Thing) {
       if (Stream) *Stream << Thing;
@@ -51,6 +56,8 @@ namespace llvm {
       return *this;
     }
 
+    operator StreamTy* () { return Stream; }
+
     bool operator == (const StreamTy &S) { return &S == Stream; }
     bool operator != (const StreamTy &S) { return !(*this == S); }
     bool operator == (const BaseStream &S) { return S.Stream == Stream; }
@@ -61,7 +68,7 @@ namespace llvm {
   typedef BaseStream<std::istream> IStream;
   typedef BaseStream<std::stringstream> StringStream;
 
-  extern OStream NullStream;
+  extern OStream cnull;
   extern OStream cout;
   extern OStream cerr;
   extern IStream cin;

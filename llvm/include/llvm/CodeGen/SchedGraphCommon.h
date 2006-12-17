@@ -70,10 +70,8 @@ public:
   void dump(int indent=0) const;
 
   // Debugging support
-  void print(OStream &os) const {
-    if (os.stream()) print(*os.stream());
-  }
   virtual void print(std::ostream &os) const = 0;
+  void print(std::ostream *os) const { if (os) print(*os); }
 
 protected:
   friend class SchedGraphCommon;
@@ -96,11 +94,6 @@ protected:
 };
 
 // ostream << operator for SchedGraphNode class
-inline OStream &operator<<(OStream &os,
-                           const SchedGraphNodeCommon &node) {
-  node.print(os);
-  return os;
-}
 inline std::ostream &operator<<(std::ostream &os,
                                 const SchedGraphNodeCommon &node) {
   node.print(os);
@@ -188,10 +181,8 @@ public:
 
 public:
   // Debugging support
-  void print(OStream &os) const {
-    if (os.stream()) print(*os.stream());
-  }
   void print(std::ostream &os) const;
+  void print(std::ostream *os) const { if (os) print(*os); }
   void dump(int indent=0) const;
 
 private:
@@ -200,10 +191,6 @@ private:
 };
 
 // ostream << operator for SchedGraphNode class
-inline OStream &operator<<(OStream &os, const SchedGraphEdge &edge) {
-  edge.print(os);
-  return os;
-}
 inline std::ostream &operator<<(std::ostream &os, const SchedGraphEdge &edge) {
   edge.print(os);
   return os;

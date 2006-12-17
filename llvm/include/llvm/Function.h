@@ -194,6 +194,7 @@ public:
   bool                        arg_empty() const { return ArgumentList.empty(); }
 
   virtual void print(std::ostream &OS) const { print(OS, 0); }
+  void print(std::ostream *OS) const { if (OS) print(*OS); }
   void print(std::ostream &OS, AssemblyAnnotationWriter *AAW) const;
 
   /// viewCFG - This function is meant for use from the debugger.  You can just

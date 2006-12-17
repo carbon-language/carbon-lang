@@ -34,6 +34,7 @@ public:
   /// symbol table from the module.
   ///
   void print(std::ostream &o, const Module *M) const;
+  void print(std::ostream *o, const Module *M) const { if (o) print(*o, M); }
 
 private:
   /// IncorporateType - Incorporate one type and all of its subtypes into the
