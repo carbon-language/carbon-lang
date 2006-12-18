@@ -14,6 +14,9 @@
 /* Define if CBE is enabled for printf %a output */
 #undef ENABLE_CBE_PRINTF_A
 
+/* Define if position independent code is enabled */
+#undef ENABLE_PIC
+
 /* Define if threads enabled */
 #undef ENABLE_THREADS
 
