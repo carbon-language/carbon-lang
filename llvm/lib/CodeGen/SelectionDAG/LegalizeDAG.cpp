@@ -1360,14 +1360,13 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
     // Ensure that libcalls are emitted before a branch.
     Tmp1 = DAG.getNode(ISD::TokenFactor, MVT::Other, Tmp1, LastCALLSEQ_END);
     Tmp1 = LegalizeOp(Tmp1);
-    LastCALLSEQ_END = DAG.getEntryNode();
-    
     Tmp2 = Node->getOperand(2);              // LHS 
     Tmp3 = Node->getOperand(3);              // RHS
     Tmp4 = Node->getOperand(1);              // CC
 
     LegalizeSetCCOperands(Tmp2, Tmp3, Tmp4);
-    
+    LastCALLSEQ_END = DAG.getEntryNode();
+
     // If we didn't get both a LHS and RHS back from LegalizeSetCCOperands,
     // the LHS is a legal SETCC itself.  In this case, we need to compare
     // the result against zero to select between true and false values.
