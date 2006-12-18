@@ -21,7 +21,9 @@
 #      The script operates by iteratively applying the optimizations that gccas
 #      and gccld run until there is a difference in the assembly resulting
 #      from the optimization. The difference is then reported with the set of
-#      optimization passes that produce the difference. 
+#      optimization passes that produce the difference.  The processing 
+#      continues until all optimization passes have been tried. The differences
+#      for each pass, if they do differ, are placed in a diffs.# file.
 #
 #      To work around differences in the assembly language format, the script
 #      can also take two filter arguments that post-process the assembly 
@@ -50,42 +52,42 @@ llvm2=$2
 bc1=$3
 bc2=$4
 filt1=$5
+filt2=$6
 if [ -z "$filt1" ] ; then
   filt1="cat"
 fi
-filt2=$6
 if [ -z "$filt2" ] ; then
   filt2="cat"
 fi
-opt1=opt.$bc1
-opt2=opt.$bc2
-ll1=${bc1}.ll
-ll2=${bc2}.ll
-dir1="/proj/llvm/llvm-test-1/External/SPEC/CINT2000/300.twolf"
-opt1="/proj/llvm/llvm-1/Debug/bin/opt"
-dis1="/proj/llvm/llvm-1/Debug/bin/llvm-dis"
-dir2="/proj/llvm/llvm-test-2/External/SPEC/CINT2000/300.twolf"
-opt2="/proj/llvm/llvm-2/Debug/bin/opt"
-dis2="/proj/llvm/llvm-2/Debug/bin/llvm-dis"
-bcfile="Output/300.twolf.linked.rbc"
-optll="opt.ll"
+opt1="${bc1}.opt"
+opt2="${bc2}.opt" 
+ll1="${bc1}.ll"
+ll2="${bc2}.ll"
+opt1ll="${bc1}.opt.ll"
+opt2ll="${bc2}.opt.ll"
+dis1="$llvm1/Debug/bin/llvm-dis"
+dis2="$llvm2/Debug/bin/llvm-dis"
+opt1="$llvm1/Debug/bin/opt"
+opt2="$llvm2/Debug/bin/opt"
 
 all_switches="-verify -lowersetjmp -funcresolve -raiseallocs -simplifycfg -mem2reg -globalopt -globaldce -ipconstprop -deadargelim -instcombine -simplifycfg -prune-eh -inline -simplify-libcalls -argpromotion -raise -tailduplicate -simplifycfg -scalarrepl -instcombine -predsimplify -condprop -tailcallelim -simplifycfg -reassociate -licm -loop-unswitch -instcombine -indvars -loop-unroll -instcombine -load-vn -gcse -sccp -instcombine -condprop -dse -dce -simplifycfg -deadtypeelim -constmerge -funcresolve -internalize -ipsccp -globalopt -constmerge -deadargelim -inline -prune-eh -globalopt -globaldce -argpromotion -instcombine -predsimplify -scalarrepl -globalsmodref-aa -licm -load-vn -gcse -dse -instcombine -simplifycfg -verify"
 
+#counter=0
 function tryit {
   switches_to_use="$1"
-  cd $dir1
-  $opt1 $switches_to_use "$bcfile" -o - | $dis1 | $filt1 > "$optll"
-  cd $dir2
-  $opt2 $switches_to_use "$bcfile" -o - | $dis2 | $filt2 > "$optll"
-  diff "$dir1/$optll" "$dir2/$optll" > /dev/null
+  $opt1 $switches_to_use "$bc1" -o - | $dis1 | $filt1 > "$opt1ll"
+  $opt2 $switches_to_use "$bc2" -o - | $dis2 | $filt2 > "$opt2ll"
+  diffs="diffs."$((counter++))
+  diff "$opt1ll" "$opt2ll" > $diffs
   if [ $? -ne 0 ] ; then
     echo
     echo "Diff fails with these switches:"
     echo $switches
     echo "Differences:"
-    diff "$dir1/$optll" "$dir2/$optll" | head
-    exit 1
+    head $diffs
+    echo 'Switches:' $switches_to_use >> $diffs
+  else
+    rm $diffs
   fi
   return 1
 }
