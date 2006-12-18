@@ -875,16 +875,14 @@ Constant *llvm::ConstantFoldCastInstruction(unsigned opc, const Constant *V,
     // A ZExt always produces an unsigned value so we need to cast the value
     // now before we try to cast it to the destination type
     if (isa<ConstantInt>(V))
-      V = ConstantInt::get(SrcTy->getUnsignedVersion(), 
-                           cast<ConstantIntegral>(V)->getZExtValue());
+      V = ConstantInt::get(SrcTy, cast<ConstantIntegral>(V)->getZExtValue());
     break;
   case Instruction::SIToFP:
   case Instruction::SExt:
     // A SExt always produces a signed value so we need to cast the value
     // now before we try to cast it to the destiniation type.
     if (isa<ConstantInt>(V))
-      V = ConstantInt::get(SrcTy->getSignedVersion(), 
-                           cast<ConstantIntegral>(V)->getSExtValue());
+      V = ConstantInt::get(SrcTy, cast<ConstantIntegral>(V)->getSExtValue());
     else if (const ConstantBool *CB = dyn_cast<ConstantBool>(V))
       V = ConstantInt::get(Type::SByteTy, CB->getValue() ? -1 : 0);
       
