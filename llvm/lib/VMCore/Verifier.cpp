@@ -922,7 +922,6 @@ void Verifier::visitInstruction(Instruction &I) {
             // 'OpBlock' dominates all of its predecessors other than the
             // invoke.  In this case, the invoke value can still be used.
             if (!Bad) {
-              Bad = false;
               for (pred_iterator PI = pred_begin(OpBlock),
                    E = pred_end(OpBlock); PI != E; ++PI) {
                 if (*PI != II->getParent() && !EF->dominates(OpBlock, *PI)) {
