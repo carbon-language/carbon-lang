@@ -572,8 +572,6 @@ public:
     const Type *Ty ///< The integer type to cast to
   );
 
-  static Constant *getCast(Constant *C, const Type *Ty);
-
   /// @brief Return true if this is a convert constant expression
   bool isCast() const;
 

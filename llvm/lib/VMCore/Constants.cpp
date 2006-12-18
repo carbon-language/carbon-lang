@@ -1480,13 +1480,6 @@ Constant *ConstantExpr::getCast(unsigned oc, Constant *C, const Type *Ty) {
   return 0;
 } 
 
-Constant *ConstantExpr::getCast(Constant *C, const Type *Ty) {
-  // Note: we can't inline this because it requires the Instructions.h header
-  return getCast(CastInst::getCastOpcode(
-        C, C->getType()->isSigned(), Ty, Ty->isSigned()), C, Ty);
-}
-
-
 Constant *ConstantExpr::getZExtOrBitCast(Constant *C, const Type *Ty) {
   if (C->getType()->getPrimitiveSizeInBits() == Ty->getPrimitiveSizeInBits())
     return getCast(Instruction::BitCast, C, Ty);
