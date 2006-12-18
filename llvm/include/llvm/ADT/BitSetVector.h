@@ -244,7 +244,7 @@ public:
 };
 
 
-inline void BitSetVector::print(llvm_ostream& O) const
+inline void BitSetVector::print(std::ostream& O) const
 {
   for (std::vector<bitword>::const_iterator
          I=bitsetVec.begin(), E=bitsetVec.end(); I != E; ++I)
