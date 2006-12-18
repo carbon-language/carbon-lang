@@ -210,7 +210,9 @@ Value *llvm::ConvertExpressionToType(Value *V, const Type *Ty,
     Constant *CPV = cast<Constant>(V);
     // Constants are converted by constant folding the cast that is required.
     // We assume here that all casts are implemented for constant prop.
-    Value *Result = ConstantExpr::getCast(CPV, Ty);
+    Instruction::CastOps opcode = CastInst::getCastOpcode(CPV,
+        CPV->getType()->isSigned(), Ty, Ty->isSigned());
+    Value *Result = ConstantExpr::getCast(opcode, CPV, Ty);
     // Add the instruction to the expression map
     //VMC.ExprMap[V] = Result;
     return Result;
