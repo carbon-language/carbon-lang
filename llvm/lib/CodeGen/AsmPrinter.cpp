@@ -106,6 +106,18 @@ bool AsmPrinter::doInitialization(Module &M) {
 }
 
 bool AsmPrinter::doFinalization(Module &M) {
+  if (TAI->getWeakRefDirective()) {
+    if (ExtWeakSymbols.begin() != ExtWeakSymbols.end())
+      SwitchToDataSection("");
+
+    for (std::set<const GlobalValue*>::iterator i = ExtWeakSymbols.begin(),
+         e = ExtWeakSymbols.end(); i != e; ++i) {
+      const GlobalValue *GV = *i;
+      std::string Name = Mang->getValueName(GV);
+      O << TAI->getWeakRefDirective() << Name << "\n";
+    }
+  }
+
   delete Mang; Mang = 0;
   return false;
 }

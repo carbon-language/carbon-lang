@@ -250,7 +250,7 @@ bool X86SharedAsmPrinter::doFinalization(Module &M) {
       // reference!
       if (const GlobalValue *GV = dyn_cast<GlobalValue>(C))
         if (GV->hasExternalWeakLinkage())
-          ExtWeakSymbols.insert(Mang->getValueName(GV));
+          ExtWeakSymbols.insert(GV);
 
       EmitGlobalConstant(C);
       O << '\n';
@@ -278,15 +278,6 @@ bool X86SharedAsmPrinter::doFinalization(Module &M) {
     O << "\t.ascii \" -export:" << *i << "\"\n";
   }    
 
-  if (TAI->getWeakRefDirective()) {
-    if (ExtWeakSymbols.begin() != ExtWeakSymbols.end())
-      SwitchToDataSection("");
-    for (std::set<std::string>::iterator i = ExtWeakSymbols.begin(),
-         e = ExtWeakSymbols.end(); i != e; ++i) {
-      O << TAI->getWeakRefDirective() << *i << "\n";
-    }
-  }
-  
   if (Subtarget->isTargetDarwin()) {
     SwitchToDataSection("");
 

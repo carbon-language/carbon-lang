@@ -18,6 +18,7 @@
 
 #include "llvm/CodeGen/MachineFunctionPass.h"
 #include "llvm/Support/DataTypes.h"
+#include <set>
 
 namespace llvm {
   class Constant;
@@ -38,6 +39,10 @@ namespace llvm {
     /// IncrementFunctionNumber().
     ///
     unsigned FunctionNumber;
+
+  protected:
+    // Necessary for external weak linkage support
+    std::set<const GlobalValue*> ExtWeakSymbols;
 
   public:
     /// Output stream on which we're printing assembly code.

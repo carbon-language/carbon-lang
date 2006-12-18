@@ -50,9 +50,6 @@ namespace {
   struct VISIBILITY_HIDDEN PPCAsmPrinter : public AsmPrinter {
     std::set<std::string> FnStubs, GVStubs;
     const PPCSubtarget &Subtarget;
-    
-    // Necessary for external weak linkage support
-    std::set<std::string> ExtWeakSymbols;
 
     PPCAsmPrinter(std::ostream &O, TargetMachine &TM, const TargetAsmInfo *T)
       : AsmPrinter(O, TM, T), Subtarget(TM.getSubtarget<PPCSubtarget>()) {
@@ -162,7 +159,7 @@ namespace {
             FnStubs.insert(Name);
             O << "L" << Name << "$stub";
             if (GV->hasExternalWeakLinkage())
-              ExtWeakSymbols.insert(Name);
+              ExtWeakSymbols.insert(GV);
             return;
           }
         }
@@ -337,7 +334,7 @@ void PPCAsmPrinter::printOp(const MachineOperand &MO) {
     O << Name;
     
     if (GV->hasExternalWeakLinkage())
-      ExtWeakSymbols.insert(Name);
+      ExtWeakSymbols.insert(GV);
     return;
   }
 
@@ -658,19 +655,10 @@ bool DarwinAsmPrinter::doFinalization(Module &M) {
       // reference!
       if (const GlobalValue *GV = dyn_cast<GlobalValue>(C))
         if (GV->hasExternalWeakLinkage())
-          ExtWeakSymbols.insert(Mang->getValueName(GV));
+          ExtWeakSymbols.insert(GV);
 
       EmitGlobalConstant(C);
       O << '\n';
-    }
-  }
-
-  if (TAI->getWeakRefDirective()) {
-    if (ExtWeakSymbols.begin() != ExtWeakSymbols.end())
-      SwitchToDataSection("");
-    for (std::set<std::string>::iterator i = ExtWeakSymbols.begin(),
-         e = ExtWeakSymbols.end(); i != e; ++i) {
-      O << TAI->getWeakRefDirective() << *i << "\n";
     }
   }
 

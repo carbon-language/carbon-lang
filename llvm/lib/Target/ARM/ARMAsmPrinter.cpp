@@ -62,8 +62,6 @@ namespace {
       : AsmPrinter(O, TM, T) {
     }
 
-    std::set<std::string> ExtWeakSymbols;
-
     /// We name each basic block in a Function with a unique number, so
     /// that we can consistently refer to them later. This is cleared
     /// at the beginning of each call to runOnMachineFunction().
@@ -246,7 +244,7 @@ void ARMAsmPrinter::printOperand(const MachineInstr *MI, int opNum) {
     std::string Name = Mang->getValueName(GV);
     O << Name;
     if (GV->hasExternalWeakLinkage()) {
-      ExtWeakSymbols.insert(Name);
+      ExtWeakSymbols.insert(GV);
     }
   }
     break;
@@ -335,13 +333,6 @@ bool ARMAsmPrinter::doFinalization(Module &M) {
       O << name << ":\n";
       EmitGlobalConstant(C);
     }
-  }
-
-  if (ExtWeakSymbols.begin() != ExtWeakSymbols.end())
-    SwitchToDataSection("");
-  for (std::set<std::string>::iterator i = ExtWeakSymbols.begin(),
-         e = ExtWeakSymbols.end(); i != e; ++i) {
-    O << TAI->getWeakRefDirective() << *i << "\n";
   }
 
   AsmPrinter::doFinalization(M);
