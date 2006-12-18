@@ -19,3 +19,10 @@ void "NewCasts" (short %x) {
 }
 
 
+ushort "ZExtConst" () {
+  ret ushort trunc ( uint zext ( short 42 to uint) to ushort )
+}
+
+short "SExtConst" () {
+  ret short trunc (int sext (ushort 42 to int) to short )
+}
