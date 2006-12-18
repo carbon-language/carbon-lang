@@ -1782,20 +1782,6 @@ checkCast(Instruction::CastOps op, Value *S, const Type *DstTy) {
   }
 }
 
-CastInst *CastInst::createInferredCast(
-  Value *S, const Type *Ty, const std::string &Name, Instruction *InsertBefore)
-{
-  return createInferredCast(S, S->getType()->isSigned(), Ty, Ty->isSigned(),
-      Name, InsertBefore);
-}
-
-CastInst *CastInst::createInferredCast(
-  Value *S, const Type *Ty, const std::string &Name, BasicBlock *InsertAtEnd) 
-{
-  return createInferredCast(S, S->getType()->isSigned(), Ty, Ty->isSigned(),
-      Name, InsertAtEnd);
-}
-
 TruncInst::TruncInst(
   Value *S, const Type *Ty, const std::string &Name, Instruction *InsertBefore
 ) : CastInst(Ty, Trunc, S, Name, InsertBefore) {

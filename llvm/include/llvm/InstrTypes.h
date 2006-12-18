@@ -398,66 +398,13 @@ public:
   );
 
   /// Returns the opcode necessary to cast Val into Ty using usual casting
-  /// rules.
+  /// rules. 
+  /// @brief Infer the opcode for cast operand and type
   static Instruction::CastOps getCastOpcode(
     const Value *Val, ///< The value to cast
     bool SrcIsSigned, ///< Whether to treat the source as signed
     const Type *Ty,   ///< The Type to which the value should be casted
     bool DstIsSigned  ///< Whether to treate the dest. as signed
-  );
-
-  /// Joins the create method (with insert-before-instruction semantics) above 
-  /// with the getCastOpcode method. getOpcode(S,Ty) is called first to
-  /// obtain the opcode for casting S to type Ty. Then the get(...) method is 
-  /// called to create the CastInst and insert it. The instruction is
-  /// inserted before InsertBefore (if it is non-null). The cast created is
-  /// inferred, because only the types involved are used in determining which
-  /// cast opcode to use. For specific casts, use one of the create methods.
-  /// @brief Inline helper method to join create with getCastOpcode.
-  inline static CastInst *createInferredCast(
-    Value *S,                     ///< The value to be casted (operand 0)
-    bool SrcIsSigned,             ///< Whether to treat the source as signed
-    const Type *Ty,               ///< Type to which operand should be casted
-    bool DstIsSigned,             ///< Whether to treate the dest. as signed
-    const std::string &Name = "", ///< Name for the instruction
-    Instruction *InsertBefore = 0 ///< Place to insert the CastInst
-  ) {
-    return create(getCastOpcode(S, SrcIsSigned, Ty, DstIsSigned), 
-                  S, Ty, Name, InsertBefore);
-  }
-  static CastInst *createInferredCast(
-    Value *S,                     ///< The value to be casted (operand 0)
-    const Type *Ty,               ///< Type to which operand should be casted
-    const std::string &Name = "", ///< Name for the instruction
-    Instruction *InsertBefore = 0 ///< Place to insert the CastInst
-  );
-
-  /// Joins the get method (with insert-at-end-of-block semantics) method 
-  /// above with the getCastOpcode method. getOpcode(S,Ty) is called first to
-  /// obtain the usual casting opcode for casting S to type Ty. Then the 
-  /// get(...) method is called to create the CastInst and insert it. The 
-  /// instruction is inserted at the end of InsertAtEnd (if it is non-null).
-  /// The created cast is inferred, because only the types involved are used 
-  /// in determining which cast opcode to use. For specific casts, use one of 
-  /// the create methods.
-  /// @brief Inline helper method to join create with getCastOpcode.
-  inline static CastInst *createInferredCast(
-    Value *S,                     ///< The value to be casted (operand 0)
-    bool SrcIsSigned,             ///< Whether to treat the source as signed
-    const Type *Ty,               ///< Type to which operand should be casted
-    bool DstIsSigned,             ///< Whether to treate the dest. as signed
-    const std::string &Name,      ///< Name for the instruction
-    BasicBlock *InsertAtEnd       ///< The block to insert the instruction into
-  ) {
-    return create(getCastOpcode(S, SrcIsSigned, Ty, DstIsSigned), 
-                  S, Ty, Name, InsertAtEnd);
-  }
-
-  static CastInst *createInferredCast(
-    Value *S,                     ///< The value to be casted (operand 0)
-    const Type *Ty,               ///< Type to which operand should be casted
-    const std::string &Name,      ///< Name for the instruction
-    BasicBlock *InsertAtEnd       ///< The block to insert the instruction into
   );
 
   /// There are several places where we need to know if a cast instruction 
