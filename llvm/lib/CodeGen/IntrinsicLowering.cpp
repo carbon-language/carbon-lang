@@ -66,9 +66,13 @@ static CallInst *ReplaceCallWith(const char *NewFn, CallInst *CI,
       if (castOpcodes[ArgNo])
         Arg = CastInst::create(Instruction::CastOps(castOpcodes[ArgNo]),
           Arg, FT->getParamType(ArgNo), Arg->getName(), CI);
-      else
-        Arg = CastInst::createInferredCast(Arg, FT->getParamType(ArgNo), 
-                                           Arg->getName(), CI);
+      else {
+        Instruction::CastOps opcode = CastInst::getCastOpcode(Arg, 
+            Arg->getType()->isSigned(), FT->getParamType(ArgNo), 
+            FT->getParamType(ArgNo)->isSigned());
+        Arg = CastInst::create(opcode, Arg, FT->getParamType(ArgNo),
+                               Arg->getName(), CI);
+      }
     Operands.push_back(Arg);
   }
   // Pass nulls into any additional arguments...
@@ -80,8 +84,12 @@ static CallInst *ReplaceCallWith(const char *NewFn, CallInst *CI,
   CallInst *NewCI = new CallInst(FCache, Operands, Name, CI);
   if (!CI->use_empty()) {
     Value *V = NewCI;
-    if (CI->getType() != NewCI->getType())
-      V = CastInst::createInferredCast(NewCI, CI->getType(), Name, CI);
+    if (CI->getType() != NewCI->getType()) {
+      Instruction::CastOps opcode = CastInst::getCastOpcode(NewCI, 
+          NewCI->getType()->isSigned(), CI->getType(), 
+          CI->getType()->isSigned());
+      V = CastInst::create(opcode, NewCI, CI->getType(), Name, CI);
+    }
     CI->replaceAllUsesWith(V);
   }
   return NewCI;

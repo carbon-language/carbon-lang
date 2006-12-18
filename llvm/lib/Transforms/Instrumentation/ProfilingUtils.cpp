@@ -62,8 +62,10 @@ void llvm::InsertProfilingInitCall(Function *MainFn, const char *FnName,
   case 2:
     AI = MainFn->arg_begin(); ++AI;
     if (AI->getType() != ArgVTy) {
+      Instruction::CastOps opcode = CastInst::getCastOpcode(AI,
+          AI->getType()->isSigned(), ArgVTy, ArgVTy->isSigned());
       InitCall->setOperand(2, 
-          CastInst::createInferredCast(AI, ArgVTy, "argv.cast", InitCall));
+          CastInst::create(opcode, AI, ArgVTy, "argv.cast", InitCall));
     } else {
       InitCall->setOperand(2, AI);
     }
@@ -74,11 +76,18 @@ void llvm::InsertProfilingInitCall(Function *MainFn, const char *FnName,
     // If the program looked at argc, have it look at the return value of the
     // init call instead.
     if (AI->getType() != Type::IntTy) {
-      if (!AI->use_empty())
+      Instruction::CastOps opcode;
+      if (!AI->use_empty()) {
+        opcode = CastInst::getCastOpcode(InitCall, 
+            InitCall->getType()->isSigned(), AI->getType(), 
+            AI->getType()->isSigned());
         AI->replaceAllUsesWith(
-          CastInst::createInferredCast(InitCall, AI->getType(), "", InsertPos));
+          CastInst::create(opcode, InitCall, AI->getType(), "", InsertPos));
+      }
+      opcode = CastInst::getCastOpcode(AI, AI->getType()->isSigned(),
+          Type::IntTy, true);
       InitCall->setOperand(1, 
-          CastInst::createInferredCast(AI, Type::IntTy, "argc.cast", InitCall));
+          CastInst::create(opcode, AI, Type::IntTy, "argc.cast", InitCall));
     } else {
       AI->replaceAllUsesWith(InitCall);
       InitCall->setOperand(1, AI);

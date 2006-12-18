@@ -228,11 +228,14 @@ Value *llvm::ConvertExpressionToType(Value *V, const Type *Ty,
   Constant *Dummy = Constant::getNullValue(Ty);
 
   switch (I->getOpcode()) {
-  case Instruction::BitCast:
+  case Instruction::BitCast: {
     assert(VMC.NewCasts.count(ValueHandle(VMC, I)) == 0);
-    Res = CastInst::createInferredCast(I->getOperand(0), Ty, Name);
+    Instruction::CastOps opcode = CastInst::getCastOpcode(I->getOperand(0),
+        I->getOperand(0)->getType()->isSigned(), Ty, Ty->isSigned());
+    Res = CastInst::create(opcode, I->getOperand(0), Ty, Name);
     VMC.NewCasts.insert(ValueHandle(VMC, Res));
     break;
+  }
 
   case Instruction::Add:
   case Instruction::Sub:
@@ -706,9 +709,12 @@ static void ConvertOperandToType(User *U, Value *OldVal, Value *NewVal,
                   Constant::getNullValue(NewTy) : 0;
 
   switch (I->getOpcode()) {
-  case Instruction::BitCast:
-    Res = CastInst::createInferredCast(NewVal, I->getType(), Name);
+  case Instruction::BitCast: {
+    Instruction::CastOps opcode = CastInst::getCastOpcode(NewVal,
+        NewVal->getType()->isSigned(), I->getType(), I->getType()->isSigned());
+    Res = CastInst::create(opcode, NewVal, I->getType(), Name);
     break;
+  }
 
   case Instruction::Add:
   case Instruction::Sub:

@@ -7009,7 +7009,9 @@ bool InstCombiner::transformConstExprCastCall(CallSite CS) {
     if ((*AI)->getType() == ParamTy) {
       Args.push_back(*AI);
     } else {
-      CastInst *NewCast = CastInst::createInferredCast(*AI, ParamTy, "tmp");
+      Instruction::CastOps opcode = CastInst::getCastOpcode(*AI,
+          (*AI)->getType()->isSigned(), ParamTy, ParamTy->isSigned());
+      CastInst *NewCast = CastInst::create(opcode, *AI, ParamTy, "tmp");
       Args.push_back(InsertNewInstBefore(NewCast, *Caller));
     }
   }
@@ -7030,7 +7032,9 @@ bool InstCombiner::transformConstExprCastCall(CallSite CS) {
         const Type *PTy = getPromotedType((*AI)->getType());
         if (PTy != (*AI)->getType()) {
           // Must promote to pass through va_arg area!
-          Instruction *Cast = CastInst::createInferredCast(*AI, PTy, "tmp");
+          Instruction::CastOps opcode = CastInst::getCastOpcode(
+              *AI, (*AI)->getType()->isSigned(), PTy, PTy->isSigned());
+          Instruction *Cast = CastInst::create(opcode, *AI, PTy, "tmp");
           InsertNewInstBefore(Cast, *Caller);
           Args.push_back(Cast);
         } else {
@@ -7058,7 +7062,10 @@ bool InstCombiner::transformConstExprCastCall(CallSite CS) {
   Value *NV = NC;
   if (Caller->getType() != NV->getType() && !Caller->use_empty()) {
     if (NV->getType() != Type::VoidTy) {
-      NV = NC = CastInst::createInferredCast(NC, Caller->getType(), "tmp");
+      const Type *CallerTy = Caller->getType();
+      Instruction::CastOps opcode = CastInst::getCastOpcode(
+          NC, NC->getType()->isSigned(), CallerTy, CallerTy->isSigned());
+      NV = NC = CastInst::create(opcode, NC, CallerTy, "tmp");
 
       // If this is an invoke instruction, we should insert it after the first
       // non-phi, instruction in the normal successor block.
