@@ -1,4 +1,4 @@
-; RUN: llvm-as -f %s -o - | llc
+; RUN: llvm-upgrade < %s | llvm-as | llc
 
 ; On this code, llc did not pass the sixth argument (%reg321) to printf.
 ; It passed the first five in %o0 - %o4, but never initialized %o5.

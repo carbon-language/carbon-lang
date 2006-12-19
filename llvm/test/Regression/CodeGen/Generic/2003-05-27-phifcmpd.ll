@@ -1,4 +1,4 @@
-; RUN: llvm-as -f %s -o - | llc
+; RUN: llvm-upgrade < %s | llvm-as | llc
 
 void %QRiterate(int %p.1, double %tmp.212) { 
 entry:          ; No predecessors!
