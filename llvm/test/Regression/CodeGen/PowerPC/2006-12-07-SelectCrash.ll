@@ -1,6 +1,6 @@
-; RUN: llvm-as < %s | llc -march=ppc64 &&
-; RUN: llvm-as < %s | llc -march=ppc32 &&
-; RUN: llvm-as < %s | llc
+; RUN: llvm-upgrade < %s | llvm-as | llc -march=ppc64 &&
+; RUN: llvm-upgrade < %s | llvm-as | llc -march=ppc32 &&
+; RUN: llvm-upgrade < %s | llvm-as | llc
 
 %qsz.b = external global bool		; <bool*> [#uses=1]
 
