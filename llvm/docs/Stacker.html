@@ -229,7 +229,7 @@ in a single function using LLVM in the following way: </p>
 <pre>
 using namespace llvm;
 BasicBlock*
-MyCompiler::handle_if( BasicBlock* bb, SetCondInst* condition )
+MyCompiler::handle_if( BasicBlock* bb, ICmpInst* condition )
 {
     // Create the blocks to contain code in the structure of if/then/else
     BasicBlock* then_bb = new BasicBlock(); 
