@@ -36,7 +36,7 @@ class llvm::PMDataManager;
 //     information before it is consumed by another pass.
 //
 // Pass Manager Infrastructure uses multiple pass managers.  They are
-// PassManager, FunctionPassManager, ModulePassManager, BasicBlockPassManager.
+// PassManager, FunctionPassManager, MPPassManager, FPPassManager, BBPassManager.
 // This class hierarcy uses multiple inheritance but pass managers do not derive
 // from another pass manager.
 //
@@ -58,9 +58,9 @@ class llvm::PMDataManager;
 // a place to implement common pass manager APIs. All pass managers derive from
 // PMDataManager.
 //
-// [o] class BasicBlockPassManager : public FunctionPass, public PMDataManager;
+// [o] class BBPassManager : public FunctionPass, public PMDataManager;
 //
-// BasicBlockPassManager manages BasicBlockPasses.
+// BBPassManager manages BasicBlockPasses.
 //
 // [o] class FunctionPassManager;
 //
@@ -70,12 +70,15 @@ class llvm::PMDataManager;
 // [o] class FunctionPassManagerImpl : public ModulePass, PMDataManager,
 //                                     public PMTopLevelManager;
 //
-// FunctionPassManagerImpl is a top level manager. It manages FunctionPasses
-// and BasicBlockPassManagers.
+// FunctionPassManagerImpl is a top level manager. It manages FPPassManagers
 //
-// [o] class ModulePassManager : public Pass, public PMDataManager;
+// [o] class FPPassManager : public ModulePass, public PMDataManager;
 //
-// ModulePassManager manages ModulePasses and FunctionPassManagerImpls.
+// FPPassManager manages FunctionPasses and BBPassManagers
+//
+// [o] class MPPassManager : public Pass, public PMDataManager;
+//
+// MPPassManager manages ModulePasses and FPPassManagers
 //
 // [o] class PassManager;
 //
@@ -86,7 +89,7 @@ class llvm::PMDataManager;
 //                             public PMDTopLevelManager
 //
 // PassManagerImpl is a top level pass manager responsible for managing
-// ModulePassManagers.
+// MPPassManagers.
 //===----------------------------------------------------------------------===//
 
 namespace llvm {
@@ -126,12 +129,8 @@ namespace {
 class VISIBILITY_HIDDEN PMTopLevelManager {
 public:
 
-  inline std::vector<Pass *>::iterator passManagersBegin() { 
-    return PassManagers.begin(); 
-  }
-
-  inline std::vector<Pass *>::iterator passManagersEnd() { 
-    return PassManagers.end();
+  virtual unsigned getNumContainedManagers() {
+    return PassManagers.size();
   }
 
   /// Schedule pass P for execution. Make sure that passes required by
@@ -194,10 +193,12 @@ public:
   void dumpPasses() const;
   void dumpArguments() const;
 
-private:
+protected:
   
   /// Collection of pass managers
   std::vector<Pass *> PassManagers;
+
+private:
 
   /// Collection of pass managers that are not directly maintained
   /// by this pass manager
@@ -318,16 +319,16 @@ private:
 };
 
 //===----------------------------------------------------------------------===//
-// BasicBlockPassManager
+// BBPassManager
 //
-/// BasicBlockPassManager manages BasicBlockPass. It batches all the
+/// BBPassManager manages BasicBlockPass. It batches all the
 /// pass together and sequence them to process one basic block before
 /// processing next basic block.
-class VISIBILITY_HIDDEN BasicBlockPassManager : public PMDataManager, 
-                              public FunctionPass {
+class VISIBILITY_HIDDEN BBPassManager : public PMDataManager, 
+                                        public FunctionPass {
 
 public:
-  BasicBlockPassManager(int Depth) : PMDataManager(Depth) { }
+  BBPassManager(int Depth) : PMDataManager(Depth) { }
 
   /// Add a pass into a passmanager queue. 
   bool addPass(Pass *p);
@@ -364,55 +365,27 @@ public:
 };
 
 //===----------------------------------------------------------------------===//
-// FunctionPassManagerImpl_New
+// FPPassManager
 //
-/// FunctionPassManagerImpl_New manages FunctionPasses and
-/// BasicBlockPassManagers.  It batches all function passes and basic block pass
-/// managers together and sequence them to process one function at a time before
-/// processing next function.
-class FunctionPassManagerImpl_New : public ModulePass, 
-                                    public PMDataManager,
-                                    public PMTopLevelManager {
-public:
-  FunctionPassManagerImpl_New(int Depth) : PMDataManager(Depth) { 
-    activeBBPassManager = NULL;
-  }
-  ~FunctionPassManagerImpl_New() { /* TODO */ };
+/// FPPassManager manages BBPassManagers and FunctionPasses.
+/// It batches all function passes and basic block pass managers together and 
+/// sequence them to process one function at a time before processing next 
+/// function.
+
+class FPPassManager : public ModulePass, public PMDataManager {
  
-  inline void addTopLevelPass(Pass *P) { 
-
-    if (ImmutablePass *IP = dynamic_cast<ImmutablePass *> (P)) {
-
-      // P is a immutable pass then it will be managed by this
-      // top level manager. Set up analysis resolver to connect them.
-      AnalysisResolver_New *AR = new AnalysisResolver_New(*this);
-      P->setResolver(AR);
-      initializeAnalysisImpl(P);
-      addImmutablePass(IP);
-      recordAvailableAnalysis(IP);
-    } 
-    else 
-      addPass(P);
+public:
+  FPPassManager(int Depth) : PMDataManager(Depth) { 
+    activeBBPassManager = NULL; 
   }
-
-  /// add - Add a pass to the queue of passes to run.  This passes
-  /// ownership of the Pass to the PassManager.  When the
-  /// PassManager_X is destroyed, the pass will be destroyed as well, so
-  /// there is no need to delete the pass. (TODO delete passes.)
-  /// This implies that all passes MUST be allocated with 'new'.
-  void add(Pass *P) { 
-    schedulePass(P);
-  }
-
-  /// Add pass into the pass manager queue.
-  bool addPass(Pass *P);
-
-  /// Execute all of the passes scheduled for execution.  Keep
-  /// track of whether any of the passes modifies the function, and if
-  /// so, return true.
-  bool runOnModule(Module &M);
+  
+  /// Add a pass into a passmanager queue. 
+  bool addPass(Pass *p);
+  
+  /// run - Execute all of the passes scheduled for execution.  Keep track of
+  /// whether any of the passes modifies the module, and if so, return true.
   bool runOnFunction(Function &F);
-  bool run(Function &F);
+  bool runOnModule(Module &M);
 
   /// doInitialization - Run all of the initializers for the function passes.
   ///
@@ -429,7 +402,7 @@ public:
 
   // Print passes managed by this manager
   void dumpPassStructure(unsigned Offset) {
-    llvm::cerr << std::string(Offset*2, ' ') << "FunctionPass Manager 42\n";
+    llvm::cerr << std::string(Offset*2, ' ') << "FunctionPass Manager\n";
     for (unsigned Index = 0; Index < getNumContainedPasses(); ++Index) {
       FunctionPass *FP = getContainedPass(Index);
       FP->dumpPassStructure(Offset + 1);
@@ -444,20 +417,90 @@ public:
   }
 
 private:
-  // Active Pass Managers
-  BasicBlockPassManager *activeBBPassManager;
+  // Active Pass Manager
+  BBPassManager *activeBBPassManager;
 };
 
 //===----------------------------------------------------------------------===//
-// ModulePassManager
+// FunctionPassManagerImpl
 //
-/// ModulePassManager manages ModulePasses and function pass managers.
+/// FunctionPassManagerImpl manages FPPassManagers
+class FunctionPassManagerImpl : public Pass,
+                                    public PMDataManager,
+                                    public PMTopLevelManager {
+
+public:
+
+  FunctionPassManagerImpl(int Depth) : PMDataManager(Depth) {
+    activeManager = NULL;
+  }
+
+  /// add - Add a pass to the queue of passes to run.  This passes ownership of
+  /// the Pass to the PassManager.  When the PassManager is destroyed, the pass
+  /// will be destroyed as well, so there is no need to delete the pass.  This
+  /// implies that all passes MUST be allocated with 'new'.
+  void add(Pass *P) {
+    schedulePass(P);
+  }
+ 
+  /// run - Execute all of the passes scheduled for execution.  Keep track of
+  /// whether any of the passes modifies the module, and if so, return true.
+  bool run(Function &F);
+
+  /// doInitialization - Run all of the initializers for the function passes.
+  ///
+  bool doInitialization(Module &M);
+  
+  /// doFinalization - Run all of the initializers for the function passes.
+  ///
+  bool doFinalization(Module &M);
+
+  /// Pass Manager itself does not invalidate any analysis info.
+  void getAnalysisUsage(AnalysisUsage &Info) const {
+    Info.setPreservesAll();
+  }
+
+  inline void addTopLevelPass(Pass *P) {
+
+    if (ImmutablePass *IP = dynamic_cast<ImmutablePass *> (P)) {
+      
+      // P is a immutable pass and it will be managed by this
+      // top level manager. Set up analysis resolver to connect them.
+      AnalysisResolver_New *AR = new AnalysisResolver_New(*this);
+      P->setResolver(AR);
+      initializeAnalysisImpl(P);
+      addImmutablePass(IP);
+      recordAvailableAnalysis(IP);
+    }
+    else 
+      addPass(P);
+  }
+
+  FPPassManager *getContainedManager(unsigned N) {
+    assert ( N < PassManagers.size() && "Pass number out of range!");
+    FPPassManager *FP = static_cast<FPPassManager *>(PassManagers[N]);
+    return FP;
+  }
+
+  /// Add a pass into a passmanager queue.
+  bool addPass(Pass *p);
+
+private:
+
+  // Active Pass Manager
+  FPPassManager *activeManager;
+};
+
+//===----------------------------------------------------------------------===//
+// MPPassManager
+//
+/// MPPassManager manages ModulePasses and function pass managers.
 /// It batches all Module passes  passes and function pass managers together and
 /// sequence them to process one module.
-class ModulePassManager : public Pass, public PMDataManager {
+class MPPassManager : public Pass, public PMDataManager {
  
 public:
-  ModulePassManager(int Depth) : PMDataManager(Depth) { 
+  MPPassManager(int Depth) : PMDataManager(Depth) { 
     activeFunctionPassManager = NULL; 
   }
   
@@ -491,20 +534,20 @@ public:
 
 private:
   // Active Pass Manager
-  FunctionPassManagerImpl_New *activeFunctionPassManager;
+  FPPassManager *activeFunctionPassManager;
 };
 
 //===----------------------------------------------------------------------===//
-// PassManagerImpl_New
+// PassManagerImpl
 //
-/// PassManagerImpl_New manages ModulePassManagers
-class PassManagerImpl_New : public Pass,
+/// PassManagerImpl manages MPPassManagers
+class PassManagerImpl : public Pass,
                             public PMDataManager,
                             public PMTopLevelManager {
 
 public:
 
-  PassManagerImpl_New(int Depth) : PMDataManager(Depth) {
+  PassManagerImpl(int Depth) : PMDataManager(Depth) {
     activeManager = NULL;
   }
 
@@ -541,13 +584,19 @@ public:
       addPass(P);
   }
 
+  MPPassManager *getContainedManager(unsigned N) {
+    assert ( N < PassManagers.size() && "Pass number out of range!");
+    MPPassManager *MP = static_cast<MPPassManager *>(PassManagers[N]);
+    return MP;
+  }
+
 private:
 
   /// Add a pass into a passmanager queue.
   bool addPass(Pass *p);
 
   // Active Pass Manager
-  ModulePassManager *activeManager;
+  MPPassManager *activeManager;
 };
 
 } // End of llvm namespace
@@ -699,6 +748,9 @@ Pass *PMTopLevelManager::findAnalysisPass(AnalysisID AID) {
 
 // Print passes managed by this top level manager.
 void PMTopLevelManager::dumpPasses() const {
+
+  if (PassDebugging_New < Structure)
+    return;
 
   // Print out the immutable passes
   for (unsigned i = 0, e = ImmutablePasses.size(); i != e; ++i) {
@@ -972,12 +1024,12 @@ Pass *AnalysisResolver_New::getAnalysisToUpdate(AnalysisID ID, bool dir) const {
 }
 
 //===----------------------------------------------------------------------===//
-// BasicBlockPassManager implementation
+// BBPassManager implementation
 
 /// Add pass P into PassVector and return true. If this pass is not
 /// manageable by this manager then return false.
 bool
-BasicBlockPassManager::addPass(Pass *P) {
+BBPassManager::addPass(Pass *P) {
 
   BasicBlockPass *BP = dynamic_cast<BasicBlockPass*>(P);
   if (!BP)
@@ -997,7 +1049,7 @@ BasicBlockPassManager::addPass(Pass *P) {
 /// runOnBasicBlock method.  Keep track of whether any of the passes modifies 
 /// the function, and if so, return true.
 bool
-BasicBlockPassManager::runOnFunction(Function &F) {
+BBPassManager::runOnFunction(Function &F) {
 
   if (F.isExternal())
     return false;
@@ -1036,7 +1088,7 @@ BasicBlockPassManager::runOnFunction(Function &F) {
 }
 
 // Implement doInitialization and doFinalization
-inline bool BasicBlockPassManager::doInitialization(Module &M) {
+inline bool BBPassManager::doInitialization(Module &M) {
   bool Changed = false;
 
   for (unsigned Index = 0; Index < getNumContainedPasses(); ++Index) {
@@ -1047,7 +1099,7 @@ inline bool BasicBlockPassManager::doInitialization(Module &M) {
   return Changed;
 }
 
-inline bool BasicBlockPassManager::doFinalization(Module &M) {
+inline bool BBPassManager::doFinalization(Module &M) {
   bool Changed = false;
 
   for (unsigned Index = 0; Index < getNumContainedPasses(); ++Index) {
@@ -1058,7 +1110,7 @@ inline bool BasicBlockPassManager::doFinalization(Module &M) {
   return Changed;
 }
 
-inline bool BasicBlockPassManager::doInitialization(Function &F) {
+inline bool BBPassManager::doInitialization(Function &F) {
   bool Changed = false;
 
   for (unsigned Index = 0; Index < getNumContainedPasses(); ++Index) {
@@ -1069,7 +1121,7 @@ inline bool BasicBlockPassManager::doInitialization(Function &F) {
   return Changed;
 }
 
-inline bool BasicBlockPassManager::doFinalization(Function &F) {
+inline bool BBPassManager::doFinalization(Function &F) {
   bool Changed = false;
 
   for (unsigned Index = 0; Index < getNumContainedPasses(); ++Index) {
@@ -1086,7 +1138,7 @@ inline bool BasicBlockPassManager::doFinalization(Function &F) {
 
 /// Create new Function pass manager
 FunctionPassManager::FunctionPassManager(ModuleProvider *P) {
-  FPM = new FunctionPassManagerImpl_New(0);
+  FPM = new FunctionPassManagerImpl(0);
   // FPM is the top level manager.
   FPM->setTopLevelManager(FPM);
 
@@ -1094,7 +1146,6 @@ FunctionPassManager::FunctionPassManager(ModuleProvider *P) {
   AnalysisResolver_New *AR = new AnalysisResolver_New(*PMD);
   FPM->setResolver(AR);
   
-  FPM->addPassManager(FPM);
   MP = P;
 }
 
@@ -1145,15 +1196,78 @@ bool FunctionPassManager::doFinalization() {
 }
 
 //===----------------------------------------------------------------------===//
-// FunctionPassManagerImpl_New implementation
+// FunctionPassManagerImpl implementation
+//
+/// Add P into active pass manager or use new module pass manager to
+/// manage it.
+bool FunctionPassManagerImpl::addPass(Pass *P) {
+
+  if (!activeManager || !activeManager->addPass(P)) {
+    activeManager = new FPPassManager(getDepth() + 1);
+    // Inherit top level manager
+    activeManager->setTopLevelManager(this->getTopLevelManager());
+
+    // This top level manager is going to manage activeManager. 
+    // Set up analysis resolver to connect them.
+    AnalysisResolver_New *AR = new AnalysisResolver_New(*this);
+    activeManager->setResolver(AR);
+
+    addPassManager(activeManager);
+    return activeManager->addPass(P);
+  }
+  return true;
+}
+
+inline bool FunctionPassManagerImpl::doInitialization(Module &M) {
+  bool Changed = false;
+
+  for (unsigned Index = 0; Index < getNumContainedManagers(); ++Index) {  
+    FPPassManager *FP = getContainedManager(Index);
+    Changed |= FP->doInitialization(M);
+  }
+
+  return Changed;
+}
+
+inline bool FunctionPassManagerImpl::doFinalization(Module &M) {
+  bool Changed = false;
+
+  for (unsigned Index = 0; Index < getNumContainedManagers(); ++Index) {  
+    FPPassManager *FP = getContainedManager(Index);
+    Changed |= FP->doFinalization(M);
+  }
+
+  return Changed;
+}
+
+// Execute all the passes managed by this top level manager.
+// Return true if any function is modified by a pass.
+bool FunctionPassManagerImpl::run(Function &F) {
+
+  bool Changed = false;
+
+  TimingInfo::createTheTimeInfo();
+
+  dumpArguments();
+  dumpPasses();
+
+  for (unsigned Index = 0; Index < getNumContainedManagers(); ++Index) {  
+    FPPassManager *FP = getContainedManager(Index);
+    Changed |= FP->runOnFunction(F);
+  }
+  return Changed;
+}
+
+//===----------------------------------------------------------------------===//
+// FPPassManager implementation
 
 /// Add pass P into the pass manager queue. If P is a BasicBlockPass then
 /// either use it into active basic block pass manager or create new basic
 /// block pass manager to handle pass P.
 bool
-FunctionPassManagerImpl_New::addPass(Pass *P) {
+FPPassManager::addPass(Pass *P) {
 
-  // If P is a BasicBlockPass then use BasicBlockPassManager.
+  // If P is a BasicBlockPass then use BBPassManager.
   if (BasicBlockPass *BP = dynamic_cast<BasicBlockPass*>(P)) {
 
     if (!activeBBPassManager || !activeBBPassManager->addPass(BP)) {
@@ -1163,8 +1277,7 @@ FunctionPassManagerImpl_New::addPass(Pass *P) {
         activeBBPassManager->initializeAnalysisInfo();
 
       // Create and add new manager
-      activeBBPassManager = 
-        new BasicBlockPassManager(getDepth() + 1);
+      activeBBPassManager = new BBPassManager(getDepth() + 1);
       // Inherit top level manager
       activeBBPassManager->setTopLevelManager(this->getTopLevelManager());
 
@@ -1186,7 +1299,6 @@ FunctionPassManagerImpl_New::addPass(Pass *P) {
         TPM->setLastUser(TLU, this);
 
     }
-
 
     return true;
   }
@@ -1214,21 +1326,7 @@ FunctionPassManagerImpl_New::addPass(Pass *P) {
 /// Execute all of the passes scheduled for execution by invoking 
 /// runOnFunction method.  Keep track of whether any of the passes modifies 
 /// the function, and if so, return true.
-bool FunctionPassManagerImpl_New::runOnModule(Module &M) {
-
-  bool Changed = doInitialization(M);
-  initializeAnalysisInfo();
-
-  for (Module::iterator I = M.begin(), E = M.end(); I != E; ++I)
-    this->runOnFunction(*I);
-
-  return Changed |= doFinalization(M);
-}
-
-/// Execute all of the passes scheduled for execution by invoking 
-/// runOnFunction method.  Keep track of whether any of the passes modifies 
-/// the function, and if so, return true.
-bool FunctionPassManagerImpl_New::runOnFunction(Function &F) {
+bool FPPassManager::runOnFunction(Function &F) {
 
   bool Changed = false;
 
@@ -1267,8 +1365,18 @@ bool FunctionPassManagerImpl_New::runOnFunction(Function &F) {
   return Changed;
 }
 
+bool FPPassManager::runOnModule(Module &M) {
 
-inline bool FunctionPassManagerImpl_New::doInitialization(Module &M) {
+  bool Changed = doInitialization(M);
+  initializeAnalysisInfo();
+
+  for(Module::iterator I = M.begin(), E = M.end(); I != E; ++I)
+    this->runOnFunction(*I);
+
+  return Changed |= doFinalization(M);
+}
+
+inline bool FPPassManager::doInitialization(Module &M) {
   bool Changed = false;
 
   for (unsigned Index = 0; Index < getNumContainedPasses(); ++Index) {  
@@ -1279,7 +1387,7 @@ inline bool FunctionPassManagerImpl_New::doInitialization(Module &M) {
   return Changed;
 }
 
-inline bool FunctionPassManagerImpl_New::doFinalization(Module &M) {
+inline bool FPPassManager::doFinalization(Module &M) {
   bool Changed = false;
 
   for (unsigned Index = 0; Index < getNumContainedPasses(); ++Index) {  
@@ -1290,28 +1398,14 @@ inline bool FunctionPassManagerImpl_New::doFinalization(Module &M) {
   return Changed;
 }
 
-// Execute all the passes managed by this top level manager.
-// Return true if any function is modified by a pass.
-bool FunctionPassManagerImpl_New::run(Function &F) {
-
-  bool Changed = false;
-  for (std::vector<Pass *>::iterator I = passManagersBegin(),
-         E = passManagersEnd(); I != E; ++I) {
-    FunctionPassManagerImpl_New *FP = 
-      dynamic_cast<FunctionPassManagerImpl_New *>(*I);
-    Changed |= FP->runOnFunction(F);
-  }
-  return Changed;
-}
-
 //===----------------------------------------------------------------------===//
-// ModulePassManager implementation
+// MPPassManager implementation
 
 /// Add P into pass vector if it is manageble. If P is a FunctionPass
-/// then use FunctionPassManagerImpl_New to manage it. Return false if P
+/// then use FPPassManager to manage it. Return false if P
 /// is not manageable by this manager.
 bool
-ModulePassManager::addPass(Pass *P) {
+MPPassManager::addPass(Pass *P) {
 
   // If P is FunctionPass then use function pass maanager.
   if (FunctionPass *FP = dynamic_cast<FunctionPass*>(P)) {
@@ -1324,7 +1418,7 @@ ModulePassManager::addPass(Pass *P) {
 
       // Create and add new manager
       activeFunctionPassManager = 
-        new FunctionPassManagerImpl_New(getDepth() + 1);
+        new FPPassManager(getDepth() + 1);
       
       // Add new manager into current manager's list
       addPassToManager(activeFunctionPassManager, false);
@@ -1377,7 +1471,7 @@ ModulePassManager::addPass(Pass *P) {
 /// runOnModule method.  Keep track of whether any of the passes modifies 
 /// the module, and if so, return true.
 bool
-ModulePassManager::runOnModule(Module &M) {
+MPPassManager::runOnModule(Module &M) {
   bool Changed = false;
   initializeAnalysisInfo();
 
@@ -1416,10 +1510,10 @@ ModulePassManager::runOnModule(Module &M) {
 //
 /// Add P into active pass manager or use new module pass manager to
 /// manage it.
-bool PassManagerImpl_New::addPass(Pass *P) {
+bool PassManagerImpl::addPass(Pass *P) {
 
   if (!activeManager || !activeManager->addPass(P)) {
-    activeManager = new ModulePassManager(getDepth() + 1);
+    activeManager = new MPPassManager(getDepth() + 1);
     // Inherit top level manager
     activeManager->setTopLevelManager(this->getTopLevelManager());
 
@@ -1436,19 +1530,17 @@ bool PassManagerImpl_New::addPass(Pass *P) {
 
 /// run - Execute all of the passes scheduled for execution.  Keep track of
 /// whether any of the passes modifies the module, and if so, return true.
-bool PassManagerImpl_New::run(Module &M) {
+bool PassManagerImpl::run(Module &M) {
 
   bool Changed = false;
 
   TimingInfo::createTheTimeInfo();
 
   dumpArguments();
-  if (PassDebugging_New >= Structure)
-    dumpPasses();
+  dumpPasses();
 
-  for (std::vector<Pass *>::iterator I = passManagersBegin(),
-         E = passManagersEnd(); I != E; ++I) {
-    ModulePassManager *MP = dynamic_cast<ModulePassManager *>(*I);
+  for (unsigned Index = 0; Index < getNumContainedManagers(); ++Index) {  
+    MPPassManager *MP = getContainedManager(Index);
     Changed |= MP->runOnModule(M);
   }
   return Changed;
@@ -1459,7 +1551,7 @@ bool PassManagerImpl_New::run(Module &M) {
 
 /// Create new pass manager
 PassManager::PassManager() {
-  PM = new PassManagerImpl_New(0);
+  PM = new PassManagerImpl(0);
   // PM is the top level manager
   PM->setTopLevelManager(PM);
 }

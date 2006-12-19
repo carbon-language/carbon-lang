@@ -93,8 +93,8 @@ public:
 #else
 
 class ModulePassManager;
-class PassManagerImpl_New;
-class FunctionPassManagerImpl_New;
+class PassManagerImpl;
+class FunctionPassManagerImpl;
 
 /// PassManager manages ModulePassManagers
 class PassManager {
@@ -118,7 +118,7 @@ private:
 
   /// PassManagerImpl_New is the actual class. PassManager is just the 
   /// wraper to publish simple pass manager interface
-  PassManagerImpl_New *PM;
+  PassManagerImpl *PM;
 
 };
 
@@ -151,7 +151,7 @@ public:
   bool doFinalization();
 private:
   
-  FunctionPassManagerImpl_New *FPM;
+  FunctionPassManagerImpl *FPM;
   ModuleProvider *MP;
 };
 
