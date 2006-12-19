@@ -33,12 +33,9 @@
 #include <algorithm>
 using namespace llvm;
 
-namespace {
-  Statistic NumBytes("jit", "Number of bytes of machine code compiled");
-  Statistic NumRelos("jit", "Number of relocations applied");
-  JIT *TheJIT = 0;
-}
-
+STATISTIC(NumBytes, "Number of bytes of machine code compiled");
+STATISTIC(NumRelos, "Number of relocations applied");
+static JIT *TheJIT = 0;
 
 //===----------------------------------------------------------------------===//
 // JITMemoryManager code.

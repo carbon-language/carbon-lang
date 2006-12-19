@@ -26,10 +26,8 @@
 #include "llvm/Target/TargetData.h"
 using namespace llvm;
 
-namespace {
-  Statistic NumInitBytes("lli", "Number of bytes of global vars initialized");
-  Statistic NumGlobals  ("lli", "Number of global vars initialized");
-}
+STATISTIC(NumInitBytes, "Number of bytes of global vars initialized");
+STATISTIC(NumGlobals  , "Number of global vars initialized");
 
 ExecutionEngine::EECtorFn ExecutionEngine::JITCtor = 0;
 ExecutionEngine::EECtorFn ExecutionEngine::InterpCtor = 0;
