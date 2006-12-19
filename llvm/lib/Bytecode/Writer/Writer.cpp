@@ -17,6 +17,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#define DEBUG_TYPE "bytecodewriter"
 #include "WriterInternals.h"
 #include "llvm/Bytecode/WriteBytecodePass.h"
 #include "llvm/CallingConv.h"
@@ -45,8 +46,7 @@ const unsigned BCVersionNum = 7;
 
 static RegisterPass<WriteBytecodePass> X("emitbytecode", "Bytecode Writer");
 
-static Statistic
-BytesWritten("bytecodewriter", "Number of bytecode bytes written");
+STATISTIC(BytesWritten, "Number of bytecode bytes written");
 
 //===----------------------------------------------------------------------===//
 //===                           Output Primitives                          ===//

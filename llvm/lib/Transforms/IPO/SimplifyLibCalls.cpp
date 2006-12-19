@@ -73,11 +73,11 @@ public:
   /// optimized by the subclass.
   /// @brief Constructor that registers the optimization.
   LibCallOptimization(const char *FName, const char *Description)
-    : FunctionName(FName)
+    : FunctionName(FName) {
+      
 #ifndef NDEBUG
-    , occurrences("simplify-libcalls", Description)
+    occurrences.construct("simplify-libcalls", Description);
 #endif
-  {
     // Register this optimizer in the list of optimizations.
     Next = OptList;
     OptList = this;
