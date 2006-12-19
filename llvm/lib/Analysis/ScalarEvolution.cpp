@@ -74,6 +74,7 @@
 #include "llvm/Support/ConstantRange.h"
 #include "llvm/Support/InstIterator.h"
 #include "llvm/Support/ManagedStatic.h"
+#include "llvm/Support/MathExtras.h"
 #include "llvm/Support/Streams.h"
 #include "llvm/ADT/Statistic.h"
 #include <ostream>
@@ -1372,11 +1373,14 @@ static uint64_t GetConstantFactor(SCEVHandle S) {
   }
     
   if (SCEVAddRecExpr *A = dyn_cast<SCEVAddRecExpr>(S)) {
-    // FIXME: Generalize.
-    if (A->getNumOperands() == 2)
-      return std::min(GetConstantFactor(A->getOperand(0)),
-                      GetConstantFactor(A->getOperand(1)));
-    // ?
+    // For now, we just handle linear expressions.
+    if (A->getNumOperands() == 2) {
+      // We want the GCD between the start and the stride value.
+      uint64_t Start = GetConstantFactor(A->getOperand(0));
+      if (Start == 1) return 1;
+      uint64_t Stride = GetConstantFactor(A->getOperand(1));
+      return GreatestCommonDivisor64(Start, Stride);
+    }
   }
   
   // SCEVSDivExpr, SCEVUnknown.
