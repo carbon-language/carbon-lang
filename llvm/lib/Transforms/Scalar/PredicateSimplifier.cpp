@@ -92,14 +92,11 @@
 #include <map>
 using namespace llvm;
 
-namespace {
-  Statistic
-  NumVarsReplaced("predsimplify", "Number of argument substitutions");
-  Statistic
-  NumInstruction("predsimplify", "Number of instructions removed");
-  Statistic
-  NumSimple("predsimplify", "Number of simple replacements");
+STATISTIC(NumVarsReplaced, "Number of argument substitutions");
+STATISTIC(NumInstruction , "Number of instructions removed");
+STATISTIC(NumSimple      , "Number of simple replacements");
 
+namespace {
   /// The InequalityGraph stores the relationships between values.
   /// Each Value in the graph is assigned to a Node. Nodes are pointer
   /// comparable for equality. The caller is expected to maintain the logical
