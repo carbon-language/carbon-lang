@@ -680,66 +680,43 @@ Constant *llvm::ConstantFoldCastInstruction(unsigned opc, const Constant *V,
   switch (opc) {
   case Instruction::FPTrunc:
   case Instruction::FPExt:
-    return ConstantFP::get(DestTy, cast<ConstantFP>(V)->getValue());
-  case Instruction::FPToUI: {
-    double dVal = cast<ConstantFP>(V)->getValue();
-    uint64_t iVal = (uint64_t) dVal;
-    return ConstantIntegral::get(DestTy, iVal);
-  }
-  case Instruction::FPToSI: {
-    double dVal = cast<ConstantFP>(V)->getValue();
-    int64_t iVal = (int64_t) dVal;
-    return ConstantIntegral::get(DestTy, iVal);
-  }
-  case Instruction::IntToPtr: //always treated as unsigned
-    if (V->isNullValue())    // Is it a FP or Integral null value?
+    if (const ConstantFP *FPC = dyn_cast<ConstantFP>(V))
+      return ConstantFP::get(DestTy, FPC->getValue());
+    return 0; // Can't fold.
+  case Instruction::FPToUI: 
+    if (const ConstantFP *FPC = dyn_cast<ConstantFP>(V))
+      return ConstantIntegral::get(DestTy,(uint64_t) FPC->getValue());
+    return 0; // Can't fold.
+  case Instruction::FPToSI:
+    if (const ConstantFP *FPC = dyn_cast<ConstantFP>(V))
+      return ConstantIntegral::get(DestTy,(int64_t) FPC->getValue());
+    return 0; // Can't fold.
+  case Instruction::IntToPtr:   //always treated as unsigned
+    if (V->isNullValue())       // Is it an integral null value?
       return ConstantPointerNull::get(cast<PointerType>(DestTy));
-    return 0; // Other pointer types cannot be casted
-  case Instruction::PtrToInt: // always treated as unsigned
-    if (V->isNullValue())
+    return 0;                   // Other pointer types cannot be casted
+  case Instruction::PtrToInt:   // always treated as unsigned
+    if (V->isNullValue())       // is it a null pointer value?
       return ConstantIntegral::get(DestTy, 0);
-    return 0; // Other pointer types cannot be casted
-  case Instruction::UIToFP: {
-    // First, extract the unsigned integer value
-    uint64_t Val;
-    if (isa<ConstantInt>(V))
-      Val = cast<ConstantIntegral>(V)->getZExtValue();
-    else if (const ConstantBool *CB = dyn_cast<ConstantBool>(V))
-      Val = CB->getValue() ? 1 : 0;
-    // Now generate the equivalent floating point value
-    double dVal = (double) Val;
-    return ConstantFP::get(DestTy, dVal);
-  }
-  case Instruction::SIToFP: {
-    // First, extract the signed integer value
-    int64_t Val;
-    if (isa<ConstantInt>(V))
-      Val = cast<ConstantIntegral>(V)->getSExtValue();
-    else if (const ConstantBool *CB = dyn_cast<ConstantBool>(V))
-      Val = CB->getValue() ? -1 : 0;
-    // Now generate the equivalent floating point value
-    double dVal = (double) Val;
-    return ConstantFP::get(DestTy, dVal);
-  }
+    return 0;                   // Other pointer types cannot be casted
+  case Instruction::UIToFP:
+    if (const ConstantIntegral *CI = dyn_cast<ConstantIntegral>(V))
+      return ConstantFP::get(DestTy, double(CI->getZExtValue()));
+    return 0;
+  case Instruction::SIToFP:
+    if (const ConstantIntegral *CI = dyn_cast<ConstantIntegral>(V))
+      return ConstantFP::get(DestTy, double(CI->getSExtValue()));
+    return 0;
   case Instruction::ZExt:
-    // Handle trunc directly here if it is a ConstantIntegral.
-    if (isa<ConstantInt>(V))
-      return ConstantInt::get(DestTy, cast<ConstantInt>(V)->getZExtValue());
-    else if (const ConstantBool *CB = dyn_cast<ConstantBool>(V))
-      return ConstantInt::get(DestTy, CB->getValue() ? 1 : 0);
+    if (const ConstantIntegral *CI = dyn_cast<ConstantIntegral>(V))
+      return ConstantInt::get(DestTy, CI->getZExtValue());
     return 0;
   case Instruction::SExt:
-    // A SExt always produces a signed value so we need to cast the value
-    // now before we try to cast it to the destiniation type.
-    if (isa<ConstantInt>(V))
-      return ConstantInt::get(DestTy, cast<ConstantInt>(V)->getSExtValue());
-    else if (const ConstantBool *CB = dyn_cast<ConstantBool>(V))
-      return ConstantInt::get(DestTy, CB->getValue() ? -1 : 0);
+    if (const ConstantIntegral *CI = dyn_cast<ConstantIntegral>(V))
+      return ConstantInt::get(DestTy, CI->getSExtValue());
     return 0;
   case Instruction::Trunc:
-    // We just handle trunc directly here.  The code below doesn't work for
-    // trunc to bool.
-    if (const ConstantInt *CI = dyn_cast<ConstantInt>(V))
+    if (const ConstantInt *CI = dyn_cast<ConstantInt>(V)) // Can't trunc a bool
       return ConstantIntegral::get(DestTy, CI->getZExtValue());
     return 0;
   case Instruction::BitCast:
