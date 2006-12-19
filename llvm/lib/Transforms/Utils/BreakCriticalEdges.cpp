@@ -16,6 +16,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#define DEBUG_TYPE "break-crit-edges"
 #include "llvm/Transforms/Scalar.h"
 #include "llvm/Transforms/Utils/BasicBlockUtils.h"
 #include "llvm/Analysis/Dominators.h"
@@ -29,9 +30,9 @@
 #include "llvm/ADT/Statistic.h"
 using namespace llvm;
 
-namespace {
-  Statistic NumBroken("break-crit-edges", "Number of blocks inserted");
+STATISTIC(NumBroken, "Number of blocks inserted");
 
+namespace {
   struct VISIBILITY_HIDDEN BreakCriticalEdges : public FunctionPass {
     virtual bool runOnFunction(Function &F);
 

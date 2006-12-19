@@ -13,6 +13,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#define DEBUG_TYPE "raise"
 #include "llvm/Transforms/Scalar.h"
 #include "llvm/Transforms/Utils/Local.h"
 #include "TransformInternals.h"
@@ -34,23 +35,17 @@ static cl::opt<std::string>
 StartInst("raise-start-inst", cl::Hidden, cl::value_desc("inst name"),
        cl::desc("Start raise pass at the instruction with the specified name"));
 
-static Statistic
-NumLoadStorePeepholes("raise", "Number of load/store peepholes");
+STATISTIC(NumLoadStorePeepholes, "Number of load/store peepholes");
 
-static Statistic
-NumGEPInstFormed("raise", "Number of other getelementptr's formed");
+STATISTIC(NumGEPInstFormed, "Number of other getelementptr's formed");
 
-static Statistic
-NumExprTreesConv("raise", "Number of expression trees converted");
+STATISTIC(NumExprTreesConv, "Number of expression trees converted");
 
-static Statistic
-NumCastOfCast("raise", "Number of cast-of-self removed");
+STATISTIC(NumCastOfCast, "Number of cast-of-self removed");
 
-static Statistic
-NumDCEorCP("raise", "Number of insts DCEd or constprop'd");
+STATISTIC(NumDCEorCP, "Number of insts DCEd or constprop'd");
 
-static Statistic
-NumVarargCallChanges("raise", "Number of vararg call peepholes");
+STATISTIC(NumVarargCallChanges, "Number of vararg call peepholes");
 
 #define PRINT_PEEPHOLE(ID, NUM, I)            \
   DOUT << "Inst P/H " << ID << "[" << NUM << "] " << I

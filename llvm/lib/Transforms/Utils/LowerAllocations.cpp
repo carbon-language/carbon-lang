@@ -12,6 +12,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#define DEBUG_TYPE "lowerallocs"
 #include "llvm/Transforms/Scalar.h"
 #include "llvm/Transforms/Utils/UnifyFunctionExitNodes.h"
 #include "llvm/Module.h"
@@ -24,9 +25,9 @@
 #include "llvm/Support/Compiler.h"
 using namespace llvm;
 
-namespace {
-  Statistic NumLowered("lowerallocs", "Number of allocations lowered");
+STATISTIC(NumLowered, "Number of allocations lowered");
 
+namespace {
   /// LowerAllocations - Turn malloc and free instructions into %malloc and
   /// %free calls.
   ///

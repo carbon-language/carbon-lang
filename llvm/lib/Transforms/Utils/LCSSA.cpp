@@ -27,6 +27,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#define DEBUG_TYPE "lcssa"
 #include "llvm/Transforms/Scalar.h"
 #include "llvm/Constants.h"
 #include "llvm/Pass.h"
@@ -39,13 +40,11 @@
 #include "llvm/Support/CFG.h"
 #include <algorithm>
 #include <map>
-
 using namespace llvm;
 
+STATISTIC(NumLCSSA, "Number of live out of a loop variables");
+
 namespace {
-  static Statistic NumLCSSA("lcssa",
-                              "Number of live out of a loop variables");
-  
   struct LCSSA : public FunctionPass {
     // Cached analysis information for the current function.
     LoopInfo *LI;

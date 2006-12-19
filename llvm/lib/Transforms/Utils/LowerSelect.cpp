@@ -24,12 +24,9 @@
 #include "llvm/Instructions.h"
 #include "llvm/Pass.h"
 #include "llvm/Type.h"
-#include "llvm/ADT/Statistic.h"
 using namespace llvm;
 
 namespace {
-  Statistic NumLowered("lowerselect","Number of select instructions lowered");
-
   /// LowerSelect - Turn select instructions into conditional branches.
   ///
   class LowerSelect : public FunctionPass {

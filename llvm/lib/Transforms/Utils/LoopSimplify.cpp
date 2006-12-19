@@ -32,6 +32,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#define DEBUG_TYPE "loopsimplify"
 #include "llvm/Transforms/Scalar.h"
 #include "llvm/Constant.h"
 #include "llvm/Instructions.h"
@@ -48,12 +49,10 @@
 #include "llvm/ADT/DepthFirstIterator.h"
 using namespace llvm;
 
-namespace {
-  Statistic
-  NumInserted("loopsimplify", "Number of pre-header or exit blocks inserted");
-  Statistic
-  NumNested("loopsimplify", "Number of nested loops split out");
+STATISTIC(NumInserted, "Number of pre-header or exit blocks inserted");
+STATISTIC(NumNested  , "Number of nested loops split out");
 
+namespace {
   struct VISIBILITY_HIDDEN LoopSimplify : public FunctionPass {
     // AA - If we have an alias analysis object to update, this is it, otherwise
     // this is null.

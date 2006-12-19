@@ -34,6 +34,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#define DEBUG_TYPE "lowerinvoke"
 #include "llvm/Transforms/Scalar.h"
 #include "llvm/Constants.h"
 #include "llvm/DerivedTypes.h"
@@ -49,14 +50,14 @@
 #include <csetjmp>
 using namespace llvm;
 
-namespace {
-  Statistic NumInvokes("lowerinvoke", "Number of invokes replaced");
-  Statistic NumUnwinds("lowerinvoke", "Number of unwinds replaced");
-  Statistic NumSpilled("lowerinvoke",
-                         "Number of registers live across unwind edges");
-  cl::opt<bool> ExpensiveEHSupport("enable-correct-eh-support",
+STATISTIC(NumInvokes, "Number of invokes replaced");
+STATISTIC(NumUnwinds, "Number of unwinds replaced");
+STATISTIC(NumSpilled, "Number of registers live across unwind edges");
+
+static cl::opt<bool> ExpensiveEHSupport("enable-correct-eh-support",
  cl::desc("Make the -lowerinvoke pass insert expensive, but correct, EH code"));
 
+namespace {
   class VISIBILITY_HIDDEN LowerInvoke : public FunctionPass {
     // Used for both models.
     Function *WriteFn;

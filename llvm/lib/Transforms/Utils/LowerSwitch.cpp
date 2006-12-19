@@ -21,13 +21,10 @@
 #include "llvm/Pass.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/Compiler.h"
-#include "llvm/ADT/Statistic.h"
 #include <algorithm>
 using namespace llvm;
 
 namespace {
-  Statistic NumLowered("lowerswitch", "Number of SwitchInst's replaced");
-
   /// LowerSwitch Pass - Replace all SwitchInst instructions with chained branch
   /// instructions.  Note that this cannot be a BasicBlock pass because it
   /// modifies the CFG!
