@@ -15,35 +15,26 @@
 //
 //===----------------------------------------------------------------------===//
 
+#define DEBUG_TYPE "indmemrem"
 #include "llvm/Transforms/IPO.h"
 #include "llvm/Pass.h"
 #include "llvm/Module.h"
-#include "llvm/Function.h"
 #include "llvm/Instructions.h"
 #include "llvm/Type.h"
-#include "llvm/Support/Debug.h"
 #include "llvm/ADT/Statistic.h"
-#include <fstream>
-#include <set>
 using namespace llvm;
 
+STATISTIC(NumBounceSites, "Number of sites modified");
+STATISTIC(NumBounce     , "Number of bounce functions created");
+
 namespace {
-  Statistic NumBounceSites("indmemrem", "Number of sites modified");
-  Statistic NumBounce  ("indmemrem", "Number of bounce functions created");
-
   class IndMemRemPass : public ModulePass {
-
   public:
-    IndMemRemPass();
     virtual bool runOnModule(Module &M);
   };
   RegisterPass<IndMemRemPass> X("indmemrem","Indirect Malloc and Free Removal");
 } // end anonymous namespace
 
-
-IndMemRemPass::IndMemRemPass()
-{
-}
 
 bool IndMemRemPass::runOnModule(Module &M) {
   //in Theory, all direct calls of malloc and free should be promoted

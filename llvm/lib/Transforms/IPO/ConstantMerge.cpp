@@ -17,15 +17,16 @@
 //
 //===----------------------------------------------------------------------===//
 
+#define DEBUG_TYPE "constmerge"
 #include "llvm/Transforms/IPO.h"
 #include "llvm/Module.h"
 #include "llvm/Pass.h"
 #include "llvm/ADT/Statistic.h"
 using namespace llvm;
 
-namespace {
-  Statistic NumMerged("constmerge", "Number of global constants merged");
+STATISTIC(NumMerged, "Number of global constants merged");
 
+namespace {
   struct ConstantMerge : public ModulePass {
     // run - For this pass, process all of the globals in the module,
     // eliminating duplicate constants.

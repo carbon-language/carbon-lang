@@ -32,12 +32,10 @@
 #include <set>
 using namespace llvm;
 
-namespace {
-  Statistic NumArgumentsEliminated("deadargelim",
-                                     "Number of unread args removed");
-  Statistic NumRetValsEliminated("deadargelim",
-                                   "Number of unused return values removed");
+STATISTIC(NumArgumentsEliminated, "Number of unread args removed");
+STATISTIC(NumRetValsEliminated  , "Number of unused return values removed");
 
+namespace {
   /// DAE - The dead argument elimination pass.
   ///
   class DAE : public ModulePass {

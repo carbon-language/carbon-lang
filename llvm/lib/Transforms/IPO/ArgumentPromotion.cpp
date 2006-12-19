@@ -47,14 +47,11 @@
 #include <set>
 using namespace llvm;
 
-namespace {
-  Statistic NumArgumentsPromoted("argpromotion",
-                                   "Number of pointer arguments promoted");
-  Statistic NumAggregatesPromoted("argpromotion",
-                                    "Number of aggregate arguments promoted");
-  Statistic NumArgumentsDead("argpromotion",
-                               "Number of dead pointer args eliminated");
+STATISTIC(NumArgumentsPromoted , "Number of pointer arguments promoted");
+STATISTIC(NumAggregatesPromoted, "Number of aggregate arguments promoted");
+STATISTIC(NumArgumentsDead     , "Number of dead pointer args eliminated");
 
+namespace {
   /// ArgPromotion - The 'by reference' to 'by value' argument promotion pass.
   ///
   struct ArgPromotion : public CallGraphSCCPass {

@@ -12,6 +12,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#define DEBUG_TYPE "raiseallocs"
 #include "llvm/Transforms/IPO.h"
 #include "llvm/Constants.h"
 #include "llvm/DerivedTypes.h"
@@ -22,9 +23,9 @@
 #include "llvm/ADT/Statistic.h"
 using namespace llvm;
 
-namespace {
-  Statistic NumRaised("raiseallocs", "Number of allocations raised");
+STATISTIC(NumRaised, "Number of allocations raised");
 
+namespace {
   // RaiseAllocations - Turn %malloc and %free calls into the appropriate
   // instruction.
   //

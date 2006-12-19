@@ -13,6 +13,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#define DEBUG_TYPE "internalize"
 #include "llvm/Transforms/IPO.h"
 #include "llvm/Pass.h"
 #include "llvm/Module.h"
@@ -23,9 +24,10 @@
 #include <set>
 using namespace llvm;
 
+STATISTIC(NumFunctions, "Number of functions internalized");
+STATISTIC(NumGlobals  , "Number of global vars internalized");
+
 namespace {
-  Statistic NumFunctions("internalize", "Number of functions internalized");
-  Statistic NumGlobals  ("internalize", "Number of global vars internalized");
 
   // APIFile - A file which contains a list of symbols that should not be marked
   // external.

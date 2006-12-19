@@ -31,17 +31,15 @@
 #include "llvm/Transforms/IPO.h"
 using namespace llvm;
 
-namespace {
-
 /// This statistic keeps track of the total number of library calls that have
 /// been simplified regardless of which call it is.
-Statistic SimplifiedLibCalls("simplify-libcalls",
-  "Number of library calls simplified");
+STATISTIC(SimplifiedLibCalls, "Number of library calls simplified");
 
-// Forward declarations
-class LibCallOptimization;
-class SimplifyLibCalls;
-
+namespace {
+  // Forward declarations
+  class LibCallOptimization;
+  class SimplifyLibCalls;
+  
 /// This list is populated by the constructor for LibCallOptimization class.
 /// Therefore all subclasses are registered here at static initialization time
 /// and this list is what the SimplifyLibCalls pass uses to apply the individual

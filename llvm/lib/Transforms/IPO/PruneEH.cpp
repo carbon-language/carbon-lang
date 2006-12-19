@@ -14,6 +14,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#define DEBUG_TYPE "prune-eh"
 #include "llvm/Transforms/IPO.h"
 #include "llvm/CallGraphSCCPass.h"
 #include "llvm/Constants.h"
@@ -27,10 +28,10 @@
 #include <algorithm>
 using namespace llvm;
 
-namespace {
-  Statistic NumRemoved("prune-eh", "Number of invokes removed");
-  Statistic NumUnreach("prune-eh", "Number of noreturn calls optimized");
+STATISTIC(NumRemoved, "Number of invokes removed");
+STATISTIC(NumUnreach, "Number of noreturn calls optimized");
 
+namespace {
   struct PruneEH : public CallGraphSCCPass {
     /// DoesNotUnwind - This set contains all of the functions which we have
     /// determined cannot unwind.

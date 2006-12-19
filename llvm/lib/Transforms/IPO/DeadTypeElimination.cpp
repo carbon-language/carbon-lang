@@ -12,6 +12,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#define DEBUG_TYPE "deadtypeelim"
 #include "llvm/Transforms/IPO.h"
 #include "llvm/Analysis/FindUsedTypes.h"
 #include "llvm/Module.h"
@@ -19,6 +20,8 @@
 #include "llvm/DerivedTypes.h"
 #include "llvm/ADT/Statistic.h"
 using namespace llvm;
+
+STATISTIC(NumKilled, "Number of unused typenames removed from symtab");
 
 namespace {
   struct DTE : public ModulePass {
@@ -37,8 +40,6 @@ namespace {
     }
   };
   RegisterPass<DTE> X("deadtypeelim", "Dead Type Elimination");
-  Statistic
-  NumKilled("deadtypeelim", "Number of unused typenames removed from symtab");
 }
 
 ModulePass *llvm::createDeadTypeEliminationPass() {

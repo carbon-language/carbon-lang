@@ -15,6 +15,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#define DEBUG_TYPE "ipconstprop"
 #include "llvm/Transforms/IPO.h"
 #include "llvm/Constants.h"
 #include "llvm/Instructions.h"
@@ -24,12 +25,10 @@
 #include "llvm/ADT/Statistic.h"
 using namespace llvm;
 
-namespace {
-  Statistic NumArgumentsProped("ipconstprop",
-                                 "Number of args turned into constants");
-  Statistic NumReturnValProped("ipconstprop",
-                              "Number of return values turned into constants");
+STATISTIC(NumArgumentsProped, "Number of args turned into constants");
+STATISTIC(NumReturnValProped, "Number of return values turned into constants");
 
+namespace {
   /// IPCP - The interprocedural constant propagation pass
   ///
   struct IPCP : public ModulePass {

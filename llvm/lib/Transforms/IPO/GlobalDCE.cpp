@@ -15,6 +15,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#define DEBUG_TYPE "globaldce"
 #include "llvm/Transforms/IPO.h"
 #include "llvm/Constants.h"
 #include "llvm/Module.h"
@@ -23,10 +24,10 @@
 #include <set>
 using namespace llvm;
 
-namespace {
-  Statistic NumFunctions("globaldce","Number of functions removed");
-  Statistic NumVariables("globaldce","Number of global variables removed");
+STATISTIC(NumFunctions, "Number of functions removed");
+STATISTIC(NumVariables, "Number of global variables removed");
 
+namespace {
   struct GlobalDCE : public ModulePass {
     // run - Do the GlobalDCE pass on the specified module, optionally updating
     // the specified callgraph to reflect the changes.

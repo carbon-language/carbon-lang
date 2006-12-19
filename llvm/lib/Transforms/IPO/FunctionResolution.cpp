@@ -18,6 +18,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#define DEBUG_TYPE "funcresolve"
 #include "llvm/Transforms/IPO.h"
 #include "llvm/Module.h"
 #include "llvm/DerivedTypes.h"
@@ -31,10 +32,10 @@
 #include <algorithm>
 using namespace llvm;
 
-namespace {
-  Statistic NumResolved("funcresolve", "Number of varargs functions resolved");
-  Statistic NumGlobals("funcresolve", "Number of global variables resolved");
+STATISTIC(NumResolved, "Number of varargs functions resolved");
+STATISTIC(NumGlobals, "Number of global variables resolved");
 
+namespace {
   struct FunctionResolvingPass : public ModulePass {
     virtual void getAnalysisUsage(AnalysisUsage &AU) const {
       AU.addRequired<TargetData>();

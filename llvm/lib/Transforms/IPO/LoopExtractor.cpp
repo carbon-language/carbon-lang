@@ -14,6 +14,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#define DEBUG_TYPE "loop-extract"
 #include "llvm/Transforms/IPO.h"
 #include "llvm/Instructions.h"
 #include "llvm/Module.h"
@@ -25,9 +26,9 @@
 #include "llvm/ADT/Statistic.h"
 using namespace llvm;
 
-namespace {
-  Statistic NumExtracted("loop-extract", "Number of loops extracted");
+STATISTIC(NumExtracted, "Number of loops extracted");
 
+namespace {
   // FIXME: This is not a function pass, but the PassManager doesn't allow
   // Module passes to require FunctionPasses, so we can't get loop info if we're
   // not a function pass.

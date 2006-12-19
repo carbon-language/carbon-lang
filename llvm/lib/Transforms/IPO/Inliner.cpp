@@ -13,6 +13,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#define DEBUG_TYPE "inline"
 #include "Inliner.h"
 #include "llvm/Module.h"
 #include "llvm/Instructions.h"
@@ -25,10 +26,10 @@
 #include <set>
 using namespace llvm;
 
+STATISTIC(NumInlined, "Number of functions inlined");
+STATISTIC(NumDeleted, "Number of functions deleted because all callers found");
+
 namespace {
-  Statistic NumInlined("inline", "Number of functions inlined");
-  Statistic NumDeleted("inline",
-                       "Number of functions deleted because all callers found");
   cl::opt<unsigned>             // FIXME: 200 is VERY conservative
   InlineLimit("inline-threshold", cl::Hidden, cl::init(200),
         cl::desc("Control the amount of inlining to perform (default = 200)"));

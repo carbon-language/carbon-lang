@@ -33,6 +33,7 @@
 // pass invokable via the "opt" command at will.
 //===----------------------------------------------------------------------===//
 
+#define DEBUG_TYPE "lowersetjmp"
 #include "llvm/Transforms/IPO.h"
 #include "llvm/Constants.h"
 #include "llvm/DerivedTypes.h"
@@ -49,16 +50,12 @@
 #include "llvm/ADT/VectorExtras.h"
 using namespace llvm;
 
-namespace {
-  Statistic LongJmpsTransformed("lowersetjmp",
-                                  "Number of longjmps transformed");
-  Statistic SetJmpsTransformed("lowersetjmp",
-                                 "Number of setjmps transformed");
-  Statistic CallsTransformed("lowersetjmp",
-                               "Number of calls invokified");
-  Statistic InvokesTransformed("lowersetjmp",
-                                 "Number of invokes modified");
+STATISTIC(LongJmpsTransformed, "Number of longjmps transformed");
+STATISTIC(SetJmpsTransformed , "Number of setjmps transformed");
+STATISTIC(CallsTransformed   , "Number of calls invokified");
+STATISTIC(InvokesTransformed , "Number of invokes modified");
 
+namespace {
   //===--------------------------------------------------------------------===//
   // LowerSetJmp pass implementation.
   class LowerSetJmp : public ModulePass,

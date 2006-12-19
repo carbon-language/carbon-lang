@@ -31,23 +31,19 @@
 #include <set>
 using namespace llvm;
 
-namespace {
-  Statistic NumMarked   ("globalopt", "Number of globals marked constant");
-  Statistic NumSRA      ("globalopt", "Number of aggregate globals broken "
-                           "into scalars");
-  Statistic NumHeapSRA  ("globalopt", "Number of heap objects SRA'd");
-  Statistic NumSubstitute("globalopt",
-                        "Number of globals with initializers stored into them");
-  Statistic NumDeleted  ("globalopt", "Number of globals deleted");
-  Statistic NumFnDeleted("globalopt", "Number of functions deleted");
-  Statistic NumGlobUses ("globalopt", "Number of global uses devirtualized");
-  Statistic NumLocalized("globalopt", "Number of globals localized");
-  Statistic NumShrunkToBool("globalopt",
-                              "Number of global vars shrunk to booleans");
-  Statistic NumFastCallFns("globalopt",
-                             "Number of functions converted to fastcc");
-  Statistic NumCtorsEvaluated("globalopt","Number of static ctors evaluated");
+STATISTIC(NumMarked    , "Number of globals marked constant");
+STATISTIC(NumSRA       , "Number of aggregate globals broken into scalars");
+STATISTIC(NumHeapSRA   , "Number of heap objects SRA'd");
+STATISTIC(NumSubstitute,"Number of globals with initializers stored into them");
+STATISTIC(NumDeleted   , "Number of globals deleted");
+STATISTIC(NumFnDeleted , "Number of functions deleted");
+STATISTIC(NumGlobUses  , "Number of global uses devirtualized");
+STATISTIC(NumLocalized , "Number of globals localized");
+STATISTIC(NumShrunkToBool  , "Number of global vars shrunk to booleans");
+STATISTIC(NumFastCallFns   , "Number of functions converted to fastcc");
+STATISTIC(NumCtorsEvaluated, "Number of static ctors evaluated");
 
+namespace {
   struct GlobalOpt : public ModulePass {
     virtual void getAnalysisUsage(AnalysisUsage &AU) const {
       AU.addRequired<TargetData>();
