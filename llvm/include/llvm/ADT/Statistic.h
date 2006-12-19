@@ -28,16 +28,12 @@
 
 namespace llvm {
 
-class Statistic {
+class StatisticBase {
+public:
   const char *Name;
   const char *Desc;
   unsigned Value : 31;
   bool Initialized : 1;
-public:
-  // Normal constructor, default initialize data item...
-  Statistic(const char *name, const char *desc)
-    : Name(name), Desc(desc), Value(0), Initialized(0) {
-  }
 
   unsigned getValue() const { return Value; }
   const char *getName() const { return Name; }
@@ -45,23 +41,35 @@ public:
   
   // Allow use of this class as the value itself.
   operator unsigned() const { return Value; }
-  const Statistic &operator=(unsigned Val) { Value = Val; return init(); }
-  const Statistic &operator++() { ++Value; return init(); }
+  const StatisticBase &operator=(unsigned Val) { Value = Val; return init(); }
+  const StatisticBase &operator++() { ++Value; return init(); }
   unsigned operator++(int) { init(); return Value++; }
-  const Statistic &operator--() { --Value; return init(); }
+  const StatisticBase &operator--() { --Value; return init(); }
   unsigned operator--(int) { init(); return Value--; }
-  const Statistic &operator+=(const unsigned &V) { Value += V; return init(); }
-  const Statistic &operator-=(const unsigned &V) { Value -= V; return init(); }
-  const Statistic &operator*=(const unsigned &V) { Value *= V; return init(); }
-  const Statistic &operator/=(const unsigned &V) { Value /= V; return init(); }
+  const StatisticBase &operator+=(const unsigned &V) {Value += V;return init();}
+  const StatisticBase &operator-=(const unsigned &V) {Value -= V;return init();}
+  const StatisticBase &operator*=(const unsigned &V) {Value *= V;return init();}
+  const StatisticBase &operator/=(const unsigned &V) {Value /= V;return init();}
   
 private:
-  Statistic &init() {
+  StatisticBase &init() {
     if (!Initialized) RegisterStatistic();
     return *this;
   }
   void RegisterStatistic();
 };
+  
+struct Statistic : public StatisticBase {
+  Statistic(const char *name, const char *desc) {
+    Name = name; Desc = desc; Value = 0; Initialized = 0;
+  }
+};
+
+  
+// STATISTIC - A macro to make definition of statistics really simple.  This
+// automatically passes the DEBUG_TYPE of the file into the statistic.
+#define STATISTIC(VARNAME, DESC) \
+  static StatisticBase VARNAME = { DEBUG_TYPE, DESC, 0, 0 }
 
 } // End llvm namespace
 
