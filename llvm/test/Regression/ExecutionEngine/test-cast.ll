@@ -1,6 +1,5 @@
-; RUN: llvm-upgrade %s | llvm-as -f -o %t.bc
+; RUN: llvm-upgrade < %s | llvm-as -f -o %t.bc
 ; RUN: lli %t.bc > /dev/null
-
 
 
 int %foo() {
