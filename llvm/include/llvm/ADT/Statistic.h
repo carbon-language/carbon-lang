@@ -51,7 +51,7 @@ public:
   const StatisticBase &operator*=(const unsigned &V) {Value *= V;return init();}
   const StatisticBase &operator/=(const unsigned &V) {Value /= V;return init();}
   
-private:
+protected:
   StatisticBase &init() {
     if (!Initialized) RegisterStatistic();
     return *this;
@@ -63,6 +63,18 @@ struct Statistic : public StatisticBase {
   Statistic(const char *name, const char *desc) {
     Name = name; Desc = desc; Value = 0; Initialized = 0;
   }
+
+  // Allow use of this class as the value itself.
+  operator unsigned() const { return Value; }
+  const Statistic &operator=(unsigned Val) { Value = Val; init(); return *this;}
+  const Statistic &operator++() { ++Value; init(); return *this;}
+  unsigned operator++(int) { init(); return Value++; }
+  const Statistic &operator--() { --Value; init(); return *this;}
+  unsigned operator--(int) { init(); return Value--; }
+  const Statistic &operator+=(const unsigned &V) {Value += V;init();return *this;}
+  const Statistic &operator-=(const unsigned &V) {Value -= V;init();return *this;}
+  const Statistic &operator*=(const unsigned &V) {Value *= V;init();return *this;}
+  const Statistic &operator/=(const unsigned &V) {Value /= V;init();return *this;}
 };
 
   
