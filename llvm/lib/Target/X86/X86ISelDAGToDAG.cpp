@@ -604,11 +604,9 @@ bool X86DAGToDAGISel::MatchAddress(SDOperand N, X86ISelAddressMode &AM,
       SDOperand N0 = N.getOperand(0);
       if (GlobalAddressSDNode *G = dyn_cast<GlobalAddressSDNode>(N0)) {
         GlobalValue *GV = G->getGlobal();
-        bool isAbs32 = !is64Bit ||
-          (isStatic && !(GV->isExternal() || GV->hasWeakLinkage() ||
-                         GV->hasLinkOnceLinkage()));
+        bool isAbs32 = !is64Bit || isStatic;
         if (isAbs32 || isRoot) {
-          AM.GV = G->getGlobal();
+          AM.GV = GV;
           AM.Disp += G->getOffset();
           AM.isRIPRel = !isAbs32;
           return false;
