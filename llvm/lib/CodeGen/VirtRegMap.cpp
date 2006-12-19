@@ -32,14 +32,14 @@
 #include <algorithm>
 using namespace llvm;
 
-namespace {
-  static Statistic NumSpills("spiller", "Number of register spills");
-  static Statistic NumStores("spiller", "Number of stores added");
-  static Statistic NumLoads ("spiller", "Number of loads added");
-  static Statistic NumReused("spiller", "Number of values reused");
-  static Statistic NumDSE   ("spiller", "Number of dead stores elided");
-  static Statistic NumDCE   ("spiller", "Number of copies elided");
+STATISTIC(NumSpills, "Number of register spills");
+STATISTIC(NumStores, "Number of stores added");
+STATISTIC(NumLoads , "Number of loads added");
+STATISTIC(NumReused, "Number of values reused");
+STATISTIC(NumDSE   , "Number of dead stores elided");
+STATISTIC(NumDCE   , "Number of copies elided");
 
+namespace {
   enum SpillerName { simple, local };
 
   static cl::opt<SpillerName>

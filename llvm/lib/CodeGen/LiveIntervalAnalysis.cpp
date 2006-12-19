@@ -36,23 +36,14 @@
 #include <cmath>
 using namespace llvm;
 
+STATISTIC(numIntervals, "Number of original intervals");
+STATISTIC(numIntervalsAfter, "Number of intervals after coalescing");
+STATISTIC(numJoins    , "Number of interval joins performed");
+STATISTIC(numPeep     , "Number of identity moves eliminated after coalescing");
+STATISTIC(numFolded   , "Number of loads/stores folded into instructions");
+
 namespace {
   RegisterPass<LiveIntervals> X("liveintervals", "Live Interval Analysis");
-
-  static Statistic numIntervals
-  ("liveintervals", "Number of original intervals");
-
-  static Statistic numIntervalsAfter
-  ("liveintervals", "Number of intervals after coalescing");
-
-  static Statistic numJoins
-  ("liveintervals", "Number of interval joins performed");
-
-  static Statistic numPeep
-  ("liveintervals", "Number of identity moves eliminated after coalescing");
-
-  static Statistic numFolded
-  ("liveintervals", "Number of loads/stores folded into instructions");
 
   static cl::opt<bool>
   EnableJoining("join-liveintervals",

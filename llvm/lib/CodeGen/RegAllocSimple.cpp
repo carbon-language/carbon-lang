@@ -29,10 +29,10 @@
 #include "llvm/ADT/STLExtras.h"
 using namespace llvm;
 
-namespace {
-  static Statistic NumStores("ra-simple", "Number of stores added");
-  static Statistic NumLoads ("ra-simple", "Number of loads added");
+STATISTIC(NumStores, "Number of stores added");
+STATISTIC(NumLoads , "Number of loads added");
 
+namespace {
   static RegisterRegAlloc
     simpleRegAlloc("simple", "  simple register allocator",
                    createSimpleRegisterAllocator);

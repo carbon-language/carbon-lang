@@ -40,15 +40,11 @@
 #include <algorithm>
 using namespace llvm;
 
+STATISTIC(NodesCombined   , "Number of dag nodes combined");
+STATISTIC(PreIndexedNodes , "Number of pre-indexed nodes created");
+STATISTIC(PostIndexedNodes, "Number of post-indexed nodes created");
+
 namespace {
-  static Statistic NodesCombined ("dagcombiner", 
-				    "Number of dag nodes combined");
-            
-  static Statistic PreIndexedNodes ("pre_indexed_ops", 
-                                      "Number of pre-indexed nodes created");
-  static Statistic PostIndexedNodes ("post_indexed_ops", 
-                                       "Number of post-indexed nodes created");
-            
   static cl::opt<bool>
     CombinerAA("combiner-alias-analysis", cl::Hidden,
                cl::desc("Turn on alias analysis during testing"));

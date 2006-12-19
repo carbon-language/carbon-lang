@@ -43,14 +43,11 @@
 #include "llvm/ADT/STLExtras.h"
 using namespace llvm;
 
-namespace {
-  static Statistic NumTwoAddressInstrs("twoaddressinstruction",
-                                  "Number of two-address instructions");
-  static Statistic NumCommuted("twoaddressinstruction",
-                          "Number of instructions commuted to coalesce");
-  static Statistic NumConvertedTo3Addr("twoaddressinstruction",
-                                "Number of instructions promoted to 3-address");
+STATISTIC(NumTwoAddressInstrs, "Number of two-address instructions");
+STATISTIC(NumCommuted        , "Number of instructions commuted to coalesce");
+STATISTIC(NumConvertedTo3Addr, "Number of instructions promoted to 3-address");
 
+namespace {
   struct VISIBILITY_HIDDEN TwoAddressInstructionPass
    : public MachineFunctionPass {
     virtual void getAnalysisUsage(AnalysisUsage &AU) const;

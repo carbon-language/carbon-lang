@@ -32,12 +32,11 @@
 #include <algorithm>
 using namespace llvm;
 
-namespace {
-  static Statistic NumStores("ra-local", "Number of stores added");
-  static Statistic NumLoads ("ra-local", "Number of loads added");
-  static Statistic NumFolded("ra-local", "Number of loads/stores folded "
-			       "into instructions");
+STATISTIC(NumStores, "Number of stores added");
+STATISTIC(NumLoads , "Number of loads added");
+STATISTIC(NumFolded, "Number of loads/stores folded into instructions");
 
+namespace {
   static RegisterRegAlloc
     localRegAlloc("local", "  local register allocator",
                   createLocalRegisterAllocator);

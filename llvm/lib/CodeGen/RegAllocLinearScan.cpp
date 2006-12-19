@@ -35,17 +35,14 @@
 #include <cmath>
 using namespace llvm;
 
+STATISTIC(NumIters     , "Number of iterations performed");
+STATISTIC(NumBacktracks, "Number of times we had to backtrack");
+
+static RegisterRegAlloc
+linearscanRegAlloc("linearscan", "  linear scan register allocator",
+                   createLinearScanRegisterAllocator);
+
 namespace {
-
-  static Statistic NumIters
-  ("regalloc", "Number of iterations performed");
-  static Statistic NumBacktracks
-  ("regalloc", "Number of times we had to backtrack");
-
-  static RegisterRegAlloc
-    linearscanRegAlloc("linearscan", "  linear scan register allocator",
-                       createLinearScanRegisterAllocator);
-
   static unsigned numIterations = 0;
   static unsigned numIntervals = 0;
 

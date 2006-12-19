@@ -34,10 +34,8 @@
 #include <queue>
 using namespace llvm;
 
-namespace {
-  static Statistic NumNoops ("scheduler", "Number of noops inserted");
-  static Statistic NumStalls("scheduler", "Number of pipeline stalls");
-}
+STATISTIC(NumNoops , "Number of noops inserted");
+STATISTIC(NumStalls, "Number of pipeline stalls");
 
 static RegisterScheduler
   tdListDAGScheduler("list-td", "  Top-down list scheduler",
