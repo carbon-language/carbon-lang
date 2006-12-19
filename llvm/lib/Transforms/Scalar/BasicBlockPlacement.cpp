@@ -26,6 +26,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#define DEBUG_TYPE "block-placement"
 #include "llvm/Analysis/ProfileInfo.h"
 #include "llvm/Function.h"
 #include "llvm/Pass.h"
@@ -35,9 +36,9 @@
 #include <set>
 using namespace llvm;
 
-namespace {
-  Statistic NumMoved("block-placement", "Number of basic blocks moved");
+STATISTIC(NumMoved, "Number of basic blocks moved");
 
+namespace {
   struct BlockPlacement : public FunctionPass {
     virtual bool runOnFunction(Function &F);
 

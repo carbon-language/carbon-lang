@@ -18,6 +18,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#define DEBUG_TYPE "simplifycfg"
 #include "llvm/Transforms/Scalar.h"
 #include "llvm/Transforms/Utils/Local.h"
 #include "llvm/Constants.h"
@@ -29,9 +30,9 @@
 #include <set>
 using namespace llvm;
 
-namespace {
-  Statistic NumSimpl("cfgsimplify", "Number of blocks simplified");
+STATISTIC(NumSimpl, "Number of blocks simplified");
 
+namespace {
   struct CFGSimplifyPass : public FunctionPass {
     virtual bool runOnFunction(Function &F);
   };

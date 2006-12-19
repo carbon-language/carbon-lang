@@ -13,6 +13,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#define DEBUG_TYPE "adce"
 #include "llvm/Transforms/Scalar.h"
 #include "llvm/Constants.h"
 #include "llvm/Instructions.h"
@@ -29,11 +30,11 @@
 #include <algorithm>
 using namespace llvm;
 
-namespace {
-  Statistic NumBlockRemoved("adce", "Number of basic blocks removed");
-  Statistic NumInstRemoved ("adce", "Number of instructions removed");
-  Statistic NumCallRemoved ("adce", "Number of calls and invokes removed");
+STATISTIC(NumBlockRemoved, "Number of basic blocks removed");
+STATISTIC(NumInstRemoved , "Number of instructions removed");
+STATISTIC(NumCallRemoved , "Number of calls and invokes removed");
 
+namespace {
 //===----------------------------------------------------------------------===//
 // ADCE Class
 //

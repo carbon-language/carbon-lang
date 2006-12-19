@@ -19,6 +19,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#define DEBUG_TYPE "scalarrepl"
 #include "llvm/Transforms/Scalar.h"
 #include "llvm/Constants.h"
 #include "llvm/DerivedTypes.h"
@@ -36,12 +37,11 @@
 #include "llvm/ADT/StringExtras.h"
 using namespace llvm;
 
-namespace {
-  Statistic NumReplaced("scalarrepl", "Number of allocas broken up");
-  Statistic NumPromoted("scalarrepl", "Number of allocas promoted");
-  Statistic NumConverted("scalarrepl",
-                           "Number of aggregates converted to scalar");
+STATISTIC(NumReplaced,  "Number of allocas broken up");
+STATISTIC(NumPromoted,  "Number of allocas promoted");
+STATISTIC(NumConverted, "Number of aggregates converted to scalar");
 
+namespace {
   struct VISIBILITY_HIDDEN SROA : public FunctionPass {
     bool runOnFunction(Function &F);
 

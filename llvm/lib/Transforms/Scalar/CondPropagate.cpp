@@ -25,12 +25,10 @@
 #include "llvm/Support/Streams.h"
 using namespace llvm;
 
-namespace {
-  Statistic
-  NumBrThread("condprop", "Number of CFG edges threaded through branches");
-  Statistic
-  NumSwThread("condprop", "Number of CFG edges threaded through switches");
+STATISTIC(NumBrThread, "Number of CFG edges threaded through branches");
+STATISTIC(NumSwThread, "Number of CFG edges threaded through switches");
 
+namespace {
   struct CondProp : public FunctionPass {
     virtual bool runOnFunction(Function &F);
 

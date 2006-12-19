@@ -36,9 +36,9 @@
 #include <algorithm>
 using namespace llvm;
 
-namespace {
-  Statistic NumUnrolled("loop-unroll", "Number of loops completely unrolled");
+STATISTIC(NumUnrolled, "Number of loops completely unrolled");
 
+namespace {
   cl::opt<unsigned>
   UnrollThreshold("unroll-threshold", cl::init(100), cl::Hidden,
                   cl::desc("The cut-off point for loop unrolling"));

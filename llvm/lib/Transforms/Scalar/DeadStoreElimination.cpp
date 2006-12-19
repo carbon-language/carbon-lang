@@ -15,6 +15,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#define DEBUG_TYPE "dse"
 #include "llvm/Transforms/Scalar.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/Function.h"
@@ -27,10 +28,10 @@
 #include "llvm/ADT/Statistic.h"
 using namespace llvm;
 
-namespace {
-  Statistic NumStores("dse", "Number of stores deleted");
-  Statistic NumOther ("dse", "Number of other instrs removed");
+STATISTIC(NumStores, "Number of stores deleted");
+STATISTIC(NumOther , "Number of other instrs removed");
 
+namespace {
   struct DSE : public FunctionPass {
 
     virtual bool runOnFunction(Function &F) {

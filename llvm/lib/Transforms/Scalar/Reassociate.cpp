@@ -35,13 +35,12 @@
 #include <algorithm>
 using namespace llvm;
 
-namespace {
-  Statistic NumLinear ("reassociate","Number of insts linearized");
-  Statistic NumChanged("reassociate","Number of insts reassociated");
-  Statistic NumSwapped("reassociate","Number of insts with operands swapped");
-  Statistic NumAnnihil("reassociate","Number of expr tree annihilated");
-  Statistic NumFactor ("reassociate","Number of multiplies factored");
+STATISTIC(NumLinear , "Number of insts linearized");
+STATISTIC(NumChanged, "Number of insts reassociated");
+STATISTIC(NumAnnihil, "Number of expr tree annihilated");
+STATISTIC(NumFactor , "Number of multiplies factored");
 
+namespace {
   struct ValueEntry {
     unsigned Rank;
     Value *Op;

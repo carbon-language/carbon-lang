@@ -43,14 +43,13 @@
 #include <set>
 using namespace llvm;
 
+STATISTIC(NumBranches, "Number of branches unswitched");
+STATISTIC(NumSwitches, "Number of switches unswitched");
+STATISTIC(NumSelects , "Number of selects unswitched");
+STATISTIC(NumTrivial , "Number of unswitches that are trivial");
+STATISTIC(NumSimplify, "Number of simplifications of unswitched code");
+
 namespace {
-  Statistic NumBranches("loop-unswitch", "Number of branches unswitched");
-  Statistic NumSwitches("loop-unswitch", "Number of switches unswitched");
-  Statistic NumSelects ("loop-unswitch", "Number of selects unswitched");
-  Statistic NumTrivial ("loop-unswitch",
-                          "Number of unswitches that are trivial");
-  Statistic NumSimplify("loop-unswitch", 
-                          "Number of simplifications of unswitched code");
   cl::opt<unsigned>
   Threshold("loop-unswitch-threshold", cl::desc("Max loop size to unswitch"),
             cl::init(10), cl::Hidden);

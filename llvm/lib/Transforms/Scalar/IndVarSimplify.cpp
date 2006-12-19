@@ -37,6 +37,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#define DEBUG_TYPE "indvars"
 #include "llvm/Transforms/Scalar.h"
 #include "llvm/BasicBlock.h"
 #include "llvm/Constants.h"
@@ -51,13 +52,13 @@
 #include "llvm/ADT/Statistic.h"
 using namespace llvm;
 
-namespace {
-  Statistic NumRemoved ("indvars", "Number of aux indvars removed");
-  Statistic NumPointer ("indvars", "Number of pointer indvars promoted");
-  Statistic NumInserted("indvars", "Number of canonical indvars added");
-  Statistic NumReplaced("indvars", "Number of exit values replaced");
-  Statistic NumLFTR    ("indvars", "Number of loop exit tests replaced");
+STATISTIC(NumRemoved , "Number of aux indvars removed");
+STATISTIC(NumPointer , "Number of pointer indvars promoted");
+STATISTIC(NumInserted, "Number of canonical indvars added");
+STATISTIC(NumReplaced, "Number of exit values replaced");
+STATISTIC(NumLFTR    , "Number of loop exit tests replaced");
 
+namespace {
   class IndVarSimplify : public FunctionPass {
     LoopInfo        *LI;
     ScalarEvolution *SE;

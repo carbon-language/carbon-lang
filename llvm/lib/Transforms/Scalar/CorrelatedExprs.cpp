@@ -26,6 +26,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#define DEBUG_TYPE "cee"
 #include "llvm/Transforms/Scalar.h"
 #include "llvm/Constants.h"
 #include "llvm/Pass.h"
@@ -44,11 +45,11 @@
 #include <algorithm>
 using namespace llvm;
 
-namespace {
-  Statistic NumSetCCRemoved("cee", "Number of setcc instruction eliminated");
-  Statistic NumOperandsCann("cee", "Number of operands canonicalized");
-  Statistic BranchRevectors("cee", "Number of branches revectored");
+STATISTIC(NumSetCCRemoved, "Number of setcc instruction eliminated");
+STATISTIC(NumOperandsCann, "Number of operands canonicalized");
+STATISTIC(BranchRevectors, "Number of branches revectored");
 
+namespace {
   class ValueInfo;
   class Relation {
     Value *Val;                 // Relation to what value?

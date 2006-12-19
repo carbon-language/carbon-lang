@@ -18,6 +18,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#define DEBUG_TYPE "constprop"
 #include "llvm/Transforms/Scalar.h"
 #include "llvm/Transforms/Utils/Local.h"
 #include "llvm/Constant.h"
@@ -28,9 +29,9 @@
 #include <set>
 using namespace llvm;
 
-namespace {
-  Statistic NumInstKilled("constprop", "Number of instructions killed");
+STATISTIC(NumInstKilled, "Number of instructions killed");
 
+namespace {
   struct ConstantPropagation : public FunctionPass {
     bool runOnFunction(Function &F);
 

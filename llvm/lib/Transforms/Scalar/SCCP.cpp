@@ -39,6 +39,16 @@
 #include <set>
 using namespace llvm;
 
+STATISTIC(NumInstRemoved, "Number of instructions removed");
+STATISTIC(NumDeadBlocks , "Number of basic blocks unreachable");
+
+STATISTIC(IPNumInstRemoved, "Number ofinstructions removed by IPSCCP");
+STATISTIC(IPNumDeadBlocks , "Number of basic blocks unreachable by IPSCCP");
+STATISTIC(IPNumArgsElimed ,"Number of arguments constant propagated by IPSCCP");
+STATISTIC(IPNumGlobalConst, "Number of globals found to be constant by IPSCCP");
+
+
+
 // LatticeVal class - This class represents the different lattice values that an
 // instruction may occupy.  It is a simple class with value semantics.
 //
@@ -1081,9 +1091,6 @@ bool SCCPSolver::ResolveBranchesIn(Function &F) {
 
 
 namespace {
-  Statistic NumInstRemoved("sccp", "Number of instructions removed");
-  Statistic NumDeadBlocks ("sccp", "Number of basic blocks unreachable");
-
   //===--------------------------------------------------------------------===//
   //
   /// SCCP Class - This class uses the SCCPSolver to implement a per-function
@@ -1192,13 +1199,6 @@ bool SCCP::runOnFunction(Function &F) {
 }
 
 namespace {
-  Statistic IPNumInstRemoved("ipsccp", "Number of instructions removed");
-  Statistic IPNumDeadBlocks ("ipsccp", "Number of basic blocks unreachable");
-  Statistic IPNumArgsElimed ("ipsccp",
-                               "Number of arguments constant propagated");
-  Statistic IPNumGlobalConst("ipsccp",
-                               "Number of globals found to be constant");
-
   //===--------------------------------------------------------------------===//
   //
   /// IPSCCP Class - This class implements interprocedural Sparse Conditional

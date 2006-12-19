@@ -55,13 +55,13 @@
 using namespace llvm;
 using namespace llvm::PatternMatch;
 
-namespace {
-  Statistic NumCombined ("instcombine", "Number of insts combined");
-  Statistic NumConstProp("instcombine", "Number of constant folds");
-  Statistic NumDeadInst ("instcombine", "Number of dead inst eliminated");
-  Statistic NumDeadStore("instcombine", "Number of dead stores eliminated");
-  Statistic NumSunkInst ("instcombine", "Number of instructions sunk");
+STATISTIC(NumCombined , "Number of insts combined");
+STATISTIC(NumConstProp, "Number of constant folds");
+STATISTIC(NumDeadInst , "Number of dead inst eliminated");
+STATISTIC(NumDeadStore, "Number of dead stores eliminated");
+STATISTIC(NumSunkInst , "Number of instructions sunk");
 
+namespace {
   class VISIBILITY_HIDDEN InstCombiner
     : public FunctionPass,
       public InstVisitor<InstCombiner, Instruction*> {

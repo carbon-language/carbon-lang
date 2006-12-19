@@ -50,6 +50,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#define DEBUG_TYPE "tailcallelim"
 #include "llvm/Transforms/Scalar.h"
 #include "llvm/Constants.h"
 #include "llvm/DerivedTypes.h"
@@ -60,10 +61,10 @@
 #include "llvm/ADT/Statistic.h"
 using namespace llvm;
 
-namespace {
-  Statistic NumEliminated("tailcallelim", "Number of tail calls removed");
-  Statistic NumAccumAdded("tailcallelim","Number of accumulators introduced");
+STATISTIC(NumEliminated, "Number of tail calls removed");
+STATISTIC(NumAccumAdded, "Number of accumulators introduced");
 
+namespace {
   struct TailCallElim : public FunctionPass {
     virtual bool runOnFunction(Function &F);
 

@@ -14,6 +14,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#define DEBUG_TYPE "gcse"
 #include "llvm/Transforms/Scalar.h"
 #include "llvm/BasicBlock.h"
 #include "llvm/Constant.h"
@@ -27,15 +28,14 @@
 #include <algorithm>
 using namespace llvm;
 
+STATISTIC(NumInstRemoved, "Number of instructions removed");
+STATISTIC(NumLoadRemoved, "Number of loads removed");
+STATISTIC(NumCallRemoved, "Number of calls removed");
+STATISTIC(NumNonInsts   , "Number of instructions removed due "
+                          "to non-instruction values");
+STATISTIC(NumArgsRepl   , "Number of function arguments replaced "
+                          "with constant values");
 namespace {
-  Statistic NumInstRemoved("gcse", "Number of instructions removed");
-  Statistic NumLoadRemoved("gcse", "Number of loads removed");
-  Statistic NumCallRemoved("gcse", "Number of calls removed");
-  Statistic NumNonInsts   ("gcse", "Number of instructions removed due "
-                             "to non-instruction values");
-  Statistic NumArgsRepl   ("gcse", "Number of function arguments replaced "
-                             "with constant values");
-
   struct GCSE : public FunctionPass {
     virtual bool runOnFunction(Function &F);
 

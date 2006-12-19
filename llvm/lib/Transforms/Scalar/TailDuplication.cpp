@@ -33,14 +33,12 @@
 #include "llvm/ADT/Statistic.h"
 using namespace llvm;
 
+STATISTIC(NumEliminated, "Number of unconditional branches eliminated");
+
 namespace {
   cl::opt<unsigned>
   Threshold("taildup-threshold", cl::desc("Max block size to tail duplicate"),
             cl::init(6), cl::Hidden);
-  Statistic NumEliminated("tailduplicate",
-                            "Number of unconditional branches eliminated");
-  Statistic NumPHINodes("tailduplicate", "Number of phi nodes inserted");
-
   class TailDup : public FunctionPass {
     bool runOnFunction(Function &F);
   private:

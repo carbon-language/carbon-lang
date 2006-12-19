@@ -16,6 +16,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#define DEBUG_TYPE "dce"
 #include "llvm/Transforms/Scalar.h"
 #include "llvm/Transforms/Utils/Local.h"
 #include "llvm/Instruction.h"
@@ -25,14 +26,13 @@
 #include <set>
 using namespace llvm;
 
-namespace {
-  Statistic DIEEliminated("die", "Number of insts removed");
-  Statistic DCEEliminated("dce", "Number of insts removed");
+STATISTIC(DIEEliminated, "Number of insts removed by DIE pass");
+STATISTIC(DCEEliminated, "Number of insts removed");
 
+namespace {
   //===--------------------------------------------------------------------===//
   // DeadInstElimination pass implementation
   //
-
   struct DeadInstElimination : public BasicBlockPass {
     virtual bool runOnBasicBlock(BasicBlock &BB) {
       bool Changed = false;
@@ -58,11 +58,10 @@ FunctionPass *llvm::createDeadInstEliminationPass() {
 }
 
 
-//===----------------------------------------------------------------------===//
-// DeadCodeElimination pass implementation
-//
-
 namespace {
+  //===--------------------------------------------------------------------===//
+  // DeadCodeElimination pass implementation
+  //
   struct DCE : public FunctionPass {
     virtual bool runOnFunction(Function &F);
 

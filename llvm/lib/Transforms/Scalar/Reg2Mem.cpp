@@ -16,6 +16,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#define DEBUG_TYPE "reg2mem"
 #include "llvm/Transforms/Scalar.h"
 #include "llvm/Transforms/Utils/Local.h"
 #include "llvm/Pass.h"
@@ -24,14 +25,12 @@
 #include "llvm/BasicBlock.h"
 #include "llvm/Instructions.h"
 #include "llvm/ADT/Statistic.h"
-
 #include <list>
-
 using namespace llvm;
 
+STATISTIC(NumDemoted, "Number of registers demoted");
+
 namespace {
-  Statistic NumDemoted("reg2mem", "Number of registers demoted");
-  
   struct RegToMem : public FunctionPass {
 
     virtual void getAnalysisUsage(AnalysisUsage &AU) const {
