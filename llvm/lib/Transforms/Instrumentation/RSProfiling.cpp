@@ -39,11 +39,9 @@
 #include "llvm/DerivedTypes.h"
 #include "llvm/Transforms/Scalar.h"
 #include "llvm/Transforms/Utils/BasicBlockUtils.h"
-#include "llvm/ADT/Statistic.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Transforms/Instrumentation.h"
-//#include "ProfilingUtils.h"
 #include "RSProfiling.h"
 #include <set>
 #include <map>
@@ -52,8 +50,6 @@
 using namespace llvm;
 
 namespace {
-  Statistic NumBackEdges("bedge", "Number of BackEdges");
-
   enum RandomMeth {
     GBV, GBVO, HOSTCC
   };
