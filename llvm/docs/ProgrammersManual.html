@@ -35,7 +35,7 @@ option</a>
 and the <tt>-debug-only</tt> option</a> </li>
         </ul>
       </li>
-      <li><a href="#Statistic">The <tt>Statistic</tt> template &amp; <tt>-stats</tt>
+      <li><a href="#Statistic">The <tt>Statistic</tt> class &amp; <tt>-stats</tt>
 option</a></li>
 <!--
       <li>The <tt>InstVisitor</tt> template
@@ -485,7 +485,7 @@ even if the source lives in multiple files.</p>
 
 <!-- ======================================================================= -->
 <div class="doc_subsection">
-  <a name="Statistic">The <tt>Statistic</tt> template &amp; <tt>-stats</tt>
+  <a name="Statistic">The <tt>Statistic</tt> class &amp; <tt>-stats</tt>
   option</a>
 </div>
 
@@ -493,7 +493,7 @@ even if the source lives in multiple files.</p>
 
 <p>The "<tt><a
 href="/doxygen/Statistic_8h-source.html">llvm/ADT/Statistic.h</a></tt>" file
-provides a template named <tt>Statistic</tt> that is used as a unified way to
+provides a class named <tt>Statistic</tt> that is used as a unified way to
 keep track of what the LLVM compiler is doing and how effective various
 optimizations are.  It is useful to see what optimizations are contributing to
 making a particular program run faster.</p>
@@ -501,7 +501,7 @@ making a particular program run faster.</p>
 <p>Often you may run your pass on some big program, and you're interested to see
 how many times it makes a certain transformation.  Although you can do this with
 hand inspection, or some ad-hoc method, this is a real pain and not very useful
-for big programs.  Using the <tt>Statistic</tt> template makes it very easy to
+for big programs.  Using the <tt>Statistic</tt> class makes it very easy to
 keep track of this information, and the calculated information is presented in a
 uniform manner with the rest of the passes being executed.</p>
 
@@ -513,13 +513,15 @@ it are as follows:</p>
 
 <div class="doc_code">
 <pre>
-static Statistic&lt;&gt; NumXForms("mypassname", "The # of times I did stuff");
+#define <a href="#DEBUG_TYPE">DEBUG_TYPE</a> "mypassname"   <i>// This goes before any #includes.</i>
+STATISTIC(NumXForms, "The # of times I did stuff");
 </pre>
 </div>
 
-      <p>The <tt>Statistic</tt> template can emulate just about any data-type,
-      but if you do not specify a template argument, it defaults to acting like
-      an unsigned int counter (this is usually what you want).</p></li>
+  <p>The <tt>STATISTIC</tt> macro defines a static variable, whose name is
+    specified by the first argument.  The pass name is taken from the DEBUG_TYPE
+    macro, and the description is taken from the second argument.  The variable
+    defined ("NumXForms" in this case) acts like an unsigned int.</p></li>
 
     <li><p>Whenever you make a transformation, bump the counter:</p>
 
