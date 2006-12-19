@@ -23,11 +23,8 @@
 #include <cmath>
 using namespace llvm;
 
-namespace {
-  Statistic NumDynamicInsts("lli", "Number of dynamic instructions executed");
-
-  Interpreter *TheEE = 0;
-}
+STATISTIC(NumDynamicInsts, "Number of dynamic instructions executed");
+static Interpreter *TheEE = 0;
 
 
 //===----------------------------------------------------------------------===//
