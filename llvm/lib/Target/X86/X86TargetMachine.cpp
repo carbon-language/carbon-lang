@@ -80,6 +80,11 @@ unsigned X86_64TargetMachine::getModuleMatchQuality(const Module &M) {
       TT[3] == '_' && TT[4] == '6' && TT[5] == '4' && TT[6] == '-')
     return 20;
 
+  // We strongly match "amd64-*".
+  if (TT.size() >= 6 && TT[0] == 'a' && TT[1] == 'm' && TT[2] == 'd' &&
+      TT[3] == '6' && TT[4] == '4' && TT[5] == '-')
+    return 20;
+  
   if (M.getEndianness()  == Module::LittleEndian &&
       M.getPointerSize() == Module::Pointer64)
     return 10;                                   // Weak match
