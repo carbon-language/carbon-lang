@@ -153,10 +153,6 @@ public:
   /// then return NULL.
   Pass *findAnalysisPass(AnalysisID AID);
 
-  inline void clearManagers() { 
-    PassManagers.clear();
-  }
-
   virtual ~PMTopLevelManager() {
     for (std::vector<Pass *>::iterator I = PassManagers.begin(),
            E = PassManagers.end(); I != E; ++I)
@@ -1150,13 +1146,6 @@ FunctionPassManager::FunctionPassManager(ModuleProvider *P) {
 }
 
 FunctionPassManager::~FunctionPassManager() {
-  // Note : FPM maintains one entry in PassManagers vector.
-  // This one entry is FPM itself. This is not ideal. One
-  // alternative is have one additional layer between
-  // FunctionPassManager and FunctionPassManagerImpl.
-  // Meanwhile, to avoid going into infinte loop, first
-  // remove FPM from its PassMangers vector.
-  FPM->clearManagers();
   delete FPM;
 }
 
