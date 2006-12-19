@@ -5072,24 +5072,6 @@ void SelectionDAGLegalize::ExpandOp(SDOperand Op, SDOperand &Lo, SDOperand &Hi){
   case ISD::FP_ROUND:
     Lo = ExpandLibCall("__truncdfsf2", Node, Hi);
     break;
-  case ISD::SINT_TO_FP: {
-    const char *FnName = 0;
-    if (Node->getOperand(0).getValueType() == MVT::i64)
-      FnName = (VT == MVT::f32) ? "__floatdisf" : "__floatdidf";
-    else
-      FnName = (VT == MVT::f32) ? "__floatsisf" : "__floatsidf";
-    Lo = ExpandLibCall(FnName, Node, Hi);
-    break;
-  }
-  case ISD::UINT_TO_FP: {
-    const char *FnName = 0;
-    if (Node->getOperand(0).getValueType() == MVT::i64)
-      FnName = (VT == MVT::f32) ? "__floatundisf" : "__floatundidf";
-    else
-      FnName = (VT == MVT::f32) ? "__floatunsisf" : "__floatunsidf";
-    Lo = ExpandLibCall(FnName, Node, Hi);
-    break;
-  }
   case ISD::FSQRT:
   case ISD::FSIN:
   case ISD::FCOS: {
@@ -5123,6 +5105,35 @@ void SelectionDAGLegalize::ExpandOp(SDOperand Op, SDOperand &Lo, SDOperand &Hi){
     Lo = DAG.getNode(ISD::XOR, NVT, Lo, Mask);
     if (getTypeAction(NVT) == Expand)
       ExpandOp(Lo, Lo, Hi);
+    break;
+  }
+  case ISD::SINT_TO_FP:
+  case ISD::UINT_TO_FP: {
+    bool isSigned = Node->getOpcode() == ISD::SINT_TO_FP;
+    MVT::ValueType SrcVT = Node->getOperand(0).getValueType();
+    const char *FnName = 0;
+    if (Node->getOperand(0).getValueType() == MVT::i64) {
+      if (VT == MVT::f32)
+        FnName = isSigned ? "__floatdisf" : "__floatundisf";
+      else
+        FnName = isSigned ? "__floatdidf" : "__floatundidf";
+    } else {
+      if (VT == MVT::f32)
+        FnName = isSigned ? "__floatsisf" : "__floatunsisf";
+      else
+        FnName = isSigned ? "__floatsidf" : "__floatunsidf";
+    }
+
+    // Promote the operand if needed.
+    if (getTypeAction(SrcVT) == Promote) {
+      SDOperand Tmp = PromoteOp(Node->getOperand(0));
+      Tmp = isSigned
+        ? DAG.getNode(ISD::SIGN_EXTEND_INREG, Tmp.getValueType(), Tmp,
+                      DAG.getValueType(SrcVT))
+        : DAG.getZeroExtendInReg(Tmp, SrcVT);
+      Node = DAG.UpdateNodeOperands(Op, Tmp).Val;
+    }
+    Lo = ExpandLibCall(FnName, Node, Hi);
     break;
   }
   }
