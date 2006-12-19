@@ -181,9 +181,11 @@ public:
 
   /// This static method returns true if the type Ty is big enough to 
   /// represent the value V. This can be used to avoid having the get method 
-  /// assert when V is larger than Ty can represent. Note that values are
-  /// always treated as unsigned so if the intention is to represent a signed
-  /// type, you must do the conversion first.
+  /// assert when V is larger than Ty can represent. Note that there are two
+  /// versions of this method, one for unsigned and one for signed integers.
+  /// Although ConstantInt canonicalizes everything to an unsigned integer, 
+  /// the signed version avoids callers having to convert a signed quantity
+  /// to the appropriate unsigned type before calling the method.
   /// @returns true if V is a valid value for type Ty
   /// @brief Determine if the value is in range for the given type.
   static bool isValueValidForType(const Type *Ty, uint64_t V);
