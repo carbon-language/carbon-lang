@@ -113,7 +113,7 @@ void X86IntelAsmPrinter::printOp(const MachineOperand &MO,
                                  const char *Modifier) {
   const MRegisterInfo &RI = *TM.getRegisterInfo();
   switch (MO.getType()) {
-  case MachineOperand::MO_Register:
+  case MachineOperand::MO_Register: {      
     if (MRegisterInfo::isPhysicalRegister(MO.getReg())) {
       unsigned Reg = MO.getReg();
       if (Modifier && strncmp(Modifier, "subreg", strlen("subreg")) == 0) {
@@ -126,13 +126,20 @@ void X86IntelAsmPrinter::printOp(const MachineOperand &MO,
     } else
       O << "reg" << MO.getReg();
     return;
-
+  }
   case MachineOperand::MO_Immediate:
     O << MO.getImmedValue();
     return;
   case MachineOperand::MO_MachineBasicBlock:
     printBasicBlockLabel(MO.getMachineBasicBlock());
     return;
+  case MachineOperand::MO_JumpTableIndex: {
+    bool isMemOp  = Modifier && !strcmp(Modifier, "mem");
+    if (!isMemOp) O << "OFFSET ";
+    O << TAI->getPrivateGlobalPrefix() << "JTI" << getFunctionNumber()
+      << "_" << MO.getJumpTableIndex();
+    return;
+  }    
   case MachineOperand::MO_ConstantPoolIndex: {
     bool isMemOp  = Modifier && !strcmp(Modifier, "mem");
     if (!isMemOp) O << "OFFSET ";

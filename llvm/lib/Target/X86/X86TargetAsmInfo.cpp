@@ -152,6 +152,7 @@ X86TargetAsmInfo::X86TargetAsmInfo(const X86TargetMachine &TM) {
     
     TextSection = "_text";
     DataSection = "_data";
+    JumpTableDataSection = NULL;
     SwitchToSectionDirective = "";
     TextSectionStartSuffix = "\tsegment 'CODE'";
     DataSectionStartSuffix = "\tsegment 'DATA'";

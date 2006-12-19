@@ -214,14 +214,17 @@ void AsmPrinter::EmitJumpTableInfo(MachineJumpTableInfo *MJTI,
   // Pick the directive to use to print the jump table entries, and switch to 
   // the appropriate section.
   TargetLowering *LoweringInfo = TM.getTargetLowering();
-  
-  if (IsPic && !(LoweringInfo && LoweringInfo->usesGlobalOffsetTable())) {
+
+  const char* JumpTableDataSection = TAI->getJumpTableDataSection();  
+  if ((IsPic && !(LoweringInfo && LoweringInfo->usesGlobalOffsetTable())) ||
+     !JumpTableDataSection) {
     // In PIC mode, we need to emit the jump table to the same section as the
     // function body itself, otherwise the label differences won't make sense.
+    // We should also do if the section name is NULL.
     const Function *F = MF.getFunction();
     SwitchToTextSection(getSectionForFunction(*F).c_str(), F);
   } else {
-    SwitchToDataSection(TAI->getJumpTableDataSection());
+    SwitchToDataSection(JumpTableDataSection);
   }
   
   EmitAlignment(Log2_32(MJTI->getAlignment()));
