@@ -1851,14 +1851,37 @@ way as for other <a href="#User"><tt>User</tt></a>s (with the
 the <tt>Instruction</tt> class is the <tt>llvm/Instruction.def</tt> file. This
 file contains some meta-data about the various different types of instructions
 in LLVM.  It describes the enum values that are used as opcodes (for example
-<tt>Instruction::Add</tt> and <tt>Instruction::SetLE</tt>), as well as the
+<tt>Instruction::Add</tt> and <tt>Instruction::ICmp</tt>), as well as the
 concrete sub-classes of <tt>Instruction</tt> that implement the instruction (for
 example <tt><a href="#BinaryOperator">BinaryOperator</a></tt> and <tt><a
-href="#SetCondInst">SetCondInst</a></tt>).  Unfortunately, the use of macros in
+href="#CmpInst">CmpInst</a></tt>).  Unfortunately, the use of macros in
 this file confuses doxygen, so these enum values don't show up correctly in the
 <a href="/doxygen/classllvm_1_1Instruction.html">doxygen output</a>.</p>
 
 </div>
+
+<!-- _______________________________________________________________________ -->
+<div class="doc_subsubsection">
+  <a name="s_Instruction">Important Subclasses of the <tt>Instruction</tt>
+  class</a>
+</div>
+<div class="doc_text">
+  <ul>
+    <li><tt><a name="BinaryOperator">BinaryOperator</a></tt>
+    <p>This subclasses represents all two operand instructions whose operands
+    must be the same type, except for the comparison instructions.</p></li>
+    <li><tt><a name="CastInst">CastInst</a></tt>
+    <p>This subclass is the parent of the 12 casting instructions. It provides
+    common operations on cast instructions.</p>
+    <li><tt><a name="CmpInst">CmpInst</a></tt>
+    <p>This subclass respresents the two comparison instructions, 
+    <a href="LangRef.html#i_icmp">ICmpInst</a> (integer opreands), and
+    <a href="LangRef.html#i_fcmp">FCmpInst</a> (floating point operands).</p>
+    <li><tt><a name="TerminatorInst">TerminatorInst</a></tt>
+    <p>This subclass is the parent of all terminator instructions (those which
+    can terminate a block).</p>
+  </ul>
+  </div>
 
 <!-- _______________________________________________________________________ -->
 <div class="doc_subsubsection">
