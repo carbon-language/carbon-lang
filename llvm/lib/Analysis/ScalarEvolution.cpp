@@ -59,6 +59,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#define DEBUG_TYPE "scalar-evolution"
 #include "llvm/Analysis/ScalarEvolutionExpressions.h"
 #include "llvm/Constants.h"
 #include "llvm/DerivedTypes.h"
@@ -82,32 +83,27 @@
 #include <cmath>
 using namespace llvm;
 
+STATISTIC(NumBruteForceEvaluations,
+          "Number of brute force evaluations needed to "
+          "calculate high-order polynomial exit values");
+STATISTIC(NumArrayLenItCounts,
+          "Number of trip counts computed with array length");
+STATISTIC(NumTripCountsComputed,
+          "Number of loops with predictable loop counts");
+STATISTIC(NumTripCountsNotComputed,
+          "Number of loops without predictable loop counts");
+STATISTIC(NumBruteForceTripCountsComputed,
+          "Number of loops with trip counts computed by force");
+
+cl::opt<unsigned>
+MaxBruteForceIterations("scalar-evolution-max-iterations", cl::ReallyHidden,
+                        cl::desc("Maximum number of iterations SCEV will "
+                                 "symbolically execute a constant derived loop"),
+                        cl::init(100));
+
 namespace {
   RegisterPass<ScalarEvolution>
   R("scalar-evolution", "Scalar Evolution Analysis");
-
-  Statistic
-  NumBruteForceEvaluations("scalar-evolution",
-                           "Number of brute force evaluations needed to "
-                           "calculate high-order polynomial exit values");
-  Statistic
-  NumArrayLenItCounts("scalar-evolution",
-                      "Number of trip counts computed with array length");
-  Statistic
-  NumTripCountsComputed("scalar-evolution",
-                        "Number of loops with predictable loop counts");
-  Statistic
-  NumTripCountsNotComputed("scalar-evolution",
-                           "Number of loops without predictable loop counts");
-  Statistic
-  NumBruteForceTripCountsComputed("scalar-evolution",
-                        "Number of loops with trip counts computed by force");
-
-  cl::opt<unsigned>
-  MaxBruteForceIterations("scalar-evolution-max-iterations", cl::ReallyHidden,
-                          cl::desc("Maximum number of iterations SCEV will "
-                              "symbolically execute a constant derived loop"),
-                          cl::init(100));
 }
 
 //===----------------------------------------------------------------------===//

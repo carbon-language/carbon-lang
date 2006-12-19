@@ -64,18 +64,13 @@
 #include <set>
 using namespace llvm;
 
-namespace {
-  Statistic
-  NumIters("anders-aa", "Number of iterations to reach convergence");
-  Statistic
-  NumConstraints("anders-aa", "Number of constraints");
-  Statistic
-  NumNodes("anders-aa", "Number of nodes");
-  Statistic
-  NumEscapingFunctions("anders-aa", "Number of internal functions that escape");
-  Statistic
-  NumIndirectCallees("anders-aa", "Number of indirect callees found");
+STATISTIC(NumIters            , "Number of iterations to reach convergence");
+STATISTIC(NumConstraints      , "Number of constraints");
+STATISTIC(NumNodes            , "Number of nodes");
+STATISTIC(NumEscapingFunctions, "Number of internal functions that escape");
+STATISTIC(NumIndirectCallees  , "Number of indirect callees found");
 
+namespace {
   class Andersens : public ModulePass, public AliasAnalysis,
                     private InstVisitor<Andersens> {
     /// Node class - This class is used to represent a memory object in the

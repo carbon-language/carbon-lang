@@ -14,6 +14,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#define DEBUG_TYPE "globalsmodref-aa"
 #include "llvm/Analysis/Passes.h"
 #include "llvm/Module.h"
 #include "llvm/Pass.h"
@@ -29,23 +30,14 @@
 #include <set>
 using namespace llvm;
 
+STATISTIC(NumNonAddrTakenGlobalVars,
+          "Number of global vars without address taken");
+STATISTIC(NumNonAddrTakenFunctions,"Number of functions without address taken");
+STATISTIC(NumNoMemFunctions, "Number of functions that do not access memory");
+STATISTIC(NumReadMemFunctions, "Number of functions that only read memory");
+STATISTIC(NumIndirectGlobalVars, "Number of indirect global objects");
+
 namespace {
-  Statistic
-  NumNonAddrTakenGlobalVars("globalsmodref-aa",
-                            "Number of global vars without address taken");
-  Statistic
-  NumNonAddrTakenFunctions("globalsmodref-aa",
-                           "Number of functions without address taken");
-  Statistic
-  NumNoMemFunctions("globalsmodref-aa",
-                    "Number of functions that do not access memory");
-  Statistic
-  NumReadMemFunctions("globalsmodref-aa",
-                      "Number of functions that only read memory");
-  Statistic
-  NumIndirectGlobalVars("globalsmodref-aa",
-                        "Number of indirect global objects");
-  
   /// FunctionRecord - One instance of this structure is stored for every
   /// function in the program.  Later, the entries for these functions are
   /// removed if the function is found to call an external function (in which
