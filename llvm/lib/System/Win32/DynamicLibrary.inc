@@ -51,7 +51,11 @@ extern "C" {
         stricmp(ModuleName, "msvcp60") != 0 &&
         stricmp(ModuleName, "msvcp70") != 0 &&
         stricmp(ModuleName, "msvcr70") != 0 &&
+#ifndef __MINGW32__
+        // Mingw32 uses msvcrt.dll by default. Don't ignore it.
+        // Otherwise, user should be aware, what he's doing :)
         stricmp(ModuleName, "msvcrt") != 0 &&
+#endif        
         stricmp(ModuleName, "msvcrt20") != 0 &&
         stricmp(ModuleName, "msvcrt40") != 0) {
       OpenedHandles.push_back((HMODULE)ModuleBase);
@@ -84,6 +88,17 @@ DynamicLibrary::~DynamicLibrary() {
   }
 }
 
+#ifdef __MINGW32__
+  #define EXPLICIT_SYMBOL(SYM)                    \
+    if (!strcmp(symbolName, #SYM)) return (void*)&SYM
+  #define EXPLICIT_SYMBOL2(SYMFROM, SYMTO)        \
+    if (!strcmp(symbolName, #SYMFROM)) return (void*)&SYMTO
+  #define EXPLICIT_SYMBOL_DEF(SYM)                \
+    extern "C" { extern void *SYM; }
+  
+  EXPLICIT_SYMBOL_DEF(_alloca);
+#endif
+ 
 bool DynamicLibrary::LoadLibraryPermanently(const char *filename,
                                             std::string *ErrMsg) {
   if (filename) {
@@ -117,6 +132,16 @@ void* DynamicLibrary::SearchForAddressOfSymbol(const char* symbolName) {
     if (ptr)
       return (void *) ptr;
   }
+
+#ifdef __MINGW32__  
+  {
+    EXPLICIT_SYMBOL(_alloca);
+    EXPLICIT_SYMBOL2(alloca, _alloca);
+#undef EXPLICIT_SYMBOL
+#undef EXPLICIT_SYMBOL2
+#undef EXPLICIT_SYMBOL_DEF    
+  }
+#endif
 
   return 0;
 }
