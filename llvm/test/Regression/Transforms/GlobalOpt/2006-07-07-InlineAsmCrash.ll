@@ -1,4 +1,4 @@
-; RUN: llvm-as< %s | opt -globalopt -disable-output
+; RUN: llvm-upgrade < %s | llvm-as | opt -globalopt -disable-output
 ; PR820
 target endian = little
 target pointersize = 32
