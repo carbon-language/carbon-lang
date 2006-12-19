@@ -12,6 +12,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#define DEBUG_TYPE "asm-printer"
 #include "Sparc.h"
 #include "SparcInstrInfo.h"
 #include "llvm/Constants.h"
@@ -32,9 +33,9 @@
 #include <cctype>
 using namespace llvm;
 
-namespace {
-  Statistic EmittedInsts("asm-printer", "Number of machine instrs printed");
+STATISTIC(EmittedInsts, "Number of machine instrs printed");
 
+namespace {
   struct VISIBILITY_HIDDEN SparcAsmPrinter : public AsmPrinter {
     SparcAsmPrinter(std::ostream &O, TargetMachine &TM, const TargetAsmInfo *T)
       : AsmPrinter(O, TM, T) {

@@ -12,6 +12,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#define DEBUG_TYPE "x86-emitter"
 #include "X86InstrInfo.h"
 #include "X86Subtarget.h"
 #include "X86TargetMachine.h"
@@ -28,10 +29,7 @@
 #include "llvm/Target/TargetOptions.h"
 using namespace llvm;
 
-namespace {
-  Statistic
-  NumEmitted("x86-emitter", "Number of machine instructions emitted");
-}
+STATISTIC(NumEmitted, "Number of machine instructions emitted");
 
 namespace {
   class VISIBILITY_HIDDEN Emitter : public MachineFunctionPass {

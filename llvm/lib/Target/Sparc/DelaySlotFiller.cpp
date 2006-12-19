@@ -11,6 +11,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#define DEBUG_TYPE "delayslotfiller"
 #include "Sparc.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
@@ -19,9 +20,9 @@
 #include "llvm/ADT/Statistic.h"
 using namespace llvm;
 
-namespace {
-  Statistic FilledSlots("delayslotfiller", "Num. of delay slots filled");
+STATISTIC(FilledSlots, "Number of delay slots filled");
 
+namespace {
   struct Filler : public MachineFunctionPass {
     /// Target machine description which we query for reg. names, data
     /// layout, etc.

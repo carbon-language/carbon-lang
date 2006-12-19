@@ -13,6 +13,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#define DEBUG_TYPE "asm-printer"
 #include "X86ATTAsmPrinter.h"
 #include "X86.h"
 #include "X86MachineFunctionInfo.h"
@@ -23,7 +24,10 @@
 #include "llvm/Support/Mangler.h"
 #include "llvm/Target/TargetAsmInfo.h"
 #include "llvm/Target/TargetOptions.h"
+#include "llvm/ADT/Statistic.h"
 using namespace llvm;
+
+STATISTIC(EmittedInsts, "Number of machine instrs printed");
 
 /// getSectionForFunction - Return the section that we should emit the
 /// specified function body into.

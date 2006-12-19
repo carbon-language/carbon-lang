@@ -13,6 +13,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#define DEBUG_TYPE "asm-printer"
 #include "ARM.h"
 #include "ARMInstrInfo.h"
 #include "llvm/Constants.h"
@@ -33,9 +34,9 @@
 #include <cctype>
 using namespace llvm;
 
-namespace {
-  Statistic EmittedInsts("asm-printer", "Number of machine instrs printed");
+STATISTIC(EmittedInsts, "Number of machine instrs printed");
 
+namespace {
   static const char *ARMCondCodeToString(ARMCC::CondCodes CC) {
     switch (CC) {
     default: assert(0 && "Unknown condition code");
@@ -144,6 +145,7 @@ bool ARMAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
          II != E; ++II) {
       // Print the assembly for the instruction.
       O << "\t";
+      ++EmittedInsts;
       printInstruction(II);
     }
   }

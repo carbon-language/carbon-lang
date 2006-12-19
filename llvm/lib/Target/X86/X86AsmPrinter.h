@@ -22,14 +22,11 @@
 #include "llvm/CodeGen/AsmPrinter.h"
 #include "llvm/CodeGen/DwarfWriter.h"
 #include "llvm/CodeGen/MachineDebugInfo.h"
-#include "llvm/ADT/Statistic.h"
 #include "llvm/Support/Compiler.h"
 #include <set>
 
 
 namespace llvm {
-
-extern Statistic EmittedInsts;
 
 // FIXME: Move this to CodeGen/AsmPrinter.h
 namespace PICStyle {

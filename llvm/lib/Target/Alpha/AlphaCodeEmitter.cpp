@@ -12,6 +12,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#define DEBUG_TYPE "alpha-emitter"
 #include "AlphaTargetMachine.h"
 #include "AlphaRelocations.h"
 #include "Alpha.h"
@@ -22,13 +23,7 @@
 #include "llvm/CodeGen/Passes.h"
 #include "llvm/Function.h"
 #include "llvm/Support/Debug.h"
-#include "llvm/ADT/Statistic.h"
 using namespace llvm;
-
-namespace {
-  Statistic
-  NumEmitted("alpha-emitter", "Number of machine instructions emitted");
-}
 
 namespace {
   class AlphaCodeEmitter : public MachineFunctionPass {

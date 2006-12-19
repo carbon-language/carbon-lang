@@ -20,6 +20,7 @@
 // 
 //===----------------------------------------------------------------------===//
 
+#define DEBUG_TYPE "ia64-codegen"
 #include "IA64.h"
 #include "IA64InstrInfo.h"
 #include "IA64TargetMachine.h"
@@ -31,9 +32,9 @@
 #include <set>
 using namespace llvm;
 
-namespace {
-  Statistic StopBitsAdded("ia64-codegen", "Number of stop bits added");
+STATISTIC(StopBitsAdded, "Number of stop bits added");
 
+namespace {
   struct IA64BundlingPass : public MachineFunctionPass {
     /// Target machine description which we query for reg. names, data
     /// layout, etc.

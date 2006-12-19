@@ -15,6 +15,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#define DEBUG_TYPE "ppc-branch-select"
 #include "PPC.h"
 #include "PPCInstrBuilder.h"
 #include "PPCInstrInfo.h"
@@ -27,8 +28,7 @@
 #include "llvm/Support/MathExtras.h"
 using namespace llvm;
 
-static Statistic NumExpanded("ppc-branch-select",
-                               "Num branches expanded to long format");
+STATISTIC(NumExpanded, "Number of branches expanded to long format");
 
 namespace {
   struct VISIBILITY_HIDDEN PPCBSel : public MachineFunctionPass {

@@ -27,11 +27,7 @@
 #include "llvm/Assembly/Writer.h"
 #include "llvm/Support/Mangler.h"
 #include "llvm/Target/TargetAsmInfo.h"
-
 using namespace llvm;
-
-Statistic llvm::EmittedInsts("asm-printer",
-                               "Number of machine instrs printed");
 
 static X86FunctionInfo calculateFunctionInfo(const Function *F,
                                              const TargetData *TD) {

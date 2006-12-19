@@ -16,6 +16,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#define DEBUG_TYPE "asm-printer"
 #include "IA64.h"
 #include "IA64TargetMachine.h"
 #include "llvm/Module.h"
@@ -28,9 +29,9 @@
 #include "llvm/ADT/Statistic.h"
 using namespace llvm;
 
+STATISTIC(EmittedInsts, "Number of machine instrs printed");
+
 namespace {
-  Statistic EmittedInsts("asm-printer", "Number of machine instrs printed");
-  
   struct IA64AsmPrinter : public AsmPrinter {
     std::set<std::string> ExternalFunctionNames, ExternalObjectNames;
 

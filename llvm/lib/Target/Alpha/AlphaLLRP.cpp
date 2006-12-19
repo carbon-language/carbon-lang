@@ -8,10 +8,11 @@
 //===----------------------------------------------------------------------===//
 //
 // Here we check for potential replay traps introduced by the spiller
-// We also align some branch targets if we can do so for free
+// We also align some branch targets if we can do so for free.
+//
 //===----------------------------------------------------------------------===//
 
-
+#define DEBUG_TYPE "alpha-nops"
 #include "Alpha.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
@@ -22,11 +23,10 @@
 #include "llvm/Support/CommandLine.h"
 using namespace llvm;
 
-namespace {
-  Statistic nopintro("alpha-nops", "Number of nops inserted");
-  Statistic nopalign("alpha-nops-align", 
-		       "Number of nops inserted for alignment");
+STATISTIC(nopintro, "Number of nops inserted");
+STATISTIC(nopalign, "Number of nops inserted for alignment");
 
+namespace {
   cl::opt<bool>
   AlignAll("alpha-align-all", cl::Hidden,
                    cl::desc("Align all blocks"));

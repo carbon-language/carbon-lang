@@ -12,6 +12,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#define DEBUG_TYPE "ia64-codegen"
 #include "IA64.h"
 #include "IA64TargetMachine.h"
 #include "IA64ISelLowering.h"
@@ -21,7 +22,6 @@
 #include "llvm/CodeGen/SelectionDAG.h"
 #include "llvm/CodeGen/SelectionDAGISel.h"
 #include "llvm/Target/TargetOptions.h"
-#include "llvm/ADT/Statistic.h"
 #include "llvm/Constants.h"
 #include "llvm/GlobalValue.h"
 #include "llvm/Intrinsics.h"
@@ -32,9 +32,6 @@
 using namespace llvm;
 
 namespace {
-  Statistic FusedFP ("ia64-codegen", "Number of fused fp operations");
-  Statistic FrameOff("ia64-codegen", "Number of frame idx offsets collapsed");
-    
   //===--------------------------------------------------------------------===//
   /// IA64DAGToDAGISel - IA64 specific code to select IA64 machine
   /// instructions for SelectionDAG operations.

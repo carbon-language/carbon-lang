@@ -11,6 +11,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#define DEBUG_TYPE "fpmover"
 #include "Sparc.h"
 #include "SparcSubtarget.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
@@ -21,10 +22,10 @@
 #include "llvm/Support/Debug.h"
 using namespace llvm;
 
-namespace {
-  Statistic NumFpDs("fpmover", "Number of instructions translated");
-  Statistic NoopFpDs("fpmover", "Number of noop instructions removed");
+STATISTIC(NumFpDs , "Number of instructions translated");
+STATISTIC(NoopFpDs, "Number of noop instructions removed");
 
+namespace {
   struct FPMover : public MachineFunctionPass {
     /// Target machine description which we query for reg. names, data
     /// layout, etc.

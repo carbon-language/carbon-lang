@@ -22,7 +22,6 @@
 #include "llvm/CodeGen/SelectionDAG.h"
 #include "llvm/CodeGen/SelectionDAGISel.h"
 #include "llvm/Target/TargetOptions.h"
-#include "llvm/ADT/Statistic.h"
 #include "llvm/Constants.h"
 #include "llvm/GlobalValue.h"
 #include "llvm/Intrinsics.h"

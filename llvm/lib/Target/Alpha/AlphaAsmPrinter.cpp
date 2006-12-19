@@ -12,6 +12,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#define DEBUG_TYPE "asm-printer"
 #include "Alpha.h"
 #include "AlphaInstrInfo.h"
 #include "AlphaTargetMachine.h"
@@ -26,9 +27,9 @@
 #include "llvm/ADT/Statistic.h"
 using namespace llvm;
 
+STATISTIC(EmittedInsts, "Number of machine instrs printed");
+
 namespace {
-  Statistic EmittedInsts("asm-printer", "Number of machine instrs printed");
-  
   struct VISIBILITY_HIDDEN AlphaAsmPrinter : public AsmPrinter {
 
     /// Unique incrementer for label values for referencing Global values.

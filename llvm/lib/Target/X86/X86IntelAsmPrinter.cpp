@@ -13,6 +13,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#define DEBUG_TYPE "asm-printer"
 #include "X86IntelAsmPrinter.h"
 #include "X86TargetAsmInfo.h"
 #include "X86.h"
@@ -23,7 +24,10 @@
 #include "llvm/Support/Mangler.h"
 #include "llvm/Target/TargetAsmInfo.h"
 #include "llvm/Target/TargetOptions.h"
+#include "llvm/ADT/Statistic.h"
 using namespace llvm;
+
+STATISTIC(EmittedInsts, "Number of machine instrs printed");
 
 std::string X86IntelAsmPrinter::getSectionForFunction(const Function &F) const {
   // Intel asm always emits functions to _text.

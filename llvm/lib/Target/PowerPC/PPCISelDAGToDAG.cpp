@@ -12,6 +12,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#define DEBUG_TYPE "ppc-codegen"
 #include "PPC.h"
 #include "PPCPredicates.h"
 #include "PPCTargetMachine.h"
@@ -23,7 +24,6 @@
 #include "llvm/CodeGen/SelectionDAG.h"
 #include "llvm/CodeGen/SelectionDAGISel.h"
 #include "llvm/Target/TargetOptions.h"
-#include "llvm/ADT/Statistic.h"
 #include "llvm/Constants.h"
 #include "llvm/GlobalValue.h"
 #include "llvm/Intrinsics.h"
@@ -35,8 +35,6 @@
 using namespace llvm;
 
 namespace {
-  Statistic FrameOff("ppc-codegen", "Number of frame idx offsets collapsed");
-    
   //===--------------------------------------------------------------------===//
   /// PPCDAGToDAGISel - PPC specific code to select PPC machine
   /// instructions for SelectionDAG operations.

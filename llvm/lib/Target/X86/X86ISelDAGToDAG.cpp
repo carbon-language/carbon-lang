@@ -38,6 +38,10 @@
 #include <set>
 using namespace llvm;
 
+STATISTIC(NumFPKill   , "Number of FP_REG_KILL instructions added");
+STATISTIC(NumLoadMoved, "Number of loads moved below TokenFactor");
+
+
 //===----------------------------------------------------------------------===//
 //                      Pattern Matcher Implementation
 //===----------------------------------------------------------------------===//
@@ -75,12 +79,6 @@ namespace {
 }
 
 namespace {
-  Statistic
-  NumFPKill("x86-codegen", "Number of FP_REG_KILL instructions added");
-
-  Statistic
-  NumLoadMoved("x86-codegen", "Number of loads moved below TokenFactor");
-
   //===--------------------------------------------------------------------===//
   /// ISel - X86 specific code to select X86 machine instructions for
   /// SelectionDAG operations.

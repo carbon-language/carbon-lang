@@ -28,7 +28,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#define DEBUG_TYPE "fp"
+#define DEBUG_TYPE "x86-codegen"
 #include "X86.h"
 #include "X86InstrInfo.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
@@ -47,10 +47,10 @@
 #include <set>
 using namespace llvm;
 
-namespace {
-  Statistic NumFXCH("x86-codegen", "Number of fxch instructions inserted");
-  Statistic NumFP  ("x86-codegen", "Number of floating point instructions");
+STATISTIC(NumFXCH, "Number of fxch instructions inserted");
+STATISTIC(NumFP  , "Number of floating point instructions");
 
+namespace {
   struct VISIBILITY_HIDDEN FPS : public MachineFunctionPass {
     virtual bool runOnMachineFunction(MachineFunction &MF);
 
