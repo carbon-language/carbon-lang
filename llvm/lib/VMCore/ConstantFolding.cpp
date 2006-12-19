@@ -54,21 +54,6 @@ namespace {
     virtual Constant *lessthan(const Constant *V1, const Constant *V2) const =0;
     virtual Constant *equalto(const Constant *V1, const Constant *V2) const = 0;
 
-    // Casting operators.
-    virtual Constant *castToBool  (const Constant *V) const = 0;
-    virtual Constant *castToSByte (const Constant *V) const = 0;
-    virtual Constant *castToUByte (const Constant *V) const = 0;
-    virtual Constant *castToShort (const Constant *V) const = 0;
-    virtual Constant *castToUShort(const Constant *V) const = 0;
-    virtual Constant *castToInt   (const Constant *V) const = 0;
-    virtual Constant *castToUInt  (const Constant *V) const = 0;
-    virtual Constant *castToLong  (const Constant *V) const = 0;
-    virtual Constant *castToULong (const Constant *V) const = 0;
-    virtual Constant *castToFloat (const Constant *V) const = 0;
-    virtual Constant *castToDouble(const Constant *V) const = 0;
-    virtual Constant *castToPointer(const Constant *V,
-                                    const PointerType *Ty) const = 0;
-
     // ConstRules::get - Return an instance of ConstRules for the specified
     // constant operands.
     //
@@ -154,44 +139,6 @@ class VISIBILITY_HIDDEN TemplateRules : public ConstRules {
     return SubClassName::EqualTo((const ArgType *)V1, (const ArgType *)V2);
   }
 
-  // Casting operators.  ick
-  virtual Constant *castToBool(const Constant *V) const {
-    return SubClassName::CastToBool((const ArgType*)V);
-  }
-  virtual Constant *castToSByte(const Constant *V) const {
-    return SubClassName::CastToSByte((const ArgType*)V);
-  }
-  virtual Constant *castToUByte(const Constant *V) const {
-    return SubClassName::CastToUByte((const ArgType*)V);
-  }
-  virtual Constant *castToShort(const Constant *V) const {
-    return SubClassName::CastToShort((const ArgType*)V);
-  }
-  virtual Constant *castToUShort(const Constant *V) const {
-    return SubClassName::CastToUShort((const ArgType*)V);
-  }
-  virtual Constant *castToInt(const Constant *V) const {
-    return SubClassName::CastToInt((const ArgType*)V);
-  }
-  virtual Constant *castToUInt(const Constant *V) const {
-    return SubClassName::CastToUInt((const ArgType*)V);
-  }
-  virtual Constant *castToLong(const Constant *V) const {
-    return SubClassName::CastToLong((const ArgType*)V);
-  }
-  virtual Constant *castToULong(const Constant *V) const {
-    return SubClassName::CastToULong((const ArgType*)V);
-  }
-  virtual Constant *castToFloat(const Constant *V) const {
-    return SubClassName::CastToFloat((const ArgType*)V);
-  }
-  virtual Constant *castToDouble(const Constant *V) const {
-    return SubClassName::CastToDouble((const ArgType*)V);
-  }
-  virtual Constant *castToPointer(const Constant *V,
-                                  const PointerType *Ty) const {
-    return SubClassName::CastToPointer((const ArgType*)V, Ty);
-  }
 
   //===--------------------------------------------------------------------===//
   // Default "noop" implementations
@@ -218,21 +165,6 @@ class VISIBILITY_HIDDEN TemplateRules : public ConstRules {
   static Constant *EqualTo(const ArgType *V1, const ArgType *V2) {
     return 0;
   }
-
-  // Casting operators.  ick
-  static Constant *CastToBool  (const Constant *V) { return 0; }
-  static Constant *CastToSByte (const Constant *V) { return 0; }
-  static Constant *CastToUByte (const Constant *V) { return 0; }
-  static Constant *CastToShort (const Constant *V) { return 0; }
-  static Constant *CastToUShort(const Constant *V) { return 0; }
-  static Constant *CastToInt   (const Constant *V) { return 0; }
-  static Constant *CastToUInt  (const Constant *V) { return 0; }
-  static Constant *CastToLong  (const Constant *V) { return 0; }
-  static Constant *CastToULong (const Constant *V) { return 0; }
-  static Constant *CastToFloat (const Constant *V) { return 0; }
-  static Constant *CastToDouble(const Constant *V) { return 0; }
-  static Constant *CastToPointer(const Constant *,
-                                 const PointerType *) {return 0;}
 
 public:
   virtual ~TemplateRules() {}
@@ -287,25 +219,6 @@ struct VISIBILITY_HIDDEN BoolRules
   static Constant *Xor(const ConstantBool *V1, const ConstantBool *V2) {
     return ConstantBool::get(V1->getValue() ^ V2->getValue());
   }
-
-  // Casting operators.  ick
-#define DEF_CAST(TYPE, CLASS, CTYPE) \
-  static Constant *CastTo##TYPE  (const ConstantBool *V) {    \
-    return CLASS::get(Type::TYPE##Ty, (CTYPE)(bool)V->getValue()); \
-  }
-
-  DEF_CAST(Bool  , ConstantBool, bool)
-  DEF_CAST(SByte , ConstantInt, signed char)
-  DEF_CAST(UByte , ConstantInt, unsigned char)
-  DEF_CAST(Short , ConstantInt, signed short)
-  DEF_CAST(UShort, ConstantInt, unsigned short)
-  DEF_CAST(Int   , ConstantInt, signed int)
-  DEF_CAST(UInt  , ConstantInt, unsigned int)
-  DEF_CAST(Long  , ConstantInt, int64_t)
-  DEF_CAST(ULong , ConstantInt, uint64_t)
-  DEF_CAST(Float , ConstantFP  , float)
-  DEF_CAST(Double, ConstantFP  , double)
-#undef DEF_CAST
 };
 }  // end anonymous namespace
 
@@ -322,44 +235,6 @@ struct VISIBILITY_HIDDEN NullPointerRules
   : public TemplateRules<ConstantPointerNull, NullPointerRules> {
   static Constant *EqualTo(const Constant *V1, const Constant *V2) {
     return ConstantBool::getTrue();  // Null pointers are always equal
-  }
-  static Constant *CastToBool(const Constant *V) {
-    return ConstantBool::getFalse();
-  }
-  static Constant *CastToSByte (const Constant *V) {
-    return ConstantInt::get(Type::SByteTy, 0);
-  }
-  static Constant *CastToUByte (const Constant *V) {
-    return ConstantInt::get(Type::UByteTy, 0);
-  }
-  static Constant *CastToShort (const Constant *V) {
-    return ConstantInt::get(Type::ShortTy, 0);
-  }
-  static Constant *CastToUShort(const Constant *V) {
-    return ConstantInt::get(Type::UShortTy, 0);
-  }
-  static Constant *CastToInt   (const Constant *V) {
-    return ConstantInt::get(Type::IntTy, 0);
-  }
-  static Constant *CastToUInt  (const Constant *V) {
-    return ConstantInt::get(Type::UIntTy, 0);
-  }
-  static Constant *CastToLong  (const Constant *V) {
-    return ConstantInt::get(Type::LongTy, 0);
-  }
-  static Constant *CastToULong (const Constant *V) {
-    return ConstantInt::get(Type::ULongTy, 0);
-  }
-  static Constant *CastToFloat (const Constant *V) {
-    return ConstantFP::get(Type::FloatTy, 0);
-  }
-  static Constant *CastToDouble(const Constant *V) {
-    return ConstantFP::get(Type::DoubleTy, 0);
-  }
-
-  static Constant *CastToPointer(const ConstantPointerNull *V,
-                                 const PointerType *PTy) {
-    return ConstantPointerNull::get(PTy);
   }
 };
 }  // end anonymous namespace
@@ -497,32 +372,6 @@ struct VISIBILITY_HIDDEN DirectIntRules
     return ConstantBool::get(R);
   }
 
-  static Constant *CastToPointer(const ConstantInt *V,
-                                 const PointerType *PTy) {
-    if (V->isNullValue())    // Is it a FP or Integral null value?
-      return ConstantPointerNull::get(PTy);
-    return 0;  // Can't const prop other types of pointers
-  }
-
-  // Casting operators.  ick
-#define DEF_CAST(TYPE, CLASS, CTYPE) \
-  static Constant *CastTo##TYPE  (const ConstantInt *V) {    \
-    return CLASS::get(Type::TYPE##Ty, (CTYPE)((BuiltinType)V->getZExtValue()));\
-  }
-
-  DEF_CAST(Bool  , ConstantBool, bool)
-  DEF_CAST(SByte , ConstantInt, signed char)
-  DEF_CAST(UByte , ConstantInt, unsigned char)
-  DEF_CAST(Short , ConstantInt, signed short)
-  DEF_CAST(UShort, ConstantInt, unsigned short)
-  DEF_CAST(Int   , ConstantInt, signed int)
-  DEF_CAST(UInt  , ConstantInt, unsigned int)
-  DEF_CAST(Long  , ConstantInt, int64_t)
-  DEF_CAST(ULong , ConstantInt, uint64_t)
-  DEF_CAST(Float , ConstantFP , float)
-  DEF_CAST(Double, ConstantFP , double)
-#undef DEF_CAST
-
   static Constant *UDiv(const ConstantInt *V1, const ConstantInt *V2) {
     if (V2->isNullValue())                   // X / 0
       return 0;
@@ -629,32 +478,6 @@ struct VISIBILITY_HIDDEN DirectFPRules
     bool R = (BuiltinType)V1->getValue() == (BuiltinType)V2->getValue();
     return ConstantBool::get(R);
   }
-
-  static Constant *CastToPointer(const ConstantFP *V,
-                                 const PointerType *PTy) {
-    if (V->isNullValue())    // Is it a FP or Integral null value?
-      return ConstantPointerNull::get(PTy);
-    return 0;  // Can't const prop other types of pointers
-  }
-
-  // Casting operators.  ick
-#define DEF_CAST(TYPE, CLASS, CTYPE) \
-  static Constant *CastTo##TYPE  (const ConstantFP *V) {    \
-    return CLASS::get(Type::TYPE##Ty, (CTYPE)(BuiltinType)V->getValue()); \
-  }
-
-  DEF_CAST(Bool  , ConstantBool, bool)
-  DEF_CAST(SByte , ConstantInt, signed char)
-  DEF_CAST(UByte , ConstantInt, unsigned char)
-  DEF_CAST(Short , ConstantInt, signed short)
-  DEF_CAST(UShort, ConstantInt, unsigned short)
-  DEF_CAST(Int   , ConstantInt, signed int)
-  DEF_CAST(UInt  , ConstantInt, unsigned int)
-  DEF_CAST(Long  , ConstantInt, int64_t)
-  DEF_CAST(ULong , ConstantInt, uint64_t)
-  DEF_CAST(Float , ConstantFP , float)
-  DEF_CAST(Double, ConstantFP , double)
-#undef DEF_CAST
 
   static Constant *FRem(const ConstantFP *V1, const ConstantFP *V2) {
     if (V2->isNullValue()) return 0;
@@ -852,43 +675,67 @@ Constant *llvm::ConstantFoldCastInstruction(unsigned opc, const Constant *V,
     }
   }
 
-  // We actually have to do a cast now, but first, we might need to fix up
-  // the value of the operand.
+  // We actually have to do a cast now. Perform the cast according to the
+  // opcode specified.
   switch (opc) {
-  case Instruction::PtrToInt:
   case Instruction::FPTrunc:
   case Instruction::FPExt:
-    break;
+    return ConstantFP::get(DestTy, cast<ConstantFP>(V)->getValue());
   case Instruction::FPToUI: {
-    ConstRules &Rules = ConstRules::get(V, V);
-    V = Rules.castToULong(V); // make sure we get an unsigned value first 
-    break;
+    double dVal = cast<ConstantFP>(V)->getValue();
+    uint64_t iVal = (uint64_t) dVal;
+    return ConstantIntegral::get(DestTy, iVal);
   }
   case Instruction::FPToSI: {
-    ConstRules &Rules = ConstRules::get(V, V);
-    V = Rules.castToLong(V); // make sure we get a signed value first 
-    break;
+    double dVal = cast<ConstantFP>(V)->getValue();
+    int64_t iVal = (int64_t) dVal;
+    return ConstantIntegral::get(DestTy, iVal);
   }
   case Instruction::IntToPtr: //always treated as unsigned
-  case Instruction::UIToFP:
-  case Instruction::ZExt:
-    // A ZExt always produces an unsigned value so we need to cast the value
-    // now before we try to cast it to the destination type
+    if (V->isNullValue())    // Is it a FP or Integral null value?
+      return ConstantPointerNull::get(cast<PointerType>(DestTy));
+    return 0; // Other pointer types cannot be casted
+  case Instruction::PtrToInt: // always treated as unsigned
+    if (V->isNullValue())
+      return ConstantIntegral::get(DestTy, 0);
+    return 0; // Other pointer types cannot be casted
+  case Instruction::UIToFP: {
+    // First, extract the unsigned integer value
+    uint64_t Val;
     if (isa<ConstantInt>(V))
-      V = ConstantInt::get(SrcTy->getUnsignedVersion(), 
-                           cast<ConstantIntegral>(V)->getZExtValue());
-    break;
-  case Instruction::SIToFP:
+      Val = cast<ConstantIntegral>(V)->getZExtValue();
+    else if (const ConstantBool *CB = dyn_cast<ConstantBool>(V))
+      Val = CB->getValue() ? 1 : 0;
+    // Now generate the equivalent floating point value
+    double dVal = (double) Val;
+    return ConstantFP::get(DestTy, dVal);
+  }
+  case Instruction::SIToFP: {
+    // First, extract the signed integer value
+    int64_t Val;
+    if (isa<ConstantInt>(V))
+      Val = cast<ConstantIntegral>(V)->getSExtValue();
+    else if (const ConstantBool *CB = dyn_cast<ConstantBool>(V))
+      Val = CB->getValue() ? -1 : 0;
+    // Now generate the equivalent floating point value
+    double dVal = (double) Val;
+    return ConstantFP::get(DestTy, dVal);
+  }
+  case Instruction::ZExt:
+    // Handle trunc directly here if it is a ConstantIntegral.
+    if (isa<ConstantInt>(V))
+      return ConstantInt::get(DestTy, cast<ConstantInt>(V)->getZExtValue());
+    else if (const ConstantBool *CB = dyn_cast<ConstantBool>(V))
+      return ConstantInt::get(DestTy, CB->getValue() ? 1 : 0);
+    return 0;
   case Instruction::SExt:
     // A SExt always produces a signed value so we need to cast the value
     // now before we try to cast it to the destiniation type.
     if (isa<ConstantInt>(V))
-      V = ConstantInt::get(SrcTy->getSignedVersion(), 
-                           cast<ConstantIntegral>(V)->getSExtValue());
+      return ConstantInt::get(DestTy, cast<ConstantInt>(V)->getSExtValue());
     else if (const ConstantBool *CB = dyn_cast<ConstantBool>(V))
-      V = ConstantInt::get(Type::SByteTy, CB->getValue() ? -1 : 0);
-      
-    break;
+      return ConstantInt::get(DestTy, CB->getValue() ? -1 : 0);
+    return 0;
   case Instruction::Trunc:
     // We just handle trunc directly here.  The code below doesn't work for
     // trunc to bool.
@@ -896,7 +743,8 @@ Constant *llvm::ConstantFoldCastInstruction(unsigned opc, const Constant *V,
       return ConstantIntegral::get(DestTy, CI->getZExtValue());
     return 0;
   case Instruction::BitCast:
-    if (SrcTy == DestTy) return (Constant*)V; // no-op cast
+    if (SrcTy == DestTy) 
+      return (Constant*)V; // no-op cast
     
     // Check to see if we are casting a pointer to an aggregate to a pointer to
     // the first element.  If so, return the appropriate GEP instruction.
@@ -995,25 +843,8 @@ Constant *llvm::ConstantFoldCastInstruction(unsigned opc, const Constant *V,
     break;
   }
 
-  // Okay, no more folding possible, time to cast
-  ConstRules &Rules = ConstRules::get(V, V);
-  switch (DestTy->getTypeID()) {
-  case Type::BoolTyID:    return Rules.castToBool(V);
-  case Type::UByteTyID:   return Rules.castToUByte(V);
-  case Type::SByteTyID:   return Rules.castToSByte(V);
-  case Type::UShortTyID:  return Rules.castToUShort(V);
-  case Type::ShortTyID:   return Rules.castToShort(V);
-  case Type::UIntTyID:    return Rules.castToUInt(V);
-  case Type::IntTyID:     return Rules.castToInt(V);
-  case Type::ULongTyID:   return Rules.castToULong(V);
-  case Type::LongTyID:    return Rules.castToLong(V);
-  case Type::FloatTyID:   return Rules.castToFloat(V);
-  case Type::DoubleTyID:  return Rules.castToDouble(V);
-  case Type::PointerTyID:
-    return Rules.castToPointer(V, cast<PointerType>(DestTy));
-  // what about packed ?
-  default: return 0;
-  }
+  assert(0 && "Failed to cast constant expression");
+  return 0;
 }
 
 Constant *llvm::ConstantFoldSelectInstruction(const Constant *Cond,
