@@ -12,6 +12,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#define DEBUG_TYPE "hello"
 #include "llvm/Pass.h"
 #include "llvm/Function.h"
 #include "llvm/ADT/StringExtras.h"
@@ -20,9 +21,9 @@
 #include "llvm/ADT/Statistic.h"
 using namespace llvm;
 
+STATISTIC(HelloCounter, "Counts number of functions greeted");
+
 namespace {
-  Statistic HelloCounter("hellocount",
-      "Counts number of functions greeted");
   // Hello - The first implementation, without getAnalysisUsage.
   struct Hello : public FunctionPass {
     virtual bool runOnFunction(Function &F) {
