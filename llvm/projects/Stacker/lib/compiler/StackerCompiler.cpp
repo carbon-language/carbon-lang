@@ -12,10 +12,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-//===----------------------------------------------------------------------===//
-//            Globasl - Global variables we use
-//===----------------------------------------------------------------------===//
-
+#define DEBUG_TYPE "stacker"
 #include "llvm/PassManager.h"
 #include "llvm/Analysis/LoadValueNumbering.h"
 #include "llvm/Analysis/Verifier.h"
@@ -38,8 +35,7 @@ extern int Stackerparse();
 
 StackerCompiler* StackerCompiler::TheInstance = 0;
 
-static Statistic NumDefinitions(
-        "numdefs","The # of definitions encoutered while compiling Stacker");
+STATISTIC(NumDefinitions, "The number of definitions encountered");
 
 StackerCompiler::StackerCompiler()
     : CurFilename("")
