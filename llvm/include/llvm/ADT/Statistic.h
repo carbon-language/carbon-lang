@@ -28,7 +28,7 @@
 
 namespace llvm {
 
-class StatisticBase {
+class Statistic {
 public:
   const char *Name;
   const char *Desc;
@@ -38,50 +38,37 @@ public:
   unsigned getValue() const { return Value; }
   const char *getName() const { return Name; }
   const char *getDesc() const { return Desc; }
-  
+
+  /// construct - This should only be called for non-global statistics.
+  void construct(const char *name, const char *desc) {
+    Name = name; Desc = desc;
+    Value = 0; Initialized = 0;
+  }
+
   // Allow use of this class as the value itself.
   operator unsigned() const { return Value; }
-  const StatisticBase &operator=(unsigned Val) { Value = Val; return init(); }
-  const StatisticBase &operator++() { ++Value; return init(); }
+  const Statistic &operator=(unsigned Val) { Value = Val; return init(); }
+  const Statistic &operator++() { ++Value; return init(); }
   unsigned operator++(int) { init(); return Value++; }
-  const StatisticBase &operator--() { --Value; return init(); }
+  const Statistic &operator--() { --Value; return init(); }
   unsigned operator--(int) { init(); return Value--; }
-  const StatisticBase &operator+=(const unsigned &V) {Value += V;return init();}
-  const StatisticBase &operator-=(const unsigned &V) {Value -= V;return init();}
-  const StatisticBase &operator*=(const unsigned &V) {Value *= V;return init();}
-  const StatisticBase &operator/=(const unsigned &V) {Value /= V;return init();}
+  const Statistic &operator+=(const unsigned &V) { Value += V; return init(); }
+  const Statistic &operator-=(const unsigned &V) { Value -= V; return init(); }
+  const Statistic &operator*=(const unsigned &V) { Value *= V; return init(); }
+  const Statistic &operator/=(const unsigned &V) { Value /= V; return init(); }
   
 protected:
-  StatisticBase &init() {
+  Statistic &init() {
     if (!Initialized) RegisterStatistic();
     return *this;
   }
   void RegisterStatistic();
 };
   
-struct Statistic : public StatisticBase {
-  Statistic(const char *name, const char *desc) {
-    Name = name; Desc = desc; Value = 0; Initialized = 0;
-  }
-
-  // Allow use of this class as the value itself.
-  operator unsigned() const { return Value; }
-  const Statistic &operator=(unsigned Val) { Value = Val; init(); return *this;}
-  const Statistic &operator++() { ++Value; init(); return *this;}
-  unsigned operator++(int) { init(); return Value++; }
-  const Statistic &operator--() { --Value; init(); return *this;}
-  unsigned operator--(int) { init(); return Value--; }
-  const Statistic &operator+=(const unsigned &V) {Value += V;init();return *this;}
-  const Statistic &operator-=(const unsigned &V) {Value -= V;init();return *this;}
-  const Statistic &operator*=(const unsigned &V) {Value *= V;init();return *this;}
-  const Statistic &operator/=(const unsigned &V) {Value /= V;init();return *this;}
-};
-
-  
 // STATISTIC - A macro to make definition of statistics really simple.  This
 // automatically passes the DEBUG_TYPE of the file into the statistic.
 #define STATISTIC(VARNAME, DESC) \
-  static StatisticBase VARNAME = { DEBUG_TYPE, DESC, 0, 0 }
+  static Statistic VARNAME = { DEBUG_TYPE, DESC, 0, 0 }
 
 } // End llvm namespace
 

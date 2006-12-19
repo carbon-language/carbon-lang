@@ -45,11 +45,11 @@ namespace {
 /// on demand (when the first statistic is bumped) and destroyed only when 
 /// llvm_shutdown is called.  We print statistics from the destructor.
 class StatisticInfo {
-  std::vector<const StatisticBase*> Stats;
+  std::vector<const Statistic*> Stats;
 public:
   ~StatisticInfo();
   
-  void addStatistic(const StatisticBase *S) {
+  void addStatistic(const Statistic *S) {
     Stats.push_back(S);
   }
 };
@@ -60,7 +60,7 @@ static ManagedStatic<StatisticInfo> StatInfo;
 
 /// RegisterStatistic - The first time a statistic is bumped, this method is
 /// called.
-void StatisticBase::RegisterStatistic() {
+void Statistic::RegisterStatistic() {
   // If stats are enabled, inform StatInfo that this statistic should be
   // printed.
   if (Enabled)
@@ -70,7 +70,7 @@ void StatisticBase::RegisterStatistic() {
 }
 
 struct NameCompare {
-  bool operator()(const StatisticBase *LHS, const StatisticBase *RHS) const {
+  bool operator()(const Statistic *LHS, const Statistic *RHS) const {
     int Cmp = std::strcmp(LHS->getName(), RHS->getName());
     if (Cmp != 0) return Cmp < 0;
     
