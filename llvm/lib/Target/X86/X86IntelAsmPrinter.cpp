@@ -211,7 +211,8 @@ void X86IntelAsmPrinter::printMemReference(const MachineInstr *MI, unsigned Op,
     NeedPlus = true;
   }
 
-  if (DispSpec.isGlobalAddress() || DispSpec.isConstantPoolIndex()) {
+  if (DispSpec.isGlobalAddress() || DispSpec.isConstantPoolIndex() ||
+      DispSpec.isJumpTableIndex()) {
     if (NeedPlus)
       O << " + ";
     printOp(DispSpec, "mem");
