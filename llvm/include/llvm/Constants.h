@@ -181,9 +181,12 @@ public:
 
   /// This static method returns true if the type Ty is big enough to 
   /// represent the value V. This can be used to avoid having the get method 
-  /// assert when V is larger than Ty can represent.
+  /// assert when V is larger than Ty can represent. Note that values are
+  /// always treated as unsigned so if the intention is to represent a signed
+  /// type, you must do the conversion first.
   /// @returns true if V is a valid value for type Ty
   /// @brief Determine if the value is in range for the given type.
+  static bool isValueValidForType(const Type *Ty, uint64_t V);
   static bool isValueValidForType(const Type *Ty, int64_t V);
 
   /// @returns true if this is the null integer value.
@@ -205,7 +208,7 @@ public:
       int64_t V = getSExtValue();
       if (V < 0) return false;    // Be careful about wrap-around on 'long's
       ++V;
-      return !isValueValidForType(getType()->getSignedVersion(), V) || V < 0;
+      return !isValueValidForType(getType(), V) || V < 0;
     }
     return isAllOnesValue();
   }
@@ -219,7 +222,7 @@ public:
       int64_t V = getSExtValue();
       if (V > 0) return false;    // Be careful about wrap-around on 'long's
       --V;
-      return !isValueValidForType(getType()->getSignedVersion(), V) || V > 0;
+      return !isValueValidForType(getType(), V) || V > 0;
     }
     return getZExtValue() == 0;
   }

@@ -592,26 +592,31 @@ getWithOperands(const std::vector<Constant*> &Ops) const {
 //===----------------------------------------------------------------------===//
 //                      isValueValidForType implementations
 
+bool ConstantInt::isValueValidForType(const Type *Ty, uint64_t Val) {
+  switch (Ty->getTypeID()) {
+  default:              return false; // These can't be represented as integers!
+  case Type::SByteTyID:
+  case Type::UByteTyID: return Val <= UINT8_MAX;
+  case Type::ShortTyID:
+  case Type::UShortTyID:return Val <= UINT16_MAX;
+  case Type::IntTyID:
+  case Type::UIntTyID:  return Val <= UINT32_MAX;
+  case Type::LongTyID:
+  case Type::ULongTyID: return true; // always true, has to fit in largest type
+  }
+}
+
 bool ConstantInt::isValueValidForType(const Type *Ty, int64_t Val) {
   switch (Ty->getTypeID()) {
-  default:
-    return false;         // These can't be represented as integers!!!
-    // Signed types...
+  default:              return false; // These can't be represented as integers!
   case Type::SByteTyID:
-    return (Val <= INT8_MAX && Val >= INT8_MIN);
-  case Type::UByteTyID:
-    return (Val >= 0) && (Val <= UINT8_MAX);
+  case Type::UByteTyID: return (Val >= INT8_MIN && Val <= INT8_MAX);
   case Type::ShortTyID:
-    return (Val <= INT16_MAX && Val >= INT16_MIN);
-  case Type::UShortTyID:
-    return (Val >= 0) && (Val <= UINT16_MAX);
+  case Type::UShortTyID:return (Val >= INT16_MIN && Val <= UINT16_MAX);
   case Type::IntTyID:
-    return (Val <= int(INT32_MAX) && Val >= int(INT32_MIN));
-  case Type::UIntTyID:
-    return (Val >= 0) && (Val <= UINT32_MAX);
+  case Type::UIntTyID:  return (Val >= INT32_MIN && Val <= UINT32_MAX);
   case Type::LongTyID:
-  case Type::ULongTyID:
-    return true; // always true, has to fit in largest type
+  case Type::ULongTyID: return true; // always true, has to fit in largest type
   }
 }
 
