@@ -36,7 +36,7 @@
 #include <typeinfo>
 #include <cassert>
 
-//#define USE_OLD_PASSMANAGER 1
+#define USE_OLD_PASSMANAGER 1
 
 namespace llvm {
 
