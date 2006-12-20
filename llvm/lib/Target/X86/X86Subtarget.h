@@ -61,6 +61,9 @@ private:
   /// pointer size is 64 bit.
   bool Is64Bit;
 
+  /// GenerateExtraLoadsForGVs - True if we should generate extra loads for
+  /// indirect symbols (e.g. dllimported symbols on windows).
+  bool GenerateExtraLoadsForGVs;
 public:
   enum {
     isELF, isCygwin, isDarwin, isWindows
@@ -112,6 +115,10 @@ public:
   /// value of GV itself. This means that the GlobalAddress must be in the base
   /// or index register of the address, not the GV offset field.
   bool GVRequiresExtraLoad(const GlobalValue* GV, bool isDirectCall) const;
+
+  /// SetJITMode - This is called to inform the subtarget info that we are
+  /// producing code for the JIT.
+  void SetJITMode();
 };
 
 namespace X86 {

@@ -166,6 +166,9 @@ bool X86TargetMachine::addCodeEmitter(FunctionPassManager &PM, bool Fast,
   // JIT cannot ensure globals are placed in the lower 4G of address.
   if (Subtarget.is64Bit())
     setCodeModel(CodeModel::Large);
+
+  // Inform the subtarget that we are in JIT mode.
+  Subtarget.SetJITMode(); 
   
   PM.add(createX86CodeEmitterPass(*this, MCE));
   return false;
