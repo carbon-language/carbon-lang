@@ -94,7 +94,7 @@ namespace {
       case 'r':
       case 'f':
       case 'v': return RegName + 1;
-      case 'c': if (RegName[0] == 'r') return RegName + 2;
+      case 'c': if (RegName[1] == 'r') return RegName + 2;
       }
        
       return RegName;
