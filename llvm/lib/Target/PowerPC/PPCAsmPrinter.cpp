@@ -86,12 +86,66 @@ namespace {
 
     void printMachineInstruction(const MachineInstr *MI);
     void printOp(const MachineOperand &MO);
+    
+    /// stripRegisterPrefix - This method strips the character prefix from a
+    /// register name so that only the number is left.  Used by for linux asm.
+    void stripRegisterPrefix(std::string &Name) {
+      // Potential prefixes.
+      static const char *Prefixes[] = { "r", "f", "v", "cr" };
+      unsigned NPrefixes = sizeof(Prefixes) / sizeof(const char *);
+      // Fetch string length.
+      unsigned Size = Name.size();
+      // Start position of numeric portion.
+      unsigned Pos = 0;
+      
+      // Try each prefix.
+      for (unsigned i = 0; i < NPrefixes; ++i) {
+        const char *Prefix = Prefixes[i];
+        unsigned Length = strlen(Prefix);
+        // Does it match the beginning?
+        if (Name.compare(0, Length, Prefix, Length) == 0) {
+          // If so, start looking beyond the prefix.
+          Pos = strlen(Prefix);
+          break;
+        }
+      }
+      
+       // If we have a match.
+      if (Pos) {
+        // Remaining characters better be digits.
+        for (unsigned j = Pos; j < Size; ++j) {
+          unsigned Ch = Name[j];
+          if (Ch < '0' || '9' < Ch) return;
+        }
+        
+        // Pass back just the numeric portion.
+        Name = Name.substr(Pos, Size - Pos);
+      }
+    }
+    
+    /// printRegister - Print register according to target requirements.
+    ///
+    void printRegister(const MachineOperand &MO, bool R0AsZero) {
+      unsigned RegNo = MO.getReg();
+      assert(MRegisterInfo::isPhysicalRegister(RegNo) && "Not physreg??");
+      
+      // If we should use 0 for R0.
+      if (R0AsZero && RegNo == PPC::R0) {
+        O << "0";
+        return;
+      }
+      
+      std::string Name = TM.getRegisterInfo()->get(RegNo).Name;
+      // Linux assembler (Others?) does not take register mnemonics.
+      // FIXME - What about special registers used in mfspr/mtspr?
+      if (!Subtarget.isDarwin()) stripRegisterPrefix(Name);
+      O << Name;
+    }
 
     void printOperand(const MachineInstr *MI, unsigned OpNo) {
       const MachineOperand &MO = MI->getOperand(OpNo);
       if (MO.isRegister()) {
-        assert(MRegisterInfo::isPhysicalRegister(MO.getReg())&&"Not physreg??");
-        O << TM.getRegisterInfo()->get(MO.getReg()).Name;
+        printRegister(MO, false);
       } else if (MO.isImmediate()) {
         O << MO.getImmedValue();
       } else {
@@ -239,10 +293,7 @@ namespace {
       // the value contained in the register.  For this reason, the darwin
       // assembler requires that we print r0 as 0 (no r) when used as the base.
       const MachineOperand &MO = MI->getOperand(OpNo);
-      if (MO.getReg() == PPC::R0)
-        O << '0';
-      else
-        O << TM.getRegisterInfo()->get(MO.getReg()).Name;
+      printRegister(MO, true);
       O << ", ";
       printOperand(MI, OpNo+1);
     }
@@ -616,7 +667,7 @@ bool DarwinAsmPrinter::doFinalization(Module &M) {
         SwitchToDataSection("\t.data", I);
         O << ".comm " << name << "," << Size;
       }
-      O << "\t\t; '" << I->getName() << "'\n";
+      O << "\t\t" << TAI->getCommentString() << " '" << I->getName() << "'\n";
     } else {
       switch (I->getLinkage()) {
       case GlobalValue::LinkOnceLinkage:
@@ -649,7 +700,8 @@ bool DarwinAsmPrinter::doFinalization(Module &M) {
       }
 
       EmitAlignment(Align, I);
-      O << name << ":\t\t\t\t; '" << I->getName() << "'\n";
+      O << name << ":\t\t\t\t" << TAI->getCommentString() << " '"
+        << I->getName() << "'\n";
 
       // If the initializer is a extern weak symbol, remember to emit the weak
       // reference!
@@ -751,8 +803,8 @@ bool DarwinAsmPrinter::doFinalization(Module &M) {
 
 
 
-/// createDarwinCodePrinterPass - Returns a pass that prints the PPC assembly
-/// code for a MachineFunction to the given output stream, in a format that the
+/// createPPCAsmPrinterPass - Returns a pass that prints the PPC assembly code
+/// for a MachineFunction to the given output stream, in a format that the
 /// Darwin assembler can deal with.
 ///
 FunctionPass *llvm::createPPCAsmPrinterPass(std::ostream &o,
