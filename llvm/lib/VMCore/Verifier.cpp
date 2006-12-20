@@ -902,6 +902,10 @@ void Verifier::visitInstruction(Instruction &I) {
         if (InvokeInst *II = dyn_cast<InvokeInst>(Op)) {
           OpBlock = II->getNormalDest();
           
+          Assert2(OpBlock != II->getUnwindDest(),
+                  "No uses of invoke possible due to dominance structure!",
+                  Op, II);
+          
           // If the normal successor of an invoke instruction has multiple
           // predecessors, then the normal edge from the invoke is critical, so
           // the invoke value can only be live if the destination block
@@ -931,8 +935,9 @@ void Verifier::visitInstruction(Instruction &I) {
                 }
               }
             }
-            Assert1(!Bad,
-                    "Invoke value defined on critical edge but not dead!", &I);
+            Assert2(!Bad,
+                    "Invoke value defined on critical edge but not dead!", &I,
+                    Op);
           }
         } else if (OpBlock == BB) {
           // If they are in the same basic block, make sure that the definition
