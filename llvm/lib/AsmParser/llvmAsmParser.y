@@ -926,7 +926,6 @@ Module *llvm::RunVMAsmParser(const char * AsmString, Module * M) {
 
 // EUINT64VAL - A positive number within uns. long long range
 %token <UInt64Val> EUINT64VAL
-%type  <SInt64Val> EINT64VAL
 
 %token  <SIntVal>   SINTVAL   // Signed 32 bit ints...
 %token  <UIntVal>   UINTVAL   // Unsigned 32 bit ints...
@@ -992,15 +991,6 @@ INTVAL : UINTVAL {
   if ($1 > (uint32_t)INT32_MAX)     // Outside of my range!
     GEN_ERROR("Value too large for type!");
   $$ = (int32_t)$1;
-  CHECK_FOR_ERROR
-};
-
-
-EINT64VAL : ESINT64VAL;      // These have same type and can't cause problems...
-EINT64VAL : EUINT64VAL {
-  if ($1 > (uint64_t)INT64_MAX)     // Outside of my range!
-    GEN_ERROR("Value too large for type!");
-  $$ = (int64_t)$1;
   CHECK_FOR_ERROR
 };
 
@@ -1486,13 +1476,25 @@ ConstVal: Types '[' ConstVector ']' { // Nonempty unsized arr
     delete $1;
     CHECK_FOR_ERROR
   }
-  | SIntType EINT64VAL {      // integral constants
+  | SIntType ESINT64VAL {      // integral constants
+    if (!ConstantInt::isValueValidForType($1, $2))
+      GEN_ERROR("Constant value doesn't fit in type!");
+    $$ = ConstantInt::get($1, $2);
+    CHECK_FOR_ERROR
+  }
+  | SIntType EUINT64VAL {      // integral constants
     if (!ConstantInt::isValueValidForType($1, $2))
       GEN_ERROR("Constant value doesn't fit in type!");
     $$ = ConstantInt::get($1, $2);
     CHECK_FOR_ERROR
   }
   | UIntType EUINT64VAL {            // integral constants
+    if (!ConstantInt::isValueValidForType($1, $2))
+      GEN_ERROR("Constant value doesn't fit in type!");
+    $$ = ConstantInt::get($1, $2);
+    CHECK_FOR_ERROR
+  }
+  | UIntType ESINT64VAL {
     if (!ConstantInt::isValueValidForType($1, $2))
       GEN_ERROR("Constant value doesn't fit in type!");
     $$ = ConstantInt::get($1, $2);
