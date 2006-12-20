@@ -30,7 +30,8 @@ AsmWriterFlavor("x86-asm-syntax", cl::init(X86Subtarget::unset),
 /// symbols are indirect, loading the value at address GV rather then the
 /// value of GV itself. This means that the GlobalAddress must be in the base
 /// or index register of the address, not the GV offset field.
-bool X86Subtarget::GVRequiresExtraLoad(const GlobalValue* GV, bool isDirectCall) const
+bool X86Subtarget::GVRequiresExtraLoad(const GlobalValue* GV,
+                                       bool isDirectCall) const
 {
   if (GenerateExtraLoadsForGVs)
     if (isTargetDarwin()) {
@@ -209,7 +210,8 @@ static const char *GetCurrentX86CPU() {
 
 /// SetJITMode - This is called to inform the subtarget info that we are
 /// producing code for the JIT.
-void X86Subtarget::SetJITMode() {
+void X86Subtarget::SetJITMode()
+{
   // JIT mode doesn't want extra loads for dllimported symbols, it knows exactly
   // where everything is.
   if (isTargetCygwin())
