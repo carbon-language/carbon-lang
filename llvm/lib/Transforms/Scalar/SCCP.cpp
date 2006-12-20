@@ -47,23 +47,33 @@ STATISTIC(IPNumDeadBlocks , "Number of basic blocks unreachable by IPSCCP");
 STATISTIC(IPNumArgsElimed ,"Number of arguments constant propagated by IPSCCP");
 STATISTIC(IPNumGlobalConst, "Number of globals found to be constant by IPSCCP");
 
-
-
-// LatticeVal class - This class represents the different lattice values that an
-// instruction may occupy.  It is a simple class with value semantics.
-//
 namespace {
-
+/// LatticeVal class - This class represents the different lattice values that
+/// an LLVM value may occupy.  It is a simple class with value semantics.
+///
 class LatticeVal {
   enum {
-    undefined,           // This instruction has no known value
-    constant,            // This instruction has a constant value
-    overdefined          // This instruction has an unknown value
-  } LatticeValue;        // The current lattice position
+    /// undefined - This LLVM Value has no known value yet.
+    undefined,
+    
+    /// constant - This LLVM Value has a specific constant value.
+    constant,
+
+    /// forcedconstant - This LLVM Value was thought to be undef until
+    /// ResolvedUndefsIn.  This is treated just like 'constant', but if merged
+    /// with another (different) constant, it goes to overdefined, instead of
+    /// asserting.
+    forcedconstant,
+    
+    /// overdefined - This instruction is not known to be constant, and we know
+    /// it has a value.
+    overdefined
+  } LatticeValue;    // The current lattice position
+  
   Constant *ConstantVal; // If Constant value, the current value
 public:
   inline LatticeVal() : LatticeValue(undefined), ConstantVal(0) {}
-
+  
   // markOverdefined - Return true if this is a new status to be in...
   inline bool markOverdefined() {
     if (LatticeValue != overdefined) {
@@ -73,11 +83,23 @@ public:
     return false;
   }
 
-  // markConstant - Return true if this is a new status for us...
+  // markConstant - Return true if this is a new status for us.
   inline bool markConstant(Constant *V) {
     if (LatticeValue != constant) {
-      LatticeValue = constant;
-      ConstantVal = V;
+      if (LatticeValue == undefined) {
+        LatticeValue = constant;
+        ConstantVal = V;
+      } else {
+        assert(LatticeValue == forcedconstant && 
+               "Cannot move from overdefined to constant!");
+        // Stay at forcedconstant if the constant is the same.
+        if (V == ConstantVal) return false;
+        
+        // Otherwise, we go to overdefined.  Assumptions made based on the
+        // forced value are possibly wrong.  Assuming this is another constant
+        // could expose a contradiction.
+        LatticeValue = overdefined;
+      }
       return true;
     } else {
       assert(ConstantVal == V && "Marking constant with different value");
@@ -85,8 +107,16 @@ public:
     return false;
   }
 
-  inline bool isUndefined()   const { return LatticeValue == undefined; }
-  inline bool isConstant()    const { return LatticeValue == constant; }
+  inline void markForcedConstant(Constant *V) {
+    assert(LatticeValue == undefined && "Can't force a defined value!");
+    LatticeValue = forcedconstant;
+    ConstantVal = V;
+  }
+  
+  inline bool isUndefined() const { return LatticeValue == undefined; }
+  inline bool isConstant() const {
+    return LatticeValue == constant || LatticeValue == forcedconstant;
+  }
   inline bool isOverdefined() const { return LatticeValue == overdefined; }
 
   inline Constant *getConstant() const {
@@ -174,12 +204,12 @@ public:
   ///
   void Solve();
 
-  /// ResolveBranchesIn - While solving the dataflow for a function, we assume
+  /// ResolvedUndefsIn - While solving the dataflow for a function, we assume
   /// that branches on undef values cannot reach any of their successors.
   /// However, this is not a safe assumption.  After we solve dataflow, this
   /// method should be use to handle this.  If this returns true, the solver
   /// should be rerun.
-  bool ResolveBranchesIn(Function &F);
+  bool ResolvedUndefsIn(Function &F);
 
   /// getExecutableBlocks - Once we have solved for constants, return the set of
   /// blocks that is known to be executable.
@@ -217,6 +247,13 @@ private:
       InstWorkList.push_back(V);
     }
   }
+  
+  inline void markForcedConstant(LatticeVal &IV, Value *V, Constant *C) {
+    IV.markForcedConstant(C);
+    DOUT << "markForcedConstant: " << *C << ": " << *V;
+    InstWorkList.push_back(V);
+  }
+  
   inline void markConstant(Value *V, Constant *C) {
     markConstant(ValueState[V], V, C);
   }
@@ -266,11 +303,11 @@ private:
     hash_map<Value*, LatticeVal>::iterator I = ValueState.find(V);
     if (I != ValueState.end()) return I->second;  // Common case, in the map
 
-    if (Constant *CPV = dyn_cast<Constant>(V)) {
+    if (Constant *C = dyn_cast<Constant>(V)) {
       if (isa<UndefValue>(V)) {
         // Nothing to do, remain undefined.
       } else {
-        ValueState[CPV].markConstant(CPV);          // Constants are constant
+        ValueState[C].markConstant(C);          // Constants are constant
       }
     }
     // All others are underdefined by default...
@@ -1044,7 +1081,7 @@ void SCCPSolver::Solve() {
   }
 }
 
-/// ResolveBranchesIn - While solving the dataflow for a function, we assume
+/// ResolvedUndefsIn - While solving the dataflow for a function, we assume
 /// that branches on undef values cannot reach any of their successors.
 /// However, this is not a safe assumption.  After we solve dataflow, this
 /// method should be use to handle this.  If this returns true, the solver
@@ -1054,13 +1091,116 @@ void SCCPSolver::Solve() {
 /// of the edges from the block as being feasible, even though the condition
 /// doesn't say it would otherwise be.  This allows SCCP to find the rest of the
 /// CFG and only slightly pessimizes the analysis results (by marking one,
-/// potentially unfeasible, edge feasible).  This cannot usefully modify the
+/// potentially infeasible, edge feasible).  This cannot usefully modify the
 /// constraints on the condition of the branch, as that would impact other users
 /// of the value.
-bool SCCPSolver::ResolveBranchesIn(Function &F) {
+///
+/// This scan also checks for values that use undefs, whose results are actually
+/// defined.  For example, 'zext i8 undef to i32' should produce all zeros
+/// conservatively, as "(zext i8 X -> i32) & 0xFF00" must always return zero,
+/// even if X isn't defined.
+bool SCCPSolver::ResolvedUndefsIn(Function &F) {
   for (Function::iterator BB = F.begin(), E = F.end(); BB != E; ++BB) {
     if (!BBExecutable.count(BB))
       continue;
+    
+    for (BasicBlock::iterator I = BB->begin(), E = BB->end(); I != E; ++I) {
+      // Look for instructions which produce undef values.
+      if (I->getType() == Type::VoidTy) continue;
+      
+      LatticeVal &LV = getValueState(I);
+      if (!LV.isUndefined()) continue;
+
+      // Get the lattice values of the first two operands for use below.
+      LatticeVal &Op0LV = getValueState(I->getOperand(0));
+      LatticeVal Op1LV;
+      if (I->getNumOperands() == 2) {
+        // If this is a two-operand instruction, and if both operands are
+        // undefs, the result stays undef.
+        Op1LV = getValueState(I->getOperand(1));
+        if (Op0LV.isUndefined() && Op1LV.isUndefined())
+          continue;
+      }
+      
+      // If this is an instructions whose result is defined even if the input is
+      // not fully defined, propagate the information.
+      const Type *ITy = I->getType();
+      switch (I->getOpcode()) {
+      default: break;          // Leave the instruction as an undef.
+      case Instruction::ZExt:
+        // After a zero extend, we know the top part is zero.  SExt doesn't have
+        // to be handled here, because we don't know whether the top part is 1's
+        // or 0's.
+        assert(Op0LV.isUndefined());
+        markForcedConstant(LV, I, Constant::getNullValue(ITy));
+        return true;
+      case Instruction::Mul:
+      case Instruction::And:
+        // undef * X -> 0.   X could be zero.
+        // undef & X -> 0.   X could be zero.
+        markForcedConstant(LV, I, Constant::getNullValue(ITy));
+        return true;
+
+      case Instruction::Or:
+        // undef | X -> -1.   X could be -1.
+        markForcedConstant(LV, I, ConstantInt::getAllOnesValue(ITy));
+        return true;
+
+      case Instruction::SDiv:
+      case Instruction::UDiv:
+      case Instruction::SRem:
+      case Instruction::URem:
+        // X / undef -> undef.  No change.
+        // X % undef -> undef.  No change.
+        if (Op1LV.isUndefined()) break;
+        
+        // undef / X -> 0.   X could be maxint.
+        // undef % X -> 0.   X could be 1.
+        markForcedConstant(LV, I, Constant::getNullValue(ITy));
+        return true;
+        
+      case Instruction::AShr:
+        // undef >>s X -> undef.  No change.
+        if (Op0LV.isUndefined()) break;
+        
+        // X >>s undef -> X.  X could be 0, X could have the high-bit known set.
+        if (Op0LV.isConstant())
+          markForcedConstant(LV, I, Op0LV.getConstant());
+        else
+          markOverdefined(LV, I);
+        return true;
+      case Instruction::LShr:
+      case Instruction::Shl:
+        // undef >> X -> undef.  No change.
+        // undef << X -> undef.  No change.
+        if (Op0LV.isUndefined()) break;
+        
+        // X >> undef -> 0.  X could be 0.
+        // X << undef -> 0.  X could be 0.
+        markForcedConstant(LV, I, Constant::getNullValue(ITy));
+        return true;
+      case Instruction::Select:
+        // undef ? X : Y  -> X or Y.  There could be commonality between X/Y.
+        if (Op0LV.isUndefined()) {
+          if (!Op1LV.isConstant())  // Pick the constant one if there is any.
+            Op1LV = getValueState(I->getOperand(2));
+        } else if (Op1LV.isUndefined()) {
+          // c ? undef : undef -> undef.  No change.
+          Op1LV = getValueState(I->getOperand(2));
+          if (Op1LV.isUndefined())
+            break;
+          // Otherwise, c ? undef : x -> x.
+        } else {
+          // Leave Op1LV as Operand(1)'s LatticeValue.
+        }
+        
+        if (Op1LV.isConstant())
+          markForcedConstant(LV, I, Op1LV.getConstant());
+        else
+          markOverdefined(LV, I);
+        return true;
+      }
+    }
   
     TerminatorInst *TI = BB->getTerminator();
     if (BranchInst *BI = dyn_cast<BranchInst>(TI)) {
@@ -1133,11 +1273,11 @@ bool SCCP::runOnFunction(Function &F) {
     Values[AI].markOverdefined();
 
   // Solve for constants.
-  bool ResolvedBranches = true;
-  while (ResolvedBranches) {
+  bool ResolvedUndefs = true;
+  while (ResolvedUndefs) {
     Solver.Solve();
-    DOUT << "RESOLVING UNDEF BRANCHES\n";
-    ResolvedBranches = Solver.ResolveBranchesIn(F);
+    DOUT << "RESOLVING UNDEFs\n";
+    ResolvedUndefs = Solver.ResolvedUndefsIn(F);
   }
 
   bool MadeChanges = false;
@@ -1270,14 +1410,14 @@ bool IPSCCP::runOnModule(Module &M) {
       Solver.TrackValueOfGlobalVariable(G);
 
   // Solve for constants.
-  bool ResolvedBranches = true;
-  while (ResolvedBranches) {
+  bool ResolvedUndefs = true;
+  while (ResolvedUndefs) {
     Solver.Solve();
 
-    DOUT << "RESOLVING UNDEF BRANCHES\n";
-    ResolvedBranches = false;
+    DOUT << "RESOLVING UNDEFS\n";
+    ResolvedUndefs = false;
     for (Module::iterator F = M.begin(), E = M.end(); F != E; ++F)
-      ResolvedBranches |= Solver.ResolveBranchesIn(*F);
+      ResolvedUndefs |= Solver.ResolvedUndefsIn(*F);
   }
 
   bool MadeChanges = false;
