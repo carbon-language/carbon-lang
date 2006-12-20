@@ -24,3 +24,10 @@ begin
 	ret sbyte* null            ; Test null
 end
 
+uint %negativeUnsigned() {
+        ret uint -1
+}
+
+int %largeSigned() {
+       ret int 3900000000
+}
