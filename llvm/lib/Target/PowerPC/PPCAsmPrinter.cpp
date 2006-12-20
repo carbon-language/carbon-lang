@@ -89,38 +89,15 @@ namespace {
     
     /// stripRegisterPrefix - This method strips the character prefix from a
     /// register name so that only the number is left.  Used by for linux asm.
-    void stripRegisterPrefix(std::string &Name) {
-      // Potential prefixes.
-      static const char *Prefixes[] = { "r", "f", "v", "cr" };
-      unsigned NPrefixes = sizeof(Prefixes) / sizeof(const char *);
-      // Fetch string length.
-      unsigned Size = Name.size();
-      // Start position of numeric portion.
-      unsigned Pos = 0;
-      
-      // Try each prefix.
-      for (unsigned i = 0; i < NPrefixes; ++i) {
-        const char *Prefix = Prefixes[i];
-        unsigned Length = strlen(Prefix);
-        // Does it match the beginning?
-        if (Name.compare(0, Length, Prefix, Length) == 0) {
-          // If so, start looking beyond the prefix.
-          Pos = strlen(Prefix);
-          break;
-        }
+    const char *stripRegisterPrefix(const char *RegName) {
+      switch (RegName[0]) {
+      case 'r':
+      case 'f':
+      case 'v': return RegName + 1;
+      case 'c': if (RegName[0] == 'r') return RegName + 2;
       }
-      
-       // If we have a match.
-      if (Pos) {
-        // Remaining characters better be digits.
-        for (unsigned j = Pos; j < Size; ++j) {
-          unsigned Ch = Name[j];
-          if (Ch < '0' || '9' < Ch) return;
-        }
-        
-        // Pass back just the numeric portion.
-        Name = Name.substr(Pos, Size - Pos);
-      }
+       
+      return RegName;
     }
     
     /// printRegister - Print register according to target requirements.
@@ -135,11 +112,11 @@ namespace {
         return;
       }
       
-      std::string Name = TM.getRegisterInfo()->get(RegNo).Name;
+      const char *RegName = TM.getRegisterInfo()->get(RegNo).Name;
       // Linux assembler (Others?) does not take register mnemonics.
       // FIXME - What about special registers used in mfspr/mtspr?
-      if (!Subtarget.isDarwin()) stripRegisterPrefix(Name);
-      O << Name;
+      if (!Subtarget.isDarwin()) RegName = stripRegisterPrefix(RegName);
+      O << RegName;
     }
 
     void printOperand(const MachineInstr *MI, unsigned OpNo) {
