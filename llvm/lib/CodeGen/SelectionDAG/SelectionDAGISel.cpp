@@ -1835,7 +1835,7 @@ SDOperand SelectionDAGLowering::getLoadFrom(const Type *Ty, SDOperand Ptr,
     L = DAG.getVecLoad(PTy->getNumElements(), PVT, Root, Ptr,
                        DAG.getSrcValue(SV));
   } else {
-    L = DAG.getLoad(TLI.getValueType(Ty), Root, Ptr, SV, isVolatile);
+    L = DAG.getLoad(TLI.getValueType(Ty), Root, Ptr, SV, 0, isVolatile);
   }
 
   if (isVolatile)
@@ -1851,7 +1851,7 @@ void SelectionDAGLowering::visitStore(StoreInst &I) {
   Value *SrcV = I.getOperand(0);
   SDOperand Src = getValue(SrcV);
   SDOperand Ptr = getValue(I.getOperand(1));
-  DAG.setRoot(DAG.getStore(getRoot(), Src, Ptr, I.getOperand(1),
+  DAG.setRoot(DAG.getStore(getRoot(), Src, Ptr, I.getOperand(1), 0,
                            I.isVolatile()));
 }
 
