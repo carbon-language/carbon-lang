@@ -920,10 +920,7 @@ struct StrLenOptimization : public LibCallOptimization {
 
     // strlen("xyz") -> 3 (for example)
     const Type *Ty = SLC.getTargetData()->getIntPtrType();
-    if (Ty->isSigned())
-      ci->replaceAllUsesWith(ConstantInt::get(Ty, len));
-    else
-      ci->replaceAllUsesWith(ConstantInt::get(Ty, len));
+    ci->replaceAllUsesWith(ConstantInt::get(Ty, len));
      
     ci->eraseFromParent();
     return true;
