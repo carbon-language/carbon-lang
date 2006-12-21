@@ -189,6 +189,8 @@ public:
   void dumpPasses() const;
   void dumpArguments() const;
 
+  void initializeAllAnalysisInfo();
+
 protected:
   
   /// Collection of pass managers
@@ -773,6 +775,21 @@ void PMTopLevelManager::dumpArguments() const {
   cerr << "\n";
 }
 
+void PMTopLevelManager::initializeAllAnalysisInfo() {
+  
+  for (std::vector<Pass *>::iterator I = PassManagers.begin(),
+         E = PassManagers.end(); I != E; ++I) {
+    PMDataManager *PMD = dynamic_cast<PMDataManager *>(*I);
+    assert(PMD && "This is not a PassManager");
+    PMD->initializeAnalysisInfo();
+  }
+  
+  // Initailize other pass managers
+  for (std::vector<PMDataManager *>::iterator I = IndirectPassManagers.begin(),
+         E = IndirectPassManagers.end(); I != E; ++I)
+    (*I)->initializeAnalysisInfo();
+}
+
 //===----------------------------------------------------------------------===//
 // PMDataManager implementation
 
@@ -1051,7 +1068,6 @@ BBPassManager::runOnFunction(Function &F) {
     return false;
 
   bool Changed = doInitialization(F);
-  initializeAnalysisInfo();
 
   std::string Msg1 = "Executing Pass '";
   std::string Msg3 = "' Made Modification '";
@@ -1240,6 +1256,7 @@ bool FunctionPassManagerImpl::run(Function &F) {
   dumpArguments();
   dumpPasses();
 
+  initializeAllAnalysisInfo();
   for (unsigned Index = 0; Index < getNumContainedManagers(); ++Index) {  
     FPPassManager *FP = getContainedManager(Index);
     Changed |= FP->runOnFunction(F);
@@ -1322,8 +1339,6 @@ bool FPPassManager::runOnFunction(Function &F) {
   if (F.isExternal())
     return false;
 
-  initializeAnalysisInfo();
-
   std::string Msg1 = "Executing Pass '";
   std::string Msg3 = "' Made Modification '";
 
@@ -1357,7 +1372,6 @@ bool FPPassManager::runOnFunction(Function &F) {
 bool FPPassManager::runOnModule(Module &M) {
 
   bool Changed = doInitialization(M);
-  initializeAnalysisInfo();
 
   for(Module::iterator I = M.begin(), E = M.end(); I != E; ++I)
     this->runOnFunction(*I);
@@ -1462,7 +1476,6 @@ MPPassManager::addPass(Pass *P) {
 bool
 MPPassManager::runOnModule(Module &M) {
   bool Changed = false;
-  initializeAnalysisInfo();
 
   std::string Msg1 = "Executing Pass '";
   std::string Msg3 = "' Made Modification '";
@@ -1528,6 +1541,7 @@ bool PassManagerImpl::run(Module &M) {
   dumpArguments();
   dumpPasses();
 
+  initializeAllAnalysisInfo();
   for (unsigned Index = 0; Index < getNumContainedManagers(); ++Index) {  
     MPPassManager *MP = getContainedManager(Index);
     Changed |= MP->runOnModule(M);
