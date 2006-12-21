@@ -26,11 +26,10 @@ namespace llvm {
   /// TargetAsmInfo - This class is intended to be used as a base class for asm
   /// properties and features specific to the target.
   class TargetAsmInfo {
-  public:
+  protected:
     //===------------------------------------------------------------------===//
     // Properties to be set by the target writer, used to configure asm printer.
-    // Should not be accessed by anything but a subclass of TargetAsmInfo.  Use
-    // accessor functions.
+    //
     
     /// TextSection - Section directive for standard text.
     ///
