@@ -743,6 +743,8 @@ if test "$llvm_cv_llvmgcc_sanity" = "yes" ; then
   AC_SUBST(LLVMCC1PLUS,$llvmcc1pluspath)
   llvmgccdir=`echo "$llvmcc1path" | sed 's,/libexec/.*,,'`
   AC_SUBST(LLVMGCCDIR,$llvmgccdir)
+  llvmgcclibexec=`echo "$llvmcc1path" | sed 's,/cc1,,'`
+  AC_SUBST(LLVMGCCLIBEXEC,$llvmgcclibexec)
   llvmgccversion=[`"$LLVMGCC" -dumpversion 2>&1 | sed 's/^\([0-9.]*\).*/\1/'`]
   llvmgccmajvers=[`echo $llvmgccversion | sed 's/^\([0-9]\).*/\1/'`]
   AC_SUBST(LLVMGCC_VERSION,$llvmgccversion)

@@ -182,6 +182,9 @@ else
 LLVMGCCARCH := @target@/@LLVMGCC_VERSION@
 endif
 
+# Determine the path where the library executables are
+LLVMGCCLIBEXEC := @LLVMGCCLIBEXEC@
+
 # Full pathnames of LLVM C/C++ front-end 'cc1' and 'cc1plus' binaries:
 LLVMGCC  := @LLVMGCC@
 LLVMGXX  := @LLVMGXX@
