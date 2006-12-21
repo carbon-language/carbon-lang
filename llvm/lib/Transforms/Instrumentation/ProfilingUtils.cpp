@@ -62,8 +62,8 @@ void llvm::InsertProfilingInitCall(Function *MainFn, const char *FnName,
   case 2:
     AI = MainFn->arg_begin(); ++AI;
     if (AI->getType() != ArgVTy) {
-      Instruction::CastOps opcode = CastInst::getCastOpcode(AI,
-          AI->getType()->isSigned(), ArgVTy, ArgVTy->isSigned());
+      Instruction::CastOps opcode = CastInst::getCastOpcode(AI, false, ArgVTy, 
+                                                            false);
       InitCall->setOperand(2, 
           CastInst::create(opcode, AI, ArgVTy, "argv.cast", InitCall));
     } else {
@@ -78,14 +78,11 @@ void llvm::InsertProfilingInitCall(Function *MainFn, const char *FnName,
     if (AI->getType() != Type::IntTy) {
       Instruction::CastOps opcode;
       if (!AI->use_empty()) {
-        opcode = CastInst::getCastOpcode(InitCall, 
-            InitCall->getType()->isSigned(), AI->getType(), 
-            AI->getType()->isSigned());
+        opcode = CastInst::getCastOpcode(InitCall, true, AI->getType(), true);
         AI->replaceAllUsesWith(
           CastInst::create(opcode, InitCall, AI->getType(), "", InsertPos));
       }
-      opcode = CastInst::getCastOpcode(AI, AI->getType()->isSigned(),
-          Type::IntTy, true);
+      opcode = CastInst::getCastOpcode(AI, true, Type::IntTy, true);
       InitCall->setOperand(1, 
           CastInst::create(opcode, AI, Type::IntTy, "argc.cast", InitCall));
     } else {
