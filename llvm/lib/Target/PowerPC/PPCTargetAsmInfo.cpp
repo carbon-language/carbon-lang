@@ -16,24 +16,14 @@
 #include "llvm/Function.h"
 using namespace llvm;
 
-DarwinTargetAsmInfo::DarwinTargetAsmInfo(const PPCTargetMachine &TM) {
+PPCTargetAsmInfo::PPCTargetAsmInfo(const PPCTargetMachine &TM) {
   bool isPPC64 = TM.getSubtargetImpl()->isPPC64();
-
-  CommentString = ";";
-  GlobalPrefix = "_";
-  PrivateGlobalPrefix = "L";
+  
   ZeroDirective = "\t.space\t";
   SetDirective = "\t.set";
   Data64bitsDirective = isPPC64 ? "\t.quad\t" : 0;  
   AlignmentIsInBytes = false;
-  ConstantPoolSection = "\t.const\t";
-  JumpTableDataSection = ".const";
-  CStringSection = "\t.cstring";
   LCOMMDirective = "\t.lcomm\t";
-  StaticCtorsSection = ".mod_init_func";
-  StaticDtorsSection = ".mod_term_func";
-  UsedDirective = "\t.no_dead_strip\t";
-  WeakRefDirective = "\t.weak_reference\t";
   InlineAsmStart = "# InlineAsm Start";
   InlineAsmEnd = "# InlineAsm End";
   
@@ -52,3 +42,32 @@ DarwinTargetAsmInfo::DarwinTargetAsmInfo(const PPCTargetMachine &TM) {
   DwarfMacInfoSection = ".section __DWARF,__debug_macinfo,regular,debug";
 }
 
+DarwinTargetAsmInfo::DarwinTargetAsmInfo(const PPCTargetMachine &TM)
+: PPCTargetAsmInfo(TM)
+{
+  CommentString = ";";
+  GlobalPrefix = "_";
+  PrivateGlobalPrefix = "L";
+  ConstantPoolSection = "\t.const\t";
+  JumpTableDataSection = ".const";
+  CStringSection = "\t.cstring";
+  StaticCtorsSection = ".mod_init_func";
+  StaticDtorsSection = ".mod_term_func";
+  UsedDirective = "\t.no_dead_strip\t";
+  WeakRefDirective = "\t.weak_reference\t";
+}
+
+LinuxTargetAsmInfo::LinuxTargetAsmInfo(const PPCTargetMachine &TM)
+: PPCTargetAsmInfo(TM)
+{
+  CommentString = "#";
+  GlobalPrefix = "";
+  PrivateGlobalPrefix = "";
+  ConstantPoolSection = "\t.section .rodata.cst4\t";
+  JumpTableDataSection = ".section .rodata.cst4";
+  CStringSection = "\t.section\t.rodata";
+  StaticCtorsSection = ".section\t.ctors,\"aw\",@progbits";
+  StaticDtorsSection = ".section\t.dtors,\"aw\",@progbits";
+  UsedDirective = "\t# .no_dead_strip\t";
+  WeakRefDirective = "\t.weak\t";
+}

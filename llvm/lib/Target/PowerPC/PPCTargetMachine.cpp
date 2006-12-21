@@ -28,7 +28,10 @@ namespace {
 }
 
 const TargetAsmInfo *PPCTargetMachine::createTargetAsmInfo() const {
-  return new DarwinTargetAsmInfo(*this);
+  if (Subtarget.isDarwin())
+    return new DarwinTargetAsmInfo(*this);
+  else
+    return new LinuxTargetAsmInfo(*this);
 }
 
 unsigned PPC32TargetMachine::getJITMatchQuality() {
@@ -90,7 +93,7 @@ PPCTargetMachine::PPCTargetMachine(const Module &M, const std::string &FS,
     if (Subtarget.isDarwin())
       setRelocationModel(Reloc::DynamicNoPIC);
     else
-      setRelocationModel(Reloc::PIC_);
+      setRelocationModel(Reloc::Static);
 }
 
 PPC32TargetMachine::PPC32TargetMachine(const Module &M, const std::string &FS) 

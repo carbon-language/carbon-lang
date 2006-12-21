@@ -282,6 +282,35 @@ namespace {
     virtual bool doFinalization(Module &M) = 0;
   };
 
+  /// LinuxAsmPrinter - PowerPC assembly printer, customized for Linux
+  struct VISIBILITY_HIDDEN LinuxAsmPrinter : public PPCAsmPrinter {
+
+    DwarfWriter DW;
+
+    LinuxAsmPrinter(std::ostream &O, PPCTargetMachine &TM,
+                    const TargetAsmInfo *T)
+      : PPCAsmPrinter(O, TM, T), DW(O, this, T) {
+    }
+
+    virtual const char *getPassName() const {
+      return "Linux PPC Assembly Printer";
+    }
+
+    bool runOnMachineFunction(MachineFunction &F);
+    bool doInitialization(Module &M);
+    bool doFinalization(Module &M);
+    
+    void getAnalysisUsage(AnalysisUsage &AU) const {
+      AU.setPreservesAll();
+      AU.addRequired<MachineDebugInfo>();
+      PPCAsmPrinter::getAnalysisUsage(AU);
+    }
+
+    /// getSectionForFunction - Return the section that we should emit the
+    /// specified function body into.
+    virtual std::string getSectionForFunction(const Function &F) const;
+  };
+
   /// DarwinAsmPrinter - PowerPC assembly printer, customized for Darwin/Mac OS
   /// X
   struct VISIBILITY_HIDDEN DarwinAsmPrinter : public PPCAsmPrinter {
@@ -491,7 +520,194 @@ void PPCAsmPrinter::printMachineInstruction(const MachineInstr *MI) {
   return;
 }
 
+/// runOnMachineFunction - This uses the printMachineInstruction()
+/// method to print assembly for each instruction.
+///
+bool LinuxAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
+  DW.SetDebugInfo(&getAnalysis<MachineDebugInfo>());
 
+  SetupMachineFunction(MF);
+  O << "\n\n";
+  
+  // Print out constants referenced by the function
+  EmitConstantPool(MF.getConstantPool());
+
+  // Print out labels for the function.
+  const Function *F = MF.getFunction();
+  SwitchToTextSection(getSectionForFunction(*F).c_str(), F);
+  
+  switch (F->getLinkage()) {
+  default: assert(0 && "Unknown linkage type!");
+  case Function::InternalLinkage:  // Symbols default to internal.
+    break;
+  case Function::ExternalLinkage:
+    O << "\t.global\t" << CurrentFnName << '\n'
+      << "\t.type\t" << CurrentFnName << ", @function\n";
+    break;
+  case Function::WeakLinkage:
+  case Function::LinkOnceLinkage:
+    O << "\t.global\t" << CurrentFnName << '\n';
+    O << "\t.weak\t" << CurrentFnName << '\n';
+    break;
+  }
+  EmitAlignment(2, F);
+  O << CurrentFnName << ":\n";
+
+  // Emit pre-function debug information.
+  DW.BeginFunction(&MF);
+
+  // Print out code for the function.
+  for (MachineFunction::const_iterator I = MF.begin(), E = MF.end();
+       I != E; ++I) {
+    // Print a label for the basic block.
+    if (I != MF.begin()) {
+      printBasicBlockLabel(I, true);
+      O << '\n';
+    }
+    for (MachineBasicBlock::const_iterator II = I->begin(), E = I->end();
+         II != E; ++II) {
+      // Print the assembly for the instruction.
+      O << "\t";
+      printMachineInstruction(II);
+    }
+  }
+
+  O << "\t.size\t" << CurrentFnName << ",.-" << CurrentFnName << "\n";
+
+  // Print out jump tables referenced by the function.
+  EmitJumpTableInfo(MF.getJumpTableInfo(), MF);
+  
+  // Emit post-function debug information.
+  DW.EndFunction();
+  
+  // We didn't modify anything.
+  return false;
+}
+
+bool LinuxAsmPrinter::doInitialization(Module &M) {
+  AsmPrinter::doInitialization(M);
+  
+  // GNU as handles section names wrapped in quotes
+  Mang->setUseQuotes(true);
+
+  SwitchToTextSection(TAI->getTextSection());
+  
+  // Emit initial debug information.
+  DW.BeginModule(&M);
+  return false;
+}
+
+bool LinuxAsmPrinter::doFinalization(Module &M) {
+  const TargetData *TD = TM.getTargetData();
+
+  // Print out module-level global variables here.
+  for (Module::const_global_iterator I = M.global_begin(), E = M.global_end();
+       I != E; ++I) {
+    if (!I->hasInitializer()) continue;   // External global require no code
+    
+    // Check to see if this is a special global used by LLVM, if so, emit it.
+    if (EmitSpecialLLVMGlobal(I))
+      continue;
+    
+    std::string name = Mang->getValueName(I);
+    Constant *C = I->getInitializer();
+    unsigned Size = TD->getTypeSize(C->getType());
+    unsigned Align = TD->getPreferredAlignmentLog(I);
+
+    if (C->isNullValue() && /* FIXME: Verify correct */
+        (I->hasInternalLinkage() || I->hasWeakLinkage() ||
+         I->hasLinkOnceLinkage() ||
+         (I->hasExternalLinkage() && !I->hasSection()))) {
+      if (Size == 0) Size = 1;   // .comm Foo, 0 is undefined, avoid it.
+      if (I->hasExternalLinkage()) {
+        O << "\t.global " << name << '\n';
+        O << "\t.type " << name << ", @object\n";
+        //O << "\t.zerofill __DATA, __common, " << name << ", "
+        //  << Size << ", " << Align;
+      } else if (I->hasInternalLinkage()) {
+        SwitchToDataSection("\t.data", I);
+        O << TAI->getLCOMMDirective() << name << "," << Size;
+      } else {
+        SwitchToDataSection("\t.data", I);
+        O << ".comm " << name << "," << Size;
+      }
+      O << "\t\t" << TAI->getCommentString() << " '" << I->getName() << "'\n";
+    } else {
+      switch (I->getLinkage()) {
+      case GlobalValue::LinkOnceLinkage:
+      case GlobalValue::WeakLinkage:
+        O << "\t.global " << name << '\n'
+          << "\t.type " << name << ", @object\n"
+          << "\t.weak " << name << '\n';
+        SwitchToDataSection("\t.data", I);
+        break;
+      case GlobalValue::AppendingLinkage:
+        // FIXME: appending linkage variables should go into a section of
+        // their name or something.  For now, just emit them as external.
+      case GlobalValue::ExternalLinkage:
+        // If external or appending, declare as a global symbol
+        O << "\t.global " << name << "\n"
+          << "\t.type " << name << ", @object\n";
+        // FALL THROUGH
+      case GlobalValue::InternalLinkage:
+        if (I->isConstant()) {
+          const ConstantArray *CVA = dyn_cast<ConstantArray>(C);
+          if (TAI->getCStringSection() && CVA && CVA->isCString()) {
+            SwitchToDataSection(TAI->getCStringSection(), I);
+            break;
+          }
+        }
+
+        // FIXME: special handling for ".ctors" & ".dtors" sections
+        if (I->hasSection() &&
+            (I->getSection() == ".ctors" ||
+             I->getSection() == ".dtors")) {
+          std::string SectionName = ".section " + I->getSection()
+                                                + ",\"aw\",@progbits";
+          SwitchToDataSection(SectionName.c_str());
+        } else {
+          SwitchToDataSection(TAI->getDataSection(), I);
+        }
+        break;
+      default:
+        cerr << "Unknown linkage type!";
+        abort();
+      }
+
+      EmitAlignment(Align, I);
+      O << name << ":\t\t\t\t" << TAI->getCommentString() << " '"
+        << I->getName() << "'\n";
+
+      // If the initializer is a extern weak symbol, remember to emit the weak
+      // reference!
+      if (const GlobalValue *GV = dyn_cast<GlobalValue>(C))
+        if (GV->hasExternalWeakLinkage())
+          ExtWeakSymbols.insert(GV);
+
+      EmitGlobalConstant(C);
+      O << '\n';
+    }
+  }
+
+  // TODO
+
+  // Emit initial debug information.
+  DW.EndModule();
+
+  AsmPrinter::doFinalization(M);
+  return false; // success
+}
+
+std::string LinuxAsmPrinter::getSectionForFunction(const Function &F) const {
+  switch (F.getLinkage()) {
+  default: assert(0 && "Unknown linkage type!");
+  case Function::ExternalLinkage:
+  case Function::InternalLinkage: return TAI->getTextSection();
+  case Function::WeakLinkage:
+  case Function::LinkOnceLinkage:
+    return ".text";
+  }
+}
 
 std::string DarwinAsmPrinter::getSectionForFunction(const Function &F) const {
   switch (F.getLinkage()) {
@@ -786,6 +1002,12 @@ bool DarwinAsmPrinter::doFinalization(Module &M) {
 ///
 FunctionPass *llvm::createPPCAsmPrinterPass(std::ostream &o,
                                             PPCTargetMachine &tm) {
-  return new DarwinAsmPrinter(o, tm, tm.getTargetAsmInfo());
+  const PPCSubtarget *Subtarget = &tm.getSubtarget<PPCSubtarget>();
+
+  if (Subtarget->isDarwin()) {
+    return new DarwinAsmPrinter(o, tm, tm.getTargetAsmInfo());
+  } else {
+    return new LinuxAsmPrinter(o, tm, tm.getTargetAsmInfo());
+  }
 }
 

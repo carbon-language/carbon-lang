@@ -209,9 +209,9 @@ def VRSAVE: SPR<256, "VRsave">, DwarfRegNum<107>;
 // Allocate volatiles first
 // then nonvolatiles in reverse order since stmw/lmw save from rN to r31
 def GPRC : RegisterClass<"PPC", [i32], 32,
-     [R2, R3, R4, R5, R6, R7, R8, R9, R10, R11, R12,
+     [R3, R4, R5, R6, R7, R8, R9, R10, R11, R12,
       R30, R29, R28, R27, R26, R25, R24, R23, R22, R21, R20, R19, R18, R17,
-      R16, R15, R14, R13, R31, R0, R1, LR]>
+      R16, R15, R14, R2, R13, R31, R0, R1, LR]>
 {
   let MethodProtos = [{
     iterator allocation_order_begin(const MachineFunction &MF) const;
@@ -224,6 +224,10 @@ def GPRC : RegisterClass<"PPC", [i32], 32,
     }
     GPRCClass::iterator
     GPRCClass::allocation_order_end(const MachineFunction &MF) const {
+      // In Linux, r2 is reserved for the OS.
+      if (!MF.getTarget().getSubtarget<PPCSubtarget>().isDarwin())
+        return end()-6;
+
       // On PPC64, r13 is the thread pointer.  Never allocate this register.
       // Note that this is overconservative, as it also prevents allocation of
       // R31 when the FP is not needed.
