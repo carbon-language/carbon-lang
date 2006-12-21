@@ -111,6 +111,20 @@ bool ARMAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
   // Print out constants referenced by the function
   EmitConstantPool(MF.getConstantPool());
 
+  const std::vector<MachineConstantPoolEntry>
+    &CP = MF.getConstantPool()->getConstants();
+  for (unsigned i = 0, e = CP.size(); i != e; ++i) {
+    MachineConstantPoolEntry CPE = CP[i];
+    if (!CPE.isMachineConstantPoolEntry()){
+      Constant *CV = CPE.Val.ConstVal;
+      if (const GlobalValue *GV = dyn_cast<GlobalValue>(CV)) {
+        if (GV->hasExternalWeakLinkage()) {
+          ExtWeakSymbols.insert(GV);
+        }
+      }
+    }
+  }
+
   // Print out jump tables referenced by the function
   EmitJumpTableInfo(MF.getJumpTableInfo(), MF);
 
