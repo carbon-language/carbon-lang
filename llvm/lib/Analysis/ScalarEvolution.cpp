@@ -173,6 +173,8 @@ SCEVConstant::~SCEVConstant() {
 
 SCEVHandle SCEVConstant::get(ConstantInt *V) {
   // Make sure that SCEVConstant instances are all unsigned.
+  // FIXME:Signless. This entire if statement can be removed when integer types
+  // are signless. There won't be a need to bitcast then.
   if (V->getType()->isSigned()) {
     const Type *NewTy = V->getType()->getUnsignedVersion();
     V = cast<ConstantInt>(
@@ -459,7 +461,10 @@ SCEVHandle SCEVUnknown::getIntegerSCEV(int Val, const Type *Ty) {
     C = Constant::getNullValue(Ty);
   else if (Ty->isFloatingPoint())
     C = ConstantFP::get(Ty, Val);
-  else if (Ty->isSigned())
+  /// FIXME:Signless. when integer types are signless, just change this to:
+  /// else
+  ///   C = ConstantInt::get(Ty, Val);
+  else if (Ty->isSigned())        
     C = ConstantInt::get(Ty, Val);
   else {
     C = ConstantInt::get(Ty->getSignedVersion(), Val);
@@ -1574,6 +1579,8 @@ SCEVHandle ScalarEvolutionsImpl::ComputeIterationCount(const Loop *L) {
 
           // Now that we have it, if it's signed, convert it to an unsigned
           // range.
+          // FIXME:Signless. This entire if statement can go away when 
+          // integers are signless.  ConstantRange is already signless.
           if (CompRange.getLower()->getType()->isSigned()) {
             const Type *NewTy = RHSC->getValue()->getType();
             Constant *NewL = ConstantExpr::getBitCast(CompRange.getLower(), 
