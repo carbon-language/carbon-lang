@@ -38,8 +38,7 @@ static Function *EnsureFunctionExists(Module &M, const char *Name,
 /// prototype doesn't match the arguments we expect to pass in.
 template <class ArgIt>
 static CallInst *ReplaceCallWith(const char *NewFn, CallInst *CI,
-                                 ArgIt ArgBegin, ArgIt ArgEnd,
-                                 const unsigned *castOpcodes,
+                                 ArgIt ArgBegin, ArgIt ArgEnd, bool isSigned,
                                  const Type *RetTy, Function *&FCache) {
   if (!FCache) {
     // If we haven't already looked up this function, check to see if the
@@ -59,20 +58,15 @@ static CallInst *ReplaceCallWith(const char *NewFn, CallInst *CI,
   const FunctionType *FT = FCache->getFunctionType();
   std::vector<Value*> Operands;
   unsigned ArgNo = 0;
-  for (ArgIt I = ArgBegin; I != ArgEnd && ArgNo != FT->getNumParams();
+  for (ArgIt I = ArgBegin; I != ArgEnd && ArgNo != FT->getNumParams(); 
        ++I, ++ArgNo) {
     Value *Arg = *I;
-    if (Arg->getType() != FT->getParamType(ArgNo))
-      if (castOpcodes[ArgNo])
-        Arg = CastInst::create(Instruction::CastOps(castOpcodes[ArgNo]),
-          Arg, FT->getParamType(ArgNo), Arg->getName(), CI);
-      else {
-        Instruction::CastOps opcode = CastInst::getCastOpcode(Arg, 
-            Arg->getType()->isSigned(), FT->getParamType(ArgNo), 
-            FT->getParamType(ArgNo)->isSigned());
-        Arg = CastInst::create(opcode, Arg, FT->getParamType(ArgNo),
-                               Arg->getName(), CI);
-      }
+    if (Arg->getType() != FT->getParamType(ArgNo)) {
+      Instruction::CastOps opcode = CastInst::getCastOpcode(Arg, isSigned,
+          FT->getParamType(ArgNo), isSigned);
+      Arg = CastInst::create(opcode, Arg, FT->getParamType(ArgNo), 
+                             Arg->getName(), CI);
+    }
     Operands.push_back(Arg);
   }
   // Pass nulls into any additional arguments...
@@ -85,9 +79,8 @@ static CallInst *ReplaceCallWith(const char *NewFn, CallInst *CI,
   if (!CI->use_empty()) {
     Value *V = NewCI;
     if (CI->getType() != NewCI->getType()) {
-      Instruction::CastOps opcode = CastInst::getCastOpcode(NewCI, 
-          NewCI->getType()->isSigned(), CI->getType(), 
-          CI->getType()->isSigned());
+      Instruction::CastOps opcode = CastInst::getCastOpcode(NewCI, isSigned,
+          CI->getType(), isSigned);
       V = CastInst::create(opcode, NewCI, CI->getType(), Name, CI);
     }
     CI->replaceAllUsesWith(V);
@@ -400,75 +393,38 @@ void IntrinsicLowering::LowerIntrinsicCall(CallInst *CI) {
     break;    // Simply strip out debugging intrinsics
 
   case Intrinsic::memcpy_i32: {
-    // The memcpy intrinsic take an extra alignment argument that the memcpy
-    // libc function does not.
-    static unsigned opcodes[] = 
-      { Instruction::BitCast, Instruction::BitCast, Instruction::BitCast };
-    // FIXME:
-    // if (target_is_64_bit) opcodes[2] = Instruction::ZExt;
-    // else opcodes[2] = Instruction::BitCast;
     static Function *MemcpyFCache = 0;
     ReplaceCallWith("memcpy", CI, CI->op_begin()+1, CI->op_end()-1,
-                    opcodes, (*(CI->op_begin()+1))->getType(), MemcpyFCache);
+                    false, (*(CI->op_begin()+1))->getType(), MemcpyFCache);
     break;
   }
   case Intrinsic::memcpy_i64: {
-    static unsigned opcodes[] = 
-      { Instruction::BitCast, Instruction::BitCast, Instruction::Trunc };
-    // FIXME:
-    // if (target_is_64_bit) opcodes[2] = Instruction::BitCast;
-    // else opcodes[2] = Instruction::Trunc;
     static Function *MemcpyFCache = 0;
     ReplaceCallWith("memcpy", CI, CI->op_begin()+1, CI->op_end()-1,
-                     opcodes, (*(CI->op_begin()+1))->getType(), MemcpyFCache);
+                     false, (*(CI->op_begin()+1))->getType(), MemcpyFCache);
     break;
   }
   case Intrinsic::memmove_i32: {
-    // The memmove intrinsic take an extra alignment argument that the memmove
-    // libc function does not.
-    static unsigned opcodes[] = 
-      { Instruction::BitCast, Instruction::BitCast, Instruction::BitCast };
-    // FIXME:
-    // if (target_is_64_bit) opcodes[2] = Instruction::ZExt;
-    // else opcodes[2] = Instruction::BitCast;
     static Function *MemmoveFCache = 0;
     ReplaceCallWith("memmove", CI, CI->op_begin()+1, CI->op_end()-1,
-                    opcodes, (*(CI->op_begin()+1))->getType(), MemmoveFCache);
+                    false, (*(CI->op_begin()+1))->getType(), MemmoveFCache);
     break;
   }
   case Intrinsic::memmove_i64: {
-    // The memmove intrinsic take an extra alignment argument that the memmove
-    // libc function does not.
-    static const unsigned opcodes[] = 
-      { Instruction::BitCast, Instruction::BitCast, Instruction::Trunc };
-    // if (target_is_64_bit) opcodes[2] = Instruction::BitCast;
-    // else opcodes[2] = Instruction::Trunc;
     static Function *MemmoveFCache = 0;
     ReplaceCallWith("memmove", CI, CI->op_begin()+1, CI->op_end()-1,
-                    opcodes, (*(CI->op_begin()+1))->getType(), MemmoveFCache);
+                    false, (*(CI->op_begin()+1))->getType(), MemmoveFCache);
     break;
   }
   case Intrinsic::memset_i32: {
-    // The memset intrinsic take an extra alignment argument that the memset
-    // libc function does not.
-    static const unsigned opcodes[] = 
-      { Instruction::BitCast, Instruction::ZExt, Instruction::ZExt, 0 };
-    // if (target_is_64_bit) opcodes[2] = Instruction::BitCast;
-    // else opcodes[2] = Instruction::ZExt;
     static Function *MemsetFCache = 0;
     ReplaceCallWith("memset", CI, CI->op_begin()+1, CI->op_end()-1,
-                    opcodes, (*(CI->op_begin()+1))->getType(), MemsetFCache);
+                    true, (*(CI->op_begin()+1))->getType(), MemsetFCache);
   }
   case Intrinsic::memset_i64: {
-    // The memset intrinsic take an extra alignment argument that the memset
-    // libc function does not.
-    static const unsigned opcodes[] = 
-      { Instruction::BitCast, Instruction::ZExt, Instruction::Trunc, 0 };
-    // if (target_is_64_bit) opcodes[2] = Instruction::BitCast;
-    // else opcodes[2] = Instruction::Trunc;
     static Function *MemsetFCache = 0;
     ReplaceCallWith("memset", CI, CI->op_begin()+1, CI->op_end()-1,
-                    opcodes, (*(CI->op_begin()+1))->getType(), MemsetFCache);
+                    true, (*(CI->op_begin()+1))->getType(), MemsetFCache);
     break;
   }
   case Intrinsic::isunordered_f32:
@@ -484,17 +440,15 @@ void IntrinsicLowering::LowerIntrinsicCall(CallInst *CI) {
     break;
   }
   case Intrinsic::sqrt_f32: {
-    static const unsigned opcodes[] = { 0 };
     static Function *sqrtfFCache = 0;
     ReplaceCallWith("sqrtf", CI, CI->op_begin()+1, CI->op_end(),
-                    opcodes, Type::FloatTy, sqrtfFCache);
+                    false, Type::FloatTy, sqrtfFCache);
     break;
   }
   case Intrinsic::sqrt_f64: {
-    static const unsigned opcodes[] =  { 0 };
     static Function *sqrtFCache = 0;
     ReplaceCallWith("sqrt", CI, CI->op_begin()+1, CI->op_end(),
-                    opcodes, Type::DoubleTy, sqrtFCache);
+                    false, Type::DoubleTy, sqrtFCache);
     break;
   }
   }
