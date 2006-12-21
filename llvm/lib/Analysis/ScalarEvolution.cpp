@@ -2151,6 +2151,8 @@ SolveQuadraticEquation(const SCEVAddRecExpr *AddRec) {
   Constant *TwoA = ConstantExpr::getMul(A, Two);
 
   // The divisions must be performed as signed divisions.
+  // FIXME:Signedness. These casts can all go away once integer types are
+  // signless.
   const Type *SignedTy = NegB->getType()->getSignedVersion();
   NegB = ConstantExpr::getBitCast(NegB, SignedTy);
   TwoA = ConstantExpr::getBitCast(TwoA, SignedTy);
