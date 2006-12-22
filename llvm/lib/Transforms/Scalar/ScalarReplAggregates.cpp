@@ -139,6 +139,13 @@ bool SROA::performScalarRepl(Function &F) {
     AllocationInst *AI = WorkList.back();
     WorkList.pop_back();
     
+    // Handle dead allocas trivially.  These can be formed by SROA'ing arrays
+    // with unused elements.
+    if (AI->use_empty()) {
+      AI->eraseFromParent();
+      continue;
+    }
+    
     // If we can turn this aggregate value (potentially with casts) into a
     // simple scalar value that can be mem2reg'd into a register value.
     bool IsNotTrivial = false;
@@ -232,7 +239,7 @@ bool SROA::performScalarRepl(Function &F) {
     }
 
     // Finally, delete the Alloca instruction
-    AI->getParent()->getInstList().erase(AI);
+    AI->eraseFromParent();
     NumReplaced++;
   }
 
