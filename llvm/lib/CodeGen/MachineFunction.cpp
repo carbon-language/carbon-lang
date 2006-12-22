@@ -466,7 +466,7 @@ void MachineConstantPool::print(std::ostream &OS) const {
       Constants[i].Val.MachineCPVal->print(OS);
     else
       OS << *(Value*)Constants[i].Val.ConstVal;
-    OS << " , offset=" << Constants[i].Offset;
+    OS << " , offset=" << Constants[i].getOffset();
     OS << "\n";
   }
 }
