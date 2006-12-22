@@ -1539,10 +1539,19 @@ private:
             uint64_t FieldAlign = Align;
             uint64_t FieldOffset = Offset;
             
-            if (TypeDesc *FromTy = MemberDesc->getFromType()) {
-              AddType(Member, FromTy, Unit);
-              FieldSize = FromTy->getSize();
-              FieldAlign = FromTy->getSize();
+            // Set the member type.
+            TypeDesc *FromTy = MemberDesc->getFromType();
+            AddType(Member, FromTy, Unit);
+            
+            // Walk up typedefs until a real size is found.
+            while (FromTy) {
+              if (FromTy->getTag() != DW_TAG_typedef) {
+                FieldSize = FromTy->getSize();
+                FieldAlign = FromTy->getSize();
+                break;
+              }
+              
+              FromTy = dyn_cast<DerivedTypeDesc>(FromTy)->getFromType();
             }
             
             // Unless we have a bit field.
