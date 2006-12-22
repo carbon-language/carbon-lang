@@ -205,6 +205,9 @@ public:
 
 #ifdef USE_OLD_PASSMANAGER
   virtual void addToPassManager(ModulePassManager *PM, AnalysisUsage &AU);
+#else
+  // Force out-of-line virtual method.
+  virtual ~ModulePass();
 #endif
 };
 
@@ -233,6 +236,9 @@ private:
   template<typename Trait> friend class PassManagerT;
   friend class ModulePassManager;
   virtual void addToPassManager(ModulePassManager *PM, AnalysisUsage &AU);
+#else
+  // Force out-of-line virtual method.
+  virtual ~ImmutablePass();
 #endif
 };
 

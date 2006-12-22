@@ -171,6 +171,9 @@ void PMDebug::PrintAnalysisSetInfo(unsigned Depth, const char *Msg,
 void ModulePass::addToPassManager(ModulePassManager *PM, AnalysisUsage &AU) {
   PM->addPass(this, AU);
 }
+#else
+// Force out-of-line virtual method.
+ModulePass::~ModulePass() { }
 #endif
 
 bool Pass::mustPreserveAnalysisID(const PassInfo *AnalysisID) const {
@@ -215,6 +218,9 @@ void ImmutablePass::addToPassManager(ModulePassManager *PM,
                                      AnalysisUsage &AU) {
   PM->addPass(this, AU);
 }
+#else
+// Force out-of-line virtual method.
+ImmutablePass::~ImmutablePass() { }
 #endif
 
 //===----------------------------------------------------------------------===//
