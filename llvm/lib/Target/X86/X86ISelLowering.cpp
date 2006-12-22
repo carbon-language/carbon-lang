@@ -664,8 +664,10 @@ SDOperand X86TargetLowering::LowerCCCCallTo(SDOperand Op, SelectionDAG &DAG) {
   // If the callee is a GlobalAddress node (quite common, every direct call is)
   // turn it into a TargetGlobalAddress node so that legalize doesn't hack it.
   if (GlobalAddressSDNode *G = dyn_cast<GlobalAddressSDNode>(Callee)) {
-    // We should use extra load for direct calls to dllimported functions
-    if (!Subtarget->GVRequiresExtraLoad(G->getGlobal(), true))
+    // We should use extra load for direct calls to dllimported functions in
+    // non-JIT mode.
+    if (!Subtarget->GVRequiresExtraLoad(G->getGlobal(),
+                                        getTargetMachine(), true))
       Callee = DAG.getTargetGlobalAddress(G->getGlobal(), getPointerTy());
   } else if (ExternalSymbolSDNode *S = dyn_cast<ExternalSymbolSDNode>(Callee))
     Callee = DAG.getTargetExternalSymbol(S->getSymbol(), getPointerTy());
@@ -1201,8 +1203,10 @@ X86TargetLowering::LowerX86_64CCCCallTo(SDOperand Op, SelectionDAG &DAG) {
   // If the callee is a GlobalAddress node (quite common, every direct call is)
   // turn it into a TargetGlobalAddress node so that legalize doesn't hack it.
   if (GlobalAddressSDNode *G = dyn_cast<GlobalAddressSDNode>(Callee)) {
-    // We should use extra load for direct calls to dllimported functions
-    if (!Subtarget->GVRequiresExtraLoad(G->getGlobal(), true))
+    // We should use extra load for direct calls to dllimported functions in
+    // non-JIT mode.
+    if (!Subtarget->GVRequiresExtraLoad(G->getGlobal(),
+                                        getTargetMachine(), true))
       Callee = DAG.getTargetGlobalAddress(G->getGlobal(), getPointerTy());
   } else if (ExternalSymbolSDNode *S = dyn_cast<ExternalSymbolSDNode>(Callee))
     Callee = DAG.getTargetExternalSymbol(S->getSymbol(), getPointerTy());
@@ -1698,8 +1702,10 @@ SDOperand X86TargetLowering::LowerFastCCCallTo(SDOperand Op, SelectionDAG &DAG,
   // If the callee is a GlobalAddress node (quite common, every direct call is)
   // turn it into a TargetGlobalAddress node so that legalize doesn't hack it.
   if (GlobalAddressSDNode *G = dyn_cast<GlobalAddressSDNode>(Callee)) {
-    // We should use extra load for direct calls to dllimported functions
-    if (!Subtarget->GVRequiresExtraLoad(G->getGlobal(), true))
+    // We should use extra load for direct calls to dllimported functions in
+    // non-JIT mode.
+    if (!Subtarget->GVRequiresExtraLoad(G->getGlobal(),
+                                        getTargetMachine(), true))
       Callee = DAG.getTargetGlobalAddress(G->getGlobal(), getPointerTy());
   } else if (ExternalSymbolSDNode *S = dyn_cast<ExternalSymbolSDNode>(Callee))
     Callee = DAG.getTargetExternalSymbol(S->getSymbol(), getPointerTy());
@@ -1996,8 +2002,10 @@ SDOperand X86TargetLowering::LowerStdCallCCCallTo(SDOperand Op,
   // If the callee is a GlobalAddress node (quite common, every direct call is)
   // turn it into a TargetGlobalAddress node so that legalize doesn't hack it.
   if (GlobalAddressSDNode *G = dyn_cast<GlobalAddressSDNode>(Callee)) {
-    // We should use extra load for direct calls to dllimported functions
-    if (!Subtarget->GVRequiresExtraLoad(G->getGlobal(), true))
+    // We should use extra load for direct calls to dllimported functions in
+    // non-JIT mode.
+    if (!Subtarget->GVRequiresExtraLoad(G->getGlobal(),
+                                        getTargetMachine(), true))
       Callee = DAG.getTargetGlobalAddress(G->getGlobal(), getPointerTy());
   } else if (ExternalSymbolSDNode *S = dyn_cast<ExternalSymbolSDNode>(Callee))
     Callee = DAG.getTargetExternalSymbol(S->getSymbol(), getPointerTy());
@@ -3868,17 +3876,14 @@ X86TargetLowering::LowerGlobalAddress(SDOperand Op, SelectionDAG &DAG) {
       Result = DAG.getNode(ISD::ADD, getPointerTy(),
                            DAG.getNode(X86ISD::GlobalBaseReg, getPointerTy()),
                            Result);
-
-    // For Darwin, external and weak symbols are indirect, so we want to load
-    // the value at address GV, not the value of GV itself. This means that
-    // the GlobalAddress must be in the base or index register of the address,
-    // not the GV offset field.
-    if (getTargetMachine().getRelocationModel() != Reloc::Static &&
-        Subtarget->GVRequiresExtraLoad(GV, false))
-      Result = DAG.getLoad(getPointerTy(), DAG.getEntryNode(), Result, NULL, 0);
-  } else if (Subtarget->GVRequiresExtraLoad(GV, false)) {
-    Result = DAG.getLoad(getPointerTy(), DAG.getEntryNode(), Result, NULL, 0);
   }
+  
+  // For Darwin & Mingw32, external and weak symbols are indirect, so we want to
+  // load the value at address GV, not the value of GV itself. This means that
+  // the GlobalAddress must be in the base or index register of the address, not
+  // the GV offset field. Platform check is inside GVRequiresExtraLoad() call
+  if (Subtarget->GVRequiresExtraLoad(GV, getTargetMachine(), false))
+    Result = DAG.getLoad(getPointerTy(), DAG.getEntryNode(), Result, NULL, 0);
 
   return Result;
 }
@@ -5010,9 +5015,8 @@ bool X86TargetLowering::isLegalAddressImmediate(GlobalValue *GV) const {
   if (Subtarget->is64Bit() &&
       getTargetMachine().getCodeModel() != CodeModel::Small)
     return false;
-  Reloc::Model RModel = getTargetMachine().getRelocationModel();
-  return (RModel == Reloc::Static) ||
-    !Subtarget->GVRequiresExtraLoad(GV, false);
+  
+  return (!Subtarget->GVRequiresExtraLoad(GV, getTargetMachine(), false));
 }
 
 /// isShuffleMaskLegal - Targets can use this to indicate that they only

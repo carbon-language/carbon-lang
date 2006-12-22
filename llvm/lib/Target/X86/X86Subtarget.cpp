@@ -15,6 +15,7 @@
 #include "X86GenSubtarget.inc"
 #include "llvm/Module.h"
 #include "llvm/Support/CommandLine.h"
+#include "llvm/Target/TargetMachine.h"
 using namespace llvm;
 
 cl::opt<X86Subtarget::AsmWriterFlavorTy>
@@ -31,9 +32,10 @@ AsmWriterFlavor("x86-asm-syntax", cl::init(X86Subtarget::unset),
 /// value of GV itself. This means that the GlobalAddress must be in the base
 /// or index register of the address, not the GV offset field.
 bool X86Subtarget::GVRequiresExtraLoad(const GlobalValue* GV,
+                                       const TargetMachine& TM,
                                        bool isDirectCall) const
 {
-  if (GenerateExtraLoadsForGVs)
+  if (TM.getRelocationModel() != Reloc::Static)
     if (isTargetDarwin()) {
       return (!isDirectCall &&
               (GV->hasWeakLinkage() || GV->hasLinkOnceLinkage() ||
@@ -208,16 +210,6 @@ static const char *GetCurrentX86CPU() {
   }
 }
 
-/// SetJITMode - This is called to inform the subtarget info that we are
-/// producing code for the JIT.
-void X86Subtarget::SetJITMode()
-{
-  // JIT mode doesn't want extra loads for dllimported symbols, it knows exactly
-  // where everything is.
-  if (isTargetCygwin())
-    GenerateExtraLoadsForGVs = false;
-}
-
 X86Subtarget::X86Subtarget(const Module &M, const std::string &FS, bool is64Bit)
   : AsmFlavor(AsmWriterFlavor)
   , X86SSELevel(NoMMXSSE)
@@ -226,7 +218,6 @@ X86Subtarget::X86Subtarget(const Module &M, const std::string &FS, bool is64Bit)
   // FIXME: this is a known good value for Yonah. How about others?
   , MinRepStrSizeThreshold(128)
   , Is64Bit(is64Bit)
-  , GenerateExtraLoadsForGVs(true)
   , TargetType(isELF) { // Default to ELF unless otherwise specified.
 
   // Determine default and user specified characteristics

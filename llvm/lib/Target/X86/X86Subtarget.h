@@ -21,6 +21,7 @@
 namespace llvm {
 class Module;
 class GlobalValue;
+class TargetMachine;
 
 class X86Subtarget : public TargetSubtarget {
 public:
@@ -61,9 +62,6 @@ private:
   /// pointer size is 64 bit.
   bool Is64Bit;
 
-  /// GenerateExtraLoadsForGVs - True if we should generate extra loads for
-  /// indirect symbols (e.g. dllimported symbols on windows).
-  bool GenerateExtraLoadsForGVs;
 public:
   enum {
     isELF, isCygwin, isDarwin, isWindows
@@ -114,11 +112,9 @@ public:
   /// symbols are indirect, loading the value at address GV rather then the
   /// value of GV itself. This means that the GlobalAddress must be in the base
   /// or index register of the address, not the GV offset field.
-  bool GVRequiresExtraLoad(const GlobalValue* GV, bool isDirectCall) const;
+  bool GVRequiresExtraLoad(const GlobalValue* GV, const TargetMachine& TM,
+                           bool isDirectCall) const;
 
-  /// SetJITMode - This is called to inform the subtarget info that we are
-  /// producing code for the JIT.
-  void SetJITMode();
 };
 
 namespace X86 {

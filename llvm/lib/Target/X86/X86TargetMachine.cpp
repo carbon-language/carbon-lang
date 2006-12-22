@@ -115,7 +115,7 @@ X86TargetMachine::X86TargetMachine(const Module &M, const std::string &FS, bool 
               Subtarget.getStackAlignment(), Subtarget.is64Bit() ? -8 : -4),
     InstrInfo(*this), JITInfo(*this), TLInfo(*this) {
   if (getRelocationModel() == Reloc::Default)
-    if (Subtarget.isTargetDarwin())
+    if (Subtarget.isTargetDarwin() || Subtarget.isTargetCygwin())
       setRelocationModel(Reloc::DynamicNoPIC);
     else
       setRelocationModel(Reloc::Static);
@@ -167,9 +167,6 @@ bool X86TargetMachine::addCodeEmitter(FunctionPassManager &PM, bool Fast,
   if (Subtarget.is64Bit())
     setCodeModel(CodeModel::Large);
 
-  // Inform the subtarget that we are in JIT mode.
-  Subtarget.SetJITMode(); 
-  
   PM.add(createX86CodeEmitterPass(*this, MCE));
   return false;
 }
