@@ -4518,8 +4518,8 @@ Instruction *InstCombiner::visitICmpInst(ICmpInst &I) {
     if (KnownOne | KnownZero) {
       // Compute the Min, Max and RHS values based on the known bits. For the
       // EQ and NE we use unsigned values.
-      uint64_t UMin, UMax, URHSVal;
-      int64_t SMin, SMax, SRHSVal;
+      uint64_t UMin = 0, UMax = 0, URHSVal = 0;
+      int64_t SMin = 0, SMax = 0, SRHSVal = 0;
       if (ICmpInst::isSignedPredicate(I.getPredicate())) {
         SRHSVal = CI->getSExtValue();
         ComputeSignedMinMaxValuesFromKnownBits(Ty, KnownZero, KnownOne, SMin, 
